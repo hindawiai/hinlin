@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * NET		An implementation of the SOCKET network access protocol.
  *
@@ -11,384 +10,384 @@
  *
  * Fixes:
  *		Anonymous	:	NOTSOCK/BADF cleanup. Error fix in
- *					shutकरोwn()
- *		Alan Cox	:	verअगरy_area() fixes
+ *					shutdown()
+ *		Alan Cox	:	verify_area() fixes
  *		Alan Cox	:	Removed DDI
  *		Jonathan Kamens	:	SOCK_DGRAM reconnect bug
  *		Alan Cox	:	Moved a load of checks to the very
  *					top level.
- *		Alan Cox	:	Move address काष्ठाures to/from user
+ *		Alan Cox	:	Move address structures to/from user
  *					mode above the protocol layers.
  *		Rob Janssen	:	Allow 0 length sends.
  *		Alan Cox	:	Asynchronous I/O support (cribbed from the
  *					tty drivers).
- *		Niibe Yutaka	:	Asynchronous I/O क्रम ग_लिखोs (4.4BSD style)
+ *		Niibe Yutaka	:	Asynchronous I/O for writes (4.4BSD style)
  *		Jeff Uphoff	:	Made max number of sockets command-line
  *					configurable.
  *		Matti Aarnio	:	Made the number of sockets dynamic,
  *					to be allocated when needed, and mr.
  *					Uphoff's max is used as max to be
  *					allowed to allocate.
- *		Linus		:	Argh. हटाओd all the socket allocation
+ *		Linus		:	Argh. removed all the socket allocation
  *					altogether: it's in the inode now.
- *		Alan Cox	:	Made sock_alloc()/sock_release() खुला
- *					क्रम NetROM and future kernel nfsd type
+ *		Alan Cox	:	Made sock_alloc()/sock_release() public
+ *					for NetROM and future kernel nfsd type
  *					stuff.
  *		Alan Cox	:	sendmsg/recvmsg basics.
  *		Tom Dyas	:	Export net symbols.
  *		Marcin Dalecki	:	Fixed problems with CONFIG_NET="n".
- *		Alan Cox	:	Added thपढ़ो locking to sys_* calls
- *					क्रम sockets. May have errors at the
+ *		Alan Cox	:	Added thread locking to sys_* calls
+ *					for sockets. May have errors at the
  *					moment.
  *		Kevin Buhr	:	Fixed the dumb errors in the above.
  *		Andi Kleen	:	Some small cleanups, optimizations,
  *					and fixed a copy_from_user() bug.
- *		Tigran Aivazian	:	sys_send(args) calls sys_sendto(args, शून्य, 0)
+ *		Tigran Aivazian	:	sys_send(args) calls sys_sendto(args, NULL, 0)
  *		Tigran Aivazian	:	Made listen(2) backlog sanity checks
  *					protocol-independent
  *
- *	This module is effectively the top level पूर्णांकerface to the BSD socket
+ *	This module is effectively the top level interface to the BSD socket
  *	paradigm.
  *
  *	Based upon Swansea University Computer Society NET3.039
  */
 
-#समावेश <linux/ethtool.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/file.h>
-#समावेश <linux/net.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/thपढ़ो_info.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/अगर_bridge.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/ptp_classअगरy.h>
-#समावेश <linux/init.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/cache.h>
-#समावेश <linux/module.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/mount.h>
-#समावेश <linux/pseuकरो_fs.h>
-#समावेश <linux/security.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/kmod.h>
-#समावेश <linux/audit.h>
-#समावेश <linux/wireless.h>
-#समावेश <linux/nsproxy.h>
-#समावेश <linux/magic.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/xattr.h>
-#समावेश <linux/nospec.h>
-#समावेश <linux/indirect_call_wrapper.h>
+#include <linux/ethtool.h>
+#include <linux/mm.h>
+#include <linux/socket.h>
+#include <linux/file.h>
+#include <linux/net.h>
+#include <linux/interrupt.h>
+#include <linux/thread_info.h>
+#include <linux/rcupdate.h>
+#include <linux/netdevice.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/mutex.h>
+#include <linux/if_bridge.h>
+#include <linux/if_vlan.h>
+#include <linux/ptp_classify.h>
+#include <linux/init.h>
+#include <linux/poll.h>
+#include <linux/cache.h>
+#include <linux/module.h>
+#include <linux/highmem.h>
+#include <linux/mount.h>
+#include <linux/pseudo_fs.h>
+#include <linux/security.h>
+#include <linux/syscalls.h>
+#include <linux/compat.h>
+#include <linux/kmod.h>
+#include <linux/audit.h>
+#include <linux/wireless.h>
+#include <linux/nsproxy.h>
+#include <linux/magic.h>
+#include <linux/slab.h>
+#include <linux/xattr.h>
+#include <linux/nospec.h>
+#include <linux/indirect_call_wrapper.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/unistd.h>
+#include <linux/uaccess.h>
+#include <asm/unistd.h>
 
-#समावेश <net/compat.h>
-#समावेश <net/wext.h>
-#समावेश <net/cls_cgroup.h>
+#include <net/compat.h>
+#include <net/wext.h>
+#include <net/cls_cgroup.h>
 
-#समावेश <net/sock.h>
-#समावेश <linux/netfilter.h>
+#include <net/sock.h>
+#include <linux/netfilter.h>
 
-#समावेश <linux/अगर_tun.h>
-#समावेश <linux/ipv6_route.h>
-#समावेश <linux/route.h>
-#समावेश <linux/termios.h>
-#समावेश <linux/sockios.h>
-#समावेश <net/busy_poll.h>
-#समावेश <linux/errqueue.h>
+#include <linux/if_tun.h>
+#include <linux/ipv6_route.h>
+#include <linux/route.h>
+#include <linux/termios.h>
+#include <linux/sockios.h>
+#include <net/busy_poll.h>
+#include <linux/errqueue.h>
 
-#अगर_घोषित CONFIG_NET_RX_BUSY_POLL
-अचिन्हित पूर्णांक sysctl_net_busy_पढ़ो __पढ़ो_mostly;
-अचिन्हित पूर्णांक sysctl_net_busy_poll __पढ़ो_mostly;
-#पूर्ण_अगर
+#ifdef CONFIG_NET_RX_BUSY_POLL
+unsigned int sysctl_net_busy_read __read_mostly;
+unsigned int sysctl_net_busy_poll __read_mostly;
+#endif
 
-अटल sमाप_प्रकार sock_पढ़ो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *to);
-अटल sमाप_प्रकार sock_ग_लिखो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *from);
-अटल पूर्णांक sock_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma);
+static ssize_t sock_read_iter(struct kiocb *iocb, struct iov_iter *to);
+static ssize_t sock_write_iter(struct kiocb *iocb, struct iov_iter *from);
+static int sock_mmap(struct file *file, struct vm_area_struct *vma);
 
-अटल पूर्णांक sock_बंद(काष्ठा inode *inode, काष्ठा file *file);
-अटल __poll_t sock_poll(काष्ठा file *file,
-			      काष्ठा poll_table_काष्ठा *रुको);
-अटल दीर्घ sock_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
-#अगर_घोषित CONFIG_COMPAT
-अटल दीर्घ compat_sock_ioctl(काष्ठा file *file,
-			      अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
-#पूर्ण_अगर
-अटल पूर्णांक sock_fasync(पूर्णांक fd, काष्ठा file *filp, पूर्णांक on);
-अटल sमाप_प्रकार sock_sendpage(काष्ठा file *file, काष्ठा page *page,
-			     पूर्णांक offset, माप_प्रकार size, loff_t *ppos, पूर्णांक more);
-अटल sमाप_प्रकार sock_splice_पढ़ो(काष्ठा file *file, loff_t *ppos,
-				काष्ठा pipe_inode_info *pipe, माप_प्रकार len,
-				अचिन्हित पूर्णांक flags);
+static int sock_close(struct inode *inode, struct file *file);
+static __poll_t sock_poll(struct file *file,
+			      struct poll_table_struct *wait);
+static long sock_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
+#ifdef CONFIG_COMPAT
+static long compat_sock_ioctl(struct file *file,
+			      unsigned int cmd, unsigned long arg);
+#endif
+static int sock_fasync(int fd, struct file *filp, int on);
+static ssize_t sock_sendpage(struct file *file, struct page *page,
+			     int offset, size_t size, loff_t *ppos, int more);
+static ssize_t sock_splice_read(struct file *file, loff_t *ppos,
+				struct pipe_inode_info *pipe, size_t len,
+				unsigned int flags);
 
-#अगर_घोषित CONFIG_PROC_FS
-अटल व्योम sock_show_fdinfo(काष्ठा seq_file *m, काष्ठा file *f)
-अणु
-	काष्ठा socket *sock = f->निजी_data;
+#ifdef CONFIG_PROC_FS
+static void sock_show_fdinfo(struct seq_file *m, struct file *f)
+{
+	struct socket *sock = f->private_data;
 
-	अगर (sock->ops->show_fdinfo)
+	if (sock->ops->show_fdinfo)
 		sock->ops->show_fdinfo(m, sock);
-पूर्ण
-#अन्यथा
-#घोषणा sock_show_fdinfo शून्य
-#पूर्ण_अगर
+}
+#else
+#define sock_show_fdinfo NULL
+#endif
 
 /*
  *	Socket files have a set of 'special' operations as well as the generic file ones. These don't appear
- *	in the operation काष्ठाures but are करोne directly via the socketcall() multiplexor.
+ *	in the operation structures but are done directly via the socketcall() multiplexor.
  */
 
-अटल स्थिर काष्ठा file_operations socket_file_ops = अणु
+static const struct file_operations socket_file_ops = {
 	.owner =	THIS_MODULE,
 	.llseek =	no_llseek,
-	.पढ़ो_iter =	sock_पढ़ो_iter,
-	.ग_लिखो_iter =	sock_ग_लिखो_iter,
+	.read_iter =	sock_read_iter,
+	.write_iter =	sock_write_iter,
 	.poll =		sock_poll,
 	.unlocked_ioctl = sock_ioctl,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.compat_ioctl = compat_sock_ioctl,
-#पूर्ण_अगर
+#endif
 	.mmap =		sock_mmap,
-	.release =	sock_बंद,
+	.release =	sock_close,
 	.fasync =	sock_fasync,
 	.sendpage =	sock_sendpage,
-	.splice_ग_लिखो = generic_splice_sendpage,
-	.splice_पढ़ो =	sock_splice_पढ़ो,
+	.splice_write = generic_splice_sendpage,
+	.splice_read =	sock_splice_read,
 	.show_fdinfo =	sock_show_fdinfo,
-पूर्ण;
+};
 
 /*
- *	The protocol list. Each protocol is रेजिस्टरed in here.
+ *	The protocol list. Each protocol is registered in here.
  */
 
-अटल DEFINE_SPINLOCK(net_family_lock);
-अटल स्थिर काष्ठा net_proto_family __rcu *net_families[NPROTO] __पढ़ो_mostly;
+static DEFINE_SPINLOCK(net_family_lock);
+static const struct net_proto_family __rcu *net_families[NPROTO] __read_mostly;
 
 /*
  * Support routines.
- * Move socket addresses back and क्रमth across the kernel/user
- * भागide and look after the messy bits.
+ * Move socket addresses back and forth across the kernel/user
+ * divide and look after the messy bits.
  */
 
 /**
- *	move_addr_to_kernel	-	copy a socket address पूर्णांकo kernel space
+ *	move_addr_to_kernel	-	copy a socket address into kernel space
  *	@uaddr: Address in user space
  *	@kaddr: Address in kernel space
  *	@ulen: Length in user space
  *
- *	The address is copied पूर्णांकo kernel space. If the provided address is
- *	too दीर्घ an error code of -EINVAL is वापसed. If the copy gives
- *	invalid addresses -EFAULT is वापसed. On a success 0 is वापसed.
+ *	The address is copied into kernel space. If the provided address is
+ *	too long an error code of -EINVAL is returned. If the copy gives
+ *	invalid addresses -EFAULT is returned. On a success 0 is returned.
  */
 
-पूर्णांक move_addr_to_kernel(व्योम __user *uaddr, पूर्णांक ulen, काष्ठा sockaddr_storage *kaddr)
-अणु
-	अगर (ulen < 0 || ulen > माप(काष्ठा sockaddr_storage))
-		वापस -EINVAL;
-	अगर (ulen == 0)
-		वापस 0;
-	अगर (copy_from_user(kaddr, uaddr, ulen))
-		वापस -EFAULT;
-	वापस audit_sockaddr(ulen, kaddr);
-पूर्ण
+int move_addr_to_kernel(void __user *uaddr, int ulen, struct sockaddr_storage *kaddr)
+{
+	if (ulen < 0 || ulen > sizeof(struct sockaddr_storage))
+		return -EINVAL;
+	if (ulen == 0)
+		return 0;
+	if (copy_from_user(kaddr, uaddr, ulen))
+		return -EFAULT;
+	return audit_sockaddr(ulen, kaddr);
+}
 
 /**
  *	move_addr_to_user	-	copy an address to user space
  *	@kaddr: kernel space address
  *	@klen: length of address in kernel
  *	@uaddr: user space address
- *	@ulen: poपूर्णांकer to user length field
+ *	@ulen: pointer to user length field
  *
- *	The value poपूर्णांकed to by ulen on entry is the buffer length available.
- *	This is overwritten with the buffer space used. -EINVAL is वापसed
- *	अगर an overदीर्घ buffer is specअगरied or a negative buffer size. -EFAULT
- *	is वापसed अगर either the buffer or the length field are not
+ *	The value pointed to by ulen on entry is the buffer length available.
+ *	This is overwritten with the buffer space used. -EINVAL is returned
+ *	if an overlong buffer is specified or a negative buffer size. -EFAULT
+ *	is returned if either the buffer or the length field are not
  *	accessible.
- *	After copying the data up to the limit the user specअगरies, the true
+ *	After copying the data up to the limit the user specifies, the true
  *	length of the data is written over the length limit the user
- *	specअगरied. Zero is वापसed क्रम a success.
+ *	specified. Zero is returned for a success.
  */
 
-अटल पूर्णांक move_addr_to_user(काष्ठा sockaddr_storage *kaddr, पूर्णांक klen,
-			     व्योम __user *uaddr, पूर्णांक __user *ulen)
-अणु
-	पूर्णांक err;
-	पूर्णांक len;
+static int move_addr_to_user(struct sockaddr_storage *kaddr, int klen,
+			     void __user *uaddr, int __user *ulen)
+{
+	int err;
+	int len;
 
-	BUG_ON(klen > माप(काष्ठा sockaddr_storage));
+	BUG_ON(klen > sizeof(struct sockaddr_storage));
 	err = get_user(len, ulen);
-	अगर (err)
-		वापस err;
-	अगर (len > klen)
+	if (err)
+		return err;
+	if (len > klen)
 		len = klen;
-	अगर (len < 0)
-		वापस -EINVAL;
-	अगर (len) अणु
-		अगर (audit_sockaddr(klen, kaddr))
-			वापस -ENOMEM;
-		अगर (copy_to_user(uaddr, kaddr, len))
-			वापस -EFAULT;
-	पूर्ण
+	if (len < 0)
+		return -EINVAL;
+	if (len) {
+		if (audit_sockaddr(klen, kaddr))
+			return -ENOMEM;
+		if (copy_to_user(uaddr, kaddr, len))
+			return -EFAULT;
+	}
 	/*
 	 *      "fromlen shall refer to the value before truncation.."
 	 *                      1003.1g
 	 */
-	वापस __put_user(klen, ulen);
-पूर्ण
+	return __put_user(klen, ulen);
+}
 
-अटल काष्ठा kmem_cache *sock_inode_cachep __ro_after_init;
+static struct kmem_cache *sock_inode_cachep __ro_after_init;
 
-अटल काष्ठा inode *sock_alloc_inode(काष्ठा super_block *sb)
-अणु
-	काष्ठा socket_alloc *ei;
+static struct inode *sock_alloc_inode(struct super_block *sb)
+{
+	struct socket_alloc *ei;
 
 	ei = kmem_cache_alloc(sock_inode_cachep, GFP_KERNEL);
-	अगर (!ei)
-		वापस शून्य;
-	init_रुकोqueue_head(&ei->socket.wq.रुको);
-	ei->socket.wq.fasync_list = शून्य;
+	if (!ei)
+		return NULL;
+	init_waitqueue_head(&ei->socket.wq.wait);
+	ei->socket.wq.fasync_list = NULL;
 	ei->socket.wq.flags = 0;
 
 	ei->socket.state = SS_UNCONNECTED;
 	ei->socket.flags = 0;
-	ei->socket.ops = शून्य;
-	ei->socket.sk = शून्य;
-	ei->socket.file = शून्य;
+	ei->socket.ops = NULL;
+	ei->socket.sk = NULL;
+	ei->socket.file = NULL;
 
-	वापस &ei->vfs_inode;
-पूर्ण
+	return &ei->vfs_inode;
+}
 
-अटल व्योम sock_मुक्त_inode(काष्ठा inode *inode)
-अणु
-	काष्ठा socket_alloc *ei;
+static void sock_free_inode(struct inode *inode)
+{
+	struct socket_alloc *ei;
 
-	ei = container_of(inode, काष्ठा socket_alloc, vfs_inode);
-	kmem_cache_मुक्त(sock_inode_cachep, ei);
-पूर्ण
+	ei = container_of(inode, struct socket_alloc, vfs_inode);
+	kmem_cache_free(sock_inode_cachep, ei);
+}
 
-अटल व्योम init_once(व्योम *foo)
-अणु
-	काष्ठा socket_alloc *ei = (काष्ठा socket_alloc *)foo;
+static void init_once(void *foo)
+{
+	struct socket_alloc *ei = (struct socket_alloc *)foo;
 
 	inode_init_once(&ei->vfs_inode);
-पूर्ण
+}
 
-अटल व्योम init_inodecache(व्योम)
-अणु
+static void init_inodecache(void)
+{
 	sock_inode_cachep = kmem_cache_create("sock_inode_cache",
-					      माप(काष्ठा socket_alloc),
+					      sizeof(struct socket_alloc),
 					      0,
 					      (SLAB_HWCACHE_ALIGN |
 					       SLAB_RECLAIM_ACCOUNT |
 					       SLAB_MEM_SPREAD | SLAB_ACCOUNT),
 					      init_once);
-	BUG_ON(sock_inode_cachep == शून्य);
-पूर्ण
+	BUG_ON(sock_inode_cachep == NULL);
+}
 
-अटल स्थिर काष्ठा super_operations sockfs_ops = अणु
+static const struct super_operations sockfs_ops = {
 	.alloc_inode	= sock_alloc_inode,
-	.मुक्त_inode	= sock_मुक्त_inode,
+	.free_inode	= sock_free_inode,
 	.statfs		= simple_statfs,
-पूर्ण;
+};
 
 /*
  * sockfs_dname() is called from d_path().
  */
-अटल अक्षर *sockfs_dname(काष्ठा dentry *dentry, अक्षर *buffer, पूर्णांक buflen)
-अणु
-	वापस dynamic_dname(dentry, buffer, buflen, "socket:[%lu]",
+static char *sockfs_dname(struct dentry *dentry, char *buffer, int buflen)
+{
+	return dynamic_dname(dentry, buffer, buflen, "socket:[%lu]",
 				d_inode(dentry)->i_ino);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा dentry_operations sockfs_dentry_operations = अणु
+static const struct dentry_operations sockfs_dentry_operations = {
 	.d_dname  = sockfs_dname,
-पूर्ण;
+};
 
-अटल पूर्णांक sockfs_xattr_get(स्थिर काष्ठा xattr_handler *handler,
-			    काष्ठा dentry *dentry, काष्ठा inode *inode,
-			    स्थिर अक्षर *suffix, व्योम *value, माप_प्रकार size)
-अणु
-	अगर (value) अणु
-		अगर (dentry->d_name.len + 1 > size)
-			वापस -दुस्फल;
-		स_नकल(value, dentry->d_name.name, dentry->d_name.len + 1);
-	पूर्ण
-	वापस dentry->d_name.len + 1;
-पूर्ण
+static int sockfs_xattr_get(const struct xattr_handler *handler,
+			    struct dentry *dentry, struct inode *inode,
+			    const char *suffix, void *value, size_t size)
+{
+	if (value) {
+		if (dentry->d_name.len + 1 > size)
+			return -ERANGE;
+		memcpy(value, dentry->d_name.name, dentry->d_name.len + 1);
+	}
+	return dentry->d_name.len + 1;
+}
 
-#घोषणा XATTR_SOCKPROTONAME_SUFFIX "sockprotoname"
-#घोषणा XATTR_NAME_SOCKPROTONAME (XATTR_SYSTEM_PREFIX XATTR_SOCKPROTONAME_SUFFIX)
-#घोषणा XATTR_NAME_SOCKPROTONAME_LEN (माप(XATTR_NAME_SOCKPROTONAME)-1)
+#define XATTR_SOCKPROTONAME_SUFFIX "sockprotoname"
+#define XATTR_NAME_SOCKPROTONAME (XATTR_SYSTEM_PREFIX XATTR_SOCKPROTONAME_SUFFIX)
+#define XATTR_NAME_SOCKPROTONAME_LEN (sizeof(XATTR_NAME_SOCKPROTONAME)-1)
 
-अटल स्थिर काष्ठा xattr_handler sockfs_xattr_handler = अणु
+static const struct xattr_handler sockfs_xattr_handler = {
 	.name = XATTR_NAME_SOCKPROTONAME,
 	.get = sockfs_xattr_get,
-पूर्ण;
+};
 
-अटल पूर्णांक sockfs_security_xattr_set(स्थिर काष्ठा xattr_handler *handler,
-				     काष्ठा user_namespace *mnt_userns,
-				     काष्ठा dentry *dentry, काष्ठा inode *inode,
-				     स्थिर अक्षर *suffix, स्थिर व्योम *value,
-				     माप_प्रकार size, पूर्णांक flags)
-अणु
+static int sockfs_security_xattr_set(const struct xattr_handler *handler,
+				     struct user_namespace *mnt_userns,
+				     struct dentry *dentry, struct inode *inode,
+				     const char *suffix, const void *value,
+				     size_t size, int flags)
+{
 	/* Handled by LSM. */
-	वापस -EAGAIN;
-पूर्ण
+	return -EAGAIN;
+}
 
-अटल स्थिर काष्ठा xattr_handler sockfs_security_xattr_handler = अणु
+static const struct xattr_handler sockfs_security_xattr_handler = {
 	.prefix = XATTR_SECURITY_PREFIX,
 	.set = sockfs_security_xattr_set,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा xattr_handler *sockfs_xattr_handlers[] = अणु
+static const struct xattr_handler *sockfs_xattr_handlers[] = {
 	&sockfs_xattr_handler,
 	&sockfs_security_xattr_handler,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल पूर्णांक sockfs_init_fs_context(काष्ठा fs_context *fc)
-अणु
-	काष्ठा pseuकरो_fs_context *ctx = init_pseuकरो(fc, SOCKFS_MAGIC);
-	अगर (!ctx)
-		वापस -ENOMEM;
+static int sockfs_init_fs_context(struct fs_context *fc)
+{
+	struct pseudo_fs_context *ctx = init_pseudo(fc, SOCKFS_MAGIC);
+	if (!ctx)
+		return -ENOMEM;
 	ctx->ops = &sockfs_ops;
-	ctx->करोps = &sockfs_dentry_operations;
+	ctx->dops = &sockfs_dentry_operations;
 	ctx->xattr = sockfs_xattr_handlers;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा vfsmount *sock_mnt __पढ़ो_mostly;
+static struct vfsmount *sock_mnt __read_mostly;
 
-अटल काष्ठा file_प्रणाली_type sock_fs_type = अणु
+static struct file_system_type sock_fs_type = {
 	.name =		"sockfs",
 	.init_fs_context = sockfs_init_fs_context,
-	.समाप्त_sb =	समाप्त_anon_super,
-पूर्ण;
+	.kill_sb =	kill_anon_super,
+};
 
 /*
- *	Obtains the first available file descriptor and sets it up क्रम use.
+ *	Obtains the first available file descriptor and sets it up for use.
  *
- *	These functions create file काष्ठाures and maps them to fd space
- *	of the current process. On success it वापसs file descriptor
- *	and file काष्ठा implicitly stored in sock->file.
- *	Note that another thपढ़ो may बंद file descriptor beक्रमe we वापस
- *	from this function. We use the fact that now we करो not refer
+ *	These functions create file structures and maps them to fd space
+ *	of the current process. On success it returns file descriptor
+ *	and file struct implicitly stored in sock->file.
+ *	Note that another thread may close file descriptor before we return
+ *	from this function. We use the fact that now we do not refer
  *	to socket after mapping. If one day we will need it, this
  *	function will increment ref. count on file by 1.
  *
- *	In any हाल वापसed fd MAY BE not valid!
- *	This race condition is unaव्योमable
+ *	In any case returned fd MAY BE not valid!
+ *	This race condition is unavoidable
  *	with shared fd spaces, we cannot solve it inside kernel,
- *	but we take care of पूर्णांकernal coherence yet.
+ *	but we take care of internal coherence yet.
  */
 
 /**
@@ -398,185 +397,185 @@
  *	@dname: protocol name
  *
  *	Returns the &file bound with @sock, implicitly storing it
- *	in sock->file. If dname is %शून्य, sets to "".
- *	On failure the वापस is a ERR poपूर्णांकer (see linux/err.h).
- *	This function uses GFP_KERNEL पूर्णांकernally.
+ *	in sock->file. If dname is %NULL, sets to "".
+ *	On failure the return is a ERR pointer (see linux/err.h).
+ *	This function uses GFP_KERNEL internally.
  */
 
-काष्ठा file *sock_alloc_file(काष्ठा socket *sock, पूर्णांक flags, स्थिर अक्षर *dname)
-अणु
-	काष्ठा file *file;
+struct file *sock_alloc_file(struct socket *sock, int flags, const char *dname)
+{
+	struct file *file;
 
-	अगर (!dname)
+	if (!dname)
 		dname = sock->sk ? sock->sk->sk_prot_creator->name : "";
 
-	file = alloc_file_pseuकरो(SOCK_INODE(sock), sock_mnt, dname,
+	file = alloc_file_pseudo(SOCK_INODE(sock), sock_mnt, dname,
 				O_RDWR | (flags & O_NONBLOCK),
 				&socket_file_ops);
-	अगर (IS_ERR(file)) अणु
+	if (IS_ERR(file)) {
 		sock_release(sock);
-		वापस file;
-	पूर्ण
+		return file;
+	}
 
 	sock->file = file;
-	file->निजी_data = sock;
-	stream_खोलो(SOCK_INODE(sock), file);
-	वापस file;
-पूर्ण
+	file->private_data = sock;
+	stream_open(SOCK_INODE(sock), file);
+	return file;
+}
 EXPORT_SYMBOL(sock_alloc_file);
 
-अटल पूर्णांक sock_map_fd(काष्ठा socket *sock, पूर्णांक flags)
-अणु
-	काष्ठा file *newfile;
-	पूर्णांक fd = get_unused_fd_flags(flags);
-	अगर (unlikely(fd < 0)) अणु
+static int sock_map_fd(struct socket *sock, int flags)
+{
+	struct file *newfile;
+	int fd = get_unused_fd_flags(flags);
+	if (unlikely(fd < 0)) {
 		sock_release(sock);
-		वापस fd;
-	पूर्ण
+		return fd;
+	}
 
-	newfile = sock_alloc_file(sock, flags, शून्य);
-	अगर (!IS_ERR(newfile)) अणु
+	newfile = sock_alloc_file(sock, flags, NULL);
+	if (!IS_ERR(newfile)) {
 		fd_install(fd, newfile);
-		वापस fd;
-	पूर्ण
+		return fd;
+	}
 
 	put_unused_fd(fd);
-	वापस PTR_ERR(newfile);
-पूर्ण
+	return PTR_ERR(newfile);
+}
 
 /**
  *	sock_from_file - Return the &socket bounded to @file.
  *	@file: file
  *
- *	On failure वापसs %शून्य.
+ *	On failure returns %NULL.
  */
 
-काष्ठा socket *sock_from_file(काष्ठा file *file)
-अणु
-	अगर (file->f_op == &socket_file_ops)
-		वापस file->निजी_data;	/* set in sock_map_fd */
+struct socket *sock_from_file(struct file *file)
+{
+	if (file->f_op == &socket_file_ops)
+		return file->private_data;	/* set in sock_map_fd */
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL(sock_from_file);
 
 /**
  *	sockfd_lookup - Go from a file number to its socket slot
  *	@fd: file handle
- *	@err: poपूर्णांकer to an error code वापस
+ *	@err: pointer to an error code return
  *
  *	The file handle passed in is locked and the socket it is bound
- *	to is वापसed. If an error occurs the err poपूर्णांकer is overwritten
- *	with a negative त्रुटि_सं code and शून्य is वापसed. The function checks
- *	क्रम both invalid handles and passing a handle which is not a socket.
+ *	to is returned. If an error occurs the err pointer is overwritten
+ *	with a negative errno code and NULL is returned. The function checks
+ *	for both invalid handles and passing a handle which is not a socket.
  *
- *	On a success the socket object poपूर्णांकer is वापसed.
+ *	On a success the socket object pointer is returned.
  */
 
-काष्ठा socket *sockfd_lookup(पूर्णांक fd, पूर्णांक *err)
-अणु
-	काष्ठा file *file;
-	काष्ठा socket *sock;
+struct socket *sockfd_lookup(int fd, int *err)
+{
+	struct file *file;
+	struct socket *sock;
 
 	file = fget(fd);
-	अगर (!file) अणु
+	if (!file) {
 		*err = -EBADF;
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	sock = sock_from_file(file);
-	अगर (!sock) अणु
+	if (!sock) {
 		*err = -ENOTSOCK;
 		fput(file);
-	पूर्ण
-	वापस sock;
-पूर्ण
+	}
+	return sock;
+}
 EXPORT_SYMBOL(sockfd_lookup);
 
-अटल काष्ठा socket *sockfd_lookup_light(पूर्णांक fd, पूर्णांक *err, पूर्णांक *fput_needed)
-अणु
-	काष्ठा fd f = fdget(fd);
-	काष्ठा socket *sock;
+static struct socket *sockfd_lookup_light(int fd, int *err, int *fput_needed)
+{
+	struct fd f = fdget(fd);
+	struct socket *sock;
 
 	*err = -EBADF;
-	अगर (f.file) अणु
+	if (f.file) {
 		sock = sock_from_file(f.file);
-		अगर (likely(sock)) अणु
+		if (likely(sock)) {
 			*fput_needed = f.flags & FDPUT_FPUT;
-			वापस sock;
-		पूर्ण
+			return sock;
+		}
 		*err = -ENOTSOCK;
 		fdput(f);
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	}
+	return NULL;
+}
 
-अटल sमाप_प्रकार sockfs_listxattr(काष्ठा dentry *dentry, अक्षर *buffer,
-				माप_प्रकार size)
-अणु
-	sमाप_प्रकार len;
-	sमाप_प्रकार used = 0;
+static ssize_t sockfs_listxattr(struct dentry *dentry, char *buffer,
+				size_t size)
+{
+	ssize_t len;
+	ssize_t used = 0;
 
 	len = security_inode_listsecurity(d_inode(dentry), buffer, size);
-	अगर (len < 0)
-		वापस len;
+	if (len < 0)
+		return len;
 	used += len;
-	अगर (buffer) अणु
-		अगर (size < used)
-			वापस -दुस्फल;
+	if (buffer) {
+		if (size < used)
+			return -ERANGE;
 		buffer += len;
-	पूर्ण
+	}
 
 	len = (XATTR_NAME_SOCKPROTONAME_LEN + 1);
 	used += len;
-	अगर (buffer) अणु
-		अगर (size < used)
-			वापस -दुस्फल;
-		स_नकल(buffer, XATTR_NAME_SOCKPROTONAME, len);
+	if (buffer) {
+		if (size < used)
+			return -ERANGE;
+		memcpy(buffer, XATTR_NAME_SOCKPROTONAME, len);
 		buffer += len;
-	पूर्ण
+	}
 
-	वापस used;
-पूर्ण
+	return used;
+}
 
-अटल पूर्णांक sockfs_setattr(काष्ठा user_namespace *mnt_userns,
-			  काष्ठा dentry *dentry, काष्ठा iattr *iattr)
-अणु
-	पूर्णांक err = simple_setattr(&init_user_ns, dentry, iattr);
+static int sockfs_setattr(struct user_namespace *mnt_userns,
+			  struct dentry *dentry, struct iattr *iattr)
+{
+	int err = simple_setattr(&init_user_ns, dentry, iattr);
 
-	अगर (!err && (iattr->ia_valid & ATTR_UID)) अणु
-		काष्ठा socket *sock = SOCKET_I(d_inode(dentry));
+	if (!err && (iattr->ia_valid & ATTR_UID)) {
+		struct socket *sock = SOCKET_I(d_inode(dentry));
 
-		अगर (sock->sk)
+		if (sock->sk)
 			sock->sk->sk_uid = iattr->ia_uid;
-		अन्यथा
+		else
 			err = -ENOENT;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा inode_operations sockfs_inode_ops = अणु
+static const struct inode_operations sockfs_inode_ops = {
 	.listxattr = sockfs_listxattr,
 	.setattr = sockfs_setattr,
-पूर्ण;
+};
 
 /**
  *	sock_alloc - allocate a socket
  *
  *	Allocate a new inode and socket object. The two are bound together
- *	and initialised. The socket is then वापसed. If we are out of inodes
- *	शून्य is वापसed. This functions uses GFP_KERNEL पूर्णांकernally.
+ *	and initialised. The socket is then returned. If we are out of inodes
+ *	NULL is returned. This functions uses GFP_KERNEL internally.
  */
 
-काष्ठा socket *sock_alloc(व्योम)
-अणु
-	काष्ठा inode *inode;
-	काष्ठा socket *sock;
+struct socket *sock_alloc(void)
+{
+	struct inode *inode;
+	struct socket *sock;
 
-	inode = new_inode_pseuकरो(sock_mnt->mnt_sb);
-	अगर (!inode)
-		वापस शून्य;
+	inode = new_inode_pseudo(sock_mnt->mnt_sb);
+	if (!inode)
+		return NULL;
 
 	sock = SOCKET_I(inode);
 
@@ -586,78 +585,78 @@ EXPORT_SYMBOL(sockfd_lookup);
 	inode->i_gid = current_fsgid();
 	inode->i_op = &sockfs_inode_ops;
 
-	वापस sock;
-पूर्ण
+	return sock;
+}
 EXPORT_SYMBOL(sock_alloc);
 
-अटल व्योम __sock_release(काष्ठा socket *sock, काष्ठा inode *inode)
-अणु
-	अगर (sock->ops) अणु
-		काष्ठा module *owner = sock->ops->owner;
+static void __sock_release(struct socket *sock, struct inode *inode)
+{
+	if (sock->ops) {
+		struct module *owner = sock->ops->owner;
 
-		अगर (inode)
+		if (inode)
 			inode_lock(inode);
 		sock->ops->release(sock);
-		sock->sk = शून्य;
-		अगर (inode)
+		sock->sk = NULL;
+		if (inode)
 			inode_unlock(inode);
-		sock->ops = शून्य;
+		sock->ops = NULL;
 		module_put(owner);
-	पूर्ण
+	}
 
-	अगर (sock->wq.fasync_list)
+	if (sock->wq.fasync_list)
 		pr_err("%s: fasync list not empty!\n", __func__);
 
-	अगर (!sock->file) अणु
+	if (!sock->file) {
 		iput(SOCK_INODE(sock));
-		वापस;
-	पूर्ण
-	sock->file = शून्य;
-पूर्ण
+		return;
+	}
+	sock->file = NULL;
+}
 
 /**
- *	sock_release - बंद a socket
- *	@sock: socket to बंद
+ *	sock_release - close a socket
+ *	@sock: socket to close
  *
- *	The socket is released from the protocol stack अगर it has a release
- *	callback, and the inode is then released अगर the socket is bound to
+ *	The socket is released from the protocol stack if it has a release
+ *	callback, and the inode is then released if the socket is bound to
  *	an inode not a file.
  */
-व्योम sock_release(काष्ठा socket *sock)
-अणु
-	__sock_release(sock, शून्य);
-पूर्ण
+void sock_release(struct socket *sock)
+{
+	__sock_release(sock, NULL);
+}
 EXPORT_SYMBOL(sock_release);
 
-व्योम __sock_tx_बारtamp(__u16 tsflags, __u8 *tx_flags)
-अणु
+void __sock_tx_timestamp(__u16 tsflags, __u8 *tx_flags)
+{
 	u8 flags = *tx_flags;
 
-	अगर (tsflags & SOF_TIMESTAMPING_TX_HARDWARE)
+	if (tsflags & SOF_TIMESTAMPING_TX_HARDWARE)
 		flags |= SKBTX_HW_TSTAMP;
 
-	अगर (tsflags & SOF_TIMESTAMPING_TX_SOFTWARE)
+	if (tsflags & SOF_TIMESTAMPING_TX_SOFTWARE)
 		flags |= SKBTX_SW_TSTAMP;
 
-	अगर (tsflags & SOF_TIMESTAMPING_TX_SCHED)
+	if (tsflags & SOF_TIMESTAMPING_TX_SCHED)
 		flags |= SKBTX_SCHED_TSTAMP;
 
 	*tx_flags = flags;
-पूर्ण
-EXPORT_SYMBOL(__sock_tx_बारtamp);
+}
+EXPORT_SYMBOL(__sock_tx_timestamp);
 
-INसूचीECT_CALLABLE_DECLARE(पूर्णांक inet_sendmsg(काष्ठा socket *, काष्ठा msghdr *,
-					   माप_प्रकार));
-INसूचीECT_CALLABLE_DECLARE(पूर्णांक inet6_sendmsg(काष्ठा socket *, काष्ठा msghdr *,
-					    माप_प्रकार));
-अटल अंतरभूत पूर्णांक sock_sendmsg_nosec(काष्ठा socket *sock, काष्ठा msghdr *msg)
-अणु
-	पूर्णांक ret = INसूचीECT_CALL_INET(sock->ops->sendmsg, inet6_sendmsg,
+INDIRECT_CALLABLE_DECLARE(int inet_sendmsg(struct socket *, struct msghdr *,
+					   size_t));
+INDIRECT_CALLABLE_DECLARE(int inet6_sendmsg(struct socket *, struct msghdr *,
+					    size_t));
+static inline int sock_sendmsg_nosec(struct socket *sock, struct msghdr *msg)
+{
+	int ret = INDIRECT_CALL_INET(sock->ops->sendmsg, inet6_sendmsg,
 				     inet_sendmsg, sock, msg,
 				     msg_data_left(msg));
 	BUG_ON(ret == -EIOCBQUEUED);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  *	sock_sendmsg - send a message through @sock
@@ -667,13 +666,13 @@ INसूचीECT_CALLABLE_DECLARE(पूर्णांक inet6_sendmsg(का
  *	Sends @msg through @sock, passing through LSM.
  *	Returns the number of bytes sent, or an error code.
  */
-पूर्णांक sock_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg)
-अणु
-	पूर्णांक err = security_socket_sendmsg(sock, msg,
+int sock_sendmsg(struct socket *sock, struct msghdr *msg)
+{
+	int err = security_socket_sendmsg(sock, msg,
 					  msg_data_left(msg));
 
-	वापस err ?: sock_sendmsg_nosec(sock, msg);
-पूर्ण
+	return err ?: sock_sendmsg_nosec(sock, msg);
+}
 EXPORT_SYMBOL(sock_sendmsg);
 
 /**
@@ -688,12 +687,12 @@ EXPORT_SYMBOL(sock_sendmsg);
  *	Returns the number of bytes sent, or an error code.
  */
 
-पूर्णांक kernel_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
-		   काष्ठा kvec *vec, माप_प्रकार num, माप_प्रकार size)
-अणु
+int kernel_sendmsg(struct socket *sock, struct msghdr *msg,
+		   struct kvec *vec, size_t num, size_t size)
+{
 	iov_iter_kvec(&msg->msg_iter, WRITE, vec, num, size);
-	वापस sock_sendmsg(sock, msg);
-पूर्ण
+	return sock_sendmsg(sock, msg);
+}
 EXPORT_SYMBOL(kernel_sendmsg);
 
 /**
@@ -709,187 +708,187 @@ EXPORT_SYMBOL(kernel_sendmsg);
  *	Caller must hold @sk.
  */
 
-पूर्णांक kernel_sendmsg_locked(काष्ठा sock *sk, काष्ठा msghdr *msg,
-			  काष्ठा kvec *vec, माप_प्रकार num, माप_प्रकार size)
-अणु
-	काष्ठा socket *sock = sk->sk_socket;
+int kernel_sendmsg_locked(struct sock *sk, struct msghdr *msg,
+			  struct kvec *vec, size_t num, size_t size)
+{
+	struct socket *sock = sk->sk_socket;
 
-	अगर (!sock->ops->sendmsg_locked)
-		वापस sock_no_sendmsg_locked(sk, msg, size);
+	if (!sock->ops->sendmsg_locked)
+		return sock_no_sendmsg_locked(sk, msg, size);
 
 	iov_iter_kvec(&msg->msg_iter, WRITE, vec, num, size);
 
-	वापस sock->ops->sendmsg_locked(sk, msg, msg_data_left(msg));
-पूर्ण
+	return sock->ops->sendmsg_locked(sk, msg, msg_data_left(msg));
+}
 EXPORT_SYMBOL(kernel_sendmsg_locked);
 
-अटल bool skb_is_err_queue(स्थिर काष्ठा sk_buff *skb)
-अणु
+static bool skb_is_err_queue(const struct sk_buff *skb)
+{
 	/* pkt_type of skbs enqueued on the error queue are set to
-	 * PACKET_OUTGOING in skb_set_err_queue(). This is only safe to करो
+	 * PACKET_OUTGOING in skb_set_err_queue(). This is only safe to do
 	 * in recvmsg, since skbs received on a local socket will never
 	 * have a pkt_type of PACKET_OUTGOING.
 	 */
-	वापस skb->pkt_type == PACKET_OUTGOING;
-पूर्ण
+	return skb->pkt_type == PACKET_OUTGOING;
+}
 
-/* On transmit, software and hardware बारtamps are वापसed independently.
- * As the two skb clones share the hardware बारtamp, which may be updated
- * beक्रमe the software बारtamp is received, a hardware TX बारtamp may be
- * वापसed only अगर there is no software TX बारtamp. Ignore false software
- * बारtamps, which may be made in the __sock_recv_बारtamp() call when the
+/* On transmit, software and hardware timestamps are returned independently.
+ * As the two skb clones share the hardware timestamp, which may be updated
+ * before the software timestamp is received, a hardware TX timestamp may be
+ * returned only if there is no software TX timestamp. Ignore false software
+ * timestamps, which may be made in the __sock_recv_timestamp() call when the
  * option SO_TIMESTAMP_OLD(NS) is enabled on the socket, even when the skb has a
- * hardware बारtamp.
+ * hardware timestamp.
  */
-अटल bool skb_is_swtx_tstamp(स्थिर काष्ठा sk_buff *skb, पूर्णांक false_tstamp)
-अणु
-	वापस skb->tstamp && !false_tstamp && skb_is_err_queue(skb);
-पूर्ण
+static bool skb_is_swtx_tstamp(const struct sk_buff *skb, int false_tstamp)
+{
+	return skb->tstamp && !false_tstamp && skb_is_err_queue(skb);
+}
 
-अटल व्योम put_ts_pktinfo(काष्ठा msghdr *msg, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा scm_ts_pktinfo ts_pktinfo;
-	काष्ठा net_device *orig_dev;
+static void put_ts_pktinfo(struct msghdr *msg, struct sk_buff *skb)
+{
+	struct scm_ts_pktinfo ts_pktinfo;
+	struct net_device *orig_dev;
 
-	अगर (!skb_mac_header_was_set(skb))
-		वापस;
+	if (!skb_mac_header_was_set(skb))
+		return;
 
-	स_रखो(&ts_pktinfo, 0, माप(ts_pktinfo));
+	memset(&ts_pktinfo, 0, sizeof(ts_pktinfo));
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	orig_dev = dev_get_by_napi_id(skb_napi_id(skb));
-	अगर (orig_dev)
-		ts_pktinfo.अगर_index = orig_dev->अगरindex;
-	rcu_पढ़ो_unlock();
+	if (orig_dev)
+		ts_pktinfo.if_index = orig_dev->ifindex;
+	rcu_read_unlock();
 
 	ts_pktinfo.pkt_length = skb->len - skb_mac_offset(skb);
 	put_cmsg(msg, SOL_SOCKET, SCM_TIMESTAMPING_PKTINFO,
-		 माप(ts_pktinfo), &ts_pktinfo);
-पूर्ण
+		 sizeof(ts_pktinfo), &ts_pktinfo);
+}
 
 /*
- * called from sock_recv_बारtamp() अगर sock_flag(sk, SOCK_RCVTSTAMP)
+ * called from sock_recv_timestamp() if sock_flag(sk, SOCK_RCVTSTAMP)
  */
-व्योम __sock_recv_बारtamp(काष्ठा msghdr *msg, काष्ठा sock *sk,
-	काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक need_software_tstamp = sock_flag(sk, SOCK_RCVTSTAMP);
-	पूर्णांक new_tstamp = sock_flag(sk, SOCK_TSTAMP_NEW);
-	काष्ठा scm_बारtamping_पूर्णांकernal tss;
+void __sock_recv_timestamp(struct msghdr *msg, struct sock *sk,
+	struct sk_buff *skb)
+{
+	int need_software_tstamp = sock_flag(sk, SOCK_RCVTSTAMP);
+	int new_tstamp = sock_flag(sk, SOCK_TSTAMP_NEW);
+	struct scm_timestamping_internal tss;
 
-	पूर्णांक empty = 1, false_tstamp = 0;
-	काष्ठा skb_shared_hwtstamps *shhwtstamps =
+	int empty = 1, false_tstamp = 0;
+	struct skb_shared_hwtstamps *shhwtstamps =
 		skb_hwtstamps(skb);
 
-	/* Race occurred between बारtamp enabling and packet
-	   receiving.  Fill in the current समय क्रम now. */
-	अगर (need_software_tstamp && skb->tstamp == 0) अणु
-		__net_बारtamp(skb);
+	/* Race occurred between timestamp enabling and packet
+	   receiving.  Fill in the current time for now. */
+	if (need_software_tstamp && skb->tstamp == 0) {
+		__net_timestamp(skb);
 		false_tstamp = 1;
-	पूर्ण
+	}
 
-	अगर (need_software_tstamp) अणु
-		अगर (!sock_flag(sk, SOCK_RCVTSTAMPNS)) अणु
-			अगर (new_tstamp) अणु
-				काष्ठा __kernel_sock_समयval tv;
+	if (need_software_tstamp) {
+		if (!sock_flag(sk, SOCK_RCVTSTAMPNS)) {
+			if (new_tstamp) {
+				struct __kernel_sock_timeval tv;
 
-				skb_get_new_बारtamp(skb, &tv);
+				skb_get_new_timestamp(skb, &tv);
 				put_cmsg(msg, SOL_SOCKET, SO_TIMESTAMP_NEW,
-					 माप(tv), &tv);
-			पूर्ण अन्यथा अणु
-				काष्ठा __kernel_old_समयval tv;
+					 sizeof(tv), &tv);
+			} else {
+				struct __kernel_old_timeval tv;
 
-				skb_get_बारtamp(skb, &tv);
+				skb_get_timestamp(skb, &tv);
 				put_cmsg(msg, SOL_SOCKET, SO_TIMESTAMP_OLD,
-					 माप(tv), &tv);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (new_tstamp) अणु
-				काष्ठा __kernel_बारpec ts;
+					 sizeof(tv), &tv);
+			}
+		} else {
+			if (new_tstamp) {
+				struct __kernel_timespec ts;
 
-				skb_get_new_बारtampns(skb, &ts);
+				skb_get_new_timestampns(skb, &ts);
 				put_cmsg(msg, SOL_SOCKET, SO_TIMESTAMPNS_NEW,
-					 माप(ts), &ts);
-			पूर्ण अन्यथा अणु
-				काष्ठा __kernel_old_बारpec ts;
+					 sizeof(ts), &ts);
+			} else {
+				struct __kernel_old_timespec ts;
 
-				skb_get_बारtampns(skb, &ts);
+				skb_get_timestampns(skb, &ts);
 				put_cmsg(msg, SOL_SOCKET, SO_TIMESTAMPNS_OLD,
-					 माप(ts), &ts);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					 sizeof(ts), &ts);
+			}
+		}
+	}
 
-	स_रखो(&tss, 0, माप(tss));
-	अगर ((sk->sk_tsflags & SOF_TIMESTAMPING_SOFTWARE) &&
-	    kसमय_प्रकारo_बारpec64_cond(skb->tstamp, tss.ts + 0))
+	memset(&tss, 0, sizeof(tss));
+	if ((sk->sk_tsflags & SOF_TIMESTAMPING_SOFTWARE) &&
+	    ktime_to_timespec64_cond(skb->tstamp, tss.ts + 0))
 		empty = 0;
-	अगर (shhwtstamps &&
+	if (shhwtstamps &&
 	    (sk->sk_tsflags & SOF_TIMESTAMPING_RAW_HARDWARE) &&
 	    !skb_is_swtx_tstamp(skb, false_tstamp) &&
-	    kसमय_प्रकारo_बारpec64_cond(shhwtstamps->hwtstamp, tss.ts + 2)) अणु
+	    ktime_to_timespec64_cond(shhwtstamps->hwtstamp, tss.ts + 2)) {
 		empty = 0;
-		अगर ((sk->sk_tsflags & SOF_TIMESTAMPING_OPT_PKTINFO) &&
+		if ((sk->sk_tsflags & SOF_TIMESTAMPING_OPT_PKTINFO) &&
 		    !skb_is_err_queue(skb))
 			put_ts_pktinfo(msg, skb);
-	पूर्ण
-	अगर (!empty) अणु
-		अगर (sock_flag(sk, SOCK_TSTAMP_NEW))
-			put_cmsg_scm_बारtamping64(msg, &tss);
-		अन्यथा
-			put_cmsg_scm_बारtamping(msg, &tss);
+	}
+	if (!empty) {
+		if (sock_flag(sk, SOCK_TSTAMP_NEW))
+			put_cmsg_scm_timestamping64(msg, &tss);
+		else
+			put_cmsg_scm_timestamping(msg, &tss);
 
-		अगर (skb_is_err_queue(skb) && skb->len &&
+		if (skb_is_err_queue(skb) && skb->len &&
 		    SKB_EXT_ERR(skb)->opt_stats)
 			put_cmsg(msg, SOL_SOCKET, SCM_TIMESTAMPING_OPT_STATS,
 				 skb->len, skb->data);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(__sock_recv_बारtamp);
+	}
+}
+EXPORT_SYMBOL_GPL(__sock_recv_timestamp);
 
-व्योम __sock_recv_wअगरi_status(काष्ठा msghdr *msg, काष्ठा sock *sk,
-	काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक ack;
+void __sock_recv_wifi_status(struct msghdr *msg, struct sock *sk,
+	struct sk_buff *skb)
+{
+	int ack;
 
-	अगर (!sock_flag(sk, SOCK_WIFI_STATUS))
-		वापस;
-	अगर (!skb->wअगरi_acked_valid)
-		वापस;
+	if (!sock_flag(sk, SOCK_WIFI_STATUS))
+		return;
+	if (!skb->wifi_acked_valid)
+		return;
 
-	ack = skb->wअगरi_acked;
+	ack = skb->wifi_acked;
 
-	put_cmsg(msg, SOL_SOCKET, SCM_WIFI_STATUS, माप(ack), &ack);
-पूर्ण
-EXPORT_SYMBOL_GPL(__sock_recv_wअगरi_status);
+	put_cmsg(msg, SOL_SOCKET, SCM_WIFI_STATUS, sizeof(ack), &ack);
+}
+EXPORT_SYMBOL_GPL(__sock_recv_wifi_status);
 
-अटल अंतरभूत व्योम sock_recv_drops(काष्ठा msghdr *msg, काष्ठा sock *sk,
-				   काष्ठा sk_buff *skb)
-अणु
-	अगर (sock_flag(sk, SOCK_RXQ_OVFL) && skb && SOCK_SKB_CB(skb)->dropcount)
+static inline void sock_recv_drops(struct msghdr *msg, struct sock *sk,
+				   struct sk_buff *skb)
+{
+	if (sock_flag(sk, SOCK_RXQ_OVFL) && skb && SOCK_SKB_CB(skb)->dropcount)
 		put_cmsg(msg, SOL_SOCKET, SO_RXQ_OVFL,
-			माप(__u32), &SOCK_SKB_CB(skb)->dropcount);
-पूर्ण
+			sizeof(__u32), &SOCK_SKB_CB(skb)->dropcount);
+}
 
-व्योम __sock_recv_ts_and_drops(काष्ठा msghdr *msg, काष्ठा sock *sk,
-	काष्ठा sk_buff *skb)
-अणु
-	sock_recv_बारtamp(msg, sk, skb);
+void __sock_recv_ts_and_drops(struct msghdr *msg, struct sock *sk,
+	struct sk_buff *skb)
+{
+	sock_recv_timestamp(msg, sk, skb);
 	sock_recv_drops(msg, sk, skb);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(__sock_recv_ts_and_drops);
 
-INसूचीECT_CALLABLE_DECLARE(पूर्णांक inet_recvmsg(काष्ठा socket *, काष्ठा msghdr *,
-					   माप_प्रकार, पूर्णांक));
-INसूचीECT_CALLABLE_DECLARE(पूर्णांक inet6_recvmsg(काष्ठा socket *, काष्ठा msghdr *,
-					    माप_प्रकार, पूर्णांक));
-अटल अंतरभूत पूर्णांक sock_recvmsg_nosec(काष्ठा socket *sock, काष्ठा msghdr *msg,
-				     पूर्णांक flags)
-अणु
-	वापस INसूचीECT_CALL_INET(sock->ops->recvmsg, inet6_recvmsg,
+INDIRECT_CALLABLE_DECLARE(int inet_recvmsg(struct socket *, struct msghdr *,
+					   size_t, int));
+INDIRECT_CALLABLE_DECLARE(int inet6_recvmsg(struct socket *, struct msghdr *,
+					    size_t, int));
+static inline int sock_recvmsg_nosec(struct socket *sock, struct msghdr *msg,
+				     int flags)
+{
+	return INDIRECT_CALL_INET(sock->ops->recvmsg, inet6_recvmsg,
 				  inet_recvmsg, sock, msg, msg_data_left(msg),
 				  flags);
-पूर्ण
+}
 
 /**
  *	sock_recvmsg - receive a message from @sock
@@ -900,275 +899,275 @@ INसूचीECT_CALLABLE_DECLARE(पूर्णांक inet6_recvmsg(का
  *	Receives @msg from @sock, passing through LSM. Returns the total number
  *	of bytes received, or an error.
  */
-पूर्णांक sock_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, पूर्णांक flags)
-अणु
-	पूर्णांक err = security_socket_recvmsg(sock, msg, msg_data_left(msg), flags);
+int sock_recvmsg(struct socket *sock, struct msghdr *msg, int flags)
+{
+	int err = security_socket_recvmsg(sock, msg, msg_data_left(msg), flags);
 
-	वापस err ?: sock_recvmsg_nosec(sock, msg, flags);
-पूर्ण
+	return err ?: sock_recvmsg_nosec(sock, msg, flags);
+}
 EXPORT_SYMBOL(sock_recvmsg);
 
 /**
  *	kernel_recvmsg - Receive a message from a socket (kernel space)
  *	@sock: The socket to receive the message from
  *	@msg: Received message
- *	@vec: Input s/g array क्रम message data
+ *	@vec: Input s/g array for message data
  *	@num: Size of input s/g array
- *	@size: Number of bytes to पढ़ो
+ *	@size: Number of bytes to read
  *	@flags: Message flags (MSG_DONTWAIT, etc...)
  *
- *	On वापस the msg काष्ठाure contains the scatter/gather array passed in the
- *	vec argument. The array is modअगरied so that it consists of the unfilled
+ *	On return the msg structure contains the scatter/gather array passed in the
+ *	vec argument. The array is modified so that it consists of the unfilled
  *	portion of the original array.
  *
- *	The वापसed value is the total number of bytes received, or an error.
+ *	The returned value is the total number of bytes received, or an error.
  */
 
-पूर्णांक kernel_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
-		   काष्ठा kvec *vec, माप_प्रकार num, माप_प्रकार size, पूर्णांक flags)
-अणु
+int kernel_recvmsg(struct socket *sock, struct msghdr *msg,
+		   struct kvec *vec, size_t num, size_t size, int flags)
+{
 	msg->msg_control_is_user = false;
 	iov_iter_kvec(&msg->msg_iter, READ, vec, num, size);
-	वापस sock_recvmsg(sock, msg, flags);
-पूर्ण
+	return sock_recvmsg(sock, msg, flags);
+}
 EXPORT_SYMBOL(kernel_recvmsg);
 
-अटल sमाप_प्रकार sock_sendpage(काष्ठा file *file, काष्ठा page *page,
-			     पूर्णांक offset, माप_प्रकार size, loff_t *ppos, पूर्णांक more)
-अणु
-	काष्ठा socket *sock;
-	पूर्णांक flags;
+static ssize_t sock_sendpage(struct file *file, struct page *page,
+			     int offset, size_t size, loff_t *ppos, int more)
+{
+	struct socket *sock;
+	int flags;
 
-	sock = file->निजी_data;
+	sock = file->private_data;
 
 	flags = (file->f_flags & O_NONBLOCK) ? MSG_DONTWAIT : 0;
 	/* more is a combination of MSG_MORE and MSG_SENDPAGE_NOTLAST */
 	flags |= more;
 
-	वापस kernel_sendpage(sock, page, offset, size, flags);
-पूर्ण
+	return kernel_sendpage(sock, page, offset, size, flags);
+}
 
-अटल sमाप_प्रकार sock_splice_पढ़ो(काष्ठा file *file, loff_t *ppos,
-				काष्ठा pipe_inode_info *pipe, माप_प्रकार len,
-				अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा socket *sock = file->निजी_data;
+static ssize_t sock_splice_read(struct file *file, loff_t *ppos,
+				struct pipe_inode_info *pipe, size_t len,
+				unsigned int flags)
+{
+	struct socket *sock = file->private_data;
 
-	अगर (unlikely(!sock->ops->splice_पढ़ो))
-		वापस generic_file_splice_पढ़ो(file, ppos, pipe, len, flags);
+	if (unlikely(!sock->ops->splice_read))
+		return generic_file_splice_read(file, ppos, pipe, len, flags);
 
-	वापस sock->ops->splice_पढ़ो(sock, ppos, pipe, len, flags);
-पूर्ण
+	return sock->ops->splice_read(sock, ppos, pipe, len, flags);
+}
 
-अटल sमाप_प्रकार sock_पढ़ो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *to)
-अणु
-	काष्ठा file *file = iocb->ki_filp;
-	काष्ठा socket *sock = file->निजी_data;
-	काष्ठा msghdr msg = अणु.msg_iter = *to,
-			     .msg_iocb = iocbपूर्ण;
-	sमाप_प्रकार res;
+static ssize_t sock_read_iter(struct kiocb *iocb, struct iov_iter *to)
+{
+	struct file *file = iocb->ki_filp;
+	struct socket *sock = file->private_data;
+	struct msghdr msg = {.msg_iter = *to,
+			     .msg_iocb = iocb};
+	ssize_t res;
 
-	अगर (file->f_flags & O_NONBLOCK || (iocb->ki_flags & IOCB_NOWAIT))
+	if (file->f_flags & O_NONBLOCK || (iocb->ki_flags & IOCB_NOWAIT))
 		msg.msg_flags = MSG_DONTWAIT;
 
-	अगर (iocb->ki_pos != 0)
-		वापस -ESPIPE;
+	if (iocb->ki_pos != 0)
+		return -ESPIPE;
 
-	अगर (!iov_iter_count(to))	/* Match SYS5 behaviour */
-		वापस 0;
+	if (!iov_iter_count(to))	/* Match SYS5 behaviour */
+		return 0;
 
 	res = sock_recvmsg(sock, &msg, msg.msg_flags);
 	*to = msg.msg_iter;
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल sमाप_प्रकार sock_ग_लिखो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
-अणु
-	काष्ठा file *file = iocb->ki_filp;
-	काष्ठा socket *sock = file->निजी_data;
-	काष्ठा msghdr msg = अणु.msg_iter = *from,
-			     .msg_iocb = iocbपूर्ण;
-	sमाप_प्रकार res;
+static ssize_t sock_write_iter(struct kiocb *iocb, struct iov_iter *from)
+{
+	struct file *file = iocb->ki_filp;
+	struct socket *sock = file->private_data;
+	struct msghdr msg = {.msg_iter = *from,
+			     .msg_iocb = iocb};
+	ssize_t res;
 
-	अगर (iocb->ki_pos != 0)
-		वापस -ESPIPE;
+	if (iocb->ki_pos != 0)
+		return -ESPIPE;
 
-	अगर (file->f_flags & O_NONBLOCK || (iocb->ki_flags & IOCB_NOWAIT))
+	if (file->f_flags & O_NONBLOCK || (iocb->ki_flags & IOCB_NOWAIT))
 		msg.msg_flags = MSG_DONTWAIT;
 
-	अगर (sock->type == SOCK_SEQPACKET)
+	if (sock->type == SOCK_SEQPACKET)
 		msg.msg_flags |= MSG_EOR;
 
 	res = sock_sendmsg(sock, &msg);
 	*from = msg.msg_iter;
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /*
- * Atomic setting of ioctl hooks to aव्योम race
+ * Atomic setting of ioctl hooks to avoid race
  * with module unload.
  */
 
-अटल DEFINE_MUTEX(br_ioctl_mutex);
-अटल पूर्णांक (*br_ioctl_hook) (काष्ठा net *, अचिन्हित पूर्णांक cmd, व्योम __user *arg);
+static DEFINE_MUTEX(br_ioctl_mutex);
+static int (*br_ioctl_hook) (struct net *, unsigned int cmd, void __user *arg);
 
-व्योम brioctl_set(पूर्णांक (*hook) (काष्ठा net *, अचिन्हित पूर्णांक, व्योम __user *))
-अणु
+void brioctl_set(int (*hook) (struct net *, unsigned int, void __user *))
+{
 	mutex_lock(&br_ioctl_mutex);
 	br_ioctl_hook = hook;
 	mutex_unlock(&br_ioctl_mutex);
-पूर्ण
+}
 EXPORT_SYMBOL(brioctl_set);
 
-अटल DEFINE_MUTEX(vlan_ioctl_mutex);
-अटल पूर्णांक (*vlan_ioctl_hook) (काष्ठा net *, व्योम __user *arg);
+static DEFINE_MUTEX(vlan_ioctl_mutex);
+static int (*vlan_ioctl_hook) (struct net *, void __user *arg);
 
-व्योम vlan_ioctl_set(पूर्णांक (*hook) (काष्ठा net *, व्योम __user *))
-अणु
+void vlan_ioctl_set(int (*hook) (struct net *, void __user *))
+{
 	mutex_lock(&vlan_ioctl_mutex);
 	vlan_ioctl_hook = hook;
 	mutex_unlock(&vlan_ioctl_mutex);
-पूर्ण
+}
 EXPORT_SYMBOL(vlan_ioctl_set);
 
-अटल दीर्घ sock_करो_ioctl(काष्ठा net *net, काष्ठा socket *sock,
-			  अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक err;
-	व्योम __user *argp = (व्योम __user *)arg;
+static long sock_do_ioctl(struct net *net, struct socket *sock,
+			  unsigned int cmd, unsigned long arg)
+{
+	int err;
+	void __user *argp = (void __user *)arg;
 
 	err = sock->ops->ioctl(sock, cmd, arg);
 
 	/*
-	 * If this ioctl is unknown try to hand it करोwn
+	 * If this ioctl is unknown try to hand it down
 	 * to the NIC driver.
 	 */
-	अगर (err != -ENOIOCTLCMD)
-		वापस err;
+	if (err != -ENOIOCTLCMD)
+		return err;
 
-	अगर (cmd == SIOCGIFCONF) अणु
-		काष्ठा अगरconf अगरc;
-		अगर (copy_from_user(&अगरc, argp, माप(काष्ठा अगरconf)))
-			वापस -EFAULT;
+	if (cmd == SIOCGIFCONF) {
+		struct ifconf ifc;
+		if (copy_from_user(&ifc, argp, sizeof(struct ifconf)))
+			return -EFAULT;
 		rtnl_lock();
-		err = dev_अगरconf(net, &अगरc, माप(काष्ठा अगरreq));
+		err = dev_ifconf(net, &ifc, sizeof(struct ifreq));
 		rtnl_unlock();
-		अगर (!err && copy_to_user(argp, &अगरc, माप(काष्ठा अगरconf)))
+		if (!err && copy_to_user(argp, &ifc, sizeof(struct ifconf)))
 			err = -EFAULT;
-	पूर्ण अन्यथा अणु
-		काष्ठा अगरreq अगरr;
+	} else {
+		struct ifreq ifr;
 		bool need_copyout;
-		अगर (copy_from_user(&अगरr, argp, माप(काष्ठा अगरreq)))
-			वापस -EFAULT;
-		err = dev_ioctl(net, cmd, &अगरr, &need_copyout);
-		अगर (!err && need_copyout)
-			अगर (copy_to_user(argp, &अगरr, माप(काष्ठा अगरreq)))
-				वापस -EFAULT;
-	पूर्ण
-	वापस err;
-पूर्ण
+		if (copy_from_user(&ifr, argp, sizeof(struct ifreq)))
+			return -EFAULT;
+		err = dev_ioctl(net, cmd, &ifr, &need_copyout);
+		if (!err && need_copyout)
+			if (copy_to_user(argp, &ifr, sizeof(struct ifreq)))
+				return -EFAULT;
+	}
+	return err;
+}
 
 /*
- *	With an ioctl, arg may well be a user mode poपूर्णांकer, but we करोn't know
- *	what to करो with it - that's up to the protocol still.
+ *	With an ioctl, arg may well be a user mode pointer, but we don't know
+ *	what to do with it - that's up to the protocol still.
  */
 
-अटल दीर्घ sock_ioctl(काष्ठा file *file, अचिन्हित cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा socket *sock;
-	काष्ठा sock *sk;
-	व्योम __user *argp = (व्योम __user *)arg;
-	पूर्णांक pid, err;
-	काष्ठा net *net;
+static long sock_ioctl(struct file *file, unsigned cmd, unsigned long arg)
+{
+	struct socket *sock;
+	struct sock *sk;
+	void __user *argp = (void __user *)arg;
+	int pid, err;
+	struct net *net;
 
-	sock = file->निजी_data;
+	sock = file->private_data;
 	sk = sock->sk;
 	net = sock_net(sk);
-	अगर (unlikely(cmd >= SIOCDEVPRIVATE && cmd <= (SIOCDEVPRIVATE + 15))) अणु
-		काष्ठा अगरreq अगरr;
+	if (unlikely(cmd >= SIOCDEVPRIVATE && cmd <= (SIOCDEVPRIVATE + 15))) {
+		struct ifreq ifr;
 		bool need_copyout;
-		अगर (copy_from_user(&अगरr, argp, माप(काष्ठा अगरreq)))
-			वापस -EFAULT;
-		err = dev_ioctl(net, cmd, &अगरr, &need_copyout);
-		अगर (!err && need_copyout)
-			अगर (copy_to_user(argp, &अगरr, माप(काष्ठा अगरreq)))
-				वापस -EFAULT;
-	पूर्ण अन्यथा
-#अगर_घोषित CONFIG_WEXT_CORE
-	अगर (cmd >= SIOCIWFIRST && cmd <= SIOCIWLAST) अणु
+		if (copy_from_user(&ifr, argp, sizeof(struct ifreq)))
+			return -EFAULT;
+		err = dev_ioctl(net, cmd, &ifr, &need_copyout);
+		if (!err && need_copyout)
+			if (copy_to_user(argp, &ifr, sizeof(struct ifreq)))
+				return -EFAULT;
+	} else
+#ifdef CONFIG_WEXT_CORE
+	if (cmd >= SIOCIWFIRST && cmd <= SIOCIWLAST) {
 		err = wext_handle_ioctl(net, cmd, argp);
-	पूर्ण अन्यथा
-#पूर्ण_अगर
-		चयन (cmd) अणु
-		हाल FIOSETOWN:
-		हाल SIOCSPGRP:
+	} else
+#endif
+		switch (cmd) {
+		case FIOSETOWN:
+		case SIOCSPGRP:
 			err = -EFAULT;
-			अगर (get_user(pid, (पूर्णांक __user *)argp))
-				अवरोध;
+			if (get_user(pid, (int __user *)argp))
+				break;
 			err = f_setown(sock->file, pid, 1);
-			अवरोध;
-		हाल FIOGETOWN:
-		हाल SIOCGPGRP:
+			break;
+		case FIOGETOWN:
+		case SIOCGPGRP:
 			err = put_user(f_getown(sock->file),
-				       (पूर्णांक __user *)argp);
-			अवरोध;
-		हाल SIOCGIFBR:
-		हाल SIOCSIFBR:
-		हाल SIOCBRADDBR:
-		हाल SIOCBRDELBR:
+				       (int __user *)argp);
+			break;
+		case SIOCGIFBR:
+		case SIOCSIFBR:
+		case SIOCBRADDBR:
+		case SIOCBRDELBR:
 			err = -ENOPKG;
-			अगर (!br_ioctl_hook)
+			if (!br_ioctl_hook)
 				request_module("bridge");
 
 			mutex_lock(&br_ioctl_mutex);
-			अगर (br_ioctl_hook)
+			if (br_ioctl_hook)
 				err = br_ioctl_hook(net, cmd, argp);
 			mutex_unlock(&br_ioctl_mutex);
-			अवरोध;
-		हाल SIOCGIFVLAN:
-		हाल SIOCSIFVLAN:
+			break;
+		case SIOCGIFVLAN:
+		case SIOCSIFVLAN:
 			err = -ENOPKG;
-			अगर (!vlan_ioctl_hook)
+			if (!vlan_ioctl_hook)
 				request_module("8021q");
 
 			mutex_lock(&vlan_ioctl_mutex);
-			अगर (vlan_ioctl_hook)
+			if (vlan_ioctl_hook)
 				err = vlan_ioctl_hook(net, argp);
 			mutex_unlock(&vlan_ioctl_mutex);
-			अवरोध;
-		हाल SIOCGSKNS:
+			break;
+		case SIOCGSKNS:
 			err = -EPERM;
-			अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-				अवरोध;
+			if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+				break;
 
-			err = खोलो_related_ns(&net->ns, get_net_ns);
-			अवरोध;
-		हाल SIOCGSTAMP_OLD:
-		हाल SIOCGSTAMPNS_OLD:
-			अगर (!sock->ops->gettstamp) अणु
+			err = open_related_ns(&net->ns, get_net_ns);
+			break;
+		case SIOCGSTAMP_OLD:
+		case SIOCGSTAMPNS_OLD:
+			if (!sock->ops->gettstamp) {
 				err = -ENOIOCTLCMD;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			err = sock->ops->gettstamp(sock, argp,
 						   cmd == SIOCGSTAMP_OLD,
 						   !IS_ENABLED(CONFIG_64BIT));
-			अवरोध;
-		हाल SIOCGSTAMP_NEW:
-		हाल SIOCGSTAMPNS_NEW:
-			अगर (!sock->ops->gettstamp) अणु
+			break;
+		case SIOCGSTAMP_NEW:
+		case SIOCGSTAMPNS_NEW:
+			if (!sock->ops->gettstamp) {
 				err = -ENOIOCTLCMD;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			err = sock->ops->gettstamp(sock, argp,
 						   cmd == SIOCGSTAMP_NEW,
 						   false);
-			अवरोध;
-		शेष:
-			err = sock_करो_ioctl(net, sock, cmd, arg);
-			अवरोध;
-		पूर्ण
-	वापस err;
-पूर्ण
+			break;
+		default:
+			err = sock_do_ioctl(net, sock, cmd, arg);
+			break;
+		}
+	return err;
+}
 
 /**
  *	sock_create_lite - creates a socket
@@ -1179,132 +1178,132 @@ EXPORT_SYMBOL(vlan_ioctl_set);
  *
  *	Creates a new socket and assigns it to @res, passing through LSM.
  *	The new socket initialization is not complete, see kernel_accept().
- *	Returns 0 or an error. On failure @res is set to %शून्य.
- *	This function पूर्णांकernally uses GFP_KERNEL.
+ *	Returns 0 or an error. On failure @res is set to %NULL.
+ *	This function internally uses GFP_KERNEL.
  */
 
-पूर्णांक sock_create_lite(पूर्णांक family, पूर्णांक type, पूर्णांक protocol, काष्ठा socket **res)
-अणु
-	पूर्णांक err;
-	काष्ठा socket *sock = शून्य;
+int sock_create_lite(int family, int type, int protocol, struct socket **res)
+{
+	int err;
+	struct socket *sock = NULL;
 
 	err = security_socket_create(family, type, protocol, 1);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	sock = sock_alloc();
-	अगर (!sock) अणु
+	if (!sock) {
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	sock->type = type;
 	err = security_socket_post_create(sock, family, type, protocol, 1);
-	अगर (err)
-		जाओ out_release;
+	if (err)
+		goto out_release;
 
 out:
 	*res = sock;
-	वापस err;
+	return err;
 out_release:
 	sock_release(sock);
-	sock = शून्य;
-	जाओ out;
-पूर्ण
+	sock = NULL;
+	goto out;
+}
 EXPORT_SYMBOL(sock_create_lite);
 
 /* No kernel lock held - perfect */
-अटल __poll_t sock_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा socket *sock = file->निजी_data;
-	__poll_t events = poll_requested_events(रुको), flag = 0;
+static __poll_t sock_poll(struct file *file, poll_table *wait)
+{
+	struct socket *sock = file->private_data;
+	__poll_t events = poll_requested_events(wait), flag = 0;
 
-	अगर (!sock->ops->poll)
-		वापस 0;
+	if (!sock->ops->poll)
+		return 0;
 
-	अगर (sk_can_busy_loop(sock->sk)) अणु
-		/* poll once अगर requested by the syscall */
-		अगर (events & POLL_BUSY_LOOP)
+	if (sk_can_busy_loop(sock->sk)) {
+		/* poll once if requested by the syscall */
+		if (events & POLL_BUSY_LOOP)
 			sk_busy_loop(sock->sk, 1);
 
-		/* अगर this socket can poll_ll, tell the प्रणाली call */
+		/* if this socket can poll_ll, tell the system call */
 		flag = POLL_BUSY_LOOP;
-	पूर्ण
+	}
 
-	वापस sock->ops->poll(file, sock, रुको) | flag;
-पूर्ण
+	return sock->ops->poll(file, sock, wait) | flag;
+}
 
-अटल पूर्णांक sock_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा socket *sock = file->निजी_data;
+static int sock_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	struct socket *sock = file->private_data;
 
-	वापस sock->ops->mmap(file, sock, vma);
-पूर्ण
+	return sock->ops->mmap(file, sock, vma);
+}
 
-अटल पूर्णांक sock_बंद(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
+static int sock_close(struct inode *inode, struct file *filp)
+{
 	__sock_release(SOCKET_I(inode), inode);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  *	Update the socket async list
  *
  *	Fasync_list locking strategy.
  *
- *	1. fasync_list is modअगरied only under process context socket lock
+ *	1. fasync_list is modified only under process context socket lock
  *	   i.e. under semaphore.
- *	2. fasync_list is used under पढ़ो_lock(&sk->sk_callback_lock)
+ *	2. fasync_list is used under read_lock(&sk->sk_callback_lock)
  *	   or under socket lock
  */
 
-अटल पूर्णांक sock_fasync(पूर्णांक fd, काष्ठा file *filp, पूर्णांक on)
-अणु
-	काष्ठा socket *sock = filp->निजी_data;
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा socket_wq *wq = &sock->wq;
+static int sock_fasync(int fd, struct file *filp, int on)
+{
+	struct socket *sock = filp->private_data;
+	struct sock *sk = sock->sk;
+	struct socket_wq *wq = &sock->wq;
 
-	अगर (sk == शून्य)
-		वापस -EINVAL;
+	if (sk == NULL)
+		return -EINVAL;
 
 	lock_sock(sk);
 	fasync_helper(fd, filp, on, &wq->fasync_list);
 
-	अगर (!wq->fasync_list)
+	if (!wq->fasync_list)
 		sock_reset_flag(sk, SOCK_FASYNC);
-	अन्यथा
+	else
 		sock_set_flag(sk, SOCK_FASYNC);
 
 	release_sock(sk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* This function may be called only under rcu_lock */
 
-पूर्णांक sock_wake_async(काष्ठा socket_wq *wq, पूर्णांक how, पूर्णांक band)
-अणु
-	अगर (!wq || !wq->fasync_list)
-		वापस -1;
+int sock_wake_async(struct socket_wq *wq, int how, int band)
+{
+	if (!wq || !wq->fasync_list)
+		return -1;
 
-	चयन (how) अणु
-	हाल SOCK_WAKE_WAITD:
-		अगर (test_bit(SOCKWQ_ASYNC_WAITDATA, &wq->flags))
-			अवरोध;
-		जाओ call_समाप्त;
-	हाल SOCK_WAKE_SPACE:
-		अगर (!test_and_clear_bit(SOCKWQ_ASYNC_NOSPACE, &wq->flags))
-			अवरोध;
+	switch (how) {
+	case SOCK_WAKE_WAITD:
+		if (test_bit(SOCKWQ_ASYNC_WAITDATA, &wq->flags))
+			break;
+		goto call_kill;
+	case SOCK_WAKE_SPACE:
+		if (!test_and_clear_bit(SOCKWQ_ASYNC_NOSPACE, &wq->flags))
+			break;
 		fallthrough;
-	हाल SOCK_WAKE_IO:
-call_समाप्त:
-		समाप्त_fasync(&wq->fasync_list, SIGIO, band);
-		अवरोध;
-	हाल SOCK_WAKE_URG:
-		समाप्त_fasync(&wq->fasync_list, SIGURG, band);
-	पूर्ण
+	case SOCK_WAKE_IO:
+call_kill:
+		kill_fasync(&wq->fasync_list, SIGIO, band);
+		break;
+	case SOCK_WAKE_URG:
+		kill_fasync(&wq->fasync_list, SIGURG, band);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(sock_wake_async);
 
 /**
@@ -1314,121 +1313,121 @@ EXPORT_SYMBOL(sock_wake_async);
  *	@type: communication type (SOCK_STREAM, ...)
  *	@protocol: protocol (0, ...)
  *	@res: new socket
- *	@kern: boolean क्रम kernel space sockets
+ *	@kern: boolean for kernel space sockets
  *
  *	Creates a new socket and assigns it to @res, passing through LSM.
- *	Returns 0 or an error. On failure @res is set to %शून्य. @kern must
- *	be set to true अगर the socket resides in kernel space.
- *	This function पूर्णांकernally uses GFP_KERNEL.
+ *	Returns 0 or an error. On failure @res is set to %NULL. @kern must
+ *	be set to true if the socket resides in kernel space.
+ *	This function internally uses GFP_KERNEL.
  */
 
-पूर्णांक __sock_create(काष्ठा net *net, पूर्णांक family, पूर्णांक type, पूर्णांक protocol,
-			 काष्ठा socket **res, पूर्णांक kern)
-अणु
-	पूर्णांक err;
-	काष्ठा socket *sock;
-	स्थिर काष्ठा net_proto_family *pf;
+int __sock_create(struct net *net, int family, int type, int protocol,
+			 struct socket **res, int kern)
+{
+	int err;
+	struct socket *sock;
+	const struct net_proto_family *pf;
 
 	/*
 	 *      Check protocol is in range
 	 */
-	अगर (family < 0 || family >= NPROTO)
-		वापस -EAFNOSUPPORT;
-	अगर (type < 0 || type >= SOCK_MAX)
-		वापस -EINVAL;
+	if (family < 0 || family >= NPROTO)
+		return -EAFNOSUPPORT;
+	if (type < 0 || type >= SOCK_MAX)
+		return -EINVAL;
 
 	/* Compatibility.
 
-	   This uglymoron is moved from INET layer to here to aव्योम
+	   This uglymoron is moved from INET layer to here to avoid
 	   deadlock in module load.
 	 */
-	अगर (family == PF_INET && type == SOCK_PACKET) अणु
+	if (family == PF_INET && type == SOCK_PACKET) {
 		pr_info_once("%s uses obsolete (PF_INET,SOCK_PACKET)\n",
 			     current->comm);
 		family = PF_PACKET;
-	पूर्ण
+	}
 
 	err = security_socket_create(family, type, protocol, kern);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/*
-	 *	Allocate the socket and allow the family to set things up. अगर
-	 *	the protocol is 0, the family is inकाष्ठाed to select an appropriate
-	 *	शेष.
+	 *	Allocate the socket and allow the family to set things up. if
+	 *	the protocol is 0, the family is instructed to select an appropriate
+	 *	default.
 	 */
 	sock = sock_alloc();
-	अगर (!sock) अणु
+	if (!sock) {
 		net_warn_ratelimited("socket: no more sockets\n");
-		वापस -ENखाता;	/* Not exactly a match, but its the
-				   बंदst posix thing */
-	पूर्ण
+		return -ENFILE;	/* Not exactly a match, but its the
+				   closest posix thing */
+	}
 
 	sock->type = type;
 
-#अगर_घोषित CONFIG_MODULES
-	/* Attempt to load a protocol module अगर the find failed.
+#ifdef CONFIG_MODULES
+	/* Attempt to load a protocol module if the find failed.
 	 *
-	 * 12/09/1996 Marcin: But! this makes REALLY only sense, अगर the user
+	 * 12/09/1996 Marcin: But! this makes REALLY only sense, if the user
 	 * requested real, full-featured networking support upon configuration.
-	 * Otherwise module support will अवरोध!
+	 * Otherwise module support will break!
 	 */
-	अगर (rcu_access_poपूर्णांकer(net_families[family]) == शून्य)
+	if (rcu_access_pointer(net_families[family]) == NULL)
 		request_module("net-pf-%d", family);
-#पूर्ण_अगर
+#endif
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	pf = rcu_dereference(net_families[family]);
 	err = -EAFNOSUPPORT;
-	अगर (!pf)
-		जाओ out_release;
+	if (!pf)
+		goto out_release;
 
 	/*
 	 * We will call the ->create function, that possibly is in a loadable
 	 * module, so we have to bump that loadable module refcnt first.
 	 */
-	अगर (!try_module_get(pf->owner))
-		जाओ out_release;
+	if (!try_module_get(pf->owner))
+		goto out_release;
 
-	/* Now रक्षित by module ref count */
-	rcu_पढ़ो_unlock();
+	/* Now protected by module ref count */
+	rcu_read_unlock();
 
 	err = pf->create(net, sock, protocol, kern);
-	अगर (err < 0)
-		जाओ out_module_put;
+	if (err < 0)
+		goto out_module_put;
 
 	/*
 	 * Now to bump the refcnt of the [loadable] module that owns this
-	 * socket at sock_release समय we decrement its refcnt.
+	 * socket at sock_release time we decrement its refcnt.
 	 */
-	अगर (!try_module_get(sock->ops->owner))
-		जाओ out_module_busy;
+	if (!try_module_get(sock->ops->owner))
+		goto out_module_busy;
 
 	/*
-	 * Now that we're करोne with the ->create function, the [loadable]
+	 * Now that we're done with the ->create function, the [loadable]
 	 * module can have its refcnt decremented
 	 */
 	module_put(pf->owner);
 	err = security_socket_post_create(sock, family, type, protocol, kern);
-	अगर (err)
-		जाओ out_sock_release;
+	if (err)
+		goto out_sock_release;
 	*res = sock;
 
-	वापस 0;
+	return 0;
 
 out_module_busy:
 	err = -EAFNOSUPPORT;
 out_module_put:
-	sock->ops = शून्य;
+	sock->ops = NULL;
 	module_put(pf->owner);
 out_sock_release:
 	sock_release(sock);
-	वापस err;
+	return err;
 
 out_release:
-	rcu_पढ़ो_unlock();
-	जाओ out_sock_release;
-पूर्ण
+	rcu_read_unlock();
+	goto out_sock_release;
+}
 EXPORT_SYMBOL(__sock_create);
 
 /**
@@ -1439,13 +1438,13 @@ EXPORT_SYMBOL(__sock_create);
  *	@res: new socket
  *
  *	A wrapper around __sock_create().
- *	Returns 0 or an error. This function पूर्णांकernally uses GFP_KERNEL.
+ *	Returns 0 or an error. This function internally uses GFP_KERNEL.
  */
 
-पूर्णांक sock_create(पूर्णांक family, पूर्णांक type, पूर्णांक protocol, काष्ठा socket **res)
-अणु
-	वापस __sock_create(current->nsproxy->net_ns, family, type, protocol, res, 0);
-पूर्ण
+int sock_create(int family, int type, int protocol, struct socket **res)
+{
+	return __sock_create(current->nsproxy->net_ns, family, type, protocol, res, 0);
+}
 EXPORT_SYMBOL(sock_create);
 
 /**
@@ -1457,509 +1456,509 @@ EXPORT_SYMBOL(sock_create);
  *	@res: new socket
  *
  *	A wrapper around __sock_create().
- *	Returns 0 or an error. This function पूर्णांकernally uses GFP_KERNEL.
+ *	Returns 0 or an error. This function internally uses GFP_KERNEL.
  */
 
-पूर्णांक sock_create_kern(काष्ठा net *net, पूर्णांक family, पूर्णांक type, पूर्णांक protocol, काष्ठा socket **res)
-अणु
-	वापस __sock_create(net, family, type, protocol, res, 1);
-पूर्ण
+int sock_create_kern(struct net *net, int family, int type, int protocol, struct socket **res)
+{
+	return __sock_create(net, family, type, protocol, res, 1);
+}
 EXPORT_SYMBOL(sock_create_kern);
 
-पूर्णांक __sys_socket(पूर्णांक family, पूर्णांक type, पूर्णांक protocol)
-अणु
-	पूर्णांक retval;
-	काष्ठा socket *sock;
-	पूर्णांक flags;
+int __sys_socket(int family, int type, int protocol)
+{
+	int retval;
+	struct socket *sock;
+	int flags;
 
-	/* Check the SOCK_* स्थिरants क्रम consistency.  */
+	/* Check the SOCK_* constants for consistency.  */
 	BUILD_BUG_ON(SOCK_CLOEXEC != O_CLOEXEC);
 	BUILD_BUG_ON((SOCK_MAX | SOCK_TYPE_MASK) != SOCK_TYPE_MASK);
 	BUILD_BUG_ON(SOCK_CLOEXEC & SOCK_TYPE_MASK);
 	BUILD_BUG_ON(SOCK_NONBLOCK & SOCK_TYPE_MASK);
 
 	flags = type & ~SOCK_TYPE_MASK;
-	अगर (flags & ~(SOCK_CLOEXEC | SOCK_NONBLOCK))
-		वापस -EINVAL;
+	if (flags & ~(SOCK_CLOEXEC | SOCK_NONBLOCK))
+		return -EINVAL;
 	type &= SOCK_TYPE_MASK;
 
-	अगर (SOCK_NONBLOCK != O_NONBLOCK && (flags & SOCK_NONBLOCK))
+	if (SOCK_NONBLOCK != O_NONBLOCK && (flags & SOCK_NONBLOCK))
 		flags = (flags & ~SOCK_NONBLOCK) | O_NONBLOCK;
 
 	retval = sock_create(family, type, protocol, &sock);
-	अगर (retval < 0)
-		वापस retval;
+	if (retval < 0)
+		return retval;
 
-	वापस sock_map_fd(sock, flags & (O_CLOEXEC | O_NONBLOCK));
-पूर्ण
+	return sock_map_fd(sock, flags & (O_CLOEXEC | O_NONBLOCK));
+}
 
-SYSCALL_DEFINE3(socket, पूर्णांक, family, पूर्णांक, type, पूर्णांक, protocol)
-अणु
-	वापस __sys_socket(family, type, protocol);
-पूर्ण
+SYSCALL_DEFINE3(socket, int, family, int, type, int, protocol)
+{
+	return __sys_socket(family, type, protocol);
+}
 
 /*
  *	Create a pair of connected sockets.
  */
 
-पूर्णांक __sys_socketpair(पूर्णांक family, पूर्णांक type, पूर्णांक protocol, पूर्णांक __user *usockvec)
-अणु
-	काष्ठा socket *sock1, *sock2;
-	पूर्णांक fd1, fd2, err;
-	काष्ठा file *newfile1, *newfile2;
-	पूर्णांक flags;
+int __sys_socketpair(int family, int type, int protocol, int __user *usockvec)
+{
+	struct socket *sock1, *sock2;
+	int fd1, fd2, err;
+	struct file *newfile1, *newfile2;
+	int flags;
 
 	flags = type & ~SOCK_TYPE_MASK;
-	अगर (flags & ~(SOCK_CLOEXEC | SOCK_NONBLOCK))
-		वापस -EINVAL;
+	if (flags & ~(SOCK_CLOEXEC | SOCK_NONBLOCK))
+		return -EINVAL;
 	type &= SOCK_TYPE_MASK;
 
-	अगर (SOCK_NONBLOCK != O_NONBLOCK && (flags & SOCK_NONBLOCK))
+	if (SOCK_NONBLOCK != O_NONBLOCK && (flags & SOCK_NONBLOCK))
 		flags = (flags & ~SOCK_NONBLOCK) | O_NONBLOCK;
 
 	/*
 	 * reserve descriptors and make sure we won't fail
-	 * to वापस them to userland.
+	 * to return them to userland.
 	 */
 	fd1 = get_unused_fd_flags(flags);
-	अगर (unlikely(fd1 < 0))
-		वापस fd1;
+	if (unlikely(fd1 < 0))
+		return fd1;
 
 	fd2 = get_unused_fd_flags(flags);
-	अगर (unlikely(fd2 < 0)) अणु
+	if (unlikely(fd2 < 0)) {
 		put_unused_fd(fd1);
-		वापस fd2;
-	पूर्ण
+		return fd2;
+	}
 
 	err = put_user(fd1, &usockvec[0]);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	err = put_user(fd2, &usockvec[1]);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	/*
-	 * Obtain the first socket and check अगर the underlying protocol
+	 * Obtain the first socket and check if the underlying protocol
 	 * supports the socketpair call.
 	 */
 
 	err = sock_create(family, type, protocol, &sock1);
-	अगर (unlikely(err < 0))
-		जाओ out;
+	if (unlikely(err < 0))
+		goto out;
 
 	err = sock_create(family, type, protocol, &sock2);
-	अगर (unlikely(err < 0)) अणु
+	if (unlikely(err < 0)) {
 		sock_release(sock1);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = security_socket_socketpair(sock1, sock2);
-	अगर (unlikely(err)) अणु
+	if (unlikely(err)) {
 		sock_release(sock2);
 		sock_release(sock1);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = sock1->ops->socketpair(sock1, sock2);
-	अगर (unlikely(err < 0)) अणु
+	if (unlikely(err < 0)) {
 		sock_release(sock2);
 		sock_release(sock1);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	newfile1 = sock_alloc_file(sock1, flags, शून्य);
-	अगर (IS_ERR(newfile1)) अणु
+	newfile1 = sock_alloc_file(sock1, flags, NULL);
+	if (IS_ERR(newfile1)) {
 		err = PTR_ERR(newfile1);
 		sock_release(sock2);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	newfile2 = sock_alloc_file(sock2, flags, शून्य);
-	अगर (IS_ERR(newfile2)) अणु
+	newfile2 = sock_alloc_file(sock2, flags, NULL);
+	if (IS_ERR(newfile2)) {
 		err = PTR_ERR(newfile2);
 		fput(newfile1);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	audit_fd_pair(fd1, fd2);
 
 	fd_install(fd1, newfile1);
 	fd_install(fd2, newfile2);
-	वापस 0;
+	return 0;
 
 out:
 	put_unused_fd(fd2);
 	put_unused_fd(fd1);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-SYSCALL_DEFINE4(socketpair, पूर्णांक, family, पूर्णांक, type, पूर्णांक, protocol,
-		पूर्णांक __user *, usockvec)
-अणु
-	वापस __sys_socketpair(family, type, protocol, usockvec);
-पूर्ण
+SYSCALL_DEFINE4(socketpair, int, family, int, type, int, protocol,
+		int __user *, usockvec)
+{
+	return __sys_socketpair(family, type, protocol, usockvec);
+}
 
 /*
- *	Bind a name to a socket. Nothing much to करो here since it's
+ *	Bind a name to a socket. Nothing much to do here since it's
  *	the protocol's responsibility to handle the local address.
  *
- *	We move the socket address to kernel space beक्रमe we call
+ *	We move the socket address to kernel space before we call
  *	the protocol layer (having also checked the address is ok).
  */
 
-पूर्णांक __sys_bind(पूर्णांक fd, काष्ठा sockaddr __user *umyaddr, पूर्णांक addrlen)
-अणु
-	काष्ठा socket *sock;
-	काष्ठा sockaddr_storage address;
-	पूर्णांक err, fput_needed;
+int __sys_bind(int fd, struct sockaddr __user *umyaddr, int addrlen)
+{
+	struct socket *sock;
+	struct sockaddr_storage address;
+	int err, fput_needed;
 
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
-	अगर (sock) अणु
+	if (sock) {
 		err = move_addr_to_kernel(umyaddr, addrlen, &address);
-		अगर (!err) अणु
+		if (!err) {
 			err = security_socket_bind(sock,
-						   (काष्ठा sockaddr *)&address,
+						   (struct sockaddr *)&address,
 						   addrlen);
-			अगर (!err)
+			if (!err)
 				err = sock->ops->bind(sock,
-						      (काष्ठा sockaddr *)
+						      (struct sockaddr *)
 						      &address, addrlen);
-		पूर्ण
+		}
 		fput_light(sock->file, fput_needed);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-SYSCALL_DEFINE3(bind, पूर्णांक, fd, काष्ठा sockaddr __user *, umyaddr, पूर्णांक, addrlen)
-अणु
-	वापस __sys_bind(fd, umyaddr, addrlen);
-पूर्ण
+SYSCALL_DEFINE3(bind, int, fd, struct sockaddr __user *, umyaddr, int, addrlen)
+{
+	return __sys_bind(fd, umyaddr, addrlen);
+}
 
 /*
- *	Perक्रमm a listen. Basically, we allow the protocol to करो anything
- *	necessary क्रम a listen, and अगर that works, we mark the socket as
- *	पढ़ोy क्रम listening.
+ *	Perform a listen. Basically, we allow the protocol to do anything
+ *	necessary for a listen, and if that works, we mark the socket as
+ *	ready for listening.
  */
 
-पूर्णांक __sys_listen(पूर्णांक fd, पूर्णांक backlog)
-अणु
-	काष्ठा socket *sock;
-	पूर्णांक err, fput_needed;
-	पूर्णांक somaxconn;
+int __sys_listen(int fd, int backlog)
+{
+	struct socket *sock;
+	int err, fput_needed;
+	int somaxconn;
 
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
-	अगर (sock) अणु
+	if (sock) {
 		somaxconn = sock_net(sock->sk)->core.sysctl_somaxconn;
-		अगर ((अचिन्हित पूर्णांक)backlog > somaxconn)
+		if ((unsigned int)backlog > somaxconn)
 			backlog = somaxconn;
 
 		err = security_socket_listen(sock, backlog);
-		अगर (!err)
+		if (!err)
 			err = sock->ops->listen(sock, backlog);
 
 		fput_light(sock->file, fput_needed);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-SYSCALL_DEFINE2(listen, पूर्णांक, fd, पूर्णांक, backlog)
-अणु
-	वापस __sys_listen(fd, backlog);
-पूर्ण
+SYSCALL_DEFINE2(listen, int, fd, int, backlog)
+{
+	return __sys_listen(fd, backlog);
+}
 
-पूर्णांक __sys_accept4_file(काष्ठा file *file, अचिन्हित file_flags,
-		       काष्ठा sockaddr __user *upeer_sockaddr,
-		       पूर्णांक __user *upeer_addrlen, पूर्णांक flags,
-		       अचिन्हित दीर्घ nofile)
-अणु
-	काष्ठा socket *sock, *newsock;
-	काष्ठा file *newfile;
-	पूर्णांक err, len, newfd;
-	काष्ठा sockaddr_storage address;
+int __sys_accept4_file(struct file *file, unsigned file_flags,
+		       struct sockaddr __user *upeer_sockaddr,
+		       int __user *upeer_addrlen, int flags,
+		       unsigned long nofile)
+{
+	struct socket *sock, *newsock;
+	struct file *newfile;
+	int err, len, newfd;
+	struct sockaddr_storage address;
 
-	अगर (flags & ~(SOCK_CLOEXEC | SOCK_NONBLOCK))
-		वापस -EINVAL;
+	if (flags & ~(SOCK_CLOEXEC | SOCK_NONBLOCK))
+		return -EINVAL;
 
-	अगर (SOCK_NONBLOCK != O_NONBLOCK && (flags & SOCK_NONBLOCK))
+	if (SOCK_NONBLOCK != O_NONBLOCK && (flags & SOCK_NONBLOCK))
 		flags = (flags & ~SOCK_NONBLOCK) | O_NONBLOCK;
 
 	sock = sock_from_file(file);
-	अगर (!sock) अणु
+	if (!sock) {
 		err = -ENOTSOCK;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	err = -ENखाता;
+	err = -ENFILE;
 	newsock = sock_alloc();
-	अगर (!newsock)
-		जाओ out;
+	if (!newsock)
+		goto out;
 
 	newsock->type = sock->type;
 	newsock->ops = sock->ops;
 
 	/*
-	 * We करोn't need try_module_get here, as the listening socket (sock)
+	 * We don't need try_module_get here, as the listening socket (sock)
 	 * has the protocol module (sock->ops->owner) held.
 	 */
 	__module_get(newsock->ops->owner);
 
 	newfd = __get_unused_fd_flags(flags, nofile);
-	अगर (unlikely(newfd < 0)) अणु
+	if (unlikely(newfd < 0)) {
 		err = newfd;
 		sock_release(newsock);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	newfile = sock_alloc_file(newsock, flags, sock->sk->sk_prot_creator->name);
-	अगर (IS_ERR(newfile)) अणु
+	if (IS_ERR(newfile)) {
 		err = PTR_ERR(newfile);
 		put_unused_fd(newfd);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = security_socket_accept(sock, newsock);
-	अगर (err)
-		जाओ out_fd;
+	if (err)
+		goto out_fd;
 
 	err = sock->ops->accept(sock, newsock, sock->file->f_flags | file_flags,
 					false);
-	अगर (err < 0)
-		जाओ out_fd;
+	if (err < 0)
+		goto out_fd;
 
-	अगर (upeer_sockaddr) अणु
+	if (upeer_sockaddr) {
 		len = newsock->ops->getname(newsock,
-					(काष्ठा sockaddr *)&address, 2);
-		अगर (len < 0) अणु
+					(struct sockaddr *)&address, 2);
+		if (len < 0) {
 			err = -ECONNABORTED;
-			जाओ out_fd;
-		पूर्ण
+			goto out_fd;
+		}
 		err = move_addr_to_user(&address,
 					len, upeer_sockaddr, upeer_addrlen);
-		अगर (err < 0)
-			जाओ out_fd;
-	पूर्ण
+		if (err < 0)
+			goto out_fd;
+	}
 
 	/* File flags are not inherited via accept() unlike another OSes. */
 
 	fd_install(newfd, newfile);
 	err = newfd;
 out:
-	वापस err;
+	return err;
 out_fd:
 	fput(newfile);
 	put_unused_fd(newfd);
-	जाओ out;
+	goto out;
 
-पूर्ण
+}
 
 /*
  *	For accept, we attempt to create a new socket, set up the link
- *	with the client, wake up the client, then वापस the new
+ *	with the client, wake up the client, then return the new
  *	connected fd. We collect the address of the connector in kernel
  *	space and move it to user at the very end. This is unclean because
- *	we खोलो the socket then वापस an error.
+ *	we open the socket then return an error.
  *
  *	1003.1g adds the ability to recvmsg() to query connection pending
  *	status to recvmsg. We need to add that support in a way thats
- *	clean when we reकाष्ठाure accept also.
+ *	clean when we restructure accept also.
  */
 
-पूर्णांक __sys_accept4(पूर्णांक fd, काष्ठा sockaddr __user *upeer_sockaddr,
-		  पूर्णांक __user *upeer_addrlen, पूर्णांक flags)
-अणु
-	पूर्णांक ret = -EBADF;
-	काष्ठा fd f;
+int __sys_accept4(int fd, struct sockaddr __user *upeer_sockaddr,
+		  int __user *upeer_addrlen, int flags)
+{
+	int ret = -EBADF;
+	struct fd f;
 
 	f = fdget(fd);
-	अगर (f.file) अणु
+	if (f.file) {
 		ret = __sys_accept4_file(f.file, 0, upeer_sockaddr,
 						upeer_addrlen, flags,
-						rlimit(RLIMIT_NOखाता));
+						rlimit(RLIMIT_NOFILE));
 		fdput(f);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-SYSCALL_DEFINE4(accept4, पूर्णांक, fd, काष्ठा sockaddr __user *, upeer_sockaddr,
-		पूर्णांक __user *, upeer_addrlen, पूर्णांक, flags)
-अणु
-	वापस __sys_accept4(fd, upeer_sockaddr, upeer_addrlen, flags);
-पूर्ण
+SYSCALL_DEFINE4(accept4, int, fd, struct sockaddr __user *, upeer_sockaddr,
+		int __user *, upeer_addrlen, int, flags)
+{
+	return __sys_accept4(fd, upeer_sockaddr, upeer_addrlen, flags);
+}
 
-SYSCALL_DEFINE3(accept, पूर्णांक, fd, काष्ठा sockaddr __user *, upeer_sockaddr,
-		पूर्णांक __user *, upeer_addrlen)
-अणु
-	वापस __sys_accept4(fd, upeer_sockaddr, upeer_addrlen, 0);
-पूर्ण
+SYSCALL_DEFINE3(accept, int, fd, struct sockaddr __user *, upeer_sockaddr,
+		int __user *, upeer_addrlen)
+{
+	return __sys_accept4(fd, upeer_sockaddr, upeer_addrlen, 0);
+}
 
 /*
  *	Attempt to connect to a socket with the server address.  The address
- *	is in user space so we verअगरy it is OK and move it to kernel space.
+ *	is in user space so we verify it is OK and move it to kernel space.
  *
- *	For 1003.1g we need to add clean support क्रम a bind to AF_UNSPEC to
- *	अवरोध bindings
+ *	For 1003.1g we need to add clean support for a bind to AF_UNSPEC to
+ *	break bindings
  *
  *	NOTE: 1003.1g draft 6.3 is broken with respect to AX.25/NetROM and
- *	other SEQPACKET protocols that take समय to connect() as it करोesn't
- *	include the -EINPROGRESS status क्रम such sockets.
+ *	other SEQPACKET protocols that take time to connect() as it doesn't
+ *	include the -EINPROGRESS status for such sockets.
  */
 
-पूर्णांक __sys_connect_file(काष्ठा file *file, काष्ठा sockaddr_storage *address,
-		       पूर्णांक addrlen, पूर्णांक file_flags)
-अणु
-	काष्ठा socket *sock;
-	पूर्णांक err;
+int __sys_connect_file(struct file *file, struct sockaddr_storage *address,
+		       int addrlen, int file_flags)
+{
+	struct socket *sock;
+	int err;
 
 	sock = sock_from_file(file);
-	अगर (!sock) अणु
+	if (!sock) {
 		err = -ENOTSOCK;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err =
-	    security_socket_connect(sock, (काष्ठा sockaddr *)address, addrlen);
-	अगर (err)
-		जाओ out;
+	    security_socket_connect(sock, (struct sockaddr *)address, addrlen);
+	if (err)
+		goto out;
 
-	err = sock->ops->connect(sock, (काष्ठा sockaddr *)address, addrlen,
+	err = sock->ops->connect(sock, (struct sockaddr *)address, addrlen,
 				 sock->file->f_flags | file_flags);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक __sys_connect(पूर्णांक fd, काष्ठा sockaddr __user *uservaddr, पूर्णांक addrlen)
-अणु
-	पूर्णांक ret = -EBADF;
-	काष्ठा fd f;
+int __sys_connect(int fd, struct sockaddr __user *uservaddr, int addrlen)
+{
+	int ret = -EBADF;
+	struct fd f;
 
 	f = fdget(fd);
-	अगर (f.file) अणु
-		काष्ठा sockaddr_storage address;
+	if (f.file) {
+		struct sockaddr_storage address;
 
 		ret = move_addr_to_kernel(uservaddr, addrlen, &address);
-		अगर (!ret)
+		if (!ret)
 			ret = __sys_connect_file(f.file, &address, addrlen, 0);
 		fdput(f);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-SYSCALL_DEFINE3(connect, पूर्णांक, fd, काष्ठा sockaddr __user *, uservaddr,
-		पूर्णांक, addrlen)
-अणु
-	वापस __sys_connect(fd, uservaddr, addrlen);
-पूर्ण
+SYSCALL_DEFINE3(connect, int, fd, struct sockaddr __user *, uservaddr,
+		int, addrlen)
+{
+	return __sys_connect(fd, uservaddr, addrlen);
+}
 
 /*
  *	Get the local address ('name') of a socket object. Move the obtained
  *	name to user space.
  */
 
-पूर्णांक __sys_माला_लोockname(पूर्णांक fd, काष्ठा sockaddr __user *usockaddr,
-		      पूर्णांक __user *usockaddr_len)
-अणु
-	काष्ठा socket *sock;
-	काष्ठा sockaddr_storage address;
-	पूर्णांक err, fput_needed;
+int __sys_getsockname(int fd, struct sockaddr __user *usockaddr,
+		      int __user *usockaddr_len)
+{
+	struct socket *sock;
+	struct sockaddr_storage address;
+	int err, fput_needed;
 
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
-	अगर (!sock)
-		जाओ out;
+	if (!sock)
+		goto out;
 
-	err = security_socket_माला_लोockname(sock);
-	अगर (err)
-		जाओ out_put;
+	err = security_socket_getsockname(sock);
+	if (err)
+		goto out_put;
 
-	err = sock->ops->getname(sock, (काष्ठा sockaddr *)&address, 0);
-	अगर (err < 0)
-		जाओ out_put;
-        /* "err" is actually length in this हाल */
+	err = sock->ops->getname(sock, (struct sockaddr *)&address, 0);
+	if (err < 0)
+		goto out_put;
+        /* "err" is actually length in this case */
 	err = move_addr_to_user(&address, err, usockaddr, usockaddr_len);
 
 out_put:
 	fput_light(sock->file, fput_needed);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-SYSCALL_DEFINE3(माला_लोockname, पूर्णांक, fd, काष्ठा sockaddr __user *, usockaddr,
-		पूर्णांक __user *, usockaddr_len)
-अणु
-	वापस __sys_माला_लोockname(fd, usockaddr, usockaddr_len);
-पूर्ण
+SYSCALL_DEFINE3(getsockname, int, fd, struct sockaddr __user *, usockaddr,
+		int __user *, usockaddr_len)
+{
+	return __sys_getsockname(fd, usockaddr, usockaddr_len);
+}
 
 /*
  *	Get the remote address ('name') of a socket object. Move the obtained
  *	name to user space.
  */
 
-पूर्णांक __sys_getpeername(पूर्णांक fd, काष्ठा sockaddr __user *usockaddr,
-		      पूर्णांक __user *usockaddr_len)
-अणु
-	काष्ठा socket *sock;
-	काष्ठा sockaddr_storage address;
-	पूर्णांक err, fput_needed;
+int __sys_getpeername(int fd, struct sockaddr __user *usockaddr,
+		      int __user *usockaddr_len)
+{
+	struct socket *sock;
+	struct sockaddr_storage address;
+	int err, fput_needed;
 
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
-	अगर (sock != शून्य) अणु
+	if (sock != NULL) {
 		err = security_socket_getpeername(sock);
-		अगर (err) अणु
+		if (err) {
 			fput_light(sock->file, fput_needed);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
-		err = sock->ops->getname(sock, (काष्ठा sockaddr *)&address, 1);
-		अगर (err >= 0)
-			/* "err" is actually length in this हाल */
+		err = sock->ops->getname(sock, (struct sockaddr *)&address, 1);
+		if (err >= 0)
+			/* "err" is actually length in this case */
 			err = move_addr_to_user(&address, err, usockaddr,
 						usockaddr_len);
 		fput_light(sock->file, fput_needed);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-SYSCALL_DEFINE3(getpeername, पूर्णांक, fd, काष्ठा sockaddr __user *, usockaddr,
-		पूर्णांक __user *, usockaddr_len)
-अणु
-	वापस __sys_getpeername(fd, usockaddr, usockaddr_len);
-पूर्ण
+SYSCALL_DEFINE3(getpeername, int, fd, struct sockaddr __user *, usockaddr,
+		int __user *, usockaddr_len)
+{
+	return __sys_getpeername(fd, usockaddr, usockaddr_len);
+}
 
 /*
- *	Send a datagram to a given address. We move the address पूर्णांकo kernel
- *	space and check the user space data area is पढ़ोable beक्रमe invoking
+ *	Send a datagram to a given address. We move the address into kernel
+ *	space and check the user space data area is readable before invoking
  *	the protocol.
  */
-पूर्णांक __sys_sendto(पूर्णांक fd, व्योम __user *buff, माप_प्रकार len, अचिन्हित पूर्णांक flags,
-		 काष्ठा sockaddr __user *addr,  पूर्णांक addr_len)
-अणु
-	काष्ठा socket *sock;
-	काष्ठा sockaddr_storage address;
-	पूर्णांक err;
-	काष्ठा msghdr msg;
-	काष्ठा iovec iov;
-	पूर्णांक fput_needed;
+int __sys_sendto(int fd, void __user *buff, size_t len, unsigned int flags,
+		 struct sockaddr __user *addr,  int addr_len)
+{
+	struct socket *sock;
+	struct sockaddr_storage address;
+	int err;
+	struct msghdr msg;
+	struct iovec iov;
+	int fput_needed;
 
 	err = import_single_range(WRITE, buff, len, &iov, &msg.msg_iter);
-	अगर (unlikely(err))
-		वापस err;
+	if (unlikely(err))
+		return err;
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
-	अगर (!sock)
-		जाओ out;
+	if (!sock)
+		goto out;
 
-	msg.msg_name = शून्य;
-	msg.msg_control = शून्य;
+	msg.msg_name = NULL;
+	msg.msg_control = NULL;
 	msg.msg_controllen = 0;
 	msg.msg_namelen = 0;
-	अगर (addr) अणु
+	if (addr) {
 		err = move_addr_to_kernel(addr, addr_len, &address);
-		अगर (err < 0)
-			जाओ out_put;
-		msg.msg_name = (काष्ठा sockaddr *)&address;
+		if (err < 0)
+			goto out_put;
+		msg.msg_name = (struct sockaddr *)&address;
 		msg.msg_namelen = addr_len;
-	पूर्ण
-	अगर (sock->file->f_flags & O_NONBLOCK)
+	}
+	if (sock->file->f_flags & O_NONBLOCK)
 		flags |= MSG_DONTWAIT;
 	msg.msg_flags = flags;
 	err = sock_sendmsg(sock, &msg);
@@ -1967,258 +1966,258 @@ SYSCALL_DEFINE3(getpeername, पूर्णांक, fd, काष्ठा so
 out_put:
 	fput_light(sock->file, fput_needed);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-SYSCALL_DEFINE6(sendto, पूर्णांक, fd, व्योम __user *, buff, माप_प्रकार, len,
-		अचिन्हित पूर्णांक, flags, काष्ठा sockaddr __user *, addr,
-		पूर्णांक, addr_len)
-अणु
-	वापस __sys_sendto(fd, buff, len, flags, addr, addr_len);
-पूर्ण
+SYSCALL_DEFINE6(sendto, int, fd, void __user *, buff, size_t, len,
+		unsigned int, flags, struct sockaddr __user *, addr,
+		int, addr_len)
+{
+	return __sys_sendto(fd, buff, len, flags, addr, addr_len);
+}
 
 /*
- *	Send a datagram करोwn a socket.
+ *	Send a datagram down a socket.
  */
 
-SYSCALL_DEFINE4(send, पूर्णांक, fd, व्योम __user *, buff, माप_प्रकार, len,
-		अचिन्हित पूर्णांक, flags)
-अणु
-	वापस __sys_sendto(fd, buff, len, flags, शून्य, 0);
-पूर्ण
+SYSCALL_DEFINE4(send, int, fd, void __user *, buff, size_t, len,
+		unsigned int, flags)
+{
+	return __sys_sendto(fd, buff, len, flags, NULL, 0);
+}
 
 /*
  *	Receive a frame from the socket and optionally record the address of the
- *	sender. We verअगरy the buffers are writable and अगर needed move the
+ *	sender. We verify the buffers are writable and if needed move the
  *	sender address from kernel to user space.
  */
-पूर्णांक __sys_recvfrom(पूर्णांक fd, व्योम __user *ubuf, माप_प्रकार size, अचिन्हित पूर्णांक flags,
-		   काष्ठा sockaddr __user *addr, पूर्णांक __user *addr_len)
-अणु
-	काष्ठा socket *sock;
-	काष्ठा iovec iov;
-	काष्ठा msghdr msg;
-	काष्ठा sockaddr_storage address;
-	पूर्णांक err, err2;
-	पूर्णांक fput_needed;
+int __sys_recvfrom(int fd, void __user *ubuf, size_t size, unsigned int flags,
+		   struct sockaddr __user *addr, int __user *addr_len)
+{
+	struct socket *sock;
+	struct iovec iov;
+	struct msghdr msg;
+	struct sockaddr_storage address;
+	int err, err2;
+	int fput_needed;
 
 	err = import_single_range(READ, ubuf, size, &iov, &msg.msg_iter);
-	अगर (unlikely(err))
-		वापस err;
+	if (unlikely(err))
+		return err;
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
-	अगर (!sock)
-		जाओ out;
+	if (!sock)
+		goto out;
 
-	msg.msg_control = शून्य;
+	msg.msg_control = NULL;
 	msg.msg_controllen = 0;
-	/* Save some cycles and करोn't copy the address अगर not needed */
-	msg.msg_name = addr ? (काष्ठा sockaddr *)&address : शून्य;
+	/* Save some cycles and don't copy the address if not needed */
+	msg.msg_name = addr ? (struct sockaddr *)&address : NULL;
 	/* We assume all kernel code knows the size of sockaddr_storage */
 	msg.msg_namelen = 0;
-	msg.msg_iocb = शून्य;
+	msg.msg_iocb = NULL;
 	msg.msg_flags = 0;
-	अगर (sock->file->f_flags & O_NONBLOCK)
+	if (sock->file->f_flags & O_NONBLOCK)
 		flags |= MSG_DONTWAIT;
 	err = sock_recvmsg(sock, &msg, flags);
 
-	अगर (err >= 0 && addr != शून्य) अणु
+	if (err >= 0 && addr != NULL) {
 		err2 = move_addr_to_user(&address,
 					 msg.msg_namelen, addr, addr_len);
-		अगर (err2 < 0)
+		if (err2 < 0)
 			err = err2;
-	पूर्ण
+	}
 
 	fput_light(sock->file, fput_needed);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-SYSCALL_DEFINE6(recvfrom, पूर्णांक, fd, व्योम __user *, ubuf, माप_प्रकार, size,
-		अचिन्हित पूर्णांक, flags, काष्ठा sockaddr __user *, addr,
-		पूर्णांक __user *, addr_len)
-अणु
-	वापस __sys_recvfrom(fd, ubuf, size, flags, addr, addr_len);
-पूर्ण
+SYSCALL_DEFINE6(recvfrom, int, fd, void __user *, ubuf, size_t, size,
+		unsigned int, flags, struct sockaddr __user *, addr,
+		int __user *, addr_len)
+{
+	return __sys_recvfrom(fd, ubuf, size, flags, addr, addr_len);
+}
 
 /*
  *	Receive a datagram from a socket.
  */
 
-SYSCALL_DEFINE4(recv, पूर्णांक, fd, व्योम __user *, ubuf, माप_प्रकार, size,
-		अचिन्हित पूर्णांक, flags)
-अणु
-	वापस __sys_recvfrom(fd, ubuf, size, flags, शून्य, शून्य);
-पूर्ण
+SYSCALL_DEFINE4(recv, int, fd, void __user *, ubuf, size_t, size,
+		unsigned int, flags)
+{
+	return __sys_recvfrom(fd, ubuf, size, flags, NULL, NULL);
+}
 
-अटल bool sock_use_custom_sol_socket(स्थिर काष्ठा socket *sock)
-अणु
-	स्थिर काष्ठा sock *sk = sock->sk;
+static bool sock_use_custom_sol_socket(const struct socket *sock)
+{
+	const struct sock *sk = sock->sk;
 
-	/* Use sock->ops->setsockopt() क्रम MPTCP */
-	वापस IS_ENABLED(CONFIG_MPTCP) &&
+	/* Use sock->ops->setsockopt() for MPTCP */
+	return IS_ENABLED(CONFIG_MPTCP) &&
 	       sk->sk_protocol == IPPROTO_MPTCP &&
 	       sk->sk_type == SOCK_STREAM &&
 	       (sk->sk_family == AF_INET || sk->sk_family == AF_INET6);
-पूर्ण
+}
 
 /*
- *	Set a socket option. Because we करोn't know the option lengths we have
- *	to pass the user mode parameter क्रम the protocols to sort out.
+ *	Set a socket option. Because we don't know the option lengths we have
+ *	to pass the user mode parameter for the protocols to sort out.
  */
-पूर्णांक __sys_setsockopt(पूर्णांक fd, पूर्णांक level, पूर्णांक optname, अक्षर __user *user_optval,
-		पूर्णांक optlen)
-अणु
+int __sys_setsockopt(int fd, int level, int optname, char __user *user_optval,
+		int optlen)
+{
 	sockptr_t optval = USER_SOCKPTR(user_optval);
-	अक्षर *kernel_optval = शून्य;
-	पूर्णांक err, fput_needed;
-	काष्ठा socket *sock;
+	char *kernel_optval = NULL;
+	int err, fput_needed;
+	struct socket *sock;
 
-	अगर (optlen < 0)
-		वापस -EINVAL;
+	if (optlen < 0)
+		return -EINVAL;
 
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
-	अगर (!sock)
-		वापस err;
+	if (!sock)
+		return err;
 
 	err = security_socket_setsockopt(sock, level, optname);
-	अगर (err)
-		जाओ out_put;
+	if (err)
+		goto out_put;
 
-	अगर (!in_compat_syscall())
+	if (!in_compat_syscall())
 		err = BPF_CGROUP_RUN_PROG_SETSOCKOPT(sock->sk, &level, &optname,
 						     user_optval, &optlen,
 						     &kernel_optval);
-	अगर (err < 0)
-		जाओ out_put;
-	अगर (err > 0) अणु
+	if (err < 0)
+		goto out_put;
+	if (err > 0) {
 		err = 0;
-		जाओ out_put;
-	पूर्ण
+		goto out_put;
+	}
 
-	अगर (kernel_optval)
+	if (kernel_optval)
 		optval = KERNEL_SOCKPTR(kernel_optval);
-	अगर (level == SOL_SOCKET && !sock_use_custom_sol_socket(sock))
+	if (level == SOL_SOCKET && !sock_use_custom_sol_socket(sock))
 		err = sock_setsockopt(sock, level, optname, optval, optlen);
-	अन्यथा अगर (unlikely(!sock->ops->setsockopt))
+	else if (unlikely(!sock->ops->setsockopt))
 		err = -EOPNOTSUPP;
-	अन्यथा
+	else
 		err = sock->ops->setsockopt(sock, level, optname, optval,
 					    optlen);
-	kमुक्त(kernel_optval);
+	kfree(kernel_optval);
 out_put:
 	fput_light(sock->file, fput_needed);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-SYSCALL_DEFINE5(setsockopt, पूर्णांक, fd, पूर्णांक, level, पूर्णांक, optname,
-		अक्षर __user *, optval, पूर्णांक, optlen)
-अणु
-	वापस __sys_setsockopt(fd, level, optname, optval, optlen);
-पूर्ण
+SYSCALL_DEFINE5(setsockopt, int, fd, int, level, int, optname,
+		char __user *, optval, int, optlen)
+{
+	return __sys_setsockopt(fd, level, optname, optval, optlen);
+}
 
-INसूचीECT_CALLABLE_DECLARE(bool tcp_bpf_bypass_माला_लोockopt(पूर्णांक level,
-							 पूर्णांक optname));
+INDIRECT_CALLABLE_DECLARE(bool tcp_bpf_bypass_getsockopt(int level,
+							 int optname));
 
 /*
- *	Get a socket option. Because we करोn't know the option lengths we have
- *	to pass a user mode parameter क्रम the protocols to sort out.
+ *	Get a socket option. Because we don't know the option lengths we have
+ *	to pass a user mode parameter for the protocols to sort out.
  */
-पूर्णांक __sys_माला_लोockopt(पूर्णांक fd, पूर्णांक level, पूर्णांक optname, अक्षर __user *optval,
-		पूर्णांक __user *optlen)
-अणु
-	पूर्णांक err, fput_needed;
-	काष्ठा socket *sock;
-	पूर्णांक max_optlen;
+int __sys_getsockopt(int fd, int level, int optname, char __user *optval,
+		int __user *optlen)
+{
+	int err, fput_needed;
+	struct socket *sock;
+	int max_optlen;
 
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
-	अगर (!sock)
-		वापस err;
+	if (!sock)
+		return err;
 
-	err = security_socket_माला_लोockopt(sock, level, optname);
-	अगर (err)
-		जाओ out_put;
+	err = security_socket_getsockopt(sock, level, optname);
+	if (err)
+		goto out_put;
 
-	अगर (!in_compat_syscall())
+	if (!in_compat_syscall())
 		max_optlen = BPF_CGROUP_GETSOCKOPT_MAX_OPTLEN(optlen);
 
-	अगर (level == SOL_SOCKET)
-		err = sock_माला_लोockopt(sock, level, optname, optval, optlen);
-	अन्यथा अगर (unlikely(!sock->ops->माला_लोockopt))
+	if (level == SOL_SOCKET)
+		err = sock_getsockopt(sock, level, optname, optval, optlen);
+	else if (unlikely(!sock->ops->getsockopt))
 		err = -EOPNOTSUPP;
-	अन्यथा
-		err = sock->ops->माला_लोockopt(sock, level, optname, optval,
+	else
+		err = sock->ops->getsockopt(sock, level, optname, optval,
 					    optlen);
 
-	अगर (!in_compat_syscall())
+	if (!in_compat_syscall())
 		err = BPF_CGROUP_RUN_PROG_GETSOCKOPT(sock->sk, level, optname,
 						     optval, optlen, max_optlen,
 						     err);
 out_put:
 	fput_light(sock->file, fput_needed);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-SYSCALL_DEFINE5(माला_लोockopt, पूर्णांक, fd, पूर्णांक, level, पूर्णांक, optname,
-		अक्षर __user *, optval, पूर्णांक __user *, optlen)
-अणु
-	वापस __sys_माला_लोockopt(fd, level, optname, optval, optlen);
-पूर्ण
+SYSCALL_DEFINE5(getsockopt, int, fd, int, level, int, optname,
+		char __user *, optval, int __user *, optlen)
+{
+	return __sys_getsockopt(fd, level, optname, optval, optlen);
+}
 
 /*
- *	Shutकरोwn a socket.
+ *	Shutdown a socket.
  */
 
-पूर्णांक __sys_shutकरोwn_sock(काष्ठा socket *sock, पूर्णांक how)
-अणु
-	पूर्णांक err;
+int __sys_shutdown_sock(struct socket *sock, int how)
+{
+	int err;
 
-	err = security_socket_shutकरोwn(sock, how);
-	अगर (!err)
-		err = sock->ops->shutकरोwn(sock, how);
+	err = security_socket_shutdown(sock, how);
+	if (!err)
+		err = sock->ops->shutdown(sock, how);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक __sys_shutकरोwn(पूर्णांक fd, पूर्णांक how)
-अणु
-	पूर्णांक err, fput_needed;
-	काष्ठा socket *sock;
+int __sys_shutdown(int fd, int how)
+{
+	int err, fput_needed;
+	struct socket *sock;
 
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
-	अगर (sock != शून्य) अणु
-		err = __sys_shutकरोwn_sock(sock, how);
+	if (sock != NULL) {
+		err = __sys_shutdown_sock(sock, how);
 		fput_light(sock->file, fput_needed);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-SYSCALL_DEFINE2(shutकरोwn, पूर्णांक, fd, पूर्णांक, how)
-अणु
-	वापस __sys_shutकरोwn(fd, how);
-पूर्ण
+SYSCALL_DEFINE2(shutdown, int, fd, int, how)
+{
+	return __sys_shutdown(fd, how);
+}
 
-/* A couple of helpful macros क्रम getting the address of the 32/64 bit
- * fields which are the same type (पूर्णांक / अचिन्हित) on our platक्रमms.
+/* A couple of helpful macros for getting the address of the 32/64 bit
+ * fields which are the same type (int / unsigned) on our platforms.
  */
-#घोषणा COMPAT_MSG(msg, member)	((MSG_CMSG_COMPAT & flags) ? &msg##_compat->member : &msg->member)
-#घोषणा COMPAT_NAMELEN(msg)	COMPAT_MSG(msg, msg_namelen)
-#घोषणा COMPAT_FLAGS(msg)	COMPAT_MSG(msg, msg_flags)
+#define COMPAT_MSG(msg, member)	((MSG_CMSG_COMPAT & flags) ? &msg##_compat->member : &msg->member)
+#define COMPAT_NAMELEN(msg)	COMPAT_MSG(msg, msg_namelen)
+#define COMPAT_FLAGS(msg)	COMPAT_MSG(msg, msg_flags)
 
-काष्ठा used_address अणु
-	काष्ठा sockaddr_storage name;
-	अचिन्हित पूर्णांक name_len;
-पूर्ण;
+struct used_address {
+	struct sockaddr_storage name;
+	unsigned int name_len;
+};
 
-पूर्णांक __copy_msghdr_from_user(काष्ठा msghdr *kmsg,
-			    काष्ठा user_msghdr __user *umsg,
-			    काष्ठा sockaddr __user **save_addr,
-			    काष्ठा iovec __user **uiov, माप_प्रकार *nsegs)
-अणु
-	काष्ठा user_msghdr msg;
-	sमाप_प्रकार err;
+int __copy_msghdr_from_user(struct msghdr *kmsg,
+			    struct user_msghdr __user *umsg,
+			    struct sockaddr __user **save_addr,
+			    struct iovec __user **uiov, size_t *nsegs)
+{
+	struct user_msghdr msg;
+	ssize_t err;
 
-	अगर (copy_from_user(&msg, umsg, माप(*umsg)))
-		वापस -EFAULT;
+	if (copy_from_user(&msg, umsg, sizeof(*umsg)))
+		return -EFAULT;
 
 	kmsg->msg_control_is_user = true;
 	kmsg->msg_control_user = msg.msg_control;
@@ -2226,767 +2225,767 @@ SYSCALL_DEFINE2(shutकरोwn, पूर्णांक, fd, पूर्ण�
 	kmsg->msg_flags = msg.msg_flags;
 
 	kmsg->msg_namelen = msg.msg_namelen;
-	अगर (!msg.msg_name)
+	if (!msg.msg_name)
 		kmsg->msg_namelen = 0;
 
-	अगर (kmsg->msg_namelen < 0)
-		वापस -EINVAL;
+	if (kmsg->msg_namelen < 0)
+		return -EINVAL;
 
-	अगर (kmsg->msg_namelen > माप(काष्ठा sockaddr_storage))
-		kmsg->msg_namelen = माप(काष्ठा sockaddr_storage);
+	if (kmsg->msg_namelen > sizeof(struct sockaddr_storage))
+		kmsg->msg_namelen = sizeof(struct sockaddr_storage);
 
-	अगर (save_addr)
+	if (save_addr)
 		*save_addr = msg.msg_name;
 
-	अगर (msg.msg_name && kmsg->msg_namelen) अणु
-		अगर (!save_addr) अणु
+	if (msg.msg_name && kmsg->msg_namelen) {
+		if (!save_addr) {
 			err = move_addr_to_kernel(msg.msg_name,
 						  kmsg->msg_namelen,
 						  kmsg->msg_name);
-			अगर (err < 0)
-				वापस err;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		kmsg->msg_name = शून्य;
+			if (err < 0)
+				return err;
+		}
+	} else {
+		kmsg->msg_name = NULL;
 		kmsg->msg_namelen = 0;
-	पूर्ण
+	}
 
-	अगर (msg.msg_iovlen > UIO_MAXIOV)
-		वापस -EMSGSIZE;
+	if (msg.msg_iovlen > UIO_MAXIOV)
+		return -EMSGSIZE;
 
-	kmsg->msg_iocb = शून्य;
+	kmsg->msg_iocb = NULL;
 	*uiov = msg.msg_iov;
 	*nsegs = msg.msg_iovlen;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक copy_msghdr_from_user(काष्ठा msghdr *kmsg,
-				 काष्ठा user_msghdr __user *umsg,
-				 काष्ठा sockaddr __user **save_addr,
-				 काष्ठा iovec **iov)
-अणु
-	काष्ठा user_msghdr msg;
-	sमाप_प्रकार err;
+static int copy_msghdr_from_user(struct msghdr *kmsg,
+				 struct user_msghdr __user *umsg,
+				 struct sockaddr __user **save_addr,
+				 struct iovec **iov)
+{
+	struct user_msghdr msg;
+	ssize_t err;
 
 	err = __copy_msghdr_from_user(kmsg, umsg, save_addr, &msg.msg_iov,
 					&msg.msg_iovlen);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = import_iovec(save_addr ? READ : WRITE,
 			    msg.msg_iov, msg.msg_iovlen,
 			    UIO_FASTIOV, iov, &kmsg->msg_iter);
-	वापस err < 0 ? err : 0;
-पूर्ण
+	return err < 0 ? err : 0;
+}
 
-अटल पूर्णांक ____sys_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg_sys,
-			   अचिन्हित पूर्णांक flags, काष्ठा used_address *used_address,
-			   अचिन्हित पूर्णांक allowed_msghdr_flags)
-अणु
-	अचिन्हित अक्षर ctl[माप(काष्ठा cmsghdr) + 20]
-				__aligned(माप(__kernel_माप_प्रकार));
+static int ____sys_sendmsg(struct socket *sock, struct msghdr *msg_sys,
+			   unsigned int flags, struct used_address *used_address,
+			   unsigned int allowed_msghdr_flags)
+{
+	unsigned char ctl[sizeof(struct cmsghdr) + 20]
+				__aligned(sizeof(__kernel_size_t));
 	/* 20 is size of ipv6_pktinfo */
-	अचिन्हित अक्षर *ctl_buf = ctl;
-	पूर्णांक ctl_len;
-	sमाप_प्रकार err;
+	unsigned char *ctl_buf = ctl;
+	int ctl_len;
+	ssize_t err;
 
 	err = -ENOBUFS;
 
-	अगर (msg_sys->msg_controllen > पूर्णांक_उच्च)
-		जाओ out;
+	if (msg_sys->msg_controllen > INT_MAX)
+		goto out;
 	flags |= (msg_sys->msg_flags & allowed_msghdr_flags);
 	ctl_len = msg_sys->msg_controllen;
-	अगर ((MSG_CMSG_COMPAT & flags) && ctl_len) अणु
+	if ((MSG_CMSG_COMPAT & flags) && ctl_len) {
 		err =
 		    cmsghdr_from_user_compat_to_kern(msg_sys, sock->sk, ctl,
-						     माप(ctl));
-		अगर (err)
-			जाओ out;
+						     sizeof(ctl));
+		if (err)
+			goto out;
 		ctl_buf = msg_sys->msg_control;
 		ctl_len = msg_sys->msg_controllen;
-	पूर्ण अन्यथा अगर (ctl_len) अणु
-		BUILD_BUG_ON(माप(काष्ठा cmsghdr) !=
-			     CMSG_ALIGN(माप(काष्ठा cmsghdr)));
-		अगर (ctl_len > माप(ctl)) अणु
-			ctl_buf = sock_kदो_स्मृति(sock->sk, ctl_len, GFP_KERNEL);
-			अगर (ctl_buf == शून्य)
-				जाओ out;
-		पूर्ण
+	} else if (ctl_len) {
+		BUILD_BUG_ON(sizeof(struct cmsghdr) !=
+			     CMSG_ALIGN(sizeof(struct cmsghdr)));
+		if (ctl_len > sizeof(ctl)) {
+			ctl_buf = sock_kmalloc(sock->sk, ctl_len, GFP_KERNEL);
+			if (ctl_buf == NULL)
+				goto out;
+		}
 		err = -EFAULT;
-		अगर (copy_from_user(ctl_buf, msg_sys->msg_control_user, ctl_len))
-			जाओ out_मुक्तctl;
+		if (copy_from_user(ctl_buf, msg_sys->msg_control_user, ctl_len))
+			goto out_freectl;
 		msg_sys->msg_control = ctl_buf;
 		msg_sys->msg_control_is_user = false;
-	पूर्ण
+	}
 	msg_sys->msg_flags = flags;
 
-	अगर (sock->file->f_flags & O_NONBLOCK)
+	if (sock->file->f_flags & O_NONBLOCK)
 		msg_sys->msg_flags |= MSG_DONTWAIT;
 	/*
 	 * If this is sendmmsg() and current destination address is same as
 	 * previously succeeded address, omit asking LSM's decision.
-	 * used_address->name_len is initialized to अच_पूर्णांक_उच्च so that the first
+	 * used_address->name_len is initialized to UINT_MAX so that the first
 	 * destination address never matches.
 	 */
-	अगर (used_address && msg_sys->msg_name &&
+	if (used_address && msg_sys->msg_name &&
 	    used_address->name_len == msg_sys->msg_namelen &&
-	    !स_भेद(&used_address->name, msg_sys->msg_name,
-		    used_address->name_len)) अणु
+	    !memcmp(&used_address->name, msg_sys->msg_name,
+		    used_address->name_len)) {
 		err = sock_sendmsg_nosec(sock, msg_sys);
-		जाओ out_मुक्तctl;
-	पूर्ण
+		goto out_freectl;
+	}
 	err = sock_sendmsg(sock, msg_sys);
 	/*
 	 * If this is sendmmsg() and sending to current destination address was
 	 * successful, remember it.
 	 */
-	अगर (used_address && err >= 0) अणु
+	if (used_address && err >= 0) {
 		used_address->name_len = msg_sys->msg_namelen;
-		अगर (msg_sys->msg_name)
-			स_नकल(&used_address->name, msg_sys->msg_name,
+		if (msg_sys->msg_name)
+			memcpy(&used_address->name, msg_sys->msg_name,
 			       used_address->name_len);
-	पूर्ण
+	}
 
-out_मुक्तctl:
-	अगर (ctl_buf != ctl)
-		sock_kमुक्त_s(sock->sk, ctl_buf, ctl_len);
+out_freectl:
+	if (ctl_buf != ctl)
+		sock_kfree_s(sock->sk, ctl_buf, ctl_len);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक sendmsg_copy_msghdr(काष्ठा msghdr *msg,
-			काष्ठा user_msghdr __user *umsg, अचिन्हित flags,
-			काष्ठा iovec **iov)
-अणु
-	पूर्णांक err;
+int sendmsg_copy_msghdr(struct msghdr *msg,
+			struct user_msghdr __user *umsg, unsigned flags,
+			struct iovec **iov)
+{
+	int err;
 
-	अगर (flags & MSG_CMSG_COMPAT) अणु
-		काष्ठा compat_msghdr __user *msg_compat;
+	if (flags & MSG_CMSG_COMPAT) {
+		struct compat_msghdr __user *msg_compat;
 
-		msg_compat = (काष्ठा compat_msghdr __user *) umsg;
-		err = get_compat_msghdr(msg, msg_compat, शून्य, iov);
-	पूर्ण अन्यथा अणु
-		err = copy_msghdr_from_user(msg, umsg, शून्य, iov);
-	पूर्ण
-	अगर (err < 0)
-		वापस err;
+		msg_compat = (struct compat_msghdr __user *) umsg;
+		err = get_compat_msghdr(msg, msg_compat, NULL, iov);
+	} else {
+		err = copy_msghdr_from_user(msg, umsg, NULL, iov);
+	}
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ___sys_sendmsg(काष्ठा socket *sock, काष्ठा user_msghdr __user *msg,
-			 काष्ठा msghdr *msg_sys, अचिन्हित पूर्णांक flags,
-			 काष्ठा used_address *used_address,
-			 अचिन्हित पूर्णांक allowed_msghdr_flags)
-अणु
-	काष्ठा sockaddr_storage address;
-	काष्ठा iovec iovstack[UIO_FASTIOV], *iov = iovstack;
-	sमाप_प्रकार err;
+static int ___sys_sendmsg(struct socket *sock, struct user_msghdr __user *msg,
+			 struct msghdr *msg_sys, unsigned int flags,
+			 struct used_address *used_address,
+			 unsigned int allowed_msghdr_flags)
+{
+	struct sockaddr_storage address;
+	struct iovec iovstack[UIO_FASTIOV], *iov = iovstack;
+	ssize_t err;
 
 	msg_sys->msg_name = &address;
 
 	err = sendmsg_copy_msghdr(msg_sys, msg, flags, &iov);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = ____sys_sendmsg(sock, msg_sys, flags, used_address,
 				allowed_msghdr_flags);
-	kमुक्त(iov);
-	वापस err;
-पूर्ण
+	kfree(iov);
+	return err;
+}
 
 /*
- *	BSD sendmsg पूर्णांकerface
+ *	BSD sendmsg interface
  */
-दीर्घ __sys_sendmsg_sock(काष्ठा socket *sock, काष्ठा msghdr *msg,
-			अचिन्हित पूर्णांक flags)
-अणु
-	वापस ____sys_sendmsg(sock, msg, flags, शून्य, 0);
-पूर्ण
+long __sys_sendmsg_sock(struct socket *sock, struct msghdr *msg,
+			unsigned int flags)
+{
+	return ____sys_sendmsg(sock, msg, flags, NULL, 0);
+}
 
-दीर्घ __sys_sendmsg(पूर्णांक fd, काष्ठा user_msghdr __user *msg, अचिन्हित पूर्णांक flags,
-		   bool क्रमbid_cmsg_compat)
-अणु
-	पूर्णांक fput_needed, err;
-	काष्ठा msghdr msg_sys;
-	काष्ठा socket *sock;
+long __sys_sendmsg(int fd, struct user_msghdr __user *msg, unsigned int flags,
+		   bool forbid_cmsg_compat)
+{
+	int fput_needed, err;
+	struct msghdr msg_sys;
+	struct socket *sock;
 
-	अगर (क्रमbid_cmsg_compat && (flags & MSG_CMSG_COMPAT))
-		वापस -EINVAL;
+	if (forbid_cmsg_compat && (flags & MSG_CMSG_COMPAT))
+		return -EINVAL;
 
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
-	अगर (!sock)
-		जाओ out;
+	if (!sock)
+		goto out;
 
-	err = ___sys_sendmsg(sock, msg, &msg_sys, flags, शून्य, 0);
+	err = ___sys_sendmsg(sock, msg, &msg_sys, flags, NULL, 0);
 
 	fput_light(sock->file, fput_needed);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-SYSCALL_DEFINE3(sendmsg, पूर्णांक, fd, काष्ठा user_msghdr __user *, msg, अचिन्हित पूर्णांक, flags)
-अणु
-	वापस __sys_sendmsg(fd, msg, flags, true);
-पूर्ण
+SYSCALL_DEFINE3(sendmsg, int, fd, struct user_msghdr __user *, msg, unsigned int, flags)
+{
+	return __sys_sendmsg(fd, msg, flags, true);
+}
 
 /*
- *	Linux sendmmsg पूर्णांकerface
+ *	Linux sendmmsg interface
  */
 
-पूर्णांक __sys_sendmmsg(पूर्णांक fd, काष्ठा mmsghdr __user *mmsg, अचिन्हित पूर्णांक vlen,
-		   अचिन्हित पूर्णांक flags, bool क्रमbid_cmsg_compat)
-अणु
-	पूर्णांक fput_needed, err, datagrams;
-	काष्ठा socket *sock;
-	काष्ठा mmsghdr __user *entry;
-	काष्ठा compat_mmsghdr __user *compat_entry;
-	काष्ठा msghdr msg_sys;
-	काष्ठा used_address used_address;
-	अचिन्हित पूर्णांक oflags = flags;
+int __sys_sendmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
+		   unsigned int flags, bool forbid_cmsg_compat)
+{
+	int fput_needed, err, datagrams;
+	struct socket *sock;
+	struct mmsghdr __user *entry;
+	struct compat_mmsghdr __user *compat_entry;
+	struct msghdr msg_sys;
+	struct used_address used_address;
+	unsigned int oflags = flags;
 
-	अगर (क्रमbid_cmsg_compat && (flags & MSG_CMSG_COMPAT))
-		वापस -EINVAL;
+	if (forbid_cmsg_compat && (flags & MSG_CMSG_COMPAT))
+		return -EINVAL;
 
-	अगर (vlen > UIO_MAXIOV)
+	if (vlen > UIO_MAXIOV)
 		vlen = UIO_MAXIOV;
 
 	datagrams = 0;
 
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
-	अगर (!sock)
-		वापस err;
+	if (!sock)
+		return err;
 
-	used_address.name_len = अच_पूर्णांक_उच्च;
+	used_address.name_len = UINT_MAX;
 	entry = mmsg;
-	compat_entry = (काष्ठा compat_mmsghdr __user *)mmsg;
+	compat_entry = (struct compat_mmsghdr __user *)mmsg;
 	err = 0;
 	flags |= MSG_BATCH;
 
-	जबतक (datagrams < vlen) अणु
-		अगर (datagrams == vlen - 1)
+	while (datagrams < vlen) {
+		if (datagrams == vlen - 1)
 			flags = oflags;
 
-		अगर (MSG_CMSG_COMPAT & flags) अणु
-			err = ___sys_sendmsg(sock, (काष्ठा user_msghdr __user *)compat_entry,
+		if (MSG_CMSG_COMPAT & flags) {
+			err = ___sys_sendmsg(sock, (struct user_msghdr __user *)compat_entry,
 					     &msg_sys, flags, &used_address, MSG_EOR);
-			अगर (err < 0)
-				अवरोध;
+			if (err < 0)
+				break;
 			err = __put_user(err, &compat_entry->msg_len);
 			++compat_entry;
-		पूर्ण अन्यथा अणु
+		} else {
 			err = ___sys_sendmsg(sock,
-					     (काष्ठा user_msghdr __user *)entry,
+					     (struct user_msghdr __user *)entry,
 					     &msg_sys, flags, &used_address, MSG_EOR);
-			अगर (err < 0)
-				अवरोध;
+			if (err < 0)
+				break;
 			err = put_user(err, &entry->msg_len);
 			++entry;
-		पूर्ण
+		}
 
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 		++datagrams;
-		अगर (msg_data_left(&msg_sys))
-			अवरोध;
+		if (msg_data_left(&msg_sys))
+			break;
 		cond_resched();
-	पूर्ण
+	}
 
 	fput_light(sock->file, fput_needed);
 
-	/* We only वापस an error अगर no datagrams were able to be sent */
-	अगर (datagrams != 0)
-		वापस datagrams;
+	/* We only return an error if no datagrams were able to be sent */
+	if (datagrams != 0)
+		return datagrams;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-SYSCALL_DEFINE4(sendmmsg, पूर्णांक, fd, काष्ठा mmsghdr __user *, mmsg,
-		अचिन्हित पूर्णांक, vlen, अचिन्हित पूर्णांक, flags)
-अणु
-	वापस __sys_sendmmsg(fd, mmsg, vlen, flags, true);
-पूर्ण
+SYSCALL_DEFINE4(sendmmsg, int, fd, struct mmsghdr __user *, mmsg,
+		unsigned int, vlen, unsigned int, flags)
+{
+	return __sys_sendmmsg(fd, mmsg, vlen, flags, true);
+}
 
-पूर्णांक recvmsg_copy_msghdr(काष्ठा msghdr *msg,
-			काष्ठा user_msghdr __user *umsg, अचिन्हित flags,
-			काष्ठा sockaddr __user **uaddr,
-			काष्ठा iovec **iov)
-अणु
-	sमाप_प्रकार err;
+int recvmsg_copy_msghdr(struct msghdr *msg,
+			struct user_msghdr __user *umsg, unsigned flags,
+			struct sockaddr __user **uaddr,
+			struct iovec **iov)
+{
+	ssize_t err;
 
-	अगर (MSG_CMSG_COMPAT & flags) अणु
-		काष्ठा compat_msghdr __user *msg_compat;
+	if (MSG_CMSG_COMPAT & flags) {
+		struct compat_msghdr __user *msg_compat;
 
-		msg_compat = (काष्ठा compat_msghdr __user *) umsg;
+		msg_compat = (struct compat_msghdr __user *) umsg;
 		err = get_compat_msghdr(msg, msg_compat, uaddr, iov);
-	पूर्ण अन्यथा अणु
+	} else {
 		err = copy_msghdr_from_user(msg, umsg, uaddr, iov);
-	पूर्ण
-	अगर (err < 0)
-		वापस err;
+	}
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ____sys_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg_sys,
-			   काष्ठा user_msghdr __user *msg,
-			   काष्ठा sockaddr __user *uaddr,
-			   अचिन्हित पूर्णांक flags, पूर्णांक nosec)
-अणु
-	काष्ठा compat_msghdr __user *msg_compat =
-					(काष्ठा compat_msghdr __user *) msg;
-	पूर्णांक __user *uaddr_len = COMPAT_NAMELEN(msg);
-	काष्ठा sockaddr_storage addr;
-	अचिन्हित दीर्घ cmsg_ptr;
-	पूर्णांक len;
-	sमाप_प्रकार err;
+static int ____sys_recvmsg(struct socket *sock, struct msghdr *msg_sys,
+			   struct user_msghdr __user *msg,
+			   struct sockaddr __user *uaddr,
+			   unsigned int flags, int nosec)
+{
+	struct compat_msghdr __user *msg_compat =
+					(struct compat_msghdr __user *) msg;
+	int __user *uaddr_len = COMPAT_NAMELEN(msg);
+	struct sockaddr_storage addr;
+	unsigned long cmsg_ptr;
+	int len;
+	ssize_t err;
 
 	msg_sys->msg_name = &addr;
-	cmsg_ptr = (अचिन्हित दीर्घ)msg_sys->msg_control;
+	cmsg_ptr = (unsigned long)msg_sys->msg_control;
 	msg_sys->msg_flags = flags & (MSG_CMSG_CLOEXEC|MSG_CMSG_COMPAT);
 
 	/* We assume all kernel code knows the size of sockaddr_storage */
 	msg_sys->msg_namelen = 0;
 
-	अगर (sock->file->f_flags & O_NONBLOCK)
+	if (sock->file->f_flags & O_NONBLOCK)
 		flags |= MSG_DONTWAIT;
 
-	अगर (unlikely(nosec))
+	if (unlikely(nosec))
 		err = sock_recvmsg_nosec(sock, msg_sys, flags);
-	अन्यथा
+	else
 		err = sock_recvmsg(sock, msg_sys, flags);
 
-	अगर (err < 0)
-		जाओ out;
+	if (err < 0)
+		goto out;
 	len = err;
 
-	अगर (uaddr != शून्य) अणु
+	if (uaddr != NULL) {
 		err = move_addr_to_user(&addr,
 					msg_sys->msg_namelen, uaddr,
 					uaddr_len);
-		अगर (err < 0)
-			जाओ out;
-	पूर्ण
+		if (err < 0)
+			goto out;
+	}
 	err = __put_user((msg_sys->msg_flags & ~MSG_CMSG_COMPAT),
 			 COMPAT_FLAGS(msg));
-	अगर (err)
-		जाओ out;
-	अगर (MSG_CMSG_COMPAT & flags)
-		err = __put_user((अचिन्हित दीर्घ)msg_sys->msg_control - cmsg_ptr,
+	if (err)
+		goto out;
+	if (MSG_CMSG_COMPAT & flags)
+		err = __put_user((unsigned long)msg_sys->msg_control - cmsg_ptr,
 				 &msg_compat->msg_controllen);
-	अन्यथा
-		err = __put_user((अचिन्हित दीर्घ)msg_sys->msg_control - cmsg_ptr,
+	else
+		err = __put_user((unsigned long)msg_sys->msg_control - cmsg_ptr,
 				 &msg->msg_controllen);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 	err = len;
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ___sys_recvmsg(काष्ठा socket *sock, काष्ठा user_msghdr __user *msg,
-			 काष्ठा msghdr *msg_sys, अचिन्हित पूर्णांक flags, पूर्णांक nosec)
-अणु
-	काष्ठा iovec iovstack[UIO_FASTIOV], *iov = iovstack;
-	/* user mode address poपूर्णांकers */
-	काष्ठा sockaddr __user *uaddr;
-	sमाप_प्रकार err;
+static int ___sys_recvmsg(struct socket *sock, struct user_msghdr __user *msg,
+			 struct msghdr *msg_sys, unsigned int flags, int nosec)
+{
+	struct iovec iovstack[UIO_FASTIOV], *iov = iovstack;
+	/* user mode address pointers */
+	struct sockaddr __user *uaddr;
+	ssize_t err;
 
 	err = recvmsg_copy_msghdr(msg_sys, msg, flags, &uaddr, &iov);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = ____sys_recvmsg(sock, msg_sys, msg, uaddr, flags, nosec);
-	kमुक्त(iov);
-	वापस err;
-पूर्ण
+	kfree(iov);
+	return err;
+}
 
 /*
- *	BSD recvmsg पूर्णांकerface
+ *	BSD recvmsg interface
  */
 
-दीर्घ __sys_recvmsg_sock(काष्ठा socket *sock, काष्ठा msghdr *msg,
-			काष्ठा user_msghdr __user *umsg,
-			काष्ठा sockaddr __user *uaddr, अचिन्हित पूर्णांक flags)
-अणु
-	वापस ____sys_recvmsg(sock, msg, umsg, uaddr, flags, 0);
-पूर्ण
+long __sys_recvmsg_sock(struct socket *sock, struct msghdr *msg,
+			struct user_msghdr __user *umsg,
+			struct sockaddr __user *uaddr, unsigned int flags)
+{
+	return ____sys_recvmsg(sock, msg, umsg, uaddr, flags, 0);
+}
 
-दीर्घ __sys_recvmsg(पूर्णांक fd, काष्ठा user_msghdr __user *msg, अचिन्हित पूर्णांक flags,
-		   bool क्रमbid_cmsg_compat)
-अणु
-	पूर्णांक fput_needed, err;
-	काष्ठा msghdr msg_sys;
-	काष्ठा socket *sock;
+long __sys_recvmsg(int fd, struct user_msghdr __user *msg, unsigned int flags,
+		   bool forbid_cmsg_compat)
+{
+	int fput_needed, err;
+	struct msghdr msg_sys;
+	struct socket *sock;
 
-	अगर (क्रमbid_cmsg_compat && (flags & MSG_CMSG_COMPAT))
-		वापस -EINVAL;
+	if (forbid_cmsg_compat && (flags & MSG_CMSG_COMPAT))
+		return -EINVAL;
 
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
-	अगर (!sock)
-		जाओ out;
+	if (!sock)
+		goto out;
 
 	err = ___sys_recvmsg(sock, msg, &msg_sys, flags, 0);
 
 	fput_light(sock->file, fput_needed);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-SYSCALL_DEFINE3(recvmsg, पूर्णांक, fd, काष्ठा user_msghdr __user *, msg,
-		अचिन्हित पूर्णांक, flags)
-अणु
-	वापस __sys_recvmsg(fd, msg, flags, true);
-पूर्ण
+SYSCALL_DEFINE3(recvmsg, int, fd, struct user_msghdr __user *, msg,
+		unsigned int, flags)
+{
+	return __sys_recvmsg(fd, msg, flags, true);
+}
 
 /*
- *     Linux recvmmsg पूर्णांकerface
+ *     Linux recvmmsg interface
  */
 
-अटल पूर्णांक करो_recvmmsg(पूर्णांक fd, काष्ठा mmsghdr __user *mmsg,
-			  अचिन्हित पूर्णांक vlen, अचिन्हित पूर्णांक flags,
-			  काष्ठा बारpec64 *समयout)
-अणु
-	पूर्णांक fput_needed, err, datagrams;
-	काष्ठा socket *sock;
-	काष्ठा mmsghdr __user *entry;
-	काष्ठा compat_mmsghdr __user *compat_entry;
-	काष्ठा msghdr msg_sys;
-	काष्ठा बारpec64 end_समय;
-	काष्ठा बारpec64 समयout64;
+static int do_recvmmsg(int fd, struct mmsghdr __user *mmsg,
+			  unsigned int vlen, unsigned int flags,
+			  struct timespec64 *timeout)
+{
+	int fput_needed, err, datagrams;
+	struct socket *sock;
+	struct mmsghdr __user *entry;
+	struct compat_mmsghdr __user *compat_entry;
+	struct msghdr msg_sys;
+	struct timespec64 end_time;
+	struct timespec64 timeout64;
 
-	अगर (समयout &&
-	    poll_select_set_समयout(&end_समय, समयout->tv_sec,
-				    समयout->tv_nsec))
-		वापस -EINVAL;
+	if (timeout &&
+	    poll_select_set_timeout(&end_time, timeout->tv_sec,
+				    timeout->tv_nsec))
+		return -EINVAL;
 
 	datagrams = 0;
 
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
-	अगर (!sock)
-		वापस err;
+	if (!sock)
+		return err;
 
-	अगर (likely(!(flags & MSG_ERRQUEUE))) अणु
+	if (likely(!(flags & MSG_ERRQUEUE))) {
 		err = sock_error(sock->sk);
-		अगर (err) अणु
+		if (err) {
 			datagrams = err;
-			जाओ out_put;
-		पूर्ण
-	पूर्ण
+			goto out_put;
+		}
+	}
 
 	entry = mmsg;
-	compat_entry = (काष्ठा compat_mmsghdr __user *)mmsg;
+	compat_entry = (struct compat_mmsghdr __user *)mmsg;
 
-	जबतक (datagrams < vlen) अणु
+	while (datagrams < vlen) {
 		/*
-		 * No need to ask LSM क्रम more than the first datagram.
+		 * No need to ask LSM for more than the first datagram.
 		 */
-		अगर (MSG_CMSG_COMPAT & flags) अणु
-			err = ___sys_recvmsg(sock, (काष्ठा user_msghdr __user *)compat_entry,
+		if (MSG_CMSG_COMPAT & flags) {
+			err = ___sys_recvmsg(sock, (struct user_msghdr __user *)compat_entry,
 					     &msg_sys, flags & ~MSG_WAITFORONE,
 					     datagrams);
-			अगर (err < 0)
-				अवरोध;
+			if (err < 0)
+				break;
 			err = __put_user(err, &compat_entry->msg_len);
 			++compat_entry;
-		पूर्ण अन्यथा अणु
+		} else {
 			err = ___sys_recvmsg(sock,
-					     (काष्ठा user_msghdr __user *)entry,
+					     (struct user_msghdr __user *)entry,
 					     &msg_sys, flags & ~MSG_WAITFORONE,
 					     datagrams);
-			अगर (err < 0)
-				अवरोध;
+			if (err < 0)
+				break;
 			err = put_user(err, &entry->msg_len);
 			++entry;
-		पूर्ण
+		}
 
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 		++datagrams;
 
 		/* MSG_WAITFORONE turns on MSG_DONTWAIT after one packet */
-		अगर (flags & MSG_WAITFORONE)
+		if (flags & MSG_WAITFORONE)
 			flags |= MSG_DONTWAIT;
 
-		अगर (समयout) अणु
-			kसमय_get_ts64(&समयout64);
-			*समयout = बारpec64_sub(end_समय, समयout64);
-			अगर (समयout->tv_sec < 0) अणु
-				समयout->tv_sec = समयout->tv_nsec = 0;
-				अवरोध;
-			पूर्ण
+		if (timeout) {
+			ktime_get_ts64(&timeout64);
+			*timeout = timespec64_sub(end_time, timeout64);
+			if (timeout->tv_sec < 0) {
+				timeout->tv_sec = timeout->tv_nsec = 0;
+				break;
+			}
 
-			/* Timeout, वापस less than vlen datagrams */
-			अगर (समयout->tv_nsec == 0 && समयout->tv_sec == 0)
-				अवरोध;
-		पूर्ण
+			/* Timeout, return less than vlen datagrams */
+			if (timeout->tv_nsec == 0 && timeout->tv_sec == 0)
+				break;
+		}
 
-		/* Out of band data, वापस right away */
-		अगर (msg_sys.msg_flags & MSG_OOB)
-			अवरोध;
+		/* Out of band data, return right away */
+		if (msg_sys.msg_flags & MSG_OOB)
+			break;
 		cond_resched();
-	पूर्ण
+	}
 
-	अगर (err == 0)
-		जाओ out_put;
+	if (err == 0)
+		goto out_put;
 
-	अगर (datagrams == 0) अणु
+	if (datagrams == 0) {
 		datagrams = err;
-		जाओ out_put;
-	पूर्ण
+		goto out_put;
+	}
 
 	/*
-	 * We may वापस less entries than requested (vlen) अगर the
+	 * We may return less entries than requested (vlen) if the
 	 * sock is non block and there aren't enough datagrams...
 	 */
-	अगर (err != -EAGAIN) अणु
+	if (err != -EAGAIN) {
 		/*
-		 * ... or  अगर recvmsg वापसs an error after we
+		 * ... or  if recvmsg returns an error after we
 		 * received some datagrams, where we record the
-		 * error to वापस on the next call or अगर the
-		 * app asks about it using माला_लोockopt(SO_ERROR).
+		 * error to return on the next call or if the
+		 * app asks about it using getsockopt(SO_ERROR).
 		 */
 		sock->sk->sk_err = -err;
-	पूर्ण
+	}
 out_put:
 	fput_light(sock->file, fput_needed);
 
-	वापस datagrams;
-पूर्ण
+	return datagrams;
+}
 
-पूर्णांक __sys_recvmmsg(पूर्णांक fd, काष्ठा mmsghdr __user *mmsg,
-		   अचिन्हित पूर्णांक vlen, अचिन्हित पूर्णांक flags,
-		   काष्ठा __kernel_बारpec __user *समयout,
-		   काष्ठा old_बारpec32 __user *समयout32)
-अणु
-	पूर्णांक datagrams;
-	काष्ठा बारpec64 समयout_sys;
+int __sys_recvmmsg(int fd, struct mmsghdr __user *mmsg,
+		   unsigned int vlen, unsigned int flags,
+		   struct __kernel_timespec __user *timeout,
+		   struct old_timespec32 __user *timeout32)
+{
+	int datagrams;
+	struct timespec64 timeout_sys;
 
-	अगर (समयout && get_बारpec64(&समयout_sys, समयout))
-		वापस -EFAULT;
+	if (timeout && get_timespec64(&timeout_sys, timeout))
+		return -EFAULT;
 
-	अगर (समयout32 && get_old_बारpec32(&समयout_sys, समयout32))
-		वापस -EFAULT;
+	if (timeout32 && get_old_timespec32(&timeout_sys, timeout32))
+		return -EFAULT;
 
-	अगर (!समयout && !समयout32)
-		वापस करो_recvmmsg(fd, mmsg, vlen, flags, शून्य);
+	if (!timeout && !timeout32)
+		return do_recvmmsg(fd, mmsg, vlen, flags, NULL);
 
-	datagrams = करो_recvmmsg(fd, mmsg, vlen, flags, &समयout_sys);
+	datagrams = do_recvmmsg(fd, mmsg, vlen, flags, &timeout_sys);
 
-	अगर (datagrams <= 0)
-		वापस datagrams;
+	if (datagrams <= 0)
+		return datagrams;
 
-	अगर (समयout && put_बारpec64(&समयout_sys, समयout))
+	if (timeout && put_timespec64(&timeout_sys, timeout))
 		datagrams = -EFAULT;
 
-	अगर (समयout32 && put_old_बारpec32(&समयout_sys, समयout32))
+	if (timeout32 && put_old_timespec32(&timeout_sys, timeout32))
 		datagrams = -EFAULT;
 
-	वापस datagrams;
-पूर्ण
+	return datagrams;
+}
 
-SYSCALL_DEFINE5(recvmmsg, पूर्णांक, fd, काष्ठा mmsghdr __user *, mmsg,
-		अचिन्हित पूर्णांक, vlen, अचिन्हित पूर्णांक, flags,
-		काष्ठा __kernel_बारpec __user *, समयout)
-अणु
-	अगर (flags & MSG_CMSG_COMPAT)
-		वापस -EINVAL;
+SYSCALL_DEFINE5(recvmmsg, int, fd, struct mmsghdr __user *, mmsg,
+		unsigned int, vlen, unsigned int, flags,
+		struct __kernel_timespec __user *, timeout)
+{
+	if (flags & MSG_CMSG_COMPAT)
+		return -EINVAL;
 
-	वापस __sys_recvmmsg(fd, mmsg, vlen, flags, समयout, शून्य);
-पूर्ण
+	return __sys_recvmmsg(fd, mmsg, vlen, flags, timeout, NULL);
+}
 
-#अगर_घोषित CONFIG_COMPAT_32BIT_TIME
-SYSCALL_DEFINE5(recvmmsg_समय32, पूर्णांक, fd, काष्ठा mmsghdr __user *, mmsg,
-		अचिन्हित पूर्णांक, vlen, अचिन्हित पूर्णांक, flags,
-		काष्ठा old_बारpec32 __user *, समयout)
-अणु
-	अगर (flags & MSG_CMSG_COMPAT)
-		वापस -EINVAL;
+#ifdef CONFIG_COMPAT_32BIT_TIME
+SYSCALL_DEFINE5(recvmmsg_time32, int, fd, struct mmsghdr __user *, mmsg,
+		unsigned int, vlen, unsigned int, flags,
+		struct old_timespec32 __user *, timeout)
+{
+	if (flags & MSG_CMSG_COMPAT)
+		return -EINVAL;
 
-	वापस __sys_recvmmsg(fd, mmsg, vlen, flags, शून्य, समयout);
-पूर्ण
-#पूर्ण_अगर
+	return __sys_recvmmsg(fd, mmsg, vlen, flags, NULL, timeout);
+}
+#endif
 
-#अगर_घोषित __ARCH_WANT_SYS_SOCKETCALL
-/* Argument list sizes क्रम sys_socketcall */
-#घोषणा AL(x) ((x) * माप(अचिन्हित दीर्घ))
-अटल स्थिर अचिन्हित अक्षर nargs[21] = अणु
+#ifdef __ARCH_WANT_SYS_SOCKETCALL
+/* Argument list sizes for sys_socketcall */
+#define AL(x) ((x) * sizeof(unsigned long))
+static const unsigned char nargs[21] = {
 	AL(0), AL(3), AL(3), AL(3), AL(2), AL(3),
 	AL(3), AL(3), AL(4), AL(4), AL(4), AL(6),
 	AL(6), AL(2), AL(5), AL(5), AL(3), AL(3),
 	AL(4), AL(5), AL(4)
-पूर्ण;
+};
 
-#अघोषित AL
+#undef AL
 
 /*
  *	System call vectors.
  *
  *	Argument checking cleaned up. Saved 20% in size.
- *  This function करोesn't need to set the kernel lock because
+ *  This function doesn't need to set the kernel lock because
  *  it is set by the callees.
  */
 
-SYSCALL_DEFINE2(socketcall, पूर्णांक, call, अचिन्हित दीर्घ __user *, args)
-अणु
-	अचिन्हित दीर्घ a[AUDITSC_ARGS];
-	अचिन्हित दीर्घ a0, a1;
-	पूर्णांक err;
-	अचिन्हित पूर्णांक len;
+SYSCALL_DEFINE2(socketcall, int, call, unsigned long __user *, args)
+{
+	unsigned long a[AUDITSC_ARGS];
+	unsigned long a0, a1;
+	int err;
+	unsigned int len;
 
-	अगर (call < 1 || call > SYS_SENDMMSG)
-		वापस -EINVAL;
+	if (call < 1 || call > SYS_SENDMMSG)
+		return -EINVAL;
 	call = array_index_nospec(call, SYS_SENDMMSG + 1);
 
 	len = nargs[call];
-	अगर (len > माप(a))
-		वापस -EINVAL;
+	if (len > sizeof(a))
+		return -EINVAL;
 
 	/* copy_from_user should be SMP safe. */
-	अगर (copy_from_user(a, args, len))
-		वापस -EFAULT;
+	if (copy_from_user(a, args, len))
+		return -EFAULT;
 
-	err = audit_socketcall(nargs[call] / माप(अचिन्हित दीर्घ), a);
-	अगर (err)
-		वापस err;
+	err = audit_socketcall(nargs[call] / sizeof(unsigned long), a);
+	if (err)
+		return err;
 
 	a0 = a[0];
 	a1 = a[1];
 
-	चयन (call) अणु
-	हाल SYS_SOCKET:
+	switch (call) {
+	case SYS_SOCKET:
 		err = __sys_socket(a0, a1, a[2]);
-		अवरोध;
-	हाल SYS_BIND:
-		err = __sys_bind(a0, (काष्ठा sockaddr __user *)a1, a[2]);
-		अवरोध;
-	हाल SYS_CONNECT:
-		err = __sys_connect(a0, (काष्ठा sockaddr __user *)a1, a[2]);
-		अवरोध;
-	हाल SYS_LISTEN:
+		break;
+	case SYS_BIND:
+		err = __sys_bind(a0, (struct sockaddr __user *)a1, a[2]);
+		break;
+	case SYS_CONNECT:
+		err = __sys_connect(a0, (struct sockaddr __user *)a1, a[2]);
+		break;
+	case SYS_LISTEN:
 		err = __sys_listen(a0, a1);
-		अवरोध;
-	हाल SYS_ACCEPT:
-		err = __sys_accept4(a0, (काष्ठा sockaddr __user *)a1,
-				    (पूर्णांक __user *)a[2], 0);
-		अवरोध;
-	हाल SYS_GETSOCKNAME:
+		break;
+	case SYS_ACCEPT:
+		err = __sys_accept4(a0, (struct sockaddr __user *)a1,
+				    (int __user *)a[2], 0);
+		break;
+	case SYS_GETSOCKNAME:
 		err =
-		    __sys_माला_लोockname(a0, (काष्ठा sockaddr __user *)a1,
-				      (पूर्णांक __user *)a[2]);
-		अवरोध;
-	हाल SYS_GETPEERNAME:
+		    __sys_getsockname(a0, (struct sockaddr __user *)a1,
+				      (int __user *)a[2]);
+		break;
+	case SYS_GETPEERNAME:
 		err =
-		    __sys_getpeername(a0, (काष्ठा sockaddr __user *)a1,
-				      (पूर्णांक __user *)a[2]);
-		अवरोध;
-	हाल SYS_SOCKETPAIR:
-		err = __sys_socketpair(a0, a1, a[2], (पूर्णांक __user *)a[3]);
-		अवरोध;
-	हाल SYS_SEND:
-		err = __sys_sendto(a0, (व्योम __user *)a1, a[2], a[3],
-				   शून्य, 0);
-		अवरोध;
-	हाल SYS_SENDTO:
-		err = __sys_sendto(a0, (व्योम __user *)a1, a[2], a[3],
-				   (काष्ठा sockaddr __user *)a[4], a[5]);
-		अवरोध;
-	हाल SYS_RECV:
-		err = __sys_recvfrom(a0, (व्योम __user *)a1, a[2], a[3],
-				     शून्य, शून्य);
-		अवरोध;
-	हाल SYS_RECVFROM:
-		err = __sys_recvfrom(a0, (व्योम __user *)a1, a[2], a[3],
-				     (काष्ठा sockaddr __user *)a[4],
-				     (पूर्णांक __user *)a[5]);
-		अवरोध;
-	हाल SYS_SHUTDOWN:
-		err = __sys_shutकरोwn(a0, a1);
-		अवरोध;
-	हाल SYS_SETSOCKOPT:
-		err = __sys_setsockopt(a0, a1, a[2], (अक्षर __user *)a[3],
+		    __sys_getpeername(a0, (struct sockaddr __user *)a1,
+				      (int __user *)a[2]);
+		break;
+	case SYS_SOCKETPAIR:
+		err = __sys_socketpair(a0, a1, a[2], (int __user *)a[3]);
+		break;
+	case SYS_SEND:
+		err = __sys_sendto(a0, (void __user *)a1, a[2], a[3],
+				   NULL, 0);
+		break;
+	case SYS_SENDTO:
+		err = __sys_sendto(a0, (void __user *)a1, a[2], a[3],
+				   (struct sockaddr __user *)a[4], a[5]);
+		break;
+	case SYS_RECV:
+		err = __sys_recvfrom(a0, (void __user *)a1, a[2], a[3],
+				     NULL, NULL);
+		break;
+	case SYS_RECVFROM:
+		err = __sys_recvfrom(a0, (void __user *)a1, a[2], a[3],
+				     (struct sockaddr __user *)a[4],
+				     (int __user *)a[5]);
+		break;
+	case SYS_SHUTDOWN:
+		err = __sys_shutdown(a0, a1);
+		break;
+	case SYS_SETSOCKOPT:
+		err = __sys_setsockopt(a0, a1, a[2], (char __user *)a[3],
 				       a[4]);
-		अवरोध;
-	हाल SYS_GETSOCKOPT:
+		break;
+	case SYS_GETSOCKOPT:
 		err =
-		    __sys_माला_लोockopt(a0, a1, a[2], (अक्षर __user *)a[3],
-				     (पूर्णांक __user *)a[4]);
-		अवरोध;
-	हाल SYS_SENDMSG:
-		err = __sys_sendmsg(a0, (काष्ठा user_msghdr __user *)a1,
+		    __sys_getsockopt(a0, a1, a[2], (char __user *)a[3],
+				     (int __user *)a[4]);
+		break;
+	case SYS_SENDMSG:
+		err = __sys_sendmsg(a0, (struct user_msghdr __user *)a1,
 				    a[2], true);
-		अवरोध;
-	हाल SYS_SENDMMSG:
-		err = __sys_sendmmsg(a0, (काष्ठा mmsghdr __user *)a1, a[2],
+		break;
+	case SYS_SENDMMSG:
+		err = __sys_sendmmsg(a0, (struct mmsghdr __user *)a1, a[2],
 				     a[3], true);
-		अवरोध;
-	हाल SYS_RECVMSG:
-		err = __sys_recvmsg(a0, (काष्ठा user_msghdr __user *)a1,
+		break;
+	case SYS_RECVMSG:
+		err = __sys_recvmsg(a0, (struct user_msghdr __user *)a1,
 				    a[2], true);
-		अवरोध;
-	हाल SYS_RECVMMSG:
-		अगर (IS_ENABLED(CONFIG_64BIT))
-			err = __sys_recvmmsg(a0, (काष्ठा mmsghdr __user *)a1,
+		break;
+	case SYS_RECVMMSG:
+		if (IS_ENABLED(CONFIG_64BIT))
+			err = __sys_recvmmsg(a0, (struct mmsghdr __user *)a1,
 					     a[2], a[3],
-					     (काष्ठा __kernel_बारpec __user *)a[4],
-					     शून्य);
-		अन्यथा
-			err = __sys_recvmmsg(a0, (काष्ठा mmsghdr __user *)a1,
-					     a[2], a[3], शून्य,
-					     (काष्ठा old_बारpec32 __user *)a[4]);
-		अवरोध;
-	हाल SYS_ACCEPT4:
-		err = __sys_accept4(a0, (काष्ठा sockaddr __user *)a1,
-				    (पूर्णांक __user *)a[2], a[3]);
-		अवरोध;
-	शेष:
+					     (struct __kernel_timespec __user *)a[4],
+					     NULL);
+		else
+			err = __sys_recvmmsg(a0, (struct mmsghdr __user *)a1,
+					     a[2], a[3], NULL,
+					     (struct old_timespec32 __user *)a[4]);
+		break;
+	case SYS_ACCEPT4:
+		err = __sys_accept4(a0, (struct sockaddr __user *)a1,
+				    (int __user *)a[2], a[3]);
+		break;
+	default:
 		err = -EINVAL;
-		अवरोध;
-	पूर्ण
-	वापस err;
-पूर्ण
+		break;
+	}
+	return err;
+}
 
-#पूर्ण_अगर				/* __ARCH_WANT_SYS_SOCKETCALL */
+#endif				/* __ARCH_WANT_SYS_SOCKETCALL */
 
 /**
- *	sock_रेजिस्टर - add a socket protocol handler
+ *	sock_register - add a socket protocol handler
  *	@ops: description of protocol
  *
  *	This function is called by a protocol handler that wants to
- *	advertise its address family, and have it linked पूर्णांकo the
- *	socket पूर्णांकerface. The value ops->family corresponds to the
- *	socket प्रणाली call protocol family.
+ *	advertise its address family, and have it linked into the
+ *	socket interface. The value ops->family corresponds to the
+ *	socket system call protocol family.
  */
-पूर्णांक sock_रेजिस्टर(स्थिर काष्ठा net_proto_family *ops)
-अणु
-	पूर्णांक err;
+int sock_register(const struct net_proto_family *ops)
+{
+	int err;
 
-	अगर (ops->family >= NPROTO) अणु
+	if (ops->family >= NPROTO) {
 		pr_crit("protocol %d >= NPROTO(%d)\n", ops->family, NPROTO);
-		वापस -ENOBUFS;
-	पूर्ण
+		return -ENOBUFS;
+	}
 
 	spin_lock(&net_family_lock);
-	अगर (rcu_dereference_रक्षित(net_families[ops->family],
+	if (rcu_dereference_protected(net_families[ops->family],
 				      lockdep_is_held(&net_family_lock)))
 		err = -EEXIST;
-	अन्यथा अणु
-		rcu_assign_poपूर्णांकer(net_families[ops->family], ops);
+	else {
+		rcu_assign_pointer(net_families[ops->family], ops);
 		err = 0;
-	पूर्ण
+	}
 	spin_unlock(&net_family_lock);
 
 	pr_info("NET: Registered protocol family %d\n", ops->family);
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL(sock_रेजिस्टर);
+	return err;
+}
+EXPORT_SYMBOL(sock_register);
 
 /**
- *	sock_unरेजिस्टर - हटाओ a protocol handler
- *	@family: protocol family to हटाओ
+ *	sock_unregister - remove a protocol handler
+ *	@family: protocol family to remove
  *
  *	This function is called by a protocol handler that wants to
- *	हटाओ its address family, and have it unlinked from the
+ *	remove its address family, and have it unlinked from the
  *	new socket creation.
  *
  *	If protocol handler is a module, then it can use module reference
@@ -2994,34 +2993,34 @@ EXPORT_SYMBOL(sock_रेजिस्टर);
  *	a module then it needs to provide its own protection in
  *	the ops->create routine.
  */
-व्योम sock_unरेजिस्टर(पूर्णांक family)
-अणु
+void sock_unregister(int family)
+{
 	BUG_ON(family < 0 || family >= NPROTO);
 
 	spin_lock(&net_family_lock);
-	RCU_INIT_POINTER(net_families[family], शून्य);
+	RCU_INIT_POINTER(net_families[family], NULL);
 	spin_unlock(&net_family_lock);
 
 	synchronize_rcu();
 
 	pr_info("NET: Unregistered protocol family %d\n", family);
-पूर्ण
-EXPORT_SYMBOL(sock_unरेजिस्टर);
+}
+EXPORT_SYMBOL(sock_unregister);
 
-bool sock_is_रेजिस्टरed(पूर्णांक family)
-अणु
-	वापस family < NPROTO && rcu_access_poपूर्णांकer(net_families[family]);
-पूर्ण
+bool sock_is_registered(int family)
+{
+	return family < NPROTO && rcu_access_pointer(net_families[family]);
+}
 
-अटल पूर्णांक __init sock_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init sock_init(void)
+{
+	int err;
 	/*
-	 *      Initialize the network sysctl infraकाष्ठाure.
+	 *      Initialize the network sysctl infrastructure.
 	 */
 	err = net_sysctl_init();
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	/*
 	 *      Initialize skbuff SLAB cache
@@ -3034,455 +3033,455 @@ bool sock_is_रेजिस्टरed(पूर्णांक family)
 
 	init_inodecache();
 
-	err = रेजिस्टर_fileप्रणाली(&sock_fs_type);
-	अगर (err)
-		जाओ out;
+	err = register_filesystem(&sock_fs_type);
+	if (err)
+		goto out;
 	sock_mnt = kern_mount(&sock_fs_type);
-	अगर (IS_ERR(sock_mnt)) अणु
+	if (IS_ERR(sock_mnt)) {
 		err = PTR_ERR(sock_mnt);
-		जाओ out_mount;
-	पूर्ण
+		goto out_mount;
+	}
 
-	/* The real protocol initialization is perक्रमmed in later initcalls.
+	/* The real protocol initialization is performed in later initcalls.
 	 */
 
-#अगर_घोषित CONFIG_NETFILTER
+#ifdef CONFIG_NETFILTER
 	err = netfilter_init();
-	अगर (err)
-		जाओ out;
-#पूर्ण_अगर
+	if (err)
+		goto out;
+#endif
 
-	ptp_classअगरier_init();
+	ptp_classifier_init();
 
 out:
-	वापस err;
+	return err;
 
 out_mount:
-	unरेजिस्टर_fileप्रणाली(&sock_fs_type);
-	जाओ out;
-पूर्ण
+	unregister_filesystem(&sock_fs_type);
+	goto out;
+}
 
 core_initcall(sock_init);	/* early initcall */
 
-#अगर_घोषित CONFIG_PROC_FS
-व्योम socket_seq_show(काष्ठा seq_file *seq)
-अणु
-	seq_म_लिखो(seq, "sockets: used %d\n",
-		   sock_inuse_get(seq->निजी));
-पूर्ण
-#पूर्ण_अगर				/* CONFIG_PROC_FS */
+#ifdef CONFIG_PROC_FS
+void socket_seq_show(struct seq_file *seq)
+{
+	seq_printf(seq, "sockets: used %d\n",
+		   sock_inuse_get(seq->private));
+}
+#endif				/* CONFIG_PROC_FS */
 
-#अगर_घोषित CONFIG_COMPAT
-अटल पूर्णांक compat_dev_अगरconf(काष्ठा net *net, काष्ठा compat_अगरconf __user *uअगरc32)
-अणु
-	काष्ठा compat_अगरconf अगरc32;
-	काष्ठा अगरconf अगरc;
-	पूर्णांक err;
+#ifdef CONFIG_COMPAT
+static int compat_dev_ifconf(struct net *net, struct compat_ifconf __user *uifc32)
+{
+	struct compat_ifconf ifc32;
+	struct ifconf ifc;
+	int err;
 
-	अगर (copy_from_user(&अगरc32, uअगरc32, माप(काष्ठा compat_अगरconf)))
-		वापस -EFAULT;
+	if (copy_from_user(&ifc32, uifc32, sizeof(struct compat_ifconf)))
+		return -EFAULT;
 
-	अगरc.अगरc_len = अगरc32.अगरc_len;
-	अगरc.अगरc_req = compat_ptr(अगरc32.अगरcbuf);
+	ifc.ifc_len = ifc32.ifc_len;
+	ifc.ifc_req = compat_ptr(ifc32.ifcbuf);
 
 	rtnl_lock();
-	err = dev_अगरconf(net, &अगरc, माप(काष्ठा compat_अगरreq));
+	err = dev_ifconf(net, &ifc, sizeof(struct compat_ifreq));
 	rtnl_unlock();
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगरc32.अगरc_len = अगरc.अगरc_len;
-	अगर (copy_to_user(uअगरc32, &अगरc32, माप(काष्ठा compat_अगरconf)))
-		वापस -EFAULT;
+	ifc32.ifc_len = ifc.ifc_len;
+	if (copy_to_user(uifc32, &ifc32, sizeof(struct compat_ifconf)))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ethtool_ioctl(काष्ठा net *net, काष्ठा compat_अगरreq __user *अगरr32)
-अणु
-	काष्ठा compat_ethtool_rxnfc __user *compat_rxnfc;
+static int ethtool_ioctl(struct net *net, struct compat_ifreq __user *ifr32)
+{
+	struct compat_ethtool_rxnfc __user *compat_rxnfc;
 	bool convert_in = false, convert_out = false;
-	माप_प्रकार buf_size = 0;
-	काष्ठा ethtool_rxnfc __user *rxnfc = शून्य;
-	काष्ठा अगरreq अगरr;
+	size_t buf_size = 0;
+	struct ethtool_rxnfc __user *rxnfc = NULL;
+	struct ifreq ifr;
 	u32 rule_cnt = 0, actual_rule_cnt;
 	u32 ethcmd;
 	u32 data;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (get_user(data, &अगरr32->अगरr_अगरru.अगरru_data))
-		वापस -EFAULT;
+	if (get_user(data, &ifr32->ifr_ifru.ifru_data))
+		return -EFAULT;
 
 	compat_rxnfc = compat_ptr(data);
 
-	अगर (get_user(ethcmd, &compat_rxnfc->cmd))
-		वापस -EFAULT;
+	if (get_user(ethcmd, &compat_rxnfc->cmd))
+		return -EFAULT;
 
-	/* Most ethtool काष्ठाures are defined without padding.
-	 * Unक्रमtunately काष्ठा ethtool_rxnfc is an exception.
+	/* Most ethtool structures are defined without padding.
+	 * Unfortunately struct ethtool_rxnfc is an exception.
 	 */
-	चयन (ethcmd) अणु
-	शेष:
-		अवरोध;
-	हाल ETHTOOL_GRXCLSRLALL:
+	switch (ethcmd) {
+	default:
+		break;
+	case ETHTOOL_GRXCLSRLALL:
 		/* Buffer size is variable */
-		अगर (get_user(rule_cnt, &compat_rxnfc->rule_cnt))
-			वापस -EFAULT;
-		अगर (rule_cnt > KMALLOC_MAX_SIZE / माप(u32))
-			वापस -ENOMEM;
-		buf_size += rule_cnt * माप(u32);
+		if (get_user(rule_cnt, &compat_rxnfc->rule_cnt))
+			return -EFAULT;
+		if (rule_cnt > KMALLOC_MAX_SIZE / sizeof(u32))
+			return -ENOMEM;
+		buf_size += rule_cnt * sizeof(u32);
 		fallthrough;
-	हाल ETHTOOL_GRXRINGS:
-	हाल ETHTOOL_GRXCLSRLCNT:
-	हाल ETHTOOL_GRXCLSRULE:
-	हाल ETHTOOL_SRXCLSRLINS:
+	case ETHTOOL_GRXRINGS:
+	case ETHTOOL_GRXCLSRLCNT:
+	case ETHTOOL_GRXCLSRULE:
+	case ETHTOOL_SRXCLSRLINS:
 		convert_out = true;
 		fallthrough;
-	हाल ETHTOOL_SRXCLSRLDEL:
-		buf_size += माप(काष्ठा ethtool_rxnfc);
+	case ETHTOOL_SRXCLSRLDEL:
+		buf_size += sizeof(struct ethtool_rxnfc);
 		convert_in = true;
 		rxnfc = compat_alloc_user_space(buf_size);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (copy_from_user(&अगरr.अगरr_name, &अगरr32->अगरr_name, IFNAMSIZ))
-		वापस -EFAULT;
+	if (copy_from_user(&ifr.ifr_name, &ifr32->ifr_name, IFNAMSIZ))
+		return -EFAULT;
 
-	अगरr.अगरr_data = convert_in ? rxnfc : (व्योम __user *)compat_rxnfc;
+	ifr.ifr_data = convert_in ? rxnfc : (void __user *)compat_rxnfc;
 
-	अगर (convert_in) अणु
+	if (convert_in) {
 		/* We expect there to be holes between fs.m_ext and
-		 * fs.ring_cookie and at the end of fs, but nowhere अन्यथा.
+		 * fs.ring_cookie and at the end of fs, but nowhere else.
 		 */
-		BUILD_BUG_ON(दुरत्व(काष्ठा compat_ethtool_rxnfc, fs.m_ext) +
-			     माप(compat_rxnfc->fs.m_ext) !=
-			     दुरत्व(काष्ठा ethtool_rxnfc, fs.m_ext) +
-			     माप(rxnfc->fs.m_ext));
+		BUILD_BUG_ON(offsetof(struct compat_ethtool_rxnfc, fs.m_ext) +
+			     sizeof(compat_rxnfc->fs.m_ext) !=
+			     offsetof(struct ethtool_rxnfc, fs.m_ext) +
+			     sizeof(rxnfc->fs.m_ext));
 		BUILD_BUG_ON(
-			दुरत्व(काष्ठा compat_ethtool_rxnfc, fs.location) -
-			दुरत्व(काष्ठा compat_ethtool_rxnfc, fs.ring_cookie) !=
-			दुरत्व(काष्ठा ethtool_rxnfc, fs.location) -
-			दुरत्व(काष्ठा ethtool_rxnfc, fs.ring_cookie));
+			offsetof(struct compat_ethtool_rxnfc, fs.location) -
+			offsetof(struct compat_ethtool_rxnfc, fs.ring_cookie) !=
+			offsetof(struct ethtool_rxnfc, fs.location) -
+			offsetof(struct ethtool_rxnfc, fs.ring_cookie));
 
-		अगर (copy_in_user(rxnfc, compat_rxnfc,
-				 (व्योम __user *)(&rxnfc->fs.m_ext + 1) -
-				 (व्योम __user *)rxnfc) ||
+		if (copy_in_user(rxnfc, compat_rxnfc,
+				 (void __user *)(&rxnfc->fs.m_ext + 1) -
+				 (void __user *)rxnfc) ||
 		    copy_in_user(&rxnfc->fs.ring_cookie,
 				 &compat_rxnfc->fs.ring_cookie,
-				 (व्योम __user *)(&rxnfc->fs.location + 1) -
-				 (व्योम __user *)&rxnfc->fs.ring_cookie))
-			वापस -EFAULT;
-		अगर (ethcmd == ETHTOOL_GRXCLSRLALL) अणु
-			अगर (put_user(rule_cnt, &rxnfc->rule_cnt))
-				वापस -EFAULT;
-		पूर्ण अन्यथा अगर (copy_in_user(&rxnfc->rule_cnt,
+				 (void __user *)(&rxnfc->fs.location + 1) -
+				 (void __user *)&rxnfc->fs.ring_cookie))
+			return -EFAULT;
+		if (ethcmd == ETHTOOL_GRXCLSRLALL) {
+			if (put_user(rule_cnt, &rxnfc->rule_cnt))
+				return -EFAULT;
+		} else if (copy_in_user(&rxnfc->rule_cnt,
 					&compat_rxnfc->rule_cnt,
-					माप(rxnfc->rule_cnt)))
-			वापस -EFAULT;
-	पूर्ण
+					sizeof(rxnfc->rule_cnt)))
+			return -EFAULT;
+	}
 
-	ret = dev_ioctl(net, SIOCETHTOOL, &अगरr, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = dev_ioctl(net, SIOCETHTOOL, &ifr, NULL);
+	if (ret)
+		return ret;
 
-	अगर (convert_out) अणु
-		अगर (copy_in_user(compat_rxnfc, rxnfc,
-				 (स्थिर व्योम __user *)(&rxnfc->fs.m_ext + 1) -
-				 (स्थिर व्योम __user *)rxnfc) ||
+	if (convert_out) {
+		if (copy_in_user(compat_rxnfc, rxnfc,
+				 (const void __user *)(&rxnfc->fs.m_ext + 1) -
+				 (const void __user *)rxnfc) ||
 		    copy_in_user(&compat_rxnfc->fs.ring_cookie,
 				 &rxnfc->fs.ring_cookie,
-				 (स्थिर व्योम __user *)(&rxnfc->fs.location + 1) -
-				 (स्थिर व्योम __user *)&rxnfc->fs.ring_cookie) ||
+				 (const void __user *)(&rxnfc->fs.location + 1) -
+				 (const void __user *)&rxnfc->fs.ring_cookie) ||
 		    copy_in_user(&compat_rxnfc->rule_cnt, &rxnfc->rule_cnt,
-				 माप(rxnfc->rule_cnt)))
-			वापस -EFAULT;
+				 sizeof(rxnfc->rule_cnt)))
+			return -EFAULT;
 
-		अगर (ethcmd == ETHTOOL_GRXCLSRLALL) अणु
+		if (ethcmd == ETHTOOL_GRXCLSRLALL) {
 			/* As an optimisation, we only copy the actual
 			 * number of rules that the underlying
-			 * function वापसed.  Since Mallory might
+			 * function returned.  Since Mallory might
 			 * change the rule count in user memory, we
 			 * check that it is less than the rule count
 			 * originally given (as the user buffer size),
 			 * which has been range-checked.
 			 */
-			अगर (get_user(actual_rule_cnt, &rxnfc->rule_cnt))
-				वापस -EFAULT;
-			अगर (actual_rule_cnt < rule_cnt)
+			if (get_user(actual_rule_cnt, &rxnfc->rule_cnt))
+				return -EFAULT;
+			if (actual_rule_cnt < rule_cnt)
 				rule_cnt = actual_rule_cnt;
-			अगर (copy_in_user(&compat_rxnfc->rule_locs[0],
+			if (copy_in_user(&compat_rxnfc->rule_locs[0],
 					 &rxnfc->rule_locs[0],
-					 rule_cnt * माप(u32)))
-				वापस -EFAULT;
-		पूर्ण
-	पूर्ण
+					 rule_cnt * sizeof(u32)))
+				return -EFAULT;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक compat_siocwandev(काष्ठा net *net, काष्ठा compat_अगरreq __user *uअगरr32)
-अणु
+static int compat_siocwandev(struct net *net, struct compat_ifreq __user *uifr32)
+{
 	compat_uptr_t uptr32;
-	काष्ठा अगरreq अगरr;
-	व्योम __user *saved;
-	पूर्णांक err;
+	struct ifreq ifr;
+	void __user *saved;
+	int err;
 
-	अगर (copy_from_user(&अगरr, uअगरr32, माप(काष्ठा compat_अगरreq)))
-		वापस -EFAULT;
+	if (copy_from_user(&ifr, uifr32, sizeof(struct compat_ifreq)))
+		return -EFAULT;
 
-	अगर (get_user(uptr32, &uअगरr32->अगरr_settings.अगरs_अगरsu))
-		वापस -EFAULT;
+	if (get_user(uptr32, &uifr32->ifr_settings.ifs_ifsu))
+		return -EFAULT;
 
-	saved = अगरr.अगरr_settings.अगरs_अगरsu.raw_hdlc;
-	अगरr.अगरr_settings.अगरs_अगरsu.raw_hdlc = compat_ptr(uptr32);
+	saved = ifr.ifr_settings.ifs_ifsu.raw_hdlc;
+	ifr.ifr_settings.ifs_ifsu.raw_hdlc = compat_ptr(uptr32);
 
-	err = dev_ioctl(net, SIOCWANDEV, &अगरr, शून्य);
-	अगर (!err) अणु
-		अगरr.अगरr_settings.अगरs_अगरsu.raw_hdlc = saved;
-		अगर (copy_to_user(uअगरr32, &अगरr, माप(काष्ठा compat_अगरreq)))
+	err = dev_ioctl(net, SIOCWANDEV, &ifr, NULL);
+	if (!err) {
+		ifr.ifr_settings.ifs_ifsu.raw_hdlc = saved;
+		if (copy_to_user(uifr32, &ifr, sizeof(struct compat_ifreq)))
 			err = -EFAULT;
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-/* Handle ioctls that use अगरreq::अगरr_data and just need काष्ठा अगरreq converted */
-अटल पूर्णांक compat_अगरr_data_ioctl(काष्ठा net *net, अचिन्हित पूर्णांक cmd,
-				 काष्ठा compat_अगरreq __user *u_अगरreq32)
-अणु
-	काष्ठा अगरreq अगरreq;
+/* Handle ioctls that use ifreq::ifr_data and just need struct ifreq converted */
+static int compat_ifr_data_ioctl(struct net *net, unsigned int cmd,
+				 struct compat_ifreq __user *u_ifreq32)
+{
+	struct ifreq ifreq;
 	u32 data32;
 
-	अगर (copy_from_user(अगरreq.अगरr_name, u_अगरreq32->अगरr_name, IFNAMSIZ))
-		वापस -EFAULT;
-	अगर (get_user(data32, &u_अगरreq32->अगरr_data))
-		वापस -EFAULT;
-	अगरreq.अगरr_data = compat_ptr(data32);
+	if (copy_from_user(ifreq.ifr_name, u_ifreq32->ifr_name, IFNAMSIZ))
+		return -EFAULT;
+	if (get_user(data32, &u_ifreq32->ifr_data))
+		return -EFAULT;
+	ifreq.ifr_data = compat_ptr(data32);
 
-	वापस dev_ioctl(net, cmd, &अगरreq, शून्य);
-पूर्ण
+	return dev_ioctl(net, cmd, &ifreq, NULL);
+}
 
-अटल पूर्णांक compat_अगरreq_ioctl(काष्ठा net *net, काष्ठा socket *sock,
-			      अचिन्हित पूर्णांक cmd,
-			      काष्ठा compat_अगरreq __user *uअगरr32)
-अणु
-	काष्ठा अगरreq __user *uअगरr;
-	पूर्णांक err;
+static int compat_ifreq_ioctl(struct net *net, struct socket *sock,
+			      unsigned int cmd,
+			      struct compat_ifreq __user *uifr32)
+{
+	struct ifreq __user *uifr;
+	int err;
 
-	/* Handle the fact that जबतक काष्ठा अगरreq has the same *layout* on
-	 * 32/64 क्रम everything but अगरreq::अगरru_अगरmap and अगरreq::अगरru_data,
-	 * which are handled अन्यथाwhere, it still has dअगरferent *size* due to
-	 * अगरreq::अगरru_अगरmap (which is 16 bytes on 32 bit, 24 bytes on 64-bit,
-	 * resulting in काष्ठा अगरreq being 32 and 40 bytes respectively).
-	 * As a result, अगर the काष्ठा happens to be at the end of a page and
-	 * the next page isn't पढ़ोable/writable, we get a fault. To prevent
-	 * that, copy back and क्रमth to the full size.
+	/* Handle the fact that while struct ifreq has the same *layout* on
+	 * 32/64 for everything but ifreq::ifru_ifmap and ifreq::ifru_data,
+	 * which are handled elsewhere, it still has different *size* due to
+	 * ifreq::ifru_ifmap (which is 16 bytes on 32 bit, 24 bytes on 64-bit,
+	 * resulting in struct ifreq being 32 and 40 bytes respectively).
+	 * As a result, if the struct happens to be at the end of a page and
+	 * the next page isn't readable/writable, we get a fault. To prevent
+	 * that, copy back and forth to the full size.
 	 */
 
-	uअगरr = compat_alloc_user_space(माप(*uअगरr));
-	अगर (copy_in_user(uअगरr, uअगरr32, माप(*uअगरr32)))
-		वापस -EFAULT;
+	uifr = compat_alloc_user_space(sizeof(*uifr));
+	if (copy_in_user(uifr, uifr32, sizeof(*uifr32)))
+		return -EFAULT;
 
-	err = sock_करो_ioctl(net, sock, cmd, (अचिन्हित दीर्घ)uअगरr);
+	err = sock_do_ioctl(net, sock, cmd, (unsigned long)uifr);
 
-	अगर (!err) अणु
-		चयन (cmd) अणु
-		हाल SIOCGIFFLAGS:
-		हाल SIOCGIFMETRIC:
-		हाल SIOCGIFMTU:
-		हाल SIOCGIFMEM:
-		हाल SIOCGIFHWADDR:
-		हाल SIOCGIFINDEX:
-		हाल SIOCGIFADDR:
-		हाल SIOCGIFBRDADDR:
-		हाल SIOCGIFDSTADDR:
-		हाल SIOCGIFNETMASK:
-		हाल SIOCGIFPFLAGS:
-		हाल SIOCGIFTXQLEN:
-		हाल SIOCGMIIPHY:
-		हाल SIOCGMIIREG:
-		हाल SIOCGIFNAME:
-			अगर (copy_in_user(uअगरr32, uअगरr, माप(*uअगरr32)))
+	if (!err) {
+		switch (cmd) {
+		case SIOCGIFFLAGS:
+		case SIOCGIFMETRIC:
+		case SIOCGIFMTU:
+		case SIOCGIFMEM:
+		case SIOCGIFHWADDR:
+		case SIOCGIFINDEX:
+		case SIOCGIFADDR:
+		case SIOCGIFBRDADDR:
+		case SIOCGIFDSTADDR:
+		case SIOCGIFNETMASK:
+		case SIOCGIFPFLAGS:
+		case SIOCGIFTXQLEN:
+		case SIOCGMIIPHY:
+		case SIOCGMIIREG:
+		case SIOCGIFNAME:
+			if (copy_in_user(uifr32, uifr, sizeof(*uifr32)))
 				err = -EFAULT;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस err;
-पूर्ण
+			break;
+		}
+	}
+	return err;
+}
 
-अटल पूर्णांक compat_sioc_अगरmap(काष्ठा net *net, अचिन्हित पूर्णांक cmd,
-			काष्ठा compat_अगरreq __user *uअगरr32)
-अणु
-	काष्ठा अगरreq अगरr;
-	काष्ठा compat_अगरmap __user *uअगरmap32;
-	पूर्णांक err;
+static int compat_sioc_ifmap(struct net *net, unsigned int cmd,
+			struct compat_ifreq __user *uifr32)
+{
+	struct ifreq ifr;
+	struct compat_ifmap __user *uifmap32;
+	int err;
 
-	uअगरmap32 = &uअगरr32->अगरr_अगरru.अगरru_map;
-	err = copy_from_user(&अगरr, uअगरr32, माप(अगरr.अगरr_name));
-	err |= get_user(अगरr.अगरr_map.mem_start, &uअगरmap32->mem_start);
-	err |= get_user(अगरr.अगरr_map.mem_end, &uअगरmap32->mem_end);
-	err |= get_user(अगरr.अगरr_map.base_addr, &uअगरmap32->base_addr);
-	err |= get_user(अगरr.अगरr_map.irq, &uअगरmap32->irq);
-	err |= get_user(अगरr.अगरr_map.dma, &uअगरmap32->dma);
-	err |= get_user(अगरr.अगरr_map.port, &uअगरmap32->port);
-	अगर (err)
-		वापस -EFAULT;
+	uifmap32 = &uifr32->ifr_ifru.ifru_map;
+	err = copy_from_user(&ifr, uifr32, sizeof(ifr.ifr_name));
+	err |= get_user(ifr.ifr_map.mem_start, &uifmap32->mem_start);
+	err |= get_user(ifr.ifr_map.mem_end, &uifmap32->mem_end);
+	err |= get_user(ifr.ifr_map.base_addr, &uifmap32->base_addr);
+	err |= get_user(ifr.ifr_map.irq, &uifmap32->irq);
+	err |= get_user(ifr.ifr_map.dma, &uifmap32->dma);
+	err |= get_user(ifr.ifr_map.port, &uifmap32->port);
+	if (err)
+		return -EFAULT;
 
-	err = dev_ioctl(net, cmd, &अगरr, शून्य);
+	err = dev_ioctl(net, cmd, &ifr, NULL);
 
-	अगर (cmd == SIOCGIFMAP && !err) अणु
-		err = copy_to_user(uअगरr32, &अगरr, माप(अगरr.अगरr_name));
-		err |= put_user(अगरr.अगरr_map.mem_start, &uअगरmap32->mem_start);
-		err |= put_user(अगरr.अगरr_map.mem_end, &uअगरmap32->mem_end);
-		err |= put_user(अगरr.अगरr_map.base_addr, &uअगरmap32->base_addr);
-		err |= put_user(अगरr.अगरr_map.irq, &uअगरmap32->irq);
-		err |= put_user(अगरr.अगरr_map.dma, &uअगरmap32->dma);
-		err |= put_user(अगरr.अगरr_map.port, &uअगरmap32->port);
-		अगर (err)
+	if (cmd == SIOCGIFMAP && !err) {
+		err = copy_to_user(uifr32, &ifr, sizeof(ifr.ifr_name));
+		err |= put_user(ifr.ifr_map.mem_start, &uifmap32->mem_start);
+		err |= put_user(ifr.ifr_map.mem_end, &uifmap32->mem_end);
+		err |= put_user(ifr.ifr_map.base_addr, &uifmap32->base_addr);
+		err |= put_user(ifr.ifr_map.irq, &uifmap32->irq);
+		err |= put_user(ifr.ifr_map.dma, &uifmap32->dma);
+		err |= put_user(ifr.ifr_map.port, &uifmap32->port);
+		if (err)
 			err = -EFAULT;
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
 /* Since old style bridge ioctl's endup using SIOCDEVPRIVATE
- * क्रम some operations; this क्रमces use of the newer bridge-utils that
+ * for some operations; this forces use of the newer bridge-utils that
  * use compatible ioctls
  */
-अटल पूर्णांक old_bridge_ioctl(compat_uदीर्घ_t __user *argp)
-अणु
-	compat_uदीर्घ_t पंचांगp;
+static int old_bridge_ioctl(compat_ulong_t __user *argp)
+{
+	compat_ulong_t tmp;
 
-	अगर (get_user(पंचांगp, argp))
-		वापस -EFAULT;
-	अगर (पंचांगp == BRCTL_GET_VERSION)
-		वापस BRCTL_VERSION + 1;
-	वापस -EINVAL;
-पूर्ण
+	if (get_user(tmp, argp))
+		return -EFAULT;
+	if (tmp == BRCTL_GET_VERSION)
+		return BRCTL_VERSION + 1;
+	return -EINVAL;
+}
 
-अटल पूर्णांक compat_sock_ioctl_trans(काष्ठा file *file, काष्ठा socket *sock,
-			 अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	व्योम __user *argp = compat_ptr(arg);
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा net *net = sock_net(sk);
+static int compat_sock_ioctl_trans(struct file *file, struct socket *sock,
+			 unsigned int cmd, unsigned long arg)
+{
+	void __user *argp = compat_ptr(arg);
+	struct sock *sk = sock->sk;
+	struct net *net = sock_net(sk);
 
-	अगर (cmd >= SIOCDEVPRIVATE && cmd <= (SIOCDEVPRIVATE + 15))
-		वापस compat_अगरr_data_ioctl(net, cmd, argp);
+	if (cmd >= SIOCDEVPRIVATE && cmd <= (SIOCDEVPRIVATE + 15))
+		return compat_ifr_data_ioctl(net, cmd, argp);
 
-	चयन (cmd) अणु
-	हाल SIOCSIFBR:
-	हाल SIOCGIFBR:
-		वापस old_bridge_ioctl(argp);
-	हाल SIOCGIFCONF:
-		वापस compat_dev_अगरconf(net, argp);
-	हाल SIOCETHTOOL:
-		वापस ethtool_ioctl(net, argp);
-	हाल SIOCWANDEV:
-		वापस compat_siocwandev(net, argp);
-	हाल SIOCGIFMAP:
-	हाल SIOCSIFMAP:
-		वापस compat_sioc_अगरmap(net, cmd, argp);
-	हाल SIOCGSTAMP_OLD:
-	हाल SIOCGSTAMPNS_OLD:
-		अगर (!sock->ops->gettstamp)
-			वापस -ENOIOCTLCMD;
-		वापस sock->ops->gettstamp(sock, argp, cmd == SIOCGSTAMP_OLD,
+	switch (cmd) {
+	case SIOCSIFBR:
+	case SIOCGIFBR:
+		return old_bridge_ioctl(argp);
+	case SIOCGIFCONF:
+		return compat_dev_ifconf(net, argp);
+	case SIOCETHTOOL:
+		return ethtool_ioctl(net, argp);
+	case SIOCWANDEV:
+		return compat_siocwandev(net, argp);
+	case SIOCGIFMAP:
+	case SIOCSIFMAP:
+		return compat_sioc_ifmap(net, cmd, argp);
+	case SIOCGSTAMP_OLD:
+	case SIOCGSTAMPNS_OLD:
+		if (!sock->ops->gettstamp)
+			return -ENOIOCTLCMD;
+		return sock->ops->gettstamp(sock, argp, cmd == SIOCGSTAMP_OLD,
 					    !COMPAT_USE_64BIT_TIME);
 
-	हाल SIOCBONDSLAVEINFOQUERY:
-	हाल SIOCBONDINFOQUERY:
-	हाल SIOCSHWTSTAMP:
-	हाल SIOCGHWTSTAMP:
-		वापस compat_अगरr_data_ioctl(net, cmd, argp);
+	case SIOCBONDSLAVEINFOQUERY:
+	case SIOCBONDINFOQUERY:
+	case SIOCSHWTSTAMP:
+	case SIOCGHWTSTAMP:
+		return compat_ifr_data_ioctl(net, cmd, argp);
 
-	हाल FIOSETOWN:
-	हाल SIOCSPGRP:
-	हाल FIOGETOWN:
-	हाल SIOCGPGRP:
-	हाल SIOCBRADDBR:
-	हाल SIOCBRDELBR:
-	हाल SIOCGIFVLAN:
-	हाल SIOCSIFVLAN:
-	हाल SIOCGSKNS:
-	हाल SIOCGSTAMP_NEW:
-	हाल SIOCGSTAMPNS_NEW:
-		वापस sock_ioctl(file, cmd, arg);
+	case FIOSETOWN:
+	case SIOCSPGRP:
+	case FIOGETOWN:
+	case SIOCGPGRP:
+	case SIOCBRADDBR:
+	case SIOCBRDELBR:
+	case SIOCGIFVLAN:
+	case SIOCSIFVLAN:
+	case SIOCGSKNS:
+	case SIOCGSTAMP_NEW:
+	case SIOCGSTAMPNS_NEW:
+		return sock_ioctl(file, cmd, arg);
 
-	हाल SIOCGIFFLAGS:
-	हाल SIOCSIFFLAGS:
-	हाल SIOCGIFMETRIC:
-	हाल SIOCSIFMETRIC:
-	हाल SIOCGIFMTU:
-	हाल SIOCSIFMTU:
-	हाल SIOCGIFMEM:
-	हाल SIOCSIFMEM:
-	हाल SIOCGIFHWADDR:
-	हाल SIOCSIFHWADDR:
-	हाल SIOCADDMULTI:
-	हाल SIOCDELMULTI:
-	हाल SIOCGIFINDEX:
-	हाल SIOCGIFADDR:
-	हाल SIOCSIFADDR:
-	हाल SIOCSIFHWBROADCAST:
-	हाल SIOCDIFADDR:
-	हाल SIOCGIFBRDADDR:
-	हाल SIOCSIFBRDADDR:
-	हाल SIOCGIFDSTADDR:
-	हाल SIOCSIFDSTADDR:
-	हाल SIOCGIFNETMASK:
-	हाल SIOCSIFNETMASK:
-	हाल SIOCSIFPFLAGS:
-	हाल SIOCGIFPFLAGS:
-	हाल SIOCGIFTXQLEN:
-	हाल SIOCSIFTXQLEN:
-	हाल SIOCBRADDIF:
-	हाल SIOCBRDELIF:
-	हाल SIOCGIFNAME:
-	हाल SIOCSIFNAME:
-	हाल SIOCGMIIPHY:
-	हाल SIOCGMIIREG:
-	हाल SIOCSMIIREG:
-	हाल SIOCBONDENSLAVE:
-	हाल SIOCBONDRELEASE:
-	हाल SIOCBONDSETHWADDR:
-	हाल SIOCBONDCHANGEACTIVE:
-		वापस compat_अगरreq_ioctl(net, sock, cmd, argp);
+	case SIOCGIFFLAGS:
+	case SIOCSIFFLAGS:
+	case SIOCGIFMETRIC:
+	case SIOCSIFMETRIC:
+	case SIOCGIFMTU:
+	case SIOCSIFMTU:
+	case SIOCGIFMEM:
+	case SIOCSIFMEM:
+	case SIOCGIFHWADDR:
+	case SIOCSIFHWADDR:
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+	case SIOCGIFINDEX:
+	case SIOCGIFADDR:
+	case SIOCSIFADDR:
+	case SIOCSIFHWBROADCAST:
+	case SIOCDIFADDR:
+	case SIOCGIFBRDADDR:
+	case SIOCSIFBRDADDR:
+	case SIOCGIFDSTADDR:
+	case SIOCSIFDSTADDR:
+	case SIOCGIFNETMASK:
+	case SIOCSIFNETMASK:
+	case SIOCSIFPFLAGS:
+	case SIOCGIFPFLAGS:
+	case SIOCGIFTXQLEN:
+	case SIOCSIFTXQLEN:
+	case SIOCBRADDIF:
+	case SIOCBRDELIF:
+	case SIOCGIFNAME:
+	case SIOCSIFNAME:
+	case SIOCGMIIPHY:
+	case SIOCGMIIREG:
+	case SIOCSMIIREG:
+	case SIOCBONDENSLAVE:
+	case SIOCBONDRELEASE:
+	case SIOCBONDSETHWADDR:
+	case SIOCBONDCHANGEACTIVE:
+		return compat_ifreq_ioctl(net, sock, cmd, argp);
 
-	हाल SIOCSARP:
-	हाल SIOCGARP:
-	हाल SIOCDARP:
-	हाल SIOCOUTQ:
-	हाल SIOCOUTQNSD:
-	हाल SIOCATMARK:
-		वापस sock_करो_ioctl(net, sock, cmd, arg);
-	पूर्ण
+	case SIOCSARP:
+	case SIOCGARP:
+	case SIOCDARP:
+	case SIOCOUTQ:
+	case SIOCOUTQNSD:
+	case SIOCATMARK:
+		return sock_do_ioctl(net, sock, cmd, arg);
+	}
 
-	वापस -ENOIOCTLCMD;
-पूर्ण
+	return -ENOIOCTLCMD;
+}
 
-अटल दीर्घ compat_sock_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-			      अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा socket *sock = file->निजी_data;
-	पूर्णांक ret = -ENOIOCTLCMD;
-	काष्ठा sock *sk;
-	काष्ठा net *net;
+static long compat_sock_ioctl(struct file *file, unsigned int cmd,
+			      unsigned long arg)
+{
+	struct socket *sock = file->private_data;
+	int ret = -ENOIOCTLCMD;
+	struct sock *sk;
+	struct net *net;
 
 	sk = sock->sk;
 	net = sock_net(sk);
 
-	अगर (sock->ops->compat_ioctl)
+	if (sock->ops->compat_ioctl)
 		ret = sock->ops->compat_ioctl(sock, cmd, arg);
 
-	अगर (ret == -ENOIOCTLCMD &&
+	if (ret == -ENOIOCTLCMD &&
 	    (cmd >= SIOCIWFIRST && cmd <= SIOCIWLAST))
 		ret = compat_wext_handle_ioctl(net, cmd, arg);
 
-	अगर (ret == -ENOIOCTLCMD)
+	if (ret == -ENOIOCTLCMD)
 		ret = compat_sock_ioctl_trans(file, sock, cmd, arg);
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
 /**
  *	kernel_bind - bind an address to a socket (kernel space)
@@ -3493,10 +3492,10 @@ core_initcall(sock_init);	/* early initcall */
  *	Returns 0 or an error.
  */
 
-पूर्णांक kernel_bind(काष्ठा socket *sock, काष्ठा sockaddr *addr, पूर्णांक addrlen)
-अणु
-	वापस sock->ops->bind(sock, addr, addrlen);
-पूर्ण
+int kernel_bind(struct socket *sock, struct sockaddr *addr, int addrlen)
+{
+	return sock->ops->bind(sock, addr, addrlen);
+}
 EXPORT_SYMBOL(kernel_bind);
 
 /**
@@ -3507,10 +3506,10 @@ EXPORT_SYMBOL(kernel_bind);
  *	Returns 0 or an error.
  */
 
-पूर्णांक kernel_listen(काष्ठा socket *sock, पूर्णांक backlog)
-अणु
-	वापस sock->ops->listen(sock, backlog);
-पूर्ण
+int kernel_listen(struct socket *sock, int backlog)
+{
+	return sock->ops->listen(sock, backlog);
+}
 EXPORT_SYMBOL(kernel_listen);
 
 /**
@@ -3520,33 +3519,33 @@ EXPORT_SYMBOL(kernel_listen);
  *	@flags: flags
  *
  *	@flags must be SOCK_CLOEXEC, SOCK_NONBLOCK or 0.
- *	If it fails, @newsock is guaranteed to be %शून्य.
+ *	If it fails, @newsock is guaranteed to be %NULL.
  *	Returns 0 or an error.
  */
 
-पूर्णांक kernel_accept(काष्ठा socket *sock, काष्ठा socket **newsock, पूर्णांक flags)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	पूर्णांक err;
+int kernel_accept(struct socket *sock, struct socket **newsock, int flags)
+{
+	struct sock *sk = sock->sk;
+	int err;
 
 	err = sock_create_lite(sk->sk_family, sk->sk_type, sk->sk_protocol,
 			       newsock);
-	अगर (err < 0)
-		जाओ करोne;
+	if (err < 0)
+		goto done;
 
 	err = sock->ops->accept(sock, *newsock, flags, true);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		sock_release(*newsock);
-		*newsock = शून्य;
-		जाओ करोne;
-	पूर्ण
+		*newsock = NULL;
+		goto done;
+	}
 
 	(*newsock)->ops = sock->ops;
 	__module_get((*newsock)->ops->owner);
 
-करोne:
-	वापस err;
-पूर्ण
+done:
+	return err;
+}
 EXPORT_SYMBOL(kernel_accept);
 
 /**
@@ -3557,46 +3556,46 @@ EXPORT_SYMBOL(kernel_accept);
  *	@flags: flags (O_NONBLOCK, ...)
  *
  *	For datagram sockets, @addr is the address to which datagrams are sent
- *	by शेष, and the only address from which datagrams are received.
+ *	by default, and the only address from which datagrams are received.
  *	For stream sockets, attempts to connect to @addr.
  *	Returns 0 or an error code.
  */
 
-पूर्णांक kernel_connect(काष्ठा socket *sock, काष्ठा sockaddr *addr, पूर्णांक addrlen,
-		   पूर्णांक flags)
-अणु
-	वापस sock->ops->connect(sock, addr, addrlen, flags);
-पूर्ण
+int kernel_connect(struct socket *sock, struct sockaddr *addr, int addrlen,
+		   int flags)
+{
+	return sock->ops->connect(sock, addr, addrlen, flags);
+}
 EXPORT_SYMBOL(kernel_connect);
 
 /**
- *	kernel_माला_लोockname - get the address which the socket is bound (kernel space)
+ *	kernel_getsockname - get the address which the socket is bound (kernel space)
  *	@sock: socket
  *	@addr: address holder
  *
- * 	Fills the @addr poपूर्णांकer with the address which the socket is bound.
+ * 	Fills the @addr pointer with the address which the socket is bound.
  *	Returns 0 or an error code.
  */
 
-पूर्णांक kernel_माला_लोockname(काष्ठा socket *sock, काष्ठा sockaddr *addr)
-अणु
-	वापस sock->ops->getname(sock, addr, 0);
-पूर्ण
-EXPORT_SYMBOL(kernel_माला_लोockname);
+int kernel_getsockname(struct socket *sock, struct sockaddr *addr)
+{
+	return sock->ops->getname(sock, addr, 0);
+}
+EXPORT_SYMBOL(kernel_getsockname);
 
 /**
  *	kernel_getpeername - get the address which the socket is connected (kernel space)
  *	@sock: socket
  *	@addr: address holder
  *
- * 	Fills the @addr poपूर्णांकer with the address which the socket is connected.
+ * 	Fills the @addr pointer with the address which the socket is connected.
  *	Returns 0 or an error code.
  */
 
-पूर्णांक kernel_getpeername(काष्ठा socket *sock, काष्ठा sockaddr *addr)
-अणु
-	वापस sock->ops->getname(sock, addr, 1);
-पूर्ण
+int kernel_getpeername(struct socket *sock, struct sockaddr *addr)
+{
+	return sock->ops->getname(sock, addr, 1);
+}
 EXPORT_SYMBOL(kernel_getpeername);
 
 /**
@@ -3610,16 +3609,16 @@ EXPORT_SYMBOL(kernel_getpeername);
  *	Returns the total amount sent in bytes or an error.
  */
 
-पूर्णांक kernel_sendpage(काष्ठा socket *sock, काष्ठा page *page, पूर्णांक offset,
-		    माप_प्रकार size, पूर्णांक flags)
-अणु
-	अगर (sock->ops->sendpage) अणु
-		/* Warn in हाल the improper page to zero-copy send */
+int kernel_sendpage(struct socket *sock, struct page *page, int offset,
+		    size_t size, int flags)
+{
+	if (sock->ops->sendpage) {
+		/* Warn in case the improper page to zero-copy send */
 		WARN_ONCE(!sendpage_ok(page), "improper page for zero-copy send");
-		वापस sock->ops->sendpage(sock, page, offset, size, flags);
-	पूर्ण
-	वापस sock_no_sendpage(sock, page, offset, size, flags);
-पूर्ण
+		return sock->ops->sendpage(sock, page, offset, size, flags);
+	}
+	return sock_no_sendpage(sock, page, offset, size, flags);
+}
 EXPORT_SYMBOL(kernel_sendpage);
 
 /**
@@ -3634,78 +3633,78 @@ EXPORT_SYMBOL(kernel_sendpage);
  *	Caller must hold @sk.
  */
 
-पूर्णांक kernel_sendpage_locked(काष्ठा sock *sk, काष्ठा page *page, पूर्णांक offset,
-			   माप_प्रकार size, पूर्णांक flags)
-अणु
-	काष्ठा socket *sock = sk->sk_socket;
+int kernel_sendpage_locked(struct sock *sk, struct page *page, int offset,
+			   size_t size, int flags)
+{
+	struct socket *sock = sk->sk_socket;
 
-	अगर (sock->ops->sendpage_locked)
-		वापस sock->ops->sendpage_locked(sk, page, offset, size,
+	if (sock->ops->sendpage_locked)
+		return sock->ops->sendpage_locked(sk, page, offset, size,
 						  flags);
 
-	वापस sock_no_sendpage_locked(sk, page, offset, size, flags);
-पूर्ण
+	return sock_no_sendpage_locked(sk, page, offset, size, flags);
+}
 EXPORT_SYMBOL(kernel_sendpage_locked);
 
 /**
- *	kernel_sock_shutकरोwn - shut करोwn part of a full-duplex connection (kernel space)
+ *	kernel_sock_shutdown - shut down part of a full-duplex connection (kernel space)
  *	@sock: socket
  *	@how: connection part
  *
  *	Returns 0 or an error.
  */
 
-पूर्णांक kernel_sock_shutकरोwn(काष्ठा socket *sock, क्रमागत sock_shutकरोwn_cmd how)
-अणु
-	वापस sock->ops->shutकरोwn(sock, how);
-पूर्ण
-EXPORT_SYMBOL(kernel_sock_shutकरोwn);
+int kernel_sock_shutdown(struct socket *sock, enum sock_shutdown_cmd how)
+{
+	return sock->ops->shutdown(sock, how);
+}
+EXPORT_SYMBOL(kernel_sock_shutdown);
 
 /**
- *	kernel_sock_ip_overhead - वापसs the IP overhead imposed by a socket
+ *	kernel_sock_ip_overhead - returns the IP overhead imposed by a socket
  *	@sk: socket
  *
- *	This routine वापसs the IP overhead imposed by a socket i.e.
+ *	This routine returns the IP overhead imposed by a socket i.e.
  *	the length of the underlying IP header, depending on whether
  *	this is an IPv4 or IPv6 socket and the length from IP options turned
  *	on at the socket. Assumes that the caller has a lock on the socket.
  */
 
-u32 kernel_sock_ip_overhead(काष्ठा sock *sk)
-अणु
-	काष्ठा inet_sock *inet;
-	काष्ठा ip_options_rcu *opt;
+u32 kernel_sock_ip_overhead(struct sock *sk)
+{
+	struct inet_sock *inet;
+	struct ip_options_rcu *opt;
 	u32 overhead = 0;
-#अगर IS_ENABLED(CONFIG_IPV6)
-	काष्ठा ipv6_pinfo *np;
-	काष्ठा ipv6_txoptions *optv6 = शून्य;
-#पूर्ण_अगर /* IS_ENABLED(CONFIG_IPV6) */
+#if IS_ENABLED(CONFIG_IPV6)
+	struct ipv6_pinfo *np;
+	struct ipv6_txoptions *optv6 = NULL;
+#endif /* IS_ENABLED(CONFIG_IPV6) */
 
-	अगर (!sk)
-		वापस overhead;
+	if (!sk)
+		return overhead;
 
-	चयन (sk->sk_family) अणु
-	हाल AF_INET:
+	switch (sk->sk_family) {
+	case AF_INET:
 		inet = inet_sk(sk);
-		overhead += माप(काष्ठा iphdr);
-		opt = rcu_dereference_रक्षित(inet->inet_opt,
+		overhead += sizeof(struct iphdr);
+		opt = rcu_dereference_protected(inet->inet_opt,
 						sock_owned_by_user(sk));
-		अगर (opt)
+		if (opt)
 			overhead += opt->opt.optlen;
-		वापस overhead;
-#अगर IS_ENABLED(CONFIG_IPV6)
-	हाल AF_INET6:
+		return overhead;
+#if IS_ENABLED(CONFIG_IPV6)
+	case AF_INET6:
 		np = inet6_sk(sk);
-		overhead += माप(काष्ठा ipv6hdr);
-		अगर (np)
-			optv6 = rcu_dereference_रक्षित(np->opt,
+		overhead += sizeof(struct ipv6hdr);
+		if (np)
+			optv6 = rcu_dereference_protected(np->opt,
 							  sock_owned_by_user(sk));
-		अगर (optv6)
+		if (optv6)
 			overhead += (optv6->opt_flen + optv6->opt_nflen);
-		वापस overhead;
-#पूर्ण_अगर /* IS_ENABLED(CONFIG_IPV6) */
-	शेष: /* Returns 0 overhead अगर the socket is not ipv4 or ipv6 */
-		वापस overhead;
-	पूर्ण
-पूर्ण
+		return overhead;
+#endif /* IS_ENABLED(CONFIG_IPV6) */
+	default: /* Returns 0 overhead if the socket is not ipv4 or ipv6 */
+		return overhead;
+	}
+}
 EXPORT_SYMBOL(kernel_sock_ip_overhead);

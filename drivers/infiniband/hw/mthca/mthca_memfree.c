@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2004, 2005 Topspin Communications.  All rights reserved.
  * Copyright (c) 2005 Cisco Systems.  All rights reserved.
@@ -7,20 +6,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -33,258 +32,258 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/mm.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
+#include <linux/mm.h>
+#include <linux/scatterlist.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
 
-#समावेश <यंत्र/page.h>
+#include <asm/page.h>
 
-#समावेश "mthca_memfree.h"
-#समावेश "mthca_dev.h"
-#समावेश "mthca_cmd.h"
+#include "mthca_memfree.h"
+#include "mthca_dev.h"
+#include "mthca_cmd.h"
 
 /*
  * We allocate in as big chunks as we can, up to a maximum of 256 KB
  * per chunk.
  */
-क्रमागत अणु
+enum {
 	MTHCA_ICM_ALLOC_SIZE   = 1 << 18,
 	MTHCA_TABLE_CHUNK_SIZE = 1 << 18
-पूर्ण;
+};
 
-काष्ठा mthca_user_db_table अणु
-	काष्ठा mutex mutex;
-	काष्ठा अणु
+struct mthca_user_db_table {
+	struct mutex mutex;
+	struct {
 		u64                uvirt;
-		काष्ठा scatterlist mem;
-		पूर्णांक                refcount;
-	पूर्ण page[];
-पूर्ण;
+		struct scatterlist mem;
+		int                refcount;
+	} page[];
+};
 
-अटल व्योम mthca_मुक्त_icm_pages(काष्ठा mthca_dev *dev, काष्ठा mthca_icm_chunk *chunk)
-अणु
-	पूर्णांक i;
+static void mthca_free_icm_pages(struct mthca_dev *dev, struct mthca_icm_chunk *chunk)
+{
+	int i;
 
-	अगर (chunk->nsg > 0)
+	if (chunk->nsg > 0)
 		pci_unmap_sg(dev->pdev, chunk->mem, chunk->npages,
-			     PCI_DMA_BIसूचीECTIONAL);
+			     PCI_DMA_BIDIRECTIONAL);
 
-	क्रम (i = 0; i < chunk->npages; ++i)
-		__मुक्त_pages(sg_page(&chunk->mem[i]),
+	for (i = 0; i < chunk->npages; ++i)
+		__free_pages(sg_page(&chunk->mem[i]),
 			     get_order(chunk->mem[i].length));
-पूर्ण
+}
 
-अटल व्योम mthca_मुक्त_icm_coherent(काष्ठा mthca_dev *dev, काष्ठा mthca_icm_chunk *chunk)
-अणु
-	पूर्णांक i;
+static void mthca_free_icm_coherent(struct mthca_dev *dev, struct mthca_icm_chunk *chunk)
+{
+	int i;
 
-	क्रम (i = 0; i < chunk->npages; ++i) अणु
-		dma_मुक्त_coherent(&dev->pdev->dev, chunk->mem[i].length,
+	for (i = 0; i < chunk->npages; ++i) {
+		dma_free_coherent(&dev->pdev->dev, chunk->mem[i].length,
 				  lowmem_page_address(sg_page(&chunk->mem[i])),
 				  sg_dma_address(&chunk->mem[i]));
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम mthca_मुक्त_icm(काष्ठा mthca_dev *dev, काष्ठा mthca_icm *icm, पूर्णांक coherent)
-अणु
-	काष्ठा mthca_icm_chunk *chunk, *पंचांगp;
+void mthca_free_icm(struct mthca_dev *dev, struct mthca_icm *icm, int coherent)
+{
+	struct mthca_icm_chunk *chunk, *tmp;
 
-	अगर (!icm)
-		वापस;
+	if (!icm)
+		return;
 
-	list_क्रम_each_entry_safe(chunk, पंचांगp, &icm->chunk_list, list) अणु
-		अगर (coherent)
-			mthca_मुक्त_icm_coherent(dev, chunk);
-		अन्यथा
-			mthca_मुक्त_icm_pages(dev, chunk);
+	list_for_each_entry_safe(chunk, tmp, &icm->chunk_list, list) {
+		if (coherent)
+			mthca_free_icm_coherent(dev, chunk);
+		else
+			mthca_free_icm_pages(dev, chunk);
 
-		kमुक्त(chunk);
-	पूर्ण
+		kfree(chunk);
+	}
 
-	kमुक्त(icm);
-पूर्ण
+	kfree(icm);
+}
 
-अटल पूर्णांक mthca_alloc_icm_pages(काष्ठा scatterlist *mem, पूर्णांक order, gfp_t gfp_mask)
-अणु
-	काष्ठा page *page;
+static int mthca_alloc_icm_pages(struct scatterlist *mem, int order, gfp_t gfp_mask)
+{
+	struct page *page;
 
 	/*
 	 * Use __GFP_ZERO because buggy firmware assumes ICM pages are
-	 * cleared, and subtle failures are seen अगर they aren't.
+	 * cleared, and subtle failures are seen if they aren't.
 	 */
 	page = alloc_pages(gfp_mask | __GFP_ZERO, order);
-	अगर (!page)
-		वापस -ENOMEM;
+	if (!page)
+		return -ENOMEM;
 
 	sg_set_page(mem, page, PAGE_SIZE << order, 0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mthca_alloc_icm_coherent(काष्ठा device *dev, काष्ठा scatterlist *mem,
-				    पूर्णांक order, gfp_t gfp_mask)
-अणु
-	व्योम *buf = dma_alloc_coherent(dev, PAGE_SIZE << order, &sg_dma_address(mem),
+static int mthca_alloc_icm_coherent(struct device *dev, struct scatterlist *mem,
+				    int order, gfp_t gfp_mask)
+{
+	void *buf = dma_alloc_coherent(dev, PAGE_SIZE << order, &sg_dma_address(mem),
 				       gfp_mask);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
 	sg_set_buf(mem, buf, PAGE_SIZE << order);
 	BUG_ON(mem->offset);
 	sg_dma_len(mem) = PAGE_SIZE << order;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा mthca_icm *mthca_alloc_icm(काष्ठा mthca_dev *dev, पूर्णांक npages,
-				  gfp_t gfp_mask, पूर्णांक coherent)
-अणु
-	काष्ठा mthca_icm *icm;
-	काष्ठा mthca_icm_chunk *chunk = शून्य;
-	पूर्णांक cur_order;
-	पूर्णांक ret;
+struct mthca_icm *mthca_alloc_icm(struct mthca_dev *dev, int npages,
+				  gfp_t gfp_mask, int coherent)
+{
+	struct mthca_icm *icm;
+	struct mthca_icm_chunk *chunk = NULL;
+	int cur_order;
+	int ret;
 
-	/* We use sg_set_buf क्रम coherent allocs, which assumes low memory */
+	/* We use sg_set_buf for coherent allocs, which assumes low memory */
 	BUG_ON(coherent && (gfp_mask & __GFP_HIGHMEM));
 
-	icm = kदो_स्मृति(माप *icm, gfp_mask & ~(__GFP_HIGHMEM | __GFP_NOWARN));
-	अगर (!icm)
-		वापस icm;
+	icm = kmalloc(sizeof *icm, gfp_mask & ~(__GFP_HIGHMEM | __GFP_NOWARN));
+	if (!icm)
+		return icm;
 
 	icm->refcount = 0;
 	INIT_LIST_HEAD(&icm->chunk_list);
 
 	cur_order = get_order(MTHCA_ICM_ALLOC_SIZE);
 
-	जबतक (npages > 0) अणु
-		अगर (!chunk) अणु
-			chunk = kदो_स्मृति(माप *chunk,
+	while (npages > 0) {
+		if (!chunk) {
+			chunk = kmalloc(sizeof *chunk,
 					gfp_mask & ~(__GFP_HIGHMEM | __GFP_NOWARN));
-			अगर (!chunk)
-				जाओ fail;
+			if (!chunk)
+				goto fail;
 
 			sg_init_table(chunk->mem, MTHCA_ICM_CHUNK_LEN);
 			chunk->npages = 0;
 			chunk->nsg    = 0;
 			list_add_tail(&chunk->list, &icm->chunk_list);
-		पूर्ण
+		}
 
-		जबतक (1 << cur_order > npages)
+		while (1 << cur_order > npages)
 			--cur_order;
 
-		अगर (coherent)
+		if (coherent)
 			ret = mthca_alloc_icm_coherent(&dev->pdev->dev,
 						       &chunk->mem[chunk->npages],
 						       cur_order, gfp_mask);
-		अन्यथा
+		else
 			ret = mthca_alloc_icm_pages(&chunk->mem[chunk->npages],
 						    cur_order, gfp_mask);
 
-		अगर (!ret) अणु
+		if (!ret) {
 			++chunk->npages;
 
-			अगर (coherent)
+			if (coherent)
 				++chunk->nsg;
-			अन्यथा अगर (chunk->npages == MTHCA_ICM_CHUNK_LEN) अणु
+			else if (chunk->npages == MTHCA_ICM_CHUNK_LEN) {
 				chunk->nsg = pci_map_sg(dev->pdev, chunk->mem,
 							chunk->npages,
-							PCI_DMA_BIसूचीECTIONAL);
+							PCI_DMA_BIDIRECTIONAL);
 
-				अगर (chunk->nsg <= 0)
-					जाओ fail;
-			पूर्ण
+				if (chunk->nsg <= 0)
+					goto fail;
+			}
 
-			अगर (chunk->npages == MTHCA_ICM_CHUNK_LEN)
-				chunk = शून्य;
+			if (chunk->npages == MTHCA_ICM_CHUNK_LEN)
+				chunk = NULL;
 
 			npages -= 1 << cur_order;
-		पूर्ण अन्यथा अणु
+		} else {
 			--cur_order;
-			अगर (cur_order < 0)
-				जाओ fail;
-		पूर्ण
-	पूर्ण
+			if (cur_order < 0)
+				goto fail;
+		}
+	}
 
-	अगर (!coherent && chunk) अणु
+	if (!coherent && chunk) {
 		chunk->nsg = pci_map_sg(dev->pdev, chunk->mem,
 					chunk->npages,
-					PCI_DMA_BIसूचीECTIONAL);
+					PCI_DMA_BIDIRECTIONAL);
 
-		अगर (chunk->nsg <= 0)
-			जाओ fail;
-	पूर्ण
+		if (chunk->nsg <= 0)
+			goto fail;
+	}
 
-	वापस icm;
+	return icm;
 
 fail:
-	mthca_मुक्त_icm(dev, icm, coherent);
-	वापस शून्य;
-पूर्ण
+	mthca_free_icm(dev, icm, coherent);
+	return NULL;
+}
 
-पूर्णांक mthca_table_get(काष्ठा mthca_dev *dev, काष्ठा mthca_icm_table *table, पूर्णांक obj)
-अणु
-	पूर्णांक i = (obj & (table->num_obj - 1)) * table->obj_size / MTHCA_TABLE_CHUNK_SIZE;
-	पूर्णांक ret = 0;
+int mthca_table_get(struct mthca_dev *dev, struct mthca_icm_table *table, int obj)
+{
+	int i = (obj & (table->num_obj - 1)) * table->obj_size / MTHCA_TABLE_CHUNK_SIZE;
+	int ret = 0;
 
 	mutex_lock(&table->mutex);
 
-	अगर (table->icm[i]) अणु
+	if (table->icm[i]) {
 		++table->icm[i]->refcount;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	table->icm[i] = mthca_alloc_icm(dev, MTHCA_TABLE_CHUNK_SIZE >> PAGE_SHIFT,
 					(table->lowmem ? GFP_KERNEL : GFP_HIGHUSER) |
 					__GFP_NOWARN, table->coherent);
-	अगर (!table->icm[i]) अणु
+	if (!table->icm[i]) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (mthca_MAP_ICM(dev, table->icm[i],
-			  table->virt + i * MTHCA_TABLE_CHUNK_SIZE)) अणु
-		mthca_मुक्त_icm(dev, table->icm[i], table->coherent);
-		table->icm[i] = शून्य;
+	if (mthca_MAP_ICM(dev, table->icm[i],
+			  table->virt + i * MTHCA_TABLE_CHUNK_SIZE)) {
+		mthca_free_icm(dev, table->icm[i], table->coherent);
+		table->icm[i] = NULL;
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	++table->icm[i]->refcount;
 
 out:
 	mutex_unlock(&table->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम mthca_table_put(काष्ठा mthca_dev *dev, काष्ठा mthca_icm_table *table, पूर्णांक obj)
-अणु
-	पूर्णांक i;
+void mthca_table_put(struct mthca_dev *dev, struct mthca_icm_table *table, int obj)
+{
+	int i;
 
-	अगर (!mthca_is_memमुक्त(dev))
-		वापस;
+	if (!mthca_is_memfree(dev))
+		return;
 
 	i = (obj & (table->num_obj - 1)) * table->obj_size / MTHCA_TABLE_CHUNK_SIZE;
 
 	mutex_lock(&table->mutex);
 
-	अगर (--table->icm[i]->refcount == 0) अणु
+	if (--table->icm[i]->refcount == 0) {
 		mthca_UNMAP_ICM(dev, table->virt + i * MTHCA_TABLE_CHUNK_SIZE,
 				MTHCA_TABLE_CHUNK_SIZE / MTHCA_ICM_PAGE_SIZE);
-		mthca_मुक्त_icm(dev, table->icm[i], table->coherent);
-		table->icm[i] = शून्य;
-	पूर्ण
+		mthca_free_icm(dev, table->icm[i], table->coherent);
+		table->icm[i] = NULL;
+	}
 
 	mutex_unlock(&table->mutex);
-पूर्ण
+}
 
-व्योम *mthca_table_find(काष्ठा mthca_icm_table *table, पूर्णांक obj, dma_addr_t *dma_handle)
-अणु
-	पूर्णांक idx, offset, dma_offset, i;
-	काष्ठा mthca_icm_chunk *chunk;
-	काष्ठा mthca_icm *icm;
-	काष्ठा page *page = शून्य;
+void *mthca_table_find(struct mthca_icm_table *table, int obj, dma_addr_t *dma_handle)
+{
+	int idx, offset, dma_offset, i;
+	struct mthca_icm_chunk *chunk;
+	struct mthca_icm *icm;
+	struct page *page = NULL;
 
-	अगर (!table->lowmem)
-		वापस शून्य;
+	if (!table->lowmem)
+		return NULL;
 
 	mutex_lock(&table->mutex);
 
@@ -292,85 +291,85 @@ out:
 	icm = table->icm[idx / MTHCA_TABLE_CHUNK_SIZE];
 	dma_offset = offset = idx % MTHCA_TABLE_CHUNK_SIZE;
 
-	अगर (!icm)
-		जाओ out;
+	if (!icm)
+		goto out;
 
-	list_क्रम_each_entry(chunk, &icm->chunk_list, list) अणु
-		क्रम (i = 0; i < chunk->npages; ++i) अणु
-			अगर (dma_handle && dma_offset >= 0) अणु
-				अगर (sg_dma_len(&chunk->mem[i]) > dma_offset)
+	list_for_each_entry(chunk, &icm->chunk_list, list) {
+		for (i = 0; i < chunk->npages; ++i) {
+			if (dma_handle && dma_offset >= 0) {
+				if (sg_dma_len(&chunk->mem[i]) > dma_offset)
 					*dma_handle = sg_dma_address(&chunk->mem[i]) +
 						dma_offset;
 				dma_offset -= sg_dma_len(&chunk->mem[i]);
-			पूर्ण
+			}
 			/* DMA mapping can merge pages but not split them,
-			 * so अगर we found the page, dma_handle has alपढ़ोy
-			 * been asचिन्हित to. */
-			अगर (chunk->mem[i].length > offset) अणु
+			 * so if we found the page, dma_handle has already
+			 * been assigned to. */
+			if (chunk->mem[i].length > offset) {
 				page = sg_page(&chunk->mem[i]);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			offset -= chunk->mem[i].length;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 out:
 	mutex_unlock(&table->mutex);
-	वापस page ? lowmem_page_address(page) + offset : शून्य;
-पूर्ण
+	return page ? lowmem_page_address(page) + offset : NULL;
+}
 
-पूर्णांक mthca_table_get_range(काष्ठा mthca_dev *dev, काष्ठा mthca_icm_table *table,
-			  पूर्णांक start, पूर्णांक end)
-अणु
-	पूर्णांक inc = MTHCA_TABLE_CHUNK_SIZE / table->obj_size;
-	पूर्णांक i, err;
+int mthca_table_get_range(struct mthca_dev *dev, struct mthca_icm_table *table,
+			  int start, int end)
+{
+	int inc = MTHCA_TABLE_CHUNK_SIZE / table->obj_size;
+	int i, err;
 
-	क्रम (i = start; i <= end; i += inc) अणु
+	for (i = start; i <= end; i += inc) {
 		err = mthca_table_get(dev, table, i);
-		अगर (err)
-			जाओ fail;
-	पूर्ण
+		if (err)
+			goto fail;
+	}
 
-	वापस 0;
+	return 0;
 
 fail:
-	जबतक (i > start) अणु
+	while (i > start) {
 		i -= inc;
 		mthca_table_put(dev, table, i);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम mthca_table_put_range(काष्ठा mthca_dev *dev, काष्ठा mthca_icm_table *table,
-			   पूर्णांक start, पूर्णांक end)
-अणु
-	पूर्णांक i;
+void mthca_table_put_range(struct mthca_dev *dev, struct mthca_icm_table *table,
+			   int start, int end)
+{
+	int i;
 
-	अगर (!mthca_is_memमुक्त(dev))
-		वापस;
+	if (!mthca_is_memfree(dev))
+		return;
 
-	क्रम (i = start; i <= end; i += MTHCA_TABLE_CHUNK_SIZE / table->obj_size)
+	for (i = start; i <= end; i += MTHCA_TABLE_CHUNK_SIZE / table->obj_size)
 		mthca_table_put(dev, table, i);
-पूर्ण
+}
 
-काष्ठा mthca_icm_table *mthca_alloc_icm_table(काष्ठा mthca_dev *dev,
-					      u64 virt, पूर्णांक obj_size,
-					      पूर्णांक nobj, पूर्णांक reserved,
-					      पूर्णांक use_lowmem, पूर्णांक use_coherent)
-अणु
-	काष्ठा mthca_icm_table *table;
-	पूर्णांक obj_per_chunk;
-	पूर्णांक num_icm;
-	अचिन्हित chunk_size;
-	पूर्णांक i;
+struct mthca_icm_table *mthca_alloc_icm_table(struct mthca_dev *dev,
+					      u64 virt, int obj_size,
+					      int nobj, int reserved,
+					      int use_lowmem, int use_coherent)
+{
+	struct mthca_icm_table *table;
+	int obj_per_chunk;
+	int num_icm;
+	unsigned chunk_size;
+	int i;
 
 	obj_per_chunk = MTHCA_TABLE_CHUNK_SIZE / obj_size;
 	num_icm = DIV_ROUND_UP(nobj, obj_per_chunk);
 
-	table = kदो_स्मृति(काष्ठा_size(table, icm, num_icm), GFP_KERNEL);
-	अगर (!table)
-		वापस शून्य;
+	table = kmalloc(struct_size(table, icm, num_icm), GFP_KERNEL);
+	if (!table)
+		return NULL;
 
 	table->virt     = virt;
 	table->num_icm  = num_icm;
@@ -380,137 +379,137 @@ fail:
 	table->coherent = use_coherent;
 	mutex_init(&table->mutex);
 
-	क्रम (i = 0; i < num_icm; ++i)
-		table->icm[i] = शून्य;
+	for (i = 0; i < num_icm; ++i)
+		table->icm[i] = NULL;
 
-	क्रम (i = 0; i * MTHCA_TABLE_CHUNK_SIZE < reserved * obj_size; ++i) अणु
+	for (i = 0; i * MTHCA_TABLE_CHUNK_SIZE < reserved * obj_size; ++i) {
 		chunk_size = MTHCA_TABLE_CHUNK_SIZE;
-		अगर ((i + 1) * MTHCA_TABLE_CHUNK_SIZE > nobj * obj_size)
+		if ((i + 1) * MTHCA_TABLE_CHUNK_SIZE > nobj * obj_size)
 			chunk_size = nobj * obj_size - i * MTHCA_TABLE_CHUNK_SIZE;
 
 		table->icm[i] = mthca_alloc_icm(dev, chunk_size >> PAGE_SHIFT,
 						(use_lowmem ? GFP_KERNEL : GFP_HIGHUSER) |
 						__GFP_NOWARN, use_coherent);
-		अगर (!table->icm[i])
-			जाओ err;
-		अगर (mthca_MAP_ICM(dev, table->icm[i],
-				  virt + i * MTHCA_TABLE_CHUNK_SIZE)) अणु
-			mthca_मुक्त_icm(dev, table->icm[i], table->coherent);
-			table->icm[i] = शून्य;
-			जाओ err;
-		पूर्ण
+		if (!table->icm[i])
+			goto err;
+		if (mthca_MAP_ICM(dev, table->icm[i],
+				  virt + i * MTHCA_TABLE_CHUNK_SIZE)) {
+			mthca_free_icm(dev, table->icm[i], table->coherent);
+			table->icm[i] = NULL;
+			goto err;
+		}
 
 		/*
 		 * Add a reference to this ICM chunk so that it never
-		 * माला_लो मुक्तd (since it contains reserved firmware objects).
+		 * gets freed (since it contains reserved firmware objects).
 		 */
 		++table->icm[i]->refcount;
-	पूर्ण
+	}
 
-	वापस table;
+	return table;
 
 err:
-	क्रम (i = 0; i < num_icm; ++i)
-		अगर (table->icm[i]) अणु
+	for (i = 0; i < num_icm; ++i)
+		if (table->icm[i]) {
 			mthca_UNMAP_ICM(dev, virt + i * MTHCA_TABLE_CHUNK_SIZE,
 					MTHCA_TABLE_CHUNK_SIZE / MTHCA_ICM_PAGE_SIZE);
-			mthca_मुक्त_icm(dev, table->icm[i], table->coherent);
-		पूर्ण
+			mthca_free_icm(dev, table->icm[i], table->coherent);
+		}
 
-	kमुक्त(table);
+	kfree(table);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-व्योम mthca_मुक्त_icm_table(काष्ठा mthca_dev *dev, काष्ठा mthca_icm_table *table)
-अणु
-	पूर्णांक i;
+void mthca_free_icm_table(struct mthca_dev *dev, struct mthca_icm_table *table)
+{
+	int i;
 
-	क्रम (i = 0; i < table->num_icm; ++i)
-		अगर (table->icm[i]) अणु
+	for (i = 0; i < table->num_icm; ++i)
+		if (table->icm[i]) {
 			mthca_UNMAP_ICM(dev,
 					table->virt + i * MTHCA_TABLE_CHUNK_SIZE,
 					MTHCA_TABLE_CHUNK_SIZE / MTHCA_ICM_PAGE_SIZE);
-			mthca_मुक्त_icm(dev, table->icm[i], table->coherent);
-		पूर्ण
+			mthca_free_icm(dev, table->icm[i], table->coherent);
+		}
 
-	kमुक्त(table);
-पूर्ण
+	kfree(table);
+}
 
-अटल u64 mthca_uarc_virt(काष्ठा mthca_dev *dev, काष्ठा mthca_uar *uar, पूर्णांक page)
-अणु
-	वापस dev->uar_table.uarc_base +
+static u64 mthca_uarc_virt(struct mthca_dev *dev, struct mthca_uar *uar, int page)
+{
+	return dev->uar_table.uarc_base +
 		uar->index * dev->uar_table.uarc_size +
 		page * MTHCA_ICM_PAGE_SIZE;
-पूर्ण
+}
 
-पूर्णांक mthca_map_user_db(काष्ठा mthca_dev *dev, काष्ठा mthca_uar *uar,
-		      काष्ठा mthca_user_db_table *db_tab, पूर्णांक index, u64 uaddr)
-अणु
-	काष्ठा page *pages[1];
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+int mthca_map_user_db(struct mthca_dev *dev, struct mthca_uar *uar,
+		      struct mthca_user_db_table *db_tab, int index, u64 uaddr)
+{
+	struct page *pages[1];
+	int ret = 0;
+	int i;
 
-	अगर (!mthca_is_memमुक्त(dev))
-		वापस 0;
+	if (!mthca_is_memfree(dev))
+		return 0;
 
-	अगर (index < 0 || index > dev->uar_table.uarc_size / 8)
-		वापस -EINVAL;
+	if (index < 0 || index > dev->uar_table.uarc_size / 8)
+		return -EINVAL;
 
 	mutex_lock(&db_tab->mutex);
 
 	i = index / MTHCA_DB_REC_PER_PAGE;
 
-	अगर ((db_tab->page[i].refcount >= MTHCA_DB_REC_PER_PAGE)       ||
+	if ((db_tab->page[i].refcount >= MTHCA_DB_REC_PER_PAGE)       ||
 	    (db_tab->page[i].uvirt && db_tab->page[i].uvirt != uaddr) ||
-	    (uaddr & 4095)) अणु
+	    (uaddr & 4095)) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (db_tab->page[i].refcount) अणु
+	if (db_tab->page[i].refcount) {
 		++db_tab->page[i].refcount;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = pin_user_pages_fast(uaddr & PAGE_MASK, 1,
 				  FOLL_WRITE | FOLL_LONGTERM, pages);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	sg_set_page(&db_tab->page[i].mem, pages[0], MTHCA_ICM_PAGE_SIZE,
 			uaddr & ~PAGE_MASK);
 
 	ret = pci_map_sg(dev->pdev, &db_tab->page[i].mem, 1, PCI_DMA_TODEVICE);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		unpin_user_page(pages[0]);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = mthca_MAP_ICM_page(dev, sg_dma_address(&db_tab->page[i].mem),
 				 mthca_uarc_virt(dev, uar, i));
-	अगर (ret) अणु
+	if (ret) {
 		pci_unmap_sg(dev->pdev, &db_tab->page[i].mem, 1, PCI_DMA_TODEVICE);
 		unpin_user_page(sg_page(&db_tab->page[i].mem));
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	db_tab->page[i].uvirt    = uaddr;
 	db_tab->page[i].refcount = 1;
 
 out:
 	mutex_unlock(&db_tab->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम mthca_unmap_user_db(काष्ठा mthca_dev *dev, काष्ठा mthca_uar *uar,
-			 काष्ठा mthca_user_db_table *db_tab, पूर्णांक index)
-अणु
-	अगर (!mthca_is_memमुक्त(dev))
-		वापस;
+void mthca_unmap_user_db(struct mthca_dev *dev, struct mthca_uar *uar,
+			 struct mthca_user_db_table *db_tab, int index)
+{
+	if (!mthca_is_memfree(dev))
+		return;
 
 	/*
-	 * To make our bookkeeping simpler, we करोn't unmap DB
+	 * To make our bookkeeping simpler, we don't unmap DB
 	 * pages until we clean up the whole db table.
 	 */
 
@@ -519,107 +518,107 @@ out:
 	--db_tab->page[index / MTHCA_DB_REC_PER_PAGE].refcount;
 
 	mutex_unlock(&db_tab->mutex);
-पूर्ण
+}
 
-काष्ठा mthca_user_db_table *mthca_init_user_db_tab(काष्ठा mthca_dev *dev)
-अणु
-	काष्ठा mthca_user_db_table *db_tab;
-	पूर्णांक npages;
-	पूर्णांक i;
+struct mthca_user_db_table *mthca_init_user_db_tab(struct mthca_dev *dev)
+{
+	struct mthca_user_db_table *db_tab;
+	int npages;
+	int i;
 
-	अगर (!mthca_is_memमुक्त(dev))
-		वापस शून्य;
+	if (!mthca_is_memfree(dev))
+		return NULL;
 
 	npages = dev->uar_table.uarc_size / MTHCA_ICM_PAGE_SIZE;
-	db_tab = kदो_स्मृति(काष्ठा_size(db_tab, page, npages), GFP_KERNEL);
-	अगर (!db_tab)
-		वापस ERR_PTR(-ENOMEM);
+	db_tab = kmalloc(struct_size(db_tab, page, npages), GFP_KERNEL);
+	if (!db_tab)
+		return ERR_PTR(-ENOMEM);
 
 	mutex_init(&db_tab->mutex);
-	क्रम (i = 0; i < npages; ++i) अणु
+	for (i = 0; i < npages; ++i) {
 		db_tab->page[i].refcount = 0;
 		db_tab->page[i].uvirt    = 0;
 		sg_init_table(&db_tab->page[i].mem, 1);
-	पूर्ण
+	}
 
-	वापस db_tab;
-पूर्ण
+	return db_tab;
+}
 
-व्योम mthca_cleanup_user_db_tab(काष्ठा mthca_dev *dev, काष्ठा mthca_uar *uar,
-			       काष्ठा mthca_user_db_table *db_tab)
-अणु
-	पूर्णांक i;
+void mthca_cleanup_user_db_tab(struct mthca_dev *dev, struct mthca_uar *uar,
+			       struct mthca_user_db_table *db_tab)
+{
+	int i;
 
-	अगर (!mthca_is_memमुक्त(dev))
-		वापस;
+	if (!mthca_is_memfree(dev))
+		return;
 
-	क्रम (i = 0; i < dev->uar_table.uarc_size / MTHCA_ICM_PAGE_SIZE; ++i) अणु
-		अगर (db_tab->page[i].uvirt) अणु
+	for (i = 0; i < dev->uar_table.uarc_size / MTHCA_ICM_PAGE_SIZE; ++i) {
+		if (db_tab->page[i].uvirt) {
 			mthca_UNMAP_ICM(dev, mthca_uarc_virt(dev, uar, i), 1);
 			pci_unmap_sg(dev->pdev, &db_tab->page[i].mem, 1, PCI_DMA_TODEVICE);
 			unpin_user_page(sg_page(&db_tab->page[i].mem));
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	kमुक्त(db_tab);
-पूर्ण
+	kfree(db_tab);
+}
 
-पूर्णांक mthca_alloc_db(काष्ठा mthca_dev *dev, क्रमागत mthca_db_type type,
+int mthca_alloc_db(struct mthca_dev *dev, enum mthca_db_type type,
 		   u32 qn, __be32 **db)
-अणु
-	पूर्णांक group;
-	पूर्णांक start, end, dir;
-	पूर्णांक i, j;
-	काष्ठा mthca_db_page *page;
-	पूर्णांक ret = 0;
+{
+	int group;
+	int start, end, dir;
+	int i, j;
+	struct mthca_db_page *page;
+	int ret = 0;
 
 	mutex_lock(&dev->db_tab->mutex);
 
-	चयन (type) अणु
-	हाल MTHCA_DB_TYPE_CQ_ARM:
-	हाल MTHCA_DB_TYPE_SQ:
+	switch (type) {
+	case MTHCA_DB_TYPE_CQ_ARM:
+	case MTHCA_DB_TYPE_SQ:
 		group = 0;
 		start = 0;
 		end   = dev->db_tab->max_group1;
 		dir   = 1;
-		अवरोध;
+		break;
 
-	हाल MTHCA_DB_TYPE_CQ_SET_CI:
-	हाल MTHCA_DB_TYPE_RQ:
-	हाल MTHCA_DB_TYPE_SRQ:
+	case MTHCA_DB_TYPE_CQ_SET_CI:
+	case MTHCA_DB_TYPE_RQ:
+	case MTHCA_DB_TYPE_SRQ:
 		group = 1;
 		start = dev->db_tab->npages - 1;
 		end   = dev->db_tab->min_group2;
 		dir   = -1;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (i = start; i != end; i += dir)
-		अगर (dev->db_tab->page[i].db_rec &&
-		    !biपंचांगap_full(dev->db_tab->page[i].used,
-				 MTHCA_DB_REC_PER_PAGE)) अणु
+	for (i = start; i != end; i += dir)
+		if (dev->db_tab->page[i].db_rec &&
+		    !bitmap_full(dev->db_tab->page[i].used,
+				 MTHCA_DB_REC_PER_PAGE)) {
 			page = dev->db_tab->page + i;
-			जाओ found;
-		पूर्ण
+			goto found;
+		}
 
-	क्रम (i = start; i != end; i += dir)
-		अगर (!dev->db_tab->page[i].db_rec) अणु
+	for (i = start; i != end; i += dir)
+		if (!dev->db_tab->page[i].db_rec) {
 			page = dev->db_tab->page + i;
-			जाओ alloc;
-		पूर्ण
+			goto alloc;
+		}
 
-	अगर (dev->db_tab->max_group1 >= dev->db_tab->min_group2 - 1) अणु
+	if (dev->db_tab->max_group1 >= dev->db_tab->min_group2 - 1) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (group == 0)
+	if (group == 0)
 		++dev->db_tab->max_group1;
-	अन्यथा
+	else
 		--dev->db_tab->min_group2;
 
 	page = dev->db_tab->page + end;
@@ -628,26 +627,26 @@ alloc:
 	page->db_rec = dma_alloc_coherent(&dev->pdev->dev,
 					  MTHCA_ICM_PAGE_SIZE, &page->mapping,
 					  GFP_KERNEL);
-	अगर (!page->db_rec) अणु
+	if (!page->db_rec) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = mthca_MAP_ICM_page(dev, page->mapping,
 				 mthca_uarc_virt(dev, &dev->driver_uar, i));
-	अगर (ret) अणु
-		dma_मुक्त_coherent(&dev->pdev->dev, MTHCA_ICM_PAGE_SIZE,
+	if (ret) {
+		dma_free_coherent(&dev->pdev->dev, MTHCA_ICM_PAGE_SIZE,
 				  page->db_rec, page->mapping);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	biपंचांगap_zero(page->used, MTHCA_DB_REC_PER_PAGE);
+	bitmap_zero(page->used, MTHCA_DB_REC_PER_PAGE);
 
 found:
 	j = find_first_zero_bit(page->used, MTHCA_DB_REC_PER_PAGE);
 	set_bit(j, page->used);
 
-	अगर (group == 1)
+	if (group == 1)
 		j = MTHCA_DB_REC_PER_PAGE - 1 - j;
 
 	ret = i * MTHCA_DB_REC_PER_PAGE + j;
@@ -659,13 +658,13 @@ found:
 out:
 	mutex_unlock(&dev->db_tab->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम mthca_मुक्त_db(काष्ठा mthca_dev *dev, पूर्णांक type, पूर्णांक db_index)
-अणु
-	पूर्णांक i, j;
-	काष्ठा mthca_db_page *page;
+void mthca_free_db(struct mthca_dev *dev, int type, int db_index)
+{
+	int i, j;
+	struct mthca_db_page *page;
 
 	i = db_index / MTHCA_DB_REC_PER_PAGE;
 	j = db_index % MTHCA_DB_REC_PER_PAGE;
@@ -675,39 +674,39 @@ out:
 	mutex_lock(&dev->db_tab->mutex);
 
 	page->db_rec[j] = 0;
-	अगर (i >= dev->db_tab->min_group2)
+	if (i >= dev->db_tab->min_group2)
 		j = MTHCA_DB_REC_PER_PAGE - 1 - j;
 	clear_bit(j, page->used);
 
-	अगर (biपंचांगap_empty(page->used, MTHCA_DB_REC_PER_PAGE) &&
-	    i >= dev->db_tab->max_group1 - 1) अणु
+	if (bitmap_empty(page->used, MTHCA_DB_REC_PER_PAGE) &&
+	    i >= dev->db_tab->max_group1 - 1) {
 		mthca_UNMAP_ICM(dev, mthca_uarc_virt(dev, &dev->driver_uar, i), 1);
 
-		dma_मुक्त_coherent(&dev->pdev->dev, MTHCA_ICM_PAGE_SIZE,
+		dma_free_coherent(&dev->pdev->dev, MTHCA_ICM_PAGE_SIZE,
 				  page->db_rec, page->mapping);
-		page->db_rec = शून्य;
+		page->db_rec = NULL;
 
-		अगर (i == dev->db_tab->max_group1) अणु
+		if (i == dev->db_tab->max_group1) {
 			--dev->db_tab->max_group1;
 			/* XXX may be able to unmap more pages now */
-		पूर्ण
-		अगर (i == dev->db_tab->min_group2)
+		}
+		if (i == dev->db_tab->min_group2)
 			++dev->db_tab->min_group2;
-	पूर्ण
+	}
 
 	mutex_unlock(&dev->db_tab->mutex);
-पूर्ण
+}
 
-पूर्णांक mthca_init_db_tab(काष्ठा mthca_dev *dev)
-अणु
-	पूर्णांक i;
+int mthca_init_db_tab(struct mthca_dev *dev)
+{
+	int i;
 
-	अगर (!mthca_is_memमुक्त(dev))
-		वापस 0;
+	if (!mthca_is_memfree(dev))
+		return 0;
 
-	dev->db_tab = kदो_स्मृति(माप *dev->db_tab, GFP_KERNEL);
-	अगर (!dev->db_tab)
-		वापस -ENOMEM;
+	dev->db_tab = kmalloc(sizeof *dev->db_tab, GFP_KERNEL);
+	if (!dev->db_tab)
+		return -ENOMEM;
 
 	mutex_init(&dev->db_tab->mutex);
 
@@ -715,47 +714,47 @@ out:
 	dev->db_tab->max_group1 = 0;
 	dev->db_tab->min_group2 = dev->db_tab->npages - 1;
 
-	dev->db_tab->page = kदो_स्मृति_array(dev->db_tab->npages,
-					  माप(*dev->db_tab->page),
+	dev->db_tab->page = kmalloc_array(dev->db_tab->npages,
+					  sizeof(*dev->db_tab->page),
 					  GFP_KERNEL);
-	अगर (!dev->db_tab->page) अणु
-		kमुक्त(dev->db_tab);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!dev->db_tab->page) {
+		kfree(dev->db_tab);
+		return -ENOMEM;
+	}
 
-	क्रम (i = 0; i < dev->db_tab->npages; ++i)
-		dev->db_tab->page[i].db_rec = शून्य;
+	for (i = 0; i < dev->db_tab->npages; ++i)
+		dev->db_tab->page[i].db_rec = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम mthca_cleanup_db_tab(काष्ठा mthca_dev *dev)
-अणु
-	पूर्णांक i;
+void mthca_cleanup_db_tab(struct mthca_dev *dev)
+{
+	int i;
 
-	अगर (!mthca_is_memमुक्त(dev))
-		वापस;
+	if (!mthca_is_memfree(dev))
+		return;
 
 	/*
-	 * Because we करोn't always मुक्त our UARC pages when they
-	 * become empty to make mthca_मुक्त_db() simpler we need to
-	 * make a sweep through the करोorbell pages and मुक्त any
+	 * Because we don't always free our UARC pages when they
+	 * become empty to make mthca_free_db() simpler we need to
+	 * make a sweep through the doorbell pages and free any
 	 * leftover pages now.
 	 */
-	क्रम (i = 0; i < dev->db_tab->npages; ++i) अणु
-		अगर (!dev->db_tab->page[i].db_rec)
-			जारी;
+	for (i = 0; i < dev->db_tab->npages; ++i) {
+		if (!dev->db_tab->page[i].db_rec)
+			continue;
 
-		अगर (!biपंचांगap_empty(dev->db_tab->page[i].used, MTHCA_DB_REC_PER_PAGE))
+		if (!bitmap_empty(dev->db_tab->page[i].used, MTHCA_DB_REC_PER_PAGE))
 			mthca_warn(dev, "Kernel UARC page %d not empty\n", i);
 
 		mthca_UNMAP_ICM(dev, mthca_uarc_virt(dev, &dev->driver_uar, i), 1);
 
-		dma_मुक्त_coherent(&dev->pdev->dev, MTHCA_ICM_PAGE_SIZE,
+		dma_free_coherent(&dev->pdev->dev, MTHCA_ICM_PAGE_SIZE,
 				  dev->db_tab->page[i].db_rec,
 				  dev->db_tab->page[i].mapping);
-	पूर्ण
+	}
 
-	kमुक्त(dev->db_tab->page);
-	kमुक्त(dev->db_tab);
-पूर्ण
+	kfree(dev->db_tab->page);
+	kfree(dev->db_tab);
+}

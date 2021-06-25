@@ -1,163 +1,162 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* net/aपंचांग/addr.c - Local ATM address registry */
+// SPDX-License-Identifier: GPL-2.0
+/* net/atm/addr.c - Local ATM address registry */
 
 /* Written 1995-2000 by Werner Almesberger, EPFL LRC/ICA */
 
-#समावेश <linux/aपंचांग.h>
-#समावेश <linux/aपंचांगdev.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
+#include <linux/atm.h>
+#include <linux/atmdev.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
 
-#समावेश "signaling.h"
-#समावेश "addr.h"
+#include "signaling.h"
+#include "addr.h"
 
-अटल पूर्णांक check_addr(स्थिर काष्ठा sockaddr_aपंचांगsvc *addr)
-अणु
-	पूर्णांक i;
+static int check_addr(const struct sockaddr_atmsvc *addr)
+{
+	int i;
 
-	अगर (addr->sas_family != AF_ATMSVC)
-		वापस -EAFNOSUPPORT;
-	अगर (!*addr->sas_addr.pub)
-		वापस *addr->sas_addr.prv ? 0 : -EINVAL;
-	क्रम (i = 1; i < ATM_E164_LEN + 1; i++)	/* make sure it's \0-terminated */
-		अगर (!addr->sas_addr.pub[i])
-			वापस 0;
-	वापस -EINVAL;
-पूर्ण
+	if (addr->sas_family != AF_ATMSVC)
+		return -EAFNOSUPPORT;
+	if (!*addr->sas_addr.pub)
+		return *addr->sas_addr.prv ? 0 : -EINVAL;
+	for (i = 1; i < ATM_E164_LEN + 1; i++)	/* make sure it's \0-terminated */
+		if (!addr->sas_addr.pub[i])
+			return 0;
+	return -EINVAL;
+}
 
-अटल पूर्णांक identical(स्थिर काष्ठा sockaddr_aपंचांगsvc *a, स्थिर काष्ठा sockaddr_aपंचांगsvc *b)
-अणु
-	अगर (*a->sas_addr.prv)
-		अगर (स_भेद(a->sas_addr.prv, b->sas_addr.prv, ATM_ESA_LEN))
-			वापस 0;
-	अगर (!*a->sas_addr.pub)
-		वापस !*b->sas_addr.pub;
-	अगर (!*b->sas_addr.pub)
-		वापस 0;
-	वापस !म_भेद(a->sas_addr.pub, b->sas_addr.pub);
-पूर्ण
+static int identical(const struct sockaddr_atmsvc *a, const struct sockaddr_atmsvc *b)
+{
+	if (*a->sas_addr.prv)
+		if (memcmp(a->sas_addr.prv, b->sas_addr.prv, ATM_ESA_LEN))
+			return 0;
+	if (!*a->sas_addr.pub)
+		return !*b->sas_addr.pub;
+	if (!*b->sas_addr.pub)
+		return 0;
+	return !strcmp(a->sas_addr.pub, b->sas_addr.pub);
+}
 
-अटल व्योम notअगरy_sigd(स्थिर काष्ठा aपंचांग_dev *dev)
-अणु
-	काष्ठा sockaddr_aपंचांगpvc pvc;
+static void notify_sigd(const struct atm_dev *dev)
+{
+	struct sockaddr_atmpvc pvc;
 
 	pvc.sap_addr.itf = dev->number;
-	sigd_enq(शून्य, as_itf_notअगरy, शून्य, &pvc, शून्य);
-पूर्ण
+	sigd_enq(NULL, as_itf_notify, NULL, &pvc, NULL);
+}
 
-व्योम aपंचांग_reset_addr(काष्ठा aपंचांग_dev *dev, क्रमागत aपंचांग_addr_type_t atype)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा aपंचांग_dev_addr *this, *p;
-	काष्ठा list_head *head;
+void atm_reset_addr(struct atm_dev *dev, enum atm_addr_type_t atype)
+{
+	unsigned long flags;
+	struct atm_dev_addr *this, *p;
+	struct list_head *head;
 
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (atype == ATM_ADDR_LECS)
+	if (atype == ATM_ADDR_LECS)
 		head = &dev->lecs;
-	अन्यथा
+	else
 		head = &dev->local;
-	list_क्रम_each_entry_safe(this, p, head, entry) अणु
+	list_for_each_entry_safe(this, p, head, entry) {
 		list_del(&this->entry);
-		kमुक्त(this);
-	पूर्ण
+		kfree(this);
+	}
 	spin_unlock_irqrestore(&dev->lock, flags);
-	अगर (head == &dev->local)
-		notअगरy_sigd(dev);
-पूर्ण
+	if (head == &dev->local)
+		notify_sigd(dev);
+}
 
-पूर्णांक aपंचांग_add_addr(काष्ठा aपंचांग_dev *dev, स्थिर काष्ठा sockaddr_aपंचांगsvc *addr,
-		 क्रमागत aपंचांग_addr_type_t atype)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा aपंचांग_dev_addr *this;
-	काष्ठा list_head *head;
-	पूर्णांक error;
+int atm_add_addr(struct atm_dev *dev, const struct sockaddr_atmsvc *addr,
+		 enum atm_addr_type_t atype)
+{
+	unsigned long flags;
+	struct atm_dev_addr *this;
+	struct list_head *head;
+	int error;
 
 	error = check_addr(addr);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (atype == ATM_ADDR_LECS)
+	if (atype == ATM_ADDR_LECS)
 		head = &dev->lecs;
-	अन्यथा
+	else
 		head = &dev->local;
-	list_क्रम_each_entry(this, head, entry) अणु
-		अगर (identical(&this->addr, addr)) अणु
+	list_for_each_entry(this, head, entry) {
+		if (identical(&this->addr, addr)) {
 			spin_unlock_irqrestore(&dev->lock, flags);
-			वापस -EEXIST;
-		पूर्ण
-	पूर्ण
-	this = kदो_स्मृति(माप(काष्ठा aपंचांग_dev_addr), GFP_ATOMIC);
-	अगर (!this) अणु
+			return -EEXIST;
+		}
+	}
+	this = kmalloc(sizeof(struct atm_dev_addr), GFP_ATOMIC);
+	if (!this) {
 		spin_unlock_irqrestore(&dev->lock, flags);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	this->addr = *addr;
 	list_add(&this->entry, head);
 	spin_unlock_irqrestore(&dev->lock, flags);
-	अगर (head == &dev->local)
-		notअगरy_sigd(dev);
-	वापस 0;
-पूर्ण
+	if (head == &dev->local)
+		notify_sigd(dev);
+	return 0;
+}
 
-पूर्णांक aपंचांग_del_addr(काष्ठा aपंचांग_dev *dev, स्थिर काष्ठा sockaddr_aपंचांगsvc *addr,
-		 क्रमागत aपंचांग_addr_type_t atype)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा aपंचांग_dev_addr *this;
-	काष्ठा list_head *head;
-	पूर्णांक error;
+int atm_del_addr(struct atm_dev *dev, const struct sockaddr_atmsvc *addr,
+		 enum atm_addr_type_t atype)
+{
+	unsigned long flags;
+	struct atm_dev_addr *this;
+	struct list_head *head;
+	int error;
 
 	error = check_addr(addr);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (atype == ATM_ADDR_LECS)
+	if (atype == ATM_ADDR_LECS)
 		head = &dev->lecs;
-	अन्यथा
+	else
 		head = &dev->local;
-	list_क्रम_each_entry(this, head, entry) अणु
-		अगर (identical(&this->addr, addr)) अणु
+	list_for_each_entry(this, head, entry) {
+		if (identical(&this->addr, addr)) {
 			list_del(&this->entry);
 			spin_unlock_irqrestore(&dev->lock, flags);
-			kमुक्त(this);
-			अगर (head == &dev->local)
-				notअगरy_sigd(dev);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			kfree(this);
+			if (head == &dev->local)
+				notify_sigd(dev);
+			return 0;
+		}
+	}
 	spin_unlock_irqrestore(&dev->lock, flags);
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-पूर्णांक aपंचांग_get_addr(काष्ठा aपंचांग_dev *dev, काष्ठा sockaddr_aपंचांगsvc __user * buf,
-		 माप_प्रकार size, क्रमागत aपंचांग_addr_type_t atype)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा aपंचांग_dev_addr *this;
-	काष्ठा list_head *head;
-	पूर्णांक total = 0, error;
-	काष्ठा sockaddr_aपंचांगsvc *पंचांगp_buf, *पंचांगp_bufp;
+int atm_get_addr(struct atm_dev *dev, struct sockaddr_atmsvc __user * buf,
+		 size_t size, enum atm_addr_type_t atype)
+{
+	unsigned long flags;
+	struct atm_dev_addr *this;
+	struct list_head *head;
+	int total = 0, error;
+	struct sockaddr_atmsvc *tmp_buf, *tmp_bufp;
 
 	spin_lock_irqsave(&dev->lock, flags);
-	अगर (atype == ATM_ADDR_LECS)
+	if (atype == ATM_ADDR_LECS)
 		head = &dev->lecs;
-	अन्यथा
+	else
 		head = &dev->local;
-	list_क्रम_each_entry(this, head, entry)
-	    total += माप(काष्ठा sockaddr_aपंचांगsvc);
-	पंचांगp_buf = पंचांगp_bufp = kदो_स्मृति(total, GFP_ATOMIC);
-	अगर (!पंचांगp_buf) अणु
+	list_for_each_entry(this, head, entry)
+	    total += sizeof(struct sockaddr_atmsvc);
+	tmp_buf = tmp_bufp = kmalloc(total, GFP_ATOMIC);
+	if (!tmp_buf) {
 		spin_unlock_irqrestore(&dev->lock, flags);
-		वापस -ENOMEM;
-	पूर्ण
-	list_क्रम_each_entry(this, head, entry)
-	    स_नकल(पंचांगp_bufp++, &this->addr, माप(काष्ठा sockaddr_aपंचांगsvc));
+		return -ENOMEM;
+	}
+	list_for_each_entry(this, head, entry)
+	    memcpy(tmp_bufp++, &this->addr, sizeof(struct sockaddr_atmsvc));
 	spin_unlock_irqrestore(&dev->lock, flags);
 	error = total > size ? -E2BIG : total;
-	अगर (copy_to_user(buf, पंचांगp_buf, total < size ? total : size))
+	if (copy_to_user(buf, tmp_buf, total < size ? total : size))
 		error = -EFAULT;
-	kमुक्त(पंचांगp_buf);
-	वापस error;
-पूर्ण
+	kfree(tmp_buf);
+	return error;
+}

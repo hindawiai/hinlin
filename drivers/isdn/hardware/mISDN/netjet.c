@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * NETJet mISDN driver
  *
@@ -8,254 +7,254 @@
  * Copyright 2009  by Karsten Keil <keil@isdn4linux.de>
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/mISDNhw.h>
-#समावेश <linux/slab.h>
-#समावेश "ipac.h"
-#समावेश "iohelper.h"
-#समावेश "netjet.h"
-#समावेश "isdnhdlc.h"
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/delay.h>
+#include <linux/mISDNhw.h>
+#include <linux/slab.h>
+#include "ipac.h"
+#include "iohelper.h"
+#include "netjet.h"
+#include "isdnhdlc.h"
 
-#घोषणा NETJET_REV	"2.0"
+#define NETJET_REV	"2.0"
 
-क्रमागत nj_types अणु
+enum nj_types {
 	NETJET_S_TJ300,
 	NETJET_S_TJ320,
 	ENTERNOW__TJ320,
-पूर्ण;
+};
 
-काष्ठा tiger_dma अणु
-	माप_प्रकार		size;
+struct tiger_dma {
+	size_t		size;
 	u32		*start;
-	पूर्णांक		idx;
+	int		idx;
 	u32		dmastart;
 	u32		dmairq;
 	u32		dmaend;
 	u32		dmacur;
-पूर्ण;
+};
 
-काष्ठा tiger_hw;
+struct tiger_hw;
 
-काष्ठा tiger_ch अणु
-	काष्ठा bchannel		bch;
-	काष्ठा tiger_hw		*nj;
-	पूर्णांक			idx;
-	पूर्णांक			मुक्त;
-	पूर्णांक			lastrx;
+struct tiger_ch {
+	struct bchannel		bch;
+	struct tiger_hw		*nj;
+	int			idx;
+	int			free;
+	int			lastrx;
 	u16			rxstate;
 	u16			txstate;
-	काष्ठा isdnhdlc_vars	hsend;
-	काष्ठा isdnhdlc_vars	hrecv;
+	struct isdnhdlc_vars	hsend;
+	struct isdnhdlc_vars	hrecv;
 	u8			*hsbuf;
 	u8			*hrbuf;
-पूर्ण;
+};
 
-#घोषणा TX_INIT		0x0001
-#घोषणा TX_IDLE		0x0002
-#घोषणा TX_RUN		0x0004
-#घोषणा TX_UNDERRUN	0x0100
-#घोषणा RX_OVERRUN	0x0100
+#define TX_INIT		0x0001
+#define TX_IDLE		0x0002
+#define TX_RUN		0x0004
+#define TX_UNDERRUN	0x0100
+#define RX_OVERRUN	0x0100
 
-#घोषणा LOG_SIZE	64
+#define LOG_SIZE	64
 
-काष्ठा tiger_hw अणु
-	काष्ठा list_head	list;
-	काष्ठा pci_dev		*pdev;
-	अक्षर			name[MISDN_MAX_IDLEN];
-	क्रमागत nj_types		typ;
-	पूर्णांक			irq;
+struct tiger_hw {
+	struct list_head	list;
+	struct pci_dev		*pdev;
+	char			name[MISDN_MAX_IDLEN];
+	enum nj_types		typ;
+	int			irq;
 	u32			irqcnt;
 	u32			base;
-	माप_प्रकार			base_s;
+	size_t			base_s;
 	dma_addr_t		dma;
-	व्योम			*dma_p;
+	void			*dma_p;
 	spinlock_t		lock;	/* lock HW */
-	काष्ठा isac_hw		isac;
-	काष्ठा tiger_dma	send;
-	काष्ठा tiger_dma	recv;
-	काष्ठा tiger_ch		bc[2];
+	struct isac_hw		isac;
+	struct tiger_dma	send;
+	struct tiger_dma	recv;
+	struct tiger_ch		bc[2];
 	u8			ctrlreg;
 	u8			dmactrl;
 	u8			auxd;
 	u8			last_is0;
 	u8			irqmask0;
-	अक्षर			log[LOG_SIZE];
-पूर्ण;
+	char			log[LOG_SIZE];
+};
 
-अटल LIST_HEAD(Cards);
-अटल DEFINE_RWLOCK(card_lock); /* protect Cards */
-अटल u32 debug;
-अटल पूर्णांक nj_cnt;
+static LIST_HEAD(Cards);
+static DEFINE_RWLOCK(card_lock); /* protect Cards */
+static u32 debug;
+static int nj_cnt;
 
-अटल व्योम
-_set_debug(काष्ठा tiger_hw *card)
-अणु
+static void
+_set_debug(struct tiger_hw *card)
+{
 	card->isac.dch.debug = debug;
 	card->bc[0].bch.debug = debug;
 	card->bc[1].bch.debug = debug;
-पूर्ण
+}
 
-अटल पूर्णांक
-set_debug(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
-अणु
-	पूर्णांक ret;
-	काष्ठा tiger_hw *card;
+static int
+set_debug(const char *val, const struct kernel_param *kp)
+{
+	int ret;
+	struct tiger_hw *card;
 
-	ret = param_set_uपूर्णांक(val, kp);
-	अगर (!ret) अणु
-		पढ़ो_lock(&card_lock);
-		list_क्रम_each_entry(card, &Cards, list)
+	ret = param_set_uint(val, kp);
+	if (!ret) {
+		read_lock(&card_lock);
+		list_for_each_entry(card, &Cards, list)
 			_set_debug(card);
-		पढ़ो_unlock(&card_lock);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		read_unlock(&card_lock);
+	}
+	return ret;
+}
 
 MODULE_AUTHOR("Karsten Keil");
 MODULE_LICENSE("GPL v2");
 MODULE_VERSION(NETJET_REV);
-module_param_call(debug, set_debug, param_get_uपूर्णांक, &debug, S_IRUGO | S_IWUSR);
+module_param_call(debug, set_debug, param_get_uint, &debug, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(debug, "Netjet debug mask");
 
-अटल व्योम
-nj_disable_hwirq(काष्ठा tiger_hw *card)
-अणु
+static void
+nj_disable_hwirq(struct tiger_hw *card)
+{
 	outb(0, card->base + NJ_IRQMASK0);
 	outb(0, card->base + NJ_IRQMASK1);
-पूर्ण
+}
 
 
-अटल u8
-ReadISAC_nj(व्योम *p, u8 offset)
-अणु
-	काष्ठा tiger_hw *card = p;
+static u8
+ReadISAC_nj(void *p, u8 offset)
+{
+	struct tiger_hw *card = p;
 	u8 ret;
 
 	card->auxd &= 0xfc;
 	card->auxd |= (offset >> 4) & 3;
 	outb(card->auxd, card->base + NJ_AUXDATA);
 	ret = inb(card->base + NJ_ISAC_OFF + ((offset & 0x0f) << 2));
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम
-WriteISAC_nj(व्योम *p, u8 offset, u8 value)
-अणु
-	काष्ठा tiger_hw *card = p;
+static void
+WriteISAC_nj(void *p, u8 offset, u8 value)
+{
+	struct tiger_hw *card = p;
 
 	card->auxd &= 0xfc;
 	card->auxd |= (offset >> 4) & 3;
 	outb(card->auxd, card->base + NJ_AUXDATA);
 	outb(value, card->base + NJ_ISAC_OFF + ((offset & 0x0f) << 2));
-पूर्ण
+}
 
-अटल व्योम
-ReadFiFoISAC_nj(व्योम *p, u8 offset, u8 *data, पूर्णांक size)
-अणु
-	काष्ठा tiger_hw *card = p;
+static void
+ReadFiFoISAC_nj(void *p, u8 offset, u8 *data, int size)
+{
+	struct tiger_hw *card = p;
 
 	card->auxd &= 0xfc;
 	outb(card->auxd, card->base + NJ_AUXDATA);
 	insb(card->base + NJ_ISAC_OFF, data, size);
-पूर्ण
+}
 
-अटल व्योम
-WriteFiFoISAC_nj(व्योम *p, u8 offset, u8 *data, पूर्णांक size)
-अणु
-	काष्ठा tiger_hw *card = p;
+static void
+WriteFiFoISAC_nj(void *p, u8 offset, u8 *data, int size)
+{
+	struct tiger_hw *card = p;
 
 	card->auxd &= 0xfc;
 	outb(card->auxd, card->base + NJ_AUXDATA);
 	outsb(card->base + NJ_ISAC_OFF, data, size);
-पूर्ण
+}
 
-अटल व्योम
-fill_mem(काष्ठा tiger_ch *bc, u32 idx, u32 cnt, u32 fill)
-अणु
-	काष्ठा tiger_hw *card = bc->bch.hw;
+static void
+fill_mem(struct tiger_ch *bc, u32 idx, u32 cnt, u32 fill)
+{
+	struct tiger_hw *card = bc->bch.hw;
 	u32 mask = 0xff, val;
 
 	pr_debug("%s: B%1d fill %02x len %d idx %d/%d\n", card->name,
 		 bc->bch.nr, fill, cnt, idx, card->send.idx);
-	अगर (bc->bch.nr & 2) अणु
+	if (bc->bch.nr & 2) {
 		fill  <<= 8;
 		mask <<= 8;
-	पूर्ण
+	}
 	mask ^= 0xffffffff;
-	जबतक (cnt--) अणु
+	while (cnt--) {
 		val = card->send.start[idx];
 		val &= mask;
 		val |= fill;
 		card->send.start[idx++] = val;
-		अगर (idx >= card->send.size)
+		if (idx >= card->send.size)
 			idx = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक
-mode_tiger(काष्ठा tiger_ch *bc, u32 protocol)
-अणु
-	काष्ठा tiger_hw *card = bc->bch.hw;
+static int
+mode_tiger(struct tiger_ch *bc, u32 protocol)
+{
+	struct tiger_hw *card = bc->bch.hw;
 
 	pr_debug("%s: B%1d protocol %x-->%x\n", card->name,
 		 bc->bch.nr, bc->bch.state, protocol);
-	चयन (protocol) अणु
-	हाल ISDN_P_NONE:
-		अगर (bc->bch.state == ISDN_P_NONE)
-			अवरोध;
+	switch (protocol) {
+	case ISDN_P_NONE:
+		if (bc->bch.state == ISDN_P_NONE)
+			break;
 		fill_mem(bc, 0, card->send.size, 0xff);
 		bc->bch.state = protocol;
-		/* only stop dma and पूर्णांकerrupts अगर both channels शून्य */
-		अगर ((card->bc[0].bch.state == ISDN_P_NONE) &&
-		    (card->bc[1].bch.state == ISDN_P_NONE)) अणु
+		/* only stop dma and interrupts if both channels NULL */
+		if ((card->bc[0].bch.state == ISDN_P_NONE) &&
+		    (card->bc[1].bch.state == ISDN_P_NONE)) {
 			card->dmactrl = 0;
 			outb(card->dmactrl, card->base + NJ_DMACTRL);
 			outb(0, card->base + NJ_IRQMASK0);
-		पूर्ण
+		}
 		test_and_clear_bit(FLG_HDLC, &bc->bch.Flags);
 		test_and_clear_bit(FLG_TRANSPARENT, &bc->bch.Flags);
 		bc->txstate = 0;
 		bc->rxstate = 0;
 		bc->lastrx = -1;
-		अवरोध;
-	हाल ISDN_P_B_RAW:
+		break;
+	case ISDN_P_B_RAW:
 		test_and_set_bit(FLG_TRANSPARENT, &bc->bch.Flags);
 		bc->bch.state = protocol;
 		bc->idx = 0;
-		bc->मुक्त = card->send.size / 2;
+		bc->free = card->send.size / 2;
 		bc->rxstate = 0;
 		bc->txstate = TX_INIT | TX_IDLE;
 		bc->lastrx = -1;
-		अगर (!card->dmactrl) अणु
+		if (!card->dmactrl) {
 			card->dmactrl = 1;
 			outb(card->dmactrl, card->base + NJ_DMACTRL);
 			outb(0x0f, card->base + NJ_IRQMASK0);
-		पूर्ण
-		अवरोध;
-	हाल ISDN_P_B_HDLC:
+		}
+		break;
+	case ISDN_P_B_HDLC:
 		test_and_set_bit(FLG_HDLC, &bc->bch.Flags);
 		bc->bch.state = protocol;
 		bc->idx = 0;
-		bc->मुक्त = card->send.size / 2;
+		bc->free = card->send.size / 2;
 		bc->rxstate = 0;
 		bc->txstate = TX_INIT | TX_IDLE;
 		isdnhdlc_rcv_init(&bc->hrecv, 0);
 		isdnhdlc_out_init(&bc->hsend, 0);
 		bc->lastrx = -1;
-		अगर (!card->dmactrl) अणु
+		if (!card->dmactrl) {
 			card->dmactrl = 1;
 			outb(card->dmactrl, card->base + NJ_DMACTRL);
 			outb(0x0f, card->base + NJ_IRQMASK0);
-		पूर्ण
-		अवरोध;
-	शेष:
+		}
+		break;
+	default:
 		pr_info("%s: %s protocol %x not handled\n", card->name,
 			__func__, protocol);
-		वापस -ENOPROTOOPT;
-	पूर्ण
+		return -ENOPROTOOPT;
+	}
 	card->send.dmacur = inl(card->base + NJ_DMA_READ_ADR);
 	card->recv.dmacur = inl(card->base + NJ_DMA_WRITE_ADR);
 	card->send.idx = (card->send.dmacur - card->send.dmastart) >> 2;
@@ -267,21 +266,21 @@ mode_tiger(काष्ठा tiger_ch *bc, u32 protocol)
 		 inb(card->base + NJ_IRQSTAT0),
 		 card->send.idx,
 		 card->recv.idx);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-nj_reset(काष्ठा tiger_hw *card)
-अणु
+static void
+nj_reset(struct tiger_hw *card)
+{
 	outb(0xff, card->base + NJ_CTRL); /* Reset On */
 	mdelay(1);
 
-	/* now edge triggered क्रम TJ320 GE 13/07/00 */
+	/* now edge triggered for TJ320 GE 13/07/00 */
 	/* see comment in IRQ function */
-	अगर (card->typ == NETJET_S_TJ320) /* TJ320 */
-		card->ctrlreg = 0x40;  /* Reset Off and status पढ़ो clear */
-	अन्यथा
-		card->ctrlreg = 0x00;  /* Reset Off and status पढ़ो clear */
+	if (card->typ == NETJET_S_TJ320) /* TJ320 */
+		card->ctrlreg = 0x40;  /* Reset Off and status read clear */
+	else
+		card->ctrlreg = 0x00;  /* Reset Off and status read clear */
 	outb(card->ctrlreg, card->base + NJ_CTRL);
 	mdelay(10);
 
@@ -291,36 +290,36 @@ nj_reset(काष्ठा tiger_hw *card)
 	outb(~NJ_ISACIRQ, card->base + NJ_AUXCTRL);
 	outb(NJ_ISACIRQ,  card->base + NJ_IRQMASK1);
 	outb(card->auxd, card->base + NJ_AUXDATA);
-पूर्ण
+}
 
-अटल पूर्णांक
-inittiger(काष्ठा tiger_hw *card)
-अणु
-	पूर्णांक i;
+static int
+inittiger(struct tiger_hw *card)
+{
+	int i;
 
 	card->dma_p = dma_alloc_coherent(&card->pdev->dev, NJ_DMA_SIZE,
 					 &card->dma, GFP_ATOMIC);
-	अगर (!card->dma_p) अणु
+	if (!card->dma_p) {
 		pr_info("%s: No DMA memory\n", card->name);
-		वापस -ENOMEM;
-	पूर्ण
-	अगर ((u64)card->dma > 0xffffffff) अणु
+		return -ENOMEM;
+	}
+	if ((u64)card->dma > 0xffffffff) {
 		pr_info("%s: DMA outside 32 bit\n", card->name);
-		वापस -ENOMEM;
-	पूर्ण
-	क्रम (i = 0; i < 2; i++) अणु
-		card->bc[i].hsbuf = kदो_स्मृति(NJ_DMA_TXSIZE, GFP_ATOMIC);
-		अगर (!card->bc[i].hsbuf) अणु
+		return -ENOMEM;
+	}
+	for (i = 0; i < 2; i++) {
+		card->bc[i].hsbuf = kmalloc(NJ_DMA_TXSIZE, GFP_ATOMIC);
+		if (!card->bc[i].hsbuf) {
 			pr_info("%s: no B%d send buffer\n", card->name, i + 1);
-			वापस -ENOMEM;
-		पूर्ण
-		card->bc[i].hrbuf = kदो_स्मृति(NJ_DMA_RXSIZE, GFP_ATOMIC);
-		अगर (!card->bc[i].hrbuf) अणु
+			return -ENOMEM;
+		}
+		card->bc[i].hrbuf = kmalloc(NJ_DMA_RXSIZE, GFP_ATOMIC);
+		if (!card->bc[i].hrbuf) {
 			pr_info("%s: no B%d recv buffer\n", card->name, i + 1);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
-	स_रखो(card->dma_p, 0xff, NJ_DMA_SIZE);
+			return -ENOMEM;
+		}
+	}
+	memset(card->dma_p, 0xff, NJ_DMA_SIZE);
 
 	card->send.start = card->dma_p;
 	card->send.dmastart = (u32)card->dma;
@@ -330,7 +329,7 @@ inittiger(काष्ठा tiger_hw *card)
 		(4 * ((NJ_DMA_TXSIZE / 2) - 1));
 	card->send.size = NJ_DMA_TXSIZE;
 
-	अगर (debug & DEBUG_HW)
+	if (debug & DEBUG_HW)
 		pr_notice("%s: send buffer phy %#x - %#x - %#x  virt %p"
 			  " size %zu u32\n", card->name,
 			  card->send.dmastart, card->send.dmairq,
@@ -348,7 +347,7 @@ inittiger(काष्ठा tiger_hw *card)
 		(4 * ((NJ_DMA_RXSIZE / 2) - 1));
 	card->recv.size = NJ_DMA_RXSIZE;
 
-	अगर (debug & DEBUG_HW)
+	if (debug & DEBUG_HW)
 		pr_notice("%s: recv buffer phy %#x - %#x - %#x  virt %p"
 			  " size %zu u32\n", card->name,
 			  card->recv.dmastart, card->recv.dmairq,
@@ -357,447 +356,447 @@ inittiger(काष्ठा tiger_hw *card)
 	outl(card->recv.dmastart, card->base + NJ_DMA_WRITE_START);
 	outl(card->recv.dmairq, card->base + NJ_DMA_WRITE_IRQ);
 	outl(card->recv.dmaend, card->base + NJ_DMA_WRITE_END);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-पढ़ो_dma(काष्ठा tiger_ch *bc, u32 idx, पूर्णांक cnt)
-अणु
-	काष्ठा tiger_hw *card = bc->bch.hw;
-	पूर्णांक i, stat;
+static void
+read_dma(struct tiger_ch *bc, u32 idx, int cnt)
+{
+	struct tiger_hw *card = bc->bch.hw;
+	int i, stat;
 	u32 val;
 	u8 *p, *pn;
 
-	अगर (bc->lastrx == idx) अणु
+	if (bc->lastrx == idx) {
 		bc->rxstate |= RX_OVERRUN;
 		pr_info("%s: B%1d overrun at idx %d\n", card->name,
 			bc->bch.nr, idx);
-	पूर्ण
+	}
 	bc->lastrx = idx;
-	अगर (test_bit(FLG_RX_OFF, &bc->bch.Flags)) अणु
+	if (test_bit(FLG_RX_OFF, &bc->bch.Flags)) {
 		bc->bch.dropcnt += cnt;
-		वापस;
-	पूर्ण
+		return;
+	}
 	stat = bchannel_get_rxbuf(&bc->bch, cnt);
 	/* only transparent use the count here, HDLC overun is detected later */
-	अगर (stat == -ENOMEM) अणु
+	if (stat == -ENOMEM) {
 		pr_warn("%s.B%d: No memory for %d bytes\n",
 			card->name, bc->bch.nr, cnt);
-		वापस;
-	पूर्ण
-	अगर (test_bit(FLG_TRANSPARENT, &bc->bch.Flags))
+		return;
+	}
+	if (test_bit(FLG_TRANSPARENT, &bc->bch.Flags))
 		p = skb_put(bc->bch.rx_skb, cnt);
-	अन्यथा
+	else
 		p = bc->hrbuf;
 
-	क्रम (i = 0; i < cnt; i++) अणु
+	for (i = 0; i < cnt; i++) {
 		val = card->recv.start[idx++];
-		अगर (bc->bch.nr & 2)
+		if (bc->bch.nr & 2)
 			val >>= 8;
-		अगर (idx >= card->recv.size)
+		if (idx >= card->recv.size)
 			idx = 0;
 		p[i] = val & 0xff;
-	पूर्ण
+	}
 
-	अगर (test_bit(FLG_TRANSPARENT, &bc->bch.Flags)) अणु
+	if (test_bit(FLG_TRANSPARENT, &bc->bch.Flags)) {
 		recv_Bchannel(&bc->bch, 0, false);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	pn = bc->hrbuf;
-	जबतक (cnt > 0) अणु
+	while (cnt > 0) {
 		stat = isdnhdlc_decode(&bc->hrecv, pn, cnt, &i,
 				       bc->bch.rx_skb->data, bc->bch.maxlen);
-		अगर (stat > 0) अणु /* valid frame received */
+		if (stat > 0) { /* valid frame received */
 			p = skb_put(bc->bch.rx_skb, stat);
-			अगर (debug & DEBUG_HW_BFIFO) अणु
-				snम_लिखो(card->log, LOG_SIZE,
+			if (debug & DEBUG_HW_BFIFO) {
+				snprintf(card->log, LOG_SIZE,
 					 "B%1d-recv %s %d ", bc->bch.nr,
 					 card->name, stat);
-				prपूर्णांक_hex_dump_bytes(card->log,
+				print_hex_dump_bytes(card->log,
 						     DUMP_PREFIX_OFFSET, p,
 						     stat);
-			पूर्ण
+			}
 			recv_Bchannel(&bc->bch, 0, false);
 			stat = bchannel_get_rxbuf(&bc->bch, bc->bch.maxlen);
-			अगर (stat < 0) अणु
+			if (stat < 0) {
 				pr_warn("%s.B%d: No memory for %d bytes\n",
 					card->name, bc->bch.nr, cnt);
-				वापस;
-			पूर्ण
-		पूर्ण अन्यथा अगर (stat == -HDLC_CRC_ERROR) अणु
+				return;
+			}
+		} else if (stat == -HDLC_CRC_ERROR) {
 			pr_info("%s: B%1d receive frame CRC error\n",
 				card->name, bc->bch.nr);
-		पूर्ण अन्यथा अगर (stat == -HDLC_FRAMING_ERROR) अणु
+		} else if (stat == -HDLC_FRAMING_ERROR) {
 			pr_info("%s: B%1d receive framing error\n",
 				card->name, bc->bch.nr);
-		पूर्ण अन्यथा अगर (stat == -HDLC_LENGTH_ERROR) अणु
+		} else if (stat == -HDLC_LENGTH_ERROR) {
 			pr_info("%s: B%1d receive frame too long (> %d)\n",
 				card->name, bc->bch.nr, bc->bch.maxlen);
-		पूर्ण
+		}
 		pn += i;
 		cnt -= i;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-recv_tiger(काष्ठा tiger_hw *card, u8 irq_stat)
-अणु
+static void
+recv_tiger(struct tiger_hw *card, u8 irq_stat)
+{
 	u32 idx;
-	पूर्णांक cnt = card->recv.size / 2;
+	int cnt = card->recv.size / 2;
 
 	/* Note receive is via the WRITE DMA channel */
 	card->last_is0 &= ~NJ_IRQM0_WR_MASK;
 	card->last_is0 |= (irq_stat & NJ_IRQM0_WR_MASK);
 
-	अगर (irq_stat & NJ_IRQM0_WR_END)
+	if (irq_stat & NJ_IRQM0_WR_END)
 		idx = cnt - 1;
-	अन्यथा
+	else
 		idx = card->recv.size - 1;
 
-	अगर (test_bit(FLG_ACTIVE, &card->bc[0].bch.Flags))
-		पढ़ो_dma(&card->bc[0], idx, cnt);
-	अगर (test_bit(FLG_ACTIVE, &card->bc[1].bch.Flags))
-		पढ़ो_dma(&card->bc[1], idx, cnt);
-पूर्ण
+	if (test_bit(FLG_ACTIVE, &card->bc[0].bch.Flags))
+		read_dma(&card->bc[0], idx, cnt);
+	if (test_bit(FLG_ACTIVE, &card->bc[1].bch.Flags))
+		read_dma(&card->bc[1], idx, cnt);
+}
 
 /* sync with current DMA address at start or after exception */
-अटल व्योम
-resync(काष्ठा tiger_ch *bc, काष्ठा tiger_hw *card)
-अणु
+static void
+resync(struct tiger_ch *bc, struct tiger_hw *card)
+{
 	card->send.dmacur = inl(card->base | NJ_DMA_READ_ADR);
 	card->send.idx = (card->send.dmacur - card->send.dmastart) >> 2;
-	अगर (bc->मुक्त > card->send.size / 2)
-		bc->मुक्त = card->send.size / 2;
-	/* currently we simple sync to the next complete मुक्त area
-	 * this hast the advantage that we have always maximum समय to
+	if (bc->free > card->send.size / 2)
+		bc->free = card->send.size / 2;
+	/* currently we simple sync to the next complete free area
+	 * this hast the advantage that we have always maximum time to
 	 * handle TX irq
 	 */
-	अगर (card->send.idx < ((card->send.size / 2) - 1))
+	if (card->send.idx < ((card->send.size / 2) - 1))
 		bc->idx = (card->recv.size / 2) - 1;
-	अन्यथा
+	else
 		bc->idx = card->recv.size - 1;
 	bc->txstate = TX_RUN;
 	pr_debug("%s: %s B%1d free %d idx %d/%d\n", card->name,
-		 __func__, bc->bch.nr, bc->मुक्त, bc->idx, card->send.idx);
-पूर्ण
+		 __func__, bc->bch.nr, bc->free, bc->idx, card->send.idx);
+}
 
-अटल पूर्णांक bc_next_frame(काष्ठा tiger_ch *);
+static int bc_next_frame(struct tiger_ch *);
 
-अटल व्योम
-fill_hdlc_flag(काष्ठा tiger_ch *bc)
-अणु
-	काष्ठा tiger_hw *card = bc->bch.hw;
-	पूर्णांक count, i;
+static void
+fill_hdlc_flag(struct tiger_ch *bc)
+{
+	struct tiger_hw *card = bc->bch.hw;
+	int count, i;
 	u32 m, v;
 	u8  *p;
 
-	अगर (bc->मुक्त == 0)
-		वापस;
+	if (bc->free == 0)
+		return;
 	pr_debug("%s: %s B%1d %d state %x idx %d/%d\n", card->name,
-		 __func__, bc->bch.nr, bc->मुक्त, bc->txstate,
+		 __func__, bc->bch.nr, bc->free, bc->txstate,
 		 bc->idx, card->send.idx);
-	अगर (bc->txstate & (TX_IDLE | TX_INIT | TX_UNDERRUN))
+	if (bc->txstate & (TX_IDLE | TX_INIT | TX_UNDERRUN))
 		resync(bc, card);
-	count = isdnhdlc_encode(&bc->hsend, शून्य, 0, &i,
-				bc->hsbuf, bc->मुक्त);
+	count = isdnhdlc_encode(&bc->hsend, NULL, 0, &i,
+				bc->hsbuf, bc->free);
 	pr_debug("%s: B%1d hdlc encoded %d flags\n", card->name,
 		 bc->bch.nr, count);
-	bc->मुक्त -= count;
+	bc->free -= count;
 	p = bc->hsbuf;
 	m = (bc->bch.nr & 1) ? 0xffffff00 : 0xffff00ff;
-	क्रम (i = 0; i < count; i++) अणु
-		अगर (bc->idx >= card->send.size)
+	for (i = 0; i < count; i++) {
+		if (bc->idx >= card->send.size)
 			bc->idx = 0;
 		v = card->send.start[bc->idx];
 		v &= m;
 		v |= (bc->bch.nr & 1) ? (u32)(p[i]) : ((u32)(p[i])) << 8;
 		card->send.start[bc->idx++] = v;
-	पूर्ण
-	अगर (debug & DEBUG_HW_BFIFO) अणु
-		snम_लिखो(card->log, LOG_SIZE, "B%1d-send %s %d ",
+	}
+	if (debug & DEBUG_HW_BFIFO) {
+		snprintf(card->log, LOG_SIZE, "B%1d-send %s %d ",
 			 bc->bch.nr, card->name, count);
-		prपूर्णांक_hex_dump_bytes(card->log, DUMP_PREFIX_OFFSET, p, count);
-	पूर्ण
-पूर्ण
+		print_hex_dump_bytes(card->log, DUMP_PREFIX_OFFSET, p, count);
+	}
+}
 
-अटल व्योम
-fill_dma(काष्ठा tiger_ch *bc)
-अणु
-	काष्ठा tiger_hw *card = bc->bch.hw;
-	पूर्णांक count, i, fillempty = 0;
+static void
+fill_dma(struct tiger_ch *bc)
+{
+	struct tiger_hw *card = bc->bch.hw;
+	int count, i, fillempty = 0;
 	u32 m, v, n = 0;
 	u8  *p;
 
-	अगर (bc->मुक्त == 0)
-		वापस;
-	अगर (!bc->bch.tx_skb) अणु
-		अगर (!test_bit(FLG_TX_EMPTY, &bc->bch.Flags))
-			वापस;
+	if (bc->free == 0)
+		return;
+	if (!bc->bch.tx_skb) {
+		if (!test_bit(FLG_TX_EMPTY, &bc->bch.Flags))
+			return;
 		fillempty = 1;
 		count = card->send.size >> 1;
 		p = bc->bch.fill;
-	पूर्ण अन्यथा अणु
+	} else {
 		count = bc->bch.tx_skb->len - bc->bch.tx_idx;
-		अगर (count <= 0)
-			वापस;
+		if (count <= 0)
+			return;
 		pr_debug("%s: %s B%1d %d/%d/%d/%d state %x idx %d/%d\n",
-			 card->name, __func__, bc->bch.nr, count, bc->मुक्त,
+			 card->name, __func__, bc->bch.nr, count, bc->free,
 			 bc->bch.tx_idx, bc->bch.tx_skb->len, bc->txstate,
 			 bc->idx, card->send.idx);
 		p = bc->bch.tx_skb->data + bc->bch.tx_idx;
-	पूर्ण
-	अगर (bc->txstate & (TX_IDLE | TX_INIT | TX_UNDERRUN))
+	}
+	if (bc->txstate & (TX_IDLE | TX_INIT | TX_UNDERRUN))
 		resync(bc, card);
-	अगर (test_bit(FLG_HDLC, &bc->bch.Flags) && !fillempty) अणु
+	if (test_bit(FLG_HDLC, &bc->bch.Flags) && !fillempty) {
 		count = isdnhdlc_encode(&bc->hsend, p, count, &i,
-					bc->hsbuf, bc->मुक्त);
+					bc->hsbuf, bc->free);
 		pr_debug("%s: B%1d hdlc encoded %d in %d\n", card->name,
 			 bc->bch.nr, i, count);
 		bc->bch.tx_idx += i;
-		bc->मुक्त -= count;
+		bc->free -= count;
 		p = bc->hsbuf;
-	पूर्ण अन्यथा अणु
-		अगर (count > bc->मुक्त)
-			count = bc->मुक्त;
-		अगर (!fillempty)
+	} else {
+		if (count > bc->free)
+			count = bc->free;
+		if (!fillempty)
 			bc->bch.tx_idx += count;
-		bc->मुक्त -= count;
-	पूर्ण
+		bc->free -= count;
+	}
 	m = (bc->bch.nr & 1) ? 0xffffff00 : 0xffff00ff;
-	अगर (fillempty) अणु
+	if (fillempty) {
 		n = p[0];
-		अगर (!(bc->bch.nr & 1))
+		if (!(bc->bch.nr & 1))
 			n <<= 8;
-		क्रम (i = 0; i < count; i++) अणु
-			अगर (bc->idx >= card->send.size)
+		for (i = 0; i < count; i++) {
+			if (bc->idx >= card->send.size)
 				bc->idx = 0;
 			v = card->send.start[bc->idx];
 			v &= m;
 			v |= n;
 			card->send.start[bc->idx++] = v;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < count; i++) अणु
-			अगर (bc->idx >= card->send.size)
+		}
+	} else {
+		for (i = 0; i < count; i++) {
+			if (bc->idx >= card->send.size)
 				bc->idx = 0;
 			v = card->send.start[bc->idx];
 			v &= m;
 			n = p[i];
 			v |= (bc->bch.nr & 1) ? n : n << 8;
 			card->send.start[bc->idx++] = v;
-		पूर्ण
-	पूर्ण
-	अगर (debug & DEBUG_HW_BFIFO) अणु
-		snम_लिखो(card->log, LOG_SIZE, "B%1d-send %s %d ",
+		}
+	}
+	if (debug & DEBUG_HW_BFIFO) {
+		snprintf(card->log, LOG_SIZE, "B%1d-send %s %d ",
 			 bc->bch.nr, card->name, count);
-		prपूर्णांक_hex_dump_bytes(card->log, DUMP_PREFIX_OFFSET, p, count);
-	पूर्ण
-	अगर (bc->मुक्त)
+		print_hex_dump_bytes(card->log, DUMP_PREFIX_OFFSET, p, count);
+	}
+	if (bc->free)
 		bc_next_frame(bc);
-पूर्ण
+}
 
 
-अटल पूर्णांक
-bc_next_frame(काष्ठा tiger_ch *bc)
-अणु
-	पूर्णांक ret = 1;
+static int
+bc_next_frame(struct tiger_ch *bc)
+{
+	int ret = 1;
 
-	अगर (bc->bch.tx_skb && bc->bch.tx_idx < bc->bch.tx_skb->len) अणु
+	if (bc->bch.tx_skb && bc->bch.tx_idx < bc->bch.tx_skb->len) {
 		fill_dma(bc);
-	पूर्ण अन्यथा अणु
-		dev_kमुक्त_skb(bc->bch.tx_skb);
-		अगर (get_next_bframe(&bc->bch)) अणु
+	} else {
+		dev_kfree_skb(bc->bch.tx_skb);
+		if (get_next_bframe(&bc->bch)) {
 			fill_dma(bc);
 			test_and_clear_bit(FLG_TX_EMPTY, &bc->bch.Flags);
-		पूर्ण अन्यथा अगर (test_bit(FLG_TX_EMPTY, &bc->bch.Flags)) अणु
+		} else if (test_bit(FLG_TX_EMPTY, &bc->bch.Flags)) {
 			fill_dma(bc);
-		पूर्ण अन्यथा अगर (test_bit(FLG_FILLEMPTY, &bc->bch.Flags)) अणु
+		} else if (test_bit(FLG_FILLEMPTY, &bc->bch.Flags)) {
 			test_and_set_bit(FLG_TX_EMPTY, &bc->bch.Flags);
 			ret = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = 0;
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+		}
+	}
+	return ret;
+}
 
-अटल व्योम
-send_tiger_bc(काष्ठा tiger_hw *card, काष्ठा tiger_ch *bc)
-अणु
-	पूर्णांक ret;
+static void
+send_tiger_bc(struct tiger_hw *card, struct tiger_ch *bc)
+{
+	int ret;
 
-	bc->मुक्त += card->send.size / 2;
-	अगर (bc->मुक्त >= card->send.size) अणु
-		अगर (!(bc->txstate & (TX_UNDERRUN | TX_INIT))) अणु
+	bc->free += card->send.size / 2;
+	if (bc->free >= card->send.size) {
+		if (!(bc->txstate & (TX_UNDERRUN | TX_INIT))) {
 			pr_info("%s: B%1d TX underrun state %x\n", card->name,
 				bc->bch.nr, bc->txstate);
 			bc->txstate |= TX_UNDERRUN;
-		पूर्ण
-		bc->मुक्त = card->send.size;
-	पूर्ण
+		}
+		bc->free = card->send.size;
+	}
 	ret = bc_next_frame(bc);
-	अगर (!ret) अणु
-		अगर (test_bit(FLG_HDLC, &bc->bch.Flags)) अणु
+	if (!ret) {
+		if (test_bit(FLG_HDLC, &bc->bch.Flags)) {
 			fill_hdlc_flag(bc);
-			वापस;
-		पूर्ण
+			return;
+		}
 		pr_debug("%s: B%1d TX no data free %d idx %d/%d\n", card->name,
-			 bc->bch.nr, bc->मुक्त, bc->idx, card->send.idx);
-		अगर (!(bc->txstate & (TX_IDLE | TX_INIT))) अणु
-			fill_mem(bc, bc->idx, bc->मुक्त, 0xff);
-			अगर (bc->मुक्त == card->send.size)
+			 bc->bch.nr, bc->free, bc->idx, card->send.idx);
+		if (!(bc->txstate & (TX_IDLE | TX_INIT))) {
+			fill_mem(bc, bc->idx, bc->free, 0xff);
+			if (bc->free == card->send.size)
 				bc->txstate |= TX_IDLE;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम
-send_tiger(काष्ठा tiger_hw *card, u8 irq_stat)
-अणु
-	पूर्णांक i;
+static void
+send_tiger(struct tiger_hw *card, u8 irq_stat)
+{
+	int i;
 
 	/* Note send is via the READ DMA channel */
-	अगर ((irq_stat & card->last_is0) & NJ_IRQM0_RD_MASK) अणु
+	if ((irq_stat & card->last_is0) & NJ_IRQM0_RD_MASK) {
 		pr_info("%s: tiger warn write double dma %x/%x\n",
 			card->name, irq_stat, card->last_is0);
-		वापस;
-	पूर्ण अन्यथा अणु
+		return;
+	} else {
 		card->last_is0 &= ~NJ_IRQM0_RD_MASK;
 		card->last_is0 |= (irq_stat & NJ_IRQM0_RD_MASK);
-	पूर्ण
-	क्रम (i = 0; i < 2; i++) अणु
-		अगर (test_bit(FLG_ACTIVE, &card->bc[i].bch.Flags))
+	}
+	for (i = 0; i < 2; i++) {
+		if (test_bit(FLG_ACTIVE, &card->bc[i].bch.Flags))
 			send_tiger_bc(card, &card->bc[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल irqवापस_t
-nj_irq(पूर्णांक पूर्णांकno, व्योम *dev_id)
-अणु
-	काष्ठा tiger_hw *card = dev_id;
+static irqreturn_t
+nj_irq(int intno, void *dev_id)
+{
+	struct tiger_hw *card = dev_id;
 	u8 val, s1val, s0val;
 
 	spin_lock(&card->lock);
 	s0val = inb(card->base | NJ_IRQSTAT0);
 	s1val = inb(card->base | NJ_IRQSTAT1);
-	अगर ((s1val & NJ_ISACIRQ) && (s0val == 0)) अणु
+	if ((s1val & NJ_ISACIRQ) && (s0val == 0)) {
 		/* shared IRQ */
 		spin_unlock(&card->lock);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 	pr_debug("%s: IRQSTAT0 %02x IRQSTAT1 %02x\n", card->name, s0val, s1val);
 	card->irqcnt++;
-	अगर (!(s1val & NJ_ISACIRQ)) अणु
+	if (!(s1val & NJ_ISACIRQ)) {
 		val = ReadISAC_nj(card, ISAC_ISTA);
-		अगर (val)
+		if (val)
 			mISDNisac_irq(&card->isac, val);
-	पूर्ण
+	}
 
-	अगर (s0val)
-		/* ग_लिखो to clear */
+	if (s0val)
+		/* write to clear */
 		outb(s0val, card->base | NJ_IRQSTAT0);
-	अन्यथा
-		जाओ end;
+	else
+		goto end;
 	s1val = s0val;
-	/* set bits in sval to indicate which page is मुक्त */
+	/* set bits in sval to indicate which page is free */
 	card->recv.dmacur = inl(card->base | NJ_DMA_WRITE_ADR);
 	card->recv.idx = (card->recv.dmacur - card->recv.dmastart) >> 2;
-	अगर (card->recv.dmacur < card->recv.dmairq)
-		s0val = 0x08;	/* the 2nd ग_लिखो area is मुक्त */
-	अन्यथा
-		s0val = 0x04;	/* the 1st ग_लिखो area is मुक्त */
+	if (card->recv.dmacur < card->recv.dmairq)
+		s0val = 0x08;	/* the 2nd write area is free */
+	else
+		s0val = 0x04;	/* the 1st write area is free */
 
 	card->send.dmacur = inl(card->base | NJ_DMA_READ_ADR);
 	card->send.idx = (card->send.dmacur - card->send.dmastart) >> 2;
-	अगर (card->send.dmacur < card->send.dmairq)
-		s0val |= 0x02;	/* the 2nd पढ़ो area is मुक्त */
-	अन्यथा
-		s0val |= 0x01;	/* the 1st पढ़ो area is मुक्त */
+	if (card->send.dmacur < card->send.dmairq)
+		s0val |= 0x02;	/* the 2nd read area is free */
+	else
+		s0val |= 0x01;	/* the 1st read area is free */
 
 	pr_debug("%s: DMA Status %02x/%02x/%02x %d/%d\n", card->name,
 		 s1val, s0val, card->last_is0,
 		 card->recv.idx, card->send.idx);
-	/* test अगर we have a DMA पूर्णांकerrupt */
-	अगर (s0val != card->last_is0) अणु
-		अगर ((s0val & NJ_IRQM0_RD_MASK) !=
+	/* test if we have a DMA interrupt */
+	if (s0val != card->last_is0) {
+		if ((s0val & NJ_IRQM0_RD_MASK) !=
 		    (card->last_is0 & NJ_IRQM0_RD_MASK))
-			/* got a ग_लिखो dma पूर्णांक */
+			/* got a write dma int */
 			send_tiger(card, s0val);
-		अगर ((s0val & NJ_IRQM0_WR_MASK) !=
+		if ((s0val & NJ_IRQM0_WR_MASK) !=
 		    (card->last_is0 & NJ_IRQM0_WR_MASK))
-			/* got a पढ़ो dma पूर्णांक */
+			/* got a read dma int */
 			recv_tiger(card, s0val);
-	पूर्ण
+	}
 end:
 	spin_unlock(&card->lock);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक
-nj_l2l1B(काष्ठा mISDNchannel *ch, काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक ret = -EINVAL;
-	काष्ठा bchannel *bch = container_of(ch, काष्ठा bchannel, ch);
-	काष्ठा tiger_ch *bc = container_of(bch, काष्ठा tiger_ch, bch);
-	काष्ठा tiger_hw *card = bch->hw;
-	काष्ठा mISDNhead *hh = mISDN_HEAD_P(skb);
-	अचिन्हित दीर्घ flags;
+static int
+nj_l2l1B(struct mISDNchannel *ch, struct sk_buff *skb)
+{
+	int ret = -EINVAL;
+	struct bchannel *bch = container_of(ch, struct bchannel, ch);
+	struct tiger_ch *bc = container_of(bch, struct tiger_ch, bch);
+	struct tiger_hw *card = bch->hw;
+	struct mISDNhead *hh = mISDN_HEAD_P(skb);
+	unsigned long flags;
 
-	चयन (hh->prim) अणु
-	हाल PH_DATA_REQ:
+	switch (hh->prim) {
+	case PH_DATA_REQ:
 		spin_lock_irqsave(&card->lock, flags);
 		ret = bchannel_senddata(bch, skb);
-		अगर (ret > 0) अणु /* direct TX */
+		if (ret > 0) { /* direct TX */
 			fill_dma(bc);
 			ret = 0;
-		पूर्ण
+		}
 		spin_unlock_irqrestore(&card->lock, flags);
-		वापस ret;
-	हाल PH_ACTIVATE_REQ:
+		return ret;
+	case PH_ACTIVATE_REQ:
 		spin_lock_irqsave(&card->lock, flags);
-		अगर (!test_and_set_bit(FLG_ACTIVE, &bch->Flags))
+		if (!test_and_set_bit(FLG_ACTIVE, &bch->Flags))
 			ret = mode_tiger(bc, ch->protocol);
-		अन्यथा
+		else
 			ret = 0;
 		spin_unlock_irqrestore(&card->lock, flags);
-		अगर (!ret)
+		if (!ret)
 			_queue_data(ch, PH_ACTIVATE_IND, MISDN_ID_ANY, 0,
-				    शून्य, GFP_KERNEL);
-		अवरोध;
-	हाल PH_DEACTIVATE_REQ:
+				    NULL, GFP_KERNEL);
+		break;
+	case PH_DEACTIVATE_REQ:
 		spin_lock_irqsave(&card->lock, flags);
 		mISDN_clear_bchannel(bch);
 		mode_tiger(bc, ISDN_P_NONE);
 		spin_unlock_irqrestore(&card->lock, flags);
 		_queue_data(ch, PH_DEACTIVATE_IND, MISDN_ID_ANY, 0,
-			    शून्य, GFP_KERNEL);
+			    NULL, GFP_KERNEL);
 		ret = 0;
-		अवरोध;
-	पूर्ण
-	अगर (!ret)
-		dev_kमुक्त_skb(skb);
-	वापस ret;
-पूर्ण
+		break;
+	}
+	if (!ret)
+		dev_kfree_skb(skb);
+	return ret;
+}
 
-अटल पूर्णांक
-channel_bctrl(काष्ठा tiger_ch *bc, काष्ठा mISDN_ctrl_req *cq)
-अणु
-	वापस mISDN_ctrl_bchannel(&bc->bch, cq);
-पूर्ण
+static int
+channel_bctrl(struct tiger_ch *bc, struct mISDN_ctrl_req *cq)
+{
+	return mISDN_ctrl_bchannel(&bc->bch, cq);
+}
 
-अटल पूर्णांक
-nj_bctrl(काष्ठा mISDNchannel *ch, u32 cmd, व्योम *arg)
-अणु
-	काष्ठा bchannel *bch = container_of(ch, काष्ठा bchannel, ch);
-	काष्ठा tiger_ch *bc = container_of(bch, काष्ठा tiger_ch, bch);
-	काष्ठा tiger_hw *card  = bch->hw;
-	पूर्णांक ret = -EINVAL;
-	u_दीर्घ flags;
+static int
+nj_bctrl(struct mISDNchannel *ch, u32 cmd, void *arg)
+{
+	struct bchannel *bch = container_of(ch, struct bchannel, ch);
+	struct tiger_ch *bc = container_of(bch, struct tiger_ch, bch);
+	struct tiger_hw *card  = bch->hw;
+	int ret = -EINVAL;
+	u_long flags;
 
 	pr_debug("%s: %s cmd:%x %p\n", card->name, __func__, cmd, arg);
-	चयन (cmd) अणु
-	हाल CLOSE_CHANNEL:
+	switch (cmd) {
+	case CLOSE_CHANNEL:
 		test_and_clear_bit(FLG_OPEN, &bch->Flags);
 		cancel_work_sync(&bch->workq);
 		spin_lock_irqsave(&card->lock, flags);
@@ -805,147 +804,147 @@ nj_bctrl(काष्ठा mISDNchannel *ch, u32 cmd, व्योम *arg)
 		mode_tiger(bc, ISDN_P_NONE);
 		spin_unlock_irqrestore(&card->lock, flags);
 		ch->protocol = ISDN_P_NONE;
-		ch->peer = शून्य;
+		ch->peer = NULL;
 		module_put(THIS_MODULE);
 		ret = 0;
-		अवरोध;
-	हाल CONTROL_CHANNEL:
+		break;
+	case CONTROL_CHANNEL:
 		ret = channel_bctrl(bc, arg);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_info("%s: %s unknown prim(%x)\n", card->name, __func__, cmd);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक
-channel_ctrl(काष्ठा tiger_hw *card, काष्ठा mISDN_ctrl_req *cq)
-अणु
-	पूर्णांक	ret = 0;
+static int
+channel_ctrl(struct tiger_hw *card, struct mISDN_ctrl_req *cq)
+{
+	int	ret = 0;
 
-	चयन (cq->op) अणु
-	हाल MISDN_CTRL_GETOP:
+	switch (cq->op) {
+	case MISDN_CTRL_GETOP:
 		cq->op = MISDN_CTRL_LOOP | MISDN_CTRL_L1_TIMER3;
-		अवरोध;
-	हाल MISDN_CTRL_LOOP:
+		break;
+	case MISDN_CTRL_LOOP:
 		/* cq->channel: 0 disable, 1 B1 loop 2 B2 loop, 3 both */
-		अगर (cq->channel < 0 || cq->channel > 3) अणु
+		if (cq->channel < 0 || cq->channel > 3) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ret = card->isac.ctrl(&card->isac, HW_TESTLOOP, cq->channel);
-		अवरोध;
-	हाल MISDN_CTRL_L1_TIMER3:
+		break;
+	case MISDN_CTRL_L1_TIMER3:
 		ret = card->isac.ctrl(&card->isac, HW_TIMER3_VALUE, cq->p1);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_info("%s: %s unknown Op %x\n", card->name, __func__, cq->op);
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		break;
+	}
+	return ret;
+}
 
-अटल पूर्णांक
-खोलो_bchannel(काष्ठा tiger_hw *card, काष्ठा channel_req *rq)
-अणु
-	काष्ठा bchannel *bch;
+static int
+open_bchannel(struct tiger_hw *card, struct channel_req *rq)
+{
+	struct bchannel *bch;
 
-	अगर (rq->adr.channel == 0 || rq->adr.channel > 2)
-		वापस -EINVAL;
-	अगर (rq->protocol == ISDN_P_NONE)
-		वापस -EINVAL;
+	if (rq->adr.channel == 0 || rq->adr.channel > 2)
+		return -EINVAL;
+	if (rq->protocol == ISDN_P_NONE)
+		return -EINVAL;
 	bch = &card->bc[rq->adr.channel - 1].bch;
-	अगर (test_and_set_bit(FLG_OPEN, &bch->Flags))
-		वापस -EBUSY; /* b-channel can be only खोलो once */
+	if (test_and_set_bit(FLG_OPEN, &bch->Flags))
+		return -EBUSY; /* b-channel can be only open once */
 	test_and_clear_bit(FLG_FILLEMPTY, &bch->Flags);
 	bch->ch.protocol = rq->protocol;
 	rq->ch = &bch->ch;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * device control function
  */
-अटल पूर्णांक
-nj_dctrl(काष्ठा mISDNchannel *ch, u32 cmd, व्योम *arg)
-अणु
-	काष्ठा mISDNdevice	*dev = container_of(ch, काष्ठा mISDNdevice, D);
-	काष्ठा dchannel		*dch = container_of(dev, काष्ठा dchannel, dev);
-	काष्ठा tiger_hw	*card = dch->hw;
-	काष्ठा channel_req	*rq;
-	पूर्णांक			err = 0;
+static int
+nj_dctrl(struct mISDNchannel *ch, u32 cmd, void *arg)
+{
+	struct mISDNdevice	*dev = container_of(ch, struct mISDNdevice, D);
+	struct dchannel		*dch = container_of(dev, struct dchannel, dev);
+	struct tiger_hw	*card = dch->hw;
+	struct channel_req	*rq;
+	int			err = 0;
 
 	pr_debug("%s: %s cmd:%x %p\n", card->name, __func__, cmd, arg);
-	चयन (cmd) अणु
-	हाल OPEN_CHANNEL:
+	switch (cmd) {
+	case OPEN_CHANNEL:
 		rq = arg;
-		अगर (rq->protocol == ISDN_P_TE_S0)
-			err = card->isac.खोलो(&card->isac, rq);
-		अन्यथा
-			err = खोलो_bchannel(card, rq);
-		अगर (err)
-			अवरोध;
-		अगर (!try_module_get(THIS_MODULE))
+		if (rq->protocol == ISDN_P_TE_S0)
+			err = card->isac.open(&card->isac, rq);
+		else
+			err = open_bchannel(card, rq);
+		if (err)
+			break;
+		if (!try_module_get(THIS_MODULE))
 			pr_info("%s: cannot get module\n", card->name);
-		अवरोध;
-	हाल CLOSE_CHANNEL:
+		break;
+	case CLOSE_CHANNEL:
 		pr_debug("%s: dev(%d) close from %p\n", card->name, dch->dev.id,
-			 __builtin_वापस_address(0));
+			 __builtin_return_address(0));
 		module_put(THIS_MODULE);
-		अवरोध;
-	हाल CONTROL_CHANNEL:
+		break;
+	case CONTROL_CHANNEL:
 		err = channel_ctrl(card, arg);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_debug("%s: %s unknown command %x\n",
 			 card->name, __func__, cmd);
-		वापस -EINVAL;
-	पूर्ण
-	वापस err;
-पूर्ण
+		return -EINVAL;
+	}
+	return err;
+}
 
-अटल पूर्णांक
-nj_init_card(काष्ठा tiger_hw *card)
-अणु
-	u_दीर्घ flags;
-	पूर्णांक ret;
+static int
+nj_init_card(struct tiger_hw *card)
+{
+	u_long flags;
+	int ret;
 
 	spin_lock_irqsave(&card->lock, flags);
 	nj_disable_hwirq(card);
 	spin_unlock_irqrestore(&card->lock, flags);
 
 	card->irq = card->pdev->irq;
-	अगर (request_irq(card->irq, nj_irq, IRQF_SHARED, card->name, card)) अणु
+	if (request_irq(card->irq, nj_irq, IRQF_SHARED, card->name, card)) {
 		pr_info("%s: couldn't get interrupt %d\n",
 			card->name, card->irq);
 		card->irq = -1;
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	spin_lock_irqsave(&card->lock, flags);
 	nj_reset(card);
 	ret = card->isac.init(&card->isac);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 	ret = inittiger(card);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 	mode_tiger(&card->bc[0], ISDN_P_NONE);
 	mode_tiger(&card->bc[1], ISDN_P_NONE);
 error:
 	spin_unlock_irqrestore(&card->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल व्योम
-nj_release(काष्ठा tiger_hw *card)
-अणु
-	u_दीर्घ flags;
-	पूर्णांक i;
+static void
+nj_release(struct tiger_hw *card)
+{
+	u_long flags;
+	int i;
 
-	अगर (card->base_s) अणु
+	if (card->base_s) {
 		spin_lock_irqsave(&card->lock, flags);
 		nj_disable_hwirq(card);
 		mode_tiger(&card->bc[0], ISDN_P_NONE);
@@ -954,57 +953,57 @@ nj_release(काष्ठा tiger_hw *card)
 		spin_unlock_irqrestore(&card->lock, flags);
 		release_region(card->base, card->base_s);
 		card->base_s = 0;
-	पूर्ण
-	अगर (card->irq > 0)
-		मुक्त_irq(card->irq, card);
-	अगर (card->isac.dch.dev.dev.class)
-		mISDN_unरेजिस्टर_device(&card->isac.dch.dev);
+	}
+	if (card->irq > 0)
+		free_irq(card->irq, card);
+	if (card->isac.dch.dev.dev.class)
+		mISDN_unregister_device(&card->isac.dch.dev);
 
-	क्रम (i = 0; i < 2; i++) अणु
-		mISDN_मुक्तbchannel(&card->bc[i].bch);
-		kमुक्त(card->bc[i].hsbuf);
-		kमुक्त(card->bc[i].hrbuf);
-	पूर्ण
-	अगर (card->dma_p)
-		dma_मुक्त_coherent(&card->pdev->dev, NJ_DMA_SIZE, card->dma_p,
+	for (i = 0; i < 2; i++) {
+		mISDN_freebchannel(&card->bc[i].bch);
+		kfree(card->bc[i].hsbuf);
+		kfree(card->bc[i].hrbuf);
+	}
+	if (card->dma_p)
+		dma_free_coherent(&card->pdev->dev, NJ_DMA_SIZE, card->dma_p,
 				  card->dma);
-	ग_लिखो_lock_irqsave(&card_lock, flags);
+	write_lock_irqsave(&card_lock, flags);
 	list_del(&card->list);
-	ग_लिखो_unlock_irqrestore(&card_lock, flags);
+	write_unlock_irqrestore(&card_lock, flags);
 	pci_clear_master(card->pdev);
 	pci_disable_device(card->pdev);
-	pci_set_drvdata(card->pdev, शून्य);
-	kमुक्त(card);
-पूर्ण
+	pci_set_drvdata(card->pdev, NULL);
+	kfree(card);
+}
 
 
-अटल पूर्णांक
-nj_setup(काष्ठा tiger_hw *card)
-अणु
+static int
+nj_setup(struct tiger_hw *card)
+{
 	card->base = pci_resource_start(card->pdev, 0);
 	card->base_s = pci_resource_len(card->pdev, 0);
-	अगर (!request_region(card->base, card->base_s, card->name)) अणु
+	if (!request_region(card->base, card->base_s, card->name)) {
 		pr_info("%s: NETjet config port %#x-%#x already in use\n",
 			card->name, card->base,
 			(u32)(card->base + card->base_s - 1));
 		card->base_s = 0;
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	ASSIGN_FUNC(nj, ISAC, card->isac);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक
-setup_instance(काष्ठा tiger_hw *card)
-अणु
-	पूर्णांक i, err;
-	u_दीर्घ flags;
+static int
+setup_instance(struct tiger_hw *card)
+{
+	int i, err;
+	u_long flags;
 
-	snम_लिखो(card->name, MISDN_MAX_IDLEN - 1, "netjet.%d", nj_cnt + 1);
-	ग_लिखो_lock_irqsave(&card_lock, flags);
+	snprintf(card->name, MISDN_MAX_IDLEN - 1, "netjet.%d", nj_cnt + 1);
+	write_lock_irqsave(&card_lock, flags);
 	list_add_tail(&card->list, &Cards);
-	ग_लिखो_unlock_irqrestore(&card_lock, flags);
+	write_unlock_irqrestore(&card_lock, flags);
 
 	_set_debug(card);
 	card->isac.name = card->name;
@@ -1015,7 +1014,7 @@ setup_instance(काष्ठा tiger_hw *card)
 	card->isac.dch.dev.Bprotocols = (1 << (ISDN_P_B_RAW & ISDN_P_B_MASK)) |
 		(1 << (ISDN_P_B_HDLC & ISDN_P_B_MASK));
 	card->isac.dch.dev.D.ctrl = nj_dctrl;
-	क्रम (i = 0; i < 2; i++) अणु
+	for (i = 0; i < 2; i++) {
 		card->bc[i].bch.nr = i + 1;
 		set_channelmap(i + 1, card->isac.dch.dev.channelmap);
 		mISDN_initbchannel(&card->bc[i].bch, MAX_DATA_MEM,
@@ -1027,129 +1026,129 @@ setup_instance(काष्ठा tiger_hw *card)
 		list_add(&card->bc[i].bch.ch.list,
 			 &card->isac.dch.dev.bchannels);
 		card->bc[i].bch.hw = card;
-	पूर्ण
+	}
 	err = nj_setup(card);
-	अगर (err)
-		जाओ error;
-	err = mISDN_रेजिस्टर_device(&card->isac.dch.dev, &card->pdev->dev,
+	if (err)
+		goto error;
+	err = mISDN_register_device(&card->isac.dch.dev, &card->pdev->dev,
 				    card->name);
-	अगर (err)
-		जाओ error;
+	if (err)
+		goto error;
 	err = nj_init_card(card);
-	अगर (!err)  अणु
+	if (!err)  {
 		nj_cnt++;
 		pr_notice("Netjet %d cards installed\n", nj_cnt);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 error:
 	nj_release(card);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-nj_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
-अणु
-	पूर्णांक err = -ENOMEM;
-	पूर्णांक cfg;
-	काष्ठा tiger_hw *card;
+static int
+nj_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
+{
+	int err = -ENOMEM;
+	int cfg;
+	struct tiger_hw *card;
 
-	अगर (pdev->subप्रणाली_venकरोr == 0x8086 &&
-	    pdev->subप्रणाली_device == 0x0003) अणु
+	if (pdev->subsystem_vendor == 0x8086 &&
+	    pdev->subsystem_device == 0x0003) {
 		pr_notice("Netjet: Digium X100P/X101P not handled\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (pdev->subप्रणाली_venकरोr == 0x55 &&
-	    pdev->subप्रणाली_device == 0x02) अणु
+	if (pdev->subsystem_vendor == 0x55 &&
+	    pdev->subsystem_device == 0x02) {
 		pr_notice("Netjet: Enter!Now not handled yet\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (pdev->subप्रणाली_venकरोr == 0xb100 &&
-	    pdev->subप्रणाली_device == 0x0003) अणु
+	if (pdev->subsystem_vendor == 0xb100 &&
+	    pdev->subsystem_device == 0x0003) {
 		pr_notice("Netjet: Digium TDM400P not handled yet\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	card = kzalloc(माप(काष्ठा tiger_hw), GFP_KERNEL);
-	अगर (!card) अणु
+	card = kzalloc(sizeof(struct tiger_hw), GFP_KERNEL);
+	if (!card) {
 		pr_info("No kmem for Netjet\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	card->pdev = pdev;
 
 	err = pci_enable_device(pdev);
-	अगर (err) अणु
-		kमुक्त(card);
-		वापस err;
-	पूर्ण
+	if (err) {
+		kfree(card);
+		return err;
+	}
 
-	prपूर्णांकk(KERN_INFO "nj_probe(mISDN): found adapter at %s\n",
+	printk(KERN_INFO "nj_probe(mISDN): found adapter at %s\n",
 	       pci_name(pdev));
 
 	pci_set_master(pdev);
 
-	/* the TJ300 and TJ320 must be detected, the IRQ handling is dअगरferent
-	 * unक्रमtunately the chips use the same device ID, but the TJ320 has
-	 * the bit20 in status PCI cfg रेजिस्टर set
+	/* the TJ300 and TJ320 must be detected, the IRQ handling is different
+	 * unfortunately the chips use the same device ID, but the TJ320 has
+	 * the bit20 in status PCI cfg register set
 	 */
-	pci_पढ़ो_config_dword(pdev, 0x04, &cfg);
-	अगर (cfg & 0x00100000)
+	pci_read_config_dword(pdev, 0x04, &cfg);
+	if (cfg & 0x00100000)
 		card->typ = NETJET_S_TJ320;
-	अन्यथा
+	else
 		card->typ = NETJET_S_TJ300;
 
 	card->base = pci_resource_start(pdev, 0);
 	pci_set_drvdata(pdev, card);
 	err = setup_instance(card);
-	अगर (err)
-		pci_set_drvdata(pdev, शून्य);
+	if (err)
+		pci_set_drvdata(pdev, NULL);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
-अटल व्योम nj_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा tiger_hw *card = pci_get_drvdata(pdev);
+static void nj_remove(struct pci_dev *pdev)
+{
+	struct tiger_hw *card = pci_get_drvdata(pdev);
 
-	अगर (card)
+	if (card)
 		nj_release(card);
-	अन्यथा
+	else
 		pr_info("%s drvdata already removed\n", __func__);
-पूर्ण
+}
 
 /* We cannot select cards with PCI_SUB... IDs, since here are cards with
  * SUB IDs set to PCI_ANY_ID, so we need to match all and reject
  * known other cards which not work with this driver - see probe function */
-अटल स्थिर काष्ठा pci_device_id nj_pci_ids[] = अणु
-	अणु PCI_VENDOR_ID_TIGERJET, PCI_DEVICE_ID_TIGERJET_300,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct pci_device_id nj_pci_ids[] = {
+	{ PCI_VENDOR_ID_TIGERJET, PCI_DEVICE_ID_TIGERJET_300,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+	{ }
+};
 MODULE_DEVICE_TABLE(pci, nj_pci_ids);
 
-अटल काष्ठा pci_driver nj_driver = अणु
+static struct pci_driver nj_driver = {
 	.name = "netjet",
 	.probe = nj_probe,
-	.हटाओ = nj_हटाओ,
+	.remove = nj_remove,
 	.id_table = nj_pci_ids,
-पूर्ण;
+};
 
-अटल पूर्णांक __init nj_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init nj_init(void)
+{
+	int err;
 
 	pr_notice("Netjet PCI driver Rev. %s\n", NETJET_REV);
-	err = pci_रेजिस्टर_driver(&nj_driver);
-	वापस err;
-पूर्ण
+	err = pci_register_driver(&nj_driver);
+	return err;
+}
 
-अटल व्योम __निकास nj_cleanup(व्योम)
-अणु
-	pci_unरेजिस्टर_driver(&nj_driver);
-पूर्ण
+static void __exit nj_cleanup(void)
+{
+	pci_unregister_driver(&nj_driver);
+}
 
 module_init(nj_init);
-module_निकास(nj_cleanup);
+module_exit(nj_cleanup);

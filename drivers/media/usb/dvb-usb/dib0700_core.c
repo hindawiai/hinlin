@@ -1,120 +1,119 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* Linux driver क्रम devices based on the DiBcom DiB0700 USB bridge
+// SPDX-License-Identifier: GPL-2.0-only
+/* Linux driver for devices based on the DiBcom DiB0700 USB bridge
  *
  *  Copyright (C) 2005-6 DiBcom, SA
  */
-#समावेश "dib0700.h"
+#include "dib0700.h"
 
 /* debug */
-पूर्णांक dvb_usb_dib0700_debug;
-module_param_named(debug,dvb_usb_dib0700_debug, पूर्णांक, 0644);
+int dvb_usb_dib0700_debug;
+module_param_named(debug,dvb_usb_dib0700_debug, int, 0644);
 MODULE_PARM_DESC(debug, "set debugging level (1=info,2=fw,4=fwdata,8=data (or-able))." DVB_USB_DEBUG_STATUS);
 
-अटल पूर्णांक nb_packet_buffer_size = 21;
-module_param(nb_packet_buffer_size, पूर्णांक, 0644);
+static int nb_packet_buffer_size = 21;
+module_param(nb_packet_buffer_size, int, 0644);
 MODULE_PARM_DESC(nb_packet_buffer_size,
 	"Set the dib0700 driver data buffer size. This parameter corresponds to the number of TS packets. The actual size of the data buffer corresponds to this parameter multiplied by 188 (default: 21)");
 
 DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
 
-पूर्णांक dib0700_get_version(काष्ठा dvb_usb_device *d, u32 *hwversion,
+int dib0700_get_version(struct dvb_usb_device *d, u32 *hwversion,
 			u32 *romversion, u32 *ramversion, u32 *fwtype)
-अणु
-	काष्ठा dib0700_state *st = d->priv;
-	पूर्णांक ret;
+{
+	struct dib0700_state *st = d->priv;
+	int ret;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&d->usb_mutex) < 0) अणु
+	if (mutex_lock_interruptible(&d->usb_mutex) < 0) {
 		err("could not acquire lock");
-		वापस -EINTR;
-	पूर्ण
+		return -EINTR;
+	}
 
 	ret = usb_control_msg(d->udev, usb_rcvctrlpipe(d->udev, 0),
 				  REQUEST_GET_VERSION,
-				  USB_TYPE_VENDOR | USB_सूची_IN, 0, 0,
+				  USB_TYPE_VENDOR | USB_DIR_IN, 0, 0,
 				  st->buf, 16, USB_CTRL_GET_TIMEOUT);
-	अगर (hwversion != शून्य)
+	if (hwversion != NULL)
 		*hwversion  = (st->buf[0] << 24)  | (st->buf[1] << 16)  |
 			(st->buf[2] << 8)  | st->buf[3];
-	अगर (romversion != शून्य)
+	if (romversion != NULL)
 		*romversion = (st->buf[4] << 24)  | (st->buf[5] << 16)  |
 			(st->buf[6] << 8)  | st->buf[7];
-	अगर (ramversion != शून्य)
+	if (ramversion != NULL)
 		*ramversion = (st->buf[8] << 24)  | (st->buf[9] << 16)  |
 			(st->buf[10] << 8) | st->buf[11];
-	अगर (fwtype != शून्य)
+	if (fwtype != NULL)
 		*fwtype     = (st->buf[12] << 24) | (st->buf[13] << 16) |
 			(st->buf[14] << 8) | st->buf[15];
 	mutex_unlock(&d->usb_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* expecting rx buffer: request data[0] data[1] ... data[2] */
-अटल पूर्णांक dib0700_ctrl_wr(काष्ठा dvb_usb_device *d, u8 *tx, u8 txlen)
-अणु
-	पूर्णांक status;
+static int dib0700_ctrl_wr(struct dvb_usb_device *d, u8 *tx, u8 txlen)
+{
+	int status;
 
 	deb_data(">>> ");
 	debug_dump(tx, txlen, deb_data);
 
 	status = usb_control_msg(d->udev, usb_sndctrlpipe(d->udev,0),
-		tx[0], USB_TYPE_VENDOR | USB_सूची_OUT, 0, 0, tx, txlen,
+		tx[0], USB_TYPE_VENDOR | USB_DIR_OUT, 0, 0, tx, txlen,
 		USB_CTRL_GET_TIMEOUT);
 
-	अगर (status != txlen)
+	if (status != txlen)
 		deb_data("ep 0 write error (status = %d, len: %d)\n",status,txlen);
 
-	वापस status < 0 ? status : 0;
-पूर्ण
+	return status < 0 ? status : 0;
+}
 
 /* expecting tx buffer: request data[0] ... data[n] (n <= 4) */
-पूर्णांक dib0700_ctrl_rd(काष्ठा dvb_usb_device *d, u8 *tx, u8 txlen, u8 *rx, u8 rxlen)
-अणु
+int dib0700_ctrl_rd(struct dvb_usb_device *d, u8 *tx, u8 txlen, u8 *rx, u8 rxlen)
+{
 	u16 index, value;
-	पूर्णांक status;
+	int status;
 
-	अगर (txlen < 2) अणु
+	if (txlen < 2) {
 		err("tx buffer length is smaller than 2. Makes no sense.");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (txlen > 4) अणु
+		return -EINVAL;
+	}
+	if (txlen > 4) {
 		err("tx buffer length is larger than 4. Not supported.");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	deb_data(">>> ");
 	debug_dump(tx,txlen,deb_data);
 
 	value = ((txlen - 2) << 8) | tx[1];
 	index = 0;
-	अगर (txlen > 2)
+	if (txlen > 2)
 		index |= (tx[2] << 8);
-	अगर (txlen > 3)
+	if (txlen > 3)
 		index |= tx[3];
 
 	status = usb_control_msg(d->udev, usb_rcvctrlpipe(d->udev,0), tx[0],
-			USB_TYPE_VENDOR | USB_सूची_IN, value, index, rx, rxlen,
+			USB_TYPE_VENDOR | USB_DIR_IN, value, index, rx, rxlen,
 			USB_CTRL_GET_TIMEOUT);
 
-	अगर (status < 0)
+	if (status < 0)
 		deb_info("ep 0 read error (status = %d)\n",status);
 
 	deb_data("<<< ");
 	debug_dump(rx, rxlen, deb_data);
 
-	वापस status; /* length in हाल of success */
-पूर्ण
+	return status; /* length in case of success */
+}
 
-पूर्णांक dib0700_set_gpio(काष्ठा dvb_usb_device *d, क्रमागत dib07x0_gpios gpio, u8 gpio_dir, u8 gpio_val)
-अणु
-	काष्ठा dib0700_state *st = d->priv;
-	पूर्णांक ret;
+int dib0700_set_gpio(struct dvb_usb_device *d, enum dib07x0_gpios gpio, u8 gpio_dir, u8 gpio_val)
+{
+	struct dib0700_state *st = d->priv;
+	int ret;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&d->usb_mutex) < 0) अणु
+	if (mutex_lock_interruptible(&d->usb_mutex) < 0) {
 		err("could not acquire lock");
-		वापस -EINTR;
-	पूर्ण
+		return -EINTR;
+	}
 
 	st->buf[0] = REQUEST_SET_GPIO;
 	st->buf[1] = gpio;
@@ -123,19 +122,19 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	ret = dib0700_ctrl_wr(d, st->buf, 3);
 
 	mutex_unlock(&d->usb_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dib0700_set_usb_xfer_len(काष्ठा dvb_usb_device *d, u16 nb_ts_packets)
-अणु
-	काष्ठा dib0700_state *st = d->priv;
-	पूर्णांक ret;
+static int dib0700_set_usb_xfer_len(struct dvb_usb_device *d, u16 nb_ts_packets)
+{
+	struct dib0700_state *st = d->priv;
+	int ret;
 
-	अगर (st->fw_version >= 0x10201) अणु
-		अगर (mutex_lock_पूर्णांकerruptible(&d->usb_mutex) < 0) अणु
+	if (st->fw_version >= 0x10201) {
+		if (mutex_lock_interruptible(&d->usb_mutex) < 0) {
 			err("could not acquire lock");
-			वापस -EINTR;
-		पूर्ण
+			return -EINTR;
+		}
 
 		st->buf[0] = REQUEST_SET_USB_XFER_LEN;
 		st->buf[1] = (nb_ts_packets >> 8) & 0xff;
@@ -145,57 +144,57 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
 		ret = dib0700_ctrl_wr(d, st->buf, 3);
 		mutex_unlock(&d->usb_mutex);
-	पूर्ण अन्यथा अणु
+	} else {
 		deb_info("this firmware does not allow to change the USB xfer len\n");
 		ret = -EIO;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * I2C master xfer function (supported in 1.20 firmware)
  */
-अटल पूर्णांक dib0700_i2c_xfer_new(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg *msg,
-				पूर्णांक num)
-अणु
+static int dib0700_i2c_xfer_new(struct i2c_adapter *adap, struct i2c_msg *msg,
+				int num)
+{
 	/* The new i2c firmware messages are more reliable and in particular
-	   properly support i2c पढ़ो calls not preceded by a ग_लिखो */
+	   properly support i2c read calls not preceded by a write */
 
-	काष्ठा dvb_usb_device *d = i2c_get_adapdata(adap);
-	काष्ठा dib0700_state *st = d->priv;
-	uपूर्णांक8_t bus_mode = 1;  /* 0=eeprom bus, 1=frontend bus */
-	uपूर्णांक8_t gen_mode = 0; /* 0=master i2c, 1=gpio i2c */
-	uपूर्णांक8_t en_start = 0;
-	uपूर्णांक8_t en_stop = 0;
-	पूर्णांक result, i;
+	struct dvb_usb_device *d = i2c_get_adapdata(adap);
+	struct dib0700_state *st = d->priv;
+	uint8_t bus_mode = 1;  /* 0=eeprom bus, 1=frontend bus */
+	uint8_t gen_mode = 0; /* 0=master i2c, 1=gpio i2c */
+	uint8_t en_start = 0;
+	uint8_t en_stop = 0;
+	int result, i;
 
-	/* Ensure nobody अन्यथा hits the i2c bus जबतक we're sending our
-	   sequence of messages, (such as the remote control thपढ़ो) */
-	अगर (mutex_lock_पूर्णांकerruptible(&d->i2c_mutex) < 0)
-		वापस -EINTR;
+	/* Ensure nobody else hits the i2c bus while we're sending our
+	   sequence of messages, (such as the remote control thread) */
+	if (mutex_lock_interruptible(&d->i2c_mutex) < 0)
+		return -EINTR;
 
-	क्रम (i = 0; i < num; i++) अणु
-		अगर (i == 0) अणु
+	for (i = 0; i < num; i++) {
+		if (i == 0) {
 			/* First message in the transaction */
 			en_start = 1;
-		पूर्ण अन्यथा अगर (!(msg[i].flags & I2C_M_NOSTART)) अणु
+		} else if (!(msg[i].flags & I2C_M_NOSTART)) {
 			/* Device supports repeated-start */
 			en_start = 1;
-		पूर्ण अन्यथा अणु
-			/* Not the first packet and device करोesn't support
+		} else {
+			/* Not the first packet and device doesn't support
 			   repeated start */
 			en_start = 0;
-		पूर्ण
-		अगर (i == (num - 1)) अणु
+		}
+		if (i == (num - 1)) {
 			/* Last message in the transaction */
 			en_stop = 1;
-		पूर्ण
+		}
 
-		अगर (msg[i].flags & I2C_M_RD) अणु
+		if (msg[i].flags & I2C_M_RD) {
 			/* Read request */
 			u16 index, value;
-			uपूर्णांक8_t i2c_dest;
+			uint8_t i2c_dest;
 
 			i2c_dest = (msg[i].addr << 1);
 			value = ((en_start << 7) | (en_stop << 6) |
@@ -207,34 +206,34 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 			result = usb_control_msg(d->udev,
 						 usb_rcvctrlpipe(d->udev, 0),
 						 REQUEST_NEW_I2C_READ,
-						 USB_TYPE_VENDOR | USB_सूची_IN,
+						 USB_TYPE_VENDOR | USB_DIR_IN,
 						 value, index, st->buf,
 						 msg[i].len,
 						 USB_CTRL_GET_TIMEOUT);
-			अगर (result < 0) अणु
+			if (result < 0) {
 				deb_info("i2c read error (status = %d)\n", result);
-				जाओ unlock;
-			पूर्ण
+				goto unlock;
+			}
 
-			अगर (msg[i].len > माप(st->buf)) अणु
+			if (msg[i].len > sizeof(st->buf)) {
 				deb_info("buffer too small to fit %d bytes\n",
 					 msg[i].len);
 				result = -EIO;
-				जाओ unlock;
-			पूर्ण
+				goto unlock;
+			}
 
-			स_नकल(msg[i].buf, st->buf, msg[i].len);
+			memcpy(msg[i].buf, st->buf, msg[i].len);
 
 			deb_data("<<< ");
 			debug_dump(msg[i].buf, msg[i].len, deb_data);
 
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Write request */
-			अगर (mutex_lock_पूर्णांकerruptible(&d->usb_mutex) < 0) अणु
+			if (mutex_lock_interruptible(&d->usb_mutex) < 0) {
 				err("could not acquire lock");
 				result = -EINTR;
-				जाओ unlock;
-			पूर्ण
+				goto unlock;
+			}
 			st->buf[0] = REQUEST_NEW_I2C_WRITE;
 			st->buf[1] = msg[i].addr << 1;
 			st->buf[2] = (en_start << 7) | (en_stop << 6) |
@@ -243,16 +242,16 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 			st->buf[3] = ((gen_mode << 6) & 0xC0) |
 				 ((bus_mode << 4) & 0x30);
 
-			अगर (msg[i].len > माप(st->buf) - 4) अणु
+			if (msg[i].len > sizeof(st->buf) - 4) {
 				deb_info("i2c message to big: %d\n",
 					 msg[i].len);
 				mutex_unlock(&d->usb_mutex);
 				result = -EIO;
-				जाओ unlock;
-			पूर्ण
+				goto unlock;
+			}
 
 			/* The Actual i2c payload */
-			स_नकल(&st->buf[4], msg[i].buf, msg[i].len);
+			memcpy(&st->buf[4], msg[i].buf, msg[i].len);
 
 			deb_data(">>> ");
 			debug_dump(st->buf, msg[i].len + 4, deb_data);
@@ -260,199 +259,199 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 			result = usb_control_msg(d->udev,
 						 usb_sndctrlpipe(d->udev, 0),
 						 REQUEST_NEW_I2C_WRITE,
-						 USB_TYPE_VENDOR | USB_सूची_OUT,
+						 USB_TYPE_VENDOR | USB_DIR_OUT,
 						 0, 0, st->buf, msg[i].len + 4,
 						 USB_CTRL_GET_TIMEOUT);
 			mutex_unlock(&d->usb_mutex);
-			अगर (result < 0) अणु
+			if (result < 0) {
 				deb_info("i2c write error (status = %d)\n", result);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 	result = i;
 
 unlock:
 	mutex_unlock(&d->i2c_mutex);
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*
  * I2C master xfer function (pre-1.20 firmware)
  */
-अटल पूर्णांक dib0700_i2c_xfer_legacy(काष्ठा i2c_adapter *adap,
-				   काष्ठा i2c_msg *msg, पूर्णांक num)
-अणु
-	काष्ठा dvb_usb_device *d = i2c_get_adapdata(adap);
-	काष्ठा dib0700_state *st = d->priv;
-	पूर्णांक i, len, result;
+static int dib0700_i2c_xfer_legacy(struct i2c_adapter *adap,
+				   struct i2c_msg *msg, int num)
+{
+	struct dvb_usb_device *d = i2c_get_adapdata(adap);
+	struct dib0700_state *st = d->priv;
+	int i, len, result;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&d->i2c_mutex) < 0)
-		वापस -EINTR;
-	अगर (mutex_lock_पूर्णांकerruptible(&d->usb_mutex) < 0) अणु
+	if (mutex_lock_interruptible(&d->i2c_mutex) < 0)
+		return -EINTR;
+	if (mutex_lock_interruptible(&d->usb_mutex) < 0) {
 		err("could not acquire lock");
 		mutex_unlock(&d->i2c_mutex);
-		वापस -EINTR;
-	पूर्ण
+		return -EINTR;
+	}
 
-	क्रम (i = 0; i < num; i++) अणु
+	for (i = 0; i < num; i++) {
 		/* fill in the address */
 		st->buf[1] = msg[i].addr << 1;
 		/* fill the buffer */
-		अगर (msg[i].len > माप(st->buf) - 2) अणु
+		if (msg[i].len > sizeof(st->buf) - 2) {
 			deb_info("i2c xfer to big: %d\n",
 				msg[i].len);
 			result = -EIO;
-			जाओ unlock;
-		पूर्ण
-		स_नकल(&st->buf[2], msg[i].buf, msg[i].len);
+			goto unlock;
+		}
+		memcpy(&st->buf[2], msg[i].buf, msg[i].len);
 
-		/* ग_लिखो/पढ़ो request */
-		अगर (i+1 < num && (msg[i+1].flags & I2C_M_RD)) अणु
+		/* write/read request */
+		if (i+1 < num && (msg[i+1].flags & I2C_M_RD)) {
 			st->buf[0] = REQUEST_I2C_READ;
 			st->buf[1] |= 1;
 
-			/* special thing in the current firmware: when length is zero the पढ़ो-failed */
+			/* special thing in the current firmware: when length is zero the read-failed */
 			len = dib0700_ctrl_rd(d, st->buf, msg[i].len + 2,
 					      st->buf, msg[i + 1].len);
-			अगर (len <= 0) अणु
+			if (len <= 0) {
 				deb_info("I2C read failed on address 0x%02x\n",
 						msg[i].addr);
 				result = -EIO;
-				जाओ unlock;
-			पूर्ण
+				goto unlock;
+			}
 
-			अगर (msg[i + 1].len > माप(st->buf)) अणु
+			if (msg[i + 1].len > sizeof(st->buf)) {
 				deb_info("i2c xfer buffer to small for %d\n",
 					msg[i].len);
 				result = -EIO;
-				जाओ unlock;
-			पूर्ण
-			स_नकल(msg[i + 1].buf, st->buf, msg[i + 1].len);
+				goto unlock;
+			}
+			memcpy(msg[i + 1].buf, st->buf, msg[i + 1].len);
 
 			msg[i+1].len = len;
 
 			i++;
-		पूर्ण अन्यथा अणु
+		} else {
 			st->buf[0] = REQUEST_I2C_WRITE;
 			result = dib0700_ctrl_wr(d, st->buf, msg[i].len + 2);
-			अगर (result < 0)
-				जाओ unlock;
-		पूर्ण
-	पूर्ण
+			if (result < 0)
+				goto unlock;
+		}
+	}
 	result = i;
 unlock:
 	mutex_unlock(&d->usb_mutex);
 	mutex_unlock(&d->i2c_mutex);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक dib0700_i2c_xfer(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg *msg,
-			    पूर्णांक num)
-अणु
-	काष्ठा dvb_usb_device *d = i2c_get_adapdata(adap);
-	काष्ठा dib0700_state *st = d->priv;
+static int dib0700_i2c_xfer(struct i2c_adapter *adap, struct i2c_msg *msg,
+			    int num)
+{
+	struct dvb_usb_device *d = i2c_get_adapdata(adap);
+	struct dib0700_state *st = d->priv;
 
-	अगर (st->fw_use_new_i2c_api == 1) अणु
+	if (st->fw_use_new_i2c_api == 1) {
 		/* User running at least fw 1.20 */
-		वापस dib0700_i2c_xfer_new(adap, msg, num);
-	पूर्ण अन्यथा अणु
+		return dib0700_i2c_xfer_new(adap, msg, num);
+	} else {
 		/* Use legacy calls */
-		वापस dib0700_i2c_xfer_legacy(adap, msg, num);
-	पूर्ण
-पूर्ण
+		return dib0700_i2c_xfer_legacy(adap, msg, num);
+	}
+}
 
-अटल u32 dib0700_i2c_func(काष्ठा i2c_adapter *adapter)
-अणु
-	वापस I2C_FUNC_I2C;
-पूर्ण
+static u32 dib0700_i2c_func(struct i2c_adapter *adapter)
+{
+	return I2C_FUNC_I2C;
+}
 
-काष्ठा i2c_algorithm dib0700_i2c_algo = अणु
+struct i2c_algorithm dib0700_i2c_algo = {
 	.master_xfer   = dib0700_i2c_xfer,
 	.functionality = dib0700_i2c_func,
-पूर्ण;
+};
 
-पूर्णांक dib0700_identअगरy_state(काष्ठा usb_device *udev,
-			   स्थिर काष्ठा dvb_usb_device_properties *props,
-			   स्थिर काष्ठा dvb_usb_device_description **desc,
-			   पूर्णांक *cold)
-अणु
+int dib0700_identify_state(struct usb_device *udev,
+			   const struct dvb_usb_device_properties *props,
+			   const struct dvb_usb_device_description **desc,
+			   int *cold)
+{
 	s16 ret;
 	u8 *b;
 
-	b = kदो_स्मृति(16, GFP_KERNEL);
-	अगर (!b)
-		वापस	-ENOMEM;
+	b = kmalloc(16, GFP_KERNEL);
+	if (!b)
+		return	-ENOMEM;
 
 
 	ret = usb_control_msg(udev, usb_rcvctrlpipe(udev, 0),
-		REQUEST_GET_VERSION, USB_TYPE_VENDOR | USB_सूची_IN, 0, 0, b, 16, USB_CTRL_GET_TIMEOUT);
+		REQUEST_GET_VERSION, USB_TYPE_VENDOR | USB_DIR_IN, 0, 0, b, 16, USB_CTRL_GET_TIMEOUT);
 
 	deb_info("FW GET_VERSION length: %d\n",ret);
 
 	*cold = ret <= 0;
 	deb_info("cold: %d\n", *cold);
 
-	kमुक्त(b);
-	वापस 0;
-पूर्ण
+	kfree(b);
+	return 0;
+}
 
-अटल पूर्णांक dib0700_set_घड़ी(काष्ठा dvb_usb_device *d, u8 en_pll,
-	u8 pll_src, u8 pll_range, u8 घड़ी_gpio3, u16 pll_preभाग,
-	u16 pll_loopभाग, u16 मुक्त_भाग, u16 dsuScaler)
-अणु
-	काष्ठा dib0700_state *st = d->priv;
-	पूर्णांक ret;
+static int dib0700_set_clock(struct dvb_usb_device *d, u8 en_pll,
+	u8 pll_src, u8 pll_range, u8 clock_gpio3, u16 pll_prediv,
+	u16 pll_loopdiv, u16 free_div, u16 dsuScaler)
+{
+	struct dib0700_state *st = d->priv;
+	int ret;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&d->usb_mutex) < 0) अणु
+	if (mutex_lock_interruptible(&d->usb_mutex) < 0) {
 		err("could not acquire lock");
-		वापस -EINTR;
-	पूर्ण
+		return -EINTR;
+	}
 
 	st->buf[0] = REQUEST_SET_CLOCK;
 	st->buf[1] = (en_pll << 7) | (pll_src << 6) |
-		(pll_range << 5) | (घड़ी_gpio3 << 4);
-	st->buf[2] = (pll_preभाग >> 8)  & 0xff; /* MSB */
-	st->buf[3] =  pll_preभाग        & 0xff; /* LSB */
-	st->buf[4] = (pll_loopभाग >> 8) & 0xff; /* MSB */
-	st->buf[5] =  pll_loopभाग       & 0xff; /* LSB */
-	st->buf[6] = (मुक्त_भाग >> 8)    & 0xff; /* MSB */
-	st->buf[7] =  मुक्त_भाग          & 0xff; /* LSB */
+		(pll_range << 5) | (clock_gpio3 << 4);
+	st->buf[2] = (pll_prediv >> 8)  & 0xff; /* MSB */
+	st->buf[3] =  pll_prediv        & 0xff; /* LSB */
+	st->buf[4] = (pll_loopdiv >> 8) & 0xff; /* MSB */
+	st->buf[5] =  pll_loopdiv       & 0xff; /* LSB */
+	st->buf[6] = (free_div >> 8)    & 0xff; /* MSB */
+	st->buf[7] =  free_div          & 0xff; /* LSB */
 	st->buf[8] = (dsuScaler >> 8)   & 0xff; /* MSB */
 	st->buf[9] =  dsuScaler         & 0xff; /* LSB */
 
 	ret = dib0700_ctrl_wr(d, st->buf, 10);
 	mutex_unlock(&d->usb_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक dib0700_set_i2c_speed(काष्ठा dvb_usb_device *d, u16 scl_kHz)
-अणु
-	काष्ठा dib0700_state *st = d->priv;
-	u16 भागider;
-	पूर्णांक ret;
+int dib0700_set_i2c_speed(struct dvb_usb_device *d, u16 scl_kHz)
+{
+	struct dib0700_state *st = d->priv;
+	u16 divider;
+	int ret;
 
-	अगर (scl_kHz == 0)
-		वापस -EINVAL;
+	if (scl_kHz == 0)
+		return -EINVAL;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&d->usb_mutex) < 0) अणु
+	if (mutex_lock_interruptible(&d->usb_mutex) < 0) {
 		err("could not acquire lock");
-		वापस -EINTR;
-	पूर्ण
+		return -EINTR;
+	}
 
 	st->buf[0] = REQUEST_SET_I2C_PARAM;
-	भागider = (u16) (30000 / scl_kHz);
+	divider = (u16) (30000 / scl_kHz);
 	st->buf[1] = 0;
-	st->buf[2] = (u8) (भागider >> 8);
-	st->buf[3] = (u8) (भागider & 0xff);
-	भागider = (u16) (72000 / scl_kHz);
-	st->buf[4] = (u8) (भागider >> 8);
-	st->buf[5] = (u8) (भागider & 0xff);
-	भागider = (u16) (72000 / scl_kHz); /* घड़ी: 72MHz */
-	st->buf[6] = (u8) (भागider >> 8);
-	st->buf[7] = (u8) (भागider & 0xff);
+	st->buf[2] = (u8) (divider >> 8);
+	st->buf[3] = (u8) (divider & 0xff);
+	divider = (u16) (72000 / scl_kHz);
+	st->buf[4] = (u8) (divider >> 8);
+	st->buf[5] = (u8) (divider & 0xff);
+	divider = (u16) (72000 / scl_kHz); /* clock: 72MHz */
+	st->buf[6] = (u8) (divider >> 8);
+	st->buf[7] = (u8) (divider & 0xff);
 
 	deb_info("setting I2C speed: %04x %04x %04x (%d kHz).",
 		(st->buf[2] << 8) | (st->buf[3]), (st->buf[4] << 8) |
@@ -461,27 +460,27 @@ unlock:
 	ret = dib0700_ctrl_wr(d, st->buf, 8);
 	mutex_unlock(&d->usb_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-पूर्णांक dib0700_ctrl_घड़ी(काष्ठा dvb_usb_device *d, u32 clk_MHz, u8 घड़ी_out_gp3)
-अणु
-	चयन (clk_MHz) अणु
-		हाल 72: dib0700_set_घड़ी(d, 1, 0, 1, घड़ी_out_gp3, 2, 24, 0, 0x4c); अवरोध;
-		शेष: वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+int dib0700_ctrl_clock(struct dvb_usb_device *d, u32 clk_MHz, u8 clock_out_gp3)
+{
+	switch (clk_MHz) {
+		case 72: dib0700_set_clock(d, 1, 0, 1, clock_out_gp3, 2, 24, 0, 0x4c); break;
+		default: return -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक dib0700_jumpram(काष्ठा usb_device *udev, u32 address)
-अणु
-	पूर्णांक ret = 0, actlen;
+static int dib0700_jumpram(struct usb_device *udev, u32 address)
+{
+	int ret = 0, actlen;
 	u8 *buf;
 
-	buf = kदो_स्मृति(8, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc(8, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 	buf[0] = REQUEST_JUMPRAM;
 	buf[1] = 0;
 	buf[2] = 0;
@@ -491,32 +490,32 @@ unlock:
 	buf[6] = (address >> 8)  & 0xff;
 	buf[7] =  address        & 0xff;
 
-	अगर ((ret = usb_bulk_msg(udev, usb_sndbulkpipe(udev, 0x01),buf,8,&actlen,1000)) < 0) अणु
+	if ((ret = usb_bulk_msg(udev, usb_sndbulkpipe(udev, 0x01),buf,8,&actlen,1000)) < 0) {
 		deb_fw("jumpram to 0x%x failed\n",address);
-		जाओ out;
-	पूर्ण
-	अगर (actlen != 8) अणु
+		goto out;
+	}
+	if (actlen != 8) {
 		deb_fw("jumpram to 0x%x failed\n",address);
 		ret = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 out:
-	kमुक्त(buf);
-	वापस ret;
-पूर्ण
+	kfree(buf);
+	return ret;
+}
 
-पूर्णांक dib0700_करोwnload_firmware(काष्ठा usb_device *udev, स्थिर काष्ठा firmware *fw)
-अणु
-	काष्ठा hexline hx;
-	पूर्णांक pos = 0, ret, act_len, i, adap_num;
+int dib0700_download_firmware(struct usb_device *udev, const struct firmware *fw)
+{
+	struct hexline hx;
+	int pos = 0, ret, act_len, i, adap_num;
 	u8 *buf;
 	u32 fw_version;
 
-	buf = kदो_स्मृति(260, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc(260, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
-	जबतक ((ret = dvb_usb_get_hexline(fw, &hx, &pos)) > 0) अणु
+	while ((ret = dvb_usb_get_hexline(fw, &hx, &pos)) > 0) {
 		deb_fwdata("writing to address 0x%08x (buffer: 0x%02x %02x)\n",
 				hx.addr, hx.len, hx.chk);
 
@@ -524,7 +523,7 @@ out:
 		buf[1] = (hx.addr >> 8) & 0xff;
 		buf[2] =  hx.addr       & 0xff;
 		buf[3] = hx.type;
-		स_नकल(&buf[4],hx.data,hx.len);
+		memcpy(&buf[4],hx.data,hx.len);
 		buf[4+hx.len] = hx.chk;
 
 		ret = usb_bulk_msg(udev,
@@ -534,68 +533,68 @@ out:
 			&act_len,
 			1000);
 
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			err("firmware download failed at %d with %d",pos,ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (ret == 0) अणु
+	if (ret == 0) {
 		/* start the firmware */
-		अगर ((ret = dib0700_jumpram(udev, 0x70000000)) == 0) अणु
+		if ((ret = dib0700_jumpram(udev, 0x70000000)) == 0) {
 			info("firmware started successfully.");
 			msleep(500);
-		पूर्ण
-	पूर्ण अन्यथा
+		}
+	} else
 		ret = -EIO;
 
 	/* the number of ts packet has to be at least 1 */
-	अगर (nb_packet_buffer_size < 1)
+	if (nb_packet_buffer_size < 1)
 		nb_packet_buffer_size = 1;
 
 	/* get the firmware version */
 	usb_control_msg(udev, usb_rcvctrlpipe(udev, 0),
 				  REQUEST_GET_VERSION,
-				  USB_TYPE_VENDOR | USB_सूची_IN, 0, 0,
+				  USB_TYPE_VENDOR | USB_DIR_IN, 0, 0,
 				  buf, 16, USB_CTRL_GET_TIMEOUT);
 	fw_version = (buf[8] << 24) | (buf[9] << 16) | (buf[10] << 8) | buf[11];
 
 	/* set the buffer size - DVB-USB is allocating URB buffers
-	 * only after the firwmare करोwnload was successful */
-	क्रम (i = 0; i < dib0700_device_count; i++) अणु
-		क्रम (adap_num = 0; adap_num < dib0700_devices[i].num_adapters;
-				adap_num++) अणु
-			अगर (fw_version >= 0x10201) अणु
+	 * only after the firwmare download was successful */
+	for (i = 0; i < dib0700_device_count; i++) {
+		for (adap_num = 0; adap_num < dib0700_devices[i].num_adapters;
+				adap_num++) {
+			if (fw_version >= 0x10201) {
 				dib0700_devices[i].adapter[adap_num].fe[0].stream.u.bulk.buffersize = 188*nb_packet_buffer_size;
-			पूर्ण अन्यथा अणु
-				/* क्रम fw version older than 1.20.1,
-				 * the buffersize has to be n बार 512 */
+			} else {
+				/* for fw version older than 1.20.1,
+				 * the buffersize has to be n times 512 */
 				dib0700_devices[i].adapter[adap_num].fe[0].stream.u.bulk.buffersize = ((188*nb_packet_buffer_size+188/2)/512)*512;
-				अगर (dib0700_devices[i].adapter[adap_num].fe[0].stream.u.bulk.buffersize < 512)
+				if (dib0700_devices[i].adapter[adap_num].fe[0].stream.u.bulk.buffersize < 512)
 					dib0700_devices[i].adapter[adap_num].fe[0].stream.u.bulk.buffersize = 512;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 out:
-	kमुक्त(buf);
-	वापस ret;
-पूर्ण
+	kfree(buf);
+	return ret;
+}
 
-पूर्णांक dib0700_streaming_ctrl(काष्ठा dvb_usb_adapter *adap, पूर्णांक onoff)
-अणु
-	काष्ठा dib0700_state *st = adap->dev->priv;
-	पूर्णांक ret;
+int dib0700_streaming_ctrl(struct dvb_usb_adapter *adap, int onoff)
+{
+	struct dib0700_state *st = adap->dev->priv;
+	int ret;
 
-	अगर ((onoff != 0) && (st->fw_version >= 0x10201)) अणु
-		/* क्रम firmware later than 1.20.1,
+	if ((onoff != 0) && (st->fw_version >= 0x10201)) {
+		/* for firmware later than 1.20.1,
 		 * the USB xfer length can be set  */
 		ret = dib0700_set_usb_xfer_len(adap->dev,
 			st->nb_packet_buffer_size);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			deb_info("can not set the USB xfer len\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	mutex_lock(&adap->dev->usb_mutex);
 
@@ -604,9 +603,9 @@ out:
 	 * rather than enabling something or not */
 	st->buf[1] = (onoff << 4) | 0x00;
 
-	अगर (st->disable_streaming_master_mode == 1)
+	if (st->disable_streaming_master_mode == 1)
 		st->buf[2] = 0x00;
-	अन्यथा
+	else
 		st->buf[2] = 0x01 << 4; /* Master mode */
 
 	st->buf[3] = 0x00;
@@ -614,19 +613,19 @@ out:
 	deb_info("modifying (%d) streaming state for %d\n", onoff, adap->id);
 
 	st->channel_state &= ~0x3;
-	अगर ((adap->fe_adap[0].stream.props.endpoपूर्णांक != 2)
-			&& (adap->fe_adap[0].stream.props.endpoपूर्णांक != 3)) अणु
-		deb_info("the endpoint number (%i) is not correct, use the adapter id instead", adap->fe_adap[0].stream.props.endpoपूर्णांक);
-		अगर (onoff)
+	if ((adap->fe_adap[0].stream.props.endpoint != 2)
+			&& (adap->fe_adap[0].stream.props.endpoint != 3)) {
+		deb_info("the endpoint number (%i) is not correct, use the adapter id instead", adap->fe_adap[0].stream.props.endpoint);
+		if (onoff)
 			st->channel_state |=	1 << (adap->id);
-		अन्यथा
+		else
 			st->channel_state |=	1 << ~(adap->id);
-	पूर्ण अन्यथा अणु
-		अगर (onoff)
-			st->channel_state |=	1 << (adap->fe_adap[0].stream.props.endpoपूर्णांक-2);
-		अन्यथा
-			st->channel_state |=	1 << (3-adap->fe_adap[0].stream.props.endpoपूर्णांक);
-	पूर्ण
+	} else {
+		if (onoff)
+			st->channel_state |=	1 << (adap->fe_adap[0].stream.props.endpoint-2);
+		else
+			st->channel_state |=	1 << (3-adap->fe_adap[0].stream.props.endpoint);
+	}
 
 	st->buf[2] |= st->channel_state;
 
@@ -635,257 +634,257 @@ out:
 	ret = dib0700_ctrl_wr(adap->dev, st->buf, 4);
 	mutex_unlock(&adap->dev->usb_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक dib0700_change_protocol(काष्ठा rc_dev *rc, u64 *rc_proto)
-अणु
-	काष्ठा dvb_usb_device *d = rc->priv;
-	काष्ठा dib0700_state *st = d->priv;
-	पूर्णांक new_proto, ret;
+int dib0700_change_protocol(struct rc_dev *rc, u64 *rc_proto)
+{
+	struct dvb_usb_device *d = rc->priv;
+	struct dib0700_state *st = d->priv;
+	int new_proto, ret;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&d->usb_mutex) < 0) अणु
+	if (mutex_lock_interruptible(&d->usb_mutex) < 0) {
 		err("could not acquire lock");
-		वापस -EINTR;
-	पूर्ण
+		return -EINTR;
+	}
 
 	st->buf[0] = REQUEST_SET_RC;
 	st->buf[1] = 0;
 	st->buf[2] = 0;
 
 	/* Set the IR mode */
-	अगर (*rc_proto & RC_PROTO_BIT_RC5) अणु
+	if (*rc_proto & RC_PROTO_BIT_RC5) {
 		new_proto = 1;
 		*rc_proto = RC_PROTO_BIT_RC5;
-	पूर्ण अन्यथा अगर (*rc_proto & RC_PROTO_BIT_NEC) अणु
+	} else if (*rc_proto & RC_PROTO_BIT_NEC) {
 		new_proto = 0;
 		*rc_proto = RC_PROTO_BIT_NEC;
-	पूर्ण अन्यथा अगर (*rc_proto & RC_PROTO_BIT_RC6_MCE) अणु
-		अगर (st->fw_version < 0x10200) अणु
+	} else if (*rc_proto & RC_PROTO_BIT_RC6_MCE) {
+		if (st->fw_version < 0x10200) {
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		new_proto = 2;
 		*rc_proto = RC_PROTO_BIT_RC6_MCE;
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	st->buf[1] = new_proto;
 
 	ret = dib0700_ctrl_wr(d, st->buf, 3);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		err("ir protocol setup failed");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	d->props.rc.core.protocol = *rc_proto;
 
 out:
 	mutex_unlock(&d->usb_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* This is the काष्ठाure of the RC response packet starting in firmware 1.20 */
-काष्ठा dib0700_rc_response अणु
+/* This is the structure of the RC response packet starting in firmware 1.20 */
+struct dib0700_rc_response {
 	u8 report_id;
 	u8 data_state;
-	जोड़ अणु
-		काष्ठा अणु
-			u8 प्रणाली;
-			u8 not_प्रणाली;
+	union {
+		struct {
+			u8 system;
+			u8 not_system;
 			u8 data;
 			u8 not_data;
-		पूर्ण nec;
-		काष्ठा अणु
+		} nec;
+		struct {
 			u8 not_used;
-			u8 प्रणाली;
+			u8 system;
 			u8 data;
 			u8 not_data;
-		पूर्ण rc5;
-	पूर्ण;
-पूर्ण;
-#घोषणा RC_MSG_SIZE_V1_20 6
+		} rc5;
+	};
+};
+#define RC_MSG_SIZE_V1_20 6
 
-अटल व्योम dib0700_rc_urb_completion(काष्ठा urb *purb)
-अणु
-	काष्ठा dvb_usb_device *d = purb->context;
-	काष्ठा dib0700_rc_response *poll_reply;
-	क्रमागत rc_proto protocol;
+static void dib0700_rc_urb_completion(struct urb *purb)
+{
+	struct dvb_usb_device *d = purb->context;
+	struct dib0700_rc_response *poll_reply;
+	enum rc_proto protocol;
 	u32 keycode;
 	u8 toggle;
 
 	deb_info("%s()\n", __func__);
-	अगर (d->rc_dev == शून्य) अणु
-		/* This will occur अगर disable_rc_polling=1 */
-		kमुक्त(purb->transfer_buffer);
-		usb_मुक्त_urb(purb);
-		वापस;
-	पूर्ण
+	if (d->rc_dev == NULL) {
+		/* This will occur if disable_rc_polling=1 */
+		kfree(purb->transfer_buffer);
+		usb_free_urb(purb);
+		return;
+	}
 
 	poll_reply = purb->transfer_buffer;
 
-	अगर (purb->status < 0) अणु
+	if (purb->status < 0) {
 		deb_info("discontinuing polling\n");
-		kमुक्त(purb->transfer_buffer);
-		usb_मुक्त_urb(purb);
-		वापस;
-	पूर्ण
+		kfree(purb->transfer_buffer);
+		usb_free_urb(purb);
+		return;
+	}
 
-	अगर (purb->actual_length != RC_MSG_SIZE_V1_20) अणु
+	if (purb->actual_length != RC_MSG_SIZE_V1_20) {
 		deb_info("malformed rc msg size=%d\n", purb->actual_length);
-		जाओ resubmit;
-	पूर्ण
+		goto resubmit;
+	}
 
 	deb_data("IR ID = %02X state = %02X System = %02X %02X Cmd = %02X %02X (len %d)\n",
 		 poll_reply->report_id, poll_reply->data_state,
-		 poll_reply->nec.प्रणाली, poll_reply->nec.not_प्रणाली,
+		 poll_reply->nec.system, poll_reply->nec.not_system,
 		 poll_reply->nec.data, poll_reply->nec.not_data,
 		 purb->actual_length);
 
-	चयन (d->props.rc.core.protocol) अणु
-	हाल RC_PROTO_BIT_NEC:
+	switch (d->props.rc.core.protocol) {
+	case RC_PROTO_BIT_NEC:
 		toggle = 0;
 
 		/* NEC protocol sends repeat code as 0 0 0 FF */
-		अगर (poll_reply->nec.प्रणाली     == 0x00 &&
-		    poll_reply->nec.not_प्रणाली == 0x00 &&
+		if (poll_reply->nec.system     == 0x00 &&
+		    poll_reply->nec.not_system == 0x00 &&
 		    poll_reply->nec.data       == 0x00 &&
-		    poll_reply->nec.not_data   == 0xff) अणु
+		    poll_reply->nec.not_data   == 0xff) {
 			poll_reply->data_state = 2;
 			rc_repeat(d->rc_dev);
-			जाओ resubmit;
-		पूर्ण
+			goto resubmit;
+		}
 
-		अगर ((poll_reply->nec.data ^ poll_reply->nec.not_data) != 0xff) अणु
+		if ((poll_reply->nec.data ^ poll_reply->nec.not_data) != 0xff) {
 			deb_data("NEC32 protocol\n");
-			keycode = RC_SCANCODE_NEC32(poll_reply->nec.प्रणाली     << 24 |
-						     poll_reply->nec.not_प्रणाली << 16 |
+			keycode = RC_SCANCODE_NEC32(poll_reply->nec.system     << 24 |
+						     poll_reply->nec.not_system << 16 |
 						     poll_reply->nec.data       << 8  |
 						     poll_reply->nec.not_data);
 			protocol = RC_PROTO_NEC32;
-		पूर्ण अन्यथा अगर ((poll_reply->nec.प्रणाली ^ poll_reply->nec.not_प्रणाली) != 0xff) अणु
+		} else if ((poll_reply->nec.system ^ poll_reply->nec.not_system) != 0xff) {
 			deb_data("NEC extended protocol\n");
-			keycode = RC_SCANCODE_NECX(poll_reply->nec.प्रणाली << 8 |
-						    poll_reply->nec.not_प्रणाली,
+			keycode = RC_SCANCODE_NECX(poll_reply->nec.system << 8 |
+						    poll_reply->nec.not_system,
 						    poll_reply->nec.data);
 
 			protocol = RC_PROTO_NECX;
-		पूर्ण अन्यथा अणु
+		} else {
 			deb_data("NEC normal protocol\n");
-			keycode = RC_SCANCODE_NEC(poll_reply->nec.प्रणाली,
+			keycode = RC_SCANCODE_NEC(poll_reply->nec.system,
 						   poll_reply->nec.data);
 			protocol = RC_PROTO_NEC;
-		पूर्ण
+		}
 
-		अवरोध;
-	शेष:
+		break;
+	default:
 		deb_data("RC5 protocol\n");
 		protocol = RC_PROTO_RC5;
 		toggle = poll_reply->report_id;
-		keycode = RC_SCANCODE_RC5(poll_reply->rc5.प्रणाली, poll_reply->rc5.data);
+		keycode = RC_SCANCODE_RC5(poll_reply->rc5.system, poll_reply->rc5.data);
 
-		अगर ((poll_reply->rc5.data ^ poll_reply->rc5.not_data) != 0xff) अणु
-			/* Key failed पूर्णांकegrity check */
+		if ((poll_reply->rc5.data ^ poll_reply->rc5.not_data) != 0xff) {
+			/* Key failed integrity check */
 			err("key failed integrity check: %02x %02x %02x %02x",
-			    poll_reply->rc5.not_used, poll_reply->rc5.प्रणाली,
+			    poll_reply->rc5.not_used, poll_reply->rc5.system,
 			    poll_reply->rc5.data, poll_reply->rc5.not_data);
-			जाओ resubmit;
-		पूर्ण
+			goto resubmit;
+		}
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	rc_keyकरोwn(d->rc_dev, protocol, keycode, toggle);
+	rc_keydown(d->rc_dev, protocol, keycode, toggle);
 
 resubmit:
-	/* Clean the buffer beक्रमe we requeue */
-	स_रखो(purb->transfer_buffer, 0, RC_MSG_SIZE_V1_20);
+	/* Clean the buffer before we requeue */
+	memset(purb->transfer_buffer, 0, RC_MSG_SIZE_V1_20);
 
 	/* Requeue URB */
 	usb_submit_urb(purb, GFP_ATOMIC);
-पूर्ण
+}
 
-पूर्णांक dib0700_rc_setup(काष्ठा dvb_usb_device *d, काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा dib0700_state *st = d->priv;
-	काष्ठा urb *purb;
-	स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *e;
-	पूर्णांक ret, rc_ep = 1;
-	अचिन्हित पूर्णांक pipe = 0;
+int dib0700_rc_setup(struct dvb_usb_device *d, struct usb_interface *intf)
+{
+	struct dib0700_state *st = d->priv;
+	struct urb *purb;
+	const struct usb_endpoint_descriptor *e;
+	int ret, rc_ep = 1;
+	unsigned int pipe = 0;
 
 	/* Poll-based. Don't initialize bulk mode */
-	अगर (st->fw_version < 0x10200 || !पूर्णांकf)
-		वापस 0;
+	if (st->fw_version < 0x10200 || !intf)
+		return 0;
 
 	/* Starting in firmware 1.20, the RC info is provided on a bulk pipe */
 
-	अगर (पूर्णांकf->cur_altsetting->desc.bNumEndpoपूर्णांकs < rc_ep + 1)
-		वापस -ENODEV;
+	if (intf->cur_altsetting->desc.bNumEndpoints < rc_ep + 1)
+		return -ENODEV;
 
 	purb = usb_alloc_urb(0, GFP_KERNEL);
-	अगर (purb == शून्य)
-		वापस -ENOMEM;
+	if (purb == NULL)
+		return -ENOMEM;
 
 	purb->transfer_buffer = kzalloc(RC_MSG_SIZE_V1_20, GFP_KERNEL);
-	अगर (purb->transfer_buffer == शून्य) अणु
+	if (purb->transfer_buffer == NULL) {
 		err("rc kzalloc failed");
-		usb_मुक्त_urb(purb);
-		वापस -ENOMEM;
-	पूर्ण
+		usb_free_urb(purb);
+		return -ENOMEM;
+	}
 
 	purb->status = -EINPROGRESS;
 
 	/*
-	 * Some devices like the Hauppauge NovaTD model 52009 use an पूर्णांकerrupt
-	 * endpoपूर्णांक, जबतक others use a bulk one.
+	 * Some devices like the Hauppauge NovaTD model 52009 use an interrupt
+	 * endpoint, while others use a bulk one.
 	 */
-	e = &पूर्णांकf->cur_altsetting->endpoपूर्णांक[rc_ep].desc;
-	अगर (usb_endpoपूर्णांक_dir_in(e)) अणु
-		अगर (usb_endpoपूर्णांक_xfer_bulk(e)) अणु
+	e = &intf->cur_altsetting->endpoint[rc_ep].desc;
+	if (usb_endpoint_dir_in(e)) {
+		if (usb_endpoint_xfer_bulk(e)) {
 			pipe = usb_rcvbulkpipe(d->udev, rc_ep);
 			usb_fill_bulk_urb(purb, d->udev, pipe,
 					  purb->transfer_buffer,
 					  RC_MSG_SIZE_V1_20,
 					  dib0700_rc_urb_completion, d);
 
-		पूर्ण अन्यथा अगर (usb_endpoपूर्णांक_xfer_पूर्णांक(e)) अणु
-			pipe = usb_rcvपूर्णांकpipe(d->udev, rc_ep);
-			usb_fill_पूर्णांक_urb(purb, d->udev, pipe,
+		} else if (usb_endpoint_xfer_int(e)) {
+			pipe = usb_rcvintpipe(d->udev, rc_ep);
+			usb_fill_int_urb(purb, d->udev, pipe,
 					  purb->transfer_buffer,
 					  RC_MSG_SIZE_V1_20,
 					  dib0700_rc_urb_completion, d, 1);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!pipe) अणु
+	if (!pipe) {
 		err("There's no endpoint for remote controller");
-		kमुक्त(purb->transfer_buffer);
-		usb_मुक्त_urb(purb);
-		वापस 0;
-	पूर्ण
+		kfree(purb->transfer_buffer);
+		usb_free_urb(purb);
+		return 0;
+	}
 
 	ret = usb_submit_urb(purb, GFP_ATOMIC);
-	अगर (ret) अणु
+	if (ret) {
 		err("rc submit urb failed");
-		kमुक्त(purb->transfer_buffer);
-		usb_मुक्त_urb(purb);
-	पूर्ण
+		kfree(purb->transfer_buffer);
+		usb_free_urb(purb);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dib0700_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
-		स्थिर काष्ठा usb_device_id *id)
-अणु
-	पूर्णांक i;
-	काष्ठा dvb_usb_device *dev;
+static int dib0700_probe(struct usb_interface *intf,
+		const struct usb_device_id *id)
+{
+	int i;
+	struct dvb_usb_device *dev;
 
-	क्रम (i = 0; i < dib0700_device_count; i++)
-		अगर (dvb_usb_device_init(पूर्णांकf, &dib0700_devices[i], THIS_MODULE,
-		    &dev, adapter_nr) == 0) अणु
-			काष्ठा dib0700_state *st = dev->priv;
+	for (i = 0; i < dib0700_device_count; i++)
+		if (dvb_usb_device_init(intf, &dib0700_devices[i], THIS_MODULE,
+		    &dev, adapter_nr) == 0) {
+			struct dib0700_state *st = dev->priv;
 			u32 hwversion, romversion, fw_version, fwtype;
 
 			dib0700_get_version(dev, &hwversion, &romversion,
@@ -898,49 +897,49 @@ resubmit:
 			st->nb_packet_buffer_size = (u32)nb_packet_buffer_size;
 
 			/* Disable polling mode on newer firmwares */
-			अगर (st->fw_version >= 0x10200)
+			if (st->fw_version >= 0x10200)
 				dev->props.rc.core.bulk_mode = true;
-			अन्यथा
+			else
 				dev->props.rc.core.bulk_mode = false;
 
-			dib0700_rc_setup(dev, पूर्णांकf);
+			dib0700_rc_setup(dev, intf);
 
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल व्योम dib0700_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा dvb_usb_device *d = usb_get_पूर्णांकfdata(पूर्णांकf);
-	काष्ठा dib0700_state *st = d->priv;
-	काष्ठा i2c_client *client;
+static void dib0700_disconnect(struct usb_interface *intf)
+{
+	struct dvb_usb_device *d = usb_get_intfdata(intf);
+	struct dib0700_state *st = d->priv;
+	struct i2c_client *client;
 
-	/* हटाओ I2C client क्रम tuner */
+	/* remove I2C client for tuner */
 	client = st->i2c_client_tuner;
-	अगर (client) अणु
+	if (client) {
 		module_put(client->dev.driver->owner);
-		i2c_unरेजिस्टर_device(client);
-	पूर्ण
+		i2c_unregister_device(client);
+	}
 
-	/* हटाओ I2C client क्रम demodulator */
+	/* remove I2C client for demodulator */
 	client = st->i2c_client_demod;
-	अगर (client) अणु
+	if (client) {
 		module_put(client->dev.driver->owner);
-		i2c_unरेजिस्टर_device(client);
-	पूर्ण
+		i2c_unregister_device(client);
+	}
 
-	dvb_usb_device_निकास(पूर्णांकf);
-पूर्ण
+	dvb_usb_device_exit(intf);
+}
 
 
-अटल काष्ठा usb_driver dib0700_driver = अणु
+static struct usb_driver dib0700_driver = {
 	.name       = "dvb_usb_dib0700",
 	.probe      = dib0700_probe,
 	.disconnect = dib0700_disconnect,
 	.id_table   = dib0700_usb_id_table,
-पूर्ण;
+};
 
 module_usb_driver(dib0700_driver);
 

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * mt8183-afe-common.h  --  Mediatek 8183 audio driver definitions
  *
@@ -7,15 +6,15 @@
  * Author: KaiChieh Chuang <kaichieh.chuang@mediatek.com>
  */
 
-#अगर_अघोषित _MT_8183_AFE_COMMON_H_
-#घोषणा _MT_8183_AFE_COMMON_H_
+#ifndef _MT_8183_AFE_COMMON_H_
+#define _MT_8183_AFE_COMMON_H_
 
-#समावेश <sound/soc.h>
-#समावेश <linux/list.h>
-#समावेश <linux/regmap.h>
-#समावेश "../common/mtk-base-afe.h"
+#include <sound/soc.h>
+#include <linux/list.h>
+#include <linux/regmap.h>
+#include "../common/mtk-base-afe.h"
 
-क्रमागत अणु
+enum {
 	MT8183_MEMIF_DL1,
 	MT8183_MEMIF_DL2,
 	MT8183_MEMIF_DL3,
@@ -38,9 +37,9 @@
 	MT8183_DAI_HOSTLESS_LPBK,
 	MT8183_DAI_HOSTLESS_SPEECH,
 	MT8183_DAI_NUM,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	MT8183_IRQ_0,
 	MT8183_IRQ_1,
 	MT8183_IRQ_2,
@@ -53,16 +52,16 @@
 	MT8183_IRQ_11,
 	MT8183_IRQ_12,
 	MT8183_IRQ_NUM,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	MT8183_MTKAIF_PROTOCOL_1 = 0,
 	MT8183_MTKAIF_PROTOCOL_2,
 	MT8183_MTKAIF_PROTOCOL_2_CLK_P2,
-पूर्ण;
+};
 
 /* MCLK */
-क्रमागत अणु
+enum {
 	MT8183_I2S0_MCK = 0,
 	MT8183_I2S1_MCK,
 	MT8183_I2S2_MCK,
@@ -71,39 +70,39 @@
 	MT8183_I2S4_BCK,
 	MT8183_I2S5_MCK,
 	MT8183_MCK_NUM,
-पूर्ण;
+};
 
-काष्ठा clk;
+struct clk;
 
-काष्ठा mt8183_afe_निजी अणु
-	काष्ठा clk **clk;
+struct mt8183_afe_private {
+	struct clk **clk;
 
-	पूर्णांक pm_runसमय_bypass_reg_ctl;
+	int pm_runtime_bypass_reg_ctl;
 
 	/* dai */
-	व्योम *dai_priv[MT8183_DAI_NUM];
+	void *dai_priv[MT8183_DAI_NUM];
 
 	/* adda */
-	पूर्णांक mtkaअगर_protocol;
-	पूर्णांक mtkaअगर_calibration_ok;
-	पूर्णांक mtkaअगर_chosen_phase[4];
-	पूर्णांक mtkaअगर_phase_cycle[4];
-	पूर्णांक mtkaअगर_calibration_num_phase;
-	पूर्णांक mtkaअगर_dmic;
+	int mtkaif_protocol;
+	int mtkaif_calibration_ok;
+	int mtkaif_chosen_phase[4];
+	int mtkaif_phase_cycle[4];
+	int mtkaif_calibration_num_phase;
+	int mtkaif_dmic;
 
 	/* mck */
-	पूर्णांक mck_rate[MT8183_MCK_NUM];
-पूर्ण;
+	int mck_rate[MT8183_MCK_NUM];
+};
 
-अचिन्हित पूर्णांक mt8183_general_rate_transक्रमm(काष्ठा device *dev,
-					   अचिन्हित पूर्णांक rate);
-अचिन्हित पूर्णांक mt8183_rate_transक्रमm(काष्ठा device *dev,
-				   अचिन्हित पूर्णांक rate, पूर्णांक aud_blk);
+unsigned int mt8183_general_rate_transform(struct device *dev,
+					   unsigned int rate);
+unsigned int mt8183_rate_transform(struct device *dev,
+				   unsigned int rate, int aud_blk);
 
-/* dai रेजिस्टर */
-पूर्णांक mt8183_dai_adda_रेजिस्टर(काष्ठा mtk_base_afe *afe);
-पूर्णांक mt8183_dai_pcm_रेजिस्टर(काष्ठा mtk_base_afe *afe);
-पूर्णांक mt8183_dai_i2s_रेजिस्टर(काष्ठा mtk_base_afe *afe);
-पूर्णांक mt8183_dai_tdm_रेजिस्टर(काष्ठा mtk_base_afe *afe);
-पूर्णांक mt8183_dai_hostless_रेजिस्टर(काष्ठा mtk_base_afe *afe);
-#पूर्ण_अगर
+/* dai register */
+int mt8183_dai_adda_register(struct mtk_base_afe *afe);
+int mt8183_dai_pcm_register(struct mtk_base_afe *afe);
+int mt8183_dai_i2s_register(struct mtk_base_afe *afe);
+int mt8183_dai_tdm_register(struct mtk_base_afe *afe);
+int mt8183_dai_hostless_register(struct mtk_base_afe *afe);
+#endif

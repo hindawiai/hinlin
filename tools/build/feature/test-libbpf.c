@@ -1,8 +1,7 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <bpf/libbpf.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <bpf/libbpf.h>
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	वापस bpf_object__खोलो("test") ? 0 : -1;
-पूर्ण
+int main(void)
+{
+	return bpf_object__open("test") ? 0 : -1;
+}

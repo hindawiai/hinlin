@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Allwinner Reduced Serial Bus Driver
  *
@@ -10,97 +9,97 @@
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
-#अगर_अघोषित _SUNXI_RSB_H
-#घोषणा _SUNXI_RSB_H
+#ifndef _SUNXI_RSB_H
+#define _SUNXI_RSB_H
 
-#समावेश <linux/device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/types.h>
+#include <linux/device.h>
+#include <linux/regmap.h>
+#include <linux/types.h>
 
-काष्ठा sunxi_rsb;
+struct sunxi_rsb;
 
 /**
- * काष्ठा sunxi_rsb_device - Basic representation of an RSB device
+ * struct sunxi_rsb_device - Basic representation of an RSB device
  * @dev:	Driver model representation of the device.
  * @ctrl:	RSB controller managing the bus hosting this device.
- * @rtaddr:	This device's runसमय address
+ * @rtaddr:	This device's runtime address
  * @hwaddr:	This device's hardware address
  */
-काष्ठा sunxi_rsb_device अणु
-	काष्ठा device		dev;
-	काष्ठा sunxi_rsb	*rsb;
-	पूर्णांक			irq;
+struct sunxi_rsb_device {
+	struct device		dev;
+	struct sunxi_rsb	*rsb;
+	int			irq;
 	u8			rtaddr;
 	u16			hwaddr;
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा sunxi_rsb_device *to_sunxi_rsb_device(काष्ठा device *d)
-अणु
-	वापस container_of(d, काष्ठा sunxi_rsb_device, dev);
-पूर्ण
+static inline struct sunxi_rsb_device *to_sunxi_rsb_device(struct device *d)
+{
+	return container_of(d, struct sunxi_rsb_device, dev);
+}
 
-अटल अंतरभूत व्योम *sunxi_rsb_device_get_drvdata(स्थिर काष्ठा sunxi_rsb_device *rdev)
-अणु
-	वापस dev_get_drvdata(&rdev->dev);
-पूर्ण
+static inline void *sunxi_rsb_device_get_drvdata(const struct sunxi_rsb_device *rdev)
+{
+	return dev_get_drvdata(&rdev->dev);
+}
 
-अटल अंतरभूत व्योम sunxi_rsb_device_set_drvdata(काष्ठा sunxi_rsb_device *rdev,
-						व्योम *data)
-अणु
+static inline void sunxi_rsb_device_set_drvdata(struct sunxi_rsb_device *rdev,
+						void *data)
+{
 	dev_set_drvdata(&rdev->dev, data);
-पूर्ण
+}
 
 /**
- * काष्ठा sunxi_rsb_driver - RSB slave device driver
+ * struct sunxi_rsb_driver - RSB slave device driver
  * @driver:	RSB device drivers should initialize name and owner field of
- *		this काष्ठाure.
+ *		this structure.
  * @probe:	binds this driver to a RSB device.
- * @हटाओ:	unbinds this driver from the RSB device.
+ * @remove:	unbinds this driver from the RSB device.
  */
-काष्ठा sunxi_rsb_driver अणु
-	काष्ठा device_driver driver;
-	पूर्णांक (*probe)(काष्ठा sunxi_rsb_device *rdev);
-	व्योम (*हटाओ)(काष्ठा sunxi_rsb_device *rdev);
-पूर्ण;
+struct sunxi_rsb_driver {
+	struct device_driver driver;
+	int (*probe)(struct sunxi_rsb_device *rdev);
+	void (*remove)(struct sunxi_rsb_device *rdev);
+};
 
-अटल अंतरभूत काष्ठा sunxi_rsb_driver *to_sunxi_rsb_driver(काष्ठा device_driver *d)
-अणु
-	वापस container_of(d, काष्ठा sunxi_rsb_driver, driver);
-पूर्ण
+static inline struct sunxi_rsb_driver *to_sunxi_rsb_driver(struct device_driver *d)
+{
+	return container_of(d, struct sunxi_rsb_driver, driver);
+}
 
-पूर्णांक sunxi_rsb_driver_रेजिस्टर(काष्ठा sunxi_rsb_driver *rdrv);
+int sunxi_rsb_driver_register(struct sunxi_rsb_driver *rdrv);
 
 /**
- * sunxi_rsb_driver_unरेजिस्टर() - unरेजिस्टर an RSB client driver
- * @rdrv:	the driver to unरेजिस्टर
+ * sunxi_rsb_driver_unregister() - unregister an RSB client driver
+ * @rdrv:	the driver to unregister
  */
-अटल अंतरभूत व्योम sunxi_rsb_driver_unरेजिस्टर(काष्ठा sunxi_rsb_driver *rdrv)
-अणु
-	अगर (rdrv)
-		driver_unरेजिस्टर(&rdrv->driver);
-पूर्ण
+static inline void sunxi_rsb_driver_unregister(struct sunxi_rsb_driver *rdrv)
+{
+	if (rdrv)
+		driver_unregister(&rdrv->driver);
+}
 
-#घोषणा module_sunxi_rsb_driver(__sunxi_rsb_driver) \
-	module_driver(__sunxi_rsb_driver, sunxi_rsb_driver_रेजिस्टर, \
-			sunxi_rsb_driver_unरेजिस्टर)
+#define module_sunxi_rsb_driver(__sunxi_rsb_driver) \
+	module_driver(__sunxi_rsb_driver, sunxi_rsb_driver_register, \
+			sunxi_rsb_driver_unregister)
 
-काष्ठा regmap *__devm_regmap_init_sunxi_rsb(काष्ठा sunxi_rsb_device *rdev,
-					    स्थिर काष्ठा regmap_config *config,
-					    काष्ठा lock_class_key *lock_key,
-					    स्थिर अक्षर *lock_name);
+struct regmap *__devm_regmap_init_sunxi_rsb(struct sunxi_rsb_device *rdev,
+					    const struct regmap_config *config,
+					    struct lock_class_key *lock_key,
+					    const char *lock_name);
 
 /**
- * devm_regmap_init_sunxi_rsb(): Initialise managed रेजिस्टर map
+ * devm_regmap_init_sunxi_rsb(): Initialise managed register map
  *
- * @rdev: Device that will be पूर्णांकeracted with
- * @config: Configuration क्रम रेजिस्टर map
+ * @rdev: Device that will be interacted with
+ * @config: Configuration for register map
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer
- * to a काष्ठा regmap.  The regmap will be स्वतःmatically मुक्तd by the
+ * The return value will be an ERR_PTR() on error or a valid pointer
+ * to a struct regmap.  The regmap will be automatically freed by the
  * device management code.
  */
-#घोषणा devm_regmap_init_sunxi_rsb(rdev, config)			\
+#define devm_regmap_init_sunxi_rsb(rdev, config)			\
 	__regmap_lockdep_wrapper(__devm_regmap_init_sunxi_rsb, #config,	\
 				 rdev, config)
 
-#पूर्ण_अगर /* _SUNXI_RSB_H */
+#endif /* _SUNXI_RSB_H */

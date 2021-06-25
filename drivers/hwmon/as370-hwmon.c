@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Synaptics AS370 SoC Hardware Monitoring Driver
  *
@@ -7,139 +6,139 @@
  * Author: Jisheng Zhang <jszhang@kernel.org>
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
+#include <linux/bitops.h>
+#include <linux/hwmon.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
 
-#घोषणा CTRL		0x0
-#घोषणा  PD		BIT(0)
-#घोषणा  EN		BIT(1)
-#घोषणा  T_SEL		BIT(2)
-#घोषणा  V_SEL		BIT(3)
-#घोषणा  NMOS_SEL	BIT(8)
-#घोषणा  PMOS_SEL	BIT(9)
-#घोषणा STS		0x4
-#घोषणा  BN_MASK	GENMASK(11, 0)
-#घोषणा  EOC		BIT(12)
+#define CTRL		0x0
+#define  PD		BIT(0)
+#define  EN		BIT(1)
+#define  T_SEL		BIT(2)
+#define  V_SEL		BIT(3)
+#define  NMOS_SEL	BIT(8)
+#define  PMOS_SEL	BIT(9)
+#define STS		0x4
+#define  BN_MASK	GENMASK(11, 0)
+#define  EOC		BIT(12)
 
-काष्ठा as370_hwmon अणु
-	व्योम __iomem *base;
-पूर्ण;
+struct as370_hwmon {
+	void __iomem *base;
+};
 
-अटल व्योम init_pvt(काष्ठा as370_hwmon *hwmon)
-अणु
+static void init_pvt(struct as370_hwmon *hwmon)
+{
 	u32 val;
-	व्योम __iomem *addr = hwmon->base + CTRL;
+	void __iomem *addr = hwmon->base + CTRL;
 
 	val = PD;
-	ग_लिखोl_relaxed(val, addr);
+	writel_relaxed(val, addr);
 	val |= T_SEL;
-	ग_लिखोl_relaxed(val, addr);
+	writel_relaxed(val, addr);
 	val |= EN;
-	ग_लिखोl_relaxed(val, addr);
+	writel_relaxed(val, addr);
 	val &= ~PD;
-	ग_लिखोl_relaxed(val, addr);
-पूर्ण
+	writel_relaxed(val, addr);
+}
 
-अटल पूर्णांक as370_hwmon_पढ़ो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
-			    u32 attr, पूर्णांक channel, दीर्घ *temp)
-अणु
-	पूर्णांक val;
-	काष्ठा as370_hwmon *hwmon = dev_get_drvdata(dev);
+static int as370_hwmon_read(struct device *dev, enum hwmon_sensor_types type,
+			    u32 attr, int channel, long *temp)
+{
+	int val;
+	struct as370_hwmon *hwmon = dev_get_drvdata(dev);
 
-	चयन (attr) अणु
-	हाल hwmon_temp_input:
-		val = पढ़ोl_relaxed(hwmon->base + STS) & BN_MASK;
+	switch (attr) {
+	case hwmon_temp_input:
+		val = readl_relaxed(hwmon->base + STS) & BN_MASK;
 		*temp = DIV_ROUND_CLOSEST(val * 251802, 4096) - 85525;
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल umode_t
-as370_hwmon_is_visible(स्थिर व्योम *data, क्रमागत hwmon_sensor_types type,
-		       u32 attr, पूर्णांक channel)
-अणु
-	अगर (type != hwmon_temp)
-		वापस 0;
+static umode_t
+as370_hwmon_is_visible(const void *data, enum hwmon_sensor_types type,
+		       u32 attr, int channel)
+{
+	if (type != hwmon_temp)
+		return 0;
 
-	चयन (attr) अणु
-	हाल hwmon_temp_input:
-		वापस 0444;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+	switch (attr) {
+	case hwmon_temp_input:
+		return 0444;
+	default:
+		return 0;
+	}
+}
 
-अटल स्थिर u32 as370_hwmon_temp_config[] = अणु
+static const u32 as370_hwmon_temp_config[] = {
 	HWMON_T_INPUT,
 	0
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा hwmon_channel_info as370_hwmon_temp = अणु
+static const struct hwmon_channel_info as370_hwmon_temp = {
 	.type = hwmon_temp,
 	.config = as370_hwmon_temp_config,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा hwmon_channel_info *as370_hwmon_info[] = अणु
+static const struct hwmon_channel_info *as370_hwmon_info[] = {
 	&as370_hwmon_temp,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा hwmon_ops as370_hwmon_ops = अणु
+static const struct hwmon_ops as370_hwmon_ops = {
 	.is_visible = as370_hwmon_is_visible,
-	.पढ़ो = as370_hwmon_पढ़ो,
-पूर्ण;
+	.read = as370_hwmon_read,
+};
 
-अटल स्थिर काष्ठा hwmon_chip_info as370_chip_info = अणु
+static const struct hwmon_chip_info as370_chip_info = {
 	.ops = &as370_hwmon_ops,
 	.info = as370_hwmon_info,
-पूर्ण;
+};
 
-अटल पूर्णांक as370_hwmon_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *hwmon_dev;
-	काष्ठा as370_hwmon *hwmon;
-	काष्ठा device *dev = &pdev->dev;
+static int as370_hwmon_probe(struct platform_device *pdev)
+{
+	struct device *hwmon_dev;
+	struct as370_hwmon *hwmon;
+	struct device *dev = &pdev->dev;
 
-	hwmon = devm_kzalloc(dev, माप(*hwmon), GFP_KERNEL);
-	अगर (!hwmon)
-		वापस -ENOMEM;
+	hwmon = devm_kzalloc(dev, sizeof(*hwmon), GFP_KERNEL);
+	if (!hwmon)
+		return -ENOMEM;
 
-	hwmon->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(hwmon->base))
-		वापस PTR_ERR(hwmon->base);
+	hwmon->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(hwmon->base))
+		return PTR_ERR(hwmon->base);
 
 	init_pvt(hwmon);
 
-	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_info(dev,
+	hwmon_dev = devm_hwmon_device_register_with_info(dev,
 							 "as370",
 							 hwmon,
 							 &as370_chip_info,
-							 शून्य);
-	वापस PTR_ERR_OR_ZERO(hwmon_dev);
-पूर्ण
+							 NULL);
+	return PTR_ERR_OR_ZERO(hwmon_dev);
+}
 
-अटल स्थिर काष्ठा of_device_id as370_hwmon_match[] = अणु
-	अणु .compatible = "syna,as370-hwmon" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id as370_hwmon_match[] = {
+	{ .compatible = "syna,as370-hwmon" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, as370_hwmon_match);
 
-अटल काष्ठा platक्रमm_driver as370_hwmon_driver = अणु
+static struct platform_driver as370_hwmon_driver = {
 	.probe = as370_hwmon_probe,
-	.driver = अणु
+	.driver = {
 		.name = "as370-hwmon",
 		.of_match_table = as370_hwmon_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(as370_hwmon_driver);
+	},
+};
+module_platform_driver(as370_hwmon_driver);
 
 MODULE_AUTHOR("Jisheng Zhang<jszhang@kernel.org>");
 MODULE_DESCRIPTION("Synaptics AS370 SoC hardware monitor");

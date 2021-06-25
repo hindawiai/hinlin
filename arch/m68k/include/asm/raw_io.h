@@ -1,128 +1,127 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * linux/include/यंत्र-m68k/raw_पन.स
+ * linux/include/asm-m68k/raw_io.h
  *
- * 10/20/00 RZ: - created from bits of पन.स and ide.h to cleanup namespace
+ * 10/20/00 RZ: - created from bits of io.h and ide.h to cleanup namespace
  *
  */
 
-#अगर_अघोषित _RAW_IO_H
-#घोषणा _RAW_IO_H
+#ifndef _RAW_IO_H
+#define _RAW_IO_H
 
-#अगर_घोषित __KERNEL__
+#ifdef __KERNEL__
 
-#समावेश <यंत्र/byteorder.h>
+#include <asm/byteorder.h>
 
-/* ++roman: The assignments to temp. vars aव्योम that gcc someबार generates
- * two accesses to memory, which may be undesirable क्रम some devices.
+/* ++roman: The assignments to temp. vars avoid that gcc sometimes generates
+ * two accesses to memory, which may be undesirable for some devices.
  */
-#घोषणा in_8(addr) \
-    (अणु u8 __v = (*(__क्रमce अस्थिर u8 *) (addr)); __v; पूर्ण)
-#घोषणा in_be16(addr) \
-    (अणु u16 __v = (*(__क्रमce अस्थिर u16 *) (addr)); __v; पूर्ण)
-#घोषणा in_be32(addr) \
-    (अणु u32 __v = (*(__क्रमce अस्थिर u32 *) (addr)); __v; पूर्ण)
-#घोषणा in_le16(addr) \
-    (अणु u16 __v = le16_to_cpu(*(__क्रमce अस्थिर __le16 *) (addr)); __v; पूर्ण)
-#घोषणा in_le32(addr) \
-    (अणु u32 __v = le32_to_cpu(*(__क्रमce अस्थिर __le32 *) (addr)); __v; पूर्ण)
+#define in_8(addr) \
+    ({ u8 __v = (*(__force volatile u8 *) (addr)); __v; })
+#define in_be16(addr) \
+    ({ u16 __v = (*(__force volatile u16 *) (addr)); __v; })
+#define in_be32(addr) \
+    ({ u32 __v = (*(__force volatile u32 *) (addr)); __v; })
+#define in_le16(addr) \
+    ({ u16 __v = le16_to_cpu(*(__force volatile __le16 *) (addr)); __v; })
+#define in_le32(addr) \
+    ({ u32 __v = le32_to_cpu(*(__force volatile __le32 *) (addr)); __v; })
 
-#घोषणा out_8(addr,b) (व्योम)((*(__क्रमce अस्थिर u8 *) (addr)) = (b))
-#घोषणा out_be16(addr,w) (व्योम)((*(__क्रमce अस्थिर u16 *) (addr)) = (w))
-#घोषणा out_be32(addr,l) (व्योम)((*(__क्रमce अस्थिर u32 *) (addr)) = (l))
-#घोषणा out_le16(addr,w) (व्योम)((*(__क्रमce अस्थिर __le16 *) (addr)) = cpu_to_le16(w))
-#घोषणा out_le32(addr,l) (व्योम)((*(__क्रमce अस्थिर __le32 *) (addr)) = cpu_to_le32(l))
+#define out_8(addr,b) (void)((*(__force volatile u8 *) (addr)) = (b))
+#define out_be16(addr,w) (void)((*(__force volatile u16 *) (addr)) = (w))
+#define out_be32(addr,l) (void)((*(__force volatile u32 *) (addr)) = (l))
+#define out_le16(addr,w) (void)((*(__force volatile __le16 *) (addr)) = cpu_to_le16(w))
+#define out_le32(addr,l) (void)((*(__force volatile __le32 *) (addr)) = cpu_to_le32(l))
 
-#घोषणा raw_inb in_8
-#घोषणा raw_inw in_be16
-#घोषणा raw_inl in_be32
-#घोषणा __raw_पढ़ोb in_8
-#घोषणा __raw_पढ़ोw in_be16
-#घोषणा __raw_पढ़ोl in_be32
+#define raw_inb in_8
+#define raw_inw in_be16
+#define raw_inl in_be32
+#define __raw_readb in_8
+#define __raw_readw in_be16
+#define __raw_readl in_be32
 
-#घोषणा raw_outb(val,port) out_8((port),(val))
-#घोषणा raw_outw(val,port) out_be16((port),(val))
-#घोषणा raw_outl(val,port) out_be32((port),(val))
-#घोषणा __raw_ग_लिखोb(val,addr) out_8((addr),(val))
-#घोषणा __raw_ग_लिखोw(val,addr) out_be16((addr),(val))
-#घोषणा __raw_ग_लिखोl(val,addr) out_be32((addr),(val))
+#define raw_outb(val,port) out_8((port),(val))
+#define raw_outw(val,port) out_be16((port),(val))
+#define raw_outl(val,port) out_be32((port),(val))
+#define __raw_writeb(val,addr) out_8((addr),(val))
+#define __raw_writew(val,addr) out_be16((addr),(val))
+#define __raw_writel(val,addr) out_be32((addr),(val))
 
 /*
- * Atari ROM port (cartridge port) ISA adapter, used क्रम the EtherNEC NE2000
+ * Atari ROM port (cartridge port) ISA adapter, used for the EtherNEC NE2000
  * network card driver.
  * The ISA adapter connects address lines A9-A13 to ISA address lines A0-A4,
- * and hardwires the rest of the ISA addresses क्रम a base address of 0x300.
+ * and hardwires the rest of the ISA addresses for a base address of 0x300.
  *
- * Data lines D8-D15 are connected to ISA data lines D0-D7 क्रम पढ़ोing.
- * For ग_लिखोs, address lines A1-A8 are latched to ISA data lines D0-D7
- * (meaning the bit pattern on A1-A8 can be पढ़ो back as byte).
+ * Data lines D8-D15 are connected to ISA data lines D0-D7 for reading.
+ * For writes, address lines A1-A8 are latched to ISA data lines D0-D7
+ * (meaning the bit pattern on A1-A8 can be read back as byte).
  *
- * Read and ग_लिखो operations are distinguished by the base address used:
- * पढ़ोs are from the ROM A side range, ग_लिखोs are through the B side range
+ * Read and write operations are distinguished by the base address used:
+ * reads are from the ROM A side range, writes are through the B side range
  * addresses (A side base + 0x10000).
  *
- * Reads and ग_लिखोs are byte only.
+ * Reads and writes are byte only.
  *
- * 16 bit पढ़ोs and ग_लिखोs are necessary क्रम the NetUSBee adapter's USB
- * chipset - 16 bit words are पढ़ो straight off the ROM port जबतक 16 bit
- * पढ़ोs are split पूर्णांकo two byte ग_लिखोs. The low byte is latched to the
- * NetUSBee buffer by a पढ़ो from the _पढ़ो_ winकरोw (with the data pattern
- * निश्चितed as A1-A8 address pattern). The high byte is then written to the
- * ग_लिखो range as usual, completing the ग_लिखो cycle.
+ * 16 bit reads and writes are necessary for the NetUSBee adapter's USB
+ * chipset - 16 bit words are read straight off the ROM port while 16 bit
+ * reads are split into two byte writes. The low byte is latched to the
+ * NetUSBee buffer by a read from the _read_ window (with the data pattern
+ * asserted as A1-A8 address pattern). The high byte is then written to the
+ * write range as usual, completing the write cycle.
  */
 
-#अगर defined(CONFIG_ATARI_ROM_ISA)
-#घोषणा rom_in_8(addr) \
-	(अणु u16 __v = (*(__क्रमce अस्थिर u16 *) (addr)); __v >>= 8; __v; पूर्ण)
-#घोषणा rom_in_be16(addr) \
-	(अणु u16 __v = (*(__क्रमce अस्थिर u16 *) (addr)); __v; पूर्ण)
-#घोषणा rom_in_le16(addr) \
-	(अणु u16 __v = le16_to_cpu(*(__क्रमce अस्थिर u16 *) (addr)); __v; पूर्ण)
+#if defined(CONFIG_ATARI_ROM_ISA)
+#define rom_in_8(addr) \
+	({ u16 __v = (*(__force volatile u16 *) (addr)); __v >>= 8; __v; })
+#define rom_in_be16(addr) \
+	({ u16 __v = (*(__force volatile u16 *) (addr)); __v; })
+#define rom_in_le16(addr) \
+	({ u16 __v = le16_to_cpu(*(__force volatile u16 *) (addr)); __v; })
 
-#घोषणा rom_out_8(addr, b)	\
-	(अणुu8 __maybe_unused __w, __v = (b);  u32 _addr = ((u32) (addr)); \
-	__w = ((*(__क्रमce अस्थिर u8 *)  ((_addr | 0x10000) + (__v<<1)))); पूर्ण)
-#घोषणा rom_out_be16(addr, w)	\
-	(अणुu16 __maybe_unused __w, __v = (w); u32 _addr = ((u32) (addr)); \
-	__w = ((*(__क्रमce अस्थिर u16 *) ((_addr & 0xFFFF0000UL) + ((__v & 0xFF)<<1)))); \
-	__w = ((*(__क्रमce अस्थिर u16 *) ((_addr | 0x10000) + ((__v >> 8)<<1)))); पूर्ण)
-#घोषणा rom_out_le16(addr, w)	\
-	(अणुu16 __maybe_unused __w, __v = (w); u32 _addr = ((u32) (addr)); \
-	__w = ((*(__क्रमce अस्थिर u16 *) ((_addr & 0xFFFF0000UL) + ((__v >> 8)<<1)))); \
-	__w = ((*(__क्रमce अस्थिर u16 *) ((_addr | 0x10000) + ((__v & 0xFF)<<1)))); पूर्ण)
+#define rom_out_8(addr, b)	\
+	({u8 __maybe_unused __w, __v = (b);  u32 _addr = ((u32) (addr)); \
+	__w = ((*(__force volatile u8 *)  ((_addr | 0x10000) + (__v<<1)))); })
+#define rom_out_be16(addr, w)	\
+	({u16 __maybe_unused __w, __v = (w); u32 _addr = ((u32) (addr)); \
+	__w = ((*(__force volatile u16 *) ((_addr & 0xFFFF0000UL) + ((__v & 0xFF)<<1)))); \
+	__w = ((*(__force volatile u16 *) ((_addr | 0x10000) + ((__v >> 8)<<1)))); })
+#define rom_out_le16(addr, w)	\
+	({u16 __maybe_unused __w, __v = (w); u32 _addr = ((u32) (addr)); \
+	__w = ((*(__force volatile u16 *) ((_addr & 0xFFFF0000UL) + ((__v >> 8)<<1)))); \
+	__w = ((*(__force volatile u16 *) ((_addr | 0x10000) + ((__v & 0xFF)<<1)))); })
 
-#घोषणा raw_rom_inb rom_in_8
-#घोषणा raw_rom_inw rom_in_be16
+#define raw_rom_inb rom_in_8
+#define raw_rom_inw rom_in_be16
 
-#घोषणा raw_rom_outb(val, port) rom_out_8((port), (val))
-#घोषणा raw_rom_outw(val, port) rom_out_be16((port), (val))
-#पूर्ण_अगर /* CONFIG_ATARI_ROM_ISA */
+#define raw_rom_outb(val, port) rom_out_8((port), (val))
+#define raw_rom_outw(val, port) rom_out_be16((port), (val))
+#endif /* CONFIG_ATARI_ROM_ISA */
 
-अटल अंतरभूत व्योम raw_insb(अस्थिर u8 __iomem *port, u8 *buf, अचिन्हित पूर्णांक len)
-अणु
-	अचिन्हित पूर्णांक i;
+static inline void raw_insb(volatile u8 __iomem *port, u8 *buf, unsigned int len)
+{
+	unsigned int i;
 
-        क्रम (i = 0; i < len; i++)
+        for (i = 0; i < len; i++)
 		*buf++ = in_8(port);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम raw_outsb(अस्थिर u8 __iomem *port, स्थिर u8 *buf,
-			     अचिन्हित पूर्णांक nr)
-अणु
-	अचिन्हित पूर्णांक पंचांगp;
+static inline void raw_outsb(volatile u8 __iomem *port, const u8 *buf,
+			     unsigned int nr)
+{
+	unsigned int tmp;
 
-	अगर (nr & 15) अणु
-		पंचांगp = (nr & 15) - 1;
-		यंत्र अस्थिर (
+	if (nr & 15) {
+		tmp = (nr & 15) - 1;
+		asm volatile (
 			"1: moveb %0@+,%2@; dbra %1,1b"
-			: "=a" (buf), "=d" (पंचांगp)
+			: "=a" (buf), "=d" (tmp)
 			: "a" (port), "0" (buf),
-			  "1" (पंचांगp));
-	पूर्ण
-	अगर (nr >> 4) अणु
-		पंचांगp = (nr >> 4) - 1;
-		यंत्र अस्थिर (
+			  "1" (tmp));
+	}
+	if (nr >> 4) {
+		tmp = (nr >> 4) - 1;
+		asm volatile (
 			"1: "
 			"moveb %0@+,%2@; "
 			"moveb %0@+,%2@; "
@@ -141,27 +140,27 @@
 			"moveb %0@+,%2@; "
 			"moveb %0@+,%2@; "
 			"dbra %1,1b"
-			: "=a" (buf), "=d" (पंचांगp)
+			: "=a" (buf), "=d" (tmp)
 			: "a" (port), "0" (buf),
-			  "1" (पंचांगp));
-	पूर्ण
-पूर्ण
+			  "1" (tmp));
+	}
+}
 
-अटल अंतरभूत व्योम raw_insw(अस्थिर u16 __iomem *port, u16 *buf, अचिन्हित पूर्णांक nr)
-अणु
-	अचिन्हित पूर्णांक पंचांगp;
+static inline void raw_insw(volatile u16 __iomem *port, u16 *buf, unsigned int nr)
+{
+	unsigned int tmp;
 
-	अगर (nr & 15) अणु
-		पंचांगp = (nr & 15) - 1;
-		यंत्र अस्थिर (
+	if (nr & 15) {
+		tmp = (nr & 15) - 1;
+		asm volatile (
 			"1: movew %2@,%0@+; dbra %1,1b"
-			: "=a" (buf), "=d" (पंचांगp)
+			: "=a" (buf), "=d" (tmp)
 			: "a" (port), "0" (buf),
-			  "1" (पंचांगp));
-	पूर्ण
-	अगर (nr >> 4) अणु
-		पंचांगp = (nr >> 4) - 1;
-		यंत्र अस्थिर (
+			  "1" (tmp));
+	}
+	if (nr >> 4) {
+		tmp = (nr >> 4) - 1;
+		asm volatile (
 			"1: "
 			"movew %2@,%0@+; "
 			"movew %2@,%0@+; "
@@ -180,28 +179,28 @@
 			"movew %2@,%0@+; "
 			"movew %2@,%0@+; "
 			"dbra %1,1b"
-			: "=a" (buf), "=d" (पंचांगp)
+			: "=a" (buf), "=d" (tmp)
 			: "a" (port), "0" (buf),
-			  "1" (पंचांगp));
-	पूर्ण
-पूर्ण
+			  "1" (tmp));
+	}
+}
 
-अटल अंतरभूत व्योम raw_outsw(अस्थिर u16 __iomem *port, स्थिर u16 *buf,
-			     अचिन्हित पूर्णांक nr)
-अणु
-	अचिन्हित पूर्णांक पंचांगp;
+static inline void raw_outsw(volatile u16 __iomem *port, const u16 *buf,
+			     unsigned int nr)
+{
+	unsigned int tmp;
 
-	अगर (nr & 15) अणु
-		पंचांगp = (nr & 15) - 1;
-		यंत्र अस्थिर (
+	if (nr & 15) {
+		tmp = (nr & 15) - 1;
+		asm volatile (
 			"1: movew %0@+,%2@; dbra %1,1b"
-			: "=a" (buf), "=d" (पंचांगp)
+			: "=a" (buf), "=d" (tmp)
 			: "a" (port), "0" (buf),
-			  "1" (पंचांगp));
-	पूर्ण
-	अगर (nr >> 4) अणु
-		पंचांगp = (nr >> 4) - 1;
-		यंत्र अस्थिर (
+			  "1" (tmp));
+	}
+	if (nr >> 4) {
+		tmp = (nr >> 4) - 1;
+		asm volatile (
 			"1: "
 			"movew %0@+,%2@; "
 			"movew %0@+,%2@; "
@@ -220,27 +219,27 @@
 			"movew %0@+,%2@; "
 			"movew %0@+,%2@; "
 			"dbra %1,1b"
-			: "=a" (buf), "=d" (पंचांगp)
+			: "=a" (buf), "=d" (tmp)
 			: "a" (port), "0" (buf),
-			  "1" (पंचांगp));
-	पूर्ण
-पूर्ण
+			  "1" (tmp));
+	}
+}
 
-अटल अंतरभूत व्योम raw_insl(अस्थिर u32 __iomem *port, u32 *buf, अचिन्हित पूर्णांक nr)
-अणु
-	अचिन्हित पूर्णांक पंचांगp;
+static inline void raw_insl(volatile u32 __iomem *port, u32 *buf, unsigned int nr)
+{
+	unsigned int tmp;
 
-	अगर (nr & 15) अणु
-		पंचांगp = (nr & 15) - 1;
-		यंत्र अस्थिर (
+	if (nr & 15) {
+		tmp = (nr & 15) - 1;
+		asm volatile (
 			"1: movel %2@,%0@+; dbra %1,1b"
-			: "=a" (buf), "=d" (पंचांगp)
+			: "=a" (buf), "=d" (tmp)
 			: "a" (port), "0" (buf),
-			  "1" (पंचांगp));
-	पूर्ण
-	अगर (nr >> 4) अणु
-		पंचांगp = (nr >> 4) - 1;
-		यंत्र अस्थिर (
+			  "1" (tmp));
+	}
+	if (nr >> 4) {
+		tmp = (nr >> 4) - 1;
+		asm volatile (
 			"1: "
 			"movel %2@,%0@+; "
 			"movel %2@,%0@+; "
@@ -259,28 +258,28 @@
 			"movel %2@,%0@+; "
 			"movel %2@,%0@+; "
 			"dbra %1,1b"
-			: "=a" (buf), "=d" (पंचांगp)
+			: "=a" (buf), "=d" (tmp)
 			: "a" (port), "0" (buf),
-			  "1" (पंचांगp));
-	पूर्ण
-पूर्ण
+			  "1" (tmp));
+	}
+}
 
-अटल अंतरभूत व्योम raw_outsl(अस्थिर u32 __iomem *port, स्थिर u32 *buf,
-			     अचिन्हित पूर्णांक nr)
-अणु
-	अचिन्हित पूर्णांक पंचांगp;
+static inline void raw_outsl(volatile u32 __iomem *port, const u32 *buf,
+			     unsigned int nr)
+{
+	unsigned int tmp;
 
-	अगर (nr & 15) अणु
-		पंचांगp = (nr & 15) - 1;
-		यंत्र अस्थिर (
+	if (nr & 15) {
+		tmp = (nr & 15) - 1;
+		asm volatile (
 			"1: movel %0@+,%2@; dbra %1,1b"
-			: "=a" (buf), "=d" (पंचांगp)
+			: "=a" (buf), "=d" (tmp)
 			: "a" (port), "0" (buf),
-			  "1" (पंचांगp));
-	पूर्ण
-	अगर (nr >> 4) अणु
-		पंचांगp = (nr >> 4) - 1;
-		यंत्र अस्थिर (
+			  "1" (tmp));
+	}
+	if (nr >> 4) {
+		tmp = (nr >> 4) - 1;
+		asm volatile (
 			"1: "
 			"movel %0@+,%2@; "
 			"movel %0@+,%2@; "
@@ -299,18 +298,18 @@
 			"movel %0@+,%2@; "
 			"movel %0@+,%2@; "
 			"dbra %1,1b"
-			: "=a" (buf), "=d" (पंचांगp)
+			: "=a" (buf), "=d" (tmp)
 			: "a" (port), "0" (buf),
-			  "1" (पंचांगp));
-	पूर्ण
-पूर्ण
+			  "1" (tmp));
+	}
+}
 
 
-अटल अंतरभूत व्योम raw_insw_swapw(अस्थिर u16 __iomem *port, u16 *buf,
-				  अचिन्हित पूर्णांक nr)
-अणु
-    अगर ((nr) % 8)
-	__यंत्र__ __अस्थिर__
+static inline void raw_insw_swapw(volatile u16 __iomem *port, u16 *buf,
+				  unsigned int nr)
+{
+    if ((nr) % 8)
+	__asm__ __volatile__
 	       ("\tmovel %0,%/a0\n\t"
 		"movel %1,%/a1\n\t"
 		"movel %2,%/d6\n\t"
@@ -322,8 +321,8 @@
 		:
 		: "g" (port), "g" (buf), "g" (nr)
 		: "d0", "a0", "a1", "d6");
-    अन्यथा
-	__यंत्र__ __अस्थिर__
+    else
+	__asm__ __volatile__
 	       ("movel %0,%/a0\n\t"
 		"movel %1,%/a1\n\t"
 		"movel %2,%/d6\n\t"
@@ -357,13 +356,13 @@
                 :
 		: "g" (port), "g" (buf), "g" (nr)
 		: "d0", "a0", "a1", "d6");
-पूर्ण
+}
 
-अटल अंतरभूत व्योम raw_outsw_swapw(अस्थिर u16 __iomem *port, स्थिर u16 *buf,
-				   अचिन्हित पूर्णांक nr)
-अणु
-    अगर ((nr) % 8)
-	__यंत्र__ __अस्थिर__
+static inline void raw_outsw_swapw(volatile u16 __iomem *port, const u16 *buf,
+				   unsigned int nr)
+{
+    if ((nr) % 8)
+	__asm__ __volatile__
 	       ("movel %0,%/a0\n\t"
 		"movel %1,%/a1\n\t"
 		"movel %2,%/d6\n\t"
@@ -375,8 +374,8 @@
                 :
 		: "g" (port), "g" (buf), "g" (nr)
 		: "d0", "a0", "a1", "d6");
-    अन्यथा
-	__यंत्र__ __अस्थिर__
+    else
+	__asm__ __volatile__
 	       ("movel %0,%/a0\n\t"
 		"movel %1,%/a1\n\t"
 		"movel %2,%/d6\n\t"
@@ -410,64 +409,64 @@
                 :
 		: "g" (port), "g" (buf), "g" (nr)
 		: "d0", "a0", "a1", "d6");
-पूर्ण
+}
 
 
-#अगर defined(CONFIG_ATARI_ROM_ISA)
-अटल अंतरभूत व्योम raw_rom_insb(अस्थिर u8 __iomem *port, u8 *buf, अचिन्हित पूर्णांक len)
-अणु
-	अचिन्हित पूर्णांक i;
+#if defined(CONFIG_ATARI_ROM_ISA)
+static inline void raw_rom_insb(volatile u8 __iomem *port, u8 *buf, unsigned int len)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < len; i++)
+	for (i = 0; i < len; i++)
 		*buf++ = rom_in_8(port);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम raw_rom_outsb(अस्थिर u8 __iomem *port, स्थिर u8 *buf,
-			     अचिन्हित पूर्णांक len)
-अणु
-	अचिन्हित पूर्णांक i;
+static inline void raw_rom_outsb(volatile u8 __iomem *port, const u8 *buf,
+			     unsigned int len)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < len; i++)
+	for (i = 0; i < len; i++)
 		rom_out_8(port, *buf++);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम raw_rom_insw(अस्थिर u16 __iomem *port, u16 *buf,
-				   अचिन्हित पूर्णांक nr)
-अणु
-	अचिन्हित पूर्णांक i;
+static inline void raw_rom_insw(volatile u16 __iomem *port, u16 *buf,
+				   unsigned int nr)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < nr; i++)
+	for (i = 0; i < nr; i++)
 		*buf++ = rom_in_be16(port);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम raw_rom_outsw(अस्थिर u16 __iomem *port, स्थिर u16 *buf,
-				   अचिन्हित पूर्णांक nr)
-अणु
-	अचिन्हित पूर्णांक i;
+static inline void raw_rom_outsw(volatile u16 __iomem *port, const u16 *buf,
+				   unsigned int nr)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < nr; i++)
+	for (i = 0; i < nr; i++)
 		rom_out_be16(port, *buf++);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम raw_rom_insw_swapw(अस्थिर u16 __iomem *port, u16 *buf,
-				   अचिन्हित पूर्णांक nr)
-अणु
-	अचिन्हित पूर्णांक i;
+static inline void raw_rom_insw_swapw(volatile u16 __iomem *port, u16 *buf,
+				   unsigned int nr)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < nr; i++)
+	for (i = 0; i < nr; i++)
 		*buf++ = rom_in_le16(port);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम raw_rom_outsw_swapw(अस्थिर u16 __iomem *port, स्थिर u16 *buf,
-				   अचिन्हित पूर्णांक nr)
-अणु
-	अचिन्हित पूर्णांक i;
+static inline void raw_rom_outsw_swapw(volatile u16 __iomem *port, const u16 *buf,
+				   unsigned int nr)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < nr; i++)
+	for (i = 0; i < nr; i++)
 		rom_out_le16(port, *buf++);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_ATARI_ROM_ISA */
+}
+#endif /* CONFIG_ATARI_ROM_ISA */
 
-#पूर्ण_अगर /* __KERNEL__ */
+#endif /* __KERNEL__ */
 
-#पूर्ण_अगर /* _RAW_IO_H */
+#endif /* _RAW_IO_H */

@@ -1,16 +1,15 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR MIT
+// SPDX-License-Identifier: GPL-2.0 OR MIT
 /*
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
  * Copyright (c) 2012 David Airlie <airlied@linux.ie>
  * Copyright (c) 2013 David Herrmann <dh.herrmann@gmail.com>
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,48 +23,48 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#समावेश <linux/mm.h>
-#समावेश <linux/module.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/types.h>
+#include <linux/mm.h>
+#include <linux/module.h>
+#include <linux/rbtree.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/types.h>
 
-#समावेश <drm/drm_mm.h>
-#समावेश <drm/drm_vma_manager.h>
+#include <drm/drm_mm.h>
+#include <drm/drm_vma_manager.h>
 
 /**
  * DOC: vma offset manager
  *
  * The vma-manager is responsible to map arbitrary driver-dependent memory
- * regions पूर्णांकo the linear user address-space. It provides offsets to the
+ * regions into the linear user address-space. It provides offsets to the
  * caller which can then be used on the address_space of the drm-device. It
  * takes care to not overlap regions, size them appropriately and to not
  * confuse mm-core by inconsistent fake vm_pgoff fields.
- * Drivers shouldn't use this क्रम object placement in VMEM. This manager should
- * only be used to manage mappings पूर्णांकo linear user-space VMs.
+ * Drivers shouldn't use this for object placement in VMEM. This manager should
+ * only be used to manage mappings into linear user-space VMs.
  *
  * We use drm_mm as backend to manage object allocations. But it is highly
- * optimized क्रम alloc/मुक्त calls, not lookups. Hence, we use an rb-tree to
+ * optimized for alloc/free calls, not lookups. Hence, we use an rb-tree to
  * speed up offset lookups.
  *
  * You must not use multiple offset managers on a single address_space.
- * Otherwise, mm-core will be unable to tear करोwn memory mappings as the VM will
- * no दीर्घer be linear.
+ * Otherwise, mm-core will be unable to tear down memory mappings as the VM will
+ * no longer be linear.
  *
  * This offset manager works on page-based addresses. That is, every argument
- * and वापस code (with the exception of drm_vma_node_offset_addr()) is given
+ * and return code (with the exception of drm_vma_node_offset_addr()) is given
  * in number of pages, not number of bytes. That means, object sizes and offsets
  * must always be page-aligned (as usual).
- * If you want to get a valid byte-based user-space address क्रम a given offset,
+ * If you want to get a valid byte-based user-space address for a given offset,
  * please see drm_vma_node_offset_addr().
  *
  * Additionally to offset management, the vma offset manager also handles access
- * management. For every खोलो-file context that is allowed to access a given
+ * management. For every open-file context that is allowed to access a given
  * node, you must call drm_vma_node_allow(). Otherwise, an mmap() call on this
- * खोलो-file with the offset of the node will fail with -EACCES. To revoke
+ * open-file with the offset of the node will fail with -EACCES. To revoke
  * access again, use drm_vma_node_revoke(). However, the caller is responsible
- * क्रम destroying alपढ़ोy existing mappings, अगर required.
+ * for destroying already existing mappings, if required.
  */
 
 /**
@@ -74,21 +73,21 @@
  * @page_offset: Offset of available memory area (page-based)
  * @size: Size of available address space range (page-based)
  *
- * Initialize a new offset-manager. The offset and area size available क्रम the
- * manager are given as @page_offset and @size. Both are पूर्णांकerpreted as
+ * Initialize a new offset-manager. The offset and area size available for the
+ * manager are given as @page_offset and @size. Both are interpreted as
  * page-numbers, not bytes.
  *
- * Adding/removing nodes from the manager is locked पूर्णांकernally and रक्षित
- * against concurrent access. However, node allocation and deकाष्ठाion is left
- * क्रम the caller. While calling पूर्णांकo the vma-manager, a given node must
+ * Adding/removing nodes from the manager is locked internally and protected
+ * against concurrent access. However, node allocation and destruction is left
+ * for the caller. While calling into the vma-manager, a given node must
  * always be guaranteed to be referenced.
  */
-व्योम drm_vma_offset_manager_init(काष्ठा drm_vma_offset_manager *mgr,
-				 अचिन्हित दीर्घ page_offset, अचिन्हित दीर्घ size)
-अणु
+void drm_vma_offset_manager_init(struct drm_vma_offset_manager *mgr,
+				 unsigned long page_offset, unsigned long size)
+{
 	rwlock_init(&mgr->vm_lock);
 	drm_mm_init(&mgr->vm_addr_space_mm, page_offset, size);
-पूर्ण
+}
 EXPORT_SYMBOL(drm_vma_offset_manager_init);
 
 /**
@@ -96,31 +95,31 @@ EXPORT_SYMBOL(drm_vma_offset_manager_init);
  * @mgr: Manager object
  *
  * Destroy an object manager which was previously created via
- * drm_vma_offset_manager_init(). The caller must हटाओ all allocated nodes
- * beक्रमe destroying the manager. Otherwise, drm_mm will refuse to मुक्त the
+ * drm_vma_offset_manager_init(). The caller must remove all allocated nodes
+ * before destroying the manager. Otherwise, drm_mm will refuse to free the
  * requested resources.
  *
  * The manager must not be accessed after this function is called.
  */
-व्योम drm_vma_offset_manager_destroy(काष्ठा drm_vma_offset_manager *mgr)
-अणु
-	drm_mm_takeकरोwn(&mgr->vm_addr_space_mm);
-पूर्ण
+void drm_vma_offset_manager_destroy(struct drm_vma_offset_manager *mgr)
+{
+	drm_mm_takedown(&mgr->vm_addr_space_mm);
+}
 EXPORT_SYMBOL(drm_vma_offset_manager_destroy);
 
 /**
  * drm_vma_offset_lookup_locked() - Find node in offset space
  * @mgr: Manager object
- * @start: Start address क्रम object (page-based)
+ * @start: Start address for object (page-based)
  * @pages: Size of object (page-based)
  *
- * Find a node given a start address and object size. This वापसs the _best_
- * match क्रम the given node. That is, @start may poपूर्णांक somewhere पूर्णांकo a valid
- * region and the given node will be वापसed, as दीर्घ as the node spans the
+ * Find a node given a start address and object size. This returns the _best_
+ * match for the given node. That is, @start may point somewhere into a valid
+ * region and the given node will be returned, as long as the node spans the
  * whole requested area (given the size in number of pages as @pages).
  *
- * Note that beक्रमe lookup the vma offset manager lookup lock must be acquired
- * with drm_vma_offset_lock_lookup(). See there क्रम an example. This can then be
+ * Note that before lookup the vma offset manager lookup lock must be acquired
+ * with drm_vma_offset_lock_lookup(). See there for an example. This can then be
  * used to implement weakly referenced lookups using kref_get_unless_zero().
  *
  * Example:
@@ -129,51 +128,51 @@ EXPORT_SYMBOL(drm_vma_offset_manager_destroy);
  *
  *     drm_vma_offset_lock_lookup(mgr);
  *     node = drm_vma_offset_lookup_locked(mgr);
- *     अगर (node)
+ *     if (node)
  *         kref_get_unless_zero(container_of(node, sth, entr));
  *     drm_vma_offset_unlock_lookup(mgr);
  *
  * RETURNS:
- * Returns शून्य अगर no suitable node can be found. Otherwise, the best match
- * is वापसed. It's the caller's responsibility to make sure the node doesn't
- * get destroyed beक्रमe the caller can access it.
+ * Returns NULL if no suitable node can be found. Otherwise, the best match
+ * is returned. It's the caller's responsibility to make sure the node doesn't
+ * get destroyed before the caller can access it.
  */
-काष्ठा drm_vma_offset_node *drm_vma_offset_lookup_locked(काष्ठा drm_vma_offset_manager *mgr,
-							 अचिन्हित दीर्घ start,
-							 अचिन्हित दीर्घ pages)
-अणु
-	काष्ठा drm_mm_node *node, *best;
-	काष्ठा rb_node *iter;
-	अचिन्हित दीर्घ offset;
+struct drm_vma_offset_node *drm_vma_offset_lookup_locked(struct drm_vma_offset_manager *mgr,
+							 unsigned long start,
+							 unsigned long pages)
+{
+	struct drm_mm_node *node, *best;
+	struct rb_node *iter;
+	unsigned long offset;
 
-	iter = mgr->vm_addr_space_mm.पूर्णांकerval_tree.rb_root.rb_node;
-	best = शून्य;
+	iter = mgr->vm_addr_space_mm.interval_tree.rb_root.rb_node;
+	best = NULL;
 
-	जबतक (likely(iter)) अणु
-		node = rb_entry(iter, काष्ठा drm_mm_node, rb);
+	while (likely(iter)) {
+		node = rb_entry(iter, struct drm_mm_node, rb);
 		offset = node->start;
-		अगर (start >= offset) अणु
+		if (start >= offset) {
 			iter = iter->rb_right;
 			best = node;
-			अगर (start == offset)
-				अवरोध;
-		पूर्ण अन्यथा अणु
+			if (start == offset)
+				break;
+		} else {
 			iter = iter->rb_left;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* verअगरy that the node spans the requested area */
-	अगर (best) अणु
+	/* verify that the node spans the requested area */
+	if (best) {
 		offset = best->start + best->size;
-		अगर (offset < start + pages)
-			best = शून्य;
-	पूर्ण
+		if (offset < start + pages)
+			best = NULL;
+	}
 
-	अगर (!best)
-		वापस शून्य;
+	if (!best)
+		return NULL;
 
-	वापस container_of(best, काष्ठा drm_vma_offset_node, vm_node);
-पूर्ण
+	return container_of(best, struct drm_vma_offset_node, vm_node);
+}
 EXPORT_SYMBOL(drm_vma_offset_lookup_locked);
 
 /**
@@ -182,209 +181,209 @@ EXPORT_SYMBOL(drm_vma_offset_lookup_locked);
  * @node: Node to be added
  * @pages: Allocation size visible to user-space (in number of pages)
  *
- * Add a node to the offset-manager. If the node was alपढ़ोy added, this करोes
- * nothing and वापस 0. @pages is the size of the object given in number of
+ * Add a node to the offset-manager. If the node was already added, this does
+ * nothing and return 0. @pages is the size of the object given in number of
  * pages.
  * After this call succeeds, you can access the offset of the node until it
- * is हटाओd again.
+ * is removed again.
  *
  * If this call fails, it is safe to retry the operation or call
- * drm_vma_offset_हटाओ(), anyway. However, no cleanup is required in that
- * हाल.
+ * drm_vma_offset_remove(), anyway. However, no cleanup is required in that
+ * case.
  *
  * @pages is not required to be the same size as the underlying memory object
- * that you want to map. It only limits the size that user-space can map पूर्णांकo
+ * that you want to map. It only limits the size that user-space can map into
  * their address space.
  *
  * RETURNS:
  * 0 on success, negative error code on failure.
  */
-पूर्णांक drm_vma_offset_add(काष्ठा drm_vma_offset_manager *mgr,
-		       काष्ठा drm_vma_offset_node *node, अचिन्हित दीर्घ pages)
-अणु
-	पूर्णांक ret = 0;
+int drm_vma_offset_add(struct drm_vma_offset_manager *mgr,
+		       struct drm_vma_offset_node *node, unsigned long pages)
+{
+	int ret = 0;
 
-	ग_लिखो_lock(&mgr->vm_lock);
+	write_lock(&mgr->vm_lock);
 
-	अगर (!drm_mm_node_allocated(&node->vm_node))
+	if (!drm_mm_node_allocated(&node->vm_node))
 		ret = drm_mm_insert_node(&mgr->vm_addr_space_mm,
 					 &node->vm_node, pages);
 
-	ग_लिखो_unlock(&mgr->vm_lock);
+	write_unlock(&mgr->vm_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(drm_vma_offset_add);
 
 /**
- * drm_vma_offset_हटाओ() - Remove offset node from manager
+ * drm_vma_offset_remove() - Remove offset node from manager
  * @mgr: Manager object
- * @node: Node to be हटाओd
+ * @node: Node to be removed
  *
- * Remove a node from the offset manager. If the node wasn't added beक्रमe, this
- * करोes nothing. After this call वापसs, the offset and size will be 0 until a
+ * Remove a node from the offset manager. If the node wasn't added before, this
+ * does nothing. After this call returns, the offset and size will be 0 until a
  * new offset is allocated via drm_vma_offset_add() again. Helper functions like
- * drm_vma_node_start() and drm_vma_node_offset_addr() will वापस 0 अगर no
+ * drm_vma_node_start() and drm_vma_node_offset_addr() will return 0 if no
  * offset is allocated.
  */
-व्योम drm_vma_offset_हटाओ(काष्ठा drm_vma_offset_manager *mgr,
-			   काष्ठा drm_vma_offset_node *node)
-अणु
-	ग_लिखो_lock(&mgr->vm_lock);
+void drm_vma_offset_remove(struct drm_vma_offset_manager *mgr,
+			   struct drm_vma_offset_node *node)
+{
+	write_lock(&mgr->vm_lock);
 
-	अगर (drm_mm_node_allocated(&node->vm_node)) अणु
-		drm_mm_हटाओ_node(&node->vm_node);
-		स_रखो(&node->vm_node, 0, माप(node->vm_node));
-	पूर्ण
+	if (drm_mm_node_allocated(&node->vm_node)) {
+		drm_mm_remove_node(&node->vm_node);
+		memset(&node->vm_node, 0, sizeof(node->vm_node));
+	}
 
-	ग_लिखो_unlock(&mgr->vm_lock);
-पूर्ण
-EXPORT_SYMBOL(drm_vma_offset_हटाओ);
+	write_unlock(&mgr->vm_lock);
+}
+EXPORT_SYMBOL(drm_vma_offset_remove);
 
 /**
- * drm_vma_node_allow - Add खोलो-file to list of allowed users
- * @node: Node to modअगरy
- * @tag: Tag of file to हटाओ
+ * drm_vma_node_allow - Add open-file to list of allowed users
+ * @node: Node to modify
+ * @tag: Tag of file to remove
  *
- * Add @tag to the list of allowed खोलो-files क्रम this node. If @tag is
- * alपढ़ोy on this list, the ref-count is incremented.
+ * Add @tag to the list of allowed open-files for this node. If @tag is
+ * already on this list, the ref-count is incremented.
  *
  * The list of allowed-users is preserved across drm_vma_offset_add() and
- * drm_vma_offset_हटाओ() calls. You may even call it अगर the node is currently
+ * drm_vma_offset_remove() calls. You may even call it if the node is currently
  * not added to any offset-manager.
  *
- * You must हटाओ all खोलो-files the same number of बार as you added them
- * beक्रमe destroying the node. Otherwise, you will leak memory.
+ * You must remove all open-files the same number of times as you added them
+ * before destroying the node. Otherwise, you will leak memory.
  *
- * This is locked against concurrent access पूर्णांकernally.
+ * This is locked against concurrent access internally.
  *
  * RETURNS:
- * 0 on success, negative error code on पूर्णांकernal failure (out-of-mem)
+ * 0 on success, negative error code on internal failure (out-of-mem)
  */
-पूर्णांक drm_vma_node_allow(काष्ठा drm_vma_offset_node *node, काष्ठा drm_file *tag)
-अणु
-	काष्ठा rb_node **iter;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा drm_vma_offset_file *new, *entry;
-	पूर्णांक ret = 0;
+int drm_vma_node_allow(struct drm_vma_offset_node *node, struct drm_file *tag)
+{
+	struct rb_node **iter;
+	struct rb_node *parent = NULL;
+	struct drm_vma_offset_file *new, *entry;
+	int ret = 0;
 
-	/* Pपुनः_स्मृतिate entry to aव्योम atomic allocations below. It is quite
-	 * unlikely that an खोलो-file is added twice to a single node so we
-	 * करोn't optimize क्रम this हाल. OOM is checked below only अगर the entry
+	/* Preallocate entry to avoid atomic allocations below. It is quite
+	 * unlikely that an open-file is added twice to a single node so we
+	 * don't optimize for this case. OOM is checked below only if the entry
 	 * is actually used. */
-	new = kदो_स्मृति(माप(*entry), GFP_KERNEL);
+	new = kmalloc(sizeof(*entry), GFP_KERNEL);
 
-	ग_लिखो_lock(&node->vm_lock);
+	write_lock(&node->vm_lock);
 
 	iter = &node->vm_files.rb_node;
 
-	जबतक (likely(*iter)) अणु
+	while (likely(*iter)) {
 		parent = *iter;
-		entry = rb_entry(*iter, काष्ठा drm_vma_offset_file, vm_rb);
+		entry = rb_entry(*iter, struct drm_vma_offset_file, vm_rb);
 
-		अगर (tag == entry->vm_tag) अणु
+		if (tag == entry->vm_tag) {
 			entry->vm_count++;
-			जाओ unlock;
-		पूर्ण अन्यथा अगर (tag > entry->vm_tag) अणु
+			goto unlock;
+		} else if (tag > entry->vm_tag) {
 			iter = &(*iter)->rb_right;
-		पूर्ण अन्यथा अणु
+		} else {
 			iter = &(*iter)->rb_left;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!new) अणु
+	if (!new) {
 		ret = -ENOMEM;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	new->vm_tag = tag;
 	new->vm_count = 1;
 	rb_link_node(&new->vm_rb, parent, iter);
 	rb_insert_color(&new->vm_rb, &node->vm_files);
-	new = शून्य;
+	new = NULL;
 
 unlock:
-	ग_लिखो_unlock(&node->vm_lock);
-	kमुक्त(new);
-	वापस ret;
-पूर्ण
+	write_unlock(&node->vm_lock);
+	kfree(new);
+	return ret;
+}
 EXPORT_SYMBOL(drm_vma_node_allow);
 
 /**
- * drm_vma_node_revoke - Remove खोलो-file from list of allowed users
- * @node: Node to modअगरy
- * @tag: Tag of file to हटाओ
+ * drm_vma_node_revoke - Remove open-file from list of allowed users
+ * @node: Node to modify
+ * @tag: Tag of file to remove
  *
- * Decrement the ref-count of @tag in the list of allowed खोलो-files on @node.
- * If the ref-count drops to zero, हटाओ @tag from the list. You must call
- * this once क्रम every drm_vma_node_allow() on @tag.
+ * Decrement the ref-count of @tag in the list of allowed open-files on @node.
+ * If the ref-count drops to zero, remove @tag from the list. You must call
+ * this once for every drm_vma_node_allow() on @tag.
  *
- * This is locked against concurrent access पूर्णांकernally.
+ * This is locked against concurrent access internally.
  *
- * If @tag is not on the list, nothing is करोne.
+ * If @tag is not on the list, nothing is done.
  */
-व्योम drm_vma_node_revoke(काष्ठा drm_vma_offset_node *node,
-			 काष्ठा drm_file *tag)
-अणु
-	काष्ठा drm_vma_offset_file *entry;
-	काष्ठा rb_node *iter;
+void drm_vma_node_revoke(struct drm_vma_offset_node *node,
+			 struct drm_file *tag)
+{
+	struct drm_vma_offset_file *entry;
+	struct rb_node *iter;
 
-	ग_लिखो_lock(&node->vm_lock);
+	write_lock(&node->vm_lock);
 
 	iter = node->vm_files.rb_node;
-	जबतक (likely(iter)) अणु
-		entry = rb_entry(iter, काष्ठा drm_vma_offset_file, vm_rb);
-		अगर (tag == entry->vm_tag) अणु
-			अगर (!--entry->vm_count) अणु
+	while (likely(iter)) {
+		entry = rb_entry(iter, struct drm_vma_offset_file, vm_rb);
+		if (tag == entry->vm_tag) {
+			if (!--entry->vm_count) {
 				rb_erase(&entry->vm_rb, &node->vm_files);
-				kमुक्त(entry);
-			पूर्ण
-			अवरोध;
-		पूर्ण अन्यथा अगर (tag > entry->vm_tag) अणु
+				kfree(entry);
+			}
+			break;
+		} else if (tag > entry->vm_tag) {
 			iter = iter->rb_right;
-		पूर्ण अन्यथा अणु
+		} else {
 			iter = iter->rb_left;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	ग_लिखो_unlock(&node->vm_lock);
-पूर्ण
+	write_unlock(&node->vm_lock);
+}
 EXPORT_SYMBOL(drm_vma_node_revoke);
 
 /**
- * drm_vma_node_is_allowed - Check whether an खोलो-file is granted access
+ * drm_vma_node_is_allowed - Check whether an open-file is granted access
  * @node: Node to check
- * @tag: Tag of file to हटाओ
+ * @tag: Tag of file to remove
  *
  * Search the list in @node whether @tag is currently on the list of allowed
- * खोलो-files (see drm_vma_node_allow()).
+ * open-files (see drm_vma_node_allow()).
  *
- * This is locked against concurrent access पूर्णांकernally.
+ * This is locked against concurrent access internally.
  *
  * RETURNS:
- * true अगरf @filp is on the list
+ * true iff @filp is on the list
  */
-bool drm_vma_node_is_allowed(काष्ठा drm_vma_offset_node *node,
-			     काष्ठा drm_file *tag)
-अणु
-	काष्ठा drm_vma_offset_file *entry;
-	काष्ठा rb_node *iter;
+bool drm_vma_node_is_allowed(struct drm_vma_offset_node *node,
+			     struct drm_file *tag)
+{
+	struct drm_vma_offset_file *entry;
+	struct rb_node *iter;
 
-	पढ़ो_lock(&node->vm_lock);
+	read_lock(&node->vm_lock);
 
 	iter = node->vm_files.rb_node;
-	जबतक (likely(iter)) अणु
-		entry = rb_entry(iter, काष्ठा drm_vma_offset_file, vm_rb);
-		अगर (tag == entry->vm_tag)
-			अवरोध;
-		अन्यथा अगर (tag > entry->vm_tag)
+	while (likely(iter)) {
+		entry = rb_entry(iter, struct drm_vma_offset_file, vm_rb);
+		if (tag == entry->vm_tag)
+			break;
+		else if (tag > entry->vm_tag)
 			iter = iter->rb_right;
-		अन्यथा
+		else
 			iter = iter->rb_left;
-	पूर्ण
+	}
 
-	पढ़ो_unlock(&node->vm_lock);
+	read_unlock(&node->vm_lock);
 
-	वापस iter;
-पूर्ण
+	return iter;
+}
 EXPORT_SYMBOL(drm_vma_node_is_allowed);

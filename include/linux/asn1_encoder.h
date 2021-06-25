@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 
-#अगर_अघोषित _LINUX_ASN1_ENCODER_H
-#घोषणा _LINUX_ASN1_ENCODER_H
+#ifndef _LINUX_ASN1_ENCODER_H
+#define _LINUX_ASN1_ENCODER_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/asn1.h>
-#समावेश <linux/asn1_ber_bytecode.h>
-#समावेश <linux/bug.h>
+#include <linux/types.h>
+#include <linux/asn1.h>
+#include <linux/asn1_ber_bytecode.h>
+#include <linux/bug.h>
 
-#घोषणा asn1_oid_len(oid) (माप(oid)/माप(u32))
-अचिन्हित अक्षर *
-asn1_encode_पूर्णांकeger(अचिन्हित अक्षर *data, स्थिर अचिन्हित अक्षर *end_data,
-		    s64 पूर्णांकeger);
-अचिन्हित अक्षर *
-asn1_encode_oid(अचिन्हित अक्षर *data, स्थिर अचिन्हित अक्षर *end_data,
-		u32 oid[], पूर्णांक oid_len);
-अचिन्हित अक्षर *
-asn1_encode_tag(अचिन्हित अक्षर *data, स्थिर अचिन्हित अक्षर *end_data,
-		u32 tag, स्थिर अचिन्हित अक्षर *string, पूर्णांक len);
-अचिन्हित अक्षर *
-asn1_encode_octet_string(अचिन्हित अक्षर *data,
-			 स्थिर अचिन्हित अक्षर *end_data,
-			 स्थिर अचिन्हित अक्षर *string, u32 len);
-अचिन्हित अक्षर *
-asn1_encode_sequence(अचिन्हित अक्षर *data, स्थिर अचिन्हित अक्षर *end_data,
-		     स्थिर अचिन्हित अक्षर *seq, पूर्णांक len);
-अचिन्हित अक्षर *
-asn1_encode_boolean(अचिन्हित अक्षर *data, स्थिर अचिन्हित अक्षर *end_data,
+#define asn1_oid_len(oid) (sizeof(oid)/sizeof(u32))
+unsigned char *
+asn1_encode_integer(unsigned char *data, const unsigned char *end_data,
+		    s64 integer);
+unsigned char *
+asn1_encode_oid(unsigned char *data, const unsigned char *end_data,
+		u32 oid[], int oid_len);
+unsigned char *
+asn1_encode_tag(unsigned char *data, const unsigned char *end_data,
+		u32 tag, const unsigned char *string, int len);
+unsigned char *
+asn1_encode_octet_string(unsigned char *data,
+			 const unsigned char *end_data,
+			 const unsigned char *string, u32 len);
+unsigned char *
+asn1_encode_sequence(unsigned char *data, const unsigned char *end_data,
+		     const unsigned char *seq, int len);
+unsigned char *
+asn1_encode_boolean(unsigned char *data, const unsigned char *end_data,
 		    bool val);
 
-#पूर्ण_अगर
+#endif

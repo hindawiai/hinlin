@@ -1,480 +1,479 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2006 Ben Dooks
  * Copyright 2006-2009 Simtec Electronics
  *	Ben Dooks <ben@simtec.co.uk>
 */
 
-#समावेश <linux/spinlock.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/err.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/interrupt.h>
+#include <linux/delay.h>
+#include <linux/errno.h>
+#include <linux/err.h>
+#include <linux/clk.h>
+#include <linux/platform_device.h>
+#include <linux/gpio.h>
+#include <linux/io.h>
+#include <linux/slab.h>
 
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/spi/spi_bitbang.h>
-#समावेश <linux/spi/s3c24xx.h>
-#समावेश <linux/spi/s3c24xx-fiq.h>
-#समावेश <linux/module.h>
+#include <linux/spi/spi.h>
+#include <linux/spi/spi_bitbang.h>
+#include <linux/spi/s3c24xx.h>
+#include <linux/spi/s3c24xx-fiq.h>
+#include <linux/module.h>
 
-#समावेश <यंत्र/fiq.h>
+#include <asm/fiq.h>
 
-#समावेश "spi-s3c24xx-regs.h"
+#include "spi-s3c24xx-regs.h"
 
 /**
- * काष्ठा s3c24xx_spi_devstate - per device data
- * @hz: Last frequency calculated क्रम @sppre field.
- * @mode: Last mode setting क्रम the @spcon field.
- * @spcon: Value to ग_लिखो to the SPCON रेजिस्टर.
- * @sppre: Value to ग_लिखो to the SPPRE रेजिस्टर.
+ * struct s3c24xx_spi_devstate - per device data
+ * @hz: Last frequency calculated for @sppre field.
+ * @mode: Last mode setting for the @spcon field.
+ * @spcon: Value to write to the SPCON register.
+ * @sppre: Value to write to the SPPRE register.
  */
-काष्ठा s3c24xx_spi_devstate अणु
-	अचिन्हित पूर्णांक	hz;
-	अचिन्हित पूर्णांक	mode;
+struct s3c24xx_spi_devstate {
+	unsigned int	hz;
+	unsigned int	mode;
 	u8		spcon;
 	u8		sppre;
-पूर्ण;
+};
 
-क्रमागत spi_fiq_mode अणु
+enum spi_fiq_mode {
 	FIQ_MODE_NONE	= 0,
 	FIQ_MODE_TX	= 1,
 	FIQ_MODE_RX	= 2,
 	FIQ_MODE_TXRX	= 3,
-पूर्ण;
+};
 
-काष्ठा s3c24xx_spi अणु
+struct s3c24xx_spi {
 	/* bitbang has to be first */
-	काष्ठा spi_bitbang	 bitbang;
-	काष्ठा completion	 करोne;
+	struct spi_bitbang	 bitbang;
+	struct completion	 done;
 
-	व्योम __iomem		*regs;
-	पूर्णांक			 irq;
-	पूर्णांक			 len;
-	पूर्णांक			 count;
+	void __iomem		*regs;
+	int			 irq;
+	int			 len;
+	int			 count;
 
-	काष्ठा fiq_handler	 fiq_handler;
-	क्रमागत spi_fiq_mode	 fiq_mode;
-	अचिन्हित अक्षर		 fiq_inuse;
-	अचिन्हित अक्षर		 fiq_claimed;
+	struct fiq_handler	 fiq_handler;
+	enum spi_fiq_mode	 fiq_mode;
+	unsigned char		 fiq_inuse;
+	unsigned char		 fiq_claimed;
 
-	व्योम			(*set_cs)(काष्ठा s3c2410_spi_info *spi,
-					  पूर्णांक cs, पूर्णांक pol);
+	void			(*set_cs)(struct s3c2410_spi_info *spi,
+					  int cs, int pol);
 
 	/* data buffers */
-	स्थिर अचिन्हित अक्षर	*tx;
-	अचिन्हित अक्षर		*rx;
+	const unsigned char	*tx;
+	unsigned char		*rx;
 
-	काष्ठा clk		*clk;
-	काष्ठा spi_master	*master;
-	काष्ठा spi_device	*curdev;
-	काष्ठा device		*dev;
-	काष्ठा s3c2410_spi_info *pdata;
-पूर्ण;
+	struct clk		*clk;
+	struct spi_master	*master;
+	struct spi_device	*curdev;
+	struct device		*dev;
+	struct s3c2410_spi_info *pdata;
+};
 
-#घोषणा SPCON_DEFAULT (S3C2410_SPCON_MSTR | S3C2410_SPCON_SMOD_INT)
-#घोषणा SPPIN_DEFAULT (S3C2410_SPPIN_KEEP)
+#define SPCON_DEFAULT (S3C2410_SPCON_MSTR | S3C2410_SPCON_SMOD_INT)
+#define SPPIN_DEFAULT (S3C2410_SPPIN_KEEP)
 
-अटल अंतरभूत काष्ठा s3c24xx_spi *to_hw(काष्ठा spi_device *sdev)
-अणु
-	वापस spi_master_get_devdata(sdev->master);
-पूर्ण
+static inline struct s3c24xx_spi *to_hw(struct spi_device *sdev)
+{
+	return spi_master_get_devdata(sdev->master);
+}
 
-अटल व्योम s3c24xx_spi_gpiocs(काष्ठा s3c2410_spi_info *spi, पूर्णांक cs, पूर्णांक pol)
-अणु
+static void s3c24xx_spi_gpiocs(struct s3c2410_spi_info *spi, int cs, int pol)
+{
 	gpio_set_value(spi->pin_cs, pol);
-पूर्ण
+}
 
-अटल व्योम s3c24xx_spi_chipsel(काष्ठा spi_device *spi, पूर्णांक value)
-अणु
-	काष्ठा s3c24xx_spi_devstate *cs = spi->controller_state;
-	काष्ठा s3c24xx_spi *hw = to_hw(spi);
-	अचिन्हित पूर्णांक cspol = spi->mode & SPI_CS_HIGH ? 1 : 0;
+static void s3c24xx_spi_chipsel(struct spi_device *spi, int value)
+{
+	struct s3c24xx_spi_devstate *cs = spi->controller_state;
+	struct s3c24xx_spi *hw = to_hw(spi);
+	unsigned int cspol = spi->mode & SPI_CS_HIGH ? 1 : 0;
 
-	/* change the chipselect state and the state of the spi engine घड़ी */
+	/* change the chipselect state and the state of the spi engine clock */
 
-	चयन (value) अणु
-	हाल BITBANG_CS_INACTIVE:
+	switch (value) {
+	case BITBANG_CS_INACTIVE:
 		hw->set_cs(hw->pdata, spi->chip_select, cspol^1);
-		ग_लिखोb(cs->spcon, hw->regs + S3C2410_SPCON);
-		अवरोध;
+		writeb(cs->spcon, hw->regs + S3C2410_SPCON);
+		break;
 
-	हाल BITBANG_CS_ACTIVE:
-		ग_लिखोb(cs->spcon | S3C2410_SPCON_ENSCK,
+	case BITBANG_CS_ACTIVE:
+		writeb(cs->spcon | S3C2410_SPCON_ENSCK,
 		       hw->regs + S3C2410_SPCON);
 		hw->set_cs(hw->pdata, spi->chip_select, cspol);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक s3c24xx_spi_update_state(काष्ठा spi_device *spi,
-				    काष्ठा spi_transfer *t)
-अणु
-	काष्ठा s3c24xx_spi *hw = to_hw(spi);
-	काष्ठा s3c24xx_spi_devstate *cs = spi->controller_state;
-	अचिन्हित पूर्णांक hz;
-	अचिन्हित पूर्णांक भाग;
-	अचिन्हित दीर्घ clk;
+static int s3c24xx_spi_update_state(struct spi_device *spi,
+				    struct spi_transfer *t)
+{
+	struct s3c24xx_spi *hw = to_hw(spi);
+	struct s3c24xx_spi_devstate *cs = spi->controller_state;
+	unsigned int hz;
+	unsigned int div;
+	unsigned long clk;
 
 	hz  = t ? t->speed_hz : spi->max_speed_hz;
 
-	अगर (!hz)
+	if (!hz)
 		hz = spi->max_speed_hz;
 
-	अगर (spi->mode != cs->mode) अणु
+	if (spi->mode != cs->mode) {
 		u8 spcon = SPCON_DEFAULT | S3C2410_SPCON_ENSCK;
 
-		अगर (spi->mode & SPI_CPHA)
+		if (spi->mode & SPI_CPHA)
 			spcon |= S3C2410_SPCON_CPHA_FMTB;
 
-		अगर (spi->mode & SPI_CPOL)
+		if (spi->mode & SPI_CPOL)
 			spcon |= S3C2410_SPCON_CPOL_HIGH;
 
 		cs->mode = spi->mode;
 		cs->spcon = spcon;
-	पूर्ण
+	}
 
-	अगर (cs->hz != hz) अणु
+	if (cs->hz != hz) {
 		clk = clk_get_rate(hw->clk);
-		भाग = DIV_ROUND_UP(clk, hz * 2) - 1;
+		div = DIV_ROUND_UP(clk, hz * 2) - 1;
 
-		अगर (भाग > 255)
-			भाग = 255;
+		if (div > 255)
+			div = 255;
 
 		dev_dbg(&spi->dev, "pre-scaler=%d (wanted %d, got %ld)\n",
-			भाग, hz, clk / (2 * (भाग + 1)));
+			div, hz, clk / (2 * (div + 1)));
 
 		cs->hz = hz;
-		cs->sppre = भाग;
-	पूर्ण
+		cs->sppre = div;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s3c24xx_spi_setupxfer(काष्ठा spi_device *spi,
-				 काष्ठा spi_transfer *t)
-अणु
-	काष्ठा s3c24xx_spi_devstate *cs = spi->controller_state;
-	काष्ठा s3c24xx_spi *hw = to_hw(spi);
-	पूर्णांक ret;
+static int s3c24xx_spi_setupxfer(struct spi_device *spi,
+				 struct spi_transfer *t)
+{
+	struct s3c24xx_spi_devstate *cs = spi->controller_state;
+	struct s3c24xx_spi *hw = to_hw(spi);
+	int ret;
 
 	ret = s3c24xx_spi_update_state(spi, t);
-	अगर (!ret)
-		ग_लिखोb(cs->sppre, hw->regs + S3C2410_SPPRE);
+	if (!ret)
+		writeb(cs->sppre, hw->regs + S3C2410_SPPRE);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक s3c24xx_spi_setup(काष्ठा spi_device *spi)
-अणु
-	काष्ठा s3c24xx_spi_devstate *cs = spi->controller_state;
-	काष्ठा s3c24xx_spi *hw = to_hw(spi);
-	पूर्णांक ret;
+static int s3c24xx_spi_setup(struct spi_device *spi)
+{
+	struct s3c24xx_spi_devstate *cs = spi->controller_state;
+	struct s3c24xx_spi *hw = to_hw(spi);
+	int ret;
 
 	/* allocate settings on the first call */
-	अगर (!cs) अणु
+	if (!cs) {
 		cs = devm_kzalloc(&spi->dev,
-				  माप(काष्ठा s3c24xx_spi_devstate),
+				  sizeof(struct s3c24xx_spi_devstate),
 				  GFP_KERNEL);
-		अगर (!cs)
-			वापस -ENOMEM;
+		if (!cs)
+			return -ENOMEM;
 
 		cs->spcon = SPCON_DEFAULT;
 		cs->hz = -1;
 		spi->controller_state = cs;
-	पूर्ण
+	}
 
 	/* initialise the state from the device */
-	ret = s3c24xx_spi_update_state(spi, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = s3c24xx_spi_update_state(spi, NULL);
+	if (ret)
+		return ret;
 
 	mutex_lock(&hw->bitbang.lock);
-	अगर (!hw->bitbang.busy) अणु
+	if (!hw->bitbang.busy) {
 		hw->bitbang.chipselect(spi, BITBANG_CS_INACTIVE);
-		/* need to ndelay क्रम 0.5 घड़ीtick ? */
-	पूर्ण
+		/* need to ndelay for 0.5 clocktick ? */
+	}
 	mutex_unlock(&hw->bitbang.lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक hw_txbyte(काष्ठा s3c24xx_spi *hw, पूर्णांक count)
-अणु
-	वापस hw->tx ? hw->tx[count] : 0;
-पूर्ण
+static inline unsigned int hw_txbyte(struct s3c24xx_spi *hw, int count)
+{
+	return hw->tx ? hw->tx[count] : 0;
+}
 
-#अगर_घोषित CONFIG_SPI_S3C24XX_FIQ
-/* Support क्रम FIQ based pseuकरो-DMA to improve the transfer speed.
+#ifdef CONFIG_SPI_S3C24XX_FIQ
+/* Support for FIQ based pseudo-DMA to improve the transfer speed.
  *
  * This code uses the assembly helper in spi_s3c24xx_spi.S which is
- * used by the FIQ core to move data between मुख्य memory and the peripheral
+ * used by the FIQ core to move data between main memory and the peripheral
  * block. Since this is code running on the processor, there is no problem
  * with cache coherency of the buffers, so we can use any buffer we like.
  */
 
 /**
- * काष्ठा spi_fiq_code - FIQ code and header
+ * struct spi_fiq_code - FIQ code and header
  * @length: The length of the code fragment, excluding this header.
  * @ack_offset: The offset from @data to the word to place the IRQ ACK bit at.
  * @data: The code itself to install as a FIQ handler.
  */
-काष्ठा spi_fiq_code अणु
+struct spi_fiq_code {
 	u32	length;
 	u32	ack_offset;
 	u8	data[];
-पूर्ण;
+};
 
 /**
- * s3c24xx_spi_tryfiq - attempt to claim and setup FIQ क्रम transfer
+ * s3c24xx_spi_tryfiq - attempt to claim and setup FIQ for transfer
  * @hw: The hardware state.
  *
- * Claim the FIQ handler (only one can be active at any one समय) and
- * then setup the correct transfer code क्रम this transfer.
+ * Claim the FIQ handler (only one can be active at any one time) and
+ * then setup the correct transfer code for this transfer.
  *
- * This call updates all the necessary state inक्रमmation अगर successful,
- * so the caller करोes not need to करो anything more than start the transfer
+ * This call updates all the necessary state information if successful,
+ * so the caller does not need to do anything more than start the transfer
  * as normal, since the IRQ will have been re-routed to the FIQ handler.
 */
-अटल व्योम s3c24xx_spi_tryfiq(काष्ठा s3c24xx_spi *hw)
-अणु
-	काष्ठा pt_regs regs;
-	क्रमागत spi_fiq_mode mode;
-	काष्ठा spi_fiq_code *code;
-	u32 *ack_ptr = शून्य;
-	पूर्णांक ret;
+static void s3c24xx_spi_tryfiq(struct s3c24xx_spi *hw)
+{
+	struct pt_regs regs;
+	enum spi_fiq_mode mode;
+	struct spi_fiq_code *code;
+	u32 *ack_ptr = NULL;
+	int ret;
 
-	अगर (!hw->fiq_claimed) अणु
-		/* try and claim fiq अगर we haven't got it, and अगर not
-		 * then वापस and simply use another transfer method */
+	if (!hw->fiq_claimed) {
+		/* try and claim fiq if we haven't got it, and if not
+		 * then return and simply use another transfer method */
 
 		ret = claim_fiq(&hw->fiq_handler);
-		अगर (ret)
-			वापस;
-	पूर्ण
+		if (ret)
+			return;
+	}
 
-	अगर (hw->tx && !hw->rx)
+	if (hw->tx && !hw->rx)
 		mode = FIQ_MODE_TX;
-	अन्यथा अगर (hw->rx && !hw->tx)
+	else if (hw->rx && !hw->tx)
 		mode = FIQ_MODE_RX;
-	अन्यथा
+	else
 		mode = FIQ_MODE_TXRX;
 
-	regs.uregs[fiq_rspi] = (दीर्घ)hw->regs;
-	regs.uregs[fiq_rrx]  = (दीर्घ)hw->rx;
-	regs.uregs[fiq_rtx]  = (दीर्घ)hw->tx + 1;
+	regs.uregs[fiq_rspi] = (long)hw->regs;
+	regs.uregs[fiq_rrx]  = (long)hw->rx;
+	regs.uregs[fiq_rtx]  = (long)hw->tx + 1;
 	regs.uregs[fiq_rcount] = hw->len - 1;
 
 	set_fiq_regs(&regs);
 
-	अगर (hw->fiq_mode != mode) अणु
+	if (hw->fiq_mode != mode) {
 		hw->fiq_mode = mode;
 
-		चयन (mode) अणु
-		हाल FIQ_MODE_TX:
+		switch (mode) {
+		case FIQ_MODE_TX:
 			code = &s3c24xx_spi_fiq_tx;
-			अवरोध;
-		हाल FIQ_MODE_RX:
+			break;
+		case FIQ_MODE_RX:
 			code = &s3c24xx_spi_fiq_rx;
-			अवरोध;
-		हाल FIQ_MODE_TXRX:
+			break;
+		case FIQ_MODE_TXRX:
 			code = &s3c24xx_spi_fiq_txrx;
-			अवरोध;
-		शेष:
-			code = शून्य;
-		पूर्ण
+			break;
+		default:
+			code = NULL;
+		}
 
 		BUG_ON(!code);
 
 		ack_ptr = (u32 *)&code->data[code->ack_offset];
 		set_fiq_handler(&code->data, code->length);
-	पूर्ण
+	}
 
 	s3c24xx_set_fiq(hw->irq, ack_ptr, true);
 
 	hw->fiq_mode = mode;
 	hw->fiq_inuse = 1;
-पूर्ण
+}
 
 /**
  * s3c24xx_spi_fiqop - FIQ core code callback
- * @pw: Data रेजिस्टरed with the handler
- * @release: Whether this is a release or a वापस.
+ * @pw: Data registered with the handler
+ * @release: Whether this is a release or a return.
  *
  * Called by the FIQ code when another module wants to use the FIQ, so
- * वापस whether we are currently using this or not and then update our
- * पूर्णांकernal state.
+ * return whether we are currently using this or not and then update our
+ * internal state.
  */
-अटल पूर्णांक s3c24xx_spi_fiqop(व्योम *pw, पूर्णांक release)
-अणु
-	काष्ठा s3c24xx_spi *hw = pw;
-	पूर्णांक ret = 0;
+static int s3c24xx_spi_fiqop(void *pw, int release)
+{
+	struct s3c24xx_spi *hw = pw;
+	int ret = 0;
 
-	अगर (release) अणु
-		अगर (hw->fiq_inuse)
+	if (release) {
+		if (hw->fiq_inuse)
 			ret = -EBUSY;
 
-		/* note, we करो not need to unroute the FIQ, as the FIQ
-		 * vector code de-routes it to संकेत the end of transfer */
+		/* note, we do not need to unroute the FIQ, as the FIQ
+		 * vector code de-routes it to signal the end of transfer */
 
 		hw->fiq_mode = FIQ_MODE_NONE;
 		hw->fiq_claimed = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		hw->fiq_claimed = 1;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * s3c24xx_spi_initfiq - setup the inक्रमmation क्रम the FIQ core
+ * s3c24xx_spi_initfiq - setup the information for the FIQ core
  * @hw: The hardware state.
  *
  * Setup the fiq_handler block to pass to the FIQ core.
  */
-अटल अंतरभूत व्योम s3c24xx_spi_initfiq(काष्ठा s3c24xx_spi *hw)
-अणु
+static inline void s3c24xx_spi_initfiq(struct s3c24xx_spi *hw)
+{
 	hw->fiq_handler.dev_id = hw;
 	hw->fiq_handler.name = dev_name(hw->dev);
 	hw->fiq_handler.fiq_op = s3c24xx_spi_fiqop;
-पूर्ण
+}
 
 /**
- * s3c24xx_spi_usefiq - वापस अगर we should be using FIQ.
+ * s3c24xx_spi_usefiq - return if we should be using FIQ.
  * @hw: The hardware state.
  *
- * Return true अगर the platक्रमm data specअगरies whether this channel is
+ * Return true if the platform data specifies whether this channel is
  * allowed to use the FIQ.
  */
-अटल अंतरभूत bool s3c24xx_spi_usefiq(काष्ठा s3c24xx_spi *hw)
-अणु
-	वापस hw->pdata->use_fiq;
-पूर्ण
+static inline bool s3c24xx_spi_usefiq(struct s3c24xx_spi *hw)
+{
+	return hw->pdata->use_fiq;
+}
 
 /**
- * s3c24xx_spi_usingfiq - वापस अगर channel is using FIQ
+ * s3c24xx_spi_usingfiq - return if channel is using FIQ
  * @spi: The hardware state.
  *
  * Return whether the channel is currently using the FIQ (separate from
  * whether the FIQ is claimed).
  */
-अटल अंतरभूत bool s3c24xx_spi_usingfiq(काष्ठा s3c24xx_spi *spi)
-अणु
-	वापस spi->fiq_inuse;
-पूर्ण
-#अन्यथा
+static inline bool s3c24xx_spi_usingfiq(struct s3c24xx_spi *spi)
+{
+	return spi->fiq_inuse;
+}
+#else
 
-अटल अंतरभूत व्योम s3c24xx_spi_initfiq(काष्ठा s3c24xx_spi *s) अणु पूर्ण
-अटल अंतरभूत व्योम s3c24xx_spi_tryfiq(काष्ठा s3c24xx_spi *s) अणु पूर्ण
-अटल अंतरभूत bool s3c24xx_spi_usefiq(काष्ठा s3c24xx_spi *s) अणु वापस false; पूर्ण
-अटल अंतरभूत bool s3c24xx_spi_usingfiq(काष्ठा s3c24xx_spi *s) अणु वापस false; पूर्ण
+static inline void s3c24xx_spi_initfiq(struct s3c24xx_spi *s) { }
+static inline void s3c24xx_spi_tryfiq(struct s3c24xx_spi *s) { }
+static inline bool s3c24xx_spi_usefiq(struct s3c24xx_spi *s) { return false; }
+static inline bool s3c24xx_spi_usingfiq(struct s3c24xx_spi *s) { return false; }
 
-#पूर्ण_अगर /* CONFIG_SPI_S3C24XX_FIQ */
+#endif /* CONFIG_SPI_S3C24XX_FIQ */
 
-अटल पूर्णांक s3c24xx_spi_txrx(काष्ठा spi_device *spi, काष्ठा spi_transfer *t)
-अणु
-	काष्ठा s3c24xx_spi *hw = to_hw(spi);
+static int s3c24xx_spi_txrx(struct spi_device *spi, struct spi_transfer *t)
+{
+	struct s3c24xx_spi *hw = to_hw(spi);
 
 	hw->tx = t->tx_buf;
 	hw->rx = t->rx_buf;
 	hw->len = t->len;
 	hw->count = 0;
 
-	init_completion(&hw->करोne);
+	init_completion(&hw->done);
 
 	hw->fiq_inuse = 0;
-	अगर (s3c24xx_spi_usefiq(hw) && t->len >= 3)
+	if (s3c24xx_spi_usefiq(hw) && t->len >= 3)
 		s3c24xx_spi_tryfiq(hw);
 
 	/* send the first byte */
-	ग_लिखोb(hw_txbyte(hw, 0), hw->regs + S3C2410_SPTDAT);
+	writeb(hw_txbyte(hw, 0), hw->regs + S3C2410_SPTDAT);
 
-	रुको_क्रम_completion(&hw->करोne);
-	वापस hw->count;
-पूर्ण
+	wait_for_completion(&hw->done);
+	return hw->count;
+}
 
-अटल irqवापस_t s3c24xx_spi_irq(पूर्णांक irq, व्योम *dev)
-अणु
-	काष्ठा s3c24xx_spi *hw = dev;
-	अचिन्हित पूर्णांक spsta = पढ़ोb(hw->regs + S3C2410_SPSTA);
-	अचिन्हित पूर्णांक count = hw->count;
+static irqreturn_t s3c24xx_spi_irq(int irq, void *dev)
+{
+	struct s3c24xx_spi *hw = dev;
+	unsigned int spsta = readb(hw->regs + S3C2410_SPSTA);
+	unsigned int count = hw->count;
 
-	अगर (spsta & S3C2410_SPSTA_DCOL) अणु
+	if (spsta & S3C2410_SPSTA_DCOL) {
 		dev_dbg(hw->dev, "data-collision\n");
-		complete(&hw->करोne);
-		जाओ irq_करोne;
-	पूर्ण
+		complete(&hw->done);
+		goto irq_done;
+	}
 
-	अगर (!(spsta & S3C2410_SPSTA_READY)) अणु
+	if (!(spsta & S3C2410_SPSTA_READY)) {
 		dev_dbg(hw->dev, "spi not ready for tx?\n");
-		complete(&hw->करोne);
-		जाओ irq_करोne;
-	पूर्ण
+		complete(&hw->done);
+		goto irq_done;
+	}
 
-	अगर (!s3c24xx_spi_usingfiq(hw)) अणु
+	if (!s3c24xx_spi_usingfiq(hw)) {
 		hw->count++;
 
-		अगर (hw->rx)
-			hw->rx[count] = पढ़ोb(hw->regs + S3C2410_SPRDAT);
+		if (hw->rx)
+			hw->rx[count] = readb(hw->regs + S3C2410_SPRDAT);
 
 		count++;
 
-		अगर (count < hw->len)
-			ग_लिखोb(hw_txbyte(hw, count), hw->regs + S3C2410_SPTDAT);
-		अन्यथा
-			complete(&hw->करोne);
-	पूर्ण अन्यथा अणु
+		if (count < hw->len)
+			writeb(hw_txbyte(hw, count), hw->regs + S3C2410_SPTDAT);
+		else
+			complete(&hw->done);
+	} else {
 		hw->count = hw->len;
 		hw->fiq_inuse = 0;
 
-		अगर (hw->rx)
-			hw->rx[hw->len-1] = पढ़ोb(hw->regs + S3C2410_SPRDAT);
+		if (hw->rx)
+			hw->rx[hw->len-1] = readb(hw->regs + S3C2410_SPRDAT);
 
-		complete(&hw->करोne);
-	पूर्ण
+		complete(&hw->done);
+	}
 
- irq_करोne:
-	वापस IRQ_HANDLED;
-पूर्ण
+ irq_done:
+	return IRQ_HANDLED;
+}
 
-अटल व्योम s3c24xx_spi_initialsetup(काष्ठा s3c24xx_spi *hw)
-अणु
-	/* क्रम the moment, permanently enable the घड़ी */
+static void s3c24xx_spi_initialsetup(struct s3c24xx_spi *hw)
+{
+	/* for the moment, permanently enable the clock */
 
 	clk_enable(hw->clk);
 
-	/* program शेषs पूर्णांकo the रेजिस्टरs */
+	/* program defaults into the registers */
 
-	ग_लिखोb(0xff, hw->regs + S3C2410_SPPRE);
-	ग_लिखोb(SPPIN_DEFAULT, hw->regs + S3C2410_SPPIN);
-	ग_लिखोb(SPCON_DEFAULT, hw->regs + S3C2410_SPCON);
+	writeb(0xff, hw->regs + S3C2410_SPPRE);
+	writeb(SPPIN_DEFAULT, hw->regs + S3C2410_SPPIN);
+	writeb(SPCON_DEFAULT, hw->regs + S3C2410_SPCON);
 
-	अगर (hw->pdata) अणु
-		अगर (hw->set_cs == s3c24xx_spi_gpiocs)
+	if (hw->pdata) {
+		if (hw->set_cs == s3c24xx_spi_gpiocs)
 			gpio_direction_output(hw->pdata->pin_cs, 1);
 
-		अगर (hw->pdata->gpio_setup)
+		if (hw->pdata->gpio_setup)
 			hw->pdata->gpio_setup(hw->pdata, 1);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक s3c24xx_spi_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा s3c2410_spi_info *pdata;
-	काष्ठा s3c24xx_spi *hw;
-	काष्ठा spi_master *master;
-	पूर्णांक err = 0;
+static int s3c24xx_spi_probe(struct platform_device *pdev)
+{
+	struct s3c2410_spi_info *pdata;
+	struct s3c24xx_spi *hw;
+	struct spi_master *master;
+	int err = 0;
 
-	master = spi_alloc_master(&pdev->dev, माप(काष्ठा s3c24xx_spi));
-	अगर (master == शून्य) अणु
+	master = spi_alloc_master(&pdev->dev, sizeof(struct s3c24xx_spi));
+	if (master == NULL) {
 		dev_err(&pdev->dev, "No memory for spi_master\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	hw = spi_master_get_devdata(master);
 
@@ -482,14 +481,14 @@
 	hw->pdata = pdata = dev_get_platdata(&pdev->dev);
 	hw->dev = &pdev->dev;
 
-	अगर (pdata == शून्य) अणु
+	if (pdata == NULL) {
 		dev_err(&pdev->dev, "No platform data supplied\n");
 		err = -ENOENT;
-		जाओ err_no_pdata;
-	पूर्ण
+		goto err_no_pdata;
+	}
 
-	platक्रमm_set_drvdata(pdev, hw);
-	init_completion(&hw->करोne);
+	platform_set_drvdata(pdev, hw);
+	init_completion(&hw->done);
 
 	/* initialise fiq handler */
 
@@ -504,7 +503,7 @@
 	master->bus_num = pdata->bus_num;
 	master->bits_per_word_mask = SPI_BPW_MASK(8);
 
-	/* setup the state क्रम the bitbang driver */
+	/* setup the state for the bitbang driver */
 
 	hw->bitbang.master         = hw->master;
 	hw->bitbang.setup_transfer = s3c24xx_spi_setupxfer;
@@ -516,130 +515,130 @@
 	dev_dbg(hw->dev, "bitbang at %p\n", &hw->bitbang);
 
 	/* find and map our resources */
-	hw->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(hw->regs)) अणु
+	hw->regs = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(hw->regs)) {
 		err = PTR_ERR(hw->regs);
-		जाओ err_no_pdata;
-	पूर्ण
+		goto err_no_pdata;
+	}
 
-	hw->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (hw->irq < 0) अणु
+	hw->irq = platform_get_irq(pdev, 0);
+	if (hw->irq < 0) {
 		err = -ENOENT;
-		जाओ err_no_pdata;
-	पूर्ण
+		goto err_no_pdata;
+	}
 
 	err = devm_request_irq(&pdev->dev, hw->irq, s3c24xx_spi_irq, 0,
 				pdev->name, hw);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "Cannot claim IRQ\n");
-		जाओ err_no_pdata;
-	पूर्ण
+		goto err_no_pdata;
+	}
 
 	hw->clk = devm_clk_get(&pdev->dev, "spi");
-	अगर (IS_ERR(hw->clk)) अणु
+	if (IS_ERR(hw->clk)) {
 		dev_err(&pdev->dev, "No clock for device\n");
 		err = PTR_ERR(hw->clk);
-		जाओ err_no_pdata;
-	पूर्ण
+		goto err_no_pdata;
+	}
 
 	/* setup any gpio we can */
 
-	अगर (!pdata->set_cs) अणु
-		अगर (pdata->pin_cs < 0) अणु
+	if (!pdata->set_cs) {
+		if (pdata->pin_cs < 0) {
 			dev_err(&pdev->dev, "No chipselect pin\n");
 			err = -EINVAL;
-			जाओ err_रेजिस्टर;
-		पूर्ण
+			goto err_register;
+		}
 
 		err = devm_gpio_request(&pdev->dev, pdata->pin_cs,
 					dev_name(&pdev->dev));
-		अगर (err) अणु
+		if (err) {
 			dev_err(&pdev->dev, "Failed to get gpio for cs\n");
-			जाओ err_रेजिस्टर;
-		पूर्ण
+			goto err_register;
+		}
 
 		hw->set_cs = s3c24xx_spi_gpiocs;
 		gpio_direction_output(pdata->pin_cs, 1);
-	पूर्ण अन्यथा
+	} else
 		hw->set_cs = pdata->set_cs;
 
 	s3c24xx_spi_initialsetup(hw);
 
-	/* रेजिस्टर our spi controller */
+	/* register our spi controller */
 
 	err = spi_bitbang_start(&hw->bitbang);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "Failed to register SPI master\n");
-		जाओ err_रेजिस्टर;
-	पूर्ण
+		goto err_register;
+	}
 
-	वापस 0;
+	return 0;
 
- err_रेजिस्टर:
+ err_register:
 	clk_disable(hw->clk);
 
  err_no_pdata:
 	spi_master_put(hw->master);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक s3c24xx_spi_हटाओ(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा s3c24xx_spi *hw = platक्रमm_get_drvdata(dev);
+static int s3c24xx_spi_remove(struct platform_device *dev)
+{
+	struct s3c24xx_spi *hw = platform_get_drvdata(dev);
 
 	spi_bitbang_stop(&hw->bitbang);
 	clk_disable(hw->clk);
 	spi_master_put(hw->master);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 
-अटल पूर्णांक s3c24xx_spi_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा s3c24xx_spi *hw = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int s3c24xx_spi_suspend(struct device *dev)
+{
+	struct s3c24xx_spi *hw = dev_get_drvdata(dev);
+	int ret;
 
 	ret = spi_master_suspend(hw->master);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (hw->pdata && hw->pdata->gpio_setup)
+	if (hw->pdata && hw->pdata->gpio_setup)
 		hw->pdata->gpio_setup(hw->pdata, 0);
 
 	clk_disable(hw->clk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s3c24xx_spi_resume(काष्ठा device *dev)
-अणु
-	काष्ठा s3c24xx_spi *hw = dev_get_drvdata(dev);
+static int s3c24xx_spi_resume(struct device *dev)
+{
+	struct s3c24xx_spi *hw = dev_get_drvdata(dev);
 
 	s3c24xx_spi_initialsetup(hw);
-	वापस spi_master_resume(hw->master);
-पूर्ण
+	return spi_master_resume(hw->master);
+}
 
-अटल स्थिर काष्ठा dev_pm_ops s3c24xx_spi_pmops = अणु
+static const struct dev_pm_ops s3c24xx_spi_pmops = {
 	.suspend	= s3c24xx_spi_suspend,
 	.resume		= s3c24xx_spi_resume,
-पूर्ण;
+};
 
-#घोषणा S3C24XX_SPI_PMOPS &s3c24xx_spi_pmops
-#अन्यथा
-#घोषणा S3C24XX_SPI_PMOPS शून्य
-#पूर्ण_अगर /* CONFIG_PM */
+#define S3C24XX_SPI_PMOPS &s3c24xx_spi_pmops
+#else
+#define S3C24XX_SPI_PMOPS NULL
+#endif /* CONFIG_PM */
 
 MODULE_ALIAS("platform:s3c2410-spi");
-अटल काष्ठा platक्रमm_driver s3c24xx_spi_driver = अणु
+static struct platform_driver s3c24xx_spi_driver = {
 	.probe		= s3c24xx_spi_probe,
-	.हटाओ		= s3c24xx_spi_हटाओ,
-	.driver		= अणु
+	.remove		= s3c24xx_spi_remove,
+	.driver		= {
 		.name	= "s3c2410-spi",
 		.pm	= S3C24XX_SPI_PMOPS,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(s3c24xx_spi_driver);
+	},
+};
+module_platform_driver(s3c24xx_spi_driver);
 
 MODULE_DESCRIPTION("S3C24XX SPI Driver");
 MODULE_AUTHOR("Ben Dooks, <ben@simtec.co.uk>");

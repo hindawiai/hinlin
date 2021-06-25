@@ -1,461 +1,460 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Atlantic Network Driver
  *
  * Copyright (C) 2014-2019 aQuantia Corporation
  * Copyright (C) 2019-2020 Marvell International Ltd.
  */
 
-/* File aq_मुख्य.c: Main file क्रम aQuantia Linux driver. */
+/* File aq_main.c: Main file for aQuantia Linux driver. */
 
-#समावेश "aq_main.h"
-#समावेश "aq_nic.h"
-#समावेश "aq_pci_func.h"
-#समावेश "aq_ethtool.h"
-#समावेश "aq_ptp.h"
-#समावेश "aq_filters.h"
-#समावेश "aq_hw_utils.h"
+#include "aq_main.h"
+#include "aq_nic.h"
+#include "aq_pci_func.h"
+#include "aq_ethtool.h"
+#include "aq_ptp.h"
+#include "aq_filters.h"
+#include "aq_hw_utils.h"
 
-#समावेश <linux/netdevice.h>
-#समावेश <linux/module.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/udp.h>
-#समावेश <net/pkt_cls.h>
+#include <linux/netdevice.h>
+#include <linux/module.h>
+#include <linux/ip.h>
+#include <linux/udp.h>
+#include <net/pkt_cls.h>
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR(AQ_CFG_DRV_AUTHOR);
 MODULE_DESCRIPTION(AQ_CFG_DRV_DESC);
 
-अटल स्थिर अक्षर aq_ndev_driver_name[] = AQ_CFG_DRV_NAME;
+static const char aq_ndev_driver_name[] = AQ_CFG_DRV_NAME;
 
-अटल स्थिर काष्ठा net_device_ops aq_ndev_ops;
+static const struct net_device_ops aq_ndev_ops;
 
-अटल काष्ठा workqueue_काष्ठा *aq_ndev_wq;
+static struct workqueue_struct *aq_ndev_wq;
 
-व्योम aq_ndev_schedule_work(काष्ठा work_काष्ठा *work)
-अणु
+void aq_ndev_schedule_work(struct work_struct *work)
+{
 	queue_work(aq_ndev_wq, work);
-पूर्ण
+}
 
-काष्ठा net_device *aq_ndev_alloc(व्योम)
-अणु
-	काष्ठा net_device *ndev = शून्य;
-	काष्ठा aq_nic_s *aq_nic = शून्य;
+struct net_device *aq_ndev_alloc(void)
+{
+	struct net_device *ndev = NULL;
+	struct aq_nic_s *aq_nic = NULL;
 
-	ndev = alloc_etherdev_mq(माप(काष्ठा aq_nic_s), AQ_HW_QUEUES_MAX);
-	अगर (!ndev)
-		वापस शून्य;
+	ndev = alloc_etherdev_mq(sizeof(struct aq_nic_s), AQ_HW_QUEUES_MAX);
+	if (!ndev)
+		return NULL;
 
 	aq_nic = netdev_priv(ndev);
 	aq_nic->ndev = ndev;
 	ndev->netdev_ops = &aq_ndev_ops;
 	ndev->ethtool_ops = &aq_ethtool_ops;
 
-	वापस ndev;
-पूर्ण
+	return ndev;
+}
 
-अटल पूर्णांक aq_ndev_खोलो(काष्ठा net_device *ndev)
-अणु
-	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
-	पूर्णांक err = 0;
+static int aq_ndev_open(struct net_device *ndev)
+{
+	struct aq_nic_s *aq_nic = netdev_priv(ndev);
+	int err = 0;
 
 	err = aq_nic_init(aq_nic);
-	अगर (err < 0)
-		जाओ err_निकास;
+	if (err < 0)
+		goto err_exit;
 
 	err = aq_reapply_rxnfc_all_rules(aq_nic);
-	अगर (err < 0)
-		जाओ err_निकास;
+	if (err < 0)
+		goto err_exit;
 
 	err = aq_filters_vlans_update(aq_nic);
-	अगर (err < 0)
-		जाओ err_निकास;
+	if (err < 0)
+		goto err_exit;
 
 	err = aq_nic_start(aq_nic);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		aq_nic_stop(aq_nic);
-		जाओ err_निकास;
-	पूर्ण
+		goto err_exit;
+	}
 
-err_निकास:
-	अगर (err < 0)
+err_exit:
+	if (err < 0)
 		aq_nic_deinit(aq_nic, true);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक aq_ndev_बंद(काष्ठा net_device *ndev)
-अणु
-	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
-	पूर्णांक err = 0;
+static int aq_ndev_close(struct net_device *ndev)
+{
+	struct aq_nic_s *aq_nic = netdev_priv(ndev);
+	int err = 0;
 
 	err = aq_nic_stop(aq_nic);
-	अगर (err < 0)
-		जाओ err_निकास;
+	if (err < 0)
+		goto err_exit;
 	aq_nic_deinit(aq_nic, true);
 
-err_निकास:
-	वापस err;
-पूर्ण
+err_exit:
+	return err;
+}
 
-अटल netdev_tx_t aq_ndev_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *ndev)
-अणु
-	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
+static netdev_tx_t aq_ndev_start_xmit(struct sk_buff *skb, struct net_device *ndev)
+{
+	struct aq_nic_s *aq_nic = netdev_priv(ndev);
 
-#अगर IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
-	अगर (unlikely(aq_utils_obj_test(&aq_nic->flags, AQ_NIC_PTP_DPATH_UP))) अणु
-		/* Hardware adds the Timestamp क्रम PTPv2 802.AS1
+#if IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
+	if (unlikely(aq_utils_obj_test(&aq_nic->flags, AQ_NIC_PTP_DPATH_UP))) {
+		/* Hardware adds the Timestamp for PTPv2 802.AS1
 		 * and PTPv2 IPv4 UDP.
 		 * We have to push even general 320 port messages to the ptp
 		 * queue explicitly. This is a limitation of current firmware
 		 * and hardware PTP design of the chip. Otherwise ptp stream
 		 * will fail to sync
 		 */
-		अगर (unlikely(skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP) ||
+		if (unlikely(skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP) ||
 		    unlikely((ip_hdr(skb)->version == 4) &&
 			     (ip_hdr(skb)->protocol == IPPROTO_UDP) &&
 			     ((udp_hdr(skb)->dest == htons(319)) ||
 			      (udp_hdr(skb)->dest == htons(320)))) ||
 		    unlikely(eth_hdr(skb)->h_proto == htons(ETH_P_1588)))
-			वापस aq_ptp_xmit(aq_nic, skb);
-	पूर्ण
-#पूर्ण_अगर
+			return aq_ptp_xmit(aq_nic, skb);
+	}
+#endif
 
-	skb_tx_बारtamp(skb);
-	वापस aq_nic_xmit(aq_nic, skb);
-पूर्ण
+	skb_tx_timestamp(skb);
+	return aq_nic_xmit(aq_nic, skb);
+}
 
-अटल पूर्णांक aq_ndev_change_mtu(काष्ठा net_device *ndev, पूर्णांक new_mtu)
-अणु
-	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
-	पूर्णांक err;
+static int aq_ndev_change_mtu(struct net_device *ndev, int new_mtu)
+{
+	struct aq_nic_s *aq_nic = netdev_priv(ndev);
+	int err;
 
 	err = aq_nic_set_mtu(aq_nic, new_mtu + ETH_HLEN);
 
-	अगर (err < 0)
-		जाओ err_निकास;
+	if (err < 0)
+		goto err_exit;
 	ndev->mtu = new_mtu;
 
-err_निकास:
-	वापस err;
-पूर्ण
+err_exit:
+	return err;
+}
 
-अटल पूर्णांक aq_ndev_set_features(काष्ठा net_device *ndev,
+static int aq_ndev_set_features(struct net_device *ndev,
 				netdev_features_t features)
-अणु
+{
 	bool is_vlan_tx_insert = !!(features & NETIF_F_HW_VLAN_CTAG_TX);
 	bool is_vlan_rx_strip = !!(features & NETIF_F_HW_VLAN_CTAG_RX);
-	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
+	struct aq_nic_s *aq_nic = netdev_priv(ndev);
 	bool need_ndev_restart = false;
-	काष्ठा aq_nic_cfg_s *aq_cfg;
+	struct aq_nic_cfg_s *aq_cfg;
 	bool is_lro = false;
-	पूर्णांक err = 0;
+	int err = 0;
 
 	aq_cfg = aq_nic_get_cfg(aq_nic);
 
-	अगर (!(features & NETIF_F_NTUPLE)) अणु
-		अगर (aq_nic->ndev->features & NETIF_F_NTUPLE) अणु
+	if (!(features & NETIF_F_NTUPLE)) {
+		if (aq_nic->ndev->features & NETIF_F_NTUPLE) {
 			err = aq_clear_rxnfc_all_rules(aq_nic);
-			अगर (unlikely(err))
-				जाओ err_निकास;
-		पूर्ण
-	पूर्ण
-	अगर (!(features & NETIF_F_HW_VLAN_CTAG_FILTER)) अणु
-		अगर (aq_nic->ndev->features & NETIF_F_HW_VLAN_CTAG_FILTER) अणु
+			if (unlikely(err))
+				goto err_exit;
+		}
+	}
+	if (!(features & NETIF_F_HW_VLAN_CTAG_FILTER)) {
+		if (aq_nic->ndev->features & NETIF_F_HW_VLAN_CTAG_FILTER) {
 			err = aq_filters_vlan_offload_off(aq_nic);
-			अगर (unlikely(err))
-				जाओ err_निकास;
-		पूर्ण
-	पूर्ण
+			if (unlikely(err))
+				goto err_exit;
+		}
+	}
 
 	aq_cfg->features = features;
 
-	अगर (aq_cfg->aq_hw_caps->hw_features & NETIF_F_LRO) अणु
+	if (aq_cfg->aq_hw_caps->hw_features & NETIF_F_LRO) {
 		is_lro = features & NETIF_F_LRO;
 
-		अगर (aq_cfg->is_lro != is_lro) अणु
+		if (aq_cfg->is_lro != is_lro) {
 			aq_cfg->is_lro = is_lro;
 			need_ndev_restart = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर ((aq_nic->ndev->features ^ features) & NETIF_F_RXCSUM) अणु
+	if ((aq_nic->ndev->features ^ features) & NETIF_F_RXCSUM) {
 		err = aq_nic->aq_hw_ops->hw_set_offload(aq_nic->aq_hw,
 							aq_cfg);
 
-		अगर (unlikely(err))
-			जाओ err_निकास;
-	पूर्ण
+		if (unlikely(err))
+			goto err_exit;
+	}
 
-	अगर (aq_cfg->is_vlan_rx_strip != is_vlan_rx_strip) अणु
+	if (aq_cfg->is_vlan_rx_strip != is_vlan_rx_strip) {
 		aq_cfg->is_vlan_rx_strip = is_vlan_rx_strip;
 		need_ndev_restart = true;
-	पूर्ण
-	अगर (aq_cfg->is_vlan_tx_insert != is_vlan_tx_insert) अणु
+	}
+	if (aq_cfg->is_vlan_tx_insert != is_vlan_tx_insert) {
 		aq_cfg->is_vlan_tx_insert = is_vlan_tx_insert;
 		need_ndev_restart = true;
-	पूर्ण
+	}
 
-	अगर (need_ndev_restart && netअगर_running(ndev)) अणु
-		aq_ndev_बंद(ndev);
-		aq_ndev_खोलो(ndev);
-	पूर्ण
+	if (need_ndev_restart && netif_running(ndev)) {
+		aq_ndev_close(ndev);
+		aq_ndev_open(ndev);
+	}
 
-err_निकास:
-	वापस err;
-पूर्ण
+err_exit:
+	return err;
+}
 
-अटल पूर्णांक aq_ndev_set_mac_address(काष्ठा net_device *ndev, व्योम *addr)
-अणु
-	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
-	पूर्णांक err = 0;
+static int aq_ndev_set_mac_address(struct net_device *ndev, void *addr)
+{
+	struct aq_nic_s *aq_nic = netdev_priv(ndev);
+	int err = 0;
 
 	err = eth_mac_addr(ndev, addr);
-	अगर (err < 0)
-		जाओ err_निकास;
+	if (err < 0)
+		goto err_exit;
 	err = aq_nic_set_mac(aq_nic, ndev);
-	अगर (err < 0)
-		जाओ err_निकास;
+	if (err < 0)
+		goto err_exit;
 
-err_निकास:
-	वापस err;
-पूर्ण
+err_exit:
+	return err;
+}
 
-अटल व्योम aq_ndev_set_multicast_settings(काष्ठा net_device *ndev)
-अणु
-	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
+static void aq_ndev_set_multicast_settings(struct net_device *ndev)
+{
+	struct aq_nic_s *aq_nic = netdev_priv(ndev);
 
-	(व्योम)aq_nic_set_multicast_list(aq_nic, ndev);
-पूर्ण
+	(void)aq_nic_set_multicast_list(aq_nic, ndev);
+}
 
-#अगर IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
-अटल पूर्णांक aq_ndev_config_hwtstamp(काष्ठा aq_nic_s *aq_nic,
-				   काष्ठा hwtstamp_config *config)
-अणु
-	अगर (config->flags)
-		वापस -EINVAL;
+#if IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
+static int aq_ndev_config_hwtstamp(struct aq_nic_s *aq_nic,
+				   struct hwtstamp_config *config)
+{
+	if (config->flags)
+		return -EINVAL;
 
-	चयन (config->tx_type) अणु
-	हाल HWTSTAMP_TX_OFF:
-	हाल HWTSTAMP_TX_ON:
-		अवरोध;
-	शेष:
-		वापस -दुस्फल;
-	पूर्ण
+	switch (config->tx_type) {
+	case HWTSTAMP_TX_OFF:
+	case HWTSTAMP_TX_ON:
+		break;
+	default:
+		return -ERANGE;
+	}
 
-	चयन (config->rx_filter) अणु
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ:
-	हाल HWTSTAMP_FILTER_PTP_V2_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V2_DELAY_REQ:
+	switch (config->rx_filter) {
+	case HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
+	case HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
+	case HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
+	case HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
+	case HWTSTAMP_FILTER_PTP_V2_L2_SYNC:
+	case HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ:
+	case HWTSTAMP_FILTER_PTP_V2_SYNC:
+	case HWTSTAMP_FILTER_PTP_V2_DELAY_REQ:
 		config->rx_filter = HWTSTAMP_FILTER_PTP_V2_EVENT;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_PTP_V2_EVENT:
-	हाल HWTSTAMP_FILTER_NONE:
-		अवरोध;
-	शेष:
-		वापस -दुस्फल;
-	पूर्ण
+		break;
+	case HWTSTAMP_FILTER_PTP_V2_EVENT:
+	case HWTSTAMP_FILTER_NONE:
+		break;
+	default:
+		return -ERANGE;
+	}
 
-	वापस aq_ptp_hwtstamp_config_set(aq_nic->aq_ptp, config);
-पूर्ण
-#पूर्ण_अगर
+	return aq_ptp_hwtstamp_config_set(aq_nic->aq_ptp, config);
+}
+#endif
 
-अटल पूर्णांक aq_ndev_hwtstamp_set(काष्ठा aq_nic_s *aq_nic, काष्ठा अगरreq *अगरr)
-अणु
-	काष्ठा hwtstamp_config config;
-#अगर IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
-	पूर्णांक ret_val;
-#पूर्ण_अगर
+static int aq_ndev_hwtstamp_set(struct aq_nic_s *aq_nic, struct ifreq *ifr)
+{
+	struct hwtstamp_config config;
+#if IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
+	int ret_val;
+#endif
 
-	अगर (!aq_nic->aq_ptp)
-		वापस -EOPNOTSUPP;
+	if (!aq_nic->aq_ptp)
+		return -EOPNOTSUPP;
 
-	अगर (copy_from_user(&config, अगरr->अगरr_data, माप(config)))
-		वापस -EFAULT;
-#अगर IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
+	if (copy_from_user(&config, ifr->ifr_data, sizeof(config)))
+		return -EFAULT;
+#if IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
 	ret_val = aq_ndev_config_hwtstamp(aq_nic, &config);
-	अगर (ret_val)
-		वापस ret_val;
-#पूर्ण_अगर
+	if (ret_val)
+		return ret_val;
+#endif
 
-	वापस copy_to_user(अगरr->अगरr_data, &config, माप(config)) ?
+	return copy_to_user(ifr->ifr_data, &config, sizeof(config)) ?
 	       -EFAULT : 0;
-पूर्ण
+}
 
-#अगर IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
-अटल पूर्णांक aq_ndev_hwtstamp_get(काष्ठा aq_nic_s *aq_nic, काष्ठा अगरreq *अगरr)
-अणु
-	काष्ठा hwtstamp_config config;
+#if IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
+static int aq_ndev_hwtstamp_get(struct aq_nic_s *aq_nic, struct ifreq *ifr)
+{
+	struct hwtstamp_config config;
 
-	अगर (!aq_nic->aq_ptp)
-		वापस -EOPNOTSUPP;
+	if (!aq_nic->aq_ptp)
+		return -EOPNOTSUPP;
 
 	aq_ptp_hwtstamp_config_get(aq_nic->aq_ptp, &config);
-	वापस copy_to_user(अगरr->अगरr_data, &config, माप(config)) ?
+	return copy_to_user(ifr->ifr_data, &config, sizeof(config)) ?
 	       -EFAULT : 0;
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल पूर्णांक aq_ndev_ioctl(काष्ठा net_device *netdev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
-अणु
-	काष्ठा aq_nic_s *aq_nic = netdev_priv(netdev);
+static int aq_ndev_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
+{
+	struct aq_nic_s *aq_nic = netdev_priv(netdev);
 
-	चयन (cmd) अणु
-	हाल SIOCSHWTSTAMP:
-		वापस aq_ndev_hwtstamp_set(aq_nic, अगरr);
+	switch (cmd) {
+	case SIOCSHWTSTAMP:
+		return aq_ndev_hwtstamp_set(aq_nic, ifr);
 
-#अगर IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
-	हाल SIOCGHWTSTAMP:
-		वापस aq_ndev_hwtstamp_get(aq_nic, अगरr);
-#पूर्ण_अगर
-	पूर्ण
+#if IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
+	case SIOCGHWTSTAMP:
+		return aq_ndev_hwtstamp_get(aq_nic, ifr);
+#endif
+	}
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक aq_nकरो_vlan_rx_add_vid(काष्ठा net_device *ndev, __be16 proto,
+static int aq_ndo_vlan_rx_add_vid(struct net_device *ndev, __be16 proto,
 				  u16 vid)
-अणु
-	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
+{
+	struct aq_nic_s *aq_nic = netdev_priv(ndev);
 
-	अगर (!aq_nic->aq_hw_ops->hw_filter_vlan_set)
-		वापस -EOPNOTSUPP;
+	if (!aq_nic->aq_hw_ops->hw_filter_vlan_set)
+		return -EOPNOTSUPP;
 
 	set_bit(vid, aq_nic->active_vlans);
 
-	वापस aq_filters_vlans_update(aq_nic);
-पूर्ण
+	return aq_filters_vlans_update(aq_nic);
+}
 
-अटल पूर्णांक aq_nकरो_vlan_rx_समाप्त_vid(काष्ठा net_device *ndev, __be16 proto,
+static int aq_ndo_vlan_rx_kill_vid(struct net_device *ndev, __be16 proto,
 				   u16 vid)
-अणु
-	काष्ठा aq_nic_s *aq_nic = netdev_priv(ndev);
+{
+	struct aq_nic_s *aq_nic = netdev_priv(ndev);
 
-	अगर (!aq_nic->aq_hw_ops->hw_filter_vlan_set)
-		वापस -EOPNOTSUPP;
+	if (!aq_nic->aq_hw_ops->hw_filter_vlan_set)
+		return -EOPNOTSUPP;
 
 	clear_bit(vid, aq_nic->active_vlans);
 
-	अगर (-ENOENT == aq_del_fvlan_by_vlan(aq_nic, vid))
-		वापस aq_filters_vlans_update(aq_nic);
+	if (-ENOENT == aq_del_fvlan_by_vlan(aq_nic, vid))
+		return aq_filters_vlans_update(aq_nic);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aq_validate_mqprio_opt(काष्ठा aq_nic_s *self,
-				  काष्ठा tc_mqprio_qopt_offload *mqprio,
-				  स्थिर अचिन्हित पूर्णांक num_tc)
-अणु
-	स्थिर bool has_min_rate = !!(mqprio->flags & TC_MQPRIO_F_MIN_RATE);
-	काष्ठा aq_nic_cfg_s *aq_nic_cfg = aq_nic_get_cfg(self);
-	स्थिर अचिन्हित पूर्णांक tcs_max = min_t(u8, aq_nic_cfg->aq_hw_caps->tcs_max,
+static int aq_validate_mqprio_opt(struct aq_nic_s *self,
+				  struct tc_mqprio_qopt_offload *mqprio,
+				  const unsigned int num_tc)
+{
+	const bool has_min_rate = !!(mqprio->flags & TC_MQPRIO_F_MIN_RATE);
+	struct aq_nic_cfg_s *aq_nic_cfg = aq_nic_get_cfg(self);
+	const unsigned int tcs_max = min_t(u8, aq_nic_cfg->aq_hw_caps->tcs_max,
 					   AQ_CFG_TCS_MAX);
 
-	अगर (num_tc > tcs_max) अणु
+	if (num_tc > tcs_max) {
 		netdev_err(self->ndev, "Too many TCs requested\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (num_tc != 0 && !is_घातer_of_2(num_tc)) अणु
+	if (num_tc != 0 && !is_power_of_2(num_tc)) {
 		netdev_err(self->ndev, "TC count should be power of 2\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (has_min_rate && !ATL_HW_IS_CHIP_FEATURE(self->aq_hw, ANTIGUA)) अणु
+	if (has_min_rate && !ATL_HW_IS_CHIP_FEATURE(self->aq_hw, ANTIGUA)) {
 		netdev_err(self->ndev, "Min tx rate is not supported\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aq_nकरो_setup_tc(काष्ठा net_device *dev, क्रमागत tc_setup_type type,
-			   व्योम *type_data)
-अणु
-	काष्ठा tc_mqprio_qopt_offload *mqprio = type_data;
-	काष्ठा aq_nic_s *aq_nic = netdev_priv(dev);
+static int aq_ndo_setup_tc(struct net_device *dev, enum tc_setup_type type,
+			   void *type_data)
+{
+	struct tc_mqprio_qopt_offload *mqprio = type_data;
+	struct aq_nic_s *aq_nic = netdev_priv(dev);
 	bool has_min_rate;
 	bool has_max_rate;
-	पूर्णांक err;
-	पूर्णांक i;
+	int err;
+	int i;
 
-	अगर (type != TC_SETUP_QDISC_MQPRIO)
-		वापस -EOPNOTSUPP;
+	if (type != TC_SETUP_QDISC_MQPRIO)
+		return -EOPNOTSUPP;
 
 	has_min_rate = !!(mqprio->flags & TC_MQPRIO_F_MIN_RATE);
 	has_max_rate = !!(mqprio->flags & TC_MQPRIO_F_MAX_RATE);
 
 	err = aq_validate_mqprio_opt(aq_nic, mqprio, mqprio->qopt.num_tc);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	क्रम (i = 0; i < mqprio->qopt.num_tc; i++) अणु
-		अगर (has_max_rate) अणु
+	for (i = 0; i < mqprio->qopt.num_tc; i++) {
+		if (has_max_rate) {
 			u64 max_rate = mqprio->max_rate[i];
 
-			करो_भाग(max_rate, AQ_MBPS_DIVISOR);
+			do_div(max_rate, AQ_MBPS_DIVISOR);
 			aq_nic_setup_tc_max_rate(aq_nic, i, (u32)max_rate);
-		पूर्ण
+		}
 
-		अगर (has_min_rate) अणु
+		if (has_min_rate) {
 			u64 min_rate = mqprio->min_rate[i];
 
-			करो_भाग(min_rate, AQ_MBPS_DIVISOR);
+			do_div(min_rate, AQ_MBPS_DIVISOR);
 			aq_nic_setup_tc_min_rate(aq_nic, i, (u32)min_rate);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस aq_nic_setup_tc_mqprio(aq_nic, mqprio->qopt.num_tc,
+	return aq_nic_setup_tc_mqprio(aq_nic, mqprio->qopt.num_tc,
 				      mqprio->qopt.prio_tc_map);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा net_device_ops aq_ndev_ops = अणु
-	.nकरो_खोलो = aq_ndev_खोलो,
-	.nकरो_stop = aq_ndev_बंद,
-	.nकरो_start_xmit = aq_ndev_start_xmit,
-	.nकरो_set_rx_mode = aq_ndev_set_multicast_settings,
-	.nकरो_change_mtu = aq_ndev_change_mtu,
-	.nकरो_set_mac_address = aq_ndev_set_mac_address,
-	.nकरो_set_features = aq_ndev_set_features,
-	.nकरो_करो_ioctl = aq_ndev_ioctl,
-	.nकरो_vlan_rx_add_vid = aq_nकरो_vlan_rx_add_vid,
-	.nकरो_vlan_rx_समाप्त_vid = aq_nकरो_vlan_rx_समाप्त_vid,
-	.nकरो_setup_tc = aq_nकरो_setup_tc,
-पूर्ण;
+static const struct net_device_ops aq_ndev_ops = {
+	.ndo_open = aq_ndev_open,
+	.ndo_stop = aq_ndev_close,
+	.ndo_start_xmit = aq_ndev_start_xmit,
+	.ndo_set_rx_mode = aq_ndev_set_multicast_settings,
+	.ndo_change_mtu = aq_ndev_change_mtu,
+	.ndo_set_mac_address = aq_ndev_set_mac_address,
+	.ndo_set_features = aq_ndev_set_features,
+	.ndo_do_ioctl = aq_ndev_ioctl,
+	.ndo_vlan_rx_add_vid = aq_ndo_vlan_rx_add_vid,
+	.ndo_vlan_rx_kill_vid = aq_ndo_vlan_rx_kill_vid,
+	.ndo_setup_tc = aq_ndo_setup_tc,
+};
 
-अटल पूर्णांक __init aq_ndev_init_module(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init aq_ndev_init_module(void)
+{
+	int ret;
 
-	aq_ndev_wq = create_singlethपढ़ो_workqueue(aq_ndev_driver_name);
-	अगर (!aq_ndev_wq) अणु
+	aq_ndev_wq = create_singlethread_workqueue(aq_ndev_driver_name);
+	if (!aq_ndev_wq) {
 		pr_err("Failed to create workqueue\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	ret = aq_pci_func_रेजिस्टर_driver();
-	अगर (ret) अणु
+	ret = aq_pci_func_register_driver();
+	if (ret) {
 		destroy_workqueue(aq_ndev_wq);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास aq_ndev_निकास_module(व्योम)
-अणु
-	aq_pci_func_unरेजिस्टर_driver();
+static void __exit aq_ndev_exit_module(void)
+{
+	aq_pci_func_unregister_driver();
 
-	अगर (aq_ndev_wq) अणु
+	if (aq_ndev_wq) {
 		destroy_workqueue(aq_ndev_wq);
-		aq_ndev_wq = शून्य;
-	पूर्ण
-पूर्ण
+		aq_ndev_wq = NULL;
+	}
+}
 
 module_init(aq_ndev_init_module);
-module_निकास(aq_ndev_निकास_module);
+module_exit(aq_ndev_exit_module);

@@ -1,53 +1,52 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Driver क्रम TANBAC TB0219 base board.
+ *  Driver for TANBAC TB0219 base board.
  *
  *  Copyright (C) 2005  Yoichi Yuasa <yuasa@linux-mips.org>
  */
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/uaccess.h>
+#include <linux/platform_device.h>
+#include <linux/fs.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/uaccess.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/reboot.h>
-#समावेश <यंत्र/vr41xx/giu.h>
-#समावेश <यंत्र/vr41xx/tb0219.h>
+#include <asm/io.h>
+#include <asm/reboot.h>
+#include <asm/vr41xx/giu.h>
+#include <asm/vr41xx/tb0219.h>
 
 MODULE_AUTHOR("Yoichi Yuasa <yuasa@linux-mips.org>");
 MODULE_DESCRIPTION("TANBAC TB0219 base board driver");
 MODULE_LICENSE("GPL");
 
-अटल पूर्णांक major;	/* शेष is dynamic major device number */
-module_param(major, पूर्णांक, 0);
+static int major;	/* default is dynamic major device number */
+module_param(major, int, 0);
 MODULE_PARM_DESC(major, "Major device number");
 
-अटल व्योम (*old_machine_restart)(अक्षर *command);
-अटल व्योम __iomem *tb0219_base;
-अटल DEFINE_SPINLOCK(tb0219_lock);
+static void (*old_machine_restart)(char *command);
+static void __iomem *tb0219_base;
+static DEFINE_SPINLOCK(tb0219_lock);
 
-#घोषणा tb0219_पढ़ो(offset)		पढ़ोw(tb0219_base + (offset))
-#घोषणा tb0219_ग_लिखो(offset, value)	ग_लिखोw((value), tb0219_base + (offset))
+#define tb0219_read(offset)		readw(tb0219_base + (offset))
+#define tb0219_write(offset, value)	writew((value), tb0219_base + (offset))
 
-#घोषणा TB0219_START	0x0a000000UL
-#घोषणा TB0219_SIZE	0x20UL
+#define TB0219_START	0x0a000000UL
+#define TB0219_SIZE	0x20UL
 
-#घोषणा TB0219_LED			0x00
-#घोषणा TB0219_GPIO_INPUT		0x02
-#घोषणा TB0219_GPIO_OUTPUT		0x04
-#घोषणा TB0219_DIP_SWITCH		0x06
-#घोषणा TB0219_MISC			0x08
-#घोषणा TB0219_RESET			0x0e
-#घोषणा TB0219_PCI_SLOT1_IRQ_STATUS	0x10
-#घोषणा TB0219_PCI_SLOT2_IRQ_STATUS	0x12
-#घोषणा TB0219_PCI_SLOT3_IRQ_STATUS	0x14
+#define TB0219_LED			0x00
+#define TB0219_GPIO_INPUT		0x02
+#define TB0219_GPIO_OUTPUT		0x04
+#define TB0219_DIP_SWITCH		0x06
+#define TB0219_MISC			0x08
+#define TB0219_RESET			0x0e
+#define TB0219_PCI_SLOT1_IRQ_STATUS	0x10
+#define TB0219_PCI_SLOT2_IRQ_STATUS	0x12
+#define TB0219_PCI_SLOT3_IRQ_STATUS	0x14
 
-प्रकार क्रमागत अणु
+typedef enum {
 	TYPE_LED,
 	TYPE_GPIO_OUTPUT,
-पूर्ण tb0219_type_t;
+} tb0219_type_t;
 
 /*
  * Minor device number
@@ -71,195 +70,195 @@ MODULE_PARM_DESC(major, "Major device number");
  *	38 = GPIO OUT 6
  *	39 = GPIO OUT 7
  *
- *	48 = DIP चयन 1
- *	49 = DIP चयन 2
- *	50 = DIP चयन 3
- *	51 = DIP चयन 4
- *	52 = DIP चयन 5
- *	53 = DIP चयन 6
- *	54 = DIP चयन 7
- *	55 = DIP चयन 8
+ *	48 = DIP switch 1
+ *	49 = DIP switch 2
+ *	50 = DIP switch 3
+ *	51 = DIP switch 4
+ *	52 = DIP switch 5
+ *	53 = DIP switch 6
+ *	54 = DIP switch 7
+ *	55 = DIP switch 8
  */
 
-अटल अंतरभूत अक्षर get_led(व्योम)
-अणु
-	वापस (अक्षर)tb0219_पढ़ो(TB0219_LED);
-पूर्ण
+static inline char get_led(void)
+{
+	return (char)tb0219_read(TB0219_LED);
+}
 
-अटल अंतरभूत अक्षर get_gpio_input_pin(अचिन्हित पूर्णांक pin)
-अणु
-	uपूर्णांक16_t values;
+static inline char get_gpio_input_pin(unsigned int pin)
+{
+	uint16_t values;
 
-	values = tb0219_पढ़ो(TB0219_GPIO_INPUT);
-	अगर (values & (1 << pin))
-		वापस '1';
+	values = tb0219_read(TB0219_GPIO_INPUT);
+	if (values & (1 << pin))
+		return '1';
 
-	वापस '0';
-पूर्ण
+	return '0';
+}
 
-अटल अंतरभूत अक्षर get_gpio_output_pin(अचिन्हित पूर्णांक pin)
-अणु
-	uपूर्णांक16_t values;
+static inline char get_gpio_output_pin(unsigned int pin)
+{
+	uint16_t values;
 
-	values = tb0219_पढ़ो(TB0219_GPIO_OUTPUT);
-	अगर (values & (1 << pin))
-		वापस '1';
+	values = tb0219_read(TB0219_GPIO_OUTPUT);
+	if (values & (1 << pin))
+		return '1';
 
-	वापस '0';
-पूर्ण
+	return '0';
+}
 
-अटल अंतरभूत अक्षर get_dip_चयन(अचिन्हित पूर्णांक pin)
-अणु
-	uपूर्णांक16_t values;
+static inline char get_dip_switch(unsigned int pin)
+{
+	uint16_t values;
 
-	values = tb0219_पढ़ो(TB0219_DIP_SWITCH);
-	अगर (values & (1 << pin))
-		वापस '1';
+	values = tb0219_read(TB0219_DIP_SWITCH);
+	if (values & (1 << pin))
+		return '1';
 
-	वापस '0';
-पूर्ण
+	return '0';
+}
 
-अटल अंतरभूत पूर्णांक set_led(अक्षर command)
-अणु
-	tb0219_ग_लिखो(TB0219_LED, command);
+static inline int set_led(char command)
+{
+	tb0219_write(TB0219_LED, command);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक set_gpio_output_pin(अचिन्हित पूर्णांक pin, अक्षर command)
-अणु
-	अचिन्हित दीर्घ flags;
-	uपूर्णांक16_t value;
+static inline int set_gpio_output_pin(unsigned int pin, char command)
+{
+	unsigned long flags;
+	uint16_t value;
 
-	अगर (command != '0' && command != '1')
-		वापस -EINVAL;
+	if (command != '0' && command != '1')
+		return -EINVAL;
 
 	spin_lock_irqsave(&tb0219_lock, flags);
-	value = tb0219_पढ़ो(TB0219_GPIO_OUTPUT);
-	अगर (command == '0')
+	value = tb0219_read(TB0219_GPIO_OUTPUT);
+	if (command == '0')
 		value &= ~(1 << pin);
-	अन्यथा
+	else
 		value |= 1 << pin;
-	tb0219_ग_लिखो(TB0219_GPIO_OUTPUT, value);
+	tb0219_write(TB0219_GPIO_OUTPUT, value);
 	spin_unlock_irqrestore(&tb0219_lock, flags);
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
-अटल sमाप_प्रकार tanbac_tb0219_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार len,
+static ssize_t tanbac_tb0219_read(struct file *file, char __user *buf, size_t len,
                                   loff_t *ppos)
-अणु
-	अचिन्हित पूर्णांक minor;
-	अक्षर value;
+{
+	unsigned int minor;
+	char value;
 
 	minor = iminor(file_inode(file));
-	चयन (minor) अणु
-	हाल 0:
+	switch (minor) {
+	case 0:
 		value = get_led();
-		अवरोध;
-	हाल 16 ... 23:
+		break;
+	case 16 ... 23:
 		value = get_gpio_input_pin(minor - 16);
-		अवरोध;
-	हाल 32 ... 39:
+		break;
+	case 32 ... 39:
 		value = get_gpio_output_pin(minor - 32);
-		अवरोध;
-	हाल 48 ... 55:
-		value = get_dip_चयन(minor - 48);
-		अवरोध;
-	शेष:
-		वापस -EBADF;
-	पूर्ण
+		break;
+	case 48 ... 55:
+		value = get_dip_switch(minor - 48);
+		break;
+	default:
+		return -EBADF;
+	}
 
-	अगर (len <= 0)
-		वापस -EFAULT;
+	if (len <= 0)
+		return -EFAULT;
 
-	अगर (put_user(value, buf))
-		वापस -EFAULT;
+	if (put_user(value, buf))
+		return -EFAULT;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल sमाप_प्रकार tanbac_tb0219_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *data,
-                                   माप_प्रकार len, loff_t *ppos)
-अणु
-	अचिन्हित पूर्णांक minor;
+static ssize_t tanbac_tb0219_write(struct file *file, const char __user *data,
+                                   size_t len, loff_t *ppos)
+{
+	unsigned int minor;
 	tb0219_type_t type;
-	माप_प्रकार i;
-	पूर्णांक retval = 0;
-	अक्षर c;
+	size_t i;
+	int retval = 0;
+	char c;
 
 	minor = iminor(file_inode(file));
-	चयन (minor) अणु
-	हाल 0:
+	switch (minor) {
+	case 0:
 		type = TYPE_LED;
-		अवरोध;
-	हाल 32 ... 39:
+		break;
+	case 32 ... 39:
 		type = TYPE_GPIO_OUTPUT;
-		अवरोध;
-	शेष:
-		वापस -EBADF;
-	पूर्ण
+		break;
+	default:
+		return -EBADF;
+	}
 
-	क्रम (i = 0; i < len; i++) अणु
-		अगर (get_user(c, data + i))
-			वापस -EFAULT;
+	for (i = 0; i < len; i++) {
+		if (get_user(c, data + i))
+			return -EFAULT;
 
-		चयन (type) अणु
-		हाल TYPE_LED:
+		switch (type) {
+		case TYPE_LED:
 			retval = set_led(c);
-			अवरोध;
-		हाल TYPE_GPIO_OUTPUT:
+			break;
+		case TYPE_GPIO_OUTPUT:
 			retval = set_gpio_output_pin(minor - 32, c);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (retval < 0)
-			अवरोध;
-	पूर्ण
+		if (retval < 0)
+			break;
+	}
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल पूर्णांक tanbac_tb0219_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	अचिन्हित पूर्णांक minor;
+static int tanbac_tb0219_open(struct inode *inode, struct file *file)
+{
+	unsigned int minor;
 
 	minor = iminor(inode);
-	चयन (minor) अणु
-	हाल 0:
-	हाल 16 ... 23:
-	हाल 32 ... 39:
-	हाल 48 ... 55:
-		वापस stream_खोलो(inode, file);
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (minor) {
+	case 0:
+	case 16 ... 23:
+	case 32 ... 39:
+	case 48 ... 55:
+		return stream_open(inode, file);
+	default:
+		break;
+	}
 
-	वापस -EBADF;
-पूर्ण
+	return -EBADF;
+}
 
-अटल पूर्णांक tanbac_tb0219_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस 0;
-पूर्ण
+static int tanbac_tb0219_release(struct inode *inode, struct file *file)
+{
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations tb0219_fops = अणु
+static const struct file_operations tb0219_fops = {
 	.owner		= THIS_MODULE,
-	.पढ़ो		= tanbac_tb0219_पढ़ो,
-	.ग_लिखो		= tanbac_tb0219_ग_लिखो,
-	.खोलो		= tanbac_tb0219_खोलो,
+	.read		= tanbac_tb0219_read,
+	.write		= tanbac_tb0219_write,
+	.open		= tanbac_tb0219_open,
 	.release	= tanbac_tb0219_release,
 	.llseek		= no_llseek,
-पूर्ण;
+};
 
-अटल व्योम tb0219_restart(अक्षर *command)
-अणु
-	tb0219_ग_लिखो(TB0219_RESET, 0);
-पूर्ण
+static void tb0219_restart(char *command)
+{
+	tb0219_write(TB0219_RESET, 0);
+}
 
-अटल व्योम tb0219_pci_irq_init(व्योम)
-अणु
+static void tb0219_pci_irq_init(void)
+{
 	/* PCI Slot 1 */
 	vr41xx_set_irq_trigger(TB0219_PCI_SLOT1_PIN, IRQ_TRIGGER_LEVEL, IRQ_SIGNAL_THROUGH);
 	vr41xx_set_irq_level(TB0219_PCI_SLOT1_PIN, IRQ_LEVEL_LOW);
@@ -271,90 +270,90 @@ MODULE_PARM_DESC(major, "Major device number");
 	/* PCI Slot 3 */
 	vr41xx_set_irq_trigger(TB0219_PCI_SLOT3_PIN, IRQ_TRIGGER_LEVEL, IRQ_SIGNAL_THROUGH);
 	vr41xx_set_irq_level(TB0219_PCI_SLOT3_PIN, IRQ_LEVEL_LOW);
-पूर्ण
+}
 
-अटल पूर्णांक tb0219_probe(काष्ठा platक्रमm_device *dev)
-अणु
-	पूर्णांक retval;
+static int tb0219_probe(struct platform_device *dev)
+{
+	int retval;
 
-	अगर (request_mem_region(TB0219_START, TB0219_SIZE, "TB0219") == शून्य)
-		वापस -EBUSY;
+	if (request_mem_region(TB0219_START, TB0219_SIZE, "TB0219") == NULL)
+		return -EBUSY;
 
 	tb0219_base = ioremap(TB0219_START, TB0219_SIZE);
-	अगर (tb0219_base == शून्य) अणु
+	if (tb0219_base == NULL) {
 		release_mem_region(TB0219_START, TB0219_SIZE);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	retval = रेजिस्टर_chrdev(major, "TB0219", &tb0219_fops);
-	अगर (retval < 0) अणु
+	retval = register_chrdev(major, "TB0219", &tb0219_fops);
+	if (retval < 0) {
 		iounmap(tb0219_base);
-		tb0219_base = शून्य;
+		tb0219_base = NULL;
 		release_mem_region(TB0219_START, TB0219_SIZE);
-		वापस retval;
-	पूर्ण
+		return retval;
+	}
 
 	old_machine_restart = _machine_restart;
 	_machine_restart = tb0219_restart;
 
 	tb0219_pci_irq_init();
 
-	अगर (major == 0) अणु
+	if (major == 0) {
 		major = retval;
-		prपूर्णांकk(KERN_INFO "TB0219: major number %d\n", major);
-	पूर्ण
+		printk(KERN_INFO "TB0219: major number %d\n", major);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tb0219_हटाओ(काष्ठा platक्रमm_device *dev)
-अणु
+static int tb0219_remove(struct platform_device *dev)
+{
 	_machine_restart = old_machine_restart;
 
 	iounmap(tb0219_base);
-	tb0219_base = शून्य;
+	tb0219_base = NULL;
 
 	release_mem_region(TB0219_START, TB0219_SIZE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_device *tb0219_platक्रमm_device;
+static struct platform_device *tb0219_platform_device;
 
-अटल काष्ठा platक्रमm_driver tb0219_device_driver = अणु
+static struct platform_driver tb0219_device_driver = {
 	.probe		= tb0219_probe,
-	.हटाओ		= tb0219_हटाओ,
-	.driver		= अणु
+	.remove		= tb0219_remove,
+	.driver		= {
 		.name	= "TB0219",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init tanbac_tb0219_init(व्योम)
-अणु
-	पूर्णांक retval;
+static int __init tanbac_tb0219_init(void)
+{
+	int retval;
 
-	tb0219_platक्रमm_device = platक्रमm_device_alloc("TB0219", -1);
-	अगर (!tb0219_platक्रमm_device)
-		वापस -ENOMEM;
+	tb0219_platform_device = platform_device_alloc("TB0219", -1);
+	if (!tb0219_platform_device)
+		return -ENOMEM;
 
-	retval = platक्रमm_device_add(tb0219_platक्रमm_device);
-	अगर (retval < 0) अणु
-		platक्रमm_device_put(tb0219_platक्रमm_device);
-		वापस retval;
-	पूर्ण
+	retval = platform_device_add(tb0219_platform_device);
+	if (retval < 0) {
+		platform_device_put(tb0219_platform_device);
+		return retval;
+	}
 
-	retval = platक्रमm_driver_रेजिस्टर(&tb0219_device_driver);
-	अगर (retval < 0)
-		platक्रमm_device_unरेजिस्टर(tb0219_platक्रमm_device);
+	retval = platform_driver_register(&tb0219_device_driver);
+	if (retval < 0)
+		platform_device_unregister(tb0219_platform_device);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम __निकास tanbac_tb0219_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&tb0219_device_driver);
-	platक्रमm_device_unरेजिस्टर(tb0219_platक्रमm_device);
-पूर्ण
+static void __exit tanbac_tb0219_exit(void)
+{
+	platform_driver_unregister(&tb0219_device_driver);
+	platform_device_unregister(tb0219_platform_device);
+}
 
 module_init(tanbac_tb0219_init);
-module_निकास(tanbac_tb0219_निकास);
+module_exit(tanbac_tb0219_exit);

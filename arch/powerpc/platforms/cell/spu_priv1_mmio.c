@@ -1,157 +1,156 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * spu hypervisor असलtraction क्रम direct hardware access.
+ * spu hypervisor abstraction for direct hardware access.
  *
  *  (C) Copyright IBM Deutschland Entwicklung GmbH 2005
  *  Copyright 2006 Sony Corp.
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/list.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/mutex.h>
-#समावेश <linux/device.h>
-#समावेश <linux/sched.h>
+#include <linux/interrupt.h>
+#include <linux/list.h>
+#include <linux/ptrace.h>
+#include <linux/wait.h>
+#include <linux/mm.h>
+#include <linux/io.h>
+#include <linux/mutex.h>
+#include <linux/device.h>
+#include <linux/sched.h>
 
-#समावेश <यंत्र/spu.h>
-#समावेश <यंत्र/spu_priv1.h>
-#समावेश <यंत्र/firmware.h>
-#समावेश <यंत्र/prom.h>
+#include <asm/spu.h>
+#include <asm/spu_priv1.h>
+#include <asm/firmware.h>
+#include <asm/prom.h>
 
-#समावेश "interrupt.h"
-#समावेश "spu_priv1_mmio.h"
+#include "interrupt.h"
+#include "spu_priv1_mmio.h"
 
-अटल व्योम पूर्णांक_mask_and(काष्ठा spu *spu, पूर्णांक class, u64 mask)
-अणु
+static void int_mask_and(struct spu *spu, int class, u64 mask)
+{
 	u64 old_mask;
 
-	old_mask = in_be64(&spu->priv1->पूर्णांक_mask_RW[class]);
-	out_be64(&spu->priv1->पूर्णांक_mask_RW[class], old_mask & mask);
-पूर्ण
+	old_mask = in_be64(&spu->priv1->int_mask_RW[class]);
+	out_be64(&spu->priv1->int_mask_RW[class], old_mask & mask);
+}
 
-अटल व्योम पूर्णांक_mask_or(काष्ठा spu *spu, पूर्णांक class, u64 mask)
-अणु
+static void int_mask_or(struct spu *spu, int class, u64 mask)
+{
 	u64 old_mask;
 
-	old_mask = in_be64(&spu->priv1->पूर्णांक_mask_RW[class]);
-	out_be64(&spu->priv1->पूर्णांक_mask_RW[class], old_mask | mask);
-पूर्ण
+	old_mask = in_be64(&spu->priv1->int_mask_RW[class]);
+	out_be64(&spu->priv1->int_mask_RW[class], old_mask | mask);
+}
 
-अटल व्योम पूर्णांक_mask_set(काष्ठा spu *spu, पूर्णांक class, u64 mask)
-अणु
-	out_be64(&spu->priv1->पूर्णांक_mask_RW[class], mask);
-पूर्ण
+static void int_mask_set(struct spu *spu, int class, u64 mask)
+{
+	out_be64(&spu->priv1->int_mask_RW[class], mask);
+}
 
-अटल u64 पूर्णांक_mask_get(काष्ठा spu *spu, पूर्णांक class)
-अणु
-	वापस in_be64(&spu->priv1->पूर्णांक_mask_RW[class]);
-पूर्ण
+static u64 int_mask_get(struct spu *spu, int class)
+{
+	return in_be64(&spu->priv1->int_mask_RW[class]);
+}
 
-अटल व्योम पूर्णांक_stat_clear(काष्ठा spu *spu, पूर्णांक class, u64 stat)
-अणु
-	out_be64(&spu->priv1->पूर्णांक_stat_RW[class], stat);
-पूर्ण
+static void int_stat_clear(struct spu *spu, int class, u64 stat)
+{
+	out_be64(&spu->priv1->int_stat_RW[class], stat);
+}
 
-अटल u64 पूर्णांक_stat_get(काष्ठा spu *spu, पूर्णांक class)
-अणु
-	वापस in_be64(&spu->priv1->पूर्णांक_stat_RW[class]);
-पूर्ण
+static u64 int_stat_get(struct spu *spu, int class)
+{
+	return in_be64(&spu->priv1->int_stat_RW[class]);
+}
 
-अटल व्योम cpu_affinity_set(काष्ठा spu *spu, पूर्णांक cpu)
-अणु
+static void cpu_affinity_set(struct spu *spu, int cpu)
+{
 	u64 target;
 	u64 route;
 
-	अगर (nr_cpus_node(spu->node)) अणु
-		स्थिर काष्ठा cpumask *spumask = cpumask_of_node(spu->node),
+	if (nr_cpus_node(spu->node)) {
+		const struct cpumask *spumask = cpumask_of_node(spu->node),
 			*cpumask = cpumask_of_node(cpu_to_node(cpu));
 
-		अगर (!cpumask_पूर्णांकersects(spumask, cpumask))
-			वापस;
-	पूर्ण
+		if (!cpumask_intersects(spumask, cpumask))
+			return;
+	}
 
 	target = iic_get_target_id(cpu);
 	route = target << 48 | target << 32 | target << 16;
-	out_be64(&spu->priv1->पूर्णांक_route_RW, route);
-पूर्ण
+	out_be64(&spu->priv1->int_route_RW, route);
+}
 
-अटल u64 mfc_dar_get(काष्ठा spu *spu)
-अणु
-	वापस in_be64(&spu->priv1->mfc_dar_RW);
-पूर्ण
+static u64 mfc_dar_get(struct spu *spu)
+{
+	return in_be64(&spu->priv1->mfc_dar_RW);
+}
 
-अटल u64 mfc_dsisr_get(काष्ठा spu *spu)
-अणु
-	वापस in_be64(&spu->priv1->mfc_dsisr_RW);
-पूर्ण
+static u64 mfc_dsisr_get(struct spu *spu)
+{
+	return in_be64(&spu->priv1->mfc_dsisr_RW);
+}
 
-अटल व्योम mfc_dsisr_set(काष्ठा spu *spu, u64 dsisr)
-अणु
+static void mfc_dsisr_set(struct spu *spu, u64 dsisr)
+{
 	out_be64(&spu->priv1->mfc_dsisr_RW, dsisr);
-पूर्ण
+}
 
-अटल व्योम mfc_sdr_setup(काष्ठा spu *spu)
-अणु
+static void mfc_sdr_setup(struct spu *spu)
+{
 	out_be64(&spu->priv1->mfc_sdr_RW, mfspr(SPRN_SDR1));
-पूर्ण
+}
 
-अटल व्योम mfc_sr1_set(काष्ठा spu *spu, u64 sr1)
-अणु
+static void mfc_sr1_set(struct spu *spu, u64 sr1)
+{
 	out_be64(&spu->priv1->mfc_sr1_RW, sr1);
-पूर्ण
+}
 
-अटल u64 mfc_sr1_get(काष्ठा spu *spu)
-अणु
-	वापस in_be64(&spu->priv1->mfc_sr1_RW);
-पूर्ण
+static u64 mfc_sr1_get(struct spu *spu)
+{
+	return in_be64(&spu->priv1->mfc_sr1_RW);
+}
 
-अटल व्योम mfc_tclass_id_set(काष्ठा spu *spu, u64 tclass_id)
-अणु
+static void mfc_tclass_id_set(struct spu *spu, u64 tclass_id)
+{
 	out_be64(&spu->priv1->mfc_tclass_id_RW, tclass_id);
-पूर्ण
+}
 
-अटल u64 mfc_tclass_id_get(काष्ठा spu *spu)
-अणु
-	वापस in_be64(&spu->priv1->mfc_tclass_id_RW);
-पूर्ण
+static u64 mfc_tclass_id_get(struct spu *spu)
+{
+	return in_be64(&spu->priv1->mfc_tclass_id_RW);
+}
 
-अटल व्योम tlb_invalidate(काष्ठा spu *spu)
-अणु
+static void tlb_invalidate(struct spu *spu)
+{
 	out_be64(&spu->priv1->tlb_invalidate_entry_W, 0ul);
-पूर्ण
+}
 
-अटल व्योम resource_allocation_groupID_set(काष्ठा spu *spu, u64 id)
-अणु
+static void resource_allocation_groupID_set(struct spu *spu, u64 id)
+{
 	out_be64(&spu->priv1->resource_allocation_groupID_RW, id);
-पूर्ण
+}
 
-अटल u64 resource_allocation_groupID_get(काष्ठा spu *spu)
-अणु
-	वापस in_be64(&spu->priv1->resource_allocation_groupID_RW);
-पूर्ण
+static u64 resource_allocation_groupID_get(struct spu *spu)
+{
+	return in_be64(&spu->priv1->resource_allocation_groupID_RW);
+}
 
-अटल व्योम resource_allocation_enable_set(काष्ठा spu *spu, u64 enable)
-अणु
+static void resource_allocation_enable_set(struct spu *spu, u64 enable)
+{
 	out_be64(&spu->priv1->resource_allocation_enable_RW, enable);
-पूर्ण
+}
 
-अटल u64 resource_allocation_enable_get(काष्ठा spu *spu)
-अणु
-	वापस in_be64(&spu->priv1->resource_allocation_enable_RW);
-पूर्ण
+static u64 resource_allocation_enable_get(struct spu *spu)
+{
+	return in_be64(&spu->priv1->resource_allocation_enable_RW);
+}
 
-स्थिर काष्ठा spu_priv1_ops spu_priv1_mmio_ops =
-अणु
-	.पूर्णांक_mask_and = पूर्णांक_mask_and,
-	.पूर्णांक_mask_or = पूर्णांक_mask_or,
-	.पूर्णांक_mask_set = पूर्णांक_mask_set,
-	.पूर्णांक_mask_get = पूर्णांक_mask_get,
-	.पूर्णांक_stat_clear = पूर्णांक_stat_clear,
-	.पूर्णांक_stat_get = पूर्णांक_stat_get,
+const struct spu_priv1_ops spu_priv1_mmio_ops =
+{
+	.int_mask_and = int_mask_and,
+	.int_mask_or = int_mask_or,
+	.int_mask_set = int_mask_set,
+	.int_mask_get = int_mask_get,
+	.int_stat_clear = int_stat_clear,
+	.int_stat_get = int_stat_get,
 	.cpu_affinity_set = cpu_affinity_set,
 	.mfc_dar_get = mfc_dar_get,
 	.mfc_dsisr_get = mfc_dsisr_get,
@@ -166,4 +165,4 @@
 	.resource_allocation_groupID_get = resource_allocation_groupID_get,
 	.resource_allocation_enable_set = resource_allocation_enable_set,
 	.resource_allocation_enable_get = resource_allocation_enable_get,
-पूर्ण;
+};

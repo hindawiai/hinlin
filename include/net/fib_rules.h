@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __NET_FIB_RULES_H
-#घोषणा __NET_FIB_RULES_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __NET_FIB_RULES_H
+#define __NET_FIB_RULES_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/fib_rules.h>
-#समावेश <linux/refcount.h>
-#समावेश <net/flow.h>
-#समावेश <net/rtnetlink.h>
-#समावेश <net/fib_notअगरier.h>
-#समावेश <linux/indirect_call_wrapper.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/netdevice.h>
+#include <linux/fib_rules.h>
+#include <linux/refcount.h>
+#include <net/flow.h>
+#include <net/rtnetlink.h>
+#include <net/fib_notifier.h>
+#include <linux/indirect_call_wrapper.h>
 
-काष्ठा fib_kuid_range अणु
+struct fib_kuid_range {
 	kuid_t start;
 	kuid_t end;
-पूर्ण;
+};
 
-काष्ठा fib_rule अणु
-	काष्ठा list_head	list;
-	पूर्णांक			iअगरindex;
-	पूर्णांक			oअगरindex;
+struct fib_rule {
+	struct list_head	list;
+	int			iifindex;
+	int			oifindex;
 	u32			mark;
 	u32			mark_mask;
 	u32			flags;
@@ -32,194 +31,194 @@
 	u8			ip_proto;
 	u32			target;
 	__be64			tun_id;
-	काष्ठा fib_rule __rcu	*ctarget;
-	काष्ठा net		*fr_net;
+	struct fib_rule __rcu	*ctarget;
+	struct net		*fr_net;
 
 	refcount_t		refcnt;
 	u32			pref;
-	पूर्णांक			suppress_अगरgroup;
-	पूर्णांक			suppress_prefixlen;
-	अक्षर			iअगरname[IFNAMSIZ];
-	अक्षर			oअगरname[IFNAMSIZ];
-	काष्ठा fib_kuid_range	uid_range;
-	काष्ठा fib_rule_port_range	sport_range;
-	काष्ठा fib_rule_port_range	dport_range;
-	काष्ठा rcu_head		rcu;
-पूर्ण;
+	int			suppress_ifgroup;
+	int			suppress_prefixlen;
+	char			iifname[IFNAMSIZ];
+	char			oifname[IFNAMSIZ];
+	struct fib_kuid_range	uid_range;
+	struct fib_rule_port_range	sport_range;
+	struct fib_rule_port_range	dport_range;
+	struct rcu_head		rcu;
+};
 
-काष्ठा fib_lookup_arg अणु
-	व्योम			*lookup_ptr;
-	स्थिर व्योम		*lookup_data;
-	व्योम			*result;
-	काष्ठा fib_rule		*rule;
+struct fib_lookup_arg {
+	void			*lookup_ptr;
+	const void		*lookup_data;
+	void			*result;
+	struct fib_rule		*rule;
 	u32			table;
-	पूर्णांक			flags;
-#घोषणा FIB_LOOKUP_NOREF		1
-#घोषणा FIB_LOOKUP_IGNORE_LINKSTATE	2
-पूर्ण;
+	int			flags;
+#define FIB_LOOKUP_NOREF		1
+#define FIB_LOOKUP_IGNORE_LINKSTATE	2
+};
 
-काष्ठा fib_rules_ops अणु
-	पूर्णांक			family;
-	काष्ठा list_head	list;
-	पूर्णांक			rule_size;
-	पूर्णांक			addr_size;
-	पूर्णांक			unresolved_rules;
-	पूर्णांक			nr_जाओ_rules;
-	अचिन्हित पूर्णांक		fib_rules_seq;
+struct fib_rules_ops {
+	int			family;
+	struct list_head	list;
+	int			rule_size;
+	int			addr_size;
+	int			unresolved_rules;
+	int			nr_goto_rules;
+	unsigned int		fib_rules_seq;
 
-	पूर्णांक			(*action)(काष्ठा fib_rule *,
-					  काष्ठा flowi *, पूर्णांक,
-					  काष्ठा fib_lookup_arg *);
-	bool			(*suppress)(काष्ठा fib_rule *,
-					    काष्ठा fib_lookup_arg *);
-	पूर्णांक			(*match)(काष्ठा fib_rule *,
-					 काष्ठा flowi *, पूर्णांक);
-	पूर्णांक			(*configure)(काष्ठा fib_rule *,
-					     काष्ठा sk_buff *,
-					     काष्ठा fib_rule_hdr *,
-					     काष्ठा nlattr **,
-					     काष्ठा netlink_ext_ack *);
-	पूर्णांक			(*delete)(काष्ठा fib_rule *);
-	पूर्णांक			(*compare)(काष्ठा fib_rule *,
-					   काष्ठा fib_rule_hdr *,
-					   काष्ठा nlattr **);
-	पूर्णांक			(*fill)(काष्ठा fib_rule *, काष्ठा sk_buff *,
-					काष्ठा fib_rule_hdr *);
-	माप_प्रकार			(*nlmsg_payload)(काष्ठा fib_rule *);
+	int			(*action)(struct fib_rule *,
+					  struct flowi *, int,
+					  struct fib_lookup_arg *);
+	bool			(*suppress)(struct fib_rule *,
+					    struct fib_lookup_arg *);
+	int			(*match)(struct fib_rule *,
+					 struct flowi *, int);
+	int			(*configure)(struct fib_rule *,
+					     struct sk_buff *,
+					     struct fib_rule_hdr *,
+					     struct nlattr **,
+					     struct netlink_ext_ack *);
+	int			(*delete)(struct fib_rule *);
+	int			(*compare)(struct fib_rule *,
+					   struct fib_rule_hdr *,
+					   struct nlattr **);
+	int			(*fill)(struct fib_rule *, struct sk_buff *,
+					struct fib_rule_hdr *);
+	size_t			(*nlmsg_payload)(struct fib_rule *);
 
-	/* Called after modअगरications to the rules set, must flush
-	 * the route cache अगर one exists. */
-	व्योम			(*flush_cache)(काष्ठा fib_rules_ops *ops);
+	/* Called after modifications to the rules set, must flush
+	 * the route cache if one exists. */
+	void			(*flush_cache)(struct fib_rules_ops *ops);
 
-	पूर्णांक			nlgroup;
-	स्थिर काष्ठा nla_policy	*policy;
-	काष्ठा list_head	rules_list;
-	काष्ठा module		*owner;
-	काष्ठा net		*fro_net;
-	काष्ठा rcu_head		rcu;
-पूर्ण;
+	int			nlgroup;
+	const struct nla_policy	*policy;
+	struct list_head	rules_list;
+	struct module		*owner;
+	struct net		*fro_net;
+	struct rcu_head		rcu;
+};
 
-काष्ठा fib_rule_notअगरier_info अणु
-	काष्ठा fib_notअगरier_info info; /* must be first */
-	काष्ठा fib_rule *rule;
-पूर्ण;
+struct fib_rule_notifier_info {
+	struct fib_notifier_info info; /* must be first */
+	struct fib_rule *rule;
+};
 
-#घोषणा FRA_GENERIC_POLICY \
-	[FRA_UNSPEC]	= अणु .strict_start_type = FRA_DPORT_RANGE + 1 पूर्ण, \
-	[FRA_IIFNAME]	= अणु .type = NLA_STRING, .len = IFNAMSIZ - 1 पूर्ण, \
-	[FRA_OIFNAME]	= अणु .type = NLA_STRING, .len = IFNAMSIZ - 1 पूर्ण, \
-	[FRA_PRIORITY]	= अणु .type = NLA_U32 पूर्ण, \
-	[FRA_FWMARK]	= अणु .type = NLA_U32 पूर्ण, \
-	[FRA_TUN_ID]	= अणु .type = NLA_U64 पूर्ण, \
-	[FRA_FWMASK]	= अणु .type = NLA_U32 पूर्ण, \
-	[FRA_TABLE]     = अणु .type = NLA_U32 पूर्ण, \
-	[FRA_SUPPRESS_PREFIXLEN] = अणु .type = NLA_U32 पूर्ण, \
-	[FRA_SUPPRESS_IFGROUP] = अणु .type = NLA_U32 पूर्ण, \
-	[FRA_GOTO]	= अणु .type = NLA_U32 पूर्ण, \
-	[FRA_L3MDEV]	= अणु .type = NLA_U8 पूर्ण, \
-	[FRA_UID_RANGE]	= अणु .len = माप(काष्ठा fib_rule_uid_range) पूर्ण, \
-	[FRA_PROTOCOL]  = अणु .type = NLA_U8 पूर्ण, \
-	[FRA_IP_PROTO]  = अणु .type = NLA_U8 पूर्ण, \
-	[FRA_SPORT_RANGE] = अणु .len = माप(काष्ठा fib_rule_port_range) पूर्ण, \
-	[FRA_DPORT_RANGE] = अणु .len = माप(काष्ठा fib_rule_port_range) पूर्ण
+#define FRA_GENERIC_POLICY \
+	[FRA_UNSPEC]	= { .strict_start_type = FRA_DPORT_RANGE + 1 }, \
+	[FRA_IIFNAME]	= { .type = NLA_STRING, .len = IFNAMSIZ - 1 }, \
+	[FRA_OIFNAME]	= { .type = NLA_STRING, .len = IFNAMSIZ - 1 }, \
+	[FRA_PRIORITY]	= { .type = NLA_U32 }, \
+	[FRA_FWMARK]	= { .type = NLA_U32 }, \
+	[FRA_TUN_ID]	= { .type = NLA_U64 }, \
+	[FRA_FWMASK]	= { .type = NLA_U32 }, \
+	[FRA_TABLE]     = { .type = NLA_U32 }, \
+	[FRA_SUPPRESS_PREFIXLEN] = { .type = NLA_U32 }, \
+	[FRA_SUPPRESS_IFGROUP] = { .type = NLA_U32 }, \
+	[FRA_GOTO]	= { .type = NLA_U32 }, \
+	[FRA_L3MDEV]	= { .type = NLA_U8 }, \
+	[FRA_UID_RANGE]	= { .len = sizeof(struct fib_rule_uid_range) }, \
+	[FRA_PROTOCOL]  = { .type = NLA_U8 }, \
+	[FRA_IP_PROTO]  = { .type = NLA_U8 }, \
+	[FRA_SPORT_RANGE] = { .len = sizeof(struct fib_rule_port_range) }, \
+	[FRA_DPORT_RANGE] = { .len = sizeof(struct fib_rule_port_range) }
 
 
-अटल अंतरभूत व्योम fib_rule_get(काष्ठा fib_rule *rule)
-अणु
+static inline void fib_rule_get(struct fib_rule *rule)
+{
 	refcount_inc(&rule->refcnt);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम fib_rule_put(काष्ठा fib_rule *rule)
-अणु
-	अगर (refcount_dec_and_test(&rule->refcnt))
-		kमुक्त_rcu(rule, rcu);
-पूर्ण
+static inline void fib_rule_put(struct fib_rule *rule)
+{
+	if (refcount_dec_and_test(&rule->refcnt))
+		kfree_rcu(rule, rcu);
+}
 
-#अगर_घोषित CONFIG_NET_L3_MASTER_DEV
-अटल अंतरभूत u32 fib_rule_get_table(काष्ठा fib_rule *rule,
-				     काष्ठा fib_lookup_arg *arg)
-अणु
-	वापस rule->l3mdev ? arg->table : rule->table;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत u32 fib_rule_get_table(काष्ठा fib_rule *rule,
-				     काष्ठा fib_lookup_arg *arg)
-अणु
-	वापस rule->table;
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_NET_L3_MASTER_DEV
+static inline u32 fib_rule_get_table(struct fib_rule *rule,
+				     struct fib_lookup_arg *arg)
+{
+	return rule->l3mdev ? arg->table : rule->table;
+}
+#else
+static inline u32 fib_rule_get_table(struct fib_rule *rule,
+				     struct fib_lookup_arg *arg)
+{
+	return rule->table;
+}
+#endif
 
-अटल अंतरभूत u32 frh_get_table(काष्ठा fib_rule_hdr *frh, काष्ठा nlattr **nla)
-अणु
-	अगर (nla[FRA_TABLE])
-		वापस nla_get_u32(nla[FRA_TABLE]);
-	वापस frh->table;
-पूर्ण
+static inline u32 frh_get_table(struct fib_rule_hdr *frh, struct nlattr **nla)
+{
+	if (nla[FRA_TABLE])
+		return nla_get_u32(nla[FRA_TABLE]);
+	return frh->table;
+}
 
-अटल अंतरभूत bool fib_rule_port_range_set(स्थिर काष्ठा fib_rule_port_range *range)
-अणु
-	वापस range->start != 0 && range->end != 0;
-पूर्ण
+static inline bool fib_rule_port_range_set(const struct fib_rule_port_range *range)
+{
+	return range->start != 0 && range->end != 0;
+}
 
-अटल अंतरभूत bool fib_rule_port_inrange(स्थिर काष्ठा fib_rule_port_range *a,
+static inline bool fib_rule_port_inrange(const struct fib_rule_port_range *a,
 					 __be16 port)
-अणु
-	वापस ntohs(port) >= a->start &&
+{
+	return ntohs(port) >= a->start &&
 		ntohs(port) <= a->end;
-पूर्ण
+}
 
-अटल अंतरभूत bool fib_rule_port_range_valid(स्थिर काष्ठा fib_rule_port_range *a)
-अणु
-	वापस a->start != 0 && a->end != 0 && a->end < 0xffff &&
+static inline bool fib_rule_port_range_valid(const struct fib_rule_port_range *a)
+{
+	return a->start != 0 && a->end != 0 && a->end < 0xffff &&
 		a->start <= a->end;
-पूर्ण
+}
 
-अटल अंतरभूत bool fib_rule_port_range_compare(काष्ठा fib_rule_port_range *a,
-					       काष्ठा fib_rule_port_range *b)
-अणु
-	वापस a->start == b->start &&
+static inline bool fib_rule_port_range_compare(struct fib_rule_port_range *a,
+					       struct fib_rule_port_range *b)
+{
+	return a->start == b->start &&
 		a->end == b->end;
-पूर्ण
+}
 
-अटल अंतरभूत bool fib_rule_requires_fldissect(काष्ठा fib_rule *rule)
-अणु
-	वापस rule->iअगरindex != LOOPBACK_IFINDEX && (rule->ip_proto ||
+static inline bool fib_rule_requires_fldissect(struct fib_rule *rule)
+{
+	return rule->iifindex != LOOPBACK_IFINDEX && (rule->ip_proto ||
 		fib_rule_port_range_set(&rule->sport_range) ||
 		fib_rule_port_range_set(&rule->dport_range));
-पूर्ण
+}
 
-काष्ठा fib_rules_ops *fib_rules_रेजिस्टर(स्थिर काष्ठा fib_rules_ops *,
-					 काष्ठा net *);
-व्योम fib_rules_unरेजिस्टर(काष्ठा fib_rules_ops *);
+struct fib_rules_ops *fib_rules_register(const struct fib_rules_ops *,
+					 struct net *);
+void fib_rules_unregister(struct fib_rules_ops *);
 
-पूर्णांक fib_rules_lookup(काष्ठा fib_rules_ops *, काष्ठा flowi *, पूर्णांक flags,
-		     काष्ठा fib_lookup_arg *);
-पूर्णांक fib_शेष_rule_add(काष्ठा fib_rules_ops *, u32 pref, u32 table,
+int fib_rules_lookup(struct fib_rules_ops *, struct flowi *, int flags,
+		     struct fib_lookup_arg *);
+int fib_default_rule_add(struct fib_rules_ops *, u32 pref, u32 table,
 			 u32 flags);
-bool fib_rule_matchall(स्थिर काष्ठा fib_rule *rule);
-पूर्णांक fib_rules_dump(काष्ठा net *net, काष्ठा notअगरier_block *nb, पूर्णांक family,
-		   काष्ठा netlink_ext_ack *extack);
-अचिन्हित पूर्णांक fib_rules_seq_पढ़ो(काष्ठा net *net, पूर्णांक family);
+bool fib_rule_matchall(const struct fib_rule *rule);
+int fib_rules_dump(struct net *net, struct notifier_block *nb, int family,
+		   struct netlink_ext_ack *extack);
+unsigned int fib_rules_seq_read(struct net *net, int family);
 
-पूर्णांक fib_nl_newrule(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
-		   काष्ठा netlink_ext_ack *extack);
-पूर्णांक fib_nl_delrule(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
-		   काष्ठा netlink_ext_ack *extack);
+int fib_nl_newrule(struct sk_buff *skb, struct nlmsghdr *nlh,
+		   struct netlink_ext_ack *extack);
+int fib_nl_delrule(struct sk_buff *skb, struct nlmsghdr *nlh,
+		   struct netlink_ext_ack *extack);
 
-INसूचीECT_CALLABLE_DECLARE(पूर्णांक fib6_rule_match(काष्ठा fib_rule *rule,
-					    काष्ठा flowi *fl, पूर्णांक flags));
-INसूचीECT_CALLABLE_DECLARE(पूर्णांक fib4_rule_match(काष्ठा fib_rule *rule,
-					    काष्ठा flowi *fl, पूर्णांक flags));
+INDIRECT_CALLABLE_DECLARE(int fib6_rule_match(struct fib_rule *rule,
+					    struct flowi *fl, int flags));
+INDIRECT_CALLABLE_DECLARE(int fib4_rule_match(struct fib_rule *rule,
+					    struct flowi *fl, int flags));
 
-INसूचीECT_CALLABLE_DECLARE(पूर्णांक fib6_rule_action(काष्ठा fib_rule *rule,
-			    काष्ठा flowi *flp, पूर्णांक flags,
-			    काष्ठा fib_lookup_arg *arg));
-INसूचीECT_CALLABLE_DECLARE(पूर्णांक fib4_rule_action(काष्ठा fib_rule *rule,
-			    काष्ठा flowi *flp, पूर्णांक flags,
-			    काष्ठा fib_lookup_arg *arg));
+INDIRECT_CALLABLE_DECLARE(int fib6_rule_action(struct fib_rule *rule,
+			    struct flowi *flp, int flags,
+			    struct fib_lookup_arg *arg));
+INDIRECT_CALLABLE_DECLARE(int fib4_rule_action(struct fib_rule *rule,
+			    struct flowi *flp, int flags,
+			    struct fib_lookup_arg *arg));
 
-INसूचीECT_CALLABLE_DECLARE(bool fib6_rule_suppress(काष्ठा fib_rule *rule,
-						काष्ठा fib_lookup_arg *arg));
-INसूचीECT_CALLABLE_DECLARE(bool fib4_rule_suppress(काष्ठा fib_rule *rule,
-						काष्ठा fib_lookup_arg *arg));
-#पूर्ण_अगर
+INDIRECT_CALLABLE_DECLARE(bool fib6_rule_suppress(struct fib_rule *rule,
+						struct fib_lookup_arg *arg));
+INDIRECT_CALLABLE_DECLARE(bool fib4_rule_suppress(struct fib_rule *rule,
+						struct fib_lookup_arg *arg));
+#endif

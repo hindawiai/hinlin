@@ -1,218 +1,217 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Ranकरोmness driver क्रम virtio
+ * Randomness driver for virtio
  *  Copyright (C) 2007, 2008 Rusty Russell IBM Corporation
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/hw_अक्रमom.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/virtपन.स>
-#समावेश <linux/virtio_rng.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
+#include <linux/err.h>
+#include <linux/hw_random.h>
+#include <linux/scatterlist.h>
+#include <linux/spinlock.h>
+#include <linux/virtio.h>
+#include <linux/virtio_rng.h>
+#include <linux/module.h>
+#include <linux/slab.h>
 
-अटल DEFINE_IDA(rng_index_ida);
+static DEFINE_IDA(rng_index_ida);
 
-काष्ठा virtrng_info अणु
-	काष्ठा hwrng hwrng;
-	काष्ठा virtqueue *vq;
-	काष्ठा completion have_data;
-	अक्षर name[25];
-	अचिन्हित पूर्णांक data_avail;
-	पूर्णांक index;
+struct virtrng_info {
+	struct hwrng hwrng;
+	struct virtqueue *vq;
+	struct completion have_data;
+	char name[25];
+	unsigned int data_avail;
+	int index;
 	bool busy;
-	bool hwrng_रेजिस्टर_करोne;
-	bool hwrng_हटाओd;
-पूर्ण;
+	bool hwrng_register_done;
+	bool hwrng_removed;
+};
 
-अटल व्योम अक्रमom_recv_करोne(काष्ठा virtqueue *vq)
-अणु
-	काष्ठा virtrng_info *vi = vq->vdev->priv;
+static void random_recv_done(struct virtqueue *vq)
+{
+	struct virtrng_info *vi = vq->vdev->priv;
 
 	/* We can get spurious callbacks, e.g. shared IRQs + virtio_pci. */
-	अगर (!virtqueue_get_buf(vi->vq, &vi->data_avail))
-		वापस;
+	if (!virtqueue_get_buf(vi->vq, &vi->data_avail))
+		return;
 
 	complete(&vi->have_data);
-पूर्ण
+}
 
-/* The host will fill any buffer we give it with sweet, sweet अक्रमomness. */
-अटल व्योम रेजिस्टर_buffer(काष्ठा virtrng_info *vi, u8 *buf, माप_प्रकार size)
-अणु
-	काष्ठा scatterlist sg;
+/* The host will fill any buffer we give it with sweet, sweet randomness. */
+static void register_buffer(struct virtrng_info *vi, u8 *buf, size_t size)
+{
+	struct scatterlist sg;
 
 	sg_init_one(&sg, buf, size);
 
-	/* There should always be room क्रम one buffer. */
+	/* There should always be room for one buffer. */
 	virtqueue_add_inbuf(vi->vq, &sg, 1, buf, GFP_KERNEL);
 
 	virtqueue_kick(vi->vq);
-पूर्ण
+}
 
-अटल पूर्णांक virtio_पढ़ो(काष्ठा hwrng *rng, व्योम *buf, माप_प्रकार size, bool रुको)
-अणु
-	पूर्णांक ret;
-	काष्ठा virtrng_info *vi = (काष्ठा virtrng_info *)rng->priv;
+static int virtio_read(struct hwrng *rng, void *buf, size_t size, bool wait)
+{
+	int ret;
+	struct virtrng_info *vi = (struct virtrng_info *)rng->priv;
 
-	अगर (vi->hwrng_हटाओd)
-		वापस -ENODEV;
+	if (vi->hwrng_removed)
+		return -ENODEV;
 
-	अगर (!vi->busy) अणु
+	if (!vi->busy) {
 		vi->busy = true;
 		reinit_completion(&vi->have_data);
-		रेजिस्टर_buffer(vi, buf, size);
-	पूर्ण
+		register_buffer(vi, buf, size);
+	}
 
-	अगर (!रुको)
-		वापस 0;
+	if (!wait)
+		return 0;
 
-	ret = रुको_क्रम_completion_समाप्तable(&vi->have_data);
-	अगर (ret < 0)
-		वापस ret;
+	ret = wait_for_completion_killable(&vi->have_data);
+	if (ret < 0)
+		return ret;
 
 	vi->busy = false;
 
-	वापस vi->data_avail;
-पूर्ण
+	return vi->data_avail;
+}
 
-अटल व्योम virtio_cleanup(काष्ठा hwrng *rng)
-अणु
-	काष्ठा virtrng_info *vi = (काष्ठा virtrng_info *)rng->priv;
+static void virtio_cleanup(struct hwrng *rng)
+{
+	struct virtrng_info *vi = (struct virtrng_info *)rng->priv;
 
-	अगर (vi->busy)
-		रुको_क्रम_completion(&vi->have_data);
-पूर्ण
+	if (vi->busy)
+		wait_for_completion(&vi->have_data);
+}
 
-अटल पूर्णांक probe_common(काष्ठा virtio_device *vdev)
-अणु
-	पूर्णांक err, index;
-	काष्ठा virtrng_info *vi = शून्य;
+static int probe_common(struct virtio_device *vdev)
+{
+	int err, index;
+	struct virtrng_info *vi = NULL;
 
-	vi = kzalloc(माप(काष्ठा virtrng_info), GFP_KERNEL);
-	अगर (!vi)
-		वापस -ENOMEM;
+	vi = kzalloc(sizeof(struct virtrng_info), GFP_KERNEL);
+	if (!vi)
+		return -ENOMEM;
 
 	vi->index = index = ida_simple_get(&rng_index_ida, 0, 0, GFP_KERNEL);
-	अगर (index < 0) अणु
+	if (index < 0) {
 		err = index;
-		जाओ err_ida;
-	पूर्ण
-	प्र_लिखो(vi->name, "virtio_rng.%d", index);
+		goto err_ida;
+	}
+	sprintf(vi->name, "virtio_rng.%d", index);
 	init_completion(&vi->have_data);
 
-	vi->hwrng = (काष्ठा hwrng) अणु
-		.पढ़ो = virtio_पढ़ो,
+	vi->hwrng = (struct hwrng) {
+		.read = virtio_read,
 		.cleanup = virtio_cleanup,
-		.priv = (अचिन्हित दीर्घ)vi,
+		.priv = (unsigned long)vi,
 		.name = vi->name,
 		.quality = 1000,
-	पूर्ण;
+	};
 	vdev->priv = vi;
 
 	/* We expect a single virtqueue. */
-	vi->vq = virtio_find_single_vq(vdev, अक्रमom_recv_करोne, "input");
-	अगर (IS_ERR(vi->vq)) अणु
+	vi->vq = virtio_find_single_vq(vdev, random_recv_done, "input");
+	if (IS_ERR(vi->vq)) {
 		err = PTR_ERR(vi->vq);
-		जाओ err_find;
-	पूर्ण
+		goto err_find;
+	}
 
-	वापस 0;
+	return 0;
 
 err_find:
-	ida_simple_हटाओ(&rng_index_ida, index);
+	ida_simple_remove(&rng_index_ida, index);
 err_ida:
-	kमुक्त(vi);
-	वापस err;
-पूर्ण
+	kfree(vi);
+	return err;
+}
 
-अटल व्योम हटाओ_common(काष्ठा virtio_device *vdev)
-अणु
-	काष्ठा virtrng_info *vi = vdev->priv;
+static void remove_common(struct virtio_device *vdev)
+{
+	struct virtrng_info *vi = vdev->priv;
 
-	vi->hwrng_हटाओd = true;
+	vi->hwrng_removed = true;
 	vi->data_avail = 0;
 	complete(&vi->have_data);
 	vdev->config->reset(vdev);
 	vi->busy = false;
-	अगर (vi->hwrng_रेजिस्टर_करोne)
-		hwrng_unरेजिस्टर(&vi->hwrng);
+	if (vi->hwrng_register_done)
+		hwrng_unregister(&vi->hwrng);
 	vdev->config->del_vqs(vdev);
-	ida_simple_हटाओ(&rng_index_ida, vi->index);
-	kमुक्त(vi);
-पूर्ण
+	ida_simple_remove(&rng_index_ida, vi->index);
+	kfree(vi);
+}
 
-अटल पूर्णांक virtrng_probe(काष्ठा virtio_device *vdev)
-अणु
-	वापस probe_common(vdev);
-पूर्ण
+static int virtrng_probe(struct virtio_device *vdev)
+{
+	return probe_common(vdev);
+}
 
-अटल व्योम virtrng_हटाओ(काष्ठा virtio_device *vdev)
-अणु
-	हटाओ_common(vdev);
-पूर्ण
+static void virtrng_remove(struct virtio_device *vdev)
+{
+	remove_common(vdev);
+}
 
-अटल व्योम virtrng_scan(काष्ठा virtio_device *vdev)
-अणु
-	काष्ठा virtrng_info *vi = vdev->priv;
-	पूर्णांक err;
+static void virtrng_scan(struct virtio_device *vdev)
+{
+	struct virtrng_info *vi = vdev->priv;
+	int err;
 
-	err = hwrng_रेजिस्टर(&vi->hwrng);
-	अगर (!err)
-		vi->hwrng_रेजिस्टर_करोne = true;
-पूर्ण
+	err = hwrng_register(&vi->hwrng);
+	if (!err)
+		vi->hwrng_register_done = true;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक virtrng_मुक्तze(काष्ठा virtio_device *vdev)
-अणु
-	हटाओ_common(vdev);
-	वापस 0;
-पूर्ण
+#ifdef CONFIG_PM_SLEEP
+static int virtrng_freeze(struct virtio_device *vdev)
+{
+	remove_common(vdev);
+	return 0;
+}
 
-अटल पूर्णांक virtrng_restore(काष्ठा virtio_device *vdev)
-अणु
-	पूर्णांक err;
+static int virtrng_restore(struct virtio_device *vdev)
+{
+	int err;
 
 	err = probe_common(vdev);
-	अगर (!err) अणु
-		काष्ठा virtrng_info *vi = vdev->priv;
+	if (!err) {
+		struct virtrng_info *vi = vdev->priv;
 
 		/*
-		 * Set hwrng_हटाओd to ensure that virtio_पढ़ो()
-		 * करोes not block रुकोing क्रम data beक्रमe the
+		 * Set hwrng_removed to ensure that virtio_read()
+		 * does not block waiting for data before the
 		 * registration is complete.
 		 */
-		vi->hwrng_हटाओd = true;
-		err = hwrng_रेजिस्टर(&vi->hwrng);
-		अगर (!err) अणु
-			vi->hwrng_रेजिस्टर_करोne = true;
-			vi->hwrng_हटाओd = false;
-		पूर्ण
-	पूर्ण
+		vi->hwrng_removed = true;
+		err = hwrng_register(&vi->hwrng);
+		if (!err) {
+			vi->hwrng_register_done = true;
+			vi->hwrng_removed = false;
+		}
+	}
 
-	वापस err;
-पूर्ण
-#पूर्ण_अगर
+	return err;
+}
+#endif
 
-अटल स्थिर काष्ठा virtio_device_id id_table[] = अणु
-	अणु VIRTIO_ID_RNG, VIRTIO_DEV_ANY_ID पूर्ण,
-	अणु 0 पूर्ण,
-पूर्ण;
+static const struct virtio_device_id id_table[] = {
+	{ VIRTIO_ID_RNG, VIRTIO_DEV_ANY_ID },
+	{ 0 },
+};
 
-अटल काष्ठा virtio_driver virtio_rng_driver = अणु
+static struct virtio_driver virtio_rng_driver = {
 	.driver.name =	KBUILD_MODNAME,
 	.driver.owner =	THIS_MODULE,
 	.id_table =	id_table,
 	.probe =	virtrng_probe,
-	.हटाओ =	virtrng_हटाओ,
+	.remove =	virtrng_remove,
 	.scan =		virtrng_scan,
-#अगर_घोषित CONFIG_PM_SLEEP
-	.मुक्तze =	virtrng_मुक्तze,
+#ifdef CONFIG_PM_SLEEP
+	.freeze =	virtrng_freeze,
 	.restore =	virtrng_restore,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
 module_virtio_driver(virtio_rng_driver);
 MODULE_DEVICE_TABLE(virtio, id_table);

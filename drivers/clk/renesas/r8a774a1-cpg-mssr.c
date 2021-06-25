@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * r8a774a1 Clock Pulse Generator / Module Standby and Software Reset
  *
@@ -10,18 +9,18 @@
  * Copyright (C) 2016 Glider bvba
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/soc/renesas/rcar-rst.h>
+#include <linux/device.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/soc/renesas/rcar-rst.h>
 
-#समावेश <dt-bindings/घड़ी/r8a774a1-cpg-mssr.h>
+#include <dt-bindings/clock/r8a774a1-cpg-mssr.h>
 
-#समावेश "renesas-cpg-mssr.h"
-#समावेश "rcar-gen3-cpg.h"
+#include "renesas-cpg-mssr.h"
+#include "rcar-gen3-cpg.h"
 
-क्रमागत clk_ids अणु
-	/* Core Clock Outमाला_दो exported to DT */
+enum clk_ids {
+	/* Core Clock Outputs exported to DT */
 	LAST_DT_CORE_CLK = R8A774A1_CLK_CANFD,
 
 	/* External Input Clocks */
@@ -47,10 +46,10 @@
 
 	/* Module Clocks */
 	MOD_CLK_BASE
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा cpg_core_clk r8a774a1_core_clks[] __initस्थिर = अणु
-	/* External Clock Inमाला_दो */
+static const struct cpg_core_clk r8a774a1_core_clks[] __initconst = {
+	/* External Clock Inputs */
 	DEF_INPUT("extal",      CLK_EXTAL),
 	DEF_INPUT("extalr",     CLK_EXTALR),
 
@@ -78,7 +77,7 @@
 
 	DEF_GEN3_OSC(".r",      CLK_RINT,          CLK_EXTAL,      32),
 
-	/* Core Clock Outमाला_दो */
+	/* Core Clock Outputs */
 	DEF_GEN3_Z("z",		R8A774A1_CLK_Z,     CLK_TYPE_GEN3_Z,  CLK_PLL0, 2, 8),
 	DEF_GEN3_Z("z2",	R8A774A1_CLK_Z2,    CLK_TYPE_GEN3_Z,  CLK_PLL2, 2, 0),
 	DEF_FIXED("ztr",        R8A774A1_CLK_ZTR,   CLK_PLL1_DIV2,  6, 1),
@@ -118,9 +117,9 @@
 	DEF_GEN3_OSC("osc",     R8A774A1_CLK_OSC,   CLK_EXTAL,     8),
 
 	DEF_BASE("r",           R8A774A1_CLK_R,     CLK_TYPE_GEN3_R, CLK_RINT),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mssr_mod_clk r8a774a1_mod_clks[] __initस्थिर = अणु
+static const struct mssr_mod_clk r8a774a1_mod_clks[] __initconst = {
 	DEF_MOD("tmu4",			 121,	R8A774A1_CLK_S0D6),
 	DEF_MOD("tmu3",			 122,	R8A774A1_CLK_S3D2),
 	DEF_MOD("tmu2",			 123,	R8A774A1_CLK_S3D2),
@@ -243,12 +242,12 @@
 	DEF_MOD("scu-src2",		1029,	MOD_CLK_ID(1017)),
 	DEF_MOD("scu-src1",		1030,	MOD_CLK_ID(1017)),
 	DEF_MOD("scu-src0",		1031,	MOD_CLK_ID(1017)),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक r8a774a1_crit_mod_clks[] __initस्थिर = अणु
+static const unsigned int r8a774a1_crit_mod_clks[] __initconst = {
 	MOD_CLK_ID(402),	/* RWDT */
 	MOD_CLK_ID(408),	/* INTC-AP (GIC) */
-पूर्ण;
+};
 
 /*
  * CPG Clock Data
@@ -275,51 +274,51 @@
  * 1  1  1  0	Prohibited setting
  * 1  1  1  1	33.33 / 2	x180	x192	x144	x192	x144	/32
  */
-#घोषणा CPG_PLL_CONFIG_INDEX(md)	((((md) & BIT(14)) >> 11) | \
+#define CPG_PLL_CONFIG_INDEX(md)	((((md) & BIT(14)) >> 11) | \
 					 (((md) & BIT(13)) >> 11) | \
 					 (((md) & BIT(19)) >> 18) | \
 					 (((md) & BIT(17)) >> 17))
 
-अटल स्थिर काष्ठा rcar_gen3_cpg_pll_config cpg_pll_configs[16] __initस्थिर = अणु
-	/* EXTAL भाग	PLL1 mult/भाग	PLL3 mult/भाग	OSC preभाग */
-	अणु 1,		192,	1,	192,	1,	16,	पूर्ण,
-	अणु 1,		192,	1,	128,	1,	16,	पूर्ण,
-	अणु 0, /* Prohibited setting */				पूर्ण,
-	अणु 1,		192,	1,	192,	1,	16,	पूर्ण,
-	अणु 1,		160,	1,	160,	1,	19,	पूर्ण,
-	अणु 1,		160,	1,	106,	1,	19,	पूर्ण,
-	अणु 0, /* Prohibited setting */				पूर्ण,
-	अणु 1,		160,	1,	160,	1,	19,	पूर्ण,
-	अणु 1,		128,	1,	128,	1,	24,	पूर्ण,
-	अणु 1,		128,	1,	84,	1,	24,	पूर्ण,
-	अणु 0, /* Prohibited setting */				पूर्ण,
-	अणु 1,		128,	1,	128,	1,	24,	पूर्ण,
-	अणु 2,		192,	1,	192,	1,	32,	पूर्ण,
-	अणु 2,		192,	1,	128,	1,	32,	पूर्ण,
-	अणु 0, /* Prohibited setting */				पूर्ण,
-	अणु 2,		192,	1,	192,	1,	32,	पूर्ण,
-पूर्ण;
+static const struct rcar_gen3_cpg_pll_config cpg_pll_configs[16] __initconst = {
+	/* EXTAL div	PLL1 mult/div	PLL3 mult/div	OSC prediv */
+	{ 1,		192,	1,	192,	1,	16,	},
+	{ 1,		192,	1,	128,	1,	16,	},
+	{ 0, /* Prohibited setting */				},
+	{ 1,		192,	1,	192,	1,	16,	},
+	{ 1,		160,	1,	160,	1,	19,	},
+	{ 1,		160,	1,	106,	1,	19,	},
+	{ 0, /* Prohibited setting */				},
+	{ 1,		160,	1,	160,	1,	19,	},
+	{ 1,		128,	1,	128,	1,	24,	},
+	{ 1,		128,	1,	84,	1,	24,	},
+	{ 0, /* Prohibited setting */				},
+	{ 1,		128,	1,	128,	1,	24,	},
+	{ 2,		192,	1,	192,	1,	32,	},
+	{ 2,		192,	1,	128,	1,	32,	},
+	{ 0, /* Prohibited setting */				},
+	{ 2,		192,	1,	192,	1,	32,	},
+};
 
-अटल पूर्णांक __init r8a774a1_cpg_mssr_init(काष्ठा device *dev)
-अणु
-	स्थिर काष्ठा rcar_gen3_cpg_pll_config *cpg_pll_config;
+static int __init r8a774a1_cpg_mssr_init(struct device *dev)
+{
+	const struct rcar_gen3_cpg_pll_config *cpg_pll_config;
 	u32 cpg_mode;
-	पूर्णांक error;
+	int error;
 
-	error = rcar_rst_पढ़ो_mode_pins(&cpg_mode);
-	अगर (error)
-		वापस error;
+	error = rcar_rst_read_mode_pins(&cpg_mode);
+	if (error)
+		return error;
 
 	cpg_pll_config = &cpg_pll_configs[CPG_PLL_CONFIG_INDEX(cpg_mode)];
-	अगर (!cpg_pll_config->extal_भाग) अणु
+	if (!cpg_pll_config->extal_div) {
 		dev_err(dev, "Prohibited setting (cpg_mode=0x%x)\n", cpg_mode);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस rcar_gen3_cpg_init(cpg_pll_config, CLK_EXTALR, cpg_mode);
-पूर्ण
+	return rcar_gen3_cpg_init(cpg_pll_config, CLK_EXTALR, cpg_mode);
+}
 
-स्थिर काष्ठा cpg_mssr_info r8a774a1_cpg_mssr_info __initस्थिर = अणु
+const struct cpg_mssr_info r8a774a1_cpg_mssr_info __initconst = {
 	/* Core Clocks */
 	.core_clks = r8a774a1_core_clks,
 	.num_core_clks = ARRAY_SIZE(r8a774a1_core_clks),
@@ -337,5 +336,5 @@
 
 	/* Callbacks */
 	.init = r8a774a1_cpg_mssr_init,
-	.cpg_clk_रेजिस्टर = rcar_gen3_cpg_clk_रेजिस्टर,
-पूर्ण;
+	.cpg_clk_register = rcar_gen3_cpg_clk_register,
+};

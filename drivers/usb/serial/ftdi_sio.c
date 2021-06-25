@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * USB FTDI SIO driver
  *
  *	Copyright (C) 2009 - 2013
  *	    Johan Hovold (jhovold@gmail.com)
  *	Copyright (C) 1999 - 2001
- *	    Greg Kroah-Harपंचांगan (greg@kroah.com)
+ *	    Greg Kroah-Hartman (greg@kroah.com)
  *          Bill Ryder (bryder@sgi.com)
  *	Copyright (C) 2002
  *	    Kuba Ober (kuba@mareimbrium.org)
  *
- * See Documentation/usb/usb-serial.rst क्रम more inक्रमmation on using this
+ * See Documentation/usb/usb-serial.rst for more information on using this
  * driver
  *
- * See http://ftdi-usb-sio.sourceक्रमge.net क्रम up to date testing info
- *	and extra करोcumentation
+ * See http://ftdi-usb-sio.sourceforge.net for up to date testing info
+ *	and extra documentation
  *
  * Change entries from 2004 and earlier can be found in versions of this
  * file in kernel versions prior to the 2.6.24 release.
@@ -23,120 +22,120 @@
  */
 
 /* Bill Ryder - bryder@sgi.com - wrote the FTDI_SIO implementation */
-/* Thanx to FTDI क्रम so kindly providing details of the protocol required */
+/* Thanx to FTDI for so kindly providing details of the protocol required */
 /*   to talk to the device */
-/* Thanx to gkh and the rest of the usb dev group क्रम all code I have
+/* Thanx to gkh and the rest of the usb dev group for all code I have
    assimilated :-) */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_driver.h>
-#समावेश <linux/tty_flip.h>
-#समावेश <linux/module.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/serial.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/usb/serial.h>
-#समावेश "ftdi_sio.h"
-#समावेश "ftdi_sio_ids.h"
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/slab.h>
+#include <linux/tty.h>
+#include <linux/tty_driver.h>
+#include <linux/tty_flip.h>
+#include <linux/module.h>
+#include <linux/spinlock.h>
+#include <linux/mutex.h>
+#include <linux/uaccess.h>
+#include <linux/usb.h>
+#include <linux/serial.h>
+#include <linux/gpio/driver.h>
+#include <linux/usb/serial.h>
+#include "ftdi_sio.h"
+#include "ftdi_sio_ids.h"
 
-#घोषणा DRIVER_AUTHOR "Greg Kroah-Hartman <greg@kroah.com>, Bill Ryder <bryder@sgi.com>, Kuba Ober <kuba@mareimbrium.org>, Andreas Mohr, Johan Hovold <jhovold@gmail.com>"
-#घोषणा DRIVER_DESC "USB FTDI Serial Converters Driver"
+#define DRIVER_AUTHOR "Greg Kroah-Hartman <greg@kroah.com>, Bill Ryder <bryder@sgi.com>, Kuba Ober <kuba@mareimbrium.org>, Andreas Mohr, Johan Hovold <jhovold@gmail.com>"
+#define DRIVER_DESC "USB FTDI Serial Converters Driver"
 
 
-काष्ठा ftdi_निजी अणु
-	क्रमागत ftdi_chip_type chip_type;
+struct ftdi_private {
+	enum ftdi_chip_type chip_type;
 				/* type of device, either SIO or FT8U232AM */
-	पूर्णांक baud_base;		/* baud base घड़ी क्रम भागisor setting */
-	पूर्णांक custom_भागisor;	/* custom_भागisor kludge, this is क्रम
-				   baud_base (dअगरferent from what goes to the
+	int baud_base;		/* baud base clock for divisor setting */
+	int custom_divisor;	/* custom_divisor kludge, this is for
+				   baud_base (different from what goes to the
 				   chip!) */
-	u16 last_set_data_value; /* the last data state set - needed क्रम करोing
-				  * a अवरोध
+	u16 last_set_data_value; /* the last data state set - needed for doing
+				  * a break
 				  */
-	पूर्णांक flags;		/* some ASYNC_xxxx flags are supported */
-	अचिन्हित दीर्घ last_dtr_rts;	/* saved modem control outमाला_दो */
-	अक्षर prev_status;        /* Used क्रम TIOCMIWAIT */
-	अक्षर transmit_empty;	/* If transmitter is empty or not */
-	u16 पूर्णांकerface;		/* FT2232C, FT2232H or FT4232H port पूर्णांकerface
-				   (0 क्रम FT232/245) */
+	int flags;		/* some ASYNC_xxxx flags are supported */
+	unsigned long last_dtr_rts;	/* saved modem control outputs */
+	char prev_status;        /* Used for TIOCMIWAIT */
+	char transmit_empty;	/* If transmitter is empty or not */
+	u16 interface;		/* FT2232C, FT2232H or FT4232H port interface
+				   (0 for FT232/245) */
 
-	speed_t क्रमce_baud;	/* अगर non-zero, क्रमce the baud rate to
+	speed_t force_baud;	/* if non-zero, force the baud rate to
 				   this value */
-	पूर्णांक क्रमce_rtscts;	/* अगर non-zero, क्रमce RTS-CTS to always
+	int force_rtscts;	/* if non-zero, force RTS-CTS to always
 				   be enabled */
 
-	अचिन्हित पूर्णांक latency;		/* latency setting in use */
-	अचिन्हित लघु max_packet_size;
-	काष्ठा mutex cfg_lock; /* Aव्योम mess by parallel calls of config ioctl() and change_speed() */
-#अगर_घोषित CONFIG_GPIOLIB
-	काष्ठा gpio_chip gc;
-	काष्ठा mutex gpio_lock;	/* protects GPIO state */
-	bool gpio_रेजिस्टरed;	/* is the gpiochip in kernel रेजिस्टरed */
-	bool gpio_used;		/* true अगर the user requested a gpio */
+	unsigned int latency;		/* latency setting in use */
+	unsigned short max_packet_size;
+	struct mutex cfg_lock; /* Avoid mess by parallel calls of config ioctl() and change_speed() */
+#ifdef CONFIG_GPIOLIB
+	struct gpio_chip gc;
+	struct mutex gpio_lock;	/* protects GPIO state */
+	bool gpio_registered;	/* is the gpiochip in kernel registered */
+	bool gpio_used;		/* true if the user requested a gpio */
 	u8 gpio_altfunc;	/* which pins are in gpio mode */
 	u8 gpio_output;		/* pin directions cache */
-	u8 gpio_value;		/* pin value क्रम outमाला_दो */
-#पूर्ण_अगर
-पूर्ण;
+	u8 gpio_value;		/* pin value for outputs */
+#endif
+};
 
-/* काष्ठा ftdi_sio_quirk is used by devices requiring special attention. */
-काष्ठा ftdi_sio_quirk अणु
-	पूर्णांक (*probe)(काष्ठा usb_serial *);
-	/* Special settings क्रम probed ports. */
-	व्योम (*port_probe)(काष्ठा ftdi_निजी *);
-पूर्ण;
+/* struct ftdi_sio_quirk is used by devices requiring special attention. */
+struct ftdi_sio_quirk {
+	int (*probe)(struct usb_serial *);
+	/* Special settings for probed ports. */
+	void (*port_probe)(struct ftdi_private *);
+};
 
-अटल पूर्णांक   ftdi_jtag_probe(काष्ठा usb_serial *serial);
-अटल पूर्णांक   ftdi_NDI_device_setup(काष्ठा usb_serial *serial);
-अटल पूर्णांक   ftdi_sपंचांगclite_probe(काष्ठा usb_serial *serial);
-अटल पूर्णांक   ftdi_8u2232c_probe(काष्ठा usb_serial *serial);
-अटल व्योम  ftdi_USB_UIRT_setup(काष्ठा ftdi_निजी *priv);
-अटल व्योम  ftdi_HE_TIRA1_setup(काष्ठा ftdi_निजी *priv);
+static int   ftdi_jtag_probe(struct usb_serial *serial);
+static int   ftdi_NDI_device_setup(struct usb_serial *serial);
+static int   ftdi_stmclite_probe(struct usb_serial *serial);
+static int   ftdi_8u2232c_probe(struct usb_serial *serial);
+static void  ftdi_USB_UIRT_setup(struct ftdi_private *priv);
+static void  ftdi_HE_TIRA1_setup(struct ftdi_private *priv);
 
-अटल स्थिर काष्ठा ftdi_sio_quirk ftdi_jtag_quirk = अणु
+static const struct ftdi_sio_quirk ftdi_jtag_quirk = {
 	.probe	= ftdi_jtag_probe,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ftdi_sio_quirk ftdi_NDI_device_quirk = अणु
+static const struct ftdi_sio_quirk ftdi_NDI_device_quirk = {
 	.probe	= ftdi_NDI_device_setup,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ftdi_sio_quirk ftdi_USB_UIRT_quirk = अणु
+static const struct ftdi_sio_quirk ftdi_USB_UIRT_quirk = {
 	.port_probe = ftdi_USB_UIRT_setup,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ftdi_sio_quirk ftdi_HE_TIRA1_quirk = अणु
+static const struct ftdi_sio_quirk ftdi_HE_TIRA1_quirk = {
 	.port_probe = ftdi_HE_TIRA1_setup,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ftdi_sio_quirk ftdi_sपंचांगclite_quirk = अणु
-	.probe	= ftdi_sपंचांगclite_probe,
-पूर्ण;
+static const struct ftdi_sio_quirk ftdi_stmclite_quirk = {
+	.probe	= ftdi_stmclite_probe,
+};
 
-अटल स्थिर काष्ठा ftdi_sio_quirk ftdi_8u2232c_quirk = अणु
+static const struct ftdi_sio_quirk ftdi_8u2232c_quirk = {
 	.probe	= ftdi_8u2232c_probe,
-पूर्ण;
+};
 
 /*
- * The 8U232AM has the same API as the sio except क्रम:
+ * The 8U232AM has the same API as the sio except for:
  * - it can support MUCH higher baudrates; up to:
- *   o 921600 क्रम RS232 and 2000000 क्रम RS422/485 at 48MHz
+ *   o 921600 for RS232 and 2000000 for RS422/485 at 48MHz
  *   o 230400 at 12MHz
- *   so .. 8U232AM's baudrate setting codes are dअगरferent
+ *   so .. 8U232AM's baudrate setting codes are different
  * - it has a two byte status code.
- * - it वापसs अक्षरacters every 16ms (the FTDI करोes it every 40ms)
+ * - it returns characters every 16ms (the FTDI does it every 40ms)
  *
- * the bcdDevice value is used to dअगरferentiate FT232BM and FT245BM from
+ * the bcdDevice value is used to differentiate FT232BM and FT245BM from
  * the earlier FT8U232AM and FT8U232BM.  For now, include all known VID/PID
  * combinations in both tables.
- * FIXME: perhaps bcdDevice can also identअगरy 12MHz FT8U232AM devices,
- * but I करोn't know अगर those ever went पूर्णांकo mass production. [Ian Abbott]
+ * FIXME: perhaps bcdDevice can also identify 12MHz FT8U232AM devices,
+ * but I don't know if those ever went into mass production. [Ian Abbott]
  */
 
 
@@ -145,914 +144,914 @@
  * Device ID not listed? Test it using
  * /sys/bus/usb-serial/drivers/ftdi_sio/new_id and send a patch or report.
  */
-अटल स्थिर काष्ठा usb_device_id id_table_combined[] = अणु
-	अणु USB_DEVICE(FTDI_VID, FTDI_BRICK_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ZEITCONTROL_TAGTRACE_MIFARE_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_CTI_MINI_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_CTI_न_अंकO_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_AMC232_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_CANUSB_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_CANDAPTER_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_BM_ATOM_न_अंकO_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_NXTCAM_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_EV3CON_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_SCS_DEVICE_0_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_SCS_DEVICE_1_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_SCS_DEVICE_2_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_SCS_DEVICE_3_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_SCS_DEVICE_4_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_SCS_DEVICE_5_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_SCS_DEVICE_6_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_SCS_DEVICE_7_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_USINT_CAT_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_USINT_WKEY_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_USINT_RS232_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ACTZWAVE_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_IRTRANS_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_IPLUS_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_IPLUS2_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_DMX4ALL) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_SIO_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_8U232AM_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_8U232AM_ALT_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_232RL_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_8U2232C_PID) ,
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_8u2232c_quirk पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_4232H_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_232H_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_FTX_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_MICRO_CHAMELEON_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_RELAIS_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_OPENDCC_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_OPENDCC_SNIFFER_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_OPENDCC_THROTTLE_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_OPENDCC_GATEWAY_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_OPENDCC_GBM_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_OPENDCC_GBM_BOOST_PID) पूर्ण,
-	अणु USB_DEVICE(NEWPORT_VID, NEWPORT_AGILIS_PID) पूर्ण,
-	अणु USB_DEVICE(NEWPORT_VID, NEWPORT_CONEX_CC_PID) पूर्ण,
-	अणु USB_DEVICE(NEWPORT_VID, NEWPORT_CONEX_AGP_PID) पूर्ण,
-	अणु USB_DEVICE(INTERBIOMETRICS_VID, INTERBIOMETRICS_IOBOARD_PID) पूर्ण,
-	अणु USB_DEVICE(INTERBIOMETRICS_VID, INTERBIOMETRICS_MINI_IOBOARD_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_SPROG_II) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_TAGSYS_LP101_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_TAGSYS_P200X_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_LENZ_LIUSB_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_XF_632_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_XF_634_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_XF_547_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_XF_633_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_XF_631_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_XF_635_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_XF_640_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_XF_642_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_DSS20_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_URBAN_0_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_URBAN_1_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_NF_RIC_VID, FTDI_NF_RIC_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_VNHCPCUSB_D_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_MTXORB_0_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_MTXORB_1_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_MTXORB_2_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_MTXORB_3_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_MTXORB_4_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_MTXORB_5_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_MTXORB_6_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_R2000KU_TRUE_RNG) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_VARDAAN_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0100_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0101_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0102_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0103_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0104_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0105_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0106_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0107_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0108_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0109_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_010A_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_010B_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_010C_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_010D_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_010E_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_010F_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0110_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0111_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0112_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0113_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0114_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0115_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0116_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0117_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0118_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0119_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_011A_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_011B_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_011C_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_011D_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_011E_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_011F_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0120_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0121_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0122_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0123_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0124_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0125_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0126_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0127_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0128_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0129_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_012A_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_012B_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_012C_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_012D_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_012E_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_012F_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0130_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0131_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0132_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0133_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0134_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0135_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0136_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0137_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0138_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0139_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_013A_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_013B_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_013C_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_013D_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_013E_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_013F_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0140_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0141_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0142_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0143_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0144_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0145_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0146_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0147_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0148_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0149_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_014A_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_014B_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_014C_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_014D_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_014E_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_014F_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0150_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0151_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0152_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0153_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0154_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0155_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0156_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0157_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0158_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0159_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_015A_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_015B_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_015C_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_015D_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_015E_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_015F_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0160_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0161_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0162_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0163_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0164_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0165_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0166_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0167_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0168_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0169_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_016A_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_016B_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_016C_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_016D_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_016E_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_016F_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0170_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0171_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0172_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0173_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0174_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0175_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0176_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0177_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0178_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0179_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_017A_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_017B_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_017C_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_017D_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_017E_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_017F_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0180_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0181_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0182_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0183_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0184_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0185_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0186_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0187_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0188_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0189_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_018A_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_018B_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_018C_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_018D_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_018E_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_018F_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0190_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0191_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0192_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0193_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0194_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0195_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0196_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0197_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0198_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0199_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_019A_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_019B_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_019C_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_019D_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_019E_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_019F_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01A0_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01A1_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01A2_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01A3_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01A4_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01A5_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01A6_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01A7_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01A8_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01A9_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01AA_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01AB_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01AC_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01AD_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01AE_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01AF_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01B0_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01B1_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01B2_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01B3_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01B4_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01B5_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01B6_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01B7_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01B8_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01B9_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01BA_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01BB_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01BC_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01BD_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01BE_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01BF_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01C0_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01C1_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01C2_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01C3_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01C4_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01C5_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01C6_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01C7_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01C8_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01C9_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01CA_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01CB_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01CC_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01CD_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01CE_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01CF_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01D0_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01D1_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01D2_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01D3_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01D4_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01D5_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01D6_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01D7_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01D8_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01D9_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01DA_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01DB_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01DC_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01DD_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01DE_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01DF_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01E0_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01E1_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01E2_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01E3_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01E4_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01E5_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01E6_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01E7_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01E8_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01E9_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01EA_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01EB_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01EC_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01ED_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01EE_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01EF_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01F0_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01F1_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01F2_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01F3_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01F4_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01F5_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01F6_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01F7_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01F8_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01F9_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01FA_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01FB_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01FC_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01FD_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01FE_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01FF_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_4701_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9300_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9301_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9302_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9303_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9304_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9305_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9306_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9307_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9308_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9309_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_930A_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_930B_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_930C_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_930D_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_930E_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_930F_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9310_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9311_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9312_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9313_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9314_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9315_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9316_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9317_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9318_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9319_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_931A_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_931B_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_931C_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_931D_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_931E_PID) पूर्ण,
-	अणु USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_931F_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_PERLE_ULTRAPORT_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_PIEGROUP_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_TNC_X_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_USBX_707_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2101_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2102_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2103_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2104_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2106_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2201_1_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2201_2_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2202_1_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2202_2_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2203_1_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2203_2_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2401_1_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2401_2_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2401_3_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2401_4_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2402_1_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2402_2_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2402_3_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2402_4_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2403_1_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2403_2_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2403_3_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2403_4_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2801_1_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2801_2_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2801_3_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2801_4_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2801_5_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2801_6_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2801_7_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2801_8_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2802_1_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2802_2_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2802_3_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2802_4_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2802_5_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2802_6_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2802_7_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2802_8_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2803_1_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2803_2_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2803_3_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2803_4_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2803_5_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2803_6_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2803_7_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2803_8_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2803R_1_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2803R_2_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2803R_3_PID) पूर्ण,
-	अणु USB_DEVICE(SEALEVEL_VID, SEALEVEL_2803R_4_PID) पूर्ण,
-	अणु USB_DEVICE(IDTECH_VID, IDTECH_IDT1221U_PID) पूर्ण,
-	अणु USB_DEVICE(OCT_VID, OCT_US101_PID) पूर्ण,
-	अणु USB_DEVICE(OCT_VID, OCT_DK201_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_HE_TIRA1_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_HE_TIRA1_quirk पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_USB_UIRT_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_USB_UIRT_quirk पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, PROTEGO_SPECIAL_1) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, PROTEGO_R2X0) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, PROTEGO_SPECIAL_3) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, PROTEGO_SPECIAL_4) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E808_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E809_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E80A_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E80B_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E80C_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E80D_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E80E_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E80F_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E888_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E889_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E88A_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E88B_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E88C_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E88D_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E88E_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E88F_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_UO100_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_UM100_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_UR100_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_ALC8500_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_PYRAMID_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_FHZ1000PC_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_IBS_US485_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_IBS_PICPRO_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_IBS_PCMCIA_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_IBS_PK1_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_IBS_RS232MON_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_IBS_APP70_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_IBS_PEDO_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_IBS_PROD_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_TAVIR_STK500_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_TIAO_UMPA_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_jtag_quirk पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_NT_ORIONLXM_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_jtag_quirk पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_NT_ORIONLX_PLUS_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_NT_ORION_IO_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_NT_ORIONMX_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_SYNAPSE_SS200_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_CUSTOMWARE_MINIPLEX_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_CUSTOMWARE_MINIPLEX2_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_CUSTOMWARE_MINIPLEX2WI_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_CUSTOMWARE_MINIPLEX3_PID) पूर्ण,
+static const struct usb_device_id id_table_combined[] = {
+	{ USB_DEVICE(FTDI_VID, FTDI_BRICK_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ZEITCONTROL_TAGTRACE_MIFARE_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_CTI_MINI_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_CTI_NANO_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_AMC232_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_CANUSB_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_CANDAPTER_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_BM_ATOM_NANO_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_NXTCAM_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_EV3CON_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_SCS_DEVICE_0_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_SCS_DEVICE_1_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_SCS_DEVICE_2_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_SCS_DEVICE_3_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_SCS_DEVICE_4_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_SCS_DEVICE_5_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_SCS_DEVICE_6_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_SCS_DEVICE_7_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_USINT_CAT_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_USINT_WKEY_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_USINT_RS232_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ACTZWAVE_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_IRTRANS_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_IPLUS_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_IPLUS2_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_DMX4ALL) },
+	{ USB_DEVICE(FTDI_VID, FTDI_SIO_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_8U232AM_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_8U232AM_ALT_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_232RL_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_8U2232C_PID) ,
+		.driver_info = (kernel_ulong_t)&ftdi_8u2232c_quirk },
+	{ USB_DEVICE(FTDI_VID, FTDI_4232H_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_232H_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_FTX_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_MICRO_CHAMELEON_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_RELAIS_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_OPENDCC_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_OPENDCC_SNIFFER_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_OPENDCC_THROTTLE_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_OPENDCC_GATEWAY_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_OPENDCC_GBM_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_OPENDCC_GBM_BOOST_PID) },
+	{ USB_DEVICE(NEWPORT_VID, NEWPORT_AGILIS_PID) },
+	{ USB_DEVICE(NEWPORT_VID, NEWPORT_CONEX_CC_PID) },
+	{ USB_DEVICE(NEWPORT_VID, NEWPORT_CONEX_AGP_PID) },
+	{ USB_DEVICE(INTERBIOMETRICS_VID, INTERBIOMETRICS_IOBOARD_PID) },
+	{ USB_DEVICE(INTERBIOMETRICS_VID, INTERBIOMETRICS_MINI_IOBOARD_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_SPROG_II) },
+	{ USB_DEVICE(FTDI_VID, FTDI_TAGSYS_LP101_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_TAGSYS_P200X_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_LENZ_LIUSB_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_XF_632_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_XF_634_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_XF_547_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_XF_633_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_XF_631_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_XF_635_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_XF_640_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_XF_642_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_DSS20_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_URBAN_0_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_URBAN_1_PID) },
+	{ USB_DEVICE(FTDI_NF_RIC_VID, FTDI_NF_RIC_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_VNHCPCUSB_D_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_MTXORB_0_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_MTXORB_1_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_MTXORB_2_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_MTXORB_3_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_MTXORB_4_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_MTXORB_5_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_MTXORB_6_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_R2000KU_TRUE_RNG) },
+	{ USB_DEVICE(FTDI_VID, FTDI_VARDAAN_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0100_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0101_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0102_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0103_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0104_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0105_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0106_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0107_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0108_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0109_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_010A_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_010B_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_010C_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_010D_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_010E_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_010F_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0110_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0111_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0112_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0113_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0114_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0115_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0116_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0117_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0118_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0119_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_011A_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_011B_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_011C_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_011D_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_011E_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_011F_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0120_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0121_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0122_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0123_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0124_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0125_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0126_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0127_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0128_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0129_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_012A_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_012B_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_012C_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_012D_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_012E_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_012F_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0130_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0131_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0132_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0133_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0134_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0135_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0136_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0137_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0138_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0139_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_013A_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_013B_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_013C_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_013D_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_013E_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_013F_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0140_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0141_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0142_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0143_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0144_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0145_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0146_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0147_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0148_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0149_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_014A_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_014B_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_014C_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_014D_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_014E_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_014F_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0150_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0151_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0152_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0153_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0154_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0155_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0156_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0157_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0158_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0159_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_015A_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_015B_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_015C_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_015D_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_015E_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_015F_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0160_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0161_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0162_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0163_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0164_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0165_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0166_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0167_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0168_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0169_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_016A_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_016B_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_016C_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_016D_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_016E_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_016F_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0170_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0171_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0172_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0173_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0174_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0175_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0176_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0177_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0178_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0179_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_017A_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_017B_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_017C_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_017D_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_017E_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_017F_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0180_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0181_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0182_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0183_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0184_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0185_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0186_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0187_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0188_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0189_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_018A_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_018B_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_018C_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_018D_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_018E_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_018F_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0190_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0191_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0192_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0193_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0194_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0195_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0196_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0197_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0198_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_0199_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_019A_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_019B_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_019C_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_019D_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_019E_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_019F_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01A0_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01A1_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01A2_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01A3_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01A4_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01A5_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01A6_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01A7_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01A8_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01A9_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01AA_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01AB_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01AC_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01AD_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01AE_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01AF_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01B0_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01B1_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01B2_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01B3_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01B4_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01B5_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01B6_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01B7_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01B8_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01B9_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01BA_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01BB_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01BC_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01BD_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01BE_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01BF_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01C0_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01C1_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01C2_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01C3_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01C4_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01C5_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01C6_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01C7_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01C8_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01C9_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01CA_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01CB_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01CC_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01CD_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01CE_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01CF_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01D0_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01D1_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01D2_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01D3_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01D4_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01D5_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01D6_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01D7_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01D8_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01D9_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01DA_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01DB_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01DC_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01DD_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01DE_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01DF_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01E0_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01E1_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01E2_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01E3_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01E4_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01E5_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01E6_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01E7_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01E8_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01E9_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01EA_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01EB_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01EC_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01ED_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01EE_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01EF_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01F0_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01F1_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01F2_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01F3_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01F4_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01F5_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01F6_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01F7_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01F8_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01F9_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01FA_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01FB_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01FC_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01FD_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01FE_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_01FF_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_4701_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9300_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9301_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9302_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9303_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9304_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9305_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9306_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9307_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9308_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9309_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_930A_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_930B_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_930C_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_930D_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_930E_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_930F_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9310_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9311_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9312_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9313_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9314_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9315_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9316_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9317_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9318_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_9319_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_931A_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_931B_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_931C_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_931D_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_931E_PID) },
+	{ USB_DEVICE(MTXORB_VID, MTXORB_FTDI_RANGE_931F_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_PERLE_ULTRAPORT_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_PIEGROUP_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_TNC_X_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_USBX_707_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2101_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2102_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2103_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2104_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2106_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2201_1_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2201_2_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2202_1_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2202_2_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2203_1_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2203_2_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2401_1_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2401_2_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2401_3_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2401_4_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2402_1_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2402_2_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2402_3_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2402_4_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2403_1_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2403_2_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2403_3_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2403_4_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2801_1_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2801_2_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2801_3_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2801_4_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2801_5_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2801_6_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2801_7_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2801_8_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2802_1_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2802_2_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2802_3_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2802_4_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2802_5_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2802_6_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2802_7_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2802_8_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2803_1_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2803_2_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2803_3_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2803_4_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2803_5_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2803_6_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2803_7_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2803_8_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2803R_1_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2803R_2_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2803R_3_PID) },
+	{ USB_DEVICE(SEALEVEL_VID, SEALEVEL_2803R_4_PID) },
+	{ USB_DEVICE(IDTECH_VID, IDTECH_IDT1221U_PID) },
+	{ USB_DEVICE(OCT_VID, OCT_US101_PID) },
+	{ USB_DEVICE(OCT_VID, OCT_DK201_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_HE_TIRA1_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_HE_TIRA1_quirk },
+	{ USB_DEVICE(FTDI_VID, FTDI_USB_UIRT_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_USB_UIRT_quirk },
+	{ USB_DEVICE(FTDI_VID, PROTEGO_SPECIAL_1) },
+	{ USB_DEVICE(FTDI_VID, PROTEGO_R2X0) },
+	{ USB_DEVICE(FTDI_VID, PROTEGO_SPECIAL_3) },
+	{ USB_DEVICE(FTDI_VID, PROTEGO_SPECIAL_4) },
+	{ USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E808_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E809_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E80A_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E80B_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E80C_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E80D_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E80E_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E80F_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E888_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E889_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E88A_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E88B_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E88C_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E88D_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E88E_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_GUDEADS_E88F_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_UO100_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_UM100_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_UR100_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_ALC8500_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_PYRAMID_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_FHZ1000PC_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_IBS_US485_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_IBS_PICPRO_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_IBS_PCMCIA_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_IBS_PK1_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_IBS_RS232MON_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_IBS_APP70_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_IBS_PEDO_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_IBS_PROD_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_TAVIR_STK500_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_TIAO_UMPA_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ USB_DEVICE(FTDI_VID, FTDI_NT_ORIONLXM_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ USB_DEVICE(FTDI_VID, FTDI_NT_ORIONLX_PLUS_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_NT_ORION_IO_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_NT_ORIONMX_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_SYNAPSE_SS200_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_CUSTOMWARE_MINIPLEX_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_CUSTOMWARE_MINIPLEX2_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_CUSTOMWARE_MINIPLEX2WI_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_CUSTOMWARE_MINIPLEX3_PID) },
 	/*
 	 * ELV devices:
 	 */
-	अणु USB_DEVICE(FTDI_ELV_VID, FTDI_ELV_WS300_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_USR_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_MSM1_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_KL100_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_WS550_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_EC3000_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_WS888_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_TWS550_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_FEM_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_CLI7000_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_PPS7330_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_TFM100_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_UDF77_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_UIO88_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_UAD8_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_UDA7_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_USI2_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_T1100_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_PCD200_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_ULA200_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_CSI8_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_EM1000DL_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_PCK100_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_RFP500_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_FS20SIG_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_UTP8_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_WS300PC_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_WS444PC_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_FHZ1300PC_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_EM1010PC_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_WS500_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_HS485_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_UMS100_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_TFD128_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_FM3RX_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELV_WS777_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_PALMSENS_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_IVIUM_XSTAT_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, LINX_SDMUSBQSS_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, LINX_MASTERDEVEL2_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, LINX_FUTURE_0_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, LINX_FUTURE_1_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, LINX_FUTURE_2_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_CCSICDU20_0_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_CCSICDU40_1_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_CCSMACHX_2_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_CCSLOAD_N_GO_3_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_CCSICDU64_4_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_CCSPRIME8_5_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, INSIDE_ACCESSO) पूर्ण,
-	अणु USB_DEVICE(INTREPID_VID, INTREPID_VALUECAN_PID) पूर्ण,
-	अणु USB_DEVICE(INTREPID_VID, INTREPID_NEOVI_PID) पूर्ण,
-	अणु USB_DEVICE(FALCOM_VID, FALCOM_TWIST_PID) पूर्ण,
-	अणु USB_DEVICE(FALCOM_VID, FALCOM_SAMBA_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_SUUNTO_SPORTS_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_OCEANIC_PID) पूर्ण,
-	अणु USB_DEVICE(TTI_VID, TTI_QL355P_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_RM_CANVIEW_PID) पूर्ण,
-	अणु USB_DEVICE(ACTON_VID, ACTON_SPECTRAPRO_PID) पूर्ण,
-	अणु USB_DEVICE(CONTEC_VID, CONTEC_COM1USBH_PID) पूर्ण,
-	अणु USB_DEVICE(MITSUBISHI_VID, MITSUBISHI_FXUSB_PID) पूर्ण,
-	अणु USB_DEVICE(BANDB_VID, BANDB_USOTL4_PID) पूर्ण,
-	अणु USB_DEVICE(BANDB_VID, BANDB_USTL4_PID) पूर्ण,
-	अणु USB_DEVICE(BANDB_VID, BANDB_USO9ML2_PID) पूर्ण,
-	अणु USB_DEVICE(BANDB_VID, BANDB_USOPTL4_PID) पूर्ण,
-	अणु USB_DEVICE(BANDB_VID, BANDB_USPTL4_PID) पूर्ण,
-	अणु USB_DEVICE(BANDB_VID, BANDB_USO9ML2DR_2_PID) पूर्ण,
-	अणु USB_DEVICE(BANDB_VID, BANDB_USO9ML2DR_PID) पूर्ण,
-	अणु USB_DEVICE(BANDB_VID, BANDB_USOPTL4DR2_PID) पूर्ण,
-	अणु USB_DEVICE(BANDB_VID, BANDB_USOPTL4DR_PID) पूर्ण,
-	अणु USB_DEVICE(BANDB_VID, BANDB_485USB9F_2W_PID) पूर्ण,
-	अणु USB_DEVICE(BANDB_VID, BANDB_485USB9F_4W_PID) पूर्ण,
-	अणु USB_DEVICE(BANDB_VID, BANDB_232USB9M_PID) पूर्ण,
-	अणु USB_DEVICE(BANDB_VID, BANDB_485USBTB_2W_PID) पूर्ण,
-	अणु USB_DEVICE(BANDB_VID, BANDB_485USBTB_4W_PID) पूर्ण,
-	अणु USB_DEVICE(BANDB_VID, BANDB_TTL5USB9M_PID) पूर्ण,
-	अणु USB_DEVICE(BANDB_VID, BANDB_TTL3USB9M_PID) पूर्ण,
-	अणु USB_DEVICE(BANDB_VID, BANDB_ZZ_PROG1_USB_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, EVER_ECO_PRO_CDS) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_4N_GALAXY_DE_1_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_4N_GALAXY_DE_2_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_4N_GALAXY_DE_3_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, XSENS_CONVERTER_0_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, XSENS_CONVERTER_1_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, XSENS_CONVERTER_2_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, XSENS_CONVERTER_3_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, XSENS_CONVERTER_4_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, XSENS_CONVERTER_5_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, XSENS_CONVERTER_6_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, XSENS_CONVERTER_7_PID) पूर्ण,
-	अणु USB_DEVICE(XSENS_VID, XSENS_AWINDA_DONGLE_PID) पूर्ण,
-	अणु USB_DEVICE(XSENS_VID, XSENS_AWINDA_STATION_PID) पूर्ण,
-	अणु USB_DEVICE(XSENS_VID, XSENS_CONVERTER_PID) पूर्ण,
-	अणु USB_DEVICE(XSENS_VID, XSENS_MTDEVBOARD_PID) पूर्ण,
-	अणु USB_DEVICE(XSENS_VID, XSENS_MTIUSBCONVERTER_PID) पूर्ण,
-	अणु USB_DEVICE(XSENS_VID, XSENS_MTW_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_OMNI1509) पूर्ण,
-	अणु USB_DEVICE(MOBILITY_VID, MOBILITY_USB_SERIAL_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ACTIVE_ROBOTS_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_MHAM_KW_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_MHAM_YS_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_MHAM_Y6_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_MHAM_Y8_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_MHAM_IC_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_MHAM_DB9_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_MHAM_RS232_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_MHAM_Y9_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_TERATRONIK_VCP_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_TERATRONIK_D2XX_PID) पूर्ण,
-	अणु USB_DEVICE(EVOLUTION_VID, EVOLUTION_ER1_PID) पूर्ण,
-	अणु USB_DEVICE(EVOLUTION_VID, EVO_HYBRID_PID) पूर्ण,
-	अणु USB_DEVICE(EVOLUTION_VID, EVO_RCM4_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ARTEMIS_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ATIK_ATK16_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ATIK_ATK16C_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ATIK_ATK16HR_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ATIK_ATK16HRC_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ATIK_ATK16IC_PID) पूर्ण,
-	अणु USB_DEVICE(KOBIL_VID, KOBIL_CONV_B1_PID) पूर्ण,
-	अणु USB_DEVICE(KOBIL_VID, KOBIL_CONV_KAAN_PID) पूर्ण,
-	अणु USB_DEVICE(POSIFLEX_VID, POSIFLEX_PP7000_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_TTUSB_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ECLO_COM_1WIRE_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_WESTREX_MODEL_777_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_WESTREX_MODEL_8900F_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_PCDJ_DAC2_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_RRCIRKITS_LOCOBUFFER_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ASK_RDR400_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_NZR_SEM_USB_PID) पूर्ण,
-	अणु USB_DEVICE(ICOM_VID, ICOM_ID_1_PID) पूर्ण,
-	अणु USB_DEVICE(ICOM_VID, ICOM_OPC_U_UC_PID) पूर्ण,
-	अणु USB_DEVICE(ICOM_VID, ICOM_ID_RP2C1_PID) पूर्ण,
-	अणु USB_DEVICE(ICOM_VID, ICOM_ID_RP2C2_PID) पूर्ण,
-	अणु USB_DEVICE(ICOM_VID, ICOM_ID_RP2D_PID) पूर्ण,
-	अणु USB_DEVICE(ICOM_VID, ICOM_ID_RP2VT_PID) पूर्ण,
-	अणु USB_DEVICE(ICOM_VID, ICOM_ID_RP2VR_PID) पूर्ण,
-	अणु USB_DEVICE(ICOM_VID, ICOM_ID_RP4KVT_PID) पूर्ण,
-	अणु USB_DEVICE(ICOM_VID, ICOM_ID_RP4KVR_PID) पूर्ण,
-	अणु USB_DEVICE(ICOM_VID, ICOM_ID_RP2KVT_PID) पूर्ण,
-	अणु USB_DEVICE(ICOM_VID, ICOM_ID_RP2KVR_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ACG_HFDUAL_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_YEI_SERVOCENTER31_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_THORLABS_PID) पूर्ण,
-	अणु USB_DEVICE(TESTO_VID, TESTO_1_PID) पूर्ण,
-	अणु USB_DEVICE(TESTO_VID, TESTO_3_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_GAMMA_SCOUT_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_TACTRIX_OPENPORT_13M_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_TACTRIX_OPENPORT_13S_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_TACTRIX_OPENPORT_13U_PID) पूर्ण,
-	अणु USB_DEVICE(ELEKTOR_VID, ELEKTOR_FT323R_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_NDI_HUC_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_NDI_device_quirk पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_NDI_SPECTRA_SCU_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_NDI_device_quirk पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_NDI_FUTURE_2_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_NDI_device_quirk पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_NDI_FUTURE_3_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_NDI_device_quirk पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_NDI_AURORA_SCU_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_NDI_device_quirk पूर्ण,
-	अणु USB_DEVICE(TELLDUS_VID, TELLDUS_TELLSTICK_PID) पूर्ण,
-	अणु USB_DEVICE(NOVITUS_VID, NOVITUS_BONO_E_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, RTSYSTEMS_USB_VX8_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_S03_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_59_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_57A_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_57B_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_29A_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_29B_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_29F_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_62B_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_S01_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_63_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_29C_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_81B_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_82B_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_K5D_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_K4Y_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_K5G_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_S05_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_60_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_61_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_62_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_63B_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_64_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_65_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_92_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_92D_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_W5R_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_A5R_PID) पूर्ण,
-	अणु USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_PW1_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_MAXSTREAM_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_PHI_FISCO_PID) पूर्ण,
-	अणु USB_DEVICE(TML_VID, TML_USB_SERIAL_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_ELSTER_UNICOM_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_PROPOX_JTAGCABLEII_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_PROPOX_ISPCABLEIII_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, CYBER_CORTEX_AV_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_jtag_quirk पूर्ण,
-	अणु USB_DEVICE_INTERFACE_NUMBER(OLIMEX_VID, OLIMEX_ARM_USB_OCD_PID, 1) पूर्ण,
-	अणु USB_DEVICE_INTERFACE_NUMBER(OLIMEX_VID, OLIMEX_ARM_USB_OCD_H_PID, 1) पूर्ण,
-	अणु USB_DEVICE_INTERFACE_NUMBER(OLIMEX_VID, OLIMEX_ARM_USB_TINY_PID, 1) पूर्ण,
-	अणु USB_DEVICE_INTERFACE_NUMBER(OLIMEX_VID, OLIMEX_ARM_USB_TINY_H_PID, 1) पूर्ण,
-	अणु USB_DEVICE(FIC_VID, FIC_NEO1973_DEBUG_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_jtag_quirk पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_OOCDLINK_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_jtag_quirk पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, LMI_LM3S_DEVEL_BOARD_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_jtag_quirk पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, LMI_LM3S_EVAL_BOARD_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_jtag_quirk पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, LMI_LM3S_ICDI_BOARD_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_jtag_quirk पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_TURTELIZER_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_jtag_quirk पूर्ण,
-	अणु USB_DEVICE(RATOC_VENDOR_ID, RATOC_PRODUCT_ID_USB60F) पूर्ण,
-	अणु USB_DEVICE(RATOC_VENDOR_ID, RATOC_PRODUCT_ID_SCU18) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_REU_TINY_PID) पूर्ण,
+	{ USB_DEVICE(FTDI_ELV_VID, FTDI_ELV_WS300_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_USR_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_MSM1_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_KL100_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_WS550_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_EC3000_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_WS888_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_TWS550_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_FEM_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_CLI7000_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_PPS7330_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_TFM100_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_UDF77_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_UIO88_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_UAD8_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_UDA7_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_USI2_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_T1100_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_PCD200_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_ULA200_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_CSI8_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_EM1000DL_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_PCK100_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_RFP500_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_FS20SIG_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_UTP8_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_WS300PC_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_WS444PC_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_FHZ1300PC_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_EM1010PC_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_WS500_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_HS485_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_UMS100_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_TFD128_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_FM3RX_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELV_WS777_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_PALMSENS_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_IVIUM_XSTAT_PID) },
+	{ USB_DEVICE(FTDI_VID, LINX_SDMUSBQSS_PID) },
+	{ USB_DEVICE(FTDI_VID, LINX_MASTERDEVEL2_PID) },
+	{ USB_DEVICE(FTDI_VID, LINX_FUTURE_0_PID) },
+	{ USB_DEVICE(FTDI_VID, LINX_FUTURE_1_PID) },
+	{ USB_DEVICE(FTDI_VID, LINX_FUTURE_2_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_CCSICDU20_0_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_CCSICDU40_1_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_CCSMACHX_2_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_CCSLOAD_N_GO_3_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_CCSICDU64_4_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_CCSPRIME8_5_PID) },
+	{ USB_DEVICE(FTDI_VID, INSIDE_ACCESSO) },
+	{ USB_DEVICE(INTREPID_VID, INTREPID_VALUECAN_PID) },
+	{ USB_DEVICE(INTREPID_VID, INTREPID_NEOVI_PID) },
+	{ USB_DEVICE(FALCOM_VID, FALCOM_TWIST_PID) },
+	{ USB_DEVICE(FALCOM_VID, FALCOM_SAMBA_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_SUUNTO_SPORTS_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_OCEANIC_PID) },
+	{ USB_DEVICE(TTI_VID, TTI_QL355P_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_RM_CANVIEW_PID) },
+	{ USB_DEVICE(ACTON_VID, ACTON_SPECTRAPRO_PID) },
+	{ USB_DEVICE(CONTEC_VID, CONTEC_COM1USBH_PID) },
+	{ USB_DEVICE(MITSUBISHI_VID, MITSUBISHI_FXUSB_PID) },
+	{ USB_DEVICE(BANDB_VID, BANDB_USOTL4_PID) },
+	{ USB_DEVICE(BANDB_VID, BANDB_USTL4_PID) },
+	{ USB_DEVICE(BANDB_VID, BANDB_USO9ML2_PID) },
+	{ USB_DEVICE(BANDB_VID, BANDB_USOPTL4_PID) },
+	{ USB_DEVICE(BANDB_VID, BANDB_USPTL4_PID) },
+	{ USB_DEVICE(BANDB_VID, BANDB_USO9ML2DR_2_PID) },
+	{ USB_DEVICE(BANDB_VID, BANDB_USO9ML2DR_PID) },
+	{ USB_DEVICE(BANDB_VID, BANDB_USOPTL4DR2_PID) },
+	{ USB_DEVICE(BANDB_VID, BANDB_USOPTL4DR_PID) },
+	{ USB_DEVICE(BANDB_VID, BANDB_485USB9F_2W_PID) },
+	{ USB_DEVICE(BANDB_VID, BANDB_485USB9F_4W_PID) },
+	{ USB_DEVICE(BANDB_VID, BANDB_232USB9M_PID) },
+	{ USB_DEVICE(BANDB_VID, BANDB_485USBTB_2W_PID) },
+	{ USB_DEVICE(BANDB_VID, BANDB_485USBTB_4W_PID) },
+	{ USB_DEVICE(BANDB_VID, BANDB_TTL5USB9M_PID) },
+	{ USB_DEVICE(BANDB_VID, BANDB_TTL3USB9M_PID) },
+	{ USB_DEVICE(BANDB_VID, BANDB_ZZ_PROG1_USB_PID) },
+	{ USB_DEVICE(FTDI_VID, EVER_ECO_PRO_CDS) },
+	{ USB_DEVICE(FTDI_VID, FTDI_4N_GALAXY_DE_1_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_4N_GALAXY_DE_2_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_4N_GALAXY_DE_3_PID) },
+	{ USB_DEVICE(FTDI_VID, XSENS_CONVERTER_0_PID) },
+	{ USB_DEVICE(FTDI_VID, XSENS_CONVERTER_1_PID) },
+	{ USB_DEVICE(FTDI_VID, XSENS_CONVERTER_2_PID) },
+	{ USB_DEVICE(FTDI_VID, XSENS_CONVERTER_3_PID) },
+	{ USB_DEVICE(FTDI_VID, XSENS_CONVERTER_4_PID) },
+	{ USB_DEVICE(FTDI_VID, XSENS_CONVERTER_5_PID) },
+	{ USB_DEVICE(FTDI_VID, XSENS_CONVERTER_6_PID) },
+	{ USB_DEVICE(FTDI_VID, XSENS_CONVERTER_7_PID) },
+	{ USB_DEVICE(XSENS_VID, XSENS_AWINDA_DONGLE_PID) },
+	{ USB_DEVICE(XSENS_VID, XSENS_AWINDA_STATION_PID) },
+	{ USB_DEVICE(XSENS_VID, XSENS_CONVERTER_PID) },
+	{ USB_DEVICE(XSENS_VID, XSENS_MTDEVBOARD_PID) },
+	{ USB_DEVICE(XSENS_VID, XSENS_MTIUSBCONVERTER_PID) },
+	{ USB_DEVICE(XSENS_VID, XSENS_MTW_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_OMNI1509) },
+	{ USB_DEVICE(MOBILITY_VID, MOBILITY_USB_SERIAL_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ACTIVE_ROBOTS_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_MHAM_KW_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_MHAM_YS_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_MHAM_Y6_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_MHAM_Y8_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_MHAM_IC_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_MHAM_DB9_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_MHAM_RS232_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_MHAM_Y9_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_TERATRONIK_VCP_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_TERATRONIK_D2XX_PID) },
+	{ USB_DEVICE(EVOLUTION_VID, EVOLUTION_ER1_PID) },
+	{ USB_DEVICE(EVOLUTION_VID, EVO_HYBRID_PID) },
+	{ USB_DEVICE(EVOLUTION_VID, EVO_RCM4_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ARTEMIS_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ATIK_ATK16_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ATIK_ATK16C_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ATIK_ATK16HR_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ATIK_ATK16HRC_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ATIK_ATK16IC_PID) },
+	{ USB_DEVICE(KOBIL_VID, KOBIL_CONV_B1_PID) },
+	{ USB_DEVICE(KOBIL_VID, KOBIL_CONV_KAAN_PID) },
+	{ USB_DEVICE(POSIFLEX_VID, POSIFLEX_PP7000_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_TTUSB_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ECLO_COM_1WIRE_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_WESTREX_MODEL_777_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_WESTREX_MODEL_8900F_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_PCDJ_DAC2_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_RRCIRKITS_LOCOBUFFER_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ASK_RDR400_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_NZR_SEM_USB_PID) },
+	{ USB_DEVICE(ICOM_VID, ICOM_ID_1_PID) },
+	{ USB_DEVICE(ICOM_VID, ICOM_OPC_U_UC_PID) },
+	{ USB_DEVICE(ICOM_VID, ICOM_ID_RP2C1_PID) },
+	{ USB_DEVICE(ICOM_VID, ICOM_ID_RP2C2_PID) },
+	{ USB_DEVICE(ICOM_VID, ICOM_ID_RP2D_PID) },
+	{ USB_DEVICE(ICOM_VID, ICOM_ID_RP2VT_PID) },
+	{ USB_DEVICE(ICOM_VID, ICOM_ID_RP2VR_PID) },
+	{ USB_DEVICE(ICOM_VID, ICOM_ID_RP4KVT_PID) },
+	{ USB_DEVICE(ICOM_VID, ICOM_ID_RP4KVR_PID) },
+	{ USB_DEVICE(ICOM_VID, ICOM_ID_RP2KVT_PID) },
+	{ USB_DEVICE(ICOM_VID, ICOM_ID_RP2KVR_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ACG_HFDUAL_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_YEI_SERVOCENTER31_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_THORLABS_PID) },
+	{ USB_DEVICE(TESTO_VID, TESTO_1_PID) },
+	{ USB_DEVICE(TESTO_VID, TESTO_3_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_GAMMA_SCOUT_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_TACTRIX_OPENPORT_13M_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_TACTRIX_OPENPORT_13S_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_TACTRIX_OPENPORT_13U_PID) },
+	{ USB_DEVICE(ELEKTOR_VID, ELEKTOR_FT323R_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_NDI_HUC_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_NDI_device_quirk },
+	{ USB_DEVICE(FTDI_VID, FTDI_NDI_SPECTRA_SCU_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_NDI_device_quirk },
+	{ USB_DEVICE(FTDI_VID, FTDI_NDI_FUTURE_2_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_NDI_device_quirk },
+	{ USB_DEVICE(FTDI_VID, FTDI_NDI_FUTURE_3_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_NDI_device_quirk },
+	{ USB_DEVICE(FTDI_VID, FTDI_NDI_AURORA_SCU_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_NDI_device_quirk },
+	{ USB_DEVICE(TELLDUS_VID, TELLDUS_TELLSTICK_PID) },
+	{ USB_DEVICE(NOVITUS_VID, NOVITUS_BONO_E_PID) },
+	{ USB_DEVICE(FTDI_VID, RTSYSTEMS_USB_VX8_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_S03_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_59_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_57A_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_57B_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_29A_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_29B_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_29F_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_62B_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_S01_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_63_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_29C_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_81B_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_82B_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_K5D_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_K4Y_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_K5G_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_S05_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_60_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_61_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_62_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_63B_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_64_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_65_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_92_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_92D_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_W5R_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_A5R_PID) },
+	{ USB_DEVICE(RTSYSTEMS_VID, RTSYSTEMS_USB_PW1_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_MAXSTREAM_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_PHI_FISCO_PID) },
+	{ USB_DEVICE(TML_VID, TML_USB_SERIAL_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_ELSTER_UNICOM_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_PROPOX_JTAGCABLEII_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_PROPOX_ISPCABLEIII_PID) },
+	{ USB_DEVICE(FTDI_VID, CYBER_CORTEX_AV_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ USB_DEVICE_INTERFACE_NUMBER(OLIMEX_VID, OLIMEX_ARM_USB_OCD_PID, 1) },
+	{ USB_DEVICE_INTERFACE_NUMBER(OLIMEX_VID, OLIMEX_ARM_USB_OCD_H_PID, 1) },
+	{ USB_DEVICE_INTERFACE_NUMBER(OLIMEX_VID, OLIMEX_ARM_USB_TINY_PID, 1) },
+	{ USB_DEVICE_INTERFACE_NUMBER(OLIMEX_VID, OLIMEX_ARM_USB_TINY_H_PID, 1) },
+	{ USB_DEVICE(FIC_VID, FIC_NEO1973_DEBUG_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ USB_DEVICE(FTDI_VID, FTDI_OOCDLINK_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ USB_DEVICE(FTDI_VID, LMI_LM3S_DEVEL_BOARD_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ USB_DEVICE(FTDI_VID, LMI_LM3S_EVAL_BOARD_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ USB_DEVICE(FTDI_VID, LMI_LM3S_ICDI_BOARD_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ USB_DEVICE(FTDI_VID, FTDI_TURTELIZER_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ USB_DEVICE(RATOC_VENDOR_ID, RATOC_PRODUCT_ID_USB60F) },
+	{ USB_DEVICE(RATOC_VENDOR_ID, RATOC_PRODUCT_ID_SCU18) },
+	{ USB_DEVICE(FTDI_VID, FTDI_REU_TINY_PID) },
 
 	/* Papouch devices based on FTDI chip */
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_SB485_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_AP485_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_SB422_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_SB485_2_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_AP485_2_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_SB422_2_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_SB485S_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_SB485C_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_LEC_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_SB232_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_TMU_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_IRAMP_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_DRAK5_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_QUIDO8x8_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_QUIDO4x4_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_QUIDO2x2_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_QUIDO10x1_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_QUIDO30x3_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_QUIDO60x3_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_QUIDO2x16_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_QUIDO3x32_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_DRAK6_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_UPSUSB_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_MU_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_SIMUKEY_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_AD4USB_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_GMUX_PID) पूर्ण,
-	अणु USB_DEVICE(PAPOUCH_VID, PAPOUCH_GMSR_PID) पूर्ण,
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_SB485_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_AP485_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_SB422_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_SB485_2_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_AP485_2_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_SB422_2_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_SB485S_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_SB485C_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_LEC_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_SB232_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_TMU_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_IRAMP_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_DRAK5_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_QUIDO8x8_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_QUIDO4x4_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_QUIDO2x2_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_QUIDO10x1_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_QUIDO30x3_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_QUIDO60x3_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_QUIDO2x16_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_QUIDO3x32_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_DRAK6_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_UPSUSB_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_MU_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_SIMUKEY_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_AD4USB_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_GMUX_PID) },
+	{ USB_DEVICE(PAPOUCH_VID, PAPOUCH_GMSR_PID) },
 
-	अणु USB_DEVICE(FTDI_VID, FTDI_DOMINTELL_DGQG_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_DOMINTELL_DUSB_PID) पूर्ण,
-	अणु USB_DEVICE(ALTI2_VID, ALTI2_N3_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, DIEBOLD_BCS_SE923_PID) पूर्ण,
-	अणु USB_DEVICE(ATMEL_VID, STK541_PID) पूर्ण,
-	अणु USB_DEVICE(DE_VID, STB_PID) पूर्ण,
-	अणु USB_DEVICE(DE_VID, WHT_PID) पूर्ण,
-	अणु USB_DEVICE(ADI_VID, ADI_GNICE_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_jtag_quirk पूर्ण,
-	अणु USB_DEVICE(ADI_VID, ADI_GNICEPLUS_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_jtag_quirk पूर्ण,
-	अणु USB_DEVICE_AND_INTERFACE_INFO(MICROCHIP_VID, MICROCHIP_USB_BOARD_PID,
+	{ USB_DEVICE(FTDI_VID, FTDI_DOMINTELL_DGQG_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_DOMINTELL_DUSB_PID) },
+	{ USB_DEVICE(ALTI2_VID, ALTI2_N3_PID) },
+	{ USB_DEVICE(FTDI_VID, DIEBOLD_BCS_SE923_PID) },
+	{ USB_DEVICE(ATMEL_VID, STK541_PID) },
+	{ USB_DEVICE(DE_VID, STB_PID) },
+	{ USB_DEVICE(DE_VID, WHT_PID) },
+	{ USB_DEVICE(ADI_VID, ADI_GNICE_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ USB_DEVICE(ADI_VID, ADI_GNICEPLUS_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ USB_DEVICE_AND_INTERFACE_INFO(MICROCHIP_VID, MICROCHIP_USB_BOARD_PID,
 					USB_CLASS_VENDOR_SPEC,
-					USB_SUBCLASS_VENDOR_SPEC, 0x00) पूर्ण,
-	अणु USB_DEVICE_INTERFACE_NUMBER(ACTEL_VID, MICROSEMI_ARROW_SF2PLUS_BOARD_PID, 2) पूर्ण,
-	अणु USB_DEVICE(JETI_VID, JETI_SPC1201_PID) पूर्ण,
-	अणु USB_DEVICE(MARVELL_VID, MARVELL_SHEEVAPLUG_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_jtag_quirk पूर्ण,
-	अणु USB_DEVICE(LARSENBRUSGAARD_VID, LB_ALTITRACK_PID) पूर्ण,
-	अणु USB_DEVICE(GN_OTOMETRICS_VID, AURICAL_USB_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, PI_C865_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, PI_C857_PID) पूर्ण,
-	अणु USB_DEVICE(PI_VID, PI_C866_PID) पूर्ण,
-	अणु USB_DEVICE(PI_VID, PI_C663_PID) पूर्ण,
-	अणु USB_DEVICE(PI_VID, PI_C725_PID) पूर्ण,
-	अणु USB_DEVICE(PI_VID, PI_E517_PID) पूर्ण,
-	अणु USB_DEVICE(PI_VID, PI_C863_PID) पूर्ण,
-	अणु USB_DEVICE(PI_VID, PI_E861_PID) पूर्ण,
-	अणु USB_DEVICE(PI_VID, PI_C867_PID) पूर्ण,
-	अणु USB_DEVICE(PI_VID, PI_E609_PID) पूर्ण,
-	अणु USB_DEVICE(PI_VID, PI_E709_PID) पूर्ण,
-	अणु USB_DEVICE(PI_VID, PI_100F_PID) पूर्ण,
-	अणु USB_DEVICE(PI_VID, PI_1011_PID) पूर्ण,
-	अणु USB_DEVICE(PI_VID, PI_1012_PID) पूर्ण,
-	अणु USB_DEVICE(PI_VID, PI_1013_PID) पूर्ण,
-	अणु USB_DEVICE(PI_VID, PI_1014_PID) पूर्ण,
-	अणु USB_DEVICE(PI_VID, PI_1015_PID) पूर्ण,
-	अणु USB_DEVICE(PI_VID, PI_1016_PID) पूर्ण,
-	अणु USB_DEVICE(KONDO_VID, KONDO_USB_SERIAL_PID) पूर्ण,
-	अणु USB_DEVICE(BAYER_VID, BAYER_CONTOUR_CABLE_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, MARVELL_OPENRD_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_jtag_quirk पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, TI_XDS100V2_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_jtag_quirk पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, HAMEG_HO820_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, HAMEG_HO720_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, HAMEG_HO730_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, HAMEG_HO870_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, MJSG_GENERIC_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, MJSG_SR_RADIO_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, MJSG_HD_RADIO_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, MJSG_XM_RADIO_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, XVERVE_SIGNALYZER_ST_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_jtag_quirk पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, XVERVE_SIGNALYZER_SLITE_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_jtag_quirk पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, XVERVE_SIGNALYZER_SH2_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_jtag_quirk पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, XVERVE_SIGNALYZER_SH4_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_jtag_quirk पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, SEGWAY_RMP200_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, ACCESIO_COM4SM_PID) पूर्ण,
-	अणु USB_DEVICE(IONICS_VID, IONICS_PLUGCOMPUTER_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_jtag_quirk पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_CHAMSYS_24_MASTER_WING_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_CHAMSYS_PC_WING_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_CHAMSYS_USB_DMX_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_CHAMSYS_MIDI_TIMECODE_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_CHAMSYS_MINI_WING_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_CHAMSYS_MAXI_WING_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_CHAMSYS_MEDIA_WING_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_CHAMSYS_WING_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_SCIENCESCOPE_LOGBOOKML_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_SCIENCESCOPE_LS_LOGBOOK_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_SCIENCESCOPE_HS_LOGBOOK_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_CINTERION_MC55I_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_FHE_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_DOTEC_PID) पूर्ण,
-	अणु USB_DEVICE(QIHARDWARE_VID, MILKYMISTONE_JTAGSERIAL_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_jtag_quirk पूर्ण,
-	अणु USB_DEVICE(ST_VID, ST_STMCLT_2232_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_jtag_quirk पूर्ण,
-	अणु USB_DEVICE(ST_VID, ST_STMCLT_4232_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_sपंचांगclite_quirk पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_RF_R106) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_DISTORTEC_JTAG_LOCK_PICK_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_jtag_quirk पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_LUMEL_PD12_PID) पूर्ण,
+					USB_SUBCLASS_VENDOR_SPEC, 0x00) },
+	{ USB_DEVICE_INTERFACE_NUMBER(ACTEL_VID, MICROSEMI_ARROW_SF2PLUS_BOARD_PID, 2) },
+	{ USB_DEVICE(JETI_VID, JETI_SPC1201_PID) },
+	{ USB_DEVICE(MARVELL_VID, MARVELL_SHEEVAPLUG_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ USB_DEVICE(LARSENBRUSGAARD_VID, LB_ALTITRACK_PID) },
+	{ USB_DEVICE(GN_OTOMETRICS_VID, AURICAL_USB_PID) },
+	{ USB_DEVICE(FTDI_VID, PI_C865_PID) },
+	{ USB_DEVICE(FTDI_VID, PI_C857_PID) },
+	{ USB_DEVICE(PI_VID, PI_C866_PID) },
+	{ USB_DEVICE(PI_VID, PI_C663_PID) },
+	{ USB_DEVICE(PI_VID, PI_C725_PID) },
+	{ USB_DEVICE(PI_VID, PI_E517_PID) },
+	{ USB_DEVICE(PI_VID, PI_C863_PID) },
+	{ USB_DEVICE(PI_VID, PI_E861_PID) },
+	{ USB_DEVICE(PI_VID, PI_C867_PID) },
+	{ USB_DEVICE(PI_VID, PI_E609_PID) },
+	{ USB_DEVICE(PI_VID, PI_E709_PID) },
+	{ USB_DEVICE(PI_VID, PI_100F_PID) },
+	{ USB_DEVICE(PI_VID, PI_1011_PID) },
+	{ USB_DEVICE(PI_VID, PI_1012_PID) },
+	{ USB_DEVICE(PI_VID, PI_1013_PID) },
+	{ USB_DEVICE(PI_VID, PI_1014_PID) },
+	{ USB_DEVICE(PI_VID, PI_1015_PID) },
+	{ USB_DEVICE(PI_VID, PI_1016_PID) },
+	{ USB_DEVICE(KONDO_VID, KONDO_USB_SERIAL_PID) },
+	{ USB_DEVICE(BAYER_VID, BAYER_CONTOUR_CABLE_PID) },
+	{ USB_DEVICE(FTDI_VID, MARVELL_OPENRD_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ USB_DEVICE(FTDI_VID, TI_XDS100V2_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ USB_DEVICE(FTDI_VID, HAMEG_HO820_PID) },
+	{ USB_DEVICE(FTDI_VID, HAMEG_HO720_PID) },
+	{ USB_DEVICE(FTDI_VID, HAMEG_HO730_PID) },
+	{ USB_DEVICE(FTDI_VID, HAMEG_HO870_PID) },
+	{ USB_DEVICE(FTDI_VID, MJSG_GENERIC_PID) },
+	{ USB_DEVICE(FTDI_VID, MJSG_SR_RADIO_PID) },
+	{ USB_DEVICE(FTDI_VID, MJSG_HD_RADIO_PID) },
+	{ USB_DEVICE(FTDI_VID, MJSG_XM_RADIO_PID) },
+	{ USB_DEVICE(FTDI_VID, XVERVE_SIGNALYZER_ST_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ USB_DEVICE(FTDI_VID, XVERVE_SIGNALYZER_SLITE_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ USB_DEVICE(FTDI_VID, XVERVE_SIGNALYZER_SH2_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ USB_DEVICE(FTDI_VID, XVERVE_SIGNALYZER_SH4_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ USB_DEVICE(FTDI_VID, SEGWAY_RMP200_PID) },
+	{ USB_DEVICE(FTDI_VID, ACCESIO_COM4SM_PID) },
+	{ USB_DEVICE(IONICS_VID, IONICS_PLUGCOMPUTER_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ USB_DEVICE(FTDI_VID, FTDI_CHAMSYS_24_MASTER_WING_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_CHAMSYS_PC_WING_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_CHAMSYS_USB_DMX_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_CHAMSYS_MIDI_TIMECODE_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_CHAMSYS_MINI_WING_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_CHAMSYS_MAXI_WING_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_CHAMSYS_MEDIA_WING_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_CHAMSYS_WING_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_SCIENCESCOPE_LOGBOOKML_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_SCIENCESCOPE_LS_LOGBOOK_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_SCIENCESCOPE_HS_LOGBOOK_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_CINTERION_MC55I_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_FHE_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_DOTEC_PID) },
+	{ USB_DEVICE(QIHARDWARE_VID, MILKYMISTONE_JTAGSERIAL_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ USB_DEVICE(ST_VID, ST_STMCLT_2232_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ USB_DEVICE(ST_VID, ST_STMCLT_4232_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_stmclite_quirk },
+	{ USB_DEVICE(FTDI_VID, FTDI_RF_R106) },
+	{ USB_DEVICE(FTDI_VID, FTDI_DISTORTEC_JTAG_LOCK_PICK_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ USB_DEVICE(FTDI_VID, FTDI_LUMEL_PD12_PID) },
 	/* Crucible Devices */
-	अणु USB_DEVICE(FTDI_VID, FTDI_CT_COMET_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_Z3X_PID) पूर्ण,
+	{ USB_DEVICE(FTDI_VID, FTDI_CT_COMET_PID) },
+	{ USB_DEVICE(FTDI_VID, FTDI_Z3X_PID) },
 	/* Cressi Devices */
-	अणु USB_DEVICE(FTDI_VID, FTDI_CRESSI_PID) पूर्ण,
+	{ USB_DEVICE(FTDI_VID, FTDI_CRESSI_PID) },
 	/* Brainboxes Devices */
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_VX_001_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_VX_012_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_VX_023_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_VX_034_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_101_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_160_1_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_160_2_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_160_3_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_160_4_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_160_5_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_160_6_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_160_7_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_160_8_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_257_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_279_1_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_279_2_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_279_3_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_279_4_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_313_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_324_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_346_1_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_346_2_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_357_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_606_1_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_606_2_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_606_3_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_701_1_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_701_2_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_842_1_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_842_2_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_842_3_PID) पूर्ण,
-	अणु USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_842_4_PID) पूर्ण,
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_VX_001_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_VX_012_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_VX_023_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_VX_034_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_101_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_160_1_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_160_2_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_160_3_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_160_4_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_160_5_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_160_6_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_160_7_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_160_8_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_257_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_279_1_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_279_2_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_279_3_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_279_4_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_313_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_324_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_346_1_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_346_2_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_357_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_606_1_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_606_2_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_606_3_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_701_1_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_701_2_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_842_1_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_842_2_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_842_3_PID) },
+	{ USB_DEVICE(BRAINBOXES_VID, BRAINBOXES_US_842_4_PID) },
 	/* ekey Devices */
-	अणु USB_DEVICE(FTDI_VID, FTDI_EKEY_CONV_USB_PID) पूर्ण,
+	{ USB_DEVICE(FTDI_VID, FTDI_EKEY_CONV_USB_PID) },
 	/* Infineon Devices */
-	अणु USB_DEVICE_INTERFACE_NUMBER(INFINEON_VID, INFINEON_TRIBOARD_TC1798_PID, 1) पूर्ण,
-	अणु USB_DEVICE_INTERFACE_NUMBER(INFINEON_VID, INFINEON_TRIBOARD_TC2X7_PID, 1) पूर्ण,
+	{ USB_DEVICE_INTERFACE_NUMBER(INFINEON_VID, INFINEON_TRIBOARD_TC1798_PID, 1) },
+	{ USB_DEVICE_INTERFACE_NUMBER(INFINEON_VID, INFINEON_TRIBOARD_TC2X7_PID, 1) },
 	/* GE Healthcare devices */
-	अणु USB_DEVICE(GE_HEALTHCARE_VID, GE_HEALTHCARE_NEMO_TRACKER_PID) पूर्ण,
+	{ USB_DEVICE(GE_HEALTHCARE_VID, GE_HEALTHCARE_NEMO_TRACKER_PID) },
 	/* Active Research (Actisense) devices */
-	अणु USB_DEVICE(FTDI_VID, ACTISENSE_NDC_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, ACTISENSE_USG_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, ACTISENSE_NGT_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, ACTISENSE_NGW_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, ACTISENSE_D9AC_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, ACTISENSE_D9AD_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, ACTISENSE_D9AE_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, ACTISENSE_D9AF_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, CHETCO_SEAGAUGE_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, CHETCO_SEASWITCH_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, CHETCO_SEASMART_NMEA2000_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, CHETCO_SEASMART_ETHERNET_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, CHETCO_SEASMART_WIFI_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, CHETCO_SEASMART_DISPLAY_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, CHETCO_SEASMART_LITE_PID) पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, CHETCO_SEASMART_ANALOG_PID) पूर्ण,
+	{ USB_DEVICE(FTDI_VID, ACTISENSE_NDC_PID) },
+	{ USB_DEVICE(FTDI_VID, ACTISENSE_USG_PID) },
+	{ USB_DEVICE(FTDI_VID, ACTISENSE_NGT_PID) },
+	{ USB_DEVICE(FTDI_VID, ACTISENSE_NGW_PID) },
+	{ USB_DEVICE(FTDI_VID, ACTISENSE_D9AC_PID) },
+	{ USB_DEVICE(FTDI_VID, ACTISENSE_D9AD_PID) },
+	{ USB_DEVICE(FTDI_VID, ACTISENSE_D9AE_PID) },
+	{ USB_DEVICE(FTDI_VID, ACTISENSE_D9AF_PID) },
+	{ USB_DEVICE(FTDI_VID, CHETCO_SEAGAUGE_PID) },
+	{ USB_DEVICE(FTDI_VID, CHETCO_SEASWITCH_PID) },
+	{ USB_DEVICE(FTDI_VID, CHETCO_SEASMART_NMEA2000_PID) },
+	{ USB_DEVICE(FTDI_VID, CHETCO_SEASMART_ETHERNET_PID) },
+	{ USB_DEVICE(FTDI_VID, CHETCO_SEASMART_WIFI_PID) },
+	{ USB_DEVICE(FTDI_VID, CHETCO_SEASMART_DISPLAY_PID) },
+	{ USB_DEVICE(FTDI_VID, CHETCO_SEASMART_LITE_PID) },
+	{ USB_DEVICE(FTDI_VID, CHETCO_SEASMART_ANALOG_PID) },
 	/* ICP DAS I-756xU devices */
-	अणु USB_DEVICE(ICPDAS_VID, ICPDAS_I7560U_PID) पूर्ण,
-	अणु USB_DEVICE(ICPDAS_VID, ICPDAS_I7561U_PID) पूर्ण,
-	अणु USB_DEVICE(ICPDAS_VID, ICPDAS_I7563U_PID) पूर्ण,
-	अणु USB_DEVICE(WICED_VID, WICED_USB20706V2_PID) पूर्ण,
-	अणु USB_DEVICE(TI_VID, TI_CC3200_LAUNCHPAD_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_jtag_quirk पूर्ण,
-	अणु USB_DEVICE(CYPRESS_VID, CYPRESS_WICED_BT_USB_PID) पूर्ण,
-	अणु USB_DEVICE(CYPRESS_VID, CYPRESS_WICED_WL_USB_PID) पूर्ण,
-	अणु USB_DEVICE(AIRBUS_DS_VID, AIRBUS_DS_P8GR) पूर्ण,
+	{ USB_DEVICE(ICPDAS_VID, ICPDAS_I7560U_PID) },
+	{ USB_DEVICE(ICPDAS_VID, ICPDAS_I7561U_PID) },
+	{ USB_DEVICE(ICPDAS_VID, ICPDAS_I7563U_PID) },
+	{ USB_DEVICE(WICED_VID, WICED_USB20706V2_PID) },
+	{ USB_DEVICE(TI_VID, TI_CC3200_LAUNCHPAD_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ USB_DEVICE(CYPRESS_VID, CYPRESS_WICED_BT_USB_PID) },
+	{ USB_DEVICE(CYPRESS_VID, CYPRESS_WICED_WL_USB_PID) },
+	{ USB_DEVICE(AIRBUS_DS_VID, AIRBUS_DS_P8GR) },
 	/* EZPrototypes devices */
-	अणु USB_DEVICE(EZPROTOTYPES_VID, HJELMSLUND_USB485_ISO_PID) पूर्ण,
-	अणु USB_DEVICE_INTERFACE_NUMBER(UNJO_VID, UNJO_ISODEBUG_V1_PID, 1) पूर्ण,
+	{ USB_DEVICE(EZPROTOTYPES_VID, HJELMSLUND_USB485_ISO_PID) },
+	{ USB_DEVICE_INTERFACE_NUMBER(UNJO_VID, UNJO_ISODEBUG_V1_PID, 1) },
 	/* Sienna devices */
-	अणु USB_DEVICE(FTDI_VID, FTDI_SIENNA_PID) पूर्ण,
-	अणु USB_DEVICE(ECHELON_VID, ECHELON_U20_PID) पूर्ण,
+	{ USB_DEVICE(FTDI_VID, FTDI_SIENNA_PID) },
+	{ USB_DEVICE(ECHELON_VID, ECHELON_U20_PID) },
 	/* IDS GmbH devices */
-	अणु USB_DEVICE(IDS_VID, IDS_SI31A_PID) पूर्ण,
-	अणु USB_DEVICE(IDS_VID, IDS_CM31A_PID) पूर्ण,
+	{ USB_DEVICE(IDS_VID, IDS_SI31A_PID) },
+	{ USB_DEVICE(IDS_VID, IDS_CM31A_PID) },
 	/* U-Blox devices */
-	अणु USB_DEVICE(UBLOX_VID, UBLOX_C099F9P_ZED_PID) पूर्ण,
-	अणु USB_DEVICE(UBLOX_VID, UBLOX_C099F9P_ODIN_PID) पूर्ण,
+	{ USB_DEVICE(UBLOX_VID, UBLOX_C099F9P_ZED_PID) },
+	{ USB_DEVICE(UBLOX_VID, UBLOX_C099F9P_ODIN_PID) },
 	/* FreeCalypso USB adapters */
-	अणु USB_DEVICE(FTDI_VID, FTDI_FALCONIA_JTAG_BUF_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_jtag_quirk पूर्ण,
-	अणु USB_DEVICE(FTDI_VID, FTDI_FALCONIA_JTAG_UNBUF_PID),
-		.driver_info = (kernel_uदीर्घ_t)&ftdi_jtag_quirk पूर्ण,
-	अणु पूर्ण					/* Terminating entry */
-पूर्ण;
+	{ USB_DEVICE(FTDI_VID, FTDI_FALCONIA_JTAG_BUF_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ USB_DEVICE(FTDI_VID, FTDI_FALCONIA_JTAG_UNBUF_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ }					/* Terminating entry */
+};
 
 MODULE_DEVICE_TABLE(usb, id_table_combined);
 
-अटल स्थिर अक्षर *ftdi_chip_name[] = अणु
+static const char *ftdi_chip_name[] = {
 	[SIO] = "SIO",	/* the serial part of FT8U100AX */
 	[FT8U232AM] = "FT8U232AM",
 	[FT232BM] = "FT232BM",
@@ -1062,51 +1061,51 @@ MODULE_DEVICE_TABLE(usb, id_table_combined);
 	[FT4232H] = "FT4232H",
 	[FT232H]  = "FT232H",
 	[FTX]     = "FT-X"
-पूर्ण;
+};
 
 
-/* Used क्रम TIOCMIWAIT */
-#घोषणा FTDI_STATUS_B0_MASK	(FTDI_RS0_CTS | FTDI_RS0_DSR | FTDI_RS0_RI | FTDI_RS0_RLSD)
-#घोषणा FTDI_STATUS_B1_MASK	(FTDI_RS_BI)
+/* Used for TIOCMIWAIT */
+#define FTDI_STATUS_B0_MASK	(FTDI_RS0_CTS | FTDI_RS0_DSR | FTDI_RS0_RI | FTDI_RS0_RLSD)
+#define FTDI_STATUS_B1_MASK	(FTDI_RS_BI)
 /* End TIOCMIWAIT */
 
-/* function prototypes क्रम a FTDI serial converter */
-अटल पूर्णांक  ftdi_sio_probe(काष्ठा usb_serial *serial,
-					स्थिर काष्ठा usb_device_id *id);
-अटल पूर्णांक  ftdi_sio_port_probe(काष्ठा usb_serial_port *port);
-अटल व्योम ftdi_sio_port_हटाओ(काष्ठा usb_serial_port *port);
-अटल पूर्णांक  ftdi_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port);
-अटल व्योम ftdi_dtr_rts(काष्ठा usb_serial_port *port, पूर्णांक on);
-अटल व्योम ftdi_process_पढ़ो_urb(काष्ठा urb *urb);
-अटल पूर्णांक ftdi_prepare_ग_लिखो_buffer(काष्ठा usb_serial_port *port,
-						व्योम *dest, माप_प्रकार size);
-अटल व्योम ftdi_set_termios(काष्ठा tty_काष्ठा *tty,
-			काष्ठा usb_serial_port *port, काष्ठा ktermios *old);
-अटल पूर्णांक  ftdi_tiocmget(काष्ठा tty_काष्ठा *tty);
-अटल पूर्णांक  ftdi_tiocmset(काष्ठा tty_काष्ठा *tty,
-			अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear);
-अटल पूर्णांक  ftdi_ioctl(काष्ठा tty_काष्ठा *tty,
-			अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
-अटल व्योम get_serial_info(काष्ठा tty_काष्ठा *tty, काष्ठा serial_काष्ठा *ss);
-अटल पूर्णांक set_serial_info(काष्ठा tty_काष्ठा *tty,
-				काष्ठा serial_काष्ठा *ss);
-अटल व्योम ftdi_अवरोध_ctl(काष्ठा tty_काष्ठा *tty, पूर्णांक अवरोध_state);
-अटल bool ftdi_tx_empty(काष्ठा usb_serial_port *port);
-अटल पूर्णांक ftdi_get_modem_status(काष्ठा usb_serial_port *port,
-						अचिन्हित अक्षर status[2]);
+/* function prototypes for a FTDI serial converter */
+static int  ftdi_sio_probe(struct usb_serial *serial,
+					const struct usb_device_id *id);
+static int  ftdi_sio_port_probe(struct usb_serial_port *port);
+static void ftdi_sio_port_remove(struct usb_serial_port *port);
+static int  ftdi_open(struct tty_struct *tty, struct usb_serial_port *port);
+static void ftdi_dtr_rts(struct usb_serial_port *port, int on);
+static void ftdi_process_read_urb(struct urb *urb);
+static int ftdi_prepare_write_buffer(struct usb_serial_port *port,
+						void *dest, size_t size);
+static void ftdi_set_termios(struct tty_struct *tty,
+			struct usb_serial_port *port, struct ktermios *old);
+static int  ftdi_tiocmget(struct tty_struct *tty);
+static int  ftdi_tiocmset(struct tty_struct *tty,
+			unsigned int set, unsigned int clear);
+static int  ftdi_ioctl(struct tty_struct *tty,
+			unsigned int cmd, unsigned long arg);
+static void get_serial_info(struct tty_struct *tty, struct serial_struct *ss);
+static int set_serial_info(struct tty_struct *tty,
+				struct serial_struct *ss);
+static void ftdi_break_ctl(struct tty_struct *tty, int break_state);
+static bool ftdi_tx_empty(struct usb_serial_port *port);
+static int ftdi_get_modem_status(struct usb_serial_port *port,
+						unsigned char status[2]);
 
-अटल अचिन्हित लघु पूर्णांक ftdi_232am_baud_base_to_भागisor(पूर्णांक baud, पूर्णांक base);
-अटल अचिन्हित लघु पूर्णांक ftdi_232am_baud_to_भागisor(पूर्णांक baud);
-अटल u32 ftdi_232bm_baud_base_to_भागisor(पूर्णांक baud, पूर्णांक base);
-अटल u32 ftdi_232bm_baud_to_भागisor(पूर्णांक baud);
-अटल u32 ftdi_2232h_baud_base_to_भागisor(पूर्णांक baud, पूर्णांक base);
-अटल u32 ftdi_2232h_baud_to_भागisor(पूर्णांक baud);
+static unsigned short int ftdi_232am_baud_base_to_divisor(int baud, int base);
+static unsigned short int ftdi_232am_baud_to_divisor(int baud);
+static u32 ftdi_232bm_baud_base_to_divisor(int baud, int base);
+static u32 ftdi_232bm_baud_to_divisor(int baud);
+static u32 ftdi_2232h_baud_base_to_divisor(int baud, int base);
+static u32 ftdi_2232h_baud_to_divisor(int baud);
 
-अटल काष्ठा usb_serial_driver ftdi_sio_device = अणु
-	.driver = अणु
+static struct usb_serial_driver ftdi_sio_device = {
+	.driver = {
 		.owner =	THIS_MODULE,
 		.name =		"ftdi_sio",
-	पूर्ण,
+	},
 	.description =		"FTDI USB Serial Device",
 	.id_table =		id_table_combined,
 	.num_ports =		1,
@@ -1114,32 +1113,32 @@ MODULE_DEVICE_TABLE(usb, id_table_combined);
 	.bulk_out_size =	256,
 	.probe =		ftdi_sio_probe,
 	.port_probe =		ftdi_sio_port_probe,
-	.port_हटाओ =		ftdi_sio_port_हटाओ,
-	.खोलो =			ftdi_खोलो,
+	.port_remove =		ftdi_sio_port_remove,
+	.open =			ftdi_open,
 	.dtr_rts =		ftdi_dtr_rts,
 	.throttle =		usb_serial_generic_throttle,
 	.unthrottle =		usb_serial_generic_unthrottle,
-	.process_पढ़ो_urb =	ftdi_process_पढ़ो_urb,
-	.prepare_ग_लिखो_buffer =	ftdi_prepare_ग_लिखो_buffer,
+	.process_read_urb =	ftdi_process_read_urb,
+	.prepare_write_buffer =	ftdi_prepare_write_buffer,
 	.tiocmget =		ftdi_tiocmget,
 	.tiocmset =		ftdi_tiocmset,
-	.tiocmiरुको =		usb_serial_generic_tiocmiरुको,
+	.tiocmiwait =		usb_serial_generic_tiocmiwait,
 	.get_icount =           usb_serial_generic_get_icount,
 	.ioctl =		ftdi_ioctl,
 	.get_serial =		get_serial_info,
 	.set_serial =		set_serial_info,
 	.set_termios =		ftdi_set_termios,
-	.अवरोध_ctl =		ftdi_अवरोध_ctl,
+	.break_ctl =		ftdi_break_ctl,
 	.tx_empty =		ftdi_tx_empty,
-पूर्ण;
+};
 
-अटल काष्ठा usb_serial_driver * स्थिर serial_drivers[] = अणु
-	&ftdi_sio_device, शून्य
-पूर्ण;
+static struct usb_serial_driver * const serial_drivers[] = {
+	&ftdi_sio_device, NULL
+};
 
 
-#घोषणा WDR_TIMEOUT 5000 /* शेष urb समयout */
-#घोषणा WDR_SHORT_TIMEOUT 1000	/* लघुer urb समयout */
+#define WDR_TIMEOUT 5000 /* default urb timeout */
+#define WDR_SHORT_TIMEOUT 1000	/* shorter urb timeout */
 
 /*
  * ***************************************************************************
@@ -1147,277 +1146,277 @@ MODULE_DEVICE_TABLE(usb, id_table_combined);
  * ***************************************************************************
  */
 
-अटल अचिन्हित लघु पूर्णांक ftdi_232am_baud_base_to_भागisor(पूर्णांक baud, पूर्णांक base)
-अणु
-	अचिन्हित लघु पूर्णांक भागisor;
-	/* भागisor shअगरted 3 bits to the left */
-	पूर्णांक भागisor3 = DIV_ROUND_CLOSEST(base, 2 * baud);
-	अगर ((भागisor3 & 0x7) == 7)
-		भागisor3++; /* round x.7/8 up to x+1 */
-	भागisor = भागisor3 >> 3;
-	भागisor3 &= 0x7;
-	अगर (भागisor3 == 1)
-		भागisor |= 0xc000;	/* +0.125 */
-	अन्यथा अगर (भागisor3 >= 4)
-		भागisor |= 0x4000;	/* +0.5 */
-	अन्यथा अगर (भागisor3 != 0)
-		भागisor |= 0x8000;	/* +0.25 */
-	अन्यथा अगर (भागisor == 1)
-		भागisor = 0;		/* special हाल क्रम maximum baud rate */
-	वापस भागisor;
-पूर्ण
+static unsigned short int ftdi_232am_baud_base_to_divisor(int baud, int base)
+{
+	unsigned short int divisor;
+	/* divisor shifted 3 bits to the left */
+	int divisor3 = DIV_ROUND_CLOSEST(base, 2 * baud);
+	if ((divisor3 & 0x7) == 7)
+		divisor3++; /* round x.7/8 up to x+1 */
+	divisor = divisor3 >> 3;
+	divisor3 &= 0x7;
+	if (divisor3 == 1)
+		divisor |= 0xc000;	/* +0.125 */
+	else if (divisor3 >= 4)
+		divisor |= 0x4000;	/* +0.5 */
+	else if (divisor3 != 0)
+		divisor |= 0x8000;	/* +0.25 */
+	else if (divisor == 1)
+		divisor = 0;		/* special case for maximum baud rate */
+	return divisor;
+}
 
-अटल अचिन्हित लघु पूर्णांक ftdi_232am_baud_to_भागisor(पूर्णांक baud)
-अणु
-	 वापस ftdi_232am_baud_base_to_भागisor(baud, 48000000);
-पूर्ण
+static unsigned short int ftdi_232am_baud_to_divisor(int baud)
+{
+	 return ftdi_232am_baud_base_to_divisor(baud, 48000000);
+}
 
-अटल u32 ftdi_232bm_baud_base_to_भागisor(पूर्णांक baud, पूर्णांक base)
-अणु
-	अटल स्थिर अचिन्हित अक्षर भागfrac[8] = अणु 0, 3, 2, 4, 1, 5, 6, 7 पूर्ण;
-	u32 भागisor;
-	/* भागisor shअगरted 3 bits to the left */
-	पूर्णांक भागisor3 = DIV_ROUND_CLOSEST(base, 2 * baud);
-	भागisor = भागisor3 >> 3;
-	भागisor |= (u32)भागfrac[भागisor3 & 0x7] << 14;
-	/* Deal with special हालs क्रम highest baud rates. */
-	अगर (भागisor == 1)		/* 1.0 */
-		भागisor = 0;
-	अन्यथा अगर (भागisor == 0x4001)	/* 1.5 */
-		भागisor = 1;
-	वापस भागisor;
-पूर्ण
+static u32 ftdi_232bm_baud_base_to_divisor(int baud, int base)
+{
+	static const unsigned char divfrac[8] = { 0, 3, 2, 4, 1, 5, 6, 7 };
+	u32 divisor;
+	/* divisor shifted 3 bits to the left */
+	int divisor3 = DIV_ROUND_CLOSEST(base, 2 * baud);
+	divisor = divisor3 >> 3;
+	divisor |= (u32)divfrac[divisor3 & 0x7] << 14;
+	/* Deal with special cases for highest baud rates. */
+	if (divisor == 1)		/* 1.0 */
+		divisor = 0;
+	else if (divisor == 0x4001)	/* 1.5 */
+		divisor = 1;
+	return divisor;
+}
 
-अटल u32 ftdi_232bm_baud_to_भागisor(पूर्णांक baud)
-अणु
-	 वापस ftdi_232bm_baud_base_to_भागisor(baud, 48000000);
-पूर्ण
+static u32 ftdi_232bm_baud_to_divisor(int baud)
+{
+	 return ftdi_232bm_baud_base_to_divisor(baud, 48000000);
+}
 
-अटल u32 ftdi_2232h_baud_base_to_भागisor(पूर्णांक baud, पूर्णांक base)
-अणु
-	अटल स्थिर अचिन्हित अक्षर भागfrac[8] = अणु 0, 3, 2, 4, 1, 5, 6, 7 पूर्ण;
-	u32 भागisor;
-	पूर्णांक भागisor3;
+static u32 ftdi_2232h_baud_base_to_divisor(int baud, int base)
+{
+	static const unsigned char divfrac[8] = { 0, 3, 2, 4, 1, 5, 6, 7 };
+	u32 divisor;
+	int divisor3;
 
 	/* hi-speed baud rate is 10-bit sampling instead of 16-bit */
-	भागisor3 = DIV_ROUND_CLOSEST(8 * base, 10 * baud);
+	divisor3 = DIV_ROUND_CLOSEST(8 * base, 10 * baud);
 
-	भागisor = भागisor3 >> 3;
-	भागisor |= (u32)भागfrac[भागisor3 & 0x7] << 14;
-	/* Deal with special हालs क्रम highest baud rates. */
-	अगर (भागisor == 1)		/* 1.0 */
-		भागisor = 0;
-	अन्यथा अगर (भागisor == 0x4001)	/* 1.5 */
-		भागisor = 1;
+	divisor = divisor3 >> 3;
+	divisor |= (u32)divfrac[divisor3 & 0x7] << 14;
+	/* Deal with special cases for highest baud rates. */
+	if (divisor == 1)		/* 1.0 */
+		divisor = 0;
+	else if (divisor == 0x4001)	/* 1.5 */
+		divisor = 1;
 	/*
-	 * Set this bit to turn off a भागide by 2.5 on baud rate generator
+	 * Set this bit to turn off a divide by 2.5 on baud rate generator
 	 * This enables baud rates up to 12Mbaud but cannot reach below 1200
 	 * baud with this bit set
 	 */
-	भागisor |= 0x00020000;
-	वापस भागisor;
-पूर्ण
+	divisor |= 0x00020000;
+	return divisor;
+}
 
-अटल u32 ftdi_2232h_baud_to_भागisor(पूर्णांक baud)
-अणु
-	 वापस ftdi_2232h_baud_base_to_भागisor(baud, 120000000);
-पूर्ण
+static u32 ftdi_2232h_baud_to_divisor(int baud)
+{
+	 return ftdi_2232h_baud_base_to_divisor(baud, 120000000);
+}
 
-#घोषणा set_mctrl(port, set)		update_mctrl((port), (set), 0)
-#घोषणा clear_mctrl(port, clear)	update_mctrl((port), 0, (clear))
+#define set_mctrl(port, set)		update_mctrl((port), (set), 0)
+#define clear_mctrl(port, clear)	update_mctrl((port), 0, (clear))
 
-अटल पूर्णांक update_mctrl(काष्ठा usb_serial_port *port, अचिन्हित पूर्णांक set,
-							अचिन्हित पूर्णांक clear)
-अणु
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
-	काष्ठा device *dev = &port->dev;
-	अचिन्हित value;
-	पूर्णांक rv;
+static int update_mctrl(struct usb_serial_port *port, unsigned int set,
+							unsigned int clear)
+{
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
+	struct device *dev = &port->dev;
+	unsigned value;
+	int rv;
 
-	अगर (((set | clear) & (TIOCM_DTR | TIOCM_RTS)) == 0) अणु
+	if (((set | clear) & (TIOCM_DTR | TIOCM_RTS)) == 0) {
 		dev_dbg(dev, "%s - DTR|RTS not being set|cleared\n", __func__);
-		वापस 0;	/* no change */
-	पूर्ण
+		return 0;	/* no change */
+	}
 
 	clear &= ~set;	/* 'set' takes precedence over 'clear' */
 	value = 0;
-	अगर (clear & TIOCM_DTR)
+	if (clear & TIOCM_DTR)
 		value |= FTDI_SIO_SET_DTR_LOW;
-	अगर (clear & TIOCM_RTS)
+	if (clear & TIOCM_RTS)
 		value |= FTDI_SIO_SET_RTS_LOW;
-	अगर (set & TIOCM_DTR)
+	if (set & TIOCM_DTR)
 		value |= FTDI_SIO_SET_DTR_HIGH;
-	अगर (set & TIOCM_RTS)
+	if (set & TIOCM_RTS)
 		value |= FTDI_SIO_SET_RTS_HIGH;
 	rv = usb_control_msg(port->serial->dev,
 			       usb_sndctrlpipe(port->serial->dev, 0),
 			       FTDI_SIO_SET_MODEM_CTRL_REQUEST,
 			       FTDI_SIO_SET_MODEM_CTRL_REQUEST_TYPE,
-			       value, priv->पूर्णांकerface,
-			       शून्य, 0, WDR_TIMEOUT);
-	अगर (rv < 0) अणु
+			       value, priv->interface,
+			       NULL, 0, WDR_TIMEOUT);
+	if (rv < 0) {
 		dev_dbg(dev, "%s Error from MODEM_CTRL urb: DTR %s, RTS %s\n",
 			__func__,
 			(set & TIOCM_DTR) ? "HIGH" : (clear & TIOCM_DTR) ? "LOW" : "unchanged",
 			(set & TIOCM_RTS) ? "HIGH" : (clear & TIOCM_RTS) ? "LOW" : "unchanged");
 		rv = usb_translate_errors(rv);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_dbg(dev, "%s - DTR %s, RTS %s\n", __func__,
 			(set & TIOCM_DTR) ? "HIGH" : (clear & TIOCM_DTR) ? "LOW" : "unchanged",
 			(set & TIOCM_RTS) ? "HIGH" : (clear & TIOCM_RTS) ? "LOW" : "unchanged");
 		/* FIXME: locking on last_dtr_rts */
 		priv->last_dtr_rts = (priv->last_dtr_rts & ~clear) | set;
-	पूर्ण
-	वापस rv;
-पूर्ण
+	}
+	return rv;
+}
 
 
-अटल u32 get_ftdi_भागisor(काष्ठा tty_काष्ठा *tty,
-						काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
-	काष्ठा device *dev = &port->dev;
-	u32 भाग_value = 0;
-	पूर्णांक भाग_okay = 1;
-	पूर्णांक baud;
+static u32 get_ftdi_divisor(struct tty_struct *tty,
+						struct usb_serial_port *port)
+{
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
+	struct device *dev = &port->dev;
+	u32 div_value = 0;
+	int div_okay = 1;
+	int baud;
 
 	baud = tty_get_baud_rate(tty);
 	dev_dbg(dev, "%s - tty_get_baud_rate reports speed %d\n", __func__, baud);
 
 	/*
-	 * Observe deprecated async-compatible custom_भागisor hack, update
-	 * baudrate अगर needed.
+	 * Observe deprecated async-compatible custom_divisor hack, update
+	 * baudrate if needed.
 	 */
-	अगर (baud == 38400 &&
+	if (baud == 38400 &&
 	    ((priv->flags & ASYNC_SPD_MASK) == ASYNC_SPD_CUST) &&
-	     (priv->custom_भागisor)) अणु
-		baud = priv->baud_base / priv->custom_भागisor;
+	     (priv->custom_divisor)) {
+		baud = priv->baud_base / priv->custom_divisor;
 		dev_dbg(dev, "%s - custom divisor %d sets baud rate to %d\n",
-			__func__, priv->custom_भागisor, baud);
-	पूर्ण
+			__func__, priv->custom_divisor, baud);
+	}
 
-	अगर (!baud)
+	if (!baud)
 		baud = 9600;
-	चयन (priv->chip_type) अणु
-	हाल SIO: /* SIO chip */
-		चयन (baud) अणु
-		हाल 300: भाग_value = ftdi_sio_b300; अवरोध;
-		हाल 600: भाग_value = ftdi_sio_b600; अवरोध;
-		हाल 1200: भाग_value = ftdi_sio_b1200; अवरोध;
-		हाल 2400: भाग_value = ftdi_sio_b2400; अवरोध;
-		हाल 4800: भाग_value = ftdi_sio_b4800; अवरोध;
-		हाल 9600: भाग_value = ftdi_sio_b9600; अवरोध;
-		हाल 19200: भाग_value = ftdi_sio_b19200; अवरोध;
-		हाल 38400: भाग_value = ftdi_sio_b38400; अवरोध;
-		हाल 57600: भाग_value = ftdi_sio_b57600;  अवरोध;
-		हाल 115200: भाग_value = ftdi_sio_b115200; अवरोध;
-		पूर्ण /* baud */
-		अगर (भाग_value == 0) अणु
+	switch (priv->chip_type) {
+	case SIO: /* SIO chip */
+		switch (baud) {
+		case 300: div_value = ftdi_sio_b300; break;
+		case 600: div_value = ftdi_sio_b600; break;
+		case 1200: div_value = ftdi_sio_b1200; break;
+		case 2400: div_value = ftdi_sio_b2400; break;
+		case 4800: div_value = ftdi_sio_b4800; break;
+		case 9600: div_value = ftdi_sio_b9600; break;
+		case 19200: div_value = ftdi_sio_b19200; break;
+		case 38400: div_value = ftdi_sio_b38400; break;
+		case 57600: div_value = ftdi_sio_b57600;  break;
+		case 115200: div_value = ftdi_sio_b115200; break;
+		} /* baud */
+		if (div_value == 0) {
 			dev_dbg(dev, "%s - Baudrate (%d) requested is not supported\n",
 				__func__,  baud);
-			भाग_value = ftdi_sio_b9600;
+			div_value = ftdi_sio_b9600;
 			baud = 9600;
-			भाग_okay = 0;
-		पूर्ण
-		अवरोध;
-	हाल FT8U232AM: /* 8U232AM chip */
-		अगर (baud <= 3000000) अणु
-			भाग_value = ftdi_232am_baud_to_भागisor(baud);
-		पूर्ण अन्यथा अणु
+			div_okay = 0;
+		}
+		break;
+	case FT8U232AM: /* 8U232AM chip */
+		if (baud <= 3000000) {
+			div_value = ftdi_232am_baud_to_divisor(baud);
+		} else {
 			dev_dbg(dev, "%s - Baud rate too high!\n", __func__);
 			baud = 9600;
-			भाग_value = ftdi_232am_baud_to_भागisor(9600);
-			भाग_okay = 0;
-		पूर्ण
-		अवरोध;
-	हाल FT232BM: /* FT232BM chip */
-	हाल FT2232C: /* FT2232C chip */
-	हाल FT232RL: /* FT232RL chip */
-	हाल FTX:     /* FT-X series */
-		अगर (baud <= 3000000) अणु
+			div_value = ftdi_232am_baud_to_divisor(9600);
+			div_okay = 0;
+		}
+		break;
+	case FT232BM: /* FT232BM chip */
+	case FT2232C: /* FT2232C chip */
+	case FT232RL: /* FT232RL chip */
+	case FTX:     /* FT-X series */
+		if (baud <= 3000000) {
 			u16 product_id = le16_to_cpu(
 				port->serial->dev->descriptor.idProduct);
-			अगर (((product_id == FTDI_NDI_HUC_PID)		||
+			if (((product_id == FTDI_NDI_HUC_PID)		||
 			     (product_id == FTDI_NDI_SPECTRA_SCU_PID)	||
 			     (product_id == FTDI_NDI_FUTURE_2_PID)	||
 			     (product_id == FTDI_NDI_FUTURE_3_PID)	||
 			     (product_id == FTDI_NDI_AURORA_SCU_PID))	&&
-			    (baud == 19200)) अणु
+			    (baud == 19200)) {
 				baud = 1200000;
-			पूर्ण
-			भाग_value = ftdi_232bm_baud_to_भागisor(baud);
-		पूर्ण अन्यथा अणु
+			}
+			div_value = ftdi_232bm_baud_to_divisor(baud);
+		} else {
 			dev_dbg(dev, "%s - Baud rate too high!\n", __func__);
-			भाग_value = ftdi_232bm_baud_to_भागisor(9600);
-			भाग_okay = 0;
+			div_value = ftdi_232bm_baud_to_divisor(9600);
+			div_okay = 0;
 			baud = 9600;
-		पूर्ण
-		अवरोध;
-	हाल FT2232H: /* FT2232H chip */
-	हाल FT4232H: /* FT4232H chip */
-	हाल FT232H:  /* FT232H chip */
-		अगर ((baud <= 12000000) && (baud >= 1200)) अणु
-			भाग_value = ftdi_2232h_baud_to_भागisor(baud);
-		पूर्ण अन्यथा अगर (baud < 1200) अणु
-			भाग_value = ftdi_232bm_baud_to_भागisor(baud);
-		पूर्ण अन्यथा अणु
+		}
+		break;
+	case FT2232H: /* FT2232H chip */
+	case FT4232H: /* FT4232H chip */
+	case FT232H:  /* FT232H chip */
+		if ((baud <= 12000000) && (baud >= 1200)) {
+			div_value = ftdi_2232h_baud_to_divisor(baud);
+		} else if (baud < 1200) {
+			div_value = ftdi_232bm_baud_to_divisor(baud);
+		} else {
 			dev_dbg(dev, "%s - Baud rate too high!\n", __func__);
-			भाग_value = ftdi_232bm_baud_to_भागisor(9600);
-			भाग_okay = 0;
+			div_value = ftdi_232bm_baud_to_divisor(9600);
+			div_okay = 0;
 			baud = 9600;
-		पूर्ण
-		अवरोध;
-	पूर्ण /* priv->chip_type */
+		}
+		break;
+	} /* priv->chip_type */
 
-	अगर (भाग_okay) अणु
+	if (div_okay) {
 		dev_dbg(dev, "%s - Baud rate set to %d (divisor 0x%lX) on chip %s\n",
-			__func__, baud, (अचिन्हित दीर्घ)भाग_value,
+			__func__, baud, (unsigned long)div_value,
 			ftdi_chip_name[priv->chip_type]);
-	पूर्ण
+	}
 
 	tty_encode_baud_rate(tty, baud, baud);
-	वापस भाग_value;
-पूर्ण
+	return div_value;
+}
 
-अटल पूर्णांक change_speed(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
+static int change_speed(struct tty_struct *tty, struct usb_serial_port *port)
+{
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
 	u16 value;
 	u16 index;
 	u32 index_value;
-	पूर्णांक rv;
+	int rv;
 
-	index_value = get_ftdi_भागisor(tty, port);
+	index_value = get_ftdi_divisor(tty, port);
 	value = (u16)index_value;
 	index = (u16)(index_value >> 16);
-	अगर (priv->chip_type == FT2232C || priv->chip_type == FT2232H ||
+	if (priv->chip_type == FT2232C || priv->chip_type == FT2232H ||
 			priv->chip_type == FT4232H || priv->chip_type == FT232H ||
-			priv->chip_type == FTX) अणु
+			priv->chip_type == FTX) {
 		/* Probably the BM type needs the MSB of the encoded fractional
-		 * भागider also moved like क्रम the chips above. Any infos? */
-		index = (u16)((index << 8) | priv->पूर्णांकerface);
-	पूर्ण
+		 * divider also moved like for the chips above. Any infos? */
+		index = (u16)((index << 8) | priv->interface);
+	}
 
 	rv = usb_control_msg(port->serial->dev,
 			    usb_sndctrlpipe(port->serial->dev, 0),
 			    FTDI_SIO_SET_BAUDRATE_REQUEST,
 			    FTDI_SIO_SET_BAUDRATE_REQUEST_TYPE,
 			    value, index,
-			    शून्य, 0, WDR_SHORT_TIMEOUT);
-	वापस rv;
-पूर्ण
+			    NULL, 0, WDR_SHORT_TIMEOUT);
+	return rv;
+}
 
-अटल पूर्णांक ग_लिखो_latency_समयr(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
-	काष्ठा usb_device *udev = port->serial->dev;
-	पूर्णांक rv;
-	पूर्णांक l = priv->latency;
+static int write_latency_timer(struct usb_serial_port *port)
+{
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
+	struct usb_device *udev = port->serial->dev;
+	int rv;
+	int l = priv->latency;
 
-	अगर (priv->chip_type == SIO || priv->chip_type == FT8U232AM)
-		वापस -EINVAL;
+	if (priv->chip_type == SIO || priv->chip_type == FT8U232AM)
+		return -EINVAL;
 
-	अगर (priv->flags & ASYNC_LOW_LATENCY)
+	if (priv->flags & ASYNC_LOW_LATENCY)
 		l = 1;
 
 	dev_dbg(&port->dev, "%s: setting latency timer = %i\n", __func__, l);
@@ -1426,244 +1425,244 @@ MODULE_DEVICE_TABLE(usb, id_table_combined);
 			     usb_sndctrlpipe(udev, 0),
 			     FTDI_SIO_SET_LATENCY_TIMER_REQUEST,
 			     FTDI_SIO_SET_LATENCY_TIMER_REQUEST_TYPE,
-			     l, priv->पूर्णांकerface,
-			     शून्य, 0, WDR_TIMEOUT);
-	अगर (rv < 0)
+			     l, priv->interface,
+			     NULL, 0, WDR_TIMEOUT);
+	if (rv < 0)
 		dev_err(&port->dev, "Unable to write latency timer: %i\n", rv);
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल पूर्णांक _पढ़ो_latency_समयr(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
-	काष्ठा usb_device *udev = port->serial->dev;
-	अचिन्हित अक्षर *buf;
-	पूर्णांक rv;
+static int _read_latency_timer(struct usb_serial_port *port)
+{
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
+	struct usb_device *udev = port->serial->dev;
+	unsigned char *buf;
+	int rv;
 
-	buf = kदो_स्मृति(1, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc(1, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
 	rv = usb_control_msg(udev,
 			     usb_rcvctrlpipe(udev, 0),
 			     FTDI_SIO_GET_LATENCY_TIMER_REQUEST,
 			     FTDI_SIO_GET_LATENCY_TIMER_REQUEST_TYPE,
-			     0, priv->पूर्णांकerface,
+			     0, priv->interface,
 			     buf, 1, WDR_TIMEOUT);
-	अगर (rv < 1) अणु
-		अगर (rv >= 0)
+	if (rv < 1) {
+		if (rv >= 0)
 			rv = -EIO;
-	पूर्ण अन्यथा अणु
+	} else {
 		rv = buf[0];
-	पूर्ण
+	}
 
-	kमुक्त(buf);
+	kfree(buf);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल पूर्णांक पढ़ो_latency_समयr(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
-	पूर्णांक rv;
+static int read_latency_timer(struct usb_serial_port *port)
+{
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
+	int rv;
 
-	अगर (priv->chip_type == SIO || priv->chip_type == FT8U232AM)
-		वापस -EINVAL;
+	if (priv->chip_type == SIO || priv->chip_type == FT8U232AM)
+		return -EINVAL;
 
-	rv = _पढ़ो_latency_समयr(port);
-	अगर (rv < 0) अणु
+	rv = _read_latency_timer(port);
+	if (rv < 0) {
 		dev_err(&port->dev, "Unable to read latency timer: %i\n", rv);
-		वापस rv;
-	पूर्ण
+		return rv;
+	}
 
 	priv->latency = rv;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम get_serial_info(काष्ठा tty_काष्ठा *tty, काष्ठा serial_काष्ठा *ss)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
+static void get_serial_info(struct tty_struct *tty, struct serial_struct *ss)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
 
 	ss->flags = priv->flags;
 	ss->baud_base = priv->baud_base;
-	ss->custom_भागisor = priv->custom_भागisor;
-पूर्ण
+	ss->custom_divisor = priv->custom_divisor;
+}
 
-अटल पूर्णांक set_serial_info(काष्ठा tty_काष्ठा *tty, काष्ठा serial_काष्ठा *ss)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
-	पूर्णांक old_flags, old_भागisor;
+static int set_serial_info(struct tty_struct *tty, struct serial_struct *ss)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
+	int old_flags, old_divisor;
 
 	mutex_lock(&priv->cfg_lock);
 
-	अगर (!capable(CAP_SYS_ADMIN)) अणु
-		अगर ((ss->flags ^ priv->flags) & ~ASYNC_USR_MASK) अणु
+	if (!capable(CAP_SYS_ADMIN)) {
+		if ((ss->flags ^ priv->flags) & ~ASYNC_USR_MASK) {
 			mutex_unlock(&priv->cfg_lock);
-			वापस -EPERM;
-		पूर्ण
-	पूर्ण
+			return -EPERM;
+		}
+	}
 
 	old_flags = priv->flags;
-	old_भागisor = priv->custom_भागisor;
+	old_divisor = priv->custom_divisor;
 
 	priv->flags = ss->flags & ASYNC_FLAGS;
-	priv->custom_भागisor = ss->custom_भागisor;
+	priv->custom_divisor = ss->custom_divisor;
 
-	ग_लिखो_latency_समयr(port);
+	write_latency_timer(port);
 
-	अगर ((priv->flags ^ old_flags) & ASYNC_SPD_MASK ||
+	if ((priv->flags ^ old_flags) & ASYNC_SPD_MASK ||
 			((priv->flags & ASYNC_SPD_MASK) == ASYNC_SPD_CUST &&
-			 priv->custom_भागisor != old_भागisor)) अणु
+			 priv->custom_divisor != old_divisor)) {
 
 		/* warn about deprecation unless clearing */
-		अगर (priv->flags & ASYNC_SPD_MASK)
+		if (priv->flags & ASYNC_SPD_MASK)
 			dev_warn_ratelimited(&port->dev, "use of SPD flags is deprecated\n");
 
 		change_speed(tty, port);
-	पूर्ण
+	}
 	mutex_unlock(&priv->cfg_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक get_lsr_info(काष्ठा usb_serial_port *port,
-			अचिन्हित पूर्णांक __user *retinfo)
-अणु
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
-	अचिन्हित पूर्णांक result = 0;
+static int get_lsr_info(struct usb_serial_port *port,
+			unsigned int __user *retinfo)
+{
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
+	unsigned int result = 0;
 
-	अगर (priv->transmit_empty)
+	if (priv->transmit_empty)
 		result = TIOCSER_TEMT;
 
-	अगर (copy_to_user(retinfo, &result, माप(अचिन्हित पूर्णांक)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(retinfo, &result, sizeof(unsigned int)))
+		return -EFAULT;
+	return 0;
+}
 
 
 /* Determine type of FTDI chip based on USB config and descriptor. */
-अटल व्योम ftdi_determine_type(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
-	काष्ठा usb_serial *serial = port->serial;
-	काष्ठा usb_device *udev = serial->dev;
-	अचिन्हित version;
-	अचिन्हित पूर्णांकerfaces;
+static void ftdi_determine_type(struct usb_serial_port *port)
+{
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
+	struct usb_serial *serial = port->serial;
+	struct usb_device *udev = serial->dev;
+	unsigned version;
+	unsigned interfaces;
 
-	/* Assume it is not the original SIO device क्रम now. */
+	/* Assume it is not the original SIO device for now. */
 	priv->baud_base = 48000000 / 2;
 
 	version = le16_to_cpu(udev->descriptor.bcdDevice);
-	पूर्णांकerfaces = udev->actconfig->desc.bNumInterfaces;
+	interfaces = udev->actconfig->desc.bNumInterfaces;
 	dev_dbg(&port->dev, "%s: bcdDevice = 0x%x, bNumInterfaces = %u\n", __func__,
-		version, पूर्णांकerfaces);
-	अगर (पूर्णांकerfaces > 1) अणु
-		काष्ठा usb_पूर्णांकerface *पूर्णांकf = serial->पूर्णांकerface;
-		पूर्णांक अगरnum = पूर्णांकf->cur_altsetting->desc.bInterfaceNumber;
+		version, interfaces);
+	if (interfaces > 1) {
+		struct usb_interface *intf = serial->interface;
+		int ifnum = intf->cur_altsetting->desc.bInterfaceNumber;
 
-		/* Multiple पूर्णांकerfaces.*/
-		अगर (version == 0x0800) अणु
+		/* Multiple interfaces.*/
+		if (version == 0x0800) {
 			priv->chip_type = FT4232H;
-			/* Hi-speed - baud घड़ी runs at 120MHz */
+			/* Hi-speed - baud clock runs at 120MHz */
 			priv->baud_base = 120000000 / 2;
-		पूर्ण अन्यथा अगर (version == 0x0700) अणु
+		} else if (version == 0x0700) {
 			priv->chip_type = FT2232H;
-			/* Hi-speed - baud घड़ी runs at 120MHz */
+			/* Hi-speed - baud clock runs at 120MHz */
 			priv->baud_base = 120000000 / 2;
-		पूर्ण अन्यथा
+		} else
 			priv->chip_type = FT2232C;
 
-		/* Determine पूर्णांकerface code. */
-		अगर (अगरnum == 0)
-			priv->पूर्णांकerface = INTERFACE_A;
-		अन्यथा अगर (अगरnum == 1)
-			priv->पूर्णांकerface = INTERFACE_B;
-		अन्यथा अगर (अगरnum == 2)
-			priv->पूर्णांकerface = INTERFACE_C;
-		अन्यथा अगर (अगरnum == 3)
-			priv->पूर्णांकerface = INTERFACE_D;
+		/* Determine interface code. */
+		if (ifnum == 0)
+			priv->interface = INTERFACE_A;
+		else if (ifnum == 1)
+			priv->interface = INTERFACE_B;
+		else if (ifnum == 2)
+			priv->interface = INTERFACE_C;
+		else if (ifnum == 3)
+			priv->interface = INTERFACE_D;
 
-		/* BM-type devices have a bug where bcdDevice माला_लो set
+		/* BM-type devices have a bug where bcdDevice gets set
 		 * to 0x200 when iSerialNumber is 0.  */
-		अगर (version < 0x500) अणु
+		if (version < 0x500) {
 			dev_dbg(&port->dev,
 				"%s: something fishy - bcdDevice too low for multi-interface device\n",
 				__func__);
-		पूर्ण
-	पूर्ण अन्यथा अगर (version < 0x200) अणु
+		}
+	} else if (version < 0x200) {
 		/* Old device.  Assume it's the original SIO. */
 		priv->chip_type = SIO;
 		priv->baud_base = 12000000 / 16;
-	पूर्ण अन्यथा अगर (version < 0x400) अणु
+	} else if (version < 0x400) {
 		/* Assume it's an FT8U232AM (or FT8U245AM) */
 		priv->chip_type = FT8U232AM;
 		/*
 		 * It might be a BM type because of the iSerialNumber bug.
-		 * If iSerialNumber==0 and the latency समयr is पढ़ोable,
+		 * If iSerialNumber==0 and the latency timer is readable,
 		 * assume it is BM type.
 		 */
-		अगर (udev->descriptor.iSerialNumber == 0 &&
-				_पढ़ो_latency_समयr(port) >= 0) अणु
+		if (udev->descriptor.iSerialNumber == 0 &&
+				_read_latency_timer(port) >= 0) {
 			dev_dbg(&port->dev,
 				"%s: has latency timer so not an AM type\n",
 				__func__);
 			priv->chip_type = FT232BM;
-		पूर्ण
-	पूर्ण अन्यथा अगर (version < 0x600) अणु
+		}
+	} else if (version < 0x600) {
 		/* Assume it's an FT232BM (or FT245BM) */
 		priv->chip_type = FT232BM;
-	पूर्ण अन्यथा अगर (version < 0x900) अणु
+	} else if (version < 0x900) {
 		/* Assume it's an FT232RL */
 		priv->chip_type = FT232RL;
-	पूर्ण अन्यथा अगर (version < 0x1000) अणु
+	} else if (version < 0x1000) {
 		/* Assume it's an FT232H */
 		priv->chip_type = FT232H;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Assume it's an FT-X series device */
 		priv->chip_type = FTX;
-	पूर्ण
+	}
 
 	dev_info(&udev->dev, "Detected %s\n", ftdi_chip_name[priv->chip_type]);
-पूर्ण
+}
 
 
 /*
- * Determine the maximum packet size क्रम the device. This depends on the chip
+ * Determine the maximum packet size for the device. This depends on the chip
  * type and the USB host capabilities. The value should be obtained from the
- * device descriptor as the chip will use the appropriate values क्रम the host.
+ * device descriptor as the chip will use the appropriate values for the host.
  */
-अटल व्योम ftdi_set_max_packet_size(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
-	काष्ठा usb_पूर्णांकerface *पूर्णांकerface = port->serial->पूर्णांकerface;
-	काष्ठा usb_endpoपूर्णांक_descriptor *ep_desc;
-	अचिन्हित num_endpoपूर्णांकs;
-	अचिन्हित i;
+static void ftdi_set_max_packet_size(struct usb_serial_port *port)
+{
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
+	struct usb_interface *interface = port->serial->interface;
+	struct usb_endpoint_descriptor *ep_desc;
+	unsigned num_endpoints;
+	unsigned i;
 
-	num_endpoपूर्णांकs = पूर्णांकerface->cur_altsetting->desc.bNumEndpoपूर्णांकs;
-	अगर (!num_endpoपूर्णांकs)
-		वापस;
+	num_endpoints = interface->cur_altsetting->desc.bNumEndpoints;
+	if (!num_endpoints)
+		return;
 
 	/*
 	 * NOTE: Some customers have programmed FT232R/FT245R devices
-	 * with an endpoपूर्णांक size of 0 - not good. In this हाल, we
-	 * want to override the endpoपूर्णांक descriptor setting and use a
-	 * value of 64 क्रम wMaxPacketSize.
+	 * with an endpoint size of 0 - not good. In this case, we
+	 * want to override the endpoint descriptor setting and use a
+	 * value of 64 for wMaxPacketSize.
 	 */
-	क्रम (i = 0; i < num_endpoपूर्णांकs; i++) अणु
-		ep_desc = &पूर्णांकerface->cur_altsetting->endpoपूर्णांक[i].desc;
-		अगर (!ep_desc->wMaxPacketSize) अणु
+	for (i = 0; i < num_endpoints; i++) {
+		ep_desc = &interface->cur_altsetting->endpoint[i].desc;
+		if (!ep_desc->wMaxPacketSize) {
 			ep_desc->wMaxPacketSize = cpu_to_le16(0x40);
 			dev_warn(&port->dev, "Overriding wMaxPacketSize on endpoint %d\n",
-					usb_endpoपूर्णांक_num(ep_desc));
-		पूर्ण
-	पूर्ण
+					usb_endpoint_num(ep_desc));
+		}
+	}
 
 	/* Set max packet size based on last descriptor. */
-	priv->max_packet_size = usb_endpoपूर्णांक_maxp(ep_desc);
-पूर्ण
+	priv->max_packet_size = usb_endpoint_maxp(ep_desc);
+}
 
 
 /*
@@ -1672,51 +1671,51 @@ MODULE_DEVICE_TABLE(usb, id_table_combined);
  * ***************************************************************************
  */
 
-अटल sमाप_प्रकार latency_समयr_show(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा usb_serial_port *port = to_usb_serial_port(dev);
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
-	अगर (priv->flags & ASYNC_LOW_LATENCY)
-		वापस प्र_लिखो(buf, "1\n");
-	अन्यथा
-		वापस प्र_लिखो(buf, "%i\n", priv->latency);
-पूर्ण
+static ssize_t latency_timer_show(struct device *dev,
+				  struct device_attribute *attr, char *buf)
+{
+	struct usb_serial_port *port = to_usb_serial_port(dev);
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
+	if (priv->flags & ASYNC_LOW_LATENCY)
+		return sprintf(buf, "1\n");
+	else
+		return sprintf(buf, "%i\n", priv->latency);
+}
 
-/* Write a new value of the latency समयr, in units of milliseconds. */
-अटल sमाप_प्रकार latency_समयr_store(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr,
-				   स्थिर अक्षर *valbuf, माप_प्रकार count)
-अणु
-	काष्ठा usb_serial_port *port = to_usb_serial_port(dev);
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
+/* Write a new value of the latency timer, in units of milliseconds. */
+static ssize_t latency_timer_store(struct device *dev,
+				   struct device_attribute *attr,
+				   const char *valbuf, size_t count)
+{
+	struct usb_serial_port *port = to_usb_serial_port(dev);
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
 	u8 v;
-	पूर्णांक rv;
+	int rv;
 
-	अगर (kstrtou8(valbuf, 10, &v))
-		वापस -EINVAL;
+	if (kstrtou8(valbuf, 10, &v))
+		return -EINVAL;
 
 	priv->latency = v;
-	rv = ग_लिखो_latency_समयr(port);
-	अगर (rv < 0)
-		वापस -EIO;
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR_RW(latency_समयr);
+	rv = write_latency_timer(port);
+	if (rv < 0)
+		return -EIO;
+	return count;
+}
+static DEVICE_ATTR_RW(latency_timer);
 
-/* Write an event अक्षरacter directly to the FTDI रेजिस्टर.  The ASCII
+/* Write an event character directly to the FTDI register.  The ASCII
    value is in the low 8 bits, with the enable bit in the 9th bit. */
-अटल sमाप_प्रकार event_अक्षर_store(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, स्थिर अक्षर *valbuf, माप_प्रकार count)
-अणु
-	काष्ठा usb_serial_port *port = to_usb_serial_port(dev);
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
-	काष्ठा usb_device *udev = port->serial->dev;
-	अचिन्हित पूर्णांक v;
-	पूर्णांक rv;
+static ssize_t event_char_store(struct device *dev,
+	struct device_attribute *attr, const char *valbuf, size_t count)
+{
+	struct usb_serial_port *port = to_usb_serial_port(dev);
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
+	struct usb_device *udev = port->serial->dev;
+	unsigned int v;
+	int rv;
 
-	अगर (kstrtouपूर्णांक(valbuf, 0, &v) || v >= 0x200)
-		वापस -EINVAL;
+	if (kstrtouint(valbuf, 0, &v) || v >= 0x200)
+		return -EINVAL;
 
 	dev_dbg(&port->dev, "%s: setting event char = 0x%03x\n", __func__, v);
 
@@ -1724,214 +1723,214 @@ MODULE_DEVICE_TABLE(usb, id_table_combined);
 			     usb_sndctrlpipe(udev, 0),
 			     FTDI_SIO_SET_EVENT_CHAR_REQUEST,
 			     FTDI_SIO_SET_EVENT_CHAR_REQUEST_TYPE,
-			     v, priv->पूर्णांकerface,
-			     शून्य, 0, WDR_TIMEOUT);
-	अगर (rv < 0) अणु
+			     v, priv->interface,
+			     NULL, 0, WDR_TIMEOUT);
+	if (rv < 0) {
 		dev_dbg(&port->dev, "Unable to write event character: %i\n", rv);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR_WO(event_अक्षर);
+	return count;
+}
+static DEVICE_ATTR_WO(event_char);
 
-अटल पूर्णांक create_sysfs_attrs(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
-	पूर्णांक retval = 0;
+static int create_sysfs_attrs(struct usb_serial_port *port)
+{
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
+	int retval = 0;
 
-	/* XXX I've no idea अगर the original SIO supports the event_अक्षर
+	/* XXX I've no idea if the original SIO supports the event_char
 	 * sysfs parameter, so I'm playing it safe.  */
-	अगर (priv->chip_type != SIO) अणु
+	if (priv->chip_type != SIO) {
 		dev_dbg(&port->dev, "sysfs attributes for %s\n", ftdi_chip_name[priv->chip_type]);
-		retval = device_create_file(&port->dev, &dev_attr_event_अक्षर);
-		अगर ((!retval) &&
+		retval = device_create_file(&port->dev, &dev_attr_event_char);
+		if ((!retval) &&
 		    (priv->chip_type == FT232BM ||
 		     priv->chip_type == FT2232C ||
 		     priv->chip_type == FT232RL ||
 		     priv->chip_type == FT2232H ||
 		     priv->chip_type == FT4232H ||
 		     priv->chip_type == FT232H ||
-		     priv->chip_type == FTX)) अणु
+		     priv->chip_type == FTX)) {
 			retval = device_create_file(&port->dev,
-						    &dev_attr_latency_समयr);
-		पूर्ण
-	पूर्ण
-	वापस retval;
-पूर्ण
+						    &dev_attr_latency_timer);
+		}
+	}
+	return retval;
+}
 
-अटल व्योम हटाओ_sysfs_attrs(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
+static void remove_sysfs_attrs(struct usb_serial_port *port)
+{
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
 
 	/* XXX see create_sysfs_attrs */
-	अगर (priv->chip_type != SIO) अणु
-		device_हटाओ_file(&port->dev, &dev_attr_event_अक्षर);
-		अगर (priv->chip_type == FT232BM ||
+	if (priv->chip_type != SIO) {
+		device_remove_file(&port->dev, &dev_attr_event_char);
+		if (priv->chip_type == FT232BM ||
 		    priv->chip_type == FT2232C ||
 		    priv->chip_type == FT232RL ||
 		    priv->chip_type == FT2232H ||
 		    priv->chip_type == FT4232H ||
 		    priv->chip_type == FT232H ||
-		    priv->chip_type == FTX) अणु
-			device_हटाओ_file(&port->dev, &dev_attr_latency_समयr);
-		पूर्ण
-	पूर्ण
+		    priv->chip_type == FTX) {
+			device_remove_file(&port->dev, &dev_attr_latency_timer);
+		}
+	}
 
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_GPIOLIB
+#ifdef CONFIG_GPIOLIB
 
-अटल पूर्णांक ftdi_set_biपंचांगode(काष्ठा usb_serial_port *port, u8 mode)
-अणु
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
-	काष्ठा usb_serial *serial = port->serial;
-	पूर्णांक result;
+static int ftdi_set_bitmode(struct usb_serial_port *port, u8 mode)
+{
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
+	struct usb_serial *serial = port->serial;
+	int result;
 	u16 val;
 
-	result = usb_स्वतःpm_get_पूर्णांकerface(serial->पूर्णांकerface);
-	अगर (result)
-		वापस result;
+	result = usb_autopm_get_interface(serial->interface);
+	if (result)
+		return result;
 
 	val = (mode << 8) | (priv->gpio_output << 4) | priv->gpio_value;
 	result = usb_control_msg(serial->dev,
 				 usb_sndctrlpipe(serial->dev, 0),
 				 FTDI_SIO_SET_BITMODE_REQUEST,
 				 FTDI_SIO_SET_BITMODE_REQUEST_TYPE, val,
-				 priv->पूर्णांकerface, शून्य, 0, WDR_TIMEOUT);
-	अगर (result < 0) अणु
-		dev_err(&serial->पूर्णांकerface->dev,
+				 priv->interface, NULL, 0, WDR_TIMEOUT);
+	if (result < 0) {
+		dev_err(&serial->interface->dev,
 			"bitmode request failed for value 0x%04x: %d\n",
 			val, result);
-	पूर्ण
+	}
 
-	usb_स्वतःpm_put_पूर्णांकerface(serial->पूर्णांकerface);
+	usb_autopm_put_interface(serial->interface);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक ftdi_set_cbus_pins(काष्ठा usb_serial_port *port)
-अणु
-	वापस ftdi_set_biपंचांगode(port, FTDI_SIO_BITMODE_CBUS);
-पूर्ण
+static int ftdi_set_cbus_pins(struct usb_serial_port *port)
+{
+	return ftdi_set_bitmode(port, FTDI_SIO_BITMODE_CBUS);
+}
 
-अटल पूर्णांक ftdi_निकास_cbus_mode(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
+static int ftdi_exit_cbus_mode(struct usb_serial_port *port)
+{
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
 
 	priv->gpio_output = 0;
 	priv->gpio_value = 0;
-	वापस ftdi_set_biपंचांगode(port, FTDI_SIO_BITMODE_RESET);
-पूर्ण
+	return ftdi_set_bitmode(port, FTDI_SIO_BITMODE_RESET);
+}
 
-अटल पूर्णांक ftdi_gpio_request(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा usb_serial_port *port = gpiochip_get_data(gc);
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
-	पूर्णांक result;
+static int ftdi_gpio_request(struct gpio_chip *gc, unsigned int offset)
+{
+	struct usb_serial_port *port = gpiochip_get_data(gc);
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
+	int result;
 
 	mutex_lock(&priv->gpio_lock);
-	अगर (!priv->gpio_used) अणु
-		/* Set शेष pin states, as we cannot get them from device */
+	if (!priv->gpio_used) {
+		/* Set default pin states, as we cannot get them from device */
 		priv->gpio_output = 0x00;
 		priv->gpio_value = 0x00;
 		result = ftdi_set_cbus_pins(port);
-		अगर (result) अणु
+		if (result) {
 			mutex_unlock(&priv->gpio_lock);
-			वापस result;
-		पूर्ण
+			return result;
+		}
 
 		priv->gpio_used = true;
-	पूर्ण
+	}
 	mutex_unlock(&priv->gpio_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ftdi_पढ़ो_cbus_pins(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
-	काष्ठा usb_serial *serial = port->serial;
-	अचिन्हित अक्षर *buf;
-	पूर्णांक result;
+static int ftdi_read_cbus_pins(struct usb_serial_port *port)
+{
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
+	struct usb_serial *serial = port->serial;
+	unsigned char *buf;
+	int result;
 
-	result = usb_स्वतःpm_get_पूर्णांकerface(serial->पूर्णांकerface);
-	अगर (result)
-		वापस result;
+	result = usb_autopm_get_interface(serial->interface);
+	if (result)
+		return result;
 
-	buf = kदो_स्मृति(1, GFP_KERNEL);
-	अगर (!buf) अणु
-		usb_स्वतःpm_put_पूर्णांकerface(serial->पूर्णांकerface);
-		वापस -ENOMEM;
-	पूर्ण
+	buf = kmalloc(1, GFP_KERNEL);
+	if (!buf) {
+		usb_autopm_put_interface(serial->interface);
+		return -ENOMEM;
+	}
 
 	result = usb_control_msg(serial->dev,
 				 usb_rcvctrlpipe(serial->dev, 0),
 				 FTDI_SIO_READ_PINS_REQUEST,
 				 FTDI_SIO_READ_PINS_REQUEST_TYPE, 0,
-				 priv->पूर्णांकerface, buf, 1, WDR_TIMEOUT);
-	अगर (result < 1) अणु
-		अगर (result >= 0)
+				 priv->interface, buf, 1, WDR_TIMEOUT);
+	if (result < 1) {
+		if (result >= 0)
 			result = -EIO;
-	पूर्ण अन्यथा अणु
+	} else {
 		result = buf[0];
-	पूर्ण
+	}
 
-	kमुक्त(buf);
-	usb_स्वतःpm_put_पूर्णांकerface(serial->पूर्णांकerface);
+	kfree(buf);
+	usb_autopm_put_interface(serial->interface);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक ftdi_gpio_get(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio)
-अणु
-	काष्ठा usb_serial_port *port = gpiochip_get_data(gc);
-	पूर्णांक result;
+static int ftdi_gpio_get(struct gpio_chip *gc, unsigned int gpio)
+{
+	struct usb_serial_port *port = gpiochip_get_data(gc);
+	int result;
 
-	result = ftdi_पढ़ो_cbus_pins(port);
-	अगर (result < 0)
-		वापस result;
+	result = ftdi_read_cbus_pins(port);
+	if (result < 0)
+		return result;
 
-	वापस !!(result & BIT(gpio));
-पूर्ण
+	return !!(result & BIT(gpio));
+}
 
-अटल व्योम ftdi_gpio_set(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio, पूर्णांक value)
-अणु
-	काष्ठा usb_serial_port *port = gpiochip_get_data(gc);
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
+static void ftdi_gpio_set(struct gpio_chip *gc, unsigned int gpio, int value)
+{
+	struct usb_serial_port *port = gpiochip_get_data(gc);
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
 
 	mutex_lock(&priv->gpio_lock);
 
-	अगर (value)
+	if (value)
 		priv->gpio_value |= BIT(gpio);
-	अन्यथा
+	else
 		priv->gpio_value &= ~BIT(gpio);
 
 	ftdi_set_cbus_pins(port);
 
 	mutex_unlock(&priv->gpio_lock);
-पूर्ण
+}
 
-अटल पूर्णांक ftdi_gpio_get_multiple(काष्ठा gpio_chip *gc, अचिन्हित दीर्घ *mask,
-					अचिन्हित दीर्घ *bits)
-अणु
-	काष्ठा usb_serial_port *port = gpiochip_get_data(gc);
-	पूर्णांक result;
+static int ftdi_gpio_get_multiple(struct gpio_chip *gc, unsigned long *mask,
+					unsigned long *bits)
+{
+	struct usb_serial_port *port = gpiochip_get_data(gc);
+	int result;
 
-	result = ftdi_पढ़ो_cbus_pins(port);
-	अगर (result < 0)
-		वापस result;
+	result = ftdi_read_cbus_pins(port);
+	if (result < 0)
+		return result;
 
 	*bits = result & *mask;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ftdi_gpio_set_multiple(काष्ठा gpio_chip *gc, अचिन्हित दीर्घ *mask,
-					अचिन्हित दीर्घ *bits)
-अणु
-	काष्ठा usb_serial_port *port = gpiochip_get_data(gc);
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
+static void ftdi_gpio_set_multiple(struct gpio_chip *gc, unsigned long *mask,
+					unsigned long *bits)
+{
+	struct usb_serial_port *port = gpiochip_get_data(gc);
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
 
 	mutex_lock(&priv->gpio_lock);
 
@@ -1940,21 +1939,21 @@ MODULE_DEVICE_TABLE(usb, id_table_combined);
 	ftdi_set_cbus_pins(port);
 
 	mutex_unlock(&priv->gpio_lock);
-पूर्ण
+}
 
-अटल पूर्णांक ftdi_gpio_direction_get(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio)
-अणु
-	काष्ठा usb_serial_port *port = gpiochip_get_data(gc);
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
+static int ftdi_gpio_direction_get(struct gpio_chip *gc, unsigned int gpio)
+{
+	struct usb_serial_port *port = gpiochip_get_data(gc);
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
 
-	वापस !(priv->gpio_output & BIT(gpio));
-पूर्ण
+	return !(priv->gpio_output & BIT(gpio));
+}
 
-अटल पूर्णांक ftdi_gpio_direction_input(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio)
-अणु
-	काष्ठा usb_serial_port *port = gpiochip_get_data(gc);
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
-	पूर्णांक result;
+static int ftdi_gpio_direction_input(struct gpio_chip *gc, unsigned int gpio)
+{
+	struct usb_serial_port *port = gpiochip_get_data(gc);
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
+	int result;
 
 	mutex_lock(&priv->gpio_lock);
 
@@ -1963,98 +1962,98 @@ MODULE_DEVICE_TABLE(usb, id_table_combined);
 
 	mutex_unlock(&priv->gpio_lock);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक ftdi_gpio_direction_output(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio,
-					पूर्णांक value)
-अणु
-	काष्ठा usb_serial_port *port = gpiochip_get_data(gc);
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
-	पूर्णांक result;
+static int ftdi_gpio_direction_output(struct gpio_chip *gc, unsigned int gpio,
+					int value)
+{
+	struct usb_serial_port *port = gpiochip_get_data(gc);
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
+	int result;
 
 	mutex_lock(&priv->gpio_lock);
 
 	priv->gpio_output |= BIT(gpio);
-	अगर (value)
+	if (value)
 		priv->gpio_value |= BIT(gpio);
-	अन्यथा
+	else
 		priv->gpio_value &= ~BIT(gpio);
 
 	result = ftdi_set_cbus_pins(port);
 
 	mutex_unlock(&priv->gpio_lock);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक ftdi_gpio_init_valid_mask(काष्ठा gpio_chip *gc,
-				     अचिन्हित दीर्घ *valid_mask,
-				     अचिन्हित पूर्णांक ngpios)
-अणु
-	काष्ठा usb_serial_port *port = gpiochip_get_data(gc);
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
-	अचिन्हित दीर्घ map = priv->gpio_altfunc;
+static int ftdi_gpio_init_valid_mask(struct gpio_chip *gc,
+				     unsigned long *valid_mask,
+				     unsigned int ngpios)
+{
+	struct usb_serial_port *port = gpiochip_get_data(gc);
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
+	unsigned long map = priv->gpio_altfunc;
 
-	biपंचांगap_complement(valid_mask, &map, ngpios);
+	bitmap_complement(valid_mask, &map, ngpios);
 
-	अगर (biपंचांगap_empty(valid_mask, ngpios))
+	if (bitmap_empty(valid_mask, ngpios))
 		dev_dbg(&port->dev, "no CBUS pin configured for GPIO\n");
-	अन्यथा
+	else
 		dev_dbg(&port->dev, "CBUS%*pbl configured for GPIO\n", ngpios,
 			valid_mask);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ftdi_पढ़ो_eeprom(काष्ठा usb_serial *serial, व्योम *dst, u16 addr,
+static int ftdi_read_eeprom(struct usb_serial *serial, void *dst, u16 addr,
 				u16 nbytes)
-अणु
-	पूर्णांक पढ़ो = 0;
+{
+	int read = 0;
 
-	अगर (addr % 2 != 0)
-		वापस -EINVAL;
-	अगर (nbytes % 2 != 0)
-		वापस -EINVAL;
+	if (addr % 2 != 0)
+		return -EINVAL;
+	if (nbytes % 2 != 0)
+		return -EINVAL;
 
-	/* Read EEPROM two bytes at a समय */
-	जबतक (पढ़ो < nbytes) अणु
-		पूर्णांक rv;
+	/* Read EEPROM two bytes at a time */
+	while (read < nbytes) {
+		int rv;
 
 		rv = usb_control_msg(serial->dev,
 				     usb_rcvctrlpipe(serial->dev, 0),
 				     FTDI_SIO_READ_EEPROM_REQUEST,
 				     FTDI_SIO_READ_EEPROM_REQUEST_TYPE,
-				     0, (addr + पढ़ो) / 2, dst + पढ़ो, 2,
+				     0, (addr + read) / 2, dst + read, 2,
 				     WDR_TIMEOUT);
-		अगर (rv < 2) अणु
-			अगर (rv >= 0)
-				वापस -EIO;
-			अन्यथा
-				वापस rv;
-		पूर्ण
+		if (rv < 2) {
+			if (rv >= 0)
+				return -EIO;
+			else
+				return rv;
+		}
 
-		पढ़ो += rv;
-	पूर्ण
+		read += rv;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ftdi_gpio_init_ft232h(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
+static int ftdi_gpio_init_ft232h(struct usb_serial_port *port)
+{
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
 	u16 cbus_config;
 	u8 *buf;
-	पूर्णांक ret;
-	पूर्णांक i;
+	int ret;
+	int i;
 
-	buf = kदो_स्मृति(4, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc(4, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
-	ret = ftdi_पढ़ो_eeprom(port->serial, buf, 0x1a, 4);
-	अगर (ret < 0)
-		जाओ out_मुक्त;
+	ret = ftdi_read_eeprom(port->serial, buf, 0x1a, 4);
+	if (ret < 0)
+		goto out_free;
 
 	/*
 	 * FT232H CBUS Memory Map
@@ -2068,33 +2067,33 @@ MODULE_DEVICE_TABLE(usb, id_table_combined);
 	priv->gc.ngpio = 4;
 	priv->gpio_altfunc = 0xff;
 
-	क्रम (i = 0; i < priv->gc.ngpio; ++i) अणु
-		अगर ((cbus_config & 0xf) == FTDI_FTX_CBUS_MUX_GPIO)
+	for (i = 0; i < priv->gc.ngpio; ++i) {
+		if ((cbus_config & 0xf) == FTDI_FTX_CBUS_MUX_GPIO)
 			priv->gpio_altfunc &= ~BIT(i);
 		cbus_config >>= 4;
-	पूर्ण
+	}
 
-out_मुक्त:
-	kमुक्त(buf);
+out_free:
+	kfree(buf);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ftdi_gpio_init_ft232r(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
+static int ftdi_gpio_init_ft232r(struct usb_serial_port *port)
+{
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
 	u16 cbus_config;
 	u8 *buf;
-	पूर्णांक ret;
-	पूर्णांक i;
+	int ret;
+	int i;
 
-	buf = kदो_स्मृति(2, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc(2, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
-	ret = ftdi_पढ़ो_eeprom(port->serial, buf, 0x14, 2);
-	अगर (ret < 0)
-		जाओ out_मुक्त;
+	ret = ftdi_read_eeprom(port->serial, buf, 0x14, 2);
+	if (ret < 0)
+		goto out_free;
 
 	cbus_config = le16_to_cpup((__le16 *)buf);
 	dev_dbg(&port->dev, "cbus_config = 0x%04x\n", cbus_config);
@@ -2102,74 +2101,74 @@ out_मुक्त:
 	priv->gc.ngpio = 4;
 
 	priv->gpio_altfunc = 0xff;
-	क्रम (i = 0; i < priv->gc.ngpio; ++i) अणु
-		अगर ((cbus_config & 0xf) == FTDI_FT232R_CBUS_MUX_GPIO)
+	for (i = 0; i < priv->gc.ngpio; ++i) {
+		if ((cbus_config & 0xf) == FTDI_FT232R_CBUS_MUX_GPIO)
 			priv->gpio_altfunc &= ~BIT(i);
 		cbus_config >>= 4;
-	पूर्ण
-out_मुक्त:
-	kमुक्त(buf);
+	}
+out_free:
+	kfree(buf);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ftdi_gpio_init_ftx(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
-	काष्ठा usb_serial *serial = port->serial;
-	स्थिर u16 cbus_cfg_addr = 0x1a;
-	स्थिर u16 cbus_cfg_size = 4;
+static int ftdi_gpio_init_ftx(struct usb_serial_port *port)
+{
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
+	struct usb_serial *serial = port->serial;
+	const u16 cbus_cfg_addr = 0x1a;
+	const u16 cbus_cfg_size = 4;
 	u8 *cbus_cfg_buf;
-	पूर्णांक result;
+	int result;
 	u8 i;
 
-	cbus_cfg_buf = kदो_स्मृति(cbus_cfg_size, GFP_KERNEL);
-	अगर (!cbus_cfg_buf)
-		वापस -ENOMEM;
+	cbus_cfg_buf = kmalloc(cbus_cfg_size, GFP_KERNEL);
+	if (!cbus_cfg_buf)
+		return -ENOMEM;
 
-	result = ftdi_पढ़ो_eeprom(serial, cbus_cfg_buf,
+	result = ftdi_read_eeprom(serial, cbus_cfg_buf,
 				  cbus_cfg_addr, cbus_cfg_size);
-	अगर (result < 0)
-		जाओ out_मुक्त;
+	if (result < 0)
+		goto out_free;
 
 	/* FIXME: FT234XD alone has 1 GPIO, but how to recognize this IC? */
 	priv->gc.ngpio = 4;
 
-	/* Determine which pins are configured क्रम CBUS bitbanging */
+	/* Determine which pins are configured for CBUS bitbanging */
 	priv->gpio_altfunc = 0xff;
-	क्रम (i = 0; i < priv->gc.ngpio; ++i) अणु
-		अगर (cbus_cfg_buf[i] == FTDI_FTX_CBUS_MUX_GPIO)
+	for (i = 0; i < priv->gc.ngpio; ++i) {
+		if (cbus_cfg_buf[i] == FTDI_FTX_CBUS_MUX_GPIO)
 			priv->gpio_altfunc &= ~BIT(i);
-	पूर्ण
+	}
 
-out_मुक्त:
-	kमुक्त(cbus_cfg_buf);
+out_free:
+	kfree(cbus_cfg_buf);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक ftdi_gpio_init(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
-	काष्ठा usb_serial *serial = port->serial;
-	पूर्णांक result;
+static int ftdi_gpio_init(struct usb_serial_port *port)
+{
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
+	struct usb_serial *serial = port->serial;
+	int result;
 
-	चयन (priv->chip_type) अणु
-	हाल FT232H:
+	switch (priv->chip_type) {
+	case FT232H:
 		result = ftdi_gpio_init_ft232h(port);
-		अवरोध;
-	हाल FT232RL:
+		break;
+	case FT232RL:
 		result = ftdi_gpio_init_ft232r(port);
-		अवरोध;
-	हाल FTX:
+		break;
+	case FTX:
 		result = ftdi_gpio_init_ftx(port);
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+		break;
+	default:
+		return 0;
+	}
 
-	अगर (result < 0)
-		वापस result;
+	if (result < 0)
+		return result;
 
 	mutex_init(&priv->gpio_lock);
 
@@ -2184,542 +2183,542 @@ out_मुक्त:
 	priv->gc.get_multiple = ftdi_gpio_get_multiple;
 	priv->gc.set_multiple = ftdi_gpio_set_multiple;
 	priv->gc.owner = THIS_MODULE;
-	priv->gc.parent = &serial->पूर्णांकerface->dev;
+	priv->gc.parent = &serial->interface->dev;
 	priv->gc.base = -1;
 	priv->gc.can_sleep = true;
 
 	result = gpiochip_add_data(&priv->gc, port);
-	अगर (!result)
-		priv->gpio_रेजिस्टरed = true;
+	if (!result)
+		priv->gpio_registered = true;
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल व्योम ftdi_gpio_हटाओ(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
+static void ftdi_gpio_remove(struct usb_serial_port *port)
+{
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
 
-	अगर (priv->gpio_रेजिस्टरed) अणु
-		gpiochip_हटाओ(&priv->gc);
-		priv->gpio_रेजिस्टरed = false;
-	पूर्ण
+	if (priv->gpio_registered) {
+		gpiochip_remove(&priv->gc);
+		priv->gpio_registered = false;
+	}
 
-	अगर (priv->gpio_used) अणु
-		/* Exiting CBUS-mode करोes not reset pin states. */
-		ftdi_निकास_cbus_mode(port);
+	if (priv->gpio_used) {
+		/* Exiting CBUS-mode does not reset pin states. */
+		ftdi_exit_cbus_mode(port);
 		priv->gpio_used = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अन्यथा
+#else
 
-अटल पूर्णांक ftdi_gpio_init(काष्ठा usb_serial_port *port)
-अणु
-	वापस 0;
-पूर्ण
+static int ftdi_gpio_init(struct usb_serial_port *port)
+{
+	return 0;
+}
 
-अटल व्योम ftdi_gpio_हटाओ(काष्ठा usb_serial_port *port) अणु पूर्ण
+static void ftdi_gpio_remove(struct usb_serial_port *port) { }
 
-#पूर्ण_अगर	/* CONFIG_GPIOLIB */
+#endif	/* CONFIG_GPIOLIB */
 
 /*
  * ***************************************************************************
- * FTDI driver specअगरic functions
+ * FTDI driver specific functions
  * ***************************************************************************
  */
 
-/* Probe function to check क्रम special devices */
-अटल पूर्णांक ftdi_sio_probe(काष्ठा usb_serial *serial,
-					स्थिर काष्ठा usb_device_id *id)
-अणु
-	स्थिर काष्ठा ftdi_sio_quirk *quirk =
-				(काष्ठा ftdi_sio_quirk *)id->driver_info;
+/* Probe function to check for special devices */
+static int ftdi_sio_probe(struct usb_serial *serial,
+					const struct usb_device_id *id)
+{
+	const struct ftdi_sio_quirk *quirk =
+				(struct ftdi_sio_quirk *)id->driver_info;
 
-	अगर (quirk && quirk->probe) अणु
-		पूर्णांक ret = quirk->probe(serial);
-		अगर (ret != 0)
-			वापस ret;
-	पूर्ण
+	if (quirk && quirk->probe) {
+		int ret = quirk->probe(serial);
+		if (ret != 0)
+			return ret;
+	}
 
-	usb_set_serial_data(serial, (व्योम *)id->driver_info);
+	usb_set_serial_data(serial, (void *)id->driver_info);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ftdi_sio_port_probe(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा ftdi_निजी *priv;
-	स्थिर काष्ठा ftdi_sio_quirk *quirk = usb_get_serial_data(port->serial);
-	पूर्णांक result;
+static int ftdi_sio_port_probe(struct usb_serial_port *port)
+{
+	struct ftdi_private *priv;
+	const struct ftdi_sio_quirk *quirk = usb_get_serial_data(port->serial);
+	int result;
 
-	priv = kzalloc(माप(काष्ठा ftdi_निजी), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = kzalloc(sizeof(struct ftdi_private), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	mutex_init(&priv->cfg_lock);
 
-	अगर (quirk && quirk->port_probe)
+	if (quirk && quirk->port_probe)
 		quirk->port_probe(priv);
 
 	usb_set_serial_port_data(port, priv);
 
 	ftdi_determine_type(port);
 	ftdi_set_max_packet_size(port);
-	अगर (पढ़ो_latency_समयr(port) < 0)
+	if (read_latency_timer(port) < 0)
 		priv->latency = 16;
-	ग_लिखो_latency_समयr(port);
+	write_latency_timer(port);
 	create_sysfs_attrs(port);
 
 	result = ftdi_gpio_init(port);
-	अगर (result < 0) अणु
-		dev_err(&port->serial->पूर्णांकerface->dev,
+	if (result < 0) {
+		dev_err(&port->serial->interface->dev,
 			"GPIO initialisation failed: %d\n",
 			result);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Setup क्रम the USB-UIRT device, which requires hardwired
- * baudrate (38400 माला_लो mapped to 312500) */
+/* Setup for the USB-UIRT device, which requires hardwired
+ * baudrate (38400 gets mapped to 312500) */
 /* Called from usbserial:serial_probe */
-अटल व्योम ftdi_USB_UIRT_setup(काष्ठा ftdi_निजी *priv)
-अणु
+static void ftdi_USB_UIRT_setup(struct ftdi_private *priv)
+{
 	priv->flags |= ASYNC_SPD_CUST;
-	priv->custom_भागisor = 77;
-	priv->क्रमce_baud = 38400;
-पूर्ण
+	priv->custom_divisor = 77;
+	priv->force_baud = 38400;
+}
 
-/* Setup क्रम the HE-TIRA1 device, which requires hardwired
- * baudrate (38400 माला_लो mapped to 100000) and RTS-CTS enabled.  */
+/* Setup for the HE-TIRA1 device, which requires hardwired
+ * baudrate (38400 gets mapped to 100000) and RTS-CTS enabled.  */
 
-अटल व्योम ftdi_HE_TIRA1_setup(काष्ठा ftdi_निजी *priv)
-अणु
+static void ftdi_HE_TIRA1_setup(struct ftdi_private *priv)
+{
 	priv->flags |= ASYNC_SPD_CUST;
-	priv->custom_भागisor = 240;
-	priv->क्रमce_baud = 38400;
-	priv->क्रमce_rtscts = 1;
-पूर्ण
+	priv->custom_divisor = 240;
+	priv->force_baud = 38400;
+	priv->force_rtscts = 1;
+}
 
 /*
- * Module parameter to control latency समयr क्रम NDI FTDI-based USB devices.
+ * Module parameter to control latency timer for NDI FTDI-based USB devices.
  * If this value is not set in /etc/modprobe.d/ its value will be set
  * to 1ms.
  */
-अटल पूर्णांक ndi_latency_समयr = 1;
+static int ndi_latency_timer = 1;
 
-/* Setup क्रम the NDI FTDI-based USB devices, which requires hardwired
- * baudrate (19200 माला_लो mapped to 1200000).
+/* Setup for the NDI FTDI-based USB devices, which requires hardwired
+ * baudrate (19200 gets mapped to 1200000).
  *
  * Called from usbserial:serial_probe.
  */
-अटल पूर्णांक ftdi_NDI_device_setup(काष्ठा usb_serial *serial)
-अणु
-	काष्ठा usb_device *udev = serial->dev;
-	पूर्णांक latency = ndi_latency_समयr;
+static int ftdi_NDI_device_setup(struct usb_serial *serial)
+{
+	struct usb_device *udev = serial->dev;
+	int latency = ndi_latency_timer;
 
-	अगर (latency == 0)
+	if (latency == 0)
 		latency = 1;
-	अगर (latency > 99)
+	if (latency > 99)
 		latency = 99;
 
 	dev_dbg(&udev->dev, "%s setting NDI device latency to %d\n", __func__, latency);
 	dev_info(&udev->dev, "NDI device with a latency value of %d\n", latency);
 
-	/* FIXME: errors are not वापसed */
+	/* FIXME: errors are not returned */
 	usb_control_msg(udev, usb_sndctrlpipe(udev, 0),
 				FTDI_SIO_SET_LATENCY_TIMER_REQUEST,
 				FTDI_SIO_SET_LATENCY_TIMER_REQUEST_TYPE,
-				latency, 0, शून्य, 0, WDR_TIMEOUT);
-	वापस 0;
-पूर्ण
+				latency, 0, NULL, 0, WDR_TIMEOUT);
+	return 0;
+}
 
 /*
  * First port on JTAG adaptors such as Olimex arm-usb-ocd or the FIC/OpenMoko
- * Neo1973 Debug Board is reserved क्रम JTAG पूर्णांकerface and can be accessed from
- * userspace using खोलोocd.
+ * Neo1973 Debug Board is reserved for JTAG interface and can be accessed from
+ * userspace using openocd.
  */
-अटल पूर्णांक ftdi_jtag_probe(काष्ठा usb_serial *serial)
-अणु
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf = serial->पूर्णांकerface;
-	पूर्णांक अगरnum = पूर्णांकf->cur_altsetting->desc.bInterfaceNumber;
+static int ftdi_jtag_probe(struct usb_serial *serial)
+{
+	struct usb_interface *intf = serial->interface;
+	int ifnum = intf->cur_altsetting->desc.bInterfaceNumber;
 
-	अगर (अगरnum == 0) अणु
-		dev_info(&पूर्णांकf->dev, "Ignoring interface reserved for JTAG\n");
-		वापस -ENODEV;
-	पूर्ण
+	if (ifnum == 0) {
+		dev_info(&intf->dev, "Ignoring interface reserved for JTAG\n");
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ftdi_8u2232c_probe(काष्ठा usb_serial *serial)
-अणु
-	काष्ठा usb_device *udev = serial->dev;
+static int ftdi_8u2232c_probe(struct usb_serial *serial)
+{
+	struct usb_device *udev = serial->dev;
 
-	अगर (udev->manufacturer && !म_भेद(udev->manufacturer, "CALAO Systems"))
-		वापस ftdi_jtag_probe(serial);
+	if (udev->manufacturer && !strcmp(udev->manufacturer, "CALAO Systems"))
+		return ftdi_jtag_probe(serial);
 
-	अगर (udev->product &&
-		(!म_भेद(udev->product, "Arrow USB Blaster") ||
-		 !म_भेद(udev->product, "BeagleBone/XDS100V2") ||
-		 !म_भेद(udev->product, "SNAP Connect E10")))
-		वापस ftdi_jtag_probe(serial);
+	if (udev->product &&
+		(!strcmp(udev->product, "Arrow USB Blaster") ||
+		 !strcmp(udev->product, "BeagleBone/XDS100V2") ||
+		 !strcmp(udev->product, "SNAP Connect E10")))
+		return ftdi_jtag_probe(serial);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * First two ports on JTAG adaptors using an FT4232 such as STMicroelectronics's
- * ST Micro Connect Lite are reserved क्रम JTAG or other non-UART पूर्णांकerfaces and
+ * ST Micro Connect Lite are reserved for JTAG or other non-UART interfaces and
  * can be accessed from userspace.
- * The next two ports are enabled as UARTs by शेष, where port 2 is
+ * The next two ports are enabled as UARTs by default, where port 2 is
  * a conventional RS-232 UART.
  */
-अटल पूर्णांक ftdi_sपंचांगclite_probe(काष्ठा usb_serial *serial)
-अणु
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf = serial->पूर्णांकerface;
-	पूर्णांक अगरnum = पूर्णांकf->cur_altsetting->desc.bInterfaceNumber;
+static int ftdi_stmclite_probe(struct usb_serial *serial)
+{
+	struct usb_interface *intf = serial->interface;
+	int ifnum = intf->cur_altsetting->desc.bInterfaceNumber;
 
-	अगर (अगरnum < 2) अणु
-		dev_info(&पूर्णांकf->dev, "Ignoring interface reserved for JTAG\n");
-		वापस -ENODEV;
-	पूर्ण
+	if (ifnum < 2) {
+		dev_info(&intf->dev, "Ignoring interface reserved for JTAG\n");
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ftdi_sio_port_हटाओ(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
+static void ftdi_sio_port_remove(struct usb_serial_port *port)
+{
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
 
-	ftdi_gpio_हटाओ(port);
+	ftdi_gpio_remove(port);
 
-	हटाओ_sysfs_attrs(port);
+	remove_sysfs_attrs(port);
 
-	kमुक्त(priv);
-पूर्ण
+	kfree(priv);
+}
 
-अटल पूर्णांक ftdi_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा usb_device *dev = port->serial->dev;
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
+static int ftdi_open(struct tty_struct *tty, struct usb_serial_port *port)
+{
+	struct usb_device *dev = port->serial->dev;
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
 
-	/* No error checking क्रम this (will get errors later anyway) */
-	/* See ftdi_sपन.स क्रम description of what is reset */
+	/* No error checking for this (will get errors later anyway) */
+	/* See ftdi_sio.h for description of what is reset */
 	usb_control_msg(dev, usb_sndctrlpipe(dev, 0),
 			FTDI_SIO_RESET_REQUEST, FTDI_SIO_RESET_REQUEST_TYPE,
 			FTDI_SIO_RESET_SIO,
-			priv->पूर्णांकerface, शून्य, 0, WDR_TIMEOUT);
+			priv->interface, NULL, 0, WDR_TIMEOUT);
 
-	/* Termios शेषs are set by usb_serial_init. We करोn't change
+	/* Termios defaults are set by usb_serial_init. We don't change
 	   port->tty->termios - this would lose speed settings, etc.
-	   This is same behaviour as serial.c/rs_खोलो() - Kuba */
+	   This is same behaviour as serial.c/rs_open() - Kuba */
 
 	/* ftdi_set_termios  will send usb control messages */
-	अगर (tty)
-		ftdi_set_termios(tty, port, शून्य);
+	if (tty)
+		ftdi_set_termios(tty, port, NULL);
 
-	वापस usb_serial_generic_खोलो(tty, port);
-पूर्ण
+	return usb_serial_generic_open(tty, port);
+}
 
-अटल व्योम ftdi_dtr_rts(काष्ठा usb_serial_port *port, पूर्णांक on)
-अणु
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
+static void ftdi_dtr_rts(struct usb_serial_port *port, int on)
+{
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
 
 	/* Disable flow control */
-	अगर (!on) अणु
-		अगर (usb_control_msg(port->serial->dev,
+	if (!on) {
+		if (usb_control_msg(port->serial->dev,
 			    usb_sndctrlpipe(port->serial->dev, 0),
 			    FTDI_SIO_SET_FLOW_CTRL_REQUEST,
 			    FTDI_SIO_SET_FLOW_CTRL_REQUEST_TYPE,
-			    0, priv->पूर्णांकerface, शून्य, 0,
-			    WDR_TIMEOUT) < 0) अणु
+			    0, priv->interface, NULL, 0,
+			    WDR_TIMEOUT) < 0) {
 			dev_err(&port->dev, "error from flowcontrol urb\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/* drop RTS and DTR */
-	अगर (on)
+	if (on)
 		set_mctrl(port, TIOCM_DTR | TIOCM_RTS);
-	अन्यथा
+	else
 		clear_mctrl(port, TIOCM_DTR | TIOCM_RTS);
-पूर्ण
+}
 
 /* The SIO requires the first byte to have:
  *  B0 1
  *  B1 0
  *  B2..7 length of message excluding byte 0
  *
- * The new devices करो not require this byte
+ * The new devices do not require this byte
  */
-अटल पूर्णांक ftdi_prepare_ग_लिखो_buffer(काष्ठा usb_serial_port *port,
-						व्योम *dest, माप_प्रकार size)
-अणु
-	काष्ठा ftdi_निजी *priv;
-	पूर्णांक count;
-	अचिन्हित दीर्घ flags;
+static int ftdi_prepare_write_buffer(struct usb_serial_port *port,
+						void *dest, size_t size)
+{
+	struct ftdi_private *priv;
+	int count;
+	unsigned long flags;
 
 	priv = usb_get_serial_port_data(port);
 
-	अगर (priv->chip_type == SIO) अणु
-		अचिन्हित अक्षर *buffer = dest;
-		पूर्णांक i, len, c;
+	if (priv->chip_type == SIO) {
+		unsigned char *buffer = dest;
+		int i, len, c;
 
 		count = 0;
 		spin_lock_irqsave(&port->lock, flags);
-		क्रम (i = 0; i < size - 1; i += priv->max_packet_size) अणु
-			len = min_t(पूर्णांक, size - i, priv->max_packet_size) - 1;
-			c = kfअगरo_out(&port->ग_लिखो_fअगरo, &buffer[i + 1], len);
-			अगर (!c)
-				अवरोध;
+		for (i = 0; i < size - 1; i += priv->max_packet_size) {
+			len = min_t(int, size - i, priv->max_packet_size) - 1;
+			c = kfifo_out(&port->write_fifo, &buffer[i + 1], len);
+			if (!c)
+				break;
 			port->icount.tx += c;
 			buffer[i] = (c << 2) + 1;
 			count += c + 1;
-		पूर्ण
+		}
 		spin_unlock_irqrestore(&port->lock, flags);
-	पूर्ण अन्यथा अणु
-		count = kfअगरo_out_locked(&port->ग_लिखो_fअगरo, dest, size,
+	} else {
+		count = kfifo_out_locked(&port->write_fifo, dest, size,
 								&port->lock);
 		port->icount.tx += count;
-	पूर्ण
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-#घोषणा FTDI_RS_ERR_MASK (FTDI_RS_BI | FTDI_RS_PE | FTDI_RS_FE | FTDI_RS_OE)
+#define FTDI_RS_ERR_MASK (FTDI_RS_BI | FTDI_RS_PE | FTDI_RS_FE | FTDI_RS_OE)
 
-अटल पूर्णांक ftdi_process_packet(काष्ठा usb_serial_port *port,
-		काष्ठा ftdi_निजी *priv, अचिन्हित अक्षर *buf, पूर्णांक len)
-अणु
-	अचिन्हित अक्षर status;
-	bool brkपूर्णांक = false;
-	पूर्णांक i;
-	अक्षर flag;
+static int ftdi_process_packet(struct usb_serial_port *port,
+		struct ftdi_private *priv, unsigned char *buf, int len)
+{
+	unsigned char status;
+	bool brkint = false;
+	int i;
+	char flag;
 
-	अगर (len < 2) अणु
+	if (len < 2) {
 		dev_dbg(&port->dev, "malformed packet\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Compare new line status to the old one, संकेत अगर dअगरferent/
-	   N.B. packet may be processed more than once, but dअगरferences
+	/* Compare new line status to the old one, signal if different/
+	   N.B. packet may be processed more than once, but differences
 	   are only processed once.  */
 	status = buf[0] & FTDI_STATUS_B0_MASK;
-	अगर (status != priv->prev_status) अणु
-		अक्षर dअगरf_status = status ^ priv->prev_status;
+	if (status != priv->prev_status) {
+		char diff_status = status ^ priv->prev_status;
 
-		अगर (dअगरf_status & FTDI_RS0_CTS)
+		if (diff_status & FTDI_RS0_CTS)
 			port->icount.cts++;
-		अगर (dअगरf_status & FTDI_RS0_DSR)
+		if (diff_status & FTDI_RS0_DSR)
 			port->icount.dsr++;
-		अगर (dअगरf_status & FTDI_RS0_RI)
+		if (diff_status & FTDI_RS0_RI)
 			port->icount.rng++;
-		अगर (dअगरf_status & FTDI_RS0_RLSD) अणु
-			काष्ठा tty_काष्ठा *tty;
+		if (diff_status & FTDI_RS0_RLSD) {
+			struct tty_struct *tty;
 
 			port->icount.dcd++;
 			tty = tty_port_tty_get(&port->port);
-			अगर (tty)
+			if (tty)
 				usb_serial_handle_dcd_change(port, tty,
 						status & FTDI_RS0_RLSD);
 			tty_kref_put(tty);
-		पूर्ण
+		}
 
-		wake_up_पूर्णांकerruptible(&port->port.delta_msr_रुको);
+		wake_up_interruptible(&port->port.delta_msr_wait);
 		priv->prev_status = status;
-	पूर्ण
+	}
 
-	/* save अगर the transmitter is empty or not */
-	अगर (buf[1] & FTDI_RS_TEMT)
+	/* save if the transmitter is empty or not */
+	if (buf[1] & FTDI_RS_TEMT)
 		priv->transmit_empty = 1;
-	अन्यथा
+	else
 		priv->transmit_empty = 0;
 
-	अगर (len == 2)
-		वापस 0;	/* status only */
+	if (len == 2)
+		return 0;	/* status only */
 
 	/*
-	 * Break and error status must only be processed क्रम packets with
-	 * data payload to aव्योम over-reporting.
+	 * Break and error status must only be processed for packets with
+	 * data payload to avoid over-reporting.
 	 */
 	flag = TTY_NORMAL;
-	अगर (buf[1] & FTDI_RS_ERR_MASK) अणु
+	if (buf[1] & FTDI_RS_ERR_MASK) {
 		/*
 		 * Break takes precedence over parity, which takes precedence
-		 * over framing errors. Note that अवरोध is only associated
-		 * with the last अक्षरacter in the buffer and only when it's a
+		 * over framing errors. Note that break is only associated
+		 * with the last character in the buffer and only when it's a
 		 * NUL.
 		 */
-		अगर (buf[1] & FTDI_RS_BI && buf[len - 1] == '\0') अणु
+		if (buf[1] & FTDI_RS_BI && buf[len - 1] == '\0') {
 			port->icount.brk++;
-			brkपूर्णांक = true;
-		पूर्ण
-		अगर (buf[1] & FTDI_RS_PE) अणु
+			brkint = true;
+		}
+		if (buf[1] & FTDI_RS_PE) {
 			flag = TTY_PARITY;
 			port->icount.parity++;
-		पूर्ण अन्यथा अगर (buf[1] & FTDI_RS_FE) अणु
+		} else if (buf[1] & FTDI_RS_FE) {
 			flag = TTY_FRAME;
 			port->icount.frame++;
-		पूर्ण
-		/* Overrun is special, not associated with a अक्षर */
-		अगर (buf[1] & FTDI_RS_OE) अणु
+		}
+		/* Overrun is special, not associated with a char */
+		if (buf[1] & FTDI_RS_OE) {
 			port->icount.overrun++;
-			tty_insert_flip_अक्षर(&port->port, 0, TTY_OVERRUN);
-		पूर्ण
-	पूर्ण
+			tty_insert_flip_char(&port->port, 0, TTY_OVERRUN);
+		}
+	}
 
 	port->icount.rx += len - 2;
 
-	अगर (brkपूर्णांक || port->sysrq) अणु
-		क्रम (i = 2; i < len; i++) अणु
-			अगर (brkपूर्णांक && i == len - 1) अणु
-				अगर (usb_serial_handle_अवरोध(port))
-					वापस len - 3;
+	if (brkint || port->sysrq) {
+		for (i = 2; i < len; i++) {
+			if (brkint && i == len - 1) {
+				if (usb_serial_handle_break(port))
+					return len - 3;
 				flag = TTY_BREAK;
-			पूर्ण
-			अगर (usb_serial_handle_sysrq_अक्षर(port, buf[i]))
-				जारी;
-			tty_insert_flip_अक्षर(&port->port, buf[i], flag);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			}
+			if (usb_serial_handle_sysrq_char(port, buf[i]))
+				continue;
+			tty_insert_flip_char(&port->port, buf[i], flag);
+		}
+	} else {
 		tty_insert_flip_string_fixed_flag(&port->port, buf + 2, flag,
 				len - 2);
-	पूर्ण
+	}
 
-	वापस len - 2;
-पूर्ण
+	return len - 2;
+}
 
-अटल व्योम ftdi_process_पढ़ो_urb(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_serial_port *port = urb->context;
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
-	अक्षर *data = urb->transfer_buffer;
-	पूर्णांक i;
-	पूर्णांक len;
-	पूर्णांक count = 0;
+static void ftdi_process_read_urb(struct urb *urb)
+{
+	struct usb_serial_port *port = urb->context;
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
+	char *data = urb->transfer_buffer;
+	int i;
+	int len;
+	int count = 0;
 
-	क्रम (i = 0; i < urb->actual_length; i += priv->max_packet_size) अणु
-		len = min_t(पूर्णांक, urb->actual_length - i, priv->max_packet_size);
+	for (i = 0; i < urb->actual_length; i += priv->max_packet_size) {
+		len = min_t(int, urb->actual_length - i, priv->max_packet_size);
 		count += ftdi_process_packet(port, priv, &data[i], len);
-	पूर्ण
+	}
 
-	अगर (count)
+	if (count)
 		tty_flip_buffer_push(&port->port);
-पूर्ण
+}
 
-अटल व्योम ftdi_अवरोध_ctl(काष्ठा tty_काष्ठा *tty, पूर्णांक अवरोध_state)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
+static void ftdi_break_ctl(struct tty_struct *tty, int break_state)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
 	u16 value;
 
-	/* अवरोध_state = -1 to turn on अवरोध, and 0 to turn off अवरोध */
-	/* see drivers/अक्षर/tty_io.c to see it used */
-	/* last_set_data_value NEVER has the अवरोध bit set in it */
+	/* break_state = -1 to turn on break, and 0 to turn off break */
+	/* see drivers/char/tty_io.c to see it used */
+	/* last_set_data_value NEVER has the break bit set in it */
 
-	अगर (अवरोध_state)
+	if (break_state)
 		value = priv->last_set_data_value | FTDI_SIO_SET_BREAK;
-	अन्यथा
+	else
 		value = priv->last_set_data_value;
 
-	अगर (usb_control_msg(port->serial->dev,
+	if (usb_control_msg(port->serial->dev,
 			usb_sndctrlpipe(port->serial->dev, 0),
 			FTDI_SIO_SET_DATA_REQUEST,
 			FTDI_SIO_SET_DATA_REQUEST_TYPE,
-			value , priv->पूर्णांकerface,
-			शून्य, 0, WDR_TIMEOUT) < 0) अणु
+			value , priv->interface,
+			NULL, 0, WDR_TIMEOUT) < 0) {
 		dev_err(&port->dev, "%s FAILED to enable/disable break state (state was %d)\n",
-			__func__, अवरोध_state);
-	पूर्ण
+			__func__, break_state);
+	}
 
 	dev_dbg(&port->dev, "%s break state is %d - urb is %d\n", __func__,
-		अवरोध_state, value);
+		break_state, value);
 
-पूर्ण
+}
 
-अटल bool ftdi_tx_empty(काष्ठा usb_serial_port *port)
-अणु
-	अचिन्हित अक्षर buf[2];
-	पूर्णांक ret;
+static bool ftdi_tx_empty(struct usb_serial_port *port)
+{
+	unsigned char buf[2];
+	int ret;
 
 	ret = ftdi_get_modem_status(port, buf);
-	अगर (ret == 2) अणु
-		अगर (!(buf[1] & FTDI_RS_TEMT))
-			वापस false;
-	पूर्ण
+	if (ret == 2) {
+		if (!(buf[1] & FTDI_RS_TEMT))
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /* old_termios contains the original termios settings and tty->termios contains
  * the new setting to be used
  * WARNING: set_termios calls this with old_termios in kernel space
  */
-अटल व्योम ftdi_set_termios(काष्ठा tty_काष्ठा *tty,
-		काष्ठा usb_serial_port *port, काष्ठा ktermios *old_termios)
-अणु
-	काष्ठा usb_device *dev = port->serial->dev;
-	काष्ठा device *ddev = &port->dev;
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
-	काष्ठा ktermios *termios = &tty->termios;
-	अचिन्हित पूर्णांक cflag = termios->c_cflag;
+static void ftdi_set_termios(struct tty_struct *tty,
+		struct usb_serial_port *port, struct ktermios *old_termios)
+{
+	struct usb_device *dev = port->serial->dev;
+	struct device *ddev = &port->dev;
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
+	struct ktermios *termios = &tty->termios;
+	unsigned int cflag = termios->c_cflag;
 	u16 value, index;
-	पूर्णांक ret;
+	int ret;
 
-	/* Force baud rate अगर this device requires it, unless it is set to
+	/* Force baud rate if this device requires it, unless it is set to
 	   B0. */
-	अगर (priv->क्रमce_baud && ((termios->c_cflag & CBAUD) != B0)) अणु
+	if (priv->force_baud && ((termios->c_cflag & CBAUD) != B0)) {
 		dev_dbg(ddev, "%s: forcing baud rate for this device\n", __func__);
-		tty_encode_baud_rate(tty, priv->क्रमce_baud,
-					priv->क्रमce_baud);
-	पूर्ण
+		tty_encode_baud_rate(tty, priv->force_baud,
+					priv->force_baud);
+	}
 
-	/* Force RTS-CTS अगर this device requires it. */
-	अगर (priv->क्रमce_rtscts) अणु
+	/* Force RTS-CTS if this device requires it. */
+	if (priv->force_rtscts) {
 		dev_dbg(ddev, "%s: forcing rtscts for this device\n", __func__);
 		termios->c_cflag |= CRTSCTS;
-	पूर्ण
+	}
 
 	/*
 	 * All FTDI UART chips are limited to CS7/8. We shouldn't pretend to
 	 * support CS5/6 and revert the CSIZE setting instead.
 	 *
-	 * CS5 however is used to control some smartcard पढ़ोers which abuse
-	 * this limitation to चयन modes. Original FTDI chips fall back to
+	 * CS5 however is used to control some smartcard readers which abuse
+	 * this limitation to switch modes. Original FTDI chips fall back to
 	 * eight data bits.
 	 *
 	 * TODO: Implement a quirk to only allow this with mentioned
-	 *       पढ़ोers. One I know of (Argolis Smartपढ़ोer V1)
-	 *       वापसs "USB smartcard server" as iInterface string.
-	 *       The venकरोr didn't bother with a custom VID/PID of
+	 *       readers. One I know of (Argolis Smartreader V1)
+	 *       returns "USB smartcard server" as iInterface string.
+	 *       The vendor didn't bother with a custom VID/PID of
 	 *       course.
 	 */
-	अगर (C_CSIZE(tty) == CS6) अणु
+	if (C_CSIZE(tty) == CS6) {
 		dev_warn(ddev, "requested CSIZE setting not supported\n");
 
 		termios->c_cflag &= ~CSIZE;
-		अगर (old_termios)
+		if (old_termios)
 			termios->c_cflag |= old_termios->c_cflag & CSIZE;
-		अन्यथा
+		else
 			termios->c_cflag |= CS8;
-	पूर्ण
+	}
 
 	cflag = termios->c_cflag;
 
-	अगर (!old_termios)
-		जाओ no_skip;
+	if (!old_termios)
+		goto no_skip;
 
-	अगर (old_termios->c_cflag == termios->c_cflag
+	if (old_termios->c_cflag == termios->c_cflag
 	    && old_termios->c_ispeed == termios->c_ispeed
 	    && old_termios->c_ospeed == termios->c_ospeed)
-		जाओ no_c_cflag_changes;
+		goto no_c_cflag_changes;
 
-	/* NOTE These routines can get पूर्णांकerrupted by
-	   ftdi_sio_पढ़ो_bulk_callback  - need to examine what this means -
-	   करोn't see any problems yet */
+	/* NOTE These routines can get interrupted by
+	   ftdi_sio_read_bulk_callback  - need to examine what this means -
+	   don't see any problems yet */
 
-	अगर ((old_termios->c_cflag & (CSIZE|PARODD|PARENB|CMSPAR|CSTOPB)) ==
+	if ((old_termios->c_cflag & (CSIZE|PARODD|PARENB|CMSPAR|CSTOPB)) ==
 	    (termios->c_cflag & (CSIZE|PARODD|PARENB|CMSPAR|CSTOPB)))
-		जाओ no_data_parity_stop_changes;
+		goto no_data_parity_stop_changes;
 
 no_skip:
 	/* Set number of data bits, parity, stop bits */
@@ -2727,96 +2726,96 @@ no_skip:
 	value = 0;
 	value |= (cflag & CSTOPB ? FTDI_SIO_SET_DATA_STOP_BITS_2 :
 			FTDI_SIO_SET_DATA_STOP_BITS_1);
-	अगर (cflag & PARENB) अणु
-		अगर (cflag & CMSPAR)
+	if (cflag & PARENB) {
+		if (cflag & CMSPAR)
 			value |= cflag & PARODD ?
 					FTDI_SIO_SET_DATA_PARITY_MARK :
 					FTDI_SIO_SET_DATA_PARITY_SPACE;
-		अन्यथा
+		else
 			value |= cflag & PARODD ?
 					FTDI_SIO_SET_DATA_PARITY_ODD :
 					FTDI_SIO_SET_DATA_PARITY_EVEN;
-	पूर्ण अन्यथा अणु
+	} else {
 		value |= FTDI_SIO_SET_DATA_PARITY_NONE;
-	पूर्ण
-	चयन (cflag & CSIZE) अणु
-	हाल CS5:
+	}
+	switch (cflag & CSIZE) {
+	case CS5:
 		dev_dbg(ddev, "Setting CS5 quirk\n");
-		अवरोध;
-	हाल CS7:
+		break;
+	case CS7:
 		value |= 7;
 		dev_dbg(ddev, "Setting CS7\n");
-		अवरोध;
-	शेष:
-	हाल CS8:
+		break;
+	default:
+	case CS8:
 		value |= 8;
 		dev_dbg(ddev, "Setting CS8\n");
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	/* This is needed by the अवरोध command since it uses the same command
+	/* This is needed by the break command since it uses the same command
 	   - but is or'ed with this value  */
 	priv->last_set_data_value = value;
 
-	अगर (usb_control_msg(dev, usb_sndctrlpipe(dev, 0),
+	if (usb_control_msg(dev, usb_sndctrlpipe(dev, 0),
 			    FTDI_SIO_SET_DATA_REQUEST,
 			    FTDI_SIO_SET_DATA_REQUEST_TYPE,
-			    value , priv->पूर्णांकerface,
-			    शून्य, 0, WDR_SHORT_TIMEOUT) < 0) अणु
+			    value , priv->interface,
+			    NULL, 0, WDR_SHORT_TIMEOUT) < 0) {
 		dev_err(ddev, "%s FAILED to set databits/stopbits/parity\n",
 			__func__);
-	पूर्ण
+	}
 
-	/* Now करो the baudrate */
+	/* Now do the baudrate */
 no_data_parity_stop_changes:
-	अगर ((cflag & CBAUD) == B0) अणु
+	if ((cflag & CBAUD) == B0) {
 		/* Disable flow control */
-		अगर (usb_control_msg(dev, usb_sndctrlpipe(dev, 0),
+		if (usb_control_msg(dev, usb_sndctrlpipe(dev, 0),
 				    FTDI_SIO_SET_FLOW_CTRL_REQUEST,
 				    FTDI_SIO_SET_FLOW_CTRL_REQUEST_TYPE,
-				    0, priv->पूर्णांकerface,
-				    शून्य, 0, WDR_TIMEOUT) < 0) अणु
+				    0, priv->interface,
+				    NULL, 0, WDR_TIMEOUT) < 0) {
 			dev_err(ddev, "%s error from disable flowcontrol urb\n",
 				__func__);
-		पूर्ण
+		}
 		/* Drop RTS and DTR */
 		clear_mctrl(port, TIOCM_DTR | TIOCM_RTS);
-	पूर्ण अन्यथा अणु
-		/* set the baudrate determined beक्रमe */
+	} else {
+		/* set the baudrate determined before */
 		mutex_lock(&priv->cfg_lock);
-		अगर (change_speed(tty, port))
+		if (change_speed(tty, port))
 			dev_err(ddev, "%s urb failed to set baudrate\n", __func__);
 		mutex_unlock(&priv->cfg_lock);
-		/* Ensure RTS and DTR are उठाओd when baudrate changed from 0 */
-		अगर (old_termios && (old_termios->c_cflag & CBAUD) == B0)
+		/* Ensure RTS and DTR are raised when baudrate changed from 0 */
+		if (old_termios && (old_termios->c_cflag & CBAUD) == B0)
 			set_mctrl(port, TIOCM_DTR | TIOCM_RTS);
-	पूर्ण
+	}
 
 no_c_cflag_changes:
 	/* Set hardware-assisted flow control */
 	value = 0;
 
-	अगर (C_CRTSCTS(tty)) अणु
+	if (C_CRTSCTS(tty)) {
 		dev_dbg(&port->dev, "enabling rts/cts flow control\n");
 		index = FTDI_SIO_RTS_CTS_HS;
-	पूर्ण अन्यथा अगर (I_IXON(tty)) अणु
+	} else if (I_IXON(tty)) {
 		dev_dbg(&port->dev, "enabling xon/xoff flow control\n");
 		index = FTDI_SIO_XON_XOFF_HS;
 		value = STOP_CHAR(tty) << 8 | START_CHAR(tty);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_dbg(&port->dev, "disabling flow control\n");
 		index = FTDI_SIO_DISABLE_FLOW_CTRL;
-	पूर्ण
+	}
 
-	index |= priv->पूर्णांकerface;
+	index |= priv->interface;
 
 	ret = usb_control_msg(dev, usb_sndctrlpipe(dev, 0),
 			FTDI_SIO_SET_FLOW_CTRL_REQUEST,
 			FTDI_SIO_SET_FLOW_CTRL_REQUEST_TYPE,
-			value, index, शून्य, 0, WDR_TIMEOUT);
-	अगर (ret < 0)
+			value, index, NULL, 0, WDR_TIMEOUT);
+	if (ret < 0)
 		dev_err(&port->dev, "failed to set flow control: %d\n", ret);
-पूर्ण
+}
 
 /*
  * Get modem-control status.
@@ -2824,80 +2823,80 @@ no_c_cflag_changes:
  * Returns the number of status bytes retrieved (device dependant), or
  * negative error code.
  */
-अटल पूर्णांक ftdi_get_modem_status(काष्ठा usb_serial_port *port,
-						अचिन्हित अक्षर status[2])
-अणु
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
-	अचिन्हित अक्षर *buf;
-	पूर्णांक len;
-	पूर्णांक ret;
+static int ftdi_get_modem_status(struct usb_serial_port *port,
+						unsigned char status[2])
+{
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
+	unsigned char *buf;
+	int len;
+	int ret;
 
-	buf = kदो_स्मृति(2, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc(2, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 	/*
-	 * The 8U232AM वापसs a two byte value (the SIO a 1 byte value) in
-	 * the same क्रमmat as the data वापसed from the in poपूर्णांक.
+	 * The 8U232AM returns a two byte value (the SIO a 1 byte value) in
+	 * the same format as the data returned from the in point.
 	 */
-	चयन (priv->chip_type) अणु
-	हाल SIO:
+	switch (priv->chip_type) {
+	case SIO:
 		len = 1;
-		अवरोध;
-	हाल FT8U232AM:
-	हाल FT232BM:
-	हाल FT2232C:
-	हाल FT232RL:
-	हाल FT2232H:
-	हाल FT4232H:
-	हाल FT232H:
-	हाल FTX:
+		break;
+	case FT8U232AM:
+	case FT232BM:
+	case FT2232C:
+	case FT232RL:
+	case FT2232H:
+	case FT4232H:
+	case FT232H:
+	case FTX:
 		len = 2;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = usb_control_msg(port->serial->dev,
 			usb_rcvctrlpipe(port->serial->dev, 0),
 			FTDI_SIO_GET_MODEM_STATUS_REQUEST,
 			FTDI_SIO_GET_MODEM_STATUS_REQUEST_TYPE,
-			0, priv->पूर्णांकerface,
+			0, priv->interface,
 			buf, len, WDR_TIMEOUT);
 
-	/* NOTE: We allow लघु responses and handle that below. */
-	अगर (ret < 1) अणु
+	/* NOTE: We allow short responses and handle that below. */
+	if (ret < 1) {
 		dev_err(&port->dev, "failed to get modem status: %d\n", ret);
-		अगर (ret >= 0)
+		if (ret >= 0)
 			ret = -EIO;
 		ret = usb_translate_errors(ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	status[0] = buf[0];
-	अगर (ret > 1)
+	if (ret > 1)
 		status[1] = buf[1];
-	अन्यथा
+	else
 		status[1] = 0;
 
 	dev_dbg(&port->dev, "%s - 0x%02x%02x\n", __func__, status[0],
 								status[1]);
 out:
-	kमुक्त(buf);
+	kfree(buf);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ftdi_tiocmget(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा ftdi_निजी *priv = usb_get_serial_port_data(port);
-	अचिन्हित अक्षर buf[2];
-	पूर्णांक ret;
+static int ftdi_tiocmget(struct tty_struct *tty)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	struct ftdi_private *priv = usb_get_serial_port_data(port);
+	unsigned char buf[2];
+	int ret;
 
 	ret = ftdi_get_modem_status(port, buf);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret =	(buf[0] & FTDI_SIO_DSR_MASK  ? TIOCM_DSR : 0) |
 		(buf[0] & FTDI_SIO_CTS_MASK  ? TIOCM_CTS : 0) |
@@ -2905,32 +2904,32 @@ out:
 		(buf[0] & FTDI_SIO_RLSD_MASK ? TIOCM_CD  : 0) |
 		priv->last_dtr_rts;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ftdi_tiocmset(काष्ठा tty_काष्ठा *tty,
-			अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
+static int ftdi_tiocmset(struct tty_struct *tty,
+			unsigned int set, unsigned int clear)
+{
+	struct usb_serial_port *port = tty->driver_data;
 
-	वापस update_mctrl(port, set, clear);
-पूर्ण
+	return update_mctrl(port, set, clear);
+}
 
-अटल पूर्णांक ftdi_ioctl(काष्ठा tty_काष्ठा *tty,
-					अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	व्योम __user *argp = (व्योम __user *)arg;
+static int ftdi_ioctl(struct tty_struct *tty,
+					unsigned int cmd, unsigned long arg)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	void __user *argp = (void __user *)arg;
 
-	चयन (cmd) अणु
-	हाल TIOCSERGETLSR:
-		वापस get_lsr_info(port, argp);
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (cmd) {
+	case TIOCSERGETLSR:
+		return get_lsr_info(port, argp);
+	default:
+		break;
+	}
 
-	वापस -ENOIOCTLCMD;
-पूर्ण
+	return -ENOIOCTLCMD;
+}
 
 module_usb_serial_driver(serial_drivers, id_table_combined);
 
@@ -2938,5 +2937,5 @@ MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
 
-module_param(ndi_latency_समयr, पूर्णांक, S_IRUGO | S_IWUSR);
-MODULE_PARM_DESC(ndi_latency_समयr, "NDI device latency timer override");
+module_param(ndi_latency_timer, int, S_IRUGO | S_IWUSR);
+MODULE_PARM_DESC(ndi_latency_timer, "NDI device latency timer override");

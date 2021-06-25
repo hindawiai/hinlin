@@ -1,226 +1,225 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2015-2018 Mellanox Technologies. All rights reserved */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/dcbnl.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/list.h>
-#समावेश <linux/netlink.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/dcbnl.h>
+#include <linux/if_ether.h>
+#include <linux/list.h>
+#include <linux/netlink.h>
 
-#समावेश "spectrum.h"
-#समावेश "core.h"
-#समावेश "port.h"
-#समावेश "reg.h"
+#include "spectrum.h"
+#include "core.h"
+#include "port.h"
+#include "reg.h"
 
-काष्ठा mlxsw_sp_sb_pr अणु
-	क्रमागत mlxsw_reg_sbpr_mode mode;
+struct mlxsw_sp_sb_pr {
+	enum mlxsw_reg_sbpr_mode mode;
 	u32 size;
-	u8 मुक्तze_mode:1,
-	   मुक्तze_size:1;
-पूर्ण;
+	u8 freeze_mode:1,
+	   freeze_size:1;
+};
 
-काष्ठा mlxsw_cp_sb_occ अणु
+struct mlxsw_cp_sb_occ {
 	u32 cur;
 	u32 max;
-पूर्ण;
+};
 
-काष्ठा mlxsw_sp_sb_cm अणु
+struct mlxsw_sp_sb_cm {
 	u32 min_buff;
 	u32 max_buff;
 	u16 pool_index;
-	काष्ठा mlxsw_cp_sb_occ occ;
-	u8 मुक्तze_pool:1,
-	   मुक्तze_thresh:1;
-पूर्ण;
+	struct mlxsw_cp_sb_occ occ;
+	u8 freeze_pool:1,
+	   freeze_thresh:1;
+};
 
-#घोषणा MLXSW_SP_SB_INFI -1U
-#घोषणा MLXSW_SP_SB_REST -2U
+#define MLXSW_SP_SB_INFI -1U
+#define MLXSW_SP_SB_REST -2U
 
-काष्ठा mlxsw_sp_sb_pm अणु
+struct mlxsw_sp_sb_pm {
 	u32 min_buff;
 	u32 max_buff;
-	काष्ठा mlxsw_cp_sb_occ occ;
-पूर्ण;
+	struct mlxsw_cp_sb_occ occ;
+};
 
-काष्ठा mlxsw_sp_sb_mm अणु
+struct mlxsw_sp_sb_mm {
 	u32 min_buff;
 	u32 max_buff;
 	u16 pool_index;
-पूर्ण;
+};
 
-काष्ठा mlxsw_sp_sb_pool_des अणु
-	क्रमागत mlxsw_reg_sbxx_dir dir;
+struct mlxsw_sp_sb_pool_des {
+	enum mlxsw_reg_sbxx_dir dir;
 	u8 pool;
-पूर्ण;
+};
 
-#घोषणा MLXSW_SP_SB_POOL_ING		0
-#घोषणा MLXSW_SP_SB_POOL_EGR		4
-#घोषणा MLXSW_SP_SB_POOL_EGR_MC		8
-#घोषणा MLXSW_SP_SB_POOL_ING_CPU	9
-#घोषणा MLXSW_SP_SB_POOL_EGR_CPU	10
+#define MLXSW_SP_SB_POOL_ING		0
+#define MLXSW_SP_SB_POOL_EGR		4
+#define MLXSW_SP_SB_POOL_EGR_MC		8
+#define MLXSW_SP_SB_POOL_ING_CPU	9
+#define MLXSW_SP_SB_POOL_EGR_CPU	10
 
-अटल स्थिर काष्ठा mlxsw_sp_sb_pool_des mlxsw_sp1_sb_pool_dess[] = अणु
-	अणुMLXSW_REG_SBXX_सूची_INGRESS, 0पूर्ण,
-	अणुMLXSW_REG_SBXX_सूची_INGRESS, 1पूर्ण,
-	अणुMLXSW_REG_SBXX_सूची_INGRESS, 2पूर्ण,
-	अणुMLXSW_REG_SBXX_सूची_INGRESS, 3पूर्ण,
-	अणुMLXSW_REG_SBXX_सूची_EGRESS, 0पूर्ण,
-	अणुMLXSW_REG_SBXX_सूची_EGRESS, 1पूर्ण,
-	अणुMLXSW_REG_SBXX_सूची_EGRESS, 2पूर्ण,
-	अणुMLXSW_REG_SBXX_सूची_EGRESS, 3पूर्ण,
-	अणुMLXSW_REG_SBXX_सूची_EGRESS, 15पूर्ण,
-	अणुMLXSW_REG_SBXX_सूची_INGRESS, 4पूर्ण,
-	अणुMLXSW_REG_SBXX_सूची_EGRESS, 4पूर्ण,
-पूर्ण;
+static const struct mlxsw_sp_sb_pool_des mlxsw_sp1_sb_pool_dess[] = {
+	{MLXSW_REG_SBXX_DIR_INGRESS, 0},
+	{MLXSW_REG_SBXX_DIR_INGRESS, 1},
+	{MLXSW_REG_SBXX_DIR_INGRESS, 2},
+	{MLXSW_REG_SBXX_DIR_INGRESS, 3},
+	{MLXSW_REG_SBXX_DIR_EGRESS, 0},
+	{MLXSW_REG_SBXX_DIR_EGRESS, 1},
+	{MLXSW_REG_SBXX_DIR_EGRESS, 2},
+	{MLXSW_REG_SBXX_DIR_EGRESS, 3},
+	{MLXSW_REG_SBXX_DIR_EGRESS, 15},
+	{MLXSW_REG_SBXX_DIR_INGRESS, 4},
+	{MLXSW_REG_SBXX_DIR_EGRESS, 4},
+};
 
-अटल स्थिर काष्ठा mlxsw_sp_sb_pool_des mlxsw_sp2_sb_pool_dess[] = अणु
-	अणुMLXSW_REG_SBXX_सूची_INGRESS, 0पूर्ण,
-	अणुMLXSW_REG_SBXX_सूची_INGRESS, 1पूर्ण,
-	अणुMLXSW_REG_SBXX_सूची_INGRESS, 2पूर्ण,
-	अणुMLXSW_REG_SBXX_सूची_INGRESS, 3पूर्ण,
-	अणुMLXSW_REG_SBXX_सूची_EGRESS, 0पूर्ण,
-	अणुMLXSW_REG_SBXX_सूची_EGRESS, 1पूर्ण,
-	अणुMLXSW_REG_SBXX_सूची_EGRESS, 2पूर्ण,
-	अणुMLXSW_REG_SBXX_सूची_EGRESS, 3पूर्ण,
-	अणुMLXSW_REG_SBXX_सूची_EGRESS, 15पूर्ण,
-	अणुMLXSW_REG_SBXX_सूची_INGRESS, 4पूर्ण,
-	अणुMLXSW_REG_SBXX_सूची_EGRESS, 4पूर्ण,
-पूर्ण;
+static const struct mlxsw_sp_sb_pool_des mlxsw_sp2_sb_pool_dess[] = {
+	{MLXSW_REG_SBXX_DIR_INGRESS, 0},
+	{MLXSW_REG_SBXX_DIR_INGRESS, 1},
+	{MLXSW_REG_SBXX_DIR_INGRESS, 2},
+	{MLXSW_REG_SBXX_DIR_INGRESS, 3},
+	{MLXSW_REG_SBXX_DIR_EGRESS, 0},
+	{MLXSW_REG_SBXX_DIR_EGRESS, 1},
+	{MLXSW_REG_SBXX_DIR_EGRESS, 2},
+	{MLXSW_REG_SBXX_DIR_EGRESS, 3},
+	{MLXSW_REG_SBXX_DIR_EGRESS, 15},
+	{MLXSW_REG_SBXX_DIR_INGRESS, 4},
+	{MLXSW_REG_SBXX_DIR_EGRESS, 4},
+};
 
-#घोषणा MLXSW_SP_SB_ING_TC_COUNT 8
-#घोषणा MLXSW_SP_SB_EG_TC_COUNT 16
+#define MLXSW_SP_SB_ING_TC_COUNT 8
+#define MLXSW_SP_SB_EG_TC_COUNT 16
 
-काष्ठा mlxsw_sp_sb_port अणु
-	काष्ठा mlxsw_sp_sb_cm ing_cms[MLXSW_SP_SB_ING_TC_COUNT];
-	काष्ठा mlxsw_sp_sb_cm eg_cms[MLXSW_SP_SB_EG_TC_COUNT];
-	काष्ठा mlxsw_sp_sb_pm *pms;
-पूर्ण;
+struct mlxsw_sp_sb_port {
+	struct mlxsw_sp_sb_cm ing_cms[MLXSW_SP_SB_ING_TC_COUNT];
+	struct mlxsw_sp_sb_cm eg_cms[MLXSW_SP_SB_EG_TC_COUNT];
+	struct mlxsw_sp_sb_pm *pms;
+};
 
-काष्ठा mlxsw_sp_sb अणु
-	काष्ठा mlxsw_sp_sb_pr *prs;
-	काष्ठा mlxsw_sp_sb_port *ports;
+struct mlxsw_sp_sb {
+	struct mlxsw_sp_sb_pr *prs;
+	struct mlxsw_sp_sb_port *ports;
 	u32 cell_size;
 	u32 max_headroom_cells;
 	u64 sb_size;
-पूर्ण;
+};
 
-काष्ठा mlxsw_sp_sb_vals अणु
-	अचिन्हित पूर्णांक pool_count;
-	स्थिर काष्ठा mlxsw_sp_sb_pool_des *pool_dess;
-	स्थिर काष्ठा mlxsw_sp_sb_pm *pms;
-	स्थिर काष्ठा mlxsw_sp_sb_pm *pms_cpu;
-	स्थिर काष्ठा mlxsw_sp_sb_pr *prs;
-	स्थिर काष्ठा mlxsw_sp_sb_mm *mms;
-	स्थिर काष्ठा mlxsw_sp_sb_cm *cms_ingress;
-	स्थिर काष्ठा mlxsw_sp_sb_cm *cms_egress;
-	स्थिर काष्ठा mlxsw_sp_sb_cm *cms_cpu;
-	अचिन्हित पूर्णांक mms_count;
-	अचिन्हित पूर्णांक cms_ingress_count;
-	अचिन्हित पूर्णांक cms_egress_count;
-	अचिन्हित पूर्णांक cms_cpu_count;
-पूर्ण;
+struct mlxsw_sp_sb_vals {
+	unsigned int pool_count;
+	const struct mlxsw_sp_sb_pool_des *pool_dess;
+	const struct mlxsw_sp_sb_pm *pms;
+	const struct mlxsw_sp_sb_pm *pms_cpu;
+	const struct mlxsw_sp_sb_pr *prs;
+	const struct mlxsw_sp_sb_mm *mms;
+	const struct mlxsw_sp_sb_cm *cms_ingress;
+	const struct mlxsw_sp_sb_cm *cms_egress;
+	const struct mlxsw_sp_sb_cm *cms_cpu;
+	unsigned int mms_count;
+	unsigned int cms_ingress_count;
+	unsigned int cms_egress_count;
+	unsigned int cms_cpu_count;
+};
 
-काष्ठा mlxsw_sp_sb_ops अणु
-	u32 (*पूर्णांक_buf_size_get)(पूर्णांक mtu, u32 speed);
-पूर्ण;
+struct mlxsw_sp_sb_ops {
+	u32 (*int_buf_size_get)(int mtu, u32 speed);
+};
 
-u32 mlxsw_sp_cells_bytes(स्थिर काष्ठा mlxsw_sp *mlxsw_sp, u32 cells)
-अणु
-	वापस mlxsw_sp->sb->cell_size * cells;
-पूर्ण
+u32 mlxsw_sp_cells_bytes(const struct mlxsw_sp *mlxsw_sp, u32 cells)
+{
+	return mlxsw_sp->sb->cell_size * cells;
+}
 
-u32 mlxsw_sp_bytes_cells(स्थिर काष्ठा mlxsw_sp *mlxsw_sp, u32 bytes)
-अणु
-	वापस DIV_ROUND_UP(bytes, mlxsw_sp->sb->cell_size);
-पूर्ण
+u32 mlxsw_sp_bytes_cells(const struct mlxsw_sp *mlxsw_sp, u32 bytes)
+{
+	return DIV_ROUND_UP(bytes, mlxsw_sp->sb->cell_size);
+}
 
-अटल u32 mlxsw_sp_port_headroom_8x_adjust(स्थिर काष्ठा mlxsw_sp_port *mlxsw_sp_port,
+static u32 mlxsw_sp_port_headroom_8x_adjust(const struct mlxsw_sp_port *mlxsw_sp_port,
 					    u32 size_cells)
-अणु
+{
 	/* Ports with eight lanes use two headroom buffers between which the
-	 * configured headroom size is split. Thereक्रमe, multiply the calculated
+	 * configured headroom size is split. Therefore, multiply the calculated
 	 * headroom size by two.
 	 */
-	वापस mlxsw_sp_port->mapping.width == 8 ? 2 * size_cells : size_cells;
-पूर्ण
+	return mlxsw_sp_port->mapping.width == 8 ? 2 * size_cells : size_cells;
+}
 
-अटल काष्ठा mlxsw_sp_sb_pr *mlxsw_sp_sb_pr_get(काष्ठा mlxsw_sp *mlxsw_sp,
+static struct mlxsw_sp_sb_pr *mlxsw_sp_sb_pr_get(struct mlxsw_sp *mlxsw_sp,
 						 u16 pool_index)
-अणु
-	वापस &mlxsw_sp->sb->prs[pool_index];
-पूर्ण
+{
+	return &mlxsw_sp->sb->prs[pool_index];
+}
 
-अटल bool mlxsw_sp_sb_cm_exists(u8 pg_buff, क्रमागत mlxsw_reg_sbxx_dir dir)
-अणु
-	अगर (dir == MLXSW_REG_SBXX_सूची_INGRESS)
-		वापस pg_buff < MLXSW_SP_SB_ING_TC_COUNT;
-	अन्यथा
-		वापस pg_buff < MLXSW_SP_SB_EG_TC_COUNT;
-पूर्ण
+static bool mlxsw_sp_sb_cm_exists(u8 pg_buff, enum mlxsw_reg_sbxx_dir dir)
+{
+	if (dir == MLXSW_REG_SBXX_DIR_INGRESS)
+		return pg_buff < MLXSW_SP_SB_ING_TC_COUNT;
+	else
+		return pg_buff < MLXSW_SP_SB_EG_TC_COUNT;
+}
 
-अटल काष्ठा mlxsw_sp_sb_cm *mlxsw_sp_sb_cm_get(काष्ठा mlxsw_sp *mlxsw_sp,
+static struct mlxsw_sp_sb_cm *mlxsw_sp_sb_cm_get(struct mlxsw_sp *mlxsw_sp,
 						 u8 local_port, u8 pg_buff,
-						 क्रमागत mlxsw_reg_sbxx_dir dir)
-अणु
-	काष्ठा mlxsw_sp_sb_port *sb_port = &mlxsw_sp->sb->ports[local_port];
+						 enum mlxsw_reg_sbxx_dir dir)
+{
+	struct mlxsw_sp_sb_port *sb_port = &mlxsw_sp->sb->ports[local_port];
 
 	WARN_ON(!mlxsw_sp_sb_cm_exists(pg_buff, dir));
-	अगर (dir == MLXSW_REG_SBXX_सूची_INGRESS)
-		वापस &sb_port->ing_cms[pg_buff];
-	अन्यथा
-		वापस &sb_port->eg_cms[pg_buff];
-पूर्ण
+	if (dir == MLXSW_REG_SBXX_DIR_INGRESS)
+		return &sb_port->ing_cms[pg_buff];
+	else
+		return &sb_port->eg_cms[pg_buff];
+}
 
-अटल काष्ठा mlxsw_sp_sb_pm *mlxsw_sp_sb_pm_get(काष्ठा mlxsw_sp *mlxsw_sp,
+static struct mlxsw_sp_sb_pm *mlxsw_sp_sb_pm_get(struct mlxsw_sp *mlxsw_sp,
 						 u8 local_port, u16 pool_index)
-अणु
-	वापस &mlxsw_sp->sb->ports[local_port].pms[pool_index];
-पूर्ण
+{
+	return &mlxsw_sp->sb->ports[local_port].pms[pool_index];
+}
 
-अटल पूर्णांक mlxsw_sp_sb_pr_ग_लिखो(काष्ठा mlxsw_sp *mlxsw_sp, u16 pool_index,
-				क्रमागत mlxsw_reg_sbpr_mode mode,
+static int mlxsw_sp_sb_pr_write(struct mlxsw_sp *mlxsw_sp, u16 pool_index,
+				enum mlxsw_reg_sbpr_mode mode,
 				u32 size, bool infi_size)
-अणु
-	स्थिर काष्ठा mlxsw_sp_sb_pool_des *des =
+{
+	const struct mlxsw_sp_sb_pool_des *des =
 		&mlxsw_sp->sb_vals->pool_dess[pool_index];
-	अक्षर sbpr_pl[MLXSW_REG_SBPR_LEN];
-	काष्ठा mlxsw_sp_sb_pr *pr;
-	पूर्णांक err;
+	char sbpr_pl[MLXSW_REG_SBPR_LEN];
+	struct mlxsw_sp_sb_pr *pr;
+	int err;
 
 	mlxsw_reg_sbpr_pack(sbpr_pl, des->pool, des->dir, mode,
 			    size, infi_size);
-	err = mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(sbpr), sbpr_pl);
-	अगर (err)
-		वापस err;
+	err = mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(sbpr), sbpr_pl);
+	if (err)
+		return err;
 
-	अगर (infi_size)
+	if (infi_size)
 		size = mlxsw_sp_bytes_cells(mlxsw_sp, mlxsw_sp->sb->sb_size);
 	pr = mlxsw_sp_sb_pr_get(mlxsw_sp, pool_index);
 	pr->mode = mode;
 	pr->size = size;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mlxsw_sp_sb_cm_ग_लिखो(काष्ठा mlxsw_sp *mlxsw_sp, u8 local_port,
+static int mlxsw_sp_sb_cm_write(struct mlxsw_sp *mlxsw_sp, u8 local_port,
 				u8 pg_buff, u32 min_buff, u32 max_buff,
 				bool infi_max, u16 pool_index)
-अणु
-	स्थिर काष्ठा mlxsw_sp_sb_pool_des *des =
+{
+	const struct mlxsw_sp_sb_pool_des *des =
 		&mlxsw_sp->sb_vals->pool_dess[pool_index];
-	अक्षर sbcm_pl[MLXSW_REG_SBCM_LEN];
-	काष्ठा mlxsw_sp_sb_cm *cm;
-	पूर्णांक err;
+	char sbcm_pl[MLXSW_REG_SBCM_LEN];
+	struct mlxsw_sp_sb_cm *cm;
+	int err;
 
 	mlxsw_reg_sbcm_pack(sbcm_pl, local_port, pg_buff, des->dir,
 			    min_buff, max_buff, infi_max, des->pool);
-	err = mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(sbcm), sbcm_pl);
-	अगर (err)
-		वापस err;
+	err = mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(sbcm), sbcm_pl);
+	if (err)
+		return err;
 
-	अगर (mlxsw_sp_sb_cm_exists(pg_buff, des->dir)) अणु
-		अगर (infi_max)
+	if (mlxsw_sp_sb_cm_exists(pg_buff, des->dir)) {
+		if (infi_max)
 			max_buff = mlxsw_sp_bytes_cells(mlxsw_sp,
 							mlxsw_sp->sb->sb_size);
 
@@ -229,467 +228,467 @@ u32 mlxsw_sp_bytes_cells(स्थिर काष्ठा mlxsw_sp *mlxsw_sp, 
 		cm->min_buff = min_buff;
 		cm->max_buff = max_buff;
 		cm->pool_index = pool_index;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक mlxsw_sp_sb_pm_ग_लिखो(काष्ठा mlxsw_sp *mlxsw_sp, u8 local_port,
+static int mlxsw_sp_sb_pm_write(struct mlxsw_sp *mlxsw_sp, u8 local_port,
 				u16 pool_index, u32 min_buff, u32 max_buff)
-अणु
-	स्थिर काष्ठा mlxsw_sp_sb_pool_des *des =
+{
+	const struct mlxsw_sp_sb_pool_des *des =
 		&mlxsw_sp->sb_vals->pool_dess[pool_index];
-	अक्षर sbpm_pl[MLXSW_REG_SBPM_LEN];
-	काष्ठा mlxsw_sp_sb_pm *pm;
-	पूर्णांक err;
+	char sbpm_pl[MLXSW_REG_SBPM_LEN];
+	struct mlxsw_sp_sb_pm *pm;
+	int err;
 
 	mlxsw_reg_sbpm_pack(sbpm_pl, local_port, des->pool, des->dir, false,
 			    min_buff, max_buff);
-	err = mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(sbpm), sbpm_pl);
-	अगर (err)
-		वापस err;
+	err = mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(sbpm), sbpm_pl);
+	if (err)
+		return err;
 
 	pm = mlxsw_sp_sb_pm_get(mlxsw_sp, local_port, pool_index);
 	pm->min_buff = min_buff;
 	pm->max_buff = max_buff;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mlxsw_sp_sb_pm_occ_clear(काष्ठा mlxsw_sp *mlxsw_sp, u8 local_port,
-				    u16 pool_index, काष्ठा list_head *bulk_list)
-अणु
-	स्थिर काष्ठा mlxsw_sp_sb_pool_des *des =
+static int mlxsw_sp_sb_pm_occ_clear(struct mlxsw_sp *mlxsw_sp, u8 local_port,
+				    u16 pool_index, struct list_head *bulk_list)
+{
+	const struct mlxsw_sp_sb_pool_des *des =
 		&mlxsw_sp->sb_vals->pool_dess[pool_index];
-	अक्षर sbpm_pl[MLXSW_REG_SBPM_LEN];
+	char sbpm_pl[MLXSW_REG_SBPM_LEN];
 
-	अगर (local_port == MLXSW_PORT_CPU_PORT &&
-	    des->dir == MLXSW_REG_SBXX_सूची_INGRESS)
-		वापस 0;
+	if (local_port == MLXSW_PORT_CPU_PORT &&
+	    des->dir == MLXSW_REG_SBXX_DIR_INGRESS)
+		return 0;
 
 	mlxsw_reg_sbpm_pack(sbpm_pl, local_port, des->pool, des->dir,
 			    true, 0, 0);
-	वापस mlxsw_reg_trans_query(mlxsw_sp->core, MLXSW_REG(sbpm), sbpm_pl,
-				     bulk_list, शून्य, 0);
-पूर्ण
+	return mlxsw_reg_trans_query(mlxsw_sp->core, MLXSW_REG(sbpm), sbpm_pl,
+				     bulk_list, NULL, 0);
+}
 
-अटल व्योम mlxsw_sp_sb_pm_occ_query_cb(काष्ठा mlxsw_core *mlxsw_core,
-					अक्षर *sbpm_pl, माप_प्रकार sbpm_pl_len,
-					अचिन्हित दीर्घ cb_priv)
-अणु
-	काष्ठा mlxsw_sp_sb_pm *pm = (काष्ठा mlxsw_sp_sb_pm *) cb_priv;
+static void mlxsw_sp_sb_pm_occ_query_cb(struct mlxsw_core *mlxsw_core,
+					char *sbpm_pl, size_t sbpm_pl_len,
+					unsigned long cb_priv)
+{
+	struct mlxsw_sp_sb_pm *pm = (struct mlxsw_sp_sb_pm *) cb_priv;
 
 	mlxsw_reg_sbpm_unpack(sbpm_pl, &pm->occ.cur, &pm->occ.max);
-पूर्ण
+}
 
-अटल पूर्णांक mlxsw_sp_sb_pm_occ_query(काष्ठा mlxsw_sp *mlxsw_sp, u8 local_port,
-				    u16 pool_index, काष्ठा list_head *bulk_list)
-अणु
-	स्थिर काष्ठा mlxsw_sp_sb_pool_des *des =
+static int mlxsw_sp_sb_pm_occ_query(struct mlxsw_sp *mlxsw_sp, u8 local_port,
+				    u16 pool_index, struct list_head *bulk_list)
+{
+	const struct mlxsw_sp_sb_pool_des *des =
 		&mlxsw_sp->sb_vals->pool_dess[pool_index];
-	अक्षर sbpm_pl[MLXSW_REG_SBPM_LEN];
-	काष्ठा mlxsw_sp_sb_pm *pm;
+	char sbpm_pl[MLXSW_REG_SBPM_LEN];
+	struct mlxsw_sp_sb_pm *pm;
 
-	अगर (local_port == MLXSW_PORT_CPU_PORT &&
-	    des->dir == MLXSW_REG_SBXX_सूची_INGRESS)
-		वापस 0;
+	if (local_port == MLXSW_PORT_CPU_PORT &&
+	    des->dir == MLXSW_REG_SBXX_DIR_INGRESS)
+		return 0;
 
 	pm = mlxsw_sp_sb_pm_get(mlxsw_sp, local_port, pool_index);
 	mlxsw_reg_sbpm_pack(sbpm_pl, local_port, des->pool, des->dir,
 			    false, 0, 0);
-	वापस mlxsw_reg_trans_query(mlxsw_sp->core, MLXSW_REG(sbpm), sbpm_pl,
+	return mlxsw_reg_trans_query(mlxsw_sp->core, MLXSW_REG(sbpm), sbpm_pl,
 				     bulk_list,
 				     mlxsw_sp_sb_pm_occ_query_cb,
-				     (अचिन्हित दीर्घ) pm);
-पूर्ण
+				     (unsigned long) pm);
+}
 
-व्योम mlxsw_sp_hdroom_prios_reset_buf_idx(काष्ठा mlxsw_sp_hdroom *hdroom)
-अणु
-	पूर्णांक prio;
+void mlxsw_sp_hdroom_prios_reset_buf_idx(struct mlxsw_sp_hdroom *hdroom)
+{
+	int prio;
 
-	क्रम (prio = 0; prio < IEEE_8021QAZ_MAX_TCS; prio++) अणु
-		चयन (hdroom->mode) अणु
-		हाल MLXSW_SP_HDROOM_MODE_DCB:
+	for (prio = 0; prio < IEEE_8021QAZ_MAX_TCS; prio++) {
+		switch (hdroom->mode) {
+		case MLXSW_SP_HDROOM_MODE_DCB:
 			hdroom->prios.prio[prio].buf_idx = hdroom->prios.prio[prio].ets_buf_idx;
-			अवरोध;
-		हाल MLXSW_SP_HDROOM_MODE_TC:
+			break;
+		case MLXSW_SP_HDROOM_MODE_TC:
 			hdroom->prios.prio[prio].buf_idx = hdroom->prios.prio[prio].set_buf_idx;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
-व्योम mlxsw_sp_hdroom_bufs_reset_lossiness(काष्ठा mlxsw_sp_hdroom *hdroom)
-अणु
-	पूर्णांक prio;
-	पूर्णांक i;
+void mlxsw_sp_hdroom_bufs_reset_lossiness(struct mlxsw_sp_hdroom *hdroom)
+{
+	int prio;
+	int i;
 
-	क्रम (i = 0; i < DCBX_MAX_BUFFERS; i++)
+	for (i = 0; i < DCBX_MAX_BUFFERS; i++)
 		hdroom->bufs.buf[i].lossy = true;
 
-	क्रम (prio = 0; prio < IEEE_8021Q_MAX_PRIORITIES; prio++) अणु
-		अगर (!hdroom->prios.prio[prio].lossy)
+	for (prio = 0; prio < IEEE_8021Q_MAX_PRIORITIES; prio++) {
+		if (!hdroom->prios.prio[prio].lossy)
 			hdroom->bufs.buf[hdroom->prios.prio[prio].buf_idx].lossy = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u16 mlxsw_sp_hdroom_buf_threshold_get(स्थिर काष्ठा mlxsw_sp *mlxsw_sp, पूर्णांक mtu)
-अणु
-	वापस 2 * mlxsw_sp_bytes_cells(mlxsw_sp, mtu);
-पूर्ण
+static u16 mlxsw_sp_hdroom_buf_threshold_get(const struct mlxsw_sp *mlxsw_sp, int mtu)
+{
+	return 2 * mlxsw_sp_bytes_cells(mlxsw_sp, mtu);
+}
 
-अटल व्योम mlxsw_sp_hdroom_buf_pack(अक्षर *pbmc_pl, पूर्णांक index, u16 size, u16 thres, bool lossy)
-अणु
-	अगर (lossy)
+static void mlxsw_sp_hdroom_buf_pack(char *pbmc_pl, int index, u16 size, u16 thres, bool lossy)
+{
+	if (lossy)
 		mlxsw_reg_pbmc_lossy_buffer_pack(pbmc_pl, index, size);
-	अन्यथा
+	else
 		mlxsw_reg_pbmc_lossless_buffer_pack(pbmc_pl, index, size,
 						    thres);
-पूर्ण
+}
 
-अटल u16 mlxsw_sp_hdroom_buf_delay_get(स्थिर काष्ठा mlxsw_sp *mlxsw_sp,
-					 स्थिर काष्ठा mlxsw_sp_hdroom *hdroom)
-अणु
+static u16 mlxsw_sp_hdroom_buf_delay_get(const struct mlxsw_sp *mlxsw_sp,
+					 const struct mlxsw_sp_hdroom *hdroom)
+{
 	u16 delay_cells;
 
 	delay_cells = mlxsw_sp_bytes_cells(mlxsw_sp, hdroom->delay_bytes);
 
-	/* In the worst हाल scenario the delay will be made up of packets that
+	/* In the worst case scenario the delay will be made up of packets that
 	 * are all of size CELL_SIZE + 1, which means each packet will require
-	 * almost twice its true size when buffered in the चयन. We thereक्रमe
-	 * multiply this value by the "cell factor", which is बंद to 2.
+	 * almost twice its true size when buffered in the switch. We therefore
+	 * multiply this value by the "cell factor", which is close to 2.
 	 *
-	 * Another MTU is added in हाल the transmitting host alपढ़ोy started
+	 * Another MTU is added in case the transmitting host already started
 	 * transmitting a maximum length frame when the PFC packet was received.
 	 */
-	वापस 2 * delay_cells + mlxsw_sp_bytes_cells(mlxsw_sp, hdroom->mtu);
-पूर्ण
+	return 2 * delay_cells + mlxsw_sp_bytes_cells(mlxsw_sp, hdroom->mtu);
+}
 
-अटल u32 mlxsw_sp_hdroom_पूर्णांक_buf_size_get(काष्ठा mlxsw_sp *mlxsw_sp, पूर्णांक mtu, u32 speed)
-अणु
-	u32 buffsize = mlxsw_sp->sb_ops->पूर्णांक_buf_size_get(speed, mtu);
+static u32 mlxsw_sp_hdroom_int_buf_size_get(struct mlxsw_sp *mlxsw_sp, int mtu, u32 speed)
+{
+	u32 buffsize = mlxsw_sp->sb_ops->int_buf_size_get(speed, mtu);
 
-	वापस mlxsw_sp_bytes_cells(mlxsw_sp, buffsize) + 1;
-पूर्ण
+	return mlxsw_sp_bytes_cells(mlxsw_sp, buffsize) + 1;
+}
 
-अटल bool mlxsw_sp_hdroom_buf_is_used(स्थिर काष्ठा mlxsw_sp_hdroom *hdroom, पूर्णांक buf)
-अणु
-	पूर्णांक prio;
+static bool mlxsw_sp_hdroom_buf_is_used(const struct mlxsw_sp_hdroom *hdroom, int buf)
+{
+	int prio;
 
-	क्रम (prio = 0; prio < IEEE_8021QAZ_MAX_TCS; prio++) अणु
-		अगर (hdroom->prios.prio[prio].buf_idx == buf)
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+	for (prio = 0; prio < IEEE_8021QAZ_MAX_TCS; prio++) {
+		if (hdroom->prios.prio[prio].buf_idx == buf)
+			return true;
+	}
+	return false;
+}
 
-व्योम mlxsw_sp_hdroom_bufs_reset_sizes(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-				      काष्ठा mlxsw_sp_hdroom *hdroom)
-अणु
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+void mlxsw_sp_hdroom_bufs_reset_sizes(struct mlxsw_sp_port *mlxsw_sp_port,
+				      struct mlxsw_sp_hdroom *hdroom)
+{
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
 	u16 reserve_cells;
-	पूर्णांक i;
+	int i;
 
 	/* Internal buffer. */
-	reserve_cells = mlxsw_sp_hdroom_पूर्णांक_buf_size_get(mlxsw_sp, mlxsw_sp_port->max_speed,
+	reserve_cells = mlxsw_sp_hdroom_int_buf_size_get(mlxsw_sp, mlxsw_sp_port->max_speed,
 							 mlxsw_sp_port->max_mtu);
 	reserve_cells = mlxsw_sp_port_headroom_8x_adjust(mlxsw_sp_port, reserve_cells);
-	hdroom->पूर्णांक_buf.reserve_cells = reserve_cells;
+	hdroom->int_buf.reserve_cells = reserve_cells;
 
-	अगर (hdroom->पूर्णांक_buf.enable)
-		hdroom->पूर्णांक_buf.size_cells = reserve_cells;
-	अन्यथा
-		hdroom->पूर्णांक_buf.size_cells = 0;
+	if (hdroom->int_buf.enable)
+		hdroom->int_buf.size_cells = reserve_cells;
+	else
+		hdroom->int_buf.size_cells = 0;
 
 	/* PG buffers. */
-	क्रम (i = 0; i < DCBX_MAX_BUFFERS; i++) अणु
-		काष्ठा mlxsw_sp_hdroom_buf *buf = &hdroom->bufs.buf[i];
+	for (i = 0; i < DCBX_MAX_BUFFERS; i++) {
+		struct mlxsw_sp_hdroom_buf *buf = &hdroom->bufs.buf[i];
 		u16 thres_cells;
 		u16 delay_cells;
 
-		अगर (!mlxsw_sp_hdroom_buf_is_used(hdroom, i)) अणु
+		if (!mlxsw_sp_hdroom_buf_is_used(hdroom, i)) {
 			thres_cells = 0;
 			delay_cells = 0;
-		पूर्ण अन्यथा अगर (buf->lossy) अणु
+		} else if (buf->lossy) {
 			thres_cells = mlxsw_sp_hdroom_buf_threshold_get(mlxsw_sp, hdroom->mtu);
 			delay_cells = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			thres_cells = mlxsw_sp_hdroom_buf_threshold_get(mlxsw_sp, hdroom->mtu);
 			delay_cells = mlxsw_sp_hdroom_buf_delay_get(mlxsw_sp, hdroom);
-		पूर्ण
+		}
 
 		thres_cells = mlxsw_sp_port_headroom_8x_adjust(mlxsw_sp_port, thres_cells);
 		delay_cells = mlxsw_sp_port_headroom_8x_adjust(mlxsw_sp_port, delay_cells);
 
 		buf->thres_cells = thres_cells;
-		अगर (hdroom->mode == MLXSW_SP_HDROOM_MODE_DCB) अणु
+		if (hdroom->mode == MLXSW_SP_HDROOM_MODE_DCB) {
 			buf->size_cells = thres_cells + delay_cells;
-		पूर्ण अन्यथा अणु
-			/* Do not allow going below the minimum size, even अगर
+		} else {
+			/* Do not allow going below the minimum size, even if
 			 * the user requested it.
 			 */
 			buf->size_cells = max(buf->set_size_cells, buf->thres_cells);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-#घोषणा MLXSW_SP_PB_UNUSED 8
+#define MLXSW_SP_PB_UNUSED 8
 
-अटल पूर्णांक mlxsw_sp_hdroom_configure_buffers(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-					     स्थिर काष्ठा mlxsw_sp_hdroom *hdroom, bool क्रमce)
-अणु
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
-	अक्षर pbmc_pl[MLXSW_REG_PBMC_LEN];
+static int mlxsw_sp_hdroom_configure_buffers(struct mlxsw_sp_port *mlxsw_sp_port,
+					     const struct mlxsw_sp_hdroom *hdroom, bool force)
+{
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	char pbmc_pl[MLXSW_REG_PBMC_LEN];
 	bool dirty;
-	पूर्णांक err;
-	पूर्णांक i;
+	int err;
+	int i;
 
-	dirty = स_भेद(&mlxsw_sp_port->hdroom->bufs, &hdroom->bufs, माप(hdroom->bufs));
-	अगर (!dirty && !क्रमce)
-		वापस 0;
+	dirty = memcmp(&mlxsw_sp_port->hdroom->bufs, &hdroom->bufs, sizeof(hdroom->bufs));
+	if (!dirty && !force)
+		return 0;
 
 	mlxsw_reg_pbmc_pack(pbmc_pl, mlxsw_sp_port->local_port, 0xffff, 0xffff / 2);
-	क्रम (i = 0; i < MLXSW_SP_PB_COUNT; i++) अणु
-		स्थिर काष्ठा mlxsw_sp_hdroom_buf *buf = &hdroom->bufs.buf[i];
+	for (i = 0; i < MLXSW_SP_PB_COUNT; i++) {
+		const struct mlxsw_sp_hdroom_buf *buf = &hdroom->bufs.buf[i];
 
-		अगर (i == MLXSW_SP_PB_UNUSED)
-			जारी;
+		if (i == MLXSW_SP_PB_UNUSED)
+			continue;
 
 		mlxsw_sp_hdroom_buf_pack(pbmc_pl, i, buf->size_cells, buf->thres_cells, buf->lossy);
-	पूर्ण
+	}
 
 	mlxsw_reg_pbmc_lossy_buffer_pack(pbmc_pl, MLXSW_REG_PBMC_PORT_SHARED_BUF_IDX, 0);
-	err = mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(pbmc), pbmc_pl);
-	अगर (err)
-		वापस err;
+	err = mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(pbmc), pbmc_pl);
+	if (err)
+		return err;
 
 	mlxsw_sp_port->hdroom->bufs = hdroom->bufs;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mlxsw_sp_hdroom_configure_priomap(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-					     स्थिर काष्ठा mlxsw_sp_hdroom *hdroom, bool क्रमce)
-अणु
-	अक्षर pptb_pl[MLXSW_REG_PPTB_LEN];
+static int mlxsw_sp_hdroom_configure_priomap(struct mlxsw_sp_port *mlxsw_sp_port,
+					     const struct mlxsw_sp_hdroom *hdroom, bool force)
+{
+	char pptb_pl[MLXSW_REG_PPTB_LEN];
 	bool dirty;
-	पूर्णांक prio;
-	पूर्णांक err;
+	int prio;
+	int err;
 
-	dirty = स_भेद(&mlxsw_sp_port->hdroom->prios, &hdroom->prios, माप(hdroom->prios));
-	अगर (!dirty && !क्रमce)
-		वापस 0;
+	dirty = memcmp(&mlxsw_sp_port->hdroom->prios, &hdroom->prios, sizeof(hdroom->prios));
+	if (!dirty && !force)
+		return 0;
 
 	mlxsw_reg_pptb_pack(pptb_pl, mlxsw_sp_port->local_port);
-	क्रम (prio = 0; prio < IEEE_8021QAZ_MAX_TCS; prio++)
+	for (prio = 0; prio < IEEE_8021QAZ_MAX_TCS; prio++)
 		mlxsw_reg_pptb_prio_to_buff_pack(pptb_pl, prio, hdroom->prios.prio[prio].buf_idx);
 
-	err = mlxsw_reg_ग_लिखो(mlxsw_sp_port->mlxsw_sp->core, MLXSW_REG(pptb), pptb_pl);
-	अगर (err)
-		वापस err;
+	err = mlxsw_reg_write(mlxsw_sp_port->mlxsw_sp->core, MLXSW_REG(pptb), pptb_pl);
+	if (err)
+		return err;
 
 	mlxsw_sp_port->hdroom->prios = hdroom->prios;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mlxsw_sp_hdroom_configure_पूर्णांक_buf(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-					     स्थिर काष्ठा mlxsw_sp_hdroom *hdroom, bool क्रमce)
-अणु
-	अक्षर sbib_pl[MLXSW_REG_SBIB_LEN];
+static int mlxsw_sp_hdroom_configure_int_buf(struct mlxsw_sp_port *mlxsw_sp_port,
+					     const struct mlxsw_sp_hdroom *hdroom, bool force)
+{
+	char sbib_pl[MLXSW_REG_SBIB_LEN];
 	bool dirty;
-	पूर्णांक err;
+	int err;
 
-	dirty = स_भेद(&mlxsw_sp_port->hdroom->पूर्णांक_buf, &hdroom->पूर्णांक_buf, माप(hdroom->पूर्णांक_buf));
-	अगर (!dirty && !क्रमce)
-		वापस 0;
+	dirty = memcmp(&mlxsw_sp_port->hdroom->int_buf, &hdroom->int_buf, sizeof(hdroom->int_buf));
+	if (!dirty && !force)
+		return 0;
 
-	mlxsw_reg_sbib_pack(sbib_pl, mlxsw_sp_port->local_port, hdroom->पूर्णांक_buf.size_cells);
-	err = mlxsw_reg_ग_लिखो(mlxsw_sp_port->mlxsw_sp->core, MLXSW_REG(sbib), sbib_pl);
-	अगर (err)
-		वापस err;
+	mlxsw_reg_sbib_pack(sbib_pl, mlxsw_sp_port->local_port, hdroom->int_buf.size_cells);
+	err = mlxsw_reg_write(mlxsw_sp_port->mlxsw_sp->core, MLXSW_REG(sbib), sbib_pl);
+	if (err)
+		return err;
 
-	mlxsw_sp_port->hdroom->पूर्णांक_buf = hdroom->पूर्णांक_buf;
-	वापस 0;
-पूर्ण
+	mlxsw_sp_port->hdroom->int_buf = hdroom->int_buf;
+	return 0;
+}
 
-अटल bool mlxsw_sp_hdroom_bufs_fit(काष्ठा mlxsw_sp *mlxsw_sp,
-				     स्थिर काष्ठा mlxsw_sp_hdroom *hdroom)
-अणु
+static bool mlxsw_sp_hdroom_bufs_fit(struct mlxsw_sp *mlxsw_sp,
+				     const struct mlxsw_sp_hdroom *hdroom)
+{
 	u32 taken_headroom_cells = 0;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < MLXSW_SP_PB_COUNT; i++)
+	for (i = 0; i < MLXSW_SP_PB_COUNT; i++)
 		taken_headroom_cells += hdroom->bufs.buf[i].size_cells;
 
-	taken_headroom_cells += hdroom->पूर्णांक_buf.reserve_cells;
-	वापस taken_headroom_cells <= mlxsw_sp->sb->max_headroom_cells;
-पूर्ण
+	taken_headroom_cells += hdroom->int_buf.reserve_cells;
+	return taken_headroom_cells <= mlxsw_sp->sb->max_headroom_cells;
+}
 
-अटल पूर्णांक __mlxsw_sp_hdroom_configure(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-				       स्थिर काष्ठा mlxsw_sp_hdroom *hdroom, bool क्रमce)
-अणु
-	काष्ठा mlxsw_sp_hdroom orig_hdroom;
-	काष्ठा mlxsw_sp_hdroom पंचांगp_hdroom;
-	पूर्णांक err;
-	पूर्णांक i;
+static int __mlxsw_sp_hdroom_configure(struct mlxsw_sp_port *mlxsw_sp_port,
+				       const struct mlxsw_sp_hdroom *hdroom, bool force)
+{
+	struct mlxsw_sp_hdroom orig_hdroom;
+	struct mlxsw_sp_hdroom tmp_hdroom;
+	int err;
+	int i;
 
 	/* Port buffers need to be configured in three steps. First, all buffers
 	 * with non-zero size are configured. Then, prio-to-buffer map is
 	 * updated, allowing traffic to flow to the now non-zero buffers.
 	 * Finally, zero-sized buffers are configured, because now no traffic
 	 * should be directed to them anymore. This way, in a non-congested
-	 * प्रणाली, no packet drops are पूर्णांकroduced by the reconfiguration.
+	 * system, no packet drops are introduced by the reconfiguration.
 	 */
 
 	orig_hdroom = *mlxsw_sp_port->hdroom;
-	पंचांगp_hdroom = orig_hdroom;
-	क्रम (i = 0; i < MLXSW_SP_PB_COUNT; i++) अणु
-		अगर (hdroom->bufs.buf[i].size_cells)
-			पंचांगp_hdroom.bufs.buf[i] = hdroom->bufs.buf[i];
-	पूर्ण
+	tmp_hdroom = orig_hdroom;
+	for (i = 0; i < MLXSW_SP_PB_COUNT; i++) {
+		if (hdroom->bufs.buf[i].size_cells)
+			tmp_hdroom.bufs.buf[i] = hdroom->bufs.buf[i];
+	}
 
-	अगर (!mlxsw_sp_hdroom_bufs_fit(mlxsw_sp_port->mlxsw_sp, &पंचांगp_hdroom) ||
+	if (!mlxsw_sp_hdroom_bufs_fit(mlxsw_sp_port->mlxsw_sp, &tmp_hdroom) ||
 	    !mlxsw_sp_hdroom_bufs_fit(mlxsw_sp_port->mlxsw_sp, hdroom))
-		वापस -ENOBUFS;
+		return -ENOBUFS;
 
-	err = mlxsw_sp_hdroom_configure_buffers(mlxsw_sp_port, &पंचांगp_hdroom, क्रमce);
-	अगर (err)
-		वापस err;
+	err = mlxsw_sp_hdroom_configure_buffers(mlxsw_sp_port, &tmp_hdroom, force);
+	if (err)
+		return err;
 
-	err = mlxsw_sp_hdroom_configure_priomap(mlxsw_sp_port, hdroom, क्रमce);
-	अगर (err)
-		जाओ err_configure_priomap;
+	err = mlxsw_sp_hdroom_configure_priomap(mlxsw_sp_port, hdroom, force);
+	if (err)
+		goto err_configure_priomap;
 
 	err = mlxsw_sp_hdroom_configure_buffers(mlxsw_sp_port, hdroom, false);
-	अगर (err)
-		जाओ err_configure_buffers;
+	if (err)
+		goto err_configure_buffers;
 
-	err = mlxsw_sp_hdroom_configure_पूर्णांक_buf(mlxsw_sp_port, hdroom, false);
-	अगर (err)
-		जाओ err_configure_पूर्णांक_buf;
+	err = mlxsw_sp_hdroom_configure_int_buf(mlxsw_sp_port, hdroom, false);
+	if (err)
+		goto err_configure_int_buf;
 
 	*mlxsw_sp_port->hdroom = *hdroom;
-	वापस 0;
+	return 0;
 
-err_configure_पूर्णांक_buf:
-	mlxsw_sp_hdroom_configure_buffers(mlxsw_sp_port, &पंचांगp_hdroom, false);
+err_configure_int_buf:
+	mlxsw_sp_hdroom_configure_buffers(mlxsw_sp_port, &tmp_hdroom, false);
 err_configure_buffers:
-	mlxsw_sp_hdroom_configure_priomap(mlxsw_sp_port, &पंचांगp_hdroom, false);
+	mlxsw_sp_hdroom_configure_priomap(mlxsw_sp_port, &tmp_hdroom, false);
 err_configure_priomap:
 	mlxsw_sp_hdroom_configure_buffers(mlxsw_sp_port, &orig_hdroom, false);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक mlxsw_sp_hdroom_configure(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			      स्थिर काष्ठा mlxsw_sp_hdroom *hdroom)
-अणु
-	वापस __mlxsw_sp_hdroom_configure(mlxsw_sp_port, hdroom, false);
-पूर्ण
+int mlxsw_sp_hdroom_configure(struct mlxsw_sp_port *mlxsw_sp_port,
+			      const struct mlxsw_sp_hdroom *hdroom)
+{
+	return __mlxsw_sp_hdroom_configure(mlxsw_sp_port, hdroom, false);
+}
 
-अटल पूर्णांक mlxsw_sp_port_headroom_init(काष्ठा mlxsw_sp_port *mlxsw_sp_port)
-अणु
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
-	काष्ठा mlxsw_sp_hdroom hdroom = अणुपूर्ण;
+static int mlxsw_sp_port_headroom_init(struct mlxsw_sp_port *mlxsw_sp_port)
+{
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	struct mlxsw_sp_hdroom hdroom = {};
 	u32 size9;
-	पूर्णांक prio;
+	int prio;
 
 	hdroom.mtu = mlxsw_sp_port->dev->mtu;
 	hdroom.mode = MLXSW_SP_HDROOM_MODE_DCB;
-	क्रम (prio = 0; prio < IEEE_8021QAZ_MAX_TCS; prio++)
+	for (prio = 0; prio < IEEE_8021QAZ_MAX_TCS; prio++)
 		hdroom.prios.prio[prio].lossy = true;
 
 	mlxsw_sp_hdroom_bufs_reset_lossiness(&hdroom);
 	mlxsw_sp_hdroom_bufs_reset_sizes(mlxsw_sp_port, &hdroom);
 
-	/* Buffer 9 is used क्रम control traffic. */
+	/* Buffer 9 is used for control traffic. */
 	size9 = mlxsw_sp_port_headroom_8x_adjust(mlxsw_sp_port, mlxsw_sp_port->max_mtu);
 	hdroom.bufs.buf[9].size_cells = mlxsw_sp_bytes_cells(mlxsw_sp, size9);
 
-	वापस __mlxsw_sp_hdroom_configure(mlxsw_sp_port, &hdroom, true);
-पूर्ण
+	return __mlxsw_sp_hdroom_configure(mlxsw_sp_port, &hdroom, true);
+}
 
-अटल पूर्णांक mlxsw_sp_sb_port_init(काष्ठा mlxsw_sp *mlxsw_sp,
-				 काष्ठा mlxsw_sp_sb_port *sb_port)
-अणु
-	काष्ठा mlxsw_sp_sb_pm *pms;
+static int mlxsw_sp_sb_port_init(struct mlxsw_sp *mlxsw_sp,
+				 struct mlxsw_sp_sb_port *sb_port)
+{
+	struct mlxsw_sp_sb_pm *pms;
 
-	pms = kसुस्मृति(mlxsw_sp->sb_vals->pool_count, माप(*pms),
+	pms = kcalloc(mlxsw_sp->sb_vals->pool_count, sizeof(*pms),
 		      GFP_KERNEL);
-	अगर (!pms)
-		वापस -ENOMEM;
+	if (!pms)
+		return -ENOMEM;
 	sb_port->pms = pms;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mlxsw_sp_sb_port_fini(काष्ठा mlxsw_sp_sb_port *sb_port)
-अणु
-	kमुक्त(sb_port->pms);
-पूर्ण
+static void mlxsw_sp_sb_port_fini(struct mlxsw_sp_sb_port *sb_port)
+{
+	kfree(sb_port->pms);
+}
 
-अटल पूर्णांक mlxsw_sp_sb_ports_init(काष्ठा mlxsw_sp *mlxsw_sp)
-अणु
-	अचिन्हित पूर्णांक max_ports = mlxsw_core_max_ports(mlxsw_sp->core);
-	काष्ठा mlxsw_sp_sb_pr *prs;
-	पूर्णांक i;
-	पूर्णांक err;
+static int mlxsw_sp_sb_ports_init(struct mlxsw_sp *mlxsw_sp)
+{
+	unsigned int max_ports = mlxsw_core_max_ports(mlxsw_sp->core);
+	struct mlxsw_sp_sb_pr *prs;
+	int i;
+	int err;
 
-	mlxsw_sp->sb->ports = kसुस्मृति(max_ports,
-				      माप(काष्ठा mlxsw_sp_sb_port),
+	mlxsw_sp->sb->ports = kcalloc(max_ports,
+				      sizeof(struct mlxsw_sp_sb_port),
 				      GFP_KERNEL);
-	अगर (!mlxsw_sp->sb->ports)
-		वापस -ENOMEM;
+	if (!mlxsw_sp->sb->ports)
+		return -ENOMEM;
 
-	prs = kसुस्मृति(mlxsw_sp->sb_vals->pool_count, माप(*prs),
+	prs = kcalloc(mlxsw_sp->sb_vals->pool_count, sizeof(*prs),
 		      GFP_KERNEL);
-	अगर (!prs) अणु
+	if (!prs) {
 		err = -ENOMEM;
-		जाओ err_alloc_prs;
-	पूर्ण
+		goto err_alloc_prs;
+	}
 	mlxsw_sp->sb->prs = prs;
 
-	क्रम (i = 0; i < max_ports; i++) अणु
+	for (i = 0; i < max_ports; i++) {
 		err = mlxsw_sp_sb_port_init(mlxsw_sp, &mlxsw_sp->sb->ports[i]);
-		अगर (err)
-			जाओ err_sb_port_init;
-	पूर्ण
+		if (err)
+			goto err_sb_port_init;
+	}
 
-	वापस 0;
+	return 0;
 
 err_sb_port_init:
-	क्रम (i--; i >= 0; i--)
+	for (i--; i >= 0; i--)
 		mlxsw_sp_sb_port_fini(&mlxsw_sp->sb->ports[i]);
-	kमुक्त(mlxsw_sp->sb->prs);
+	kfree(mlxsw_sp->sb->prs);
 err_alloc_prs:
-	kमुक्त(mlxsw_sp->sb->ports);
-	वापस err;
-पूर्ण
+	kfree(mlxsw_sp->sb->ports);
+	return err;
+}
 
-अटल व्योम mlxsw_sp_sb_ports_fini(काष्ठा mlxsw_sp *mlxsw_sp)
-अणु
-	पूर्णांक max_ports = mlxsw_core_max_ports(mlxsw_sp->core);
-	पूर्णांक i;
+static void mlxsw_sp_sb_ports_fini(struct mlxsw_sp *mlxsw_sp)
+{
+	int max_ports = mlxsw_core_max_ports(mlxsw_sp->core);
+	int i;
 
-	क्रम (i = max_ports - 1; i >= 0; i--)
+	for (i = max_ports - 1; i >= 0; i--)
 		mlxsw_sp_sb_port_fini(&mlxsw_sp->sb->ports[i]);
-	kमुक्त(mlxsw_sp->sb->prs);
-	kमुक्त(mlxsw_sp->sb->ports);
-पूर्ण
+	kfree(mlxsw_sp->sb->prs);
+	kfree(mlxsw_sp->sb->ports);
+}
 
-#घोषणा MLXSW_SP_SB_PR(_mode, _size)	\
-	अणु				\
+#define MLXSW_SP_SB_PR(_mode, _size)	\
+	{				\
 		.mode = _mode,		\
 		.size = _size,		\
-	पूर्ण
+	}
 
-#घोषणा MLXSW_SP_SB_PR_EXT(_mode, _size, _मुक्तze_mode, _मुक्तze_size)	\
-	अणु								\
+#define MLXSW_SP_SB_PR_EXT(_mode, _size, _freeze_mode, _freeze_size)	\
+	{								\
 		.mode = _mode,						\
 		.size = _size,						\
-		.मुक्तze_mode = _मुक्तze_mode,				\
-		.मुक्तze_size = _मुक्तze_size,				\
-	पूर्ण
+		.freeze_mode = _freeze_mode,				\
+		.freeze_size = _freeze_size,				\
+	}
 
-#घोषणा MLXSW_SP1_SB_PR_CPU_SIZE	(256 * 1000)
+#define MLXSW_SP1_SB_PR_CPU_SIZE	(256 * 1000)
 
 /* Order according to mlxsw_sp1_sb_pool_dess */
-अटल स्थिर काष्ठा mlxsw_sp_sb_pr mlxsw_sp1_sb_prs[] = अणु
+static const struct mlxsw_sp_sb_pr mlxsw_sp1_sb_prs[] = {
 	MLXSW_SP_SB_PR(MLXSW_REG_SBPR_MODE_DYNAMIC, MLXSW_SP_SB_REST),
 	MLXSW_SP_SB_PR(MLXSW_REG_SBPR_MODE_DYNAMIC, 0),
 	MLXSW_SP_SB_PR(MLXSW_REG_SBPR_MODE_DYNAMIC, 0),
@@ -705,12 +704,12 @@ err_alloc_prs:
 			   MLXSW_SP1_SB_PR_CPU_SIZE, true, false),
 	MLXSW_SP_SB_PR_EXT(MLXSW_REG_SBPR_MODE_DYNAMIC,
 			   MLXSW_SP1_SB_PR_CPU_SIZE, true, false),
-पूर्ण;
+};
 
-#घोषणा MLXSW_SP2_SB_PR_CPU_SIZE	(256 * 1000)
+#define MLXSW_SP2_SB_PR_CPU_SIZE	(256 * 1000)
 
 /* Order according to mlxsw_sp2_sb_pool_dess */
-अटल स्थिर काष्ठा mlxsw_sp_sb_pr mlxsw_sp2_sb_prs[] = अणु
+static const struct mlxsw_sp_sb_pr mlxsw_sp2_sb_prs[] = {
 	MLXSW_SP_SB_PR(MLXSW_REG_SBPR_MODE_DYNAMIC, MLXSW_SP_SB_REST),
 	MLXSW_SP_SB_PR(MLXSW_REG_SBPR_MODE_STATIC, 0),
 	MLXSW_SP_SB_PR(MLXSW_REG_SBPR_MODE_STATIC, 0),
@@ -726,90 +725,90 @@ err_alloc_prs:
 			   MLXSW_SP2_SB_PR_CPU_SIZE, true, false),
 	MLXSW_SP_SB_PR_EXT(MLXSW_REG_SBPR_MODE_DYNAMIC,
 			   MLXSW_SP2_SB_PR_CPU_SIZE, true, false),
-पूर्ण;
+};
 
-अटल पूर्णांक mlxsw_sp_sb_prs_init(काष्ठा mlxsw_sp *mlxsw_sp,
-				स्थिर काष्ठा mlxsw_sp_sb_pr *prs,
-				स्थिर काष्ठा mlxsw_sp_sb_pool_des *pool_dess,
-				माप_प्रकार prs_len)
-अणु
-	/* Round करोwn, unlike mlxsw_sp_bytes_cells(). */
-	u32 sb_cells = भाग_u64(mlxsw_sp->sb->sb_size, mlxsw_sp->sb->cell_size);
-	u32 rest_cells[2] = अणुsb_cells, sb_cellsपूर्ण;
-	पूर्णांक i;
-	पूर्णांक err;
+static int mlxsw_sp_sb_prs_init(struct mlxsw_sp *mlxsw_sp,
+				const struct mlxsw_sp_sb_pr *prs,
+				const struct mlxsw_sp_sb_pool_des *pool_dess,
+				size_t prs_len)
+{
+	/* Round down, unlike mlxsw_sp_bytes_cells(). */
+	u32 sb_cells = div_u64(mlxsw_sp->sb->sb_size, mlxsw_sp->sb->cell_size);
+	u32 rest_cells[2] = {sb_cells, sb_cells};
+	int i;
+	int err;
 
 	/* Calculate how much space to give to the "REST" pools in either
 	 * direction.
 	 */
-	क्रम (i = 0; i < prs_len; i++) अणु
-		क्रमागत mlxsw_reg_sbxx_dir dir = pool_dess[i].dir;
+	for (i = 0; i < prs_len; i++) {
+		enum mlxsw_reg_sbxx_dir dir = pool_dess[i].dir;
 		u32 size = prs[i].size;
 		u32 size_cells;
 
-		अगर (size == MLXSW_SP_SB_INFI || size == MLXSW_SP_SB_REST)
-			जारी;
+		if (size == MLXSW_SP_SB_INFI || size == MLXSW_SP_SB_REST)
+			continue;
 
 		size_cells = mlxsw_sp_bytes_cells(mlxsw_sp, size);
-		अगर (WARN_ON_ONCE(size_cells > rest_cells[dir]))
-			जारी;
+		if (WARN_ON_ONCE(size_cells > rest_cells[dir]))
+			continue;
 
 		rest_cells[dir] -= size_cells;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < prs_len; i++) अणु
+	for (i = 0; i < prs_len; i++) {
 		u32 size = prs[i].size;
 		u32 size_cells;
 
-		अगर (size == MLXSW_SP_SB_INFI) अणु
-			err = mlxsw_sp_sb_pr_ग_लिखो(mlxsw_sp, i, prs[i].mode,
+		if (size == MLXSW_SP_SB_INFI) {
+			err = mlxsw_sp_sb_pr_write(mlxsw_sp, i, prs[i].mode,
 						   0, true);
-		पूर्ण अन्यथा अगर (size == MLXSW_SP_SB_REST) अणु
+		} else if (size == MLXSW_SP_SB_REST) {
 			size_cells = rest_cells[pool_dess[i].dir];
-			err = mlxsw_sp_sb_pr_ग_लिखो(mlxsw_sp, i, prs[i].mode,
+			err = mlxsw_sp_sb_pr_write(mlxsw_sp, i, prs[i].mode,
 						   size_cells, false);
-		पूर्ण अन्यथा अणु
+		} else {
 			size_cells = mlxsw_sp_bytes_cells(mlxsw_sp, size);
-			err = mlxsw_sp_sb_pr_ग_लिखो(mlxsw_sp, i, prs[i].mode,
+			err = mlxsw_sp_sb_pr_write(mlxsw_sp, i, prs[i].mode,
 						   size_cells, false);
-		पूर्ण
-		अगर (err)
-			वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+		if (err)
+			return err;
+	}
+	return 0;
+}
 
-#घोषणा MLXSW_SP_SB_CM(_min_buff, _max_buff, _pool)	\
-	अणु						\
+#define MLXSW_SP_SB_CM(_min_buff, _max_buff, _pool)	\
+	{						\
 		.min_buff = _min_buff,			\
 		.max_buff = _max_buff,			\
 		.pool_index = _pool,			\
-	पूर्ण
+	}
 
-#घोषणा MLXSW_SP_SB_CM_ING(_min_buff, _max_buff)	\
-	अणु						\
+#define MLXSW_SP_SB_CM_ING(_min_buff, _max_buff)	\
+	{						\
 		.min_buff = _min_buff,			\
 		.max_buff = _max_buff,			\
 		.pool_index = MLXSW_SP_SB_POOL_ING,	\
-	पूर्ण
+	}
 
-#घोषणा MLXSW_SP_SB_CM_EGR(_min_buff, _max_buff)	\
-	अणु						\
+#define MLXSW_SP_SB_CM_EGR(_min_buff, _max_buff)	\
+	{						\
 		.min_buff = _min_buff,			\
 		.max_buff = _max_buff,			\
 		.pool_index = MLXSW_SP_SB_POOL_EGR,	\
-	पूर्ण
+	}
 
-#घोषणा MLXSW_SP_SB_CM_EGR_MC(_min_buff, _max_buff)	\
-	अणु						\
+#define MLXSW_SP_SB_CM_EGR_MC(_min_buff, _max_buff)	\
+	{						\
 		.min_buff = _min_buff,			\
 		.max_buff = _max_buff,			\
 		.pool_index = MLXSW_SP_SB_POOL_EGR_MC,	\
-		.मुक्तze_pool = true,			\
-		.मुक्तze_thresh = true,			\
-	पूर्ण
+		.freeze_pool = true,			\
+		.freeze_thresh = true,			\
+	}
 
-अटल स्थिर काष्ठा mlxsw_sp_sb_cm mlxsw_sp1_sb_cms_ingress[] = अणु
+static const struct mlxsw_sp_sb_cm mlxsw_sp1_sb_cms_ingress[] = {
 	MLXSW_SP_SB_CM_ING(10000, 8),
 	MLXSW_SP_SB_CM_ING(0, MLXSW_REG_SBXX_DYN_MAX_BUFF_MIN),
 	MLXSW_SP_SB_CM_ING(0, MLXSW_REG_SBXX_DYN_MAX_BUFF_MIN),
@@ -818,11 +817,11 @@ err_alloc_prs:
 	MLXSW_SP_SB_CM_ING(0, MLXSW_REG_SBXX_DYN_MAX_BUFF_MIN),
 	MLXSW_SP_SB_CM_ING(0, MLXSW_REG_SBXX_DYN_MAX_BUFF_MIN),
 	MLXSW_SP_SB_CM_ING(0, MLXSW_REG_SBXX_DYN_MAX_BUFF_MIN),
-	MLXSW_SP_SB_CM_ING(0, 0), /* dummy, this PG करोes not exist */
+	MLXSW_SP_SB_CM_ING(0, 0), /* dummy, this PG does not exist */
 	MLXSW_SP_SB_CM(10000, 8, MLXSW_SP_SB_POOL_ING_CPU),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mlxsw_sp_sb_cm mlxsw_sp2_sb_cms_ingress[] = अणु
+static const struct mlxsw_sp_sb_cm mlxsw_sp2_sb_cms_ingress[] = {
 	MLXSW_SP_SB_CM_ING(0, 7),
 	MLXSW_SP_SB_CM_ING(0, MLXSW_REG_SBXX_DYN_MAX_BUFF_MIN),
 	MLXSW_SP_SB_CM_ING(0, MLXSW_REG_SBXX_DYN_MAX_BUFF_MIN),
@@ -831,11 +830,11 @@ err_alloc_prs:
 	MLXSW_SP_SB_CM_ING(0, MLXSW_REG_SBXX_DYN_MAX_BUFF_MIN),
 	MLXSW_SP_SB_CM_ING(0, MLXSW_REG_SBXX_DYN_MAX_BUFF_MIN),
 	MLXSW_SP_SB_CM_ING(0, MLXSW_REG_SBXX_DYN_MAX_BUFF_MIN),
-	MLXSW_SP_SB_CM_ING(0, 0), /* dummy, this PG करोes not exist */
+	MLXSW_SP_SB_CM_ING(0, 0), /* dummy, this PG does not exist */
 	MLXSW_SP_SB_CM(10000, 8, MLXSW_SP_SB_POOL_ING_CPU),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mlxsw_sp_sb_cm mlxsw_sp1_sb_cms_egress[] = अणु
+static const struct mlxsw_sp_sb_cm mlxsw_sp1_sb_cms_egress[] = {
 	MLXSW_SP_SB_CM_EGR(1500, 9),
 	MLXSW_SP_SB_CM_EGR(1500, 9),
 	MLXSW_SP_SB_CM_EGR(1500, 9),
@@ -853,9 +852,9 @@ err_alloc_prs:
 	MLXSW_SP_SB_CM_EGR_MC(0, MLXSW_SP_SB_INFI),
 	MLXSW_SP_SB_CM_EGR_MC(0, MLXSW_SP_SB_INFI),
 	MLXSW_SP_SB_CM_EGR(1, 0xff),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mlxsw_sp_sb_cm mlxsw_sp2_sb_cms_egress[] = अणु
+static const struct mlxsw_sp_sb_cm mlxsw_sp2_sb_cms_egress[] = {
 	MLXSW_SP_SB_CM_EGR(0, 7),
 	MLXSW_SP_SB_CM_EGR(0, 7),
 	MLXSW_SP_SB_CM_EGR(0, 7),
@@ -873,11 +872,11 @@ err_alloc_prs:
 	MLXSW_SP_SB_CM_EGR_MC(0, MLXSW_SP_SB_INFI),
 	MLXSW_SP_SB_CM_EGR_MC(0, MLXSW_SP_SB_INFI),
 	MLXSW_SP_SB_CM_EGR(1, 0xff),
-पूर्ण;
+};
 
-#घोषणा MLXSW_SP_CPU_PORT_SB_CM MLXSW_SP_SB_CM(0, 0, MLXSW_SP_SB_POOL_EGR_CPU)
+#define MLXSW_SP_CPU_PORT_SB_CM MLXSW_SP_SB_CM(0, 0, MLXSW_SP_SB_POOL_EGR_CPU)
 
-अटल स्थिर काष्ठा mlxsw_sp_sb_cm mlxsw_sp_cpu_port_sb_cms[] = अणु
+static const struct mlxsw_sp_sb_cm mlxsw_sp_cpu_port_sb_cms[] = {
 	MLXSW_SP_SB_CM(1000, 8, MLXSW_SP_SB_POOL_EGR_CPU),
 	MLXSW_SP_SB_CM(1000, 8, MLXSW_SP_SB_POOL_EGR_CPU),
 	MLXSW_SP_SB_CM(1000, 8, MLXSW_SP_SB_POOL_EGR_CPU),
@@ -910,91 +909,91 @@ err_alloc_prs:
 	MLXSW_SP_CPU_PORT_SB_CM,
 	MLXSW_SP_CPU_PORT_SB_CM,
 	MLXSW_SP_CPU_PORT_SB_CM,
-पूर्ण;
+};
 
-अटल bool
-mlxsw_sp_sb_pool_is_अटल(काष्ठा mlxsw_sp *mlxsw_sp, u16 pool_index)
-अणु
-	काष्ठा mlxsw_sp_sb_pr *pr = mlxsw_sp_sb_pr_get(mlxsw_sp, pool_index);
+static bool
+mlxsw_sp_sb_pool_is_static(struct mlxsw_sp *mlxsw_sp, u16 pool_index)
+{
+	struct mlxsw_sp_sb_pr *pr = mlxsw_sp_sb_pr_get(mlxsw_sp, pool_index);
 
-	वापस pr->mode == MLXSW_REG_SBPR_MODE_STATIC;
-पूर्ण
+	return pr->mode == MLXSW_REG_SBPR_MODE_STATIC;
+}
 
-अटल पूर्णांक __mlxsw_sp_sb_cms_init(काष्ठा mlxsw_sp *mlxsw_sp, u8 local_port,
-				  क्रमागत mlxsw_reg_sbxx_dir dir,
-				  स्थिर काष्ठा mlxsw_sp_sb_cm *cms,
-				  माप_प्रकार cms_len)
-अणु
-	स्थिर काष्ठा mlxsw_sp_sb_vals *sb_vals = mlxsw_sp->sb_vals;
-	पूर्णांक i;
-	पूर्णांक err;
+static int __mlxsw_sp_sb_cms_init(struct mlxsw_sp *mlxsw_sp, u8 local_port,
+				  enum mlxsw_reg_sbxx_dir dir,
+				  const struct mlxsw_sp_sb_cm *cms,
+				  size_t cms_len)
+{
+	const struct mlxsw_sp_sb_vals *sb_vals = mlxsw_sp->sb_vals;
+	int i;
+	int err;
 
-	क्रम (i = 0; i < cms_len; i++) अणु
-		स्थिर काष्ठा mlxsw_sp_sb_cm *cm;
+	for (i = 0; i < cms_len; i++) {
+		const struct mlxsw_sp_sb_cm *cm;
 		u32 min_buff;
 		u32 max_buff;
 
-		अगर (i == 8 && dir == MLXSW_REG_SBXX_सूची_INGRESS)
-			जारी; /* PG number 8 करोes not exist, skip it */
+		if (i == 8 && dir == MLXSW_REG_SBXX_DIR_INGRESS)
+			continue; /* PG number 8 does not exist, skip it */
 		cm = &cms[i];
-		अगर (WARN_ON(sb_vals->pool_dess[cm->pool_index].dir != dir))
-			जारी;
+		if (WARN_ON(sb_vals->pool_dess[cm->pool_index].dir != dir))
+			continue;
 
 		min_buff = mlxsw_sp_bytes_cells(mlxsw_sp, cm->min_buff);
 		max_buff = cm->max_buff;
-		अगर (max_buff == MLXSW_SP_SB_INFI) अणु
-			err = mlxsw_sp_sb_cm_ग_लिखो(mlxsw_sp, local_port, i,
+		if (max_buff == MLXSW_SP_SB_INFI) {
+			err = mlxsw_sp_sb_cm_write(mlxsw_sp, local_port, i,
 						   min_buff, 0,
 						   true, cm->pool_index);
-		पूर्ण अन्यथा अणु
-			अगर (mlxsw_sp_sb_pool_is_अटल(mlxsw_sp,
+		} else {
+			if (mlxsw_sp_sb_pool_is_static(mlxsw_sp,
 						       cm->pool_index))
 				max_buff = mlxsw_sp_bytes_cells(mlxsw_sp,
 								max_buff);
-			err = mlxsw_sp_sb_cm_ग_लिखो(mlxsw_sp, local_port, i,
+			err = mlxsw_sp_sb_cm_write(mlxsw_sp, local_port, i,
 						   min_buff, max_buff,
 						   false, cm->pool_index);
-		पूर्ण
-		अगर (err)
-			वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+		if (err)
+			return err;
+	}
+	return 0;
+}
 
-अटल पूर्णांक mlxsw_sp_port_sb_cms_init(काष्ठा mlxsw_sp_port *mlxsw_sp_port)
-अणु
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
-	पूर्णांक err;
+static int mlxsw_sp_port_sb_cms_init(struct mlxsw_sp_port *mlxsw_sp_port)
+{
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	int err;
 
 	err = __mlxsw_sp_sb_cms_init(mlxsw_sp,
 				     mlxsw_sp_port->local_port,
-				     MLXSW_REG_SBXX_सूची_INGRESS,
+				     MLXSW_REG_SBXX_DIR_INGRESS,
 				     mlxsw_sp->sb_vals->cms_ingress,
 				     mlxsw_sp->sb_vals->cms_ingress_count);
-	अगर (err)
-		वापस err;
-	वापस __mlxsw_sp_sb_cms_init(mlxsw_sp_port->mlxsw_sp,
+	if (err)
+		return err;
+	return __mlxsw_sp_sb_cms_init(mlxsw_sp_port->mlxsw_sp,
 				      mlxsw_sp_port->local_port,
-				      MLXSW_REG_SBXX_सूची_EGRESS,
+				      MLXSW_REG_SBXX_DIR_EGRESS,
 				      mlxsw_sp->sb_vals->cms_egress,
 				      mlxsw_sp->sb_vals->cms_egress_count);
-पूर्ण
+}
 
-अटल पूर्णांक mlxsw_sp_cpu_port_sb_cms_init(काष्ठा mlxsw_sp *mlxsw_sp)
-अणु
-	वापस __mlxsw_sp_sb_cms_init(mlxsw_sp, 0, MLXSW_REG_SBXX_सूची_EGRESS,
+static int mlxsw_sp_cpu_port_sb_cms_init(struct mlxsw_sp *mlxsw_sp)
+{
+	return __mlxsw_sp_sb_cms_init(mlxsw_sp, 0, MLXSW_REG_SBXX_DIR_EGRESS,
 				      mlxsw_sp->sb_vals->cms_cpu,
 				      mlxsw_sp->sb_vals->cms_cpu_count);
-पूर्ण
+}
 
-#घोषणा MLXSW_SP_SB_PM(_min_buff, _max_buff)	\
-	अणु					\
+#define MLXSW_SP_SB_PM(_min_buff, _max_buff)	\
+	{					\
 		.min_buff = _min_buff,		\
 		.max_buff = _max_buff,		\
-	पूर्ण
+	}
 
 /* Order according to mlxsw_sp1_sb_pool_dess */
-अटल स्थिर काष्ठा mlxsw_sp_sb_pm mlxsw_sp1_sb_pms[] = अणु
+static const struct mlxsw_sp_sb_pm mlxsw_sp1_sb_pms[] = {
 	MLXSW_SP_SB_PM(0, MLXSW_REG_SBXX_DYN_MAX_BUFF_MAX),
 	MLXSW_SP_SB_PM(0, MLXSW_REG_SBXX_DYN_MAX_BUFF_MIN),
 	MLXSW_SP_SB_PM(0, MLXSW_REG_SBXX_DYN_MAX_BUFF_MIN),
@@ -1006,10 +1005,10 @@ mlxsw_sp_sb_pool_is_अटल(काष्ठा mlxsw_sp *mlxsw_sp, u16 pool_in
 	MLXSW_SP_SB_PM(10000, 90000),
 	MLXSW_SP_SB_PM(0, 8),	/* 50% occupancy */
 	MLXSW_SP_SB_PM(0, MLXSW_REG_SBXX_DYN_MAX_BUFF_MIN),
-पूर्ण;
+};
 
 /* Order according to mlxsw_sp2_sb_pool_dess */
-अटल स्थिर काष्ठा mlxsw_sp_sb_pm mlxsw_sp2_sb_pms[] = अणु
+static const struct mlxsw_sp_sb_pm mlxsw_sp2_sb_pms[] = {
 	MLXSW_SP_SB_PM(0, 7),
 	MLXSW_SP_SB_PM(0, 0),
 	MLXSW_SP_SB_PM(0, 0),
@@ -1021,10 +1020,10 @@ mlxsw_sp_sb_pool_is_अटल(काष्ठा mlxsw_sp *mlxsw_sp, u16 pool_in
 	MLXSW_SP_SB_PM(10000, 90000),
 	MLXSW_SP_SB_PM(0, 8),	/* 50% occupancy */
 	MLXSW_SP_SB_PM(0, MLXSW_REG_SBXX_DYN_MAX_BUFF_MIN),
-पूर्ण;
+};
 
 /* Order according to mlxsw_sp*_sb_pool_dess */
-अटल स्थिर काष्ठा mlxsw_sp_sb_pm mlxsw_sp_cpu_port_sb_pms[] = अणु
+static const struct mlxsw_sp_sb_pm mlxsw_sp_cpu_port_sb_pms[] = {
 	MLXSW_SP_SB_PM(0, 0),
 	MLXSW_SP_SB_PM(0, 0),
 	MLXSW_SP_SB_PM(0, 0),
@@ -1036,58 +1035,58 @@ mlxsw_sp_sb_pool_is_अटल(काष्ठा mlxsw_sp *mlxsw_sp, u16 pool_in
 	MLXSW_SP_SB_PM(0, 90000),
 	MLXSW_SP_SB_PM(0, 0),
 	MLXSW_SP_SB_PM(0, MLXSW_REG_SBXX_DYN_MAX_BUFF_MAX),
-पूर्ण;
+};
 
-अटल पूर्णांक mlxsw_sp_sb_pms_init(काष्ठा mlxsw_sp *mlxsw_sp, u8 local_port,
-				स्थिर काष्ठा mlxsw_sp_sb_pm *pms,
+static int mlxsw_sp_sb_pms_init(struct mlxsw_sp *mlxsw_sp, u8 local_port,
+				const struct mlxsw_sp_sb_pm *pms,
 				bool skip_ingress)
-अणु
-	पूर्णांक i, err;
+{
+	int i, err;
 
-	क्रम (i = 0; i < mlxsw_sp->sb_vals->pool_count; i++) अणु
-		स्थिर काष्ठा mlxsw_sp_sb_pm *pm = &pms[i];
-		स्थिर काष्ठा mlxsw_sp_sb_pool_des *des;
+	for (i = 0; i < mlxsw_sp->sb_vals->pool_count; i++) {
+		const struct mlxsw_sp_sb_pm *pm = &pms[i];
+		const struct mlxsw_sp_sb_pool_des *des;
 		u32 max_buff;
 		u32 min_buff;
 
 		des = &mlxsw_sp->sb_vals->pool_dess[i];
-		अगर (skip_ingress && des->dir == MLXSW_REG_SBXX_सूची_INGRESS)
-			जारी;
+		if (skip_ingress && des->dir == MLXSW_REG_SBXX_DIR_INGRESS)
+			continue;
 
 		min_buff = mlxsw_sp_bytes_cells(mlxsw_sp, pm->min_buff);
 		max_buff = pm->max_buff;
-		अगर (mlxsw_sp_sb_pool_is_अटल(mlxsw_sp, i))
+		if (mlxsw_sp_sb_pool_is_static(mlxsw_sp, i))
 			max_buff = mlxsw_sp_bytes_cells(mlxsw_sp, max_buff);
-		err = mlxsw_sp_sb_pm_ग_लिखो(mlxsw_sp, local_port, i, min_buff,
+		err = mlxsw_sp_sb_pm_write(mlxsw_sp, local_port, i, min_buff,
 					   max_buff);
-		अगर (err)
-			वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (err)
+			return err;
+	}
+	return 0;
+}
 
-अटल पूर्णांक mlxsw_sp_port_sb_pms_init(काष्ठा mlxsw_sp_port *mlxsw_sp_port)
-अणु
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+static int mlxsw_sp_port_sb_pms_init(struct mlxsw_sp_port *mlxsw_sp_port)
+{
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
 
-	वापस mlxsw_sp_sb_pms_init(mlxsw_sp, mlxsw_sp_port->local_port,
+	return mlxsw_sp_sb_pms_init(mlxsw_sp, mlxsw_sp_port->local_port,
 				    mlxsw_sp->sb_vals->pms, false);
-पूर्ण
+}
 
-अटल पूर्णांक mlxsw_sp_cpu_port_sb_pms_init(काष्ठा mlxsw_sp *mlxsw_sp)
-अणु
-	वापस mlxsw_sp_sb_pms_init(mlxsw_sp, 0, mlxsw_sp->sb_vals->pms_cpu,
+static int mlxsw_sp_cpu_port_sb_pms_init(struct mlxsw_sp *mlxsw_sp)
+{
+	return mlxsw_sp_sb_pms_init(mlxsw_sp, 0, mlxsw_sp->sb_vals->pms_cpu,
 				    true);
-पूर्ण
+}
 
-#घोषणा MLXSW_SP_SB_MM(_min_buff, _max_buff)		\
-	अणु						\
+#define MLXSW_SP_SB_MM(_min_buff, _max_buff)		\
+	{						\
 		.min_buff = _min_buff,			\
 		.max_buff = _max_buff,			\
 		.pool_index = MLXSW_SP_SB_POOL_EGR,	\
-	पूर्ण
+	}
 
-अटल स्थिर काष्ठा mlxsw_sp_sb_mm mlxsw_sp_sb_mms[] = अणु
+static const struct mlxsw_sp_sb_mm mlxsw_sp_sb_mms[] = {
 	MLXSW_SP_SB_MM(0, 6),
 	MLXSW_SP_SB_MM(0, 6),
 	MLXSW_SP_SB_MM(0, 6),
@@ -1103,51 +1102,51 @@ mlxsw_sp_sb_pool_is_अटल(काष्ठा mlxsw_sp *mlxsw_sp, u16 pool_in
 	MLXSW_SP_SB_MM(0, 6),
 	MLXSW_SP_SB_MM(0, 6),
 	MLXSW_SP_SB_MM(0, 6),
-पूर्ण;
+};
 
-अटल पूर्णांक mlxsw_sp_sb_mms_init(काष्ठा mlxsw_sp *mlxsw_sp)
-अणु
-	अक्षर sbmm_pl[MLXSW_REG_SBMM_LEN];
-	पूर्णांक i;
-	पूर्णांक err;
+static int mlxsw_sp_sb_mms_init(struct mlxsw_sp *mlxsw_sp)
+{
+	char sbmm_pl[MLXSW_REG_SBMM_LEN];
+	int i;
+	int err;
 
-	क्रम (i = 0; i < mlxsw_sp->sb_vals->mms_count; i++) अणु
-		स्थिर काष्ठा mlxsw_sp_sb_pool_des *des;
-		स्थिर काष्ठा mlxsw_sp_sb_mm *mc;
+	for (i = 0; i < mlxsw_sp->sb_vals->mms_count; i++) {
+		const struct mlxsw_sp_sb_pool_des *des;
+		const struct mlxsw_sp_sb_mm *mc;
 		u32 min_buff;
 
 		mc = &mlxsw_sp->sb_vals->mms[i];
 		des = &mlxsw_sp->sb_vals->pool_dess[mc->pool_index];
 		/* All pools used by sb_mm's are initialized using dynamic
-		 * thresholds, thereक्रमe 'max_buff' isn't specअगरied in cells.
+		 * thresholds, therefore 'max_buff' isn't specified in cells.
 		 */
 		min_buff = mlxsw_sp_bytes_cells(mlxsw_sp, mc->min_buff);
 		mlxsw_reg_sbmm_pack(sbmm_pl, i, min_buff, mc->max_buff,
 				    des->pool);
-		err = mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(sbmm), sbmm_pl);
-		अगर (err)
-			वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		err = mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(sbmm), sbmm_pl);
+		if (err)
+			return err;
+	}
+	return 0;
+}
 
-अटल व्योम mlxsw_sp_pool_count(काष्ठा mlxsw_sp *mlxsw_sp,
+static void mlxsw_sp_pool_count(struct mlxsw_sp *mlxsw_sp,
 				u16 *p_ingress_len, u16 *p_egress_len)
-अणु
-	पूर्णांक i;
+{
+	int i;
 
-	क्रम (i = 0; i < mlxsw_sp->sb_vals->pool_count; ++i) अणु
-		अगर (mlxsw_sp->sb_vals->pool_dess[i].dir ==
-		    MLXSW_REG_SBXX_सूची_INGRESS)
+	for (i = 0; i < mlxsw_sp->sb_vals->pool_count; ++i) {
+		if (mlxsw_sp->sb_vals->pool_dess[i].dir ==
+		    MLXSW_REG_SBXX_DIR_INGRESS)
 			(*p_ingress_len)++;
-		अन्यथा
+		else
 			(*p_egress_len)++;
-	पूर्ण
+	}
 
 	WARN(*p_egress_len == 0, "No egress pools\n");
-पूर्ण
+}
 
-स्थिर काष्ठा mlxsw_sp_sb_vals mlxsw_sp1_sb_vals = अणु
+const struct mlxsw_sp_sb_vals mlxsw_sp1_sb_vals = {
 	.pool_count = ARRAY_SIZE(mlxsw_sp1_sb_pool_dess),
 	.pool_dess = mlxsw_sp1_sb_pool_dess,
 	.pms = mlxsw_sp1_sb_pms,
@@ -1161,9 +1160,9 @@ mlxsw_sp_sb_pool_is_अटल(काष्ठा mlxsw_sp *mlxsw_sp, u16 pool_in
 	.cms_ingress_count = ARRAY_SIZE(mlxsw_sp1_sb_cms_ingress),
 	.cms_egress_count = ARRAY_SIZE(mlxsw_sp1_sb_cms_egress),
 	.cms_cpu_count = ARRAY_SIZE(mlxsw_sp_cpu_port_sb_cms),
-पूर्ण;
+};
 
-स्थिर काष्ठा mlxsw_sp_sb_vals mlxsw_sp2_sb_vals = अणु
+const struct mlxsw_sp_sb_vals mlxsw_sp2_sb_vals = {
 	.pool_count = ARRAY_SIZE(mlxsw_sp2_sb_pool_dess),
 	.pool_dess = mlxsw_sp2_sb_pool_dess,
 	.pms = mlxsw_sp2_sb_pms,
@@ -1177,569 +1176,569 @@ mlxsw_sp_sb_pool_is_अटल(काष्ठा mlxsw_sp *mlxsw_sp, u16 pool_in
 	.cms_ingress_count = ARRAY_SIZE(mlxsw_sp2_sb_cms_ingress),
 	.cms_egress_count = ARRAY_SIZE(mlxsw_sp2_sb_cms_egress),
 	.cms_cpu_count = ARRAY_SIZE(mlxsw_sp_cpu_port_sb_cms),
-पूर्ण;
+};
 
-अटल u32 mlxsw_sp1_pb_पूर्णांक_buf_size_get(पूर्णांक mtu, u32 speed)
-अणु
-	वापस mtu * 5 / 2;
-पूर्ण
+static u32 mlxsw_sp1_pb_int_buf_size_get(int mtu, u32 speed)
+{
+	return mtu * 5 / 2;
+}
 
-अटल u32 __mlxsw_sp_pb_पूर्णांक_buf_size_get(पूर्णांक mtu, u32 speed, u32 buffer_factor)
-अणु
-	वापस 3 * mtu + buffer_factor * speed / 1000;
-पूर्ण
+static u32 __mlxsw_sp_pb_int_buf_size_get(int mtu, u32 speed, u32 buffer_factor)
+{
+	return 3 * mtu + buffer_factor * speed / 1000;
+}
 
-#घोषणा MLXSW_SP2_SPAN_EG_MIRROR_BUFFER_FACTOR 38
+#define MLXSW_SP2_SPAN_EG_MIRROR_BUFFER_FACTOR 38
 
-अटल u32 mlxsw_sp2_pb_पूर्णांक_buf_size_get(पूर्णांक mtu, u32 speed)
-अणु
-	पूर्णांक factor = MLXSW_SP2_SPAN_EG_MIRROR_BUFFER_FACTOR;
+static u32 mlxsw_sp2_pb_int_buf_size_get(int mtu, u32 speed)
+{
+	int factor = MLXSW_SP2_SPAN_EG_MIRROR_BUFFER_FACTOR;
 
-	वापस __mlxsw_sp_pb_पूर्णांक_buf_size_get(mtu, speed, factor);
-पूर्ण
+	return __mlxsw_sp_pb_int_buf_size_get(mtu, speed, factor);
+}
 
-#घोषणा MLXSW_SP3_SPAN_EG_MIRROR_BUFFER_FACTOR 50
+#define MLXSW_SP3_SPAN_EG_MIRROR_BUFFER_FACTOR 50
 
-अटल u32 mlxsw_sp3_pb_पूर्णांक_buf_size_get(पूर्णांक mtu, u32 speed)
-अणु
-	पूर्णांक factor = MLXSW_SP3_SPAN_EG_MIRROR_BUFFER_FACTOR;
+static u32 mlxsw_sp3_pb_int_buf_size_get(int mtu, u32 speed)
+{
+	int factor = MLXSW_SP3_SPAN_EG_MIRROR_BUFFER_FACTOR;
 
-	वापस __mlxsw_sp_pb_पूर्णांक_buf_size_get(mtu, speed, factor);
-पूर्ण
+	return __mlxsw_sp_pb_int_buf_size_get(mtu, speed, factor);
+}
 
-स्थिर काष्ठा mlxsw_sp_sb_ops mlxsw_sp1_sb_ops = अणु
-	.पूर्णांक_buf_size_get = mlxsw_sp1_pb_पूर्णांक_buf_size_get,
-पूर्ण;
+const struct mlxsw_sp_sb_ops mlxsw_sp1_sb_ops = {
+	.int_buf_size_get = mlxsw_sp1_pb_int_buf_size_get,
+};
 
-स्थिर काष्ठा mlxsw_sp_sb_ops mlxsw_sp2_sb_ops = अणु
-	.पूर्णांक_buf_size_get = mlxsw_sp2_pb_पूर्णांक_buf_size_get,
-पूर्ण;
+const struct mlxsw_sp_sb_ops mlxsw_sp2_sb_ops = {
+	.int_buf_size_get = mlxsw_sp2_pb_int_buf_size_get,
+};
 
-स्थिर काष्ठा mlxsw_sp_sb_ops mlxsw_sp3_sb_ops = अणु
-	.पूर्णांक_buf_size_get = mlxsw_sp3_pb_पूर्णांक_buf_size_get,
-पूर्ण;
+const struct mlxsw_sp_sb_ops mlxsw_sp3_sb_ops = {
+	.int_buf_size_get = mlxsw_sp3_pb_int_buf_size_get,
+};
 
-पूर्णांक mlxsw_sp_buffers_init(काष्ठा mlxsw_sp *mlxsw_sp)
-अणु
+int mlxsw_sp_buffers_init(struct mlxsw_sp *mlxsw_sp)
+{
 	u32 max_headroom_size;
 	u16 ing_pool_count = 0;
 	u16 eg_pool_count = 0;
-	पूर्णांक err;
+	int err;
 
-	अगर (!MLXSW_CORE_RES_VALID(mlxsw_sp->core, CELL_SIZE))
-		वापस -EIO;
+	if (!MLXSW_CORE_RES_VALID(mlxsw_sp->core, CELL_SIZE))
+		return -EIO;
 
-	अगर (!MLXSW_CORE_RES_VALID(mlxsw_sp->core, GUARANTEED_SHARED_BUFFER))
-		वापस -EIO;
+	if (!MLXSW_CORE_RES_VALID(mlxsw_sp->core, GUARANTEED_SHARED_BUFFER))
+		return -EIO;
 
-	अगर (!MLXSW_CORE_RES_VALID(mlxsw_sp->core, MAX_HEADROOM_SIZE))
-		वापस -EIO;
+	if (!MLXSW_CORE_RES_VALID(mlxsw_sp->core, MAX_HEADROOM_SIZE))
+		return -EIO;
 
-	mlxsw_sp->sb = kzalloc(माप(*mlxsw_sp->sb), GFP_KERNEL);
-	अगर (!mlxsw_sp->sb)
-		वापस -ENOMEM;
+	mlxsw_sp->sb = kzalloc(sizeof(*mlxsw_sp->sb), GFP_KERNEL);
+	if (!mlxsw_sp->sb)
+		return -ENOMEM;
 	mlxsw_sp->sb->cell_size = MLXSW_CORE_RES_GET(mlxsw_sp->core, CELL_SIZE);
 	mlxsw_sp->sb->sb_size = MLXSW_CORE_RES_GET(mlxsw_sp->core,
 						   GUARANTEED_SHARED_BUFFER);
 	max_headroom_size = MLXSW_CORE_RES_GET(mlxsw_sp->core,
 					       MAX_HEADROOM_SIZE);
-	/* Round करोwn, because this limit must not be overstepped. */
+	/* Round down, because this limit must not be overstepped. */
 	mlxsw_sp->sb->max_headroom_cells = max_headroom_size /
 						mlxsw_sp->sb->cell_size;
 
 	err = mlxsw_sp_sb_ports_init(mlxsw_sp);
-	अगर (err)
-		जाओ err_sb_ports_init;
+	if (err)
+		goto err_sb_ports_init;
 	err = mlxsw_sp_sb_prs_init(mlxsw_sp, mlxsw_sp->sb_vals->prs,
 				   mlxsw_sp->sb_vals->pool_dess,
 				   mlxsw_sp->sb_vals->pool_count);
-	अगर (err)
-		जाओ err_sb_prs_init;
+	if (err)
+		goto err_sb_prs_init;
 	err = mlxsw_sp_cpu_port_sb_cms_init(mlxsw_sp);
-	अगर (err)
-		जाओ err_sb_cpu_port_sb_cms_init;
+	if (err)
+		goto err_sb_cpu_port_sb_cms_init;
 	err = mlxsw_sp_cpu_port_sb_pms_init(mlxsw_sp);
-	अगर (err)
-		जाओ err_sb_cpu_port_pms_init;
+	if (err)
+		goto err_sb_cpu_port_pms_init;
 	err = mlxsw_sp_sb_mms_init(mlxsw_sp);
-	अगर (err)
-		जाओ err_sb_mms_init;
+	if (err)
+		goto err_sb_mms_init;
 	mlxsw_sp_pool_count(mlxsw_sp, &ing_pool_count, &eg_pool_count);
-	err = devlink_sb_रेजिस्टर(priv_to_devlink(mlxsw_sp->core), 0,
+	err = devlink_sb_register(priv_to_devlink(mlxsw_sp->core), 0,
 				  mlxsw_sp->sb->sb_size,
 				  ing_pool_count,
 				  eg_pool_count,
 				  MLXSW_SP_SB_ING_TC_COUNT,
 				  MLXSW_SP_SB_EG_TC_COUNT);
-	अगर (err)
-		जाओ err_devlink_sb_रेजिस्टर;
+	if (err)
+		goto err_devlink_sb_register;
 
-	वापस 0;
+	return 0;
 
-err_devlink_sb_रेजिस्टर:
+err_devlink_sb_register:
 err_sb_mms_init:
 err_sb_cpu_port_pms_init:
 err_sb_cpu_port_sb_cms_init:
 err_sb_prs_init:
 	mlxsw_sp_sb_ports_fini(mlxsw_sp);
 err_sb_ports_init:
-	kमुक्त(mlxsw_sp->sb);
-	वापस err;
-पूर्ण
+	kfree(mlxsw_sp->sb);
+	return err;
+}
 
-व्योम mlxsw_sp_buffers_fini(काष्ठा mlxsw_sp *mlxsw_sp)
-अणु
-	devlink_sb_unरेजिस्टर(priv_to_devlink(mlxsw_sp->core), 0);
+void mlxsw_sp_buffers_fini(struct mlxsw_sp *mlxsw_sp)
+{
+	devlink_sb_unregister(priv_to_devlink(mlxsw_sp->core), 0);
 	mlxsw_sp_sb_ports_fini(mlxsw_sp);
-	kमुक्त(mlxsw_sp->sb);
-पूर्ण
+	kfree(mlxsw_sp->sb);
+}
 
-पूर्णांक mlxsw_sp_port_buffers_init(काष्ठा mlxsw_sp_port *mlxsw_sp_port)
-अणु
-	पूर्णांक err;
+int mlxsw_sp_port_buffers_init(struct mlxsw_sp_port *mlxsw_sp_port)
+{
+	int err;
 
-	mlxsw_sp_port->hdroom = kzalloc(माप(*mlxsw_sp_port->hdroom), GFP_KERNEL);
-	अगर (!mlxsw_sp_port->hdroom)
-		वापस -ENOMEM;
+	mlxsw_sp_port->hdroom = kzalloc(sizeof(*mlxsw_sp_port->hdroom), GFP_KERNEL);
+	if (!mlxsw_sp_port->hdroom)
+		return -ENOMEM;
 	mlxsw_sp_port->hdroom->mtu = mlxsw_sp_port->dev->mtu;
 
 	err = mlxsw_sp_port_headroom_init(mlxsw_sp_port);
-	अगर (err)
-		जाओ err_headroom_init;
+	if (err)
+		goto err_headroom_init;
 	err = mlxsw_sp_port_sb_cms_init(mlxsw_sp_port);
-	अगर (err)
-		जाओ err_port_sb_cms_init;
+	if (err)
+		goto err_port_sb_cms_init;
 	err = mlxsw_sp_port_sb_pms_init(mlxsw_sp_port);
-	अगर (err)
-		जाओ err_port_sb_pms_init;
-	वापस 0;
+	if (err)
+		goto err_port_sb_pms_init;
+	return 0;
 
 err_port_sb_pms_init:
 err_port_sb_cms_init:
 err_headroom_init:
-	kमुक्त(mlxsw_sp_port->hdroom);
-	वापस err;
-पूर्ण
+	kfree(mlxsw_sp_port->hdroom);
+	return err;
+}
 
-व्योम mlxsw_sp_port_buffers_fini(काष्ठा mlxsw_sp_port *mlxsw_sp_port)
-अणु
-	kमुक्त(mlxsw_sp_port->hdroom);
-पूर्ण
+void mlxsw_sp_port_buffers_fini(struct mlxsw_sp_port *mlxsw_sp_port)
+{
+	kfree(mlxsw_sp_port->hdroom);
+}
 
-पूर्णांक mlxsw_sp_sb_pool_get(काष्ठा mlxsw_core *mlxsw_core,
-			 अचिन्हित पूर्णांक sb_index, u16 pool_index,
-			 काष्ठा devlink_sb_pool_info *pool_info)
-अणु
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_core_driver_priv(mlxsw_core);
-	क्रमागत mlxsw_reg_sbxx_dir dir;
-	काष्ठा mlxsw_sp_sb_pr *pr;
+int mlxsw_sp_sb_pool_get(struct mlxsw_core *mlxsw_core,
+			 unsigned int sb_index, u16 pool_index,
+			 struct devlink_sb_pool_info *pool_info)
+{
+	struct mlxsw_sp *mlxsw_sp = mlxsw_core_driver_priv(mlxsw_core);
+	enum mlxsw_reg_sbxx_dir dir;
+	struct mlxsw_sp_sb_pr *pr;
 
 	dir = mlxsw_sp->sb_vals->pool_dess[pool_index].dir;
 	pr = mlxsw_sp_sb_pr_get(mlxsw_sp, pool_index);
-	pool_info->pool_type = (क्रमागत devlink_sb_pool_type) dir;
+	pool_info->pool_type = (enum devlink_sb_pool_type) dir;
 	pool_info->size = mlxsw_sp_cells_bytes(mlxsw_sp, pr->size);
-	pool_info->threshold_type = (क्रमागत devlink_sb_threshold_type) pr->mode;
+	pool_info->threshold_type = (enum devlink_sb_threshold_type) pr->mode;
 	pool_info->cell_size = mlxsw_sp->sb->cell_size;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mlxsw_sp_sb_pool_set(काष्ठा mlxsw_core *mlxsw_core,
-			 अचिन्हित पूर्णांक sb_index, u16 pool_index, u32 size,
-			 क्रमागत devlink_sb_threshold_type threshold_type,
-			 काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_core_driver_priv(mlxsw_core);
+int mlxsw_sp_sb_pool_set(struct mlxsw_core *mlxsw_core,
+			 unsigned int sb_index, u16 pool_index, u32 size,
+			 enum devlink_sb_threshold_type threshold_type,
+			 struct netlink_ext_ack *extack)
+{
+	struct mlxsw_sp *mlxsw_sp = mlxsw_core_driver_priv(mlxsw_core);
 	u32 pool_size = mlxsw_sp_bytes_cells(mlxsw_sp, size);
-	स्थिर काष्ठा mlxsw_sp_sb_pr *pr;
-	क्रमागत mlxsw_reg_sbpr_mode mode;
+	const struct mlxsw_sp_sb_pr *pr;
+	enum mlxsw_reg_sbpr_mode mode;
 
-	mode = (क्रमागत mlxsw_reg_sbpr_mode) threshold_type;
+	mode = (enum mlxsw_reg_sbpr_mode) threshold_type;
 	pr = &mlxsw_sp->sb_vals->prs[pool_index];
 
-	अगर (size > MLXSW_CORE_RES_GET(mlxsw_sp->core,
-				      GUARANTEED_SHARED_BUFFER)) अणु
+	if (size > MLXSW_CORE_RES_GET(mlxsw_sp->core,
+				      GUARANTEED_SHARED_BUFFER)) {
 		NL_SET_ERR_MSG_MOD(extack, "Exceeded shared buffer size");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (pr->मुक्तze_mode && pr->mode != mode) अणु
+	if (pr->freeze_mode && pr->mode != mode) {
 		NL_SET_ERR_MSG_MOD(extack, "Changing this pool's threshold type is forbidden");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (pr->मुक्तze_size && pr->size != size) अणु
+	if (pr->freeze_size && pr->size != size) {
 		NL_SET_ERR_MSG_MOD(extack, "Changing this pool's size is forbidden");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस mlxsw_sp_sb_pr_ग_लिखो(mlxsw_sp, pool_index, mode,
+	return mlxsw_sp_sb_pr_write(mlxsw_sp, pool_index, mode,
 				    pool_size, false);
-पूर्ण
+}
 
-#घोषणा MLXSW_SP_SB_THRESHOLD_TO_ALPHA_OFFSET (-2) /* 3->1, 16->14 */
+#define MLXSW_SP_SB_THRESHOLD_TO_ALPHA_OFFSET (-2) /* 3->1, 16->14 */
 
-अटल u32 mlxsw_sp_sb_threshold_out(काष्ठा mlxsw_sp *mlxsw_sp, u16 pool_index,
+static u32 mlxsw_sp_sb_threshold_out(struct mlxsw_sp *mlxsw_sp, u16 pool_index,
 				     u32 max_buff)
-अणु
-	काष्ठा mlxsw_sp_sb_pr *pr = mlxsw_sp_sb_pr_get(mlxsw_sp, pool_index);
+{
+	struct mlxsw_sp_sb_pr *pr = mlxsw_sp_sb_pr_get(mlxsw_sp, pool_index);
 
-	अगर (pr->mode == MLXSW_REG_SBPR_MODE_DYNAMIC)
-		वापस max_buff - MLXSW_SP_SB_THRESHOLD_TO_ALPHA_OFFSET;
-	वापस mlxsw_sp_cells_bytes(mlxsw_sp, max_buff);
-पूर्ण
+	if (pr->mode == MLXSW_REG_SBPR_MODE_DYNAMIC)
+		return max_buff - MLXSW_SP_SB_THRESHOLD_TO_ALPHA_OFFSET;
+	return mlxsw_sp_cells_bytes(mlxsw_sp, max_buff);
+}
 
-अटल पूर्णांक mlxsw_sp_sb_threshold_in(काष्ठा mlxsw_sp *mlxsw_sp, u16 pool_index,
+static int mlxsw_sp_sb_threshold_in(struct mlxsw_sp *mlxsw_sp, u16 pool_index,
 				    u32 threshold, u32 *p_max_buff,
-				    काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा mlxsw_sp_sb_pr *pr = mlxsw_sp_sb_pr_get(mlxsw_sp, pool_index);
+				    struct netlink_ext_ack *extack)
+{
+	struct mlxsw_sp_sb_pr *pr = mlxsw_sp_sb_pr_get(mlxsw_sp, pool_index);
 
-	अगर (pr->mode == MLXSW_REG_SBPR_MODE_DYNAMIC) अणु
-		पूर्णांक val;
+	if (pr->mode == MLXSW_REG_SBPR_MODE_DYNAMIC) {
+		int val;
 
 		val = threshold + MLXSW_SP_SB_THRESHOLD_TO_ALPHA_OFFSET;
-		अगर (val < MLXSW_REG_SBXX_DYN_MAX_BUFF_MIN ||
-		    val > MLXSW_REG_SBXX_DYN_MAX_BUFF_MAX) अणु
+		if (val < MLXSW_REG_SBXX_DYN_MAX_BUFF_MIN ||
+		    val > MLXSW_REG_SBXX_DYN_MAX_BUFF_MAX) {
 			NL_SET_ERR_MSG_MOD(extack, "Invalid dynamic threshold value");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		*p_max_buff = val;
-	पूर्ण अन्यथा अणु
+	} else {
 		*p_max_buff = mlxsw_sp_bytes_cells(mlxsw_sp, threshold);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-पूर्णांक mlxsw_sp_sb_port_pool_get(काष्ठा mlxsw_core_port *mlxsw_core_port,
-			      अचिन्हित पूर्णांक sb_index, u16 pool_index,
+int mlxsw_sp_sb_port_pool_get(struct mlxsw_core_port *mlxsw_core_port,
+			      unsigned int sb_index, u16 pool_index,
 			      u32 *p_threshold)
-अणु
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port =
+{
+	struct mlxsw_sp_port *mlxsw_sp_port =
 			mlxsw_core_port_driver_priv(mlxsw_core_port);
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
 	u8 local_port = mlxsw_sp_port->local_port;
-	काष्ठा mlxsw_sp_sb_pm *pm = mlxsw_sp_sb_pm_get(mlxsw_sp, local_port,
+	struct mlxsw_sp_sb_pm *pm = mlxsw_sp_sb_pm_get(mlxsw_sp, local_port,
 						       pool_index);
 
 	*p_threshold = mlxsw_sp_sb_threshold_out(mlxsw_sp, pool_index,
 						 pm->max_buff);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mlxsw_sp_sb_port_pool_set(काष्ठा mlxsw_core_port *mlxsw_core_port,
-			      अचिन्हित पूर्णांक sb_index, u16 pool_index,
-			      u32 threshold, काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port =
+int mlxsw_sp_sb_port_pool_set(struct mlxsw_core_port *mlxsw_core_port,
+			      unsigned int sb_index, u16 pool_index,
+			      u32 threshold, struct netlink_ext_ack *extack)
+{
+	struct mlxsw_sp_port *mlxsw_sp_port =
 			mlxsw_core_port_driver_priv(mlxsw_core_port);
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
 	u8 local_port = mlxsw_sp_port->local_port;
 	u32 max_buff;
-	पूर्णांक err;
+	int err;
 
-	अगर (local_port == MLXSW_PORT_CPU_PORT) अणु
+	if (local_port == MLXSW_PORT_CPU_PORT) {
 		NL_SET_ERR_MSG_MOD(extack, "Changing CPU port's threshold is forbidden");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = mlxsw_sp_sb_threshold_in(mlxsw_sp, pool_index,
 				       threshold, &max_buff, extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस mlxsw_sp_sb_pm_ग_लिखो(mlxsw_sp, local_port, pool_index,
+	return mlxsw_sp_sb_pm_write(mlxsw_sp, local_port, pool_index,
 				    0, max_buff);
-पूर्ण
+}
 
-पूर्णांक mlxsw_sp_sb_tc_pool_bind_get(काष्ठा mlxsw_core_port *mlxsw_core_port,
-				 अचिन्हित पूर्णांक sb_index, u16 tc_index,
-				 क्रमागत devlink_sb_pool_type pool_type,
+int mlxsw_sp_sb_tc_pool_bind_get(struct mlxsw_core_port *mlxsw_core_port,
+				 unsigned int sb_index, u16 tc_index,
+				 enum devlink_sb_pool_type pool_type,
 				 u16 *p_pool_index, u32 *p_threshold)
-अणु
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port =
+{
+	struct mlxsw_sp_port *mlxsw_sp_port =
 			mlxsw_core_port_driver_priv(mlxsw_core_port);
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
 	u8 local_port = mlxsw_sp_port->local_port;
 	u8 pg_buff = tc_index;
-	क्रमागत mlxsw_reg_sbxx_dir dir = (क्रमागत mlxsw_reg_sbxx_dir) pool_type;
-	काष्ठा mlxsw_sp_sb_cm *cm = mlxsw_sp_sb_cm_get(mlxsw_sp, local_port,
+	enum mlxsw_reg_sbxx_dir dir = (enum mlxsw_reg_sbxx_dir) pool_type;
+	struct mlxsw_sp_sb_cm *cm = mlxsw_sp_sb_cm_get(mlxsw_sp, local_port,
 						       pg_buff, dir);
 
 	*p_threshold = mlxsw_sp_sb_threshold_out(mlxsw_sp, cm->pool_index,
 						 cm->max_buff);
 	*p_pool_index = cm->pool_index;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mlxsw_sp_sb_tc_pool_bind_set(काष्ठा mlxsw_core_port *mlxsw_core_port,
-				 अचिन्हित पूर्णांक sb_index, u16 tc_index,
-				 क्रमागत devlink_sb_pool_type pool_type,
+int mlxsw_sp_sb_tc_pool_bind_set(struct mlxsw_core_port *mlxsw_core_port,
+				 unsigned int sb_index, u16 tc_index,
+				 enum devlink_sb_pool_type pool_type,
 				 u16 pool_index, u32 threshold,
-				 काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port =
+				 struct netlink_ext_ack *extack)
+{
+	struct mlxsw_sp_port *mlxsw_sp_port =
 			mlxsw_core_port_driver_priv(mlxsw_core_port);
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
 	u8 local_port = mlxsw_sp_port->local_port;
-	स्थिर काष्ठा mlxsw_sp_sb_cm *cm;
+	const struct mlxsw_sp_sb_cm *cm;
 	u8 pg_buff = tc_index;
-	क्रमागत mlxsw_reg_sbxx_dir dir = (क्रमागत mlxsw_reg_sbxx_dir) pool_type;
+	enum mlxsw_reg_sbxx_dir dir = (enum mlxsw_reg_sbxx_dir) pool_type;
 	u32 max_buff;
-	पूर्णांक err;
+	int err;
 
-	अगर (local_port == MLXSW_PORT_CPU_PORT) अणु
+	if (local_port == MLXSW_PORT_CPU_PORT) {
 		NL_SET_ERR_MSG_MOD(extack, "Changing CPU port's binding is forbidden");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (dir != mlxsw_sp->sb_vals->pool_dess[pool_index].dir) अणु
+	if (dir != mlxsw_sp->sb_vals->pool_dess[pool_index].dir) {
 		NL_SET_ERR_MSG_MOD(extack, "Binding egress TC to ingress pool and vice versa is forbidden");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (dir == MLXSW_REG_SBXX_सूची_INGRESS)
+	if (dir == MLXSW_REG_SBXX_DIR_INGRESS)
 		cm = &mlxsw_sp->sb_vals->cms_ingress[tc_index];
-	अन्यथा
+	else
 		cm = &mlxsw_sp->sb_vals->cms_egress[tc_index];
 
-	अगर (cm->मुक्तze_pool && cm->pool_index != pool_index) अणु
+	if (cm->freeze_pool && cm->pool_index != pool_index) {
 		NL_SET_ERR_MSG_MOD(extack, "Binding this TC to a different pool is forbidden");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (cm->मुक्तze_thresh && cm->max_buff != threshold) अणु
+	if (cm->freeze_thresh && cm->max_buff != threshold) {
 		NL_SET_ERR_MSG_MOD(extack, "Changing this TC's threshold is forbidden");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = mlxsw_sp_sb_threshold_in(mlxsw_sp, pool_index,
 				       threshold, &max_buff, extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस mlxsw_sp_sb_cm_ग_लिखो(mlxsw_sp, local_port, pg_buff,
+	return mlxsw_sp_sb_cm_write(mlxsw_sp, local_port, pg_buff,
 				    0, max_buff, false, pool_index);
-पूर्ण
+}
 
-#घोषणा MASKED_COUNT_MAX \
+#define MASKED_COUNT_MAX \
 	(MLXSW_REG_SBSR_REC_MAX_COUNT / \
 	 (MLXSW_SP_SB_ING_TC_COUNT + MLXSW_SP_SB_EG_TC_COUNT))
 
-काष्ठा mlxsw_sp_sb_sr_occ_query_cb_ctx अणु
+struct mlxsw_sp_sb_sr_occ_query_cb_ctx {
 	u8 masked_count;
 	u8 local_port_1;
-पूर्ण;
+};
 
-अटल व्योम mlxsw_sp_sb_sr_occ_query_cb(काष्ठा mlxsw_core *mlxsw_core,
-					अक्षर *sbsr_pl, माप_प्रकार sbsr_pl_len,
-					अचिन्हित दीर्घ cb_priv)
-अणु
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_core_driver_priv(mlxsw_core);
-	काष्ठा mlxsw_sp_sb_sr_occ_query_cb_ctx cb_ctx;
+static void mlxsw_sp_sb_sr_occ_query_cb(struct mlxsw_core *mlxsw_core,
+					char *sbsr_pl, size_t sbsr_pl_len,
+					unsigned long cb_priv)
+{
+	struct mlxsw_sp *mlxsw_sp = mlxsw_core_driver_priv(mlxsw_core);
+	struct mlxsw_sp_sb_sr_occ_query_cb_ctx cb_ctx;
 	u8 masked_count;
 	u8 local_port;
-	पूर्णांक rec_index = 0;
-	काष्ठा mlxsw_sp_sb_cm *cm;
-	पूर्णांक i;
+	int rec_index = 0;
+	struct mlxsw_sp_sb_cm *cm;
+	int i;
 
-	स_नकल(&cb_ctx, &cb_priv, माप(cb_ctx));
+	memcpy(&cb_ctx, &cb_priv, sizeof(cb_ctx));
 
 	masked_count = 0;
-	क्रम (local_port = cb_ctx.local_port_1;
-	     local_port < mlxsw_core_max_ports(mlxsw_core); local_port++) अणु
-		अगर (!mlxsw_sp->ports[local_port])
-			जारी;
-		अगर (local_port == MLXSW_PORT_CPU_PORT) अणु
-			/* Ingress quotas are not supported क्रम the CPU port */
+	for (local_port = cb_ctx.local_port_1;
+	     local_port < mlxsw_core_max_ports(mlxsw_core); local_port++) {
+		if (!mlxsw_sp->ports[local_port])
+			continue;
+		if (local_port == MLXSW_PORT_CPU_PORT) {
+			/* Ingress quotas are not supported for the CPU port */
 			masked_count++;
-			जारी;
-		पूर्ण
-		क्रम (i = 0; i < MLXSW_SP_SB_ING_TC_COUNT; i++) अणु
+			continue;
+		}
+		for (i = 0; i < MLXSW_SP_SB_ING_TC_COUNT; i++) {
 			cm = mlxsw_sp_sb_cm_get(mlxsw_sp, local_port, i,
-						MLXSW_REG_SBXX_सूची_INGRESS);
+						MLXSW_REG_SBXX_DIR_INGRESS);
 			mlxsw_reg_sbsr_rec_unpack(sbsr_pl, rec_index++,
 						  &cm->occ.cur, &cm->occ.max);
-		पूर्ण
-		अगर (++masked_count == cb_ctx.masked_count)
-			अवरोध;
-	पूर्ण
+		}
+		if (++masked_count == cb_ctx.masked_count)
+			break;
+	}
 	masked_count = 0;
-	क्रम (local_port = cb_ctx.local_port_1;
-	     local_port < mlxsw_core_max_ports(mlxsw_core); local_port++) अणु
-		अगर (!mlxsw_sp->ports[local_port])
-			जारी;
-		क्रम (i = 0; i < MLXSW_SP_SB_EG_TC_COUNT; i++) अणु
+	for (local_port = cb_ctx.local_port_1;
+	     local_port < mlxsw_core_max_ports(mlxsw_core); local_port++) {
+		if (!mlxsw_sp->ports[local_port])
+			continue;
+		for (i = 0; i < MLXSW_SP_SB_EG_TC_COUNT; i++) {
 			cm = mlxsw_sp_sb_cm_get(mlxsw_sp, local_port, i,
-						MLXSW_REG_SBXX_सूची_EGRESS);
+						MLXSW_REG_SBXX_DIR_EGRESS);
 			mlxsw_reg_sbsr_rec_unpack(sbsr_pl, rec_index++,
 						  &cm->occ.cur, &cm->occ.max);
-		पूर्ण
-		अगर (++masked_count == cb_ctx.masked_count)
-			अवरोध;
-	पूर्ण
-पूर्ण
+		}
+		if (++masked_count == cb_ctx.masked_count)
+			break;
+	}
+}
 
-पूर्णांक mlxsw_sp_sb_occ_snapshot(काष्ठा mlxsw_core *mlxsw_core,
-			     अचिन्हित पूर्णांक sb_index)
-अणु
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_core_driver_priv(mlxsw_core);
-	काष्ठा mlxsw_sp_sb_sr_occ_query_cb_ctx cb_ctx;
-	अचिन्हित दीर्घ cb_priv;
+int mlxsw_sp_sb_occ_snapshot(struct mlxsw_core *mlxsw_core,
+			     unsigned int sb_index)
+{
+	struct mlxsw_sp *mlxsw_sp = mlxsw_core_driver_priv(mlxsw_core);
+	struct mlxsw_sp_sb_sr_occ_query_cb_ctx cb_ctx;
+	unsigned long cb_priv;
 	LIST_HEAD(bulk_list);
-	अक्षर *sbsr_pl;
+	char *sbsr_pl;
 	u8 masked_count;
 	u8 local_port_1;
 	u8 local_port;
-	पूर्णांक i;
-	पूर्णांक err;
-	पूर्णांक err2;
+	int i;
+	int err;
+	int err2;
 
-	sbsr_pl = kदो_स्मृति(MLXSW_REG_SBSR_LEN, GFP_KERNEL);
-	अगर (!sbsr_pl)
-		वापस -ENOMEM;
+	sbsr_pl = kmalloc(MLXSW_REG_SBSR_LEN, GFP_KERNEL);
+	if (!sbsr_pl)
+		return -ENOMEM;
 
 	local_port = MLXSW_PORT_CPU_PORT;
 next_batch:
 	local_port_1 = local_port;
 	masked_count = 0;
 	mlxsw_reg_sbsr_pack(sbsr_pl, false);
-	क्रम (i = 0; i < MLXSW_SP_SB_ING_TC_COUNT; i++)
+	for (i = 0; i < MLXSW_SP_SB_ING_TC_COUNT; i++)
 		mlxsw_reg_sbsr_pg_buff_mask_set(sbsr_pl, i, 1);
-	क्रम (i = 0; i < MLXSW_SP_SB_EG_TC_COUNT; i++)
+	for (i = 0; i < MLXSW_SP_SB_EG_TC_COUNT; i++)
 		mlxsw_reg_sbsr_tclass_mask_set(sbsr_pl, i, 1);
-	क्रम (; local_port < mlxsw_core_max_ports(mlxsw_core); local_port++) अणु
-		अगर (!mlxsw_sp->ports[local_port])
-			जारी;
-		अगर (local_port != MLXSW_PORT_CPU_PORT) अणु
-			/* Ingress quotas are not supported क्रम the CPU port */
+	for (; local_port < mlxsw_core_max_ports(mlxsw_core); local_port++) {
+		if (!mlxsw_sp->ports[local_port])
+			continue;
+		if (local_port != MLXSW_PORT_CPU_PORT) {
+			/* Ingress quotas are not supported for the CPU port */
 			mlxsw_reg_sbsr_ingress_port_mask_set(sbsr_pl,
 							     local_port, 1);
-		पूर्ण
+		}
 		mlxsw_reg_sbsr_egress_port_mask_set(sbsr_pl, local_port, 1);
-		क्रम (i = 0; i < mlxsw_sp->sb_vals->pool_count; i++) अणु
+		for (i = 0; i < mlxsw_sp->sb_vals->pool_count; i++) {
 			err = mlxsw_sp_sb_pm_occ_query(mlxsw_sp, local_port, i,
 						       &bulk_list);
-			अगर (err)
-				जाओ out;
-		पूर्ण
-		अगर (++masked_count == MASKED_COUNT_MAX)
-			जाओ करो_query;
-	पूर्ण
+			if (err)
+				goto out;
+		}
+		if (++masked_count == MASKED_COUNT_MAX)
+			goto do_query;
+	}
 
-करो_query:
+do_query:
 	cb_ctx.masked_count = masked_count;
 	cb_ctx.local_port_1 = local_port_1;
-	स_नकल(&cb_priv, &cb_ctx, माप(cb_ctx));
+	memcpy(&cb_priv, &cb_ctx, sizeof(cb_ctx));
 	err = mlxsw_reg_trans_query(mlxsw_core, MLXSW_REG(sbsr), sbsr_pl,
 				    &bulk_list, mlxsw_sp_sb_sr_occ_query_cb,
 				    cb_priv);
-	अगर (err)
-		जाओ out;
-	अगर (local_port < mlxsw_core_max_ports(mlxsw_core)) अणु
+	if (err)
+		goto out;
+	if (local_port < mlxsw_core_max_ports(mlxsw_core)) {
 		local_port++;
-		जाओ next_batch;
-	पूर्ण
+		goto next_batch;
+	}
 
 out:
-	err2 = mlxsw_reg_trans_bulk_रुको(&bulk_list);
-	अगर (!err)
+	err2 = mlxsw_reg_trans_bulk_wait(&bulk_list);
+	if (!err)
 		err = err2;
-	kमुक्त(sbsr_pl);
-	वापस err;
-पूर्ण
+	kfree(sbsr_pl);
+	return err;
+}
 
-पूर्णांक mlxsw_sp_sb_occ_max_clear(काष्ठा mlxsw_core *mlxsw_core,
-			      अचिन्हित पूर्णांक sb_index)
-अणु
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_core_driver_priv(mlxsw_core);
+int mlxsw_sp_sb_occ_max_clear(struct mlxsw_core *mlxsw_core,
+			      unsigned int sb_index)
+{
+	struct mlxsw_sp *mlxsw_sp = mlxsw_core_driver_priv(mlxsw_core);
 	LIST_HEAD(bulk_list);
-	अक्षर *sbsr_pl;
-	अचिन्हित पूर्णांक masked_count;
+	char *sbsr_pl;
+	unsigned int masked_count;
 	u8 local_port;
-	पूर्णांक i;
-	पूर्णांक err;
-	पूर्णांक err2;
+	int i;
+	int err;
+	int err2;
 
-	sbsr_pl = kदो_स्मृति(MLXSW_REG_SBSR_LEN, GFP_KERNEL);
-	अगर (!sbsr_pl)
-		वापस -ENOMEM;
+	sbsr_pl = kmalloc(MLXSW_REG_SBSR_LEN, GFP_KERNEL);
+	if (!sbsr_pl)
+		return -ENOMEM;
 
 	local_port = MLXSW_PORT_CPU_PORT;
 next_batch:
 	masked_count = 0;
 	mlxsw_reg_sbsr_pack(sbsr_pl, true);
-	क्रम (i = 0; i < MLXSW_SP_SB_ING_TC_COUNT; i++)
+	for (i = 0; i < MLXSW_SP_SB_ING_TC_COUNT; i++)
 		mlxsw_reg_sbsr_pg_buff_mask_set(sbsr_pl, i, 1);
-	क्रम (i = 0; i < MLXSW_SP_SB_EG_TC_COUNT; i++)
+	for (i = 0; i < MLXSW_SP_SB_EG_TC_COUNT; i++)
 		mlxsw_reg_sbsr_tclass_mask_set(sbsr_pl, i, 1);
-	क्रम (; local_port < mlxsw_core_max_ports(mlxsw_core); local_port++) अणु
-		अगर (!mlxsw_sp->ports[local_port])
-			जारी;
-		अगर (local_port != MLXSW_PORT_CPU_PORT) अणु
-			/* Ingress quotas are not supported क्रम the CPU port */
+	for (; local_port < mlxsw_core_max_ports(mlxsw_core); local_port++) {
+		if (!mlxsw_sp->ports[local_port])
+			continue;
+		if (local_port != MLXSW_PORT_CPU_PORT) {
+			/* Ingress quotas are not supported for the CPU port */
 			mlxsw_reg_sbsr_ingress_port_mask_set(sbsr_pl,
 							     local_port, 1);
-		पूर्ण
+		}
 		mlxsw_reg_sbsr_egress_port_mask_set(sbsr_pl, local_port, 1);
-		क्रम (i = 0; i < mlxsw_sp->sb_vals->pool_count; i++) अणु
+		for (i = 0; i < mlxsw_sp->sb_vals->pool_count; i++) {
 			err = mlxsw_sp_sb_pm_occ_clear(mlxsw_sp, local_port, i,
 						       &bulk_list);
-			अगर (err)
-				जाओ out;
-		पूर्ण
-		अगर (++masked_count == MASKED_COUNT_MAX)
-			जाओ करो_query;
-	पूर्ण
+			if (err)
+				goto out;
+		}
+		if (++masked_count == MASKED_COUNT_MAX)
+			goto do_query;
+	}
 
-करो_query:
+do_query:
 	err = mlxsw_reg_trans_query(mlxsw_core, MLXSW_REG(sbsr), sbsr_pl,
-				    &bulk_list, शून्य, 0);
-	अगर (err)
-		जाओ out;
-	अगर (local_port < mlxsw_core_max_ports(mlxsw_core)) अणु
+				    &bulk_list, NULL, 0);
+	if (err)
+		goto out;
+	if (local_port < mlxsw_core_max_ports(mlxsw_core)) {
 		local_port++;
-		जाओ next_batch;
-	पूर्ण
+		goto next_batch;
+	}
 
 out:
-	err2 = mlxsw_reg_trans_bulk_रुको(&bulk_list);
-	अगर (!err)
+	err2 = mlxsw_reg_trans_bulk_wait(&bulk_list);
+	if (!err)
 		err = err2;
-	kमुक्त(sbsr_pl);
-	वापस err;
-पूर्ण
+	kfree(sbsr_pl);
+	return err;
+}
 
-पूर्णांक mlxsw_sp_sb_occ_port_pool_get(काष्ठा mlxsw_core_port *mlxsw_core_port,
-				  अचिन्हित पूर्णांक sb_index, u16 pool_index,
+int mlxsw_sp_sb_occ_port_pool_get(struct mlxsw_core_port *mlxsw_core_port,
+				  unsigned int sb_index, u16 pool_index,
 				  u32 *p_cur, u32 *p_max)
-अणु
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port =
+{
+	struct mlxsw_sp_port *mlxsw_sp_port =
 			mlxsw_core_port_driver_priv(mlxsw_core_port);
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
 	u8 local_port = mlxsw_sp_port->local_port;
-	काष्ठा mlxsw_sp_sb_pm *pm = mlxsw_sp_sb_pm_get(mlxsw_sp, local_port,
+	struct mlxsw_sp_sb_pm *pm = mlxsw_sp_sb_pm_get(mlxsw_sp, local_port,
 						       pool_index);
 
 	*p_cur = mlxsw_sp_cells_bytes(mlxsw_sp, pm->occ.cur);
 	*p_max = mlxsw_sp_cells_bytes(mlxsw_sp, pm->occ.max);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mlxsw_sp_sb_occ_tc_port_bind_get(काष्ठा mlxsw_core_port *mlxsw_core_port,
-				     अचिन्हित पूर्णांक sb_index, u16 tc_index,
-				     क्रमागत devlink_sb_pool_type pool_type,
+int mlxsw_sp_sb_occ_tc_port_bind_get(struct mlxsw_core_port *mlxsw_core_port,
+				     unsigned int sb_index, u16 tc_index,
+				     enum devlink_sb_pool_type pool_type,
 				     u32 *p_cur, u32 *p_max)
-अणु
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port =
+{
+	struct mlxsw_sp_port *mlxsw_sp_port =
 			mlxsw_core_port_driver_priv(mlxsw_core_port);
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
 	u8 local_port = mlxsw_sp_port->local_port;
 	u8 pg_buff = tc_index;
-	क्रमागत mlxsw_reg_sbxx_dir dir = (क्रमागत mlxsw_reg_sbxx_dir) pool_type;
-	काष्ठा mlxsw_sp_sb_cm *cm = mlxsw_sp_sb_cm_get(mlxsw_sp, local_port,
+	enum mlxsw_reg_sbxx_dir dir = (enum mlxsw_reg_sbxx_dir) pool_type;
+	struct mlxsw_sp_sb_cm *cm = mlxsw_sp_sb_cm_get(mlxsw_sp, local_port,
 						       pg_buff, dir);
 
 	*p_cur = mlxsw_sp_cells_bytes(mlxsw_sp, cm->occ.cur);
 	*p_max = mlxsw_sp_cells_bytes(mlxsw_sp, cm->occ.max);
-	वापस 0;
-पूर्ण
+	return 0;
+}

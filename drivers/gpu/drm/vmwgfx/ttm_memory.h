@@ -1,15 +1,14 @@
-<शैली गुरु>
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -26,72 +25,72 @@
  *
  **************************************************************************/
 
-#अगर_अघोषित TTM_MEMORY_H
-#घोषणा TTM_MEMORY_H
+#ifndef TTM_MEMORY_H
+#define TTM_MEMORY_H
 
-#समावेश <linux/workqueue.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kobject.h>
-#समावेश <linux/mm.h>
+#include <linux/workqueue.h>
+#include <linux/spinlock.h>
+#include <linux/bug.h>
+#include <linux/wait.h>
+#include <linux/errno.h>
+#include <linux/kobject.h>
+#include <linux/mm.h>
 
-#समावेश <drm/tपंचांग/tपंचांग_bo_api.h>
+#include <drm/ttm/ttm_bo_api.h>
 
 /**
- * काष्ठा tपंचांग_mem_global - Global memory accounting काष्ठाure.
+ * struct ttm_mem_global - Global memory accounting structure.
  *
  * @shrink: A single callback to shrink TTM memory usage. Extend this
  * to a linked list to be able to handle multiple callbacks when needed.
  * @swap_queue: A workqueue to handle shrinking in low memory situations. We
- * need a separate workqueue since it will spend a lot of समय रुकोing
- * क्रम the GPU, and this will otherwise block other workqueue tasks(?)
- * At this poपूर्णांक we use only a single-thपढ़ोed workqueue.
- * @work: The workqueue callback क्रम the shrink queue.
+ * need a separate workqueue since it will spend a lot of time waiting
+ * for the GPU, and this will otherwise block other workqueue tasks(?)
+ * At this point we use only a single-threaded workqueue.
+ * @work: The workqueue callback for the shrink queue.
  * @lock: Lock to protect the @shrink - and the memory accounting members,
- * that is, essentially the whole काष्ठाure with some exceptions.
+ * that is, essentially the whole structure with some exceptions.
  * @lower_mem_limit: include lower limit of swap space and lower limit of
- * प्रणाली memory.
- * @zones: Array of poपूर्णांकers to accounting zones.
+ * system memory.
+ * @zones: Array of pointers to accounting zones.
  * @num_zones: Number of populated entries in the @zones array.
- * @zone_kernel: Poपूर्णांकer to the kernel zone.
- * @zone_highmem: Poपूर्णांकer to the highmem zone अगर there is one.
- * @zone_dma32: Poपूर्णांकer to the dma32 zone अगर there is one.
+ * @zone_kernel: Pointer to the kernel zone.
+ * @zone_highmem: Pointer to the highmem zone if there is one.
+ * @zone_dma32: Pointer to the dma32 zone if there is one.
  *
- * Note that this काष्ठाure is not per device. It should be global क्रम all
+ * Note that this structure is not per device. It should be global for all
  * graphics devices.
  */
 
-#घोषणा TTM_MEM_MAX_ZONES 2
-काष्ठा tपंचांग_mem_zone;
-बाह्य काष्ठा tपंचांग_mem_global अणु
-	काष्ठा kobject kobj;
-	काष्ठा workqueue_काष्ठा *swap_queue;
-	काष्ठा work_काष्ठा work;
+#define TTM_MEM_MAX_ZONES 2
+struct ttm_mem_zone;
+extern struct ttm_mem_global {
+	struct kobject kobj;
+	struct workqueue_struct *swap_queue;
+	struct work_struct work;
 	spinlock_t lock;
-	uपूर्णांक64_t lower_mem_limit;
-	काष्ठा tपंचांग_mem_zone *zones[TTM_MEM_MAX_ZONES];
-	अचिन्हित पूर्णांक num_zones;
-	काष्ठा tपंचांग_mem_zone *zone_kernel;
-#अगर_घोषित CONFIG_HIGHMEM
-	काष्ठा tपंचांग_mem_zone *zone_highmem;
-#अन्यथा
-	काष्ठा tपंचांग_mem_zone *zone_dma32;
-#पूर्ण_अगर
-पूर्ण tपंचांग_mem_glob;
+	uint64_t lower_mem_limit;
+	struct ttm_mem_zone *zones[TTM_MEM_MAX_ZONES];
+	unsigned int num_zones;
+	struct ttm_mem_zone *zone_kernel;
+#ifdef CONFIG_HIGHMEM
+	struct ttm_mem_zone *zone_highmem;
+#else
+	struct ttm_mem_zone *zone_dma32;
+#endif
+} ttm_mem_glob;
 
-पूर्णांक tपंचांग_mem_global_init(काष्ठा tपंचांग_mem_global *glob, काष्ठा device *dev);
-व्योम tपंचांग_mem_global_release(काष्ठा tपंचांग_mem_global *glob);
-पूर्णांक tपंचांग_mem_global_alloc(काष्ठा tपंचांग_mem_global *glob, uपूर्णांक64_t memory,
-			 काष्ठा tपंचांग_operation_ctx *ctx);
-व्योम tपंचांग_mem_global_मुक्त(काष्ठा tपंचांग_mem_global *glob, uपूर्णांक64_t amount);
-पूर्णांक tपंचांग_mem_global_alloc_page(काष्ठा tपंचांग_mem_global *glob,
-			      काष्ठा page *page, uपूर्णांक64_t size,
-			      काष्ठा tपंचांग_operation_ctx *ctx);
-व्योम tपंचांग_mem_global_मुक्त_page(काष्ठा tपंचांग_mem_global *glob,
-			      काष्ठा page *page, uपूर्णांक64_t size);
-माप_प्रकार tपंचांग_round_pot(माप_प्रकार size);
-bool tपंचांग_check_under_lowerlimit(काष्ठा tपंचांग_mem_global *glob, uपूर्णांक64_t num_pages,
-				काष्ठा tपंचांग_operation_ctx *ctx);
-#पूर्ण_अगर
+int ttm_mem_global_init(struct ttm_mem_global *glob, struct device *dev);
+void ttm_mem_global_release(struct ttm_mem_global *glob);
+int ttm_mem_global_alloc(struct ttm_mem_global *glob, uint64_t memory,
+			 struct ttm_operation_ctx *ctx);
+void ttm_mem_global_free(struct ttm_mem_global *glob, uint64_t amount);
+int ttm_mem_global_alloc_page(struct ttm_mem_global *glob,
+			      struct page *page, uint64_t size,
+			      struct ttm_operation_ctx *ctx);
+void ttm_mem_global_free_page(struct ttm_mem_global *glob,
+			      struct page *page, uint64_t size);
+size_t ttm_round_pot(size_t size);
+bool ttm_check_under_lowerlimit(struct ttm_mem_global *glob, uint64_t num_pages,
+				struct ttm_operation_ctx *ctx);
+#endif

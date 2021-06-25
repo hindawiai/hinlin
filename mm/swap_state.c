@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  linux/mm/swap_state.c
  *
@@ -8,104 +7,104 @@
  *
  *  Rewritten to use page cache, (C) 1998 Stephen Tweedie
  */
-#समावेश <linux/mm.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/kernel_स्थिति.स>
-#समावेश <linux/swap.h>
-#समावेश <linux/swapops.h>
-#समावेश <linux/init.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/backing-dev.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/pagevec.h>
-#समावेश <linux/migrate.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/swap_slots.h>
-#समावेश <linux/huge_mm.h>
-#समावेश <linux/shmem_fs.h>
-#समावेश "internal.h"
+#include <linux/mm.h>
+#include <linux/gfp.h>
+#include <linux/kernel_stat.h>
+#include <linux/swap.h>
+#include <linux/swapops.h>
+#include <linux/init.h>
+#include <linux/pagemap.h>
+#include <linux/backing-dev.h>
+#include <linux/blkdev.h>
+#include <linux/pagevec.h>
+#include <linux/migrate.h>
+#include <linux/vmalloc.h>
+#include <linux/swap_slots.h>
+#include <linux/huge_mm.h>
+#include <linux/shmem_fs.h>
+#include "internal.h"
 
 /*
- * swapper_space is a fiction, retained to simplअगरy the path through
+ * swapper_space is a fiction, retained to simplify the path through
  * vmscan's shrink_page_list.
  */
-अटल स्थिर काष्ठा address_space_operations swap_aops = अणु
-	.ग_लिखोpage	= swap_ग_लिखोpage,
+static const struct address_space_operations swap_aops = {
+	.writepage	= swap_writepage,
 	.set_page_dirty	= swap_set_page_dirty,
-#अगर_घोषित CONFIG_MIGRATION
+#ifdef CONFIG_MIGRATION
 	.migratepage	= migrate_page,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-काष्ठा address_space *swapper_spaces[MAX_SWAPखाताS] __पढ़ो_mostly;
-अटल अचिन्हित पूर्णांक nr_swapper_spaces[MAX_SWAPखाताS] __पढ़ो_mostly;
-अटल bool enable_vma_पढ़ोahead __पढ़ो_mostly = true;
+struct address_space *swapper_spaces[MAX_SWAPFILES] __read_mostly;
+static unsigned int nr_swapper_spaces[MAX_SWAPFILES] __read_mostly;
+static bool enable_vma_readahead __read_mostly = true;
 
-#घोषणा SWAP_RA_WIN_SHIFT	(PAGE_SHIFT / 2)
-#घोषणा SWAP_RA_HITS_MASK	((1UL << SWAP_RA_WIN_SHIFT) - 1)
-#घोषणा SWAP_RA_HITS_MAX	SWAP_RA_HITS_MASK
-#घोषणा SWAP_RA_WIN_MASK	(~PAGE_MASK & ~SWAP_RA_HITS_MASK)
+#define SWAP_RA_WIN_SHIFT	(PAGE_SHIFT / 2)
+#define SWAP_RA_HITS_MASK	((1UL << SWAP_RA_WIN_SHIFT) - 1)
+#define SWAP_RA_HITS_MAX	SWAP_RA_HITS_MASK
+#define SWAP_RA_WIN_MASK	(~PAGE_MASK & ~SWAP_RA_HITS_MASK)
 
-#घोषणा SWAP_RA_HITS(v)		((v) & SWAP_RA_HITS_MASK)
-#घोषणा SWAP_RA_WIN(v)		(((v) & SWAP_RA_WIN_MASK) >> SWAP_RA_WIN_SHIFT)
-#घोषणा SWAP_RA_ADDR(v)		((v) & PAGE_MASK)
+#define SWAP_RA_HITS(v)		((v) & SWAP_RA_HITS_MASK)
+#define SWAP_RA_WIN(v)		(((v) & SWAP_RA_WIN_MASK) >> SWAP_RA_WIN_SHIFT)
+#define SWAP_RA_ADDR(v)		((v) & PAGE_MASK)
 
-#घोषणा SWAP_RA_VAL(addr, win, hits)				\
+#define SWAP_RA_VAL(addr, win, hits)				\
 	(((addr) & PAGE_MASK) |					\
 	 (((win) << SWAP_RA_WIN_SHIFT) & SWAP_RA_WIN_MASK) |	\
 	 ((hits) & SWAP_RA_HITS_MASK))
 
-/* Initial पढ़ोahead hits is 4 to start up with a small winकरोw */
-#घोषणा GET_SWAP_RA_VAL(vma)					\
-	(atomic_दीर्घ_पढ़ो(&(vma)->swap_पढ़ोahead_info) ? : 4)
+/* Initial readahead hits is 4 to start up with a small window */
+#define GET_SWAP_RA_VAL(vma)					\
+	(atomic_long_read(&(vma)->swap_readahead_info) ? : 4)
 
-#घोषणा INC_CACHE_INFO(x)	data_race(swap_cache_info.x++)
-#घोषणा ADD_CACHE_INFO(x, nr)	data_race(swap_cache_info.x += (nr))
+#define INC_CACHE_INFO(x)	data_race(swap_cache_info.x++)
+#define ADD_CACHE_INFO(x, nr)	data_race(swap_cache_info.x += (nr))
 
-अटल काष्ठा अणु
-	अचिन्हित दीर्घ add_total;
-	अचिन्हित दीर्घ del_total;
-	अचिन्हित दीर्घ find_success;
-	अचिन्हित दीर्घ find_total;
-पूर्ण swap_cache_info;
+static struct {
+	unsigned long add_total;
+	unsigned long del_total;
+	unsigned long find_success;
+	unsigned long find_total;
+} swap_cache_info;
 
-अटल atomic_t swapin_पढ़ोahead_hits = ATOMIC_INIT(4);
+static atomic_t swapin_readahead_hits = ATOMIC_INIT(4);
 
-व्योम show_swap_cache_info(व्योम)
-अणु
-	prपूर्णांकk("%lu pages in swap cache\n", total_swapcache_pages());
-	prपूर्णांकk("Swap cache stats: add %lu, delete %lu, find %lu/%lu\n",
+void show_swap_cache_info(void)
+{
+	printk("%lu pages in swap cache\n", total_swapcache_pages());
+	printk("Swap cache stats: add %lu, delete %lu, find %lu/%lu\n",
 		swap_cache_info.add_total, swap_cache_info.del_total,
 		swap_cache_info.find_success, swap_cache_info.find_total);
-	prपूर्णांकk("Free swap  = %ldkB\n",
+	printk("Free swap  = %ldkB\n",
 		get_nr_swap_pages() << (PAGE_SHIFT - 10));
-	prपूर्णांकk("Total swap = %lukB\n", total_swap_pages << (PAGE_SHIFT - 10));
-पूर्ण
+	printk("Total swap = %lukB\n", total_swap_pages << (PAGE_SHIFT - 10));
+}
 
-व्योम *get_shaकरोw_from_swap_cache(swp_entry_t entry)
-अणु
-	काष्ठा address_space *address_space = swap_address_space(entry);
+void *get_shadow_from_swap_cache(swp_entry_t entry)
+{
+	struct address_space *address_space = swap_address_space(entry);
 	pgoff_t idx = swp_offset(entry);
-	काष्ठा page *page;
+	struct page *page;
 
 	page = xa_load(&address_space->i_pages, idx);
-	अगर (xa_is_value(page))
-		वापस page;
-	वापस शून्य;
-पूर्ण
+	if (xa_is_value(page))
+		return page;
+	return NULL;
+}
 
 /*
  * add_to_swap_cache resembles add_to_page_cache_locked on swapper_space,
- * but sets SwapCache flag and निजी instead of mapping and index.
+ * but sets SwapCache flag and private instead of mapping and index.
  */
-पूर्णांक add_to_swap_cache(काष्ठा page *page, swp_entry_t entry,
-			gfp_t gfp, व्योम **shaकरोwp)
-अणु
-	काष्ठा address_space *address_space = swap_address_space(entry);
+int add_to_swap_cache(struct page *page, swp_entry_t entry,
+			gfp_t gfp, void **shadowp)
+{
+	struct address_space *address_space = swap_address_space(entry);
 	pgoff_t idx = swp_offset(entry);
 	XA_STATE_ORDER(xas, &address_space->i_pages, idx, compound_order(page));
-	अचिन्हित दीर्घ i, nr = thp_nr_pages(page);
-	व्योम *old;
+	unsigned long i, nr = thp_nr_pages(page);
+	void *old;
 
 	VM_BUG_ON_PAGE(!PageLocked(page), page);
 	VM_BUG_ON_PAGE(PageSwapCache(page), page);
@@ -114,50 +113,50 @@
 	page_ref_add(page, nr);
 	SetPageSwapCache(page);
 
-	करो अणु
-		अचिन्हित दीर्घ nr_shaकरोws = 0;
+	do {
+		unsigned long nr_shadows = 0;
 
 		xas_lock_irq(&xas);
 		xas_create_range(&xas);
-		अगर (xas_error(&xas))
-			जाओ unlock;
-		क्रम (i = 0; i < nr; i++) अणु
+		if (xas_error(&xas))
+			goto unlock;
+		for (i = 0; i < nr; i++) {
 			VM_BUG_ON_PAGE(xas.xa_index != idx + i, page);
 			old = xas_load(&xas);
-			अगर (xa_is_value(old)) अणु
-				nr_shaकरोws++;
-				अगर (shaकरोwp)
-					*shaकरोwp = old;
-			पूर्ण
-			set_page_निजी(page + i, entry.val + i);
+			if (xa_is_value(old)) {
+				nr_shadows++;
+				if (shadowp)
+					*shadowp = old;
+			}
+			set_page_private(page + i, entry.val + i);
 			xas_store(&xas, page);
 			xas_next(&xas);
-		पूर्ण
+		}
 		address_space->nrpages += nr;
-		__mod_node_page_state(page_pgdat(page), NR_खाता_PAGES, nr);
+		__mod_node_page_state(page_pgdat(page), NR_FILE_PAGES, nr);
 		__mod_lruvec_page_state(page, NR_SWAPCACHE, nr);
 		ADD_CACHE_INFO(add_total, nr);
 unlock:
 		xas_unlock_irq(&xas);
-	पूर्ण जबतक (xas_nomem(&xas, gfp));
+	} while (xas_nomem(&xas, gfp));
 
-	अगर (!xas_error(&xas))
-		वापस 0;
+	if (!xas_error(&xas))
+		return 0;
 
 	ClearPageSwapCache(page);
 	page_ref_sub(page, nr);
-	वापस xas_error(&xas);
-पूर्ण
+	return xas_error(&xas);
+}
 
 /*
  * This must be called only on pages that have
- * been verअगरied to be in the swap cache.
+ * been verified to be in the swap cache.
  */
-व्योम __delete_from_swap_cache(काष्ठा page *page,
-			swp_entry_t entry, व्योम *shaकरोw)
-अणु
-	काष्ठा address_space *address_space = swap_address_space(entry);
-	पूर्णांक i, nr = thp_nr_pages(page);
+void __delete_from_swap_cache(struct page *page,
+			swp_entry_t entry, void *shadow)
+{
+	struct address_space *address_space = swap_address_space(entry);
+	int i, nr = thp_nr_pages(page);
 	pgoff_t idx = swp_offset(entry);
 	XA_STATE(xas, &address_space->i_pages, idx);
 
@@ -165,37 +164,37 @@ unlock:
 	VM_BUG_ON_PAGE(!PageSwapCache(page), page);
 	VM_BUG_ON_PAGE(PageWriteback(page), page);
 
-	क्रम (i = 0; i < nr; i++) अणु
-		व्योम *entry = xas_store(&xas, shaकरोw);
+	for (i = 0; i < nr; i++) {
+		void *entry = xas_store(&xas, shadow);
 		VM_BUG_ON_PAGE(entry != page, entry);
-		set_page_निजी(page + i, 0);
+		set_page_private(page + i, 0);
 		xas_next(&xas);
-	पूर्ण
+	}
 	ClearPageSwapCache(page);
 	address_space->nrpages -= nr;
-	__mod_node_page_state(page_pgdat(page), NR_खाता_PAGES, -nr);
+	__mod_node_page_state(page_pgdat(page), NR_FILE_PAGES, -nr);
 	__mod_lruvec_page_state(page, NR_SWAPCACHE, -nr);
 	ADD_CACHE_INFO(del_total, nr);
-पूर्ण
+}
 
 /**
- * add_to_swap - allocate swap space क्रम a page
+ * add_to_swap - allocate swap space for a page
  * @page: page we want to move to swap
  *
- * Allocate swap space क्रम the page and add the page to the
+ * Allocate swap space for the page and add the page to the
  * swap cache.  Caller needs to hold the page lock. 
  */
-पूर्णांक add_to_swap(काष्ठा page *page)
-अणु
+int add_to_swap(struct page *page)
+{
 	swp_entry_t entry;
-	पूर्णांक err;
+	int err;
 
 	VM_BUG_ON_PAGE(!PageLocked(page), page);
 	VM_BUG_ON_PAGE(!PageUptodate(page), page);
 
 	entry = get_swap_page(page);
-	अगर (!entry.val)
-		वापस 0;
+	if (!entry.val)
+		return 0;
 
 	/*
 	 * XArray node allocations from PF_MEMALLOC contexts could
@@ -209,283 +208,283 @@ unlock:
 	 * Add it to the swap cache.
 	 */
 	err = add_to_swap_cache(page, entry,
-			__GFP_HIGH|__GFP_NOMEMALLOC|__GFP_NOWARN, शून्य);
-	अगर (err)
+			__GFP_HIGH|__GFP_NOMEMALLOC|__GFP_NOWARN, NULL);
+	if (err)
 		/*
-		 * add_to_swap_cache() करोesn't वापस -EEXIST, so we can safely
+		 * add_to_swap_cache() doesn't return -EEXIST, so we can safely
 		 * clear SWAP_HAS_CACHE flag.
 		 */
-		जाओ fail;
+		goto fail;
 	/*
 	 * Normally the page will be dirtied in unmap because its pte should be
-	 * dirty. A special हाल is MADV_FREE page. The page's pte could have
+	 * dirty. A special case is MADV_FREE page. The page's pte could have
 	 * dirty bit cleared but the page's SwapBacked bit is still set because
-	 * clearing the dirty bit and SwapBacked bit has no lock रक्षित. For
-	 * such page, unmap will not set dirty bit क्रम it, so page reclaim will
-	 * not ग_लिखो the page out. This can cause data corruption when the page
-	 * is swap in later. Always setting the dirty bit क्रम the page solves
+	 * clearing the dirty bit and SwapBacked bit has no lock protected. For
+	 * such page, unmap will not set dirty bit for it, so page reclaim will
+	 * not write the page out. This can cause data corruption when the page
+	 * is swap in later. Always setting the dirty bit for the page solves
 	 * the problem.
 	 */
 	set_page_dirty(page);
 
-	वापस 1;
+	return 1;
 
 fail:
 	put_swap_page(page, entry);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * This must be called only on pages that have
- * been verअगरied to be in the swap cache and locked.
- * It will never put the page पूर्णांकo the मुक्त list,
+ * been verified to be in the swap cache and locked.
+ * It will never put the page into the free list,
  * the caller has a reference on the page.
  */
-व्योम delete_from_swap_cache(काष्ठा page *page)
-अणु
-	swp_entry_t entry = अणु .val = page_निजी(page) पूर्ण;
-	काष्ठा address_space *address_space = swap_address_space(entry);
+void delete_from_swap_cache(struct page *page)
+{
+	swp_entry_t entry = { .val = page_private(page) };
+	struct address_space *address_space = swap_address_space(entry);
 
 	xa_lock_irq(&address_space->i_pages);
-	__delete_from_swap_cache(page, entry, शून्य);
+	__delete_from_swap_cache(page, entry, NULL);
 	xa_unlock_irq(&address_space->i_pages);
 
 	put_swap_page(page, entry);
 	page_ref_sub(page, thp_nr_pages(page));
-पूर्ण
+}
 
-व्योम clear_shaकरोw_from_swap_cache(पूर्णांक type, अचिन्हित दीर्घ begin,
-				अचिन्हित दीर्घ end)
-अणु
-	अचिन्हित दीर्घ curr = begin;
-	व्योम *old;
+void clear_shadow_from_swap_cache(int type, unsigned long begin,
+				unsigned long end)
+{
+	unsigned long curr = begin;
+	void *old;
 
-	क्रम (;;) अणु
-		अचिन्हित दीर्घ nr_shaकरोws = 0;
+	for (;;) {
+		unsigned long nr_shadows = 0;
 		swp_entry_t entry = swp_entry(type, curr);
-		काष्ठा address_space *address_space = swap_address_space(entry);
+		struct address_space *address_space = swap_address_space(entry);
 		XA_STATE(xas, &address_space->i_pages, curr);
 
 		xa_lock_irq(&address_space->i_pages);
-		xas_क्रम_each(&xas, old, end) अणु
-			अगर (!xa_is_value(old))
-				जारी;
-			xas_store(&xas, शून्य);
-			nr_shaकरोws++;
-		पूर्ण
+		xas_for_each(&xas, old, end) {
+			if (!xa_is_value(old))
+				continue;
+			xas_store(&xas, NULL);
+			nr_shadows++;
+		}
 		xa_unlock_irq(&address_space->i_pages);
 
 		/* search the next swapcache until we meet end */
 		curr >>= SWAP_ADDRESS_SPACE_SHIFT;
 		curr++;
 		curr <<= SWAP_ADDRESS_SPACE_SHIFT;
-		अगर (curr > end)
-			अवरोध;
-	पूर्ण
-पूर्ण
+		if (curr > end)
+			break;
+	}
+}
 
 /* 
- * If we are the only user, then try to मुक्त up the swap cache. 
+ * If we are the only user, then try to free up the swap cache. 
  * 
- * Its ok to check क्रम PageSwapCache without the page lock
+ * Its ok to check for PageSwapCache without the page lock
  * here because we are going to recheck again inside
- * try_to_मुक्त_swap() _with_ the lock.
+ * try_to_free_swap() _with_ the lock.
  * 					- Marcelo
  */
-अटल अंतरभूत व्योम मुक्त_swap_cache(काष्ठा page *page)
-अणु
-	अगर (PageSwapCache(page) && !page_mapped(page) && trylock_page(page)) अणु
-		try_to_मुक्त_swap(page);
+static inline void free_swap_cache(struct page *page)
+{
+	if (PageSwapCache(page) && !page_mapped(page) && trylock_page(page)) {
+		try_to_free_swap(page);
 		unlock_page(page);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* 
- * Perक्रमm a मुक्त_page(), also मुक्तing any swap cache associated with
- * this page अगर it is the last user of the page.
+ * Perform a free_page(), also freeing any swap cache associated with
+ * this page if it is the last user of the page.
  */
-व्योम मुक्त_page_and_swap_cache(काष्ठा page *page)
-अणु
-	मुक्त_swap_cache(page);
-	अगर (!is_huge_zero_page(page))
+void free_page_and_swap_cache(struct page *page)
+{
+	free_swap_cache(page);
+	if (!is_huge_zero_page(page))
 		put_page(page);
-पूर्ण
+}
 
 /*
  * Passed an array of pages, drop them all from swapcache and then release
- * them.  They are हटाओd from the LRU and मुक्तd अगर this is their last use.
+ * them.  They are removed from the LRU and freed if this is their last use.
  */
-व्योम मुक्त_pages_and_swap_cache(काष्ठा page **pages, पूर्णांक nr)
-अणु
-	काष्ठा page **pagep = pages;
-	पूर्णांक i;
+void free_pages_and_swap_cache(struct page **pages, int nr)
+{
+	struct page **pagep = pages;
+	int i;
 
 	lru_add_drain();
-	क्रम (i = 0; i < nr; i++)
-		मुक्त_swap_cache(pagep[i]);
+	for (i = 0; i < nr; i++)
+		free_swap_cache(pagep[i]);
 	release_pages(pagep, nr);
-पूर्ण
+}
 
-अटल अंतरभूत bool swap_use_vma_पढ़ोahead(व्योम)
-अणु
-	वापस READ_ONCE(enable_vma_पढ़ोahead) && !atomic_पढ़ो(&nr_rotate_swap);
-पूर्ण
+static inline bool swap_use_vma_readahead(void)
+{
+	return READ_ONCE(enable_vma_readahead) && !atomic_read(&nr_rotate_swap);
+}
 
 /*
- * Lookup a swap entry in the swap cache. A found page will be वापसed
+ * Lookup a swap entry in the swap cache. A found page will be returned
  * unlocked and with its refcount incremented - we rely on the kernel
- * lock getting page table operations atomic even अगर we drop the page
- * lock beक्रमe वापसing.
+ * lock getting page table operations atomic even if we drop the page
+ * lock before returning.
  */
-काष्ठा page *lookup_swap_cache(swp_entry_t entry, काष्ठा vm_area_काष्ठा *vma,
-			       अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा page *page;
-	काष्ठा swap_info_काष्ठा *si;
+struct page *lookup_swap_cache(swp_entry_t entry, struct vm_area_struct *vma,
+			       unsigned long addr)
+{
+	struct page *page;
+	struct swap_info_struct *si;
 
 	si = get_swap_device(entry);
-	अगर (!si)
-		वापस शून्य;
+	if (!si)
+		return NULL;
 	page = find_get_page(swap_address_space(entry), swp_offset(entry));
 	put_swap_device(si);
 
 	INC_CACHE_INFO(find_total);
-	अगर (page) अणु
-		bool vma_ra = swap_use_vma_पढ़ोahead();
-		bool पढ़ोahead;
+	if (page) {
+		bool vma_ra = swap_use_vma_readahead();
+		bool readahead;
 
 		INC_CACHE_INFO(find_success);
 		/*
-		 * At the moment, we करोn't support PG_पढ़ोahead क्रम anon THP
-		 * so let's bail out rather than confusing the पढ़ोahead stat.
+		 * At the moment, we don't support PG_readahead for anon THP
+		 * so let's bail out rather than confusing the readahead stat.
 		 */
-		अगर (unlikely(PageTransCompound(page)))
-			वापस page;
+		if (unlikely(PageTransCompound(page)))
+			return page;
 
-		पढ़ोahead = TestClearPageReadahead(page);
-		अगर (vma && vma_ra) अणु
-			अचिन्हित दीर्घ ra_val;
-			पूर्णांक win, hits;
+		readahead = TestClearPageReadahead(page);
+		if (vma && vma_ra) {
+			unsigned long ra_val;
+			int win, hits;
 
 			ra_val = GET_SWAP_RA_VAL(vma);
 			win = SWAP_RA_WIN(ra_val);
 			hits = SWAP_RA_HITS(ra_val);
-			अगर (पढ़ोahead)
-				hits = min_t(पूर्णांक, hits + 1, SWAP_RA_HITS_MAX);
-			atomic_दीर्घ_set(&vma->swap_पढ़ोahead_info,
+			if (readahead)
+				hits = min_t(int, hits + 1, SWAP_RA_HITS_MAX);
+			atomic_long_set(&vma->swap_readahead_info,
 					SWAP_RA_VAL(addr, win, hits));
-		पूर्ण
+		}
 
-		अगर (पढ़ोahead) अणु
+		if (readahead) {
 			count_vm_event(SWAP_RA_HIT);
-			अगर (!vma || !vma_ra)
-				atomic_inc(&swapin_पढ़ोahead_hits);
-		पूर्ण
-	पूर्ण
+			if (!vma || !vma_ra)
+				atomic_inc(&swapin_readahead_hits);
+		}
+	}
 
-	वापस page;
-पूर्ण
+	return page;
+}
 
 /**
  * find_get_incore_page - Find and get a page from the page or swap caches.
  * @mapping: The address_space to search.
  * @index: The page cache index.
  *
- * This dअगरfers from find_get_page() in that it will also look क्रम the
+ * This differs from find_get_page() in that it will also look for the
  * page in the swap cache.
  *
- * Return: The found page or %शून्य.
+ * Return: The found page or %NULL.
  */
-काष्ठा page *find_get_incore_page(काष्ठा address_space *mapping, pgoff_t index)
-अणु
+struct page *find_get_incore_page(struct address_space *mapping, pgoff_t index)
+{
 	swp_entry_t swp;
-	काष्ठा swap_info_काष्ठा *si;
-	काष्ठा page *page = pagecache_get_page(mapping, index,
+	struct swap_info_struct *si;
+	struct page *page = pagecache_get_page(mapping, index,
 						FGP_ENTRY | FGP_HEAD, 0);
 
-	अगर (!page)
-		वापस page;
-	अगर (!xa_is_value(page))
-		वापस find_subpage(page, index);
-	अगर (!shmem_mapping(mapping))
-		वापस शून्य;
+	if (!page)
+		return page;
+	if (!xa_is_value(page))
+		return find_subpage(page, index);
+	if (!shmem_mapping(mapping))
+		return NULL;
 
 	swp = radix_to_swp_entry(page);
 	/* Prevent swapoff from happening to us */
 	si = get_swap_device(swp);
-	अगर (!si)
-		वापस शून्य;
+	if (!si)
+		return NULL;
 	page = find_get_page(swap_address_space(swp), swp_offset(swp));
 	put_swap_device(si);
-	वापस page;
-पूर्ण
+	return page;
+}
 
-काष्ठा page *__पढ़ो_swap_cache_async(swp_entry_t entry, gfp_t gfp_mask,
-			काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
+struct page *__read_swap_cache_async(swp_entry_t entry, gfp_t gfp_mask,
+			struct vm_area_struct *vma, unsigned long addr,
 			bool *new_page_allocated)
-अणु
-	काष्ठा swap_info_काष्ठा *si;
-	काष्ठा page *page;
-	व्योम *shaकरोw = शून्य;
+{
+	struct swap_info_struct *si;
+	struct page *page;
+	void *shadow = NULL;
 
 	*new_page_allocated = false;
 
-	क्रम (;;) अणु
-		पूर्णांक err;
+	for (;;) {
+		int err;
 		/*
 		 * First check the swap cache.  Since this is normally
 		 * called after lookup_swap_cache() failed, re-calling
 		 * that would confuse statistics.
 		 */
 		si = get_swap_device(entry);
-		अगर (!si)
-			वापस शून्य;
+		if (!si)
+			return NULL;
 		page = find_get_page(swap_address_space(entry),
 				     swp_offset(entry));
 		put_swap_device(si);
-		अगर (page)
-			वापस page;
+		if (page)
+			return page;
 
 		/*
-		 * Just skip पढ़ो ahead क्रम unused swap slot.
+		 * Just skip read ahead for unused swap slot.
 		 * During swap_off when swap_slot_cache is disabled,
 		 * we have to handle the race between putting
 		 * swap entry in swap cache and marking swap slot
-		 * as SWAP_HAS_CACHE.  That's करोne in later part of code or
-		 * अन्यथा swap_off will be पातed अगर we वापस शून्य.
+		 * as SWAP_HAS_CACHE.  That's done in later part of code or
+		 * else swap_off will be aborted if we return NULL.
 		 */
-		अगर (!__swp_swapcount(entry) && swap_slot_cache_enabled)
-			वापस शून्य;
+		if (!__swp_swapcount(entry) && swap_slot_cache_enabled)
+			return NULL;
 
 		/*
-		 * Get a new page to पढ़ो पूर्णांकo from swap.  Allocate it now,
-		 * beक्रमe marking swap_map SWAP_HAS_CACHE, when -EEXIST will
+		 * Get a new page to read into from swap.  Allocate it now,
+		 * before marking swap_map SWAP_HAS_CACHE, when -EEXIST will
 		 * cause any racers to loop around until we add it to cache.
 		 */
 		page = alloc_page_vma(gfp_mask, vma, addr);
-		अगर (!page)
-			वापस शून्य;
+		if (!page)
+			return NULL;
 
 		/*
-		 * Swap entry may have been मुक्तd since our caller observed it.
+		 * Swap entry may have been freed since our caller observed it.
 		 */
 		err = swapcache_prepare(entry);
-		अगर (!err)
-			अवरोध;
+		if (!err)
+			break;
 
 		put_page(page);
-		अगर (err != -EEXIST)
-			वापस शून्य;
+		if (err != -EEXIST)
+			return NULL;
 
 		/*
 		 * We might race against __delete_from_swap_cache(), and
 		 * stumble across a swap_map entry whose SWAP_HAS_CACHE
 		 * has not yet been cleared.  Or race against another
-		 * __पढ़ो_swap_cache_async(), which has set SWAP_HAS_CACHE
+		 * __read_swap_cache_async(), which has set SWAP_HAS_CACHE
 		 * in swap_map, but not yet added its page to swap cache.
 		 */
 		cond_resched();
-	पूर्ण
+	}
 
 	/*
 	 * The swap entry is ours to swap in. Prepare the new page.
@@ -494,257 +493,257 @@ fail:
 	__SetPageLocked(page);
 	__SetPageSwapBacked(page);
 
-	अगर (mem_cgroup_swapin_अक्षरge_page(page, शून्य, gfp_mask, entry))
-		जाओ fail_unlock;
+	if (mem_cgroup_swapin_charge_page(page, NULL, gfp_mask, entry))
+		goto fail_unlock;
 
-	/* May fail (-ENOMEM) अगर XArray node allocation failed. */
-	अगर (add_to_swap_cache(page, entry, gfp_mask & GFP_RECLAIM_MASK, &shaकरोw))
-		जाओ fail_unlock;
+	/* May fail (-ENOMEM) if XArray node allocation failed. */
+	if (add_to_swap_cache(page, entry, gfp_mask & GFP_RECLAIM_MASK, &shadow))
+		goto fail_unlock;
 
-	mem_cgroup_swapin_unअक्षरge_swap(entry);
+	mem_cgroup_swapin_uncharge_swap(entry);
 
-	अगर (shaकरोw)
-		workingset_refault(page, shaकरोw);
+	if (shadow)
+		workingset_refault(page, shadow);
 
-	/* Caller will initiate पढ़ो पूर्णांकo locked page */
+	/* Caller will initiate read into locked page */
 	lru_cache_add(page);
 	*new_page_allocated = true;
-	वापस page;
+	return page;
 
 fail_unlock:
 	put_swap_page(page, entry);
 	unlock_page(page);
 	put_page(page);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
  * Locate a page of swap in physical memory, reserving swap cache space
- * and पढ़ोing the disk अगर it is not alपढ़ोy cached.
- * A failure वापस means that either the page allocation failed or that
- * the swap entry is no दीर्घer in use.
+ * and reading the disk if it is not already cached.
+ * A failure return means that either the page allocation failed or that
+ * the swap entry is no longer in use.
  */
-काष्ठा page *पढ़ो_swap_cache_async(swp_entry_t entry, gfp_t gfp_mask,
-		काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr, bool करो_poll)
-अणु
+struct page *read_swap_cache_async(swp_entry_t entry, gfp_t gfp_mask,
+		struct vm_area_struct *vma, unsigned long addr, bool do_poll)
+{
 	bool page_was_allocated;
-	काष्ठा page *retpage = __पढ़ो_swap_cache_async(entry, gfp_mask,
+	struct page *retpage = __read_swap_cache_async(entry, gfp_mask,
 			vma, addr, &page_was_allocated);
 
-	अगर (page_was_allocated)
-		swap_पढ़ोpage(retpage, करो_poll);
+	if (page_was_allocated)
+		swap_readpage(retpage, do_poll);
 
-	वापस retpage;
-पूर्ण
+	return retpage;
+}
 
-अटल अचिन्हित पूर्णांक __swapin_nr_pages(अचिन्हित दीर्घ prev_offset,
-				      अचिन्हित दीर्घ offset,
-				      पूर्णांक hits,
-				      पूर्णांक max_pages,
-				      पूर्णांक prev_win)
-अणु
-	अचिन्हित पूर्णांक pages, last_ra;
+static unsigned int __swapin_nr_pages(unsigned long prev_offset,
+				      unsigned long offset,
+				      int hits,
+				      int max_pages,
+				      int prev_win)
+{
+	unsigned int pages, last_ra;
 
 	/*
 	 * This heuristic has been found to work well on both sequential and
-	 * अक्रमom loads, swapping to hard disk or to SSD: please करोn't ask
+	 * random loads, swapping to hard disk or to SSD: please don't ask
 	 * what the "+ 2" means, it just happens to work well, that's all.
 	 */
 	pages = hits + 2;
-	अगर (pages == 2) अणु
+	if (pages == 2) {
 		/*
-		 * We can have no पढ़ोahead hits to judge by: but must not get
-		 * stuck here क्रमever, so check क्रम an adjacent offset instead
-		 * (and करोn't even bother to check whether swap type is same).
+		 * We can have no readahead hits to judge by: but must not get
+		 * stuck here forever, so check for an adjacent offset instead
+		 * (and don't even bother to check whether swap type is same).
 		 */
-		अगर (offset != prev_offset + 1 && offset != prev_offset - 1)
+		if (offset != prev_offset + 1 && offset != prev_offset - 1)
 			pages = 1;
-	पूर्ण अन्यथा अणु
-		अचिन्हित पूर्णांक roundup = 4;
-		जबतक (roundup < pages)
+	} else {
+		unsigned int roundup = 4;
+		while (roundup < pages)
 			roundup <<= 1;
 		pages = roundup;
-	पूर्ण
+	}
 
-	अगर (pages > max_pages)
+	if (pages > max_pages)
 		pages = max_pages;
 
-	/* Don't shrink पढ़ोahead too fast */
+	/* Don't shrink readahead too fast */
 	last_ra = prev_win / 2;
-	अगर (pages < last_ra)
+	if (pages < last_ra)
 		pages = last_ra;
 
-	वापस pages;
-पूर्ण
+	return pages;
+}
 
-अटल अचिन्हित दीर्घ swapin_nr_pages(अचिन्हित दीर्घ offset)
-अणु
-	अटल अचिन्हित दीर्घ prev_offset;
-	अचिन्हित पूर्णांक hits, pages, max_pages;
-	अटल atomic_t last_पढ़ोahead_pages;
+static unsigned long swapin_nr_pages(unsigned long offset)
+{
+	static unsigned long prev_offset;
+	unsigned int hits, pages, max_pages;
+	static atomic_t last_readahead_pages;
 
 	max_pages = 1 << READ_ONCE(page_cluster);
-	अगर (max_pages <= 1)
-		वापस 1;
+	if (max_pages <= 1)
+		return 1;
 
-	hits = atomic_xchg(&swapin_पढ़ोahead_hits, 0);
+	hits = atomic_xchg(&swapin_readahead_hits, 0);
 	pages = __swapin_nr_pages(READ_ONCE(prev_offset), offset, hits,
 				  max_pages,
-				  atomic_पढ़ो(&last_पढ़ोahead_pages));
-	अगर (!hits)
+				  atomic_read(&last_readahead_pages));
+	if (!hits)
 		WRITE_ONCE(prev_offset, offset);
-	atomic_set(&last_पढ़ोahead_pages, pages);
+	atomic_set(&last_readahead_pages, pages);
 
-	वापस pages;
-पूर्ण
+	return pages;
+}
 
 /**
- * swap_cluster_पढ़ोahead - swap in pages in hope we need them soon
+ * swap_cluster_readahead - swap in pages in hope we need them soon
  * @entry: swap entry of this memory
  * @gfp_mask: memory allocation flags
- * @vmf: fault inक्रमmation
+ * @vmf: fault information
  *
- * Returns the काष्ठा page क्रम entry and addr, after queueing swapin.
+ * Returns the struct page for entry and addr, after queueing swapin.
  *
- * Primitive swap पढ़ोahead code. We simply पढ़ो an aligned block of
+ * Primitive swap readahead code. We simply read an aligned block of
  * (1 << page_cluster) entries in the swap area. This method is chosen
- * because it करोesn't cost us any seek समय.  We also make sure to queue
- * the 'original' request together with the पढ़ोahead ones...
+ * because it doesn't cost us any seek time.  We also make sure to queue
+ * the 'original' request together with the readahead ones...
  *
  * This has been extended to use the NUMA policies from the mm triggering
- * the पढ़ोahead.
+ * the readahead.
  *
- * Caller must hold पढ़ो mmap_lock अगर vmf->vma is not शून्य.
+ * Caller must hold read mmap_lock if vmf->vma is not NULL.
  */
-काष्ठा page *swap_cluster_पढ़ोahead(swp_entry_t entry, gfp_t gfp_mask,
-				काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा page *page;
-	अचिन्हित दीर्घ entry_offset = swp_offset(entry);
-	अचिन्हित दीर्घ offset = entry_offset;
-	अचिन्हित दीर्घ start_offset, end_offset;
-	अचिन्हित दीर्घ mask;
-	काष्ठा swap_info_काष्ठा *si = swp_swap_info(entry);
-	काष्ठा blk_plug plug;
-	bool करो_poll = true, page_allocated;
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
-	अचिन्हित दीर्घ addr = vmf->address;
+struct page *swap_cluster_readahead(swp_entry_t entry, gfp_t gfp_mask,
+				struct vm_fault *vmf)
+{
+	struct page *page;
+	unsigned long entry_offset = swp_offset(entry);
+	unsigned long offset = entry_offset;
+	unsigned long start_offset, end_offset;
+	unsigned long mask;
+	struct swap_info_struct *si = swp_swap_info(entry);
+	struct blk_plug plug;
+	bool do_poll = true, page_allocated;
+	struct vm_area_struct *vma = vmf->vma;
+	unsigned long addr = vmf->address;
 
 	mask = swapin_nr_pages(offset) - 1;
-	अगर (!mask)
-		जाओ skip;
+	if (!mask)
+		goto skip;
 
 	/* Test swap type to make sure the dereference is safe */
-	अगर (likely(si->flags & (SWP_BLKDEV | SWP_FS_OPS))) अणु
-		काष्ठा inode *inode = si->swap_file->f_mapping->host;
-		अगर (inode_पढ़ो_congested(inode))
-			जाओ skip;
-	पूर्ण
+	if (likely(si->flags & (SWP_BLKDEV | SWP_FS_OPS))) {
+		struct inode *inode = si->swap_file->f_mapping->host;
+		if (inode_read_congested(inode))
+			goto skip;
+	}
 
-	करो_poll = false;
+	do_poll = false;
 	/* Read a page_cluster sized and aligned cluster around offset. */
 	start_offset = offset & ~mask;
 	end_offset = offset | mask;
-	अगर (!start_offset)	/* First page is swap header. */
+	if (!start_offset)	/* First page is swap header. */
 		start_offset++;
-	अगर (end_offset >= si->max)
+	if (end_offset >= si->max)
 		end_offset = si->max - 1;
 
 	blk_start_plug(&plug);
-	क्रम (offset = start_offset; offset <= end_offset ; offset++) अणु
-		/* Ok, करो the async पढ़ो-ahead now */
-		page = __पढ़ो_swap_cache_async(
+	for (offset = start_offset; offset <= end_offset ; offset++) {
+		/* Ok, do the async read-ahead now */
+		page = __read_swap_cache_async(
 			swp_entry(swp_type(entry), offset),
 			gfp_mask, vma, addr, &page_allocated);
-		अगर (!page)
-			जारी;
-		अगर (page_allocated) अणु
-			swap_पढ़ोpage(page, false);
-			अगर (offset != entry_offset) अणु
+		if (!page)
+			continue;
+		if (page_allocated) {
+			swap_readpage(page, false);
+			if (offset != entry_offset) {
 				SetPageReadahead(page);
 				count_vm_event(SWAP_RA);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		put_page(page);
-	पूर्ण
+	}
 	blk_finish_plug(&plug);
 
 	lru_add_drain();	/* Push any new pages onto the LRU now */
 skip:
-	वापस पढ़ो_swap_cache_async(entry, gfp_mask, vma, addr, करो_poll);
-पूर्ण
+	return read_swap_cache_async(entry, gfp_mask, vma, addr, do_poll);
+}
 
-पूर्णांक init_swap_address_space(अचिन्हित पूर्णांक type, अचिन्हित दीर्घ nr_pages)
-अणु
-	काष्ठा address_space *spaces, *space;
-	अचिन्हित पूर्णांक i, nr;
+int init_swap_address_space(unsigned int type, unsigned long nr_pages)
+{
+	struct address_space *spaces, *space;
+	unsigned int i, nr;
 
 	nr = DIV_ROUND_UP(nr_pages, SWAP_ADDRESS_SPACE_PAGES);
-	spaces = kvसुस्मृति(nr, माप(काष्ठा address_space), GFP_KERNEL);
-	अगर (!spaces)
-		वापस -ENOMEM;
-	क्रम (i = 0; i < nr; i++) अणु
+	spaces = kvcalloc(nr, sizeof(struct address_space), GFP_KERNEL);
+	if (!spaces)
+		return -ENOMEM;
+	for (i = 0; i < nr; i++) {
 		space = spaces + i;
 		xa_init_flags(&space->i_pages, XA_FLAGS_LOCK_IRQ);
 		atomic_set(&space->i_mmap_writable, 0);
 		space->a_ops = &swap_aops;
-		/* swap cache करोesn't use ग_लिखोback related tags */
-		mapping_set_no_ग_लिखोback_tags(space);
-	पूर्ण
+		/* swap cache doesn't use writeback related tags */
+		mapping_set_no_writeback_tags(space);
+	}
 	nr_swapper_spaces[type] = nr;
 	swapper_spaces[type] = spaces;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम निकास_swap_address_space(अचिन्हित पूर्णांक type)
-अणु
-	kvमुक्त(swapper_spaces[type]);
+void exit_swap_address_space(unsigned int type)
+{
+	kvfree(swapper_spaces[type]);
 	nr_swapper_spaces[type] = 0;
-	swapper_spaces[type] = शून्य;
-पूर्ण
+	swapper_spaces[type] = NULL;
+}
 
-अटल अंतरभूत व्योम swap_ra_clamp_pfn(काष्ठा vm_area_काष्ठा *vma,
-				     अचिन्हित दीर्घ faddr,
-				     अचिन्हित दीर्घ lpfn,
-				     अचिन्हित दीर्घ rpfn,
-				     अचिन्हित दीर्घ *start,
-				     अचिन्हित दीर्घ *end)
-अणु
+static inline void swap_ra_clamp_pfn(struct vm_area_struct *vma,
+				     unsigned long faddr,
+				     unsigned long lpfn,
+				     unsigned long rpfn,
+				     unsigned long *start,
+				     unsigned long *end)
+{
 	*start = max3(lpfn, PFN_DOWN(vma->vm_start),
 		      PFN_DOWN(faddr & PMD_MASK));
 	*end = min3(rpfn, PFN_DOWN(vma->vm_end),
 		    PFN_DOWN((faddr & PMD_MASK) + PMD_SIZE));
-पूर्ण
+}
 
-अटल व्योम swap_ra_info(काष्ठा vm_fault *vmf,
-			काष्ठा vma_swap_पढ़ोahead *ra_info)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
-	अचिन्हित दीर्घ ra_val;
+static void swap_ra_info(struct vm_fault *vmf,
+			struct vma_swap_readahead *ra_info)
+{
+	struct vm_area_struct *vma = vmf->vma;
+	unsigned long ra_val;
 	swp_entry_t entry;
-	अचिन्हित दीर्घ faddr, pfn, fpfn;
-	अचिन्हित दीर्घ start, end;
+	unsigned long faddr, pfn, fpfn;
+	unsigned long start, end;
 	pte_t *pte, *orig_pte;
-	अचिन्हित पूर्णांक max_win, hits, prev_win, win, left;
-#अगर_अघोषित CONFIG_64BIT
+	unsigned int max_win, hits, prev_win, win, left;
+#ifndef CONFIG_64BIT
 	pte_t *tpte;
-#पूर्ण_अगर
+#endif
 
-	max_win = 1 << min_t(अचिन्हित पूर्णांक, READ_ONCE(page_cluster),
+	max_win = 1 << min_t(unsigned int, READ_ONCE(page_cluster),
 			     SWAP_RA_ORDER_CEILING);
-	अगर (max_win == 1) अणु
+	if (max_win == 1) {
 		ra_info->win = 1;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	faddr = vmf->address;
 	orig_pte = pte = pte_offset_map(vmf->pmd, faddr);
 	entry = pte_to_swp_entry(*pte);
-	अगर ((unlikely(non_swap_entry(entry)))) अणु
+	if ((unlikely(non_swap_entry(entry)))) {
 		pte_unmap(orig_pte);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	fpfn = PFN_DOWN(faddr);
 	ra_val = GET_SWAP_RA_VAL(vma);
@@ -753,174 +752,174 @@ skip:
 	hits = SWAP_RA_HITS(ra_val);
 	ra_info->win = win = __swapin_nr_pages(pfn, fpfn, hits,
 					       max_win, prev_win);
-	atomic_दीर्घ_set(&vma->swap_पढ़ोahead_info,
+	atomic_long_set(&vma->swap_readahead_info,
 			SWAP_RA_VAL(faddr, win, 0));
 
-	अगर (win == 1) अणु
+	if (win == 1) {
 		pte_unmap(orig_pte);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Copy the PTEs because the page table may be unmapped */
-	अगर (fpfn == pfn + 1)
+	if (fpfn == pfn + 1)
 		swap_ra_clamp_pfn(vma, faddr, fpfn, fpfn + win, &start, &end);
-	अन्यथा अगर (pfn == fpfn + 1)
+	else if (pfn == fpfn + 1)
 		swap_ra_clamp_pfn(vma, faddr, fpfn - win + 1, fpfn + 1,
 				  &start, &end);
-	अन्यथा अणु
+	else {
 		left = (win - 1) / 2;
 		swap_ra_clamp_pfn(vma, faddr, fpfn - left, fpfn + win - left,
 				  &start, &end);
-	पूर्ण
+	}
 	ra_info->nr_pte = end - start;
 	ra_info->offset = fpfn - start;
 	pte -= ra_info->offset;
-#अगर_घोषित CONFIG_64BIT
+#ifdef CONFIG_64BIT
 	ra_info->ptes = pte;
-#अन्यथा
+#else
 	tpte = ra_info->ptes;
-	क्रम (pfn = start; pfn != end; pfn++)
+	for (pfn = start; pfn != end; pfn++)
 		*tpte++ = *pte++;
-#पूर्ण_अगर
+#endif
 	pte_unmap(orig_pte);
-पूर्ण
+}
 
 /**
- * swap_vma_पढ़ोahead - swap in pages in hope we need them soon
+ * swap_vma_readahead - swap in pages in hope we need them soon
  * @fentry: swap entry of this memory
  * @gfp_mask: memory allocation flags
- * @vmf: fault inक्रमmation
+ * @vmf: fault information
  *
- * Returns the काष्ठा page क्रम entry and addr, after queueing swapin.
+ * Returns the struct page for entry and addr, after queueing swapin.
  *
- * Primitive swap पढ़ोahead code. We simply पढ़ो in a few pages whose
- * भव addresses are around the fault address in the same vma.
+ * Primitive swap readahead code. We simply read in a few pages whose
+ * virtual addresses are around the fault address in the same vma.
  *
- * Caller must hold पढ़ो mmap_lock अगर vmf->vma is not शून्य.
+ * Caller must hold read mmap_lock if vmf->vma is not NULL.
  *
  */
-अटल काष्ठा page *swap_vma_पढ़ोahead(swp_entry_t fentry, gfp_t gfp_mask,
-				       काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा blk_plug plug;
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
-	काष्ठा page *page;
+static struct page *swap_vma_readahead(swp_entry_t fentry, gfp_t gfp_mask,
+				       struct vm_fault *vmf)
+{
+	struct blk_plug plug;
+	struct vm_area_struct *vma = vmf->vma;
+	struct page *page;
 	pte_t *pte, pentry;
 	swp_entry_t entry;
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 	bool page_allocated;
-	काष्ठा vma_swap_पढ़ोahead ra_info = अणु
+	struct vma_swap_readahead ra_info = {
 		.win = 1,
-	पूर्ण;
+	};
 
 	swap_ra_info(vmf, &ra_info);
-	अगर (ra_info.win == 1)
-		जाओ skip;
+	if (ra_info.win == 1)
+		goto skip;
 
 	blk_start_plug(&plug);
-	क्रम (i = 0, pte = ra_info.ptes; i < ra_info.nr_pte;
-	     i++, pte++) अणु
+	for (i = 0, pte = ra_info.ptes; i < ra_info.nr_pte;
+	     i++, pte++) {
 		pentry = *pte;
-		अगर (pte_none(pentry))
-			जारी;
-		अगर (pte_present(pentry))
-			जारी;
+		if (pte_none(pentry))
+			continue;
+		if (pte_present(pentry))
+			continue;
 		entry = pte_to_swp_entry(pentry);
-		अगर (unlikely(non_swap_entry(entry)))
-			जारी;
-		page = __पढ़ो_swap_cache_async(entry, gfp_mask, vma,
+		if (unlikely(non_swap_entry(entry)))
+			continue;
+		page = __read_swap_cache_async(entry, gfp_mask, vma,
 					       vmf->address, &page_allocated);
-		अगर (!page)
-			जारी;
-		अगर (page_allocated) अणु
-			swap_पढ़ोpage(page, false);
-			अगर (i != ra_info.offset) अणु
+		if (!page)
+			continue;
+		if (page_allocated) {
+			swap_readpage(page, false);
+			if (i != ra_info.offset) {
 				SetPageReadahead(page);
 				count_vm_event(SWAP_RA);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		put_page(page);
-	पूर्ण
+	}
 	blk_finish_plug(&plug);
 	lru_add_drain();
 skip:
-	वापस पढ़ो_swap_cache_async(fentry, gfp_mask, vma, vmf->address,
+	return read_swap_cache_async(fentry, gfp_mask, vma, vmf->address,
 				     ra_info.win == 1);
-पूर्ण
+}
 
 /**
- * swapin_पढ़ोahead - swap in pages in hope we need them soon
+ * swapin_readahead - swap in pages in hope we need them soon
  * @entry: swap entry of this memory
  * @gfp_mask: memory allocation flags
- * @vmf: fault inक्रमmation
+ * @vmf: fault information
  *
- * Returns the काष्ठा page क्रम entry and addr, after queueing swapin.
+ * Returns the struct page for entry and addr, after queueing swapin.
  *
- * It's a मुख्य entry function क्रम swap पढ़ोahead. By the configuration,
- * it will पढ़ो ahead blocks by cluster-based(ie, physical disk based)
- * or vma-based(ie, भव address based on faulty address) पढ़ोahead.
+ * It's a main entry function for swap readahead. By the configuration,
+ * it will read ahead blocks by cluster-based(ie, physical disk based)
+ * or vma-based(ie, virtual address based on faulty address) readahead.
  */
-काष्ठा page *swapin_पढ़ोahead(swp_entry_t entry, gfp_t gfp_mask,
-				काष्ठा vm_fault *vmf)
-अणु
-	वापस swap_use_vma_पढ़ोahead() ?
-			swap_vma_पढ़ोahead(entry, gfp_mask, vmf) :
-			swap_cluster_पढ़ोahead(entry, gfp_mask, vmf);
-पूर्ण
+struct page *swapin_readahead(swp_entry_t entry, gfp_t gfp_mask,
+				struct vm_fault *vmf)
+{
+	return swap_use_vma_readahead() ?
+			swap_vma_readahead(entry, gfp_mask, vmf) :
+			swap_cluster_readahead(entry, gfp_mask, vmf);
+}
 
-#अगर_घोषित CONFIG_SYSFS
-अटल sमाप_प्रकार vma_ra_enabled_show(काष्ठा kobject *kobj,
-				     काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%s\n",
-			  enable_vma_पढ़ोahead ? "true" : "false");
-पूर्ण
-अटल sमाप_प्रकार vma_ra_enabled_store(काष्ठा kobject *kobj,
-				      काष्ठा kobj_attribute *attr,
-				      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	अगर (!म_भेदन(buf, "true", 4) || !म_भेदन(buf, "1", 1))
-		enable_vma_पढ़ोahead = true;
-	अन्यथा अगर (!म_भेदन(buf, "false", 5) || !म_भेदन(buf, "0", 1))
-		enable_vma_पढ़ोahead = false;
-	अन्यथा
-		वापस -EINVAL;
+#ifdef CONFIG_SYSFS
+static ssize_t vma_ra_enabled_show(struct kobject *kobj,
+				     struct kobj_attribute *attr, char *buf)
+{
+	return sysfs_emit(buf, "%s\n",
+			  enable_vma_readahead ? "true" : "false");
+}
+static ssize_t vma_ra_enabled_store(struct kobject *kobj,
+				      struct kobj_attribute *attr,
+				      const char *buf, size_t count)
+{
+	if (!strncmp(buf, "true", 4) || !strncmp(buf, "1", 1))
+		enable_vma_readahead = true;
+	else if (!strncmp(buf, "false", 5) || !strncmp(buf, "0", 1))
+		enable_vma_readahead = false;
+	else
+		return -EINVAL;
 
-	वापस count;
-पूर्ण
-अटल काष्ठा kobj_attribute vma_ra_enabled_attr =
+	return count;
+}
+static struct kobj_attribute vma_ra_enabled_attr =
 	__ATTR(vma_ra_enabled, 0644, vma_ra_enabled_show,
 	       vma_ra_enabled_store);
 
-अटल काष्ठा attribute *swap_attrs[] = अणु
+static struct attribute *swap_attrs[] = {
 	&vma_ra_enabled_attr.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group swap_attr_group = अणु
+static const struct attribute_group swap_attr_group = {
 	.attrs = swap_attrs,
-पूर्ण;
+};
 
-अटल पूर्णांक __init swap_init_sysfs(व्योम)
-अणु
-	पूर्णांक err;
-	काष्ठा kobject *swap_kobj;
+static int __init swap_init_sysfs(void)
+{
+	int err;
+	struct kobject *swap_kobj;
 
 	swap_kobj = kobject_create_and_add("swap", mm_kobj);
-	अगर (!swap_kobj) अणु
+	if (!swap_kobj) {
 		pr_err("failed to create swap kobject\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	err = sysfs_create_group(swap_kobj, &swap_attr_group);
-	अगर (err) अणु
+	if (err) {
 		pr_err("failed to register swap group\n");
-		जाओ delete_obj;
-	पूर्ण
-	वापस 0;
+		goto delete_obj;
+	}
+	return 0;
 
 delete_obj:
 	kobject_put(swap_kobj);
-	वापस err;
-पूर्ण
+	return err;
+}
 subsys_initcall(swap_init_sysfs);
-#पूर्ण_अगर
+#endif

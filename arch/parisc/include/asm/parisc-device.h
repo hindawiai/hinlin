@@ -1,69 +1,68 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_PARISC_PARISC_DEVICE_H_
-#घोषणा _ASM_PARISC_PARISC_DEVICE_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_PARISC_PARISC_DEVICE_H_
+#define _ASM_PARISC_PARISC_DEVICE_H_
 
-#समावेश <linux/device.h>
+#include <linux/device.h>
 
-काष्ठा parisc_device अणु
-	काष्ठा resource hpa;		/* Hard Physical Address */
-	काष्ठा parisc_device_id id;
-	काष्ठा parisc_driver *driver;	/* Driver क्रम this device */
-	अक्षर		name[80];	/* The hardware description */
-	पूर्णांक		irq;
-	पूर्णांक		aux_irq;	/* Some devices have a second IRQ */
+struct parisc_device {
+	struct resource hpa;		/* Hard Physical Address */
+	struct parisc_device_id id;
+	struct parisc_driver *driver;	/* Driver for this device */
+	char		name[80];	/* The hardware description */
+	int		irq;
+	int		aux_irq;	/* Some devices have a second IRQ */
 
-	अक्षर		hw_path;        /* The module number on this bus */
-	अचिन्हित पूर्णांक	num_addrs;	/* some devices have additional address ranges. */
-	अचिन्हित दीर्घ	*addr;          /* which will be stored here */
+	char		hw_path;        /* The module number on this bus */
+	unsigned int	num_addrs;	/* some devices have additional address ranges. */
+	unsigned long	*addr;          /* which will be stored here */
  
-#अगर_घोषित CONFIG_64BIT
-	/* parms क्रम pdc_pat_cell_module() call */
-	अचिन्हित दीर्घ	pcell_loc;	/* Physical Cell location */
-	अचिन्हित दीर्घ	mod_index;	/* PAT specअगरic - Misc Module info */
+#ifdef CONFIG_64BIT
+	/* parms for pdc_pat_cell_module() call */
+	unsigned long	pcell_loc;	/* Physical Cell location */
+	unsigned long	mod_index;	/* PAT specific - Misc Module info */
 
-	/* generic info वापसed from pdc_pat_cell_module() */
-	अचिन्हित दीर्घ	mod_info;	/* PAT specअगरic - Misc Module info */
-	अचिन्हित दीर्घ	pmod_loc;	/* physical Module location */
-	अचिन्हित दीर्घ	mod0;
-#पूर्ण_अगर
-	u64		dma_mask;	/* DMA mask क्रम I/O */
-	काष्ठा device 	dev;
-पूर्ण;
+	/* generic info returned from pdc_pat_cell_module() */
+	unsigned long	mod_info;	/* PAT specific - Misc Module info */
+	unsigned long	pmod_loc;	/* physical Module location */
+	unsigned long	mod0;
+#endif
+	u64		dma_mask;	/* DMA mask for I/O */
+	struct device 	dev;
+};
 
-काष्ठा parisc_driver अणु
-	काष्ठा parisc_driver *next;
-	अक्षर *name; 
-	स्थिर काष्ठा parisc_device_id *id_table;
-	पूर्णांक (*probe) (काष्ठा parisc_device *dev); /* New device discovered */
-	पूर्णांक (*हटाओ) (काष्ठा parisc_device *dev);
-	काष्ठा device_driver drv;
-पूर्ण;
+struct parisc_driver {
+	struct parisc_driver *next;
+	char *name; 
+	const struct parisc_device_id *id_table;
+	int (*probe) (struct parisc_device *dev); /* New device discovered */
+	int (*remove) (struct parisc_device *dev);
+	struct device_driver drv;
+};
 
 
-#घोषणा to_parisc_device(d)	container_of(d, काष्ठा parisc_device, dev)
-#घोषणा to_parisc_driver(d)	container_of(d, काष्ठा parisc_driver, drv)
-#घोषणा parisc_parent(d)	to_parisc_device(d->dev.parent)
+#define to_parisc_device(d)	container_of(d, struct parisc_device, dev)
+#define to_parisc_driver(d)	container_of(d, struct parisc_driver, drv)
+#define parisc_parent(d)	to_parisc_device(d->dev.parent)
 
-अटल अंतरभूत स्थिर अक्षर *parisc_pathname(काष्ठा parisc_device *d)
-अणु
-	वापस dev_name(&d->dev);
-पूर्ण
+static inline const char *parisc_pathname(struct parisc_device *d)
+{
+	return dev_name(&d->dev);
+}
 
-अटल अंतरभूत व्योम
-parisc_set_drvdata(काष्ठा parisc_device *d, व्योम *p)
-अणु
+static inline void
+parisc_set_drvdata(struct parisc_device *d, void *p)
+{
 	dev_set_drvdata(&d->dev, p);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम *
-parisc_get_drvdata(काष्ठा parisc_device *d)
-अणु
-	वापस dev_get_drvdata(&d->dev);
-पूर्ण
+static inline void *
+parisc_get_drvdata(struct parisc_device *d)
+{
+	return dev_get_drvdata(&d->dev);
+}
 
-बाह्य काष्ठा bus_type parisc_bus_type;
+extern struct bus_type parisc_bus_type;
 
-पूर्णांक iosapic_serial_irq(काष्ठा parisc_device *dev);
+int iosapic_serial_irq(struct parisc_device *dev);
 
-#पूर्ण_अगर /*_ASM_PARISC_PARISC_DEVICE_H_*/
+#endif /*_ASM_PARISC_PARISC_DEVICE_H_*/

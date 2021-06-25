@@ -1,269 +1,268 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * fixed.c
  *
  * Copyright 2008 Wolfson Microelectronics PLC.
  *
- * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
  *
  * Copyright (c) 2009 Nokia Corporation
  * Roger Quadros <ext-roger.quadros@nokia.com>
  *
- * This is useful क्रम प्रणालीs with mixed controllable and
- * non-controllable regulators, as well as क्रम allowing testing on
- * प्रणालीs with no controllable regulators.
+ * This is useful for systems with mixed controllable and
+ * non-controllable regulators, as well as for allowing testing on
+ * systems with no controllable regulators.
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_करोमुख्य.h>
-#समावेश <linux/pm_opp.h>
-#समावेश <linux/regulator/driver.h>
-#समावेश <linux/regulator/fixed.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/regulator/of_regulator.h>
-#समावेश <linux/regulator/machine.h>
-#समावेश <linux/clk.h>
+#include <linux/err.h>
+#include <linux/mutex.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/pm_domain.h>
+#include <linux/pm_opp.h>
+#include <linux/regulator/driver.h>
+#include <linux/regulator/fixed.h>
+#include <linux/gpio/consumer.h>
+#include <linux/slab.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/regulator/of_regulator.h>
+#include <linux/regulator/machine.h>
+#include <linux/clk.h>
 
 
-काष्ठा fixed_voltage_data अणु
-	काष्ठा regulator_desc desc;
-	काष्ठा regulator_dev *dev;
+struct fixed_voltage_data {
+	struct regulator_desc desc;
+	struct regulator_dev *dev;
 
-	काष्ठा clk *enable_घड़ी;
-	अचिन्हित पूर्णांक enable_counter;
-	पूर्णांक perक्रमmance_state;
-पूर्ण;
+	struct clk *enable_clock;
+	unsigned int enable_counter;
+	int performance_state;
+};
 
-काष्ठा fixed_dev_type अणु
-	bool has_enable_घड़ी;
-	bool has_perक्रमmance_state;
-पूर्ण;
+struct fixed_dev_type {
+	bool has_enable_clock;
+	bool has_performance_state;
+};
 
-अटल पूर्णांक reg_घड़ी_enable(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा fixed_voltage_data *priv = rdev_get_drvdata(rdev);
-	पूर्णांक ret = 0;
+static int reg_clock_enable(struct regulator_dev *rdev)
+{
+	struct fixed_voltage_data *priv = rdev_get_drvdata(rdev);
+	int ret = 0;
 
-	ret = clk_prepare_enable(priv->enable_घड़ी);
-	अगर (ret)
-		वापस ret;
-
-	priv->enable_counter++;
-
-	वापस ret;
-पूर्ण
-
-अटल पूर्णांक reg_घड़ी_disable(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा fixed_voltage_data *priv = rdev_get_drvdata(rdev);
-
-	clk_disable_unprepare(priv->enable_घड़ी);
-	priv->enable_counter--;
-
-	वापस 0;
-पूर्ण
-
-अटल पूर्णांक reg_करोमुख्य_enable(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा fixed_voltage_data *priv = rdev_get_drvdata(rdev);
-	काष्ठा device *dev = rdev->dev.parent;
-	पूर्णांक ret;
-
-	ret = dev_pm_genpd_set_perक्रमmance_state(dev, priv->perक्रमmance_state);
-	अगर (ret)
-		वापस ret;
+	ret = clk_prepare_enable(priv->enable_clock);
+	if (ret)
+		return ret;
 
 	priv->enable_counter++;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक reg_करोमुख्य_disable(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा fixed_voltage_data *priv = rdev_get_drvdata(rdev);
-	काष्ठा device *dev = rdev->dev.parent;
-	पूर्णांक ret;
+static int reg_clock_disable(struct regulator_dev *rdev)
+{
+	struct fixed_voltage_data *priv = rdev_get_drvdata(rdev);
 
-	ret = dev_pm_genpd_set_perक्रमmance_state(dev, 0);
-	अगर (ret)
-		वापस ret;
+	clk_disable_unprepare(priv->enable_clock);
+	priv->enable_counter--;
+
+	return 0;
+}
+
+static int reg_domain_enable(struct regulator_dev *rdev)
+{
+	struct fixed_voltage_data *priv = rdev_get_drvdata(rdev);
+	struct device *dev = rdev->dev.parent;
+	int ret;
+
+	ret = dev_pm_genpd_set_performance_state(dev, priv->performance_state);
+	if (ret)
+		return ret;
+
+	priv->enable_counter++;
+
+	return ret;
+}
+
+static int reg_domain_disable(struct regulator_dev *rdev)
+{
+	struct fixed_voltage_data *priv = rdev_get_drvdata(rdev);
+	struct device *dev = rdev->dev.parent;
+	int ret;
+
+	ret = dev_pm_genpd_set_performance_state(dev, 0);
+	if (ret)
+		return ret;
 
 	priv->enable_counter--;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक reg_is_enabled(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा fixed_voltage_data *priv = rdev_get_drvdata(rdev);
+static int reg_is_enabled(struct regulator_dev *rdev)
+{
+	struct fixed_voltage_data *priv = rdev_get_drvdata(rdev);
 
-	वापस priv->enable_counter > 0;
-पूर्ण
+	return priv->enable_counter > 0;
+}
 
 
 /**
- * of_get_fixed_voltage_config - extract fixed_voltage_config काष्ठाure info
- * @dev: device requesting क्रम fixed_voltage_config
+ * of_get_fixed_voltage_config - extract fixed_voltage_config structure info
+ * @dev: device requesting for fixed_voltage_config
  * @desc: regulator description
  *
- * Populates fixed_voltage_config काष्ठाure by extracting data from device
- * tree node, वापसs a poपूर्णांकer to the populated काष्ठाure of शून्य अगर memory
+ * Populates fixed_voltage_config structure by extracting data from device
+ * tree node, returns a pointer to the populated structure of NULL if memory
  * alloc fails.
  */
-अटल काष्ठा fixed_voltage_config *
-of_get_fixed_voltage_config(काष्ठा device *dev,
-			    स्थिर काष्ठा regulator_desc *desc)
-अणु
-	काष्ठा fixed_voltage_config *config;
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा regulator_init_data *init_data;
+static struct fixed_voltage_config *
+of_get_fixed_voltage_config(struct device *dev,
+			    const struct regulator_desc *desc)
+{
+	struct fixed_voltage_config *config;
+	struct device_node *np = dev->of_node;
+	struct regulator_init_data *init_data;
 
-	config = devm_kzalloc(dev, माप(काष्ठा fixed_voltage_config),
+	config = devm_kzalloc(dev, sizeof(struct fixed_voltage_config),
 								 GFP_KERNEL);
-	अगर (!config)
-		वापस ERR_PTR(-ENOMEM);
+	if (!config)
+		return ERR_PTR(-ENOMEM);
 
 	config->init_data = of_get_regulator_init_data(dev, dev->of_node, desc);
-	अगर (!config->init_data)
-		वापस ERR_PTR(-EINVAL);
+	if (!config->init_data)
+		return ERR_PTR(-EINVAL);
 
 	init_data = config->init_data;
-	init_data->स्थिरraपूर्णांकs.apply_uV = 0;
+	init_data->constraints.apply_uV = 0;
 
-	config->supply_name = init_data->स्थिरraपूर्णांकs.name;
-	अगर (init_data->स्थिरraपूर्णांकs.min_uV == init_data->स्थिरraपूर्णांकs.max_uV) अणु
-		config->microvolts = init_data->स्थिरraपूर्णांकs.min_uV;
-	पूर्ण अन्यथा अणु
+	config->supply_name = init_data->constraints.name;
+	if (init_data->constraints.min_uV == init_data->constraints.max_uV) {
+		config->microvolts = init_data->constraints.min_uV;
+	} else {
 		dev_err(dev,
 			 "Fixed regulator specified with variable voltages\n");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (init_data->स्थिरraपूर्णांकs.boot_on)
+	if (init_data->constraints.boot_on)
 		config->enabled_at_boot = true;
 
-	of_property_पढ़ो_u32(np, "startup-delay-us", &config->startup_delay);
-	of_property_पढ़ो_u32(np, "off-on-delay-us", &config->off_on_delay);
+	of_property_read_u32(np, "startup-delay-us", &config->startup_delay);
+	of_property_read_u32(np, "off-on-delay-us", &config->off_on_delay);
 
-	अगर (of_find_property(np, "vin-supply", शून्य))
+	if (of_find_property(np, "vin-supply", NULL))
 		config->input_supply = "vin";
 
-	वापस config;
-पूर्ण
+	return config;
+}
 
-अटल स्थिर काष्ठा regulator_ops fixed_voltage_ops = अणु
-पूर्ण;
+static const struct regulator_ops fixed_voltage_ops = {
+};
 
-अटल स्थिर काष्ठा regulator_ops fixed_voltage_clkenabled_ops = अणु
-	.enable = reg_घड़ी_enable,
-	.disable = reg_घड़ी_disable,
+static const struct regulator_ops fixed_voltage_clkenabled_ops = {
+	.enable = reg_clock_enable,
+	.disable = reg_clock_disable,
 	.is_enabled = reg_is_enabled,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regulator_ops fixed_voltage_करोमुख्य_ops = अणु
-	.enable = reg_करोमुख्य_enable,
-	.disable = reg_करोमुख्य_disable,
+static const struct regulator_ops fixed_voltage_domain_ops = {
+	.enable = reg_domain_enable,
+	.disable = reg_domain_disable,
 	.is_enabled = reg_is_enabled,
-पूर्ण;
+};
 
-अटल पूर्णांक reg_fixed_voltage_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा fixed_voltage_config *config;
-	काष्ठा fixed_voltage_data *drvdata;
-	स्थिर काष्ठा fixed_dev_type *drvtype = of_device_get_match_data(dev);
-	काष्ठा regulator_config cfg = अणु पूर्ण;
-	क्रमागत gpiod_flags gflags;
-	पूर्णांक ret;
+static int reg_fixed_voltage_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct fixed_voltage_config *config;
+	struct fixed_voltage_data *drvdata;
+	const struct fixed_dev_type *drvtype = of_device_get_match_data(dev);
+	struct regulator_config cfg = { };
+	enum gpiod_flags gflags;
+	int ret;
 
-	drvdata = devm_kzalloc(&pdev->dev, माप(काष्ठा fixed_voltage_data),
+	drvdata = devm_kzalloc(&pdev->dev, sizeof(struct fixed_voltage_data),
 			       GFP_KERNEL);
-	अगर (!drvdata)
-		वापस -ENOMEM;
+	if (!drvdata)
+		return -ENOMEM;
 
-	अगर (pdev->dev.of_node) अणु
+	if (pdev->dev.of_node) {
 		config = of_get_fixed_voltage_config(&pdev->dev,
 						     &drvdata->desc);
-		अगर (IS_ERR(config))
-			वापस PTR_ERR(config);
-	पूर्ण अन्यथा अणु
+		if (IS_ERR(config))
+			return PTR_ERR(config);
+	} else {
 		config = dev_get_platdata(&pdev->dev);
-	पूर्ण
+	}
 
-	अगर (!config)
-		वापस -ENOMEM;
+	if (!config)
+		return -ENOMEM;
 
 	drvdata->desc.name = devm_kstrdup(&pdev->dev,
 					  config->supply_name,
 					  GFP_KERNEL);
-	अगर (drvdata->desc.name == शून्य) अणु
+	if (drvdata->desc.name == NULL) {
 		dev_err(&pdev->dev, "Failed to allocate supply name\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	drvdata->desc.type = REGULATOR_VOLTAGE;
 	drvdata->desc.owner = THIS_MODULE;
 
-	अगर (drvtype && drvtype->has_enable_घड़ी) अणु
+	if (drvtype && drvtype->has_enable_clock) {
 		drvdata->desc.ops = &fixed_voltage_clkenabled_ops;
 
-		drvdata->enable_घड़ी = devm_clk_get(dev, शून्य);
-		अगर (IS_ERR(drvdata->enable_घड़ी)) अणु
+		drvdata->enable_clock = devm_clk_get(dev, NULL);
+		if (IS_ERR(drvdata->enable_clock)) {
 			dev_err(dev, "Can't get enable-clock from devicetree\n");
-			वापस -ENOENT;
-		पूर्ण
-	पूर्ण अन्यथा अगर (drvtype && drvtype->has_perक्रमmance_state) अणु
-		drvdata->desc.ops = &fixed_voltage_करोमुख्य_ops;
+			return -ENOENT;
+		}
+	} else if (drvtype && drvtype->has_performance_state) {
+		drvdata->desc.ops = &fixed_voltage_domain_ops;
 
-		drvdata->perक्रमmance_state = of_get_required_opp_perक्रमmance_state(dev->of_node, 0);
-		अगर (drvdata->perक्रमmance_state < 0) अणु
+		drvdata->performance_state = of_get_required_opp_performance_state(dev->of_node, 0);
+		if (drvdata->performance_state < 0) {
 			dev_err(dev, "Can't get performance state from devicetree\n");
-			वापस drvdata->perक्रमmance_state;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return drvdata->performance_state;
+		}
+	} else {
 		drvdata->desc.ops = &fixed_voltage_ops;
-	पूर्ण
+	}
 
-	drvdata->desc.enable_समय = config->startup_delay;
+	drvdata->desc.enable_time = config->startup_delay;
 	drvdata->desc.off_on_delay = config->off_on_delay;
 
-	अगर (config->input_supply) अणु
+	if (config->input_supply) {
 		drvdata->desc.supply_name = devm_kstrdup(&pdev->dev,
 					    config->input_supply,
 					    GFP_KERNEL);
-		अगर (!drvdata->desc.supply_name) अणु
+		if (!drvdata->desc.supply_name) {
 			dev_err(&pdev->dev,
 				"Failed to allocate input supply\n");
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+			return -ENOMEM;
+		}
+	}
 
-	अगर (config->microvolts)
+	if (config->microvolts)
 		drvdata->desc.n_voltages = 1;
 
 	drvdata->desc.fixed_uV = config->microvolts;
 
 	/*
-	 * The संकेत will be inverted by the GPIO core अगर flagged so in the
+	 * The signal will be inverted by the GPIO core if flagged so in the
 	 * descriptor.
 	 */
-	अगर (config->enabled_at_boot)
+	if (config->enabled_at_boot)
 		gflags = GPIOD_OUT_HIGH;
-	अन्यथा
+	else
 		gflags = GPIOD_OUT_LOW;
 
 	/*
 	 * Some fixed regulators share the enable line between two
 	 * regulators which makes it necessary to get a handle on the
-	 * same descriptor क्रम two dअगरferent consumers. This will get
+	 * same descriptor for two different consumers. This will get
 	 * the GPIO descriptor, but only the first call will initialize
-	 * it so any flags such as inversion or खोलो drain will only
+	 * it so any flags such as inversion or open drain will only
 	 * be set up by the first caller and assumed identical on the
 	 * next caller.
 	 *
@@ -273,84 +272,84 @@ of_get_fixed_voltage_config(काष्ठा device *dev,
 
 	/*
 	 * Do not use devm* here: the regulator core takes over the
-	 * lअगरecycle management of the GPIO descriptor.
+	 * lifecycle management of the GPIO descriptor.
 	 */
-	cfg.ena_gpiod = gpiod_get_optional(&pdev->dev, शून्य, gflags);
-	अगर (IS_ERR(cfg.ena_gpiod))
-		वापस PTR_ERR(cfg.ena_gpiod);
+	cfg.ena_gpiod = gpiod_get_optional(&pdev->dev, NULL, gflags);
+	if (IS_ERR(cfg.ena_gpiod))
+		return PTR_ERR(cfg.ena_gpiod);
 
 	cfg.dev = &pdev->dev;
 	cfg.init_data = config->init_data;
 	cfg.driver_data = drvdata;
 	cfg.of_node = pdev->dev.of_node;
 
-	drvdata->dev = devm_regulator_रेजिस्टर(&pdev->dev, &drvdata->desc,
+	drvdata->dev = devm_regulator_register(&pdev->dev, &drvdata->desc,
 					       &cfg);
-	अगर (IS_ERR(drvdata->dev)) अणु
+	if (IS_ERR(drvdata->dev)) {
 		ret = PTR_ERR(drvdata->dev);
 		dev_err(&pdev->dev, "Failed to register regulator: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	platक्रमm_set_drvdata(pdev, drvdata);
+	platform_set_drvdata(pdev, drvdata);
 
 	dev_dbg(&pdev->dev, "%s supplying %duV\n", drvdata->desc.name,
 		drvdata->desc.fixed_uV);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर defined(CONFIG_OF)
-अटल स्थिर काष्ठा fixed_dev_type fixed_voltage_data = अणु
-	.has_enable_घड़ी = false,
-पूर्ण;
+#if defined(CONFIG_OF)
+static const struct fixed_dev_type fixed_voltage_data = {
+	.has_enable_clock = false,
+};
 
-अटल स्थिर काष्ठा fixed_dev_type fixed_clkenable_data = अणु
-	.has_enable_घड़ी = true,
-पूर्ण;
+static const struct fixed_dev_type fixed_clkenable_data = {
+	.has_enable_clock = true,
+};
 
-अटल स्थिर काष्ठा fixed_dev_type fixed_करोमुख्य_data = अणु
-	.has_perक्रमmance_state = true,
-पूर्ण;
+static const struct fixed_dev_type fixed_domain_data = {
+	.has_performance_state = true,
+};
 
-अटल स्थिर काष्ठा of_device_id fixed_of_match[] = अणु
-	अणु
+static const struct of_device_id fixed_of_match[] = {
+	{
 		.compatible = "regulator-fixed",
 		.data = &fixed_voltage_data,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "regulator-fixed-clock",
 		.data = &fixed_clkenable_data,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "regulator-fixed-domain",
-		.data = &fixed_करोमुख्य_data,
-	पूर्ण,
-	अणु
-	पूर्ण,
-पूर्ण;
+		.data = &fixed_domain_data,
+	},
+	{
+	},
+};
 MODULE_DEVICE_TABLE(of, fixed_of_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver regulator_fixed_voltage_driver = अणु
+static struct platform_driver regulator_fixed_voltage_driver = {
 	.probe		= reg_fixed_voltage_probe,
-	.driver		= अणु
+	.driver		= {
 		.name		= "reg-fixed-voltage",
 		.of_match_table = of_match_ptr(fixed_of_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init regulator_fixed_voltage_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&regulator_fixed_voltage_driver);
-पूर्ण
+static int __init regulator_fixed_voltage_init(void)
+{
+	return platform_driver_register(&regulator_fixed_voltage_driver);
+}
 subsys_initcall(regulator_fixed_voltage_init);
 
-अटल व्योम __निकास regulator_fixed_voltage_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&regulator_fixed_voltage_driver);
-पूर्ण
-module_निकास(regulator_fixed_voltage_निकास);
+static void __exit regulator_fixed_voltage_exit(void)
+{
+	platform_driver_unregister(&regulator_fixed_voltage_driver);
+}
+module_exit(regulator_fixed_voltage_exit);
 
 MODULE_AUTHOR("Mark Brown <broonie@opensource.wolfsonmicro.com>");
 MODULE_DESCRIPTION("Fixed voltage regulator");

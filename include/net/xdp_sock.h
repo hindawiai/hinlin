@@ -1,64 +1,63 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-/* AF_XDP पूर्णांकernal functions
+/* SPDX-License-Identifier: GPL-2.0 */
+/* AF_XDP internal functions
  * Copyright(c) 2018 Intel Corporation.
  */
 
-#अगर_अघोषित _LINUX_XDP_SOCK_H
-#घोषणा _LINUX_XDP_SOCK_H
+#ifndef _LINUX_XDP_SOCK_H
+#define _LINUX_XDP_SOCK_H
 
-#समावेश <linux/workqueue.h>
-#समावेश <linux/अगर_xdp.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/mm.h>
-#समावेश <net/sock.h>
+#include <linux/workqueue.h>
+#include <linux/if_xdp.h>
+#include <linux/mutex.h>
+#include <linux/spinlock.h>
+#include <linux/mm.h>
+#include <net/sock.h>
 
-काष्ठा net_device;
-काष्ठा xsk_queue;
-काष्ठा xdp_buff;
+struct net_device;
+struct xsk_queue;
+struct xdp_buff;
 
-काष्ठा xdp_umem अणु
-	व्योम *addrs;
+struct xdp_umem {
+	void *addrs;
 	u64 size;
 	u32 headroom;
 	u32 chunk_size;
 	u32 chunks;
 	u32 npgs;
-	काष्ठा user_काष्ठा *user;
+	struct user_struct *user;
 	refcount_t users;
 	u8 flags;
 	bool zc;
-	काष्ठा page **pgs;
-	पूर्णांक id;
-	काष्ठा list_head xsk_dma_list;
-	काष्ठा work_काष्ठा work;
-पूर्ण;
+	struct page **pgs;
+	int id;
+	struct list_head xsk_dma_list;
+	struct work_struct work;
+};
 
-काष्ठा xsk_map अणु
-	काष्ठा bpf_map map;
+struct xsk_map {
+	struct bpf_map map;
 	spinlock_t lock; /* Synchronize map updates */
-	काष्ठा xdp_sock *xsk_map[];
-पूर्ण;
+	struct xdp_sock *xsk_map[];
+};
 
-काष्ठा xdp_sock अणु
-	/* काष्ठा sock must be the first member of काष्ठा xdp_sock */
-	काष्ठा sock sk;
-	काष्ठा xsk_queue *rx ____cacheline_aligned_in_smp;
-	काष्ठा net_device *dev;
-	काष्ठा xdp_umem *umem;
-	काष्ठा list_head flush_node;
-	काष्ठा xsk_buff_pool *pool;
+struct xdp_sock {
+	/* struct sock must be the first member of struct xdp_sock */
+	struct sock sk;
+	struct xsk_queue *rx ____cacheline_aligned_in_smp;
+	struct net_device *dev;
+	struct xdp_umem *umem;
+	struct list_head flush_node;
+	struct xsk_buff_pool *pool;
 	u16 queue_id;
 	bool zc;
-	क्रमागत अणु
+	enum {
 		XSK_READY = 0,
 		XSK_BOUND,
 		XSK_UNBOUND,
-	पूर्ण state;
+	} state;
 
-	काष्ठा xsk_queue *tx ____cacheline_aligned_in_smp;
-	काष्ठा list_head tx_list;
+	struct xsk_queue *tx ____cacheline_aligned_in_smp;
+	struct list_head tx_list;
 	/* Protects generic receive. */
 	spinlock_t rx_lock;
 
@@ -66,37 +65,37 @@
 	u64 rx_dropped;
 	u64 rx_queue_full;
 
-	काष्ठा list_head map_list;
+	struct list_head map_list;
 	/* Protects map_list */
 	spinlock_t map_list_lock;
 	/* Protects multiple processes in the control path */
-	काष्ठा mutex mutex;
-	काष्ठा xsk_queue *fq_पंचांगp; /* Only as पंचांगp storage beक्रमe bind */
-	काष्ठा xsk_queue *cq_पंचांगp; /* Only as पंचांगp storage beक्रमe bind */
-पूर्ण;
+	struct mutex mutex;
+	struct xsk_queue *fq_tmp; /* Only as tmp storage before bind */
+	struct xsk_queue *cq_tmp; /* Only as tmp storage before bind */
+};
 
-#अगर_घोषित CONFIG_XDP_SOCKETS
+#ifdef CONFIG_XDP_SOCKETS
 
-पूर्णांक xsk_generic_rcv(काष्ठा xdp_sock *xs, काष्ठा xdp_buff *xdp);
-पूर्णांक __xsk_map_redirect(काष्ठा xdp_sock *xs, काष्ठा xdp_buff *xdp);
-व्योम __xsk_map_flush(व्योम);
+int xsk_generic_rcv(struct xdp_sock *xs, struct xdp_buff *xdp);
+int __xsk_map_redirect(struct xdp_sock *xs, struct xdp_buff *xdp);
+void __xsk_map_flush(void);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत पूर्णांक xsk_generic_rcv(काष्ठा xdp_sock *xs, काष्ठा xdp_buff *xdp)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+static inline int xsk_generic_rcv(struct xdp_sock *xs, struct xdp_buff *xdp)
+{
+	return -ENOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक __xsk_map_redirect(काष्ठा xdp_sock *xs, काष्ठा xdp_buff *xdp)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int __xsk_map_redirect(struct xdp_sock *xs, struct xdp_buff *xdp)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत व्योम __xsk_map_flush(व्योम)
-अणु
-पूर्ण
+static inline void __xsk_map_flush(void)
+{
+}
 
-#पूर्ण_अगर /* CONFIG_XDP_SOCKETS */
+#endif /* CONFIG_XDP_SOCKETS */
 
-#पूर्ण_अगर /* _LINUX_XDP_SOCK_H */
+#endif /* _LINUX_XDP_SOCK_H */

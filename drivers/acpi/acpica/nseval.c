@@ -1,18 +1,17 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /*******************************************************************************
  *
  * Module Name: nseval - Object evaluation, includes control method execution
  *
  ******************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acparser.h"
-#समावेश "acinterp.h"
-#समावेश "acnamesp.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acparser.h"
+#include "acinterp.h"
+#include "acnamesp.h"
 
-#घोषणा _COMPONENT          ACPI_NAMESPACE
+#define _COMPONENT          ACPI_NAMESPACE
 ACPI_MODULE_NAME("nseval")
 
 /*******************************************************************************
@@ -22,64 +21,64 @@ ACPI_MODULE_NAME("nseval")
  * PARAMETERS:  info            - Evaluation info block, contains these fields
  *                                and more:
  *                  prefix_node     - Prefix or Method/Object Node to execute
- *                  relative_path   - Name of method to execute, If शून्य, the
+ *                  relative_path   - Name of method to execute, If NULL, the
  *                                    Node is the object to execute
  *                  parameters      - List of parameters to pass to the method,
- *                                    terminated by शून्य. Params itself may be
- *                                    शून्य अगर no parameters are being passed.
+ *                                    terminated by NULL. Params itself may be
+ *                                    NULL if no parameters are being passed.
  *                  parameter_type  - Type of Parameter list
- *                  वापस_object   - Where to put method's वापस value (अगर
- *                                    any). If शून्य, no value is वापसed.
- *                  flags           - ACPI_IGNORE_RETURN_VALUE to delete वापस
+ *                  return_object   - Where to put method's return value (if
+ *                                    any). If NULL, no value is returned.
+ *                  flags           - ACPI_IGNORE_RETURN_VALUE to delete return
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Execute a control method or वापस the current value of an
+ * DESCRIPTION: Execute a control method or return the current value of an
  *              ACPI namespace object.
  *
- * MUTEX:       Locks पूर्णांकerpreter
+ * MUTEX:       Locks interpreter
  *
  ******************************************************************************/
-acpi_status acpi_ns_evaluate(काष्ठा acpi_evaluate_info *info)
-अणु
+acpi_status acpi_ns_evaluate(struct acpi_evaluate_info *info)
+{
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE(ns_evaluate);
 
-	अगर (!info) अणु
-		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
-	पूर्ण
+	if (!info) {
+		return_ACPI_STATUS(AE_BAD_PARAMETER);
+	}
 
-	अगर (!info->node) अणु
+	if (!info->node) {
 		/*
-		 * Get the actual namespace node क्रम the target object अगर we
-		 * need to. Handles these हालs:
+		 * Get the actual namespace node for the target object if we
+		 * need to. Handles these cases:
 		 *
-		 * 1) Null node, valid pathname from root (असलolute path)
+		 * 1) Null node, valid pathname from root (absolute path)
 		 * 2) Node and valid pathname (path relative to Node)
 		 * 3) Node, Null pathname
 		 */
 		status =
 		    acpi_ns_get_node(info->prefix_node, info->relative_pathname,
 				     ACPI_NS_NO_UPSEARCH, &info->node);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस_ACPI_STATUS(status);
-		पूर्ण
-	पूर्ण
+		if (ACPI_FAILURE(status)) {
+			return_ACPI_STATUS(status);
+		}
+	}
 
 	/*
 	 * For a method alias, we must grab the actual method node so that
-	 * proper scoping context will be established beक्रमe execution.
+	 * proper scoping context will be established before execution.
 	 */
-	अगर (acpi_ns_get_type(info->node) == ACPI_TYPE_LOCAL_METHOD_ALIAS) अणु
+	if (acpi_ns_get_type(info->node) == ACPI_TYPE_LOCAL_METHOD_ALIAS) {
 		info->node =
-		    ACPI_CAST_PTR(काष्ठा acpi_namespace_node,
+		    ACPI_CAST_PTR(struct acpi_namespace_node,
 				  info->node->object);
-	पूर्ण
+	}
 
 	/* Complete the info block initialization */
 
-	info->वापस_object = शून्य;
+	info->return_object = NULL;
 	info->node_flags = info->node->flags;
 	info->obj_desc = acpi_ns_get_attached_object(info->node);
 
@@ -87,17 +86,17 @@ acpi_status acpi_ns_evaluate(काष्ठा acpi_evaluate_info *info)
 			  info->relative_pathname, info->node,
 			  acpi_ns_get_attached_object(info->node)));
 
-	/* Get info अगर we have a predefined name (_HID, etc.) */
+	/* Get info if we have a predefined name (_HID, etc.) */
 
 	info->predefined =
 	    acpi_ut_match_predefined_method(info->node->name.ascii);
 
-	/* Get the full pathname to the object, क्रम use in warning messages */
+	/* Get the full pathname to the object, for use in warning messages */
 
 	info->full_pathname = acpi_ns_get_normalized_pathname(info->node, TRUE);
-	अगर (!info->full_pathname) अणु
-		वापस_ACPI_STATUS(AE_NO_MEMORY);
-	पूर्ण
+	if (!info->full_pathname) {
+		return_ACPI_STATUS(AE_NO_MEMORY);
+	}
 
 	/* Optional object evaluation log */
 
@@ -109,14 +108,14 @@ acpi_status acpi_ns_evaluate(काष्ठा acpi_evaluate_info *info)
 	/* Count the number of arguments being passed in */
 
 	info->param_count = 0;
-	अगर (info->parameters) अणु
-		जबतक (info->parameters[info->param_count]) अणु
+	if (info->parameters) {
+		while (info->parameters[info->param_count]) {
 			info->param_count++;
-		पूर्ण
+		}
 
 		/* Warn on impossible argument count */
 
-		अगर (info->param_count > ACPI_METHOD_NUM_ARGS) अणु
+		if (info->param_count > ACPI_METHOD_NUM_ARGS) {
 			ACPI_WARN_PREDEFINED((AE_INFO, info->full_pathname,
 					      ACPI_WARN_ALWAYS,
 					      "Excess arguments (%u) - using only %u",
@@ -124,8 +123,8 @@ acpi_status acpi_ns_evaluate(काष्ठा acpi_evaluate_info *info)
 					      ACPI_METHOD_NUM_ARGS));
 
 			info->param_count = ACPI_METHOD_NUM_ARGS;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
 	 * For predefined names: Check that the declared argument count
@@ -135,7 +134,7 @@ acpi_status acpi_ns_evaluate(काष्ठा acpi_evaluate_info *info)
 				      info->predefined);
 
 	/*
-	 * For all names: Check that the incoming argument count क्रम
+	 * For all names: Check that the incoming argument count for
 	 * this method/object matches the actual ASL/AML definition.
 	 */
 	acpi_ns_check_argument_count(info->full_pathname, info->node,
@@ -146,20 +145,20 @@ acpi_status acpi_ns_evaluate(काष्ठा acpi_evaluate_info *info)
 	acpi_ns_check_argument_types(info);
 
 	/*
-	 * Three major evaluation हालs:
+	 * Three major evaluation cases:
 	 *
 	 * 1) Object types that cannot be evaluated by definition
 	 * 2) The object is a control method -- execute it
-	 * 3) The object is not a method -- just वापस it's current value
+	 * 3) The object is not a method -- just return it's current value
 	 */
-	चयन (acpi_ns_get_type(info->node)) अणु
-	हाल ACPI_TYPE_ANY:
-	हाल ACPI_TYPE_DEVICE:
-	हाल ACPI_TYPE_EVENT:
-	हाल ACPI_TYPE_MUTEX:
-	हाल ACPI_TYPE_REGION:
-	हाल ACPI_TYPE_THERMAL:
-	हाल ACPI_TYPE_LOCAL_SCOPE:
+	switch (acpi_ns_get_type(info->node)) {
+	case ACPI_TYPE_ANY:
+	case ACPI_TYPE_DEVICE:
+	case ACPI_TYPE_EVENT:
+	case ACPI_TYPE_MUTEX:
+	case ACPI_TYPE_REGION:
+	case ACPI_TYPE_THERMAL:
+	case ACPI_TYPE_LOCAL_SCOPE:
 		/*
 		 * 1) Disallow evaluation of these object types. For these,
 		 *    object evaluation is undefined.
@@ -171,22 +170,22 @@ acpi_status acpi_ns_evaluate(काष्ठा acpi_evaluate_info *info)
 			    acpi_ut_get_type_name(info->node->type)));
 
 		status = AE_TYPE;
-		जाओ cleanup;
+		goto cleanup;
 
-	हाल ACPI_TYPE_METHOD:
+	case ACPI_TYPE_METHOD:
 		/*
 		 * 2) Object is a control method - execute it
 		 */
 
-		/* Verअगरy that there is a method object associated with this node */
+		/* Verify that there is a method object associated with this node */
 
-		अगर (!info->obj_desc) अणु
+		if (!info->obj_desc) {
 			ACPI_ERROR((AE_INFO,
 				    "%s: Method has no attached sub-object",
 				    info->full_pathname));
-			status = AE_शून्य_OBJECT;
-			जाओ cleanup;
-		पूर्ण
+			status = AE_NULL_OBJECT;
+			goto cleanup;
+		}
 
 		ACPI_DEBUG_PRINT((ACPI_DB_EXEC,
 				  "**** Execute method [%s] at AML address %p length %X\n",
@@ -196,95 +195,95 @@ acpi_status acpi_ns_evaluate(काष्ठा acpi_evaluate_info *info)
 
 		/*
 		 * Any namespace deletion must acquire both the namespace and
-		 * पूर्णांकerpreter locks to ensure that no thपढ़ो is using the portion of
+		 * interpreter locks to ensure that no thread is using the portion of
 		 * the namespace that is being deleted.
 		 *
-		 * Execute the method via the पूर्णांकerpreter. The पूर्णांकerpreter is locked
-		 * here beक्रमe calling पूर्णांकo the AML parser
+		 * Execute the method via the interpreter. The interpreter is locked
+		 * here before calling into the AML parser
 		 */
-		acpi_ex_enter_पूर्णांकerpreter();
+		acpi_ex_enter_interpreter();
 		status = acpi_ps_execute_method(info);
-		acpi_ex_निकास_पूर्णांकerpreter();
-		अवरोध;
+		acpi_ex_exit_interpreter();
+		break;
 
-	शेष:
+	default:
 		/*
 		 * 3) All other non-method objects -- get the current object value
 		 */
 
 		/*
 		 * Some objects require additional resolution steps (e.g., the Node
-		 * may be a field that must be पढ़ो, etc.) -- we can't just grab
+		 * may be a field that must be read, etc.) -- we can't just grab
 		 * the object out of the node.
 		 *
 		 * Use resolve_node_to_value() to get the associated value.
 		 *
-		 * NOTE: we can get away with passing in शून्य क्रम a walk state because
+		 * NOTE: we can get away with passing in NULL for a walk state because
 		 * the Node is guaranteed to not be a reference to either a method
-		 * local or a method argument (because this पूर्णांकerface is never called
+		 * local or a method argument (because this interface is never called
 		 * from a running method.)
 		 *
-		 * Even though we करो not directly invoke the पूर्णांकerpreter क्रम object
+		 * Even though we do not directly invoke the interpreter for object
 		 * resolution, we must lock it because we could access an op_region.
-		 * The op_region access code assumes that the पूर्णांकerpreter is locked.
+		 * The op_region access code assumes that the interpreter is locked.
 		 */
-		acpi_ex_enter_पूर्णांकerpreter();
+		acpi_ex_enter_interpreter();
 
-		/* TBD: resolve_node_to_value has a strange पूर्णांकerface, fix */
+		/* TBD: resolve_node_to_value has a strange interface, fix */
 
-		info->वापस_object =
-		    ACPI_CAST_PTR(जोड़ acpi_opeअक्रम_object, info->node);
+		info->return_object =
+		    ACPI_CAST_PTR(union acpi_operand_object, info->node);
 
 		status =
-		    acpi_ex_resolve_node_to_value(ACPI_CAST_INसूचीECT_PTR
-						  (काष्ठा acpi_namespace_node,
-						   &info->वापस_object), शून्य);
-		acpi_ex_निकास_पूर्णांकerpreter();
+		    acpi_ex_resolve_node_to_value(ACPI_CAST_INDIRECT_PTR
+						  (struct acpi_namespace_node,
+						   &info->return_object), NULL);
+		acpi_ex_exit_interpreter();
 
-		अगर (ACPI_FAILURE(status)) अणु
-			info->वापस_object = शून्य;
-			जाओ cleanup;
-		पूर्ण
+		if (ACPI_FAILURE(status)) {
+			info->return_object = NULL;
+			goto cleanup;
+		}
 
 		ACPI_DEBUG_PRINT((ACPI_DB_NAMES, "Returned object %p [%s]\n",
-				  info->वापस_object,
+				  info->return_object,
 				  acpi_ut_get_object_type_name(info->
-							       वापस_object)));
+							       return_object)));
 
 		status = AE_CTRL_RETURN_VALUE;	/* Always has a "return value" */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/*
-	 * For predefined names, check the वापस value against the ACPI
-	 * specअगरication. Some incorrect वापस value types are repaired.
+	 * For predefined names, check the return value against the ACPI
+	 * specification. Some incorrect return value types are repaired.
 	 */
-	(व्योम)acpi_ns_check_वापस_value(info->node, info, info->param_count,
-					 status, &info->वापस_object);
+	(void)acpi_ns_check_return_value(info->node, info, info->param_count,
+					 status, &info->return_object);
 
-	/* Check अगर there is a वापस value that must be dealt with */
+	/* Check if there is a return value that must be dealt with */
 
-	अगर (status == AE_CTRL_RETURN_VALUE) अणु
+	if (status == AE_CTRL_RETURN_VALUE) {
 
-		/* If caller करोes not want the वापस value, delete it */
+		/* If caller does not want the return value, delete it */
 
-		अगर (info->flags & ACPI_IGNORE_RETURN_VALUE) अणु
-			acpi_ut_हटाओ_reference(info->वापस_object);
-			info->वापस_object = शून्य;
-		पूर्ण
+		if (info->flags & ACPI_IGNORE_RETURN_VALUE) {
+			acpi_ut_remove_reference(info->return_object);
+			info->return_object = NULL;
+		}
 
-		/* Map AE_CTRL_RETURN_VALUE to AE_OK, we are करोne with it */
+		/* Map AE_CTRL_RETURN_VALUE to AE_OK, we are done with it */
 
 		status = AE_OK;
-	पूर्ण अन्यथा अगर (ACPI_FAILURE(status)) अणु
+	} else if (ACPI_FAILURE(status)) {
 
-		/* If वापस_object exists, delete it */
+		/* If return_object exists, delete it */
 
-		अगर (info->वापस_object) अणु
-			acpi_ut_हटाओ_reference(info->वापस_object);
-			info->वापस_object = शून्य;
-		पूर्ण
-	पूर्ण
+		if (info->return_object) {
+			acpi_ut_remove_reference(info->return_object);
+			info->return_object = NULL;
+		}
+	}
 
 	ACPI_DEBUG_PRINT((ACPI_DB_NAMES,
 			  "*** Completed evaluation of object %s ***\n",
@@ -299,9 +298,9 @@ cleanup:
 
 	/*
 	 * Namespace was unlocked by the handling acpi_ns* function, so we
-	 * just मुक्त the pathname and वापस
+	 * just free the pathname and return
 	 */
 	ACPI_FREE(info->full_pathname);
-	info->full_pathname = शून्य;
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	info->full_pathname = NULL;
+	return_ACPI_STATUS(status);
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * This file is part of the APDS990x sensor driver.
  * Chip is combined proximity and ambient light sensor.
@@ -9,58 +8,58 @@
  * Contact: Samu Onkalo <samu.p.onkalo@nokia.com>
  */
 
-#अगर_अघोषित __APDS990X_H__
-#घोषणा __APDS990X_H__
+#ifndef __APDS990X_H__
+#define __APDS990X_H__
 
 
-#घोषणा APDS_IRLED_CURR_12mA	0x3
-#घोषणा APDS_IRLED_CURR_25mA	0x2
-#घोषणा APDS_IRLED_CURR_50mA	0x1
-#घोषणा APDS_IRLED_CURR_100mA	0x0
+#define APDS_IRLED_CURR_12mA	0x3
+#define APDS_IRLED_CURR_25mA	0x2
+#define APDS_IRLED_CURR_50mA	0x1
+#define APDS_IRLED_CURR_100mA	0x0
 
 /**
- * काष्ठा apds990x_chip_factors - defines effect of the cover winकरोw
+ * struct apds990x_chip_factors - defines effect of the cover window
  * @ga: Total glass attenuation
- * @cf1: clear channel factor 1 क्रम raw to lux conversion
- * @irf1: IR channel factor 1 क्रम raw to lux conversion
- * @cf2: clear channel factor 2 क्रम raw to lux conversion
- * @irf2: IR channel factor 2 क्रम raw to lux conversion
- * @df: device factor क्रम conversion क्रमmulas
+ * @cf1: clear channel factor 1 for raw to lux conversion
+ * @irf1: IR channel factor 1 for raw to lux conversion
+ * @cf2: clear channel factor 2 for raw to lux conversion
+ * @irf2: IR channel factor 2 for raw to lux conversion
+ * @df: device factor for conversion formulas
  *
- * Structure क्रम tuning ALS calculation to match with environment.
+ * Structure for tuning ALS calculation to match with environment.
  * Values depend on the material above the sensor and the sensor
- * itself. If the GA is zero, driver will use uncovered sensor शेष values
- * क्रमmat: decimal value * APDS_PARAM_SCALE except df which is plain पूर्णांकeger.
+ * itself. If the GA is zero, driver will use uncovered sensor default values
+ * format: decimal value * APDS_PARAM_SCALE except df which is plain integer.
  */
-#घोषणा APDS_PARAM_SCALE 4096
-काष्ठा apds990x_chip_factors अणु
-	पूर्णांक ga;
-	पूर्णांक cf1;
-	पूर्णांक irf1;
-	पूर्णांक cf2;
-	पूर्णांक irf2;
-	पूर्णांक df;
-पूर्ण;
+#define APDS_PARAM_SCALE 4096
+struct apds990x_chip_factors {
+	int ga;
+	int cf1;
+	int irf1;
+	int cf2;
+	int irf2;
+	int df;
+};
 
 /**
- * काष्ठा apds990x_platक्रमm_data - platक्रमm data क्रम apsd990x.c driver
+ * struct apds990x_platform_data - platform data for apsd990x.c driver
  * @cf: chip factor data
  * @pddrive: IR-led driving current
- * @ppcount: number of IR pulses used क्रम proximity estimation
- * @setup_resources: पूर्णांकerrupt line setup call back function
- * @release_resources: पूर्णांकerrupt line release call back function
+ * @ppcount: number of IR pulses used for proximity estimation
+ * @setup_resources: interrupt line setup call back function
+ * @release_resources: interrupt line release call back function
  *
  * Proximity detection result depends heavily on correct ppcount, pdrive
- * and cover winकरोw.
+ * and cover window.
  *
  */
 
-काष्ठा apds990x_platक्रमm_data अणु
-	काष्ठा apds990x_chip_factors cf;
+struct apds990x_platform_data {
+	struct apds990x_chip_factors cf;
 	u8     pdrive;
 	u8     ppcount;
-	पूर्णांक    (*setup_resources)(व्योम);
-	पूर्णांक    (*release_resources)(व्योम);
-पूर्ण;
+	int    (*setup_resources)(void);
+	int    (*release_resources)(void);
+};
 
-#पूर्ण_अगर
+#endif

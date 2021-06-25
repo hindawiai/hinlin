@@ -1,41 +1,40 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2007 Lemote, Inc. & Institute of Computing Technology
  * Author: Fuxin Zhang, zhangfx@lemote.com
  */
-#समावेश <linux/pci.h>
+#include <linux/pci.h>
 
-#समावेश <pci.h>
-#समावेश <loongson.h>
+#include <pci.h>
+#include <loongson.h>
 
-अटल काष्ठा resource loongson_pci_mem_resource = अणु
+static struct resource loongson_pci_mem_resource = {
 	.name	= "pci memory space",
 	.start	= LOONGSON_PCI_MEM_START,
 	.end	= LOONGSON_PCI_MEM_END,
 	.flags	= IORESOURCE_MEM,
-पूर्ण;
+};
 
-अटल काष्ठा resource loongson_pci_io_resource = अणु
+static struct resource loongson_pci_io_resource = {
 	.name	= "pci io space",
 	.start	= LOONGSON_PCI_IO_START,
 	.end	= IO_SPACE_LIMIT,
 	.flags	= IORESOURCE_IO,
-पूर्ण;
+};
 
-अटल काष्ठा pci_controller  loongson_pci_controller = अणु
+static struct pci_controller  loongson_pci_controller = {
 	.pci_ops	= &loongson_pci_ops,
 	.io_resource	= &loongson_pci_io_resource,
 	.mem_resource	= &loongson_pci_mem_resource,
 	.mem_offset	= 0x00000000UL,
 	.io_offset	= 0x00000000UL,
-पूर्ण;
+};
 
-अटल व्योम __init setup_pcimap(व्योम)
-अणु
+static void __init setup_pcimap(void)
+{
 	/*
-	 * local to PCI mapping क्रम CPU accessing PCI space
-	 * CPU address space [256M,448M] is winकरोw क्रम accessing pci space
+	 * local to PCI mapping for CPU accessing PCI space
+	 * CPU address space [256M,448M] is window for accessing pci space
 	 * we set pcimap_lo[0,1,2] to map it to pci space[0M,64M], [320M,448M]
 	 *
 	 * pcimap: PCI_MAP2  PCI_Mem_Lo2 PCI_Mem_Lo1 PCI_Mem_Lo0
@@ -58,33 +57,33 @@
 	LOONGSON_PCI_HIT2_SEL_L = 0x00000006ul; /* set this BAR as invalid */
 	LOONGSON_PCI_HIT2_SEL_H = 0x00000000ul;
 
-	/* aव्योम deadlock of PCI पढ़ोing/writing lock operation */
+	/* avoid deadlock of PCI reading/writing lock operation */
 	LOONGSON_PCI_ISR4C = 0xd2000001ul;
 
-	/* can not change gnt to अवरोध pci transfer when device's gnt not
-	deनिश्चित क्रम some broken device */
+	/* can not change gnt to break pci transfer when device's gnt not
+	deassert for some broken device */
 	LOONGSON_PXARB_CFG = 0x00fe0105ul;
 
-#अगर_घोषित CONFIG_CPU_SUPPORTS_ADDRWINCFG
+#ifdef CONFIG_CPU_SUPPORTS_ADDRWINCFG
 	/*
-	 * set cpu addr winकरोw2 to map CPU address space to PCI address space
+	 * set cpu addr window2 to map CPU address space to PCI address space
 	 */
 	LOONGSON_ADDRWIN_CPUTOPCI(ADDRWIN_WIN2, LOONGSON_CPU_MEM_SRC,
 		LOONGSON_PCI_MEM_DST, MMAP_CPUTOPCI_SIZE);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-बाह्य पूर्णांक sbx00_acpi_init(व्योम);
+extern int sbx00_acpi_init(void);
 
-अटल पूर्णांक __init pcibios_init(व्योम)
-अणु
+static int __init pcibios_init(void)
+{
 	setup_pcimap();
 
 	loongson_pci_controller.io_map_base = mips_io_port_base;
-	रेजिस्टर_pci_controller(&loongson_pci_controller);
+	register_pci_controller(&loongson_pci_controller);
 
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 arch_initcall(pcibios_init);

@@ -1,64 +1,63 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  drivers/irqchip/irq-crossbar.c
  *
  *  Copyright (C) 2013 Texas Instruments Incorporated - http://www.ti.com
- *  Author: Sriअक्षरan R <r.sriअक्षरan@ti.com>
+ *  Author: Sricharan R <r.sricharan@ti.com>
  */
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/irqchip.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/slab.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/irqchip.h>
+#include <linux/irqdomain.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/slab.h>
 
-#घोषणा IRQ_FREE	-1
-#घोषणा IRQ_RESERVED	-2
-#घोषणा IRQ_SKIP	-3
-#घोषणा GIC_IRQ_START	32
+#define IRQ_FREE	-1
+#define IRQ_RESERVED	-2
+#define IRQ_SKIP	-3
+#define GIC_IRQ_START	32
 
 /**
- * काष्ठा crossbar_device - crossbar device description
+ * struct crossbar_device - crossbar device description
  * @lock: spinlock serializing access to @irq_map
- * @पूर्णांक_max: maximum number of supported पूर्णांकerrupts
- * @safe_map: safe शेष value to initialize the crossbar
+ * @int_max: maximum number of supported interrupts
+ * @safe_map: safe default value to initialize the crossbar
  * @max_crossbar_sources: Maximum number of crossbar sources
- * @irq_map: array of पूर्णांकerrupts to crossbar number mapping
+ * @irq_map: array of interrupts to crossbar number mapping
  * @crossbar_base: crossbar base address
- * @रेजिस्टर_offsets: offsets क्रम each irq number
- * @ग_लिखो: रेजिस्टर ग_लिखो function poपूर्णांकer
+ * @register_offsets: offsets for each irq number
+ * @write: register write function pointer
  */
-काष्ठा crossbar_device अणु
+struct crossbar_device {
 	raw_spinlock_t lock;
-	uपूर्णांक पूर्णांक_max;
-	uपूर्णांक safe_map;
-	uपूर्णांक max_crossbar_sources;
-	uपूर्णांक *irq_map;
-	व्योम __iomem *crossbar_base;
-	पूर्णांक *रेजिस्टर_offsets;
-	व्योम (*ग_लिखो)(पूर्णांक, पूर्णांक);
-पूर्ण;
+	uint int_max;
+	uint safe_map;
+	uint max_crossbar_sources;
+	uint *irq_map;
+	void __iomem *crossbar_base;
+	int *register_offsets;
+	void (*write)(int, int);
+};
 
-अटल काष्ठा crossbar_device *cb;
+static struct crossbar_device *cb;
 
-अटल व्योम crossbar_ग_लिखोl(पूर्णांक irq_no, पूर्णांक cb_no)
-अणु
-	ग_लिखोl(cb_no, cb->crossbar_base + cb->रेजिस्टर_offsets[irq_no]);
-पूर्ण
+static void crossbar_writel(int irq_no, int cb_no)
+{
+	writel(cb_no, cb->crossbar_base + cb->register_offsets[irq_no]);
+}
 
-अटल व्योम crossbar_ग_लिखोw(पूर्णांक irq_no, पूर्णांक cb_no)
-अणु
-	ग_लिखोw(cb_no, cb->crossbar_base + cb->रेजिस्टर_offsets[irq_no]);
-पूर्ण
+static void crossbar_writew(int irq_no, int cb_no)
+{
+	writew(cb_no, cb->crossbar_base + cb->register_offsets[irq_no]);
+}
 
-अटल व्योम crossbar_ग_लिखोb(पूर्णांक irq_no, पूर्णांक cb_no)
-अणु
-	ग_लिखोb(cb_no, cb->crossbar_base + cb->रेजिस्टर_offsets[irq_no]);
-पूर्ण
+static void crossbar_writeb(int irq_no, int cb_no)
+{
+	writeb(cb_no, cb->crossbar_base + cb->register_offsets[irq_no]);
+}
 
-अटल काष्ठा irq_chip crossbar_chip = अणु
+static struct irq_chip crossbar_chip = {
 	.name			= "CBAR",
 	.irq_eoi		= irq_chip_eoi_parent,
 	.irq_mask		= irq_chip_mask_parent,
@@ -67,301 +66,301 @@
 	.irq_set_type		= irq_chip_set_type_parent,
 	.flags			= IRQCHIP_MASK_ON_SUSPEND |
 				  IRQCHIP_SKIP_SET_WAKE,
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	.irq_set_affinity	= irq_chip_set_affinity_parent,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल पूर्णांक allocate_gic_irq(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित virq,
+static int allocate_gic_irq(struct irq_domain *domain, unsigned virq,
 			    irq_hw_number_t hwirq)
-अणु
-	काष्ठा irq_fwspec fwspec;
-	पूर्णांक i;
-	पूर्णांक err;
+{
+	struct irq_fwspec fwspec;
+	int i;
+	int err;
 
-	अगर (!irq_करोमुख्य_get_of_node(करोमुख्य->parent))
-		वापस -EINVAL;
+	if (!irq_domain_get_of_node(domain->parent))
+		return -EINVAL;
 
 	raw_spin_lock(&cb->lock);
-	क्रम (i = cb->पूर्णांक_max - 1; i >= 0; i--) अणु
-		अगर (cb->irq_map[i] == IRQ_FREE) अणु
+	for (i = cb->int_max - 1; i >= 0; i--) {
+		if (cb->irq_map[i] == IRQ_FREE) {
 			cb->irq_map[i] = hwirq;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	raw_spin_unlock(&cb->lock);
 
-	अगर (i < 0)
-		वापस -ENODEV;
+	if (i < 0)
+		return -ENODEV;
 
-	fwspec.fwnode = करोमुख्य->parent->fwnode;
+	fwspec.fwnode = domain->parent->fwnode;
 	fwspec.param_count = 3;
 	fwspec.param[0] = 0;	/* SPI */
 	fwspec.param[1] = i;
 	fwspec.param[2] = IRQ_TYPE_LEVEL_HIGH;
 
-	err = irq_करोमुख्य_alloc_irqs_parent(करोमुख्य, virq, 1, &fwspec);
-	अगर (err)
+	err = irq_domain_alloc_irqs_parent(domain, virq, 1, &fwspec);
+	if (err)
 		cb->irq_map[i] = IRQ_FREE;
-	अन्यथा
-		cb->ग_लिखो(i, hwirq);
+	else
+		cb->write(i, hwirq);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक crossbar_करोमुख्य_alloc(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक virq,
-				 अचिन्हित पूर्णांक nr_irqs, व्योम *data)
-अणु
-	काष्ठा irq_fwspec *fwspec = data;
+static int crossbar_domain_alloc(struct irq_domain *d, unsigned int virq,
+				 unsigned int nr_irqs, void *data)
+{
+	struct irq_fwspec *fwspec = data;
 	irq_hw_number_t hwirq;
-	पूर्णांक i;
+	int i;
 
-	अगर (fwspec->param_count != 3)
-		वापस -EINVAL;	/* Not GIC compliant */
-	अगर (fwspec->param[0] != 0)
-		वापस -EINVAL;	/* No PPI should poपूर्णांक to this करोमुख्य */
+	if (fwspec->param_count != 3)
+		return -EINVAL;	/* Not GIC compliant */
+	if (fwspec->param[0] != 0)
+		return -EINVAL;	/* No PPI should point to this domain */
 
 	hwirq = fwspec->param[1];
-	अगर ((hwirq + nr_irqs) > cb->max_crossbar_sources)
-		वापस -EINVAL;	/* Can't deal with this */
+	if ((hwirq + nr_irqs) > cb->max_crossbar_sources)
+		return -EINVAL;	/* Can't deal with this */
 
-	क्रम (i = 0; i < nr_irqs; i++) अणु
-		पूर्णांक err = allocate_gic_irq(d, virq + i, hwirq + i);
+	for (i = 0; i < nr_irqs; i++) {
+		int err = allocate_gic_irq(d, virq + i, hwirq + i);
 
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
-		irq_करोमुख्य_set_hwirq_and_chip(d, virq + i, hwirq + i,
-					      &crossbar_chip, शून्य);
-	पूर्ण
+		irq_domain_set_hwirq_and_chip(d, virq + i, hwirq + i,
+					      &crossbar_chip, NULL);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * crossbar_करोमुख्य_मुक्त - unmap/मुक्त a crossbar<->irq connection
- * @करोमुख्य: करोमुख्य of irq to unmap
+ * crossbar_domain_free - unmap/free a crossbar<->irq connection
+ * @domain: domain of irq to unmap
  * @virq: virq number
- * @nr_irqs: number of irqs to मुक्त
+ * @nr_irqs: number of irqs to free
  *
- * We करो not मुख्यtain a use count of total number of map/unmap
- * calls क्रम a particular irq to find out अगर a irq can be really
+ * We do not maintain a use count of total number of map/unmap
+ * calls for a particular irq to find out if a irq can be really
  * unmapped. This is because unmap is called during irq_dispose_mapping(irq),
  * after which irq is anyways unusable. So an explicit map has to be called
  * after that.
  */
-अटल व्योम crossbar_करोमुख्य_मुक्त(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक virq,
-				 अचिन्हित पूर्णांक nr_irqs)
-अणु
-	पूर्णांक i;
+static void crossbar_domain_free(struct irq_domain *domain, unsigned int virq,
+				 unsigned int nr_irqs)
+{
+	int i;
 
 	raw_spin_lock(&cb->lock);
-	क्रम (i = 0; i < nr_irqs; i++) अणु
-		काष्ठा irq_data *d = irq_करोमुख्य_get_irq_data(करोमुख्य, virq + i);
+	for (i = 0; i < nr_irqs; i++) {
+		struct irq_data *d = irq_domain_get_irq_data(domain, virq + i);
 
-		irq_करोमुख्य_reset_irq_data(d);
+		irq_domain_reset_irq_data(d);
 		cb->irq_map[d->hwirq] = IRQ_FREE;
-		cb->ग_लिखो(d->hwirq, cb->safe_map);
-	पूर्ण
+		cb->write(d->hwirq, cb->safe_map);
+	}
 	raw_spin_unlock(&cb->lock);
-पूर्ण
+}
 
-अटल पूर्णांक crossbar_करोमुख्य_translate(काष्ठा irq_करोमुख्य *d,
-				     काष्ठा irq_fwspec *fwspec,
-				     अचिन्हित दीर्घ *hwirq,
-				     अचिन्हित पूर्णांक *type)
-अणु
-	अगर (is_of_node(fwspec->fwnode)) अणु
-		अगर (fwspec->param_count != 3)
-			वापस -EINVAL;
+static int crossbar_domain_translate(struct irq_domain *d,
+				     struct irq_fwspec *fwspec,
+				     unsigned long *hwirq,
+				     unsigned int *type)
+{
+	if (is_of_node(fwspec->fwnode)) {
+		if (fwspec->param_count != 3)
+			return -EINVAL;
 
-		/* No PPI should poपूर्णांक to this करोमुख्य */
-		अगर (fwspec->param[0] != 0)
-			वापस -EINVAL;
+		/* No PPI should point to this domain */
+		if (fwspec->param[0] != 0)
+			return -EINVAL;
 
 		*hwirq = fwspec->param[1];
 		*type = fwspec->param[2] & IRQ_TYPE_SENSE_MASK;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops crossbar_करोमुख्य_ops = अणु
-	.alloc		= crossbar_करोमुख्य_alloc,
-	.मुक्त		= crossbar_करोमुख्य_मुक्त,
-	.translate	= crossbar_करोमुख्य_translate,
-पूर्ण;
+static const struct irq_domain_ops crossbar_domain_ops = {
+	.alloc		= crossbar_domain_alloc,
+	.free		= crossbar_domain_free,
+	.translate	= crossbar_domain_translate,
+};
 
-अटल पूर्णांक __init crossbar_of_init(काष्ठा device_node *node)
-अणु
+static int __init crossbar_of_init(struct device_node *node)
+{
 	u32 max = 0, entry, reg_size;
-	पूर्णांक i, size, reserved = 0;
-	स्थिर __be32 *irqsr;
-	पूर्णांक ret = -ENOMEM;
+	int i, size, reserved = 0;
+	const __be32 *irqsr;
+	int ret = -ENOMEM;
 
-	cb = kzalloc(माप(*cb), GFP_KERNEL);
+	cb = kzalloc(sizeof(*cb), GFP_KERNEL);
 
-	अगर (!cb)
-		वापस ret;
+	if (!cb)
+		return ret;
 
 	cb->crossbar_base = of_iomap(node, 0);
-	अगर (!cb->crossbar_base)
-		जाओ err_cb;
+	if (!cb->crossbar_base)
+		goto err_cb;
 
-	of_property_पढ़ो_u32(node, "ti,max-crossbar-sources",
+	of_property_read_u32(node, "ti,max-crossbar-sources",
 			     &cb->max_crossbar_sources);
-	अगर (!cb->max_crossbar_sources) अणु
+	if (!cb->max_crossbar_sources) {
 		pr_err("missing 'ti,max-crossbar-sources' property\n");
 		ret = -EINVAL;
-		जाओ err_base;
-	पूर्ण
+		goto err_base;
+	}
 
-	of_property_पढ़ो_u32(node, "ti,max-irqs", &max);
-	अगर (!max) अणु
+	of_property_read_u32(node, "ti,max-irqs", &max);
+	if (!max) {
 		pr_err("missing 'ti,max-irqs' property\n");
 		ret = -EINVAL;
-		जाओ err_base;
-	पूर्ण
-	cb->irq_map = kसुस्मृति(max, माप(पूर्णांक), GFP_KERNEL);
-	अगर (!cb->irq_map)
-		जाओ err_base;
+		goto err_base;
+	}
+	cb->irq_map = kcalloc(max, sizeof(int), GFP_KERNEL);
+	if (!cb->irq_map)
+		goto err_base;
 
-	cb->पूर्णांक_max = max;
+	cb->int_max = max;
 
-	क्रम (i = 0; i < max; i++)
+	for (i = 0; i < max; i++)
 		cb->irq_map[i] = IRQ_FREE;
 
 	/* Get and mark reserved irqs */
 	irqsr = of_get_property(node, "ti,irqs-reserved", &size);
-	अगर (irqsr) अणु
-		size /= माप(__be32);
+	if (irqsr) {
+		size /= sizeof(__be32);
 
-		क्रम (i = 0; i < size; i++) अणु
-			of_property_पढ़ो_u32_index(node,
+		for (i = 0; i < size; i++) {
+			of_property_read_u32_index(node,
 						   "ti,irqs-reserved",
 						   i, &entry);
-			अगर (entry >= max) अणु
+			if (entry >= max) {
 				pr_err("Invalid reserved entry\n");
 				ret = -EINVAL;
-				जाओ err_irq_map;
-			पूर्ण
+				goto err_irq_map;
+			}
 			cb->irq_map[entry] = IRQ_RESERVED;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Skip irqs hardwired to bypass the crossbar */
 	irqsr = of_get_property(node, "ti,irqs-skip", &size);
-	अगर (irqsr) अणु
-		size /= माप(__be32);
+	if (irqsr) {
+		size /= sizeof(__be32);
 
-		क्रम (i = 0; i < size; i++) अणु
-			of_property_पढ़ो_u32_index(node,
+		for (i = 0; i < size; i++) {
+			of_property_read_u32_index(node,
 						   "ti,irqs-skip",
 						   i, &entry);
-			अगर (entry >= max) अणु
+			if (entry >= max) {
 				pr_err("Invalid skip entry\n");
 				ret = -EINVAL;
-				जाओ err_irq_map;
-			पूर्ण
+				goto err_irq_map;
+			}
 			cb->irq_map[entry] = IRQ_SKIP;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 
-	cb->रेजिस्टर_offsets = kसुस्मृति(max, माप(पूर्णांक), GFP_KERNEL);
-	अगर (!cb->रेजिस्टर_offsets)
-		जाओ err_irq_map;
+	cb->register_offsets = kcalloc(max, sizeof(int), GFP_KERNEL);
+	if (!cb->register_offsets)
+		goto err_irq_map;
 
-	of_property_पढ़ो_u32(node, "ti,reg-size", &reg_size);
+	of_property_read_u32(node, "ti,reg-size", &reg_size);
 
-	चयन (reg_size) अणु
-	हाल 1:
-		cb->ग_लिखो = crossbar_ग_लिखोb;
-		अवरोध;
-	हाल 2:
-		cb->ग_लिखो = crossbar_ग_लिखोw;
-		अवरोध;
-	हाल 4:
-		cb->ग_लिखो = crossbar_ग_लिखोl;
-		अवरोध;
-	शेष:
+	switch (reg_size) {
+	case 1:
+		cb->write = crossbar_writeb;
+		break;
+	case 2:
+		cb->write = crossbar_writew;
+		break;
+	case 4:
+		cb->write = crossbar_writel;
+		break;
+	default:
 		pr_err("Invalid reg-size property\n");
 		ret = -EINVAL;
-		जाओ err_reg_offset;
-		अवरोध;
-	पूर्ण
+		goto err_reg_offset;
+		break;
+	}
 
 	/*
 	 * Register offsets are not linear because of the
 	 * reserved irqs. so find and store the offsets once.
 	 */
-	क्रम (i = 0; i < max; i++) अणु
-		अगर (cb->irq_map[i] == IRQ_RESERVED)
-			जारी;
+	for (i = 0; i < max; i++) {
+		if (cb->irq_map[i] == IRQ_RESERVED)
+			continue;
 
-		cb->रेजिस्टर_offsets[i] = reserved;
+		cb->register_offsets[i] = reserved;
 		reserved += reg_size;
-	पूर्ण
+	}
 
-	of_property_पढ़ो_u32(node, "ti,irqs-safe-map", &cb->safe_map);
+	of_property_read_u32(node, "ti,irqs-safe-map", &cb->safe_map);
 	/* Initialize the crossbar with safe map to start with */
-	क्रम (i = 0; i < max; i++) अणु
-		अगर (cb->irq_map[i] == IRQ_RESERVED ||
+	for (i = 0; i < max; i++) {
+		if (cb->irq_map[i] == IRQ_RESERVED ||
 		    cb->irq_map[i] == IRQ_SKIP)
-			जारी;
+			continue;
 
-		cb->ग_लिखो(i, cb->safe_map);
-	पूर्ण
+		cb->write(i, cb->safe_map);
+	}
 
 	raw_spin_lock_init(&cb->lock);
 
-	वापस 0;
+	return 0;
 
 err_reg_offset:
-	kमुक्त(cb->रेजिस्टर_offsets);
+	kfree(cb->register_offsets);
 err_irq_map:
-	kमुक्त(cb->irq_map);
+	kfree(cb->irq_map);
 err_base:
 	iounmap(cb->crossbar_base);
 err_cb:
-	kमुक्त(cb);
+	kfree(cb);
 
-	cb = शून्य;
-	वापस ret;
-पूर्ण
+	cb = NULL;
+	return ret;
+}
 
-अटल पूर्णांक __init irqcrossbar_init(काष्ठा device_node *node,
-				   काष्ठा device_node *parent)
-अणु
-	काष्ठा irq_करोमुख्य *parent_करोमुख्य, *करोमुख्य;
-	पूर्णांक err;
+static int __init irqcrossbar_init(struct device_node *node,
+				   struct device_node *parent)
+{
+	struct irq_domain *parent_domain, *domain;
+	int err;
 
-	अगर (!parent) अणु
+	if (!parent) {
 		pr_err("%pOF: no parent, giving up\n", node);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	parent_करोमुख्य = irq_find_host(parent);
-	अगर (!parent_करोमुख्य) अणु
+	parent_domain = irq_find_host(parent);
+	if (!parent_domain) {
 		pr_err("%pOF: unable to obtain parent domain\n", node);
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	err = crossbar_of_init(node);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	करोमुख्य = irq_करोमुख्य_add_hierarchy(parent_करोमुख्य, 0,
+	domain = irq_domain_add_hierarchy(parent_domain, 0,
 					  cb->max_crossbar_sources,
-					  node, &crossbar_करोमुख्य_ops,
-					  शून्य);
-	अगर (!करोमुख्य) अणु
+					  node, &crossbar_domain_ops,
+					  NULL);
+	if (!domain) {
 		pr_err("%pOF: failed to allocated domain\n", node);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 IRQCHIP_DECLARE(ti_irqcrossbar, "ti,irq-crossbar", irqcrossbar_init);

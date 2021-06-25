@@ -1,70 +1,69 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित LOCKS_H
-#घोषणा LOCKS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef LOCKS_H
+#define LOCKS_H
 
-#समावेश <सीमा.स>
-#समावेश <pthपढ़ो.h>
-#समावेश <stdbool.h>
+#include <limits.h>
+#include <pthread.h>
+#include <stdbool.h>
 
-#समावेश "assume.h"
-#समावेश "bug_on.h"
-#समावेश "preempt.h"
+#include "assume.h"
+#include "bug_on.h"
+#include "preempt.h"
 
-पूर्णांक nondet_पूर्णांक(व्योम);
+int nondet_int(void);
 
-#घोषणा __acquire(x)
-#घोषणा __acquires(x)
-#घोषणा __release(x)
-#घोषणा __releases(x)
+#define __acquire(x)
+#define __acquires(x)
+#define __release(x)
+#define __releases(x)
 
 /* Only use one lock mechanism. Select which one. */
-#अगर_घोषित PTHREAD_LOCK
-काष्ठा lock_impl अणु
-	pthपढ़ो_mutex_t mutex;
-पूर्ण;
+#ifdef PTHREAD_LOCK
+struct lock_impl {
+	pthread_mutex_t mutex;
+};
 
-अटल अंतरभूत व्योम lock_impl_lock(काष्ठा lock_impl *lock)
-अणु
-	BUG_ON(pthपढ़ो_mutex_lock(&lock->mutex));
-पूर्ण
+static inline void lock_impl_lock(struct lock_impl *lock)
+{
+	BUG_ON(pthread_mutex_lock(&lock->mutex));
+}
 
-अटल अंतरभूत व्योम lock_impl_unlock(काष्ठा lock_impl *lock)
-अणु
-	BUG_ON(pthपढ़ो_mutex_unlock(&lock->mutex));
-पूर्ण
+static inline void lock_impl_unlock(struct lock_impl *lock)
+{
+	BUG_ON(pthread_mutex_unlock(&lock->mutex));
+}
 
-अटल अंतरभूत bool lock_impl_trylock(काष्ठा lock_impl *lock)
-अणु
-	पूर्णांक err = pthपढ़ो_mutex_trylock(&lock->mutex);
+static inline bool lock_impl_trylock(struct lock_impl *lock)
+{
+	int err = pthread_mutex_trylock(&lock->mutex);
 
-	अगर (!err)
-		वापस true;
-	अन्यथा अगर (err == EBUSY)
-		वापस false;
+	if (!err)
+		return true;
+	else if (err == EBUSY)
+		return false;
 	BUG();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम lock_impl_init(काष्ठा lock_impl *lock)
-अणु
-	pthपढ़ो_mutex_init(&lock->mutex, शून्य);
-पूर्ण
+static inline void lock_impl_init(struct lock_impl *lock)
+{
+	pthread_mutex_init(&lock->mutex, NULL);
+}
 
-#घोषणा LOCK_IMPL_INITIALIZER अणु.mutex = PTHREAD_MUTEX_INITIALIZERपूर्ण
+#define LOCK_IMPL_INITIALIZER {.mutex = PTHREAD_MUTEX_INITIALIZER}
 
-#अन्यथा /* !defined(PTHREAD_LOCK) */
-/* Spinlock that assumes that it always माला_लो the lock immediately. */
+#else /* !defined(PTHREAD_LOCK) */
+/* Spinlock that assumes that it always gets the lock immediately. */
 
-काष्ठा lock_impl अणु
+struct lock_impl {
 	bool locked;
-पूर्ण;
+};
 
-अटल अंतरभूत bool lock_impl_trylock(काष्ठा lock_impl *lock)
-अणु
-#अगर_घोषित RUN
+static inline bool lock_impl_trylock(struct lock_impl *lock)
+{
+#ifdef RUN
 	/* TODO: Should this be a test and set? */
-	वापस __sync_bool_compare_and_swap(&lock->locked, false, true);
-#अन्यथा
+	return __sync_bool_compare_and_swap(&lock->locked, false, true);
+#else
 	__CPROVER_atomic_begin();
 	bool old_locked = lock->locked;
 	lock->locked = true;
@@ -73,29 +72,29 @@
 	/* Minimal barrier to prevent accesses leaking out of lock. */
 	__CPROVER_fence("RRfence", "RWfence");
 
-	वापस !old_locked;
-#पूर्ण_अगर
-पूर्ण
+	return !old_locked;
+#endif
+}
 
-अटल अंतरभूत व्योम lock_impl_lock(काष्ठा lock_impl *lock)
-अणु
+static inline void lock_impl_lock(struct lock_impl *lock)
+{
 	/*
-	 * CBMC करोesn't support busy रुकोing, so just assume that the
+	 * CBMC doesn't support busy waiting, so just assume that the
 	 * lock is available.
 	 */
 	assume(lock_impl_trylock(lock));
 
 	/*
-	 * If the lock was alपढ़ोy held by this thपढ़ो then the assumption
+	 * If the lock was already held by this thread then the assumption
 	 * is unsatisfiable (deadlock).
 	 */
-पूर्ण
+}
 
-अटल अंतरभूत व्योम lock_impl_unlock(काष्ठा lock_impl *lock)
-अणु
-#अगर_घोषित RUN
+static inline void lock_impl_unlock(struct lock_impl *lock)
+{
+#ifdef RUN
 	BUG_ON(!__sync_bool_compare_and_swap(&lock->locked, true, false));
-#अन्यथा
+#else
 	/* Minimal barrier to prevent accesses leaking out of lock. */
 	__CPROVER_fence("RWfence", "WWfence");
 
@@ -105,118 +104,118 @@
 	__CPROVER_atomic_end();
 
 	BUG_ON(!old_locked);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल अंतरभूत व्योम lock_impl_init(काष्ठा lock_impl *lock)
-अणु
+static inline void lock_impl_init(struct lock_impl *lock)
+{
 	lock->locked = false;
-पूर्ण
+}
 
-#घोषणा LOCK_IMPL_INITIALIZER अणु.locked = falseपूर्ण
+#define LOCK_IMPL_INITIALIZER {.locked = false}
 
-#पूर्ण_अगर /* !defined(PTHREAD_LOCK) */
+#endif /* !defined(PTHREAD_LOCK) */
 
 /*
  * Implement spinlocks using the lock mechanism. Wrap the lock to prevent mixing
- * locks of dअगरferent types.
+ * locks of different types.
  */
-प्रकार काष्ठा अणु
-	काष्ठा lock_impl पूर्णांकernal_lock;
-पूर्ण spinlock_t;
+typedef struct {
+	struct lock_impl internal_lock;
+} spinlock_t;
 
-#घोषणा SPIN_LOCK_UNLOCKED अणु.पूर्णांकernal_lock = LOCK_IMPL_INITIALIZERपूर्ण
-#घोषणा __SPIN_LOCK_UNLOCKED(x) SPIN_LOCK_UNLOCKED
-#घोषणा DEFINE_SPINLOCK(x) spinlock_t x = SPIN_LOCK_UNLOCKED
+#define SPIN_LOCK_UNLOCKED {.internal_lock = LOCK_IMPL_INITIALIZER}
+#define __SPIN_LOCK_UNLOCKED(x) SPIN_LOCK_UNLOCKED
+#define DEFINE_SPINLOCK(x) spinlock_t x = SPIN_LOCK_UNLOCKED
 
-अटल अंतरभूत व्योम spin_lock_init(spinlock_t *lock)
-अणु
-	lock_impl_init(&lock->पूर्णांकernal_lock);
-पूर्ण
+static inline void spin_lock_init(spinlock_t *lock)
+{
+	lock_impl_init(&lock->internal_lock);
+}
 
-अटल अंतरभूत व्योम spin_lock(spinlock_t *lock)
-अणु
+static inline void spin_lock(spinlock_t *lock)
+{
 	/*
-	 * Spin locks also need to be हटाओd in order to eliminate all
-	 * memory barriers. They are only used by the ग_लिखो side anyway.
+	 * Spin locks also need to be removed in order to eliminate all
+	 * memory barriers. They are only used by the write side anyway.
 	 */
-#अगर_अघोषित NO_SYNC_SMP_MB
+#ifndef NO_SYNC_SMP_MB
 	preempt_disable();
-	lock_impl_lock(&lock->पूर्णांकernal_lock);
-#पूर्ण_अगर
-पूर्ण
+	lock_impl_lock(&lock->internal_lock);
+#endif
+}
 
-अटल अंतरभूत व्योम spin_unlock(spinlock_t *lock)
-अणु
-#अगर_अघोषित NO_SYNC_SMP_MB
-	lock_impl_unlock(&lock->पूर्णांकernal_lock);
+static inline void spin_unlock(spinlock_t *lock)
+{
+#ifndef NO_SYNC_SMP_MB
+	lock_impl_unlock(&lock->internal_lock);
 	preempt_enable();
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-/* Don't bother with पूर्णांकerrupts */
-#घोषणा spin_lock_irq(lock) spin_lock(lock)
-#घोषणा spin_unlock_irq(lock) spin_unlock(lock)
-#घोषणा spin_lock_irqsave(lock, flags) spin_lock(lock)
-#घोषणा spin_unlock_irqrestore(lock, flags) spin_unlock(lock)
+/* Don't bother with interrupts */
+#define spin_lock_irq(lock) spin_lock(lock)
+#define spin_unlock_irq(lock) spin_unlock(lock)
+#define spin_lock_irqsave(lock, flags) spin_lock(lock)
+#define spin_unlock_irqrestore(lock, flags) spin_unlock(lock)
 
 /*
- * This is supposed to वापस an पूर्णांक, but I think that a bool should work as
+ * This is supposed to return an int, but I think that a bool should work as
  * well.
  */
-अटल अंतरभूत bool spin_trylock(spinlock_t *lock)
-अणु
-#अगर_अघोषित NO_SYNC_SMP_MB
+static inline bool spin_trylock(spinlock_t *lock)
+{
+#ifndef NO_SYNC_SMP_MB
 	preempt_disable();
-	वापस lock_impl_trylock(&lock->पूर्णांकernal_lock);
-#अन्यथा
-	वापस true;
-#पूर्ण_अगर
-पूर्ण
+	return lock_impl_trylock(&lock->internal_lock);
+#else
+	return true;
+#endif
+}
 
-काष्ठा completion अणु
+struct completion {
 	/* Hopefuly this won't overflow. */
-	अचिन्हित पूर्णांक count;
-पूर्ण;
+	unsigned int count;
+};
 
-#घोषणा COMPLETION_INITIALIZER(x) अणु.count = 0पूर्ण
-#घोषणा DECLARE_COMPLETION(x) काष्ठा completion x = COMPLETION_INITIALIZER(x)
-#घोषणा DECLARE_COMPLETION_ONSTACK(x) DECLARE_COMPLETION(x)
+#define COMPLETION_INITIALIZER(x) {.count = 0}
+#define DECLARE_COMPLETION(x) struct completion x = COMPLETION_INITIALIZER(x)
+#define DECLARE_COMPLETION_ONSTACK(x) DECLARE_COMPLETION(x)
 
-अटल अंतरभूत व्योम init_completion(काष्ठा completion *c)
-अणु
+static inline void init_completion(struct completion *c)
+{
 	c->count = 0;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम रुको_क्रम_completion(काष्ठा completion *c)
-अणु
-	अचिन्हित पूर्णांक prev_count = __sync_fetch_and_sub(&c->count, 1);
+static inline void wait_for_completion(struct completion *c)
+{
+	unsigned int prev_count = __sync_fetch_and_sub(&c->count, 1);
 
 	assume(prev_count);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम complete(काष्ठा completion *c)
-अणु
-	अचिन्हित पूर्णांक prev_count = __sync_fetch_and_add(&c->count, 1);
+static inline void complete(struct completion *c)
+{
+	unsigned int prev_count = __sync_fetch_and_add(&c->count, 1);
 
-	BUG_ON(prev_count == अच_पूर्णांक_उच्च);
-पूर्ण
+	BUG_ON(prev_count == UINT_MAX);
+}
 
-/* This function probably isn't very useful क्रम CBMC. */
-अटल अंतरभूत bool try_रुको_क्रम_completion(काष्ठा completion *c)
-अणु
+/* This function probably isn't very useful for CBMC. */
+static inline bool try_wait_for_completion(struct completion *c)
+{
 	BUG();
-पूर्ण
+}
 
-अटल अंतरभूत bool completion_करोne(काष्ठा completion *c)
-अणु
-	वापस c->count;
-पूर्ण
+static inline bool completion_done(struct completion *c)
+{
+	return c->count;
+}
 
 /* TODO: Implement complete_all */
-अटल अंतरभूत व्योम complete_all(काष्ठा completion *c)
-अणु
+static inline void complete_all(struct completion *c)
+{
 	BUG();
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif

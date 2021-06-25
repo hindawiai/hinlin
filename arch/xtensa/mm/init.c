@@ -1,12 +1,11 @@
-<शैली गुरु>
 /*
  * arch/xtensa/mm/init.c
  *
  * Derived from MIPS, PPC.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2001 - 2005 Tensilica Inc.
  * Copyright (C) 2014 - 2016 Cadence Design Systems Inc.
@@ -17,40 +16,40 @@
  * Kevin Chea
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/memblock.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/swap.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/nodemask.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/of_fdt.h>
-#समावेश <linux/dma-map-ops.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/memblock.h>
+#include <linux/gfp.h>
+#include <linux/highmem.h>
+#include <linux/swap.h>
+#include <linux/mman.h>
+#include <linux/nodemask.h>
+#include <linux/mm.h>
+#include <linux/of_fdt.h>
+#include <linux/dma-map-ops.h>
 
-#समावेश <यंत्र/bootparam.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/sections.h>
-#समावेश <यंत्र/sysस्मृति.स>
+#include <asm/bootparam.h>
+#include <asm/page.h>
+#include <asm/sections.h>
+#include <asm/sysmem.h>
 
 /*
- * Initialize the booपंचांगem प्रणाली and give it all low memory we have available.
+ * Initialize the bootmem system and give it all low memory we have available.
  */
 
-व्योम __init booपंचांगem_init(व्योम)
-अणु
+void __init bootmem_init(void)
+{
 	/* Reserve all memory below PHYS_OFFSET, as memory
-	 * accounting करोesn't work क्रम pages below that address.
+	 * accounting doesn't work for pages below that address.
 	 *
 	 * If PHYS_OFFSET is zero reserve page at address 0:
-	 * successfull allocations should never वापस शून्य.
+	 * successfull allocations should never return NULL.
 	 */
 	memblock_reserve(0, PHYS_OFFSET ? PHYS_OFFSET : 1);
 
 	early_init_fdt_scan_reserved_mem();
 
-	अगर (!memblock_phys_mem_size())
+	if (!memblock_phys_mem_size())
 		panic("No memory found!\n");
 
 	min_low_pfn = PFN_UP(memblock_start_of_DRAM());
@@ -65,155 +64,155 @@
 	dma_contiguous_reserve(PFN_PHYS(max_low_pfn));
 
 	memblock_dump_all();
-पूर्ण
+}
 
 
-व्योम __init zones_init(व्योम)
-अणु
+void __init zones_init(void)
+{
 	/* All pages are DMA-able, so we put them all in the DMA zone. */
-	अचिन्हित दीर्घ max_zone_pfn[MAX_NR_ZONES] = अणु
+	unsigned long max_zone_pfn[MAX_NR_ZONES] = {
 		[ZONE_NORMAL] = max_low_pfn,
-#अगर_घोषित CONFIG_HIGHMEM
+#ifdef CONFIG_HIGHMEM
 		[ZONE_HIGHMEM] = max_pfn,
-#पूर्ण_अगर
-	पूर्ण;
-	मुक्त_area_init(max_zone_pfn);
-पूर्ण
+#endif
+	};
+	free_area_init(max_zone_pfn);
+}
 
-अटल व्योम __init मुक्त_highpages(व्योम)
-अणु
-#अगर_घोषित CONFIG_HIGHMEM
-	अचिन्हित दीर्घ max_low = max_low_pfn;
+static void __init free_highpages(void)
+{
+#ifdef CONFIG_HIGHMEM
+	unsigned long max_low = max_low_pfn;
 	phys_addr_t range_start, range_end;
 	u64 i;
 
-	/* set highmem page मुक्त */
-	क्रम_each_मुक्त_mem_range(i, NUMA_NO_NODE, MEMBLOCK_NONE,
-				&range_start, &range_end, शून्य) अणु
-		अचिन्हित दीर्घ start = PFN_UP(range_start);
-		अचिन्हित दीर्घ end = PFN_DOWN(range_end);
+	/* set highmem page free */
+	for_each_free_mem_range(i, NUMA_NO_NODE, MEMBLOCK_NONE,
+				&range_start, &range_end, NULL) {
+		unsigned long start = PFN_UP(range_start);
+		unsigned long end = PFN_DOWN(range_end);
 
 		/* Ignore complete lowmem entries */
-		अगर (end <= max_low)
-			जारी;
+		if (end <= max_low)
+			continue;
 
 		/* Truncate partial highmem entries */
-		अगर (start < max_low)
+		if (start < max_low)
 			start = max_low;
 
-		क्रम (; start < end; start++)
-			मुक्त_highmem_page(pfn_to_page(start));
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+		for (; start < end; start++)
+			free_highmem_page(pfn_to_page(start));
+	}
+#endif
+}
 
 /*
  * Initialize memory pages.
  */
 
-व्योम __init mem_init(व्योम)
-अणु
-	मुक्त_highpages();
+void __init mem_init(void)
+{
+	free_highpages();
 
 	max_mapnr = max_pfn - ARCH_PFN_OFFSET;
-	high_memory = (व्योम *)__va(max_low_pfn << PAGE_SHIFT);
+	high_memory = (void *)__va(max_low_pfn << PAGE_SHIFT);
 
-	memblock_मुक्त_all();
+	memblock_free_all();
 
 	pr_info("virtual kernel memory layout:\n"
-#अगर_घोषित CONFIG_KASAN
+#ifdef CONFIG_KASAN
 		"    kasan   : 0x%08lx - 0x%08lx  (%5lu MB)\n"
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_MMU
+#endif
+#ifdef CONFIG_MMU
 		"    vmalloc : 0x%08lx - 0x%08lx  (%5lu MB)\n"
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_HIGHMEM
+#endif
+#ifdef CONFIG_HIGHMEM
 		"    pkmap   : 0x%08lx - 0x%08lx  (%5lu kB)\n"
 		"    fixmap  : 0x%08lx - 0x%08lx  (%5lu kB)\n"
-#पूर्ण_अगर
+#endif
 		"    lowmem  : 0x%08lx - 0x%08lx  (%5lu MB)\n"
 		"    .text   : 0x%08lx - 0x%08lx  (%5lu kB)\n"
 		"    .rodata : 0x%08lx - 0x%08lx  (%5lu kB)\n"
 		"    .data   : 0x%08lx - 0x%08lx  (%5lu kB)\n"
 		"    .init   : 0x%08lx - 0x%08lx  (%5lu kB)\n"
 		"    .bss    : 0x%08lx - 0x%08lx  (%5lu kB)\n",
-#अगर_घोषित CONFIG_KASAN
+#ifdef CONFIG_KASAN
 		KASAN_SHADOW_START, KASAN_SHADOW_START + KASAN_SHADOW_SIZE,
 		KASAN_SHADOW_SIZE >> 20,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_MMU
+#endif
+#ifdef CONFIG_MMU
 		VMALLOC_START, VMALLOC_END,
 		(VMALLOC_END - VMALLOC_START) >> 20,
-#अगर_घोषित CONFIG_HIGHMEM
+#ifdef CONFIG_HIGHMEM
 		PKMAP_BASE, PKMAP_BASE + LAST_PKMAP * PAGE_SIZE,
 		(LAST_PKMAP*PAGE_SIZE) >> 10,
 		FIXADDR_START, FIXADDR_END,
 		(FIXADDR_END - FIXADDR_START) >> 10,
-#पूर्ण_अगर
+#endif
 		PAGE_OFFSET, PAGE_OFFSET +
 		(max_low_pfn - min_low_pfn) * PAGE_SIZE,
-#अन्यथा
+#else
 		min_low_pfn * PAGE_SIZE, max_low_pfn * PAGE_SIZE,
-#पूर्ण_अगर
+#endif
 		((max_low_pfn - min_low_pfn) * PAGE_SIZE) >> 20,
-		(अचिन्हित दीर्घ)_text, (अचिन्हित दीर्घ)_etext,
-		(अचिन्हित दीर्घ)(_etext - _text) >> 10,
-		(अचिन्हित दीर्घ)__start_rodata, (अचिन्हित दीर्घ)__end_rodata,
-		(अचिन्हित दीर्घ)(__end_rodata - __start_rodata) >> 10,
-		(अचिन्हित दीर्घ)_sdata, (अचिन्हित दीर्घ)_edata,
-		(अचिन्हित दीर्घ)(_edata - _sdata) >> 10,
-		(अचिन्हित दीर्घ)__init_begin, (अचिन्हित दीर्घ)__init_end,
-		(अचिन्हित दीर्घ)(__init_end - __init_begin) >> 10,
-		(अचिन्हित दीर्घ)__bss_start, (अचिन्हित दीर्घ)__bss_stop,
-		(अचिन्हित दीर्घ)(__bss_stop - __bss_start) >> 10);
-पूर्ण
+		(unsigned long)_text, (unsigned long)_etext,
+		(unsigned long)(_etext - _text) >> 10,
+		(unsigned long)__start_rodata, (unsigned long)__end_rodata,
+		(unsigned long)(__end_rodata - __start_rodata) >> 10,
+		(unsigned long)_sdata, (unsigned long)_edata,
+		(unsigned long)(_edata - _sdata) >> 10,
+		(unsigned long)__init_begin, (unsigned long)__init_end,
+		(unsigned long)(__init_end - __init_begin) >> 10,
+		(unsigned long)__bss_start, (unsigned long)__bss_stop,
+		(unsigned long)(__bss_stop - __bss_start) >> 10);
+}
 
-अटल व्योम __init parse_memmap_one(अक्षर *p)
-अणु
-	अक्षर *oldp;
-	अचिन्हित दीर्घ start_at, mem_size;
+static void __init parse_memmap_one(char *p)
+{
+	char *oldp;
+	unsigned long start_at, mem_size;
 
-	अगर (!p)
-		वापस;
+	if (!p)
+		return;
 
 	oldp = p;
 	mem_size = memparse(p, &p);
-	अगर (p == oldp)
-		वापस;
+	if (p == oldp)
+		return;
 
-	चयन (*p) अणु
-	हाल '@':
+	switch (*p) {
+	case '@':
 		start_at = memparse(p + 1, &p);
 		memblock_add(start_at, mem_size);
-		अवरोध;
+		break;
 
-	हाल '$':
+	case '$':
 		start_at = memparse(p + 1, &p);
 		memblock_reserve(start_at, mem_size);
-		अवरोध;
+		break;
 
-	हाल 0:
+	case 0:
 		memblock_reserve(mem_size, -mem_size);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		pr_warn("Unrecognized memmap syntax: %s\n", p);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक __init parse_memmap_opt(अक्षर *str)
-अणु
-	जबतक (str) अणु
-		अक्षर *k = म_अक्षर(str, ',');
+static int __init parse_memmap_opt(char *str)
+{
+	while (str) {
+		char *k = strchr(str, ',');
 
-		अगर (k)
+		if (k)
 			*k++ = 0;
 
 		parse_memmap_one(str);
 		str = k;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_param("memmap", parse_memmap_opt);

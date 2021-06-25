@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * usage.c
  *
@@ -8,22 +7,22 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-#समावेश "util.h"
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <linux/compiler.h>
+#include "util.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <linux/compiler.h>
 
-अटल __noवापस व्योम usage_builtin(स्थिर अक्षर *err)
-अणु
-	ख_लिखो(मानक_त्रुटि, "\n Usage: %s\n", err);
-	निकास(129);
-पूर्ण
+static __noreturn void usage_builtin(const char *err)
+{
+	fprintf(stderr, "\n Usage: %s\n", err);
+	exit(129);
+}
 
-/* If we are in a dlखोलो()ed .so ग_लिखो to a global variable would segfault
- * (ugh), so keep things अटल. */
-अटल व्योम (*usage_routine)(स्थिर अक्षर *err) __noवापस = usage_builtin;
+/* If we are in a dlopen()ed .so write to a global variable would segfault
+ * (ugh), so keep things static. */
+static void (*usage_routine)(const char *err) __noreturn = usage_builtin;
 
-व्योम usage(स्थिर अक्षर *err)
-अणु
+void usage(const char *err)
+{
 	usage_routine(err);
-पूर्ण
+}

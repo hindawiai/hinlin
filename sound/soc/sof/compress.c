@@ -1,148 +1,147 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause)
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
 //
 // This file is provided under a dual BSD/GPLv2 license.  When using or
-// redistributing this file, you may करो so under either license.
+// redistributing this file, you may do so under either license.
 //
 // Copyright(c) 2019-2020 Intel Corporation. All rights reserved.
 //
-// Author: Cezary Rojewski <cezary.rojewski@पूर्णांकel.com>
+// Author: Cezary Rojewski <cezary.rojewski@intel.com>
 //
 
-#समावेश <sound/soc.h>
-#समावेश "compress.h"
-#समावेश "ops.h"
-#समावेश "probe.h"
+#include <sound/soc.h>
+#include "compress.h"
+#include "ops.h"
+#include "probe.h"
 
-काष्ठा snd_compress_ops sof_probe_compressed_ops = अणु
+struct snd_compress_ops sof_probe_compressed_ops = {
 	.copy		= sof_probe_compr_copy,
-पूर्ण;
+};
 EXPORT_SYMBOL(sof_probe_compressed_ops);
 
-पूर्णांक sof_probe_compr_खोलो(काष्ठा snd_compr_stream *cstream,
-		काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा snd_sof_dev *sdev =
+int sof_probe_compr_open(struct snd_compr_stream *cstream,
+		struct snd_soc_dai *dai)
+{
+	struct snd_sof_dev *sdev =
 				snd_soc_component_get_drvdata(dai->component);
-	पूर्णांक ret;
+	int ret;
 
 	ret = snd_sof_probe_compr_assign(sdev, cstream, dai);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dai->dev, "Failed to assign probe stream: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	sdev->extractor_stream_tag = ret;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(sof_probe_compr_खोलो);
+	return 0;
+}
+EXPORT_SYMBOL(sof_probe_compr_open);
 
-पूर्णांक sof_probe_compr_मुक्त(काष्ठा snd_compr_stream *cstream,
-		काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा snd_sof_dev *sdev =
+int sof_probe_compr_free(struct snd_compr_stream *cstream,
+		struct snd_soc_dai *dai)
+{
+	struct snd_sof_dev *sdev =
 				snd_soc_component_get_drvdata(dai->component);
-	काष्ठा sof_probe_poपूर्णांक_desc *desc;
-	माप_प्रकार num_desc;
-	पूर्णांक i, ret;
+	struct sof_probe_point_desc *desc;
+	size_t num_desc;
+	int i, ret;
 
-	/* disconnect all probe poपूर्णांकs */
-	ret = sof_ipc_probe_poपूर्णांकs_info(sdev, &desc, &num_desc);
-	अगर (ret < 0) अणु
+	/* disconnect all probe points */
+	ret = sof_ipc_probe_points_info(sdev, &desc, &num_desc);
+	if (ret < 0) {
 		dev_err(dai->dev, "Failed to get probe points: %d\n", ret);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	क्रम (i = 0; i < num_desc; i++)
-		sof_ipc_probe_poपूर्णांकs_हटाओ(sdev, &desc[i].buffer_id, 1);
-	kमुक्त(desc);
+	for (i = 0; i < num_desc; i++)
+		sof_ipc_probe_points_remove(sdev, &desc[i].buffer_id, 1);
+	kfree(desc);
 
-निकास:
+exit:
 	ret = sof_ipc_probe_deinit(sdev);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(dai->dev, "Failed to deinit probe: %d\n", ret);
 
 	sdev->extractor_stream_tag = SOF_PROBE_INVALID_NODE_ID;
-	snd_compr_मुक्त_pages(cstream);
+	snd_compr_free_pages(cstream);
 
-	वापस snd_sof_probe_compr_मुक्त(sdev, cstream, dai);
-पूर्ण
-EXPORT_SYMBOL(sof_probe_compr_मुक्त);
+	return snd_sof_probe_compr_free(sdev, cstream, dai);
+}
+EXPORT_SYMBOL(sof_probe_compr_free);
 
-पूर्णांक sof_probe_compr_set_params(काष्ठा snd_compr_stream *cstream,
-		काष्ठा snd_compr_params *params, काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा snd_compr_runसमय *rtd = cstream->runसमय;
-	काष्ठा snd_sof_dev *sdev =
+int sof_probe_compr_set_params(struct snd_compr_stream *cstream,
+		struct snd_compr_params *params, struct snd_soc_dai *dai)
+{
+	struct snd_compr_runtime *rtd = cstream->runtime;
+	struct snd_sof_dev *sdev =
 				snd_soc_component_get_drvdata(dai->component);
-	पूर्णांक ret;
+	int ret;
 
 	cstream->dma_buffer.dev.type = SNDRV_DMA_TYPE_DEV_SG;
 	cstream->dma_buffer.dev.dev = sdev->dev;
-	ret = snd_compr_दो_स्मृति_pages(cstream, rtd->buffer_size);
-	अगर (ret < 0)
-		वापस ret;
+	ret = snd_compr_malloc_pages(cstream, rtd->buffer_size);
+	if (ret < 0)
+		return ret;
 
 	ret = snd_sof_probe_compr_set_params(sdev, cstream, params, dai);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = sof_ipc_probe_init(sdev, sdev->extractor_stream_tag,
 				 rtd->dma_bytes);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dai->dev, "Failed to init probe: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(sof_probe_compr_set_params);
 
-पूर्णांक sof_probe_compr_trigger(काष्ठा snd_compr_stream *cstream, पूर्णांक cmd,
-		काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा snd_sof_dev *sdev =
+int sof_probe_compr_trigger(struct snd_compr_stream *cstream, int cmd,
+		struct snd_soc_dai *dai)
+{
+	struct snd_sof_dev *sdev =
 				snd_soc_component_get_drvdata(dai->component);
 
-	वापस snd_sof_probe_compr_trigger(sdev, cstream, cmd, dai);
-पूर्ण
+	return snd_sof_probe_compr_trigger(sdev, cstream, cmd, dai);
+}
 EXPORT_SYMBOL(sof_probe_compr_trigger);
 
-पूर्णांक sof_probe_compr_poपूर्णांकer(काष्ठा snd_compr_stream *cstream,
-		काष्ठा snd_compr_tstamp *tstamp, काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा snd_sof_dev *sdev =
+int sof_probe_compr_pointer(struct snd_compr_stream *cstream,
+		struct snd_compr_tstamp *tstamp, struct snd_soc_dai *dai)
+{
+	struct snd_sof_dev *sdev =
 				snd_soc_component_get_drvdata(dai->component);
 
-	वापस snd_sof_probe_compr_poपूर्णांकer(sdev, cstream, tstamp, dai);
-पूर्ण
-EXPORT_SYMBOL(sof_probe_compr_poपूर्णांकer);
+	return snd_sof_probe_compr_pointer(sdev, cstream, tstamp, dai);
+}
+EXPORT_SYMBOL(sof_probe_compr_pointer);
 
-पूर्णांक sof_probe_compr_copy(काष्ठा snd_soc_component *component,
-			 काष्ठा snd_compr_stream *cstream,
-			 अक्षर __user *buf, माप_प्रकार count)
-अणु
-	काष्ठा snd_compr_runसमय *rtd = cstream->runसमय;
-	अचिन्हित पूर्णांक offset, n;
-	व्योम *ptr;
-	पूर्णांक ret;
+int sof_probe_compr_copy(struct snd_soc_component *component,
+			 struct snd_compr_stream *cstream,
+			 char __user *buf, size_t count)
+{
+	struct snd_compr_runtime *rtd = cstream->runtime;
+	unsigned int offset, n;
+	void *ptr;
+	int ret;
 
-	अगर (count > rtd->buffer_size)
+	if (count > rtd->buffer_size)
 		count = rtd->buffer_size;
 
-	भाग_u64_rem(rtd->total_bytes_transferred, rtd->buffer_size, &offset);
+	div_u64_rem(rtd->total_bytes_transferred, rtd->buffer_size, &offset);
 	ptr = rtd->dma_area + offset;
 	n = rtd->buffer_size - offset;
 
-	अगर (count < n) अणु
+	if (count < n) {
 		ret = copy_to_user(buf, ptr, count);
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = copy_to_user(buf, ptr, n);
 		ret += copy_to_user(buf + n, rtd->dma_area, count - n);
-	पूर्ण
+	}
 
-	अगर (ret)
-		वापस count - ret;
-	वापस count;
-पूर्ण
+	if (ret)
+		return count - ret;
+	return count;
+}
 EXPORT_SYMBOL(sof_probe_compr_copy);

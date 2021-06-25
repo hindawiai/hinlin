@@ -1,80 +1,79 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * u-blox GNSS receiver driver
  *
  * Copyright (C) 2018 Johan Hovold <johan@kernel.org>
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/gnss.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/serdev.h>
+#include <linux/errno.h>
+#include <linux/gnss.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/regulator/consumer.h>
+#include <linux/serdev.h>
 
-#समावेश "serial.h"
+#include "serial.h"
 
-काष्ठा ubx_data अणु
-	काष्ठा regulator *v_bckp;
-	काष्ठा regulator *vcc;
-पूर्ण;
+struct ubx_data {
+	struct regulator *v_bckp;
+	struct regulator *vcc;
+};
 
-अटल पूर्णांक ubx_set_active(काष्ठा gnss_serial *gserial)
-अणु
-	काष्ठा ubx_data *data = gnss_serial_get_drvdata(gserial);
-	पूर्णांक ret;
+static int ubx_set_active(struct gnss_serial *gserial)
+{
+	struct ubx_data *data = gnss_serial_get_drvdata(gserial);
+	int ret;
 
 	ret = regulator_enable(data->vcc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ubx_set_standby(काष्ठा gnss_serial *gserial)
-अणु
-	काष्ठा ubx_data *data = gnss_serial_get_drvdata(gserial);
-	पूर्णांक ret;
+static int ubx_set_standby(struct gnss_serial *gserial)
+{
+	struct ubx_data *data = gnss_serial_get_drvdata(gserial);
+	int ret;
 
 	ret = regulator_disable(data->vcc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ubx_set_घातer(काष्ठा gnss_serial *gserial,
-				क्रमागत gnss_serial_pm_state state)
-अणु
-	चयन (state) अणु
-	हाल GNSS_SERIAL_ACTIVE:
-		वापस ubx_set_active(gserial);
-	हाल GNSS_SERIAL_OFF:
-	हाल GNSS_SERIAL_STANDBY:
-		वापस ubx_set_standby(gserial);
-	पूर्ण
+static int ubx_set_power(struct gnss_serial *gserial,
+				enum gnss_serial_pm_state state)
+{
+	switch (state) {
+	case GNSS_SERIAL_ACTIVE:
+		return ubx_set_active(gserial);
+	case GNSS_SERIAL_OFF:
+	case GNSS_SERIAL_STANDBY:
+		return ubx_set_standby(gserial);
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा gnss_serial_ops ubx_gserial_ops = अणु
-	.set_घातer = ubx_set_घातer,
-पूर्ण;
+static const struct gnss_serial_ops ubx_gserial_ops = {
+	.set_power = ubx_set_power,
+};
 
-अटल पूर्णांक ubx_probe(काष्ठा serdev_device *serdev)
-अणु
-	काष्ठा gnss_serial *gserial;
-	काष्ठा ubx_data *data;
-	पूर्णांक ret;
+static int ubx_probe(struct serdev_device *serdev)
+{
+	struct gnss_serial *gserial;
+	struct ubx_data *data;
+	int ret;
 
-	gserial = gnss_serial_allocate(serdev, माप(*data));
-	अगर (IS_ERR(gserial)) अणु
+	gserial = gnss_serial_allocate(serdev, sizeof(*data));
+	if (IS_ERR(gserial)) {
 		ret = PTR_ERR(gserial);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	gserial->ops = &ubx_gserial_ops;
 
@@ -83,71 +82,71 @@
 	data = gnss_serial_get_drvdata(gserial);
 
 	data->vcc = devm_regulator_get(&serdev->dev, "vcc");
-	अगर (IS_ERR(data->vcc)) अणु
+	if (IS_ERR(data->vcc)) {
 		ret = PTR_ERR(data->vcc);
-		जाओ err_मुक्त_gserial;
-	पूर्ण
+		goto err_free_gserial;
+	}
 
 	data->v_bckp = devm_regulator_get_optional(&serdev->dev, "v-bckp");
-	अगर (IS_ERR(data->v_bckp)) अणु
+	if (IS_ERR(data->v_bckp)) {
 		ret = PTR_ERR(data->v_bckp);
-		अगर (ret == -ENODEV)
-			data->v_bckp = शून्य;
-		अन्यथा
-			जाओ err_मुक्त_gserial;
-	पूर्ण
+		if (ret == -ENODEV)
+			data->v_bckp = NULL;
+		else
+			goto err_free_gserial;
+	}
 
-	अगर (data->v_bckp) अणु
+	if (data->v_bckp) {
 		ret = regulator_enable(data->v_bckp);
-		अगर (ret)
-			जाओ err_मुक्त_gserial;
-	पूर्ण
+		if (ret)
+			goto err_free_gserial;
+	}
 
-	ret = gnss_serial_रेजिस्टर(gserial);
-	अगर (ret)
-		जाओ err_disable_v_bckp;
+	ret = gnss_serial_register(gserial);
+	if (ret)
+		goto err_disable_v_bckp;
 
-	वापस 0;
+	return 0;
 
 err_disable_v_bckp:
-	अगर (data->v_bckp)
+	if (data->v_bckp)
 		regulator_disable(data->v_bckp);
-err_मुक्त_gserial:
-	gnss_serial_मुक्त(gserial);
+err_free_gserial:
+	gnss_serial_free(gserial);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ubx_हटाओ(काष्ठा serdev_device *serdev)
-अणु
-	काष्ठा gnss_serial *gserial = serdev_device_get_drvdata(serdev);
-	काष्ठा ubx_data *data = gnss_serial_get_drvdata(gserial);
+static void ubx_remove(struct serdev_device *serdev)
+{
+	struct gnss_serial *gserial = serdev_device_get_drvdata(serdev);
+	struct ubx_data *data = gnss_serial_get_drvdata(gserial);
 
-	gnss_serial_deरेजिस्टर(gserial);
-	अगर (data->v_bckp)
+	gnss_serial_deregister(gserial);
+	if (data->v_bckp)
 		regulator_disable(data->v_bckp);
-	gnss_serial_मुक्त(gserial);
-पूर्ण;
+	gnss_serial_free(gserial);
+};
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id ubx_of_match[] = अणु
-	अणु .compatible = "u-blox,neo-6m" पूर्ण,
-	अणु .compatible = "u-blox,neo-8" पूर्ण,
-	अणु .compatible = "u-blox,neo-m8" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id ubx_of_match[] = {
+	{ .compatible = "u-blox,neo-6m" },
+	{ .compatible = "u-blox,neo-8" },
+	{ .compatible = "u-blox,neo-m8" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, ubx_of_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा serdev_device_driver ubx_driver = अणु
-	.driver	= अणु
+static struct serdev_device_driver ubx_driver = {
+	.driver	= {
 		.name		= "gnss-ubx",
 		.of_match_table	= of_match_ptr(ubx_of_match),
 		.pm		= &gnss_serial_pm_ops,
-	पूर्ण,
+	},
 	.probe	= ubx_probe,
-	.हटाओ	= ubx_हटाओ,
-पूर्ण;
+	.remove	= ubx_remove,
+};
 module_serdev_device_driver(ubx_driver);
 
 MODULE_AUTHOR("Johan Hovold <johan@kernel.org>");

@@ -1,65 +1,64 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Kernel-based Virtual Machine driver क्रम Linux
+ * Kernel-based Virtual Machine driver for Linux
  *
  * Copyright 2016 Red Hat, Inc. and/or its affiliates.
  */
-#समावेश <linux/kvm_host.h>
-#समावेश <linux/debugfs.h>
-#समावेश "lapic.h"
+#include <linux/kvm_host.h>
+#include <linux/debugfs.h>
+#include "lapic.h"
 
-अटल पूर्णांक vcpu_get_समयr_advance_ns(व्योम *data, u64 *val)
-अणु
-	काष्ठा kvm_vcpu *vcpu = (काष्ठा kvm_vcpu *) data;
-	*val = vcpu->arch.apic->lapic_समयr.समयr_advance_ns;
-	वापस 0;
-पूर्ण
+static int vcpu_get_timer_advance_ns(void *data, u64 *val)
+{
+	struct kvm_vcpu *vcpu = (struct kvm_vcpu *) data;
+	*val = vcpu->arch.apic->lapic_timer.timer_advance_ns;
+	return 0;
+}
 
-DEFINE_SIMPLE_ATTRIBUTE(vcpu_समयr_advance_ns_fops, vcpu_get_समयr_advance_ns, शून्य, "%llu\n");
+DEFINE_SIMPLE_ATTRIBUTE(vcpu_timer_advance_ns_fops, vcpu_get_timer_advance_ns, NULL, "%llu\n");
 
-अटल पूर्णांक vcpu_get_tsc_offset(व्योम *data, u64 *val)
-अणु
-	काष्ठा kvm_vcpu *vcpu = (काष्ठा kvm_vcpu *) data;
+static int vcpu_get_tsc_offset(void *data, u64 *val)
+{
+	struct kvm_vcpu *vcpu = (struct kvm_vcpu *) data;
 	*val = vcpu->arch.tsc_offset;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-DEFINE_SIMPLE_ATTRIBUTE(vcpu_tsc_offset_fops, vcpu_get_tsc_offset, शून्य, "%lld\n");
+DEFINE_SIMPLE_ATTRIBUTE(vcpu_tsc_offset_fops, vcpu_get_tsc_offset, NULL, "%lld\n");
 
-अटल पूर्णांक vcpu_get_tsc_scaling_ratio(व्योम *data, u64 *val)
-अणु
-	काष्ठा kvm_vcpu *vcpu = (काष्ठा kvm_vcpu *) data;
+static int vcpu_get_tsc_scaling_ratio(void *data, u64 *val)
+{
+	struct kvm_vcpu *vcpu = (struct kvm_vcpu *) data;
 	*val = vcpu->arch.tsc_scaling_ratio;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-DEFINE_SIMPLE_ATTRIBUTE(vcpu_tsc_scaling_fops, vcpu_get_tsc_scaling_ratio, शून्य, "%llu\n");
+DEFINE_SIMPLE_ATTRIBUTE(vcpu_tsc_scaling_fops, vcpu_get_tsc_scaling_ratio, NULL, "%llu\n");
 
-अटल पूर्णांक vcpu_get_tsc_scaling_frac_bits(व्योम *data, u64 *val)
-अणु
+static int vcpu_get_tsc_scaling_frac_bits(void *data, u64 *val)
+{
 	*val = kvm_tsc_scaling_ratio_frac_bits;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-DEFINE_SIMPLE_ATTRIBUTE(vcpu_tsc_scaling_frac_fops, vcpu_get_tsc_scaling_frac_bits, शून्य, "%llu\n");
+DEFINE_SIMPLE_ATTRIBUTE(vcpu_tsc_scaling_frac_fops, vcpu_get_tsc_scaling_frac_bits, NULL, "%llu\n");
 
-व्योम kvm_arch_create_vcpu_debugfs(काष्ठा kvm_vcpu *vcpu, काष्ठा dentry *debugfs_dentry)
-अणु
+void kvm_arch_create_vcpu_debugfs(struct kvm_vcpu *vcpu, struct dentry *debugfs_dentry)
+{
 	debugfs_create_file("tsc-offset", 0444, debugfs_dentry, vcpu,
 			    &vcpu_tsc_offset_fops);
 
-	अगर (lapic_in_kernel(vcpu))
+	if (lapic_in_kernel(vcpu))
 		debugfs_create_file("lapic_timer_advance_ns", 0444,
 				    debugfs_dentry, vcpu,
-				    &vcpu_समयr_advance_ns_fops);
+				    &vcpu_timer_advance_ns_fops);
 
-	अगर (kvm_has_tsc_control) अणु
+	if (kvm_has_tsc_control) {
 		debugfs_create_file("tsc-scaling-ratio", 0444,
 				    debugfs_dentry, vcpu,
 				    &vcpu_tsc_scaling_fops);
 		debugfs_create_file("tsc-scaling-ratio-frac-bits", 0444,
 				    debugfs_dentry, vcpu,
 				    &vcpu_tsc_scaling_frac_fops);
-	पूर्ण
-पूर्ण
+	}
+}

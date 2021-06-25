@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2017 Oracle.  All rights reserved.
  */
 
 /*
- * क्रमागत ib_event_type, from include/rdma/ib_verbs.h
+ * enum ib_event_type, from include/rdma/ib_verbs.h
  */
-#घोषणा IB_EVENT_LIST				\
+#define IB_EVENT_LIST				\
 	ib_event(CQ_ERR)			\
 	ib_event(QP_FATAL)			\
 	ib_event(QP_REQ_ERR)			\
@@ -29,27 +28,27 @@
 	ib_event(GID_CHANGE)			\
 	ib_event_end(WQ_FATAL)
 
-#अघोषित ib_event
-#अघोषित ib_event_end
+#undef ib_event
+#undef ib_event_end
 
-#घोषणा ib_event(x)		TRACE_DEFINE_ENUM(IB_EVENT_##x);
-#घोषणा ib_event_end(x)		TRACE_DEFINE_ENUM(IB_EVENT_##x);
+#define ib_event(x)		TRACE_DEFINE_ENUM(IB_EVENT_##x);
+#define ib_event_end(x)		TRACE_DEFINE_ENUM(IB_EVENT_##x);
 
 IB_EVENT_LIST
 
-#अघोषित ib_event
-#अघोषित ib_event_end
+#undef ib_event
+#undef ib_event_end
 
-#घोषणा ib_event(x)		अणु IB_EVENT_##x, #x पूर्ण,
-#घोषणा ib_event_end(x)		अणु IB_EVENT_##x, #x पूर्ण
+#define ib_event(x)		{ IB_EVENT_##x, #x },
+#define ib_event_end(x)		{ IB_EVENT_##x, #x }
 
-#घोषणा rdma_show_ib_event(x) \
-		__prपूर्णांक_symbolic(x, IB_EVENT_LIST)
+#define rdma_show_ib_event(x) \
+		__print_symbolic(x, IB_EVENT_LIST)
 
 /*
- * क्रमागत ib_wc_status type, from include/rdma/ib_verbs.h
+ * enum ib_wc_status type, from include/rdma/ib_verbs.h
  */
-#घोषणा IB_WC_STATUS_LIST			\
+#define IB_WC_STATUS_LIST			\
 	ib_wc_status(SUCCESS)			\
 	ib_wc_status(LOC_LEN_ERR)		\
 	ib_wc_status(LOC_QP_OP_ERR)		\
@@ -73,27 +72,27 @@ IB_EVENT_LIST
 	ib_wc_status(RESP_TIMEOUT_ERR)		\
 	ib_wc_status_end(GENERAL_ERR)
 
-#अघोषित ib_wc_status
-#अघोषित ib_wc_status_end
+#undef ib_wc_status
+#undef ib_wc_status_end
 
-#घोषणा ib_wc_status(x)		TRACE_DEFINE_ENUM(IB_WC_##x);
-#घोषणा ib_wc_status_end(x)	TRACE_DEFINE_ENUM(IB_WC_##x);
+#define ib_wc_status(x)		TRACE_DEFINE_ENUM(IB_WC_##x);
+#define ib_wc_status_end(x)	TRACE_DEFINE_ENUM(IB_WC_##x);
 
 IB_WC_STATUS_LIST
 
-#अघोषित ib_wc_status
-#अघोषित ib_wc_status_end
+#undef ib_wc_status
+#undef ib_wc_status_end
 
-#घोषणा ib_wc_status(x)		अणु IB_WC_##x, #x पूर्ण,
-#घोषणा ib_wc_status_end(x)	अणु IB_WC_##x, #x पूर्ण
+#define ib_wc_status(x)		{ IB_WC_##x, #x },
+#define ib_wc_status_end(x)	{ IB_WC_##x, #x }
 
-#घोषणा rdma_show_wc_status(x) \
-		__prपूर्णांक_symbolic(x, IB_WC_STATUS_LIST)
+#define rdma_show_wc_status(x) \
+		__print_symbolic(x, IB_WC_STATUS_LIST)
 
 /*
- * क्रमागत ib_cm_event_type, from include/rdma/ib_cm.h
+ * enum ib_cm_event_type, from include/rdma/ib_cm.h
  */
-#घोषणा IB_CM_EVENT_LIST			\
+#define IB_CM_EVENT_LIST			\
 	ib_cm_event(REQ_ERROR)			\
 	ib_cm_event(REQ_RECEIVED)		\
 	ib_cm_event(REP_ERROR)			\
@@ -113,27 +112,27 @@ IB_WC_STATUS_LIST
 	ib_cm_event(SIDR_REQ_RECEIVED)		\
 	ib_cm_event_end(SIDR_REP_RECEIVED)
 
-#अघोषित ib_cm_event
-#अघोषित ib_cm_event_end
+#undef ib_cm_event
+#undef ib_cm_event_end
 
-#घोषणा ib_cm_event(x)		TRACE_DEFINE_ENUM(IB_CM_##x);
-#घोषणा ib_cm_event_end(x)	TRACE_DEFINE_ENUM(IB_CM_##x);
+#define ib_cm_event(x)		TRACE_DEFINE_ENUM(IB_CM_##x);
+#define ib_cm_event_end(x)	TRACE_DEFINE_ENUM(IB_CM_##x);
 
 IB_CM_EVENT_LIST
 
-#अघोषित ib_cm_event
-#अघोषित ib_cm_event_end
+#undef ib_cm_event
+#undef ib_cm_event_end
 
-#घोषणा ib_cm_event(x)		अणु IB_CM_##x, #x पूर्ण,
-#घोषणा ib_cm_event_end(x)	अणु IB_CM_##x, #x पूर्ण
+#define ib_cm_event(x)		{ IB_CM_##x, #x },
+#define ib_cm_event_end(x)	{ IB_CM_##x, #x }
 
-#घोषणा rdma_show_ib_cm_event(x) \
-		__prपूर्णांक_symbolic(x, IB_CM_EVENT_LIST)
+#define rdma_show_ib_cm_event(x) \
+		__print_symbolic(x, IB_CM_EVENT_LIST)
 
 /*
- * क्रमागत rdma_cm_event_type, from include/rdma/rdma_cm.h
+ * enum rdma_cm_event_type, from include/rdma/rdma_cm.h
  */
-#घोषणा RDMA_CM_EVENT_LIST			\
+#define RDMA_CM_EVENT_LIST			\
 	rdma_cm_event(ADDR_RESOLVED)		\
 	rdma_cm_event(ADDR_ERROR)		\
 	rdma_cm_event(ROUTE_RESOLVED)		\
@@ -151,19 +150,19 @@ IB_CM_EVENT_LIST
 	rdma_cm_event(ADDR_CHANGE)		\
 	rdma_cm_event_end(TIMEWAIT_EXIT)
 
-#अघोषित rdma_cm_event
-#अघोषित rdma_cm_event_end
+#undef rdma_cm_event
+#undef rdma_cm_event_end
 
-#घोषणा rdma_cm_event(x)	TRACE_DEFINE_ENUM(RDMA_CM_EVENT_##x);
-#घोषणा rdma_cm_event_end(x)	TRACE_DEFINE_ENUM(RDMA_CM_EVENT_##x);
+#define rdma_cm_event(x)	TRACE_DEFINE_ENUM(RDMA_CM_EVENT_##x);
+#define rdma_cm_event_end(x)	TRACE_DEFINE_ENUM(RDMA_CM_EVENT_##x);
 
 RDMA_CM_EVENT_LIST
 
-#अघोषित rdma_cm_event
-#अघोषित rdma_cm_event_end
+#undef rdma_cm_event
+#undef rdma_cm_event_end
 
-#घोषणा rdma_cm_event(x)	अणु RDMA_CM_EVENT_##x, #x पूर्ण,
-#घोषणा rdma_cm_event_end(x)	अणु RDMA_CM_EVENT_##x, #x पूर्ण
+#define rdma_cm_event(x)	{ RDMA_CM_EVENT_##x, #x },
+#define rdma_cm_event_end(x)	{ RDMA_CM_EVENT_##x, #x }
 
-#घोषणा rdma_show_cm_event(x) \
-		__prपूर्णांक_symbolic(x, RDMA_CM_EVENT_LIST)
+#define rdma_show_cm_event(x) \
+		__print_symbolic(x, RDMA_CM_EVENT_LIST)

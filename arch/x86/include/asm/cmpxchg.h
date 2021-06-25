@@ -1,262 +1,261 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित ASM_X86_CMPXCHG_H
-#घोषणा ASM_X86_CMPXCHG_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef ASM_X86_CMPXCHG_H
+#define ASM_X86_CMPXCHG_H
 
-#समावेश <linux/compiler.h>
-#समावेश <यंत्र/cpufeatures.h>
-#समावेश <यंत्र/alternative.h> /* Provides LOCK_PREFIX */
+#include <linux/compiler.h>
+#include <asm/cpufeatures.h>
+#include <asm/alternative.h> /* Provides LOCK_PREFIX */
 
 /*
- * Non-existent functions to indicate usage errors at link समय
- * (or compile-समय अगर the compiler implements __compileसमय_error().
+ * Non-existent functions to indicate usage errors at link time
+ * (or compile-time if the compiler implements __compiletime_error().
  */
-बाह्य व्योम __xchg_wrong_size(व्योम)
-	__compileसमय_error("Bad argument size for xchg");
-बाह्य व्योम __cmpxchg_wrong_size(व्योम)
-	__compileसमय_error("Bad argument size for cmpxchg");
-बाह्य व्योम __xadd_wrong_size(व्योम)
-	__compileसमय_error("Bad argument size for xadd");
-बाह्य व्योम __add_wrong_size(व्योम)
-	__compileसमय_error("Bad argument size for add");
+extern void __xchg_wrong_size(void)
+	__compiletime_error("Bad argument size for xchg");
+extern void __cmpxchg_wrong_size(void)
+	__compiletime_error("Bad argument size for cmpxchg");
+extern void __xadd_wrong_size(void)
+	__compiletime_error("Bad argument size for xadd");
+extern void __add_wrong_size(void)
+	__compiletime_error("Bad argument size for add");
 
 /*
- * Constants क्रम operation sizes. On 32-bit, the 64-bit size it set to
- * -1 because माप will never वापस -1, thereby making those चयन
- * हाल statements guaranteed dead code which the compiler will
+ * Constants for operation sizes. On 32-bit, the 64-bit size it set to
+ * -1 because sizeof will never return -1, thereby making those switch
+ * case statements guaranteed dead code which the compiler will
  * eliminate, and allowing the "missing symbol in the default case" to
  * indicate a usage error.
  */
-#घोषणा __X86_CASE_B	1
-#घोषणा __X86_CASE_W	2
-#घोषणा __X86_CASE_L	4
-#अगर_घोषित CONFIG_64BIT
-#घोषणा __X86_CASE_Q	8
-#अन्यथा
-#घोषणा	__X86_CASE_Q	-1		/* माप will never वापस -1 */
-#पूर्ण_अगर
+#define __X86_CASE_B	1
+#define __X86_CASE_W	2
+#define __X86_CASE_L	4
+#ifdef CONFIG_64BIT
+#define __X86_CASE_Q	8
+#else
+#define	__X86_CASE_Q	-1		/* sizeof will never return -1 */
+#endif
 
 /* 
- * An exchange-type operation, which takes a value and a poपूर्णांकer, and
- * वापसs the old value.
+ * An exchange-type operation, which takes a value and a pointer, and
+ * returns the old value.
  */
-#घोषणा __xchg_op(ptr, arg, op, lock)					\
-	(अणु								\
+#define __xchg_op(ptr, arg, op, lock)					\
+	({								\
 	        __typeof__ (*(ptr)) __ret = (arg);			\
-		चयन (माप(*(ptr))) अणु				\
-		हाल __X86_CASE_B:					\
-			यंत्र अस्थिर (lock #op "b %b0, %1\n"		\
+		switch (sizeof(*(ptr))) {				\
+		case __X86_CASE_B:					\
+			asm volatile (lock #op "b %b0, %1\n"		\
 				      : "+q" (__ret), "+m" (*(ptr))	\
 				      : : "memory", "cc");		\
-			अवरोध;						\
-		हाल __X86_CASE_W:					\
-			यंत्र अस्थिर (lock #op "w %w0, %1\n"		\
+			break;						\
+		case __X86_CASE_W:					\
+			asm volatile (lock #op "w %w0, %1\n"		\
 				      : "+r" (__ret), "+m" (*(ptr))	\
 				      : : "memory", "cc");		\
-			अवरोध;						\
-		हाल __X86_CASE_L:					\
-			यंत्र अस्थिर (lock #op "l %0, %1\n"		\
+			break;						\
+		case __X86_CASE_L:					\
+			asm volatile (lock #op "l %0, %1\n"		\
 				      : "+r" (__ret), "+m" (*(ptr))	\
 				      : : "memory", "cc");		\
-			अवरोध;						\
-		हाल __X86_CASE_Q:					\
-			यंत्र अस्थिर (lock #op "q %q0, %1\n"		\
+			break;						\
+		case __X86_CASE_Q:					\
+			asm volatile (lock #op "q %q0, %1\n"		\
 				      : "+r" (__ret), "+m" (*(ptr))	\
 				      : : "memory", "cc");		\
-			अवरोध;						\
-		शेष:						\
+			break;						\
+		default:						\
 			__ ## op ## _wrong_size();			\
-		पूर्ण							\
+		}							\
 		__ret;							\
-	पूर्ण)
+	})
 
 /*
  * Note: no "lock" prefix even on SMP: xchg always implies lock anyway.
- * Since this is generally used to protect other memory inक्रमmation, we
+ * Since this is generally used to protect other memory information, we
  * use "asm volatile" and "memory" clobbers to prevent gcc from moving
- * inक्रमmation around.
+ * information around.
  */
-#घोषणा arch_xchg(ptr, v)	__xchg_op((ptr), (v), xchg, "")
+#define arch_xchg(ptr, v)	__xchg_op((ptr), (v), xchg, "")
 
 /*
- * Atomic compare and exchange.  Compare OLD with MEM, अगर identical,
+ * Atomic compare and exchange.  Compare OLD with MEM, if identical,
  * store NEW in MEM.  Return the initial value in MEM.  Success is
  * indicated by comparing RETURN with OLD.
  */
-#घोषणा __raw_cmpxchg(ptr, old, new, size, lock)			\
-(अणु									\
+#define __raw_cmpxchg(ptr, old, new, size, lock)			\
+({									\
 	__typeof__(*(ptr)) __ret;					\
 	__typeof__(*(ptr)) __old = (old);				\
 	__typeof__(*(ptr)) __new = (new);				\
-	चयन (size) अणु							\
-	हाल __X86_CASE_B:						\
-	अणु								\
-		अस्थिर u8 *__ptr = (अस्थिर u8 *)(ptr);		\
-		यंत्र अस्थिर(lock "cmpxchgb %2,%1"			\
+	switch (size) {							\
+	case __X86_CASE_B:						\
+	{								\
+		volatile u8 *__ptr = (volatile u8 *)(ptr);		\
+		asm volatile(lock "cmpxchgb %2,%1"			\
 			     : "=a" (__ret), "+m" (*__ptr)		\
 			     : "q" (__new), "0" (__old)			\
 			     : "memory");				\
-		अवरोध;							\
-	पूर्ण								\
-	हाल __X86_CASE_W:						\
-	अणु								\
-		अस्थिर u16 *__ptr = (अस्थिर u16 *)(ptr);		\
-		यंत्र अस्थिर(lock "cmpxchgw %2,%1"			\
+		break;							\
+	}								\
+	case __X86_CASE_W:						\
+	{								\
+		volatile u16 *__ptr = (volatile u16 *)(ptr);		\
+		asm volatile(lock "cmpxchgw %2,%1"			\
 			     : "=a" (__ret), "+m" (*__ptr)		\
 			     : "r" (__new), "0" (__old)			\
 			     : "memory");				\
-		अवरोध;							\
-	पूर्ण								\
-	हाल __X86_CASE_L:						\
-	अणु								\
-		अस्थिर u32 *__ptr = (अस्थिर u32 *)(ptr);		\
-		यंत्र अस्थिर(lock "cmpxchgl %2,%1"			\
+		break;							\
+	}								\
+	case __X86_CASE_L:						\
+	{								\
+		volatile u32 *__ptr = (volatile u32 *)(ptr);		\
+		asm volatile(lock "cmpxchgl %2,%1"			\
 			     : "=a" (__ret), "+m" (*__ptr)		\
 			     : "r" (__new), "0" (__old)			\
 			     : "memory");				\
-		अवरोध;							\
-	पूर्ण								\
-	हाल __X86_CASE_Q:						\
-	अणु								\
-		अस्थिर u64 *__ptr = (अस्थिर u64 *)(ptr);		\
-		यंत्र अस्थिर(lock "cmpxchgq %2,%1"			\
+		break;							\
+	}								\
+	case __X86_CASE_Q:						\
+	{								\
+		volatile u64 *__ptr = (volatile u64 *)(ptr);		\
+		asm volatile(lock "cmpxchgq %2,%1"			\
 			     : "=a" (__ret), "+m" (*__ptr)		\
 			     : "r" (__new), "0" (__old)			\
 			     : "memory");				\
-		अवरोध;							\
-	पूर्ण								\
-	शेष:							\
+		break;							\
+	}								\
+	default:							\
 		__cmpxchg_wrong_size();					\
-	पूर्ण								\
+	}								\
 	__ret;								\
-पूर्ण)
+})
 
-#घोषणा __cmpxchg(ptr, old, new, size)					\
+#define __cmpxchg(ptr, old, new, size)					\
 	__raw_cmpxchg((ptr), (old), (new), (size), LOCK_PREFIX)
 
-#घोषणा __sync_cmpxchg(ptr, old, new, size)				\
+#define __sync_cmpxchg(ptr, old, new, size)				\
 	__raw_cmpxchg((ptr), (old), (new), (size), "lock; ")
 
-#घोषणा __cmpxchg_local(ptr, old, new, size)				\
+#define __cmpxchg_local(ptr, old, new, size)				\
 	__raw_cmpxchg((ptr), (old), (new), (size), "")
 
-#अगर_घोषित CONFIG_X86_32
-# include <यंत्र/cmpxchg_32.h>
-#अन्यथा
-# include <यंत्र/cmpxchg_64.h>
-#पूर्ण_अगर
+#ifdef CONFIG_X86_32
+# include <asm/cmpxchg_32.h>
+#else
+# include <asm/cmpxchg_64.h>
+#endif
 
-#घोषणा arch_cmpxchg(ptr, old, new)					\
-	__cmpxchg(ptr, old, new, माप(*(ptr)))
+#define arch_cmpxchg(ptr, old, new)					\
+	__cmpxchg(ptr, old, new, sizeof(*(ptr)))
 
-#घोषणा arch_sync_cmpxchg(ptr, old, new)				\
-	__sync_cmpxchg(ptr, old, new, माप(*(ptr)))
+#define arch_sync_cmpxchg(ptr, old, new)				\
+	__sync_cmpxchg(ptr, old, new, sizeof(*(ptr)))
 
-#घोषणा arch_cmpxchg_local(ptr, old, new)				\
-	__cmpxchg_local(ptr, old, new, माप(*(ptr)))
+#define arch_cmpxchg_local(ptr, old, new)				\
+	__cmpxchg_local(ptr, old, new, sizeof(*(ptr)))
 
 
-#घोषणा __raw_try_cmpxchg(_ptr, _pold, _new, size, lock)		\
-(अणु									\
+#define __raw_try_cmpxchg(_ptr, _pold, _new, size, lock)		\
+({									\
 	bool success;							\
 	__typeof__(_ptr) _old = (__typeof__(_ptr))(_pold);		\
 	__typeof__(*(_ptr)) __old = *_old;				\
 	__typeof__(*(_ptr)) __new = (_new);				\
-	चयन (size) अणु							\
-	हाल __X86_CASE_B:						\
-	अणु								\
-		अस्थिर u8 *__ptr = (अस्थिर u8 *)(_ptr);		\
-		यंत्र अस्थिर(lock "cmpxchgb %[new], %[ptr]"		\
+	switch (size) {							\
+	case __X86_CASE_B:						\
+	{								\
+		volatile u8 *__ptr = (volatile u8 *)(_ptr);		\
+		asm volatile(lock "cmpxchgb %[new], %[ptr]"		\
 			     CC_SET(z)					\
 			     : CC_OUT(z) (success),			\
 			       [ptr] "+m" (*__ptr),			\
 			       [old] "+a" (__old)			\
 			     : [new] "q" (__new)			\
 			     : "memory");				\
-		अवरोध;							\
-	पूर्ण								\
-	हाल __X86_CASE_W:						\
-	अणु								\
-		अस्थिर u16 *__ptr = (अस्थिर u16 *)(_ptr);		\
-		यंत्र अस्थिर(lock "cmpxchgw %[new], %[ptr]"		\
+		break;							\
+	}								\
+	case __X86_CASE_W:						\
+	{								\
+		volatile u16 *__ptr = (volatile u16 *)(_ptr);		\
+		asm volatile(lock "cmpxchgw %[new], %[ptr]"		\
 			     CC_SET(z)					\
 			     : CC_OUT(z) (success),			\
 			       [ptr] "+m" (*__ptr),			\
 			       [old] "+a" (__old)			\
 			     : [new] "r" (__new)			\
 			     : "memory");				\
-		अवरोध;							\
-	पूर्ण								\
-	हाल __X86_CASE_L:						\
-	अणु								\
-		अस्थिर u32 *__ptr = (अस्थिर u32 *)(_ptr);		\
-		यंत्र अस्थिर(lock "cmpxchgl %[new], %[ptr]"		\
+		break;							\
+	}								\
+	case __X86_CASE_L:						\
+	{								\
+		volatile u32 *__ptr = (volatile u32 *)(_ptr);		\
+		asm volatile(lock "cmpxchgl %[new], %[ptr]"		\
 			     CC_SET(z)					\
 			     : CC_OUT(z) (success),			\
 			       [ptr] "+m" (*__ptr),			\
 			       [old] "+a" (__old)			\
 			     : [new] "r" (__new)			\
 			     : "memory");				\
-		अवरोध;							\
-	पूर्ण								\
-	हाल __X86_CASE_Q:						\
-	अणु								\
-		अस्थिर u64 *__ptr = (अस्थिर u64 *)(_ptr);		\
-		यंत्र अस्थिर(lock "cmpxchgq %[new], %[ptr]"		\
+		break;							\
+	}								\
+	case __X86_CASE_Q:						\
+	{								\
+		volatile u64 *__ptr = (volatile u64 *)(_ptr);		\
+		asm volatile(lock "cmpxchgq %[new], %[ptr]"		\
 			     CC_SET(z)					\
 			     : CC_OUT(z) (success),			\
 			       [ptr] "+m" (*__ptr),			\
 			       [old] "+a" (__old)			\
 			     : [new] "r" (__new)			\
 			     : "memory");				\
-		अवरोध;							\
-	पूर्ण								\
-	शेष:							\
+		break;							\
+	}								\
+	default:							\
 		__cmpxchg_wrong_size();					\
-	पूर्ण								\
-	अगर (unlikely(!success))						\
+	}								\
+	if (unlikely(!success))						\
 		*_old = __old;						\
 	likely(success);						\
-पूर्ण)
+})
 
-#घोषणा __try_cmpxchg(ptr, pold, new, size)				\
+#define __try_cmpxchg(ptr, pold, new, size)				\
 	__raw_try_cmpxchg((ptr), (pold), (new), (size), LOCK_PREFIX)
 
-#घोषणा arch_try_cmpxchg(ptr, pold, new) 				\
-	__try_cmpxchg((ptr), (pold), (new), माप(*(ptr)))
+#define arch_try_cmpxchg(ptr, pold, new) 				\
+	__try_cmpxchg((ptr), (pold), (new), sizeof(*(ptr)))
 
 /*
- * xadd() adds "inc" to "*ptr" and atomically वापसs the previous
+ * xadd() adds "inc" to "*ptr" and atomically returns the previous
  * value of "*ptr".
  *
  * xadd() is locked when multiple CPUs are online
  */
-#घोषणा __xadd(ptr, inc, lock)	__xchg_op((ptr), (inc), xadd, lock)
-#घोषणा xadd(ptr, inc)		__xadd((ptr), (inc), LOCK_PREFIX)
+#define __xadd(ptr, inc, lock)	__xchg_op((ptr), (inc), xadd, lock)
+#define xadd(ptr, inc)		__xadd((ptr), (inc), LOCK_PREFIX)
 
-#घोषणा __cmpxchg_द्विगुन(pfx, p1, p2, o1, o2, n1, n2)			\
-(अणु									\
+#define __cmpxchg_double(pfx, p1, p2, o1, o2, n1, n2)			\
+({									\
 	bool __ret;							\
 	__typeof__(*(p1)) __old1 = (o1), __new1 = (n1);			\
 	__typeof__(*(p2)) __old2 = (o2), __new2 = (n2);			\
-	BUILD_BUG_ON(माप(*(p1)) != माप(दीर्घ));			\
-	BUILD_BUG_ON(माप(*(p2)) != माप(दीर्घ));			\
-	VM_BUG_ON((अचिन्हित दीर्घ)(p1) % (2 * माप(दीर्घ)));		\
-	VM_BUG_ON((अचिन्हित दीर्घ)((p1) + 1) != (अचिन्हित दीर्घ)(p2));	\
-	यंत्र अस्थिर(pfx "cmpxchg%c5b %1"				\
+	BUILD_BUG_ON(sizeof(*(p1)) != sizeof(long));			\
+	BUILD_BUG_ON(sizeof(*(p2)) != sizeof(long));			\
+	VM_BUG_ON((unsigned long)(p1) % (2 * sizeof(long)));		\
+	VM_BUG_ON((unsigned long)((p1) + 1) != (unsigned long)(p2));	\
+	asm volatile(pfx "cmpxchg%c5b %1"				\
 		     CC_SET(e)						\
 		     : CC_OUT(e) (__ret),				\
 		       "+m" (*(p1)), "+m" (*(p2)),			\
 		       "+a" (__old1), "+d" (__old2)			\
-		     : "i" (2 * माप(दीर्घ)),				\
+		     : "i" (2 * sizeof(long)),				\
 		       "b" (__new1), "c" (__new2));			\
 	__ret;								\
-पूर्ण)
+})
 
-#घोषणा arch_cmpxchg_द्विगुन(p1, p2, o1, o2, n1, n2) \
-	__cmpxchg_द्विगुन(LOCK_PREFIX, p1, p2, o1, o2, n1, n2)
+#define arch_cmpxchg_double(p1, p2, o1, o2, n1, n2) \
+	__cmpxchg_double(LOCK_PREFIX, p1, p2, o1, o2, n1, n2)
 
-#घोषणा arch_cmpxchg_द्विगुन_local(p1, p2, o1, o2, n1, n2) \
-	__cmpxchg_द्विगुन(, p1, p2, o1, o2, n1, n2)
+#define arch_cmpxchg_double_local(p1, p2, o1, o2, n1, n2) \
+	__cmpxchg_double(, p1, p2, o1, o2, n1, n2)
 
-#पूर्ण_अगर	/* ASM_X86_CMPXCHG_H */
+#endif	/* ASM_X86_CMPXCHG_H */

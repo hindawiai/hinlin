@@ -1,61 +1,60 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2008 Nir Tzaअक्षर <nir.tzaअक्षर@gmail.com>
+ * Copyright (C) 2008 Nir Tzachar <nir.tzachar@gmail.com>
  *
  * Derived from menuconfig.
  */
-#समावेश "nconf.h"
-#समावेश "lkc.h"
+#include "nconf.h"
+#include "lkc.h"
 
-पूर्णांक attr_normal;
-पूर्णांक attr_मुख्य_heading;
-पूर्णांक attr_मुख्य_menu_box;
-पूर्णांक attr_मुख्य_menu_क्रमe;
-पूर्णांक attr_मुख्य_menu_back;
-पूर्णांक attr_मुख्य_menu_grey;
-पूर्णांक attr_मुख्य_menu_heading;
-पूर्णांक attr_scrollwin_text;
-पूर्णांक attr_scrollwin_heading;
-पूर्णांक attr_scrollwin_box;
-पूर्णांक attr_dialog_text;
-पूर्णांक attr_dialog_menu_क्रमe;
-पूर्णांक attr_dialog_menu_back;
-पूर्णांक attr_dialog_box;
-पूर्णांक attr_input_box;
-पूर्णांक attr_input_heading;
-पूर्णांक attr_input_text;
-पूर्णांक attr_input_field;
-पूर्णांक attr_function_text;
-पूर्णांक attr_function_highlight;
+int attr_normal;
+int attr_main_heading;
+int attr_main_menu_box;
+int attr_main_menu_fore;
+int attr_main_menu_back;
+int attr_main_menu_grey;
+int attr_main_menu_heading;
+int attr_scrollwin_text;
+int attr_scrollwin_heading;
+int attr_scrollwin_box;
+int attr_dialog_text;
+int attr_dialog_menu_fore;
+int attr_dialog_menu_back;
+int attr_dialog_box;
+int attr_input_box;
+int attr_input_heading;
+int attr_input_text;
+int attr_input_field;
+int attr_function_text;
+int attr_function_highlight;
 
-#घोषणा COLOR_ATTR(_at, _fg, _bg, _hl) \
-	अणु .attr = &(_at), .has_color = true, .color_fg = _fg, .color_bg = _bg, .highlight = _hl पूर्ण
-#घोषणा NO_COLOR_ATTR(_at, _hl) \
-	अणु .attr = &(_at), .has_color = false, .highlight = _hl पूर्ण
-#घोषणा COLOR_DEFAULT		-1
+#define COLOR_ATTR(_at, _fg, _bg, _hl) \
+	{ .attr = &(_at), .has_color = true, .color_fg = _fg, .color_bg = _bg, .highlight = _hl }
+#define NO_COLOR_ATTR(_at, _hl) \
+	{ .attr = &(_at), .has_color = false, .highlight = _hl }
+#define COLOR_DEFAULT		-1
 
-काष्ठा nconf_attr_param अणु
-	पूर्णांक *attr;
+struct nconf_attr_param {
+	int *attr;
 	bool has_color;
-	पूर्णांक color_fg;
-	पूर्णांक color_bg;
-	पूर्णांक highlight;
-पूर्ण;
+	int color_fg;
+	int color_bg;
+	int highlight;
+};
 
-अटल स्थिर काष्ठा nconf_attr_param color_theme_params[] = अणु
+static const struct nconf_attr_param color_theme_params[] = {
 	COLOR_ATTR(attr_normal,			COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL),
-	COLOR_ATTR(attr_मुख्य_heading,		COLOR_MAGENTA,	COLOR_DEFAULT,	A_BOLD | A_UNDERLINE),
-	COLOR_ATTR(attr_मुख्य_menu_box,		COLOR_YELLOW,	COLOR_DEFAULT,	A_NORMAL),
-	COLOR_ATTR(attr_मुख्य_menu_क्रमe,		COLOR_DEFAULT,	COLOR_DEFAULT,	A_REVERSE),
-	COLOR_ATTR(attr_मुख्य_menu_back,		COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL),
-	COLOR_ATTR(attr_मुख्य_menu_grey,		COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL),
-	COLOR_ATTR(attr_मुख्य_menu_heading,	COLOR_GREEN,	COLOR_DEFAULT,	A_BOLD),
+	COLOR_ATTR(attr_main_heading,		COLOR_MAGENTA,	COLOR_DEFAULT,	A_BOLD | A_UNDERLINE),
+	COLOR_ATTR(attr_main_menu_box,		COLOR_YELLOW,	COLOR_DEFAULT,	A_NORMAL),
+	COLOR_ATTR(attr_main_menu_fore,		COLOR_DEFAULT,	COLOR_DEFAULT,	A_REVERSE),
+	COLOR_ATTR(attr_main_menu_back,		COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL),
+	COLOR_ATTR(attr_main_menu_grey,		COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL),
+	COLOR_ATTR(attr_main_menu_heading,	COLOR_GREEN,	COLOR_DEFAULT,	A_BOLD),
 	COLOR_ATTR(attr_scrollwin_text,		COLOR_DEFAULT,	COLOR_DEFAULT,	A_NORMAL),
 	COLOR_ATTR(attr_scrollwin_heading,	COLOR_GREEN,	COLOR_DEFAULT,	A_BOLD),
 	COLOR_ATTR(attr_scrollwin_box,		COLOR_YELLOW,	COLOR_DEFAULT,	A_BOLD),
 	COLOR_ATTR(attr_dialog_text,		COLOR_DEFAULT,	COLOR_DEFAULT,	A_BOLD),
-	COLOR_ATTR(attr_dialog_menu_क्रमe,	COLOR_RED,	COLOR_DEFAULT,	A_STANDOUT),
+	COLOR_ATTR(attr_dialog_menu_fore,	COLOR_RED,	COLOR_DEFAULT,	A_STANDOUT),
 	COLOR_ATTR(attr_dialog_menu_back,	COLOR_YELLOW,	COLOR_DEFAULT,	A_NORMAL),
 	COLOR_ATTR(attr_dialog_box,		COLOR_YELLOW,	COLOR_DEFAULT,	A_BOLD),
 	COLOR_ATTR(attr_input_box,		COLOR_YELLOW,	COLOR_DEFAULT,	A_NORMAL),
@@ -64,22 +63,22 @@
 	COLOR_ATTR(attr_input_field,		COLOR_DEFAULT,	COLOR_DEFAULT,	A_UNDERLINE),
 	COLOR_ATTR(attr_function_text,		COLOR_YELLOW,	COLOR_DEFAULT,	A_REVERSE),
 	COLOR_ATTR(attr_function_highlight,	COLOR_DEFAULT,	COLOR_DEFAULT,	A_BOLD),
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+	{ /* sentinel */ }
+};
 
-अटल स्थिर काष्ठा nconf_attr_param no_color_theme_params[] = अणु
+static const struct nconf_attr_param no_color_theme_params[] = {
 	NO_COLOR_ATTR(attr_normal,		A_NORMAL),
-	NO_COLOR_ATTR(attr_मुख्य_heading,	A_BOLD | A_UNDERLINE),
-	NO_COLOR_ATTR(attr_मुख्य_menu_box,	A_NORMAL),
-	NO_COLOR_ATTR(attr_मुख्य_menu_क्रमe,	A_STANDOUT),
-	NO_COLOR_ATTR(attr_मुख्य_menu_back,	A_NORMAL),
-	NO_COLOR_ATTR(attr_मुख्य_menu_grey,	A_NORMAL),
-	NO_COLOR_ATTR(attr_मुख्य_menu_heading,	A_BOLD),
+	NO_COLOR_ATTR(attr_main_heading,	A_BOLD | A_UNDERLINE),
+	NO_COLOR_ATTR(attr_main_menu_box,	A_NORMAL),
+	NO_COLOR_ATTR(attr_main_menu_fore,	A_STANDOUT),
+	NO_COLOR_ATTR(attr_main_menu_back,	A_NORMAL),
+	NO_COLOR_ATTR(attr_main_menu_grey,	A_NORMAL),
+	NO_COLOR_ATTR(attr_main_menu_heading,	A_BOLD),
 	NO_COLOR_ATTR(attr_scrollwin_text,	A_NORMAL),
 	NO_COLOR_ATTR(attr_scrollwin_heading,	A_BOLD),
 	NO_COLOR_ATTR(attr_scrollwin_box,	A_BOLD),
 	NO_COLOR_ATTR(attr_dialog_text,		A_NORMAL),
-	NO_COLOR_ATTR(attr_dialog_menu_क्रमe,	A_STANDOUT),
+	NO_COLOR_ATTR(attr_dialog_menu_fore,	A_STANDOUT),
 	NO_COLOR_ATTR(attr_dialog_menu_back,	A_NORMAL),
 	NO_COLOR_ATTR(attr_dialog_box,		A_BOLD),
 	NO_COLOR_ATTR(attr_input_box,		A_BOLD),
@@ -88,154 +87,154 @@
 	NO_COLOR_ATTR(attr_input_field,		A_UNDERLINE),
 	NO_COLOR_ATTR(attr_function_text,	A_REVERSE),
 	NO_COLOR_ATTR(attr_function_highlight,	A_BOLD),
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+	{ /* sentinel */ }
+};
 
-व्योम set_colors(व्योम)
-अणु
-	स्थिर काष्ठा nconf_attr_param *p;
-	पूर्णांक pair = 0;
+void set_colors(void)
+{
+	const struct nconf_attr_param *p;
+	int pair = 0;
 
-	अगर (has_colors()) अणु
+	if (has_colors()) {
 		start_color();
-		use_शेष_colors();
+		use_default_colors();
 		p = color_theme_params;
-	पूर्ण अन्यथा अणु
+	} else {
 		p = no_color_theme_params;
-	पूर्ण
+	}
 
-	क्रम (; p->attr; p++) अणु
-		पूर्णांक attr = p->highlight;
+	for (; p->attr; p++) {
+		int attr = p->highlight;
 
-		अगर (p->has_color) अणु
+		if (p->has_color) {
 			pair++;
 			init_pair(pair, p->color_fg, p->color_bg);
 			attr |= COLOR_PAIR(pair);
-		पूर्ण
+		}
 
 		*p->attr = attr;
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* this changes the winकरोws attributes !!! */
-व्योम prपूर्णांक_in_middle(WINDOW *win, पूर्णांक y, पूर्णांक width, स्थिर अक्षर *str, पूर्णांक attrs)
-अणु
+/* this changes the windows attributes !!! */
+void print_in_middle(WINDOW *win, int y, int width, const char *str, int attrs)
+{
 	wattrset(win, attrs);
-	mvwprपूर्णांकw(win, y, (width - म_माप(str)) / 2, "%s", str);
-पूर्ण
+	mvwprintw(win, y, (width - strlen(str)) / 2, "%s", str);
+}
 
-पूर्णांक get_line_no(स्थिर अक्षर *text)
-अणु
-	पूर्णांक i;
-	पूर्णांक total = 1;
+int get_line_no(const char *text)
+{
+	int i;
+	int total = 1;
 
-	अगर (!text)
-		वापस 0;
+	if (!text)
+		return 0;
 
-	क्रम (i = 0; text[i] != '\0'; i++)
-		अगर (text[i] == '\n')
+	for (i = 0; text[i] != '\0'; i++)
+		if (text[i] == '\n')
 			total++;
-	वापस total;
-पूर्ण
+	return total;
+}
 
-स्थिर अक्षर *get_line(स्थिर अक्षर *text, पूर्णांक line_no)
-अणु
-	पूर्णांक i;
-	पूर्णांक lines = 0;
+const char *get_line(const char *text, int line_no)
+{
+	int i;
+	int lines = 0;
 
-	अगर (!text)
-		वापस शून्य;
+	if (!text)
+		return NULL;
 
-	क्रम (i = 0; text[i] != '\0' && lines < line_no; i++)
-		अगर (text[i] == '\n')
+	for (i = 0; text[i] != '\0' && lines < line_no; i++)
+		if (text[i] == '\n')
 			lines++;
-	वापस text+i;
-पूर्ण
+	return text+i;
+}
 
-पूर्णांक get_line_length(स्थिर अक्षर *line)
-अणु
-	पूर्णांक res = 0;
-	जबतक (*line != '\0' && *line != '\n') अणु
+int get_line_length(const char *line)
+{
+	int res = 0;
+	while (*line != '\0' && *line != '\n') {
 		line++;
 		res++;
-	पूर्ण
-	वापस res;
-पूर्ण
+	}
+	return res;
+}
 
-/* prपूर्णांक all lines to the winकरोw. */
-व्योम fill_winकरोw(WINDOW *win, स्थिर अक्षर *text)
-अणु
-	पूर्णांक x, y;
-	पूर्णांक total_lines = get_line_no(text);
-	पूर्णांक i;
+/* print all lines to the window. */
+void fill_window(WINDOW *win, const char *text)
+{
+	int x, y;
+	int total_lines = get_line_no(text);
+	int i;
 
-	geपंचांगaxyx(win, y, x);
-	/* करो not go over end of line */
+	getmaxyx(win, y, x);
+	/* do not go over end of line */
 	total_lines = min(total_lines, y);
-	क्रम (i = 0; i < total_lines; i++) अणु
-		अक्षर पंचांगp[x+10];
-		स्थिर अक्षर *line = get_line(text, i);
-		पूर्णांक len = get_line_length(line);
-		म_नकलन(पंचांगp, line, min(len, x));
-		पंचांगp[len] = '\0';
-		mvwprपूर्णांकw(win, i, 0, "%s", पंचांगp);
-	पूर्ण
-पूर्ण
+	for (i = 0; i < total_lines; i++) {
+		char tmp[x+10];
+		const char *line = get_line(text, i);
+		int len = get_line_length(line);
+		strncpy(tmp, line, min(len, x));
+		tmp[len] = '\0';
+		mvwprintw(win, i, 0, "%s", tmp);
+	}
+}
 
 /* get the message, and buttons.
- * each button must be a अक्षर*
- * वापस the selected button
+ * each button must be a char*
+ * return the selected button
  *
- * this dialog is used क्रम 2 dअगरferent things:
+ * this dialog is used for 2 different things:
  * 1) show a text box, no buttons.
  * 2) show a dialog, with horizontal buttons
  */
-पूर्णांक btn_dialog(WINDOW *मुख्य_winकरोw, स्थिर अक्षर *msg, पूर्णांक btn_num, ...)
-अणु
-	बहु_सूची ap;
-	अक्षर *btn;
-	पूर्णांक btns_width = 0;
-	पूर्णांक msg_lines = 0;
-	पूर्णांक msg_width = 0;
-	पूर्णांक total_width;
-	पूर्णांक win_rows = 0;
+int btn_dialog(WINDOW *main_window, const char *msg, int btn_num, ...)
+{
+	va_list ap;
+	char *btn;
+	int btns_width = 0;
+	int msg_lines = 0;
+	int msg_width = 0;
+	int total_width;
+	int win_rows = 0;
 	WINDOW *win;
 	WINDOW *msg_win;
 	WINDOW *menu_win;
 	MENU *menu;
 	ITEM *btns[btn_num+1];
-	पूर्णांक i, x, y;
-	पूर्णांक res = -1;
+	int i, x, y;
+	int res = -1;
 
 
-	बहु_शुरू(ap, btn_num);
-	क्रम (i = 0; i < btn_num; i++) अणु
-		btn = बहु_तर्क(ap, अक्षर *);
+	va_start(ap, btn_num);
+	for (i = 0; i < btn_num; i++) {
+		btn = va_arg(ap, char *);
 		btns[i] = new_item(btn, "");
-		btns_width += म_माप(btn)+1;
-	पूर्ण
-	बहु_पूर्ण(ap);
-	btns[btn_num] = शून्य;
+		btns_width += strlen(btn)+1;
+	}
+	va_end(ap);
+	btns[btn_num] = NULL;
 
 	/* find the widest line of msg: */
 	msg_lines = get_line_no(msg);
-	क्रम (i = 0; i < msg_lines; i++) अणु
-		स्थिर अक्षर *line = get_line(msg, i);
-		पूर्णांक len = get_line_length(line);
-		अगर (msg_width < len)
+	for (i = 0; i < msg_lines; i++) {
+		const char *line = get_line(msg, i);
+		int len = get_line_length(line);
+		if (msg_width < len)
 			msg_width = len;
-	पूर्ण
+	}
 
 	total_width = max(msg_width, btns_width);
 	/* place dialog in middle of screen */
-	y = (geपंचांगaxy(stdscr)-(msg_lines+4))/2;
-	x = (geपंचांगaxx(stdscr)-(total_width+4))/2;
+	y = (getmaxy(stdscr)-(msg_lines+4))/2;
+	x = (getmaxx(stdscr)-(total_width+4))/2;
 
 
-	/* create the winकरोws */
-	अगर (btn_num > 0)
+	/* create the windows */
+	if (btn_num > 0)
 		win_rows = msg_lines+4;
-	अन्यथा
+	else
 		win_rows = msg_lines+2;
 
 	win = newwin(win_rows, total_width+4, y, x);
@@ -246,19 +245,19 @@
 	msg_win = derwin(win, win_rows-2, msg_width, 1,
 			1+(total_width+2-msg_width)/2);
 
-	set_menu_क्रमe(menu, attr_dialog_menu_क्रमe);
+	set_menu_fore(menu, attr_dialog_menu_fore);
 	set_menu_back(menu, attr_dialog_menu_back);
 
 	wattrset(win, attr_dialog_box);
 	box(win, 0, 0);
 
-	/* prपूर्णांक message */
+	/* print message */
 	wattrset(msg_win, attr_dialog_text);
-	fill_winकरोw(msg_win, msg);
+	fill_window(msg_win, msg);
 
 	set_menu_win(menu, win);
 	set_menu_sub(menu, menu_win);
-	set_menu_क्रमmat(menu, 1, btn_num);
+	set_menu_format(menu, 1, btn_num);
 	menu_opts_off(menu, O_SHOWDESC);
 	menu_opts_off(menu, O_SHOWMATCH);
 	menu_opts_on(menu, O_ONEVALUE);
@@ -268,77 +267,77 @@
 
 
 	touchwin(win);
-	refresh_all_winकरोws(मुख्य_winकरोw);
-	जबतक ((res = wअ_लोh(win))) अणु
-		चयन (res) अणु
-		हाल KEY_LEFT:
+	refresh_all_windows(main_window);
+	while ((res = wgetch(win))) {
+		switch (res) {
+		case KEY_LEFT:
 			menu_driver(menu, REQ_LEFT_ITEM);
-			अवरोध;
-		हाल KEY_RIGHT:
+			break;
+		case KEY_RIGHT:
 			menu_driver(menu, REQ_RIGHT_ITEM);
-			अवरोध;
-		हाल 10: /* ENTER */
-		हाल 27: /* ESCAPE */
-		हाल ' ':
-		हाल KEY_F(F_BACK):
-		हाल KEY_F(F_EXIT):
-			अवरोध;
-		पूर्ण
+			break;
+		case 10: /* ENTER */
+		case 27: /* ESCAPE */
+		case ' ':
+		case KEY_F(F_BACK):
+		case KEY_F(F_EXIT):
+			break;
+		}
 		touchwin(win);
-		refresh_all_winकरोws(मुख्य_winकरोw);
+		refresh_all_windows(main_window);
 
-		अगर (res == 10 || res == ' ') अणु
+		if (res == 10 || res == ' ') {
 			res = item_index(current_item(menu));
-			अवरोध;
-		पूर्ण अन्यथा अगर (res == 27 || res == KEY_F(F_BACK) ||
-				res == KEY_F(F_EXIT)) अणु
+			break;
+		} else if (res == 27 || res == KEY_F(F_BACK) ||
+				res == KEY_F(F_EXIT)) {
 			res = KEY_EXIT;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	unpost_menu(menu);
-	मुक्त_menu(menu);
-	क्रम (i = 0; i < btn_num; i++)
-		मुक्त_item(btns[i]);
+	free_menu(menu);
+	for (i = 0; i < btn_num; i++)
+		free_item(btns[i]);
 
 	delwin(win);
-	वापस res;
-पूर्ण
+	return res;
+}
 
-पूर्णांक dialog_inputbox(WINDOW *मुख्य_winकरोw,
-		स्थिर अक्षर *title, स्थिर अक्षर *prompt,
-		स्थिर अक्षर *init, अक्षर **resultp, पूर्णांक *result_len)
-अणु
-	पूर्णांक prompt_lines = 0;
-	पूर्णांक prompt_width = 0;
+int dialog_inputbox(WINDOW *main_window,
+		const char *title, const char *prompt,
+		const char *init, char **resultp, int *result_len)
+{
+	int prompt_lines = 0;
+	int prompt_width = 0;
 	WINDOW *win;
 	WINDOW *prompt_win;
-	WINDOW *क्रमm_win;
+	WINDOW *form_win;
 	PANEL *panel;
-	पूर्णांक i, x, y, lines, columns, win_lines, win_cols;
-	पूर्णांक res = -1;
-	पूर्णांक cursor_position = म_माप(init);
-	पूर्णांक cursor_क्रमm_win;
-	अक्षर *result = *resultp;
+	int i, x, y, lines, columns, win_lines, win_cols;
+	int res = -1;
+	int cursor_position = strlen(init);
+	int cursor_form_win;
+	char *result = *resultp;
 
-	geपंचांगaxyx(stdscr, lines, columns);
+	getmaxyx(stdscr, lines, columns);
 
-	अगर (म_माप(init)+1 > *result_len) अणु
-		*result_len = म_माप(init)+1;
-		*resultp = result = xपुनः_स्मृति(result, *result_len);
-	पूर्ण
+	if (strlen(init)+1 > *result_len) {
+		*result_len = strlen(init)+1;
+		*resultp = result = xrealloc(result, *result_len);
+	}
 
 	/* find the widest line of msg: */
 	prompt_lines = get_line_no(prompt);
-	क्रम (i = 0; i < prompt_lines; i++) अणु
-		स्थिर अक्षर *line = get_line(prompt, i);
-		पूर्णांक len = get_line_length(line);
+	for (i = 0; i < prompt_lines; i++) {
+		const char *line = get_line(prompt, i);
+		int len = get_line_length(line);
 		prompt_width = max(prompt_width, len);
-	पूर्ण
+	}
 
-	अगर (title)
-		prompt_width = max(prompt_width, म_माप(title));
+	if (title)
+		prompt_width = max(prompt_width, strlen(title));
 
 	win_lines = min(prompt_lines+6, lines-2);
 	win_cols = min(prompt_width+7, columns-2);
@@ -349,30 +348,30 @@
 	y = (lines-win_lines)/2;
 	x = (columns-win_cols)/2;
 
-	म_नकलन(result, init, *result_len);
+	strncpy(result, init, *result_len);
 
-	/* create the winकरोws */
+	/* create the windows */
 	win = newwin(win_lines, win_cols, y, x);
 	prompt_win = derwin(win, prompt_lines+1, prompt_width, 2, 2);
-	क्रमm_win = derwin(win, 1, prompt_width, prompt_lines+3, 2);
-	keypad(क्रमm_win, TRUE);
+	form_win = derwin(win, 1, prompt_width, prompt_lines+3, 2);
+	keypad(form_win, TRUE);
 
-	wattrset(क्रमm_win, attr_input_field);
+	wattrset(form_win, attr_input_field);
 
 	wattrset(win, attr_input_box);
 	box(win, 0, 0);
 	wattrset(win, attr_input_heading);
-	अगर (title)
-		mvwprपूर्णांकw(win, 0, 3, "%s", title);
+	if (title)
+		mvwprintw(win, 0, 3, "%s", title);
 
-	/* prपूर्णांक message */
+	/* print message */
 	wattrset(prompt_win, attr_input_text);
-	fill_winकरोw(prompt_win, prompt);
+	fill_window(prompt_win, prompt);
 
-	mvwprपूर्णांकw(क्रमm_win, 0, 0, "%*s", prompt_width, " ");
-	cursor_क्रमm_win = min(cursor_position, prompt_width-1);
-	mvwprपूर्णांकw(क्रमm_win, 0, 0, "%s",
-		  result + cursor_position-cursor_क्रमm_win);
+	mvwprintw(form_win, 0, 0, "%*s", prompt_width, " ");
+	cursor_form_win = min(cursor_position, prompt_width-1);
+	mvwprintw(form_win, 0, 0, "%s",
+		  result + cursor_position-cursor_form_win);
 
 	/* create panels */
 	panel = new_panel(win);
@@ -381,235 +380,235 @@
 	curs_set(1);
 
 	touchwin(win);
-	refresh_all_winकरोws(मुख्य_winकरोw);
-	जबतक ((res = wअ_लोh(क्रमm_win))) अणु
-		पूर्णांक len = म_माप(result);
-		चयन (res) अणु
-		हाल 10: /* ENTER */
-		हाल 27: /* ESCAPE */
-		हाल KEY_F(F_HELP):
-		हाल KEY_F(F_EXIT):
-		हाल KEY_F(F_BACK):
-			अवरोध;
-		हाल 8:   /* ^H */
-		हाल 127: /* ^? */
-		हाल KEY_BACKSPACE:
-			अगर (cursor_position > 0) अणु
-				स_हटाओ(&result[cursor_position-1],
+	refresh_all_windows(main_window);
+	while ((res = wgetch(form_win))) {
+		int len = strlen(result);
+		switch (res) {
+		case 10: /* ENTER */
+		case 27: /* ESCAPE */
+		case KEY_F(F_HELP):
+		case KEY_F(F_EXIT):
+		case KEY_F(F_BACK):
+			break;
+		case 8:   /* ^H */
+		case 127: /* ^? */
+		case KEY_BACKSPACE:
+			if (cursor_position > 0) {
+				memmove(&result[cursor_position-1],
 						&result[cursor_position],
 						len-cursor_position+1);
 				cursor_position--;
-				cursor_क्रमm_win--;
+				cursor_form_win--;
 				len--;
-			पूर्ण
-			अवरोध;
-		हाल KEY_DC:
-			अगर (cursor_position >= 0 && cursor_position < len) अणु
-				स_हटाओ(&result[cursor_position],
+			}
+			break;
+		case KEY_DC:
+			if (cursor_position >= 0 && cursor_position < len) {
+				memmove(&result[cursor_position],
 						&result[cursor_position+1],
 						len-cursor_position+1);
 				len--;
-			पूर्ण
-			अवरोध;
-		हाल KEY_UP:
-		हाल KEY_RIGHT:
-			अगर (cursor_position < len) अणु
+			}
+			break;
+		case KEY_UP:
+		case KEY_RIGHT:
+			if (cursor_position < len) {
 				cursor_position++;
-				cursor_क्रमm_win++;
-			पूर्ण
-			अवरोध;
-		हाल KEY_DOWN:
-		हाल KEY_LEFT:
-			अगर (cursor_position > 0) अणु
+				cursor_form_win++;
+			}
+			break;
+		case KEY_DOWN:
+		case KEY_LEFT:
+			if (cursor_position > 0) {
 				cursor_position--;
-				cursor_क्रमm_win--;
-			पूर्ण
-			अवरोध;
-		हाल KEY_HOME:
+				cursor_form_win--;
+			}
+			break;
+		case KEY_HOME:
 			cursor_position = 0;
-			cursor_क्रमm_win = 0;
-			अवरोध;
-		हाल KEY_END:
+			cursor_form_win = 0;
+			break;
+		case KEY_END:
 			cursor_position = len;
-			cursor_क्रमm_win = min(cursor_position, prompt_width-1);
-			अवरोध;
-		शेष:
-			अगर ((है_चित्र(res) || है_खाली(res))) अणु
-				/* one क्रम new अक्षर, one क्रम '\0' */
-				अगर (len+2 > *result_len) अणु
+			cursor_form_win = min(cursor_position, prompt_width-1);
+			break;
+		default:
+			if ((isgraph(res) || isspace(res))) {
+				/* one for new char, one for '\0' */
+				if (len+2 > *result_len) {
 					*result_len = len+2;
-					*resultp = result = पुनः_स्मृति(result,
+					*resultp = result = realloc(result,
 								*result_len);
-				पूर्ण
-				/* insert the अक्षर at the proper position */
-				स_हटाओ(&result[cursor_position+1],
+				}
+				/* insert the char at the proper position */
+				memmove(&result[cursor_position+1],
 						&result[cursor_position],
 						len-cursor_position+1);
 				result[cursor_position] = res;
 				cursor_position++;
-				cursor_क्रमm_win++;
+				cursor_form_win++;
 				len++;
-			पूर्ण अन्यथा अणु
-				mvprपूर्णांकw(0, 0, "unknown key: %d\n", res);
-			पूर्ण
-			अवरोध;
-		पूर्ण
-		अगर (cursor_क्रमm_win < 0)
-			cursor_क्रमm_win = 0;
-		अन्यथा अगर (cursor_क्रमm_win > prompt_width-1)
-			cursor_क्रमm_win = prompt_width-1;
+			} else {
+				mvprintw(0, 0, "unknown key: %d\n", res);
+			}
+			break;
+		}
+		if (cursor_form_win < 0)
+			cursor_form_win = 0;
+		else if (cursor_form_win > prompt_width-1)
+			cursor_form_win = prompt_width-1;
 
-		wmove(क्रमm_win, 0, 0);
-		wclrtoeol(क्रमm_win);
-		mvwprपूर्णांकw(क्रमm_win, 0, 0, "%*s", prompt_width, " ");
-		mvwprपूर्णांकw(क्रमm_win, 0, 0, "%s",
-			result + cursor_position-cursor_क्रमm_win);
-		wmove(क्रमm_win, 0, cursor_क्रमm_win);
+		wmove(form_win, 0, 0);
+		wclrtoeol(form_win);
+		mvwprintw(form_win, 0, 0, "%*s", prompt_width, " ");
+		mvwprintw(form_win, 0, 0, "%s",
+			result + cursor_position-cursor_form_win);
+		wmove(form_win, 0, cursor_form_win);
 		touchwin(win);
-		refresh_all_winकरोws(मुख्य_winकरोw);
+		refresh_all_windows(main_window);
 
-		अगर (res == 10) अणु
+		if (res == 10) {
 			res = 0;
-			अवरोध;
-		पूर्ण अन्यथा अगर (res == 27 || res == KEY_F(F_BACK) ||
-				res == KEY_F(F_EXIT)) अणु
+			break;
+		} else if (res == 27 || res == KEY_F(F_BACK) ||
+				res == KEY_F(F_EXIT)) {
 			res = KEY_EXIT;
-			अवरोध;
-		पूर्ण अन्यथा अगर (res == KEY_F(F_HELP)) अणु
+			break;
+		} else if (res == KEY_F(F_HELP)) {
 			res = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	/* hide the cursor */
 	curs_set(0);
 	del_panel(panel);
 	delwin(prompt_win);
-	delwin(क्रमm_win);
+	delwin(form_win);
 	delwin(win);
-	वापस res;
-पूर्ण
+	return res;
+}
 
-/* refresh all winकरोws in the correct order */
-व्योम refresh_all_winकरोws(WINDOW *मुख्य_winकरोw)
-अणु
+/* refresh all windows in the correct order */
+void refresh_all_windows(WINDOW *main_window)
+{
 	update_panels();
-	touchwin(मुख्य_winकरोw);
+	touchwin(main_window);
 	refresh();
-पूर्ण
+}
 
-/* layman's scrollable winकरोw... */
-व्योम show_scroll_win(WINDOW *मुख्य_winकरोw,
-		स्थिर अक्षर *title,
-		स्थिर अक्षर *text)
-अणु
-	पूर्णांक res;
-	पूर्णांक total_lines = get_line_no(text);
-	पूर्णांक x, y, lines, columns;
-	पूर्णांक start_x = 0, start_y = 0;
-	पूर्णांक text_lines = 0, text_cols = 0;
-	पूर्णांक total_cols = 0;
-	पूर्णांक win_cols = 0;
-	पूर्णांक win_lines = 0;
-	पूर्णांक i = 0;
+/* layman's scrollable window... */
+void show_scroll_win(WINDOW *main_window,
+		const char *title,
+		const char *text)
+{
+	int res;
+	int total_lines = get_line_no(text);
+	int x, y, lines, columns;
+	int start_x = 0, start_y = 0;
+	int text_lines = 0, text_cols = 0;
+	int total_cols = 0;
+	int win_cols = 0;
+	int win_lines = 0;
+	int i = 0;
 	WINDOW *win;
 	WINDOW *pad;
 	PANEL *panel;
 
-	geपंचांगaxyx(stdscr, lines, columns);
+	getmaxyx(stdscr, lines, columns);
 
 	/* find the widest line of msg: */
 	total_lines = get_line_no(text);
-	क्रम (i = 0; i < total_lines; i++) अणु
-		स्थिर अक्षर *line = get_line(text, i);
-		पूर्णांक len = get_line_length(line);
+	for (i = 0; i < total_lines; i++) {
+		const char *line = get_line(text, i);
+		int len = get_line_length(line);
 		total_cols = max(total_cols, len+2);
-	पूर्ण
+	}
 
 	/* create the pad */
 	pad = newpad(total_lines+10, total_cols+10);
 	wattrset(pad, attr_scrollwin_text);
-	fill_winकरोw(pad, text);
+	fill_window(pad, text);
 
 	win_lines = min(total_lines+4, lines-2);
 	win_cols = min(total_cols+2, columns-2);
 	text_lines = max(win_lines-4, 0);
 	text_cols = max(win_cols-2, 0);
 
-	/* place winकरोw in middle of screen */
+	/* place window in middle of screen */
 	y = (lines-win_lines)/2;
 	x = (columns-win_cols)/2;
 
 	win = newwin(win_lines, win_cols, y, x);
 	keypad(win, TRUE);
-	/* show the help in the help winकरोw, and show the help panel */
+	/* show the help in the help window, and show the help panel */
 	wattrset(win, attr_scrollwin_box);
 	box(win, 0, 0);
 	wattrset(win, attr_scrollwin_heading);
-	mvwprपूर्णांकw(win, 0, 3, " %s ", title);
+	mvwprintw(win, 0, 3, " %s ", title);
 	panel = new_panel(win);
 
 	/* handle scrolling */
-	करो अणु
+	do {
 
 		copywin(pad, win, start_y, start_x, 2, 2, text_lines,
 				text_cols, 0);
-		prपूर्णांक_in_middle(win,
+		print_in_middle(win,
 				text_lines+2,
 				text_cols,
 				"<OK>",
-				attr_dialog_menu_क्रमe);
+				attr_dialog_menu_fore);
 		wrefresh(win);
 
-		res = wअ_लोh(win);
-		चयन (res) अणु
-		हाल KEY_NPAGE:
-		हाल ' ':
-		हाल 'd':
+		res = wgetch(win);
+		switch (res) {
+		case KEY_NPAGE:
+		case ' ':
+		case 'd':
 			start_y += text_lines-2;
-			अवरोध;
-		हाल KEY_PPAGE:
-		हाल 'u':
+			break;
+		case KEY_PPAGE:
+		case 'u':
 			start_y -= text_lines+2;
-			अवरोध;
-		हाल KEY_HOME:
+			break;
+		case KEY_HOME:
 			start_y = 0;
-			अवरोध;
-		हाल KEY_END:
+			break;
+		case KEY_END:
 			start_y = total_lines-text_lines;
-			अवरोध;
-		हाल KEY_DOWN:
-		हाल 'j':
+			break;
+		case KEY_DOWN:
+		case 'j':
 			start_y++;
-			अवरोध;
-		हाल KEY_UP:
-		हाल 'k':
+			break;
+		case KEY_UP:
+		case 'k':
 			start_y--;
-			अवरोध;
-		हाल KEY_LEFT:
-		हाल 'h':
+			break;
+		case KEY_LEFT:
+		case 'h':
 			start_x--;
-			अवरोध;
-		हाल KEY_RIGHT:
-		हाल 'l':
+			break;
+		case KEY_RIGHT:
+		case 'l':
 			start_x++;
-			अवरोध;
-		पूर्ण
-		अगर (res == 10 || res == 27 || res == 'q' ||
+			break;
+		}
+		if (res == 10 || res == 27 || res == 'q' ||
 			res == KEY_F(F_HELP) || res == KEY_F(F_BACK) ||
 			res == KEY_F(F_EXIT))
-			अवरोध;
-		अगर (start_y < 0)
+			break;
+		if (start_y < 0)
 			start_y = 0;
-		अगर (start_y >= total_lines-text_lines)
+		if (start_y >= total_lines-text_lines)
 			start_y = total_lines-text_lines;
-		अगर (start_x < 0)
+		if (start_x < 0)
 			start_x = 0;
-		अगर (start_x >= total_cols-text_cols)
+		if (start_x >= total_cols-text_cols)
 			start_x = total_cols-text_cols;
-	पूर्ण जबतक (res);
+	} while (res);
 
 	del_panel(panel);
 	delwin(win);
-	refresh_all_winकरोws(मुख्य_winकरोw);
-पूर्ण
+	refresh_all_windows(main_window);
+}

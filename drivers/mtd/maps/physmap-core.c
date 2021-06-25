@@ -1,12 +1,11 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Normal mappings of chips in physical memory
  *
  * Copyright (C) 2003 MontaVista Software Inc.
  * Author: Jun Sun, jsun@mvista.com or jsun@junsun.net
  *
- * 031022 - [jsun] add run-समय configure and partition setup
+ * 031022 - [jsun] add run-time configure and partition setup
  *
  * Device tree support:
  *    Copyright (C) 2006 MontaVista Software Inc.
@@ -16,667 +15,667 @@
  *    Copyright (C) 2007 David Gibson, IBM Corporation.
  *
  * GPIO address extension:
- *    Handle the हाल where a flash device is mostly addressed using physical
+ *    Handle the case where a flash device is mostly addressed using physical
  *    line and supplemented by GPIOs.  This way you can hook up say a 8MiB flash
  *    to a 2MiB memory range and use the GPIOs to select a particular range.
  *
- *    Copyright तऊ 2000 Nicolas Pitre <nico@cam.org>
- *    Copyright तऊ 2005-2009 Analog Devices Inc.
+ *    Copyright © 2000 Nicolas Pitre <nico@cam.org>
+ *    Copyright © 2005-2009 Analog Devices Inc.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/map.h>
-#समावेश <linux/mtd/partitions.h>
-#समावेश <linux/mtd/physmap.h>
-#समावेश <linux/mtd/concat.h>
-#समावेश <linux/mtd/cfi_endian.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/gpio/consumer.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/device.h>
+#include <linux/platform_device.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/map.h>
+#include <linux/mtd/partitions.h>
+#include <linux/mtd/physmap.h>
+#include <linux/mtd/concat.h>
+#include <linux/mtd/cfi_endian.h>
+#include <linux/io.h>
+#include <linux/of_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/gpio/consumer.h>
 
-#समावेश "physmap-bt1-rom.h"
-#समावेश "physmap-gemini.h"
-#समावेश "physmap-ixp4xx.h"
-#समावेश "physmap-versatile.h"
+#include "physmap-bt1-rom.h"
+#include "physmap-gemini.h"
+#include "physmap-ixp4xx.h"
+#include "physmap-versatile.h"
 
-काष्ठा physmap_flash_info अणु
-	अचिन्हित पूर्णांक		nmaps;
-	काष्ठा mtd_info		**mtds;
-	काष्ठा mtd_info		*cmtd;
-	काष्ठा map_info		*maps;
+struct physmap_flash_info {
+	unsigned int		nmaps;
+	struct mtd_info		**mtds;
+	struct mtd_info		*cmtd;
+	struct map_info		*maps;
 	spinlock_t		vpp_lock;
-	पूर्णांक			vpp_refcnt;
-	स्थिर अक्षर		*probe_type;
-	स्थिर अक्षर * स्थिर	*part_types;
-	अचिन्हित पूर्णांक		nparts;
-	स्थिर काष्ठा mtd_partition *parts;
-	काष्ठा gpio_descs	*gpios;
-	अचिन्हित पूर्णांक		gpio_values;
-	अचिन्हित पूर्णांक		win_order;
-पूर्ण;
+	int			vpp_refcnt;
+	const char		*probe_type;
+	const char * const	*part_types;
+	unsigned int		nparts;
+	const struct mtd_partition *parts;
+	struct gpio_descs	*gpios;
+	unsigned int		gpio_values;
+	unsigned int		win_order;
+};
 
-अटल पूर्णांक physmap_flash_हटाओ(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा physmap_flash_info *info;
-	काष्ठा physmap_flash_data *physmap_data;
-	पूर्णांक i, err = 0;
+static int physmap_flash_remove(struct platform_device *dev)
+{
+	struct physmap_flash_info *info;
+	struct physmap_flash_data *physmap_data;
+	int i, err = 0;
 
-	info = platक्रमm_get_drvdata(dev);
-	अगर (!info) अणु
+	info = platform_get_drvdata(dev);
+	if (!info) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (info->cmtd) अणु
-		err = mtd_device_unरेजिस्टर(info->cmtd);
-		अगर (err)
-			जाओ out;
+	if (info->cmtd) {
+		err = mtd_device_unregister(info->cmtd);
+		if (err)
+			goto out;
 
-		अगर (info->cmtd != info->mtds[0])
+		if (info->cmtd != info->mtds[0])
 			mtd_concat_destroy(info->cmtd);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < info->nmaps; i++) अणु
-		अगर (info->mtds[i])
+	for (i = 0; i < info->nmaps; i++) {
+		if (info->mtds[i])
 			map_destroy(info->mtds[i]);
-	पूर्ण
+	}
 
 	physmap_data = dev_get_platdata(&dev->dev);
-	अगर (physmap_data && physmap_data->निकास)
-		physmap_data->निकास(dev);
+	if (physmap_data && physmap_data->exit)
+		physmap_data->exit(dev);
 
 out:
-	pm_runसमय_put(&dev->dev);
-	pm_runसमय_disable(&dev->dev);
-	वापस err;
-पूर्ण
+	pm_runtime_put(&dev->dev);
+	pm_runtime_disable(&dev->dev);
+	return err;
+}
 
-अटल व्योम physmap_set_vpp(काष्ठा map_info *map, पूर्णांक state)
-अणु
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा physmap_flash_data *physmap_data;
-	काष्ठा physmap_flash_info *info;
-	अचिन्हित दीर्घ flags;
+static void physmap_set_vpp(struct map_info *map, int state)
+{
+	struct platform_device *pdev;
+	struct physmap_flash_data *physmap_data;
+	struct physmap_flash_info *info;
+	unsigned long flags;
 
-	pdev = (काष्ठा platक्रमm_device *)map->map_priv_1;
+	pdev = (struct platform_device *)map->map_priv_1;
 	physmap_data = dev_get_platdata(&pdev->dev);
 
-	अगर (!physmap_data->set_vpp)
-		वापस;
+	if (!physmap_data->set_vpp)
+		return;
 
-	info = platक्रमm_get_drvdata(pdev);
+	info = platform_get_drvdata(pdev);
 
 	spin_lock_irqsave(&info->vpp_lock, flags);
-	अगर (state) अणु
-		अगर (++info->vpp_refcnt == 1)    /* first nested 'on' */
+	if (state) {
+		if (++info->vpp_refcnt == 1)    /* first nested 'on' */
 			physmap_data->set_vpp(pdev, 1);
-	पूर्ण अन्यथा अणु
-		अगर (--info->vpp_refcnt == 0)    /* last nested 'off' */
+	} else {
+		if (--info->vpp_refcnt == 0)    /* last nested 'off' */
 			physmap_data->set_vpp(pdev, 0);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&info->vpp_lock, flags);
-पूर्ण
+}
 
-#अगर IS_ENABLED(CONFIG_MTD_PHYSMAP_GPIO_ADDR)
-अटल व्योम physmap_set_addr_gpios(काष्ठा physmap_flash_info *info,
-				   अचिन्हित दीर्घ ofs)
-अणु
-	अचिन्हित पूर्णांक i;
+#if IS_ENABLED(CONFIG_MTD_PHYSMAP_GPIO_ADDR)
+static void physmap_set_addr_gpios(struct physmap_flash_info *info,
+				   unsigned long ofs)
+{
+	unsigned int i;
 
 	ofs >>= info->win_order;
-	अगर (info->gpio_values == ofs)
-		वापस;
+	if (info->gpio_values == ofs)
+		return;
 
-	क्रम (i = 0; i < info->gpios->ndescs; i++) अणु
-		अगर ((BIT(i) & ofs) == (BIT(i) & info->gpio_values))
-			जारी;
+	for (i = 0; i < info->gpios->ndescs; i++) {
+		if ((BIT(i) & ofs) == (BIT(i) & info->gpio_values))
+			continue;
 
 		gpiod_set_value(info->gpios->desc[i], !!(BIT(i) & ofs));
-	पूर्ण
+	}
 
 	info->gpio_values = ofs;
-पूर्ण
+}
 
-#घोषणा win_mask(order)		(BIT(order) - 1)
+#define win_mask(order)		(BIT(order) - 1)
 
-अटल map_word physmap_addr_gpios_पढ़ो(काष्ठा map_info *map,
-					अचिन्हित दीर्घ ofs)
-अणु
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा physmap_flash_info *info;
+static map_word physmap_addr_gpios_read(struct map_info *map,
+					unsigned long ofs)
+{
+	struct platform_device *pdev;
+	struct physmap_flash_info *info;
 	map_word mw;
 	u16 word;
 
-	pdev = (काष्ठा platक्रमm_device *)map->map_priv_1;
-	info = platक्रमm_get_drvdata(pdev);
+	pdev = (struct platform_device *)map->map_priv_1;
+	info = platform_get_drvdata(pdev);
 	physmap_set_addr_gpios(info, ofs);
 
-	word = पढ़ोw(map->virt + (ofs & win_mask(info->win_order)));
+	word = readw(map->virt + (ofs & win_mask(info->win_order)));
 	mw.x[0] = word;
-	वापस mw;
-पूर्ण
+	return mw;
+}
 
-अटल व्योम physmap_addr_gpios_copy_from(काष्ठा map_info *map, व्योम *buf,
-					 अचिन्हित दीर्घ ofs, sमाप_प्रकार len)
-अणु
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा physmap_flash_info *info;
+static void physmap_addr_gpios_copy_from(struct map_info *map, void *buf,
+					 unsigned long ofs, ssize_t len)
+{
+	struct platform_device *pdev;
+	struct physmap_flash_info *info;
 
-	pdev = (काष्ठा platक्रमm_device *)map->map_priv_1;
-	info = platक्रमm_get_drvdata(pdev);
+	pdev = (struct platform_device *)map->map_priv_1;
+	info = platform_get_drvdata(pdev);
 
-	जबतक (len) अणु
-		अचिन्हित पूर्णांक winofs = ofs & win_mask(info->win_order);
-		अचिन्हित पूर्णांक chunklen = min_t(अचिन्हित पूर्णांक, len,
+	while (len) {
+		unsigned int winofs = ofs & win_mask(info->win_order);
+		unsigned int chunklen = min_t(unsigned int, len,
 					      BIT(info->win_order) - winofs);
 
 		physmap_set_addr_gpios(info, ofs);
-		स_नकल_fromio(buf, map->virt + winofs, chunklen);
+		memcpy_fromio(buf, map->virt + winofs, chunklen);
 		len -= chunklen;
 		buf += chunklen;
 		ofs += chunklen;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम physmap_addr_gpios_ग_लिखो(काष्ठा map_info *map, map_word mw,
-				     अचिन्हित दीर्घ ofs)
-अणु
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा physmap_flash_info *info;
+static void physmap_addr_gpios_write(struct map_info *map, map_word mw,
+				     unsigned long ofs)
+{
+	struct platform_device *pdev;
+	struct physmap_flash_info *info;
 	u16 word;
 
-	pdev = (काष्ठा platक्रमm_device *)map->map_priv_1;
-	info = platक्रमm_get_drvdata(pdev);
+	pdev = (struct platform_device *)map->map_priv_1;
+	info = platform_get_drvdata(pdev);
 	physmap_set_addr_gpios(info, ofs);
 
 	word = mw.x[0];
-	ग_लिखोw(word, map->virt + (ofs & win_mask(info->win_order)));
-पूर्ण
+	writew(word, map->virt + (ofs & win_mask(info->win_order)));
+}
 
-अटल व्योम physmap_addr_gpios_copy_to(काष्ठा map_info *map, अचिन्हित दीर्घ ofs,
-				       स्थिर व्योम *buf, sमाप_प्रकार len)
-अणु
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा physmap_flash_info *info;
+static void physmap_addr_gpios_copy_to(struct map_info *map, unsigned long ofs,
+				       const void *buf, ssize_t len)
+{
+	struct platform_device *pdev;
+	struct physmap_flash_info *info;
 
-	pdev = (काष्ठा platक्रमm_device *)map->map_priv_1;
-	info = platक्रमm_get_drvdata(pdev);
+	pdev = (struct platform_device *)map->map_priv_1;
+	info = platform_get_drvdata(pdev);
 
-	जबतक (len) अणु
-		अचिन्हित पूर्णांक winofs = ofs & win_mask(info->win_order);
-		अचिन्हित पूर्णांक chunklen = min_t(अचिन्हित पूर्णांक, len,
+	while (len) {
+		unsigned int winofs = ofs & win_mask(info->win_order);
+		unsigned int chunklen = min_t(unsigned int, len,
 					      BIT(info->win_order) - winofs);
 
 		physmap_set_addr_gpios(info, ofs);
-		स_नकल_toio(map->virt + winofs, buf, chunklen);
+		memcpy_toio(map->virt + winofs, buf, chunklen);
 		len -= chunklen;
 		buf += chunklen;
 		ofs += chunklen;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक physmap_addr_gpios_map_init(काष्ठा map_info *map)
-अणु
+static int physmap_addr_gpios_map_init(struct map_info *map)
+{
 	map->phys = NO_XIP;
-	map->पढ़ो = physmap_addr_gpios_पढ़ो;
+	map->read = physmap_addr_gpios_read;
 	map->copy_from = physmap_addr_gpios_copy_from;
-	map->ग_लिखो = physmap_addr_gpios_ग_लिखो;
+	map->write = physmap_addr_gpios_write;
 	map->copy_to = physmap_addr_gpios_copy_to;
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक physmap_addr_gpios_map_init(काष्ठा map_info *map)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#else
+static int physmap_addr_gpios_map_init(struct map_info *map)
+{
+	return -ENOTSUPP;
+}
+#endif
 
-#अगर IS_ENABLED(CONFIG_MTD_PHYSMAP_OF)
-अटल स्थिर काष्ठा of_device_id of_flash_match[] = अणु
-	अणु
+#if IS_ENABLED(CONFIG_MTD_PHYSMAP_OF)
+static const struct of_device_id of_flash_match[] = {
+	{
 		.compatible = "cfi-flash",
 		.data = "cfi_probe",
-	पूर्ण,
-	अणु
+	},
+	{
 		/*
 		 * FIXME: JEDEC chips can't be safely and reliably
-		 * probed, although the mtd code माला_लो it right in
-		 * practice most of the समय.  We should use the
-		 * venकरोr and device ids specअगरied by the binding to
+		 * probed, although the mtd code gets it right in
+		 * practice most of the time.  We should use the
+		 * vendor and device ids specified by the binding to
 		 * bypass the heuristic probe code, but the mtd layer
-		 * provides, at present, no पूर्णांकerface क्रम करोing so
+		 * provides, at present, no interface for doing so
 		 * :(.
 		 */
 		.compatible = "jedec-flash",
 		.data = "jedec_probe",
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "mtd-ram",
 		.data = "map_ram",
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "mtd-rom",
 		.data = "map_rom",
-	पूर्ण,
-	अणु
+	},
+	{
 		.type = "rom",
 		.compatible = "direct-mapped"
-	पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+	},
+	{ /* sentinel */ },
+};
 MODULE_DEVICE_TABLE(of, of_flash_match);
 
-अटल स्थिर अक्षर * स्थिर of_शेष_part_probes[] = अणु
-	"cmdlinepart", "RedBoot", "ofpart", "ofoldpart", शून्य
-पूर्ण;
+static const char * const of_default_part_probes[] = {
+	"cmdlinepart", "RedBoot", "ofpart", "ofoldpart", NULL
+};
 
-अटल स्थिर अक्षर * स्थिर *of_get_part_probes(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा device_node *dp = dev->dev.of_node;
-	स्थिर अक्षर **res;
-	पूर्णांक count;
+static const char * const *of_get_part_probes(struct platform_device *dev)
+{
+	struct device_node *dp = dev->dev.of_node;
+	const char **res;
+	int count;
 
 	count = of_property_count_strings(dp, "linux,part-probe");
-	अगर (count < 0)
-		वापस of_शेष_part_probes;
+	if (count < 0)
+		return of_default_part_probes;
 
-	res = devm_kसुस्मृति(&dev->dev, count + 1, माप(*res), GFP_KERNEL);
-	अगर (!res)
-		वापस शून्य;
+	res = devm_kcalloc(&dev->dev, count + 1, sizeof(*res), GFP_KERNEL);
+	if (!res)
+		return NULL;
 
-	count = of_property_पढ़ो_string_array(dp, "linux,part-probe", res,
+	count = of_property_read_string_array(dp, "linux,part-probe", res,
 					      count);
-	अगर (count < 0)
-		वापस शून्य;
+	if (count < 0)
+		return NULL;
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल स्थिर अक्षर *of_select_probe_type(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा device_node *dp = dev->dev.of_node;
-	स्थिर काष्ठा of_device_id *match;
-	स्थिर अक्षर *probe_type;
+static const char *of_select_probe_type(struct platform_device *dev)
+{
+	struct device_node *dp = dev->dev.of_node;
+	const struct of_device_id *match;
+	const char *probe_type;
 
 	match = of_match_device(of_flash_match, &dev->dev);
 	probe_type = match->data;
-	अगर (probe_type)
-		वापस probe_type;
+	if (probe_type)
+		return probe_type;
 
 	dev_warn(&dev->dev,
 		 "Device tree uses obsolete \"direct-mapped\" flash binding\n");
 
-	of_property_पढ़ो_string(dp, "probe-type", &probe_type);
-	अगर (!probe_type)
-		वापस शून्य;
+	of_property_read_string(dp, "probe-type", &probe_type);
+	if (!probe_type)
+		return NULL;
 
-	अगर (!म_भेद(probe_type, "CFI")) अणु
+	if (!strcmp(probe_type, "CFI")) {
 		probe_type = "cfi_probe";
-	पूर्ण अन्यथा अगर (!म_भेद(probe_type, "JEDEC")) अणु
+	} else if (!strcmp(probe_type, "JEDEC")) {
 		probe_type = "jedec_probe";
-	पूर्ण अन्यथा अगर (!म_भेद(probe_type, "ROM")) अणु
+	} else if (!strcmp(probe_type, "ROM")) {
 		probe_type = "map_rom";
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_warn(&dev->dev,
 			 "obsolete_probe: don't know probe type '%s', mapping as rom\n",
 			 probe_type);
 		probe_type = "map_rom";
-	पूर्ण
+	}
 
-	वापस probe_type;
-पूर्ण
+	return probe_type;
+}
 
-अटल पूर्णांक physmap_flash_of_init(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा physmap_flash_info *info = platक्रमm_get_drvdata(dev);
-	काष्ठा device_node *dp = dev->dev.of_node;
-	स्थिर अक्षर *mtd_name = शून्य;
-	पूर्णांक err, swap = 0;
+static int physmap_flash_of_init(struct platform_device *dev)
+{
+	struct physmap_flash_info *info = platform_get_drvdata(dev);
+	struct device_node *dp = dev->dev.of_node;
+	const char *mtd_name = NULL;
+	int err, swap = 0;
 	bool map_indirect;
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 	u32 bankwidth;
 
-	अगर (!dp)
-		वापस -EINVAL;
+	if (!dp)
+		return -EINVAL;
 
 	info->probe_type = of_select_probe_type(dev);
 
 	info->part_types = of_get_part_probes(dev);
-	अगर (!info->part_types)
-		वापस -ENOMEM;
+	if (!info->part_types)
+		return -ENOMEM;
 
-	of_property_पढ़ो_string(dp, "linux,mtd-name", &mtd_name);
+	of_property_read_string(dp, "linux,mtd-name", &mtd_name);
 
-	map_indirect = of_property_पढ़ो_bool(dp, "no-unaligned-direct-access");
+	map_indirect = of_property_read_bool(dp, "no-unaligned-direct-access");
 
-	err = of_property_पढ़ो_u32(dp, "bank-width", &bankwidth);
-	अगर (err) अणु
+	err = of_property_read_u32(dp, "bank-width", &bankwidth);
+	if (err) {
 		dev_err(&dev->dev, "Can't get bank width from device tree\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (of_property_पढ़ो_bool(dp, "big-endian"))
+	if (of_property_read_bool(dp, "big-endian"))
 		swap = CFI_BIG_ENDIAN;
-	अन्यथा अगर (of_property_पढ़ो_bool(dp, "little-endian"))
+	else if (of_property_read_bool(dp, "little-endian"))
 		swap = CFI_LITTLE_ENDIAN;
 
-	क्रम (i = 0; i < info->nmaps; i++) अणु
+	for (i = 0; i < info->nmaps; i++) {
 		info->maps[i].name = mtd_name;
 		info->maps[i].swap = swap;
 		info->maps[i].bankwidth = bankwidth;
 		info->maps[i].device_node = dp;
 
 		err = of_flash_probe_bt1_rom(dev, dp, &info->maps[i]);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		err = of_flash_probe_gemini(dev, dp, &info->maps[i]);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		err = of_flash_probe_ixp4xx(dev, dp, &info->maps[i]);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		err = of_flash_probe_versatile(dev, dp, &info->maps[i]);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		/*
-		 * On some platक्रमms (e.g. MPC5200) a direct 1:1 mapping
+		 * On some platforms (e.g. MPC5200) a direct 1:1 mapping
 		 * may cause problems with JFFS2 usage, as the local bus (LPB)
-		 * करोesn't support unaligned accesses as implemented in the
-		 * JFFS2 code via स_नकल(). By setting NO_XIP, the
+		 * doesn't support unaligned accesses as implemented in the
+		 * JFFS2 code via memcpy(). By setting NO_XIP, the
 		 * flash will not be exposed directly to the MTD users
 		 * (e.g. JFFS2) any more.
 		 */
-		अगर (map_indirect)
+		if (map_indirect)
 			info->maps[i].phys = NO_XIP;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-#अन्यथा /* IS_ENABLED(CONFIG_MTD_PHYSMAP_OF) */
-#घोषणा of_flash_match शून्य
+	return 0;
+}
+#else /* IS_ENABLED(CONFIG_MTD_PHYSMAP_OF) */
+#define of_flash_match NULL
 
-अटल पूर्णांक physmap_flash_of_init(काष्ठा platक्रमm_device *dev)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
-#पूर्ण_अगर /* IS_ENABLED(CONFIG_MTD_PHYSMAP_OF) */
+static int physmap_flash_of_init(struct platform_device *dev)
+{
+	return -ENOTSUPP;
+}
+#endif /* IS_ENABLED(CONFIG_MTD_PHYSMAP_OF) */
 
-अटल स्थिर अक्षर * स्थिर rom_probe_types[] = अणु
+static const char * const rom_probe_types[] = {
 	"cfi_probe", "jedec_probe", "qinfo_probe", "map_rom",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर part_probe_types[] = अणु
-	"cmdlinepart", "RedBoot", "afs", शून्य
-पूर्ण;
+static const char * const part_probe_types[] = {
+	"cmdlinepart", "RedBoot", "afs", NULL
+};
 
-अटल पूर्णांक physmap_flash_pdata_init(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा physmap_flash_info *info = platक्रमm_get_drvdata(dev);
-	काष्ठा physmap_flash_data *physmap_data;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
+static int physmap_flash_pdata_init(struct platform_device *dev)
+{
+	struct physmap_flash_info *info = platform_get_drvdata(dev);
+	struct physmap_flash_data *physmap_data;
+	unsigned int i;
+	int err;
 
 	physmap_data = dev_get_platdata(&dev->dev);
-	अगर (!physmap_data)
-		वापस -EINVAL;
+	if (!physmap_data)
+		return -EINVAL;
 
 	info->probe_type = physmap_data->probe_type;
 	info->part_types = physmap_data->part_probe_types ? : part_probe_types;
 	info->parts = physmap_data->parts;
 	info->nparts = physmap_data->nr_parts;
 
-	अगर (physmap_data->init) अणु
+	if (physmap_data->init) {
 		err = physmap_data->init(dev);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	क्रम (i = 0; i < info->nmaps; i++) अणु
+	for (i = 0; i < info->nmaps; i++) {
 		info->maps[i].bankwidth = physmap_data->width;
 		info->maps[i].pfow_base = physmap_data->pfow_base;
 		info->maps[i].set_vpp = physmap_set_vpp;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक physmap_flash_probe(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा physmap_flash_info *info;
-	पूर्णांक err = 0;
-	पूर्णांक i;
+static int physmap_flash_probe(struct platform_device *dev)
+{
+	struct physmap_flash_info *info;
+	int err = 0;
+	int i;
 
-	अगर (!dev->dev.of_node && !dev_get_platdata(&dev->dev))
-		वापस -EINVAL;
+	if (!dev->dev.of_node && !dev_get_platdata(&dev->dev))
+		return -EINVAL;
 
-	info = devm_kzalloc(&dev->dev, माप(*info), GFP_KERNEL);
-	अगर (!info)
-		वापस -ENOMEM;
+	info = devm_kzalloc(&dev->dev, sizeof(*info), GFP_KERNEL);
+	if (!info)
+		return -ENOMEM;
 
-	जबतक (platक्रमm_get_resource(dev, IORESOURCE_MEM, info->nmaps))
+	while (platform_get_resource(dev, IORESOURCE_MEM, info->nmaps))
 		info->nmaps++;
 
-	अगर (!info->nmaps)
-		वापस -ENODEV;
+	if (!info->nmaps)
+		return -ENODEV;
 
 	info->maps = devm_kzalloc(&dev->dev,
-				  माप(*info->maps) * info->nmaps,
+				  sizeof(*info->maps) * info->nmaps,
 				  GFP_KERNEL);
-	अगर (!info->maps)
-		वापस -ENOMEM;
+	if (!info->maps)
+		return -ENOMEM;
 
 	info->mtds = devm_kzalloc(&dev->dev,
-				  माप(*info->mtds) * info->nmaps,
+				  sizeof(*info->mtds) * info->nmaps,
 				  GFP_KERNEL);
-	अगर (!info->mtds)
-		वापस -ENOMEM;
+	if (!info->mtds)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(dev, info);
+	platform_set_drvdata(dev, info);
 
 	info->gpios = devm_gpiod_get_array_optional(&dev->dev, "addr",
 						    GPIOD_OUT_LOW);
-	अगर (IS_ERR(info->gpios))
-		वापस PTR_ERR(info->gpios);
+	if (IS_ERR(info->gpios))
+		return PTR_ERR(info->gpios);
 
-	अगर (info->gpios && info->nmaps > 1) अणु
+	if (info->gpios && info->nmaps > 1) {
 		dev_err(&dev->dev, "addr-gpios only supported for nmaps == 1\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	pm_runसमय_enable(&dev->dev);
-	pm_runसमय_get_sync(&dev->dev);
+	pm_runtime_enable(&dev->dev);
+	pm_runtime_get_sync(&dev->dev);
 
-	अगर (dev->dev.of_node)
+	if (dev->dev.of_node)
 		err = physmap_flash_of_init(dev);
-	अन्यथा
+	else
 		err = physmap_flash_pdata_init(dev);
 
-	अगर (err) अणु
-		pm_runसमय_put(&dev->dev);
-		pm_runसमय_disable(&dev->dev);
-		वापस err;
-	पूर्ण
+	if (err) {
+		pm_runtime_put(&dev->dev);
+		pm_runtime_disable(&dev->dev);
+		return err;
+	}
 
-	क्रम (i = 0; i < info->nmaps; i++) अणु
-		काष्ठा resource *res;
+	for (i = 0; i < info->nmaps; i++) {
+		struct resource *res;
 
-		res = platक्रमm_get_resource(dev, IORESOURCE_MEM, i);
+		res = platform_get_resource(dev, IORESOURCE_MEM, i);
 		info->maps[i].virt = devm_ioremap_resource(&dev->dev, res);
-		अगर (IS_ERR(info->maps[i].virt)) अणु
+		if (IS_ERR(info->maps[i].virt)) {
 			err = PTR_ERR(info->maps[i].virt);
-			जाओ err_out;
-		पूर्ण
+			goto err_out;
+		}
 
 		dev_notice(&dev->dev, "physmap platform flash device: %pR\n",
 			   res);
 
-		अगर (!info->maps[i].name)
+		if (!info->maps[i].name)
 			info->maps[i].name = dev_name(&dev->dev);
 
-		अगर (!info->maps[i].phys)
+		if (!info->maps[i].phys)
 			info->maps[i].phys = res->start;
 
-		info->win_order = get_biपंचांगask_order(resource_size(res)) - 1;
+		info->win_order = get_bitmask_order(resource_size(res)) - 1;
 		info->maps[i].size = BIT(info->win_order +
 					 (info->gpios ?
 					  info->gpios->ndescs : 0));
 
-		info->maps[i].map_priv_1 = (अचिन्हित दीर्घ)dev;
+		info->maps[i].map_priv_1 = (unsigned long)dev;
 
-		अगर (info->gpios) अणु
+		if (info->gpios) {
 			err = physmap_addr_gpios_map_init(&info->maps[i]);
-			अगर (err)
-				जाओ err_out;
-		पूर्ण
+			if (err)
+				goto err_out;
+		}
 
-#अगर_घोषित CONFIG_MTD_COMPLEX_MAPPINGS
+#ifdef CONFIG_MTD_COMPLEX_MAPPINGS
 		/*
-		 * Only use the simple_map implementation अगर map hooks are not
-		 * implemented. Since map->पढ़ो() is mandatory checking क्रम its
+		 * Only use the simple_map implementation if map hooks are not
+		 * implemented. Since map->read() is mandatory checking for its
 		 * presence is enough.
 		 */
-		अगर (!info->maps[i].पढ़ो)
+		if (!info->maps[i].read)
 			simple_map_init(&info->maps[i]);
-#अन्यथा
+#else
 		simple_map_init(&info->maps[i]);
-#पूर्ण_अगर
+#endif
 
-		अगर (info->probe_type) अणु
-			info->mtds[i] = करो_map_probe(info->probe_type,
+		if (info->probe_type) {
+			info->mtds[i] = do_map_probe(info->probe_type,
 						     &info->maps[i]);
-		पूर्ण अन्यथा अणु
-			पूर्णांक j;
+		} else {
+			int j;
 
-			क्रम (j = 0; j < ARRAY_SIZE(rom_probe_types); j++) अणु
-				info->mtds[i] = करो_map_probe(rom_probe_types[j],
+			for (j = 0; j < ARRAY_SIZE(rom_probe_types); j++) {
+				info->mtds[i] = do_map_probe(rom_probe_types[j],
 							     &info->maps[i]);
-				अगर (info->mtds[i])
-					अवरोध;
-			पूर्ण
-		पूर्ण
+				if (info->mtds[i])
+					break;
+			}
+		}
 
-		अगर (!info->mtds[i]) अणु
+		if (!info->mtds[i]) {
 			dev_err(&dev->dev, "map_probe failed\n");
 			err = -ENXIO;
-			जाओ err_out;
-		पूर्ण
+			goto err_out;
+		}
 		info->mtds[i]->dev.parent = &dev->dev;
-	पूर्ण
+	}
 
-	अगर (info->nmaps == 1) अणु
+	if (info->nmaps == 1) {
 		info->cmtd = info->mtds[0];
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * We detected multiple devices. Concatenate them together.
 		 */
 		info->cmtd = mtd_concat_create(info->mtds, info->nmaps,
 					       dev_name(&dev->dev));
-		अगर (!info->cmtd)
+		if (!info->cmtd)
 			err = -ENXIO;
-	पूर्ण
-	अगर (err)
-		जाओ err_out;
+	}
+	if (err)
+		goto err_out;
 
 	spin_lock_init(&info->vpp_lock);
 
 	mtd_set_of_node(info->cmtd, dev->dev.of_node);
-	err = mtd_device_parse_रेजिस्टर(info->cmtd, info->part_types, शून्य,
+	err = mtd_device_parse_register(info->cmtd, info->part_types, NULL,
 					info->parts, info->nparts);
-	अगर (err)
-		जाओ err_out;
+	if (err)
+		goto err_out;
 
-	वापस 0;
+	return 0;
 
 err_out:
-	physmap_flash_हटाओ(dev);
-	वापस err;
-पूर्ण
+	physmap_flash_remove(dev);
+	return err;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल व्योम physmap_flash_shutकरोwn(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा physmap_flash_info *info = platक्रमm_get_drvdata(dev);
-	पूर्णांक i;
+#ifdef CONFIG_PM
+static void physmap_flash_shutdown(struct platform_device *dev)
+{
+	struct physmap_flash_info *info = platform_get_drvdata(dev);
+	int i;
 
-	क्रम (i = 0; i < info->nmaps && info->mtds[i]; i++)
-		अगर (mtd_suspend(info->mtds[i]) == 0)
+	for (i = 0; i < info->nmaps && info->mtds[i]; i++)
+		if (mtd_suspend(info->mtds[i]) == 0)
 			mtd_resume(info->mtds[i]);
-पूर्ण
-#अन्यथा
-#घोषणा physmap_flash_shutकरोwn शून्य
-#पूर्ण_अगर
+}
+#else
+#define physmap_flash_shutdown NULL
+#endif
 
-अटल काष्ठा platक्रमm_driver physmap_flash_driver = अणु
+static struct platform_driver physmap_flash_driver = {
 	.probe		= physmap_flash_probe,
-	.हटाओ		= physmap_flash_हटाओ,
-	.shutकरोwn	= physmap_flash_shutकरोwn,
-	.driver		= अणु
+	.remove		= physmap_flash_remove,
+	.shutdown	= physmap_flash_shutdown,
+	.driver		= {
 		.name	= "physmap-flash",
 		.of_match_table = of_flash_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#अगर_घोषित CONFIG_MTD_PHYSMAP_COMPAT
-अटल काष्ठा physmap_flash_data physmap_flash_data = अणु
+#ifdef CONFIG_MTD_PHYSMAP_COMPAT
+static struct physmap_flash_data physmap_flash_data = {
 	.width		= CONFIG_MTD_PHYSMAP_BANKWIDTH,
-पूर्ण;
+};
 
-अटल काष्ठा resource physmap_flash_resource = अणु
+static struct resource physmap_flash_resource = {
 	.start		= CONFIG_MTD_PHYSMAP_START,
 	.end		= CONFIG_MTD_PHYSMAP_START + CONFIG_MTD_PHYSMAP_LEN - 1,
 	.flags		= IORESOURCE_MEM,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device physmap_flash = अणु
+static struct platform_device physmap_flash = {
 	.name		= "physmap-flash",
 	.id		= 0,
-	.dev		= अणु
-		.platक्रमm_data	= &physmap_flash_data,
-	पूर्ण,
+	.dev		= {
+		.platform_data	= &physmap_flash_data,
+	},
 	.num_resources	= 1,
 	.resource	= &physmap_flash_resource,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल पूर्णांक __init physmap_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init physmap_init(void)
+{
+	int err;
 
-	err = platक्रमm_driver_रेजिस्टर(&physmap_flash_driver);
-#अगर_घोषित CONFIG_MTD_PHYSMAP_COMPAT
-	अगर (err == 0) अणु
-		err = platक्रमm_device_रेजिस्टर(&physmap_flash);
-		अगर (err)
-			platक्रमm_driver_unरेजिस्टर(&physmap_flash_driver);
-	पूर्ण
-#पूर्ण_अगर
+	err = platform_driver_register(&physmap_flash_driver);
+#ifdef CONFIG_MTD_PHYSMAP_COMPAT
+	if (err == 0) {
+		err = platform_device_register(&physmap_flash);
+		if (err)
+			platform_driver_unregister(&physmap_flash_driver);
+	}
+#endif
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __निकास physmap_निकास(व्योम)
-अणु
-#अगर_घोषित CONFIG_MTD_PHYSMAP_COMPAT
-	platक्रमm_device_unरेजिस्टर(&physmap_flash);
-#पूर्ण_अगर
-	platक्रमm_driver_unरेजिस्टर(&physmap_flash_driver);
-पूर्ण
+static void __exit physmap_exit(void)
+{
+#ifdef CONFIG_MTD_PHYSMAP_COMPAT
+	platform_device_unregister(&physmap_flash);
+#endif
+	platform_driver_unregister(&physmap_flash_driver);
+}
 
 module_init(physmap_init);
-module_निकास(physmap_निकास);
+module_exit(physmap_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("David Woodhouse <dwmw2@infradead.org>");
@@ -684,8 +683,8 @@ MODULE_AUTHOR("Vitaly Wool <vwool@ru.mvista.com>");
 MODULE_AUTHOR("Mike Frysinger <vapier@gentoo.org>");
 MODULE_DESCRIPTION("Generic configurable MTD map driver");
 
-/* legacy platक्रमm drivers can't hotplug or coldplg */
-#अगर_अघोषित CONFIG_MTD_PHYSMAP_COMPAT
+/* legacy platform drivers can't hotplug or coldplg */
+#ifndef CONFIG_MTD_PHYSMAP_COMPAT
 /* work with hotplug and coldplug */
 MODULE_ALIAS("platform:physmap-flash");
-#पूर्ण_अगर
+#endif

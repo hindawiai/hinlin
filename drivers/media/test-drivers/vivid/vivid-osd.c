@@ -1,117 +1,116 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * vivid-osd.c - osd support क्रम testing overlays.
+ * vivid-osd.c - osd support for testing overlays.
  *
  * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/font.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/videodev2.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/मुक्तzer.h>
-#समावेश <linux/fb.h>
-#समावेश <media/videobuf2-vदो_स्मृति.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-ioctl.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-fh.h>
-#समावेश <media/v4l2-event.h>
-#समावेश <media/v4l2-common.h>
+#include <linux/module.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/font.h>
+#include <linux/mutex.h>
+#include <linux/videodev2.h>
+#include <linux/kthread.h>
+#include <linux/freezer.h>
+#include <linux/fb.h>
+#include <media/videobuf2-vmalloc.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-ioctl.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-fh.h>
+#include <media/v4l2-event.h>
+#include <media/v4l2-common.h>
 
-#समावेश "vivid-core.h"
-#समावेश "vivid-osd.h"
+#include "vivid-core.h"
+#include "vivid-osd.h"
 
-#घोषणा MAX_OSD_WIDTH  720
-#घोषणा MAX_OSD_HEIGHT 576
+#define MAX_OSD_WIDTH  720
+#define MAX_OSD_HEIGHT 576
 
 /*
  * Order: white, yellow, cyan, green, magenta, red, blue, black,
- * and same again with the alpha bit set (अगर any)
+ * and same again with the alpha bit set (if any)
  */
-अटल स्थिर u16 rgb555[16] = अणु
+static const u16 rgb555[16] = {
 	0x7fff, 0x7fe0, 0x03ff, 0x03e0, 0x7c1f, 0x7c00, 0x001f, 0x0000,
 	0xffff, 0xffe0, 0x83ff, 0x83e0, 0xfc1f, 0xfc00, 0x801f, 0x8000
-पूर्ण;
+};
 
-अटल स्थिर u16 rgb565[16] = अणु
+static const u16 rgb565[16] = {
 	0xffff, 0xffe0, 0x07ff, 0x07e0, 0xf81f, 0xf800, 0x001f, 0x0000,
 	0xffff, 0xffe0, 0x07ff, 0x07e0, 0xf81f, 0xf800, 0x001f, 0x0000
-पूर्ण;
+};
 
-व्योम vivid_clear_fb(काष्ठा vivid_dev *dev)
-अणु
-	व्योम *p = dev->video_vbase;
-	स्थिर u16 *rgb = rgb555;
-	अचिन्हित x, y;
+void vivid_clear_fb(struct vivid_dev *dev)
+{
+	void *p = dev->video_vbase;
+	const u16 *rgb = rgb555;
+	unsigned x, y;
 
-	अगर (dev->fb_defined.green.length == 6)
+	if (dev->fb_defined.green.length == 6)
 		rgb = rgb565;
 
-	क्रम (y = 0; y < dev->display_height; y++) अणु
+	for (y = 0; y < dev->display_height; y++) {
 		u16 *d = p;
 
-		क्रम (x = 0; x < dev->display_width; x++)
+		for (x = 0; x < dev->display_width; x++)
 			d[x] = rgb[(y / 16 + x / 16) % 16];
 		p += dev->display_byte_stride;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* --------------------------------------------------------------------- */
 
-अटल पूर्णांक vivid_fb_ioctl(काष्ठा fb_info *info, अचिन्हित cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा vivid_dev *dev = (काष्ठा vivid_dev *)info->par;
+static int vivid_fb_ioctl(struct fb_info *info, unsigned cmd, unsigned long arg)
+{
+	struct vivid_dev *dev = (struct vivid_dev *)info->par;
 
-	चयन (cmd) अणु
-	हाल FBIOGET_VBLANK: अणु
-		काष्ठा fb_vblank vblank;
+	switch (cmd) {
+	case FBIOGET_VBLANK: {
+		struct fb_vblank vblank;
 
-		स_रखो(&vblank, 0, माप(vblank));
+		memset(&vblank, 0, sizeof(vblank));
 		vblank.flags = FB_VBLANK_HAVE_COUNT | FB_VBLANK_HAVE_VCOUNT |
 			FB_VBLANK_HAVE_VSYNC;
 		vblank.count = 0;
 		vblank.vcount = 0;
 		vblank.hcount = 0;
-		अगर (copy_to_user((व्योम __user *)arg, &vblank, माप(vblank)))
-			वापस -EFAULT;
-		वापस 0;
-	पूर्ण
+		if (copy_to_user((void __user *)arg, &vblank, sizeof(vblank)))
+			return -EFAULT;
+		return 0;
+	}
 
-	शेष:
-		dprपूर्णांकk(dev, 1, "Unknown ioctl %08x\n", cmd);
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	default:
+		dprintk(dev, 1, "Unknown ioctl %08x\n", cmd);
+		return -EINVAL;
+	}
+	return 0;
+}
 
 /* Framebuffer device handling */
 
-अटल पूर्णांक vivid_fb_set_var(काष्ठा vivid_dev *dev, काष्ठा fb_var_screeninfo *var)
-अणु
-	dprपूर्णांकk(dev, 1, "vivid_fb_set_var\n");
+static int vivid_fb_set_var(struct vivid_dev *dev, struct fb_var_screeninfo *var)
+{
+	dprintk(dev, 1, "vivid_fb_set_var\n");
 
-	अगर (var->bits_per_pixel != 16) अणु
-		dprपूर्णांकk(dev, 1, "vivid_fb_set_var - Invalid bpp\n");
-		वापस -EINVAL;
-	पूर्ण
+	if (var->bits_per_pixel != 16) {
+		dprintk(dev, 1, "vivid_fb_set_var - Invalid bpp\n");
+		return -EINVAL;
+	}
 	dev->display_byte_stride = var->xres * dev->bytes_per_pixel;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vivid_fb_get_fix(काष्ठा vivid_dev *dev, काष्ठा fb_fix_screeninfo *fix)
-अणु
-	dprपूर्णांकk(dev, 1, "vivid_fb_get_fix\n");
-	स_रखो(fix, 0, माप(काष्ठा fb_fix_screeninfo));
-	strscpy(fix->id, "vioverlay fb", माप(fix->id));
+static int vivid_fb_get_fix(struct vivid_dev *dev, struct fb_fix_screeninfo *fix)
+{
+	dprintk(dev, 1, "vivid_fb_get_fix\n");
+	memset(fix, 0, sizeof(struct fb_fix_screeninfo));
+	strscpy(fix->id, "vioverlay fb", sizeof(fix->id));
 	fix->smem_start = dev->video_pbase;
 	fix->smem_len = dev->video_buffer_size;
 	fix->type = FB_TYPE_PACKED_PIXELS;
@@ -121,18 +120,18 @@
 	fix->ywrapstep = 0;
 	fix->line_length = dev->display_byte_stride;
 	fix->accel = FB_ACCEL_NONE;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Check the requested display mode, वापसing -EINVAL अगर we can't
+/* Check the requested display mode, returning -EINVAL if we can't
    handle it. */
 
-अटल पूर्णांक _vivid_fb_check_var(काष्ठा fb_var_screeninfo *var, काष्ठा vivid_dev *dev)
-अणु
-	dprपूर्णांकk(dev, 1, "vivid_fb_check_var\n");
+static int _vivid_fb_check_var(struct fb_var_screeninfo *var, struct vivid_dev *dev)
+{
+	dprintk(dev, 1, "vivid_fb_check_var\n");
 
 	var->bits_per_pixel = 16;
-	अगर (var->green.length == 5) अणु
+	if (var->green.length == 5) {
 		var->red.offset = 10;
 		var->red.length = 5;
 		var->green.offset = 5;
@@ -141,7 +140,7 @@
 		var->blue.length = 5;
 		var->transp.offset = 15;
 		var->transp.length = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		var->red.offset = 11;
 		var->red.length = 5;
 		var->green.offset = 5;
@@ -150,7 +149,7 @@
 		var->blue.length = 5;
 		var->transp.offset = 0;
 		var->transp.length = 0;
-	पूर्ण
+	}
 	var->xoffset = var->yoffset = 0;
 	var->left_margin = var->upper_margin = 0;
 	var->nonstd = 0;
@@ -161,91 +160,91 @@
 	/* Dummy values */
 	var->hsync_len = 24;
 	var->vsync_len = 2;
-	var->pixघड़ी = 84316;
+	var->pixclock = 84316;
 	var->right_margin = 776;
 	var->lower_margin = 591;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vivid_fb_check_var(काष्ठा fb_var_screeninfo *var, काष्ठा fb_info *info)
-अणु
-	काष्ठा vivid_dev *dev = (काष्ठा vivid_dev *) info->par;
+static int vivid_fb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
+{
+	struct vivid_dev *dev = (struct vivid_dev *) info->par;
 
-	dprपूर्णांकk(dev, 1, "vivid_fb_check_var\n");
-	वापस _vivid_fb_check_var(var, dev);
-पूर्ण
+	dprintk(dev, 1, "vivid_fb_check_var\n");
+	return _vivid_fb_check_var(var, dev);
+}
 
-अटल पूर्णांक vivid_fb_pan_display(काष्ठा fb_var_screeninfo *var, काष्ठा fb_info *info)
-अणु
-	वापस 0;
-पूर्ण
+static int vivid_fb_pan_display(struct fb_var_screeninfo *var, struct fb_info *info)
+{
+	return 0;
+}
 
-अटल पूर्णांक vivid_fb_set_par(काष्ठा fb_info *info)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा vivid_dev *dev = (काष्ठा vivid_dev *) info->par;
+static int vivid_fb_set_par(struct fb_info *info)
+{
+	int rc = 0;
+	struct vivid_dev *dev = (struct vivid_dev *) info->par;
 
-	dprपूर्णांकk(dev, 1, "vivid_fb_set_par\n");
+	dprintk(dev, 1, "vivid_fb_set_par\n");
 
 	rc = vivid_fb_set_var(dev, &info->var);
 	vivid_fb_get_fix(dev, &info->fix);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक vivid_fb_setcolreg(अचिन्हित regno, अचिन्हित red, अचिन्हित green,
-				अचिन्हित blue, अचिन्हित transp,
-				काष्ठा fb_info *info)
-अणु
+static int vivid_fb_setcolreg(unsigned regno, unsigned red, unsigned green,
+				unsigned blue, unsigned transp,
+				struct fb_info *info)
+{
 	u32 color, *palette;
 
-	अगर (regno >= info->cmap.len)
-		वापस -EINVAL;
+	if (regno >= info->cmap.len)
+		return -EINVAL;
 
 	color = ((transp & 0xFF00) << 16) | ((red & 0xFF00) << 8) |
 		 (green & 0xFF00) | ((blue & 0xFF00) >> 8);
-	अगर (regno >= 16)
-		वापस -EINVAL;
+	if (regno >= 16)
+		return -EINVAL;
 
-	palette = info->pseuकरो_palette;
-	अगर (info->var.bits_per_pixel == 16) अणु
-		चयन (info->var.green.length) अणु
-		हाल 6:
+	palette = info->pseudo_palette;
+	if (info->var.bits_per_pixel == 16) {
+		switch (info->var.green.length) {
+		case 6:
 			color = (red & 0xf800) |
 				((green & 0xfc00) >> 5) |
 				((blue & 0xf800) >> 11);
-			अवरोध;
-		हाल 5:
+			break;
+		case 5:
 			color = ((red & 0xf800) >> 1) |
 				((green & 0xf800) >> 6) |
 				((blue & 0xf800) >> 11) |
 				(transp ? 0x8000 : 0);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	palette[regno] = color;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* We करोn't really support blanking. All this करोes is enable or
+/* We don't really support blanking. All this does is enable or
    disable the OSD. */
-अटल पूर्णांक vivid_fb_blank(पूर्णांक blank_mode, काष्ठा fb_info *info)
-अणु
-	काष्ठा vivid_dev *dev = (काष्ठा vivid_dev *)info->par;
+static int vivid_fb_blank(int blank_mode, struct fb_info *info)
+{
+	struct vivid_dev *dev = (struct vivid_dev *)info->par;
 
-	dprपूर्णांकk(dev, 1, "Set blanking mode : %d\n", blank_mode);
-	चयन (blank_mode) अणु
-	हाल FB_BLANK_UNBLANK:
-		अवरोध;
-	हाल FB_BLANK_NORMAL:
-	हाल FB_BLANK_HSYNC_SUSPEND:
-	हाल FB_BLANK_VSYNC_SUSPEND:
-	हाल FB_BLANK_POWERDOWN:
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	dprintk(dev, 1, "Set blanking mode : %d\n", blank_mode);
+	switch (blank_mode) {
+	case FB_BLANK_UNBLANK:
+		break;
+	case FB_BLANK_NORMAL:
+	case FB_BLANK_HSYNC_SUSPEND:
+	case FB_BLANK_VSYNC_SUSPEND:
+	case FB_BLANK_POWERDOWN:
+		break;
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा fb_ops vivid_fb_ops = अणु
+static const struct fb_ops vivid_fb_ops = {
 	.owner = THIS_MODULE,
 	.fb_check_var   = vivid_fb_check_var,
 	.fb_set_par     = vivid_fb_set_par,
@@ -253,51 +252,51 @@
 	.fb_fillrect    = cfb_fillrect,
 	.fb_copyarea    = cfb_copyarea,
 	.fb_imageblit   = cfb_imageblit,
-	.fb_cursor      = शून्य,
+	.fb_cursor      = NULL,
 	.fb_ioctl       = vivid_fb_ioctl,
 	.fb_pan_display = vivid_fb_pan_display,
 	.fb_blank       = vivid_fb_blank,
-पूर्ण;
+};
 
 /* Initialization */
 
 
 /* Setup our initial video mode */
-अटल पूर्णांक vivid_fb_init_vidmode(काष्ठा vivid_dev *dev)
-अणु
-	काष्ठा v4l2_rect start_winकरोw;
+static int vivid_fb_init_vidmode(struct vivid_dev *dev)
+{
+	struct v4l2_rect start_window;
 
 	/* Color mode */
 
 	dev->bits_per_pixel = 16;
 	dev->bytes_per_pixel = dev->bits_per_pixel / 8;
 
-	start_winकरोw.width = MAX_OSD_WIDTH;
-	start_winकरोw.left = 0;
+	start_window.width = MAX_OSD_WIDTH;
+	start_window.left = 0;
 
-	dev->display_byte_stride = start_winकरोw.width * dev->bytes_per_pixel;
+	dev->display_byte_stride = start_window.width * dev->bytes_per_pixel;
 
 	/* Vertical size & position */
 
-	start_winकरोw.height = MAX_OSD_HEIGHT;
-	start_winकरोw.top = 0;
+	start_window.height = MAX_OSD_HEIGHT;
+	start_window.top = 0;
 
-	dev->display_width = start_winकरोw.width;
-	dev->display_height = start_winकरोw.height;
+	dev->display_width = start_window.width;
+	dev->display_height = start_window.height;
 
 	/* Generate a valid fb_var_screeninfo */
 
 	dev->fb_defined.xres = dev->display_width;
 	dev->fb_defined.yres = dev->display_height;
-	dev->fb_defined.xres_भव = dev->display_width;
-	dev->fb_defined.yres_भव = dev->display_height;
+	dev->fb_defined.xres_virtual = dev->display_width;
+	dev->fb_defined.yres_virtual = dev->display_height;
 	dev->fb_defined.bits_per_pixel = dev->bits_per_pixel;
 	dev->fb_defined.vmode = FB_VMODE_NONINTERLACED;
-	dev->fb_defined.left_margin = start_winकरोw.left + 1;
-	dev->fb_defined.upper_margin = start_winकरोw.top + 1;
+	dev->fb_defined.left_margin = start_window.left + 1;
+	dev->fb_defined.upper_margin = start_window.top + 1;
 	dev->fb_defined.accel_flags = FB_ACCEL_NONE;
 	dev->fb_defined.nonstd = 0;
-	/* set शेष to 1:5:5:5 */
+	/* set default to 1:5:5:5 */
 	dev->fb_defined.green.length = 5;
 
 	/* We've filled in the most data, let the usual mode check
@@ -318,72 +317,72 @@
 	dev->fb_info.screen_base = (u8 __iomem *)dev->video_vbase;
 	dev->fb_info.fbops = &vivid_fb_ops;
 
-	/* Supply some monitor specs. Bogus values will करो क्रम now */
+	/* Supply some monitor specs. Bogus values will do for now */
 	dev->fb_info.monspecs.hfmin = 8000;
 	dev->fb_info.monspecs.hfmax = 70000;
 	dev->fb_info.monspecs.vfmin = 10;
 	dev->fb_info.monspecs.vfmax = 100;
 
 	/* Allocate color map */
-	अगर (fb_alloc_cmap(&dev->fb_info.cmap, 256, 1)) अणु
+	if (fb_alloc_cmap(&dev->fb_info.cmap, 256, 1)) {
 		pr_err("abort, unable to alloc cmap\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	/* Allocate the pseuकरो palette */
-	dev->fb_info.pseuकरो_palette = kदो_स्मृति_array(16, माप(u32), GFP_KERNEL);
+	/* Allocate the pseudo palette */
+	dev->fb_info.pseudo_palette = kmalloc_array(16, sizeof(u32), GFP_KERNEL);
 
-	वापस dev->fb_info.pseuकरो_palette ? 0 : -ENOMEM;
-पूर्ण
+	return dev->fb_info.pseudo_palette ? 0 : -ENOMEM;
+}
 
 /* Release any memory we've grabbed */
-व्योम vivid_fb_release_buffers(काष्ठा vivid_dev *dev)
-अणु
-	अगर (dev->video_vbase == शून्य)
-		वापस;
+void vivid_fb_release_buffers(struct vivid_dev *dev)
+{
+	if (dev->video_vbase == NULL)
+		return;
 
 	/* Release cmap */
-	अगर (dev->fb_info.cmap.len)
+	if (dev->fb_info.cmap.len)
 		fb_dealloc_cmap(&dev->fb_info.cmap);
 
-	/* Release pseuकरो palette */
-	kमुक्त(dev->fb_info.pseuकरो_palette);
-	kमुक्त(dev->video_vbase);
-पूर्ण
+	/* Release pseudo palette */
+	kfree(dev->fb_info.pseudo_palette);
+	kfree(dev->video_vbase);
+}
 
-/* Initialize the specअगरied card */
+/* Initialize the specified card */
 
-पूर्णांक vivid_fb_init(काष्ठा vivid_dev *dev)
-अणु
-	पूर्णांक ret;
+int vivid_fb_init(struct vivid_dev *dev)
+{
+	int ret;
 
 	dev->video_buffer_size = MAX_OSD_HEIGHT * MAX_OSD_WIDTH * 2;
 	dev->video_vbase = kzalloc(dev->video_buffer_size, GFP_KERNEL | GFP_DMA32);
-	अगर (dev->video_vbase == शून्य)
-		वापस -ENOMEM;
+	if (dev->video_vbase == NULL)
+		return -ENOMEM;
 	dev->video_pbase = virt_to_phys(dev->video_vbase);
 
 	pr_info("Framebuffer at 0x%lx, mapped to 0x%p, size %dk\n",
 			dev->video_pbase, dev->video_vbase,
 			dev->video_buffer_size / 1024);
 
-	/* Set the startup video mode inक्रमmation */
+	/* Set the startup video mode information */
 	ret = vivid_fb_init_vidmode(dev);
-	अगर (ret) अणु
+	if (ret) {
 		vivid_fb_release_buffers(dev);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	vivid_clear_fb(dev);
 
 	/* Register the framebuffer */
-	अगर (रेजिस्टर_framebuffer(&dev->fb_info) < 0) अणु
+	if (register_framebuffer(&dev->fb_info) < 0) {
 		vivid_fb_release_buffers(dev);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Set the card to the requested mode */
 	vivid_fb_set_par(&dev->fb_info);
-	वापस 0;
+	return 0;
 
-पूर्ण
+}

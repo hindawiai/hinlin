@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _XT_SECMARK_H_target
-#घोषणा _XT_SECMARK_H_target
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _XT_SECMARK_H_target
+#define _XT_SECMARK_H_target
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
 /*
- * This is पूर्णांकended क्रम use by various security subप्रणालीs (but not
- * at the same समय).
+ * This is intended for use by various security subsystems (but not
+ * at the same time).
  *
- * 'mode' refers to the specअगरic security subप्रणाली which the
- * packets are being marked क्रम.
+ * 'mode' refers to the specific security subsystem which the
+ * packets are being marked for.
  */
-#घोषणा SECMARK_MODE_SEL	0x01		/* SELinux */
-#घोषणा SECMARK_SECCTX_MAX	256
+#define SECMARK_MODE_SEL	0x01		/* SELinux */
+#define SECMARK_SECCTX_MAX	256
 
-काष्ठा xt_secmark_target_info अणु
+struct xt_secmark_target_info {
 	__u8 mode;
 	__u32 secid;
-	अक्षर secctx[SECMARK_SECCTX_MAX];
-पूर्ण;
+	char secctx[SECMARK_SECCTX_MAX];
+};
 
-काष्ठा xt_secmark_target_info_v1 अणु
+struct xt_secmark_target_info_v1 {
 	__u8 mode;
-	अक्षर secctx[SECMARK_SECCTX_MAX];
+	char secctx[SECMARK_SECCTX_MAX];
 	__u32 secid;
-पूर्ण;
+};
 
-#पूर्ण_अगर /*_XT_SECMARK_H_target */
+#endif /*_XT_SECMARK_H_target */

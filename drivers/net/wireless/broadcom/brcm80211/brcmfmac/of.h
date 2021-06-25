@@ -1,14 +1,13 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2014 Broadcom Corporation
  */
-#अगर_घोषित CONFIG_OF
-व्योम brcmf_of_probe(काष्ठा device *dev, क्रमागत brcmf_bus_type bus_type,
-		    काष्ठा brcmf_mp_device *settings);
-#अन्यथा
-अटल व्योम brcmf_of_probe(काष्ठा device *dev, क्रमागत brcmf_bus_type bus_type,
-			   काष्ठा brcmf_mp_device *settings)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_OF */
+#ifdef CONFIG_OF
+void brcmf_of_probe(struct device *dev, enum brcmf_bus_type bus_type,
+		    struct brcmf_mp_device *settings);
+#else
+static void brcmf_of_probe(struct device *dev, enum brcmf_bus_type bus_type,
+			   struct brcmf_mp_device *settings)
+{
+}
+#endif /* CONFIG_OF */

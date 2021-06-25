@@ -1,110 +1,109 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* net/aपंचांग/pvc.c - ATM PVC sockets */
+// SPDX-License-Identifier: GPL-2.0
+/* net/atm/pvc.c - ATM PVC sockets */
 
 /* Written 1995-2000 by Werner Almesberger, EPFL LRC/ICA */
 
 
-#समावेश <linux/net.h>		/* काष्ठा socket, काष्ठा proto_ops */
-#समावेश <linux/aपंचांग.h>		/* ATM stuff */
-#समावेश <linux/aपंचांगdev.h>	/* ATM devices */
-#समावेश <linux/त्रुटिसं.स>	/* error codes */
-#समावेश <linux/kernel.h>	/* prपूर्णांकk */
-#समावेश <linux/init.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/export.h>
-#समावेश <net/sock.h>		/* क्रम sock_no_* */
+#include <linux/net.h>		/* struct socket, struct proto_ops */
+#include <linux/atm.h>		/* ATM stuff */
+#include <linux/atmdev.h>	/* ATM devices */
+#include <linux/errno.h>	/* error codes */
+#include <linux/kernel.h>	/* printk */
+#include <linux/init.h>
+#include <linux/skbuff.h>
+#include <linux/bitops.h>
+#include <linux/export.h>
+#include <net/sock.h>		/* for sock_no_* */
 
-#समावेश "resources.h"		/* devs and vccs */
-#समावेश "common.h"		/* common क्रम PVCs and SVCs */
+#include "resources.h"		/* devs and vccs */
+#include "common.h"		/* common for PVCs and SVCs */
 
 
-अटल पूर्णांक pvc_shutकरोwn(काष्ठा socket *sock, पूर्णांक how)
-अणु
-	वापस 0;
-पूर्ण
+static int pvc_shutdown(struct socket *sock, int how)
+{
+	return 0;
+}
 
-अटल पूर्णांक pvc_bind(काष्ठा socket *sock, काष्ठा sockaddr *sockaddr,
-		    पूर्णांक sockaddr_len)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा sockaddr_aपंचांगpvc *addr;
-	काष्ठा aपंचांग_vcc *vcc;
-	पूर्णांक error;
+static int pvc_bind(struct socket *sock, struct sockaddr *sockaddr,
+		    int sockaddr_len)
+{
+	struct sock *sk = sock->sk;
+	struct sockaddr_atmpvc *addr;
+	struct atm_vcc *vcc;
+	int error;
 
-	अगर (sockaddr_len != माप(काष्ठा sockaddr_aपंचांगpvc))
-		वापस -EINVAL;
-	addr = (काष्ठा sockaddr_aपंचांगpvc *)sockaddr;
-	अगर (addr->sap_family != AF_ATMPVC)
-		वापस -EAFNOSUPPORT;
+	if (sockaddr_len != sizeof(struct sockaddr_atmpvc))
+		return -EINVAL;
+	addr = (struct sockaddr_atmpvc *)sockaddr;
+	if (addr->sap_family != AF_ATMPVC)
+		return -EAFNOSUPPORT;
 	lock_sock(sk);
 	vcc = ATM_SD(sock);
-	अगर (!test_bit(ATM_VF_HASQOS, &vcc->flags)) अणु
+	if (!test_bit(ATM_VF_HASQOS, &vcc->flags)) {
 		error = -EBADFD;
-		जाओ out;
-	पूर्ण
-	अगर (test_bit(ATM_VF_PARTIAL, &vcc->flags)) अणु
-		अगर (vcc->vpi != ATM_VPI_UNSPEC)
+		goto out;
+	}
+	if (test_bit(ATM_VF_PARTIAL, &vcc->flags)) {
+		if (vcc->vpi != ATM_VPI_UNSPEC)
 			addr->sap_addr.vpi = vcc->vpi;
-		अगर (vcc->vci != ATM_VCI_UNSPEC)
+		if (vcc->vci != ATM_VCI_UNSPEC)
 			addr->sap_addr.vci = vcc->vci;
-	पूर्ण
+	}
 	error = vcc_connect(sock, addr->sap_addr.itf, addr->sap_addr.vpi,
 			    addr->sap_addr.vci);
 out:
 	release_sock(sk);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक pvc_connect(काष्ठा socket *sock, काष्ठा sockaddr *sockaddr,
-		       पूर्णांक sockaddr_len, पूर्णांक flags)
-अणु
-	वापस pvc_bind(sock, sockaddr, sockaddr_len);
-पूर्ण
+static int pvc_connect(struct socket *sock, struct sockaddr *sockaddr,
+		       int sockaddr_len, int flags)
+{
+	return pvc_bind(sock, sockaddr, sockaddr_len);
+}
 
-अटल पूर्णांक pvc_setsockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-			  sockptr_t optval, अचिन्हित पूर्णांक optlen)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	पूर्णांक error;
+static int pvc_setsockopt(struct socket *sock, int level, int optname,
+			  sockptr_t optval, unsigned int optlen)
+{
+	struct sock *sk = sock->sk;
+	int error;
 
 	lock_sock(sk);
 	error = vcc_setsockopt(sock, level, optname, optval, optlen);
 	release_sock(sk);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक pvc_माला_लोockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-			  अक्षर __user *optval, पूर्णांक __user *optlen)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	पूर्णांक error;
+static int pvc_getsockopt(struct socket *sock, int level, int optname,
+			  char __user *optval, int __user *optlen)
+{
+	struct sock *sk = sock->sk;
+	int error;
 
 	lock_sock(sk);
-	error = vcc_माला_लोockopt(sock, level, optname, optval, optlen);
+	error = vcc_getsockopt(sock, level, optname, optval, optlen);
 	release_sock(sk);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक pvc_getname(काष्ठा socket *sock, काष्ठा sockaddr *sockaddr,
-		       पूर्णांक peer)
-अणु
-	काष्ठा sockaddr_aपंचांगpvc *addr;
-	काष्ठा aपंचांग_vcc *vcc = ATM_SD(sock);
+static int pvc_getname(struct socket *sock, struct sockaddr *sockaddr,
+		       int peer)
+{
+	struct sockaddr_atmpvc *addr;
+	struct atm_vcc *vcc = ATM_SD(sock);
 
-	अगर (!vcc->dev || !test_bit(ATM_VF_ADDR, &vcc->flags))
-		वापस -ENOTCONN;
-	addr = (काष्ठा sockaddr_aपंचांगpvc *)sockaddr;
-	स_रखो(addr, 0, माप(*addr));
+	if (!vcc->dev || !test_bit(ATM_VF_ADDR, &vcc->flags))
+		return -ENOTCONN;
+	addr = (struct sockaddr_atmpvc *)sockaddr;
+	memset(addr, 0, sizeof(*addr));
 	addr->sap_family = AF_ATMPVC;
 	addr->sap_addr.itf = vcc->dev->number;
 	addr->sap_addr.vpi = vcc->vpi;
 	addr->sap_addr.vci = vcc->vci;
-	वापस माप(काष्ठा sockaddr_aपंचांगpvc);
-पूर्ण
+	return sizeof(struct sockaddr_atmpvc);
+}
 
-अटल स्थिर काष्ठा proto_ops pvc_proto_ops = अणु
+static const struct proto_ops pvc_proto_ops = {
 	.family =	PF_ATMPVC,
 	.owner =	THIS_MODULE,
 
@@ -116,36 +115,36 @@ out:
 	.getname =	pvc_getname,
 	.poll =		vcc_poll,
 	.ioctl =	vcc_ioctl,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.compat_ioctl = vcc_compat_ioctl,
-#पूर्ण_अगर
+#endif
 	.gettstamp =	sock_gettstamp,
 	.listen =	sock_no_listen,
-	.shutकरोwn =	pvc_shutकरोwn,
+	.shutdown =	pvc_shutdown,
 	.setsockopt =	pvc_setsockopt,
-	.माला_लोockopt =	pvc_माला_लोockopt,
+	.getsockopt =	pvc_getsockopt,
 	.sendmsg =	vcc_sendmsg,
 	.recvmsg =	vcc_recvmsg,
 	.mmap =		sock_no_mmap,
 	.sendpage =	sock_no_sendpage,
-पूर्ण;
+};
 
 
-अटल पूर्णांक pvc_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक protocol,
-		      पूर्णांक kern)
-अणु
-	अगर (net != &init_net)
-		वापस -EAFNOSUPPORT;
+static int pvc_create(struct net *net, struct socket *sock, int protocol,
+		      int kern)
+{
+	if (net != &init_net)
+		return -EAFNOSUPPORT;
 
 	sock->ops = &pvc_proto_ops;
-	वापस vcc_create(net, sock, protocol, PF_ATMPVC, kern);
-पूर्ण
+	return vcc_create(net, sock, protocol, PF_ATMPVC, kern);
+}
 
-अटल स्थिर काष्ठा net_proto_family pvc_family_ops = अणु
+static const struct net_proto_family pvc_family_ops = {
 	.family = PF_ATMPVC,
 	.create = pvc_create,
 	.owner = THIS_MODULE,
-पूर्ण;
+};
 
 
 /*
@@ -153,12 +152,12 @@ out:
  */
 
 
-पूर्णांक __init aपंचांगpvc_init(व्योम)
-अणु
-	वापस sock_रेजिस्टर(&pvc_family_ops);
-पूर्ण
+int __init atmpvc_init(void)
+{
+	return sock_register(&pvc_family_ops);
+}
 
-व्योम aपंचांगpvc_निकास(व्योम)
-अणु
-	sock_unरेजिस्टर(PF_ATMPVC);
-पूर्ण
+void atmpvc_exit(void)
+{
+	sock_unregister(PF_ATMPVC);
+}

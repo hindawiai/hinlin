@@ -1,25 +1,24 @@
-<शैली गुरु>
 /*
- * Inline routines shareable across OS platक्रमms.
+ * Inline routines shareable across OS platforms.
  *
  * Copyright (c) 1994-2001 Justin T. Gibbs.
  * Copyright (c) 2000-2001 Adaptec Inc.
  * All rights reserved.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modअगरication.
- * 2. Redistributions in binary क्रमm must reproduce at minimum a disclaimer
+ *    without modification.
+ * 2. Redistributions in binary form must reproduce at minimum a disclaimer
  *    substantially similar to the "NO WARRANTY" disclaimer below
  *    ("Disclaimer") and any redistribution must be conditioned upon
- *    including a substantially similar Disclaimer requirement क्रम further
+ *    including a substantially similar Disclaimer requirement for further
  *    binary redistribution.
  * 3. Neither the names of the above-listed copyright holders nor the names
- *    of any contributors may be used to enकरोrse or promote products derived
- *    from this software without specअगरic prior written permission.
+ *    of any contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") version 2 as published by the Free
@@ -38,61 +37,61 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: //depot/aic7xxx/aic7xxx/aic7xxx_अंतरभूत.h#43 $
+ * $Id: //depot/aic7xxx/aic7xxx/aic7xxx_inline.h#43 $
  *
  * $FreeBSD$
  */
 
-#अगर_अघोषित _AIC7XXX_INLINE_H_
-#घोषणा _AIC7XXX_INLINE_H_
+#ifndef _AIC7XXX_INLINE_H_
+#define _AIC7XXX_INLINE_H_
 
 /************************* Sequencer Execution Control ************************/
-पूर्णांक  ahc_is_छोड़ोd(काष्ठा ahc_softc *ahc);
-व्योम ahc_छोड़ो(काष्ठा ahc_softc *ahc);
-व्योम ahc_unछोड़ो(काष्ठा ahc_softc *ahc);
+int  ahc_is_paused(struct ahc_softc *ahc);
+void ahc_pause(struct ahc_softc *ahc);
+void ahc_unpause(struct ahc_softc *ahc);
 
 /************************** Memory mapping routines ***************************/
-व्योम	ahc_sync_sglist(काष्ठा ahc_softc *ahc,
-			काष्ठा scb *scb, पूर्णांक op);
+void	ahc_sync_sglist(struct ahc_softc *ahc,
+			struct scb *scb, int op);
 
 /******************************** Debugging ***********************************/
-अटल अंतरभूत अक्षर *ahc_name(काष्ठा ahc_softc *ahc);
+static inline char *ahc_name(struct ahc_softc *ahc);
 
-अटल अंतरभूत अक्षर *ahc_name(काष्ठा ahc_softc *ahc)
-अणु
-	वापस (ahc->name);
-पूर्ण
+static inline char *ahc_name(struct ahc_softc *ahc)
+{
+	return (ahc->name);
+}
 
 /*********************** Miscellaneous Support Functions ***********************/
 
-काष्ठा ahc_initiator_tinfo *
-	ahc_fetch_transinfo(काष्ठा ahc_softc *ahc,
-			    अक्षर channel, u_पूर्णांक our_id,
-			    u_पूर्णांक remote_id,
-			    काष्ठा ahc_पंचांगode_tstate **tstate);
-uपूर्णांक16_t
-	ahc_inw(काष्ठा ahc_softc *ahc, u_पूर्णांक port);
-व्योम	ahc_outw(काष्ठा ahc_softc *ahc, u_पूर्णांक port,
-		 u_पूर्णांक value);
-uपूर्णांक32_t
-	ahc_inl(काष्ठा ahc_softc *ahc, u_पूर्णांक port);
-व्योम	ahc_outl(काष्ठा ahc_softc *ahc, u_पूर्णांक port,
-		 uपूर्णांक32_t value);
-uपूर्णांक64_t
-	ahc_inq(काष्ठा ahc_softc *ahc, u_पूर्णांक port);
-व्योम	ahc_outq(काष्ठा ahc_softc *ahc, u_पूर्णांक port,
-		 uपूर्णांक64_t value);
-काष्ठा scb*
-	ahc_get_scb(काष्ठा ahc_softc *ahc);
-व्योम	ahc_मुक्त_scb(काष्ठा ahc_softc *ahc, काष्ठा scb *scb);
-काष्ठा scb *
-	ahc_lookup_scb(काष्ठा ahc_softc *ahc, u_पूर्णांक tag);
-व्योम	ahc_queue_scb(काष्ठा ahc_softc *ahc, काष्ठा scb *scb);
-काष्ठा scsi_sense_data *
-	ahc_get_sense_buf(काष्ठा ahc_softc *ahc,
-			  काष्ठा scb *scb);
+struct ahc_initiator_tinfo *
+	ahc_fetch_transinfo(struct ahc_softc *ahc,
+			    char channel, u_int our_id,
+			    u_int remote_id,
+			    struct ahc_tmode_tstate **tstate);
+uint16_t
+	ahc_inw(struct ahc_softc *ahc, u_int port);
+void	ahc_outw(struct ahc_softc *ahc, u_int port,
+		 u_int value);
+uint32_t
+	ahc_inl(struct ahc_softc *ahc, u_int port);
+void	ahc_outl(struct ahc_softc *ahc, u_int port,
+		 uint32_t value);
+uint64_t
+	ahc_inq(struct ahc_softc *ahc, u_int port);
+void	ahc_outq(struct ahc_softc *ahc, u_int port,
+		 uint64_t value);
+struct scb*
+	ahc_get_scb(struct ahc_softc *ahc);
+void	ahc_free_scb(struct ahc_softc *ahc, struct scb *scb);
+struct scb *
+	ahc_lookup_scb(struct ahc_softc *ahc, u_int tag);
+void	ahc_queue_scb(struct ahc_softc *ahc, struct scb *scb);
+struct scsi_sense_data *
+	ahc_get_sense_buf(struct ahc_softc *ahc,
+			  struct scb *scb);
 
 /************************** Interrupt Processing ******************************/
-पूर्णांक	ahc_पूर्णांकr(काष्ठा ahc_softc *ahc);
+int	ahc_intr(struct ahc_softc *ahc);
 
-#पूर्ण_अगर  /* _AIC7XXX_INLINE_H_ */
+#endif  /* _AIC7XXX_INLINE_H_ */

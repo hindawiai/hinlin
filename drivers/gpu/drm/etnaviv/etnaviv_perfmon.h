@@ -1,39 +1,38 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2017 Etnaviv Project
  * Copyright (C) 2017 Zodiac Inflight Innovations
  */
 
-#अगर_अघोषित __ETNAVIV_PERFMON_H__
-#घोषणा __ETNAVIV_PERFMON_H__
+#ifndef __ETNAVIV_PERFMON_H__
+#define __ETNAVIV_PERFMON_H__
 
-काष्ठा etnaviv_gpu;
-काष्ठा drm_etnaviv_pm_करोमुख्य;
-काष्ठा drm_etnaviv_pm_संकेत;
+struct etnaviv_gpu;
+struct drm_etnaviv_pm_domain;
+struct drm_etnaviv_pm_signal;
 
-काष्ठा etnaviv_perfmon_request
-अणु
+struct etnaviv_perfmon_request
+{
 	u32 flags;
-	u8 करोमुख्य;
-	u8 संकेत;
+	u8 domain;
+	u8 signal;
 	u32 sequence;
 
 	/* bo to store a value */
 	u32 *bo_vma;
 	u32 offset;
-पूर्ण;
+};
 
-पूर्णांक etnaviv_pm_query_करोm(काष्ठा etnaviv_gpu *gpu,
-	काष्ठा drm_etnaviv_pm_करोमुख्य *करोमुख्य);
+int etnaviv_pm_query_dom(struct etnaviv_gpu *gpu,
+	struct drm_etnaviv_pm_domain *domain);
 
-पूर्णांक etnaviv_pm_query_sig(काष्ठा etnaviv_gpu *gpu,
-	काष्ठा drm_etnaviv_pm_संकेत *संकेत);
+int etnaviv_pm_query_sig(struct etnaviv_gpu *gpu,
+	struct drm_etnaviv_pm_signal *signal);
 
-पूर्णांक etnaviv_pm_req_validate(स्थिर काष्ठा drm_etnaviv_gem_submit_pmr *r,
+int etnaviv_pm_req_validate(const struct drm_etnaviv_gem_submit_pmr *r,
 	u32 exec_state);
 
-व्योम etnaviv_perfmon_process(काष्ठा etnaviv_gpu *gpu,
-	स्थिर काष्ठा etnaviv_perfmon_request *pmr, u32 exec_state);
+void etnaviv_perfmon_process(struct etnaviv_gpu *gpu,
+	const struct etnaviv_perfmon_request *pmr, u32 exec_state);
 
-#पूर्ण_अगर /* __ETNAVIV_PERFMON_H__ */
+#endif /* __ETNAVIV_PERFMON_H__ */

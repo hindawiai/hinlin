@@ -1,133 +1,132 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* USB OTG (On The Go) defines */
 /*
  *
  * These APIs may be used between USB controllers.  USB device drivers
- * (क्रम either host or peripheral roles) करोn't use these calls; they
- * जारी to use just usb_device and usb_gadget.
+ * (for either host or peripheral roles) don't use these calls; they
+ * continue to use just usb_device and usb_gadget.
  */
 
-#अगर_अघोषित __LINUX_USB_OTG_H
-#घोषणा __LINUX_USB_OTG_H
+#ifndef __LINUX_USB_OTG_H
+#define __LINUX_USB_OTG_H
 
-#समावेश <linux/phy/phy.h>
-#समावेश <linux/usb/phy.h>
+#include <linux/phy/phy.h>
+#include <linux/usb/phy.h>
 
-काष्ठा usb_otg अणु
-	u8			शेष_a;
+struct usb_otg {
+	u8			default_a;
 
-	काष्ठा phy		*phy;
-	/* old usb_phy पूर्णांकerface */
-	काष्ठा usb_phy		*usb_phy;
-	काष्ठा usb_bus		*host;
-	काष्ठा usb_gadget	*gadget;
+	struct phy		*phy;
+	/* old usb_phy interface */
+	struct usb_phy		*usb_phy;
+	struct usb_bus		*host;
+	struct usb_gadget	*gadget;
 
-	क्रमागत usb_otg_state	state;
+	enum usb_otg_state	state;
 
 	/* bind/unbind the host controller */
-	पूर्णांक	(*set_host)(काष्ठा usb_otg *otg, काष्ठा usb_bus *host);
+	int	(*set_host)(struct usb_otg *otg, struct usb_bus *host);
 
 	/* bind/unbind the peripheral controller */
-	पूर्णांक	(*set_peripheral)(काष्ठा usb_otg *otg,
-					काष्ठा usb_gadget *gadget);
+	int	(*set_peripheral)(struct usb_otg *otg,
+					struct usb_gadget *gadget);
 
-	/* effective क्रम A-peripheral, ignored क्रम B devices */
-	पूर्णांक	(*set_vbus)(काष्ठा usb_otg *otg, bool enabled);
+	/* effective for A-peripheral, ignored for B devices */
+	int	(*set_vbus)(struct usb_otg *otg, bool enabled);
 
-	/* क्रम B devices only:  start session with A-Host */
-	पूर्णांक	(*start_srp)(काष्ठा usb_otg *otg);
+	/* for B devices only:  start session with A-Host */
+	int	(*start_srp)(struct usb_otg *otg);
 
-	/* start or जारी HNP role चयन */
-	पूर्णांक	(*start_hnp)(काष्ठा usb_otg *otg);
+	/* start or continue HNP role switch */
+	int	(*start_hnp)(struct usb_otg *otg);
 
-पूर्ण;
+};
 
 /**
- * काष्ठा usb_otg_caps - describes the otg capabilities of the device
+ * struct usb_otg_caps - describes the otg capabilities of the device
  * @otg_rev: The OTG revision number the device is compliant with, it's
  *		in binary-coded decimal (i.e. 2.0 is 0200H).
- * @hnp_support: Indicates अगर the device supports HNP.
- * @srp_support: Indicates अगर the device supports SRP.
- * @adp_support: Indicates अगर the device supports ADP.
+ * @hnp_support: Indicates if the device supports HNP.
+ * @srp_support: Indicates if the device supports SRP.
+ * @adp_support: Indicates if the device supports ADP.
  */
-काष्ठा usb_otg_caps अणु
+struct usb_otg_caps {
 	u16 otg_rev;
 	bool hnp_support;
 	bool srp_support;
 	bool adp_support;
-पूर्ण;
+};
 
-बाह्य स्थिर अक्षर *usb_otg_state_string(क्रमागत usb_otg_state state);
-
-/* Context: can sleep */
-अटल अंतरभूत पूर्णांक
-otg_start_hnp(काष्ठा usb_otg *otg)
-अणु
-	अगर (otg && otg->start_hnp)
-		वापस otg->start_hnp(otg);
-
-	वापस -ENOTSUPP;
-पूर्ण
+extern const char *usb_otg_state_string(enum usb_otg_state state);
 
 /* Context: can sleep */
-अटल अंतरभूत पूर्णांक
-otg_set_vbus(काष्ठा usb_otg *otg, bool enabled)
-अणु
-	अगर (otg && otg->set_vbus)
-		वापस otg->set_vbus(otg, enabled);
+static inline int
+otg_start_hnp(struct usb_otg *otg)
+{
+	if (otg && otg->start_hnp)
+		return otg->start_hnp(otg);
 
-	वापस -ENOTSUPP;
-पूर्ण
-
-/* क्रम HCDs */
-अटल अंतरभूत पूर्णांक
-otg_set_host(काष्ठा usb_otg *otg, काष्ठा usb_bus *host)
-अणु
-	अगर (otg && otg->set_host)
-		वापस otg->set_host(otg, host);
-
-	वापस -ENOTSUPP;
-पूर्ण
-
-/* क्रम usb peripheral controller drivers */
+	return -ENOTSUPP;
+}
 
 /* Context: can sleep */
-अटल अंतरभूत पूर्णांक
-otg_set_peripheral(काष्ठा usb_otg *otg, काष्ठा usb_gadget *periph)
-अणु
-	अगर (otg && otg->set_peripheral)
-		वापस otg->set_peripheral(otg, periph);
+static inline int
+otg_set_vbus(struct usb_otg *otg, bool enabled)
+{
+	if (otg && otg->set_vbus)
+		return otg->set_vbus(otg, enabled);
 
-	वापस -ENOTSUPP;
-पूर्ण
+	return -ENOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक
-otg_start_srp(काष्ठा usb_otg *otg)
-अणु
-	अगर (otg && otg->start_srp)
-		वापस otg->start_srp(otg);
+/* for HCDs */
+static inline int
+otg_set_host(struct usb_otg *otg, struct usb_bus *host)
+{
+	if (otg && otg->set_host)
+		return otg->set_host(otg, host);
 
-	वापस -ENOTSUPP;
-पूर्ण
+	return -ENOTSUPP;
+}
 
-/* क्रम OTG controller drivers (and maybe other stuff) */
-बाह्य पूर्णांक usb_bus_start_क्रमागत(काष्ठा usb_bus *bus, अचिन्हित port_num);
+/* for usb peripheral controller drivers */
 
-क्रमागत usb_dr_mode अणु
+/* Context: can sleep */
+static inline int
+otg_set_peripheral(struct usb_otg *otg, struct usb_gadget *periph)
+{
+	if (otg && otg->set_peripheral)
+		return otg->set_peripheral(otg, periph);
+
+	return -ENOTSUPP;
+}
+
+static inline int
+otg_start_srp(struct usb_otg *otg)
+{
+	if (otg && otg->start_srp)
+		return otg->start_srp(otg);
+
+	return -ENOTSUPP;
+}
+
+/* for OTG controller drivers (and maybe other stuff) */
+extern int usb_bus_start_enum(struct usb_bus *bus, unsigned port_num);
+
+enum usb_dr_mode {
 	USB_DR_MODE_UNKNOWN,
 	USB_DR_MODE_HOST,
 	USB_DR_MODE_PERIPHERAL,
 	USB_DR_MODE_OTG,
-पूर्ण;
+};
 
 /**
- * usb_get_dr_mode - Get dual role mode क्रम given device
- * @dev: Poपूर्णांकer to the given device
+ * usb_get_dr_mode - Get dual role mode for given device
+ * @dev: Pointer to the given device
  *
- * The function माला_लो phy पूर्णांकerface string from property 'dr_mode',
- * and वापसs the correspondig क्रमागत usb_dr_mode
+ * The function gets phy interface string from property 'dr_mode',
+ * and returns the correspondig enum usb_dr_mode
  */
-बाह्य क्रमागत usb_dr_mode usb_get_dr_mode(काष्ठा device *dev);
+extern enum usb_dr_mode usb_get_dr_mode(struct device *dev);
 
-#पूर्ण_अगर /* __LINUX_USB_OTG_H */
+#endif /* __LINUX_USB_OTG_H */

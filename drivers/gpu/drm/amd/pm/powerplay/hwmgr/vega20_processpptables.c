@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,53 +20,53 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/fb.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/fb.h>
 
-#समावेश "smu11_driver_if.h"
-#समावेश "vega20_processpptables.h"
-#समावेश "ppatomfwctrl.h"
-#समावेश "atomfirmware.h"
-#समावेश "pp_debug.h"
-#समावेश "cgs_common.h"
-#समावेश "vega20_pptable.h"
+#include "smu11_driver_if.h"
+#include "vega20_processpptables.h"
+#include "ppatomfwctrl.h"
+#include "atomfirmware.h"
+#include "pp_debug.h"
+#include "cgs_common.h"
+#include "vega20_pptable.h"
 
-#घोषणा VEGA20_FAN_TARGET_TEMPERATURE_OVERRIDE 105
+#define VEGA20_FAN_TARGET_TEMPERATURE_OVERRIDE 105
 
-अटल व्योम set_hw_cap(काष्ठा pp_hwmgr *hwmgr, bool enable,
-		क्रमागत phm_platक्रमm_caps cap)
-अणु
-	अगर (enable)
-		phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps, cap);
-	अन्यथा
-		phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps, cap);
-पूर्ण
+static void set_hw_cap(struct pp_hwmgr *hwmgr, bool enable,
+		enum phm_platform_caps cap)
+{
+	if (enable)
+		phm_cap_set(hwmgr->platform_descriptor.platformCaps, cap);
+	else
+		phm_cap_unset(hwmgr->platform_descriptor.platformCaps, cap);
+}
 
-अटल स्थिर व्योम *get_घातerplay_table(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	पूर्णांक index = GetIndexIntoMasterDataTable(घातerplayinfo);
+static const void *get_powerplay_table(struct pp_hwmgr *hwmgr)
+{
+	int index = GetIndexIntoMasterDataTable(powerplayinfo);
 
 	u16 size;
 	u8 frev, crev;
-	स्थिर व्योम *table_address = hwmgr->soft_pp_table;
+	const void *table_address = hwmgr->soft_pp_table;
 
-	अगर (!table_address) अणु
+	if (!table_address) {
 		table_address = (ATOM_Vega20_POWERPLAYTABLE *)
 				smu_atom_get_data_table(hwmgr->adev, index,
 						&size, &frev, &crev);
 
 		hwmgr->soft_pp_table = table_address;
 		hwmgr->soft_pp_table_size = size;
-	पूर्ण
+	}
 
-	वापस table_address;
-पूर्ण
+	return table_address;
+}
 
-#अगर 0
-अटल व्योम dump_pptable(PPTable_t *pptable)
-अणु
-	पूर्णांक i;
+#if 0
+static void dump_pptable(PPTable_t *pptable)
+{
+	int i;
 
 	pr_info("Version = 0x%08x\n", pptable->Version);
 
@@ -311,47 +310,47 @@
 
 
 	pr_info("FreqTableGfx\n");
-	क्रम (i = 0; i < NUM_GFXCLK_DPM_LEVELS; i++)
+	for (i = 0; i < NUM_GFXCLK_DPM_LEVELS; i++)
 		pr_info("  .[%02d] = %d\n", i, pptable->FreqTableGfx[i]);
 
 	pr_info("FreqTableVclk\n");
-	क्रम (i = 0; i < NUM_VCLK_DPM_LEVELS; i++)
+	for (i = 0; i < NUM_VCLK_DPM_LEVELS; i++)
 		pr_info("  .[%02d] = %d\n", i, pptable->FreqTableVclk[i]);
 
 	pr_info("FreqTableDclk\n");
-	क्रम (i = 0; i < NUM_DCLK_DPM_LEVELS; i++)
+	for (i = 0; i < NUM_DCLK_DPM_LEVELS; i++)
 		pr_info("  .[%02d] = %d\n", i, pptable->FreqTableDclk[i]);
 
 	pr_info("FreqTableEclk\n");
-	क्रम (i = 0; i < NUM_ECLK_DPM_LEVELS; i++)
+	for (i = 0; i < NUM_ECLK_DPM_LEVELS; i++)
 		pr_info("  .[%02d] = %d\n", i, pptable->FreqTableEclk[i]);
 
 	pr_info("FreqTableSocclk\n");
-	क्रम (i = 0; i < NUM_SOCCLK_DPM_LEVELS; i++)
+	for (i = 0; i < NUM_SOCCLK_DPM_LEVELS; i++)
 		pr_info("  .[%02d] = %d\n", i, pptable->FreqTableSocclk[i]);
 
 	pr_info("FreqTableUclk\n");
-	क्रम (i = 0; i < NUM_UCLK_DPM_LEVELS; i++)
+	for (i = 0; i < NUM_UCLK_DPM_LEVELS; i++)
 		pr_info("  .[%02d] = %d\n", i, pptable->FreqTableUclk[i]);
 
 	pr_info("FreqTableFclk\n");
-	क्रम (i = 0; i < NUM_FCLK_DPM_LEVELS; i++)
+	for (i = 0; i < NUM_FCLK_DPM_LEVELS; i++)
 		pr_info("  .[%02d] = %d\n", i, pptable->FreqTableFclk[i]);
 
 	pr_info("FreqTableDcefclk\n");
-	क्रम (i = 0; i < NUM_DCEFCLK_DPM_LEVELS; i++)
+	for (i = 0; i < NUM_DCEFCLK_DPM_LEVELS; i++)
 		pr_info("  .[%02d] = %d\n", i, pptable->FreqTableDcefclk[i]);
 
 	pr_info("FreqTableDispclk\n");
-	क्रम (i = 0; i < NUM_DISPCLK_DPM_LEVELS; i++)
+	for (i = 0; i < NUM_DISPCLK_DPM_LEVELS; i++)
 		pr_info("  .[%02d] = %d\n", i, pptable->FreqTableDispclk[i]);
 
 	pr_info("FreqTablePixclk\n");
-	क्रम (i = 0; i < NUM_PIXCLK_DPM_LEVELS; i++)
+	for (i = 0; i < NUM_PIXCLK_DPM_LEVELS; i++)
 		pr_info("  .[%02d] = %d\n", i, pptable->FreqTablePixclk[i]);
 
 	pr_info("FreqTablePhyclk\n");
-	क्रम (i = 0; i < NUM_PHYCLK_DPM_LEVELS; i++)
+	for (i = 0; i < NUM_PHYCLK_DPM_LEVELS; i++)
 		pr_info("  .[%02d] = %d\n", i, pptable->FreqTablePhyclk[i]);
 
 	pr_info("DcModeMaxFreq[PPCLK_GFXCLK] = %d\n", pptable->DcModeMaxFreq[PPCLK_GFXCLK]);
@@ -368,11 +367,11 @@
 	pr_info("Padding8_Clks = %d\n", pptable->Padding8_Clks);
 
 	pr_info("Mp0clkFreq\n");
-	क्रम (i = 0; i < NUM_MP0CLK_DPM_LEVELS; i++)
+	for (i = 0; i < NUM_MP0CLK_DPM_LEVELS; i++)
 		pr_info("  .[%d] = %d\n", i, pptable->Mp0clkFreq[i]);
 
 	pr_info("Mp0DpmVoltage\n");
-	क्रम (i = 0; i < NUM_MP0CLK_DPM_LEVELS; i++)
+	for (i = 0; i < NUM_MP0CLK_DPM_LEVELS; i++)
 		pr_info("  .[%d] = %d\n", i, pptable->Mp0DpmVoltage[i]);
 
 	pr_info("GfxclkFidle = 0x%x\n", pptable->GfxclkFidle);
@@ -397,15 +396,15 @@
 	pr_info("Padding8_Uclk[2] = 0x%x\n", pptable->Padding8_Uclk[2]);
 
 	pr_info("PcieGenSpeed\n");
-	क्रम (i = 0; i < NUM_LINK_LEVELS; i++)
+	for (i = 0; i < NUM_LINK_LEVELS; i++)
 		pr_info("  .[%d] = %d\n", i, pptable->PcieGenSpeed[i]);
 
 	pr_info("PcieLaneCount\n");
-	क्रम (i = 0; i < NUM_LINK_LEVELS; i++)
+	for (i = 0; i < NUM_LINK_LEVELS; i++)
 		pr_info("  .[%d] = %d\n", i, pptable->PcieLaneCount[i]);
 
 	pr_info("LclkFreq\n");
-	क्रम (i = 0; i < NUM_LINK_LEVELS; i++)
+	for (i = 0; i < NUM_LINK_LEVELS; i++)
 		pr_info("  .[%d] = %d\n", i, pptable->LclkFreq[i]);
 
 	pr_info("EnableTdpm = %d\n", pptable->EnableTdpm);
@@ -496,22 +495,22 @@
 	pr_info("DcBtcMax[AVFS_VOLTAGE_SOC] = 0x%x\n", pptable->DcBtcMax[AVFS_VOLTAGE_SOC]);
 
 	pr_info("XgmiLinkSpeed\n");
-	क्रम (i = 0; i < NUM_XGMI_LEVELS; i++)
+	for (i = 0; i < NUM_XGMI_LEVELS; i++)
 		pr_info("  .[%d] = %d\n", i, pptable->XgmiLinkSpeed[i]);
 	pr_info("XgmiLinkWidth\n");
-	क्रम (i = 0; i < NUM_XGMI_LEVELS; i++)
+	for (i = 0; i < NUM_XGMI_LEVELS; i++)
 		pr_info("  .[%d] = %d\n", i, pptable->XgmiLinkWidth[i]);
 	pr_info("XgmiFclkFreq\n");
-	क्रम (i = 0; i < NUM_XGMI_LEVELS; i++)
+	for (i = 0; i < NUM_XGMI_LEVELS; i++)
 		pr_info("  .[%d] = %d\n", i, pptable->XgmiFclkFreq[i]);
 	pr_info("XgmiUclkFreq\n");
-	क्रम (i = 0; i < NUM_XGMI_LEVELS; i++)
+	for (i = 0; i < NUM_XGMI_LEVELS; i++)
 		pr_info("  .[%d] = %d\n", i, pptable->XgmiUclkFreq[i]);
 	pr_info("XgmiSocclkFreq\n");
-	क्रम (i = 0; i < NUM_XGMI_LEVELS; i++)
+	for (i = 0; i < NUM_XGMI_LEVELS; i++)
 		pr_info("  .[%d] = %d\n", i, pptable->XgmiSocclkFreq[i]);
 	pr_info("XgmiSocVoltage\n");
-	क्रम (i = 0; i < NUM_XGMI_LEVELS; i++)
+	for (i = 0; i < NUM_XGMI_LEVELS; i++)
 		pr_info("  .[%d] = %d\n", i, pptable->XgmiSocVoltage[i]);
 
 	pr_info("DebugOverrides = 0x%x\n", pptable->DebugOverrides);
@@ -544,10 +543,10 @@
 	pr_info("DcBtcGb[AVFS_VOLTAGE_GFX] = 0x%x\n", pptable->DcBtcGb[AVFS_VOLTAGE_GFX]);
 	pr_info("DcBtcGb[AVFS_VOLTAGE_SOC] = 0x%x\n", pptable->DcBtcGb[AVFS_VOLTAGE_SOC]);
 
-	क्रम (i = 0; i < 11; i++)
+	for (i = 0; i < 11; i++)
 		pr_info("Reserved[%d] = 0x%x\n", i, pptable->Reserved[i]);
 
-	क्रम (i = 0; i < 3; i++)
+	for (i = 0; i < 3; i++)
 		pr_info("Padding32[%d] = 0x%x\n", i, pptable->Padding32[i]);
 
 	pr_info("MaxVoltageStepGfx = 0x%x\n", pptable->MaxVoltageStepGfx);
@@ -594,23 +593,23 @@
 	pr_info("LedPin2 = %d\n", pptable->LedPin2);
 	pr_info("padding8_4 = 0x%x\n", pptable->padding8_4);
 
-	pr_info("PllGfxclkSpreadEnabled = %d\n", pptable->PllGfxclkSpपढ़ोEnabled);
-	pr_info("PllGfxclkSpreadPercent = %d\n", pptable->PllGfxclkSpपढ़ोPercent);
-	pr_info("PllGfxclkSpreadFreq = %d\n", pptable->PllGfxclkSpपढ़ोFreq);
+	pr_info("PllGfxclkSpreadEnabled = %d\n", pptable->PllGfxclkSpreadEnabled);
+	pr_info("PllGfxclkSpreadPercent = %d\n", pptable->PllGfxclkSpreadPercent);
+	pr_info("PllGfxclkSpreadFreq = %d\n", pptable->PllGfxclkSpreadFreq);
 
-	pr_info("UclkSpreadEnabled = %d\n", pptable->UclkSpपढ़ोEnabled);
-	pr_info("UclkSpreadPercent = %d\n", pptable->UclkSpपढ़ोPercent);
-	pr_info("UclkSpreadFreq = %d\n", pptable->UclkSpपढ़ोFreq);
+	pr_info("UclkSpreadEnabled = %d\n", pptable->UclkSpreadEnabled);
+	pr_info("UclkSpreadPercent = %d\n", pptable->UclkSpreadPercent);
+	pr_info("UclkSpreadFreq = %d\n", pptable->UclkSpreadFreq);
 
-	pr_info("FclkSpreadEnabled = %d\n", pptable->FclkSpपढ़ोEnabled);
-	pr_info("FclkSpreadPercent = %d\n", pptable->FclkSpपढ़ोPercent);
-	pr_info("FclkSpreadFreq = %d\n", pptable->FclkSpपढ़ोFreq);
+	pr_info("FclkSpreadEnabled = %d\n", pptable->FclkSpreadEnabled);
+	pr_info("FclkSpreadPercent = %d\n", pptable->FclkSpreadPercent);
+	pr_info("FclkSpreadFreq = %d\n", pptable->FclkSpreadFreq);
 
-	pr_info("FllGfxclkSpreadEnabled = %d\n", pptable->FllGfxclkSpपढ़ोEnabled);
-	pr_info("FllGfxclkSpreadPercent = %d\n", pptable->FllGfxclkSpपढ़ोPercent);
-	pr_info("FllGfxclkSpreadFreq = %d\n", pptable->FllGfxclkSpपढ़ोFreq);
+	pr_info("FllGfxclkSpreadEnabled = %d\n", pptable->FllGfxclkSpreadEnabled);
+	pr_info("FllGfxclkSpreadPercent = %d\n", pptable->FllGfxclkSpreadPercent);
+	pr_info("FllGfxclkSpreadFreq = %d\n", pptable->FllGfxclkSpreadFreq);
 
-	क्रम (i = 0; i < I2C_CONTROLLER_NAME_COUNT; i++) अणु
+	for (i = 0; i < I2C_CONTROLLER_NAME_COUNT; i++) {
 		pr_info("I2cControllers[%d]:\n", i);
 		pr_info("                   .Enabled = %d\n",
 				pptable->I2cControllers[i].Enabled);
@@ -626,104 +625,104 @@
 				pptable->I2cControllers[i].I2cProtocol);
 		pr_info("                   .I2cSpeed = %d\n",
 				pptable->I2cControllers[i].I2cSpeed);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < 10; i++)
+	for (i = 0; i < 10; i++)
 		pr_info("BoardReserved[%d] = 0x%x\n", i, pptable->BoardReserved[i]);
 
-	क्रम (i = 0; i < 8; i++)
+	for (i = 0; i < 8; i++)
 		pr_info("MmHubPadding[%d] = 0x%x\n", i, pptable->MmHubPadding[i]);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल पूर्णांक check_घातerplay_tables(
-		काष्ठा pp_hwmgr *hwmgr,
-		स्थिर ATOM_Vega20_POWERPLAYTABLE *घातerplay_table)
-अणु
-	PP_ASSERT_WITH_CODE((घातerplay_table->sHeader.क्रमmat_revision >=
+static int check_powerplay_tables(
+		struct pp_hwmgr *hwmgr,
+		const ATOM_Vega20_POWERPLAYTABLE *powerplay_table)
+{
+	PP_ASSERT_WITH_CODE((powerplay_table->sHeader.format_revision >=
 		ATOM_VEGA20_TABLE_REVISION_VEGA20),
-		"Unsupported PPTable format!", वापस -1);
-	PP_ASSERT_WITH_CODE(घातerplay_table->sHeader.काष्ठाuresize > 0,
-		"Invalid PowerPlay Table!", वापस -1);
+		"Unsupported PPTable format!", return -1);
+	PP_ASSERT_WITH_CODE(powerplay_table->sHeader.structuresize > 0,
+		"Invalid PowerPlay Table!", return -1);
 
-	अगर (घातerplay_table->smcPPTable.Version != PPTABLE_V20_SMU_VERSION) अणु
+	if (powerplay_table->smcPPTable.Version != PPTABLE_V20_SMU_VERSION) {
 		pr_info("Unmatch PPTable version: "
 			"pptable from VBIOS is V%d while driver supported is V%d!",
-			घातerplay_table->smcPPTable.Version,
+			powerplay_table->smcPPTable.Version,
 			PPTABLE_V20_SMU_VERSION);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	//dump_pptable(&घातerplay_table->smcPPTable);
+	//dump_pptable(&powerplay_table->smcPPTable);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक set_platक्रमm_caps(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t घातerplay_caps)
-अणु
+static int set_platform_caps(struct pp_hwmgr *hwmgr, uint32_t powerplay_caps)
+{
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_VEGA20_PP_PLATFORM_CAP_POWERPLAY),
-		PHM_Platक्रमmCaps_PowerPlaySupport);
-
-	set_hw_cap(
-		hwmgr,
-		0 != (घातerplay_caps & ATOM_VEGA20_PP_PLATFORM_CAP_SBIOSPOWERSOURCE),
-		PHM_Platक्रमmCaps_BiosPowerSourceControl);
+		0 != (powerplay_caps & ATOM_VEGA20_PP_PLATFORM_CAP_POWERPLAY),
+		PHM_PlatformCaps_PowerPlaySupport);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_VEGA20_PP_PLATFORM_CAP_BACO),
-		PHM_Platक्रमmCaps_BACO);
+		0 != (powerplay_caps & ATOM_VEGA20_PP_PLATFORM_CAP_SBIOSPOWERSOURCE),
+		PHM_PlatformCaps_BiosPowerSourceControl);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_VEGA20_PP_PLATFORM_CAP_BAMACO),
-		 PHM_Platक्रमmCaps_BAMACO);
+		0 != (powerplay_caps & ATOM_VEGA20_PP_PLATFORM_CAP_BACO),
+		PHM_PlatformCaps_BACO);
 
-	वापस 0;
-पूर्ण
+	set_hw_cap(
+		hwmgr,
+		0 != (powerplay_caps & ATOM_VEGA20_PP_PLATFORM_CAP_BAMACO),
+		 PHM_PlatformCaps_BAMACO);
 
-अटल पूर्णांक copy_overdrive_feature_capabilities_array(
-		काष्ठा pp_hwmgr *hwmgr,
-		uपूर्णांक8_t **pptable_info_array,
-		स्थिर uपूर्णांक8_t *pptable_array,
-		uपूर्णांक8_t od_feature_count)
-अणु
-	uपूर्णांक32_t array_size, i;
-	uपूर्णांक8_t *table;
+	return 0;
+}
+
+static int copy_overdrive_feature_capabilities_array(
+		struct pp_hwmgr *hwmgr,
+		uint8_t **pptable_info_array,
+		const uint8_t *pptable_array,
+		uint8_t od_feature_count)
+{
+	uint32_t array_size, i;
+	uint8_t *table;
 	bool od_supported = false;
 
-	array_size = माप(uपूर्णांक8_t) * od_feature_count;
+	array_size = sizeof(uint8_t) * od_feature_count;
 	table = kzalloc(array_size, GFP_KERNEL);
-	अगर (शून्य == table)
-		वापस -ENOMEM;
+	if (NULL == table)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < od_feature_count; i++) अणु
+	for (i = 0; i < od_feature_count; i++) {
 		table[i] = le32_to_cpu(pptable_array[i]);
-		अगर (table[i])
+		if (table[i])
 			od_supported = true;
-	पूर्ण
+	}
 
 	*pptable_info_array = table;
 
-	अगर (od_supported)
-		phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-				PHM_Platक्रमmCaps_ACOverdriveSupport);
+	if (od_supported)
+		phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+				PHM_PlatformCaps_ACOverdriveSupport);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक append_vbios_pptable(काष्ठा pp_hwmgr *hwmgr, PPTable_t *ppsmc_pptable)
-अणु
-	काष्ठा atom_smc_dpm_info_v4_4 *smc_dpm_table;
-	पूर्णांक index = GetIndexIntoMasterDataTable(smc_dpm_info);
-	पूर्णांक i;
+static int append_vbios_pptable(struct pp_hwmgr *hwmgr, PPTable_t *ppsmc_pptable)
+{
+	struct atom_smc_dpm_info_v4_4 *smc_dpm_table;
+	int index = GetIndexIntoMasterDataTable(smc_dpm_info);
+	int i;
 
 	PP_ASSERT_WITH_CODE(
-		smc_dpm_table = smu_atom_get_data_table(hwmgr->adev, index, शून्य, शून्य, शून्य),
+		smc_dpm_table = smu_atom_get_data_table(hwmgr->adev, index, NULL, NULL, NULL),
 		"[appendVbiosPPTable] Failed to retrieve Smc Dpm Table from VBIOS!",
-		वापस -1);
+		return -1);
 
 	ppsmc_pptable->MaxVoltageStepGfx = smc_dpm_table->maxvoltagestepgfx;
 	ppsmc_pptable->MaxVoltageStepSoc = smc_dpm_table->maxvoltagestepsoc;
@@ -735,7 +734,7 @@
 
 	ppsmc_pptable->GfxUlvPhaseSheddingMask = smc_dpm_table->gfxulvphasesheddingmask;
 	ppsmc_pptable->SocUlvPhaseSheddingMask = smc_dpm_table->soculvphasesheddingmask;
-	ppsmc_pptable->ExternalSensorPresent = smc_dpm_table->बाह्यalsensorpresent;
+	ppsmc_pptable->ExternalSensorPresent = smc_dpm_table->externalsensorpresent;
 
 	ppsmc_pptable->GfxMaxCurrent = smc_dpm_table->gfxmaxcurrent;
 	ppsmc_pptable->GfxOffset = smc_dpm_table->gfxoffset;
@@ -767,23 +766,23 @@
 	ppsmc_pptable->LedPin1 = smc_dpm_table->ledpin1;
 	ppsmc_pptable->LedPin2 = smc_dpm_table->ledpin2;
 
-	ppsmc_pptable->PllGfxclkSpपढ़ोEnabled = smc_dpm_table->pllgfxclkspपढ़ोenabled;
-	ppsmc_pptable->PllGfxclkSpपढ़ोPercent = smc_dpm_table->pllgfxclkspपढ़ोpercent;
-	ppsmc_pptable->PllGfxclkSpपढ़ोFreq = smc_dpm_table->pllgfxclkspपढ़ोfreq;
+	ppsmc_pptable->PllGfxclkSpreadEnabled = smc_dpm_table->pllgfxclkspreadenabled;
+	ppsmc_pptable->PllGfxclkSpreadPercent = smc_dpm_table->pllgfxclkspreadpercent;
+	ppsmc_pptable->PllGfxclkSpreadFreq = smc_dpm_table->pllgfxclkspreadfreq;
 
-	ppsmc_pptable->UclkSpपढ़ोEnabled = 0;
-	ppsmc_pptable->UclkSpपढ़ोPercent = smc_dpm_table->uclkspपढ़ोpercent;
-	ppsmc_pptable->UclkSpपढ़ोFreq = smc_dpm_table->uclkspपढ़ोfreq;
+	ppsmc_pptable->UclkSpreadEnabled = 0;
+	ppsmc_pptable->UclkSpreadPercent = smc_dpm_table->uclkspreadpercent;
+	ppsmc_pptable->UclkSpreadFreq = smc_dpm_table->uclkspreadfreq;
 
-	ppsmc_pptable->FclkSpपढ़ोEnabled = smc_dpm_table->fclkspपढ़ोenabled;
-	ppsmc_pptable->FclkSpपढ़ोPercent = smc_dpm_table->fclkspपढ़ोpercent;
-	ppsmc_pptable->FclkSpपढ़ोFreq = smc_dpm_table->fclkspपढ़ोfreq;
+	ppsmc_pptable->FclkSpreadEnabled = smc_dpm_table->fclkspreadenabled;
+	ppsmc_pptable->FclkSpreadPercent = smc_dpm_table->fclkspreadpercent;
+	ppsmc_pptable->FclkSpreadFreq = smc_dpm_table->fclkspreadfreq;
 
-	ppsmc_pptable->FllGfxclkSpपढ़ोEnabled = smc_dpm_table->fllgfxclkspपढ़ोenabled;
-	ppsmc_pptable->FllGfxclkSpपढ़ोPercent = smc_dpm_table->fllgfxclkspपढ़ोpercent;
-	ppsmc_pptable->FllGfxclkSpपढ़ोFreq = smc_dpm_table->fllgfxclkspपढ़ोfreq;
+	ppsmc_pptable->FllGfxclkSpreadEnabled = smc_dpm_table->fllgfxclkspreadenabled;
+	ppsmc_pptable->FllGfxclkSpreadPercent = smc_dpm_table->fllgfxclkspreadpercent;
+	ppsmc_pptable->FllGfxclkSpreadFreq = smc_dpm_table->fllgfxclkspreadfreq;
 
-	क्रम (i = 0; i < I2C_CONTROLLER_NAME_COUNT; i++) अणु
+	for (i = 0; i < I2C_CONTROLLER_NAME_COUNT; i++) {
 		ppsmc_pptable->I2cControllers[i].Enabled =
 			smc_dpm_table->i2ccontrollers[i].enabled;
 		ppsmc_pptable->I2cControllers[i].SlaveAddress =
@@ -796,176 +795,176 @@
 			smc_dpm_table->i2ccontrollers[i].i2cprotocol;
 		ppsmc_pptable->I2cControllers[i].I2cSpeed =
 			smc_dpm_table->i2ccontrollers[i].i2cspeed;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक override_घातerplay_table_fantargettemperature(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा phm_ppt_v3_inक्रमmation *pptable_inक्रमmation =
-		(काष्ठा phm_ppt_v3_inक्रमmation *)hwmgr->pptable;
-	PPTable_t *ppsmc_pptable = (PPTable_t *)(pptable_inक्रमmation->smc_pptable);
+static int override_powerplay_table_fantargettemperature(struct pp_hwmgr *hwmgr)
+{
+	struct phm_ppt_v3_information *pptable_information =
+		(struct phm_ppt_v3_information *)hwmgr->pptable;
+	PPTable_t *ppsmc_pptable = (PPTable_t *)(pptable_information->smc_pptable);
 
 	ppsmc_pptable->FanTargetTemperature = VEGA20_FAN_TARGET_TEMPERATURE_OVERRIDE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा VEGA20_ENGINECLOCK_HARDMAX 198000
-अटल पूर्णांक init_घातerplay_table_inक्रमmation(
-		काष्ठा pp_hwmgr *hwmgr,
-		स्थिर ATOM_Vega20_POWERPLAYTABLE *घातerplay_table)
-अणु
-	काष्ठा phm_ppt_v3_inक्रमmation *pptable_inक्रमmation =
-		(काष्ठा phm_ppt_v3_inक्रमmation *)hwmgr->pptable;
-	uपूर्णांक32_t disable_घातer_control = 0;
-	uपूर्णांक32_t od_feature_count, od_setting_count, घातer_saving_घड़ी_count;
-	पूर्णांक result;
+#define VEGA20_ENGINECLOCK_HARDMAX 198000
+static int init_powerplay_table_information(
+		struct pp_hwmgr *hwmgr,
+		const ATOM_Vega20_POWERPLAYTABLE *powerplay_table)
+{
+	struct phm_ppt_v3_information *pptable_information =
+		(struct phm_ppt_v3_information *)hwmgr->pptable;
+	uint32_t disable_power_control = 0;
+	uint32_t od_feature_count, od_setting_count, power_saving_clock_count;
+	int result;
 
-	hwmgr->thermal_controller.ucType = घातerplay_table->ucThermalControllerType;
-	pptable_inक्रमmation->uc_thermal_controller_type = घातerplay_table->ucThermalControllerType;
+	hwmgr->thermal_controller.ucType = powerplay_table->ucThermalControllerType;
+	pptable_information->uc_thermal_controller_type = powerplay_table->ucThermalControllerType;
 	hwmgr->thermal_controller.fanInfo.ulMinRPM = 0;
-	hwmgr->thermal_controller.fanInfo.ulMaxRPM = घातerplay_table->smcPPTable.FanMaximumRpm;
+	hwmgr->thermal_controller.fanInfo.ulMaxRPM = powerplay_table->smcPPTable.FanMaximumRpm;
 
 	set_hw_cap(hwmgr,
 		ATOM_VEGA20_PP_THERMALCONTROLLER_NONE != hwmgr->thermal_controller.ucType,
-		PHM_Platक्रमmCaps_ThermalController);
+		PHM_PlatformCaps_ThermalController);
 
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps, PHM_Platक्रमmCaps_MicrocodeFanControl);
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps, PHM_PlatformCaps_MicrocodeFanControl);
 
-	अगर (घातerplay_table->OverDrive8Table.ucODTableRevision == 1) अणु
+	if (powerplay_table->OverDrive8Table.ucODTableRevision == 1) {
 		od_feature_count =
-			(le32_to_cpu(घातerplay_table->OverDrive8Table.ODFeatureCount) >
+			(le32_to_cpu(powerplay_table->OverDrive8Table.ODFeatureCount) >
 			 ATOM_VEGA20_ODFEATURE_COUNT) ?
 			ATOM_VEGA20_ODFEATURE_COUNT :
-			le32_to_cpu(घातerplay_table->OverDrive8Table.ODFeatureCount);
+			le32_to_cpu(powerplay_table->OverDrive8Table.ODFeatureCount);
 		od_setting_count =
-			(le32_to_cpu(घातerplay_table->OverDrive8Table.ODSettingCount) >
+			(le32_to_cpu(powerplay_table->OverDrive8Table.ODSettingCount) >
 			 ATOM_VEGA20_ODSETTING_COUNT) ?
 			ATOM_VEGA20_ODSETTING_COUNT :
-			le32_to_cpu(घातerplay_table->OverDrive8Table.ODSettingCount);
+			le32_to_cpu(powerplay_table->OverDrive8Table.ODSettingCount);
 
 		copy_overdrive_feature_capabilities_array(hwmgr,
-				&pptable_inक्रमmation->od_feature_capabilities,
-				घातerplay_table->OverDrive8Table.ODFeatureCapabilities,
+				&pptable_information->od_feature_capabilities,
+				powerplay_table->OverDrive8Table.ODFeatureCapabilities,
 				od_feature_count);
 		phm_copy_overdrive_settings_limits_array(hwmgr,
-				&pptable_inक्रमmation->od_settings_max,
-				घातerplay_table->OverDrive8Table.ODSettingsMax,
+				&pptable_information->od_settings_max,
+				powerplay_table->OverDrive8Table.ODSettingsMax,
 				od_setting_count);
 		phm_copy_overdrive_settings_limits_array(hwmgr,
-				&pptable_inक्रमmation->od_settings_min,
-				घातerplay_table->OverDrive8Table.ODSettingsMin,
+				&pptable_information->od_settings_min,
+				powerplay_table->OverDrive8Table.ODSettingsMin,
 				od_setting_count);
-	पूर्ण
+	}
 
-	pptable_inक्रमmation->us_small_घातer_limit1 = le16_to_cpu(घातerplay_table->usSmallPowerLimit1);
-	pptable_inक्रमmation->us_small_घातer_limit2 = le16_to_cpu(घातerplay_table->usSmallPowerLimit2);
-	pptable_inक्रमmation->us_boost_घातer_limit = le16_to_cpu(घातerplay_table->usBoostPowerLimit);
-	pptable_inक्रमmation->us_od_turbo_घातer_limit = le16_to_cpu(घातerplay_table->usODTurboPowerLimit);
-	pptable_inक्रमmation->us_od_घातersave_घातer_limit = le16_to_cpu(घातerplay_table->usODPowerSavePowerLimit);
+	pptable_information->us_small_power_limit1 = le16_to_cpu(powerplay_table->usSmallPowerLimit1);
+	pptable_information->us_small_power_limit2 = le16_to_cpu(powerplay_table->usSmallPowerLimit2);
+	pptable_information->us_boost_power_limit = le16_to_cpu(powerplay_table->usBoostPowerLimit);
+	pptable_information->us_od_turbo_power_limit = le16_to_cpu(powerplay_table->usODTurboPowerLimit);
+	pptable_information->us_od_powersave_power_limit = le16_to_cpu(powerplay_table->usODPowerSavePowerLimit);
 
-	pptable_inक्रमmation->us_software_shutकरोwn_temp = le16_to_cpu(घातerplay_table->usSoftwareShutकरोwnTemp);
+	pptable_information->us_software_shutdown_temp = le16_to_cpu(powerplay_table->usSoftwareShutdownTemp);
 
-	hwmgr->platक्रमm_descriptor.TDPODLimit = le32_to_cpu(घातerplay_table->OverDrive8Table.ODSettingsMax[ATOM_VEGA20_ODSETTING_POWERPERCENTAGE]);
+	hwmgr->platform_descriptor.TDPODLimit = le32_to_cpu(powerplay_table->OverDrive8Table.ODSettingsMax[ATOM_VEGA20_ODSETTING_POWERPERCENTAGE]);
 
-	disable_घातer_control = 0;
-	अगर (!disable_घातer_control && hwmgr->platक्रमm_descriptor.TDPODLimit)
-		/* enable TDP overdrive (PowerControl) feature as well अगर supported */
-		phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps, PHM_Platक्रमmCaps_PowerControl);
+	disable_power_control = 0;
+	if (!disable_power_control && hwmgr->platform_descriptor.TDPODLimit)
+		/* enable TDP overdrive (PowerControl) feature as well if supported */
+		phm_cap_set(hwmgr->platform_descriptor.platformCaps, PHM_PlatformCaps_PowerControl);
 
-	अगर (घातerplay_table->PowerSavingClockTable.ucTableRevision == 1) अणु
-		घातer_saving_घड़ी_count =
-			(le32_to_cpu(घातerplay_table->PowerSavingClockTable.PowerSavingClockCount) >=
+	if (powerplay_table->PowerSavingClockTable.ucTableRevision == 1) {
+		power_saving_clock_count =
+			(le32_to_cpu(powerplay_table->PowerSavingClockTable.PowerSavingClockCount) >=
 			 ATOM_VEGA20_PPCLOCK_COUNT) ?
 			ATOM_VEGA20_PPCLOCK_COUNT :
-			le32_to_cpu(घातerplay_table->PowerSavingClockTable.PowerSavingClockCount);
-		phm_copy_घड़ी_limits_array(hwmgr,
-				&pptable_inक्रमmation->घातer_saving_घड़ी_max,
-				घातerplay_table->PowerSavingClockTable.PowerSavingClockMax,
-				घातer_saving_घड़ी_count);
-		phm_copy_घड़ी_limits_array(hwmgr,
-				&pptable_inक्रमmation->घातer_saving_घड़ी_min,
-				घातerplay_table->PowerSavingClockTable.PowerSavingClockMin,
-				घातer_saving_घड़ी_count);
-	पूर्ण
+			le32_to_cpu(powerplay_table->PowerSavingClockTable.PowerSavingClockCount);
+		phm_copy_clock_limits_array(hwmgr,
+				&pptable_information->power_saving_clock_max,
+				powerplay_table->PowerSavingClockTable.PowerSavingClockMax,
+				power_saving_clock_count);
+		phm_copy_clock_limits_array(hwmgr,
+				&pptable_information->power_saving_clock_min,
+				powerplay_table->PowerSavingClockTable.PowerSavingClockMin,
+				power_saving_clock_count);
+	}
 
-	pptable_inक्रमmation->smc_pptable = kmemdup(&(घातerplay_table->smcPPTable),
-						   माप(PPTable_t),
+	pptable_information->smc_pptable = kmemdup(&(powerplay_table->smcPPTable),
+						   sizeof(PPTable_t),
 						   GFP_KERNEL);
-	अगर (pptable_inक्रमmation->smc_pptable == शून्य)
-		वापस -ENOMEM;
+	if (pptable_information->smc_pptable == NULL)
+		return -ENOMEM;
 
 
-	result = append_vbios_pptable(hwmgr, (pptable_inक्रमmation->smc_pptable));
-	अगर (result)
-		वापस result;
+	result = append_vbios_pptable(hwmgr, (pptable_information->smc_pptable));
+	if (result)
+		return result;
 
-	result = override_घातerplay_table_fantargettemperature(hwmgr);
+	result = override_powerplay_table_fantargettemperature(hwmgr);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक vega20_pp_tables_initialize(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	पूर्णांक result = 0;
-	स्थिर ATOM_Vega20_POWERPLAYTABLE *घातerplay_table;
+static int vega20_pp_tables_initialize(struct pp_hwmgr *hwmgr)
+{
+	int result = 0;
+	const ATOM_Vega20_POWERPLAYTABLE *powerplay_table;
 
-	hwmgr->pptable = kzalloc(माप(काष्ठा phm_ppt_v3_inक्रमmation), GFP_KERNEL);
-	PP_ASSERT_WITH_CODE((hwmgr->pptable != शून्य),
-		"Failed to allocate hwmgr->pptable!", वापस -ENOMEM);
+	hwmgr->pptable = kzalloc(sizeof(struct phm_ppt_v3_information), GFP_KERNEL);
+	PP_ASSERT_WITH_CODE((hwmgr->pptable != NULL),
+		"Failed to allocate hwmgr->pptable!", return -ENOMEM);
 
-	घातerplay_table = get_घातerplay_table(hwmgr);
-	PP_ASSERT_WITH_CODE((घातerplay_table != शून्य),
-		"Missing PowerPlay Table!", वापस -1);
+	powerplay_table = get_powerplay_table(hwmgr);
+	PP_ASSERT_WITH_CODE((powerplay_table != NULL),
+		"Missing PowerPlay Table!", return -1);
 
-	result = check_घातerplay_tables(hwmgr, घातerplay_table);
+	result = check_powerplay_tables(hwmgr, powerplay_table);
 	PP_ASSERT_WITH_CODE((result == 0),
-		"check_powerplay_tables failed", वापस result);
+		"check_powerplay_tables failed", return result);
 
-	result = set_platक्रमm_caps(hwmgr,
-			le32_to_cpu(घातerplay_table->ulPlatक्रमmCaps));
+	result = set_platform_caps(hwmgr,
+			le32_to_cpu(powerplay_table->ulPlatformCaps));
 	PP_ASSERT_WITH_CODE((result == 0),
-		"set_platform_caps failed", वापस result);
+		"set_platform_caps failed", return result);
 
-	result = init_घातerplay_table_inक्रमmation(hwmgr, घातerplay_table);
+	result = init_powerplay_table_information(hwmgr, powerplay_table);
 	PP_ASSERT_WITH_CODE((result == 0),
-		"init_powerplay_table_information failed", वापस result);
+		"init_powerplay_table_information failed", return result);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक vega20_pp_tables_uninitialize(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा phm_ppt_v3_inक्रमmation *pp_table_info =
-			(काष्ठा phm_ppt_v3_inक्रमmation *)(hwmgr->pptable);
+static int vega20_pp_tables_uninitialize(struct pp_hwmgr *hwmgr)
+{
+	struct phm_ppt_v3_information *pp_table_info =
+			(struct phm_ppt_v3_information *)(hwmgr->pptable);
 
-	kमुक्त(pp_table_info->घातer_saving_घड़ी_max);
-	pp_table_info->घातer_saving_घड़ी_max = शून्य;
+	kfree(pp_table_info->power_saving_clock_max);
+	pp_table_info->power_saving_clock_max = NULL;
 
-	kमुक्त(pp_table_info->घातer_saving_घड़ी_min);
-	pp_table_info->घातer_saving_घड़ी_min = शून्य;
+	kfree(pp_table_info->power_saving_clock_min);
+	pp_table_info->power_saving_clock_min = NULL;
 
-	kमुक्त(pp_table_info->od_feature_capabilities);
-	pp_table_info->od_feature_capabilities = शून्य;
+	kfree(pp_table_info->od_feature_capabilities);
+	pp_table_info->od_feature_capabilities = NULL;
 
-	kमुक्त(pp_table_info->od_settings_max);
-	pp_table_info->od_settings_max = शून्य;
+	kfree(pp_table_info->od_settings_max);
+	pp_table_info->od_settings_max = NULL;
 
-	kमुक्त(pp_table_info->od_settings_min);
-	pp_table_info->od_settings_min = शून्य;
+	kfree(pp_table_info->od_settings_min);
+	pp_table_info->od_settings_min = NULL;
 
-	kमुक्त(pp_table_info->smc_pptable);
-	pp_table_info->smc_pptable = शून्य;
+	kfree(pp_table_info->smc_pptable);
+	pp_table_info->smc_pptable = NULL;
 
-	kमुक्त(hwmgr->pptable);
-	hwmgr->pptable = शून्य;
+	kfree(hwmgr->pptable);
+	hwmgr->pptable = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा pp_table_func vega20_pptable_funcs = अणु
+const struct pp_table_func vega20_pptable_funcs = {
 	.pptable_init = vega20_pp_tables_initialize,
 	.pptable_fini = vega20_pp_tables_uninitialize,
-पूर्ण;
+};

@@ -1,28 +1,27 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 
 /*
- * Linux device driver क्रम USB based Prism54
+ * Linux device driver for USB based Prism54
  *
  * Copyright (c) 2006, Michael Wu <flamingice@sourmilk.net>
  *
- * Based on the islsm (sofपंचांगac prism54) driver, which is:
+ * Based on the islsm (softmac prism54) driver, which is:
  * Copyright 2004-2006 Jean-Baptiste Note <jbnote@gmail.com>, et al.
  */
 
-#समावेश <linux/usb.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/module.h>
-#समावेश <net/mac80211.h>
+#include <linux/usb.h>
+#include <linux/pci.h>
+#include <linux/slab.h>
+#include <linux/firmware.h>
+#include <linux/etherdevice.h>
+#include <linux/delay.h>
+#include <linux/crc32.h>
+#include <linux/module.h>
+#include <net/mac80211.h>
 
-#समावेश "p54.h"
-#समावेश "lmac.h"
-#समावेश "p54usb.h"
+#include "p54.h"
+#include "lmac.h"
+#include "p54usb.h"
 
 MODULE_AUTHOR("Michael Wu <flamingice@sourmilk.net>");
 MODULE_DESCRIPTION("Prism54 USB wireless driver");
@@ -31,7 +30,7 @@ MODULE_ALIAS("prism54usb");
 MODULE_FIRMWARE("isl3886usb");
 MODULE_FIRMWARE("isl3887usb");
 
-अटल काष्ठा usb_driver p54u_driver;
+static struct usb_driver p54u_driver;
 
 /*
  * Note:
@@ -41,620 +40,620 @@ MODULE_FIRMWARE("isl3887usb");
  * whenever you add a new device.
  */
 
-अटल स्थिर काष्ठा usb_device_id p54u_table[] = अणु
+static const struct usb_device_id p54u_table[] = {
 	/* Version 1 devices (pci chip + net2280) */
-	अणुUSB_DEVICE(0x0411, 0x0050)पूर्ण,	/* Buffalo WLI2-USB2-G54 */
-	अणुUSB_DEVICE(0x045e, 0x00c2)पूर्ण,	/* Microsoft MN-710 */
-	अणुUSB_DEVICE(0x0506, 0x0a11)पूर्ण,	/* 3COM 3CRWE254G72 */
-	अणुUSB_DEVICE(0x0675, 0x0530)पूर्ण,	/* DrayTek Vigor 530 */
-	अणुUSB_DEVICE(0x06b9, 0x0120)पूर्ण,	/* Thomson SpeedTouch 120g */
-	अणुUSB_DEVICE(0x0707, 0xee06)पूर्ण,	/* SMC 2862W-G */
-	अणुUSB_DEVICE(0x07aa, 0x001c)पूर्ण,	/* Corega CG-WLUSB2GT */
-	अणुUSB_DEVICE(0x083a, 0x4501)पूर्ण,	/* Accton 802.11g WN4501 USB */
-	अणुUSB_DEVICE(0x083a, 0x4502)पूर्ण,	/* Siemens Gigaset USB Adapter */
-	अणुUSB_DEVICE(0x083a, 0x5501)पूर्ण,	/* Phillips CPWUA054 */
-	अणुUSB_DEVICE(0x0846, 0x4200)पूर्ण,	/* Netgear WG121 */
-	अणुUSB_DEVICE(0x0846, 0x4210)पूर्ण,	/* Netgear WG121 the second ? */
-	अणुUSB_DEVICE(0x0846, 0x4220)पूर्ण,	/* Netgear WG111 */
-	अणुUSB_DEVICE(0x09aa, 0x1000)पूर्ण,	/* Spinnaker Proto board */
-	अणुUSB_DEVICE(0x0bf8, 0x1007)पूर्ण,	/* Fujitsu E-5400 USB */
-	अणुUSB_DEVICE(0x0cde, 0x0006)पूर्ण,	/* Medion 40900, Roper Europe */
-	अणुUSB_DEVICE(0x0db0, 0x6826)पूर्ण,	/* MSI UB54G (MS-6826) */
-	अणुUSB_DEVICE(0x107b, 0x55f2)पूर्ण,	/* Gateway WGU-210 (Gemtek) */
-	अणुUSB_DEVICE(0x124a, 0x4023)पूर्ण,	/* Shuttle PN15, Airvast WM168g, IOGear GWU513 */
-	अणुUSB_DEVICE(0x124a, 0x4026)पूर्ण,	/* AirVasT USB wireless device */
-	अणुUSB_DEVICE(0x1435, 0x0210)पूर्ण,	/* Inventel UR054G */
-	अणुUSB_DEVICE(0x15a9, 0x0002)पूर्ण,	/* Gemtek WUBI-100GW 802.11g */
-	अणुUSB_DEVICE(0x1630, 0x0005)पूर्ण,	/* 2Wire 802.11g USB (v1) / Z-Com */
-	अणुUSB_DEVICE(0x182d, 0x096b)पूर्ण,	/* Sitecom WL-107 */
-	अणुUSB_DEVICE(0x1915, 0x2234)पूर्ण,	/* Linksys WUSB54G OEM */
-	अणुUSB_DEVICE(0x1915, 0x2235)पूर्ण,	/* Linksys WUSB54G Portable OEM */
-	अणुUSB_DEVICE(0x2001, 0x3701)पूर्ण,	/* DLink DWL-G120 Spinnaker */
-	अणुUSB_DEVICE(0x2001, 0x3703)पूर्ण,	/* DLink DWL-G122 */
-	अणुUSB_DEVICE(0x2001, 0x3762)पूर्ण,	/* Conceptronic C54U */
-	अणुUSB_DEVICE(0x5041, 0x2234)पूर्ण,	/* Linksys WUSB54G */
-	अणुUSB_DEVICE(0x5041, 0x2235)पूर्ण,	/* Linksys WUSB54G Portable */
+	{USB_DEVICE(0x0411, 0x0050)},	/* Buffalo WLI2-USB2-G54 */
+	{USB_DEVICE(0x045e, 0x00c2)},	/* Microsoft MN-710 */
+	{USB_DEVICE(0x0506, 0x0a11)},	/* 3COM 3CRWE254G72 */
+	{USB_DEVICE(0x0675, 0x0530)},	/* DrayTek Vigor 530 */
+	{USB_DEVICE(0x06b9, 0x0120)},	/* Thomson SpeedTouch 120g */
+	{USB_DEVICE(0x0707, 0xee06)},	/* SMC 2862W-G */
+	{USB_DEVICE(0x07aa, 0x001c)},	/* Corega CG-WLUSB2GT */
+	{USB_DEVICE(0x083a, 0x4501)},	/* Accton 802.11g WN4501 USB */
+	{USB_DEVICE(0x083a, 0x4502)},	/* Siemens Gigaset USB Adapter */
+	{USB_DEVICE(0x083a, 0x5501)},	/* Phillips CPWUA054 */
+	{USB_DEVICE(0x0846, 0x4200)},	/* Netgear WG121 */
+	{USB_DEVICE(0x0846, 0x4210)},	/* Netgear WG121 the second ? */
+	{USB_DEVICE(0x0846, 0x4220)},	/* Netgear WG111 */
+	{USB_DEVICE(0x09aa, 0x1000)},	/* Spinnaker Proto board */
+	{USB_DEVICE(0x0bf8, 0x1007)},	/* Fujitsu E-5400 USB */
+	{USB_DEVICE(0x0cde, 0x0006)},	/* Medion 40900, Roper Europe */
+	{USB_DEVICE(0x0db0, 0x6826)},	/* MSI UB54G (MS-6826) */
+	{USB_DEVICE(0x107b, 0x55f2)},	/* Gateway WGU-210 (Gemtek) */
+	{USB_DEVICE(0x124a, 0x4023)},	/* Shuttle PN15, Airvast WM168g, IOGear GWU513 */
+	{USB_DEVICE(0x124a, 0x4026)},	/* AirVasT USB wireless device */
+	{USB_DEVICE(0x1435, 0x0210)},	/* Inventel UR054G */
+	{USB_DEVICE(0x15a9, 0x0002)},	/* Gemtek WUBI-100GW 802.11g */
+	{USB_DEVICE(0x1630, 0x0005)},	/* 2Wire 802.11g USB (v1) / Z-Com */
+	{USB_DEVICE(0x182d, 0x096b)},	/* Sitecom WL-107 */
+	{USB_DEVICE(0x1915, 0x2234)},	/* Linksys WUSB54G OEM */
+	{USB_DEVICE(0x1915, 0x2235)},	/* Linksys WUSB54G Portable OEM */
+	{USB_DEVICE(0x2001, 0x3701)},	/* DLink DWL-G120 Spinnaker */
+	{USB_DEVICE(0x2001, 0x3703)},	/* DLink DWL-G122 */
+	{USB_DEVICE(0x2001, 0x3762)},	/* Conceptronic C54U */
+	{USB_DEVICE(0x5041, 0x2234)},	/* Linksys WUSB54G */
+	{USB_DEVICE(0x5041, 0x2235)},	/* Linksys WUSB54G Portable */
 
 	/* Version 2 devices (3887) */
-	अणुUSB_DEVICE(0x0471, 0x1230)पूर्ण,   /* Philips CPWUA054/00 */
-	अणुUSB_DEVICE(0x050d, 0x7050)पूर्ण,	/* Belkin F5D7050 ver 1000 */
-	अणुUSB_DEVICE(0x0572, 0x2000)पूर्ण,	/* Cohiba Proto board */
-	अणुUSB_DEVICE(0x0572, 0x2002)पूर्ण,	/* Cohiba Proto board */
-	अणुUSB_DEVICE(0x06a9, 0x000e)पूर्ण,	/* Westell 802.11g USB (A90-211WG-01) */
-	अणुUSB_DEVICE(0x06b9, 0x0121)पूर्ण,	/* Thomson SpeedTouch 121g */
-	अणुUSB_DEVICE(0x0707, 0xee13)पूर्ण,   /* SMC 2862W-G version 2 */
-	अणुUSB_DEVICE(0x07aa, 0x0020)पूर्ण,	/* Corega WLUSB2GTST USB */
-	अणुUSB_DEVICE(0x0803, 0x4310)पूर्ण,	/* Zoom 4410a */
-	अणुUSB_DEVICE(0x083a, 0x4521)पूर्ण,   /* Siemens Gigaset USB Adapter 54 version 2 */
-	अणुUSB_DEVICE(0x083a, 0x4531)पूर्ण,	/* T-Com Sinus 154 data II */
-	अणुUSB_DEVICE(0x083a, 0xc501)पूर्ण,	/* Zoom Wireless-G 4410 */
-	अणुUSB_DEVICE(0x083a, 0xf503)पूर्ण,	/* Accton FD7050E ver 1010ec  */
-	अणुUSB_DEVICE(0x0846, 0x4240)पूर्ण,	/* Netgear WG111 (v2) */
-	अणुUSB_DEVICE(0x0915, 0x2000)पूर्ण,	/* Cohiba Proto board */
-	अणुUSB_DEVICE(0x0915, 0x2002)पूर्ण,	/* Cohiba Proto board */
-	अणुUSB_DEVICE(0x0baf, 0x0118)पूर्ण,   /* U.S. Robotics U5 802.11g Adapter*/
-	अणुUSB_DEVICE(0x0bf8, 0x1009)पूर्ण,   /* FUJITSU E-5400 USB D1700*/
-	/* अणुUSB_DEVICE(0x0cde, 0x0006)पूर्ण, * Medion MD40900 alपढ़ोy listed above,
-					 * just noting it here क्रम clarity */
-	अणुUSB_DEVICE(0x0cde, 0x0008)पूर्ण,	/* Sagem XG703A */
-	अणुUSB_DEVICE(0x0cde, 0x0015)पूर्ण,	/* Zcomax XG-705A */
-	अणुUSB_DEVICE(0x0d8e, 0x3762)पूर्ण,	/* DLink DWL-G120 Cohiba */
-	अणुUSB_DEVICE(0x124a, 0x4025)पूर्ण,	/* IOGear GWU513 (GW3887IK chip) */
-	अणुUSB_DEVICE(0x1260, 0xee22)पूर्ण,	/* SMC 2862W-G version 2 */
-	अणुUSB_DEVICE(0x13b1, 0x000a)पूर्ण,	/* Linksys WUSB54G ver 2 */
-	अणुUSB_DEVICE(0x13B1, 0x000C)पूर्ण,	/* Linksys WUSB54AG */
-	अणुUSB_DEVICE(0x1413, 0x5400)पूर्ण,   /* Tअन्यथाy 802.11g USB2.0 Adapter */
-	अणुUSB_DEVICE(0x1435, 0x0427)पूर्ण,	/* Inventel UR054G */
-	/* अणुUSB_DEVICE(0x15a9, 0x0002)पूर्ण, * Also SparkLAN WL-682 with 3887 */
-	अणुUSB_DEVICE(0x1668, 0x1050)पूर्ण,	/* Actiontec 802UIG-1 */
-	अणुUSB_DEVICE(0x1740, 0x1000)पूर्ण,	/* Senao NUB-350 */
-	अणुUSB_DEVICE(0x2001, 0x3704)पूर्ण,	/* DLink DWL-G122 rev A2 */
-	अणुUSB_DEVICE(0x2001, 0x3705)पूर्ण,	/* D-Link DWL-G120 rev C1 */
-	अणुUSB_DEVICE(0x413c, 0x5513)पूर्ण,	/* Dell WLA3310 USB Wireless Adapter */
-	अणुUSB_DEVICE(0x413c, 0x8102)पूर्ण,	/* Spinnaker DUT */
-	अणुUSB_DEVICE(0x413c, 0x8104)पूर्ण,	/* Cohiba Proto board */
-	अणुपूर्ण
-पूर्ण;
+	{USB_DEVICE(0x0471, 0x1230)},   /* Philips CPWUA054/00 */
+	{USB_DEVICE(0x050d, 0x7050)},	/* Belkin F5D7050 ver 1000 */
+	{USB_DEVICE(0x0572, 0x2000)},	/* Cohiba Proto board */
+	{USB_DEVICE(0x0572, 0x2002)},	/* Cohiba Proto board */
+	{USB_DEVICE(0x06a9, 0x000e)},	/* Westell 802.11g USB (A90-211WG-01) */
+	{USB_DEVICE(0x06b9, 0x0121)},	/* Thomson SpeedTouch 121g */
+	{USB_DEVICE(0x0707, 0xee13)},   /* SMC 2862W-G version 2 */
+	{USB_DEVICE(0x07aa, 0x0020)},	/* Corega WLUSB2GTST USB */
+	{USB_DEVICE(0x0803, 0x4310)},	/* Zoom 4410a */
+	{USB_DEVICE(0x083a, 0x4521)},   /* Siemens Gigaset USB Adapter 54 version 2 */
+	{USB_DEVICE(0x083a, 0x4531)},	/* T-Com Sinus 154 data II */
+	{USB_DEVICE(0x083a, 0xc501)},	/* Zoom Wireless-G 4410 */
+	{USB_DEVICE(0x083a, 0xf503)},	/* Accton FD7050E ver 1010ec  */
+	{USB_DEVICE(0x0846, 0x4240)},	/* Netgear WG111 (v2) */
+	{USB_DEVICE(0x0915, 0x2000)},	/* Cohiba Proto board */
+	{USB_DEVICE(0x0915, 0x2002)},	/* Cohiba Proto board */
+	{USB_DEVICE(0x0baf, 0x0118)},   /* U.S. Robotics U5 802.11g Adapter*/
+	{USB_DEVICE(0x0bf8, 0x1009)},   /* FUJITSU E-5400 USB D1700*/
+	/* {USB_DEVICE(0x0cde, 0x0006)}, * Medion MD40900 already listed above,
+					 * just noting it here for clarity */
+	{USB_DEVICE(0x0cde, 0x0008)},	/* Sagem XG703A */
+	{USB_DEVICE(0x0cde, 0x0015)},	/* Zcomax XG-705A */
+	{USB_DEVICE(0x0d8e, 0x3762)},	/* DLink DWL-G120 Cohiba */
+	{USB_DEVICE(0x124a, 0x4025)},	/* IOGear GWU513 (GW3887IK chip) */
+	{USB_DEVICE(0x1260, 0xee22)},	/* SMC 2862W-G version 2 */
+	{USB_DEVICE(0x13b1, 0x000a)},	/* Linksys WUSB54G ver 2 */
+	{USB_DEVICE(0x13B1, 0x000C)},	/* Linksys WUSB54AG */
+	{USB_DEVICE(0x1413, 0x5400)},   /* Telsey 802.11g USB2.0 Adapter */
+	{USB_DEVICE(0x1435, 0x0427)},	/* Inventel UR054G */
+	/* {USB_DEVICE(0x15a9, 0x0002)}, * Also SparkLAN WL-682 with 3887 */
+	{USB_DEVICE(0x1668, 0x1050)},	/* Actiontec 802UIG-1 */
+	{USB_DEVICE(0x1740, 0x1000)},	/* Senao NUB-350 */
+	{USB_DEVICE(0x2001, 0x3704)},	/* DLink DWL-G122 rev A2 */
+	{USB_DEVICE(0x2001, 0x3705)},	/* D-Link DWL-G120 rev C1 */
+	{USB_DEVICE(0x413c, 0x5513)},	/* Dell WLA3310 USB Wireless Adapter */
+	{USB_DEVICE(0x413c, 0x8102)},	/* Spinnaker DUT */
+	{USB_DEVICE(0x413c, 0x8104)},	/* Cohiba Proto board */
+	{}
+};
 
 MODULE_DEVICE_TABLE(usb, p54u_table);
 
-अटल स्थिर काष्ठा अणु
-	u32 पूर्णांकf;
-	क्रमागत p54u_hw_type type;
-	स्थिर अक्षर *fw;
-	अक्षर hw[20];
-पूर्ण p54u_fwlist[__NUM_P54U_HWTYPES] = अणु
-	अणु
+static const struct {
+	u32 intf;
+	enum p54u_hw_type type;
+	const char *fw;
+	char hw[20];
+} p54u_fwlist[__NUM_P54U_HWTYPES] = {
+	{
 		.type = P54U_NET2280,
-		.पूर्णांकf = FW_LM86,
+		.intf = FW_LM86,
 		.fw = "isl3886usb",
 		.hw = "ISL3886 + net2280",
-	पूर्ण,
-	अणु
+	},
+	{
 		.type = P54U_3887,
-		.पूर्णांकf = FW_LM87,
+		.intf = FW_LM87,
 		.fw = "isl3887usb",
 		.hw = "ISL3887",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल व्योम p54u_rx_cb(काष्ठा urb *urb)
-अणु
-	काष्ठा sk_buff *skb = (काष्ठा sk_buff *) urb->context;
-	काष्ठा p54u_rx_info *info = (काष्ठा p54u_rx_info *)skb->cb;
-	काष्ठा ieee80211_hw *dev = info->dev;
-	काष्ठा p54u_priv *priv = dev->priv;
+static void p54u_rx_cb(struct urb *urb)
+{
+	struct sk_buff *skb = (struct sk_buff *) urb->context;
+	struct p54u_rx_info *info = (struct p54u_rx_info *)skb->cb;
+	struct ieee80211_hw *dev = info->dev;
+	struct p54u_priv *priv = dev->priv;
 
 	skb_unlink(skb, &priv->rx_queue);
 
-	अगर (unlikely(urb->status)) अणु
-		dev_kमुक्त_skb_irq(skb);
-		वापस;
-	पूर्ण
+	if (unlikely(urb->status)) {
+		dev_kfree_skb_irq(skb);
+		return;
+	}
 
 	skb_put(skb, urb->actual_length);
 
-	अगर (priv->hw_type == P54U_NET2280)
+	if (priv->hw_type == P54U_NET2280)
 		skb_pull(skb, priv->common.tx_hdr_len);
-	अगर (priv->common.fw_पूर्णांकerface == FW_LM87) अणु
+	if (priv->common.fw_interface == FW_LM87) {
 		skb_pull(skb, 4);
 		skb_put(skb, 4);
-	पूर्ण
+	}
 
-	अगर (p54_rx(dev, skb)) अणु
+	if (p54_rx(dev, skb)) {
 		skb = dev_alloc_skb(priv->common.rx_mtu + 32);
-		अगर (unlikely(!skb)) अणु
+		if (unlikely(!skb)) {
 			/* TODO check rx queue length and refill *somewhere* */
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		info = (काष्ठा p54u_rx_info *) skb->cb;
+		info = (struct p54u_rx_info *) skb->cb;
 		info->urb = urb;
 		info->dev = dev;
-		urb->transfer_buffer = skb_tail_poपूर्णांकer(skb);
+		urb->transfer_buffer = skb_tail_pointer(skb);
 		urb->context = skb;
-	पूर्ण अन्यथा अणु
-		अगर (priv->hw_type == P54U_NET2280)
+	} else {
+		if (priv->hw_type == P54U_NET2280)
 			skb_push(skb, priv->common.tx_hdr_len);
-		अगर (priv->common.fw_पूर्णांकerface == FW_LM87) अणु
+		if (priv->common.fw_interface == FW_LM87) {
 			skb_push(skb, 4);
 			skb_put(skb, 4);
-		पूर्ण
-		skb_reset_tail_poपूर्णांकer(skb);
+		}
+		skb_reset_tail_pointer(skb);
 		skb_trim(skb, 0);
-		urb->transfer_buffer = skb_tail_poपूर्णांकer(skb);
-	पूर्ण
+		urb->transfer_buffer = skb_tail_pointer(skb);
+	}
 	skb_queue_tail(&priv->rx_queue, skb);
 	usb_anchor_urb(urb, &priv->submitted);
-	अगर (usb_submit_urb(urb, GFP_ATOMIC)) अणु
+	if (usb_submit_urb(urb, GFP_ATOMIC)) {
 		skb_unlink(skb, &priv->rx_queue);
 		usb_unanchor_urb(urb);
-		dev_kमुक्त_skb_irq(skb);
-	पूर्ण
-पूर्ण
+		dev_kfree_skb_irq(skb);
+	}
+}
 
-अटल व्योम p54u_tx_cb(काष्ठा urb *urb)
-अणु
-	काष्ठा sk_buff *skb = urb->context;
-	काष्ठा ieee80211_hw *dev =
-		usb_get_पूर्णांकfdata(usb_अगरnum_to_अगर(urb->dev, 0));
+static void p54u_tx_cb(struct urb *urb)
+{
+	struct sk_buff *skb = urb->context;
+	struct ieee80211_hw *dev =
+		usb_get_intfdata(usb_ifnum_to_if(urb->dev, 0));
 
-	p54_मुक्त_skb(dev, skb);
-पूर्ण
+	p54_free_skb(dev, skb);
+}
 
-अटल व्योम p54u_tx_dummy_cb(काष्ठा urb *urb) अणु पूर्ण
+static void p54u_tx_dummy_cb(struct urb *urb) { }
 
-अटल व्योम p54u_मुक्त_urbs(काष्ठा ieee80211_hw *dev)
-अणु
-	काष्ठा p54u_priv *priv = dev->priv;
-	usb_समाप्त_anchored_urbs(&priv->submitted);
-पूर्ण
+static void p54u_free_urbs(struct ieee80211_hw *dev)
+{
+	struct p54u_priv *priv = dev->priv;
+	usb_kill_anchored_urbs(&priv->submitted);
+}
 
-अटल व्योम p54u_stop(काष्ठा ieee80211_hw *dev)
-अणु
+static void p54u_stop(struct ieee80211_hw *dev)
+{
 	/*
 	 * TODO: figure out how to reliably stop the 3887 and net2280 so
-	 * the hardware is still usable next समय we want to start it.
+	 * the hardware is still usable next time we want to start it.
 	 * until then, we just stop listening to the hardware..
 	 */
-	p54u_मुक्त_urbs(dev);
-पूर्ण
+	p54u_free_urbs(dev);
+}
 
-अटल पूर्णांक p54u_init_urbs(काष्ठा ieee80211_hw *dev)
-अणु
-	काष्ठा p54u_priv *priv = dev->priv;
-	काष्ठा urb *entry = शून्य;
-	काष्ठा sk_buff *skb;
-	काष्ठा p54u_rx_info *info;
-	पूर्णांक ret = 0;
+static int p54u_init_urbs(struct ieee80211_hw *dev)
+{
+	struct p54u_priv *priv = dev->priv;
+	struct urb *entry = NULL;
+	struct sk_buff *skb;
+	struct p54u_rx_info *info;
+	int ret = 0;
 
-	जबतक (skb_queue_len(&priv->rx_queue) < 32) अणु
+	while (skb_queue_len(&priv->rx_queue) < 32) {
 		skb = __dev_alloc_skb(priv->common.rx_mtu + 32, GFP_KERNEL);
-		अगर (!skb) अणु
+		if (!skb) {
 			ret = -ENOMEM;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 		entry = usb_alloc_urb(0, GFP_KERNEL);
-		अगर (!entry) अणु
+		if (!entry) {
 			ret = -ENOMEM;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		usb_fill_bulk_urb(entry, priv->udev,
 				  usb_rcvbulkpipe(priv->udev, P54U_PIPE_DATA),
-				  skb_tail_poपूर्णांकer(skb),
+				  skb_tail_pointer(skb),
 				  priv->common.rx_mtu + 32, p54u_rx_cb, skb);
-		info = (काष्ठा p54u_rx_info *) skb->cb;
+		info = (struct p54u_rx_info *) skb->cb;
 		info->urb = entry;
 		info->dev = dev;
 		skb_queue_tail(&priv->rx_queue, skb);
 
 		usb_anchor_urb(entry, &priv->submitted);
 		ret = usb_submit_urb(entry, GFP_KERNEL);
-		अगर (ret) अणु
+		if (ret) {
 			skb_unlink(skb, &priv->rx_queue);
 			usb_unanchor_urb(entry);
-			जाओ err;
-		पूर्ण
-		usb_मुक्त_urb(entry);
-		entry = शून्य;
-	पूर्ण
+			goto err;
+		}
+		usb_free_urb(entry);
+		entry = NULL;
+	}
 
-	वापस 0;
+	return 0;
 
  err:
-	usb_मुक्त_urb(entry);
-	kमुक्त_skb(skb);
-	p54u_मुक्त_urbs(dev);
-	वापस ret;
-पूर्ण
+	usb_free_urb(entry);
+	kfree_skb(skb);
+	p54u_free_urbs(dev);
+	return ret;
+}
 
-अटल पूर्णांक p54u_खोलो(काष्ठा ieee80211_hw *dev)
-अणु
+static int p54u_open(struct ieee80211_hw *dev)
+{
 	/*
-	 * TODO: Because we करोn't know how to reliably stop the 3887 and
+	 * TODO: Because we don't know how to reliably stop the 3887 and
 	 * the isl3886+net2280, other than brutally cut off all
 	 * communications. We have to reinitialize the urbs on every start.
 	 */
-	वापस p54u_init_urbs(dev);
-पूर्ण
+	return p54u_init_urbs(dev);
+}
 
-अटल __le32 p54u_lm87_chksum(स्थिर __le32 *data, माप_प्रकार length)
-अणु
+static __le32 p54u_lm87_chksum(const __le32 *data, size_t length)
+{
 	u32 chk = 0;
 
 	length >>= 2;
-	जबतक (length--) अणु
+	while (length--) {
 		chk ^= le32_to_cpu(*data++);
 		chk = (chk >> 5) ^ (chk << 3);
-	पूर्ण
+	}
 
-	वापस cpu_to_le32(chk);
-पूर्ण
+	return cpu_to_le32(chk);
+}
 
-अटल व्योम p54u_tx_lm87(काष्ठा ieee80211_hw *dev, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा p54u_priv *priv = dev->priv;
-	काष्ठा urb *data_urb;
-	काष्ठा lm87_tx_hdr *hdr = (व्योम *)skb->data - माप(*hdr);
+static void p54u_tx_lm87(struct ieee80211_hw *dev, struct sk_buff *skb)
+{
+	struct p54u_priv *priv = dev->priv;
+	struct urb *data_urb;
+	struct lm87_tx_hdr *hdr = (void *)skb->data - sizeof(*hdr);
 
 	data_urb = usb_alloc_urb(0, GFP_ATOMIC);
-	अगर (!data_urb) अणु
-		p54_मुक्त_skb(dev, skb);
-		वापस;
-	पूर्ण
+	if (!data_urb) {
+		p54_free_skb(dev, skb);
+		return;
+	}
 
 	hdr->chksum = p54u_lm87_chksum((__le32 *)skb->data, skb->len);
-	hdr->device_addr = ((काष्ठा p54_hdr *)skb->data)->req_id;
+	hdr->device_addr = ((struct p54_hdr *)skb->data)->req_id;
 
 	usb_fill_bulk_urb(data_urb, priv->udev,
 			  usb_sndbulkpipe(priv->udev, P54U_PIPE_DATA),
-			  hdr, skb->len + माप(*hdr),  FREE_AFTER_TX(skb) ?
+			  hdr, skb->len + sizeof(*hdr),  FREE_AFTER_TX(skb) ?
 			  p54u_tx_cb : p54u_tx_dummy_cb, skb);
 	data_urb->transfer_flags |= URB_ZERO_PACKET;
 
 	usb_anchor_urb(data_urb, &priv->submitted);
-	अगर (usb_submit_urb(data_urb, GFP_ATOMIC)) अणु
+	if (usb_submit_urb(data_urb, GFP_ATOMIC)) {
 		usb_unanchor_urb(data_urb);
-		p54_मुक्त_skb(dev, skb);
-	पूर्ण
-	usb_मुक्त_urb(data_urb);
-पूर्ण
+		p54_free_skb(dev, skb);
+	}
+	usb_free_urb(data_urb);
+}
 
-अटल व्योम p54u_tx_net2280(काष्ठा ieee80211_hw *dev, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा p54u_priv *priv = dev->priv;
-	काष्ठा urb *पूर्णांक_urb = शून्य, *data_urb = शून्य;
-	काष्ठा net2280_tx_hdr *hdr = (व्योम *)skb->data - माप(*hdr);
-	काष्ठा net2280_reg_ग_लिखो *reg = शून्य;
-	पूर्णांक err = -ENOMEM;
+static void p54u_tx_net2280(struct ieee80211_hw *dev, struct sk_buff *skb)
+{
+	struct p54u_priv *priv = dev->priv;
+	struct urb *int_urb = NULL, *data_urb = NULL;
+	struct net2280_tx_hdr *hdr = (void *)skb->data - sizeof(*hdr);
+	struct net2280_reg_write *reg = NULL;
+	int err = -ENOMEM;
 
-	reg = kदो_स्मृति(माप(*reg), GFP_ATOMIC);
-	अगर (!reg)
-		जाओ out;
+	reg = kmalloc(sizeof(*reg), GFP_ATOMIC);
+	if (!reg)
+		goto out;
 
-	पूर्णांक_urb = usb_alloc_urb(0, GFP_ATOMIC);
-	अगर (!पूर्णांक_urb)
-		जाओ out;
+	int_urb = usb_alloc_urb(0, GFP_ATOMIC);
+	if (!int_urb)
+		goto out;
 
 	data_urb = usb_alloc_urb(0, GFP_ATOMIC);
-	अगर (!data_urb)
-		जाओ out;
+	if (!data_urb)
+		goto out;
 
 	reg->port = cpu_to_le16(NET2280_DEV_U32);
 	reg->addr = cpu_to_le32(P54U_DEV_BASE);
 	reg->val = cpu_to_le32(ISL38XX_DEV_INT_DATA);
 
-	स_रखो(hdr, 0, माप(*hdr));
+	memset(hdr, 0, sizeof(*hdr));
 	hdr->len = cpu_to_le16(skb->len);
-	hdr->device_addr = ((काष्ठा p54_hdr *) skb->data)->req_id;
+	hdr->device_addr = ((struct p54_hdr *) skb->data)->req_id;
 
-	usb_fill_bulk_urb(पूर्णांक_urb, priv->udev,
-		usb_sndbulkpipe(priv->udev, P54U_PIPE_DEV), reg, माप(*reg),
+	usb_fill_bulk_urb(int_urb, priv->udev,
+		usb_sndbulkpipe(priv->udev, P54U_PIPE_DEV), reg, sizeof(*reg),
 		p54u_tx_dummy_cb, dev);
 
 	/*
-	 * URB_FREE_BUFFER triggers a code path in the USB subप्रणाली that will
-	 * मुक्त what is inside the transfer_buffer after the last reference to
-	 * the पूर्णांक_urb is dropped.
+	 * URB_FREE_BUFFER triggers a code path in the USB subsystem that will
+	 * free what is inside the transfer_buffer after the last reference to
+	 * the int_urb is dropped.
 	 */
-	पूर्णांक_urb->transfer_flags |= URB_FREE_BUFFER | URB_ZERO_PACKET;
-	reg = शून्य;
+	int_urb->transfer_flags |= URB_FREE_BUFFER | URB_ZERO_PACKET;
+	reg = NULL;
 
 	usb_fill_bulk_urb(data_urb, priv->udev,
 			  usb_sndbulkpipe(priv->udev, P54U_PIPE_DATA),
-			  hdr, skb->len + माप(*hdr), FREE_AFTER_TX(skb) ?
+			  hdr, skb->len + sizeof(*hdr), FREE_AFTER_TX(skb) ?
 			  p54u_tx_cb : p54u_tx_dummy_cb, skb);
 	data_urb->transfer_flags |= URB_ZERO_PACKET;
 
-	usb_anchor_urb(पूर्णांक_urb, &priv->submitted);
-	err = usb_submit_urb(पूर्णांक_urb, GFP_ATOMIC);
-	अगर (err) अणु
-		usb_unanchor_urb(पूर्णांक_urb);
-		जाओ out;
-	पूर्ण
+	usb_anchor_urb(int_urb, &priv->submitted);
+	err = usb_submit_urb(int_urb, GFP_ATOMIC);
+	if (err) {
+		usb_unanchor_urb(int_urb);
+		goto out;
+	}
 
 	usb_anchor_urb(data_urb, &priv->submitted);
 	err = usb_submit_urb(data_urb, GFP_ATOMIC);
-	अगर (err) अणु
+	if (err) {
 		usb_unanchor_urb(data_urb);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 out:
-	usb_मुक्त_urb(पूर्णांक_urb);
-	usb_मुक्त_urb(data_urb);
+	usb_free_urb(int_urb);
+	usb_free_urb(data_urb);
 
-	अगर (err) अणु
-		kमुक्त(reg);
-		p54_मुक्त_skb(dev, skb);
-	पूर्ण
-पूर्ण
+	if (err) {
+		kfree(reg);
+		p54_free_skb(dev, skb);
+	}
+}
 
-अटल पूर्णांक p54u_ग_लिखो(काष्ठा p54u_priv *priv,
-		      काष्ठा net2280_reg_ग_लिखो *buf,
-		      क्रमागत net2280_op_type type,
+static int p54u_write(struct p54u_priv *priv,
+		      struct net2280_reg_write *buf,
+		      enum net2280_op_type type,
 		      __le32 addr, __le32 val)
-अणु
-	अचिन्हित पूर्णांक ep;
-	पूर्णांक alen;
+{
+	unsigned int ep;
+	int alen;
 
-	अगर (type & 0x0800)
+	if (type & 0x0800)
 		ep = usb_sndbulkpipe(priv->udev, P54U_PIPE_DEV);
-	अन्यथा
+	else
 		ep = usb_sndbulkpipe(priv->udev, P54U_PIPE_BRG);
 
 	buf->port = cpu_to_le16(type);
 	buf->addr = addr;
 	buf->val = val;
 
-	वापस usb_bulk_msg(priv->udev, ep, buf, माप(*buf), &alen, 1000);
-पूर्ण
+	return usb_bulk_msg(priv->udev, ep, buf, sizeof(*buf), &alen, 1000);
+}
 
-अटल पूर्णांक p54u_पढ़ो(काष्ठा p54u_priv *priv, व्योम *buf,
-		     क्रमागत net2280_op_type type,
+static int p54u_read(struct p54u_priv *priv, void *buf,
+		     enum net2280_op_type type,
 		     __le32 addr, __le32 *val)
-अणु
-	काष्ठा net2280_reg_पढ़ो *पढ़ो = buf;
+{
+	struct net2280_reg_read *read = buf;
 	__le32 *reg = buf;
-	अचिन्हित पूर्णांक ep;
-	पूर्णांक alen, err;
+	unsigned int ep;
+	int alen, err;
 
-	अगर (type & 0x0800)
+	if (type & 0x0800)
 		ep = P54U_PIPE_DEV;
-	अन्यथा
+	else
 		ep = P54U_PIPE_BRG;
 
-	पढ़ो->port = cpu_to_le16(type);
-	पढ़ो->addr = addr;
+	read->port = cpu_to_le16(type);
+	read->addr = addr;
 
 	err = usb_bulk_msg(priv->udev, usb_sndbulkpipe(priv->udev, ep),
-			   पढ़ो, माप(*पढ़ो), &alen, 1000);
-	अगर (err)
-		वापस err;
+			   read, sizeof(*read), &alen, 1000);
+	if (err)
+		return err;
 
 	err = usb_bulk_msg(priv->udev, usb_rcvbulkpipe(priv->udev, ep),
-			   reg, माप(*reg), &alen, 1000);
-	अगर (err)
-		वापस err;
+			   reg, sizeof(*reg), &alen, 1000);
+	if (err)
+		return err;
 
 	*val = *reg;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक p54u_bulk_msg(काष्ठा p54u_priv *priv, अचिन्हित पूर्णांक ep,
-			 व्योम *data, माप_प्रकार len)
-अणु
-	पूर्णांक alen;
-	वापस usb_bulk_msg(priv->udev, usb_sndbulkpipe(priv->udev, ep),
+static int p54u_bulk_msg(struct p54u_priv *priv, unsigned int ep,
+			 void *data, size_t len)
+{
+	int alen;
+	return usb_bulk_msg(priv->udev, usb_sndbulkpipe(priv->udev, ep),
 			    data, len, &alen, 2000);
-पूर्ण
+}
 
-अटल पूर्णांक p54u_device_reset(काष्ठा ieee80211_hw *dev)
-अणु
-	काष्ठा p54u_priv *priv = dev->priv;
-	पूर्णांक ret, lock = (priv->पूर्णांकf->condition != USB_INTERFACE_BINDING);
+static int p54u_device_reset(struct ieee80211_hw *dev)
+{
+	struct p54u_priv *priv = dev->priv;
+	int ret, lock = (priv->intf->condition != USB_INTERFACE_BINDING);
 
-	अगर (lock) अणु
-		ret = usb_lock_device_क्रम_reset(priv->udev, priv->पूर्णांकf);
-		अगर (ret < 0) अणु
+	if (lock) {
+		ret = usb_lock_device_for_reset(priv->udev, priv->intf);
+		if (ret < 0) {
 			dev_err(&priv->udev->dev, "(p54usb) unable to lock "
 				"device for reset (%d)!\n", ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	ret = usb_reset_device(priv->udev);
-	अगर (lock)
+	if (lock)
 		usb_unlock_device(priv->udev);
 
-	अगर (ret)
+	if (ret)
 		dev_err(&priv->udev->dev, "(p54usb) unable to reset "
 			"device (%d)!\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर अक्षर p54u_romboot_3887[] = "~~~~";
-अटल पूर्णांक p54u_firmware_reset_3887(काष्ठा ieee80211_hw *dev)
-अणु
-	काष्ठा p54u_priv *priv = dev->priv;
+static const char p54u_romboot_3887[] = "~~~~";
+static int p54u_firmware_reset_3887(struct ieee80211_hw *dev)
+{
+	struct p54u_priv *priv = dev->priv;
 	u8 *buf;
-	पूर्णांक ret;
+	int ret;
 
 	buf = kmemdup(p54u_romboot_3887, 4, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 	ret = p54u_bulk_msg(priv, P54U_PIPE_DATA,
 			    buf, 4);
-	kमुक्त(buf);
-	अगर (ret)
+	kfree(buf);
+	if (ret)
 		dev_err(&priv->udev->dev, "(p54usb) unable to jump to "
 			"boot ROM (%d)!\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर अक्षर p54u_firmware_upload_3887[] = "<\r";
-अटल पूर्णांक p54u_upload_firmware_3887(काष्ठा ieee80211_hw *dev)
-अणु
-	काष्ठा p54u_priv *priv = dev->priv;
-	पूर्णांक err, alen;
+static const char p54u_firmware_upload_3887[] = "<\r";
+static int p54u_upload_firmware_3887(struct ieee80211_hw *dev)
+{
+	struct p54u_priv *priv = dev->priv;
+	int err, alen;
 	u8 carry = 0;
-	u8 *buf, *पंचांगp;
-	स्थिर u8 *data;
-	अचिन्हित पूर्णांक left, reमुख्यs, block_size;
-	काष्ठा x2_header *hdr;
-	अचिन्हित दीर्घ समयout;
+	u8 *buf, *tmp;
+	const u8 *data;
+	unsigned int left, remains, block_size;
+	struct x2_header *hdr;
+	unsigned long timeout;
 
 	err = p54u_firmware_reset_3887(dev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	पंचांगp = buf = kदो_स्मृति(P54U_FW_BLOCK, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	tmp = buf = kmalloc(P54U_FW_BLOCK, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
-	left = block_size = min_t(माप_प्रकार, P54U_FW_BLOCK, priv->fw->size);
-	म_नकल(buf, p54u_firmware_upload_3887);
-	left -= म_माप(p54u_firmware_upload_3887);
-	पंचांगp += म_माप(p54u_firmware_upload_3887);
+	left = block_size = min_t(size_t, P54U_FW_BLOCK, priv->fw->size);
+	strcpy(buf, p54u_firmware_upload_3887);
+	left -= strlen(p54u_firmware_upload_3887);
+	tmp += strlen(p54u_firmware_upload_3887);
 
 	data = priv->fw->data;
-	reमुख्यs = priv->fw->size;
+	remains = priv->fw->size;
 
-	hdr = (काष्ठा x2_header *)(buf + म_माप(p54u_firmware_upload_3887));
-	स_नकल(hdr->signature, X2_SIGNATURE, X2_SIGNATURE_SIZE);
+	hdr = (struct x2_header *)(buf + strlen(p54u_firmware_upload_3887));
+	memcpy(hdr->signature, X2_SIGNATURE, X2_SIGNATURE_SIZE);
 	hdr->fw_load_addr = cpu_to_le32(ISL38XX_DEV_FIRMWARE_ADDR);
 	hdr->fw_length = cpu_to_le32(priv->fw->size);
-	hdr->crc = cpu_to_le32(~crc32_le(~0, (व्योम *)&hdr->fw_load_addr,
-					 माप(u32)*2));
-	left -= माप(*hdr);
-	पंचांगp += माप(*hdr);
+	hdr->crc = cpu_to_le32(~crc32_le(~0, (void *)&hdr->fw_load_addr,
+					 sizeof(u32)*2));
+	left -= sizeof(*hdr);
+	tmp += sizeof(*hdr);
 
-	जबतक (reमुख्यs) अणु
-		जबतक (left--) अणु
-			अगर (carry) अणु
-				*पंचांगp++ = carry;
+	while (remains) {
+		while (left--) {
+			if (carry) {
+				*tmp++ = carry;
 				carry = 0;
-				reमुख्यs--;
-				जारी;
-			पूर्ण
-			चयन (*data) अणु
-			हाल '~':
-				*पंचांगp++ = '}';
+				remains--;
+				continue;
+			}
+			switch (*data) {
+			case '~':
+				*tmp++ = '}';
 				carry = '^';
-				अवरोध;
-			हाल '}':
-				*पंचांगp++ = '}';
+				break;
+			case '}':
+				*tmp++ = '}';
 				carry = ']';
-				अवरोध;
-			शेष:
-				*पंचांगp++ = *data;
-				reमुख्यs--;
-				अवरोध;
-			पूर्ण
+				break;
+			default:
+				*tmp++ = *data;
+				remains--;
+				break;
+			}
 			data++;
-		पूर्ण
+		}
 
 		err = p54u_bulk_msg(priv, P54U_PIPE_DATA, buf, block_size);
-		अगर (err) अणु
+		if (err) {
 			dev_err(&priv->udev->dev, "(p54usb) firmware "
 						  "upload failed!\n");
-			जाओ err_upload_failed;
-		पूर्ण
+			goto err_upload_failed;
+		}
 
-		पंचांगp = buf;
-		left = block_size = min((अचिन्हित पूर्णांक)P54U_FW_BLOCK, reमुख्यs);
-	पूर्ण
+		tmp = buf;
+		left = block_size = min((unsigned int)P54U_FW_BLOCK, remains);
+	}
 
 	*((__le32 *)buf) = cpu_to_le32(~crc32_le(~0, priv->fw->data,
 						 priv->fw->size));
-	err = p54u_bulk_msg(priv, P54U_PIPE_DATA, buf, माप(u32));
-	अगर (err) अणु
+	err = p54u_bulk_msg(priv, P54U_PIPE_DATA, buf, sizeof(u32));
+	if (err) {
 		dev_err(&priv->udev->dev, "(p54usb) firmware upload failed!\n");
-		जाओ err_upload_failed;
-	पूर्ण
-	समयout = jअगरfies + msecs_to_jअगरfies(1000);
-	जबतक (!(err = usb_bulk_msg(priv->udev,
-		usb_rcvbulkpipe(priv->udev, P54U_PIPE_DATA), buf, 128, &alen, 1000))) अणु
-		अगर (alen > 2 && !स_भेद(buf, "OK", 2))
-			अवरोध;
+		goto err_upload_failed;
+	}
+	timeout = jiffies + msecs_to_jiffies(1000);
+	while (!(err = usb_bulk_msg(priv->udev,
+		usb_rcvbulkpipe(priv->udev, P54U_PIPE_DATA), buf, 128, &alen, 1000))) {
+		if (alen > 2 && !memcmp(buf, "OK", 2))
+			break;
 
-		अगर (alen > 5 && !स_भेद(buf, "ERROR", 5)) अणु
+		if (alen > 5 && !memcmp(buf, "ERROR", 5)) {
 			err = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (समय_after(jअगरfies, समयout)) अणु
+		if (time_after(jiffies, timeout)) {
 			dev_err(&priv->udev->dev, "(p54usb) firmware boot "
 						  "timed out!\n");
 			err = -ETIMEDOUT;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (err) अणु
+			break;
+		}
+	}
+	if (err) {
 		dev_err(&priv->udev->dev, "(p54usb) firmware upload failed!\n");
-		जाओ err_upload_failed;
-	पूर्ण
+		goto err_upload_failed;
+	}
 
 	buf[0] = 'g';
 	buf[1] = '\r';
 	err = p54u_bulk_msg(priv, P54U_PIPE_DATA, buf, 2);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&priv->udev->dev, "(p54usb) firmware boot failed!\n");
-		जाओ err_upload_failed;
-	पूर्ण
+		goto err_upload_failed;
+	}
 
-	समयout = jअगरfies + msecs_to_jअगरfies(1000);
-	जबतक (!(err = usb_bulk_msg(priv->udev,
-		usb_rcvbulkpipe(priv->udev, P54U_PIPE_DATA), buf, 128, &alen, 1000))) अणु
-		अगर (alen > 0 && buf[0] == 'g')
-			अवरोध;
+	timeout = jiffies + msecs_to_jiffies(1000);
+	while (!(err = usb_bulk_msg(priv->udev,
+		usb_rcvbulkpipe(priv->udev, P54U_PIPE_DATA), buf, 128, &alen, 1000))) {
+		if (alen > 0 && buf[0] == 'g')
+			break;
 
-		अगर (समय_after(jअगरfies, समयout)) अणु
+		if (time_after(jiffies, timeout)) {
 			err = -ETIMEDOUT;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (err)
-		जाओ err_upload_failed;
+			break;
+		}
+	}
+	if (err)
+		goto err_upload_failed;
 
 err_upload_failed:
-	kमुक्त(buf);
-	वापस err;
-पूर्ण
+	kfree(buf);
+	return err;
+}
 
-अटल पूर्णांक p54u_upload_firmware_net2280(काष्ठा ieee80211_hw *dev)
-अणु
-	काष्ठा p54u_priv *priv = dev->priv;
-	स्थिर काष्ठा p54p_csr *devreg = (स्थिर काष्ठा p54p_csr *) P54U_DEV_BASE;
-	पूर्णांक err, alen;
-	व्योम *buf;
+static int p54u_upload_firmware_net2280(struct ieee80211_hw *dev)
+{
+	struct p54u_priv *priv = dev->priv;
+	const struct p54p_csr *devreg = (const struct p54p_csr *) P54U_DEV_BASE;
+	int err, alen;
+	void *buf;
 	__le32 reg;
-	अचिन्हित पूर्णांक reमुख्यs, offset;
-	स्थिर u8 *data;
+	unsigned int remains, offset;
+	const u8 *data;
 
-	buf = kदो_स्मृति(512, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc(512, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
-#घोषणा P54U_WRITE(type, addr, data) \
-	करो अणु\
-		err = p54u_ग_लिखो(priv, buf, type,\
-				 cpu_to_le32((u32)(अचिन्हित दीर्घ)addr), data);\
-		अगर (err) \
-			जाओ fail;\
-	पूर्ण जबतक (0)
+#define P54U_WRITE(type, addr, data) \
+	do {\
+		err = p54u_write(priv, buf, type,\
+				 cpu_to_le32((u32)(unsigned long)addr), data);\
+		if (err) \
+			goto fail;\
+	} while (0)
 
-#घोषणा P54U_READ(type, addr) \
-	करो अणु\
-		err = p54u_पढ़ो(priv, buf, type,\
-				cpu_to_le32((u32)(अचिन्हित दीर्घ)addr), &reg);\
-		अगर (err)\
-			जाओ fail;\
-	पूर्ण जबतक (0)
+#define P54U_READ(type, addr) \
+	do {\
+		err = p54u_read(priv, buf, type,\
+				cpu_to_le32((u32)(unsigned long)addr), &reg);\
+		if (err)\
+			goto fail;\
+	} while (0)
 
-	/* घातer करोwn net2280 bridge */
+	/* power down net2280 bridge */
 	P54U_READ(NET2280_BRG_U32, NET2280_GPIOCTL);
 	reg |= cpu_to_le32(P54U_BRG_POWER_DOWN);
 	reg &= cpu_to_le32(~P54U_BRG_POWER_UP);
@@ -662,7 +661,7 @@ err_upload_failed:
 
 	mdelay(100);
 
-	/* घातer up bridge */
+	/* power up bridge */
 	reg |= cpu_to_le32(P54U_BRG_POWER_UP);
 	reg &= cpu_to_le32(~P54U_BRG_POWER_DOWN);
 	P54U_WRITE(NET2280_BRG_U32, NET2280_GPIOCTL, reg);
@@ -698,13 +697,13 @@ err_upload_failed:
 	P54U_WRITE(NET2280_BRG_CFG_U32, PCI_BASE_ADDRESS_2,
 		   cpu_to_le32(NET2280_BASE2));
 
-	/* finally करोne setting up the bridge */
+	/* finally done setting up the bridge */
 
 	P54U_WRITE(NET2280_DEV_CFG_U16, 0x10000 | PCI_COMMAND,
 		   cpu_to_le32(PCI_COMMAND_MEMORY |
 			       PCI_COMMAND_MASTER));
 
-	P54U_WRITE(NET2280_DEV_CFG_U16, 0x10000 | 0x40 /* TRDY समयout */, 0);
+	P54U_WRITE(NET2280_DEV_CFG_U16, 0x10000 | 0x40 /* TRDY timeout */, 0);
 	P54U_WRITE(NET2280_DEV_CFG_U32, 0x10000 | PCI_BASE_ADDRESS_0,
 		   cpu_to_le32(P54U_DEV_BASE));
 
@@ -712,8 +711,8 @@ err_upload_failed:
 	P54U_WRITE(NET2280_BRG_U32, NET2280_IRQSTAT1,
 		   cpu_to_le32(NET2280_PCI_INTA_INTERRUPT));
 
-	/* करो romboot */
-	P54U_WRITE(NET2280_DEV_U32, &devreg->पूर्णांक_enable, 0);
+	/* do romboot */
+	P54U_WRITE(NET2280_DEV_U32, &devreg->int_enable, 0);
 
 	P54U_READ(NET2280_DEV_U32, &devreg->ctrl_stat);
 	reg &= cpu_to_le32(~ISL38XX_CTRL_STAT_RESET);
@@ -733,39 +732,39 @@ err_upload_failed:
 
 	mdelay(100);
 
-	P54U_READ(NET2280_DEV_U32, &devreg->पूर्णांक_ident);
-	P54U_WRITE(NET2280_DEV_U32, &devreg->पूर्णांक_ack, reg);
+	P54U_READ(NET2280_DEV_U32, &devreg->int_ident);
+	P54U_WRITE(NET2280_DEV_U32, &devreg->int_ack, reg);
 
 	/* finally, we can upload firmware now! */
-	reमुख्यs = priv->fw->size;
+	remains = priv->fw->size;
 	data = priv->fw->data;
 	offset = ISL38XX_DEV_FIRMWARE_ADDR;
 
-	जबतक (reमुख्यs) अणु
-		अचिन्हित पूर्णांक block_len = min(reमुख्यs, (अचिन्हित पूर्णांक)512);
-		स_नकल(buf, data, block_len);
+	while (remains) {
+		unsigned int block_len = min(remains, (unsigned int)512);
+		memcpy(buf, data, block_len);
 
 		err = p54u_bulk_msg(priv, P54U_PIPE_DATA, buf, block_len);
-		अगर (err) अणु
+		if (err) {
 			dev_err(&priv->udev->dev, "(p54usb) firmware block "
 						  "upload failed\n");
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
 		P54U_WRITE(NET2280_DEV_U32, &devreg->direct_mem_base,
 			   cpu_to_le32(0xc0000f00));
 
 		P54U_WRITE(NET2280_DEV_U32,
-			   0x0020 | (अचिन्हित दीर्घ)&devreg->direct_mem_win, 0);
+			   0x0020 | (unsigned long)&devreg->direct_mem_win, 0);
 		P54U_WRITE(NET2280_DEV_U32,
-			   0x0020 | (अचिन्हित दीर्घ)&devreg->direct_mem_win,
+			   0x0020 | (unsigned long)&devreg->direct_mem_win,
 			   cpu_to_le32(1));
 
 		P54U_WRITE(NET2280_DEV_U32,
-			   0x0024 | (अचिन्हित दीर्घ)&devreg->direct_mem_win,
+			   0x0024 | (unsigned long)&devreg->direct_mem_win,
 			   cpu_to_le32(block_len));
 		P54U_WRITE(NET2280_DEV_U32,
-			   0x0028 | (अचिन्हित दीर्घ)&devreg->direct_mem_win,
+			   0x0028 | (unsigned long)&devreg->direct_mem_win,
 			   cpu_to_le32(offset));
 
 		P54U_WRITE(NET2280_DEV_U32, &devreg->dma_addr,
@@ -778,23 +777,23 @@ err_upload_failed:
 		mdelay(10);
 
 		P54U_READ(NET2280_DEV_U32,
-			  0x002C | (अचिन्हित दीर्घ)&devreg->direct_mem_win);
-		अगर (!(reg & cpu_to_le32(ISL38XX_DMA_STATUS_DONE)) ||
-		    !(reg & cpu_to_le32(ISL38XX_DMA_STATUS_READY))) अणु
+			  0x002C | (unsigned long)&devreg->direct_mem_win);
+		if (!(reg & cpu_to_le32(ISL38XX_DMA_STATUS_DONE)) ||
+		    !(reg & cpu_to_le32(ISL38XX_DMA_STATUS_READY))) {
 			dev_err(&priv->udev->dev, "(p54usb) firmware DMA "
 						  "transfer failed\n");
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
 		P54U_WRITE(NET2280_BRG_U32, NET2280_EPA_STAT,
 			   cpu_to_le32(NET2280_FIFO_FLUSH));
 
-		reमुख्यs -= block_len;
+		remains -= block_len;
 		data += block_len;
 		offset += block_len;
-	पूर्ण
+	}
 
-	/* करो ramboot */
+	/* do ramboot */
 	P54U_READ(NET2280_DEV_U32, &devreg->ctrl_stat);
 	reg &= cpu_to_le32(~ISL38XX_CTRL_STAT_RESET);
 	reg &= cpu_to_le32(~ISL38XX_CTRL_STAT_CLKRUN);
@@ -811,11 +810,11 @@ err_upload_failed:
 
 	mdelay(100);
 
-	P54U_READ(NET2280_DEV_U32, &devreg->पूर्णांक_ident);
-	P54U_WRITE(NET2280_DEV_U32, &devreg->पूर्णांक_ack, reg);
+	P54U_READ(NET2280_DEV_U32, &devreg->int_ident);
+	P54U_WRITE(NET2280_DEV_U32, &devreg->int_ack, reg);
 
 	/* start up the firmware */
-	P54U_WRITE(NET2280_DEV_U32, &devreg->पूर्णांक_enable,
+	P54U_WRITE(NET2280_DEV_U32, &devreg->int_enable,
 		   cpu_to_le32(ISL38XX_INT_IDENT_INIT));
 
 	P54U_WRITE(NET2280_BRG_U32, NET2280_IRQSTAT1,
@@ -825,317 +824,317 @@ err_upload_failed:
 		   cpu_to_le32(NET2280_PCI_INTA_INTERRUPT_ENABLE |
 			       NET2280_USB_INTERRUPT_ENABLE));
 
-	P54U_WRITE(NET2280_DEV_U32, &devreg->dev_पूर्णांक,
+	P54U_WRITE(NET2280_DEV_U32, &devreg->dev_int,
 		   cpu_to_le32(ISL38XX_DEV_INT_RESET));
 
-	err = usb_पूर्णांकerrupt_msg(priv->udev,
+	err = usb_interrupt_msg(priv->udev,
 				usb_rcvbulkpipe(priv->udev, P54U_PIPE_INT),
-				buf, माप(__le32), &alen, 1000);
-	अगर (err || alen != माप(__le32))
-		जाओ fail;
+				buf, sizeof(__le32), &alen, 1000);
+	if (err || alen != sizeof(__le32))
+		goto fail;
 
-	P54U_READ(NET2280_DEV_U32, &devreg->पूर्णांक_ident);
-	P54U_WRITE(NET2280_DEV_U32, &devreg->पूर्णांक_ack, reg);
+	P54U_READ(NET2280_DEV_U32, &devreg->int_ident);
+	P54U_WRITE(NET2280_DEV_U32, &devreg->int_ack, reg);
 
-	अगर (!(reg & cpu_to_le32(ISL38XX_INT_IDENT_INIT)))
+	if (!(reg & cpu_to_le32(ISL38XX_INT_IDENT_INIT)))
 		err = -EINVAL;
 
 	P54U_WRITE(NET2280_BRG_U32, NET2280_USBIRQENB1, 0);
 	P54U_WRITE(NET2280_BRG_U32, NET2280_IRQSTAT1,
 		   cpu_to_le32(NET2280_PCI_INTA_INTERRUPT));
 
-#अघोषित P54U_WRITE
-#अघोषित P54U_READ
+#undef P54U_WRITE
+#undef P54U_READ
 
 fail:
-	kमुक्त(buf);
-	वापस err;
-पूर्ण
+	kfree(buf);
+	return err;
+}
 
-अटल पूर्णांक p54_find_type(काष्ठा p54u_priv *priv)
-अणु
-	पूर्णांक i;
+static int p54_find_type(struct p54u_priv *priv)
+{
+	int i;
 
-	क्रम (i = 0; i < __NUM_P54U_HWTYPES; i++)
-		अगर (p54u_fwlist[i].type == priv->hw_type)
-			अवरोध;
-	अगर (i == __NUM_P54U_HWTYPES)
-		वापस -EOPNOTSUPP;
+	for (i = 0; i < __NUM_P54U_HWTYPES; i++)
+		if (p54u_fwlist[i].type == priv->hw_type)
+			break;
+	if (i == __NUM_P54U_HWTYPES)
+		return -EOPNOTSUPP;
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल पूर्णांक p54u_start_ops(काष्ठा p54u_priv *priv)
-अणु
-	काष्ठा ieee80211_hw *dev = priv->common.hw;
-	पूर्णांक ret;
+static int p54u_start_ops(struct p54u_priv *priv)
+{
+	struct ieee80211_hw *dev = priv->common.hw;
+	int ret;
 
 	ret = p54_parse_firmware(dev, priv->fw);
-	अगर (ret)
-		जाओ err_out;
+	if (ret)
+		goto err_out;
 
 	ret = p54_find_type(priv);
-	अगर (ret < 0)
-		जाओ err_out;
+	if (ret < 0)
+		goto err_out;
 
-	अगर (priv->common.fw_पूर्णांकerface != p54u_fwlist[ret].पूर्णांकf) अणु
+	if (priv->common.fw_interface != p54u_fwlist[ret].intf) {
 		dev_err(&priv->udev->dev, "wrong firmware, please get "
 			"a firmware for \"%s\" and try again.\n",
 			p54u_fwlist[ret].hw);
 		ret = -ENODEV;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
 	ret = priv->upload_fw(dev);
-	अगर (ret)
-		जाओ err_out;
+	if (ret)
+		goto err_out;
 
-	ret = p54u_खोलो(dev);
-	अगर (ret)
-		जाओ err_out;
+	ret = p54u_open(dev);
+	if (ret)
+		goto err_out;
 
-	ret = p54_पढ़ो_eeprom(dev);
-	अगर (ret)
-		जाओ err_stop;
+	ret = p54_read_eeprom(dev);
+	if (ret)
+		goto err_stop;
 
 	p54u_stop(dev);
 
-	ret = p54_रेजिस्टर_common(dev, &priv->udev->dev);
-	अगर (ret)
-		जाओ err_stop;
+	ret = p54_register_common(dev, &priv->udev->dev);
+	if (ret)
+		goto err_stop;
 
-	वापस 0;
+	return 0;
 
 err_stop:
 	p54u_stop(dev);
 
 err_out:
 	/*
-	 * p54u_disconnect will करो the rest of the
+	 * p54u_disconnect will do the rest of the
 	 * cleanup
 	 */
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम p54u_load_firmware_cb(स्थिर काष्ठा firmware *firmware,
-				  व्योम *context)
-अणु
-	काष्ठा p54u_priv *priv = context;
-	काष्ठा usb_device *udev = priv->udev;
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf = priv->पूर्णांकf;
-	पूर्णांक err;
+static void p54u_load_firmware_cb(const struct firmware *firmware,
+				  void *context)
+{
+	struct p54u_priv *priv = context;
+	struct usb_device *udev = priv->udev;
+	struct usb_interface *intf = priv->intf;
+	int err;
 
-	अगर (firmware) अणु
+	if (firmware) {
 		priv->fw = firmware;
 		err = p54u_start_ops(priv);
-	पूर्ण अन्यथा अणु
+	} else {
 		err = -ENOENT;
 		dev_err(&udev->dev, "Firmware not found.\n");
-	पूर्ण
+	}
 
-	complete(&priv->fw_रुको_load);
+	complete(&priv->fw_wait_load);
 	/*
-	 * At this poपूर्णांक p54u_disconnect may have alपढ़ोy मुक्तd
+	 * At this point p54u_disconnect may have already freed
 	 * the "priv" context. Do not use it anymore!
 	 */
-	priv = शून्य;
+	priv = NULL;
 
-	अगर (err) अणु
-		dev_err(&पूर्णांकf->dev, "failed to initialize device (%d)\n", err);
+	if (err) {
+		dev_err(&intf->dev, "failed to initialize device (%d)\n", err);
 
 		usb_lock_device(udev);
-		usb_driver_release_पूर्णांकerface(&p54u_driver, पूर्णांकf);
+		usb_driver_release_interface(&p54u_driver, intf);
 		usb_unlock_device(udev);
-	पूर्ण
+	}
 
-	usb_put_पूर्णांकf(पूर्णांकf);
-पूर्ण
+	usb_put_intf(intf);
+}
 
-अटल पूर्णांक p54u_load_firmware(काष्ठा ieee80211_hw *dev,
-			      काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकf);
-	काष्ठा p54u_priv *priv = dev->priv;
-	काष्ठा device *device = &udev->dev;
-	पूर्णांक err, i;
+static int p54u_load_firmware(struct ieee80211_hw *dev,
+			      struct usb_interface *intf)
+{
+	struct usb_device *udev = interface_to_usbdev(intf);
+	struct p54u_priv *priv = dev->priv;
+	struct device *device = &udev->dev;
+	int err, i;
 
 	BUILD_BUG_ON(ARRAY_SIZE(p54u_fwlist) != __NUM_P54U_HWTYPES);
 
-	init_completion(&priv->fw_रुको_load);
+	init_completion(&priv->fw_wait_load);
 	i = p54_find_type(priv);
-	अगर (i < 0)
-		वापस i;
+	if (i < 0)
+		return i;
 
 	dev_info(&priv->udev->dev, "Loading firmware file %s\n",
 	       p54u_fwlist[i].fw);
 
-	usb_get_पूर्णांकf(पूर्णांकf);
-	err = request_firmware_noरुको(THIS_MODULE, 1, p54u_fwlist[i].fw,
+	usb_get_intf(intf);
+	err = request_firmware_nowait(THIS_MODULE, 1, p54u_fwlist[i].fw,
 				      device, GFP_KERNEL, priv,
 				      p54u_load_firmware_cb);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&priv->udev->dev, "(p54usb) cannot load firmware %s "
 					  "(%d)!\n", p54u_fwlist[i].fw, err);
-		usb_put_पूर्णांकf(पूर्णांकf);
-	पूर्ण
+		usb_put_intf(intf);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक p54u_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
-				स्थिर काष्ठा usb_device_id *id)
-अणु
-	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकf);
-	काष्ठा ieee80211_hw *dev;
-	काष्ठा p54u_priv *priv;
-	पूर्णांक err;
-	अचिन्हित पूर्णांक i, recognized_pipes;
+static int p54u_probe(struct usb_interface *intf,
+				const struct usb_device_id *id)
+{
+	struct usb_device *udev = interface_to_usbdev(intf);
+	struct ieee80211_hw *dev;
+	struct p54u_priv *priv;
+	int err;
+	unsigned int i, recognized_pipes;
 
-	dev = p54_init_common(माप(*priv));
+	dev = p54_init_common(sizeof(*priv));
 
-	अगर (!dev) अणु
+	if (!dev) {
 		dev_err(&udev->dev, "(p54usb) ieee80211 alloc failed\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	priv = dev->priv;
 	priv->hw_type = P54U_INVALID_HW;
 
-	SET_IEEE80211_DEV(dev, &पूर्णांकf->dev);
-	usb_set_पूर्णांकfdata(पूर्णांकf, dev);
+	SET_IEEE80211_DEV(dev, &intf->dev);
+	usb_set_intfdata(intf, dev);
 	priv->udev = udev;
-	priv->पूर्णांकf = पूर्णांकf;
+	priv->intf = intf;
 	skb_queue_head_init(&priv->rx_queue);
 	init_usb_anchor(&priv->submitted);
 
-	/* really lazy and simple way of figuring out अगर we're a 3887 */
-	/* TODO: should just stick the identअगरication in the device table */
-	i = पूर्णांकf->altsetting->desc.bNumEndpoपूर्णांकs;
+	/* really lazy and simple way of figuring out if we're a 3887 */
+	/* TODO: should just stick the identification in the device table */
+	i = intf->altsetting->desc.bNumEndpoints;
 	recognized_pipes = 0;
-	जबतक (i--) अणु
-		चयन (पूर्णांकf->altsetting->endpoपूर्णांक[i].desc.bEndpoपूर्णांकAddress) अणु
-		हाल P54U_PIPE_DATA:
-		हाल P54U_PIPE_MGMT:
-		हाल P54U_PIPE_BRG:
-		हाल P54U_PIPE_DEV:
-		हाल P54U_PIPE_DATA | USB_सूची_IN:
-		हाल P54U_PIPE_MGMT | USB_सूची_IN:
-		हाल P54U_PIPE_BRG | USB_सूची_IN:
-		हाल P54U_PIPE_DEV | USB_सूची_IN:
-		हाल P54U_PIPE_INT | USB_सूची_IN:
+	while (i--) {
+		switch (intf->altsetting->endpoint[i].desc.bEndpointAddress) {
+		case P54U_PIPE_DATA:
+		case P54U_PIPE_MGMT:
+		case P54U_PIPE_BRG:
+		case P54U_PIPE_DEV:
+		case P54U_PIPE_DATA | USB_DIR_IN:
+		case P54U_PIPE_MGMT | USB_DIR_IN:
+		case P54U_PIPE_BRG | USB_DIR_IN:
+		case P54U_PIPE_DEV | USB_DIR_IN:
+		case P54U_PIPE_INT | USB_DIR_IN:
 			recognized_pipes++;
-		पूर्ण
-	पूर्ण
-	priv->common.खोलो = p54u_खोलो;
+		}
+	}
+	priv->common.open = p54u_open;
 	priv->common.stop = p54u_stop;
-	अगर (recognized_pipes < P54U_PIPE_NUMBER) अणु
-#अगर_घोषित CONFIG_PM
+	if (recognized_pipes < P54U_PIPE_NUMBER) {
+#ifdef CONFIG_PM
 		/* ISL3887 needs a full reset on resume */
 		udev->reset_resume = 1;
-#पूर्ण_अगर /* CONFIG_PM */
+#endif /* CONFIG_PM */
 		err = p54u_device_reset(dev);
 
 		priv->hw_type = P54U_3887;
-		dev->extra_tx_headroom += माप(काष्ठा lm87_tx_hdr);
-		priv->common.tx_hdr_len = माप(काष्ठा lm87_tx_hdr);
+		dev->extra_tx_headroom += sizeof(struct lm87_tx_hdr);
+		priv->common.tx_hdr_len = sizeof(struct lm87_tx_hdr);
 		priv->common.tx = p54u_tx_lm87;
 		priv->upload_fw = p54u_upload_firmware_3887;
-	पूर्ण अन्यथा अणु
+	} else {
 		priv->hw_type = P54U_NET2280;
-		dev->extra_tx_headroom += माप(काष्ठा net2280_tx_hdr);
-		priv->common.tx_hdr_len = माप(काष्ठा net2280_tx_hdr);
+		dev->extra_tx_headroom += sizeof(struct net2280_tx_hdr);
+		priv->common.tx_hdr_len = sizeof(struct net2280_tx_hdr);
 		priv->common.tx = p54u_tx_net2280;
 		priv->upload_fw = p54u_upload_firmware_net2280;
-	पूर्ण
-	err = p54u_load_firmware(dev, पूर्णांकf);
-	अगर (err)
-		p54_मुक्त_common(dev);
-	वापस err;
-पूर्ण
+	}
+	err = p54u_load_firmware(dev, intf);
+	if (err)
+		p54_free_common(dev);
+	return err;
+}
 
-अटल व्योम p54u_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा ieee80211_hw *dev = usb_get_पूर्णांकfdata(पूर्णांकf);
-	काष्ठा p54u_priv *priv;
+static void p54u_disconnect(struct usb_interface *intf)
+{
+	struct ieee80211_hw *dev = usb_get_intfdata(intf);
+	struct p54u_priv *priv;
 
-	अगर (!dev)
-		वापस;
+	if (!dev)
+		return;
 
 	priv = dev->priv;
-	रुको_क्रम_completion(&priv->fw_रुको_load);
-	p54_unरेजिस्टर_common(dev);
+	wait_for_completion(&priv->fw_wait_load);
+	p54_unregister_common(dev);
 
 	release_firmware(priv->fw);
-	p54_मुक्त_common(dev);
-पूर्ण
+	p54_free_common(dev);
+}
 
-अटल पूर्णांक p54u_pre_reset(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा ieee80211_hw *dev = usb_get_पूर्णांकfdata(पूर्णांकf);
+static int p54u_pre_reset(struct usb_interface *intf)
+{
+	struct ieee80211_hw *dev = usb_get_intfdata(intf);
 
-	अगर (!dev)
-		वापस -ENODEV;
+	if (!dev)
+		return -ENODEV;
 
 	p54u_stop(dev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक p54u_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा ieee80211_hw *dev = usb_get_पूर्णांकfdata(पूर्णांकf);
-	काष्ठा p54u_priv *priv;
+static int p54u_resume(struct usb_interface *intf)
+{
+	struct ieee80211_hw *dev = usb_get_intfdata(intf);
+	struct p54u_priv *priv;
 
-	अगर (!dev)
-		वापस -ENODEV;
+	if (!dev)
+		return -ENODEV;
 
 	priv = dev->priv;
-	अगर (unlikely(!(priv->upload_fw && priv->fw)))
-		वापस 0;
+	if (unlikely(!(priv->upload_fw && priv->fw)))
+		return 0;
 
-	वापस priv->upload_fw(dev);
-पूर्ण
+	return priv->upload_fw(dev);
+}
 
-अटल पूर्णांक p54u_post_reset(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा ieee80211_hw *dev = usb_get_पूर्णांकfdata(पूर्णांकf);
-	काष्ठा p54u_priv *priv;
-	पूर्णांक err;
+static int p54u_post_reset(struct usb_interface *intf)
+{
+	struct ieee80211_hw *dev = usb_get_intfdata(intf);
+	struct p54u_priv *priv;
+	int err;
 
-	err = p54u_resume(पूर्णांकf);
-	अगर (err)
-		वापस err;
+	err = p54u_resume(intf);
+	if (err)
+		return err;
 
 	/* reinitialize old device state */
 	priv = dev->priv;
-	अगर (priv->common.mode != NL80211_IFTYPE_UNSPECIFIED)
+	if (priv->common.mode != NL80211_IFTYPE_UNSPECIFIED)
 		ieee80211_restart_hw(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 
-अटल पूर्णांक p54u_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकf, pm_message_t message)
-अणु
-	वापस p54u_pre_reset(पूर्णांकf);
-पूर्ण
+static int p54u_suspend(struct usb_interface *intf, pm_message_t message)
+{
+	return p54u_pre_reset(intf);
+}
 
-#पूर्ण_अगर /* CONFIG_PM */
+#endif /* CONFIG_PM */
 
-अटल काष्ठा usb_driver p54u_driver = अणु
+static struct usb_driver p54u_driver = {
 	.name	= "p54usb",
 	.id_table = p54u_table,
 	.probe = p54u_probe,
 	.disconnect = p54u_disconnect,
 	.pre_reset = p54u_pre_reset,
 	.post_reset = p54u_post_reset,
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 	.suspend = p54u_suspend,
 	.resume = p54u_resume,
 	.reset_resume = p54u_resume,
-#पूर्ण_अगर /* CONFIG_PM */
+#endif /* CONFIG_PM */
 	.soft_unbind = 1,
 	.disable_hub_initiated_lpm = 1,
-पूर्ण;
+};
 
 module_usb_driver(p54u_driver);

@@ -1,262 +1,261 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * NXP LPC32XX न_अंकD SLC driver
+ * NXP LPC32XX NAND SLC driver
  *
  * Authors:
  *    Kevin Wells <kevin.wells@nxp.com>
  *    Roland Stigge <stigge@antcom.de>
  *
- * Copyright तऊ 2011 NXP Semiconductors
- * Copyright तऊ 2012 Roland Stigge
+ * Copyright © 2011 NXP Semiconductors
+ * Copyright © 2012 Roland Stigge
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/rawnand.h>
-#समावेश <linux/mtd/partitions.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/mtd/lpc32xx_slc.h>
-#समावेश <linux/mtd/nand-ecc-sw-hamming.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/rawnand.h>
+#include <linux/mtd/partitions.h>
+#include <linux/clk.h>
+#include <linux/err.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/mm.h>
+#include <linux/dma-mapping.h>
+#include <linux/dmaengine.h>
+#include <linux/gpio.h>
+#include <linux/of.h>
+#include <linux/of_gpio.h>
+#include <linux/mtd/lpc32xx_slc.h>
+#include <linux/mtd/nand-ecc-sw-hamming.h>
 
-#घोषणा LPC32XX_MODNAME		"lpc32xx-nand"
+#define LPC32XX_MODNAME		"lpc32xx-nand"
 
 /**********************************************************************
-* SLC न_अंकD controller रेजिस्टर offsets
+* SLC NAND controller register offsets
 **********************************************************************/
 
-#घोषणा SLC_DATA(x)		(x + 0x000)
-#घोषणा SLC_ADDR(x)		(x + 0x004)
-#घोषणा SLC_CMD(x)		(x + 0x008)
-#घोषणा SLC_STOP(x)		(x + 0x00C)
-#घोषणा SLC_CTRL(x)		(x + 0x010)
-#घोषणा SLC_CFG(x)		(x + 0x014)
-#घोषणा SLC_STAT(x)		(x + 0x018)
-#घोषणा SLC_INT_STAT(x)		(x + 0x01C)
-#घोषणा SLC_IEN(x)		(x + 0x020)
-#घोषणा SLC_ISR(x)		(x + 0x024)
-#घोषणा SLC_ICR(x)		(x + 0x028)
-#घोषणा SLC_TAC(x)		(x + 0x02C)
-#घोषणा SLC_TC(x)		(x + 0x030)
-#घोषणा SLC_ECC(x)		(x + 0x034)
-#घोषणा SLC_DMA_DATA(x)		(x + 0x038)
+#define SLC_DATA(x)		(x + 0x000)
+#define SLC_ADDR(x)		(x + 0x004)
+#define SLC_CMD(x)		(x + 0x008)
+#define SLC_STOP(x)		(x + 0x00C)
+#define SLC_CTRL(x)		(x + 0x010)
+#define SLC_CFG(x)		(x + 0x014)
+#define SLC_STAT(x)		(x + 0x018)
+#define SLC_INT_STAT(x)		(x + 0x01C)
+#define SLC_IEN(x)		(x + 0x020)
+#define SLC_ISR(x)		(x + 0x024)
+#define SLC_ICR(x)		(x + 0x028)
+#define SLC_TAC(x)		(x + 0x02C)
+#define SLC_TC(x)		(x + 0x030)
+#define SLC_ECC(x)		(x + 0x034)
+#define SLC_DMA_DATA(x)		(x + 0x038)
 
 /**********************************************************************
-* slc_ctrl रेजिस्टर definitions
+* slc_ctrl register definitions
 **********************************************************************/
-#घोषणा SLCCTRL_SW_RESET	(1 << 2) /* Reset the न_अंकD controller bit */
-#घोषणा SLCCTRL_ECC_CLEAR	(1 << 1) /* Reset ECC bit */
-#घोषणा SLCCTRL_DMA_START	(1 << 0) /* Start DMA channel bit */
+#define SLCCTRL_SW_RESET	(1 << 2) /* Reset the NAND controller bit */
+#define SLCCTRL_ECC_CLEAR	(1 << 1) /* Reset ECC bit */
+#define SLCCTRL_DMA_START	(1 << 0) /* Start DMA channel bit */
 
 /**********************************************************************
-* slc_cfg रेजिस्टर definitions
+* slc_cfg register definitions
 **********************************************************************/
-#घोषणा SLCCFG_CE_LOW		(1 << 5) /* Force CE low bit */
-#घोषणा SLCCFG_DMA_ECC		(1 << 4) /* Enable DMA ECC bit */
-#घोषणा SLCCFG_ECC_EN		(1 << 3) /* ECC enable bit */
-#घोषणा SLCCFG_DMA_BURST	(1 << 2) /* DMA burst bit */
-#घोषणा SLCCFG_DMA_सूची		(1 << 1) /* DMA ग_लिखो(0)/पढ़ो(1) bit */
-#घोषणा SLCCFG_WIDTH		(1 << 0) /* External device width, 0=8bit */
+#define SLCCFG_CE_LOW		(1 << 5) /* Force CE low bit */
+#define SLCCFG_DMA_ECC		(1 << 4) /* Enable DMA ECC bit */
+#define SLCCFG_ECC_EN		(1 << 3) /* ECC enable bit */
+#define SLCCFG_DMA_BURST	(1 << 2) /* DMA burst bit */
+#define SLCCFG_DMA_DIR		(1 << 1) /* DMA write(0)/read(1) bit */
+#define SLCCFG_WIDTH		(1 << 0) /* External device width, 0=8bit */
 
 /**********************************************************************
-* slc_stat रेजिस्टर definitions
+* slc_stat register definitions
 **********************************************************************/
-#घोषणा SLCSTAT_DMA_FIFO	(1 << 2) /* DMA FIFO has data bit */
-#घोषणा SLCSTAT_SLC_FIFO	(1 << 1) /* SLC FIFO has data bit */
-#घोषणा SLCSTAT_न_अंकD_READY	(1 << 0) /* न_अंकD device is पढ़ोy bit */
+#define SLCSTAT_DMA_FIFO	(1 << 2) /* DMA FIFO has data bit */
+#define SLCSTAT_SLC_FIFO	(1 << 1) /* SLC FIFO has data bit */
+#define SLCSTAT_NAND_READY	(1 << 0) /* NAND device is ready bit */
 
 /**********************************************************************
-* slc_पूर्णांक_stat, slc_ien, slc_isr, and slc_icr रेजिस्टर definitions
+* slc_int_stat, slc_ien, slc_isr, and slc_icr register definitions
 **********************************************************************/
-#घोषणा SLCSTAT_INT_TC		(1 << 1) /* Transfer count bit */
-#घोषणा SLCSTAT_INT_RDY_EN	(1 << 0) /* Ready पूर्णांकerrupt bit */
+#define SLCSTAT_INT_TC		(1 << 1) /* Transfer count bit */
+#define SLCSTAT_INT_RDY_EN	(1 << 0) /* Ready interrupt bit */
 
 /**********************************************************************
-* slc_tac रेजिस्टर definitions
+* slc_tac register definitions
 **********************************************************************/
-/* Computation of घड़ी cycles on basis of controller and device घड़ी rates */
-#घोषणा SLCTAC_CLOCKS(c, n, s)	(min_t(u32, DIV_ROUND_UP(c, n) - 1, 0xF) << s)
+/* Computation of clock cycles on basis of controller and device clock rates */
+#define SLCTAC_CLOCKS(c, n, s)	(min_t(u32, DIV_ROUND_UP(c, n) - 1, 0xF) << s)
 
-/* Clock setting क्रम RDY ग_लिखो sample रुको समय in 2*n घड़ीs */
-#घोषणा SLCTAC_WDR(n)		(((n) & 0xF) << 28)
-/* Write pulse width in घड़ी cycles, 1 to 16 घड़ीs */
-#घोषणा SLCTAC_WWIDTH(c, n)	(SLCTAC_CLOCKS(c, n, 24))
-/* Write hold समय of control and data संकेतs, 1 to 16 घड़ीs */
-#घोषणा SLCTAC_WHOLD(c, n)	(SLCTAC_CLOCKS(c, n, 20))
-/* Write setup समय of control and data संकेतs, 1 to 16 घड़ीs */
-#घोषणा SLCTAC_WSETUP(c, n)	(SLCTAC_CLOCKS(c, n, 16))
-/* Clock setting क्रम RDY पढ़ो sample रुको समय in 2*n घड़ीs */
-#घोषणा SLCTAC_RDR(n)		(((n) & 0xF) << 12)
-/* Read pulse width in घड़ी cycles, 1 to 16 घड़ीs */
-#घोषणा SLCTAC_RWIDTH(c, n)	(SLCTAC_CLOCKS(c, n, 8))
-/* Read hold समय of control and data संकेतs, 1 to 16 घड़ीs */
-#घोषणा SLCTAC_RHOLD(c, n)	(SLCTAC_CLOCKS(c, n, 4))
-/* Read setup समय of control and data संकेतs, 1 to 16 घड़ीs */
-#घोषणा SLCTAC_RSETUP(c, n)	(SLCTAC_CLOCKS(c, n, 0))
+/* Clock setting for RDY write sample wait time in 2*n clocks */
+#define SLCTAC_WDR(n)		(((n) & 0xF) << 28)
+/* Write pulse width in clock cycles, 1 to 16 clocks */
+#define SLCTAC_WWIDTH(c, n)	(SLCTAC_CLOCKS(c, n, 24))
+/* Write hold time of control and data signals, 1 to 16 clocks */
+#define SLCTAC_WHOLD(c, n)	(SLCTAC_CLOCKS(c, n, 20))
+/* Write setup time of control and data signals, 1 to 16 clocks */
+#define SLCTAC_WSETUP(c, n)	(SLCTAC_CLOCKS(c, n, 16))
+/* Clock setting for RDY read sample wait time in 2*n clocks */
+#define SLCTAC_RDR(n)		(((n) & 0xF) << 12)
+/* Read pulse width in clock cycles, 1 to 16 clocks */
+#define SLCTAC_RWIDTH(c, n)	(SLCTAC_CLOCKS(c, n, 8))
+/* Read hold time of control and data signals, 1 to 16 clocks */
+#define SLCTAC_RHOLD(c, n)	(SLCTAC_CLOCKS(c, n, 4))
+/* Read setup time of control and data signals, 1 to 16 clocks */
+#define SLCTAC_RSETUP(c, n)	(SLCTAC_CLOCKS(c, n, 0))
 
 /**********************************************************************
-* slc_ecc रेजिस्टर definitions
+* slc_ecc register definitions
 **********************************************************************/
 /* ECC line party fetch macro */
-#घोषणा SLCECC_TO_LINEPAR(n)	(((n) >> 6) & 0x7FFF)
-#घोषणा SLCECC_TO_COLPAR(n)	((n) & 0x3F)
+#define SLCECC_TO_LINEPAR(n)	(((n) >> 6) & 0x7FFF)
+#define SLCECC_TO_COLPAR(n)	((n) & 0x3F)
 
 /*
- * DMA requires storage space क्रम the DMA local buffer and the hardware ECC
- * storage area. The DMA local buffer is only used अगर DMA mapping fails
- * during runसमय.
+ * DMA requires storage space for the DMA local buffer and the hardware ECC
+ * storage area. The DMA local buffer is only used if DMA mapping fails
+ * during runtime.
  */
-#घोषणा LPC32XX_DMA_DATA_SIZE		4096
-#घोषणा LPC32XX_ECC_SAVE_SIZE		((4096 / 256) * 4)
+#define LPC32XX_DMA_DATA_SIZE		4096
+#define LPC32XX_ECC_SAVE_SIZE		((4096 / 256) * 4)
 
-/* Number of bytes used क्रम ECC stored in न_अंकD per 256 bytes */
-#घोषणा LPC32XX_SLC_DEV_ECC_BYTES	3
+/* Number of bytes used for ECC stored in NAND per 256 bytes */
+#define LPC32XX_SLC_DEV_ECC_BYTES	3
 
 /*
- * If the न_अंकD base घड़ी frequency can't be fetched, this frequency will be
- * used instead as the base. This rate is used to setup the timing रेजिस्टरs
- * used क्रम न_अंकD accesses.
+ * If the NAND base clock frequency can't be fetched, this frequency will be
+ * used instead as the base. This rate is used to setup the timing registers
+ * used for NAND accesses.
  */
-#घोषणा LPC32XX_DEF_BUS_RATE		133250000
+#define LPC32XX_DEF_BUS_RATE		133250000
 
-/* Milliseconds क्रम DMA FIFO समयout (unlikely anyway) */
-#घोषणा LPC32XX_DMA_TIMEOUT		100
+/* Milliseconds for DMA FIFO timeout (unlikely anyway) */
+#define LPC32XX_DMA_TIMEOUT		100
 
 /*
- * न_अंकD ECC Layout क्रम small page न_अंकD devices
- * Note: For large and huge page devices, the शेष layouts are used
+ * NAND ECC Layout for small page NAND devices
+ * Note: For large and huge page devices, the default layouts are used
  */
-अटल पूर्णांक lpc32xx_ooblayout_ecc(काष्ठा mtd_info *mtd, पूर्णांक section,
-				 काष्ठा mtd_oob_region *oobregion)
-अणु
-	अगर (section)
-		वापस -दुस्फल;
+static int lpc32xx_ooblayout_ecc(struct mtd_info *mtd, int section,
+				 struct mtd_oob_region *oobregion)
+{
+	if (section)
+		return -ERANGE;
 
 	oobregion->length = 6;
 	oobregion->offset = 10;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lpc32xx_ooblayout_मुक्त(काष्ठा mtd_info *mtd, पूर्णांक section,
-				  काष्ठा mtd_oob_region *oobregion)
-अणु
-	अगर (section > 1)
-		वापस -दुस्फल;
+static int lpc32xx_ooblayout_free(struct mtd_info *mtd, int section,
+				  struct mtd_oob_region *oobregion)
+{
+	if (section > 1)
+		return -ERANGE;
 
-	अगर (!section) अणु
+	if (!section) {
 		oobregion->offset = 0;
 		oobregion->length = 4;
-	पूर्ण अन्यथा अणु
+	} else {
 		oobregion->offset = 6;
 		oobregion->length = 4;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा mtd_ooblayout_ops lpc32xx_ooblayout_ops = अणु
+static const struct mtd_ooblayout_ops lpc32xx_ooblayout_ops = {
 	.ecc = lpc32xx_ooblayout_ecc,
-	.मुक्त = lpc32xx_ooblayout_मुक्त,
-पूर्ण;
+	.free = lpc32xx_ooblayout_free,
+};
 
-अटल u8 bbt_pattern[] = अणु'B', 'b', 't', '0' पूर्ण;
-अटल u8 mirror_pattern[] = अणु'1', 't', 'b', 'B' पूर्ण;
+static u8 bbt_pattern[] = {'B', 'b', 't', '0' };
+static u8 mirror_pattern[] = {'1', 't', 'b', 'B' };
 
 /*
  * Small page FLASH BBT descriptors, marker at offset 0, version at offset 6
- * Note: Large page devices used the शेष layout
+ * Note: Large page devices used the default layout
  */
-अटल काष्ठा nand_bbt_descr bbt_smallpage_मुख्य_descr = अणु
-	.options = न_अंकD_BBT_LASTBLOCK | न_अंकD_BBT_CREATE | न_अंकD_BBT_WRITE
-		| न_अंकD_BBT_2BIT | न_अंकD_BBT_VERSION | न_अंकD_BBT_PERCHIP,
+static struct nand_bbt_descr bbt_smallpage_main_descr = {
+	.options = NAND_BBT_LASTBLOCK | NAND_BBT_CREATE | NAND_BBT_WRITE
+		| NAND_BBT_2BIT | NAND_BBT_VERSION | NAND_BBT_PERCHIP,
 	.offs =	0,
 	.len = 4,
 	.veroffs = 6,
 	.maxblocks = 4,
 	.pattern = bbt_pattern
-पूर्ण;
+};
 
-अटल काष्ठा nand_bbt_descr bbt_smallpage_mirror_descr = अणु
-	.options = न_अंकD_BBT_LASTBLOCK | न_अंकD_BBT_CREATE | न_अंकD_BBT_WRITE
-		| न_अंकD_BBT_2BIT | न_अंकD_BBT_VERSION | न_अंकD_BBT_PERCHIP,
+static struct nand_bbt_descr bbt_smallpage_mirror_descr = {
+	.options = NAND_BBT_LASTBLOCK | NAND_BBT_CREATE | NAND_BBT_WRITE
+		| NAND_BBT_2BIT | NAND_BBT_VERSION | NAND_BBT_PERCHIP,
 	.offs =	0,
 	.len = 4,
 	.veroffs = 6,
 	.maxblocks = 4,
 	.pattern = mirror_pattern
-पूर्ण;
+};
 
 /*
- * न_अंकD platक्रमm configuration काष्ठाure
+ * NAND platform configuration structure
  */
-काष्ठा lpc32xx_nand_cfg_slc अणु
-	uपूर्णांक32_t wdr_clks;
-	uपूर्णांक32_t wwidth;
-	uपूर्णांक32_t whold;
-	uपूर्णांक32_t wsetup;
-	uपूर्णांक32_t rdr_clks;
-	uपूर्णांक32_t rwidth;
-	uपूर्णांक32_t rhold;
-	uपूर्णांक32_t rsetup;
-	पूर्णांक wp_gpio;
-	काष्ठा mtd_partition *parts;
-	अचिन्हित num_parts;
-पूर्ण;
+struct lpc32xx_nand_cfg_slc {
+	uint32_t wdr_clks;
+	uint32_t wwidth;
+	uint32_t whold;
+	uint32_t wsetup;
+	uint32_t rdr_clks;
+	uint32_t rwidth;
+	uint32_t rhold;
+	uint32_t rsetup;
+	int wp_gpio;
+	struct mtd_partition *parts;
+	unsigned num_parts;
+};
 
-काष्ठा lpc32xx_nand_host अणु
-	काष्ठा nand_chip	nand_chip;
-	काष्ठा lpc32xx_slc_platक्रमm_data *pdata;
-	काष्ठा clk		*clk;
-	व्योम __iomem		*io_base;
-	काष्ठा lpc32xx_nand_cfg_slc *ncfg;
+struct lpc32xx_nand_host {
+	struct nand_chip	nand_chip;
+	struct lpc32xx_slc_platform_data *pdata;
+	struct clk		*clk;
+	void __iomem		*io_base;
+	struct lpc32xx_nand_cfg_slc *ncfg;
 
-	काष्ठा completion	comp;
-	काष्ठा dma_chan		*dma_chan;
-	uपूर्णांक32_t		dma_buf_len;
-	काष्ठा dma_slave_config	dma_slave_config;
-	काष्ठा scatterlist	sgl;
+	struct completion	comp;
+	struct dma_chan		*dma_chan;
+	uint32_t		dma_buf_len;
+	struct dma_slave_config	dma_slave_config;
+	struct scatterlist	sgl;
 
 	/*
 	 * DMA and CPU addresses of ECC work area and data buffer
 	 */
-	uपूर्णांक32_t		*ecc_buf;
-	uपूर्णांक8_t			*data_buf;
+	uint32_t		*ecc_buf;
+	uint8_t			*data_buf;
 	dma_addr_t		io_base_dma;
-पूर्ण;
+};
 
-अटल व्योम lpc32xx_nand_setup(काष्ठा lpc32xx_nand_host *host)
-अणु
-	uपूर्णांक32_t clkrate, पंचांगp;
+static void lpc32xx_nand_setup(struct lpc32xx_nand_host *host)
+{
+	uint32_t clkrate, tmp;
 
 	/* Reset SLC controller */
-	ग_लिखोl(SLCCTRL_SW_RESET, SLC_CTRL(host->io_base));
+	writel(SLCCTRL_SW_RESET, SLC_CTRL(host->io_base));
 	udelay(1000);
 
 	/* Basic setup */
-	ग_लिखोl(0, SLC_CFG(host->io_base));
-	ग_लिखोl(0, SLC_IEN(host->io_base));
-	ग_लिखोl((SLCSTAT_INT_TC | SLCSTAT_INT_RDY_EN),
+	writel(0, SLC_CFG(host->io_base));
+	writel(0, SLC_IEN(host->io_base));
+	writel((SLCSTAT_INT_TC | SLCSTAT_INT_RDY_EN),
 		SLC_ICR(host->io_base));
 
-	/* Get base घड़ी क्रम SLC block */
+	/* Get base clock for SLC block */
 	clkrate = clk_get_rate(host->clk);
-	अगर (clkrate == 0)
+	if (clkrate == 0)
 		clkrate = LPC32XX_DEF_BUS_RATE;
 
-	/* Compute घड़ी setup values */
-	पंचांगp = SLCTAC_WDR(host->ncfg->wdr_clks) |
+	/* Compute clock setup values */
+	tmp = SLCTAC_WDR(host->ncfg->wdr_clks) |
 		SLCTAC_WWIDTH(clkrate, host->ncfg->wwidth) |
 		SLCTAC_WHOLD(clkrate, host->ncfg->whold) |
 		SLCTAC_WSETUP(clkrate, host->ncfg->wsetup) |
@@ -264,187 +263,187 @@
 		SLCTAC_RWIDTH(clkrate, host->ncfg->rwidth) |
 		SLCTAC_RHOLD(clkrate, host->ncfg->rhold) |
 		SLCTAC_RSETUP(clkrate, host->ncfg->rsetup);
-	ग_लिखोl(पंचांगp, SLC_TAC(host->io_base));
-पूर्ण
+	writel(tmp, SLC_TAC(host->io_base));
+}
 
 /*
- * Hardware specअगरic access to control lines
+ * Hardware specific access to control lines
  */
-अटल व्योम lpc32xx_nand_cmd_ctrl(काष्ठा nand_chip *chip, पूर्णांक cmd,
-				  अचिन्हित पूर्णांक ctrl)
-अणु
-	uपूर्णांक32_t पंचांगp;
-	काष्ठा lpc32xx_nand_host *host = nand_get_controller_data(chip);
+static void lpc32xx_nand_cmd_ctrl(struct nand_chip *chip, int cmd,
+				  unsigned int ctrl)
+{
+	uint32_t tmp;
+	struct lpc32xx_nand_host *host = nand_get_controller_data(chip);
 
 	/* Does CE state need to be changed? */
-	पंचांगp = पढ़ोl(SLC_CFG(host->io_base));
-	अगर (ctrl & न_अंकD_NCE)
-		पंचांगp |= SLCCFG_CE_LOW;
-	अन्यथा
-		पंचांगp &= ~SLCCFG_CE_LOW;
-	ग_लिखोl(पंचांगp, SLC_CFG(host->io_base));
+	tmp = readl(SLC_CFG(host->io_base));
+	if (ctrl & NAND_NCE)
+		tmp |= SLCCFG_CE_LOW;
+	else
+		tmp &= ~SLCCFG_CE_LOW;
+	writel(tmp, SLC_CFG(host->io_base));
 
-	अगर (cmd != न_अंकD_CMD_NONE) अणु
-		अगर (ctrl & न_अंकD_CLE)
-			ग_लिखोl(cmd, SLC_CMD(host->io_base));
-		अन्यथा
-			ग_लिखोl(cmd, SLC_ADDR(host->io_base));
-	पूर्ण
-पूर्ण
+	if (cmd != NAND_CMD_NONE) {
+		if (ctrl & NAND_CLE)
+			writel(cmd, SLC_CMD(host->io_base));
+		else
+			writel(cmd, SLC_ADDR(host->io_base));
+	}
+}
 
 /*
  * Read the Device Ready pin
  */
-अटल पूर्णांक lpc32xx_nand_device_पढ़ोy(काष्ठा nand_chip *chip)
-अणु
-	काष्ठा lpc32xx_nand_host *host = nand_get_controller_data(chip);
-	पूर्णांक rdy = 0;
+static int lpc32xx_nand_device_ready(struct nand_chip *chip)
+{
+	struct lpc32xx_nand_host *host = nand_get_controller_data(chip);
+	int rdy = 0;
 
-	अगर ((पढ़ोl(SLC_STAT(host->io_base)) & SLCSTAT_न_अंकD_READY) != 0)
+	if ((readl(SLC_STAT(host->io_base)) & SLCSTAT_NAND_READY) != 0)
 		rdy = 1;
 
-	वापस rdy;
-पूर्ण
+	return rdy;
+}
 
 /*
- * Enable न_अंकD ग_लिखो protect
+ * Enable NAND write protect
  */
-अटल व्योम lpc32xx_wp_enable(काष्ठा lpc32xx_nand_host *host)
-अणु
-	अगर (gpio_is_valid(host->ncfg->wp_gpio))
+static void lpc32xx_wp_enable(struct lpc32xx_nand_host *host)
+{
+	if (gpio_is_valid(host->ncfg->wp_gpio))
 		gpio_set_value(host->ncfg->wp_gpio, 0);
-पूर्ण
+}
 
 /*
- * Disable न_अंकD ग_लिखो protect
+ * Disable NAND write protect
  */
-अटल व्योम lpc32xx_wp_disable(काष्ठा lpc32xx_nand_host *host)
-अणु
-	अगर (gpio_is_valid(host->ncfg->wp_gpio))
+static void lpc32xx_wp_disable(struct lpc32xx_nand_host *host)
+{
+	if (gpio_is_valid(host->ncfg->wp_gpio))
 		gpio_set_value(host->ncfg->wp_gpio, 1);
-पूर्ण
+}
 
 /*
- * Prepares SLC क्रम transfers with H/W ECC enabled
+ * Prepares SLC for transfers with H/W ECC enabled
  */
-अटल व्योम lpc32xx_nand_ecc_enable(काष्ठा nand_chip *chip, पूर्णांक mode)
-अणु
-	/* Hardware ECC is enabled स्वतःmatically in hardware as needed */
-पूर्ण
+static void lpc32xx_nand_ecc_enable(struct nand_chip *chip, int mode)
+{
+	/* Hardware ECC is enabled automatically in hardware as needed */
+}
 
 /*
- * Calculates the ECC क्रम the data
+ * Calculates the ECC for the data
  */
-अटल पूर्णांक lpc32xx_nand_ecc_calculate(काष्ठा nand_chip *chip,
-				      स्थिर अचिन्हित अक्षर *buf,
-				      अचिन्हित अक्षर *code)
-अणु
+static int lpc32xx_nand_ecc_calculate(struct nand_chip *chip,
+				      const unsigned char *buf,
+				      unsigned char *code)
+{
 	/*
-	 * ECC is calculated स्वतःmatically in hardware during syndrome पढ़ो
-	 * and ग_लिखो operations, so it करोesn't need to be calculated here.
+	 * ECC is calculated automatically in hardware during syndrome read
+	 * and write operations, so it doesn't need to be calculated here.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Corrects the data
  */
-अटल पूर्णांक lpc32xx_nand_ecc_correct(काष्ठा nand_chip *chip,
-				    अचिन्हित अक्षर *buf,
-				    अचिन्हित अक्षर *पढ़ो_ecc,
-				    अचिन्हित अक्षर *calc_ecc)
-अणु
-	वापस ecc_sw_hamming_correct(buf, पढ़ो_ecc, calc_ecc,
+static int lpc32xx_nand_ecc_correct(struct nand_chip *chip,
+				    unsigned char *buf,
+				    unsigned char *read_ecc,
+				    unsigned char *calc_ecc)
+{
+	return ecc_sw_hamming_correct(buf, read_ecc, calc_ecc,
 				      chip->ecc.size, false);
-पूर्ण
+}
 
 /*
- * Read a single byte from न_अंकD device
+ * Read a single byte from NAND device
  */
-अटल uपूर्णांक8_t lpc32xx_nand_पढ़ो_byte(काष्ठा nand_chip *chip)
-अणु
-	काष्ठा lpc32xx_nand_host *host = nand_get_controller_data(chip);
+static uint8_t lpc32xx_nand_read_byte(struct nand_chip *chip)
+{
+	struct lpc32xx_nand_host *host = nand_get_controller_data(chip);
 
-	वापस (uपूर्णांक8_t)पढ़ोl(SLC_DATA(host->io_base));
-पूर्ण
+	return (uint8_t)readl(SLC_DATA(host->io_base));
+}
 
 /*
- * Simple device पढ़ो without ECC
+ * Simple device read without ECC
  */
-अटल व्योम lpc32xx_nand_पढ़ो_buf(काष्ठा nand_chip *chip, u_अक्षर *buf, पूर्णांक len)
-अणु
-	काष्ठा lpc32xx_nand_host *host = nand_get_controller_data(chip);
+static void lpc32xx_nand_read_buf(struct nand_chip *chip, u_char *buf, int len)
+{
+	struct lpc32xx_nand_host *host = nand_get_controller_data(chip);
 
-	/* Direct device पढ़ो with no ECC */
-	जबतक (len-- > 0)
-		*buf++ = (uपूर्णांक8_t)पढ़ोl(SLC_DATA(host->io_base));
-पूर्ण
+	/* Direct device read with no ECC */
+	while (len-- > 0)
+		*buf++ = (uint8_t)readl(SLC_DATA(host->io_base));
+}
 
 /*
- * Simple device ग_लिखो without ECC
+ * Simple device write without ECC
  */
-अटल व्योम lpc32xx_nand_ग_लिखो_buf(काष्ठा nand_chip *chip, स्थिर uपूर्णांक8_t *buf,
-				   पूर्णांक len)
-अणु
-	काष्ठा lpc32xx_nand_host *host = nand_get_controller_data(chip);
+static void lpc32xx_nand_write_buf(struct nand_chip *chip, const uint8_t *buf,
+				   int len)
+{
+	struct lpc32xx_nand_host *host = nand_get_controller_data(chip);
 
-	/* Direct device ग_लिखो with no ECC */
-	जबतक (len-- > 0)
-		ग_लिखोl((uपूर्णांक32_t)*buf++, SLC_DATA(host->io_base));
-पूर्ण
+	/* Direct device write with no ECC */
+	while (len-- > 0)
+		writel((uint32_t)*buf++, SLC_DATA(host->io_base));
+}
 
 /*
  * Read the OOB data from the device without ECC using FIFO method
  */
-अटल पूर्णांक lpc32xx_nand_पढ़ो_oob_syndrome(काष्ठा nand_chip *chip, पूर्णांक page)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+static int lpc32xx_nand_read_oob_syndrome(struct nand_chip *chip, int page)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
 
-	वापस nand_पढ़ो_oob_op(chip, page, 0, chip->oob_poi, mtd->oobsize);
-पूर्ण
+	return nand_read_oob_op(chip, page, 0, chip->oob_poi, mtd->oobsize);
+}
 
 /*
  * Write the OOB data to the device without ECC using FIFO method
  */
-अटल पूर्णांक lpc32xx_nand_ग_लिखो_oob_syndrome(काष्ठा nand_chip *chip, पूर्णांक page)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+static int lpc32xx_nand_write_oob_syndrome(struct nand_chip *chip, int page)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
 
-	वापस nand_prog_page_op(chip, page, mtd->ग_लिखोsize, chip->oob_poi,
+	return nand_prog_page_op(chip, page, mtd->writesize, chip->oob_poi,
 				 mtd->oobsize);
-पूर्ण
+}
 
 /*
  * Fills in the ECC fields in the OOB buffer with the hardware generated ECC
  */
-अटल व्योम lpc32xx_slc_ecc_copy(uपूर्णांक8_t *spare, स्थिर uपूर्णांक32_t *ecc, पूर्णांक count)
-अणु
-	पूर्णांक i;
+static void lpc32xx_slc_ecc_copy(uint8_t *spare, const uint32_t *ecc, int count)
+{
+	int i;
 
-	क्रम (i = 0; i < (count * 3); i += 3) अणु
-		uपूर्णांक32_t ce = ecc[i / 3];
+	for (i = 0; i < (count * 3); i += 3) {
+		uint32_t ce = ecc[i / 3];
 		ce = ~(ce << 2) & 0xFFFFFF;
-		spare[i + 2] = (uपूर्णांक8_t)(ce & 0xFF);
+		spare[i + 2] = (uint8_t)(ce & 0xFF);
 		ce >>= 8;
-		spare[i + 1] = (uपूर्णांक8_t)(ce & 0xFF);
+		spare[i + 1] = (uint8_t)(ce & 0xFF);
 		ce >>= 8;
-		spare[i] = (uपूर्णांक8_t)(ce & 0xFF);
-	पूर्ण
-पूर्ण
+		spare[i] = (uint8_t)(ce & 0xFF);
+	}
+}
 
-अटल व्योम lpc32xx_dma_complete_func(व्योम *completion)
-अणु
+static void lpc32xx_dma_complete_func(void *completion)
+{
 	complete(completion);
-पूर्ण
+}
 
-अटल पूर्णांक lpc32xx_xmit_dma(काष्ठा mtd_info *mtd, dma_addr_t dma,
-			    व्योम *mem, पूर्णांक len, क्रमागत dma_transfer_direction dir)
-अणु
-	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
-	काष्ठा lpc32xx_nand_host *host = nand_get_controller_data(chip);
-	काष्ठा dma_async_tx_descriptor *desc;
-	पूर्णांक flags = DMA_CTRL_ACK | DMA_PREP_INTERRUPT;
-	पूर्णांक res;
+static int lpc32xx_xmit_dma(struct mtd_info *mtd, dma_addr_t dma,
+			    void *mem, int len, enum dma_transfer_direction dir)
+{
+	struct nand_chip *chip = mtd_to_nand(mtd);
+	struct lpc32xx_nand_host *host = nand_get_controller_data(chip);
+	struct dma_async_tx_descriptor *desc;
+	int flags = DMA_CTRL_ACK | DMA_PREP_INTERRUPT;
+	int res;
 
 	host->dma_slave_config.direction = dir;
 	host->dma_slave_config.src_addr = dma;
@@ -453,27 +452,27 @@
 	host->dma_slave_config.dst_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
 	host->dma_slave_config.src_maxburst = 4;
 	host->dma_slave_config.dst_maxburst = 4;
-	/* DMA controller करोes flow control: */
+	/* DMA controller does flow control: */
 	host->dma_slave_config.device_fc = false;
-	अगर (dmaengine_slave_config(host->dma_chan, &host->dma_slave_config)) अणु
+	if (dmaengine_slave_config(host->dma_chan, &host->dma_slave_config)) {
 		dev_err(mtd->dev.parent, "Failed to setup DMA slave\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	sg_init_one(&host->sgl, mem, len);
 
 	res = dma_map_sg(host->dma_chan->device->dev, &host->sgl, 1,
-			 DMA_BIसूचीECTIONAL);
-	अगर (res != 1) अणु
+			 DMA_BIDIRECTIONAL);
+	if (res != 1) {
 		dev_err(mtd->dev.parent, "Failed to map sg list\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 	desc = dmaengine_prep_slave_sg(host->dma_chan, &host->sgl, 1, dir,
 				       flags);
-	अगर (!desc) अणु
+	if (!desc) {
 		dev_err(mtd->dev.parent, "Failed to prepare slave sg\n");
-		जाओ out1;
-	पूर्ण
+		goto out1;
+	}
 
 	init_completion(&host->comp);
 	desc->callback = lpc32xx_dma_complete_func;
@@ -482,397 +481,397 @@
 	dmaengine_submit(desc);
 	dma_async_issue_pending(host->dma_chan);
 
-	रुको_क्रम_completion_समयout(&host->comp, msecs_to_jअगरfies(1000));
+	wait_for_completion_timeout(&host->comp, msecs_to_jiffies(1000));
 
 	dma_unmap_sg(host->dma_chan->device->dev, &host->sgl, 1,
-		     DMA_BIसूचीECTIONAL);
+		     DMA_BIDIRECTIONAL);
 
-	वापस 0;
+	return 0;
 out1:
 	dma_unmap_sg(host->dma_chan->device->dev, &host->sgl, 1,
-		     DMA_BIसूचीECTIONAL);
-	वापस -ENXIO;
-पूर्ण
+		     DMA_BIDIRECTIONAL);
+	return -ENXIO;
+}
 
 /*
- * DMA पढ़ो/ग_लिखो transfers with ECC support
+ * DMA read/write transfers with ECC support
  */
-अटल पूर्णांक lpc32xx_xfer(काष्ठा mtd_info *mtd, uपूर्णांक8_t *buf, पूर्णांक eccsubpages,
-			पूर्णांक पढ़ो)
-अणु
-	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
-	काष्ठा lpc32xx_nand_host *host = nand_get_controller_data(chip);
-	पूर्णांक i, status = 0;
-	अचिन्हित दीर्घ समयout;
-	पूर्णांक res;
-	क्रमागत dma_transfer_direction dir =
-		पढ़ो ? DMA_DEV_TO_MEM : DMA_MEM_TO_DEV;
-	uपूर्णांक8_t *dma_buf;
+static int lpc32xx_xfer(struct mtd_info *mtd, uint8_t *buf, int eccsubpages,
+			int read)
+{
+	struct nand_chip *chip = mtd_to_nand(mtd);
+	struct lpc32xx_nand_host *host = nand_get_controller_data(chip);
+	int i, status = 0;
+	unsigned long timeout;
+	int res;
+	enum dma_transfer_direction dir =
+		read ? DMA_DEV_TO_MEM : DMA_MEM_TO_DEV;
+	uint8_t *dma_buf;
 	bool dma_mapped;
 
-	अगर ((व्योम *)buf <= high_memory) अणु
+	if ((void *)buf <= high_memory) {
 		dma_buf = buf;
 		dma_mapped = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		dma_buf = host->data_buf;
 		dma_mapped = false;
-		अगर (!पढ़ो)
-			स_नकल(host->data_buf, buf, mtd->ग_लिखोsize);
-	पूर्ण
+		if (!read)
+			memcpy(host->data_buf, buf, mtd->writesize);
+	}
 
-	अगर (पढ़ो) अणु
-		ग_लिखोl(पढ़ोl(SLC_CFG(host->io_base)) |
-		       SLCCFG_DMA_सूची | SLCCFG_ECC_EN | SLCCFG_DMA_ECC |
+	if (read) {
+		writel(readl(SLC_CFG(host->io_base)) |
+		       SLCCFG_DMA_DIR | SLCCFG_ECC_EN | SLCCFG_DMA_ECC |
 		       SLCCFG_DMA_BURST, SLC_CFG(host->io_base));
-	पूर्ण अन्यथा अणु
-		ग_लिखोl((पढ़ोl(SLC_CFG(host->io_base)) |
+	} else {
+		writel((readl(SLC_CFG(host->io_base)) |
 			SLCCFG_ECC_EN | SLCCFG_DMA_ECC | SLCCFG_DMA_BURST) &
-		       ~SLCCFG_DMA_सूची,
+		       ~SLCCFG_DMA_DIR,
 			SLC_CFG(host->io_base));
-	पूर्ण
+	}
 
 	/* Clear initial ECC */
-	ग_लिखोl(SLCCTRL_ECC_CLEAR, SLC_CTRL(host->io_base));
+	writel(SLCCTRL_ECC_CLEAR, SLC_CTRL(host->io_base));
 
 	/* Transfer size is data area only */
-	ग_लिखोl(mtd->ग_लिखोsize, SLC_TC(host->io_base));
+	writel(mtd->writesize, SLC_TC(host->io_base));
 
-	/* Start transfer in the न_अंकD controller */
-	ग_लिखोl(पढ़ोl(SLC_CTRL(host->io_base)) | SLCCTRL_DMA_START,
+	/* Start transfer in the NAND controller */
+	writel(readl(SLC_CTRL(host->io_base)) | SLCCTRL_DMA_START,
 	       SLC_CTRL(host->io_base));
 
-	क्रम (i = 0; i < chip->ecc.steps; i++) अणु
+	for (i = 0; i < chip->ecc.steps; i++) {
 		/* Data */
 		res = lpc32xx_xmit_dma(mtd, SLC_DMA_DATA(host->io_base_dma),
 				       dma_buf + i * chip->ecc.size,
-				       mtd->ग_लिखोsize / chip->ecc.steps, dir);
-		अगर (res)
-			वापस res;
+				       mtd->writesize / chip->ecc.steps, dir);
+		if (res)
+			return res;
 
-		/* Always _पढ़ो_ ECC */
-		अगर (i == chip->ecc.steps - 1)
-			अवरोध;
-		अगर (!पढ़ो) /* ECC availability delayed on ग_लिखो */
+		/* Always _read_ ECC */
+		if (i == chip->ecc.steps - 1)
+			break;
+		if (!read) /* ECC availability delayed on write */
 			udelay(10);
 		res = lpc32xx_xmit_dma(mtd, SLC_ECC(host->io_base_dma),
 				       &host->ecc_buf[i], 4, DMA_DEV_TO_MEM);
-		अगर (res)
-			वापस res;
-	पूर्ण
+		if (res)
+			return res;
+	}
 
 	/*
-	 * According to NXP, the DMA can be finished here, but the न_अंकD
+	 * According to NXP, the DMA can be finished here, but the NAND
 	 * controller may still have buffered data. After porting to using the
 	 * dmaengine DMA driver (amba-pl080), the condition (DMA_FIFO empty)
-	 * appears to be always true, according to tests. Keeping the check क्रम
-	 * safety reasons क्रम now.
+	 * appears to be always true, according to tests. Keeping the check for
+	 * safety reasons for now.
 	 */
-	अगर (पढ़ोl(SLC_STAT(host->io_base)) & SLCSTAT_DMA_FIFO) अणु
+	if (readl(SLC_STAT(host->io_base)) & SLCSTAT_DMA_FIFO) {
 		dev_warn(mtd->dev.parent, "FIFO not empty!\n");
-		समयout = jअगरfies + msecs_to_jअगरfies(LPC32XX_DMA_TIMEOUT);
-		जबतक ((पढ़ोl(SLC_STAT(host->io_base)) & SLCSTAT_DMA_FIFO) &&
-		       समय_beक्रमe(jअगरfies, समयout))
+		timeout = jiffies + msecs_to_jiffies(LPC32XX_DMA_TIMEOUT);
+		while ((readl(SLC_STAT(host->io_base)) & SLCSTAT_DMA_FIFO) &&
+		       time_before(jiffies, timeout))
 			cpu_relax();
-		अगर (!समय_beक्रमe(jअगरfies, समयout)) अणु
+		if (!time_before(jiffies, timeout)) {
 			dev_err(mtd->dev.parent, "FIFO held data too long\n");
 			status = -EIO;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Read last calculated ECC value */
-	अगर (!पढ़ो)
+	if (!read)
 		udelay(10);
 	host->ecc_buf[chip->ecc.steps - 1] =
-		पढ़ोl(SLC_ECC(host->io_base));
+		readl(SLC_ECC(host->io_base));
 
 	/* Flush DMA */
 	dmaengine_terminate_all(host->dma_chan);
 
-	अगर (पढ़ोl(SLC_STAT(host->io_base)) & SLCSTAT_DMA_FIFO ||
-	    पढ़ोl(SLC_TC(host->io_base))) अणु
+	if (readl(SLC_STAT(host->io_base)) & SLCSTAT_DMA_FIFO ||
+	    readl(SLC_TC(host->io_base))) {
 		/* Something is left in the FIFO, something is wrong */
 		dev_err(mtd->dev.parent, "DMA FIFO failure\n");
 		status = -EIO;
-	पूर्ण
+	}
 
 	/* Stop DMA & HW ECC */
-	ग_लिखोl(पढ़ोl(SLC_CTRL(host->io_base)) & ~SLCCTRL_DMA_START,
+	writel(readl(SLC_CTRL(host->io_base)) & ~SLCCTRL_DMA_START,
 	       SLC_CTRL(host->io_base));
-	ग_लिखोl(पढ़ोl(SLC_CFG(host->io_base)) &
-	       ~(SLCCFG_DMA_सूची | SLCCFG_ECC_EN | SLCCFG_DMA_ECC |
+	writel(readl(SLC_CFG(host->io_base)) &
+	       ~(SLCCFG_DMA_DIR | SLCCFG_ECC_EN | SLCCFG_DMA_ECC |
 		 SLCCFG_DMA_BURST), SLC_CFG(host->io_base));
 
-	अगर (!dma_mapped && पढ़ो)
-		स_नकल(buf, host->data_buf, mtd->ग_लिखोsize);
+	if (!dma_mapped && read)
+		memcpy(buf, host->data_buf, mtd->writesize);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Read the data and OOB data from the device, use ECC correction with the
- * data, disable ECC क्रम the OOB data
+ * data, disable ECC for the OOB data
  */
-अटल पूर्णांक lpc32xx_nand_पढ़ो_page_syndrome(काष्ठा nand_chip *chip, uपूर्णांक8_t *buf,
-					   पूर्णांक oob_required, पूर्णांक page)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
-	काष्ठा lpc32xx_nand_host *host = nand_get_controller_data(chip);
-	काष्ठा mtd_oob_region oobregion = अणु पूर्ण;
-	पूर्णांक stat, i, status, error;
-	uपूर्णांक8_t *oobecc, पंचांगpecc[LPC32XX_ECC_SAVE_SIZE];
+static int lpc32xx_nand_read_page_syndrome(struct nand_chip *chip, uint8_t *buf,
+					   int oob_required, int page)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
+	struct lpc32xx_nand_host *host = nand_get_controller_data(chip);
+	struct mtd_oob_region oobregion = { };
+	int stat, i, status, error;
+	uint8_t *oobecc, tmpecc[LPC32XX_ECC_SAVE_SIZE];
 
-	/* Issue पढ़ो command */
-	nand_पढ़ो_page_op(chip, page, 0, शून्य, 0);
+	/* Issue read command */
+	nand_read_page_op(chip, page, 0, NULL, 0);
 
 	/* Read data and oob, calculate ECC */
 	status = lpc32xx_xfer(mtd, buf, chip->ecc.steps, 1);
 
 	/* Get OOB data */
-	chip->legacy.पढ़ो_buf(chip, chip->oob_poi, mtd->oobsize);
+	chip->legacy.read_buf(chip, chip->oob_poi, mtd->oobsize);
 
-	/* Convert to stored ECC क्रमmat */
-	lpc32xx_slc_ecc_copy(पंचांगpecc, (uपूर्णांक32_t *) host->ecc_buf, chip->ecc.steps);
+	/* Convert to stored ECC format */
+	lpc32xx_slc_ecc_copy(tmpecc, (uint32_t *) host->ecc_buf, chip->ecc.steps);
 
-	/* Poपूर्णांकer to ECC data retrieved from न_अंकD spare area */
+	/* Pointer to ECC data retrieved from NAND spare area */
 	error = mtd_ooblayout_ecc(mtd, 0, &oobregion);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	oobecc = chip->oob_poi + oobregion.offset;
 
-	क्रम (i = 0; i < chip->ecc.steps; i++) अणु
+	for (i = 0; i < chip->ecc.steps; i++) {
 		stat = chip->ecc.correct(chip, buf, oobecc,
-					 &पंचांगpecc[i * chip->ecc.bytes]);
-		अगर (stat < 0)
+					 &tmpecc[i * chip->ecc.bytes]);
+		if (stat < 0)
 			mtd->ecc_stats.failed++;
-		अन्यथा
+		else
 			mtd->ecc_stats.corrected += stat;
 
 		buf += chip->ecc.size;
 		oobecc += chip->ecc.bytes;
-	पूर्ण
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Read the data and OOB data from the device, no ECC correction with the
  * data or OOB data
  */
-अटल पूर्णांक lpc32xx_nand_पढ़ो_page_raw_syndrome(काष्ठा nand_chip *chip,
-					       uपूर्णांक8_t *buf, पूर्णांक oob_required,
-					       पूर्णांक page)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+static int lpc32xx_nand_read_page_raw_syndrome(struct nand_chip *chip,
+					       uint8_t *buf, int oob_required,
+					       int page)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
 
-	/* Issue पढ़ो command */
-	nand_पढ़ो_page_op(chip, page, 0, शून्य, 0);
+	/* Issue read command */
+	nand_read_page_op(chip, page, 0, NULL, 0);
 
-	/* Raw पढ़ोs can just use the FIFO पूर्णांकerface */
-	chip->legacy.पढ़ो_buf(chip, buf, chip->ecc.size * chip->ecc.steps);
-	chip->legacy.पढ़ो_buf(chip, chip->oob_poi, mtd->oobsize);
+	/* Raw reads can just use the FIFO interface */
+	chip->legacy.read_buf(chip, buf, chip->ecc.size * chip->ecc.steps);
+	chip->legacy.read_buf(chip, chip->oob_poi, mtd->oobsize);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Write the data and OOB data to the device, use ECC with the data,
- * disable ECC क्रम the OOB data
+ * disable ECC for the OOB data
  */
-अटल पूर्णांक lpc32xx_nand_ग_लिखो_page_syndrome(काष्ठा nand_chip *chip,
-					    स्थिर uपूर्णांक8_t *buf,
-					    पूर्णांक oob_required, पूर्णांक page)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
-	काष्ठा lpc32xx_nand_host *host = nand_get_controller_data(chip);
-	काष्ठा mtd_oob_region oobregion = अणु पूर्ण;
-	uपूर्णांक8_t *pb;
-	पूर्णांक error;
+static int lpc32xx_nand_write_page_syndrome(struct nand_chip *chip,
+					    const uint8_t *buf,
+					    int oob_required, int page)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
+	struct lpc32xx_nand_host *host = nand_get_controller_data(chip);
+	struct mtd_oob_region oobregion = { };
+	uint8_t *pb;
+	int error;
 
-	nand_prog_page_begin_op(chip, page, 0, शून्य, 0);
+	nand_prog_page_begin_op(chip, page, 0, NULL, 0);
 
 	/* Write data, calculate ECC on outbound data */
-	error = lpc32xx_xfer(mtd, (uपूर्णांक8_t *)buf, chip->ecc.steps, 0);
-	अगर (error)
-		वापस error;
+	error = lpc32xx_xfer(mtd, (uint8_t *)buf, chip->ecc.steps, 0);
+	if (error)
+		return error;
 
 	/*
-	 * The calculated ECC needs some manual work करोne to it beक्रमe
-	 * committing it to न_अंकD. Process the calculated ECC and place
-	 * the resultant values directly पूर्णांकo the OOB buffer. */
+	 * The calculated ECC needs some manual work done to it before
+	 * committing it to NAND. Process the calculated ECC and place
+	 * the resultant values directly into the OOB buffer. */
 	error = mtd_ooblayout_ecc(mtd, 0, &oobregion);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	pb = chip->oob_poi + oobregion.offset;
-	lpc32xx_slc_ecc_copy(pb, (uपूर्णांक32_t *)host->ecc_buf, chip->ecc.steps);
+	lpc32xx_slc_ecc_copy(pb, (uint32_t *)host->ecc_buf, chip->ecc.steps);
 
 	/* Write ECC data to device */
-	chip->legacy.ग_लिखो_buf(chip, chip->oob_poi, mtd->oobsize);
+	chip->legacy.write_buf(chip, chip->oob_poi, mtd->oobsize);
 
-	वापस nand_prog_page_end_op(chip);
-पूर्ण
+	return nand_prog_page_end_op(chip);
+}
 
 /*
  * Write the data and OOB data to the device, no ECC correction with the
  * data or OOB data
  */
-अटल पूर्णांक lpc32xx_nand_ग_लिखो_page_raw_syndrome(काष्ठा nand_chip *chip,
-						स्थिर uपूर्णांक8_t *buf,
-						पूर्णांक oob_required, पूर्णांक page)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+static int lpc32xx_nand_write_page_raw_syndrome(struct nand_chip *chip,
+						const uint8_t *buf,
+						int oob_required, int page)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
 
-	/* Raw ग_लिखोs can just use the FIFO पूर्णांकerface */
+	/* Raw writes can just use the FIFO interface */
 	nand_prog_page_begin_op(chip, page, 0, buf,
 				chip->ecc.size * chip->ecc.steps);
-	chip->legacy.ग_लिखो_buf(chip, chip->oob_poi, mtd->oobsize);
+	chip->legacy.write_buf(chip, chip->oob_poi, mtd->oobsize);
 
-	वापस nand_prog_page_end_op(chip);
-पूर्ण
+	return nand_prog_page_end_op(chip);
+}
 
-अटल पूर्णांक lpc32xx_nand_dma_setup(काष्ठा lpc32xx_nand_host *host)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(&host->nand_chip);
+static int lpc32xx_nand_dma_setup(struct lpc32xx_nand_host *host)
+{
+	struct mtd_info *mtd = nand_to_mtd(&host->nand_chip);
 	dma_cap_mask_t mask;
 
-	अगर (!host->pdata || !host->pdata->dma_filter) अणु
+	if (!host->pdata || !host->pdata->dma_filter) {
 		dev_err(mtd->dev.parent, "no DMA platform data\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	dma_cap_zero(mask);
 	dma_cap_set(DMA_SLAVE, mask);
 	host->dma_chan = dma_request_channel(mask, host->pdata->dma_filter,
 					     "nand-slc");
-	अगर (!host->dma_chan) अणु
+	if (!host->dma_chan) {
 		dev_err(mtd->dev.parent, "Failed to request DMA channel\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा lpc32xx_nand_cfg_slc *lpc32xx_parse_dt(काष्ठा device *dev)
-अणु
-	काष्ठा lpc32xx_nand_cfg_slc *ncfg;
-	काष्ठा device_node *np = dev->of_node;
+static struct lpc32xx_nand_cfg_slc *lpc32xx_parse_dt(struct device *dev)
+{
+	struct lpc32xx_nand_cfg_slc *ncfg;
+	struct device_node *np = dev->of_node;
 
-	ncfg = devm_kzalloc(dev, माप(*ncfg), GFP_KERNEL);
-	अगर (!ncfg)
-		वापस शून्य;
+	ncfg = devm_kzalloc(dev, sizeof(*ncfg), GFP_KERNEL);
+	if (!ncfg)
+		return NULL;
 
-	of_property_पढ़ो_u32(np, "nxp,wdr-clks", &ncfg->wdr_clks);
-	of_property_पढ़ो_u32(np, "nxp,wwidth", &ncfg->wwidth);
-	of_property_पढ़ो_u32(np, "nxp,whold", &ncfg->whold);
-	of_property_पढ़ो_u32(np, "nxp,wsetup", &ncfg->wsetup);
-	of_property_पढ़ो_u32(np, "nxp,rdr-clks", &ncfg->rdr_clks);
-	of_property_पढ़ो_u32(np, "nxp,rwidth", &ncfg->rwidth);
-	of_property_पढ़ो_u32(np, "nxp,rhold", &ncfg->rhold);
-	of_property_पढ़ो_u32(np, "nxp,rsetup", &ncfg->rsetup);
+	of_property_read_u32(np, "nxp,wdr-clks", &ncfg->wdr_clks);
+	of_property_read_u32(np, "nxp,wwidth", &ncfg->wwidth);
+	of_property_read_u32(np, "nxp,whold", &ncfg->whold);
+	of_property_read_u32(np, "nxp,wsetup", &ncfg->wsetup);
+	of_property_read_u32(np, "nxp,rdr-clks", &ncfg->rdr_clks);
+	of_property_read_u32(np, "nxp,rwidth", &ncfg->rwidth);
+	of_property_read_u32(np, "nxp,rhold", &ncfg->rhold);
+	of_property_read_u32(np, "nxp,rsetup", &ncfg->rsetup);
 
-	अगर (!ncfg->wdr_clks || !ncfg->wwidth || !ncfg->whold ||
+	if (!ncfg->wdr_clks || !ncfg->wwidth || !ncfg->whold ||
 	    !ncfg->wsetup || !ncfg->rdr_clks || !ncfg->rwidth ||
-	    !ncfg->rhold || !ncfg->rsetup) अणु
+	    !ncfg->rhold || !ncfg->rsetup) {
 		dev_err(dev, "chip parameters not specified correctly\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	ncfg->wp_gpio = of_get_named_gpio(np, "gpios", 0);
 
-	वापस ncfg;
-पूर्ण
+	return ncfg;
+}
 
-अटल पूर्णांक lpc32xx_nand_attach_chip(काष्ठा nand_chip *chip)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
-	काष्ठा lpc32xx_nand_host *host = nand_get_controller_data(chip);
+static int lpc32xx_nand_attach_chip(struct nand_chip *chip)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
+	struct lpc32xx_nand_host *host = nand_get_controller_data(chip);
 
-	अगर (chip->ecc.engine_type != न_अंकD_ECC_ENGINE_TYPE_ON_HOST)
-		वापस 0;
+	if (chip->ecc.engine_type != NAND_ECC_ENGINE_TYPE_ON_HOST)
+		return 0;
 
 	/* OOB and ECC CPU and DMA work areas */
-	host->ecc_buf = (uपूर्णांक32_t *)(host->data_buf + LPC32XX_DMA_DATA_SIZE);
+	host->ecc_buf = (uint32_t *)(host->data_buf + LPC32XX_DMA_DATA_SIZE);
 
 	/*
 	 * Small page FLASH has a unique OOB layout, but large and huge
 	 * page FLASH use the standard layout. Small page FLASH uses a
 	 * custom BBT marker layout.
 	 */
-	अगर (mtd->ग_लिखोsize <= 512)
+	if (mtd->writesize <= 512)
 		mtd_set_ooblayout(mtd, &lpc32xx_ooblayout_ops);
 
-	chip->ecc.placement = न_अंकD_ECC_PLACEMENT_INTERLEAVED;
-	/* These sizes reमुख्य the same regardless of page size */
+	chip->ecc.placement = NAND_ECC_PLACEMENT_INTERLEAVED;
+	/* These sizes remain the same regardless of page size */
 	chip->ecc.size = 256;
 	chip->ecc.strength = 1;
 	chip->ecc.bytes = LPC32XX_SLC_DEV_ECC_BYTES;
 	chip->ecc.prepad = 0;
 	chip->ecc.postpad = 0;
-	chip->ecc.पढ़ो_page_raw = lpc32xx_nand_पढ़ो_page_raw_syndrome;
-	chip->ecc.पढ़ो_page = lpc32xx_nand_पढ़ो_page_syndrome;
-	chip->ecc.ग_लिखो_page_raw = lpc32xx_nand_ग_लिखो_page_raw_syndrome;
-	chip->ecc.ग_लिखो_page = lpc32xx_nand_ग_लिखो_page_syndrome;
-	chip->ecc.ग_लिखो_oob = lpc32xx_nand_ग_लिखो_oob_syndrome;
-	chip->ecc.पढ़ो_oob = lpc32xx_nand_पढ़ो_oob_syndrome;
+	chip->ecc.read_page_raw = lpc32xx_nand_read_page_raw_syndrome;
+	chip->ecc.read_page = lpc32xx_nand_read_page_syndrome;
+	chip->ecc.write_page_raw = lpc32xx_nand_write_page_raw_syndrome;
+	chip->ecc.write_page = lpc32xx_nand_write_page_syndrome;
+	chip->ecc.write_oob = lpc32xx_nand_write_oob_syndrome;
+	chip->ecc.read_oob = lpc32xx_nand_read_oob_syndrome;
 	chip->ecc.calculate = lpc32xx_nand_ecc_calculate;
 	chip->ecc.correct = lpc32xx_nand_ecc_correct;
 	chip->ecc.hwctl = lpc32xx_nand_ecc_enable;
 
 	/*
-	 * Use a custom BBT marker setup क्रम small page FLASH that
-	 * won't पूर्णांकerfere with the ECC layout. Large and huge page
+	 * Use a custom BBT marker setup for small page FLASH that
+	 * won't interfere with the ECC layout. Large and huge page
 	 * FLASH use the standard layout.
 	 */
-	अगर ((chip->bbt_options & न_अंकD_BBT_USE_FLASH) &&
-	    mtd->ग_लिखोsize <= 512) अणु
-		chip->bbt_td = &bbt_smallpage_मुख्य_descr;
+	if ((chip->bbt_options & NAND_BBT_USE_FLASH) &&
+	    mtd->writesize <= 512) {
+		chip->bbt_td = &bbt_smallpage_main_descr;
 		chip->bbt_md = &bbt_smallpage_mirror_descr;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा nand_controller_ops lpc32xx_nand_controller_ops = अणु
+static const struct nand_controller_ops lpc32xx_nand_controller_ops = {
 	.attach_chip = lpc32xx_nand_attach_chip,
-पूर्ण;
+};
 
 /*
- * Probe क्रम न_अंकD controller
+ * Probe for NAND controller
  */
-अटल पूर्णांक lpc32xx_nand_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा lpc32xx_nand_host *host;
-	काष्ठा mtd_info *mtd;
-	काष्ठा nand_chip *chip;
-	काष्ठा resource *rc;
-	पूर्णांक res;
+static int lpc32xx_nand_probe(struct platform_device *pdev)
+{
+	struct lpc32xx_nand_host *host;
+	struct mtd_info *mtd;
+	struct nand_chip *chip;
+	struct resource *rc;
+	int res;
 
-	/* Allocate memory क्रम the device काष्ठाure (and zero it) */
-	host = devm_kzalloc(&pdev->dev, माप(*host), GFP_KERNEL);
-	अगर (!host)
-		वापस -ENOMEM;
+	/* Allocate memory for the device structure (and zero it) */
+	host = devm_kzalloc(&pdev->dev, sizeof(*host), GFP_KERNEL);
+	if (!host)
+		return -ENOMEM;
 
-	rc = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	rc = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	host->io_base = devm_ioremap_resource(&pdev->dev, rc);
-	अगर (IS_ERR(host->io_base))
-		वापस PTR_ERR(host->io_base);
+	if (IS_ERR(host->io_base))
+		return PTR_ERR(host->io_base);
 
 	host->io_base_dma = rc->start;
-	अगर (pdev->dev.of_node)
+	if (pdev->dev.of_node)
 		host->ncfg = lpc32xx_parse_dt(&pdev->dev);
-	अगर (!host->ncfg) अणु
+	if (!host->ncfg) {
 		dev_err(&pdev->dev,
 			"Missing or bad NAND config from device tree\n");
-		वापस -ENOENT;
-	पूर्ण
-	अगर (host->ncfg->wp_gpio == -EPROBE_DEFER)
-		वापस -EPROBE_DEFER;
-	अगर (gpio_is_valid(host->ncfg->wp_gpio) && devm_gpio_request(&pdev->dev,
-			host->ncfg->wp_gpio, "NAND WP")) अणु
+		return -ENOENT;
+	}
+	if (host->ncfg->wp_gpio == -EPROBE_DEFER)
+		return -EPROBE_DEFER;
+	if (gpio_is_valid(host->ncfg->wp_gpio) && devm_gpio_request(&pdev->dev,
+			host->ncfg->wp_gpio, "NAND WP")) {
 		dev_err(&pdev->dev, "GPIO not available\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 	lpc32xx_wp_disable(host);
 
 	host->pdata = dev_get_platdata(&pdev->dev);
@@ -884,65 +883,65 @@ out1:
 	mtd->owner = THIS_MODULE;
 	mtd->dev.parent = &pdev->dev;
 
-	/* Get न_अंकD घड़ी */
-	host->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(host->clk)) अणु
+	/* Get NAND clock */
+	host->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(host->clk)) {
 		dev_err(&pdev->dev, "Clock failure\n");
 		res = -ENOENT;
-		जाओ enable_wp;
-	पूर्ण
+		goto enable_wp;
+	}
 	res = clk_prepare_enable(host->clk);
-	अगर (res)
-		जाओ enable_wp;
+	if (res)
+		goto enable_wp;
 
-	/* Set न_अंकD IO addresses and command/पढ़ोy functions */
+	/* Set NAND IO addresses and command/ready functions */
 	chip->legacy.IO_ADDR_R = SLC_DATA(host->io_base);
 	chip->legacy.IO_ADDR_W = SLC_DATA(host->io_base);
 	chip->legacy.cmd_ctrl = lpc32xx_nand_cmd_ctrl;
-	chip->legacy.dev_पढ़ोy = lpc32xx_nand_device_पढ़ोy;
-	chip->legacy.chip_delay = 20; /* 20us command delay समय */
+	chip->legacy.dev_ready = lpc32xx_nand_device_ready;
+	chip->legacy.chip_delay = 20; /* 20us command delay time */
 
-	/* Init न_अंकD controller */
+	/* Init NAND controller */
 	lpc32xx_nand_setup(host);
 
-	platक्रमm_set_drvdata(pdev, host);
+	platform_set_drvdata(pdev, host);
 
-	/* न_अंकD callbacks क्रम LPC32xx SLC hardware */
-	chip->legacy.पढ़ो_byte = lpc32xx_nand_पढ़ो_byte;
-	chip->legacy.पढ़ो_buf = lpc32xx_nand_पढ़ो_buf;
-	chip->legacy.ग_लिखो_buf = lpc32xx_nand_ग_लिखो_buf;
+	/* NAND callbacks for LPC32xx SLC hardware */
+	chip->legacy.read_byte = lpc32xx_nand_read_byte;
+	chip->legacy.read_buf = lpc32xx_nand_read_buf;
+	chip->legacy.write_buf = lpc32xx_nand_write_buf;
 
 	/*
-	 * Allocate a large enough buffer क्रम a single huge page plus
-	 * extra space क्रम the spare area and ECC storage area
+	 * Allocate a large enough buffer for a single huge page plus
+	 * extra space for the spare area and ECC storage area
 	 */
 	host->dma_buf_len = LPC32XX_DMA_DATA_SIZE + LPC32XX_ECC_SAVE_SIZE;
 	host->data_buf = devm_kzalloc(&pdev->dev, host->dma_buf_len,
 				      GFP_KERNEL);
-	अगर (host->data_buf == शून्य) अणु
+	if (host->data_buf == NULL) {
 		res = -ENOMEM;
-		जाओ unprepare_clk;
-	पूर्ण
+		goto unprepare_clk;
+	}
 
 	res = lpc32xx_nand_dma_setup(host);
-	अगर (res) अणु
+	if (res) {
 		res = -EIO;
-		जाओ unprepare_clk;
-	पूर्ण
+		goto unprepare_clk;
+	}
 
-	/* Find न_अंकD device */
+	/* Find NAND device */
 	chip->legacy.dummy_controller.ops = &lpc32xx_nand_controller_ops;
 	res = nand_scan(chip, 1);
-	अगर (res)
-		जाओ release_dma;
+	if (res)
+		goto release_dma;
 
 	mtd->name = "nxp_lpc3220_slc";
-	res = mtd_device_रेजिस्टर(mtd, host->ncfg->parts,
+	res = mtd_device_register(mtd, host->ncfg->parts,
 				  host->ncfg->num_parts);
-	अगर (res)
-		जाओ cleanup_nand;
+	if (res)
+		goto cleanup_nand;
 
-	वापस 0;
+	return 0;
 
 cleanup_nand:
 	nand_cleanup(chip);
@@ -953,97 +952,97 @@ unprepare_clk:
 enable_wp:
 	lpc32xx_wp_enable(host);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /*
- * Remove न_अंकD device.
+ * Remove NAND device.
  */
-अटल पूर्णांक lpc32xx_nand_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	uपूर्णांक32_t पंचांगp;
-	काष्ठा lpc32xx_nand_host *host = platक्रमm_get_drvdata(pdev);
-	काष्ठा nand_chip *chip = &host->nand_chip;
-	पूर्णांक ret;
+static int lpc32xx_nand_remove(struct platform_device *pdev)
+{
+	uint32_t tmp;
+	struct lpc32xx_nand_host *host = platform_get_drvdata(pdev);
+	struct nand_chip *chip = &host->nand_chip;
+	int ret;
 
-	ret = mtd_device_unरेजिस्टर(nand_to_mtd(chip));
+	ret = mtd_device_unregister(nand_to_mtd(chip));
 	WARN_ON(ret);
 	nand_cleanup(chip);
 	dma_release_channel(host->dma_chan);
 
 	/* Force CE high */
-	पंचांगp = पढ़ोl(SLC_CTRL(host->io_base));
-	पंचांगp &= ~SLCCFG_CE_LOW;
-	ग_लिखोl(पंचांगp, SLC_CTRL(host->io_base));
+	tmp = readl(SLC_CTRL(host->io_base));
+	tmp &= ~SLCCFG_CE_LOW;
+	writel(tmp, SLC_CTRL(host->io_base));
 
 	clk_disable_unprepare(host->clk);
 	lpc32xx_wp_enable(host);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक lpc32xx_nand_resume(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा lpc32xx_nand_host *host = platक्रमm_get_drvdata(pdev);
-	पूर्णांक ret;
+#ifdef CONFIG_PM
+static int lpc32xx_nand_resume(struct platform_device *pdev)
+{
+	struct lpc32xx_nand_host *host = platform_get_drvdata(pdev);
+	int ret;
 
-	/* Re-enable न_अंकD घड़ी */
+	/* Re-enable NAND clock */
 	ret = clk_prepare_enable(host->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Fresh init of न_अंकD controller */
+	/* Fresh init of NAND controller */
 	lpc32xx_nand_setup(host);
 
-	/* Disable ग_लिखो protect */
+	/* Disable write protect */
 	lpc32xx_wp_disable(host);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lpc32xx_nand_suspend(काष्ठा platक्रमm_device *pdev, pm_message_t pm)
-अणु
-	uपूर्णांक32_t पंचांगp;
-	काष्ठा lpc32xx_nand_host *host = platक्रमm_get_drvdata(pdev);
+static int lpc32xx_nand_suspend(struct platform_device *pdev, pm_message_t pm)
+{
+	uint32_t tmp;
+	struct lpc32xx_nand_host *host = platform_get_drvdata(pdev);
 
 	/* Force CE high */
-	पंचांगp = पढ़ोl(SLC_CTRL(host->io_base));
-	पंचांगp &= ~SLCCFG_CE_LOW;
-	ग_लिखोl(पंचांगp, SLC_CTRL(host->io_base));
+	tmp = readl(SLC_CTRL(host->io_base));
+	tmp &= ~SLCCFG_CE_LOW;
+	writel(tmp, SLC_CTRL(host->io_base));
 
-	/* Enable ग_लिखो protect क्रम safety */
+	/* Enable write protect for safety */
 	lpc32xx_wp_enable(host);
 
-	/* Disable घड़ी */
+	/* Disable clock */
 	clk_disable_unprepare(host->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अन्यथा
-#घोषणा lpc32xx_nand_resume शून्य
-#घोषणा lpc32xx_nand_suspend शून्य
-#पूर्ण_अगर
+#else
+#define lpc32xx_nand_resume NULL
+#define lpc32xx_nand_suspend NULL
+#endif
 
-अटल स्थिर काष्ठा of_device_id lpc32xx_nand_match[] = अणु
-	अणु .compatible = "nxp,lpc3220-slc" पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+static const struct of_device_id lpc32xx_nand_match[] = {
+	{ .compatible = "nxp,lpc3220-slc" },
+	{ /* sentinel */ },
+};
 MODULE_DEVICE_TABLE(of, lpc32xx_nand_match);
 
-अटल काष्ठा platक्रमm_driver lpc32xx_nand_driver = अणु
+static struct platform_driver lpc32xx_nand_driver = {
 	.probe		= lpc32xx_nand_probe,
-	.हटाओ		= lpc32xx_nand_हटाओ,
+	.remove		= lpc32xx_nand_remove,
 	.resume		= lpc32xx_nand_resume,
 	.suspend	= lpc32xx_nand_suspend,
-	.driver		= अणु
+	.driver		= {
 		.name	= LPC32XX_MODNAME,
 		.of_match_table = lpc32xx_nand_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(lpc32xx_nand_driver);
+module_platform_driver(lpc32xx_nand_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Kevin Wells <kevin.wells@nxp.com>");

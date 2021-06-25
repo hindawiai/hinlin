@@ -1,579 +1,578 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: LGPL-2.1
+// SPDX-License-Identifier: LGPL-2.1
 /*
  * Copyright (C) 2009, 2010 Red Hat Inc, Steven Rostedt <srostedt@redhat.com>
  *
  *
- *  The parts क्रम function graph prपूर्णांकing was taken and modअगरied from the
+ *  The parts for function graph printing was taken and modified from the
  *  Linux Kernel that were written by
  *    - Copyright (C) 2009  Frederic Weisbecker,
  *  Frederic Weisbecker gave his permission to relicense the code to
  *  the Lesser General Public License.
  */
-#समावेश <पूर्णांकtypes.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <मानकतर्क.स>
-#समावेश <प्रकार.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <मानक_निवेशt.h>
-#समावेश <सीमा.स>
-#समावेश <linux/समय64.h>
+#include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+#include <ctype.h>
+#include <errno.h>
+#include <stdint.h>
+#include <limits.h>
+#include <linux/time64.h>
 
-#समावेश <netinet/in.h>
-#समावेश "event-parse.h"
+#include <netinet/in.h>
+#include "event-parse.h"
 
-#समावेश "event-parse-local.h"
-#समावेश "event-utils.h"
-#समावेश "trace-seq.h"
+#include "event-parse-local.h"
+#include "event-utils.h"
+#include "trace-seq.h"
 
-अटल स्थिर अक्षर *input_buf;
-अटल अचिन्हित दीर्घ दीर्घ input_buf_ptr;
-अटल अचिन्हित दीर्घ दीर्घ input_buf_siz;
+static const char *input_buf;
+static unsigned long long input_buf_ptr;
+static unsigned long long input_buf_siz;
 
-अटल पूर्णांक is_flag_field;
-अटल पूर्णांक is_symbolic_field;
+static int is_flag_field;
+static int is_symbolic_field;
 
-अटल पूर्णांक show_warning = 1;
+static int show_warning = 1;
 
-#घोषणा करो_warning(fmt, ...)				\
-	करो अणु						\
-		अगर (show_warning)			\
+#define do_warning(fmt, ...)				\
+	do {						\
+		if (show_warning)			\
 			warning(fmt, ##__VA_ARGS__);	\
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा करो_warning_event(event, fmt, ...)			\
-	करो अणु							\
-		अगर (!show_warning)				\
-			जारी;				\
+#define do_warning_event(event, fmt, ...)			\
+	do {							\
+		if (!show_warning)				\
+			continue;				\
 								\
-		अगर (event)					\
-			warning("[%s:%s] " fmt, event->प्रणाली,	\
+		if (event)					\
+			warning("[%s:%s] " fmt, event->system,	\
 				event->name, ##__VA_ARGS__);	\
-		अन्यथा						\
+		else						\
 			warning(fmt, ##__VA_ARGS__);		\
-	पूर्ण जबतक (0)
+	} while (0)
 
 /**
- * init_input_buf - init buffer क्रम parsing
+ * init_input_buf - init buffer for parsing
  * @buf: buffer to parse
  * @size: the size of the buffer
  *
- * Initializes the पूर्णांकernal buffer that tep_पढ़ो_token() will parse.
+ * Initializes the internal buffer that tep_read_token() will parse.
  */
-__hidden व्योम init_input_buf(स्थिर अक्षर *buf, अचिन्हित दीर्घ दीर्घ size)
-अणु
+__hidden void init_input_buf(const char *buf, unsigned long long size)
+{
 	input_buf = buf;
 	input_buf_siz = size;
 	input_buf_ptr = 0;
-पूर्ण
+}
 
-__hidden स्थिर अक्षर *get_input_buf(व्योम)
-अणु
-	वापस input_buf;
-पूर्ण
+__hidden const char *get_input_buf(void)
+{
+	return input_buf;
+}
 
-__hidden अचिन्हित दीर्घ दीर्घ get_input_buf_ptr(व्योम)
-अणु
-	वापस input_buf_ptr;
-पूर्ण
+__hidden unsigned long long get_input_buf_ptr(void)
+{
+	return input_buf_ptr;
+}
 
-काष्ठा event_handler अणु
-	काष्ठा event_handler		*next;
-	पूर्णांक				id;
-	स्थिर अक्षर			*sys_name;
-	स्थिर अक्षर			*event_name;
+struct event_handler {
+	struct event_handler		*next;
+	int				id;
+	const char			*sys_name;
+	const char			*event_name;
 	tep_event_handler_func		func;
-	व्योम				*context;
-पूर्ण;
+	void				*context;
+};
 
-काष्ठा func_params अणु
-	काष्ठा func_params	*next;
-	क्रमागत tep_func_arg_type	type;
-पूर्ण;
+struct func_params {
+	struct func_params	*next;
+	enum tep_func_arg_type	type;
+};
 
-काष्ठा tep_function_handler अणु
-	काष्ठा tep_function_handler	*next;
-	क्रमागत tep_func_arg_type		ret_type;
-	अक्षर				*name;
+struct tep_function_handler {
+	struct tep_function_handler	*next;
+	enum tep_func_arg_type		ret_type;
+	char				*name;
 	tep_func_handler		func;
-	काष्ठा func_params		*params;
-	पूर्णांक				nr_args;
-पूर्ण;
+	struct func_params		*params;
+	int				nr_args;
+};
 
-अटल अचिन्हित दीर्घ दीर्घ
-process_defined_func(काष्ठा trace_seq *s, व्योम *data, पूर्णांक size,
-		     काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg *arg);
+static unsigned long long
+process_defined_func(struct trace_seq *s, void *data, int size,
+		     struct tep_event *event, struct tep_print_arg *arg);
 
-अटल व्योम मुक्त_func_handle(काष्ठा tep_function_handler *func);
+static void free_func_handle(struct tep_function_handler *func);
 
-व्योम अवरोधpoपूर्णांक(व्योम)
-अणु
-	अटल पूर्णांक x;
+void breakpoint(void)
+{
+	static int x;
 	x++;
-पूर्ण
+}
 
-अटल काष्ठा tep_prपूर्णांक_arg *alloc_arg(व्योम)
-अणु
-	वापस सुस्मृति(1, माप(काष्ठा tep_prपूर्णांक_arg));
-पूर्ण
+static struct tep_print_arg *alloc_arg(void)
+{
+	return calloc(1, sizeof(struct tep_print_arg));
+}
 
-काष्ठा tep_cmdline अणु
-	अक्षर *comm;
-	पूर्णांक pid;
-पूर्ण;
+struct tep_cmdline {
+	char *comm;
+	int pid;
+};
 
-अटल पूर्णांक cmdline_cmp(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	स्थिर काष्ठा tep_cmdline *ca = a;
-	स्थिर काष्ठा tep_cmdline *cb = b;
+static int cmdline_cmp(const void *a, const void *b)
+{
+	const struct tep_cmdline *ca = a;
+	const struct tep_cmdline *cb = b;
 
-	अगर (ca->pid < cb->pid)
-		वापस -1;
-	अगर (ca->pid > cb->pid)
-		वापस 1;
+	if (ca->pid < cb->pid)
+		return -1;
+	if (ca->pid > cb->pid)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Looking क्रम where to place the key */
-अटल पूर्णांक cmdline_slot_cmp(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	स्थिर काष्ठा tep_cmdline *ca = a;
-	स्थिर काष्ठा tep_cmdline *cb = b;
-	स्थिर काष्ठा tep_cmdline *cb1 = cb + 1;
+/* Looking for where to place the key */
+static int cmdline_slot_cmp(const void *a, const void *b)
+{
+	const struct tep_cmdline *ca = a;
+	const struct tep_cmdline *cb = b;
+	const struct tep_cmdline *cb1 = cb + 1;
 
-	अगर (ca->pid < cb->pid)
-		वापस -1;
+	if (ca->pid < cb->pid)
+		return -1;
 
-	अगर (ca->pid > cb->pid) अणु
-		अगर (ca->pid <= cb1->pid)
-			वापस 0;
-		वापस 1;
-	पूर्ण
+	if (ca->pid > cb->pid) {
+		if (ca->pid <= cb1->pid)
+			return 0;
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा cmdline_list अणु
-	काष्ठा cmdline_list	*next;
-	अक्षर			*comm;
-	पूर्णांक			pid;
-पूर्ण;
+struct cmdline_list {
+	struct cmdline_list	*next;
+	char			*comm;
+	int			pid;
+};
 
-अटल पूर्णांक cmdline_init(काष्ठा tep_handle *tep)
-अणु
-	काष्ठा cmdline_list *cmdlist = tep->cmdlist;
-	काष्ठा cmdline_list *item;
-	काष्ठा tep_cmdline *cmdlines;
-	पूर्णांक i;
+static int cmdline_init(struct tep_handle *tep)
+{
+	struct cmdline_list *cmdlist = tep->cmdlist;
+	struct cmdline_list *item;
+	struct tep_cmdline *cmdlines;
+	int i;
 
-	cmdlines = दो_स्मृति(माप(*cmdlines) * tep->cmdline_count);
-	अगर (!cmdlines)
-		वापस -1;
+	cmdlines = malloc(sizeof(*cmdlines) * tep->cmdline_count);
+	if (!cmdlines)
+		return -1;
 
 	i = 0;
-	जबतक (cmdlist) अणु
+	while (cmdlist) {
 		cmdlines[i].pid = cmdlist->pid;
 		cmdlines[i].comm = cmdlist->comm;
 		i++;
 		item = cmdlist;
 		cmdlist = cmdlist->next;
-		मुक्त(item);
-	पूर्ण
+		free(item);
+	}
 
-	क्विक(cmdlines, tep->cmdline_count, माप(*cmdlines), cmdline_cmp);
+	qsort(cmdlines, tep->cmdline_count, sizeof(*cmdlines), cmdline_cmp);
 
 	tep->cmdlines = cmdlines;
-	tep->cmdlist = शून्य;
+	tep->cmdlist = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर अक्षर *find_cmdline(काष्ठा tep_handle *tep, पूर्णांक pid)
-अणु
-	स्थिर काष्ठा tep_cmdline *comm;
-	काष्ठा tep_cmdline key;
+static const char *find_cmdline(struct tep_handle *tep, int pid)
+{
+	const struct tep_cmdline *comm;
+	struct tep_cmdline key;
 
-	अगर (!pid)
-		वापस "<idle>";
+	if (!pid)
+		return "<idle>";
 
-	अगर (!tep->cmdlines && cmdline_init(tep))
-		वापस "<not enough memory for cmdlines!>";
+	if (!tep->cmdlines && cmdline_init(tep))
+		return "<not enough memory for cmdlines!>";
 
 	key.pid = pid;
 
-	comm = द्वा_खोज(&key, tep->cmdlines, tep->cmdline_count,
-		       माप(*tep->cmdlines), cmdline_cmp);
+	comm = bsearch(&key, tep->cmdlines, tep->cmdline_count,
+		       sizeof(*tep->cmdlines), cmdline_cmp);
 
-	अगर (comm)
-		वापस comm->comm;
-	वापस "<...>";
-पूर्ण
+	if (comm)
+		return comm->comm;
+	return "<...>";
+}
 
 /**
- * tep_is_pid_रेजिस्टरed - वापस अगर a pid has a cmdline रेजिस्टरed
+ * tep_is_pid_registered - return if a pid has a cmdline registered
  * @tep: a handle to the trace event parser context
- * @pid: The pid to check अगर it has a cmdline रेजिस्टरed with.
+ * @pid: The pid to check if it has a cmdline registered with.
  *
- * Returns true अगर the pid has a cmdline mapped to it
+ * Returns true if the pid has a cmdline mapped to it
  * false otherwise.
  */
-bool tep_is_pid_रेजिस्टरed(काष्ठा tep_handle *tep, पूर्णांक pid)
-अणु
-	स्थिर काष्ठा tep_cmdline *comm;
-	काष्ठा tep_cmdline key;
+bool tep_is_pid_registered(struct tep_handle *tep, int pid)
+{
+	const struct tep_cmdline *comm;
+	struct tep_cmdline key;
 
-	अगर (!pid)
-		वापस true;
+	if (!pid)
+		return true;
 
-	अगर (!tep->cmdlines && cmdline_init(tep))
-		वापस false;
+	if (!tep->cmdlines && cmdline_init(tep))
+		return false;
 
 	key.pid = pid;
 
-	comm = द्वा_खोज(&key, tep->cmdlines, tep->cmdline_count,
-		       माप(*tep->cmdlines), cmdline_cmp);
+	comm = bsearch(&key, tep->cmdlines, tep->cmdline_count,
+		       sizeof(*tep->cmdlines), cmdline_cmp);
 
-	अगर (comm)
-		वापस true;
-	वापस false;
-पूर्ण
+	if (comm)
+		return true;
+	return false;
+}
 
 /*
  * If the command lines have been converted to an array, then
  * we must add this pid. This is much slower than when cmdlines
- * are added beक्रमe the array is initialized.
+ * are added before the array is initialized.
  */
-अटल पूर्णांक add_new_comm(काष्ठा tep_handle *tep,
-			स्थिर अक्षर *comm, पूर्णांक pid, bool override)
-अणु
-	काष्ठा tep_cmdline *cmdlines = tep->cmdlines;
-	काष्ठा tep_cmdline *cmdline;
-	काष्ठा tep_cmdline key;
-	अक्षर *new_comm;
-	पूर्णांक cnt;
+static int add_new_comm(struct tep_handle *tep,
+			const char *comm, int pid, bool override)
+{
+	struct tep_cmdline *cmdlines = tep->cmdlines;
+	struct tep_cmdline *cmdline;
+	struct tep_cmdline key;
+	char *new_comm;
+	int cnt;
 
-	अगर (!pid)
-		वापस 0;
+	if (!pid)
+		return 0;
 
-	/* aव्योम duplicates */
+	/* avoid duplicates */
 	key.pid = pid;
 
-	cmdline = द्वा_खोज(&key, tep->cmdlines, tep->cmdline_count,
-			  माप(*tep->cmdlines), cmdline_cmp);
-	अगर (cmdline) अणु
-		अगर (!override) अणु
-			त्रुटि_सं = EEXIST;
-			वापस -1;
-		पूर्ण
+	cmdline = bsearch(&key, tep->cmdlines, tep->cmdline_count,
+			  sizeof(*tep->cmdlines), cmdline_cmp);
+	if (cmdline) {
+		if (!override) {
+			errno = EEXIST;
+			return -1;
+		}
 		new_comm = strdup(comm);
-		अगर (!new_comm) अणु
-			त्रुटि_सं = ENOMEM;
-			वापस -1;
-		पूर्ण
-		मुक्त(cmdline->comm);
+		if (!new_comm) {
+			errno = ENOMEM;
+			return -1;
+		}
+		free(cmdline->comm);
 		cmdline->comm = new_comm;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	cmdlines = पुनः_स्मृति(cmdlines, माप(*cmdlines) * (tep->cmdline_count + 1));
-	अगर (!cmdlines) अणु
-		त्रुटि_सं = ENOMEM;
-		वापस -1;
-	पूर्ण
+	cmdlines = realloc(cmdlines, sizeof(*cmdlines) * (tep->cmdline_count + 1));
+	if (!cmdlines) {
+		errno = ENOMEM;
+		return -1;
+	}
 	tep->cmdlines = cmdlines;
 
 	key.comm = strdup(comm);
-	अगर (!key.comm) अणु
-		त्रुटि_सं = ENOMEM;
-		वापस -1;
-	पूर्ण
+	if (!key.comm) {
+		errno = ENOMEM;
+		return -1;
+	}
 
-	अगर (!tep->cmdline_count) अणु
+	if (!tep->cmdline_count) {
 		/* no entries yet */
 		tep->cmdlines[0] = key;
 		tep->cmdline_count++;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Now find where we want to store the new cmdline */
-	cmdline = द्वा_खोज(&key, tep->cmdlines, tep->cmdline_count - 1,
-			  माप(*tep->cmdlines), cmdline_slot_cmp);
+	cmdline = bsearch(&key, tep->cmdlines, tep->cmdline_count - 1,
+			  sizeof(*tep->cmdlines), cmdline_slot_cmp);
 
 	cnt = tep->cmdline_count;
-	अगर (cmdline) अणु
-		/* cmdline poपूर्णांकs to the one beक्रमe the spot we want */
+	if (cmdline) {
+		/* cmdline points to the one before the spot we want */
 		cmdline++;
 		cnt -= cmdline - tep->cmdlines;
 
-	पूर्ण अन्यथा अणु
-		/* The new entry is either beक्रमe or after the list */
-		अगर (key.pid > tep->cmdlines[tep->cmdline_count - 1].pid) अणु
+	} else {
+		/* The new entry is either before or after the list */
+		if (key.pid > tep->cmdlines[tep->cmdline_count - 1].pid) {
 			tep->cmdlines[tep->cmdline_count++] = key;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		cmdline = &tep->cmdlines[0];
-	पूर्ण
-	स_हटाओ(cmdline + 1, cmdline, (cnt * माप(*cmdline)));
+	}
+	memmove(cmdline + 1, cmdline, (cnt * sizeof(*cmdline)));
 	*cmdline = key;
 
 	tep->cmdline_count++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक _tep_रेजिस्टर_comm(काष्ठा tep_handle *tep,
-			      स्थिर अक्षर *comm, पूर्णांक pid, bool override)
-अणु
-	काष्ठा cmdline_list *item;
+static int _tep_register_comm(struct tep_handle *tep,
+			      const char *comm, int pid, bool override)
+{
+	struct cmdline_list *item;
 
-	अगर (tep->cmdlines)
-		वापस add_new_comm(tep, comm, pid, override);
+	if (tep->cmdlines)
+		return add_new_comm(tep, comm, pid, override);
 
-	item = दो_स्मृति(माप(*item));
-	अगर (!item)
-		वापस -1;
+	item = malloc(sizeof(*item));
+	if (!item)
+		return -1;
 
-	अगर (comm)
+	if (comm)
 		item->comm = strdup(comm);
-	अन्यथा
+	else
 		item->comm = strdup("<...>");
-	अगर (!item->comm) अणु
-		मुक्त(item);
-		वापस -1;
-	पूर्ण
+	if (!item->comm) {
+		free(item);
+		return -1;
+	}
 	item->pid = pid;
 	item->next = tep->cmdlist;
 
 	tep->cmdlist = item;
 	tep->cmdline_count++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * tep_रेजिस्टर_comm - रेजिस्टर a pid / comm mapping
+ * tep_register_comm - register a pid / comm mapping
  * @tep: a handle to the trace event parser context
- * @comm: the command line to रेजिस्टर
+ * @comm: the command line to register
  * @pid: the pid to map the command line to
  *
- * This adds a mapping to search क्रम command line names with
+ * This adds a mapping to search for command line names with
  * a given pid. The comm is duplicated. If a command with the same pid
- * alपढ़ोy exist, -1 is वापसed and त्रुटि_सं is set to EEXIST
+ * already exist, -1 is returned and errno is set to EEXIST
  */
-पूर्णांक tep_रेजिस्टर_comm(काष्ठा tep_handle *tep, स्थिर अक्षर *comm, पूर्णांक pid)
-अणु
-	वापस _tep_रेजिस्टर_comm(tep, comm, pid, false);
-पूर्ण
+int tep_register_comm(struct tep_handle *tep, const char *comm, int pid)
+{
+	return _tep_register_comm(tep, comm, pid, false);
+}
 
 /**
- * tep_override_comm - रेजिस्टर a pid / comm mapping
+ * tep_override_comm - register a pid / comm mapping
  * @tep: a handle to the trace event parser context
- * @comm: the command line to रेजिस्टर
+ * @comm: the command line to register
  * @pid: the pid to map the command line to
  *
- * This adds a mapping to search क्रम command line names with
+ * This adds a mapping to search for command line names with
  * a given pid. The comm is duplicated. If a command with the same pid
- * alपढ़ोy exist, the command string is udapted with the new one
+ * already exist, the command string is udapted with the new one
  */
-पूर्णांक tep_override_comm(काष्ठा tep_handle *tep, स्थिर अक्षर *comm, पूर्णांक pid)
-अणु
-	अगर (!tep->cmdlines && cmdline_init(tep)) अणु
-		त्रुटि_सं = ENOMEM;
-		वापस -1;
-	पूर्ण
-	वापस _tep_रेजिस्टर_comm(tep, comm, pid, true);
-पूर्ण
+int tep_override_comm(struct tep_handle *tep, const char *comm, int pid)
+{
+	if (!tep->cmdlines && cmdline_init(tep)) {
+		errno = ENOMEM;
+		return -1;
+	}
+	return _tep_register_comm(tep, comm, pid, true);
+}
 
-काष्ठा func_map अणु
-	अचिन्हित दीर्घ दीर्घ		addr;
-	अक्षर				*func;
-	अक्षर				*mod;
-पूर्ण;
+struct func_map {
+	unsigned long long		addr;
+	char				*func;
+	char				*mod;
+};
 
-काष्ठा func_list अणु
-	काष्ठा func_list	*next;
-	अचिन्हित दीर्घ दीर्घ	addr;
-	अक्षर			*func;
-	अक्षर			*mod;
-पूर्ण;
+struct func_list {
+	struct func_list	*next;
+	unsigned long long	addr;
+	char			*func;
+	char			*mod;
+};
 
-अटल पूर्णांक func_cmp(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	स्थिर काष्ठा func_map *fa = a;
-	स्थिर काष्ठा func_map *fb = b;
+static int func_cmp(const void *a, const void *b)
+{
+	const struct func_map *fa = a;
+	const struct func_map *fb = b;
 
-	अगर (fa->addr < fb->addr)
-		वापस -1;
-	अगर (fa->addr > fb->addr)
-		वापस 1;
+	if (fa->addr < fb->addr)
+		return -1;
+	if (fa->addr > fb->addr)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * We are searching क्रम a record in between, not an exact
+ * We are searching for a record in between, not an exact
  * match.
  */
-अटल पूर्णांक func_bcmp(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	स्थिर काष्ठा func_map *fa = a;
-	स्थिर काष्ठा func_map *fb = b;
+static int func_bcmp(const void *a, const void *b)
+{
+	const struct func_map *fa = a;
+	const struct func_map *fb = b;
 
-	अगर ((fa->addr == fb->addr) ||
+	if ((fa->addr == fb->addr) ||
 
 	    (fa->addr > fb->addr &&
 	     fa->addr < (fb+1)->addr))
-		वापस 0;
+		return 0;
 
-	अगर (fa->addr < fb->addr)
-		वापस -1;
+	if (fa->addr < fb->addr)
+		return -1;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक func_map_init(काष्ठा tep_handle *tep)
-अणु
-	काष्ठा func_list *funclist;
-	काष्ठा func_list *item;
-	काष्ठा func_map *func_map;
-	पूर्णांक i;
+static int func_map_init(struct tep_handle *tep)
+{
+	struct func_list *funclist;
+	struct func_list *item;
+	struct func_map *func_map;
+	int i;
 
-	func_map = दो_स्मृति(माप(*func_map) * (tep->func_count + 1));
-	अगर (!func_map)
-		वापस -1;
+	func_map = malloc(sizeof(*func_map) * (tep->func_count + 1));
+	if (!func_map)
+		return -1;
 
 	funclist = tep->funclist;
 
 	i = 0;
-	जबतक (funclist) अणु
+	while (funclist) {
 		func_map[i].func = funclist->func;
 		func_map[i].addr = funclist->addr;
 		func_map[i].mod = funclist->mod;
 		i++;
 		item = funclist;
 		funclist = funclist->next;
-		मुक्त(item);
-	पूर्ण
+		free(item);
+	}
 
-	क्विक(func_map, tep->func_count, माप(*func_map), func_cmp);
+	qsort(func_map, tep->func_count, sizeof(*func_map), func_cmp);
 
 	/*
 	 * Add a special record at the end.
 	 */
-	func_map[tep->func_count].func = शून्य;
+	func_map[tep->func_count].func = NULL;
 	func_map[tep->func_count].addr = 0;
-	func_map[tep->func_count].mod = शून्य;
+	func_map[tep->func_count].mod = NULL;
 
 	tep->func_map = func_map;
-	tep->funclist = शून्य;
+	tep->funclist = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा func_map *
-__find_func(काष्ठा tep_handle *tep, अचिन्हित दीर्घ दीर्घ addr)
-अणु
-	काष्ठा func_map *func;
-	काष्ठा func_map key;
+static struct func_map *
+__find_func(struct tep_handle *tep, unsigned long long addr)
+{
+	struct func_map *func;
+	struct func_map key;
 
-	अगर (!tep->func_map)
+	if (!tep->func_map)
 		func_map_init(tep);
 
 	key.addr = addr;
 
-	func = द्वा_खोज(&key, tep->func_map, tep->func_count,
-		       माप(*tep->func_map), func_bcmp);
+	func = bsearch(&key, tep->func_map, tep->func_count,
+		       sizeof(*tep->func_map), func_bcmp);
 
-	वापस func;
-पूर्ण
+	return func;
+}
 
-काष्ठा func_resolver अणु
+struct func_resolver {
 	tep_func_resolver_t	*func;
-	व्योम			*priv;
-	काष्ठा func_map		map;
-पूर्ण;
+	void			*priv;
+	struct func_map		map;
+};
 
 /**
  * tep_set_function_resolver - set an alternative function resolver
  * @tep: a handle to the trace event parser context
  * @resolver: function to be used
- * @priv: resolver function निजी state.
+ * @priv: resolver function private state.
  *
- * Some tools may have alपढ़ोy a way to resolve kernel functions, allow them to
+ * Some tools may have already a way to resolve kernel functions, allow them to
  * keep using it instead of duplicating all the entries inside tep->funclist.
  */
-पूर्णांक tep_set_function_resolver(काष्ठा tep_handle *tep,
-			      tep_func_resolver_t *func, व्योम *priv)
-अणु
-	काष्ठा func_resolver *resolver = दो_स्मृति(माप(*resolver));
+int tep_set_function_resolver(struct tep_handle *tep,
+			      tep_func_resolver_t *func, void *priv)
+{
+	struct func_resolver *resolver = malloc(sizeof(*resolver));
 
-	अगर (resolver == शून्य)
-		वापस -1;
+	if (resolver == NULL)
+		return -1;
 
 	resolver->func = func;
 	resolver->priv = priv;
 
-	मुक्त(tep->func_resolver);
+	free(tep->func_resolver);
 	tep->func_resolver = resolver;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * tep_reset_function_resolver - reset alternative function resolver
  * @tep: a handle to the trace event parser context
  *
- * Stop using whatever alternative resolver was set, use the शेष
+ * Stop using whatever alternative resolver was set, use the default
  * one instead.
  */
-व्योम tep_reset_function_resolver(काष्ठा tep_handle *tep)
-अणु
-	मुक्त(tep->func_resolver);
-	tep->func_resolver = शून्य;
-पूर्ण
+void tep_reset_function_resolver(struct tep_handle *tep)
+{
+	free(tep->func_resolver);
+	tep->func_resolver = NULL;
+}
 
-अटल काष्ठा func_map *
-find_func(काष्ठा tep_handle *tep, अचिन्हित दीर्घ दीर्घ addr)
-अणु
-	काष्ठा func_map *map;
+static struct func_map *
+find_func(struct tep_handle *tep, unsigned long long addr)
+{
+	struct func_map *map;
 
-	अगर (!tep->func_resolver)
-		वापस __find_func(tep, addr);
+	if (!tep->func_resolver)
+		return __find_func(tep, addr);
 
 	map = &tep->func_resolver->map;
-	map->mod  = शून्य;
+	map->mod  = NULL;
 	map->addr = addr;
 	map->func = tep->func_resolver->func(tep->func_resolver->priv,
 					     &map->addr, &map->mod);
-	अगर (map->func == शून्य)
-		वापस शून्य;
+	if (map->func == NULL)
+		return NULL;
 
-	वापस map;
-पूर्ण
+	return map;
+}
 
 /**
  * tep_find_function - find a function by a given address
  * @tep: a handle to the trace event parser context
  * @addr: the address to find the function with
  *
- * Returns a poपूर्णांकer to the function stored that has the given
- * address. Note, the address करोes not have to be exact, it
+ * Returns a pointer to the function stored that has the given
+ * address. Note, the address does not have to be exact, it
  * will select the function that would contain the address.
  */
-स्थिर अक्षर *tep_find_function(काष्ठा tep_handle *tep, अचिन्हित दीर्घ दीर्घ addr)
-अणु
-	काष्ठा func_map *map;
+const char *tep_find_function(struct tep_handle *tep, unsigned long long addr)
+{
+	struct func_map *map;
 
 	map = find_func(tep, addr);
-	अगर (!map)
-		वापस शून्य;
+	if (!map)
+		return NULL;
 
-	वापस map->func;
-पूर्ण
+	return map->func;
+}
 
 /**
  * tep_find_function_address - find a function address by a given address
@@ -581,1249 +580,1249 @@ find_func(काष्ठा tep_handle *tep, अचिन्हित दीर
  * @addr: the address to find the function with
  *
  * Returns the address the function starts at. This can be used in
- * conjunction with tep_find_function to prपूर्णांक both the function
+ * conjunction with tep_find_function to print both the function
  * name and the function offset.
  */
-अचिन्हित दीर्घ दीर्घ
-tep_find_function_address(काष्ठा tep_handle *tep, अचिन्हित दीर्घ दीर्घ addr)
-अणु
-	काष्ठा func_map *map;
+unsigned long long
+tep_find_function_address(struct tep_handle *tep, unsigned long long addr)
+{
+	struct func_map *map;
 
 	map = find_func(tep, addr);
-	अगर (!map)
-		वापस 0;
+	if (!map)
+		return 0;
 
-	वापस map->addr;
-पूर्ण
+	return map->addr;
+}
 
 /**
- * tep_रेजिस्टर_function - रेजिस्टर a function with a given address
+ * tep_register_function - register a function with a given address
  * @tep: a handle to the trace event parser context
- * @function: the function name to रेजिस्टर
+ * @function: the function name to register
  * @addr: the address the function starts at
- * @mod: the kernel module the function may be in (शून्य क्रम none)
+ * @mod: the kernel module the function may be in (NULL for none)
  *
- * This रेजिस्टरs a function name with an address and module.
+ * This registers a function name with an address and module.
  * The @func passed in is duplicated.
  */
-पूर्णांक tep_रेजिस्टर_function(काष्ठा tep_handle *tep, अक्षर *func,
-			  अचिन्हित दीर्घ दीर्घ addr, अक्षर *mod)
-अणु
-	काष्ठा func_list *item = दो_स्मृति(माप(*item));
+int tep_register_function(struct tep_handle *tep, char *func,
+			  unsigned long long addr, char *mod)
+{
+	struct func_list *item = malloc(sizeof(*item));
 
-	अगर (!item)
-		वापस -1;
+	if (!item)
+		return -1;
 
 	item->next = tep->funclist;
 	item->func = strdup(func);
-	अगर (!item->func)
-		जाओ out_मुक्त;
+	if (!item->func)
+		goto out_free;
 
-	अगर (mod) अणु
+	if (mod) {
 		item->mod = strdup(mod);
-		अगर (!item->mod)
-			जाओ out_मुक्त_func;
-	पूर्ण अन्यथा
-		item->mod = शून्य;
+		if (!item->mod)
+			goto out_free_func;
+	} else
+		item->mod = NULL;
 	item->addr = addr;
 
 	tep->funclist = item;
 	tep->func_count++;
 
-	वापस 0;
+	return 0;
 
-out_मुक्त_func:
-	मुक्त(item->func);
-	item->func = शून्य;
-out_मुक्त:
-	मुक्त(item);
-	त्रुटि_सं = ENOMEM;
-	वापस -1;
-पूर्ण
+out_free_func:
+	free(item->func);
+	item->func = NULL;
+out_free:
+	free(item);
+	errno = ENOMEM;
+	return -1;
+}
 
 /**
- * tep_prपूर्णांक_funcs - prपूर्णांक out the stored functions
+ * tep_print_funcs - print out the stored functions
  * @tep: a handle to the trace event parser context
  *
- * This prपूर्णांकs out the stored functions.
+ * This prints out the stored functions.
  */
-व्योम tep_prपूर्णांक_funcs(काष्ठा tep_handle *tep)
-अणु
-	पूर्णांक i;
+void tep_print_funcs(struct tep_handle *tep)
+{
+	int i;
 
-	अगर (!tep->func_map)
+	if (!tep->func_map)
 		func_map_init(tep);
 
-	क्रम (i = 0; i < (पूर्णांक)tep->func_count; i++) अणु
-		म_लिखो("%016llx %s",
+	for (i = 0; i < (int)tep->func_count; i++) {
+		printf("%016llx %s",
 		       tep->func_map[i].addr,
 		       tep->func_map[i].func);
-		अगर (tep->func_map[i].mod)
-			म_लिखो(" [%s]\n", tep->func_map[i].mod);
-		अन्यथा
-			म_लिखो("\n");
-	पूर्ण
-पूर्ण
+		if (tep->func_map[i].mod)
+			printf(" [%s]\n", tep->func_map[i].mod);
+		else
+			printf("\n");
+	}
+}
 
-काष्ठा prपूर्णांकk_map अणु
-	अचिन्हित दीर्घ दीर्घ		addr;
-	अक्षर				*prपूर्णांकk;
-पूर्ण;
+struct printk_map {
+	unsigned long long		addr;
+	char				*printk;
+};
 
-काष्ठा prपूर्णांकk_list अणु
-	काष्ठा prपूर्णांकk_list	*next;
-	अचिन्हित दीर्घ दीर्घ	addr;
-	अक्षर			*prपूर्णांकk;
-पूर्ण;
+struct printk_list {
+	struct printk_list	*next;
+	unsigned long long	addr;
+	char			*printk;
+};
 
-अटल पूर्णांक prपूर्णांकk_cmp(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	स्थिर काष्ठा prपूर्णांकk_map *pa = a;
-	स्थिर काष्ठा prपूर्णांकk_map *pb = b;
+static int printk_cmp(const void *a, const void *b)
+{
+	const struct printk_map *pa = a;
+	const struct printk_map *pb = b;
 
-	अगर (pa->addr < pb->addr)
-		वापस -1;
-	अगर (pa->addr > pb->addr)
-		वापस 1;
+	if (pa->addr < pb->addr)
+		return -1;
+	if (pa->addr > pb->addr)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक prपूर्णांकk_map_init(काष्ठा tep_handle *tep)
-अणु
-	काष्ठा prपूर्णांकk_list *prपूर्णांकklist;
-	काष्ठा prपूर्णांकk_list *item;
-	काष्ठा prपूर्णांकk_map *prपूर्णांकk_map;
-	पूर्णांक i;
+static int printk_map_init(struct tep_handle *tep)
+{
+	struct printk_list *printklist;
+	struct printk_list *item;
+	struct printk_map *printk_map;
+	int i;
 
-	prपूर्णांकk_map = दो_स्मृति(माप(*prपूर्णांकk_map) * (tep->prपूर्णांकk_count + 1));
-	अगर (!prपूर्णांकk_map)
-		वापस -1;
+	printk_map = malloc(sizeof(*printk_map) * (tep->printk_count + 1));
+	if (!printk_map)
+		return -1;
 
-	prपूर्णांकklist = tep->prपूर्णांकklist;
+	printklist = tep->printklist;
 
 	i = 0;
-	जबतक (prपूर्णांकklist) अणु
-		prपूर्णांकk_map[i].prपूर्णांकk = prपूर्णांकklist->prपूर्णांकk;
-		prपूर्णांकk_map[i].addr = prपूर्णांकklist->addr;
+	while (printklist) {
+		printk_map[i].printk = printklist->printk;
+		printk_map[i].addr = printklist->addr;
 		i++;
-		item = prपूर्णांकklist;
-		prपूर्णांकklist = prपूर्णांकklist->next;
-		मुक्त(item);
-	पूर्ण
+		item = printklist;
+		printklist = printklist->next;
+		free(item);
+	}
 
-	क्विक(prपूर्णांकk_map, tep->prपूर्णांकk_count, माप(*prपूर्णांकk_map), prपूर्णांकk_cmp);
+	qsort(printk_map, tep->printk_count, sizeof(*printk_map), printk_cmp);
 
-	tep->prपूर्णांकk_map = prपूर्णांकk_map;
-	tep->prपूर्णांकklist = शून्य;
+	tep->printk_map = printk_map;
+	tep->printklist = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा prपूर्णांकk_map *
-find_prपूर्णांकk(काष्ठा tep_handle *tep, अचिन्हित दीर्घ दीर्घ addr)
-अणु
-	काष्ठा prपूर्णांकk_map *prपूर्णांकk;
-	काष्ठा prपूर्णांकk_map key;
+static struct printk_map *
+find_printk(struct tep_handle *tep, unsigned long long addr)
+{
+	struct printk_map *printk;
+	struct printk_map key;
 
-	अगर (!tep->prपूर्णांकk_map && prपूर्णांकk_map_init(tep))
-		वापस शून्य;
+	if (!tep->printk_map && printk_map_init(tep))
+		return NULL;
 
 	key.addr = addr;
 
-	prपूर्णांकk = द्वा_खोज(&key, tep->prपूर्णांकk_map, tep->prपूर्णांकk_count,
-			 माप(*tep->prपूर्णांकk_map), prपूर्णांकk_cmp);
+	printk = bsearch(&key, tep->printk_map, tep->printk_count,
+			 sizeof(*tep->printk_map), printk_cmp);
 
-	वापस prपूर्णांकk;
-पूर्ण
+	return printk;
+}
 
 /**
- * tep_रेजिस्टर_prपूर्णांक_string - रेजिस्टर a string by its address
+ * tep_register_print_string - register a string by its address
  * @tep: a handle to the trace event parser context
- * @fmt: the string क्रमmat to रेजिस्टर
+ * @fmt: the string format to register
  * @addr: the address the string was located at
  *
- * This रेजिस्टरs a string by the address it was stored in the kernel.
+ * This registers a string by the address it was stored in the kernel.
  * The @fmt passed in is duplicated.
  */
-पूर्णांक tep_रेजिस्टर_prपूर्णांक_string(काष्ठा tep_handle *tep, स्थिर अक्षर *fmt,
-			      अचिन्हित दीर्घ दीर्घ addr)
-अणु
-	काष्ठा prपूर्णांकk_list *item = दो_स्मृति(माप(*item));
-	अक्षर *p;
+int tep_register_print_string(struct tep_handle *tep, const char *fmt,
+			      unsigned long long addr)
+{
+	struct printk_list *item = malloc(sizeof(*item));
+	char *p;
 
-	अगर (!item)
-		वापस -1;
+	if (!item)
+		return -1;
 
-	item->next = tep->prपूर्णांकklist;
+	item->next = tep->printklist;
 	item->addr = addr;
 
 	/* Strip off quotes and '\n' from the end */
-	अगर (fmt[0] == '"')
+	if (fmt[0] == '"')
 		fmt++;
-	item->prपूर्णांकk = strdup(fmt);
-	अगर (!item->prपूर्णांकk)
-		जाओ out_मुक्त;
+	item->printk = strdup(fmt);
+	if (!item->printk)
+		goto out_free;
 
-	p = item->prपूर्णांकk + म_माप(item->prपूर्णांकk) - 1;
-	अगर (*p == '"')
+	p = item->printk + strlen(item->printk) - 1;
+	if (*p == '"')
 		*p = 0;
 
 	p -= 2;
-	अगर (म_भेद(p, "\\n") == 0)
+	if (strcmp(p, "\\n") == 0)
 		*p = 0;
 
-	tep->prपूर्णांकklist = item;
-	tep->prपूर्णांकk_count++;
+	tep->printklist = item;
+	tep->printk_count++;
 
-	वापस 0;
+	return 0;
 
-out_मुक्त:
-	मुक्त(item);
-	त्रुटि_सं = ENOMEM;
-	वापस -1;
-पूर्ण
+out_free:
+	free(item);
+	errno = ENOMEM;
+	return -1;
+}
 
 /**
- * tep_prपूर्णांक_prपूर्णांकk - prपूर्णांक out the stored strings
+ * tep_print_printk - print out the stored strings
  * @tep: a handle to the trace event parser context
  *
- * This prपूर्णांकs the string क्रमmats that were stored.
+ * This prints the string formats that were stored.
  */
-व्योम tep_prपूर्णांक_prपूर्णांकk(काष्ठा tep_handle *tep)
-अणु
-	पूर्णांक i;
+void tep_print_printk(struct tep_handle *tep)
+{
+	int i;
 
-	अगर (!tep->prपूर्णांकk_map)
-		prपूर्णांकk_map_init(tep);
+	if (!tep->printk_map)
+		printk_map_init(tep);
 
-	क्रम (i = 0; i < (पूर्णांक)tep->prपूर्णांकk_count; i++) अणु
-		म_लिखो("%016llx %s\n",
-		       tep->prपूर्णांकk_map[i].addr,
-		       tep->prपूर्णांकk_map[i].prपूर्णांकk);
-	पूर्ण
-पूर्ण
+	for (i = 0; i < (int)tep->printk_count; i++) {
+		printf("%016llx %s\n",
+		       tep->printk_map[i].addr,
+		       tep->printk_map[i].printk);
+	}
+}
 
-अटल काष्ठा tep_event *alloc_event(व्योम)
-अणु
-	वापस सुस्मृति(1, माप(काष्ठा tep_event));
-पूर्ण
+static struct tep_event *alloc_event(void)
+{
+	return calloc(1, sizeof(struct tep_event));
+}
 
-अटल पूर्णांक add_event(काष्ठा tep_handle *tep, काष्ठा tep_event *event)
-अणु
-	पूर्णांक i;
-	काष्ठा tep_event **events = पुनः_स्मृति(tep->events, माप(event) *
+static int add_event(struct tep_handle *tep, struct tep_event *event)
+{
+	int i;
+	struct tep_event **events = realloc(tep->events, sizeof(event) *
 					    (tep->nr_events + 1));
-	अगर (!events)
-		वापस -1;
+	if (!events)
+		return -1;
 
 	tep->events = events;
 
-	क्रम (i = 0; i < tep->nr_events; i++) अणु
-		अगर (tep->events[i]->id > event->id)
-			अवरोध;
-	पूर्ण
-	अगर (i < tep->nr_events)
-		स_हटाओ(&tep->events[i + 1],
+	for (i = 0; i < tep->nr_events; i++) {
+		if (tep->events[i]->id > event->id)
+			break;
+	}
+	if (i < tep->nr_events)
+		memmove(&tep->events[i + 1],
 			&tep->events[i],
-			माप(event) * (tep->nr_events - i));
+			sizeof(event) * (tep->nr_events - i));
 
 	tep->events[i] = event;
 	tep->nr_events++;
 
 	event->tep = tep;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक event_item_type(क्रमागत tep_event_type type)
-अणु
-	चयन (type) अणु
-	हाल TEP_EVENT_ITEM ... TEP_EVENT_SQUOTE:
-		वापस 1;
-	हाल TEP_EVENT_ERROR ... TEP_EVENT_DELIM:
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static int event_item_type(enum tep_event_type type)
+{
+	switch (type) {
+	case TEP_EVENT_ITEM ... TEP_EVENT_SQUOTE:
+		return 1;
+	case TEP_EVENT_ERROR ... TEP_EVENT_DELIM:
+	default:
+		return 0;
+	}
+}
 
-अटल व्योम मुक्त_flag_sym(काष्ठा tep_prपूर्णांक_flag_sym *fsym)
-अणु
-	काष्ठा tep_prपूर्णांक_flag_sym *next;
+static void free_flag_sym(struct tep_print_flag_sym *fsym)
+{
+	struct tep_print_flag_sym *next;
 
-	जबतक (fsym) अणु
+	while (fsym) {
 		next = fsym->next;
-		मुक्त(fsym->value);
-		मुक्त(fsym->str);
-		मुक्त(fsym);
+		free(fsym->value);
+		free(fsym->str);
+		free(fsym);
 		fsym = next;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम मुक्त_arg(काष्ठा tep_prपूर्णांक_arg *arg)
-अणु
-	काष्ठा tep_prपूर्णांक_arg *farg;
+static void free_arg(struct tep_print_arg *arg)
+{
+	struct tep_print_arg *farg;
 
-	अगर (!arg)
-		वापस;
+	if (!arg)
+		return;
 
-	चयन (arg->type) अणु
-	हाल TEP_PRINT_ATOM:
-		मुक्त(arg->atom.atom);
-		अवरोध;
-	हाल TEP_PRINT_FIELD:
-		मुक्त(arg->field.name);
-		अवरोध;
-	हाल TEP_PRINT_FLAGS:
-		मुक्त_arg(arg->flags.field);
-		मुक्त(arg->flags.delim);
-		मुक्त_flag_sym(arg->flags.flags);
-		अवरोध;
-	हाल TEP_PRINT_SYMBOL:
-		मुक्त_arg(arg->symbol.field);
-		मुक्त_flag_sym(arg->symbol.symbols);
-		अवरोध;
-	हाल TEP_PRINT_HEX:
-	हाल TEP_PRINT_HEX_STR:
-		मुक्त_arg(arg->hex.field);
-		मुक्त_arg(arg->hex.size);
-		अवरोध;
-	हाल TEP_PRINT_INT_ARRAY:
-		मुक्त_arg(arg->पूर्णांक_array.field);
-		मुक्त_arg(arg->पूर्णांक_array.count);
-		मुक्त_arg(arg->पूर्णांक_array.el_size);
-		अवरोध;
-	हाल TEP_PRINT_TYPE:
-		मुक्त(arg->typecast.type);
-		मुक्त_arg(arg->typecast.item);
-		अवरोध;
-	हाल TEP_PRINT_STRING:
-	हाल TEP_PRINT_BSTRING:
-		मुक्त(arg->string.string);
-		अवरोध;
-	हाल TEP_PRINT_BITMASK:
-		मुक्त(arg->biपंचांगask.biपंचांगask);
-		अवरोध;
-	हाल TEP_PRINT_DYNAMIC_ARRAY:
-	हाल TEP_PRINT_DYNAMIC_ARRAY_LEN:
-		मुक्त(arg->dynarray.index);
-		अवरोध;
-	हाल TEP_PRINT_OP:
-		मुक्त(arg->op.op);
-		मुक्त_arg(arg->op.left);
-		मुक्त_arg(arg->op.right);
-		अवरोध;
-	हाल TEP_PRINT_FUNC:
-		जबतक (arg->func.args) अणु
+	switch (arg->type) {
+	case TEP_PRINT_ATOM:
+		free(arg->atom.atom);
+		break;
+	case TEP_PRINT_FIELD:
+		free(arg->field.name);
+		break;
+	case TEP_PRINT_FLAGS:
+		free_arg(arg->flags.field);
+		free(arg->flags.delim);
+		free_flag_sym(arg->flags.flags);
+		break;
+	case TEP_PRINT_SYMBOL:
+		free_arg(arg->symbol.field);
+		free_flag_sym(arg->symbol.symbols);
+		break;
+	case TEP_PRINT_HEX:
+	case TEP_PRINT_HEX_STR:
+		free_arg(arg->hex.field);
+		free_arg(arg->hex.size);
+		break;
+	case TEP_PRINT_INT_ARRAY:
+		free_arg(arg->int_array.field);
+		free_arg(arg->int_array.count);
+		free_arg(arg->int_array.el_size);
+		break;
+	case TEP_PRINT_TYPE:
+		free(arg->typecast.type);
+		free_arg(arg->typecast.item);
+		break;
+	case TEP_PRINT_STRING:
+	case TEP_PRINT_BSTRING:
+		free(arg->string.string);
+		break;
+	case TEP_PRINT_BITMASK:
+		free(arg->bitmask.bitmask);
+		break;
+	case TEP_PRINT_DYNAMIC_ARRAY:
+	case TEP_PRINT_DYNAMIC_ARRAY_LEN:
+		free(arg->dynarray.index);
+		break;
+	case TEP_PRINT_OP:
+		free(arg->op.op);
+		free_arg(arg->op.left);
+		free_arg(arg->op.right);
+		break;
+	case TEP_PRINT_FUNC:
+		while (arg->func.args) {
 			farg = arg->func.args;
 			arg->func.args = farg->next;
-			मुक्त_arg(farg);
-		पूर्ण
-		अवरोध;
+			free_arg(farg);
+		}
+		break;
 
-	हाल TEP_PRINT_शून्य:
-	शेष:
-		अवरोध;
-	पूर्ण
+	case TEP_PRINT_NULL:
+	default:
+		break;
+	}
 
-	मुक्त(arg);
-पूर्ण
+	free(arg);
+}
 
-अटल क्रमागत tep_event_type get_type(पूर्णांक ch)
-अणु
-	अगर (ch == '\n')
-		वापस TEP_EVENT_NEWLINE;
-	अगर (है_खाली(ch))
-		वापस TEP_EVENT_SPACE;
-	अगर (है_अक्षर_अंक(ch) || ch == '_')
-		वापस TEP_EVENT_ITEM;
-	अगर (ch == '\'')
-		वापस TEP_EVENT_SQUOTE;
-	अगर (ch == '"')
-		वापस TEP_EVENT_DQUOTE;
-	अगर (!है_छाप(ch))
-		वापस TEP_EVENT_NONE;
-	अगर (ch == '(' || ch == ')' || ch == ',')
-		वापस TEP_EVENT_DELIM;
+static enum tep_event_type get_type(int ch)
+{
+	if (ch == '\n')
+		return TEP_EVENT_NEWLINE;
+	if (isspace(ch))
+		return TEP_EVENT_SPACE;
+	if (isalnum(ch) || ch == '_')
+		return TEP_EVENT_ITEM;
+	if (ch == '\'')
+		return TEP_EVENT_SQUOTE;
+	if (ch == '"')
+		return TEP_EVENT_DQUOTE;
+	if (!isprint(ch))
+		return TEP_EVENT_NONE;
+	if (ch == '(' || ch == ')' || ch == ',')
+		return TEP_EVENT_DELIM;
 
-	वापस TEP_EVENT_OP;
-पूर्ण
+	return TEP_EVENT_OP;
+}
 
-अटल पूर्णांक __पढ़ो_अक्षर(व्योम)
-अणु
-	अगर (input_buf_ptr >= input_buf_siz)
-		वापस -1;
+static int __read_char(void)
+{
+	if (input_buf_ptr >= input_buf_siz)
+		return -1;
 
-	वापस input_buf[input_buf_ptr++];
-पूर्ण
+	return input_buf[input_buf_ptr++];
+}
 
 /**
- * peek_अक्षर - peek at the next अक्षरacter that will be पढ़ो
+ * peek_char - peek at the next character that will be read
  *
- * Returns the next अक्षरacter पढ़ो, or -1 अगर end of buffer.
+ * Returns the next character read, or -1 if end of buffer.
  */
-__hidden पूर्णांक peek_अक्षर(व्योम)
-अणु
-	अगर (input_buf_ptr >= input_buf_siz)
-		वापस -1;
+__hidden int peek_char(void)
+{
+	if (input_buf_ptr >= input_buf_siz)
+		return -1;
 
-	वापस input_buf[input_buf_ptr];
-पूर्ण
+	return input_buf[input_buf_ptr];
+}
 
-अटल पूर्णांक extend_token(अक्षर **tok, अक्षर *buf, पूर्णांक size)
-अणु
-	अक्षर *newtok = पुनः_स्मृति(*tok, size);
+static int extend_token(char **tok, char *buf, int size)
+{
+	char *newtok = realloc(*tok, size);
 
-	अगर (!newtok) अणु
-		मुक्त(*tok);
-		*tok = शून्य;
-		वापस -1;
-	पूर्ण
+	if (!newtok) {
+		free(*tok);
+		*tok = NULL;
+		return -1;
+	}
 
-	अगर (!*tok)
-		म_नकल(newtok, buf);
-	अन्यथा
-		म_जोड़ो(newtok, buf);
+	if (!*tok)
+		strcpy(newtok, buf);
+	else
+		strcat(newtok, buf);
 	*tok = newtok;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल क्रमागत tep_event_type क्रमce_token(स्थिर अक्षर *str, अक्षर **tok);
+static enum tep_event_type force_token(const char *str, char **tok);
 
-अटल क्रमागत tep_event_type __पढ़ो_token(अक्षर **tok)
-अणु
-	अक्षर buf[बफ_मान];
-	पूर्णांक ch, last_ch, quote_ch, next_ch;
-	पूर्णांक i = 0;
-	पूर्णांक tok_size = 0;
-	क्रमागत tep_event_type type;
+static enum tep_event_type __read_token(char **tok)
+{
+	char buf[BUFSIZ];
+	int ch, last_ch, quote_ch, next_ch;
+	int i = 0;
+	int tok_size = 0;
+	enum tep_event_type type;
 
-	*tok = शून्य;
+	*tok = NULL;
 
 
-	ch = __पढ़ो_अक्षर();
-	अगर (ch < 0)
-		वापस TEP_EVENT_NONE;
+	ch = __read_char();
+	if (ch < 0)
+		return TEP_EVENT_NONE;
 
 	type = get_type(ch);
-	अगर (type == TEP_EVENT_NONE)
-		वापस type;
+	if (type == TEP_EVENT_NONE)
+		return type;
 
 	buf[i++] = ch;
 
-	चयन (type) अणु
-	हाल TEP_EVENT_NEWLINE:
-	हाल TEP_EVENT_DELIM:
-		अगर (aप्र_लिखो(tok, "%c", ch) < 0)
-			वापस TEP_EVENT_ERROR;
+	switch (type) {
+	case TEP_EVENT_NEWLINE:
+	case TEP_EVENT_DELIM:
+		if (asprintf(tok, "%c", ch) < 0)
+			return TEP_EVENT_ERROR;
 
-		वापस type;
+		return type;
 
-	हाल TEP_EVENT_OP:
-		चयन (ch) अणु
-		हाल '-':
-			next_ch = peek_अक्षर();
-			अगर (next_ch == '>') अणु
-				buf[i++] = __पढ़ो_अक्षर();
-				अवरोध;
-			पूर्ण
+	case TEP_EVENT_OP:
+		switch (ch) {
+		case '-':
+			next_ch = peek_char();
+			if (next_ch == '>') {
+				buf[i++] = __read_char();
+				break;
+			}
 			/* fall through */
-		हाल '+':
-		हाल '|':
-		हाल '&':
-		हाल '>':
-		हाल '<':
+		case '+':
+		case '|':
+		case '&':
+		case '>':
+		case '<':
 			last_ch = ch;
-			ch = peek_अक्षर();
-			अगर (ch != last_ch)
-				जाओ test_equal;
-			buf[i++] = __पढ़ो_अक्षर();
-			चयन (last_ch) अणु
-			हाल '>':
-			हाल '<':
-				जाओ test_equal;
-			शेष:
-				अवरोध;
-			पूर्ण
-			अवरोध;
-		हाल '!':
-		हाल '=':
-			जाओ test_equal;
-		शेष: /* what should we करो instead? */
-			अवरोध;
-		पूर्ण
+			ch = peek_char();
+			if (ch != last_ch)
+				goto test_equal;
+			buf[i++] = __read_char();
+			switch (last_ch) {
+			case '>':
+			case '<':
+				goto test_equal;
+			default:
+				break;
+			}
+			break;
+		case '!':
+		case '=':
+			goto test_equal;
+		default: /* what should we do instead? */
+			break;
+		}
 		buf[i] = 0;
 		*tok = strdup(buf);
-		वापस type;
+		return type;
 
  test_equal:
-		ch = peek_अक्षर();
-		अगर (ch == '=')
-			buf[i++] = __पढ़ो_अक्षर();
-		जाओ out;
+		ch = peek_char();
+		if (ch == '=')
+			buf[i++] = __read_char();
+		goto out;
 
-	हाल TEP_EVENT_DQUOTE:
-	हाल TEP_EVENT_SQUOTE:
-		/* करोn't keep quotes */
+	case TEP_EVENT_DQUOTE:
+	case TEP_EVENT_SQUOTE:
+		/* don't keep quotes */
 		i--;
 		quote_ch = ch;
 		last_ch = 0;
  concat:
-		करो अणु
-			अगर (i == (बफ_मान - 1)) अणु
+		do {
+			if (i == (BUFSIZ - 1)) {
 				buf[i] = 0;
-				tok_size += बफ_मान;
+				tok_size += BUFSIZ;
 
-				अगर (extend_token(tok, buf, tok_size) < 0)
-					वापस TEP_EVENT_NONE;
+				if (extend_token(tok, buf, tok_size) < 0)
+					return TEP_EVENT_NONE;
 				i = 0;
-			पूर्ण
+			}
 			last_ch = ch;
-			ch = __पढ़ो_अक्षर();
+			ch = __read_char();
 			buf[i++] = ch;
 			/* the '\' '\' will cancel itself */
-			अगर (ch == '\\' && last_ch == '\\')
+			if (ch == '\\' && last_ch == '\\')
 				last_ch = 0;
-		पूर्ण जबतक (ch != quote_ch || last_ch == '\\');
-		/* हटाओ the last quote */
+		} while (ch != quote_ch || last_ch == '\\');
+		/* remove the last quote */
 		i--;
 
 		/*
-		 * For strings (द्विगुन quotes) check the next token.
+		 * For strings (double quotes) check the next token.
 		 * If it is another string, concatinate the two.
 		 */
-		अगर (type == TEP_EVENT_DQUOTE) अणु
-			अचिन्हित दीर्घ दीर्घ save_input_buf_ptr = input_buf_ptr;
+		if (type == TEP_EVENT_DQUOTE) {
+			unsigned long long save_input_buf_ptr = input_buf_ptr;
 
-			करो अणु
-				ch = __पढ़ो_अक्षर();
-			पूर्ण जबतक (है_खाली(ch));
-			अगर (ch == '"')
-				जाओ concat;
+			do {
+				ch = __read_char();
+			} while (isspace(ch));
+			if (ch == '"')
+				goto concat;
 			input_buf_ptr = save_input_buf_ptr;
-		पूर्ण
+		}
 
-		जाओ out;
+		goto out;
 
-	हाल TEP_EVENT_ERROR ... TEP_EVENT_SPACE:
-	हाल TEP_EVENT_ITEM:
-	शेष:
-		अवरोध;
-	पूर्ण
+	case TEP_EVENT_ERROR ... TEP_EVENT_SPACE:
+	case TEP_EVENT_ITEM:
+	default:
+		break;
+	}
 
-	जबतक (get_type(peek_अक्षर()) == type) अणु
-		अगर (i == (बफ_मान - 1)) अणु
+	while (get_type(peek_char()) == type) {
+		if (i == (BUFSIZ - 1)) {
 			buf[i] = 0;
-			tok_size += बफ_मान;
+			tok_size += BUFSIZ;
 
-			अगर (extend_token(tok, buf, tok_size) < 0)
-				वापस TEP_EVENT_NONE;
+			if (extend_token(tok, buf, tok_size) < 0)
+				return TEP_EVENT_NONE;
 			i = 0;
-		पूर्ण
-		ch = __पढ़ो_अक्षर();
+		}
+		ch = __read_char();
 		buf[i++] = ch;
-	पूर्ण
+	}
 
  out:
 	buf[i] = 0;
-	अगर (extend_token(tok, buf, tok_size + i + 1) < 0)
-		वापस TEP_EVENT_NONE;
+	if (extend_token(tok, buf, tok_size + i + 1) < 0)
+		return TEP_EVENT_NONE;
 
-	अगर (type == TEP_EVENT_ITEM) अणु
+	if (type == TEP_EVENT_ITEM) {
 		/*
 		 * Older versions of the kernel has a bug that
-		 * creates invalid symbols and will अवरोध the mac80211
+		 * creates invalid symbols and will break the mac80211
 		 * parsing. This is a work around to that bug.
 		 *
 		 * See Linux kernel commit:
 		 *  811cb50baf63461ce0bdb234927046131fc7fa8b
 		 */
-		अगर (म_भेद(*tok, "LOCAL_PR_FMT") == 0) अणु
-			मुक्त(*tok);
-			*tok = शून्य;
-			वापस क्रमce_token("\"%s\" ", tok);
-		पूर्ण अन्यथा अगर (म_भेद(*tok, "STA_PR_FMT") == 0) अणु
-			मुक्त(*tok);
-			*tok = शून्य;
-			वापस क्रमce_token("\" sta:%pM\" ", tok);
-		पूर्ण अन्यथा अगर (म_भेद(*tok, "VIF_PR_FMT") == 0) अणु
-			मुक्त(*tok);
-			*tok = शून्य;
-			वापस क्रमce_token("\" vif:%p(%d)\" ", tok);
-		पूर्ण
-	पूर्ण
+		if (strcmp(*tok, "LOCAL_PR_FMT") == 0) {
+			free(*tok);
+			*tok = NULL;
+			return force_token("\"%s\" ", tok);
+		} else if (strcmp(*tok, "STA_PR_FMT") == 0) {
+			free(*tok);
+			*tok = NULL;
+			return force_token("\" sta:%pM\" ", tok);
+		} else if (strcmp(*tok, "VIF_PR_FMT") == 0) {
+			free(*tok);
+			*tok = NULL;
+			return force_token("\" vif:%p(%d)\" ", tok);
+		}
+	}
 
-	वापस type;
-पूर्ण
+	return type;
+}
 
-अटल क्रमागत tep_event_type क्रमce_token(स्थिर अक्षर *str, अक्षर **tok)
-अणु
-	स्थिर अक्षर *save_input_buf;
-	अचिन्हित दीर्घ दीर्घ save_input_buf_ptr;
-	अचिन्हित दीर्घ दीर्घ save_input_buf_siz;
-	क्रमागत tep_event_type type;
+static enum tep_event_type force_token(const char *str, char **tok)
+{
+	const char *save_input_buf;
+	unsigned long long save_input_buf_ptr;
+	unsigned long long save_input_buf_siz;
+	enum tep_event_type type;
 	
-	/* save off the current input poपूर्णांकers */
+	/* save off the current input pointers */
 	save_input_buf = input_buf;
 	save_input_buf_ptr = input_buf_ptr;
 	save_input_buf_siz = input_buf_siz;
 
-	init_input_buf(str, म_माप(str));
+	init_input_buf(str, strlen(str));
 
-	type = __पढ़ो_token(tok);
+	type = __read_token(tok);
 
 	/* reset back to original token */
 	input_buf = save_input_buf;
 	input_buf_ptr = save_input_buf_ptr;
 	input_buf_siz = save_input_buf_siz;
 
-	वापस type;
-पूर्ण
+	return type;
+}
 
 /**
- * मुक्त_token - मुक्त a token वापसed by tep_पढ़ो_token
- * @token: the token to मुक्त
+ * free_token - free a token returned by tep_read_token
+ * @token: the token to free
  */
-__hidden व्योम मुक्त_token(अक्षर *tok)
-अणु
-	अगर (tok)
-		मुक्त(tok);
-पूर्ण
+__hidden void free_token(char *tok)
+{
+	if (tok)
+		free(tok);
+}
 
 /**
- * पढ़ो_token - access to utilities to use the tep parser
- * @tok: The token to वापस
+ * read_token - access to utilities to use the tep parser
+ * @tok: The token to return
  *
  * This will parse tokens from the string given by
  * tep_init_data().
  *
  * Returns the token type.
  */
-__hidden क्रमागत tep_event_type पढ़ो_token(अक्षर **tok)
-अणु
-	क्रमागत tep_event_type type;
+__hidden enum tep_event_type read_token(char **tok)
+{
+	enum tep_event_type type;
 
-	क्रम (;;) अणु
-		type = __पढ़ो_token(tok);
-		अगर (type != TEP_EVENT_SPACE)
-			वापस type;
+	for (;;) {
+		type = __read_token(tok);
+		if (type != TEP_EVENT_SPACE)
+			return type;
 
-		मुक्त_token(*tok);
-	पूर्ण
+		free_token(*tok);
+	}
 
 	/* not reached */
-	*tok = शून्य;
-	वापस TEP_EVENT_NONE;
-पूर्ण
+	*tok = NULL;
+	return TEP_EVENT_NONE;
+}
 
 /* no newline */
-अटल क्रमागत tep_event_type पढ़ो_token_item(अक्षर **tok)
-अणु
-	क्रमागत tep_event_type type;
+static enum tep_event_type read_token_item(char **tok)
+{
+	enum tep_event_type type;
 
-	क्रम (;;) अणु
-		type = __पढ़ो_token(tok);
-		अगर (type != TEP_EVENT_SPACE && type != TEP_EVENT_NEWLINE)
-			वापस type;
-		मुक्त_token(*tok);
-		*tok = शून्य;
-	पूर्ण
+	for (;;) {
+		type = __read_token(tok);
+		if (type != TEP_EVENT_SPACE && type != TEP_EVENT_NEWLINE)
+			return type;
+		free_token(*tok);
+		*tok = NULL;
+	}
 
 	/* not reached */
-	*tok = शून्य;
-	वापस TEP_EVENT_NONE;
-पूर्ण
+	*tok = NULL;
+	return TEP_EVENT_NONE;
+}
 
-अटल पूर्णांक test_type(क्रमागत tep_event_type type, क्रमागत tep_event_type expect)
-अणु
-	अगर (type != expect) अणु
-		करो_warning("Error: expected type %d but read %d",
+static int test_type(enum tep_event_type type, enum tep_event_type expect)
+{
+	if (type != expect) {
+		do_warning("Error: expected type %d but read %d",
 		    expect, type);
-		वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -1;
+	}
+	return 0;
+}
 
-अटल पूर्णांक test_type_token(क्रमागत tep_event_type type, स्थिर अक्षर *token,
-		    क्रमागत tep_event_type expect, स्थिर अक्षर *expect_tok)
-अणु
-	अगर (type != expect) अणु
-		करो_warning("Error: expected type %d but read %d",
+static int test_type_token(enum tep_event_type type, const char *token,
+		    enum tep_event_type expect, const char *expect_tok)
+{
+	if (type != expect) {
+		do_warning("Error: expected type %d but read %d",
 		    expect, type);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (म_भेद(token, expect_tok) != 0) अणु
-		करो_warning("Error: expected '%s' but read '%s'",
+	if (strcmp(token, expect_tok) != 0) {
+		do_warning("Error: expected '%s' but read '%s'",
 		    expect_tok, token);
-		वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -1;
+	}
+	return 0;
+}
 
-अटल पूर्णांक __पढ़ो_expect_type(क्रमागत tep_event_type expect, अक्षर **tok, पूर्णांक newline_ok)
-अणु
-	क्रमागत tep_event_type type;
+static int __read_expect_type(enum tep_event_type expect, char **tok, int newline_ok)
+{
+	enum tep_event_type type;
 
-	अगर (newline_ok)
-		type = पढ़ो_token(tok);
-	अन्यथा
-		type = पढ़ो_token_item(tok);
-	वापस test_type(type, expect);
-पूर्ण
+	if (newline_ok)
+		type = read_token(tok);
+	else
+		type = read_token_item(tok);
+	return test_type(type, expect);
+}
 
-अटल पूर्णांक पढ़ो_expect_type(क्रमागत tep_event_type expect, अक्षर **tok)
-अणु
-	वापस __पढ़ो_expect_type(expect, tok, 1);
-पूर्ण
+static int read_expect_type(enum tep_event_type expect, char **tok)
+{
+	return __read_expect_type(expect, tok, 1);
+}
 
-अटल पूर्णांक __पढ़ो_expected(क्रमागत tep_event_type expect, स्थिर अक्षर *str,
-			   पूर्णांक newline_ok)
-अणु
-	क्रमागत tep_event_type type;
-	अक्षर *token;
-	पूर्णांक ret;
+static int __read_expected(enum tep_event_type expect, const char *str,
+			   int newline_ok)
+{
+	enum tep_event_type type;
+	char *token;
+	int ret;
 
-	अगर (newline_ok)
-		type = पढ़ो_token(&token);
-	अन्यथा
-		type = पढ़ो_token_item(&token);
+	if (newline_ok)
+		type = read_token(&token);
+	else
+		type = read_token_item(&token);
 
 	ret = test_type_token(type, token, expect, str);
 
-	मुक्त_token(token);
+	free_token(token);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक पढ़ो_expected(क्रमागत tep_event_type expect, स्थिर अक्षर *str)
-अणु
-	वापस __पढ़ो_expected(expect, str, 1);
-पूर्ण
+static int read_expected(enum tep_event_type expect, const char *str)
+{
+	return __read_expected(expect, str, 1);
+}
 
-अटल पूर्णांक पढ़ो_expected_item(क्रमागत tep_event_type expect, स्थिर अक्षर *str)
-अणु
-	वापस __पढ़ो_expected(expect, str, 0);
-पूर्ण
+static int read_expected_item(enum tep_event_type expect, const char *str)
+{
+	return __read_expected(expect, str, 0);
+}
 
-अटल अक्षर *event_पढ़ो_name(व्योम)
-अणु
-	अक्षर *token;
+static char *event_read_name(void)
+{
+	char *token;
 
-	अगर (पढ़ो_expected(TEP_EVENT_ITEM, "name") < 0)
-		वापस शून्य;
+	if (read_expected(TEP_EVENT_ITEM, "name") < 0)
+		return NULL;
 
-	अगर (पढ़ो_expected(TEP_EVENT_OP, ":") < 0)
-		वापस शून्य;
+	if (read_expected(TEP_EVENT_OP, ":") < 0)
+		return NULL;
 
-	अगर (पढ़ो_expect_type(TEP_EVENT_ITEM, &token) < 0)
-		जाओ fail;
+	if (read_expect_type(TEP_EVENT_ITEM, &token) < 0)
+		goto fail;
 
-	वापस token;
-
- fail:
-	मुक्त_token(token);
-	वापस शून्य;
-पूर्ण
-
-अटल पूर्णांक event_पढ़ो_id(व्योम)
-अणु
-	अक्षर *token;
-	पूर्णांक id;
-
-	अगर (पढ़ो_expected_item(TEP_EVENT_ITEM, "ID") < 0)
-		वापस -1;
-
-	अगर (पढ़ो_expected(TEP_EVENT_OP, ":") < 0)
-		वापस -1;
-
-	अगर (पढ़ो_expect_type(TEP_EVENT_ITEM, &token) < 0)
-		जाओ fail;
-
-	id = म_से_अदीर्घ(token, शून्य, 0);
-	मुक्त_token(token);
-	वापस id;
+	return token;
 
  fail:
-	मुक्त_token(token);
-	वापस -1;
-पूर्ण
+	free_token(token);
+	return NULL;
+}
 
-अटल पूर्णांक field_is_string(काष्ठा tep_क्रमmat_field *field)
-अणु
-	अगर ((field->flags & TEP_FIELD_IS_ARRAY) &&
-	    (म_माला(field->type, "char") || म_माला(field->type, "u8") ||
-	     म_माला(field->type, "s8")))
-		वापस 1;
+static int event_read_id(void)
+{
+	char *token;
+	int id;
 
-	वापस 0;
-पूर्ण
+	if (read_expected_item(TEP_EVENT_ITEM, "ID") < 0)
+		return -1;
 
-अटल पूर्णांक field_is_dynamic(काष्ठा tep_क्रमmat_field *field)
-अणु
-	अगर (म_भेदन(field->type, "__data_loc", 10) == 0)
-		वापस 1;
+	if (read_expected(TEP_EVENT_OP, ":") < 0)
+		return -1;
 
-	वापस 0;
-पूर्ण
+	if (read_expect_type(TEP_EVENT_ITEM, &token) < 0)
+		goto fail;
 
-अटल पूर्णांक field_is_दीर्घ(काष्ठा tep_क्रमmat_field *field)
-अणु
-	/* includes दीर्घ दीर्घ */
-	अगर (म_माला(field->type, "long"))
-		वापस 1;
+	id = strtoul(token, NULL, 0);
+	free_token(token);
+	return id;
 
-	वापस 0;
-पूर्ण
+ fail:
+	free_token(token);
+	return -1;
+}
 
-अटल अचिन्हित पूर्णांक type_size(स्थिर अक्षर *name)
-अणु
+static int field_is_string(struct tep_format_field *field)
+{
+	if ((field->flags & TEP_FIELD_IS_ARRAY) &&
+	    (strstr(field->type, "char") || strstr(field->type, "u8") ||
+	     strstr(field->type, "s8")))
+		return 1;
+
+	return 0;
+}
+
+static int field_is_dynamic(struct tep_format_field *field)
+{
+	if (strncmp(field->type, "__data_loc", 10) == 0)
+		return 1;
+
+	return 0;
+}
+
+static int field_is_long(struct tep_format_field *field)
+{
+	/* includes long long */
+	if (strstr(field->type, "long"))
+		return 1;
+
+	return 0;
+}
+
+static unsigned int type_size(const char *name)
+{
 	/* This covers all TEP_FIELD_IS_STRING types. */
-	अटल काष्ठा अणु
-		स्थिर अक्षर *type;
-		अचिन्हित पूर्णांक size;
-	पूर्ण table[] = अणु
-		अणु "u8",   1 पूर्ण,
-		अणु "u16",  2 पूर्ण,
-		अणु "u32",  4 पूर्ण,
-		अणु "u64",  8 पूर्ण,
-		अणु "s8",   1 पूर्ण,
-		अणु "s16",  2 पूर्ण,
-		अणु "s32",  4 पूर्ण,
-		अणु "s64",  8 पूर्ण,
-		अणु "char", 1 पूर्ण,
-		अणु पूर्ण,
-	पूर्ण;
-	पूर्णांक i;
+	static struct {
+		const char *type;
+		unsigned int size;
+	} table[] = {
+		{ "u8",   1 },
+		{ "u16",  2 },
+		{ "u32",  4 },
+		{ "u64",  8 },
+		{ "s8",   1 },
+		{ "s16",  2 },
+		{ "s32",  4 },
+		{ "s64",  8 },
+		{ "char", 1 },
+		{ },
+	};
+	int i;
 
-	क्रम (i = 0; table[i].type; i++) अणु
-		अगर (!म_भेद(table[i].type, name))
-			वापस table[i].size;
-	पूर्ण
+	for (i = 0; table[i].type; i++) {
+		if (!strcmp(table[i].type, name))
+			return table[i].size;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक append(अक्षर **buf, स्थिर अक्षर *delim, स्थिर अक्षर *str)
-अणु
-	अक्षर *new_buf;
+static int append(char **buf, const char *delim, const char *str)
+{
+	char *new_buf;
 
-	new_buf = पुनः_स्मृति(*buf, म_माप(*buf) + म_माप(delim) + म_माप(str) + 1);
-	अगर (!new_buf)
-		वापस -1;
-	म_जोड़ो(new_buf, delim);
-	म_जोड़ो(new_buf, str);
+	new_buf = realloc(*buf, strlen(*buf) + strlen(delim) + strlen(str) + 1);
+	if (!new_buf)
+		return -1;
+	strcat(new_buf, delim);
+	strcat(new_buf, str);
 	*buf = new_buf;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक event_पढ़ो_fields(काष्ठा tep_event *event, काष्ठा tep_क्रमmat_field **fields)
-अणु
-	काष्ठा tep_क्रमmat_field *field = शून्य;
-	क्रमागत tep_event_type type;
-	अक्षर *token;
-	अक्षर *last_token;
-	अक्षर *delim = " ";
-	पूर्णांक count = 0;
-	पूर्णांक ret;
+static int event_read_fields(struct tep_event *event, struct tep_format_field **fields)
+{
+	struct tep_format_field *field = NULL;
+	enum tep_event_type type;
+	char *token;
+	char *last_token;
+	char *delim = " ";
+	int count = 0;
+	int ret;
 
-	करो अणु
-		अचिन्हित पूर्णांक size_dynamic = 0;
+	do {
+		unsigned int size_dynamic = 0;
 
-		type = पढ़ो_token(&token);
-		अगर (type == TEP_EVENT_NEWLINE) अणु
-			मुक्त_token(token);
-			वापस count;
-		पूर्ण
+		type = read_token(&token);
+		if (type == TEP_EVENT_NEWLINE) {
+			free_token(token);
+			return count;
+		}
 
 		count++;
 
-		अगर (test_type_token(type, token, TEP_EVENT_ITEM, "field"))
-			जाओ fail;
-		मुक्त_token(token);
+		if (test_type_token(type, token, TEP_EVENT_ITEM, "field"))
+			goto fail;
+		free_token(token);
 
-		type = पढ़ो_token(&token);
+		type = read_token(&token);
 		/*
 		 * The ftrace fields may still use the "special" name.
 		 * Just ignore it.
 		 */
-		अगर (event->flags & TEP_EVENT_FL_ISFTRACE &&
-		    type == TEP_EVENT_ITEM && म_भेद(token, "special") == 0) अणु
-			मुक्त_token(token);
-			type = पढ़ो_token(&token);
-		पूर्ण
+		if (event->flags & TEP_EVENT_FL_ISFTRACE &&
+		    type == TEP_EVENT_ITEM && strcmp(token, "special") == 0) {
+			free_token(token);
+			type = read_token(&token);
+		}
 
-		अगर (test_type_token(type, token, TEP_EVENT_OP, ":") < 0)
-			जाओ fail;
+		if (test_type_token(type, token, TEP_EVENT_OP, ":") < 0)
+			goto fail;
 
-		मुक्त_token(token);
-		अगर (पढ़ो_expect_type(TEP_EVENT_ITEM, &token) < 0)
-			जाओ fail;
+		free_token(token);
+		if (read_expect_type(TEP_EVENT_ITEM, &token) < 0)
+			goto fail;
 
 		last_token = token;
 
-		field = सुस्मृति(1, माप(*field));
-		अगर (!field)
-			जाओ fail;
+		field = calloc(1, sizeof(*field));
+		if (!field)
+			goto fail;
 
 		field->event = event;
 
-		/* पढ़ो the rest of the type */
-		क्रम (;;) अणु
-			type = पढ़ो_token(&token);
-			अगर (type == TEP_EVENT_ITEM ||
-			    (type == TEP_EVENT_OP && म_भेद(token, "*") == 0) ||
+		/* read the rest of the type */
+		for (;;) {
+			type = read_token(&token);
+			if (type == TEP_EVENT_ITEM ||
+			    (type == TEP_EVENT_OP && strcmp(token, "*") == 0) ||
 			    /*
 			     * Some of the ftrace fields are broken and have
 			     * an illegal "." in them.
 			     */
 			    (event->flags & TEP_EVENT_FL_ISFTRACE &&
-			     type == TEP_EVENT_OP && म_भेद(token, ".") == 0)) अणु
+			     type == TEP_EVENT_OP && strcmp(token, ".") == 0)) {
 
-				अगर (म_भेद(token, "*") == 0)
+				if (strcmp(token, "*") == 0)
 					field->flags |= TEP_FIELD_IS_POINTER;
 
-				अगर (field->type) अणु
+				if (field->type) {
 					ret = append(&field->type, delim, last_token);
-					मुक्त(last_token);
-					अगर (ret < 0)
-						जाओ fail;
-				पूर्ण अन्यथा
+					free(last_token);
+					if (ret < 0)
+						goto fail;
+				} else
 					field->type = last_token;
 				last_token = token;
 				delim = " ";
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			/* Handle __attribute__((user)) */
-			अगर ((type == TEP_EVENT_DELIM) &&
-			    म_भेद("__attribute__", last_token) == 0 &&
-			    token[0] == '(') अणु
-				पूर्णांक depth = 1;
-				पूर्णांक ret;
+			if ((type == TEP_EVENT_DELIM) &&
+			    strcmp("__attribute__", last_token) == 0 &&
+			    token[0] == '(') {
+				int depth = 1;
+				int ret;
 
 				ret = append(&field->type, " ", last_token);
 				ret |= append(&field->type, "", "(");
-				अगर (ret < 0)
-					जाओ fail;
+				if (ret < 0)
+					goto fail;
 
 				delim = " ";
-				जबतक ((type = पढ़ो_token(&token)) != TEP_EVENT_NONE) अणु
-					अगर (type == TEP_EVENT_DELIM) अणु
-						अगर (token[0] == '(')
+				while ((type = read_token(&token)) != TEP_EVENT_NONE) {
+					if (type == TEP_EVENT_DELIM) {
+						if (token[0] == '(')
 							depth++;
-						अन्यथा अगर (token[0] == ')')
+						else if (token[0] == ')')
 							depth--;
-						अगर (!depth)
-							अवरोध;
+						if (!depth)
+							break;
 						ret = append(&field->type, "", token);
 						delim = "";
-					पूर्ण अन्यथा अणु
+					} else {
 						ret = append(&field->type, delim, token);
 						delim = " ";
-					पूर्ण
-					अगर (ret < 0)
-						जाओ fail;
-					मुक्त(last_token);
+					}
+					if (ret < 0)
+						goto fail;
+					free(last_token);
 					last_token = token;
-				पूर्ण
-				जारी;
-			पूर्ण
-			अवरोध;
-		पूर्ण
+				}
+				continue;
+			}
+			break;
+		}
 
-		अगर (!field->type) अणु
-			करो_warning_event(event, "%s: no type found", __func__);
-			जाओ fail;
-		पूर्ण
+		if (!field->type) {
+			do_warning_event(event, "%s: no type found", __func__);
+			goto fail;
+		}
 		field->name = field->alias = last_token;
 
-		अगर (test_type(type, TEP_EVENT_OP))
-			जाओ fail;
+		if (test_type(type, TEP_EVENT_OP))
+			goto fail;
 
-		अगर (म_भेद(token, "[") == 0) अणु
-			क्रमागत tep_event_type last_type = type;
-			अक्षर *brackets = token;
+		if (strcmp(token, "[") == 0) {
+			enum tep_event_type last_type = type;
+			char *brackets = token;
 
 			field->flags |= TEP_FIELD_IS_ARRAY;
 
-			type = पढ़ो_token(&token);
+			type = read_token(&token);
 
-			अगर (type == TEP_EVENT_ITEM)
-				field->arraylen = म_से_अदीर्घ(token, शून्य, 0);
-			अन्यथा
+			if (type == TEP_EVENT_ITEM)
+				field->arraylen = strtoul(token, NULL, 0);
+			else
 				field->arraylen = 0;
 
-		        जबतक (म_भेद(token, "]") != 0) अणु
-				स्थिर अक्षर *delim;
+		        while (strcmp(token, "]") != 0) {
+				const char *delim;
 
-				अगर (last_type == TEP_EVENT_ITEM &&
+				if (last_type == TEP_EVENT_ITEM &&
 				    type == TEP_EVENT_ITEM)
 					delim = " ";
-				अन्यथा
+				else
 					delim = "";
 
 				last_type = type;
 
 				ret = append(&brackets, delim, token);
-				अगर (ret < 0) अणु
-					मुक्त(brackets);
-					जाओ fail;
-				पूर्ण
+				if (ret < 0) {
+					free(brackets);
+					goto fail;
+				}
 				/* We only care about the last token */
-				field->arraylen = म_से_अदीर्घ(token, शून्य, 0);
-				मुक्त_token(token);
-				type = पढ़ो_token(&token);
-				अगर (type == TEP_EVENT_NONE) अणु
-					मुक्त(brackets);
-					करो_warning_event(event, "failed to find token");
-					जाओ fail;
-				पूर्ण
-			पूर्ण
+				field->arraylen = strtoul(token, NULL, 0);
+				free_token(token);
+				type = read_token(&token);
+				if (type == TEP_EVENT_NONE) {
+					free(brackets);
+					do_warning_event(event, "failed to find token");
+					goto fail;
+				}
+			}
 
-			मुक्त_token(token);
+			free_token(token);
 
 			ret = append(&brackets, "", "]");
-			अगर (ret < 0) अणु
-				मुक्त(brackets);
-				जाओ fail;
-			पूर्ण
+			if (ret < 0) {
+				free(brackets);
+				goto fail;
+			}
 
 			/* add brackets to type */
 
-			type = पढ़ो_token(&token);
+			type = read_token(&token);
 			/*
 			 * If the next token is not an OP, then it is of
-			 * the क्रमmat: type [] item;
+			 * the format: type [] item;
 			 */
-			अगर (type == TEP_EVENT_ITEM) अणु
+			if (type == TEP_EVENT_ITEM) {
 				ret = append(&field->type, " ", field->name);
-				अगर (ret < 0) अणु
-					मुक्त(brackets);
-					जाओ fail;
-				पूर्ण
+				if (ret < 0) {
+					free(brackets);
+					goto fail;
+				}
 				ret = append(&field->type, "", brackets);
 
 				size_dynamic = type_size(field->name);
-				मुक्त_token(field->name);
+				free_token(field->name);
 				field->name = field->alias = token;
-				type = पढ़ो_token(&token);
-			पूर्ण अन्यथा अणु
+				type = read_token(&token);
+			} else {
 				ret = append(&field->type, "", brackets);
-				अगर (ret < 0) अणु
-					मुक्त(brackets);
-					जाओ fail;
-				पूर्ण
-			पूर्ण
-			मुक्त(brackets);
-		पूर्ण
+				if (ret < 0) {
+					free(brackets);
+					goto fail;
+				}
+			}
+			free(brackets);
+		}
 
-		अगर (field_is_string(field))
+		if (field_is_string(field))
 			field->flags |= TEP_FIELD_IS_STRING;
-		अगर (field_is_dynamic(field))
+		if (field_is_dynamic(field))
 			field->flags |= TEP_FIELD_IS_DYNAMIC;
-		अगर (field_is_दीर्घ(field))
+		if (field_is_long(field))
 			field->flags |= TEP_FIELD_IS_LONG;
 
-		अगर (test_type_token(type, token,  TEP_EVENT_OP, ";"))
-			जाओ fail;
-		मुक्त_token(token);
+		if (test_type_token(type, token,  TEP_EVENT_OP, ";"))
+			goto fail;
+		free_token(token);
 
-		अगर (पढ़ो_expected(TEP_EVENT_ITEM, "offset") < 0)
-			जाओ fail_expect;
+		if (read_expected(TEP_EVENT_ITEM, "offset") < 0)
+			goto fail_expect;
 
-		अगर (पढ़ो_expected(TEP_EVENT_OP, ":") < 0)
-			जाओ fail_expect;
+		if (read_expected(TEP_EVENT_OP, ":") < 0)
+			goto fail_expect;
 
-		अगर (पढ़ो_expect_type(TEP_EVENT_ITEM, &token))
-			जाओ fail;
-		field->offset = म_से_अदीर्घ(token, शून्य, 0);
-		मुक्त_token(token);
+		if (read_expect_type(TEP_EVENT_ITEM, &token))
+			goto fail;
+		field->offset = strtoul(token, NULL, 0);
+		free_token(token);
 
-		अगर (पढ़ो_expected(TEP_EVENT_OP, ";") < 0)
-			जाओ fail_expect;
+		if (read_expected(TEP_EVENT_OP, ";") < 0)
+			goto fail_expect;
 
-		अगर (पढ़ो_expected(TEP_EVENT_ITEM, "size") < 0)
-			जाओ fail_expect;
+		if (read_expected(TEP_EVENT_ITEM, "size") < 0)
+			goto fail_expect;
 
-		अगर (पढ़ो_expected(TEP_EVENT_OP, ":") < 0)
-			जाओ fail_expect;
+		if (read_expected(TEP_EVENT_OP, ":") < 0)
+			goto fail_expect;
 
-		अगर (पढ़ो_expect_type(TEP_EVENT_ITEM, &token))
-			जाओ fail;
-		field->size = म_से_अदीर्घ(token, शून्य, 0);
-		मुक्त_token(token);
+		if (read_expect_type(TEP_EVENT_ITEM, &token))
+			goto fail;
+		field->size = strtoul(token, NULL, 0);
+		free_token(token);
 
-		अगर (पढ़ो_expected(TEP_EVENT_OP, ";") < 0)
-			जाओ fail_expect;
+		if (read_expected(TEP_EVENT_OP, ";") < 0)
+			goto fail_expect;
 
-		type = पढ़ो_token(&token);
-		अगर (type != TEP_EVENT_NEWLINE) अणु
+		type = read_token(&token);
+		if (type != TEP_EVENT_NEWLINE) {
 			/* newer versions of the kernel have a "signed" type */
-			अगर (test_type_token(type, token, TEP_EVENT_ITEM, "signed"))
-				जाओ fail;
+			if (test_type_token(type, token, TEP_EVENT_ITEM, "signed"))
+				goto fail;
 
-			मुक्त_token(token);
+			free_token(token);
 
-			अगर (पढ़ो_expected(TEP_EVENT_OP, ":") < 0)
-				जाओ fail_expect;
+			if (read_expected(TEP_EVENT_OP, ":") < 0)
+				goto fail_expect;
 
-			अगर (पढ़ो_expect_type(TEP_EVENT_ITEM, &token))
-				जाओ fail;
+			if (read_expect_type(TEP_EVENT_ITEM, &token))
+				goto fail;
 
-			अगर (म_से_अदीर्घ(token, शून्य, 0))
+			if (strtoul(token, NULL, 0))
 				field->flags |= TEP_FIELD_IS_SIGNED;
 
-			मुक्त_token(token);
-			अगर (पढ़ो_expected(TEP_EVENT_OP, ";") < 0)
-				जाओ fail_expect;
+			free_token(token);
+			if (read_expected(TEP_EVENT_OP, ";") < 0)
+				goto fail_expect;
 
-			अगर (पढ़ो_expect_type(TEP_EVENT_NEWLINE, &token))
-				जाओ fail;
-		पूर्ण
+			if (read_expect_type(TEP_EVENT_NEWLINE, &token))
+				goto fail;
+		}
 
-		मुक्त_token(token);
+		free_token(token);
 
-		अगर (field->flags & TEP_FIELD_IS_ARRAY) अणु
-			अगर (field->arraylen)
+		if (field->flags & TEP_FIELD_IS_ARRAY) {
+			if (field->arraylen)
 				field->elementsize = field->size / field->arraylen;
-			अन्यथा अगर (field->flags & TEP_FIELD_IS_DYNAMIC)
+			else if (field->flags & TEP_FIELD_IS_DYNAMIC)
 				field->elementsize = size_dynamic;
-			अन्यथा अगर (field->flags & TEP_FIELD_IS_STRING)
+			else if (field->flags & TEP_FIELD_IS_STRING)
 				field->elementsize = 1;
-			अन्यथा अगर (field->flags & TEP_FIELD_IS_LONG)
+			else if (field->flags & TEP_FIELD_IS_LONG)
 				field->elementsize = event->tep ?
-						     event->tep->दीर्घ_size :
-						     माप(दीर्घ);
-		पूर्ण अन्यथा
+						     event->tep->long_size :
+						     sizeof(long);
+		} else
 			field->elementsize = field->size;
 
 		*fields = field;
 		fields = &field->next;
 
-	पूर्ण जबतक (1);
+	} while (1);
 
-	वापस 0;
+	return 0;
 
 fail:
-	मुक्त_token(token);
+	free_token(token);
 fail_expect:
-	अगर (field) अणु
-		मुक्त(field->type);
-		मुक्त(field->name);
-		मुक्त(field);
-	पूर्ण
-	वापस -1;
-पूर्ण
+	if (field) {
+		free(field->type);
+		free(field->name);
+		free(field);
+	}
+	return -1;
+}
 
-अटल पूर्णांक event_पढ़ो_क्रमmat(काष्ठा tep_event *event)
-अणु
-	अक्षर *token;
-	पूर्णांक ret;
+static int event_read_format(struct tep_event *event)
+{
+	char *token;
+	int ret;
 
-	अगर (पढ़ो_expected_item(TEP_EVENT_ITEM, "format") < 0)
-		वापस -1;
+	if (read_expected_item(TEP_EVENT_ITEM, "format") < 0)
+		return -1;
 
-	अगर (पढ़ो_expected(TEP_EVENT_OP, ":") < 0)
-		वापस -1;
+	if (read_expected(TEP_EVENT_OP, ":") < 0)
+		return -1;
 
-	अगर (पढ़ो_expect_type(TEP_EVENT_NEWLINE, &token))
-		जाओ fail;
-	मुक्त_token(token);
+	if (read_expect_type(TEP_EVENT_NEWLINE, &token))
+		goto fail;
+	free_token(token);
 
-	ret = event_पढ़ो_fields(event, &event->क्रमmat.common_fields);
-	अगर (ret < 0)
-		वापस ret;
-	event->क्रमmat.nr_common = ret;
+	ret = event_read_fields(event, &event->format.common_fields);
+	if (ret < 0)
+		return ret;
+	event->format.nr_common = ret;
 
-	ret = event_पढ़ो_fields(event, &event->क्रमmat.fields);
-	अगर (ret < 0)
-		वापस ret;
-	event->क्रमmat.nr_fields = ret;
+	ret = event_read_fields(event, &event->format.fields);
+	if (ret < 0)
+		return ret;
+	event->format.nr_fields = ret;
 
-	वापस 0;
+	return 0;
 
  fail:
-	मुक्त_token(token);
-	वापस -1;
-पूर्ण
+	free_token(token);
+	return -1;
+}
 
-अटल क्रमागत tep_event_type
-process_arg_token(काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg *arg,
-		  अक्षर **tok, क्रमागत tep_event_type type);
+static enum tep_event_type
+process_arg_token(struct tep_event *event, struct tep_print_arg *arg,
+		  char **tok, enum tep_event_type type);
 
-अटल क्रमागत tep_event_type
-process_arg(काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg *arg, अक्षर **tok)
-अणु
-	क्रमागत tep_event_type type;
-	अक्षर *token;
+static enum tep_event_type
+process_arg(struct tep_event *event, struct tep_print_arg *arg, char **tok)
+{
+	enum tep_event_type type;
+	char *token;
 
-	type = पढ़ो_token(&token);
+	type = read_token(&token);
 	*tok = token;
 
-	वापस process_arg_token(event, arg, tok, type);
-पूर्ण
+	return process_arg_token(event, arg, tok, type);
+}
 
-अटल क्रमागत tep_event_type
-process_op(काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg *arg, अक्षर **tok);
+static enum tep_event_type
+process_op(struct tep_event *event, struct tep_print_arg *arg, char **tok);
 
 /*
- * For __prपूर्णांक_symbolic() and __prपूर्णांक_flags, we need to completely
- * evaluate the first argument, which defines what to prपूर्णांक next.
+ * For __print_symbolic() and __print_flags, we need to completely
+ * evaluate the first argument, which defines what to print next.
  */
-अटल क्रमागत tep_event_type
-process_field_arg(काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg *arg, अक्षर **tok)
-अणु
-	क्रमागत tep_event_type type;
+static enum tep_event_type
+process_field_arg(struct tep_event *event, struct tep_print_arg *arg, char **tok)
+{
+	enum tep_event_type type;
 
 	type = process_arg(event, arg, tok);
 
-	जबतक (type == TEP_EVENT_OP) अणु
+	while (type == TEP_EVENT_OP) {
 		type = process_op(event, arg, tok);
-	पूर्ण
+	}
 
-	वापस type;
-पूर्ण
+	return type;
+}
 
-अटल क्रमागत tep_event_type
-process_cond(काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg *top, अक्षर **tok)
-अणु
-	काष्ठा tep_prपूर्णांक_arg *arg, *left, *right;
-	क्रमागत tep_event_type type;
-	अक्षर *token = शून्य;
+static enum tep_event_type
+process_cond(struct tep_event *event, struct tep_print_arg *top, char **tok)
+{
+	struct tep_print_arg *arg, *left, *right;
+	enum tep_event_type type;
+	char *token = NULL;
 
 	arg = alloc_arg();
 	left = alloc_arg();
 	right = alloc_arg();
 
-	अगर (!arg || !left || !right) अणु
-		करो_warning_event(event, "%s: not enough memory!", __func__);
-		/* arg will be मुक्तd at out_मुक्त */
-		मुक्त_arg(left);
-		मुक्त_arg(right);
-		जाओ out_मुक्त;
-	पूर्ण
+	if (!arg || !left || !right) {
+		do_warning_event(event, "%s: not enough memory!", __func__);
+		/* arg will be freed at out_free */
+		free_arg(left);
+		free_arg(right);
+		goto out_free;
+	}
 
 	arg->type = TEP_PRINT_OP;
 	arg->op.left = left;
 	arg->op.right = right;
 
-	*tok = शून्य;
+	*tok = NULL;
 	type = process_arg(event, left, &token);
 
  again:
-	अगर (type == TEP_EVENT_ERROR)
-		जाओ out_मुक्त;
+	if (type == TEP_EVENT_ERROR)
+		goto out_free;
 
 	/* Handle other operations in the arguments */
-	अगर (type == TEP_EVENT_OP && म_भेद(token, ":") != 0) अणु
+	if (type == TEP_EVENT_OP && strcmp(token, ":") != 0) {
 		type = process_op(event, left, &token);
-		जाओ again;
-	पूर्ण
+		goto again;
+	}
 
-	अगर (test_type_token(type, token, TEP_EVENT_OP, ":"))
-		जाओ out_मुक्त;
+	if (test_type_token(type, token, TEP_EVENT_OP, ":"))
+		goto out_free;
 
 	arg->op.op = token;
 
@@ -1832,169 +1831,169 @@ process_cond(काष्ठा tep_event *event, काष्ठा tep_prप�
 	top->op.right = arg;
 
 	*tok = token;
-	वापस type;
+	return type;
 
-out_मुक्त:
-	/* Top may poपूर्णांक to itself */
-	top->op.right = शून्य;
-	मुक्त_token(token);
-	मुक्त_arg(arg);
-	वापस TEP_EVENT_ERROR;
-पूर्ण
+out_free:
+	/* Top may point to itself */
+	top->op.right = NULL;
+	free_token(token);
+	free_arg(arg);
+	return TEP_EVENT_ERROR;
+}
 
-अटल क्रमागत tep_event_type
-process_array(काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg *top, अक्षर **tok)
-अणु
-	काष्ठा tep_prपूर्णांक_arg *arg;
-	क्रमागत tep_event_type type;
-	अक्षर *token = शून्य;
+static enum tep_event_type
+process_array(struct tep_event *event, struct tep_print_arg *top, char **tok)
+{
+	struct tep_print_arg *arg;
+	enum tep_event_type type;
+	char *token = NULL;
 
 	arg = alloc_arg();
-	अगर (!arg) अणु
-		करो_warning_event(event, "%s: not enough memory!", __func__);
-		/* '*tok' is set to top->op.op.  No need to मुक्त. */
-		*tok = शून्य;
-		वापस TEP_EVENT_ERROR;
-	पूर्ण
+	if (!arg) {
+		do_warning_event(event, "%s: not enough memory!", __func__);
+		/* '*tok' is set to top->op.op.  No need to free. */
+		*tok = NULL;
+		return TEP_EVENT_ERROR;
+	}
 
-	*tok = शून्य;
+	*tok = NULL;
 	type = process_arg(event, arg, &token);
-	अगर (test_type_token(type, token, TEP_EVENT_OP, "]"))
-		जाओ out_मुक्त;
+	if (test_type_token(type, token, TEP_EVENT_OP, "]"))
+		goto out_free;
 
 	top->op.right = arg;
 
-	मुक्त_token(token);
-	type = पढ़ो_token_item(&token);
+	free_token(token);
+	type = read_token_item(&token);
 	*tok = token;
 
-	वापस type;
+	return type;
 
-out_मुक्त:
-	मुक्त_token(token);
-	मुक्त_arg(arg);
-	वापस TEP_EVENT_ERROR;
-पूर्ण
+out_free:
+	free_token(token);
+	free_arg(arg);
+	return TEP_EVENT_ERROR;
+}
 
-अटल पूर्णांक get_op_prio(अक्षर *op)
-अणु
-	अगर (!op[1]) अणु
-		चयन (op[0]) अणु
-		हाल '~':
-		हाल '!':
-			वापस 4;
-		हाल '*':
-		हाल '/':
-		हाल '%':
-			वापस 6;
-		हाल '+':
-		हाल '-':
-			वापस 7;
+static int get_op_prio(char *op)
+{
+	if (!op[1]) {
+		switch (op[0]) {
+		case '~':
+		case '!':
+			return 4;
+		case '*':
+		case '/':
+		case '%':
+			return 6;
+		case '+':
+		case '-':
+			return 7;
 			/* '>>' and '<<' are 8 */
-		हाल '<':
-		हाल '>':
-			वापस 9;
+		case '<':
+		case '>':
+			return 9;
 			/* '==' and '!=' are 10 */
-		हाल '&':
-			वापस 11;
-		हाल '^':
-			वापस 12;
-		हाल '|':
-			वापस 13;
-		हाल '?':
-			वापस 16;
-		शेष:
-			करो_warning("unknown op '%c'", op[0]);
-			वापस -1;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (म_भेद(op, "++") == 0 ||
-		    म_भेद(op, "--") == 0) अणु
-			वापस 3;
-		पूर्ण अन्यथा अगर (म_भेद(op, ">>") == 0 ||
-			   म_भेद(op, "<<") == 0) अणु
-			वापस 8;
-		पूर्ण अन्यथा अगर (म_भेद(op, ">=") == 0 ||
-			   म_भेद(op, "<=") == 0) अणु
-			वापस 9;
-		पूर्ण अन्यथा अगर (म_भेद(op, "==") == 0 ||
-			   म_भेद(op, "!=") == 0) अणु
-			वापस 10;
-		पूर्ण अन्यथा अगर (म_भेद(op, "&&") == 0) अणु
-			वापस 14;
-		पूर्ण अन्यथा अगर (म_भेद(op, "||") == 0) अणु
-			वापस 15;
-		पूर्ण अन्यथा अणु
-			करो_warning("unknown op '%s'", op);
-			वापस -1;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		case '&':
+			return 11;
+		case '^':
+			return 12;
+		case '|':
+			return 13;
+		case '?':
+			return 16;
+		default:
+			do_warning("unknown op '%c'", op[0]);
+			return -1;
+		}
+	} else {
+		if (strcmp(op, "++") == 0 ||
+		    strcmp(op, "--") == 0) {
+			return 3;
+		} else if (strcmp(op, ">>") == 0 ||
+			   strcmp(op, "<<") == 0) {
+			return 8;
+		} else if (strcmp(op, ">=") == 0 ||
+			   strcmp(op, "<=") == 0) {
+			return 9;
+		} else if (strcmp(op, "==") == 0 ||
+			   strcmp(op, "!=") == 0) {
+			return 10;
+		} else if (strcmp(op, "&&") == 0) {
+			return 14;
+		} else if (strcmp(op, "||") == 0) {
+			return 15;
+		} else {
+			do_warning("unknown op '%s'", op);
+			return -1;
+		}
+	}
+}
 
-अटल पूर्णांक set_op_prio(काष्ठा tep_prपूर्णांक_arg *arg)
-अणु
+static int set_op_prio(struct tep_print_arg *arg)
+{
 
 	/* single ops are the greatest */
-	अगर (!arg->op.left || arg->op.left->type == TEP_PRINT_शून्य)
+	if (!arg->op.left || arg->op.left->type == TEP_PRINT_NULL)
 		arg->op.prio = 0;
-	अन्यथा
+	else
 		arg->op.prio = get_op_prio(arg->op.op);
 
-	वापस arg->op.prio;
-पूर्ण
+	return arg->op.prio;
+}
 
-/* Note, *tok करोes not get मुक्तd, but will most likely be saved */
-अटल क्रमागत tep_event_type
-process_op(काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg *arg, अक्षर **tok)
-अणु
-	काष्ठा tep_prपूर्णांक_arg *left, *right = शून्य;
-	क्रमागत tep_event_type type;
-	अक्षर *token;
+/* Note, *tok does not get freed, but will most likely be saved */
+static enum tep_event_type
+process_op(struct tep_event *event, struct tep_print_arg *arg, char **tok)
+{
+	struct tep_print_arg *left, *right = NULL;
+	enum tep_event_type type;
+	char *token;
 
 	/* the op is passed in via tok */
 	token = *tok;
 
-	अगर (arg->type == TEP_PRINT_OP && !arg->op.left) अणु
+	if (arg->type == TEP_PRINT_OP && !arg->op.left) {
 		/* handle single op */
-		अगर (token[1]) अणु
-			करो_warning_event(event, "bad op token %s", token);
-			जाओ out_मुक्त;
-		पूर्ण
-		चयन (token[0]) अणु
-		हाल '~':
-		हाल '!':
-		हाल '+':
-		हाल '-':
-			अवरोध;
-		शेष:
-			करो_warning_event(event, "bad op token %s", token);
-			जाओ out_मुक्त;
+		if (token[1]) {
+			do_warning_event(event, "bad op token %s", token);
+			goto out_free;
+		}
+		switch (token[0]) {
+		case '~':
+		case '!':
+		case '+':
+		case '-':
+			break;
+		default:
+			do_warning_event(event, "bad op token %s", token);
+			goto out_free;
 
-		पूर्ण
+		}
 
 		/* make an empty left */
 		left = alloc_arg();
-		अगर (!left)
-			जाओ out_warn_मुक्त;
+		if (!left)
+			goto out_warn_free;
 
-		left->type = TEP_PRINT_शून्य;
+		left->type = TEP_PRINT_NULL;
 		arg->op.left = left;
 
 		right = alloc_arg();
-		अगर (!right)
-			जाओ out_warn_मुक्त;
+		if (!right)
+			goto out_warn_free;
 
 		arg->op.right = right;
 
-		/* करो not मुक्त the token, it beदीर्घs to an op */
-		*tok = शून्य;
+		/* do not free the token, it belongs to an op */
+		*tok = NULL;
 		type = process_arg(event, right, tok);
 
-	पूर्ण अन्यथा अगर (म_भेद(token, "?") == 0) अणु
+	} else if (strcmp(token, "?") == 0) {
 
 		left = alloc_arg();
-		अगर (!left)
-			जाओ out_warn_मुक्त;
+		if (!left)
+			goto out_warn_free;
 
 		/* copy the top arg to the left */
 		*left = *arg;
@@ -2007,28 +2006,28 @@ process_op(काष्ठा tep_event *event, काष्ठा tep_prपू�
 		/* it will set arg->op.right */
 		type = process_cond(event, arg, tok);
 
-	पूर्ण अन्यथा अगर (म_भेद(token, ">>") == 0 ||
-		   म_भेद(token, "<<") == 0 ||
-		   म_भेद(token, "&") == 0 ||
-		   म_भेद(token, "|") == 0 ||
-		   म_भेद(token, "&&") == 0 ||
-		   म_भेद(token, "||") == 0 ||
-		   म_भेद(token, "-") == 0 ||
-		   म_भेद(token, "+") == 0 ||
-		   म_भेद(token, "*") == 0 ||
-		   म_भेद(token, "^") == 0 ||
-		   म_भेद(token, "/") == 0 ||
-		   म_भेद(token, "%") == 0 ||
-		   म_भेद(token, "<") == 0 ||
-		   म_भेद(token, ">") == 0 ||
-		   म_भेद(token, "<=") == 0 ||
-		   म_भेद(token, ">=") == 0 ||
-		   म_भेद(token, "==") == 0 ||
-		   म_भेद(token, "!=") == 0) अणु
+	} else if (strcmp(token, ">>") == 0 ||
+		   strcmp(token, "<<") == 0 ||
+		   strcmp(token, "&") == 0 ||
+		   strcmp(token, "|") == 0 ||
+		   strcmp(token, "&&") == 0 ||
+		   strcmp(token, "||") == 0 ||
+		   strcmp(token, "-") == 0 ||
+		   strcmp(token, "+") == 0 ||
+		   strcmp(token, "*") == 0 ||
+		   strcmp(token, "^") == 0 ||
+		   strcmp(token, "/") == 0 ||
+		   strcmp(token, "%") == 0 ||
+		   strcmp(token, "<") == 0 ||
+		   strcmp(token, ">") == 0 ||
+		   strcmp(token, "<=") == 0 ||
+		   strcmp(token, ">=") == 0 ||
+		   strcmp(token, "==") == 0 ||
+		   strcmp(token, "!=") == 0) {
 
 		left = alloc_arg();
-		अगर (!left)
-			जाओ out_warn_मुक्त;
+		if (!left)
+			goto out_warn_free;
 
 		/* copy the top arg to the left */
 		*left = *arg;
@@ -2036,71 +2035,71 @@ process_op(काष्ठा tep_event *event, काष्ठा tep_prपू�
 		arg->type = TEP_PRINT_OP;
 		arg->op.op = token;
 		arg->op.left = left;
-		arg->op.right = शून्य;
+		arg->op.right = NULL;
 
-		अगर (set_op_prio(arg) == -1) अणु
+		if (set_op_prio(arg) == -1) {
 			event->flags |= TEP_EVENT_FL_FAILED;
-			/* arg->op.op (= token) will be मुक्तd at out_मुक्त */
-			arg->op.op = शून्य;
-			जाओ out_मुक्त;
-		पूर्ण
+			/* arg->op.op (= token) will be freed at out_free */
+			arg->op.op = NULL;
+			goto out_free;
+		}
 
-		type = पढ़ो_token_item(&token);
+		type = read_token_item(&token);
 		*tok = token;
 
-		/* could just be a type poपूर्णांकer */
-		अगर ((म_भेद(arg->op.op, "*") == 0) &&
-		    type == TEP_EVENT_DELIM && (म_भेद(token, ")") == 0)) अणु
-			पूर्णांक ret;
+		/* could just be a type pointer */
+		if ((strcmp(arg->op.op, "*") == 0) &&
+		    type == TEP_EVENT_DELIM && (strcmp(token, ")") == 0)) {
+			int ret;
 
-			अगर (left->type != TEP_PRINT_ATOM) अणु
-				करो_warning_event(event, "bad pointer type");
-				जाओ out_मुक्त;
-			पूर्ण
+			if (left->type != TEP_PRINT_ATOM) {
+				do_warning_event(event, "bad pointer type");
+				goto out_free;
+			}
 			ret = append(&left->atom.atom, " ", "*");
-			अगर (ret < 0)
-				जाओ out_warn_मुक्त;
+			if (ret < 0)
+				goto out_warn_free;
 
-			मुक्त(arg->op.op);
+			free(arg->op.op);
 			*arg = *left;
-			मुक्त(left);
+			free(left);
 
-			वापस type;
-		पूर्ण
+			return type;
+		}
 
 		right = alloc_arg();
-		अगर (!right)
-			जाओ out_warn_मुक्त;
+		if (!right)
+			goto out_warn_free;
 
 		type = process_arg_token(event, right, tok, type);
-		अगर (type == TEP_EVENT_ERROR) अणु
-			मुक्त_arg(right);
-			/* token was मुक्तd in process_arg_token() via *tok */
-			token = शून्य;
-			जाओ out_मुक्त;
-		पूर्ण
+		if (type == TEP_EVENT_ERROR) {
+			free_arg(right);
+			/* token was freed in process_arg_token() via *tok */
+			token = NULL;
+			goto out_free;
+		}
 
-		अगर (right->type == TEP_PRINT_OP &&
-		    get_op_prio(arg->op.op) < get_op_prio(right->op.op)) अणु
-			काष्ठा tep_prपूर्णांक_arg पंचांगp;
+		if (right->type == TEP_PRINT_OP &&
+		    get_op_prio(arg->op.op) < get_op_prio(right->op.op)) {
+			struct tep_print_arg tmp;
 
 			/* rotate ops according to the priority */
 			arg->op.right = right->op.left;
 
-			पंचांगp = *arg;
+			tmp = *arg;
 			*arg = *right;
-			*right = पंचांगp;
+			*right = tmp;
 
 			arg->op.left = right;
-		पूर्ण अन्यथा अणु
+		} else {
 			arg->op.right = right;
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा अगर (म_भेद(token, "[") == 0) अणु
+	} else if (strcmp(token, "[") == 0) {
 
 		left = alloc_arg();
-		अगर (!left)
-			जाओ out_warn_मुक्त;
+		if (!left)
+			goto out_warn_free;
 
 		*left = *arg;
 
@@ -2113,1316 +2112,1316 @@ process_op(काष्ठा tep_event *event, काष्ठा tep_prपू�
 		/* it will set arg->op.right */
 		type = process_array(event, arg, tok);
 
-	पूर्ण अन्यथा अणु
-		करो_warning_event(event, "unknown op '%s'", token);
+	} else {
+		do_warning_event(event, "unknown op '%s'", token);
 		event->flags |= TEP_EVENT_FL_FAILED;
 		/* the arg is now the left side */
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	अगर (type == TEP_EVENT_OP && म_भेद(*tok, ":") != 0) अणु
-		पूर्णांक prio;
+	if (type == TEP_EVENT_OP && strcmp(*tok, ":") != 0) {
+		int prio;
 
-		/* higher prios need to be बंदr to the root */
+		/* higher prios need to be closer to the root */
 		prio = get_op_prio(*tok);
 
-		अगर (prio > arg->op.prio)
-			वापस process_op(event, arg, tok);
+		if (prio > arg->op.prio)
+			return process_op(event, arg, tok);
 
-		वापस process_op(event, right, tok);
-	पूर्ण
+		return process_op(event, right, tok);
+	}
 
-	वापस type;
+	return type;
 
-out_warn_मुक्त:
-	करो_warning_event(event, "%s: not enough memory!", __func__);
-out_मुक्त:
-	मुक्त_token(token);
-	*tok = शून्य;
-	वापस TEP_EVENT_ERROR;
-पूर्ण
+out_warn_free:
+	do_warning_event(event, "%s: not enough memory!", __func__);
+out_free:
+	free_token(token);
+	*tok = NULL;
+	return TEP_EVENT_ERROR;
+}
 
-अटल क्रमागत tep_event_type
-process_entry(काष्ठा tep_event *event __maybe_unused, काष्ठा tep_prपूर्णांक_arg *arg,
-	      अक्षर **tok)
-अणु
-	क्रमागत tep_event_type type;
-	अक्षर *field;
-	अक्षर *token;
+static enum tep_event_type
+process_entry(struct tep_event *event __maybe_unused, struct tep_print_arg *arg,
+	      char **tok)
+{
+	enum tep_event_type type;
+	char *field;
+	char *token;
 
-	अगर (पढ़ो_expected(TEP_EVENT_OP, "->") < 0)
-		जाओ out_err;
+	if (read_expected(TEP_EVENT_OP, "->") < 0)
+		goto out_err;
 
-	अगर (पढ़ो_expect_type(TEP_EVENT_ITEM, &token) < 0)
-		जाओ out_मुक्त;
+	if (read_expect_type(TEP_EVENT_ITEM, &token) < 0)
+		goto out_free;
 	field = token;
 
 	arg->type = TEP_PRINT_FIELD;
 	arg->field.name = field;
 
-	अगर (is_flag_field) अणु
+	if (is_flag_field) {
 		arg->field.field = tep_find_any_field(event, arg->field.name);
 		arg->field.field->flags |= TEP_FIELD_IS_FLAG;
 		is_flag_field = 0;
-	पूर्ण अन्यथा अगर (is_symbolic_field) अणु
+	} else if (is_symbolic_field) {
 		arg->field.field = tep_find_any_field(event, arg->field.name);
 		arg->field.field->flags |= TEP_FIELD_IS_SYMBOLIC;
 		is_symbolic_field = 0;
-	पूर्ण
+	}
 
-	type = पढ़ो_token(&token);
+	type = read_token(&token);
 	*tok = token;
 
-	वापस type;
+	return type;
 
- out_मुक्त:
-	मुक्त_token(token);
+ out_free:
+	free_token(token);
  out_err:
-	*tok = शून्य;
-	वापस TEP_EVENT_ERROR;
-पूर्ण
+	*tok = NULL;
+	return TEP_EVENT_ERROR;
+}
 
-अटल पूर्णांक alloc_and_process_delim(काष्ठा tep_event *event, अक्षर *next_token,
-				   काष्ठा tep_prपूर्णांक_arg **prपूर्णांक_arg)
-अणु
-	काष्ठा tep_prपूर्णांक_arg *field;
-	क्रमागत tep_event_type type;
-	अक्षर *token;
-	पूर्णांक ret = 0;
+static int alloc_and_process_delim(struct tep_event *event, char *next_token,
+				   struct tep_print_arg **print_arg)
+{
+	struct tep_print_arg *field;
+	enum tep_event_type type;
+	char *token;
+	int ret = 0;
 
 	field = alloc_arg();
-	अगर (!field) अणु
-		करो_warning_event(event, "%s: not enough memory!", __func__);
-		त्रुटि_सं = ENOMEM;
-		वापस -1;
-	पूर्ण
+	if (!field) {
+		do_warning_event(event, "%s: not enough memory!", __func__);
+		errno = ENOMEM;
+		return -1;
+	}
 
 	type = process_arg(event, field, &token);
 
-	अगर (test_type_token(type, token, TEP_EVENT_DELIM, next_token)) अणु
-		त्रुटि_सं = EINVAL;
+	if (test_type_token(type, token, TEP_EVENT_DELIM, next_token)) {
+		errno = EINVAL;
 		ret = -1;
-		मुक्त_arg(field);
-		जाओ out_मुक्त_token;
-	पूर्ण
+		free_arg(field);
+		goto out_free_token;
+	}
 
-	*prपूर्णांक_arg = field;
+	*print_arg = field;
 
-out_मुक्त_token:
-	मुक्त_token(token);
+out_free_token:
+	free_token(token);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अक्षर *arg_eval (काष्ठा tep_prपूर्णांक_arg *arg);
+static char *arg_eval (struct tep_print_arg *arg);
 
-अटल अचिन्हित दीर्घ दीर्घ
-eval_type_str(अचिन्हित दीर्घ दीर्घ val, स्थिर अक्षर *type, पूर्णांक poपूर्णांकer)
-अणु
-	पूर्णांक sign = 0;
-	अक्षर *ref;
-	पूर्णांक len;
+static unsigned long long
+eval_type_str(unsigned long long val, const char *type, int pointer)
+{
+	int sign = 0;
+	char *ref;
+	int len;
 
-	len = म_माप(type);
+	len = strlen(type);
 
-	अगर (poपूर्णांकer) अणु
+	if (pointer) {
 
-		अगर (type[len-1] != '*') अणु
-			करो_warning("pointer expected with non pointer type");
-			वापस val;
-		पूर्ण
+		if (type[len-1] != '*') {
+			do_warning("pointer expected with non pointer type");
+			return val;
+		}
 
-		ref = दो_स्मृति(len);
-		अगर (!ref) अणु
-			करो_warning("%s: not enough memory!", __func__);
-			वापस val;
-		पूर्ण
-		स_नकल(ref, type, len);
+		ref = malloc(len);
+		if (!ref) {
+			do_warning("%s: not enough memory!", __func__);
+			return val;
+		}
+		memcpy(ref, type, len);
 
 		/* chop off the " *" */
 		ref[len - 2] = 0;
 
 		val = eval_type_str(val, ref, 0);
-		मुक्त(ref);
-		वापस val;
-	पूर्ण
+		free(ref);
+		return val;
+	}
 
-	/* check अगर this is a poपूर्णांकer */
-	अगर (type[len - 1] == '*')
-		वापस val;
+	/* check if this is a pointer */
+	if (type[len - 1] == '*')
+		return val;
 
 	/* Try to figure out the arg size*/
-	अगर (म_भेदन(type, "struct", 6) == 0)
+	if (strncmp(type, "struct", 6) == 0)
 		/* all bets off */
-		वापस val;
+		return val;
 
-	अगर (म_भेद(type, "u8") == 0)
-		वापस val & 0xff;
+	if (strcmp(type, "u8") == 0)
+		return val & 0xff;
 
-	अगर (म_भेद(type, "u16") == 0)
-		वापस val & 0xffff;
+	if (strcmp(type, "u16") == 0)
+		return val & 0xffff;
 
-	अगर (म_भेद(type, "u32") == 0)
-		वापस val & 0xffffffff;
+	if (strcmp(type, "u32") == 0)
+		return val & 0xffffffff;
 
-	अगर (म_भेद(type, "u64") == 0 ||
-	    म_भेद(type, "s64") == 0)
-		वापस val;
+	if (strcmp(type, "u64") == 0 ||
+	    strcmp(type, "s64") == 0)
+		return val;
 
-	अगर (म_भेद(type, "s8") == 0)
-		वापस (अचिन्हित दीर्घ दीर्घ)(अक्षर)val & 0xff;
+	if (strcmp(type, "s8") == 0)
+		return (unsigned long long)(char)val & 0xff;
 
-	अगर (म_भेद(type, "s16") == 0)
-		वापस (अचिन्हित दीर्घ दीर्घ)(लघु)val & 0xffff;
+	if (strcmp(type, "s16") == 0)
+		return (unsigned long long)(short)val & 0xffff;
 
-	अगर (म_भेद(type, "s32") == 0)
-		वापस (अचिन्हित दीर्घ दीर्घ)(पूर्णांक)val & 0xffffffff;
+	if (strcmp(type, "s32") == 0)
+		return (unsigned long long)(int)val & 0xffffffff;
 
-	अगर (म_भेदन(type, "unsigned ", 9) == 0) अणु
+	if (strncmp(type, "unsigned ", 9) == 0) {
 		sign = 0;
 		type += 9;
-	पूर्ण
+	}
 
-	अगर (म_भेद(type, "char") == 0) अणु
-		अगर (sign)
-			वापस (अचिन्हित दीर्घ दीर्घ)(अक्षर)val & 0xff;
-		अन्यथा
-			वापस val & 0xff;
-	पूर्ण
+	if (strcmp(type, "char") == 0) {
+		if (sign)
+			return (unsigned long long)(char)val & 0xff;
+		else
+			return val & 0xff;
+	}
 
-	अगर (म_भेद(type, "short") == 0) अणु
-		अगर (sign)
-			वापस (अचिन्हित दीर्घ दीर्घ)(लघु)val & 0xffff;
-		अन्यथा
-			वापस val & 0xffff;
-	पूर्ण
+	if (strcmp(type, "short") == 0) {
+		if (sign)
+			return (unsigned long long)(short)val & 0xffff;
+		else
+			return val & 0xffff;
+	}
 
-	अगर (म_भेद(type, "int") == 0) अणु
-		अगर (sign)
-			वापस (अचिन्हित दीर्घ दीर्घ)(पूर्णांक)val & 0xffffffff;
-		अन्यथा
-			वापस val & 0xffffffff;
-	पूर्ण
+	if (strcmp(type, "int") == 0) {
+		if (sign)
+			return (unsigned long long)(int)val & 0xffffffff;
+		else
+			return val & 0xffffffff;
+	}
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
 /*
  * Try to figure out the type.
  */
-अटल अचिन्हित दीर्घ दीर्घ
-eval_type(अचिन्हित दीर्घ दीर्घ val, काष्ठा tep_prपूर्णांक_arg *arg, पूर्णांक poपूर्णांकer)
-अणु
-	अगर (arg->type != TEP_PRINT_TYPE) अणु
-		करो_warning("expected type argument");
-		वापस 0;
-	पूर्ण
+static unsigned long long
+eval_type(unsigned long long val, struct tep_print_arg *arg, int pointer)
+{
+	if (arg->type != TEP_PRINT_TYPE) {
+		do_warning("expected type argument");
+		return 0;
+	}
 
-	वापस eval_type_str(val, arg->typecast.type, poपूर्णांकer);
-पूर्ण
+	return eval_type_str(val, arg->typecast.type, pointer);
+}
 
-अटल पूर्णांक arg_num_eval(काष्ठा tep_prपूर्णांक_arg *arg, दीर्घ दीर्घ *val)
-अणु
-	दीर्घ दीर्घ left, right;
-	पूर्णांक ret = 1;
+static int arg_num_eval(struct tep_print_arg *arg, long long *val)
+{
+	long long left, right;
+	int ret = 1;
 
-	चयन (arg->type) अणु
-	हाल TEP_PRINT_ATOM:
-		*val = म_से_दीर्घl(arg->atom.atom, शून्य, 0);
-		अवरोध;
-	हाल TEP_PRINT_TYPE:
+	switch (arg->type) {
+	case TEP_PRINT_ATOM:
+		*val = strtoll(arg->atom.atom, NULL, 0);
+		break;
+	case TEP_PRINT_TYPE:
 		ret = arg_num_eval(arg->typecast.item, val);
-		अगर (!ret)
-			अवरोध;
+		if (!ret)
+			break;
 		*val = eval_type(*val, arg, 0);
-		अवरोध;
-	हाल TEP_PRINT_OP:
-		चयन (arg->op.op[0]) अणु
-		हाल '|':
+		break;
+	case TEP_PRINT_OP:
+		switch (arg->op.op[0]) {
+		case '|':
 			ret = arg_num_eval(arg->op.left, &left);
-			अगर (!ret)
-				अवरोध;
+			if (!ret)
+				break;
 			ret = arg_num_eval(arg->op.right, &right);
-			अगर (!ret)
-				अवरोध;
-			अगर (arg->op.op[1])
+			if (!ret)
+				break;
+			if (arg->op.op[1])
 				*val = left || right;
-			अन्यथा
+			else
 				*val = left | right;
-			अवरोध;
-		हाल '&':
+			break;
+		case '&':
 			ret = arg_num_eval(arg->op.left, &left);
-			अगर (!ret)
-				अवरोध;
+			if (!ret)
+				break;
 			ret = arg_num_eval(arg->op.right, &right);
-			अगर (!ret)
-				अवरोध;
-			अगर (arg->op.op[1])
+			if (!ret)
+				break;
+			if (arg->op.op[1])
 				*val = left && right;
-			अन्यथा
+			else
 				*val = left & right;
-			अवरोध;
-		हाल '<':
+			break;
+		case '<':
 			ret = arg_num_eval(arg->op.left, &left);
-			अगर (!ret)
-				अवरोध;
+			if (!ret)
+				break;
 			ret = arg_num_eval(arg->op.right, &right);
-			अगर (!ret)
-				अवरोध;
-			चयन (arg->op.op[1]) अणु
-			हाल 0:
+			if (!ret)
+				break;
+			switch (arg->op.op[1]) {
+			case 0:
 				*val = left < right;
-				अवरोध;
-			हाल '<':
+				break;
+			case '<':
 				*val = left << right;
-				अवरोध;
-			हाल '=':
+				break;
+			case '=':
 				*val = left <= right;
-				अवरोध;
-			शेष:
-				करो_warning("unknown op '%s'", arg->op.op);
+				break;
+			default:
+				do_warning("unknown op '%s'", arg->op.op);
 				ret = 0;
-			पूर्ण
-			अवरोध;
-		हाल '>':
+			}
+			break;
+		case '>':
 			ret = arg_num_eval(arg->op.left, &left);
-			अगर (!ret)
-				अवरोध;
+			if (!ret)
+				break;
 			ret = arg_num_eval(arg->op.right, &right);
-			अगर (!ret)
-				अवरोध;
-			चयन (arg->op.op[1]) अणु
-			हाल 0:
+			if (!ret)
+				break;
+			switch (arg->op.op[1]) {
+			case 0:
 				*val = left > right;
-				अवरोध;
-			हाल '>':
+				break;
+			case '>':
 				*val = left >> right;
-				अवरोध;
-			हाल '=':
+				break;
+			case '=':
 				*val = left >= right;
-				अवरोध;
-			शेष:
-				करो_warning("unknown op '%s'", arg->op.op);
+				break;
+			default:
+				do_warning("unknown op '%s'", arg->op.op);
 				ret = 0;
-			पूर्ण
-			अवरोध;
-		हाल '=':
+			}
+			break;
+		case '=':
 			ret = arg_num_eval(arg->op.left, &left);
-			अगर (!ret)
-				अवरोध;
+			if (!ret)
+				break;
 			ret = arg_num_eval(arg->op.right, &right);
-			अगर (!ret)
-				अवरोध;
+			if (!ret)
+				break;
 
-			अगर (arg->op.op[1] != '=') अणु
-				करो_warning("unknown op '%s'", arg->op.op);
+			if (arg->op.op[1] != '=') {
+				do_warning("unknown op '%s'", arg->op.op);
 				ret = 0;
-			पूर्ण अन्यथा
+			} else
 				*val = left == right;
-			अवरोध;
-		हाल '!':
+			break;
+		case '!':
 			ret = arg_num_eval(arg->op.left, &left);
-			अगर (!ret)
-				अवरोध;
+			if (!ret)
+				break;
 			ret = arg_num_eval(arg->op.right, &right);
-			अगर (!ret)
-				अवरोध;
+			if (!ret)
+				break;
 
-			चयन (arg->op.op[1]) अणु
-			हाल '=':
+			switch (arg->op.op[1]) {
+			case '=':
 				*val = left != right;
-				अवरोध;
-			शेष:
-				करो_warning("unknown op '%s'", arg->op.op);
+				break;
+			default:
+				do_warning("unknown op '%s'", arg->op.op);
 				ret = 0;
-			पूर्ण
-			अवरोध;
-		हाल '-':
-			/* check क्रम negative */
-			अगर (arg->op.left->type == TEP_PRINT_शून्य)
+			}
+			break;
+		case '-':
+			/* check for negative */
+			if (arg->op.left->type == TEP_PRINT_NULL)
 				left = 0;
-			अन्यथा
+			else
 				ret = arg_num_eval(arg->op.left, &left);
-			अगर (!ret)
-				अवरोध;
+			if (!ret)
+				break;
 			ret = arg_num_eval(arg->op.right, &right);
-			अगर (!ret)
-				अवरोध;
+			if (!ret)
+				break;
 			*val = left - right;
-			अवरोध;
-		हाल '+':
-			अगर (arg->op.left->type == TEP_PRINT_शून्य)
+			break;
+		case '+':
+			if (arg->op.left->type == TEP_PRINT_NULL)
 				left = 0;
-			अन्यथा
+			else
 				ret = arg_num_eval(arg->op.left, &left);
-			अगर (!ret)
-				अवरोध;
+			if (!ret)
+				break;
 			ret = arg_num_eval(arg->op.right, &right);
-			अगर (!ret)
-				अवरोध;
+			if (!ret)
+				break;
 			*val = left + right;
-			अवरोध;
-		हाल '~':
+			break;
+		case '~':
 			ret = arg_num_eval(arg->op.right, &right);
-			अगर (!ret)
-				अवरोध;
+			if (!ret)
+				break;
 			*val = ~right;
-			अवरोध;
-		शेष:
-			करो_warning("unknown op '%s'", arg->op.op);
+			break;
+		default:
+			do_warning("unknown op '%s'", arg->op.op);
 			ret = 0;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल TEP_PRINT_शून्य:
-	हाल TEP_PRINT_FIELD ... TEP_PRINT_SYMBOL:
-	हाल TEP_PRINT_STRING:
-	हाल TEP_PRINT_BSTRING:
-	हाल TEP_PRINT_BITMASK:
-	शेष:
-		करो_warning("invalid eval type %d", arg->type);
+	case TEP_PRINT_NULL:
+	case TEP_PRINT_FIELD ... TEP_PRINT_SYMBOL:
+	case TEP_PRINT_STRING:
+	case TEP_PRINT_BSTRING:
+	case TEP_PRINT_BITMASK:
+	default:
+		do_warning("invalid eval type %d", arg->type);
 		ret = 0;
 
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल अक्षर *arg_eval (काष्ठा tep_prपूर्णांक_arg *arg)
-अणु
-	दीर्घ दीर्घ val;
-	अटल अक्षर buf[24];
+static char *arg_eval (struct tep_print_arg *arg)
+{
+	long long val;
+	static char buf[24];
 
-	चयन (arg->type) अणु
-	हाल TEP_PRINT_ATOM:
-		वापस arg->atom.atom;
-	हाल TEP_PRINT_TYPE:
-		वापस arg_eval(arg->typecast.item);
-	हाल TEP_PRINT_OP:
-		अगर (!arg_num_eval(arg, &val))
-			अवरोध;
-		प्र_लिखो(buf, "%lld", val);
-		वापस buf;
+	switch (arg->type) {
+	case TEP_PRINT_ATOM:
+		return arg->atom.atom;
+	case TEP_PRINT_TYPE:
+		return arg_eval(arg->typecast.item);
+	case TEP_PRINT_OP:
+		if (!arg_num_eval(arg, &val))
+			break;
+		sprintf(buf, "%lld", val);
+		return buf;
 
-	हाल TEP_PRINT_शून्य:
-	हाल TEP_PRINT_FIELD ... TEP_PRINT_SYMBOL:
-	हाल TEP_PRINT_STRING:
-	हाल TEP_PRINT_BSTRING:
-	हाल TEP_PRINT_BITMASK:
-	शेष:
-		करो_warning("invalid eval type %d", arg->type);
-		अवरोध;
-	पूर्ण
+	case TEP_PRINT_NULL:
+	case TEP_PRINT_FIELD ... TEP_PRINT_SYMBOL:
+	case TEP_PRINT_STRING:
+	case TEP_PRINT_BSTRING:
+	case TEP_PRINT_BITMASK:
+	default:
+		do_warning("invalid eval type %d", arg->type);
+		break;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल क्रमागत tep_event_type
-process_fields(काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_flag_sym **list, अक्षर **tok)
-अणु
-	क्रमागत tep_event_type type;
-	काष्ठा tep_prपूर्णांक_arg *arg = शून्य;
-	काष्ठा tep_prपूर्णांक_flag_sym *field;
-	अक्षर *token = *tok;
-	अक्षर *value;
+static enum tep_event_type
+process_fields(struct tep_event *event, struct tep_print_flag_sym **list, char **tok)
+{
+	enum tep_event_type type;
+	struct tep_print_arg *arg = NULL;
+	struct tep_print_flag_sym *field;
+	char *token = *tok;
+	char *value;
 
-	करो अणु
-		मुक्त_token(token);
-		type = पढ़ो_token_item(&token);
-		अगर (test_type_token(type, token, TEP_EVENT_OP, "{"))
-			अवरोध;
+	do {
+		free_token(token);
+		type = read_token_item(&token);
+		if (test_type_token(type, token, TEP_EVENT_OP, "{"))
+			break;
 
 		arg = alloc_arg();
-		अगर (!arg)
-			जाओ out_मुक्त;
+		if (!arg)
+			goto out_free;
 
-		मुक्त_token(token);
+		free_token(token);
 		type = process_arg(event, arg, &token);
 
-		अगर (type == TEP_EVENT_OP)
+		if (type == TEP_EVENT_OP)
 			type = process_op(event, arg, &token);
 
-		अगर (type == TEP_EVENT_ERROR)
-			जाओ out_मुक्त;
+		if (type == TEP_EVENT_ERROR)
+			goto out_free;
 
-		अगर (test_type_token(type, token, TEP_EVENT_DELIM, ","))
-			जाओ out_मुक्त;
+		if (test_type_token(type, token, TEP_EVENT_DELIM, ","))
+			goto out_free;
 
-		field = सुस्मृति(1, माप(*field));
-		अगर (!field)
-			जाओ out_मुक्त;
+		field = calloc(1, sizeof(*field));
+		if (!field)
+			goto out_free;
 
 		value = arg_eval(arg);
-		अगर (value == शून्य)
-			जाओ out_मुक्त_field;
+		if (value == NULL)
+			goto out_free_field;
 		field->value = strdup(value);
-		अगर (field->value == शून्य)
-			जाओ out_मुक्त_field;
+		if (field->value == NULL)
+			goto out_free_field;
 
-		मुक्त_arg(arg);
+		free_arg(arg);
 		arg = alloc_arg();
-		अगर (!arg)
-			जाओ out_मुक्त;
+		if (!arg)
+			goto out_free;
 
-		मुक्त_token(token);
+		free_token(token);
 		type = process_arg(event, arg, &token);
-		अगर (test_type_token(type, token, TEP_EVENT_OP, "}"))
-			जाओ out_मुक्त_field;
+		if (test_type_token(type, token, TEP_EVENT_OP, "}"))
+			goto out_free_field;
 
 		value = arg_eval(arg);
-		अगर (value == शून्य)
-			जाओ out_मुक्त_field;
+		if (value == NULL)
+			goto out_free_field;
 		field->str = strdup(value);
-		अगर (field->str == शून्य)
-			जाओ out_मुक्त_field;
-		मुक्त_arg(arg);
-		arg = शून्य;
+		if (field->str == NULL)
+			goto out_free_field;
+		free_arg(arg);
+		arg = NULL;
 
 		*list = field;
 		list = &field->next;
 
-		मुक्त_token(token);
-		type = पढ़ो_token_item(&token);
-	पूर्ण जबतक (type == TEP_EVENT_DELIM && म_भेद(token, ",") == 0);
+		free_token(token);
+		type = read_token_item(&token);
+	} while (type == TEP_EVENT_DELIM && strcmp(token, ",") == 0);
 
 	*tok = token;
-	वापस type;
+	return type;
 
-out_मुक्त_field:
-	मुक्त_flag_sym(field);
-out_मुक्त:
-	मुक्त_arg(arg);
-	मुक्त_token(token);
-	*tok = शून्य;
+out_free_field:
+	free_flag_sym(field);
+out_free:
+	free_arg(arg);
+	free_token(token);
+	*tok = NULL;
 
-	वापस TEP_EVENT_ERROR;
-पूर्ण
+	return TEP_EVENT_ERROR;
+}
 
-अटल क्रमागत tep_event_type
-process_flags(काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg *arg, अक्षर **tok)
-अणु
-	काष्ठा tep_prपूर्णांक_arg *field;
-	क्रमागत tep_event_type type;
-	अक्षर *token = शून्य;
+static enum tep_event_type
+process_flags(struct tep_event *event, struct tep_print_arg *arg, char **tok)
+{
+	struct tep_print_arg *field;
+	enum tep_event_type type;
+	char *token = NULL;
 
-	स_रखो(arg, 0, माप(*arg));
+	memset(arg, 0, sizeof(*arg));
 	arg->type = TEP_PRINT_FLAGS;
 
 	field = alloc_arg();
-	अगर (!field) अणु
-		करो_warning_event(event, "%s: not enough memory!", __func__);
-		जाओ out_मुक्त;
-	पूर्ण
+	if (!field) {
+		do_warning_event(event, "%s: not enough memory!", __func__);
+		goto out_free;
+	}
 
 	type = process_field_arg(event, field, &token);
 
 	/* Handle operations in the first argument */
-	जबतक (type == TEP_EVENT_OP)
+	while (type == TEP_EVENT_OP)
 		type = process_op(event, field, &token);
 
-	अगर (test_type_token(type, token, TEP_EVENT_DELIM, ","))
-		जाओ out_मुक्त_field;
-	मुक्त_token(token);
+	if (test_type_token(type, token, TEP_EVENT_DELIM, ","))
+		goto out_free_field;
+	free_token(token);
 
 	arg->flags.field = field;
 
-	type = पढ़ो_token_item(&token);
-	अगर (event_item_type(type)) अणु
+	type = read_token_item(&token);
+	if (event_item_type(type)) {
 		arg->flags.delim = token;
-		type = पढ़ो_token_item(&token);
-	पूर्ण
+		type = read_token_item(&token);
+	}
 
-	अगर (test_type_token(type, token, TEP_EVENT_DELIM, ","))
-		जाओ out_मुक्त;
+	if (test_type_token(type, token, TEP_EVENT_DELIM, ","))
+		goto out_free;
 
 	type = process_fields(event, &arg->flags.flags, &token);
-	अगर (test_type_token(type, token, TEP_EVENT_DELIM, ")"))
-		जाओ out_मुक्त;
+	if (test_type_token(type, token, TEP_EVENT_DELIM, ")"))
+		goto out_free;
 
-	मुक्त_token(token);
-	type = पढ़ो_token_item(tok);
-	वापस type;
+	free_token(token);
+	type = read_token_item(tok);
+	return type;
 
-out_मुक्त_field:
-	मुक्त_arg(field);
-out_मुक्त:
-	मुक्त_token(token);
-	*tok = शून्य;
-	वापस TEP_EVENT_ERROR;
-पूर्ण
+out_free_field:
+	free_arg(field);
+out_free:
+	free_token(token);
+	*tok = NULL;
+	return TEP_EVENT_ERROR;
+}
 
-अटल क्रमागत tep_event_type
-process_symbols(काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg *arg, अक्षर **tok)
-अणु
-	काष्ठा tep_prपूर्णांक_arg *field;
-	क्रमागत tep_event_type type;
-	अक्षर *token = शून्य;
+static enum tep_event_type
+process_symbols(struct tep_event *event, struct tep_print_arg *arg, char **tok)
+{
+	struct tep_print_arg *field;
+	enum tep_event_type type;
+	char *token = NULL;
 
-	स_रखो(arg, 0, माप(*arg));
+	memset(arg, 0, sizeof(*arg));
 	arg->type = TEP_PRINT_SYMBOL;
 
 	field = alloc_arg();
-	अगर (!field) अणु
-		करो_warning_event(event, "%s: not enough memory!", __func__);
-		जाओ out_मुक्त;
-	पूर्ण
+	if (!field) {
+		do_warning_event(event, "%s: not enough memory!", __func__);
+		goto out_free;
+	}
 
 	type = process_field_arg(event, field, &token);
 
-	अगर (test_type_token(type, token, TEP_EVENT_DELIM, ","))
-		जाओ out_मुक्त_field;
+	if (test_type_token(type, token, TEP_EVENT_DELIM, ","))
+		goto out_free_field;
 
 	arg->symbol.field = field;
 
 	type = process_fields(event, &arg->symbol.symbols, &token);
-	अगर (test_type_token(type, token, TEP_EVENT_DELIM, ")"))
-		जाओ out_मुक्त;
+	if (test_type_token(type, token, TEP_EVENT_DELIM, ")"))
+		goto out_free;
 
-	मुक्त_token(token);
-	type = पढ़ो_token_item(tok);
-	वापस type;
+	free_token(token);
+	type = read_token_item(tok);
+	return type;
 
-out_मुक्त_field:
-	मुक्त_arg(field);
-out_मुक्त:
-	मुक्त_token(token);
-	*tok = शून्य;
-	वापस TEP_EVENT_ERROR;
-पूर्ण
+out_free_field:
+	free_arg(field);
+out_free:
+	free_token(token);
+	*tok = NULL;
+	return TEP_EVENT_ERROR;
+}
 
-अटल क्रमागत tep_event_type
-process_hex_common(काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg *arg,
-		   अक्षर **tok, क्रमागत tep_prपूर्णांक_arg_type type)
-अणु
-	स_रखो(arg, 0, माप(*arg));
+static enum tep_event_type
+process_hex_common(struct tep_event *event, struct tep_print_arg *arg,
+		   char **tok, enum tep_print_arg_type type)
+{
+	memset(arg, 0, sizeof(*arg));
 	arg->type = type;
 
-	अगर (alloc_and_process_delim(event, ",", &arg->hex.field))
-		जाओ out;
+	if (alloc_and_process_delim(event, ",", &arg->hex.field))
+		goto out;
 
-	अगर (alloc_and_process_delim(event, ")", &arg->hex.size))
-		जाओ मुक्त_field;
+	if (alloc_and_process_delim(event, ")", &arg->hex.size))
+		goto free_field;
 
-	वापस पढ़ो_token_item(tok);
+	return read_token_item(tok);
 
-मुक्त_field:
-	मुक्त_arg(arg->hex.field);
-	arg->hex.field = शून्य;
+free_field:
+	free_arg(arg->hex.field);
+	arg->hex.field = NULL;
 out:
-	*tok = शून्य;
-	वापस TEP_EVENT_ERROR;
-पूर्ण
+	*tok = NULL;
+	return TEP_EVENT_ERROR;
+}
 
-अटल क्रमागत tep_event_type
-process_hex(काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg *arg, अक्षर **tok)
-अणु
-	वापस process_hex_common(event, arg, tok, TEP_PRINT_HEX);
-पूर्ण
+static enum tep_event_type
+process_hex(struct tep_event *event, struct tep_print_arg *arg, char **tok)
+{
+	return process_hex_common(event, arg, tok, TEP_PRINT_HEX);
+}
 
-अटल क्रमागत tep_event_type
-process_hex_str(काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg *arg,
-		अक्षर **tok)
-अणु
-	वापस process_hex_common(event, arg, tok, TEP_PRINT_HEX_STR);
-पूर्ण
+static enum tep_event_type
+process_hex_str(struct tep_event *event, struct tep_print_arg *arg,
+		char **tok)
+{
+	return process_hex_common(event, arg, tok, TEP_PRINT_HEX_STR);
+}
 
-अटल क्रमागत tep_event_type
-process_पूर्णांक_array(काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg *arg, अक्षर **tok)
-अणु
-	स_रखो(arg, 0, माप(*arg));
+static enum tep_event_type
+process_int_array(struct tep_event *event, struct tep_print_arg *arg, char **tok)
+{
+	memset(arg, 0, sizeof(*arg));
 	arg->type = TEP_PRINT_INT_ARRAY;
 
-	अगर (alloc_and_process_delim(event, ",", &arg->पूर्णांक_array.field))
-		जाओ out;
+	if (alloc_and_process_delim(event, ",", &arg->int_array.field))
+		goto out;
 
-	अगर (alloc_and_process_delim(event, ",", &arg->पूर्णांक_array.count))
-		जाओ मुक्त_field;
+	if (alloc_and_process_delim(event, ",", &arg->int_array.count))
+		goto free_field;
 
-	अगर (alloc_and_process_delim(event, ")", &arg->पूर्णांक_array.el_size))
-		जाओ मुक्त_size;
+	if (alloc_and_process_delim(event, ")", &arg->int_array.el_size))
+		goto free_size;
 
-	वापस पढ़ो_token_item(tok);
+	return read_token_item(tok);
 
-मुक्त_size:
-	मुक्त_arg(arg->पूर्णांक_array.count);
-	arg->पूर्णांक_array.count = शून्य;
-मुक्त_field:
-	मुक्त_arg(arg->पूर्णांक_array.field);
-	arg->पूर्णांक_array.field = शून्य;
+free_size:
+	free_arg(arg->int_array.count);
+	arg->int_array.count = NULL;
+free_field:
+	free_arg(arg->int_array.field);
+	arg->int_array.field = NULL;
 out:
-	*tok = शून्य;
-	वापस TEP_EVENT_ERROR;
-पूर्ण
+	*tok = NULL;
+	return TEP_EVENT_ERROR;
+}
 
-अटल क्रमागत tep_event_type
-process_dynamic_array(काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg *arg, अक्षर **tok)
-अणु
-	काष्ठा tep_क्रमmat_field *field;
-	क्रमागत tep_event_type type;
-	अक्षर *token;
+static enum tep_event_type
+process_dynamic_array(struct tep_event *event, struct tep_print_arg *arg, char **tok)
+{
+	struct tep_format_field *field;
+	enum tep_event_type type;
+	char *token;
 
-	स_रखो(arg, 0, माप(*arg));
+	memset(arg, 0, sizeof(*arg));
 	arg->type = TEP_PRINT_DYNAMIC_ARRAY;
 
 	/*
 	 * The item within the parenthesis is another field that holds
-	 * the index पूर्णांकo where the array starts.
+	 * the index into where the array starts.
 	 */
-	type = पढ़ो_token(&token);
+	type = read_token(&token);
 	*tok = token;
-	अगर (type != TEP_EVENT_ITEM)
-		जाओ out_मुक्त;
+	if (type != TEP_EVENT_ITEM)
+		goto out_free;
 
 	/* Find the field */
 
 	field = tep_find_field(event, token);
-	अगर (!field)
-		जाओ out_मुक्त;
+	if (!field)
+		goto out_free;
 
 	arg->dynarray.field = field;
 	arg->dynarray.index = 0;
 
-	अगर (पढ़ो_expected(TEP_EVENT_DELIM, ")") < 0)
-		जाओ out_मुक्त;
+	if (read_expected(TEP_EVENT_DELIM, ")") < 0)
+		goto out_free;
 
-	मुक्त_token(token);
-	type = पढ़ो_token_item(&token);
+	free_token(token);
+	type = read_token_item(&token);
 	*tok = token;
-	अगर (type != TEP_EVENT_OP || म_भेद(token, "[") != 0)
-		वापस type;
+	if (type != TEP_EVENT_OP || strcmp(token, "[") != 0)
+		return type;
 
-	मुक्त_token(token);
+	free_token(token);
 	arg = alloc_arg();
-	अगर (!arg) अणु
-		करो_warning_event(event, "%s: not enough memory!", __func__);
-		*tok = शून्य;
-		वापस TEP_EVENT_ERROR;
-	पूर्ण
+	if (!arg) {
+		do_warning_event(event, "%s: not enough memory!", __func__);
+		*tok = NULL;
+		return TEP_EVENT_ERROR;
+	}
 
 	type = process_arg(event, arg, &token);
-	अगर (type == TEP_EVENT_ERROR)
-		जाओ out_मुक्त_arg;
+	if (type == TEP_EVENT_ERROR)
+		goto out_free_arg;
 
-	अगर (!test_type_token(type, token, TEP_EVENT_OP, "]"))
-		जाओ out_मुक्त_arg;
+	if (!test_type_token(type, token, TEP_EVENT_OP, "]"))
+		goto out_free_arg;
 
-	मुक्त_token(token);
-	type = पढ़ो_token_item(tok);
-	वापस type;
+	free_token(token);
+	type = read_token_item(tok);
+	return type;
 
- out_मुक्त_arg:
-	मुक्त_arg(arg);
- out_मुक्त:
-	मुक्त_token(token);
-	*tok = शून्य;
-	वापस TEP_EVENT_ERROR;
-पूर्ण
+ out_free_arg:
+	free_arg(arg);
+ out_free:
+	free_token(token);
+	*tok = NULL;
+	return TEP_EVENT_ERROR;
+}
 
-अटल क्रमागत tep_event_type
-process_dynamic_array_len(काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg *arg,
-			  अक्षर **tok)
-अणु
-	काष्ठा tep_क्रमmat_field *field;
-	क्रमागत tep_event_type type;
-	अक्षर *token;
+static enum tep_event_type
+process_dynamic_array_len(struct tep_event *event, struct tep_print_arg *arg,
+			  char **tok)
+{
+	struct tep_format_field *field;
+	enum tep_event_type type;
+	char *token;
 
-	अगर (पढ़ो_expect_type(TEP_EVENT_ITEM, &token) < 0)
-		जाओ out_मुक्त;
+	if (read_expect_type(TEP_EVENT_ITEM, &token) < 0)
+		goto out_free;
 
 	arg->type = TEP_PRINT_DYNAMIC_ARRAY_LEN;
 
 	/* Find the field */
 	field = tep_find_field(event, token);
-	अगर (!field)
-		जाओ out_मुक्त;
+	if (!field)
+		goto out_free;
 
 	arg->dynarray.field = field;
 	arg->dynarray.index = 0;
 
-	अगर (पढ़ो_expected(TEP_EVENT_DELIM, ")") < 0)
-		जाओ out_err;
+	if (read_expected(TEP_EVENT_DELIM, ")") < 0)
+		goto out_err;
 
-	मुक्त_token(token);
-	type = पढ़ो_token(&token);
+	free_token(token);
+	type = read_token(&token);
 	*tok = token;
 
-	वापस type;
+	return type;
 
- out_मुक्त:
-	मुक्त_token(token);
+ out_free:
+	free_token(token);
  out_err:
-	*tok = शून्य;
-	वापस TEP_EVENT_ERROR;
-पूर्ण
+	*tok = NULL;
+	return TEP_EVENT_ERROR;
+}
 
-अटल क्रमागत tep_event_type
-process_paren(काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg *arg, अक्षर **tok)
-अणु
-	काष्ठा tep_prपूर्णांक_arg *item_arg;
-	क्रमागत tep_event_type type;
-	अक्षर *token;
+static enum tep_event_type
+process_paren(struct tep_event *event, struct tep_print_arg *arg, char **tok)
+{
+	struct tep_print_arg *item_arg;
+	enum tep_event_type type;
+	char *token;
 
 	type = process_arg(event, arg, &token);
 
-	अगर (type == TEP_EVENT_ERROR)
-		जाओ out_मुक्त;
+	if (type == TEP_EVENT_ERROR)
+		goto out_free;
 
-	अगर (type == TEP_EVENT_OP)
+	if (type == TEP_EVENT_OP)
 		type = process_op(event, arg, &token);
 
-	अगर (type == TEP_EVENT_ERROR)
-		जाओ out_मुक्त;
+	if (type == TEP_EVENT_ERROR)
+		goto out_free;
 
-	अगर (test_type_token(type, token, TEP_EVENT_DELIM, ")"))
-		जाओ out_मुक्त;
+	if (test_type_token(type, token, TEP_EVENT_DELIM, ")"))
+		goto out_free;
 
-	मुक्त_token(token);
-	type = पढ़ो_token_item(&token);
+	free_token(token);
+	type = read_token_item(&token);
 
 	/*
-	 * If the next token is an item or another खोलो paren, then
+	 * If the next token is an item or another open paren, then
 	 * this was a typecast.
 	 */
-	अगर (event_item_type(type) ||
-	    (type == TEP_EVENT_DELIM && म_भेद(token, "(") == 0)) अणु
+	if (event_item_type(type) ||
+	    (type == TEP_EVENT_DELIM && strcmp(token, "(") == 0)) {
 
 		/* make this a typecast and contine */
 
 		/* prevous must be an atom */
-		अगर (arg->type != TEP_PRINT_ATOM) अणु
-			करो_warning_event(event, "previous needed to be TEP_PRINT_ATOM");
-			जाओ out_मुक्त;
-		पूर्ण
+		if (arg->type != TEP_PRINT_ATOM) {
+			do_warning_event(event, "previous needed to be TEP_PRINT_ATOM");
+			goto out_free;
+		}
 
 		item_arg = alloc_arg();
-		अगर (!item_arg) अणु
-			करो_warning_event(event, "%s: not enough memory!",
+		if (!item_arg) {
+			do_warning_event(event, "%s: not enough memory!",
 					 __func__);
-			जाओ out_मुक्त;
-		पूर्ण
+			goto out_free;
+		}
 
 		arg->type = TEP_PRINT_TYPE;
 		arg->typecast.type = arg->atom.atom;
 		arg->typecast.item = item_arg;
 		type = process_arg_token(event, item_arg, &token, type);
 
-	पूर्ण
+	}
 
 	*tok = token;
-	वापस type;
+	return type;
 
- out_मुक्त:
-	मुक्त_token(token);
-	*tok = शून्य;
-	वापस TEP_EVENT_ERROR;
-पूर्ण
+ out_free:
+	free_token(token);
+	*tok = NULL;
+	return TEP_EVENT_ERROR;
+}
 
 
-अटल क्रमागत tep_event_type
-process_str(काष्ठा tep_event *event __maybe_unused, काष्ठा tep_prपूर्णांक_arg *arg,
-	    अक्षर **tok)
-अणु
-	क्रमागत tep_event_type type;
-	अक्षर *token;
+static enum tep_event_type
+process_str(struct tep_event *event __maybe_unused, struct tep_print_arg *arg,
+	    char **tok)
+{
+	enum tep_event_type type;
+	char *token;
 
-	अगर (पढ़ो_expect_type(TEP_EVENT_ITEM, &token) < 0)
-		जाओ out_मुक्त;
+	if (read_expect_type(TEP_EVENT_ITEM, &token) < 0)
+		goto out_free;
 
 	arg->type = TEP_PRINT_STRING;
 	arg->string.string = token;
 	arg->string.offset = -1;
 
-	अगर (पढ़ो_expected(TEP_EVENT_DELIM, ")") < 0)
-		जाओ out_err;
+	if (read_expected(TEP_EVENT_DELIM, ")") < 0)
+		goto out_err;
 
-	type = पढ़ो_token(&token);
+	type = read_token(&token);
 	*tok = token;
 
-	वापस type;
+	return type;
 
- out_मुक्त:
-	मुक्त_token(token);
+ out_free:
+	free_token(token);
  out_err:
-	*tok = शून्य;
-	वापस TEP_EVENT_ERROR;
-पूर्ण
+	*tok = NULL;
+	return TEP_EVENT_ERROR;
+}
 
-अटल क्रमागत tep_event_type
-process_biपंचांगask(काष्ठा tep_event *event __maybe_unused, काष्ठा tep_prपूर्णांक_arg *arg,
-		अक्षर **tok)
-अणु
-	क्रमागत tep_event_type type;
-	अक्षर *token;
+static enum tep_event_type
+process_bitmask(struct tep_event *event __maybe_unused, struct tep_print_arg *arg,
+		char **tok)
+{
+	enum tep_event_type type;
+	char *token;
 
-	अगर (पढ़ो_expect_type(TEP_EVENT_ITEM, &token) < 0)
-		जाओ out_मुक्त;
+	if (read_expect_type(TEP_EVENT_ITEM, &token) < 0)
+		goto out_free;
 
 	arg->type = TEP_PRINT_BITMASK;
-	arg->biपंचांगask.biपंचांगask = token;
-	arg->biपंचांगask.offset = -1;
+	arg->bitmask.bitmask = token;
+	arg->bitmask.offset = -1;
 
-	अगर (पढ़ो_expected(TEP_EVENT_DELIM, ")") < 0)
-		जाओ out_err;
+	if (read_expected(TEP_EVENT_DELIM, ")") < 0)
+		goto out_err;
 
-	type = पढ़ो_token(&token);
+	type = read_token(&token);
 	*tok = token;
 
-	वापस type;
+	return type;
 
- out_मुक्त:
-	मुक्त_token(token);
+ out_free:
+	free_token(token);
  out_err:
-	*tok = शून्य;
-	वापस TEP_EVENT_ERROR;
-पूर्ण
+	*tok = NULL;
+	return TEP_EVENT_ERROR;
+}
 
-अटल काष्ठा tep_function_handler *
-find_func_handler(काष्ठा tep_handle *tep, अक्षर *func_name)
-अणु
-	काष्ठा tep_function_handler *func;
+static struct tep_function_handler *
+find_func_handler(struct tep_handle *tep, char *func_name)
+{
+	struct tep_function_handler *func;
 
-	अगर (!tep)
-		वापस शून्य;
+	if (!tep)
+		return NULL;
 
-	क्रम (func = tep->func_handlers; func; func = func->next) अणु
-		अगर (म_भेद(func->name, func_name) == 0)
-			अवरोध;
-	पूर्ण
+	for (func = tep->func_handlers; func; func = func->next) {
+		if (strcmp(func->name, func_name) == 0)
+			break;
+	}
 
-	वापस func;
-पूर्ण
+	return func;
+}
 
-अटल व्योम हटाओ_func_handler(काष्ठा tep_handle *tep, अक्षर *func_name)
-अणु
-	काष्ठा tep_function_handler *func;
-	काष्ठा tep_function_handler **next;
+static void remove_func_handler(struct tep_handle *tep, char *func_name)
+{
+	struct tep_function_handler *func;
+	struct tep_function_handler **next;
 
 	next = &tep->func_handlers;
-	जबतक ((func = *next)) अणु
-		अगर (म_भेद(func->name, func_name) == 0) अणु
+	while ((func = *next)) {
+		if (strcmp(func->name, func_name) == 0) {
 			*next = func->next;
-			मुक्त_func_handle(func);
-			अवरोध;
-		पूर्ण
+			free_func_handle(func);
+			break;
+		}
 		next = &func->next;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल क्रमागत tep_event_type
-process_func_handler(काष्ठा tep_event *event, काष्ठा tep_function_handler *func,
-		     काष्ठा tep_prपूर्णांक_arg *arg, अक्षर **tok)
-अणु
-	काष्ठा tep_prपूर्णांक_arg **next_arg;
-	काष्ठा tep_prपूर्णांक_arg *farg;
-	क्रमागत tep_event_type type;
-	अक्षर *token;
-	पूर्णांक i;
+static enum tep_event_type
+process_func_handler(struct tep_event *event, struct tep_function_handler *func,
+		     struct tep_print_arg *arg, char **tok)
+{
+	struct tep_print_arg **next_arg;
+	struct tep_print_arg *farg;
+	enum tep_event_type type;
+	char *token;
+	int i;
 
 	arg->type = TEP_PRINT_FUNC;
 	arg->func.func = func;
 
-	*tok = शून्य;
+	*tok = NULL;
 
 	next_arg = &(arg->func.args);
-	क्रम (i = 0; i < func->nr_args; i++) अणु
+	for (i = 0; i < func->nr_args; i++) {
 		farg = alloc_arg();
-		अगर (!farg) अणु
-			करो_warning_event(event, "%s: not enough memory!",
+		if (!farg) {
+			do_warning_event(event, "%s: not enough memory!",
 					 __func__);
-			वापस TEP_EVENT_ERROR;
-		पूर्ण
+			return TEP_EVENT_ERROR;
+		}
 
 		type = process_arg(event, farg, &token);
-		अगर (i < (func->nr_args - 1)) अणु
-			अगर (type != TEP_EVENT_DELIM || म_भेद(token, ",") != 0) अणु
-				करो_warning_event(event,
+		if (i < (func->nr_args - 1)) {
+			if (type != TEP_EVENT_DELIM || strcmp(token, ",") != 0) {
+				do_warning_event(event,
 					"Error: function '%s()' expects %d arguments but event %s only uses %d",
 					func->name, func->nr_args,
 					event->name, i + 1);
-				जाओ err;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (type != TEP_EVENT_DELIM || म_भेद(token, ")") != 0) अणु
-				करो_warning_event(event,
+				goto err;
+			}
+		} else {
+			if (type != TEP_EVENT_DELIM || strcmp(token, ")") != 0) {
+				do_warning_event(event,
 					"Error: function '%s()' only expects %d arguments but event %s has more",
 					func->name, func->nr_args, event->name);
-				जाओ err;
-			पूर्ण
-		पूर्ण
+				goto err;
+			}
+		}
 
 		*next_arg = farg;
 		next_arg = &(farg->next);
-		मुक्त_token(token);
-	पूर्ण
+		free_token(token);
+	}
 
-	type = पढ़ो_token(&token);
+	type = read_token(&token);
 	*tok = token;
 
-	वापस type;
+	return type;
 
 err:
-	मुक्त_arg(farg);
-	मुक्त_token(token);
-	वापस TEP_EVENT_ERROR;
-पूर्ण
+	free_arg(farg);
+	free_token(token);
+	return TEP_EVENT_ERROR;
+}
 
-अटल क्रमागत tep_event_type
-process_builtin_expect(काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg *arg, अक्षर **tok)
-अणु
-	क्रमागत tep_event_type type;
-	अक्षर *token = शून्य;
+static enum tep_event_type
+process_builtin_expect(struct tep_event *event, struct tep_print_arg *arg, char **tok)
+{
+	enum tep_event_type type;
+	char *token = NULL;
 
 	/* Handle __builtin_expect( cond, #) */
 	type = process_arg(event, arg, &token);
 
-	अगर (type != TEP_EVENT_DELIM || token[0] != ',')
-		जाओ out_मुक्त;
+	if (type != TEP_EVENT_DELIM || token[0] != ',')
+		goto out_free;
 
-	मुक्त_token(token);
+	free_token(token);
 
-	/* We करोn't care what the second parameter is of the __builtin_expect() */
-	अगर (पढ़ो_expect_type(TEP_EVENT_ITEM, &token) < 0)
-		जाओ out_मुक्त;
+	/* We don't care what the second parameter is of the __builtin_expect() */
+	if (read_expect_type(TEP_EVENT_ITEM, &token) < 0)
+		goto out_free;
 
-	अगर (पढ़ो_expected(TEP_EVENT_DELIM, ")") < 0)
-		जाओ out_मुक्त;
+	if (read_expected(TEP_EVENT_DELIM, ")") < 0)
+		goto out_free;
 
-	मुक्त_token(token);
-	type = पढ़ो_token_item(tok);
-	वापस type;
+	free_token(token);
+	type = read_token_item(tok);
+	return type;
 
-out_मुक्त:
-	मुक्त_token(token);
-	*tok = शून्य;
-	वापस TEP_EVENT_ERROR;
-पूर्ण
+out_free:
+	free_token(token);
+	*tok = NULL;
+	return TEP_EVENT_ERROR;
+}
 
-अटल क्रमागत tep_event_type
-process_function(काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg *arg,
-		 अक्षर *token, अक्षर **tok)
-अणु
-	काष्ठा tep_function_handler *func;
+static enum tep_event_type
+process_function(struct tep_event *event, struct tep_print_arg *arg,
+		 char *token, char **tok)
+{
+	struct tep_function_handler *func;
 
-	अगर (म_भेद(token, "__print_flags") == 0) अणु
-		मुक्त_token(token);
+	if (strcmp(token, "__print_flags") == 0) {
+		free_token(token);
 		is_flag_field = 1;
-		वापस process_flags(event, arg, tok);
-	पूर्ण
-	अगर (म_भेद(token, "__print_symbolic") == 0) अणु
-		मुक्त_token(token);
+		return process_flags(event, arg, tok);
+	}
+	if (strcmp(token, "__print_symbolic") == 0) {
+		free_token(token);
 		is_symbolic_field = 1;
-		वापस process_symbols(event, arg, tok);
-	पूर्ण
-	अगर (म_भेद(token, "__print_hex") == 0) अणु
-		मुक्त_token(token);
-		वापस process_hex(event, arg, tok);
-	पूर्ण
-	अगर (म_भेद(token, "__print_hex_str") == 0) अणु
-		मुक्त_token(token);
-		वापस process_hex_str(event, arg, tok);
-	पूर्ण
-	अगर (म_भेद(token, "__print_array") == 0) अणु
-		मुक्त_token(token);
-		वापस process_पूर्णांक_array(event, arg, tok);
-	पूर्ण
-	अगर (म_भेद(token, "__get_str") == 0) अणु
-		मुक्त_token(token);
-		वापस process_str(event, arg, tok);
-	पूर्ण
-	अगर (म_भेद(token, "__get_bitmask") == 0) अणु
-		मुक्त_token(token);
-		वापस process_biपंचांगask(event, arg, tok);
-	पूर्ण
-	अगर (म_भेद(token, "__get_dynamic_array") == 0) अणु
-		मुक्त_token(token);
-		वापस process_dynamic_array(event, arg, tok);
-	पूर्ण
-	अगर (म_भेद(token, "__get_dynamic_array_len") == 0) अणु
-		मुक्त_token(token);
-		वापस process_dynamic_array_len(event, arg, tok);
-	पूर्ण
-	अगर (म_भेद(token, "__builtin_expect") == 0) अणु
-		मुक्त_token(token);
-		वापस process_builtin_expect(event, arg, tok);
-	पूर्ण
+		return process_symbols(event, arg, tok);
+	}
+	if (strcmp(token, "__print_hex") == 0) {
+		free_token(token);
+		return process_hex(event, arg, tok);
+	}
+	if (strcmp(token, "__print_hex_str") == 0) {
+		free_token(token);
+		return process_hex_str(event, arg, tok);
+	}
+	if (strcmp(token, "__print_array") == 0) {
+		free_token(token);
+		return process_int_array(event, arg, tok);
+	}
+	if (strcmp(token, "__get_str") == 0) {
+		free_token(token);
+		return process_str(event, arg, tok);
+	}
+	if (strcmp(token, "__get_bitmask") == 0) {
+		free_token(token);
+		return process_bitmask(event, arg, tok);
+	}
+	if (strcmp(token, "__get_dynamic_array") == 0) {
+		free_token(token);
+		return process_dynamic_array(event, arg, tok);
+	}
+	if (strcmp(token, "__get_dynamic_array_len") == 0) {
+		free_token(token);
+		return process_dynamic_array_len(event, arg, tok);
+	}
+	if (strcmp(token, "__builtin_expect") == 0) {
+		free_token(token);
+		return process_builtin_expect(event, arg, tok);
+	}
 
 	func = find_func_handler(event->tep, token);
-	अगर (func) अणु
-		मुक्त_token(token);
-		वापस process_func_handler(event, func, arg, tok);
-	पूर्ण
+	if (func) {
+		free_token(token);
+		return process_func_handler(event, func, arg, tok);
+	}
 
-	करो_warning_event(event, "function %s not defined", token);
-	मुक्त_token(token);
-	वापस TEP_EVENT_ERROR;
-पूर्ण
+	do_warning_event(event, "function %s not defined", token);
+	free_token(token);
+	return TEP_EVENT_ERROR;
+}
 
-अटल क्रमागत tep_event_type
-process_arg_token(काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg *arg,
-		  अक्षर **tok, क्रमागत tep_event_type type)
-अणु
-	अक्षर *token;
-	अक्षर *atom;
+static enum tep_event_type
+process_arg_token(struct tep_event *event, struct tep_print_arg *arg,
+		  char **tok, enum tep_event_type type)
+{
+	char *token;
+	char *atom;
 
 	token = *tok;
 
-	चयन (type) अणु
-	हाल TEP_EVENT_ITEM:
-		अगर (म_भेद(token, "REC") == 0) अणु
-			मुक्त_token(token);
+	switch (type) {
+	case TEP_EVENT_ITEM:
+		if (strcmp(token, "REC") == 0) {
+			free_token(token);
 			type = process_entry(event, arg, &token);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		atom = token;
 		/* test the next token */
-		type = पढ़ो_token_item(&token);
+		type = read_token_item(&token);
 
 		/*
 		 * If the next token is a parenthesis, then this
 		 * is a function.
 		 */
-		अगर (type == TEP_EVENT_DELIM && म_भेद(token, "(") == 0) अणु
-			मुक्त_token(token);
-			token = शून्य;
-			/* this will मुक्त atom. */
+		if (type == TEP_EVENT_DELIM && strcmp(token, "(") == 0) {
+			free_token(token);
+			token = NULL;
+			/* this will free atom. */
 			type = process_function(event, arg, atom, &token);
-			अवरोध;
-		पूर्ण
-		/* atoms can be more than one token दीर्घ */
-		जबतक (type == TEP_EVENT_ITEM) अणु
-			पूर्णांक ret;
+			break;
+		}
+		/* atoms can be more than one token long */
+		while (type == TEP_EVENT_ITEM) {
+			int ret;
 
 			ret = append(&atom, " ", token);
-			अगर (ret < 0) अणु
-				मुक्त(atom);
-				*tok = शून्य;
-				मुक्त_token(token);
-				वापस TEP_EVENT_ERROR;
-			पूर्ण
-			मुक्त_token(token);
-			type = पढ़ो_token_item(&token);
-		पूर्ण
+			if (ret < 0) {
+				free(atom);
+				*tok = NULL;
+				free_token(token);
+				return TEP_EVENT_ERROR;
+			}
+			free_token(token);
+			type = read_token_item(&token);
+		}
 
 		arg->type = TEP_PRINT_ATOM;
 		arg->atom.atom = atom;
-		अवरोध;
+		break;
 
-	हाल TEP_EVENT_DQUOTE:
-	हाल TEP_EVENT_SQUOTE:
+	case TEP_EVENT_DQUOTE:
+	case TEP_EVENT_SQUOTE:
 		arg->type = TEP_PRINT_ATOM;
 		arg->atom.atom = token;
-		type = पढ़ो_token_item(&token);
-		अवरोध;
-	हाल TEP_EVENT_DELIM:
-		अगर (म_भेद(token, "(") == 0) अणु
-			मुक्त_token(token);
+		type = read_token_item(&token);
+		break;
+	case TEP_EVENT_DELIM:
+		if (strcmp(token, "(") == 0) {
+			free_token(token);
 			type = process_paren(event, arg, &token);
-			अवरोध;
-		पूर्ण
-	हाल TEP_EVENT_OP:
+			break;
+		}
+	case TEP_EVENT_OP:
 		/* handle single ops */
 		arg->type = TEP_PRINT_OP;
 		arg->op.op = token;
-		arg->op.left = शून्य;
+		arg->op.left = NULL;
 		type = process_op(event, arg, &token);
 
-		/* On error, the op is मुक्तd */
-		अगर (type == TEP_EVENT_ERROR)
-			arg->op.op = शून्य;
+		/* On error, the op is freed */
+		if (type == TEP_EVENT_ERROR)
+			arg->op.op = NULL;
 
-		/* वापस error type अगर errored */
-		अवरोध;
+		/* return error type if errored */
+		break;
 
-	हाल TEP_EVENT_ERROR ... TEP_EVENT_NEWLINE:
-	शेष:
-		करो_warning_event(event, "unexpected type %d", type);
-		वापस TEP_EVENT_ERROR;
-	पूर्ण
+	case TEP_EVENT_ERROR ... TEP_EVENT_NEWLINE:
+	default:
+		do_warning_event(event, "unexpected type %d", type);
+		return TEP_EVENT_ERROR;
+	}
 	*tok = token;
 
-	वापस type;
-पूर्ण
+	return type;
+}
 
-अटल पूर्णांक event_पढ़ो_prपूर्णांक_args(काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg **list)
-अणु
-	क्रमागत tep_event_type type = TEP_EVENT_ERROR;
-	काष्ठा tep_prपूर्णांक_arg *arg;
-	अक्षर *token;
-	पूर्णांक args = 0;
+static int event_read_print_args(struct tep_event *event, struct tep_print_arg **list)
+{
+	enum tep_event_type type = TEP_EVENT_ERROR;
+	struct tep_print_arg *arg;
+	char *token;
+	int args = 0;
 
-	करो अणु
-		अगर (type == TEP_EVENT_NEWLINE) अणु
-			type = पढ़ो_token_item(&token);
-			जारी;
-		पूर्ण
+	do {
+		if (type == TEP_EVENT_NEWLINE) {
+			type = read_token_item(&token);
+			continue;
+		}
 
 		arg = alloc_arg();
-		अगर (!arg) अणु
-			करो_warning_event(event, "%s: not enough memory!",
+		if (!arg) {
+			do_warning_event(event, "%s: not enough memory!",
 					 __func__);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
 		type = process_arg(event, arg, &token);
 
-		अगर (type == TEP_EVENT_ERROR) अणु
-			मुक्त_token(token);
-			मुक्त_arg(arg);
-			वापस -1;
-		पूर्ण
+		if (type == TEP_EVENT_ERROR) {
+			free_token(token);
+			free_arg(arg);
+			return -1;
+		}
 
 		*list = arg;
 		args++;
 
-		अगर (type == TEP_EVENT_OP) अणु
+		if (type == TEP_EVENT_OP) {
 			type = process_op(event, arg, &token);
-			मुक्त_token(token);
-			अगर (type == TEP_EVENT_ERROR) अणु
-				*list = शून्य;
-				मुक्त_arg(arg);
-				वापस -1;
-			पूर्ण
+			free_token(token);
+			if (type == TEP_EVENT_ERROR) {
+				*list = NULL;
+				free_arg(arg);
+				return -1;
+			}
 			list = &arg->next;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (type == TEP_EVENT_DELIM && म_भेद(token, ",") == 0) अणु
-			मुक्त_token(token);
+		if (type == TEP_EVENT_DELIM && strcmp(token, ",") == 0) {
+			free_token(token);
 			*list = arg;
 			list = &arg->next;
-			जारी;
-		पूर्ण
-		अवरोध;
-	पूर्ण जबतक (type != TEP_EVENT_NONE);
+			continue;
+		}
+		break;
+	} while (type != TEP_EVENT_NONE);
 
-	अगर (type != TEP_EVENT_NONE && type != TEP_EVENT_ERROR)
-		मुक्त_token(token);
+	if (type != TEP_EVENT_NONE && type != TEP_EVENT_ERROR)
+		free_token(token);
 
-	वापस args;
-पूर्ण
+	return args;
+}
 
-अटल पूर्णांक event_पढ़ो_prपूर्णांक(काष्ठा tep_event *event)
-अणु
-	क्रमागत tep_event_type type;
-	अक्षर *token;
-	पूर्णांक ret;
+static int event_read_print(struct tep_event *event)
+{
+	enum tep_event_type type;
+	char *token;
+	int ret;
 
-	अगर (पढ़ो_expected_item(TEP_EVENT_ITEM, "print") < 0)
-		वापस -1;
+	if (read_expected_item(TEP_EVENT_ITEM, "print") < 0)
+		return -1;
 
-	अगर (पढ़ो_expected(TEP_EVENT_ITEM, "fmt") < 0)
-		वापस -1;
+	if (read_expected(TEP_EVENT_ITEM, "fmt") < 0)
+		return -1;
 
-	अगर (पढ़ो_expected(TEP_EVENT_OP, ":") < 0)
-		वापस -1;
+	if (read_expected(TEP_EVENT_OP, ":") < 0)
+		return -1;
 
-	अगर (पढ़ो_expect_type(TEP_EVENT_DQUOTE, &token) < 0)
-		जाओ fail;
+	if (read_expect_type(TEP_EVENT_DQUOTE, &token) < 0)
+		goto fail;
 
  concat:
-	event->prपूर्णांक_fmt.क्रमmat = token;
-	event->prपूर्णांक_fmt.args = शून्य;
+	event->print_fmt.format = token;
+	event->print_fmt.args = NULL;
 
 	/* ok to have no arg */
-	type = पढ़ो_token_item(&token);
+	type = read_token_item(&token);
 
-	अगर (type == TEP_EVENT_NONE)
-		वापस 0;
+	if (type == TEP_EVENT_NONE)
+		return 0;
 
-	/* Handle concatenation of prपूर्णांक lines */
-	अगर (type == TEP_EVENT_DQUOTE) अणु
-		अक्षर *cat;
+	/* Handle concatenation of print lines */
+	if (type == TEP_EVENT_DQUOTE) {
+		char *cat;
 
-		अगर (aप्र_लिखो(&cat, "%s%s", event->prपूर्णांक_fmt.क्रमmat, token) < 0)
-			जाओ fail;
-		मुक्त_token(token);
-		मुक्त_token(event->prपूर्णांक_fmt.क्रमmat);
-		event->prपूर्णांक_fmt.क्रमmat = शून्य;
+		if (asprintf(&cat, "%s%s", event->print_fmt.format, token) < 0)
+			goto fail;
+		free_token(token);
+		free_token(event->print_fmt.format);
+		event->print_fmt.format = NULL;
 		token = cat;
-		जाओ concat;
-	पूर्ण
+		goto concat;
+	}
 			     
-	अगर (test_type_token(type, token, TEP_EVENT_DELIM, ","))
-		जाओ fail;
+	if (test_type_token(type, token, TEP_EVENT_DELIM, ","))
+		goto fail;
 
-	मुक्त_token(token);
+	free_token(token);
 
-	ret = event_पढ़ो_prपूर्णांक_args(event, &event->prपूर्णांक_fmt.args);
-	अगर (ret < 0)
-		वापस -1;
+	ret = event_read_print_args(event, &event->print_fmt.args);
+	if (ret < 0)
+		return -1;
 
-	वापस ret;
+	return ret;
 
  fail:
-	मुक्त_token(token);
-	वापस -1;
-पूर्ण
+	free_token(token);
+	return -1;
+}
 
 /**
- * tep_find_common_field - वापस a common field by event
- * @event: handle क्रम the event
- * @name: the name of the common field to वापस
+ * tep_find_common_field - return a common field by event
+ * @event: handle for the event
+ * @name: the name of the common field to return
  *
  * Returns a common field from the event by the given @name.
  * This only searches the common fields and not all field.
  */
-काष्ठा tep_क्रमmat_field *
-tep_find_common_field(काष्ठा tep_event *event, स्थिर अक्षर *name)
-अणु
-	काष्ठा tep_क्रमmat_field *क्रमmat;
+struct tep_format_field *
+tep_find_common_field(struct tep_event *event, const char *name)
+{
+	struct tep_format_field *format;
 
-	क्रम (क्रमmat = event->क्रमmat.common_fields;
-	     क्रमmat; क्रमmat = क्रमmat->next) अणु
-		अगर (म_भेद(क्रमmat->name, name) == 0)
-			अवरोध;
-	पूर्ण
+	for (format = event->format.common_fields;
+	     format; format = format->next) {
+		if (strcmp(format->name, name) == 0)
+			break;
+	}
 
-	वापस क्रमmat;
-पूर्ण
+	return format;
+}
 
 /**
  * tep_find_field - find a non-common field
- * @event: handle क्रम the event
+ * @event: handle for the event
  * @name: the name of the non-common field
  *
  * Returns a non-common field by the given @name.
- * This करोes not search common fields.
+ * This does not search common fields.
  */
-काष्ठा tep_क्रमmat_field *
-tep_find_field(काष्ठा tep_event *event, स्थिर अक्षर *name)
-अणु
-	काष्ठा tep_क्रमmat_field *क्रमmat;
+struct tep_format_field *
+tep_find_field(struct tep_event *event, const char *name)
+{
+	struct tep_format_field *format;
 
-	क्रम (क्रमmat = event->क्रमmat.fields;
-	     क्रमmat; क्रमmat = क्रमmat->next) अणु
-		अगर (म_भेद(क्रमmat->name, name) == 0)
-			अवरोध;
-	पूर्ण
+	for (format = event->format.fields;
+	     format; format = format->next) {
+		if (strcmp(format->name, name) == 0)
+			break;
+	}
 
-	वापस क्रमmat;
-पूर्ण
+	return format;
+}
 
 /**
  * tep_find_any_field - find any field by name
- * @event: handle क्रम the event
+ * @event: handle for the event
  * @name: the name of the field
  *
  * Returns a field by the given @name.
  * This searches the common field names first, then
- * the non-common ones अगर a common one was not found.
+ * the non-common ones if a common one was not found.
  */
-काष्ठा tep_क्रमmat_field *
-tep_find_any_field(काष्ठा tep_event *event, स्थिर अक्षर *name)
-अणु
-	काष्ठा tep_क्रमmat_field *क्रमmat;
+struct tep_format_field *
+tep_find_any_field(struct tep_event *event, const char *name)
+{
+	struct tep_format_field *format;
 
-	क्रमmat = tep_find_common_field(event, name);
-	अगर (क्रमmat)
-		वापस क्रमmat;
-	वापस tep_find_field(event, name);
-पूर्ण
+	format = tep_find_common_field(event, name);
+	if (format)
+		return format;
+	return tep_find_field(event, name);
+}
 
 /**
- * tep_पढ़ो_number - पढ़ो a number from data
+ * tep_read_number - read a number from data
  * @tep: a handle to the trace event parser context
  * @ptr: the raw data
  * @size: the size of the data that holds the number
@@ -3430,138 +3429,138 @@ tep_find_any_field(काष्ठा tep_event *event, स्थिर अक�
  * Returns the number (converted to host) from the
  * raw data.
  */
-अचिन्हित दीर्घ दीर्घ tep_पढ़ो_number(काष्ठा tep_handle *tep,
-				   स्थिर व्योम *ptr, पूर्णांक size)
-अणु
-	अचिन्हित दीर्घ दीर्घ val;
+unsigned long long tep_read_number(struct tep_handle *tep,
+				   const void *ptr, int size)
+{
+	unsigned long long val;
 
-	चयन (size) अणु
-	हाल 1:
-		वापस *(अचिन्हित अक्षर *)ptr;
-	हाल 2:
-		वापस data2host2(tep, *(अचिन्हित लघु *)ptr);
-	हाल 4:
-		वापस data2host4(tep, *(अचिन्हित पूर्णांक *)ptr);
-	हाल 8:
-		स_नकल(&val, (ptr), माप(अचिन्हित दीर्घ दीर्घ));
-		वापस data2host8(tep, val);
-	शेष:
+	switch (size) {
+	case 1:
+		return *(unsigned char *)ptr;
+	case 2:
+		return data2host2(tep, *(unsigned short *)ptr);
+	case 4:
+		return data2host4(tep, *(unsigned int *)ptr);
+	case 8:
+		memcpy(&val, (ptr), sizeof(unsigned long long));
+		return data2host8(tep, val);
+	default:
 		/* BUG! */
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 
 /**
- * tep_पढ़ो_number_field - पढ़ो a number from data
+ * tep_read_number_field - read a number from data
  * @field: a handle to the field
- * @data: the raw data to पढ़ो
+ * @data: the raw data to read
  * @value: the value to place the number in
  *
  * Reads raw data according to a field offset and size,
- * and translates it पूर्णांकo @value.
+ * and translates it into @value.
  *
  * Returns 0 on success, -1 otherwise.
  */
-पूर्णांक tep_पढ़ो_number_field(काष्ठा tep_क्रमmat_field *field, स्थिर व्योम *data,
-			  अचिन्हित दीर्घ दीर्घ *value)
-अणु
-	अगर (!field)
-		वापस -1;
-	चयन (field->size) अणु
-	हाल 1:
-	हाल 2:
-	हाल 4:
-	हाल 8:
-		*value = tep_पढ़ो_number(field->event->tep,
+int tep_read_number_field(struct tep_format_field *field, const void *data,
+			  unsigned long long *value)
+{
+	if (!field)
+		return -1;
+	switch (field->size) {
+	case 1:
+	case 2:
+	case 4:
+	case 8:
+		*value = tep_read_number(field->event->tep,
 					 data + field->offset, field->size);
-		वापस 0;
-	शेष:
-		वापस -1;
-	पूर्ण
-पूर्ण
+		return 0;
+	default:
+		return -1;
+	}
+}
 
-अटल पूर्णांक get_common_info(काष्ठा tep_handle *tep,
-			   स्थिर अक्षर *type, पूर्णांक *offset, पूर्णांक *size)
-अणु
-	काष्ठा tep_event *event;
-	काष्ठा tep_क्रमmat_field *field;
+static int get_common_info(struct tep_handle *tep,
+			   const char *type, int *offset, int *size)
+{
+	struct tep_event *event;
+	struct tep_format_field *field;
 
 	/*
 	 * All events should have the same common elements.
 	 * Pick any event to find where the type is;
 	 */
-	अगर (!tep->events) अणु
-		करो_warning("no event_list!");
-		वापस -1;
-	पूर्ण
+	if (!tep->events) {
+		do_warning("no event_list!");
+		return -1;
+	}
 
 	event = tep->events[0];
 	field = tep_find_common_field(event, type);
-	अगर (!field)
-		वापस -1;
+	if (!field)
+		return -1;
 
 	*offset = field->offset;
 	*size = field->size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __parse_common(काष्ठा tep_handle *tep, व्योम *data,
-			  पूर्णांक *size, पूर्णांक *offset, स्थिर अक्षर *name)
-अणु
-	पूर्णांक ret;
+static int __parse_common(struct tep_handle *tep, void *data,
+			  int *size, int *offset, const char *name)
+{
+	int ret;
 
-	अगर (!*size) अणु
+	if (!*size) {
 		ret = get_common_info(tep, name, offset, size);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
-	वापस tep_पढ़ो_number(tep, data + *offset, *size);
-पूर्ण
+		if (ret < 0)
+			return ret;
+	}
+	return tep_read_number(tep, data + *offset, *size);
+}
 
-अटल पूर्णांक trace_parse_common_type(काष्ठा tep_handle *tep, व्योम *data)
-अणु
-	वापस __parse_common(tep, data,
+static int trace_parse_common_type(struct tep_handle *tep, void *data)
+{
+	return __parse_common(tep, data,
 			      &tep->type_size, &tep->type_offset,
 			      "common_type");
-पूर्ण
+}
 
-अटल पूर्णांक parse_common_pid(काष्ठा tep_handle *tep, व्योम *data)
-अणु
-	वापस __parse_common(tep, data,
+static int parse_common_pid(struct tep_handle *tep, void *data)
+{
+	return __parse_common(tep, data,
 			      &tep->pid_size, &tep->pid_offset,
 			      "common_pid");
-पूर्ण
+}
 
-अटल पूर्णांक parse_common_pc(काष्ठा tep_handle *tep, व्योम *data)
-अणु
-	वापस __parse_common(tep, data,
+static int parse_common_pc(struct tep_handle *tep, void *data)
+{
+	return __parse_common(tep, data,
 			      &tep->pc_size, &tep->pc_offset,
 			      "common_preempt_count");
-पूर्ण
+}
 
-अटल पूर्णांक parse_common_flags(काष्ठा tep_handle *tep, व्योम *data)
-अणु
-	वापस __parse_common(tep, data,
+static int parse_common_flags(struct tep_handle *tep, void *data)
+{
+	return __parse_common(tep, data,
 			      &tep->flags_size, &tep->flags_offset,
 			      "common_flags");
-पूर्ण
+}
 
-अटल पूर्णांक parse_common_lock_depth(काष्ठा tep_handle *tep, व्योम *data)
-अणु
-	वापस __parse_common(tep, data,
+static int parse_common_lock_depth(struct tep_handle *tep, void *data)
+{
+	return __parse_common(tep, data,
 			      &tep->ld_size, &tep->ld_offset,
 			      "common_lock_depth");
-पूर्ण
+}
 
-अटल पूर्णांक parse_common_migrate_disable(काष्ठा tep_handle *tep, व्योम *data)
-अणु
-	वापस __parse_common(tep, data,
+static int parse_common_migrate_disable(struct tep_handle *tep, void *data)
+{
+	return __parse_common(tep, data,
 			      &tep->ld_size, &tep->ld_offset,
 			      "common_migrate_disable");
-पूर्ण
+}
 
-अटल पूर्णांक events_id_cmp(स्थिर व्योम *a, स्थिर व्योम *b);
+static int events_id_cmp(const void *a, const void *b);
 
 /**
  * tep_find_event - find an event by given id
@@ -3570,139 +3569,139 @@ tep_find_any_field(काष्ठा tep_event *event, स्थिर अक�
  *
  * Returns an event that has a given @id.
  */
-काष्ठा tep_event *tep_find_event(काष्ठा tep_handle *tep, पूर्णांक id)
-अणु
-	काष्ठा tep_event **eventptr;
-	काष्ठा tep_event key;
-	काष्ठा tep_event *pkey = &key;
+struct tep_event *tep_find_event(struct tep_handle *tep, int id)
+{
+	struct tep_event **eventptr;
+	struct tep_event key;
+	struct tep_event *pkey = &key;
 
 	/* Check cache first */
-	अगर (tep->last_event && tep->last_event->id == id)
-		वापस tep->last_event;
+	if (tep->last_event && tep->last_event->id == id)
+		return tep->last_event;
 
 	key.id = id;
 
-	eventptr = द्वा_खोज(&pkey, tep->events, tep->nr_events,
-			   माप(*tep->events), events_id_cmp);
+	eventptr = bsearch(&pkey, tep->events, tep->nr_events,
+			   sizeof(*tep->events), events_id_cmp);
 
-	अगर (eventptr) अणु
+	if (eventptr) {
 		tep->last_event = *eventptr;
-		वापस *eventptr;
-	पूर्ण
+		return *eventptr;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
  * tep_find_event_by_name - find an event by given name
  * @tep: a handle to the trace event parser context
- * @sys: the प्रणाली name to search क्रम
- * @name: the name of the event to search क्रम
+ * @sys: the system name to search for
+ * @name: the name of the event to search for
  *
- * This वापसs an event with a given @name and under the प्रणाली
- * @sys. If @sys is शून्य the first event with @name is वापसed.
+ * This returns an event with a given @name and under the system
+ * @sys. If @sys is NULL the first event with @name is returned.
  */
-काष्ठा tep_event *
-tep_find_event_by_name(काष्ठा tep_handle *tep,
-		       स्थिर अक्षर *sys, स्थिर अक्षर *name)
-अणु
-	काष्ठा tep_event *event = शून्य;
-	पूर्णांक i;
+struct tep_event *
+tep_find_event_by_name(struct tep_handle *tep,
+		       const char *sys, const char *name)
+{
+	struct tep_event *event = NULL;
+	int i;
 
-	अगर (tep->last_event &&
-	    म_भेद(tep->last_event->name, name) == 0 &&
-	    (!sys || म_भेद(tep->last_event->प्रणाली, sys) == 0))
-		वापस tep->last_event;
+	if (tep->last_event &&
+	    strcmp(tep->last_event->name, name) == 0 &&
+	    (!sys || strcmp(tep->last_event->system, sys) == 0))
+		return tep->last_event;
 
-	क्रम (i = 0; i < tep->nr_events; i++) अणु
+	for (i = 0; i < tep->nr_events; i++) {
 		event = tep->events[i];
-		अगर (म_भेद(event->name, name) == 0) अणु
-			अगर (!sys)
-				अवरोध;
-			अगर (म_भेद(event->प्रणाली, sys) == 0)
-				अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (i == tep->nr_events)
-		event = शून्य;
+		if (strcmp(event->name, name) == 0) {
+			if (!sys)
+				break;
+			if (strcmp(event->system, sys) == 0)
+				break;
+		}
+	}
+	if (i == tep->nr_events)
+		event = NULL;
 
 	tep->last_event = event;
-	वापस event;
-पूर्ण
+	return event;
+}
 
-अटल अचिन्हित दीर्घ दीर्घ
-eval_num_arg(व्योम *data, पूर्णांक size, काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg *arg)
-अणु
-	काष्ठा tep_handle *tep = event->tep;
-	अचिन्हित दीर्घ दीर्घ val = 0;
-	अचिन्हित दीर्घ दीर्घ left, right;
-	काष्ठा tep_prपूर्णांक_arg *typearg = शून्य;
-	काष्ठा tep_prपूर्णांक_arg *larg;
-	अचिन्हित दीर्घ offset;
-	अचिन्हित पूर्णांक field_size;
+static unsigned long long
+eval_num_arg(void *data, int size, struct tep_event *event, struct tep_print_arg *arg)
+{
+	struct tep_handle *tep = event->tep;
+	unsigned long long val = 0;
+	unsigned long long left, right;
+	struct tep_print_arg *typearg = NULL;
+	struct tep_print_arg *larg;
+	unsigned long offset;
+	unsigned int field_size;
 
-	चयन (arg->type) अणु
-	हाल TEP_PRINT_शून्य:
+	switch (arg->type) {
+	case TEP_PRINT_NULL:
 		/* ?? */
-		वापस 0;
-	हाल TEP_PRINT_ATOM:
-		वापस म_से_अदीर्घl(arg->atom.atom, शून्य, 0);
-	हाल TEP_PRINT_FIELD:
-		अगर (!arg->field.field) अणु
+		return 0;
+	case TEP_PRINT_ATOM:
+		return strtoull(arg->atom.atom, NULL, 0);
+	case TEP_PRINT_FIELD:
+		if (!arg->field.field) {
 			arg->field.field = tep_find_any_field(event, arg->field.name);
-			अगर (!arg->field.field)
-				जाओ out_warning_field;
+			if (!arg->field.field)
+				goto out_warning_field;
 			
-		पूर्ण
+		}
 		/* must be a number */
-		val = tep_पढ़ो_number(tep, data + arg->field.field->offset,
+		val = tep_read_number(tep, data + arg->field.field->offset,
 				      arg->field.field->size);
-		अवरोध;
-	हाल TEP_PRINT_FLAGS:
-	हाल TEP_PRINT_SYMBOL:
-	हाल TEP_PRINT_INT_ARRAY:
-	हाल TEP_PRINT_HEX:
-	हाल TEP_PRINT_HEX_STR:
-		अवरोध;
-	हाल TEP_PRINT_TYPE:
+		break;
+	case TEP_PRINT_FLAGS:
+	case TEP_PRINT_SYMBOL:
+	case TEP_PRINT_INT_ARRAY:
+	case TEP_PRINT_HEX:
+	case TEP_PRINT_HEX_STR:
+		break;
+	case TEP_PRINT_TYPE:
 		val = eval_num_arg(data, size, event, arg->typecast.item);
-		वापस eval_type(val, arg, 0);
-	हाल TEP_PRINT_STRING:
-	हाल TEP_PRINT_BSTRING:
-	हाल TEP_PRINT_BITMASK:
-		वापस 0;
-	हाल TEP_PRINT_FUNC: अणु
-		काष्ठा trace_seq s;
+		return eval_type(val, arg, 0);
+	case TEP_PRINT_STRING:
+	case TEP_PRINT_BSTRING:
+	case TEP_PRINT_BITMASK:
+		return 0;
+	case TEP_PRINT_FUNC: {
+		struct trace_seq s;
 		trace_seq_init(&s);
 		val = process_defined_func(&s, data, size, event, arg);
 		trace_seq_destroy(&s);
-		वापस val;
-	पूर्ण
-	हाल TEP_PRINT_OP:
-		अगर (म_भेद(arg->op.op, "[") == 0) अणु
+		return val;
+	}
+	case TEP_PRINT_OP:
+		if (strcmp(arg->op.op, "[") == 0) {
 			/*
-			 * Arrays are special, since we करोn't want
-			 * to पढ़ो the arg as is.
+			 * Arrays are special, since we don't want
+			 * to read the arg as is.
 			 */
 			right = eval_num_arg(data, size, event, arg->op.right);
 
 			/* handle typecasts */
 			larg = arg->op.left;
-			जबतक (larg->type == TEP_PRINT_TYPE) अणु
-				अगर (!typearg)
+			while (larg->type == TEP_PRINT_TYPE) {
+				if (!typearg)
 					typearg = larg;
 				larg = larg->typecast.item;
-			पूर्ण
+			}
 
-			/* Default to दीर्घ size */
-			field_size = tep->दीर्घ_size;
+			/* Default to long size */
+			field_size = tep->long_size;
 
-			चयन (larg->type) अणु
-			हाल TEP_PRINT_DYNAMIC_ARRAY:
-				offset = tep_पढ़ो_number(tep,
+			switch (larg->type) {
+			case TEP_PRINT_DYNAMIC_ARRAY:
+				offset = tep_read_number(tep,
 						   data + larg->dynarray.field->offset,
 						   larg->dynarray.field->size);
-				अगर (larg->dynarray.field->elementsize)
+				if (larg->dynarray.field->elementsize)
 					field_size = larg->dynarray.field->elementsize;
 				/*
 				 * The actual length of the dynamic array is stored
@@ -3711,125 +3710,125 @@ eval_num_arg(व्योम *data, पूर्णांक size, काष्�
 				 */
 				offset &= 0xffff;
 				offset += right;
-				अवरोध;
-			हाल TEP_PRINT_FIELD:
-				अगर (!larg->field.field) अणु
+				break;
+			case TEP_PRINT_FIELD:
+				if (!larg->field.field) {
 					larg->field.field =
 						tep_find_any_field(event, larg->field.name);
-					अगर (!larg->field.field) अणु
+					if (!larg->field.field) {
 						arg = larg;
-						जाओ out_warning_field;
-					पूर्ण
-				पूर्ण
+						goto out_warning_field;
+					}
+				}
 				field_size = larg->field.field->elementsize;
 				offset = larg->field.field->offset +
 					right * larg->field.field->elementsize;
-				अवरोध;
-			शेष:
-				जाओ शेष_op; /* oops, all bets off */
-			पूर्ण
-			val = tep_पढ़ो_number(tep,
+				break;
+			default:
+				goto default_op; /* oops, all bets off */
+			}
+			val = tep_read_number(tep,
 					      data + offset, field_size);
-			अगर (typearg)
+			if (typearg)
 				val = eval_type(val, typearg, 1);
-			अवरोध;
-		पूर्ण अन्यथा अगर (म_भेद(arg->op.op, "?") == 0) अणु
+			break;
+		} else if (strcmp(arg->op.op, "?") == 0) {
 			left = eval_num_arg(data, size, event, arg->op.left);
 			arg = arg->op.right;
-			अगर (left)
+			if (left)
 				val = eval_num_arg(data, size, event, arg->op.left);
-			अन्यथा
+			else
 				val = eval_num_arg(data, size, event, arg->op.right);
-			अवरोध;
-		पूर्ण
- शेष_op:
+			break;
+		}
+ default_op:
 		left = eval_num_arg(data, size, event, arg->op.left);
 		right = eval_num_arg(data, size, event, arg->op.right);
-		चयन (arg->op.op[0]) अणु
-		हाल '!':
-			चयन (arg->op.op[1]) अणु
-			हाल 0:
+		switch (arg->op.op[0]) {
+		case '!':
+			switch (arg->op.op[1]) {
+			case 0:
 				val = !right;
-				अवरोध;
-			हाल '=':
+				break;
+			case '=':
 				val = left != right;
-				अवरोध;
-			शेष:
-				जाओ out_warning_op;
-			पूर्ण
-			अवरोध;
-		हाल '~':
+				break;
+			default:
+				goto out_warning_op;
+			}
+			break;
+		case '~':
 			val = ~right;
-			अवरोध;
-		हाल '|':
-			अगर (arg->op.op[1])
+			break;
+		case '|':
+			if (arg->op.op[1])
 				val = left || right;
-			अन्यथा
+			else
 				val = left | right;
-			अवरोध;
-		हाल '&':
-			अगर (arg->op.op[1])
+			break;
+		case '&':
+			if (arg->op.op[1])
 				val = left && right;
-			अन्यथा
+			else
 				val = left & right;
-			अवरोध;
-		हाल '<':
-			चयन (arg->op.op[1]) अणु
-			हाल 0:
+			break;
+		case '<':
+			switch (arg->op.op[1]) {
+			case 0:
 				val = left < right;
-				अवरोध;
-			हाल '<':
+				break;
+			case '<':
 				val = left << right;
-				अवरोध;
-			हाल '=':
+				break;
+			case '=':
 				val = left <= right;
-				अवरोध;
-			शेष:
-				जाओ out_warning_op;
-			पूर्ण
-			अवरोध;
-		हाल '>':
-			चयन (arg->op.op[1]) अणु
-			हाल 0:
+				break;
+			default:
+				goto out_warning_op;
+			}
+			break;
+		case '>':
+			switch (arg->op.op[1]) {
+			case 0:
 				val = left > right;
-				अवरोध;
-			हाल '>':
+				break;
+			case '>':
 				val = left >> right;
-				अवरोध;
-			हाल '=':
+				break;
+			case '=':
 				val = left >= right;
-				अवरोध;
-			शेष:
-				जाओ out_warning_op;
-			पूर्ण
-			अवरोध;
-		हाल '=':
-			अगर (arg->op.op[1] != '=')
-				जाओ out_warning_op;
+				break;
+			default:
+				goto out_warning_op;
+			}
+			break;
+		case '=':
+			if (arg->op.op[1] != '=')
+				goto out_warning_op;
 
 			val = left == right;
-			अवरोध;
-		हाल '-':
+			break;
+		case '-':
 			val = left - right;
-			अवरोध;
-		हाल '+':
+			break;
+		case '+':
 			val = left + right;
-			अवरोध;
-		हाल '/':
+			break;
+		case '/':
 			val = left / right;
-			अवरोध;
-		हाल '%':
+			break;
+		case '%':
 			val = left % right;
-			अवरोध;
-		हाल '*':
+			break;
+		case '*':
 			val = left * right;
-			अवरोध;
-		शेष:
-			जाओ out_warning_op;
-		पूर्ण
-		अवरोध;
-	हाल TEP_PRINT_DYNAMIC_ARRAY_LEN:
-		offset = tep_पढ़ो_number(tep,
+			break;
+		default:
+			goto out_warning_op;
+		}
+		break;
+	case TEP_PRINT_DYNAMIC_ARRAY_LEN:
+		offset = tep_read_number(tep,
 					 data + arg->dynarray.field->offset,
 					 arg->dynarray.field->size);
 		/*
@@ -3837,11 +3836,11 @@ eval_num_arg(व्योम *data, पूर्णांक size, काष्�
 		 * stored in the top half of the field, and the offset
 		 * is in the bottom half of the 32 bit field.
 		 */
-		val = (अचिन्हित दीर्घ दीर्घ)(offset >> 16);
-		अवरोध;
-	हाल TEP_PRINT_DYNAMIC_ARRAY:
+		val = (unsigned long long)(offset >> 16);
+		break;
+	case TEP_PRINT_DYNAMIC_ARRAY:
 		/* Without [], we pass the address to the dynamic data */
-		offset = tep_पढ़ो_number(tep,
+		offset = tep_read_number(tep,
 					 data + arg->dynarray.field->offset,
 					 arg->dynarray.field->size);
 		/*
@@ -3850,168 +3849,168 @@ eval_num_arg(व्योम *data, पूर्णांक size, काष्�
 		 * is in the bottom half of the 32 bit field.
 		 */
 		offset &= 0xffff;
-		val = (अचिन्हित दीर्घ दीर्घ)((अचिन्हित दीर्घ)data + offset);
-		अवरोध;
-	शेष: /* not sure what to करो there */
-		वापस 0;
-	पूर्ण
-	वापस val;
+		val = (unsigned long long)((unsigned long)data + offset);
+		break;
+	default: /* not sure what to do there */
+		return 0;
+	}
+	return val;
 
 out_warning_op:
-	करो_warning_event(event, "%s: unknown op '%s'", __func__, arg->op.op);
-	वापस 0;
+	do_warning_event(event, "%s: unknown op '%s'", __func__, arg->op.op);
+	return 0;
 
 out_warning_field:
-	करो_warning_event(event, "%s: field %s not found",
+	do_warning_event(event, "%s: field %s not found",
 			 __func__, arg->field.name);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा flag अणु
-	स्थिर अक्षर *name;
-	अचिन्हित दीर्घ दीर्घ value;
-पूर्ण;
+struct flag {
+	const char *name;
+	unsigned long long value;
+};
 
-अटल स्थिर काष्ठा flag flags[] = अणु
-	अणु "HI_SOFTIRQ", 0 पूर्ण,
-	अणु "TIMER_SOFTIRQ", 1 पूर्ण,
-	अणु "NET_TX_SOFTIRQ", 2 पूर्ण,
-	अणु "NET_RX_SOFTIRQ", 3 पूर्ण,
-	अणु "BLOCK_SOFTIRQ", 4 पूर्ण,
-	अणु "IRQ_POLL_SOFTIRQ", 5 पूर्ण,
-	अणु "TASKLET_SOFTIRQ", 6 पूर्ण,
-	अणु "SCHED_SOFTIRQ", 7 पूर्ण,
-	अणु "HRTIMER_SOFTIRQ", 8 पूर्ण,
-	अणु "RCU_SOFTIRQ", 9 पूर्ण,
+static const struct flag flags[] = {
+	{ "HI_SOFTIRQ", 0 },
+	{ "TIMER_SOFTIRQ", 1 },
+	{ "NET_TX_SOFTIRQ", 2 },
+	{ "NET_RX_SOFTIRQ", 3 },
+	{ "BLOCK_SOFTIRQ", 4 },
+	{ "IRQ_POLL_SOFTIRQ", 5 },
+	{ "TASKLET_SOFTIRQ", 6 },
+	{ "SCHED_SOFTIRQ", 7 },
+	{ "HRTIMER_SOFTIRQ", 8 },
+	{ "RCU_SOFTIRQ", 9 },
 
-	अणु "HRTIMER_NORESTART", 0 पूर्ण,
-	अणु "HRTIMER_RESTART", 1 पूर्ण,
-पूर्ण;
+	{ "HRTIMER_NORESTART", 0 },
+	{ "HRTIMER_RESTART", 1 },
+};
 
-अटल दीर्घ दीर्घ eval_flag(स्थिर अक्षर *flag)
-अणु
-	पूर्णांक i;
+static long long eval_flag(const char *flag)
+{
+	int i;
 
 	/*
-	 * Some flags in the क्रमmat files करो not get converted.
-	 * If the flag is not numeric, see अगर it is something that
-	 * we alपढ़ोy know about.
+	 * Some flags in the format files do not get converted.
+	 * If the flag is not numeric, see if it is something that
+	 * we already know about.
 	 */
-	अगर (है_अंक(flag[0]))
-		वापस म_से_अदीर्घl(flag, शून्य, 0);
+	if (isdigit(flag[0]))
+		return strtoull(flag, NULL, 0);
 
-	क्रम (i = 0; i < (पूर्णांक)(माप(flags)/माप(flags[0])); i++)
-		अगर (म_भेद(flags[i].name, flag) == 0)
-			वापस flags[i].value;
+	for (i = 0; i < (int)(sizeof(flags)/sizeof(flags[0])); i++)
+		if (strcmp(flags[i].name, flag) == 0)
+			return flags[i].value;
 
-	वापस -1LL;
-पूर्ण
+	return -1LL;
+}
 
-अटल व्योम prपूर्णांक_str_to_seq(काष्ठा trace_seq *s, स्थिर अक्षर *क्रमmat,
-			     पूर्णांक len_arg, स्थिर अक्षर *str)
-अणु
-	अगर (len_arg >= 0)
-		trace_seq_म_लिखो(s, क्रमmat, len_arg, str);
-	अन्यथा
-		trace_seq_म_लिखो(s, क्रमmat, str);
-पूर्ण
+static void print_str_to_seq(struct trace_seq *s, const char *format,
+			     int len_arg, const char *str)
+{
+	if (len_arg >= 0)
+		trace_seq_printf(s, format, len_arg, str);
+	else
+		trace_seq_printf(s, format, str);
+}
 
-अटल व्योम prपूर्णांक_biपंचांगask_to_seq(काष्ठा tep_handle *tep,
-				 काष्ठा trace_seq *s, स्थिर अक्षर *क्रमmat,
-				 पूर्णांक len_arg, स्थिर व्योम *data, पूर्णांक size)
-अणु
-	पूर्णांक nr_bits = size * 8;
-	पूर्णांक str_size = (nr_bits + 3) / 4;
-	पूर्णांक len = 0;
-	अक्षर buf[3];
-	अक्षर *str;
-	पूर्णांक index;
-	पूर्णांक i;
+static void print_bitmask_to_seq(struct tep_handle *tep,
+				 struct trace_seq *s, const char *format,
+				 int len_arg, const void *data, int size)
+{
+	int nr_bits = size * 8;
+	int str_size = (nr_bits + 3) / 4;
+	int len = 0;
+	char buf[3];
+	char *str;
+	int index;
+	int i;
 
 	/*
 	 * The kernel likes to put in commas every 32 bits, we
-	 * can करो the same.
+	 * can do the same.
 	 */
 	str_size += (nr_bits - 1) / 32;
 
-	str = दो_स्मृति(str_size + 1);
-	अगर (!str) अणु
-		करो_warning("%s: not enough memory!", __func__);
-		वापस;
-	पूर्ण
+	str = malloc(str_size + 1);
+	if (!str) {
+		do_warning("%s: not enough memory!", __func__);
+		return;
+	}
 	str[str_size] = 0;
 
-	/* Start out with -2 क्रम the two अक्षरs per byte */
-	क्रम (i = str_size - 2; i >= 0; i -= 2) अणु
+	/* Start out with -2 for the two chars per byte */
+	for (i = str_size - 2; i >= 0; i -= 2) {
 		/*
-		 * data poपूर्णांकs to a bit mask of size bytes.
-		 * In the kernel, this is an array of दीर्घ words, thus
+		 * data points to a bit mask of size bytes.
+		 * In the kernel, this is an array of long words, thus
 		 * endianness is very important.
 		 */
-		अगर (tep->file_bigendian)
+		if (tep->file_bigendian)
 			index = size - (len + 1);
-		अन्यथा
+		else
 			index = len;
 
-		snम_लिखो(buf, 3, "%02x", *((अचिन्हित अक्षर *)data + index));
-		स_नकल(str + i, buf, 2);
+		snprintf(buf, 3, "%02x", *((unsigned char *)data + index));
+		memcpy(str + i, buf, 2);
 		len++;
-		अगर (!(len & 3) && i > 0) अणु
+		if (!(len & 3) && i > 0) {
 			i--;
 			str[i] = ',';
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (len_arg >= 0)
-		trace_seq_म_लिखो(s, क्रमmat, len_arg, str);
-	अन्यथा
-		trace_seq_म_लिखो(s, क्रमmat, str);
+	if (len_arg >= 0)
+		trace_seq_printf(s, format, len_arg, str);
+	else
+		trace_seq_printf(s, format, str);
 
-	मुक्त(str);
-पूर्ण
+	free(str);
+}
 
-अटल व्योम prपूर्णांक_str_arg(काष्ठा trace_seq *s, व्योम *data, पूर्णांक size,
-			  काष्ठा tep_event *event, स्थिर अक्षर *क्रमmat,
-			  पूर्णांक len_arg, काष्ठा tep_prपूर्णांक_arg *arg)
-अणु
-	काष्ठा tep_handle *tep = event->tep;
-	काष्ठा tep_prपूर्णांक_flag_sym *flag;
-	काष्ठा tep_क्रमmat_field *field;
-	काष्ठा prपूर्णांकk_map *prपूर्णांकk;
-	दीर्घ दीर्घ val, fval;
-	अचिन्हित दीर्घ दीर्घ addr;
-	अक्षर *str;
-	अचिन्हित अक्षर *hex;
-	पूर्णांक prपूर्णांक;
-	पूर्णांक i, len;
+static void print_str_arg(struct trace_seq *s, void *data, int size,
+			  struct tep_event *event, const char *format,
+			  int len_arg, struct tep_print_arg *arg)
+{
+	struct tep_handle *tep = event->tep;
+	struct tep_print_flag_sym *flag;
+	struct tep_format_field *field;
+	struct printk_map *printk;
+	long long val, fval;
+	unsigned long long addr;
+	char *str;
+	unsigned char *hex;
+	int print;
+	int i, len;
 
-	चयन (arg->type) अणु
-	हाल TEP_PRINT_शून्य:
+	switch (arg->type) {
+	case TEP_PRINT_NULL:
 		/* ?? */
-		वापस;
-	हाल TEP_PRINT_ATOM:
-		prपूर्णांक_str_to_seq(s, क्रमmat, len_arg, arg->atom.atom);
-		वापस;
-	हाल TEP_PRINT_FIELD:
+		return;
+	case TEP_PRINT_ATOM:
+		print_str_to_seq(s, format, len_arg, arg->atom.atom);
+		return;
+	case TEP_PRINT_FIELD:
 		field = arg->field.field;
-		अगर (!field) अणु
+		if (!field) {
 			field = tep_find_any_field(event, arg->field.name);
-			अगर (!field) अणु
+			if (!field) {
 				str = arg->field.name;
-				जाओ out_warning_field;
-			पूर्ण
+				goto out_warning_field;
+			}
 			arg->field.field = field;
-		पूर्ण
+		}
 		/* Zero sized fields, mean the rest of the data */
 		len = field->size ? : size - field->offset;
 
 		/*
-		 * Some events pass in poपूर्णांकers. If this is not an array
-		 * and the size is the same as दीर्घ_size, assume that it
-		 * is a poपूर्णांकer.
+		 * Some events pass in pointers. If this is not an array
+		 * and the size is the same as long_size, assume that it
+		 * is a pointer.
 		 */
-		अगर (!(field->flags & TEP_FIELD_IS_ARRAY) &&
-		    field->size == tep->दीर्घ_size) अणु
+		if (!(field->flags & TEP_FIELD_IS_ARRAY) &&
+		    field->size == tep->long_size) {
 
 			/* Handle heterogeneous recording and processing
 			 * architectures
@@ -4019,1776 +4018,1776 @@ out_warning_field:
 			 * CASE I:
 			 * Traces recorded on 32-bit devices (32-bit
 			 * addressing) and processed on 64-bit devices:
-			 * In this हाल, only 32 bits should be पढ़ो.
+			 * In this case, only 32 bits should be read.
 			 *
 			 * CASE II:
 			 * Traces recorded on 64 bit devices and processed
 			 * on 32-bit devices:
-			 * In this हाल, 64 bits must be पढ़ो.
+			 * In this case, 64 bits must be read.
 			 */
-			addr = (tep->दीर्घ_size == 8) ?
-				*(अचिन्हित दीर्घ दीर्घ *)(data + field->offset) :
-				(अचिन्हित दीर्घ दीर्घ)*(अचिन्हित पूर्णांक *)(data + field->offset);
+			addr = (tep->long_size == 8) ?
+				*(unsigned long long *)(data + field->offset) :
+				(unsigned long long)*(unsigned int *)(data + field->offset);
 
-			/* Check अगर it matches a prपूर्णांक क्रमmat */
-			prपूर्णांकk = find_prपूर्णांकk(tep, addr);
-			अगर (prपूर्णांकk)
-				trace_seq_माला_दो(s, prपूर्णांकk->prपूर्णांकk);
-			अन्यथा
-				trace_seq_म_लिखो(s, "%llx", addr);
-			अवरोध;
-		पूर्ण
-		str = दो_स्मृति(len + 1);
-		अगर (!str) अणु
-			करो_warning_event(event, "%s: not enough memory!",
+			/* Check if it matches a print format */
+			printk = find_printk(tep, addr);
+			if (printk)
+				trace_seq_puts(s, printk->printk);
+			else
+				trace_seq_printf(s, "%llx", addr);
+			break;
+		}
+		str = malloc(len + 1);
+		if (!str) {
+			do_warning_event(event, "%s: not enough memory!",
 					 __func__);
-			वापस;
-		पूर्ण
-		स_नकल(str, data + field->offset, len);
+			return;
+		}
+		memcpy(str, data + field->offset, len);
 		str[len] = 0;
-		prपूर्णांक_str_to_seq(s, क्रमmat, len_arg, str);
-		मुक्त(str);
-		अवरोध;
-	हाल TEP_PRINT_FLAGS:
+		print_str_to_seq(s, format, len_arg, str);
+		free(str);
+		break;
+	case TEP_PRINT_FLAGS:
 		val = eval_num_arg(data, size, event, arg->flags.field);
-		prपूर्णांक = 0;
-		क्रम (flag = arg->flags.flags; flag; flag = flag->next) अणु
+		print = 0;
+		for (flag = arg->flags.flags; flag; flag = flag->next) {
 			fval = eval_flag(flag->value);
-			अगर (!val && fval < 0) अणु
-				prपूर्णांक_str_to_seq(s, क्रमmat, len_arg, flag->str);
-				अवरोध;
-			पूर्ण
-			अगर (fval > 0 && (val & fval) == fval) अणु
-				अगर (prपूर्णांक && arg->flags.delim)
-					trace_seq_माला_दो(s, arg->flags.delim);
-				prपूर्णांक_str_to_seq(s, क्रमmat, len_arg, flag->str);
-				prपूर्णांक = 1;
+			if (!val && fval < 0) {
+				print_str_to_seq(s, format, len_arg, flag->str);
+				break;
+			}
+			if (fval > 0 && (val & fval) == fval) {
+				if (print && arg->flags.delim)
+					trace_seq_puts(s, arg->flags.delim);
+				print_str_to_seq(s, format, len_arg, flag->str);
+				print = 1;
 				val &= ~fval;
-			पूर्ण
-		पूर्ण
-		अगर (val) अणु
-			अगर (prपूर्णांक && arg->flags.delim)
-				trace_seq_माला_दो(s, arg->flags.delim);
-			trace_seq_म_लिखो(s, "0x%llx", val);
-		पूर्ण
-		अवरोध;
-	हाल TEP_PRINT_SYMBOL:
+			}
+		}
+		if (val) {
+			if (print && arg->flags.delim)
+				trace_seq_puts(s, arg->flags.delim);
+			trace_seq_printf(s, "0x%llx", val);
+		}
+		break;
+	case TEP_PRINT_SYMBOL:
 		val = eval_num_arg(data, size, event, arg->symbol.field);
-		क्रम (flag = arg->symbol.symbols; flag; flag = flag->next) अणु
+		for (flag = arg->symbol.symbols; flag; flag = flag->next) {
 			fval = eval_flag(flag->value);
-			अगर (val == fval) अणु
-				prपूर्णांक_str_to_seq(s, क्रमmat, len_arg, flag->str);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (!flag)
-			trace_seq_म_लिखो(s, "0x%llx", val);
-		अवरोध;
-	हाल TEP_PRINT_HEX:
-	हाल TEP_PRINT_HEX_STR:
-		अगर (arg->hex.field->type == TEP_PRINT_DYNAMIC_ARRAY) अणु
-			अचिन्हित दीर्घ offset;
-			offset = tep_पढ़ो_number(tep,
+			if (val == fval) {
+				print_str_to_seq(s, format, len_arg, flag->str);
+				break;
+			}
+		}
+		if (!flag)
+			trace_seq_printf(s, "0x%llx", val);
+		break;
+	case TEP_PRINT_HEX:
+	case TEP_PRINT_HEX_STR:
+		if (arg->hex.field->type == TEP_PRINT_DYNAMIC_ARRAY) {
+			unsigned long offset;
+			offset = tep_read_number(tep,
 				data + arg->hex.field->dynarray.field->offset,
 				arg->hex.field->dynarray.field->size);
 			hex = data + (offset & 0xffff);
-		पूर्ण अन्यथा अणु
+		} else {
 			field = arg->hex.field->field.field;
-			अगर (!field) अणु
+			if (!field) {
 				str = arg->hex.field->field.name;
 				field = tep_find_any_field(event, str);
-				अगर (!field)
-					जाओ out_warning_field;
+				if (!field)
+					goto out_warning_field;
 				arg->hex.field->field.field = field;
-			पूर्ण
+			}
 			hex = data + field->offset;
-		पूर्ण
+		}
 		len = eval_num_arg(data, size, event, arg->hex.size);
-		क्रम (i = 0; i < len; i++) अणु
-			अगर (i && arg->type == TEP_PRINT_HEX)
-				trace_seq_अ_दो(s, ' ');
-			trace_seq_म_लिखो(s, "%02x", hex[i]);
-		पूर्ण
-		अवरोध;
+		for (i = 0; i < len; i++) {
+			if (i && arg->type == TEP_PRINT_HEX)
+				trace_seq_putc(s, ' ');
+			trace_seq_printf(s, "%02x", hex[i]);
+		}
+		break;
 
-	हाल TEP_PRINT_INT_ARRAY: अणु
-		व्योम *num;
-		पूर्णांक el_size;
+	case TEP_PRINT_INT_ARRAY: {
+		void *num;
+		int el_size;
 
-		अगर (arg->पूर्णांक_array.field->type == TEP_PRINT_DYNAMIC_ARRAY) अणु
-			अचिन्हित दीर्घ offset;
-			काष्ठा tep_क्रमmat_field *field =
-				arg->पूर्णांक_array.field->dynarray.field;
-			offset = tep_पढ़ो_number(tep,
+		if (arg->int_array.field->type == TEP_PRINT_DYNAMIC_ARRAY) {
+			unsigned long offset;
+			struct tep_format_field *field =
+				arg->int_array.field->dynarray.field;
+			offset = tep_read_number(tep,
 						 data + field->offset,
 						 field->size);
 			num = data + (offset & 0xffff);
-		पूर्ण अन्यथा अणु
-			field = arg->पूर्णांक_array.field->field.field;
-			अगर (!field) अणु
-				str = arg->पूर्णांक_array.field->field.name;
+		} else {
+			field = arg->int_array.field->field.field;
+			if (!field) {
+				str = arg->int_array.field->field.name;
 				field = tep_find_any_field(event, str);
-				अगर (!field)
-					जाओ out_warning_field;
-				arg->पूर्णांक_array.field->field.field = field;
-			पूर्ण
+				if (!field)
+					goto out_warning_field;
+				arg->int_array.field->field.field = field;
+			}
 			num = data + field->offset;
-		पूर्ण
-		len = eval_num_arg(data, size, event, arg->पूर्णांक_array.count);
+		}
+		len = eval_num_arg(data, size, event, arg->int_array.count);
 		el_size = eval_num_arg(data, size, event,
-				       arg->पूर्णांक_array.el_size);
-		क्रम (i = 0; i < len; i++) अणु
-			अगर (i)
-				trace_seq_अ_दो(s, ' ');
+				       arg->int_array.el_size);
+		for (i = 0; i < len; i++) {
+			if (i)
+				trace_seq_putc(s, ' ');
 
-			अगर (el_size == 1) अणु
-				trace_seq_म_लिखो(s, "%u", *(uपूर्णांक8_t *)num);
-			पूर्ण अन्यथा अगर (el_size == 2) अणु
-				trace_seq_म_लिखो(s, "%u", *(uपूर्णांक16_t *)num);
-			पूर्ण अन्यथा अगर (el_size == 4) अणु
-				trace_seq_म_लिखो(s, "%u", *(uपूर्णांक32_t *)num);
-			पूर्ण अन्यथा अगर (el_size == 8) अणु
-				trace_seq_म_लिखो(s, "%"PRIu64, *(uपूर्णांक64_t *)num);
-			पूर्ण अन्यथा अणु
-				trace_seq_म_लिखो(s, "BAD SIZE:%d 0x%x",
-						 el_size, *(uपूर्णांक8_t *)num);
+			if (el_size == 1) {
+				trace_seq_printf(s, "%u", *(uint8_t *)num);
+			} else if (el_size == 2) {
+				trace_seq_printf(s, "%u", *(uint16_t *)num);
+			} else if (el_size == 4) {
+				trace_seq_printf(s, "%u", *(uint32_t *)num);
+			} else if (el_size == 8) {
+				trace_seq_printf(s, "%"PRIu64, *(uint64_t *)num);
+			} else {
+				trace_seq_printf(s, "BAD SIZE:%d 0x%x",
+						 el_size, *(uint8_t *)num);
 				el_size = 1;
-			पूर्ण
+			}
 
 			num += el_size;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	हाल TEP_PRINT_TYPE:
-		अवरोध;
-	हाल TEP_PRINT_STRING: अणु
-		पूर्णांक str_offset;
+		}
+		break;
+	}
+	case TEP_PRINT_TYPE:
+		break;
+	case TEP_PRINT_STRING: {
+		int str_offset;
 
-		अगर (arg->string.offset == -1) अणु
-			काष्ठा tep_क्रमmat_field *f;
+		if (arg->string.offset == -1) {
+			struct tep_format_field *f;
 
 			f = tep_find_any_field(event, arg->string.string);
 			arg->string.offset = f->offset;
-		पूर्ण
-		str_offset = data2host4(tep, *(अचिन्हित पूर्णांक *)(data + arg->string.offset));
+		}
+		str_offset = data2host4(tep, *(unsigned int *)(data + arg->string.offset));
 		str_offset &= 0xffff;
-		prपूर्णांक_str_to_seq(s, क्रमmat, len_arg, ((अक्षर *)data) + str_offset);
-		अवरोध;
-	पूर्ण
-	हाल TEP_PRINT_BSTRING:
-		prपूर्णांक_str_to_seq(s, क्रमmat, len_arg, arg->string.string);
-		अवरोध;
-	हाल TEP_PRINT_BITMASK: अणु
-		पूर्णांक biपंचांगask_offset;
-		पूर्णांक biपंचांगask_size;
+		print_str_to_seq(s, format, len_arg, ((char *)data) + str_offset);
+		break;
+	}
+	case TEP_PRINT_BSTRING:
+		print_str_to_seq(s, format, len_arg, arg->string.string);
+		break;
+	case TEP_PRINT_BITMASK: {
+		int bitmask_offset;
+		int bitmask_size;
 
-		अगर (arg->biपंचांगask.offset == -1) अणु
-			काष्ठा tep_क्रमmat_field *f;
+		if (arg->bitmask.offset == -1) {
+			struct tep_format_field *f;
 
-			f = tep_find_any_field(event, arg->biपंचांगask.biपंचांगask);
-			arg->biपंचांगask.offset = f->offset;
-		पूर्ण
-		biपंचांगask_offset = data2host4(tep, *(अचिन्हित पूर्णांक *)(data + arg->biपंचांगask.offset));
-		biपंचांगask_size = biपंचांगask_offset >> 16;
-		biपंचांगask_offset &= 0xffff;
-		prपूर्णांक_biपंचांगask_to_seq(tep, s, क्रमmat, len_arg,
-				     data + biपंचांगask_offset, biपंचांगask_size);
-		अवरोध;
-	पूर्ण
-	हाल TEP_PRINT_OP:
+			f = tep_find_any_field(event, arg->bitmask.bitmask);
+			arg->bitmask.offset = f->offset;
+		}
+		bitmask_offset = data2host4(tep, *(unsigned int *)(data + arg->bitmask.offset));
+		bitmask_size = bitmask_offset >> 16;
+		bitmask_offset &= 0xffff;
+		print_bitmask_to_seq(tep, s, format, len_arg,
+				     data + bitmask_offset, bitmask_size);
+		break;
+	}
+	case TEP_PRINT_OP:
 		/*
-		 * The only op क्रम string should be ? :
+		 * The only op for string should be ? :
 		 */
-		अगर (arg->op.op[0] != '?')
-			वापस;
+		if (arg->op.op[0] != '?')
+			return;
 		val = eval_num_arg(data, size, event, arg->op.left);
-		अगर (val)
-			prपूर्णांक_str_arg(s, data, size, event,
-				      क्रमmat, len_arg, arg->op.right->op.left);
-		अन्यथा
-			prपूर्णांक_str_arg(s, data, size, event,
-				      क्रमmat, len_arg, arg->op.right->op.right);
-		अवरोध;
-	हाल TEP_PRINT_FUNC:
+		if (val)
+			print_str_arg(s, data, size, event,
+				      format, len_arg, arg->op.right->op.left);
+		else
+			print_str_arg(s, data, size, event,
+				      format, len_arg, arg->op.right->op.right);
+		break;
+	case TEP_PRINT_FUNC:
 		process_defined_func(s, data, size, event, arg);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* well... */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस;
+	return;
 
 out_warning_field:
-	करो_warning_event(event, "%s: field %s not found",
+	do_warning_event(event, "%s: field %s not found",
 			 __func__, arg->field.name);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ दीर्घ
-process_defined_func(काष्ठा trace_seq *s, व्योम *data, पूर्णांक size,
-		     काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg *arg)
-अणु
-	काष्ठा tep_function_handler *func_handle = arg->func.func;
-	काष्ठा func_params *param;
-	अचिन्हित दीर्घ दीर्घ *args;
-	अचिन्हित दीर्घ दीर्घ ret;
-	काष्ठा tep_prपूर्णांक_arg *farg;
-	काष्ठा trace_seq str;
-	काष्ठा save_str अणु
-		काष्ठा save_str *next;
-		अक्षर *str;
-	पूर्ण *strings = शून्य, *string;
-	पूर्णांक i;
+static unsigned long long
+process_defined_func(struct trace_seq *s, void *data, int size,
+		     struct tep_event *event, struct tep_print_arg *arg)
+{
+	struct tep_function_handler *func_handle = arg->func.func;
+	struct func_params *param;
+	unsigned long long *args;
+	unsigned long long ret;
+	struct tep_print_arg *farg;
+	struct trace_seq str;
+	struct save_str {
+		struct save_str *next;
+		char *str;
+	} *strings = NULL, *string;
+	int i;
 
-	अगर (!func_handle->nr_args) अणु
-		ret = (*func_handle->func)(s, शून्य);
-		जाओ out;
-	पूर्ण
+	if (!func_handle->nr_args) {
+		ret = (*func_handle->func)(s, NULL);
+		goto out;
+	}
 
 	farg = arg->func.args;
 	param = func_handle->params;
 
-	ret = ULदीर्घ_उच्च;
-	args = दो_स्मृति(माप(*args) * func_handle->nr_args);
-	अगर (!args)
-		जाओ out;
+	ret = ULLONG_MAX;
+	args = malloc(sizeof(*args) * func_handle->nr_args);
+	if (!args)
+		goto out;
 
-	क्रम (i = 0; i < func_handle->nr_args; i++) अणु
-		चयन (param->type) अणु
-		हाल TEP_FUNC_ARG_INT:
-		हाल TEP_FUNC_ARG_LONG:
-		हाल TEP_FUNC_ARG_PTR:
+	for (i = 0; i < func_handle->nr_args; i++) {
+		switch (param->type) {
+		case TEP_FUNC_ARG_INT:
+		case TEP_FUNC_ARG_LONG:
+		case TEP_FUNC_ARG_PTR:
 			args[i] = eval_num_arg(data, size, event, farg);
-			अवरोध;
-		हाल TEP_FUNC_ARG_STRING:
+			break;
+		case TEP_FUNC_ARG_STRING:
 			trace_seq_init(&str);
-			prपूर्णांक_str_arg(&str, data, size, event, "%s", -1, farg);
+			print_str_arg(&str, data, size, event, "%s", -1, farg);
 			trace_seq_terminate(&str);
-			string = दो_स्मृति(माप(*string));
-			अगर (!string) अणु
-				करो_warning_event(event, "%s(%d): malloc str",
+			string = malloc(sizeof(*string));
+			if (!string) {
+				do_warning_event(event, "%s(%d): malloc str",
 						 __func__, __LINE__);
-				जाओ out_मुक्त;
-			पूर्ण
+				goto out_free;
+			}
 			string->next = strings;
 			string->str = strdup(str.buffer);
-			अगर (!string->str) अणु
-				मुक्त(string);
-				करो_warning_event(event, "%s(%d): malloc str",
+			if (!string->str) {
+				free(string);
+				do_warning_event(event, "%s(%d): malloc str",
 						 __func__, __LINE__);
-				जाओ out_मुक्त;
-			पूर्ण
-			args[i] = (uपूर्णांकptr_t)string->str;
+				goto out_free;
+			}
+			args[i] = (uintptr_t)string->str;
 			strings = string;
 			trace_seq_destroy(&str);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			/*
 			 * Something went totally wrong, this is not
 			 * an input error, something in this code broke.
 			 */
-			करो_warning_event(event, "Unexpected end of arguments\n");
-			जाओ out_मुक्त;
-		पूर्ण
+			do_warning_event(event, "Unexpected end of arguments\n");
+			goto out_free;
+		}
 		farg = farg->next;
 		param = param->next;
-	पूर्ण
+	}
 
 	ret = (*func_handle->func)(s, args);
-out_मुक्त:
-	मुक्त(args);
-	जबतक (strings) अणु
+out_free:
+	free(args);
+	while (strings) {
 		string = strings;
 		strings = string->next;
-		मुक्त(string->str);
-		मुक्त(string);
-	पूर्ण
+		free(string->str);
+		free(string);
+	}
 
  out:
-	/* TBD : handle वापस type here */
-	वापस ret;
-पूर्ण
+	/* TBD : handle return type here */
+	return ret;
+}
 
-अटल व्योम मुक्त_args(काष्ठा tep_prपूर्णांक_arg *args)
-अणु
-	काष्ठा tep_prपूर्णांक_arg *next;
+static void free_args(struct tep_print_arg *args)
+{
+	struct tep_print_arg *next;
 
-	जबतक (args) अणु
+	while (args) {
 		next = args->next;
 
-		मुक्त_arg(args);
+		free_arg(args);
 		args = next;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा tep_prपूर्णांक_arg *make_bprपूर्णांक_args(अक्षर *fmt, व्योम *data, पूर्णांक size, काष्ठा tep_event *event)
-अणु
-	काष्ठा tep_handle *tep = event->tep;
-	काष्ठा tep_क्रमmat_field *field, *ip_field;
-	काष्ठा tep_prपूर्णांक_arg *args, *arg, **next;
-	अचिन्हित दीर्घ दीर्घ ip, val;
-	अक्षर *ptr;
-	व्योम *bptr;
-	पूर्णांक vsize = 0;
+static struct tep_print_arg *make_bprint_args(char *fmt, void *data, int size, struct tep_event *event)
+{
+	struct tep_handle *tep = event->tep;
+	struct tep_format_field *field, *ip_field;
+	struct tep_print_arg *args, *arg, **next;
+	unsigned long long ip, val;
+	char *ptr;
+	void *bptr;
+	int vsize = 0;
 
-	field = tep->bprपूर्णांक_buf_field;
-	ip_field = tep->bprपूर्णांक_ip_field;
+	field = tep->bprint_buf_field;
+	ip_field = tep->bprint_ip_field;
 
-	अगर (!field) अणु
+	if (!field) {
 		field = tep_find_field(event, "buf");
-		अगर (!field) अणु
-			करो_warning_event(event, "can't find buffer field for binary printk");
-			वापस शून्य;
-		पूर्ण
+		if (!field) {
+			do_warning_event(event, "can't find buffer field for binary printk");
+			return NULL;
+		}
 		ip_field = tep_find_field(event, "ip");
-		अगर (!ip_field) अणु
-			करो_warning_event(event, "can't find ip field for binary printk");
-			वापस शून्य;
-		पूर्ण
-		tep->bprपूर्णांक_buf_field = field;
-		tep->bprपूर्णांक_ip_field = ip_field;
-	पूर्ण
+		if (!ip_field) {
+			do_warning_event(event, "can't find ip field for binary printk");
+			return NULL;
+		}
+		tep->bprint_buf_field = field;
+		tep->bprint_ip_field = ip_field;
+	}
 
-	ip = tep_पढ़ो_number(tep, data + ip_field->offset, ip_field->size);
+	ip = tep_read_number(tep, data + ip_field->offset, ip_field->size);
 
 	/*
-	 * The first arg is the IP poपूर्णांकer.
+	 * The first arg is the IP pointer.
 	 */
 	args = alloc_arg();
-	अगर (!args) अणु
-		करो_warning_event(event, "%s(%d): not enough memory!",
+	if (!args) {
+		do_warning_event(event, "%s(%d): not enough memory!",
 				 __func__, __LINE__);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	arg = args;
-	arg->next = शून्य;
+	arg->next = NULL;
 	next = &arg->next;
 
 	arg->type = TEP_PRINT_ATOM;
 		
-	अगर (aप्र_लिखो(&arg->atom.atom, "%lld", ip) < 0)
-		जाओ out_मुक्त;
+	if (asprintf(&arg->atom.atom, "%lld", ip) < 0)
+		goto out_free;
 
 	/* skip the first "%ps: " */
-	क्रम (ptr = fmt + 5, bptr = data + field->offset;
-	     bptr < data + size && *ptr; ptr++) अणु
-		पूर्णांक ls = 0;
+	for (ptr = fmt + 5, bptr = data + field->offset;
+	     bptr < data + size && *ptr; ptr++) {
+		int ls = 0;
 
-		अगर (*ptr == '%') अणु
+		if (*ptr == '%') {
  process_again:
 			ptr++;
-			चयन (*ptr) अणु
-			हाल '%':
-				अवरोध;
-			हाल 'l':
+			switch (*ptr) {
+			case '%':
+				break;
+			case 'l':
 				ls++;
-				जाओ process_again;
-			हाल 'L':
+				goto process_again;
+			case 'L':
 				ls = 2;
-				जाओ process_again;
-			हाल '0' ... '9':
-				जाओ process_again;
-			हाल '.':
-				जाओ process_again;
-			हाल 'z':
-			हाल 'Z':
+				goto process_again;
+			case '0' ... '9':
+				goto process_again;
+			case '.':
+				goto process_again;
+			case 'z':
+			case 'Z':
 				ls = 1;
-				जाओ process_again;
-			हाल 'p':
+				goto process_again;
+			case 'p':
 				ls = 1;
-				अगर (है_अक्षर_अंक(ptr[1])) अणु
+				if (isalnum(ptr[1])) {
 					ptr++;
-					/* Check क्रम special poपूर्णांकers */
-					चयन (*ptr) अणु
-					हाल 's':
-					हाल 'S':
-					हाल 'x':
-						अवरोध;
-					हाल 'f':
-					हाल 'F':
+					/* Check for special pointers */
+					switch (*ptr) {
+					case 's':
+					case 'S':
+					case 'x':
+						break;
+					case 'f':
+					case 'F':
 						/*
 						 * Pre-5.5 kernels use %pf and
-						 * %pF क्रम prपूर्णांकing symbols
-						 * जबतक kernels since 5.5 use
-						 * %pfw क्रम fwnodes. So check
+						 * %pF for printing symbols
+						 * while kernels since 5.5 use
+						 * %pfw for fwnodes. So check
 						 * %p[fF] isn't followed by 'w'.
 						 */
-						अगर (ptr[1] != 'w')
-							अवरोध;
+						if (ptr[1] != 'w')
+							break;
 						/* fall through */
-					शेष:
+					default:
 						/*
-						 * Older kernels करो not process
-						 * dereferenced poपूर्णांकers.
-						 * Only process अगर the poपूर्णांकer
-						 * value is a prपूर्णांकable.
+						 * Older kernels do not process
+						 * dereferenced pointers.
+						 * Only process if the pointer
+						 * value is a printable.
 						 */
-						अगर (है_छाप(*(अक्षर *)bptr))
-							जाओ process_string;
-					पूर्ण
-				पूर्ण
+						if (isprint(*(char *)bptr))
+							goto process_string;
+					}
+				}
 				/* fall through */
-			हाल 'd':
-			हाल 'u':
-			हाल 'i':
-			हाल 'x':
-			हाल 'X':
-			हाल 'o':
-				चयन (ls) अणु
-				हाल 0:
+			case 'd':
+			case 'u':
+			case 'i':
+			case 'x':
+			case 'X':
+			case 'o':
+				switch (ls) {
+				case 0:
 					vsize = 4;
-					अवरोध;
-				हाल 1:
-					vsize = tep->दीर्घ_size;
-					अवरोध;
-				हाल 2:
+					break;
+				case 1:
+					vsize = tep->long_size;
+					break;
+				case 2:
 					vsize = 8;
-					अवरोध;
-				शेष:
+					break;
+				default:
 					vsize = ls; /* ? */
-					अवरोध;
-				पूर्ण
+					break;
+				}
 			/* fall through */
-			हाल '*':
-				अगर (*ptr == '*')
+			case '*':
+				if (*ptr == '*')
 					vsize = 4;
 
-				/* the poपूर्णांकers are always 4 bytes aligned */
-				bptr = (व्योम *)(((अचिन्हित दीर्घ)bptr + 3) &
+				/* the pointers are always 4 bytes aligned */
+				bptr = (void *)(((unsigned long)bptr + 3) &
 						~3);
-				val = tep_पढ़ो_number(tep, bptr, vsize);
+				val = tep_read_number(tep, bptr, vsize);
 				bptr += vsize;
 				arg = alloc_arg();
-				अगर (!arg) अणु
-					करो_warning_event(event, "%s(%d): not enough memory!",
+				if (!arg) {
+					do_warning_event(event, "%s(%d): not enough memory!",
 						   __func__, __LINE__);
-					जाओ out_मुक्त;
-				पूर्ण
-				arg->next = शून्य;
+					goto out_free;
+				}
+				arg->next = NULL;
 				arg->type = TEP_PRINT_ATOM;
-				अगर (aप्र_लिखो(&arg->atom.atom, "%lld", val) < 0) अणु
-					मुक्त(arg);
-					जाओ out_मुक्त;
-				पूर्ण
+				if (asprintf(&arg->atom.atom, "%lld", val) < 0) {
+					free(arg);
+					goto out_free;
+				}
 				*next = arg;
 				next = &arg->next;
 				/*
-				 * The '*' हाल means that an arg is used as the length.
-				 * We need to जारी to figure out क्रम what.
+				 * The '*' case means that an arg is used as the length.
+				 * We need to continue to figure out for what.
 				 */
-				अगर (*ptr == '*')
-					जाओ process_again;
+				if (*ptr == '*')
+					goto process_again;
 
-				अवरोध;
-			हाल 's':
+				break;
+			case 's':
  process_string:
 				arg = alloc_arg();
-				अगर (!arg) अणु
-					करो_warning_event(event, "%s(%d): not enough memory!",
+				if (!arg) {
+					do_warning_event(event, "%s(%d): not enough memory!",
 						   __func__, __LINE__);
-					जाओ out_मुक्त;
-				पूर्ण
-				arg->next = शून्य;
+					goto out_free;
+				}
+				arg->next = NULL;
 				arg->type = TEP_PRINT_BSTRING;
 				arg->string.string = strdup(bptr);
-				अगर (!arg->string.string)
-					जाओ out_मुक्त;
-				bptr += म_माप(bptr) + 1;
+				if (!arg->string.string)
+					goto out_free;
+				bptr += strlen(bptr) + 1;
 				*next = arg;
 				next = &arg->next;
-			शेष:
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			default:
+				break;
+			}
+		}
+	}
 
-	वापस args;
+	return args;
 
-out_मुक्त:
-	मुक्त_args(args);
-	वापस शून्य;
-पूर्ण
+out_free:
+	free_args(args);
+	return NULL;
+}
 
-अटल अक्षर *
-get_bprपूर्णांक_क्रमmat(व्योम *data, पूर्णांक size __maybe_unused,
-		  काष्ठा tep_event *event)
-अणु
-	काष्ठा tep_handle *tep = event->tep;
-	अचिन्हित दीर्घ दीर्घ addr;
-	काष्ठा tep_क्रमmat_field *field;
-	काष्ठा prपूर्णांकk_map *prपूर्णांकk;
-	अक्षर *क्रमmat;
+static char *
+get_bprint_format(void *data, int size __maybe_unused,
+		  struct tep_event *event)
+{
+	struct tep_handle *tep = event->tep;
+	unsigned long long addr;
+	struct tep_format_field *field;
+	struct printk_map *printk;
+	char *format;
 
-	field = tep->bprपूर्णांक_fmt_field;
+	field = tep->bprint_fmt_field;
 
-	अगर (!field) अणु
+	if (!field) {
 		field = tep_find_field(event, "fmt");
-		अगर (!field) अणु
-			करो_warning_event(event, "can't find format field for binary printk");
-			वापस शून्य;
-		पूर्ण
-		tep->bprपूर्णांक_fmt_field = field;
-	पूर्ण
+		if (!field) {
+			do_warning_event(event, "can't find format field for binary printk");
+			return NULL;
+		}
+		tep->bprint_fmt_field = field;
+	}
 
-	addr = tep_पढ़ो_number(tep, data + field->offset, field->size);
+	addr = tep_read_number(tep, data + field->offset, field->size);
 
-	prपूर्णांकk = find_prपूर्णांकk(tep, addr);
-	अगर (!prपूर्णांकk) अणु
-		अगर (aप्र_लिखो(&क्रमmat, "%%ps: (NO FORMAT FOUND at %llx)\n", addr) < 0)
-			वापस शून्य;
-		वापस क्रमmat;
-	पूर्ण
+	printk = find_printk(tep, addr);
+	if (!printk) {
+		if (asprintf(&format, "%%ps: (NO FORMAT FOUND at %llx)\n", addr) < 0)
+			return NULL;
+		return format;
+	}
 
-	अगर (aप्र_लिखो(&क्रमmat, "%s: %s", "%ps", prपूर्णांकk->prपूर्णांकk) < 0)
-		वापस शून्य;
+	if (asprintf(&format, "%s: %s", "%ps", printk->printk) < 0)
+		return NULL;
 
-	वापस क्रमmat;
-पूर्ण
+	return format;
+}
 
-अटल पूर्णांक prपूर्णांक_mac_arg(काष्ठा trace_seq *s, स्थिर अक्षर *क्रमmat,
-			 व्योम *data, पूर्णांक size, काष्ठा tep_event *event,
-			 काष्ठा tep_prपूर्णांक_arg *arg)
-अणु
-	स्थिर अक्षर *fmt = "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x";
+static int print_mac_arg(struct trace_seq *s, const char *format,
+			 void *data, int size, struct tep_event *event,
+			 struct tep_print_arg *arg)
+{
+	const char *fmt = "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x";
 	bool reverse = false;
-	अचिन्हित अक्षर *buf;
-	पूर्णांक ret = 0;
+	unsigned char *buf;
+	int ret = 0;
 
-	अगर (arg->type == TEP_PRINT_FUNC) अणु
+	if (arg->type == TEP_PRINT_FUNC) {
 		process_defined_func(s, data, size, event, arg);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (arg->type != TEP_PRINT_FIELD) अणु
-		trace_seq_म_लिखो(s, "ARG TYPE NOT FIELD BUT %d",
+	if (arg->type != TEP_PRINT_FIELD) {
+		trace_seq_printf(s, "ARG TYPE NOT FIELD BUT %d",
 				 arg->type);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (क्रमmat[0] == 'm') अणु
+	if (format[0] == 'm') {
 		fmt = "%.2x%.2x%.2x%.2x%.2x%.2x";
-	पूर्ण अन्यथा अगर (क्रमmat[0] == 'M' && format[1] == 'F') अणु
+	} else if (format[0] == 'M' && format[1] == 'F') {
 		fmt = "%.2x-%.2x-%.2x-%.2x-%.2x-%.2x";
 		ret++;
-	पूर्ण
-	अगर (क्रमmat[1] == 'R') अणु
+	}
+	if (format[1] == 'R') {
 		reverse = true;
 		ret++;
-	पूर्ण
+	}
 
-	अगर (!arg->field.field) अणु
+	if (!arg->field.field) {
 		arg->field.field =
 			tep_find_any_field(event, arg->field.name);
-		अगर (!arg->field.field) अणु
-			करो_warning_event(event, "%s: field %s not found",
+		if (!arg->field.field) {
+			do_warning_event(event, "%s: field %s not found",
 					 __func__, arg->field.name);
-			वापस ret;
-		पूर्ण
-	पूर्ण
-	अगर (arg->field.field->size != 6) अणु
-		trace_seq_म_लिखो(s, "INVALIDMAC");
-		वापस ret;
-	पूर्ण
+			return ret;
+		}
+	}
+	if (arg->field.field->size != 6) {
+		trace_seq_printf(s, "INVALIDMAC");
+		return ret;
+	}
 
 	buf = data + arg->field.field->offset;
-	अगर (reverse)
-		trace_seq_म_लिखो(s, fmt, buf[5], buf[4], buf[3], buf[2], buf[1], buf[0]);
-	अन्यथा
-		trace_seq_म_लिखो(s, fmt, buf[0], buf[1], buf[2], buf[3], buf[4], buf[5]);
+	if (reverse)
+		trace_seq_printf(s, fmt, buf[5], buf[4], buf[3], buf[2], buf[1], buf[0]);
+	else
+		trace_seq_printf(s, fmt, buf[0], buf[1], buf[2], buf[3], buf[4], buf[5]);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक parse_ip4_prपूर्णांक_args(काष्ठा tep_handle *tep,
-				स्थिर अक्षर *ptr, bool *reverse)
-अणु
-	पूर्णांक ret = 0;
+static int parse_ip4_print_args(struct tep_handle *tep,
+				const char *ptr, bool *reverse)
+{
+	int ret = 0;
 
 	*reverse = false;
 
 	/* hnbl */
-	चयन (*ptr) अणु
-	हाल 'h':
-		अगर (tep->file_bigendian)
+	switch (*ptr) {
+	case 'h':
+		if (tep->file_bigendian)
 			*reverse = false;
-		अन्यथा
+		else
 			*reverse = true;
 		ret++;
-		अवरोध;
-	हाल 'l':
+		break;
+	case 'l':
 		*reverse = true;
 		ret++;
-		अवरोध;
-	हाल 'n':
-	हाल 'b':
+		break;
+	case 'n':
+	case 'b':
 		ret++;
 		/* fall through */
-	शेष:
+	default:
 		*reverse = false;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम prपूर्णांक_ip4_addr(काष्ठा trace_seq *s, अक्षर i, bool reverse, अचिन्हित अक्षर *buf)
-अणु
-	स्थिर अक्षर *fmt;
+static void print_ip4_addr(struct trace_seq *s, char i, bool reverse, unsigned char *buf)
+{
+	const char *fmt;
 
-	अगर (i == 'i')
+	if (i == 'i')
 		fmt = "%03d.%03d.%03d.%03d";
-	अन्यथा
+	else
 		fmt = "%d.%d.%d.%d";
 
-	अगर (reverse)
-		trace_seq_म_लिखो(s, fmt, buf[3], buf[2], buf[1], buf[0]);
-	अन्यथा
-		trace_seq_म_लिखो(s, fmt, buf[0], buf[1], buf[2], buf[3]);
+	if (reverse)
+		trace_seq_printf(s, fmt, buf[3], buf[2], buf[1], buf[0]);
+	else
+		trace_seq_printf(s, fmt, buf[0], buf[1], buf[2], buf[3]);
 
-पूर्ण
+}
 
-अटल अंतरभूत bool ipv6_addr_v4mapped(स्थिर काष्ठा in6_addr *a)
-अणु
-	वापस ((अचिन्हित दीर्घ)(a->s6_addr32[0] | a->s6_addr32[1]) |
-		(अचिन्हित दीर्घ)(a->s6_addr32[2] ^ htonl(0x0000ffff))) == 0UL;
-पूर्ण
+static inline bool ipv6_addr_v4mapped(const struct in6_addr *a)
+{
+	return ((unsigned long)(a->s6_addr32[0] | a->s6_addr32[1]) |
+		(unsigned long)(a->s6_addr32[2] ^ htonl(0x0000ffff))) == 0UL;
+}
 
-अटल अंतरभूत bool ipv6_addr_is_isatap(स्थिर काष्ठा in6_addr *addr)
-अणु
-	वापस (addr->s6_addr32[2] | htonl(0x02000000)) == htonl(0x02005EFE);
-पूर्ण
+static inline bool ipv6_addr_is_isatap(const struct in6_addr *addr)
+{
+	return (addr->s6_addr32[2] | htonl(0x02000000)) == htonl(0x02005EFE);
+}
 
-अटल व्योम prपूर्णांक_ip6c_addr(काष्ठा trace_seq *s, अचिन्हित अक्षर *addr)
-अणु
-	पूर्णांक i, j, range;
-	अचिन्हित अक्षर zerolength[8];
-	पूर्णांक दीर्घest = 1;
-	पूर्णांक colonpos = -1;
-	uपूर्णांक16_t word;
-	uपूर्णांक8_t hi, lo;
+static void print_ip6c_addr(struct trace_seq *s, unsigned char *addr)
+{
+	int i, j, range;
+	unsigned char zerolength[8];
+	int longest = 1;
+	int colonpos = -1;
+	uint16_t word;
+	uint8_t hi, lo;
 	bool needcolon = false;
 	bool useIPv4;
-	काष्ठा in6_addr in6;
+	struct in6_addr in6;
 
-	स_नकल(&in6, addr, माप(काष्ठा in6_addr));
+	memcpy(&in6, addr, sizeof(struct in6_addr));
 
 	useIPv4 = ipv6_addr_v4mapped(&in6) || ipv6_addr_is_isatap(&in6);
 
-	स_रखो(zerolength, 0, माप(zerolength));
+	memset(zerolength, 0, sizeof(zerolength));
 
-	अगर (useIPv4)
+	if (useIPv4)
 		range = 6;
-	अन्यथा
+	else
 		range = 8;
 
-	/* find position of दीर्घest 0 run */
-	क्रम (i = 0; i < range; i++) अणु
-		क्रम (j = i; j < range; j++) अणु
-			अगर (in6.s6_addr16[j] != 0)
-				अवरोध;
+	/* find position of longest 0 run */
+	for (i = 0; i < range; i++) {
+		for (j = i; j < range; j++) {
+			if (in6.s6_addr16[j] != 0)
+				break;
 			zerolength[i]++;
-		पूर्ण
-	पूर्ण
-	क्रम (i = 0; i < range; i++) अणु
-		अगर (zerolength[i] > दीर्घest) अणु
-			दीर्घest = zerolength[i];
+		}
+	}
+	for (i = 0; i < range; i++) {
+		if (zerolength[i] > longest) {
+			longest = zerolength[i];
 			colonpos = i;
-		पूर्ण
-	पूर्ण
-	अगर (दीर्घest == 1)		/* करोn't compress a single 0 */
+		}
+	}
+	if (longest == 1)		/* don't compress a single 0 */
 		colonpos = -1;
 
 	/* emit address */
-	क्रम (i = 0; i < range; i++) अणु
-		अगर (i == colonpos) अणु
-			अगर (needcolon || i == 0)
-				trace_seq_म_लिखो(s, ":");
-			trace_seq_म_लिखो(s, ":");
+	for (i = 0; i < range; i++) {
+		if (i == colonpos) {
+			if (needcolon || i == 0)
+				trace_seq_printf(s, ":");
+			trace_seq_printf(s, ":");
 			needcolon = false;
-			i += दीर्घest - 1;
-			जारी;
-		पूर्ण
-		अगर (needcolon) अणु
-			trace_seq_म_लिखो(s, ":");
+			i += longest - 1;
+			continue;
+		}
+		if (needcolon) {
+			trace_seq_printf(s, ":");
 			needcolon = false;
-		पूर्ण
+		}
 		/* hex u16 without leading 0s */
 		word = ntohs(in6.s6_addr16[i]);
 		hi = word >> 8;
 		lo = word & 0xff;
-		अगर (hi)
-			trace_seq_म_लिखो(s, "%x%02x", hi, lo);
-		अन्यथा
-			trace_seq_म_लिखो(s, "%x", lo);
+		if (hi)
+			trace_seq_printf(s, "%x%02x", hi, lo);
+		else
+			trace_seq_printf(s, "%x", lo);
 
 		needcolon = true;
-	पूर्ण
+	}
 
-	अगर (useIPv4) अणु
-		अगर (needcolon)
-			trace_seq_म_लिखो(s, ":");
-		prपूर्णांक_ip4_addr(s, 'I', false, &in6.s6_addr[12]);
-	पूर्ण
+	if (useIPv4) {
+		if (needcolon)
+			trace_seq_printf(s, ":");
+		print_ip4_addr(s, 'I', false, &in6.s6_addr[12]);
+	}
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल व्योम prपूर्णांक_ip6_addr(काष्ठा trace_seq *s, अक्षर i, अचिन्हित अक्षर *buf)
-अणु
-	पूर्णांक j;
+static void print_ip6_addr(struct trace_seq *s, char i, unsigned char *buf)
+{
+	int j;
 
-	क्रम (j = 0; j < 16; j += 2) अणु
-		trace_seq_म_लिखो(s, "%02x%02x", buf[j], buf[j+1]);
-		अगर (i == 'I' && j < 14)
-			trace_seq_म_लिखो(s, ":");
-	पूर्ण
-पूर्ण
+	for (j = 0; j < 16; j += 2) {
+		trace_seq_printf(s, "%02x%02x", buf[j], buf[j+1]);
+		if (i == 'I' && j < 14)
+			trace_seq_printf(s, ":");
+	}
+}
 
 /*
- * %pi4   prपूर्णांक an IPv4 address with leading zeros
- * %pI4   prपूर्णांक an IPv4 address without leading zeros
- * %pi6   prपूर्णांक an IPv6 address without colons
- * %pI6   prपूर्णांक an IPv6 address with colons
- * %pI6c  prपूर्णांक an IPv6 address in compressed क्रमm with colons
- * %pISpc prपूर्णांक an IP address based on sockaddr; p adds port.
+ * %pi4   print an IPv4 address with leading zeros
+ * %pI4   print an IPv4 address without leading zeros
+ * %pi6   print an IPv6 address without colons
+ * %pI6   print an IPv6 address with colons
+ * %pI6c  print an IPv6 address in compressed form with colons
+ * %pISpc print an IP address based on sockaddr; p adds port.
  */
-अटल पूर्णांक prपूर्णांक_ipv4_arg(काष्ठा trace_seq *s, स्थिर अक्षर *ptr, अक्षर i,
-			  व्योम *data, पूर्णांक size, काष्ठा tep_event *event,
-			  काष्ठा tep_prपूर्णांक_arg *arg)
-अणु
+static int print_ipv4_arg(struct trace_seq *s, const char *ptr, char i,
+			  void *data, int size, struct tep_event *event,
+			  struct tep_print_arg *arg)
+{
 	bool reverse = false;
-	अचिन्हित अक्षर *buf;
-	पूर्णांक ret;
+	unsigned char *buf;
+	int ret;
 
-	ret = parse_ip4_prपूर्णांक_args(event->tep, ptr, &reverse);
+	ret = parse_ip4_print_args(event->tep, ptr, &reverse);
 
-	अगर (arg->type == TEP_PRINT_FUNC) अणु
+	if (arg->type == TEP_PRINT_FUNC) {
 		process_defined_func(s, data, size, event, arg);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (arg->type != TEP_PRINT_FIELD) अणु
-		trace_seq_म_लिखो(s, "ARG TYPE NOT FIELD BUT %d", arg->type);
-		वापस ret;
-	पूर्ण
+	if (arg->type != TEP_PRINT_FIELD) {
+		trace_seq_printf(s, "ARG TYPE NOT FIELD BUT %d", arg->type);
+		return ret;
+	}
 
-	अगर (!arg->field.field) अणु
+	if (!arg->field.field) {
 		arg->field.field =
 			tep_find_any_field(event, arg->field.name);
-		अगर (!arg->field.field) अणु
-			करो_warning("%s: field %s not found",
+		if (!arg->field.field) {
+			do_warning("%s: field %s not found",
 				   __func__, arg->field.name);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	buf = data + arg->field.field->offset;
 
-	अगर (arg->field.field->size != 4) अणु
-		trace_seq_म_लिखो(s, "INVALIDIPv4");
-		वापस ret;
-	पूर्ण
+	if (arg->field.field->size != 4) {
+		trace_seq_printf(s, "INVALIDIPv4");
+		return ret;
+	}
 
-	prपूर्णांक_ip4_addr(s, i, reverse, buf);
-	वापस ret;
+	print_ip4_addr(s, i, reverse, buf);
+	return ret;
 
-पूर्ण
+}
 
-अटल पूर्णांक prपूर्णांक_ipv6_arg(काष्ठा trace_seq *s, स्थिर अक्षर *ptr, अक्षर i,
-			  व्योम *data, पूर्णांक size, काष्ठा tep_event *event,
-			  काष्ठा tep_prपूर्णांक_arg *arg)
-अणु
-	अक्षर have_c = 0;
-	अचिन्हित अक्षर *buf;
-	पूर्णांक rc = 0;
+static int print_ipv6_arg(struct trace_seq *s, const char *ptr, char i,
+			  void *data, int size, struct tep_event *event,
+			  struct tep_print_arg *arg)
+{
+	char have_c = 0;
+	unsigned char *buf;
+	int rc = 0;
 
 	/* pI6c */
-	अगर (i == 'I' && *ptr == 'c') अणु
+	if (i == 'I' && *ptr == 'c') {
 		have_c = 1;
 		ptr++;
 		rc++;
-	पूर्ण
+	}
 
-	अगर (arg->type == TEP_PRINT_FUNC) अणु
+	if (arg->type == TEP_PRINT_FUNC) {
 		process_defined_func(s, data, size, event, arg);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	अगर (arg->type != TEP_PRINT_FIELD) अणु
-		trace_seq_म_लिखो(s, "ARG TYPE NOT FIELD BUT %d", arg->type);
-		वापस rc;
-	पूर्ण
+	if (arg->type != TEP_PRINT_FIELD) {
+		trace_seq_printf(s, "ARG TYPE NOT FIELD BUT %d", arg->type);
+		return rc;
+	}
 
-	अगर (!arg->field.field) अणु
+	if (!arg->field.field) {
 		arg->field.field =
 			tep_find_any_field(event, arg->field.name);
-		अगर (!arg->field.field) अणु
-			करो_warning("%s: field %s not found",
+		if (!arg->field.field) {
+			do_warning("%s: field %s not found",
 				   __func__, arg->field.name);
-			वापस rc;
-		पूर्ण
-	पूर्ण
+			return rc;
+		}
+	}
 
 	buf = data + arg->field.field->offset;
 
-	अगर (arg->field.field->size != 16) अणु
-		trace_seq_म_लिखो(s, "INVALIDIPv6");
-		वापस rc;
-	पूर्ण
+	if (arg->field.field->size != 16) {
+		trace_seq_printf(s, "INVALIDIPv6");
+		return rc;
+	}
 
-	अगर (have_c)
-		prपूर्णांक_ip6c_addr(s, buf);
-	अन्यथा
-		prपूर्णांक_ip6_addr(s, i, buf);
+	if (have_c)
+		print_ip6c_addr(s, buf);
+	else
+		print_ip6_addr(s, i, buf);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक prपूर्णांक_ipsa_arg(काष्ठा trace_seq *s, स्थिर अक्षर *ptr, अक्षर i,
-			  व्योम *data, पूर्णांक size, काष्ठा tep_event *event,
-			  काष्ठा tep_prपूर्णांक_arg *arg)
-अणु
-	अक्षर have_c = 0, have_p = 0;
-	अचिन्हित अक्षर *buf;
-	काष्ठा sockaddr_storage *sa;
+static int print_ipsa_arg(struct trace_seq *s, const char *ptr, char i,
+			  void *data, int size, struct tep_event *event,
+			  struct tep_print_arg *arg)
+{
+	char have_c = 0, have_p = 0;
+	unsigned char *buf;
+	struct sockaddr_storage *sa;
 	bool reverse = false;
-	पूर्णांक rc = 0;
-	पूर्णांक ret;
+	int rc = 0;
+	int ret;
 
 	/* pISpc */
-	अगर (i == 'I') अणु
-		अगर (*ptr == 'p') अणु
+	if (i == 'I') {
+		if (*ptr == 'p') {
 			have_p = 1;
 			ptr++;
 			rc++;
-		पूर्ण
-		अगर (*ptr == 'c') अणु
+		}
+		if (*ptr == 'c') {
 			have_c = 1;
 			ptr++;
 			rc++;
-		पूर्ण
-	पूर्ण
-	ret = parse_ip4_prपूर्णांक_args(event->tep, ptr, &reverse);
+		}
+	}
+	ret = parse_ip4_print_args(event->tep, ptr, &reverse);
 	ptr += ret;
 	rc += ret;
 
-	अगर (arg->type == TEP_PRINT_FUNC) अणु
+	if (arg->type == TEP_PRINT_FUNC) {
 		process_defined_func(s, data, size, event, arg);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	अगर (arg->type != TEP_PRINT_FIELD) अणु
-		trace_seq_म_लिखो(s, "ARG TYPE NOT FIELD BUT %d", arg->type);
-		वापस rc;
-	पूर्ण
+	if (arg->type != TEP_PRINT_FIELD) {
+		trace_seq_printf(s, "ARG TYPE NOT FIELD BUT %d", arg->type);
+		return rc;
+	}
 
-	अगर (!arg->field.field) अणु
+	if (!arg->field.field) {
 		arg->field.field =
 			tep_find_any_field(event, arg->field.name);
-		अगर (!arg->field.field) अणु
-			करो_warning("%s: field %s not found",
+		if (!arg->field.field) {
+			do_warning("%s: field %s not found",
 				   __func__, arg->field.name);
-			वापस rc;
-		पूर्ण
-	पूर्ण
+			return rc;
+		}
+	}
 
-	sa = (काष्ठा sockaddr_storage *) (data + arg->field.field->offset);
+	sa = (struct sockaddr_storage *) (data + arg->field.field->offset);
 
-	अगर (sa->ss_family == AF_INET) अणु
-		काष्ठा sockaddr_in *sa4 = (काष्ठा sockaddr_in *) sa;
+	if (sa->ss_family == AF_INET) {
+		struct sockaddr_in *sa4 = (struct sockaddr_in *) sa;
 
-		अगर (arg->field.field->size < माप(काष्ठा sockaddr_in)) अणु
-			trace_seq_म_लिखो(s, "INVALIDIPv4");
-			वापस rc;
-		पूर्ण
+		if (arg->field.field->size < sizeof(struct sockaddr_in)) {
+			trace_seq_printf(s, "INVALIDIPv4");
+			return rc;
+		}
 
-		prपूर्णांक_ip4_addr(s, i, reverse, (अचिन्हित अक्षर *) &sa4->sin_addr);
-		अगर (have_p)
-			trace_seq_म_लिखो(s, ":%d", ntohs(sa4->sin_port));
+		print_ip4_addr(s, i, reverse, (unsigned char *) &sa4->sin_addr);
+		if (have_p)
+			trace_seq_printf(s, ":%d", ntohs(sa4->sin_port));
 
 
-	पूर्ण अन्यथा अगर (sa->ss_family == AF_INET6) अणु
-		काष्ठा sockaddr_in6 *sa6 = (काष्ठा sockaddr_in6 *) sa;
+	} else if (sa->ss_family == AF_INET6) {
+		struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *) sa;
 
-		अगर (arg->field.field->size < माप(काष्ठा sockaddr_in6)) अणु
-			trace_seq_म_लिखो(s, "INVALIDIPv6");
-			वापस rc;
-		पूर्ण
+		if (arg->field.field->size < sizeof(struct sockaddr_in6)) {
+			trace_seq_printf(s, "INVALIDIPv6");
+			return rc;
+		}
 
-		अगर (have_p)
-			trace_seq_म_लिखो(s, "[");
+		if (have_p)
+			trace_seq_printf(s, "[");
 
-		buf = (अचिन्हित अक्षर *) &sa6->sin6_addr;
-		अगर (have_c)
-			prपूर्णांक_ip6c_addr(s, buf);
-		अन्यथा
-			prपूर्णांक_ip6_addr(s, i, buf);
+		buf = (unsigned char *) &sa6->sin6_addr;
+		if (have_c)
+			print_ip6c_addr(s, buf);
+		else
+			print_ip6_addr(s, i, buf);
 
-		अगर (have_p)
-			trace_seq_म_लिखो(s, "]:%d", ntohs(sa6->sin6_port));
-	पूर्ण
+		if (have_p)
+			trace_seq_printf(s, "]:%d", ntohs(sa6->sin6_port));
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक prपूर्णांक_ip_arg(काष्ठा trace_seq *s, स्थिर अक्षर *ptr,
-			व्योम *data, पूर्णांक size, काष्ठा tep_event *event,
-			काष्ठा tep_prपूर्णांक_arg *arg)
-अणु
-	अक्षर i = *ptr;  /* 'i' or 'I' */
-	पूर्णांक rc = 1;
+static int print_ip_arg(struct trace_seq *s, const char *ptr,
+			void *data, int size, struct tep_event *event,
+			struct tep_print_arg *arg)
+{
+	char i = *ptr;  /* 'i' or 'I' */
+	int rc = 1;
 
 	/* IP version */
 	ptr++;
 
-	चयन (*ptr) अणु
-	हाल '4':
-		rc += prपूर्णांक_ipv4_arg(s, ptr + 1, i, data, size, event, arg);
-		अवरोध;
-	हाल '6':
-		rc += prपूर्णांक_ipv6_arg(s, ptr + 1, i, data, size, event, arg);
-		अवरोध;
-	हाल 'S':
-		rc += prपूर्णांक_ipsa_arg(s, ptr + 1, i, data, size, event, arg);
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+	switch (*ptr) {
+	case '4':
+		rc += print_ipv4_arg(s, ptr + 1, i, data, size, event, arg);
+		break;
+	case '6':
+		rc += print_ipv6_arg(s, ptr + 1, i, data, size, event, arg);
+		break;
+	case 'S':
+		rc += print_ipsa_arg(s, ptr + 1, i, data, size, event, arg);
+		break;
+	default:
+		return 0;
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल स्थिर पूर्णांक guid_index[16] = अणु3, 2, 1, 0, 5, 4, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15पूर्ण;
-अटल स्थिर पूर्णांक uuid_index[16] = अणु0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15पूर्ण;
+static const int guid_index[16] = {3, 2, 1, 0, 5, 4, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15};
+static const int uuid_index[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 
-अटल पूर्णांक prपूर्णांक_uuid_arg(काष्ठा trace_seq *s, स्थिर अक्षर *ptr,
-			व्योम *data, पूर्णांक size, काष्ठा tep_event *event,
-			काष्ठा tep_prपूर्णांक_arg *arg)
-अणु
-	स्थिर पूर्णांक *index = uuid_index;
-	अक्षर *क्रमmat = "%02x";
-	पूर्णांक ret = 0;
-	अक्षर *buf;
-	पूर्णांक i;
+static int print_uuid_arg(struct trace_seq *s, const char *ptr,
+			void *data, int size, struct tep_event *event,
+			struct tep_print_arg *arg)
+{
+	const int *index = uuid_index;
+	char *format = "%02x";
+	int ret = 0;
+	char *buf;
+	int i;
 
-	चयन (*(ptr + 1)) अणु
-	हाल 'L':
-		क्रमmat = "%02X";
+	switch (*(ptr + 1)) {
+	case 'L':
+		format = "%02X";
 		/* fall through */
-	हाल 'l':
+	case 'l':
 		index = guid_index;
 		ret++;
-		अवरोध;
-	हाल 'B':
-		क्रमmat = "%02X";
+		break;
+	case 'B':
+		format = "%02X";
 		/* fall through */
-	हाल 'b':
+	case 'b':
 		ret++;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (arg->type == TEP_PRINT_FUNC) अणु
+	if (arg->type == TEP_PRINT_FUNC) {
 		process_defined_func(s, data, size, event, arg);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (arg->type != TEP_PRINT_FIELD) अणु
-		trace_seq_म_लिखो(s, "ARG TYPE NOT FIELD BUT %d", arg->type);
-		वापस ret;
-	पूर्ण
+	if (arg->type != TEP_PRINT_FIELD) {
+		trace_seq_printf(s, "ARG TYPE NOT FIELD BUT %d", arg->type);
+		return ret;
+	}
 
-	अगर (!arg->field.field) अणु
+	if (!arg->field.field) {
 		arg->field.field =
 			tep_find_any_field(event, arg->field.name);
-		अगर (!arg->field.field) अणु
-			करो_warning("%s: field %s not found",
+		if (!arg->field.field) {
+			do_warning("%s: field %s not found",
 				   __func__, arg->field.name);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	अगर (arg->field.field->size != 16) अणु
-		trace_seq_म_लिखो(s, "INVALIDUUID");
-		वापस ret;
-	पूर्ण
+	if (arg->field.field->size != 16) {
+		trace_seq_printf(s, "INVALIDUUID");
+		return ret;
+	}
 
 	buf = data + arg->field.field->offset;
 
-	क्रम (i = 0; i < 16; i++) अणु
-		trace_seq_म_लिखो(s, क्रमmat, buf[index[i]] & 0xff);
-		चयन (i) अणु
-		हाल 3:
-		हाल 5:
-		हाल 7:
-		हाल 9:
-			trace_seq_म_लिखो(s, "-");
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < 16; i++) {
+		trace_seq_printf(s, format, buf[index[i]] & 0xff);
+		switch (i) {
+		case 3:
+		case 5:
+		case 7:
+		case 9:
+			trace_seq_printf(s, "-");
+			break;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक prपूर्णांक_raw_buff_arg(काष्ठा trace_seq *s, स्थिर अक्षर *ptr,
-			      व्योम *data, पूर्णांक size, काष्ठा tep_event *event,
-			      काष्ठा tep_prपूर्णांक_arg *arg, पूर्णांक prपूर्णांक_len)
-अणु
-	पूर्णांक plen = prपूर्णांक_len;
-	अक्षर *delim = " ";
-	पूर्णांक ret = 0;
-	अक्षर *buf;
-	पूर्णांक i;
-	अचिन्हित दीर्घ offset;
-	पूर्णांक arr_len;
+static int print_raw_buff_arg(struct trace_seq *s, const char *ptr,
+			      void *data, int size, struct tep_event *event,
+			      struct tep_print_arg *arg, int print_len)
+{
+	int plen = print_len;
+	char *delim = " ";
+	int ret = 0;
+	char *buf;
+	int i;
+	unsigned long offset;
+	int arr_len;
 
-	चयन (*(ptr + 1)) अणु
-	हाल 'C':
+	switch (*(ptr + 1)) {
+	case 'C':
 		delim = ":";
 		ret++;
-		अवरोध;
-	हाल 'D':
+		break;
+	case 'D':
 		delim = "-";
 		ret++;
-		अवरोध;
-	हाल 'N':
+		break;
+	case 'N':
 		delim = "";
 		ret++;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (arg->type == TEP_PRINT_FUNC) अणु
+	if (arg->type == TEP_PRINT_FUNC) {
 		process_defined_func(s, data, size, event, arg);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (arg->type != TEP_PRINT_DYNAMIC_ARRAY) अणु
-		trace_seq_म_लिखो(s, "ARG TYPE NOT FIELD BUT %d", arg->type);
-		वापस ret;
-	पूर्ण
+	if (arg->type != TEP_PRINT_DYNAMIC_ARRAY) {
+		trace_seq_printf(s, "ARG TYPE NOT FIELD BUT %d", arg->type);
+		return ret;
+	}
 
-	offset = tep_पढ़ो_number(event->tep,
+	offset = tep_read_number(event->tep,
 				 data + arg->dynarray.field->offset,
 				 arg->dynarray.field->size);
-	arr_len = (अचिन्हित दीर्घ दीर्घ)(offset >> 16);
+	arr_len = (unsigned long long)(offset >> 16);
 	buf = data + (offset & 0xffff);
 
-	अगर (arr_len < plen)
+	if (arr_len < plen)
 		plen = arr_len;
 
-	अगर (plen < 1)
-		वापस ret;
+	if (plen < 1)
+		return ret;
 
-	trace_seq_म_लिखो(s, "%02x", buf[0] & 0xff);
-	क्रम (i = 1; i < plen; i++)
-		trace_seq_म_लिखो(s, "%s%02x", delim, buf[i] & 0xff);
+	trace_seq_printf(s, "%02x", buf[0] & 0xff);
+	for (i = 1; i < plen; i++)
+		trace_seq_printf(s, "%s%02x", delim, buf[i] & 0xff);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक is_prपूर्णांकable_array(अक्षर *p, अचिन्हित पूर्णांक len)
-अणु
-	अचिन्हित पूर्णांक i;
+static int is_printable_array(char *p, unsigned int len)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < len && p[i]; i++)
-		अगर (!है_छाप(p[i]) && !है_खाली(p[i]))
-		    वापस 0;
-	वापस 1;
-पूर्ण
+	for (i = 0; i < len && p[i]; i++)
+		if (!isprint(p[i]) && !isspace(p[i]))
+		    return 0;
+	return 1;
+}
 
-व्योम tep_prपूर्णांक_field(काष्ठा trace_seq *s, व्योम *data,
-		     काष्ठा tep_क्रमmat_field *field)
-अणु
-	अचिन्हित दीर्घ दीर्घ val;
-	अचिन्हित पूर्णांक offset, len, i;
-	काष्ठा tep_handle *tep = field->event->tep;
+void tep_print_field(struct trace_seq *s, void *data,
+		     struct tep_format_field *field)
+{
+	unsigned long long val;
+	unsigned int offset, len, i;
+	struct tep_handle *tep = field->event->tep;
 
-	अगर (field->flags & TEP_FIELD_IS_ARRAY) अणु
+	if (field->flags & TEP_FIELD_IS_ARRAY) {
 		offset = field->offset;
 		len = field->size;
-		अगर (field->flags & TEP_FIELD_IS_DYNAMIC) अणु
-			val = tep_पढ़ो_number(tep, data + offset, len);
+		if (field->flags & TEP_FIELD_IS_DYNAMIC) {
+			val = tep_read_number(tep, data + offset, len);
 			offset = val;
 			len = offset >> 16;
 			offset &= 0xffff;
-		पूर्ण
-		अगर (field->flags & TEP_FIELD_IS_STRING &&
-		    is_prपूर्णांकable_array(data + offset, len)) अणु
-			trace_seq_म_लिखो(s, "%s", (अक्षर *)data + offset);
-		पूर्ण अन्यथा अणु
-			trace_seq_माला_दो(s, "ARRAY[");
-			क्रम (i = 0; i < len; i++) अणु
-				अगर (i)
-					trace_seq_माला_दो(s, ", ");
-				trace_seq_म_लिखो(s, "%02x",
-						 *((अचिन्हित अक्षर *)data + offset + i));
-			पूर्ण
-			trace_seq_अ_दो(s, ']');
+		}
+		if (field->flags & TEP_FIELD_IS_STRING &&
+		    is_printable_array(data + offset, len)) {
+			trace_seq_printf(s, "%s", (char *)data + offset);
+		} else {
+			trace_seq_puts(s, "ARRAY[");
+			for (i = 0; i < len; i++) {
+				if (i)
+					trace_seq_puts(s, ", ");
+				trace_seq_printf(s, "%02x",
+						 *((unsigned char *)data + offset + i));
+			}
+			trace_seq_putc(s, ']');
 			field->flags &= ~TEP_FIELD_IS_STRING;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		val = tep_पढ़ो_number(tep, data + field->offset,
+		}
+	} else {
+		val = tep_read_number(tep, data + field->offset,
 				      field->size);
-		अगर (field->flags & TEP_FIELD_IS_POINTER) अणु
-			trace_seq_म_लिखो(s, "0x%llx", val);
-		पूर्ण अन्यथा अगर (field->flags & TEP_FIELD_IS_SIGNED) अणु
-			चयन (field->size) अणु
-			हाल 4:
+		if (field->flags & TEP_FIELD_IS_POINTER) {
+			trace_seq_printf(s, "0x%llx", val);
+		} else if (field->flags & TEP_FIELD_IS_SIGNED) {
+			switch (field->size) {
+			case 4:
 				/*
-				 * If field is दीर्घ then prपूर्णांक it in hex.
-				 * A दीर्घ usually stores poपूर्णांकers.
+				 * If field is long then print it in hex.
+				 * A long usually stores pointers.
 				 */
-				अगर (field->flags & TEP_FIELD_IS_LONG)
-					trace_seq_म_लिखो(s, "0x%x", (पूर्णांक)val);
-				अन्यथा
-					trace_seq_म_लिखो(s, "%d", (पूर्णांक)val);
-				अवरोध;
-			हाल 2:
-				trace_seq_म_लिखो(s, "%2d", (लघु)val);
-				अवरोध;
-			हाल 1:
-				trace_seq_म_लिखो(s, "%1d", (अक्षर)val);
-				अवरोध;
-			शेष:
-				trace_seq_म_लिखो(s, "%lld", val);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (field->flags & TEP_FIELD_IS_LONG)
-				trace_seq_म_लिखो(s, "0x%llx", val);
-			अन्यथा
-				trace_seq_म_लिखो(s, "%llu", val);
-		पूर्ण
-	पूर्ण
-पूर्ण
+				if (field->flags & TEP_FIELD_IS_LONG)
+					trace_seq_printf(s, "0x%x", (int)val);
+				else
+					trace_seq_printf(s, "%d", (int)val);
+				break;
+			case 2:
+				trace_seq_printf(s, "%2d", (short)val);
+				break;
+			case 1:
+				trace_seq_printf(s, "%1d", (char)val);
+				break;
+			default:
+				trace_seq_printf(s, "%lld", val);
+			}
+		} else {
+			if (field->flags & TEP_FIELD_IS_LONG)
+				trace_seq_printf(s, "0x%llx", val);
+			else
+				trace_seq_printf(s, "%llu", val);
+		}
+	}
+}
 
-व्योम tep_prपूर्णांक_fields(काष्ठा trace_seq *s, व्योम *data,
-		      पूर्णांक size __maybe_unused, काष्ठा tep_event *event)
-अणु
-	काष्ठा tep_क्रमmat_field *field;
+void tep_print_fields(struct trace_seq *s, void *data,
+		      int size __maybe_unused, struct tep_event *event)
+{
+	struct tep_format_field *field;
 
-	field = event->क्रमmat.fields;
-	जबतक (field) अणु
-		trace_seq_म_लिखो(s, " %s=", field->name);
-		tep_prपूर्णांक_field(s, data, field);
+	field = event->format.fields;
+	while (field) {
+		trace_seq_printf(s, " %s=", field->name);
+		tep_print_field(s, data, field);
 		field = field->next;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक prपूर्णांक_function(काष्ठा trace_seq *s, स्थिर अक्षर *क्रमmat,
-			  व्योम *data, पूर्णांक size, काष्ठा tep_event *event,
-			  काष्ठा tep_prपूर्णांक_arg *arg)
-अणु
-	काष्ठा func_map *func;
-	अचिन्हित दीर्घ दीर्घ val;
+static int print_function(struct trace_seq *s, const char *format,
+			  void *data, int size, struct tep_event *event,
+			  struct tep_print_arg *arg)
+{
+	struct func_map *func;
+	unsigned long long val;
 
 	val = eval_num_arg(data, size, event, arg);
 	func = find_func(event->tep, val);
-	अगर (func) अणु
-		trace_seq_माला_दो(s, func->func);
-		अगर (*क्रमmat == 'F' || *format == 'S')
-			trace_seq_म_लिखो(s, "+0x%llx", val - func->addr);
-	पूर्ण अन्यथा अणु
-		अगर (event->tep->दीर्घ_size == 4)
-			trace_seq_म_लिखो(s, "0x%lx", (दीर्घ)val);
-		अन्यथा
-			trace_seq_म_लिखो(s, "0x%llx", (दीर्घ दीर्घ)val);
-	पूर्ण
+	if (func) {
+		trace_seq_puts(s, func->func);
+		if (*format == 'F' || *format == 'S')
+			trace_seq_printf(s, "+0x%llx", val - func->addr);
+	} else {
+		if (event->tep->long_size == 4)
+			trace_seq_printf(s, "0x%lx", (long)val);
+		else
+			trace_seq_printf(s, "0x%llx", (long long)val);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक prपूर्णांक_arg_poपूर्णांकer(काष्ठा trace_seq *s, स्थिर अक्षर *क्रमmat, पूर्णांक plen,
-			     व्योम *data, पूर्णांक size,
-			     काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg *arg)
-अणु
-	अचिन्हित दीर्घ दीर्घ val;
-	पूर्णांक ret = 1;
+static int print_arg_pointer(struct trace_seq *s, const char *format, int plen,
+			     void *data, int size,
+			     struct tep_event *event, struct tep_print_arg *arg)
+{
+	unsigned long long val;
+	int ret = 1;
 
-	अगर (arg->type == TEP_PRINT_BSTRING) अणु
-		trace_seq_माला_दो(s, arg->string.string);
-		वापस 0;
-	पूर्ण
-	जबतक (*क्रमmat) अणु
-		अगर (*क्रमmat == 'p') अणु
-			क्रमmat++;
-			अवरोध;
-		पूर्ण
-		क्रमmat++;
-	पूर्ण
+	if (arg->type == TEP_PRINT_BSTRING) {
+		trace_seq_puts(s, arg->string.string);
+		return 0;
+	}
+	while (*format) {
+		if (*format == 'p') {
+			format++;
+			break;
+		}
+		format++;
+	}
 
-	चयन (*क्रमmat) अणु
-	हाल 'F':
-	हाल 'f':
-	हाल 'S':
-	हाल 's':
-		ret += prपूर्णांक_function(s, क्रमmat, data, size, event, arg);
-		अवरोध;
-	हाल 'M':
-	हाल 'm':
-		ret += prपूर्णांक_mac_arg(s, क्रमmat, data, size, event, arg);
-		अवरोध;
-	हाल 'I':
-	हाल 'i':
-		ret += prपूर्णांक_ip_arg(s, क्रमmat, data, size, event, arg);
-		अवरोध;
-	हाल 'U':
-		ret += prपूर्णांक_uuid_arg(s, क्रमmat, data, size, event, arg);
-		अवरोध;
-	हाल 'h':
-		ret += prपूर्णांक_raw_buff_arg(s, क्रमmat, data, size, event, arg, plen);
-		अवरोध;
-	शेष:
+	switch (*format) {
+	case 'F':
+	case 'f':
+	case 'S':
+	case 's':
+		ret += print_function(s, format, data, size, event, arg);
+		break;
+	case 'M':
+	case 'm':
+		ret += print_mac_arg(s, format, data, size, event, arg);
+		break;
+	case 'I':
+	case 'i':
+		ret += print_ip_arg(s, format, data, size, event, arg);
+		break;
+	case 'U':
+		ret += print_uuid_arg(s, format, data, size, event, arg);
+		break;
+	case 'h':
+		ret += print_raw_buff_arg(s, format, data, size, event, arg, plen);
+		break;
+	default:
 		ret = 0;
 		val = eval_num_arg(data, size, event, arg);
-		trace_seq_म_लिखो(s, "%p", (व्योम *)(पूर्णांकptr_t)val);
-		अवरोध;
-	पूर्ण
+		trace_seq_printf(s, "%p", (void *)(intptr_t)val);
+		break;
+	}
 
-	वापस ret;
+	return ret;
 
-पूर्ण
+}
 
-अटल पूर्णांक prपूर्णांक_arg_number(काष्ठा trace_seq *s, स्थिर अक्षर *क्रमmat, पूर्णांक plen,
-			    व्योम *data, पूर्णांक size, पूर्णांक ls,
-			    काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg *arg)
-अणु
-	अचिन्हित दीर्घ दीर्घ val;
+static int print_arg_number(struct trace_seq *s, const char *format, int plen,
+			    void *data, int size, int ls,
+			    struct tep_event *event, struct tep_print_arg *arg)
+{
+	unsigned long long val;
 
 	val = eval_num_arg(data, size, event, arg);
 
-	चयन (ls) अणु
-	हाल -2:
-		अगर (plen >= 0)
-			trace_seq_म_लिखो(s, क्रमmat, plen, (अक्षर)val);
-		अन्यथा
-			trace_seq_म_लिखो(s, क्रमmat, (अक्षर)val);
-		अवरोध;
-	हाल -1:
-		अगर (plen >= 0)
-			trace_seq_म_लिखो(s, क्रमmat, plen, (लघु)val);
-		अन्यथा
-			trace_seq_म_लिखो(s, क्रमmat, (लघु)val);
-		अवरोध;
-	हाल 0:
-		अगर (plen >= 0)
-			trace_seq_म_लिखो(s, क्रमmat, plen, (पूर्णांक)val);
-		अन्यथा
-			trace_seq_म_लिखो(s, क्रमmat, (पूर्णांक)val);
-		अवरोध;
-	हाल 1:
-		अगर (plen >= 0)
-			trace_seq_म_लिखो(s, क्रमmat, plen, (दीर्घ)val);
-		अन्यथा
-			trace_seq_म_लिखो(s, क्रमmat, (दीर्घ)val);
-		अवरोध;
-	हाल 2:
-		अगर (plen >= 0)
-			trace_seq_म_लिखो(s, क्रमmat, plen, (दीर्घ दीर्घ)val);
-		अन्यथा
-			trace_seq_म_लिखो(s, क्रमmat, (दीर्घ दीर्घ)val);
-		अवरोध;
-	शेष:
-		करो_warning_event(event, "bad count (%d)", ls);
+	switch (ls) {
+	case -2:
+		if (plen >= 0)
+			trace_seq_printf(s, format, plen, (char)val);
+		else
+			trace_seq_printf(s, format, (char)val);
+		break;
+	case -1:
+		if (plen >= 0)
+			trace_seq_printf(s, format, plen, (short)val);
+		else
+			trace_seq_printf(s, format, (short)val);
+		break;
+	case 0:
+		if (plen >= 0)
+			trace_seq_printf(s, format, plen, (int)val);
+		else
+			trace_seq_printf(s, format, (int)val);
+		break;
+	case 1:
+		if (plen >= 0)
+			trace_seq_printf(s, format, plen, (long)val);
+		else
+			trace_seq_printf(s, format, (long)val);
+		break;
+	case 2:
+		if (plen >= 0)
+			trace_seq_printf(s, format, plen, (long long)val);
+		else
+			trace_seq_printf(s, format, (long long)val);
+		break;
+	default:
+		do_warning_event(event, "bad count (%d)", ls);
 		event->flags |= TEP_EVENT_FL_FAILED;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 
-अटल व्योम prपूर्णांक_arg_string(काष्ठा trace_seq *s, स्थिर अक्षर *क्रमmat, पूर्णांक plen,
-			     व्योम *data, पूर्णांक size,
-			     काष्ठा tep_event *event, काष्ठा tep_prपूर्णांक_arg *arg)
-अणु
-	काष्ठा trace_seq p;
+static void print_arg_string(struct trace_seq *s, const char *format, int plen,
+			     void *data, int size,
+			     struct tep_event *event, struct tep_print_arg *arg)
+{
+	struct trace_seq p;
 
 	/* Use helper trace_seq */
 	trace_seq_init(&p);
-	prपूर्णांक_str_arg(&p, data, size, event,
-		      क्रमmat, plen, arg);
+	print_str_arg(&p, data, size, event,
+		      format, plen, arg);
 	trace_seq_terminate(&p);
-	trace_seq_माला_दो(s, p.buffer);
+	trace_seq_puts(s, p.buffer);
 	trace_seq_destroy(&p);
-पूर्ण
+}
 
-अटल पूर्णांक parse_arg_क्रमmat_poपूर्णांकer(स्थिर अक्षर *क्रमmat)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक index;
-	पूर्णांक loop;
+static int parse_arg_format_pointer(const char *format)
+{
+	int ret = 0;
+	int index;
+	int loop;
 
-	चयन (*क्रमmat) अणु
-	हाल 'F':
-	हाल 'S':
-	हाल 'f':
-	हाल 's':
+	switch (*format) {
+	case 'F':
+	case 'S':
+	case 'f':
+	case 's':
 		ret++;
-		अवरोध;
-	हाल 'M':
-	हाल 'm':
+		break;
+	case 'M':
+	case 'm':
 		/* [mM]R , [mM]F */
-		चयन (क्रमmat[1]) अणु
-		हाल 'R':
-		हाल 'F':
+		switch (format[1]) {
+		case 'R':
+		case 'F':
 			ret++;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ret++;
-		अवरोध;
-	हाल 'I':
-	हाल 'i':
+		break;
+	case 'I':
+	case 'i':
 		index = 2;
 		loop = 1;
-		चयन (क्रमmat[1]) अणु
-		हाल 'S':
+		switch (format[1]) {
+		case 'S':
 			/*[S][pfs]*/
-			जबतक (loop) अणु
-				चयन (क्रमmat[index]) अणु
-				हाल 'p':
-				हाल 'f':
-				हाल 's':
+			while (loop) {
+				switch (format[index]) {
+				case 'p':
+				case 'f':
+				case 's':
 					ret++;
 					index++;
-					अवरोध;
-				शेष:
+					break;
+				default:
 					loop = 0;
-					अवरोध;
-				पूर्ण
-			पूर्ण
+					break;
+				}
+			}
 			/* fall through */
-		हाल '4':
+		case '4':
 			/* [4S][hnbl] */
-			चयन (क्रमmat[index]) अणु
-			हाल 'h':
-			हाल 'n':
-			हाल 'l':
-			हाल 'b':
+			switch (format[index]) {
+			case 'h':
+			case 'n':
+			case 'l':
+			case 'b':
 				ret++;
 				index++;
-				अवरोध;
-			पूर्ण
-			अगर (क्रमmat[1] == '4') अणु
+				break;
+			}
+			if (format[1] == '4') {
 				ret++;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			/* fall through */
-		हाल '6':
+		case '6':
 			/* [6S]c */
-			अगर (क्रमmat[index] == 'c')
+			if (format[index] == 'c')
 				ret++;
 			ret++;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ret++;
-		अवरोध;
-	हाल 'U':
-		चयन (क्रमmat[1]) अणु
-		हाल 'L':
-		हाल 'l':
-		हाल 'B':
-		हाल 'b':
+		break;
+	case 'U':
+		switch (format[1]) {
+		case 'L':
+		case 'l':
+		case 'B':
+		case 'b':
 			ret++;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ret++;
-		अवरोध;
-	हाल 'h':
-		चयन (क्रमmat[1]) अणु
-		हाल 'C':
-		हाल 'D':
-		हाल 'N':
+		break;
+	case 'h':
+		switch (format[1]) {
+		case 'C':
+		case 'D':
+		case 'N':
 			ret++;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ret++;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम मुक्त_parse_args(काष्ठा tep_prपूर्णांक_parse *arg)
-अणु
-	काष्ठा tep_prपूर्णांक_parse *del;
+static void free_parse_args(struct tep_print_parse *arg)
+{
+	struct tep_print_parse *del;
 
-	जबतक (arg) अणु
+	while (arg) {
 		del = arg;
 		arg = del->next;
-		मुक्त(del->क्रमmat);
-		मुक्त(del);
-	पूर्ण
-पूर्ण
+		free(del->format);
+		free(del);
+	}
+}
 
-अटल पूर्णांक parse_arg_add(काष्ठा tep_prपूर्णांक_parse **parse, अक्षर *क्रमmat,
-			 क्रमागत tep_prपूर्णांक_parse_type type,
-			 काष्ठा tep_prपूर्णांक_arg *arg,
-			 काष्ठा tep_prपूर्णांक_arg *len_as_arg,
-			 पूर्णांक ls)
-अणु
-	काष्ठा tep_prपूर्णांक_parse *parg = शून्य;
+static int parse_arg_add(struct tep_print_parse **parse, char *format,
+			 enum tep_print_parse_type type,
+			 struct tep_print_arg *arg,
+			 struct tep_print_arg *len_as_arg,
+			 int ls)
+{
+	struct tep_print_parse *parg = NULL;
 
-	parg = सुस्मृति(1, माप(*parg));
-	अगर (!parg)
-		जाओ error;
-	parg->क्रमmat = strdup(क्रमmat);
-	अगर (!parg->क्रमmat)
-		जाओ error;
+	parg = calloc(1, sizeof(*parg));
+	if (!parg)
+		goto error;
+	parg->format = strdup(format);
+	if (!parg->format)
+		goto error;
 	parg->type = type;
 	parg->arg = arg;
 	parg->len_as_arg = len_as_arg;
 	parg->ls = ls;
 	*parse = parg;
-	वापस 0;
+	return 0;
 error:
-	अगर (parg) अणु
-		मुक्त(parg->क्रमmat);
-		मुक्त(parg);
-	पूर्ण
-	वापस -1;
-पूर्ण
+	if (parg) {
+		free(parg->format);
+		free(parg);
+	}
+	return -1;
+}
 
-अटल पूर्णांक parse_arg_क्रमmat(काष्ठा tep_prपूर्णांक_parse **parse,
-			    काष्ठा tep_event *event,
-			    स्थिर अक्षर *क्रमmat, काष्ठा tep_prपूर्णांक_arg **arg)
-अणु
-	काष्ठा tep_prपूर्णांक_arg *len_arg = शून्य;
-	अक्षर prपूर्णांक_क्रमmat[32];
-	स्थिर अक्षर *start = क्रमmat;
-	पूर्णांक ret = 0;
-	पूर्णांक ls = 0;
-	पूर्णांक res;
-	पूर्णांक len;
+static int parse_arg_format(struct tep_print_parse **parse,
+			    struct tep_event *event,
+			    const char *format, struct tep_print_arg **arg)
+{
+	struct tep_print_arg *len_arg = NULL;
+	char print_format[32];
+	const char *start = format;
+	int ret = 0;
+	int ls = 0;
+	int res;
+	int len;
 
-	क्रमmat++;
+	format++;
 	ret++;
-	क्रम (; *क्रमmat; क्रमmat++) अणु
-		चयन (*क्रमmat) अणु
-		हाल '#':
+	for (; *format; format++) {
+		switch (*format) {
+		case '#':
 			/* FIXME: need to handle properly */
-			अवरोध;
-		हाल 'h':
+			break;
+		case 'h':
 			ls--;
-			अवरोध;
-		हाल 'l':
+			break;
+		case 'l':
 			ls++;
-			अवरोध;
-		हाल 'L':
+			break;
+		case 'L':
 			ls = 2;
-			अवरोध;
-		हाल '.':
-		हाल 'z':
-		हाल 'Z':
-		हाल '0' ... '9':
-		हाल '-':
-			अवरोध;
-		हाल '*':
+			break;
+		case '.':
+		case 'z':
+		case 'Z':
+		case '0' ... '9':
+		case '-':
+			break;
+		case '*':
 			/* The argument is the length. */
-			अगर (!*arg) अणु
-				करो_warning_event(event, "no argument match");
+			if (!*arg) {
+				do_warning_event(event, "no argument match");
 				event->flags |= TEP_EVENT_FL_FAILED;
-				जाओ out_failed;
-			पूर्ण
-			अगर (len_arg) अणु
-				करो_warning_event(event, "argument already matched");
+				goto out_failed;
+			}
+			if (len_arg) {
+				do_warning_event(event, "argument already matched");
 				event->flags |= TEP_EVENT_FL_FAILED;
-				जाओ out_failed;
-			पूर्ण
+				goto out_failed;
+			}
 			len_arg = *arg;
 			*arg = (*arg)->next;
-			अवरोध;
-		हाल 'p':
-			अगर (!*arg) अणु
-				करो_warning_event(event, "no argument match");
+			break;
+		case 'p':
+			if (!*arg) {
+				do_warning_event(event, "no argument match");
 				event->flags |= TEP_EVENT_FL_FAILED;
-				जाओ out_failed;
-			पूर्ण
-			res = parse_arg_क्रमmat_poपूर्णांकer(क्रमmat + 1);
-			अगर (res > 0) अणु
-				क्रमmat += res;
+				goto out_failed;
+			}
+			res = parse_arg_format_pointer(format + 1);
+			if (res > 0) {
+				format += res;
 				ret += res;
-			पूर्ण
-			len = ((अचिन्हित दीर्घ)क्रमmat + 1) -
-				(अचिन्हित दीर्घ)start;
+			}
+			len = ((unsigned long)format + 1) -
+				(unsigned long)start;
 			/* should never happen */
-			अगर (len > 31) अणु
-				करो_warning_event(event, "bad format!");
+			if (len > 31) {
+				do_warning_event(event, "bad format!");
 				event->flags |= TEP_EVENT_FL_FAILED;
 				len = 31;
-			पूर्ण
-			स_नकल(prपूर्णांक_क्रमmat, start, len);
-			prपूर्णांक_क्रमmat[len] = 0;
+			}
+			memcpy(print_format, start, len);
+			print_format[len] = 0;
 
-			parse_arg_add(parse, prपूर्णांक_क्रमmat,
+			parse_arg_add(parse, print_format,
 				      PRINT_FMT_ARG_POINTER, *arg, len_arg, ls);
 			*arg = (*arg)->next;
 			ret++;
-			वापस ret;
-		हाल 'd':
-		हाल 'u':
-		हाल 'i':
-		हाल 'x':
-		हाल 'X':
-		हाल 'o':
-			अगर (!*arg) अणु
-				करो_warning_event(event, "no argument match");
+			return ret;
+		case 'd':
+		case 'u':
+		case 'i':
+		case 'x':
+		case 'X':
+		case 'o':
+			if (!*arg) {
+				do_warning_event(event, "no argument match");
 				event->flags |= TEP_EVENT_FL_FAILED;
-				जाओ out_failed;
-			पूर्ण
+				goto out_failed;
+			}
 
-			len = ((अचिन्हित दीर्घ)क्रमmat + 1) -
-				(अचिन्हित दीर्घ)start;
+			len = ((unsigned long)format + 1) -
+				(unsigned long)start;
 
 			/* should never happen */
-			अगर (len > 30) अणु
-				करो_warning_event(event, "bad format!");
+			if (len > 30) {
+				do_warning_event(event, "bad format!");
 				event->flags |= TEP_EVENT_FL_FAILED;
 				len = 31;
-			पूर्ण
-			स_नकल(prपूर्णांक_क्रमmat, start, len);
-			prपूर्णांक_क्रमmat[len] = 0;
+			}
+			memcpy(print_format, start, len);
+			print_format[len] = 0;
 
-			अगर (event->tep->दीर्घ_size == 8 && ls == 1 &&
-			    माप(दीर्घ) != 8) अणु
-				अक्षर *p;
+			if (event->tep->long_size == 8 && ls == 1 &&
+			    sizeof(long) != 8) {
+				char *p;
 
-				/* make %l पूर्णांकo %ll */
-				अगर (ls == 1 && (p = म_अक्षर(prपूर्णांक_क्रमmat, 'l')))
-					स_हटाओ(p+1, p, म_माप(p)+1);
+				/* make %l into %ll */
+				if (ls == 1 && (p = strchr(print_format, 'l')))
+					memmove(p+1, p, strlen(p)+1);
 				ls = 2;
-			पूर्ण
-			अगर (ls < -2 || ls > 2) अणु
-				करो_warning_event(event, "bad count (%d)", ls);
+			}
+			if (ls < -2 || ls > 2) {
+				do_warning_event(event, "bad count (%d)", ls);
 				event->flags |= TEP_EVENT_FL_FAILED;
-			पूर्ण
-			parse_arg_add(parse, prपूर्णांक_क्रमmat,
+			}
+			parse_arg_add(parse, print_format,
 				      PRINT_FMT_ARG_DIGIT, *arg, len_arg, ls);
 			*arg = (*arg)->next;
 			ret++;
-			वापस ret;
-		हाल 's':
-			अगर (!*arg) अणु
-				करो_warning_event(event, "no matching argument");
+			return ret;
+		case 's':
+			if (!*arg) {
+				do_warning_event(event, "no matching argument");
 				event->flags |= TEP_EVENT_FL_FAILED;
-				जाओ out_failed;
-			पूर्ण
+				goto out_failed;
+			}
 
-			len = ((अचिन्हित दीर्घ)क्रमmat + 1) -
-				(अचिन्हित दीर्घ)start;
+			len = ((unsigned long)format + 1) -
+				(unsigned long)start;
 
 			/* should never happen */
-			अगर (len > 31) अणु
-				करो_warning_event(event, "bad format!");
+			if (len > 31) {
+				do_warning_event(event, "bad format!");
 				event->flags |= TEP_EVENT_FL_FAILED;
 				len = 31;
-			पूर्ण
+			}
 
-			स_नकल(prपूर्णांक_क्रमmat, start, len);
-			prपूर्णांक_क्रमmat[len] = 0;
+			memcpy(print_format, start, len);
+			print_format[len] = 0;
 
-			parse_arg_add(parse, prपूर्णांक_क्रमmat,
+			parse_arg_add(parse, print_format,
 					PRINT_FMT_ARG_STRING, *arg, len_arg, 0);
 			*arg = (*arg)->next;
 			ret++;
-			वापस ret;
-		शेष:
-			snम_लिखो(prपूर्णांक_क्रमmat, 32, ">%c<", *क्रमmat);
-			parse_arg_add(parse, prपूर्णांक_क्रमmat,
-					PRINT_FMT_STRING, शून्य, शून्य, 0);
+			return ret;
+		default:
+			snprintf(print_format, 32, ">%c<", *format);
+			parse_arg_add(parse, print_format,
+					PRINT_FMT_STRING, NULL, NULL, 0);
 			ret++;
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		ret++;
-	पूर्ण
+	}
 
 out_failed:
-	वापस ret;
+	return ret;
 
-पूर्ण
+}
 
-अटल पूर्णांक parse_arg_string(काष्ठा tep_prपूर्णांक_parse **parse, स्थिर अक्षर *क्रमmat)
-अणु
-	काष्ठा trace_seq s;
-	पूर्णांक ret = 0;
+static int parse_arg_string(struct tep_print_parse **parse, const char *format)
+{
+	struct trace_seq s;
+	int ret = 0;
 
 	trace_seq_init(&s);
-	क्रम (; *क्रमmat; क्रमmat++) अणु
-		अगर (*क्रमmat == '\\') अणु
-			क्रमmat++;
+	for (; *format; format++) {
+		if (*format == '\\') {
+			format++;
 			ret++;
-			चयन (*क्रमmat) अणु
-			हाल 'n':
-				trace_seq_अ_दो(&s, '\n');
-				अवरोध;
-			हाल 't':
-				trace_seq_अ_दो(&s, '\t');
-				अवरोध;
-			हाल 'r':
-				trace_seq_अ_दो(&s, '\r');
-				अवरोध;
-			हाल '\\':
-				trace_seq_अ_दो(&s, '\\');
-				अवरोध;
-			शेष:
-				trace_seq_अ_दो(&s, *क्रमmat);
-				अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अगर (*क्रमmat == '%') अणु
-			अगर (*(क्रमmat + 1) == '%') अणु
-				trace_seq_अ_दो(&s, '%');
-				क्रमmat++;
+			switch (*format) {
+			case 'n':
+				trace_seq_putc(&s, '\n');
+				break;
+			case 't':
+				trace_seq_putc(&s, '\t');
+				break;
+			case 'r':
+				trace_seq_putc(&s, '\r');
+				break;
+			case '\\':
+				trace_seq_putc(&s, '\\');
+				break;
+			default:
+				trace_seq_putc(&s, *format);
+				break;
+			}
+		} else if (*format == '%') {
+			if (*(format + 1) == '%') {
+				trace_seq_putc(&s, '%');
+				format++;
 				ret++;
-			पूर्ण अन्यथा
-				अवरोध;
-		पूर्ण अन्यथा
-			trace_seq_अ_दो(&s, *क्रमmat);
+			} else
+				break;
+		} else
+			trace_seq_putc(&s, *format);
 
 		ret++;
-	पूर्ण
+	}
 	trace_seq_terminate(&s);
-	parse_arg_add(parse, s.buffer, PRINT_FMT_STRING, शून्य, शून्य, 0);
+	parse_arg_add(parse, s.buffer, PRINT_FMT_STRING, NULL, NULL, 0);
 	trace_seq_destroy(&s);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा tep_prपूर्णांक_parse *
-parse_args(काष्ठा tep_event *event, स्थिर अक्षर *क्रमmat, काष्ठा tep_prपूर्णांक_arg *arg)
-अणु
-	काष्ठा tep_prपूर्णांक_parse *parse_ret = शून्य;
-	काष्ठा tep_prपूर्णांक_parse **parse = शून्य;
-	पूर्णांक ret;
-	पूर्णांक len;
+static struct tep_print_parse *
+parse_args(struct tep_event *event, const char *format, struct tep_print_arg *arg)
+{
+	struct tep_print_parse *parse_ret = NULL;
+	struct tep_print_parse **parse = NULL;
+	int ret;
+	int len;
 
-	len = म_माप(क्रमmat);
-	जबतक (*क्रमmat) अणु
-		अगर (!parse_ret)
+	len = strlen(format);
+	while (*format) {
+		if (!parse_ret)
 			parse = &parse_ret;
-		अगर (*क्रमmat == '%' && *(format + 1) != '%')
-			ret = parse_arg_क्रमmat(parse, event, क्रमmat, &arg);
-		अन्यथा
-			ret = parse_arg_string(parse, क्रमmat);
-		अगर (*parse)
+		if (*format == '%' && *(format + 1) != '%')
+			ret = parse_arg_format(parse, event, format, &arg);
+		else
+			ret = parse_arg_string(parse, format);
+		if (*parse)
 			parse = &((*parse)->next);
 
 		len -= ret;
-		अगर (len > 0)
-			क्रमmat += ret;
-		अन्यथा
-			अवरोध;
-	पूर्ण
-	वापस parse_ret;
-पूर्ण
+		if (len > 0)
+			format += ret;
+		else
+			break;
+	}
+	return parse_ret;
+}
 
-अटल व्योम prपूर्णांक_event_cache(काष्ठा tep_prपूर्णांक_parse *parse, काष्ठा trace_seq *s,
-			      व्योम *data, पूर्णांक size, काष्ठा tep_event *event)
-अणु
-	पूर्णांक len_arg;
+static void print_event_cache(struct tep_print_parse *parse, struct trace_seq *s,
+			      void *data, int size, struct tep_event *event)
+{
+	int len_arg;
 
-	जबतक (parse) अणु
-		अगर (parse->len_as_arg)
+	while (parse) {
+		if (parse->len_as_arg)
 			len_arg = eval_num_arg(data, size, event, parse->len_as_arg);
-		चयन (parse->type) अणु
-		हाल PRINT_FMT_ARG_DIGIT:
-			prपूर्णांक_arg_number(s, parse->क्रमmat,
+		switch (parse->type) {
+		case PRINT_FMT_ARG_DIGIT:
+			print_arg_number(s, parse->format,
 					parse->len_as_arg ? len_arg : -1, data,
 					 size, parse->ls, event, parse->arg);
-			अवरोध;
-		हाल PRINT_FMT_ARG_POINTER:
-			prपूर्णांक_arg_poपूर्णांकer(s, parse->क्रमmat,
+			break;
+		case PRINT_FMT_ARG_POINTER:
+			print_arg_pointer(s, parse->format,
 					  parse->len_as_arg ? len_arg : 1,
 					  data, size, event, parse->arg);
-			अवरोध;
-		हाल PRINT_FMT_ARG_STRING:
-			prपूर्णांक_arg_string(s, parse->क्रमmat,
+			break;
+		case PRINT_FMT_ARG_STRING:
+			print_arg_string(s, parse->format,
 					 parse->len_as_arg ? len_arg : -1,
 					 data, size, event, parse->arg);
-			अवरोध;
-		हाल PRINT_FMT_STRING:
-		शेष:
-			trace_seq_म_लिखो(s, "%s", parse->क्रमmat);
-			अवरोध;
-		पूर्ण
+			break;
+		case PRINT_FMT_STRING:
+		default:
+			trace_seq_printf(s, "%s", parse->format);
+			break;
+		}
 		parse = parse->next;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम pretty_prपूर्णांक(काष्ठा trace_seq *s, व्योम *data, पूर्णांक size, काष्ठा tep_event *event)
-अणु
-	काष्ठा tep_prपूर्णांक_parse *parse = event->prपूर्णांक_fmt.prपूर्णांक_cache;
-	काष्ठा tep_prपूर्णांक_arg *args = शून्य;
-	अक्षर *bprपूर्णांक_fmt = शून्य;
+static void pretty_print(struct trace_seq *s, void *data, int size, struct tep_event *event)
+{
+	struct tep_print_parse *parse = event->print_fmt.print_cache;
+	struct tep_print_arg *args = NULL;
+	char *bprint_fmt = NULL;
 
-	अगर (event->flags & TEP_EVENT_FL_FAILED) अणु
-		trace_seq_म_लिखो(s, "[FAILED TO PARSE]");
-		tep_prपूर्णांक_fields(s, data, size, event);
-		वापस;
-	पूर्ण
+	if (event->flags & TEP_EVENT_FL_FAILED) {
+		trace_seq_printf(s, "[FAILED TO PARSE]");
+		tep_print_fields(s, data, size, event);
+		return;
+	}
 
-	अगर (event->flags & TEP_EVENT_FL_ISBPRINT) अणु
-		bprपूर्णांक_fmt = get_bprपूर्णांक_क्रमmat(data, size, event);
-		args = make_bprपूर्णांक_args(bprपूर्णांक_fmt, data, size, event);
-		parse = parse_args(event, bprपूर्णांक_fmt, args);
-	पूर्ण
+	if (event->flags & TEP_EVENT_FL_ISBPRINT) {
+		bprint_fmt = get_bprint_format(data, size, event);
+		args = make_bprint_args(bprint_fmt, data, size, event);
+		parse = parse_args(event, bprint_fmt, args);
+	}
 
-	prपूर्णांक_event_cache(parse, s, data, size, event);
+	print_event_cache(parse, s, data, size, event);
 
-	अगर (event->flags & TEP_EVENT_FL_ISBPRINT) अणु
-		मुक्त_parse_args(parse);
-		मुक्त_args(args);
-		मुक्त(bprपूर्णांक_fmt);
-	पूर्ण
-पूर्ण
+	if (event->flags & TEP_EVENT_FL_ISBPRINT) {
+		free_parse_args(parse);
+		free_args(args);
+		free(bprint_fmt);
+	}
+}
 
 /*
- * This parses out the Latency क्रमmat (पूर्णांकerrupts disabled,
- * need rescheduling, in hard/soft पूर्णांकerrupt, preempt count
- * and lock depth) and places it पूर्णांकo the trace_seq.
+ * This parses out the Latency format (interrupts disabled,
+ * need rescheduling, in hard/soft interrupt, preempt count
+ * and lock depth) and places it into the trace_seq.
  */
-अटल व्योम data_latency_क्रमmat(काष्ठा tep_handle *tep, काष्ठा trace_seq *s,
-				अक्षर *क्रमmat, काष्ठा tep_record *record)
-अणु
-	अटल पूर्णांक check_lock_depth = 1;
-	अटल पूर्णांक check_migrate_disable = 1;
-	अटल पूर्णांक lock_depth_exists;
-	अटल पूर्णांक migrate_disable_exists;
-	अचिन्हित पूर्णांक lat_flags;
-	काष्ठा trace_seq sq;
-	अचिन्हित पूर्णांक pc;
-	पूर्णांक lock_depth = 0;
-	पूर्णांक migrate_disable = 0;
-	पूर्णांक hardirq;
-	पूर्णांक softirq;
-	व्योम *data = record->data;
+static void data_latency_format(struct tep_handle *tep, struct trace_seq *s,
+				char *format, struct tep_record *record)
+{
+	static int check_lock_depth = 1;
+	static int check_migrate_disable = 1;
+	static int lock_depth_exists;
+	static int migrate_disable_exists;
+	unsigned int lat_flags;
+	struct trace_seq sq;
+	unsigned int pc;
+	int lock_depth = 0;
+	int migrate_disable = 0;
+	int hardirq;
+	int softirq;
+	void *data = record->data;
 
 	trace_seq_init(&sq);
 	lat_flags = parse_common_flags(tep, data);
 	pc = parse_common_pc(tep, data);
 	/* lock_depth may not always exist */
-	अगर (lock_depth_exists)
+	if (lock_depth_exists)
 		lock_depth = parse_common_lock_depth(tep, data);
-	अन्यथा अगर (check_lock_depth) अणु
+	else if (check_lock_depth) {
 		lock_depth = parse_common_lock_depth(tep, data);
-		अगर (lock_depth < 0)
+		if (lock_depth < 0)
 			check_lock_depth = 0;
-		अन्यथा
+		else
 			lock_depth_exists = 1;
-	पूर्ण
+	}
 
 	/* migrate_disable may not always exist */
-	अगर (migrate_disable_exists)
+	if (migrate_disable_exists)
 		migrate_disable = parse_common_migrate_disable(tep, data);
-	अन्यथा अगर (check_migrate_disable) अणु
+	else if (check_migrate_disable) {
 		migrate_disable = parse_common_migrate_disable(tep, data);
-		अगर (migrate_disable < 0)
+		if (migrate_disable < 0)
 			check_migrate_disable = 0;
-		अन्यथा
+		else
 			migrate_disable_exists = 1;
-	पूर्ण
+	}
 
-	hardirq = lat_flags & TRACE_FLAG_HARसूचीQ;
+	hardirq = lat_flags & TRACE_FLAG_HARDIRQ;
 	softirq = lat_flags & TRACE_FLAG_SOFTIRQ;
 
-	trace_seq_म_लिखो(&sq, "%c%c%c",
+	trace_seq_printf(&sq, "%c%c%c",
 	       (lat_flags & TRACE_FLAG_IRQS_OFF) ? 'd' :
 	       (lat_flags & TRACE_FLAG_IRQS_NOSUPPORT) ?
 	       'X' : '.',
@@ -5797,1808 +5796,1808 @@ parse_args(काष्ठा tep_event *event, स्थिर अक्षर 
 	       (hardirq && softirq) ? 'H' :
 	       hardirq ? 'h' : softirq ? 's' : '.');
 
-	अगर (pc)
-		trace_seq_म_लिखो(&sq, "%x", pc);
-	अन्यथा
-		trace_seq_म_लिखो(&sq, ".");
+	if (pc)
+		trace_seq_printf(&sq, "%x", pc);
+	else
+		trace_seq_printf(&sq, ".");
 
-	अगर (migrate_disable_exists) अणु
-		अगर (migrate_disable < 0)
-			trace_seq_म_लिखो(&sq, ".");
-		अन्यथा
-			trace_seq_म_लिखो(&sq, "%d", migrate_disable);
-	पूर्ण
+	if (migrate_disable_exists) {
+		if (migrate_disable < 0)
+			trace_seq_printf(&sq, ".");
+		else
+			trace_seq_printf(&sq, "%d", migrate_disable);
+	}
 
-	अगर (lock_depth_exists) अणु
-		अगर (lock_depth < 0)
-			trace_seq_म_लिखो(&sq, ".");
-		अन्यथा
-			trace_seq_म_लिखो(&sq, "%d", lock_depth);
-	पूर्ण
+	if (lock_depth_exists) {
+		if (lock_depth < 0)
+			trace_seq_printf(&sq, ".");
+		else
+			trace_seq_printf(&sq, "%d", lock_depth);
+	}
 
-	अगर (sq.state == TRACE_SEQ__MEM_ALLOC_FAILED) अणु
+	if (sq.state == TRACE_SEQ__MEM_ALLOC_FAILED) {
 		s->state = TRACE_SEQ__MEM_ALLOC_FAILED;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	trace_seq_terminate(&sq);
-	trace_seq_माला_दो(s, sq.buffer);
+	trace_seq_puts(s, sq.buffer);
 	trace_seq_destroy(&sq);
 	trace_seq_terminate(s);
-पूर्ण
+}
 
 /**
  * tep_data_type - parse out the given event type
  * @tep: a handle to the trace event parser context
- * @rec: the record to पढ़ो from
+ * @rec: the record to read from
  *
- * This वापसs the event id from the @rec.
+ * This returns the event id from the @rec.
  */
-पूर्णांक tep_data_type(काष्ठा tep_handle *tep, काष्ठा tep_record *rec)
-अणु
-	वापस trace_parse_common_type(tep, rec->data);
-पूर्ण
+int tep_data_type(struct tep_handle *tep, struct tep_record *rec)
+{
+	return trace_parse_common_type(tep, rec->data);
+}
 
 /**
  * tep_data_pid - parse the PID from record
  * @tep: a handle to the trace event parser context
  * @rec: the record to parse
  *
- * This वापसs the PID from a record.
+ * This returns the PID from a record.
  */
-पूर्णांक tep_data_pid(काष्ठा tep_handle *tep, काष्ठा tep_record *rec)
-अणु
-	वापस parse_common_pid(tep, rec->data);
-पूर्ण
+int tep_data_pid(struct tep_handle *tep, struct tep_record *rec)
+{
+	return parse_common_pid(tep, rec->data);
+}
 
 /**
  * tep_data_preempt_count - parse the preempt count from the record
  * @tep: a handle to the trace event parser context
  * @rec: the record to parse
  *
- * This वापसs the preempt count from a record.
+ * This returns the preempt count from a record.
  */
-पूर्णांक tep_data_preempt_count(काष्ठा tep_handle *tep, काष्ठा tep_record *rec)
-अणु
-	वापस parse_common_pc(tep, rec->data);
-पूर्ण
+int tep_data_preempt_count(struct tep_handle *tep, struct tep_record *rec)
+{
+	return parse_common_pc(tep, rec->data);
+}
 
 /**
  * tep_data_flags - parse the latency flags from the record
  * @tep: a handle to the trace event parser context
  * @rec: the record to parse
  *
- * This वापसs the latency flags from a record.
+ * This returns the latency flags from a record.
  *
- *  Use trace_flag_type क्रमागत क्रम the flags (see event-parse.h).
+ *  Use trace_flag_type enum for the flags (see event-parse.h).
  */
-पूर्णांक tep_data_flags(काष्ठा tep_handle *tep, काष्ठा tep_record *rec)
-अणु
-	वापस parse_common_flags(tep, rec->data);
-पूर्ण
+int tep_data_flags(struct tep_handle *tep, struct tep_record *rec)
+{
+	return parse_common_flags(tep, rec->data);
+}
 
 /**
- * tep_data_comm_from_pid - वापस the command line from PID
+ * tep_data_comm_from_pid - return the command line from PID
  * @tep: a handle to the trace event parser context
- * @pid: the PID of the task to search क्रम
+ * @pid: the PID of the task to search for
  *
- * This वापसs a poपूर्णांकer to the command line that has the given
+ * This returns a pointer to the command line that has the given
  * @pid.
  */
-स्थिर अक्षर *tep_data_comm_from_pid(काष्ठा tep_handle *tep, पूर्णांक pid)
-अणु
-	स्थिर अक्षर *comm;
+const char *tep_data_comm_from_pid(struct tep_handle *tep, int pid)
+{
+	const char *comm;
 
 	comm = find_cmdline(tep, pid);
-	वापस comm;
-पूर्ण
+	return comm;
+}
 
-अटल काष्ठा tep_cmdline *
-pid_from_cmdlist(काष्ठा tep_handle *tep, स्थिर अक्षर *comm, काष्ठा tep_cmdline *next)
-अणु
-	काष्ठा cmdline_list *cmdlist = (काष्ठा cmdline_list *)next;
+static struct tep_cmdline *
+pid_from_cmdlist(struct tep_handle *tep, const char *comm, struct tep_cmdline *next)
+{
+	struct cmdline_list *cmdlist = (struct cmdline_list *)next;
 
-	अगर (cmdlist)
+	if (cmdlist)
 		cmdlist = cmdlist->next;
-	अन्यथा
+	else
 		cmdlist = tep->cmdlist;
 
-	जबतक (cmdlist && म_भेद(cmdlist->comm, comm) != 0)
+	while (cmdlist && strcmp(cmdlist->comm, comm) != 0)
 		cmdlist = cmdlist->next;
 
-	वापस (काष्ठा tep_cmdline *)cmdlist;
-पूर्ण
+	return (struct tep_cmdline *)cmdlist;
+}
 
 /**
- * tep_data_pid_from_comm - वापस the pid from a given comm
+ * tep_data_pid_from_comm - return the pid from a given comm
  * @tep: a handle to the trace event parser context
  * @comm: the cmdline to find the pid from
- * @next: the cmdline काष्ठाure to find the next comm
+ * @next: the cmdline structure to find the next comm
  *
- * This वापसs the cmdline काष्ठाure that holds a pid क्रम a given
- * comm, or शून्य अगर none found. As there may be more than one pid क्रम
- * a given comm, the result of this call can be passed back पूर्णांकo
+ * This returns the cmdline structure that holds a pid for a given
+ * comm, or NULL if none found. As there may be more than one pid for
+ * a given comm, the result of this call can be passed back into
  * a recurring call in the @next parameter, and then it will find the
  * next pid.
- * Also, it करोes a linear search, so it may be slow.
+ * Also, it does a linear search, so it may be slow.
  */
-काष्ठा tep_cmdline *tep_data_pid_from_comm(काष्ठा tep_handle *tep, स्थिर अक्षर *comm,
-					   काष्ठा tep_cmdline *next)
-अणु
-	काष्ठा tep_cmdline *cmdline;
+struct tep_cmdline *tep_data_pid_from_comm(struct tep_handle *tep, const char *comm,
+					   struct tep_cmdline *next)
+{
+	struct tep_cmdline *cmdline;
 
 	/*
 	 * If the cmdlines have not been converted yet, then use
 	 * the list.
 	 */
-	अगर (!tep->cmdlines)
-		वापस pid_from_cmdlist(tep, comm, next);
+	if (!tep->cmdlines)
+		return pid_from_cmdlist(tep, comm, next);
 
-	अगर (next) अणु
+	if (next) {
 		/*
-		 * The next poपूर्णांकer could have been still from
-		 * a previous call beक्रमe cmdlines were created
+		 * The next pointer could have been still from
+		 * a previous call before cmdlines were created
 		 */
-		अगर (next < tep->cmdlines ||
+		if (next < tep->cmdlines ||
 		    next >= tep->cmdlines + tep->cmdline_count)
-			next = शून्य;
-		अन्यथा
+			next = NULL;
+		else
 			cmdline  = next++;
-	पूर्ण
+	}
 
-	अगर (!next)
+	if (!next)
 		cmdline = tep->cmdlines;
 
-	जबतक (cmdline < tep->cmdlines + tep->cmdline_count) अणु
-		अगर (म_भेद(cmdline->comm, comm) == 0)
-			वापस cmdline;
+	while (cmdline < tep->cmdlines + tep->cmdline_count) {
+		if (strcmp(cmdline->comm, comm) == 0)
+			return cmdline;
 		cmdline++;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	}
+	return NULL;
+}
 
 /**
- * tep_cmdline_pid - वापस the pid associated to a given cmdline
+ * tep_cmdline_pid - return the pid associated to a given cmdline
  * @tep: a handle to the trace event parser context
- * @cmdline: The cmdline काष्ठाure to get the pid from
+ * @cmdline: The cmdline structure to get the pid from
  *
- * Returns the pid क्रम a give cmdline. If @cmdline is शून्य, then
- * -1 is वापसed.
+ * Returns the pid for a give cmdline. If @cmdline is NULL, then
+ * -1 is returned.
  */
-पूर्णांक tep_cmdline_pid(काष्ठा tep_handle *tep, काष्ठा tep_cmdline *cmdline)
-अणु
-	काष्ठा cmdline_list *cmdlist = (काष्ठा cmdline_list *)cmdline;
+int tep_cmdline_pid(struct tep_handle *tep, struct tep_cmdline *cmdline)
+{
+	struct cmdline_list *cmdlist = (struct cmdline_list *)cmdline;
 
-	अगर (!cmdline)
-		वापस -1;
+	if (!cmdline)
+		return -1;
 
 	/*
 	 * If cmdlines have not been created yet, or cmdline is
 	 * not part of the array, then treat it as a cmdlist instead.
 	 */
-	अगर (!tep->cmdlines ||
+	if (!tep->cmdlines ||
 	    cmdline < tep->cmdlines ||
 	    cmdline >= tep->cmdlines + tep->cmdline_count)
-		वापस cmdlist->pid;
+		return cmdlist->pid;
 
-	वापस cmdline->pid;
-पूर्ण
+	return cmdline->pid;
+}
 
 /*
- * This parses the raw @data using the given @event inक्रमmation and
- * ग_लिखोs the prपूर्णांक क्रमmat पूर्णांकo the trace_seq.
+ * This parses the raw @data using the given @event information and
+ * writes the print format into the trace_seq.
  */
-अटल व्योम prपूर्णांक_event_info(काष्ठा trace_seq *s, अक्षर *क्रमmat, bool raw,
-			     काष्ठा tep_event *event, काष्ठा tep_record *record)
-अणु
-	पूर्णांक prपूर्णांक_pretty = 1;
+static void print_event_info(struct trace_seq *s, char *format, bool raw,
+			     struct tep_event *event, struct tep_record *record)
+{
+	int print_pretty = 1;
 
-	अगर (raw || (event->flags & TEP_EVENT_FL_PRINTRAW))
-		tep_prपूर्णांक_fields(s, record->data, record->size, event);
-	अन्यथा अणु
+	if (raw || (event->flags & TEP_EVENT_FL_PRINTRAW))
+		tep_print_fields(s, record->data, record->size, event);
+	else {
 
-		अगर (event->handler && !(event->flags & TEP_EVENT_FL_NOHANDLE))
-			prपूर्णांक_pretty = event->handler(s, record, event,
+		if (event->handler && !(event->flags & TEP_EVENT_FL_NOHANDLE))
+			print_pretty = event->handler(s, record, event,
 						      event->context);
 
-		अगर (prपूर्णांक_pretty)
-			pretty_prपूर्णांक(s, record->data, record->size, event);
-	पूर्ण
+		if (print_pretty)
+			pretty_print(s, record->data, record->size, event);
+	}
 
 	trace_seq_terminate(s);
-पूर्ण
+}
 
 /**
- * tep_find_event_by_record - वापस the event from a given record
+ * tep_find_event_by_record - return the event from a given record
  * @tep: a handle to the trace event parser context
  * @record: The record to get the event from
  *
- * Returns the associated event क्रम a given record, or शून्य अगर non is
+ * Returns the associated event for a given record, or NULL if non is
  * is found.
  */
-काष्ठा tep_event *
-tep_find_event_by_record(काष्ठा tep_handle *tep, काष्ठा tep_record *record)
-अणु
-	पूर्णांक type;
+struct tep_event *
+tep_find_event_by_record(struct tep_handle *tep, struct tep_record *record)
+{
+	int type;
 
-	अगर (record->size < 0) अणु
-		करो_warning("ug! negative record size %d", record->size);
-		वापस शून्य;
-	पूर्ण
+	if (record->size < 0) {
+		do_warning("ug! negative record size %d", record->size);
+		return NULL;
+	}
 
 	type = trace_parse_common_type(tep, record->data);
 
-	वापस tep_find_event(tep, type);
-पूर्ण
+	return tep_find_event(tep, type);
+}
 
 /*
- * Writes the बारtamp of the record पूर्णांकo @s. Time भागisor and precision can be
- * specअगरied as part of म_लिखो @क्रमmat string. Example:
- *	"%3.1000d" - भागide the समय by 1000 and prपूर्णांक the first 3 digits
- *	beक्रमe the करोt. Thus, the बारtamp "123456000" will be prपूर्णांकed as
+ * Writes the timestamp of the record into @s. Time divisor and precision can be
+ * specified as part of printf @format string. Example:
+ *	"%3.1000d" - divide the time by 1000 and print the first 3 digits
+ *	before the dot. Thus, the timestamp "123456000" will be printed as
  *	"123.456"
  */
-अटल व्योम prपूर्णांक_event_समय(काष्ठा tep_handle *tep, काष्ठा trace_seq *s,
-				 अक्षर *क्रमmat, काष्ठा tep_event *event,
-				 काष्ठा tep_record *record)
-अणु
-	अचिन्हित दीर्घ दीर्घ समय;
-	अक्षर *भागstr;
-	पूर्णांक prec = 0, pr;
-	पूर्णांक भाग = 0;
-	पूर्णांक p10 = 1;
+static void print_event_time(struct tep_handle *tep, struct trace_seq *s,
+				 char *format, struct tep_event *event,
+				 struct tep_record *record)
+{
+	unsigned long long time;
+	char *divstr;
+	int prec = 0, pr;
+	int div = 0;
+	int p10 = 1;
 
-	अगर (है_अंक(*(क्रमmat + 1)))
-		prec = म_से_प(क्रमmat + 1);
-	भागstr = म_अक्षर(क्रमmat, '.');
-	अगर (भागstr && है_अंक(*(भागstr + 1)))
-		भाग = म_से_प(भागstr + 1);
-	समय = record->ts;
-	अगर (भाग) अणु
-		समय += भाग / 2;
-		समय /= भाग;
-	पूर्ण
+	if (isdigit(*(format + 1)))
+		prec = atoi(format + 1);
+	divstr = strchr(format, '.');
+	if (divstr && isdigit(*(divstr + 1)))
+		div = atoi(divstr + 1);
+	time = record->ts;
+	if (div) {
+		time += div / 2;
+		time /= div;
+	}
 	pr = prec;
-	जबतक (pr--)
+	while (pr--)
 		p10 *= 10;
 
-	अगर (p10 > 1 && p10 < समय)
-		trace_seq_म_लिखो(s, "%5llu.%0*llu", समय / p10, prec, समय % p10);
-	अन्यथा
-		trace_seq_म_लिखो(s, "%12llu", समय);
-पूर्ण
+	if (p10 > 1 && p10 < time)
+		trace_seq_printf(s, "%5llu.%0*llu", time / p10, prec, time % p10);
+	else
+		trace_seq_printf(s, "%12llu", time);
+}
 
-काष्ठा prपूर्णांक_event_type अणु
-	क्रमागत अणु
+struct print_event_type {
+	enum {
 		EVENT_TYPE_INT = 1,
 		EVENT_TYPE_STRING,
 		EVENT_TYPE_UNKNOWN,
-	पूर्ण type;
-	अक्षर क्रमmat[32];
-पूर्ण;
+	} type;
+	char format[32];
+};
 
-अटल व्योम prपूर्णांक_string(काष्ठा tep_handle *tep, काष्ठा trace_seq *s,
-			 काष्ठा tep_record *record, काष्ठा tep_event *event,
-			 स्थिर अक्षर *arg, काष्ठा prपूर्णांक_event_type *type)
-अणु
-	स्थिर अक्षर *comm;
-	पूर्णांक pid;
+static void print_string(struct tep_handle *tep, struct trace_seq *s,
+			 struct tep_record *record, struct tep_event *event,
+			 const char *arg, struct print_event_type *type)
+{
+	const char *comm;
+	int pid;
 
-	अगर (म_भेदन(arg, TEP_PRINT_LATENCY, म_माप(TEP_PRINT_LATENCY)) == 0) अणु
-		data_latency_क्रमmat(tep, s, type->क्रमmat, record);
-	पूर्ण अन्यथा अगर (म_भेदन(arg, TEP_PRINT_COMM, म_माप(TEP_PRINT_COMM)) == 0) अणु
+	if (strncmp(arg, TEP_PRINT_LATENCY, strlen(TEP_PRINT_LATENCY)) == 0) {
+		data_latency_format(tep, s, type->format, record);
+	} else if (strncmp(arg, TEP_PRINT_COMM, strlen(TEP_PRINT_COMM)) == 0) {
 		pid = parse_common_pid(tep, record->data);
 		comm = find_cmdline(tep, pid);
-		trace_seq_म_लिखो(s, type->क्रमmat, comm);
-	पूर्ण अन्यथा अगर (म_भेदन(arg, TEP_PRINT_INFO_RAW, म_माप(TEP_PRINT_INFO_RAW)) == 0) अणु
-		prपूर्णांक_event_info(s, type->क्रमmat, true, event, record);
-	पूर्ण अन्यथा अगर (म_भेदन(arg, TEP_PRINT_INFO, म_माप(TEP_PRINT_INFO)) == 0) अणु
-		prपूर्णांक_event_info(s, type->क्रमmat, false, event, record);
-	पूर्ण अन्यथा अगर  (म_भेदन(arg, TEP_PRINT_NAME, म_माप(TEP_PRINT_NAME)) == 0) अणु
-		trace_seq_म_लिखो(s, type->क्रमmat, event->name);
-	पूर्ण अन्यथा अणु
-		trace_seq_म_लिखो(s, "[UNKNOWN TEP TYPE %s]", arg);
-	पूर्ण
+		trace_seq_printf(s, type->format, comm);
+	} else if (strncmp(arg, TEP_PRINT_INFO_RAW, strlen(TEP_PRINT_INFO_RAW)) == 0) {
+		print_event_info(s, type->format, true, event, record);
+	} else if (strncmp(arg, TEP_PRINT_INFO, strlen(TEP_PRINT_INFO)) == 0) {
+		print_event_info(s, type->format, false, event, record);
+	} else if  (strncmp(arg, TEP_PRINT_NAME, strlen(TEP_PRINT_NAME)) == 0) {
+		trace_seq_printf(s, type->format, event->name);
+	} else {
+		trace_seq_printf(s, "[UNKNOWN TEP TYPE %s]", arg);
+	}
 
-पूर्ण
+}
 
-अटल व्योम prपूर्णांक_पूर्णांक(काष्ठा tep_handle *tep, काष्ठा trace_seq *s,
-		      काष्ठा tep_record *record, काष्ठा tep_event *event,
-		      पूर्णांक arg, काष्ठा prपूर्णांक_event_type *type)
-अणु
-	पूर्णांक param;
+static void print_int(struct tep_handle *tep, struct trace_seq *s,
+		      struct tep_record *record, struct tep_event *event,
+		      int arg, struct print_event_type *type)
+{
+	int param;
 
-	चयन (arg) अणु
-	हाल TEP_PRINT_CPU:
+	switch (arg) {
+	case TEP_PRINT_CPU:
 		param = record->cpu;
-		अवरोध;
-	हाल TEP_PRINT_PID:
+		break;
+	case TEP_PRINT_PID:
 		param = parse_common_pid(tep, record->data);
-		अवरोध;
-	हाल TEP_PRINT_TIME:
-		वापस prपूर्णांक_event_समय(tep, s, type->क्रमmat, event, record);
-	शेष:
-		वापस;
-	पूर्ण
-	trace_seq_म_लिखो(s, type->क्रमmat, param);
-पूर्ण
+		break;
+	case TEP_PRINT_TIME:
+		return print_event_time(tep, s, type->format, event, record);
+	default:
+		return;
+	}
+	trace_seq_printf(s, type->format, param);
+}
 
-अटल पूर्णांक tep_prपूर्णांक_event_param_type(अक्षर *क्रमmat,
-				      काष्ठा prपूर्णांक_event_type *type)
-अणु
-	अक्षर *str = क्रमmat + 1;
-	पूर्णांक i = 1;
+static int tep_print_event_param_type(char *format,
+				      struct print_event_type *type)
+{
+	char *str = format + 1;
+	int i = 1;
 
 	type->type = EVENT_TYPE_UNKNOWN;
-	जबतक (*str) अणु
-		चयन (*str) अणु
-		हाल 'd':
-		हाल 'u':
-		हाल 'i':
-		हाल 'x':
-		हाल 'X':
-		हाल 'o':
+	while (*str) {
+		switch (*str) {
+		case 'd':
+		case 'u':
+		case 'i':
+		case 'x':
+		case 'X':
+		case 'o':
 			type->type = EVENT_TYPE_INT;
-			अवरोध;
-		हाल 's':
+			break;
+		case 's':
 			type->type = EVENT_TYPE_STRING;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		str++;
 		i++;
-		अगर (type->type != EVENT_TYPE_UNKNOWN)
-			अवरोध;
-	पूर्ण
-	स_रखो(type->क्रमmat, 0, 32);
-	स_नकल(type->क्रमmat, क्रमmat, i < 32 ? i : 31);
-	वापस i;
-पूर्ण
+		if (type->type != EVENT_TYPE_UNKNOWN)
+			break;
+	}
+	memset(type->format, 0, 32);
+	memcpy(type->format, format, i < 32 ? i : 31);
+	return i;
+}
 
 /**
- * tep_prपूर्णांक_event - Write various event inक्रमmation
+ * tep_print_event - Write various event information
  * @tep: a handle to the trace event parser context
- * @s: the trace_seq to ग_लिखो to
+ * @s: the trace_seq to write to
  * @record: The record to get the event from
- * @क्रमmat: a म_लिखो क्रमmat string. Supported event fileds:
+ * @format: a printf format string. Supported event fileds:
  *	TEP_PRINT_PID, "%d" - event PID
  *	TEP_PRINT_CPU, "%d" - event CPU
  *	TEP_PRINT_COMM, "%s" - event command string
  *	TEP_PRINT_NAME, "%s" - event name
  *	TEP_PRINT_LATENCY, "%s" - event latency
- *	TEP_PRINT_TIME, %d - event समय stamp. A भागisor and precision
- *			can be specअगरied as part of this क्रमmat string:
+ *	TEP_PRINT_TIME, %d - event time stamp. A divisor and precision
+ *			can be specified as part of this format string:
  *			"%precision.divisord". Example:
- *			"%3.1000d" - भागide the समय by 1000 and prपूर्णांक the first
- *			3 digits beक्रमe the करोt. Thus, the समय stamp
- *			"123456000" will be prपूर्णांकed as "123.456"
- *	TEP_PRINT_INFO, "%s" - event inक्रमmation. If any width is specअगरied in
- *			the क्रमmat string, the event inक्रमmation will be prपूर्णांकed
- *			in raw क्रमmat.
- * Writes the specअगरied event inक्रमmation पूर्णांकo @s.
+ *			"%3.1000d" - divide the time by 1000 and print the first
+ *			3 digits before the dot. Thus, the time stamp
+ *			"123456000" will be printed as "123.456"
+ *	TEP_PRINT_INFO, "%s" - event information. If any width is specified in
+ *			the format string, the event information will be printed
+ *			in raw format.
+ * Writes the specified event information into @s.
  */
-व्योम tep_prपूर्णांक_event(काष्ठा tep_handle *tep, काष्ठा trace_seq *s,
-		     काष्ठा tep_record *record, स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा prपूर्णांक_event_type type;
-	अक्षर *क्रमmat = strdup(fmt);
-	अक्षर *current = क्रमmat;
-	अक्षर *str = क्रमmat;
-	पूर्णांक offset;
-	बहु_सूची args;
-	काष्ठा tep_event *event;
+void tep_print_event(struct tep_handle *tep, struct trace_seq *s,
+		     struct tep_record *record, const char *fmt, ...)
+{
+	struct print_event_type type;
+	char *format = strdup(fmt);
+	char *current = format;
+	char *str = format;
+	int offset;
+	va_list args;
+	struct tep_event *event;
 
-	अगर (!क्रमmat)
-		वापस;
+	if (!format)
+		return;
 
 	event = tep_find_event_by_record(tep, record);
-	बहु_शुरू(args, fmt);
-	जबतक (*current) अणु
-		current = म_अक्षर(str, '%');
-		अगर (!current) अणु
-			trace_seq_माला_दो(s, str);
-			अवरोध;
-		पूर्ण
-		स_रखो(&type, 0, माप(type));
-		offset = tep_prपूर्णांक_event_param_type(current, &type);
+	va_start(args, fmt);
+	while (*current) {
+		current = strchr(str, '%');
+		if (!current) {
+			trace_seq_puts(s, str);
+			break;
+		}
+		memset(&type, 0, sizeof(type));
+		offset = tep_print_event_param_type(current, &type);
 		*current = '\0';
-		trace_seq_माला_दो(s, str);
+		trace_seq_puts(s, str);
 		current += offset;
-		चयन (type.type) अणु
-		हाल EVENT_TYPE_STRING:
-			prपूर्णांक_string(tep, s, record, event,
-				     बहु_तर्क(args, अक्षर*), &type);
-			अवरोध;
-		हाल EVENT_TYPE_INT:
-			prपूर्णांक_पूर्णांक(tep, s, record, event,
-				  बहु_तर्क(args, पूर्णांक), &type);
-			अवरोध;
-		हाल EVENT_TYPE_UNKNOWN:
-		शेष:
-			trace_seq_म_लिखो(s, "[UNKNOWN TYPE]");
-			अवरोध;
-		पूर्ण
+		switch (type.type) {
+		case EVENT_TYPE_STRING:
+			print_string(tep, s, record, event,
+				     va_arg(args, char*), &type);
+			break;
+		case EVENT_TYPE_INT:
+			print_int(tep, s, record, event,
+				  va_arg(args, int), &type);
+			break;
+		case EVENT_TYPE_UNKNOWN:
+		default:
+			trace_seq_printf(s, "[UNKNOWN TYPE]");
+			break;
+		}
 		str = current;
 
-	पूर्ण
-	बहु_पूर्ण(args);
-	मुक्त(क्रमmat);
-पूर्ण
+	}
+	va_end(args);
+	free(format);
+}
 
-अटल पूर्णांक events_id_cmp(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	काष्ठा tep_event * स्थिर * ea = a;
-	काष्ठा tep_event * स्थिर * eb = b;
+static int events_id_cmp(const void *a, const void *b)
+{
+	struct tep_event * const * ea = a;
+	struct tep_event * const * eb = b;
 
-	अगर ((*ea)->id < (*eb)->id)
-		वापस -1;
+	if ((*ea)->id < (*eb)->id)
+		return -1;
 
-	अगर ((*ea)->id > (*eb)->id)
-		वापस 1;
+	if ((*ea)->id > (*eb)->id)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक events_name_cmp(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	काष्ठा tep_event * स्थिर * ea = a;
-	काष्ठा tep_event * स्थिर * eb = b;
-	पूर्णांक res;
+static int events_name_cmp(const void *a, const void *b)
+{
+	struct tep_event * const * ea = a;
+	struct tep_event * const * eb = b;
+	int res;
 
-	res = म_भेद((*ea)->name, (*eb)->name);
-	अगर (res)
-		वापस res;
+	res = strcmp((*ea)->name, (*eb)->name);
+	if (res)
+		return res;
 
-	res = म_भेद((*ea)->प्रणाली, (*eb)->प्रणाली);
-	अगर (res)
-		वापस res;
+	res = strcmp((*ea)->system, (*eb)->system);
+	if (res)
+		return res;
 
-	वापस events_id_cmp(a, b);
-पूर्ण
+	return events_id_cmp(a, b);
+}
 
-अटल पूर्णांक events_प्रणाली_cmp(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	काष्ठा tep_event * स्थिर * ea = a;
-	काष्ठा tep_event * स्थिर * eb = b;
-	पूर्णांक res;
+static int events_system_cmp(const void *a, const void *b)
+{
+	struct tep_event * const * ea = a;
+	struct tep_event * const * eb = b;
+	int res;
 
-	res = म_भेद((*ea)->प्रणाली, (*eb)->प्रणाली);
-	अगर (res)
-		वापस res;
+	res = strcmp((*ea)->system, (*eb)->system);
+	if (res)
+		return res;
 
-	res = म_भेद((*ea)->name, (*eb)->name);
-	अगर (res)
-		वापस res;
+	res = strcmp((*ea)->name, (*eb)->name);
+	if (res)
+		return res;
 
-	वापस events_id_cmp(a, b);
-पूर्ण
+	return events_id_cmp(a, b);
+}
 
-अटल काष्ठा tep_event **list_events_copy(काष्ठा tep_handle *tep)
-अणु
-	काष्ठा tep_event **events;
+static struct tep_event **list_events_copy(struct tep_handle *tep)
+{
+	struct tep_event **events;
 
-	अगर (!tep)
-		वापस शून्य;
+	if (!tep)
+		return NULL;
 
-	events = दो_स्मृति(माप(*events) * (tep->nr_events + 1));
-	अगर (!events)
-		वापस शून्य;
+	events = malloc(sizeof(*events) * (tep->nr_events + 1));
+	if (!events)
+		return NULL;
 
-	स_नकल(events, tep->events, माप(*events) * tep->nr_events);
-	events[tep->nr_events] = शून्य;
-	वापस events;
-पूर्ण
+	memcpy(events, tep->events, sizeof(*events) * tep->nr_events);
+	events[tep->nr_events] = NULL;
+	return events;
+}
 
-अटल व्योम list_events_sort(काष्ठा tep_event **events, पूर्णांक nr_events,
-			     क्रमागत tep_event_sort_type sort_type)
-अणु
-	पूर्णांक (*sort)(स्थिर व्योम *a, स्थिर व्योम *b);
+static void list_events_sort(struct tep_event **events, int nr_events,
+			     enum tep_event_sort_type sort_type)
+{
+	int (*sort)(const void *a, const void *b);
 
-	चयन (sort_type) अणु
-	हाल TEP_EVENT_SORT_ID:
+	switch (sort_type) {
+	case TEP_EVENT_SORT_ID:
 		sort = events_id_cmp;
-		अवरोध;
-	हाल TEP_EVENT_SORT_NAME:
+		break;
+	case TEP_EVENT_SORT_NAME:
 		sort = events_name_cmp;
-		अवरोध;
-	हाल TEP_EVENT_SORT_SYSTEM:
-		sort = events_प्रणाली_cmp;
-		अवरोध;
-	शेष:
-		sort = शून्य;
-	पूर्ण
+		break;
+	case TEP_EVENT_SORT_SYSTEM:
+		sort = events_system_cmp;
+		break;
+	default:
+		sort = NULL;
+	}
 
-	अगर (sort)
-		क्विक(events, nr_events, माप(*events), sort);
-पूर्ण
+	if (sort)
+		qsort(events, nr_events, sizeof(*events), sort);
+}
 
 /**
  * tep_list_events - Get events, sorted by given criteria.
  * @tep: a handle to the tep context
  * @sort_type: desired sort order of the events in the array
  *
- * Returns an array of poपूर्णांकers to all events, sorted by the given
- * @sort_type criteria. The last element of the array is शून्य. The वापसed
- * memory must not be मुक्तd, it is managed by the library.
- * The function is not thपढ़ो safe.
+ * Returns an array of pointers to all events, sorted by the given
+ * @sort_type criteria. The last element of the array is NULL. The returned
+ * memory must not be freed, it is managed by the library.
+ * The function is not thread safe.
  */
-काष्ठा tep_event **tep_list_events(काष्ठा tep_handle *tep,
-				   क्रमागत tep_event_sort_type sort_type)
-अणु
-	काष्ठा tep_event **events;
+struct tep_event **tep_list_events(struct tep_handle *tep,
+				   enum tep_event_sort_type sort_type)
+{
+	struct tep_event **events;
 
-	अगर (!tep)
-		वापस शून्य;
+	if (!tep)
+		return NULL;
 
 	events = tep->sort_events;
-	अगर (events && tep->last_type == sort_type)
-		वापस events;
+	if (events && tep->last_type == sort_type)
+		return events;
 
-	अगर (!events) अणु
+	if (!events) {
 		events = list_events_copy(tep);
-		अगर (!events)
-			वापस शून्य;
+		if (!events)
+			return NULL;
 
 		tep->sort_events = events;
 
-		/* the पूर्णांकernal events are sorted by id */
-		अगर (sort_type == TEP_EVENT_SORT_ID) अणु
+		/* the internal events are sorted by id */
+		if (sort_type == TEP_EVENT_SORT_ID) {
 			tep->last_type = sort_type;
-			वापस events;
-		पूर्ण
-	पूर्ण
+			return events;
+		}
+	}
 
 	list_events_sort(events, tep->nr_events, sort_type);
 	tep->last_type = sort_type;
 
-	वापस events;
-पूर्ण
+	return events;
+}
 
 
 /**
- * tep_list_events_copy - Thपढ़ो safe version of tep_list_events()
+ * tep_list_events_copy - Thread safe version of tep_list_events()
  * @tep: a handle to the tep context
  * @sort_type: desired sort order of the events in the array
  *
- * Returns an array of poपूर्णांकers to all events, sorted by the given
- * @sort_type criteria. The last element of the array is शून्य. The वापसed
- * array is newly allocated inside the function and must be मुक्तd by the caller
+ * Returns an array of pointers to all events, sorted by the given
+ * @sort_type criteria. The last element of the array is NULL. The returned
+ * array is newly allocated inside the function and must be freed by the caller
  */
-काष्ठा tep_event **tep_list_events_copy(काष्ठा tep_handle *tep,
-					क्रमागत tep_event_sort_type sort_type)
-अणु
-	काष्ठा tep_event **events;
+struct tep_event **tep_list_events_copy(struct tep_handle *tep,
+					enum tep_event_sort_type sort_type)
+{
+	struct tep_event **events;
 
-	अगर (!tep)
-		वापस शून्य;
+	if (!tep)
+		return NULL;
 
 	events = list_events_copy(tep);
-	अगर (!events)
-		वापस शून्य;
+	if (!events)
+		return NULL;
 
-	/* the पूर्णांकernal events are sorted by id */
-	अगर (sort_type == TEP_EVENT_SORT_ID)
-		वापस events;
+	/* the internal events are sorted by id */
+	if (sort_type == TEP_EVENT_SORT_ID)
+		return events;
 
 	list_events_sort(events, tep->nr_events, sort_type);
 
-	वापस events;
-पूर्ण
+	return events;
+}
 
-अटल काष्ठा tep_क्रमmat_field **
-get_event_fields(स्थिर अक्षर *type, स्थिर अक्षर *name,
-		 पूर्णांक count, काष्ठा tep_क्रमmat_field *list)
-अणु
-	काष्ठा tep_क्रमmat_field **fields;
-	काष्ठा tep_क्रमmat_field *field;
-	पूर्णांक i = 0;
+static struct tep_format_field **
+get_event_fields(const char *type, const char *name,
+		 int count, struct tep_format_field *list)
+{
+	struct tep_format_field **fields;
+	struct tep_format_field *field;
+	int i = 0;
 
-	fields = दो_स्मृति(माप(*fields) * (count + 1));
-	अगर (!fields)
-		वापस शून्य;
+	fields = malloc(sizeof(*fields) * (count + 1));
+	if (!fields)
+		return NULL;
 
-	क्रम (field = list; field; field = field->next) अणु
+	for (field = list; field; field = field->next) {
 		fields[i++] = field;
-		अगर (i == count + 1) अणु
-			करो_warning("event %s has more %s fields than specified",
+		if (i == count + 1) {
+			do_warning("event %s has more %s fields than specified",
 				name, type);
 			i--;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (i != count)
-		करो_warning("event %s has less %s fields than specified",
+	if (i != count)
+		do_warning("event %s has less %s fields than specified",
 			name, type);
 
-	fields[i] = शून्य;
+	fields[i] = NULL;
 
-	वापस fields;
-पूर्ण
-
-/**
- * tep_event_common_fields - वापस a list of common fields क्रम an event
- * @event: the event to वापस the common fields of.
- *
- * Returns an allocated array of fields. The last item in the array is शून्य.
- * The array must be मुक्तd with मुक्त().
- */
-काष्ठा tep_क्रमmat_field **tep_event_common_fields(काष्ठा tep_event *event)
-अणु
-	वापस get_event_fields("common", event->name,
-				event->क्रमmat.nr_common,
-				event->क्रमmat.common_fields);
-पूर्ण
+	return fields;
+}
 
 /**
- * tep_event_fields - वापस a list of event specअगरic fields क्रम an event
- * @event: the event to वापस the fields of.
+ * tep_event_common_fields - return a list of common fields for an event
+ * @event: the event to return the common fields of.
  *
- * Returns an allocated array of fields. The last item in the array is शून्य.
- * The array must be मुक्तd with मुक्त().
+ * Returns an allocated array of fields. The last item in the array is NULL.
+ * The array must be freed with free().
  */
-काष्ठा tep_क्रमmat_field **tep_event_fields(काष्ठा tep_event *event)
-अणु
-	वापस get_event_fields("event", event->name,
-				event->क्रमmat.nr_fields,
-				event->क्रमmat.fields);
-पूर्ण
+struct tep_format_field **tep_event_common_fields(struct tep_event *event)
+{
+	return get_event_fields("common", event->name,
+				event->format.nr_common,
+				event->format.common_fields);
+}
 
-अटल व्योम prपूर्णांक_fields(काष्ठा trace_seq *s, काष्ठा tep_prपूर्णांक_flag_sym *field)
-अणु
-	trace_seq_म_लिखो(s, "{ %s, %s }", field->value, field->str);
-	अगर (field->next) अणु
-		trace_seq_माला_दो(s, ", ");
-		prपूर्णांक_fields(s, field->next);
-	पूर्ण
-पूर्ण
+/**
+ * tep_event_fields - return a list of event specific fields for an event
+ * @event: the event to return the fields of.
+ *
+ * Returns an allocated array of fields. The last item in the array is NULL.
+ * The array must be freed with free().
+ */
+struct tep_format_field **tep_event_fields(struct tep_event *event)
+{
+	return get_event_fields("event", event->name,
+				event->format.nr_fields,
+				event->format.fields);
+}
 
-/* क्रम debugging */
-अटल व्योम prपूर्णांक_args(काष्ठा tep_prपूर्णांक_arg *args)
-अणु
-	पूर्णांक prपूर्णांक_paren = 1;
-	काष्ठा trace_seq s;
+static void print_fields(struct trace_seq *s, struct tep_print_flag_sym *field)
+{
+	trace_seq_printf(s, "{ %s, %s }", field->value, field->str);
+	if (field->next) {
+		trace_seq_puts(s, ", ");
+		print_fields(s, field->next);
+	}
+}
 
-	चयन (args->type) अणु
-	हाल TEP_PRINT_शून्य:
-		म_लिखो("null");
-		अवरोध;
-	हाल TEP_PRINT_ATOM:
-		म_लिखो("%s", args->atom.atom);
-		अवरोध;
-	हाल TEP_PRINT_FIELD:
-		म_लिखो("REC->%s", args->field.name);
-		अवरोध;
-	हाल TEP_PRINT_FLAGS:
-		म_लिखो("__print_flags(");
-		prपूर्णांक_args(args->flags.field);
-		म_लिखो(", %s, ", args->flags.delim);
+/* for debugging */
+static void print_args(struct tep_print_arg *args)
+{
+	int print_paren = 1;
+	struct trace_seq s;
+
+	switch (args->type) {
+	case TEP_PRINT_NULL:
+		printf("null");
+		break;
+	case TEP_PRINT_ATOM:
+		printf("%s", args->atom.atom);
+		break;
+	case TEP_PRINT_FIELD:
+		printf("REC->%s", args->field.name);
+		break;
+	case TEP_PRINT_FLAGS:
+		printf("__print_flags(");
+		print_args(args->flags.field);
+		printf(", %s, ", args->flags.delim);
 		trace_seq_init(&s);
-		prपूर्णांक_fields(&s, args->flags.flags);
-		trace_seq_करो_म_लिखो(&s);
+		print_fields(&s, args->flags.flags);
+		trace_seq_do_printf(&s);
 		trace_seq_destroy(&s);
-		म_लिखो(")");
-		अवरोध;
-	हाल TEP_PRINT_SYMBOL:
-		म_लिखो("__print_symbolic(");
-		prपूर्णांक_args(args->symbol.field);
-		म_लिखो(", ");
+		printf(")");
+		break;
+	case TEP_PRINT_SYMBOL:
+		printf("__print_symbolic(");
+		print_args(args->symbol.field);
+		printf(", ");
 		trace_seq_init(&s);
-		prपूर्णांक_fields(&s, args->symbol.symbols);
-		trace_seq_करो_म_लिखो(&s);
+		print_fields(&s, args->symbol.symbols);
+		trace_seq_do_printf(&s);
 		trace_seq_destroy(&s);
-		म_लिखो(")");
-		अवरोध;
-	हाल TEP_PRINT_HEX:
-		म_लिखो("__print_hex(");
-		prपूर्णांक_args(args->hex.field);
-		म_लिखो(", ");
-		prपूर्णांक_args(args->hex.size);
-		म_लिखो(")");
-		अवरोध;
-	हाल TEP_PRINT_HEX_STR:
-		म_लिखो("__print_hex_str(");
-		prपूर्णांक_args(args->hex.field);
-		म_लिखो(", ");
-		prपूर्णांक_args(args->hex.size);
-		म_लिखो(")");
-		अवरोध;
-	हाल TEP_PRINT_INT_ARRAY:
-		म_लिखो("__print_array(");
-		prपूर्णांक_args(args->पूर्णांक_array.field);
-		म_लिखो(", ");
-		prपूर्णांक_args(args->पूर्णांक_array.count);
-		म_लिखो(", ");
-		prपूर्णांक_args(args->पूर्णांक_array.el_size);
-		म_लिखो(")");
-		अवरोध;
-	हाल TEP_PRINT_STRING:
-	हाल TEP_PRINT_BSTRING:
-		म_लिखो("__get_str(%s)", args->string.string);
-		अवरोध;
-	हाल TEP_PRINT_BITMASK:
-		म_लिखो("__get_bitmask(%s)", args->biपंचांगask.biपंचांगask);
-		अवरोध;
-	हाल TEP_PRINT_TYPE:
-		म_लिखो("(%s)", args->typecast.type);
-		prपूर्णांक_args(args->typecast.item);
-		अवरोध;
-	हाल TEP_PRINT_OP:
-		अगर (म_भेद(args->op.op, ":") == 0)
-			prपूर्णांक_paren = 0;
-		अगर (prपूर्णांक_paren)
-			म_लिखो("(");
-		prपूर्णांक_args(args->op.left);
-		म_लिखो(" %s ", args->op.op);
-		prपूर्णांक_args(args->op.right);
-		अगर (prपूर्णांक_paren)
-			म_लिखो(")");
-		अवरोध;
-	शेष:
+		printf(")");
+		break;
+	case TEP_PRINT_HEX:
+		printf("__print_hex(");
+		print_args(args->hex.field);
+		printf(", ");
+		print_args(args->hex.size);
+		printf(")");
+		break;
+	case TEP_PRINT_HEX_STR:
+		printf("__print_hex_str(");
+		print_args(args->hex.field);
+		printf(", ");
+		print_args(args->hex.size);
+		printf(")");
+		break;
+	case TEP_PRINT_INT_ARRAY:
+		printf("__print_array(");
+		print_args(args->int_array.field);
+		printf(", ");
+		print_args(args->int_array.count);
+		printf(", ");
+		print_args(args->int_array.el_size);
+		printf(")");
+		break;
+	case TEP_PRINT_STRING:
+	case TEP_PRINT_BSTRING:
+		printf("__get_str(%s)", args->string.string);
+		break;
+	case TEP_PRINT_BITMASK:
+		printf("__get_bitmask(%s)", args->bitmask.bitmask);
+		break;
+	case TEP_PRINT_TYPE:
+		printf("(%s)", args->typecast.type);
+		print_args(args->typecast.item);
+		break;
+	case TEP_PRINT_OP:
+		if (strcmp(args->op.op, ":") == 0)
+			print_paren = 0;
+		if (print_paren)
+			printf("(");
+		print_args(args->op.left);
+		printf(" %s ", args->op.op);
+		print_args(args->op.right);
+		if (print_paren)
+			printf(")");
+		break;
+	default:
 		/* we should warn... */
-		वापस;
-	पूर्ण
-	अगर (args->next) अणु
-		म_लिखो("\n");
-		prपूर्णांक_args(args->next);
-	पूर्ण
-पूर्ण
+		return;
+	}
+	if (args->next) {
+		printf("\n");
+		print_args(args->next);
+	}
+}
 
-अटल व्योम parse_header_field(स्थिर अक्षर *field,
-			       पूर्णांक *offset, पूर्णांक *size, पूर्णांक mandatory)
-अणु
-	अचिन्हित दीर्घ दीर्घ save_input_buf_ptr;
-	अचिन्हित दीर्घ दीर्घ save_input_buf_siz;
-	अक्षर *token;
-	पूर्णांक type;
+static void parse_header_field(const char *field,
+			       int *offset, int *size, int mandatory)
+{
+	unsigned long long save_input_buf_ptr;
+	unsigned long long save_input_buf_siz;
+	char *token;
+	int type;
 
 	save_input_buf_ptr = input_buf_ptr;
 	save_input_buf_siz = input_buf_siz;
 
-	अगर (पढ़ो_expected(TEP_EVENT_ITEM, "field") < 0)
-		वापस;
-	अगर (पढ़ो_expected(TEP_EVENT_OP, ":") < 0)
-		वापस;
+	if (read_expected(TEP_EVENT_ITEM, "field") < 0)
+		return;
+	if (read_expected(TEP_EVENT_OP, ":") < 0)
+		return;
 
 	/* type */
-	अगर (पढ़ो_expect_type(TEP_EVENT_ITEM, &token) < 0)
-		जाओ fail;
-	मुक्त_token(token);
+	if (read_expect_type(TEP_EVENT_ITEM, &token) < 0)
+		goto fail;
+	free_token(token);
 
 	/*
 	 * If this is not a mandatory field, then test it first.
 	 */
-	अगर (mandatory) अणु
-		अगर (पढ़ो_expected(TEP_EVENT_ITEM, field) < 0)
-			वापस;
-	पूर्ण अन्यथा अणु
-		अगर (पढ़ो_expect_type(TEP_EVENT_ITEM, &token) < 0)
-			जाओ fail;
-		अगर (म_भेद(token, field) != 0)
-			जाओ discard;
-		मुक्त_token(token);
-	पूर्ण
+	if (mandatory) {
+		if (read_expected(TEP_EVENT_ITEM, field) < 0)
+			return;
+	} else {
+		if (read_expect_type(TEP_EVENT_ITEM, &token) < 0)
+			goto fail;
+		if (strcmp(token, field) != 0)
+			goto discard;
+		free_token(token);
+	}
 
-	अगर (पढ़ो_expected(TEP_EVENT_OP, ";") < 0)
-		वापस;
-	अगर (पढ़ो_expected(TEP_EVENT_ITEM, "offset") < 0)
-		वापस;
-	अगर (पढ़ो_expected(TEP_EVENT_OP, ":") < 0)
-		वापस;
-	अगर (पढ़ो_expect_type(TEP_EVENT_ITEM, &token) < 0)
-		जाओ fail;
-	*offset = म_से_प(token);
-	मुक्त_token(token);
-	अगर (पढ़ो_expected(TEP_EVENT_OP, ";") < 0)
-		वापस;
-	अगर (पढ़ो_expected(TEP_EVENT_ITEM, "size") < 0)
-		वापस;
-	अगर (पढ़ो_expected(TEP_EVENT_OP, ":") < 0)
-		वापस;
-	अगर (पढ़ो_expect_type(TEP_EVENT_ITEM, &token) < 0)
-		जाओ fail;
-	*size = म_से_प(token);
-	मुक्त_token(token);
-	अगर (पढ़ो_expected(TEP_EVENT_OP, ";") < 0)
-		वापस;
-	type = पढ़ो_token(&token);
-	अगर (type != TEP_EVENT_NEWLINE) अणु
+	if (read_expected(TEP_EVENT_OP, ";") < 0)
+		return;
+	if (read_expected(TEP_EVENT_ITEM, "offset") < 0)
+		return;
+	if (read_expected(TEP_EVENT_OP, ":") < 0)
+		return;
+	if (read_expect_type(TEP_EVENT_ITEM, &token) < 0)
+		goto fail;
+	*offset = atoi(token);
+	free_token(token);
+	if (read_expected(TEP_EVENT_OP, ";") < 0)
+		return;
+	if (read_expected(TEP_EVENT_ITEM, "size") < 0)
+		return;
+	if (read_expected(TEP_EVENT_OP, ":") < 0)
+		return;
+	if (read_expect_type(TEP_EVENT_ITEM, &token) < 0)
+		goto fail;
+	*size = atoi(token);
+	free_token(token);
+	if (read_expected(TEP_EVENT_OP, ";") < 0)
+		return;
+	type = read_token(&token);
+	if (type != TEP_EVENT_NEWLINE) {
 		/* newer versions of the kernel have a "signed" type */
-		अगर (type != TEP_EVENT_ITEM)
-			जाओ fail;
+		if (type != TEP_EVENT_ITEM)
+			goto fail;
 
-		अगर (म_भेद(token, "signed") != 0)
-			जाओ fail;
+		if (strcmp(token, "signed") != 0)
+			goto fail;
 
-		मुक्त_token(token);
+		free_token(token);
 
-		अगर (पढ़ो_expected(TEP_EVENT_OP, ":") < 0)
-			वापस;
+		if (read_expected(TEP_EVENT_OP, ":") < 0)
+			return;
 
-		अगर (पढ़ो_expect_type(TEP_EVENT_ITEM, &token))
-			जाओ fail;
+		if (read_expect_type(TEP_EVENT_ITEM, &token))
+			goto fail;
 
-		मुक्त_token(token);
-		अगर (पढ़ो_expected(TEP_EVENT_OP, ";") < 0)
-			वापस;
+		free_token(token);
+		if (read_expected(TEP_EVENT_OP, ";") < 0)
+			return;
 
-		अगर (पढ़ो_expect_type(TEP_EVENT_NEWLINE, &token))
-			जाओ fail;
-	पूर्ण
+		if (read_expect_type(TEP_EVENT_NEWLINE, &token))
+			goto fail;
+	}
  fail:
-	मुक्त_token(token);
-	वापस;
+	free_token(token);
+	return;
 
  discard:
 	input_buf_ptr = save_input_buf_ptr;
 	input_buf_siz = save_input_buf_siz;
 	*offset = 0;
 	*size = 0;
-	मुक्त_token(token);
-पूर्ण
+	free_token(token);
+}
 
 /**
  * tep_parse_header_page - parse the data stored in the header page
  * @tep: a handle to the trace event parser context
- * @buf: the buffer storing the header page क्रमmat string
+ * @buf: the buffer storing the header page format string
  * @size: the size of @buf
- * @दीर्घ_size: the दीर्घ size to use अगर there is no header
+ * @long_size: the long size to use if there is no header
  *
- * This parses the header page क्रमmat क्रम inक्रमmation on the
+ * This parses the header page format for information on the
  * ring buffer used. The @buf should be copied from
  *
  * /sys/kernel/debug/tracing/events/header_page
  */
-पूर्णांक tep_parse_header_page(काष्ठा tep_handle *tep, अक्षर *buf, अचिन्हित दीर्घ size,
-			  पूर्णांक दीर्घ_size)
-अणु
-	पूर्णांक ignore;
+int tep_parse_header_page(struct tep_handle *tep, char *buf, unsigned long size,
+			  int long_size)
+{
+	int ignore;
 
-	अगर (!size) अणु
+	if (!size) {
 		/*
 		 * Old kernels did not have header page info.
 		 * Sorry but we just use what we find here in user space.
 		 */
-		tep->header_page_ts_size = माप(दीर्घ दीर्घ);
-		tep->header_page_size_size = दीर्घ_size;
-		tep->header_page_data_offset = माप(दीर्घ दीर्घ) + दीर्घ_size;
-		tep->old_क्रमmat = 1;
-		वापस -1;
-	पूर्ण
+		tep->header_page_ts_size = sizeof(long long);
+		tep->header_page_size_size = long_size;
+		tep->header_page_data_offset = sizeof(long long) + long_size;
+		tep->old_format = 1;
+		return -1;
+	}
 	init_input_buf(buf, size);
 
 	parse_header_field("timestamp", &tep->header_page_ts_offset,
 			   &tep->header_page_ts_size, 1);
 	parse_header_field("commit", &tep->header_page_size_offset,
 			   &tep->header_page_size_size, 1);
-	parse_header_field("overwrite", &tep->header_page_overग_लिखो,
+	parse_header_field("overwrite", &tep->header_page_overwrite,
 			   &ignore, 0);
 	parse_header_field("data", &tep->header_page_data_offset,
 			   &tep->header_page_data_size, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक event_matches(काष्ठा tep_event *event,
-			 पूर्णांक id, स्थिर अक्षर *sys_name,
-			 स्थिर अक्षर *event_name)
-अणु
-	अगर (id >= 0 && id != event->id)
-		वापस 0;
+static int event_matches(struct tep_event *event,
+			 int id, const char *sys_name,
+			 const char *event_name)
+{
+	if (id >= 0 && id != event->id)
+		return 0;
 
-	अगर (event_name && (म_भेद(event_name, event->name) != 0))
-		वापस 0;
+	if (event_name && (strcmp(event_name, event->name) != 0))
+		return 0;
 
-	अगर (sys_name && (म_भेद(sys_name, event->प्रणाली) != 0))
-		वापस 0;
+	if (sys_name && (strcmp(sys_name, event->system) != 0))
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम मुक्त_handler(काष्ठा event_handler *handle)
-अणु
-	मुक्त((व्योम *)handle->sys_name);
-	मुक्त((व्योम *)handle->event_name);
-	मुक्त(handle);
-पूर्ण
+static void free_handler(struct event_handler *handle)
+{
+	free((void *)handle->sys_name);
+	free((void *)handle->event_name);
+	free(handle);
+}
 
-अटल पूर्णांक find_event_handle(काष्ठा tep_handle *tep, काष्ठा tep_event *event)
-अणु
-	काष्ठा event_handler *handle, **next;
+static int find_event_handle(struct tep_handle *tep, struct tep_event *event)
+{
+	struct event_handler *handle, **next;
 
-	क्रम (next = &tep->handlers; *next;
-	     next = &(*next)->next) अणु
+	for (next = &tep->handlers; *next;
+	     next = &(*next)->next) {
 		handle = *next;
-		अगर (event_matches(event, handle->id,
+		if (event_matches(event, handle->id,
 				  handle->sys_name,
 				  handle->event_name))
-			अवरोध;
-	पूर्ण
+			break;
+	}
 
-	अगर (!(*next))
-		वापस 0;
+	if (!(*next))
+		return 0;
 
 	pr_stat("overriding event (%d) %s:%s with new print handler",
-		event->id, event->प्रणाली, event->name);
+		event->id, event->system, event->name);
 
 	event->handler = handle->func;
 	event->context = handle->context;
 
 	*next = handle->next;
-	मुक्त_handler(handle);
+	free_handler(handle);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /**
- * parse_क्रमmat - parse the event क्रमmat
- * @buf: the buffer storing the event क्रमmat string
+ * parse_format - parse the event format
+ * @buf: the buffer storing the event format string
  * @size: the size of @buf
- * @sys: the प्रणाली the event beदीर्घs to
+ * @sys: the system the event belongs to
  *
- * This parses the event क्रमmat and creates an event काष्ठाure
- * to quickly parse raw data क्रम a given event.
+ * This parses the event format and creates an event structure
+ * to quickly parse raw data for a given event.
  *
  * These files currently come from:
  *
- * /sys/kernel/debug/tracing/events/.../.../क्रमmat
+ * /sys/kernel/debug/tracing/events/.../.../format
  */
-अटल क्रमागत tep_त्रुटि_सं parse_क्रमmat(काष्ठा tep_event **eventp,
-				   काष्ठा tep_handle *tep, स्थिर अक्षर *buf,
-				   अचिन्हित दीर्घ size, स्थिर अक्षर *sys)
-अणु
-	काष्ठा tep_event *event;
-	पूर्णांक ret;
+static enum tep_errno parse_format(struct tep_event **eventp,
+				   struct tep_handle *tep, const char *buf,
+				   unsigned long size, const char *sys)
+{
+	struct tep_event *event;
+	int ret;
 
 	init_input_buf(buf, size);
 
 	*eventp = event = alloc_event();
-	अगर (!event)
-		वापस TEP_ERRNO__MEM_ALLOC_FAILED;
+	if (!event)
+		return TEP_ERRNO__MEM_ALLOC_FAILED;
 
-	event->name = event_पढ़ो_name();
-	अगर (!event->name) अणु
+	event->name = event_read_name();
+	if (!event->name) {
 		/* Bad event? */
 		ret = TEP_ERRNO__MEM_ALLOC_FAILED;
-		जाओ event_alloc_failed;
-	पूर्ण
+		goto event_alloc_failed;
+	}
 
-	अगर (म_भेद(sys, "ftrace") == 0) अणु
+	if (strcmp(sys, "ftrace") == 0) {
 		event->flags |= TEP_EVENT_FL_ISFTRACE;
 
-		अगर (म_भेद(event->name, "bprint") == 0)
+		if (strcmp(event->name, "bprint") == 0)
 			event->flags |= TEP_EVENT_FL_ISBPRINT;
-	पूर्ण
+	}
 		
-	event->id = event_पढ़ो_id();
-	अगर (event->id < 0) अणु
+	event->id = event_read_id();
+	if (event->id < 0) {
 		ret = TEP_ERRNO__READ_ID_FAILED;
 		/*
 		 * This isn't an allocation error actually.
 		 * But as the ID is critical, just bail out.
 		 */
-		जाओ event_alloc_failed;
-	पूर्ण
+		goto event_alloc_failed;
+	}
 
-	event->प्रणाली = strdup(sys);
-	अगर (!event->प्रणाली) अणु
+	event->system = strdup(sys);
+	if (!event->system) {
 		ret = TEP_ERRNO__MEM_ALLOC_FAILED;
-		जाओ event_alloc_failed;
-	पूर्ण
+		goto event_alloc_failed;
+	}
 
 	/* Add tep to event so that it can be referenced */
 	event->tep = tep;
 
-	ret = event_पढ़ो_क्रमmat(event);
-	अगर (ret < 0) अणु
+	ret = event_read_format(event);
+	if (ret < 0) {
 		ret = TEP_ERRNO__READ_FORMAT_FAILED;
-		जाओ event_parse_failed;
-	पूर्ण
+		goto event_parse_failed;
+	}
 
 	/*
-	 * If the event has an override, करोn't prपूर्णांक warnings अगर the event
-	 * prपूर्णांक क्रमmat fails to parse.
+	 * If the event has an override, don't print warnings if the event
+	 * print format fails to parse.
 	 */
-	अगर (tep && find_event_handle(tep, event))
+	if (tep && find_event_handle(tep, event))
 		show_warning = 0;
 
-	ret = event_पढ़ो_prपूर्णांक(event);
+	ret = event_read_print(event);
 	show_warning = 1;
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		ret = TEP_ERRNO__READ_PRINT_FAILED;
-		जाओ event_parse_failed;
-	पूर्ण
+		goto event_parse_failed;
+	}
 
-	अगर (!ret && (event->flags & TEP_EVENT_FL_ISFTRACE)) अणु
-		काष्ठा tep_क्रमmat_field *field;
-		काष्ठा tep_prपूर्णांक_arg *arg, **list;
+	if (!ret && (event->flags & TEP_EVENT_FL_ISFTRACE)) {
+		struct tep_format_field *field;
+		struct tep_print_arg *arg, **list;
 
 		/* old ftrace had no args */
-		list = &event->prपूर्णांक_fmt.args;
-		क्रम (field = event->क्रमmat.fields; field; field = field->next) अणु
+		list = &event->print_fmt.args;
+		for (field = event->format.fields; field; field = field->next) {
 			arg = alloc_arg();
-			अगर (!arg) अणु
+			if (!arg) {
 				event->flags |= TEP_EVENT_FL_FAILED;
-				वापस TEP_ERRNO__OLD_FTRACE_ARG_FAILED;
-			पूर्ण
+				return TEP_ERRNO__OLD_FTRACE_ARG_FAILED;
+			}
 			arg->type = TEP_PRINT_FIELD;
 			arg->field.name = strdup(field->name);
-			अगर (!arg->field.name) अणु
+			if (!arg->field.name) {
 				event->flags |= TEP_EVENT_FL_FAILED;
-				मुक्त_arg(arg);
-				वापस TEP_ERRNO__OLD_FTRACE_ARG_FAILED;
-			पूर्ण
+				free_arg(arg);
+				return TEP_ERRNO__OLD_FTRACE_ARG_FAILED;
+			}
 			arg->field.field = field;
 			*list = arg;
 			list = &arg->next;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!(event->flags & TEP_EVENT_FL_ISBPRINT))
-		event->prपूर्णांक_fmt.prपूर्णांक_cache = parse_args(event,
-							  event->prपूर्णांक_fmt.क्रमmat,
-							  event->prपूर्णांक_fmt.args);
+	if (!(event->flags & TEP_EVENT_FL_ISBPRINT))
+		event->print_fmt.print_cache = parse_args(event,
+							  event->print_fmt.format,
+							  event->print_fmt.args);
 
-	वापस 0;
+	return 0;
 
  event_parse_failed:
 	event->flags |= TEP_EVENT_FL_FAILED;
-	वापस ret;
+	return ret;
 
  event_alloc_failed:
-	मुक्त(event->प्रणाली);
-	मुक्त(event->name);
-	मुक्त(event);
-	*eventp = शून्य;
-	वापस ret;
-पूर्ण
+	free(event->system);
+	free(event->name);
+	free(event);
+	*eventp = NULL;
+	return ret;
+}
 
-अटल क्रमागत tep_त्रुटि_सं
-__parse_event(काष्ठा tep_handle *tep,
-	      काष्ठा tep_event **eventp,
-	      स्थिर अक्षर *buf, अचिन्हित दीर्घ size,
-	      स्थिर अक्षर *sys)
-अणु
-	पूर्णांक ret = parse_क्रमmat(eventp, tep, buf, size, sys);
-	काष्ठा tep_event *event = *eventp;
+static enum tep_errno
+__parse_event(struct tep_handle *tep,
+	      struct tep_event **eventp,
+	      const char *buf, unsigned long size,
+	      const char *sys)
+{
+	int ret = parse_format(eventp, tep, buf, size, sys);
+	struct tep_event *event = *eventp;
 
-	अगर (event == शून्य)
-		वापस ret;
+	if (event == NULL)
+		return ret;
 
-	अगर (tep && add_event(tep, event)) अणु
+	if (tep && add_event(tep, event)) {
 		ret = TEP_ERRNO__MEM_ALLOC_FAILED;
-		जाओ event_add_failed;
-	पूर्ण
+		goto event_add_failed;
+	}
 
-#घोषणा PRINT_ARGS 0
-	अगर (PRINT_ARGS && event->prपूर्णांक_fmt.args)
-		prपूर्णांक_args(event->prपूर्णांक_fmt.args);
+#define PRINT_ARGS 0
+	if (PRINT_ARGS && event->print_fmt.args)
+		print_args(event->print_fmt.args);
 
-	वापस 0;
+	return 0;
 
 event_add_failed:
-	मुक्त_tep_event(event);
-	वापस ret;
-पूर्ण
+	free_tep_event(event);
+	return ret;
+}
 
 /**
- * tep_parse_क्रमmat - parse the event क्रमmat
+ * tep_parse_format - parse the event format
  * @tep: a handle to the trace event parser context
- * @eventp: वापसed क्रमmat
- * @buf: the buffer storing the event क्रमmat string
+ * @eventp: returned format
+ * @buf: the buffer storing the event format string
  * @size: the size of @buf
- * @sys: the प्रणाली the event beदीर्घs to
+ * @sys: the system the event belongs to
  *
- * This parses the event क्रमmat and creates an event काष्ठाure
- * to quickly parse raw data क्रम a given event.
+ * This parses the event format and creates an event structure
+ * to quickly parse raw data for a given event.
  *
  * These files currently come from:
  *
- * /sys/kernel/debug/tracing/events/.../.../क्रमmat
+ * /sys/kernel/debug/tracing/events/.../.../format
  */
-क्रमागत tep_त्रुटि_सं tep_parse_क्रमmat(काष्ठा tep_handle *tep,
-				काष्ठा tep_event **eventp,
-				स्थिर अक्षर *buf,
-				अचिन्हित दीर्घ size, स्थिर अक्षर *sys)
-अणु
-	वापस __parse_event(tep, eventp, buf, size, sys);
-पूर्ण
+enum tep_errno tep_parse_format(struct tep_handle *tep,
+				struct tep_event **eventp,
+				const char *buf,
+				unsigned long size, const char *sys)
+{
+	return __parse_event(tep, eventp, buf, size, sys);
+}
 
 /**
- * tep_parse_event - parse the event क्रमmat
+ * tep_parse_event - parse the event format
  * @tep: a handle to the trace event parser context
- * @buf: the buffer storing the event क्रमmat string
+ * @buf: the buffer storing the event format string
  * @size: the size of @buf
- * @sys: the प्रणाली the event beदीर्घs to
+ * @sys: the system the event belongs to
  *
- * This parses the event क्रमmat and creates an event काष्ठाure
- * to quickly parse raw data क्रम a given event.
+ * This parses the event format and creates an event structure
+ * to quickly parse raw data for a given event.
  *
  * These files currently come from:
  *
- * /sys/kernel/debug/tracing/events/.../.../क्रमmat
+ * /sys/kernel/debug/tracing/events/.../.../format
  */
-क्रमागत tep_त्रुटि_सं tep_parse_event(काष्ठा tep_handle *tep, स्थिर अक्षर *buf,
-			       अचिन्हित दीर्घ size, स्थिर अक्षर *sys)
-अणु
-	काष्ठा tep_event *event = शून्य;
-	वापस __parse_event(tep, &event, buf, size, sys);
-पूर्ण
+enum tep_errno tep_parse_event(struct tep_handle *tep, const char *buf,
+			       unsigned long size, const char *sys)
+{
+	struct tep_event *event = NULL;
+	return __parse_event(tep, &event, buf, size, sys);
+}
 
-पूर्णांक get_field_val(काष्ठा trace_seq *s, काष्ठा tep_क्रमmat_field *field,
-		  स्थिर अक्षर *name, काष्ठा tep_record *record,
-		  अचिन्हित दीर्घ दीर्घ *val, पूर्णांक err)
-अणु
-	अगर (!field) अणु
-		अगर (err)
-			trace_seq_म_लिखो(s, "<CANT FIND FIELD %s>", name);
-		वापस -1;
-	पूर्ण
+int get_field_val(struct trace_seq *s, struct tep_format_field *field,
+		  const char *name, struct tep_record *record,
+		  unsigned long long *val, int err)
+{
+	if (!field) {
+		if (err)
+			trace_seq_printf(s, "<CANT FIND FIELD %s>", name);
+		return -1;
+	}
 
-	अगर (tep_पढ़ो_number_field(field, record->data, val)) अणु
-		अगर (err)
-			trace_seq_म_लिखो(s, " %s=INVALID", name);
-		वापस -1;
-	पूर्ण
+	if (tep_read_number_field(field, record->data, val)) {
+		if (err)
+			trace_seq_printf(s, " %s=INVALID", name);
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * tep_get_field_raw - वापस the raw poपूर्णांकer पूर्णांकo the data field
- * @s: The seq to prपूर्णांक to on error
- * @event: the event that the field is क्रम
+ * tep_get_field_raw - return the raw pointer into the data field
+ * @s: The seq to print to on error
+ * @event: the event that the field is for
  * @name: The name of the field
  * @record: The record with the field name.
  * @len: place to store the field length.
- * @err: prपूर्णांक शेष error अगर failed.
+ * @err: print default error if failed.
  *
- * Returns a poपूर्णांकer पूर्णांकo record->data of the field and places
+ * Returns a pointer into record->data of the field and places
  * the length of the field in @len.
  *
- * On failure, it वापसs शून्य.
+ * On failure, it returns NULL.
  */
-व्योम *tep_get_field_raw(काष्ठा trace_seq *s, काष्ठा tep_event *event,
-			स्थिर अक्षर *name, काष्ठा tep_record *record,
-			पूर्णांक *len, पूर्णांक err)
-अणु
-	काष्ठा tep_क्रमmat_field *field;
-	व्योम *data = record->data;
-	अचिन्हित offset;
-	पूर्णांक dummy;
+void *tep_get_field_raw(struct trace_seq *s, struct tep_event *event,
+			const char *name, struct tep_record *record,
+			int *len, int err)
+{
+	struct tep_format_field *field;
+	void *data = record->data;
+	unsigned offset;
+	int dummy;
 
-	अगर (!event)
-		वापस शून्य;
+	if (!event)
+		return NULL;
 
 	field = tep_find_field(event, name);
 
-	अगर (!field) अणु
-		अगर (err)
-			trace_seq_म_लिखो(s, "<CANT FIND FIELD %s>", name);
-		वापस शून्य;
-	पूर्ण
+	if (!field) {
+		if (err)
+			trace_seq_printf(s, "<CANT FIND FIELD %s>", name);
+		return NULL;
+	}
 
-	/* Allow @len to be शून्य */
-	अगर (!len)
+	/* Allow @len to be NULL */
+	if (!len)
 		len = &dummy;
 
 	offset = field->offset;
-	अगर (field->flags & TEP_FIELD_IS_DYNAMIC) अणु
-		offset = tep_पढ़ो_number(event->tep,
+	if (field->flags & TEP_FIELD_IS_DYNAMIC) {
+		offset = tep_read_number(event->tep,
 					 data + offset, field->size);
 		*len = offset >> 16;
 		offset &= 0xffff;
-	पूर्ण अन्यथा
+	} else
 		*len = field->size;
 
-	वापस data + offset;
-पूर्ण
+	return data + offset;
+}
 
 /**
- * tep_get_field_val - find a field and वापस its value
- * @s: The seq to prपूर्णांक to on error
- * @event: the event that the field is क्रम
+ * tep_get_field_val - find a field and return its value
+ * @s: The seq to print to on error
+ * @event: the event that the field is for
  * @name: The name of the field
  * @record: The record with the field name.
  * @val: place to store the value of the field.
- * @err: prपूर्णांक शेष error अगर failed.
+ * @err: print default error if failed.
  *
  * Returns 0 on success -1 on field not found.
  */
-पूर्णांक tep_get_field_val(काष्ठा trace_seq *s, काष्ठा tep_event *event,
-		      स्थिर अक्षर *name, काष्ठा tep_record *record,
-		      अचिन्हित दीर्घ दीर्घ *val, पूर्णांक err)
-अणु
-	काष्ठा tep_क्रमmat_field *field;
+int tep_get_field_val(struct trace_seq *s, struct tep_event *event,
+		      const char *name, struct tep_record *record,
+		      unsigned long long *val, int err)
+{
+	struct tep_format_field *field;
 
-	अगर (!event)
-		वापस -1;
+	if (!event)
+		return -1;
 
 	field = tep_find_field(event, name);
 
-	वापस get_field_val(s, field, name, record, val, err);
-पूर्ण
+	return get_field_val(s, field, name, record, val, err);
+}
 
 /**
- * tep_get_common_field_val - find a common field and वापस its value
- * @s: The seq to prपूर्णांक to on error
- * @event: the event that the field is क्रम
+ * tep_get_common_field_val - find a common field and return its value
+ * @s: The seq to print to on error
+ * @event: the event that the field is for
  * @name: The name of the field
  * @record: The record with the field name.
  * @val: place to store the value of the field.
- * @err: prपूर्णांक शेष error अगर failed.
+ * @err: print default error if failed.
  *
  * Returns 0 on success -1 on field not found.
  */
-पूर्णांक tep_get_common_field_val(काष्ठा trace_seq *s, काष्ठा tep_event *event,
-			     स्थिर अक्षर *name, काष्ठा tep_record *record,
-			     अचिन्हित दीर्घ दीर्घ *val, पूर्णांक err)
-अणु
-	काष्ठा tep_क्रमmat_field *field;
+int tep_get_common_field_val(struct trace_seq *s, struct tep_event *event,
+			     const char *name, struct tep_record *record,
+			     unsigned long long *val, int err)
+{
+	struct tep_format_field *field;
 
-	अगर (!event)
-		वापस -1;
+	if (!event)
+		return -1;
 
 	field = tep_find_common_field(event, name);
 
-	वापस get_field_val(s, field, name, record, val, err);
-पूर्ण
+	return get_field_val(s, field, name, record, val, err);
+}
 
 /**
- * tep_get_any_field_val - find a any field and वापस its value
- * @s: The seq to prपूर्णांक to on error
- * @event: the event that the field is क्रम
+ * tep_get_any_field_val - find a any field and return its value
+ * @s: The seq to print to on error
+ * @event: the event that the field is for
  * @name: The name of the field
  * @record: The record with the field name.
  * @val: place to store the value of the field.
- * @err: prपूर्णांक शेष error अगर failed.
+ * @err: print default error if failed.
  *
  * Returns 0 on success -1 on field not found.
  */
-पूर्णांक tep_get_any_field_val(काष्ठा trace_seq *s, काष्ठा tep_event *event,
-			  स्थिर अक्षर *name, काष्ठा tep_record *record,
-			  अचिन्हित दीर्घ दीर्घ *val, पूर्णांक err)
-अणु
-	काष्ठा tep_क्रमmat_field *field;
+int tep_get_any_field_val(struct trace_seq *s, struct tep_event *event,
+			  const char *name, struct tep_record *record,
+			  unsigned long long *val, int err)
+{
+	struct tep_format_field *field;
 
-	अगर (!event)
-		वापस -1;
+	if (!event)
+		return -1;
 
 	field = tep_find_any_field(event, name);
 
-	वापस get_field_val(s, field, name, record, val, err);
-पूर्ण
+	return get_field_val(s, field, name, record, val, err);
+}
 
 /**
- * tep_prपूर्णांक_num_field - prपूर्णांक a field and a क्रमmat
- * @s: The seq to prपूर्णांक to
- * @fmt: The म_लिखो क्रमmat to prपूर्णांक the field with.
- * @event: the event that the field is क्रम
+ * tep_print_num_field - print a field and a format
+ * @s: The seq to print to
+ * @fmt: The printf format to print the field with.
+ * @event: the event that the field is for
  * @name: The name of the field
  * @record: The record with the field name.
- * @err: prपूर्णांक शेष error अगर failed.
+ * @err: print default error if failed.
  *
- * Returns positive value on success, negative in हाल of an error,
- * or 0 अगर buffer is full.
+ * Returns positive value on success, negative in case of an error,
+ * or 0 if buffer is full.
  */
-पूर्णांक tep_prपूर्णांक_num_field(काष्ठा trace_seq *s, स्थिर अक्षर *fmt,
-			काष्ठा tep_event *event, स्थिर अक्षर *name,
-			काष्ठा tep_record *record, पूर्णांक err)
-अणु
-	काष्ठा tep_क्रमmat_field *field = tep_find_field(event, name);
-	अचिन्हित दीर्घ दीर्घ val;
+int tep_print_num_field(struct trace_seq *s, const char *fmt,
+			struct tep_event *event, const char *name,
+			struct tep_record *record, int err)
+{
+	struct tep_format_field *field = tep_find_field(event, name);
+	unsigned long long val;
 
-	अगर (!field)
-		जाओ failed;
+	if (!field)
+		goto failed;
 
-	अगर (tep_पढ़ो_number_field(field, record->data, &val))
-		जाओ failed;
+	if (tep_read_number_field(field, record->data, &val))
+		goto failed;
 
-	वापस trace_seq_म_लिखो(s, fmt, val);
+	return trace_seq_printf(s, fmt, val);
 
  failed:
-	अगर (err)
-		trace_seq_म_लिखो(s, "CAN'T FIND FIELD \"%s\"", name);
-	वापस -1;
-पूर्ण
+	if (err)
+		trace_seq_printf(s, "CAN'T FIND FIELD \"%s\"", name);
+	return -1;
+}
 
 /**
- * tep_prपूर्णांक_func_field - prपूर्णांक a field and a क्रमmat क्रम function poपूर्णांकers
- * @s: The seq to prपूर्णांक to
- * @fmt: The म_लिखो क्रमmat to prपूर्णांक the field with.
- * @event: the event that the field is क्रम
+ * tep_print_func_field - print a field and a format for function pointers
+ * @s: The seq to print to
+ * @fmt: The printf format to print the field with.
+ * @event: the event that the field is for
  * @name: The name of the field
  * @record: The record with the field name.
- * @err: prपूर्णांक शेष error अगर failed.
+ * @err: print default error if failed.
  *
- * Returns positive value on success, negative in हाल of an error,
- * or 0 अगर buffer is full.
+ * Returns positive value on success, negative in case of an error,
+ * or 0 if buffer is full.
  */
-पूर्णांक tep_prपूर्णांक_func_field(काष्ठा trace_seq *s, स्थिर अक्षर *fmt,
-			 काष्ठा tep_event *event, स्थिर अक्षर *name,
-			 काष्ठा tep_record *record, पूर्णांक err)
-अणु
-	काष्ठा tep_क्रमmat_field *field = tep_find_field(event, name);
-	काष्ठा tep_handle *tep = event->tep;
-	अचिन्हित दीर्घ दीर्घ val;
-	काष्ठा func_map *func;
-	अक्षर पंचांगp[128];
+int tep_print_func_field(struct trace_seq *s, const char *fmt,
+			 struct tep_event *event, const char *name,
+			 struct tep_record *record, int err)
+{
+	struct tep_format_field *field = tep_find_field(event, name);
+	struct tep_handle *tep = event->tep;
+	unsigned long long val;
+	struct func_map *func;
+	char tmp[128];
 
-	अगर (!field)
-		जाओ failed;
+	if (!field)
+		goto failed;
 
-	अगर (tep_पढ़ो_number_field(field, record->data, &val))
-		जाओ failed;
+	if (tep_read_number_field(field, record->data, &val))
+		goto failed;
 
 	func = find_func(tep, val);
 
-	अगर (func)
-		snम_लिखो(पंचांगp, 128, "%s/0x%llx", func->func, func->addr - val);
-	अन्यथा
-		प्र_लिखो(पंचांगp, "0x%08llx", val);
+	if (func)
+		snprintf(tmp, 128, "%s/0x%llx", func->func, func->addr - val);
+	else
+		sprintf(tmp, "0x%08llx", val);
 
-	वापस trace_seq_म_लिखो(s, fmt, पंचांगp);
+	return trace_seq_printf(s, fmt, tmp);
 
  failed:
-	अगर (err)
-		trace_seq_म_लिखो(s, "CAN'T FIND FIELD \"%s\"", name);
-	वापस -1;
-पूर्ण
+	if (err)
+		trace_seq_printf(s, "CAN'T FIND FIELD \"%s\"", name);
+	return -1;
+}
 
-अटल व्योम मुक्त_func_handle(काष्ठा tep_function_handler *func)
-अणु
-	काष्ठा func_params *params;
+static void free_func_handle(struct tep_function_handler *func)
+{
+	struct func_params *params;
 
-	मुक्त(func->name);
+	free(func->name);
 
-	जबतक (func->params) अणु
+	while (func->params) {
 		params = func->params;
 		func->params = params->next;
-		मुक्त(params);
-	पूर्ण
+		free(params);
+	}
 
-	मुक्त(func);
-पूर्ण
+	free(func);
+}
 
 /**
- * tep_रेजिस्टर_prपूर्णांक_function - रेजिस्टर a helper function
+ * tep_register_print_function - register a helper function
  * @tep: a handle to the trace event parser context
  * @func: the function to process the helper function
- * @ret_type: the वापस type of the helper function
+ * @ret_type: the return type of the helper function
  * @name: the name of the helper function
- * @parameters: A list of क्रमागत tep_func_arg_type
+ * @parameters: A list of enum tep_func_arg_type
  *
- * Some events may have helper functions in the prपूर्णांक क्रमmat arguments.
+ * Some events may have helper functions in the print format arguments.
  * This allows a plugin to dynamically create a way to process one
  * of these functions.
  *
- * The @parameters is a variable list of tep_func_arg_type क्रमागतs that
+ * The @parameters is a variable list of tep_func_arg_type enums that
  * must end with TEP_FUNC_ARG_VOID.
  */
-पूर्णांक tep_रेजिस्टर_prपूर्णांक_function(काष्ठा tep_handle *tep,
+int tep_register_print_function(struct tep_handle *tep,
 				tep_func_handler func,
-				क्रमागत tep_func_arg_type ret_type,
-				अक्षर *name, ...)
-अणु
-	काष्ठा tep_function_handler *func_handle;
-	काष्ठा func_params **next_param;
-	काष्ठा func_params *param;
-	क्रमागत tep_func_arg_type type;
-	बहु_सूची ap;
-	पूर्णांक ret;
+				enum tep_func_arg_type ret_type,
+				char *name, ...)
+{
+	struct tep_function_handler *func_handle;
+	struct func_params **next_param;
+	struct func_params *param;
+	enum tep_func_arg_type type;
+	va_list ap;
+	int ret;
 
 	func_handle = find_func_handler(tep, name);
-	अगर (func_handle) अणु
+	if (func_handle) {
 		/*
 		 * This is most like caused by the users own
 		 * plugins updating the function. This overrides the
-		 * प्रणाली शेषs.
+		 * system defaults.
 		 */
 		pr_stat("override of function helper '%s'", name);
-		हटाओ_func_handler(tep, name);
-	पूर्ण
+		remove_func_handler(tep, name);
+	}
 
-	func_handle = सुस्मृति(1, माप(*func_handle));
-	अगर (!func_handle) अणु
-		करो_warning("Failed to allocate function handler");
-		वापस TEP_ERRNO__MEM_ALLOC_FAILED;
-	पूर्ण
+	func_handle = calloc(1, sizeof(*func_handle));
+	if (!func_handle) {
+		do_warning("Failed to allocate function handler");
+		return TEP_ERRNO__MEM_ALLOC_FAILED;
+	}
 
 	func_handle->ret_type = ret_type;
 	func_handle->name = strdup(name);
 	func_handle->func = func;
-	अगर (!func_handle->name) अणु
-		करो_warning("Failed to allocate function name");
-		मुक्त(func_handle);
-		वापस TEP_ERRNO__MEM_ALLOC_FAILED;
-	पूर्ण
+	if (!func_handle->name) {
+		do_warning("Failed to allocate function name");
+		free(func_handle);
+		return TEP_ERRNO__MEM_ALLOC_FAILED;
+	}
 
 	next_param = &(func_handle->params);
-	बहु_शुरू(ap, name);
-	क्रम (;;) अणु
-		type = बहु_तर्क(ap, क्रमागत tep_func_arg_type);
-		अगर (type == TEP_FUNC_ARG_VOID)
-			अवरोध;
+	va_start(ap, name);
+	for (;;) {
+		type = va_arg(ap, enum tep_func_arg_type);
+		if (type == TEP_FUNC_ARG_VOID)
+			break;
 
-		अगर (type >= TEP_FUNC_ARG_MAX_TYPES) अणु
-			करो_warning("Invalid argument type %d", type);
+		if (type >= TEP_FUNC_ARG_MAX_TYPES) {
+			do_warning("Invalid argument type %d", type);
 			ret = TEP_ERRNO__INVALID_ARG_TYPE;
-			जाओ out_मुक्त;
-		पूर्ण
+			goto out_free;
+		}
 
-		param = दो_स्मृति(माप(*param));
-		अगर (!param) अणु
-			करो_warning("Failed to allocate function param");
+		param = malloc(sizeof(*param));
+		if (!param) {
+			do_warning("Failed to allocate function param");
 			ret = TEP_ERRNO__MEM_ALLOC_FAILED;
-			जाओ out_मुक्त;
-		पूर्ण
+			goto out_free;
+		}
 		param->type = type;
-		param->next = शून्य;
+		param->next = NULL;
 
 		*next_param = param;
 		next_param = &(param->next);
 
 		func_handle->nr_args++;
-	पूर्ण
-	बहु_पूर्ण(ap);
+	}
+	va_end(ap);
 
 	func_handle->next = tep->func_handlers;
 	tep->func_handlers = func_handle;
 
-	वापस 0;
- out_मुक्त:
-	बहु_पूर्ण(ap);
-	मुक्त_func_handle(func_handle);
-	वापस ret;
-पूर्ण
+	return 0;
+ out_free:
+	va_end(ap);
+	free_func_handle(func_handle);
+	return ret;
+}
 
 /**
- * tep_unरेजिस्टर_prपूर्णांक_function - unरेजिस्टर a helper function
+ * tep_unregister_print_function - unregister a helper function
  * @tep: a handle to the trace event parser context
  * @func: the function to process the helper function
  * @name: the name of the helper function
  *
- * This function हटाओs existing prपूर्णांक handler क्रम function @name.
+ * This function removes existing print handler for function @name.
  *
- * Returns 0 अगर the handler was हटाओd successully, -1 otherwise.
+ * Returns 0 if the handler was removed successully, -1 otherwise.
  */
-पूर्णांक tep_unरेजिस्टर_prपूर्णांक_function(काष्ठा tep_handle *tep,
-				  tep_func_handler func, अक्षर *name)
-अणु
-	काष्ठा tep_function_handler *func_handle;
+int tep_unregister_print_function(struct tep_handle *tep,
+				  tep_func_handler func, char *name)
+{
+	struct tep_function_handler *func_handle;
 
 	func_handle = find_func_handler(tep, name);
-	अगर (func_handle && func_handle->func == func) अणु
-		हटाओ_func_handler(tep, name);
-		वापस 0;
-	पूर्ण
-	वापस -1;
-पूर्ण
+	if (func_handle && func_handle->func == func) {
+		remove_func_handler(tep, name);
+		return 0;
+	}
+	return -1;
+}
 
-अटल काष्ठा tep_event *search_event(काष्ठा tep_handle *tep, पूर्णांक id,
-				      स्थिर अक्षर *sys_name,
-				      स्थिर अक्षर *event_name)
-अणु
-	काष्ठा tep_event *event;
+static struct tep_event *search_event(struct tep_handle *tep, int id,
+				      const char *sys_name,
+				      const char *event_name)
+{
+	struct tep_event *event;
 
-	अगर (id >= 0) अणु
+	if (id >= 0) {
 		/* search by id */
 		event = tep_find_event(tep, id);
-		अगर (!event)
-			वापस शून्य;
-		अगर (event_name && (म_भेद(event_name, event->name) != 0))
-			वापस शून्य;
-		अगर (sys_name && (म_भेद(sys_name, event->प्रणाली) != 0))
-			वापस शून्य;
-	पूर्ण अन्यथा अणु
+		if (!event)
+			return NULL;
+		if (event_name && (strcmp(event_name, event->name) != 0))
+			return NULL;
+		if (sys_name && (strcmp(sys_name, event->system) != 0))
+			return NULL;
+	} else {
 		event = tep_find_event_by_name(tep, sys_name, event_name);
-		अगर (!event)
-			वापस शून्य;
-	पूर्ण
-	वापस event;
-पूर्ण
+		if (!event)
+			return NULL;
+	}
+	return event;
+}
 
 /**
- * tep_रेजिस्टर_event_handler - रेजिस्टर a way to parse an event
+ * tep_register_event_handler - register a way to parse an event
  * @tep: a handle to the trace event parser context
- * @id: the id of the event to रेजिस्टर
- * @sys_name: the प्रणाली name the event beदीर्घs to
+ * @id: the id of the event to register
+ * @sys_name: the system name the event belongs to
  * @event_name: the name of the event
- * @func: the function to call to parse the event inक्रमmation
+ * @func: the function to call to parse the event information
  * @context: the data to be passed to @func
  *
  * This function allows a developer to override the parsing of
- * a given event. If क्रम some reason the शेष prपूर्णांक क्रमmat
- * is not sufficient, this function will रेजिस्टर a function
- * क्रम an event to be used to parse the data instead.
+ * a given event. If for some reason the default print format
+ * is not sufficient, this function will register a function
+ * for an event to be used to parse the data instead.
  *
  * If @id is >= 0, then it is used to find the event.
- * अन्यथा @sys_name and @event_name are used.
+ * else @sys_name and @event_name are used.
  *
  * Returns:
- *  TEP_REGISTER_SUCCESS_OVERWRITE अगर an existing handler is overwritten
- *  TEP_REGISTER_SUCCESS अगर a new handler is रेजिस्टरed successfully
- *  negative TEP_ERRNO_... in हाल of an error
+ *  TEP_REGISTER_SUCCESS_OVERWRITE if an existing handler is overwritten
+ *  TEP_REGISTER_SUCCESS if a new handler is registered successfully
+ *  negative TEP_ERRNO_... in case of an error
  *
  */
-पूर्णांक tep_रेजिस्टर_event_handler(काष्ठा tep_handle *tep, पूर्णांक id,
-			       स्थिर अक्षर *sys_name, स्थिर अक्षर *event_name,
-			       tep_event_handler_func func, व्योम *context)
-अणु
-	काष्ठा tep_event *event;
-	काष्ठा event_handler *handle;
+int tep_register_event_handler(struct tep_handle *tep, int id,
+			       const char *sys_name, const char *event_name,
+			       tep_event_handler_func func, void *context)
+{
+	struct tep_event *event;
+	struct event_handler *handle;
 
 	event = search_event(tep, id, sys_name, event_name);
-	अगर (event == शून्य)
-		जाओ not_found;
+	if (event == NULL)
+		goto not_found;
 
 	pr_stat("overriding event (%d) %s:%s with new print handler",
-		event->id, event->प्रणाली, event->name);
+		event->id, event->system, event->name);
 
 	event->handler = func;
 	event->context = context;
-	वापस TEP_REGISTER_SUCCESS_OVERWRITE;
+	return TEP_REGISTER_SUCCESS_OVERWRITE;
 
  not_found:
-	/* Save क्रम later use. */
-	handle = सुस्मृति(1, माप(*handle));
-	अगर (!handle) अणु
-		करो_warning("Failed to allocate event handler");
-		वापस TEP_ERRNO__MEM_ALLOC_FAILED;
-	पूर्ण
+	/* Save for later use. */
+	handle = calloc(1, sizeof(*handle));
+	if (!handle) {
+		do_warning("Failed to allocate event handler");
+		return TEP_ERRNO__MEM_ALLOC_FAILED;
+	}
 
 	handle->id = id;
-	अगर (event_name)
+	if (event_name)
 		handle->event_name = strdup(event_name);
-	अगर (sys_name)
+	if (sys_name)
 		handle->sys_name = strdup(sys_name);
 
-	अगर ((event_name && !handle->event_name) ||
-	    (sys_name && !handle->sys_name)) अणु
-		करो_warning("Failed to allocate event/sys name");
-		मुक्त((व्योम *)handle->event_name);
-		मुक्त((व्योम *)handle->sys_name);
-		मुक्त(handle);
-		वापस TEP_ERRNO__MEM_ALLOC_FAILED;
-	पूर्ण
+	if ((event_name && !handle->event_name) ||
+	    (sys_name && !handle->sys_name)) {
+		do_warning("Failed to allocate event/sys name");
+		free((void *)handle->event_name);
+		free((void *)handle->sys_name);
+		free(handle);
+		return TEP_ERRNO__MEM_ALLOC_FAILED;
+	}
 
 	handle->func = func;
 	handle->next = tep->handlers;
 	tep->handlers = handle;
 	handle->context = context;
 
-	वापस TEP_REGISTER_SUCCESS;
-पूर्ण
+	return TEP_REGISTER_SUCCESS;
+}
 
-अटल पूर्णांक handle_matches(काष्ठा event_handler *handler, पूर्णांक id,
-			  स्थिर अक्षर *sys_name, स्थिर अक्षर *event_name,
-			  tep_event_handler_func func, व्योम *context)
-अणु
-	अगर (id >= 0 && id != handler->id)
-		वापस 0;
+static int handle_matches(struct event_handler *handler, int id,
+			  const char *sys_name, const char *event_name,
+			  tep_event_handler_func func, void *context)
+{
+	if (id >= 0 && id != handler->id)
+		return 0;
 
-	अगर (event_name && (म_भेद(event_name, handler->event_name) != 0))
-		वापस 0;
+	if (event_name && (strcmp(event_name, handler->event_name) != 0))
+		return 0;
 
-	अगर (sys_name && (म_भेद(sys_name, handler->sys_name) != 0))
-		वापस 0;
+	if (sys_name && (strcmp(sys_name, handler->sys_name) != 0))
+		return 0;
 
-	अगर (func != handler->func || context != handler->context)
-		वापस 0;
+	if (func != handler->func || context != handler->context)
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /**
- * tep_unरेजिस्टर_event_handler - unरेजिस्टर an existing event handler
+ * tep_unregister_event_handler - unregister an existing event handler
  * @tep: a handle to the trace event parser context
- * @id: the id of the event to unरेजिस्टर
- * @sys_name: the प्रणाली name the handler beदीर्घs to
+ * @id: the id of the event to unregister
+ * @sys_name: the system name the handler belongs to
  * @event_name: the name of the event handler
- * @func: the function to call to parse the event inक्रमmation
+ * @func: the function to call to parse the event information
  * @context: the data to be passed to @func
  *
- * This function हटाओs existing event handler (parser).
+ * This function removes existing event handler (parser).
  *
  * If @id is >= 0, then it is used to find the event.
- * अन्यथा @sys_name and @event_name are used.
+ * else @sys_name and @event_name are used.
  *
- * Returns 0 अगर handler was हटाओd successfully, -1 अगर event was not found.
+ * Returns 0 if handler was removed successfully, -1 if event was not found.
  */
-पूर्णांक tep_unरेजिस्टर_event_handler(काष्ठा tep_handle *tep, पूर्णांक id,
-				 स्थिर अक्षर *sys_name, स्थिर अक्षर *event_name,
-				 tep_event_handler_func func, व्योम *context)
-अणु
-	काष्ठा tep_event *event;
-	काष्ठा event_handler *handle;
-	काष्ठा event_handler **next;
+int tep_unregister_event_handler(struct tep_handle *tep, int id,
+				 const char *sys_name, const char *event_name,
+				 tep_event_handler_func func, void *context)
+{
+	struct tep_event *event;
+	struct event_handler *handle;
+	struct event_handler **next;
 
 	event = search_event(tep, id, sys_name, event_name);
-	अगर (event == शून्य)
-		जाओ not_found;
+	if (event == NULL)
+		goto not_found;
 
-	अगर (event->handler == func && event->context == context) अणु
+	if (event->handler == func && event->context == context) {
 		pr_stat("removing override handler for event (%d) %s:%s. Going back to default handler.",
-			event->id, event->प्रणाली, event->name);
+			event->id, event->system, event->name);
 
-		event->handler = शून्य;
-		event->context = शून्य;
-		वापस 0;
-	पूर्ण
+		event->handler = NULL;
+		event->context = NULL;
+		return 0;
+	}
 
 not_found:
-	क्रम (next = &tep->handlers; *next; next = &(*next)->next) अणु
+	for (next = &tep->handlers; *next; next = &(*next)->next) {
 		handle = *next;
-		अगर (handle_matches(handle, id, sys_name, event_name,
+		if (handle_matches(handle, id, sys_name, event_name,
 				   func, context))
-			अवरोध;
-	पूर्ण
+			break;
+	}
 
-	अगर (!(*next))
-		वापस -1;
+	if (!(*next))
+		return -1;
 
 	*next = handle->next;
-	मुक्त_handler(handle);
+	free_handler(handle);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * tep_alloc - create a tep handle
  */
-काष्ठा tep_handle *tep_alloc(व्योम)
-अणु
-	काष्ठा tep_handle *tep = सुस्मृति(1, माप(*tep));
+struct tep_handle *tep_alloc(void)
+{
+	struct tep_handle *tep = calloc(1, sizeof(*tep));
 
-	अगर (tep) अणु
+	if (tep) {
 		tep->ref_count = 1;
 		tep->host_bigendian = tep_is_bigendian();
-	पूर्ण
+	}
 
-	वापस tep;
-पूर्ण
+	return tep;
+}
 
-व्योम tep_ref(काष्ठा tep_handle *tep)
-अणु
+void tep_ref(struct tep_handle *tep)
+{
 	tep->ref_count++;
-पूर्ण
+}
 
-पूर्णांक tep_get_ref(काष्ठा tep_handle *tep)
-अणु
-	अगर (tep)
-		वापस tep->ref_count;
-	वापस 0;
-पूर्ण
+int tep_get_ref(struct tep_handle *tep)
+{
+	if (tep)
+		return tep->ref_count;
+	return 0;
+}
 
-__hidden व्योम मुक्त_tep_क्रमmat_field(काष्ठा tep_क्रमmat_field *field)
-अणु
-	मुक्त(field->type);
-	अगर (field->alias != field->name)
-		मुक्त(field->alias);
-	मुक्त(field->name);
-	मुक्त(field);
-पूर्ण
+__hidden void free_tep_format_field(struct tep_format_field *field)
+{
+	free(field->type);
+	if (field->alias != field->name)
+		free(field->alias);
+	free(field->name);
+	free(field);
+}
 
-अटल व्योम मुक्त_क्रमmat_fields(काष्ठा tep_क्रमmat_field *field)
-अणु
-	काष्ठा tep_क्रमmat_field *next;
+static void free_format_fields(struct tep_format_field *field)
+{
+	struct tep_format_field *next;
 
-	जबतक (field) अणु
+	while (field) {
 		next = field->next;
-		मुक्त_tep_क्रमmat_field(field);
+		free_tep_format_field(field);
 		field = next;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम मुक्त_क्रमmats(काष्ठा tep_क्रमmat *क्रमmat)
-अणु
-	मुक्त_क्रमmat_fields(क्रमmat->common_fields);
-	मुक्त_क्रमmat_fields(क्रमmat->fields);
-पूर्ण
+static void free_formats(struct tep_format *format)
+{
+	free_format_fields(format->common_fields);
+	free_format_fields(format->fields);
+}
 
-__hidden व्योम मुक्त_tep_event(काष्ठा tep_event *event)
-अणु
-	मुक्त(event->name);
-	मुक्त(event->प्रणाली);
+__hidden void free_tep_event(struct tep_event *event)
+{
+	free(event->name);
+	free(event->system);
 
-	मुक्त_क्रमmats(&event->क्रमmat);
+	free_formats(&event->format);
 
-	मुक्त(event->prपूर्णांक_fmt.क्रमmat);
-	मुक्त_args(event->prपूर्णांक_fmt.args);
-	मुक्त_parse_args(event->prपूर्णांक_fmt.prपूर्णांक_cache);
-	मुक्त(event);
-पूर्ण
+	free(event->print_fmt.format);
+	free_args(event->print_fmt.args);
+	free_parse_args(event->print_fmt.print_cache);
+	free(event);
+}
 
 /**
- * tep_मुक्त - मुक्त a tep handle
- * @tep: the tep handle to मुक्त
+ * tep_free - free a tep handle
+ * @tep: the tep handle to free
  */
-व्योम tep_मुक्त(काष्ठा tep_handle *tep)
-अणु
-	काष्ठा cmdline_list *cmdlist, *cmdnext;
-	काष्ठा func_list *funclist, *funcnext;
-	काष्ठा prपूर्णांकk_list *prपूर्णांकklist, *prपूर्णांकknext;
-	काष्ठा tep_function_handler *func_handler;
-	काष्ठा event_handler *handle;
-	पूर्णांक i;
+void tep_free(struct tep_handle *tep)
+{
+	struct cmdline_list *cmdlist, *cmdnext;
+	struct func_list *funclist, *funcnext;
+	struct printk_list *printklist, *printknext;
+	struct tep_function_handler *func_handler;
+	struct event_handler *handle;
+	int i;
 
-	अगर (!tep)
-		वापस;
+	if (!tep)
+		return;
 
 	cmdlist = tep->cmdlist;
 	funclist = tep->funclist;
-	prपूर्णांकklist = tep->prपूर्णांकklist;
+	printklist = tep->printklist;
 
 	tep->ref_count--;
-	अगर (tep->ref_count)
-		वापस;
+	if (tep->ref_count)
+		return;
 
-	अगर (tep->cmdlines) अणु
-		क्रम (i = 0; i < tep->cmdline_count; i++)
-			मुक्त(tep->cmdlines[i].comm);
-		मुक्त(tep->cmdlines);
-	पूर्ण
+	if (tep->cmdlines) {
+		for (i = 0; i < tep->cmdline_count; i++)
+			free(tep->cmdlines[i].comm);
+		free(tep->cmdlines);
+	}
 
-	जबतक (cmdlist) अणु
+	while (cmdlist) {
 		cmdnext = cmdlist->next;
-		मुक्त(cmdlist->comm);
-		मुक्त(cmdlist);
+		free(cmdlist->comm);
+		free(cmdlist);
 		cmdlist = cmdnext;
-	पूर्ण
+	}
 
-	अगर (tep->func_map) अणु
-		क्रम (i = 0; i < (पूर्णांक)tep->func_count; i++) अणु
-			मुक्त(tep->func_map[i].func);
-			मुक्त(tep->func_map[i].mod);
-		पूर्ण
-		मुक्त(tep->func_map);
-	पूर्ण
+	if (tep->func_map) {
+		for (i = 0; i < (int)tep->func_count; i++) {
+			free(tep->func_map[i].func);
+			free(tep->func_map[i].mod);
+		}
+		free(tep->func_map);
+	}
 
-	जबतक (funclist) अणु
+	while (funclist) {
 		funcnext = funclist->next;
-		मुक्त(funclist->func);
-		मुक्त(funclist->mod);
-		मुक्त(funclist);
+		free(funclist->func);
+		free(funclist->mod);
+		free(funclist);
 		funclist = funcnext;
-	पूर्ण
+	}
 
-	जबतक (tep->func_handlers) अणु
+	while (tep->func_handlers) {
 		func_handler = tep->func_handlers;
 		tep->func_handlers = func_handler->next;
-		मुक्त_func_handle(func_handler);
-	पूर्ण
+		free_func_handle(func_handler);
+	}
 
-	अगर (tep->prपूर्णांकk_map) अणु
-		क्रम (i = 0; i < (पूर्णांक)tep->prपूर्णांकk_count; i++)
-			मुक्त(tep->prपूर्णांकk_map[i].prपूर्णांकk);
-		मुक्त(tep->prपूर्णांकk_map);
-	पूर्ण
+	if (tep->printk_map) {
+		for (i = 0; i < (int)tep->printk_count; i++)
+			free(tep->printk_map[i].printk);
+		free(tep->printk_map);
+	}
 
-	जबतक (prपूर्णांकklist) अणु
-		prपूर्णांकknext = prपूर्णांकklist->next;
-		मुक्त(prपूर्णांकklist->prपूर्णांकk);
-		मुक्त(prपूर्णांकklist);
-		prपूर्णांकklist = prपूर्णांकknext;
-	पूर्ण
+	while (printklist) {
+		printknext = printklist->next;
+		free(printklist->printk);
+		free(printklist);
+		printklist = printknext;
+	}
 
-	क्रम (i = 0; i < tep->nr_events; i++)
-		मुक्त_tep_event(tep->events[i]);
+	for (i = 0; i < tep->nr_events; i++)
+		free_tep_event(tep->events[i]);
 
-	जबतक (tep->handlers) अणु
+	while (tep->handlers) {
 		handle = tep->handlers;
 		tep->handlers = handle->next;
-		मुक्त_handler(handle);
-	पूर्ण
+		free_handler(handle);
+	}
 
-	मुक्त(tep->events);
-	मुक्त(tep->sort_events);
-	मुक्त(tep->func_resolver);
-	मुक्त_tep_plugin_paths(tep);
+	free(tep->events);
+	free(tep->sort_events);
+	free(tep->func_resolver);
+	free_tep_plugin_paths(tep);
 
-	मुक्त(tep);
-पूर्ण
+	free(tep);
+}
 
-व्योम tep_unref(काष्ठा tep_handle *tep)
-अणु
-	tep_मुक्त(tep);
-पूर्ण
+void tep_unref(struct tep_handle *tep)
+{
+	tep_free(tep);
+}

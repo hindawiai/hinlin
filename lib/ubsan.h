@@ -1,96 +1,95 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LIB_UBSAN_H
-#घोषणा _LIB_UBSAN_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LIB_UBSAN_H
+#define _LIB_UBSAN_H
 
-क्रमागत अणु
-	type_kind_पूर्णांक = 0,
-	type_kind_भग्न = 1,
+enum {
+	type_kind_int = 0,
+	type_kind_float = 1,
 	type_unknown = 0xffff
-पूर्ण;
+};
 
-काष्ठा type_descriptor अणु
+struct type_descriptor {
 	u16 type_kind;
 	u16 type_info;
-	अक्षर type_name[1];
-पूर्ण;
+	char type_name[1];
+};
 
-काष्ठा source_location अणु
-	स्थिर अक्षर *file_name;
-	जोड़ अणु
-		अचिन्हित दीर्घ reported;
-		काष्ठा अणु
+struct source_location {
+	const char *file_name;
+	union {
+		unsigned long reported;
+		struct {
 			u32 line;
 			u32 column;
-		पूर्ण;
-	पूर्ण;
-पूर्ण;
+		};
+	};
+};
 
-काष्ठा overflow_data अणु
-	काष्ठा source_location location;
-	काष्ठा type_descriptor *type;
-पूर्ण;
+struct overflow_data {
+	struct source_location location;
+	struct type_descriptor *type;
+};
 
-काष्ठा type_mismatch_data अणु
-	काष्ठा source_location location;
-	काष्ठा type_descriptor *type;
-	अचिन्हित दीर्घ alignment;
-	अचिन्हित अक्षर type_check_kind;
-पूर्ण;
+struct type_mismatch_data {
+	struct source_location location;
+	struct type_descriptor *type;
+	unsigned long alignment;
+	unsigned char type_check_kind;
+};
 
-काष्ठा type_mismatch_data_v1 अणु
-	काष्ठा source_location location;
-	काष्ठा type_descriptor *type;
-	अचिन्हित अक्षर log_alignment;
-	अचिन्हित अक्षर type_check_kind;
-पूर्ण;
+struct type_mismatch_data_v1 {
+	struct source_location location;
+	struct type_descriptor *type;
+	unsigned char log_alignment;
+	unsigned char type_check_kind;
+};
 
-काष्ठा type_mismatch_data_common अणु
-	काष्ठा source_location *location;
-	काष्ठा type_descriptor *type;
-	अचिन्हित दीर्घ alignment;
-	अचिन्हित अक्षर type_check_kind;
-पूर्ण;
+struct type_mismatch_data_common {
+	struct source_location *location;
+	struct type_descriptor *type;
+	unsigned long alignment;
+	unsigned char type_check_kind;
+};
 
-काष्ठा nonnull_arg_data अणु
-	काष्ठा source_location location;
-	काष्ठा source_location attr_location;
-	पूर्णांक arg_index;
-पूर्ण;
+struct nonnull_arg_data {
+	struct source_location location;
+	struct source_location attr_location;
+	int arg_index;
+};
 
-काष्ठा out_of_bounds_data अणु
-	काष्ठा source_location location;
-	काष्ठा type_descriptor *array_type;
-	काष्ठा type_descriptor *index_type;
-पूर्ण;
+struct out_of_bounds_data {
+	struct source_location location;
+	struct type_descriptor *array_type;
+	struct type_descriptor *index_type;
+};
 
-काष्ठा shअगरt_out_of_bounds_data अणु
-	काष्ठा source_location location;
-	काष्ठा type_descriptor *lhs_type;
-	काष्ठा type_descriptor *rhs_type;
-पूर्ण;
+struct shift_out_of_bounds_data {
+	struct source_location location;
+	struct type_descriptor *lhs_type;
+	struct type_descriptor *rhs_type;
+};
 
-काष्ठा unreachable_data अणु
-	काष्ठा source_location location;
-पूर्ण;
+struct unreachable_data {
+	struct source_location location;
+};
 
-काष्ठा invalid_value_data अणु
-	काष्ठा source_location location;
-	काष्ठा type_descriptor *type;
-पूर्ण;
+struct invalid_value_data {
+	struct source_location location;
+	struct type_descriptor *type;
+};
 
-काष्ठा alignment_assumption_data अणु
-	काष्ठा source_location location;
-	काष्ठा source_location assumption_location;
-	काष्ठा type_descriptor *type;
-पूर्ण;
+struct alignment_assumption_data {
+	struct source_location location;
+	struct source_location assumption_location;
+	struct type_descriptor *type;
+};
 
-#अगर defined(CONFIG_ARCH_SUPPORTS_INT128)
-प्रकार __पूर्णांक128 s_max;
-प्रकार अचिन्हित __पूर्णांक128 u_max;
-#अन्यथा
-प्रकार s64 s_max;
-प्रकार u64 u_max;
-#पूर्ण_अगर
+#if defined(CONFIG_ARCH_SUPPORTS_INT128)
+typedef __int128 s_max;
+typedef unsigned __int128 u_max;
+#else
+typedef s64 s_max;
+typedef u64 u_max;
+#endif
 
-#पूर्ण_अगर
+#endif

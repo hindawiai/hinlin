@@ -1,124 +1,123 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) STMicroelectronics SA 2014
- * Author: Vincent Abriou <vincent.abriou@st.com> क्रम STMicroelectronics.
+ * Author: Vincent Abriou <vincent.abriou@st.com> for STMicroelectronics.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/component.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/clk.h>
+#include <linux/component.h>
+#include <linux/debugfs.h>
+#include <linux/module.h>
+#include <linux/of_gpio.h>
+#include <linux/platform_device.h>
 
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_bridge.h>
-#समावेश <drm/drm_device.h>
-#समावेश <drm/drm_panel.h>
-#समावेश <drm/drm_prपूर्णांक.h>
-#समावेश <drm/drm_probe_helper.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_bridge.h>
+#include <drm/drm_device.h>
+#include <drm/drm_panel.h>
+#include <drm/drm_print.h>
+#include <drm/drm_probe_helper.h>
 
-#समावेश "sti_awg_utils.h"
-#समावेश "sti_drv.h"
-#समावेश "sti_mixer.h"
+#include "sti_awg_utils.h"
+#include "sti_drv.h"
+#include "sti_mixer.h"
 
-/* DVO रेजिस्टरs */
-#घोषणा DVO_AWG_DIGSYNC_CTRL      0x0000
-#घोषणा DVO_DOF_CFG               0x0004
-#घोषणा DVO_LUT_PROG_LOW          0x0008
-#घोषणा DVO_LUT_PROG_MID          0x000C
-#घोषणा DVO_LUT_PROG_HIGH         0x0010
-#घोषणा DVO_DIGSYNC_INSTR_I       0x0100
+/* DVO registers */
+#define DVO_AWG_DIGSYNC_CTRL      0x0000
+#define DVO_DOF_CFG               0x0004
+#define DVO_LUT_PROG_LOW          0x0008
+#define DVO_LUT_PROG_MID          0x000C
+#define DVO_LUT_PROG_HIGH         0x0010
+#define DVO_DIGSYNC_INSTR_I       0x0100
 
-#घोषणा DVO_AWG_CTRL_EN           BIT(0)
-#घोषणा DVO_AWG_FRAME_BASED_SYNC  BIT(2)
+#define DVO_AWG_CTRL_EN           BIT(0)
+#define DVO_AWG_FRAME_BASED_SYNC  BIT(2)
 
-#घोषणा DVO_DOF_EN_LOWBYTE        BIT(0)
-#घोषणा DVO_DOF_EN_MIDBYTE        BIT(1)
-#घोषणा DVO_DOF_EN_HIGHBYTE       BIT(2)
-#घोषणा DVO_DOF_EN                BIT(6)
-#घोषणा DVO_DOF_MOD_COUNT_SHIFT   8
+#define DVO_DOF_EN_LOWBYTE        BIT(0)
+#define DVO_DOF_EN_MIDBYTE        BIT(1)
+#define DVO_DOF_EN_HIGHBYTE       BIT(2)
+#define DVO_DOF_EN                BIT(6)
+#define DVO_DOF_MOD_COUNT_SHIFT   8
 
-#घोषणा DVO_LUT_ZERO              0
-#घोषणा DVO_LUT_Y_G               1
-#घोषणा DVO_LUT_Y_G_DEL           2
-#घोषणा DVO_LUT_CB_B              3
-#घोषणा DVO_LUT_CB_B_DEL          4
-#घोषणा DVO_LUT_CR_R              5
-#घोषणा DVO_LUT_CR_R_DEL          6
-#घोषणा DVO_LUT_HOLD              7
+#define DVO_LUT_ZERO              0
+#define DVO_LUT_Y_G               1
+#define DVO_LUT_Y_G_DEL           2
+#define DVO_LUT_CB_B              3
+#define DVO_LUT_CB_B_DEL          4
+#define DVO_LUT_CR_R              5
+#define DVO_LUT_CR_R_DEL          6
+#define DVO_LUT_HOLD              7
 
-काष्ठा dvo_config अणु
+struct dvo_config {
 	u32 flags;
 	u32 lowbyte;
 	u32 midbyte;
 	u32 highbyte;
-	पूर्णांक (*awg_fwgen_fct)(
-			काष्ठा awg_code_generation_params *fw_gen_params,
-			काष्ठा awg_timing *timing);
-पूर्ण;
+	int (*awg_fwgen_fct)(
+			struct awg_code_generation_params *fw_gen_params,
+			struct awg_timing *timing);
+};
 
-अटल काष्ठा dvo_config rgb_24bit_de_cfg = अणु
+static struct dvo_config rgb_24bit_de_cfg = {
 	.flags         = (0L << DVO_DOF_MOD_COUNT_SHIFT),
 	.lowbyte       = DVO_LUT_CR_R,
 	.midbyte       = DVO_LUT_Y_G,
 	.highbyte      = DVO_LUT_CB_B,
 	.awg_fwgen_fct = sti_awg_generate_code_data_enable_mode,
-पूर्ण;
+};
 
 /*
- * STI digital video output काष्ठाure
+ * STI digital video output structure
  *
  * @dev: driver device
- * @drm_dev: poपूर्णांकer to drm device
+ * @drm_dev: pointer to drm device
  * @mode: current display mode selected
- * @regs: dvo रेजिस्टरs
- * @clk_pix: pixel घड़ी क्रम dvo
- * @clk: घड़ी क्रम dvo
- * @clk_मुख्य_parent: dvo parent घड़ी अगर मुख्य path used
- * @clk_aux_parent: dvo parent घड़ी अगर aux path used
+ * @regs: dvo registers
+ * @clk_pix: pixel clock for dvo
+ * @clk: clock for dvo
+ * @clk_main_parent: dvo parent clock if main path used
+ * @clk_aux_parent: dvo parent clock if aux path used
  * @panel_node: panel node reference from device tree
  * @panel: reference to the panel connected to the dvo
- * @enabled: true अगर dvo is enabled अन्यथा false
+ * @enabled: true if dvo is enabled else false
  * @encoder: drm_encoder it is bound
  */
-काष्ठा sti_dvo अणु
-	काष्ठा device dev;
-	काष्ठा drm_device *drm_dev;
-	काष्ठा drm_display_mode mode;
-	व्योम __iomem *regs;
-	काष्ठा clk *clk_pix;
-	काष्ठा clk *clk;
-	काष्ठा clk *clk_मुख्य_parent;
-	काष्ठा clk *clk_aux_parent;
-	काष्ठा device_node *panel_node;
-	काष्ठा drm_panel *panel;
-	काष्ठा dvo_config *config;
+struct sti_dvo {
+	struct device dev;
+	struct drm_device *drm_dev;
+	struct drm_display_mode mode;
+	void __iomem *regs;
+	struct clk *clk_pix;
+	struct clk *clk;
+	struct clk *clk_main_parent;
+	struct clk *clk_aux_parent;
+	struct device_node *panel_node;
+	struct drm_panel *panel;
+	struct dvo_config *config;
 	bool enabled;
-	काष्ठा drm_encoder *encoder;
-	काष्ठा drm_bridge *bridge;
-पूर्ण;
+	struct drm_encoder *encoder;
+	struct drm_bridge *bridge;
+};
 
-काष्ठा sti_dvo_connector अणु
-	काष्ठा drm_connector drm_connector;
-	काष्ठा drm_encoder *encoder;
-	काष्ठा sti_dvo *dvo;
-पूर्ण;
+struct sti_dvo_connector {
+	struct drm_connector drm_connector;
+	struct drm_encoder *encoder;
+	struct sti_dvo *dvo;
+};
 
-#घोषणा to_sti_dvo_connector(x) \
-	container_of(x, काष्ठा sti_dvo_connector, drm_connector)
+#define to_sti_dvo_connector(x) \
+	container_of(x, struct sti_dvo_connector, drm_connector)
 
-#घोषणा BLANKING_LEVEL 16
-अटल पूर्णांक dvo_awg_generate_code(काष्ठा sti_dvo *dvo, u8 *ram_size, u32 *ram_code)
-अणु
-	काष्ठा drm_display_mode *mode = &dvo->mode;
-	काष्ठा dvo_config *config = dvo->config;
-	काष्ठा awg_code_generation_params fw_gen_params;
-	काष्ठा awg_timing timing;
+#define BLANKING_LEVEL 16
+static int dvo_awg_generate_code(struct sti_dvo *dvo, u8 *ram_size, u32 *ram_code)
+{
+	struct drm_display_mode *mode = &dvo->mode;
+	struct dvo_config *config = dvo->config;
+	struct awg_code_generation_params fw_gen_params;
+	struct awg_timing timing;
 
 	fw_gen_params.ram_code = ram_code;
-	fw_gen_params.inकाष्ठाion_offset = 0;
+	fw_gen_params.instruction_offset = 0;
 
 	timing.total_lines = mode->vtotal;
 	timing.active_lines = mode->vdisplay;
@@ -130,350 +129,350 @@
 	timing.trailing_pixels = mode->htotal - mode->hsync_start;
 	timing.blanking_level = BLANKING_LEVEL;
 
-	अगर (config->awg_fwgen_fct(&fw_gen_params, &timing)) अणु
+	if (config->awg_fwgen_fct(&fw_gen_params, &timing)) {
 		DRM_ERROR("AWG firmware not properly generated\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	*ram_size = fw_gen_params.inकाष्ठाion_offset;
+	*ram_size = fw_gen_params.instruction_offset;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Configure AWG, writing inकाष्ठाions
+/* Configure AWG, writing instructions
  *
- * @dvo: poपूर्णांकer to DVO काष्ठाure
- * @awg_ram_code: poपूर्णांकer to AWG inकाष्ठाions table
- * @nb: nb of AWG inकाष्ठाions
+ * @dvo: pointer to DVO structure
+ * @awg_ram_code: pointer to AWG instructions table
+ * @nb: nb of AWG instructions
  */
-अटल व्योम dvo_awg_configure(काष्ठा sti_dvo *dvo, u32 *awg_ram_code, पूर्णांक nb)
-अणु
-	पूर्णांक i;
+static void dvo_awg_configure(struct sti_dvo *dvo, u32 *awg_ram_code, int nb)
+{
+	int i;
 
 	DRM_DEBUG_DRIVER("\n");
 
-	क्रम (i = 0; i < nb; i++)
-		ग_लिखोl(awg_ram_code[i],
+	for (i = 0; i < nb; i++)
+		writel(awg_ram_code[i],
 		       dvo->regs + DVO_DIGSYNC_INSTR_I + i * 4);
-	क्रम (i = nb; i < AWG_MAX_INST; i++)
-		ग_लिखोl(0, dvo->regs + DVO_DIGSYNC_INSTR_I + i * 4);
+	for (i = nb; i < AWG_MAX_INST; i++)
+		writel(0, dvo->regs + DVO_DIGSYNC_INSTR_I + i * 4);
 
-	ग_लिखोl(DVO_AWG_CTRL_EN, dvo->regs + DVO_AWG_DIGSYNC_CTRL);
-पूर्ण
+	writel(DVO_AWG_CTRL_EN, dvo->regs + DVO_AWG_DIGSYNC_CTRL);
+}
 
-#घोषणा DBGFS_DUMP(reg) seq_म_लिखो(s, "\n  %-25s 0x%08X", #reg, \
-				   पढ़ोl(dvo->regs + reg))
+#define DBGFS_DUMP(reg) seq_printf(s, "\n  %-25s 0x%08X", #reg, \
+				   readl(dvo->regs + reg))
 
-अटल व्योम dvo_dbg_awg_microcode(काष्ठा seq_file *s, व्योम __iomem *reg)
-अणु
-	अचिन्हित पूर्णांक i;
+static void dvo_dbg_awg_microcode(struct seq_file *s, void __iomem *reg)
+{
+	unsigned int i;
 
-	seq_माला_दो(s, "\n\n");
-	seq_माला_दो(s, "  DVO AWG microcode:");
-	क्रम (i = 0; i < AWG_MAX_INST; i++) अणु
-		अगर (i % 8 == 0)
-			seq_म_लिखो(s, "\n  %04X:", i);
-		seq_म_लिखो(s, " %04X", पढ़ोl(reg + i * 4));
-	पूर्ण
-पूर्ण
+	seq_puts(s, "\n\n");
+	seq_puts(s, "  DVO AWG microcode:");
+	for (i = 0; i < AWG_MAX_INST; i++) {
+		if (i % 8 == 0)
+			seq_printf(s, "\n  %04X:", i);
+		seq_printf(s, " %04X", readl(reg + i * 4));
+	}
+}
 
-अटल पूर्णांक dvo_dbg_show(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा drm_info_node *node = s->निजी;
-	काष्ठा sti_dvo *dvo = (काष्ठा sti_dvo *)node->info_ent->data;
+static int dvo_dbg_show(struct seq_file *s, void *data)
+{
+	struct drm_info_node *node = s->private;
+	struct sti_dvo *dvo = (struct sti_dvo *)node->info_ent->data;
 
-	seq_म_लिखो(s, "DVO: (vaddr = 0x%p)", dvo->regs);
+	seq_printf(s, "DVO: (vaddr = 0x%p)", dvo->regs);
 	DBGFS_DUMP(DVO_AWG_DIGSYNC_CTRL);
 	DBGFS_DUMP(DVO_DOF_CFG);
 	DBGFS_DUMP(DVO_LUT_PROG_LOW);
 	DBGFS_DUMP(DVO_LUT_PROG_MID);
 	DBGFS_DUMP(DVO_LUT_PROG_HIGH);
 	dvo_dbg_awg_microcode(s, dvo->regs + DVO_DIGSYNC_INSTR_I);
-	seq_अ_दो(s, '\n');
-	वापस 0;
-पूर्ण
+	seq_putc(s, '\n');
+	return 0;
+}
 
-अटल काष्ठा drm_info_list dvo_debugfs_files[] = अणु
-	अणु "dvo", dvo_dbg_show, 0, शून्य पूर्ण,
-पूर्ण;
+static struct drm_info_list dvo_debugfs_files[] = {
+	{ "dvo", dvo_dbg_show, 0, NULL },
+};
 
-अटल व्योम dvo_debugfs_init(काष्ठा sti_dvo *dvo, काष्ठा drm_minor *minor)
-अणु
-	अचिन्हित पूर्णांक i;
+static void dvo_debugfs_init(struct sti_dvo *dvo, struct drm_minor *minor)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(dvo_debugfs_files); i++)
+	for (i = 0; i < ARRAY_SIZE(dvo_debugfs_files); i++)
 		dvo_debugfs_files[i].data = dvo;
 
 	drm_debugfs_create_files(dvo_debugfs_files,
 				 ARRAY_SIZE(dvo_debugfs_files),
 				 minor->debugfs_root, minor);
-पूर्ण
+}
 
-अटल व्योम sti_dvo_disable(काष्ठा drm_bridge *bridge)
-अणु
-	काष्ठा sti_dvo *dvo = bridge->driver_निजी;
+static void sti_dvo_disable(struct drm_bridge *bridge)
+{
+	struct sti_dvo *dvo = bridge->driver_private;
 
-	अगर (!dvo->enabled)
-		वापस;
+	if (!dvo->enabled)
+		return;
 
 	DRM_DEBUG_DRIVER("\n");
 
-	अगर (dvo->config->awg_fwgen_fct)
-		ग_लिखोl(0x00000000, dvo->regs + DVO_AWG_DIGSYNC_CTRL);
+	if (dvo->config->awg_fwgen_fct)
+		writel(0x00000000, dvo->regs + DVO_AWG_DIGSYNC_CTRL);
 
-	ग_लिखोl(0x00000000, dvo->regs + DVO_DOF_CFG);
+	writel(0x00000000, dvo->regs + DVO_DOF_CFG);
 
 	drm_panel_disable(dvo->panel);
 
-	/* Disable/unprepare dvo घड़ी */
+	/* Disable/unprepare dvo clock */
 	clk_disable_unprepare(dvo->clk_pix);
 	clk_disable_unprepare(dvo->clk);
 
 	dvo->enabled = false;
-पूर्ण
+}
 
-अटल व्योम sti_dvo_pre_enable(काष्ठा drm_bridge *bridge)
-अणु
-	काष्ठा sti_dvo *dvo = bridge->driver_निजी;
-	काष्ठा dvo_config *config = dvo->config;
+static void sti_dvo_pre_enable(struct drm_bridge *bridge)
+{
+	struct sti_dvo *dvo = bridge->driver_private;
+	struct dvo_config *config = dvo->config;
 	u32 val;
 
 	DRM_DEBUG_DRIVER("\n");
 
-	अगर (dvo->enabled)
-		वापस;
+	if (dvo->enabled)
+		return;
 
 	/* Make sure DVO is disabled */
-	ग_लिखोl(0x00000000, dvo->regs + DVO_DOF_CFG);
-	ग_लिखोl(0x00000000, dvo->regs + DVO_AWG_DIGSYNC_CTRL);
+	writel(0x00000000, dvo->regs + DVO_DOF_CFG);
+	writel(0x00000000, dvo->regs + DVO_AWG_DIGSYNC_CTRL);
 
-	अगर (config->awg_fwgen_fct) अणु
+	if (config->awg_fwgen_fct) {
 		u8 nb_instr;
 		u32 awg_ram_code[AWG_MAX_INST];
 		/* Configure AWG */
-		अगर (!dvo_awg_generate_code(dvo, &nb_instr, awg_ram_code))
+		if (!dvo_awg_generate_code(dvo, &nb_instr, awg_ram_code))
 			dvo_awg_configure(dvo, awg_ram_code, nb_instr);
-		अन्यथा
-			वापस;
-	पूर्ण
+		else
+			return;
+	}
 
-	/* Prepare/enable घड़ीs */
-	अगर (clk_prepare_enable(dvo->clk_pix))
+	/* Prepare/enable clocks */
+	if (clk_prepare_enable(dvo->clk_pix))
 		DRM_ERROR("Failed to prepare/enable dvo_pix clk\n");
-	अगर (clk_prepare_enable(dvo->clk))
+	if (clk_prepare_enable(dvo->clk))
 		DRM_ERROR("Failed to prepare/enable dvo clk\n");
 
 	drm_panel_enable(dvo->panel);
 
 	/* Set LUT */
-	ग_लिखोl(config->lowbyte,  dvo->regs + DVO_LUT_PROG_LOW);
-	ग_लिखोl(config->midbyte,  dvo->regs + DVO_LUT_PROG_MID);
-	ग_लिखोl(config->highbyte, dvo->regs + DVO_LUT_PROG_HIGH);
+	writel(config->lowbyte,  dvo->regs + DVO_LUT_PROG_LOW);
+	writel(config->midbyte,  dvo->regs + DVO_LUT_PROG_MID);
+	writel(config->highbyte, dvo->regs + DVO_LUT_PROG_HIGH);
 
-	/* Digital output क्रमmatter config */
+	/* Digital output formatter config */
 	val = (config->flags | DVO_DOF_EN);
-	ग_लिखोl(val, dvo->regs + DVO_DOF_CFG);
+	writel(val, dvo->regs + DVO_DOF_CFG);
 
 	dvo->enabled = true;
-पूर्ण
+}
 
-अटल व्योम sti_dvo_set_mode(काष्ठा drm_bridge *bridge,
-			     स्थिर काष्ठा drm_display_mode *mode,
-			     स्थिर काष्ठा drm_display_mode *adjusted_mode)
-अणु
-	काष्ठा sti_dvo *dvo = bridge->driver_निजी;
-	काष्ठा sti_mixer *mixer = to_sti_mixer(dvo->encoder->crtc);
-	पूर्णांक rate = mode->घड़ी * 1000;
-	काष्ठा clk *clkp;
-	पूर्णांक ret;
+static void sti_dvo_set_mode(struct drm_bridge *bridge,
+			     const struct drm_display_mode *mode,
+			     const struct drm_display_mode *adjusted_mode)
+{
+	struct sti_dvo *dvo = bridge->driver_private;
+	struct sti_mixer *mixer = to_sti_mixer(dvo->encoder->crtc);
+	int rate = mode->clock * 1000;
+	struct clk *clkp;
+	int ret;
 
 	DRM_DEBUG_DRIVER("\n");
 
-	स_नकल(&dvo->mode, mode, माप(काष्ठा drm_display_mode));
+	memcpy(&dvo->mode, mode, sizeof(struct drm_display_mode));
 
-	/* According to the path used (मुख्य or aux), the dvo घड़ीs should
-	 * have a dअगरferent parent घड़ी. */
-	अगर (mixer->id == STI_MIXER_MAIN)
-		clkp = dvo->clk_मुख्य_parent;
-	अन्यथा
+	/* According to the path used (main or aux), the dvo clocks should
+	 * have a different parent clock. */
+	if (mixer->id == STI_MIXER_MAIN)
+		clkp = dvo->clk_main_parent;
+	else
 		clkp = dvo->clk_aux_parent;
 
-	अगर (clkp) अणु
+	if (clkp) {
 		clk_set_parent(dvo->clk_pix, clkp);
 		clk_set_parent(dvo->clk, clkp);
-	पूर्ण
+	}
 
-	/* DVO घड़ीs = compositor घड़ी */
+	/* DVO clocks = compositor clock */
 	ret = clk_set_rate(dvo->clk_pix, rate);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		DRM_ERROR("Cannot set rate (%dHz) for dvo_pix clk\n", rate);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ret = clk_set_rate(dvo->clk, rate);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		DRM_ERROR("Cannot set rate (%dHz) for dvo clk\n", rate);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* For now, we only support 24bit data enable (DE) synchro क्रमmat */
+	/* For now, we only support 24bit data enable (DE) synchro format */
 	dvo->config = &rgb_24bit_de_cfg;
-पूर्ण
+}
 
-अटल व्योम sti_dvo_bridge_nope(काष्ठा drm_bridge *bridge)
-अणु
-	/* करो nothing */
-पूर्ण
+static void sti_dvo_bridge_nope(struct drm_bridge *bridge)
+{
+	/* do nothing */
+}
 
-अटल स्थिर काष्ठा drm_bridge_funcs sti_dvo_bridge_funcs = अणु
+static const struct drm_bridge_funcs sti_dvo_bridge_funcs = {
 	.pre_enable = sti_dvo_pre_enable,
 	.enable = sti_dvo_bridge_nope,
 	.disable = sti_dvo_disable,
 	.post_disable = sti_dvo_bridge_nope,
 	.mode_set = sti_dvo_set_mode,
-पूर्ण;
+};
 
-अटल पूर्णांक sti_dvo_connector_get_modes(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा sti_dvo_connector *dvo_connector
+static int sti_dvo_connector_get_modes(struct drm_connector *connector)
+{
+	struct sti_dvo_connector *dvo_connector
 		= to_sti_dvo_connector(connector);
-	काष्ठा sti_dvo *dvo = dvo_connector->dvo;
+	struct sti_dvo *dvo = dvo_connector->dvo;
 
-	अगर (dvo->panel)
-		वापस drm_panel_get_modes(dvo->panel, connector);
+	if (dvo->panel)
+		return drm_panel_get_modes(dvo->panel, connector);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा CLK_TOLERANCE_HZ 50
+#define CLK_TOLERANCE_HZ 50
 
-अटल पूर्णांक sti_dvo_connector_mode_valid(काष्ठा drm_connector *connector,
-					काष्ठा drm_display_mode *mode)
-अणु
-	पूर्णांक target = mode->घड़ी * 1000;
-	पूर्णांक target_min = target - CLK_TOLERANCE_HZ;
-	पूर्णांक target_max = target + CLK_TOLERANCE_HZ;
-	पूर्णांक result;
-	काष्ठा sti_dvo_connector *dvo_connector
+static int sti_dvo_connector_mode_valid(struct drm_connector *connector,
+					struct drm_display_mode *mode)
+{
+	int target = mode->clock * 1000;
+	int target_min = target - CLK_TOLERANCE_HZ;
+	int target_max = target + CLK_TOLERANCE_HZ;
+	int result;
+	struct sti_dvo_connector *dvo_connector
 		= to_sti_dvo_connector(connector);
-	काष्ठा sti_dvo *dvo = dvo_connector->dvo;
+	struct sti_dvo *dvo = dvo_connector->dvo;
 
 	result = clk_round_rate(dvo->clk_pix, target);
 
 	DRM_DEBUG_DRIVER("target rate = %d => available rate = %d\n",
 			 target, result);
 
-	अगर ((result < target_min) || (result > target_max)) अणु
+	if ((result < target_min) || (result > target_max)) {
 		DRM_DEBUG_DRIVER("dvo pixclk=%d not supported\n", target);
-		वापस MODE_BAD;
-	पूर्ण
+		return MODE_BAD;
+	}
 
-	वापस MODE_OK;
-पूर्ण
+	return MODE_OK;
+}
 
-अटल स्थिर
-काष्ठा drm_connector_helper_funcs sti_dvo_connector_helper_funcs = अणु
+static const
+struct drm_connector_helper_funcs sti_dvo_connector_helper_funcs = {
 	.get_modes = sti_dvo_connector_get_modes,
 	.mode_valid = sti_dvo_connector_mode_valid,
-पूर्ण;
+};
 
-अटल क्रमागत drm_connector_status
-sti_dvo_connector_detect(काष्ठा drm_connector *connector, bool क्रमce)
-अणु
-	काष्ठा sti_dvo_connector *dvo_connector
+static enum drm_connector_status
+sti_dvo_connector_detect(struct drm_connector *connector, bool force)
+{
+	struct sti_dvo_connector *dvo_connector
 		= to_sti_dvo_connector(connector);
-	काष्ठा sti_dvo *dvo = dvo_connector->dvo;
+	struct sti_dvo *dvo = dvo_connector->dvo;
 
 	DRM_DEBUG_DRIVER("\n");
 
-	अगर (!dvo->panel) अणु
+	if (!dvo->panel) {
 		dvo->panel = of_drm_find_panel(dvo->panel_node);
-		अगर (IS_ERR(dvo->panel))
-			dvo->panel = शून्य;
-	पूर्ण
+		if (IS_ERR(dvo->panel))
+			dvo->panel = NULL;
+	}
 
-	अगर (dvo->panel)
-		वापस connector_status_connected;
+	if (dvo->panel)
+		return connector_status_connected;
 
-	वापस connector_status_disconnected;
-पूर्ण
+	return connector_status_disconnected;
+}
 
-अटल पूर्णांक sti_dvo_late_रेजिस्टर(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा sti_dvo_connector *dvo_connector
+static int sti_dvo_late_register(struct drm_connector *connector)
+{
+	struct sti_dvo_connector *dvo_connector
 		= to_sti_dvo_connector(connector);
-	काष्ठा sti_dvo *dvo = dvo_connector->dvo;
+	struct sti_dvo *dvo = dvo_connector->dvo;
 
 	dvo_debugfs_init(dvo, dvo->drm_dev->primary);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा drm_connector_funcs sti_dvo_connector_funcs = अणु
+static const struct drm_connector_funcs sti_dvo_connector_funcs = {
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.detect = sti_dvo_connector_detect,
 	.destroy = drm_connector_cleanup,
 	.reset = drm_atomic_helper_connector_reset,
 	.atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
-	.late_रेजिस्टर = sti_dvo_late_रेजिस्टर,
-पूर्ण;
+	.late_register = sti_dvo_late_register,
+};
 
-अटल काष्ठा drm_encoder *sti_dvo_find_encoder(काष्ठा drm_device *dev)
-अणु
-	काष्ठा drm_encoder *encoder;
+static struct drm_encoder *sti_dvo_find_encoder(struct drm_device *dev)
+{
+	struct drm_encoder *encoder;
 
-	list_क्रम_each_entry(encoder, &dev->mode_config.encoder_list, head) अणु
-		अगर (encoder->encoder_type == DRM_MODE_ENCODER_LVDS)
-			वापस encoder;
-	पूर्ण
+	list_for_each_entry(encoder, &dev->mode_config.encoder_list, head) {
+		if (encoder->encoder_type == DRM_MODE_ENCODER_LVDS)
+			return encoder;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक sti_dvo_bind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
-अणु
-	काष्ठा sti_dvo *dvo = dev_get_drvdata(dev);
-	काष्ठा drm_device *drm_dev = data;
-	काष्ठा drm_encoder *encoder;
-	काष्ठा sti_dvo_connector *connector;
-	काष्ठा drm_connector *drm_connector;
-	काष्ठा drm_bridge *bridge;
-	पूर्णांक err;
+static int sti_dvo_bind(struct device *dev, struct device *master, void *data)
+{
+	struct sti_dvo *dvo = dev_get_drvdata(dev);
+	struct drm_device *drm_dev = data;
+	struct drm_encoder *encoder;
+	struct sti_dvo_connector *connector;
+	struct drm_connector *drm_connector;
+	struct drm_bridge *bridge;
+	int err;
 
 	/* Set the drm device handle */
 	dvo->drm_dev = drm_dev;
 
 	encoder = sti_dvo_find_encoder(drm_dev);
-	अगर (!encoder)
-		वापस -ENOMEM;
+	if (!encoder)
+		return -ENOMEM;
 
-	connector = devm_kzalloc(dev, माप(*connector), GFP_KERNEL);
-	अगर (!connector)
-		वापस -ENOMEM;
+	connector = devm_kzalloc(dev, sizeof(*connector), GFP_KERNEL);
+	if (!connector)
+		return -ENOMEM;
 
 	connector->dvo = dvo;
 
-	bridge = devm_kzalloc(dev, माप(*bridge), GFP_KERNEL);
-	अगर (!bridge)
-		वापस -ENOMEM;
+	bridge = devm_kzalloc(dev, sizeof(*bridge), GFP_KERNEL);
+	if (!bridge)
+		return -ENOMEM;
 
-	bridge->driver_निजी = dvo;
+	bridge->driver_private = dvo;
 	bridge->funcs = &sti_dvo_bridge_funcs;
 	bridge->of_node = dvo->dev.of_node;
 	drm_bridge_add(bridge);
 
-	err = drm_bridge_attach(encoder, bridge, शून्य, 0);
-	अगर (err) अणु
+	err = drm_bridge_attach(encoder, bridge, NULL, 0);
+	if (err) {
 		DRM_ERROR("Failed to attach bridge\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	dvo->bridge = bridge;
 	connector->encoder = encoder;
 	dvo->encoder = encoder;
 
-	drm_connector = (काष्ठा drm_connector *)connector;
+	drm_connector = (struct drm_connector *)connector;
 
 	drm_connector->polled = DRM_CONNECTOR_POLL_HPD;
 
@@ -483,113 +482,113 @@ sti_dvo_connector_detect(काष्ठा drm_connector *connector, bool क�
 				 &sti_dvo_connector_helper_funcs);
 
 	err = drm_connector_attach_encoder(drm_connector, encoder);
-	अगर (err) अणु
+	if (err) {
 		DRM_ERROR("Failed to attach a connector to a encoder\n");
-		जाओ err_sysfs;
-	पूर्ण
+		goto err_sysfs;
+	}
 
-	वापस 0;
+	return 0;
 
 err_sysfs:
-	drm_bridge_हटाओ(bridge);
-	वापस -EINVAL;
-पूर्ण
+	drm_bridge_remove(bridge);
+	return -EINVAL;
+}
 
-अटल व्योम sti_dvo_unbind(काष्ठा device *dev,
-			   काष्ठा device *master, व्योम *data)
-अणु
-	काष्ठा sti_dvo *dvo = dev_get_drvdata(dev);
+static void sti_dvo_unbind(struct device *dev,
+			   struct device *master, void *data)
+{
+	struct sti_dvo *dvo = dev_get_drvdata(dev);
 
-	drm_bridge_हटाओ(dvo->bridge);
-पूर्ण
+	drm_bridge_remove(dvo->bridge);
+}
 
-अटल स्थिर काष्ठा component_ops sti_dvo_ops = अणु
+static const struct component_ops sti_dvo_ops = {
 	.bind = sti_dvo_bind,
 	.unbind = sti_dvo_unbind,
-पूर्ण;
+};
 
-अटल पूर्णांक sti_dvo_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा sti_dvo *dvo;
-	काष्ठा resource *res;
-	काष्ठा device_node *np = dev->of_node;
+static int sti_dvo_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct sti_dvo *dvo;
+	struct resource *res;
+	struct device_node *np = dev->of_node;
 
 	DRM_INFO("%s\n", __func__);
 
-	dvo = devm_kzalloc(dev, माप(*dvo), GFP_KERNEL);
-	अगर (!dvo) अणु
+	dvo = devm_kzalloc(dev, sizeof(*dvo), GFP_KERNEL);
+	if (!dvo) {
 		DRM_ERROR("Failed to allocate memory for DVO\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	dvo->dev = pdev->dev;
 
-	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "dvo-reg");
-	अगर (!res) अणु
+	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "dvo-reg");
+	if (!res) {
 		DRM_ERROR("Invalid dvo resource\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	dvo->regs = devm_ioremap(dev, res->start,
 			resource_size(res));
-	अगर (!dvo->regs)
-		वापस -ENOMEM;
+	if (!dvo->regs)
+		return -ENOMEM;
 
 	dvo->clk_pix = devm_clk_get(dev, "dvo_pix");
-	अगर (IS_ERR(dvo->clk_pix)) अणु
+	if (IS_ERR(dvo->clk_pix)) {
 		DRM_ERROR("Cannot get dvo_pix clock\n");
-		वापस PTR_ERR(dvo->clk_pix);
-	पूर्ण
+		return PTR_ERR(dvo->clk_pix);
+	}
 
 	dvo->clk = devm_clk_get(dev, "dvo");
-	अगर (IS_ERR(dvo->clk)) अणु
+	if (IS_ERR(dvo->clk)) {
 		DRM_ERROR("Cannot get dvo clock\n");
-		वापस PTR_ERR(dvo->clk);
-	पूर्ण
+		return PTR_ERR(dvo->clk);
+	}
 
-	dvo->clk_मुख्य_parent = devm_clk_get(dev, "main_parent");
-	अगर (IS_ERR(dvo->clk_मुख्य_parent)) अणु
+	dvo->clk_main_parent = devm_clk_get(dev, "main_parent");
+	if (IS_ERR(dvo->clk_main_parent)) {
 		DRM_DEBUG_DRIVER("Cannot get main_parent clock\n");
-		dvo->clk_मुख्य_parent = शून्य;
-	पूर्ण
+		dvo->clk_main_parent = NULL;
+	}
 
 	dvo->clk_aux_parent = devm_clk_get(dev, "aux_parent");
-	अगर (IS_ERR(dvo->clk_aux_parent)) अणु
+	if (IS_ERR(dvo->clk_aux_parent)) {
 		DRM_DEBUG_DRIVER("Cannot get aux_parent clock\n");
-		dvo->clk_aux_parent = शून्य;
-	पूर्ण
+		dvo->clk_aux_parent = NULL;
+	}
 
 	dvo->panel_node = of_parse_phandle(np, "sti,panel", 0);
-	अगर (!dvo->panel_node)
+	if (!dvo->panel_node)
 		DRM_ERROR("No panel associated to the dvo output\n");
 	of_node_put(dvo->panel_node);
 
-	platक्रमm_set_drvdata(pdev, dvo);
+	platform_set_drvdata(pdev, dvo);
 
-	वापस component_add(&pdev->dev, &sti_dvo_ops);
-पूर्ण
+	return component_add(&pdev->dev, &sti_dvo_ops);
+}
 
-अटल पूर्णांक sti_dvo_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
+static int sti_dvo_remove(struct platform_device *pdev)
+{
 	component_del(&pdev->dev, &sti_dvo_ops);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id dvo_of_match[] = अणु
-	अणु .compatible = "st,stih407-dvo", पूर्ण,
-	अणु /* end node */ पूर्ण
-पूर्ण;
+static const struct of_device_id dvo_of_match[] = {
+	{ .compatible = "st,stih407-dvo", },
+	{ /* end node */ }
+};
 MODULE_DEVICE_TABLE(of, dvo_of_match);
 
-काष्ठा platक्रमm_driver sti_dvo_driver = अणु
-	.driver = अणु
+struct platform_driver sti_dvo_driver = {
+	.driver = {
 		.name = "sti-dvo",
 		.owner = THIS_MODULE,
 		.of_match_table = dvo_of_match,
-	पूर्ण,
+	},
 	.probe = sti_dvo_probe,
-	.हटाओ = sti_dvo_हटाओ,
-पूर्ण;
+	.remove = sti_dvo_remove,
+};
 
 MODULE_AUTHOR("Benjamin Gaignard <benjamin.gaignard@st.com>");
 MODULE_DESCRIPTION("STMicroelectronics SoC DRM driver");

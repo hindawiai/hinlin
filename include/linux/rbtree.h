@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
   Red Black Trees
   (C) 1999  Andrea Arcangeli <andrea@suse.de>
@@ -8,90 +7,90 @@
   linux/include/linux/rbtree.h
 
   To use rbtrees you'll have to implement your own insert and search cores.
-  This will aव्योम us to use callbacks and to drop drammatically perक्रमmances.
+  This will avoid us to use callbacks and to drop drammatically performances.
   I know it's not the cleaner way,  but in C (not in C++) to get
-  perक्रमmances and genericity...
+  performances and genericity...
 
-  See Documentation/core-api/rbtree.rst क्रम करोcumentation and samples.
+  See Documentation/core-api/rbtree.rst for documentation and samples.
 */
 
-#अगर_अघोषित	_LINUX_RBTREE_H
-#घोषणा	_LINUX_RBTREE_H
+#ifndef	_LINUX_RBTREE_H
+#define	_LINUX_RBTREE_H
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/rcupdate.h>
+#include <linux/kernel.h>
+#include <linux/stddef.h>
+#include <linux/rcupdate.h>
 
-काष्ठा rb_node अणु
-	अचिन्हित दीर्घ  __rb_parent_color;
-	काष्ठा rb_node *rb_right;
-	काष्ठा rb_node *rb_left;
-पूर्ण __attribute__((aligned(माप(दीर्घ))));
-    /* The alignment might seem poपूर्णांकless, but allegedly CRIS needs it */
+struct rb_node {
+	unsigned long  __rb_parent_color;
+	struct rb_node *rb_right;
+	struct rb_node *rb_left;
+} __attribute__((aligned(sizeof(long))));
+    /* The alignment might seem pointless, but allegedly CRIS needs it */
 
-काष्ठा rb_root अणु
-	काष्ठा rb_node *rb_node;
-पूर्ण;
+struct rb_root {
+	struct rb_node *rb_node;
+};
 
-#घोषणा rb_parent(r)   ((काष्ठा rb_node *)((r)->__rb_parent_color & ~3))
+#define rb_parent(r)   ((struct rb_node *)((r)->__rb_parent_color & ~3))
 
-#घोषणा RB_ROOT	(काष्ठा rb_root) अणु शून्य, पूर्ण
-#घोषणा	rb_entry(ptr, type, member) container_of(ptr, type, member)
+#define RB_ROOT	(struct rb_root) { NULL, }
+#define	rb_entry(ptr, type, member) container_of(ptr, type, member)
 
-#घोषणा RB_EMPTY_ROOT(root)  (READ_ONCE((root)->rb_node) == शून्य)
+#define RB_EMPTY_ROOT(root)  (READ_ONCE((root)->rb_node) == NULL)
 
 /* 'empty' nodes are nodes that are known not to be inserted in an rbtree */
-#घोषणा RB_EMPTY_NODE(node)  \
-	((node)->__rb_parent_color == (अचिन्हित दीर्घ)(node))
-#घोषणा RB_CLEAR_NODE(node)  \
-	((node)->__rb_parent_color = (अचिन्हित दीर्घ)(node))
+#define RB_EMPTY_NODE(node)  \
+	((node)->__rb_parent_color == (unsigned long)(node))
+#define RB_CLEAR_NODE(node)  \
+	((node)->__rb_parent_color = (unsigned long)(node))
 
 
-बाह्य व्योम rb_insert_color(काष्ठा rb_node *, काष्ठा rb_root *);
-बाह्य व्योम rb_erase(काष्ठा rb_node *, काष्ठा rb_root *);
+extern void rb_insert_color(struct rb_node *, struct rb_root *);
+extern void rb_erase(struct rb_node *, struct rb_root *);
 
 
 /* Find logical next and previous nodes in a tree */
-बाह्य काष्ठा rb_node *rb_next(स्थिर काष्ठा rb_node *);
-बाह्य काष्ठा rb_node *rb_prev(स्थिर काष्ठा rb_node *);
-बाह्य काष्ठा rb_node *rb_first(स्थिर काष्ठा rb_root *);
-बाह्य काष्ठा rb_node *rb_last(स्थिर काष्ठा rb_root *);
+extern struct rb_node *rb_next(const struct rb_node *);
+extern struct rb_node *rb_prev(const struct rb_node *);
+extern struct rb_node *rb_first(const struct rb_root *);
+extern struct rb_node *rb_last(const struct rb_root *);
 
 /* Postorder iteration - always visit the parent after its children */
-बाह्य काष्ठा rb_node *rb_first_postorder(स्थिर काष्ठा rb_root *);
-बाह्य काष्ठा rb_node *rb_next_postorder(स्थिर काष्ठा rb_node *);
+extern struct rb_node *rb_first_postorder(const struct rb_root *);
+extern struct rb_node *rb_next_postorder(const struct rb_node *);
 
-/* Fast replacement of a single node without हटाओ/rebalance/add/rebalance */
-बाह्य व्योम rb_replace_node(काष्ठा rb_node *victim, काष्ठा rb_node *new,
-			    काष्ठा rb_root *root);
-बाह्य व्योम rb_replace_node_rcu(काष्ठा rb_node *victim, काष्ठा rb_node *new,
-				काष्ठा rb_root *root);
+/* Fast replacement of a single node without remove/rebalance/add/rebalance */
+extern void rb_replace_node(struct rb_node *victim, struct rb_node *new,
+			    struct rb_root *root);
+extern void rb_replace_node_rcu(struct rb_node *victim, struct rb_node *new,
+				struct rb_root *root);
 
-अटल अंतरभूत व्योम rb_link_node(काष्ठा rb_node *node, काष्ठा rb_node *parent,
-				काष्ठा rb_node **rb_link)
-अणु
-	node->__rb_parent_color = (अचिन्हित दीर्घ)parent;
-	node->rb_left = node->rb_right = शून्य;
+static inline void rb_link_node(struct rb_node *node, struct rb_node *parent,
+				struct rb_node **rb_link)
+{
+	node->__rb_parent_color = (unsigned long)parent;
+	node->rb_left = node->rb_right = NULL;
 
 	*rb_link = node;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम rb_link_node_rcu(काष्ठा rb_node *node, काष्ठा rb_node *parent,
-				    काष्ठा rb_node **rb_link)
-अणु
-	node->__rb_parent_color = (अचिन्हित दीर्घ)parent;
-	node->rb_left = node->rb_right = शून्य;
+static inline void rb_link_node_rcu(struct rb_node *node, struct rb_node *parent,
+				    struct rb_node **rb_link)
+{
+	node->__rb_parent_color = (unsigned long)parent;
+	node->rb_left = node->rb_right = NULL;
 
-	rcu_assign_poपूर्णांकer(*rb_link, node);
-पूर्ण
+	rcu_assign_pointer(*rb_link, node);
+}
 
-#घोषणा rb_entry_safe(ptr, type, member) \
-	(अणु typeof(ptr) ____ptr = (ptr); \
-	   ____ptr ? rb_entry(____ptr, type, member) : शून्य; \
-	पूर्ण)
+#define rb_entry_safe(ptr, type, member) \
+	({ typeof(ptr) ____ptr = (ptr); \
+	   ____ptr ? rb_entry(____ptr, type, member) : NULL; \
+	})
 
 /**
- * rbtree_postorder_क्रम_each_entry_safe - iterate in post-order over rb_root of
+ * rbtree_postorder_for_each_entry_safe - iterate in post-order over rb_root of
  * given type allowing the backing memory of @pos to be invalidated
  *
  * @pos:	the 'type *' to use as a loop cursor.
@@ -99,264 +98,264 @@
  * @root:	'rb_root *' of the rbtree.
  * @field:	the name of the rb_node field within 'type'.
  *
- * rbtree_postorder_क्रम_each_entry_safe() provides a similar guarantee as
- * list_क्रम_each_entry_safe() and allows the iteration to जारी independent
+ * rbtree_postorder_for_each_entry_safe() provides a similar guarantee as
+ * list_for_each_entry_safe() and allows the iteration to continue independent
  * of changes to @pos by the body of the loop.
  *
- * Note, however, that it cannot handle other modअगरications that re-order the
+ * Note, however, that it cannot handle other modifications that re-order the
  * rbtree it is iterating over. This includes calling rb_erase() on @pos, as
  * rb_erase() may rebalance the tree, causing us to miss some nodes.
  */
-#घोषणा rbtree_postorder_क्रम_each_entry_safe(pos, n, root, field) \
-	क्रम (pos = rb_entry_safe(rb_first_postorder(root), typeof(*pos), field); \
-	     pos && (अणु n = rb_entry_safe(rb_next_postorder(&pos->field), \
-			typeof(*pos), field); 1; पूर्ण); \
+#define rbtree_postorder_for_each_entry_safe(pos, n, root, field) \
+	for (pos = rb_entry_safe(rb_first_postorder(root), typeof(*pos), field); \
+	     pos && ({ n = rb_entry_safe(rb_next_postorder(&pos->field), \
+			typeof(*pos), field); 1; }); \
 	     pos = n)
 
 /*
- * Lefपंचांगost-cached rbtrees.
+ * Leftmost-cached rbtrees.
  *
- * We करो not cache the righपंचांगost node based on footprपूर्णांक
+ * We do not cache the rightmost node based on footprint
  * size vs number of potential users that could benefit
  * from O(1) rb_last(). Just not worth it, users that want
  * this feature can always implement the logic explicitly.
- * Furthermore, users that want to cache both poपूर्णांकers may
+ * Furthermore, users that want to cache both pointers may
  * find it a bit asymmetric, but that's ok.
  */
-काष्ठा rb_root_cached अणु
-	काष्ठा rb_root rb_root;
-	काष्ठा rb_node *rb_lefपंचांगost;
-पूर्ण;
+struct rb_root_cached {
+	struct rb_root rb_root;
+	struct rb_node *rb_leftmost;
+};
 
-#घोषणा RB_ROOT_CACHED (काष्ठा rb_root_cached) अणु अणुशून्य, पूर्ण, शून्य पूर्ण
+#define RB_ROOT_CACHED (struct rb_root_cached) { {NULL, }, NULL }
 
 /* Same as rb_first(), but O(1) */
-#घोषणा rb_first_cached(root) (root)->rb_lefपंचांगost
+#define rb_first_cached(root) (root)->rb_leftmost
 
-अटल अंतरभूत व्योम rb_insert_color_cached(काष्ठा rb_node *node,
-					  काष्ठा rb_root_cached *root,
-					  bool lefपंचांगost)
-अणु
-	अगर (lefपंचांगost)
-		root->rb_lefपंचांगost = node;
+static inline void rb_insert_color_cached(struct rb_node *node,
+					  struct rb_root_cached *root,
+					  bool leftmost)
+{
+	if (leftmost)
+		root->rb_leftmost = node;
 	rb_insert_color(node, &root->rb_root);
-पूर्ण
+}
 
 
-अटल अंतरभूत काष्ठा rb_node *
-rb_erase_cached(काष्ठा rb_node *node, काष्ठा rb_root_cached *root)
-अणु
-	काष्ठा rb_node *lefपंचांगost = शून्य;
+static inline struct rb_node *
+rb_erase_cached(struct rb_node *node, struct rb_root_cached *root)
+{
+	struct rb_node *leftmost = NULL;
 
-	अगर (root->rb_lefपंचांगost == node)
-		lefपंचांगost = root->rb_lefपंचांगost = rb_next(node);
+	if (root->rb_leftmost == node)
+		leftmost = root->rb_leftmost = rb_next(node);
 
 	rb_erase(node, &root->rb_root);
 
-	वापस lefपंचांगost;
-पूर्ण
+	return leftmost;
+}
 
-अटल अंतरभूत व्योम rb_replace_node_cached(काष्ठा rb_node *victim,
-					  काष्ठा rb_node *new,
-					  काष्ठा rb_root_cached *root)
-अणु
-	अगर (root->rb_lefपंचांगost == victim)
-		root->rb_lefपंचांगost = new;
+static inline void rb_replace_node_cached(struct rb_node *victim,
+					  struct rb_node *new,
+					  struct rb_root_cached *root)
+{
+	if (root->rb_leftmost == victim)
+		root->rb_leftmost = new;
 	rb_replace_node(victim, new, &root->rb_root);
-पूर्ण
+}
 
 /*
- * The below helper functions use 2 चालकs with 3 dअगरferent
- * calling conventions. The चालकs are related like:
+ * The below helper functions use 2 operators with 3 different
+ * calling conventions. The operators are related like:
  *
  *	comp(a->key,b) < 0  := less(a,b)
  *	comp(a->key,b) > 0  := less(b,a)
  *	comp(a->key,b) == 0 := !less(a,b) && !less(b,a)
  *
- * If these चालकs define a partial order on the elements we make no
+ * If these operators define a partial order on the elements we make no
  * guarantee on which of the elements matching the key is found. See
  * rb_find().
  *
- * The reason क्रम this is to allow the find() पूर्णांकerface without requiring an
+ * The reason for this is to allow the find() interface without requiring an
  * on-stack dummy object, which might not be feasible due to object size.
  */
 
 /**
- * rb_add_cached() - insert @node पूर्णांकo the lefपंचांगost cached tree @tree
+ * rb_add_cached() - insert @node into the leftmost cached tree @tree
  * @node: node to insert
- * @tree: lefपंचांगost cached tree to insert @node पूर्णांकo
- * @less: चालक defining the (partial) node order
+ * @tree: leftmost cached tree to insert @node into
+ * @less: operator defining the (partial) node order
  *
- * Returns @node when it is the new lefपंचांगost, or शून्य.
+ * Returns @node when it is the new leftmost, or NULL.
  */
-अटल __always_अंतरभूत काष्ठा rb_node *
-rb_add_cached(काष्ठा rb_node *node, काष्ठा rb_root_cached *tree,
-	      bool (*less)(काष्ठा rb_node *, स्थिर काष्ठा rb_node *))
-अणु
-	काष्ठा rb_node **link = &tree->rb_root.rb_node;
-	काष्ठा rb_node *parent = शून्य;
-	bool lefपंचांगost = true;
+static __always_inline struct rb_node *
+rb_add_cached(struct rb_node *node, struct rb_root_cached *tree,
+	      bool (*less)(struct rb_node *, const struct rb_node *))
+{
+	struct rb_node **link = &tree->rb_root.rb_node;
+	struct rb_node *parent = NULL;
+	bool leftmost = true;
 
-	जबतक (*link) अणु
+	while (*link) {
 		parent = *link;
-		अगर (less(node, parent)) अणु
+		if (less(node, parent)) {
 			link = &parent->rb_left;
-		पूर्ण अन्यथा अणु
+		} else {
 			link = &parent->rb_right;
-			lefपंचांगost = false;
-		पूर्ण
-	पूर्ण
+			leftmost = false;
+		}
+	}
 
 	rb_link_node(node, parent, link);
-	rb_insert_color_cached(node, tree, lefपंचांगost);
+	rb_insert_color_cached(node, tree, leftmost);
 
-	वापस lefपंचांगost ? node : शून्य;
-पूर्ण
+	return leftmost ? node : NULL;
+}
 
 /**
- * rb_add() - insert @node पूर्णांकo @tree
+ * rb_add() - insert @node into @tree
  * @node: node to insert
- * @tree: tree to insert @node पूर्णांकo
- * @less: चालक defining the (partial) node order
+ * @tree: tree to insert @node into
+ * @less: operator defining the (partial) node order
  */
-अटल __always_अंतरभूत व्योम
-rb_add(काष्ठा rb_node *node, काष्ठा rb_root *tree,
-       bool (*less)(काष्ठा rb_node *, स्थिर काष्ठा rb_node *))
-अणु
-	काष्ठा rb_node **link = &tree->rb_node;
-	काष्ठा rb_node *parent = शून्य;
+static __always_inline void
+rb_add(struct rb_node *node, struct rb_root *tree,
+       bool (*less)(struct rb_node *, const struct rb_node *))
+{
+	struct rb_node **link = &tree->rb_node;
+	struct rb_node *parent = NULL;
 
-	जबतक (*link) अणु
+	while (*link) {
 		parent = *link;
-		अगर (less(node, parent))
+		if (less(node, parent))
 			link = &parent->rb_left;
-		अन्यथा
+		else
 			link = &parent->rb_right;
-	पूर्ण
+	}
 
 	rb_link_node(node, parent, link);
 	rb_insert_color(node, tree);
-पूर्ण
+}
 
 /**
  * rb_find_add() - find equivalent @node in @tree, or add @node
- * @node: node to look-क्रम / insert
- * @tree: tree to search / modअगरy
- * @cmp: चालक defining the node order
+ * @node: node to look-for / insert
+ * @tree: tree to search / modify
+ * @cmp: operator defining the node order
  *
- * Returns the rb_node matching @node, or शून्य when no match is found and @node
+ * Returns the rb_node matching @node, or NULL when no match is found and @node
  * is inserted.
  */
-अटल __always_अंतरभूत काष्ठा rb_node *
-rb_find_add(काष्ठा rb_node *node, काष्ठा rb_root *tree,
-	    पूर्णांक (*cmp)(काष्ठा rb_node *, स्थिर काष्ठा rb_node *))
-अणु
-	काष्ठा rb_node **link = &tree->rb_node;
-	काष्ठा rb_node *parent = शून्य;
-	पूर्णांक c;
+static __always_inline struct rb_node *
+rb_find_add(struct rb_node *node, struct rb_root *tree,
+	    int (*cmp)(struct rb_node *, const struct rb_node *))
+{
+	struct rb_node **link = &tree->rb_node;
+	struct rb_node *parent = NULL;
+	int c;
 
-	जबतक (*link) अणु
+	while (*link) {
 		parent = *link;
 		c = cmp(node, parent);
 
-		अगर (c < 0)
+		if (c < 0)
 			link = &parent->rb_left;
-		अन्यथा अगर (c > 0)
+		else if (c > 0)
 			link = &parent->rb_right;
-		अन्यथा
-			वापस parent;
-	पूर्ण
+		else
+			return parent;
+	}
 
 	rb_link_node(node, parent, link);
 	rb_insert_color(node, tree);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
  * rb_find() - find @key in tree @tree
  * @key: key to match
  * @tree: tree to search
- * @cmp: चालक defining the node order
+ * @cmp: operator defining the node order
  *
- * Returns the rb_node matching @key or शून्य.
+ * Returns the rb_node matching @key or NULL.
  */
-अटल __always_अंतरभूत काष्ठा rb_node *
-rb_find(स्थिर व्योम *key, स्थिर काष्ठा rb_root *tree,
-	पूर्णांक (*cmp)(स्थिर व्योम *key, स्थिर काष्ठा rb_node *))
-अणु
-	काष्ठा rb_node *node = tree->rb_node;
+static __always_inline struct rb_node *
+rb_find(const void *key, const struct rb_root *tree,
+	int (*cmp)(const void *key, const struct rb_node *))
+{
+	struct rb_node *node = tree->rb_node;
 
-	जबतक (node) अणु
-		पूर्णांक c = cmp(key, node);
+	while (node) {
+		int c = cmp(key, node);
 
-		अगर (c < 0)
+		if (c < 0)
 			node = node->rb_left;
-		अन्यथा अगर (c > 0)
+		else if (c > 0)
 			node = node->rb_right;
-		अन्यथा
-			वापस node;
-	पूर्ण
+		else
+			return node;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
  * rb_find_first() - find the first @key in @tree
  * @key: key to match
  * @tree: tree to search
- * @cmp: चालक defining node order
+ * @cmp: operator defining node order
  *
- * Returns the lefपंचांगost node matching @key, or शून्य.
+ * Returns the leftmost node matching @key, or NULL.
  */
-अटल __always_अंतरभूत काष्ठा rb_node *
-rb_find_first(स्थिर व्योम *key, स्थिर काष्ठा rb_root *tree,
-	      पूर्णांक (*cmp)(स्थिर व्योम *key, स्थिर काष्ठा rb_node *))
-अणु
-	काष्ठा rb_node *node = tree->rb_node;
-	काष्ठा rb_node *match = शून्य;
+static __always_inline struct rb_node *
+rb_find_first(const void *key, const struct rb_root *tree,
+	      int (*cmp)(const void *key, const struct rb_node *))
+{
+	struct rb_node *node = tree->rb_node;
+	struct rb_node *match = NULL;
 
-	जबतक (node) अणु
-		पूर्णांक c = cmp(key, node);
+	while (node) {
+		int c = cmp(key, node);
 
-		अगर (c <= 0) अणु
-			अगर (!c)
+		if (c <= 0) {
+			if (!c)
 				match = node;
 			node = node->rb_left;
-		पूर्ण अन्यथा अगर (c > 0) अणु
+		} else if (c > 0) {
 			node = node->rb_right;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस match;
-पूर्ण
+	return match;
+}
 
 /**
  * rb_next_match() - find the next @key in @tree
  * @key: key to match
  * @tree: tree to search
- * @cmp: चालक defining node order
+ * @cmp: operator defining node order
  *
- * Returns the next node matching @key, or शून्य.
+ * Returns the next node matching @key, or NULL.
  */
-अटल __always_अंतरभूत काष्ठा rb_node *
-rb_next_match(स्थिर व्योम *key, काष्ठा rb_node *node,
-	      पूर्णांक (*cmp)(स्थिर व्योम *key, स्थिर काष्ठा rb_node *))
-अणु
+static __always_inline struct rb_node *
+rb_next_match(const void *key, struct rb_node *node,
+	      int (*cmp)(const void *key, const struct rb_node *))
+{
 	node = rb_next(node);
-	अगर (node && cmp(key, node))
-		node = शून्य;
-	वापस node;
-पूर्ण
+	if (node && cmp(key, node))
+		node = NULL;
+	return node;
+}
 
 /**
- * rb_क्रम_each() - iterates a subtree matching @key
+ * rb_for_each() - iterates a subtree matching @key
  * @node: iterator
  * @key: key to match
  * @tree: tree to search
- * @cmp: चालक defining node order
+ * @cmp: operator defining node order
  */
-#घोषणा rb_क्रम_each(node, key, tree, cmp) \
-	क्रम ((node) = rb_find_first((key), (tree), (cmp)); \
+#define rb_for_each(node, key, tree, cmp) \
+	for ((node) = rb_find_first((key), (tree), (cmp)); \
 	     (node); (node) = rb_next_match((key), (node), (cmp)))
 
-#पूर्ण_अगर	/* _LINUX_RBTREE_H */
+#endif	/* _LINUX_RBTREE_H */

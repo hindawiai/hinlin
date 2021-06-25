@@ -1,64 +1,63 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  mxl5007t.c - driver क्रम the MaxLinear MxL5007T silicon tuner
+ *  mxl5007t.c - driver for the MaxLinear MxL5007T silicon tuner
  *
  *  Copyright (C) 2008, 2009 Michael Krufky <mkrufky@linuxtv.org>
  */
 
-#समावेश <linux/i2c.h>
-#समावेश <linux/types.h>
-#समावेश <linux/videodev2.h>
-#समावेश "tuner-i2c.h"
-#समावेश "mxl5007t.h"
+#include <linux/i2c.h>
+#include <linux/types.h>
+#include <linux/videodev2.h>
+#include "tuner-i2c.h"
+#include "mxl5007t.h"
 
-अटल DEFINE_MUTEX(mxl5007t_list_mutex);
-अटल LIST_HEAD(hybrid_tuner_instance_list);
+static DEFINE_MUTEX(mxl5007t_list_mutex);
+static LIST_HEAD(hybrid_tuner_instance_list);
 
-अटल पूर्णांक mxl5007t_debug;
-module_param_named(debug, mxl5007t_debug, पूर्णांक, 0644);
+static int mxl5007t_debug;
+module_param_named(debug, mxl5007t_debug, int, 0644);
 MODULE_PARM_DESC(debug, "set debug level");
 
 /* ------------------------------------------------------------------------- */
 
-#घोषणा mxl_prपूर्णांकk(kern, fmt, arg...) \
-	prपूर्णांकk(kern "%s: " fmt "\n", __func__, ##arg)
+#define mxl_printk(kern, fmt, arg...) \
+	printk(kern "%s: " fmt "\n", __func__, ##arg)
 
-#घोषणा mxl_err(fmt, arg...) \
-	mxl_prपूर्णांकk(KERN_ERR, "%d: " fmt, __LINE__, ##arg)
+#define mxl_err(fmt, arg...) \
+	mxl_printk(KERN_ERR, "%d: " fmt, __LINE__, ##arg)
 
-#घोषणा mxl_warn(fmt, arg...) \
-	mxl_prपूर्णांकk(KERN_WARNING, fmt, ##arg)
+#define mxl_warn(fmt, arg...) \
+	mxl_printk(KERN_WARNING, fmt, ##arg)
 
-#घोषणा mxl_info(fmt, arg...) \
-	mxl_prपूर्णांकk(KERN_INFO, fmt, ##arg)
+#define mxl_info(fmt, arg...) \
+	mxl_printk(KERN_INFO, fmt, ##arg)
 
-#घोषणा mxl_debug(fmt, arg...)				\
-(अणु							\
-	अगर (mxl5007t_debug)				\
-		mxl_prपूर्णांकk(KERN_DEBUG, fmt, ##arg);	\
-पूर्ण)
+#define mxl_debug(fmt, arg...)				\
+({							\
+	if (mxl5007t_debug)				\
+		mxl_printk(KERN_DEBUG, fmt, ##arg);	\
+})
 
-#घोषणा mxl_fail(ret)							\
-(अणु									\
-	पूर्णांक __ret;							\
+#define mxl_fail(ret)							\
+({									\
+	int __ret;							\
 	__ret = (ret < 0);						\
-	अगर (__ret)							\
-		mxl_prपूर्णांकk(KERN_ERR, "error %d on line %d",		\
+	if (__ret)							\
+		mxl_printk(KERN_ERR, "error %d on line %d",		\
 			   ret, __LINE__);				\
 	__ret;								\
-पूर्ण)
+})
 
 /* ------------------------------------------------------------------------- */
 
-क्रमागत mxl5007t_mode अणु
+enum mxl5007t_mode {
 	MxL_MODE_ISDBT     =    0,
 	MxL_MODE_DVBT      =    1,
 	MxL_MODE_ATSC      =    2,
 	MxL_MODE_CABLE     = 0x10,
-पूर्ण;
+};
 
-क्रमागत mxl5007t_chip_version अणु
+enum mxl5007t_chip_version {
 	MxL_UNKNOWN_ID     = 0x00,
 	MxL_5007_V1_F1     = 0x11,
 	MxL_5007_V1_F2     = 0x12,
@@ -67,721 +66,721 @@ MODULE_PARM_DESC(debug, "set debug level");
 	MxL_5007_V2_100_F2 = 0x22,
 	MxL_5007_V2_200_F1 = 0x23,
 	MxL_5007_V2_200_F2 = 0x24,
-पूर्ण;
+};
 
-काष्ठा reg_pair_t अणु
+struct reg_pair_t {
 	u8 reg;
 	u8 val;
-पूर्ण;
+};
 
 /* ------------------------------------------------------------------------- */
 
-अटल काष्ठा reg_pair_t init_tab[] = अणु
-	अणु 0x02, 0x06 पूर्ण,
-	अणु 0x03, 0x48 पूर्ण,
-	अणु 0x05, 0x04 पूर्ण,
-	अणु 0x06, 0x10 पूर्ण,
-	अणु 0x2e, 0x15 पूर्ण, /* OVERRIDE */
-	अणु 0x30, 0x10 पूर्ण, /* OVERRIDE */
-	अणु 0x45, 0x58 पूर्ण, /* OVERRIDE */
-	अणु 0x48, 0x19 पूर्ण, /* OVERRIDE */
-	अणु 0x52, 0x03 पूर्ण, /* OVERRIDE */
-	अणु 0x53, 0x44 पूर्ण, /* OVERRIDE */
-	अणु 0x6a, 0x4b पूर्ण, /* OVERRIDE */
-	अणु 0x76, 0x00 पूर्ण, /* OVERRIDE */
-	अणु 0x78, 0x18 पूर्ण, /* OVERRIDE */
-	अणु 0x7a, 0x17 पूर्ण, /* OVERRIDE */
-	अणु 0x85, 0x06 पूर्ण, /* OVERRIDE */
-	अणु 0x01, 0x01 पूर्ण, /* TOP_MASTER_ENABLE */
-	अणु 0, 0 पूर्ण
-पूर्ण;
+static struct reg_pair_t init_tab[] = {
+	{ 0x02, 0x06 },
+	{ 0x03, 0x48 },
+	{ 0x05, 0x04 },
+	{ 0x06, 0x10 },
+	{ 0x2e, 0x15 }, /* OVERRIDE */
+	{ 0x30, 0x10 }, /* OVERRIDE */
+	{ 0x45, 0x58 }, /* OVERRIDE */
+	{ 0x48, 0x19 }, /* OVERRIDE */
+	{ 0x52, 0x03 }, /* OVERRIDE */
+	{ 0x53, 0x44 }, /* OVERRIDE */
+	{ 0x6a, 0x4b }, /* OVERRIDE */
+	{ 0x76, 0x00 }, /* OVERRIDE */
+	{ 0x78, 0x18 }, /* OVERRIDE */
+	{ 0x7a, 0x17 }, /* OVERRIDE */
+	{ 0x85, 0x06 }, /* OVERRIDE */
+	{ 0x01, 0x01 }, /* TOP_MASTER_ENABLE */
+	{ 0, 0 }
+};
 
-अटल काष्ठा reg_pair_t init_tab_cable[] = अणु
-	अणु 0x02, 0x06 पूर्ण,
-	अणु 0x03, 0x48 पूर्ण,
-	अणु 0x05, 0x04 पूर्ण,
-	अणु 0x06, 0x10 पूर्ण,
-	अणु 0x09, 0x3f पूर्ण,
-	अणु 0x0a, 0x3f पूर्ण,
-	अणु 0x0b, 0x3f पूर्ण,
-	अणु 0x2e, 0x15 पूर्ण, /* OVERRIDE */
-	अणु 0x30, 0x10 पूर्ण, /* OVERRIDE */
-	अणु 0x45, 0x58 पूर्ण, /* OVERRIDE */
-	अणु 0x48, 0x19 पूर्ण, /* OVERRIDE */
-	अणु 0x52, 0x03 पूर्ण, /* OVERRIDE */
-	अणु 0x53, 0x44 पूर्ण, /* OVERRIDE */
-	अणु 0x6a, 0x4b पूर्ण, /* OVERRIDE */
-	अणु 0x76, 0x00 पूर्ण, /* OVERRIDE */
-	अणु 0x78, 0x18 पूर्ण, /* OVERRIDE */
-	अणु 0x7a, 0x17 पूर्ण, /* OVERRIDE */
-	अणु 0x85, 0x06 पूर्ण, /* OVERRIDE */
-	अणु 0x01, 0x01 पूर्ण, /* TOP_MASTER_ENABLE */
-	अणु 0, 0 पूर्ण
-पूर्ण;
-
-/* ------------------------------------------------------------------------- */
-
-अटल काष्ठा reg_pair_t reg_pair_rftune[] = अणु
-	अणु 0x0f, 0x00 पूर्ण, /* पात tune */
-	अणु 0x0c, 0x15 पूर्ण,
-	अणु 0x0d, 0x40 पूर्ण,
-	अणु 0x0e, 0x0e पूर्ण,
-	अणु 0x1f, 0x87 पूर्ण, /* OVERRIDE */
-	अणु 0x20, 0x1f पूर्ण, /* OVERRIDE */
-	अणु 0x21, 0x87 पूर्ण, /* OVERRIDE */
-	अणु 0x22, 0x1f पूर्ण, /* OVERRIDE */
-	अणु 0x80, 0x01 पूर्ण, /* freq dependent */
-	अणु 0x0f, 0x01 पूर्ण, /* start tune */
-	अणु 0, 0 पूर्ण
-पूर्ण;
+static struct reg_pair_t init_tab_cable[] = {
+	{ 0x02, 0x06 },
+	{ 0x03, 0x48 },
+	{ 0x05, 0x04 },
+	{ 0x06, 0x10 },
+	{ 0x09, 0x3f },
+	{ 0x0a, 0x3f },
+	{ 0x0b, 0x3f },
+	{ 0x2e, 0x15 }, /* OVERRIDE */
+	{ 0x30, 0x10 }, /* OVERRIDE */
+	{ 0x45, 0x58 }, /* OVERRIDE */
+	{ 0x48, 0x19 }, /* OVERRIDE */
+	{ 0x52, 0x03 }, /* OVERRIDE */
+	{ 0x53, 0x44 }, /* OVERRIDE */
+	{ 0x6a, 0x4b }, /* OVERRIDE */
+	{ 0x76, 0x00 }, /* OVERRIDE */
+	{ 0x78, 0x18 }, /* OVERRIDE */
+	{ 0x7a, 0x17 }, /* OVERRIDE */
+	{ 0x85, 0x06 }, /* OVERRIDE */
+	{ 0x01, 0x01 }, /* TOP_MASTER_ENABLE */
+	{ 0, 0 }
+};
 
 /* ------------------------------------------------------------------------- */
 
-काष्ठा mxl5007t_state अणु
-	काष्ठा list_head hybrid_tuner_instance_list;
-	काष्ठा tuner_i2c_props i2c_props;
+static struct reg_pair_t reg_pair_rftune[] = {
+	{ 0x0f, 0x00 }, /* abort tune */
+	{ 0x0c, 0x15 },
+	{ 0x0d, 0x40 },
+	{ 0x0e, 0x0e },
+	{ 0x1f, 0x87 }, /* OVERRIDE */
+	{ 0x20, 0x1f }, /* OVERRIDE */
+	{ 0x21, 0x87 }, /* OVERRIDE */
+	{ 0x22, 0x1f }, /* OVERRIDE */
+	{ 0x80, 0x01 }, /* freq dependent */
+	{ 0x0f, 0x01 }, /* start tune */
+	{ 0, 0 }
+};
 
-	काष्ठा mutex lock;
+/* ------------------------------------------------------------------------- */
 
-	काष्ठा mxl5007t_config *config;
+struct mxl5007t_state {
+	struct list_head hybrid_tuner_instance_list;
+	struct tuner_i2c_props i2c_props;
 
-	क्रमागत mxl5007t_chip_version chip_id;
+	struct mutex lock;
 
-	काष्ठा reg_pair_t tab_init[ARRAY_SIZE(init_tab)];
-	काष्ठा reg_pair_t tab_init_cable[ARRAY_SIZE(init_tab_cable)];
-	काष्ठा reg_pair_t tab_rftune[ARRAY_SIZE(reg_pair_rftune)];
+	struct mxl5007t_config *config;
 
-	क्रमागत mxl5007t_अगर_freq अगर_freq;
+	enum mxl5007t_chip_version chip_id;
+
+	struct reg_pair_t tab_init[ARRAY_SIZE(init_tab)];
+	struct reg_pair_t tab_init_cable[ARRAY_SIZE(init_tab_cable)];
+	struct reg_pair_t tab_rftune[ARRAY_SIZE(reg_pair_rftune)];
+
+	enum mxl5007t_if_freq if_freq;
 
 	u32 frequency;
 	u32 bandwidth;
-पूर्ण;
+};
 
 /* ------------------------------------------------------------------------- */
 
-/* called by _init and _rftun to manipulate the रेजिस्टर arrays */
+/* called by _init and _rftun to manipulate the register arrays */
 
-अटल व्योम set_reg_bits(काष्ठा reg_pair_t *reg_pair, u8 reg, u8 mask, u8 val)
-अणु
-	अचिन्हित पूर्णांक i = 0;
+static void set_reg_bits(struct reg_pair_t *reg_pair, u8 reg, u8 mask, u8 val)
+{
+	unsigned int i = 0;
 
-	जबतक (reg_pair[i].reg || reg_pair[i].val) अणु
-		अगर (reg_pair[i].reg == reg) अणु
+	while (reg_pair[i].reg || reg_pair[i].val) {
+		if (reg_pair[i].reg == reg) {
 			reg_pair[i].val &= ~mask;
 			reg_pair[i].val |= val;
-		पूर्ण
+		}
 		i++;
 
-	पूर्ण
-	वापस;
-पूर्ण
+	}
+	return;
+}
 
-अटल व्योम copy_reg_bits(काष्ठा reg_pair_t *reg_pair1,
-			  काष्ठा reg_pair_t *reg_pair2)
-अणु
-	अचिन्हित पूर्णांक i, j;
+static void copy_reg_bits(struct reg_pair_t *reg_pair1,
+			  struct reg_pair_t *reg_pair2)
+{
+	unsigned int i, j;
 
 	i = j = 0;
 
-	जबतक (reg_pair1[i].reg || reg_pair1[i].val) अणु
-		जबतक (reg_pair2[j].reg || reg_pair2[j].val) अणु
-			अगर (reg_pair1[i].reg != reg_pair2[j].reg) अणु
+	while (reg_pair1[i].reg || reg_pair1[i].val) {
+		while (reg_pair2[j].reg || reg_pair2[j].val) {
+			if (reg_pair1[i].reg != reg_pair2[j].reg) {
 				j++;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			reg_pair2[j].val = reg_pair1[i].val;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		i++;
-	पूर्ण
-	वापस;
-पूर्ण
+	}
+	return;
+}
 
 /* ------------------------------------------------------------------------- */
 
-अटल व्योम mxl5007t_set_mode_bits(काष्ठा mxl5007t_state *state,
-				   क्रमागत mxl5007t_mode mode,
-				   s32 अगर_dअगरf_out_level)
-अणु
-	चयन (mode) अणु
-	हाल MxL_MODE_ATSC:
+static void mxl5007t_set_mode_bits(struct mxl5007t_state *state,
+				   enum mxl5007t_mode mode,
+				   s32 if_diff_out_level)
+{
+	switch (mode) {
+	case MxL_MODE_ATSC:
 		set_reg_bits(state->tab_init, 0x06, 0x1f, 0x12);
-		अवरोध;
-	हाल MxL_MODE_DVBT:
+		break;
+	case MxL_MODE_DVBT:
 		set_reg_bits(state->tab_init, 0x06, 0x1f, 0x11);
-		अवरोध;
-	हाल MxL_MODE_ISDBT:
+		break;
+	case MxL_MODE_ISDBT:
 		set_reg_bits(state->tab_init, 0x06, 0x1f, 0x10);
-		अवरोध;
-	हाल MxL_MODE_CABLE:
+		break;
+	case MxL_MODE_CABLE:
 		set_reg_bits(state->tab_init_cable, 0x09, 0xff, 0xc1);
 		set_reg_bits(state->tab_init_cable, 0x0a, 0xff,
-			     8 - अगर_dअगरf_out_level);
+			     8 - if_diff_out_level);
 		set_reg_bits(state->tab_init_cable, 0x0b, 0xff, 0x17);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		mxl_fail(-EINVAL);
-	पूर्ण
-	वापस;
-पूर्ण
+	}
+	return;
+}
 
-अटल व्योम mxl5007t_set_अगर_freq_bits(काष्ठा mxl5007t_state *state,
-				      क्रमागत mxl5007t_अगर_freq अगर_freq,
-				      पूर्णांक invert_अगर)
-अणु
+static void mxl5007t_set_if_freq_bits(struct mxl5007t_state *state,
+				      enum mxl5007t_if_freq if_freq,
+				      int invert_if)
+{
 	u8 val;
 
-	चयन (अगर_freq) अणु
-	हाल MxL_IF_4_MHZ:
+	switch (if_freq) {
+	case MxL_IF_4_MHZ:
 		val = 0x00;
-		अवरोध;
-	हाल MxL_IF_4_5_MHZ:
+		break;
+	case MxL_IF_4_5_MHZ:
 		val = 0x02;
-		अवरोध;
-	हाल MxL_IF_4_57_MHZ:
+		break;
+	case MxL_IF_4_57_MHZ:
 		val = 0x03;
-		अवरोध;
-	हाल MxL_IF_5_MHZ:
+		break;
+	case MxL_IF_5_MHZ:
 		val = 0x04;
-		अवरोध;
-	हाल MxL_IF_5_38_MHZ:
+		break;
+	case MxL_IF_5_38_MHZ:
 		val = 0x05;
-		अवरोध;
-	हाल MxL_IF_6_MHZ:
+		break;
+	case MxL_IF_6_MHZ:
 		val = 0x06;
-		अवरोध;
-	हाल MxL_IF_6_28_MHZ:
+		break;
+	case MxL_IF_6_28_MHZ:
 		val = 0x07;
-		अवरोध;
-	हाल MxL_IF_9_1915_MHZ:
+		break;
+	case MxL_IF_9_1915_MHZ:
 		val = 0x08;
-		अवरोध;
-	हाल MxL_IF_35_25_MHZ:
+		break;
+	case MxL_IF_35_25_MHZ:
 		val = 0x09;
-		अवरोध;
-	हाल MxL_IF_36_15_MHZ:
+		break;
+	case MxL_IF_36_15_MHZ:
 		val = 0x0a;
-		अवरोध;
-	हाल MxL_IF_44_MHZ:
+		break;
+	case MxL_IF_44_MHZ:
 		val = 0x0b;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		mxl_fail(-EINVAL);
-		वापस;
-	पूर्ण
+		return;
+	}
 	set_reg_bits(state->tab_init, 0x02, 0x0f, val);
 
 	/* set inverted IF or normal IF */
-	set_reg_bits(state->tab_init, 0x02, 0x10, invert_अगर ? 0x10 : 0x00);
+	set_reg_bits(state->tab_init, 0x02, 0x10, invert_if ? 0x10 : 0x00);
 
-	state->अगर_freq = अगर_freq;
+	state->if_freq = if_freq;
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल व्योम mxl5007t_set_xtal_freq_bits(काष्ठा mxl5007t_state *state,
-					क्रमागत mxl5007t_xtal_freq xtal_freq)
-अणु
-	चयन (xtal_freq) अणु
-	हाल MxL_XTAL_16_MHZ:
+static void mxl5007t_set_xtal_freq_bits(struct mxl5007t_state *state,
+					enum mxl5007t_xtal_freq xtal_freq)
+{
+	switch (xtal_freq) {
+	case MxL_XTAL_16_MHZ:
 		/* select xtal freq & ref freq */
 		set_reg_bits(state->tab_init, 0x03, 0xf0, 0x00);
 		set_reg_bits(state->tab_init, 0x05, 0x0f, 0x00);
-		अवरोध;
-	हाल MxL_XTAL_20_MHZ:
+		break;
+	case MxL_XTAL_20_MHZ:
 		set_reg_bits(state->tab_init, 0x03, 0xf0, 0x10);
 		set_reg_bits(state->tab_init, 0x05, 0x0f, 0x01);
-		अवरोध;
-	हाल MxL_XTAL_20_25_MHZ:
+		break;
+	case MxL_XTAL_20_25_MHZ:
 		set_reg_bits(state->tab_init, 0x03, 0xf0, 0x20);
 		set_reg_bits(state->tab_init, 0x05, 0x0f, 0x02);
-		अवरोध;
-	हाल MxL_XTAL_20_48_MHZ:
+		break;
+	case MxL_XTAL_20_48_MHZ:
 		set_reg_bits(state->tab_init, 0x03, 0xf0, 0x30);
 		set_reg_bits(state->tab_init, 0x05, 0x0f, 0x03);
-		अवरोध;
-	हाल MxL_XTAL_24_MHZ:
+		break;
+	case MxL_XTAL_24_MHZ:
 		set_reg_bits(state->tab_init, 0x03, 0xf0, 0x40);
 		set_reg_bits(state->tab_init, 0x05, 0x0f, 0x04);
-		अवरोध;
-	हाल MxL_XTAL_25_MHZ:
+		break;
+	case MxL_XTAL_25_MHZ:
 		set_reg_bits(state->tab_init, 0x03, 0xf0, 0x50);
 		set_reg_bits(state->tab_init, 0x05, 0x0f, 0x05);
-		अवरोध;
-	हाल MxL_XTAL_25_14_MHZ:
+		break;
+	case MxL_XTAL_25_14_MHZ:
 		set_reg_bits(state->tab_init, 0x03, 0xf0, 0x60);
 		set_reg_bits(state->tab_init, 0x05, 0x0f, 0x06);
-		अवरोध;
-	हाल MxL_XTAL_27_MHZ:
+		break;
+	case MxL_XTAL_27_MHZ:
 		set_reg_bits(state->tab_init, 0x03, 0xf0, 0x70);
 		set_reg_bits(state->tab_init, 0x05, 0x0f, 0x07);
-		अवरोध;
-	हाल MxL_XTAL_28_8_MHZ:
+		break;
+	case MxL_XTAL_28_8_MHZ:
 		set_reg_bits(state->tab_init, 0x03, 0xf0, 0x80);
 		set_reg_bits(state->tab_init, 0x05, 0x0f, 0x08);
-		अवरोध;
-	हाल MxL_XTAL_32_MHZ:
+		break;
+	case MxL_XTAL_32_MHZ:
 		set_reg_bits(state->tab_init, 0x03, 0xf0, 0x90);
 		set_reg_bits(state->tab_init, 0x05, 0x0f, 0x09);
-		अवरोध;
-	हाल MxL_XTAL_40_MHZ:
+		break;
+	case MxL_XTAL_40_MHZ:
 		set_reg_bits(state->tab_init, 0x03, 0xf0, 0xa0);
 		set_reg_bits(state->tab_init, 0x05, 0x0f, 0x0a);
-		अवरोध;
-	हाल MxL_XTAL_44_MHZ:
+		break;
+	case MxL_XTAL_44_MHZ:
 		set_reg_bits(state->tab_init, 0x03, 0xf0, 0xb0);
 		set_reg_bits(state->tab_init, 0x05, 0x0f, 0x0b);
-		अवरोध;
-	हाल MxL_XTAL_48_MHZ:
+		break;
+	case MxL_XTAL_48_MHZ:
 		set_reg_bits(state->tab_init, 0x03, 0xf0, 0xc0);
 		set_reg_bits(state->tab_init, 0x05, 0x0f, 0x0c);
-		अवरोध;
-	हाल MxL_XTAL_49_3811_MHZ:
+		break;
+	case MxL_XTAL_49_3811_MHZ:
 		set_reg_bits(state->tab_init, 0x03, 0xf0, 0xd0);
 		set_reg_bits(state->tab_init, 0x05, 0x0f, 0x0d);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		mxl_fail(-EINVAL);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल काष्ठा reg_pair_t *mxl5007t_calc_init_regs(काष्ठा mxl5007t_state *state,
-						  क्रमागत mxl5007t_mode mode)
-अणु
-	काष्ठा mxl5007t_config *cfg = state->config;
+static struct reg_pair_t *mxl5007t_calc_init_regs(struct mxl5007t_state *state,
+						  enum mxl5007t_mode mode)
+{
+	struct mxl5007t_config *cfg = state->config;
 
-	स_नकल(&state->tab_init, &init_tab, माप(init_tab));
-	स_नकल(&state->tab_init_cable, &init_tab_cable, माप(init_tab_cable));
+	memcpy(&state->tab_init, &init_tab, sizeof(init_tab));
+	memcpy(&state->tab_init_cable, &init_tab_cable, sizeof(init_tab_cable));
 
-	mxl5007t_set_mode_bits(state, mode, cfg->अगर_dअगरf_out_level);
-	mxl5007t_set_अगर_freq_bits(state, cfg->अगर_freq_hz, cfg->invert_अगर);
+	mxl5007t_set_mode_bits(state, mode, cfg->if_diff_out_level);
+	mxl5007t_set_if_freq_bits(state, cfg->if_freq_hz, cfg->invert_if);
 	mxl5007t_set_xtal_freq_bits(state, cfg->xtal_freq_hz);
 
 	set_reg_bits(state->tab_init, 0x03, 0x08, cfg->clk_out_enable << 3);
 	set_reg_bits(state->tab_init, 0x03, 0x07, cfg->clk_out_amp);
 
-	अगर (mode >= MxL_MODE_CABLE) अणु
+	if (mode >= MxL_MODE_CABLE) {
 		copy_reg_bits(state->tab_init, state->tab_init_cable);
-		वापस state->tab_init_cable;
-	पूर्ण अन्यथा
-		वापस state->tab_init;
-पूर्ण
+		return state->tab_init_cable;
+	} else
+		return state->tab_init;
+}
 
 /* ------------------------------------------------------------------------- */
 
-क्रमागत mxl5007t_bw_mhz अणु
+enum mxl5007t_bw_mhz {
 	MxL_BW_6MHz = 6,
 	MxL_BW_7MHz = 7,
 	MxL_BW_8MHz = 8,
-पूर्ण;
+};
 
-अटल व्योम mxl5007t_set_bw_bits(काष्ठा mxl5007t_state *state,
-				 क्रमागत mxl5007t_bw_mhz bw)
-अणु
+static void mxl5007t_set_bw_bits(struct mxl5007t_state *state,
+				 enum mxl5007t_bw_mhz bw)
+{
 	u8 val;
 
-	चयन (bw) अणु
-	हाल MxL_BW_6MHz:
+	switch (bw) {
+	case MxL_BW_6MHz:
 		val = 0x15; /* set DIG_MODEINDEX, DIG_MODEINDEX_A,
 			     * and DIG_MODEINDEX_CSF */
-		अवरोध;
-	हाल MxL_BW_7MHz:
+		break;
+	case MxL_BW_7MHz:
 		val = 0x2a;
-		अवरोध;
-	हाल MxL_BW_8MHz:
+		break;
+	case MxL_BW_8MHz:
 		val = 0x3f;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		mxl_fail(-EINVAL);
-		वापस;
-	पूर्ण
+		return;
+	}
 	set_reg_bits(state->tab_rftune, 0x0c, 0x3f, val);
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल काष्ठा
-reg_pair_t *mxl5007t_calc_rf_tune_regs(काष्ठा mxl5007t_state *state,
-				       u32 rf_freq, क्रमागत mxl5007t_bw_mhz bw)
-अणु
+static struct
+reg_pair_t *mxl5007t_calc_rf_tune_regs(struct mxl5007t_state *state,
+				       u32 rf_freq, enum mxl5007t_bw_mhz bw)
+{
 	u32 dig_rf_freq = 0;
 	u32 temp;
-	u32 frac_भागider = 1000000;
-	अचिन्हित पूर्णांक i;
+	u32 frac_divider = 1000000;
+	unsigned int i;
 
-	स_नकल(&state->tab_rftune, &reg_pair_rftune, माप(reg_pair_rftune));
+	memcpy(&state->tab_rftune, &reg_pair_rftune, sizeof(reg_pair_rftune));
 
 	mxl5007t_set_bw_bits(state, bw);
 
-	/* Convert RF frequency पूर्णांकo 16 bits =>
-	 * 10 bit पूर्णांकeger (MHz) + 6 bit fraction */
+	/* Convert RF frequency into 16 bits =>
+	 * 10 bit integer (MHz) + 6 bit fraction */
 	dig_rf_freq = rf_freq / MHz;
 
 	temp = rf_freq % MHz;
 
-	क्रम (i = 0; i < 6; i++) अणु
+	for (i = 0; i < 6; i++) {
 		dig_rf_freq <<= 1;
-		frac_भागider /= 2;
-		अगर (temp > frac_भागider) अणु
-			temp -= frac_भागider;
+		frac_divider /= 2;
+		if (temp > frac_divider) {
+			temp -= frac_divider;
 			dig_rf_freq++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* add to have shअगरt center poपूर्णांक by 7.8124 kHz */
-	अगर (temp > 7812)
+	/* add to have shift center point by 7.8124 kHz */
+	if (temp > 7812)
 		dig_rf_freq++;
 
 	set_reg_bits(state->tab_rftune, 0x0d, 0xff, (u8) dig_rf_freq);
 	set_reg_bits(state->tab_rftune, 0x0e, 0xff, (u8) (dig_rf_freq >> 8));
 
-	अगर (rf_freq >= 333000000)
+	if (rf_freq >= 333000000)
 		set_reg_bits(state->tab_rftune, 0x80, 0x40, 0x40);
 
-	वापस state->tab_rftune;
-पूर्ण
+	return state->tab_rftune;
+}
 
 /* ------------------------------------------------------------------------- */
 
-अटल पूर्णांक mxl5007t_ग_लिखो_reg(काष्ठा mxl5007t_state *state, u8 reg, u8 val)
-अणु
-	u8 buf[] = अणु reg, val पूर्ण;
-	काष्ठा i2c_msg msg = अणु .addr = state->i2c_props.addr, .flags = 0,
-			       .buf = buf, .len = 2 पूर्ण;
-	पूर्णांक ret;
+static int mxl5007t_write_reg(struct mxl5007t_state *state, u8 reg, u8 val)
+{
+	u8 buf[] = { reg, val };
+	struct i2c_msg msg = { .addr = state->i2c_props.addr, .flags = 0,
+			       .buf = buf, .len = 2 };
+	int ret;
 
 	ret = i2c_transfer(state->i2c_props.adap, &msg, 1);
-	अगर (ret != 1) अणु
+	if (ret != 1) {
 		mxl_err("failed!");
-		वापस -EREMOTEIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EREMOTEIO;
+	}
+	return 0;
+}
 
-अटल पूर्णांक mxl5007t_ग_लिखो_regs(काष्ठा mxl5007t_state *state,
-			       काष्ठा reg_pair_t *reg_pair)
-अणु
-	अचिन्हित पूर्णांक i = 0;
-	पूर्णांक ret = 0;
+static int mxl5007t_write_regs(struct mxl5007t_state *state,
+			       struct reg_pair_t *reg_pair)
+{
+	unsigned int i = 0;
+	int ret = 0;
 
-	जबतक ((ret == 0) && (reg_pair[i].reg || reg_pair[i].val)) अणु
-		ret = mxl5007t_ग_लिखो_reg(state,
+	while ((ret == 0) && (reg_pair[i].reg || reg_pair[i].val)) {
+		ret = mxl5007t_write_reg(state,
 					 reg_pair[i].reg, reg_pair[i].val);
 		i++;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक mxl5007t_पढ़ो_reg(काष्ठा mxl5007t_state *state, u8 reg, u8 *val)
-अणु
-	u8 buf[2] = अणु 0xfb, reg पूर्ण;
-	काष्ठा i2c_msg msg[] = अणु
-		अणु .addr = state->i2c_props.addr, .flags = 0,
-		  .buf = buf, .len = 2 पूर्ण,
-		अणु .addr = state->i2c_props.addr, .flags = I2C_M_RD,
-		  .buf = val, .len = 1 पूर्ण,
-	पूर्ण;
-	पूर्णांक ret;
+static int mxl5007t_read_reg(struct mxl5007t_state *state, u8 reg, u8 *val)
+{
+	u8 buf[2] = { 0xfb, reg };
+	struct i2c_msg msg[] = {
+		{ .addr = state->i2c_props.addr, .flags = 0,
+		  .buf = buf, .len = 2 },
+		{ .addr = state->i2c_props.addr, .flags = I2C_M_RD,
+		  .buf = val, .len = 1 },
+	};
+	int ret;
 
 	ret = i2c_transfer(state->i2c_props.adap, msg, 2);
-	अगर (ret != 2) अणु
+	if (ret != 2) {
 		mxl_err("failed!");
-		वापस -EREMOTEIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EREMOTEIO;
+	}
+	return 0;
+}
 
-अटल पूर्णांक mxl5007t_soft_reset(काष्ठा mxl5007t_state *state)
-अणु
+static int mxl5007t_soft_reset(struct mxl5007t_state *state)
+{
 	u8 d = 0xff;
-	काष्ठा i2c_msg msg = अणु
+	struct i2c_msg msg = {
 		.addr = state->i2c_props.addr, .flags = 0,
 		.buf = &d, .len = 1
-	पूर्ण;
-	पूर्णांक ret = i2c_transfer(state->i2c_props.adap, &msg, 1);
+	};
+	int ret = i2c_transfer(state->i2c_props.adap, &msg, 1);
 
-	अगर (ret != 1) अणु
+	if (ret != 1) {
 		mxl_err("failed!");
-		वापस -EREMOTEIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EREMOTEIO;
+	}
+	return 0;
+}
 
-अटल पूर्णांक mxl5007t_tuner_init(काष्ठा mxl5007t_state *state,
-			       क्रमागत mxl5007t_mode mode)
-अणु
-	काष्ठा reg_pair_t *init_regs;
-	पूर्णांक ret;
+static int mxl5007t_tuner_init(struct mxl5007t_state *state,
+			       enum mxl5007t_mode mode)
+{
+	struct reg_pair_t *init_regs;
+	int ret;
 
 	/* calculate initialization reg array */
 	init_regs = mxl5007t_calc_init_regs(state, mode);
 
-	ret = mxl5007t_ग_लिखो_regs(state, init_regs);
-	अगर (mxl_fail(ret))
-		जाओ fail;
+	ret = mxl5007t_write_regs(state, init_regs);
+	if (mxl_fail(ret))
+		goto fail;
 	mdelay(1);
 fail:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mxl5007t_tuner_rf_tune(काष्ठा mxl5007t_state *state, u32 rf_freq_hz,
-				  क्रमागत mxl5007t_bw_mhz bw)
-अणु
-	काष्ठा reg_pair_t *rf_tune_regs;
-	पूर्णांक ret;
+static int mxl5007t_tuner_rf_tune(struct mxl5007t_state *state, u32 rf_freq_hz,
+				  enum mxl5007t_bw_mhz bw)
+{
+	struct reg_pair_t *rf_tune_regs;
+	int ret;
 
 	/* calculate channel change reg array */
 	rf_tune_regs = mxl5007t_calc_rf_tune_regs(state, rf_freq_hz, bw);
 
-	ret = mxl5007t_ग_लिखो_regs(state, rf_tune_regs);
-	अगर (mxl_fail(ret))
-		जाओ fail;
+	ret = mxl5007t_write_regs(state, rf_tune_regs);
+	if (mxl_fail(ret))
+		goto fail;
 	msleep(3);
 fail:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* ------------------------------------------------------------------------- */
 
-अटल पूर्णांक mxl5007t_synth_lock_status(काष्ठा mxl5007t_state *state,
-				      पूर्णांक *rf_locked, पूर्णांक *ref_locked)
-अणु
+static int mxl5007t_synth_lock_status(struct mxl5007t_state *state,
+				      int *rf_locked, int *ref_locked)
+{
 	u8 d;
-	पूर्णांक ret;
+	int ret;
 
 	*rf_locked = 0;
 	*ref_locked = 0;
 
-	ret = mxl5007t_पढ़ो_reg(state, 0xd8, &d);
-	अगर (mxl_fail(ret))
-		जाओ fail;
+	ret = mxl5007t_read_reg(state, 0xd8, &d);
+	if (mxl_fail(ret))
+		goto fail;
 
-	अगर ((d & 0x0c) == 0x0c)
+	if ((d & 0x0c) == 0x0c)
 		*rf_locked = 1;
 
-	अगर ((d & 0x03) == 0x03)
+	if ((d & 0x03) == 0x03)
 		*ref_locked = 1;
 fail:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* ------------------------------------------------------------------------- */
 
-अटल पूर्णांक mxl5007t_get_status(काष्ठा dvb_frontend *fe, u32 *status)
-अणु
-	काष्ठा mxl5007t_state *state = fe->tuner_priv;
-	पूर्णांक rf_locked, ref_locked, ret;
+static int mxl5007t_get_status(struct dvb_frontend *fe, u32 *status)
+{
+	struct mxl5007t_state *state = fe->tuner_priv;
+	int rf_locked, ref_locked, ret;
 
 	*status = 0;
 
-	अगर (fe->ops.i2c_gate_ctrl)
+	if (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
 
 	ret = mxl5007t_synth_lock_status(state, &rf_locked, &ref_locked);
-	अगर (mxl_fail(ret))
-		जाओ fail;
+	if (mxl_fail(ret))
+		goto fail;
 	mxl_debug("%s%s", rf_locked ? "rf locked " : "",
 		  ref_locked ? "ref locked" : "");
 
-	अगर ((rf_locked) || (ref_locked))
+	if ((rf_locked) || (ref_locked))
 		*status |= TUNER_STATUS_LOCKED;
 fail:
-	अगर (fe->ops.i2c_gate_ctrl)
+	if (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 0);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* ------------------------------------------------------------------------- */
 
-अटल पूर्णांक mxl5007t_set_params(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
-	u32 delsys = c->delivery_प्रणाली;
-	काष्ठा mxl5007t_state *state = fe->tuner_priv;
-	क्रमागत mxl5007t_bw_mhz bw;
-	क्रमागत mxl5007t_mode mode;
-	पूर्णांक ret;
+static int mxl5007t_set_params(struct dvb_frontend *fe)
+{
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+	u32 delsys = c->delivery_system;
+	struct mxl5007t_state *state = fe->tuner_priv;
+	enum mxl5007t_bw_mhz bw;
+	enum mxl5007t_mode mode;
+	int ret;
 	u32 freq = c->frequency;
 
-	चयन (delsys) अणु
-	हाल SYS_ATSC:
+	switch (delsys) {
+	case SYS_ATSC:
 		mode = MxL_MODE_ATSC;
 		bw = MxL_BW_6MHz;
-		अवरोध;
-	हाल SYS_DVBC_ANNEX_B:
+		break;
+	case SYS_DVBC_ANNEX_B:
 		mode = MxL_MODE_CABLE;
 		bw = MxL_BW_6MHz;
-		अवरोध;
-	हाल SYS_DVBT:
-	हाल SYS_DVBT2:
+		break;
+	case SYS_DVBT:
+	case SYS_DVBT2:
 		mode = MxL_MODE_DVBT;
-		चयन (c->bandwidth_hz) अणु
-		हाल 6000000:
+		switch (c->bandwidth_hz) {
+		case 6000000:
 			bw = MxL_BW_6MHz;
-			अवरोध;
-		हाल 7000000:
+			break;
+		case 7000000:
 			bw = MxL_BW_7MHz;
-			अवरोध;
-		हाल 8000000:
+			break;
+		case 8000000:
 			bw = MxL_BW_8MHz;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	शेष:
+			break;
+		default:
+			return -EINVAL;
+		}
+		break;
+	default:
 		mxl_err("modulation type not supported!");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (fe->ops.i2c_gate_ctrl)
+	if (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
 
 	mutex_lock(&state->lock);
 
 	ret = mxl5007t_tuner_init(state, mode);
-	अगर (mxl_fail(ret))
-		जाओ fail;
+	if (mxl_fail(ret))
+		goto fail;
 
 	ret = mxl5007t_tuner_rf_tune(state, freq, bw);
-	अगर (mxl_fail(ret))
-		जाओ fail;
+	if (mxl_fail(ret))
+		goto fail;
 
 	state->frequency = freq;
 	state->bandwidth = c->bandwidth_hz;
 fail:
 	mutex_unlock(&state->lock);
 
-	अगर (fe->ops.i2c_gate_ctrl)
+	if (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 0);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* ------------------------------------------------------------------------- */
 
-अटल पूर्णांक mxl5007t_init(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा mxl5007t_state *state = fe->tuner_priv;
-	पूर्णांक ret;
+static int mxl5007t_init(struct dvb_frontend *fe)
+{
+	struct mxl5007t_state *state = fe->tuner_priv;
+	int ret;
 
-	अगर (fe->ops.i2c_gate_ctrl)
+	if (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
 
 	/* wake from standby */
-	ret = mxl5007t_ग_लिखो_reg(state, 0x01, 0x01);
+	ret = mxl5007t_write_reg(state, 0x01, 0x01);
 	mxl_fail(ret);
 
-	अगर (fe->ops.i2c_gate_ctrl)
+	if (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 0);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mxl5007t_sleep(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा mxl5007t_state *state = fe->tuner_priv;
-	पूर्णांक ret;
+static int mxl5007t_sleep(struct dvb_frontend *fe)
+{
+	struct mxl5007t_state *state = fe->tuner_priv;
+	int ret;
 
-	अगर (fe->ops.i2c_gate_ctrl)
+	if (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
 
 	/* enter standby mode */
-	ret = mxl5007t_ग_लिखो_reg(state, 0x01, 0x00);
+	ret = mxl5007t_write_reg(state, 0x01, 0x00);
 	mxl_fail(ret);
-	ret = mxl5007t_ग_लिखो_reg(state, 0x0f, 0x00);
+	ret = mxl5007t_write_reg(state, 0x0f, 0x00);
 	mxl_fail(ret);
 
-	अगर (fe->ops.i2c_gate_ctrl)
+	if (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 0);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* ------------------------------------------------------------------------- */
 
-अटल पूर्णांक mxl5007t_get_frequency(काष्ठा dvb_frontend *fe, u32 *frequency)
-अणु
-	काष्ठा mxl5007t_state *state = fe->tuner_priv;
+static int mxl5007t_get_frequency(struct dvb_frontend *fe, u32 *frequency)
+{
+	struct mxl5007t_state *state = fe->tuner_priv;
 	*frequency = state->frequency;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mxl5007t_get_bandwidth(काष्ठा dvb_frontend *fe, u32 *bandwidth)
-अणु
-	काष्ठा mxl5007t_state *state = fe->tuner_priv;
+static int mxl5007t_get_bandwidth(struct dvb_frontend *fe, u32 *bandwidth)
+{
+	struct mxl5007t_state *state = fe->tuner_priv;
 	*bandwidth = state->bandwidth;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mxl5007t_get_अगर_frequency(काष्ठा dvb_frontend *fe, u32 *frequency)
-अणु
-	काष्ठा mxl5007t_state *state = fe->tuner_priv;
+static int mxl5007t_get_if_frequency(struct dvb_frontend *fe, u32 *frequency)
+{
+	struct mxl5007t_state *state = fe->tuner_priv;
 
 	*frequency = 0;
 
-	चयन (state->अगर_freq) अणु
-	हाल MxL_IF_4_MHZ:
+	switch (state->if_freq) {
+	case MxL_IF_4_MHZ:
 		*frequency = 4000000;
-		अवरोध;
-	हाल MxL_IF_4_5_MHZ:
+		break;
+	case MxL_IF_4_5_MHZ:
 		*frequency = 4500000;
-		अवरोध;
-	हाल MxL_IF_4_57_MHZ:
+		break;
+	case MxL_IF_4_57_MHZ:
 		*frequency = 4570000;
-		अवरोध;
-	हाल MxL_IF_5_MHZ:
+		break;
+	case MxL_IF_5_MHZ:
 		*frequency = 5000000;
-		अवरोध;
-	हाल MxL_IF_5_38_MHZ:
+		break;
+	case MxL_IF_5_38_MHZ:
 		*frequency = 5380000;
-		अवरोध;
-	हाल MxL_IF_6_MHZ:
+		break;
+	case MxL_IF_6_MHZ:
 		*frequency = 6000000;
-		अवरोध;
-	हाल MxL_IF_6_28_MHZ:
+		break;
+	case MxL_IF_6_28_MHZ:
 		*frequency = 6280000;
-		अवरोध;
-	हाल MxL_IF_9_1915_MHZ:
+		break;
+	case MxL_IF_9_1915_MHZ:
 		*frequency = 9191500;
-		अवरोध;
-	हाल MxL_IF_35_25_MHZ:
+		break;
+	case MxL_IF_35_25_MHZ:
 		*frequency = 35250000;
-		अवरोध;
-	हाल MxL_IF_36_15_MHZ:
+		break;
+	case MxL_IF_36_15_MHZ:
 		*frequency = 36150000;
-		अवरोध;
-	हाल MxL_IF_44_MHZ:
+		break;
+	case MxL_IF_44_MHZ:
 		*frequency = 44000000;
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	}
+	return 0;
+}
 
-अटल व्योम mxl5007t_release(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा mxl5007t_state *state = fe->tuner_priv;
+static void mxl5007t_release(struct dvb_frontend *fe)
+{
+	struct mxl5007t_state *state = fe->tuner_priv;
 
 	mutex_lock(&mxl5007t_list_mutex);
 
-	अगर (state)
+	if (state)
 		hybrid_tuner_release_state(state);
 
 	mutex_unlock(&mxl5007t_list_mutex);
 
-	fe->tuner_priv = शून्य;
-पूर्ण
+	fe->tuner_priv = NULL;
+}
 
 /* ------------------------------------------------------------------------- */
 
-अटल स्थिर काष्ठा dvb_tuner_ops mxl5007t_tuner_ops = अणु
-	.info = अणु
+static const struct dvb_tuner_ops mxl5007t_tuner_ops = {
+	.info = {
 		.name = "MaxLinear MxL5007T",
-	पूर्ण,
+	},
 	.init              = mxl5007t_init,
 	.sleep             = mxl5007t_sleep,
 	.set_params        = mxl5007t_set_params,
@@ -789,134 +788,134 @@ fail:
 	.get_frequency     = mxl5007t_get_frequency,
 	.get_bandwidth     = mxl5007t_get_bandwidth,
 	.release           = mxl5007t_release,
-	.get_अगर_frequency  = mxl5007t_get_अगर_frequency,
-पूर्ण;
+	.get_if_frequency  = mxl5007t_get_if_frequency,
+};
 
-अटल पूर्णांक mxl5007t_get_chip_id(काष्ठा mxl5007t_state *state)
-अणु
-	अक्षर *name;
-	पूर्णांक ret;
+static int mxl5007t_get_chip_id(struct mxl5007t_state *state)
+{
+	char *name;
+	int ret;
 	u8 id;
 
-	ret = mxl5007t_पढ़ो_reg(state, 0xd9, &id);
-	अगर (mxl_fail(ret))
-		जाओ fail;
+	ret = mxl5007t_read_reg(state, 0xd9, &id);
+	if (mxl_fail(ret))
+		goto fail;
 
-	चयन (id) अणु
-	हाल MxL_5007_V1_F1:
+	switch (id) {
+	case MxL_5007_V1_F1:
 		name = "MxL5007.v1.f1";
-		अवरोध;
-	हाल MxL_5007_V1_F2:
+		break;
+	case MxL_5007_V1_F2:
 		name = "MxL5007.v1.f2";
-		अवरोध;
-	हाल MxL_5007_V2_100_F1:
+		break;
+	case MxL_5007_V2_100_F1:
 		name = "MxL5007.v2.100.f1";
-		अवरोध;
-	हाल MxL_5007_V2_100_F2:
+		break;
+	case MxL_5007_V2_100_F2:
 		name = "MxL5007.v2.100.f2";
-		अवरोध;
-	हाल MxL_5007_V2_200_F1:
+		break;
+	case MxL_5007_V2_200_F1:
 		name = "MxL5007.v2.200.f1";
-		अवरोध;
-	हाल MxL_5007_V2_200_F2:
+		break;
+	case MxL_5007_V2_200_F2:
 		name = "MxL5007.v2.200.f2";
-		अवरोध;
-	हाल MxL_5007_V4:
+		break;
+	case MxL_5007_V4:
 		name = "MxL5007T.v4";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		name = "MxL5007T";
-		prपूर्णांकk(KERN_WARNING "%s: unknown rev (%02x)\n", __func__, id);
+		printk(KERN_WARNING "%s: unknown rev (%02x)\n", __func__, id);
 		id = MxL_UNKNOWN_ID;
-	पूर्ण
+	}
 	state->chip_id = id;
 	mxl_info("%s detected @ %d-%04x", name,
 		 i2c_adapter_id(state->i2c_props.adap),
 		 state->i2c_props.addr);
-	वापस 0;
+	return 0;
 fail:
 	mxl_warn("unable to identify device @ %d-%04x",
 		 i2c_adapter_id(state->i2c_props.adap),
 		 state->i2c_props.addr);
 
 	state->chip_id = MxL_UNKNOWN_ID;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा dvb_frontend *mxl5007t_attach(काष्ठा dvb_frontend *fe,
-				     काष्ठा i2c_adapter *i2c, u8 addr,
-				     काष्ठा mxl5007t_config *cfg)
-अणु
-	काष्ठा mxl5007t_state *state = शून्य;
-	पूर्णांक instance, ret;
+struct dvb_frontend *mxl5007t_attach(struct dvb_frontend *fe,
+				     struct i2c_adapter *i2c, u8 addr,
+				     struct mxl5007t_config *cfg)
+{
+	struct mxl5007t_state *state = NULL;
+	int instance, ret;
 
 	mutex_lock(&mxl5007t_list_mutex);
-	instance = hybrid_tuner_request_state(काष्ठा mxl5007t_state, state,
+	instance = hybrid_tuner_request_state(struct mxl5007t_state, state,
 					      hybrid_tuner_instance_list,
 					      i2c, addr, "mxl5007t");
-	चयन (instance) अणु
-	हाल 0:
-		जाओ fail;
-	हाल 1:
+	switch (instance) {
+	case 0:
+		goto fail;
+	case 1:
 		/* new tuner instance */
 		state->config = cfg;
 
 		mutex_init(&state->lock);
 
-		अगर (fe->ops.i2c_gate_ctrl)
+		if (fe->ops.i2c_gate_ctrl)
 			fe->ops.i2c_gate_ctrl(fe, 1);
 
 		ret = mxl5007t_get_chip_id(state);
 
-		अगर (fe->ops.i2c_gate_ctrl)
+		if (fe->ops.i2c_gate_ctrl)
 			fe->ops.i2c_gate_ctrl(fe, 0);
 
-		/* check वापस value of mxl5007t_get_chip_id */
-		अगर (mxl_fail(ret))
-			जाओ fail;
-		अवरोध;
-	शेष:
+		/* check return value of mxl5007t_get_chip_id */
+		if (mxl_fail(ret))
+			goto fail;
+		break;
+	default:
 		/* existing tuner instance */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (fe->ops.i2c_gate_ctrl)
+	if (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
 
 	ret = mxl5007t_soft_reset(state);
 
-	अगर (fe->ops.i2c_gate_ctrl)
+	if (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 0);
 
-	अगर (mxl_fail(ret))
-		जाओ fail;
+	if (mxl_fail(ret))
+		goto fail;
 
-	अगर (fe->ops.i2c_gate_ctrl)
+	if (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
 
-	ret = mxl5007t_ग_लिखो_reg(state, 0x04,
+	ret = mxl5007t_write_reg(state, 0x04,
 		state->config->loop_thru_enable);
 
-	अगर (fe->ops.i2c_gate_ctrl)
+	if (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 0);
 
-	अगर (mxl_fail(ret))
-		जाओ fail;
+	if (mxl_fail(ret))
+		goto fail;
 
 	fe->tuner_priv = state;
 
 	mutex_unlock(&mxl5007t_list_mutex);
 
-	स_नकल(&fe->ops.tuner_ops, &mxl5007t_tuner_ops,
-	       माप(काष्ठा dvb_tuner_ops));
+	memcpy(&fe->ops.tuner_ops, &mxl5007t_tuner_ops,
+	       sizeof(struct dvb_tuner_ops));
 
-	वापस fe;
+	return fe;
 fail:
 	mutex_unlock(&mxl5007t_list_mutex);
 
 	mxl5007t_release(fe);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(mxl5007t_attach);
 MODULE_DESCRIPTION("MaxLinear MxL5007T Silicon IC tuner driver");
 MODULE_AUTHOR("Michael Krufky <mkrufky@linuxtv.org>");

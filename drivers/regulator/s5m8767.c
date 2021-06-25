@@ -1,30 +1,29 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
 // Copyright (c) 2011 Samsung Electronics Co., Ltd
 //              http://www.samsung.com
 
-#समावेश <linux/err.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regulator/driver.h>
-#समावेश <linux/regulator/machine.h>
-#समावेश <linux/mfd/samsung/core.h>
-#समावेश <linux/mfd/samsung/s5m8767.h>
-#समावेश <linux/regulator/of_regulator.h>
-#समावेश <linux/regmap.h>
+#include <linux/err.h>
+#include <linux/of_gpio.h>
+#include <linux/gpio/consumer.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/regulator/driver.h>
+#include <linux/regulator/machine.h>
+#include <linux/mfd/samsung/core.h>
+#include <linux/mfd/samsung/s5m8767.h>
+#include <linux/regulator/of_regulator.h>
+#include <linux/regmap.h>
 
-#घोषणा S5M8767_OPMODE_NORMAL_MODE 0x1
+#define S5M8767_OPMODE_NORMAL_MODE 0x1
 
-काष्ठा s5m8767_info अणु
-	काष्ठा device *dev;
-	काष्ठा sec_pmic_dev *iodev;
-	पूर्णांक num_regulators;
-	काष्ठा sec_opmode_data *opmode;
+struct s5m8767_info {
+	struct device *dev;
+	struct sec_pmic_dev *iodev;
+	int num_regulators;
+	struct sec_opmode_data *opmode;
 
-	पूर्णांक ramp_delay;
+	int ramp_delay;
 	bool buck2_ramp;
 	bool buck3_ramp;
 	bool buck4_ramp;
@@ -35,76 +34,76 @@
 	u8 buck2_vol[8];
 	u8 buck3_vol[8];
 	u8 buck4_vol[8];
-	पूर्णांक buck_gpios[3];
-	पूर्णांक buck_ds[3];
-	पूर्णांक buck_gpioindex;
-पूर्ण;
+	int buck_gpios[3];
+	int buck_ds[3];
+	int buck_gpioindex;
+};
 
-काष्ठा sec_voltage_desc अणु
-	पूर्णांक max;
-	पूर्णांक min;
-	पूर्णांक step;
-पूर्ण;
+struct sec_voltage_desc {
+	int max;
+	int min;
+	int step;
+};
 
-अटल स्थिर काष्ठा sec_voltage_desc buck_voltage_val1 = अणु
+static const struct sec_voltage_desc buck_voltage_val1 = {
 	.max = 2225000,
 	.min =  650000,
 	.step =   6250,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sec_voltage_desc buck_voltage_val2 = अणु
+static const struct sec_voltage_desc buck_voltage_val2 = {
 	.max = 1600000,
 	.min =  600000,
 	.step =   6250,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sec_voltage_desc buck_voltage_val3 = अणु
+static const struct sec_voltage_desc buck_voltage_val3 = {
 	.max = 3000000,
 	.min =  750000,
 	.step =  12500,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sec_voltage_desc lकरो_voltage_val1 = अणु
+static const struct sec_voltage_desc ldo_voltage_val1 = {
 	.max = 3950000,
 	.min =  800000,
 	.step =  50000,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sec_voltage_desc lकरो_voltage_val2 = अणु
+static const struct sec_voltage_desc ldo_voltage_val2 = {
 	.max = 2375000,
 	.min =  800000,
 	.step =  25000,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sec_voltage_desc *reg_voltage_map[] = अणु
-	[S5M8767_LDO1] = &lकरो_voltage_val2,
-	[S5M8767_LDO2] = &lकरो_voltage_val2,
-	[S5M8767_LDO3] = &lकरो_voltage_val1,
-	[S5M8767_LDO4] = &lकरो_voltage_val1,
-	[S5M8767_LDO5] = &lकरो_voltage_val1,
-	[S5M8767_LDO6] = &lकरो_voltage_val2,
-	[S5M8767_LDO7] = &lकरो_voltage_val2,
-	[S5M8767_LDO8] = &lकरो_voltage_val2,
-	[S5M8767_LDO9] = &lकरो_voltage_val1,
-	[S5M8767_LDO10] = &lकरो_voltage_val1,
-	[S5M8767_LDO11] = &lकरो_voltage_val1,
-	[S5M8767_LDO12] = &lकरो_voltage_val1,
-	[S5M8767_LDO13] = &lकरो_voltage_val1,
-	[S5M8767_LDO14] = &lकरो_voltage_val1,
-	[S5M8767_LDO15] = &lकरो_voltage_val2,
-	[S5M8767_LDO16] = &lकरो_voltage_val1,
-	[S5M8767_LDO17] = &lकरो_voltage_val1,
-	[S5M8767_LDO18] = &lकरो_voltage_val1,
-	[S5M8767_LDO19] = &lकरो_voltage_val1,
-	[S5M8767_LDO20] = &lकरो_voltage_val1,
-	[S5M8767_LDO21] = &lकरो_voltage_val1,
-	[S5M8767_LDO22] = &lकरो_voltage_val1,
-	[S5M8767_LDO23] = &lकरो_voltage_val1,
-	[S5M8767_LDO24] = &lकरो_voltage_val1,
-	[S5M8767_LDO25] = &lकरो_voltage_val1,
-	[S5M8767_LDO26] = &lकरो_voltage_val1,
-	[S5M8767_LDO27] = &lकरो_voltage_val1,
-	[S5M8767_LDO28] = &lकरो_voltage_val1,
+static const struct sec_voltage_desc *reg_voltage_map[] = {
+	[S5M8767_LDO1] = &ldo_voltage_val2,
+	[S5M8767_LDO2] = &ldo_voltage_val2,
+	[S5M8767_LDO3] = &ldo_voltage_val1,
+	[S5M8767_LDO4] = &ldo_voltage_val1,
+	[S5M8767_LDO5] = &ldo_voltage_val1,
+	[S5M8767_LDO6] = &ldo_voltage_val2,
+	[S5M8767_LDO7] = &ldo_voltage_val2,
+	[S5M8767_LDO8] = &ldo_voltage_val2,
+	[S5M8767_LDO9] = &ldo_voltage_val1,
+	[S5M8767_LDO10] = &ldo_voltage_val1,
+	[S5M8767_LDO11] = &ldo_voltage_val1,
+	[S5M8767_LDO12] = &ldo_voltage_val1,
+	[S5M8767_LDO13] = &ldo_voltage_val1,
+	[S5M8767_LDO14] = &ldo_voltage_val1,
+	[S5M8767_LDO15] = &ldo_voltage_val2,
+	[S5M8767_LDO16] = &ldo_voltage_val1,
+	[S5M8767_LDO17] = &ldo_voltage_val1,
+	[S5M8767_LDO18] = &ldo_voltage_val1,
+	[S5M8767_LDO19] = &ldo_voltage_val1,
+	[S5M8767_LDO20] = &ldo_voltage_val1,
+	[S5M8767_LDO21] = &ldo_voltage_val1,
+	[S5M8767_LDO22] = &ldo_voltage_val1,
+	[S5M8767_LDO23] = &ldo_voltage_val1,
+	[S5M8767_LDO24] = &ldo_voltage_val1,
+	[S5M8767_LDO25] = &ldo_voltage_val1,
+	[S5M8767_LDO26] = &ldo_voltage_val1,
+	[S5M8767_LDO27] = &ldo_voltage_val1,
+	[S5M8767_LDO28] = &ldo_voltage_val1,
 	[S5M8767_BUCK1] = &buck_voltage_val1,
 	[S5M8767_BUCK2] = &buck_voltage_val2,
 	[S5M8767_BUCK3] = &buck_voltage_val2,
@@ -114,275 +113,275 @@
 	[S5M8767_BUCK7] = &buck_voltage_val3,
 	[S5M8767_BUCK8] = &buck_voltage_val3,
 	[S5M8767_BUCK9] = &buck_voltage_val3,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक s5m8767_opmode_reg[][4] = अणु
-	/* अणुOFF, ON, LOWPOWER, SUSPENDपूर्ण */
+static const unsigned int s5m8767_opmode_reg[][4] = {
+	/* {OFF, ON, LOWPOWER, SUSPEND} */
 	/* LDO1 ... LDO28 */
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण, /* LDO1 */
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण,
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण,
-	अणु0x0, 0x0, 0x0, 0x0पूर्ण,
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण, /* LDO5 */
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण,
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण,
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण,
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण,
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण, /* LDO10 */
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण,
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण,
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण,
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण,
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण, /* LDO15 */
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण,
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण,
-	अणु0x0, 0x0, 0x0, 0x0पूर्ण,
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण,
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण, /* LDO20 */
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण,
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण,
-	अणु0x0, 0x0, 0x0, 0x0पूर्ण,
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण,
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण, /* LDO25 */
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण,
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण,
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण, /* LDO28 */
+	{0x0, 0x3, 0x2, 0x1}, /* LDO1 */
+	{0x0, 0x3, 0x2, 0x1},
+	{0x0, 0x3, 0x2, 0x1},
+	{0x0, 0x0, 0x0, 0x0},
+	{0x0, 0x3, 0x2, 0x1}, /* LDO5 */
+	{0x0, 0x3, 0x2, 0x1},
+	{0x0, 0x3, 0x2, 0x1},
+	{0x0, 0x3, 0x2, 0x1},
+	{0x0, 0x3, 0x2, 0x1},
+	{0x0, 0x3, 0x2, 0x1}, /* LDO10 */
+	{0x0, 0x3, 0x2, 0x1},
+	{0x0, 0x3, 0x2, 0x1},
+	{0x0, 0x3, 0x2, 0x1},
+	{0x0, 0x3, 0x2, 0x1},
+	{0x0, 0x3, 0x2, 0x1}, /* LDO15 */
+	{0x0, 0x3, 0x2, 0x1},
+	{0x0, 0x3, 0x2, 0x1},
+	{0x0, 0x0, 0x0, 0x0},
+	{0x0, 0x3, 0x2, 0x1},
+	{0x0, 0x3, 0x2, 0x1}, /* LDO20 */
+	{0x0, 0x3, 0x2, 0x1},
+	{0x0, 0x3, 0x2, 0x1},
+	{0x0, 0x0, 0x0, 0x0},
+	{0x0, 0x3, 0x2, 0x1},
+	{0x0, 0x3, 0x2, 0x1}, /* LDO25 */
+	{0x0, 0x3, 0x2, 0x1},
+	{0x0, 0x3, 0x2, 0x1},
+	{0x0, 0x3, 0x2, 0x1}, /* LDO28 */
 
 	/* BUCK1 ... BUCK9 */
-	अणु0x0, 0x3, 0x1, 0x1पूर्ण, /* BUCK1 */
-	अणु0x0, 0x3, 0x1, 0x1पूर्ण,
-	अणु0x0, 0x3, 0x1, 0x1पूर्ण,
-	अणु0x0, 0x3, 0x1, 0x1पूर्ण,
-	अणु0x0, 0x3, 0x2, 0x1पूर्ण, /* BUCK5 */
-	अणु0x0, 0x3, 0x1, 0x1पूर्ण,
-	अणु0x0, 0x3, 0x1, 0x1पूर्ण,
-	अणु0x0, 0x3, 0x1, 0x1पूर्ण,
-	अणु0x0, 0x3, 0x1, 0x1पूर्ण, /* BUCK9 */
-पूर्ण;
+	{0x0, 0x3, 0x1, 0x1}, /* BUCK1 */
+	{0x0, 0x3, 0x1, 0x1},
+	{0x0, 0x3, 0x1, 0x1},
+	{0x0, 0x3, 0x1, 0x1},
+	{0x0, 0x3, 0x2, 0x1}, /* BUCK5 */
+	{0x0, 0x3, 0x1, 0x1},
+	{0x0, 0x3, 0x1, 0x1},
+	{0x0, 0x3, 0x1, 0x1},
+	{0x0, 0x3, 0x1, 0x1}, /* BUCK9 */
+};
 
-अटल पूर्णांक s5m8767_get_रेजिस्टर(काष्ठा s5m8767_info *s5m8767, पूर्णांक reg_id,
-				पूर्णांक *reg, पूर्णांक *enable_ctrl)
-अणु
-	पूर्णांक i;
-	अचिन्हित पूर्णांक mode;
+static int s5m8767_get_register(struct s5m8767_info *s5m8767, int reg_id,
+				int *reg, int *enable_ctrl)
+{
+	int i;
+	unsigned int mode;
 
-	चयन (reg_id) अणु
-	हाल S5M8767_LDO1 ... S5M8767_LDO2:
+	switch (reg_id) {
+	case S5M8767_LDO1 ... S5M8767_LDO2:
 		*reg = S5M8767_REG_LDO1CTRL + (reg_id - S5M8767_LDO1);
-		अवरोध;
-	हाल S5M8767_LDO3 ... S5M8767_LDO28:
+		break;
+	case S5M8767_LDO3 ... S5M8767_LDO28:
 		*reg = S5M8767_REG_LDO3CTRL + (reg_id - S5M8767_LDO3);
-		अवरोध;
-	हाल S5M8767_BUCK1:
+		break;
+	case S5M8767_BUCK1:
 		*reg = S5M8767_REG_BUCK1CTRL1;
-		अवरोध;
-	हाल S5M8767_BUCK2 ... S5M8767_BUCK4:
+		break;
+	case S5M8767_BUCK2 ... S5M8767_BUCK4:
 		*reg = S5M8767_REG_BUCK2CTRL + (reg_id - S5M8767_BUCK2) * 9;
-		अवरोध;
-	हाल S5M8767_BUCK5:
+		break;
+	case S5M8767_BUCK5:
 		*reg = S5M8767_REG_BUCK5CTRL1;
-		अवरोध;
-	हाल S5M8767_BUCK6 ... S5M8767_BUCK9:
+		break;
+	case S5M8767_BUCK6 ... S5M8767_BUCK9:
 		*reg = S5M8767_REG_BUCK6CTRL1 + (reg_id - S5M8767_BUCK6) * 2;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	क्रम (i = 0; i < s5m8767->num_regulators; i++) अणु
-		अगर (s5m8767->opmode[i].id == reg_id) अणु
+	for (i = 0; i < s5m8767->num_regulators; i++) {
+		if (s5m8767->opmode[i].id == reg_id) {
 			mode = s5m8767->opmode[i].mode;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (i >= s5m8767->num_regulators)
-		वापस -EINVAL;
+	if (i >= s5m8767->num_regulators)
+		return -EINVAL;
 
 	*enable_ctrl = s5m8767_opmode_reg[reg_id][mode] << S5M8767_ENCTRL_SHIFT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s5m8767_get_vsel_reg(पूर्णांक reg_id, काष्ठा s5m8767_info *s5m8767)
-अणु
-	पूर्णांक reg;
+static int s5m8767_get_vsel_reg(int reg_id, struct s5m8767_info *s5m8767)
+{
+	int reg;
 
-	चयन (reg_id) अणु
-	हाल S5M8767_LDO1 ... S5M8767_LDO2:
+	switch (reg_id) {
+	case S5M8767_LDO1 ... S5M8767_LDO2:
 		reg = S5M8767_REG_LDO1CTRL + (reg_id - S5M8767_LDO1);
-		अवरोध;
-	हाल S5M8767_LDO3 ... S5M8767_LDO28:
+		break;
+	case S5M8767_LDO3 ... S5M8767_LDO28:
 		reg = S5M8767_REG_LDO3CTRL + (reg_id - S5M8767_LDO3);
-		अवरोध;
-	हाल S5M8767_BUCK1:
+		break;
+	case S5M8767_BUCK1:
 		reg = S5M8767_REG_BUCK1CTRL2;
-		अवरोध;
-	हाल S5M8767_BUCK2:
+		break;
+	case S5M8767_BUCK2:
 		reg = S5M8767_REG_BUCK2DVS1;
-		अगर (s5m8767->buck2_gpiodvs)
+		if (s5m8767->buck2_gpiodvs)
 			reg += s5m8767->buck_gpioindex;
-		अवरोध;
-	हाल S5M8767_BUCK3:
+		break;
+	case S5M8767_BUCK3:
 		reg = S5M8767_REG_BUCK3DVS1;
-		अगर (s5m8767->buck3_gpiodvs)
+		if (s5m8767->buck3_gpiodvs)
 			reg += s5m8767->buck_gpioindex;
-		अवरोध;
-	हाल S5M8767_BUCK4:
+		break;
+	case S5M8767_BUCK4:
 		reg = S5M8767_REG_BUCK4DVS1;
-		अगर (s5m8767->buck4_gpiodvs)
+		if (s5m8767->buck4_gpiodvs)
 			reg += s5m8767->buck_gpioindex;
-		अवरोध;
-	हाल S5M8767_BUCK5:
+		break;
+	case S5M8767_BUCK5:
 		reg = S5M8767_REG_BUCK5CTRL2;
-		अवरोध;
-	हाल S5M8767_BUCK6 ... S5M8767_BUCK9:
+		break;
+	case S5M8767_BUCK6 ... S5M8767_BUCK9:
 		reg = S5M8767_REG_BUCK6CTRL2 + (reg_id - S5M8767_BUCK6) * 2;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस reg;
-पूर्ण
+	return reg;
+}
 
-अटल पूर्णांक s5m8767_convert_voltage_to_sel(स्थिर काष्ठा sec_voltage_desc *desc,
-					  पूर्णांक min_vol)
-अणु
-	पूर्णांक selector = 0;
+static int s5m8767_convert_voltage_to_sel(const struct sec_voltage_desc *desc,
+					  int min_vol)
+{
+	int selector = 0;
 
-	अगर (desc == शून्य)
-		वापस -EINVAL;
+	if (desc == NULL)
+		return -EINVAL;
 
-	अगर (min_vol > desc->max)
-		वापस -EINVAL;
+	if (min_vol > desc->max)
+		return -EINVAL;
 
-	अगर (min_vol < desc->min)
+	if (min_vol < desc->min)
 		min_vol = desc->min;
 
 	selector = DIV_ROUND_UP(min_vol - desc->min, desc->step);
 
-	अगर (desc->min + desc->step * selector > desc->max)
-		वापस -EINVAL;
+	if (desc->min + desc->step * selector > desc->max)
+		return -EINVAL;
 
-	वापस selector;
-पूर्ण
+	return selector;
+}
 
-अटल अंतरभूत पूर्णांक s5m8767_set_high(काष्ठा s5m8767_info *s5m8767)
-अणु
-	पूर्णांक temp_index = s5m8767->buck_gpioindex;
+static inline int s5m8767_set_high(struct s5m8767_info *s5m8767)
+{
+	int temp_index = s5m8767->buck_gpioindex;
 
 	gpio_set_value(s5m8767->buck_gpios[0], (temp_index >> 2) & 0x1);
 	gpio_set_value(s5m8767->buck_gpios[1], (temp_index >> 1) & 0x1);
 	gpio_set_value(s5m8767->buck_gpios[2], temp_index & 0x1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक s5m8767_set_low(काष्ठा s5m8767_info *s5m8767)
-अणु
-	पूर्णांक temp_index = s5m8767->buck_gpioindex;
+static inline int s5m8767_set_low(struct s5m8767_info *s5m8767)
+{
+	int temp_index = s5m8767->buck_gpioindex;
 
 	gpio_set_value(s5m8767->buck_gpios[2], temp_index & 0x1);
 	gpio_set_value(s5m8767->buck_gpios[1], (temp_index >> 1) & 0x1);
 	gpio_set_value(s5m8767->buck_gpios[0], (temp_index >> 2) & 0x1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s5m8767_set_voltage_sel(काष्ठा regulator_dev *rdev,
-				   अचिन्हित selector)
-अणु
-	काष्ठा s5m8767_info *s5m8767 = rdev_get_drvdata(rdev);
-	पूर्णांक reg_id = rdev_get_id(rdev);
-	पूर्णांक old_index, index = 0;
-	u8 *buck234_vol = शून्य;
+static int s5m8767_set_voltage_sel(struct regulator_dev *rdev,
+				   unsigned selector)
+{
+	struct s5m8767_info *s5m8767 = rdev_get_drvdata(rdev);
+	int reg_id = rdev_get_id(rdev);
+	int old_index, index = 0;
+	u8 *buck234_vol = NULL;
 
-	चयन (reg_id) अणु
-	हाल S5M8767_LDO1 ... S5M8767_LDO28:
-		अवरोध;
-	हाल S5M8767_BUCK1 ... S5M8767_BUCK6:
-		अगर (reg_id == S5M8767_BUCK2 && s5m8767->buck2_gpiodvs)
+	switch (reg_id) {
+	case S5M8767_LDO1 ... S5M8767_LDO28:
+		break;
+	case S5M8767_BUCK1 ... S5M8767_BUCK6:
+		if (reg_id == S5M8767_BUCK2 && s5m8767->buck2_gpiodvs)
 			buck234_vol = &s5m8767->buck2_vol[0];
-		अन्यथा अगर (reg_id == S5M8767_BUCK3 && s5m8767->buck3_gpiodvs)
+		else if (reg_id == S5M8767_BUCK3 && s5m8767->buck3_gpiodvs)
 			buck234_vol = &s5m8767->buck3_vol[0];
-		अन्यथा अगर (reg_id == S5M8767_BUCK4 && s5m8767->buck4_gpiodvs)
+		else if (reg_id == S5M8767_BUCK4 && s5m8767->buck4_gpiodvs)
 			buck234_vol = &s5m8767->buck4_vol[0];
-		अवरोध;
-	हाल S5M8767_BUCK7 ... S5M8767_BUCK8:
-		वापस -EINVAL;
-	हाल S5M8767_BUCK9:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	case S5M8767_BUCK7 ... S5M8767_BUCK8:
+		return -EINVAL;
+	case S5M8767_BUCK9:
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	/* buck234_vol != शून्य means to control buck234 voltage via DVS GPIO */
-	अगर (buck234_vol) अणु
-		जबतक (*buck234_vol != selector) अणु
+	/* buck234_vol != NULL means to control buck234 voltage via DVS GPIO */
+	if (buck234_vol) {
+		while (*buck234_vol != selector) {
 			buck234_vol++;
 			index++;
-		पूर्ण
+		}
 		old_index = s5m8767->buck_gpioindex;
 		s5m8767->buck_gpioindex = index;
 
-		अगर (index > old_index)
-			वापस s5m8767_set_high(s5m8767);
-		अन्यथा
-			वापस s5m8767_set_low(s5m8767);
-	पूर्ण अन्यथा अणु
-		वापस regulator_set_voltage_sel_regmap(rdev, selector);
-	पूर्ण
-पूर्ण
+		if (index > old_index)
+			return s5m8767_set_high(s5m8767);
+		else
+			return s5m8767_set_low(s5m8767);
+	} else {
+		return regulator_set_voltage_sel_regmap(rdev, selector);
+	}
+}
 
-अटल पूर्णांक s5m8767_set_voltage_समय_sel(काष्ठा regulator_dev *rdev,
-					     अचिन्हित पूर्णांक old_sel,
-					     अचिन्हित पूर्णांक new_sel)
-अणु
-	काष्ठा s5m8767_info *s5m8767 = rdev_get_drvdata(rdev);
+static int s5m8767_set_voltage_time_sel(struct regulator_dev *rdev,
+					     unsigned int old_sel,
+					     unsigned int new_sel)
+{
+	struct s5m8767_info *s5m8767 = rdev_get_drvdata(rdev);
 
-	अगर ((old_sel < new_sel) && s5m8767->ramp_delay)
-		वापस DIV_ROUND_UP(rdev->desc->uV_step * (new_sel - old_sel),
+	if ((old_sel < new_sel) && s5m8767->ramp_delay)
+		return DIV_ROUND_UP(rdev->desc->uV_step * (new_sel - old_sel),
 					s5m8767->ramp_delay * 1000);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा regulator_ops s5m8767_ops = अणु
+static const struct regulator_ops s5m8767_ops = {
 	.list_voltage		= regulator_list_voltage_linear,
 	.is_enabled		= regulator_is_enabled_regmap,
 	.enable			= regulator_enable_regmap,
 	.disable		= regulator_disable_regmap,
 	.get_voltage_sel	= regulator_get_voltage_sel_regmap,
 	.set_voltage_sel	= s5m8767_set_voltage_sel,
-	.set_voltage_समय_sel	= s5m8767_set_voltage_समय_sel,
-पूर्ण;
+	.set_voltage_time_sel	= s5m8767_set_voltage_time_sel,
+};
 
-अटल स्थिर काष्ठा regulator_ops s5m8767_buck78_ops = अणु
+static const struct regulator_ops s5m8767_buck78_ops = {
 	.list_voltage		= regulator_list_voltage_linear,
 	.is_enabled		= regulator_is_enabled_regmap,
 	.enable			= regulator_enable_regmap,
 	.disable		= regulator_disable_regmap,
 	.get_voltage_sel	= regulator_get_voltage_sel_regmap,
 	.set_voltage_sel	= regulator_set_voltage_sel_regmap,
-पूर्ण;
+};
 
-#घोषणा s5m8767_regulator_desc(_name) अणु		\
+#define s5m8767_regulator_desc(_name) {		\
 	.name		= #_name,		\
 	.id		= S5M8767_##_name,	\
 	.ops		= &s5m8767_ops,		\
 	.type		= REGULATOR_VOLTAGE,	\
 	.owner		= THIS_MODULE,		\
-पूर्ण
+}
 
-#घोषणा s5m8767_regulator_buck78_desc(_name) अणु	\
+#define s5m8767_regulator_buck78_desc(_name) {	\
 	.name		= #_name,		\
 	.id		= S5M8767_##_name,	\
 	.ops		= &s5m8767_buck78_ops,	\
 	.type		= REGULATOR_VOLTAGE,	\
 	.owner		= THIS_MODULE,		\
-पूर्ण
+}
 
-अटल काष्ठा regulator_desc regulators[] = अणु
+static struct regulator_desc regulators[] = {
 	s5m8767_regulator_desc(LDO1),
 	s5m8767_regulator_desc(LDO2),
 	s5m8767_regulator_desc(LDO3),
@@ -420,157 +419,157 @@
 	s5m8767_regulator_buck78_desc(BUCK7),
 	s5m8767_regulator_buck78_desc(BUCK8),
 	s5m8767_regulator_desc(BUCK9),
-पूर्ण;
+};
 
 /*
- * Enable GPIO control over BUCK9 in regulator_config क्रम that regulator.
+ * Enable GPIO control over BUCK9 in regulator_config for that regulator.
  */
-अटल व्योम s5m8767_regulator_config_ext_control(काष्ठा s5m8767_info *s5m8767,
-		काष्ठा sec_regulator_data *rdata,
-		काष्ठा regulator_config *config)
-अणु
-	पूर्णांक i, mode = 0;
+static void s5m8767_regulator_config_ext_control(struct s5m8767_info *s5m8767,
+		struct sec_regulator_data *rdata,
+		struct regulator_config *config)
+{
+	int i, mode = 0;
 
-	अगर (rdata->id != S5M8767_BUCK9)
-		वापस;
+	if (rdata->id != S5M8767_BUCK9)
+		return;
 
-	/* Check अगर opmode क्रम regulator matches S5M8767_ENCTRL_USE_GPIO */
-	क्रम (i = 0; i < s5m8767->num_regulators; i++) अणु
-		स्थिर काष्ठा sec_opmode_data *opmode = &s5m8767->opmode[i];
-		अगर (opmode->id == rdata->id) अणु
+	/* Check if opmode for regulator matches S5M8767_ENCTRL_USE_GPIO */
+	for (i = 0; i < s5m8767->num_regulators; i++) {
+		const struct sec_opmode_data *opmode = &s5m8767->opmode[i];
+		if (opmode->id == rdata->id) {
 			mode = s5m8767_opmode_reg[rdata->id][opmode->mode];
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (mode != S5M8767_ENCTRL_USE_GPIO) अणु
+			break;
+		}
+	}
+	if (mode != S5M8767_ENCTRL_USE_GPIO) {
 		dev_warn(s5m8767->dev,
 				"ext-control for %pOFn: mismatched op_mode (%x), ignoring\n",
 				rdata->reg_node, mode);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!rdata->ext_control_gpiod) अणु
+	if (!rdata->ext_control_gpiod) {
 		dev_warn(s5m8767->dev,
 				"ext-control for %pOFn: GPIO not valid, ignoring\n",
 			 rdata->reg_node);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	config->ena_gpiod = rdata->ext_control_gpiod;
-पूर्ण
+}
 
 /*
  * Turn on GPIO control over BUCK9.
  */
-अटल पूर्णांक s5m8767_enable_ext_control(काष्ठा s5m8767_info *s5m8767,
-		काष्ठा regulator_dev *rdev)
-अणु
-	पूर्णांक id = rdev_get_id(rdev);
-	पूर्णांक ret, reg, enable_ctrl;
+static int s5m8767_enable_ext_control(struct s5m8767_info *s5m8767,
+		struct regulator_dev *rdev)
+{
+	int id = rdev_get_id(rdev);
+	int ret, reg, enable_ctrl;
 
-	अगर (id != S5M8767_BUCK9)
-		वापस -EINVAL;
+	if (id != S5M8767_BUCK9)
+		return -EINVAL;
 
-	ret = s5m8767_get_रेजिस्टर(s5m8767, id, &reg, &enable_ctrl);
-	अगर (ret)
-		वापस ret;
+	ret = s5m8767_get_register(s5m8767, id, &reg, &enable_ctrl);
+	if (ret)
+		return ret;
 
-	वापस regmap_update_bits(s5m8767->iodev->regmap_pmic,
+	return regmap_update_bits(s5m8767->iodev->regmap_pmic,
 			reg, S5M8767_ENCTRL_MASK,
 			S5M8767_ENCTRL_USE_GPIO << S5M8767_ENCTRL_SHIFT);
-पूर्ण
+}
 
 
-#अगर_घोषित CONFIG_OF
-अटल पूर्णांक s5m8767_pmic_dt_parse_dvs_gpio(काष्ठा sec_pmic_dev *iodev,
-			काष्ठा sec_platक्रमm_data *pdata,
-			काष्ठा device_node *pmic_np)
-अणु
-	पूर्णांक i, gpio;
+#ifdef CONFIG_OF
+static int s5m8767_pmic_dt_parse_dvs_gpio(struct sec_pmic_dev *iodev,
+			struct sec_platform_data *pdata,
+			struct device_node *pmic_np)
+{
+	int i, gpio;
 
-	क्रम (i = 0; i < 3; i++) अणु
+	for (i = 0; i < 3; i++) {
 		gpio = of_get_named_gpio(pmic_np,
 					"s5m8767,pmic-buck-dvs-gpios", i);
-		अगर (!gpio_is_valid(gpio)) अणु
+		if (!gpio_is_valid(gpio)) {
 			dev_err(iodev->dev, "invalid gpio[%d]: %d\n", i, gpio);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		pdata->buck_gpios[i] = gpio;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक s5m8767_pmic_dt_parse_ds_gpio(काष्ठा sec_pmic_dev *iodev,
-			काष्ठा sec_platक्रमm_data *pdata,
-			काष्ठा device_node *pmic_np)
-अणु
-	पूर्णांक i, gpio;
+static int s5m8767_pmic_dt_parse_ds_gpio(struct sec_pmic_dev *iodev,
+			struct sec_platform_data *pdata,
+			struct device_node *pmic_np)
+{
+	int i, gpio;
 
-	क्रम (i = 0; i < 3; i++) अणु
+	for (i = 0; i < 3; i++) {
 		gpio = of_get_named_gpio(pmic_np,
 					"s5m8767,pmic-buck-ds-gpios", i);
-		अगर (!gpio_is_valid(gpio)) अणु
+		if (!gpio_is_valid(gpio)) {
 			dev_err(iodev->dev, "invalid gpio[%d]: %d\n", i, gpio);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		pdata->buck_ds[i] = gpio;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक s5m8767_pmic_dt_parse_pdata(काष्ठा platक्रमm_device *pdev,
-					काष्ठा sec_platक्रमm_data *pdata)
-अणु
-	काष्ठा sec_pmic_dev *iodev = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा device_node *pmic_np, *regulators_np, *reg_np;
-	काष्ठा sec_regulator_data *rdata;
-	काष्ठा sec_opmode_data *rmode;
-	अचिन्हित पूर्णांक i, dvs_voltage_nr = 8, ret;
+static int s5m8767_pmic_dt_parse_pdata(struct platform_device *pdev,
+					struct sec_platform_data *pdata)
+{
+	struct sec_pmic_dev *iodev = dev_get_drvdata(pdev->dev.parent);
+	struct device_node *pmic_np, *regulators_np, *reg_np;
+	struct sec_regulator_data *rdata;
+	struct sec_opmode_data *rmode;
+	unsigned int i, dvs_voltage_nr = 8, ret;
 
 	pmic_np = iodev->dev->of_node;
-	अगर (!pmic_np) अणु
+	if (!pmic_np) {
 		dev_err(iodev->dev, "could not find pmic sub-node\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	regulators_np = of_get_child_by_name(pmic_np, "regulators");
-	अगर (!regulators_np) अणु
+	if (!regulators_np) {
 		dev_err(iodev->dev, "could not find regulators sub-node\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* count the number of regulators to be supported in pmic */
 	pdata->num_regulators = of_get_child_count(regulators_np);
 
-	rdata = devm_kसुस्मृति(&pdev->dev,
-			     pdata->num_regulators, माप(*rdata),
+	rdata = devm_kcalloc(&pdev->dev,
+			     pdata->num_regulators, sizeof(*rdata),
 			     GFP_KERNEL);
-	अगर (!rdata) अणु
+	if (!rdata) {
 		of_node_put(regulators_np);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	rmode = devm_kसुस्मृति(&pdev->dev,
-			     pdata->num_regulators, माप(*rmode),
+	rmode = devm_kcalloc(&pdev->dev,
+			     pdata->num_regulators, sizeof(*rmode),
 			     GFP_KERNEL);
-	अगर (!rmode) अणु
+	if (!rmode) {
 		of_node_put(regulators_np);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	pdata->regulators = rdata;
 	pdata->opmode = rmode;
-	क्रम_each_child_of_node(regulators_np, reg_np) अणु
-		क्रम (i = 0; i < ARRAY_SIZE(regulators); i++)
-			अगर (of_node_name_eq(reg_np, regulators[i].name))
-				अवरोध;
+	for_each_child_of_node(regulators_np, reg_np) {
+		for (i = 0; i < ARRAY_SIZE(regulators); i++)
+			if (of_node_name_eq(reg_np, regulators[i].name))
+				break;
 
-		अगर (i == ARRAY_SIZE(regulators)) अणु
+		if (i == ARRAY_SIZE(regulators)) {
 			dev_warn(iodev->dev,
 			"don't know how to configure regulator %pOFn\n",
 			reg_np);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		rdata->ext_control_gpiod = devm_fwnode_gpiod_get(
 			&pdev->dev,
@@ -578,13 +577,13 @@
 			"s5m8767,pmic-ext-control",
 			GPIOD_OUT_HIGH | GPIOD_FLAGS_BIT_NONEXCLUSIVE,
 			"s5m8767");
-		अगर (PTR_ERR(rdata->ext_control_gpiod) == -ENOENT) अणु
-			rdata->ext_control_gpiod = शून्य;
-		पूर्ण अन्यथा अगर (IS_ERR(rdata->ext_control_gpiod)) अणु
+		if (PTR_ERR(rdata->ext_control_gpiod) == -ENOENT) {
+			rdata->ext_control_gpiod = NULL;
+		} else if (IS_ERR(rdata->ext_control_gpiod)) {
 			of_node_put(reg_np);
 			of_node_put(regulators_np);
-			वापस PTR_ERR(rdata->ext_control_gpiod);
-		पूर्ण
+			return PTR_ERR(rdata->ext_control_gpiod);
+		}
 
 		rdata->id = i;
 		rdata->initdata = of_get_regulator_init_data(
@@ -593,152 +592,152 @@
 		rdata->reg_node = reg_np;
 		rdata++;
 		rmode->id = i;
-		अगर (of_property_पढ़ो_u32(reg_np, "op_mode",
-				&rmode->mode)) अणु
+		if (of_property_read_u32(reg_np, "op_mode",
+				&rmode->mode)) {
 			dev_warn(iodev->dev,
 				"no op_mode property at %pOF\n",
 				reg_np);
 
 			rmode->mode = S5M8767_OPMODE_NORMAL_MODE;
-		पूर्ण
+		}
 		rmode++;
-	पूर्ण
+	}
 
 	of_node_put(regulators_np);
 
-	अगर (of_get_property(pmic_np, "s5m8767,pmic-buck2-uses-gpio-dvs", शून्य)) अणु
+	if (of_get_property(pmic_np, "s5m8767,pmic-buck2-uses-gpio-dvs", NULL)) {
 		pdata->buck2_gpiodvs = true;
 
-		अगर (of_property_पढ़ो_u32_array(pmic_np,
+		if (of_property_read_u32_array(pmic_np,
 				"s5m8767,pmic-buck2-dvs-voltage",
-				pdata->buck2_voltage, dvs_voltage_nr)) अणु
+				pdata->buck2_voltage, dvs_voltage_nr)) {
 			dev_err(iodev->dev, "buck2 voltages not specified\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (of_get_property(pmic_np, "s5m8767,pmic-buck3-uses-gpio-dvs", शून्य)) अणु
+	if (of_get_property(pmic_np, "s5m8767,pmic-buck3-uses-gpio-dvs", NULL)) {
 		pdata->buck3_gpiodvs = true;
 
-		अगर (of_property_पढ़ो_u32_array(pmic_np,
+		if (of_property_read_u32_array(pmic_np,
 				"s5m8767,pmic-buck3-dvs-voltage",
-				pdata->buck3_voltage, dvs_voltage_nr)) अणु
+				pdata->buck3_voltage, dvs_voltage_nr)) {
 			dev_err(iodev->dev, "buck3 voltages not specified\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (of_get_property(pmic_np, "s5m8767,pmic-buck4-uses-gpio-dvs", शून्य)) अणु
+	if (of_get_property(pmic_np, "s5m8767,pmic-buck4-uses-gpio-dvs", NULL)) {
 		pdata->buck4_gpiodvs = true;
 
-		अगर (of_property_पढ़ो_u32_array(pmic_np,
+		if (of_property_read_u32_array(pmic_np,
 				"s5m8767,pmic-buck4-dvs-voltage",
-				pdata->buck4_voltage, dvs_voltage_nr)) अणु
+				pdata->buck4_voltage, dvs_voltage_nr)) {
 			dev_err(iodev->dev, "buck4 voltages not specified\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (pdata->buck2_gpiodvs || pdata->buck3_gpiodvs ||
-						pdata->buck4_gpiodvs) अणु
+	if (pdata->buck2_gpiodvs || pdata->buck3_gpiodvs ||
+						pdata->buck4_gpiodvs) {
 		ret = s5m8767_pmic_dt_parse_dvs_gpio(iodev, pdata, pmic_np);
-		अगर (ret)
-			वापस -EINVAL;
+		if (ret)
+			return -EINVAL;
 
-		अगर (of_property_पढ़ो_u32(pmic_np,
+		if (of_property_read_u32(pmic_np,
 				"s5m8767,pmic-buck-default-dvs-idx",
-				&pdata->buck_शेष_idx)) अणु
-			pdata->buck_शेष_idx = 0;
-		पूर्ण अन्यथा अणु
-			अगर (pdata->buck_शेष_idx >= 8) अणु
-				pdata->buck_शेष_idx = 0;
+				&pdata->buck_default_idx)) {
+			pdata->buck_default_idx = 0;
+		} else {
+			if (pdata->buck_default_idx >= 8) {
+				pdata->buck_default_idx = 0;
 				dev_info(iodev->dev,
 				"invalid value for default dvs index, use 0\n");
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	ret = s5m8767_pmic_dt_parse_ds_gpio(iodev, pdata, pmic_np);
-	अगर (ret)
-		वापस -EINVAL;
+	if (ret)
+		return -EINVAL;
 
-	अगर (of_get_property(pmic_np, "s5m8767,pmic-buck2-ramp-enable", शून्य))
+	if (of_get_property(pmic_np, "s5m8767,pmic-buck2-ramp-enable", NULL))
 		pdata->buck2_ramp_enable = true;
 
-	अगर (of_get_property(pmic_np, "s5m8767,pmic-buck3-ramp-enable", शून्य))
+	if (of_get_property(pmic_np, "s5m8767,pmic-buck3-ramp-enable", NULL))
 		pdata->buck3_ramp_enable = true;
 
-	अगर (of_get_property(pmic_np, "s5m8767,pmic-buck4-ramp-enable", शून्य))
+	if (of_get_property(pmic_np, "s5m8767,pmic-buck4-ramp-enable", NULL))
 		pdata->buck4_ramp_enable = true;
 
-	अगर (pdata->buck2_ramp_enable || pdata->buck3_ramp_enable
-			|| pdata->buck4_ramp_enable) अणु
-		अगर (of_property_पढ़ो_u32(pmic_np, "s5m8767,pmic-buck-ramp-delay",
+	if (pdata->buck2_ramp_enable || pdata->buck3_ramp_enable
+			|| pdata->buck4_ramp_enable) {
+		if (of_property_read_u32(pmic_np, "s5m8767,pmic-buck-ramp-delay",
 				&pdata->buck_ramp_delay))
 			pdata->buck_ramp_delay = 0;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक s5m8767_pmic_dt_parse_pdata(काष्ठा platक्रमm_device *pdev,
-					काष्ठा sec_platक्रमm_data *pdata)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_OF */
+	return 0;
+}
+#else
+static int s5m8767_pmic_dt_parse_pdata(struct platform_device *pdev,
+					struct sec_platform_data *pdata)
+{
+	return 0;
+}
+#endif /* CONFIG_OF */
 
-अटल पूर्णांक s5m8767_pmic_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sec_pmic_dev *iodev = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा sec_platक्रमm_data *pdata = iodev->pdata;
-	काष्ठा regulator_config config = अणु पूर्ण;
-	काष्ठा s5m8767_info *s5m8767;
-	पूर्णांक i, ret, buck_init;
+static int s5m8767_pmic_probe(struct platform_device *pdev)
+{
+	struct sec_pmic_dev *iodev = dev_get_drvdata(pdev->dev.parent);
+	struct sec_platform_data *pdata = iodev->pdata;
+	struct regulator_config config = { };
+	struct s5m8767_info *s5m8767;
+	int i, ret, buck_init;
 
-	अगर (!pdata) अणु
+	if (!pdata) {
 		dev_err(pdev->dev.parent, "Platform data not supplied\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (iodev->dev->of_node) अणु
+	if (iodev->dev->of_node) {
 		ret = s5m8767_pmic_dt_parse_pdata(pdev, pdata);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (pdata->buck2_gpiodvs) अणु
-		अगर (pdata->buck3_gpiodvs || pdata->buck4_gpiodvs) अणु
+	if (pdata->buck2_gpiodvs) {
+		if (pdata->buck3_gpiodvs || pdata->buck4_gpiodvs) {
 			dev_err(&pdev->dev, "S5M8767 GPIO DVS NOT VALID\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (pdata->buck3_gpiodvs) अणु
-		अगर (pdata->buck2_gpiodvs || pdata->buck4_gpiodvs) अणु
+	if (pdata->buck3_gpiodvs) {
+		if (pdata->buck2_gpiodvs || pdata->buck4_gpiodvs) {
 			dev_err(&pdev->dev, "S5M8767 GPIO DVS NOT VALID\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (pdata->buck4_gpiodvs) अणु
-		अगर (pdata->buck2_gpiodvs || pdata->buck3_gpiodvs) अणु
+	if (pdata->buck4_gpiodvs) {
+		if (pdata->buck2_gpiodvs || pdata->buck3_gpiodvs) {
 			dev_err(&pdev->dev, "S5M8767 GPIO DVS NOT VALID\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	s5m8767 = devm_kzalloc(&pdev->dev, माप(काष्ठा s5m8767_info),
+	s5m8767 = devm_kzalloc(&pdev->dev, sizeof(struct s5m8767_info),
 				GFP_KERNEL);
-	अगर (!s5m8767)
-		वापस -ENOMEM;
+	if (!s5m8767)
+		return -ENOMEM;
 
 	s5m8767->dev = &pdev->dev;
 	s5m8767->iodev = iodev;
 	s5m8767->num_regulators = pdata->num_regulators;
-	platक्रमm_set_drvdata(pdev, s5m8767);
+	platform_set_drvdata(pdev, s5m8767);
 
-	s5m8767->buck_gpioindex = pdata->buck_शेष_idx;
+	s5m8767->buck_gpioindex = pdata->buck_default_idx;
 	s5m8767->buck2_gpiodvs = pdata->buck2_gpiodvs;
 	s5m8767->buck3_gpiodvs = pdata->buck3_gpiodvs;
 	s5m8767->buck4_gpiodvs = pdata->buck4_gpiodvs;
@@ -758,68 +757,68 @@
 	buck_init = s5m8767_convert_voltage_to_sel(&buck_voltage_val2,
 						   pdata->buck2_init);
 
-	regmap_ग_लिखो(s5m8767->iodev->regmap_pmic, S5M8767_REG_BUCK2DVS2,
+	regmap_write(s5m8767->iodev->regmap_pmic, S5M8767_REG_BUCK2DVS2,
 			buck_init);
 
 	buck_init = s5m8767_convert_voltage_to_sel(&buck_voltage_val2,
 						   pdata->buck3_init);
 
-	regmap_ग_लिखो(s5m8767->iodev->regmap_pmic, S5M8767_REG_BUCK3DVS2,
+	regmap_write(s5m8767->iodev->regmap_pmic, S5M8767_REG_BUCK3DVS2,
 			buck_init);
 
 	buck_init = s5m8767_convert_voltage_to_sel(&buck_voltage_val2,
 						   pdata->buck4_init);
 
-	regmap_ग_लिखो(s5m8767->iodev->regmap_pmic, S5M8767_REG_BUCK4DVS2,
+	regmap_write(s5m8767->iodev->regmap_pmic, S5M8767_REG_BUCK4DVS2,
 			buck_init);
 
-	क्रम (i = 0; i < 8; i++) अणु
-		अगर (s5m8767->buck2_gpiodvs) अणु
+	for (i = 0; i < 8; i++) {
+		if (s5m8767->buck2_gpiodvs) {
 			s5m8767->buck2_vol[i] =
 				s5m8767_convert_voltage_to_sel(
 						&buck_voltage_val2,
 						pdata->buck2_voltage[i]);
-		पूर्ण
+		}
 
-		अगर (s5m8767->buck3_gpiodvs) अणु
+		if (s5m8767->buck3_gpiodvs) {
 			s5m8767->buck3_vol[i] =
 				s5m8767_convert_voltage_to_sel(
 						&buck_voltage_val2,
 						pdata->buck3_voltage[i]);
-		पूर्ण
+		}
 
-		अगर (s5m8767->buck4_gpiodvs) अणु
+		if (s5m8767->buck4_gpiodvs) {
 			s5m8767->buck4_vol[i] =
 				s5m8767_convert_voltage_to_sel(
 						&buck_voltage_val2,
 						pdata->buck4_voltage[i]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (pdata->buck2_gpiodvs || pdata->buck3_gpiodvs ||
-						pdata->buck4_gpiodvs) अणु
+	if (pdata->buck2_gpiodvs || pdata->buck3_gpiodvs ||
+						pdata->buck4_gpiodvs) {
 
-		अगर (!gpio_is_valid(pdata->buck_gpios[0]) ||
+		if (!gpio_is_valid(pdata->buck_gpios[0]) ||
 			!gpio_is_valid(pdata->buck_gpios[1]) ||
-			!gpio_is_valid(pdata->buck_gpios[2])) अणु
+			!gpio_is_valid(pdata->buck_gpios[2])) {
 			dev_err(&pdev->dev, "GPIO NOT VALID\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		ret = devm_gpio_request(&pdev->dev, pdata->buck_gpios[0],
 					"S5M8767 SET1");
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		ret = devm_gpio_request(&pdev->dev, pdata->buck_gpios[1],
 					"S5M8767 SET2");
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		ret = devm_gpio_request(&pdev->dev, pdata->buck_gpios[2],
 					"S5M8767 SET3");
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		/* SET1 GPIO */
 		gpio_direction_output(pdata->buck_gpios[0],
@@ -830,19 +829,19 @@
 		/* SET3 GPIO */
 		gpio_direction_output(pdata->buck_gpios[2],
 				(s5m8767->buck_gpioindex >> 0) & 0x1);
-	पूर्ण
+	}
 
 	ret = devm_gpio_request(&pdev->dev, pdata->buck_ds[0], "S5M8767 DS2");
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = devm_gpio_request(&pdev->dev, pdata->buck_ds[1], "S5M8767 DS3");
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = devm_gpio_request(&pdev->dev, pdata->buck_ds[2], "S5M8767 DS4");
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* DS2 GPIO */
 	gpio_direction_output(pdata->buck_ds[0], 0x0);
@@ -851,8 +850,8 @@
 	/* DS4 GPIO */
 	gpio_direction_output(pdata->buck_ds[2], 0x0);
 
-	अगर (pdata->buck2_gpiodvs || pdata->buck3_gpiodvs ||
-	   pdata->buck4_gpiodvs) अणु
+	if (pdata->buck2_gpiodvs || pdata->buck3_gpiodvs ||
+	   pdata->buck4_gpiodvs) {
 		regmap_update_bits(s5m8767->iodev->regmap_pmic,
 				S5M8767_REG_BUCK2CTRL, 1 << 1,
 				(pdata->buck2_gpiodvs) ? (1 << 1) : (0 << 1));
@@ -862,155 +861,155 @@
 		regmap_update_bits(s5m8767->iodev->regmap_pmic,
 				S5M8767_REG_BUCK4CTRL, 1 << 1,
 				(pdata->buck4_gpiodvs) ? (1 << 1) : (0 << 1));
-	पूर्ण
+	}
 
-	/* Initialize GPIO DVS रेजिस्टरs */
-	क्रम (i = 0; i < 8; i++) अणु
-		अगर (s5m8767->buck2_gpiodvs) अणु
-			regmap_ग_लिखो(s5m8767->iodev->regmap_pmic,
+	/* Initialize GPIO DVS registers */
+	for (i = 0; i < 8; i++) {
+		if (s5m8767->buck2_gpiodvs) {
+			regmap_write(s5m8767->iodev->regmap_pmic,
 					S5M8767_REG_BUCK2DVS1 + i,
 					s5m8767->buck2_vol[i]);
-		पूर्ण
+		}
 
-		अगर (s5m8767->buck3_gpiodvs) अणु
-			regmap_ग_लिखो(s5m8767->iodev->regmap_pmic,
+		if (s5m8767->buck3_gpiodvs) {
+			regmap_write(s5m8767->iodev->regmap_pmic,
 					S5M8767_REG_BUCK3DVS1 + i,
 					s5m8767->buck3_vol[i]);
-		पूर्ण
+		}
 
-		अगर (s5m8767->buck4_gpiodvs) अणु
-			regmap_ग_लिखो(s5m8767->iodev->regmap_pmic,
+		if (s5m8767->buck4_gpiodvs) {
+			regmap_write(s5m8767->iodev->regmap_pmic,
 					S5M8767_REG_BUCK4DVS1 + i,
 					s5m8767->buck4_vol[i]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (s5m8767->buck2_ramp)
+	if (s5m8767->buck2_ramp)
 		regmap_update_bits(s5m8767->iodev->regmap_pmic,
 				S5M8767_REG_DVSRAMP, 0x08, 0x08);
 
-	अगर (s5m8767->buck3_ramp)
+	if (s5m8767->buck3_ramp)
 		regmap_update_bits(s5m8767->iodev->regmap_pmic,
 				S5M8767_REG_DVSRAMP, 0x04, 0x04);
 
-	अगर (s5m8767->buck4_ramp)
+	if (s5m8767->buck4_ramp)
 		regmap_update_bits(s5m8767->iodev->regmap_pmic,
 				S5M8767_REG_DVSRAMP, 0x02, 0x02);
 
-	अगर (s5m8767->buck2_ramp || s5m8767->buck3_ramp
-		|| s5m8767->buck4_ramp) अणु
-		अचिन्हित पूर्णांक val;
-		चयन (s5m8767->ramp_delay) अणु
-		हाल 5:
+	if (s5m8767->buck2_ramp || s5m8767->buck3_ramp
+		|| s5m8767->buck4_ramp) {
+		unsigned int val;
+		switch (s5m8767->ramp_delay) {
+		case 5:
 			val = S5M8767_DVS_BUCK_RAMP_5;
-			अवरोध;
-		हाल 10:
+			break;
+		case 10:
 			val = S5M8767_DVS_BUCK_RAMP_10;
-			अवरोध;
-		हाल 25:
+			break;
+		case 25:
 			val = S5M8767_DVS_BUCK_RAMP_25;
-			अवरोध;
-		हाल 50:
+			break;
+		case 50:
 			val = S5M8767_DVS_BUCK_RAMP_50;
-			अवरोध;
-		हाल 100:
+			break;
+		case 100:
 			val = S5M8767_DVS_BUCK_RAMP_100;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			val = S5M8767_DVS_BUCK_RAMP_10;
-		पूर्ण
+		}
 		regmap_update_bits(s5m8767->iodev->regmap_pmic,
 					S5M8767_REG_DVSRAMP,
 					S5M8767_DVS_BUCK_RAMP_MASK,
 					val << S5M8767_DVS_BUCK_RAMP_SHIFT);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < pdata->num_regulators; i++) अणु
-		स्थिर काष्ठा sec_voltage_desc *desc;
-		पूर्णांक id = pdata->regulators[i].id;
-		पूर्णांक enable_reg, enable_val;
-		काष्ठा regulator_dev *rdev;
+	for (i = 0; i < pdata->num_regulators; i++) {
+		const struct sec_voltage_desc *desc;
+		int id = pdata->regulators[i].id;
+		int enable_reg, enable_val;
+		struct regulator_dev *rdev;
 
 		desc = reg_voltage_map[id];
-		अगर (desc) अणु
+		if (desc) {
 			regulators[id].n_voltages =
 				(desc->max - desc->min) / desc->step + 1;
 			regulators[id].min_uV = desc->min;
 			regulators[id].uV_step = desc->step;
 			regulators[id].vsel_reg =
 				s5m8767_get_vsel_reg(id, s5m8767);
-			अगर (id < S5M8767_BUCK1)
+			if (id < S5M8767_BUCK1)
 				regulators[id].vsel_mask = 0x3f;
-			अन्यथा
+			else
 				regulators[id].vsel_mask = 0xff;
 
-			ret = s5m8767_get_रेजिस्टर(s5m8767, id, &enable_reg,
+			ret = s5m8767_get_register(s5m8767, id, &enable_reg,
 					     &enable_val);
-			अगर (ret) अणु
+			if (ret) {
 				dev_err(s5m8767->dev, "error reading registers\n");
-				वापस ret;
-			पूर्ण
+				return ret;
+			}
 			regulators[id].enable_reg = enable_reg;
 			regulators[id].enable_mask = S5M8767_ENCTRL_MASK;
 			regulators[id].enable_val = enable_val;
-		पूर्ण
+		}
 
 		config.dev = s5m8767->dev;
 		config.init_data = pdata->regulators[i].initdata;
 		config.driver_data = s5m8767;
 		config.regmap = iodev->regmap_pmic;
 		config.of_node = pdata->regulators[i].reg_node;
-		config.ena_gpiod = शून्य;
-		अगर (pdata->regulators[i].ext_control_gpiod) अणु
+		config.ena_gpiod = NULL;
+		if (pdata->regulators[i].ext_control_gpiod) {
 			/* Assigns config.ena_gpiod */
 			s5m8767_regulator_config_ext_control(s5m8767,
 					&pdata->regulators[i], &config);
 
 			/*
 			 * Hand the GPIO descriptor management over to the
-			 * regulator core, हटाओ it from devres management.
+			 * regulator core, remove it from devres management.
 			 */
 			devm_gpiod_unhinge(s5m8767->dev, config.ena_gpiod);
-		पूर्ण
-		rdev = devm_regulator_रेजिस्टर(&pdev->dev, &regulators[id],
+		}
+		rdev = devm_regulator_register(&pdev->dev, &regulators[id],
 						  &config);
-		अगर (IS_ERR(rdev)) अणु
+		if (IS_ERR(rdev)) {
 			ret = PTR_ERR(rdev);
 			dev_err(s5m8767->dev, "regulator init failed for %d\n",
 					id);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		अगर (pdata->regulators[i].ext_control_gpiod) अणु
+		if (pdata->regulators[i].ext_control_gpiod) {
 			ret = s5m8767_enable_ext_control(s5m8767, rdev);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				dev_err(s5m8767->dev,
 						"failed to enable gpio control over %s: %d\n",
 						rdev->desc->name, ret);
-				वापस ret;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return ret;
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा platक्रमm_device_id s5m8767_pmic_id[] = अणु
-	अणु "s5m8767-pmic", 0पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(platक्रमm, s5m8767_pmic_id);
+static const struct platform_device_id s5m8767_pmic_id[] = {
+	{ "s5m8767-pmic", 0},
+	{ },
+};
+MODULE_DEVICE_TABLE(platform, s5m8767_pmic_id);
 
-अटल काष्ठा platक्रमm_driver s5m8767_pmic_driver = अणु
-	.driver = अणु
+static struct platform_driver s5m8767_pmic_driver = {
+	.driver = {
 		.name = "s5m8767-pmic",
-	पूर्ण,
+	},
 	.probe = s5m8767_pmic_probe,
 	.id_table = s5m8767_pmic_id,
-पूर्ण;
-module_platक्रमm_driver(s5m8767_pmic_driver);
+};
+module_platform_driver(s5m8767_pmic_driver);
 
-/* Module inक्रमmation */
+/* Module information */
 MODULE_AUTHOR("Sangbeom Kim <sbkim73@samsung.com>");
 MODULE_DESCRIPTION("Samsung S5M8767 Regulator Driver");
 MODULE_LICENSE("GPL");

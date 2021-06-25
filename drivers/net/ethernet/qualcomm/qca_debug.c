@@ -1,37 +1,36 @@
-<शैली गुरु>
 /*
  *   Copyright (c) 2011, 2012, Qualcomm Atheros Communications Inc.
  *   Copyright (c) 2014, I2SE GmbH
  *
- *   Permission to use, copy, modअगरy, and/or distribute this software
- *   क्रम any purpose with or without fee is hereby granted, provided
+ *   Permission to use, copy, modify, and/or distribute this software
+ *   for any purpose with or without fee is hereby granted, provided
  *   that the above copyright notice and this permission notice appear
  *   in all copies.
  *
  *   THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
  *   WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
  *   WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- *   THE AUTHOR BE LIABLE FOR ANY SPECIAL, सूचीECT, INसूचीECT, OR
+ *   THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
  *   CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
  *   LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
  *   NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  *   CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*   This file contains debugging routines क्रम use in the QCA7K driver.
+/*   This file contains debugging routines for use in the QCA7K driver.
  */
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/types.h>
+#include <linux/debugfs.h>
+#include <linux/ethtool.h>
+#include <linux/seq_file.h>
+#include <linux/types.h>
 
-#समावेश "qca_7k.h"
-#समावेश "qca_debug.h"
+#include "qca_7k.h"
+#include "qca_debug.h"
 
-#घोषणा QCASPI_MAX_REGS 0x20
+#define QCASPI_MAX_REGS 0x20
 
-अटल स्थिर u16 qcaspi_spi_regs[] = अणु
+static const u16 qcaspi_spi_regs[] = {
 	SPI_REG_BFR_SIZE,
 	SPI_REG_WRBUF_SPC_AVA,
 	SPI_REG_RDBUF_BYTE_AVA,
@@ -43,13 +42,13 @@
 	SPI_REG_WRBUF_WATERMARK,
 	SPI_REG_SIGNATURE,
 	SPI_REG_ACTION_CTRL
-पूर्ण;
+};
 
 /* The order of these strings must match the order of the fields in
- * काष्ठा qcaspi_stats
+ * struct qcaspi_stats
  * See qca_spi.h
  */
-अटल स्थिर अक्षर qcaspi_gstrings_stats[][ETH_GSTRING_LEN] = अणु
+static const char qcaspi_gstrings_stats[][ETH_GSTRING_LEN] = {
 	"Triggered resets",
 	"Device resets",
 	"Reset timeouts",
@@ -63,223 +62,223 @@
 	"SPI errors",
 	"Write verify errors",
 	"Buffer available errors",
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_DEBUG_FS
+#ifdef CONFIG_DEBUG_FS
 
-अटल पूर्णांक
-qcaspi_info_show(काष्ठा seq_file *s, व्योम *what)
-अणु
-	काष्ठा qcaspi *qca = s->निजी;
+static int
+qcaspi_info_show(struct seq_file *s, void *what)
+{
+	struct qcaspi *qca = s->private;
 
-	seq_म_लिखो(s, "RX buffer size   : %lu\n",
-		   (अचिन्हित दीर्घ)qca->buffer_size);
+	seq_printf(s, "RX buffer size   : %lu\n",
+		   (unsigned long)qca->buffer_size);
 
-	seq_माला_दो(s, "TX ring state    : ");
+	seq_puts(s, "TX ring state    : ");
 
-	अगर (qca->txr.skb[qca->txr.head] == शून्य)
-		seq_माला_दो(s, "empty");
-	अन्यथा अगर (qca->txr.skb[qca->txr.tail])
-		seq_माला_दो(s, "full");
-	अन्यथा
-		seq_माला_दो(s, "in use");
+	if (qca->txr.skb[qca->txr.head] == NULL)
+		seq_puts(s, "empty");
+	else if (qca->txr.skb[qca->txr.tail])
+		seq_puts(s, "full");
+	else
+		seq_puts(s, "in use");
 
-	seq_माला_दो(s, "\n");
+	seq_puts(s, "\n");
 
-	seq_म_लिखो(s, "TX ring size     : %u\n",
+	seq_printf(s, "TX ring size     : %u\n",
 		   qca->txr.size);
 
-	seq_म_लिखो(s, "Sync state       : %u (",
-		   (अचिन्हित पूर्णांक)qca->sync);
-	चयन (qca->sync) अणु
-	हाल QCASPI_SYNC_UNKNOWN:
-		seq_माला_दो(s, "QCASPI_SYNC_UNKNOWN");
-		अवरोध;
-	हाल QCASPI_SYNC_RESET:
-		seq_माला_दो(s, "QCASPI_SYNC_RESET");
-		अवरोध;
-	हाल QCASPI_SYNC_READY:
-		seq_माला_दो(s, "QCASPI_SYNC_READY");
-		अवरोध;
-	शेष:
-		seq_माला_दो(s, "INVALID");
-		अवरोध;
-	पूर्ण
-	seq_माला_दो(s, ")\n");
+	seq_printf(s, "Sync state       : %u (",
+		   (unsigned int)qca->sync);
+	switch (qca->sync) {
+	case QCASPI_SYNC_UNKNOWN:
+		seq_puts(s, "QCASPI_SYNC_UNKNOWN");
+		break;
+	case QCASPI_SYNC_RESET:
+		seq_puts(s, "QCASPI_SYNC_RESET");
+		break;
+	case QCASPI_SYNC_READY:
+		seq_puts(s, "QCASPI_SYNC_READY");
+		break;
+	default:
+		seq_puts(s, "INVALID");
+		break;
+	}
+	seq_puts(s, ")\n");
 
-	seq_म_लिखो(s, "IRQ              : %d\n",
+	seq_printf(s, "IRQ              : %d\n",
 		   qca->spi_dev->irq);
-	seq_म_लिखो(s, "INTR REQ         : %u\n",
-		   qca->पूर्णांकr_req);
-	seq_म_लिखो(s, "INTR SVC         : %u\n",
-		   qca->पूर्णांकr_svc);
+	seq_printf(s, "INTR REQ         : %u\n",
+		   qca->intr_req);
+	seq_printf(s, "INTR SVC         : %u\n",
+		   qca->intr_svc);
 
-	seq_म_लिखो(s, "SPI max speed    : %lu\n",
-		   (अचिन्हित दीर्घ)qca->spi_dev->max_speed_hz);
-	seq_म_लिखो(s, "SPI mode         : %x\n",
+	seq_printf(s, "SPI max speed    : %lu\n",
+		   (unsigned long)qca->spi_dev->max_speed_hz);
+	seq_printf(s, "SPI mode         : %x\n",
 		   qca->spi_dev->mode);
-	seq_म_लिखो(s, "SPI chip select  : %u\n",
-		   (अचिन्हित पूर्णांक)qca->spi_dev->chip_select);
-	seq_म_लिखो(s, "SPI legacy mode  : %u\n",
-		   (अचिन्हित पूर्णांक)qca->legacy_mode);
-	seq_म_लिखो(s, "SPI burst length : %u\n",
-		   (अचिन्हित पूर्णांक)qca->burst_len);
+	seq_printf(s, "SPI chip select  : %u\n",
+		   (unsigned int)qca->spi_dev->chip_select);
+	seq_printf(s, "SPI legacy mode  : %u\n",
+		   (unsigned int)qca->legacy_mode);
+	seq_printf(s, "SPI burst length : %u\n",
+		   (unsigned int)qca->burst_len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(qcaspi_info);
 
-व्योम
-qcaspi_init_device_debugfs(काष्ठा qcaspi *qca)
-अणु
+void
+qcaspi_init_device_debugfs(struct qcaspi *qca)
+{
 	qca->device_root = debugfs_create_dir(dev_name(&qca->net_dev->dev),
-					      शून्य);
+					      NULL);
 
 	debugfs_create_file("info", S_IFREG | 0444, qca->device_root, qca,
 			    &qcaspi_info_fops);
-पूर्ण
+}
 
-व्योम
-qcaspi_हटाओ_device_debugfs(काष्ठा qcaspi *qca)
-अणु
-	debugfs_हटाओ_recursive(qca->device_root);
-पूर्ण
+void
+qcaspi_remove_device_debugfs(struct qcaspi *qca)
+{
+	debugfs_remove_recursive(qca->device_root);
+}
 
-#अन्यथा /* CONFIG_DEBUG_FS */
+#else /* CONFIG_DEBUG_FS */
 
-व्योम
-qcaspi_init_device_debugfs(काष्ठा qcaspi *qca)
-अणु
-पूर्ण
+void
+qcaspi_init_device_debugfs(struct qcaspi *qca)
+{
+}
 
-व्योम
-qcaspi_हटाओ_device_debugfs(काष्ठा qcaspi *qca)
-अणु
-पूर्ण
+void
+qcaspi_remove_device_debugfs(struct qcaspi *qca)
+{
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल व्योम
-qcaspi_get_drvinfo(काष्ठा net_device *dev, काष्ठा ethtool_drvinfo *p)
-अणु
-	काष्ठा qcaspi *qca = netdev_priv(dev);
+static void
+qcaspi_get_drvinfo(struct net_device *dev, struct ethtool_drvinfo *p)
+{
+	struct qcaspi *qca = netdev_priv(dev);
 
-	strlcpy(p->driver, QCASPI_DRV_NAME, माप(p->driver));
-	strlcpy(p->version, QCASPI_DRV_VERSION, माप(p->version));
-	strlcpy(p->fw_version, "QCA7000", माप(p->fw_version));
+	strlcpy(p->driver, QCASPI_DRV_NAME, sizeof(p->driver));
+	strlcpy(p->version, QCASPI_DRV_VERSION, sizeof(p->version));
+	strlcpy(p->fw_version, "QCA7000", sizeof(p->fw_version));
 	strlcpy(p->bus_info, dev_name(&qca->spi_dev->dev),
-		माप(p->bus_info));
-पूर्ण
+		sizeof(p->bus_info));
+}
 
-अटल पूर्णांक
-qcaspi_get_link_ksettings(काष्ठा net_device *dev,
-			  काष्ठा ethtool_link_ksettings *cmd)
-अणु
+static int
+qcaspi_get_link_ksettings(struct net_device *dev,
+			  struct ethtool_link_ksettings *cmd)
+{
 	ethtool_link_ksettings_zero_link_mode(cmd, supported);
 	ethtool_link_ksettings_add_link_mode(cmd, supported, 10baseT_Half);
 
 	cmd->base.speed = SPEED_10;
 	cmd->base.duplex = DUPLEX_HALF;
 	cmd->base.port = PORT_OTHER;
-	cmd->base.स्वतःneg = AUTONEG_DISABLE;
+	cmd->base.autoneg = AUTONEG_DISABLE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-qcaspi_get_ethtool_stats(काष्ठा net_device *dev, काष्ठा ethtool_stats *estats, u64 *data)
-अणु
-	काष्ठा qcaspi *qca = netdev_priv(dev);
-	काष्ठा qcaspi_stats *st = &qca->stats;
+static void
+qcaspi_get_ethtool_stats(struct net_device *dev, struct ethtool_stats *estats, u64 *data)
+{
+	struct qcaspi *qca = netdev_priv(dev);
+	struct qcaspi_stats *st = &qca->stats;
 
-	स_नकल(data, st, ARRAY_SIZE(qcaspi_gstrings_stats) * माप(u64));
-पूर्ण
+	memcpy(data, st, ARRAY_SIZE(qcaspi_gstrings_stats) * sizeof(u64));
+}
 
-अटल व्योम
-qcaspi_get_strings(काष्ठा net_device *dev, u32 stringset, u8 *buf)
-अणु
-	चयन (stringset) अणु
-	हाल ETH_SS_STATS:
-		स_नकल(buf, &qcaspi_gstrings_stats,
-		       माप(qcaspi_gstrings_stats));
-		अवरोध;
-	शेष:
+static void
+qcaspi_get_strings(struct net_device *dev, u32 stringset, u8 *buf)
+{
+	switch (stringset) {
+	case ETH_SS_STATS:
+		memcpy(buf, &qcaspi_gstrings_stats,
+		       sizeof(qcaspi_gstrings_stats));
+		break;
+	default:
 		WARN_ON(1);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक
-qcaspi_get_sset_count(काष्ठा net_device *dev, पूर्णांक sset)
-अणु
-	चयन (sset) अणु
-	हाल ETH_SS_STATS:
-		वापस ARRAY_SIZE(qcaspi_gstrings_stats);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+static int
+qcaspi_get_sset_count(struct net_device *dev, int sset)
+{
+	switch (sset) {
+	case ETH_SS_STATS:
+		return ARRAY_SIZE(qcaspi_gstrings_stats);
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक
-qcaspi_get_regs_len(काष्ठा net_device *dev)
-अणु
-	वापस माप(u32) * QCASPI_MAX_REGS;
-पूर्ण
+static int
+qcaspi_get_regs_len(struct net_device *dev)
+{
+	return sizeof(u32) * QCASPI_MAX_REGS;
+}
 
-अटल व्योम
-qcaspi_get_regs(काष्ठा net_device *dev, काष्ठा ethtool_regs *regs, व्योम *p)
-अणु
-	काष्ठा qcaspi *qca = netdev_priv(dev);
+static void
+qcaspi_get_regs(struct net_device *dev, struct ethtool_regs *regs, void *p)
+{
+	struct qcaspi *qca = netdev_priv(dev);
 	u32 *regs_buff = p;
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 
 	regs->version = 1;
-	स_रखो(regs_buff, 0, माप(u32) * QCASPI_MAX_REGS);
+	memset(regs_buff, 0, sizeof(u32) * QCASPI_MAX_REGS);
 
-	क्रम (i = 0; i < ARRAY_SIZE(qcaspi_spi_regs); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(qcaspi_spi_regs); i++) {
 		u16 offset, value;
 
-		qcaspi_पढ़ो_रेजिस्टर(qca, qcaspi_spi_regs[i], &value);
+		qcaspi_read_register(qca, qcaspi_spi_regs[i], &value);
 		offset = qcaspi_spi_regs[i] >> 8;
 		regs_buff[offset] = value;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-qcaspi_get_ringparam(काष्ठा net_device *dev, काष्ठा ethtool_ringparam *ring)
-अणु
-	काष्ठा qcaspi *qca = netdev_priv(dev);
+static void
+qcaspi_get_ringparam(struct net_device *dev, struct ethtool_ringparam *ring)
+{
+	struct qcaspi *qca = netdev_priv(dev);
 
 	ring->rx_max_pending = 4;
 	ring->tx_max_pending = TX_RING_MAX_LEN;
 	ring->rx_pending = 4;
 	ring->tx_pending = qca->txr.count;
-पूर्ण
+}
 
-अटल पूर्णांक
-qcaspi_set_ringparam(काष्ठा net_device *dev, काष्ठा ethtool_ringparam *ring)
-अणु
-	स्थिर काष्ठा net_device_ops *ops = dev->netdev_ops;
-	काष्ठा qcaspi *qca = netdev_priv(dev);
+static int
+qcaspi_set_ringparam(struct net_device *dev, struct ethtool_ringparam *ring)
+{
+	const struct net_device_ops *ops = dev->netdev_ops;
+	struct qcaspi *qca = netdev_priv(dev);
 
-	अगर ((ring->rx_pending) ||
+	if ((ring->rx_pending) ||
 	    (ring->rx_mini_pending) ||
 	    (ring->rx_jumbo_pending))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (netअगर_running(dev))
-		ops->nकरो_stop(dev);
+	if (netif_running(dev))
+		ops->ndo_stop(dev);
 
 	qca->txr.count = max_t(u32, ring->tx_pending, TX_RING_MIN_LEN);
 	qca->txr.count = min_t(u16, qca->txr.count, TX_RING_MAX_LEN);
 
-	अगर (netअगर_running(dev))
-		ops->nकरो_खोलो(dev);
+	if (netif_running(dev))
+		ops->ndo_open(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा ethtool_ops qcaspi_ethtool_ops = अणु
+static const struct ethtool_ops qcaspi_ethtool_ops = {
 	.get_drvinfo = qcaspi_get_drvinfo,
 	.get_link = ethtool_op_get_link,
 	.get_ethtool_stats = qcaspi_get_ethtool_stats,
@@ -290,9 +289,9 @@ qcaspi_set_ringparam(काष्ठा net_device *dev, काष्ठा etht
 	.get_ringparam = qcaspi_get_ringparam,
 	.set_ringparam = qcaspi_set_ringparam,
 	.get_link_ksettings = qcaspi_get_link_ksettings,
-पूर्ण;
+};
 
-व्योम qcaspi_set_ethtool_ops(काष्ठा net_device *dev)
-अणु
+void qcaspi_set_ethtool_ops(struct net_device *dev)
+{
 	dev->ethtool_ops = &qcaspi_ethtool_ops;
-पूर्ण
+}

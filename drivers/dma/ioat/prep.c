@@ -1,127 +1,126 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Intel I/OAT DMA Linux driver
  * Copyright(c) 2004 - 2015 Intel Corporation.
  */
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/prefetch.h>
-#समावेश "../dmaengine.h"
-#समावेश "registers.h"
-#समावेश "hw.h"
-#समावेश "dma.h"
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/gfp.h>
+#include <linux/dmaengine.h>
+#include <linux/dma-mapping.h>
+#include <linux/prefetch.h>
+#include "../dmaengine.h"
+#include "registers.h"
+#include "hw.h"
+#include "dma.h"
 
-#घोषणा MAX_SCF	256
+#define MAX_SCF	256
 
-/* provide a lookup table क्रम setting the source address in the base or
+/* provide a lookup table for setting the source address in the base or
  * extended descriptor of an xor or pq descriptor
  */
-अटल स्थिर u8 xor_idx_to_desc = 0xe0;
-अटल स्थिर u8 xor_idx_to_field[] = अणु 1, 4, 5, 6, 7, 0, 1, 2 पूर्ण;
-अटल स्थिर u8 pq_idx_to_desc = 0xf8;
-अटल स्थिर u8 pq16_idx_to_desc[] = अणु 0, 0, 1, 1, 1, 1, 1, 1, 1,
-				       2, 2, 2, 2, 2, 2, 2 पूर्ण;
-अटल स्थिर u8 pq_idx_to_field[] = अणु 1, 4, 5, 0, 1, 2, 4, 5 पूर्ण;
-अटल स्थिर u8 pq16_idx_to_field[] = अणु 1, 4, 1, 2, 3, 4, 5, 6, 7,
-					0, 1, 2, 3, 4, 5, 6 पूर्ण;
+static const u8 xor_idx_to_desc = 0xe0;
+static const u8 xor_idx_to_field[] = { 1, 4, 5, 6, 7, 0, 1, 2 };
+static const u8 pq_idx_to_desc = 0xf8;
+static const u8 pq16_idx_to_desc[] = { 0, 0, 1, 1, 1, 1, 1, 1, 1,
+				       2, 2, 2, 2, 2, 2, 2 };
+static const u8 pq_idx_to_field[] = { 1, 4, 5, 0, 1, 2, 4, 5 };
+static const u8 pq16_idx_to_field[] = { 1, 4, 1, 2, 3, 4, 5, 6, 7,
+					0, 1, 2, 3, 4, 5, 6 };
 
-अटल व्योम xor_set_src(काष्ठा ioat_raw_descriptor *descs[2],
-			dma_addr_t addr, u32 offset, पूर्णांक idx)
-अणु
-	काष्ठा ioat_raw_descriptor *raw = descs[xor_idx_to_desc >> idx & 1];
+static void xor_set_src(struct ioat_raw_descriptor *descs[2],
+			dma_addr_t addr, u32 offset, int idx)
+{
+	struct ioat_raw_descriptor *raw = descs[xor_idx_to_desc >> idx & 1];
 
 	raw->field[xor_idx_to_field[idx]] = addr + offset;
-पूर्ण
+}
 
-अटल dma_addr_t pq_get_src(काष्ठा ioat_raw_descriptor *descs[2], पूर्णांक idx)
-अणु
-	काष्ठा ioat_raw_descriptor *raw = descs[pq_idx_to_desc >> idx & 1];
+static dma_addr_t pq_get_src(struct ioat_raw_descriptor *descs[2], int idx)
+{
+	struct ioat_raw_descriptor *raw = descs[pq_idx_to_desc >> idx & 1];
 
-	वापस raw->field[pq_idx_to_field[idx]];
-पूर्ण
+	return raw->field[pq_idx_to_field[idx]];
+}
 
-अटल dma_addr_t pq16_get_src(काष्ठा ioat_raw_descriptor *desc[3], पूर्णांक idx)
-अणु
-	काष्ठा ioat_raw_descriptor *raw = desc[pq16_idx_to_desc[idx]];
+static dma_addr_t pq16_get_src(struct ioat_raw_descriptor *desc[3], int idx)
+{
+	struct ioat_raw_descriptor *raw = desc[pq16_idx_to_desc[idx]];
 
-	वापस raw->field[pq16_idx_to_field[idx]];
-पूर्ण
+	return raw->field[pq16_idx_to_field[idx]];
+}
 
-अटल व्योम pq_set_src(काष्ठा ioat_raw_descriptor *descs[2],
-		       dma_addr_t addr, u32 offset, u8 coef, पूर्णांक idx)
-अणु
-	काष्ठा ioat_pq_descriptor *pq = (काष्ठा ioat_pq_descriptor *) descs[0];
-	काष्ठा ioat_raw_descriptor *raw = descs[pq_idx_to_desc >> idx & 1];
+static void pq_set_src(struct ioat_raw_descriptor *descs[2],
+		       dma_addr_t addr, u32 offset, u8 coef, int idx)
+{
+	struct ioat_pq_descriptor *pq = (struct ioat_pq_descriptor *) descs[0];
+	struct ioat_raw_descriptor *raw = descs[pq_idx_to_desc >> idx & 1];
 
 	raw->field[pq_idx_to_field[idx]] = addr + offset;
 	pq->coef[idx] = coef;
-पूर्ण
+}
 
-अटल व्योम pq16_set_src(काष्ठा ioat_raw_descriptor *desc[3],
-			dma_addr_t addr, u32 offset, u8 coef, अचिन्हित idx)
-अणु
-	काष्ठा ioat_pq_descriptor *pq = (काष्ठा ioat_pq_descriptor *)desc[0];
-	काष्ठा ioat_pq16a_descriptor *pq16 =
-		(काष्ठा ioat_pq16a_descriptor *)desc[1];
-	काष्ठा ioat_raw_descriptor *raw = desc[pq16_idx_to_desc[idx]];
+static void pq16_set_src(struct ioat_raw_descriptor *desc[3],
+			dma_addr_t addr, u32 offset, u8 coef, unsigned idx)
+{
+	struct ioat_pq_descriptor *pq = (struct ioat_pq_descriptor *)desc[0];
+	struct ioat_pq16a_descriptor *pq16 =
+		(struct ioat_pq16a_descriptor *)desc[1];
+	struct ioat_raw_descriptor *raw = desc[pq16_idx_to_desc[idx]];
 
 	raw->field[pq16_idx_to_field[idx]] = addr + offset;
 
-	अगर (idx < 8)
+	if (idx < 8)
 		pq->coef[idx] = coef;
-	अन्यथा
+	else
 		pq16->coef[idx - 8] = coef;
-पूर्ण
+}
 
-अटल काष्ठा ioat_sed_ent *
-ioat3_alloc_sed(काष्ठा ioatdma_device *ioat_dma, अचिन्हित पूर्णांक hw_pool)
-अणु
-	काष्ठा ioat_sed_ent *sed;
+static struct ioat_sed_ent *
+ioat3_alloc_sed(struct ioatdma_device *ioat_dma, unsigned int hw_pool)
+{
+	struct ioat_sed_ent *sed;
 	gfp_t flags = __GFP_ZERO | GFP_ATOMIC;
 
 	sed = kmem_cache_alloc(ioat_sed_cache, flags);
-	अगर (!sed)
-		वापस शून्य;
+	if (!sed)
+		return NULL;
 
 	sed->hw_pool = hw_pool;
 	sed->hw = dma_pool_alloc(ioat_dma->sed_hw_pool[hw_pool],
 				 flags, &sed->dma);
-	अगर (!sed->hw) अणु
-		kmem_cache_मुक्त(ioat_sed_cache, sed);
-		वापस शून्य;
-	पूर्ण
+	if (!sed->hw) {
+		kmem_cache_free(ioat_sed_cache, sed);
+		return NULL;
+	}
 
-	वापस sed;
-पूर्ण
+	return sed;
+}
 
-काष्ठा dma_async_tx_descriptor *
-ioat_dma_prep_स_नकल_lock(काष्ठा dma_chan *c, dma_addr_t dma_dest,
-			   dma_addr_t dma_src, माप_प्रकार len, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा ioatdma_chan *ioat_chan = to_ioat_chan(c);
-	काष्ठा ioat_dma_descriptor *hw;
-	काष्ठा ioat_ring_ent *desc;
+struct dma_async_tx_descriptor *
+ioat_dma_prep_memcpy_lock(struct dma_chan *c, dma_addr_t dma_dest,
+			   dma_addr_t dma_src, size_t len, unsigned long flags)
+{
+	struct ioatdma_chan *ioat_chan = to_ioat_chan(c);
+	struct ioat_dma_descriptor *hw;
+	struct ioat_ring_ent *desc;
 	dma_addr_t dst = dma_dest;
 	dma_addr_t src = dma_src;
-	माप_प्रकार total_len = len;
-	पूर्णांक num_descs, idx, i;
+	size_t total_len = len;
+	int num_descs, idx, i;
 
-	अगर (test_bit(IOAT_CHAN_DOWN, &ioat_chan->state))
-		वापस शून्य;
+	if (test_bit(IOAT_CHAN_DOWN, &ioat_chan->state))
+		return NULL;
 
 	num_descs = ioat_xferlen_to_descs(ioat_chan, len);
-	अगर (likely(num_descs) &&
+	if (likely(num_descs) &&
 	    ioat_check_space_lock(ioat_chan, num_descs) == 0)
 		idx = ioat_chan->head;
-	अन्यथा
-		वापस शून्य;
+	else
+		return NULL;
 	i = 0;
-	करो अणु
-		माप_प्रकार copy = min_t(माप_प्रकार, len, 1 << ioat_chan->xfercap_log);
+	do {
+		size_t copy = min_t(size_t, len, 1 << ioat_chan->xfercap_log);
 
 		desc = ioat_get_ring_ent(ioat_chan, idx + i);
 		hw = desc->hw;
@@ -135,34 +134,34 @@ ioat_dma_prep_स_नकल_lock(काष्ठा dma_chan *c, dma_addr_t dma_
 		dst += copy;
 		src += copy;
 		dump_desc_dbg(ioat_chan, desc);
-	पूर्ण जबतक (++i < num_descs);
+	} while (++i < num_descs);
 
 	desc->txd.flags = flags;
 	desc->len = total_len;
-	hw->ctl_f.पूर्णांक_en = !!(flags & DMA_PREP_INTERRUPT);
+	hw->ctl_f.int_en = !!(flags & DMA_PREP_INTERRUPT);
 	hw->ctl_f.fence = !!(flags & DMA_PREP_FENCE);
-	hw->ctl_f.compl_ग_लिखो = 1;
+	hw->ctl_f.compl_write = 1;
 	dump_desc_dbg(ioat_chan, desc);
 	/* we leave the channel locked to ensure in order submission */
 
-	वापस &desc->txd;
-पूर्ण
+	return &desc->txd;
+}
 
 
-अटल काष्ठा dma_async_tx_descriptor *
-__ioat_prep_xor_lock(काष्ठा dma_chan *c, क्रमागत sum_check_flags *result,
-		      dma_addr_t dest, dma_addr_t *src, अचिन्हित पूर्णांक src_cnt,
-		      माप_प्रकार len, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा ioatdma_chan *ioat_chan = to_ioat_chan(c);
-	काष्ठा ioat_ring_ent *compl_desc;
-	काष्ठा ioat_ring_ent *desc;
-	काष्ठा ioat_ring_ent *ext;
-	माप_प्रकार total_len = len;
-	काष्ठा ioat_xor_descriptor *xor;
-	काष्ठा ioat_xor_ext_descriptor *xor_ex = शून्य;
-	काष्ठा ioat_dma_descriptor *hw;
-	पूर्णांक num_descs, with_ext, idx, i;
+static struct dma_async_tx_descriptor *
+__ioat_prep_xor_lock(struct dma_chan *c, enum sum_check_flags *result,
+		      dma_addr_t dest, dma_addr_t *src, unsigned int src_cnt,
+		      size_t len, unsigned long flags)
+{
+	struct ioatdma_chan *ioat_chan = to_ioat_chan(c);
+	struct ioat_ring_ent *compl_desc;
+	struct ioat_ring_ent *desc;
+	struct ioat_ring_ent *ext;
+	size_t total_len = len;
+	struct ioat_xor_descriptor *xor;
+	struct ioat_xor_ext_descriptor *xor_ex = NULL;
+	struct ioat_dma_descriptor *hw;
+	int num_descs, with_ext, idx, i;
 	u32 offset = 0;
 	u8 op = result ? IOAT_OP_XOR_VAL : IOAT_OP_XOR;
 
@@ -172,42 +171,42 @@ __ioat_prep_xor_lock(काष्ठा dma_chan *c, क्रमागत sum_c
 	/* we need 2x the number of descriptors to cover greater than 5
 	 * sources
 	 */
-	अगर (src_cnt > 5) अणु
+	if (src_cnt > 5) {
 		with_ext = 1;
 		num_descs *= 2;
-	पूर्ण अन्यथा
+	} else
 		with_ext = 0;
 
-	/* completion ग_लिखोs from the raid engine may pass completion
-	 * ग_लिखोs from the legacy engine, so we need one extra null
-	 * (legacy) descriptor to ensure all completion ग_लिखोs arrive in
+	/* completion writes from the raid engine may pass completion
+	 * writes from the legacy engine, so we need one extra null
+	 * (legacy) descriptor to ensure all completion writes arrive in
 	 * order.
 	 */
-	अगर (likely(num_descs) &&
+	if (likely(num_descs) &&
 	    ioat_check_space_lock(ioat_chan, num_descs+1) == 0)
 		idx = ioat_chan->head;
-	अन्यथा
-		वापस शून्य;
+	else
+		return NULL;
 	i = 0;
-	करो अणु
-		काष्ठा ioat_raw_descriptor *descs[2];
-		माप_प्रकार xfer_size = min_t(माप_प्रकार,
+	do {
+		struct ioat_raw_descriptor *descs[2];
+		size_t xfer_size = min_t(size_t,
 					 len, 1 << ioat_chan->xfercap_log);
-		पूर्णांक s;
+		int s;
 
 		desc = ioat_get_ring_ent(ioat_chan, idx + i);
 		xor = desc->xor;
 
 		/* save a branch by unconditionally retrieving the
-		 * extended descriptor xor_set_src() knows to not ग_लिखो
-		 * to it in the single descriptor हाल
+		 * extended descriptor xor_set_src() knows to not write
+		 * to it in the single descriptor case
 		 */
 		ext = ioat_get_ring_ent(ioat_chan, idx + i + 1);
 		xor_ex = ext->xor_ex;
 
-		descs[0] = (काष्ठा ioat_raw_descriptor *) xor;
-		descs[1] = (काष्ठा ioat_raw_descriptor *) xor_ex;
-		क्रम (s = 0; s < src_cnt; s++)
+		descs[0] = (struct ioat_raw_descriptor *) xor;
+		descs[1] = (struct ioat_raw_descriptor *) xor_ex;
+		for (s = 0; s < src_cnt; s++)
 			xor_set_src(descs, src[s], offset, s);
 		xor->size = xfer_size;
 		xor->dst_addr = dest + offset;
@@ -218,209 +217,209 @@ __ioat_prep_xor_lock(काष्ठा dma_chan *c, क्रमागत sum_c
 		len -= xfer_size;
 		offset += xfer_size;
 		dump_desc_dbg(ioat_chan, desc);
-	पूर्ण जबतक ((i += 1 + with_ext) < num_descs);
+	} while ((i += 1 + with_ext) < num_descs);
 
 	/* last xor descriptor carries the unmap parameters and fence bit */
 	desc->txd.flags = flags;
 	desc->len = total_len;
-	अगर (result)
+	if (result)
 		desc->result = result;
 	xor->ctl_f.fence = !!(flags & DMA_PREP_FENCE);
 
-	/* completion descriptor carries पूर्णांकerrupt bit */
+	/* completion descriptor carries interrupt bit */
 	compl_desc = ioat_get_ring_ent(ioat_chan, idx + i);
 	compl_desc->txd.flags = flags & DMA_PREP_INTERRUPT;
 	hw = compl_desc->hw;
 	hw->ctl = 0;
 	hw->ctl_f.null = 1;
-	hw->ctl_f.पूर्णांक_en = !!(flags & DMA_PREP_INTERRUPT);
-	hw->ctl_f.compl_ग_लिखो = 1;
-	hw->size = शून्य_DESC_BUFFER_SIZE;
+	hw->ctl_f.int_en = !!(flags & DMA_PREP_INTERRUPT);
+	hw->ctl_f.compl_write = 1;
+	hw->size = NULL_DESC_BUFFER_SIZE;
 	dump_desc_dbg(ioat_chan, compl_desc);
 
 	/* we leave the channel locked to ensure in order submission */
-	वापस &compl_desc->txd;
-पूर्ण
+	return &compl_desc->txd;
+}
 
-काष्ठा dma_async_tx_descriptor *
-ioat_prep_xor(काष्ठा dma_chan *chan, dma_addr_t dest, dma_addr_t *src,
-	       अचिन्हित पूर्णांक src_cnt, माप_प्रकार len, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा ioatdma_chan *ioat_chan = to_ioat_chan(chan);
+struct dma_async_tx_descriptor *
+ioat_prep_xor(struct dma_chan *chan, dma_addr_t dest, dma_addr_t *src,
+	       unsigned int src_cnt, size_t len, unsigned long flags)
+{
+	struct ioatdma_chan *ioat_chan = to_ioat_chan(chan);
 
-	अगर (test_bit(IOAT_CHAN_DOWN, &ioat_chan->state))
-		वापस शून्य;
+	if (test_bit(IOAT_CHAN_DOWN, &ioat_chan->state))
+		return NULL;
 
-	वापस __ioat_prep_xor_lock(chan, शून्य, dest, src, src_cnt, len, flags);
-पूर्ण
+	return __ioat_prep_xor_lock(chan, NULL, dest, src, src_cnt, len, flags);
+}
 
-काष्ठा dma_async_tx_descriptor *
-ioat_prep_xor_val(काष्ठा dma_chan *chan, dma_addr_t *src,
-		    अचिन्हित पूर्णांक src_cnt, माप_प्रकार len,
-		    क्रमागत sum_check_flags *result, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा ioatdma_chan *ioat_chan = to_ioat_chan(chan);
+struct dma_async_tx_descriptor *
+ioat_prep_xor_val(struct dma_chan *chan, dma_addr_t *src,
+		    unsigned int src_cnt, size_t len,
+		    enum sum_check_flags *result, unsigned long flags)
+{
+	struct ioatdma_chan *ioat_chan = to_ioat_chan(chan);
 
-	अगर (test_bit(IOAT_CHAN_DOWN, &ioat_chan->state))
-		वापस शून्य;
+	if (test_bit(IOAT_CHAN_DOWN, &ioat_chan->state))
+		return NULL;
 
 	/* the cleanup routine only sets bits on validate failure, it
-	 * करोes not clear bits on validate success... so clear it here
+	 * does not clear bits on validate success... so clear it here
 	 */
 	*result = 0;
 
-	वापस __ioat_prep_xor_lock(chan, result, src[0], &src[1],
+	return __ioat_prep_xor_lock(chan, result, src[0], &src[1],
 				     src_cnt - 1, len, flags);
-पूर्ण
+}
 
-अटल व्योम
-dump_pq_desc_dbg(काष्ठा ioatdma_chan *ioat_chan, काष्ठा ioat_ring_ent *desc,
-		 काष्ठा ioat_ring_ent *ext)
-अणु
-	काष्ठा device *dev = to_dev(ioat_chan);
-	काष्ठा ioat_pq_descriptor *pq = desc->pq;
-	काष्ठा ioat_pq_ext_descriptor *pq_ex = ext ? ext->pq_ex : शून्य;
-	काष्ठा ioat_raw_descriptor *descs[] = अणु (व्योम *) pq, (व्योम *) pq_ex पूर्ण;
-	पूर्णांक src_cnt = src_cnt_to_sw(pq->ctl_f.src_cnt);
-	पूर्णांक i;
+static void
+dump_pq_desc_dbg(struct ioatdma_chan *ioat_chan, struct ioat_ring_ent *desc,
+		 struct ioat_ring_ent *ext)
+{
+	struct device *dev = to_dev(ioat_chan);
+	struct ioat_pq_descriptor *pq = desc->pq;
+	struct ioat_pq_ext_descriptor *pq_ex = ext ? ext->pq_ex : NULL;
+	struct ioat_raw_descriptor *descs[] = { (void *) pq, (void *) pq_ex };
+	int src_cnt = src_cnt_to_sw(pq->ctl_f.src_cnt);
+	int i;
 
 	dev_dbg(dev, "desc[%d]: (%#llx->%#llx) flags: %#x"
 		" sz: %#10.8x ctl: %#x (op: %#x int: %d compl: %d pq: '%s%s'"
 		" src_cnt: %d)\n",
-		desc_id(desc), (अचिन्हित दीर्घ दीर्घ) desc->txd.phys,
-		(अचिन्हित दीर्घ दीर्घ) (pq_ex ? pq_ex->next : pq->next),
+		desc_id(desc), (unsigned long long) desc->txd.phys,
+		(unsigned long long) (pq_ex ? pq_ex->next : pq->next),
 		desc->txd.flags, pq->size, pq->ctl, pq->ctl_f.op,
-		pq->ctl_f.पूर्णांक_en, pq->ctl_f.compl_ग_लिखो,
+		pq->ctl_f.int_en, pq->ctl_f.compl_write,
 		pq->ctl_f.p_disable ? "" : "p", pq->ctl_f.q_disable ? "" : "q",
 		pq->ctl_f.src_cnt);
-	क्रम (i = 0; i < src_cnt; i++)
+	for (i = 0; i < src_cnt; i++)
 		dev_dbg(dev, "\tsrc[%d]: %#llx coef: %#x\n", i,
-			(अचिन्हित दीर्घ दीर्घ) pq_get_src(descs, i), pq->coef[i]);
+			(unsigned long long) pq_get_src(descs, i), pq->coef[i]);
 	dev_dbg(dev, "\tP: %#llx\n", pq->p_addr);
 	dev_dbg(dev, "\tQ: %#llx\n", pq->q_addr);
 	dev_dbg(dev, "\tNEXT: %#llx\n", pq->next);
-पूर्ण
+}
 
-अटल व्योम dump_pq16_desc_dbg(काष्ठा ioatdma_chan *ioat_chan,
-			       काष्ठा ioat_ring_ent *desc)
-अणु
-	काष्ठा device *dev = to_dev(ioat_chan);
-	काष्ठा ioat_pq_descriptor *pq = desc->pq;
-	काष्ठा ioat_raw_descriptor *descs[] = अणु (व्योम *)pq,
-						(व्योम *)pq,
-						(व्योम *)pq पूर्ण;
-	पूर्णांक src_cnt = src16_cnt_to_sw(pq->ctl_f.src_cnt);
-	पूर्णांक i;
+static void dump_pq16_desc_dbg(struct ioatdma_chan *ioat_chan,
+			       struct ioat_ring_ent *desc)
+{
+	struct device *dev = to_dev(ioat_chan);
+	struct ioat_pq_descriptor *pq = desc->pq;
+	struct ioat_raw_descriptor *descs[] = { (void *)pq,
+						(void *)pq,
+						(void *)pq };
+	int src_cnt = src16_cnt_to_sw(pq->ctl_f.src_cnt);
+	int i;
 
-	अगर (desc->sed) अणु
-		descs[1] = (व्योम *)desc->sed->hw;
-		descs[2] = (व्योम *)desc->sed->hw + 64;
-	पूर्ण
+	if (desc->sed) {
+		descs[1] = (void *)desc->sed->hw;
+		descs[2] = (void *)desc->sed->hw + 64;
+	}
 
 	dev_dbg(dev, "desc[%d]: (%#llx->%#llx) flags: %#x"
 		" sz: %#x ctl: %#x (op: %#x int: %d compl: %d pq: '%s%s'"
 		" src_cnt: %d)\n",
-		desc_id(desc), (अचिन्हित दीर्घ दीर्घ) desc->txd.phys,
-		(अचिन्हित दीर्घ दीर्घ) pq->next,
+		desc_id(desc), (unsigned long long) desc->txd.phys,
+		(unsigned long long) pq->next,
 		desc->txd.flags, pq->size, pq->ctl,
-		pq->ctl_f.op, pq->ctl_f.पूर्णांक_en,
-		pq->ctl_f.compl_ग_लिखो,
+		pq->ctl_f.op, pq->ctl_f.int_en,
+		pq->ctl_f.compl_write,
 		pq->ctl_f.p_disable ? "" : "p", pq->ctl_f.q_disable ? "" : "q",
 		pq->ctl_f.src_cnt);
-	क्रम (i = 0; i < src_cnt; i++) अणु
+	for (i = 0; i < src_cnt; i++) {
 		dev_dbg(dev, "\tsrc[%d]: %#llx coef: %#x\n", i,
-			(अचिन्हित दीर्घ दीर्घ) pq16_get_src(descs, i),
+			(unsigned long long) pq16_get_src(descs, i),
 			pq->coef[i]);
-	पूर्ण
+	}
 	dev_dbg(dev, "\tP: %#llx\n", pq->p_addr);
 	dev_dbg(dev, "\tQ: %#llx\n", pq->q_addr);
-पूर्ण
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-__ioat_prep_pq_lock(काष्ठा dma_chan *c, क्रमागत sum_check_flags *result,
-		     स्थिर dma_addr_t *dst, स्थिर dma_addr_t *src,
-		     अचिन्हित पूर्णांक src_cnt, स्थिर अचिन्हित अक्षर *scf,
-		     माप_प्रकार len, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा ioatdma_chan *ioat_chan = to_ioat_chan(c);
-	काष्ठा ioatdma_device *ioat_dma = ioat_chan->ioat_dma;
-	काष्ठा ioat_ring_ent *compl_desc;
-	काष्ठा ioat_ring_ent *desc;
-	काष्ठा ioat_ring_ent *ext;
-	माप_प्रकार total_len = len;
-	काष्ठा ioat_pq_descriptor *pq;
-	काष्ठा ioat_pq_ext_descriptor *pq_ex = शून्य;
-	काष्ठा ioat_dma_descriptor *hw;
+static struct dma_async_tx_descriptor *
+__ioat_prep_pq_lock(struct dma_chan *c, enum sum_check_flags *result,
+		     const dma_addr_t *dst, const dma_addr_t *src,
+		     unsigned int src_cnt, const unsigned char *scf,
+		     size_t len, unsigned long flags)
+{
+	struct ioatdma_chan *ioat_chan = to_ioat_chan(c);
+	struct ioatdma_device *ioat_dma = ioat_chan->ioat_dma;
+	struct ioat_ring_ent *compl_desc;
+	struct ioat_ring_ent *desc;
+	struct ioat_ring_ent *ext;
+	size_t total_len = len;
+	struct ioat_pq_descriptor *pq;
+	struct ioat_pq_ext_descriptor *pq_ex = NULL;
+	struct ioat_dma_descriptor *hw;
 	u32 offset = 0;
 	u8 op = result ? IOAT_OP_PQ_VAL : IOAT_OP_PQ;
-	पूर्णांक i, s, idx, with_ext, num_descs;
-	पूर्णांक cb32 = (ioat_dma->version < IOAT_VER_3_3) ? 1 : 0;
+	int i, s, idx, with_ext, num_descs;
+	int cb32 = (ioat_dma->version < IOAT_VER_3_3) ? 1 : 0;
 
 	dev_dbg(to_dev(ioat_chan), "%s\n", __func__);
 	/* the engine requires at least two sources (we provide
-	 * at least 1 implied source in the DMA_PREP_CONTINUE हाल)
+	 * at least 1 implied source in the DMA_PREP_CONTINUE case)
 	 */
-	BUG_ON(src_cnt + dmaf_जारी(flags) < 2);
+	BUG_ON(src_cnt + dmaf_continue(flags) < 2);
 
 	num_descs = ioat_xferlen_to_descs(ioat_chan, len);
 	/* we need 2x the number of descriptors to cover greater than 3
 	 * sources (we need 1 extra source in the q-only continuation
-	 * हाल and 3 extra sources in the p+q continuation हाल.
+	 * case and 3 extra sources in the p+q continuation case.
 	 */
-	अगर (src_cnt + dmaf_p_disabled_जारी(flags) > 3 ||
-	    (dmaf_जारी(flags) && !dmaf_p_disabled_जारी(flags))) अणु
+	if (src_cnt + dmaf_p_disabled_continue(flags) > 3 ||
+	    (dmaf_continue(flags) && !dmaf_p_disabled_continue(flags))) {
 		with_ext = 1;
 		num_descs *= 2;
-	पूर्ण अन्यथा
+	} else
 		with_ext = 0;
 
-	/* completion ग_लिखोs from the raid engine may pass completion
-	 * ग_लिखोs from the legacy engine, so we need one extra null
-	 * (legacy) descriptor to ensure all completion ग_लिखोs arrive in
+	/* completion writes from the raid engine may pass completion
+	 * writes from the legacy engine, so we need one extra null
+	 * (legacy) descriptor to ensure all completion writes arrive in
 	 * order.
 	 */
-	अगर (likely(num_descs) &&
+	if (likely(num_descs) &&
 	    ioat_check_space_lock(ioat_chan, num_descs + cb32) == 0)
 		idx = ioat_chan->head;
-	अन्यथा
-		वापस शून्य;
+	else
+		return NULL;
 	i = 0;
-	करो अणु
-		काष्ठा ioat_raw_descriptor *descs[2];
-		माप_प्रकार xfer_size = min_t(माप_प्रकार, len,
+	do {
+		struct ioat_raw_descriptor *descs[2];
+		size_t xfer_size = min_t(size_t, len,
 					 1 << ioat_chan->xfercap_log);
 
 		desc = ioat_get_ring_ent(ioat_chan, idx + i);
 		pq = desc->pq;
 
 		/* save a branch by unconditionally retrieving the
-		 * extended descriptor pq_set_src() knows to not ग_लिखो
-		 * to it in the single descriptor हाल
+		 * extended descriptor pq_set_src() knows to not write
+		 * to it in the single descriptor case
 		 */
 		ext = ioat_get_ring_ent(ioat_chan, idx + i + with_ext);
 		pq_ex = ext->pq_ex;
 
-		descs[0] = (काष्ठा ioat_raw_descriptor *) pq;
-		descs[1] = (काष्ठा ioat_raw_descriptor *) pq_ex;
+		descs[0] = (struct ioat_raw_descriptor *) pq;
+		descs[1] = (struct ioat_raw_descriptor *) pq_ex;
 
-		क्रम (s = 0; s < src_cnt; s++)
+		for (s = 0; s < src_cnt; s++)
 			pq_set_src(descs, src[s], offset, scf[s], s);
 
-		/* see the comment क्रम dma_maxpq in include/linux/dmaengine.h */
-		अगर (dmaf_p_disabled_जारी(flags))
+		/* see the comment for dma_maxpq in include/linux/dmaengine.h */
+		if (dmaf_p_disabled_continue(flags))
 			pq_set_src(descs, dst[1], offset, 1, s++);
-		अन्यथा अगर (dmaf_जारी(flags)) अणु
+		else if (dmaf_continue(flags)) {
 			pq_set_src(descs, dst[0], offset, 0, s++);
 			pq_set_src(descs, dst[1], offset, 1, s++);
 			pq_set_src(descs, dst[1], offset, 0, s++);
-		पूर्ण
+		}
 		pq->size = xfer_size;
 		pq->p_addr = dst[0] + offset;
 		pq->q_addr = dst[1] + offset;
 		pq->ctl = 0;
 		pq->ctl_f.op = op;
-		/* we turn on descriptor ग_लिखो back error status */
-		अगर (ioat_dma->cap & IOAT_CAP_DWBES)
+		/* we turn on descriptor write back error status */
+		if (ioat_dma->cap & IOAT_CAP_DWBES)
 			pq->ctl_f.wb_en = result ? 1 : 0;
 		pq->ctl_f.src_cnt = src_cnt_to_hw(s);
 		pq->ctl_f.p_disable = !!(flags & DMA_PREP_PQ_DISABLE_P);
@@ -428,52 +427,52 @@ __ioat_prep_pq_lock(काष्ठा dma_chan *c, क्रमागत sum_ch
 
 		len -= xfer_size;
 		offset += xfer_size;
-	पूर्ण जबतक ((i += 1 + with_ext) < num_descs);
+	} while ((i += 1 + with_ext) < num_descs);
 
 	/* last pq descriptor carries the unmap parameters and fence bit */
 	desc->txd.flags = flags;
 	desc->len = total_len;
-	अगर (result)
+	if (result)
 		desc->result = result;
 	pq->ctl_f.fence = !!(flags & DMA_PREP_FENCE);
 	dump_pq_desc_dbg(ioat_chan, desc, ext);
 
-	अगर (!cb32) अणु
-		pq->ctl_f.पूर्णांक_en = !!(flags & DMA_PREP_INTERRUPT);
-		pq->ctl_f.compl_ग_लिखो = 1;
+	if (!cb32) {
+		pq->ctl_f.int_en = !!(flags & DMA_PREP_INTERRUPT);
+		pq->ctl_f.compl_write = 1;
 		compl_desc = desc;
-	पूर्ण अन्यथा अणु
-		/* completion descriptor carries पूर्णांकerrupt bit */
+	} else {
+		/* completion descriptor carries interrupt bit */
 		compl_desc = ioat_get_ring_ent(ioat_chan, idx + i);
 		compl_desc->txd.flags = flags & DMA_PREP_INTERRUPT;
 		hw = compl_desc->hw;
 		hw->ctl = 0;
 		hw->ctl_f.null = 1;
-		hw->ctl_f.पूर्णांक_en = !!(flags & DMA_PREP_INTERRUPT);
-		hw->ctl_f.compl_ग_लिखो = 1;
-		hw->size = शून्य_DESC_BUFFER_SIZE;
+		hw->ctl_f.int_en = !!(flags & DMA_PREP_INTERRUPT);
+		hw->ctl_f.compl_write = 1;
+		hw->size = NULL_DESC_BUFFER_SIZE;
 		dump_desc_dbg(ioat_chan, compl_desc);
-	पूर्ण
+	}
 
 
 	/* we leave the channel locked to ensure in order submission */
-	वापस &compl_desc->txd;
-पूर्ण
+	return &compl_desc->txd;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-__ioat_prep_pq16_lock(काष्ठा dma_chan *c, क्रमागत sum_check_flags *result,
-		       स्थिर dma_addr_t *dst, स्थिर dma_addr_t *src,
-		       अचिन्हित पूर्णांक src_cnt, स्थिर अचिन्हित अक्षर *scf,
-		       माप_प्रकार len, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा ioatdma_chan *ioat_chan = to_ioat_chan(c);
-	काष्ठा ioatdma_device *ioat_dma = ioat_chan->ioat_dma;
-	काष्ठा ioat_ring_ent *desc;
-	माप_प्रकार total_len = len;
-	काष्ठा ioat_pq_descriptor *pq;
+static struct dma_async_tx_descriptor *
+__ioat_prep_pq16_lock(struct dma_chan *c, enum sum_check_flags *result,
+		       const dma_addr_t *dst, const dma_addr_t *src,
+		       unsigned int src_cnt, const unsigned char *scf,
+		       size_t len, unsigned long flags)
+{
+	struct ioatdma_chan *ioat_chan = to_ioat_chan(c);
+	struct ioatdma_device *ioat_dma = ioat_chan->ioat_dma;
+	struct ioat_ring_ent *desc;
+	size_t total_len = len;
+	struct ioat_pq_descriptor *pq;
 	u32 offset = 0;
 	u8 op;
-	पूर्णांक i, s, idx, num_descs;
+	int i, s, idx, num_descs;
 
 	/* this function is only called with 9-16 sources */
 	op = result ? IOAT_OP_PQ_VAL_16S : IOAT_OP_PQ_16S;
@@ -484,49 +483,49 @@ __ioat_prep_pq16_lock(काष्ठा dma_chan *c, क्रमागत sum_
 
 	/*
 	 * 16 source pq is only available on cb3.3 and has no completion
-	 * ग_लिखो hw bug.
+	 * write hw bug.
 	 */
-	अगर (num_descs && ioat_check_space_lock(ioat_chan, num_descs) == 0)
+	if (num_descs && ioat_check_space_lock(ioat_chan, num_descs) == 0)
 		idx = ioat_chan->head;
-	अन्यथा
-		वापस शून्य;
+	else
+		return NULL;
 
 	i = 0;
 
-	करो अणु
-		काष्ठा ioat_raw_descriptor *descs[4];
-		माप_प्रकार xfer_size = min_t(माप_प्रकार, len,
+	do {
+		struct ioat_raw_descriptor *descs[4];
+		size_t xfer_size = min_t(size_t, len,
 					 1 << ioat_chan->xfercap_log);
 
 		desc = ioat_get_ring_ent(ioat_chan, idx + i);
 		pq = desc->pq;
 
-		descs[0] = (काष्ठा ioat_raw_descriptor *) pq;
+		descs[0] = (struct ioat_raw_descriptor *) pq;
 
 		desc->sed = ioat3_alloc_sed(ioat_dma, (src_cnt-2) >> 3);
-		अगर (!desc->sed) अणु
+		if (!desc->sed) {
 			dev_err(to_dev(ioat_chan),
 				"%s: no free sed entries\n", __func__);
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 
 		pq->sed_addr = desc->sed->dma;
 		desc->sed->parent = desc;
 
-		descs[1] = (काष्ठा ioat_raw_descriptor *)desc->sed->hw;
-		descs[2] = (व्योम *)descs[1] + 64;
+		descs[1] = (struct ioat_raw_descriptor *)desc->sed->hw;
+		descs[2] = (void *)descs[1] + 64;
 
-		क्रम (s = 0; s < src_cnt; s++)
+		for (s = 0; s < src_cnt; s++)
 			pq16_set_src(descs, src[s], offset, scf[s], s);
 
-		/* see the comment क्रम dma_maxpq in include/linux/dmaengine.h */
-		अगर (dmaf_p_disabled_जारी(flags))
+		/* see the comment for dma_maxpq in include/linux/dmaengine.h */
+		if (dmaf_p_disabled_continue(flags))
 			pq16_set_src(descs, dst[1], offset, 1, s++);
-		अन्यथा अगर (dmaf_जारी(flags)) अणु
+		else if (dmaf_continue(flags)) {
 			pq16_set_src(descs, dst[0], offset, 0, s++);
 			pq16_set_src(descs, dst[1], offset, 1, s++);
 			pq16_set_src(descs, dst[1], offset, 0, s++);
-		पूर्ण
+		}
 
 		pq->size = xfer_size;
 		pq->p_addr = dst[0] + offset;
@@ -534,65 +533,65 @@ __ioat_prep_pq16_lock(काष्ठा dma_chan *c, क्रमागत sum_
 		pq->ctl = 0;
 		pq->ctl_f.op = op;
 		pq->ctl_f.src_cnt = src16_cnt_to_hw(s);
-		/* we turn on descriptor ग_लिखो back error status */
-		अगर (ioat_dma->cap & IOAT_CAP_DWBES)
+		/* we turn on descriptor write back error status */
+		if (ioat_dma->cap & IOAT_CAP_DWBES)
 			pq->ctl_f.wb_en = result ? 1 : 0;
 		pq->ctl_f.p_disable = !!(flags & DMA_PREP_PQ_DISABLE_P);
 		pq->ctl_f.q_disable = !!(flags & DMA_PREP_PQ_DISABLE_Q);
 
 		len -= xfer_size;
 		offset += xfer_size;
-	पूर्ण जबतक (++i < num_descs);
+	} while (++i < num_descs);
 
 	/* last pq descriptor carries the unmap parameters and fence bit */
 	desc->txd.flags = flags;
 	desc->len = total_len;
-	अगर (result)
+	if (result)
 		desc->result = result;
 	pq->ctl_f.fence = !!(flags & DMA_PREP_FENCE);
 
-	/* with cb3.3 we should be able to करो completion w/o a null desc */
-	pq->ctl_f.पूर्णांक_en = !!(flags & DMA_PREP_INTERRUPT);
-	pq->ctl_f.compl_ग_लिखो = 1;
+	/* with cb3.3 we should be able to do completion w/o a null desc */
+	pq->ctl_f.int_en = !!(flags & DMA_PREP_INTERRUPT);
+	pq->ctl_f.compl_write = 1;
 
 	dump_pq16_desc_dbg(ioat_chan, desc);
 
 	/* we leave the channel locked to ensure in order submission */
-	वापस &desc->txd;
-पूर्ण
+	return &desc->txd;
+}
 
-अटल पूर्णांक src_cnt_flags(अचिन्हित पूर्णांक src_cnt, अचिन्हित दीर्घ flags)
-अणु
-	अगर (dmaf_p_disabled_जारी(flags))
-		वापस src_cnt + 1;
-	अन्यथा अगर (dmaf_जारी(flags))
-		वापस src_cnt + 3;
-	अन्यथा
-		वापस src_cnt;
-पूर्ण
+static int src_cnt_flags(unsigned int src_cnt, unsigned long flags)
+{
+	if (dmaf_p_disabled_continue(flags))
+		return src_cnt + 1;
+	else if (dmaf_continue(flags))
+		return src_cnt + 3;
+	else
+		return src_cnt;
+}
 
-काष्ठा dma_async_tx_descriptor *
-ioat_prep_pq(काष्ठा dma_chan *chan, dma_addr_t *dst, dma_addr_t *src,
-	      अचिन्हित पूर्णांक src_cnt, स्थिर अचिन्हित अक्षर *scf, माप_प्रकार len,
-	      अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा ioatdma_chan *ioat_chan = to_ioat_chan(chan);
+struct dma_async_tx_descriptor *
+ioat_prep_pq(struct dma_chan *chan, dma_addr_t *dst, dma_addr_t *src,
+	      unsigned int src_cnt, const unsigned char *scf, size_t len,
+	      unsigned long flags)
+{
+	struct ioatdma_chan *ioat_chan = to_ioat_chan(chan);
 
-	अगर (test_bit(IOAT_CHAN_DOWN, &ioat_chan->state))
-		वापस शून्य;
+	if (test_bit(IOAT_CHAN_DOWN, &ioat_chan->state))
+		return NULL;
 
-	/* specअगरy valid address क्रम disabled result */
-	अगर (flags & DMA_PREP_PQ_DISABLE_P)
+	/* specify valid address for disabled result */
+	if (flags & DMA_PREP_PQ_DISABLE_P)
 		dst[0] = dst[1];
-	अगर (flags & DMA_PREP_PQ_DISABLE_Q)
+	if (flags & DMA_PREP_PQ_DISABLE_Q)
 		dst[1] = dst[0];
 
-	/* handle the single source multiply हाल from the raid6
+	/* handle the single source multiply case from the raid6
 	 * recovery path
 	 */
-	अगर ((flags & DMA_PREP_PQ_DISABLE_P) && src_cnt == 1) अणु
+	if ((flags & DMA_PREP_PQ_DISABLE_P) && src_cnt == 1) {
 		dma_addr_t single_source[2];
-		अचिन्हित अक्षर single_source_coef[2];
+		unsigned char single_source_coef[2];
 
 		BUG_ON(flags & DMA_PREP_PQ_DISABLE_Q);
 		single_source[0] = src[0];
@@ -600,130 +599,130 @@ ioat_prep_pq(काष्ठा dma_chan *chan, dma_addr_t *dst, dma_addr_t *src
 		single_source_coef[0] = scf[0];
 		single_source_coef[1] = 0;
 
-		वापस src_cnt_flags(src_cnt, flags) > 8 ?
-			__ioat_prep_pq16_lock(chan, शून्य, dst, single_source,
+		return src_cnt_flags(src_cnt, flags) > 8 ?
+			__ioat_prep_pq16_lock(chan, NULL, dst, single_source,
 					       2, single_source_coef, len,
 					       flags) :
-			__ioat_prep_pq_lock(chan, शून्य, dst, single_source, 2,
+			__ioat_prep_pq_lock(chan, NULL, dst, single_source, 2,
 					     single_source_coef, len, flags);
 
-	पूर्ण अन्यथा अणु
-		वापस src_cnt_flags(src_cnt, flags) > 8 ?
-			__ioat_prep_pq16_lock(chan, शून्य, dst, src, src_cnt,
+	} else {
+		return src_cnt_flags(src_cnt, flags) > 8 ?
+			__ioat_prep_pq16_lock(chan, NULL, dst, src, src_cnt,
 					       scf, len, flags) :
-			__ioat_prep_pq_lock(chan, शून्य, dst, src, src_cnt,
+			__ioat_prep_pq_lock(chan, NULL, dst, src, src_cnt,
 					     scf, len, flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-काष्ठा dma_async_tx_descriptor *
-ioat_prep_pq_val(काष्ठा dma_chan *chan, dma_addr_t *pq, dma_addr_t *src,
-		  अचिन्हित पूर्णांक src_cnt, स्थिर अचिन्हित अक्षर *scf, माप_प्रकार len,
-		  क्रमागत sum_check_flags *pqres, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा ioatdma_chan *ioat_chan = to_ioat_chan(chan);
+struct dma_async_tx_descriptor *
+ioat_prep_pq_val(struct dma_chan *chan, dma_addr_t *pq, dma_addr_t *src,
+		  unsigned int src_cnt, const unsigned char *scf, size_t len,
+		  enum sum_check_flags *pqres, unsigned long flags)
+{
+	struct ioatdma_chan *ioat_chan = to_ioat_chan(chan);
 
-	अगर (test_bit(IOAT_CHAN_DOWN, &ioat_chan->state))
-		वापस शून्य;
+	if (test_bit(IOAT_CHAN_DOWN, &ioat_chan->state))
+		return NULL;
 
-	/* specअगरy valid address क्रम disabled result */
-	अगर (flags & DMA_PREP_PQ_DISABLE_P)
+	/* specify valid address for disabled result */
+	if (flags & DMA_PREP_PQ_DISABLE_P)
 		pq[0] = pq[1];
-	अगर (flags & DMA_PREP_PQ_DISABLE_Q)
+	if (flags & DMA_PREP_PQ_DISABLE_Q)
 		pq[1] = pq[0];
 
 	/* the cleanup routine only sets bits on validate failure, it
-	 * करोes not clear bits on validate success... so clear it here
+	 * does not clear bits on validate success... so clear it here
 	 */
 	*pqres = 0;
 
-	वापस src_cnt_flags(src_cnt, flags) > 8 ?
+	return src_cnt_flags(src_cnt, flags) > 8 ?
 		__ioat_prep_pq16_lock(chan, pqres, pq, src, src_cnt, scf, len,
 				       flags) :
 		__ioat_prep_pq_lock(chan, pqres, pq, src, src_cnt, scf, len,
 				     flags);
-पूर्ण
+}
 
-काष्ठा dma_async_tx_descriptor *
-ioat_prep_pqxor(काष्ठा dma_chan *chan, dma_addr_t dst, dma_addr_t *src,
-		 अचिन्हित पूर्णांक src_cnt, माप_प्रकार len, अचिन्हित दीर्घ flags)
-अणु
-	अचिन्हित अक्षर scf[MAX_SCF];
+struct dma_async_tx_descriptor *
+ioat_prep_pqxor(struct dma_chan *chan, dma_addr_t dst, dma_addr_t *src,
+		 unsigned int src_cnt, size_t len, unsigned long flags)
+{
+	unsigned char scf[MAX_SCF];
 	dma_addr_t pq[2];
-	काष्ठा ioatdma_chan *ioat_chan = to_ioat_chan(chan);
+	struct ioatdma_chan *ioat_chan = to_ioat_chan(chan);
 
-	अगर (test_bit(IOAT_CHAN_DOWN, &ioat_chan->state))
-		वापस शून्य;
+	if (test_bit(IOAT_CHAN_DOWN, &ioat_chan->state))
+		return NULL;
 
-	अगर (src_cnt > MAX_SCF)
-		वापस शून्य;
+	if (src_cnt > MAX_SCF)
+		return NULL;
 
-	स_रखो(scf, 0, src_cnt);
+	memset(scf, 0, src_cnt);
 	pq[0] = dst;
 	flags |= DMA_PREP_PQ_DISABLE_Q;
-	pq[1] = dst; /* specअगरy valid address क्रम disabled result */
+	pq[1] = dst; /* specify valid address for disabled result */
 
-	वापस src_cnt_flags(src_cnt, flags) > 8 ?
-		__ioat_prep_pq16_lock(chan, शून्य, pq, src, src_cnt, scf, len,
+	return src_cnt_flags(src_cnt, flags) > 8 ?
+		__ioat_prep_pq16_lock(chan, NULL, pq, src, src_cnt, scf, len,
 				       flags) :
-		__ioat_prep_pq_lock(chan, शून्य, pq, src, src_cnt, scf, len,
+		__ioat_prep_pq_lock(chan, NULL, pq, src, src_cnt, scf, len,
 				     flags);
-पूर्ण
+}
 
-काष्ठा dma_async_tx_descriptor *
-ioat_prep_pqxor_val(काष्ठा dma_chan *chan, dma_addr_t *src,
-		     अचिन्हित पूर्णांक src_cnt, माप_प्रकार len,
-		     क्रमागत sum_check_flags *result, अचिन्हित दीर्घ flags)
-अणु
-	अचिन्हित अक्षर scf[MAX_SCF];
+struct dma_async_tx_descriptor *
+ioat_prep_pqxor_val(struct dma_chan *chan, dma_addr_t *src,
+		     unsigned int src_cnt, size_t len,
+		     enum sum_check_flags *result, unsigned long flags)
+{
+	unsigned char scf[MAX_SCF];
 	dma_addr_t pq[2];
-	काष्ठा ioatdma_chan *ioat_chan = to_ioat_chan(chan);
+	struct ioatdma_chan *ioat_chan = to_ioat_chan(chan);
 
-	अगर (test_bit(IOAT_CHAN_DOWN, &ioat_chan->state))
-		वापस शून्य;
+	if (test_bit(IOAT_CHAN_DOWN, &ioat_chan->state))
+		return NULL;
 
-	अगर (src_cnt > MAX_SCF)
-		वापस शून्य;
+	if (src_cnt > MAX_SCF)
+		return NULL;
 
 	/* the cleanup routine only sets bits on validate failure, it
-	 * करोes not clear bits on validate success... so clear it here
+	 * does not clear bits on validate success... so clear it here
 	 */
 	*result = 0;
 
-	स_रखो(scf, 0, src_cnt);
+	memset(scf, 0, src_cnt);
 	pq[0] = src[0];
 	flags |= DMA_PREP_PQ_DISABLE_Q;
-	pq[1] = pq[0]; /* specअगरy valid address क्रम disabled result */
+	pq[1] = pq[0]; /* specify valid address for disabled result */
 
-	वापस src_cnt_flags(src_cnt, flags) > 8 ?
+	return src_cnt_flags(src_cnt, flags) > 8 ?
 		__ioat_prep_pq16_lock(chan, result, pq, &src[1], src_cnt - 1,
 				       scf, len, flags) :
 		__ioat_prep_pq_lock(chan, result, pq, &src[1], src_cnt - 1,
 				     scf, len, flags);
-पूर्ण
+}
 
-काष्ठा dma_async_tx_descriptor *
-ioat_prep_पूर्णांकerrupt_lock(काष्ठा dma_chan *c, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा ioatdma_chan *ioat_chan = to_ioat_chan(c);
-	काष्ठा ioat_ring_ent *desc;
-	काष्ठा ioat_dma_descriptor *hw;
+struct dma_async_tx_descriptor *
+ioat_prep_interrupt_lock(struct dma_chan *c, unsigned long flags)
+{
+	struct ioatdma_chan *ioat_chan = to_ioat_chan(c);
+	struct ioat_ring_ent *desc;
+	struct ioat_dma_descriptor *hw;
 
-	अगर (test_bit(IOAT_CHAN_DOWN, &ioat_chan->state))
-		वापस शून्य;
+	if (test_bit(IOAT_CHAN_DOWN, &ioat_chan->state))
+		return NULL;
 
-	अगर (ioat_check_space_lock(ioat_chan, 1) == 0)
+	if (ioat_check_space_lock(ioat_chan, 1) == 0)
 		desc = ioat_get_ring_ent(ioat_chan, ioat_chan->head);
-	अन्यथा
-		वापस शून्य;
+	else
+		return NULL;
 
 	hw = desc->hw;
 	hw->ctl = 0;
 	hw->ctl_f.null = 1;
-	hw->ctl_f.पूर्णांक_en = 1;
+	hw->ctl_f.int_en = 1;
 	hw->ctl_f.fence = !!(flags & DMA_PREP_FENCE);
-	hw->ctl_f.compl_ग_लिखो = 1;
-	hw->size = शून्य_DESC_BUFFER_SIZE;
+	hw->ctl_f.compl_write = 1;
+	hw->size = NULL_DESC_BUFFER_SIZE;
 	hw->src_addr = 0;
 	hw->dst_addr = 0;
 
@@ -733,6 +732,6 @@ ioat_prep_पूर्णांकerrupt_lock(काष्ठा dma_chan *c, �
 	dump_desc_dbg(ioat_chan, desc);
 
 	/* we leave the channel locked to ensure in order submission */
-	वापस &desc->txd;
-पूर्ण
+	return &desc->txd;
+}
 

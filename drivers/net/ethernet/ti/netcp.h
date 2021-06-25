@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * NetCP driver local header
  *
@@ -11,239 +10,239 @@
  *		Wingman Kwok <w-kwok2@ti.com>
  *		Murali Karicheri <m-karicheri2@ti.com>
  */
-#अगर_अघोषित __NETCP_H__
-#घोषणा __NETCP_H__
+#ifndef __NETCP_H__
+#define __NETCP_H__
 
-#समावेश <linux/netdevice.h>
-#समावेश <linux/soc/ti/knav_dma.h>
-#समावेश <linux/u64_stats_sync.h>
+#include <linux/netdevice.h>
+#include <linux/soc/ti/knav_dma.h>
+#include <linux/u64_stats_sync.h>
 
-/* Maximum Ethernet frame size supported by Keystone चयन */
-#घोषणा NETCP_MAX_FRAME_SIZE		9504
+/* Maximum Ethernet frame size supported by Keystone switch */
+#define NETCP_MAX_FRAME_SIZE		9504
 
-#घोषणा SGMII_LINK_MAC_MAC_AUTONEG	0
-#घोषणा SGMII_LINK_MAC_PHY		1
-#घोषणा SGMII_LINK_MAC_MAC_FORCED	2
-#घोषणा SGMII_LINK_MAC_FIBER		3
-#घोषणा SGMII_LINK_MAC_PHY_NO_MDIO	4
-#घोषणा RGMII_LINK_MAC_PHY		5
-#घोषणा RGMII_LINK_MAC_PHY_NO_MDIO	7
-#घोषणा XGMII_LINK_MAC_PHY		10
-#घोषणा XGMII_LINK_MAC_MAC_FORCED	11
+#define SGMII_LINK_MAC_MAC_AUTONEG	0
+#define SGMII_LINK_MAC_PHY		1
+#define SGMII_LINK_MAC_MAC_FORCED	2
+#define SGMII_LINK_MAC_FIBER		3
+#define SGMII_LINK_MAC_PHY_NO_MDIO	4
+#define RGMII_LINK_MAC_PHY		5
+#define RGMII_LINK_MAC_PHY_NO_MDIO	7
+#define XGMII_LINK_MAC_PHY		10
+#define XGMII_LINK_MAC_MAC_FORCED	11
 
-काष्ठा netcp_device;
+struct netcp_device;
 
-काष्ठा netcp_tx_pipe अणु
-	काष्ठा netcp_device	*netcp_device;
-	व्योम			*dma_queue;
-	अचिन्हित पूर्णांक		dma_queue_id;
-	/* To port क्रम packet क्रमwarded to चयन. Used only by ethss */
-	u8			चयन_to_port;
-#घोषणा	SWITCH_TO_PORT_IN_TAGINFO	BIT(0)
+struct netcp_tx_pipe {
+	struct netcp_device	*netcp_device;
+	void			*dma_queue;
+	unsigned int		dma_queue_id;
+	/* To port for packet forwarded to switch. Used only by ethss */
+	u8			switch_to_port;
+#define	SWITCH_TO_PORT_IN_TAGINFO	BIT(0)
 	u8			flags;
-	व्योम			*dma_channel;
-	स्थिर अक्षर		*dma_chan_name;
-पूर्ण;
+	void			*dma_channel;
+	const char		*dma_chan_name;
+};
 
-#घोषणा ADDR_NEW			BIT(0)
-#घोषणा ADDR_VALID			BIT(1)
+#define ADDR_NEW			BIT(0)
+#define ADDR_VALID			BIT(1)
 
-क्रमागत netcp_addr_type अणु
+enum netcp_addr_type {
 	ADDR_ANY,
 	ADDR_DEV,
 	ADDR_UCAST,
 	ADDR_MCAST,
 	ADDR_BCAST
-पूर्ण;
+};
 
-काष्ठा netcp_addr अणु
-	काष्ठा netcp_पूर्णांकf	*netcp;
-	अचिन्हित अक्षर		addr[ETH_ALEN];
-	क्रमागत netcp_addr_type	type;
-	अचिन्हित पूर्णांक		flags;
-	काष्ठा list_head	node;
-पूर्ण;
+struct netcp_addr {
+	struct netcp_intf	*netcp;
+	unsigned char		addr[ETH_ALEN];
+	enum netcp_addr_type	type;
+	unsigned int		flags;
+	struct list_head	node;
+};
 
-काष्ठा netcp_stats अणु
-	काष्ठा u64_stats_sync   syncp_rx ____cacheline_aligned_in_smp;
+struct netcp_stats {
+	struct u64_stats_sync   syncp_rx ____cacheline_aligned_in_smp;
 	u64                     rx_packets;
 	u64                     rx_bytes;
 	u32                     rx_errors;
 	u32                     rx_dropped;
 
-	काष्ठा u64_stats_sync   syncp_tx ____cacheline_aligned_in_smp;
+	struct u64_stats_sync   syncp_tx ____cacheline_aligned_in_smp;
 	u64                     tx_packets;
 	u64                     tx_bytes;
 	u32                     tx_errors;
 	u32                     tx_dropped;
-पूर्ण;
+};
 
-काष्ठा netcp_पूर्णांकf अणु
-	काष्ठा device		*dev;
-	काष्ठा device		*ndev_dev;
-	काष्ठा net_device	*ndev;
+struct netcp_intf {
+	struct device		*dev;
+	struct device		*ndev_dev;
+	struct net_device	*ndev;
 	bool			big_endian;
-	अचिन्हित पूर्णांक		tx_compl_qid;
-	व्योम			*tx_pool;
-	काष्ठा list_head	txhook_list_head;
-	अचिन्हित पूर्णांक		tx_छोड़ो_threshold;
-	व्योम			*tx_compl_q;
+	unsigned int		tx_compl_qid;
+	void			*tx_pool;
+	struct list_head	txhook_list_head;
+	unsigned int		tx_pause_threshold;
+	void			*tx_compl_q;
 
-	अचिन्हित पूर्णांक		tx_resume_threshold;
-	व्योम			*rx_queue;
-	व्योम			*rx_pool;
-	काष्ठा list_head	rxhook_list_head;
-	अचिन्हित पूर्णांक		rx_queue_id;
-	व्योम			*rx_fdq[KNAV_DMA_FDQ_PER_CHAN];
-	काष्ठा napi_काष्ठा	rx_napi;
-	काष्ठा napi_काष्ठा	tx_napi;
-#घोषणा ETH_SW_CAN_REMOVE_ETH_FCS	BIT(0)
+	unsigned int		tx_resume_threshold;
+	void			*rx_queue;
+	void			*rx_pool;
+	struct list_head	rxhook_list_head;
+	unsigned int		rx_queue_id;
+	void			*rx_fdq[KNAV_DMA_FDQ_PER_CHAN];
+	struct napi_struct	rx_napi;
+	struct napi_struct	tx_napi;
+#define ETH_SW_CAN_REMOVE_ETH_FCS	BIT(0)
 	u32			hw_cap;
 
 	/* 64-bit netcp stats */
-	काष्ठा netcp_stats	stats;
+	struct netcp_stats	stats;
 
-	व्योम			*rx_channel;
-	स्थिर अक्षर		*dma_chan_name;
+	void			*rx_channel;
+	const char		*dma_chan_name;
 	u32			rx_pool_size;
 	u32			rx_pool_region_id;
 	u32			tx_pool_size;
 	u32			tx_pool_region_id;
-	काष्ठा list_head	module_head;
-	काष्ठा list_head	पूर्णांकerface_list;
-	काष्ठा list_head	addr_list;
-	bool			netdev_रेजिस्टरed;
+	struct list_head	module_head;
+	struct list_head	interface_list;
+	struct list_head	addr_list;
+	bool			netdev_registered;
 	bool			primary_module_attached;
 
-	/* Lock used क्रम protecting Rx/Tx hook list management */
+	/* Lock used for protecting Rx/Tx hook list management */
 	spinlock_t		lock;
-	काष्ठा netcp_device	*netcp_device;
-	काष्ठा device_node	*node_पूर्णांकerface;
+	struct netcp_device	*netcp_device;
+	struct device_node	*node_interface;
 
 	/* DMA configuration data */
 	u32			msg_enable;
 	u32			rx_queue_depths[KNAV_DMA_FDQ_PER_CHAN];
-पूर्ण;
+};
 
-#घोषणा	NETCP_PSDATA_LEN		KNAV_DMA_NUM_PS_WORDS
-काष्ठा netcp_packet अणु
-	काष्ठा sk_buff		*skb;
+#define	NETCP_PSDATA_LEN		KNAV_DMA_NUM_PS_WORDS
+struct netcp_packet {
+	struct sk_buff		*skb;
 	__le32			*epib;
 	u32			*psdata;
 	u32			eflags;
-	अचिन्हित पूर्णांक		psdata_len;
-	काष्ठा netcp_पूर्णांकf	*netcp;
-	काष्ठा netcp_tx_pipe	*tx_pipe;
+	unsigned int		psdata_len;
+	struct netcp_intf	*netcp;
+	struct netcp_tx_pipe	*tx_pipe;
 	bool			rxtstamp_complete;
-	व्योम			*ts_context;
+	void			*ts_context;
 
-	व्योम (*txtstamp)(व्योम *ctx, काष्ठा sk_buff *skb);
-पूर्ण;
+	void (*txtstamp)(void *ctx, struct sk_buff *skb);
+};
 
-अटल अंतरभूत u32 *netcp_push_psdata(काष्ठा netcp_packet *p_info,
-				     अचिन्हित पूर्णांक bytes)
-अणु
+static inline u32 *netcp_push_psdata(struct netcp_packet *p_info,
+				     unsigned int bytes)
+{
 	u32 *buf;
-	अचिन्हित पूर्णांक words;
+	unsigned int words;
 
-	अगर ((bytes & 0x03) != 0)
-		वापस शून्य;
+	if ((bytes & 0x03) != 0)
+		return NULL;
 	words = bytes >> 2;
 
-	अगर ((p_info->psdata_len + words) > NETCP_PSDATA_LEN)
-		वापस शून्य;
+	if ((p_info->psdata_len + words) > NETCP_PSDATA_LEN)
+		return NULL;
 
 	p_info->psdata_len += words;
 	buf = &p_info->psdata[NETCP_PSDATA_LEN - p_info->psdata_len];
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
-अटल अंतरभूत पूर्णांक netcp_align_psdata(काष्ठा netcp_packet *p_info,
-				     अचिन्हित पूर्णांक byte_align)
-अणु
-	पूर्णांक padding;
+static inline int netcp_align_psdata(struct netcp_packet *p_info,
+				     unsigned int byte_align)
+{
+	int padding;
 
-	चयन (byte_align) अणु
-	हाल 0:
+	switch (byte_align) {
+	case 0:
 		padding = -EINVAL;
-		अवरोध;
-	हाल 1:
-	हाल 2:
-	हाल 4:
+		break;
+	case 1:
+	case 2:
+	case 4:
 		padding = 0;
-		अवरोध;
-	हाल 8:
+		break;
+	case 8:
 		padding = (p_info->psdata_len << 2) % 8;
-		अवरोध;
-	हाल 16:
+		break;
+	case 16:
 		padding = (p_info->psdata_len << 2) % 16;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		padding = (p_info->psdata_len << 2) % byte_align;
-		अवरोध;
-	पूर्ण
-	वापस padding;
-पूर्ण
+		break;
+	}
+	return padding;
+}
 
-काष्ठा netcp_module अणु
-	स्थिर अक्षर		*name;
-	काष्ठा module		*owner;
+struct netcp_module {
+	const char		*name;
+	struct module		*owner;
 	bool			primary;
 
-	/* probe/हटाओ: called once per NETCP instance */
-	पूर्णांक	(*probe)(काष्ठा netcp_device *netcp_device,
-			 काष्ठा device *device, काष्ठा device_node *node,
-			 व्योम **inst_priv);
-	पूर्णांक	(*हटाओ)(काष्ठा netcp_device *netcp_device, व्योम *inst_priv);
+	/* probe/remove: called once per NETCP instance */
+	int	(*probe)(struct netcp_device *netcp_device,
+			 struct device *device, struct device_node *node,
+			 void **inst_priv);
+	int	(*remove)(struct netcp_device *netcp_device, void *inst_priv);
 
-	/* attach/release: called once per network पूर्णांकerface */
-	पूर्णांक	(*attach)(व्योम *inst_priv, काष्ठा net_device *ndev,
-			  काष्ठा device_node *node, व्योम **पूर्णांकf_priv);
-	पूर्णांक	(*release)(व्योम *पूर्णांकf_priv);
-	पूर्णांक	(*खोलो)(व्योम *पूर्णांकf_priv, काष्ठा net_device *ndev);
-	पूर्णांक	(*बंद)(व्योम *पूर्णांकf_priv, काष्ठा net_device *ndev);
-	पूर्णांक	(*add_addr)(व्योम *पूर्णांकf_priv, काष्ठा netcp_addr *naddr);
-	पूर्णांक	(*del_addr)(व्योम *पूर्णांकf_priv, काष्ठा netcp_addr *naddr);
-	पूर्णांक	(*add_vid)(व्योम *पूर्णांकf_priv, पूर्णांक vid);
-	पूर्णांक	(*del_vid)(व्योम *पूर्णांकf_priv, पूर्णांक vid);
-	पूर्णांक	(*ioctl)(व्योम *पूर्णांकf_priv, काष्ठा अगरreq *req, पूर्णांक cmd);
-	पूर्णांक	(*set_rx_mode)(व्योम *पूर्णांकf_priv, bool promisc);
+	/* attach/release: called once per network interface */
+	int	(*attach)(void *inst_priv, struct net_device *ndev,
+			  struct device_node *node, void **intf_priv);
+	int	(*release)(void *intf_priv);
+	int	(*open)(void *intf_priv, struct net_device *ndev);
+	int	(*close)(void *intf_priv, struct net_device *ndev);
+	int	(*add_addr)(void *intf_priv, struct netcp_addr *naddr);
+	int	(*del_addr)(void *intf_priv, struct netcp_addr *naddr);
+	int	(*add_vid)(void *intf_priv, int vid);
+	int	(*del_vid)(void *intf_priv, int vid);
+	int	(*ioctl)(void *intf_priv, struct ifreq *req, int cmd);
+	int	(*set_rx_mode)(void *intf_priv, bool promisc);
 
-	/* used पूर्णांकernally */
-	काष्ठा list_head	module_list;
-	काष्ठा list_head	पूर्णांकerface_list;
-पूर्ण;
+	/* used internally */
+	struct list_head	module_list;
+	struct list_head	interface_list;
+};
 
-पूर्णांक netcp_रेजिस्टर_module(काष्ठा netcp_module *module);
-व्योम netcp_unरेजिस्टर_module(काष्ठा netcp_module *module);
-व्योम *netcp_module_get_पूर्णांकf_data(काष्ठा netcp_module *module,
-				 काष्ठा netcp_पूर्णांकf *पूर्णांकf);
+int netcp_register_module(struct netcp_module *module);
+void netcp_unregister_module(struct netcp_module *module);
+void *netcp_module_get_intf_data(struct netcp_module *module,
+				 struct netcp_intf *intf);
 
-पूर्णांक netcp_txpipe_init(काष्ठा netcp_tx_pipe *tx_pipe,
-		      काष्ठा netcp_device *netcp_device,
-		      स्थिर अक्षर *dma_chan_name, अचिन्हित पूर्णांक dma_queue_id);
-पूर्णांक netcp_txpipe_खोलो(काष्ठा netcp_tx_pipe *tx_pipe);
-पूर्णांक netcp_txpipe_बंद(काष्ठा netcp_tx_pipe *tx_pipe);
+int netcp_txpipe_init(struct netcp_tx_pipe *tx_pipe,
+		      struct netcp_device *netcp_device,
+		      const char *dma_chan_name, unsigned int dma_queue_id);
+int netcp_txpipe_open(struct netcp_tx_pipe *tx_pipe);
+int netcp_txpipe_close(struct netcp_tx_pipe *tx_pipe);
 
-प्रकार पूर्णांक netcp_hook_rtn(पूर्णांक order, व्योम *data, काष्ठा netcp_packet *packet);
-पूर्णांक netcp_रेजिस्टर_txhook(काष्ठा netcp_पूर्णांकf *netcp_priv, पूर्णांक order,
-			  netcp_hook_rtn *hook_rtn, व्योम *hook_data);
-पूर्णांक netcp_unरेजिस्टर_txhook(काष्ठा netcp_पूर्णांकf *netcp_priv, पूर्णांक order,
-			    netcp_hook_rtn *hook_rtn, व्योम *hook_data);
-पूर्णांक netcp_रेजिस्टर_rxhook(काष्ठा netcp_पूर्णांकf *netcp_priv, पूर्णांक order,
-			  netcp_hook_rtn *hook_rtn, व्योम *hook_data);
-पूर्णांक netcp_unरेजिस्टर_rxhook(काष्ठा netcp_पूर्णांकf *netcp_priv, पूर्णांक order,
-			    netcp_hook_rtn *hook_rtn, व्योम *hook_data);
-व्योम *netcp_device_find_module(काष्ठा netcp_device *netcp_device,
-			       स्थिर अक्षर *name);
+typedef int netcp_hook_rtn(int order, void *data, struct netcp_packet *packet);
+int netcp_register_txhook(struct netcp_intf *netcp_priv, int order,
+			  netcp_hook_rtn *hook_rtn, void *hook_data);
+int netcp_unregister_txhook(struct netcp_intf *netcp_priv, int order,
+			    netcp_hook_rtn *hook_rtn, void *hook_data);
+int netcp_register_rxhook(struct netcp_intf *netcp_priv, int order,
+			  netcp_hook_rtn *hook_rtn, void *hook_data);
+int netcp_unregister_rxhook(struct netcp_intf *netcp_priv, int order,
+			    netcp_hook_rtn *hook_rtn, void *hook_data);
+void *netcp_device_find_module(struct netcp_device *netcp_device,
+			       const char *name);
 
 /* SGMII functions */
-पूर्णांक netcp_sgmii_reset(व्योम __iomem *sgmii_ofs, पूर्णांक port);
-bool netcp_sgmii_rtreset(व्योम __iomem *sgmii_ofs, पूर्णांक port, bool set);
-पूर्णांक netcp_sgmii_get_port_link(व्योम __iomem *sgmii_ofs, पूर्णांक port);
-पूर्णांक netcp_sgmii_config(व्योम __iomem *sgmii_ofs, पूर्णांक port, u32 पूर्णांकerface);
+int netcp_sgmii_reset(void __iomem *sgmii_ofs, int port);
+bool netcp_sgmii_rtreset(void __iomem *sgmii_ofs, int port, bool set);
+int netcp_sgmii_get_port_link(void __iomem *sgmii_ofs, int port);
+int netcp_sgmii_config(void __iomem *sgmii_ofs, int port, u32 interface);
 
 /* XGBE SERDES init functions */
-पूर्णांक netcp_xgbe_serdes_init(व्योम __iomem *serdes_regs, व्योम __iomem *xgbe_regs);
+int netcp_xgbe_serdes_init(void __iomem *serdes_regs, void __iomem *xgbe_regs);
 
-#पूर्ण_अगर	/* __NETCP_H__ */
+#endif	/* __NETCP_H__ */

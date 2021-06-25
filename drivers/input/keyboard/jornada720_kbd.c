@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * drivers/input/keyboard/jornada720_kbd.c
  *
- * HP Jornada 720 keyboard platक्रमm driver
+ * HP Jornada 720 keyboard platform driver
  *
  * Copyright (C) 2006/2007 Kristoffer Ericson <Kristoffer.Ericson@Gmail.com>
  *
@@ -12,22 +11,22 @@
  *     based on (C) 2004 jornada 720 kbd driver by
 		Alex Lange <chicken@handhelds.org>
  */
-#समावेश <linux/device.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/input.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
+#include <linux/device.h>
+#include <linux/errno.h>
+#include <linux/interrupt.h>
+#include <linux/input.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
 
-#समावेश <mach/jornada720.h>
+#include <mach/jornada720.h>
 
 MODULE_AUTHOR("Kristoffer Ericson <Kristoffer.Ericson@gmail.com>");
 MODULE_DESCRIPTION("HP Jornada 710/720/728 keyboard driver");
 MODULE_LICENSE("GPL v2");
 
-अटल अचिन्हित लघु jornada_std_keymap[128] = अणु					/* ROW */
+static unsigned short jornada_std_keymap[128] = {					/* ROW */
 	0, KEY_ESC, KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5, KEY_F6, KEY_F7,		/* #1  */
 	KEY_F8, KEY_F9, KEY_F10, KEY_F11, KEY_VOLUMEUP, KEY_VOLUMEDOWN, KEY_MUTE,	/*  -> */
 	0, KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9,		/* #2  */
@@ -43,33 +42,33 @@ MODULE_LICENSE("GPL v2");
 	0, 0, KEY_LEFT, KEY_DOWN, KEY_RIGHT, 0, 0, 0, 0,0, KEY_KPASTERISK,		/*  -> */
 	KEY_LEFTCTRL, 0, KEY_SPACE, 0, 0, 0, KEY_SLASH, KEY_DELETE, 0, 0,		/*  -> */
 	0, 0, 0, KEY_POWER,								/*  -> */
-पूर्ण;
+};
 
-काष्ठा jornadakbd अणु
-	अचिन्हित लघु keymap[ARRAY_SIZE(jornada_std_keymap)];
-	काष्ठा input_dev *input;
-पूर्ण;
+struct jornadakbd {
+	unsigned short keymap[ARRAY_SIZE(jornada_std_keymap)];
+	struct input_dev *input;
+};
 
-अटल irqवापस_t jornada720_kbd_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा platक्रमm_device *pdev = dev_id;
-	काष्ठा jornadakbd *jornadakbd = platक्रमm_get_drvdata(pdev);
-	काष्ठा input_dev *input = jornadakbd->input;
+static irqreturn_t jornada720_kbd_interrupt(int irq, void *dev_id)
+{
+	struct platform_device *pdev = dev_id;
+	struct jornadakbd *jornadakbd = platform_get_drvdata(pdev);
+	struct input_dev *input = jornadakbd->input;
 	u8 count, kbd_data, scan_code;
 
 	/* startup ssp with spinlock */
 	jornada_ssp_start();
 
-	अगर (jornada_ssp_inout(GETSCANKEYCODE) != TXDUMMY) अणु
+	if (jornada_ssp_inout(GETSCANKEYCODE) != TXDUMMY) {
 		dev_dbg(&pdev->dev,
 			"GetKeycode command failed with ETIMEDOUT, flushed bus\n");
-	पूर्ण अन्यथा अणु
-		/* How many keycodes are रुकोing क्रम us? */
+	} else {
+		/* How many keycodes are waiting for us? */
 		count = jornada_ssp_byte(TXDUMMY);
 
-		/* Lets drag them out one at a समय */
-		जबतक (count--) अणु
-			/* Exchange TxDummy क्रम location (keymap[kbddata]) */
+		/* Lets drag them out one at a time */
+		while (count--) {
+			/* Exchange TxDummy for location (keymap[kbddata]) */
 			kbd_data = jornada_ssp_byte(TXDUMMY);
 			scan_code = kbd_data & 0x7f;
 
@@ -77,68 +76,68 @@ MODULE_LICENSE("GPL v2");
 			input_report_key(input, jornadakbd->keymap[scan_code],
 					 !(kbd_data & 0x80));
 			input_sync(input);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* release spinlock and turn off ssp */
 	jornada_ssp_end();
 
-	वापस IRQ_HANDLED;
-पूर्ण;
+	return IRQ_HANDLED;
+};
 
-अटल पूर्णांक jornada720_kbd_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा jornadakbd *jornadakbd;
-	काष्ठा input_dev *input_dev;
-	पूर्णांक i, err, irq;
+static int jornada720_kbd_probe(struct platform_device *pdev)
+{
+	struct jornadakbd *jornadakbd;
+	struct input_dev *input_dev;
+	int i, err, irq;
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq <= 0)
-		वापस irq < 0 ? irq : -EINVAL;
+	irq = platform_get_irq(pdev, 0);
+	if (irq <= 0)
+		return irq < 0 ? irq : -EINVAL;
 
-	jornadakbd = devm_kzalloc(&pdev->dev, माप(*jornadakbd), GFP_KERNEL);
+	jornadakbd = devm_kzalloc(&pdev->dev, sizeof(*jornadakbd), GFP_KERNEL);
 	input_dev = devm_input_allocate_device(&pdev->dev);
-	अगर (!jornadakbd || !input_dev)
-		वापस -ENOMEM;
+	if (!jornadakbd || !input_dev)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, jornadakbd);
+	platform_set_drvdata(pdev, jornadakbd);
 
-	स_नकल(jornadakbd->keymap, jornada_std_keymap,
-		माप(jornada_std_keymap));
+	memcpy(jornadakbd->keymap, jornada_std_keymap,
+		sizeof(jornada_std_keymap));
 	jornadakbd->input = input_dev;
 
 	input_dev->evbit[0] = BIT(EV_KEY) | BIT(EV_REP);
 	input_dev->name = "HP Jornada 720 keyboard";
 	input_dev->phys = "jornadakbd/input0";
 	input_dev->keycode = jornadakbd->keymap;
-	input_dev->keycodesize = माप(अचिन्हित लघु);
+	input_dev->keycodesize = sizeof(unsigned short);
 	input_dev->keycodemax = ARRAY_SIZE(jornada_std_keymap);
 	input_dev->id.bustype = BUS_HOST;
 	input_dev->dev.parent = &pdev->dev;
 
-	क्रम (i = 0; i < ARRAY_SIZE(jornadakbd->keymap); i++)
+	for (i = 0; i < ARRAY_SIZE(jornadakbd->keymap); i++)
 		__set_bit(jornadakbd->keymap[i], input_dev->keybit);
 	__clear_bit(KEY_RESERVED, input_dev->keybit);
 
 	input_set_capability(input_dev, EV_MSC, MSC_SCAN);
 
-	err = devm_request_irq(&pdev->dev, irq, jornada720_kbd_पूर्णांकerrupt,
+	err = devm_request_irq(&pdev->dev, irq, jornada720_kbd_interrupt,
 			       IRQF_TRIGGER_FALLING, "jornadakbd", pdev);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "unable to grab IRQ%d: %d\n", irq, err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस input_रेजिस्टर_device(jornadakbd->input);
-पूर्ण;
+	return input_register_device(jornadakbd->input);
+};
 
 /* work with hotplug and coldplug */
 MODULE_ALIAS("platform:jornada720_kbd");
 
-अटल काष्ठा platक्रमm_driver jornada720_kbd_driver = अणु
-	.driver  = अणु
+static struct platform_driver jornada720_kbd_driver = {
+	.driver  = {
 		.name    = "jornada720_kbd",
-	 पूर्ण,
+	 },
 	.probe   = jornada720_kbd_probe,
-पूर्ण;
-module_platक्रमm_driver(jornada720_kbd_driver);
+};
+module_platform_driver(jornada720_kbd_driver);

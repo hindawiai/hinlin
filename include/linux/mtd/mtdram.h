@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __MTD_MTDRAM_H__
-#घोषणा __MTD_MTDRAM_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __MTD_MTDRAM_H__
+#define __MTD_MTDRAM_H__
 
-#समावेश <linux/mtd/mtd.h>
-पूर्णांक mtdram_init_device(काष्ठा mtd_info *mtd, व्योम *mapped_address,
-			अचिन्हित दीर्घ size, स्थिर अक्षर *name);
+#include <linux/mtd/mtd.h>
+int mtdram_init_device(struct mtd_info *mtd, void *mapped_address,
+			unsigned long size, const char *name);
 
-#पूर्ण_अगर /* __MTD_MTDRAM_H__ */
+#endif /* __MTD_MTDRAM_H__ */

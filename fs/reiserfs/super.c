@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright 2000 by Hans Reiser, licensing governed by reiserfs/README
  *
@@ -7,308 +6,308 @@
  * Trivial Changes:
  * Rights granted to Hans Reiser to redistribute under other terms providing
  * he accepts all liability including but not limited to patent, fitness
- * क्रम purpose, and direct or indirect claims arising from failure to perक्रमm.
+ * for purpose, and direct or indirect claims arising from failure to perform.
  *
  * NO WARRANTY
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/uaccess.h>
-#समावेश "reiserfs.h"
-#समावेश "acl.h"
-#समावेश "xattr.h"
-#समावेश <linux/init.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/backing-dev.h>
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/exportfs.h>
-#समावेश <linux/quotaops.h>
-#समावेश <linux/vfs.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/seq_file.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
+#include <linux/time.h>
+#include <linux/uaccess.h>
+#include "reiserfs.h"
+#include "acl.h"
+#include "xattr.h"
+#include <linux/init.h>
+#include <linux/blkdev.h>
+#include <linux/backing-dev.h>
+#include <linux/buffer_head.h>
+#include <linux/exportfs.h>
+#include <linux/quotaops.h>
+#include <linux/vfs.h>
+#include <linux/mount.h>
+#include <linux/namei.h>
+#include <linux/crc32.h>
+#include <linux/seq_file.h>
 
-काष्ठा file_प्रणाली_type reiserfs_fs_type;
+struct file_system_type reiserfs_fs_type;
 
-अटल स्थिर अक्षर reiserfs_3_5_magic_string[] = REISERFS_SUPER_MAGIC_STRING;
-अटल स्थिर अक्षर reiserfs_3_6_magic_string[] = REISER2FS_SUPER_MAGIC_STRING;
-अटल स्थिर अक्षर reiserfs_jr_magic_string[] = REISER2FS_JR_SUPER_MAGIC_STRING;
+static const char reiserfs_3_5_magic_string[] = REISERFS_SUPER_MAGIC_STRING;
+static const char reiserfs_3_6_magic_string[] = REISER2FS_SUPER_MAGIC_STRING;
+static const char reiserfs_jr_magic_string[] = REISER2FS_JR_SUPER_MAGIC_STRING;
 
-पूर्णांक is_reiserfs_3_5(काष्ठा reiserfs_super_block *rs)
-अणु
-	वापस !म_भेदन(rs->s_v1.s_magic, reiserfs_3_5_magic_string,
-			म_माप(reiserfs_3_5_magic_string));
-पूर्ण
+int is_reiserfs_3_5(struct reiserfs_super_block *rs)
+{
+	return !strncmp(rs->s_v1.s_magic, reiserfs_3_5_magic_string,
+			strlen(reiserfs_3_5_magic_string));
+}
 
-पूर्णांक is_reiserfs_3_6(काष्ठा reiserfs_super_block *rs)
-अणु
-	वापस !म_भेदन(rs->s_v1.s_magic, reiserfs_3_6_magic_string,
-			म_माप(reiserfs_3_6_magic_string));
-पूर्ण
+int is_reiserfs_3_6(struct reiserfs_super_block *rs)
+{
+	return !strncmp(rs->s_v1.s_magic, reiserfs_3_6_magic_string,
+			strlen(reiserfs_3_6_magic_string));
+}
 
-पूर्णांक is_reiserfs_jr(काष्ठा reiserfs_super_block *rs)
-अणु
-	वापस !म_भेदन(rs->s_v1.s_magic, reiserfs_jr_magic_string,
-			म_माप(reiserfs_jr_magic_string));
-पूर्ण
+int is_reiserfs_jr(struct reiserfs_super_block *rs)
+{
+	return !strncmp(rs->s_v1.s_magic, reiserfs_jr_magic_string,
+			strlen(reiserfs_jr_magic_string));
+}
 
-अटल पूर्णांक is_any_reiserfs_magic_string(काष्ठा reiserfs_super_block *rs)
-अणु
-	वापस (is_reiserfs_3_5(rs) || is_reiserfs_3_6(rs) ||
+static int is_any_reiserfs_magic_string(struct reiserfs_super_block *rs)
+{
+	return (is_reiserfs_3_5(rs) || is_reiserfs_3_6(rs) ||
 		is_reiserfs_jr(rs));
-पूर्ण
+}
 
-अटल पूर्णांक reiserfs_remount(काष्ठा super_block *s, पूर्णांक *flags, अक्षर *data);
-अटल पूर्णांक reiserfs_statfs(काष्ठा dentry *dentry, काष्ठा kstatfs *buf);
+static int reiserfs_remount(struct super_block *s, int *flags, char *data);
+static int reiserfs_statfs(struct dentry *dentry, struct kstatfs *buf);
 
-अटल पूर्णांक reiserfs_sync_fs(काष्ठा super_block *s, पूर्णांक रुको)
-अणु
-	काष्ठा reiserfs_transaction_handle th;
+static int reiserfs_sync_fs(struct super_block *s, int wait)
+{
+	struct reiserfs_transaction_handle th;
 
 	/*
-	 * Writeback quota in non-journalled quota हाल - journalled quota has
+	 * Writeback quota in non-journalled quota case - journalled quota has
 	 * no dirty dquots
 	 */
-	dquot_ग_लिखोback_dquots(s, -1);
-	reiserfs_ग_लिखो_lock(s);
-	अगर (!journal_begin(&th, s, 1))
-		अगर (!journal_end_sync(&th))
+	dquot_writeback_dquots(s, -1);
+	reiserfs_write_lock(s);
+	if (!journal_begin(&th, s, 1))
+		if (!journal_end_sync(&th))
 			reiserfs_flush_old_commits(s);
-	reiserfs_ग_लिखो_unlock(s);
-	वापस 0;
-पूर्ण
+	reiserfs_write_unlock(s);
+	return 0;
+}
 
-अटल व्योम flush_old_commits(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा reiserfs_sb_info *sbi;
-	काष्ठा super_block *s;
+static void flush_old_commits(struct work_struct *work)
+{
+	struct reiserfs_sb_info *sbi;
+	struct super_block *s;
 
-	sbi = container_of(work, काष्ठा reiserfs_sb_info, old_work.work);
+	sbi = container_of(work, struct reiserfs_sb_info, old_work.work);
 	s = sbi->s_journal->j_work_sb;
 
 	/*
-	 * We need s_umount क्रम protecting quota ग_लिखोback. We have to use
-	 * trylock as reiserfs_cancel_old_flush() may be रुकोing क्रम this work
+	 * We need s_umount for protecting quota writeback. We have to use
+	 * trylock as reiserfs_cancel_old_flush() may be waiting for this work
 	 * to complete with s_umount held.
 	 */
-	अगर (!करोwn_पढ़ो_trylock(&s->s_umount)) अणु
-		/* Requeue work अगर we are not cancelling it */
+	if (!down_read_trylock(&s->s_umount)) {
+		/* Requeue work if we are not cancelling it */
 		spin_lock(&sbi->old_work_lock);
-		अगर (sbi->work_queued == 1)
-			queue_delayed_work(प्रणाली_दीर्घ_wq, &sbi->old_work, HZ);
+		if (sbi->work_queued == 1)
+			queue_delayed_work(system_long_wq, &sbi->old_work, HZ);
 		spin_unlock(&sbi->old_work_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 	spin_lock(&sbi->old_work_lock);
-	/* Aव्योम clobbering the cancel state... */
-	अगर (sbi->work_queued == 1)
+	/* Avoid clobbering the cancel state... */
+	if (sbi->work_queued == 1)
 		sbi->work_queued = 0;
 	spin_unlock(&sbi->old_work_lock);
 
 	reiserfs_sync_fs(s, 1);
-	up_पढ़ो(&s->s_umount);
-पूर्ण
+	up_read(&s->s_umount);
+}
 
-व्योम reiserfs_schedule_old_flush(काष्ठा super_block *s)
-अणु
-	काष्ठा reiserfs_sb_info *sbi = REISERFS_SB(s);
-	अचिन्हित दीर्घ delay;
+void reiserfs_schedule_old_flush(struct super_block *s)
+{
+	struct reiserfs_sb_info *sbi = REISERFS_SB(s);
+	unsigned long delay;
 
 	/*
-	 * Aव्योम scheduling flush when sb is being shut करोwn. It can race
-	 * with journal shutकरोwn and मुक्त still queued delayed work.
+	 * Avoid scheduling flush when sb is being shut down. It can race
+	 * with journal shutdown and free still queued delayed work.
 	 */
-	अगर (sb_rकरोnly(s) || !(s->s_flags & SB_ACTIVE))
-		वापस;
+	if (sb_rdonly(s) || !(s->s_flags & SB_ACTIVE))
+		return;
 
 	spin_lock(&sbi->old_work_lock);
-	अगर (!sbi->work_queued) अणु
-		delay = msecs_to_jअगरfies(dirty_ग_लिखोback_पूर्णांकerval * 10);
-		queue_delayed_work(प्रणाली_दीर्घ_wq, &sbi->old_work, delay);
+	if (!sbi->work_queued) {
+		delay = msecs_to_jiffies(dirty_writeback_interval * 10);
+		queue_delayed_work(system_long_wq, &sbi->old_work, delay);
 		sbi->work_queued = 1;
-	पूर्ण
+	}
 	spin_unlock(&sbi->old_work_lock);
-पूर्ण
+}
 
-व्योम reiserfs_cancel_old_flush(काष्ठा super_block *s)
-अणु
-	काष्ठा reiserfs_sb_info *sbi = REISERFS_SB(s);
+void reiserfs_cancel_old_flush(struct super_block *s)
+{
+	struct reiserfs_sb_info *sbi = REISERFS_SB(s);
 
 	spin_lock(&sbi->old_work_lock);
 	/* Make sure no new flushes will be queued */
 	sbi->work_queued = 2;
 	spin_unlock(&sbi->old_work_lock);
 	cancel_delayed_work_sync(&REISERFS_SB(s)->old_work);
-पूर्ण
+}
 
-अटल पूर्णांक reiserfs_मुक्तze(काष्ठा super_block *s)
-अणु
-	काष्ठा reiserfs_transaction_handle th;
+static int reiserfs_freeze(struct super_block *s)
+{
+	struct reiserfs_transaction_handle th;
 
 	reiserfs_cancel_old_flush(s);
 
-	reiserfs_ग_लिखो_lock(s);
-	अगर (!sb_rकरोnly(s)) अणु
-		पूर्णांक err = journal_begin(&th, s, 1);
-		अगर (err) अणु
-			reiserfs_block_ग_लिखोs(&th);
-		पूर्ण अन्यथा अणु
-			reiserfs_prepare_क्रम_journal(s, SB_BUFFER_WITH_SB(s),
+	reiserfs_write_lock(s);
+	if (!sb_rdonly(s)) {
+		int err = journal_begin(&th, s, 1);
+		if (err) {
+			reiserfs_block_writes(&th);
+		} else {
+			reiserfs_prepare_for_journal(s, SB_BUFFER_WITH_SB(s),
 						     1);
 			journal_mark_dirty(&th, SB_BUFFER_WITH_SB(s));
-			reiserfs_block_ग_लिखोs(&th);
+			reiserfs_block_writes(&th);
 			journal_end_sync(&th);
-		पूर्ण
-	पूर्ण
-	reiserfs_ग_लिखो_unlock(s);
-	वापस 0;
-पूर्ण
+		}
+	}
+	reiserfs_write_unlock(s);
+	return 0;
+}
 
-अटल पूर्णांक reiserfs_unमुक्तze(काष्ठा super_block *s)
-अणु
-	काष्ठा reiserfs_sb_info *sbi = REISERFS_SB(s);
+static int reiserfs_unfreeze(struct super_block *s)
+{
+	struct reiserfs_sb_info *sbi = REISERFS_SB(s);
 
-	reiserfs_allow_ग_लिखोs(s);
+	reiserfs_allow_writes(s);
 	spin_lock(&sbi->old_work_lock);
 	/* Allow old_work to run again */
 	sbi->work_queued = 0;
 	spin_unlock(&sbi->old_work_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-बाह्य स्थिर काष्ठा in_core_key MAX_IN_CORE_KEY;
+extern const struct in_core_key MAX_IN_CORE_KEY;
 
 /*
  * this is used to delete "save link" when there are no items of a
- * file it poपूर्णांकs to. It can either happen अगर unlink is completed but
- * "save unlink" removal, or अगर file has both unlink and truncate
+ * file it points to. It can either happen if unlink is completed but
+ * "save unlink" removal, or if file has both unlink and truncate
  * pending and as unlink completes first (because key of "save link"
  * protecting unlink is bigger that a key lf "save link" which
  * protects truncate), so there left no items to make truncate
  * completion on
  */
-अटल पूर्णांक हटाओ_save_link_only(काष्ठा super_block *s,
-				 काष्ठा reiserfs_key *key, पूर्णांक oid_मुक्त)
-अणु
-	काष्ठा reiserfs_transaction_handle th;
-	पूर्णांक err;
+static int remove_save_link_only(struct super_block *s,
+				 struct reiserfs_key *key, int oid_free)
+{
+	struct reiserfs_transaction_handle th;
+	int err;
 
-	/* we are going to करो one balancing */
+	/* we are going to do one balancing */
 	err = journal_begin(&th, s, JOURNAL_PER_BALANCE_CNT);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	reiserfs_delete_solid_item(&th, शून्य, key);
-	अगर (oid_मुक्त)
-		/* removals are रक्षित by direct items */
+	reiserfs_delete_solid_item(&th, NULL, key);
+	if (oid_free)
+		/* removals are protected by direct items */
 		reiserfs_release_objectid(&th, le32_to_cpu(key->k_objectid));
 
-	वापस journal_end(&th);
-पूर्ण
+	return journal_end(&th);
+}
 
-#अगर_घोषित CONFIG_QUOTA
-अटल पूर्णांक reiserfs_quota_on_mount(काष्ठा super_block *, पूर्णांक);
-#पूर्ण_अगर
+#ifdef CONFIG_QUOTA
+static int reiserfs_quota_on_mount(struct super_block *, int);
+#endif
 
 /*
- * Look क्रम uncompleted unlinks and truncates and complete them
+ * Look for uncompleted unlinks and truncates and complete them
  *
- * Called with superblock ग_लिखो locked.  If quotas are enabled, we have to
+ * Called with superblock write locked.  If quotas are enabled, we have to
  * release/retake lest we call dquot_quota_on_mount(), proceed to
- * schedule_on_each_cpu() in invalidate_bdev() and deadlock रुकोing क्रम the per
- * cpu worklets to complete flush_async_commits() that in turn रुको क्रम the
- * superblock ग_लिखो lock.
+ * schedule_on_each_cpu() in invalidate_bdev() and deadlock waiting for the per
+ * cpu worklets to complete flush_async_commits() that in turn wait for the
+ * superblock write lock.
  */
-अटल पूर्णांक finish_unfinished(काष्ठा super_block *s)
-अणु
+static int finish_unfinished(struct super_block *s)
+{
 	INITIALIZE_PATH(path);
-	काष्ठा cpu_key max_cpu_key, obj_key;
-	काष्ठा reiserfs_key save_link_key, last_inode_key;
-	पूर्णांक retval = 0;
-	काष्ठा item_head *ih;
-	काष्ठा buffer_head *bh;
-	पूर्णांक item_pos;
-	अक्षर *item;
-	पूर्णांक करोne;
-	काष्ठा inode *inode;
-	पूर्णांक truncate;
-#अगर_घोषित CONFIG_QUOTA
-	पूर्णांक i;
-	पूर्णांक ms_active_set;
-	पूर्णांक quota_enabled[REISERFS_MAXQUOTAS];
-#पूर्ण_अगर
+	struct cpu_key max_cpu_key, obj_key;
+	struct reiserfs_key save_link_key, last_inode_key;
+	int retval = 0;
+	struct item_head *ih;
+	struct buffer_head *bh;
+	int item_pos;
+	char *item;
+	int done;
+	struct inode *inode;
+	int truncate;
+#ifdef CONFIG_QUOTA
+	int i;
+	int ms_active_set;
+	int quota_enabled[REISERFS_MAXQUOTAS];
+#endif
 
-	/* compose key to look क्रम "save" links */
+	/* compose key to look for "save" links */
 	max_cpu_key.version = KEY_FORMAT_3_5;
 	max_cpu_key.on_disk_key.k_dir_id = ~0U;
 	max_cpu_key.on_disk_key.k_objectid = ~0U;
 	set_cpu_key_k_offset(&max_cpu_key, ~0U);
 	max_cpu_key.key_length = 3;
 
-	स_रखो(&last_inode_key, 0, माप(last_inode_key));
+	memset(&last_inode_key, 0, sizeof(last_inode_key));
 
-#अगर_घोषित CONFIG_QUOTA
-	/* Needed क्रम iput() to work correctly and not trash data */
-	अगर (s->s_flags & SB_ACTIVE) अणु
+#ifdef CONFIG_QUOTA
+	/* Needed for iput() to work correctly and not trash data */
+	if (s->s_flags & SB_ACTIVE) {
 		ms_active_set = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		ms_active_set = 1;
 		s->s_flags |= SB_ACTIVE;
-	पूर्ण
+	}
 	/* Turn on quotas so that they are updated correctly */
-	क्रम (i = 0; i < REISERFS_MAXQUOTAS; i++) अणु
+	for (i = 0; i < REISERFS_MAXQUOTAS; i++) {
 		quota_enabled[i] = 1;
-		अगर (REISERFS_SB(s)->s_qf_names[i]) अणु
-			पूर्णांक ret;
+		if (REISERFS_SB(s)->s_qf_names[i]) {
+			int ret;
 
-			अगर (sb_has_quota_active(s, i)) अणु
+			if (sb_has_quota_active(s, i)) {
 				quota_enabled[i] = 0;
-				जारी;
-			पूर्ण
-			reiserfs_ग_लिखो_unlock(s);
+				continue;
+			}
+			reiserfs_write_unlock(s);
 			ret = reiserfs_quota_on_mount(s, i);
-			reiserfs_ग_लिखो_lock(s);
-			अगर (ret < 0)
+			reiserfs_write_lock(s);
+			if (ret < 0)
 				reiserfs_warning(s, "reiserfs-2500",
 						 "cannot turn on journaled "
 						 "quota: error %d", ret);
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+		}
+	}
+#endif
 
-	करोne = 0;
+	done = 0;
 	REISERFS_SB(s)->s_is_unlinked_ok = 1;
-	जबतक (!retval) अणु
-		पूर्णांक depth;
+	while (!retval) {
+		int depth;
 		retval = search_item(s, &max_cpu_key, &path);
-		अगर (retval != ITEM_NOT_FOUND) अणु
+		if (retval != ITEM_NOT_FOUND) {
 			reiserfs_error(s, "vs-2140",
 				       "search_by_key returned %d", retval);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		bh = get_last_bh(&path);
 		item_pos = get_item_pos(&path);
-		अगर (item_pos != B_NR_ITEMS(bh)) अणु
+		if (item_pos != B_NR_ITEMS(bh)) {
 			reiserfs_warning(s, "vs-2060",
 					 "wrong position found");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		item_pos--;
 		ih = item_head(bh, item_pos);
 
-		अगर (le32_to_cpu(ih->ih_key.k_dir_id) != MAX_KEY_OBJECTID)
+		if (le32_to_cpu(ih->ih_key.k_dir_id) != MAX_KEY_OBJECTID)
 			/* there are no "save" links anymore */
-			अवरोध;
+			break;
 
 		save_link_key = ih->ih_key;
-		अगर (is_indirect_le_ih(ih))
+		if (is_indirect_le_ih(ih))
 			truncate = 1;
-		अन्यथा
+		else
 			truncate = 0;
 
 		/* reiserfs_iget needs k_dirid and k_objectid only */
@@ -319,51 +318,51 @@
 		obj_key.on_disk_key.k_offset = 0;
 		obj_key.on_disk_key.k_type = 0;
 
-		pathrअन्यथा(&path);
+		pathrelse(&path);
 
 		inode = reiserfs_iget(s, &obj_key);
-		अगर (IS_ERR_OR_शून्य(inode)) अणु
+		if (IS_ERR_OR_NULL(inode)) {
 			/*
 			 * the unlink almost completed, it just did not
-			 * manage to हटाओ "save" link and release objectid
+			 * manage to remove "save" link and release objectid
 			 */
 			reiserfs_warning(s, "vs-2180", "iget failed for %K",
 					 &obj_key);
-			retval = हटाओ_save_link_only(s, &save_link_key, 1);
-			जारी;
-		पूर्ण
+			retval = remove_save_link_only(s, &save_link_key, 1);
+			continue;
+		}
 
-		अगर (!truncate && inode->i_nlink) अणु
+		if (!truncate && inode->i_nlink) {
 			/* file is not unlinked */
 			reiserfs_warning(s, "vs-2185",
 					 "file %K is not unlinked",
 					 &obj_key);
-			retval = हटाओ_save_link_only(s, &save_link_key, 0);
-			जारी;
-		पूर्ण
-		depth = reiserfs_ग_लिखो_unlock_nested(inode->i_sb);
+			retval = remove_save_link_only(s, &save_link_key, 0);
+			continue;
+		}
+		depth = reiserfs_write_unlock_nested(inode->i_sb);
 		dquot_initialize(inode);
-		reiserfs_ग_लिखो_lock_nested(inode->i_sb, depth);
+		reiserfs_write_lock_nested(inode->i_sb, depth);
 
-		अगर (truncate && S_ISसूची(inode->i_mode)) अणु
+		if (truncate && S_ISDIR(inode->i_mode)) {
 			/*
-			 * We got a truncate request क्रम a dir which
+			 * We got a truncate request for a dir which
 			 * is impossible.  The only imaginable way is to
 			 * execute unfinished truncate request then boot
-			 * पूर्णांकo old kernel, हटाओ the file and create dir
+			 * into old kernel, remove the file and create dir
 			 * with the same key.
 			 */
 			reiserfs_warning(s, "green-2101",
 					 "impossible truncate on a "
 					 "directory %k. Please report",
 					 INODE_PKEY(inode));
-			retval = हटाओ_save_link_only(s, &save_link_key, 0);
+			retval = remove_save_link_only(s, &save_link_key, 0);
 			truncate = 0;
 			iput(inode);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (truncate) अणु
+		if (truncate) {
 			REISERFS_I(inode)->i_flags |=
 			    i_link_saved_truncate_mask;
 			/*
@@ -373,67 +372,67 @@
 			reiserfs_info(s, "Truncating %k to %lld ..",
 				      INODE_PKEY(inode), inode->i_size);
 
-			/* करोn't update modअगरication समय */
+			/* don't update modification time */
 			reiserfs_truncate_file(inode, 0);
 
-			retval = हटाओ_save_link(inode, truncate);
-		पूर्ण अन्यथा अणु
+			retval = remove_save_link(inode, truncate);
+		} else {
 			REISERFS_I(inode)->i_flags |= i_link_saved_unlink_mask;
-			/* not completed unlink (सूची_हटाओ) found */
+			/* not completed unlink (rmdir) found */
 			reiserfs_info(s, "Removing %k..", INODE_PKEY(inode));
-			अगर (स_भेद(&last_inode_key, INODE_PKEY(inode),
-					माप(last_inode_key)))अणु
+			if (memcmp(&last_inode_key, INODE_PKEY(inode),
+					sizeof(last_inode_key))){
 				last_inode_key = *INODE_PKEY(inode);
-				/* removal माला_लो completed in iput */
+				/* removal gets completed in iput */
 				retval = 0;
-			पूर्ण अन्यथा अणु
+			} else {
 				reiserfs_warning(s, "super-2189", "Dead loop "
 						 "in finish_unfinished "
 						 "detected, just remove "
 						 "save link\n");
-				retval = हटाओ_save_link_only(s,
+				retval = remove_save_link_only(s,
 							&save_link_key, 0);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		iput(inode);
-		prपूर्णांकk("done\n");
-		करोne++;
-	पूर्ण
+		printk("done\n");
+		done++;
+	}
 	REISERFS_SB(s)->s_is_unlinked_ok = 0;
 
-#अगर_घोषित CONFIG_QUOTA
+#ifdef CONFIG_QUOTA
 	/* Turn quotas off */
-	reiserfs_ग_लिखो_unlock(s);
-	क्रम (i = 0; i < REISERFS_MAXQUOTAS; i++) अणु
-		अगर (sb_dqopt(s)->files[i] && quota_enabled[i])
+	reiserfs_write_unlock(s);
+	for (i = 0; i < REISERFS_MAXQUOTAS; i++) {
+		if (sb_dqopt(s)->files[i] && quota_enabled[i])
 			dquot_quota_off(s, i);
-	पूर्ण
-	reiserfs_ग_लिखो_lock(s);
-	अगर (ms_active_set)
+	}
+	reiserfs_write_lock(s);
+	if (ms_active_set)
 		/* Restore the flag back */
 		s->s_flags &= ~SB_ACTIVE;
-#पूर्ण_अगर
-	pathrअन्यथा(&path);
-	अगर (करोne)
+#endif
+	pathrelse(&path);
+	if (done)
 		reiserfs_info(s, "There were %d uncompleted unlinks/truncates. "
-			      "Completed\n", करोne);
-	वापस retval;
-पूर्ण
+			      "Completed\n", done);
+	return retval;
+}
 
 /*
  * to protect file being unlinked from getting lost we "safe" link files
  * being unlinked. This link will be deleted in the same transaction with last
- * item of file. mounting the fileप्रणाली we scan all these links and हटाओ
+ * item of file. mounting the filesystem we scan all these links and remove
  * files which almost got lost
  */
-व्योम add_save_link(काष्ठा reiserfs_transaction_handle *th,
-		   काष्ठा inode *inode, पूर्णांक truncate)
-अणु
+void add_save_link(struct reiserfs_transaction_handle *th,
+		   struct inode *inode, int truncate)
+{
 	INITIALIZE_PATH(path);
-	पूर्णांक retval;
-	काष्ठा cpu_key key;
-	काष्ठा item_head ih;
+	int retval;
+	struct cpu_key key;
+	struct item_head ih;
 	__le32 link;
 
 	BUG_ON(!th->t_trans_id);
@@ -442,415 +441,415 @@
 	RFALSE(truncate &&
 	       (REISERFS_I(inode)->i_flags & i_link_saved_truncate_mask),
 	       "saved link already exists for truncated inode %lx",
-	       (दीर्घ)inode->i_ino);
+	       (long)inode->i_ino);
 	RFALSE(!truncate &&
 	       (REISERFS_I(inode)->i_flags & i_link_saved_unlink_mask),
 	       "saved link already exists for unlinked inode %lx",
-	       (दीर्घ)inode->i_ino);
+	       (long)inode->i_ino);
 
 	/* setup key of "save" link */
 	key.version = KEY_FORMAT_3_5;
 	key.on_disk_key.k_dir_id = MAX_KEY_OBJECTID;
 	key.on_disk_key.k_objectid = inode->i_ino;
-	अगर (!truncate) अणु
-		/* unlink, सूची_हटाओ, नाम */
+	if (!truncate) {
+		/* unlink, rmdir, rename */
 		set_cpu_key_k_offset(&key, 1 + inode->i_sb->s_blocksize);
-		set_cpu_key_k_type(&key, TYPE_सूचीECT);
+		set_cpu_key_k_type(&key, TYPE_DIRECT);
 
 		/* item head of "safe" link */
 		make_le_item_head(&ih, &key, key.version,
-				  1 + inode->i_sb->s_blocksize, TYPE_सूचीECT,
-				  4 /*length */ , 0xffff /*मुक्त space */ );
-	पूर्ण अन्यथा अणु
+				  1 + inode->i_sb->s_blocksize, TYPE_DIRECT,
+				  4 /*length */ , 0xffff /*free space */ );
+	} else {
 		/* truncate */
-		अगर (S_ISसूची(inode->i_mode))
+		if (S_ISDIR(inode->i_mode))
 			reiserfs_warning(inode->i_sb, "green-2102",
 					 "Adding a truncate savelink for "
 					 "a directory %k! Please report",
 					 INODE_PKEY(inode));
 		set_cpu_key_k_offset(&key, 1);
-		set_cpu_key_k_type(&key, TYPE_INसूचीECT);
+		set_cpu_key_k_type(&key, TYPE_INDIRECT);
 
 		/* item head of "safe" link */
-		make_le_item_head(&ih, &key, key.version, 1, TYPE_INसूचीECT,
-				  4 /*length */ , 0 /*मुक्त space */ );
-	पूर्ण
+		make_le_item_head(&ih, &key, key.version, 1, TYPE_INDIRECT,
+				  4 /*length */ , 0 /*free space */ );
+	}
 	key.key_length = 3;
 
-	/* look क्रम its place in the tree */
+	/* look for its place in the tree */
 	retval = search_item(inode->i_sb, &key, &path);
-	अगर (retval != ITEM_NOT_FOUND) अणु
-		अगर (retval != -ENOSPC)
+	if (retval != ITEM_NOT_FOUND) {
+		if (retval != -ENOSPC)
 			reiserfs_error(inode->i_sb, "vs-2100",
 				       "search_by_key (%K) returned %d", &key,
 				       retval);
-		pathrअन्यथा(&path);
-		वापस;
-	पूर्ण
+		pathrelse(&path);
+		return;
+	}
 
 	/* body of "save" link */
 	link = INODE_PKEY(inode)->k_dir_id;
 
-	/* put "save" link पूर्णांकo tree, करोn't अक्षरge quota to anyone */
+	/* put "save" link into tree, don't charge quota to anyone */
 	retval =
-	    reiserfs_insert_item(th, &path, &key, &ih, शून्य, (अक्षर *)&link);
-	अगर (retval) अणु
-		अगर (retval != -ENOSPC)
+	    reiserfs_insert_item(th, &path, &key, &ih, NULL, (char *)&link);
+	if (retval) {
+		if (retval != -ENOSPC)
 			reiserfs_error(inode->i_sb, "vs-2120",
 				       "insert_item returned %d", retval);
-	पूर्ण अन्यथा अणु
-		अगर (truncate)
+	} else {
+		if (truncate)
 			REISERFS_I(inode)->i_flags |=
 			    i_link_saved_truncate_mask;
-		अन्यथा
+		else
 			REISERFS_I(inode)->i_flags |= i_link_saved_unlink_mask;
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* this खोलोs transaction unlike add_save_link */
-पूर्णांक हटाओ_save_link(काष्ठा inode *inode, पूर्णांक truncate)
-अणु
-	काष्ठा reiserfs_transaction_handle th;
-	काष्ठा reiserfs_key key;
-	पूर्णांक err;
+/* this opens transaction unlike add_save_link */
+int remove_save_link(struct inode *inode, int truncate)
+{
+	struct reiserfs_transaction_handle th;
+	struct reiserfs_key key;
+	int err;
 
-	/* we are going to करो one balancing only */
+	/* we are going to do one balancing only */
 	err = journal_begin(&th, inode->i_sb, JOURNAL_PER_BALANCE_CNT);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* setup key of "save" link */
 	key.k_dir_id = cpu_to_le32(MAX_KEY_OBJECTID);
 	key.k_objectid = INODE_PKEY(inode)->k_objectid;
-	अगर (!truncate) अणु
-		/* unlink, सूची_हटाओ, नाम */
+	if (!truncate) {
+		/* unlink, rmdir, rename */
 		set_le_key_k_offset(KEY_FORMAT_3_5, &key,
 				    1 + inode->i_sb->s_blocksize);
-		set_le_key_k_type(KEY_FORMAT_3_5, &key, TYPE_सूचीECT);
-	पूर्ण अन्यथा अणु
+		set_le_key_k_type(KEY_FORMAT_3_5, &key, TYPE_DIRECT);
+	} else {
 		/* truncate */
 		set_le_key_k_offset(KEY_FORMAT_3_5, &key, 1);
-		set_le_key_k_type(KEY_FORMAT_3_5, &key, TYPE_INसूचीECT);
-	पूर्ण
+		set_le_key_k_type(KEY_FORMAT_3_5, &key, TYPE_INDIRECT);
+	}
 
-	अगर ((truncate &&
+	if ((truncate &&
 	     (REISERFS_I(inode)->i_flags & i_link_saved_truncate_mask)) ||
 	    (!truncate &&
 	     (REISERFS_I(inode)->i_flags & i_link_saved_unlink_mask)))
-		/* करोn't take quota bytes from anywhere */
-		reiserfs_delete_solid_item(&th, शून्य, &key);
-	अगर (!truncate) अणु
+		/* don't take quota bytes from anywhere */
+		reiserfs_delete_solid_item(&th, NULL, &key);
+	if (!truncate) {
 		reiserfs_release_objectid(&th, inode->i_ino);
 		REISERFS_I(inode)->i_flags &= ~i_link_saved_unlink_mask;
-	पूर्ण अन्यथा
+	} else
 		REISERFS_I(inode)->i_flags &= ~i_link_saved_truncate_mask;
 
-	वापस journal_end(&th);
-पूर्ण
+	return journal_end(&th);
+}
 
-अटल व्योम reiserfs_समाप्त_sb(काष्ठा super_block *s)
-अणु
-	अगर (REISERFS_SB(s)) अणु
-		reiserfs_proc_info_करोne(s);
+static void reiserfs_kill_sb(struct super_block *s)
+{
+	if (REISERFS_SB(s)) {
+		reiserfs_proc_info_done(s);
 		/*
 		 * Force any pending inode evictions to occur now. Any
-		 * inodes to be हटाओd that have extended attributes
-		 * associated with them need to clean them up beक्रमe
+		 * inodes to be removed that have extended attributes
+		 * associated with them need to clean them up before
 		 * we can release the extended attribute root dentries.
-		 * shrink_dcache_क्रम_umount will BUG अगर we करोn't release
-		 * those beक्रमe it's called so ->put_super is too late.
+		 * shrink_dcache_for_umount will BUG if we don't release
+		 * those before it's called so ->put_super is too late.
 		 */
 		shrink_dcache_sb(s);
 
 		dput(REISERFS_SB(s)->xattr_root);
-		REISERFS_SB(s)->xattr_root = शून्य;
+		REISERFS_SB(s)->xattr_root = NULL;
 		dput(REISERFS_SB(s)->priv_root);
-		REISERFS_SB(s)->priv_root = शून्य;
-	पूर्ण
+		REISERFS_SB(s)->priv_root = NULL;
+	}
 
-	समाप्त_block_super(s);
-पूर्ण
+	kill_block_super(s);
+}
 
-#अगर_घोषित CONFIG_QUOTA
-अटल पूर्णांक reiserfs_quota_off(काष्ठा super_block *sb, पूर्णांक type);
+#ifdef CONFIG_QUOTA
+static int reiserfs_quota_off(struct super_block *sb, int type);
 
-अटल व्योम reiserfs_quota_off_umount(काष्ठा super_block *s)
-अणु
-	पूर्णांक type;
+static void reiserfs_quota_off_umount(struct super_block *s)
+{
+	int type;
 
-	क्रम (type = 0; type < REISERFS_MAXQUOTAS; type++)
+	for (type = 0; type < REISERFS_MAXQUOTAS; type++)
 		reiserfs_quota_off(s, type);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम reiserfs_quota_off_umount(काष्ठा super_block *s)
-अणु
-पूर्ण
-#पूर्ण_अगर
+}
+#else
+static inline void reiserfs_quota_off_umount(struct super_block *s)
+{
+}
+#endif
 
-अटल व्योम reiserfs_put_super(काष्ठा super_block *s)
-अणु
-	काष्ठा reiserfs_transaction_handle th;
+static void reiserfs_put_super(struct super_block *s)
+{
+	struct reiserfs_transaction_handle th;
 	th.t_trans_id = 0;
 
 	reiserfs_quota_off_umount(s);
 
-	reiserfs_ग_लिखो_lock(s);
+	reiserfs_write_lock(s);
 
 	/*
-	 * change file प्रणाली state to current state अगर it was mounted
-	 * with पढ़ो-ग_लिखो permissions
+	 * change file system state to current state if it was mounted
+	 * with read-write permissions
 	 */
-	अगर (!sb_rकरोnly(s)) अणु
-		अगर (!journal_begin(&th, s, 10)) अणु
-			reiserfs_prepare_क्रम_journal(s, SB_BUFFER_WITH_SB(s),
+	if (!sb_rdonly(s)) {
+		if (!journal_begin(&th, s, 10)) {
+			reiserfs_prepare_for_journal(s, SB_BUFFER_WITH_SB(s),
 						     1);
 			set_sb_umount_state(SB_DISK_SUPER_BLOCK(s),
 					    REISERFS_SB(s)->s_mount_state);
 			journal_mark_dirty(&th, SB_BUFFER_WITH_SB(s));
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
-	 * note, journal_release checks क्रम पढ़ोonly mount, and can
-	 * decide not to करो a journal_end
+	 * note, journal_release checks for readonly mount, and can
+	 * decide not to do a journal_end
 	 */
 	journal_release(&th, s);
 
-	reiserfs_मुक्त_biपंचांगap_cache(s);
+	reiserfs_free_bitmap_cache(s);
 
-	brअन्यथा(SB_BUFFER_WITH_SB(s));
+	brelse(SB_BUFFER_WITH_SB(s));
 
-	prपूर्णांक_statistics(s);
+	print_statistics(s);
 
-	अगर (REISERFS_SB(s)->reserved_blocks != 0) अणु
+	if (REISERFS_SB(s)->reserved_blocks != 0) {
 		reiserfs_warning(s, "green-2005", "reserved blocks left %d",
 				 REISERFS_SB(s)->reserved_blocks);
-	पूर्ण
+	}
 
-	reiserfs_ग_लिखो_unlock(s);
+	reiserfs_write_unlock(s);
 	mutex_destroy(&REISERFS_SB(s)->lock);
 	destroy_workqueue(REISERFS_SB(s)->commit_wq);
-	kमुक्त(REISERFS_SB(s)->s_jdev);
-	kमुक्त(s->s_fs_info);
-	s->s_fs_info = शून्य;
-पूर्ण
+	kfree(REISERFS_SB(s)->s_jdev);
+	kfree(s->s_fs_info);
+	s->s_fs_info = NULL;
+}
 
-अटल काष्ठा kmem_cache *reiserfs_inode_cachep;
+static struct kmem_cache *reiserfs_inode_cachep;
 
-अटल काष्ठा inode *reiserfs_alloc_inode(काष्ठा super_block *sb)
-अणु
-	काष्ठा reiserfs_inode_info *ei;
+static struct inode *reiserfs_alloc_inode(struct super_block *sb)
+{
+	struct reiserfs_inode_info *ei;
 	ei = kmem_cache_alloc(reiserfs_inode_cachep, GFP_KERNEL);
-	अगर (!ei)
-		वापस शून्य;
-	atomic_set(&ei->खोलोers, 0);
+	if (!ei)
+		return NULL;
+	atomic_set(&ei->openers, 0);
 	mutex_init(&ei->tailpack);
-#अगर_घोषित CONFIG_QUOTA
-	स_रखो(&ei->i_dquot, 0, माप(ei->i_dquot));
-#पूर्ण_अगर
+#ifdef CONFIG_QUOTA
+	memset(&ei->i_dquot, 0, sizeof(ei->i_dquot));
+#endif
 
-	वापस &ei->vfs_inode;
-पूर्ण
+	return &ei->vfs_inode;
+}
 
-अटल व्योम reiserfs_मुक्त_inode(काष्ठा inode *inode)
-अणु
-	kmem_cache_मुक्त(reiserfs_inode_cachep, REISERFS_I(inode));
-पूर्ण
+static void reiserfs_free_inode(struct inode *inode)
+{
+	kmem_cache_free(reiserfs_inode_cachep, REISERFS_I(inode));
+}
 
-अटल व्योम init_once(व्योम *foo)
-अणु
-	काष्ठा reiserfs_inode_info *ei = (काष्ठा reiserfs_inode_info *)foo;
+static void init_once(void *foo)
+{
+	struct reiserfs_inode_info *ei = (struct reiserfs_inode_info *)foo;
 
-	INIT_LIST_HEAD(&ei->i_pपुनः_स्मृति_list);
+	INIT_LIST_HEAD(&ei->i_prealloc_list);
 	inode_init_once(&ei->vfs_inode);
-पूर्ण
+}
 
-अटल पूर्णांक __init init_inodecache(व्योम)
-अणु
+static int __init init_inodecache(void)
+{
 	reiserfs_inode_cachep = kmem_cache_create("reiser_inode_cache",
-						  माप(काष्ठा
+						  sizeof(struct
 							 reiserfs_inode_info),
 						  0, (SLAB_RECLAIM_ACCOUNT|
 						      SLAB_MEM_SPREAD|
 						      SLAB_ACCOUNT),
 						  init_once);
-	अगर (reiserfs_inode_cachep == शून्य)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+	if (reiserfs_inode_cachep == NULL)
+		return -ENOMEM;
+	return 0;
+}
 
-अटल व्योम destroy_inodecache(व्योम)
-अणु
+static void destroy_inodecache(void)
+{
 	/*
-	 * Make sure all delayed rcu मुक्त inodes are flushed beक्रमe we
+	 * Make sure all delayed rcu free inodes are flushed before we
 	 * destroy cache.
 	 */
 	rcu_barrier();
 	kmem_cache_destroy(reiserfs_inode_cachep);
-पूर्ण
+}
 
-/* we करोn't mark inodes dirty, we just log them */
-अटल व्योम reiserfs_dirty_inode(काष्ठा inode *inode, पूर्णांक flags)
-अणु
-	काष्ठा reiserfs_transaction_handle th;
+/* we don't mark inodes dirty, we just log them */
+static void reiserfs_dirty_inode(struct inode *inode, int flags)
+{
+	struct reiserfs_transaction_handle th;
 
-	पूर्णांक err = 0;
+	int err = 0;
 
-	अगर (sb_rकरोnly(inode->i_sb)) अणु
+	if (sb_rdonly(inode->i_sb)) {
 		reiserfs_warning(inode->i_sb, "clm-6006",
 				 "writing inode %lu on readonly FS",
 				 inode->i_ino);
-		वापस;
-	पूर्ण
-	reiserfs_ग_लिखो_lock(inode->i_sb);
+		return;
+	}
+	reiserfs_write_lock(inode->i_sb);
 
 	/*
-	 * this is really only used क्रम aसमय updates, so they करोn't have
+	 * this is really only used for atime updates, so they don't have
 	 * to be included in O_SYNC or fsync
 	 */
 	err = journal_begin(&th, inode->i_sb, 1);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	reiserfs_update_sd(&th, inode);
 	journal_end(&th);
 
 out:
-	reiserfs_ग_लिखो_unlock(inode->i_sb);
-पूर्ण
+	reiserfs_write_unlock(inode->i_sb);
+}
 
-अटल पूर्णांक reiserfs_show_options(काष्ठा seq_file *seq, काष्ठा dentry *root)
-अणु
-	काष्ठा super_block *s = root->d_sb;
-	काष्ठा reiserfs_journal *journal = SB_JOURNAL(s);
-	दीर्घ opts = REISERFS_SB(s)->s_mount_opt;
+static int reiserfs_show_options(struct seq_file *seq, struct dentry *root)
+{
+	struct super_block *s = root->d_sb;
+	struct reiserfs_journal *journal = SB_JOURNAL(s);
+	long opts = REISERFS_SB(s)->s_mount_opt;
 
-	अगर (opts & (1 << REISERFS_LARGETAIL))
-		seq_माला_दो(seq, ",tails=on");
-	अन्यथा अगर (!(opts & (1 << REISERFS_SMALLTAIL)))
-		seq_माला_दो(seq, ",notail");
-	/* tails=small is शेष so we करोn't show it */
+	if (opts & (1 << REISERFS_LARGETAIL))
+		seq_puts(seq, ",tails=on");
+	else if (!(opts & (1 << REISERFS_SMALLTAIL)))
+		seq_puts(seq, ",notail");
+	/* tails=small is default so we don't show it */
 
-	अगर (!(opts & (1 << REISERFS_BARRIER_FLUSH)))
-		seq_माला_दो(seq, ",barrier=none");
-	/* barrier=flush is शेष so we करोn't show it */
+	if (!(opts & (1 << REISERFS_BARRIER_FLUSH)))
+		seq_puts(seq, ",barrier=none");
+	/* barrier=flush is default so we don't show it */
 
-	अगर (opts & (1 << REISERFS_ERROR_CONTINUE))
-		seq_माला_दो(seq, ",errors=continue");
-	अन्यथा अगर (opts & (1 << REISERFS_ERROR_PANIC))
-		seq_माला_दो(seq, ",errors=panic");
-	/* errors=ro is शेष so we करोn't show it */
+	if (opts & (1 << REISERFS_ERROR_CONTINUE))
+		seq_puts(seq, ",errors=continue");
+	else if (opts & (1 << REISERFS_ERROR_PANIC))
+		seq_puts(seq, ",errors=panic");
+	/* errors=ro is default so we don't show it */
 
-	अगर (opts & (1 << REISERFS_DATA_LOG))
-		seq_माला_दो(seq, ",data=journal");
-	अन्यथा अगर (opts & (1 << REISERFS_DATA_WRITEBACK))
-		seq_माला_दो(seq, ",data=writeback");
-	/* data=ordered is शेष so we करोn't show it */
+	if (opts & (1 << REISERFS_DATA_LOG))
+		seq_puts(seq, ",data=journal");
+	else if (opts & (1 << REISERFS_DATA_WRITEBACK))
+		seq_puts(seq, ",data=writeback");
+	/* data=ordered is default so we don't show it */
 
-	अगर (opts & (1 << REISERFS_ATTRS))
-		seq_माला_दो(seq, ",attrs");
+	if (opts & (1 << REISERFS_ATTRS))
+		seq_puts(seq, ",attrs");
 
-	अगर (opts & (1 << REISERFS_XATTRS_USER))
-		seq_माला_दो(seq, ",user_xattr");
+	if (opts & (1 << REISERFS_XATTRS_USER))
+		seq_puts(seq, ",user_xattr");
 
-	अगर (opts & (1 << REISERFS_EXPOSE_PRIVROOT))
-		seq_माला_दो(seq, ",expose_privroot");
+	if (opts & (1 << REISERFS_EXPOSE_PRIVROOT))
+		seq_puts(seq, ",expose_privroot");
 
-	अगर (opts & (1 << REISERFS_POSIXACL))
-		seq_माला_दो(seq, ",acl");
+	if (opts & (1 << REISERFS_POSIXACL))
+		seq_puts(seq, ",acl");
 
-	अगर (REISERFS_SB(s)->s_jdev)
+	if (REISERFS_SB(s)->s_jdev)
 		seq_show_option(seq, "jdev", REISERFS_SB(s)->s_jdev);
 
-	अगर (journal->j_max_commit_age != journal->j_शेष_max_commit_age)
-		seq_म_लिखो(seq, ",commit=%d", journal->j_max_commit_age);
+	if (journal->j_max_commit_age != journal->j_default_max_commit_age)
+		seq_printf(seq, ",commit=%d", journal->j_max_commit_age);
 
-#अगर_घोषित CONFIG_QUOTA
-	अगर (REISERFS_SB(s)->s_qf_names[USRQUOTA])
+#ifdef CONFIG_QUOTA
+	if (REISERFS_SB(s)->s_qf_names[USRQUOTA])
 		seq_show_option(seq, "usrjquota",
 				REISERFS_SB(s)->s_qf_names[USRQUOTA]);
-	अन्यथा अगर (opts & (1 << REISERFS_USRQUOTA))
-		seq_माला_दो(seq, ",usrquota");
-	अगर (REISERFS_SB(s)->s_qf_names[GRPQUOTA])
+	else if (opts & (1 << REISERFS_USRQUOTA))
+		seq_puts(seq, ",usrquota");
+	if (REISERFS_SB(s)->s_qf_names[GRPQUOTA])
 		seq_show_option(seq, "grpjquota",
 				REISERFS_SB(s)->s_qf_names[GRPQUOTA]);
-	अन्यथा अगर (opts & (1 << REISERFS_GRPQUOTA))
-		seq_माला_दो(seq, ",grpquota");
-	अगर (REISERFS_SB(s)->s_jquota_fmt) अणु
-		अगर (REISERFS_SB(s)->s_jquota_fmt == QFMT_VFS_OLD)
-			seq_माला_दो(seq, ",jqfmt=vfsold");
-		अन्यथा अगर (REISERFS_SB(s)->s_jquota_fmt == QFMT_VFS_V0)
-			seq_माला_दो(seq, ",jqfmt=vfsv0");
-	पूर्ण
-#पूर्ण_अगर
+	else if (opts & (1 << REISERFS_GRPQUOTA))
+		seq_puts(seq, ",grpquota");
+	if (REISERFS_SB(s)->s_jquota_fmt) {
+		if (REISERFS_SB(s)->s_jquota_fmt == QFMT_VFS_OLD)
+			seq_puts(seq, ",jqfmt=vfsold");
+		else if (REISERFS_SB(s)->s_jquota_fmt == QFMT_VFS_V0)
+			seq_puts(seq, ",jqfmt=vfsv0");
+	}
+#endif
 
 	/* Block allocator options */
-	अगर (opts & (1 << REISERFS_NO_BORDER))
-		seq_माला_दो(seq, ",block-allocator=noborder");
-	अगर (opts & (1 << REISERFS_NO_UNHASHED_RELOCATION))
-		seq_माला_दो(seq, ",block-allocator=no_unhashed_relocation");
-	अगर (opts & (1 << REISERFS_HASHED_RELOCATION))
-		seq_माला_दो(seq, ",block-allocator=hashed_relocation");
-	अगर (opts & (1 << REISERFS_TEST4))
-		seq_माला_दो(seq, ",block-allocator=test4");
+	if (opts & (1 << REISERFS_NO_BORDER))
+		seq_puts(seq, ",block-allocator=noborder");
+	if (opts & (1 << REISERFS_NO_UNHASHED_RELOCATION))
+		seq_puts(seq, ",block-allocator=no_unhashed_relocation");
+	if (opts & (1 << REISERFS_HASHED_RELOCATION))
+		seq_puts(seq, ",block-allocator=hashed_relocation");
+	if (opts & (1 << REISERFS_TEST4))
+		seq_puts(seq, ",block-allocator=test4");
 	show_alloc_options(seq, s);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_QUOTA
-अटल sमाप_प्रकार reiserfs_quota_ग_लिखो(काष्ठा super_block *, पूर्णांक, स्थिर अक्षर *,
-				    माप_प्रकार, loff_t);
-अटल sमाप_प्रकार reiserfs_quota_पढ़ो(काष्ठा super_block *, पूर्णांक, अक्षर *, माप_प्रकार,
+#ifdef CONFIG_QUOTA
+static ssize_t reiserfs_quota_write(struct super_block *, int, const char *,
+				    size_t, loff_t);
+static ssize_t reiserfs_quota_read(struct super_block *, int, char *, size_t,
 				   loff_t);
 
-अटल काष्ठा dquot **reiserfs_get_dquots(काष्ठा inode *inode)
-अणु
-	वापस REISERFS_I(inode)->i_dquot;
-पूर्ण
-#पूर्ण_अगर
+static struct dquot **reiserfs_get_dquots(struct inode *inode)
+{
+	return REISERFS_I(inode)->i_dquot;
+}
+#endif
 
-अटल स्थिर काष्ठा super_operations reiserfs_sops = अणु
+static const struct super_operations reiserfs_sops = {
 	.alloc_inode = reiserfs_alloc_inode,
-	.मुक्त_inode = reiserfs_मुक्त_inode,
-	.ग_लिखो_inode = reiserfs_ग_लिखो_inode,
+	.free_inode = reiserfs_free_inode,
+	.write_inode = reiserfs_write_inode,
 	.dirty_inode = reiserfs_dirty_inode,
 	.evict_inode = reiserfs_evict_inode,
 	.put_super = reiserfs_put_super,
 	.sync_fs = reiserfs_sync_fs,
-	.मुक्तze_fs = reiserfs_मुक्तze,
-	.unमुक्तze_fs = reiserfs_unमुक्तze,
+	.freeze_fs = reiserfs_freeze,
+	.unfreeze_fs = reiserfs_unfreeze,
 	.statfs = reiserfs_statfs,
 	.remount_fs = reiserfs_remount,
 	.show_options = reiserfs_show_options,
-#अगर_घोषित CONFIG_QUOTA
-	.quota_पढ़ो = reiserfs_quota_पढ़ो,
-	.quota_ग_लिखो = reiserfs_quota_ग_लिखो,
+#ifdef CONFIG_QUOTA
+	.quota_read = reiserfs_quota_read,
+	.quota_write = reiserfs_quota_write,
 	.get_dquots = reiserfs_get_dquots,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-#अगर_घोषित CONFIG_QUOTA
-#घोषणा QTYPE2NAME(t) ((t)==USRQUOTA?"user":"group")
+#ifdef CONFIG_QUOTA
+#define QTYPE2NAME(t) ((t)==USRQUOTA?"user":"group")
 
-अटल पूर्णांक reiserfs_ग_लिखो_dquot(काष्ठा dquot *);
-अटल पूर्णांक reiserfs_acquire_dquot(काष्ठा dquot *);
-अटल पूर्णांक reiserfs_release_dquot(काष्ठा dquot *);
-अटल पूर्णांक reiserfs_mark_dquot_dirty(काष्ठा dquot *);
-अटल पूर्णांक reiserfs_ग_लिखो_info(काष्ठा super_block *, पूर्णांक);
-अटल पूर्णांक reiserfs_quota_on(काष्ठा super_block *, पूर्णांक, पूर्णांक, स्थिर काष्ठा path *);
+static int reiserfs_write_dquot(struct dquot *);
+static int reiserfs_acquire_dquot(struct dquot *);
+static int reiserfs_release_dquot(struct dquot *);
+static int reiserfs_mark_dquot_dirty(struct dquot *);
+static int reiserfs_write_info(struct super_block *, int);
+static int reiserfs_quota_on(struct super_block *, int, int, const struct path *);
 
-अटल स्थिर काष्ठा dquot_operations reiserfs_quota_operations = अणु
-	.ग_लिखो_dquot = reiserfs_ग_लिखो_dquot,
+static const struct dquot_operations reiserfs_quota_operations = {
+	.write_dquot = reiserfs_write_dquot,
 	.acquire_dquot = reiserfs_acquire_dquot,
 	.release_dquot = reiserfs_release_dquot,
 	.mark_dirty = reiserfs_mark_dquot_dirty,
-	.ग_लिखो_info = reiserfs_ग_लिखो_info,
+	.write_info = reiserfs_write_info,
 	.alloc_dquot	= dquot_alloc,
 	.destroy_dquot	= dquot_destroy,
 	.get_next_id	= dquot_get_next_id,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा quotactl_ops reiserfs_qctl_operations = अणु
+static const struct quotactl_ops reiserfs_qctl_operations = {
 	.quota_on = reiserfs_quota_on,
 	.quota_off = reiserfs_quota_off,
 	.quota_sync = dquot_quota_sync,
@@ -858,129 +857,129 @@ out:
 	.set_info = dquot_set_dqinfo,
 	.get_dqblk = dquot_get_dqblk,
 	.set_dqblk = dquot_set_dqblk,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल स्थिर काष्ठा export_operations reiserfs_export_ops = अणु
+static const struct export_operations reiserfs_export_ops = {
 	.encode_fh = reiserfs_encode_fh,
 	.fh_to_dentry = reiserfs_fh_to_dentry,
 	.fh_to_parent = reiserfs_fh_to_parent,
 	.get_parent = reiserfs_get_parent,
-पूर्ण;
+};
 
 /*
- * this काष्ठा is used in reiserfs_getopt () क्रम containing the value क्रम
+ * this struct is used in reiserfs_getopt () for containing the value for
  * those mount options that have values rather than being toggles.
  */
-प्रकार काष्ठा अणु
-	अक्षर *value;
+typedef struct {
+	char *value;
 	/*
-	 * biपंचांगask which is to set on mount_options biपंचांगask
+	 * bitmask which is to set on mount_options bitmask
 	 * when this value is found, 0 is no bits are to be changed.
 	 */
-	पूर्णांक seपंचांगask;
+	int setmask;
 	/*
-	 * biपंचांगask which is to clear on mount_options biपंचांगask
+	 * bitmask which is to clear on mount_options bitmask
 	 * when this value is found, 0 is no bits are to be changed.
-	 * This is applied BEFORE seपंचांगask
+	 * This is applied BEFORE setmask
 	 */
-	पूर्णांक clrmask;
-पूर्ण arg_desc_t;
+	int clrmask;
+} arg_desc_t;
 
 /* Set this bit in arg_required to allow empty arguments */
-#घोषणा REISERFS_OPT_ALLOWEMPTY 31
+#define REISERFS_OPT_ALLOWEMPTY 31
 
 /*
- * this काष्ठा is used in reiserfs_getopt() क्रम describing the
+ * this struct is used in reiserfs_getopt() for describing the
  * set of reiserfs mount options
  */
-प्रकार काष्ठा अणु
-	अक्षर *option_name;
+typedef struct {
+	char *option_name;
 
-	/* 0 अगर argument is not required, not 0 otherwise */
-	पूर्णांक arg_required;
+	/* 0 if argument is not required, not 0 otherwise */
+	int arg_required;
 
 	/* list of values accepted by an option */
-	स्थिर arg_desc_t *values;
+	const arg_desc_t *values;
 
 	/*
-	 * biपंचांगask which is to set on mount_options biपंचांगask
+	 * bitmask which is to set on mount_options bitmask
 	 * when this value is found, 0 is no bits are to be changed.
 	 */
-	पूर्णांक seपंचांगask;
+	int setmask;
 
 	/*
-	 * biपंचांगask which is to clear on mount_options biपंचांगask
+	 * bitmask which is to clear on mount_options bitmask
 	 * when this value is found, 0 is no bits are to be changed.
-	 * This is applied BEFORE seपंचांगask
+	 * This is applied BEFORE setmask
 	 */
-	पूर्णांक clrmask;
-पूर्ण opt_desc_t;
+	int clrmask;
+} opt_desc_t;
 
-/* possible values क्रम -o data= */
-अटल स्थिर arg_desc_t logging_mode[] = अणु
-	अणु"ordered", 1 << REISERFS_DATA_ORDERED,
-	 (1 << REISERFS_DATA_LOG | 1 << REISERFS_DATA_WRITEBACK)पूर्ण,
-	अणु"journal", 1 << REISERFS_DATA_LOG,
-	 (1 << REISERFS_DATA_ORDERED | 1 << REISERFS_DATA_WRITEBACK)पूर्ण,
-	अणु"writeback", 1 << REISERFS_DATA_WRITEBACK,
-	 (1 << REISERFS_DATA_ORDERED | 1 << REISERFS_DATA_LOG)पूर्ण,
-	अणु.value = शून्यपूर्ण
-पूर्ण;
+/* possible values for -o data= */
+static const arg_desc_t logging_mode[] = {
+	{"ordered", 1 << REISERFS_DATA_ORDERED,
+	 (1 << REISERFS_DATA_LOG | 1 << REISERFS_DATA_WRITEBACK)},
+	{"journal", 1 << REISERFS_DATA_LOG,
+	 (1 << REISERFS_DATA_ORDERED | 1 << REISERFS_DATA_WRITEBACK)},
+	{"writeback", 1 << REISERFS_DATA_WRITEBACK,
+	 (1 << REISERFS_DATA_ORDERED | 1 << REISERFS_DATA_LOG)},
+	{.value = NULL}
+};
 
-/* possible values क्रम -o barrier= */
-अटल स्थिर arg_desc_t barrier_mode[] = अणु
-	अणु"none", 1 << REISERFS_BARRIER_NONE, 1 << REISERFS_BARRIER_FLUSHपूर्ण,
-	अणु"flush", 1 << REISERFS_BARRIER_FLUSH, 1 << REISERFS_BARRIER_NONEपूर्ण,
-	अणु.value = शून्यपूर्ण
-पूर्ण;
+/* possible values for -o barrier= */
+static const arg_desc_t barrier_mode[] = {
+	{"none", 1 << REISERFS_BARRIER_NONE, 1 << REISERFS_BARRIER_FLUSH},
+	{"flush", 1 << REISERFS_BARRIER_FLUSH, 1 << REISERFS_BARRIER_NONE},
+	{.value = NULL}
+};
 
 /*
- * possible values क्रम "-o block-allocator=" and bits which are to be set in
- * s_mount_opt of reiserfs specअगरic part of in-core super block
+ * possible values for "-o block-allocator=" and bits which are to be set in
+ * s_mount_opt of reiserfs specific part of in-core super block
  */
-अटल स्थिर arg_desc_t balloc[] = अणु
-	अणु"noborder", 1 << REISERFS_NO_BORDER, 0पूर्ण,
-	अणु"border", 0, 1 << REISERFS_NO_BORDERपूर्ण,
-	अणु"no_unhashed_relocation", 1 << REISERFS_NO_UNHASHED_RELOCATION, 0पूर्ण,
-	अणु"hashed_relocation", 1 << REISERFS_HASHED_RELOCATION, 0पूर्ण,
-	अणु"test4", 1 << REISERFS_TEST4, 0पूर्ण,
-	अणु"notest4", 0, 1 << REISERFS_TEST4पूर्ण,
-	अणुशून्य, 0, 0पूर्ण
-पूर्ण;
+static const arg_desc_t balloc[] = {
+	{"noborder", 1 << REISERFS_NO_BORDER, 0},
+	{"border", 0, 1 << REISERFS_NO_BORDER},
+	{"no_unhashed_relocation", 1 << REISERFS_NO_UNHASHED_RELOCATION, 0},
+	{"hashed_relocation", 1 << REISERFS_HASHED_RELOCATION, 0},
+	{"test4", 1 << REISERFS_TEST4, 0},
+	{"notest4", 0, 1 << REISERFS_TEST4},
+	{NULL, 0, 0}
+};
 
-अटल स्थिर arg_desc_t tails[] = अणु
-	अणु"on", 1 << REISERFS_LARGETAIL, 1 << REISERFS_SMALLTAILपूर्ण,
-	अणु"off", 0, (1 << REISERFS_LARGETAIL) | (1 << REISERFS_SMALLTAIL)पूर्ण,
-	अणु"small", 1 << REISERFS_SMALLTAIL, 1 << REISERFS_LARGETAILपूर्ण,
-	अणुशून्य, 0, 0पूर्ण
-पूर्ण;
+static const arg_desc_t tails[] = {
+	{"on", 1 << REISERFS_LARGETAIL, 1 << REISERFS_SMALLTAIL},
+	{"off", 0, (1 << REISERFS_LARGETAIL) | (1 << REISERFS_SMALLTAIL)},
+	{"small", 1 << REISERFS_SMALLTAIL, 1 << REISERFS_LARGETAIL},
+	{NULL, 0, 0}
+};
 
-अटल स्थिर arg_desc_t error_actions[] = अणु
-	अणु"panic", 1 << REISERFS_ERROR_PANIC,
-	 (1 << REISERFS_ERROR_RO | 1 << REISERFS_ERROR_CONTINUE)पूर्ण,
-	अणु"ro-remount", 1 << REISERFS_ERROR_RO,
-	 (1 << REISERFS_ERROR_PANIC | 1 << REISERFS_ERROR_CONTINUE)पूर्ण,
-#अगर_घोषित REISERFS_JOURNAL_ERROR_ALLOWS_NO_LOG
-	अणु"continue", 1 << REISERFS_ERROR_CONTINUE,
-	 (1 << REISERFS_ERROR_PANIC | 1 << REISERFS_ERROR_RO)पूर्ण,
-#पूर्ण_अगर
-	अणुशून्य, 0, 0पूर्ण,
-पूर्ण;
+static const arg_desc_t error_actions[] = {
+	{"panic", 1 << REISERFS_ERROR_PANIC,
+	 (1 << REISERFS_ERROR_RO | 1 << REISERFS_ERROR_CONTINUE)},
+	{"ro-remount", 1 << REISERFS_ERROR_RO,
+	 (1 << REISERFS_ERROR_PANIC | 1 << REISERFS_ERROR_CONTINUE)},
+#ifdef REISERFS_JOURNAL_ERROR_ALLOWS_NO_LOG
+	{"continue", 1 << REISERFS_ERROR_CONTINUE,
+	 (1 << REISERFS_ERROR_PANIC | 1 << REISERFS_ERROR_RO)},
+#endif
+	{NULL, 0, 0},
+};
 
 /*
  * proceed only one option from a list *cur - string containing of mount
  * options
  * opts - array of options which are accepted
- * opt_arg - अगर option is found and requires an argument and अगर it is specअगरed
- * in the input - poपूर्णांकer to the argument is stored here
- * bit_flags - अगर option requires to set a certain bit - it is set here
- * वापस -1 अगर unknown option is found, opt->arg_required otherwise
+ * opt_arg - if option is found and requires an argument and if it is specifed
+ * in the input - pointer to the argument is stored here
+ * bit_flags - if option requires to set a certain bit - it is set here
+ * return -1 if unknown option is found, opt->arg_required otherwise
  */
-अटल पूर्णांक reiserfs_getopt(काष्ठा super_block *s, अक्षर **cur, opt_desc_t * opts,
-			   अक्षर **opt_arg, अचिन्हित दीर्घ *bit_flags)
-अणु
-	अक्षर *p;
+static int reiserfs_getopt(struct super_block *s, char **cur, opt_desc_t * opts,
+			   char **opt_arg, unsigned long *bit_flags)
+{
+	char *p;
 	/*
 	 * foo=bar,
 	 * ^   ^  ^
@@ -988,491 +987,491 @@ out:
 	 * |   +-- arg_start
 	 * +-- option_start
 	 */
-	स्थिर opt_desc_t *opt;
-	स्थिर arg_desc_t *arg;
+	const opt_desc_t *opt;
+	const arg_desc_t *arg;
 
 	p = *cur;
 
 	/* assume argument cannot contain commas */
-	*cur = म_अक्षर(p, ',');
-	अगर (*cur) अणु
+	*cur = strchr(p, ',');
+	if (*cur) {
 		*(*cur) = '\0';
 		(*cur)++;
-	पूर्ण
+	}
 
-	अगर (!म_भेदन(p, "alloc=", 6)) अणु
+	if (!strncmp(p, "alloc=", 6)) {
 		/*
-		 * Ugly special हाल, probably we should reकरो options
-		 * parser so that it can understand several arguments क्रम
+		 * Ugly special case, probably we should redo options
+		 * parser so that it can understand several arguments for
 		 * some options, also so that it can fill several bitfields
 		 * with option values.
 		 */
-		अगर (reiserfs_parse_alloc_options(s, p + 6)) अणु
-			वापस -1;
-		पूर्ण अन्यथा अणु
-			वापस 0;
-		पूर्ण
-	पूर्ण
+		if (reiserfs_parse_alloc_options(s, p + 6)) {
+			return -1;
+		} else {
+			return 0;
+		}
+	}
 
-	/* क्रम every option in the list */
-	क्रम (opt = opts; opt->option_name; opt++) अणु
-		अगर (!म_भेदन(p, opt->option_name, म_माप(opt->option_name))) अणु
-			अगर (bit_flags) अणु
-				अगर (opt->clrmask ==
+	/* for every option in the list */
+	for (opt = opts; opt->option_name; opt++) {
+		if (!strncmp(p, opt->option_name, strlen(opt->option_name))) {
+			if (bit_flags) {
+				if (opt->clrmask ==
 				    (1 << REISERFS_UNSUPPORTED_OPT))
 					reiserfs_warning(s, "super-6500",
 							 "%s not supported.\n",
 							 p);
-				अन्यथा
+				else
 					*bit_flags &= ~opt->clrmask;
-				अगर (opt->seपंचांगask ==
+				if (opt->setmask ==
 				    (1 << REISERFS_UNSUPPORTED_OPT))
 					reiserfs_warning(s, "super-6501",
 							 "%s not supported.\n",
 							 p);
-				अन्यथा
-					*bit_flags |= opt->seपंचांगask;
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (!opt->option_name) अणु
+				else
+					*bit_flags |= opt->setmask;
+			}
+			break;
+		}
+	}
+	if (!opt->option_name) {
 		reiserfs_warning(s, "super-6502",
 				 "unknown mount option \"%s\"", p);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	p += म_माप(opt->option_name);
-	चयन (*p) अणु
-	हाल '=':
-		अगर (!opt->arg_required) अणु
+	p += strlen(opt->option_name);
+	switch (*p) {
+	case '=':
+		if (!opt->arg_required) {
 			reiserfs_warning(s, "super-6503",
 					 "the option \"%s\" does not "
 					 "require an argument\n",
 					 opt->option_name);
-			वापस -1;
-		पूर्ण
-		अवरोध;
+			return -1;
+		}
+		break;
 
-	हाल 0:
-		अगर (opt->arg_required) अणु
+	case 0:
+		if (opt->arg_required) {
 			reiserfs_warning(s, "super-6504",
 					 "the option \"%s\" requires an "
 					 "argument\n", opt->option_name);
-			वापस -1;
-		पूर्ण
-		अवरोध;
-	शेष:
+			return -1;
+		}
+		break;
+	default:
 		reiserfs_warning(s, "super-6505",
 				 "head of option \"%s\" is only correct\n",
 				 opt->option_name);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	/*
-	 * move to the argument, or to next option अगर argument is not
+	 * move to the argument, or to next option if argument is not
 	 * required
 	 */
 	p++;
 
-	अगर (opt->arg_required
+	if (opt->arg_required
 	    && !(opt->arg_required & (1 << REISERFS_OPT_ALLOWEMPTY))
-	    && !म_माप(p)) अणु
-		/* this catches "option=," अगर not allowed */
+	    && !strlen(p)) {
+		/* this catches "option=," if not allowed */
 		reiserfs_warning(s, "super-6506",
 				 "empty argument for \"%s\"\n",
 				 opt->option_name);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (!opt->values) अणु
-		/* *=शून्यopt_arg contains poपूर्णांकer to argument */
+	if (!opt->values) {
+		/* *=NULLopt_arg contains pointer to argument */
 		*opt_arg = p;
-		वापस opt->arg_required & ~(1 << REISERFS_OPT_ALLOWEMPTY);
-	पूर्ण
+		return opt->arg_required & ~(1 << REISERFS_OPT_ALLOWEMPTY);
+	}
 
-	/* values possible क्रम this option are listed in opt->values */
-	क्रम (arg = opt->values; arg->value; arg++) अणु
-		अगर (!म_भेद(p, arg->value)) अणु
-			अगर (bit_flags) अणु
+	/* values possible for this option are listed in opt->values */
+	for (arg = opt->values; arg->value; arg++) {
+		if (!strcmp(p, arg->value)) {
+			if (bit_flags) {
 				*bit_flags &= ~arg->clrmask;
-				*bit_flags |= arg->seपंचांगask;
-			पूर्ण
-			वापस opt->arg_required;
-		पूर्ण
-	पूर्ण
+				*bit_flags |= arg->setmask;
+			}
+			return opt->arg_required;
+		}
+	}
 
 	reiserfs_warning(s, "super-6506",
 			 "bad value \"%s\" for option \"%s\"\n", p,
 			 opt->option_name);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-/* वापसs 0 अगर something is wrong in option string, 1 - otherwise */
-अटल पूर्णांक reiserfs_parse_options(काष्ठा super_block *s,
+/* returns 0 if something is wrong in option string, 1 - otherwise */
+static int reiserfs_parse_options(struct super_block *s,
 
 				  /* string given via mount's -o */
-				  अक्षर *options,
+				  char *options,
 
 				  /*
 				   * after the parsing phase, contains the
 				   * collection of bitflags defining what
 				   * mount options were selected.
 				   */
-				  अचिन्हित दीर्घ *mount_options,
+				  unsigned long *mount_options,
 
-				  /* म_से_दीर्घ-ed from NNN of resize=NNN */
-				  अचिन्हित दीर्घ *blocks,
-				  अक्षर **jdev_name,
-				  अचिन्हित पूर्णांक *commit_max_age,
-				  अक्षर **qf_names,
-				  अचिन्हित पूर्णांक *qfmt)
-अणु
-	पूर्णांक c;
-	अक्षर *arg = शून्य;
-	अक्षर *pos;
-	opt_desc_t opts[] = अणु
+				  /* strtol-ed from NNN of resize=NNN */
+				  unsigned long *blocks,
+				  char **jdev_name,
+				  unsigned int *commit_max_age,
+				  char **qf_names,
+				  unsigned int *qfmt)
+{
+	int c;
+	char *arg = NULL;
+	char *pos;
+	opt_desc_t opts[] = {
 		/*
-		 * Compatibility stuff, so that -o notail क्रम old
+		 * Compatibility stuff, so that -o notail for old
 		 * setups still work
 		 */
-		अणु"tails",.arg_required = 't',.values = tailsपूर्ण,
-		अणु"notail",.clrmask =
-		 (1 << REISERFS_LARGETAIL) | (1 << REISERFS_SMALLTAIL)पूर्ण,
-		अणु"conv",.seपंचांगask = 1 << REISERFS_CONVERTपूर्ण,
-		अणु"attrs",.seपंचांगask = 1 << REISERFS_ATTRSपूर्ण,
-		अणु"noattrs",.clrmask = 1 << REISERFS_ATTRSपूर्ण,
-		अणु"expose_privroot", .seपंचांगask = 1 << REISERFS_EXPOSE_PRIVROOTपूर्ण,
-#अगर_घोषित CONFIG_REISERFS_FS_XATTR
-		अणु"user_xattr",.seपंचांगask = 1 << REISERFS_XATTRS_USERपूर्ण,
-		अणु"nouser_xattr",.clrmask = 1 << REISERFS_XATTRS_USERपूर्ण,
-#अन्यथा
-		अणु"user_xattr",.seपंचांगask = 1 << REISERFS_UNSUPPORTED_OPTपूर्ण,
-		अणु"nouser_xattr",.clrmask = 1 << REISERFS_UNSUPPORTED_OPTपूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_REISERFS_FS_POSIX_ACL
-		अणु"acl",.seपंचांगask = 1 << REISERFS_POSIXACLपूर्ण,
-		अणु"noacl",.clrmask = 1 << REISERFS_POSIXACLपूर्ण,
-#अन्यथा
-		अणु"acl",.seपंचांगask = 1 << REISERFS_UNSUPPORTED_OPTपूर्ण,
-		अणु"noacl",.clrmask = 1 << REISERFS_UNSUPPORTED_OPTपूर्ण,
-#पूर्ण_अगर
-		अणु.option_name = "nolog"पूर्ण,
-		अणु"replayonly",.seपंचांगask = 1 << REPLAYONLYपूर्ण,
-		अणु"block-allocator",.arg_required = 'a',.values = ballocपूर्ण,
-		अणु"data",.arg_required = 'd',.values = logging_modeपूर्ण,
-		अणु"barrier",.arg_required = 'b',.values = barrier_modeपूर्ण,
-		अणु"resize",.arg_required = 'r',.values = शून्यपूर्ण,
-		अणु"jdev",.arg_required = 'j',.values = शून्यपूर्ण,
-		अणु"nolargeio",.arg_required = 'w',.values = शून्यपूर्ण,
-		अणु"commit",.arg_required = 'c',.values = शून्यपूर्ण,
-		अणु"usrquota",.seपंचांगask = 1 << REISERFS_USRQUOTAपूर्ण,
-		अणु"grpquota",.seपंचांगask = 1 << REISERFS_GRPQUOTAपूर्ण,
-		अणु"noquota",.clrmask = 1 << REISERFS_USRQUOTA | 1 << REISERFS_GRPQUOTAपूर्ण,
-		अणु"errors",.arg_required = 'e',.values = error_actionsपूर्ण,
-		अणु"usrjquota",.arg_required =
-		 'u' | (1 << REISERFS_OPT_ALLOWEMPTY),.values = शून्यपूर्ण,
-		अणु"grpjquota",.arg_required =
-		 'g' | (1 << REISERFS_OPT_ALLOWEMPTY),.values = शून्यपूर्ण,
-		अणु"jqfmt",.arg_required = 'f',.values = शून्यपूर्ण,
-		अणु.option_name = शून्यपूर्ण
-	पूर्ण;
+		{"tails",.arg_required = 't',.values = tails},
+		{"notail",.clrmask =
+		 (1 << REISERFS_LARGETAIL) | (1 << REISERFS_SMALLTAIL)},
+		{"conv",.setmask = 1 << REISERFS_CONVERT},
+		{"attrs",.setmask = 1 << REISERFS_ATTRS},
+		{"noattrs",.clrmask = 1 << REISERFS_ATTRS},
+		{"expose_privroot", .setmask = 1 << REISERFS_EXPOSE_PRIVROOT},
+#ifdef CONFIG_REISERFS_FS_XATTR
+		{"user_xattr",.setmask = 1 << REISERFS_XATTRS_USER},
+		{"nouser_xattr",.clrmask = 1 << REISERFS_XATTRS_USER},
+#else
+		{"user_xattr",.setmask = 1 << REISERFS_UNSUPPORTED_OPT},
+		{"nouser_xattr",.clrmask = 1 << REISERFS_UNSUPPORTED_OPT},
+#endif
+#ifdef CONFIG_REISERFS_FS_POSIX_ACL
+		{"acl",.setmask = 1 << REISERFS_POSIXACL},
+		{"noacl",.clrmask = 1 << REISERFS_POSIXACL},
+#else
+		{"acl",.setmask = 1 << REISERFS_UNSUPPORTED_OPT},
+		{"noacl",.clrmask = 1 << REISERFS_UNSUPPORTED_OPT},
+#endif
+		{.option_name = "nolog"},
+		{"replayonly",.setmask = 1 << REPLAYONLY},
+		{"block-allocator",.arg_required = 'a',.values = balloc},
+		{"data",.arg_required = 'd',.values = logging_mode},
+		{"barrier",.arg_required = 'b',.values = barrier_mode},
+		{"resize",.arg_required = 'r',.values = NULL},
+		{"jdev",.arg_required = 'j',.values = NULL},
+		{"nolargeio",.arg_required = 'w',.values = NULL},
+		{"commit",.arg_required = 'c',.values = NULL},
+		{"usrquota",.setmask = 1 << REISERFS_USRQUOTA},
+		{"grpquota",.setmask = 1 << REISERFS_GRPQUOTA},
+		{"noquota",.clrmask = 1 << REISERFS_USRQUOTA | 1 << REISERFS_GRPQUOTA},
+		{"errors",.arg_required = 'e',.values = error_actions},
+		{"usrjquota",.arg_required =
+		 'u' | (1 << REISERFS_OPT_ALLOWEMPTY),.values = NULL},
+		{"grpjquota",.arg_required =
+		 'g' | (1 << REISERFS_OPT_ALLOWEMPTY),.values = NULL},
+		{"jqfmt",.arg_required = 'f',.values = NULL},
+		{.option_name = NULL}
+	};
 
 	*blocks = 0;
-	अगर (!options || !*options)
+	if (!options || !*options)
 		/*
-		 * use शेष configuration: create tails, journaling on, no
-		 * conversion to newest क्रमmat
+		 * use default configuration: create tails, journaling on, no
+		 * conversion to newest format
 		 */
-		वापस 1;
+		return 1;
 
-	क्रम (pos = options; pos;) अणु
+	for (pos = options; pos;) {
 		c = reiserfs_getopt(s, &pos, opts, &arg, mount_options);
-		अगर (c == -1)
+		if (c == -1)
 			/* wrong option is given */
-			वापस 0;
+			return 0;
 
-		अगर (c == 'r') अणु
-			अक्षर *p;
+		if (c == 'r') {
+			char *p;
 
-			p = शून्य;
+			p = NULL;
 			/* "resize=NNN" or "resize=auto" */
 
-			अगर (!म_भेद(arg, "auto")) अणु
-				/* From JFS code, to स्वतः-get the size. */
+			if (!strcmp(arg, "auto")) {
+				/* From JFS code, to auto-get the size. */
 				*blocks =
-				    i_size_पढ़ो(s->s_bdev->bd_inode) >> s->
+				    i_size_read(s->s_bdev->bd_inode) >> s->
 				    s_blocksize_bits;
-			पूर्ण अन्यथा अणु
-				*blocks = simple_म_से_अदीर्घ(arg, &p, 0);
-				अगर (*p != '\0') अणु
-					/* NNN करोes not look like a number */
+			} else {
+				*blocks = simple_strtoul(arg, &p, 0);
+				if (*p != '\0') {
+					/* NNN does not look like a number */
 					reiserfs_warning(s, "super-6507",
 							 "bad value %s for "
 							 "-oresize\n", arg);
-					वापस 0;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+					return 0;
+				}
+			}
+		}
 
-		अगर (c == 'c') अणु
-			अक्षर *p = शून्य;
-			अचिन्हित दीर्घ val = simple_म_से_अदीर्घ(arg, &p, 0);
-			/* commit=NNN (समय in seconds) */
-			अगर (*p != '\0' || val >= (अचिन्हित पूर्णांक)-1) अणु
+		if (c == 'c') {
+			char *p = NULL;
+			unsigned long val = simple_strtoul(arg, &p, 0);
+			/* commit=NNN (time in seconds) */
+			if (*p != '\0' || val >= (unsigned int)-1) {
 				reiserfs_warning(s, "super-6508",
 						 "bad value %s for -ocommit\n",
 						 arg);
-				वापस 0;
-			पूर्ण
-			*commit_max_age = (अचिन्हित पूर्णांक)val;
-		पूर्ण
+				return 0;
+			}
+			*commit_max_age = (unsigned int)val;
+		}
 
-		अगर (c == 'w') अणु
+		if (c == 'w') {
 			reiserfs_warning(s, "super-6509", "nolargeio option "
 					 "is no longer supported");
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		अगर (c == 'j') अणु
-			अगर (arg && *arg && jdev_name) अणु
-				/* Hm, alपढ़ोy asचिन्हित? */
-				अगर (*jdev_name) अणु
+		if (c == 'j') {
+			if (arg && *arg && jdev_name) {
+				/* Hm, already assigned? */
+				if (*jdev_name) {
 					reiserfs_warning(s, "super-6510",
 							 "journal device was "
 							 "already specified to "
 							 "be %s", *jdev_name);
-					वापस 0;
-				पूर्ण
+					return 0;
+				}
 				*jdev_name = arg;
-			पूर्ण
-		पूर्ण
-#अगर_घोषित CONFIG_QUOTA
-		अगर (c == 'u' || c == 'g') अणु
-			पूर्णांक qtype = c == 'u' ? USRQUOTA : GRPQUOTA;
+			}
+		}
+#ifdef CONFIG_QUOTA
+		if (c == 'u' || c == 'g') {
+			int qtype = c == 'u' ? USRQUOTA : GRPQUOTA;
 
-			अगर (sb_any_quota_loaded(s) &&
-			    (!*arg != !REISERFS_SB(s)->s_qf_names[qtype])) अणु
+			if (sb_any_quota_loaded(s) &&
+			    (!*arg != !REISERFS_SB(s)->s_qf_names[qtype])) {
 				reiserfs_warning(s, "super-6511",
 						 "cannot change journaled "
 						 "quota options when quota "
 						 "turned on.");
-				वापस 0;
-			पूर्ण
-			अगर (qf_names[qtype] !=
+				return 0;
+			}
+			if (qf_names[qtype] !=
 			    REISERFS_SB(s)->s_qf_names[qtype])
-				kमुक्त(qf_names[qtype]);
-			qf_names[qtype] = शून्य;
-			अगर (*arg) अणु	/* Some filename specअगरied? */
-				अगर (REISERFS_SB(s)->s_qf_names[qtype]
-				    && म_भेद(REISERFS_SB(s)->s_qf_names[qtype],
-					      arg)) अणु
+				kfree(qf_names[qtype]);
+			qf_names[qtype] = NULL;
+			if (*arg) {	/* Some filename specified? */
+				if (REISERFS_SB(s)->s_qf_names[qtype]
+				    && strcmp(REISERFS_SB(s)->s_qf_names[qtype],
+					      arg)) {
 					reiserfs_warning(s, "super-6512",
 							 "%s quota file "
 							 "already specified.",
 							 QTYPE2NAME(qtype));
-					वापस 0;
-				पूर्ण
-				अगर (म_अक्षर(arg, '/')) अणु
+					return 0;
+				}
+				if (strchr(arg, '/')) {
 					reiserfs_warning(s, "super-6513",
 							 "quotafile must be "
 							 "on filesystem root.");
-					वापस 0;
-				पूर्ण
+					return 0;
+				}
 				qf_names[qtype] = kstrdup(arg, GFP_KERNEL);
-				अगर (!qf_names[qtype]) अणु
+				if (!qf_names[qtype]) {
 					reiserfs_warning(s, "reiserfs-2502",
 							 "not enough memory "
 							 "for storing "
 							 "quotafile name.");
-					वापस 0;
-				पूर्ण
-				अगर (qtype == USRQUOTA)
+					return 0;
+				}
+				if (qtype == USRQUOTA)
 					*mount_options |= 1 << REISERFS_USRQUOTA;
-				अन्यथा
+				else
 					*mount_options |= 1 << REISERFS_GRPQUOTA;
-			पूर्ण अन्यथा अणु
-				अगर (qtype == USRQUOTA)
+			} else {
+				if (qtype == USRQUOTA)
 					*mount_options &= ~(1 << REISERFS_USRQUOTA);
-				अन्यथा
+				else
 					*mount_options &= ~(1 << REISERFS_GRPQUOTA);
-			पूर्ण
-		पूर्ण
-		अगर (c == 'f') अणु
-			अगर (!म_भेद(arg, "vfsold"))
+			}
+		}
+		if (c == 'f') {
+			if (!strcmp(arg, "vfsold"))
 				*qfmt = QFMT_VFS_OLD;
-			अन्यथा अगर (!म_भेद(arg, "vfsv0"))
+			else if (!strcmp(arg, "vfsv0"))
 				*qfmt = QFMT_VFS_V0;
-			अन्यथा अणु
+			else {
 				reiserfs_warning(s, "super-6514",
 						 "unknown quota format "
 						 "specified.");
-				वापस 0;
-			पूर्ण
-			अगर (sb_any_quota_loaded(s) &&
-			    *qfmt != REISERFS_SB(s)->s_jquota_fmt) अणु
+				return 0;
+			}
+			if (sb_any_quota_loaded(s) &&
+			    *qfmt != REISERFS_SB(s)->s_jquota_fmt) {
 				reiserfs_warning(s, "super-6515",
 						 "cannot change journaled "
 						 "quota options when quota "
 						 "turned on.");
-				वापस 0;
-			पूर्ण
-		पूर्ण
-#अन्यथा
-		अगर (c == 'u' || c == 'g' || c == 'f') अणु
+				return 0;
+			}
+		}
+#else
+		if (c == 'u' || c == 'g' || c == 'f') {
 			reiserfs_warning(s, "reiserfs-2503", "journaled "
 					 "quota options not supported.");
-			वापस 0;
-		पूर्ण
-#पूर्ण_अगर
-	पूर्ण
+			return 0;
+		}
+#endif
+	}
 
-#अगर_घोषित CONFIG_QUOTA
-	अगर (!REISERFS_SB(s)->s_jquota_fmt && !*qfmt
-	    && (qf_names[USRQUOTA] || qf_names[GRPQUOTA])) अणु
+#ifdef CONFIG_QUOTA
+	if (!REISERFS_SB(s)->s_jquota_fmt && !*qfmt
+	    && (qf_names[USRQUOTA] || qf_names[GRPQUOTA])) {
 		reiserfs_warning(s, "super-6515",
 				 "journaled quota format not specified.");
-		वापस 0;
-	पूर्ण
-	अगर ((!(*mount_options & (1 << REISERFS_USRQUOTA)) &&
+		return 0;
+	}
+	if ((!(*mount_options & (1 << REISERFS_USRQUOTA)) &&
 	       sb_has_quota_loaded(s, USRQUOTA)) ||
 	    (!(*mount_options & (1 << REISERFS_GRPQUOTA)) &&
-	       sb_has_quota_loaded(s, GRPQUOTA))) अणु
+	       sb_has_quota_loaded(s, GRPQUOTA))) {
 		reiserfs_warning(s, "super-6516", "quota options must "
 				 "be present when quota is turned on.");
-		वापस 0;
-	पूर्ण
-#पूर्ण_अगर
+		return 0;
+	}
+#endif
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम चयन_data_mode(काष्ठा super_block *s, अचिन्हित दीर्घ mode)
-अणु
+static void switch_data_mode(struct super_block *s, unsigned long mode)
+{
 	REISERFS_SB(s)->s_mount_opt &= ~((1 << REISERFS_DATA_LOG) |
 					 (1 << REISERFS_DATA_ORDERED) |
 					 (1 << REISERFS_DATA_WRITEBACK));
 	REISERFS_SB(s)->s_mount_opt |= (1 << mode);
-पूर्ण
+}
 
-अटल व्योम handle_data_mode(काष्ठा super_block *s, अचिन्हित दीर्घ mount_options)
-अणु
-	अगर (mount_options & (1 << REISERFS_DATA_LOG)) अणु
-		अगर (!reiserfs_data_log(s)) अणु
-			चयन_data_mode(s, REISERFS_DATA_LOG);
+static void handle_data_mode(struct super_block *s, unsigned long mount_options)
+{
+	if (mount_options & (1 << REISERFS_DATA_LOG)) {
+		if (!reiserfs_data_log(s)) {
+			switch_data_mode(s, REISERFS_DATA_LOG);
 			reiserfs_info(s, "switching to journaled data mode\n");
-		पूर्ण
-	पूर्ण अन्यथा अगर (mount_options & (1 << REISERFS_DATA_ORDERED)) अणु
-		अगर (!reiserfs_data_ordered(s)) अणु
-			चयन_data_mode(s, REISERFS_DATA_ORDERED);
+		}
+	} else if (mount_options & (1 << REISERFS_DATA_ORDERED)) {
+		if (!reiserfs_data_ordered(s)) {
+			switch_data_mode(s, REISERFS_DATA_ORDERED);
 			reiserfs_info(s, "switching to ordered data mode\n");
-		पूर्ण
-	पूर्ण अन्यथा अगर (mount_options & (1 << REISERFS_DATA_WRITEBACK)) अणु
-		अगर (!reiserfs_data_ग_लिखोback(s)) अणु
-			चयन_data_mode(s, REISERFS_DATA_WRITEBACK);
+		}
+	} else if (mount_options & (1 << REISERFS_DATA_WRITEBACK)) {
+		if (!reiserfs_data_writeback(s)) {
+			switch_data_mode(s, REISERFS_DATA_WRITEBACK);
 			reiserfs_info(s, "switching to writeback data mode\n");
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम handle_barrier_mode(काष्ठा super_block *s, अचिन्हित दीर्घ bits)
-अणु
-	पूर्णांक flush = (1 << REISERFS_BARRIER_FLUSH);
-	पूर्णांक none = (1 << REISERFS_BARRIER_NONE);
-	पूर्णांक all_barrier = flush | none;
+static void handle_barrier_mode(struct super_block *s, unsigned long bits)
+{
+	int flush = (1 << REISERFS_BARRIER_FLUSH);
+	int none = (1 << REISERFS_BARRIER_NONE);
+	int all_barrier = flush | none;
 
-	अगर (bits & all_barrier) अणु
+	if (bits & all_barrier) {
 		REISERFS_SB(s)->s_mount_opt &= ~all_barrier;
-		अगर (bits & flush) अणु
+		if (bits & flush) {
 			REISERFS_SB(s)->s_mount_opt |= flush;
-			prपूर्णांकk("reiserfs: enabling write barrier flush mode\n");
-		पूर्ण अन्यथा अगर (bits & none) अणु
+			printk("reiserfs: enabling write barrier flush mode\n");
+		} else if (bits & none) {
 			REISERFS_SB(s)->s_mount_opt |= none;
-			prपूर्णांकk("reiserfs: write barriers turned off\n");
-		पूर्ण
-	पूर्ण
-पूर्ण
+			printk("reiserfs: write barriers turned off\n");
+		}
+	}
+}
 
-अटल व्योम handle_attrs(काष्ठा super_block *s)
-अणु
-	काष्ठा reiserfs_super_block *rs = SB_DISK_SUPER_BLOCK(s);
+static void handle_attrs(struct super_block *s)
+{
+	struct reiserfs_super_block *rs = SB_DISK_SUPER_BLOCK(s);
 
-	अगर (reiserfs_attrs(s)) अणु
-		अगर (old_क्रमmat_only(s)) अणु
+	if (reiserfs_attrs(s)) {
+		if (old_format_only(s)) {
 			reiserfs_warning(s, "super-6517", "cannot support "
 					 "attributes on 3.5.x disk format");
 			REISERFS_SB(s)->s_mount_opt &= ~(1 << REISERFS_ATTRS);
-			वापस;
-		पूर्ण
-		अगर (!(le32_to_cpu(rs->s_flags) & reiserfs_attrs_cleared)) अणु
+			return;
+		}
+		if (!(le32_to_cpu(rs->s_flags) & reiserfs_attrs_cleared)) {
 			reiserfs_warning(s, "super-6518", "cannot support "
 					 "attributes until flag is set in "
 					 "super-block");
 			REISERFS_SB(s)->s_mount_opt &= ~(1 << REISERFS_ATTRS);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-#अगर_घोषित CONFIG_QUOTA
-अटल व्योम handle_quota_files(काष्ठा super_block *s, अक्षर **qf_names,
-			       अचिन्हित पूर्णांक *qfmt)
-अणु
-	पूर्णांक i;
+#ifdef CONFIG_QUOTA
+static void handle_quota_files(struct super_block *s, char **qf_names,
+			       unsigned int *qfmt)
+{
+	int i;
 
-	क्रम (i = 0; i < REISERFS_MAXQUOTAS; i++) अणु
-		अगर (qf_names[i] != REISERFS_SB(s)->s_qf_names[i])
-			kमुक्त(REISERFS_SB(s)->s_qf_names[i]);
+	for (i = 0; i < REISERFS_MAXQUOTAS; i++) {
+		if (qf_names[i] != REISERFS_SB(s)->s_qf_names[i])
+			kfree(REISERFS_SB(s)->s_qf_names[i]);
 		REISERFS_SB(s)->s_qf_names[i] = qf_names[i];
-	पूर्ण
-	अगर (*qfmt)
+	}
+	if (*qfmt)
 		REISERFS_SB(s)->s_jquota_fmt = *qfmt;
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल पूर्णांक reiserfs_remount(काष्ठा super_block *s, पूर्णांक *mount_flags, अक्षर *arg)
-अणु
-	काष्ठा reiserfs_super_block *rs;
-	काष्ठा reiserfs_transaction_handle th;
-	अचिन्हित दीर्घ blocks;
-	अचिन्हित दीर्घ mount_options = REISERFS_SB(s)->s_mount_opt;
-	अचिन्हित दीर्घ safe_mask = 0;
-	अचिन्हित पूर्णांक commit_max_age = (अचिन्हित पूर्णांक)-1;
-	काष्ठा reiserfs_journal *journal = SB_JOURNAL(s);
-	अक्षर *new_opts;
-	पूर्णांक err;
-	अक्षर *qf_names[REISERFS_MAXQUOTAS];
-	अचिन्हित पूर्णांक qfmt = 0;
-#अगर_घोषित CONFIG_QUOTA
-	पूर्णांक i;
-#पूर्ण_अगर
+static int reiserfs_remount(struct super_block *s, int *mount_flags, char *arg)
+{
+	struct reiserfs_super_block *rs;
+	struct reiserfs_transaction_handle th;
+	unsigned long blocks;
+	unsigned long mount_options = REISERFS_SB(s)->s_mount_opt;
+	unsigned long safe_mask = 0;
+	unsigned int commit_max_age = (unsigned int)-1;
+	struct reiserfs_journal *journal = SB_JOURNAL(s);
+	char *new_opts;
+	int err;
+	char *qf_names[REISERFS_MAXQUOTAS];
+	unsigned int qfmt = 0;
+#ifdef CONFIG_QUOTA
+	int i;
+#endif
 
 	new_opts = kstrdup(arg, GFP_KERNEL);
-	अगर (arg && !new_opts)
-		वापस -ENOMEM;
+	if (arg && !new_opts)
+		return -ENOMEM;
 
-	sync_fileप्रणाली(s);
-	reiserfs_ग_लिखो_lock(s);
+	sync_filesystem(s);
+	reiserfs_write_lock(s);
 
-#अगर_घोषित CONFIG_QUOTA
-	स_नकल(qf_names, REISERFS_SB(s)->s_qf_names, माप(qf_names));
-#पूर्ण_अगर
+#ifdef CONFIG_QUOTA
+	memcpy(qf_names, REISERFS_SB(s)->s_qf_names, sizeof(qf_names));
+#endif
 
 	rs = SB_DISK_SUPER_BLOCK(s);
 
-	अगर (!reiserfs_parse_options
-	    (s, arg, &mount_options, &blocks, शून्य, &commit_max_age,
-	    qf_names, &qfmt)) अणु
-#अगर_घोषित CONFIG_QUOTA
-		क्रम (i = 0; i < REISERFS_MAXQUOTAS; i++)
-			अगर (qf_names[i] != REISERFS_SB(s)->s_qf_names[i])
-				kमुक्त(qf_names[i]);
-#पूर्ण_अगर
+	if (!reiserfs_parse_options
+	    (s, arg, &mount_options, &blocks, NULL, &commit_max_age,
+	    qf_names, &qfmt)) {
+#ifdef CONFIG_QUOTA
+		for (i = 0; i < REISERFS_MAXQUOTAS; i++)
+			if (qf_names[i] != REISERFS_SB(s)->s_qf_names[i])
+				kfree(qf_names[i]);
+#endif
 		err = -EINVAL;
-		जाओ out_err_unlock;
-	पूर्ण
-#अगर_घोषित CONFIG_QUOTA
+		goto out_err_unlock;
+	}
+#ifdef CONFIG_QUOTA
 	handle_quota_files(s, qf_names, &qfmt);
-#पूर्ण_अगर
+#endif
 
 	handle_attrs(s);
 
@@ -1495,68 +1494,68 @@ out:
 	safe_mask |= 1 << REISERFS_GRPQUOTA;
 
 	/*
-	 * Update the biपंचांगask, taking care to keep
+	 * Update the bitmask, taking care to keep
 	 * the bits we're not allowed to change here
 	 */
 	REISERFS_SB(s)->s_mount_opt =
 	    (REISERFS_SB(s)->
 	     s_mount_opt & ~safe_mask) | (mount_options & safe_mask);
 
-	अगर (commit_max_age != 0 && commit_max_age != (अचिन्हित पूर्णांक)-1) अणु
+	if (commit_max_age != 0 && commit_max_age != (unsigned int)-1) {
 		journal->j_max_commit_age = commit_max_age;
 		journal->j_max_trans_age = commit_max_age;
-	पूर्ण अन्यथा अगर (commit_max_age == 0) अणु
-		/* 0 means restore शेषs. */
-		journal->j_max_commit_age = journal->j_शेष_max_commit_age;
+	} else if (commit_max_age == 0) {
+		/* 0 means restore defaults. */
+		journal->j_max_commit_age = journal->j_default_max_commit_age;
 		journal->j_max_trans_age = JOURNAL_MAX_TRANS_AGE;
-	पूर्ण
+	}
 
-	अगर (blocks) अणु
+	if (blocks) {
 		err = reiserfs_resize(s, blocks);
-		अगर (err != 0)
-			जाओ out_err_unlock;
-	पूर्ण
+		if (err != 0)
+			goto out_err_unlock;
+	}
 
-	अगर (*mount_flags & SB_RDONLY) अणु
-		reiserfs_ग_लिखो_unlock(s);
+	if (*mount_flags & SB_RDONLY) {
+		reiserfs_write_unlock(s);
 		reiserfs_xattr_init(s, *mount_flags);
-		/* remount पढ़ो-only */
-		अगर (sb_rकरोnly(s))
-			/* it is पढ़ो-only alपढ़ोy */
-			जाओ out_ok_unlocked;
+		/* remount read-only */
+		if (sb_rdonly(s))
+			/* it is read-only already */
+			goto out_ok_unlocked;
 
 		err = dquot_suspend(s, -1);
-		अगर (err < 0)
-			जाओ out_err;
+		if (err < 0)
+			goto out_err;
 
-		/* try to remount file प्रणाली with पढ़ो-only permissions */
-		अगर (sb_umount_state(rs) == REISERFS_VALID_FS
-		    || REISERFS_SB(s)->s_mount_state != REISERFS_VALID_FS) अणु
-			जाओ out_ok_unlocked;
-		पूर्ण
+		/* try to remount file system with read-only permissions */
+		if (sb_umount_state(rs) == REISERFS_VALID_FS
+		    || REISERFS_SB(s)->s_mount_state != REISERFS_VALID_FS) {
+			goto out_ok_unlocked;
+		}
 
-		reiserfs_ग_लिखो_lock(s);
+		reiserfs_write_lock(s);
 
 		err = journal_begin(&th, s, 10);
-		अगर (err)
-			जाओ out_err_unlock;
+		if (err)
+			goto out_err_unlock;
 
-		/* Mounting a rw partition पढ़ो-only. */
-		reiserfs_prepare_क्रम_journal(s, SB_BUFFER_WITH_SB(s), 1);
+		/* Mounting a rw partition read-only. */
+		reiserfs_prepare_for_journal(s, SB_BUFFER_WITH_SB(s), 1);
 		set_sb_umount_state(rs, REISERFS_SB(s)->s_mount_state);
 		journal_mark_dirty(&th, SB_BUFFER_WITH_SB(s));
-	पूर्ण अन्यथा अणु
-		/* remount पढ़ो-ग_लिखो */
-		अगर (!sb_rकरोnly(s)) अणु
-			reiserfs_ग_लिखो_unlock(s);
+	} else {
+		/* remount read-write */
+		if (!sb_rdonly(s)) {
+			reiserfs_write_unlock(s);
 			reiserfs_xattr_init(s, *mount_flags);
-			जाओ out_ok_unlocked;	/* We are पढ़ो-ग_लिखो alपढ़ोy */
-		पूर्ण
+			goto out_ok_unlocked;	/* We are read-write already */
+		}
 
-		अगर (reiserfs_is_journal_पातed(journal)) अणु
-			err = journal->j_त्रुटि_सं;
-			जाओ out_err_unlock;
-		पूर्ण
+		if (reiserfs_is_journal_aborted(journal)) {
+			err = journal->j_errno;
+			goto out_err_unlock;
+		}
 
 		handle_data_mode(s, mount_options);
 		handle_barrier_mode(s, mount_options);
@@ -1565,126 +1564,126 @@ out:
 		/* now it is safe to call journal_begin */
 		s->s_flags &= ~SB_RDONLY;
 		err = journal_begin(&th, s, 10);
-		अगर (err)
-			जाओ out_err_unlock;
+		if (err)
+			goto out_err_unlock;
 
-		/* Mount a partition which is पढ़ो-only, पढ़ो-ग_लिखो */
-		reiserfs_prepare_क्रम_journal(s, SB_BUFFER_WITH_SB(s), 1);
+		/* Mount a partition which is read-only, read-write */
+		reiserfs_prepare_for_journal(s, SB_BUFFER_WITH_SB(s), 1);
 		REISERFS_SB(s)->s_mount_state = sb_umount_state(rs);
 		s->s_flags &= ~SB_RDONLY;
 		set_sb_umount_state(rs, REISERFS_ERROR_FS);
-		अगर (!old_क्रमmat_only(s))
+		if (!old_format_only(s))
 			set_sb_mnt_count(rs, sb_mnt_count(rs) + 1);
 		/* mark_buffer_dirty (SB_BUFFER_WITH_SB (s), 1); */
 		journal_mark_dirty(&th, SB_BUFFER_WITH_SB(s));
 		REISERFS_SB(s)->s_mount_state = REISERFS_VALID_FS;
-	पूर्ण
-	/* this will क्रमce a full flush of all journal lists */
-	SB_JOURNAL(s)->j_must_रुको = 1;
+	}
+	/* this will force a full flush of all journal lists */
+	SB_JOURNAL(s)->j_must_wait = 1;
 	err = journal_end(&th);
-	अगर (err)
-		जाओ out_err_unlock;
+	if (err)
+		goto out_err_unlock;
 
-	reiserfs_ग_लिखो_unlock(s);
-	अगर (!(*mount_flags & SB_RDONLY)) अणु
+	reiserfs_write_unlock(s);
+	if (!(*mount_flags & SB_RDONLY)) {
 		dquot_resume(s, -1);
-		reiserfs_ग_लिखो_lock(s);
+		reiserfs_write_lock(s);
 		finish_unfinished(s);
-		reiserfs_ग_लिखो_unlock(s);
+		reiserfs_write_unlock(s);
 		reiserfs_xattr_init(s, *mount_flags);
-	पूर्ण
+	}
 
 out_ok_unlocked:
-	वापस 0;
+	return 0;
 
 out_err_unlock:
-	reiserfs_ग_लिखो_unlock(s);
+	reiserfs_write_unlock(s);
 out_err:
-	kमुक्त(new_opts);
-	वापस err;
-पूर्ण
+	kfree(new_opts);
+	return err;
+}
 
-अटल पूर्णांक पढ़ो_super_block(काष्ठा super_block *s, पूर्णांक offset)
-अणु
-	काष्ठा buffer_head *bh;
-	काष्ठा reiserfs_super_block *rs;
-	पूर्णांक fs_blocksize;
+static int read_super_block(struct super_block *s, int offset)
+{
+	struct buffer_head *bh;
+	struct reiserfs_super_block *rs;
+	int fs_blocksize;
 
-	bh = sb_bपढ़ो(s, offset / s->s_blocksize);
-	अगर (!bh) अणु
+	bh = sb_bread(s, offset / s->s_blocksize);
+	if (!bh) {
 		reiserfs_warning(s, "sh-2006",
 				 "bread failed (dev %s, block %lu, size %lu)",
 				 s->s_id, offset / s->s_blocksize,
 				 s->s_blocksize);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	rs = (काष्ठा reiserfs_super_block *)bh->b_data;
-	अगर (!is_any_reiserfs_magic_string(rs)) अणु
-		brअन्यथा(bh);
-		वापस 1;
-	पूर्ण
+	rs = (struct reiserfs_super_block *)bh->b_data;
+	if (!is_any_reiserfs_magic_string(rs)) {
+		brelse(bh);
+		return 1;
+	}
 	/*
 	 * ok, reiserfs signature (old or new) found in at the given offset
 	 */
 	fs_blocksize = sb_blocksize(rs);
-	brअन्यथा(bh);
+	brelse(bh);
 	sb_set_blocksize(s, fs_blocksize);
 
-	bh = sb_bपढ़ो(s, offset / s->s_blocksize);
-	अगर (!bh) अणु
+	bh = sb_bread(s, offset / s->s_blocksize);
+	if (!bh) {
 		reiserfs_warning(s, "sh-2007",
 				 "bread failed (dev %s, block %lu, size %lu)",
 				 s->s_id, offset / s->s_blocksize,
 				 s->s_blocksize);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	rs = (काष्ठा reiserfs_super_block *)bh->b_data;
-	अगर (sb_blocksize(rs) != s->s_blocksize) अणु
+	rs = (struct reiserfs_super_block *)bh->b_data;
+	if (sb_blocksize(rs) != s->s_blocksize) {
 		reiserfs_warning(s, "sh-2011", "can't find a reiserfs "
 				 "filesystem on (dev %s, block %llu, size %lu)",
 				 s->s_id,
-				 (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr,
+				 (unsigned long long)bh->b_blocknr,
 				 s->s_blocksize);
-		brअन्यथा(bh);
-		वापस 1;
-	पूर्ण
+		brelse(bh);
+		return 1;
+	}
 
-	अगर (rs->s_v1.s_root_block == cpu_to_le32(-1)) अणु
-		brअन्यथा(bh);
+	if (rs->s_v1.s_root_block == cpu_to_le32(-1)) {
+		brelse(bh);
 		reiserfs_warning(s, "super-6519", "Unfinished reiserfsck "
 				 "--rebuild-tree run detected. Please run\n"
 				 "reiserfsck --rebuild-tree and wait for a "
 				 "completion. If that fails\n"
 				 "get newer reiserfsprogs package");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	SB_BUFFER_WITH_SB(s) = bh;
 	SB_DISK_SUPER_BLOCK(s) = rs;
 
 	/*
-	 * magic is of non-standard journal fileप्रणाली, look at s_version to
-	 * find which क्रमmat is in use
+	 * magic is of non-standard journal filesystem, look at s_version to
+	 * find which format is in use
 	 */
-	अगर (is_reiserfs_jr(rs)) अणु
-		अगर (sb_version(rs) == REISERFS_VERSION_2)
+	if (is_reiserfs_jr(rs)) {
+		if (sb_version(rs) == REISERFS_VERSION_2)
 			reiserfs_info(s, "found reiserfs format \"3.6\""
 				      " with non-standard journal\n");
-		अन्यथा अगर (sb_version(rs) == REISERFS_VERSION_1)
+		else if (sb_version(rs) == REISERFS_VERSION_1)
 			reiserfs_info(s, "found reiserfs format \"3.5\""
 				      " with non-standard journal\n");
-		अन्यथा अणु
+		else {
 			reiserfs_warning(s, "sh-2012", "found unknown "
 					 "format \"%u\" of reiserfs with "
 					 "non-standard magic", sb_version(rs));
-			वापस 1;
-		पूर्ण
-	पूर्ण अन्यथा
+			return 1;
+		}
+	} else
 		/*
-		 * s_version of standard क्रमmat may contain incorrect
-		 * inक्रमmation, so we just look at the magic string
+		 * s_version of standard format may contain incorrect
+		 * information, so we just look at the magic string
 		 */
 		reiserfs_info(s,
 			      "found reiserfs format \"%s\" with standard journal\n",
@@ -1692,237 +1691,237 @@ out_err:
 
 	s->s_op = &reiserfs_sops;
 	s->s_export_op = &reiserfs_export_ops;
-#अगर_घोषित CONFIG_QUOTA
+#ifdef CONFIG_QUOTA
 	s->s_qcop = &reiserfs_qctl_operations;
 	s->dq_op = &reiserfs_quota_operations;
 	s->s_quota_types = QTYPE_MASK_USR | QTYPE_MASK_GRP;
-#पूर्ण_अगर
+#endif
 
 	/*
-	 * new क्रमmat is limited by the 32 bit wide i_blocks field, want to
+	 * new format is limited by the 32 bit wide i_blocks field, want to
 	 * be one full block below that.
 	 */
 	s->s_maxbytes = (512LL << 32) - s->s_blocksize;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* after journal replay, reपढ़ो all biपंचांगap and super blocks */
-अटल पूर्णांक reपढ़ो_meta_blocks(काष्ठा super_block *s)
-अणु
+/* after journal replay, reread all bitmap and super blocks */
+static int reread_meta_blocks(struct super_block *s)
+{
 	ll_rw_block(REQ_OP_READ, 0, 1, &SB_BUFFER_WITH_SB(s));
-	रुको_on_buffer(SB_BUFFER_WITH_SB(s));
-	अगर (!buffer_uptodate(SB_BUFFER_WITH_SB(s))) अणु
+	wait_on_buffer(SB_BUFFER_WITH_SB(s));
+	if (!buffer_uptodate(SB_BUFFER_WITH_SB(s))) {
 		reiserfs_warning(s, "reiserfs-2504", "error reading the super");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* hash detection stuff */
 
 /*
- * अगर root directory is empty - we set शेष - Yura's - hash and
+ * if root directory is empty - we set default - Yura's - hash and
  * warn about it
- * FIXME: we look क्रम only one name in a directory. If tea and yura
+ * FIXME: we look for only one name in a directory. If tea and yura
  * both have the same value - we ask user to send report to the
  * mailing list
  */
-अटल __u32 find_hash_out(काष्ठा super_block *s)
-अणु
-	पूर्णांक retval;
-	काष्ठा inode *inode;
-	काष्ठा cpu_key key;
+static __u32 find_hash_out(struct super_block *s)
+{
+	int retval;
+	struct inode *inode;
+	struct cpu_key key;
 	INITIALIZE_PATH(path);
-	काष्ठा reiserfs_dir_entry de;
-	काष्ठा reiserfs_de_head *deh;
+	struct reiserfs_dir_entry de;
+	struct reiserfs_de_head *deh;
 	__u32 hash = DEFAULT_HASH;
 	__u32 deh_hashval, teahash, r5hash, yurahash;
 
 	inode = d_inode(s->s_root);
 
-	make_cpu_key(&key, inode, ~0, TYPE_सूचीENTRY, 3);
+	make_cpu_key(&key, inode, ~0, TYPE_DIRENTRY, 3);
 	retval = search_by_entry_key(s, &key, &path, &de);
-	अगर (retval == IO_ERROR) अणु
-		pathrअन्यथा(&path);
-		वापस UNSET_HASH;
-	पूर्ण
-	अगर (retval == NAME_NOT_FOUND)
+	if (retval == IO_ERROR) {
+		pathrelse(&path);
+		return UNSET_HASH;
+	}
+	if (retval == NAME_NOT_FOUND)
 		de.de_entry_num--;
 
 	set_de_name_and_namelen(&de);
 	deh = de.de_deh + de.de_entry_num;
 
-	अगर (deh_offset(deh) == DOT_DOT_OFFSET) अणु
-		/* allow override in this हाल */
-		अगर (reiserfs_rupasov_hash(s))
+	if (deh_offset(deh) == DOT_DOT_OFFSET) {
+		/* allow override in this case */
+		if (reiserfs_rupasov_hash(s))
 			hash = YURA_HASH;
 		reiserfs_info(s, "FS seems to be empty, autodetect is using the default hash\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	deh_hashval = GET_HASH_VALUE(deh_offset(deh));
 	r5hash = GET_HASH_VALUE(r5_hash(de.de_name, de.de_namelen));
 	teahash = GET_HASH_VALUE(keyed_hash(de.de_name, de.de_namelen));
 	yurahash = GET_HASH_VALUE(yura_hash(de.de_name, de.de_namelen));
 
-	अगर ((teahash == r5hash && deh_hashval == r5hash) ||
+	if ((teahash == r5hash && deh_hashval == r5hash) ||
 	    (teahash == yurahash && deh_hashval == yurahash) ||
-	    (r5hash == yurahash && deh_hashval == yurahash)) अणु
+	    (r5hash == yurahash && deh_hashval == yurahash)) {
 		reiserfs_warning(s, "reiserfs-2506",
 				 "Unable to automatically detect hash "
 				 "function. Please mount with -o "
 				 "hash={tea,rupasov,r5}");
 		hash = UNSET_HASH;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (deh_hashval == yurahash)
+	if (deh_hashval == yurahash)
 		hash = YURA_HASH;
-	अन्यथा अगर (deh_hashval == teahash)
+	else if (deh_hashval == teahash)
 		hash = TEA_HASH;
-	अन्यथा अगर (deh_hashval == r5hash)
+	else if (deh_hashval == r5hash)
 		hash = R5_HASH;
-	अन्यथा अणु
+	else {
 		reiserfs_warning(s, "reiserfs-2506",
 				 "Unrecognised hash function");
 		hash = UNSET_HASH;
-	पूर्ण
+	}
 out:
-	pathrअन्यथा(&path);
-	वापस hash;
-पूर्ण
+	pathrelse(&path);
+	return hash;
+}
 
 /* finds out which hash names are sorted with */
-अटल पूर्णांक what_hash(काष्ठा super_block *s)
-अणु
+static int what_hash(struct super_block *s)
+{
 	__u32 code;
 
 	code = sb_hash_function_code(SB_DISK_SUPER_BLOCK(s));
 
 	/*
-	 * reiserfs_hash_detect() == true अगर any of the hash mount options
+	 * reiserfs_hash_detect() == true if any of the hash mount options
 	 * were used.  We must check them to make sure the user isn't
 	 * using a bad hash value
 	 */
-	अगर (code == UNSET_HASH || reiserfs_hash_detect(s))
+	if (code == UNSET_HASH || reiserfs_hash_detect(s))
 		code = find_hash_out(s);
 
-	अगर (code != UNSET_HASH && reiserfs_hash_detect(s)) अणु
+	if (code != UNSET_HASH && reiserfs_hash_detect(s)) {
 		/*
 		 * detection has found the hash, and we must check against the
 		 * mount options
 		 */
-		अगर (reiserfs_rupasov_hash(s) && code != YURA_HASH) अणु
+		if (reiserfs_rupasov_hash(s) && code != YURA_HASH) {
 			reiserfs_warning(s, "reiserfs-2507",
 					 "Error, %s hash detected, "
 					 "unable to force rupasov hash",
 					 reiserfs_hashname(code));
 			code = UNSET_HASH;
-		पूर्ण अन्यथा अगर (reiserfs_tea_hash(s) && code != TEA_HASH) अणु
+		} else if (reiserfs_tea_hash(s) && code != TEA_HASH) {
 			reiserfs_warning(s, "reiserfs-2508",
 					 "Error, %s hash detected, "
 					 "unable to force tea hash",
 					 reiserfs_hashname(code));
 			code = UNSET_HASH;
-		पूर्ण अन्यथा अगर (reiserfs_r5_hash(s) && code != R5_HASH) अणु
+		} else if (reiserfs_r5_hash(s) && code != R5_HASH) {
 			reiserfs_warning(s, "reiserfs-2509",
 					 "Error, %s hash detected, "
 					 "unable to force r5 hash",
 					 reiserfs_hashname(code));
 			code = UNSET_HASH;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/*
 		 * find_hash_out was not called or
 		 * could not determine the hash
 		 */
-		अगर (reiserfs_rupasov_hash(s)) अणु
+		if (reiserfs_rupasov_hash(s)) {
 			code = YURA_HASH;
-		पूर्ण अन्यथा अगर (reiserfs_tea_hash(s)) अणु
+		} else if (reiserfs_tea_hash(s)) {
 			code = TEA_HASH;
-		पूर्ण अन्यथा अगर (reiserfs_r5_hash(s)) अणु
+		} else if (reiserfs_r5_hash(s)) {
 			code = R5_HASH;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
-	 * अगर we are mounted RW, and we have a new valid hash code, update
+	 * if we are mounted RW, and we have a new valid hash code, update
 	 * the super
 	 */
-	अगर (code != UNSET_HASH &&
-	    !sb_rकरोnly(s) &&
-	    code != sb_hash_function_code(SB_DISK_SUPER_BLOCK(s))) अणु
+	if (code != UNSET_HASH &&
+	    !sb_rdonly(s) &&
+	    code != sb_hash_function_code(SB_DISK_SUPER_BLOCK(s))) {
 		set_sb_hash_function_code(SB_DISK_SUPER_BLOCK(s), code);
-	पूर्ण
-	वापस code;
-पूर्ण
+	}
+	return code;
+}
 
-/* वापस poपूर्णांकer to appropriate function */
-अटल hashf_t hash_function(काष्ठा super_block *s)
-अणु
-	चयन (what_hash(s)) अणु
-	हाल TEA_HASH:
+/* return pointer to appropriate function */
+static hashf_t hash_function(struct super_block *s)
+{
+	switch (what_hash(s)) {
+	case TEA_HASH:
 		reiserfs_info(s, "Using tea hash to sort names\n");
-		वापस keyed_hash;
-	हाल YURA_HASH:
+		return keyed_hash;
+	case YURA_HASH:
 		reiserfs_info(s, "Using rupasov hash to sort names\n");
-		वापस yura_hash;
-	हाल R5_HASH:
+		return yura_hash;
+	case R5_HASH:
 		reiserfs_info(s, "Using r5 hash to sort names\n");
-		वापस r5_hash;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		return r5_hash;
+	}
+	return NULL;
+}
 
-/* this is used to set up correct value क्रम old partitions */
-अटल पूर्णांक function2code(hashf_t func)
-अणु
-	अगर (func == keyed_hash)
-		वापस TEA_HASH;
-	अगर (func == yura_hash)
-		वापस YURA_HASH;
-	अगर (func == r5_hash)
-		वापस R5_HASH;
+/* this is used to set up correct value for old partitions */
+static int function2code(hashf_t func)
+{
+	if (func == keyed_hash)
+		return TEA_HASH;
+	if (func == yura_hash)
+		return YURA_HASH;
+	if (func == r5_hash)
+		return R5_HASH;
 
 	BUG();			/* should never happen */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा SWARN(silent, s, id, ...)			\
-	अगर (!(silent))				\
+#define SWARN(silent, s, id, ...)			\
+	if (!(silent))				\
 		reiserfs_warning(s, id, __VA_ARGS__)
 
-अटल पूर्णांक reiserfs_fill_super(काष्ठा super_block *s, व्योम *data, पूर्णांक silent)
-अणु
-	काष्ठा inode *root_inode;
-	काष्ठा reiserfs_transaction_handle th;
-	पूर्णांक old_क्रमmat = 0;
-	अचिन्हित दीर्घ blocks;
-	अचिन्हित पूर्णांक commit_max_age = 0;
-	पूर्णांक jinit_करोne = 0;
-	काष्ठा reiserfs_iget_args args;
-	काष्ठा reiserfs_super_block *rs;
-	अक्षर *jdev_name;
-	काष्ठा reiserfs_sb_info *sbi;
-	पूर्णांक errval = -EINVAL;
-	अक्षर *qf_names[REISERFS_MAXQUOTAS] = अणुपूर्ण;
-	अचिन्हित पूर्णांक qfmt = 0;
+static int reiserfs_fill_super(struct super_block *s, void *data, int silent)
+{
+	struct inode *root_inode;
+	struct reiserfs_transaction_handle th;
+	int old_format = 0;
+	unsigned long blocks;
+	unsigned int commit_max_age = 0;
+	int jinit_done = 0;
+	struct reiserfs_iget_args args;
+	struct reiserfs_super_block *rs;
+	char *jdev_name;
+	struct reiserfs_sb_info *sbi;
+	int errval = -EINVAL;
+	char *qf_names[REISERFS_MAXQUOTAS] = {};
+	unsigned int qfmt = 0;
 
-	sbi = kzalloc(माप(काष्ठा reiserfs_sb_info), GFP_KERNEL);
-	अगर (!sbi)
-		वापस -ENOMEM;
+	sbi = kzalloc(sizeof(struct reiserfs_sb_info), GFP_KERNEL);
+	if (!sbi)
+		return -ENOMEM;
 	s->s_fs_info = sbi;
-	/* Set शेष values क्रम options: non-aggressive tails, RO on errors */
+	/* Set default values for options: non-aggressive tails, RO on errors */
 	sbi->s_mount_opt |= (1 << REISERFS_SMALLTAIL);
 	sbi->s_mount_opt |= (1 << REISERFS_ERROR_RO);
 	sbi->s_mount_opt |= (1 << REISERFS_BARRIER_FLUSH);
-	/* no pपुनः_स्मृतिation minimum, be smart in reiserfs_file_ग_लिखो instead */
-	sbi->s_alloc_options.pपुनः_स्मृतिmin = 0;
-	/* Pपुनः_स्मृतिate by 16 blocks (17-1) at once */
-	sbi->s_alloc_options.pपुनः_स्मृतिsize = 17;
-	/* setup शेष block allocator options */
+	/* no preallocation minimum, be smart in reiserfs_file_write instead */
+	sbi->s_alloc_options.preallocmin = 0;
+	/* Preallocate by 16 blocks (17-1) at once */
+	sbi->s_alloc_options.preallocsize = 17;
+	/* setup default block allocator options */
 	reiserfs_init_alloc_options(s);
 
 	spin_lock_init(&sbi->old_work_lock);
@@ -1932,197 +1931,197 @@ out:
 
 	sbi->commit_wq = alloc_workqueue("reiserfs/%s", WQ_MEM_RECLAIM, 0,
 					 s->s_id);
-	अगर (!sbi->commit_wq) अणु
+	if (!sbi->commit_wq) {
 		SWARN(silent, s, "", "Cannot allocate commit workqueue");
 		errval = -ENOMEM;
-		जाओ error_unlocked;
-	पूर्ण
+		goto error_unlocked;
+	}
 
-	jdev_name = शून्य;
-	अगर (reiserfs_parse_options
-	    (s, (अक्षर *)data, &sbi->s_mount_opt, &blocks, &jdev_name,
-	     &commit_max_age, qf_names, &qfmt) == 0) अणु
-		जाओ error_unlocked;
-	पूर्ण
-	अगर (jdev_name && jdev_name[0]) अणु
+	jdev_name = NULL;
+	if (reiserfs_parse_options
+	    (s, (char *)data, &sbi->s_mount_opt, &blocks, &jdev_name,
+	     &commit_max_age, qf_names, &qfmt) == 0) {
+		goto error_unlocked;
+	}
+	if (jdev_name && jdev_name[0]) {
 		sbi->s_jdev = kstrdup(jdev_name, GFP_KERNEL);
-		अगर (!sbi->s_jdev) अणु
+		if (!sbi->s_jdev) {
 			SWARN(silent, s, "", "Cannot allocate memory for "
 				"journal device name");
-			जाओ error_unlocked;
-		पूर्ण
-	पूर्ण
-#अगर_घोषित CONFIG_QUOTA
+			goto error_unlocked;
+		}
+	}
+#ifdef CONFIG_QUOTA
 	handle_quota_files(s, qf_names, &qfmt);
-#पूर्ण_अगर
+#endif
 
-	अगर (blocks) अणु
+	if (blocks) {
 		SWARN(silent, s, "jmacd-7", "resize option for remount only");
-		जाओ error_unlocked;
-	पूर्ण
+		goto error_unlocked;
+	}
 
 	/*
-	 * try old क्रमmat (undistributed biपंचांगap, super block in 8-th 1k
+	 * try old format (undistributed bitmap, super block in 8-th 1k
 	 * block of a device)
 	 */
-	अगर (!पढ़ो_super_block(s, REISERFS_OLD_DISK_OFFSET_IN_BYTES))
-		old_क्रमmat = 1;
+	if (!read_super_block(s, REISERFS_OLD_DISK_OFFSET_IN_BYTES))
+		old_format = 1;
 
 	/*
-	 * try new क्रमmat (64-th 1k block), which can contain reiserfs
+	 * try new format (64-th 1k block), which can contain reiserfs
 	 * super block
 	 */
-	अन्यथा अगर (पढ़ो_super_block(s, REISERFS_DISK_OFFSET_IN_BYTES)) अणु
+	else if (read_super_block(s, REISERFS_DISK_OFFSET_IN_BYTES)) {
 		SWARN(silent, s, "sh-2021", "can not find reiserfs on %s",
 		      s->s_id);
-		जाओ error_unlocked;
-	पूर्ण
+		goto error_unlocked;
+	}
 
-	s->s_समय_min = 0;
-	s->s_समय_max = U32_MAX;
+	s->s_time_min = 0;
+	s->s_time_max = U32_MAX;
 
 	rs = SB_DISK_SUPER_BLOCK(s);
 	/*
-	 * Let's करो basic sanity check to verअगरy that underlying device is not
-	 * smaller than the fileप्रणाली. If the check fails then पात and
+	 * Let's do basic sanity check to verify that underlying device is not
+	 * smaller than the filesystem. If the check fails then abort and
 	 * scream, because bad stuff will happen otherwise.
 	 */
-	अगर (s->s_bdev && s->s_bdev->bd_inode
-	    && i_size_पढ़ो(s->s_bdev->bd_inode) <
-	    sb_block_count(rs) * sb_blocksize(rs)) अणु
+	if (s->s_bdev && s->s_bdev->bd_inode
+	    && i_size_read(s->s_bdev->bd_inode) <
+	    sb_block_count(rs) * sb_blocksize(rs)) {
 		SWARN(silent, s, "", "Filesystem cannot be "
 		      "mounted because it is bigger than the device");
 		SWARN(silent, s, "", "You may need to run fsck "
 		      "or increase size of your LVM partition");
 		SWARN(silent, s, "", "Or may be you forgot to "
 		      "reboot after fdisk when it told you to");
-		जाओ error_unlocked;
-	पूर्ण
+		goto error_unlocked;
+	}
 
 	sbi->s_mount_state = SB_REISERFS_STATE(s);
 	sbi->s_mount_state = REISERFS_VALID_FS;
 
-	अगर ((errval = reiserfs_init_biपंचांगap_cache(s))) अणु
+	if ((errval = reiserfs_init_bitmap_cache(s))) {
 		SWARN(silent, s, "jmacd-8", "unable to read bitmap");
-		जाओ error_unlocked;
-	पूर्ण
+		goto error_unlocked;
+	}
 
 	errval = -EINVAL;
-#अगर_घोषित CONFIG_REISERFS_CHECK
+#ifdef CONFIG_REISERFS_CHECK
 	SWARN(silent, s, "", "CONFIG_REISERFS_CHECK is set ON");
 	SWARN(silent, s, "", "- it is slow mode for debugging.");
-#पूर्ण_अगर
+#endif
 
-	/* make data=ordered the शेष */
-	अगर (!reiserfs_data_log(s) && !reiserfs_data_ordered(s) &&
-	    !reiserfs_data_ग_लिखोback(s)) अणु
+	/* make data=ordered the default */
+	if (!reiserfs_data_log(s) && !reiserfs_data_ordered(s) &&
+	    !reiserfs_data_writeback(s)) {
 		sbi->s_mount_opt |= (1 << REISERFS_DATA_ORDERED);
-	पूर्ण
+	}
 
-	अगर (reiserfs_data_log(s)) अणु
+	if (reiserfs_data_log(s)) {
 		reiserfs_info(s, "using journaled data mode\n");
-	पूर्ण अन्यथा अगर (reiserfs_data_ordered(s)) अणु
+	} else if (reiserfs_data_ordered(s)) {
 		reiserfs_info(s, "using ordered data mode\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		reiserfs_info(s, "using writeback data mode\n");
-	पूर्ण
-	अगर (reiserfs_barrier_flush(s)) अणु
-		prपूर्णांकk("reiserfs: using flush barriers\n");
-	पूर्ण
+	}
+	if (reiserfs_barrier_flush(s)) {
+		printk("reiserfs: using flush barriers\n");
+	}
 
-	अगर (journal_init(s, jdev_name, old_क्रमmat, commit_max_age)) अणु
+	if (journal_init(s, jdev_name, old_format, commit_max_age)) {
 		SWARN(silent, s, "sh-2022",
 		      "unable to initialize journal space");
-		जाओ error_unlocked;
-	पूर्ण अन्यथा अणु
+		goto error_unlocked;
+	} else {
 		/*
 		 * once this is set, journal_release must be called
-		 * अगर we error out of the mount
+		 * if we error out of the mount
 		 */
-		jinit_करोne = 1;
-	पूर्ण
+		jinit_done = 1;
+	}
 
-	अगर (reपढ़ो_meta_blocks(s)) अणु
+	if (reread_meta_blocks(s)) {
 		SWARN(silent, s, "jmacd-9",
 		      "unable to reread meta blocks after journal init");
-		जाओ error_unlocked;
-	पूर्ण
+		goto error_unlocked;
+	}
 
-	अगर (replay_only(s))
-		जाओ error_unlocked;
+	if (replay_only(s))
+		goto error_unlocked;
 
 	s->s_xattr = reiserfs_xattr_handlers;
 
-	अगर (bdev_पढ़ो_only(s->s_bdev) && !sb_rकरोnly(s)) अणु
+	if (bdev_read_only(s->s_bdev) && !sb_rdonly(s)) {
 		SWARN(silent, s, "clm-7000",
 		      "Detected readonly device, marking FS readonly");
 		s->s_flags |= SB_RDONLY;
-	पूर्ण
+	}
 	args.objectid = REISERFS_ROOT_OBJECTID;
 	args.dirid = REISERFS_ROOT_PARENT_OBJECTID;
 	root_inode =
 	    iget5_locked(s, REISERFS_ROOT_OBJECTID, reiserfs_find_actor,
-			 reiserfs_init_locked_inode, (व्योम *)&args);
-	अगर (!root_inode) अणु
+			 reiserfs_init_locked_inode, (void *)&args);
+	if (!root_inode) {
 		SWARN(silent, s, "jmacd-10", "get root inode failed");
-		जाओ error_unlocked;
-	पूर्ण
+		goto error_unlocked;
+	}
 
 	/*
-	 * This path assumed to be called with the BKL in the old बार.
+	 * This path assumed to be called with the BKL in the old times.
 	 * Now we have inherited the big reiserfs lock from it and many
-	 * reiserfs helpers called in the mount path and अन्यथाwhere require
-	 * this lock to be held even अगर it's not always necessary. Let's be
-	 * conservative and hold it early. The winकरोw can be reduced after
+	 * reiserfs helpers called in the mount path and elsewhere require
+	 * this lock to be held even if it's not always necessary. Let's be
+	 * conservative and hold it early. The window can be reduced after
 	 * careful review of the code.
 	 */
-	reiserfs_ग_लिखो_lock(s);
+	reiserfs_write_lock(s);
 
-	अगर (root_inode->i_state & I_NEW) अणु
-		reiserfs_पढ़ो_locked_inode(root_inode, &args);
+	if (root_inode->i_state & I_NEW) {
+		reiserfs_read_locked_inode(root_inode, &args);
 		unlock_new_inode(root_inode);
-	पूर्ण
+	}
 
 	s->s_root = d_make_root(root_inode);
-	अगर (!s->s_root)
-		जाओ error;
+	if (!s->s_root)
+		goto error;
 	/* define and initialize hash function */
 	sbi->s_hash_function = hash_function(s);
-	अगर (sbi->s_hash_function == शून्य) अणु
+	if (sbi->s_hash_function == NULL) {
 		dput(s->s_root);
-		s->s_root = शून्य;
-		जाओ error;
-	पूर्ण
+		s->s_root = NULL;
+		goto error;
+	}
 
-	अगर (is_reiserfs_3_5(rs)
+	if (is_reiserfs_3_5(rs)
 	    || (is_reiserfs_jr(rs) && SB_VERSION(s) == REISERFS_VERSION_1))
 		set_bit(REISERFS_3_5, &sbi->s_properties);
-	अन्यथा अगर (old_क्रमmat)
+	else if (old_format)
 		set_bit(REISERFS_OLD_FORMAT, &sbi->s_properties);
-	अन्यथा
+	else
 		set_bit(REISERFS_3_6, &sbi->s_properties);
 
-	अगर (!sb_rकरोnly(s)) अणु
+	if (!sb_rdonly(s)) {
 
 		errval = journal_begin(&th, s, 1);
-		अगर (errval) अणु
+		if (errval) {
 			dput(s->s_root);
-			s->s_root = शून्य;
-			जाओ error;
-		पूर्ण
-		reiserfs_prepare_क्रम_journal(s, SB_BUFFER_WITH_SB(s), 1);
+			s->s_root = NULL;
+			goto error;
+		}
+		reiserfs_prepare_for_journal(s, SB_BUFFER_WITH_SB(s), 1);
 
 		set_sb_umount_state(rs, REISERFS_ERROR_FS);
 		set_sb_fs_state(rs, 0);
 
 		/*
-		 * Clear out s_bmap_nr अगर it would wrap. We can handle this
-		 * हाल, but older revisions can't. This will cause the
-		 * file प्रणाली to fail mount on those older implementations,
-		 * aव्योमing corruption. -jeffm
+		 * Clear out s_bmap_nr if it would wrap. We can handle this
+		 * case, but older revisions can't. This will cause the
+		 * file system to fail mount on those older implementations,
+		 * avoiding corruption. -jeffm
 		 */
-		अगर (bmap_would_wrap(reiserfs_bmap_count(s)) &&
-		    sb_bmap_nr(rs) != 0) अणु
+		if (bmap_would_wrap(reiserfs_bmap_count(s)) &&
+		    sb_bmap_nr(rs) != 0) {
 			reiserfs_warning(s, "super-2030", "This file system "
 					"claims to use %u bitmap blocks in "
 					"its super block, but requires %u. "
@@ -2130,78 +2129,78 @@ out:
 					reiserfs_bmap_count(s));
 
 			set_sb_bmap_nr(rs, 0);
-		पूर्ण
+		}
 
-		अगर (old_क्रमmat_only(s)) अणु
+		if (old_format_only(s)) {
 			/*
-			 * fileप्रणाली of क्रमmat 3.5 either with standard
+			 * filesystem of format 3.5 either with standard
 			 * or non-standard journal
 			 */
-			अगर (convert_reiserfs(s)) अणु
+			if (convert_reiserfs(s)) {
 				/* and -o conv is given */
-				अगर (!silent)
+				if (!silent)
 					reiserfs_info(s,
 						      "converting 3.5 filesystem to the 3.6 format");
 
-				अगर (is_reiserfs_3_5(rs))
+				if (is_reiserfs_3_5(rs))
 					/*
-					 * put magic string of 3.6 क्रमmat.
+					 * put magic string of 3.6 format.
 					 * 2.2 will not be able to
-					 * mount this fileप्रणाली anymore
+					 * mount this filesystem anymore
 					 */
-					स_नकल(rs->s_v1.s_magic,
+					memcpy(rs->s_v1.s_magic,
 					       reiserfs_3_6_magic_string,
-					       माप
+					       sizeof
 					       (reiserfs_3_6_magic_string));
 
 				set_sb_version(rs, REISERFS_VERSION_2);
 				reiserfs_convert_objectid_map_v1(s);
 				set_bit(REISERFS_3_6, &sbi->s_properties);
 				clear_bit(REISERFS_3_5, &sbi->s_properties);
-			पूर्ण अन्यथा अगर (!silent) अणु
+			} else if (!silent) {
 				reiserfs_info(s, "using 3.5.x disk format\n");
-			पूर्ण
-		पूर्ण अन्यथा
+			}
+		} else
 			set_sb_mnt_count(rs, sb_mnt_count(rs) + 1);
 
 
 		journal_mark_dirty(&th, SB_BUFFER_WITH_SB(s));
 		errval = journal_end(&th);
-		अगर (errval) अणु
+		if (errval) {
 			dput(s->s_root);
-			s->s_root = शून्य;
-			जाओ error;
-		पूर्ण
+			s->s_root = NULL;
+			goto error;
+		}
 
-		reiserfs_ग_लिखो_unlock(s);
-		अगर ((errval = reiserfs_lookup_privroot(s)) ||
-		    (errval = reiserfs_xattr_init(s, s->s_flags))) अणु
+		reiserfs_write_unlock(s);
+		if ((errval = reiserfs_lookup_privroot(s)) ||
+		    (errval = reiserfs_xattr_init(s, s->s_flags))) {
 			dput(s->s_root);
-			s->s_root = शून्य;
-			जाओ error_unlocked;
-		पूर्ण
-		reiserfs_ग_लिखो_lock(s);
+			s->s_root = NULL;
+			goto error_unlocked;
+		}
+		reiserfs_write_lock(s);
 
 		/*
-		 * look क्रम files which were to be हटाओd in previous session
+		 * look for files which were to be removed in previous session
 		 */
 		finish_unfinished(s);
-	पूर्ण अन्यथा अणु
-		अगर (old_क्रमmat_only(s) && !silent) अणु
+	} else {
+		if (old_format_only(s) && !silent) {
 			reiserfs_info(s, "using 3.5.x disk format\n");
-		पूर्ण
+		}
 
-		reiserfs_ग_लिखो_unlock(s);
-		अगर ((errval = reiserfs_lookup_privroot(s)) ||
-		    (errval = reiserfs_xattr_init(s, s->s_flags))) अणु
+		reiserfs_write_unlock(s);
+		if ((errval = reiserfs_lookup_privroot(s)) ||
+		    (errval = reiserfs_xattr_init(s, s->s_flags))) {
 			dput(s->s_root);
-			s->s_root = शून्य;
-			जाओ error_unlocked;
-		पूर्ण
-		reiserfs_ग_लिखो_lock(s);
-	पूर्ण
+			s->s_root = NULL;
+			goto error_unlocked;
+		}
+		reiserfs_write_lock(s);
+	}
 	/*
-	 * mark hash in super block: it could be unset. overग_लिखो should be ok
+	 * mark hash in super block: it could be unset. overwrite should be ok
 	 */
 	set_sb_hash_function_code(rs, function2code(sbi->s_hash_function));
 
@@ -2209,241 +2208,241 @@ out:
 
 	reiserfs_proc_info_init(s);
 
-	init_रुकोqueue_head(&(sbi->s_रुको));
-	spin_lock_init(&sbi->biपंचांगap_lock);
+	init_waitqueue_head(&(sbi->s_wait));
+	spin_lock_init(&sbi->bitmap_lock);
 
-	reiserfs_ग_लिखो_unlock(s);
+	reiserfs_write_unlock(s);
 
-	वापस (0);
+	return (0);
 
 error:
-	reiserfs_ग_लिखो_unlock(s);
+	reiserfs_write_unlock(s);
 
 error_unlocked:
-	/* समाप्त the commit thपढ़ो, मुक्त journal ram */
-	अगर (jinit_करोne) अणु
-		reiserfs_ग_लिखो_lock(s);
-		journal_release_error(शून्य, s);
-		reiserfs_ग_लिखो_unlock(s);
-	पूर्ण
+	/* kill the commit thread, free journal ram */
+	if (jinit_done) {
+		reiserfs_write_lock(s);
+		journal_release_error(NULL, s);
+		reiserfs_write_unlock(s);
+	}
 
-	अगर (sbi->commit_wq)
+	if (sbi->commit_wq)
 		destroy_workqueue(sbi->commit_wq);
 
 	reiserfs_cancel_old_flush(s);
 
-	reiserfs_मुक्त_biपंचांगap_cache(s);
-	अगर (SB_BUFFER_WITH_SB(s))
-		brअन्यथा(SB_BUFFER_WITH_SB(s));
-#अगर_घोषित CONFIG_QUOTA
-	अणु
-		पूर्णांक j;
-		क्रम (j = 0; j < REISERFS_MAXQUOTAS; j++)
-			kमुक्त(qf_names[j]);
-	पूर्ण
-#पूर्ण_अगर
-	kमुक्त(sbi->s_jdev);
-	kमुक्त(sbi);
+	reiserfs_free_bitmap_cache(s);
+	if (SB_BUFFER_WITH_SB(s))
+		brelse(SB_BUFFER_WITH_SB(s));
+#ifdef CONFIG_QUOTA
+	{
+		int j;
+		for (j = 0; j < REISERFS_MAXQUOTAS; j++)
+			kfree(qf_names[j]);
+	}
+#endif
+	kfree(sbi->s_jdev);
+	kfree(sbi);
 
-	s->s_fs_info = शून्य;
-	वापस errval;
-पूर्ण
+	s->s_fs_info = NULL;
+	return errval;
+}
 
-अटल पूर्णांक reiserfs_statfs(काष्ठा dentry *dentry, काष्ठा kstatfs *buf)
-अणु
-	काष्ठा reiserfs_super_block *rs = SB_DISK_SUPER_BLOCK(dentry->d_sb);
+static int reiserfs_statfs(struct dentry *dentry, struct kstatfs *buf)
+{
+	struct reiserfs_super_block *rs = SB_DISK_SUPER_BLOCK(dentry->d_sb);
 
 	buf->f_namelen = (REISERFS_MAX_NAME(s->s_blocksize));
-	buf->f_bमुक्त = sb_मुक्त_blocks(rs);
-	buf->f_bavail = buf->f_bमुक्त;
+	buf->f_bfree = sb_free_blocks(rs);
+	buf->f_bavail = buf->f_bfree;
 	buf->f_blocks = sb_block_count(rs) - sb_bmap_nr(rs) - 1;
 	buf->f_bsize = dentry->d_sb->s_blocksize;
 	/* changed to accommodate gcc folks. */
 	buf->f_type = REISERFS_SUPER_MAGIC;
-	buf->f_fsid.val[0] = (u32)crc32_le(0, rs->s_uuid, माप(rs->s_uuid)/2);
-	buf->f_fsid.val[1] = (u32)crc32_le(0, rs->s_uuid + माप(rs->s_uuid)/2,
-				माप(rs->s_uuid)/2);
+	buf->f_fsid.val[0] = (u32)crc32_le(0, rs->s_uuid, sizeof(rs->s_uuid)/2);
+	buf->f_fsid.val[1] = (u32)crc32_le(0, rs->s_uuid + sizeof(rs->s_uuid)/2,
+				sizeof(rs->s_uuid)/2);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_QUOTA
-अटल पूर्णांक reiserfs_ग_लिखो_dquot(काष्ठा dquot *dquot)
-अणु
-	काष्ठा reiserfs_transaction_handle th;
-	पूर्णांक ret, err;
-	पूर्णांक depth;
+#ifdef CONFIG_QUOTA
+static int reiserfs_write_dquot(struct dquot *dquot)
+{
+	struct reiserfs_transaction_handle th;
+	int ret, err;
+	int depth;
 
-	reiserfs_ग_लिखो_lock(dquot->dq_sb);
+	reiserfs_write_lock(dquot->dq_sb);
 	ret =
 	    journal_begin(&th, dquot->dq_sb,
 			  REISERFS_QUOTA_TRANS_BLOCKS(dquot->dq_sb));
-	अगर (ret)
-		जाओ out;
-	depth = reiserfs_ग_लिखो_unlock_nested(dquot->dq_sb);
+	if (ret)
+		goto out;
+	depth = reiserfs_write_unlock_nested(dquot->dq_sb);
 	ret = dquot_commit(dquot);
-	reiserfs_ग_लिखो_lock_nested(dquot->dq_sb, depth);
+	reiserfs_write_lock_nested(dquot->dq_sb, depth);
 	err = journal_end(&th);
-	अगर (!ret && err)
+	if (!ret && err)
 		ret = err;
 out:
-	reiserfs_ग_लिखो_unlock(dquot->dq_sb);
-	वापस ret;
-पूर्ण
+	reiserfs_write_unlock(dquot->dq_sb);
+	return ret;
+}
 
-अटल पूर्णांक reiserfs_acquire_dquot(काष्ठा dquot *dquot)
-अणु
-	काष्ठा reiserfs_transaction_handle th;
-	पूर्णांक ret, err;
-	पूर्णांक depth;
+static int reiserfs_acquire_dquot(struct dquot *dquot)
+{
+	struct reiserfs_transaction_handle th;
+	int ret, err;
+	int depth;
 
-	reiserfs_ग_लिखो_lock(dquot->dq_sb);
+	reiserfs_write_lock(dquot->dq_sb);
 	ret =
 	    journal_begin(&th, dquot->dq_sb,
 			  REISERFS_QUOTA_INIT_BLOCKS(dquot->dq_sb));
-	अगर (ret)
-		जाओ out;
-	depth = reiserfs_ग_लिखो_unlock_nested(dquot->dq_sb);
+	if (ret)
+		goto out;
+	depth = reiserfs_write_unlock_nested(dquot->dq_sb);
 	ret = dquot_acquire(dquot);
-	reiserfs_ग_लिखो_lock_nested(dquot->dq_sb, depth);
+	reiserfs_write_lock_nested(dquot->dq_sb, depth);
 	err = journal_end(&th);
-	अगर (!ret && err)
+	if (!ret && err)
 		ret = err;
 out:
-	reiserfs_ग_लिखो_unlock(dquot->dq_sb);
-	वापस ret;
-पूर्ण
+	reiserfs_write_unlock(dquot->dq_sb);
+	return ret;
+}
 
-अटल पूर्णांक reiserfs_release_dquot(काष्ठा dquot *dquot)
-अणु
-	काष्ठा reiserfs_transaction_handle th;
-	पूर्णांक ret, err;
+static int reiserfs_release_dquot(struct dquot *dquot)
+{
+	struct reiserfs_transaction_handle th;
+	int ret, err;
 
-	reiserfs_ग_लिखो_lock(dquot->dq_sb);
+	reiserfs_write_lock(dquot->dq_sb);
 	ret =
 	    journal_begin(&th, dquot->dq_sb,
 			  REISERFS_QUOTA_DEL_BLOCKS(dquot->dq_sb));
-	reiserfs_ग_लिखो_unlock(dquot->dq_sb);
-	अगर (ret) अणु
-		/* Release dquot anyway to aव्योम endless cycle in dqput() */
+	reiserfs_write_unlock(dquot->dq_sb);
+	if (ret) {
+		/* Release dquot anyway to avoid endless cycle in dqput() */
 		dquot_release(dquot);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	ret = dquot_release(dquot);
-	reiserfs_ग_लिखो_lock(dquot->dq_sb);
+	reiserfs_write_lock(dquot->dq_sb);
 	err = journal_end(&th);
-	अगर (!ret && err)
+	if (!ret && err)
 		ret = err;
-	reiserfs_ग_लिखो_unlock(dquot->dq_sb);
+	reiserfs_write_unlock(dquot->dq_sb);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक reiserfs_mark_dquot_dirty(काष्ठा dquot *dquot)
-अणु
+static int reiserfs_mark_dquot_dirty(struct dquot *dquot)
+{
 	/* Are we journaling quotas? */
-	अगर (REISERFS_SB(dquot->dq_sb)->s_qf_names[USRQUOTA] ||
-	    REISERFS_SB(dquot->dq_sb)->s_qf_names[GRPQUOTA]) अणु
+	if (REISERFS_SB(dquot->dq_sb)->s_qf_names[USRQUOTA] ||
+	    REISERFS_SB(dquot->dq_sb)->s_qf_names[GRPQUOTA]) {
 		dquot_mark_dquot_dirty(dquot);
-		वापस reiserfs_ग_लिखो_dquot(dquot);
-	पूर्ण अन्यथा
-		वापस dquot_mark_dquot_dirty(dquot);
-पूर्ण
+		return reiserfs_write_dquot(dquot);
+	} else
+		return dquot_mark_dquot_dirty(dquot);
+}
 
-अटल पूर्णांक reiserfs_ग_लिखो_info(काष्ठा super_block *sb, पूर्णांक type)
-अणु
-	काष्ठा reiserfs_transaction_handle th;
-	पूर्णांक ret, err;
-	पूर्णांक depth;
+static int reiserfs_write_info(struct super_block *sb, int type)
+{
+	struct reiserfs_transaction_handle th;
+	int ret, err;
+	int depth;
 
 	/* Data block + inode block */
-	reiserfs_ग_लिखो_lock(sb);
+	reiserfs_write_lock(sb);
 	ret = journal_begin(&th, sb, 2);
-	अगर (ret)
-		जाओ out;
-	depth = reiserfs_ग_लिखो_unlock_nested(sb);
+	if (ret)
+		goto out;
+	depth = reiserfs_write_unlock_nested(sb);
 	ret = dquot_commit_info(sb, type);
-	reiserfs_ग_लिखो_lock_nested(sb, depth);
+	reiserfs_write_lock_nested(sb, depth);
 	err = journal_end(&th);
-	अगर (!ret && err)
+	if (!ret && err)
 		ret = err;
 out:
-	reiserfs_ग_लिखो_unlock(sb);
-	वापस ret;
-पूर्ण
+	reiserfs_write_unlock(sb);
+	return ret;
+}
 
 /*
- * Turn on quotas during mount समय - we need to find the quota file and such...
+ * Turn on quotas during mount time - we need to find the quota file and such...
  */
-अटल पूर्णांक reiserfs_quota_on_mount(काष्ठा super_block *sb, पूर्णांक type)
-अणु
-	वापस dquot_quota_on_mount(sb, REISERFS_SB(sb)->s_qf_names[type],
+static int reiserfs_quota_on_mount(struct super_block *sb, int type)
+{
+	return dquot_quota_on_mount(sb, REISERFS_SB(sb)->s_qf_names[type],
 					REISERFS_SB(sb)->s_jquota_fmt, type);
-पूर्ण
+}
 
 /*
  * Standard function to be called on quota_on
  */
-अटल पूर्णांक reiserfs_quota_on(काष्ठा super_block *sb, पूर्णांक type, पूर्णांक क्रमmat_id,
-			     स्थिर काष्ठा path *path)
-अणु
-	पूर्णांक err;
-	काष्ठा inode *inode;
-	काष्ठा reiserfs_transaction_handle th;
-	पूर्णांक opt = type == USRQUOTA ? REISERFS_USRQUOTA : REISERFS_GRPQUOTA;
+static int reiserfs_quota_on(struct super_block *sb, int type, int format_id,
+			     const struct path *path)
+{
+	int err;
+	struct inode *inode;
+	struct reiserfs_transaction_handle th;
+	int opt = type == USRQUOTA ? REISERFS_USRQUOTA : REISERFS_GRPQUOTA;
 
-	reiserfs_ग_लिखो_lock(sb);
-	अगर (!(REISERFS_SB(sb)->s_mount_opt & (1 << opt))) अणु
+	reiserfs_write_lock(sb);
+	if (!(REISERFS_SB(sb)->s_mount_opt & (1 << opt))) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Quotafile not on the same fileप्रणाली? */
-	अगर (path->dentry->d_sb != sb) अणु
+	/* Quotafile not on the same filesystem? */
+	if (path->dentry->d_sb != sb) {
 		err = -EXDEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	inode = d_inode(path->dentry);
 	/*
-	 * We must not pack tails क्रम quota files on reiserfs क्रम quota
+	 * We must not pack tails for quota files on reiserfs for quota
 	 * IO to work
 	 */
-	अगर (!(REISERFS_I(inode)->i_flags & i_nopack_mask)) अणु
+	if (!(REISERFS_I(inode)->i_flags & i_nopack_mask)) {
 		err = reiserfs_unpack(inode);
-		अगर (err) अणु
+		if (err) {
 			reiserfs_warning(sb, "super-6520",
 				"Unpacking tail of quota file failed"
 				" (%d). Cannot turn on quotas.", err);
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		mark_inode_dirty(inode);
-	पूर्ण
+	}
 	/* Journaling quota? */
-	अगर (REISERFS_SB(sb)->s_qf_names[type]) अणु
+	if (REISERFS_SB(sb)->s_qf_names[type]) {
 		/* Quotafile not of fs root? */
-		अगर (path->dentry->d_parent != sb->s_root)
+		if (path->dentry->d_parent != sb->s_root)
 			reiserfs_warning(sb, "super-6521",
 				 "Quota file not on filesystem root. "
 				 "Journalled quota will not work.");
-	पूर्ण
+	}
 
 	/*
 	 * When we journal data on quota file, we have to flush journal to see
 	 * all updates to the file when we bypass pagecache...
 	 */
-	अगर (reiserfs_file_data_log(inode)) अणु
+	if (reiserfs_file_data_log(inode)) {
 		/* Just start temporary transaction and finish it */
 		err = journal_begin(&th, sb, 1);
-		अगर (err)
-			जाओ out;
+		if (err)
+			goto out;
 		err = journal_end_sync(&th);
-		अगर (err)
-			जाओ out;
-	पूर्ण
-	reiserfs_ग_लिखो_unlock(sb);
-	err = dquot_quota_on(sb, type, क्रमmat_id, path);
-	अगर (!err) अणु
+		if (err)
+			goto out;
+	}
+	reiserfs_write_unlock(sb);
+	err = dquot_quota_on(sb, type, format_id, path);
+	if (!err) {
 		inode_lock(inode);
 		REISERFS_I(inode)->i_attrs |= REISERFS_IMMUTABLE_FL |
 					      REISERFS_NOATIME_FL;
@@ -2451,24 +2450,24 @@ out:
 				S_IMMUTABLE | S_NOATIME);
 		inode_unlock(inode);
 		mark_inode_dirty(inode);
-	पूर्ण
-	वापस err;
+	}
+	return err;
 out:
-	reiserfs_ग_लिखो_unlock(sb);
-	वापस err;
-पूर्ण
+	reiserfs_write_unlock(sb);
+	return err;
+}
 
-अटल पूर्णांक reiserfs_quota_off(काष्ठा super_block *sb, पूर्णांक type)
-अणु
-	पूर्णांक err;
-	काष्ठा inode *inode = sb_dqopt(sb)->files[type];
+static int reiserfs_quota_off(struct super_block *sb, int type)
+{
+	int err;
+	struct inode *inode = sb_dqopt(sb)->files[type];
 
-	अगर (!inode || !igrab(inode))
-		जाओ out;
+	if (!inode || !igrab(inode))
+		goto out;
 
 	err = dquot_quota_off(sb, type);
-	अगर (err)
-		जाओ out_put;
+	if (err)
+		goto out_put;
 
 	inode_lock(inode);
 	REISERFS_I(inode)->i_attrs &= ~(REISERFS_IMMUTABLE_FL |
@@ -2478,171 +2477,171 @@ out:
 	mark_inode_dirty(inode);
 out_put:
 	iput(inode);
-	वापस err;
+	return err;
 out:
-	वापस dquot_quota_off(sb, type);
-पूर्ण
+	return dquot_quota_off(sb, type);
+}
 
 /*
- * Read data from quotafile - aव्योम pagecache and such because we cannot afक्रमd
+ * Read data from quotafile - avoid pagecache and such because we cannot afford
  * acquiring the locks... As quota files are never truncated and quota code
- * itself serializes the operations (and no one अन्यथा should touch the files)
- * we करोn't have to be afraid of races
+ * itself serializes the operations (and no one else should touch the files)
+ * we don't have to be afraid of races
  */
-अटल sमाप_प्रकार reiserfs_quota_पढ़ो(काष्ठा super_block *sb, पूर्णांक type, अक्षर *data,
-				   माप_प्रकार len, loff_t off)
-अणु
-	काष्ठा inode *inode = sb_dqopt(sb)->files[type];
-	अचिन्हित दीर्घ blk = off >> sb->s_blocksize_bits;
-	पूर्णांक err = 0, offset = off & (sb->s_blocksize - 1), tocopy;
-	माप_प्रकार toपढ़ो;
-	काष्ठा buffer_head पंचांगp_bh, *bh;
-	loff_t i_size = i_size_पढ़ो(inode);
+static ssize_t reiserfs_quota_read(struct super_block *sb, int type, char *data,
+				   size_t len, loff_t off)
+{
+	struct inode *inode = sb_dqopt(sb)->files[type];
+	unsigned long blk = off >> sb->s_blocksize_bits;
+	int err = 0, offset = off & (sb->s_blocksize - 1), tocopy;
+	size_t toread;
+	struct buffer_head tmp_bh, *bh;
+	loff_t i_size = i_size_read(inode);
 
-	अगर (off > i_size)
-		वापस 0;
-	अगर (off + len > i_size)
+	if (off > i_size)
+		return 0;
+	if (off + len > i_size)
 		len = i_size - off;
-	toपढ़ो = len;
-	जबतक (toपढ़ो > 0) अणु
+	toread = len;
+	while (toread > 0) {
 		tocopy =
 		    sb->s_blocksize - offset <
-		    toपढ़ो ? sb->s_blocksize - offset : toपढ़ो;
-		पंचांगp_bh.b_state = 0;
+		    toread ? sb->s_blocksize - offset : toread;
+		tmp_bh.b_state = 0;
 		/*
 		 * Quota files are without tails so we can safely
 		 * use this function
 		 */
-		reiserfs_ग_लिखो_lock(sb);
-		err = reiserfs_get_block(inode, blk, &पंचांगp_bh, 0);
-		reiserfs_ग_लिखो_unlock(sb);
-		अगर (err)
-			वापस err;
-		अगर (!buffer_mapped(&पंचांगp_bh))	/* A hole? */
-			स_रखो(data, 0, tocopy);
-		अन्यथा अणु
-			bh = sb_bपढ़ो(sb, पंचांगp_bh.b_blocknr);
-			अगर (!bh)
-				वापस -EIO;
-			स_नकल(data, bh->b_data + offset, tocopy);
-			brअन्यथा(bh);
-		पूर्ण
+		reiserfs_write_lock(sb);
+		err = reiserfs_get_block(inode, blk, &tmp_bh, 0);
+		reiserfs_write_unlock(sb);
+		if (err)
+			return err;
+		if (!buffer_mapped(&tmp_bh))	/* A hole? */
+			memset(data, 0, tocopy);
+		else {
+			bh = sb_bread(sb, tmp_bh.b_blocknr);
+			if (!bh)
+				return -EIO;
+			memcpy(data, bh->b_data + offset, tocopy);
+			brelse(bh);
+		}
 		offset = 0;
-		toपढ़ो -= tocopy;
+		toread -= tocopy;
 		data += tocopy;
 		blk++;
-	पूर्ण
-	वापस len;
-पूर्ण
+	}
+	return len;
+}
 
 /*
- * Write to quotafile (we know the transaction is alपढ़ोy started and has
+ * Write to quotafile (we know the transaction is already started and has
  * enough credits)
  */
-अटल sमाप_प्रकार reiserfs_quota_ग_लिखो(काष्ठा super_block *sb, पूर्णांक type,
-				    स्थिर अक्षर *data, माप_प्रकार len, loff_t off)
-अणु
-	काष्ठा inode *inode = sb_dqopt(sb)->files[type];
-	अचिन्हित दीर्घ blk = off >> sb->s_blocksize_bits;
-	पूर्णांक err = 0, offset = off & (sb->s_blocksize - 1), tocopy;
-	पूर्णांक journal_quota = REISERFS_SB(sb)->s_qf_names[type] != शून्य;
-	माप_प्रकार toग_लिखो = len;
-	काष्ठा buffer_head पंचांगp_bh, *bh;
+static ssize_t reiserfs_quota_write(struct super_block *sb, int type,
+				    const char *data, size_t len, loff_t off)
+{
+	struct inode *inode = sb_dqopt(sb)->files[type];
+	unsigned long blk = off >> sb->s_blocksize_bits;
+	int err = 0, offset = off & (sb->s_blocksize - 1), tocopy;
+	int journal_quota = REISERFS_SB(sb)->s_qf_names[type] != NULL;
+	size_t towrite = len;
+	struct buffer_head tmp_bh, *bh;
 
-	अगर (!current->journal_info) अणु
-		prपूर्णांकk(KERN_WARNING "reiserfs: Quota write (off=%llu, len=%llu) cancelled because transaction is not started.\n",
-			(अचिन्हित दीर्घ दीर्घ)off, (अचिन्हित दीर्घ दीर्घ)len);
-		वापस -EIO;
-	पूर्ण
-	जबतक (toग_लिखो > 0) अणु
-		tocopy = sb->s_blocksize - offset < toग_लिखो ?
-		    sb->s_blocksize - offset : toग_लिखो;
-		पंचांगp_bh.b_state = 0;
-		reiserfs_ग_लिखो_lock(sb);
-		err = reiserfs_get_block(inode, blk, &पंचांगp_bh, GET_BLOCK_CREATE);
-		reiserfs_ग_लिखो_unlock(sb);
-		अगर (err)
-			जाओ out;
-		अगर (offset || tocopy != sb->s_blocksize)
-			bh = sb_bपढ़ो(sb, पंचांगp_bh.b_blocknr);
-		अन्यथा
-			bh = sb_getblk(sb, पंचांगp_bh.b_blocknr);
-		अगर (!bh) अणु
+	if (!current->journal_info) {
+		printk(KERN_WARNING "reiserfs: Quota write (off=%llu, len=%llu) cancelled because transaction is not started.\n",
+			(unsigned long long)off, (unsigned long long)len);
+		return -EIO;
+	}
+	while (towrite > 0) {
+		tocopy = sb->s_blocksize - offset < towrite ?
+		    sb->s_blocksize - offset : towrite;
+		tmp_bh.b_state = 0;
+		reiserfs_write_lock(sb);
+		err = reiserfs_get_block(inode, blk, &tmp_bh, GET_BLOCK_CREATE);
+		reiserfs_write_unlock(sb);
+		if (err)
+			goto out;
+		if (offset || tocopy != sb->s_blocksize)
+			bh = sb_bread(sb, tmp_bh.b_blocknr);
+		else
+			bh = sb_getblk(sb, tmp_bh.b_blocknr);
+		if (!bh) {
 			err = -EIO;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		lock_buffer(bh);
-		स_नकल(bh->b_data + offset, data, tocopy);
+		memcpy(bh->b_data + offset, data, tocopy);
 		flush_dcache_page(bh->b_page);
 		set_buffer_uptodate(bh);
 		unlock_buffer(bh);
-		reiserfs_ग_लिखो_lock(sb);
-		reiserfs_prepare_क्रम_journal(sb, bh, 1);
+		reiserfs_write_lock(sb);
+		reiserfs_prepare_for_journal(sb, bh, 1);
 		journal_mark_dirty(current->journal_info, bh);
-		अगर (!journal_quota)
+		if (!journal_quota)
 			reiserfs_add_ordered_list(inode, bh);
-		reiserfs_ग_लिखो_unlock(sb);
-		brअन्यथा(bh);
+		reiserfs_write_unlock(sb);
+		brelse(bh);
 		offset = 0;
-		toग_लिखो -= tocopy;
+		towrite -= tocopy;
 		data += tocopy;
 		blk++;
-	पूर्ण
+	}
 out:
-	अगर (len == toग_लिखो)
-		वापस err;
-	अगर (inode->i_size < off + len - toग_लिखो)
-		i_size_ग_लिखो(inode, off + len - toग_लिखो);
-	inode->i_mसमय = inode->i_स_समय = current_समय(inode);
+	if (len == towrite)
+		return err;
+	if (inode->i_size < off + len - towrite)
+		i_size_write(inode, off + len - towrite);
+	inode->i_mtime = inode->i_ctime = current_time(inode);
 	mark_inode_dirty(inode);
-	वापस len - toग_लिखो;
-पूर्ण
+	return len - towrite;
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा dentry *get_super_block(काष्ठा file_प्रणाली_type *fs_type,
-			   पूर्णांक flags, स्थिर अक्षर *dev_name,
-			   व्योम *data)
-अणु
-	वापस mount_bdev(fs_type, flags, dev_name, data, reiserfs_fill_super);
-पूर्ण
+static struct dentry *get_super_block(struct file_system_type *fs_type,
+			   int flags, const char *dev_name,
+			   void *data)
+{
+	return mount_bdev(fs_type, flags, dev_name, data, reiserfs_fill_super);
+}
 
-अटल पूर्णांक __init init_reiserfs_fs(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init init_reiserfs_fs(void)
+{
+	int ret;
 
 	ret = init_inodecache();
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	reiserfs_proc_info_global_init();
 
-	ret = रेजिस्टर_fileप्रणाली(&reiserfs_fs_type);
-	अगर (ret)
-		जाओ out;
+	ret = register_filesystem(&reiserfs_fs_type);
+	if (ret)
+		goto out;
 
-	वापस 0;
+	return 0;
 out:
-	reiserfs_proc_info_global_करोne();
+	reiserfs_proc_info_global_done();
 	destroy_inodecache();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास निकास_reiserfs_fs(व्योम)
-अणु
-	reiserfs_proc_info_global_करोne();
-	unरेजिस्टर_fileप्रणाली(&reiserfs_fs_type);
+static void __exit exit_reiserfs_fs(void)
+{
+	reiserfs_proc_info_global_done();
+	unregister_filesystem(&reiserfs_fs_type);
 	destroy_inodecache();
-पूर्ण
+}
 
-काष्ठा file_प्रणाली_type reiserfs_fs_type = अणु
+struct file_system_type reiserfs_fs_type = {
 	.owner = THIS_MODULE,
 	.name = "reiserfs",
 	.mount = get_super_block,
-	.समाप्त_sb = reiserfs_समाप्त_sb,
+	.kill_sb = reiserfs_kill_sb,
 	.fs_flags = FS_REQUIRES_DEV,
-पूर्ण;
+};
 MODULE_ALIAS_FS("reiserfs");
 
 MODULE_DESCRIPTION("ReiserFS journaled filesystem");
@@ -2650,4 +2649,4 @@ MODULE_AUTHOR("Hans Reiser <reiser@namesys.com>");
 MODULE_LICENSE("GPL");
 
 module_init(init_reiserfs_fs);
-module_निकास(निकास_reiserfs_fs);
+module_exit(exit_reiserfs_fs);

@@ -1,99 +1,98 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* 
  * Copyright (C) 2001, 2002 Jeff Dike (jdike@karaya.com)
  */
 
-#अगर_अघोषित __LINE_H__
-#घोषणा __LINE_H__
+#ifndef __LINE_H__
+#define __LINE_H__
 
-#समावेश <linux/list.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/mutex.h>
-#समावेश "chan_user.h"
-#समावेश "mconsole_kern.h"
+#include <linux/list.h>
+#include <linux/workqueue.h>
+#include <linux/tty.h>
+#include <linux/interrupt.h>
+#include <linux/spinlock.h>
+#include <linux/mutex.h>
+#include "chan_user.h"
+#include "mconsole_kern.h"
 
-/* There's only two modअगरiable fields in this - .mc.list and .driver */
-काष्ठा line_driver अणु
-	स्थिर अक्षर *name;
-	स्थिर अक्षर *device_name;
-	स्थिर लघु major;
-	स्थिर लघु minor_start;
-	स्थिर लघु type;
-	स्थिर लघु subtype;
-	स्थिर पूर्णांक पढ़ो_irq;
-	स्थिर अक्षर *पढ़ो_irq_name;
-	स्थिर पूर्णांक ग_लिखो_irq;
-	स्थिर अक्षर *ग_लिखो_irq_name;
-	काष्ठा mc_device mc;
-	काष्ठा tty_driver *driver;
-पूर्ण;
+/* There's only two modifiable fields in this - .mc.list and .driver */
+struct line_driver {
+	const char *name;
+	const char *device_name;
+	const short major;
+	const short minor_start;
+	const short type;
+	const short subtype;
+	const int read_irq;
+	const char *read_irq_name;
+	const int write_irq;
+	const char *write_irq_name;
+	struct mc_device mc;
+	struct tty_driver *driver;
+};
 
-काष्ठा line अणु
-	काष्ठा tty_port port;
-	पूर्णांक valid;
+struct line {
+	struct tty_port port;
+	int valid;
 
-	अक्षर *init_str;
-	काष्ठा list_head chan_list;
-	काष्ठा chan *chan_in, *chan_out;
+	char *init_str;
+	struct list_head chan_list;
+	struct chan *chan_in, *chan_out;
 
 	/*This lock is actually, mostly, local to*/
 	spinlock_t lock;
-	पूर्णांक throttled;
+	int throttled;
 	/* Yes, this is a real circular buffer.
-	 * XXX: And this should become a काष्ठा kfअगरo!
+	 * XXX: And this should become a struct kfifo!
 	 *
-	 * buffer poपूर्णांकs to a buffer allocated on demand, of length
-	 * LINE_बफ_मानE, head to the start of the ring, tail to the end.*/
-	अक्षर *buffer;
-	अक्षर *head;
-	अक्षर *tail;
+	 * buffer points to a buffer allocated on demand, of length
+	 * LINE_BUFSIZE, head to the start of the ring, tail to the end.*/
+	char *buffer;
+	char *head;
+	char *tail;
 
-	पूर्णांक sigio;
-	काष्ठा delayed_work task;
-	स्थिर काष्ठा line_driver *driver;
-पूर्ण;
+	int sigio;
+	struct delayed_work task;
+	const struct line_driver *driver;
+};
 
-बाह्य व्योम line_बंद(काष्ठा tty_काष्ठा *tty, काष्ठा file * filp);
-बाह्य पूर्णांक line_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा file *filp);
-बाह्य पूर्णांक line_install(काष्ठा tty_driver *driver, काष्ठा tty_काष्ठा *tty,
-	काष्ठा line *line);
-बाह्य व्योम line_cleanup(काष्ठा tty_काष्ठा *tty);
-बाह्य व्योम line_hangup(काष्ठा tty_काष्ठा *tty);
-बाह्य पूर्णांक line_setup(अक्षर **conf, अचिन्हित nlines, अक्षर **def,
-		      अक्षर *init, अक्षर *name);
-बाह्य पूर्णांक line_ग_लिखो(काष्ठा tty_काष्ठा *tty, स्थिर अचिन्हित अक्षर *buf,
-		      पूर्णांक len);
-बाह्य व्योम line_set_termios(काष्ठा tty_काष्ठा *tty, काष्ठा ktermios * old);
-बाह्य पूर्णांक line_अक्षरs_in_buffer(काष्ठा tty_काष्ठा *tty);
-बाह्य व्योम line_flush_buffer(काष्ठा tty_काष्ठा *tty);
-बाह्य व्योम line_flush_अक्षरs(काष्ठा tty_काष्ठा *tty);
-बाह्य पूर्णांक line_ग_लिखो_room(काष्ठा tty_काष्ठा *tty);
-बाह्य व्योम line_throttle(काष्ठा tty_काष्ठा *tty);
-बाह्य व्योम line_unthrottle(काष्ठा tty_काष्ठा *tty);
+extern void line_close(struct tty_struct *tty, struct file * filp);
+extern int line_open(struct tty_struct *tty, struct file *filp);
+extern int line_install(struct tty_driver *driver, struct tty_struct *tty,
+	struct line *line);
+extern void line_cleanup(struct tty_struct *tty);
+extern void line_hangup(struct tty_struct *tty);
+extern int line_setup(char **conf, unsigned nlines, char **def,
+		      char *init, char *name);
+extern int line_write(struct tty_struct *tty, const unsigned char *buf,
+		      int len);
+extern void line_set_termios(struct tty_struct *tty, struct ktermios * old);
+extern int line_chars_in_buffer(struct tty_struct *tty);
+extern void line_flush_buffer(struct tty_struct *tty);
+extern void line_flush_chars(struct tty_struct *tty);
+extern int line_write_room(struct tty_struct *tty);
+extern void line_throttle(struct tty_struct *tty);
+extern void line_unthrottle(struct tty_struct *tty);
 
-बाह्य अक्षर *add_xterm_umid(अक्षर *base);
-बाह्य पूर्णांक line_setup_irq(पूर्णांक fd, पूर्णांक input, पूर्णांक output, काष्ठा line *line,
-			  व्योम *data);
-बाह्य व्योम line_बंद_chan(काष्ठा line *line);
-बाह्य पूर्णांक रेजिस्टर_lines(काष्ठा line_driver *line_driver,
-			  स्थिर काष्ठा tty_operations *driver,
-			  काष्ठा line *lines, पूर्णांक nlines);
-बाह्य पूर्णांक setup_one_line(काष्ठा line *lines, पूर्णांक n, अक्षर *init,
-			  स्थिर काष्ठा chan_opts *opts, अक्षर **error_out);
-बाह्य व्योम बंद_lines(काष्ठा line *lines, पूर्णांक nlines);
+extern char *add_xterm_umid(char *base);
+extern int line_setup_irq(int fd, int input, int output, struct line *line,
+			  void *data);
+extern void line_close_chan(struct line *line);
+extern int register_lines(struct line_driver *line_driver,
+			  const struct tty_operations *driver,
+			  struct line *lines, int nlines);
+extern int setup_one_line(struct line *lines, int n, char *init,
+			  const struct chan_opts *opts, char **error_out);
+extern void close_lines(struct line *lines, int nlines);
 
-बाह्य पूर्णांक line_config(काष्ठा line *lines, अचिन्हित पूर्णांक माप_lines,
-		       अक्षर *str, स्थिर काष्ठा chan_opts *opts,
-		       अक्षर **error_out);
-बाह्य पूर्णांक line_id(अक्षर **str, पूर्णांक *start_out, पूर्णांक *end_out);
-बाह्य पूर्णांक line_हटाओ(काष्ठा line *lines, अचिन्हित पूर्णांक माप_lines, पूर्णांक n,
-		       अक्षर **error_out);
-बाह्य पूर्णांक line_get_config(अक्षर *dev, काष्ठा line *lines,
-			   अचिन्हित पूर्णांक माप_lines, अक्षर *str,
-			   पूर्णांक size, अक्षर **error_out);
+extern int line_config(struct line *lines, unsigned int sizeof_lines,
+		       char *str, const struct chan_opts *opts,
+		       char **error_out);
+extern int line_id(char **str, int *start_out, int *end_out);
+extern int line_remove(struct line *lines, unsigned int sizeof_lines, int n,
+		       char **error_out);
+extern int line_get_config(char *dev, struct line *lines,
+			   unsigned int sizeof_lines, char *str,
+			   int size, char **error_out);
 
-#पूर्ण_अगर
+#endif

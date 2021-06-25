@@ -1,77 +1,76 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
+/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
 /* Copyright (c) 2021 Mellanox Technologies. */
 
-#अगर_अघोषित __MLX5_ESW_FT_H__
-#घोषणा __MLX5_ESW_FT_H__
+#ifndef __MLX5_ESW_FT_H__
+#define __MLX5_ESW_FT_H__
 
-#अगर_घोषित CONFIG_MLX5_CLS_ACT
+#ifdef CONFIG_MLX5_CLS_ACT
 
-काष्ठा mlx5_esw_indir_table *
-mlx5_esw_indir_table_init(व्योम);
-व्योम
-mlx5_esw_indir_table_destroy(काष्ठा mlx5_esw_indir_table *indir);
+struct mlx5_esw_indir_table *
+mlx5_esw_indir_table_init(void);
+void
+mlx5_esw_indir_table_destroy(struct mlx5_esw_indir_table *indir);
 
-काष्ठा mlx5_flow_table *mlx5_esw_indir_table_get(काष्ठा mlx5_eचयन *esw,
-						 काष्ठा mlx5_flow_attr *attr,
-						 काष्ठा mlx5_flow_spec *spec,
+struct mlx5_flow_table *mlx5_esw_indir_table_get(struct mlx5_eswitch *esw,
+						 struct mlx5_flow_attr *attr,
+						 struct mlx5_flow_spec *spec,
 						 u16 vport, bool decap);
-व्योम mlx5_esw_indir_table_put(काष्ठा mlx5_eचयन *esw,
-			      काष्ठा mlx5_flow_attr *attr,
+void mlx5_esw_indir_table_put(struct mlx5_eswitch *esw,
+			      struct mlx5_flow_attr *attr,
 			      u16 vport, bool decap);
 
 bool
-mlx5_esw_indir_table_needed(काष्ठा mlx5_eचयन *esw,
-			    काष्ठा mlx5_flow_attr *attr,
+mlx5_esw_indir_table_needed(struct mlx5_eswitch *esw,
+			    struct mlx5_flow_attr *attr,
 			    u16 vport_num,
-			    काष्ठा mlx5_core_dev *dest_mdev);
+			    struct mlx5_core_dev *dest_mdev);
 
 u16
-mlx5_esw_indir_table_decap_vport(काष्ठा mlx5_flow_attr *attr);
+mlx5_esw_indir_table_decap_vport(struct mlx5_flow_attr *attr);
 
-#अन्यथा
+#else
 /* indir API stubs */
-अटल अंतरभूत काष्ठा mlx5_esw_indir_table *
-mlx5_esw_indir_table_init(व्योम)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct mlx5_esw_indir_table *
+mlx5_esw_indir_table_init(void)
+{
+	return NULL;
+}
 
-अटल अंतरभूत व्योम
-mlx5_esw_indir_table_destroy(काष्ठा mlx5_esw_indir_table *indir)
-अणु
-पूर्ण
+static inline void
+mlx5_esw_indir_table_destroy(struct mlx5_esw_indir_table *indir)
+{
+}
 
-अटल अंतरभूत काष्ठा mlx5_flow_table *
-mlx5_esw_indir_table_get(काष्ठा mlx5_eचयन *esw,
-			 काष्ठा mlx5_flow_attr *attr,
-			 काष्ठा mlx5_flow_spec *spec,
+static inline struct mlx5_flow_table *
+mlx5_esw_indir_table_get(struct mlx5_eswitch *esw,
+			 struct mlx5_flow_attr *attr,
+			 struct mlx5_flow_spec *spec,
 			 u16 vport, bool decap)
-अणु
-	वापस ERR_PTR(-EOPNOTSUPP);
-पूर्ण
+{
+	return ERR_PTR(-EOPNOTSUPP);
+}
 
-अटल अंतरभूत व्योम
-mlx5_esw_indir_table_put(काष्ठा mlx5_eचयन *esw,
-			 काष्ठा mlx5_flow_attr *attr,
+static inline void
+mlx5_esw_indir_table_put(struct mlx5_eswitch *esw,
+			 struct mlx5_flow_attr *attr,
 			 u16 vport, bool decap)
-अणु
-पूर्ण
+{
+}
 
-अटल अंतरभूत bool
-mlx5_esw_indir_table_needed(काष्ठा mlx5_eचयन *esw,
-			    काष्ठा mlx5_flow_attr *attr,
+static inline bool
+mlx5_esw_indir_table_needed(struct mlx5_eswitch *esw,
+			    struct mlx5_flow_attr *attr,
 			    u16 vport_num,
-			    काष्ठा mlx5_core_dev *dest_mdev)
-अणु
-	वापस false;
-पूर्ण
+			    struct mlx5_core_dev *dest_mdev)
+{
+	return false;
+}
 
-अटल अंतरभूत u16
-mlx5_esw_indir_table_decap_vport(काष्ठा mlx5_flow_attr *attr)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+static inline u16
+mlx5_esw_indir_table_decap_vport(struct mlx5_flow_attr *attr)
+{
+	return 0;
+}
+#endif
 
-#पूर्ण_अगर /* __MLX5_ESW_FT_H__ */
+#endif /* __MLX5_ESW_FT_H__ */

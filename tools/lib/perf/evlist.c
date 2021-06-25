@@ -1,362 +1,361 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <perf/evlist.h>
-#समावेश <perf/evsel.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/list.h>
-#समावेश <linux/hash.h>
-#समावेश <sys/ioctl.h>
-#समावेश <पूर्णांकernal/evlist.h>
-#समावेश <पूर्णांकernal/evsel.h>
-#समावेश <पूर्णांकernal/xyarray.h>
-#समावेश <पूर्णांकernal/mmap.h>
-#समावेश <पूर्णांकernal/cpumap.h>
-#समावेश <पूर्णांकernal/thपढ़ोmap.h>
-#समावेश <पूर्णांकernal/lib.h>
-#समावेश <linux/zभाग.स>
-#समावेश <मानककोष.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <unistd.h>
-#समावेश <fcntl.h>
-#समावेश <संकेत.स>
-#समावेश <poll.h>
-#समावेश <sys/mman.h>
-#समावेश <perf/cpumap.h>
-#समावेश <perf/thपढ़ोmap.h>
-#समावेश <api/fd/array.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <perf/evlist.h>
+#include <perf/evsel.h>
+#include <linux/bitops.h>
+#include <linux/list.h>
+#include <linux/hash.h>
+#include <sys/ioctl.h>
+#include <internal/evlist.h>
+#include <internal/evsel.h>
+#include <internal/xyarray.h>
+#include <internal/mmap.h>
+#include <internal/cpumap.h>
+#include <internal/threadmap.h>
+#include <internal/lib.h>
+#include <linux/zalloc.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <poll.h>
+#include <sys/mman.h>
+#include <perf/cpumap.h>
+#include <perf/threadmap.h>
+#include <api/fd/array.h>
 
-व्योम perf_evlist__init(काष्ठा perf_evlist *evlist)
-अणु
+void perf_evlist__init(struct perf_evlist *evlist)
+{
 	INIT_LIST_HEAD(&evlist->entries);
 	evlist->nr_entries = 0;
 	fdarray__init(&evlist->pollfd, 64);
 	perf_evlist__reset_id_hash(evlist);
-पूर्ण
+}
 
-अटल व्योम __perf_evlist__propagate_maps(काष्ठा perf_evlist *evlist,
-					  काष्ठा perf_evsel *evsel)
-अणु
+static void __perf_evlist__propagate_maps(struct perf_evlist *evlist,
+					  struct perf_evsel *evsel)
+{
 	/*
-	 * We alपढ़ोy have cpus क्रम evsel (via PMU sysfs) so
-	 * keep it, अगर there's no target cpu list defined.
+	 * We already have cpus for evsel (via PMU sysfs) so
+	 * keep it, if there's no target cpu list defined.
 	 */
-	अगर (!evsel->own_cpus || evlist->has_user_cpus) अणु
+	if (!evsel->own_cpus || evlist->has_user_cpus) {
 		perf_cpu_map__put(evsel->cpus);
 		evsel->cpus = perf_cpu_map__get(evlist->cpus);
-	पूर्ण अन्यथा अगर (!evsel->प्रणाली_wide && perf_cpu_map__empty(evlist->cpus)) अणु
+	} else if (!evsel->system_wide && perf_cpu_map__empty(evlist->cpus)) {
 		perf_cpu_map__put(evsel->cpus);
 		evsel->cpus = perf_cpu_map__get(evlist->cpus);
-	पूर्ण अन्यथा अगर (evsel->cpus != evsel->own_cpus) अणु
+	} else if (evsel->cpus != evsel->own_cpus) {
 		perf_cpu_map__put(evsel->cpus);
 		evsel->cpus = perf_cpu_map__get(evsel->own_cpus);
-	पूर्ण
+	}
 
-	perf_thपढ़ो_map__put(evsel->thपढ़ोs);
-	evsel->thपढ़ोs = perf_thपढ़ो_map__get(evlist->thपढ़ोs);
+	perf_thread_map__put(evsel->threads);
+	evsel->threads = perf_thread_map__get(evlist->threads);
 	evlist->all_cpus = perf_cpu_map__merge(evlist->all_cpus, evsel->cpus);
-पूर्ण
+}
 
-अटल व्योम perf_evlist__propagate_maps(काष्ठा perf_evlist *evlist)
-अणु
-	काष्ठा perf_evsel *evsel;
+static void perf_evlist__propagate_maps(struct perf_evlist *evlist)
+{
+	struct perf_evsel *evsel;
 
-	perf_evlist__क्रम_each_evsel(evlist, evsel)
+	perf_evlist__for_each_evsel(evlist, evsel)
 		__perf_evlist__propagate_maps(evlist, evsel);
-पूर्ण
+}
 
-व्योम perf_evlist__add(काष्ठा perf_evlist *evlist,
-		      काष्ठा perf_evsel *evsel)
-अणु
+void perf_evlist__add(struct perf_evlist *evlist,
+		      struct perf_evsel *evsel)
+{
 	list_add_tail(&evsel->node, &evlist->entries);
 	evlist->nr_entries += 1;
 	__perf_evlist__propagate_maps(evlist, evsel);
-पूर्ण
+}
 
-व्योम perf_evlist__हटाओ(काष्ठा perf_evlist *evlist,
-			 काष्ठा perf_evsel *evsel)
-अणु
+void perf_evlist__remove(struct perf_evlist *evlist,
+			 struct perf_evsel *evsel)
+{
 	list_del_init(&evsel->node);
 	evlist->nr_entries -= 1;
-पूर्ण
+}
 
-काष्ठा perf_evlist *perf_evlist__new(व्योम)
-अणु
-	काष्ठा perf_evlist *evlist = zalloc(माप(*evlist));
+struct perf_evlist *perf_evlist__new(void)
+{
+	struct perf_evlist *evlist = zalloc(sizeof(*evlist));
 
-	अगर (evlist != शून्य)
+	if (evlist != NULL)
 		perf_evlist__init(evlist);
 
-	वापस evlist;
-पूर्ण
+	return evlist;
+}
 
-काष्ठा perf_evsel *
-perf_evlist__next(काष्ठा perf_evlist *evlist, काष्ठा perf_evsel *prev)
-अणु
-	काष्ठा perf_evsel *next;
+struct perf_evsel *
+perf_evlist__next(struct perf_evlist *evlist, struct perf_evsel *prev)
+{
+	struct perf_evsel *next;
 
-	अगर (!prev) अणु
+	if (!prev) {
 		next = list_first_entry(&evlist->entries,
-					काष्ठा perf_evsel,
+					struct perf_evsel,
 					node);
-	पूर्ण अन्यथा अणु
+	} else {
 		next = list_next_entry(prev, node);
-	पूर्ण
+	}
 
-	/* Empty list is noticed here so करोn't need checking on entry. */
-	अगर (&next->node == &evlist->entries)
-		वापस शून्य;
+	/* Empty list is noticed here so don't need checking on entry. */
+	if (&next->node == &evlist->entries)
+		return NULL;
 
-	वापस next;
-पूर्ण
+	return next;
+}
 
-अटल व्योम perf_evlist__purge(काष्ठा perf_evlist *evlist)
-अणु
-	काष्ठा perf_evsel *pos, *n;
+static void perf_evlist__purge(struct perf_evlist *evlist)
+{
+	struct perf_evsel *pos, *n;
 
-	perf_evlist__क्रम_each_entry_safe(evlist, n, pos) अणु
+	perf_evlist__for_each_entry_safe(evlist, n, pos) {
 		list_del_init(&pos->node);
 		perf_evsel__delete(pos);
-	पूर्ण
+	}
 
 	evlist->nr_entries = 0;
-पूर्ण
+}
 
-व्योम perf_evlist__निकास(काष्ठा perf_evlist *evlist)
-अणु
+void perf_evlist__exit(struct perf_evlist *evlist)
+{
 	perf_cpu_map__put(evlist->cpus);
 	perf_cpu_map__put(evlist->all_cpus);
-	perf_thपढ़ो_map__put(evlist->thपढ़ोs);
-	evlist->cpus = शून्य;
-	evlist->all_cpus = शून्य;
-	evlist->thपढ़ोs = शून्य;
-	fdarray__निकास(&evlist->pollfd);
-पूर्ण
+	perf_thread_map__put(evlist->threads);
+	evlist->cpus = NULL;
+	evlist->all_cpus = NULL;
+	evlist->threads = NULL;
+	fdarray__exit(&evlist->pollfd);
+}
 
-व्योम perf_evlist__delete(काष्ठा perf_evlist *evlist)
-अणु
-	अगर (evlist == शून्य)
-		वापस;
+void perf_evlist__delete(struct perf_evlist *evlist)
+{
+	if (evlist == NULL)
+		return;
 
 	perf_evlist__munmap(evlist);
-	perf_evlist__बंद(evlist);
+	perf_evlist__close(evlist);
 	perf_evlist__purge(evlist);
-	perf_evlist__निकास(evlist);
-	मुक्त(evlist);
-पूर्ण
+	perf_evlist__exit(evlist);
+	free(evlist);
+}
 
-व्योम perf_evlist__set_maps(काष्ठा perf_evlist *evlist,
-			   काष्ठा perf_cpu_map *cpus,
-			   काष्ठा perf_thपढ़ो_map *thपढ़ोs)
-अणु
+void perf_evlist__set_maps(struct perf_evlist *evlist,
+			   struct perf_cpu_map *cpus,
+			   struct perf_thread_map *threads)
+{
 	/*
-	 * Allow क्रम the possibility that one or another of the maps isn't being
-	 * changed i.e. करोn't put it.  Note we are assuming the maps that are
-	 * being applied are bअक्रम new and evlist is taking ownership of the
-	 * original reference count of 1.  If that is not the हाल it is up to
+	 * Allow for the possibility that one or another of the maps isn't being
+	 * changed i.e. don't put it.  Note we are assuming the maps that are
+	 * being applied are brand new and evlist is taking ownership of the
+	 * original reference count of 1.  If that is not the case it is up to
 	 * the caller to increase the reference count.
 	 */
-	अगर (cpus != evlist->cpus) अणु
+	if (cpus != evlist->cpus) {
 		perf_cpu_map__put(evlist->cpus);
 		evlist->cpus = perf_cpu_map__get(cpus);
-	पूर्ण
+	}
 
-	अगर (thपढ़ोs != evlist->thपढ़ोs) अणु
-		perf_thपढ़ो_map__put(evlist->thपढ़ोs);
-		evlist->thपढ़ोs = perf_thपढ़ो_map__get(thपढ़ोs);
-	पूर्ण
+	if (threads != evlist->threads) {
+		perf_thread_map__put(evlist->threads);
+		evlist->threads = perf_thread_map__get(threads);
+	}
 
-	अगर (!evlist->all_cpus && cpus)
+	if (!evlist->all_cpus && cpus)
 		evlist->all_cpus = perf_cpu_map__get(cpus);
 
 	perf_evlist__propagate_maps(evlist);
-पूर्ण
+}
 
-पूर्णांक perf_evlist__खोलो(काष्ठा perf_evlist *evlist)
-अणु
-	काष्ठा perf_evsel *evsel;
-	पूर्णांक err;
+int perf_evlist__open(struct perf_evlist *evlist)
+{
+	struct perf_evsel *evsel;
+	int err;
 
-	perf_evlist__क्रम_each_entry(evlist, evsel) अणु
-		err = perf_evsel__खोलो(evsel, evsel->cpus, evsel->thपढ़ोs);
-		अगर (err < 0)
-			जाओ out_err;
-	पूर्ण
+	perf_evlist__for_each_entry(evlist, evsel) {
+		err = perf_evsel__open(evsel, evsel->cpus, evsel->threads);
+		if (err < 0)
+			goto out_err;
+	}
 
-	वापस 0;
+	return 0;
 
 out_err:
-	perf_evlist__बंद(evlist);
-	वापस err;
-पूर्ण
+	perf_evlist__close(evlist);
+	return err;
+}
 
-व्योम perf_evlist__बंद(काष्ठा perf_evlist *evlist)
-अणु
-	काष्ठा perf_evsel *evsel;
+void perf_evlist__close(struct perf_evlist *evlist)
+{
+	struct perf_evsel *evsel;
 
-	perf_evlist__क्रम_each_entry_reverse(evlist, evsel)
-		perf_evsel__बंद(evsel);
-पूर्ण
+	perf_evlist__for_each_entry_reverse(evlist, evsel)
+		perf_evsel__close(evsel);
+}
 
-व्योम perf_evlist__enable(काष्ठा perf_evlist *evlist)
-अणु
-	काष्ठा perf_evsel *evsel;
+void perf_evlist__enable(struct perf_evlist *evlist)
+{
+	struct perf_evsel *evsel;
 
-	perf_evlist__क्रम_each_entry(evlist, evsel)
+	perf_evlist__for_each_entry(evlist, evsel)
 		perf_evsel__enable(evsel);
-पूर्ण
+}
 
-व्योम perf_evlist__disable(काष्ठा perf_evlist *evlist)
-अणु
-	काष्ठा perf_evsel *evsel;
+void perf_evlist__disable(struct perf_evlist *evlist)
+{
+	struct perf_evsel *evsel;
 
-	perf_evlist__क्रम_each_entry(evlist, evsel)
+	perf_evlist__for_each_entry(evlist, evsel)
 		perf_evsel__disable(evsel);
-पूर्ण
+}
 
-u64 perf_evlist__पढ़ो_क्रमmat(काष्ठा perf_evlist *evlist)
-अणु
-	काष्ठा perf_evsel *first = perf_evlist__first(evlist);
+u64 perf_evlist__read_format(struct perf_evlist *evlist)
+{
+	struct perf_evsel *first = perf_evlist__first(evlist);
 
-	वापस first->attr.पढ़ो_क्रमmat;
-पूर्ण
+	return first->attr.read_format;
+}
 
-#घोषणा SID(e, x, y) xyarray__entry(e->sample_id, x, y)
+#define SID(e, x, y) xyarray__entry(e->sample_id, x, y)
 
-अटल व्योम perf_evlist__id_hash(काष्ठा perf_evlist *evlist,
-				 काष्ठा perf_evsel *evsel,
-				 पूर्णांक cpu, पूर्णांक thपढ़ो, u64 id)
-अणु
-	पूर्णांक hash;
-	काष्ठा perf_sample_id *sid = SID(evsel, cpu, thपढ़ो);
+static void perf_evlist__id_hash(struct perf_evlist *evlist,
+				 struct perf_evsel *evsel,
+				 int cpu, int thread, u64 id)
+{
+	int hash;
+	struct perf_sample_id *sid = SID(evsel, cpu, thread);
 
 	sid->id = id;
 	sid->evsel = evsel;
 	hash = hash_64(sid->id, PERF_EVLIST__HLIST_BITS);
 	hlist_add_head(&sid->node, &evlist->heads[hash]);
-पूर्ण
+}
 
-व्योम perf_evlist__reset_id_hash(काष्ठा perf_evlist *evlist)
-अणु
-	पूर्णांक i;
+void perf_evlist__reset_id_hash(struct perf_evlist *evlist)
+{
+	int i;
 
-	क्रम (i = 0; i < PERF_EVLIST__HLIST_SIZE; ++i)
+	for (i = 0; i < PERF_EVLIST__HLIST_SIZE; ++i)
 		INIT_HLIST_HEAD(&evlist->heads[i]);
-पूर्ण
+}
 
-व्योम perf_evlist__id_add(काष्ठा perf_evlist *evlist,
-			 काष्ठा perf_evsel *evsel,
-			 पूर्णांक cpu, पूर्णांक thपढ़ो, u64 id)
-अणु
-	perf_evlist__id_hash(evlist, evsel, cpu, thपढ़ो, id);
+void perf_evlist__id_add(struct perf_evlist *evlist,
+			 struct perf_evsel *evsel,
+			 int cpu, int thread, u64 id)
+{
+	perf_evlist__id_hash(evlist, evsel, cpu, thread, id);
 	evsel->id[evsel->ids++] = id;
-पूर्ण
+}
 
-पूर्णांक perf_evlist__id_add_fd(काष्ठा perf_evlist *evlist,
-			   काष्ठा perf_evsel *evsel,
-			   पूर्णांक cpu, पूर्णांक thपढ़ो, पूर्णांक fd)
-अणु
-	u64 पढ़ो_data[4] = अणु 0, पूर्ण;
-	पूर्णांक id_idx = 1; /* The first entry is the counter value */
+int perf_evlist__id_add_fd(struct perf_evlist *evlist,
+			   struct perf_evsel *evsel,
+			   int cpu, int thread, int fd)
+{
+	u64 read_data[4] = { 0, };
+	int id_idx = 1; /* The first entry is the counter value */
 	u64 id;
-	पूर्णांक ret;
+	int ret;
 
 	ret = ioctl(fd, PERF_EVENT_IOC_ID, &id);
-	अगर (!ret)
-		जाओ add;
+	if (!ret)
+		goto add;
 
-	अगर (त्रुटि_सं != ENOTTY)
-		वापस -1;
+	if (errno != ENOTTY)
+		return -1;
 
 	/* Legacy way to get event id.. All hail to old kernels! */
 
 	/*
-	 * This way करोes not work with group क्रमmat पढ़ो, so bail
-	 * out in that हाल.
+	 * This way does not work with group format read, so bail
+	 * out in that case.
 	 */
-	अगर (perf_evlist__पढ़ो_क्रमmat(evlist) & PERF_FORMAT_GROUP)
-		वापस -1;
+	if (perf_evlist__read_format(evlist) & PERF_FORMAT_GROUP)
+		return -1;
 
-	अगर (!(evsel->attr.पढ़ो_क्रमmat & PERF_FORMAT_ID) ||
-	    पढ़ो(fd, &पढ़ो_data, माप(पढ़ो_data)) == -1)
-		वापस -1;
+	if (!(evsel->attr.read_format & PERF_FORMAT_ID) ||
+	    read(fd, &read_data, sizeof(read_data)) == -1)
+		return -1;
 
-	अगर (evsel->attr.पढ़ो_क्रमmat & PERF_FORMAT_TOTAL_TIME_ENABLED)
+	if (evsel->attr.read_format & PERF_FORMAT_TOTAL_TIME_ENABLED)
 		++id_idx;
-	अगर (evsel->attr.पढ़ो_क्रमmat & PERF_FORMAT_TOTAL_TIME_RUNNING)
+	if (evsel->attr.read_format & PERF_FORMAT_TOTAL_TIME_RUNNING)
 		++id_idx;
 
-	id = पढ़ो_data[id_idx];
+	id = read_data[id_idx];
 
 add:
-	perf_evlist__id_add(evlist, evsel, cpu, thपढ़ो, id);
-	वापस 0;
-पूर्ण
+	perf_evlist__id_add(evlist, evsel, cpu, thread, id);
+	return 0;
+}
 
-पूर्णांक perf_evlist__alloc_pollfd(काष्ठा perf_evlist *evlist)
-अणु
-	पूर्णांक nr_cpus = perf_cpu_map__nr(evlist->cpus);
-	पूर्णांक nr_thपढ़ोs = perf_thपढ़ो_map__nr(evlist->thपढ़ोs);
-	पूर्णांक nfds = 0;
-	काष्ठा perf_evsel *evsel;
+int perf_evlist__alloc_pollfd(struct perf_evlist *evlist)
+{
+	int nr_cpus = perf_cpu_map__nr(evlist->cpus);
+	int nr_threads = perf_thread_map__nr(evlist->threads);
+	int nfds = 0;
+	struct perf_evsel *evsel;
 
-	perf_evlist__क्रम_each_entry(evlist, evsel) अणु
-		अगर (evsel->प्रणाली_wide)
+	perf_evlist__for_each_entry(evlist, evsel) {
+		if (evsel->system_wide)
 			nfds += nr_cpus;
-		अन्यथा
-			nfds += nr_cpus * nr_thपढ़ोs;
-	पूर्ण
+		else
+			nfds += nr_cpus * nr_threads;
+	}
 
-	अगर (fdarray__available_entries(&evlist->pollfd) < nfds &&
+	if (fdarray__available_entries(&evlist->pollfd) < nfds &&
 	    fdarray__grow(&evlist->pollfd, nfds) < 0)
-		वापस -ENOMEM;
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक perf_evlist__add_pollfd(काष्ठा perf_evlist *evlist, पूर्णांक fd,
-			    व्योम *ptr, लघु revent, क्रमागत fdarray_flags flags)
-अणु
-	पूर्णांक pos = fdarray__add(&evlist->pollfd, fd, revent | POLLERR | POLLHUP, flags);
+int perf_evlist__add_pollfd(struct perf_evlist *evlist, int fd,
+			    void *ptr, short revent, enum fdarray_flags flags)
+{
+	int pos = fdarray__add(&evlist->pollfd, fd, revent | POLLERR | POLLHUP, flags);
 
-	अगर (pos >= 0) अणु
+	if (pos >= 0) {
 		evlist->pollfd.priv[pos].ptr = ptr;
 		fcntl(fd, F_SETFL, O_NONBLOCK);
-	पूर्ण
+	}
 
-	वापस pos;
-पूर्ण
+	return pos;
+}
 
-अटल व्योम perf_evlist__munmap_filtered(काष्ठा fdarray *fda, पूर्णांक fd,
-					 व्योम *arg __maybe_unused)
-अणु
-	काष्ठा perf_mmap *map = fda->priv[fd].ptr;
+static void perf_evlist__munmap_filtered(struct fdarray *fda, int fd,
+					 void *arg __maybe_unused)
+{
+	struct perf_mmap *map = fda->priv[fd].ptr;
 
-	अगर (map)
+	if (map)
 		perf_mmap__put(map);
-पूर्ण
+}
 
-पूर्णांक perf_evlist__filter_pollfd(काष्ठा perf_evlist *evlist, लघु revents_and_mask)
-अणु
-	वापस fdarray__filter(&evlist->pollfd, revents_and_mask,
-			       perf_evlist__munmap_filtered, शून्य);
-पूर्ण
+int perf_evlist__filter_pollfd(struct perf_evlist *evlist, short revents_and_mask)
+{
+	return fdarray__filter(&evlist->pollfd, revents_and_mask,
+			       perf_evlist__munmap_filtered, NULL);
+}
 
-पूर्णांक perf_evlist__poll(काष्ठा perf_evlist *evlist, पूर्णांक समयout)
-अणु
-	वापस fdarray__poll(&evlist->pollfd, समयout);
-पूर्ण
+int perf_evlist__poll(struct perf_evlist *evlist, int timeout)
+{
+	return fdarray__poll(&evlist->pollfd, timeout);
+}
 
-अटल काष्ठा perf_mmap* perf_evlist__alloc_mmap(काष्ठा perf_evlist *evlist, bool overग_लिखो)
-अणु
-	पूर्णांक i;
-	काष्ठा perf_mmap *map;
+static struct perf_mmap* perf_evlist__alloc_mmap(struct perf_evlist *evlist, bool overwrite)
+{
+	int i;
+	struct perf_mmap *map;
 
-	map = zalloc(evlist->nr_mmaps * माप(काष्ठा perf_mmap));
-	अगर (!map)
-		वापस शून्य;
+	map = zalloc(evlist->nr_mmaps * sizeof(struct perf_mmap));
+	if (!map)
+		return NULL;
 
-	क्रम (i = 0; i < evlist->nr_mmaps; i++) अणु
-		काष्ठा perf_mmap *prev = i ? &map[i - 1] : शून्य;
+	for (i = 0; i < evlist->nr_mmaps; i++) {
+		struct perf_mmap *prev = i ? &map[i - 1] : NULL;
 
 		/*
 		 * When the perf_mmap() call is made we grab one refcount, plus
@@ -364,109 +363,109 @@ add:
 		 * events after all real references (perf_mmap__get()) are
 		 * dropped.
 		 *
-		 * Each PERF_EVENT_IOC_SET_OUTPUT poपूर्णांकs to this mmap and
-		 * thus करोes perf_mmap__get() on it.
+		 * Each PERF_EVENT_IOC_SET_OUTPUT points to this mmap and
+		 * thus does perf_mmap__get() on it.
 		 */
-		perf_mmap__init(&map[i], prev, overग_लिखो, शून्य);
-	पूर्ण
+		perf_mmap__init(&map[i], prev, overwrite, NULL);
+	}
 
-	वापस map;
-पूर्ण
+	return map;
+}
 
-अटल व्योम perf_evsel__set_sid_idx(काष्ठा perf_evsel *evsel, पूर्णांक idx, पूर्णांक cpu, पूर्णांक thपढ़ो)
-अणु
-	काष्ठा perf_sample_id *sid = SID(evsel, cpu, thपढ़ो);
+static void perf_evsel__set_sid_idx(struct perf_evsel *evsel, int idx, int cpu, int thread)
+{
+	struct perf_sample_id *sid = SID(evsel, cpu, thread);
 
 	sid->idx = idx;
 	sid->cpu = perf_cpu_map__cpu(evsel->cpus, cpu);
-	sid->tid = perf_thपढ़ो_map__pid(evsel->thपढ़ोs, thपढ़ो);
-पूर्ण
+	sid->tid = perf_thread_map__pid(evsel->threads, thread);
+}
 
-अटल काष्ठा perf_mmap*
-perf_evlist__mmap_cb_get(काष्ठा perf_evlist *evlist, bool overग_लिखो, पूर्णांक idx)
-अणु
-	काष्ठा perf_mmap *maps;
+static struct perf_mmap*
+perf_evlist__mmap_cb_get(struct perf_evlist *evlist, bool overwrite, int idx)
+{
+	struct perf_mmap *maps;
 
-	maps = overग_लिखो ? evlist->mmap_ovw : evlist->mmap;
+	maps = overwrite ? evlist->mmap_ovw : evlist->mmap;
 
-	अगर (!maps) अणु
-		maps = perf_evlist__alloc_mmap(evlist, overग_लिखो);
-		अगर (!maps)
-			वापस शून्य;
+	if (!maps) {
+		maps = perf_evlist__alloc_mmap(evlist, overwrite);
+		if (!maps)
+			return NULL;
 
-		अगर (overग_लिखो)
+		if (overwrite)
 			evlist->mmap_ovw = maps;
-		अन्यथा
+		else
 			evlist->mmap = maps;
-	पूर्ण
+	}
 
-	वापस &maps[idx];
-पूर्ण
+	return &maps[idx];
+}
 
-#घोषणा FD(e, x, y) (*(पूर्णांक *) xyarray__entry(e->fd, x, y))
+#define FD(e, x, y) (*(int *) xyarray__entry(e->fd, x, y))
 
-अटल पूर्णांक
-perf_evlist__mmap_cb_mmap(काष्ठा perf_mmap *map, काष्ठा perf_mmap_param *mp,
-			  पूर्णांक output, पूर्णांक cpu)
-अणु
-	वापस perf_mmap__mmap(map, mp, output, cpu);
-पूर्ण
+static int
+perf_evlist__mmap_cb_mmap(struct perf_mmap *map, struct perf_mmap_param *mp,
+			  int output, int cpu)
+{
+	return perf_mmap__mmap(map, mp, output, cpu);
+}
 
-अटल व्योम perf_evlist__set_mmap_first(काष्ठा perf_evlist *evlist, काष्ठा perf_mmap *map,
-					bool overग_लिखो)
-अणु
-	अगर (overग_लिखो)
+static void perf_evlist__set_mmap_first(struct perf_evlist *evlist, struct perf_mmap *map,
+					bool overwrite)
+{
+	if (overwrite)
 		evlist->mmap_ovw_first = map;
-	अन्यथा
+	else
 		evlist->mmap_first = map;
-पूर्ण
+}
 
-अटल पूर्णांक
-mmap_per_evsel(काष्ठा perf_evlist *evlist, काष्ठा perf_evlist_mmap_ops *ops,
-	       पूर्णांक idx, काष्ठा perf_mmap_param *mp, पूर्णांक cpu_idx,
-	       पूर्णांक thपढ़ो, पूर्णांक *_output, पूर्णांक *_output_overग_लिखो)
-अणु
-	पूर्णांक evlist_cpu = perf_cpu_map__cpu(evlist->cpus, cpu_idx);
-	काष्ठा perf_evsel *evsel;
-	पूर्णांक revent;
+static int
+mmap_per_evsel(struct perf_evlist *evlist, struct perf_evlist_mmap_ops *ops,
+	       int idx, struct perf_mmap_param *mp, int cpu_idx,
+	       int thread, int *_output, int *_output_overwrite)
+{
+	int evlist_cpu = perf_cpu_map__cpu(evlist->cpus, cpu_idx);
+	struct perf_evsel *evsel;
+	int revent;
 
-	perf_evlist__क्रम_each_entry(evlist, evsel) अणु
-		bool overग_लिखो = evsel->attr.ग_लिखो_backward;
-		काष्ठा perf_mmap *map;
-		पूर्णांक *output, fd, cpu;
+	perf_evlist__for_each_entry(evlist, evsel) {
+		bool overwrite = evsel->attr.write_backward;
+		struct perf_mmap *map;
+		int *output, fd, cpu;
 
-		अगर (evsel->प्रणाली_wide && thपढ़ो)
-			जारी;
+		if (evsel->system_wide && thread)
+			continue;
 
 		cpu = perf_cpu_map__idx(evsel->cpus, evlist_cpu);
-		अगर (cpu == -1)
-			जारी;
+		if (cpu == -1)
+			continue;
 
-		map = ops->get(evlist, overग_लिखो, idx);
-		अगर (map == शून्य)
-			वापस -ENOMEM;
+		map = ops->get(evlist, overwrite, idx);
+		if (map == NULL)
+			return -ENOMEM;
 
-		अगर (overग_लिखो) अणु
+		if (overwrite) {
 			mp->prot = PROT_READ;
-			output   = _output_overग_लिखो;
-		पूर्ण अन्यथा अणु
+			output   = _output_overwrite;
+		} else {
 			mp->prot = PROT_READ | PROT_WRITE;
 			output   = _output;
-		पूर्ण
+		}
 
-		fd = FD(evsel, cpu, thपढ़ो);
+		fd = FD(evsel, cpu, thread);
 
-		अगर (*output == -1) अणु
+		if (*output == -1) {
 			*output = fd;
 
 			/*
-			 * The last one will be करोne at perf_mmap__consume(), so that we
-			 * make sure we करोn't prevent tools from consuming every last event in
+			 * The last one will be done at perf_mmap__consume(), so that we
+			 * make sure we don't prevent tools from consuming every last event in
 			 * the ring buffer.
 			 *
-			 * I.e. we can get the POLLHUP meaning that the fd करोesn't exist
-			 * anymore, but the last events क्रम it are still in the ring buffer,
-			 * रुकोing to be consumed.
+			 * I.e. we can get the POLLHUP meaning that the fd doesn't exist
+			 * anymore, but the last events for it are still in the ring buffer,
+			 * waiting to be consumed.
 			 *
 			 * Tools can chose to ignore this at their own discretion, but the
 			 * evlist layer can't just drop it when filtering events in
@@ -474,171 +473,171 @@ mmap_per_evsel(काष्ठा perf_evlist *evlist, काष्ठा perf_e
 			 */
 			refcount_set(&map->refcnt, 2);
 
-			अगर (ops->mmap(map, mp, *output, evlist_cpu) < 0)
-				वापस -1;
+			if (ops->mmap(map, mp, *output, evlist_cpu) < 0)
+				return -1;
 
-			अगर (!idx)
-				perf_evlist__set_mmap_first(evlist, map, overग_लिखो);
-		पूर्ण अन्यथा अणु
-			अगर (ioctl(fd, PERF_EVENT_IOC_SET_OUTPUT, *output) != 0)
-				वापस -1;
+			if (!idx)
+				perf_evlist__set_mmap_first(evlist, map, overwrite);
+		} else {
+			if (ioctl(fd, PERF_EVENT_IOC_SET_OUTPUT, *output) != 0)
+				return -1;
 
 			perf_mmap__get(map);
-		पूर्ण
+		}
 
-		revent = !overग_लिखो ? POLLIN : 0;
+		revent = !overwrite ? POLLIN : 0;
 
-		अगर (!evsel->प्रणाली_wide &&
-		    perf_evlist__add_pollfd(evlist, fd, map, revent, fdarray_flag__शेष) < 0) अणु
+		if (!evsel->system_wide &&
+		    perf_evlist__add_pollfd(evlist, fd, map, revent, fdarray_flag__default) < 0) {
 			perf_mmap__put(map);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
-		अगर (evsel->attr.पढ़ो_क्रमmat & PERF_FORMAT_ID) अणु
-			अगर (perf_evlist__id_add_fd(evlist, evsel, cpu, thपढ़ो,
+		if (evsel->attr.read_format & PERF_FORMAT_ID) {
+			if (perf_evlist__id_add_fd(evlist, evsel, cpu, thread,
 						   fd) < 0)
-				वापस -1;
-			perf_evsel__set_sid_idx(evsel, idx, cpu, thपढ़ो);
-		पूर्ण
-	पूर्ण
+				return -1;
+			perf_evsel__set_sid_idx(evsel, idx, cpu, thread);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-mmap_per_thपढ़ो(काष्ठा perf_evlist *evlist, काष्ठा perf_evlist_mmap_ops *ops,
-		काष्ठा perf_mmap_param *mp)
-अणु
-	पूर्णांक thपढ़ो;
-	पूर्णांक nr_thपढ़ोs = perf_thपढ़ो_map__nr(evlist->thपढ़ोs);
+static int
+mmap_per_thread(struct perf_evlist *evlist, struct perf_evlist_mmap_ops *ops,
+		struct perf_mmap_param *mp)
+{
+	int thread;
+	int nr_threads = perf_thread_map__nr(evlist->threads);
 
-	क्रम (thपढ़ो = 0; thपढ़ो < nr_thपढ़ोs; thपढ़ो++) अणु
-		पूर्णांक output = -1;
-		पूर्णांक output_overग_लिखो = -1;
+	for (thread = 0; thread < nr_threads; thread++) {
+		int output = -1;
+		int output_overwrite = -1;
 
-		अगर (ops->idx)
-			ops->idx(evlist, mp, thपढ़ो, false);
+		if (ops->idx)
+			ops->idx(evlist, mp, thread, false);
 
-		अगर (mmap_per_evsel(evlist, ops, thपढ़ो, mp, 0, thपढ़ो,
-				   &output, &output_overग_लिखो))
-			जाओ out_unmap;
-	पूर्ण
+		if (mmap_per_evsel(evlist, ops, thread, mp, 0, thread,
+				   &output, &output_overwrite))
+			goto out_unmap;
+	}
 
-	वापस 0;
+	return 0;
 
 out_unmap:
 	perf_evlist__munmap(evlist);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक
-mmap_per_cpu(काष्ठा perf_evlist *evlist, काष्ठा perf_evlist_mmap_ops *ops,
-	     काष्ठा perf_mmap_param *mp)
-अणु
-	पूर्णांक nr_thपढ़ोs = perf_thपढ़ो_map__nr(evlist->thपढ़ोs);
-	पूर्णांक nr_cpus    = perf_cpu_map__nr(evlist->cpus);
-	पूर्णांक cpu, thपढ़ो;
+static int
+mmap_per_cpu(struct perf_evlist *evlist, struct perf_evlist_mmap_ops *ops,
+	     struct perf_mmap_param *mp)
+{
+	int nr_threads = perf_thread_map__nr(evlist->threads);
+	int nr_cpus    = perf_cpu_map__nr(evlist->cpus);
+	int cpu, thread;
 
-	क्रम (cpu = 0; cpu < nr_cpus; cpu++) अणु
-		पूर्णांक output = -1;
-		पूर्णांक output_overग_लिखो = -1;
+	for (cpu = 0; cpu < nr_cpus; cpu++) {
+		int output = -1;
+		int output_overwrite = -1;
 
-		अगर (ops->idx)
+		if (ops->idx)
 			ops->idx(evlist, mp, cpu, true);
 
-		क्रम (thपढ़ो = 0; thपढ़ो < nr_thपढ़ोs; thपढ़ो++) अणु
-			अगर (mmap_per_evsel(evlist, ops, cpu, mp, cpu,
-					   thपढ़ो, &output, &output_overग_लिखो))
-				जाओ out_unmap;
-		पूर्ण
-	पूर्ण
+		for (thread = 0; thread < nr_threads; thread++) {
+			if (mmap_per_evsel(evlist, ops, cpu, mp, cpu,
+					   thread, &output, &output_overwrite))
+				goto out_unmap;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 out_unmap:
 	perf_evlist__munmap(evlist);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक perf_evlist__nr_mmaps(काष्ठा perf_evlist *evlist)
-अणु
-	पूर्णांक nr_mmaps;
+static int perf_evlist__nr_mmaps(struct perf_evlist *evlist)
+{
+	int nr_mmaps;
 
 	nr_mmaps = perf_cpu_map__nr(evlist->cpus);
-	अगर (perf_cpu_map__empty(evlist->cpus))
-		nr_mmaps = perf_thपढ़ो_map__nr(evlist->thपढ़ोs);
+	if (perf_cpu_map__empty(evlist->cpus))
+		nr_mmaps = perf_thread_map__nr(evlist->threads);
 
-	वापस nr_mmaps;
-पूर्ण
+	return nr_mmaps;
+}
 
-पूर्णांक perf_evlist__mmap_ops(काष्ठा perf_evlist *evlist,
-			  काष्ठा perf_evlist_mmap_ops *ops,
-			  काष्ठा perf_mmap_param *mp)
-अणु
-	काष्ठा perf_evsel *evsel;
-	स्थिर काष्ठा perf_cpu_map *cpus = evlist->cpus;
-	स्थिर काष्ठा perf_thपढ़ो_map *thपढ़ोs = evlist->thपढ़ोs;
+int perf_evlist__mmap_ops(struct perf_evlist *evlist,
+			  struct perf_evlist_mmap_ops *ops,
+			  struct perf_mmap_param *mp)
+{
+	struct perf_evsel *evsel;
+	const struct perf_cpu_map *cpus = evlist->cpus;
+	const struct perf_thread_map *threads = evlist->threads;
 
-	अगर (!ops || !ops->get || !ops->mmap)
-		वापस -EINVAL;
+	if (!ops || !ops->get || !ops->mmap)
+		return -EINVAL;
 
 	mp->mask = evlist->mmap_len - page_size - 1;
 
 	evlist->nr_mmaps = perf_evlist__nr_mmaps(evlist);
 
-	perf_evlist__क्रम_each_entry(evlist, evsel) अणु
-		अगर ((evsel->attr.पढ़ो_क्रमmat & PERF_FORMAT_ID) &&
-		    evsel->sample_id == शून्य &&
-		    perf_evsel__alloc_id(evsel, perf_cpu_map__nr(cpus), thपढ़ोs->nr) < 0)
-			वापस -ENOMEM;
-	पूर्ण
+	perf_evlist__for_each_entry(evlist, evsel) {
+		if ((evsel->attr.read_format & PERF_FORMAT_ID) &&
+		    evsel->sample_id == NULL &&
+		    perf_evsel__alloc_id(evsel, perf_cpu_map__nr(cpus), threads->nr) < 0)
+			return -ENOMEM;
+	}
 
-	अगर (evlist->pollfd.entries == शून्य && perf_evlist__alloc_pollfd(evlist) < 0)
-		वापस -ENOMEM;
+	if (evlist->pollfd.entries == NULL && perf_evlist__alloc_pollfd(evlist) < 0)
+		return -ENOMEM;
 
-	अगर (perf_cpu_map__empty(cpus))
-		वापस mmap_per_thपढ़ो(evlist, ops, mp);
+	if (perf_cpu_map__empty(cpus))
+		return mmap_per_thread(evlist, ops, mp);
 
-	वापस mmap_per_cpu(evlist, ops, mp);
-पूर्ण
+	return mmap_per_cpu(evlist, ops, mp);
+}
 
-पूर्णांक perf_evlist__mmap(काष्ठा perf_evlist *evlist, पूर्णांक pages)
-अणु
-	काष्ठा perf_mmap_param mp;
-	काष्ठा perf_evlist_mmap_ops ops = अणु
+int perf_evlist__mmap(struct perf_evlist *evlist, int pages)
+{
+	struct perf_mmap_param mp;
+	struct perf_evlist_mmap_ops ops = {
 		.get  = perf_evlist__mmap_cb_get,
 		.mmap = perf_evlist__mmap_cb_mmap,
-	पूर्ण;
+	};
 
 	evlist->mmap_len = (pages + 1) * page_size;
 
-	वापस perf_evlist__mmap_ops(evlist, &ops, &mp);
-पूर्ण
+	return perf_evlist__mmap_ops(evlist, &ops, &mp);
+}
 
-व्योम perf_evlist__munmap(काष्ठा perf_evlist *evlist)
-अणु
-	पूर्णांक i;
+void perf_evlist__munmap(struct perf_evlist *evlist)
+{
+	int i;
 
-	अगर (evlist->mmap) अणु
-		क्रम (i = 0; i < evlist->nr_mmaps; i++)
+	if (evlist->mmap) {
+		for (i = 0; i < evlist->nr_mmaps; i++)
 			perf_mmap__munmap(&evlist->mmap[i]);
-	पूर्ण
+	}
 
-	अगर (evlist->mmap_ovw) अणु
-		क्रम (i = 0; i < evlist->nr_mmaps; i++)
+	if (evlist->mmap_ovw) {
+		for (i = 0; i < evlist->nr_mmaps; i++)
 			perf_mmap__munmap(&evlist->mmap_ovw[i]);
-	पूर्ण
+	}
 
-	zमुक्त(&evlist->mmap);
-	zमुक्त(&evlist->mmap_ovw);
-पूर्ण
+	zfree(&evlist->mmap);
+	zfree(&evlist->mmap_ovw);
+}
 
-काष्ठा perf_mmap*
-perf_evlist__next_mmap(काष्ठा perf_evlist *evlist, काष्ठा perf_mmap *map,
-		       bool overग_लिखो)
-अणु
-	अगर (map)
-		वापस map->next;
+struct perf_mmap*
+perf_evlist__next_mmap(struct perf_evlist *evlist, struct perf_mmap *map,
+		       bool overwrite)
+{
+	if (map)
+		return map->next;
 
-	वापस overग_लिखो ? evlist->mmap_ovw_first : evlist->mmap_first;
-पूर्ण
+	return overwrite ? evlist->mmap_ovw_first : evlist->mmap_first;
+}

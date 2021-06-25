@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-// Copyright (C) 2018 Hangzhou C-SKY Microप्रणालीs co.,ltd.
+// SPDX-License-Identifier: GPL-2.0
+// Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
 
-#समावेश <linux/ftrace.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/stop_machine.h>
-#समावेश <यंत्र/cacheflush.h>
+#include <linux/ftrace.h>
+#include <linux/uaccess.h>
+#include <linux/stop_machine.h>
+#include <asm/cacheflush.h>
 
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE
+#ifdef CONFIG_DYNAMIC_FTRACE
 
-#घोषणा NOP		0x4000
-#घोषणा NOP32_HI	0xc400
-#घोषणा NOP32_LO	0x4820
-#घोषणा PUSH_LR		0x14d0
-#घोषणा MOVIH_LINK	0xea3a
-#घोषणा ORI_LINK	0xef5a
-#घोषणा JSR_LINK	0xe8fa
-#घोषणा BSR_LINK	0xe000
+#define NOP		0x4000
+#define NOP32_HI	0xc400
+#define NOP32_LO	0x4820
+#define PUSH_LR		0x14d0
+#define MOVIH_LINK	0xea3a
+#define ORI_LINK	0xef5a
+#define JSR_LINK	0xe8fa
+#define BSR_LINK	0xe000
 
 /*
  * Gcc-csky with -pg will insert stub in function prologue:
@@ -30,7 +29,7 @@
  *	bsr	_mcount
  *	nop32
  *	nop32
- * अन्यथा we'll use (movih + ori + jsr):
+ * else we'll use (movih + ori + jsr):
  *	push	lr
  *	movih	r26, ...
  *	ori	r26, ...
@@ -39,130 +38,130 @@
  * (r26 is our reserved link-reg)
  *
  */
-अटल अंतरभूत व्योम make_jbsr(अचिन्हित दीर्घ callee, अचिन्हित दीर्घ pc,
-			     uपूर्णांक16_t *call, bool nolr)
-अणु
-	दीर्घ offset;
+static inline void make_jbsr(unsigned long callee, unsigned long pc,
+			     uint16_t *call, bool nolr)
+{
+	long offset;
 
 	call[0]	= nolr ? NOP : PUSH_LR;
 
-	offset = (दीर्घ) callee - (दीर्घ) pc;
+	offset = (long) callee - (long) pc;
 
-	अगर (unlikely(offset < -67108864 || offset > 67108864)) अणु
+	if (unlikely(offset < -67108864 || offset > 67108864)) {
 		call[1] = MOVIH_LINK;
 		call[2] = callee >> 16;
 		call[3] = ORI_LINK;
 		call[4] = callee & 0xffff;
 		call[5] = JSR_LINK;
 		call[6] = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		offset = offset >> 1;
 
 		call[1] = BSR_LINK |
-			 ((uपूर्णांक16_t)((अचिन्हित दीर्घ) offset >> 16) & 0x3ff);
-		call[2] = (uपूर्णांक16_t)((अचिन्हित दीर्घ) offset & 0xffff);
+			 ((uint16_t)((unsigned long) offset >> 16) & 0x3ff);
+		call[2] = (uint16_t)((unsigned long) offset & 0xffff);
 		call[3] = call[5] = NOP32_HI;
 		call[4] = call[6] = NOP32_LO;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल uपूर्णांक16_t nops[7] = अणुNOP, NOP32_HI, NOP32_LO, NOP32_HI, NOP32_LO,
-				NOP32_HI, NOP32_LOपूर्ण;
-अटल पूर्णांक ftrace_check_current_nop(अचिन्हित दीर्घ hook)
-अणु
-	uपूर्णांक16_t olds[7];
-	अचिन्हित दीर्घ hook_pos = hook - 2;
+static uint16_t nops[7] = {NOP, NOP32_HI, NOP32_LO, NOP32_HI, NOP32_LO,
+				NOP32_HI, NOP32_LO};
+static int ftrace_check_current_nop(unsigned long hook)
+{
+	uint16_t olds[7];
+	unsigned long hook_pos = hook - 2;
 
-	अगर (copy_from_kernel_nofault((व्योम *)olds, (व्योम *)hook_pos,
-			माप(nops)))
-		वापस -EFAULT;
+	if (copy_from_kernel_nofault((void *)olds, (void *)hook_pos,
+			sizeof(nops)))
+		return -EFAULT;
 
-	अगर (स_भेद((व्योम *)nops, (व्योम *)olds, माप(nops))) अणु
+	if (memcmp((void *)nops, (void *)olds, sizeof(nops))) {
 		pr_err("%p: nop but get (%04x %04x %04x %04x %04x %04x %04x)\n",
-			(व्योम *)hook_pos,
+			(void *)hook_pos,
 			olds[0], olds[1], olds[2], olds[3], olds[4], olds[5],
 			olds[6]);
 
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ftrace_modअगरy_code(अचिन्हित दीर्घ hook, अचिन्हित दीर्घ target,
+static int ftrace_modify_code(unsigned long hook, unsigned long target,
 			      bool enable, bool nolr)
-अणु
-	uपूर्णांक16_t call[7];
+{
+	uint16_t call[7];
 
-	अचिन्हित दीर्घ hook_pos = hook - 2;
-	पूर्णांक ret = 0;
+	unsigned long hook_pos = hook - 2;
+	int ret = 0;
 
 	make_jbsr(target, hook, call, nolr);
 
-	ret = copy_to_kernel_nofault((व्योम *)hook_pos, enable ? call : nops,
-				 माप(nops));
-	अगर (ret)
-		वापस -EPERM;
+	ret = copy_to_kernel_nofault((void *)hook_pos, enable ? call : nops,
+				 sizeof(nops));
+	if (ret)
+		return -EPERM;
 
 	flush_icache_range(hook_pos, hook_pos + MCOUNT_INSN_SIZE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ftrace_make_call(काष्ठा dyn_ftrace *rec, अचिन्हित दीर्घ addr)
-अणु
-	पूर्णांक ret = ftrace_check_current_nop(rec->ip);
+int ftrace_make_call(struct dyn_ftrace *rec, unsigned long addr)
+{
+	int ret = ftrace_check_current_nop(rec->ip);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस ftrace_modअगरy_code(rec->ip, addr, true, false);
-पूर्ण
+	return ftrace_modify_code(rec->ip, addr, true, false);
+}
 
-पूर्णांक ftrace_make_nop(काष्ठा module *mod, काष्ठा dyn_ftrace *rec,
-		    अचिन्हित दीर्घ addr)
-अणु
-	वापस ftrace_modअगरy_code(rec->ip, addr, false, false);
-पूर्ण
+int ftrace_make_nop(struct module *mod, struct dyn_ftrace *rec,
+		    unsigned long addr)
+{
+	return ftrace_modify_code(rec->ip, addr, false, false);
+}
 
-पूर्णांक ftrace_update_ftrace_func(ftrace_func_t func)
-अणु
-	पूर्णांक ret = ftrace_modअगरy_code((अचिन्हित दीर्घ)&ftrace_call,
-				(अचिन्हित दीर्घ)func, true, true);
-	अगर (!ret)
-		ret = ftrace_modअगरy_code((अचिन्हित दीर्घ)&ftrace_regs_call,
-				(अचिन्हित दीर्घ)func, true, true);
-	वापस ret;
-पूर्ण
+int ftrace_update_ftrace_func(ftrace_func_t func)
+{
+	int ret = ftrace_modify_code((unsigned long)&ftrace_call,
+				(unsigned long)func, true, true);
+	if (!ret)
+		ret = ftrace_modify_code((unsigned long)&ftrace_regs_call,
+				(unsigned long)func, true, true);
+	return ret;
+}
 
-पूर्णांक __init ftrace_dyn_arch_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_DYNAMIC_FTRACE */
+int __init ftrace_dyn_arch_init(void)
+{
+	return 0;
+}
+#endif /* CONFIG_DYNAMIC_FTRACE */
 
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE_WITH_REGS
-पूर्णांक ftrace_modअगरy_call(काष्ठा dyn_ftrace *rec, अचिन्हित दीर्घ old_addr,
-		       अचिन्हित दीर्घ addr)
-अणु
-	वापस ftrace_modअगरy_code(rec->ip, addr, true, true);
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_DYNAMIC_FTRACE_WITH_REGS
+int ftrace_modify_call(struct dyn_ftrace *rec, unsigned long old_addr,
+		       unsigned long addr)
+{
+	return ftrace_modify_code(rec->ip, addr, true, true);
+}
+#endif
 
-#अगर_घोषित CONFIG_FUNCTION_GRAPH_TRACER
-व्योम prepare_ftrace_वापस(अचिन्हित दीर्घ *parent, अचिन्हित दीर्घ self_addr,
-			   अचिन्हित दीर्घ frame_poपूर्णांकer)
-अणु
-	अचिन्हित दीर्घ वापस_hooker = (अचिन्हित दीर्घ)&वापस_to_handler;
-	अचिन्हित दीर्घ old;
+#ifdef CONFIG_FUNCTION_GRAPH_TRACER
+void prepare_ftrace_return(unsigned long *parent, unsigned long self_addr,
+			   unsigned long frame_pointer)
+{
+	unsigned long return_hooker = (unsigned long)&return_to_handler;
+	unsigned long old;
 
-	अगर (unlikely(atomic_पढ़ो(&current->tracing_graph_छोड़ो)))
-		वापस;
+	if (unlikely(atomic_read(&current->tracing_graph_pause)))
+		return;
 
 	old = *parent;
 
-	अगर (!function_graph_enter(old, self_addr,
-			*(अचिन्हित दीर्घ *)frame_poपूर्णांकer, parent)) अणु
+	if (!function_graph_enter(old, self_addr,
+			*(unsigned long *)frame_pointer, parent)) {
 		/*
 		 * For csky-gcc function has sub-call:
 		 * subi	sp,	sp, 8
@@ -171,7 +170,7 @@
 		 * st.w r15,	(sp, 0x4)
 		 * push	r15
 		 * jl	_mcount
-		 * We only need set *parent क्रम resume
+		 * We only need set *parent for resume
 		 *
 		 * For csky-gcc function has no sub-call:
 		 * subi	sp,	sp, 4
@@ -179,62 +178,62 @@
 		 * mov	r8,	sp
 		 * push	r15
 		 * jl	_mcount
-		 * We need set *parent and *(frame_poपूर्णांकer + 4) क्रम resume,
+		 * We need set *parent and *(frame_pointer + 4) for resume,
 		 * because lr is resumed twice.
 		 */
-		*parent = वापस_hooker;
-		frame_poपूर्णांकer += 4;
-		अगर (*(अचिन्हित दीर्घ *)frame_poपूर्णांकer == old)
-			*(अचिन्हित दीर्घ *)frame_poपूर्णांकer = वापस_hooker;
-	पूर्ण
-पूर्ण
+		*parent = return_hooker;
+		frame_pointer += 4;
+		if (*(unsigned long *)frame_pointer == old)
+			*(unsigned long *)frame_pointer = return_hooker;
+	}
+}
 
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE
-पूर्णांक ftrace_enable_ftrace_graph_caller(व्योम)
-अणु
-	वापस ftrace_modअगरy_code((अचिन्हित दीर्घ)&ftrace_graph_call,
-			(अचिन्हित दीर्घ)&ftrace_graph_caller, true, true);
-पूर्ण
+#ifdef CONFIG_DYNAMIC_FTRACE
+int ftrace_enable_ftrace_graph_caller(void)
+{
+	return ftrace_modify_code((unsigned long)&ftrace_graph_call,
+			(unsigned long)&ftrace_graph_caller, true, true);
+}
 
-पूर्णांक ftrace_disable_ftrace_graph_caller(व्योम)
-अणु
-	वापस ftrace_modअगरy_code((अचिन्हित दीर्घ)&ftrace_graph_call,
-			(अचिन्हित दीर्घ)&ftrace_graph_caller, false, true);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_DYNAMIC_FTRACE */
-#पूर्ण_अगर /* CONFIG_FUNCTION_GRAPH_TRACER */
+int ftrace_disable_ftrace_graph_caller(void)
+{
+	return ftrace_modify_code((unsigned long)&ftrace_graph_call,
+			(unsigned long)&ftrace_graph_caller, false, true);
+}
+#endif /* CONFIG_DYNAMIC_FTRACE */
+#endif /* CONFIG_FUNCTION_GRAPH_TRACER */
 
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE
-#अगर_अघोषित CONFIG_CPU_HAS_ICACHE_INS
-काष्ठा ftrace_modअगरy_param अणु
-	पूर्णांक command;
+#ifdef CONFIG_DYNAMIC_FTRACE
+#ifndef CONFIG_CPU_HAS_ICACHE_INS
+struct ftrace_modify_param {
+	int command;
 	atomic_t cpu_count;
-पूर्ण;
+};
 
-अटल पूर्णांक __ftrace_modअगरy_code(व्योम *data)
-अणु
-	काष्ठा ftrace_modअगरy_param *param = data;
+static int __ftrace_modify_code(void *data)
+{
+	struct ftrace_modify_param *param = data;
 
-	अगर (atomic_inc_वापस(&param->cpu_count) == 1) अणु
-		ftrace_modअगरy_all_code(param->command);
+	if (atomic_inc_return(&param->cpu_count) == 1) {
+		ftrace_modify_all_code(param->command);
 		atomic_inc(&param->cpu_count);
-	पूर्ण अन्यथा अणु
-		जबतक (atomic_पढ़ो(&param->cpu_count) <= num_online_cpus())
+	} else {
+		while (atomic_read(&param->cpu_count) <= num_online_cpus())
 			cpu_relax();
-		local_icache_inv_all(शून्य);
-	पूर्ण
+		local_icache_inv_all(NULL);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम arch_ftrace_update_code(पूर्णांक command)
-अणु
-	काष्ठा ftrace_modअगरy_param param = अणु command, ATOMIC_INIT(0) पूर्ण;
+void arch_ftrace_update_code(int command)
+{
+	struct ftrace_modify_param param = { command, ATOMIC_INIT(0) };
 
-	stop_machine(__ftrace_modअगरy_code, &param, cpu_online_mask);
-पूर्ण
-#पूर्ण_अगर
-#पूर्ण_अगर /* CONFIG_DYNAMIC_FTRACE */
+	stop_machine(__ftrace_modify_code, &param, cpu_online_mask);
+}
+#endif
+#endif /* CONFIG_DYNAMIC_FTRACE */
 
 /* _mcount is defined in abi's mcount.S */
 EXPORT_SYMBOL(_mcount);

@@ -1,124 +1,123 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2008-2011 Atheros Communications Inc.
  *
- * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#अगर_अघोषित CALIB_H
-#घोषणा CALIB_H
+#ifndef CALIB_H
+#define CALIB_H
 
-#समावेश "hw.h"
+#include "hw.h"
 
-#घोषणा AR_PHY_CCA_FILTERWINDOW_LENGTH          5
+#define AR_PHY_CCA_FILTERWINDOW_LENGTH          5
 
-/* Internal noise न्यूनमान can vary by about 6db depending on the frequency */
-#घोषणा ATH9K_NF_CAL_NOISE_THRESH		6
+/* Internal noise floor can vary by about 6db depending on the frequency */
+#define ATH9K_NF_CAL_NOISE_THRESH		6
 
-#घोषणा NUM_NF_READINGS       6
-#घोषणा ATH9K_NF_CAL_HIST_MAX 5
+#define NUM_NF_READINGS       6
+#define ATH9K_NF_CAL_HIST_MAX 5
 
-काष्ठा ar5416IniArray अणु
+struct ar5416IniArray {
 	u32 *ia_array;
 	u32 ia_rows;
 	u32 ia_columns;
-पूर्ण;
+};
 
-#घोषणा STATIC_INI_ARRAY(array) अणु			\
+#define STATIC_INI_ARRAY(array) {			\
 		.ia_array = (u32 *)(array),		\
 		.ia_rows = ARRAY_SIZE(array),		\
 		.ia_columns = ARRAY_SIZE(array[0]),	\
-	पूर्ण
+	}
 
-#घोषणा INIT_INI_ARRAY(iniarray, array) करो अणु	\
+#define INIT_INI_ARRAY(iniarray, array) do {	\
 		(iniarray)->ia_array = (u32 *)(array);		\
 		(iniarray)->ia_rows = ARRAY_SIZE(array);	\
 		(iniarray)->ia_columns = ARRAY_SIZE(array[0]);	\
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा INI_RA(iniarray, row, column) \
+#define INI_RA(iniarray, row, column) \
 	(((iniarray)->ia_array)[(row) *	((iniarray)->ia_columns) + (column)])
 
-#घोषणा INIT_CAL(_perCal) करो अणु				\
+#define INIT_CAL(_perCal) do {				\
 		(_perCal)->calState = CAL_WAITING;	\
-		(_perCal)->calNext = शून्य;		\
-	पूर्ण जबतक (0)
+		(_perCal)->calNext = NULL;		\
+	} while (0)
 
-#घोषणा INSERT_CAL(_ahp, _perCal)					\
-	करो अणु								\
-		अगर ((_ahp)->cal_list_last == शून्य) अणु			\
+#define INSERT_CAL(_ahp, _perCal)					\
+	do {								\
+		if ((_ahp)->cal_list_last == NULL) {			\
 			(_ahp)->cal_list =				\
 				(_ahp)->cal_list_last = (_perCal);	\
 			((_ahp)->cal_list_last)->calNext = (_perCal); \
-		पूर्ण अन्यथा अणु						\
+		} else {						\
 			((_ahp)->cal_list_last)->calNext = (_perCal); \
 			(_ahp)->cal_list_last = (_perCal);		\
 			(_perCal)->calNext = (_ahp)->cal_list;	\
-		पूर्ण							\
-	पूर्ण जबतक (0)
+		}							\
+	} while (0)
 
-क्रमागत ath9k_cal_state अणु
+enum ath9k_cal_state {
 	CAL_INACTIVE,
 	CAL_WAITING,
 	CAL_RUNNING,
 	CAL_DONE
-पूर्ण;
+};
 
-#घोषणा MIN_CAL_SAMPLES     1
-#घोषणा MAX_CAL_SAMPLES    64
-#घोषणा INIT_LOG_COUNT      5
-#घोषणा PER_MIN_LOG_COUNT   2
-#घोषणा PER_MAX_LOG_COUNT  10
+#define MIN_CAL_SAMPLES     1
+#define MAX_CAL_SAMPLES    64
+#define INIT_LOG_COUNT      5
+#define PER_MIN_LOG_COUNT   2
+#define PER_MAX_LOG_COUNT  10
 
-काष्ठा ath9k_percal_data अणु
+struct ath9k_percal_data {
 	u32 calType;
 	u32 calNumSamples;
 	u32 calCountMax;
-	व्योम (*calCollect) (काष्ठा ath_hw *);
-	व्योम (*calPostProc) (काष्ठा ath_hw *, u8);
-पूर्ण;
+	void (*calCollect) (struct ath_hw *);
+	void (*calPostProc) (struct ath_hw *, u8);
+};
 
-काष्ठा ath9k_cal_list अणु
-	स्थिर काष्ठा ath9k_percal_data *calData;
-	क्रमागत ath9k_cal_state calState;
-	काष्ठा ath9k_cal_list *calNext;
-पूर्ण;
+struct ath9k_cal_list {
+	const struct ath9k_percal_data *calData;
+	enum ath9k_cal_state calState;
+	struct ath9k_cal_list *calNext;
+};
 
-काष्ठा ath9k_nfcal_hist अणु
-	पूर्णांक16_t nfCalBuffer[ATH9K_NF_CAL_HIST_MAX];
+struct ath9k_nfcal_hist {
+	int16_t nfCalBuffer[ATH9K_NF_CAL_HIST_MAX];
 	u8 currIndex;
-	पूर्णांक16_t privNF;
+	int16_t privNF;
 	u8 invalidNFcount;
-पूर्ण;
+};
 
-#घोषणा MAX_PACAL_SKIPCOUNT 8
-काष्ठा ath9k_pacal_infoअणु
-	पूर्णांक32_t prev_offset;	/* Previous value of PA offset value */
-	पूर्णांक8_t max_skipcount;	/* Max No. of बार PACAL can be skipped */
-	पूर्णांक8_t skipcount;	/* No. of बार the PACAL to be skipped */
-पूर्ण;
+#define MAX_PACAL_SKIPCOUNT 8
+struct ath9k_pacal_info{
+	int32_t prev_offset;	/* Previous value of PA offset value */
+	int8_t max_skipcount;	/* Max No. of times PACAL can be skipped */
+	int8_t skipcount;	/* No. of times the PACAL to be skipped */
+};
 
-bool ath9k_hw_reset_calvalid(काष्ठा ath_hw *ah);
-व्योम ath9k_hw_start_nfcal(काष्ठा ath_hw *ah, bool update);
-पूर्णांक ath9k_hw_loadnf(काष्ठा ath_hw *ah, काष्ठा ath9k_channel *chan);
-bool ath9k_hw_getnf(काष्ठा ath_hw *ah, काष्ठा ath9k_channel *chan);
-व्योम ath9k_init_nfcal_hist_buffer(काष्ठा ath_hw *ah,
-				  काष्ठा ath9k_channel *chan);
-व्योम ath9k_hw_bstuck_nfcal(काष्ठा ath_hw *ah);
-व्योम ath9k_hw_reset_calibration(काष्ठा ath_hw *ah,
-				काष्ठा ath9k_cal_list *currCal);
-s16 ath9k_hw_अ_लोhan_noise(काष्ठा ath_hw *ah, काष्ठा ath9k_channel *chan,
+bool ath9k_hw_reset_calvalid(struct ath_hw *ah);
+void ath9k_hw_start_nfcal(struct ath_hw *ah, bool update);
+int ath9k_hw_loadnf(struct ath_hw *ah, struct ath9k_channel *chan);
+bool ath9k_hw_getnf(struct ath_hw *ah, struct ath9k_channel *chan);
+void ath9k_init_nfcal_hist_buffer(struct ath_hw *ah,
+				  struct ath9k_channel *chan);
+void ath9k_hw_bstuck_nfcal(struct ath_hw *ah);
+void ath9k_hw_reset_calibration(struct ath_hw *ah,
+				struct ath9k_cal_list *currCal);
+s16 ath9k_hw_getchan_noise(struct ath_hw *ah, struct ath9k_channel *chan,
 			   s16 nf);
 
 
-#पूर्ण_अगर /* CALIB_H */
+#endif /* CALIB_H */

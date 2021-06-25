@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /*
  * dm-init.c
@@ -8,297 +7,297 @@
  * This file is released under the GPLv2.
  */
 
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/device.h>
-#समावेश <linux/device-mapper.h>
-#समावेश <linux/init.h>
-#समावेश <linux/list.h>
-#समावेश <linux/moduleparam.h>
+#include <linux/ctype.h>
+#include <linux/device.h>
+#include <linux/device-mapper.h>
+#include <linux/init.h>
+#include <linux/list.h>
+#include <linux/moduleparam.h>
 
-#घोषणा DM_MSG_PREFIX "init"
-#घोषणा DM_MAX_DEVICES 256
-#घोषणा DM_MAX_TARGETS 256
-#घोषणा DM_MAX_STR_SIZE 4096
+#define DM_MSG_PREFIX "init"
+#define DM_MAX_DEVICES 256
+#define DM_MAX_TARGETS 256
+#define DM_MAX_STR_SIZE 4096
 
-अटल अक्षर *create;
+static char *create;
 
 /*
  * Format: dm-mod.create=<name>,<uuid>,<minor>,<flags>,<table>[,<table>+][;<name>,<uuid>,<minor>,<flags>,<table>[,<table>+]+]
- * Table क्रमmat: <start_sector> <num_sectors> <target_type> <target_args>
+ * Table format: <start_sector> <num_sectors> <target_type> <target_args>
  *
- * See Documentation/admin-guide/device-mapper/dm-init.rst क्रम dm-mod.create="..." क्रमmat
+ * See Documentation/admin-guide/device-mapper/dm-init.rst for dm-mod.create="..." format
  * details.
  */
 
-काष्ठा dm_device अणु
-	काष्ठा dm_ioctl dmi;
-	काष्ठा dm_target_spec *table[DM_MAX_TARGETS];
-	अक्षर *target_args_array[DM_MAX_TARGETS];
-	काष्ठा list_head list;
-पूर्ण;
+struct dm_device {
+	struct dm_ioctl dmi;
+	struct dm_target_spec *table[DM_MAX_TARGETS];
+	char *target_args_array[DM_MAX_TARGETS];
+	struct list_head list;
+};
 
-अटल स्थिर अक्षर * स्थिर dm_allowed_tarमाला_लो[] __initस्थिर = अणु
+static const char * const dm_allowed_targets[] __initconst = {
 	"crypt",
 	"delay",
 	"linear",
 	"snapshot-origin",
 	"striped",
 	"verity",
-पूर्ण;
+};
 
-अटल पूर्णांक __init dm_verअगरy_target_type(स्थिर अक्षर *target)
-अणु
-	अचिन्हित पूर्णांक i;
+static int __init dm_verify_target_type(const char *target)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(dm_allowed_tarमाला_लो); i++) अणु
-		अगर (!म_भेद(dm_allowed_tarमाला_लो[i], target))
-			वापस 0;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	for (i = 0; i < ARRAY_SIZE(dm_allowed_targets); i++) {
+		if (!strcmp(dm_allowed_targets[i], target))
+			return 0;
+	}
+	return -EINVAL;
+}
 
-अटल व्योम __init dm_setup_cleanup(काष्ठा list_head *devices)
-अणु
-	काष्ठा dm_device *dev, *पंचांगp;
-	अचिन्हित पूर्णांक i;
+static void __init dm_setup_cleanup(struct list_head *devices)
+{
+	struct dm_device *dev, *tmp;
+	unsigned int i;
 
-	list_क्रम_each_entry_safe(dev, पंचांगp, devices, list) अणु
+	list_for_each_entry_safe(dev, tmp, devices, list) {
 		list_del(&dev->list);
-		क्रम (i = 0; i < dev->dmi.target_count; i++) अणु
-			kमुक्त(dev->table[i]);
-			kमुक्त(dev->target_args_array[i]);
-		पूर्ण
-		kमुक्त(dev);
-	पूर्ण
-पूर्ण
+		for (i = 0; i < dev->dmi.target_count; i++) {
+			kfree(dev->table[i]);
+			kfree(dev->target_args_array[i]);
+		}
+		kfree(dev);
+	}
+}
 
 /**
- * str_field_delimit - delimit a string based on a separator अक्षर.
- * @str: the poपूर्णांकer to the string to delimit.
- * @separator: अक्षर that delimits the field
+ * str_field_delimit - delimit a string based on a separator char.
+ * @str: the pointer to the string to delimit.
+ * @separator: char that delimits the field
  *
  * Find a @separator and replace it by '\0'.
  * Remove leading and trailing spaces.
- * Return the reमुख्यder string after the @separator.
+ * Return the remainder string after the @separator.
  */
-अटल अक्षर __init *str_field_delimit(अक्षर **str, अक्षर separator)
-अणु
-	अक्षर *s;
+static char __init *str_field_delimit(char **str, char separator)
+{
+	char *s;
 
-	/* TODO: add support क्रम escaped अक्षरacters */
+	/* TODO: add support for escaped characters */
 	*str = skip_spaces(*str);
-	s = म_अक्षर(*str, separator);
-	/* Delimit the field and हटाओ trailing spaces */
-	अगर (s)
+	s = strchr(*str, separator);
+	/* Delimit the field and remove trailing spaces */
+	if (s)
 		*s = '\0';
 	*str = strim(*str);
-	वापस s ? ++s : शून्य;
-पूर्ण
+	return s ? ++s : NULL;
+}
 
 /**
  * dm_parse_table_entry - parse a table entry
- * @dev: device to store the parsed inक्रमmation.
- * @str: the poपूर्णांकer to a string with the क्रमmat:
+ * @dev: device to store the parsed information.
+ * @str: the pointer to a string with the format:
  *	<start_sector> <num_sectors> <target_type> <target_args>[, ...]
  *
- * Return the reमुख्यder string after the table entry, i.e, after the comma which
- * delimits the entry or शून्य अगर reached the end of the string.
+ * Return the remainder string after the table entry, i.e, after the comma which
+ * delimits the entry or NULL if reached the end of the string.
  */
-अटल अक्षर __init *dm_parse_table_entry(काष्ठा dm_device *dev, अक्षर *str)
-अणु
-	स्थिर अचिन्हित पूर्णांक n = dev->dmi.target_count - 1;
-	काष्ठा dm_target_spec *sp;
-	अचिन्हित पूर्णांक i;
+static char __init *dm_parse_table_entry(struct dm_device *dev, char *str)
+{
+	const unsigned int n = dev->dmi.target_count - 1;
+	struct dm_target_spec *sp;
+	unsigned int i;
 	/* fields:  */
-	अक्षर *field[4];
-	अक्षर *next;
+	char *field[4];
+	char *next;
 
 	field[0] = str;
 	/* Delimit first 3 fields that are separated by space */
-	क्रम (i = 0; i < ARRAY_SIZE(field) - 1; i++) अणु
+	for (i = 0; i < ARRAY_SIZE(field) - 1; i++) {
 		field[i + 1] = str_field_delimit(&field[i], ' ');
-		अगर (!field[i + 1])
-			वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		if (!field[i + 1])
+			return ERR_PTR(-EINVAL);
+	}
 	/* Delimit last field that can be terminated by comma */
 	next = str_field_delimit(&field[i], ',');
 
-	sp = kzalloc(माप(*sp), GFP_KERNEL);
-	अगर (!sp)
-		वापस ERR_PTR(-ENOMEM);
+	sp = kzalloc(sizeof(*sp), GFP_KERNEL);
+	if (!sp)
+		return ERR_PTR(-ENOMEM);
 	dev->table[n] = sp;
 
 	/* start_sector */
-	अगर (kम_से_अदीर्घl(field[0], 0, &sp->sector_start))
-		वापस ERR_PTR(-EINVAL);
+	if (kstrtoull(field[0], 0, &sp->sector_start))
+		return ERR_PTR(-EINVAL);
 	/* num_sector */
-	अगर (kम_से_अदीर्घl(field[1], 0, &sp->length))
-		वापस ERR_PTR(-EINVAL);
+	if (kstrtoull(field[1], 0, &sp->length))
+		return ERR_PTR(-EINVAL);
 	/* target_type */
-	strscpy(sp->target_type, field[2], माप(sp->target_type));
-	अगर (dm_verअगरy_target_type(sp->target_type)) अणु
+	strscpy(sp->target_type, field[2], sizeof(sp->target_type));
+	if (dm_verify_target_type(sp->target_type)) {
 		DMERR("invalid type \"%s\"", sp->target_type);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 	/* target_args */
 	dev->target_args_array[n] = kstrndup(field[3], DM_MAX_STR_SIZE,
 					     GFP_KERNEL);
-	अगर (!dev->target_args_array[n])
-		वापस ERR_PTR(-ENOMEM);
+	if (!dev->target_args_array[n])
+		return ERR_PTR(-ENOMEM);
 
-	वापस next;
-पूर्ण
+	return next;
+}
 
 /**
  * dm_parse_table - parse "dm-mod.create=" table field
- * @dev: device to store the parsed inक्रमmation.
- * @str: the poपूर्णांकer to a string with the क्रमmat:
+ * @dev: device to store the parsed information.
+ * @str: the pointer to a string with the format:
  *	<table>[,<table>+]
  */
-अटल पूर्णांक __init dm_parse_table(काष्ठा dm_device *dev, अक्षर *str)
-अणु
-	अक्षर *table_entry = str;
+static int __init dm_parse_table(struct dm_device *dev, char *str)
+{
+	char *table_entry = str;
 
-	जबतक (table_entry) अणु
+	while (table_entry) {
 		DMDEBUG("parsing table \"%s\"", str);
-		अगर (++dev->dmi.target_count > DM_MAX_TARGETS) अणु
+		if (++dev->dmi.target_count > DM_MAX_TARGETS) {
 			DMERR("too many targets %u > %d",
 			      dev->dmi.target_count, DM_MAX_TARGETS);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		table_entry = dm_parse_table_entry(dev, table_entry);
-		अगर (IS_ERR(table_entry)) अणु
+		if (IS_ERR(table_entry)) {
 			DMERR("couldn't parse table");
-			वापस PTR_ERR(table_entry);
-		पूर्ण
-	पूर्ण
+			return PTR_ERR(table_entry);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * dm_parse_device_entry - parse a device entry
- * @dev: device to store the parsed inक्रमmation.
- * @str: the poपूर्णांकer to a string with the क्रमmat:
+ * @dev: device to store the parsed information.
+ * @str: the pointer to a string with the format:
  *	name,uuid,minor,flags,table[; ...]
  *
- * Return the reमुख्यder string after the table entry, i.e, after the semi-colon
- * which delimits the entry or शून्य अगर reached the end of the string.
+ * Return the remainder string after the table entry, i.e, after the semi-colon
+ * which delimits the entry or NULL if reached the end of the string.
  */
-अटल अक्षर __init *dm_parse_device_entry(काष्ठा dm_device *dev, अक्षर *str)
-अणु
+static char __init *dm_parse_device_entry(struct dm_device *dev, char *str)
+{
 	/* There are 5 fields: name,uuid,minor,flags,table; */
-	अक्षर *field[5];
-	अचिन्हित पूर्णांक i;
-	अक्षर *next;
+	char *field[5];
+	unsigned int i;
+	char *next;
 
 	field[0] = str;
 	/* Delimit first 4 fields that are separated by comma */
-	क्रम (i = 0; i < ARRAY_SIZE(field) - 1; i++) अणु
+	for (i = 0; i < ARRAY_SIZE(field) - 1; i++) {
 		field[i+1] = str_field_delimit(&field[i], ',');
-		अगर (!field[i+1])
-			वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		if (!field[i+1])
+			return ERR_PTR(-EINVAL);
+	}
 	/* Delimit last field that can be delimited by semi-colon */
 	next = str_field_delimit(&field[i], ';');
 
 	/* name */
-	strscpy(dev->dmi.name, field[0], माप(dev->dmi.name));
+	strscpy(dev->dmi.name, field[0], sizeof(dev->dmi.name));
 	/* uuid */
-	strscpy(dev->dmi.uuid, field[1], माप(dev->dmi.uuid));
+	strscpy(dev->dmi.uuid, field[1], sizeof(dev->dmi.uuid));
 	/* minor */
-	अगर (म_माप(field[2])) अणु
-		अगर (kम_से_अदीर्घl(field[2], 0, &dev->dmi.dev))
-			वापस ERR_PTR(-EINVAL);
+	if (strlen(field[2])) {
+		if (kstrtoull(field[2], 0, &dev->dmi.dev))
+			return ERR_PTR(-EINVAL);
 		dev->dmi.flags |= DM_PERSISTENT_DEV_FLAG;
-	पूर्ण
+	}
 	/* flags */
-	अगर (!म_भेद(field[3], "ro"))
+	if (!strcmp(field[3], "ro"))
 		dev->dmi.flags |= DM_READONLY_FLAG;
-	अन्यथा अगर (म_भेद(field[3], "rw"))
-		वापस ERR_PTR(-EINVAL);
+	else if (strcmp(field[3], "rw"))
+		return ERR_PTR(-EINVAL);
 	/* table */
-	अगर (dm_parse_table(dev, field[4]))
-		वापस ERR_PTR(-EINVAL);
+	if (dm_parse_table(dev, field[4]))
+		return ERR_PTR(-EINVAL);
 
-	वापस next;
-पूर्ण
+	return next;
+}
 
 /**
  * dm_parse_devices - parse "dm-mod.create=" argument
- * @devices: list of काष्ठा dm_device to store the parsed inक्रमmation.
- * @str: the poपूर्णांकer to a string with the क्रमmat:
+ * @devices: list of struct dm_device to store the parsed information.
+ * @str: the pointer to a string with the format:
  *	<device>[;<device>+]
  */
-अटल पूर्णांक __init dm_parse_devices(काष्ठा list_head *devices, अक्षर *str)
-अणु
-	अचिन्हित दीर्घ ndev = 0;
-	काष्ठा dm_device *dev;
-	अक्षर *device = str;
+static int __init dm_parse_devices(struct list_head *devices, char *str)
+{
+	unsigned long ndev = 0;
+	struct dm_device *dev;
+	char *device = str;
 
 	DMDEBUG("parsing \"%s\"", str);
-	जबतक (device) अणु
-		dev = kzalloc(माप(*dev), GFP_KERNEL);
-		अगर (!dev)
-			वापस -ENOMEM;
+	while (device) {
+		dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+		if (!dev)
+			return -ENOMEM;
 		list_add_tail(&dev->list, devices);
 
-		अगर (++ndev > DM_MAX_DEVICES) अणु
+		if (++ndev > DM_MAX_DEVICES) {
 			DMERR("too many devices %lu > %d",
 			      ndev, DM_MAX_DEVICES);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		device = dm_parse_device_entry(dev, device);
-		अगर (IS_ERR(device)) अणु
+		if (IS_ERR(device)) {
 			DMERR("couldn't parse device");
-			वापस PTR_ERR(device);
-		पूर्ण
-	पूर्ण
+			return PTR_ERR(device);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * dm_init_init - parse "dm-mod.create=" argument and configure drivers
  */
-अटल पूर्णांक __init dm_init_init(व्योम)
-अणु
-	काष्ठा dm_device *dev;
+static int __init dm_init_init(void)
+{
+	struct dm_device *dev;
 	LIST_HEAD(devices);
-	अक्षर *str;
-	पूर्णांक r;
+	char *str;
+	int r;
 
-	अगर (!create)
-		वापस 0;
+	if (!create)
+		return 0;
 
-	अगर (म_माप(create) >= DM_MAX_STR_SIZE) अणु
+	if (strlen(create) >= DM_MAX_STR_SIZE) {
 		DMERR("Argument is too big. Limit is %d", DM_MAX_STR_SIZE);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	str = kstrndup(create, DM_MAX_STR_SIZE, GFP_KERNEL);
-	अगर (!str)
-		वापस -ENOMEM;
+	if (!str)
+		return -ENOMEM;
 
 	r = dm_parse_devices(&devices, str);
-	अगर (r)
-		जाओ out;
+	if (r)
+		goto out;
 
 	DMINFO("waiting for all devices to be available before creating mapped devices");
-	रुको_क्रम_device_probe();
+	wait_for_device_probe();
 
-	list_क्रम_each_entry(dev, &devices, list) अणु
-		अगर (dm_early_create(&dev->dmi, dev->table,
+	list_for_each_entry(dev, &devices, list) {
+		if (dm_early_create(&dev->dmi, dev->table,
 				    dev->target_args_array))
-			अवरोध;
-	पूर्ण
+			break;
+	}
 out:
-	kमुक्त(str);
+	kfree(str);
 	dm_setup_cleanup(&devices);
-	वापस r;
-पूर्ण
+	return r;
+}
 
 late_initcall(dm_init_init);
 
-module_param(create, अक्षरp, 0);
+module_param(create, charp, 0);
 MODULE_PARM_DESC(create, "Create a mapped device in early boot");

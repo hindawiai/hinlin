@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _PPC_BOOT_STDIO_H_
-#घोषणा _PPC_BOOT_STDIO_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _PPC_BOOT_STDIO_H_
+#define _PPC_BOOT_STDIO_H_
 
-#समावेश <मानकतर्क.स>
+#include <stdarg.h>
 
-#घोषणा	ENOMEM		12	/* Out of Memory */
-#घोषणा	EINVAL		22	/* Invalid argument */
-#घोषणा ENOSPC		28	/* No space left on device */
+#define	ENOMEM		12	/* Out of Memory */
+#define	EINVAL		22	/* Invalid argument */
+#define ENOSPC		28	/* No space left on device */
 
-बाह्य पूर्णांक म_लिखो(स्थिर अक्षर *fmt, ...) __attribute__((क्रमmat(म_लिखो, 1, 2)));
+extern int printf(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 
-#घोषणा ख_लिखो(fmt, args...)	म_लिखो(args)
+#define fprintf(fmt, args...)	printf(args)
 
-बाह्य पूर्णांक प्र_लिखो(अक्षर *buf, स्थिर अक्षर *fmt, ...)
-	__attribute__((क्रमmat(म_लिखो, 2, 3)));
+extern int sprintf(char *buf, const char *fmt, ...)
+	__attribute__((format(printf, 2, 3)));
 
-बाह्य पूर्णांक भम_लिखो(अक्षर *buf, स्थिर अक्षर *fmt, बहु_सूची args);
+extern int vsprintf(char *buf, const char *fmt, va_list args);
 
-#पूर्ण_अगर				/* _PPC_BOOT_STDIO_H_ */
+#endif				/* _PPC_BOOT_STDIO_H_ */

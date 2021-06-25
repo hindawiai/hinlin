@@ -1,76 +1,75 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2017 BayLibre, SAS
  * Author: Neil Armstrong <narmstrong@baylibre.com>
  *
- * SPDX-License-Identअगरier: GPL-2.0+
+ * SPDX-License-Identifier: GPL-2.0+
  */
 
-#समावेश <linux/of_address.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_करोमुख्य.h>
-#समावेश <linux/bitfield.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/reset.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/module.h>
+#include <linux/of_address.h>
+#include <linux/platform_device.h>
+#include <linux/pm_domain.h>
+#include <linux/bitfield.h>
+#include <linux/regmap.h>
+#include <linux/mfd/syscon.h>
+#include <linux/of_device.h>
+#include <linux/reset.h>
+#include <linux/clk.h>
+#include <linux/module.h>
 
 /* AO Offsets */
 
-#घोषणा AO_RTI_GEN_PWR_SLEEP0		(0x3a << 2)
+#define AO_RTI_GEN_PWR_SLEEP0		(0x3a << 2)
 
-#घोषणा GEN_PWR_VPU_HDMI		BIT(8)
-#घोषणा GEN_PWR_VPU_HDMI_ISO		BIT(9)
+#define GEN_PWR_VPU_HDMI		BIT(8)
+#define GEN_PWR_VPU_HDMI_ISO		BIT(9)
 
 /* HHI Offsets */
 
-#घोषणा HHI_MEM_PD_REG0			(0x40 << 2)
-#घोषणा HHI_VPU_MEM_PD_REG0		(0x41 << 2)
-#घोषणा HHI_VPU_MEM_PD_REG1		(0x42 << 2)
-#घोषणा HHI_VPU_MEM_PD_REG2		(0x4d << 2)
+#define HHI_MEM_PD_REG0			(0x40 << 2)
+#define HHI_VPU_MEM_PD_REG0		(0x41 << 2)
+#define HHI_VPU_MEM_PD_REG1		(0x42 << 2)
+#define HHI_VPU_MEM_PD_REG2		(0x4d << 2)
 
-काष्ठा meson_gx_pwrc_vpu अणु
-	काष्ठा generic_pm_करोमुख्य genpd;
-	काष्ठा regmap *regmap_ao;
-	काष्ठा regmap *regmap_hhi;
-	काष्ठा reset_control *rstc;
-	काष्ठा clk *vpu_clk;
-	काष्ठा clk *vapb_clk;
-पूर्ण;
+struct meson_gx_pwrc_vpu {
+	struct generic_pm_domain genpd;
+	struct regmap *regmap_ao;
+	struct regmap *regmap_hhi;
+	struct reset_control *rstc;
+	struct clk *vpu_clk;
+	struct clk *vapb_clk;
+};
 
-अटल अंतरभूत
-काष्ठा meson_gx_pwrc_vpu *genpd_to_pd(काष्ठा generic_pm_करोमुख्य *d)
-अणु
-	वापस container_of(d, काष्ठा meson_gx_pwrc_vpu, genpd);
-पूर्ण
+static inline
+struct meson_gx_pwrc_vpu *genpd_to_pd(struct generic_pm_domain *d)
+{
+	return container_of(d, struct meson_gx_pwrc_vpu, genpd);
+}
 
-अटल पूर्णांक meson_gx_pwrc_vpu_घातer_off(काष्ठा generic_pm_करोमुख्य *genpd)
-अणु
-	काष्ठा meson_gx_pwrc_vpu *pd = genpd_to_pd(genpd);
-	पूर्णांक i;
+static int meson_gx_pwrc_vpu_power_off(struct generic_pm_domain *genpd)
+{
+	struct meson_gx_pwrc_vpu *pd = genpd_to_pd(genpd);
+	int i;
 
 	regmap_update_bits(pd->regmap_ao, AO_RTI_GEN_PWR_SLEEP0,
 			   GEN_PWR_VPU_HDMI_ISO, GEN_PWR_VPU_HDMI_ISO);
 	udelay(20);
 
 	/* Power Down Memories */
-	क्रम (i = 0; i < 32; i += 2) अणु
+	for (i = 0; i < 32; i += 2) {
 		regmap_update_bits(pd->regmap_hhi, HHI_VPU_MEM_PD_REG0,
 				   0x3 << i, 0x3 << i);
 		udelay(5);
-	पूर्ण
-	क्रम (i = 0; i < 32; i += 2) अणु
+	}
+	for (i = 0; i < 32; i += 2) {
 		regmap_update_bits(pd->regmap_hhi, HHI_VPU_MEM_PD_REG1,
 				   0x3 << i, 0x3 << i);
 		udelay(5);
-	पूर्ण
-	क्रम (i = 8; i < 16; i++) अणु
+	}
+	for (i = 8; i < 16; i++) {
 		regmap_update_bits(pd->regmap_hhi, HHI_MEM_PD_REG0,
 				   BIT(i), BIT(i));
 		udelay(5);
-	पूर्ण
+	}
 	udelay(20);
 
 	regmap_update_bits(pd->regmap_ao, AO_RTI_GEN_PWR_SLEEP0,
@@ -81,39 +80,39 @@
 	clk_disable_unprepare(pd->vpu_clk);
 	clk_disable_unprepare(pd->vapb_clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक meson_g12a_pwrc_vpu_घातer_off(काष्ठा generic_pm_करोमुख्य *genpd)
-अणु
-	काष्ठा meson_gx_pwrc_vpu *pd = genpd_to_pd(genpd);
-	पूर्णांक i;
+static int meson_g12a_pwrc_vpu_power_off(struct generic_pm_domain *genpd)
+{
+	struct meson_gx_pwrc_vpu *pd = genpd_to_pd(genpd);
+	int i;
 
 	regmap_update_bits(pd->regmap_ao, AO_RTI_GEN_PWR_SLEEP0,
 			   GEN_PWR_VPU_HDMI_ISO, GEN_PWR_VPU_HDMI_ISO);
 	udelay(20);
 
 	/* Power Down Memories */
-	क्रम (i = 0; i < 32; i += 2) अणु
+	for (i = 0; i < 32; i += 2) {
 		regmap_update_bits(pd->regmap_hhi, HHI_VPU_MEM_PD_REG0,
 				   0x3 << i, 0x3 << i);
 		udelay(5);
-	पूर्ण
-	क्रम (i = 0; i < 32; i += 2) अणु
+	}
+	for (i = 0; i < 32; i += 2) {
 		regmap_update_bits(pd->regmap_hhi, HHI_VPU_MEM_PD_REG1,
 				   0x3 << i, 0x3 << i);
 		udelay(5);
-	पूर्ण
-	क्रम (i = 0; i < 32; i += 2) अणु
+	}
+	for (i = 0; i < 32; i += 2) {
 		regmap_update_bits(pd->regmap_hhi, HHI_VPU_MEM_PD_REG2,
 				   0x3 << i, 0x3 << i);
 		udelay(5);
-	पूर्ण
-	क्रम (i = 8; i < 16; i++) अणु
+	}
+	for (i = 8; i < 16; i++) {
 		regmap_update_bits(pd->regmap_hhi, HHI_MEM_PD_REG0,
 				   BIT(i), BIT(i));
 		udelay(5);
-	पूर्ण
+	}
 	udelay(20);
 
 	regmap_update_bits(pd->regmap_ao, AO_RTI_GEN_PWR_SLEEP0,
@@ -124,205 +123,205 @@
 	clk_disable_unprepare(pd->vpu_clk);
 	clk_disable_unprepare(pd->vapb_clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक meson_gx_pwrc_vpu_setup_clk(काष्ठा meson_gx_pwrc_vpu *pd)
-अणु
-	पूर्णांक ret;
+static int meson_gx_pwrc_vpu_setup_clk(struct meson_gx_pwrc_vpu *pd)
+{
+	int ret;
 
 	ret = clk_prepare_enable(pd->vpu_clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = clk_prepare_enable(pd->vapb_clk);
-	अगर (ret)
+	if (ret)
 		clk_disable_unprepare(pd->vpu_clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक meson_gx_pwrc_vpu_घातer_on(काष्ठा generic_pm_करोमुख्य *genpd)
-अणु
-	काष्ठा meson_gx_pwrc_vpu *pd = genpd_to_pd(genpd);
-	पूर्णांक ret;
-	पूर्णांक i;
+static int meson_gx_pwrc_vpu_power_on(struct generic_pm_domain *genpd)
+{
+	struct meson_gx_pwrc_vpu *pd = genpd_to_pd(genpd);
+	int ret;
+	int i;
 
 	regmap_update_bits(pd->regmap_ao, AO_RTI_GEN_PWR_SLEEP0,
 			   GEN_PWR_VPU_HDMI, 0);
 	udelay(20);
 
 	/* Power Up Memories */
-	क्रम (i = 0; i < 32; i += 2) अणु
+	for (i = 0; i < 32; i += 2) {
 		regmap_update_bits(pd->regmap_hhi, HHI_VPU_MEM_PD_REG0,
 				   0x3 << i, 0);
 		udelay(5);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < 32; i += 2) अणु
+	for (i = 0; i < 32; i += 2) {
 		regmap_update_bits(pd->regmap_hhi, HHI_VPU_MEM_PD_REG1,
 				   0x3 << i, 0);
 		udelay(5);
-	पूर्ण
+	}
 
-	क्रम (i = 8; i < 16; i++) अणु
+	for (i = 8; i < 16; i++) {
 		regmap_update_bits(pd->regmap_hhi, HHI_MEM_PD_REG0,
 				   BIT(i), 0);
 		udelay(5);
-	पूर्ण
+	}
 	udelay(20);
 
-	ret = reset_control_निश्चित(pd->rstc);
-	अगर (ret)
-		वापस ret;
+	ret = reset_control_assert(pd->rstc);
+	if (ret)
+		return ret;
 
 	regmap_update_bits(pd->regmap_ao, AO_RTI_GEN_PWR_SLEEP0,
 			   GEN_PWR_VPU_HDMI_ISO, 0);
 
-	ret = reset_control_deनिश्चित(pd->rstc);
-	अगर (ret)
-		वापस ret;
+	ret = reset_control_deassert(pd->rstc);
+	if (ret)
+		return ret;
 
 	ret = meson_gx_pwrc_vpu_setup_clk(pd);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक meson_g12a_pwrc_vpu_घातer_on(काष्ठा generic_pm_करोमुख्य *genpd)
-अणु
-	काष्ठा meson_gx_pwrc_vpu *pd = genpd_to_pd(genpd);
-	पूर्णांक ret;
-	पूर्णांक i;
+static int meson_g12a_pwrc_vpu_power_on(struct generic_pm_domain *genpd)
+{
+	struct meson_gx_pwrc_vpu *pd = genpd_to_pd(genpd);
+	int ret;
+	int i;
 
 	regmap_update_bits(pd->regmap_ao, AO_RTI_GEN_PWR_SLEEP0,
 			   GEN_PWR_VPU_HDMI, 0);
 	udelay(20);
 
 	/* Power Up Memories */
-	क्रम (i = 0; i < 32; i += 2) अणु
+	for (i = 0; i < 32; i += 2) {
 		regmap_update_bits(pd->regmap_hhi, HHI_VPU_MEM_PD_REG0,
 				   0x3 << i, 0);
 		udelay(5);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < 32; i += 2) अणु
+	for (i = 0; i < 32; i += 2) {
 		regmap_update_bits(pd->regmap_hhi, HHI_VPU_MEM_PD_REG1,
 				   0x3 << i, 0);
 		udelay(5);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < 32; i += 2) अणु
+	for (i = 0; i < 32; i += 2) {
 		regmap_update_bits(pd->regmap_hhi, HHI_VPU_MEM_PD_REG2,
 				   0x3 << i, 0);
 		udelay(5);
-	पूर्ण
+	}
 
-	क्रम (i = 8; i < 16; i++) अणु
+	for (i = 8; i < 16; i++) {
 		regmap_update_bits(pd->regmap_hhi, HHI_MEM_PD_REG0,
 				   BIT(i), 0);
 		udelay(5);
-	पूर्ण
+	}
 	udelay(20);
 
-	ret = reset_control_निश्चित(pd->rstc);
-	अगर (ret)
-		वापस ret;
+	ret = reset_control_assert(pd->rstc);
+	if (ret)
+		return ret;
 
 	regmap_update_bits(pd->regmap_ao, AO_RTI_GEN_PWR_SLEEP0,
 			   GEN_PWR_VPU_HDMI_ISO, 0);
 
-	ret = reset_control_deनिश्चित(pd->rstc);
-	अगर (ret)
-		वापस ret;
+	ret = reset_control_deassert(pd->rstc);
+	if (ret)
+		return ret;
 
 	ret = meson_gx_pwrc_vpu_setup_clk(pd);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool meson_gx_pwrc_vpu_get_घातer(काष्ठा meson_gx_pwrc_vpu *pd)
-अणु
+static bool meson_gx_pwrc_vpu_get_power(struct meson_gx_pwrc_vpu *pd)
+{
 	u32 reg;
 
-	regmap_पढ़ो(pd->regmap_ao, AO_RTI_GEN_PWR_SLEEP0, &reg);
+	regmap_read(pd->regmap_ao, AO_RTI_GEN_PWR_SLEEP0, &reg);
 
-	वापस (reg & GEN_PWR_VPU_HDMI);
-पूर्ण
+	return (reg & GEN_PWR_VPU_HDMI);
+}
 
-अटल काष्ठा meson_gx_pwrc_vpu vpu_hdmi_pd = अणु
-	.genpd = अणु
+static struct meson_gx_pwrc_vpu vpu_hdmi_pd = {
+	.genpd = {
 		.name = "vpu_hdmi",
-		.घातer_off = meson_gx_pwrc_vpu_घातer_off,
-		.घातer_on = meson_gx_pwrc_vpu_घातer_on,
-	पूर्ण,
-पूर्ण;
+		.power_off = meson_gx_pwrc_vpu_power_off,
+		.power_on = meson_gx_pwrc_vpu_power_on,
+	},
+};
 
-अटल काष्ठा meson_gx_pwrc_vpu vpu_hdmi_pd_g12a = अणु
-	.genpd = अणु
+static struct meson_gx_pwrc_vpu vpu_hdmi_pd_g12a = {
+	.genpd = {
 		.name = "vpu_hdmi",
-		.घातer_off = meson_g12a_pwrc_vpu_घातer_off,
-		.घातer_on = meson_g12a_pwrc_vpu_घातer_on,
-	पूर्ण,
-पूर्ण;
+		.power_off = meson_g12a_pwrc_vpu_power_off,
+		.power_on = meson_g12a_pwrc_vpu_power_on,
+	},
+};
 
-अटल पूर्णांक meson_gx_pwrc_vpu_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा meson_gx_pwrc_vpu *vpu_pd_match;
-	काष्ठा regmap *regmap_ao, *regmap_hhi;
-	काष्ठा meson_gx_pwrc_vpu *vpu_pd;
-	काष्ठा reset_control *rstc;
-	काष्ठा clk *vpu_clk;
-	काष्ठा clk *vapb_clk;
-	bool घातered_off;
-	पूर्णांक ret;
+static int meson_gx_pwrc_vpu_probe(struct platform_device *pdev)
+{
+	const struct meson_gx_pwrc_vpu *vpu_pd_match;
+	struct regmap *regmap_ao, *regmap_hhi;
+	struct meson_gx_pwrc_vpu *vpu_pd;
+	struct reset_control *rstc;
+	struct clk *vpu_clk;
+	struct clk *vapb_clk;
+	bool powered_off;
+	int ret;
 
 	vpu_pd_match = of_device_get_match_data(&pdev->dev);
-	अगर (!vpu_pd_match) अणु
+	if (!vpu_pd_match) {
 		dev_err(&pdev->dev, "failed to get match data\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	vpu_pd = devm_kzalloc(&pdev->dev, माप(*vpu_pd), GFP_KERNEL);
-	अगर (!vpu_pd)
-		वापस -ENOMEM;
+	vpu_pd = devm_kzalloc(&pdev->dev, sizeof(*vpu_pd), GFP_KERNEL);
+	if (!vpu_pd)
+		return -ENOMEM;
 
-	स_नकल(vpu_pd, vpu_pd_match, माप(*vpu_pd));
+	memcpy(vpu_pd, vpu_pd_match, sizeof(*vpu_pd));
 
 	regmap_ao = syscon_node_to_regmap(of_get_parent(pdev->dev.of_node));
-	अगर (IS_ERR(regmap_ao)) अणु
+	if (IS_ERR(regmap_ao)) {
 		dev_err(&pdev->dev, "failed to get regmap\n");
-		वापस PTR_ERR(regmap_ao);
-	पूर्ण
+		return PTR_ERR(regmap_ao);
+	}
 
 	regmap_hhi = syscon_regmap_lookup_by_phandle(pdev->dev.of_node,
 						     "amlogic,hhi-sysctrl");
-	अगर (IS_ERR(regmap_hhi)) अणु
+	if (IS_ERR(regmap_hhi)) {
 		dev_err(&pdev->dev, "failed to get HHI regmap\n");
-		वापस PTR_ERR(regmap_hhi);
-	पूर्ण
+		return PTR_ERR(regmap_hhi);
+	}
 
 	rstc = devm_reset_control_array_get_exclusive(&pdev->dev);
-	अगर (IS_ERR(rstc)) अणु
-		अगर (PTR_ERR(rstc) != -EPROBE_DEFER)
+	if (IS_ERR(rstc)) {
+		if (PTR_ERR(rstc) != -EPROBE_DEFER)
 			dev_err(&pdev->dev, "failed to get reset lines\n");
-		वापस PTR_ERR(rstc);
-	पूर्ण
+		return PTR_ERR(rstc);
+	}
 
 	vpu_clk = devm_clk_get(&pdev->dev, "vpu");
-	अगर (IS_ERR(vpu_clk)) अणु
+	if (IS_ERR(vpu_clk)) {
 		dev_err(&pdev->dev, "vpu clock request failed\n");
-		वापस PTR_ERR(vpu_clk);
-	पूर्ण
+		return PTR_ERR(vpu_clk);
+	}
 
 	vapb_clk = devm_clk_get(&pdev->dev, "vapb");
-	अगर (IS_ERR(vapb_clk)) अणु
+	if (IS_ERR(vapb_clk)) {
 		dev_err(&pdev->dev, "vapb clock request failed\n");
-		वापस PTR_ERR(vapb_clk);
-	पूर्ण
+		return PTR_ERR(vapb_clk);
+	}
 
 	vpu_pd->regmap_ao = regmap_ao;
 	vpu_pd->regmap_hhi = regmap_hhi;
@@ -330,51 +329,51 @@
 	vpu_pd->vpu_clk = vpu_clk;
 	vpu_pd->vapb_clk = vapb_clk;
 
-	platक्रमm_set_drvdata(pdev, vpu_pd);
+	platform_set_drvdata(pdev, vpu_pd);
 
-	घातered_off = meson_gx_pwrc_vpu_get_घातer(vpu_pd);
+	powered_off = meson_gx_pwrc_vpu_get_power(vpu_pd);
 
-	/* If alपढ़ोy घातered, sync the घड़ी states */
-	अगर (!घातered_off) अणु
+	/* If already powered, sync the clock states */
+	if (!powered_off) {
 		ret = meson_gx_pwrc_vpu_setup_clk(vpu_pd);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	vpu_pd->genpd.flags = GENPD_FLAG_ALWAYS_ON;
-	pm_genpd_init(&vpu_pd->genpd, शून्य, घातered_off);
+	pm_genpd_init(&vpu_pd->genpd, NULL, powered_off);
 
-	वापस of_genpd_add_provider_simple(pdev->dev.of_node,
+	return of_genpd_add_provider_simple(pdev->dev.of_node,
 					    &vpu_pd->genpd);
-पूर्ण
+}
 
-अटल व्योम meson_gx_pwrc_vpu_shutकरोwn(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा meson_gx_pwrc_vpu *vpu_pd = platक्रमm_get_drvdata(pdev);
-	bool घातered_off;
+static void meson_gx_pwrc_vpu_shutdown(struct platform_device *pdev)
+{
+	struct meson_gx_pwrc_vpu *vpu_pd = platform_get_drvdata(pdev);
+	bool powered_off;
 
-	घातered_off = meson_gx_pwrc_vpu_get_घातer(vpu_pd);
-	अगर (!घातered_off)
-		vpu_pd->genpd.घातer_off(&vpu_pd->genpd);
-पूर्ण
+	powered_off = meson_gx_pwrc_vpu_get_power(vpu_pd);
+	if (!powered_off)
+		vpu_pd->genpd.power_off(&vpu_pd->genpd);
+}
 
-अटल स्थिर काष्ठा of_device_id meson_gx_pwrc_vpu_match_table[] = अणु
-	अणु .compatible = "amlogic,meson-gx-pwrc-vpu", .data = &vpu_hdmi_pd पूर्ण,
-	अणु
+static const struct of_device_id meson_gx_pwrc_vpu_match_table[] = {
+	{ .compatible = "amlogic,meson-gx-pwrc-vpu", .data = &vpu_hdmi_pd },
+	{
 	  .compatible = "amlogic,meson-g12a-pwrc-vpu",
 	  .data = &vpu_hdmi_pd_g12a
-	पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+	},
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, meson_gx_pwrc_vpu_match_table);
 
-अटल काष्ठा platक्रमm_driver meson_gx_pwrc_vpu_driver = अणु
+static struct platform_driver meson_gx_pwrc_vpu_driver = {
 	.probe	= meson_gx_pwrc_vpu_probe,
-	.shutकरोwn = meson_gx_pwrc_vpu_shutकरोwn,
-	.driver = अणु
+	.shutdown = meson_gx_pwrc_vpu_shutdown,
+	.driver = {
 		.name		= "meson_gx_pwrc_vpu",
 		.of_match_table	= meson_gx_pwrc_vpu_match_table,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(meson_gx_pwrc_vpu_driver);
+	},
+};
+module_platform_driver(meson_gx_pwrc_vpu_driver);
 MODULE_LICENSE("GPL v2");

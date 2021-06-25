@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* leon_smp.c: Sparc-Leon SMP support.
  *
  * based on sun4m_smp.c
@@ -8,165 +7,165 @@
  * Copyright (C) 2009 Konrad Eisele (konrad@gaisler.com) Aeroflex Gaisler AB
  */
 
-#समावेश <यंत्र/head.h>
+#include <asm/head.h>
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/thपढ़ोs.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel_स्थिति.स>
-#समावेश <linux/of.h>
-#समावेश <linux/init.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/profile.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/घड़ीchips.h>
+#include <linux/kernel.h>
+#include <linux/sched/mm.h>
+#include <linux/threads.h>
+#include <linux/smp.h>
+#include <linux/interrupt.h>
+#include <linux/kernel_stat.h>
+#include <linux/of.h>
+#include <linux/init.h>
+#include <linux/spinlock.h>
+#include <linux/mm.h>
+#include <linux/swap.h>
+#include <linux/profile.h>
+#include <linux/pm.h>
+#include <linux/delay.h>
+#include <linux/gfp.h>
+#include <linux/cpu.h>
+#include <linux/clockchips.h>
 
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/tlbflush.h>
+#include <asm/cacheflush.h>
+#include <asm/tlbflush.h>
 
-#समावेश <यंत्र/ptrace.h>
-#समावेश <linux/atomic.h>
-#समावेश <यंत्र/irq_regs.h>
-#समावेश <यंत्र/traps.h>
+#include <asm/ptrace.h>
+#include <linux/atomic.h>
+#include <asm/irq_regs.h>
+#include <asm/traps.h>
 
-#समावेश <यंत्र/delay.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/oplib.h>
-#समावेश <यंत्र/cpudata.h>
-#समावेश <यंत्र/asi.h>
-#समावेश <यंत्र/leon.h>
-#समावेश <यंत्र/leon_amba.h>
-#समावेश <यंत्र/समयr.h>
+#include <asm/delay.h>
+#include <asm/irq.h>
+#include <asm/page.h>
+#include <asm/oplib.h>
+#include <asm/cpudata.h>
+#include <asm/asi.h>
+#include <asm/leon.h>
+#include <asm/leon_amba.h>
+#include <asm/timer.h>
 
-#समावेश "kernel.h"
+#include "kernel.h"
 
-#समावेश "irq.h"
+#include "irq.h"
 
-बाह्य ctxd_t *srmmu_ctx_table_phys;
-अटल पूर्णांक smp_processors_पढ़ोy;
-बाह्य अस्थिर अचिन्हित दीर्घ cpu_callin_map[NR_CPUS];
-बाह्य cpumask_t smp_commenced_mask;
-व्योम leon_configure_cache_smp(व्योम);
-अटल व्योम leon_ipi_init(व्योम);
+extern ctxd_t *srmmu_ctx_table_phys;
+static int smp_processors_ready;
+extern volatile unsigned long cpu_callin_map[NR_CPUS];
+extern cpumask_t smp_commenced_mask;
+void leon_configure_cache_smp(void);
+static void leon_ipi_init(void);
 
 /* IRQ number of LEON IPIs */
-पूर्णांक leon_ipi_irq = LEON3_IRQ_IPI_DEFAULT;
+int leon_ipi_irq = LEON3_IRQ_IPI_DEFAULT;
 
-अटल अंतरभूत अचिन्हित दीर्घ करो_swap(अस्थिर अचिन्हित दीर्घ *ptr,
-				    अचिन्हित दीर्घ val)
-अणु
-	__यंत्र__ __अस्थिर__("swapa [%2] %3, %0\n\t" : "=&r"(val)
+static inline unsigned long do_swap(volatile unsigned long *ptr,
+				    unsigned long val)
+{
+	__asm__ __volatile__("swapa [%2] %3, %0\n\t" : "=&r"(val)
 			     : "0"(val), "r"(ptr), "i"(ASI_LEON_DCACHE_MISS)
 			     : "memory");
-	वापस val;
-पूर्ण
+	return val;
+}
 
-व्योम leon_cpu_pre_starting(व्योम *arg)
-अणु
+void leon_cpu_pre_starting(void *arg)
+{
 	leon_configure_cache_smp();
-पूर्ण
+}
 
-व्योम leon_cpu_pre_online(व्योम *arg)
-अणु
-	पूर्णांक cpuid = hard_smp_processor_id();
+void leon_cpu_pre_online(void *arg)
+{
+	int cpuid = hard_smp_processor_id();
 
-	/* Allow master to जारी. The master will then give us the
-	 * go-ahead by setting the smp_commenced_mask and will रुको without
-	 * समयouts until our setup is completed fully (signअगरied by
+	/* Allow master to continue. The master will then give us the
+	 * go-ahead by setting the smp_commenced_mask and will wait without
+	 * timeouts until our setup is completed fully (signified by
 	 * our bit being set in the cpu_online_mask).
 	 */
-	करो_swap(&cpu_callin_map[cpuid], 1);
+	do_swap(&cpu_callin_map[cpuid], 1);
 
 	local_ops->cache_all();
 	local_ops->tlb_all();
 
-	/* Fix idle thपढ़ो fields. */
-	__यंत्र__ __अस्थिर__("ld [%0], %%g6\n\t" : : "r"(&current_set[cpuid])
+	/* Fix idle thread fields. */
+	__asm__ __volatile__("ld [%0], %%g6\n\t" : : "r"(&current_set[cpuid])
 			     : "memory" /* paranoid */);
 
 	/* Attach to the address space of init_task. */
 	mmgrab(&init_mm);
 	current->active_mm = &init_mm;
 
-	जबतक (!cpumask_test_cpu(cpuid, &smp_commenced_mask))
+	while (!cpumask_test_cpu(cpuid, &smp_commenced_mask))
 		mb();
-पूर्ण
+}
 
 /*
  *	Cycle through the processors asking the PROM to start each one.
  */
 
-बाह्य काष्ठा linux_prom_रेजिस्टरs smp_penguin_ctable;
+extern struct linux_prom_registers smp_penguin_ctable;
 
-व्योम leon_configure_cache_smp(व्योम)
-अणु
-	अचिन्हित दीर्घ cfg = sparc_leon3_get_dcachecfg();
-	पूर्णांक me = smp_processor_id();
+void leon_configure_cache_smp(void)
+{
+	unsigned long cfg = sparc_leon3_get_dcachecfg();
+	int me = smp_processor_id();
 
-	अगर (ASI_LEON3_SYSCTRL_CFG_SSIZE(cfg) > 4) अणु
-		prपूर्णांकk(KERN_INFO "Note: SMP with snooping only works on 4k cache, found %dk(0x%x) on cpu %d, disabling caches\n",
-		     (अचिन्हित पूर्णांक)ASI_LEON3_SYSCTRL_CFG_SSIZE(cfg),
-		     (अचिन्हित पूर्णांक)cfg, (अचिन्हित पूर्णांक)me);
+	if (ASI_LEON3_SYSCTRL_CFG_SSIZE(cfg) > 4) {
+		printk(KERN_INFO "Note: SMP with snooping only works on 4k cache, found %dk(0x%x) on cpu %d, disabling caches\n",
+		     (unsigned int)ASI_LEON3_SYSCTRL_CFG_SSIZE(cfg),
+		     (unsigned int)cfg, (unsigned int)me);
 		sparc_leon3_disable_cache();
-	पूर्ण अन्यथा अणु
-		अगर (cfg & ASI_LEON3_SYSCTRL_CFG_SNOOPING) अणु
+	} else {
+		if (cfg & ASI_LEON3_SYSCTRL_CFG_SNOOPING) {
 			sparc_leon3_enable_snooping();
-		पूर्ण अन्यथा अणु
-			prपूर्णांकk(KERN_INFO "Note: You have to enable snooping in the vhdl model cpu %d, disabling caches\n",
+		} else {
+			printk(KERN_INFO "Note: You have to enable snooping in the vhdl model cpu %d, disabling caches\n",
 			     me);
 			sparc_leon3_disable_cache();
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	local_ops->cache_all();
 	local_ops->tlb_all();
-पूर्ण
+}
 
-अटल व्योम leon_smp_setbroadcast(अचिन्हित पूर्णांक mask)
-अणु
-	पूर्णांक broadcast =
+static void leon_smp_setbroadcast(unsigned int mask)
+{
+	int broadcast =
 	    ((LEON3_BYPASS_LOAD_PA(&(leon3_irqctrl_regs->mpstatus)) >>
 	      LEON3_IRQMPSTATUS_BROADCAST) & 1);
-	अगर (!broadcast) अणु
-		prom_म_लिखो("######## !!!! The irqmp-ctrl must have broadcast enabled, smp wont work !!!!! ####### nr cpus: %d\n",
+	if (!broadcast) {
+		prom_printf("######## !!!! The irqmp-ctrl must have broadcast enabled, smp wont work !!!!! ####### nr cpus: %d\n",
 		     leon_smp_nrcpus());
-		अगर (leon_smp_nrcpus() > 1) अणु
+		if (leon_smp_nrcpus() > 1) {
 			BUG();
-		पूर्ण अन्यथा अणु
-			prom_म_लिखो("continue anyway\n");
-			वापस;
-		पूर्ण
-	पूर्ण
+		} else {
+			prom_printf("continue anyway\n");
+			return;
+		}
+	}
 	LEON_BYPASS_STORE_PA(&(leon3_irqctrl_regs->mpbroadcast), mask);
-पूर्ण
+}
 
-पूर्णांक leon_smp_nrcpus(व्योम)
-अणु
-	पूर्णांक nrcpu =
+int leon_smp_nrcpus(void)
+{
+	int nrcpu =
 	    ((LEON3_BYPASS_LOAD_PA(&(leon3_irqctrl_regs->mpstatus)) >>
 	      LEON3_IRQMPSTATUS_CPUNR) & 0xf) + 1;
-	वापस nrcpu;
-पूर्ण
+	return nrcpu;
+}
 
-व्योम __init leon_boot_cpus(व्योम)
-अणु
-	पूर्णांक nrcpu = leon_smp_nrcpus();
-	पूर्णांक me = smp_processor_id();
+void __init leon_boot_cpus(void)
+{
+	int nrcpu = leon_smp_nrcpus();
+	int me = smp_processor_id();
 
 	/* Setup IPI */
 	leon_ipi_init();
 
-	prपूर्णांकk(KERN_INFO "%d:(%d:%d) cpus mpirq at 0x%x\n", (अचिन्हित पूर्णांक)me,
-	       (अचिन्हित पूर्णांक)nrcpu, (अचिन्हित पूर्णांक)NR_CPUS,
-	       (अचिन्हित पूर्णांक)&(leon3_irqctrl_regs->mpstatus));
+	printk(KERN_INFO "%d:(%d:%d) cpus mpirq at 0x%x\n", (unsigned int)me,
+	       (unsigned int)nrcpu, (unsigned int)NR_CPUS,
+	       (unsigned int)&(leon3_irqctrl_regs->mpstatus));
 
 	leon_enable_irq_cpu(LEON3_IRQ_CROSS_CALL, me);
 	leon_enable_irq_cpu(LEON3_IRQ_TICKER, me);
@@ -177,116 +176,116 @@
 	leon_configure_cache_smp();
 	local_ops->cache_all();
 
-पूर्ण
+}
 
-पूर्णांक leon_boot_one_cpu(पूर्णांक i, काष्ठा task_काष्ठा *idle)
-अणु
-	पूर्णांक समयout;
+int leon_boot_one_cpu(int i, struct task_struct *idle)
+{
+	int timeout;
 
-	current_set[i] = task_thपढ़ो_info(idle);
+	current_set[i] = task_thread_info(idle);
 
-	/* See trampoline.S:leon_smp_cpu_startup क्रम details...
+	/* See trampoline.S:leon_smp_cpu_startup for details...
 	 * Initialize the contexts table
-	 * Since the call to prom_startcpu() trashes the काष्ठाure,
-	 * we need to re-initialize it क्रम each cpu
+	 * Since the call to prom_startcpu() trashes the structure,
+	 * we need to re-initialize it for each cpu
 	 */
 	smp_penguin_ctable.which_io = 0;
-	smp_penguin_ctable.phys_addr = (अचिन्हित पूर्णांक)srmmu_ctx_table_phys;
+	smp_penguin_ctable.phys_addr = (unsigned int)srmmu_ctx_table_phys;
 	smp_penguin_ctable.reg_size = 0;
 
 	/* whirrr, whirrr, whirrrrrrrrr... */
-	prपूर्णांकk(KERN_INFO "Starting CPU %d : (irqmp: 0x%x)\n", (अचिन्हित पूर्णांक)i,
-	       (अचिन्हित पूर्णांक)&leon3_irqctrl_regs->mpstatus);
+	printk(KERN_INFO "Starting CPU %d : (irqmp: 0x%x)\n", (unsigned int)i,
+	       (unsigned int)&leon3_irqctrl_regs->mpstatus);
 	local_ops->cache_all();
 
-	/* Make sure all IRQs are of from the start क्रम this new CPU */
+	/* Make sure all IRQs are of from the start for this new CPU */
 	LEON_BYPASS_STORE_PA(&leon3_irqctrl_regs->mask[i], 0);
 
 	/* Wake one CPU */
 	LEON_BYPASS_STORE_PA(&(leon3_irqctrl_regs->mpstatus), 1 << i);
 
 	/* wheee... it's going... */
-	क्रम (समयout = 0; समयout < 10000; समयout++) अणु
-		अगर (cpu_callin_map[i])
-			अवरोध;
+	for (timeout = 0; timeout < 10000; timeout++) {
+		if (cpu_callin_map[i])
+			break;
 		udelay(200);
-	पूर्ण
-	prपूर्णांकk(KERN_INFO "Started CPU %d\n", (अचिन्हित पूर्णांक)i);
+	}
+	printk(KERN_INFO "Started CPU %d\n", (unsigned int)i);
 
-	अगर (!(cpu_callin_map[i])) अणु
-		prपूर्णांकk(KERN_ERR "Processor %d is stuck.\n", i);
-		वापस -ENODEV;
-	पूर्ण अन्यथा अणु
+	if (!(cpu_callin_map[i])) {
+		printk(KERN_ERR "Processor %d is stuck.\n", i);
+		return -ENODEV;
+	} else {
 		leon_enable_irq_cpu(LEON3_IRQ_CROSS_CALL, i);
 		leon_enable_irq_cpu(LEON3_IRQ_TICKER, i);
 		leon_enable_irq_cpu(leon_ipi_irq, i);
-	पूर्ण
+	}
 
 	local_ops->cache_all();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम __init leon_smp_करोne(व्योम)
-अणु
+void __init leon_smp_done(void)
+{
 
-	पूर्णांक i, first;
-	पूर्णांक *prev;
+	int i, first;
+	int *prev;
 
-	/* setup cpu list क्रम irq rotation */
+	/* setup cpu list for irq rotation */
 	first = 0;
 	prev = &first;
-	क्रम (i = 0; i < NR_CPUS; i++) अणु
-		अगर (cpu_online(i)) अणु
+	for (i = 0; i < NR_CPUS; i++) {
+		if (cpu_online(i)) {
 			*prev = i;
 			prev = &cpu_data(i).next;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	*prev = first;
 	local_ops->cache_all();
 
 	/* Free unneeded trap tables */
-	अगर (!cpu_present(1)) अणु
-		मुक्त_reserved_page(virt_to_page(&trapbase_cpu1));
-	पूर्ण
-	अगर (!cpu_present(2)) अणु
-		मुक्त_reserved_page(virt_to_page(&trapbase_cpu2));
-	पूर्ण
-	अगर (!cpu_present(3)) अणु
-		मुक्त_reserved_page(virt_to_page(&trapbase_cpu3));
-	पूर्ण
-	/* Ok, they are spinning and पढ़ोy to go. */
-	smp_processors_पढ़ोy = 1;
+	if (!cpu_present(1)) {
+		free_reserved_page(virt_to_page(&trapbase_cpu1));
+	}
+	if (!cpu_present(2)) {
+		free_reserved_page(virt_to_page(&trapbase_cpu2));
+	}
+	if (!cpu_present(3)) {
+		free_reserved_page(virt_to_page(&trapbase_cpu3));
+	}
+	/* Ok, they are spinning and ready to go. */
+	smp_processors_ready = 1;
 
-पूर्ण
+}
 
-काष्ठा leon_ipi_work अणु
-	पूर्णांक single;
-	पूर्णांक msk;
-	पूर्णांक resched;
-पूर्ण;
+struct leon_ipi_work {
+	int single;
+	int msk;
+	int resched;
+};
 
-अटल DEFINE_PER_CPU_SHARED_ALIGNED(काष्ठा leon_ipi_work, leon_ipi_work);
+static DEFINE_PER_CPU_SHARED_ALIGNED(struct leon_ipi_work, leon_ipi_work);
 
 /* Initialize IPIs on the LEON, in order to save IRQ resources only one IRQ
- * is used क्रम all three types of IPIs.
+ * is used for all three types of IPIs.
  */
-अटल व्योम __init leon_ipi_init(व्योम)
-अणु
-	पूर्णांक cpu, len;
-	काष्ठा leon_ipi_work *work;
-	काष्ठा property *pp;
-	काष्ठा device_node *rootnp;
-	काष्ठा tt_entry *trap_table;
-	अचिन्हित दीर्घ flags;
+static void __init leon_ipi_init(void)
+{
+	int cpu, len;
+	struct leon_ipi_work *work;
+	struct property *pp;
+	struct device_node *rootnp;
+	struct tt_entry *trap_table;
+	unsigned long flags;
 
-	/* Find IPI IRQ or stick with शेष value */
+	/* Find IPI IRQ or stick with default value */
 	rootnp = of_find_node_by_path("/ambapp0");
-	अगर (rootnp) अणु
+	if (rootnp) {
 		pp = of_find_property(rootnp, "ipi_num", &len);
-		अगर (pp && (*(पूर्णांक *)pp->value))
-			leon_ipi_irq = *(पूर्णांक *)pp->value;
-	पूर्ण
-	prपूर्णांकk(KERN_INFO "leon: SMP IPIs at IRQ %d\n", leon_ipi_irq);
+		if (pp && (*(int *)pp->value))
+			leon_ipi_irq = *(int *)pp->value;
+	}
+	printk(KERN_INFO "leon: SMP IPIs at IRQ %d\n", leon_ipi_irq);
 
 	/* Adjust so that we jump directly to smpleon_ipi */
 	local_irq_save(flags);
@@ -295,175 +294,175 @@
 	local_ops->cache_all();
 	local_irq_restore(flags);
 
-	क्रम_each_possible_cpu(cpu) अणु
+	for_each_possible_cpu(cpu) {
 		work = &per_cpu(leon_ipi_work, cpu);
 		work->single = work->msk = work->resched = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम leon_send_ipi(पूर्णांक cpu, पूर्णांक level)
-अणु
-	अचिन्हित दीर्घ mask;
+static void leon_send_ipi(int cpu, int level)
+{
+	unsigned long mask;
 	mask = leon_get_irqmask(level);
-	LEON3_BYPASS_STORE_PA(&leon3_irqctrl_regs->क्रमce[cpu], mask);
-पूर्ण
+	LEON3_BYPASS_STORE_PA(&leon3_irqctrl_regs->force[cpu], mask);
+}
 
-अटल व्योम leon_ipi_single(पूर्णांक cpu)
-अणु
-	काष्ठा leon_ipi_work *work = &per_cpu(leon_ipi_work, cpu);
+static void leon_ipi_single(int cpu)
+{
+	struct leon_ipi_work *work = &per_cpu(leon_ipi_work, cpu);
 
 	/* Mark work */
 	work->single = 1;
 
 	/* Generate IRQ on the CPU */
 	leon_send_ipi(cpu, leon_ipi_irq);
-पूर्ण
+}
 
-अटल व्योम leon_ipi_mask_one(पूर्णांक cpu)
-अणु
-	काष्ठा leon_ipi_work *work = &per_cpu(leon_ipi_work, cpu);
+static void leon_ipi_mask_one(int cpu)
+{
+	struct leon_ipi_work *work = &per_cpu(leon_ipi_work, cpu);
 
 	/* Mark work */
 	work->msk = 1;
 
 	/* Generate IRQ on the CPU */
 	leon_send_ipi(cpu, leon_ipi_irq);
-पूर्ण
+}
 
-अटल व्योम leon_ipi_resched(पूर्णांक cpu)
-अणु
-	काष्ठा leon_ipi_work *work = &per_cpu(leon_ipi_work, cpu);
+static void leon_ipi_resched(int cpu)
+{
+	struct leon_ipi_work *work = &per_cpu(leon_ipi_work, cpu);
 
 	/* Mark work */
 	work->resched = 1;
 
 	/* Generate IRQ on the CPU (any IRQ will cause resched) */
 	leon_send_ipi(cpu, leon_ipi_irq);
-पूर्ण
+}
 
-व्योम leonsmp_ipi_पूर्णांकerrupt(व्योम)
-अणु
-	काष्ठा leon_ipi_work *work = this_cpu_ptr(&leon_ipi_work);
+void leonsmp_ipi_interrupt(void)
+{
+	struct leon_ipi_work *work = this_cpu_ptr(&leon_ipi_work);
 
-	अगर (work->single) अणु
+	if (work->single) {
 		work->single = 0;
-		smp_call_function_single_पूर्णांकerrupt();
-	पूर्ण
-	अगर (work->msk) अणु
+		smp_call_function_single_interrupt();
+	}
+	if (work->msk) {
 		work->msk = 0;
-		smp_call_function_पूर्णांकerrupt();
-	पूर्ण
-	अगर (work->resched) अणु
+		smp_call_function_interrupt();
+	}
+	if (work->resched) {
 		work->resched = 0;
-		smp_resched_पूर्णांकerrupt();
-	पूर्ण
-पूर्ण
+		smp_resched_interrupt();
+	}
+}
 
-अटल काष्ठा smp_funcall अणु
+static struct smp_funcall {
 	smpfunc_t func;
-	अचिन्हित दीर्घ arg1;
-	अचिन्हित दीर्घ arg2;
-	अचिन्हित दीर्घ arg3;
-	अचिन्हित दीर्घ arg4;
-	अचिन्हित दीर्घ arg5;
-	अचिन्हित दीर्घ processors_in[NR_CPUS];	/* Set when ipi entered. */
-	अचिन्हित दीर्घ processors_out[NR_CPUS];	/* Set when ipi निकासed. */
-पूर्ण ccall_info __attribute__((aligned(8)));
+	unsigned long arg1;
+	unsigned long arg2;
+	unsigned long arg3;
+	unsigned long arg4;
+	unsigned long arg5;
+	unsigned long processors_in[NR_CPUS];	/* Set when ipi entered. */
+	unsigned long processors_out[NR_CPUS];	/* Set when ipi exited. */
+} ccall_info __attribute__((aligned(8)));
 
-अटल DEFINE_SPINLOCK(cross_call_lock);
+static DEFINE_SPINLOCK(cross_call_lock);
 
 /* Cross calls must be serialized, at least currently. */
-अटल व्योम leon_cross_call(smpfunc_t func, cpumask_t mask, अचिन्हित दीर्घ arg1,
-			    अचिन्हित दीर्घ arg2, अचिन्हित दीर्घ arg3,
-			    अचिन्हित दीर्घ arg4)
-अणु
-	अगर (smp_processors_पढ़ोy) अणु
-		रेजिस्टर पूर्णांक high = NR_CPUS - 1;
-		अचिन्हित दीर्घ flags;
+static void leon_cross_call(smpfunc_t func, cpumask_t mask, unsigned long arg1,
+			    unsigned long arg2, unsigned long arg3,
+			    unsigned long arg4)
+{
+	if (smp_processors_ready) {
+		register int high = NR_CPUS - 1;
+		unsigned long flags;
 
 		spin_lock_irqsave(&cross_call_lock, flags);
 
-		अणु
+		{
 			/* If you make changes here, make sure gcc generates proper code... */
-			रेजिस्टर smpfunc_t f यंत्र("i0") = func;
-			रेजिस्टर अचिन्हित दीर्घ a1 यंत्र("i1") = arg1;
-			रेजिस्टर अचिन्हित दीर्घ a2 यंत्र("i2") = arg2;
-			रेजिस्टर अचिन्हित दीर्घ a3 यंत्र("i3") = arg3;
-			रेजिस्टर अचिन्हित दीर्घ a4 यंत्र("i4") = arg4;
-			रेजिस्टर अचिन्हित दीर्घ a5 यंत्र("i5") = 0;
+			register smpfunc_t f asm("i0") = func;
+			register unsigned long a1 asm("i1") = arg1;
+			register unsigned long a2 asm("i2") = arg2;
+			register unsigned long a3 asm("i3") = arg3;
+			register unsigned long a4 asm("i4") = arg4;
+			register unsigned long a5 asm("i5") = 0;
 
-			__यंत्र__ __अस्थिर__("std %0, [%6]\n\t"
+			__asm__ __volatile__("std %0, [%6]\n\t"
 					     "std %2, [%6 + 8]\n\t"
 					     "std %4, [%6 + 16]\n\t" : :
 					     "r"(f), "r"(a1), "r"(a2), "r"(a3),
 					     "r"(a4), "r"(a5),
 					     "r"(&ccall_info.func));
-		पूर्ण
+		}
 
 		/* Init receive/complete mapping, plus fire the IPI's off. */
-		अणु
-			रेजिस्टर पूर्णांक i;
+		{
+			register int i;
 
 			cpumask_clear_cpu(smp_processor_id(), &mask);
 			cpumask_and(&mask, cpu_online_mask, &mask);
-			क्रम (i = 0; i <= high; i++) अणु
-				अगर (cpumask_test_cpu(i, &mask)) अणु
+			for (i = 0; i <= high; i++) {
+				if (cpumask_test_cpu(i, &mask)) {
 					ccall_info.processors_in[i] = 0;
 					ccall_info.processors_out[i] = 0;
 					leon_send_ipi(i, LEON3_IRQ_CROSS_CALL);
 
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				}
+			}
+		}
 
-		अणु
-			रेजिस्टर पूर्णांक i;
-
-			i = 0;
-			करो अणु
-				अगर (!cpumask_test_cpu(i, &mask))
-					जारी;
-
-				जबतक (!ccall_info.processors_in[i])
-					barrier();
-			पूर्ण जबतक (++i <= high);
+		{
+			register int i;
 
 			i = 0;
-			करो अणु
-				अगर (!cpumask_test_cpu(i, &mask))
-					जारी;
+			do {
+				if (!cpumask_test_cpu(i, &mask))
+					continue;
 
-				जबतक (!ccall_info.processors_out[i])
+				while (!ccall_info.processors_in[i])
 					barrier();
-			पूर्ण जबतक (++i <= high);
-		पूर्ण
+			} while (++i <= high);
+
+			i = 0;
+			do {
+				if (!cpumask_test_cpu(i, &mask))
+					continue;
+
+				while (!ccall_info.processors_out[i])
+					barrier();
+			} while (++i <= high);
+		}
 
 		spin_unlock_irqrestore(&cross_call_lock, flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Running cross calls. */
-व्योम leon_cross_call_irq(व्योम)
-अणु
-	पूर्णांक i = smp_processor_id();
+void leon_cross_call_irq(void)
+{
+	int i = smp_processor_id();
 
 	ccall_info.processors_in[i] = 1;
 	ccall_info.func(ccall_info.arg1, ccall_info.arg2, ccall_info.arg3,
 			ccall_info.arg4, ccall_info.arg5);
 	ccall_info.processors_out[i] = 1;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा sparc32_ipi_ops leon_ipi_ops = अणु
+static const struct sparc32_ipi_ops leon_ipi_ops = {
 	.cross_call = leon_cross_call,
 	.resched    = leon_ipi_resched,
 	.single     = leon_ipi_single,
 	.mask_one   = leon_ipi_mask_one,
-पूर्ण;
+};
 
-व्योम __init leon_init_smp(व्योम)
-अणु
+void __init leon_init_smp(void)
+{
 	/* Patch ipi15 trap table */
 	t_nmi[1] = t_nmi[1] + (linux_trap_ipi15_leon - linux_trap_ipi15_sun4m);
 
 	sparc32_ipi_ops = &leon_ipi_ops;
-पूर्ण
+}

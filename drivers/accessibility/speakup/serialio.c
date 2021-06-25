@@ -1,142 +1,141 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioport.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/interrupt.h>
+#include <linux/ioport.h>
 
-#समावेश "spk_types.h"
-#समावेश "speakup.h"
-#समावेश "spk_priv.h"
-#समावेश "serialio.h"
+#include "spk_types.h"
+#include "speakup.h"
+#include "spk_priv.h"
+#include "serialio.h"
 
-#समावेश <linux/serial_core.h>
+#include <linux/serial_core.h>
 /* WARNING:  Do not change this to <linux/serial.h> without testing that
- * SERIAL_PORT_DFNS करोes get defined to the appropriate value.
+ * SERIAL_PORT_DFNS does get defined to the appropriate value.
  */
-#समावेश <यंत्र/serial.h>
+#include <asm/serial.h>
 
-#अगर_अघोषित SERIAL_PORT_DFNS
-#घोषणा SERIAL_PORT_DFNS
-#पूर्ण_अगर
+#ifndef SERIAL_PORT_DFNS
+#define SERIAL_PORT_DFNS
+#endif
 
-अटल व्योम start_serial_पूर्णांकerrupt(पूर्णांक irq);
+static void start_serial_interrupt(int irq);
 
-अटल स्थिर काष्ठा old_serial_port rs_table[] = अणु
+static const struct old_serial_port rs_table[] = {
 	SERIAL_PORT_DFNS
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा old_serial_port *serstate;
-अटल पूर्णांक समयouts;
+static const struct old_serial_port *serstate;
+static int timeouts;
 
-अटल पूर्णांक spk_serial_out(काष्ठा spk_synth *in_synth, स्थिर अक्षर ch);
-अटल व्योम spk_serial_send_xअक्षर(काष्ठा spk_synth *in_synth, अक्षर ch);
-अटल व्योम spk_serial_tiocmset(काष्ठा spk_synth *in_synth, अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear);
-अटल अचिन्हित अक्षर spk_serial_in(काष्ठा spk_synth *in_synth);
-अटल अचिन्हित अक्षर spk_serial_in_noरुको(काष्ठा spk_synth *in_synth);
-अटल व्योम spk_serial_flush_buffer(काष्ठा spk_synth *in_synth);
-अटल पूर्णांक spk_serial_रुको_क्रम_xmitr(काष्ठा spk_synth *in_synth);
+static int spk_serial_out(struct spk_synth *in_synth, const char ch);
+static void spk_serial_send_xchar(struct spk_synth *in_synth, char ch);
+static void spk_serial_tiocmset(struct spk_synth *in_synth, unsigned int set, unsigned int clear);
+static unsigned char spk_serial_in(struct spk_synth *in_synth);
+static unsigned char spk_serial_in_nowait(struct spk_synth *in_synth);
+static void spk_serial_flush_buffer(struct spk_synth *in_synth);
+static int spk_serial_wait_for_xmitr(struct spk_synth *in_synth);
 
-काष्ठा spk_io_ops spk_serial_io_ops = अणु
+struct spk_io_ops spk_serial_io_ops = {
 	.synth_out = spk_serial_out,
-	.send_xअक्षर = spk_serial_send_xअक्षर,
+	.send_xchar = spk_serial_send_xchar,
 	.tiocmset = spk_serial_tiocmset,
 	.synth_in = spk_serial_in,
-	.synth_in_noरुको = spk_serial_in_noरुको,
+	.synth_in_nowait = spk_serial_in_nowait,
 	.flush_buffer = spk_serial_flush_buffer,
-	.रुको_क्रम_xmitr = spk_serial_रुको_क्रम_xmitr,
-पूर्ण;
+	.wait_for_xmitr = spk_serial_wait_for_xmitr,
+};
 EXPORT_SYMBOL_GPL(spk_serial_io_ops);
 
-स्थिर काष्ठा old_serial_port *spk_serial_init(पूर्णांक index)
-अणु
-	पूर्णांक baud = 9600, quot = 0;
-	अचिन्हित पूर्णांक cval = 0;
-	पूर्णांक cflag = CREAD | HUPCL | CLOCAL | B9600 | CS8;
-	स्थिर काष्ठा old_serial_port *ser;
-	पूर्णांक err;
+const struct old_serial_port *spk_serial_init(int index)
+{
+	int baud = 9600, quot = 0;
+	unsigned int cval = 0;
+	int cflag = CREAD | HUPCL | CLOCAL | B9600 | CS8;
+	const struct old_serial_port *ser;
+	int err;
 
-	अगर (index >= ARRAY_SIZE(rs_table)) अणु
+	if (index >= ARRAY_SIZE(rs_table)) {
 		pr_info("no port info for ttyS%d\n", index);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	ser = rs_table + index;
 
 	/*	Divisor, bytesize and parity */
 	quot = ser->baud_base / baud;
 	cval = cflag & (CSIZE | CSTOPB);
-#अगर defined(__घातerpc__) || defined(__alpha__)
+#if defined(__powerpc__) || defined(__alpha__)
 	cval >>= 8;
-#अन्यथा /* !__घातerpc__ && !__alpha__ */
+#else /* !__powerpc__ && !__alpha__ */
 	cval >>= 4;
-#पूर्ण_अगर /* !__घातerpc__ && !__alpha__ */
-	अगर (cflag & PARENB)
+#endif /* !__powerpc__ && !__alpha__ */
+	if (cflag & PARENB)
 		cval |= UART_LCR_PARITY;
-	अगर (!(cflag & PARODD))
+	if (!(cflag & PARODD))
 		cval |= UART_LCR_EPAR;
-	अगर (synth_request_region(ser->port, 8)) अणु
+	if (synth_request_region(ser->port, 8)) {
 		/* try to take it back. */
 		pr_info("Ports not available, trying to steal them\n");
 		__release_region(&ioport_resource, ser->port, 8);
 		err = synth_request_region(ser->port, 8);
-		अगर (err) अणु
+		if (err) {
 			pr_warn("Unable to allocate port at %x, errno %i",
 				ser->port, err);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
+			return NULL;
+		}
+	}
 
-	/*	Disable UART पूर्णांकerrupts, set DTR and RTS high
+	/*	Disable UART interrupts, set DTR and RTS high
 	 *	and set speed.
 	 */
 	outb(cval | UART_LCR_DLAB, ser->port + UART_LCR);	/* set DLAB */
-	outb(quot & 0xff, ser->port + UART_DLL);	/* LS of भागisor */
-	outb(quot >> 8, ser->port + UART_DLM);		/* MS of भागisor */
+	outb(quot & 0xff, ser->port + UART_DLL);	/* LS of divisor */
+	outb(quot >> 8, ser->port + UART_DLM);		/* MS of divisor */
 	outb(cval, ser->port + UART_LCR);		/* reset DLAB */
 
 	/* Turn off Interrupts */
 	outb(0, ser->port + UART_IER);
 	outb(UART_MCR_DTR | UART_MCR_RTS, ser->port + UART_MCR);
 
-	/* If we पढ़ो 0xff from the LSR, there is no UART here. */
-	अगर (inb(ser->port + UART_LSR) == 0xff) अणु
+	/* If we read 0xff from the LSR, there is no UART here. */
+	if (inb(ser->port + UART_LSR) == 0xff) {
 		synth_release_region(ser->port, 8);
-		serstate = शून्य;
-		वापस शून्य;
-	पूर्ण
+		serstate = NULL;
+		return NULL;
+	}
 
 	mdelay(1);
 	speakup_info.port_tts = ser->port;
 	serstate = ser;
 
-	start_serial_पूर्णांकerrupt(ser->irq);
+	start_serial_interrupt(ser->irq);
 
-	वापस ser;
-पूर्ण
+	return ser;
+}
 
-अटल irqवापस_t synth_पढ़ोbuf_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक c;
+static irqreturn_t synth_readbuf_handler(int irq, void *dev_id)
+{
+	unsigned long flags;
+	int c;
 
 	spin_lock_irqsave(&speakup_info.spinlock, flags);
-	जबतक (inb_p(speakup_info.port_tts + UART_LSR) & UART_LSR_DR) अणु
+	while (inb_p(speakup_info.port_tts + UART_LSR) & UART_LSR_DR) {
 		c = inb_p(speakup_info.port_tts + UART_RX);
-		synth->पढ़ो_buff_add((u_अक्षर)c);
-	पूर्ण
+		synth->read_buff_add((u_char)c);
+	}
 	spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम start_serial_पूर्णांकerrupt(पूर्णांक irq)
-अणु
-	पूर्णांक rv;
+static void start_serial_interrupt(int irq)
+{
+	int rv;
 
-	अगर (!synth->पढ़ो_buff_add)
-		वापस;
+	if (!synth->read_buff_add)
+		return;
 
-	rv = request_irq(irq, synth_पढ़ोbuf_handler, IRQF_SHARED,
-			 "serial", (व्योम *)synth_पढ़ोbuf_handler);
+	rv = request_irq(irq, synth_readbuf_handler, IRQF_SHARED,
+			 "serial", (void *)synth_readbuf_handler);
 
-	अगर (rv)
+	if (rv)
 		pr_err("Unable to request Speakup serial I R Q\n");
 	/* Set MCR */
 	outb(UART_MCR_DTR | UART_MCR_RTS | UART_MCR_OUT2,
@@ -149,171 +148,171 @@ EXPORT_SYMBOL_GPL(spk_serial_io_ops);
 	inb(speakup_info.port_tts + UART_IIR);
 	inb(speakup_info.port_tts + UART_MSR);
 	outb(1, speakup_info.port_tts + UART_FCR);	/* Turn FIFO On */
-पूर्ण
+}
 
-अटल व्योम spk_serial_send_xअक्षर(काष्ठा spk_synth *synth, अक्षर ch)
-अणु
-	पूर्णांक समयout = SPK_XMITR_TIMEOUT;
+static void spk_serial_send_xchar(struct spk_synth *synth, char ch)
+{
+	int timeout = SPK_XMITR_TIMEOUT;
 
-	जबतक (spk_serial_tx_busy()) अणु
-		अगर (!--समयout)
-			अवरोध;
+	while (spk_serial_tx_busy()) {
+		if (!--timeout)
+			break;
 		udelay(1);
-	पूर्ण
+	}
 	outb(ch, speakup_info.port_tts);
-पूर्ण
+}
 
-अटल व्योम spk_serial_tiocmset(काष्ठा spk_synth *in_synth, अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
-अणु
-	पूर्णांक old = inb(speakup_info.port_tts + UART_MCR);
+static void spk_serial_tiocmset(struct spk_synth *in_synth, unsigned int set, unsigned int clear)
+{
+	int old = inb(speakup_info.port_tts + UART_MCR);
 
 	outb((old & ~clear) | set, speakup_info.port_tts + UART_MCR);
-पूर्ण
+}
 
-पूर्णांक spk_serial_synth_probe(काष्ठा spk_synth *synth)
-अणु
-	स्थिर काष्ठा old_serial_port *ser;
-	पूर्णांक failed = 0;
+int spk_serial_synth_probe(struct spk_synth *synth)
+{
+	const struct old_serial_port *ser;
+	int failed = 0;
 
-	अगर ((synth->ser >= SPK_LO_TTY) && (synth->ser <= SPK_HI_TTY)) अणु
+	if ((synth->ser >= SPK_LO_TTY) && (synth->ser <= SPK_HI_TTY)) {
 		ser = spk_serial_init(synth->ser);
-		अगर (!ser) अणु
+		if (!ser) {
 			failed = -1;
-		पूर्ण अन्यथा अणु
+		} else {
 			outb_p(0, ser->port);
 			mdelay(1);
 			outb_p('\r', ser->port);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		failed = -1;
 		pr_warn("ttyS%i is an invalid port\n", synth->ser);
-	पूर्ण
-	अगर (failed) अणु
-		pr_info("%s: not found\n", synth->दीर्घ_name);
-		वापस -ENODEV;
-	पूर्ण
+	}
+	if (failed) {
+		pr_info("%s: not found\n", synth->long_name);
+		return -ENODEV;
+	}
 	pr_info("%s: ttyS%i, Driver Version %s\n",
-		synth->दीर्घ_name, synth->ser, synth->version);
+		synth->long_name, synth->ser, synth->version);
 	synth->alive = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(spk_serial_synth_probe);
 
-व्योम spk_stop_serial_पूर्णांकerrupt(व्योम)
-अणु
-	अगर (speakup_info.port_tts == 0)
-		वापस;
+void spk_stop_serial_interrupt(void)
+{
+	if (speakup_info.port_tts == 0)
+		return;
 
-	अगर (!synth->पढ़ो_buff_add)
-		वापस;
+	if (!synth->read_buff_add)
+		return;
 
-	/* Turn off पूर्णांकerrupts */
+	/* Turn off interrupts */
 	outb(0, speakup_info.port_tts + UART_IER);
 	/* Free IRQ */
-	मुक्त_irq(serstate->irq, (व्योम *)synth_पढ़ोbuf_handler);
-पूर्ण
-EXPORT_SYMBOL_GPL(spk_stop_serial_पूर्णांकerrupt);
+	free_irq(serstate->irq, (void *)synth_readbuf_handler);
+}
+EXPORT_SYMBOL_GPL(spk_stop_serial_interrupt);
 
-अटल पूर्णांक spk_serial_रुको_क्रम_xmitr(काष्ठा spk_synth *in_synth)
-अणु
-	पूर्णांक पंचांगout = SPK_XMITR_TIMEOUT;
+static int spk_serial_wait_for_xmitr(struct spk_synth *in_synth)
+{
+	int tmout = SPK_XMITR_TIMEOUT;
 
-	अगर ((in_synth->alive) && (समयouts >= NUM_DISABLE_TIMEOUTS)) अणु
+	if ((in_synth->alive) && (timeouts >= NUM_DISABLE_TIMEOUTS)) {
 		pr_warn("%s: too many timeouts, deactivating speakup\n",
-			in_synth->दीर्घ_name);
+			in_synth->long_name);
 		in_synth->alive = 0;
 		/* No synth any more, so nobody will restart TTYs, and we thus
-		 * need to करो it ourselves.  Now that there is no synth we can
+		 * need to do it ourselves.  Now that there is no synth we can
 		 * let application flood anyway
 		 */
 		speakup_start_ttys();
-		समयouts = 0;
-		वापस 0;
-	पूर्ण
-	जबतक (spk_serial_tx_busy()) अणु
-		अगर (--पंचांगout == 0) अणु
+		timeouts = 0;
+		return 0;
+	}
+	while (spk_serial_tx_busy()) {
+		if (--tmout == 0) {
 			pr_warn("%s: timed out (tx busy)\n",
-				in_synth->दीर्घ_name);
-			समयouts++;
-			वापस 0;
-		पूर्ण
+				in_synth->long_name);
+			timeouts++;
+			return 0;
+		}
 		udelay(1);
-	पूर्ण
-	पंचांगout = SPK_CTS_TIMEOUT;
-	जबतक (!((inb_p(speakup_info.port_tts + UART_MSR)) & UART_MSR_CTS)) अणु
+	}
+	tmout = SPK_CTS_TIMEOUT;
+	while (!((inb_p(speakup_info.port_tts + UART_MSR)) & UART_MSR_CTS)) {
 		/* CTS */
-		अगर (--पंचांगout == 0) अणु
-			समयouts++;
-			वापस 0;
-		पूर्ण
+		if (--tmout == 0) {
+			timeouts++;
+			return 0;
+		}
 		udelay(1);
-	पूर्ण
-	समयouts = 0;
-	वापस 1;
-पूर्ण
+	}
+	timeouts = 0;
+	return 1;
+}
 
-अटल अचिन्हित अक्षर spk_serial_in(काष्ठा spk_synth *in_synth)
-अणु
-	पूर्णांक पंचांगout = SPK_SERIAL_TIMEOUT;
+static unsigned char spk_serial_in(struct spk_synth *in_synth)
+{
+	int tmout = SPK_SERIAL_TIMEOUT;
 
-	जबतक (!(inb_p(speakup_info.port_tts + UART_LSR) & UART_LSR_DR)) अणु
-		अगर (--पंचांगout == 0) अणु
+	while (!(inb_p(speakup_info.port_tts + UART_LSR) & UART_LSR_DR)) {
+		if (--tmout == 0) {
 			pr_warn("time out while waiting for input.\n");
-			वापस 0xff;
-		पूर्ण
+			return 0xff;
+		}
 		udelay(1);
-	पूर्ण
-	वापस inb_p(speakup_info.port_tts + UART_RX);
-पूर्ण
+	}
+	return inb_p(speakup_info.port_tts + UART_RX);
+}
 
-अटल अचिन्हित अक्षर spk_serial_in_noरुको(काष्ठा spk_synth *in_synth)
-अणु
-	अचिन्हित अक्षर lsr;
+static unsigned char spk_serial_in_nowait(struct spk_synth *in_synth)
+{
+	unsigned char lsr;
 
 	lsr = inb_p(speakup_info.port_tts + UART_LSR);
-	अगर (!(lsr & UART_LSR_DR))
-		वापस 0;
-	वापस inb_p(speakup_info.port_tts + UART_RX);
-पूर्ण
+	if (!(lsr & UART_LSR_DR))
+		return 0;
+	return inb_p(speakup_info.port_tts + UART_RX);
+}
 
-अटल व्योम spk_serial_flush_buffer(काष्ठा spk_synth *in_synth)
-अणु
+static void spk_serial_flush_buffer(struct spk_synth *in_synth)
+{
 	/* TODO: flush the UART 16550 buffer */
-पूर्ण
+}
 
-अटल पूर्णांक spk_serial_out(काष्ठा spk_synth *in_synth, स्थिर अक्षर ch)
-अणु
-	अगर (in_synth->alive && spk_serial_रुको_क्रम_xmitr(in_synth)) अणु
+static int spk_serial_out(struct spk_synth *in_synth, const char ch)
+{
+	if (in_synth->alive && spk_serial_wait_for_xmitr(in_synth)) {
 		outb_p(ch, speakup_info.port_tts);
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 1;
+	}
+	return 0;
+}
 
-स्थिर अक्षर *spk_serial_synth_immediate(काष्ठा spk_synth *synth,
-				       स्थिर अक्षर *buff)
-अणु
-	u_अक्षर ch;
+const char *spk_serial_synth_immediate(struct spk_synth *synth,
+				       const char *buff)
+{
+	u_char ch;
 
-	जबतक ((ch = *buff)) अणु
-		अगर (ch == '\n')
+	while ((ch = *buff)) {
+		if (ch == '\n')
 			ch = synth->procspeech;
-		अगर (spk_serial_रुको_क्रम_xmitr(synth))
+		if (spk_serial_wait_for_xmitr(synth))
 			outb(ch, speakup_info.port_tts);
-		अन्यथा
-			वापस buff;
+		else
+			return buff;
 		buff++;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	}
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(spk_serial_synth_immediate);
 
-व्योम spk_serial_release(काष्ठा spk_synth *synth)
-अणु
-	spk_stop_serial_पूर्णांकerrupt();
-	अगर (speakup_info.port_tts == 0)
-		वापस;
+void spk_serial_release(struct spk_synth *synth)
+{
+	spk_stop_serial_interrupt();
+	if (speakup_info.port_tts == 0)
+		return;
 	synth_release_region(speakup_info.port_tts, 8);
 	speakup_info.port_tts = 0;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(spk_serial_release);

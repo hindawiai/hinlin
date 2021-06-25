@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,308 +20,308 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#समावेश "pp_debug.h"
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pci.h>
+#include "pp_debug.h"
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/pci.h>
 
-#समावेश <drm/amdgpu_drm.h>
-#समावेश "processpptables.h"
-#समावेश <atom-types.h>
-#समावेश <atomमूलप्रण.स>
-#समावेश "pptable.h"
-#समावेश "power_state.h"
-#समावेश "hwmgr.h"
-#समावेश "hardwaremanager.h"
+#include <drm/amdgpu_drm.h>
+#include "processpptables.h"
+#include <atom-types.h>
+#include <atombios.h>
+#include "pptable.h"
+#include "power_state.h"
+#include "hwmgr.h"
+#include "hardwaremanager.h"
 
 
-#घोषणा SIZE_OF_ATOM_PPLIB_EXTENDEDHEADER_V2 12
-#घोषणा SIZE_OF_ATOM_PPLIB_EXTENDEDHEADER_V3 14
-#घोषणा SIZE_OF_ATOM_PPLIB_EXTENDEDHEADER_V4 16
-#घोषणा SIZE_OF_ATOM_PPLIB_EXTENDEDHEADER_V5 18
-#घोषणा SIZE_OF_ATOM_PPLIB_EXTENDEDHEADER_V6 20
-#घोषणा SIZE_OF_ATOM_PPLIB_EXTENDEDHEADER_V7 22
-#घोषणा SIZE_OF_ATOM_PPLIB_EXTENDEDHEADER_V8 24
-#घोषणा SIZE_OF_ATOM_PPLIB_EXTENDEDHEADER_V9 26
+#define SIZE_OF_ATOM_PPLIB_EXTENDEDHEADER_V2 12
+#define SIZE_OF_ATOM_PPLIB_EXTENDEDHEADER_V3 14
+#define SIZE_OF_ATOM_PPLIB_EXTENDEDHEADER_V4 16
+#define SIZE_OF_ATOM_PPLIB_EXTENDEDHEADER_V5 18
+#define SIZE_OF_ATOM_PPLIB_EXTENDEDHEADER_V6 20
+#define SIZE_OF_ATOM_PPLIB_EXTENDEDHEADER_V7 22
+#define SIZE_OF_ATOM_PPLIB_EXTENDEDHEADER_V8 24
+#define SIZE_OF_ATOM_PPLIB_EXTENDEDHEADER_V9 26
 
-#घोषणा NUM_BITS_CLOCK_INFO_ARRAY_INDEX 6
+#define NUM_BITS_CLOCK_INFO_ARRAY_INDEX 6
 
-अटल uपूर्णांक16_t get_vce_table_offset(काष्ठा pp_hwmgr *hwmgr,
-			स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table)
-अणु
-	uपूर्णांक16_t vce_table_offset = 0;
+static uint16_t get_vce_table_offset(struct pp_hwmgr *hwmgr,
+			const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table)
+{
+	uint16_t vce_table_offset = 0;
 
-	अगर (le16_to_cpu(घातerplay_table->usTableSize) >=
-	   माप(ATOM_PPLIB_POWERPLAYTABLE3)) अणु
-		स्थिर ATOM_PPLIB_POWERPLAYTABLE3 *घातerplay_table3 =
-			(स्थिर ATOM_PPLIB_POWERPLAYTABLE3 *)घातerplay_table;
+	if (le16_to_cpu(powerplay_table->usTableSize) >=
+	   sizeof(ATOM_PPLIB_POWERPLAYTABLE3)) {
+		const ATOM_PPLIB_POWERPLAYTABLE3 *powerplay_table3 =
+			(const ATOM_PPLIB_POWERPLAYTABLE3 *)powerplay_table;
 
-		अगर (घातerplay_table3->usExtendendedHeaderOffset > 0) अणु
-			स्थिर ATOM_PPLIB_EXTENDEDHEADER  *extended_header =
-						(स्थिर ATOM_PPLIB_EXTENDEDHEADER *)
-						(((अचिन्हित दीर्घ)घातerplay_table3) +
-						le16_to_cpu(घातerplay_table3->usExtendendedHeaderOffset));
-			अगर (le16_to_cpu(extended_header->usSize) >=
+		if (powerplay_table3->usExtendendedHeaderOffset > 0) {
+			const ATOM_PPLIB_EXTENDEDHEADER  *extended_header =
+						(const ATOM_PPLIB_EXTENDEDHEADER *)
+						(((unsigned long)powerplay_table3) +
+						le16_to_cpu(powerplay_table3->usExtendendedHeaderOffset));
+			if (le16_to_cpu(extended_header->usSize) >=
 			   SIZE_OF_ATOM_PPLIB_EXTENDEDHEADER_V2)
 				vce_table_offset = le16_to_cpu(extended_header->usVCETableOffset);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस vce_table_offset;
-पूर्ण
+	return vce_table_offset;
+}
 
-अटल uपूर्णांक16_t get_vce_घड़ी_info_array_offset(काष्ठा pp_hwmgr *hwmgr,
-			स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table)
-अणु
-	uपूर्णांक16_t table_offset = get_vce_table_offset(hwmgr,
-						घातerplay_table);
+static uint16_t get_vce_clock_info_array_offset(struct pp_hwmgr *hwmgr,
+			const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table)
+{
+	uint16_t table_offset = get_vce_table_offset(hwmgr,
+						powerplay_table);
 
-	अगर (table_offset > 0)
-		वापस table_offset + 1;
+	if (table_offset > 0)
+		return table_offset + 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल uपूर्णांक16_t get_vce_घड़ी_info_array_size(काष्ठा pp_hwmgr *hwmgr,
-			स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table)
-अणु
-	uपूर्णांक16_t table_offset = get_vce_घड़ी_info_array_offset(hwmgr,
-							घातerplay_table);
-	uपूर्णांक16_t table_size = 0;
+static uint16_t get_vce_clock_info_array_size(struct pp_hwmgr *hwmgr,
+			const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table)
+{
+	uint16_t table_offset = get_vce_clock_info_array_offset(hwmgr,
+							powerplay_table);
+	uint16_t table_size = 0;
 
-	अगर (table_offset > 0) अणु
-		स्थिर VCEClockInfoArray *p = (स्थिर VCEClockInfoArray *)
-			(((अचिन्हित दीर्घ) घातerplay_table) + table_offset);
-		table_size = माप(uपूर्णांक8_t) + p->ucNumEntries * माप(VCEClockInfo);
-	पूर्ण
+	if (table_offset > 0) {
+		const VCEClockInfoArray *p = (const VCEClockInfoArray *)
+			(((unsigned long) powerplay_table) + table_offset);
+		table_size = sizeof(uint8_t) + p->ucNumEntries * sizeof(VCEClockInfo);
+	}
 
-	वापस table_size;
-पूर्ण
+	return table_size;
+}
 
-अटल uपूर्णांक16_t get_vce_घड़ी_voltage_limit_table_offset(काष्ठा pp_hwmgr *hwmgr,
-				स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table)
-अणु
-	uपूर्णांक16_t table_offset = get_vce_घड़ी_info_array_offset(hwmgr,
-							घातerplay_table);
+static uint16_t get_vce_clock_voltage_limit_table_offset(struct pp_hwmgr *hwmgr,
+				const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table)
+{
+	uint16_t table_offset = get_vce_clock_info_array_offset(hwmgr,
+							powerplay_table);
 
-	अगर (table_offset > 0)
-		वापस table_offset + get_vce_घड़ी_info_array_size(hwmgr,
-							घातerplay_table);
+	if (table_offset > 0)
+		return table_offset + get_vce_clock_info_array_size(hwmgr,
+							powerplay_table);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल uपूर्णांक16_t get_vce_घड़ी_voltage_limit_table_size(काष्ठा pp_hwmgr *hwmgr,
-							स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table)
-अणु
-	uपूर्णांक16_t table_offset = get_vce_घड़ी_voltage_limit_table_offset(hwmgr, घातerplay_table);
-	uपूर्णांक16_t table_size = 0;
+static uint16_t get_vce_clock_voltage_limit_table_size(struct pp_hwmgr *hwmgr,
+							const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table)
+{
+	uint16_t table_offset = get_vce_clock_voltage_limit_table_offset(hwmgr, powerplay_table);
+	uint16_t table_size = 0;
 
-	अगर (table_offset > 0) अणु
-		स्थिर ATOM_PPLIB_VCE_Clock_Voltage_Limit_Table *ptable =
-			(स्थिर ATOM_PPLIB_VCE_Clock_Voltage_Limit_Table *)(((अचिन्हित दीर्घ) घातerplay_table) + table_offset);
+	if (table_offset > 0) {
+		const ATOM_PPLIB_VCE_Clock_Voltage_Limit_Table *ptable =
+			(const ATOM_PPLIB_VCE_Clock_Voltage_Limit_Table *)(((unsigned long) powerplay_table) + table_offset);
 
-		table_size = माप(uपूर्णांक8_t) + ptable->numEntries * माप(ATOM_PPLIB_VCE_Clock_Voltage_Limit_Record);
-	पूर्ण
-	वापस table_size;
-पूर्ण
+		table_size = sizeof(uint8_t) + ptable->numEntries * sizeof(ATOM_PPLIB_VCE_Clock_Voltage_Limit_Record);
+	}
+	return table_size;
+}
 
-अटल uपूर्णांक16_t get_vce_state_table_offset(काष्ठा pp_hwmgr *hwmgr, स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table)
-अणु
-	uपूर्णांक16_t table_offset = get_vce_घड़ी_voltage_limit_table_offset(hwmgr, घातerplay_table);
+static uint16_t get_vce_state_table_offset(struct pp_hwmgr *hwmgr, const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table)
+{
+	uint16_t table_offset = get_vce_clock_voltage_limit_table_offset(hwmgr, powerplay_table);
 
-	अगर (table_offset > 0)
-		वापस table_offset + get_vce_घड़ी_voltage_limit_table_size(hwmgr, घातerplay_table);
+	if (table_offset > 0)
+		return table_offset + get_vce_clock_voltage_limit_table_size(hwmgr, powerplay_table);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर ATOM_PPLIB_VCE_State_Table *get_vce_state_table(
-						काष्ठा pp_hwmgr *hwmgr,
-						स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table)
-अणु
-	uपूर्णांक16_t table_offset = get_vce_state_table_offset(hwmgr, घातerplay_table);
+static const ATOM_PPLIB_VCE_State_Table *get_vce_state_table(
+						struct pp_hwmgr *hwmgr,
+						const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table)
+{
+	uint16_t table_offset = get_vce_state_table_offset(hwmgr, powerplay_table);
 
-	अगर (table_offset > 0)
-		वापस (स्थिर ATOM_PPLIB_VCE_State_Table *)(((अचिन्हित दीर्घ) घातerplay_table) + table_offset);
+	if (table_offset > 0)
+		return (const ATOM_PPLIB_VCE_State_Table *)(((unsigned long) powerplay_table) + table_offset);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल uपूर्णांक16_t get_uvd_table_offset(काष्ठा pp_hwmgr *hwmgr,
-			स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table)
-अणु
-	uपूर्णांक16_t uvd_table_offset = 0;
+static uint16_t get_uvd_table_offset(struct pp_hwmgr *hwmgr,
+			const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table)
+{
+	uint16_t uvd_table_offset = 0;
 
-	अगर (le16_to_cpu(घातerplay_table->usTableSize) >=
-	    माप(ATOM_PPLIB_POWERPLAYTABLE3)) अणु
-		स्थिर ATOM_PPLIB_POWERPLAYTABLE3 *घातerplay_table3 =
-			(स्थिर ATOM_PPLIB_POWERPLAYTABLE3 *)घातerplay_table;
-		अगर (घातerplay_table3->usExtendendedHeaderOffset > 0) अणु
-			स्थिर ATOM_PPLIB_EXTENDEDHEADER  *extended_header =
-					(स्थिर ATOM_PPLIB_EXTENDEDHEADER *)
-					(((अचिन्हित दीर्घ)घातerplay_table3) +
-				le16_to_cpu(घातerplay_table3->usExtendendedHeaderOffset));
-			अगर (le16_to_cpu(extended_header->usSize) >=
+	if (le16_to_cpu(powerplay_table->usTableSize) >=
+	    sizeof(ATOM_PPLIB_POWERPLAYTABLE3)) {
+		const ATOM_PPLIB_POWERPLAYTABLE3 *powerplay_table3 =
+			(const ATOM_PPLIB_POWERPLAYTABLE3 *)powerplay_table;
+		if (powerplay_table3->usExtendendedHeaderOffset > 0) {
+			const ATOM_PPLIB_EXTENDEDHEADER  *extended_header =
+					(const ATOM_PPLIB_EXTENDEDHEADER *)
+					(((unsigned long)powerplay_table3) +
+				le16_to_cpu(powerplay_table3->usExtendendedHeaderOffset));
+			if (le16_to_cpu(extended_header->usSize) >=
 			    SIZE_OF_ATOM_PPLIB_EXTENDEDHEADER_V3)
 				uvd_table_offset = le16_to_cpu(extended_header->usUVDTableOffset);
-		पूर्ण
-	पूर्ण
-	वापस uvd_table_offset;
-पूर्ण
+		}
+	}
+	return uvd_table_offset;
+}
 
-अटल uपूर्णांक16_t get_uvd_घड़ी_info_array_offset(काष्ठा pp_hwmgr *hwmgr,
-			 स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table)
-अणु
-	uपूर्णांक16_t table_offset = get_uvd_table_offset(hwmgr,
-						    घातerplay_table);
+static uint16_t get_uvd_clock_info_array_offset(struct pp_hwmgr *hwmgr,
+			 const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table)
+{
+	uint16_t table_offset = get_uvd_table_offset(hwmgr,
+						    powerplay_table);
 
-	अगर (table_offset > 0)
-		वापस table_offset + 1;
-	वापस 0;
-पूर्ण
+	if (table_offset > 0)
+		return table_offset + 1;
+	return 0;
+}
 
-अटल uपूर्णांक16_t get_uvd_घड़ी_info_array_size(काष्ठा pp_hwmgr *hwmgr,
-			स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table)
-अणु
-	uपूर्णांक16_t table_offset = get_uvd_घड़ी_info_array_offset(hwmgr,
-						    घातerplay_table);
-	uपूर्णांक16_t table_size = 0;
+static uint16_t get_uvd_clock_info_array_size(struct pp_hwmgr *hwmgr,
+			const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table)
+{
+	uint16_t table_offset = get_uvd_clock_info_array_offset(hwmgr,
+						    powerplay_table);
+	uint16_t table_size = 0;
 
-	अगर (table_offset > 0) अणु
-		स्थिर UVDClockInfoArray *p = (स्थिर UVDClockInfoArray *)
-					(((अचिन्हित दीर्घ) घातerplay_table)
+	if (table_offset > 0) {
+		const UVDClockInfoArray *p = (const UVDClockInfoArray *)
+					(((unsigned long) powerplay_table)
 					+ table_offset);
-		table_size = माप(UCHAR) +
-			     p->ucNumEntries * माप(UVDClockInfo);
-	पूर्ण
+		table_size = sizeof(UCHAR) +
+			     p->ucNumEntries * sizeof(UVDClockInfo);
+	}
 
-	वापस table_size;
-पूर्ण
+	return table_size;
+}
 
-अटल uपूर्णांक16_t get_uvd_घड़ी_voltage_limit_table_offset(
-			काष्ठा pp_hwmgr *hwmgr,
-			स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table)
-अणु
-	uपूर्णांक16_t table_offset = get_uvd_घड़ी_info_array_offset(hwmgr,
-						     घातerplay_table);
+static uint16_t get_uvd_clock_voltage_limit_table_offset(
+			struct pp_hwmgr *hwmgr,
+			const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table)
+{
+	uint16_t table_offset = get_uvd_clock_info_array_offset(hwmgr,
+						     powerplay_table);
 
-	अगर (table_offset > 0)
-		वापस table_offset +
-			get_uvd_घड़ी_info_array_size(hwmgr, घातerplay_table);
+	if (table_offset > 0)
+		return table_offset +
+			get_uvd_clock_info_array_size(hwmgr, powerplay_table);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल uपूर्णांक16_t get_samu_table_offset(काष्ठा pp_hwmgr *hwmgr,
-			स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table)
-अणु
-	uपूर्णांक16_t samu_table_offset = 0;
+static uint16_t get_samu_table_offset(struct pp_hwmgr *hwmgr,
+			const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table)
+{
+	uint16_t samu_table_offset = 0;
 
-	अगर (le16_to_cpu(घातerplay_table->usTableSize) >=
-	    माप(ATOM_PPLIB_POWERPLAYTABLE3)) अणु
-		स्थिर ATOM_PPLIB_POWERPLAYTABLE3 *घातerplay_table3 =
-			(स्थिर ATOM_PPLIB_POWERPLAYTABLE3 *)घातerplay_table;
-		अगर (घातerplay_table3->usExtendendedHeaderOffset > 0) अणु
-			स्थिर ATOM_PPLIB_EXTENDEDHEADER  *extended_header =
-				(स्थिर ATOM_PPLIB_EXTENDEDHEADER *)
-				(((अचिन्हित दीर्घ)घातerplay_table3) +
-				le16_to_cpu(घातerplay_table3->usExtendendedHeaderOffset));
-			अगर (le16_to_cpu(extended_header->usSize) >=
+	if (le16_to_cpu(powerplay_table->usTableSize) >=
+	    sizeof(ATOM_PPLIB_POWERPLAYTABLE3)) {
+		const ATOM_PPLIB_POWERPLAYTABLE3 *powerplay_table3 =
+			(const ATOM_PPLIB_POWERPLAYTABLE3 *)powerplay_table;
+		if (powerplay_table3->usExtendendedHeaderOffset > 0) {
+			const ATOM_PPLIB_EXTENDEDHEADER  *extended_header =
+				(const ATOM_PPLIB_EXTENDEDHEADER *)
+				(((unsigned long)powerplay_table3) +
+				le16_to_cpu(powerplay_table3->usExtendendedHeaderOffset));
+			if (le16_to_cpu(extended_header->usSize) >=
 			    SIZE_OF_ATOM_PPLIB_EXTENDEDHEADER_V4)
 				samu_table_offset = le16_to_cpu(extended_header->usSAMUTableOffset);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस samu_table_offset;
-पूर्ण
+	return samu_table_offset;
+}
 
-अटल uपूर्णांक16_t get_samu_घड़ी_voltage_limit_table_offset(
-			काष्ठा pp_hwmgr *hwmgr,
-			स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table)
-अणु
-	uपूर्णांक16_t table_offset = get_samu_table_offset(hwmgr,
-					    घातerplay_table);
+static uint16_t get_samu_clock_voltage_limit_table_offset(
+			struct pp_hwmgr *hwmgr,
+			const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table)
+{
+	uint16_t table_offset = get_samu_table_offset(hwmgr,
+					    powerplay_table);
 
-	अगर (table_offset > 0)
-		वापस table_offset + 1;
+	if (table_offset > 0)
+		return table_offset + 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल uपूर्णांक16_t get_acp_table_offset(काष्ठा pp_hwmgr *hwmgr,
-				स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table)
-अणु
-	uपूर्णांक16_t acp_table_offset = 0;
+static uint16_t get_acp_table_offset(struct pp_hwmgr *hwmgr,
+				const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table)
+{
+	uint16_t acp_table_offset = 0;
 
-	अगर (le16_to_cpu(घातerplay_table->usTableSize) >=
-	    माप(ATOM_PPLIB_POWERPLAYTABLE3)) अणु
-		स्थिर ATOM_PPLIB_POWERPLAYTABLE3 *घातerplay_table3 =
-			(स्थिर ATOM_PPLIB_POWERPLAYTABLE3 *)घातerplay_table;
-		अगर (घातerplay_table3->usExtendendedHeaderOffset > 0) अणु
-			स्थिर ATOM_PPLIB_EXTENDEDHEADER  *pExtendedHeader =
-				(स्थिर ATOM_PPLIB_EXTENDEDHEADER *)
-				(((अचिन्हित दीर्घ)घातerplay_table3) +
-				le16_to_cpu(घातerplay_table3->usExtendendedHeaderOffset));
-			अगर (le16_to_cpu(pExtendedHeader->usSize) >=
+	if (le16_to_cpu(powerplay_table->usTableSize) >=
+	    sizeof(ATOM_PPLIB_POWERPLAYTABLE3)) {
+		const ATOM_PPLIB_POWERPLAYTABLE3 *powerplay_table3 =
+			(const ATOM_PPLIB_POWERPLAYTABLE3 *)powerplay_table;
+		if (powerplay_table3->usExtendendedHeaderOffset > 0) {
+			const ATOM_PPLIB_EXTENDEDHEADER  *pExtendedHeader =
+				(const ATOM_PPLIB_EXTENDEDHEADER *)
+				(((unsigned long)powerplay_table3) +
+				le16_to_cpu(powerplay_table3->usExtendendedHeaderOffset));
+			if (le16_to_cpu(pExtendedHeader->usSize) >=
 			    SIZE_OF_ATOM_PPLIB_EXTENDEDHEADER_V6)
 				acp_table_offset = le16_to_cpu(pExtendedHeader->usACPTableOffset);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस acp_table_offset;
-पूर्ण
+	return acp_table_offset;
+}
 
-अटल uपूर्णांक16_t get_acp_घड़ी_voltage_limit_table_offset(
-				काष्ठा pp_hwmgr *hwmgr,
-				स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table)
-अणु
-	uपूर्णांक16_t tableOffset = get_acp_table_offset(hwmgr, घातerplay_table);
+static uint16_t get_acp_clock_voltage_limit_table_offset(
+				struct pp_hwmgr *hwmgr,
+				const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table)
+{
+	uint16_t tableOffset = get_acp_table_offset(hwmgr, powerplay_table);
 
-	अगर (tableOffset > 0)
-		वापस tableOffset + 1;
+	if (tableOffset > 0)
+		return tableOffset + 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल uपूर्णांक16_t get_cacp_tdp_table_offset(
-				काष्ठा pp_hwmgr *hwmgr,
-				स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table)
-अणु
-	uपूर्णांक16_t cacTdpTableOffset = 0;
+static uint16_t get_cacp_tdp_table_offset(
+				struct pp_hwmgr *hwmgr,
+				const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table)
+{
+	uint16_t cacTdpTableOffset = 0;
 
-	अगर (le16_to_cpu(घातerplay_table->usTableSize) >=
-	    माप(ATOM_PPLIB_POWERPLAYTABLE3)) अणु
-		स्थिर ATOM_PPLIB_POWERPLAYTABLE3 *घातerplay_table3 =
-				(स्थिर ATOM_PPLIB_POWERPLAYTABLE3 *)घातerplay_table;
-		अगर (घातerplay_table3->usExtendendedHeaderOffset > 0) अणु
-			स्थिर ATOM_PPLIB_EXTENDEDHEADER  *pExtendedHeader =
-					(स्थिर ATOM_PPLIB_EXTENDEDHEADER *)
-					(((अचिन्हित दीर्घ)घातerplay_table3) +
-				le16_to_cpu(घातerplay_table3->usExtendendedHeaderOffset));
-			अगर (le16_to_cpu(pExtendedHeader->usSize) >=
+	if (le16_to_cpu(powerplay_table->usTableSize) >=
+	    sizeof(ATOM_PPLIB_POWERPLAYTABLE3)) {
+		const ATOM_PPLIB_POWERPLAYTABLE3 *powerplay_table3 =
+				(const ATOM_PPLIB_POWERPLAYTABLE3 *)powerplay_table;
+		if (powerplay_table3->usExtendendedHeaderOffset > 0) {
+			const ATOM_PPLIB_EXTENDEDHEADER  *pExtendedHeader =
+					(const ATOM_PPLIB_EXTENDEDHEADER *)
+					(((unsigned long)powerplay_table3) +
+				le16_to_cpu(powerplay_table3->usExtendendedHeaderOffset));
+			if (le16_to_cpu(pExtendedHeader->usSize) >=
 			    SIZE_OF_ATOM_PPLIB_EXTENDEDHEADER_V7)
 				cacTdpTableOffset = le16_to_cpu(pExtendedHeader->usPowerTuneTableOffset);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस cacTdpTableOffset;
-पूर्ण
+	return cacTdpTableOffset;
+}
 
-अटल पूर्णांक get_cac_tdp_table(काष्ठा pp_hwmgr *hwmgr,
-				काष्ठा phm_cac_tdp_table **ptable,
-				स्थिर ATOM_PowerTune_Table *table,
-				uपूर्णांक16_t us_maximum_घातer_delivery_limit)
-अणु
-	अचिन्हित दीर्घ table_size;
-	काष्ठा phm_cac_tdp_table *tdp_table;
+static int get_cac_tdp_table(struct pp_hwmgr *hwmgr,
+				struct phm_cac_tdp_table **ptable,
+				const ATOM_PowerTune_Table *table,
+				uint16_t us_maximum_power_delivery_limit)
+{
+	unsigned long table_size;
+	struct phm_cac_tdp_table *tdp_table;
 
-	table_size = माप(अचिन्हित दीर्घ) + माप(काष्ठा phm_cac_tdp_table);
+	table_size = sizeof(unsigned long) + sizeof(struct phm_cac_tdp_table);
 
 	tdp_table = kzalloc(table_size, GFP_KERNEL);
-	अगर (शून्य == tdp_table)
-		वापस -ENOMEM;
+	if (NULL == tdp_table)
+		return -ENOMEM;
 
 	tdp_table->usTDP = le16_to_cpu(table->usTDP);
 	tdp_table->usConfigurableTDP = le16_to_cpu(table->usConfigurableTDP);
@@ -331,375 +330,375 @@
 	tdp_table->usSmallPowerLimit = le16_to_cpu(table->usSmallPowerLimit);
 	tdp_table->usLowCACLeakage = le16_to_cpu(table->usLowCACLeakage);
 	tdp_table->usHighCACLeakage = le16_to_cpu(table->usHighCACLeakage);
-	tdp_table->usMaximumPowerDeliveryLimit = us_maximum_घातer_delivery_limit;
+	tdp_table->usMaximumPowerDeliveryLimit = us_maximum_power_delivery_limit;
 
 	*ptable = tdp_table;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल uपूर्णांक16_t get_sclk_vdd_gfx_table_offset(काष्ठा pp_hwmgr *hwmgr,
-			स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table)
-अणु
-	uपूर्णांक16_t sclk_vdd_gfx_table_offset = 0;
+static uint16_t get_sclk_vdd_gfx_table_offset(struct pp_hwmgr *hwmgr,
+			const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table)
+{
+	uint16_t sclk_vdd_gfx_table_offset = 0;
 
-	अगर (le16_to_cpu(घातerplay_table->usTableSize) >=
-	    माप(ATOM_PPLIB_POWERPLAYTABLE3)) अणु
-		स्थिर ATOM_PPLIB_POWERPLAYTABLE3 *घातerplay_table3 =
-				(स्थिर ATOM_PPLIB_POWERPLAYTABLE3 *)घातerplay_table;
-		अगर (घातerplay_table3->usExtendendedHeaderOffset > 0) अणु
-			स्थिर ATOM_PPLIB_EXTENDEDHEADER  *pExtendedHeader =
-				(स्थिर ATOM_PPLIB_EXTENDEDHEADER *)
-				(((अचिन्हित दीर्घ)घातerplay_table3) +
-				le16_to_cpu(घातerplay_table3->usExtendendedHeaderOffset));
-			अगर (le16_to_cpu(pExtendedHeader->usSize) >=
+	if (le16_to_cpu(powerplay_table->usTableSize) >=
+	    sizeof(ATOM_PPLIB_POWERPLAYTABLE3)) {
+		const ATOM_PPLIB_POWERPLAYTABLE3 *powerplay_table3 =
+				(const ATOM_PPLIB_POWERPLAYTABLE3 *)powerplay_table;
+		if (powerplay_table3->usExtendendedHeaderOffset > 0) {
+			const ATOM_PPLIB_EXTENDEDHEADER  *pExtendedHeader =
+				(const ATOM_PPLIB_EXTENDEDHEADER *)
+				(((unsigned long)powerplay_table3) +
+				le16_to_cpu(powerplay_table3->usExtendendedHeaderOffset));
+			if (le16_to_cpu(pExtendedHeader->usSize) >=
 			    SIZE_OF_ATOM_PPLIB_EXTENDEDHEADER_V8)
 				sclk_vdd_gfx_table_offset =
 					le16_to_cpu(pExtendedHeader->usSclkVddgfxTableOffset);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस sclk_vdd_gfx_table_offset;
-पूर्ण
+	return sclk_vdd_gfx_table_offset;
+}
 
-अटल uपूर्णांक16_t get_sclk_vdd_gfx_घड़ी_voltage_dependency_table_offset(
-			काष्ठा pp_hwmgr *hwmgr,
-			स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table)
-अणु
-	uपूर्णांक16_t tableOffset = get_sclk_vdd_gfx_table_offset(hwmgr, घातerplay_table);
+static uint16_t get_sclk_vdd_gfx_clock_voltage_dependency_table_offset(
+			struct pp_hwmgr *hwmgr,
+			const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table)
+{
+	uint16_t tableOffset = get_sclk_vdd_gfx_table_offset(hwmgr, powerplay_table);
 
-	अगर (tableOffset > 0)
-		वापस tableOffset;
+	if (tableOffset > 0)
+		return tableOffset;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक get_घड़ी_voltage_dependency_table(काष्ठा pp_hwmgr *hwmgr,
-		काष्ठा phm_घड़ी_voltage_dependency_table **ptable,
-		स्थिर ATOM_PPLIB_Clock_Voltage_Dependency_Table *table)
-अणु
+static int get_clock_voltage_dependency_table(struct pp_hwmgr *hwmgr,
+		struct phm_clock_voltage_dependency_table **ptable,
+		const ATOM_PPLIB_Clock_Voltage_Dependency_Table *table)
+{
 
-	अचिन्हित दीर्घ i;
-	काष्ठा phm_घड़ी_voltage_dependency_table *dep_table;
+	unsigned long i;
+	struct phm_clock_voltage_dependency_table *dep_table;
 
-	dep_table = kzalloc(काष्ठा_size(dep_table, entries, table->ucNumEntries),
+	dep_table = kzalloc(struct_size(dep_table, entries, table->ucNumEntries),
 			    GFP_KERNEL);
-	अगर (शून्य == dep_table)
-		वापस -ENOMEM;
+	if (NULL == dep_table)
+		return -ENOMEM;
 
-	dep_table->count = (अचिन्हित दीर्घ)table->ucNumEntries;
+	dep_table->count = (unsigned long)table->ucNumEntries;
 
-	क्रम (i = 0; i < dep_table->count; i++) अणु
+	for (i = 0; i < dep_table->count; i++) {
 		dep_table->entries[i].clk =
-			((अचिन्हित दीर्घ)table->entries[i].ucClockHigh << 16) |
+			((unsigned long)table->entries[i].ucClockHigh << 16) |
 			le16_to_cpu(table->entries[i].usClockLow);
 		dep_table->entries[i].v =
-			(अचिन्हित दीर्घ)le16_to_cpu(table->entries[i].usVoltage);
-	पूर्ण
+			(unsigned long)le16_to_cpu(table->entries[i].usVoltage);
+	}
 
 	*ptable = dep_table;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक get_valid_clk(काष्ठा pp_hwmgr *hwmgr,
-			काष्ठा phm_घड़ी_array **ptable,
-			स्थिर काष्ठा phm_घड़ी_voltage_dependency_table *table)
-अणु
-	अचिन्हित दीर्घ i;
-	काष्ठा phm_घड़ी_array *घड़ी_प्रकारable;
+static int get_valid_clk(struct pp_hwmgr *hwmgr,
+			struct phm_clock_array **ptable,
+			const struct phm_clock_voltage_dependency_table *table)
+{
+	unsigned long i;
+	struct phm_clock_array *clock_table;
 
-	घड़ी_प्रकारable = kzalloc(काष्ठा_size(घड़ी_प्रकारable, values, table->count), GFP_KERNEL);
-	अगर (!घड़ी_प्रकारable)
-		वापस -ENOMEM;
+	clock_table = kzalloc(struct_size(clock_table, values, table->count), GFP_KERNEL);
+	if (!clock_table)
+		return -ENOMEM;
 
-	घड़ी_प्रकारable->count = (अचिन्हित दीर्घ)table->count;
+	clock_table->count = (unsigned long)table->count;
 
-	क्रम (i = 0; i < घड़ी_प्रकारable->count; i++)
-		घड़ी_प्रकारable->values[i] = (अचिन्हित दीर्घ)table->entries[i].clk;
+	for (i = 0; i < clock_table->count; i++)
+		clock_table->values[i] = (unsigned long)table->entries[i].clk;
 
-	*ptable = घड़ी_प्रकारable;
+	*ptable = clock_table;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक get_घड़ी_voltage_limit(काष्ठा pp_hwmgr *hwmgr,
-			काष्ठा phm_घड़ी_and_voltage_limits *limits,
-			स्थिर ATOM_PPLIB_Clock_Voltage_Limit_Table *table)
-अणु
-	limits->sclk = ((अचिन्हित दीर्घ)table->entries[0].ucSclkHigh << 16) |
+static int get_clock_voltage_limit(struct pp_hwmgr *hwmgr,
+			struct phm_clock_and_voltage_limits *limits,
+			const ATOM_PPLIB_Clock_Voltage_Limit_Table *table)
+{
+	limits->sclk = ((unsigned long)table->entries[0].ucSclkHigh << 16) |
 			le16_to_cpu(table->entries[0].usSclkLow);
-	limits->mclk = ((अचिन्हित दीर्घ)table->entries[0].ucMclkHigh << 16) |
+	limits->mclk = ((unsigned long)table->entries[0].ucMclkHigh << 16) |
 			le16_to_cpu(table->entries[0].usMclkLow);
-	limits->vddc = (अचिन्हित दीर्घ)le16_to_cpu(table->entries[0].usVddc);
-	limits->vddci = (अचिन्हित दीर्घ)le16_to_cpu(table->entries[0].usVddci);
+	limits->vddc = (unsigned long)le16_to_cpu(table->entries[0].usVddc);
+	limits->vddci = (unsigned long)le16_to_cpu(table->entries[0].usVddci);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल व्योम set_hw_cap(काष्ठा pp_hwmgr *hwmgr, bool enable,
-		       क्रमागत phm_platक्रमm_caps cap)
-अणु
-	अगर (enable)
-		phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps, cap);
-	अन्यथा
-		phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps, cap);
-पूर्ण
+static void set_hw_cap(struct pp_hwmgr *hwmgr, bool enable,
+		       enum phm_platform_caps cap)
+{
+	if (enable)
+		phm_cap_set(hwmgr->platform_descriptor.platformCaps, cap);
+	else
+		phm_cap_unset(hwmgr->platform_descriptor.platformCaps, cap);
+}
 
-अटल पूर्णांक set_platक्रमm_caps(काष्ठा pp_hwmgr *hwmgr,
-			अचिन्हित दीर्घ घातerplay_caps)
-अणु
+static int set_platform_caps(struct pp_hwmgr *hwmgr,
+			unsigned long powerplay_caps)
+{
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_CAP_POWERPLAY),
-		PHM_Platक्रमmCaps_PowerPlaySupport
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_CAP_POWERPLAY),
+		PHM_PlatformCaps_PowerPlaySupport
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_CAP_SBIOSPOWERSOURCE),
-		PHM_Platक्रमmCaps_BiosPowerSourceControl
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_CAP_SBIOSPOWERSOURCE),
+		PHM_PlatformCaps_BiosPowerSourceControl
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_CAP_ASPM_L0s),
-		PHM_Platक्रमmCaps_EnableASPML0s
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_CAP_ASPM_L0s),
+		PHM_PlatformCaps_EnableASPML0s
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_CAP_ASPM_L1),
-		PHM_Platक्रमmCaps_EnableASPML1
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_CAP_ASPM_L1),
+		PHM_PlatformCaps_EnableASPML1
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_CAP_BACKBIAS),
-		PHM_Platक्रमmCaps_EnableBackbias
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_CAP_BACKBIAS),
+		PHM_PlatformCaps_EnableBackbias
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_CAP_HARDWAREDC),
-		PHM_Platक्रमmCaps_AutomaticDCTransition
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_CAP_HARDWAREDC),
+		PHM_PlatformCaps_AutomaticDCTransition
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_CAP_GEMINIPRIMARY),
-		PHM_Platक्रमmCaps_GeminiPrimary
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_CAP_GEMINIPRIMARY),
+		PHM_PlatformCaps_GeminiPrimary
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_CAP_STEPVDDC),
-		PHM_Platक्रमmCaps_StepVddc
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_CAP_STEPVDDC),
+		PHM_PlatformCaps_StepVddc
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_CAP_VOLTAGECONTROL),
-		PHM_Platक्रमmCaps_EnableVoltageControl
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_CAP_VOLTAGECONTROL),
+		PHM_PlatformCaps_EnableVoltageControl
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_CAP_SIDEPORTCONTROL),
-		PHM_Platक्रमmCaps_EnableSideportControl
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_CAP_SIDEPORTCONTROL),
+		PHM_PlatformCaps_EnableSideportControl
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_CAP_TURNOFFPLL_ASPML1),
-		PHM_Platक्रमmCaps_TurnOffPll_ASPML1
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_CAP_TURNOFFPLL_ASPML1),
+		PHM_PlatformCaps_TurnOffPll_ASPML1
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_CAP_HTLINKCONTROL),
-		PHM_Platक्रमmCaps_EnableHTLinkControl
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_CAP_HTLINKCONTROL),
+		PHM_PlatformCaps_EnableHTLinkControl
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_CAP_MVDDCONTROL),
-		PHM_Platक्रमmCaps_EnableMVDDControl
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_CAP_MVDDCONTROL),
+		PHM_PlatformCaps_EnableMVDDControl
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_CAP_VDDCI_CONTROL),
-		PHM_Platक्रमmCaps_ControlVDDCI
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_CAP_VDDCI_CONTROL),
+		PHM_PlatformCaps_ControlVDDCI
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_CAP_REGULATOR_HOT),
-		PHM_Platक्रमmCaps_RegulatorHot
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_CAP_REGULATOR_HOT),
+		PHM_PlatformCaps_RegulatorHot
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_CAP_GOTO_BOOT_ON_ALERT),
-		PHM_Platक्रमmCaps_BootStateOnAlert
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_CAP_GOTO_BOOT_ON_ALERT),
+		PHM_PlatformCaps_BootStateOnAlert
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_CAP_DONT_WAIT_FOR_VBLANK_ON_ALERT),
-		PHM_Platक्रमmCaps_DontWaitForVBlankOnAlert
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_CAP_DONT_WAIT_FOR_VBLANK_ON_ALERT),
+		PHM_PlatformCaps_DontWaitForVBlankOnAlert
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_CAP_BACO),
-		PHM_Platक्रमmCaps_BACO
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_CAP_BACO),
+		PHM_PlatformCaps_BACO
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_CAP_NEW_CAC_VOLTAGE),
-		PHM_Platक्रमmCaps_NewCACVoltage
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_CAP_NEW_CAC_VOLTAGE),
+		PHM_PlatformCaps_NewCACVoltage
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_CAP_REVERT_GPIO5_POLARITY),
-		PHM_Platक्रमmCaps_RevertGPIO5Polarity
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_CAP_REVERT_GPIO5_POLARITY),
+		PHM_PlatformCaps_RevertGPIO5Polarity
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_CAP_OUTPUT_THERMAL2GPIO17),
-		PHM_Platक्रमmCaps_Thermal2GPIO17
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_CAP_OUTPUT_THERMAL2GPIO17),
+		PHM_PlatformCaps_Thermal2GPIO17
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_CAP_VRHOT_GPIO_CONFIGURABLE),
-		PHM_Platक्रमmCaps_VRHotGPIOConfigurable
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_CAP_VRHOT_GPIO_CONFIGURABLE),
+		PHM_PlatformCaps_VRHotGPIOConfigurable
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_CAP_TEMP_INVERSION),
-		PHM_Platक्रमmCaps_TempInversion
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_CAP_TEMP_INVERSION),
+		PHM_PlatformCaps_TempInversion
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_CAP_EVV),
-		PHM_Platक्रमmCaps_EVV
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_CAP_EVV),
+		PHM_PlatformCaps_EVV
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_COMBINE_PCC_WITH_THERMAL_SIGNAL),
-		PHM_Platक्रमmCaps_CombinePCCWithThermalSignal
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_COMBINE_PCC_WITH_THERMAL_SIGNAL),
+		PHM_PlatformCaps_CombinePCCWithThermalSignal
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_LOAD_POST_PRODUCTION_FIRMWARE),
-		PHM_Platक्रमmCaps_LoadPostProductionFirmware
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_LOAD_POST_PRODUCTION_FIRMWARE),
+		PHM_PlatformCaps_LoadPostProductionFirmware
 	);
 
 	set_hw_cap(
 		hwmgr,
-		0 != (घातerplay_caps & ATOM_PP_PLATFORM_CAP_DISABLE_USING_ACTUAL_TEMPERATURE_FOR_POWER_CALC),
-		PHM_Platक्रमmCaps_DisableUsingActualTemperatureForPowerCalc
+		0 != (powerplay_caps & ATOM_PP_PLATFORM_CAP_DISABLE_USING_ACTUAL_TEMPERATURE_FOR_POWER_CALC),
+		PHM_PlatformCaps_DisableUsingActualTemperatureForPowerCalc
 	);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल PP_StateClassअगरicationFlags make_classअगरication_flags(
-						   काष्ठा pp_hwmgr *hwmgr,
-						    USHORT classअगरication,
-						   USHORT classअगरication2)
-अणु
-	PP_StateClassअगरicationFlags result = 0;
+static PP_StateClassificationFlags make_classification_flags(
+						   struct pp_hwmgr *hwmgr,
+						    USHORT classification,
+						   USHORT classification2)
+{
+	PP_StateClassificationFlags result = 0;
 
-	अगर (classअगरication & ATOM_PPLIB_CLASSIFICATION_BOOT)
-		result |= PP_StateClassअगरicationFlag_Boot;
+	if (classification & ATOM_PPLIB_CLASSIFICATION_BOOT)
+		result |= PP_StateClassificationFlag_Boot;
 
-	अगर (classअगरication & ATOM_PPLIB_CLASSIFICATION_THERMAL)
-		result |= PP_StateClassअगरicationFlag_Thermal;
+	if (classification & ATOM_PPLIB_CLASSIFICATION_THERMAL)
+		result |= PP_StateClassificationFlag_Thermal;
 
-	अगर (classअगरication &
+	if (classification &
 			ATOM_PPLIB_CLASSIFICATION_LIMITEDPOWERSOURCE)
-		result |= PP_StateClassअगरicationFlag_LimitedPowerSource;
+		result |= PP_StateClassificationFlag_LimitedPowerSource;
 
-	अगर (classअगरication & ATOM_PPLIB_CLASSIFICATION_REST)
-		result |= PP_StateClassअगरicationFlag_Rest;
+	if (classification & ATOM_PPLIB_CLASSIFICATION_REST)
+		result |= PP_StateClassificationFlag_Rest;
 
-	अगर (classअगरication & ATOM_PPLIB_CLASSIFICATION_FORCED)
-		result |= PP_StateClassअगरicationFlag_Forced;
+	if (classification & ATOM_PPLIB_CLASSIFICATION_FORCED)
+		result |= PP_StateClassificationFlag_Forced;
 
-	अगर (classअगरication & ATOM_PPLIB_CLASSIFICATION_3DPERFORMANCE)
-		result |= PP_StateClassअगरicationFlag_3DPerक्रमmance;
-
-
-	अगर (classअगरication & ATOM_PPLIB_CLASSIFICATION_OVERDRIVETEMPLATE)
-		result |= PP_StateClassअगरicationFlag_ACOverdriveTemplate;
-
-	अगर (classअगरication & ATOM_PPLIB_CLASSIFICATION_UVDSTATE)
-		result |= PP_StateClassअगरicationFlag_Uvd;
-
-	अगर (classअगरication & ATOM_PPLIB_CLASSIFICATION_HDSTATE)
-		result |= PP_StateClassअगरicationFlag_UvdHD;
-
-	अगर (classअगरication & ATOM_PPLIB_CLASSIFICATION_SDSTATE)
-		result |= PP_StateClassअगरicationFlag_UvdSD;
-
-	अगर (classअगरication & ATOM_PPLIB_CLASSIFICATION_HD2STATE)
-		result |= PP_StateClassअगरicationFlag_HD2;
-
-	अगर (classअगरication & ATOM_PPLIB_CLASSIFICATION_ACPI)
-		result |= PP_StateClassअगरicationFlag_ACPI;
-
-	अगर (classअगरication2 & ATOM_PPLIB_CLASSIFICATION2_LIMITEDPOWERSOURCE_2)
-		result |= PP_StateClassअगरicationFlag_LimitedPowerSource_2;
+	if (classification & ATOM_PPLIB_CLASSIFICATION_3DPERFORMANCE)
+		result |= PP_StateClassificationFlag_3DPerformance;
 
 
-	अगर (classअगरication2 & ATOM_PPLIB_CLASSIFICATION2_ULV)
-		result |= PP_StateClassअगरicationFlag_ULV;
+	if (classification & ATOM_PPLIB_CLASSIFICATION_OVERDRIVETEMPLATE)
+		result |= PP_StateClassificationFlag_ACOverdriveTemplate;
 
-	अगर (classअगरication2 & ATOM_PPLIB_CLASSIFICATION2_MVC)
-		result |= PP_StateClassअगरicationFlag_UvdMVC;
+	if (classification & ATOM_PPLIB_CLASSIFICATION_UVDSTATE)
+		result |= PP_StateClassificationFlag_Uvd;
 
-	वापस result;
-पूर्ण
+	if (classification & ATOM_PPLIB_CLASSIFICATION_HDSTATE)
+		result |= PP_StateClassificationFlag_UvdHD;
 
-अटल पूर्णांक init_non_घड़ी_fields(काष्ठा pp_hwmgr *hwmgr,
-						काष्ठा pp_घातer_state *ps,
-							    uपूर्णांक8_t version,
-			 स्थिर ATOM_PPLIB_NONCLOCK_INFO *pnon_घड़ी_info) अणु
-	अचिन्हित दीर्घ rrr_index;
-	अचिन्हित दीर्घ पंचांगp;
+	if (classification & ATOM_PPLIB_CLASSIFICATION_SDSTATE)
+		result |= PP_StateClassificationFlag_UvdSD;
 
-	ps->classअगरication.ui_label = (le16_to_cpu(pnon_घड़ी_info->usClassअगरication) &
+	if (classification & ATOM_PPLIB_CLASSIFICATION_HD2STATE)
+		result |= PP_StateClassificationFlag_HD2;
+
+	if (classification & ATOM_PPLIB_CLASSIFICATION_ACPI)
+		result |= PP_StateClassificationFlag_ACPI;
+
+	if (classification2 & ATOM_PPLIB_CLASSIFICATION2_LIMITEDPOWERSOURCE_2)
+		result |= PP_StateClassificationFlag_LimitedPowerSource_2;
+
+
+	if (classification2 & ATOM_PPLIB_CLASSIFICATION2_ULV)
+		result |= PP_StateClassificationFlag_ULV;
+
+	if (classification2 & ATOM_PPLIB_CLASSIFICATION2_MVC)
+		result |= PP_StateClassificationFlag_UvdMVC;
+
+	return result;
+}
+
+static int init_non_clock_fields(struct pp_hwmgr *hwmgr,
+						struct pp_power_state *ps,
+							    uint8_t version,
+			 const ATOM_PPLIB_NONCLOCK_INFO *pnon_clock_info) {
+	unsigned long rrr_index;
+	unsigned long tmp;
+
+	ps->classification.ui_label = (le16_to_cpu(pnon_clock_info->usClassification) &
 					ATOM_PPLIB_CLASSIFICATION_UI_MASK) >> ATOM_PPLIB_CLASSIFICATION_UI_SHIFT;
-	ps->classअगरication.flags = make_classअगरication_flags(hwmgr,
-				le16_to_cpu(pnon_घड़ी_info->usClassअगरication),
-				le16_to_cpu(pnon_घड़ी_info->usClassअगरication2));
+	ps->classification.flags = make_classification_flags(hwmgr,
+				le16_to_cpu(pnon_clock_info->usClassification),
+				le16_to_cpu(pnon_clock_info->usClassification2));
 
-	ps->classअगरication.temporary_state = false;
-	ps->classअगरication.to_be_deleted = false;
-	पंचांगp = le32_to_cpu(pnon_घड़ी_info->ulCapsAndSettings) &
+	ps->classification.temporary_state = false;
+	ps->classification.to_be_deleted = false;
+	tmp = le32_to_cpu(pnon_clock_info->ulCapsAndSettings) &
 		ATOM_PPLIB_SINGLE_DISPLAY_ONLY;
 
-	ps->validation.singleDisplayOnly = (0 != पंचांगp);
+	ps->validation.singleDisplayOnly = (0 != tmp);
 
-	पंचांगp = le32_to_cpu(pnon_घड़ी_info->ulCapsAndSettings) &
+	tmp = le32_to_cpu(pnon_clock_info->ulCapsAndSettings) &
 		ATOM_PPLIB_DISALLOW_ON_DC;
 
-	ps->validation.disallowOnDC = (0 != पंचांगp);
+	ps->validation.disallowOnDC = (0 != tmp);
 
-	ps->pcie.lanes = ((le32_to_cpu(pnon_घड़ी_info->ulCapsAndSettings) &
+	ps->pcie.lanes = ((le32_to_cpu(pnon_clock_info->ulCapsAndSettings) &
 				ATOM_PPLIB_PCIE_LINK_WIDTH_MASK) >>
 				ATOM_PPLIB_PCIE_LINK_WIDTH_SHIFT) + 1;
 
@@ -707,89 +706,89 @@
 
 	ps->display.disableFrameModulation = false;
 
-	rrr_index = (le32_to_cpu(pnon_घड़ी_info->ulCapsAndSettings) &
+	rrr_index = (le32_to_cpu(pnon_clock_info->ulCapsAndSettings) &
 			ATOM_PPLIB_LIMITED_REFRESHRATE_VALUE_MASK) >>
 			ATOM_PPLIB_LIMITED_REFRESHRATE_VALUE_SHIFT;
 
-	अगर (rrr_index != ATOM_PPLIB_LIMITED_REFRESHRATE_UNLIMITED) अणु
-		अटल स्थिर uपूर्णांक8_t look_up[(ATOM_PPLIB_LIMITED_REFRESHRATE_VALUE_MASK >> ATOM_PPLIB_LIMITED_REFRESHRATE_VALUE_SHIFT) + 1] = \
-								अणु 0, 50, 0 पूर्ण;
+	if (rrr_index != ATOM_PPLIB_LIMITED_REFRESHRATE_UNLIMITED) {
+		static const uint8_t look_up[(ATOM_PPLIB_LIMITED_REFRESHRATE_VALUE_MASK >> ATOM_PPLIB_LIMITED_REFRESHRATE_VALUE_SHIFT) + 1] = \
+								{ 0, 50, 0 };
 
 		ps->display.refreshrateSource = PP_RefreshrateSource_Explicit;
 		ps->display.explicitRefreshrate = look_up[rrr_index];
 		ps->display.limitRefreshrate = true;
 
-		अगर (ps->display.explicitRefreshrate == 0)
+		if (ps->display.explicitRefreshrate == 0)
 			ps->display.limitRefreshrate = false;
-	पूर्ण अन्यथा
+	} else
 		ps->display.limitRefreshrate = false;
 
-	पंचांगp = le32_to_cpu(pnon_घड़ी_info->ulCapsAndSettings) &
+	tmp = le32_to_cpu(pnon_clock_info->ulCapsAndSettings) &
 		ATOM_PPLIB_ENABLE_VARIBRIGHT;
 
-	ps->display.enableVariBright = (0 != पंचांगp);
+	ps->display.enableVariBright = (0 != tmp);
 
-	पंचांगp = le32_to_cpu(pnon_घड़ी_info->ulCapsAndSettings) &
+	tmp = le32_to_cpu(pnon_clock_info->ulCapsAndSettings) &
 		ATOM_PPLIB_SWSTATE_MEMORY_DLL_OFF;
 
-	ps->memory.dllOff = (0 != पंचांगp);
+	ps->memory.dllOff = (0 != tmp);
 
-	ps->memory.m3arb = (le32_to_cpu(pnon_घड़ी_info->ulCapsAndSettings) &
+	ps->memory.m3arb = (le32_to_cpu(pnon_clock_info->ulCapsAndSettings) &
 			    ATOM_PPLIB_M3ARB_MASK) >> ATOM_PPLIB_M3ARB_SHIFT;
 
 	ps->temperatures.min = PP_TEMPERATURE_UNITS_PER_CENTIGRADES *
-				     pnon_घड़ी_info->ucMinTemperature;
+				     pnon_clock_info->ucMinTemperature;
 
 	ps->temperatures.max = PP_TEMPERATURE_UNITS_PER_CENTIGRADES *
-				     pnon_घड़ी_info->ucMaxTemperature;
+				     pnon_clock_info->ucMaxTemperature;
 
-	पंचांगp = le32_to_cpu(pnon_घड़ी_info->ulCapsAndSettings) &
+	tmp = le32_to_cpu(pnon_clock_info->ulCapsAndSettings) &
 		ATOM_PPLIB_SOFTWARE_DISABLE_LOADBALANCING;
 
-	ps->software.disableLoadBalancing = पंचांगp;
+	ps->software.disableLoadBalancing = tmp;
 
-	पंचांगp = le32_to_cpu(pnon_घड़ी_info->ulCapsAndSettings) &
+	tmp = le32_to_cpu(pnon_clock_info->ulCapsAndSettings) &
 		ATOM_PPLIB_SOFTWARE_ENABLE_SLEEP_FOR_TIMESTAMPS;
 
-	ps->software.enableSleepForTimestamps = (0 != पंचांगp);
+	ps->software.enableSleepForTimestamps = (0 != tmp);
 
-	ps->validation.supportedPowerLevels = pnon_घड़ी_info->ucRequiredPower;
+	ps->validation.supportedPowerLevels = pnon_clock_info->ucRequiredPower;
 
-	अगर (ATOM_PPLIB_NONCLOCKINFO_VER1 < version) अणु
-		ps->uvd_घड़ीs.VCLK = le32_to_cpu(pnon_घड़ी_info->ulVCLK);
-		ps->uvd_घड़ीs.DCLK = le32_to_cpu(pnon_घड़ी_info->ulDCLK);
-	पूर्ण अन्यथा अणु
-		ps->uvd_घड़ीs.VCLK = 0;
-		ps->uvd_घड़ीs.DCLK = 0;
-	पूर्ण
+	if (ATOM_PPLIB_NONCLOCKINFO_VER1 < version) {
+		ps->uvd_clocks.VCLK = le32_to_cpu(pnon_clock_info->ulVCLK);
+		ps->uvd_clocks.DCLK = le32_to_cpu(pnon_clock_info->ulDCLK);
+	} else {
+		ps->uvd_clocks.VCLK = 0;
+		ps->uvd_clocks.DCLK = 0;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल ULONG size_of_entry_v2(ULONG num_dpm_levels)
-अणु
-	वापस (माप(UCHAR) + माप(UCHAR) +
-			(num_dpm_levels * माप(UCHAR)));
-पूर्ण
+static ULONG size_of_entry_v2(ULONG num_dpm_levels)
+{
+	return (sizeof(UCHAR) + sizeof(UCHAR) +
+			(num_dpm_levels * sizeof(UCHAR)));
+}
 
-अटल स्थिर ATOM_PPLIB_STATE_V2 *get_state_entry_v2(
-					स्थिर StateArray * pstate_arrays,
+static const ATOM_PPLIB_STATE_V2 *get_state_entry_v2(
+					const StateArray * pstate_arrays,
 							 ULONG entry_index)
-अणु
+{
 	ULONG i;
-	स्थिर ATOM_PPLIB_STATE_V2 *pstate;
+	const ATOM_PPLIB_STATE_V2 *pstate;
 
 	pstate = pstate_arrays->states;
-	अगर (entry_index <= pstate_arrays->ucNumEntries) अणु
-		क्रम (i = 0; i < entry_index; i++)
+	if (entry_index <= pstate_arrays->ucNumEntries) {
+		for (i = 0; i < entry_index; i++)
 			pstate = (ATOM_PPLIB_STATE_V2 *)(
-						  (अचिन्हित दीर्घ)pstate +
+						  (unsigned long)pstate +
 			     size_of_entry_v2(pstate->ucNumDPMLevels));
-	पूर्ण
-	वापस pstate;
-पूर्ण
+	}
+	return pstate;
+}
 
-अटल स्थिर अचिन्हित अक्षर soft_dummy_pp_table[] = अणु
+static const unsigned char soft_dummy_pp_table[] = {
 	0xe1, 0x01, 0x06, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x42, 0x00, 0x4a, 0x00, 0x6c, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x42, 0x00, 0x02, 0x00, 0x00, 0x00, 0x13, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00,
 	0x00, 0x4e, 0x00, 0x88, 0x00, 0x00, 0x9e, 0x00, 0x17, 0x00, 0x00, 0x00, 0x9e, 0x00, 0x00, 0x00,
@@ -821,207 +820,207 @@
 	0x00, 0x7e, 0x00, 0x71, 0xa5, 0x00, 0x7c, 0x00, 0xe5, 0xc8, 0x00, 0x74, 0x00, 0x91, 0xf4, 0x00,
 	0x66, 0x00, 0x40, 0x19, 0x01, 0x58, 0x00, 0x0e, 0x28, 0x01, 0x52, 0x00, 0x80, 0x38, 0x01, 0x4a,
 	0x00
-पूर्ण;
+};
 
-अटल स्थिर ATOM_PPLIB_POWERPLAYTABLE *get_घातerplay_table(
-				     काष्ठा pp_hwmgr *hwmgr)
-अणु
-	स्थिर व्योम *table_addr = hwmgr->soft_pp_table;
-	uपूर्णांक8_t frev, crev;
-	uपूर्णांक16_t size;
+static const ATOM_PPLIB_POWERPLAYTABLE *get_powerplay_table(
+				     struct pp_hwmgr *hwmgr)
+{
+	const void *table_addr = hwmgr->soft_pp_table;
+	uint8_t frev, crev;
+	uint16_t size;
 
-	अगर (!table_addr) अणु
-		अगर (hwmgr->chip_id == CHIP_RAVEN) अणु
+	if (!table_addr) {
+		if (hwmgr->chip_id == CHIP_RAVEN) {
 			table_addr = &soft_dummy_pp_table[0];
 			hwmgr->soft_pp_table = &soft_dummy_pp_table[0];
-			hwmgr->soft_pp_table_size = माप(soft_dummy_pp_table);
-		पूर्ण अन्यथा अणु
+			hwmgr->soft_pp_table_size = sizeof(soft_dummy_pp_table);
+		} else {
 			table_addr = smu_atom_get_data_table(hwmgr->adev,
 					GetIndexIntoMasterTable(DATA, PowerPlayInfo),
 					&size, &frev, &crev);
 			hwmgr->soft_pp_table = table_addr;
 			hwmgr->soft_pp_table_size = size;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस (स्थिर ATOM_PPLIB_POWERPLAYTABLE *)table_addr;
-पूर्ण
+	return (const ATOM_PPLIB_POWERPLAYTABLE *)table_addr;
+}
 
-पूर्णांक pp_tables_get_response_बार(काष्ठा pp_hwmgr *hwmgr,
-				uपूर्णांक32_t *vol_rep_समय, uपूर्णांक32_t *bb_rep_समय)
-अणु
-	स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_tab = get_घातerplay_table(hwmgr);
+int pp_tables_get_response_times(struct pp_hwmgr *hwmgr,
+				uint32_t *vol_rep_time, uint32_t *bb_rep_time)
+{
+	const ATOM_PPLIB_POWERPLAYTABLE *powerplay_tab = get_powerplay_table(hwmgr);
 
-	PP_ASSERT_WITH_CODE(शून्य != घातerplay_tab,
-			    "Missing PowerPlay Table!", वापस -EINVAL);
+	PP_ASSERT_WITH_CODE(NULL != powerplay_tab,
+			    "Missing PowerPlay Table!", return -EINVAL);
 
-	*vol_rep_समय = (uपूर्णांक32_t)le16_to_cpu(घातerplay_tab->usVoltageTime);
-	*bb_rep_समय = (uपूर्णांक32_t)le16_to_cpu(घातerplay_tab->usBackbiasTime);
+	*vol_rep_time = (uint32_t)le16_to_cpu(powerplay_tab->usVoltageTime);
+	*bb_rep_time = (uint32_t)le16_to_cpu(powerplay_tab->usBackbiasTime);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक pp_tables_get_num_of_entries(काष्ठा pp_hwmgr *hwmgr,
-				     अचिन्हित दीर्घ *num_of_entries)
-अणु
-	स्थिर StateArray *pstate_arrays;
-	स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table = get_घातerplay_table(hwmgr);
+int pp_tables_get_num_of_entries(struct pp_hwmgr *hwmgr,
+				     unsigned long *num_of_entries)
+{
+	const StateArray *pstate_arrays;
+	const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table = get_powerplay_table(hwmgr);
 
-	अगर (घातerplay_table == शून्य)
-		वापस -1;
+	if (powerplay_table == NULL)
+		return -1;
 
-	अगर (घातerplay_table->sHeader.ucTableFormatRevision >= 6) अणु
-		pstate_arrays = (StateArray *)(((अचिन्हित दीर्घ)घातerplay_table) +
-					le16_to_cpu(घातerplay_table->usStateArrayOffset));
+	if (powerplay_table->sHeader.ucTableFormatRevision >= 6) {
+		pstate_arrays = (StateArray *)(((unsigned long)powerplay_table) +
+					le16_to_cpu(powerplay_table->usStateArrayOffset));
 
-		*num_of_entries = (अचिन्हित दीर्घ)(pstate_arrays->ucNumEntries);
-	पूर्ण अन्यथा
-		*num_of_entries = (अचिन्हित दीर्घ)(घातerplay_table->ucNumStates);
+		*num_of_entries = (unsigned long)(pstate_arrays->ucNumEntries);
+	} else
+		*num_of_entries = (unsigned long)(powerplay_table->ucNumStates);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक pp_tables_get_entry(काष्ठा pp_hwmgr *hwmgr,
-				अचिन्हित दीर्घ entry_index,
-				काष्ठा pp_घातer_state *ps,
-			 pp_tables_hw_घड़ी_info_callback func)
-अणु
-	पूर्णांक i;
-	स्थिर StateArray *pstate_arrays;
-	स्थिर ATOM_PPLIB_STATE_V2 *pstate_entry_v2;
-	स्थिर ATOM_PPLIB_NONCLOCK_INFO *pnon_घड़ी_info;
-	स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table = get_घातerplay_table(hwmgr);
-	पूर्णांक result = 0;
-	पूर्णांक res = 0;
+int pp_tables_get_entry(struct pp_hwmgr *hwmgr,
+				unsigned long entry_index,
+				struct pp_power_state *ps,
+			 pp_tables_hw_clock_info_callback func)
+{
+	int i;
+	const StateArray *pstate_arrays;
+	const ATOM_PPLIB_STATE_V2 *pstate_entry_v2;
+	const ATOM_PPLIB_NONCLOCK_INFO *pnon_clock_info;
+	const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table = get_powerplay_table(hwmgr);
+	int result = 0;
+	int res = 0;
 
-	स्थिर ClockInfoArray *pघड़ी_arrays;
+	const ClockInfoArray *pclock_arrays;
 
-	स्थिर NonClockInfoArray *pnon_घड़ी_arrays;
+	const NonClockInfoArray *pnon_clock_arrays;
 
-	स्थिर ATOM_PPLIB_STATE *pstate_entry;
+	const ATOM_PPLIB_STATE *pstate_entry;
 
-	अगर (घातerplay_table == शून्य)
-		वापस -1;
+	if (powerplay_table == NULL)
+		return -1;
 
-	ps->classअगरication.bios_index = entry_index;
+	ps->classification.bios_index = entry_index;
 
-	अगर (घातerplay_table->sHeader.ucTableFormatRevision >= 6) अणु
-		pstate_arrays = (StateArray *)(((अचिन्हित दीर्घ)घातerplay_table) +
-					le16_to_cpu(घातerplay_table->usStateArrayOffset));
+	if (powerplay_table->sHeader.ucTableFormatRevision >= 6) {
+		pstate_arrays = (StateArray *)(((unsigned long)powerplay_table) +
+					le16_to_cpu(powerplay_table->usStateArrayOffset));
 
-		अगर (entry_index > pstate_arrays->ucNumEntries)
-			वापस -1;
+		if (entry_index > pstate_arrays->ucNumEntries)
+			return -1;
 
 		pstate_entry_v2 = get_state_entry_v2(pstate_arrays, entry_index);
-		pघड़ी_arrays = (ClockInfoArray *)(((अचिन्हित दीर्घ)घातerplay_table) +
-					le16_to_cpu(घातerplay_table->usClockInfoArrayOffset));
+		pclock_arrays = (ClockInfoArray *)(((unsigned long)powerplay_table) +
+					le16_to_cpu(powerplay_table->usClockInfoArrayOffset));
 
-		pnon_घड़ी_arrays = (NonClockInfoArray *)(((अचिन्हित दीर्घ)घातerplay_table) +
-						le16_to_cpu(घातerplay_table->usNonClockInfoArrayOffset));
+		pnon_clock_arrays = (NonClockInfoArray *)(((unsigned long)powerplay_table) +
+						le16_to_cpu(powerplay_table->usNonClockInfoArrayOffset));
 
-		pnon_घड़ी_info = (ATOM_PPLIB_NONCLOCK_INFO *)((अचिन्हित दीर्घ)(pnon_घड़ी_arrays->nonClockInfo) +
-					(pstate_entry_v2->nonClockInfoIndex * pnon_घड़ी_arrays->ucEntrySize));
+		pnon_clock_info = (ATOM_PPLIB_NONCLOCK_INFO *)((unsigned long)(pnon_clock_arrays->nonClockInfo) +
+					(pstate_entry_v2->nonClockInfoIndex * pnon_clock_arrays->ucEntrySize));
 
-		result = init_non_घड़ी_fields(hwmgr, ps, pnon_घड़ी_arrays->ucEntrySize, pnon_घड़ी_info);
+		result = init_non_clock_fields(hwmgr, ps, pnon_clock_arrays->ucEntrySize, pnon_clock_info);
 
-		क्रम (i = 0; i < pstate_entry_v2->ucNumDPMLevels; i++) अणु
-			स्थिर व्योम *pघड़ी_info = (स्थिर व्योम *)(
-							(अचिन्हित दीर्घ)(pघड़ी_arrays->घड़ीInfo) +
-							(pstate_entry_v2->घड़ीInfoIndex[i] * pघड़ी_arrays->ucEntrySize));
-			res = func(hwmgr, &ps->hardware, i, pघड़ी_info);
-			अगर ((0 == result) && (0 != res))
+		for (i = 0; i < pstate_entry_v2->ucNumDPMLevels; i++) {
+			const void *pclock_info = (const void *)(
+							(unsigned long)(pclock_arrays->clockInfo) +
+							(pstate_entry_v2->clockInfoIndex[i] * pclock_arrays->ucEntrySize));
+			res = func(hwmgr, &ps->hardware, i, pclock_info);
+			if ((0 == result) && (0 != res))
 				result = res;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (entry_index > घातerplay_table->ucNumStates)
-			वापस -1;
+		}
+	} else {
+		if (entry_index > powerplay_table->ucNumStates)
+			return -1;
 
-		pstate_entry = (ATOM_PPLIB_STATE *)((अचिन्हित दीर्घ)घातerplay_table +
-						    le16_to_cpu(घातerplay_table->usStateArrayOffset) +
-						    entry_index * घातerplay_table->ucStateEntrySize);
+		pstate_entry = (ATOM_PPLIB_STATE *)((unsigned long)powerplay_table +
+						    le16_to_cpu(powerplay_table->usStateArrayOffset) +
+						    entry_index * powerplay_table->ucStateEntrySize);
 
-		pnon_घड़ी_info = (ATOM_PPLIB_NONCLOCK_INFO *)((अचिन्हित दीर्घ)घातerplay_table +
-						le16_to_cpu(घातerplay_table->usNonClockInfoArrayOffset) +
+		pnon_clock_info = (ATOM_PPLIB_NONCLOCK_INFO *)((unsigned long)powerplay_table +
+						le16_to_cpu(powerplay_table->usNonClockInfoArrayOffset) +
 						pstate_entry->ucNonClockStateIndex *
-						घातerplay_table->ucNonClockSize);
+						powerplay_table->ucNonClockSize);
 
-		result = init_non_घड़ी_fields(hwmgr, ps,
-							घातerplay_table->ucNonClockSize,
-							pnon_घड़ी_info);
+		result = init_non_clock_fields(hwmgr, ps,
+							powerplay_table->ucNonClockSize,
+							pnon_clock_info);
 
-		क्रम (i = 0; i < घातerplay_table->ucStateEntrySize-1; i++) अणु
-			स्थिर व्योम *pघड़ी_info = (स्थिर व्योम *)((अचिन्हित दीर्घ)घातerplay_table +
-						le16_to_cpu(घातerplay_table->usClockInfoArrayOffset) +
+		for (i = 0; i < powerplay_table->ucStateEntrySize-1; i++) {
+			const void *pclock_info = (const void *)((unsigned long)powerplay_table +
+						le16_to_cpu(powerplay_table->usClockInfoArrayOffset) +
 						pstate_entry->ucClockStateIndices[i] *
-						घातerplay_table->ucClockInfoSize);
+						powerplay_table->ucClockInfoSize);
 
-			पूर्णांक res = func(hwmgr, &ps->hardware, i, pघड़ी_info);
+			int res = func(hwmgr, &ps->hardware, i, pclock_info);
 
-			अगर ((0 == result) && (0 != res))
+			if ((0 == result) && (0 != res))
 					result = res;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर ((0 == result) && (0 != (ps->classअगरication.flags & PP_StateClassअगरicationFlag_Boot))) अणु
-		अगर (hwmgr->chip_family < AMDGPU_FAMILY_RV)
+	if ((0 == result) && (0 != (ps->classification.flags & PP_StateClassificationFlag_Boot))) {
+		if (hwmgr->chip_family < AMDGPU_FAMILY_RV)
 			result = hwmgr->hwmgr_func->patch_boot_state(hwmgr, &(ps->hardware));
-	पूर्ण
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक init_घातerplay_tables(
-			काष्ठा pp_hwmgr *hwmgr,
-			स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table
+static int init_powerplay_tables(
+			struct pp_hwmgr *hwmgr,
+			const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table
 )
-अणु
-	वापस 0;
-पूर्ण
+{
+	return 0;
+}
 
 
-अटल पूर्णांक init_thermal_controller(
-			काष्ठा pp_hwmgr *hwmgr,
-			स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table)
-अणु
-	काष्ठा amdgpu_device *adev = hwmgr->adev;
+static int init_thermal_controller(
+			struct pp_hwmgr *hwmgr,
+			const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table)
+{
+	struct amdgpu_device *adev = hwmgr->adev;
 
 	hwmgr->thermal_controller.ucType =
-			घातerplay_table->sThermalController.ucType;
+			powerplay_table->sThermalController.ucType;
 	hwmgr->thermal_controller.ucI2cLine =
-			घातerplay_table->sThermalController.ucI2cLine;
+			powerplay_table->sThermalController.ucI2cLine;
 	hwmgr->thermal_controller.ucI2cAddress =
-			घातerplay_table->sThermalController.ucI2cAddress;
+			powerplay_table->sThermalController.ucI2cAddress;
 
 	hwmgr->thermal_controller.fanInfo.bNoFan =
-		(0 != (घातerplay_table->sThermalController.ucFanParameters &
+		(0 != (powerplay_table->sThermalController.ucFanParameters &
 			ATOM_PP_FANPARAMETERS_NOFAN));
 
 	hwmgr->thermal_controller.fanInfo.ucTachometerPulsesPerRevolution =
-		घातerplay_table->sThermalController.ucFanParameters &
+		powerplay_table->sThermalController.ucFanParameters &
 		ATOM_PP_FANPARAMETERS_TACHOMETER_PULSES_PER_REVOLUTION_MASK;
 
 	hwmgr->thermal_controller.fanInfo.ulMinRPM
-		= घातerplay_table->sThermalController.ucFanMinRPM * 100UL;
+		= powerplay_table->sThermalController.ucFanMinRPM * 100UL;
 	hwmgr->thermal_controller.fanInfo.ulMaxRPM
-		= घातerplay_table->sThermalController.ucFanMaxRPM * 100UL;
+		= powerplay_table->sThermalController.ucFanMaxRPM * 100UL;
 
 	set_hw_cap(hwmgr,
 		   ATOM_PP_THERMALCONTROLLER_NONE != hwmgr->thermal_controller.ucType,
-		   PHM_Platक्रमmCaps_ThermalController);
+		   PHM_PlatformCaps_ThermalController);
 
-        अगर (घातerplay_table->usTableSize >= माप(ATOM_PPLIB_POWERPLAYTABLE3)) अणु
-		स्थिर ATOM_PPLIB_POWERPLAYTABLE3 *घातerplay_table3 =
-			(स्थिर ATOM_PPLIB_POWERPLAYTABLE3 *)घातerplay_table;
+        if (powerplay_table->usTableSize >= sizeof(ATOM_PPLIB_POWERPLAYTABLE3)) {
+		const ATOM_PPLIB_POWERPLAYTABLE3 *powerplay_table3 =
+			(const ATOM_PPLIB_POWERPLAYTABLE3 *)powerplay_table;
 
-		अगर (0 == le16_to_cpu(घातerplay_table3->usFanTableOffset)) अणु
+		if (0 == le16_to_cpu(powerplay_table3->usFanTableOffset)) {
 			hwmgr->thermal_controller.use_hw_fan_control = 1;
-			वापस 0;
-		पूर्ण अन्यथा अणु
-			स्थिर ATOM_PPLIB_FANTABLE *fan_table =
-				(स्थिर ATOM_PPLIB_FANTABLE *)(((अचिन्हित दीर्घ)घातerplay_table) +
-							      le16_to_cpu(घातerplay_table3->usFanTableOffset));
+			return 0;
+		} else {
+			const ATOM_PPLIB_FANTABLE *fan_table =
+				(const ATOM_PPLIB_FANTABLE *)(((unsigned long)powerplay_table) +
+							      le16_to_cpu(powerplay_table3->usFanTableOffset));
 
-			अगर (1 <= fan_table->ucFanTableFormat) अणु
+			if (1 <= fan_table->ucFanTableFormat) {
 				hwmgr->thermal_controller.advanceFanControlParameters.ucTHyst =
 					fan_table->ucTHyst;
 				hwmgr->thermal_controller.advanceFanControlParameters.usTMin =
@@ -1039,31 +1038,31 @@
 				hwmgr->thermal_controller.advanceFanControlParameters.usTMax = 10900;
 				hwmgr->thermal_controller.advanceFanControlParameters.ulCycleDelay = 100000;
 
-				phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-					    PHM_Platक्रमmCaps_MicrocodeFanControl);
-			पूर्ण
+				phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+					    PHM_PlatformCaps_MicrocodeFanControl);
+			}
 
-			अगर (2 <= fan_table->ucFanTableFormat) अणु
-				स्थिर ATOM_PPLIB_FANTABLE2 *fan_table2 =
-					(स्थिर ATOM_PPLIB_FANTABLE2 *)(((अचिन्हित दीर्घ)घातerplay_table) +
-								       le16_to_cpu(घातerplay_table3->usFanTableOffset));
+			if (2 <= fan_table->ucFanTableFormat) {
+				const ATOM_PPLIB_FANTABLE2 *fan_table2 =
+					(const ATOM_PPLIB_FANTABLE2 *)(((unsigned long)powerplay_table) +
+								       le16_to_cpu(powerplay_table3->usFanTableOffset));
 				hwmgr->thermal_controller.advanceFanControlParameters.usTMax =
 					le16_to_cpu(fan_table2->usTMax);
-			पूर्ण
+			}
 
-			अगर (3 <= fan_table->ucFanTableFormat) अणु
-				स्थिर ATOM_PPLIB_FANTABLE3 *fan_table3 =
-					(स्थिर ATOM_PPLIB_FANTABLE3 *) (((अचिन्हित दीर्घ)घातerplay_table) +
-									le16_to_cpu(घातerplay_table3->usFanTableOffset));
+			if (3 <= fan_table->ucFanTableFormat) {
+				const ATOM_PPLIB_FANTABLE3 *fan_table3 =
+					(const ATOM_PPLIB_FANTABLE3 *) (((unsigned long)powerplay_table) +
+									le16_to_cpu(powerplay_table3->usFanTableOffset));
 
 				hwmgr->thermal_controller.advanceFanControlParameters.ucFanControlMode =
 					fan_table3->ucFanControlMode;
 
-				अगर ((3 == fan_table->ucFanTableFormat) &&
+				if ((3 == fan_table->ucFanTableFormat) &&
 				    (0x67B1 == adev->pdev->device))
 					hwmgr->thermal_controller.advanceFanControlParameters.usDefaultMaxFanPWM =
 						47;
-				अन्यथा
+				else
 					hwmgr->thermal_controller.advanceFanControlParameters.usDefaultMaxFanPWM =
 						le16_to_cpu(fan_table3->usFanPWMMax);
 
@@ -1071,30 +1070,30 @@
 					4836;
 				hwmgr->thermal_controller.advanceFanControlParameters.usFanOutputSensitivity =
 					le16_to_cpu(fan_table3->usFanOutputSensitivity);
-			पूर्ण
+			}
 
-			अगर (6 <= fan_table->ucFanTableFormat) अणु
-				स्थिर ATOM_PPLIB_FANTABLE4 *fan_table4 =
-					(स्थिर ATOM_PPLIB_FANTABLE4 *)(((अचिन्हित दीर्घ)घातerplay_table) +
-								       le16_to_cpu(घातerplay_table3->usFanTableOffset));
+			if (6 <= fan_table->ucFanTableFormat) {
+				const ATOM_PPLIB_FANTABLE4 *fan_table4 =
+					(const ATOM_PPLIB_FANTABLE4 *)(((unsigned long)powerplay_table) +
+								       le16_to_cpu(powerplay_table3->usFanTableOffset));
 
-				phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-					    PHM_Platक्रमmCaps_FanSpeedInTableIsRPM);
+				phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+					    PHM_PlatformCaps_FanSpeedInTableIsRPM);
 
 				hwmgr->thermal_controller.advanceFanControlParameters.usDefaultMaxFanRPM =
 					le16_to_cpu(fan_table4->usFanRPMMax);
-			पूर्ण
+			}
 
-			अगर (7 <= fan_table->ucFanTableFormat) अणु
-				स्थिर ATOM_PPLIB_FANTABLE5 *fan_table5 =
-					(स्थिर ATOM_PPLIB_FANTABLE5 *)(((अचिन्हित दीर्घ)घातerplay_table) +
-								       le16_to_cpu(घातerplay_table3->usFanTableOffset));
+			if (7 <= fan_table->ucFanTableFormat) {
+				const ATOM_PPLIB_FANTABLE5 *fan_table5 =
+					(const ATOM_PPLIB_FANTABLE5 *)(((unsigned long)powerplay_table) +
+								       le16_to_cpu(powerplay_table3->usFanTableOffset));
 
-				अगर (0x67A2 == adev->pdev->device ||
+				if (0x67A2 == adev->pdev->device ||
 				    0x67A9 == adev->pdev->device ||
-				    0x67B9 == adev->pdev->device) अणु
-					phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-						    PHM_Platक्रमmCaps_GeminiRegulatorFanControlSupport);
+				    0x67B9 == adev->pdev->device) {
+					phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+						    PHM_PlatformCaps_GeminiRegulatorFanControlSupport);
 					hwmgr->thermal_controller.advanceFanControlParameters.usFanCurrentLow =
 						le16_to_cpu(fan_table5->usFanCurrentLow);
 					hwmgr->thermal_controller.advanceFanControlParameters.usFanCurrentHigh =
@@ -1103,709 +1102,709 @@
 						le16_to_cpu(fan_table5->usFanRPMLow);
 					hwmgr->thermal_controller.advanceFanControlParameters.usFanRPMHigh =
 						le16_to_cpu(fan_table5->usFanRPMHigh);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				}
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक init_overdrive_limits_V1_4(काष्ठा pp_hwmgr *hwmgr,
-			स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table,
-			स्थिर ATOM_FIRMWARE_INFO_V1_4 *fw_info)
-अणु
-	hwmgr->platक्रमm_descriptor.overdriveLimit.engineClock =
+static int init_overdrive_limits_V1_4(struct pp_hwmgr *hwmgr,
+			const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table,
+			const ATOM_FIRMWARE_INFO_V1_4 *fw_info)
+{
+	hwmgr->platform_descriptor.overdriveLimit.engineClock =
 				le32_to_cpu(fw_info->ulASICMaxEngineClock);
 
-	hwmgr->platक्रमm_descriptor.overdriveLimit.memoryClock =
+	hwmgr->platform_descriptor.overdriveLimit.memoryClock =
 				le32_to_cpu(fw_info->ulASICMaxMemoryClock);
 
-	hwmgr->platक्रमm_descriptor.maxOverdriveVDDC =
+	hwmgr->platform_descriptor.maxOverdriveVDDC =
 		le32_to_cpu(fw_info->ul3DAccelerationEngineClock) & 0x7FF;
 
-	hwmgr->platक्रमm_descriptor.minOverdriveVDDC =
+	hwmgr->platform_descriptor.minOverdriveVDDC =
 			   le16_to_cpu(fw_info->usBootUpVDDCVoltage);
 
-	hwmgr->platक्रमm_descriptor.maxOverdriveVDDC =
+	hwmgr->platform_descriptor.maxOverdriveVDDC =
 			   le16_to_cpu(fw_info->usBootUpVDDCVoltage);
 
-	hwmgr->platक्रमm_descriptor.overdriveVDDCStep = 0;
-	वापस 0;
-पूर्ण
+	hwmgr->platform_descriptor.overdriveVDDCStep = 0;
+	return 0;
+}
 
-अटल पूर्णांक init_overdrive_limits_V2_1(काष्ठा pp_hwmgr *hwmgr,
-			स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table,
-			स्थिर ATOM_FIRMWARE_INFO_V2_1 *fw_info)
-अणु
-	स्थिर ATOM_PPLIB_POWERPLAYTABLE3 *घातerplay_table3;
-	स्थिर ATOM_PPLIB_EXTENDEDHEADER *header;
+static int init_overdrive_limits_V2_1(struct pp_hwmgr *hwmgr,
+			const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table,
+			const ATOM_FIRMWARE_INFO_V2_1 *fw_info)
+{
+	const ATOM_PPLIB_POWERPLAYTABLE3 *powerplay_table3;
+	const ATOM_PPLIB_EXTENDEDHEADER *header;
 
-	अगर (le16_to_cpu(घातerplay_table->usTableSize) <
-	    माप(ATOM_PPLIB_POWERPLAYTABLE3))
-		वापस 0;
+	if (le16_to_cpu(powerplay_table->usTableSize) <
+	    sizeof(ATOM_PPLIB_POWERPLAYTABLE3))
+		return 0;
 
-	घातerplay_table3 = (स्थिर ATOM_PPLIB_POWERPLAYTABLE3 *)घातerplay_table;
+	powerplay_table3 = (const ATOM_PPLIB_POWERPLAYTABLE3 *)powerplay_table;
 
-	अगर (0 == घातerplay_table3->usExtendendedHeaderOffset)
-		वापस 0;
+	if (0 == powerplay_table3->usExtendendedHeaderOffset)
+		return 0;
 
-	header = (ATOM_PPLIB_EXTENDEDHEADER *)(((अचिन्हित दीर्घ) घातerplay_table) +
-			le16_to_cpu(घातerplay_table3->usExtendendedHeaderOffset));
+	header = (ATOM_PPLIB_EXTENDEDHEADER *)(((unsigned long) powerplay_table) +
+			le16_to_cpu(powerplay_table3->usExtendendedHeaderOffset));
 
-	hwmgr->platक्रमm_descriptor.overdriveLimit.engineClock = le32_to_cpu(header->ulMaxEngineClock);
-	hwmgr->platक्रमm_descriptor.overdriveLimit.memoryClock = le32_to_cpu(header->ulMaxMemoryClock);
+	hwmgr->platform_descriptor.overdriveLimit.engineClock = le32_to_cpu(header->ulMaxEngineClock);
+	hwmgr->platform_descriptor.overdriveLimit.memoryClock = le32_to_cpu(header->ulMaxMemoryClock);
 
 
-	hwmgr->platक्रमm_descriptor.minOverdriveVDDC = 0;
-	hwmgr->platक्रमm_descriptor.maxOverdriveVDDC = 0;
-	hwmgr->platक्रमm_descriptor.overdriveVDDCStep = 0;
+	hwmgr->platform_descriptor.minOverdriveVDDC = 0;
+	hwmgr->platform_descriptor.maxOverdriveVDDC = 0;
+	hwmgr->platform_descriptor.overdriveVDDCStep = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक init_overdrive_limits(काष्ठा pp_hwmgr *hwmgr,
-			स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table)
-अणु
-	पूर्णांक result = 0;
-	uपूर्णांक8_t frev, crev;
-	uपूर्णांक16_t size;
+static int init_overdrive_limits(struct pp_hwmgr *hwmgr,
+			const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table)
+{
+	int result = 0;
+	uint8_t frev, crev;
+	uint16_t size;
 
-	स्थिर ATOM_COMMON_TABLE_HEADER *fw_info = शून्य;
+	const ATOM_COMMON_TABLE_HEADER *fw_info = NULL;
 
-	hwmgr->platक्रमm_descriptor.overdriveLimit.engineClock = 0;
-	hwmgr->platक्रमm_descriptor.overdriveLimit.memoryClock = 0;
-	hwmgr->platक्रमm_descriptor.minOverdriveVDDC = 0;
-	hwmgr->platक्रमm_descriptor.maxOverdriveVDDC = 0;
-	hwmgr->platक्रमm_descriptor.overdriveVDDCStep = 0;
+	hwmgr->platform_descriptor.overdriveLimit.engineClock = 0;
+	hwmgr->platform_descriptor.overdriveLimit.memoryClock = 0;
+	hwmgr->platform_descriptor.minOverdriveVDDC = 0;
+	hwmgr->platform_descriptor.maxOverdriveVDDC = 0;
+	hwmgr->platform_descriptor.overdriveVDDCStep = 0;
 
-	अगर (hwmgr->chip_id == CHIP_RAVEN)
-		वापस 0;
+	if (hwmgr->chip_id == CHIP_RAVEN)
+		return 0;
 
-	/* We assume here that fw_info is unchanged अगर this call fails.*/
+	/* We assume here that fw_info is unchanged if this call fails.*/
 	fw_info = smu_atom_get_data_table(hwmgr->adev,
 			 GetIndexIntoMasterTable(DATA, FirmwareInfo),
 			 &size, &frev, &crev);
 
-	अगर ((fw_info->ucTableFormatRevision == 1)
-	    && (le16_to_cpu(fw_info->usStructureSize) >= माप(ATOM_FIRMWARE_INFO_V1_4)))
+	if ((fw_info->ucTableFormatRevision == 1)
+	    && (le16_to_cpu(fw_info->usStructureSize) >= sizeof(ATOM_FIRMWARE_INFO_V1_4)))
 		result = init_overdrive_limits_V1_4(hwmgr,
-				घातerplay_table,
-				(स्थिर ATOM_FIRMWARE_INFO_V1_4 *)fw_info);
+				powerplay_table,
+				(const ATOM_FIRMWARE_INFO_V1_4 *)fw_info);
 
-	अन्यथा अगर ((fw_info->ucTableFormatRevision == 2)
-		 && (le16_to_cpu(fw_info->usStructureSize) >= माप(ATOM_FIRMWARE_INFO_V2_1)))
+	else if ((fw_info->ucTableFormatRevision == 2)
+		 && (le16_to_cpu(fw_info->usStructureSize) >= sizeof(ATOM_FIRMWARE_INFO_V2_1)))
 		result = init_overdrive_limits_V2_1(hwmgr,
-				घातerplay_table,
-				(स्थिर ATOM_FIRMWARE_INFO_V2_1 *)fw_info);
+				powerplay_table,
+				(const ATOM_FIRMWARE_INFO_V2_1 *)fw_info);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक get_uvd_घड़ी_voltage_limit_table(काष्ठा pp_hwmgr *hwmgr,
-		काष्ठा phm_uvd_घड़ी_voltage_dependency_table **ptable,
-		स्थिर ATOM_PPLIB_UVD_Clock_Voltage_Limit_Table *table,
-		स्थिर UVDClockInfoArray *array)
-अणु
-	अचिन्हित दीर्घ i;
-	काष्ठा phm_uvd_घड़ी_voltage_dependency_table *uvd_table;
+static int get_uvd_clock_voltage_limit_table(struct pp_hwmgr *hwmgr,
+		struct phm_uvd_clock_voltage_dependency_table **ptable,
+		const ATOM_PPLIB_UVD_Clock_Voltage_Limit_Table *table,
+		const UVDClockInfoArray *array)
+{
+	unsigned long i;
+	struct phm_uvd_clock_voltage_dependency_table *uvd_table;
 
-	uvd_table = kzalloc(काष्ठा_size(uvd_table, entries, table->numEntries),
+	uvd_table = kzalloc(struct_size(uvd_table, entries, table->numEntries),
 			    GFP_KERNEL);
-	अगर (!uvd_table)
-		वापस -ENOMEM;
+	if (!uvd_table)
+		return -ENOMEM;
 
 	uvd_table->count = table->numEntries;
 
-	क्रम (i = 0; i < table->numEntries; i++) अणु
-		स्थिर UVDClockInfo *entry =
+	for (i = 0; i < table->numEntries; i++) {
+		const UVDClockInfo *entry =
 			&array->entries[table->entries[i].ucUVDClockInfoIndex];
-		uvd_table->entries[i].v = (अचिन्हित दीर्घ)le16_to_cpu(table->entries[i].usVoltage);
-		uvd_table->entries[i].vclk = ((अचिन्हित दीर्घ)entry->ucVClkHigh << 16)
+		uvd_table->entries[i].v = (unsigned long)le16_to_cpu(table->entries[i].usVoltage);
+		uvd_table->entries[i].vclk = ((unsigned long)entry->ucVClkHigh << 16)
 					 | le16_to_cpu(entry->usVClkLow);
-		uvd_table->entries[i].dclk = ((अचिन्हित दीर्घ)entry->ucDClkHigh << 16)
+		uvd_table->entries[i].dclk = ((unsigned long)entry->ucDClkHigh << 16)
 					 | le16_to_cpu(entry->usDClkLow);
-	पूर्ण
+	}
 
 	*ptable = uvd_table;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक get_vce_घड़ी_voltage_limit_table(काष्ठा pp_hwmgr *hwmgr,
-		काष्ठा phm_vce_घड़ी_voltage_dependency_table **ptable,
-		स्थिर ATOM_PPLIB_VCE_Clock_Voltage_Limit_Table *table,
-		स्थिर VCEClockInfoArray    *array)
-अणु
-	अचिन्हित दीर्घ i;
-	काष्ठा phm_vce_घड़ी_voltage_dependency_table *vce_table = शून्य;
+static int get_vce_clock_voltage_limit_table(struct pp_hwmgr *hwmgr,
+		struct phm_vce_clock_voltage_dependency_table **ptable,
+		const ATOM_PPLIB_VCE_Clock_Voltage_Limit_Table *table,
+		const VCEClockInfoArray    *array)
+{
+	unsigned long i;
+	struct phm_vce_clock_voltage_dependency_table *vce_table = NULL;
 
-	vce_table = kzalloc(काष्ठा_size(vce_table, entries, table->numEntries),
+	vce_table = kzalloc(struct_size(vce_table, entries, table->numEntries),
 			    GFP_KERNEL);
-	अगर (!vce_table)
-		वापस -ENOMEM;
+	if (!vce_table)
+		return -ENOMEM;
 
 	vce_table->count = table->numEntries;
-	क्रम (i = 0; i < table->numEntries; i++) अणु
-		स्थिर VCEClockInfo *entry = &array->entries[table->entries[i].ucVCEClockInfoIndex];
+	for (i = 0; i < table->numEntries; i++) {
+		const VCEClockInfo *entry = &array->entries[table->entries[i].ucVCEClockInfoIndex];
 
-		vce_table->entries[i].v = (अचिन्हित दीर्घ)le16_to_cpu(table->entries[i].usVoltage);
-		vce_table->entries[i].evclk = ((अचिन्हित दीर्घ)entry->ucEVClkHigh << 16)
+		vce_table->entries[i].v = (unsigned long)le16_to_cpu(table->entries[i].usVoltage);
+		vce_table->entries[i].evclk = ((unsigned long)entry->ucEVClkHigh << 16)
 					| le16_to_cpu(entry->usEVClkLow);
-		vce_table->entries[i].ecclk = ((अचिन्हित दीर्घ)entry->ucECClkHigh << 16)
+		vce_table->entries[i].ecclk = ((unsigned long)entry->ucECClkHigh << 16)
 					| le16_to_cpu(entry->usECClkLow);
-	पूर्ण
+	}
 
 	*ptable = vce_table;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक get_samu_घड़ी_voltage_limit_table(काष्ठा pp_hwmgr *hwmgr,
-		 काष्ठा phm_samu_घड़ी_voltage_dependency_table **ptable,
-		 स्थिर ATOM_PPLIB_SAMClk_Voltage_Limit_Table *table)
-अणु
-	अचिन्हित दीर्घ i;
-	काष्ठा phm_samu_घड़ी_voltage_dependency_table *samu_table;
+static int get_samu_clock_voltage_limit_table(struct pp_hwmgr *hwmgr,
+		 struct phm_samu_clock_voltage_dependency_table **ptable,
+		 const ATOM_PPLIB_SAMClk_Voltage_Limit_Table *table)
+{
+	unsigned long i;
+	struct phm_samu_clock_voltage_dependency_table *samu_table;
 
-	samu_table = kzalloc(काष्ठा_size(samu_table, entries, table->numEntries),
+	samu_table = kzalloc(struct_size(samu_table, entries, table->numEntries),
 			     GFP_KERNEL);
-	अगर (!samu_table)
-		वापस -ENOMEM;
+	if (!samu_table)
+		return -ENOMEM;
 
 	samu_table->count = table->numEntries;
 
-	क्रम (i = 0; i < table->numEntries; i++) अणु
-		samu_table->entries[i].v = (अचिन्हित दीर्घ)le16_to_cpu(table->entries[i].usVoltage);
-		samu_table->entries[i].samclk = ((अचिन्हित दीर्घ)table->entries[i].ucSAMClockHigh << 16)
+	for (i = 0; i < table->numEntries; i++) {
+		samu_table->entries[i].v = (unsigned long)le16_to_cpu(table->entries[i].usVoltage);
+		samu_table->entries[i].samclk = ((unsigned long)table->entries[i].ucSAMClockHigh << 16)
 					 | le16_to_cpu(table->entries[i].usSAMClockLow);
-	पूर्ण
+	}
 
 	*ptable = samu_table;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक get_acp_घड़ी_voltage_limit_table(काष्ठा pp_hwmgr *hwmgr,
-		काष्ठा phm_acp_घड़ी_voltage_dependency_table **ptable,
-		स्थिर ATOM_PPLIB_ACPClk_Voltage_Limit_Table *table)
-अणु
-	अचिन्हित दीर्घ i;
-	काष्ठा phm_acp_घड़ी_voltage_dependency_table *acp_table;
+static int get_acp_clock_voltage_limit_table(struct pp_hwmgr *hwmgr,
+		struct phm_acp_clock_voltage_dependency_table **ptable,
+		const ATOM_PPLIB_ACPClk_Voltage_Limit_Table *table)
+{
+	unsigned long i;
+	struct phm_acp_clock_voltage_dependency_table *acp_table;
 
-	acp_table = kzalloc(काष्ठा_size(acp_table, entries, table->numEntries),
+	acp_table = kzalloc(struct_size(acp_table, entries, table->numEntries),
 			    GFP_KERNEL);
-	अगर (!acp_table)
-		वापस -ENOMEM;
+	if (!acp_table)
+		return -ENOMEM;
 
-	acp_table->count = (अचिन्हित दीर्घ)table->numEntries;
+	acp_table->count = (unsigned long)table->numEntries;
 
-	क्रम (i = 0; i < table->numEntries; i++) अणु
-		acp_table->entries[i].v = (अचिन्हित दीर्घ)le16_to_cpu(table->entries[i].usVoltage);
-		acp_table->entries[i].acpclk = ((अचिन्हित दीर्घ)table->entries[i].ucACPClockHigh << 16)
+	for (i = 0; i < table->numEntries; i++) {
+		acp_table->entries[i].v = (unsigned long)le16_to_cpu(table->entries[i].usVoltage);
+		acp_table->entries[i].acpclk = ((unsigned long)table->entries[i].ucACPClockHigh << 16)
 					 | le16_to_cpu(table->entries[i].usACPClockLow);
-	पूर्ण
+	}
 
 	*ptable = acp_table;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक init_घड़ी_voltage_dependency(काष्ठा pp_hwmgr *hwmgr,
-			स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table)
-अणु
+static int init_clock_voltage_dependency(struct pp_hwmgr *hwmgr,
+			const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table)
+{
 	ATOM_PPLIB_Clock_Voltage_Dependency_Table *table;
 	ATOM_PPLIB_Clock_Voltage_Limit_Table *limit_table;
-	पूर्णांक result = 0;
+	int result = 0;
 
-	uपूर्णांक16_t vce_घड़ी_info_array_offset;
-	uपूर्णांक16_t uvd_घड़ी_info_array_offset;
-	uपूर्णांक16_t table_offset;
+	uint16_t vce_clock_info_array_offset;
+	uint16_t uvd_clock_info_array_offset;
+	uint16_t table_offset;
 
-	hwmgr->dyn_state.vddc_dependency_on_sclk = शून्य;
-	hwmgr->dyn_state.vddci_dependency_on_mclk = शून्य;
-	hwmgr->dyn_state.vddc_dependency_on_mclk = शून्य;
-	hwmgr->dyn_state.vddc_dep_on_dal_pwrl = शून्य;
-	hwmgr->dyn_state.mvdd_dependency_on_mclk = शून्य;
-	hwmgr->dyn_state.vce_घड़ी_voltage_dependency_table = शून्य;
-	hwmgr->dyn_state.uvd_घड़ी_voltage_dependency_table = शून्य;
-	hwmgr->dyn_state.samu_घड़ी_voltage_dependency_table = शून्य;
-	hwmgr->dyn_state.acp_घड़ी_voltage_dependency_table = शून्य;
-	hwmgr->dyn_state.ppm_parameter_table = शून्य;
-	hwmgr->dyn_state.vdd_gfx_dependency_on_sclk = शून्य;
+	hwmgr->dyn_state.vddc_dependency_on_sclk = NULL;
+	hwmgr->dyn_state.vddci_dependency_on_mclk = NULL;
+	hwmgr->dyn_state.vddc_dependency_on_mclk = NULL;
+	hwmgr->dyn_state.vddc_dep_on_dal_pwrl = NULL;
+	hwmgr->dyn_state.mvdd_dependency_on_mclk = NULL;
+	hwmgr->dyn_state.vce_clock_voltage_dependency_table = NULL;
+	hwmgr->dyn_state.uvd_clock_voltage_dependency_table = NULL;
+	hwmgr->dyn_state.samu_clock_voltage_dependency_table = NULL;
+	hwmgr->dyn_state.acp_clock_voltage_dependency_table = NULL;
+	hwmgr->dyn_state.ppm_parameter_table = NULL;
+	hwmgr->dyn_state.vdd_gfx_dependency_on_sclk = NULL;
 
-	vce_घड़ी_info_array_offset = get_vce_घड़ी_info_array_offset(
-						hwmgr, घातerplay_table);
-	table_offset = get_vce_घड़ी_voltage_limit_table_offset(hwmgr,
-						घातerplay_table);
-	अगर (vce_घड़ी_info_array_offset > 0 && table_offset > 0) अणु
-		स्थिर VCEClockInfoArray *array = (स्थिर VCEClockInfoArray *)
-				(((अचिन्हित दीर्घ) घातerplay_table) +
-				vce_घड़ी_info_array_offset);
-		स्थिर ATOM_PPLIB_VCE_Clock_Voltage_Limit_Table *table =
-				(स्थिर ATOM_PPLIB_VCE_Clock_Voltage_Limit_Table *)
-				(((अचिन्हित दीर्घ) घातerplay_table) + table_offset);
-		result = get_vce_घड़ी_voltage_limit_table(hwmgr,
-				&hwmgr->dyn_state.vce_घड़ी_voltage_dependency_table,
+	vce_clock_info_array_offset = get_vce_clock_info_array_offset(
+						hwmgr, powerplay_table);
+	table_offset = get_vce_clock_voltage_limit_table_offset(hwmgr,
+						powerplay_table);
+	if (vce_clock_info_array_offset > 0 && table_offset > 0) {
+		const VCEClockInfoArray *array = (const VCEClockInfoArray *)
+				(((unsigned long) powerplay_table) +
+				vce_clock_info_array_offset);
+		const ATOM_PPLIB_VCE_Clock_Voltage_Limit_Table *table =
+				(const ATOM_PPLIB_VCE_Clock_Voltage_Limit_Table *)
+				(((unsigned long) powerplay_table) + table_offset);
+		result = get_vce_clock_voltage_limit_table(hwmgr,
+				&hwmgr->dyn_state.vce_clock_voltage_dependency_table,
 				table, array);
-	पूर्ण
+	}
 
-	uvd_घड़ी_info_array_offset = get_uvd_घड़ी_info_array_offset(hwmgr, घातerplay_table);
-	table_offset = get_uvd_घड़ी_voltage_limit_table_offset(hwmgr, घातerplay_table);
+	uvd_clock_info_array_offset = get_uvd_clock_info_array_offset(hwmgr, powerplay_table);
+	table_offset = get_uvd_clock_voltage_limit_table_offset(hwmgr, powerplay_table);
 
-	अगर (uvd_घड़ी_info_array_offset > 0 && table_offset > 0) अणु
-		स्थिर UVDClockInfoArray *array = (स्थिर UVDClockInfoArray *)
-				(((अचिन्हित दीर्घ) घातerplay_table) +
-				uvd_घड़ी_info_array_offset);
-		स्थिर ATOM_PPLIB_UVD_Clock_Voltage_Limit_Table *ptable =
-				(स्थिर ATOM_PPLIB_UVD_Clock_Voltage_Limit_Table *)
-				(((अचिन्हित दीर्घ) घातerplay_table) + table_offset);
-		result = get_uvd_घड़ी_voltage_limit_table(hwmgr,
-				&hwmgr->dyn_state.uvd_घड़ी_voltage_dependency_table, ptable, array);
-	पूर्ण
+	if (uvd_clock_info_array_offset > 0 && table_offset > 0) {
+		const UVDClockInfoArray *array = (const UVDClockInfoArray *)
+				(((unsigned long) powerplay_table) +
+				uvd_clock_info_array_offset);
+		const ATOM_PPLIB_UVD_Clock_Voltage_Limit_Table *ptable =
+				(const ATOM_PPLIB_UVD_Clock_Voltage_Limit_Table *)
+				(((unsigned long) powerplay_table) + table_offset);
+		result = get_uvd_clock_voltage_limit_table(hwmgr,
+				&hwmgr->dyn_state.uvd_clock_voltage_dependency_table, ptable, array);
+	}
 
-	table_offset = get_samu_घड़ी_voltage_limit_table_offset(hwmgr,
-							    घातerplay_table);
+	table_offset = get_samu_clock_voltage_limit_table_offset(hwmgr,
+							    powerplay_table);
 
-	अगर (table_offset > 0) अणु
-		स्थिर ATOM_PPLIB_SAMClk_Voltage_Limit_Table *ptable =
-				(स्थिर ATOM_PPLIB_SAMClk_Voltage_Limit_Table *)
-				(((अचिन्हित दीर्घ) घातerplay_table) + table_offset);
-		result = get_samu_घड़ी_voltage_limit_table(hwmgr,
-				&hwmgr->dyn_state.samu_घड़ी_voltage_dependency_table, ptable);
-	पूर्ण
+	if (table_offset > 0) {
+		const ATOM_PPLIB_SAMClk_Voltage_Limit_Table *ptable =
+				(const ATOM_PPLIB_SAMClk_Voltage_Limit_Table *)
+				(((unsigned long) powerplay_table) + table_offset);
+		result = get_samu_clock_voltage_limit_table(hwmgr,
+				&hwmgr->dyn_state.samu_clock_voltage_dependency_table, ptable);
+	}
 
-	table_offset = get_acp_घड़ी_voltage_limit_table_offset(hwmgr,
-							     घातerplay_table);
+	table_offset = get_acp_clock_voltage_limit_table_offset(hwmgr,
+							     powerplay_table);
 
-	अगर (table_offset > 0) अणु
-		स्थिर ATOM_PPLIB_ACPClk_Voltage_Limit_Table *ptable =
-				(स्थिर ATOM_PPLIB_ACPClk_Voltage_Limit_Table *)
-				(((अचिन्हित दीर्घ) घातerplay_table) + table_offset);
-		result = get_acp_घड़ी_voltage_limit_table(hwmgr,
-				&hwmgr->dyn_state.acp_घड़ी_voltage_dependency_table, ptable);
-	पूर्ण
+	if (table_offset > 0) {
+		const ATOM_PPLIB_ACPClk_Voltage_Limit_Table *ptable =
+				(const ATOM_PPLIB_ACPClk_Voltage_Limit_Table *)
+				(((unsigned long) powerplay_table) + table_offset);
+		result = get_acp_clock_voltage_limit_table(hwmgr,
+				&hwmgr->dyn_state.acp_clock_voltage_dependency_table, ptable);
+	}
 
-	table_offset = get_cacp_tdp_table_offset(hwmgr, घातerplay_table);
-	अगर (table_offset > 0) अणु
-		UCHAR rev_id = *(UCHAR *)(((अचिन्हित दीर्घ)घातerplay_table) + table_offset);
+	table_offset = get_cacp_tdp_table_offset(hwmgr, powerplay_table);
+	if (table_offset > 0) {
+		UCHAR rev_id = *(UCHAR *)(((unsigned long)powerplay_table) + table_offset);
 
-		अगर (rev_id > 0) अणु
-			स्थिर ATOM_PPLIB_POWERTUNE_Table_V1 *tune_table =
-				(स्थिर ATOM_PPLIB_POWERTUNE_Table_V1 *)
-				(((अचिन्हित दीर्घ) घातerplay_table) + table_offset);
+		if (rev_id > 0) {
+			const ATOM_PPLIB_POWERTUNE_Table_V1 *tune_table =
+				(const ATOM_PPLIB_POWERTUNE_Table_V1 *)
+				(((unsigned long) powerplay_table) + table_offset);
 			result = get_cac_tdp_table(hwmgr, &hwmgr->dyn_state.cac_dtp_table,
-				&tune_table->घातer_tune_table,
+				&tune_table->power_tune_table,
 				le16_to_cpu(tune_table->usMaximumPowerDeliveryLimit));
 			hwmgr->dyn_state.cac_dtp_table->usDefaultTargetOperatingTemp =
 				le16_to_cpu(tune_table->usTjMax);
-		पूर्ण अन्यथा अणु
-			स्थिर ATOM_PPLIB_POWERTUNE_Table *tune_table =
-				(स्थिर ATOM_PPLIB_POWERTUNE_Table *)
-				(((अचिन्हित दीर्घ) घातerplay_table) + table_offset);
+		} else {
+			const ATOM_PPLIB_POWERTUNE_Table *tune_table =
+				(const ATOM_PPLIB_POWERTUNE_Table *)
+				(((unsigned long) powerplay_table) + table_offset);
 			result = get_cac_tdp_table(hwmgr,
 				&hwmgr->dyn_state.cac_dtp_table,
-				&tune_table->घातer_tune_table, 255);
-		पूर्ण
-	पूर्ण
+				&tune_table->power_tune_table, 255);
+		}
+	}
 
-	अगर (le16_to_cpu(घातerplay_table->usTableSize) >=
-		माप(ATOM_PPLIB_POWERPLAYTABLE4)) अणु
-		स्थिर ATOM_PPLIB_POWERPLAYTABLE4 *घातerplay_table4 =
-				(स्थिर ATOM_PPLIB_POWERPLAYTABLE4 *)घातerplay_table;
-		अगर (0 != घातerplay_table4->usVddcDependencyOnSCLKOffset) अणु
+	if (le16_to_cpu(powerplay_table->usTableSize) >=
+		sizeof(ATOM_PPLIB_POWERPLAYTABLE4)) {
+		const ATOM_PPLIB_POWERPLAYTABLE4 *powerplay_table4 =
+				(const ATOM_PPLIB_POWERPLAYTABLE4 *)powerplay_table;
+		if (0 != powerplay_table4->usVddcDependencyOnSCLKOffset) {
 			table = (ATOM_PPLIB_Clock_Voltage_Dependency_Table *)
-				(((अचिन्हित दीर्घ) घातerplay_table4) +
-				 le16_to_cpu(घातerplay_table4->usVddcDependencyOnSCLKOffset));
-			result = get_घड़ी_voltage_dependency_table(hwmgr,
+				(((unsigned long) powerplay_table4) +
+				 le16_to_cpu(powerplay_table4->usVddcDependencyOnSCLKOffset));
+			result = get_clock_voltage_dependency_table(hwmgr,
 				&hwmgr->dyn_state.vddc_dependency_on_sclk, table);
-		पूर्ण
+		}
 
-		अगर (result == 0 && (0 != घातerplay_table4->usVddciDependencyOnMCLKOffset)) अणु
+		if (result == 0 && (0 != powerplay_table4->usVddciDependencyOnMCLKOffset)) {
 			table = (ATOM_PPLIB_Clock_Voltage_Dependency_Table *)
-				(((अचिन्हित दीर्घ) घातerplay_table4) +
-				 le16_to_cpu(घातerplay_table4->usVddciDependencyOnMCLKOffset));
-			result = get_घड़ी_voltage_dependency_table(hwmgr,
+				(((unsigned long) powerplay_table4) +
+				 le16_to_cpu(powerplay_table4->usVddciDependencyOnMCLKOffset));
+			result = get_clock_voltage_dependency_table(hwmgr,
 				&hwmgr->dyn_state.vddci_dependency_on_mclk, table);
-		पूर्ण
+		}
 
-		अगर (result == 0 && (0 != घातerplay_table4->usVddcDependencyOnMCLKOffset)) अणु
+		if (result == 0 && (0 != powerplay_table4->usVddcDependencyOnMCLKOffset)) {
 			table = (ATOM_PPLIB_Clock_Voltage_Dependency_Table *)
-				(((अचिन्हित दीर्घ) घातerplay_table4) +
-				 le16_to_cpu(घातerplay_table4->usVddcDependencyOnMCLKOffset));
-			result = get_घड़ी_voltage_dependency_table(hwmgr,
+				(((unsigned long) powerplay_table4) +
+				 le16_to_cpu(powerplay_table4->usVddcDependencyOnMCLKOffset));
+			result = get_clock_voltage_dependency_table(hwmgr,
 				&hwmgr->dyn_state.vddc_dependency_on_mclk, table);
-		पूर्ण
+		}
 
-		अगर (result == 0 && (0 != घातerplay_table4->usMaxClockVoltageOnDCOffset)) अणु
+		if (result == 0 && (0 != powerplay_table4->usMaxClockVoltageOnDCOffset)) {
 			limit_table = (ATOM_PPLIB_Clock_Voltage_Limit_Table *)
-				(((अचिन्हित दीर्घ) घातerplay_table4) +
-				 le16_to_cpu(घातerplay_table4->usMaxClockVoltageOnDCOffset));
-			result = get_घड़ी_voltage_limit(hwmgr,
-				&hwmgr->dyn_state.max_घड़ी_voltage_on_dc, limit_table);
-		पूर्ण
+				(((unsigned long) powerplay_table4) +
+				 le16_to_cpu(powerplay_table4->usMaxClockVoltageOnDCOffset));
+			result = get_clock_voltage_limit(hwmgr,
+				&hwmgr->dyn_state.max_clock_voltage_on_dc, limit_table);
+		}
 
-		अगर (result == 0 && (शून्य != hwmgr->dyn_state.vddc_dependency_on_mclk) &&
+		if (result == 0 && (NULL != hwmgr->dyn_state.vddc_dependency_on_mclk) &&
 			(0 != hwmgr->dyn_state.vddc_dependency_on_mclk->count))
 			result = get_valid_clk(hwmgr, &hwmgr->dyn_state.valid_mclk_values,
 					hwmgr->dyn_state.vddc_dependency_on_mclk);
 
-		अगर(result == 0 && (शून्य != hwmgr->dyn_state.vddc_dependency_on_sclk) &&
+		if(result == 0 && (NULL != hwmgr->dyn_state.vddc_dependency_on_sclk) &&
 			(0 != hwmgr->dyn_state.vddc_dependency_on_sclk->count))
 			result = get_valid_clk(hwmgr,
 				&hwmgr->dyn_state.valid_sclk_values,
 				hwmgr->dyn_state.vddc_dependency_on_sclk);
 
-		अगर (result == 0 && (0 != घातerplay_table4->usMvddDependencyOnMCLKOffset)) अणु
+		if (result == 0 && (0 != powerplay_table4->usMvddDependencyOnMCLKOffset)) {
 			table = (ATOM_PPLIB_Clock_Voltage_Dependency_Table *)
-				(((अचिन्हित दीर्घ) घातerplay_table4) +
-				 le16_to_cpu(घातerplay_table4->usMvddDependencyOnMCLKOffset));
-			result = get_घड़ी_voltage_dependency_table(hwmgr,
+				(((unsigned long) powerplay_table4) +
+				 le16_to_cpu(powerplay_table4->usMvddDependencyOnMCLKOffset));
+			result = get_clock_voltage_dependency_table(hwmgr,
 				&hwmgr->dyn_state.mvdd_dependency_on_mclk, table);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	table_offset = get_sclk_vdd_gfx_घड़ी_voltage_dependency_table_offset(hwmgr,
-								घातerplay_table);
+	table_offset = get_sclk_vdd_gfx_clock_voltage_dependency_table_offset(hwmgr,
+								powerplay_table);
 
-	अगर (table_offset > 0) अणु
+	if (table_offset > 0) {
 		table = (ATOM_PPLIB_Clock_Voltage_Dependency_Table *)
-			(((अचिन्हित दीर्घ) घातerplay_table) + table_offset);
-		result = get_घड़ी_voltage_dependency_table(hwmgr,
+			(((unsigned long) powerplay_table) + table_offset);
+		result = get_clock_voltage_dependency_table(hwmgr,
 			&hwmgr->dyn_state.vdd_gfx_dependency_on_sclk, table);
-	पूर्ण
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक get_cac_leakage_table(काष्ठा pp_hwmgr *hwmgr,
-				 काष्ठा phm_cac_leakage_table **ptable,
-				स्थिर ATOM_PPLIB_CAC_Leakage_Table *table)
-अणु
-	काष्ठा phm_cac_leakage_table  *cac_leakage_table;
-	अचिन्हित दीर्घ i;
+static int get_cac_leakage_table(struct pp_hwmgr *hwmgr,
+				 struct phm_cac_leakage_table **ptable,
+				const ATOM_PPLIB_CAC_Leakage_Table *table)
+{
+	struct phm_cac_leakage_table  *cac_leakage_table;
+	unsigned long i;
 
-	अगर (!hwmgr || !table || !ptable)
-		वापस -EINVAL;
+	if (!hwmgr || !table || !ptable)
+		return -EINVAL;
 
-	cac_leakage_table = kzalloc(काष्ठा_size(cac_leakage_table, entries, table->ucNumEntries),
+	cac_leakage_table = kzalloc(struct_size(cac_leakage_table, entries, table->ucNumEntries),
 				    GFP_KERNEL);
-	अगर (!cac_leakage_table)
-		वापस -ENOMEM;
+	if (!cac_leakage_table)
+		return -ENOMEM;
 
 	cac_leakage_table->count = (ULONG)table->ucNumEntries;
 
-	क्रम (i = 0; i < cac_leakage_table->count; i++) अणु
-		अगर (phm_cap_enabled(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-				PHM_Platक्रमmCaps_EVV)) अणु
+	for (i = 0; i < cac_leakage_table->count; i++) {
+		if (phm_cap_enabled(hwmgr->platform_descriptor.platformCaps,
+				PHM_PlatformCaps_EVV)) {
 			cac_leakage_table->entries[i].Vddc1 = le16_to_cpu(table->entries[i].usVddc1);
 			cac_leakage_table->entries[i].Vddc2 = le16_to_cpu(table->entries[i].usVddc2);
 			cac_leakage_table->entries[i].Vddc3 = le16_to_cpu(table->entries[i].usVddc3);
-		पूर्ण अन्यथा अणु
+		} else {
 			cac_leakage_table->entries[i].Vddc    = le16_to_cpu(table->entries[i].usVddc);
 			cac_leakage_table->entries[i].Leakage = le32_to_cpu(table->entries[i].ulLeakageValue);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	*ptable = cac_leakage_table;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक get_platक्रमm_घातer_management_table(काष्ठा pp_hwmgr *hwmgr,
+static int get_platform_power_management_table(struct pp_hwmgr *hwmgr,
 			ATOM_PPLIB_PPM_Table *atom_ppm_table)
-अणु
-	काष्ठा phm_ppm_table *ptr = kzalloc(माप(काष्ठा phm_ppm_table), GFP_KERNEL);
+{
+	struct phm_ppm_table *ptr = kzalloc(sizeof(struct phm_ppm_table), GFP_KERNEL);
 
-	अगर (शून्य == ptr)
-		वापस -ENOMEM;
+	if (NULL == ptr)
+		return -ENOMEM;
 
 	ptr->ppm_design            = atom_ppm_table->ucPpmDesign;
 	ptr->cpu_core_number        = le16_to_cpu(atom_ppm_table->usCpuCoreNumber);
-	ptr->platक्रमm_tdp          = le32_to_cpu(atom_ppm_table->ulPlatक्रमmTDP);
-	ptr->small_ac_platक्रमm_tdp   = le32_to_cpu(atom_ppm_table->ulSmallACPlatक्रमmTDP);
-	ptr->platक्रमm_tdc          = le32_to_cpu(atom_ppm_table->ulPlatक्रमmTDC);
-	ptr->small_ac_platक्रमm_tdc   = le32_to_cpu(atom_ppm_table->ulSmallACPlatक्रमmTDC);
+	ptr->platform_tdp          = le32_to_cpu(atom_ppm_table->ulPlatformTDP);
+	ptr->small_ac_platform_tdp   = le32_to_cpu(atom_ppm_table->ulSmallACPlatformTDP);
+	ptr->platform_tdc          = le32_to_cpu(atom_ppm_table->ulPlatformTDC);
+	ptr->small_ac_platform_tdc   = le32_to_cpu(atom_ppm_table->ulSmallACPlatformTDC);
 	ptr->apu_tdp               = le32_to_cpu(atom_ppm_table->ulApuTDP);
 	ptr->dgpu_tdp              = le32_to_cpu(atom_ppm_table->ulDGpuTDP);
-	ptr->dgpu_ulv_घातer         = le32_to_cpu(atom_ppm_table->ulDGpuUlvPower);
+	ptr->dgpu_ulv_power         = le32_to_cpu(atom_ppm_table->ulDGpuUlvPower);
 	ptr->tj_max                = le32_to_cpu(atom_ppm_table->ulTjmax);
 	hwmgr->dyn_state.ppm_parameter_table = ptr;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक init_dpm2_parameters(काष्ठा pp_hwmgr *hwmgr,
-			स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table)
-अणु
-	पूर्णांक result = 0;
+static int init_dpm2_parameters(struct pp_hwmgr *hwmgr,
+			const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table)
+{
+	int result = 0;
 
-	अगर (le16_to_cpu(घातerplay_table->usTableSize) >=
-	    माप(ATOM_PPLIB_POWERPLAYTABLE5)) अणु
-		स्थिर  ATOM_PPLIB_POWERPLAYTABLE5 *ptable5 =
-				(स्थिर ATOM_PPLIB_POWERPLAYTABLE5 *)घातerplay_table;
-		स्थिर  ATOM_PPLIB_POWERPLAYTABLE4 *ptable4 =
-				(स्थिर ATOM_PPLIB_POWERPLAYTABLE4 *)
+	if (le16_to_cpu(powerplay_table->usTableSize) >=
+	    sizeof(ATOM_PPLIB_POWERPLAYTABLE5)) {
+		const  ATOM_PPLIB_POWERPLAYTABLE5 *ptable5 =
+				(const ATOM_PPLIB_POWERPLAYTABLE5 *)powerplay_table;
+		const  ATOM_PPLIB_POWERPLAYTABLE4 *ptable4 =
+				(const ATOM_PPLIB_POWERPLAYTABLE4 *)
 				(&ptable5->basicTable4);
-		स्थिर  ATOM_PPLIB_POWERPLAYTABLE3 *ptable3 =
-				(स्थिर ATOM_PPLIB_POWERPLAYTABLE3 *)
+		const  ATOM_PPLIB_POWERPLAYTABLE3 *ptable3 =
+				(const ATOM_PPLIB_POWERPLAYTABLE3 *)
 				(&ptable4->basicTable3);
-		स्थिर  ATOM_PPLIB_EXTENDEDHEADER  *extended_header;
-		uपूर्णांक16_t table_offset;
+		const  ATOM_PPLIB_EXTENDEDHEADER  *extended_header;
+		uint16_t table_offset;
 		ATOM_PPLIB_PPM_Table *atom_ppm_table;
 
-		hwmgr->platक्रमm_descriptor.TDPLimit     = le32_to_cpu(ptable5->ulTDPLimit);
-		hwmgr->platक्रमm_descriptor.nearTDPLimit = le32_to_cpu(ptable5->ulNearTDPLimit);
+		hwmgr->platform_descriptor.TDPLimit     = le32_to_cpu(ptable5->ulTDPLimit);
+		hwmgr->platform_descriptor.nearTDPLimit = le32_to_cpu(ptable5->ulNearTDPLimit);
 
-		hwmgr->platक्रमm_descriptor.TDPODLimit   = le16_to_cpu(ptable5->usTDPODLimit);
-		hwmgr->platक्रमm_descriptor.TDPAdjusपंचांगent = 0;
+		hwmgr->platform_descriptor.TDPODLimit   = le16_to_cpu(ptable5->usTDPODLimit);
+		hwmgr->platform_descriptor.TDPAdjustment = 0;
 
-		hwmgr->platक्रमm_descriptor.VidAdjusपंचांगent = 0;
-		hwmgr->platक्रमm_descriptor.VidAdjusपंचांगentPolarity = 0;
-		hwmgr->platक्रमm_descriptor.VidMinLimit     = 0;
-		hwmgr->platक्रमm_descriptor.VidMaxLimit     = 1500000;
-		hwmgr->platक्रमm_descriptor.VidStep         = 6250;
+		hwmgr->platform_descriptor.VidAdjustment = 0;
+		hwmgr->platform_descriptor.VidAdjustmentPolarity = 0;
+		hwmgr->platform_descriptor.VidMinLimit     = 0;
+		hwmgr->platform_descriptor.VidMaxLimit     = 1500000;
+		hwmgr->platform_descriptor.VidStep         = 6250;
 
-		hwmgr->platक्रमm_descriptor.nearTDPLimitAdjusted = le32_to_cpu(ptable5->ulNearTDPLimit);
+		hwmgr->platform_descriptor.nearTDPLimitAdjusted = le32_to_cpu(ptable5->ulNearTDPLimit);
 
-		अगर (hwmgr->platक्रमm_descriptor.TDPODLimit != 0)
-			phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-					PHM_Platक्रमmCaps_PowerControl);
+		if (hwmgr->platform_descriptor.TDPODLimit != 0)
+			phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+					PHM_PlatformCaps_PowerControl);
 
-		hwmgr->platक्रमm_descriptor.SQRampingThreshold = le32_to_cpu(ptable5->ulSQRampingThreshold);
+		hwmgr->platform_descriptor.SQRampingThreshold = le32_to_cpu(ptable5->ulSQRampingThreshold);
 
-		hwmgr->platक्रमm_descriptor.CACLeakage = le32_to_cpu(ptable5->ulCACLeakage);
+		hwmgr->platform_descriptor.CACLeakage = le32_to_cpu(ptable5->ulCACLeakage);
 
-		hwmgr->dyn_state.cac_leakage_table = शून्य;
+		hwmgr->dyn_state.cac_leakage_table = NULL;
 
-		अगर (0 != ptable5->usCACLeakageTableOffset) अणु
-			स्थिर ATOM_PPLIB_CAC_Leakage_Table *pCAC_leakage_table =
-				(ATOM_PPLIB_CAC_Leakage_Table *)(((अचिन्हित दीर्घ)ptable5) +
+		if (0 != ptable5->usCACLeakageTableOffset) {
+			const ATOM_PPLIB_CAC_Leakage_Table *pCAC_leakage_table =
+				(ATOM_PPLIB_CAC_Leakage_Table *)(((unsigned long)ptable5) +
 				le16_to_cpu(ptable5->usCACLeakageTableOffset));
 			result = get_cac_leakage_table(hwmgr,
 				&hwmgr->dyn_state.cac_leakage_table, pCAC_leakage_table);
-		पूर्ण
+		}
 
-		hwmgr->platक्रमm_descriptor.LoadLineSlope = le16_to_cpu(ptable5->usLoadLineSlope);
+		hwmgr->platform_descriptor.LoadLineSlope = le16_to_cpu(ptable5->usLoadLineSlope);
 
-		hwmgr->dyn_state.ppm_parameter_table = शून्य;
+		hwmgr->dyn_state.ppm_parameter_table = NULL;
 
-		अगर (0 != ptable3->usExtendendedHeaderOffset) अणु
-			extended_header = (स्थिर ATOM_PPLIB_EXTENDEDHEADER *)
-					(((अचिन्हित दीर्घ)घातerplay_table) +
+		if (0 != ptable3->usExtendendedHeaderOffset) {
+			extended_header = (const ATOM_PPLIB_EXTENDEDHEADER *)
+					(((unsigned long)powerplay_table) +
 					le16_to_cpu(ptable3->usExtendendedHeaderOffset));
-			अगर ((extended_header->usPPMTableOffset > 0) &&
+			if ((extended_header->usPPMTableOffset > 0) &&
 				le16_to_cpu(extended_header->usSize) >=
-				    SIZE_OF_ATOM_PPLIB_EXTENDEDHEADER_V5) अणु
+				    SIZE_OF_ATOM_PPLIB_EXTENDEDHEADER_V5) {
 				table_offset = le16_to_cpu(extended_header->usPPMTableOffset);
 				atom_ppm_table = (ATOM_PPLIB_PPM_Table *)
-					(((अचिन्हित दीर्घ)घातerplay_table) + table_offset);
-				अगर (0 == get_platक्रमm_घातer_management_table(hwmgr, atom_ppm_table))
-					phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-						PHM_Platक्रमmCaps_EnablePlatक्रमmPowerManagement);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस result;
-पूर्ण
+					(((unsigned long)powerplay_table) + table_offset);
+				if (0 == get_platform_power_management_table(hwmgr, atom_ppm_table))
+					phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+						PHM_PlatformCaps_EnablePlatformPowerManagement);
+			}
+		}
+	}
+	return result;
+}
 
-अटल पूर्णांक init_phase_shedding_table(काष्ठा pp_hwmgr *hwmgr,
-		स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table)
-अणु
-	अगर (le16_to_cpu(घातerplay_table->usTableSize) >=
-	    माप(ATOM_PPLIB_POWERPLAYTABLE4)) अणु
-		स्थिर ATOM_PPLIB_POWERPLAYTABLE4 *घातerplay_table4 =
-				(स्थिर ATOM_PPLIB_POWERPLAYTABLE4 *)घातerplay_table;
+static int init_phase_shedding_table(struct pp_hwmgr *hwmgr,
+		const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table)
+{
+	if (le16_to_cpu(powerplay_table->usTableSize) >=
+	    sizeof(ATOM_PPLIB_POWERPLAYTABLE4)) {
+		const ATOM_PPLIB_POWERPLAYTABLE4 *powerplay_table4 =
+				(const ATOM_PPLIB_POWERPLAYTABLE4 *)powerplay_table;
 
-		अगर (0 != घातerplay_table4->usVddcPhaseShedLimitsTableOffset) अणु
-			स्थिर ATOM_PPLIB_PhaseSheddingLimits_Table *ptable =
+		if (0 != powerplay_table4->usVddcPhaseShedLimitsTableOffset) {
+			const ATOM_PPLIB_PhaseSheddingLimits_Table *ptable =
 				(ATOM_PPLIB_PhaseSheddingLimits_Table *)
-				(((अचिन्हित दीर्घ)घातerplay_table4) +
-				le16_to_cpu(घातerplay_table4->usVddcPhaseShedLimitsTableOffset));
-			काष्ठा phm_phase_shedding_limits_table *table;
-			अचिन्हित दीर्घ i;
+				(((unsigned long)powerplay_table4) +
+				le16_to_cpu(powerplay_table4->usVddcPhaseShedLimitsTableOffset));
+			struct phm_phase_shedding_limits_table *table;
+			unsigned long i;
 
 
-			table = kzalloc(काष्ठा_size(table, entries, ptable->ucNumEntries),
+			table = kzalloc(struct_size(table, entries, ptable->ucNumEntries),
 					GFP_KERNEL);
-			अगर (!table)
-				वापस -ENOMEM;
+			if (!table)
+				return -ENOMEM;
 
-			table->count = (अचिन्हित दीर्घ)ptable->ucNumEntries;
+			table->count = (unsigned long)ptable->ucNumEntries;
 
-			क्रम (i = 0; i < table->count; i++) अणु
-				table->entries[i].Voltage = (अचिन्हित दीर्घ)le16_to_cpu(ptable->entries[i].usVoltage);
-				table->entries[i].Sclk    = ((अचिन्हित दीर्घ)ptable->entries[i].ucSclkHigh << 16)
+			for (i = 0; i < table->count; i++) {
+				table->entries[i].Voltage = (unsigned long)le16_to_cpu(ptable->entries[i].usVoltage);
+				table->entries[i].Sclk    = ((unsigned long)ptable->entries[i].ucSclkHigh << 16)
 							| le16_to_cpu(ptable->entries[i].usSclkLow);
-				table->entries[i].Mclk    = ((अचिन्हित दीर्घ)ptable->entries[i].ucMclkHigh << 16)
+				table->entries[i].Mclk    = ((unsigned long)ptable->entries[i].ucMclkHigh << 16)
 							| le16_to_cpu(ptable->entries[i].usMclkLow);
-			पूर्ण
+			}
 			hwmgr->dyn_state.vddc_phase_shed_limits_table = table;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक get_number_of_vce_state_table_entries(
-						  काष्ठा pp_hwmgr *hwmgr)
-अणु
-	स्थिर ATOM_PPLIB_POWERPLAYTABLE *table =
-					     get_घातerplay_table(hwmgr);
-	स्थिर ATOM_PPLIB_VCE_State_Table *vce_table =
+static int get_number_of_vce_state_table_entries(
+						  struct pp_hwmgr *hwmgr)
+{
+	const ATOM_PPLIB_POWERPLAYTABLE *table =
+					     get_powerplay_table(hwmgr);
+	const ATOM_PPLIB_VCE_State_Table *vce_table =
 				    get_vce_state_table(hwmgr, table);
 
-	अगर (vce_table)
-		वापस vce_table->numEntries;
+	if (vce_table)
+		return vce_table->numEntries;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक get_vce_state_table_entry(काष्ठा pp_hwmgr *hwmgr,
-							अचिन्हित दीर्घ i,
-							काष्ठा amd_vce_state *vce_state,
-							व्योम **घड़ी_info,
-							अचिन्हित दीर्घ *flag)
-अणु
-	स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table = get_घातerplay_table(hwmgr);
+static int get_vce_state_table_entry(struct pp_hwmgr *hwmgr,
+							unsigned long i,
+							struct amd_vce_state *vce_state,
+							void **clock_info,
+							unsigned long *flag)
+{
+	const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table = get_powerplay_table(hwmgr);
 
-	स्थिर ATOM_PPLIB_VCE_State_Table *vce_state_table = get_vce_state_table(hwmgr, घातerplay_table);
+	const ATOM_PPLIB_VCE_State_Table *vce_state_table = get_vce_state_table(hwmgr, powerplay_table);
 
-	अचिन्हित लघु vce_घड़ी_info_array_offset = get_vce_घड़ी_info_array_offset(hwmgr, घातerplay_table);
+	unsigned short vce_clock_info_array_offset = get_vce_clock_info_array_offset(hwmgr, powerplay_table);
 
-	स्थिर VCEClockInfoArray *vce_घड़ी_info_array = (स्थिर VCEClockInfoArray *)(((अचिन्हित दीर्घ) घातerplay_table) + vce_घड़ी_info_array_offset);
+	const VCEClockInfoArray *vce_clock_info_array = (const VCEClockInfoArray *)(((unsigned long) powerplay_table) + vce_clock_info_array_offset);
 
-	स्थिर ClockInfoArray *घड़ी_arrays = (ClockInfoArray *)(((अचिन्हित दीर्घ)घातerplay_table) +
-								le16_to_cpu(घातerplay_table->usClockInfoArrayOffset));
+	const ClockInfoArray *clock_arrays = (ClockInfoArray *)(((unsigned long)powerplay_table) +
+								le16_to_cpu(powerplay_table->usClockInfoArrayOffset));
 
-	स्थिर ATOM_PPLIB_VCE_State_Record *record = &vce_state_table->entries[i];
+	const ATOM_PPLIB_VCE_State_Record *record = &vce_state_table->entries[i];
 
-	स्थिर VCEClockInfo *vce_घड़ी_info = &vce_घड़ी_info_array->entries[record->ucVCEClockInfoIndex];
+	const VCEClockInfo *vce_clock_info = &vce_clock_info_array->entries[record->ucVCEClockInfoIndex];
 
-	अचिन्हित दीर्घ घड़ीInfoIndex = record->ucClockInfoIndex & 0x3F;
+	unsigned long clockInfoIndex = record->ucClockInfoIndex & 0x3F;
 
 	*flag = (record->ucClockInfoIndex >> NUM_BITS_CLOCK_INFO_ARRAY_INDEX);
 
-	vce_state->evclk = ((uपूर्णांक32_t)vce_घड़ी_info->ucEVClkHigh << 16) | le16_to_cpu(vce_घड़ी_info->usEVClkLow);
-	vce_state->ecclk = ((uपूर्णांक32_t)vce_घड़ी_info->ucECClkHigh << 16) | le16_to_cpu(vce_घड़ी_info->usECClkLow);
+	vce_state->evclk = ((uint32_t)vce_clock_info->ucEVClkHigh << 16) | le16_to_cpu(vce_clock_info->usEVClkLow);
+	vce_state->ecclk = ((uint32_t)vce_clock_info->ucECClkHigh << 16) | le16_to_cpu(vce_clock_info->usECClkLow);
 
-	*घड़ी_info = (व्योम *)((अचिन्हित दीर्घ)(घड़ी_arrays->घड़ीInfo) + (घड़ीInfoIndex * घड़ी_arrays->ucEntrySize));
+	*clock_info = (void *)((unsigned long)(clock_arrays->clockInfo) + (clockInfoIndex * clock_arrays->ucEntrySize));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक pp_tables_initialize(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	पूर्णांक result;
-	स्थिर ATOM_PPLIB_POWERPLAYTABLE *घातerplay_table;
+static int pp_tables_initialize(struct pp_hwmgr *hwmgr)
+{
+	int result;
+	const ATOM_PPLIB_POWERPLAYTABLE *powerplay_table;
 
-	अगर (hwmgr->chip_id == CHIP_RAVEN)
-		वापस 0;
+	if (hwmgr->chip_id == CHIP_RAVEN)
+		return 0;
 
 	hwmgr->need_pp_table_upload = true;
 
-	घातerplay_table = get_घातerplay_table(hwmgr);
+	powerplay_table = get_powerplay_table(hwmgr);
 
-	result = init_घातerplay_tables(hwmgr, घातerplay_table);
-
-	PP_ASSERT_WITH_CODE((result == 0),
-			    "init_powerplay_tables failed", वापस result);
-
-	result = set_platक्रमm_caps(hwmgr,
-				le32_to_cpu(घातerplay_table->ulPlatक्रमmCaps));
+	result = init_powerplay_tables(hwmgr, powerplay_table);
 
 	PP_ASSERT_WITH_CODE((result == 0),
-			    "set_platform_caps failed", वापस result);
+			    "init_powerplay_tables failed", return result);
 
-	result = init_thermal_controller(hwmgr, घातerplay_table);
-
-	PP_ASSERT_WITH_CODE((result == 0),
-			    "init_thermal_controller failed", वापस result);
-
-	result = init_overdrive_limits(hwmgr, घातerplay_table);
+	result = set_platform_caps(hwmgr,
+				le32_to_cpu(powerplay_table->ulPlatformCaps));
 
 	PP_ASSERT_WITH_CODE((result == 0),
-			    "init_overdrive_limits failed", वापस result);
+			    "set_platform_caps failed", return result);
 
-	result = init_घड़ी_voltage_dependency(hwmgr,
-					       घातerplay_table);
-
-	PP_ASSERT_WITH_CODE((result == 0),
-			    "init_clock_voltage_dependency failed", वापस result);
-
-	result = init_dpm2_parameters(hwmgr, घातerplay_table);
+	result = init_thermal_controller(hwmgr, powerplay_table);
 
 	PP_ASSERT_WITH_CODE((result == 0),
-			    "init_dpm2_parameters failed", वापस result);
+			    "init_thermal_controller failed", return result);
 
-	result = init_phase_shedding_table(hwmgr, घातerplay_table);
+	result = init_overdrive_limits(hwmgr, powerplay_table);
 
 	PP_ASSERT_WITH_CODE((result == 0),
-			    "init_phase_shedding_table failed", वापस result);
+			    "init_overdrive_limits failed", return result);
 
-	वापस result;
-पूर्ण
+	result = init_clock_voltage_dependency(hwmgr,
+					       powerplay_table);
 
-अटल पूर्णांक pp_tables_uninitialize(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	अगर (hwmgr->chip_id == CHIP_RAVEN)
-		वापस 0;
+	PP_ASSERT_WITH_CODE((result == 0),
+			    "init_clock_voltage_dependency failed", return result);
 
-	kमुक्त(hwmgr->dyn_state.vddc_dependency_on_sclk);
-	hwmgr->dyn_state.vddc_dependency_on_sclk = शून्य;
+	result = init_dpm2_parameters(hwmgr, powerplay_table);
 
-	kमुक्त(hwmgr->dyn_state.vddci_dependency_on_mclk);
-	hwmgr->dyn_state.vddci_dependency_on_mclk = शून्य;
+	PP_ASSERT_WITH_CODE((result == 0),
+			    "init_dpm2_parameters failed", return result);
 
-	kमुक्त(hwmgr->dyn_state.vddc_dependency_on_mclk);
-	hwmgr->dyn_state.vddc_dependency_on_mclk = शून्य;
+	result = init_phase_shedding_table(hwmgr, powerplay_table);
 
-	kमुक्त(hwmgr->dyn_state.mvdd_dependency_on_mclk);
-	hwmgr->dyn_state.mvdd_dependency_on_mclk = शून्य;
+	PP_ASSERT_WITH_CODE((result == 0),
+			    "init_phase_shedding_table failed", return result);
 
-	kमुक्त(hwmgr->dyn_state.valid_mclk_values);
-	hwmgr->dyn_state.valid_mclk_values = शून्य;
+	return result;
+}
 
-	kमुक्त(hwmgr->dyn_state.valid_sclk_values);
-	hwmgr->dyn_state.valid_sclk_values = शून्य;
+static int pp_tables_uninitialize(struct pp_hwmgr *hwmgr)
+{
+	if (hwmgr->chip_id == CHIP_RAVEN)
+		return 0;
 
-	kमुक्त(hwmgr->dyn_state.cac_leakage_table);
-	hwmgr->dyn_state.cac_leakage_table = शून्य;
+	kfree(hwmgr->dyn_state.vddc_dependency_on_sclk);
+	hwmgr->dyn_state.vddc_dependency_on_sclk = NULL;
 
-	kमुक्त(hwmgr->dyn_state.vddc_phase_shed_limits_table);
-	hwmgr->dyn_state.vddc_phase_shed_limits_table = शून्य;
+	kfree(hwmgr->dyn_state.vddci_dependency_on_mclk);
+	hwmgr->dyn_state.vddci_dependency_on_mclk = NULL;
 
-	kमुक्त(hwmgr->dyn_state.vce_घड़ी_voltage_dependency_table);
-	hwmgr->dyn_state.vce_घड़ी_voltage_dependency_table = शून्य;
+	kfree(hwmgr->dyn_state.vddc_dependency_on_mclk);
+	hwmgr->dyn_state.vddc_dependency_on_mclk = NULL;
 
-	kमुक्त(hwmgr->dyn_state.uvd_घड़ी_voltage_dependency_table);
-	hwmgr->dyn_state.uvd_घड़ी_voltage_dependency_table = शून्य;
+	kfree(hwmgr->dyn_state.mvdd_dependency_on_mclk);
+	hwmgr->dyn_state.mvdd_dependency_on_mclk = NULL;
 
-	kमुक्त(hwmgr->dyn_state.samu_घड़ी_voltage_dependency_table);
-	hwmgr->dyn_state.samu_घड़ी_voltage_dependency_table = शून्य;
+	kfree(hwmgr->dyn_state.valid_mclk_values);
+	hwmgr->dyn_state.valid_mclk_values = NULL;
 
-	kमुक्त(hwmgr->dyn_state.acp_घड़ी_voltage_dependency_table);
-	hwmgr->dyn_state.acp_घड़ी_voltage_dependency_table = शून्य;
+	kfree(hwmgr->dyn_state.valid_sclk_values);
+	hwmgr->dyn_state.valid_sclk_values = NULL;
 
-	kमुक्त(hwmgr->dyn_state.cac_dtp_table);
-	hwmgr->dyn_state.cac_dtp_table = शून्य;
+	kfree(hwmgr->dyn_state.cac_leakage_table);
+	hwmgr->dyn_state.cac_leakage_table = NULL;
 
-	kमुक्त(hwmgr->dyn_state.ppm_parameter_table);
-	hwmgr->dyn_state.ppm_parameter_table = शून्य;
+	kfree(hwmgr->dyn_state.vddc_phase_shed_limits_table);
+	hwmgr->dyn_state.vddc_phase_shed_limits_table = NULL;
 
-	kमुक्त(hwmgr->dyn_state.vdd_gfx_dependency_on_sclk);
-	hwmgr->dyn_state.vdd_gfx_dependency_on_sclk = शून्य;
+	kfree(hwmgr->dyn_state.vce_clock_voltage_dependency_table);
+	hwmgr->dyn_state.vce_clock_voltage_dependency_table = NULL;
 
-	वापस 0;
-पूर्ण
+	kfree(hwmgr->dyn_state.uvd_clock_voltage_dependency_table);
+	hwmgr->dyn_state.uvd_clock_voltage_dependency_table = NULL;
 
-स्थिर काष्ठा pp_table_func pptable_funcs = अणु
+	kfree(hwmgr->dyn_state.samu_clock_voltage_dependency_table);
+	hwmgr->dyn_state.samu_clock_voltage_dependency_table = NULL;
+
+	kfree(hwmgr->dyn_state.acp_clock_voltage_dependency_table);
+	hwmgr->dyn_state.acp_clock_voltage_dependency_table = NULL;
+
+	kfree(hwmgr->dyn_state.cac_dtp_table);
+	hwmgr->dyn_state.cac_dtp_table = NULL;
+
+	kfree(hwmgr->dyn_state.ppm_parameter_table);
+	hwmgr->dyn_state.ppm_parameter_table = NULL;
+
+	kfree(hwmgr->dyn_state.vdd_gfx_dependency_on_sclk);
+	hwmgr->dyn_state.vdd_gfx_dependency_on_sclk = NULL;
+
+	return 0;
+}
+
+const struct pp_table_func pptable_funcs = {
 	.pptable_init = pp_tables_initialize,
 	.pptable_fini = pp_tables_uninitialize,
 	.pptable_get_number_of_vce_state_table_entries =
 				get_number_of_vce_state_table_entries,
 	.pptable_get_vce_state_table_entry =
 						get_vce_state_table_entry,
-पूर्ण;
+};
 

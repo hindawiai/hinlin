@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2009-2013, The Linux Foundation. All rights reserved.
  * Copyright (c) 2010, Google Inc.
  *
@@ -9,319 +8,319 @@
  *  - Largely rewritten from original to not be an i2c driver.
  */
 
-#घोषणा pr_fmt(fmt) "%s: " fmt, __func__
+#define pr_fmt(fmt) "%s: " fmt, __func__
 
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/ssbi.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/ssbi.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
 
-/* SSBI 2.0 controller रेजिस्टरs */
-#घोषणा SSBI2_CMD			0x0008
-#घोषणा SSBI2_RD			0x0010
-#घोषणा SSBI2_STATUS			0x0014
-#घोषणा SSBI2_MODE2			0x001C
+/* SSBI 2.0 controller registers */
+#define SSBI2_CMD			0x0008
+#define SSBI2_RD			0x0010
+#define SSBI2_STATUS			0x0014
+#define SSBI2_MODE2			0x001C
 
 /* SSBI_CMD fields */
-#घोषणा SSBI_CMD_RDWRN			(1 << 24)
+#define SSBI_CMD_RDWRN			(1 << 24)
 
 /* SSBI_STATUS fields */
-#घोषणा SSBI_STATUS_RD_READY		(1 << 2)
-#घोषणा SSBI_STATUS_READY		(1 << 1)
-#घोषणा SSBI_STATUS_MCHN_BUSY		(1 << 0)
+#define SSBI_STATUS_RD_READY		(1 << 2)
+#define SSBI_STATUS_READY		(1 << 1)
+#define SSBI_STATUS_MCHN_BUSY		(1 << 0)
 
 /* SSBI_MODE2 fields */
-#घोषणा SSBI_MODE2_REG_ADDR_15_8_SHFT	0x04
-#घोषणा SSBI_MODE2_REG_ADDR_15_8_MASK	(0x7f << SSBI_MODE2_REG_ADDR_15_8_SHFT)
+#define SSBI_MODE2_REG_ADDR_15_8_SHFT	0x04
+#define SSBI_MODE2_REG_ADDR_15_8_MASK	(0x7f << SSBI_MODE2_REG_ADDR_15_8_SHFT)
 
-#घोषणा SET_SSBI_MODE2_REG_ADDR_15_8(MD, AD) \
+#define SET_SSBI_MODE2_REG_ADDR_15_8(MD, AD) \
 	(((MD) & 0x0F) | ((((AD) >> 8) << SSBI_MODE2_REG_ADDR_15_8_SHFT) & \
 	SSBI_MODE2_REG_ADDR_15_8_MASK))
 
-/* SSBI PMIC Arbiter command रेजिस्टरs */
-#घोषणा SSBI_PA_CMD			0x0000
-#घोषणा SSBI_PA_RD_STATUS		0x0004
+/* SSBI PMIC Arbiter command registers */
+#define SSBI_PA_CMD			0x0000
+#define SSBI_PA_RD_STATUS		0x0004
 
 /* SSBI_PA_CMD fields */
-#घोषणा SSBI_PA_CMD_RDWRN		(1 << 24)
-#घोषणा SSBI_PA_CMD_ADDR_MASK		0x7fff /* REG_ADDR_7_0, REG_ADDR_8_14*/
+#define SSBI_PA_CMD_RDWRN		(1 << 24)
+#define SSBI_PA_CMD_ADDR_MASK		0x7fff /* REG_ADDR_7_0, REG_ADDR_8_14*/
 
 /* SSBI_PA_RD_STATUS fields */
-#घोषणा SSBI_PA_RD_STATUS_TRANS_DONE	(1 << 27)
-#घोषणा SSBI_PA_RD_STATUS_TRANS_DENIED	(1 << 26)
+#define SSBI_PA_RD_STATUS_TRANS_DONE	(1 << 27)
+#define SSBI_PA_RD_STATUS_TRANS_DENIED	(1 << 26)
 
-#घोषणा SSBI_TIMEOUT_US			100
+#define SSBI_TIMEOUT_US			100
 
-क्रमागत ssbi_controller_type अणु
+enum ssbi_controller_type {
 	MSM_SBI_CTRL_SSBI = 0,
 	MSM_SBI_CTRL_SSBI2,
 	MSM_SBI_CTRL_PMIC_ARBITER,
-पूर्ण;
+};
 
-काष्ठा ssbi अणु
-	काष्ठा device		*slave;
-	व्योम __iomem		*base;
+struct ssbi {
+	struct device		*slave;
+	void __iomem		*base;
 	spinlock_t		lock;
-	क्रमागत ssbi_controller_type controller_type;
-	पूर्णांक (*पढ़ो)(काष्ठा ssbi *, u16 addr, u8 *buf, पूर्णांक len);
-	पूर्णांक (*ग_लिखो)(काष्ठा ssbi *, u16 addr, स्थिर u8 *buf, पूर्णांक len);
-पूर्ण;
+	enum ssbi_controller_type controller_type;
+	int (*read)(struct ssbi *, u16 addr, u8 *buf, int len);
+	int (*write)(struct ssbi *, u16 addr, const u8 *buf, int len);
+};
 
-अटल अंतरभूत u32 ssbi_पढ़ोl(काष्ठा ssbi *ssbi, u32 reg)
-अणु
-	वापस पढ़ोl(ssbi->base + reg);
-पूर्ण
+static inline u32 ssbi_readl(struct ssbi *ssbi, u32 reg)
+{
+	return readl(ssbi->base + reg);
+}
 
-अटल अंतरभूत व्योम ssbi_ग_लिखोl(काष्ठा ssbi *ssbi, u32 val, u32 reg)
-अणु
-	ग_लिखोl(val, ssbi->base + reg);
-पूर्ण
+static inline void ssbi_writel(struct ssbi *ssbi, u32 val, u32 reg)
+{
+	writel(val, ssbi->base + reg);
+}
 
 /*
- * Via निजी exchange with one of the original authors, the hardware
+ * Via private exchange with one of the original authors, the hardware
  * should generally finish a transaction in about 5us.  The worst
- * हाल, is when using the arbiter and both other CPUs have just
- * started trying to use the SSBI bus will result in a समय of about
- * 20us.  It should never take दीर्घer than this.
+ * case, is when using the arbiter and both other CPUs have just
+ * started trying to use the SSBI bus will result in a time of about
+ * 20us.  It should never take longer than this.
  *
- * As such, this रुको merely spins, with a udelay.
+ * As such, this wait merely spins, with a udelay.
  */
-अटल पूर्णांक ssbi_रुको_mask(काष्ठा ssbi *ssbi, u32 set_mask, u32 clr_mask)
-अणु
-	u32 समयout = SSBI_TIMEOUT_US;
+static int ssbi_wait_mask(struct ssbi *ssbi, u32 set_mask, u32 clr_mask)
+{
+	u32 timeout = SSBI_TIMEOUT_US;
 	u32 val;
 
-	जबतक (समयout--) अणु
-		val = ssbi_पढ़ोl(ssbi, SSBI2_STATUS);
-		अगर (((val & set_mask) == set_mask) && ((val & clr_mask) == 0))
-			वापस 0;
+	while (timeout--) {
+		val = ssbi_readl(ssbi, SSBI2_STATUS);
+		if (((val & set_mask) == set_mask) && ((val & clr_mask) == 0))
+			return 0;
 		udelay(1);
-	पूर्ण
+	}
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल पूर्णांक
-ssbi_पढ़ो_bytes(काष्ठा ssbi *ssbi, u16 addr, u8 *buf, पूर्णांक len)
-अणु
+static int
+ssbi_read_bytes(struct ssbi *ssbi, u16 addr, u8 *buf, int len)
+{
 	u32 cmd = SSBI_CMD_RDWRN | ((addr & 0xff) << 16);
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (ssbi->controller_type == MSM_SBI_CTRL_SSBI2) अणु
-		u32 mode2 = ssbi_पढ़ोl(ssbi, SSBI2_MODE2);
+	if (ssbi->controller_type == MSM_SBI_CTRL_SSBI2) {
+		u32 mode2 = ssbi_readl(ssbi, SSBI2_MODE2);
 		mode2 = SET_SSBI_MODE2_REG_ADDR_15_8(mode2, addr);
-		ssbi_ग_लिखोl(ssbi, mode2, SSBI2_MODE2);
-	पूर्ण
+		ssbi_writel(ssbi, mode2, SSBI2_MODE2);
+	}
 
-	जबतक (len) अणु
-		ret = ssbi_रुको_mask(ssbi, SSBI_STATUS_READY, 0);
-		अगर (ret)
-			जाओ err;
+	while (len) {
+		ret = ssbi_wait_mask(ssbi, SSBI_STATUS_READY, 0);
+		if (ret)
+			goto err;
 
-		ssbi_ग_लिखोl(ssbi, cmd, SSBI2_CMD);
-		ret = ssbi_रुको_mask(ssbi, SSBI_STATUS_RD_READY, 0);
-		अगर (ret)
-			जाओ err;
-		*buf++ = ssbi_पढ़ोl(ssbi, SSBI2_RD) & 0xff;
+		ssbi_writel(ssbi, cmd, SSBI2_CMD);
+		ret = ssbi_wait_mask(ssbi, SSBI_STATUS_RD_READY, 0);
+		if (ret)
+			goto err;
+		*buf++ = ssbi_readl(ssbi, SSBI2_RD) & 0xff;
 		len--;
-	पूर्ण
+	}
 
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-ssbi_ग_लिखो_bytes(काष्ठा ssbi *ssbi, u16 addr, स्थिर u8 *buf, पूर्णांक len)
-अणु
-	पूर्णांक ret = 0;
+static int
+ssbi_write_bytes(struct ssbi *ssbi, u16 addr, const u8 *buf, int len)
+{
+	int ret = 0;
 
-	अगर (ssbi->controller_type == MSM_SBI_CTRL_SSBI2) अणु
-		u32 mode2 = ssbi_पढ़ोl(ssbi, SSBI2_MODE2);
+	if (ssbi->controller_type == MSM_SBI_CTRL_SSBI2) {
+		u32 mode2 = ssbi_readl(ssbi, SSBI2_MODE2);
 		mode2 = SET_SSBI_MODE2_REG_ADDR_15_8(mode2, addr);
-		ssbi_ग_लिखोl(ssbi, mode2, SSBI2_MODE2);
-	पूर्ण
+		ssbi_writel(ssbi, mode2, SSBI2_MODE2);
+	}
 
-	जबतक (len) अणु
-		ret = ssbi_रुको_mask(ssbi, SSBI_STATUS_READY, 0);
-		अगर (ret)
-			जाओ err;
+	while (len) {
+		ret = ssbi_wait_mask(ssbi, SSBI_STATUS_READY, 0);
+		if (ret)
+			goto err;
 
-		ssbi_ग_लिखोl(ssbi, ((addr & 0xff) << 16) | *buf, SSBI2_CMD);
-		ret = ssbi_रुको_mask(ssbi, 0, SSBI_STATUS_MCHN_BUSY);
-		अगर (ret)
-			जाओ err;
+		ssbi_writel(ssbi, ((addr & 0xff) << 16) | *buf, SSBI2_CMD);
+		ret = ssbi_wait_mask(ssbi, 0, SSBI_STATUS_MCHN_BUSY);
+		if (ret)
+			goto err;
 		buf++;
 		len--;
-	पूर्ण
+	}
 
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * See ssbi_रुको_mask क्रम an explanation of the समय and the
- * busyरुको.
+ * See ssbi_wait_mask for an explanation of the time and the
+ * busywait.
  */
-अटल अंतरभूत पूर्णांक
-ssbi_pa_transfer(काष्ठा ssbi *ssbi, u32 cmd, u8 *data)
-अणु
-	u32 समयout = SSBI_TIMEOUT_US;
+static inline int
+ssbi_pa_transfer(struct ssbi *ssbi, u32 cmd, u8 *data)
+{
+	u32 timeout = SSBI_TIMEOUT_US;
 	u32 rd_status = 0;
 
-	ssbi_ग_लिखोl(ssbi, cmd, SSBI_PA_CMD);
+	ssbi_writel(ssbi, cmd, SSBI_PA_CMD);
 
-	जबतक (समयout--) अणु
-		rd_status = ssbi_पढ़ोl(ssbi, SSBI_PA_RD_STATUS);
+	while (timeout--) {
+		rd_status = ssbi_readl(ssbi, SSBI_PA_RD_STATUS);
 
-		अगर (rd_status & SSBI_PA_RD_STATUS_TRANS_DENIED)
-			वापस -EPERM;
+		if (rd_status & SSBI_PA_RD_STATUS_TRANS_DENIED)
+			return -EPERM;
 
-		अगर (rd_status & SSBI_PA_RD_STATUS_TRANS_DONE) अणु
-			अगर (data)
+		if (rd_status & SSBI_PA_RD_STATUS_TRANS_DONE) {
+			if (data)
 				*data = rd_status & 0xff;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		udelay(1);
-	पूर्ण
+	}
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल पूर्णांक
-ssbi_pa_पढ़ो_bytes(काष्ठा ssbi *ssbi, u16 addr, u8 *buf, पूर्णांक len)
-अणु
+static int
+ssbi_pa_read_bytes(struct ssbi *ssbi, u16 addr, u8 *buf, int len)
+{
 	u32 cmd;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	cmd = SSBI_PA_CMD_RDWRN | (addr & SSBI_PA_CMD_ADDR_MASK) << 8;
 
-	जबतक (len) अणु
+	while (len) {
 		ret = ssbi_pa_transfer(ssbi, cmd, buf);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 		buf++;
 		len--;
-	पूर्ण
+	}
 
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-ssbi_pa_ग_लिखो_bytes(काष्ठा ssbi *ssbi, u16 addr, स्थिर u8 *buf, पूर्णांक len)
-अणु
+static int
+ssbi_pa_write_bytes(struct ssbi *ssbi, u16 addr, const u8 *buf, int len)
+{
 	u32 cmd;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	जबतक (len) अणु
+	while (len) {
 		cmd = (addr & SSBI_PA_CMD_ADDR_MASK) << 8 | *buf;
-		ret = ssbi_pa_transfer(ssbi, cmd, शून्य);
-		अगर (ret)
-			जाओ err;
+		ret = ssbi_pa_transfer(ssbi, cmd, NULL);
+		if (ret)
+			goto err;
 		buf++;
 		len--;
-	पूर्ण
+	}
 
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ssbi_पढ़ो(काष्ठा device *dev, u16 addr, u8 *buf, पूर्णांक len)
-अणु
-	काष्ठा ssbi *ssbi = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
-
-	spin_lock_irqsave(&ssbi->lock, flags);
-	ret = ssbi->पढ़ो(ssbi, addr, buf, len);
-	spin_unlock_irqrestore(&ssbi->lock, flags);
-
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(ssbi_पढ़ो);
-
-पूर्णांक ssbi_ग_लिखो(काष्ठा device *dev, u16 addr, स्थिर u8 *buf, पूर्णांक len)
-अणु
-	काष्ठा ssbi *ssbi = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+int ssbi_read(struct device *dev, u16 addr, u8 *buf, int len)
+{
+	struct ssbi *ssbi = dev_get_drvdata(dev);
+	unsigned long flags;
+	int ret;
 
 	spin_lock_irqsave(&ssbi->lock, flags);
-	ret = ssbi->ग_लिखो(ssbi, addr, buf, len);
+	ret = ssbi->read(ssbi, addr, buf, len);
 	spin_unlock_irqrestore(&ssbi->lock, flags);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(ssbi_ग_लिखो);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(ssbi_read);
 
-अटल पूर्णांक ssbi_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा resource *mem_res;
-	काष्ठा ssbi *ssbi;
-	स्थिर अक्षर *type;
+int ssbi_write(struct device *dev, u16 addr, const u8 *buf, int len)
+{
+	struct ssbi *ssbi = dev_get_drvdata(dev);
+	unsigned long flags;
+	int ret;
 
-	ssbi = devm_kzalloc(&pdev->dev, माप(*ssbi), GFP_KERNEL);
-	अगर (!ssbi)
-		वापस -ENOMEM;
+	spin_lock_irqsave(&ssbi->lock, flags);
+	ret = ssbi->write(ssbi, addr, buf, len);
+	spin_unlock_irqrestore(&ssbi->lock, flags);
 
-	mem_res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(ssbi_write);
+
+static int ssbi_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct resource *mem_res;
+	struct ssbi *ssbi;
+	const char *type;
+
+	ssbi = devm_kzalloc(&pdev->dev, sizeof(*ssbi), GFP_KERNEL);
+	if (!ssbi)
+		return -ENOMEM;
+
+	mem_res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	ssbi->base = devm_ioremap_resource(&pdev->dev, mem_res);
-	अगर (IS_ERR(ssbi->base))
-		वापस PTR_ERR(ssbi->base);
+	if (IS_ERR(ssbi->base))
+		return PTR_ERR(ssbi->base);
 
-	platक्रमm_set_drvdata(pdev, ssbi);
+	platform_set_drvdata(pdev, ssbi);
 
-	type = of_get_property(np, "qcom,controller-type", शून्य);
-	अगर (type == शून्य) अणु
+	type = of_get_property(np, "qcom,controller-type", NULL);
+	if (type == NULL) {
 		dev_err(&pdev->dev, "Missing qcom,controller-type property\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	dev_info(&pdev->dev, "SSBI controller type: '%s'\n", type);
-	अगर (म_भेद(type, "ssbi") == 0)
+	if (strcmp(type, "ssbi") == 0)
 		ssbi->controller_type = MSM_SBI_CTRL_SSBI;
-	अन्यथा अगर (म_भेद(type, "ssbi2") == 0)
+	else if (strcmp(type, "ssbi2") == 0)
 		ssbi->controller_type = MSM_SBI_CTRL_SSBI2;
-	अन्यथा अगर (म_भेद(type, "pmic-arbiter") == 0)
+	else if (strcmp(type, "pmic-arbiter") == 0)
 		ssbi->controller_type = MSM_SBI_CTRL_PMIC_ARBITER;
-	अन्यथा अणु
+	else {
 		dev_err(&pdev->dev, "Unknown qcom,controller-type\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ssbi->controller_type == MSM_SBI_CTRL_PMIC_ARBITER) अणु
-		ssbi->पढ़ो = ssbi_pa_पढ़ो_bytes;
-		ssbi->ग_लिखो = ssbi_pa_ग_लिखो_bytes;
-	पूर्ण अन्यथा अणु
-		ssbi->पढ़ो = ssbi_पढ़ो_bytes;
-		ssbi->ग_लिखो = ssbi_ग_लिखो_bytes;
-	पूर्ण
+	if (ssbi->controller_type == MSM_SBI_CTRL_PMIC_ARBITER) {
+		ssbi->read = ssbi_pa_read_bytes;
+		ssbi->write = ssbi_pa_write_bytes;
+	} else {
+		ssbi->read = ssbi_read_bytes;
+		ssbi->write = ssbi_write_bytes;
+	}
 
 	spin_lock_init(&ssbi->lock);
 
-	वापस devm_of_platक्रमm_populate(&pdev->dev);
-पूर्ण
+	return devm_of_platform_populate(&pdev->dev);
+}
 
-अटल स्थिर काष्ठा of_device_id ssbi_match_table[] = अणु
-	अणु .compatible = "qcom,ssbi" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id ssbi_match_table[] = {
+	{ .compatible = "qcom,ssbi" },
+	{}
+};
 MODULE_DEVICE_TABLE(of, ssbi_match_table);
 
-अटल काष्ठा platक्रमm_driver ssbi_driver = अणु
+static struct platform_driver ssbi_driver = {
 	.probe		= ssbi_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "ssbi",
 		.of_match_table = ssbi_match_table,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(ssbi_driver);
+	},
+};
+module_platform_driver(ssbi_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_VERSION("1.0");

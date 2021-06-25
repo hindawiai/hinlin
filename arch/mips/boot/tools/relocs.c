@@ -1,67 +1,66 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* This is included from relocs_32/64.c */
 
-#घोषणा ElfW(type)		_ElfW(ELF_BITS, type)
-#घोषणा _ElfW(bits, type)	__ElfW(bits, type)
-#घोषणा __ElfW(bits, type)	Elf##bits##_##type
+#define ElfW(type)		_ElfW(ELF_BITS, type)
+#define _ElfW(bits, type)	__ElfW(bits, type)
+#define __ElfW(bits, type)	Elf##bits##_##type
 
-#घोषणा Elf_Addr		ElfW(Addr)
-#घोषणा Elf_Ehdr		ElfW(Ehdr)
-#घोषणा Elf_Phdr		ElfW(Phdr)
-#घोषणा Elf_Shdr		ElfW(Shdr)
-#घोषणा Elf_Sym			ElfW(Sym)
+#define Elf_Addr		ElfW(Addr)
+#define Elf_Ehdr		ElfW(Ehdr)
+#define Elf_Phdr		ElfW(Phdr)
+#define Elf_Shdr		ElfW(Shdr)
+#define Elf_Sym			ElfW(Sym)
 
-अटल Elf_Ehdr ehdr;
+static Elf_Ehdr ehdr;
 
-काष्ठा relocs अणु
-	uपूर्णांक32_t	*offset;
-	अचिन्हित दीर्घ	count;
-	अचिन्हित दीर्घ	size;
-पूर्ण;
+struct relocs {
+	uint32_t	*offset;
+	unsigned long	count;
+	unsigned long	size;
+};
 
-अटल काष्ठा relocs relocs;
+static struct relocs relocs;
 
-काष्ठा section अणु
+struct section {
 	Elf_Shdr       shdr;
-	काष्ठा section *link;
+	struct section *link;
 	Elf_Sym        *symtab;
 	Elf_Rel        *reltab;
-	अक्षर           *strtab;
-	दीर्घ           shdr_offset;
-पूर्ण;
-अटल काष्ठा section *secs;
+	char           *strtab;
+	long           shdr_offset;
+};
+static struct section *secs;
 
-अटल स्थिर अक्षर * स्थिर regex_sym_kernel = अणु
+static const char * const regex_sym_kernel = {
 /* Symbols matching these regex's should never be relocated */
 	"^(__crc_)",
-पूर्ण;
+};
 
-अटल regex_t sym_regex_c;
+static regex_t sym_regex_c;
 
-अटल पूर्णांक regex_skip_reloc(स्थिर अक्षर *sym_name)
-अणु
-	वापस !regexec(&sym_regex_c, sym_name, 0, शून्य, 0);
-पूर्ण
+static int regex_skip_reloc(const char *sym_name)
+{
+	return !regexec(&sym_regex_c, sym_name, 0, NULL, 0);
+}
 
-अटल व्योम regex_init(व्योम)
-अणु
-	अक्षर errbuf[128];
-	पूर्णांक err;
+static void regex_init(void)
+{
+	char errbuf[128];
+	int err;
 
 	err = regcomp(&sym_regex_c, regex_sym_kernel,
 			REG_EXTENDED|REG_NOSUB);
 
-	अगर (err) अणु
-		regerror(err, &sym_regex_c, errbuf, माप(errbuf));
+	if (err) {
+		regerror(err, &sym_regex_c, errbuf, sizeof(errbuf));
 		die("%s", errbuf);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर अक्षर *rel_type(अचिन्हित type)
-अणु
-	अटल स्थिर अक्षर * स्थिर type_name[] = अणु
-#घोषणा REL_TYPE(X)[X] = #X
+static const char *rel_type(unsigned type)
+{
+	static const char * const type_name[] = {
+#define REL_TYPE(X)[X] = #X
 		REL_TYPE(R_MIPS_NONE),
 		REL_TYPE(R_MIPS_16),
 		REL_TYPE(R_MIPS_32),
@@ -80,145 +79,145 @@
 		REL_TYPE(R_MIPS_HIGHEST),
 		REL_TYPE(R_MIPS_PC21_S2),
 		REL_TYPE(R_MIPS_PC26_S2),
-#अघोषित REL_TYPE
-	पूर्ण;
-	स्थिर अक्षर *name = "unknown type rel type name";
+#undef REL_TYPE
+	};
+	const char *name = "unknown type rel type name";
 
-	अगर (type < ARRAY_SIZE(type_name) && type_name[type])
+	if (type < ARRAY_SIZE(type_name) && type_name[type])
 		name = type_name[type];
-	वापस name;
-पूर्ण
+	return name;
+}
 
-अटल स्थिर अक्षर *sec_name(अचिन्हित shndx)
-अणु
-	स्थिर अक्षर *sec_strtab;
-	स्थिर अक्षर *name;
+static const char *sec_name(unsigned shndx)
+{
+	const char *sec_strtab;
+	const char *name;
 
 	sec_strtab = secs[ehdr.e_shstrndx].strtab;
-	अगर (shndx < ehdr.e_shnum)
+	if (shndx < ehdr.e_shnum)
 		name = sec_strtab + secs[shndx].shdr.sh_name;
-	अन्यथा अगर (shndx == SHN_ABS)
+	else if (shndx == SHN_ABS)
 		name = "ABSOLUTE";
-	अन्यथा अगर (shndx == SHN_COMMON)
+	else if (shndx == SHN_COMMON)
 		name = "COMMON";
-	अन्यथा
+	else
 		name = "<noname>";
-	वापस name;
-पूर्ण
+	return name;
+}
 
-अटल काष्ठा section *sec_lookup(स्थिर अक्षर *secname)
-अणु
-	पूर्णांक i;
+static struct section *sec_lookup(const char *secname)
+{
+	int i;
 
-	क्रम (i = 0; i < ehdr.e_shnum; i++)
-		अगर (म_भेद(secname, sec_name(i)) == 0)
-			वापस &secs[i];
+	for (i = 0; i < ehdr.e_shnum; i++)
+		if (strcmp(secname, sec_name(i)) == 0)
+			return &secs[i];
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल स्थिर अक्षर *sym_name(स्थिर अक्षर *sym_strtab, Elf_Sym *sym)
-अणु
-	स्थिर अक्षर *name;
+static const char *sym_name(const char *sym_strtab, Elf_Sym *sym)
+{
+	const char *name;
 
-	अगर (sym->st_name)
+	if (sym->st_name)
 		name = sym_strtab + sym->st_name;
-	अन्यथा
+	else
 		name = sec_name(sym->st_shndx);
-	वापस name;
-पूर्ण
+	return name;
+}
 
-#अगर BYTE_ORDER == LITTLE_ENDIAN
-#घोषणा le16_to_cpu(val) (val)
-#घोषणा le32_to_cpu(val) (val)
-#घोषणा le64_to_cpu(val) (val)
-#घोषणा be16_to_cpu(val) bswap_16(val)
-#घोषणा be32_to_cpu(val) bswap_32(val)
-#घोषणा be64_to_cpu(val) bswap_64(val)
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define le16_to_cpu(val) (val)
+#define le32_to_cpu(val) (val)
+#define le64_to_cpu(val) (val)
+#define be16_to_cpu(val) bswap_16(val)
+#define be32_to_cpu(val) bswap_32(val)
+#define be64_to_cpu(val) bswap_64(val)
 
-#घोषणा cpu_to_le16(val) (val)
-#घोषणा cpu_to_le32(val) (val)
-#घोषणा cpu_to_le64(val) (val)
-#घोषणा cpu_to_be16(val) bswap_16(val)
-#घोषणा cpu_to_be32(val) bswap_32(val)
-#घोषणा cpu_to_be64(val) bswap_64(val)
-#पूर्ण_अगर
-#अगर BYTE_ORDER == BIG_ENDIAN
-#घोषणा le16_to_cpu(val) bswap_16(val)
-#घोषणा le32_to_cpu(val) bswap_32(val)
-#घोषणा le64_to_cpu(val) bswap_64(val)
-#घोषणा be16_to_cpu(val) (val)
-#घोषणा be32_to_cpu(val) (val)
-#घोषणा be64_to_cpu(val) (val)
+#define cpu_to_le16(val) (val)
+#define cpu_to_le32(val) (val)
+#define cpu_to_le64(val) (val)
+#define cpu_to_be16(val) bswap_16(val)
+#define cpu_to_be32(val) bswap_32(val)
+#define cpu_to_be64(val) bswap_64(val)
+#endif
+#if BYTE_ORDER == BIG_ENDIAN
+#define le16_to_cpu(val) bswap_16(val)
+#define le32_to_cpu(val) bswap_32(val)
+#define le64_to_cpu(val) bswap_64(val)
+#define be16_to_cpu(val) (val)
+#define be32_to_cpu(val) (val)
+#define be64_to_cpu(val) (val)
 
-#घोषणा cpu_to_le16(val) bswap_16(val)
-#घोषणा cpu_to_le32(val) bswap_32(val)
-#घोषणा cpu_to_le64(val) bswap_64(val)
-#घोषणा cpu_to_be16(val) (val)
-#घोषणा cpu_to_be32(val) (val)
-#घोषणा cpu_to_be64(val) (val)
-#पूर्ण_अगर
+#define cpu_to_le16(val) bswap_16(val)
+#define cpu_to_le32(val) bswap_32(val)
+#define cpu_to_le64(val) bswap_64(val)
+#define cpu_to_be16(val) (val)
+#define cpu_to_be32(val) (val)
+#define cpu_to_be64(val) (val)
+#endif
 
-अटल uपूर्णांक16_t elf16_to_cpu(uपूर्णांक16_t val)
-अणु
-	अगर (ehdr.e_ident[EI_DATA] == ELFDATA2LSB)
-		वापस le16_to_cpu(val);
-	अन्यथा
-		वापस be16_to_cpu(val);
-पूर्ण
+static uint16_t elf16_to_cpu(uint16_t val)
+{
+	if (ehdr.e_ident[EI_DATA] == ELFDATA2LSB)
+		return le16_to_cpu(val);
+	else
+		return be16_to_cpu(val);
+}
 
-अटल uपूर्णांक32_t elf32_to_cpu(uपूर्णांक32_t val)
-अणु
-	अगर (ehdr.e_ident[EI_DATA] == ELFDATA2LSB)
-		वापस le32_to_cpu(val);
-	अन्यथा
-		वापस be32_to_cpu(val);
-पूर्ण
+static uint32_t elf32_to_cpu(uint32_t val)
+{
+	if (ehdr.e_ident[EI_DATA] == ELFDATA2LSB)
+		return le32_to_cpu(val);
+	else
+		return be32_to_cpu(val);
+}
 
-अटल uपूर्णांक32_t cpu_to_elf32(uपूर्णांक32_t val)
-अणु
-	अगर (ehdr.e_ident[EI_DATA] == ELFDATA2LSB)
-		वापस cpu_to_le32(val);
-	अन्यथा
-		वापस cpu_to_be32(val);
-पूर्ण
+static uint32_t cpu_to_elf32(uint32_t val)
+{
+	if (ehdr.e_ident[EI_DATA] == ELFDATA2LSB)
+		return cpu_to_le32(val);
+	else
+		return cpu_to_be32(val);
+}
 
-#घोषणा elf_half_to_cpu(x)	elf16_to_cpu(x)
-#घोषणा elf_word_to_cpu(x)	elf32_to_cpu(x)
+#define elf_half_to_cpu(x)	elf16_to_cpu(x)
+#define elf_word_to_cpu(x)	elf32_to_cpu(x)
 
-#अगर ELF_BITS == 64
-अटल uपूर्णांक64_t elf64_to_cpu(uपूर्णांक64_t val)
-अणु
-	अगर (ehdr.e_ident[EI_DATA] == ELFDATA2LSB)
-		वापस le64_to_cpu(val);
-	अन्यथा
-		वापस be64_to_cpu(val);
-पूर्ण
-#घोषणा elf_addr_to_cpu(x)	elf64_to_cpu(x)
-#घोषणा elf_off_to_cpu(x)	elf64_to_cpu(x)
-#घोषणा elf_xword_to_cpu(x)	elf64_to_cpu(x)
-#अन्यथा
-#घोषणा elf_addr_to_cpu(x)	elf32_to_cpu(x)
-#घोषणा elf_off_to_cpu(x)	elf32_to_cpu(x)
-#घोषणा elf_xword_to_cpu(x)	elf32_to_cpu(x)
-#पूर्ण_अगर
+#if ELF_BITS == 64
+static uint64_t elf64_to_cpu(uint64_t val)
+{
+	if (ehdr.e_ident[EI_DATA] == ELFDATA2LSB)
+		return le64_to_cpu(val);
+	else
+		return be64_to_cpu(val);
+}
+#define elf_addr_to_cpu(x)	elf64_to_cpu(x)
+#define elf_off_to_cpu(x)	elf64_to_cpu(x)
+#define elf_xword_to_cpu(x)	elf64_to_cpu(x)
+#else
+#define elf_addr_to_cpu(x)	elf32_to_cpu(x)
+#define elf_off_to_cpu(x)	elf32_to_cpu(x)
+#define elf_xword_to_cpu(x)	elf32_to_cpu(x)
+#endif
 
-अटल व्योम पढ़ो_ehdr(खाता *fp)
-अणु
-	अगर (ख_पढ़ो(&ehdr, माप(ehdr), 1, fp) != 1)
-		die("Cannot read ELF header: %s\n", म_त्रुटि(त्रुटि_सं));
+static void read_ehdr(FILE *fp)
+{
+	if (fread(&ehdr, sizeof(ehdr), 1, fp) != 1)
+		die("Cannot read ELF header: %s\n", strerror(errno));
 
-	अगर (स_भेद(ehdr.e_ident, ELFMAG, SELFMAG) != 0)
+	if (memcmp(ehdr.e_ident, ELFMAG, SELFMAG) != 0)
 		die("No ELF magic\n");
 
-	अगर (ehdr.e_ident[EI_CLASS] != ELF_CLASS)
+	if (ehdr.e_ident[EI_CLASS] != ELF_CLASS)
 		die("Not a %d bit executable\n", ELF_BITS);
 
-	अगर ((ehdr.e_ident[EI_DATA] != ELFDATA2LSB) &&
+	if ((ehdr.e_ident[EI_DATA] != ELFDATA2LSB) &&
 	    (ehdr.e_ident[EI_DATA] != ELFDATA2MSB))
 		die("Unknown ELF Endianness\n");
 
-	अगर (ehdr.e_ident[EI_VERSION] != EV_CURRENT)
+	if (ehdr.e_ident[EI_VERSION] != EV_CURRENT)
 		die("Unknown ELF version\n");
 
 	/* Convert the fields to native endian */
@@ -236,47 +235,47 @@
 	ehdr.e_shnum     = elf_half_to_cpu(ehdr.e_shnum);
 	ehdr.e_shstrndx  = elf_half_to_cpu(ehdr.e_shstrndx);
 
-	अगर ((ehdr.e_type != ET_EXEC) && (ehdr.e_type != ET_DYN))
+	if ((ehdr.e_type != ET_EXEC) && (ehdr.e_type != ET_DYN))
 		die("Unsupported ELF header type\n");
 
-	अगर (ehdr.e_machine != ELF_MACHINE)
+	if (ehdr.e_machine != ELF_MACHINE)
 		die("Not for %s\n", ELF_MACHINE_NAME);
 
-	अगर (ehdr.e_version != EV_CURRENT)
+	if (ehdr.e_version != EV_CURRENT)
 		die("Unknown ELF version\n");
 
-	अगर (ehdr.e_ehsize != माप(Elf_Ehdr))
+	if (ehdr.e_ehsize != sizeof(Elf_Ehdr))
 		die("Bad Elf header size\n");
 
-	अगर (ehdr.e_phentsize != माप(Elf_Phdr))
+	if (ehdr.e_phentsize != sizeof(Elf_Phdr))
 		die("Bad program header entry\n");
 
-	अगर (ehdr.e_shentsize != माप(Elf_Shdr))
+	if (ehdr.e_shentsize != sizeof(Elf_Shdr))
 		die("Bad section header entry\n");
 
-	अगर (ehdr.e_shstrndx >= ehdr.e_shnum)
+	if (ehdr.e_shstrndx >= ehdr.e_shnum)
 		die("String table index out of bounds\n");
-पूर्ण
+}
 
-अटल व्योम पढ़ो_shdrs(खाता *fp)
-अणु
-	पूर्णांक i;
+static void read_shdrs(FILE *fp)
+{
+	int i;
 	Elf_Shdr shdr;
 
-	secs = सुस्मृति(ehdr.e_shnum, माप(काष्ठा section));
-	अगर (!secs)
+	secs = calloc(ehdr.e_shnum, sizeof(struct section));
+	if (!secs)
 		die("Unable to allocate %d section headers\n", ehdr.e_shnum);
 
-	अगर (ख_जाओ(fp, ehdr.e_shoff, शुरू_से) < 0)
-		die("Seek to %d failed: %s\n", ehdr.e_shoff, म_त्रुटि(त्रुटि_सं));
+	if (fseek(fp, ehdr.e_shoff, SEEK_SET) < 0)
+		die("Seek to %d failed: %s\n", ehdr.e_shoff, strerror(errno));
 
-	क्रम (i = 0; i < ehdr.e_shnum; i++) अणु
-		काष्ठा section *sec = &secs[i];
+	for (i = 0; i < ehdr.e_shnum; i++) {
+		struct section *sec = &secs[i];
 
-		sec->shdr_offset = ख_बताओ(fp);
-		अगर (ख_पढ़ो(&shdr, माप(shdr), 1, fp) != 1)
+		sec->shdr_offset = ftell(fp);
+		if (fread(&shdr, sizeof(shdr), 1, fp) != 1)
 			die("Cannot read ELF section headers %d/%d: %s\n",
-			    i, ehdr.e_shnum, म_त्रुटि(त्रुटि_सं));
+			    i, ehdr.e_shnum, strerror(errno));
 		sec->shdr.sh_name      = elf_word_to_cpu(shdr.sh_name);
 		sec->shdr.sh_type      = elf_word_to_cpu(shdr.sh_type);
 		sec->shdr.sh_flags     = elf_xword_to_cpu(shdr.sh_flags);
@@ -287,396 +286,396 @@
 		sec->shdr.sh_info      = elf_word_to_cpu(shdr.sh_info);
 		sec->shdr.sh_addralign = elf_xword_to_cpu(shdr.sh_addralign);
 		sec->shdr.sh_entsize   = elf_xword_to_cpu(shdr.sh_entsize);
-		अगर (sec->shdr.sh_link < ehdr.e_shnum)
+		if (sec->shdr.sh_link < ehdr.e_shnum)
 			sec->link = &secs[sec->shdr.sh_link];
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम पढ़ो_strtअसल(खाता *fp)
-अणु
-	पूर्णांक i;
+static void read_strtabs(FILE *fp)
+{
+	int i;
 
-	क्रम (i = 0; i < ehdr.e_shnum; i++) अणु
-		काष्ठा section *sec = &secs[i];
+	for (i = 0; i < ehdr.e_shnum; i++) {
+		struct section *sec = &secs[i];
 
-		अगर (sec->shdr.sh_type != SHT_STRTAB)
-			जारी;
+		if (sec->shdr.sh_type != SHT_STRTAB)
+			continue;
 
-		sec->strtab = दो_स्मृति(sec->shdr.sh_size);
-		अगर (!sec->strtab)
+		sec->strtab = malloc(sec->shdr.sh_size);
+		if (!sec->strtab)
 			die("malloc of %d bytes for strtab failed\n",
 			    sec->shdr.sh_size);
 
-		अगर (ख_जाओ(fp, sec->shdr.sh_offset, शुरू_से) < 0)
+		if (fseek(fp, sec->shdr.sh_offset, SEEK_SET) < 0)
 			die("Seek to %d failed: %s\n",
-			    sec->shdr.sh_offset, म_त्रुटि(त्रुटि_सं));
+			    sec->shdr.sh_offset, strerror(errno));
 
-		अगर (ख_पढ़ो(sec->strtab, 1, sec->shdr.sh_size, fp) !=
+		if (fread(sec->strtab, 1, sec->shdr.sh_size, fp) !=
 		    sec->shdr.sh_size)
-			die("Cannot read symbol table: %s\n", म_त्रुटि(त्रुटि_सं));
-	पूर्ण
-पूर्ण
+			die("Cannot read symbol table: %s\n", strerror(errno));
+	}
+}
 
-अटल व्योम पढ़ो_symtअसल(खाता *fp)
-अणु
-	पूर्णांक i, j;
+static void read_symtabs(FILE *fp)
+{
+	int i, j;
 
-	क्रम (i = 0; i < ehdr.e_shnum; i++) अणु
-		काष्ठा section *sec = &secs[i];
-		अगर (sec->shdr.sh_type != SHT_SYMTAB)
-			जारी;
+	for (i = 0; i < ehdr.e_shnum; i++) {
+		struct section *sec = &secs[i];
+		if (sec->shdr.sh_type != SHT_SYMTAB)
+			continue;
 
-		sec->symtab = दो_स्मृति(sec->shdr.sh_size);
-		अगर (!sec->symtab)
+		sec->symtab = malloc(sec->shdr.sh_size);
+		if (!sec->symtab)
 			die("malloc of %d bytes for symtab failed\n",
 			    sec->shdr.sh_size);
 
-		अगर (ख_जाओ(fp, sec->shdr.sh_offset, शुरू_से) < 0)
+		if (fseek(fp, sec->shdr.sh_offset, SEEK_SET) < 0)
 			die("Seek to %d failed: %s\n",
-			    sec->shdr.sh_offset, म_त्रुटि(त्रुटि_सं));
+			    sec->shdr.sh_offset, strerror(errno));
 
-		अगर (ख_पढ़ो(sec->symtab, 1, sec->shdr.sh_size, fp) !=
+		if (fread(sec->symtab, 1, sec->shdr.sh_size, fp) !=
 		    sec->shdr.sh_size)
-			die("Cannot read symbol table: %s\n", म_त्रुटि(त्रुटि_सं));
+			die("Cannot read symbol table: %s\n", strerror(errno));
 
-		क्रम (j = 0; j < sec->shdr.sh_size/माप(Elf_Sym); j++) अणु
+		for (j = 0; j < sec->shdr.sh_size/sizeof(Elf_Sym); j++) {
 			Elf_Sym *sym = &sec->symtab[j];
 
 			sym->st_name  = elf_word_to_cpu(sym->st_name);
 			sym->st_value = elf_addr_to_cpu(sym->st_value);
 			sym->st_size  = elf_xword_to_cpu(sym->st_size);
 			sym->st_shndx = elf_half_to_cpu(sym->st_shndx);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम पढ़ो_relocs(खाता *fp)
-अणु
-	अटल अचिन्हित दीर्घ base = 0;
-	पूर्णांक i, j;
+static void read_relocs(FILE *fp)
+{
+	static unsigned long base = 0;
+	int i, j;
 
-	अगर (!base) अणु
-		काष्ठा section *sec = sec_lookup(".text");
+	if (!base) {
+		struct section *sec = sec_lookup(".text");
 
-		अगर (!sec)
+		if (!sec)
 			die("Could not find .text section\n");
 
 		base = sec->shdr.sh_addr;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ehdr.e_shnum; i++) अणु
-		काष्ठा section *sec = &secs[i];
+	for (i = 0; i < ehdr.e_shnum; i++) {
+		struct section *sec = &secs[i];
 
-		अगर (sec->shdr.sh_type != SHT_REL_TYPE)
-			जारी;
+		if (sec->shdr.sh_type != SHT_REL_TYPE)
+			continue;
 
-		sec->reltab = दो_स्मृति(sec->shdr.sh_size);
-		अगर (!sec->reltab)
+		sec->reltab = malloc(sec->shdr.sh_size);
+		if (!sec->reltab)
 			die("malloc of %d bytes for relocs failed\n",
 			    sec->shdr.sh_size);
 
-		अगर (ख_जाओ(fp, sec->shdr.sh_offset, शुरू_से) < 0)
+		if (fseek(fp, sec->shdr.sh_offset, SEEK_SET) < 0)
 			die("Seek to %d failed: %s\n",
-			    sec->shdr.sh_offset, म_त्रुटि(त्रुटि_सं));
+			    sec->shdr.sh_offset, strerror(errno));
 
-		अगर (ख_पढ़ो(sec->reltab, 1, sec->shdr.sh_size, fp) !=
+		if (fread(sec->reltab, 1, sec->shdr.sh_size, fp) !=
 		    sec->shdr.sh_size)
-			die("Cannot read symbol table: %s\n", म_त्रुटि(त्रुटि_सं));
+			die("Cannot read symbol table: %s\n", strerror(errno));
 
-		क्रम (j = 0; j < sec->shdr.sh_size/माप(Elf_Rel); j++) अणु
+		for (j = 0; j < sec->shdr.sh_size/sizeof(Elf_Rel); j++) {
 			Elf_Rel *rel = &sec->reltab[j];
 
 			rel->r_offset = elf_addr_to_cpu(rel->r_offset);
-			/* Set offset पूर्णांकo kernel image */
+			/* Set offset into kernel image */
 			rel->r_offset -= base;
-#अगर (ELF_BITS == 32)
+#if (ELF_BITS == 32)
 			rel->r_info   = elf_xword_to_cpu(rel->r_info);
-#अन्यथा
-			/* Convert MIPS64 RELA क्रमmat - only the symbol
+#else
+			/* Convert MIPS64 RELA format - only the symbol
 			 * index needs converting to native endianness
 			 */
 			rel->r_info   = rel->r_info;
 			ELF_R_SYM(rel->r_info) = elf32_to_cpu(ELF_R_SYM(rel->r_info));
-#पूर्ण_अगर
-#अगर (SHT_REL_TYPE == SHT_RELA)
+#endif
+#if (SHT_REL_TYPE == SHT_RELA)
 			rel->r_addend = elf_xword_to_cpu(rel->r_addend);
-#पूर्ण_अगर
-		पूर्ण
-	पूर्ण
-पूर्ण
+#endif
+		}
+	}
+}
 
-अटल व्योम हटाओ_relocs(खाता *fp)
-अणु
-	पूर्णांक i;
+static void remove_relocs(FILE *fp)
+{
+	int i;
 	Elf_Shdr shdr;
 
-	क्रम (i = 0; i < ehdr.e_shnum; i++) अणु
-		काष्ठा section *sec = &secs[i];
+	for (i = 0; i < ehdr.e_shnum; i++) {
+		struct section *sec = &secs[i];
 
-		अगर (sec->shdr.sh_type != SHT_REL_TYPE)
-			जारी;
+		if (sec->shdr.sh_type != SHT_REL_TYPE)
+			continue;
 
-		अगर (ख_जाओ(fp, sec->shdr_offset, शुरू_से) < 0)
+		if (fseek(fp, sec->shdr_offset, SEEK_SET) < 0)
 			die("Seek to %d failed: %s\n",
-			    sec->shdr_offset, म_त्रुटि(त्रुटि_सं));
+			    sec->shdr_offset, strerror(errno));
 
-		अगर (ख_पढ़ो(&shdr, माप(shdr), 1, fp) != 1)
+		if (fread(&shdr, sizeof(shdr), 1, fp) != 1)
 			die("Cannot read ELF section headers %d/%d: %s\n",
-			    i, ehdr.e_shnum, म_त्रुटि(त्रुटि_सं));
+			    i, ehdr.e_shnum, strerror(errno));
 
 		/* Set relocation section size to 0, effectively removing it.
-		 * This is necessary due to lack of support क्रम relocations
+		 * This is necessary due to lack of support for relocations
 		 * in objcopy when creating 32bit elf from 64bit elf.
 		 */
 		shdr.sh_size = 0;
 
-		अगर (ख_जाओ(fp, sec->shdr_offset, शुरू_से) < 0)
+		if (fseek(fp, sec->shdr_offset, SEEK_SET) < 0)
 			die("Seek to %d failed: %s\n",
-			    sec->shdr_offset, म_त्रुटि(त्रुटि_सं));
+			    sec->shdr_offset, strerror(errno));
 
-		अगर (ख_डालो(&shdr, माप(shdr), 1, fp) != 1)
+		if (fwrite(&shdr, sizeof(shdr), 1, fp) != 1)
 			die("Cannot write ELF section headers %d/%d: %s\n",
-			    i, ehdr.e_shnum, म_त्रुटि(त्रुटि_सं));
-	पूर्ण
-पूर्ण
+			    i, ehdr.e_shnum, strerror(errno));
+	}
+}
 
-अटल व्योम add_reloc(काष्ठा relocs *r, uपूर्णांक32_t offset, अचिन्हित type)
-अणु
+static void add_reloc(struct relocs *r, uint32_t offset, unsigned type)
+{
 	/* Relocation representation in binary table:
 	 * |76543210|76543210|76543210|76543210|
 	 * |  Type  |  offset from _text >> 2  |
 	 */
 	offset >>= 2;
-	अगर (offset > 0x00FFFFFF)
+	if (offset > 0x00FFFFFF)
 		die("Kernel image exceeds maximum size for relocation!\n");
 
 	offset = (offset & 0x00FFFFFF) | ((type & 0xFF) << 24);
 
-	अगर (r->count == r->size) अणु
-		अचिन्हित दीर्घ newsize = r->size + 50000;
-		व्योम *mem = पुनः_स्मृति(r->offset, newsize * माप(r->offset[0]));
+	if (r->count == r->size) {
+		unsigned long newsize = r->size + 50000;
+		void *mem = realloc(r->offset, newsize * sizeof(r->offset[0]));
 
-		अगर (!mem)
+		if (!mem)
 			die("realloc failed\n");
 
 		r->offset = mem;
 		r->size = newsize;
-	पूर्ण
+	}
 	r->offset[r->count++] = offset;
-पूर्ण
+}
 
-अटल व्योम walk_relocs(पूर्णांक (*process)(काष्ठा section *sec, Elf_Rel *rel,
-			Elf_Sym *sym, स्थिर अक्षर *symname))
-अणु
-	पूर्णांक i;
+static void walk_relocs(int (*process)(struct section *sec, Elf_Rel *rel,
+			Elf_Sym *sym, const char *symname))
+{
+	int i;
 
 	/* Walk through the relocations */
-	क्रम (i = 0; i < ehdr.e_shnum; i++) अणु
-		अक्षर *sym_strtab;
+	for (i = 0; i < ehdr.e_shnum; i++) {
+		char *sym_strtab;
 		Elf_Sym *sh_symtab;
-		काष्ठा section *sec_applies, *sec_symtab;
-		पूर्णांक j;
-		काष्ठा section *sec = &secs[i];
+		struct section *sec_applies, *sec_symtab;
+		int j;
+		struct section *sec = &secs[i];
 
-		अगर (sec->shdr.sh_type != SHT_REL_TYPE)
-			जारी;
+		if (sec->shdr.sh_type != SHT_REL_TYPE)
+			continue;
 
 		sec_symtab  = sec->link;
 		sec_applies = &secs[sec->shdr.sh_info];
-		अगर (!(sec_applies->shdr.sh_flags & SHF_ALLOC))
-			जारी;
+		if (!(sec_applies->shdr.sh_flags & SHF_ALLOC))
+			continue;
 
 		sh_symtab = sec_symtab->symtab;
 		sym_strtab = sec_symtab->link->strtab;
-		क्रम (j = 0; j < sec->shdr.sh_size/माप(Elf_Rel); j++) अणु
+		for (j = 0; j < sec->shdr.sh_size/sizeof(Elf_Rel); j++) {
 			Elf_Rel *rel = &sec->reltab[j];
 			Elf_Sym *sym = &sh_symtab[ELF_R_SYM(rel->r_info)];
-			स्थिर अक्षर *symname = sym_name(sym_strtab, sym);
+			const char *symname = sym_name(sym_strtab, sym);
 
 			process(sec, rel, sym, symname);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक करो_reloc(काष्ठा section *sec, Elf_Rel *rel, Elf_Sym *sym,
-		      स्थिर अक्षर *symname)
-अणु
-	अचिन्हित r_type = ELF_R_TYPE(rel->r_info);
-	अचिन्हित bind = ELF_ST_BIND(sym->st_info);
+static int do_reloc(struct section *sec, Elf_Rel *rel, Elf_Sym *sym,
+		      const char *symname)
+{
+	unsigned r_type = ELF_R_TYPE(rel->r_info);
+	unsigned bind = ELF_ST_BIND(sym->st_info);
 
-	अगर ((bind == STB_WEAK) && (sym->st_value == 0)) अणु
+	if ((bind == STB_WEAK) && (sym->st_value == 0)) {
 		/* Don't relocate weak symbols without a target */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (regex_skip_reloc(symname))
-		वापस 0;
+	if (regex_skip_reloc(symname))
+		return 0;
 
-	चयन (r_type) अणु
-	हाल R_MIPS_NONE:
-	हाल R_MIPS_REL32:
-	हाल R_MIPS_PC16:
-	हाल R_MIPS_PC21_S2:
-	हाल R_MIPS_PC26_S2:
+	switch (r_type) {
+	case R_MIPS_NONE:
+	case R_MIPS_REL32:
+	case R_MIPS_PC16:
+	case R_MIPS_PC21_S2:
+	case R_MIPS_PC26_S2:
 		/*
-		 * NONE can be ignored and PC relative relocations करोn't
+		 * NONE can be ignored and PC relative relocations don't
 		 * need to be adjusted.
 		 */
-	हाल R_MIPS_HIGHEST:
-	हाल R_MIPS_HIGHER:
+	case R_MIPS_HIGHEST:
+	case R_MIPS_HIGHER:
 		/* We support relocating within the same 4Gb segment only,
 		 * thus leaving the top 32bits unchanged
 		 */
-	हाल R_MIPS_LO16:
+	case R_MIPS_LO16:
 		/* We support relocating by 64k jumps only
 		 * thus leaving the bottom 16bits unchanged
 		 */
-		अवरोध;
+		break;
 
-	हाल R_MIPS_64:
-	हाल R_MIPS_32:
-	हाल R_MIPS_26:
-	हाल R_MIPS_HI16:
+	case R_MIPS_64:
+	case R_MIPS_32:
+	case R_MIPS_26:
+	case R_MIPS_HI16:
 		add_reloc(&relocs, rel->r_offset, r_type);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		die("Unsupported relocation type: %s (%d)\n",
 		    rel_type(r_type), r_type);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ग_लिखो_reloc_as_bin(uपूर्णांक32_t v, खाता *f)
-अणु
-	अचिन्हित अक्षर buf[4];
+static int write_reloc_as_bin(uint32_t v, FILE *f)
+{
+	unsigned char buf[4];
 
 	v = cpu_to_elf32(v);
 
-	स_नकल(buf, &v, माप(uपूर्णांक32_t));
-	वापस ख_डालो(buf, 1, 4, f);
-पूर्ण
+	memcpy(buf, &v, sizeof(uint32_t));
+	return fwrite(buf, 1, 4, f);
+}
 
-अटल पूर्णांक ग_लिखो_reloc_as_text(uपूर्णांक32_t v, खाता *f)
-अणु
-	पूर्णांक res;
+static int write_reloc_as_text(uint32_t v, FILE *f)
+{
+	int res;
 
-	res = ख_लिखो(f, "\t.long 0x%08"PRIx32"\n", v);
-	अगर (res < 0)
-		वापस res;
-	अन्यथा
-		वापस माप(uपूर्णांक32_t);
-पूर्ण
+	res = fprintf(f, "\t.long 0x%08"PRIx32"\n", v);
+	if (res < 0)
+		return res;
+	else
+		return sizeof(uint32_t);
+}
 
-अटल व्योम emit_relocs(पूर्णांक as_text, पूर्णांक as_bin, खाता *outf)
-अणु
-	पूर्णांक i;
-	पूर्णांक (*ग_लिखो_reloc)(uपूर्णांक32_t, खाता *) = ग_लिखो_reloc_as_bin;
-	पूर्णांक size = 0;
-	पूर्णांक size_reserved;
-	काष्ठा section *sec_reloc;
+static void emit_relocs(int as_text, int as_bin, FILE *outf)
+{
+	int i;
+	int (*write_reloc)(uint32_t, FILE *) = write_reloc_as_bin;
+	int size = 0;
+	int size_reserved;
+	struct section *sec_reloc;
 
 	sec_reloc = sec_lookup(".data.reloc");
-	अगर (!sec_reloc)
+	if (!sec_reloc)
 		die("Could not find relocation section\n");
 
 	size_reserved = sec_reloc->shdr.sh_size;
 
 	/* Collect up the relocations */
-	walk_relocs(करो_reloc);
+	walk_relocs(do_reloc);
 
-	/* Prपूर्णांक the relocations */
-	अगर (as_text) अणु
-		/* Prपूर्णांक the relocations in a क्रमm suitable that
+	/* Print the relocations */
+	if (as_text) {
+		/* Print the relocations in a form suitable that
 		 * gas will like.
 		 */
-		म_लिखो(".section \".data.reloc\",\"a\"\n");
-		म_लिखो(".balign 4\n");
-		/* Output text to मानक_निकास */
-		ग_लिखो_reloc = ग_लिखो_reloc_as_text;
-		outf = मानक_निकास;
-	पूर्ण अन्यथा अगर (as_bin) अणु
-		/* Output raw binary to मानक_निकास */
-		outf = मानक_निकास;
-	पूर्ण अन्यथा अणु
+		printf(".section \".data.reloc\",\"a\"\n");
+		printf(".balign 4\n");
+		/* Output text to stdout */
+		write_reloc = write_reloc_as_text;
+		outf = stdout;
+	} else if (as_bin) {
+		/* Output raw binary to stdout */
+		outf = stdout;
+	} else {
 		/* Seek to offset of the relocation section.
-		* Each relocation is then written पूर्णांकo the
+		* Each relocation is then written into the
 		* vmlinux kernel image.
 		*/
-		अगर (ख_जाओ(outf, sec_reloc->shdr.sh_offset, शुरू_से) < 0) अणु
+		if (fseek(outf, sec_reloc->shdr.sh_offset, SEEK_SET) < 0) {
 			die("Seek to %d failed: %s\n",
-				sec_reloc->shdr.sh_offset, म_त्रुटि(त्रुटि_सं));
-		पूर्ण
-	पूर्ण
+				sec_reloc->shdr.sh_offset, strerror(errno));
+		}
+	}
 
-	क्रम (i = 0; i < relocs.count; i++)
-		size += ग_लिखो_reloc(relocs.offset[i], outf);
+	for (i = 0; i < relocs.count; i++)
+		size += write_reloc(relocs.offset[i], outf);
 
-	/* Prपूर्णांक a stop, but only अगर we've actually written some relocs */
-	अगर (size)
-		size += ग_लिखो_reloc(0, outf);
+	/* Print a stop, but only if we've actually written some relocs */
+	if (size)
+		size += write_reloc(0, outf);
 
-	अगर (size > size_reserved)
-		/* Die, but suggest a value क्रम CONFIG_RELOCATION_TABLE_SIZE
+	if (size > size_reserved)
+		/* Die, but suggest a value for CONFIG_RELOCATION_TABLE_SIZE
 		 * which will fix this problem and allow a bit of headroom
-		 * अगर more kernel features are enabled
+		 * if more kernel features are enabled
 		 */
 		die("Relocations overflow available space!\n" \
 		    "Please adjust CONFIG_RELOCATION_TABLE_SIZE " \
 		    "to at least 0x%08x\n", (size + 0x1000) & ~0xFFF);
-पूर्ण
+}
 
 /*
- * As an aid to debugging problems with dअगरferent linkers
- * prपूर्णांक summary inक्रमmation about the relocs.
- * Since dअगरferent linkers tend to emit the sections in
- * dअगरferent orders we use the section names in the output.
+ * As an aid to debugging problems with different linkers
+ * print summary information about the relocs.
+ * Since different linkers tend to emit the sections in
+ * different orders we use the section names in the output.
  */
-अटल पूर्णांक करो_reloc_info(काष्ठा section *sec, Elf_Rel *rel, ElfW(Sym) *sym,
-				स्थिर अक्षर *symname)
-अणु
-	म_लिखो("%16s  0x%08x  %16s  %40s  %16s\n",
+static int do_reloc_info(struct section *sec, Elf_Rel *rel, ElfW(Sym) *sym,
+				const char *symname)
+{
+	printf("%16s  0x%08x  %16s  %40s  %16s\n",
 		sec_name(sec->shdr.sh_info),
-		(अचिन्हित पूर्णांक)rel->r_offset,
+		(unsigned int)rel->r_offset,
 		rel_type(ELF_R_TYPE(rel->r_info)),
 		symname,
 		sec_name(sym->st_shndx));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम prपूर्णांक_reloc_info(व्योम)
-अणु
-	म_लिखो("%16s  %10s  %16s  %40s  %16s\n",
+static void print_reloc_info(void)
+{
+	printf("%16s  %10s  %16s  %40s  %16s\n",
 		"reloc section",
 		"offset",
 		"reloc type",
 		"symbol",
 		"symbol section");
-	walk_relocs(करो_reloc_info);
-पूर्ण
+	walk_relocs(do_reloc_info);
+}
 
-#अगर ELF_BITS == 64
+#if ELF_BITS == 64
 # define process process_64
-#अन्यथा
+#else
 # define process process_32
-#पूर्ण_अगर
+#endif
 
-व्योम process(खाता *fp, पूर्णांक as_text, पूर्णांक as_bin,
-	     पूर्णांक show_reloc_info, पूर्णांक keep_relocs)
-अणु
+void process(FILE *fp, int as_text, int as_bin,
+	     int show_reloc_info, int keep_relocs)
+{
 	regex_init();
-	पढ़ो_ehdr(fp);
-	पढ़ो_shdrs(fp);
-	पढ़ो_strtअसल(fp);
-	पढ़ो_symtअसल(fp);
-	पढ़ो_relocs(fp);
-	अगर (show_reloc_info) अणु
-		prपूर्णांक_reloc_info();
-		वापस;
-	पूर्ण
+	read_ehdr(fp);
+	read_shdrs(fp);
+	read_strtabs(fp);
+	read_symtabs(fp);
+	read_relocs(fp);
+	if (show_reloc_info) {
+		print_reloc_info();
+		return;
+	}
 	emit_relocs(as_text, as_bin, fp);
-	अगर (!keep_relocs)
-		हटाओ_relocs(fp);
-पूर्ण
+	if (!keep_relocs)
+		remove_relocs(fp);
+}

@@ -1,123 +1,122 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /*
  *  Handling Page Tables through page fragments
  *
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/hardirq.h>
-#समावेश <linux/hugetlb.h>
-#समावेश <यंत्र/pgभाग.स>
-#समावेश <यंत्र/tlbflush.h>
-#समावेश <यंत्र/tlb.h>
+#include <linux/kernel.h>
+#include <linux/gfp.h>
+#include <linux/mm.h>
+#include <linux/percpu.h>
+#include <linux/hardirq.h>
+#include <linux/hugetlb.h>
+#include <asm/pgalloc.h>
+#include <asm/tlbflush.h>
+#include <asm/tlb.h>
 
-व्योम pte_frag_destroy(व्योम *pte_frag)
-अणु
-	पूर्णांक count;
-	काष्ठा page *page;
+void pte_frag_destroy(void *pte_frag)
+{
+	int count;
+	struct page *page;
 
 	page = virt_to_page(pte_frag);
 	/* drop all the pending references */
-	count = ((अचिन्हित दीर्घ)pte_frag & ~PAGE_MASK) >> PTE_FRAG_SIZE_SHIFT;
+	count = ((unsigned long)pte_frag & ~PAGE_MASK) >> PTE_FRAG_SIZE_SHIFT;
 	/* We allow PTE_FRAG_NR fragments from a PTE page */
-	अगर (atomic_sub_and_test(PTE_FRAG_NR - count, &page->pt_frag_refcount)) अणु
+	if (atomic_sub_and_test(PTE_FRAG_NR - count, &page->pt_frag_refcount)) {
 		pgtable_pte_page_dtor(page);
-		__मुक्त_page(page);
-	पूर्ण
-पूर्ण
+		__free_page(page);
+	}
+}
 
-अटल pte_t *get_pte_from_cache(काष्ठा mm_काष्ठा *mm)
-अणु
-	व्योम *pte_frag, *ret;
+static pte_t *get_pte_from_cache(struct mm_struct *mm)
+{
+	void *pte_frag, *ret;
 
-	अगर (PTE_FRAG_NR == 1)
-		वापस शून्य;
+	if (PTE_FRAG_NR == 1)
+		return NULL;
 
 	spin_lock(&mm->page_table_lock);
 	ret = pte_frag_get(&mm->context);
-	अगर (ret) अणु
+	if (ret) {
 		pte_frag = ret + PTE_FRAG_SIZE;
 		/*
-		 * If we have taken up all the fragments mark PTE page शून्य
+		 * If we have taken up all the fragments mark PTE page NULL
 		 */
-		अगर (((अचिन्हित दीर्घ)pte_frag & ~PAGE_MASK) == 0)
-			pte_frag = शून्य;
+		if (((unsigned long)pte_frag & ~PAGE_MASK) == 0)
+			pte_frag = NULL;
 		pte_frag_set(&mm->context, pte_frag);
-	पूर्ण
+	}
 	spin_unlock(&mm->page_table_lock);
-	वापस (pte_t *)ret;
-पूर्ण
+	return (pte_t *)ret;
+}
 
-अटल pte_t *__alloc_क्रम_ptecache(काष्ठा mm_काष्ठा *mm, पूर्णांक kernel)
-अणु
-	व्योम *ret = शून्य;
-	काष्ठा page *page;
+static pte_t *__alloc_for_ptecache(struct mm_struct *mm, int kernel)
+{
+	void *ret = NULL;
+	struct page *page;
 
-	अगर (!kernel) अणु
+	if (!kernel) {
 		page = alloc_page(PGALLOC_GFP | __GFP_ACCOUNT);
-		अगर (!page)
-			वापस शून्य;
-		अगर (!pgtable_pte_page_ctor(page)) अणु
-			__मुक्त_page(page);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		if (!page)
+			return NULL;
+		if (!pgtable_pte_page_ctor(page)) {
+			__free_page(page);
+			return NULL;
+		}
+	} else {
 		page = alloc_page(PGALLOC_GFP);
-		अगर (!page)
-			वापस शून्य;
-	पूर्ण
+		if (!page)
+			return NULL;
+	}
 
 	atomic_set(&page->pt_frag_refcount, 1);
 
 	ret = page_address(page);
 	/*
-	 * अगर we support only one fragment just वापस the
+	 * if we support only one fragment just return the
 	 * allocated page.
 	 */
-	अगर (PTE_FRAG_NR == 1)
-		वापस ret;
+	if (PTE_FRAG_NR == 1)
+		return ret;
 	spin_lock(&mm->page_table_lock);
 	/*
-	 * If we find pgtable_page set, we वापस
+	 * If we find pgtable_page set, we return
 	 * the allocated page with single fragement
 	 * count.
 	 */
-	अगर (likely(!pte_frag_get(&mm->context))) अणु
+	if (likely(!pte_frag_get(&mm->context))) {
 		atomic_set(&page->pt_frag_refcount, PTE_FRAG_NR);
 		pte_frag_set(&mm->context, ret + PTE_FRAG_SIZE);
-	पूर्ण
+	}
 	spin_unlock(&mm->page_table_lock);
 
-	वापस (pte_t *)ret;
-पूर्ण
+	return (pte_t *)ret;
+}
 
-pte_t *pte_fragment_alloc(काष्ठा mm_काष्ठा *mm, पूर्णांक kernel)
-अणु
+pte_t *pte_fragment_alloc(struct mm_struct *mm, int kernel)
+{
 	pte_t *pte;
 
 	pte = get_pte_from_cache(mm);
-	अगर (pte)
-		वापस pte;
+	if (pte)
+		return pte;
 
-	वापस __alloc_क्रम_ptecache(mm, kernel);
-पूर्ण
+	return __alloc_for_ptecache(mm, kernel);
+}
 
-व्योम pte_fragment_मुक्त(अचिन्हित दीर्घ *table, पूर्णांक kernel)
-अणु
-	काष्ठा page *page = virt_to_page(table);
+void pte_fragment_free(unsigned long *table, int kernel)
+{
+	struct page *page = virt_to_page(table);
 
-	अगर (PageReserved(page))
-		वापस मुक्त_reserved_page(page);
+	if (PageReserved(page))
+		return free_reserved_page(page);
 
-	BUG_ON(atomic_पढ़ो(&page->pt_frag_refcount) <= 0);
-	अगर (atomic_dec_and_test(&page->pt_frag_refcount)) अणु
-		अगर (!kernel)
+	BUG_ON(atomic_read(&page->pt_frag_refcount) <= 0);
+	if (atomic_dec_and_test(&page->pt_frag_refcount)) {
+		if (!kernel)
 			pgtable_pte_page_dtor(page);
-		__मुक्त_page(page);
-	पूर्ण
-पूर्ण
+		__free_page(page);
+	}
+}

@@ -1,196 +1,195 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  *  Kernel Probes (KProbes)
  *
  * Copyright IBM Corp. 2002, 2006
  *
- * s390 port, used ppc64 as ढाँचा. Mike Grundy <grundym@us.ibm.com>
+ * s390 port, used ppc64 as template. Mike Grundy <grundym@us.ibm.com>
  */
 
-#समावेश <linux/moduleloader.h>
-#समावेश <linux/kprobes.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/preempt.h>
-#समावेश <linux/stop_machine.h>
-#समावेश <linux/kdebug.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/extable.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/hardirq.h>
-#समावेश <linux/ftrace.h>
-#समावेश <यंत्र/set_memory.h>
-#समावेश <यंत्र/sections.h>
-#समावेश <यंत्र/dis.h>
-#समावेश "entry.h"
+#include <linux/moduleloader.h>
+#include <linux/kprobes.h>
+#include <linux/ptrace.h>
+#include <linux/preempt.h>
+#include <linux/stop_machine.h>
+#include <linux/kdebug.h>
+#include <linux/uaccess.h>
+#include <linux/extable.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/hardirq.h>
+#include <linux/ftrace.h>
+#include <asm/set_memory.h>
+#include <asm/sections.h>
+#include <asm/dis.h>
+#include "entry.h"
 
-DEFINE_PER_CPU(काष्ठा kprobe *, current_kprobe);
-DEFINE_PER_CPU(काष्ठा kprobe_ctlblk, kprobe_ctlblk);
+DEFINE_PER_CPU(struct kprobe *, current_kprobe);
+DEFINE_PER_CPU(struct kprobe_ctlblk, kprobe_ctlblk);
 
-काष्ठा kretprobe_blackpoपूर्णांक kretprobe_blacklist[] = अणु पूर्ण;
+struct kretprobe_blackpoint kretprobe_blacklist[] = { };
 
 DEFINE_INSN_CACHE_OPS(s390_insn);
 
-अटल पूर्णांक insn_page_in_use;
+static int insn_page_in_use;
 
-व्योम *alloc_insn_page(व्योम)
-अणु
-	व्योम *page;
+void *alloc_insn_page(void)
+{
+	void *page;
 
 	page = module_alloc(PAGE_SIZE);
-	अगर (!page)
-		वापस शून्य;
-	__set_memory((अचिन्हित दीर्घ) page, 1, SET_MEMORY_RO | SET_MEMORY_X);
-	वापस page;
-पूर्ण
+	if (!page)
+		return NULL;
+	__set_memory((unsigned long) page, 1, SET_MEMORY_RO | SET_MEMORY_X);
+	return page;
+}
 
-व्योम मुक्त_insn_page(व्योम *page)
-अणु
-	module_memमुक्त(page);
-पूर्ण
+void free_insn_page(void *page)
+{
+	module_memfree(page);
+}
 
-अटल व्योम *alloc_s390_insn_page(व्योम)
-अणु
-	अगर (xchg(&insn_page_in_use, 1) == 1)
-		वापस शून्य;
-	वापस &kprobes_insn_page;
-पूर्ण
+static void *alloc_s390_insn_page(void)
+{
+	if (xchg(&insn_page_in_use, 1) == 1)
+		return NULL;
+	return &kprobes_insn_page;
+}
 
-अटल व्योम मुक्त_s390_insn_page(व्योम *page)
-अणु
+static void free_s390_insn_page(void *page)
+{
 	xchg(&insn_page_in_use, 0);
-पूर्ण
+}
 
-काष्ठा kprobe_insn_cache kprobe_s390_insn_slots = अणु
+struct kprobe_insn_cache kprobe_s390_insn_slots = {
 	.mutex = __MUTEX_INITIALIZER(kprobe_s390_insn_slots.mutex),
 	.alloc = alloc_s390_insn_page,
-	.मुक्त = मुक्त_s390_insn_page,
+	.free = free_s390_insn_page,
 	.pages = LIST_HEAD_INIT(kprobe_s390_insn_slots.pages),
 	.insn_size = MAX_INSN_SIZE,
-पूर्ण;
+};
 
-अटल व्योम copy_inकाष्ठाion(काष्ठा kprobe *p)
-अणु
+static void copy_instruction(struct kprobe *p)
+{
 	kprobe_opcode_t insn[MAX_INSN_SIZE];
 	s64 disp, new_disp;
 	u64 addr, new_addr;
-	अचिन्हित पूर्णांक len;
+	unsigned int len;
 
 	len = insn_length(*p->addr >> 8);
-	स_नकल(&insn, p->addr, len);
+	memcpy(&insn, p->addr, len);
 	p->opcode = insn[0];
-	अगर (probe_is_insn_relative_दीर्घ(&insn[0])) अणु
+	if (probe_is_insn_relative_long(&insn[0])) {
 		/*
-		 * For pc-relative inकाष्ठाions in RIL-b or RIL-c क्रमmat patch
-		 * the RI2 displacement field. We have alपढ़ोy made sure that
-		 * the insn slot क्रम the patched inकाष्ठाion is within the same
-		 * 2GB area as the original inकाष्ठाion (either kernel image or
-		 * module area). Thereक्रमe the new displacement will always fit.
+		 * For pc-relative instructions in RIL-b or RIL-c format patch
+		 * the RI2 displacement field. We have already made sure that
+		 * the insn slot for the patched instruction is within the same
+		 * 2GB area as the original instruction (either kernel image or
+		 * module area). Therefore the new displacement will always fit.
 		 */
 		disp = *(s32 *)&insn[1];
-		addr = (u64)(अचिन्हित दीर्घ)p->addr;
-		new_addr = (u64)(अचिन्हित दीर्घ)p->ainsn.insn;
+		addr = (u64)(unsigned long)p->addr;
+		new_addr = (u64)(unsigned long)p->ainsn.insn;
 		new_disp = ((addr + (disp * 2)) - new_addr) / 2;
 		*(s32 *)&insn[1] = new_disp;
-	पूर्ण
-	s390_kernel_ग_लिखो(p->ainsn.insn, &insn, len);
-पूर्ण
-NOKPROBE_SYMBOL(copy_inकाष्ठाion);
+	}
+	s390_kernel_write(p->ainsn.insn, &insn, len);
+}
+NOKPROBE_SYMBOL(copy_instruction);
 
-अटल अंतरभूत पूर्णांक is_kernel_addr(व्योम *addr)
-अणु
-	वापस addr < (व्योम *)_end;
-पूर्ण
+static inline int is_kernel_addr(void *addr)
+{
+	return addr < (void *)_end;
+}
 
-अटल पूर्णांक s390_get_insn_slot(काष्ठा kprobe *p)
-अणु
+static int s390_get_insn_slot(struct kprobe *p)
+{
 	/*
 	 * Get an insn slot that is within the same 2GB area like the original
-	 * inकाष्ठाion. That way inकाष्ठाions with a 32bit चिन्हित displacement
+	 * instruction. That way instructions with a 32bit signed displacement
 	 * field can be patched and executed within the insn slot.
 	 */
-	p->ainsn.insn = शून्य;
-	अगर (is_kernel_addr(p->addr))
+	p->ainsn.insn = NULL;
+	if (is_kernel_addr(p->addr))
 		p->ainsn.insn = get_s390_insn_slot();
-	अन्यथा अगर (is_module_addr(p->addr))
+	else if (is_module_addr(p->addr))
 		p->ainsn.insn = get_insn_slot();
-	वापस p->ainsn.insn ? 0 : -ENOMEM;
-पूर्ण
+	return p->ainsn.insn ? 0 : -ENOMEM;
+}
 NOKPROBE_SYMBOL(s390_get_insn_slot);
 
-अटल व्योम s390_मुक्त_insn_slot(काष्ठा kprobe *p)
-अणु
-	अगर (!p->ainsn.insn)
-		वापस;
-	अगर (is_kernel_addr(p->addr))
-		मुक्त_s390_insn_slot(p->ainsn.insn, 0);
-	अन्यथा
-		मुक्त_insn_slot(p->ainsn.insn, 0);
-	p->ainsn.insn = शून्य;
-पूर्ण
-NOKPROBE_SYMBOL(s390_मुक्त_insn_slot);
+static void s390_free_insn_slot(struct kprobe *p)
+{
+	if (!p->ainsn.insn)
+		return;
+	if (is_kernel_addr(p->addr))
+		free_s390_insn_slot(p->ainsn.insn, 0);
+	else
+		free_insn_slot(p->ainsn.insn, 0);
+	p->ainsn.insn = NULL;
+}
+NOKPROBE_SYMBOL(s390_free_insn_slot);
 
-पूर्णांक arch_prepare_kprobe(काष्ठा kprobe *p)
-अणु
-	अगर ((अचिन्हित दीर्घ) p->addr & 0x01)
-		वापस -EINVAL;
-	/* Make sure the probe isn't going on a dअगरficult inकाष्ठाion */
-	अगर (probe_is_prohibited_opcode(p->addr))
-		वापस -EINVAL;
-	अगर (s390_get_insn_slot(p))
-		वापस -ENOMEM;
-	copy_inकाष्ठाion(p);
-	वापस 0;
-पूर्ण
+int arch_prepare_kprobe(struct kprobe *p)
+{
+	if ((unsigned long) p->addr & 0x01)
+		return -EINVAL;
+	/* Make sure the probe isn't going on a difficult instruction */
+	if (probe_is_prohibited_opcode(p->addr))
+		return -EINVAL;
+	if (s390_get_insn_slot(p))
+		return -ENOMEM;
+	copy_instruction(p);
+	return 0;
+}
 NOKPROBE_SYMBOL(arch_prepare_kprobe);
 
-काष्ठा swap_insn_args अणु
-	काष्ठा kprobe *p;
-	अचिन्हित पूर्णांक arm_kprobe : 1;
-पूर्ण;
+struct swap_insn_args {
+	struct kprobe *p;
+	unsigned int arm_kprobe : 1;
+};
 
-अटल पूर्णांक swap_inकाष्ठाion(व्योम *data)
-अणु
-	काष्ठा swap_insn_args *args = data;
-	काष्ठा kprobe *p = args->p;
+static int swap_instruction(void *data)
+{
+	struct swap_insn_args *args = data;
+	struct kprobe *p = args->p;
 	u16 opc;
 
 	opc = args->arm_kprobe ? BREAKPOINT_INSTRUCTION : p->opcode;
-	s390_kernel_ग_लिखो(p->addr, &opc, माप(opc));
-	वापस 0;
-पूर्ण
-NOKPROBE_SYMBOL(swap_inकाष्ठाion);
+	s390_kernel_write(p->addr, &opc, sizeof(opc));
+	return 0;
+}
+NOKPROBE_SYMBOL(swap_instruction);
 
-व्योम arch_arm_kprobe(काष्ठा kprobe *p)
-अणु
-	काष्ठा swap_insn_args args = अणु.p = p, .arm_kprobe = 1पूर्ण;
+void arch_arm_kprobe(struct kprobe *p)
+{
+	struct swap_insn_args args = {.p = p, .arm_kprobe = 1};
 
-	stop_machine_cpuslocked(swap_inकाष्ठाion, &args, शून्य);
-पूर्ण
+	stop_machine_cpuslocked(swap_instruction, &args, NULL);
+}
 NOKPROBE_SYMBOL(arch_arm_kprobe);
 
-व्योम arch_disarm_kprobe(काष्ठा kprobe *p)
-अणु
-	काष्ठा swap_insn_args args = अणु.p = p, .arm_kprobe = 0पूर्ण;
+void arch_disarm_kprobe(struct kprobe *p)
+{
+	struct swap_insn_args args = {.p = p, .arm_kprobe = 0};
 
-	stop_machine_cpuslocked(swap_inकाष्ठाion, &args, शून्य);
-पूर्ण
+	stop_machine_cpuslocked(swap_instruction, &args, NULL);
+}
 NOKPROBE_SYMBOL(arch_disarm_kprobe);
 
-व्योम arch_हटाओ_kprobe(काष्ठा kprobe *p)
-अणु
-	s390_मुक्त_insn_slot(p);
-पूर्ण
-NOKPROBE_SYMBOL(arch_हटाओ_kprobe);
+void arch_remove_kprobe(struct kprobe *p)
+{
+	s390_free_insn_slot(p);
+}
+NOKPROBE_SYMBOL(arch_remove_kprobe);
 
-अटल व्योम enable_singlestep(काष्ठा kprobe_ctlblk *kcb,
-			      काष्ठा pt_regs *regs,
-			      अचिन्हित दीर्घ ip)
-अणु
-	काष्ठा per_regs per_kprobe;
+static void enable_singlestep(struct kprobe_ctlblk *kcb,
+			      struct pt_regs *regs,
+			      unsigned long ip)
+{
+	struct per_regs per_kprobe;
 
-	/* Set up the PER control रेजिस्टरs %cr9-%cr11 */
+	/* Set up the PER control registers %cr9-%cr11 */
 	per_kprobe.control = PER_EVENT_IFETCH;
 	per_kprobe.start = ip;
 	per_kprobe.end = ip;
@@ -200,104 +199,104 @@ NOKPROBE_SYMBOL(arch_हटाओ_kprobe);
 	kcb->kprobe_saved_imask = regs->psw.mask &
 		(PSW_MASK_PER | PSW_MASK_IO | PSW_MASK_EXT);
 
-	/* Set PER control regs, turns on single step क्रम the given address */
+	/* Set PER control regs, turns on single step for the given address */
 	__ctl_load(per_kprobe, 9, 11);
 	regs->psw.mask |= PSW_MASK_PER;
 	regs->psw.mask &= ~(PSW_MASK_IO | PSW_MASK_EXT);
 	regs->psw.addr = ip;
-पूर्ण
+}
 NOKPROBE_SYMBOL(enable_singlestep);
 
-अटल व्योम disable_singlestep(काष्ठा kprobe_ctlblk *kcb,
-			       काष्ठा pt_regs *regs,
-			       अचिन्हित दीर्घ ip)
-अणु
+static void disable_singlestep(struct kprobe_ctlblk *kcb,
+			       struct pt_regs *regs,
+			       unsigned long ip)
+{
 	/* Restore control regs and psw mask, set new psw address */
 	__ctl_load(kcb->kprobe_saved_ctl, 9, 11);
 	regs->psw.mask &= ~PSW_MASK_PER;
 	regs->psw.mask |= kcb->kprobe_saved_imask;
 	regs->psw.addr = ip;
-पूर्ण
+}
 NOKPROBE_SYMBOL(disable_singlestep);
 
 /*
- * Activate a kprobe by storing its poपूर्णांकer to current_kprobe. The
+ * Activate a kprobe by storing its pointer to current_kprobe. The
  * previous kprobe is stored in kcb->prev_kprobe. A stack of up to
  * two kprobes can be active, see KPROBE_REENTER.
  */
-अटल व्योम push_kprobe(काष्ठा kprobe_ctlblk *kcb, काष्ठा kprobe *p)
-अणु
-	kcb->prev_kprobe.kp = __this_cpu_पढ़ो(current_kprobe);
+static void push_kprobe(struct kprobe_ctlblk *kcb, struct kprobe *p)
+{
+	kcb->prev_kprobe.kp = __this_cpu_read(current_kprobe);
 	kcb->prev_kprobe.status = kcb->kprobe_status;
-	__this_cpu_ग_लिखो(current_kprobe, p);
-पूर्ण
+	__this_cpu_write(current_kprobe, p);
+}
 NOKPROBE_SYMBOL(push_kprobe);
 
 /*
  * Deactivate a kprobe by backing up to the previous state. If the
- * current state is KPROBE_REENTER prev_kprobe.kp will be non-शून्य,
- * क्रम any other state prev_kprobe.kp will be शून्य.
+ * current state is KPROBE_REENTER prev_kprobe.kp will be non-NULL,
+ * for any other state prev_kprobe.kp will be NULL.
  */
-अटल व्योम pop_kprobe(काष्ठा kprobe_ctlblk *kcb)
-अणु
-	__this_cpu_ग_लिखो(current_kprobe, kcb->prev_kprobe.kp);
+static void pop_kprobe(struct kprobe_ctlblk *kcb)
+{
+	__this_cpu_write(current_kprobe, kcb->prev_kprobe.kp);
 	kcb->kprobe_status = kcb->prev_kprobe.status;
-पूर्ण
+}
 NOKPROBE_SYMBOL(pop_kprobe);
 
-व्योम arch_prepare_kretprobe(काष्ठा kretprobe_instance *ri, काष्ठा pt_regs *regs)
-अणु
+void arch_prepare_kretprobe(struct kretprobe_instance *ri, struct pt_regs *regs)
+{
 	ri->ret_addr = (kprobe_opcode_t *) regs->gprs[14];
-	ri->fp = शून्य;
+	ri->fp = NULL;
 
-	/* Replace the वापस addr with trampoline addr */
-	regs->gprs[14] = (अचिन्हित दीर्घ) &kretprobe_trampoline;
-पूर्ण
+	/* Replace the return addr with trampoline addr */
+	regs->gprs[14] = (unsigned long) &kretprobe_trampoline;
+}
 NOKPROBE_SYMBOL(arch_prepare_kretprobe);
 
-अटल व्योम kprobe_reenter_check(काष्ठा kprobe_ctlblk *kcb, काष्ठा kprobe *p)
-अणु
-	चयन (kcb->kprobe_status) अणु
-	हाल KPROBE_HIT_SSDONE:
-	हाल KPROBE_HIT_ACTIVE:
+static void kprobe_reenter_check(struct kprobe_ctlblk *kcb, struct kprobe *p)
+{
+	switch (kcb->kprobe_status) {
+	case KPROBE_HIT_SSDONE:
+	case KPROBE_HIT_ACTIVE:
 		kprobes_inc_nmissed_count(p);
-		अवरोध;
-	हाल KPROBE_HIT_SS:
-	हाल KPROBE_REENTER:
-	शेष:
+		break;
+	case KPROBE_HIT_SS:
+	case KPROBE_REENTER:
+	default:
 		/*
-		 * A kprobe on the code path to single step an inकाष्ठाion
+		 * A kprobe on the code path to single step an instruction
 		 * is a BUG. The code path resides in the .kprobes.text
-		 * section and is executed with पूर्णांकerrupts disabled.
+		 * section and is executed with interrupts disabled.
 		 */
 		pr_err("Invalid kprobe detected.\n");
 		dump_kprobe(p);
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 NOKPROBE_SYMBOL(kprobe_reenter_check);
 
-अटल पूर्णांक kprobe_handler(काष्ठा pt_regs *regs)
-अणु
-	काष्ठा kprobe_ctlblk *kcb;
-	काष्ठा kprobe *p;
+static int kprobe_handler(struct pt_regs *regs)
+{
+	struct kprobe_ctlblk *kcb;
+	struct kprobe *p;
 
 	/*
-	 * We want to disable preemption क्रम the entire duration of kprobe
+	 * We want to disable preemption for the entire duration of kprobe
 	 * processing. That includes the calls to the pre/post handlers
-	 * and single stepping the kprobe inकाष्ठाion.
+	 * and single stepping the kprobe instruction.
 	 */
 	preempt_disable();
 	kcb = get_kprobe_ctlblk();
-	p = get_kprobe((व्योम *)(regs->psw.addr - 2));
+	p = get_kprobe((void *)(regs->psw.addr - 2));
 
-	अगर (p) अणु
-		अगर (kprobe_running()) अणु
+	if (p) {
+		if (kprobe_running()) {
 			/*
-			 * We have hit a kprobe जबतक another is still
+			 * We have hit a kprobe while another is still
 			 * active. This can happen in the pre and post
-			 * handler. Single step the inकाष्ठाion of the
-			 * new probe but करो not call any handler function
+			 * handler. Single step the instruction of the
+			 * new probe but do not call any handler function
 			 * of this secondary kprobe.
 			 * push_kprobe and pop_kprobe saves and restores
 			 * the currently active kprobe.
@@ -305,247 +304,247 @@ NOKPROBE_SYMBOL(kprobe_reenter_check);
 			kprobe_reenter_check(kcb, p);
 			push_kprobe(kcb, p);
 			kcb->kprobe_status = KPROBE_REENTER;
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
-			 * If we have no pre-handler or it वापसed 0, we
-			 * जारी with single stepping. If we have a
-			 * pre-handler and it वापसed non-zero, it prepped
-			 * क्रम changing execution path, so get out करोing
+			 * If we have no pre-handler or it returned 0, we
+			 * continue with single stepping. If we have a
+			 * pre-handler and it returned non-zero, it prepped
+			 * for changing execution path, so get out doing
 			 * nothing more here.
 			 */
 			push_kprobe(kcb, p);
 			kcb->kprobe_status = KPROBE_HIT_ACTIVE;
-			अगर (p->pre_handler && p->pre_handler(p, regs)) अणु
+			if (p->pre_handler && p->pre_handler(p, regs)) {
 				pop_kprobe(kcb);
 				preempt_enable_no_resched();
-				वापस 1;
-			पूर्ण
+				return 1;
+			}
 			kcb->kprobe_status = KPROBE_HIT_SS;
-		पूर्ण
-		enable_singlestep(kcb, regs, (अचिन्हित दीर्घ) p->ainsn.insn);
-		वापस 1;
-	पूर्ण /* अन्यथा:
+		}
+		enable_singlestep(kcb, regs, (unsigned long) p->ainsn.insn);
+		return 1;
+	} /* else:
 	   * No kprobe at this address and no active kprobe. The trap has
-	   * not been caused by a kprobe अवरोधpoपूर्णांक. The race of अवरोधpoपूर्णांक
-	   * vs. kprobe हटाओ करोes not exist because on s390 as we use
-	   * stop_machine to arm/disarm the अवरोधpoपूर्णांकs.
+	   * not been caused by a kprobe breakpoint. The race of breakpoint
+	   * vs. kprobe remove does not exist because on s390 as we use
+	   * stop_machine to arm/disarm the breakpoints.
 	   */
 	preempt_enable_no_resched();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 NOKPROBE_SYMBOL(kprobe_handler);
 
 /*
- * Function वापस probe trampoline:
- *	- init_kprobes() establishes a probepoपूर्णांक here
- *	- When the probed function वापसs, this probe
+ * Function return probe trampoline:
+ *	- init_kprobes() establishes a probepoint here
+ *	- When the probed function returns, this probe
  *		causes the handlers to fire
  */
-अटल व्योम __used kretprobe_trampoline_holder(व्योम)
-अणु
-	यंत्र अस्थिर(".global kretprobe_trampoline\n"
+static void __used kretprobe_trampoline_holder(void)
+{
+	asm volatile(".global kretprobe_trampoline\n"
 		     "kretprobe_trampoline: bcr 0,0\n");
-पूर्ण
+}
 
 /*
  * Called when the probe at kretprobe trampoline is hit
  */
-अटल पूर्णांक trampoline_probe_handler(काष्ठा kprobe *p, काष्ठा pt_regs *regs)
-अणु
-	regs->psw.addr = __kretprobe_trampoline_handler(regs, &kretprobe_trampoline, शून्य);
+static int trampoline_probe_handler(struct kprobe *p, struct pt_regs *regs)
+{
+	regs->psw.addr = __kretprobe_trampoline_handler(regs, &kretprobe_trampoline, NULL);
 	/*
-	 * By वापसing a non-zero value, we are telling
-	 * kprobe_handler() that we करोn't want the post_handler
+	 * By returning a non-zero value, we are telling
+	 * kprobe_handler() that we don't want the post_handler
 	 * to run (and have re-enabled preemption)
 	 */
-	वापस 1;
-पूर्ण
+	return 1;
+}
 NOKPROBE_SYMBOL(trampoline_probe_handler);
 
 /*
  * Called after single-stepping.  p->addr is the address of the
- * inकाष्ठाion whose first byte has been replaced by the "breakpoint"
- * inकाष्ठाion.  To aव्योम the SMP problems that can occur when we
+ * instruction whose first byte has been replaced by the "breakpoint"
+ * instruction.  To avoid the SMP problems that can occur when we
  * temporarily put back the original opcode to single-step, we
- * single-stepped a copy of the inकाष्ठाion.  The address of this
+ * single-stepped a copy of the instruction.  The address of this
  * copy is p->ainsn.insn.
  */
-अटल व्योम resume_execution(काष्ठा kprobe *p, काष्ठा pt_regs *regs)
-अणु
-	काष्ठा kprobe_ctlblk *kcb = get_kprobe_ctlblk();
-	अचिन्हित दीर्घ ip = regs->psw.addr;
-	पूर्णांक fixup = probe_get_fixup_type(p->ainsn.insn);
+static void resume_execution(struct kprobe *p, struct pt_regs *regs)
+{
+	struct kprobe_ctlblk *kcb = get_kprobe_ctlblk();
+	unsigned long ip = regs->psw.addr;
+	int fixup = probe_get_fixup_type(p->ainsn.insn);
 
-	अगर (fixup & FIXUP_PSW_NORMAL)
-		ip += (अचिन्हित दीर्घ) p->addr - (अचिन्हित दीर्घ) p->ainsn.insn;
+	if (fixup & FIXUP_PSW_NORMAL)
+		ip += (unsigned long) p->addr - (unsigned long) p->ainsn.insn;
 
-	अगर (fixup & FIXUP_BRANCH_NOT_TAKEN) अणु
-		पूर्णांक ilen = insn_length(p->ainsn.insn[0] >> 8);
-		अगर (ip - (अचिन्हित दीर्घ) p->ainsn.insn == ilen)
-			ip = (अचिन्हित दीर्घ) p->addr + ilen;
-	पूर्ण
+	if (fixup & FIXUP_BRANCH_NOT_TAKEN) {
+		int ilen = insn_length(p->ainsn.insn[0] >> 8);
+		if (ip - (unsigned long) p->ainsn.insn == ilen)
+			ip = (unsigned long) p->addr + ilen;
+	}
 
-	अगर (fixup & FIXUP_RETURN_REGISTER) अणु
-		पूर्णांक reg = (p->ainsn.insn[0] & 0xf0) >> 4;
-		regs->gprs[reg] += (अचिन्हित दीर्घ) p->addr -
-				   (अचिन्हित दीर्घ) p->ainsn.insn;
-	पूर्ण
+	if (fixup & FIXUP_RETURN_REGISTER) {
+		int reg = (p->ainsn.insn[0] & 0xf0) >> 4;
+		regs->gprs[reg] += (unsigned long) p->addr -
+				   (unsigned long) p->ainsn.insn;
+	}
 
 	disable_singlestep(kcb, regs, ip);
-पूर्ण
+}
 NOKPROBE_SYMBOL(resume_execution);
 
-अटल पूर्णांक post_kprobe_handler(काष्ठा pt_regs *regs)
-अणु
-	काष्ठा kprobe_ctlblk *kcb = get_kprobe_ctlblk();
-	काष्ठा kprobe *p = kprobe_running();
+static int post_kprobe_handler(struct pt_regs *regs)
+{
+	struct kprobe_ctlblk *kcb = get_kprobe_ctlblk();
+	struct kprobe *p = kprobe_running();
 
-	अगर (!p)
-		वापस 0;
+	if (!p)
+		return 0;
 
-	अगर (kcb->kprobe_status != KPROBE_REENTER && p->post_handler) अणु
+	if (kcb->kprobe_status != KPROBE_REENTER && p->post_handler) {
 		kcb->kprobe_status = KPROBE_HIT_SSDONE;
 		p->post_handler(p, regs, 0);
-	पूर्ण
+	}
 
 	resume_execution(p, regs);
 	pop_kprobe(kcb);
 	preempt_enable_no_resched();
 
 	/*
-	 * अगर somebody अन्यथा is singlestepping across a probe poपूर्णांक, psw mask
-	 * will have PER set, in which हाल, जारी the reमुख्यing processing
-	 * of करो_single_step, as अगर this is not a probe hit.
+	 * if somebody else is singlestepping across a probe point, psw mask
+	 * will have PER set, in which case, continue the remaining processing
+	 * of do_single_step, as if this is not a probe hit.
 	 */
-	अगर (regs->psw.mask & PSW_MASK_PER)
-		वापस 0;
+	if (regs->psw.mask & PSW_MASK_PER)
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 NOKPROBE_SYMBOL(post_kprobe_handler);
 
-अटल पूर्णांक kprobe_trap_handler(काष्ठा pt_regs *regs, पूर्णांक trapnr)
-अणु
-	काष्ठा kprobe_ctlblk *kcb = get_kprobe_ctlblk();
-	काष्ठा kprobe *p = kprobe_running();
-	स्थिर काष्ठा exception_table_entry *entry;
+static int kprobe_trap_handler(struct pt_regs *regs, int trapnr)
+{
+	struct kprobe_ctlblk *kcb = get_kprobe_ctlblk();
+	struct kprobe *p = kprobe_running();
+	const struct exception_table_entry *entry;
 
-	चयन(kcb->kprobe_status) अणु
-	हाल KPROBE_HIT_SS:
-	हाल KPROBE_REENTER:
+	switch(kcb->kprobe_status) {
+	case KPROBE_HIT_SS:
+	case KPROBE_REENTER:
 		/*
-		 * We are here because the inकाष्ठाion being single
+		 * We are here because the instruction being single
 		 * stepped caused a page fault. We reset the current
-		 * kprobe and the nip poपूर्णांकs back to the probe address
-		 * and allow the page fault handler to जारी as a
+		 * kprobe and the nip points back to the probe address
+		 * and allow the page fault handler to continue as a
 		 * normal page fault.
 		 */
-		disable_singlestep(kcb, regs, (अचिन्हित दीर्घ) p->addr);
+		disable_singlestep(kcb, regs, (unsigned long) p->addr);
 		pop_kprobe(kcb);
 		preempt_enable_no_resched();
-		अवरोध;
-	हाल KPROBE_HIT_ACTIVE:
-	हाल KPROBE_HIT_SSDONE:
+		break;
+	case KPROBE_HIT_ACTIVE:
+	case KPROBE_HIT_SSDONE:
 		/*
-		 * We increment the nmissed count क्रम accounting,
-		 * we can also use npre/npostfault count क्रम accounting
-		 * these specअगरic fault हालs.
+		 * We increment the nmissed count for accounting,
+		 * we can also use npre/npostfault count for accounting
+		 * these specific fault cases.
 		 */
 		kprobes_inc_nmissed_count(p);
 
 		/*
-		 * We come here because inकाष्ठाions in the pre/post
+		 * We come here because instructions in the pre/post
 		 * handler caused the page_fault, this could happen
-		 * अगर handler tries to access user space by
+		 * if handler tries to access user space by
 		 * copy_from_user(), get_user() etc. Let the
-		 * user-specअगरied handler try to fix it first.
+		 * user-specified handler try to fix it first.
 		 */
-		अगर (p->fault_handler && p->fault_handler(p, regs, trapnr))
-			वापस 1;
+		if (p->fault_handler && p->fault_handler(p, regs, trapnr))
+			return 1;
 
 		/*
-		 * In हाल the user-specअगरied fault handler वापसed
+		 * In case the user-specified fault handler returned
 		 * zero, try to fix up.
 		 */
 		entry = s390_search_extables(regs->psw.addr);
-		अगर (entry && ex_handle(entry, regs))
-			वापस 1;
+		if (entry && ex_handle(entry, regs))
+			return 1;
 
 		/*
 		 * fixup_exception() could not handle it,
-		 * Let करो_page_fault() fix it.
+		 * Let do_page_fault() fix it.
 		 */
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
 NOKPROBE_SYMBOL(kprobe_trap_handler);
 
-पूर्णांक kprobe_fault_handler(काष्ठा pt_regs *regs, पूर्णांक trapnr)
-अणु
-	पूर्णांक ret;
+int kprobe_fault_handler(struct pt_regs *regs, int trapnr)
+{
+	int ret;
 
-	अगर (regs->psw.mask & (PSW_MASK_IO | PSW_MASK_EXT))
+	if (regs->psw.mask & (PSW_MASK_IO | PSW_MASK_EXT))
 		local_irq_disable();
 	ret = kprobe_trap_handler(regs, trapnr);
-	अगर (regs->psw.mask & (PSW_MASK_IO | PSW_MASK_EXT))
+	if (regs->psw.mask & (PSW_MASK_IO | PSW_MASK_EXT))
 		local_irq_restore(regs->psw.mask & ~PSW_MASK_PER);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 NOKPROBE_SYMBOL(kprobe_fault_handler);
 
 /*
- * Wrapper routine to क्रम handling exceptions.
+ * Wrapper routine to for handling exceptions.
  */
-पूर्णांक kprobe_exceptions_notअगरy(काष्ठा notअगरier_block *self,
-			     अचिन्हित दीर्घ val, व्योम *data)
-अणु
-	काष्ठा die_args *args = (काष्ठा die_args *) data;
-	काष्ठा pt_regs *regs = args->regs;
-	पूर्णांक ret = NOTIFY_DONE;
+int kprobe_exceptions_notify(struct notifier_block *self,
+			     unsigned long val, void *data)
+{
+	struct die_args *args = (struct die_args *) data;
+	struct pt_regs *regs = args->regs;
+	int ret = NOTIFY_DONE;
 
-	अगर (regs->psw.mask & (PSW_MASK_IO | PSW_MASK_EXT))
+	if (regs->psw.mask & (PSW_MASK_IO | PSW_MASK_EXT))
 		local_irq_disable();
 
-	चयन (val) अणु
-	हाल DIE_BPT:
-		अगर (kprobe_handler(regs))
+	switch (val) {
+	case DIE_BPT:
+		if (kprobe_handler(regs))
 			ret = NOTIFY_STOP;
-		अवरोध;
-	हाल DIE_SSTEP:
-		अगर (post_kprobe_handler(regs))
+		break;
+	case DIE_SSTEP:
+		if (post_kprobe_handler(regs))
 			ret = NOTIFY_STOP;
-		अवरोध;
-	हाल DIE_TRAP:
-		अगर (!preemptible() && kprobe_running() &&
+		break;
+	case DIE_TRAP:
+		if (!preemptible() && kprobe_running() &&
 		    kprobe_trap_handler(regs, args->trapnr))
 			ret = NOTIFY_STOP;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	अगर (regs->psw.mask & (PSW_MASK_IO | PSW_MASK_EXT))
+	if (regs->psw.mask & (PSW_MASK_IO | PSW_MASK_EXT))
 		local_irq_restore(regs->psw.mask & ~PSW_MASK_PER);
 
-	वापस ret;
-पूर्ण
-NOKPROBE_SYMBOL(kprobe_exceptions_notअगरy);
+	return ret;
+}
+NOKPROBE_SYMBOL(kprobe_exceptions_notify);
 
-अटल काष्ठा kprobe trampoline = अणु
+static struct kprobe trampoline = {
 	.addr = (kprobe_opcode_t *) &kretprobe_trampoline,
 	.pre_handler = trampoline_probe_handler
-पूर्ण;
+};
 
-पूर्णांक __init arch_init_kprobes(व्योम)
-अणु
-	वापस रेजिस्टर_kprobe(&trampoline);
-पूर्ण
+int __init arch_init_kprobes(void)
+{
+	return register_kprobe(&trampoline);
+}
 
-पूर्णांक arch_trampoline_kprobe(काष्ठा kprobe *p)
-अणु
-	वापस p->addr == (kprobe_opcode_t *) &kretprobe_trampoline;
-पूर्ण
+int arch_trampoline_kprobe(struct kprobe *p)
+{
+	return p->addr == (kprobe_opcode_t *) &kretprobe_trampoline;
+}
 NOKPROBE_SYMBOL(arch_trampoline_kprobe);

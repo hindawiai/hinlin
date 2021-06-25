@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,10 +23,10 @@
  *
  */
 
-#अगर_अघोषित __DAL_DCN10_CM_COMMON_H__
-#घोषणा __DAL_DCN10_CM_COMMON_H__
+#ifndef __DAL_DCN10_CM_COMMON_H__
+#define __DAL_DCN10_CM_COMMON_H__
 
-#घोषणा TF_HELPER_REG_FIELD_LIST(type) \
+#define TF_HELPER_REG_FIELD_LIST(type) \
 	type exp_region0_lut_offset; \
 	type exp_region0_num_segments; \
 	type exp_region1_lut_offset; \
@@ -39,80 +38,80 @@
 	type exp_resion_start_segment;\
 	type field_region_linear_slope
 
-#घोषणा TF_HELPER_REG_LIST \
-	uपूर्णांक32_t start_cntl_b; \
-	uपूर्णांक32_t start_cntl_g; \
-	uपूर्णांक32_t start_cntl_r; \
-	uपूर्णांक32_t start_slope_cntl_b; \
-	uपूर्णांक32_t start_slope_cntl_g; \
-	uपूर्णांक32_t start_slope_cntl_r; \
-	uपूर्णांक32_t start_end_cntl1_b; \
-	uपूर्णांक32_t start_end_cntl2_b; \
-	uपूर्णांक32_t start_end_cntl1_g; \
-	uपूर्णांक32_t start_end_cntl2_g; \
-	uपूर्णांक32_t start_end_cntl1_r; \
-	uपूर्णांक32_t start_end_cntl2_r; \
-	uपूर्णांक32_t region_start; \
-	uपूर्णांक32_t region_end
+#define TF_HELPER_REG_LIST \
+	uint32_t start_cntl_b; \
+	uint32_t start_cntl_g; \
+	uint32_t start_cntl_r; \
+	uint32_t start_slope_cntl_b; \
+	uint32_t start_slope_cntl_g; \
+	uint32_t start_slope_cntl_r; \
+	uint32_t start_end_cntl1_b; \
+	uint32_t start_end_cntl2_b; \
+	uint32_t start_end_cntl1_g; \
+	uint32_t start_end_cntl2_g; \
+	uint32_t start_end_cntl1_r; \
+	uint32_t start_end_cntl2_r; \
+	uint32_t region_start; \
+	uint32_t region_end
 
-#घोषणा TF_CM_REG_FIELD_LIST(type) \
+#define TF_CM_REG_FIELD_LIST(type) \
 	type csc_c11; \
 	type csc_c12
 
-काष्ठा xfer_func_shअगरt अणु
-	TF_HELPER_REG_FIELD_LIST(uपूर्णांक8_t);
-पूर्ण;
+struct xfer_func_shift {
+	TF_HELPER_REG_FIELD_LIST(uint8_t);
+};
 
-काष्ठा xfer_func_mask अणु
-	TF_HELPER_REG_FIELD_LIST(uपूर्णांक32_t);
-पूर्ण;
+struct xfer_func_mask {
+	TF_HELPER_REG_FIELD_LIST(uint32_t);
+};
 
-काष्ठा xfer_func_reg अणु
-	काष्ठा xfer_func_shअगरt shअगरts;
-	काष्ठा xfer_func_mask masks;
+struct xfer_func_reg {
+	struct xfer_func_shift shifts;
+	struct xfer_func_mask masks;
 
 	TF_HELPER_REG_LIST;
-पूर्ण;
+};
 
-काष्ठा cm_color_matrix_shअगरt अणु
-	TF_CM_REG_FIELD_LIST(uपूर्णांक8_t);
-पूर्ण;
+struct cm_color_matrix_shift {
+	TF_CM_REG_FIELD_LIST(uint8_t);
+};
 
-काष्ठा cm_color_matrix_mask अणु
-	TF_CM_REG_FIELD_LIST(uपूर्णांक32_t);
-पूर्ण;
+struct cm_color_matrix_mask {
+	TF_CM_REG_FIELD_LIST(uint32_t);
+};
 
-काष्ठा color_matrices_regअणु
-	काष्ठा cm_color_matrix_shअगरt shअगरts;
-	काष्ठा cm_color_matrix_mask masks;
+struct color_matrices_reg{
+	struct cm_color_matrix_shift shifts;
+	struct cm_color_matrix_mask masks;
 
-	uपूर्णांक32_t csc_c11_c12;
-	uपूर्णांक32_t csc_c33_c34;
-पूर्ण;
+	uint32_t csc_c11_c12;
+	uint32_t csc_c33_c34;
+};
 
-व्योम cm_helper_program_color_matrices(
-		काष्ठा dc_context *ctx,
-		स्थिर uपूर्णांक16_t *regval,
-		स्थिर काष्ठा color_matrices_reg *reg);
+void cm_helper_program_color_matrices(
+		struct dc_context *ctx,
+		const uint16_t *regval,
+		const struct color_matrices_reg *reg);
 
-व्योम cm_helper_program_xfer_func(
-		काष्ठा dc_context *ctx,
-		स्थिर काष्ठा pwl_params *params,
-		स्थिर काष्ठा xfer_func_reg *reg);
+void cm_helper_program_xfer_func(
+		struct dc_context *ctx,
+		const struct pwl_params *params,
+		const struct xfer_func_reg *reg);
 
-bool cm_helper_convert_to_custom_भग्न(
-		काष्ठा pwl_result_data *rgb_resulted,
-		काष्ठा curve_poपूर्णांकs3 *corner_poपूर्णांकs,
-		uपूर्णांक32_t hw_poपूर्णांकs_num,
-		bool fixpoपूर्णांक);
+bool cm_helper_convert_to_custom_float(
+		struct pwl_result_data *rgb_resulted,
+		struct curve_points3 *corner_points,
+		uint32_t hw_points_num,
+		bool fixpoint);
 
-bool cm_helper_translate_curve_to_hw_क्रमmat(
-		स्थिर काष्ठा dc_transfer_func *output_tf,
-		काष्ठा pwl_params *lut_params, bool fixpoपूर्णांक);
+bool cm_helper_translate_curve_to_hw_format(
+		const struct dc_transfer_func *output_tf,
+		struct pwl_params *lut_params, bool fixpoint);
 
-bool cm_helper_translate_curve_to_degamma_hw_क्रमmat(
-				स्थिर काष्ठा dc_transfer_func *output_tf,
-				काष्ठा pwl_params *lut_params);
+bool cm_helper_translate_curve_to_degamma_hw_format(
+				const struct dc_transfer_func *output_tf,
+				struct pwl_params *lut_params);
 
 
-#पूर्ण_अगर
+#endif

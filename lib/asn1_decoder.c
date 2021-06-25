@@ -1,19 +1,18 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
-/* Decoder क्रम ASN.1 BER/DER/CER encoded bytestream
+// SPDX-License-Identifier: GPL-2.0-or-later
+/* Decoder for ASN.1 BER/DER/CER encoded bytestream
  *
  * Copyright (C) 2012 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/module.h>
-#समावेश <linux/asn1_decoder.h>
-#समावेश <linux/asn1_ber_bytecode.h>
+#include <linux/export.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/module.h>
+#include <linux/asn1_decoder.h>
+#include <linux/asn1_ber_bytecode.h>
 
-अटल स्थिर अचिन्हित अक्षर asn1_op_lengths[ASN1_OP__NR] = अणु
+static const unsigned char asn1_op_lengths[ASN1_OP__NR] = {
 	/*					OPC TAG JMP ACT */
 	[ASN1_OP_MATCH]				= 1 + 1,
 	[ASN1_OP_MATCH_OR_SKIP]			= 1 + 1,
@@ -45,100 +44,100 @@
 	[ASN1_OP_END_SEQ_OF_ACT]		= 1     + 1 + 1,
 	[ASN1_OP_END_SET_ACT]			= 1         + 1,
 	[ASN1_OP_END_SET_OF_ACT]		= 1     + 1 + 1,
-पूर्ण;
+};
 
 /*
  * Find the length of an indefinite length object
  * @data: The data buffer
  * @datalen: The end of the innermost containing element in the buffer
- * @_dp: The data parse cursor (updated beक्रमe वापसing)
- * @_len: Where to वापस the size of the element.
- * @_errmsg: Where to वापस a poपूर्णांकer to an error message on error
+ * @_dp: The data parse cursor (updated before returning)
+ * @_len: Where to return the size of the element.
+ * @_errmsg: Where to return a pointer to an error message on error
  */
-अटल पूर्णांक asn1_find_indefinite_length(स्थिर अचिन्हित अक्षर *data, माप_प्रकार datalen,
-				       माप_प्रकार *_dp, माप_प्रकार *_len,
-				       स्थिर अक्षर **_errmsg)
-अणु
-	अचिन्हित अक्षर tag, पंचांगp;
-	माप_प्रकार dp = *_dp, len, n;
-	पूर्णांक indef_level = 1;
+static int asn1_find_indefinite_length(const unsigned char *data, size_t datalen,
+				       size_t *_dp, size_t *_len,
+				       const char **_errmsg)
+{
+	unsigned char tag, tmp;
+	size_t dp = *_dp, len, n;
+	int indef_level = 1;
 
 next_tag:
-	अगर (unlikely(datalen - dp < 2)) अणु
-		अगर (datalen == dp)
-			जाओ missing_eoc;
-		जाओ data_overrun_error;
-	पूर्ण
+	if (unlikely(datalen - dp < 2)) {
+		if (datalen == dp)
+			goto missing_eoc;
+		goto data_overrun_error;
+	}
 
 	/* Extract a tag from the data */
 	tag = data[dp++];
-	अगर (tag == ASN1_EOC) अणु
+	if (tag == ASN1_EOC) {
 		/* It appears to be an EOC. */
-		अगर (data[dp++] != 0)
-			जाओ invalid_eoc;
-		अगर (--indef_level <= 0) अणु
+		if (data[dp++] != 0)
+			goto invalid_eoc;
+		if (--indef_level <= 0) {
 			*_len = dp - *_dp;
 			*_dp = dp;
-			वापस 0;
-		पूर्ण
-		जाओ next_tag;
-	पूर्ण
+			return 0;
+		}
+		goto next_tag;
+	}
 
-	अगर (unlikely((tag & 0x1f) == ASN1_LONG_TAG)) अणु
-		करो अणु
-			अगर (unlikely(datalen - dp < 2))
-				जाओ data_overrun_error;
-			पंचांगp = data[dp++];
-		पूर्ण जबतक (पंचांगp & 0x80);
-	पूर्ण
+	if (unlikely((tag & 0x1f) == ASN1_LONG_TAG)) {
+		do {
+			if (unlikely(datalen - dp < 2))
+				goto data_overrun_error;
+			tmp = data[dp++];
+		} while (tmp & 0x80);
+	}
 
 	/* Extract the length */
 	len = data[dp++];
-	अगर (len <= 0x7f)
-		जाओ check_length;
+	if (len <= 0x7f)
+		goto check_length;
 
-	अगर (unlikely(len == ASN1_INDEFINITE_LENGTH)) अणु
+	if (unlikely(len == ASN1_INDEFINITE_LENGTH)) {
 		/* Indefinite length */
-		अगर (unlikely((tag & ASN1_CONS_BIT) == ASN1_PRIM << 5))
-			जाओ indefinite_len_primitive;
+		if (unlikely((tag & ASN1_CONS_BIT) == ASN1_PRIM << 5))
+			goto indefinite_len_primitive;
 		indef_level++;
-		जाओ next_tag;
-	पूर्ण
+		goto next_tag;
+	}
 
 	n = len - 0x80;
-	अगर (unlikely(n > माप(len) - 1))
-		जाओ length_too_दीर्घ;
-	अगर (unlikely(n > datalen - dp))
-		जाओ data_overrun_error;
+	if (unlikely(n > sizeof(len) - 1))
+		goto length_too_long;
+	if (unlikely(n > datalen - dp))
+		goto data_overrun_error;
 	len = 0;
-	क्रम (; n > 0; n--) अणु
+	for (; n > 0; n--) {
 		len <<= 8;
 		len |= data[dp++];
-	पूर्ण
+	}
 check_length:
-	अगर (len > datalen - dp)
-		जाओ data_overrun_error;
+	if (len > datalen - dp)
+		goto data_overrun_error;
 	dp += len;
-	जाओ next_tag;
+	goto next_tag;
 
-length_too_दीर्घ:
+length_too_long:
 	*_errmsg = "Unsupported length";
-	जाओ error;
+	goto error;
 indefinite_len_primitive:
 	*_errmsg = "Indefinite len primitive not permitted";
-	जाओ error;
+	goto error;
 invalid_eoc:
 	*_errmsg = "Invalid length EOC";
-	जाओ error;
+	goto error;
 data_overrun_error:
 	*_errmsg = "Data overrun error";
-	जाओ error;
+	goto error;
 missing_eoc:
 	*_errmsg = "Missing EOC in indefinite len cons";
 error:
 	*_dp = dp;
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
 /**
  * asn1_ber_decoder - Decoder BER/DER/CER ASN.1 according to pattern
@@ -149,93 +148,93 @@ error:
  *
  * Decode BER/DER/CER encoded ASN.1 data according to a bytecode pattern
  * produced by asn1_compiler.  Action functions are called on marked tags to
- * allow the caller to retrieve signअगरicant data.
+ * allow the caller to retrieve significant data.
  *
  * LIMITATIONS:
  *
- * To keep करोwn the amount of stack used by this function, the following limits
+ * To keep down the amount of stack used by this function, the following limits
  * have been imposed:
  *
  *  (1) This won't handle datalen > 65535 without increasing the size of the
- *	cons stack elements and length_too_दीर्घ checking.
+ *	cons stack elements and length_too_long checking.
  *
- *  (2) The stack of स्थिरructed types is 10 deep.  If the depth of non-leaf
- *	स्थिरructed types exceeds this, the decode will fail.
+ *  (2) The stack of constructed types is 10 deep.  If the depth of non-leaf
+ *	constructed types exceeds this, the decode will fail.
  *
  *  (3) The SET type (not the SET OF type) isn't really supported as tracking
  *	what members of the set have been seen is a pain.
  */
-पूर्णांक asn1_ber_decoder(स्थिर काष्ठा asn1_decoder *decoder,
-		     व्योम *context,
-		     स्थिर अचिन्हित अक्षर *data,
-		     माप_प्रकार datalen)
-अणु
-	स्थिर अचिन्हित अक्षर *machine = decoder->machine;
-	स्थिर asn1_action_t *actions = decoder->actions;
-	माप_प्रकार machlen = decoder->machlen;
-	क्रमागत asn1_opcode op;
-	अचिन्हित अक्षर tag = 0, csp = 0, jsp = 0, optag = 0, hdr = 0;
-	स्थिर अक्षर *errmsg;
-	माप_प्रकार pc = 0, dp = 0, tdp = 0, len = 0;
-	पूर्णांक ret;
+int asn1_ber_decoder(const struct asn1_decoder *decoder,
+		     void *context,
+		     const unsigned char *data,
+		     size_t datalen)
+{
+	const unsigned char *machine = decoder->machine;
+	const asn1_action_t *actions = decoder->actions;
+	size_t machlen = decoder->machlen;
+	enum asn1_opcode op;
+	unsigned char tag = 0, csp = 0, jsp = 0, optag = 0, hdr = 0;
+	const char *errmsg;
+	size_t pc = 0, dp = 0, tdp = 0, len = 0;
+	int ret;
 
-	अचिन्हित अक्षर flags = 0;
-#घोषणा FLAG_INDEFINITE_LENGTH	0x01
-#घोषणा FLAG_MATCHED		0x02
-#घोषणा FLAG_LAST_MATCHED	0x04 /* Last tag matched */
-#घोषणा FLAG_CONS		0x20 /* Corresponds to CONS bit in the opcode tag
+	unsigned char flags = 0;
+#define FLAG_INDEFINITE_LENGTH	0x01
+#define FLAG_MATCHED		0x02
+#define FLAG_LAST_MATCHED	0x04 /* Last tag matched */
+#define FLAG_CONS		0x20 /* Corresponds to CONS bit in the opcode tag
 				      * - ie. whether or not we are going to parse
 				      *   a compound type.
 				      */
 
-#घोषणा NR_CONS_STACK 10
-	अचिन्हित लघु cons_dp_stack[NR_CONS_STACK];
-	अचिन्हित लघु cons_datalen_stack[NR_CONS_STACK];
-	अचिन्हित अक्षर cons_hdrlen_stack[NR_CONS_STACK];
-#घोषणा NR_JUMP_STACK 10
-	अचिन्हित अक्षर jump_stack[NR_JUMP_STACK];
+#define NR_CONS_STACK 10
+	unsigned short cons_dp_stack[NR_CONS_STACK];
+	unsigned short cons_datalen_stack[NR_CONS_STACK];
+	unsigned char cons_hdrlen_stack[NR_CONS_STACK];
+#define NR_JUMP_STACK 10
+	unsigned char jump_stack[NR_JUMP_STACK];
 
-	अगर (datalen > 65535)
-		वापस -EMSGSIZE;
+	if (datalen > 65535)
+		return -EMSGSIZE;
 
 next_op:
 	pr_debug("next_op: pc=\e[32m%zu\e[m/%zu dp=\e[33m%zu\e[m/%zu C=%d J=%d\n",
 		 pc, machlen, dp, datalen, csp, jsp);
-	अगर (unlikely(pc >= machlen))
-		जाओ machine_overrun_error;
+	if (unlikely(pc >= machlen))
+		goto machine_overrun_error;
 	op = machine[pc];
-	अगर (unlikely(pc + asn1_op_lengths[op] > machlen))
-		जाओ machine_overrun_error;
+	if (unlikely(pc + asn1_op_lengths[op] > machlen))
+		goto machine_overrun_error;
 
-	/* If this command is meant to match a tag, then करो that beक्रमe
+	/* If this command is meant to match a tag, then do that before
 	 * evaluating the command.
 	 */
-	अगर (op <= ASN1_OP__MATCHES_TAG) अणु
-		अचिन्हित अक्षर पंचांगp;
+	if (op <= ASN1_OP__MATCHES_TAG) {
+		unsigned char tmp;
 
-		/* Skip conditional matches अगर possible */
-		अगर ((op & ASN1_OP_MATCH__COND && flags & FLAG_MATCHED) ||
-		    (op & ASN1_OP_MATCH__SKIP && dp == datalen)) अणु
+		/* Skip conditional matches if possible */
+		if ((op & ASN1_OP_MATCH__COND && flags & FLAG_MATCHED) ||
+		    (op & ASN1_OP_MATCH__SKIP && dp == datalen)) {
 			flags &= ~FLAG_LAST_MATCHED;
 			pc += asn1_op_lengths[op];
-			जाओ next_op;
-		पूर्ण
+			goto next_op;
+		}
 
 		flags = 0;
 		hdr = 2;
 
 		/* Extract a tag from the data */
-		अगर (unlikely(datalen - dp < 2))
-			जाओ data_overrun_error;
+		if (unlikely(datalen - dp < 2))
+			goto data_overrun_error;
 		tag = data[dp++];
-		अगर (unlikely((tag & 0x1f) == ASN1_LONG_TAG))
-			जाओ दीर्घ_tag_not_supported;
+		if (unlikely((tag & 0x1f) == ASN1_LONG_TAG))
+			goto long_tag_not_supported;
 
-		अगर (op & ASN1_OP_MATCH__ANY) अणु
+		if (op & ASN1_OP_MATCH__ANY) {
 			pr_debug("- any %02x\n", tag);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Extract the tag from the machine
-			 * - Either CONS or PRIM are permitted in the data अगर
+			 * - Either CONS or PRIM are permitted in the data if
 			 *   CONS is not set in the op stream, otherwise CONS
 			 *   is mandatory.
 			 */
@@ -243,155 +242,155 @@ next_op:
 			flags |= optag & FLAG_CONS;
 
 			/* Determine whether the tag matched */
-			पंचांगp = optag ^ tag;
-			पंचांगp &= ~(optag & ASN1_CONS_BIT);
-			pr_debug("- match? %02x %02x %02x\n", tag, optag, पंचांगp);
-			अगर (पंचांगp != 0) अणु
+			tmp = optag ^ tag;
+			tmp &= ~(optag & ASN1_CONS_BIT);
+			pr_debug("- match? %02x %02x %02x\n", tag, optag, tmp);
+			if (tmp != 0) {
 				/* All odd-numbered tags are MATCH_OR_SKIP. */
-				अगर (op & ASN1_OP_MATCH__SKIP) अणु
+				if (op & ASN1_OP_MATCH__SKIP) {
 					pc += asn1_op_lengths[op];
 					dp--;
-					जाओ next_op;
-				पूर्ण
-				जाओ tag_mismatch;
-			पूर्ण
-		पूर्ण
+					goto next_op;
+				}
+				goto tag_mismatch;
+			}
+		}
 		flags |= FLAG_MATCHED;
 
 		len = data[dp++];
-		अगर (len > 0x7f) अणु
-			अगर (unlikely(len == ASN1_INDEFINITE_LENGTH)) अणु
+		if (len > 0x7f) {
+			if (unlikely(len == ASN1_INDEFINITE_LENGTH)) {
 				/* Indefinite length */
-				अगर (unlikely(!(tag & ASN1_CONS_BIT)))
-					जाओ indefinite_len_primitive;
+				if (unlikely(!(tag & ASN1_CONS_BIT)))
+					goto indefinite_len_primitive;
 				flags |= FLAG_INDEFINITE_LENGTH;
-				अगर (unlikely(2 > datalen - dp))
-					जाओ data_overrun_error;
-			पूर्ण अन्यथा अणु
-				पूर्णांक n = len - 0x80;
-				अगर (unlikely(n > 2))
-					जाओ length_too_दीर्घ;
-				अगर (unlikely(n > datalen - dp))
-					जाओ data_overrun_error;
+				if (unlikely(2 > datalen - dp))
+					goto data_overrun_error;
+			} else {
+				int n = len - 0x80;
+				if (unlikely(n > 2))
+					goto length_too_long;
+				if (unlikely(n > datalen - dp))
+					goto data_overrun_error;
 				hdr += n;
-				क्रम (len = 0; n > 0; n--) अणु
+				for (len = 0; n > 0; n--) {
 					len <<= 8;
 					len |= data[dp++];
-				पूर्ण
-				अगर (unlikely(len > datalen - dp))
-					जाओ data_overrun_error;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (unlikely(len > datalen - dp))
-				जाओ data_overrun_error;
-		पूर्ण
+				}
+				if (unlikely(len > datalen - dp))
+					goto data_overrun_error;
+			}
+		} else {
+			if (unlikely(len > datalen - dp))
+				goto data_overrun_error;
+		}
 
-		अगर (flags & FLAG_CONS) अणु
-			/* For expected compound क्रमms, we stack the positions
+		if (flags & FLAG_CONS) {
+			/* For expected compound forms, we stack the positions
 			 * of the start and end of the data.
 			 */
-			अगर (unlikely(csp >= NR_CONS_STACK))
-				जाओ cons_stack_overflow;
+			if (unlikely(csp >= NR_CONS_STACK))
+				goto cons_stack_overflow;
 			cons_dp_stack[csp] = dp;
 			cons_hdrlen_stack[csp] = hdr;
-			अगर (!(flags & FLAG_INDEFINITE_LENGTH)) अणु
+			if (!(flags & FLAG_INDEFINITE_LENGTH)) {
 				cons_datalen_stack[csp] = datalen;
 				datalen = dp + len;
-			पूर्ण अन्यथा अणु
+			} else {
 				cons_datalen_stack[csp] = 0;
-			पूर्ण
+			}
 			csp++;
-		पूर्ण
+		}
 
 		pr_debug("- TAG: %02x %zu%s\n",
 			 tag, len, flags & FLAG_CONS ? " CONS" : "");
 		tdp = dp;
-	पूर्ण
+	}
 
 	/* Decide how to handle the operation */
-	चयन (op) अणु
-	हाल ASN1_OP_MATCH:
-	हाल ASN1_OP_MATCH_OR_SKIP:
-	हाल ASN1_OP_MATCH_ACT:
-	हाल ASN1_OP_MATCH_ACT_OR_SKIP:
-	हाल ASN1_OP_MATCH_ANY:
-	हाल ASN1_OP_MATCH_ANY_OR_SKIP:
-	हाल ASN1_OP_MATCH_ANY_ACT:
-	हाल ASN1_OP_MATCH_ANY_ACT_OR_SKIP:
-	हाल ASN1_OP_COND_MATCH_OR_SKIP:
-	हाल ASN1_OP_COND_MATCH_ACT_OR_SKIP:
-	हाल ASN1_OP_COND_MATCH_ANY:
-	हाल ASN1_OP_COND_MATCH_ANY_OR_SKIP:
-	हाल ASN1_OP_COND_MATCH_ANY_ACT:
-	हाल ASN1_OP_COND_MATCH_ANY_ACT_OR_SKIP:
+	switch (op) {
+	case ASN1_OP_MATCH:
+	case ASN1_OP_MATCH_OR_SKIP:
+	case ASN1_OP_MATCH_ACT:
+	case ASN1_OP_MATCH_ACT_OR_SKIP:
+	case ASN1_OP_MATCH_ANY:
+	case ASN1_OP_MATCH_ANY_OR_SKIP:
+	case ASN1_OP_MATCH_ANY_ACT:
+	case ASN1_OP_MATCH_ANY_ACT_OR_SKIP:
+	case ASN1_OP_COND_MATCH_OR_SKIP:
+	case ASN1_OP_COND_MATCH_ACT_OR_SKIP:
+	case ASN1_OP_COND_MATCH_ANY:
+	case ASN1_OP_COND_MATCH_ANY_OR_SKIP:
+	case ASN1_OP_COND_MATCH_ANY_ACT:
+	case ASN1_OP_COND_MATCH_ANY_ACT_OR_SKIP:
 
-		अगर (!(flags & FLAG_CONS)) अणु
-			अगर (flags & FLAG_INDEFINITE_LENGTH) अणु
-				माप_प्रकार पंचांगp = dp;
+		if (!(flags & FLAG_CONS)) {
+			if (flags & FLAG_INDEFINITE_LENGTH) {
+				size_t tmp = dp;
 
 				ret = asn1_find_indefinite_length(
-					data, datalen, &पंचांगp, &len, &errmsg);
-				अगर (ret < 0)
-					जाओ error;
-			पूर्ण
+					data, datalen, &tmp, &len, &errmsg);
+				if (ret < 0)
+					goto error;
+			}
 			pr_debug("- LEAF: %zu\n", len);
-		पूर्ण
+		}
 
-		अगर (op & ASN1_OP_MATCH__ACT) अणु
-			अचिन्हित अक्षर act;
+		if (op & ASN1_OP_MATCH__ACT) {
+			unsigned char act;
 
-			अगर (op & ASN1_OP_MATCH__ANY)
+			if (op & ASN1_OP_MATCH__ANY)
 				act = machine[pc + 1];
-			अन्यथा
+			else
 				act = machine[pc + 2];
 			ret = actions[act](context, hdr, tag, data + dp, len);
-			अगर (ret < 0)
-				वापस ret;
-		पूर्ण
+			if (ret < 0)
+				return ret;
+		}
 
-		अगर (!(flags & FLAG_CONS))
+		if (!(flags & FLAG_CONS))
 			dp += len;
 		pc += asn1_op_lengths[op];
-		जाओ next_op;
+		goto next_op;
 
-	हाल ASN1_OP_MATCH_JUMP:
-	हाल ASN1_OP_MATCH_JUMP_OR_SKIP:
-	हाल ASN1_OP_COND_MATCH_JUMP_OR_SKIP:
+	case ASN1_OP_MATCH_JUMP:
+	case ASN1_OP_MATCH_JUMP_OR_SKIP:
+	case ASN1_OP_COND_MATCH_JUMP_OR_SKIP:
 		pr_debug("- MATCH_JUMP\n");
-		अगर (unlikely(jsp == NR_JUMP_STACK))
-			जाओ jump_stack_overflow;
+		if (unlikely(jsp == NR_JUMP_STACK))
+			goto jump_stack_overflow;
 		jump_stack[jsp++] = pc + asn1_op_lengths[op];
 		pc = machine[pc + 2];
-		जाओ next_op;
+		goto next_op;
 
-	हाल ASN1_OP_COND_FAIL:
-		अगर (unlikely(!(flags & FLAG_MATCHED)))
-			जाओ tag_mismatch;
+	case ASN1_OP_COND_FAIL:
+		if (unlikely(!(flags & FLAG_MATCHED)))
+			goto tag_mismatch;
 		pc += asn1_op_lengths[op];
-		जाओ next_op;
+		goto next_op;
 
-	हाल ASN1_OP_COMPLETE:
-		अगर (unlikely(jsp != 0 || csp != 0)) अणु
+	case ASN1_OP_COMPLETE:
+		if (unlikely(jsp != 0 || csp != 0)) {
 			pr_err("ASN.1 decoder error: Stacks not empty at completion (%u, %u)\n",
 			       jsp, csp);
-			वापस -EBADMSG;
-		पूर्ण
-		वापस 0;
+			return -EBADMSG;
+		}
+		return 0;
 
-	हाल ASN1_OP_END_SET:
-	हाल ASN1_OP_END_SET_ACT:
-		अगर (unlikely(!(flags & FLAG_MATCHED)))
-			जाओ tag_mismatch;
+	case ASN1_OP_END_SET:
+	case ASN1_OP_END_SET_ACT:
+		if (unlikely(!(flags & FLAG_MATCHED)))
+			goto tag_mismatch;
 		fallthrough;
 
-	हाल ASN1_OP_END_SEQ:
-	हाल ASN1_OP_END_SET_OF:
-	हाल ASN1_OP_END_SEQ_OF:
-	हाल ASN1_OP_END_SEQ_ACT:
-	हाल ASN1_OP_END_SET_OF_ACT:
-	हाल ASN1_OP_END_SEQ_OF_ACT:
-		अगर (unlikely(csp <= 0))
-			जाओ cons_stack_underflow;
+	case ASN1_OP_END_SEQ:
+	case ASN1_OP_END_SET_OF:
+	case ASN1_OP_END_SEQ_OF:
+	case ASN1_OP_END_SEQ_ACT:
+	case ASN1_OP_END_SET_OF_ACT:
+	case ASN1_OP_END_SEQ_OF_ACT:
+		if (unlikely(csp <= 0))
+			goto cons_stack_underflow;
 		csp--;
 		tdp = cons_dp_stack[csp];
 		hdr = cons_hdrlen_stack[csp];
@@ -399,124 +398,124 @@ next_op:
 		datalen = cons_datalen_stack[csp];
 		pr_debug("- end cons t=%zu dp=%zu l=%zu/%zu\n",
 			 tdp, dp, len, datalen);
-		अगर (datalen == 0) अणु
-			/* Indefinite length - check क्रम the EOC. */
+		if (datalen == 0) {
+			/* Indefinite length - check for the EOC. */
 			datalen = len;
-			अगर (unlikely(datalen - dp < 2))
-				जाओ data_overrun_error;
-			अगर (data[dp++] != 0) अणु
-				अगर (op & ASN1_OP_END__OF) अणु
+			if (unlikely(datalen - dp < 2))
+				goto data_overrun_error;
+			if (data[dp++] != 0) {
+				if (op & ASN1_OP_END__OF) {
 					dp--;
 					csp++;
 					pc = machine[pc + 1];
 					pr_debug("- continue\n");
-					जाओ next_op;
-				पूर्ण
-				जाओ missing_eoc;
-			पूर्ण
-			अगर (data[dp++] != 0)
-				जाओ invalid_eoc;
+					goto next_op;
+				}
+				goto missing_eoc;
+			}
+			if (data[dp++] != 0)
+				goto invalid_eoc;
 			len = dp - tdp - 2;
-		पूर्ण अन्यथा अणु
-			अगर (dp < len && (op & ASN1_OP_END__OF)) अणु
+		} else {
+			if (dp < len && (op & ASN1_OP_END__OF)) {
 				datalen = len;
 				csp++;
 				pc = machine[pc + 1];
 				pr_debug("- continue\n");
-				जाओ next_op;
-			पूर्ण
-			अगर (dp != len)
-				जाओ cons_length_error;
+				goto next_op;
+			}
+			if (dp != len)
+				goto cons_length_error;
 			len -= tdp;
 			pr_debug("- cons len l=%zu d=%zu\n", len, dp - tdp);
-		पूर्ण
+		}
 
-		अगर (op & ASN1_OP_END__ACT) अणु
-			अचिन्हित अक्षर act;
-			अगर (op & ASN1_OP_END__OF)
+		if (op & ASN1_OP_END__ACT) {
+			unsigned char act;
+			if (op & ASN1_OP_END__OF)
 				act = machine[pc + 2];
-			अन्यथा
+			else
 				act = machine[pc + 1];
 			ret = actions[act](context, hdr, 0, data + tdp, len);
-			अगर (ret < 0)
-				वापस ret;
-		पूर्ण
+			if (ret < 0)
+				return ret;
+		}
 		pc += asn1_op_lengths[op];
-		जाओ next_op;
+		goto next_op;
 
-	हाल ASN1_OP_MAYBE_ACT:
-		अगर (!(flags & FLAG_LAST_MATCHED)) अणु
+	case ASN1_OP_MAYBE_ACT:
+		if (!(flags & FLAG_LAST_MATCHED)) {
 			pc += asn1_op_lengths[op];
-			जाओ next_op;
-		पूर्ण
+			goto next_op;
+		}
 		fallthrough;
 
-	हाल ASN1_OP_ACT:
+	case ASN1_OP_ACT:
 		ret = actions[machine[pc + 1]](context, hdr, tag, data + tdp, len);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		pc += asn1_op_lengths[op];
-		जाओ next_op;
+		goto next_op;
 
-	हाल ASN1_OP_RETURN:
-		अगर (unlikely(jsp <= 0))
-			जाओ jump_stack_underflow;
+	case ASN1_OP_RETURN:
+		if (unlikely(jsp <= 0))
+			goto jump_stack_underflow;
 		pc = jump_stack[--jsp];
 		flags |= FLAG_MATCHED | FLAG_LAST_MATCHED;
-		जाओ next_op;
+		goto next_op;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
 	/* Shouldn't reach here */
 	pr_err("ASN.1 decoder error: Found reserved opcode (%u) pc=%zu\n",
 	       op, pc);
-	वापस -EBADMSG;
+	return -EBADMSG;
 
 data_overrun_error:
 	errmsg = "Data overrun error";
-	जाओ error;
+	goto error;
 machine_overrun_error:
 	errmsg = "Machine overrun error";
-	जाओ error;
+	goto error;
 jump_stack_underflow:
 	errmsg = "Jump stack underflow";
-	जाओ error;
+	goto error;
 jump_stack_overflow:
 	errmsg = "Jump stack overflow";
-	जाओ error;
+	goto error;
 cons_stack_underflow:
 	errmsg = "Cons stack underflow";
-	जाओ error;
+	goto error;
 cons_stack_overflow:
 	errmsg = "Cons stack overflow";
-	जाओ error;
+	goto error;
 cons_length_error:
 	errmsg = "Cons length error";
-	जाओ error;
+	goto error;
 missing_eoc:
 	errmsg = "Missing EOC in indefinite len cons";
-	जाओ error;
+	goto error;
 invalid_eoc:
 	errmsg = "Invalid length EOC";
-	जाओ error;
-length_too_दीर्घ:
+	goto error;
+length_too_long:
 	errmsg = "Unsupported length";
-	जाओ error;
+	goto error;
 indefinite_len_primitive:
 	errmsg = "Indefinite len primitive not permitted";
-	जाओ error;
+	goto error;
 tag_mismatch:
 	errmsg = "Unexpected tag";
-	जाओ error;
-दीर्घ_tag_not_supported:
+	goto error;
+long_tag_not_supported:
 	errmsg = "Long tag not supported";
 error:
 	pr_debug("\nASN1: %s [m=%zu d=%zu ot=%02x t=%02x l=%zu]\n",
 		 errmsg, pc, dp, optag, tag, len);
-	वापस -EBADMSG;
-पूर्ण
+	return -EBADMSG;
+}
 EXPORT_SYMBOL_GPL(asn1_ber_decoder);
 
 MODULE_LICENSE("GPL");

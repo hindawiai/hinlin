@@ -1,20 +1,19 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2020 Linaro Ltd.
  */
 
-#समावेश <linux/debugfs.h>
+#include <linux/debugfs.h>
 
-#समावेश "core.h"
+#include "core.h"
 
-व्योम venus_dbgfs_init(काष्ठा venus_core *core)
-अणु
-	core->root = debugfs_create_dir("venus", शून्य);
+void venus_dbgfs_init(struct venus_core *core)
+{
+	core->root = debugfs_create_dir("venus", NULL);
 	debugfs_create_x32("fw_level", 0644, core->root, &venus_fw_debug);
-पूर्ण
+}
 
-व्योम venus_dbgfs_deinit(काष्ठा venus_core *core)
-अणु
-	debugfs_हटाओ_recursive(core->root);
-पूर्ण
+void venus_dbgfs_deinit(struct venus_core *core)
+{
+	debugfs_remove_recursive(core->root);
+}

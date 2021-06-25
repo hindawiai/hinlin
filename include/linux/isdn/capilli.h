@@ -1,7 +1,6 @@
-<शैली गुरु>
 /* $Id: capilli.h,v 1.1.2.2 2004/01/16 21:09:27 keil Exp $
  * 
- * Kernel CAPI 2.0 Driver Interface क्रम Linux
+ * Kernel CAPI 2.0 Driver Interface for Linux
  * 
  * Copyright 1999 by Carsten Paeth <calle@calle.de>
  * 
@@ -10,87 +9,87 @@
  *
  */
 
-#अगर_अघोषित __CAPILLI_H__
-#घोषणा __CAPILLI_H__
+#ifndef __CAPILLI_H__
+#define __CAPILLI_H__
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/capi.h>
-#समावेश <linux/kernelcapi.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/capi.h>
+#include <linux/kernelcapi.h>
 
-प्रकार काष्ठा capiloaddatapart अणु
-	पूर्णांक user;		/* data in userspace ? */
-	पूर्णांक len;
-	अचिन्हित अक्षर *data;
-पूर्ण capiloaddatapart;
+typedef struct capiloaddatapart {
+	int user;		/* data in userspace ? */
+	int len;
+	unsigned char *data;
+} capiloaddatapart;
 
-प्रकार काष्ठा capiloaddata अणु
+typedef struct capiloaddata {
 	capiloaddatapart firmware;
 	capiloaddatapart configuration;
-पूर्ण capiloaddata;
+} capiloaddata;
 
-प्रकार काष्ठा capicardparams अणु
-	अचिन्हित पूर्णांक port;
-	अचिन्हित irq;
-	पूर्णांक cardtype;
-	पूर्णांक cardnr;
-	अचिन्हित पूर्णांक membase;
-पूर्ण capicardparams;
+typedef struct capicardparams {
+	unsigned int port;
+	unsigned irq;
+	int cardtype;
+	int cardnr;
+	unsigned int membase;
+} capicardparams;
 
-काष्ठा capi_ctr अणु
-	/* filled in beक्रमe calling attach_capi_ctr */
-	काष्ठा module *owner;
-	व्योम *driverdata;			/* driver specअगरic */
-	अक्षर name[32];				/* name of controller */
-	अक्षर *driver_name;			/* name of driver */
-	पूर्णांक (*load_firmware)(काष्ठा capi_ctr *, capiloaddata *);
-	व्योम (*reset_ctr)(काष्ठा capi_ctr *);
-	व्योम (*रेजिस्टर_appl)(काष्ठा capi_ctr *, u16 appl,
-			      capi_रेजिस्टर_params *);
-	व्योम (*release_appl)(काष्ठा capi_ctr *, u16 appl);
-	u16  (*send_message)(काष्ठा capi_ctr *, काष्ठा sk_buff *skb);
+struct capi_ctr {
+	/* filled in before calling attach_capi_ctr */
+	struct module *owner;
+	void *driverdata;			/* driver specific */
+	char name[32];				/* name of controller */
+	char *driver_name;			/* name of driver */
+	int (*load_firmware)(struct capi_ctr *, capiloaddata *);
+	void (*reset_ctr)(struct capi_ctr *);
+	void (*register_appl)(struct capi_ctr *, u16 appl,
+			      capi_register_params *);
+	void (*release_appl)(struct capi_ctr *, u16 appl);
+	u16  (*send_message)(struct capi_ctr *, struct sk_buff *skb);
 	
-	अक्षर *(*procinfo)(काष्ठा capi_ctr *);
-	पूर्णांक (*proc_show)(काष्ठा seq_file *, व्योम *);
+	char *(*procinfo)(struct capi_ctr *);
+	int (*proc_show)(struct seq_file *, void *);
 
-	/* filled in beक्रमe calling पढ़ोy callback */
+	/* filled in before calling ready callback */
 	u8 manu[CAPI_MANUFACTURER_LEN];		/* CAPI_GET_MANUFACTURER */
 	capi_version version;			/* CAPI_GET_VERSION */
-	capi_profile profile;			/* CAPI_GET_PROखाता */
+	capi_profile profile;			/* CAPI_GET_PROFILE */
 	u8 serial[CAPI_SERIAL_LEN];		/* CAPI_GET_SERIAL */
 
-	/* management inक्रमmation क्रम kcapi */
+	/* management information for kcapi */
 
-	अचिन्हित दीर्घ nrecvctlpkt;
-	अचिन्हित दीर्घ nrecvdatapkt;
-	अचिन्हित दीर्घ nsentctlpkt;
-	अचिन्हित दीर्घ nsentdatapkt;
+	unsigned long nrecvctlpkt;
+	unsigned long nrecvdatapkt;
+	unsigned long nsentctlpkt;
+	unsigned long nsentdatapkt;
 
-	पूर्णांक cnr;				/* controller number */
-	अचिन्हित लघु state;			/* controller state */
-	पूर्णांक blocked;				/* output blocked */
-	पूर्णांक traceflag;				/* capi trace */
+	int cnr;				/* controller number */
+	unsigned short state;			/* controller state */
+	int blocked;				/* output blocked */
+	int traceflag;				/* capi trace */
 
-	काष्ठा proc_dir_entry *procent;
-        अक्षर procfn[128];
-पूर्ण;
+	struct proc_dir_entry *procent;
+        char procfn[128];
+};
 
-पूर्णांक attach_capi_ctr(काष्ठा capi_ctr *);
-पूर्णांक detach_capi_ctr(काष्ठा capi_ctr *);
+int attach_capi_ctr(struct capi_ctr *);
+int detach_capi_ctr(struct capi_ctr *);
 
-व्योम capi_ctr_पढ़ोy(काष्ठा capi_ctr * card);
-व्योम capi_ctr_करोwn(काष्ठा capi_ctr * card);
-व्योम capi_ctr_handle_message(काष्ठा capi_ctr * card, u16 appl, काष्ठा sk_buff *skb);
+void capi_ctr_ready(struct capi_ctr * card);
+void capi_ctr_down(struct capi_ctr * card);
+void capi_ctr_handle_message(struct capi_ctr * card, u16 appl, struct sk_buff *skb);
 
 // ---------------------------------------------------------------------------
-// needed क्रम AVM capi drivers
+// needed for AVM capi drivers
 
-काष्ठा capi_driver अणु
-	अक्षर name[32];				/* driver name */
-	अक्षर revision[32];
+struct capi_driver {
+	char name[32];				/* driver name */
+	char revision[32];
 
-	/* management inक्रमmation क्रम kcapi */
-	काष्ठा list_head list; 
-पूर्ण;
+	/* management information for kcapi */
+	struct list_head list; 
+};
 
-#पूर्ण_अगर				/* __CAPILLI_H__ */
+#endif				/* __CAPILLI_H__ */

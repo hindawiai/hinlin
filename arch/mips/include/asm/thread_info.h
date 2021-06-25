@@ -1,194 +1,193 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-/* thपढ़ो_info.h: MIPS low-level thपढ़ो inक्रमmation
+/* SPDX-License-Identifier: GPL-2.0 */
+/* thread_info.h: MIPS low-level thread information
  *
  * Copyright (C) 2002  David Howells (dhowells@redhat.com)
  * - Incorporating suggestions made by Linus Torvalds and Dave Miller
  */
 
-#अगर_अघोषित _ASM_THREAD_INFO_H
-#घोषणा _ASM_THREAD_INFO_H
+#ifndef _ASM_THREAD_INFO_H
+#define _ASM_THREAD_INFO_H
 
-#अगर_घोषित __KERNEL__
+#ifdef __KERNEL__
 
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#समावेश <यंत्र/processor.h>
+#include <asm/processor.h>
 
 /*
  * low level task data that entry.S needs immediate access to
- * - this काष्ठा should fit entirely inside of one cache line
- * - this काष्ठा shares the supervisor stack pages
- * - अगर the contents of this काष्ठाure are changed, the assembly स्थिरants
+ * - this struct should fit entirely inside of one cache line
+ * - this struct shares the supervisor stack pages
+ * - if the contents of this structure are changed, the assembly constants
  *   must also be changed
  */
-काष्ठा thपढ़ो_info अणु
-	काष्ठा task_काष्ठा	*task;		/* मुख्य task काष्ठाure */
-	अचिन्हित दीर्घ		flags;		/* low level flags */
-	अचिन्हित दीर्घ		tp_value;	/* thपढ़ो poपूर्णांकer */
+struct thread_info {
+	struct task_struct	*task;		/* main task structure */
+	unsigned long		flags;		/* low level flags */
+	unsigned long		tp_value;	/* thread pointer */
 	__u32			cpu;		/* current CPU */
-	पूर्णांक			preempt_count;	/* 0 => preemptable, <0 => BUG */
-	काष्ठा pt_regs		*regs;
-	दीर्घ			syscall;	/* syscall number */
-पूर्ण;
+	int			preempt_count;	/* 0 => preemptable, <0 => BUG */
+	struct pt_regs		*regs;
+	long			syscall;	/* syscall number */
+};
 
 /*
- * macros/functions क्रम gaining access to the thपढ़ो inक्रमmation काष्ठाure
+ * macros/functions for gaining access to the thread information structure
  */
-#घोषणा INIT_THREAD_INFO(tsk)			\
-अणु						\
+#define INIT_THREAD_INFO(tsk)			\
+{						\
 	.task		= &tsk,			\
 	.flags		= _TIF_FIXADE,		\
 	.cpu		= 0,			\
 	.preempt_count	= INIT_PREEMPT_COUNT,	\
-पूर्ण
+}
 
 /*
- * A poपूर्णांकer to the काष्ठा thपढ़ो_info क्रम the currently executing thपढ़ो is
- * held in रेजिस्टर $28/$gp.
+ * A pointer to the struct thread_info for the currently executing thread is
+ * held in register $28/$gp.
  *
- * We declare __current_thपढ़ो_info as a global रेजिस्टर variable rather than a
- * local रेजिस्टर variable within current_thपढ़ो_info() because clang करोesn't
- * support explicit local रेजिस्टर variables.
+ * We declare __current_thread_info as a global register variable rather than a
+ * local register variable within current_thread_info() because clang doesn't
+ * support explicit local register variables.
  *
- * When building the VDSO we take care not to declare the global रेजिस्टर
+ * When building the VDSO we take care not to declare the global register
  * variable because this causes GCC to not preserve the value of $28/$gp in
  * functions that change its value (which is common in the PIC VDSO when
  * accessing the GOT). Since the VDSO shouldn't be accessing
- * __current_thपढ़ो_info anyway we declare it बाह्य in order to cause a link
- * failure अगर it's referenced.
+ * __current_thread_info anyway we declare it extern in order to cause a link
+ * failure if it's referenced.
  */
-#अगर_घोषित __VDSO__
-बाह्य काष्ठा thपढ़ो_info *__current_thपढ़ो_info;
-#अन्यथा
-रेजिस्टर काष्ठा thपढ़ो_info *__current_thपढ़ो_info __यंत्र__("$28");
-#पूर्ण_अगर
+#ifdef __VDSO__
+extern struct thread_info *__current_thread_info;
+#else
+register struct thread_info *__current_thread_info __asm__("$28");
+#endif
 
-अटल अंतरभूत काष्ठा thपढ़ो_info *current_thपढ़ो_info(व्योम)
-अणु
-	वापस __current_thपढ़ो_info;
-पूर्ण
+static inline struct thread_info *current_thread_info(void)
+{
+	return __current_thread_info;
+}
 
-#पूर्ण_अगर /* !__ASSEMBLY__ */
+#endif /* !__ASSEMBLY__ */
 
-/* thपढ़ो inक्रमmation allocation */
-#अगर defined(CONFIG_PAGE_SIZE_4KB) && defined(CONFIG_32BIT)
-#घोषणा THREAD_SIZE_ORDER (1)
-#पूर्ण_अगर
-#अगर defined(CONFIG_PAGE_SIZE_4KB) && defined(CONFIG_64BIT)
-#घोषणा THREAD_SIZE_ORDER (2)
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PAGE_SIZE_8KB
-#घोषणा THREAD_SIZE_ORDER (1)
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PAGE_SIZE_16KB
-#घोषणा THREAD_SIZE_ORDER (0)
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PAGE_SIZE_32KB
-#घोषणा THREAD_SIZE_ORDER (0)
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PAGE_SIZE_64KB
-#घोषणा THREAD_SIZE_ORDER (0)
-#पूर्ण_अगर
+/* thread information allocation */
+#if defined(CONFIG_PAGE_SIZE_4KB) && defined(CONFIG_32BIT)
+#define THREAD_SIZE_ORDER (1)
+#endif
+#if defined(CONFIG_PAGE_SIZE_4KB) && defined(CONFIG_64BIT)
+#define THREAD_SIZE_ORDER (2)
+#endif
+#ifdef CONFIG_PAGE_SIZE_8KB
+#define THREAD_SIZE_ORDER (1)
+#endif
+#ifdef CONFIG_PAGE_SIZE_16KB
+#define THREAD_SIZE_ORDER (0)
+#endif
+#ifdef CONFIG_PAGE_SIZE_32KB
+#define THREAD_SIZE_ORDER (0)
+#endif
+#ifdef CONFIG_PAGE_SIZE_64KB
+#define THREAD_SIZE_ORDER (0)
+#endif
 
-#घोषणा THREAD_SIZE (PAGE_SIZE << THREAD_SIZE_ORDER)
-#घोषणा THREAD_MASK (THREAD_SIZE - 1UL)
+#define THREAD_SIZE (PAGE_SIZE << THREAD_SIZE_ORDER)
+#define THREAD_MASK (THREAD_SIZE - 1UL)
 
-#घोषणा STACK_WARN	(THREAD_SIZE / 8)
+#define STACK_WARN	(THREAD_SIZE / 8)
 
 /*
- * thपढ़ो inक्रमmation flags
+ * thread information flags
  * - these are process state flags that various assembly files may need to
  *   access
- * - pending work-to-be-करोne flags are in LSW
+ * - pending work-to-be-done flags are in LSW
  * - other flags in MSW
  */
-#घोषणा TIF_SIGPENDING		1	/* संकेत pending */
-#घोषणा TIF_NEED_RESCHED	2	/* rescheduling necessary */
-#घोषणा TIF_SYSCALL_AUDIT	3	/* syscall auditing active */
-#घोषणा TIF_SECCOMP		4	/* secure computing */
-#घोषणा TIF_NOTIFY_RESUME	5	/* callback beक्रमe वापसing to user */
-#घोषणा TIF_UPROBE		6	/* अवरोधpoपूर्णांकed or singlestepping */
-#घोषणा TIF_NOTIFY_SIGNAL	7	/* संकेत notअगरications exist */
-#घोषणा TIF_RESTORE_SIGMASK	9	/* restore संकेत mask in करो_संकेत() */
-#घोषणा TIF_USEDFPU		16	/* FPU was used by this task this quantum (SMP) */
-#घोषणा TIF_MEMDIE		18	/* is terminating due to OOM समाप्तer */
-#घोषणा TIF_NOHZ		19	/* in adaptive nohz mode */
-#घोषणा TIF_FIXADE		20	/* Fix address errors in software */
-#घोषणा TIF_LOGADE		21	/* Log address errors to syslog */
-#घोषणा TIF_32BIT_REGS		22	/* 32-bit general purpose रेजिस्टरs */
-#घोषणा TIF_32BIT_ADDR		23	/* 32-bit address space (o32/n32) */
-#घोषणा TIF_FPUBOUND		24	/* thपढ़ो bound to FPU-full CPU set */
-#घोषणा TIF_LOAD_WATCH		25	/* If set, load watch रेजिस्टरs */
-#घोषणा TIF_SYSCALL_TRACEPOINT	26	/* syscall tracepoपूर्णांक instrumentation */
-#घोषणा TIF_32BIT_FPREGS	27	/* 32-bit भग्नing poपूर्णांक रेजिस्टरs */
-#घोषणा TIF_HYBRID_FPREGS	28	/* 64b FP रेजिस्टरs, odd singles in bits 63:32 of even द्विगुनs */
-#घोषणा TIF_USEDMSA		29	/* MSA has been used this quantum */
-#घोषणा TIF_MSA_CTX_LIVE	30	/* MSA context must be preserved */
-#घोषणा TIF_SYSCALL_TRACE	31	/* syscall trace active */
+#define TIF_SIGPENDING		1	/* signal pending */
+#define TIF_NEED_RESCHED	2	/* rescheduling necessary */
+#define TIF_SYSCALL_AUDIT	3	/* syscall auditing active */
+#define TIF_SECCOMP		4	/* secure computing */
+#define TIF_NOTIFY_RESUME	5	/* callback before returning to user */
+#define TIF_UPROBE		6	/* breakpointed or singlestepping */
+#define TIF_NOTIFY_SIGNAL	7	/* signal notifications exist */
+#define TIF_RESTORE_SIGMASK	9	/* restore signal mask in do_signal() */
+#define TIF_USEDFPU		16	/* FPU was used by this task this quantum (SMP) */
+#define TIF_MEMDIE		18	/* is terminating due to OOM killer */
+#define TIF_NOHZ		19	/* in adaptive nohz mode */
+#define TIF_FIXADE		20	/* Fix address errors in software */
+#define TIF_LOGADE		21	/* Log address errors to syslog */
+#define TIF_32BIT_REGS		22	/* 32-bit general purpose registers */
+#define TIF_32BIT_ADDR		23	/* 32-bit address space (o32/n32) */
+#define TIF_FPUBOUND		24	/* thread bound to FPU-full CPU set */
+#define TIF_LOAD_WATCH		25	/* If set, load watch registers */
+#define TIF_SYSCALL_TRACEPOINT	26	/* syscall tracepoint instrumentation */
+#define TIF_32BIT_FPREGS	27	/* 32-bit floating point registers */
+#define TIF_HYBRID_FPREGS	28	/* 64b FP registers, odd singles in bits 63:32 of even doubles */
+#define TIF_USEDMSA		29	/* MSA has been used this quantum */
+#define TIF_MSA_CTX_LIVE	30	/* MSA context must be preserved */
+#define TIF_SYSCALL_TRACE	31	/* syscall trace active */
 
-#घोषणा _TIF_SYSCALL_TRACE	(1<<TIF_SYSCALL_TRACE)
-#घोषणा _TIF_SIGPENDING		(1<<TIF_SIGPENDING)
-#घोषणा _TIF_NEED_RESCHED	(1<<TIF_NEED_RESCHED)
-#घोषणा _TIF_SYSCALL_AUDIT	(1<<TIF_SYSCALL_AUDIT)
-#घोषणा _TIF_SECCOMP		(1<<TIF_SECCOMP)
-#घोषणा _TIF_NOTIFY_RESUME	(1<<TIF_NOTIFY_RESUME)
-#घोषणा _TIF_UPROBE		(1<<TIF_UPROBE)
-#घोषणा _TIF_NOTIFY_SIGNAL	(1<<TIF_NOTIFY_SIGNAL)
-#घोषणा _TIF_USEDFPU		(1<<TIF_USEDFPU)
-#घोषणा _TIF_NOHZ		(1<<TIF_NOHZ)
-#घोषणा _TIF_FIXADE		(1<<TIF_FIXADE)
-#घोषणा _TIF_LOGADE		(1<<TIF_LOGADE)
-#घोषणा _TIF_32BIT_REGS		(1<<TIF_32BIT_REGS)
-#घोषणा _TIF_32BIT_ADDR		(1<<TIF_32BIT_ADDR)
-#घोषणा _TIF_FPUBOUND		(1<<TIF_FPUBOUND)
-#घोषणा _TIF_LOAD_WATCH		(1<<TIF_LOAD_WATCH)
-#घोषणा _TIF_32BIT_FPREGS	(1<<TIF_32BIT_FPREGS)
-#घोषणा _TIF_HYBRID_FPREGS	(1<<TIF_HYBRID_FPREGS)
-#घोषणा _TIF_USEDMSA		(1<<TIF_USEDMSA)
-#घोषणा _TIF_MSA_CTX_LIVE	(1<<TIF_MSA_CTX_LIVE)
-#घोषणा _TIF_SYSCALL_TRACEPOINT	(1<<TIF_SYSCALL_TRACEPOINT)
+#define _TIF_SYSCALL_TRACE	(1<<TIF_SYSCALL_TRACE)
+#define _TIF_SIGPENDING		(1<<TIF_SIGPENDING)
+#define _TIF_NEED_RESCHED	(1<<TIF_NEED_RESCHED)
+#define _TIF_SYSCALL_AUDIT	(1<<TIF_SYSCALL_AUDIT)
+#define _TIF_SECCOMP		(1<<TIF_SECCOMP)
+#define _TIF_NOTIFY_RESUME	(1<<TIF_NOTIFY_RESUME)
+#define _TIF_UPROBE		(1<<TIF_UPROBE)
+#define _TIF_NOTIFY_SIGNAL	(1<<TIF_NOTIFY_SIGNAL)
+#define _TIF_USEDFPU		(1<<TIF_USEDFPU)
+#define _TIF_NOHZ		(1<<TIF_NOHZ)
+#define _TIF_FIXADE		(1<<TIF_FIXADE)
+#define _TIF_LOGADE		(1<<TIF_LOGADE)
+#define _TIF_32BIT_REGS		(1<<TIF_32BIT_REGS)
+#define _TIF_32BIT_ADDR		(1<<TIF_32BIT_ADDR)
+#define _TIF_FPUBOUND		(1<<TIF_FPUBOUND)
+#define _TIF_LOAD_WATCH		(1<<TIF_LOAD_WATCH)
+#define _TIF_32BIT_FPREGS	(1<<TIF_32BIT_FPREGS)
+#define _TIF_HYBRID_FPREGS	(1<<TIF_HYBRID_FPREGS)
+#define _TIF_USEDMSA		(1<<TIF_USEDMSA)
+#define _TIF_MSA_CTX_LIVE	(1<<TIF_MSA_CTX_LIVE)
+#define _TIF_SYSCALL_TRACEPOINT	(1<<TIF_SYSCALL_TRACEPOINT)
 
-#घोषणा _TIF_WORK_SYSCALL_ENTRY	(_TIF_NOHZ | _TIF_SYSCALL_TRACE |	\
+#define _TIF_WORK_SYSCALL_ENTRY	(_TIF_NOHZ | _TIF_SYSCALL_TRACE |	\
 				 _TIF_SYSCALL_AUDIT | \
 				 _TIF_SYSCALL_TRACEPOINT | _TIF_SECCOMP)
 
-/* work to करो in syscall_trace_leave() */
-#घोषणा _TIF_WORK_SYSCALL_EXIT	(_TIF_NOHZ | _TIF_SYSCALL_TRACE |	\
+/* work to do in syscall_trace_leave() */
+#define _TIF_WORK_SYSCALL_EXIT	(_TIF_NOHZ | _TIF_SYSCALL_TRACE |	\
 				 _TIF_SYSCALL_AUDIT | _TIF_SYSCALL_TRACEPOINT)
 
-/* work to करो on पूर्णांकerrupt/exception वापस */
-#घोषणा _TIF_WORK_MASK		\
+/* work to do on interrupt/exception return */
+#define _TIF_WORK_MASK		\
 	(_TIF_SIGPENDING | _TIF_NEED_RESCHED | _TIF_NOTIFY_RESUME |	\
 	 _TIF_UPROBE | _TIF_NOTIFY_SIGNAL)
-/* work to करो on any वापस to u-space */
-#घोषणा _TIF_ALLWORK_MASK	(_TIF_NOHZ | _TIF_WORK_MASK |		\
+/* work to do on any return to u-space */
+#define _TIF_ALLWORK_MASK	(_TIF_NOHZ | _TIF_WORK_MASK |		\
 				 _TIF_WORK_SYSCALL_EXIT |		\
 				 _TIF_SYSCALL_TRACEPOINT)
 
 /*
- * We stash processor id पूर्णांकo a COP0 रेजिस्टर to retrieve it fast
+ * We stash processor id into a COP0 register to retrieve it fast
  * at kernel exception entry.
  */
-#अगर   defined(CONFIG_MIPS_PGD_C0_CONTEXT)
-#घोषणा SMP_CPUID_REG		20, 0	/* XCONTEXT */
-#घोषणा ASM_SMP_CPUID_REG	$20
-#घोषणा SMP_CPUID_PTRSHIFT	48
-#अन्यथा
-#घोषणा SMP_CPUID_REG		4, 0	/* CONTEXT */
-#घोषणा ASM_SMP_CPUID_REG	$4
-#घोषणा SMP_CPUID_PTRSHIFT	23
-#पूर्ण_अगर
+#if   defined(CONFIG_MIPS_PGD_C0_CONTEXT)
+#define SMP_CPUID_REG		20, 0	/* XCONTEXT */
+#define ASM_SMP_CPUID_REG	$20
+#define SMP_CPUID_PTRSHIFT	48
+#else
+#define SMP_CPUID_REG		4, 0	/* CONTEXT */
+#define ASM_SMP_CPUID_REG	$4
+#define SMP_CPUID_PTRSHIFT	23
+#endif
 
-#अगर_घोषित CONFIG_64BIT
-#घोषणा SMP_CPUID_REGSHIFT	(SMP_CPUID_PTRSHIFT + 3)
-#अन्यथा
-#घोषणा SMP_CPUID_REGSHIFT	(SMP_CPUID_PTRSHIFT + 2)
-#पूर्ण_अगर
+#ifdef CONFIG_64BIT
+#define SMP_CPUID_REGSHIFT	(SMP_CPUID_PTRSHIFT + 3)
+#else
+#define SMP_CPUID_REGSHIFT	(SMP_CPUID_PTRSHIFT + 2)
+#endif
 
-#घोषणा ASM_CPUID_MFC0		MFC0
-#घोषणा UASM_i_CPUID_MFC0	UASM_i_MFC0
+#define ASM_CPUID_MFC0		MFC0
+#define UASM_i_CPUID_MFC0	UASM_i_MFC0
 
-#पूर्ण_अगर /* __KERNEL__ */
-#पूर्ण_अगर /* _ASM_THREAD_INFO_H */
+#endif /* __KERNEL__ */
+#endif /* _ASM_THREAD_INFO_H */

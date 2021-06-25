@@ -1,30 +1,29 @@
-<शैली गुरु>
 /*
- * include/यंत्र-xtensa/ptrace.h
+ * include/asm-xtensa/ptrace.h
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2001 - 2005 Tensilica Inc.
  */
-#अगर_अघोषित _XTENSA_PTRACE_H
-#घोषणा _XTENSA_PTRACE_H
+#ifndef _XTENSA_PTRACE_H
+#define _XTENSA_PTRACE_H
 
-#समावेश <यंत्र/kmem_layout.h>
-#समावेश <uapi/यंत्र/ptrace.h>
+#include <asm/kmem_layout.h>
+#include <uapi/asm/ptrace.h>
 
 /*
  * Kernel stack
  *
  *		+-----------------------+  -------- STACK_SIZE
- *		|     रेजिस्टर file     |  |
+ *		|     register file     |  |
  *		+-----------------------+  |
- *		|    काष्ठा pt_regs     |  |
+ *		|    struct pt_regs     |  |
  *		+-----------------------+  | ------ PT_REGS_OFFSET
- * द्विगुन	:  16 bytes spill area  :  |  ^
+ * double	:  16 bytes spill area  :  |  ^
  * excetion	:- - - - - - - - - - - -:  |  |
- * frame	:    काष्ठा pt_regs     :  |  |
+ * frame	:    struct pt_regs     :  |  |
  *		:- - - - - - - - - - - -:  |  |
  *		|                       |  |  |
  *		|     memory stack      |  |  |
@@ -34,85 +33,85 @@
  *		|                       |  |  |
  *		|                       |  |  |
  *		+-----------------------+  |  | --- STACK_BIAS
- *		|  काष्ठा task_काष्ठा   |  |  |  ^
+ *		|  struct task_struct   |  |  |  ^
  *  current --> +-----------------------+  |  |  |
- *		|  काष्ठा thपढ़ो_info   |  |  |  |
+ *		|  struct thread_info   |  |  |  |
  *		+-----------------------+ --------
  */
 
-#घोषणा NO_SYSCALL (-1)
+#define NO_SYSCALL (-1)
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#समावेश <यंत्र/coprocessor.h>
+#include <asm/coprocessor.h>
 
 /*
- * This काष्ठा defines the way the रेजिस्टरs are stored on the
- * kernel stack during a प्रणाली call or other kernel entry.
+ * This struct defines the way the registers are stored on the
+ * kernel stack during a system call or other kernel entry.
  */
-काष्ठा pt_regs अणु
-	अचिन्हित दीर्घ pc;		/*   4 */
-	अचिन्हित दीर्घ ps;		/*   8 */
-	अचिन्हित दीर्घ depc;		/*  12 */
-	अचिन्हित दीर्घ exccause;		/*  16 */
-	अचिन्हित दीर्घ excvaddr;		/*  20 */
-	अचिन्हित दीर्घ debugcause;	/*  24 */
-	अचिन्हित दीर्घ wmask;		/*  28 */
-	अचिन्हित दीर्घ lbeg;		/*  32 */
-	अचिन्हित दीर्घ lend;		/*  36 */
-	अचिन्हित दीर्घ lcount;		/*  40 */
-	अचिन्हित दीर्घ sar;		/*  44 */
-	अचिन्हित दीर्घ winकरोwbase;	/*  48 */
-	अचिन्हित दीर्घ winकरोwstart;	/*  52 */
-	अचिन्हित दीर्घ syscall;		/*  56 */
-	अचिन्हित दीर्घ icountlevel;	/*  60 */
-	अचिन्हित दीर्घ scompare1;	/*  64 */
-	अचिन्हित दीर्घ thपढ़ोptr;	/*  68 */
+struct pt_regs {
+	unsigned long pc;		/*   4 */
+	unsigned long ps;		/*   8 */
+	unsigned long depc;		/*  12 */
+	unsigned long exccause;		/*  16 */
+	unsigned long excvaddr;		/*  20 */
+	unsigned long debugcause;	/*  24 */
+	unsigned long wmask;		/*  28 */
+	unsigned long lbeg;		/*  32 */
+	unsigned long lend;		/*  36 */
+	unsigned long lcount;		/*  40 */
+	unsigned long sar;		/*  44 */
+	unsigned long windowbase;	/*  48 */
+	unsigned long windowstart;	/*  52 */
+	unsigned long syscall;		/*  56 */
+	unsigned long icountlevel;	/*  60 */
+	unsigned long scompare1;	/*  64 */
+	unsigned long threadptr;	/*  68 */
 
-	/* Additional configurable रेजिस्टरs that are used by the compiler. */
+	/* Additional configurable registers that are used by the compiler. */
 	xtregs_opt_t xtregs_opt;
 
 	/* Make sure the areg field is 16 bytes aligned. */
-	पूर्णांक align[0] __attribute__ ((aligned(16)));
+	int align[0] __attribute__ ((aligned(16)));
 
-	/* current रेजिस्टर frame.
-	 * Note: The ESF क्रम kernel exceptions ends after 16 रेजिस्टरs!
+	/* current register frame.
+	 * Note: The ESF for kernel exceptions ends after 16 registers!
 	 */
-	अचिन्हित दीर्घ areg[16];
-पूर्ण;
+	unsigned long areg[16];
+};
 
-#समावेश <यंत्र/core.h>
+#include <asm/core.h>
 
 # define arch_has_single_step()	(1)
-# define task_pt_regs(tsk) ((काष्ठा pt_regs*) \
+# define task_pt_regs(tsk) ((struct pt_regs*) \
 	(task_stack_page(tsk) + KERNEL_STACK_SIZE - (XCHAL_NUM_AREGS-16)*4) - 1)
 # define user_mode(regs) (((regs)->ps & 0x00000020)!=0)
-# define inकाष्ठाion_poपूर्णांकer(regs) ((regs)->pc)
-# define वापस_poपूर्णांकer(regs) (MAKE_PC_FROM_RA((regs)->areg[0], \
+# define instruction_pointer(regs) ((regs)->pc)
+# define return_pointer(regs) (MAKE_PC_FROM_RA((regs)->areg[0], \
 					       (regs)->areg[1]))
 
-# अगरndef CONFIG_SMP
-#  define profile_pc(regs) inकाष्ठाion_poपूर्णांकer(regs)
-# अन्यथा
+# ifndef CONFIG_SMP
+#  define profile_pc(regs) instruction_pointer(regs)
+# else
 #  define profile_pc(regs)						\
-	(अणु								\
-		in_lock_functions(inकाष्ठाion_poपूर्णांकer(regs)) ?		\
-		वापस_poपूर्णांकer(regs) : inकाष्ठाion_poपूर्णांकer(regs);	\
-	पूर्ण)
-# endअगर
+	({								\
+		in_lock_functions(instruction_pointer(regs)) ?		\
+		return_pointer(regs) : instruction_pointer(regs);	\
+	})
+# endif
 
-#घोषणा user_stack_poपूर्णांकer(regs) ((regs)->areg[1])
+#define user_stack_pointer(regs) ((regs)->areg[1])
 
-अटल अंतरभूत अचिन्हित दीर्घ regs_वापस_value(काष्ठा pt_regs *regs)
-अणु
-	वापस regs->areg[2];
-पूर्ण
+static inline unsigned long regs_return_value(struct pt_regs *regs)
+{
+	return regs->areg[2];
+}
 
-#अन्यथा	/* __ASSEMBLY__ */
+#else	/* __ASSEMBLY__ */
 
-# include <यंत्र/यंत्र-offsets.h>
-#घोषणा PT_REGS_OFFSET	  (KERNEL_STACK_SIZE - PT_USER_SIZE)
+# include <asm/asm-offsets.h>
+#define PT_REGS_OFFSET	  (KERNEL_STACK_SIZE - PT_USER_SIZE)
 
-#पूर्ण_अगर	/* !__ASSEMBLY__ */
+#endif	/* !__ASSEMBLY__ */
 
-#पूर्ण_अगर	/* _XTENSA_PTRACE_H */
+#endif	/* _XTENSA_PTRACE_H */

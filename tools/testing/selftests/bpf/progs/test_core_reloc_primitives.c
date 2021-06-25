@@ -1,47 +1,46 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2019 Facebook
 
-#समावेश <linux/bpf.h>
-#समावेश <मानक_निवेशt.h>
-#समावेश <bpf/bpf_helpers.h>
-#समावेश <bpf/bpf_core_पढ़ो.h>
+#include <linux/bpf.h>
+#include <stdint.h>
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_core_read.h>
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";
 
-काष्ठा अणु
-	अक्षर in[256];
-	अक्षर out[256];
-पूर्ण data = अणुपूर्ण;
+struct {
+	char in[256];
+	char out[256];
+} data = {};
 
-क्रमागत core_reloc_primitives_क्रमागत अणु
+enum core_reloc_primitives_enum {
 	A = 0,
 	B = 1,
-पूर्ण;
+};
 
-काष्ठा core_reloc_primitives अणु
-	अक्षर a;
-	पूर्णांक b;
-	क्रमागत core_reloc_primitives_क्रमागत c;
-	व्योम *d;
-	पूर्णांक (*f)(स्थिर अक्षर *);
-पूर्ण;
+struct core_reloc_primitives {
+	char a;
+	int b;
+	enum core_reloc_primitives_enum c;
+	void *d;
+	int (*f)(const char *);
+};
 
-#घोषणा CORE_READ(dst, src) bpf_core_पढ़ो(dst, माप(*(dst)), src)
+#define CORE_READ(dst, src) bpf_core_read(dst, sizeof(*(dst)), src)
 
 SEC("raw_tracepoint/sys_enter")
-पूर्णांक test_core_primitives(व्योम *ctx)
-अणु
-	काष्ठा core_reloc_primitives *in = (व्योम *)&data.in;
-	काष्ठा core_reloc_primitives *out = (व्योम *)&data.out;
+int test_core_primitives(void *ctx)
+{
+	struct core_reloc_primitives *in = (void *)&data.in;
+	struct core_reloc_primitives *out = (void *)&data.out;
 
-	अगर (CORE_READ(&out->a, &in->a) ||
+	if (CORE_READ(&out->a, &in->a) ||
 	    CORE_READ(&out->b, &in->b) ||
 	    CORE_READ(&out->c, &in->c) ||
 	    CORE_READ(&out->d, &in->d) ||
 	    CORE_READ(&out->f, &in->f))
-		वापस 1;
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 

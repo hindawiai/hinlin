@@ -1,583 +1,582 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  linux/fs/hpfs/alloc.c
  *
  *  Mikulas Patocka (mikulas@artax.karlin.mff.cuni.cz), 1998-1999
  *
- *  HPFS biपंचांगap operations
+ *  HPFS bitmap operations
  */
 
-#समावेश "hpfs_fn.h"
+#include "hpfs_fn.h"
 
-अटल व्योम hpfs_claim_alloc(काष्ठा super_block *s, secno sec)
-अणु
-	काष्ठा hpfs_sb_info *sbi = hpfs_sb(s);
-	अगर (sbi->sb_n_मुक्त != (अचिन्हित)-1) अणु
-		अगर (unlikely(!sbi->sb_n_मुक्त)) अणु
+static void hpfs_claim_alloc(struct super_block *s, secno sec)
+{
+	struct hpfs_sb_info *sbi = hpfs_sb(s);
+	if (sbi->sb_n_free != (unsigned)-1) {
+		if (unlikely(!sbi->sb_n_free)) {
 			hpfs_error(s, "free count underflow, allocating sector %08x", sec);
-			sbi->sb_n_मुक्त = -1;
-			वापस;
-		पूर्ण
-		sbi->sb_n_मुक्त--;
-	पूर्ण
-पूर्ण
+			sbi->sb_n_free = -1;
+			return;
+		}
+		sbi->sb_n_free--;
+	}
+}
 
-अटल व्योम hpfs_claim_मुक्त(काष्ठा super_block *s, secno sec)
-अणु
-	काष्ठा hpfs_sb_info *sbi = hpfs_sb(s);
-	अगर (sbi->sb_n_मुक्त != (अचिन्हित)-1) अणु
-		अगर (unlikely(sbi->sb_n_मुक्त >= sbi->sb_fs_size)) अणु
+static void hpfs_claim_free(struct super_block *s, secno sec)
+{
+	struct hpfs_sb_info *sbi = hpfs_sb(s);
+	if (sbi->sb_n_free != (unsigned)-1) {
+		if (unlikely(sbi->sb_n_free >= sbi->sb_fs_size)) {
 			hpfs_error(s, "free count overflow, freeing sector %08x", sec);
-			sbi->sb_n_मुक्त = -1;
-			वापस;
-		पूर्ण
-		sbi->sb_n_मुक्त++;
-	पूर्ण
-पूर्ण
+			sbi->sb_n_free = -1;
+			return;
+		}
+		sbi->sb_n_free++;
+	}
+}
 
-अटल व्योम hpfs_claim_dirband_alloc(काष्ठा super_block *s, secno sec)
-अणु
-	काष्ठा hpfs_sb_info *sbi = hpfs_sb(s);
-	अगर (sbi->sb_n_मुक्त_dnodes != (अचिन्हित)-1) अणु
-		अगर (unlikely(!sbi->sb_n_मुक्त_dnodes)) अणु
+static void hpfs_claim_dirband_alloc(struct super_block *s, secno sec)
+{
+	struct hpfs_sb_info *sbi = hpfs_sb(s);
+	if (sbi->sb_n_free_dnodes != (unsigned)-1) {
+		if (unlikely(!sbi->sb_n_free_dnodes)) {
 			hpfs_error(s, "dirband free count underflow, allocating sector %08x", sec);
-			sbi->sb_n_मुक्त_dnodes = -1;
-			वापस;
-		पूर्ण
-		sbi->sb_n_मुक्त_dnodes--;
-	पूर्ण
-पूर्ण
+			sbi->sb_n_free_dnodes = -1;
+			return;
+		}
+		sbi->sb_n_free_dnodes--;
+	}
+}
 
-अटल व्योम hpfs_claim_dirband_मुक्त(काष्ठा super_block *s, secno sec)
-अणु
-	काष्ठा hpfs_sb_info *sbi = hpfs_sb(s);
-	अगर (sbi->sb_n_मुक्त_dnodes != (अचिन्हित)-1) अणु
-		अगर (unlikely(sbi->sb_n_मुक्त_dnodes >= sbi->sb_dirband_size / 4)) अणु
+static void hpfs_claim_dirband_free(struct super_block *s, secno sec)
+{
+	struct hpfs_sb_info *sbi = hpfs_sb(s);
+	if (sbi->sb_n_free_dnodes != (unsigned)-1) {
+		if (unlikely(sbi->sb_n_free_dnodes >= sbi->sb_dirband_size / 4)) {
 			hpfs_error(s, "dirband free count overflow, freeing sector %08x", sec);
-			sbi->sb_n_मुक्त_dnodes = -1;
-			वापस;
-		पूर्ण
-		sbi->sb_n_मुक्त_dnodes++;
-	पूर्ण
-पूर्ण
+			sbi->sb_n_free_dnodes = -1;
+			return;
+		}
+		sbi->sb_n_free_dnodes++;
+	}
+}
 
 /*
- * Check अगर a sector is allocated in biपंचांगap
- * This is really slow. Turned on only अगर chk==2
+ * Check if a sector is allocated in bitmap
+ * This is really slow. Turned on only if chk==2
  */
 
-अटल पूर्णांक chk_अगर_allocated(काष्ठा super_block *s, secno sec, अक्षर *msg)
-अणु
-	काष्ठा quad_buffer_head qbh;
+static int chk_if_allocated(struct super_block *s, secno sec, char *msg)
+{
+	struct quad_buffer_head qbh;
 	__le32 *bmp;
-	अगर (!(bmp = hpfs_map_biपंचांगap(s, sec >> 14, &qbh, "chk"))) जाओ fail;
-	अगर ((le32_to_cpu(bmp[(sec & 0x3fff) >> 5]) >> (sec & 0x1f)) & 1) अणु
+	if (!(bmp = hpfs_map_bitmap(s, sec >> 14, &qbh, "chk"))) goto fail;
+	if ((le32_to_cpu(bmp[(sec & 0x3fff) >> 5]) >> (sec & 0x1f)) & 1) {
 		hpfs_error(s, "sector '%s' - %08x not allocated in bitmap", msg, sec);
-		जाओ fail1;
-	पूर्ण
-	hpfs_brअन्यथा4(&qbh);
-	अगर (sec >= hpfs_sb(s)->sb_dirband_start && sec < hpfs_sb(s)->sb_dirband_start + hpfs_sb(s)->sb_dirband_size) अणु
-		अचिन्हित ssec = (sec - hpfs_sb(s)->sb_dirband_start) / 4;
-		अगर (!(bmp = hpfs_map_dnode_biपंचांगap(s, &qbh))) जाओ fail;
-		अगर ((le32_to_cpu(bmp[ssec >> 5]) >> (ssec & 0x1f)) & 1) अणु
+		goto fail1;
+	}
+	hpfs_brelse4(&qbh);
+	if (sec >= hpfs_sb(s)->sb_dirband_start && sec < hpfs_sb(s)->sb_dirband_start + hpfs_sb(s)->sb_dirband_size) {
+		unsigned ssec = (sec - hpfs_sb(s)->sb_dirband_start) / 4;
+		if (!(bmp = hpfs_map_dnode_bitmap(s, &qbh))) goto fail;
+		if ((le32_to_cpu(bmp[ssec >> 5]) >> (ssec & 0x1f)) & 1) {
 			hpfs_error(s, "sector '%s' - %08x not allocated in directory bitmap", msg, sec);
-			जाओ fail1;
-		पूर्ण
-		hpfs_brअन्यथा4(&qbh);
-	पूर्ण
-	वापस 0;
+			goto fail1;
+		}
+		hpfs_brelse4(&qbh);
+	}
+	return 0;
 	fail1:
-	hpfs_brअन्यथा4(&qbh);
+	hpfs_brelse4(&qbh);
 	fail:
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
- * Check अगर sector(s) have proper number and additionally check अगर they're
- * allocated in biपंचांगap.
+ * Check if sector(s) have proper number and additionally check if they're
+ * allocated in bitmap.
  */
 	
-पूर्णांक hpfs_chk_sectors(काष्ठा super_block *s, secno start, पूर्णांक len, अक्षर *msg)
-अणु
-	अगर (start + len < start || start < 0x12 ||
-	    start + len > hpfs_sb(s)->sb_fs_size) अणु
+int hpfs_chk_sectors(struct super_block *s, secno start, int len, char *msg)
+{
+	if (start + len < start || start < 0x12 ||
+	    start + len > hpfs_sb(s)->sb_fs_size) {
 	    	hpfs_error(s, "sector(s) '%s' badly placed at %08x", msg, start);
-		वापस 1;
-	पूर्ण
-	अगर (hpfs_sb(s)->sb_chk>=2) अणु
-		पूर्णांक i;
-		क्रम (i = 0; i < len; i++)
-			अगर (chk_अगर_allocated(s, start + i, msg)) वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 1;
+	}
+	if (hpfs_sb(s)->sb_chk>=2) {
+		int i;
+		for (i = 0; i < len; i++)
+			if (chk_if_allocated(s, start + i, msg)) return 1;
+	}
+	return 0;
+}
 
-अटल secno alloc_in_bmp(काष्ठा super_block *s, secno near, अचिन्हित n, अचिन्हित क्रमward)
-अणु
-	काष्ठा quad_buffer_head qbh;
+static secno alloc_in_bmp(struct super_block *s, secno near, unsigned n, unsigned forward)
+{
+	struct quad_buffer_head qbh;
 	__le32 *bmp;
-	अचिन्हित bs = near & ~0x3fff;
-	अचिन्हित nr = (near & 0x3fff) & ~(n - 1);
-	/*अचिन्हित mnr;*/
-	अचिन्हित i, q;
-	पूर्णांक a, b;
+	unsigned bs = near & ~0x3fff;
+	unsigned nr = (near & 0x3fff) & ~(n - 1);
+	/*unsigned mnr;*/
+	unsigned i, q;
+	int a, b;
 	secno ret = 0;
-	अगर (n != 1 && n != 4) अणु
+	if (n != 1 && n != 4) {
 		hpfs_error(s, "Bad allocation size: %d", n);
-		वापस 0;
-	पूर्ण
-	अगर (bs != ~0x3fff) अणु
-		अगर (!(bmp = hpfs_map_biपंचांगap(s, near >> 14, &qbh, "aib"))) जाओ uls;
-	पूर्ण अन्यथा अणु
-		अगर (!(bmp = hpfs_map_dnode_biपंचांगap(s, &qbh))) जाओ uls;
-	पूर्ण
-	अगर (!tstbits(bmp, nr, n + क्रमward)) अणु
+		return 0;
+	}
+	if (bs != ~0x3fff) {
+		if (!(bmp = hpfs_map_bitmap(s, near >> 14, &qbh, "aib"))) goto uls;
+	} else {
+		if (!(bmp = hpfs_map_dnode_bitmap(s, &qbh))) goto uls;
+	}
+	if (!tstbits(bmp, nr, n + forward)) {
 		ret = bs + nr;
-		जाओ rt;
-	पूर्ण
+		goto rt;
+	}
 	q = nr + n; b = 0;
-	जबतक ((a = tstbits(bmp, q, n + क्रमward)) != 0) अणु
+	while ((a = tstbits(bmp, q, n + forward)) != 0) {
 		q += a;
-		अगर (n != 1) q = ((q-1)&~(n-1))+n;
-		अगर (!b) अणु
-			अगर (q>>5 != nr>>5) अणु
+		if (n != 1) q = ((q-1)&~(n-1))+n;
+		if (!b) {
+			if (q>>5 != nr>>5) {
 				b = 1;
 				q = nr & 0x1f;
-			पूर्ण
-		पूर्ण अन्यथा अगर (q > nr) अवरोध;
-	पूर्ण
-	अगर (!a) अणु
+			}
+		} else if (q > nr) break;
+	}
+	if (!a) {
 		ret = bs + q;
-		जाओ rt;
-	पूर्ण
+		goto rt;
+	}
 	nr >>= 5;
-	/*क्रम (i = nr + 1; i != nr; i++, i &= 0x1ff) */
+	/*for (i = nr + 1; i != nr; i++, i &= 0x1ff) */
 	i = nr;
-	करो अणु
-		अगर (!le32_to_cpu(bmp[i])) जाओ cont;
-		अगर (n + क्रमward >= 0x3f && le32_to_cpu(bmp[i]) != 0xffffffff) जाओ cont;
+	do {
+		if (!le32_to_cpu(bmp[i])) goto cont;
+		if (n + forward >= 0x3f && le32_to_cpu(bmp[i]) != 0xffffffff) goto cont;
 		q = i<<5;
-		अगर (i > 0) अणु
-			अचिन्हित k = le32_to_cpu(bmp[i-1]);
-			जबतक (k & 0x80000000) अणु
+		if (i > 0) {
+			unsigned k = le32_to_cpu(bmp[i-1]);
+			while (k & 0x80000000) {
 				q--; k <<= 1;
-			पूर्ण
-		पूर्ण
-		अगर (n != 1) q = ((q-1)&~(n-1))+n;
-		जबतक ((a = tstbits(bmp, q, n + क्रमward)) != 0) अणु
+			}
+		}
+		if (n != 1) q = ((q-1)&~(n-1))+n;
+		while ((a = tstbits(bmp, q, n + forward)) != 0) {
 			q += a;
-			अगर (n != 1) q = ((q-1)&~(n-1))+n;
-			अगर (q>>5 > i) अवरोध;
-		पूर्ण
-		अगर (!a) अणु
+			if (n != 1) q = ((q-1)&~(n-1))+n;
+			if (q>>5 > i) break;
+		}
+		if (!a) {
 			ret = bs + q;
-			जाओ rt;
-		पूर्ण
+			goto rt;
+		}
 		cont:
 		i++, i &= 0x1ff;
-	पूर्ण जबतक (i != nr);
+	} while (i != nr);
 	rt:
-	अगर (ret) अणु
-		अगर (hpfs_sb(s)->sb_chk && ((ret >> 14) != (bs >> 14) || (le32_to_cpu(bmp[(ret & 0x3fff) >> 5]) | ~(((1 << n) - 1) << (ret & 0x1f))) != 0xffffffff)) अणु
+	if (ret) {
+		if (hpfs_sb(s)->sb_chk && ((ret >> 14) != (bs >> 14) || (le32_to_cpu(bmp[(ret & 0x3fff) >> 5]) | ~(((1 << n) - 1) << (ret & 0x1f))) != 0xffffffff)) {
 			hpfs_error(s, "Allocation doesn't work! Wanted %d, allocated at %08x", n, ret);
 			ret = 0;
-			जाओ b;
-		पूर्ण
+			goto b;
+		}
 		bmp[(ret & 0x3fff) >> 5] &= cpu_to_le32(~(((1 << n) - 1) << (ret & 0x1f)));
 		hpfs_mark_4buffers_dirty(&qbh);
-	पूर्ण
+	}
 	b:
-	hpfs_brअन्यथा4(&qbh);
+	hpfs_brelse4(&qbh);
 	uls:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Allocation strategy:	1) search place near the sector specअगरied
- *			2) search biपंचांगap where मुक्त sectors last found
- *			3) search all biपंचांगaps
- *			4) search all biपंचांगaps ignoring number of pre-allocated
+ * Allocation strategy:	1) search place near the sector specified
+ *			2) search bitmap where free sectors last found
+ *			3) search all bitmaps
+ *			4) search all bitmaps ignoring number of pre-allocated
  *				sectors
  */
 
-secno hpfs_alloc_sector(काष्ठा super_block *s, secno near, अचिन्हित n, पूर्णांक क्रमward)
-अणु
+secno hpfs_alloc_sector(struct super_block *s, secno near, unsigned n, int forward)
+{
 	secno sec;
-	पूर्णांक i;
-	अचिन्हित n_bmps;
-	काष्ठा hpfs_sb_info *sbi = hpfs_sb(s);
-	पूर्णांक f_p = 0;
-	पूर्णांक near_bmp;
-	अगर (क्रमward < 0) अणु
-		क्रमward = -क्रमward;
+	int i;
+	unsigned n_bmps;
+	struct hpfs_sb_info *sbi = hpfs_sb(s);
+	int f_p = 0;
+	int near_bmp;
+	if (forward < 0) {
+		forward = -forward;
 		f_p = 1;
-	पूर्ण
+	}
 	n_bmps = (sbi->sb_fs_size + 0x4000 - 1) >> 14;
-	अगर (near && near < sbi->sb_fs_size) अणु
-		अगर ((sec = alloc_in_bmp(s, near, n, f_p ? क्रमward : क्रमward/4))) जाओ ret;
+	if (near && near < sbi->sb_fs_size) {
+		if ((sec = alloc_in_bmp(s, near, n, f_p ? forward : forward/4))) goto ret;
 		near_bmp = near >> 14;
-	पूर्ण अन्यथा near_bmp = n_bmps / 2;
+	} else near_bmp = n_bmps / 2;
 	/*
-	अगर (b != -1) अणु
-		अगर ((sec = alloc_in_bmp(s, b<<14, n, f_p ? क्रमward : क्रमward/2))) अणु
+	if (b != -1) {
+		if ((sec = alloc_in_bmp(s, b<<14, n, f_p ? forward : forward/2))) {
 			b &= 0x0fffffff;
-			जाओ ret;
-		पूर्ण
-		अगर (b > 0x10000000) अगर ((sec = alloc_in_bmp(s, (b&0xfffffff)<<14, n, f_p ? क्रमward : 0))) जाओ ret;
+			goto ret;
+		}
+		if (b > 0x10000000) if ((sec = alloc_in_bmp(s, (b&0xfffffff)<<14, n, f_p ? forward : 0))) goto ret;
 	*/
-	अगर (!f_p) अगर (क्रमward > sbi->sb_max_fwd_alloc) क्रमward = sbi->sb_max_fwd_alloc;
+	if (!f_p) if (forward > sbi->sb_max_fwd_alloc) forward = sbi->sb_max_fwd_alloc;
 	less_fwd:
-	क्रम (i = 0; i < n_bmps; i++) अणु
-		अगर (near_bmp+i < n_bmps && ((sec = alloc_in_bmp(s, (near_bmp+i) << 14, n, क्रमward)))) अणु
-			sbi->sb_c_biपंचांगap = near_bmp+i;
-			जाओ ret;
-		पूर्ण	
-		अगर (!क्रमward) अणु
-			अगर (near_bmp-i-1 >= 0 && ((sec = alloc_in_bmp(s, (near_bmp-i-1) << 14, n, क्रमward)))) अणु
-				sbi->sb_c_biपंचांगap = near_bmp-i-1;
-				जाओ ret;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (near_bmp+i >= n_bmps && ((sec = alloc_in_bmp(s, (near_bmp+i-n_bmps) << 14, n, क्रमward)))) अणु
-				sbi->sb_c_biपंचांगap = near_bmp+i-n_bmps;
-				जाओ ret;
-			पूर्ण
-		पूर्ण
-		अगर (i == 1 && sbi->sb_c_biपंचांगap != -1 && ((sec = alloc_in_bmp(s, (sbi->sb_c_biपंचांगap) << 14, n, क्रमward)))) अणु
-			जाओ ret;
-		पूर्ण
-	पूर्ण
-	अगर (!f_p) अणु
-		अगर (क्रमward) अणु
-			sbi->sb_max_fwd_alloc = क्रमward * 3 / 4;
-			क्रमward /= 2;
-			जाओ less_fwd;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < n_bmps; i++) {
+		if (near_bmp+i < n_bmps && ((sec = alloc_in_bmp(s, (near_bmp+i) << 14, n, forward)))) {
+			sbi->sb_c_bitmap = near_bmp+i;
+			goto ret;
+		}	
+		if (!forward) {
+			if (near_bmp-i-1 >= 0 && ((sec = alloc_in_bmp(s, (near_bmp-i-1) << 14, n, forward)))) {
+				sbi->sb_c_bitmap = near_bmp-i-1;
+				goto ret;
+			}
+		} else {
+			if (near_bmp+i >= n_bmps && ((sec = alloc_in_bmp(s, (near_bmp+i-n_bmps) << 14, n, forward)))) {
+				sbi->sb_c_bitmap = near_bmp+i-n_bmps;
+				goto ret;
+			}
+		}
+		if (i == 1 && sbi->sb_c_bitmap != -1 && ((sec = alloc_in_bmp(s, (sbi->sb_c_bitmap) << 14, n, forward)))) {
+			goto ret;
+		}
+	}
+	if (!f_p) {
+		if (forward) {
+			sbi->sb_max_fwd_alloc = forward * 3 / 4;
+			forward /= 2;
+			goto less_fwd;
+		}
+	}
 	sec = 0;
 	ret:
-	अगर (sec) अणु
+	if (sec) {
 		i = 0;
-		करो
+		do
 			hpfs_claim_alloc(s, sec + i);
-		जबतक (unlikely(++i < n));
-	पूर्ण
-	अगर (sec && f_p) अणु
-		क्रम (i = 0; i < क्रमward; i++) अणु
-			अगर (!hpfs_alloc_अगर_possible(s, sec + n + i)) अणु
-				hpfs_error(s, "Prealloc doesn't work! Wanted %d, allocated at %08x, can't allocate %d", क्रमward, sec, i);
+		while (unlikely(++i < n));
+	}
+	if (sec && f_p) {
+		for (i = 0; i < forward; i++) {
+			if (!hpfs_alloc_if_possible(s, sec + n + i)) {
+				hpfs_error(s, "Prealloc doesn't work! Wanted %d, allocated at %08x, can't allocate %d", forward, sec, i);
 				sec = 0;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस sec;
-पूर्ण
+				break;
+			}
+		}
+	}
+	return sec;
+}
 
-अटल secno alloc_in_dirband(काष्ठा super_block *s, secno near)
-अणु
-	अचिन्हित nr = near;
+static secno alloc_in_dirband(struct super_block *s, secno near)
+{
+	unsigned nr = near;
 	secno sec;
-	काष्ठा hpfs_sb_info *sbi = hpfs_sb(s);
-	अगर (nr < sbi->sb_dirband_start)
+	struct hpfs_sb_info *sbi = hpfs_sb(s);
+	if (nr < sbi->sb_dirband_start)
 		nr = sbi->sb_dirband_start;
-	अगर (nr >= sbi->sb_dirband_start + sbi->sb_dirband_size)
+	if (nr >= sbi->sb_dirband_start + sbi->sb_dirband_size)
 		nr = sbi->sb_dirband_start + sbi->sb_dirband_size - 4;
 	nr -= sbi->sb_dirband_start;
 	nr >>= 2;
 	sec = alloc_in_bmp(s, (~0x3fff) | nr, 1, 0);
-	अगर (!sec) वापस 0;
+	if (!sec) return 0;
 	hpfs_claim_dirband_alloc(s, sec);
-	वापस ((sec & 0x3fff) << 2) + sbi->sb_dirband_start;
-पूर्ण
+	return ((sec & 0x3fff) << 2) + sbi->sb_dirband_start;
+}
 
-/* Alloc sector अगर it's मुक्त */
+/* Alloc sector if it's free */
 
-पूर्णांक hpfs_alloc_अगर_possible(काष्ठा super_block *s, secno sec)
-अणु
-	काष्ठा quad_buffer_head qbh;
+int hpfs_alloc_if_possible(struct super_block *s, secno sec)
+{
+	struct quad_buffer_head qbh;
 	__le32 *bmp;
-	अगर (!(bmp = hpfs_map_biपंचांगap(s, sec >> 14, &qbh, "aip"))) जाओ end;
-	अगर (le32_to_cpu(bmp[(sec & 0x3fff) >> 5]) & (1 << (sec & 0x1f))) अणु
+	if (!(bmp = hpfs_map_bitmap(s, sec >> 14, &qbh, "aip"))) goto end;
+	if (le32_to_cpu(bmp[(sec & 0x3fff) >> 5]) & (1 << (sec & 0x1f))) {
 		bmp[(sec & 0x3fff) >> 5] &= cpu_to_le32(~(1 << (sec & 0x1f)));
 		hpfs_mark_4buffers_dirty(&qbh);
-		hpfs_brअन्यथा4(&qbh);
+		hpfs_brelse4(&qbh);
 		hpfs_claim_alloc(s, sec);
-		वापस 1;
-	पूर्ण
-	hpfs_brअन्यथा4(&qbh);
+		return 1;
+	}
+	hpfs_brelse4(&qbh);
 	end:
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Free sectors in biपंचांगaps */
+/* Free sectors in bitmaps */
 
-व्योम hpfs_मुक्त_sectors(काष्ठा super_block *s, secno sec, अचिन्हित n)
-अणु
-	काष्ठा quad_buffer_head qbh;
+void hpfs_free_sectors(struct super_block *s, secno sec, unsigned n)
+{
+	struct quad_buffer_head qbh;
 	__le32 *bmp;
-	काष्ठा hpfs_sb_info *sbi = hpfs_sb(s);
+	struct hpfs_sb_info *sbi = hpfs_sb(s);
 	/*pr_info("2 - ");*/
-	अगर (!n) वापस;
-	अगर (sec < 0x12) अणु
+	if (!n) return;
+	if (sec < 0x12) {
 		hpfs_error(s, "Trying to free reserved sector %08x", sec);
-		वापस;
-	पूर्ण
+		return;
+	}
 	sbi->sb_max_fwd_alloc += n > 0xffff ? 0xffff : n;
-	अगर (sbi->sb_max_fwd_alloc > 0xffffff) sbi->sb_max_fwd_alloc = 0xffffff;
+	if (sbi->sb_max_fwd_alloc > 0xffffff) sbi->sb_max_fwd_alloc = 0xffffff;
 	new_map:
-	अगर (!(bmp = hpfs_map_biपंचांगap(s, sec >> 14, &qbh, "free"))) अणु
-		वापस;
-	पूर्ण	
+	if (!(bmp = hpfs_map_bitmap(s, sec >> 14, &qbh, "free"))) {
+		return;
+	}	
 	new_tst:
-	अगर ((le32_to_cpu(bmp[(sec & 0x3fff) >> 5]) >> (sec & 0x1f) & 1)) अणु
+	if ((le32_to_cpu(bmp[(sec & 0x3fff) >> 5]) >> (sec & 0x1f) & 1)) {
 		hpfs_error(s, "sector %08x not allocated", sec);
-		hpfs_brअन्यथा4(&qbh);
-		वापस;
-	पूर्ण
+		hpfs_brelse4(&qbh);
+		return;
+	}
 	bmp[(sec & 0x3fff) >> 5] |= cpu_to_le32(1 << (sec & 0x1f));
-	hpfs_claim_मुक्त(s, sec);
-	अगर (!--n) अणु
+	hpfs_claim_free(s, sec);
+	if (!--n) {
 		hpfs_mark_4buffers_dirty(&qbh);
-		hpfs_brअन्यथा4(&qbh);
-		वापस;
-	पूर्ण	
-	अगर (!(++sec & 0x3fff)) अणु
+		hpfs_brelse4(&qbh);
+		return;
+	}	
+	if (!(++sec & 0x3fff)) {
 		hpfs_mark_4buffers_dirty(&qbh);
-		hpfs_brअन्यथा4(&qbh);
-		जाओ new_map;
-	पूर्ण
-	जाओ new_tst;
-पूर्ण
+		hpfs_brelse4(&qbh);
+		goto new_map;
+	}
+	goto new_tst;
+}
 
 /*
- * Check अगर there are at least n मुक्त dnodes on the fileप्रणाली.
- * Called beक्रमe adding to dnode. If we run out of space जबतक
+ * Check if there are at least n free dnodes on the filesystem.
+ * Called before adding to dnode. If we run out of space while
  * splitting dnodes, it would corrupt dnode tree.
  */
 
-पूर्णांक hpfs_check_मुक्त_dnodes(काष्ठा super_block *s, पूर्णांक n)
-अणु
-	पूर्णांक n_bmps = (hpfs_sb(s)->sb_fs_size + 0x4000 - 1) >> 14;
-	पूर्णांक b = hpfs_sb(s)->sb_c_biपंचांगap & 0x0fffffff;
-	पूर्णांक i, j;
+int hpfs_check_free_dnodes(struct super_block *s, int n)
+{
+	int n_bmps = (hpfs_sb(s)->sb_fs_size + 0x4000 - 1) >> 14;
+	int b = hpfs_sb(s)->sb_c_bitmap & 0x0fffffff;
+	int i, j;
 	__le32 *bmp;
-	काष्ठा quad_buffer_head qbh;
-	अगर ((bmp = hpfs_map_dnode_biपंचांगap(s, &qbh))) अणु
-		क्रम (j = 0; j < 512; j++) अणु
-			अचिन्हित k;
-			अगर (!le32_to_cpu(bmp[j])) जारी;
-			क्रम (k = le32_to_cpu(bmp[j]); k; k >>= 1) अगर (k & 1) अगर (!--n) अणु
-				hpfs_brअन्यथा4(&qbh);
-				वापस 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	hpfs_brअन्यथा4(&qbh);
+	struct quad_buffer_head qbh;
+	if ((bmp = hpfs_map_dnode_bitmap(s, &qbh))) {
+		for (j = 0; j < 512; j++) {
+			unsigned k;
+			if (!le32_to_cpu(bmp[j])) continue;
+			for (k = le32_to_cpu(bmp[j]); k; k >>= 1) if (k & 1) if (!--n) {
+				hpfs_brelse4(&qbh);
+				return 0;
+			}
+		}
+	}
+	hpfs_brelse4(&qbh);
 	i = 0;
-	अगर (hpfs_sb(s)->sb_c_biपंचांगap != -1) अणु
-		bmp = hpfs_map_biपंचांगap(s, b, &qbh, "chkdn1");
-		जाओ chk_bmp;
-	पूर्ण
+	if (hpfs_sb(s)->sb_c_bitmap != -1) {
+		bmp = hpfs_map_bitmap(s, b, &qbh, "chkdn1");
+		goto chk_bmp;
+	}
 	chk_next:
-	अगर (i == b) i++;
-	अगर (i >= n_bmps) वापस 1;
-	bmp = hpfs_map_biपंचांगap(s, i, &qbh, "chkdn2");
+	if (i == b) i++;
+	if (i >= n_bmps) return 1;
+	bmp = hpfs_map_bitmap(s, i, &qbh, "chkdn2");
 	chk_bmp:
-	अगर (bmp) अणु
-		क्रम (j = 0; j < 512; j++) अणु
+	if (bmp) {
+		for (j = 0; j < 512; j++) {
 			u32 k;
-			अगर (!le32_to_cpu(bmp[j])) जारी;
-			क्रम (k = 0xf; k; k <<= 4)
-				अगर ((le32_to_cpu(bmp[j]) & k) == k) अणु
-					अगर (!--n) अणु
-						hpfs_brअन्यथा4(&qbh);
-						वापस 0;
-					पूर्ण
-				पूर्ण
-		पूर्ण
-		hpfs_brअन्यथा4(&qbh);
-	पूर्ण
+			if (!le32_to_cpu(bmp[j])) continue;
+			for (k = 0xf; k; k <<= 4)
+				if ((le32_to_cpu(bmp[j]) & k) == k) {
+					if (!--n) {
+						hpfs_brelse4(&qbh);
+						return 0;
+					}
+				}
+		}
+		hpfs_brelse4(&qbh);
+	}
 	i++;
-	जाओ chk_next;
-पूर्ण
+	goto chk_next;
+}
 
-व्योम hpfs_मुक्त_dnode(काष्ठा super_block *s, dnode_secno dno)
-अणु
-	अगर (hpfs_sb(s)->sb_chk) अगर (dno & 3) अणु
+void hpfs_free_dnode(struct super_block *s, dnode_secno dno)
+{
+	if (hpfs_sb(s)->sb_chk) if (dno & 3) {
 		hpfs_error(s, "hpfs_free_dnode: dnode %08x not aligned", dno);
-		वापस;
-	पूर्ण
-	अगर (dno < hpfs_sb(s)->sb_dirband_start ||
-	    dno >= hpfs_sb(s)->sb_dirband_start + hpfs_sb(s)->sb_dirband_size) अणु
-		hpfs_मुक्त_sectors(s, dno, 4);
-	पूर्ण अन्यथा अणु
-		काष्ठा quad_buffer_head qbh;
+		return;
+	}
+	if (dno < hpfs_sb(s)->sb_dirband_start ||
+	    dno >= hpfs_sb(s)->sb_dirband_start + hpfs_sb(s)->sb_dirband_size) {
+		hpfs_free_sectors(s, dno, 4);
+	} else {
+		struct quad_buffer_head qbh;
 		__le32 *bmp;
-		अचिन्हित ssec = (dno - hpfs_sb(s)->sb_dirband_start) / 4;
-		अगर (!(bmp = hpfs_map_dnode_biपंचांगap(s, &qbh))) अणु
-			वापस;
-		पूर्ण
+		unsigned ssec = (dno - hpfs_sb(s)->sb_dirband_start) / 4;
+		if (!(bmp = hpfs_map_dnode_bitmap(s, &qbh))) {
+			return;
+		}
 		bmp[ssec >> 5] |= cpu_to_le32(1 << (ssec & 0x1f));
 		hpfs_mark_4buffers_dirty(&qbh);
-		hpfs_brअन्यथा4(&qbh);
-		hpfs_claim_dirband_मुक्त(s, dno);
-	पूर्ण
-पूर्ण
+		hpfs_brelse4(&qbh);
+		hpfs_claim_dirband_free(s, dno);
+	}
+}
 
-काष्ठा dnode *hpfs_alloc_dnode(काष्ठा super_block *s, secno near,
-			 dnode_secno *dno, काष्ठा quad_buffer_head *qbh)
-अणु
-	काष्ठा dnode *d;
-	अगर (hpfs_get_मुक्त_dnodes(s) > FREE_DNODES_ADD) अणु
-		अगर (!(*dno = alloc_in_dirband(s, near)))
-			अगर (!(*dno = hpfs_alloc_sector(s, near, 4, 0))) वापस शून्य;
-	पूर्ण अन्यथा अणु
-		अगर (!(*dno = hpfs_alloc_sector(s, near, 4, 0)))
-			अगर (!(*dno = alloc_in_dirband(s, near))) वापस शून्य;
-	पूर्ण
-	अगर (!(d = hpfs_get_4sectors(s, *dno, qbh))) अणु
-		hpfs_मुक्त_dnode(s, *dno);
-		वापस शून्य;
-	पूर्ण
-	स_रखो(d, 0, 2048);
+struct dnode *hpfs_alloc_dnode(struct super_block *s, secno near,
+			 dnode_secno *dno, struct quad_buffer_head *qbh)
+{
+	struct dnode *d;
+	if (hpfs_get_free_dnodes(s) > FREE_DNODES_ADD) {
+		if (!(*dno = alloc_in_dirband(s, near)))
+			if (!(*dno = hpfs_alloc_sector(s, near, 4, 0))) return NULL;
+	} else {
+		if (!(*dno = hpfs_alloc_sector(s, near, 4, 0)))
+			if (!(*dno = alloc_in_dirband(s, near))) return NULL;
+	}
+	if (!(d = hpfs_get_4sectors(s, *dno, qbh))) {
+		hpfs_free_dnode(s, *dno);
+		return NULL;
+	}
+	memset(d, 0, 2048);
 	d->magic = cpu_to_le32(DNODE_MAGIC);
-	d->first_मुक्त = cpu_to_le32(52);
+	d->first_free = cpu_to_le32(52);
 	d->dirent[0] = 32;
 	d->dirent[2] = 8;
 	d->dirent[30] = 1;
 	d->dirent[31] = 255;
 	d->self = cpu_to_le32(*dno);
-	वापस d;
-पूर्ण
+	return d;
+}
 
-काष्ठा fnode *hpfs_alloc_fnode(काष्ठा super_block *s, secno near, fnode_secno *fno,
-			  काष्ठा buffer_head **bh)
-अणु
-	काष्ठा fnode *f;
-	अगर (!(*fno = hpfs_alloc_sector(s, near, 1, FNODE_ALLOC_FWD))) वापस शून्य;
-	अगर (!(f = hpfs_get_sector(s, *fno, bh))) अणु
-		hpfs_मुक्त_sectors(s, *fno, 1);
-		वापस शून्य;
-	पूर्ण	
-	स_रखो(f, 0, 512);
+struct fnode *hpfs_alloc_fnode(struct super_block *s, secno near, fnode_secno *fno,
+			  struct buffer_head **bh)
+{
+	struct fnode *f;
+	if (!(*fno = hpfs_alloc_sector(s, near, 1, FNODE_ALLOC_FWD))) return NULL;
+	if (!(f = hpfs_get_sector(s, *fno, bh))) {
+		hpfs_free_sectors(s, *fno, 1);
+		return NULL;
+	}	
+	memset(f, 0, 512);
 	f->magic = cpu_to_le32(FNODE_MAGIC);
 	f->ea_offs = cpu_to_le16(0xc4);
-	f->btree.n_मुक्त_nodes = 8;
-	f->btree.first_मुक्त = cpu_to_le16(8);
-	वापस f;
-पूर्ण
+	f->btree.n_free_nodes = 8;
+	f->btree.first_free = cpu_to_le16(8);
+	return f;
+}
 
-काष्ठा anode *hpfs_alloc_anode(काष्ठा super_block *s, secno near, anode_secno *ano,
-			  काष्ठा buffer_head **bh)
-अणु
-	काष्ठा anode *a;
-	अगर (!(*ano = hpfs_alloc_sector(s, near, 1, ANODE_ALLOC_FWD))) वापस शून्य;
-	अगर (!(a = hpfs_get_sector(s, *ano, bh))) अणु
-		hpfs_मुक्त_sectors(s, *ano, 1);
-		वापस शून्य;
-	पूर्ण
-	स_रखो(a, 0, 512);
+struct anode *hpfs_alloc_anode(struct super_block *s, secno near, anode_secno *ano,
+			  struct buffer_head **bh)
+{
+	struct anode *a;
+	if (!(*ano = hpfs_alloc_sector(s, near, 1, ANODE_ALLOC_FWD))) return NULL;
+	if (!(a = hpfs_get_sector(s, *ano, bh))) {
+		hpfs_free_sectors(s, *ano, 1);
+		return NULL;
+	}
+	memset(a, 0, 512);
 	a->magic = cpu_to_le32(ANODE_MAGIC);
 	a->self = cpu_to_le32(*ano);
-	a->btree.n_मुक्त_nodes = 40;
+	a->btree.n_free_nodes = 40;
 	a->btree.n_used_nodes = 0;
-	a->btree.first_मुक्त = cpu_to_le16(8);
-	वापस a;
-पूर्ण
+	a->btree.first_free = cpu_to_le16(8);
+	return a;
+}
 
-अटल अचिन्हित find_run(__le32 *bmp, अचिन्हित *idx)
-अणु
-	अचिन्हित len;
-	जबतक (tstbits(bmp, *idx, 1)) अणु
+static unsigned find_run(__le32 *bmp, unsigned *idx)
+{
+	unsigned len;
+	while (tstbits(bmp, *idx, 1)) {
 		(*idx)++;
-		अगर (unlikely(*idx >= 0x4000))
-			वापस 0;
-	पूर्ण
+		if (unlikely(*idx >= 0x4000))
+			return 0;
+	}
 	len = 1;
-	जबतक (!tstbits(bmp, *idx + len, 1))
+	while (!tstbits(bmp, *idx + len, 1))
 		len++;
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल पूर्णांक करो_trim(काष्ठा super_block *s, secno start, अचिन्हित len, secno limit_start, secno limit_end, अचिन्हित minlen, अचिन्हित *result)
-अणु
-	पूर्णांक err;
+static int do_trim(struct super_block *s, secno start, unsigned len, secno limit_start, secno limit_end, unsigned minlen, unsigned *result)
+{
+	int err;
 	secno end;
-	अगर (fatal_संकेत_pending(current))
-		वापस -EINTR;
+	if (fatal_signal_pending(current))
+		return -EINTR;
 	end = start + len;
-	अगर (start < limit_start)
+	if (start < limit_start)
 		start = limit_start;
-	अगर (end > limit_end)
+	if (end > limit_end)
 		end = limit_end;
-	अगर (start >= end)
-		वापस 0;
-	अगर (end - start < minlen)
-		वापस 0;
+	if (start >= end)
+		return 0;
+	if (end - start < minlen)
+		return 0;
 	err = sb_issue_discard(s, start, end - start, GFP_NOFS, 0);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	*result += end - start;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hpfs_trim_fs(काष्ठा super_block *s, u64 start, u64 end, u64 minlen, अचिन्हित *result)
-अणु
-	पूर्णांक err = 0;
-	काष्ठा hpfs_sb_info *sbi = hpfs_sb(s);
-	अचिन्हित idx, len, start_bmp, end_bmp;
+int hpfs_trim_fs(struct super_block *s, u64 start, u64 end, u64 minlen, unsigned *result)
+{
+	int err = 0;
+	struct hpfs_sb_info *sbi = hpfs_sb(s);
+	unsigned idx, len, start_bmp, end_bmp;
 	__le32 *bmp;
-	काष्ठा quad_buffer_head qbh;
+	struct quad_buffer_head qbh;
 
 	*result = 0;
-	अगर (!end || end > sbi->sb_fs_size)
+	if (!end || end > sbi->sb_fs_size)
 		end = sbi->sb_fs_size;
-	अगर (start >= sbi->sb_fs_size)
-		वापस 0;
-	अगर (minlen > 0x4000)
-		वापस 0;
-	अगर (start < sbi->sb_dirband_start + sbi->sb_dirband_size && end > sbi->sb_dirband_start) अणु
+	if (start >= sbi->sb_fs_size)
+		return 0;
+	if (minlen > 0x4000)
+		return 0;
+	if (start < sbi->sb_dirband_start + sbi->sb_dirband_size && end > sbi->sb_dirband_start) {
 		hpfs_lock(s);
-		अगर (sb_rकरोnly(s)) अणु
+		if (sb_rdonly(s)) {
 			err = -EROFS;
-			जाओ unlock_1;
-		पूर्ण
-		अगर (!(bmp = hpfs_map_dnode_biपंचांगap(s, &qbh))) अणु
+			goto unlock_1;
+		}
+		if (!(bmp = hpfs_map_dnode_bitmap(s, &qbh))) {
 			err = -EIO;
-			जाओ unlock_1;
-		पूर्ण
+			goto unlock_1;
+		}
 		idx = 0;
-		जबतक ((len = find_run(bmp, &idx)) && !err) अणु
-			err = करो_trim(s, sbi->sb_dirband_start + idx * 4, len * 4, start, end, minlen, result);
+		while ((len = find_run(bmp, &idx)) && !err) {
+			err = do_trim(s, sbi->sb_dirband_start + idx * 4, len * 4, start, end, minlen, result);
 			idx += len;
-		पूर्ण
-		hpfs_brअन्यथा4(&qbh);
+		}
+		hpfs_brelse4(&qbh);
 unlock_1:
 		hpfs_unlock(s);
-	पूर्ण
+	}
 	start_bmp = start >> 14;
 	end_bmp = (end + 0x3fff) >> 14;
-	जबतक (start_bmp < end_bmp && !err) अणु
+	while (start_bmp < end_bmp && !err) {
 		hpfs_lock(s);
-		अगर (sb_rकरोnly(s)) अणु
+		if (sb_rdonly(s)) {
 			err = -EROFS;
-			जाओ unlock_2;
-		पूर्ण
-		अगर (!(bmp = hpfs_map_biपंचांगap(s, start_bmp, &qbh, "trim"))) अणु
+			goto unlock_2;
+		}
+		if (!(bmp = hpfs_map_bitmap(s, start_bmp, &qbh, "trim"))) {
 			err = -EIO;
-			जाओ unlock_2;
-		पूर्ण
+			goto unlock_2;
+		}
 		idx = 0;
-		जबतक ((len = find_run(bmp, &idx)) && !err) अणु
-			err = करो_trim(s, (start_bmp << 14) + idx, len, start, end, minlen, result);
+		while ((len = find_run(bmp, &idx)) && !err) {
+			err = do_trim(s, (start_bmp << 14) + idx, len, start, end, minlen, result);
 			idx += len;
-		पूर्ण
-		hpfs_brअन्यथा4(&qbh);
+		}
+		hpfs_brelse4(&qbh);
 unlock_2:
 		hpfs_unlock(s);
 		start_bmp++;
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}

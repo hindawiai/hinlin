@@ -1,199 +1,198 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * मुख्य.c - Multi purpose firmware loading support
+ * main.c - Multi purpose firmware loading support
  *
  * Copyright (c) 2003 Manuel Estrada Sainz
  *
- * Please see Documentation/driver-api/firmware/ क्रम more inक्रमmation.
+ * Please see Documentation/driver-api/firmware/ for more information.
  *
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/capability.h>
-#समावेश <linux/device.h>
-#समावेश <linux/kernel_पढ़ो_file.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/initrd.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/firmware.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/file.h>
-#समावेश <linux/list.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/async.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/suspend.h>
-#समावेश <linux/syscore_ops.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/security.h>
-#समावेश <linux/xz.h>
+#include <linux/capability.h>
+#include <linux/device.h>
+#include <linux/kernel_read_file.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/initrd.h>
+#include <linux/timer.h>
+#include <linux/vmalloc.h>
+#include <linux/interrupt.h>
+#include <linux/bitops.h>
+#include <linux/mutex.h>
+#include <linux/workqueue.h>
+#include <linux/highmem.h>
+#include <linux/firmware.h>
+#include <linux/slab.h>
+#include <linux/sched.h>
+#include <linux/file.h>
+#include <linux/list.h>
+#include <linux/fs.h>
+#include <linux/async.h>
+#include <linux/pm.h>
+#include <linux/suspend.h>
+#include <linux/syscore_ops.h>
+#include <linux/reboot.h>
+#include <linux/security.h>
+#include <linux/xz.h>
 
-#समावेश <generated/utsrelease.h>
+#include <generated/utsrelease.h>
 
-#समावेश "../base.h"
-#समावेश "firmware.h"
-#समावेश "fallback.h"
+#include "../base.h"
+#include "firmware.h"
+#include "fallback.h"
 
 MODULE_AUTHOR("Manuel Estrada Sainz");
 MODULE_DESCRIPTION("Multi purpose firmware loading support");
 MODULE_LICENSE("GPL");
 
-काष्ठा firmware_cache अणु
-	/* firmware_buf instance will be added पूर्णांकo the below list */
+struct firmware_cache {
+	/* firmware_buf instance will be added into the below list */
 	spinlock_t lock;
-	काष्ठा list_head head;
-	पूर्णांक state;
+	struct list_head head;
+	int state;
 
-#अगर_घोषित CONFIG_FW_CACHE
+#ifdef CONFIG_FW_CACHE
 	/*
 	 * Names of firmware images which have been cached successfully
-	 * will be added पूर्णांकo the below list so that device uncache
+	 * will be added into the below list so that device uncache
 	 * helper can trace which firmware images have been cached
-	 * beक्रमe.
+	 * before.
 	 */
 	spinlock_t name_lock;
-	काष्ठा list_head fw_names;
+	struct list_head fw_names;
 
-	काष्ठा delayed_work work;
+	struct delayed_work work;
 
-	काष्ठा notअगरier_block   pm_notअगरy;
-#पूर्ण_अगर
-पूर्ण;
+	struct notifier_block   pm_notify;
+#endif
+};
 
-काष्ठा fw_cache_entry अणु
-	काष्ठा list_head list;
-	स्थिर अक्षर *name;
-पूर्ण;
+struct fw_cache_entry {
+	struct list_head list;
+	const char *name;
+};
 
-काष्ठा fw_name_devm अणु
-	अचिन्हित दीर्घ magic;
-	स्थिर अक्षर *name;
-पूर्ण;
+struct fw_name_devm {
+	unsigned long magic;
+	const char *name;
+};
 
-अटल अंतरभूत काष्ठा fw_priv *to_fw_priv(काष्ठा kref *ref)
-अणु
-	वापस container_of(ref, काष्ठा fw_priv, ref);
-पूर्ण
+static inline struct fw_priv *to_fw_priv(struct kref *ref)
+{
+	return container_of(ref, struct fw_priv, ref);
+}
 
-#घोषणा	FW_LOADER_NO_CACHE	0
-#घोषणा	FW_LOADER_START_CACHE	1
+#define	FW_LOADER_NO_CACHE	0
+#define	FW_LOADER_START_CACHE	1
 
 /* fw_lock could be moved to 'struct fw_sysfs' but since it is just
- * guarding क्रम corner हालs a global lock should be OK */
+ * guarding for corner cases a global lock should be OK */
 DEFINE_MUTEX(fw_lock);
 
-अटल काष्ठा firmware_cache fw_cache;
+static struct firmware_cache fw_cache;
 
 /* Builtin firmware support */
 
-#अगर_घोषित CONFIG_FW_LOADER
+#ifdef CONFIG_FW_LOADER
 
-बाह्य काष्ठा builtin_fw __start_builtin_fw[];
-बाह्य काष्ठा builtin_fw __end_builtin_fw[];
+extern struct builtin_fw __start_builtin_fw[];
+extern struct builtin_fw __end_builtin_fw[];
 
-अटल व्योम fw_copy_to_pपुनः_स्मृति_buf(काष्ठा firmware *fw,
-				    व्योम *buf, माप_प्रकार size)
-अणु
-	अगर (!buf || size < fw->size)
-		वापस;
-	स_नकल(buf, fw->data, fw->size);
-पूर्ण
+static void fw_copy_to_prealloc_buf(struct firmware *fw,
+				    void *buf, size_t size)
+{
+	if (!buf || size < fw->size)
+		return;
+	memcpy(buf, fw->data, fw->size);
+}
 
-अटल bool fw_get_builtin_firmware(काष्ठा firmware *fw, स्थिर अक्षर *name,
-				    व्योम *buf, माप_प्रकार size)
-अणु
-	काष्ठा builtin_fw *b_fw;
+static bool fw_get_builtin_firmware(struct firmware *fw, const char *name,
+				    void *buf, size_t size)
+{
+	struct builtin_fw *b_fw;
 
-	क्रम (b_fw = __start_builtin_fw; b_fw != __end_builtin_fw; b_fw++) अणु
-		अगर (म_भेद(name, b_fw->name) == 0) अणु
+	for (b_fw = __start_builtin_fw; b_fw != __end_builtin_fw; b_fw++) {
+		if (strcmp(name, b_fw->name) == 0) {
 			fw->size = b_fw->size;
 			fw->data = b_fw->data;
-			fw_copy_to_pपुनः_स्मृति_buf(fw, buf, size);
+			fw_copy_to_prealloc_buf(fw, buf, size);
 
-			वापस true;
-		पूर्ण
-	पूर्ण
+			return true;
+		}
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool fw_is_builtin_firmware(स्थिर काष्ठा firmware *fw)
-अणु
-	काष्ठा builtin_fw *b_fw;
+static bool fw_is_builtin_firmware(const struct firmware *fw)
+{
+	struct builtin_fw *b_fw;
 
-	क्रम (b_fw = __start_builtin_fw; b_fw != __end_builtin_fw; b_fw++)
-		अगर (fw->data == b_fw->data)
-			वापस true;
+	for (b_fw = __start_builtin_fw; b_fw != __end_builtin_fw; b_fw++)
+		if (fw->data == b_fw->data)
+			return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-#अन्यथा /* Module हाल - no builtin firmware support */
+#else /* Module case - no builtin firmware support */
 
-अटल अंतरभूत bool fw_get_builtin_firmware(काष्ठा firmware *fw,
-					   स्थिर अक्षर *name, व्योम *buf,
-					   माप_प्रकार size)
-अणु
-	वापस false;
-पूर्ण
+static inline bool fw_get_builtin_firmware(struct firmware *fw,
+					   const char *name, void *buf,
+					   size_t size)
+{
+	return false;
+}
 
-अटल अंतरभूत bool fw_is_builtin_firmware(स्थिर काष्ठा firmware *fw)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर
+static inline bool fw_is_builtin_firmware(const struct firmware *fw)
+{
+	return false;
+}
+#endif
 
-अटल व्योम fw_state_init(काष्ठा fw_priv *fw_priv)
-अणु
-	काष्ठा fw_state *fw_st = &fw_priv->fw_st;
+static void fw_state_init(struct fw_priv *fw_priv)
+{
+	struct fw_state *fw_st = &fw_priv->fw_st;
 
 	init_completion(&fw_st->completion);
 	fw_st->status = FW_STATUS_UNKNOWN;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक fw_state_रुको(काष्ठा fw_priv *fw_priv)
-अणु
-	वापस __fw_state_रुको_common(fw_priv, MAX_SCHEDULE_TIMEOUT);
-पूर्ण
+static inline int fw_state_wait(struct fw_priv *fw_priv)
+{
+	return __fw_state_wait_common(fw_priv, MAX_SCHEDULE_TIMEOUT);
+}
 
-अटल पूर्णांक fw_cache_piggyback_on_request(स्थिर अक्षर *name);
+static int fw_cache_piggyback_on_request(const char *name);
 
-अटल काष्ठा fw_priv *__allocate_fw_priv(स्थिर अक्षर *fw_name,
-					  काष्ठा firmware_cache *fwc,
-					  व्योम *dbuf,
-					  माप_प्रकार size,
-					  माप_प्रकार offset,
+static struct fw_priv *__allocate_fw_priv(const char *fw_name,
+					  struct firmware_cache *fwc,
+					  void *dbuf,
+					  size_t size,
+					  size_t offset,
 					  u32 opt_flags)
-अणु
-	काष्ठा fw_priv *fw_priv;
+{
+	struct fw_priv *fw_priv;
 
-	/* For a partial पढ़ो, the buffer must be pपुनः_स्मृतिated. */
-	अगर ((opt_flags & FW_OPT_PARTIAL) && !dbuf)
-		वापस शून्य;
+	/* For a partial read, the buffer must be preallocated. */
+	if ((opt_flags & FW_OPT_PARTIAL) && !dbuf)
+		return NULL;
 
-	/* Only partial पढ़ोs are allowed to use an offset. */
-	अगर (offset != 0 && !(opt_flags & FW_OPT_PARTIAL))
-		वापस शून्य;
+	/* Only partial reads are allowed to use an offset. */
+	if (offset != 0 && !(opt_flags & FW_OPT_PARTIAL))
+		return NULL;
 
-	fw_priv = kzalloc(माप(*fw_priv), GFP_ATOMIC);
-	अगर (!fw_priv)
-		वापस शून्य;
+	fw_priv = kzalloc(sizeof(*fw_priv), GFP_ATOMIC);
+	if (!fw_priv)
+		return NULL;
 
-	fw_priv->fw_name = kstrdup_स्थिर(fw_name, GFP_ATOMIC);
-	अगर (!fw_priv->fw_name) अणु
-		kमुक्त(fw_priv);
-		वापस शून्य;
-	पूर्ण
+	fw_priv->fw_name = kstrdup_const(fw_name, GFP_ATOMIC);
+	if (!fw_priv->fw_name) {
+		kfree(fw_priv);
+		return NULL;
+	}
 
 	kref_init(&fw_priv->ref);
 	fw_priv->fwc = fwc;
@@ -202,193 +201,193 @@ DEFINE_MUTEX(fw_lock);
 	fw_priv->offset = offset;
 	fw_priv->opt_flags = opt_flags;
 	fw_state_init(fw_priv);
-#अगर_घोषित CONFIG_FW_LOADER_USER_HELPER
+#ifdef CONFIG_FW_LOADER_USER_HELPER
 	INIT_LIST_HEAD(&fw_priv->pending_list);
-#पूर्ण_अगर
+#endif
 
 	pr_debug("%s: fw-%s fw_priv=%p\n", __func__, fw_name, fw_priv);
 
-	वापस fw_priv;
-पूर्ण
+	return fw_priv;
+}
 
-अटल काष्ठा fw_priv *__lookup_fw_priv(स्थिर अक्षर *fw_name)
-अणु
-	काष्ठा fw_priv *पंचांगp;
-	काष्ठा firmware_cache *fwc = &fw_cache;
+static struct fw_priv *__lookup_fw_priv(const char *fw_name)
+{
+	struct fw_priv *tmp;
+	struct firmware_cache *fwc = &fw_cache;
 
-	list_क्रम_each_entry(पंचांगp, &fwc->head, list)
-		अगर (!म_भेद(पंचांगp->fw_name, fw_name))
-			वापस पंचांगp;
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(tmp, &fwc->head, list)
+		if (!strcmp(tmp->fw_name, fw_name))
+			return tmp;
+	return NULL;
+}
 
-/* Returns 1 क्रम batching firmware requests with the same name */
-अटल पूर्णांक alloc_lookup_fw_priv(स्थिर अक्षर *fw_name,
-				काष्ठा firmware_cache *fwc,
-				काष्ठा fw_priv **fw_priv,
-				व्योम *dbuf,
-				माप_प्रकार size,
-				माप_प्रकार offset,
+/* Returns 1 for batching firmware requests with the same name */
+static int alloc_lookup_fw_priv(const char *fw_name,
+				struct firmware_cache *fwc,
+				struct fw_priv **fw_priv,
+				void *dbuf,
+				size_t size,
+				size_t offset,
 				u32 opt_flags)
-अणु
-	काष्ठा fw_priv *पंचांगp;
+{
+	struct fw_priv *tmp;
 
 	spin_lock(&fwc->lock);
 	/*
 	 * Do not merge requests that are marked to be non-cached or
-	 * are perक्रमming partial पढ़ोs.
+	 * are performing partial reads.
 	 */
-	अगर (!(opt_flags & (FW_OPT_NOCACHE | FW_OPT_PARTIAL))) अणु
-		पंचांगp = __lookup_fw_priv(fw_name);
-		अगर (पंचांगp) अणु
-			kref_get(&पंचांगp->ref);
+	if (!(opt_flags & (FW_OPT_NOCACHE | FW_OPT_PARTIAL))) {
+		tmp = __lookup_fw_priv(fw_name);
+		if (tmp) {
+			kref_get(&tmp->ref);
 			spin_unlock(&fwc->lock);
-			*fw_priv = पंचांगp;
+			*fw_priv = tmp;
 			pr_debug("batched request - sharing the same struct fw_priv and lookup for multiple requests\n");
-			वापस 1;
-		पूर्ण
-	पूर्ण
+			return 1;
+		}
+	}
 
-	पंचांगp = __allocate_fw_priv(fw_name, fwc, dbuf, size, offset, opt_flags);
-	अगर (पंचांगp) अणु
-		INIT_LIST_HEAD(&पंचांगp->list);
-		अगर (!(opt_flags & FW_OPT_NOCACHE))
-			list_add(&पंचांगp->list, &fwc->head);
-	पूर्ण
+	tmp = __allocate_fw_priv(fw_name, fwc, dbuf, size, offset, opt_flags);
+	if (tmp) {
+		INIT_LIST_HEAD(&tmp->list);
+		if (!(opt_flags & FW_OPT_NOCACHE))
+			list_add(&tmp->list, &fwc->head);
+	}
 	spin_unlock(&fwc->lock);
 
-	*fw_priv = पंचांगp;
+	*fw_priv = tmp;
 
-	वापस पंचांगp ? 0 : -ENOMEM;
-पूर्ण
+	return tmp ? 0 : -ENOMEM;
+}
 
-अटल व्योम __मुक्त_fw_priv(काष्ठा kref *ref)
+static void __free_fw_priv(struct kref *ref)
 	__releases(&fwc->lock)
-अणु
-	काष्ठा fw_priv *fw_priv = to_fw_priv(ref);
-	काष्ठा firmware_cache *fwc = fw_priv->fwc;
+{
+	struct fw_priv *fw_priv = to_fw_priv(ref);
+	struct firmware_cache *fwc = fw_priv->fwc;
 
 	pr_debug("%s: fw-%s fw_priv=%p data=%p size=%u\n",
 		 __func__, fw_priv->fw_name, fw_priv, fw_priv->data,
-		 (अचिन्हित पूर्णांक)fw_priv->size);
+		 (unsigned int)fw_priv->size);
 
 	list_del(&fw_priv->list);
 	spin_unlock(&fwc->lock);
 
-	अगर (fw_is_paged_buf(fw_priv))
-		fw_मुक्त_paged_buf(fw_priv);
-	अन्यथा अगर (!fw_priv->allocated_size)
-		vमुक्त(fw_priv->data);
+	if (fw_is_paged_buf(fw_priv))
+		fw_free_paged_buf(fw_priv);
+	else if (!fw_priv->allocated_size)
+		vfree(fw_priv->data);
 
-	kमुक्त_स्थिर(fw_priv->fw_name);
-	kमुक्त(fw_priv);
-पूर्ण
+	kfree_const(fw_priv->fw_name);
+	kfree(fw_priv);
+}
 
-अटल व्योम मुक्त_fw_priv(काष्ठा fw_priv *fw_priv)
-अणु
-	काष्ठा firmware_cache *fwc = fw_priv->fwc;
+static void free_fw_priv(struct fw_priv *fw_priv)
+{
+	struct firmware_cache *fwc = fw_priv->fwc;
 	spin_lock(&fwc->lock);
-	अगर (!kref_put(&fw_priv->ref, __मुक्त_fw_priv))
+	if (!kref_put(&fw_priv->ref, __free_fw_priv))
 		spin_unlock(&fwc->lock);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_FW_LOADER_PAGED_BUF
-bool fw_is_paged_buf(काष्ठा fw_priv *fw_priv)
-अणु
-	वापस fw_priv->is_paged_buf;
-पूर्ण
+#ifdef CONFIG_FW_LOADER_PAGED_BUF
+bool fw_is_paged_buf(struct fw_priv *fw_priv)
+{
+	return fw_priv->is_paged_buf;
+}
 
-व्योम fw_मुक्त_paged_buf(काष्ठा fw_priv *fw_priv)
-अणु
-	पूर्णांक i;
+void fw_free_paged_buf(struct fw_priv *fw_priv)
+{
+	int i;
 
-	अगर (!fw_priv->pages)
-		वापस;
+	if (!fw_priv->pages)
+		return;
 
 	vunmap(fw_priv->data);
 
-	क्रम (i = 0; i < fw_priv->nr_pages; i++)
-		__मुक्त_page(fw_priv->pages[i]);
-	kvमुक्त(fw_priv->pages);
-	fw_priv->pages = शून्य;
+	for (i = 0; i < fw_priv->nr_pages; i++)
+		__free_page(fw_priv->pages[i]);
+	kvfree(fw_priv->pages);
+	fw_priv->pages = NULL;
 	fw_priv->page_array_size = 0;
 	fw_priv->nr_pages = 0;
-पूर्ण
+}
 
-पूर्णांक fw_grow_paged_buf(काष्ठा fw_priv *fw_priv, पूर्णांक pages_needed)
-अणु
+int fw_grow_paged_buf(struct fw_priv *fw_priv, int pages_needed)
+{
 	/* If the array of pages is too small, grow it */
-	अगर (fw_priv->page_array_size < pages_needed) अणु
-		पूर्णांक new_array_size = max(pages_needed,
+	if (fw_priv->page_array_size < pages_needed) {
+		int new_array_size = max(pages_needed,
 					 fw_priv->page_array_size * 2);
-		काष्ठा page **new_pages;
+		struct page **new_pages;
 
-		new_pages = kvदो_स्मृति_array(new_array_size, माप(व्योम *),
+		new_pages = kvmalloc_array(new_array_size, sizeof(void *),
 					   GFP_KERNEL);
-		अगर (!new_pages)
-			वापस -ENOMEM;
-		स_नकल(new_pages, fw_priv->pages,
-		       fw_priv->page_array_size * माप(व्योम *));
-		स_रखो(&new_pages[fw_priv->page_array_size], 0, माप(व्योम *) *
+		if (!new_pages)
+			return -ENOMEM;
+		memcpy(new_pages, fw_priv->pages,
+		       fw_priv->page_array_size * sizeof(void *));
+		memset(&new_pages[fw_priv->page_array_size], 0, sizeof(void *) *
 		       (new_array_size - fw_priv->page_array_size));
-		kvमुक्त(fw_priv->pages);
+		kvfree(fw_priv->pages);
 		fw_priv->pages = new_pages;
 		fw_priv->page_array_size = new_array_size;
-	पूर्ण
+	}
 
-	जबतक (fw_priv->nr_pages < pages_needed) अणु
+	while (fw_priv->nr_pages < pages_needed) {
 		fw_priv->pages[fw_priv->nr_pages] =
 			alloc_page(GFP_KERNEL | __GFP_HIGHMEM);
 
-		अगर (!fw_priv->pages[fw_priv->nr_pages])
-			वापस -ENOMEM;
+		if (!fw_priv->pages[fw_priv->nr_pages])
+			return -ENOMEM;
 		fw_priv->nr_pages++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक fw_map_paged_buf(काष्ठा fw_priv *fw_priv)
-अणु
+int fw_map_paged_buf(struct fw_priv *fw_priv)
+{
 	/* one pages buffer should be mapped/unmapped only once */
-	अगर (!fw_priv->pages)
-		वापस 0;
+	if (!fw_priv->pages)
+		return 0;
 
 	vunmap(fw_priv->data);
 	fw_priv->data = vmap(fw_priv->pages, fw_priv->nr_pages, 0,
 			     PAGE_KERNEL_RO);
-	अगर (!fw_priv->data)
-		वापस -ENOMEM;
+	if (!fw_priv->data)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
 /*
  * XZ-compressed firmware support
  */
-#अगर_घोषित CONFIG_FW_LOADER_COMPRESS
-/* show an error and वापस the standard error code */
-अटल पूर्णांक fw_decompress_xz_error(काष्ठा device *dev, क्रमागत xz_ret xz_ret)
-अणु
-	अगर (xz_ret != XZ_STREAM_END) अणु
+#ifdef CONFIG_FW_LOADER_COMPRESS
+/* show an error and return the standard error code */
+static int fw_decompress_xz_error(struct device *dev, enum xz_ret xz_ret)
+{
+	if (xz_ret != XZ_STREAM_END) {
 		dev_warn(dev, "xz decompression failed (xz_ret=%d)\n", xz_ret);
-		वापस xz_ret == XZ_MEM_ERROR ? -ENOMEM : -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return xz_ret == XZ_MEM_ERROR ? -ENOMEM : -EINVAL;
+	}
+	return 0;
+}
 
 /* single-shot decompression onto the pre-allocated buffer */
-अटल पूर्णांक fw_decompress_xz_single(काष्ठा device *dev, काष्ठा fw_priv *fw_priv,
-				   माप_प्रकार in_size, स्थिर व्योम *in_buffer)
-अणु
-	काष्ठा xz_dec *xz_dec;
-	काष्ठा xz_buf xz_buf;
-	क्रमागत xz_ret xz_ret;
+static int fw_decompress_xz_single(struct device *dev, struct fw_priv *fw_priv,
+				   size_t in_size, const void *in_buffer)
+{
+	struct xz_dec *xz_dec;
+	struct xz_buf xz_buf;
+	enum xz_ret xz_ret;
 
 	xz_dec = xz_dec_init(XZ_SINGLE, (u32)-1);
-	अगर (!xz_dec)
-		वापस -ENOMEM;
+	if (!xz_dec)
+		return -ENOMEM;
 
 	xz_buf.in_size = in_size;
 	xz_buf.in = in_buffer;
@@ -401,22 +400,22 @@ bool fw_is_paged_buf(काष्ठा fw_priv *fw_priv)
 	xz_dec_end(xz_dec);
 
 	fw_priv->size = xz_buf.out_pos;
-	वापस fw_decompress_xz_error(dev, xz_ret);
-पूर्ण
+	return fw_decompress_xz_error(dev, xz_ret);
+}
 
 /* decompression on paged buffer and map it */
-अटल पूर्णांक fw_decompress_xz_pages(काष्ठा device *dev, काष्ठा fw_priv *fw_priv,
-				  माप_प्रकार in_size, स्थिर व्योम *in_buffer)
-अणु
-	काष्ठा xz_dec *xz_dec;
-	काष्ठा xz_buf xz_buf;
-	क्रमागत xz_ret xz_ret;
-	काष्ठा page *page;
-	पूर्णांक err = 0;
+static int fw_decompress_xz_pages(struct device *dev, struct fw_priv *fw_priv,
+				  size_t in_size, const void *in_buffer)
+{
+	struct xz_dec *xz_dec;
+	struct xz_buf xz_buf;
+	enum xz_ret xz_ret;
+	struct page *page;
+	int err = 0;
 
 	xz_dec = xz_dec_init(XZ_DYNALLOC, (u32)-1);
-	अगर (!xz_dec)
-		वापस -ENOMEM;
+	if (!xz_dec)
+		return -ENOMEM;
 
 	xz_buf.in_size = in_size;
 	xz_buf.in = in_buffer;
@@ -424,11 +423,11 @@ bool fw_is_paged_buf(काष्ठा fw_priv *fw_priv)
 
 	fw_priv->is_paged_buf = true;
 	fw_priv->size = 0;
-	करो अणु
-		अगर (fw_grow_paged_buf(fw_priv, fw_priv->nr_pages + 1)) अणु
+	do {
+		if (fw_grow_paged_buf(fw_priv, fw_priv->nr_pages + 1)) {
 			err = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/* decompress onto the new allocated page */
 		page = fw_priv->pages[fw_priv->nr_pages - 1];
@@ -439,973 +438,973 @@ bool fw_is_paged_buf(काष्ठा fw_priv *fw_priv)
 		kunmap(page);
 		fw_priv->size += xz_buf.out_pos;
 		/* partial decompression means either end or error */
-		अगर (xz_buf.out_pos != PAGE_SIZE)
-			अवरोध;
-	पूर्ण जबतक (xz_ret == XZ_OK);
+		if (xz_buf.out_pos != PAGE_SIZE)
+			break;
+	} while (xz_ret == XZ_OK);
 
 	err = fw_decompress_xz_error(dev, xz_ret);
-	अगर (!err)
+	if (!err)
 		err = fw_map_paged_buf(fw_priv);
 
  out:
 	xz_dec_end(xz_dec);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक fw_decompress_xz(काष्ठा device *dev, काष्ठा fw_priv *fw_priv,
-			    माप_प्रकार in_size, स्थिर व्योम *in_buffer)
-अणु
-	/* अगर the buffer is pre-allocated, we can perक्रमm in single-shot mode */
-	अगर (fw_priv->data)
-		वापस fw_decompress_xz_single(dev, fw_priv, in_size, in_buffer);
-	अन्यथा
-		वापस fw_decompress_xz_pages(dev, fw_priv, in_size, in_buffer);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_FW_LOADER_COMPRESS */
+static int fw_decompress_xz(struct device *dev, struct fw_priv *fw_priv,
+			    size_t in_size, const void *in_buffer)
+{
+	/* if the buffer is pre-allocated, we can perform in single-shot mode */
+	if (fw_priv->data)
+		return fw_decompress_xz_single(dev, fw_priv, in_size, in_buffer);
+	else
+		return fw_decompress_xz_pages(dev, fw_priv, in_size, in_buffer);
+}
+#endif /* CONFIG_FW_LOADER_COMPRESS */
 
 /* direct firmware loading support */
-अटल अक्षर fw_path_para[256];
-अटल स्थिर अक्षर * स्थिर fw_path[] = अणु
+static char fw_path_para[256];
+static const char * const fw_path[] = {
 	fw_path_para,
 	"/lib/firmware/updates/" UTS_RELEASE,
 	"/lib/firmware/updates",
 	"/lib/firmware/" UTS_RELEASE,
 	"/lib/firmware"
-पूर्ण;
+};
 
 /*
  * Typical usage is that passing 'firmware_class.path=$CUSTOMIZED_PATH'
  * from kernel command line because firmware_class is generally built in
  * kernel instead of module.
  */
-module_param_string(path, fw_path_para, माप(fw_path_para), 0644);
+module_param_string(path, fw_path_para, sizeof(fw_path_para), 0644);
 MODULE_PARM_DESC(path, "customized firmware image search path with a higher priority than default path");
 
-अटल पूर्णांक
-fw_get_fileप्रणाली_firmware(काष्ठा device *device, काष्ठा fw_priv *fw_priv,
-			   स्थिर अक्षर *suffix,
-			   पूर्णांक (*decompress)(काष्ठा device *dev,
-					     काष्ठा fw_priv *fw_priv,
-					     माप_प्रकार in_size,
-					     स्थिर व्योम *in_buffer))
-अणु
-	माप_प्रकार size;
-	पूर्णांक i, len;
-	पूर्णांक rc = -ENOENT;
-	अक्षर *path;
-	माप_प्रकार msize = पूर्णांक_उच्च;
-	व्योम *buffer = शून्य;
+static int
+fw_get_filesystem_firmware(struct device *device, struct fw_priv *fw_priv,
+			   const char *suffix,
+			   int (*decompress)(struct device *dev,
+					     struct fw_priv *fw_priv,
+					     size_t in_size,
+					     const void *in_buffer))
+{
+	size_t size;
+	int i, len;
+	int rc = -ENOENT;
+	char *path;
+	size_t msize = INT_MAX;
+	void *buffer = NULL;
 
-	/* Alपढ़ोy populated data member means we're loading पूर्णांकo a buffer */
-	अगर (!decompress && fw_priv->data) अणु
+	/* Already populated data member means we're loading into a buffer */
+	if (!decompress && fw_priv->data) {
 		buffer = fw_priv->data;
 		msize = fw_priv->allocated_size;
-	पूर्ण
+	}
 
 	path = __getname();
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 
-	रुको_क्रम_initramfs();
-	क्रम (i = 0; i < ARRAY_SIZE(fw_path); i++) अणु
-		माप_प्रकार file_size = 0;
-		माप_प्रकार *file_size_ptr = शून्य;
+	wait_for_initramfs();
+	for (i = 0; i < ARRAY_SIZE(fw_path); i++) {
+		size_t file_size = 0;
+		size_t *file_size_ptr = NULL;
 
 		/* skip the unset customized path */
-		अगर (!fw_path[i][0])
-			जारी;
+		if (!fw_path[i][0])
+			continue;
 
-		len = snम_लिखो(path, PATH_MAX, "%s/%s%s",
+		len = snprintf(path, PATH_MAX, "%s/%s%s",
 			       fw_path[i], fw_priv->fw_name, suffix);
-		अगर (len >= PATH_MAX) अणु
+		if (len >= PATH_MAX) {
 			rc = -ENAMETOOLONG;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		fw_priv->size = 0;
 
 		/*
-		 * The total file size is only examined when करोing a partial
-		 * पढ़ो; the "full read" हाल needs to fail अगर the whole
+		 * The total file size is only examined when doing a partial
+		 * read; the "full read" case needs to fail if the whole
 		 * firmware was not completely loaded.
 		 */
-		अगर ((fw_priv->opt_flags & FW_OPT_PARTIAL) && buffer)
+		if ((fw_priv->opt_flags & FW_OPT_PARTIAL) && buffer)
 			file_size_ptr = &file_size;
 
 		/* load firmware files from the mount namespace of init */
-		rc = kernel_पढ़ो_file_from_path_initns(path, fw_priv->offset,
+		rc = kernel_read_file_from_path_initns(path, fw_priv->offset,
 						       &buffer, msize,
 						       file_size_ptr,
 						       READING_FIRMWARE);
-		अगर (rc < 0) अणु
-			अगर (rc != -ENOENT)
+		if (rc < 0) {
+			if (rc != -ENOENT)
 				dev_warn(device, "loading %s failed with error %d\n",
 					 path, rc);
-			अन्यथा
+			else
 				dev_dbg(device, "loading %s failed for no such file or directory.\n",
 					 path);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		size = rc;
 		rc = 0;
 
 		dev_dbg(device, "Loading firmware from %s\n", path);
-		अगर (decompress) अणु
+		if (decompress) {
 			dev_dbg(device, "f/w decompressing %s\n",
 				fw_priv->fw_name);
 			rc = decompress(device, fw_priv, size, buffer);
 			/* discard the superfluous original content */
-			vमुक्त(buffer);
-			buffer = शून्य;
-			अगर (rc) अणु
-				fw_मुक्त_paged_buf(fw_priv);
-				जारी;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			vfree(buffer);
+			buffer = NULL;
+			if (rc) {
+				fw_free_paged_buf(fw_priv);
+				continue;
+			}
+		} else {
 			dev_dbg(device, "direct-loading %s\n",
 				fw_priv->fw_name);
-			अगर (!fw_priv->data)
+			if (!fw_priv->data)
 				fw_priv->data = buffer;
 			fw_priv->size = size;
-		पूर्ण
-		fw_state_करोne(fw_priv);
-		अवरोध;
-	पूर्ण
+		}
+		fw_state_done(fw_priv);
+		break;
+	}
 	__putname(path);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /* firmware holds the ownership of pages */
-अटल व्योम firmware_मुक्त_data(स्थिर काष्ठा firmware *fw)
-अणु
+static void firmware_free_data(const struct firmware *fw)
+{
 	/* Loaded directly? */
-	अगर (!fw->priv) अणु
-		vमुक्त(fw->data);
-		वापस;
-	पूर्ण
-	मुक्त_fw_priv(fw->priv);
-पूर्ण
+	if (!fw->priv) {
+		vfree(fw->data);
+		return;
+	}
+	free_fw_priv(fw->priv);
+}
 
 /* store the pages buffer info firmware from buf */
-अटल व्योम fw_set_page_data(काष्ठा fw_priv *fw_priv, काष्ठा firmware *fw)
-अणु
+static void fw_set_page_data(struct fw_priv *fw_priv, struct firmware *fw)
+{
 	fw->priv = fw_priv;
 	fw->size = fw_priv->size;
 	fw->data = fw_priv->data;
 
 	pr_debug("%s: fw-%s fw_priv=%p data=%p size=%u\n",
 		 __func__, fw_priv->fw_name, fw_priv, fw_priv->data,
-		 (अचिन्हित पूर्णांक)fw_priv->size);
-पूर्ण
+		 (unsigned int)fw_priv->size);
+}
 
-#अगर_घोषित CONFIG_FW_CACHE
-अटल व्योम fw_name_devm_release(काष्ठा device *dev, व्योम *res)
-अणु
-	काष्ठा fw_name_devm *fwn = res;
+#ifdef CONFIG_FW_CACHE
+static void fw_name_devm_release(struct device *dev, void *res)
+{
+	struct fw_name_devm *fwn = res;
 
-	अगर (fwn->magic == (अचिन्हित दीर्घ)&fw_cache)
+	if (fwn->magic == (unsigned long)&fw_cache)
 		pr_debug("%s: fw_name-%s devm-%p released\n",
 				__func__, fwn->name, res);
-	kमुक्त_स्थिर(fwn->name);
-पूर्ण
+	kfree_const(fwn->name);
+}
 
-अटल पूर्णांक fw_devm_match(काष्ठा device *dev, व्योम *res,
-		व्योम *match_data)
-अणु
-	काष्ठा fw_name_devm *fwn = res;
+static int fw_devm_match(struct device *dev, void *res,
+		void *match_data)
+{
+	struct fw_name_devm *fwn = res;
 
-	वापस (fwn->magic == (अचिन्हित दीर्घ)&fw_cache) &&
-		!म_भेद(fwn->name, match_data);
-पूर्ण
+	return (fwn->magic == (unsigned long)&fw_cache) &&
+		!strcmp(fwn->name, match_data);
+}
 
-अटल काष्ठा fw_name_devm *fw_find_devm_name(काष्ठा device *dev,
-		स्थिर अक्षर *name)
-अणु
-	काष्ठा fw_name_devm *fwn;
+static struct fw_name_devm *fw_find_devm_name(struct device *dev,
+		const char *name)
+{
+	struct fw_name_devm *fwn;
 
 	fwn = devres_find(dev, fw_name_devm_release,
-			  fw_devm_match, (व्योम *)name);
-	वापस fwn;
-पूर्ण
+			  fw_devm_match, (void *)name);
+	return fwn;
+}
 
-अटल bool fw_cache_is_setup(काष्ठा device *dev, स्थिर अक्षर *name)
-अणु
-	काष्ठा fw_name_devm *fwn;
+static bool fw_cache_is_setup(struct device *dev, const char *name)
+{
+	struct fw_name_devm *fwn;
 
 	fwn = fw_find_devm_name(dev, name);
-	अगर (fwn)
-		वापस true;
+	if (fwn)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-/* add firmware name पूर्णांकo devres list */
-अटल पूर्णांक fw_add_devm_name(काष्ठा device *dev, स्थिर अक्षर *name)
-अणु
-	काष्ठा fw_name_devm *fwn;
+/* add firmware name into devres list */
+static int fw_add_devm_name(struct device *dev, const char *name)
+{
+	struct fw_name_devm *fwn;
 
-	अगर (fw_cache_is_setup(dev, name))
-		वापस 0;
+	if (fw_cache_is_setup(dev, name))
+		return 0;
 
-	fwn = devres_alloc(fw_name_devm_release, माप(काष्ठा fw_name_devm),
+	fwn = devres_alloc(fw_name_devm_release, sizeof(struct fw_name_devm),
 			   GFP_KERNEL);
-	अगर (!fwn)
-		वापस -ENOMEM;
-	fwn->name = kstrdup_स्थिर(name, GFP_KERNEL);
-	अगर (!fwn->name) अणु
-		devres_मुक्त(fwn);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!fwn)
+		return -ENOMEM;
+	fwn->name = kstrdup_const(name, GFP_KERNEL);
+	if (!fwn->name) {
+		devres_free(fwn);
+		return -ENOMEM;
+	}
 
-	fwn->magic = (अचिन्हित दीर्घ)&fw_cache;
+	fwn->magic = (unsigned long)&fw_cache;
 	devres_add(dev, fwn);
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-अटल bool fw_cache_is_setup(काष्ठा device *dev, स्थिर अक्षर *name)
-अणु
-	वापस false;
-पूर्ण
+	return 0;
+}
+#else
+static bool fw_cache_is_setup(struct device *dev, const char *name)
+{
+	return false;
+}
 
-अटल पूर्णांक fw_add_devm_name(काष्ठा device *dev, स्थिर अक्षर *name)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+static int fw_add_devm_name(struct device *dev, const char *name)
+{
+	return 0;
+}
+#endif
 
-पूर्णांक assign_fw(काष्ठा firmware *fw, काष्ठा device *device)
-अणु
-	काष्ठा fw_priv *fw_priv = fw->priv;
-	पूर्णांक ret;
+int assign_fw(struct firmware *fw, struct device *device)
+{
+	struct fw_priv *fw_priv = fw->priv;
+	int ret;
 
 	mutex_lock(&fw_lock);
-	अगर (!fw_priv->size || fw_state_is_पातed(fw_priv)) अणु
+	if (!fw_priv->size || fw_state_is_aborted(fw_priv)) {
 		mutex_unlock(&fw_lock);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	/*
-	 * add firmware name पूर्णांकo devres list so that we can स्वतः cache
-	 * and uncache firmware क्रम device.
+	 * add firmware name into devres list so that we can auto cache
+	 * and uncache firmware for device.
 	 *
-	 * device may has been deleted alपढ़ोy, but the problem
+	 * device may has been deleted already, but the problem
 	 * should be fixed in devres or driver core.
 	 */
-	/* करोn't cache firmware handled without uevent */
-	अगर (device && (fw_priv->opt_flags & FW_OPT_UEVENT) &&
-	    !(fw_priv->opt_flags & FW_OPT_NOCACHE)) अणु
+	/* don't cache firmware handled without uevent */
+	if (device && (fw_priv->opt_flags & FW_OPT_UEVENT) &&
+	    !(fw_priv->opt_flags & FW_OPT_NOCACHE)) {
 		ret = fw_add_devm_name(device, fw_priv->fw_name);
-		अगर (ret) अणु
+		if (ret) {
 			mutex_unlock(&fw_lock);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	/*
 	 * After caching firmware image is started, let it piggyback
 	 * on request firmware.
 	 */
-	अगर (!(fw_priv->opt_flags & FW_OPT_NOCACHE) &&
-	    fw_priv->fwc->state == FW_LOADER_START_CACHE) अणु
-		अगर (fw_cache_piggyback_on_request(fw_priv->fw_name))
+	if (!(fw_priv->opt_flags & FW_OPT_NOCACHE) &&
+	    fw_priv->fwc->state == FW_LOADER_START_CACHE) {
+		if (fw_cache_piggyback_on_request(fw_priv->fw_name))
 			kref_get(&fw_priv->ref);
-	पूर्ण
+	}
 
 	/* pass the pages buffer to driver at the last minute */
 	fw_set_page_data(fw_priv, fw);
 	mutex_unlock(&fw_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* prepare firmware and firmware_buf काष्ठाs;
- * वापस 0 अगर a firmware is alपढ़ोy asचिन्हित, 1 अगर need to load one,
+/* prepare firmware and firmware_buf structs;
+ * return 0 if a firmware is already assigned, 1 if need to load one,
  * or a negative error code
  */
-अटल पूर्णांक
-_request_firmware_prepare(काष्ठा firmware **firmware_p, स्थिर अक्षर *name,
-			  काष्ठा device *device, व्योम *dbuf, माप_प्रकार size,
-			  माप_प्रकार offset, u32 opt_flags)
-अणु
-	काष्ठा firmware *firmware;
-	काष्ठा fw_priv *fw_priv;
-	पूर्णांक ret;
+static int
+_request_firmware_prepare(struct firmware **firmware_p, const char *name,
+			  struct device *device, void *dbuf, size_t size,
+			  size_t offset, u32 opt_flags)
+{
+	struct firmware *firmware;
+	struct fw_priv *fw_priv;
+	int ret;
 
-	*firmware_p = firmware = kzalloc(माप(*firmware), GFP_KERNEL);
-	अगर (!firmware) अणु
+	*firmware_p = firmware = kzalloc(sizeof(*firmware), GFP_KERNEL);
+	if (!firmware) {
 		dev_err(device, "%s: kmalloc(struct firmware) failed\n",
 			__func__);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	अगर (fw_get_builtin_firmware(firmware, name, dbuf, size)) अणु
+	if (fw_get_builtin_firmware(firmware, name, dbuf, size)) {
 		dev_dbg(device, "using built-in %s\n", name);
-		वापस 0; /* asचिन्हित */
-	पूर्ण
+		return 0; /* assigned */
+	}
 
 	ret = alloc_lookup_fw_priv(name, &fw_cache, &fw_priv, dbuf, size,
 				   offset, opt_flags);
 
 	/*
-	 * bind with 'priv' now to aव्योम warning in failure path
+	 * bind with 'priv' now to avoid warning in failure path
 	 * of requesting firmware.
 	 */
 	firmware->priv = fw_priv;
 
-	अगर (ret > 0) अणु
-		ret = fw_state_रुको(fw_priv);
-		अगर (!ret) अणु
+	if (ret > 0) {
+		ret = fw_state_wait(fw_priv);
+		if (!ret) {
 			fw_set_page_data(fw_priv, firmware);
-			वापस 0; /* asचिन्हित */
-		पूर्ण
-	पूर्ण
+			return 0; /* assigned */
+		}
+	}
 
-	अगर (ret < 0)
-		वापस ret;
-	वापस 1; /* need to load */
-पूर्ण
+	if (ret < 0)
+		return ret;
+	return 1; /* need to load */
+}
 
 /*
- * Batched requests need only one wake, we need to करो this step last due to the
- * fallback mechanism. The buf is रक्षित with kref_get(), and it won't be
+ * Batched requests need only one wake, we need to do this step last due to the
+ * fallback mechanism. The buf is protected with kref_get(), and it won't be
  * released until the last user calls release_firmware().
  *
- * Failed batched requests are possible as well, in such हालs we just share
- * the काष्ठा fw_priv and won't release it until all requests are woken
+ * Failed batched requests are possible as well, in such cases we just share
+ * the struct fw_priv and won't release it until all requests are woken
  * and have gone through this same path.
  */
-अटल व्योम fw_पात_batch_reqs(काष्ठा firmware *fw)
-अणु
-	काष्ठा fw_priv *fw_priv;
+static void fw_abort_batch_reqs(struct firmware *fw)
+{
+	struct fw_priv *fw_priv;
 
 	/* Loaded directly? */
-	अगर (!fw || !fw->priv)
-		वापस;
+	if (!fw || !fw->priv)
+		return;
 
 	fw_priv = fw->priv;
-	अगर (!fw_state_is_पातed(fw_priv))
-		fw_state_पातed(fw_priv);
-पूर्ण
+	if (!fw_state_is_aborted(fw_priv))
+		fw_state_aborted(fw_priv);
+}
 
 /* called from request_firmware() and request_firmware_work_func() */
-अटल पूर्णांक
-_request_firmware(स्थिर काष्ठा firmware **firmware_p, स्थिर अक्षर *name,
-		  काष्ठा device *device, व्योम *buf, माप_प्रकार size,
-		  माप_प्रकार offset, u32 opt_flags)
-अणु
-	काष्ठा firmware *fw = शून्य;
+static int
+_request_firmware(const struct firmware **firmware_p, const char *name,
+		  struct device *device, void *buf, size_t size,
+		  size_t offset, u32 opt_flags)
+{
+	struct firmware *fw = NULL;
 	bool nondirect = false;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!firmware_p)
-		वापस -EINVAL;
+	if (!firmware_p)
+		return -EINVAL;
 
-	अगर (!name || name[0] == '\0') अणु
+	if (!name || name[0] == '\0') {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = _request_firmware_prepare(&fw, name, device, buf, size,
 					offset, opt_flags);
-	अगर (ret <= 0) /* error or alपढ़ोy asचिन्हित */
-		जाओ out;
+	if (ret <= 0) /* error or already assigned */
+		goto out;
 
-	ret = fw_get_fileप्रणाली_firmware(device, fw->priv, "", शून्य);
+	ret = fw_get_filesystem_firmware(device, fw->priv, "", NULL);
 
-	/* Only full पढ़ोs can support decompression, platक्रमm, and sysfs. */
-	अगर (!(opt_flags & FW_OPT_PARTIAL))
+	/* Only full reads can support decompression, platform, and sysfs. */
+	if (!(opt_flags & FW_OPT_PARTIAL))
 		nondirect = true;
 
-#अगर_घोषित CONFIG_FW_LOADER_COMPRESS
-	अगर (ret == -ENOENT && nondirect)
-		ret = fw_get_fileप्रणाली_firmware(device, fw->priv, ".xz",
+#ifdef CONFIG_FW_LOADER_COMPRESS
+	if (ret == -ENOENT && nondirect)
+		ret = fw_get_filesystem_firmware(device, fw->priv, ".xz",
 						 fw_decompress_xz);
-#पूर्ण_अगर
-	अगर (ret == -ENOENT && nondirect)
-		ret = firmware_fallback_platक्रमm(fw->priv);
+#endif
+	if (ret == -ENOENT && nondirect)
+		ret = firmware_fallback_platform(fw->priv);
 
-	अगर (ret) अणु
-		अगर (!(opt_flags & FW_OPT_NO_WARN))
+	if (ret) {
+		if (!(opt_flags & FW_OPT_NO_WARN))
 			dev_warn(device,
 				 "Direct firmware load for %s failed with error %d\n",
 				 name, ret);
-		अगर (nondirect)
+		if (nondirect)
 			ret = firmware_fallback_sysfs(fw, name, device,
 						      opt_flags, ret);
-	पूर्ण अन्यथा
+	} else
 		ret = assign_fw(fw, device);
 
  out:
-	अगर (ret < 0) अणु
-		fw_पात_batch_reqs(fw);
+	if (ret < 0) {
+		fw_abort_batch_reqs(fw);
 		release_firmware(fw);
-		fw = शून्य;
-	पूर्ण
+		fw = NULL;
+	}
 
 	*firmware_p = fw;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * request_firmware() - send firmware request and रुको क्रम it
- * @firmware_p: poपूर्णांकer to firmware image
+ * request_firmware() - send firmware request and wait for it
+ * @firmware_p: pointer to firmware image
  * @name: name of firmware file
- * @device: device क्रम which firmware is being loaded
+ * @device: device for which firmware is being loaded
  *
- *      @firmware_p will be used to वापस a firmware image by the name
- *      of @name क्रम device @device.
+ *      @firmware_p will be used to return a firmware image by the name
+ *      of @name for device @device.
  *
  *      Should be called from user context where sleeping is allowed.
  *
  *      @name will be used as $FIRMWARE in the uevent environment and
  *      should be distinctive enough not to be confused with any other
- *      firmware image क्रम this or any other device.
+ *      firmware image for this or any other device.
  *
  *	Caller must hold the reference count of @device.
  *
  *	The function can be called safely inside device's suspend and
  *	resume callback.
  **/
-पूर्णांक
-request_firmware(स्थिर काष्ठा firmware **firmware_p, स्थिर अक्षर *name,
-		 काष्ठा device *device)
-अणु
-	पूर्णांक ret;
+int
+request_firmware(const struct firmware **firmware_p, const char *name,
+		 struct device *device)
+{
+	int ret;
 
-	/* Need to pin this module until वापस */
+	/* Need to pin this module until return */
 	__module_get(THIS_MODULE);
-	ret = _request_firmware(firmware_p, name, device, शून्य, 0, 0,
+	ret = _request_firmware(firmware_p, name, device, NULL, 0, 0,
 				FW_OPT_UEVENT);
 	module_put(THIS_MODULE);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(request_firmware);
 
 /**
- * firmware_request_nowarn() - request क्रम an optional fw module
- * @firmware: poपूर्णांकer to firmware image
+ * firmware_request_nowarn() - request for an optional fw module
+ * @firmware: pointer to firmware image
  * @name: name of firmware file
- * @device: device क्रम which firmware is being loaded
+ * @device: device for which firmware is being loaded
  *
  * This function is similar in behaviour to request_firmware(), except it
- * करोesn't produce warning messages when the file is not found. The sysfs
- * fallback mechanism is enabled अगर direct fileप्रणाली lookup fails. However,
+ * doesn't produce warning messages when the file is not found. The sysfs
+ * fallback mechanism is enabled if direct filesystem lookup fails. However,
  * failures to find the firmware file with it are still suppressed. It is
- * thereक्रमe up to the driver to check क्रम the वापस value of this call and to
- * decide when to inक्रमm the users of errors.
+ * therefore up to the driver to check for the return value of this call and to
+ * decide when to inform the users of errors.
  **/
-पूर्णांक firmware_request_nowarn(स्थिर काष्ठा firmware **firmware, स्थिर अक्षर *name,
-			    काष्ठा device *device)
-अणु
-	पूर्णांक ret;
+int firmware_request_nowarn(const struct firmware **firmware, const char *name,
+			    struct device *device)
+{
+	int ret;
 
-	/* Need to pin this module until वापस */
+	/* Need to pin this module until return */
 	__module_get(THIS_MODULE);
-	ret = _request_firmware(firmware, name, device, शून्य, 0, 0,
+	ret = _request_firmware(firmware, name, device, NULL, 0, 0,
 				FW_OPT_UEVENT | FW_OPT_NO_WARN);
 	module_put(THIS_MODULE);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(firmware_request_nowarn);
 
 /**
  * request_firmware_direct() - load firmware directly without usermode helper
- * @firmware_p: poपूर्णांकer to firmware image
+ * @firmware_p: pointer to firmware image
  * @name: name of firmware file
- * @device: device क्रम which firmware is being loaded
+ * @device: device for which firmware is being loaded
  *
- * This function works pretty much like request_firmware(), but this करोesn't
- * fall back to usermode helper even अगर the firmware couldn't be loaded
- * directly from fs.  Hence it's useful क्रम loading optional firmwares, which
- * aren't always present, without extra दीर्घ समयouts of udev.
+ * This function works pretty much like request_firmware(), but this doesn't
+ * fall back to usermode helper even if the firmware couldn't be loaded
+ * directly from fs.  Hence it's useful for loading optional firmwares, which
+ * aren't always present, without extra long timeouts of udev.
  **/
-पूर्णांक request_firmware_direct(स्थिर काष्ठा firmware **firmware_p,
-			    स्थिर अक्षर *name, काष्ठा device *device)
-अणु
-	पूर्णांक ret;
+int request_firmware_direct(const struct firmware **firmware_p,
+			    const char *name, struct device *device)
+{
+	int ret;
 
 	__module_get(THIS_MODULE);
-	ret = _request_firmware(firmware_p, name, device, शून्य, 0, 0,
+	ret = _request_firmware(firmware_p, name, device, NULL, 0, 0,
 				FW_OPT_UEVENT | FW_OPT_NO_WARN |
 				FW_OPT_NOFALLBACK_SYSFS);
 	module_put(THIS_MODULE);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(request_firmware_direct);
 
 /**
- * firmware_request_platक्रमm() - request firmware with platक्रमm-fw fallback
- * @firmware: poपूर्णांकer to firmware image
+ * firmware_request_platform() - request firmware with platform-fw fallback
+ * @firmware: pointer to firmware image
  * @name: name of firmware file
- * @device: device क्रम which firmware is being loaded
+ * @device: device for which firmware is being loaded
  *
- * This function is similar in behaviour to request_firmware, except that अगर
- * direct fileप्रणाली lookup fails, it will fallback to looking क्रम a copy of the
- * requested firmware embedded in the platक्रमm's मुख्य (e.g. UEFI) firmware.
+ * This function is similar in behaviour to request_firmware, except that if
+ * direct filesystem lookup fails, it will fallback to looking for a copy of the
+ * requested firmware embedded in the platform's main (e.g. UEFI) firmware.
  **/
-पूर्णांक firmware_request_platक्रमm(स्थिर काष्ठा firmware **firmware,
-			      स्थिर अक्षर *name, काष्ठा device *device)
-अणु
-	पूर्णांक ret;
+int firmware_request_platform(const struct firmware **firmware,
+			      const char *name, struct device *device)
+{
+	int ret;
 
-	/* Need to pin this module until वापस */
+	/* Need to pin this module until return */
 	__module_get(THIS_MODULE);
-	ret = _request_firmware(firmware, name, device, शून्य, 0, 0,
+	ret = _request_firmware(firmware, name, device, NULL, 0, 0,
 				FW_OPT_UEVENT | FW_OPT_FALLBACK_PLATFORM);
 	module_put(THIS_MODULE);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(firmware_request_platक्रमm);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(firmware_request_platform);
 
 /**
- * firmware_request_cache() - cache firmware क्रम suspend so resume can use it
+ * firmware_request_cache() - cache firmware for suspend so resume can use it
  * @name: name of firmware file
- * @device: device क्रम which firmware should be cached क्रम
+ * @device: device for which firmware should be cached for
  *
  * There are some devices with an optimization that enables the device to not
- * require loading firmware on प्रणाली reboot. This optimization may still
+ * require loading firmware on system reboot. This optimization may still
  * require the firmware present on resume from suspend. This routine can be
  * used to ensure the firmware is present on resume from suspend in these
  * situations. This helper is not compatible with drivers which use
- * request_firmware_पूर्णांकo_buf() or request_firmware_noरुको() with no uevent set.
+ * request_firmware_into_buf() or request_firmware_nowait() with no uevent set.
  **/
-पूर्णांक firmware_request_cache(काष्ठा device *device, स्थिर अक्षर *name)
-अणु
-	पूर्णांक ret;
+int firmware_request_cache(struct device *device, const char *name)
+{
+	int ret;
 
 	mutex_lock(&fw_lock);
 	ret = fw_add_devm_name(device, name);
 	mutex_unlock(&fw_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(firmware_request_cache);
 
 /**
- * request_firmware_पूर्णांकo_buf() - load firmware पूर्णांकo a previously allocated buffer
- * @firmware_p: poपूर्णांकer to firmware image
+ * request_firmware_into_buf() - load firmware into a previously allocated buffer
+ * @firmware_p: pointer to firmware image
  * @name: name of firmware file
- * @device: device क्रम which firmware is being loaded and DMA region allocated
- * @buf: address of buffer to load firmware पूर्णांकo
+ * @device: device for which firmware is being loaded and DMA region allocated
+ * @buf: address of buffer to load firmware into
  * @size: size of buffer
  *
- * This function works pretty much like request_firmware(), but it करोesn't
+ * This function works pretty much like request_firmware(), but it doesn't
  * allocate a buffer to hold the firmware data. Instead, the firmware
- * is loaded directly पूर्णांकo the buffer poपूर्णांकed to by @buf and the @firmware_p
- * data member is poपूर्णांकed at @buf.
+ * is loaded directly into the buffer pointed to by @buf and the @firmware_p
+ * data member is pointed at @buf.
  *
- * This function करोesn't cache firmware either.
+ * This function doesn't cache firmware either.
  */
-पूर्णांक
-request_firmware_पूर्णांकo_buf(स्थिर काष्ठा firmware **firmware_p, स्थिर अक्षर *name,
-			  काष्ठा device *device, व्योम *buf, माप_प्रकार size)
-अणु
-	पूर्णांक ret;
+int
+request_firmware_into_buf(const struct firmware **firmware_p, const char *name,
+			  struct device *device, void *buf, size_t size)
+{
+	int ret;
 
-	अगर (fw_cache_is_setup(device, name))
-		वापस -EOPNOTSUPP;
+	if (fw_cache_is_setup(device, name))
+		return -EOPNOTSUPP;
 
 	__module_get(THIS_MODULE);
 	ret = _request_firmware(firmware_p, name, device, buf, size, 0,
 				FW_OPT_UEVENT | FW_OPT_NOCACHE);
 	module_put(THIS_MODULE);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(request_firmware_पूर्णांकo_buf);
+	return ret;
+}
+EXPORT_SYMBOL(request_firmware_into_buf);
 
 /**
- * request_partial_firmware_पूर्णांकo_buf() - load partial firmware पूर्णांकo a previously allocated buffer
- * @firmware_p: poपूर्णांकer to firmware image
+ * request_partial_firmware_into_buf() - load partial firmware into a previously allocated buffer
+ * @firmware_p: pointer to firmware image
  * @name: name of firmware file
- * @device: device क्रम which firmware is being loaded and DMA region allocated
- * @buf: address of buffer to load firmware पूर्णांकo
+ * @device: device for which firmware is being loaded and DMA region allocated
+ * @buf: address of buffer to load firmware into
  * @size: size of buffer
- * @offset: offset पूर्णांकo file to पढ़ो
+ * @offset: offset into file to read
  *
- * This function works pretty much like request_firmware_पूर्णांकo_buf except
- * it allows a partial पढ़ो of the file.
+ * This function works pretty much like request_firmware_into_buf except
+ * it allows a partial read of the file.
  */
-पूर्णांक
-request_partial_firmware_पूर्णांकo_buf(स्थिर काष्ठा firmware **firmware_p,
-				  स्थिर अक्षर *name, काष्ठा device *device,
-				  व्योम *buf, माप_प्रकार size, माप_प्रकार offset)
-अणु
-	पूर्णांक ret;
+int
+request_partial_firmware_into_buf(const struct firmware **firmware_p,
+				  const char *name, struct device *device,
+				  void *buf, size_t size, size_t offset)
+{
+	int ret;
 
-	अगर (fw_cache_is_setup(device, name))
-		वापस -EOPNOTSUPP;
+	if (fw_cache_is_setup(device, name))
+		return -EOPNOTSUPP;
 
 	__module_get(THIS_MODULE);
 	ret = _request_firmware(firmware_p, name, device, buf, size, offset,
 				FW_OPT_UEVENT | FW_OPT_NOCACHE |
 				FW_OPT_PARTIAL);
 	module_put(THIS_MODULE);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(request_partial_firmware_पूर्णांकo_buf);
+	return ret;
+}
+EXPORT_SYMBOL(request_partial_firmware_into_buf);
 
 /**
  * release_firmware() - release the resource associated with a firmware image
  * @fw: firmware resource to release
  **/
-व्योम release_firmware(स्थिर काष्ठा firmware *fw)
-अणु
-	अगर (fw) अणु
-		अगर (!fw_is_builtin_firmware(fw))
-			firmware_मुक्त_data(fw);
-		kमुक्त(fw);
-	पूर्ण
-पूर्ण
+void release_firmware(const struct firmware *fw)
+{
+	if (fw) {
+		if (!fw_is_builtin_firmware(fw))
+			firmware_free_data(fw);
+		kfree(fw);
+	}
+}
 EXPORT_SYMBOL(release_firmware);
 
 /* Async support */
-काष्ठा firmware_work अणु
-	काष्ठा work_काष्ठा work;
-	काष्ठा module *module;
-	स्थिर अक्षर *name;
-	काष्ठा device *device;
-	व्योम *context;
-	व्योम (*cont)(स्थिर काष्ठा firmware *fw, व्योम *context);
+struct firmware_work {
+	struct work_struct work;
+	struct module *module;
+	const char *name;
+	struct device *device;
+	void *context;
+	void (*cont)(const struct firmware *fw, void *context);
 	u32 opt_flags;
-पूर्ण;
+};
 
-अटल व्योम request_firmware_work_func(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा firmware_work *fw_work;
-	स्थिर काष्ठा firmware *fw;
+static void request_firmware_work_func(struct work_struct *work)
+{
+	struct firmware_work *fw_work;
+	const struct firmware *fw;
 
-	fw_work = container_of(work, काष्ठा firmware_work, work);
+	fw_work = container_of(work, struct firmware_work, work);
 
-	_request_firmware(&fw, fw_work->name, fw_work->device, शून्य, 0, 0,
+	_request_firmware(&fw, fw_work->name, fw_work->device, NULL, 0, 0,
 			  fw_work->opt_flags);
 	fw_work->cont(fw, fw_work->context);
-	put_device(fw_work->device); /* taken in request_firmware_noरुको() */
+	put_device(fw_work->device); /* taken in request_firmware_nowait() */
 
 	module_put(fw_work->module);
-	kमुक्त_स्थिर(fw_work->name);
-	kमुक्त(fw_work);
-पूर्ण
+	kfree_const(fw_work->name);
+	kfree(fw_work);
+}
 
 /**
- * request_firmware_noरुको() - asynchronous version of request_firmware
+ * request_firmware_nowait() - asynchronous version of request_firmware
  * @module: module requesting the firmware
- * @uevent: sends uevent to copy the firmware image अगर this flag
- *	is non-zero अन्यथा the firmware copy must be करोne manually.
+ * @uevent: sends uevent to copy the firmware image if this flag
+ *	is non-zero else the firmware copy must be done manually.
  * @name: name of firmware file
- * @device: device क्रम which firmware is being loaded
+ * @device: device for which firmware is being loaded
  * @gfp: allocation flags
  * @context: will be passed over to @cont, and
- *	@fw may be %शून्य अगर firmware request fails.
+ *	@fw may be %NULL if firmware request fails.
  * @cont: function will be called asynchronously when the firmware
  *	request is over.
  *
  *	Caller must hold the reference count of @device.
  *
- *	Asynchronous variant of request_firmware() क्रम user contexts:
- *		- sleep क्रम as small periods as possible since it may
- *		  increase kernel boot समय of built-in device drivers
- *		  requesting firmware in their ->probe() methods, अगर
+ *	Asynchronous variant of request_firmware() for user contexts:
+ *		- sleep for as small periods as possible since it may
+ *		  increase kernel boot time of built-in device drivers
+ *		  requesting firmware in their ->probe() methods, if
  *		  @gfp is GFP_KERNEL.
  *
- *		- can't sleep at all अगर @gfp is GFP_ATOMIC.
+ *		- can't sleep at all if @gfp is GFP_ATOMIC.
  **/
-पूर्णांक
-request_firmware_noरुको(
-	काष्ठा module *module, bool uevent,
-	स्थिर अक्षर *name, काष्ठा device *device, gfp_t gfp, व्योम *context,
-	व्योम (*cont)(स्थिर काष्ठा firmware *fw, व्योम *context))
-अणु
-	काष्ठा firmware_work *fw_work;
+int
+request_firmware_nowait(
+	struct module *module, bool uevent,
+	const char *name, struct device *device, gfp_t gfp, void *context,
+	void (*cont)(const struct firmware *fw, void *context))
+{
+	struct firmware_work *fw_work;
 
-	fw_work = kzalloc(माप(काष्ठा firmware_work), gfp);
-	अगर (!fw_work)
-		वापस -ENOMEM;
+	fw_work = kzalloc(sizeof(struct firmware_work), gfp);
+	if (!fw_work)
+		return -ENOMEM;
 
 	fw_work->module = module;
-	fw_work->name = kstrdup_स्थिर(name, gfp);
-	अगर (!fw_work->name) अणु
-		kमुक्त(fw_work);
-		वापस -ENOMEM;
-	पूर्ण
+	fw_work->name = kstrdup_const(name, gfp);
+	if (!fw_work->name) {
+		kfree(fw_work);
+		return -ENOMEM;
+	}
 	fw_work->device = device;
 	fw_work->context = context;
 	fw_work->cont = cont;
 	fw_work->opt_flags = FW_OPT_NOWAIT |
 		(uevent ? FW_OPT_UEVENT : FW_OPT_USERHELPER);
 
-	अगर (!uevent && fw_cache_is_setup(device, name)) अणु
-		kमुक्त_स्थिर(fw_work->name);
-		kमुक्त(fw_work);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+	if (!uevent && fw_cache_is_setup(device, name)) {
+		kfree_const(fw_work->name);
+		kfree(fw_work);
+		return -EOPNOTSUPP;
+	}
 
-	अगर (!try_module_get(module)) अणु
-		kमुक्त_स्थिर(fw_work->name);
-		kमुक्त(fw_work);
-		वापस -EFAULT;
-	पूर्ण
+	if (!try_module_get(module)) {
+		kfree_const(fw_work->name);
+		kfree(fw_work);
+		return -EFAULT;
+	}
 
 	get_device(fw_work->device);
 	INIT_WORK(&fw_work->work, request_firmware_work_func);
 	schedule_work(&fw_work->work);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(request_firmware_noरुको);
+	return 0;
+}
+EXPORT_SYMBOL(request_firmware_nowait);
 
-#अगर_घोषित CONFIG_FW_CACHE
-अटल ASYNC_DOMAIN_EXCLUSIVE(fw_cache_करोमुख्य);
+#ifdef CONFIG_FW_CACHE
+static ASYNC_DOMAIN_EXCLUSIVE(fw_cache_domain);
 
 /**
  * cache_firmware() - cache one firmware image in kernel memory space
  * @fw_name: the firmware image name
  *
  * Cache firmware in kernel memory so that drivers can use it when
- * प्रणाली isn't पढ़ोy क्रम them to request firmware image from userspace.
- * Once it वापसs successfully, driver can use request_firmware or its
- * noरुको version to get the cached firmware without any पूर्णांकeracting
+ * system isn't ready for them to request firmware image from userspace.
+ * Once it returns successfully, driver can use request_firmware or its
+ * nowait version to get the cached firmware without any interacting
  * with userspace
  *
- * Return 0 अगर the firmware image has been cached successfully
+ * Return 0 if the firmware image has been cached successfully
  * Return !0 otherwise
  *
  */
-अटल पूर्णांक cache_firmware(स्थिर अक्षर *fw_name)
-अणु
-	पूर्णांक ret;
-	स्थिर काष्ठा firmware *fw;
+static int cache_firmware(const char *fw_name)
+{
+	int ret;
+	const struct firmware *fw;
 
 	pr_debug("%s: %s\n", __func__, fw_name);
 
-	ret = request_firmware(&fw, fw_name, शून्य);
-	अगर (!ret)
-		kमुक्त(fw);
+	ret = request_firmware(&fw, fw_name, NULL);
+	if (!ret)
+		kfree(fw);
 
 	pr_debug("%s: %s ret=%d\n", __func__, fw_name, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा fw_priv *lookup_fw_priv(स्थिर अक्षर *fw_name)
-अणु
-	काष्ठा fw_priv *पंचांगp;
-	काष्ठा firmware_cache *fwc = &fw_cache;
+static struct fw_priv *lookup_fw_priv(const char *fw_name)
+{
+	struct fw_priv *tmp;
+	struct firmware_cache *fwc = &fw_cache;
 
 	spin_lock(&fwc->lock);
-	पंचांगp = __lookup_fw_priv(fw_name);
+	tmp = __lookup_fw_priv(fw_name);
 	spin_unlock(&fwc->lock);
 
-	वापस पंचांगp;
-पूर्ण
+	return tmp;
+}
 
 /**
- * uncache_firmware() - हटाओ one cached firmware image
+ * uncache_firmware() - remove one cached firmware image
  * @fw_name: the firmware image name
  *
  * Uncache one firmware image which has been cached successfully
- * beक्रमe.
+ * before.
  *
- * Return 0 अगर the firmware cache has been हटाओd successfully
+ * Return 0 if the firmware cache has been removed successfully
  * Return !0 otherwise
  *
  */
-अटल पूर्णांक uncache_firmware(स्थिर अक्षर *fw_name)
-अणु
-	काष्ठा fw_priv *fw_priv;
-	काष्ठा firmware fw;
+static int uncache_firmware(const char *fw_name)
+{
+	struct fw_priv *fw_priv;
+	struct firmware fw;
 
 	pr_debug("%s: %s\n", __func__, fw_name);
 
-	अगर (fw_get_builtin_firmware(&fw, fw_name, शून्य, 0))
-		वापस 0;
+	if (fw_get_builtin_firmware(&fw, fw_name, NULL, 0))
+		return 0;
 
 	fw_priv = lookup_fw_priv(fw_name);
-	अगर (fw_priv) अणु
-		मुक्त_fw_priv(fw_priv);
-		वापस 0;
-	पूर्ण
+	if (fw_priv) {
+		free_fw_priv(fw_priv);
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल काष्ठा fw_cache_entry *alloc_fw_cache_entry(स्थिर अक्षर *name)
-अणु
-	काष्ठा fw_cache_entry *fce;
+static struct fw_cache_entry *alloc_fw_cache_entry(const char *name)
+{
+	struct fw_cache_entry *fce;
 
-	fce = kzalloc(माप(*fce), GFP_ATOMIC);
-	अगर (!fce)
-		जाओ निकास;
+	fce = kzalloc(sizeof(*fce), GFP_ATOMIC);
+	if (!fce)
+		goto exit;
 
-	fce->name = kstrdup_स्थिर(name, GFP_ATOMIC);
-	अगर (!fce->name) अणु
-		kमुक्त(fce);
-		fce = शून्य;
-		जाओ निकास;
-	पूर्ण
-निकास:
-	वापस fce;
-पूर्ण
+	fce->name = kstrdup_const(name, GFP_ATOMIC);
+	if (!fce->name) {
+		kfree(fce);
+		fce = NULL;
+		goto exit;
+	}
+exit:
+	return fce;
+}
 
-अटल पूर्णांक __fw_entry_found(स्थिर अक्षर *name)
-अणु
-	काष्ठा firmware_cache *fwc = &fw_cache;
-	काष्ठा fw_cache_entry *fce;
+static int __fw_entry_found(const char *name)
+{
+	struct firmware_cache *fwc = &fw_cache;
+	struct fw_cache_entry *fce;
 
-	list_क्रम_each_entry(fce, &fwc->fw_names, list) अणु
-		अगर (!म_भेद(fce->name, name))
-			वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	list_for_each_entry(fce, &fwc->fw_names, list) {
+		if (!strcmp(fce->name, name))
+			return 1;
+	}
+	return 0;
+}
 
-अटल पूर्णांक fw_cache_piggyback_on_request(स्थिर अक्षर *name)
-अणु
-	काष्ठा firmware_cache *fwc = &fw_cache;
-	काष्ठा fw_cache_entry *fce;
-	पूर्णांक ret = 0;
+static int fw_cache_piggyback_on_request(const char *name)
+{
+	struct firmware_cache *fwc = &fw_cache;
+	struct fw_cache_entry *fce;
+	int ret = 0;
 
 	spin_lock(&fwc->name_lock);
-	अगर (__fw_entry_found(name))
-		जाओ found;
+	if (__fw_entry_found(name))
+		goto found;
 
 	fce = alloc_fw_cache_entry(name);
-	अगर (fce) अणु
+	if (fce) {
 		ret = 1;
 		list_add(&fce->list, &fwc->fw_names);
 		pr_debug("%s: fw: %s\n", __func__, name);
-	पूर्ण
+	}
 found:
 	spin_unlock(&fwc->name_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम मुक्त_fw_cache_entry(काष्ठा fw_cache_entry *fce)
-अणु
-	kमुक्त_स्थिर(fce->name);
-	kमुक्त(fce);
-पूर्ण
+static void free_fw_cache_entry(struct fw_cache_entry *fce)
+{
+	kfree_const(fce->name);
+	kfree(fce);
+}
 
-अटल व्योम __async_dev_cache_fw_image(व्योम *fw_entry,
+static void __async_dev_cache_fw_image(void *fw_entry,
 				       async_cookie_t cookie)
-अणु
-	काष्ठा fw_cache_entry *fce = fw_entry;
-	काष्ठा firmware_cache *fwc = &fw_cache;
-	पूर्णांक ret;
+{
+	struct fw_cache_entry *fce = fw_entry;
+	struct firmware_cache *fwc = &fw_cache;
+	int ret;
 
 	ret = cache_firmware(fce->name);
-	अगर (ret) अणु
+	if (ret) {
 		spin_lock(&fwc->name_lock);
 		list_del(&fce->list);
 		spin_unlock(&fwc->name_lock);
 
-		मुक्त_fw_cache_entry(fce);
-	पूर्ण
-पूर्ण
+		free_fw_cache_entry(fce);
+	}
+}
 
 /* called with dev->devres_lock held */
-अटल व्योम dev_create_fw_entry(काष्ठा device *dev, व्योम *res,
-				व्योम *data)
-अणु
-	काष्ठा fw_name_devm *fwn = res;
-	स्थिर अक्षर *fw_name = fwn->name;
-	काष्ठा list_head *head = data;
-	काष्ठा fw_cache_entry *fce;
+static void dev_create_fw_entry(struct device *dev, void *res,
+				void *data)
+{
+	struct fw_name_devm *fwn = res;
+	const char *fw_name = fwn->name;
+	struct list_head *head = data;
+	struct fw_cache_entry *fce;
 
 	fce = alloc_fw_cache_entry(fw_name);
-	अगर (fce)
+	if (fce)
 		list_add(&fce->list, head);
-पूर्ण
+}
 
-अटल पूर्णांक devm_name_match(काष्ठा device *dev, व्योम *res,
-			   व्योम *match_data)
-अणु
-	काष्ठा fw_name_devm *fwn = res;
-	वापस (fwn->magic == (अचिन्हित दीर्घ)match_data);
-पूर्ण
+static int devm_name_match(struct device *dev, void *res,
+			   void *match_data)
+{
+	struct fw_name_devm *fwn = res;
+	return (fwn->magic == (unsigned long)match_data);
+}
 
-अटल व्योम dev_cache_fw_image(काष्ठा device *dev, व्योम *data)
-अणु
-	LIST_HEAD(toकरो);
-	काष्ठा fw_cache_entry *fce;
-	काष्ठा fw_cache_entry *fce_next;
-	काष्ठा firmware_cache *fwc = &fw_cache;
+static void dev_cache_fw_image(struct device *dev, void *data)
+{
+	LIST_HEAD(todo);
+	struct fw_cache_entry *fce;
+	struct fw_cache_entry *fce_next;
+	struct firmware_cache *fwc = &fw_cache;
 
-	devres_क्रम_each_res(dev, fw_name_devm_release,
+	devres_for_each_res(dev, fw_name_devm_release,
 			    devm_name_match, &fw_cache,
-			    dev_create_fw_entry, &toकरो);
+			    dev_create_fw_entry, &todo);
 
-	list_क्रम_each_entry_safe(fce, fce_next, &toकरो, list) अणु
+	list_for_each_entry_safe(fce, fce_next, &todo, list) {
 		list_del(&fce->list);
 
 		spin_lock(&fwc->name_lock);
-		/* only one cache entry क्रम one firmware */
-		अगर (!__fw_entry_found(fce->name)) अणु
+		/* only one cache entry for one firmware */
+		if (!__fw_entry_found(fce->name)) {
 			list_add(&fce->list, &fwc->fw_names);
-		पूर्ण अन्यथा अणु
-			मुक्त_fw_cache_entry(fce);
-			fce = शून्य;
-		पूर्ण
+		} else {
+			free_fw_cache_entry(fce);
+			fce = NULL;
+		}
 		spin_unlock(&fwc->name_lock);
 
-		अगर (fce)
-			async_schedule_करोमुख्य(__async_dev_cache_fw_image,
-					      (व्योम *)fce,
-					      &fw_cache_करोमुख्य);
-	पूर्ण
-पूर्ण
+		if (fce)
+			async_schedule_domain(__async_dev_cache_fw_image,
+					      (void *)fce,
+					      &fw_cache_domain);
+	}
+}
 
-अटल व्योम __device_uncache_fw_images(व्योम)
-अणु
-	काष्ठा firmware_cache *fwc = &fw_cache;
-	काष्ठा fw_cache_entry *fce;
+static void __device_uncache_fw_images(void)
+{
+	struct firmware_cache *fwc = &fw_cache;
+	struct fw_cache_entry *fce;
 
 	spin_lock(&fwc->name_lock);
-	जबतक (!list_empty(&fwc->fw_names)) अणु
+	while (!list_empty(&fwc->fw_names)) {
 		fce = list_entry(fwc->fw_names.next,
-				काष्ठा fw_cache_entry, list);
+				struct fw_cache_entry, list);
 		list_del(&fce->list);
 		spin_unlock(&fwc->name_lock);
 
 		uncache_firmware(fce->name);
-		मुक्त_fw_cache_entry(fce);
+		free_fw_cache_entry(fce);
 
 		spin_lock(&fwc->name_lock);
-	पूर्ण
+	}
 	spin_unlock(&fwc->name_lock);
-पूर्ण
+}
 
 /**
  * device_cache_fw_images() - cache devices' firmware
  *
- * If one device called request_firmware or its noरुको version
- * successfully beक्रमe, the firmware names are recored पूर्णांकo the
+ * If one device called request_firmware or its nowait version
+ * successfully before, the firmware names are recored into the
  * device's devres link list, so device_cache_fw_images can call
- * cache_firmware() to cache these firmwares क्रम the device,
+ * cache_firmware() to cache these firmwares for the device,
  * then the device driver can load its firmwares easily at
- * समय when प्रणाली is not पढ़ोy to complete loading firmware.
+ * time when system is not ready to complete loading firmware.
  */
-अटल व्योम device_cache_fw_images(व्योम)
-अणु
-	काष्ठा firmware_cache *fwc = &fw_cache;
-	DEFINE_WAIT(रुको);
+static void device_cache_fw_images(void)
+{
+	struct firmware_cache *fwc = &fw_cache;
+	DEFINE_WAIT(wait);
 
 	pr_debug("%s\n", __func__);
 
 	/* cancel uncache work */
 	cancel_delayed_work_sync(&fwc->work);
 
-	fw_fallback_set_cache_समयout();
+	fw_fallback_set_cache_timeout();
 
 	mutex_lock(&fw_lock);
 	fwc->state = FW_LOADER_START_CACHE;
-	dpm_क्रम_each_dev(शून्य, dev_cache_fw_image);
+	dpm_for_each_dev(NULL, dev_cache_fw_image);
 	mutex_unlock(&fw_lock);
 
-	/* रुको क्रम completion of caching firmware क्रम all devices */
-	async_synchronize_full_करोमुख्य(&fw_cache_करोमुख्य);
+	/* wait for completion of caching firmware for all devices */
+	async_synchronize_full_domain(&fw_cache_domain);
 
-	fw_fallback_set_शेष_समयout();
-पूर्ण
+	fw_fallback_set_default_timeout();
+}
 
 /**
  * device_uncache_fw_images() - uncache devices' firmware
@@ -1413,16 +1412,16 @@ found:
  * uncache all firmwares which have been cached successfully
  * by device_uncache_fw_images earlier
  */
-अटल व्योम device_uncache_fw_images(व्योम)
-अणु
+static void device_uncache_fw_images(void)
+{
 	pr_debug("%s\n", __func__);
 	__device_uncache_fw_images();
-पूर्ण
+}
 
-अटल व्योम device_uncache_fw_images_work(काष्ठा work_काष्ठा *work)
-अणु
+static void device_uncache_fw_images_work(struct work_struct *work)
+{
 	device_uncache_fw_images();
-पूर्ण
+}
 
 /**
  * device_uncache_fw_images_delay() - uncache devices firmwares
@@ -1431,32 +1430,32 @@ found:
  * uncache all devices's firmwares which has been cached successfully
  * by device_cache_fw_images after @delay milliseconds.
  */
-अटल व्योम device_uncache_fw_images_delay(अचिन्हित दीर्घ delay)
-अणु
-	queue_delayed_work(प्रणाली_घातer_efficient_wq, &fw_cache.work,
-			   msecs_to_jअगरfies(delay));
-पूर्ण
+static void device_uncache_fw_images_delay(unsigned long delay)
+{
+	queue_delayed_work(system_power_efficient_wq, &fw_cache.work,
+			   msecs_to_jiffies(delay));
+}
 
-अटल पूर्णांक fw_pm_notअगरy(काष्ठा notअगरier_block *notअगरy_block,
-			अचिन्हित दीर्घ mode, व्योम *unused)
-अणु
-	चयन (mode) अणु
-	हाल PM_HIBERNATION_PREPARE:
-	हाल PM_SUSPEND_PREPARE:
-	हाल PM_RESTORE_PREPARE:
+static int fw_pm_notify(struct notifier_block *notify_block,
+			unsigned long mode, void *unused)
+{
+	switch (mode) {
+	case PM_HIBERNATION_PREPARE:
+	case PM_SUSPEND_PREPARE:
+	case PM_RESTORE_PREPARE:
 		/*
-		 * समाप्त pending fallback requests with a custom fallback
-		 * to aव्योम stalling suspend.
+		 * kill pending fallback requests with a custom fallback
+		 * to avoid stalling suspend.
 		 */
-		समाप्त_pending_fw_fallback_reqs(true);
+		kill_pending_fw_fallback_reqs(true);
 		device_cache_fw_images();
-		अवरोध;
+		break;
 
-	हाल PM_POST_SUSPEND:
-	हाल PM_POST_HIBERNATION:
-	हाल PM_POST_RESTORE:
+	case PM_POST_SUSPEND:
+	case PM_POST_HIBERNATION:
+	case PM_POST_RESTORE:
 		/*
-		 * In हाल that प्रणाली sleep failed and syscore_suspend is
+		 * In case that system sleep failed and syscore_suspend is
 		 * not called.
 		 */
 		mutex_lock(&fw_lock);
@@ -1464,26 +1463,26 @@ found:
 		mutex_unlock(&fw_lock);
 
 		device_uncache_fw_images_delay(10 * MSEC_PER_SEC);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* stop caching firmware once syscore_suspend is reached */
-अटल पूर्णांक fw_suspend(व्योम)
-अणु
+static int fw_suspend(void)
+{
 	fw_cache.state = FW_LOADER_NO_CACHE;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा syscore_ops fw_syscore_ops = अणु
+static struct syscore_ops fw_syscore_ops = {
 	.suspend = fw_suspend,
-पूर्ण;
+};
 
-अटल पूर्णांक __init रेजिस्टर_fw_pm_ops(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init register_fw_pm_ops(void)
+{
+	int ret;
 
 	spin_lock_init(&fw_cache.name_lock);
 	INIT_LIST_HEAD(&fw_cache.fw_names);
@@ -1491,86 +1490,86 @@ found:
 	INIT_DELAYED_WORK(&fw_cache.work,
 			  device_uncache_fw_images_work);
 
-	fw_cache.pm_notअगरy.notअगरier_call = fw_pm_notअगरy;
-	ret = रेजिस्टर_pm_notअगरier(&fw_cache.pm_notअगरy);
-	अगर (ret)
-		वापस ret;
+	fw_cache.pm_notify.notifier_call = fw_pm_notify;
+	ret = register_pm_notifier(&fw_cache.pm_notify);
+	if (ret)
+		return ret;
 
-	रेजिस्टर_syscore_ops(&fw_syscore_ops);
+	register_syscore_ops(&fw_syscore_ops);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत व्योम unरेजिस्टर_fw_pm_ops(व्योम)
-अणु
-	unरेजिस्टर_syscore_ops(&fw_syscore_ops);
-	unरेजिस्टर_pm_notअगरier(&fw_cache.pm_notअगरy);
-पूर्ण
-#अन्यथा
-अटल पूर्णांक fw_cache_piggyback_on_request(स्थिर अक्षर *name)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक रेजिस्टर_fw_pm_ops(व्योम)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम unरेजिस्टर_fw_pm_ops(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void unregister_fw_pm_ops(void)
+{
+	unregister_syscore_ops(&fw_syscore_ops);
+	unregister_pm_notifier(&fw_cache.pm_notify);
+}
+#else
+static int fw_cache_piggyback_on_request(const char *name)
+{
+	return 0;
+}
+static inline int register_fw_pm_ops(void)
+{
+	return 0;
+}
+static inline void unregister_fw_pm_ops(void)
+{
+}
+#endif
 
-अटल व्योम __init fw_cache_init(व्योम)
-अणु
+static void __init fw_cache_init(void)
+{
 	spin_lock_init(&fw_cache.lock);
 	INIT_LIST_HEAD(&fw_cache.head);
 	fw_cache.state = FW_LOADER_NO_CACHE;
-पूर्ण
+}
 
-अटल पूर्णांक fw_shutकरोwn_notअगरy(काष्ठा notअगरier_block *unused1,
-			      अचिन्हित दीर्घ unused2, व्योम *unused3)
-अणु
+static int fw_shutdown_notify(struct notifier_block *unused1,
+			      unsigned long unused2, void *unused3)
+{
 	/*
-	 * Kill all pending fallback requests to aव्योम both stalling shutकरोwn,
-	 * and aव्योम a deadlock with the usermode_lock.
+	 * Kill all pending fallback requests to avoid both stalling shutdown,
+	 * and avoid a deadlock with the usermode_lock.
 	 */
-	समाप्त_pending_fw_fallback_reqs(false);
+	kill_pending_fw_fallback_reqs(false);
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block fw_shutकरोwn_nb = अणु
-	.notअगरier_call = fw_shutकरोwn_notअगरy,
-पूर्ण;
+static struct notifier_block fw_shutdown_nb = {
+	.notifier_call = fw_shutdown_notify,
+};
 
-अटल पूर्णांक __init firmware_class_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init firmware_class_init(void)
+{
+	int ret;
 
-	/* No need to unfold these on निकास */
+	/* No need to unfold these on exit */
 	fw_cache_init();
 
-	ret = रेजिस्टर_fw_pm_ops();
-	अगर (ret)
-		वापस ret;
+	ret = register_fw_pm_ops();
+	if (ret)
+		return ret;
 
-	ret = रेजिस्टर_reboot_notअगरier(&fw_shutकरोwn_nb);
-	अगर (ret)
-		जाओ out;
+	ret = register_reboot_notifier(&fw_shutdown_nb);
+	if (ret)
+		goto out;
 
-	वापस रेजिस्टर_sysfs_loader();
+	return register_sysfs_loader();
 
 out:
-	unरेजिस्टर_fw_pm_ops();
-	वापस ret;
-पूर्ण
+	unregister_fw_pm_ops();
+	return ret;
+}
 
-अटल व्योम __निकास firmware_class_निकास(व्योम)
-अणु
-	unरेजिस्टर_fw_pm_ops();
-	unरेजिस्टर_reboot_notअगरier(&fw_shutकरोwn_nb);
-	unरेजिस्टर_sysfs_loader();
-पूर्ण
+static void __exit firmware_class_exit(void)
+{
+	unregister_fw_pm_ops();
+	unregister_reboot_notifier(&fw_shutdown_nb);
+	unregister_sysfs_loader();
+}
 
 fs_initcall(firmware_class_init);
-module_निकास(firmware_class_निकास);
+module_exit(firmware_class_exit);

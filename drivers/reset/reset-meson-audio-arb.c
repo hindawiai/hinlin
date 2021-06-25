@@ -1,47 +1,46 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0 OR MIT)
+// SPDX-License-Identifier: (GPL-2.0 OR MIT)
 // Copyright (c) 2018 BayLibre, SAS.
 // Author: Jerome Brunet <jbrunet@baylibre.com>
 
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/reset-controller.h>
-#समावेश <linux/spinlock.h>
+#include <linux/clk.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of_platform.h>
+#include <linux/reset-controller.h>
+#include <linux/spinlock.h>
 
-#समावेश <dt-bindings/reset/amlogic,meson-axg-audio-arb.h>
+#include <dt-bindings/reset/amlogic,meson-axg-audio-arb.h>
 
-काष्ठा meson_audio_arb_data अणु
-	काष्ठा reset_controller_dev rstc;
-	व्योम __iomem *regs;
-	काष्ठा clk *clk;
-	स्थिर अचिन्हित पूर्णांक *reset_bits;
+struct meson_audio_arb_data {
+	struct reset_controller_dev rstc;
+	void __iomem *regs;
+	struct clk *clk;
+	const unsigned int *reset_bits;
 	spinlock_t lock;
-पूर्ण;
+};
 
-काष्ठा meson_audio_arb_match_data अणु
-	स्थिर अचिन्हित पूर्णांक *reset_bits;
-	अचिन्हित पूर्णांक reset_num;
-पूर्ण;
+struct meson_audio_arb_match_data {
+	const unsigned int *reset_bits;
+	unsigned int reset_num;
+};
 
-#घोषणा ARB_GENERAL_BIT	31
+#define ARB_GENERAL_BIT	31
 
-अटल स्थिर अचिन्हित पूर्णांक axg_audio_arb_reset_bits[] = अणु
+static const unsigned int axg_audio_arb_reset_bits[] = {
 	[AXG_ARB_TODDR_A]	= 0,
 	[AXG_ARB_TODDR_B]	= 1,
 	[AXG_ARB_TODDR_C]	= 2,
 	[AXG_ARB_FRDDR_A]	= 4,
 	[AXG_ARB_FRDDR_B]	= 5,
 	[AXG_ARB_FRDDR_C]	= 6,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा meson_audio_arb_match_data axg_audio_arb_match = अणु
+static const struct meson_audio_arb_match_data axg_audio_arb_match = {
 	.reset_bits = axg_audio_arb_reset_bits,
 	.reset_num = ARRAY_SIZE(axg_audio_arb_reset_bits),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक sm1_audio_arb_reset_bits[] = अणु
+static const unsigned int sm1_audio_arb_reset_bits[] = {
 	[AXG_ARB_TODDR_A]	= 0,
 	[AXG_ARB_TODDR_B]	= 1,
 	[AXG_ARB_TODDR_C]	= 2,
@@ -50,118 +49,118 @@
 	[AXG_ARB_FRDDR_C]	= 6,
 	[AXG_ARB_TODDR_D]	= 3,
 	[AXG_ARB_FRDDR_D]	= 7,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा meson_audio_arb_match_data sm1_audio_arb_match = अणु
+static const struct meson_audio_arb_match_data sm1_audio_arb_match = {
 	.reset_bits = sm1_audio_arb_reset_bits,
 	.reset_num = ARRAY_SIZE(sm1_audio_arb_reset_bits),
-पूर्ण;
+};
 
-अटल पूर्णांक meson_audio_arb_update(काष्ठा reset_controller_dev *rcdev,
-				  अचिन्हित दीर्घ id, bool निश्चित)
-अणु
+static int meson_audio_arb_update(struct reset_controller_dev *rcdev,
+				  unsigned long id, bool assert)
+{
 	u32 val;
-	काष्ठा meson_audio_arb_data *arb =
-		container_of(rcdev, काष्ठा meson_audio_arb_data, rstc);
+	struct meson_audio_arb_data *arb =
+		container_of(rcdev, struct meson_audio_arb_data, rstc);
 
 	spin_lock(&arb->lock);
-	val = पढ़ोl(arb->regs);
+	val = readl(arb->regs);
 
-	अगर (निश्चित)
+	if (assert)
 		val &= ~BIT(arb->reset_bits[id]);
-	अन्यथा
+	else
 		val |= BIT(arb->reset_bits[id]);
 
-	ग_लिखोl(val, arb->regs);
+	writel(val, arb->regs);
 	spin_unlock(&arb->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक meson_audio_arb_status(काष्ठा reset_controller_dev *rcdev,
-				  अचिन्हित दीर्घ id)
-अणु
+static int meson_audio_arb_status(struct reset_controller_dev *rcdev,
+				  unsigned long id)
+{
 	u32 val;
-	काष्ठा meson_audio_arb_data *arb =
-		container_of(rcdev, काष्ठा meson_audio_arb_data, rstc);
+	struct meson_audio_arb_data *arb =
+		container_of(rcdev, struct meson_audio_arb_data, rstc);
 
-	val = पढ़ोl(arb->regs);
+	val = readl(arb->regs);
 
-	वापस !(val & BIT(arb->reset_bits[id]));
-पूर्ण
+	return !(val & BIT(arb->reset_bits[id]));
+}
 
-अटल पूर्णांक meson_audio_arb_निश्चित(काष्ठा reset_controller_dev *rcdev,
-				  अचिन्हित दीर्घ id)
-अणु
-	वापस meson_audio_arb_update(rcdev, id, true);
-पूर्ण
+static int meson_audio_arb_assert(struct reset_controller_dev *rcdev,
+				  unsigned long id)
+{
+	return meson_audio_arb_update(rcdev, id, true);
+}
 
-अटल पूर्णांक meson_audio_arb_deनिश्चित(काष्ठा reset_controller_dev *rcdev,
-				    अचिन्हित दीर्घ id)
-अणु
-	वापस meson_audio_arb_update(rcdev, id, false);
-पूर्ण
+static int meson_audio_arb_deassert(struct reset_controller_dev *rcdev,
+				    unsigned long id)
+{
+	return meson_audio_arb_update(rcdev, id, false);
+}
 
-अटल स्थिर काष्ठा reset_control_ops meson_audio_arb_rstc_ops = अणु
-	.निश्चित = meson_audio_arb_निश्चित,
-	.deनिश्चित = meson_audio_arb_deनिश्चित,
+static const struct reset_control_ops meson_audio_arb_rstc_ops = {
+	.assert = meson_audio_arb_assert,
+	.deassert = meson_audio_arb_deassert,
 	.status = meson_audio_arb_status,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id meson_audio_arb_of_match[] = अणु
-	अणु
+static const struct of_device_id meson_audio_arb_of_match[] = {
+	{
 		.compatible = "amlogic,meson-axg-audio-arb",
 		.data = &axg_audio_arb_match,
-	पूर्ण, अणु
+	}, {
 		.compatible = "amlogic,meson-sm1-audio-arb",
 		.data = &sm1_audio_arb_match,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	},
+	{}
+};
 MODULE_DEVICE_TABLE(of, meson_audio_arb_of_match);
 
-अटल पूर्णांक meson_audio_arb_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा meson_audio_arb_data *arb = platक्रमm_get_drvdata(pdev);
+static int meson_audio_arb_remove(struct platform_device *pdev)
+{
+	struct meson_audio_arb_data *arb = platform_get_drvdata(pdev);
 
 	/* Disable all access */
 	spin_lock(&arb->lock);
-	ग_लिखोl(0, arb->regs);
+	writel(0, arb->regs);
 	spin_unlock(&arb->lock);
 
 	clk_disable_unprepare(arb->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक meson_audio_arb_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	स्थिर काष्ठा meson_audio_arb_match_data *data;
-	काष्ठा meson_audio_arb_data *arb;
-	काष्ठा resource *res;
-	पूर्णांक ret;
+static int meson_audio_arb_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	const struct meson_audio_arb_match_data *data;
+	struct meson_audio_arb_data *arb;
+	struct resource *res;
+	int ret;
 
 	data = of_device_get_match_data(dev);
-	अगर (!data)
-		वापस -EINVAL;
+	if (!data)
+		return -EINVAL;
 
-	arb = devm_kzalloc(dev, माप(*arb), GFP_KERNEL);
-	अगर (!arb)
-		वापस -ENOMEM;
-	platक्रमm_set_drvdata(pdev, arb);
+	arb = devm_kzalloc(dev, sizeof(*arb), GFP_KERNEL);
+	if (!arb)
+		return -ENOMEM;
+	platform_set_drvdata(pdev, arb);
 
-	arb->clk = devm_clk_get(dev, शून्य);
-	अगर (IS_ERR(arb->clk)) अणु
-		अगर (PTR_ERR(arb->clk) != -EPROBE_DEFER)
+	arb->clk = devm_clk_get(dev, NULL);
+	if (IS_ERR(arb->clk)) {
+		if (PTR_ERR(arb->clk) != -EPROBE_DEFER)
 			dev_err(dev, "failed to get clock\n");
-		वापस PTR_ERR(arb->clk);
-	पूर्ण
+		return PTR_ERR(arb->clk);
+	}
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	arb->regs = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(arb->regs))
-		वापस PTR_ERR(arb->regs);
+	if (IS_ERR(arb->regs))
+		return PTR_ERR(arb->regs);
 
 	spin_lock_init(&arb->lock);
 	arb->reset_bits = data->reset_bits;
@@ -172,35 +171,35 @@ MODULE_DEVICE_TABLE(of, meson_audio_arb_of_match);
 
 	/*
 	 * Enable general :
-	 * In the initial state, all memory पूर्णांकerfaces are disabled
+	 * In the initial state, all memory interfaces are disabled
 	 * and the general bit is on
 	 */
 	ret = clk_prepare_enable(arb->clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to enable arb clock\n");
-		वापस ret;
-	पूर्ण
-	ग_लिखोl(BIT(ARB_GENERAL_BIT), arb->regs);
+		return ret;
+	}
+	writel(BIT(ARB_GENERAL_BIT), arb->regs);
 
 	/* Register reset controller */
-	ret = devm_reset_controller_रेजिस्टर(dev, &arb->rstc);
-	अगर (ret) अणु
+	ret = devm_reset_controller_register(dev, &arb->rstc);
+	if (ret) {
 		dev_err(dev, "failed to register arb reset controller\n");
-		meson_audio_arb_हटाओ(pdev);
-	पूर्ण
+		meson_audio_arb_remove(pdev);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा platक्रमm_driver meson_audio_arb_pdrv = अणु
+static struct platform_driver meson_audio_arb_pdrv = {
 	.probe = meson_audio_arb_probe,
-	.हटाओ = meson_audio_arb_हटाओ,
-	.driver = अणु
+	.remove = meson_audio_arb_remove,
+	.driver = {
 		.name = "meson-audio-arb-reset",
 		.of_match_table = meson_audio_arb_of_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(meson_audio_arb_pdrv);
+	},
+};
+module_platform_driver(meson_audio_arb_pdrv);
 
 MODULE_DESCRIPTION("Amlogic A113 Audio Memory Arbiter");
 MODULE_AUTHOR("Jerome Brunet <jbrunet@baylibre.com>");

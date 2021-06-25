@@ -1,90 +1,89 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2000-2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#अगर_अघोषित __XFS_SUPPORT_KMEM_H__
-#घोषणा __XFS_SUPPORT_KMEM_H__
+#ifndef __XFS_SUPPORT_KMEM_H__
+#define __XFS_SUPPORT_KMEM_H__
 
-#समावेश <linux/slab.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/vदो_स्मृति.h>
+#include <linux/slab.h>
+#include <linux/sched.h>
+#include <linux/mm.h>
+#include <linux/vmalloc.h>
 
 /*
- * General memory allocation पूर्णांकerfaces
+ * General memory allocation interfaces
  */
 
-प्रकार अचिन्हित __bitwise xfs_km_flags_t;
-#घोषणा KM_NOFS		((__क्रमce xfs_km_flags_t)0x0004u)
-#घोषणा KM_MAYFAIL	((__क्रमce xfs_km_flags_t)0x0008u)
-#घोषणा KM_ZERO		((__क्रमce xfs_km_flags_t)0x0010u)
-#घोषणा KM_NOLOCKDEP	((__क्रमce xfs_km_flags_t)0x0020u)
+typedef unsigned __bitwise xfs_km_flags_t;
+#define KM_NOFS		((__force xfs_km_flags_t)0x0004u)
+#define KM_MAYFAIL	((__force xfs_km_flags_t)0x0008u)
+#define KM_ZERO		((__force xfs_km_flags_t)0x0010u)
+#define KM_NOLOCKDEP	((__force xfs_km_flags_t)0x0020u)
 
 /*
- * We use a special process flag to aव्योम recursive callbacks पूर्णांकo
- * the fileप्रणाली during transactions.  We will also issue our own
+ * We use a special process flag to avoid recursive callbacks into
+ * the filesystem during transactions.  We will also issue our own
  * warnings, so we explicitly skip any generic ones (silly of us).
  */
-अटल अंतरभूत gfp_t
+static inline gfp_t
 kmem_flags_convert(xfs_km_flags_t flags)
-अणु
+{
 	gfp_t	lflags;
 
 	BUG_ON(flags & ~(KM_NOFS | KM_MAYFAIL | KM_ZERO | KM_NOLOCKDEP));
 
 	lflags = GFP_KERNEL | __GFP_NOWARN;
-	अगर (flags & KM_NOFS)
+	if (flags & KM_NOFS)
 		lflags &= ~__GFP_FS;
 
 	/*
-	 * Default page/slab allocator behavior is to retry क्रम ever
-	 * क्रम small allocations. We can override this behavior by using
-	 * __GFP_RETRY_MAYFAIL which will tell the allocator to retry as दीर्घ
-	 * as it is feasible but rather fail than retry क्रमever क्रम all
+	 * Default page/slab allocator behavior is to retry for ever
+	 * for small allocations. We can override this behavior by using
+	 * __GFP_RETRY_MAYFAIL which will tell the allocator to retry as long
+	 * as it is feasible but rather fail than retry forever for all
 	 * request sizes.
 	 */
-	अगर (flags & KM_MAYFAIL)
+	if (flags & KM_MAYFAIL)
 		lflags |= __GFP_RETRY_MAYFAIL;
 
-	अगर (flags & KM_ZERO)
+	if (flags & KM_ZERO)
 		lflags |= __GFP_ZERO;
 
-	अगर (flags & KM_NOLOCKDEP)
+	if (flags & KM_NOLOCKDEP)
 		lflags |= __GFP_NOLOCKDEP;
 
-	वापस lflags;
-पूर्ण
+	return lflags;
+}
 
-बाह्य व्योम *kmem_alloc(माप_प्रकार, xfs_km_flags_t);
-बाह्य व्योम *kmem_alloc_io(माप_प्रकार size, पूर्णांक align_mask, xfs_km_flags_t flags);
-बाह्य व्योम *kmem_alloc_large(माप_प्रकार size, xfs_km_flags_t);
-अटल अंतरभूत व्योम  kmem_मुक्त(स्थिर व्योम *ptr)
-अणु
-	kvमुक्त(ptr);
-पूर्ण
+extern void *kmem_alloc(size_t, xfs_km_flags_t);
+extern void *kmem_alloc_io(size_t size, int align_mask, xfs_km_flags_t flags);
+extern void *kmem_alloc_large(size_t size, xfs_km_flags_t);
+static inline void  kmem_free(const void *ptr)
+{
+	kvfree(ptr);
+}
 
 
-अटल अंतरभूत व्योम *
-kmem_zalloc(माप_प्रकार size, xfs_km_flags_t flags)
-अणु
-	वापस kmem_alloc(size, flags | KM_ZERO);
-पूर्ण
+static inline void *
+kmem_zalloc(size_t size, xfs_km_flags_t flags)
+{
+	return kmem_alloc(size, flags | KM_ZERO);
+}
 
 /*
- * Zone पूर्णांकerfaces
+ * Zone interfaces
  */
 
-#घोषणा kmem_zone	kmem_cache
-#घोषणा kmem_zone_t	काष्ठा kmem_cache
+#define kmem_zone	kmem_cache
+#define kmem_zone_t	struct kmem_cache
 
-अटल अंतरभूत काष्ठा page *
-kmem_to_page(व्योम *addr)
-अणु
-	अगर (is_vदो_स्मृति_addr(addr))
-		वापस vदो_स्मृति_to_page(addr);
-	वापस virt_to_page(addr);
-पूर्ण
+static inline struct page *
+kmem_to_page(void *addr)
+{
+	if (is_vmalloc_addr(addr))
+		return vmalloc_to_page(addr);
+	return virt_to_page(addr);
+}
 
-#पूर्ण_अगर /* __XFS_SUPPORT_KMEM_H__ */
+#endif /* __XFS_SUPPORT_KMEM_H__ */

@@ -1,125 +1,124 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * net/sunrpc/rpc_pipe.c
  *
- * Userland/kernel पूर्णांकerface क्रम rpcauth_gss.
+ * Userland/kernel interface for rpcauth_gss.
  * Code shamelessly plagiarized from fs/nfsd/nfsctl.c
  * and fs/sysfs/inode.c
  *
  * Copyright (c) 2002, Trond Myklebust <trond.myklebust@fys.uio.no>
  *
  */
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/fs_context.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/fsnotअगरy.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/utsname.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/pagemap.h>
+#include <linux/mount.h>
+#include <linux/fs_context.h>
+#include <linux/namei.h>
+#include <linux/fsnotify.h>
+#include <linux/kernel.h>
+#include <linux/rcupdate.h>
+#include <linux/utsname.h>
 
-#समावेश <यंत्र/ioctls.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/seq_file.h>
+#include <asm/ioctls.h>
+#include <linux/poll.h>
+#include <linux/wait.h>
+#include <linux/seq_file.h>
 
-#समावेश <linux/sunrpc/clnt.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/sunrpc/rpc_pipe_fs.h>
-#समावेश <linux/sunrpc/cache.h>
-#समावेश <linux/nsproxy.h>
-#समावेश <linux/notअगरier.h>
+#include <linux/sunrpc/clnt.h>
+#include <linux/workqueue.h>
+#include <linux/sunrpc/rpc_pipe_fs.h>
+#include <linux/sunrpc/cache.h>
+#include <linux/nsproxy.h>
+#include <linux/notifier.h>
 
-#समावेश "netns.h"
-#समावेश "sunrpc.h"
+#include "netns.h"
+#include "sunrpc.h"
 
-#घोषणा RPCDBG_FACILITY RPCDBG_DEBUG
+#define RPCDBG_FACILITY RPCDBG_DEBUG
 
-#घोषणा NET_NAME(net)	((net == &init_net) ? " (init_net)" : "")
+#define NET_NAME(net)	((net == &init_net) ? " (init_net)" : "")
 
-अटल काष्ठा file_प्रणाली_type rpc_pipe_fs_type;
-अटल स्थिर काष्ठा rpc_pipe_ops gssd_dummy_pipe_ops;
+static struct file_system_type rpc_pipe_fs_type;
+static const struct rpc_pipe_ops gssd_dummy_pipe_ops;
 
-अटल काष्ठा kmem_cache *rpc_inode_cachep __पढ़ो_mostly;
+static struct kmem_cache *rpc_inode_cachep __read_mostly;
 
-#घोषणा RPC_UPCALL_TIMEOUT (30*HZ)
+#define RPC_UPCALL_TIMEOUT (30*HZ)
 
-अटल BLOCKING_NOTIFIER_HEAD(rpc_pipefs_notअगरier_list);
+static BLOCKING_NOTIFIER_HEAD(rpc_pipefs_notifier_list);
 
-पूर्णांक rpc_pipefs_notअगरier_रेजिस्टर(काष्ठा notअगरier_block *nb)
-अणु
-	वापस blocking_notअगरier_chain_रेजिस्टर(&rpc_pipefs_notअगरier_list, nb);
-पूर्ण
-EXPORT_SYMBOL_GPL(rpc_pipefs_notअगरier_रेजिस्टर);
+int rpc_pipefs_notifier_register(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_register(&rpc_pipefs_notifier_list, nb);
+}
+EXPORT_SYMBOL_GPL(rpc_pipefs_notifier_register);
 
-व्योम rpc_pipefs_notअगरier_unरेजिस्टर(काष्ठा notअगरier_block *nb)
-अणु
-	blocking_notअगरier_chain_unरेजिस्टर(&rpc_pipefs_notअगरier_list, nb);
-पूर्ण
-EXPORT_SYMBOL_GPL(rpc_pipefs_notअगरier_unरेजिस्टर);
+void rpc_pipefs_notifier_unregister(struct notifier_block *nb)
+{
+	blocking_notifier_chain_unregister(&rpc_pipefs_notifier_list, nb);
+}
+EXPORT_SYMBOL_GPL(rpc_pipefs_notifier_unregister);
 
-अटल व्योम rpc_purge_list(रुको_queue_head_t *रुकोq, काष्ठा list_head *head,
-		व्योम (*destroy_msg)(काष्ठा rpc_pipe_msg *), पूर्णांक err)
-अणु
-	काष्ठा rpc_pipe_msg *msg;
+static void rpc_purge_list(wait_queue_head_t *waitq, struct list_head *head,
+		void (*destroy_msg)(struct rpc_pipe_msg *), int err)
+{
+	struct rpc_pipe_msg *msg;
 
-	अगर (list_empty(head))
-		वापस;
-	करो अणु
-		msg = list_entry(head->next, काष्ठा rpc_pipe_msg, list);
+	if (list_empty(head))
+		return;
+	do {
+		msg = list_entry(head->next, struct rpc_pipe_msg, list);
 		list_del_init(&msg->list);
-		msg->त्रुटि_सं = err;
+		msg->errno = err;
 		destroy_msg(msg);
-	पूर्ण जबतक (!list_empty(head));
+	} while (!list_empty(head));
 
-	अगर (रुकोq)
-		wake_up(रुकोq);
-पूर्ण
+	if (waitq)
+		wake_up(waitq);
+}
 
-अटल व्योम
-rpc_समयout_upcall_queue(काष्ठा work_काष्ठा *work)
-अणु
-	LIST_HEAD(मुक्त_list);
-	काष्ठा rpc_pipe *pipe =
-		container_of(work, काष्ठा rpc_pipe, queue_समयout.work);
-	व्योम (*destroy_msg)(काष्ठा rpc_pipe_msg *);
-	काष्ठा dentry *dentry;
+static void
+rpc_timeout_upcall_queue(struct work_struct *work)
+{
+	LIST_HEAD(free_list);
+	struct rpc_pipe *pipe =
+		container_of(work, struct rpc_pipe, queue_timeout.work);
+	void (*destroy_msg)(struct rpc_pipe_msg *);
+	struct dentry *dentry;
 
 	spin_lock(&pipe->lock);
 	destroy_msg = pipe->ops->destroy_msg;
-	अगर (pipe->nपढ़ोers == 0) अणु
-		list_splice_init(&pipe->pipe, &मुक्त_list);
+	if (pipe->nreaders == 0) {
+		list_splice_init(&pipe->pipe, &free_list);
 		pipe->pipelen = 0;
-	पूर्ण
+	}
 	dentry = dget(pipe->dentry);
 	spin_unlock(&pipe->lock);
-	rpc_purge_list(dentry ? &RPC_I(d_inode(dentry))->रुकोq : शून्य,
-			&मुक्त_list, destroy_msg, -ETIMEDOUT);
+	rpc_purge_list(dentry ? &RPC_I(d_inode(dentry))->waitq : NULL,
+			&free_list, destroy_msg, -ETIMEDOUT);
 	dput(dentry);
-पूर्ण
+}
 
-sमाप_प्रकार rpc_pipe_generic_upcall(काष्ठा file *filp, काष्ठा rpc_pipe_msg *msg,
-				अक्षर __user *dst, माप_प्रकार buflen)
-अणु
-	अक्षर *data = (अक्षर *)msg->data + msg->copied;
-	माप_प्रकार mlen = min(msg->len - msg->copied, buflen);
-	अचिन्हित दीर्घ left;
+ssize_t rpc_pipe_generic_upcall(struct file *filp, struct rpc_pipe_msg *msg,
+				char __user *dst, size_t buflen)
+{
+	char *data = (char *)msg->data + msg->copied;
+	size_t mlen = min(msg->len - msg->copied, buflen);
+	unsigned long left;
 
 	left = copy_to_user(dst, data, mlen);
-	अगर (left == mlen) अणु
-		msg->त्रुटि_सं = -EFAULT;
-		वापस -EFAULT;
-	पूर्ण
+	if (left == mlen) {
+		msg->errno = -EFAULT;
+		return -EFAULT;
+	}
 
 	mlen -= left;
 	msg->copied += mlen;
-	msg->त्रुटि_सं = 0;
-	वापस mlen;
-पूर्ण
+	msg->errno = 0;
+	return mlen;
+}
 EXPORT_SYMBOL_GPL(rpc_pipe_generic_upcall);
 
 /**
@@ -128,726 +127,726 @@ EXPORT_SYMBOL_GPL(rpc_pipe_generic_upcall);
  * @msg: message to queue
  *
  * Call with an @inode created by rpc_mkpipe() to queue an upcall.
- * A userspace process may then later पढ़ो the upcall by perक्रमming a
- * पढ़ो on an खोलो file क्रम this inode.  It is up to the caller to
+ * A userspace process may then later read the upcall by performing a
+ * read on an open file for this inode.  It is up to the caller to
  * initialize the fields of @msg (other than @msg->list) appropriately.
  */
-पूर्णांक
-rpc_queue_upcall(काष्ठा rpc_pipe *pipe, काष्ठा rpc_pipe_msg *msg)
-अणु
-	पूर्णांक res = -EPIPE;
-	काष्ठा dentry *dentry;
+int
+rpc_queue_upcall(struct rpc_pipe *pipe, struct rpc_pipe_msg *msg)
+{
+	int res = -EPIPE;
+	struct dentry *dentry;
 
 	spin_lock(&pipe->lock);
-	अगर (pipe->nपढ़ोers) अणु
+	if (pipe->nreaders) {
 		list_add_tail(&msg->list, &pipe->pipe);
 		pipe->pipelen += msg->len;
 		res = 0;
-	पूर्ण अन्यथा अगर (pipe->flags & RPC_PIPE_WAIT_FOR_OPEN) अणु
-		अगर (list_empty(&pipe->pipe))
+	} else if (pipe->flags & RPC_PIPE_WAIT_FOR_OPEN) {
+		if (list_empty(&pipe->pipe))
 			queue_delayed_work(rpciod_workqueue,
-					&pipe->queue_समयout,
+					&pipe->queue_timeout,
 					RPC_UPCALL_TIMEOUT);
 		list_add_tail(&msg->list, &pipe->pipe);
 		pipe->pipelen += msg->len;
 		res = 0;
-	पूर्ण
+	}
 	dentry = dget(pipe->dentry);
 	spin_unlock(&pipe->lock);
-	अगर (dentry) अणु
-		wake_up(&RPC_I(d_inode(dentry))->रुकोq);
+	if (dentry) {
+		wake_up(&RPC_I(d_inode(dentry))->waitq);
 		dput(dentry);
-	पूर्ण
-	वापस res;
-पूर्ण
+	}
+	return res;
+}
 EXPORT_SYMBOL_GPL(rpc_queue_upcall);
 
-अटल अंतरभूत व्योम
-rpc_inode_setowner(काष्ठा inode *inode, व्योम *निजी)
-अणु
-	RPC_I(inode)->निजी = निजी;
-पूर्ण
+static inline void
+rpc_inode_setowner(struct inode *inode, void *private)
+{
+	RPC_I(inode)->private = private;
+}
 
-अटल व्योम
-rpc_बंद_pipes(काष्ठा inode *inode)
-अणु
-	काष्ठा rpc_pipe *pipe = RPC_I(inode)->pipe;
-	पूर्णांक need_release;
-	LIST_HEAD(मुक्त_list);
+static void
+rpc_close_pipes(struct inode *inode)
+{
+	struct rpc_pipe *pipe = RPC_I(inode)->pipe;
+	int need_release;
+	LIST_HEAD(free_list);
 
 	inode_lock(inode);
 	spin_lock(&pipe->lock);
-	need_release = pipe->nपढ़ोers != 0 || pipe->nग_लिखोrs != 0;
-	pipe->nपढ़ोers = 0;
-	list_splice_init(&pipe->in_upcall, &मुक्त_list);
-	list_splice_init(&pipe->pipe, &मुक्त_list);
+	need_release = pipe->nreaders != 0 || pipe->nwriters != 0;
+	pipe->nreaders = 0;
+	list_splice_init(&pipe->in_upcall, &free_list);
+	list_splice_init(&pipe->pipe, &free_list);
 	pipe->pipelen = 0;
-	pipe->dentry = शून्य;
+	pipe->dentry = NULL;
 	spin_unlock(&pipe->lock);
-	rpc_purge_list(&RPC_I(inode)->रुकोq, &मुक्त_list, pipe->ops->destroy_msg, -EPIPE);
-	pipe->nग_लिखोrs = 0;
-	अगर (need_release && pipe->ops->release_pipe)
+	rpc_purge_list(&RPC_I(inode)->waitq, &free_list, pipe->ops->destroy_msg, -EPIPE);
+	pipe->nwriters = 0;
+	if (need_release && pipe->ops->release_pipe)
 		pipe->ops->release_pipe(inode);
-	cancel_delayed_work_sync(&pipe->queue_समयout);
-	rpc_inode_setowner(inode, शून्य);
-	RPC_I(inode)->pipe = शून्य;
+	cancel_delayed_work_sync(&pipe->queue_timeout);
+	rpc_inode_setowner(inode, NULL);
+	RPC_I(inode)->pipe = NULL;
 	inode_unlock(inode);
-पूर्ण
+}
 
-अटल काष्ठा inode *
-rpc_alloc_inode(काष्ठा super_block *sb)
-अणु
-	काष्ठा rpc_inode *rpci;
+static struct inode *
+rpc_alloc_inode(struct super_block *sb)
+{
+	struct rpc_inode *rpci;
 	rpci = kmem_cache_alloc(rpc_inode_cachep, GFP_KERNEL);
-	अगर (!rpci)
-		वापस शून्य;
-	वापस &rpci->vfs_inode;
-पूर्ण
+	if (!rpci)
+		return NULL;
+	return &rpci->vfs_inode;
+}
 
-अटल व्योम
-rpc_मुक्त_inode(काष्ठा inode *inode)
-अणु
-	kmem_cache_मुक्त(rpc_inode_cachep, RPC_I(inode));
-पूर्ण
+static void
+rpc_free_inode(struct inode *inode)
+{
+	kmem_cache_free(rpc_inode_cachep, RPC_I(inode));
+}
 
-अटल पूर्णांक
-rpc_pipe_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा rpc_pipe *pipe;
-	पूर्णांक first_खोलो;
-	पूर्णांक res = -ENXIO;
+static int
+rpc_pipe_open(struct inode *inode, struct file *filp)
+{
+	struct rpc_pipe *pipe;
+	int first_open;
+	int res = -ENXIO;
 
 	inode_lock(inode);
 	pipe = RPC_I(inode)->pipe;
-	अगर (pipe == शून्य)
-		जाओ out;
-	first_खोलो = pipe->nपढ़ोers == 0 && pipe->nग_लिखोrs == 0;
-	अगर (first_खोलो && pipe->ops->खोलो_pipe) अणु
-		res = pipe->ops->खोलो_pipe(inode);
-		अगर (res)
-			जाओ out;
-	पूर्ण
-	अगर (filp->f_mode & FMODE_READ)
-		pipe->nपढ़ोers++;
-	अगर (filp->f_mode & FMODE_WRITE)
-		pipe->nग_लिखोrs++;
+	if (pipe == NULL)
+		goto out;
+	first_open = pipe->nreaders == 0 && pipe->nwriters == 0;
+	if (first_open && pipe->ops->open_pipe) {
+		res = pipe->ops->open_pipe(inode);
+		if (res)
+			goto out;
+	}
+	if (filp->f_mode & FMODE_READ)
+		pipe->nreaders++;
+	if (filp->f_mode & FMODE_WRITE)
+		pipe->nwriters++;
 	res = 0;
 out:
 	inode_unlock(inode);
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल पूर्णांक
-rpc_pipe_release(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा rpc_pipe *pipe;
-	काष्ठा rpc_pipe_msg *msg;
-	पूर्णांक last_बंद;
+static int
+rpc_pipe_release(struct inode *inode, struct file *filp)
+{
+	struct rpc_pipe *pipe;
+	struct rpc_pipe_msg *msg;
+	int last_close;
 
 	inode_lock(inode);
 	pipe = RPC_I(inode)->pipe;
-	अगर (pipe == शून्य)
-		जाओ out;
-	msg = filp->निजी_data;
-	अगर (msg != शून्य) अणु
+	if (pipe == NULL)
+		goto out;
+	msg = filp->private_data;
+	if (msg != NULL) {
 		spin_lock(&pipe->lock);
-		msg->त्रुटि_सं = -EAGAIN;
+		msg->errno = -EAGAIN;
 		list_del_init(&msg->list);
 		spin_unlock(&pipe->lock);
 		pipe->ops->destroy_msg(msg);
-	पूर्ण
-	अगर (filp->f_mode & FMODE_WRITE)
-		pipe->nग_लिखोrs --;
-	अगर (filp->f_mode & FMODE_READ) अणु
-		pipe->nपढ़ोers --;
-		अगर (pipe->nपढ़ोers == 0) अणु
-			LIST_HEAD(मुक्त_list);
+	}
+	if (filp->f_mode & FMODE_WRITE)
+		pipe->nwriters --;
+	if (filp->f_mode & FMODE_READ) {
+		pipe->nreaders --;
+		if (pipe->nreaders == 0) {
+			LIST_HEAD(free_list);
 			spin_lock(&pipe->lock);
-			list_splice_init(&pipe->pipe, &मुक्त_list);
+			list_splice_init(&pipe->pipe, &free_list);
 			pipe->pipelen = 0;
 			spin_unlock(&pipe->lock);
-			rpc_purge_list(&RPC_I(inode)->रुकोq, &मुक्त_list,
+			rpc_purge_list(&RPC_I(inode)->waitq, &free_list,
 					pipe->ops->destroy_msg, -EAGAIN);
-		पूर्ण
-	पूर्ण
-	last_बंद = pipe->nग_लिखोrs == 0 && pipe->nपढ़ोers == 0;
-	अगर (last_बंद && pipe->ops->release_pipe)
+		}
+	}
+	last_close = pipe->nwriters == 0 && pipe->nreaders == 0;
+	if (last_close && pipe->ops->release_pipe)
 		pipe->ops->release_pipe(inode);
 out:
 	inode_unlock(inode);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार
-rpc_pipe_पढ़ो(काष्ठा file *filp, अक्षर __user *buf, माप_प्रकार len, loff_t *offset)
-अणु
-	काष्ठा inode *inode = file_inode(filp);
-	काष्ठा rpc_pipe *pipe;
-	काष्ठा rpc_pipe_msg *msg;
-	पूर्णांक res = 0;
+static ssize_t
+rpc_pipe_read(struct file *filp, char __user *buf, size_t len, loff_t *offset)
+{
+	struct inode *inode = file_inode(filp);
+	struct rpc_pipe *pipe;
+	struct rpc_pipe_msg *msg;
+	int res = 0;
 
 	inode_lock(inode);
 	pipe = RPC_I(inode)->pipe;
-	अगर (pipe == शून्य) अणु
+	if (pipe == NULL) {
 		res = -EPIPE;
-		जाओ out_unlock;
-	पूर्ण
-	msg = filp->निजी_data;
-	अगर (msg == शून्य) अणु
+		goto out_unlock;
+	}
+	msg = filp->private_data;
+	if (msg == NULL) {
 		spin_lock(&pipe->lock);
-		अगर (!list_empty(&pipe->pipe)) अणु
+		if (!list_empty(&pipe->pipe)) {
 			msg = list_entry(pipe->pipe.next,
-					काष्ठा rpc_pipe_msg,
+					struct rpc_pipe_msg,
 					list);
 			list_move(&msg->list, &pipe->in_upcall);
 			pipe->pipelen -= msg->len;
-			filp->निजी_data = msg;
+			filp->private_data = msg;
 			msg->copied = 0;
-		पूर्ण
+		}
 		spin_unlock(&pipe->lock);
-		अगर (msg == शून्य)
-			जाओ out_unlock;
-	पूर्ण
+		if (msg == NULL)
+			goto out_unlock;
+	}
 	/* NOTE: it is up to the callback to update msg->copied */
 	res = pipe->ops->upcall(filp, msg, buf, len);
-	अगर (res < 0 || msg->len == msg->copied) अणु
-		filp->निजी_data = शून्य;
+	if (res < 0 || msg->len == msg->copied) {
+		filp->private_data = NULL;
 		spin_lock(&pipe->lock);
 		list_del_init(&msg->list);
 		spin_unlock(&pipe->lock);
 		pipe->ops->destroy_msg(msg);
-	पूर्ण
+	}
 out_unlock:
 	inode_unlock(inode);
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल sमाप_प्रकार
-rpc_pipe_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *buf, माप_प्रकार len, loff_t *offset)
-अणु
-	काष्ठा inode *inode = file_inode(filp);
-	पूर्णांक res;
+static ssize_t
+rpc_pipe_write(struct file *filp, const char __user *buf, size_t len, loff_t *offset)
+{
+	struct inode *inode = file_inode(filp);
+	int res;
 
 	inode_lock(inode);
 	res = -EPIPE;
-	अगर (RPC_I(inode)->pipe != शून्य)
-		res = RPC_I(inode)->pipe->ops->करोwncall(filp, buf, len);
+	if (RPC_I(inode)->pipe != NULL)
+		res = RPC_I(inode)->pipe->ops->downcall(filp, buf, len);
 	inode_unlock(inode);
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल __poll_t
-rpc_pipe_poll(काष्ठा file *filp, काष्ठा poll_table_काष्ठा *रुको)
-अणु
-	काष्ठा inode *inode = file_inode(filp);
-	काष्ठा rpc_inode *rpci = RPC_I(inode);
+static __poll_t
+rpc_pipe_poll(struct file *filp, struct poll_table_struct *wait)
+{
+	struct inode *inode = file_inode(filp);
+	struct rpc_inode *rpci = RPC_I(inode);
 	__poll_t mask = EPOLLOUT | EPOLLWRNORM;
 
-	poll_रुको(filp, &rpci->रुकोq, रुको);
+	poll_wait(filp, &rpci->waitq, wait);
 
 	inode_lock(inode);
-	अगर (rpci->pipe == शून्य)
+	if (rpci->pipe == NULL)
 		mask |= EPOLLERR | EPOLLHUP;
-	अन्यथा अगर (filp->निजी_data || !list_empty(&rpci->pipe->pipe))
+	else if (filp->private_data || !list_empty(&rpci->pipe->pipe))
 		mask |= EPOLLIN | EPOLLRDNORM;
 	inode_unlock(inode);
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल दीर्घ
-rpc_pipe_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा inode *inode = file_inode(filp);
-	काष्ठा rpc_pipe *pipe;
-	पूर्णांक len;
+static long
+rpc_pipe_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+{
+	struct inode *inode = file_inode(filp);
+	struct rpc_pipe *pipe;
+	int len;
 
-	चयन (cmd) अणु
-	हाल FIONREAD:
+	switch (cmd) {
+	case FIONREAD:
 		inode_lock(inode);
 		pipe = RPC_I(inode)->pipe;
-		अगर (pipe == शून्य) अणु
+		if (pipe == NULL) {
 			inode_unlock(inode);
-			वापस -EPIPE;
-		पूर्ण
+			return -EPIPE;
+		}
 		spin_lock(&pipe->lock);
 		len = pipe->pipelen;
-		अगर (filp->निजी_data) अणु
-			काष्ठा rpc_pipe_msg *msg;
-			msg = filp->निजी_data;
+		if (filp->private_data) {
+			struct rpc_pipe_msg *msg;
+			msg = filp->private_data;
 			len += msg->len - msg->copied;
-		पूर्ण
+		}
 		spin_unlock(&pipe->lock);
 		inode_unlock(inode);
-		वापस put_user(len, (पूर्णांक __user *)arg);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return put_user(len, (int __user *)arg);
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल स्थिर काष्ठा file_operations rpc_pipe_fops = अणु
+static const struct file_operations rpc_pipe_fops = {
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-	.पढ़ो		= rpc_pipe_पढ़ो,
-	.ग_लिखो		= rpc_pipe_ग_लिखो,
+	.read		= rpc_pipe_read,
+	.write		= rpc_pipe_write,
 	.poll		= rpc_pipe_poll,
 	.unlocked_ioctl	= rpc_pipe_ioctl,
-	.खोलो		= rpc_pipe_खोलो,
+	.open		= rpc_pipe_open,
 	.release	= rpc_pipe_release,
-पूर्ण;
+};
 
-अटल पूर्णांक
-rpc_show_info(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा rpc_clnt *clnt = m->निजी;
+static int
+rpc_show_info(struct seq_file *m, void *v)
+{
+	struct rpc_clnt *clnt = m->private;
 
-	rcu_पढ़ो_lock();
-	seq_म_लिखो(m, "RPC server: %s\n",
+	rcu_read_lock();
+	seq_printf(m, "RPC server: %s\n",
 			rcu_dereference(clnt->cl_xprt)->servername);
-	seq_म_लिखो(m, "service: %s (%d) version %d\n", clnt->cl_program->name,
+	seq_printf(m, "service: %s (%d) version %d\n", clnt->cl_program->name,
 			clnt->cl_prog, clnt->cl_vers);
-	seq_म_लिखो(m, "address: %s\n", rpc_peeraddr2str(clnt, RPC_DISPLAY_ADDR));
-	seq_म_लिखो(m, "protocol: %s\n", rpc_peeraddr2str(clnt, RPC_DISPLAY_PROTO));
-	seq_म_लिखो(m, "port: %s\n", rpc_peeraddr2str(clnt, RPC_DISPLAY_PORT));
-	rcu_पढ़ो_unlock();
-	वापस 0;
-पूर्ण
+	seq_printf(m, "address: %s\n", rpc_peeraddr2str(clnt, RPC_DISPLAY_ADDR));
+	seq_printf(m, "protocol: %s\n", rpc_peeraddr2str(clnt, RPC_DISPLAY_PROTO));
+	seq_printf(m, "port: %s\n", rpc_peeraddr2str(clnt, RPC_DISPLAY_PORT));
+	rcu_read_unlock();
+	return 0;
+}
 
-अटल पूर्णांक
-rpc_info_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा rpc_clnt *clnt = शून्य;
-	पूर्णांक ret = single_खोलो(file, rpc_show_info, शून्य);
+static int
+rpc_info_open(struct inode *inode, struct file *file)
+{
+	struct rpc_clnt *clnt = NULL;
+	int ret = single_open(file, rpc_show_info, NULL);
 
-	अगर (!ret) अणु
-		काष्ठा seq_file *m = file->निजी_data;
+	if (!ret) {
+		struct seq_file *m = file->private_data;
 
 		spin_lock(&file->f_path.dentry->d_lock);
-		अगर (!d_unhashed(file->f_path.dentry))
-			clnt = RPC_I(inode)->निजी;
-		अगर (clnt != शून्य && atomic_inc_not_zero(&clnt->cl_count)) अणु
+		if (!d_unhashed(file->f_path.dentry))
+			clnt = RPC_I(inode)->private;
+		if (clnt != NULL && atomic_inc_not_zero(&clnt->cl_count)) {
 			spin_unlock(&file->f_path.dentry->d_lock);
-			m->निजी = clnt;
-		पूर्ण अन्यथा अणु
+			m->private = clnt;
+		} else {
 			spin_unlock(&file->f_path.dentry->d_lock);
 			single_release(inode, file);
 			ret = -EINVAL;
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+		}
+	}
+	return ret;
+}
 
-अटल पूर्णांक
-rpc_info_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा seq_file *m = file->निजी_data;
-	काष्ठा rpc_clnt *clnt = (काष्ठा rpc_clnt *)m->निजी;
+static int
+rpc_info_release(struct inode *inode, struct file *file)
+{
+	struct seq_file *m = file->private_data;
+	struct rpc_clnt *clnt = (struct rpc_clnt *)m->private;
 
-	अगर (clnt)
+	if (clnt)
 		rpc_release_client(clnt);
-	वापस single_release(inode, file);
-पूर्ण
+	return single_release(inode, file);
+}
 
-अटल स्थिर काष्ठा file_operations rpc_info_operations = अणु
+static const struct file_operations rpc_info_operations = {
 	.owner		= THIS_MODULE,
-	.खोलो		= rpc_info_खोलो,
-	.पढ़ो		= seq_पढ़ो,
+	.open		= rpc_info_open,
+	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.release	= rpc_info_release,
-पूर्ण;
+};
 
 
 /*
  * Description of fs contents.
  */
-काष्ठा rpc_filelist अणु
-	स्थिर अक्षर *name;
-	स्थिर काष्ठा file_operations *i_fop;
+struct rpc_filelist {
+	const char *name;
+	const struct file_operations *i_fop;
 	umode_t mode;
-पूर्ण;
+};
 
-अटल काष्ठा inode *
-rpc_get_inode(काष्ठा super_block *sb, umode_t mode)
-अणु
-	काष्ठा inode *inode = new_inode(sb);
-	अगर (!inode)
-		वापस शून्य;
+static struct inode *
+rpc_get_inode(struct super_block *sb, umode_t mode)
+{
+	struct inode *inode = new_inode(sb);
+	if (!inode)
+		return NULL;
 	inode->i_ino = get_next_ino();
 	inode->i_mode = mode;
-	inode->i_aसमय = inode->i_mसमय = inode->i_स_समय = current_समय(inode);
-	चयन (mode & S_IFMT) अणु
-	हाल S_IFसूची:
+	inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(inode);
+	switch (mode & S_IFMT) {
+	case S_IFDIR:
 		inode->i_fop = &simple_dir_operations;
 		inode->i_op = &simple_dir_inode_operations;
 		inc_nlink(inode);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस inode;
-पूर्ण
+		break;
+	default:
+		break;
+	}
+	return inode;
+}
 
-अटल पूर्णांक __rpc_create_common(काष्ठा inode *dir, काष्ठा dentry *dentry,
+static int __rpc_create_common(struct inode *dir, struct dentry *dentry,
 			       umode_t mode,
-			       स्थिर काष्ठा file_operations *i_fop,
-			       व्योम *निजी)
-अणु
-	काष्ठा inode *inode;
+			       const struct file_operations *i_fop,
+			       void *private)
+{
+	struct inode *inode;
 
 	d_drop(dentry);
 	inode = rpc_get_inode(dir->i_sb, mode);
-	अगर (!inode)
-		जाओ out_err;
+	if (!inode)
+		goto out_err;
 	inode->i_ino = iunique(dir->i_sb, 100);
-	अगर (i_fop)
+	if (i_fop)
 		inode->i_fop = i_fop;
-	अगर (निजी)
-		rpc_inode_setowner(inode, निजी);
+	if (private)
+		rpc_inode_setowner(inode, private);
 	d_add(dentry, inode);
-	वापस 0;
+	return 0;
 out_err:
-	prपूर्णांकk(KERN_WARNING "%s: %s failed to allocate inode for dentry %pd\n",
-			__खाता__, __func__, dentry);
+	printk(KERN_WARNING "%s: %s failed to allocate inode for dentry %pd\n",
+			__FILE__, __func__, dentry);
 	dput(dentry);
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल पूर्णांक __rpc_create(काष्ठा inode *dir, काष्ठा dentry *dentry,
+static int __rpc_create(struct inode *dir, struct dentry *dentry,
 			umode_t mode,
-			स्थिर काष्ठा file_operations *i_fop,
-			व्योम *निजी)
-अणु
-	पूर्णांक err;
+			const struct file_operations *i_fop,
+			void *private)
+{
+	int err;
 
-	err = __rpc_create_common(dir, dentry, S_IFREG | mode, i_fop, निजी);
-	अगर (err)
-		वापस err;
-	fsnotअगरy_create(dir, dentry);
-	वापस 0;
-पूर्ण
+	err = __rpc_create_common(dir, dentry, S_IFREG | mode, i_fop, private);
+	if (err)
+		return err;
+	fsnotify_create(dir, dentry);
+	return 0;
+}
 
-अटल पूर्णांक __rpc_सूची_गढ़ो(काष्ठा inode *dir, काष्ठा dentry *dentry,
+static int __rpc_mkdir(struct inode *dir, struct dentry *dentry,
 		       umode_t mode,
-		       स्थिर काष्ठा file_operations *i_fop,
-		       व्योम *निजी)
-अणु
-	पूर्णांक err;
+		       const struct file_operations *i_fop,
+		       void *private)
+{
+	int err;
 
-	err = __rpc_create_common(dir, dentry, S_IFसूची | mode, i_fop, निजी);
-	अगर (err)
-		वापस err;
+	err = __rpc_create_common(dir, dentry, S_IFDIR | mode, i_fop, private);
+	if (err)
+		return err;
 	inc_nlink(dir);
-	fsnotअगरy_सूची_गढ़ो(dir, dentry);
-	वापस 0;
-पूर्ण
+	fsnotify_mkdir(dir, dentry);
+	return 0;
+}
 
-अटल व्योम
-init_pipe(काष्ठा rpc_pipe *pipe)
-अणु
-	pipe->nपढ़ोers = 0;
-	pipe->nग_लिखोrs = 0;
+static void
+init_pipe(struct rpc_pipe *pipe)
+{
+	pipe->nreaders = 0;
+	pipe->nwriters = 0;
 	INIT_LIST_HEAD(&pipe->in_upcall);
-	INIT_LIST_HEAD(&pipe->in_करोwncall);
+	INIT_LIST_HEAD(&pipe->in_downcall);
 	INIT_LIST_HEAD(&pipe->pipe);
 	pipe->pipelen = 0;
-	INIT_DELAYED_WORK(&pipe->queue_समयout,
-			    rpc_समयout_upcall_queue);
-	pipe->ops = शून्य;
+	INIT_DELAYED_WORK(&pipe->queue_timeout,
+			    rpc_timeout_upcall_queue);
+	pipe->ops = NULL;
 	spin_lock_init(&pipe->lock);
-	pipe->dentry = शून्य;
-पूर्ण
+	pipe->dentry = NULL;
+}
 
-व्योम rpc_destroy_pipe_data(काष्ठा rpc_pipe *pipe)
-अणु
-	kमुक्त(pipe);
-पूर्ण
+void rpc_destroy_pipe_data(struct rpc_pipe *pipe)
+{
+	kfree(pipe);
+}
 EXPORT_SYMBOL_GPL(rpc_destroy_pipe_data);
 
-काष्ठा rpc_pipe *rpc_mkpipe_data(स्थिर काष्ठा rpc_pipe_ops *ops, पूर्णांक flags)
-अणु
-	काष्ठा rpc_pipe *pipe;
+struct rpc_pipe *rpc_mkpipe_data(const struct rpc_pipe_ops *ops, int flags)
+{
+	struct rpc_pipe *pipe;
 
-	pipe = kzalloc(माप(काष्ठा rpc_pipe), GFP_KERNEL);
-	अगर (!pipe)
-		वापस ERR_PTR(-ENOMEM);
+	pipe = kzalloc(sizeof(struct rpc_pipe), GFP_KERNEL);
+	if (!pipe)
+		return ERR_PTR(-ENOMEM);
 	init_pipe(pipe);
 	pipe->ops = ops;
 	pipe->flags = flags;
-	वापस pipe;
-पूर्ण
+	return pipe;
+}
 EXPORT_SYMBOL_GPL(rpc_mkpipe_data);
 
-अटल पूर्णांक __rpc_mkpipe_dentry(काष्ठा inode *dir, काष्ठा dentry *dentry,
+static int __rpc_mkpipe_dentry(struct inode *dir, struct dentry *dentry,
 			       umode_t mode,
-			       स्थिर काष्ठा file_operations *i_fop,
-			       व्योम *निजी,
-			       काष्ठा rpc_pipe *pipe)
-अणु
-	काष्ठा rpc_inode *rpci;
-	पूर्णांक err;
+			       const struct file_operations *i_fop,
+			       void *private,
+			       struct rpc_pipe *pipe)
+{
+	struct rpc_inode *rpci;
+	int err;
 
-	err = __rpc_create_common(dir, dentry, S_IFIFO | mode, i_fop, निजी);
-	अगर (err)
-		वापस err;
+	err = __rpc_create_common(dir, dentry, S_IFIFO | mode, i_fop, private);
+	if (err)
+		return err;
 	rpci = RPC_I(d_inode(dentry));
-	rpci->निजी = निजी;
+	rpci->private = private;
 	rpci->pipe = pipe;
-	fsnotअगरy_create(dir, dentry);
-	वापस 0;
-पूर्ण
+	fsnotify_create(dir, dentry);
+	return 0;
+}
 
-अटल पूर्णांक __rpc_सूची_हटाओ(काष्ठा inode *dir, काष्ठा dentry *dentry)
-अणु
-	पूर्णांक ret;
+static int __rpc_rmdir(struct inode *dir, struct dentry *dentry)
+{
+	int ret;
 
 	dget(dentry);
-	ret = simple_सूची_हटाओ(dir, dentry);
-	अगर (!ret)
-		fsnotअगरy_सूची_हटाओ(dir, dentry);
+	ret = simple_rmdir(dir, dentry);
+	if (!ret)
+		fsnotify_rmdir(dir, dentry);
 	d_delete(dentry);
 	dput(dentry);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __rpc_unlink(काष्ठा inode *dir, काष्ठा dentry *dentry)
-अणु
-	पूर्णांक ret;
+static int __rpc_unlink(struct inode *dir, struct dentry *dentry)
+{
+	int ret;
 
 	dget(dentry);
 	ret = simple_unlink(dir, dentry);
-	अगर (!ret)
-		fsnotअगरy_unlink(dir, dentry);
+	if (!ret)
+		fsnotify_unlink(dir, dentry);
 	d_delete(dentry);
 	dput(dentry);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __rpc_rmpipe(काष्ठा inode *dir, काष्ठा dentry *dentry)
-अणु
-	काष्ठा inode *inode = d_inode(dentry);
+static int __rpc_rmpipe(struct inode *dir, struct dentry *dentry)
+{
+	struct inode *inode = d_inode(dentry);
 
-	rpc_बंद_pipes(inode);
-	वापस __rpc_unlink(dir, dentry);
-पूर्ण
+	rpc_close_pipes(inode);
+	return __rpc_unlink(dir, dentry);
+}
 
-अटल काष्ठा dentry *__rpc_lookup_create_exclusive(काष्ठा dentry *parent,
-					  स्थिर अक्षर *name)
-अणु
-	काष्ठा qstr q = QSTR_INIT(name, म_माप(name));
-	काष्ठा dentry *dentry = d_hash_and_lookup(parent, &q);
-	अगर (!dentry) अणु
+static struct dentry *__rpc_lookup_create_exclusive(struct dentry *parent,
+					  const char *name)
+{
+	struct qstr q = QSTR_INIT(name, strlen(name));
+	struct dentry *dentry = d_hash_and_lookup(parent, &q);
+	if (!dentry) {
 		dentry = d_alloc(parent, &q);
-		अगर (!dentry)
-			वापस ERR_PTR(-ENOMEM);
-	पूर्ण
-	अगर (d_really_is_negative(dentry))
-		वापस dentry;
+		if (!dentry)
+			return ERR_PTR(-ENOMEM);
+	}
+	if (d_really_is_negative(dentry))
+		return dentry;
 	dput(dentry);
-	वापस ERR_PTR(-EEXIST);
-पूर्ण
+	return ERR_PTR(-EEXIST);
+}
 
 /*
  * FIXME: This probably has races.
  */
-अटल व्योम __rpc_depopulate(काष्ठा dentry *parent,
-			     स्थिर काष्ठा rpc_filelist *files,
-			     पूर्णांक start, पूर्णांक eof)
-अणु
-	काष्ठा inode *dir = d_inode(parent);
-	काष्ठा dentry *dentry;
-	काष्ठा qstr name;
-	पूर्णांक i;
+static void __rpc_depopulate(struct dentry *parent,
+			     const struct rpc_filelist *files,
+			     int start, int eof)
+{
+	struct inode *dir = d_inode(parent);
+	struct dentry *dentry;
+	struct qstr name;
+	int i;
 
-	क्रम (i = start; i < eof; i++) अणु
+	for (i = start; i < eof; i++) {
 		name.name = files[i].name;
-		name.len = म_माप(files[i].name);
+		name.len = strlen(files[i].name);
 		dentry = d_hash_and_lookup(parent, &name);
 
-		अगर (dentry == शून्य)
-			जारी;
-		अगर (d_really_is_negative(dentry))
-			जाओ next;
-		चयन (d_inode(dentry)->i_mode & S_IFMT) अणु
-			शेष:
+		if (dentry == NULL)
+			continue;
+		if (d_really_is_negative(dentry))
+			goto next;
+		switch (d_inode(dentry)->i_mode & S_IFMT) {
+			default:
 				BUG();
-			हाल S_IFREG:
+			case S_IFREG:
 				__rpc_unlink(dir, dentry);
-				अवरोध;
-			हाल S_IFसूची:
-				__rpc_सूची_हटाओ(dir, dentry);
-		पूर्ण
+				break;
+			case S_IFDIR:
+				__rpc_rmdir(dir, dentry);
+		}
 next:
 		dput(dentry);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम rpc_depopulate(काष्ठा dentry *parent,
-			   स्थिर काष्ठा rpc_filelist *files,
-			   पूर्णांक start, पूर्णांक eof)
-अणु
-	काष्ठा inode *dir = d_inode(parent);
+static void rpc_depopulate(struct dentry *parent,
+			   const struct rpc_filelist *files,
+			   int start, int eof)
+{
+	struct inode *dir = d_inode(parent);
 
 	inode_lock_nested(dir, I_MUTEX_CHILD);
 	__rpc_depopulate(parent, files, start, eof);
 	inode_unlock(dir);
-पूर्ण
+}
 
-अटल पूर्णांक rpc_populate(काष्ठा dentry *parent,
-			स्थिर काष्ठा rpc_filelist *files,
-			पूर्णांक start, पूर्णांक eof,
-			व्योम *निजी)
-अणु
-	काष्ठा inode *dir = d_inode(parent);
-	काष्ठा dentry *dentry;
-	पूर्णांक i, err;
+static int rpc_populate(struct dentry *parent,
+			const struct rpc_filelist *files,
+			int start, int eof,
+			void *private)
+{
+	struct inode *dir = d_inode(parent);
+	struct dentry *dentry;
+	int i, err;
 
 	inode_lock(dir);
-	क्रम (i = start; i < eof; i++) अणु
+	for (i = start; i < eof; i++) {
 		dentry = __rpc_lookup_create_exclusive(parent, files[i].name);
 		err = PTR_ERR(dentry);
-		अगर (IS_ERR(dentry))
-			जाओ out_bad;
-		चयन (files[i].mode & S_IFMT) अणु
-			शेष:
+		if (IS_ERR(dentry))
+			goto out_bad;
+		switch (files[i].mode & S_IFMT) {
+			default:
 				BUG();
-			हाल S_IFREG:
+			case S_IFREG:
 				err = __rpc_create(dir, dentry,
 						files[i].mode,
 						files[i].i_fop,
-						निजी);
-				अवरोध;
-			हाल S_IFसूची:
-				err = __rpc_सूची_गढ़ो(dir, dentry,
+						private);
+				break;
+			case S_IFDIR:
+				err = __rpc_mkdir(dir, dentry,
 						files[i].mode,
-						शून्य,
-						निजी);
-		पूर्ण
-		अगर (err != 0)
-			जाओ out_bad;
-	पूर्ण
+						NULL,
+						private);
+		}
+		if (err != 0)
+			goto out_bad;
+	}
 	inode_unlock(dir);
-	वापस 0;
+	return 0;
 out_bad:
 	__rpc_depopulate(parent, files, start, eof);
 	inode_unlock(dir);
-	prपूर्णांकk(KERN_WARNING "%s: %s failed to populate directory %pd\n",
-			__खाता__, __func__, parent);
-	वापस err;
-पूर्ण
+	printk(KERN_WARNING "%s: %s failed to populate directory %pd\n",
+			__FILE__, __func__, parent);
+	return err;
+}
 
-अटल काष्ठा dentry *rpc_सूची_गढ़ो_populate(काष्ठा dentry *parent,
-		स्थिर अक्षर *name, umode_t mode, व्योम *निजी,
-		पूर्णांक (*populate)(काष्ठा dentry *, व्योम *), व्योम *args_populate)
-अणु
-	काष्ठा dentry *dentry;
-	काष्ठा inode *dir = d_inode(parent);
-	पूर्णांक error;
+static struct dentry *rpc_mkdir_populate(struct dentry *parent,
+		const char *name, umode_t mode, void *private,
+		int (*populate)(struct dentry *, void *), void *args_populate)
+{
+	struct dentry *dentry;
+	struct inode *dir = d_inode(parent);
+	int error;
 
 	inode_lock_nested(dir, I_MUTEX_PARENT);
 	dentry = __rpc_lookup_create_exclusive(parent, name);
-	अगर (IS_ERR(dentry))
-		जाओ out;
-	error = __rpc_सूची_गढ़ो(dir, dentry, mode, शून्य, निजी);
-	अगर (error != 0)
-		जाओ out_err;
-	अगर (populate != शून्य) अणु
+	if (IS_ERR(dentry))
+		goto out;
+	error = __rpc_mkdir(dir, dentry, mode, NULL, private);
+	if (error != 0)
+		goto out_err;
+	if (populate != NULL) {
 		error = populate(dentry, args_populate);
-		अगर (error)
-			जाओ err_सूची_हटाओ;
-	पूर्ण
+		if (error)
+			goto err_rmdir;
+	}
 out:
 	inode_unlock(dir);
-	वापस dentry;
-err_सूची_हटाओ:
-	__rpc_सूची_हटाओ(dir, dentry);
+	return dentry;
+err_rmdir:
+	__rpc_rmdir(dir, dentry);
 out_err:
 	dentry = ERR_PTR(error);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-अटल पूर्णांक rpc_सूची_हटाओ_depopulate(काष्ठा dentry *dentry,
-		व्योम (*depopulate)(काष्ठा dentry *))
-अणु
-	काष्ठा dentry *parent;
-	काष्ठा inode *dir;
-	पूर्णांक error;
+static int rpc_rmdir_depopulate(struct dentry *dentry,
+		void (*depopulate)(struct dentry *))
+{
+	struct dentry *parent;
+	struct inode *dir;
+	int error;
 
 	parent = dget_parent(dentry);
 	dir = d_inode(parent);
 	inode_lock_nested(dir, I_MUTEX_PARENT);
-	अगर (depopulate != शून्य)
+	if (depopulate != NULL)
 		depopulate(dentry);
-	error = __rpc_सूची_हटाओ(dir, dentry);
+	error = __rpc_rmdir(dir, dentry);
 	inode_unlock(dir);
 	dput(parent);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /**
- * rpc_mkpipe_dentry - make an rpc_pipefs file क्रम kernel<->userspace
+ * rpc_mkpipe_dentry - make an rpc_pipefs file for kernel<->userspace
  *		       communication
  * @parent: dentry of directory to create new "pipe" in
  * @name: name of pipe
- * @निजी: निजी data to associate with the pipe, क्रम the caller's use
+ * @private: private data to associate with the pipe, for the caller's use
  * @pipe: &rpc_pipe containing input parameters
  *
- * Data is made available क्रम userspace to पढ़ो by calls to
- * rpc_queue_upcall().  The actual पढ़ोs will result in calls to
- * @ops->upcall, which will be called with the file poपूर्णांकer,
+ * Data is made available for userspace to read by calls to
+ * rpc_queue_upcall().  The actual reads will result in calls to
+ * @ops->upcall, which will be called with the file pointer,
  * message, and userspace buffer to copy to.
  *
- * Writes can come at any समय, and करो not necessarily have to be
- * responses to upcalls.  They will result in calls to @msg->करोwncall.
+ * Writes can come at any time, and do not necessarily have to be
+ * responses to upcalls.  They will result in calls to @msg->downcall.
  *
- * The @निजी argument passed here will be available to all these methods
- * from the file poपूर्णांकer, via RPC_I(file_inode(file))->निजी.
+ * The @private argument passed here will be available to all these methods
+ * from the file pointer, via RPC_I(file_inode(file))->private.
  */
-काष्ठा dentry *rpc_mkpipe_dentry(काष्ठा dentry *parent, स्थिर अक्षर *name,
-				 व्योम *निजी, काष्ठा rpc_pipe *pipe)
-अणु
-	काष्ठा dentry *dentry;
-	काष्ठा inode *dir = d_inode(parent);
+struct dentry *rpc_mkpipe_dentry(struct dentry *parent, const char *name,
+				 void *private, struct rpc_pipe *pipe)
+{
+	struct dentry *dentry;
+	struct inode *dir = d_inode(parent);
 	umode_t umode = S_IFIFO | 0600;
-	पूर्णांक err;
+	int err;
 
-	अगर (pipe->ops->upcall == शून्य)
+	if (pipe->ops->upcall == NULL)
 		umode &= ~0444;
-	अगर (pipe->ops->करोwncall == शून्य)
+	if (pipe->ops->downcall == NULL)
 		umode &= ~0222;
 
 	inode_lock_nested(dir, I_MUTEX_PARENT);
 	dentry = __rpc_lookup_create_exclusive(parent, name);
-	अगर (IS_ERR(dentry))
-		जाओ out;
+	if (IS_ERR(dentry))
+		goto out;
 	err = __rpc_mkpipe_dentry(dir, dentry, umode, &rpc_pipe_fops,
-				  निजी, pipe);
-	अगर (err)
-		जाओ out_err;
+				  private, pipe);
+	if (err)
+		goto out_err;
 out:
 	inode_unlock(dir);
-	वापस dentry;
+	return dentry;
 out_err:
 	dentry = ERR_PTR(err);
-	prपूर्णांकk(KERN_WARNING "%s: %s() failed to create pipe %pd/%s (errno = %d)\n",
-			__खाता__, __func__, parent, name,
+	printk(KERN_WARNING "%s: %s() failed to create pipe %pd/%s (errno = %d)\n",
+			__FILE__, __func__, parent, name,
 			err);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 EXPORT_SYMBOL_GPL(rpc_mkpipe_dentry);
 
 /**
- * rpc_unlink - हटाओ a pipe
- * @dentry: dentry क्रम the pipe, as वापसed from rpc_mkpipe
+ * rpc_unlink - remove a pipe
+ * @dentry: dentry for the pipe, as returned from rpc_mkpipe
  *
- * After this call, lookups will no दीर्घer find the pipe, and any
- * attempts to पढ़ो or ग_लिखो using preexisting खोलोs of the pipe will
- * वापस -EPIPE.
+ * After this call, lookups will no longer find the pipe, and any
+ * attempts to read or write using preexisting opens of the pipe will
+ * return -EPIPE.
  */
-पूर्णांक
-rpc_unlink(काष्ठा dentry *dentry)
-अणु
-	काष्ठा dentry *parent;
-	काष्ठा inode *dir;
-	पूर्णांक error = 0;
+int
+rpc_unlink(struct dentry *dentry)
+{
+	struct dentry *parent;
+	struct inode *dir;
+	int error = 0;
 
 	parent = dget_parent(dentry);
 	dir = d_inode(parent);
@@ -855,187 +854,187 @@ rpc_unlink(काष्ठा dentry *dentry)
 	error = __rpc_rmpipe(dir, dentry);
 	inode_unlock(dir);
 	dput(parent);
-	वापस error;
-पूर्ण
+	return error;
+}
 EXPORT_SYMBOL_GPL(rpc_unlink);
 
 /**
- * rpc_init_pipe_dir_head - initialise a काष्ठा rpc_pipe_dir_head
- * @pdh: poपूर्णांकer to काष्ठा rpc_pipe_dir_head
+ * rpc_init_pipe_dir_head - initialise a struct rpc_pipe_dir_head
+ * @pdh: pointer to struct rpc_pipe_dir_head
  */
-व्योम rpc_init_pipe_dir_head(काष्ठा rpc_pipe_dir_head *pdh)
-अणु
+void rpc_init_pipe_dir_head(struct rpc_pipe_dir_head *pdh)
+{
 	INIT_LIST_HEAD(&pdh->pdh_entries);
-	pdh->pdh_dentry = शून्य;
-पूर्ण
+	pdh->pdh_dentry = NULL;
+}
 EXPORT_SYMBOL_GPL(rpc_init_pipe_dir_head);
 
 /**
- * rpc_init_pipe_dir_object - initialise a काष्ठा rpc_pipe_dir_object
- * @pकरो: poपूर्णांकer to काष्ठा rpc_pipe_dir_object
- * @pकरो_ops: poपूर्णांकer to स्थिर काष्ठा rpc_pipe_dir_object_ops
- * @pकरो_data: poपूर्णांकer to caller-defined data
+ * rpc_init_pipe_dir_object - initialise a struct rpc_pipe_dir_object
+ * @pdo: pointer to struct rpc_pipe_dir_object
+ * @pdo_ops: pointer to const struct rpc_pipe_dir_object_ops
+ * @pdo_data: pointer to caller-defined data
  */
-व्योम rpc_init_pipe_dir_object(काष्ठा rpc_pipe_dir_object *pकरो,
-		स्थिर काष्ठा rpc_pipe_dir_object_ops *pकरो_ops,
-		व्योम *pकरो_data)
-अणु
-	INIT_LIST_HEAD(&pकरो->pकरो_head);
-	pकरो->pकरो_ops = pकरो_ops;
-	pकरो->pकरो_data = pकरो_data;
-पूर्ण
+void rpc_init_pipe_dir_object(struct rpc_pipe_dir_object *pdo,
+		const struct rpc_pipe_dir_object_ops *pdo_ops,
+		void *pdo_data)
+{
+	INIT_LIST_HEAD(&pdo->pdo_head);
+	pdo->pdo_ops = pdo_ops;
+	pdo->pdo_data = pdo_data;
+}
 EXPORT_SYMBOL_GPL(rpc_init_pipe_dir_object);
 
-अटल पूर्णांक
-rpc_add_pipe_dir_object_locked(काष्ठा net *net,
-		काष्ठा rpc_pipe_dir_head *pdh,
-		काष्ठा rpc_pipe_dir_object *pकरो)
-अणु
-	पूर्णांक ret = 0;
+static int
+rpc_add_pipe_dir_object_locked(struct net *net,
+		struct rpc_pipe_dir_head *pdh,
+		struct rpc_pipe_dir_object *pdo)
+{
+	int ret = 0;
 
-	अगर (pdh->pdh_dentry)
-		ret = pकरो->pकरो_ops->create(pdh->pdh_dentry, pकरो);
-	अगर (ret == 0)
-		list_add_tail(&pकरो->pकरो_head, &pdh->pdh_entries);
-	वापस ret;
-पूर्ण
+	if (pdh->pdh_dentry)
+		ret = pdo->pdo_ops->create(pdh->pdh_dentry, pdo);
+	if (ret == 0)
+		list_add_tail(&pdo->pdo_head, &pdh->pdh_entries);
+	return ret;
+}
 
-अटल व्योम
-rpc_हटाओ_pipe_dir_object_locked(काष्ठा net *net,
-		काष्ठा rpc_pipe_dir_head *pdh,
-		काष्ठा rpc_pipe_dir_object *pकरो)
-अणु
-	अगर (pdh->pdh_dentry)
-		pकरो->pकरो_ops->destroy(pdh->pdh_dentry, pकरो);
-	list_del_init(&pकरो->pकरो_head);
-पूर्ण
+static void
+rpc_remove_pipe_dir_object_locked(struct net *net,
+		struct rpc_pipe_dir_head *pdh,
+		struct rpc_pipe_dir_object *pdo)
+{
+	if (pdh->pdh_dentry)
+		pdo->pdo_ops->destroy(pdh->pdh_dentry, pdo);
+	list_del_init(&pdo->pdo_head);
+}
 
 /**
  * rpc_add_pipe_dir_object - associate a rpc_pipe_dir_object to a directory
- * @net: poपूर्णांकer to काष्ठा net
- * @pdh: poपूर्णांकer to काष्ठा rpc_pipe_dir_head
- * @pकरो: poपूर्णांकer to काष्ठा rpc_pipe_dir_object
+ * @net: pointer to struct net
+ * @pdh: pointer to struct rpc_pipe_dir_head
+ * @pdo: pointer to struct rpc_pipe_dir_object
  *
  */
-पूर्णांक
-rpc_add_pipe_dir_object(काष्ठा net *net,
-		काष्ठा rpc_pipe_dir_head *pdh,
-		काष्ठा rpc_pipe_dir_object *pकरो)
-अणु
-	पूर्णांक ret = 0;
+int
+rpc_add_pipe_dir_object(struct net *net,
+		struct rpc_pipe_dir_head *pdh,
+		struct rpc_pipe_dir_object *pdo)
+{
+	int ret = 0;
 
-	अगर (list_empty(&pकरो->pकरो_head)) अणु
-		काष्ठा sunrpc_net *sn = net_generic(net, sunrpc_net_id);
+	if (list_empty(&pdo->pdo_head)) {
+		struct sunrpc_net *sn = net_generic(net, sunrpc_net_id);
 
 		mutex_lock(&sn->pipefs_sb_lock);
-		ret = rpc_add_pipe_dir_object_locked(net, pdh, pकरो);
+		ret = rpc_add_pipe_dir_object_locked(net, pdh, pdo);
 		mutex_unlock(&sn->pipefs_sb_lock);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 EXPORT_SYMBOL_GPL(rpc_add_pipe_dir_object);
 
 /**
- * rpc_हटाओ_pipe_dir_object - हटाओ a rpc_pipe_dir_object from a directory
- * @net: poपूर्णांकer to काष्ठा net
- * @pdh: poपूर्णांकer to काष्ठा rpc_pipe_dir_head
- * @pकरो: poपूर्णांकer to काष्ठा rpc_pipe_dir_object
+ * rpc_remove_pipe_dir_object - remove a rpc_pipe_dir_object from a directory
+ * @net: pointer to struct net
+ * @pdh: pointer to struct rpc_pipe_dir_head
+ * @pdo: pointer to struct rpc_pipe_dir_object
  *
  */
-व्योम
-rpc_हटाओ_pipe_dir_object(काष्ठा net *net,
-		काष्ठा rpc_pipe_dir_head *pdh,
-		काष्ठा rpc_pipe_dir_object *pकरो)
-अणु
-	अगर (!list_empty(&pकरो->pकरो_head)) अणु
-		काष्ठा sunrpc_net *sn = net_generic(net, sunrpc_net_id);
+void
+rpc_remove_pipe_dir_object(struct net *net,
+		struct rpc_pipe_dir_head *pdh,
+		struct rpc_pipe_dir_object *pdo)
+{
+	if (!list_empty(&pdo->pdo_head)) {
+		struct sunrpc_net *sn = net_generic(net, sunrpc_net_id);
 
 		mutex_lock(&sn->pipefs_sb_lock);
-		rpc_हटाओ_pipe_dir_object_locked(net, pdh, pकरो);
+		rpc_remove_pipe_dir_object_locked(net, pdh, pdo);
 		mutex_unlock(&sn->pipefs_sb_lock);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(rpc_हटाओ_pipe_dir_object);
+	}
+}
+EXPORT_SYMBOL_GPL(rpc_remove_pipe_dir_object);
 
 /**
  * rpc_find_or_alloc_pipe_dir_object
- * @net: poपूर्णांकer to काष्ठा net
- * @pdh: poपूर्णांकer to काष्ठा rpc_pipe_dir_head
- * @match: match काष्ठा rpc_pipe_dir_object to data
- * @alloc: allocate a new काष्ठा rpc_pipe_dir_object
- * @data: user defined data क्रम match() and alloc()
+ * @net: pointer to struct net
+ * @pdh: pointer to struct rpc_pipe_dir_head
+ * @match: match struct rpc_pipe_dir_object to data
+ * @alloc: allocate a new struct rpc_pipe_dir_object
+ * @data: user defined data for match() and alloc()
  *
  */
-काष्ठा rpc_pipe_dir_object *
-rpc_find_or_alloc_pipe_dir_object(काष्ठा net *net,
-		काष्ठा rpc_pipe_dir_head *pdh,
-		पूर्णांक (*match)(काष्ठा rpc_pipe_dir_object *, व्योम *),
-		काष्ठा rpc_pipe_dir_object *(*alloc)(व्योम *),
-		व्योम *data)
-अणु
-	काष्ठा sunrpc_net *sn = net_generic(net, sunrpc_net_id);
-	काष्ठा rpc_pipe_dir_object *pकरो;
+struct rpc_pipe_dir_object *
+rpc_find_or_alloc_pipe_dir_object(struct net *net,
+		struct rpc_pipe_dir_head *pdh,
+		int (*match)(struct rpc_pipe_dir_object *, void *),
+		struct rpc_pipe_dir_object *(*alloc)(void *),
+		void *data)
+{
+	struct sunrpc_net *sn = net_generic(net, sunrpc_net_id);
+	struct rpc_pipe_dir_object *pdo;
 
 	mutex_lock(&sn->pipefs_sb_lock);
-	list_क्रम_each_entry(pकरो, &pdh->pdh_entries, pकरो_head) अणु
-		अगर (!match(pकरो, data))
-			जारी;
-		जाओ out;
-	पूर्ण
-	pकरो = alloc(data);
-	अगर (!pकरो)
-		जाओ out;
-	rpc_add_pipe_dir_object_locked(net, pdh, pकरो);
+	list_for_each_entry(pdo, &pdh->pdh_entries, pdo_head) {
+		if (!match(pdo, data))
+			continue;
+		goto out;
+	}
+	pdo = alloc(data);
+	if (!pdo)
+		goto out;
+	rpc_add_pipe_dir_object_locked(net, pdh, pdo);
 out:
 	mutex_unlock(&sn->pipefs_sb_lock);
-	वापस pकरो;
-पूर्ण
+	return pdo;
+}
 EXPORT_SYMBOL_GPL(rpc_find_or_alloc_pipe_dir_object);
 
-अटल व्योम
-rpc_create_pipe_dir_objects(काष्ठा rpc_pipe_dir_head *pdh)
-अणु
-	काष्ठा rpc_pipe_dir_object *pकरो;
-	काष्ठा dentry *dir = pdh->pdh_dentry;
+static void
+rpc_create_pipe_dir_objects(struct rpc_pipe_dir_head *pdh)
+{
+	struct rpc_pipe_dir_object *pdo;
+	struct dentry *dir = pdh->pdh_dentry;
 
-	list_क्रम_each_entry(pकरो, &pdh->pdh_entries, pकरो_head)
-		pकरो->pकरो_ops->create(dir, pकरो);
-पूर्ण
+	list_for_each_entry(pdo, &pdh->pdh_entries, pdo_head)
+		pdo->pdo_ops->create(dir, pdo);
+}
 
-अटल व्योम
-rpc_destroy_pipe_dir_objects(काष्ठा rpc_pipe_dir_head *pdh)
-अणु
-	काष्ठा rpc_pipe_dir_object *pकरो;
-	काष्ठा dentry *dir = pdh->pdh_dentry;
+static void
+rpc_destroy_pipe_dir_objects(struct rpc_pipe_dir_head *pdh)
+{
+	struct rpc_pipe_dir_object *pdo;
+	struct dentry *dir = pdh->pdh_dentry;
 
-	list_क्रम_each_entry(pकरो, &pdh->pdh_entries, pकरो_head)
-		pकरो->pकरो_ops->destroy(dir, pकरो);
-पूर्ण
+	list_for_each_entry(pdo, &pdh->pdh_entries, pdo_head)
+		pdo->pdo_ops->destroy(dir, pdo);
+}
 
-क्रमागत अणु
+enum {
 	RPCAUTH_info,
-	RPCAUTH_खातापूर्ण
-पूर्ण;
+	RPCAUTH_EOF
+};
 
-अटल स्थिर काष्ठा rpc_filelist authfiles[] = अणु
-	[RPCAUTH_info] = अणु
+static const struct rpc_filelist authfiles[] = {
+	[RPCAUTH_info] = {
 		.name = "info",
 		.i_fop = &rpc_info_operations,
 		.mode = S_IFREG | 0400,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक rpc_clntdir_populate(काष्ठा dentry *dentry, व्योम *निजी)
-अणु
-	वापस rpc_populate(dentry,
-			    authfiles, RPCAUTH_info, RPCAUTH_खातापूर्ण,
-			    निजी);
-पूर्ण
+static int rpc_clntdir_populate(struct dentry *dentry, void *private)
+{
+	return rpc_populate(dentry,
+			    authfiles, RPCAUTH_info, RPCAUTH_EOF,
+			    private);
+}
 
-अटल व्योम rpc_clntdir_depopulate(काष्ठा dentry *dentry)
-अणु
-	rpc_depopulate(dentry, authfiles, RPCAUTH_info, RPCAUTH_खातापूर्ण);
-पूर्ण
+static void rpc_clntdir_depopulate(struct dentry *dentry)
+{
+	rpc_depopulate(dentry, authfiles, RPCAUTH_info, RPCAUTH_EOF);
+}
 
 /**
  * rpc_create_client_dir - Create a new rpc_client directory in rpc_pipefs
@@ -1045,474 +1044,474 @@ rpc_destroy_pipe_dir_objects(काष्ठा rpc_pipe_dir_head *pdh)
  *
  * This creates a directory at the given @path associated with
  * @rpc_clnt, which will contain a file named "info" with some basic
- * inक्रमmation about the client, together with any "pipes" that may
+ * information about the client, together with any "pipes" that may
  * later be created using rpc_mkpipe().
  */
-काष्ठा dentry *rpc_create_client_dir(काष्ठा dentry *dentry,
-				   स्थिर अक्षर *name,
-				   काष्ठा rpc_clnt *rpc_client)
-अणु
-	काष्ठा dentry *ret;
+struct dentry *rpc_create_client_dir(struct dentry *dentry,
+				   const char *name,
+				   struct rpc_clnt *rpc_client)
+{
+	struct dentry *ret;
 
-	ret = rpc_सूची_गढ़ो_populate(dentry, name, 0555, शून्य,
+	ret = rpc_mkdir_populate(dentry, name, 0555, NULL,
 				 rpc_clntdir_populate, rpc_client);
-	अगर (!IS_ERR(ret)) अणु
+	if (!IS_ERR(ret)) {
 		rpc_client->cl_pipedir_objects.pdh_dentry = ret;
 		rpc_create_pipe_dir_objects(&rpc_client->cl_pipedir_objects);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 /**
- * rpc_हटाओ_client_dir - Remove a directory created with rpc_create_client_dir()
- * @rpc_client: rpc_client क्रम the pipe
+ * rpc_remove_client_dir - Remove a directory created with rpc_create_client_dir()
+ * @rpc_client: rpc_client for the pipe
  */
-पूर्णांक rpc_हटाओ_client_dir(काष्ठा rpc_clnt *rpc_client)
-अणु
-	काष्ठा dentry *dentry = rpc_client->cl_pipedir_objects.pdh_dentry;
+int rpc_remove_client_dir(struct rpc_clnt *rpc_client)
+{
+	struct dentry *dentry = rpc_client->cl_pipedir_objects.pdh_dentry;
 
-	अगर (dentry == शून्य)
-		वापस 0;
+	if (dentry == NULL)
+		return 0;
 	rpc_destroy_pipe_dir_objects(&rpc_client->cl_pipedir_objects);
-	rpc_client->cl_pipedir_objects.pdh_dentry = शून्य;
-	वापस rpc_सूची_हटाओ_depopulate(dentry, rpc_clntdir_depopulate);
-पूर्ण
+	rpc_client->cl_pipedir_objects.pdh_dentry = NULL;
+	return rpc_rmdir_depopulate(dentry, rpc_clntdir_depopulate);
+}
 
-अटल स्थिर काष्ठा rpc_filelist cache_pipefs_files[3] = अणु
-	[0] = अणु
+static const struct rpc_filelist cache_pipefs_files[3] = {
+	[0] = {
 		.name = "channel",
 		.i_fop = &cache_file_operations_pipefs,
 		.mode = S_IFREG | 0600,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.name = "content",
 		.i_fop = &content_file_operations_pipefs,
 		.mode = S_IFREG | 0400,
-	पूर्ण,
-	[2] = अणु
+	},
+	[2] = {
 		.name = "flush",
 		.i_fop = &cache_flush_operations_pipefs,
 		.mode = S_IFREG | 0600,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक rpc_cachedir_populate(काष्ठा dentry *dentry, व्योम *निजी)
-अणु
-	वापस rpc_populate(dentry,
+static int rpc_cachedir_populate(struct dentry *dentry, void *private)
+{
+	return rpc_populate(dentry,
 			    cache_pipefs_files, 0, 3,
-			    निजी);
-पूर्ण
+			    private);
+}
 
-अटल व्योम rpc_cachedir_depopulate(काष्ठा dentry *dentry)
-अणु
+static void rpc_cachedir_depopulate(struct dentry *dentry)
+{
 	rpc_depopulate(dentry, cache_pipefs_files, 0, 3);
-पूर्ण
+}
 
-काष्ठा dentry *rpc_create_cache_dir(काष्ठा dentry *parent, स्थिर अक्षर *name,
-				    umode_t umode, काष्ठा cache_detail *cd)
-अणु
-	वापस rpc_सूची_गढ़ो_populate(parent, name, umode, शून्य,
+struct dentry *rpc_create_cache_dir(struct dentry *parent, const char *name,
+				    umode_t umode, struct cache_detail *cd)
+{
+	return rpc_mkdir_populate(parent, name, umode, NULL,
 			rpc_cachedir_populate, cd);
-पूर्ण
+}
 
-व्योम rpc_हटाओ_cache_dir(काष्ठा dentry *dentry)
-अणु
-	rpc_सूची_हटाओ_depopulate(dentry, rpc_cachedir_depopulate);
-पूर्ण
+void rpc_remove_cache_dir(struct dentry *dentry)
+{
+	rpc_rmdir_depopulate(dentry, rpc_cachedir_depopulate);
+}
 
 /*
- * populate the fileप्रणाली
+ * populate the filesystem
  */
-अटल स्थिर काष्ठा super_operations s_ops = अणु
+static const struct super_operations s_ops = {
 	.alloc_inode	= rpc_alloc_inode,
-	.मुक्त_inode	= rpc_मुक्त_inode,
+	.free_inode	= rpc_free_inode,
 	.statfs		= simple_statfs,
-पूर्ण;
+};
 
-#घोषणा RPCAUTH_GSSMAGIC 0x67596969
+#define RPCAUTH_GSSMAGIC 0x67596969
 
 /*
  * We have a single directory with 1 node in it.
  */
-क्रमागत अणु
+enum {
 	RPCAUTH_lockd,
 	RPCAUTH_mount,
 	RPCAUTH_nfs,
-	RPCAUTH_porपंचांगap,
+	RPCAUTH_portmap,
 	RPCAUTH_statd,
 	RPCAUTH_nfsd4_cb,
 	RPCAUTH_cache,
 	RPCAUTH_nfsd,
 	RPCAUTH_gssd,
-	RPCAUTH_Rootखातापूर्ण
-पूर्ण;
+	RPCAUTH_RootEOF
+};
 
-अटल स्थिर काष्ठा rpc_filelist files[] = अणु
-	[RPCAUTH_lockd] = अणु
+static const struct rpc_filelist files[] = {
+	[RPCAUTH_lockd] = {
 		.name = "lockd",
-		.mode = S_IFसूची | 0555,
-	पूर्ण,
-	[RPCAUTH_mount] = अणु
+		.mode = S_IFDIR | 0555,
+	},
+	[RPCAUTH_mount] = {
 		.name = "mount",
-		.mode = S_IFसूची | 0555,
-	पूर्ण,
-	[RPCAUTH_nfs] = अणु
+		.mode = S_IFDIR | 0555,
+	},
+	[RPCAUTH_nfs] = {
 		.name = "nfs",
-		.mode = S_IFसूची | 0555,
-	पूर्ण,
-	[RPCAUTH_porपंचांगap] = अणु
+		.mode = S_IFDIR | 0555,
+	},
+	[RPCAUTH_portmap] = {
 		.name = "portmap",
-		.mode = S_IFसूची | 0555,
-	पूर्ण,
-	[RPCAUTH_statd] = अणु
+		.mode = S_IFDIR | 0555,
+	},
+	[RPCAUTH_statd] = {
 		.name = "statd",
-		.mode = S_IFसूची | 0555,
-	पूर्ण,
-	[RPCAUTH_nfsd4_cb] = अणु
+		.mode = S_IFDIR | 0555,
+	},
+	[RPCAUTH_nfsd4_cb] = {
 		.name = "nfsd4_cb",
-		.mode = S_IFसूची | 0555,
-	पूर्ण,
-	[RPCAUTH_cache] = अणु
+		.mode = S_IFDIR | 0555,
+	},
+	[RPCAUTH_cache] = {
 		.name = "cache",
-		.mode = S_IFसूची | 0555,
-	पूर्ण,
-	[RPCAUTH_nfsd] = अणु
+		.mode = S_IFDIR | 0555,
+	},
+	[RPCAUTH_nfsd] = {
 		.name = "nfsd",
-		.mode = S_IFसूची | 0555,
-	पूर्ण,
-	[RPCAUTH_gssd] = अणु
+		.mode = S_IFDIR | 0555,
+	},
+	[RPCAUTH_gssd] = {
 		.name = "gssd",
-		.mode = S_IFसूची | 0555,
-	पूर्ण,
-पूर्ण;
+		.mode = S_IFDIR | 0555,
+	},
+};
 
 /*
- * This call can be used only in RPC pipefs mount notअगरication hooks.
+ * This call can be used only in RPC pipefs mount notification hooks.
  */
-काष्ठा dentry *rpc_d_lookup_sb(स्थिर काष्ठा super_block *sb,
-			       स्थिर अचिन्हित अक्षर *dir_name)
-अणु
-	काष्ठा qstr dir = QSTR_INIT(dir_name, म_माप(dir_name));
-	वापस d_hash_and_lookup(sb->s_root, &dir);
-पूर्ण
+struct dentry *rpc_d_lookup_sb(const struct super_block *sb,
+			       const unsigned char *dir_name)
+{
+	struct qstr dir = QSTR_INIT(dir_name, strlen(dir_name));
+	return d_hash_and_lookup(sb->s_root, &dir);
+}
 EXPORT_SYMBOL_GPL(rpc_d_lookup_sb);
 
-पूर्णांक rpc_pipefs_init_net(काष्ठा net *net)
-अणु
-	काष्ठा sunrpc_net *sn = net_generic(net, sunrpc_net_id);
+int rpc_pipefs_init_net(struct net *net)
+{
+	struct sunrpc_net *sn = net_generic(net, sunrpc_net_id);
 
 	sn->gssd_dummy = rpc_mkpipe_data(&gssd_dummy_pipe_ops, 0);
-	अगर (IS_ERR(sn->gssd_dummy))
-		वापस PTR_ERR(sn->gssd_dummy);
+	if (IS_ERR(sn->gssd_dummy))
+		return PTR_ERR(sn->gssd_dummy);
 
 	mutex_init(&sn->pipefs_sb_lock);
 	sn->pipe_version = -1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम rpc_pipefs_निकास_net(काष्ठा net *net)
-अणु
-	काष्ठा sunrpc_net *sn = net_generic(net, sunrpc_net_id);
+void rpc_pipefs_exit_net(struct net *net)
+{
+	struct sunrpc_net *sn = net_generic(net, sunrpc_net_id);
 
 	rpc_destroy_pipe_data(sn->gssd_dummy);
-पूर्ण
+}
 
 /*
- * This call will be used क्रम per network namespace operations calls.
- * Note: Function will be वापसed with pipefs_sb_lock taken अगर superblock was
+ * This call will be used for per network namespace operations calls.
+ * Note: Function will be returned with pipefs_sb_lock taken if superblock was
  * found. This lock have to be released by rpc_put_sb_net() when all operations
  * will be completed.
  */
-काष्ठा super_block *rpc_get_sb_net(स्थिर काष्ठा net *net)
-अणु
-	काष्ठा sunrpc_net *sn = net_generic(net, sunrpc_net_id);
+struct super_block *rpc_get_sb_net(const struct net *net)
+{
+	struct sunrpc_net *sn = net_generic(net, sunrpc_net_id);
 
 	mutex_lock(&sn->pipefs_sb_lock);
-	अगर (sn->pipefs_sb)
-		वापस sn->pipefs_sb;
+	if (sn->pipefs_sb)
+		return sn->pipefs_sb;
 	mutex_unlock(&sn->pipefs_sb_lock);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(rpc_get_sb_net);
 
-व्योम rpc_put_sb_net(स्थिर काष्ठा net *net)
-अणु
-	काष्ठा sunrpc_net *sn = net_generic(net, sunrpc_net_id);
+void rpc_put_sb_net(const struct net *net)
+{
+	struct sunrpc_net *sn = net_generic(net, sunrpc_net_id);
 
-	WARN_ON(sn->pipefs_sb == शून्य);
+	WARN_ON(sn->pipefs_sb == NULL);
 	mutex_unlock(&sn->pipefs_sb_lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(rpc_put_sb_net);
 
-अटल स्थिर काष्ठा rpc_filelist gssd_dummy_clnt_dir[] = अणु
-	[0] = अणु
+static const struct rpc_filelist gssd_dummy_clnt_dir[] = {
+	[0] = {
 		.name = "clntXX",
-		.mode = S_IFसूची | 0555,
-	पूर्ण,
-पूर्ण;
+		.mode = S_IFDIR | 0555,
+	},
+};
 
-अटल sमाप_प्रकार
-dummy_करोwncall(काष्ठा file *filp, स्थिर अक्षर __user *src, माप_प्रकार len)
-अणु
-	वापस -EINVAL;
-पूर्ण
+static ssize_t
+dummy_downcall(struct file *filp, const char __user *src, size_t len)
+{
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा rpc_pipe_ops gssd_dummy_pipe_ops = अणु
+static const struct rpc_pipe_ops gssd_dummy_pipe_ops = {
 	.upcall		= rpc_pipe_generic_upcall,
-	.करोwncall	= dummy_करोwncall,
-पूर्ण;
+	.downcall	= dummy_downcall,
+};
 
 /*
- * Here we present a bogus "info" file to keep rpc.gssd happy. We करोn't expect
+ * Here we present a bogus "info" file to keep rpc.gssd happy. We don't expect
  * that it will ever use this info to handle an upcall, but rpc.gssd expects
- * that this file will be there and have a certain क्रमmat.
+ * that this file will be there and have a certain format.
  */
-अटल पूर्णांक
-rpc_dummy_info_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	seq_म_लिखो(m, "RPC server: %s\n", utsname()->nodename);
-	seq_म_लिखो(m, "service: foo (1) version 0\n");
-	seq_म_लिखो(m, "address: 127.0.0.1\n");
-	seq_म_लिखो(m, "protocol: tcp\n");
-	seq_म_लिखो(m, "port: 0\n");
-	वापस 0;
-पूर्ण
+static int
+rpc_dummy_info_show(struct seq_file *m, void *v)
+{
+	seq_printf(m, "RPC server: %s\n", utsname()->nodename);
+	seq_printf(m, "service: foo (1) version 0\n");
+	seq_printf(m, "address: 127.0.0.1\n");
+	seq_printf(m, "protocol: tcp\n");
+	seq_printf(m, "port: 0\n");
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(rpc_dummy_info);
 
-अटल स्थिर काष्ठा rpc_filelist gssd_dummy_info_file[] = अणु
-	[0] = अणु
+static const struct rpc_filelist gssd_dummy_info_file[] = {
+	[0] = {
 		.name = "info",
 		.i_fop = &rpc_dummy_info_fops,
 		.mode = S_IFREG | 0400,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /**
  * rpc_gssd_dummy_populate - create a dummy gssd pipe
- * @root:	root of the rpc_pipefs fileप्रणाली
+ * @root:	root of the rpc_pipefs filesystem
  * @pipe_data:	pipe data created when netns is initialized
  *
- * Create a dummy set of directories and a pipe that gssd can hold खोलो to
+ * Create a dummy set of directories and a pipe that gssd can hold open to
  * indicate that it is up and running.
  */
-अटल काष्ठा dentry *
-rpc_gssd_dummy_populate(काष्ठा dentry *root, काष्ठा rpc_pipe *pipe_data)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा dentry *gssd_dentry;
-	काष्ठा dentry *clnt_dentry = शून्य;
-	काष्ठा dentry *pipe_dentry = शून्य;
-	काष्ठा qstr q = QSTR_INIT(files[RPCAUTH_gssd].name,
-				  म_माप(files[RPCAUTH_gssd].name));
+static struct dentry *
+rpc_gssd_dummy_populate(struct dentry *root, struct rpc_pipe *pipe_data)
+{
+	int ret = 0;
+	struct dentry *gssd_dentry;
+	struct dentry *clnt_dentry = NULL;
+	struct dentry *pipe_dentry = NULL;
+	struct qstr q = QSTR_INIT(files[RPCAUTH_gssd].name,
+				  strlen(files[RPCAUTH_gssd].name));
 
-	/* We should never get this far अगर "gssd" करोesn't exist */
+	/* We should never get this far if "gssd" doesn't exist */
 	gssd_dentry = d_hash_and_lookup(root, &q);
-	अगर (!gssd_dentry)
-		वापस ERR_PTR(-ENOENT);
+	if (!gssd_dentry)
+		return ERR_PTR(-ENOENT);
 
-	ret = rpc_populate(gssd_dentry, gssd_dummy_clnt_dir, 0, 1, शून्य);
-	अगर (ret) अणु
+	ret = rpc_populate(gssd_dentry, gssd_dummy_clnt_dir, 0, 1, NULL);
+	if (ret) {
 		pipe_dentry = ERR_PTR(ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	q.name = gssd_dummy_clnt_dir[0].name;
-	q.len = म_माप(gssd_dummy_clnt_dir[0].name);
+	q.len = strlen(gssd_dummy_clnt_dir[0].name);
 	clnt_dentry = d_hash_and_lookup(gssd_dentry, &q);
-	अगर (!clnt_dentry) अणु
+	if (!clnt_dentry) {
 		__rpc_depopulate(gssd_dentry, gssd_dummy_clnt_dir, 0, 1);
 		pipe_dentry = ERR_PTR(-ENOENT);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = rpc_populate(clnt_dentry, gssd_dummy_info_file, 0, 1, शून्य);
-	अगर (ret) अणु
+	ret = rpc_populate(clnt_dentry, gssd_dummy_info_file, 0, 1, NULL);
+	if (ret) {
 		__rpc_depopulate(gssd_dentry, gssd_dummy_clnt_dir, 0, 1);
 		pipe_dentry = ERR_PTR(ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	pipe_dentry = rpc_mkpipe_dentry(clnt_dentry, "gssd", शून्य, pipe_data);
-	अगर (IS_ERR(pipe_dentry)) अणु
+	pipe_dentry = rpc_mkpipe_dentry(clnt_dentry, "gssd", NULL, pipe_data);
+	if (IS_ERR(pipe_dentry)) {
 		__rpc_depopulate(clnt_dentry, gssd_dummy_info_file, 0, 1);
 		__rpc_depopulate(gssd_dentry, gssd_dummy_clnt_dir, 0, 1);
-	पूर्ण
+	}
 out:
 	dput(clnt_dentry);
 	dput(gssd_dentry);
-	वापस pipe_dentry;
-पूर्ण
+	return pipe_dentry;
+}
 
-अटल व्योम
-rpc_gssd_dummy_depopulate(काष्ठा dentry *pipe_dentry)
-अणु
-	काष्ठा dentry *clnt_dir = pipe_dentry->d_parent;
-	काष्ठा dentry *gssd_dir = clnt_dir->d_parent;
+static void
+rpc_gssd_dummy_depopulate(struct dentry *pipe_dentry)
+{
+	struct dentry *clnt_dir = pipe_dentry->d_parent;
+	struct dentry *gssd_dir = clnt_dir->d_parent;
 
 	dget(pipe_dentry);
 	__rpc_rmpipe(d_inode(clnt_dir), pipe_dentry);
 	__rpc_depopulate(clnt_dir, gssd_dummy_info_file, 0, 1);
 	__rpc_depopulate(gssd_dir, gssd_dummy_clnt_dir, 0, 1);
 	dput(pipe_dentry);
-पूर्ण
+}
 
-अटल पूर्णांक
-rpc_fill_super(काष्ठा super_block *sb, काष्ठा fs_context *fc)
-अणु
-	काष्ठा inode *inode;
-	काष्ठा dentry *root, *gssd_dentry;
-	काष्ठा net *net = sb->s_fs_info;
-	काष्ठा sunrpc_net *sn = net_generic(net, sunrpc_net_id);
-	पूर्णांक err;
+static int
+rpc_fill_super(struct super_block *sb, struct fs_context *fc)
+{
+	struct inode *inode;
+	struct dentry *root, *gssd_dentry;
+	struct net *net = sb->s_fs_info;
+	struct sunrpc_net *sn = net_generic(net, sunrpc_net_id);
+	int err;
 
 	sb->s_blocksize = PAGE_SIZE;
 	sb->s_blocksize_bits = PAGE_SHIFT;
 	sb->s_magic = RPCAUTH_GSSMAGIC;
 	sb->s_op = &s_ops;
 	sb->s_d_op = &simple_dentry_operations;
-	sb->s_समय_gran = 1;
+	sb->s_time_gran = 1;
 
-	inode = rpc_get_inode(sb, S_IFसूची | 0555);
+	inode = rpc_get_inode(sb, S_IFDIR | 0555);
 	sb->s_root = root = d_make_root(inode);
-	अगर (!root)
-		वापस -ENOMEM;
-	अगर (rpc_populate(root, files, RPCAUTH_lockd, RPCAUTH_Rootखातापूर्ण, शून्य))
-		वापस -ENOMEM;
+	if (!root)
+		return -ENOMEM;
+	if (rpc_populate(root, files, RPCAUTH_lockd, RPCAUTH_RootEOF, NULL))
+		return -ENOMEM;
 
 	gssd_dentry = rpc_gssd_dummy_populate(root, sn->gssd_dummy);
-	अगर (IS_ERR(gssd_dentry)) अणु
-		__rpc_depopulate(root, files, RPCAUTH_lockd, RPCAUTH_Rootखातापूर्ण);
-		वापस PTR_ERR(gssd_dentry);
-	पूर्ण
+	if (IS_ERR(gssd_dentry)) {
+		__rpc_depopulate(root, files, RPCAUTH_lockd, RPCAUTH_RootEOF);
+		return PTR_ERR(gssd_dentry);
+	}
 
-	dprपूर्णांकk("RPC:       sending pipefs MOUNT notification for net %x%s\n",
+	dprintk("RPC:       sending pipefs MOUNT notification for net %x%s\n",
 		net->ns.inum, NET_NAME(net));
 	mutex_lock(&sn->pipefs_sb_lock);
 	sn->pipefs_sb = sb;
-	err = blocking_notअगरier_call_chain(&rpc_pipefs_notअगरier_list,
+	err = blocking_notifier_call_chain(&rpc_pipefs_notifier_list,
 					   RPC_PIPEFS_MOUNT,
 					   sb);
-	अगर (err)
-		जाओ err_depopulate;
+	if (err)
+		goto err_depopulate;
 	mutex_unlock(&sn->pipefs_sb_lock);
-	वापस 0;
+	return 0;
 
 err_depopulate:
 	rpc_gssd_dummy_depopulate(gssd_dentry);
-	blocking_notअगरier_call_chain(&rpc_pipefs_notअगरier_list,
+	blocking_notifier_call_chain(&rpc_pipefs_notifier_list,
 					   RPC_PIPEFS_UMOUNT,
 					   sb);
-	sn->pipefs_sb = शून्य;
-	__rpc_depopulate(root, files, RPCAUTH_lockd, RPCAUTH_Rootखातापूर्ण);
+	sn->pipefs_sb = NULL;
+	__rpc_depopulate(root, files, RPCAUTH_lockd, RPCAUTH_RootEOF);
 	mutex_unlock(&sn->pipefs_sb_lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 bool
-gssd_running(काष्ठा net *net)
-अणु
-	काष्ठा sunrpc_net *sn = net_generic(net, sunrpc_net_id);
-	काष्ठा rpc_pipe *pipe = sn->gssd_dummy;
+gssd_running(struct net *net)
+{
+	struct sunrpc_net *sn = net_generic(net, sunrpc_net_id);
+	struct rpc_pipe *pipe = sn->gssd_dummy;
 
-	वापस pipe->nपढ़ोers || pipe->nग_लिखोrs;
-पूर्ण
+	return pipe->nreaders || pipe->nwriters;
+}
 EXPORT_SYMBOL_GPL(gssd_running);
 
-अटल पूर्णांक rpc_fs_get_tree(काष्ठा fs_context *fc)
-अणु
-	वापस get_tree_keyed(fc, rpc_fill_super, get_net(fc->net_ns));
-पूर्ण
+static int rpc_fs_get_tree(struct fs_context *fc)
+{
+	return get_tree_keyed(fc, rpc_fill_super, get_net(fc->net_ns));
+}
 
-अटल व्योम rpc_fs_मुक्त_fc(काष्ठा fs_context *fc)
-अणु
-	अगर (fc->s_fs_info)
+static void rpc_fs_free_fc(struct fs_context *fc)
+{
+	if (fc->s_fs_info)
 		put_net(fc->s_fs_info);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा fs_context_operations rpc_fs_context_ops = अणु
-	.मुक्त		= rpc_fs_मुक्त_fc,
+static const struct fs_context_operations rpc_fs_context_ops = {
+	.free		= rpc_fs_free_fc,
 	.get_tree	= rpc_fs_get_tree,
-पूर्ण;
+};
 
-अटल पूर्णांक rpc_init_fs_context(काष्ठा fs_context *fc)
-अणु
+static int rpc_init_fs_context(struct fs_context *fc)
+{
 	put_user_ns(fc->user_ns);
 	fc->user_ns = get_user_ns(fc->net_ns->user_ns);
 	fc->ops = &rpc_fs_context_ops;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम rpc_समाप्त_sb(काष्ठा super_block *sb)
-अणु
-	काष्ठा net *net = sb->s_fs_info;
-	काष्ठा sunrpc_net *sn = net_generic(net, sunrpc_net_id);
+static void rpc_kill_sb(struct super_block *sb)
+{
+	struct net *net = sb->s_fs_info;
+	struct sunrpc_net *sn = net_generic(net, sunrpc_net_id);
 
 	mutex_lock(&sn->pipefs_sb_lock);
-	अगर (sn->pipefs_sb != sb) अणु
+	if (sn->pipefs_sb != sb) {
 		mutex_unlock(&sn->pipefs_sb_lock);
-		जाओ out;
-	पूर्ण
-	sn->pipefs_sb = शून्य;
-	dprपूर्णांकk("RPC:       sending pipefs UMOUNT notification for net %x%s\n",
+		goto out;
+	}
+	sn->pipefs_sb = NULL;
+	dprintk("RPC:       sending pipefs UMOUNT notification for net %x%s\n",
 		net->ns.inum, NET_NAME(net));
-	blocking_notअगरier_call_chain(&rpc_pipefs_notअगरier_list,
+	blocking_notifier_call_chain(&rpc_pipefs_notifier_list,
 					   RPC_PIPEFS_UMOUNT,
 					   sb);
 	mutex_unlock(&sn->pipefs_sb_lock);
 out:
-	समाप्त_litter_super(sb);
+	kill_litter_super(sb);
 	put_net(net);
-पूर्ण
+}
 
-अटल काष्ठा file_प्रणाली_type rpc_pipe_fs_type = अणु
+static struct file_system_type rpc_pipe_fs_type = {
 	.owner		= THIS_MODULE,
 	.name		= "rpc_pipefs",
 	.init_fs_context = rpc_init_fs_context,
-	.समाप्त_sb	= rpc_समाप्त_sb,
-पूर्ण;
+	.kill_sb	= rpc_kill_sb,
+};
 MODULE_ALIAS_FS("rpc_pipefs");
 MODULE_ALIAS("rpc_pipefs");
 
-अटल व्योम
-init_once(व्योम *foo)
-अणु
-	काष्ठा rpc_inode *rpci = (काष्ठा rpc_inode *) foo;
+static void
+init_once(void *foo)
+{
+	struct rpc_inode *rpci = (struct rpc_inode *) foo;
 
 	inode_init_once(&rpci->vfs_inode);
-	rpci->निजी = शून्य;
-	rpci->pipe = शून्य;
-	init_रुकोqueue_head(&rpci->रुकोq);
-पूर्ण
+	rpci->private = NULL;
+	rpci->pipe = NULL;
+	init_waitqueue_head(&rpci->waitq);
+}
 
-पूर्णांक रेजिस्टर_rpc_pipefs(व्योम)
-अणु
-	पूर्णांक err;
+int register_rpc_pipefs(void)
+{
+	int err;
 
 	rpc_inode_cachep = kmem_cache_create("rpc_inode_cache",
-				माप(काष्ठा rpc_inode),
+				sizeof(struct rpc_inode),
 				0, (SLAB_HWCACHE_ALIGN|SLAB_RECLAIM_ACCOUNT|
 						SLAB_MEM_SPREAD|SLAB_ACCOUNT),
 				init_once);
-	अगर (!rpc_inode_cachep)
-		वापस -ENOMEM;
-	err = rpc_clients_notअगरier_रेजिस्टर();
-	अगर (err)
-		जाओ err_notअगरier;
-	err = रेजिस्टर_fileप्रणाली(&rpc_pipe_fs_type);
-	अगर (err)
-		जाओ err_रेजिस्टर;
-	वापस 0;
+	if (!rpc_inode_cachep)
+		return -ENOMEM;
+	err = rpc_clients_notifier_register();
+	if (err)
+		goto err_notifier;
+	err = register_filesystem(&rpc_pipe_fs_type);
+	if (err)
+		goto err_register;
+	return 0;
 
-err_रेजिस्टर:
-	rpc_clients_notअगरier_unरेजिस्टर();
-err_notअगरier:
+err_register:
+	rpc_clients_notifier_unregister();
+err_notifier:
 	kmem_cache_destroy(rpc_inode_cachep);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम unरेजिस्टर_rpc_pipefs(व्योम)
-अणु
-	rpc_clients_notअगरier_unरेजिस्टर();
-	unरेजिस्टर_fileप्रणाली(&rpc_pipe_fs_type);
+void unregister_rpc_pipefs(void)
+{
+	rpc_clients_notifier_unregister();
+	unregister_filesystem(&rpc_pipe_fs_type);
 	kmem_cache_destroy(rpc_inode_cachep);
-पूर्ण
+}

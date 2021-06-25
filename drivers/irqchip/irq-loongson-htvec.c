@@ -1,219 +1,218 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  Copyright (C) 2020, Jiaxun Yang <jiaxun.yang@flygoat.com>
  *  Loongson HyperTransport Interrupt Vector support
  */
 
-#घोषणा pr_fmt(fmt) "htvec: " fmt
+#define pr_fmt(fmt) "htvec: " fmt
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqchip.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/irqchip/chained_irq.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_platक्रमm.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/irqchip.h>
+#include <linux/irqdomain.h>
+#include <linux/irqchip/chained_irq.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/of_platform.h>
 
 /* Registers */
-#घोषणा HTVEC_EN_OFF		0x20
-#घोषणा HTVEC_MAX_PARENT_IRQ	8
+#define HTVEC_EN_OFF		0x20
+#define HTVEC_MAX_PARENT_IRQ	8
 
-#घोषणा VEC_COUNT_PER_REG	32
-#घोषणा VEC_REG_IDX(irq_id)	((irq_id) / VEC_COUNT_PER_REG)
-#घोषणा VEC_REG_BIT(irq_id)	((irq_id) % VEC_COUNT_PER_REG)
+#define VEC_COUNT_PER_REG	32
+#define VEC_REG_IDX(irq_id)	((irq_id) / VEC_COUNT_PER_REG)
+#define VEC_REG_BIT(irq_id)	((irq_id) % VEC_COUNT_PER_REG)
 
-काष्ठा htvec अणु
-	पूर्णांक			num_parents;
-	व्योम __iomem		*base;
-	काष्ठा irq_करोमुख्य	*htvec_करोमुख्य;
+struct htvec {
+	int			num_parents;
+	void __iomem		*base;
+	struct irq_domain	*htvec_domain;
 	raw_spinlock_t		htvec_lock;
-पूर्ण;
+};
 
-अटल व्योम htvec_irq_dispatch(काष्ठा irq_desc *desc)
-अणु
-	पूर्णांक i;
+static void htvec_irq_dispatch(struct irq_desc *desc)
+{
+	int i;
 	u32 pending;
 	bool handled = false;
-	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
-	काष्ठा htvec *priv = irq_desc_get_handler_data(desc);
+	struct irq_chip *chip = irq_desc_get_chip(desc);
+	struct htvec *priv = irq_desc_get_handler_data(desc);
 
 	chained_irq_enter(chip, desc);
 
-	क्रम (i = 0; i < priv->num_parents; i++) अणु
-		pending = पढ़ोl(priv->base + 4 * i);
-		जबतक (pending) अणु
-			पूर्णांक bit = __ffs(pending);
+	for (i = 0; i < priv->num_parents; i++) {
+		pending = readl(priv->base + 4 * i);
+		while (pending) {
+			int bit = __ffs(pending);
 
-			generic_handle_irq(irq_linear_revmap(priv->htvec_करोमुख्य, bit +
+			generic_handle_irq(irq_linear_revmap(priv->htvec_domain, bit +
 							     VEC_COUNT_PER_REG * i));
 			pending &= ~BIT(bit);
 			handled = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!handled)
-		spurious_पूर्णांकerrupt();
+	if (!handled)
+		spurious_interrupt();
 
-	chained_irq_निकास(chip, desc);
-पूर्ण
+	chained_irq_exit(chip, desc);
+}
 
-अटल व्योम htvec_ack_irq(काष्ठा irq_data *d)
-अणु
-	काष्ठा htvec *priv = irq_data_get_irq_chip_data(d);
+static void htvec_ack_irq(struct irq_data *d)
+{
+	struct htvec *priv = irq_data_get_irq_chip_data(d);
 
-	ग_लिखोl(BIT(VEC_REG_BIT(d->hwirq)),
+	writel(BIT(VEC_REG_BIT(d->hwirq)),
 	       priv->base + VEC_REG_IDX(d->hwirq) * 4);
-पूर्ण
+}
 
-अटल व्योम htvec_mask_irq(काष्ठा irq_data *d)
-अणु
+static void htvec_mask_irq(struct irq_data *d)
+{
 	u32 reg;
-	व्योम __iomem *addr;
-	काष्ठा htvec *priv = irq_data_get_irq_chip_data(d);
+	void __iomem *addr;
+	struct htvec *priv = irq_data_get_irq_chip_data(d);
 
 	raw_spin_lock(&priv->htvec_lock);
 	addr = priv->base + HTVEC_EN_OFF;
 	addr += VEC_REG_IDX(d->hwirq) * 4;
-	reg = पढ़ोl(addr);
+	reg = readl(addr);
 	reg &= ~BIT(VEC_REG_BIT(d->hwirq));
-	ग_लिखोl(reg, addr);
+	writel(reg, addr);
 	raw_spin_unlock(&priv->htvec_lock);
-पूर्ण
+}
 
-अटल व्योम htvec_unmask_irq(काष्ठा irq_data *d)
-अणु
+static void htvec_unmask_irq(struct irq_data *d)
+{
 	u32 reg;
-	व्योम __iomem *addr;
-	काष्ठा htvec *priv = irq_data_get_irq_chip_data(d);
+	void __iomem *addr;
+	struct htvec *priv = irq_data_get_irq_chip_data(d);
 
 	raw_spin_lock(&priv->htvec_lock);
 	addr = priv->base + HTVEC_EN_OFF;
 	addr += VEC_REG_IDX(d->hwirq) * 4;
-	reg = पढ़ोl(addr);
+	reg = readl(addr);
 	reg |= BIT(VEC_REG_BIT(d->hwirq));
-	ग_लिखोl(reg, addr);
+	writel(reg, addr);
 	raw_spin_unlock(&priv->htvec_lock);
-पूर्ण
+}
 
-अटल काष्ठा irq_chip htvec_irq_chip = अणु
+static struct irq_chip htvec_irq_chip = {
 	.name			= "LOONGSON_HTVEC",
 	.irq_mask		= htvec_mask_irq,
 	.irq_unmask		= htvec_unmask_irq,
 	.irq_ack		= htvec_ack_irq,
-पूर्ण;
+};
 
-अटल पूर्णांक htvec_करोमुख्य_alloc(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक virq,
-			      अचिन्हित पूर्णांक nr_irqs, व्योम *arg)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ hwirq;
-	अचिन्हित पूर्णांक type, i;
-	काष्ठा htvec *priv = करोमुख्य->host_data;
+static int htvec_domain_alloc(struct irq_domain *domain, unsigned int virq,
+			      unsigned int nr_irqs, void *arg)
+{
+	int ret;
+	unsigned long hwirq;
+	unsigned int type, i;
+	struct htvec *priv = domain->host_data;
 
-	ret = irq_करोमुख्य_translate_onecell(करोमुख्य, arg, &hwirq, &type);
-	अगर (ret)
-		वापस ret;
+	ret = irq_domain_translate_onecell(domain, arg, &hwirq, &type);
+	if (ret)
+		return ret;
 
-	क्रम (i = 0; i < nr_irqs; i++) अणु
-		irq_करोमुख्य_set_info(करोमुख्य, virq + i, hwirq + i, &htvec_irq_chip,
-				    priv, handle_edge_irq, शून्य, शून्य);
-	पूर्ण
+	for (i = 0; i < nr_irqs; i++) {
+		irq_domain_set_info(domain, virq + i, hwirq + i, &htvec_irq_chip,
+				    priv, handle_edge_irq, NULL, NULL);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम htvec_करोमुख्य_मुक्त(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक virq,
-				  अचिन्हित पूर्णांक nr_irqs)
-अणु
-	पूर्णांक i;
+static void htvec_domain_free(struct irq_domain *domain, unsigned int virq,
+				  unsigned int nr_irqs)
+{
+	int i;
 
-	क्रम (i = 0; i < nr_irqs; i++) अणु
-		काष्ठा irq_data *d = irq_करोमुख्य_get_irq_data(करोमुख्य, virq + i);
+	for (i = 0; i < nr_irqs; i++) {
+		struct irq_data *d = irq_domain_get_irq_data(domain, virq + i);
 
-		irq_set_handler(virq + i, शून्य);
-		irq_करोमुख्य_reset_irq_data(d);
-	पूर्ण
-पूर्ण
+		irq_set_handler(virq + i, NULL);
+		irq_domain_reset_irq_data(d);
+	}
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops htvec_करोमुख्य_ops = अणु
-	.translate	= irq_करोमुख्य_translate_onecell,
-	.alloc		= htvec_करोमुख्य_alloc,
-	.मुक्त		= htvec_करोमुख्य_मुक्त,
-पूर्ण;
+static const struct irq_domain_ops htvec_domain_ops = {
+	.translate	= irq_domain_translate_onecell,
+	.alloc		= htvec_domain_alloc,
+	.free		= htvec_domain_free,
+};
 
-अटल व्योम htvec_reset(काष्ठा htvec *priv)
-अणु
+static void htvec_reset(struct htvec *priv)
+{
 	u32 idx;
 
-	/* Clear IRQ cause रेजिस्टरs, mask all पूर्णांकerrupts */
-	क्रम (idx = 0; idx < priv->num_parents; idx++) अणु
-		ग_लिखोl_relaxed(0x0, priv->base + HTVEC_EN_OFF + 4 * idx);
-		ग_लिखोl_relaxed(0xFFFFFFFF, priv->base + 4 * idx);
-	पूर्ण
-पूर्ण
+	/* Clear IRQ cause registers, mask all interrupts */
+	for (idx = 0; idx < priv->num_parents; idx++) {
+		writel_relaxed(0x0, priv->base + HTVEC_EN_OFF + 4 * idx);
+		writel_relaxed(0xFFFFFFFF, priv->base + 4 * idx);
+	}
+}
 
-अटल पूर्णांक htvec_of_init(काष्ठा device_node *node,
-				काष्ठा device_node *parent)
-अणु
-	काष्ठा htvec *priv;
-	पूर्णांक err, parent_irq[8], i;
+static int htvec_of_init(struct device_node *node,
+				struct device_node *parent)
+{
+	struct htvec *priv;
+	int err, parent_irq[8], i;
 
-	priv = kzalloc(माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	raw_spin_lock_init(&priv->htvec_lock);
 	priv->base = of_iomap(node, 0);
-	अगर (!priv->base) अणु
+	if (!priv->base) {
 		err = -ENOMEM;
-		जाओ मुक्त_priv;
-	पूर्ण
+		goto free_priv;
+	}
 
-	/* Interrupt may come from any of the 8 पूर्णांकerrupt lines */
-	क्रम (i = 0; i < HTVEC_MAX_PARENT_IRQ; i++) अणु
+	/* Interrupt may come from any of the 8 interrupt lines */
+	for (i = 0; i < HTVEC_MAX_PARENT_IRQ; i++) {
 		parent_irq[i] = irq_of_parse_and_map(node, i);
-		अगर (parent_irq[i] <= 0)
-			अवरोध;
+		if (parent_irq[i] <= 0)
+			break;
 
 		priv->num_parents++;
-	पूर्ण
+	}
 
-	अगर (!priv->num_parents) अणु
+	if (!priv->num_parents) {
 		pr_err("Failed to get parent irqs\n");
 		err = -ENODEV;
-		जाओ iounmap_base;
-	पूर्ण
+		goto iounmap_base;
+	}
 
-	priv->htvec_करोमुख्य = irq_करोमुख्य_create_linear(of_node_to_fwnode(node),
+	priv->htvec_domain = irq_domain_create_linear(of_node_to_fwnode(node),
 					(VEC_COUNT_PER_REG * priv->num_parents),
-					&htvec_करोमुख्य_ops, priv);
-	अगर (!priv->htvec_करोमुख्य) अणु
+					&htvec_domain_ops, priv);
+	if (!priv->htvec_domain) {
 		pr_err("Failed to create IRQ domain\n");
 		err = -ENOMEM;
-		जाओ irq_dispose;
-	पूर्ण
+		goto irq_dispose;
+	}
 
 	htvec_reset(priv);
 
-	क्रम (i = 0; i < priv->num_parents; i++)
+	for (i = 0; i < priv->num_parents; i++)
 		irq_set_chained_handler_and_data(parent_irq[i],
 						 htvec_irq_dispatch, priv);
 
-	वापस 0;
+	return 0;
 
 irq_dispose:
-	क्रम (; i > 0; i--)
+	for (; i > 0; i--)
 		irq_dispose_mapping(parent_irq[i - 1]);
 iounmap_base:
 	iounmap(priv->base);
-मुक्त_priv:
-	kमुक्त(priv);
+free_priv:
+	kfree(priv);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 IRQCHIP_DECLARE(htvec, "loongson,htvec-1.0", htvec_of_init);

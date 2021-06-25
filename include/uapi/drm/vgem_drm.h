@@ -1,14 +1,13 @@
-<शैली गुरु>
 /*
  * Copyright 2016 Intel Corporation
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -25,39 +24,39 @@
  *
  */
 
-#अगर_अघोषित _UAPI_VGEM_DRM_H_
-#घोषणा _UAPI_VGEM_DRM_H_
+#ifndef _UAPI_VGEM_DRM_H_
+#define _UAPI_VGEM_DRM_H_
 
-#समावेश "drm.h"
+#include "drm.h"
 
-#अगर defined(__cplusplus)
-बाह्य "C" अणु
-#पूर्ण_अगर
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
-/* Please note that modअगरications to all काष्ठाs defined here are
- * subject to backwards-compatibility स्थिरraपूर्णांकs.
+/* Please note that modifications to all structs defined here are
+ * subject to backwards-compatibility constraints.
  */
-#घोषणा DRM_VGEM_FENCE_ATTACH	0x1
-#घोषणा DRM_VGEM_FENCE_SIGNAL	0x2
+#define DRM_VGEM_FENCE_ATTACH	0x1
+#define DRM_VGEM_FENCE_SIGNAL	0x2
 
-#घोषणा DRM_IOCTL_VGEM_FENCE_ATTACH	DRM_IOWR( DRM_COMMAND_BASE + DRM_VGEM_FENCE_ATTACH, काष्ठा drm_vgem_fence_attach)
-#घोषणा DRM_IOCTL_VGEM_FENCE_SIGNAL	DRM_IOW( DRM_COMMAND_BASE + DRM_VGEM_FENCE_SIGNAL, काष्ठा drm_vgem_fence_संकेत)
+#define DRM_IOCTL_VGEM_FENCE_ATTACH	DRM_IOWR( DRM_COMMAND_BASE + DRM_VGEM_FENCE_ATTACH, struct drm_vgem_fence_attach)
+#define DRM_IOCTL_VGEM_FENCE_SIGNAL	DRM_IOW( DRM_COMMAND_BASE + DRM_VGEM_FENCE_SIGNAL, struct drm_vgem_fence_signal)
 
-काष्ठा drm_vgem_fence_attach अणु
+struct drm_vgem_fence_attach {
 	__u32 handle;
 	__u32 flags;
-#घोषणा VGEM_FENCE_WRITE	0x1
+#define VGEM_FENCE_WRITE	0x1
 	__u32 out_fence;
 	__u32 pad;
-पूर्ण;
+};
 
-काष्ठा drm_vgem_fence_संकेत अणु
+struct drm_vgem_fence_signal {
 	__u32 fence;
 	__u32 flags;
-पूर्ण;
+};
 
-#अगर defined(__cplusplus)
-पूर्ण
-#पूर्ण_अगर
+#if defined(__cplusplus)
+}
+#endif
 
-#पूर्ण_अगर /* _UAPI_VGEM_DRM_H_ */
+#endif /* _UAPI_VGEM_DRM_H_ */

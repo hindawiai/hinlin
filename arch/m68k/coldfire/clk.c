@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /***************************************************************************/
 
 /*
@@ -10,157 +9,157 @@
 
 /***************************************************************************/
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/err.h>
-#समावेश <यंत्र/coldfire.h>
-#समावेश <यंत्र/mcfsim.h>
-#समावेश <यंत्र/mcfclk.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/mutex.h>
+#include <linux/clk.h>
+#include <linux/io.h>
+#include <linux/err.h>
+#include <asm/coldfire.h>
+#include <asm/mcfsim.h>
+#include <asm/mcfclk.h>
 
-अटल DEFINE_SPINLOCK(clk_lock);
+static DEFINE_SPINLOCK(clk_lock);
 
-#अगर_घोषित MCFPM_PPMCR0
+#ifdef MCFPM_PPMCR0
 /*
- *	For more advanced ColdFire parts that have घड़ीs that can be enabled
+ *	For more advanced ColdFire parts that have clocks that can be enabled
  *	we supply enable/disable functions. These must properly define their
- *	घड़ीs in their platक्रमm specअगरic code.
+ *	clocks in their platform specific code.
  */
-व्योम __clk_init_enabled(काष्ठा clk *clk)
-अणु
+void __clk_init_enabled(struct clk *clk)
+{
 	clk->enabled = 1;
 	clk->clk_ops->enable(clk);
-पूर्ण
+}
 
-व्योम __clk_init_disabled(काष्ठा clk *clk)
-अणु
+void __clk_init_disabled(struct clk *clk)
+{
 	clk->enabled = 0;
 	clk->clk_ops->disable(clk);
-पूर्ण
+}
 
-अटल व्योम __clk_enable0(काष्ठा clk *clk)
-अणु
-	__raw_ग_लिखोb(clk->slot, MCFPM_PPMCR0);
-पूर्ण
+static void __clk_enable0(struct clk *clk)
+{
+	__raw_writeb(clk->slot, MCFPM_PPMCR0);
+}
 
-अटल व्योम __clk_disable0(काष्ठा clk *clk)
-अणु
-	__raw_ग_लिखोb(clk->slot, MCFPM_PPMSR0);
-पूर्ण
+static void __clk_disable0(struct clk *clk)
+{
+	__raw_writeb(clk->slot, MCFPM_PPMSR0);
+}
 
-काष्ठा clk_ops clk_ops0 = अणु
+struct clk_ops clk_ops0 = {
 	.enable		= __clk_enable0,
 	.disable	= __clk_disable0,
-पूर्ण;
+};
 
-#अगर_घोषित MCFPM_PPMCR1
-अटल व्योम __clk_enable1(काष्ठा clk *clk)
-अणु
-	__raw_ग_लिखोb(clk->slot, MCFPM_PPMCR1);
-पूर्ण
+#ifdef MCFPM_PPMCR1
+static void __clk_enable1(struct clk *clk)
+{
+	__raw_writeb(clk->slot, MCFPM_PPMCR1);
+}
 
-अटल व्योम __clk_disable1(काष्ठा clk *clk)
-अणु
-	__raw_ग_लिखोb(clk->slot, MCFPM_PPMSR1);
-पूर्ण
+static void __clk_disable1(struct clk *clk)
+{
+	__raw_writeb(clk->slot, MCFPM_PPMSR1);
+}
 
-काष्ठा clk_ops clk_ops1 = अणु
+struct clk_ops clk_ops1 = {
 	.enable		= __clk_enable1,
 	.disable	= __clk_disable1,
-पूर्ण;
-#पूर्ण_अगर /* MCFPM_PPMCR1 */
-#पूर्ण_अगर /* MCFPM_PPMCR0 */
+};
+#endif /* MCFPM_PPMCR1 */
+#endif /* MCFPM_PPMCR0 */
 
-काष्ठा clk *clk_get(काष्ठा device *dev, स्थिर अक्षर *id)
-अणु
-	स्थिर अक्षर *clk_name = dev ? dev_name(dev) : id ? id : शून्य;
-	काष्ठा clk *clk;
-	अचिन्हित i;
+struct clk *clk_get(struct device *dev, const char *id)
+{
+	const char *clk_name = dev ? dev_name(dev) : id ? id : NULL;
+	struct clk *clk;
+	unsigned i;
 
-	क्रम (i = 0; (clk = mcf_clks[i]) != शून्य; ++i)
-		अगर (!म_भेद(clk->name, clk_name))
-			वापस clk;
+	for (i = 0; (clk = mcf_clks[i]) != NULL; ++i)
+		if (!strcmp(clk->name, clk_name))
+			return clk;
 	pr_warn("clk_get: didn't find clock %s\n", clk_name);
-	वापस ERR_PTR(-ENOENT);
-पूर्ण
+	return ERR_PTR(-ENOENT);
+}
 EXPORT_SYMBOL(clk_get);
 
-पूर्णांक clk_enable(काष्ठा clk *clk)
-अणु
-	अचिन्हित दीर्घ flags;
+int clk_enable(struct clk *clk)
+{
+	unsigned long flags;
 
-	अगर (!clk)
-		वापस -EINVAL;
+	if (!clk)
+		return -EINVAL;
 
 	spin_lock_irqsave(&clk_lock, flags);
-	अगर ((clk->enabled++ == 0) && clk->clk_ops)
+	if ((clk->enabled++ == 0) && clk->clk_ops)
 		clk->clk_ops->enable(clk);
 	spin_unlock_irqrestore(&clk_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(clk_enable);
 
-व्योम clk_disable(काष्ठा clk *clk)
-अणु
-	अचिन्हित दीर्घ flags;
+void clk_disable(struct clk *clk)
+{
+	unsigned long flags;
 
-	अगर (!clk)
-		वापस;
+	if (!clk)
+		return;
 
 	spin_lock_irqsave(&clk_lock, flags);
-	अगर ((--clk->enabled == 0) && clk->clk_ops)
+	if ((--clk->enabled == 0) && clk->clk_ops)
 		clk->clk_ops->disable(clk);
 	spin_unlock_irqrestore(&clk_lock, flags);
-पूर्ण
+}
 EXPORT_SYMBOL(clk_disable);
 
-व्योम clk_put(काष्ठा clk *clk)
-अणु
-	अगर (clk->enabled != 0)
+void clk_put(struct clk *clk)
+{
+	if (clk->enabled != 0)
 		pr_warn("clk_put %s still enabled\n", clk->name);
-पूर्ण
+}
 EXPORT_SYMBOL(clk_put);
 
-अचिन्हित दीर्घ clk_get_rate(काष्ठा clk *clk)
-अणु
-	अगर (!clk)
-		वापस 0;
+unsigned long clk_get_rate(struct clk *clk)
+{
+	if (!clk)
+		return 0;
 
-	वापस clk->rate;
-पूर्ण
+	return clk->rate;
+}
 EXPORT_SYMBOL(clk_get_rate);
 
 /* dummy functions, should not be called */
-दीर्घ clk_round_rate(काष्ठा clk *clk, अचिन्हित दीर्घ rate)
-अणु
+long clk_round_rate(struct clk *clk, unsigned long rate)
+{
 	WARN_ON(clk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(clk_round_rate);
 
-पूर्णांक clk_set_rate(काष्ठा clk *clk, अचिन्हित दीर्घ rate)
-अणु
+int clk_set_rate(struct clk *clk, unsigned long rate)
+{
 	WARN_ON(clk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(clk_set_rate);
 
-पूर्णांक clk_set_parent(काष्ठा clk *clk, काष्ठा clk *parent)
-अणु
+int clk_set_parent(struct clk *clk, struct clk *parent)
+{
 	WARN_ON(clk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(clk_set_parent);
 
-काष्ठा clk *clk_get_parent(काष्ठा clk *clk)
-अणु
+struct clk *clk_get_parent(struct clk *clk)
+{
 	WARN_ON(clk);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL(clk_get_parent);
 
 /***************************************************************************/

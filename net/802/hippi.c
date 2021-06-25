@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * INET		An implementation of the TCP/IP protocol suite क्रम the LINUX
- *		operating प्रणाली.  INET is implemented using the  BSD Socket
- *		पूर्णांकerface as the means of communication with the user level.
+ * INET		An implementation of the TCP/IP protocol suite for the LINUX
+ *		operating system.  INET is implemented using the  BSD Socket
+ *		interface as the means of communication with the user level.
  *
  *		HIPPI-type device handling.
  *
@@ -17,40 +16,40 @@
  *		Jes Sorensen, <Jes.Sorensen@cern.ch>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/in.h>
-#समावेश <linux/inet.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/hippidevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <net/arp.h>
-#समावेश <net/sock.h>
-#समावेश <linux/uaccess.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/mm.h>
+#include <linux/socket.h>
+#include <linux/in.h>
+#include <linux/inet.h>
+#include <linux/netdevice.h>
+#include <linux/hippidevice.h>
+#include <linux/skbuff.h>
+#include <linux/errno.h>
+#include <net/arp.h>
+#include <net/sock.h>
+#include <linux/uaccess.h>
 
 /*
- * Create the HIPPI MAC header क्रम an arbitrary protocol layer
+ * Create the HIPPI MAC header for an arbitrary protocol layer
  *
- * saddr=शून्य	means use device source address
- * daddr=शून्य	means leave destination address (eg unresolved arp)
+ * saddr=NULL	means use device source address
+ * daddr=NULL	means leave destination address (eg unresolved arp)
  */
 
-अटल पूर्णांक hippi_header(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
-			अचिन्हित लघु type,
-			स्थिर व्योम *daddr, स्थिर व्योम *saddr, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा hippi_hdr *hip = skb_push(skb, HIPPI_HLEN);
-	काष्ठा hippi_cb *hcb = (काष्ठा hippi_cb *) skb->cb;
+static int hippi_header(struct sk_buff *skb, struct net_device *dev,
+			unsigned short type,
+			const void *daddr, const void *saddr, unsigned int len)
+{
+	struct hippi_hdr *hip = skb_push(skb, HIPPI_HLEN);
+	struct hippi_cb *hcb = (struct hippi_cb *) skb->cb;
 
-	अगर (!len)अणु
+	if (!len){
 		len = skb->len - HIPPI_HLEN;
-		prपूर्णांकk("hippi_header(): length not supplied\n");
-	पूर्ण
+		printk("hippi_header(): length not supplied\n");
+	}
 
 	/*
 	 * Due to the stupidity of the little endian byte-order we
@@ -59,14 +58,14 @@
 	hip->fp.fixed		= htonl(0x04800018);
 	hip->fp.d2_size		= htonl(len + 8);
 	hip->le.fc		= 0;
-	hip->le.द्विगुन_wide	= 0;	/* only HIPPI 800 क्रम the समय being */
+	hip->le.double_wide	= 0;	/* only HIPPI 800 for the time being */
 	hip->le.message_type	= 0;	/* Data PDU */
 
 	hip->le.dest_addr_type	= 2;	/* 12 bit SC address */
 	hip->le.src_addr_type	= 2;	/* 12 bit SC address */
 
-	स_नकल(hip->le.src_चयन_addr, dev->dev_addr + 3, 3);
-	स_रखो(&hip->le.reserved, 0, 16);
+	memcpy(hip->le.src_switch_addr, dev->dev_addr + 3, 3);
+	memset(&hip->le.reserved, 0, 16);
 
 	hip->snap.dsap		= HIPPI_EXTENDED_SAP;
 	hip->snap.ssap		= HIPPI_EXTENDED_SAP;
@@ -76,40 +75,40 @@
 	hip->snap.oui[2]	= 0x00;
 	hip->snap.ethertype	= htons(type);
 
-	अगर (daddr)
-	अणु
-		स_नकल(hip->le.dest_चयन_addr, daddr + 3, 3);
-		स_नकल(&hcb->अगरield, daddr + 2, 4);
-		वापस HIPPI_HLEN;
-	पूर्ण
-	hcb->अगरield = 0;
-	वापस -((पूर्णांक)HIPPI_HLEN);
-पूर्ण
+	if (daddr)
+	{
+		memcpy(hip->le.dest_switch_addr, daddr + 3, 3);
+		memcpy(&hcb->ifield, daddr + 2, 4);
+		return HIPPI_HLEN;
+	}
+	hcb->ifield = 0;
+	return -((int)HIPPI_HLEN);
+}
 
 
 /*
  *	Determine the packet's protocol ID.
  */
 
-__be16 hippi_type_trans(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा hippi_hdr *hip;
+__be16 hippi_type_trans(struct sk_buff *skb, struct net_device *dev)
+{
+	struct hippi_hdr *hip;
 
 	/*
-	 * This is actually wrong ... question is अगर we really should
+	 * This is actually wrong ... question is if we really should
 	 * set the raw address here.
 	 */
 	skb->dev = dev;
 	skb_reset_mac_header(skb);
-	hip = (काष्ठा hippi_hdr *)skb_mac_header(skb);
+	hip = (struct hippi_hdr *)skb_mac_header(skb);
 	skb_pull(skb, HIPPI_HLEN);
 
 	/*
 	 * No fancy promisc stuff here now.
 	 */
 
-	वापस hip->snap.ethertype;
-पूर्ण
+	return hip->snap.ethertype;
+}
 
 EXPORT_SYMBOL(hippi_type_trans);
 
@@ -117,18 +116,18 @@ EXPORT_SYMBOL(hippi_type_trans);
  * For HIPPI we will actually use the lower 4 bytes of the hardware
  * address as the I-FIELD rather than the actual hardware address.
  */
-पूर्णांक hippi_mac_addr(काष्ठा net_device *dev, व्योम *p)
-अणु
-	काष्ठा sockaddr *addr = p;
-	अगर (netअगर_running(dev))
-		वापस -EBUSY;
-	स_नकल(dev->dev_addr, addr->sa_data, dev->addr_len);
-	वापस 0;
-पूर्ण
+int hippi_mac_addr(struct net_device *dev, void *p)
+{
+	struct sockaddr *addr = p;
+	if (netif_running(dev))
+		return -EBUSY;
+	memcpy(dev->dev_addr, addr->sa_data, dev->addr_len);
+	return 0;
+}
 EXPORT_SYMBOL(hippi_mac_addr);
 
-पूर्णांक hippi_neigh_setup_dev(काष्ठा net_device *dev, काष्ठा neigh_parms *p)
-अणु
+int hippi_neigh_setup_dev(struct net_device *dev, struct neigh_parms *p)
+{
 	/* Never send broadcast/multicast ARP messages */
 	NEIGH_VAR_INIT(p, MCAST_PROBES, 0);
 
@@ -136,25 +135,25 @@ EXPORT_SYMBOL(hippi_mac_addr);
 	* because they are encapsulated in normal IPv6 protocol.
 	* Should be a generic flag.
 	*/
-	अगर (p->tbl->family != AF_INET6)
+	if (p->tbl->family != AF_INET6)
 		NEIGH_VAR_INIT(p, UCAST_PROBES, 0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(hippi_neigh_setup_dev);
 
-अटल स्थिर काष्ठा header_ops hippi_header_ops = अणु
+static const struct header_ops hippi_header_ops = {
 	.create		= hippi_header,
-पूर्ण;
+};
 
 
-अटल व्योम hippi_setup(काष्ठा net_device *dev)
-अणु
+static void hippi_setup(struct net_device *dev)
+{
 	dev->header_ops			= &hippi_header_ops;
 
 	/*
-	 * We करोn't support HIPPI `ARP' क्रम the समय being, and probably
-	 * never will unless someone अन्यथा implements it. However we
-	 * still need a fake ARPHRD to make अगरconfig and मित्रs play ball.
+	 * We don't support HIPPI `ARP' for the time being, and probably
+	 * never will unless someone else implements it. However we
+	 * still need a fake ARPHRD to make ifconfig and friends play ball.
 	 */
 	dev->type		= ARPHRD_HIPPI;
 	dev->hard_header_len 	= HIPPI_HLEN;
@@ -163,32 +162,32 @@ EXPORT_SYMBOL(hippi_neigh_setup_dev);
 	dev->max_mtu		= 65280;
 	dev->addr_len		= HIPPI_ALEN;
 	dev->tx_queue_len	= 25 /* 5 */;
-	स_रखो(dev->broadcast, 0xFF, HIPPI_ALEN);
+	memset(dev->broadcast, 0xFF, HIPPI_ALEN);
 
 
 	/*
-	 * HIPPI करोesn't support broadcast+multicast and we only use
-	 * अटल ARP tables. ARP is disabled by hippi_neigh_setup_dev.
+	 * HIPPI doesn't support broadcast+multicast and we only use
+	 * static ARP tables. ARP is disabled by hippi_neigh_setup_dev.
 	 */
 	dev->flags = 0;
-पूर्ण
+}
 
 /**
  * alloc_hippi_dev - Register HIPPI device
- * @माप_priv: Size of additional driver-निजी काष्ठाure to be allocated
- *	क्रम this HIPPI device
+ * @sizeof_priv: Size of additional driver-private structure to be allocated
+ *	for this HIPPI device
  *
- * Fill in the fields of the device काष्ठाure with HIPPI-generic values.
+ * Fill in the fields of the device structure with HIPPI-generic values.
  *
- * Conकाष्ठाs a new net device, complete with a निजी data area of
- * size @माप_priv.  A 32-byte (not bit) alignment is enक्रमced क्रम
- * this निजी data area.
+ * Constructs a new net device, complete with a private data area of
+ * size @sizeof_priv.  A 32-byte (not bit) alignment is enforced for
+ * this private data area.
  */
 
-काष्ठा net_device *alloc_hippi_dev(पूर्णांक माप_priv)
-अणु
-	वापस alloc_netdev(माप_priv, "hip%d", NET_NAME_UNKNOWN,
+struct net_device *alloc_hippi_dev(int sizeof_priv)
+{
+	return alloc_netdev(sizeof_priv, "hip%d", NET_NAME_UNKNOWN,
 			    hippi_setup);
-पूर्ण
+}
 
 EXPORT_SYMBOL(alloc_hippi_dev);

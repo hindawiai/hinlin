@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
 /*
- * include/uapi/linux/devlink.h - Network physical device Netlink पूर्णांकerface
+ * include/uapi/linux/devlink.h - Network physical device Netlink interface
  * Copyright (c) 2016 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2016 Jiri Pirko <jiri@mellanox.com>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  */
 
-#अगर_अघोषित _UAPI_LINUX_DEVLINK_H_
-#घोषणा _UAPI_LINUX_DEVLINK_H_
+#ifndef _UAPI_LINUX_DEVLINK_H_
+#define _UAPI_LINUX_DEVLINK_H_
 
-#समावेश <linux/स्थिर.h>
+#include <linux/const.h>
 
-#घोषणा DEVLINK_GENL_NAME "devlink"
-#घोषणा DEVLINK_GENL_VERSION 0x1
-#घोषणा DEVLINK_GENL_MCGRP_CONFIG_NAME "config"
+#define DEVLINK_GENL_NAME "devlink"
+#define DEVLINK_GENL_VERSION 0x1
+#define DEVLINK_GENL_MCGRP_CONFIG_NAME "config"
 
-क्रमागत devlink_command अणु
-	/* करोn't change the order or add anything between, this is ABI! */
+enum devlink_command {
+	/* don't change the order or add anything between, this is ABI! */
 	DEVLINK_CMD_UNSPEC,
 
 	DEVLINK_CMD_GET,		/* can dump */
@@ -62,11 +61,11 @@
 	DEVLINK_CMD_SB_OCC_MAX_CLEAR,
 
 	DEVLINK_CMD_ESWITCH_GET,
-#घोषणा DEVLINK_CMD_ESWITCH_MODE_GET /* obsolete, never use this! */ \
+#define DEVLINK_CMD_ESWITCH_MODE_GET /* obsolete, never use this! */ \
 	DEVLINK_CMD_ESWITCH_GET
 
 	DEVLINK_CMD_ESWITCH_SET,
-#घोषणा DEVLINK_CMD_ESWITCH_MODE_SET /* obsolete, never use this! */ \
+#define DEVLINK_CMD_ESWITCH_MODE_SET /* obsolete, never use this! */ \
 	DEVLINK_CMD_ESWITCH_SET
 
 	DEVLINK_CMD_DPIPE_TABLE_GET,
@@ -107,8 +106,8 @@
 	DEVLINK_CMD_HEALTH_REPORTER_DUMP_CLEAR,
 
 	DEVLINK_CMD_FLASH_UPDATE,
-	DEVLINK_CMD_FLASH_UPDATE_END,		/* notअगरication only */
-	DEVLINK_CMD_FLASH_UPDATE_STATUS,	/* notअगरication only */
+	DEVLINK_CMD_FLASH_UPDATE_END,		/* notification only */
+	DEVLINK_CMD_FLASH_UPDATE_STATUS,	/* notification only */
 
 	DEVLINK_CMD_TRAP_GET,		/* can dump */
 	DEVLINK_CMD_TRAP_SET,
@@ -130,84 +129,84 @@
 	/* add new commands above here */
 	__DEVLINK_CMD_MAX,
 	DEVLINK_CMD_MAX = __DEVLINK_CMD_MAX - 1
-पूर्ण;
+};
 
-क्रमागत devlink_port_type अणु
+enum devlink_port_type {
 	DEVLINK_PORT_TYPE_NOTSET,
 	DEVLINK_PORT_TYPE_AUTO,
 	DEVLINK_PORT_TYPE_ETH,
 	DEVLINK_PORT_TYPE_IB,
-पूर्ण;
+};
 
-क्रमागत devlink_sb_pool_type अणु
+enum devlink_sb_pool_type {
 	DEVLINK_SB_POOL_TYPE_INGRESS,
 	DEVLINK_SB_POOL_TYPE_EGRESS,
-पूर्ण;
+};
 
-/* अटल threshold - limiting the maximum number of bytes.
+/* static threshold - limiting the maximum number of bytes.
  * dynamic threshold - limiting the maximum number of bytes
- *   based on the currently available मुक्त space in the shared buffer pool.
+ *   based on the currently available free space in the shared buffer pool.
  *   In this mode, the maximum quota is calculated based
- *   on the following क्रमmula:
+ *   on the following formula:
  *     max_quota = alpha / (1 + alpha) * Free_Buffer
  *   While Free_Buffer is the amount of none-occupied buffer associated to
  *   the relevant pool.
  *   The value range which can be passed is 0-20 and serves
- *   क्रम computation of alpha by following क्रमmula:
+ *   for computation of alpha by following formula:
  *     alpha = 2 ^ (passed_value - 10)
  */
 
-क्रमागत devlink_sb_threshold_type अणु
+enum devlink_sb_threshold_type {
 	DEVLINK_SB_THRESHOLD_TYPE_STATIC,
 	DEVLINK_SB_THRESHOLD_TYPE_DYNAMIC,
-पूर्ण;
+};
 
-#घोषणा DEVLINK_SB_THRESHOLD_TO_ALPHA_MAX 20
+#define DEVLINK_SB_THRESHOLD_TO_ALPHA_MAX 20
 
-क्रमागत devlink_eचयन_mode अणु
+enum devlink_eswitch_mode {
 	DEVLINK_ESWITCH_MODE_LEGACY,
 	DEVLINK_ESWITCH_MODE_SWITCHDEV,
-पूर्ण;
+};
 
-क्रमागत devlink_eचयन_अंतरभूत_mode अणु
+enum devlink_eswitch_inline_mode {
 	DEVLINK_ESWITCH_INLINE_MODE_NONE,
 	DEVLINK_ESWITCH_INLINE_MODE_LINK,
 	DEVLINK_ESWITCH_INLINE_MODE_NETWORK,
 	DEVLINK_ESWITCH_INLINE_MODE_TRANSPORT,
-पूर्ण;
+};
 
-क्रमागत devlink_eचयन_encap_mode अणु
+enum devlink_eswitch_encap_mode {
 	DEVLINK_ESWITCH_ENCAP_MODE_NONE,
 	DEVLINK_ESWITCH_ENCAP_MODE_BASIC,
-पूर्ण;
+};
 
-क्रमागत devlink_port_flavour अणु
+enum devlink_port_flavour {
 	DEVLINK_PORT_FLAVOUR_PHYSICAL, /* Any kind of a port physically
 					* facing the user.
 					*/
 	DEVLINK_PORT_FLAVOUR_CPU, /* CPU port */
-	DEVLINK_PORT_FLAVOUR_DSA, /* Distributed चयन architecture
-				   * पूर्णांकerconnect port.
+	DEVLINK_PORT_FLAVOUR_DSA, /* Distributed switch architecture
+				   * interconnect port.
 				   */
-	DEVLINK_PORT_FLAVOUR_PCI_PF, /* Represents eचयन port क्रम
-				      * the PCI PF. It is an पूर्णांकernal
+	DEVLINK_PORT_FLAVOUR_PCI_PF, /* Represents eswitch port for
+				      * the PCI PF. It is an internal
 				      * port that faces the PCI PF.
 				      */
-	DEVLINK_PORT_FLAVOUR_PCI_VF, /* Represents eचयन port
-				      * क्रम the PCI VF. It is an पूर्णांकernal
+	DEVLINK_PORT_FLAVOUR_PCI_VF, /* Represents eswitch port
+				      * for the PCI VF. It is an internal
 				      * port that faces the PCI VF.
 				      */
-	DEVLINK_PORT_FLAVOUR_VIRTUAL, /* Any भव port facing the user. */
-	DEVLINK_PORT_FLAVOUR_UNUSED, /* Port which exists in the चयन, but
+	DEVLINK_PORT_FLAVOUR_VIRTUAL, /* Any virtual port facing the user. */
+	DEVLINK_PORT_FLAVOUR_UNUSED, /* Port which exists in the switch, but
 				      * is not used in any way.
 				      */
-	DEVLINK_PORT_FLAVOUR_PCI_SF, /* Represents eचयन port
-				      * क्रम the PCI SF. It is an पूर्णांकernal
+	DEVLINK_PORT_FLAVOUR_PCI_SF, /* Represents eswitch port
+				      * for the PCI SF. It is an internal
 				      * port that faces the PCI SF.
 				      */
-पूर्ण;
+};
 
-क्रमागत devlink_param_cmode अणु
+enum devlink_param_cmode {
 	DEVLINK_PARAM_CMODE_RUNTIME,
 	DEVLINK_PARAM_CMODE_DRIVERINIT,
 	DEVLINK_PARAM_CMODE_PERMANENT,
@@ -215,98 +214,98 @@
 	/* Add new configuration modes above */
 	__DEVLINK_PARAM_CMODE_MAX,
 	DEVLINK_PARAM_CMODE_MAX = __DEVLINK_PARAM_CMODE_MAX - 1
-पूर्ण;
+};
 
-क्रमागत devlink_param_fw_load_policy_value अणु
+enum devlink_param_fw_load_policy_value {
 	DEVLINK_PARAM_FW_LOAD_POLICY_VALUE_DRIVER,
 	DEVLINK_PARAM_FW_LOAD_POLICY_VALUE_FLASH,
 	DEVLINK_PARAM_FW_LOAD_POLICY_VALUE_DISK,
 	DEVLINK_PARAM_FW_LOAD_POLICY_VALUE_UNKNOWN,
-पूर्ण;
+};
 
-क्रमागत devlink_param_reset_dev_on_drv_probe_value अणु
+enum devlink_param_reset_dev_on_drv_probe_value {
 	DEVLINK_PARAM_RESET_DEV_ON_DRV_PROBE_VALUE_UNKNOWN,
 	DEVLINK_PARAM_RESET_DEV_ON_DRV_PROBE_VALUE_ALWAYS,
 	DEVLINK_PARAM_RESET_DEV_ON_DRV_PROBE_VALUE_NEVER,
 	DEVLINK_PARAM_RESET_DEV_ON_DRV_PROBE_VALUE_DISK,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	DEVLINK_ATTR_STATS_RX_PACKETS,		/* u64 */
 	DEVLINK_ATTR_STATS_RX_BYTES,		/* u64 */
 	DEVLINK_ATTR_STATS_RX_DROPPED,		/* u64 */
 
 	__DEVLINK_ATTR_STATS_MAX,
 	DEVLINK_ATTR_STATS_MAX = __DEVLINK_ATTR_STATS_MAX - 1
-पूर्ण;
+};
 
-/* Specअगरy what sections of a flash component can be overwritten when
- * perक्रमming an update. Overwriting of firmware binary sections is always
+/* Specify what sections of a flash component can be overwritten when
+ * performing an update. Overwriting of firmware binary sections is always
  * implicitly assumed to be allowed.
  *
- * Each section must be करोcumented in
+ * Each section must be documented in
  * Documentation/networking/devlink/devlink-flash.rst
  *
  */
-क्रमागत अणु
+enum {
 	DEVLINK_FLASH_OVERWRITE_SETTINGS_BIT,
 	DEVLINK_FLASH_OVERWRITE_IDENTIFIERS_BIT,
 
 	__DEVLINK_FLASH_OVERWRITE_MAX_BIT,
 	DEVLINK_FLASH_OVERWRITE_MAX_BIT = __DEVLINK_FLASH_OVERWRITE_MAX_BIT - 1
-पूर्ण;
+};
 
-#घोषणा DEVLINK_FLASH_OVERWRITE_SETTINGS _BITUL(DEVLINK_FLASH_OVERWRITE_SETTINGS_BIT)
-#घोषणा DEVLINK_FLASH_OVERWRITE_IDENTIFIERS _BITUL(DEVLINK_FLASH_OVERWRITE_IDENTIFIERS_BIT)
+#define DEVLINK_FLASH_OVERWRITE_SETTINGS _BITUL(DEVLINK_FLASH_OVERWRITE_SETTINGS_BIT)
+#define DEVLINK_FLASH_OVERWRITE_IDENTIFIERS _BITUL(DEVLINK_FLASH_OVERWRITE_IDENTIFIERS_BIT)
 
-#घोषणा DEVLINK_SUPPORTED_FLASH_OVERWRITE_SECTIONS \
+#define DEVLINK_SUPPORTED_FLASH_OVERWRITE_SECTIONS \
 	(_BITUL(__DEVLINK_FLASH_OVERWRITE_MAX_BIT) - 1)
 
 /**
- * क्रमागत devlink_trap_action - Packet trap action.
+ * enum devlink_trap_action - Packet trap action.
  * @DEVLINK_TRAP_ACTION_DROP: Packet is dropped by the device and a copy is not
  *                            sent to the CPU.
  * @DEVLINK_TRAP_ACTION_TRAP: The sole copy of the packet is sent to the CPU.
- * @DEVLINK_TRAP_ACTION_MIRROR: Packet is क्रमwarded by the device and a copy is
+ * @DEVLINK_TRAP_ACTION_MIRROR: Packet is forwarded by the device and a copy is
  *                              sent to the CPU.
  */
-क्रमागत devlink_trap_action अणु
+enum devlink_trap_action {
 	DEVLINK_TRAP_ACTION_DROP,
 	DEVLINK_TRAP_ACTION_TRAP,
 	DEVLINK_TRAP_ACTION_MIRROR,
-पूर्ण;
+};
 
 /**
- * क्रमागत devlink_trap_type - Packet trap type.
+ * enum devlink_trap_type - Packet trap type.
  * @DEVLINK_TRAP_TYPE_DROP: Trap reason is a drop. Trapped packets are only
  *                          processed by devlink and not injected to the
  *                          kernel's Rx path.
  * @DEVLINK_TRAP_TYPE_EXCEPTION: Trap reason is an exception. Packet was not
- *                               क्रमwarded as पूर्णांकended due to an exception
+ *                               forwarded as intended due to an exception
  *                               (e.g., missing neighbour entry) and trapped to
- *                               control plane क्रम resolution. Trapped packets
+ *                               control plane for resolution. Trapped packets
  *                               are processed by devlink and injected to
  *                               the kernel's Rx path.
- * @DEVLINK_TRAP_TYPE_CONTROL: Packet was trapped because it is required क्रम
+ * @DEVLINK_TRAP_TYPE_CONTROL: Packet was trapped because it is required for
  *                             the correct functioning of the control plane.
  *                             For example, an ARP request packet. Trapped
  *                             packets are injected to the kernel's Rx path,
  *                             but not reported to drop monitor.
  */
-क्रमागत devlink_trap_type अणु
+enum devlink_trap_type {
 	DEVLINK_TRAP_TYPE_DROP,
 	DEVLINK_TRAP_TYPE_EXCEPTION,
 	DEVLINK_TRAP_TYPE_CONTROL,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	/* Trap can report input port as metadata */
 	DEVLINK_ATTR_TRAP_METADATA_TYPE_IN_PORT,
 	/* Trap can report flow action cookie as metadata */
 	DEVLINK_ATTR_TRAP_METADATA_TYPE_FA_COOKIE,
-पूर्ण;
+};
 
-क्रमागत devlink_reload_action अणु
+enum devlink_reload_action {
 	DEVLINK_RELOAD_ACTION_UNSPEC,
 	DEVLINK_RELOAD_ACTION_DRIVER_REINIT,	/* Driver entities re-instantiation */
 	DEVLINK_RELOAD_ACTION_FW_ACTIVATE,	/* FW activate */
@@ -314,26 +313,26 @@
 	/* Add new reload actions above */
 	__DEVLINK_RELOAD_ACTION_MAX,
 	DEVLINK_RELOAD_ACTION_MAX = __DEVLINK_RELOAD_ACTION_MAX - 1
-पूर्ण;
+};
 
-क्रमागत devlink_reload_limit अणु
-	DEVLINK_RELOAD_LIMIT_UNSPEC,	/* unspecअगरied, no स्थिरraपूर्णांकs */
-	DEVLINK_RELOAD_LIMIT_NO_RESET,	/* No reset allowed, no करोwn समय allowed,
+enum devlink_reload_limit {
+	DEVLINK_RELOAD_LIMIT_UNSPEC,	/* unspecified, no constraints */
+	DEVLINK_RELOAD_LIMIT_NO_RESET,	/* No reset allowed, no down time allowed,
 					 * no link flap and no configuration is lost.
 					 */
 
 	/* Add new reload limit above */
 	__DEVLINK_RELOAD_LIMIT_MAX,
 	DEVLINK_RELOAD_LIMIT_MAX = __DEVLINK_RELOAD_LIMIT_MAX - 1
-पूर्ण;
+};
 
-#घोषणा DEVLINK_RELOAD_LIMITS_VALID_MASK (_BITUL(__DEVLINK_RELOAD_LIMIT_MAX) - 1)
+#define DEVLINK_RELOAD_LIMITS_VALID_MASK (_BITUL(__DEVLINK_RELOAD_LIMIT_MAX) - 1)
 
-क्रमागत devlink_attr अणु
-	/* करोn't change the order or add anything between, this is ABI! */
+enum devlink_attr {
+	/* don't change the order or add anything between, this is ABI! */
 	DEVLINK_ATTR_UNSPEC,
 
-	/* bus name + dev name together are a handle क्रम devlink entity */
+	/* bus name + dev name together are a handle for devlink entity */
 	DEVLINK_ATTR_BUS_NAME,			/* string */
 	DEVLINK_ATTR_DEV_NAME,			/* string */
 
@@ -474,7 +473,7 @@
 	DEVLINK_ATTR_HEALTH_REPORTER_GRACEFUL_PERIOD,	/* u64 */
 	DEVLINK_ATTR_HEALTH_REPORTER_AUTO_RECOVER,	/* u8 */
 
-	DEVLINK_ATTR_FLASH_UPDATE_खाता_NAME,	/* string */
+	DEVLINK_ATTR_FLASH_UPDATE_FILE_NAME,	/* string */
 	DEVLINK_ATTR_FLASH_UPDATE_COMPONENT,	/* string */
 	DEVLINK_ATTR_FLASH_UPDATE_STATUS_MSG,	/* string */
 	DEVLINK_ATTR_FLASH_UPDATE_STATUS_DONE,	/* u64 */
@@ -486,9 +485,9 @@
 	DEVLINK_ATTR_STATS,				/* nested */
 
 	DEVLINK_ATTR_TRAP_NAME,				/* string */
-	/* क्रमागत devlink_trap_action */
+	/* enum devlink_trap_action */
 	DEVLINK_ATTR_TRAP_ACTION,			/* u8 */
-	/* क्रमागत devlink_trap_type */
+	/* enum devlink_trap_type */
 	DEVLINK_ATTR_TRAP_TYPE,				/* u8 */
 	DEVLINK_ATTR_TRAP_GENERIC,			/* flag */
 	DEVLINK_ATTR_TRAP_METADATA,			/* nested */
@@ -539,49 +538,49 @@
 
 	__DEVLINK_ATTR_MAX,
 	DEVLINK_ATTR_MAX = __DEVLINK_ATTR_MAX - 1
-पूर्ण;
+};
 
-/* Mapping between पूर्णांकernal resource described by the field and प्रणाली
- * काष्ठाure
+/* Mapping between internal resource described by the field and system
+ * structure
  */
-क्रमागत devlink_dpipe_field_mapping_type अणु
+enum devlink_dpipe_field_mapping_type {
 	DEVLINK_DPIPE_FIELD_MAPPING_TYPE_NONE,
 	DEVLINK_DPIPE_FIELD_MAPPING_TYPE_IFINDEX,
-पूर्ण;
+};
 
-/* Match type - specअगरy the type of the match */
-क्रमागत devlink_dpipe_match_type अणु
+/* Match type - specify the type of the match */
+enum devlink_dpipe_match_type {
 	DEVLINK_DPIPE_MATCH_TYPE_FIELD_EXACT,
-पूर्ण;
+};
 
-/* Action type - specअगरy the action type */
-क्रमागत devlink_dpipe_action_type अणु
+/* Action type - specify the action type */
+enum devlink_dpipe_action_type {
 	DEVLINK_DPIPE_ACTION_TYPE_FIELD_MODIFY,
-पूर्ण;
+};
 
-क्रमागत devlink_dpipe_field_ethernet_id अणु
+enum devlink_dpipe_field_ethernet_id {
 	DEVLINK_DPIPE_FIELD_ETHERNET_DST_MAC,
-पूर्ण;
+};
 
-क्रमागत devlink_dpipe_field_ipv4_id अणु
+enum devlink_dpipe_field_ipv4_id {
 	DEVLINK_DPIPE_FIELD_IPV4_DST_IP,
-पूर्ण;
+};
 
-क्रमागत devlink_dpipe_field_ipv6_id अणु
+enum devlink_dpipe_field_ipv6_id {
 	DEVLINK_DPIPE_FIELD_IPV6_DST_IP,
-पूर्ण;
+};
 
-क्रमागत devlink_dpipe_header_id अणु
+enum devlink_dpipe_header_id {
 	DEVLINK_DPIPE_HEADER_ETHERNET,
 	DEVLINK_DPIPE_HEADER_IPV4,
 	DEVLINK_DPIPE_HEADER_IPV6,
-पूर्ण;
+};
 
-क्रमागत devlink_resource_unit अणु
+enum devlink_resource_unit {
 	DEVLINK_RESOURCE_UNIT_ENTRY,
-पूर्ण;
+};
 
-क्रमागत devlink_port_function_attr अणु
+enum devlink_port_function_attr {
 	DEVLINK_PORT_FUNCTION_ATTR_UNSPEC,
 	DEVLINK_PORT_FUNCTION_ATTR_HW_ADDR,	/* binary */
 	DEVLINK_PORT_FN_ATTR_STATE,	/* u8 */
@@ -589,24 +588,24 @@
 
 	__DEVLINK_PORT_FUNCTION_ATTR_MAX,
 	DEVLINK_PORT_FUNCTION_ATTR_MAX = __DEVLINK_PORT_FUNCTION_ATTR_MAX - 1
-पूर्ण;
+};
 
-क्रमागत devlink_port_fn_state अणु
+enum devlink_port_fn_state {
 	DEVLINK_PORT_FN_STATE_INACTIVE,
 	DEVLINK_PORT_FN_STATE_ACTIVE,
-पूर्ण;
+};
 
 /**
- * क्रमागत devlink_port_fn_opstate - indicates operational state of the function
+ * enum devlink_port_fn_opstate - indicates operational state of the function
  * @DEVLINK_PORT_FN_OPSTATE_ATTACHED: Driver is attached to the function.
- * For graceful tear करोwn of the function, after inactivation of the
- * function, user should रुको क्रम operational state to turn DETACHED.
+ * For graceful tear down of the function, after inactivation of the
+ * function, user should wait for operational state to turn DETACHED.
  * @DEVLINK_PORT_FN_OPSTATE_DETACHED: Driver is detached from the function.
  * It is safe to delete the port.
  */
-क्रमागत devlink_port_fn_opstate अणु
+enum devlink_port_fn_opstate {
 	DEVLINK_PORT_FN_OPSTATE_DETACHED,
 	DEVLINK_PORT_FN_OPSTATE_ATTACHED,
-पूर्ण;
+};
 
-#पूर्ण_अगर /* _UAPI_LINUX_DEVLINK_H_ */
+#endif /* _UAPI_LINUX_DEVLINK_H_ */

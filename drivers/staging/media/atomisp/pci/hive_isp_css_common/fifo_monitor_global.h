@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित __FIFO_MONITOR_GLOBAL_H_INCLUDED__
-#घोषणा __FIFO_MONITOR_GLOBAL_H_INCLUDED__
+#ifndef __FIFO_MONITOR_GLOBAL_H_INCLUDED__
+#define __FIFO_MONITOR_GLOBAL_H_INCLUDED__
 
-#घोषणा IS_FIFO_MONITOR_VERSION_2
+#define IS_FIFO_MONITOR_VERSION_2
 
 /*
-#घोषणा HIVE_ISP_CSS_STREAM_SWITCH_NONE      0
-#घोषणा HIVE_ISP_CSS_STREAM_SWITCH_SP        1
-#घोषणा HIVE_ISP_CSS_STREAM_SWITCH_ISP       2
+#define HIVE_ISP_CSS_STREAM_SWITCH_NONE      0
+#define HIVE_ISP_CSS_STREAM_SWITCH_SP        1
+#define HIVE_ISP_CSS_STREAM_SWITCH_ISP       2
  *
  * Actually, "HIVE_ISP_CSS_STREAM_SWITCH_SP = 1", "HIVE_ISP_CSS_STREAM_SWITCH_ISP = 0"
  * "hive_isp_css_stream_switch_hrt.h"
  */
-#घोषणा HIVE_ISP_CSS_STREAM_SWITCH_ISP       0
-#घोषणा HIVE_ISP_CSS_STREAM_SWITCH_SP        1
-#घोषणा HIVE_ISP_CSS_STREAM_SWITCH_NONE      2
+#define HIVE_ISP_CSS_STREAM_SWITCH_ISP       0
+#define HIVE_ISP_CSS_STREAM_SWITCH_SP        1
+#define HIVE_ISP_CSS_STREAM_SWITCH_NONE      2
 
-#पूर्ण_अगर /* __FIFO_MONITOR_GLOBAL_H_INCLUDED__ */
+#endif /* __FIFO_MONITOR_GLOBAL_H_INCLUDED__ */

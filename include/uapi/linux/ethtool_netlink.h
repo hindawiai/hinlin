@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0-only WITH Linux-syscall-note */
 /*
- * include/uapi/linux/ethtool_netlink.h - netlink पूर्णांकerface क्रम ethtool
+ * include/uapi/linux/ethtool_netlink.h - netlink interface for ethtool
  *
- * See Documentation/networking/ethtool-netlink.rst in kernel source tree क्रम
- * करोucumentation of the पूर्णांकerface.
+ * See Documentation/networking/ethtool-netlink.rst in kernel source tree for
+ * doucumentation of the interface.
  */
 
-#अगर_अघोषित _UAPI_LINUX_ETHTOOL_NETLINK_H_
-#घोषणा _UAPI_LINUX_ETHTOOL_NETLINK_H_
+#ifndef _UAPI_LINUX_ETHTOOL_NETLINK_H_
+#define _UAPI_LINUX_ETHTOOL_NETLINK_H_
 
-#समावेश <linux/ethtool.h>
+#include <linux/ethtool.h>
 
 /* message types - userspace to kernel */
-क्रमागत अणु
+enum {
 	ETHTOOL_MSG_USER_NONE,
 	ETHTOOL_MSG_STRSET_GET,
 	ETHTOOL_MSG_LINKINFO_GET,
@@ -48,13 +47,13 @@
 	ETHTOOL_MSG_MODULE_EEPROM_GET,
 	ETHTOOL_MSG_STATS_GET,
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_MSG_USER_CNT,
 	ETHTOOL_MSG_USER_MAX = __ETHTOOL_MSG_USER_CNT - 1
-पूर्ण;
+};
 
 /* message types - kernel to userspace */
-क्रमागत अणु
+enum {
 	ETHTOOL_MSG_KERNEL_NONE,
 	ETHTOOL_MSG_STRSET_GET_REPLY,
 	ETHTOOL_MSG_LINKINFO_GET_REPLY,
@@ -90,58 +89,58 @@
 	ETHTOOL_MSG_MODULE_EEPROM_GET_REPLY,
 	ETHTOOL_MSG_STATS_GET_REPLY,
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_MSG_KERNEL_CNT,
 	ETHTOOL_MSG_KERNEL_MAX = __ETHTOOL_MSG_KERNEL_CNT - 1
-पूर्ण;
+};
 
 /* request header */
 
 /* use compact bitsets in reply */
-#घोषणा ETHTOOL_FLAG_COMPACT_BITSETS	(1 << 0)
-/* provide optional reply क्रम SET or ACT requests */
-#घोषणा ETHTOOL_FLAG_OMIT_REPLY	(1 << 1)
-/* request statistics, अगर supported by the driver */
-#घोषणा ETHTOOL_FLAG_STATS		(1 << 2)
+#define ETHTOOL_FLAG_COMPACT_BITSETS	(1 << 0)
+/* provide optional reply for SET or ACT requests */
+#define ETHTOOL_FLAG_OMIT_REPLY	(1 << 1)
+/* request statistics, if supported by the driver */
+#define ETHTOOL_FLAG_STATS		(1 << 2)
 
-#घोषणा ETHTOOL_FLAG_ALL (ETHTOOL_FLAG_COMPACT_BITSETS | \
+#define ETHTOOL_FLAG_ALL (ETHTOOL_FLAG_COMPACT_BITSETS | \
 			  ETHTOOL_FLAG_OMIT_REPLY | \
 			  ETHTOOL_FLAG_STATS)
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_HEADER_UNSPEC,
 	ETHTOOL_A_HEADER_DEV_INDEX,		/* u32 */
 	ETHTOOL_A_HEADER_DEV_NAME,		/* string */
 	ETHTOOL_A_HEADER_FLAGS,			/* u32 - ETHTOOL_FLAG_* */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_HEADER_CNT,
 	ETHTOOL_A_HEADER_MAX = __ETHTOOL_A_HEADER_CNT - 1
-पूर्ण;
+};
 
 /* bit sets */
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_BITSET_BIT_UNSPEC,
 	ETHTOOL_A_BITSET_BIT_INDEX,		/* u32 */
 	ETHTOOL_A_BITSET_BIT_NAME,		/* string */
 	ETHTOOL_A_BITSET_BIT_VALUE,		/* flag */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_BITSET_BIT_CNT,
 	ETHTOOL_A_BITSET_BIT_MAX = __ETHTOOL_A_BITSET_BIT_CNT - 1
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_BITSET_BITS_UNSPEC,
 	ETHTOOL_A_BITSET_BITS_BIT,		/* nest - _A_BITSET_BIT_* */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_BITSET_BITS_CNT,
 	ETHTOOL_A_BITSET_BITS_MAX = __ETHTOOL_A_BITSET_BITS_CNT - 1
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_BITSET_UNSPEC,
 	ETHTOOL_A_BITSET_NOMASK,		/* flag */
 	ETHTOOL_A_BITSET_SIZE,			/* u32 */
@@ -149,68 +148,68 @@
 	ETHTOOL_A_BITSET_VALUE,			/* binary */
 	ETHTOOL_A_BITSET_MASK,			/* binary */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_BITSET_CNT,
 	ETHTOOL_A_BITSET_MAX = __ETHTOOL_A_BITSET_CNT - 1
-पूर्ण;
+};
 
 /* string sets */
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_STRING_UNSPEC,
 	ETHTOOL_A_STRING_INDEX,			/* u32 */
 	ETHTOOL_A_STRING_VALUE,			/* string */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_STRING_CNT,
 	ETHTOOL_A_STRING_MAX = __ETHTOOL_A_STRING_CNT - 1
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_STRINGS_UNSPEC,
 	ETHTOOL_A_STRINGS_STRING,		/* nest - _A_STRINGS_* */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_STRINGS_CNT,
 	ETHTOOL_A_STRINGS_MAX = __ETHTOOL_A_STRINGS_CNT - 1
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_STRINGSET_UNSPEC,
 	ETHTOOL_A_STRINGSET_ID,			/* u32 */
 	ETHTOOL_A_STRINGSET_COUNT,		/* u32 */
 	ETHTOOL_A_STRINGSET_STRINGS,		/* nest - _A_STRINGS_* */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_STRINGSET_CNT,
 	ETHTOOL_A_STRINGSET_MAX = __ETHTOOL_A_STRINGSET_CNT - 1
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_STRINGSETS_UNSPEC,
 	ETHTOOL_A_STRINGSETS_STRINGSET,		/* nest - _A_STRINGSET_* */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_STRINGSETS_CNT,
 	ETHTOOL_A_STRINGSETS_MAX = __ETHTOOL_A_STRINGSETS_CNT - 1
-पूर्ण;
+};
 
 /* STRSET */
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_STRSET_UNSPEC,
 	ETHTOOL_A_STRSET_HEADER,		/* nest - _A_HEADER_* */
 	ETHTOOL_A_STRSET_STRINGSETS,		/* nest - _A_STRINGSETS_* */
 	ETHTOOL_A_STRSET_COUNTS_ONLY,		/* flag */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_STRSET_CNT,
 	ETHTOOL_A_STRSET_MAX = __ETHTOOL_A_STRSET_CNT - 1
-पूर्ण;
+};
 
 /* LINKINFO */
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_LINKINFO_UNSPEC,
 	ETHTOOL_A_LINKINFO_HEADER,		/* nest - _A_HEADER_* */
 	ETHTOOL_A_LINKINFO_PORT,		/* u8 */
@@ -219,14 +218,14 @@
 	ETHTOOL_A_LINKINFO_TP_MDIX_CTRL,	/* u8 */
 	ETHTOOL_A_LINKINFO_TRANSCEIVER,		/* u8 */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_LINKINFO_CNT,
 	ETHTOOL_A_LINKINFO_MAX = __ETHTOOL_A_LINKINFO_CNT - 1
-पूर्ण;
+};
 
 /* LINKMODES */
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_LINKMODES_UNSPEC,
 	ETHTOOL_A_LINKMODES_HEADER,		/* nest - _A_HEADER_* */
 	ETHTOOL_A_LINKMODES_AUTONEG,		/* u8 */
@@ -238,14 +237,14 @@
 	ETHTOOL_A_LINKMODES_MASTER_SLAVE_STATE,	/* u8 */
 	ETHTOOL_A_LINKMODES_LANES,		/* u32 */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_LINKMODES_CNT,
 	ETHTOOL_A_LINKMODES_MAX = __ETHTOOL_A_LINKMODES_CNT - 1
-पूर्ण;
+};
 
 /* LINKSTATE */
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_LINKSTATE_UNSPEC,
 	ETHTOOL_A_LINKSTATE_HEADER,		/* nest - _A_HEADER_* */
 	ETHTOOL_A_LINKSTATE_LINK,		/* u8 */
@@ -254,39 +253,39 @@
 	ETHTOOL_A_LINKSTATE_EXT_STATE,		/* u8 */
 	ETHTOOL_A_LINKSTATE_EXT_SUBSTATE,	/* u8 */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_LINKSTATE_CNT,
 	ETHTOOL_A_LINKSTATE_MAX = __ETHTOOL_A_LINKSTATE_CNT - 1
-पूर्ण;
+};
 
 /* DEBUG */
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_DEBUG_UNSPEC,
 	ETHTOOL_A_DEBUG_HEADER,			/* nest - _A_HEADER_* */
 	ETHTOOL_A_DEBUG_MSGMASK,		/* bitset */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_DEBUG_CNT,
 	ETHTOOL_A_DEBUG_MAX = __ETHTOOL_A_DEBUG_CNT - 1
-पूर्ण;
+};
 
 /* WOL */
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_WOL_UNSPEC,
 	ETHTOOL_A_WOL_HEADER,			/* nest - _A_HEADER_* */
 	ETHTOOL_A_WOL_MODES,			/* bitset */
 	ETHTOOL_A_WOL_SOPASS,			/* binary */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_WOL_CNT,
 	ETHTOOL_A_WOL_MAX = __ETHTOOL_A_WOL_CNT - 1
-पूर्ण;
+};
 
 /* FEATURES */
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_FEATURES_UNSPEC,
 	ETHTOOL_A_FEATURES_HEADER,			/* nest - _A_HEADER_* */
 	ETHTOOL_A_FEATURES_HW,				/* bitset */
@@ -294,26 +293,26 @@
 	ETHTOOL_A_FEATURES_ACTIVE,			/* bitset */
 	ETHTOOL_A_FEATURES_NOCHANGE,			/* bitset */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_FEATURES_CNT,
 	ETHTOOL_A_FEATURES_MAX = __ETHTOOL_A_FEATURES_CNT - 1
-पूर्ण;
+};
 
 /* PRIVFLAGS */
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_PRIVFLAGS_UNSPEC,
 	ETHTOOL_A_PRIVFLAGS_HEADER,			/* nest - _A_HEADER_* */
 	ETHTOOL_A_PRIVFLAGS_FLAGS,			/* bitset */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_PRIVFLAGS_CNT,
 	ETHTOOL_A_PRIVFLAGS_MAX = __ETHTOOL_A_PRIVFLAGS_CNT - 1
-पूर्ण;
+};
 
 /* RINGS */
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_RINGS_UNSPEC,
 	ETHTOOL_A_RINGS_HEADER,				/* nest - _A_HEADER_* */
 	ETHTOOL_A_RINGS_RX_MAX,				/* u32 */
@@ -325,14 +324,14 @@
 	ETHTOOL_A_RINGS_RX_JUMBO,			/* u32 */
 	ETHTOOL_A_RINGS_TX,				/* u32 */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_RINGS_CNT,
 	ETHTOOL_A_RINGS_MAX = (__ETHTOOL_A_RINGS_CNT - 1)
-पूर्ण;
+};
 
 /* CHANNELS */
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_CHANNELS_UNSPEC,
 	ETHTOOL_A_CHANNELS_HEADER,			/* nest - _A_HEADER_* */
 	ETHTOOL_A_CHANNELS_RX_MAX,			/* u32 */
@@ -344,14 +343,14 @@
 	ETHTOOL_A_CHANNELS_OTHER_COUNT,			/* u32 */
 	ETHTOOL_A_CHANNELS_COMBINED_COUNT,		/* u32 */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_CHANNELS_CNT,
 	ETHTOOL_A_CHANNELS_MAX = (__ETHTOOL_A_CHANNELS_CNT - 1)
-पूर्ण;
+};
 
 /* COALESCE */
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_COALESCE_UNSPEC,
 	ETHTOOL_A_COALESCE_HEADER,			/* nest - _A_HEADER_* */
 	ETHTOOL_A_COALESCE_RX_USECS,			/* u32 */
@@ -377,14 +376,14 @@
 	ETHTOOL_A_COALESCE_TX_MAX_FRAMES_HIGH,		/* u32 */
 	ETHTOOL_A_COALESCE_RATE_SAMPLE_INTERVAL,	/* u32 */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_COALESCE_CNT,
 	ETHTOOL_A_COALESCE_MAX = (__ETHTOOL_A_COALESCE_CNT - 1)
-पूर्ण;
+};
 
 /* PAUSE */
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_PAUSE_UNSPEC,
 	ETHTOOL_A_PAUSE_HEADER,				/* nest - _A_HEADER_* */
 	ETHTOOL_A_PAUSE_AUTONEG,			/* u8 */
@@ -392,26 +391,26 @@
 	ETHTOOL_A_PAUSE_TX,				/* u8 */
 	ETHTOOL_A_PAUSE_STATS,				/* nest - _PAUSE_STAT_* */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_PAUSE_CNT,
 	ETHTOOL_A_PAUSE_MAX = (__ETHTOOL_A_PAUSE_CNT - 1)
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_PAUSE_STAT_UNSPEC,
 	ETHTOOL_A_PAUSE_STAT_PAD,
 
 	ETHTOOL_A_PAUSE_STAT_TX_FRAMES,
 	ETHTOOL_A_PAUSE_STAT_RX_FRAMES,
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_PAUSE_STAT_CNT,
 	ETHTOOL_A_PAUSE_STAT_MAX = (__ETHTOOL_A_PAUSE_STAT_CNT - 1)
-पूर्ण;
+};
 
 /* EEE */
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_EEE_UNSPEC,
 	ETHTOOL_A_EEE_HEADER,				/* nest - _A_HEADER_* */
 	ETHTOOL_A_EEE_MODES_OURS,			/* bitset */
@@ -421,14 +420,14 @@
 	ETHTOOL_A_EEE_TX_LPI_ENABLED,			/* u8 */
 	ETHTOOL_A_EEE_TX_LPI_TIMER,			/* u32 */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_EEE_CNT,
 	ETHTOOL_A_EEE_MAX = (__ETHTOOL_A_EEE_CNT - 1)
-पूर्ण;
+};
 
 /* TSINFO */
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_TSINFO_UNSPEC,
 	ETHTOOL_A_TSINFO_HEADER,			/* nest - _A_HEADER_* */
 	ETHTOOL_A_TSINFO_TIMESTAMPING,			/* bitset */
@@ -436,71 +435,71 @@
 	ETHTOOL_A_TSINFO_RX_FILTERS,			/* bitset */
 	ETHTOOL_A_TSINFO_PHC_INDEX,			/* u32 */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_TSINFO_CNT,
 	ETHTOOL_A_TSINFO_MAX = (__ETHTOOL_A_TSINFO_CNT - 1)
-पूर्ण;
+};
 
 /* CABLE TEST */
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_CABLE_TEST_UNSPEC,
 	ETHTOOL_A_CABLE_TEST_HEADER,		/* nest - _A_HEADER_* */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_CABLE_TEST_CNT,
 	ETHTOOL_A_CABLE_TEST_MAX = __ETHTOOL_A_CABLE_TEST_CNT - 1
-पूर्ण;
+};
 
 /* CABLE TEST NOTIFY */
-क्रमागत अणु
+enum {
 	ETHTOOL_A_CABLE_RESULT_CODE_UNSPEC,
 	ETHTOOL_A_CABLE_RESULT_CODE_OK,
 	ETHTOOL_A_CABLE_RESULT_CODE_OPEN,
 	ETHTOOL_A_CABLE_RESULT_CODE_SAME_SHORT,
 	ETHTOOL_A_CABLE_RESULT_CODE_CROSS_SHORT,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_CABLE_PAIR_A,
 	ETHTOOL_A_CABLE_PAIR_B,
 	ETHTOOL_A_CABLE_PAIR_C,
 	ETHTOOL_A_CABLE_PAIR_D,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_CABLE_RESULT_UNSPEC,
 	ETHTOOL_A_CABLE_RESULT_PAIR,		/* u8 ETHTOOL_A_CABLE_PAIR_ */
 	ETHTOOL_A_CABLE_RESULT_CODE,		/* u8 ETHTOOL_A_CABLE_RESULT_CODE_ */
 
 	__ETHTOOL_A_CABLE_RESULT_CNT,
 	ETHTOOL_A_CABLE_RESULT_MAX = (__ETHTOOL_A_CABLE_RESULT_CNT - 1)
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_CABLE_FAULT_LENGTH_UNSPEC,
 	ETHTOOL_A_CABLE_FAULT_LENGTH_PAIR,	/* u8 ETHTOOL_A_CABLE_PAIR_ */
 	ETHTOOL_A_CABLE_FAULT_LENGTH_CM,	/* u32 */
 
 	__ETHTOOL_A_CABLE_FAULT_LENGTH_CNT,
 	ETHTOOL_A_CABLE_FAULT_LENGTH_MAX = (__ETHTOOL_A_CABLE_FAULT_LENGTH_CNT - 1)
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_CABLE_TEST_NTF_STATUS_UNSPEC,
 	ETHTOOL_A_CABLE_TEST_NTF_STATUS_STARTED,
 	ETHTOOL_A_CABLE_TEST_NTF_STATUS_COMPLETED
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_CABLE_NEST_UNSPEC,
 	ETHTOOL_A_CABLE_NEST_RESULT,		/* nest - ETHTOOL_A_CABLE_RESULT_ */
 	ETHTOOL_A_CABLE_NEST_FAULT_LENGTH,	/* nest - ETHTOOL_A_CABLE_FAULT_LENGTH_ */
 	__ETHTOOL_A_CABLE_NEST_CNT,
 	ETHTOOL_A_CABLE_NEST_MAX = (__ETHTOOL_A_CABLE_NEST_CNT - 1)
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_CABLE_TEST_NTF_UNSPEC,
 	ETHTOOL_A_CABLE_TEST_NTF_HEADER,	/* nest - ETHTOOL_A_HEADER_* */
 	ETHTOOL_A_CABLE_TEST_NTF_STATUS,	/* u8 - _STARTED/_COMPLETE */
@@ -508,52 +507,52 @@
 
 	__ETHTOOL_A_CABLE_TEST_NTF_CNT,
 	ETHTOOL_A_CABLE_TEST_NTF_MAX = (__ETHTOOL_A_CABLE_TEST_NTF_CNT - 1)
-पूर्ण;
+};
 
 /* CABLE TEST TDR */
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_CABLE_TEST_TDR_CFG_UNSPEC,
 	ETHTOOL_A_CABLE_TEST_TDR_CFG_FIRST,		/* u32 */
 	ETHTOOL_A_CABLE_TEST_TDR_CFG_LAST,		/* u32 */
 	ETHTOOL_A_CABLE_TEST_TDR_CFG_STEP,		/* u32 */
 	ETHTOOL_A_CABLE_TEST_TDR_CFG_PAIR,		/* u8 */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_CABLE_TEST_TDR_CFG_CNT,
 	ETHTOOL_A_CABLE_TEST_TDR_CFG_MAX = __ETHTOOL_A_CABLE_TEST_TDR_CFG_CNT - 1
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_CABLE_TEST_TDR_UNSPEC,
 	ETHTOOL_A_CABLE_TEST_TDR_HEADER,	/* nest - _A_HEADER_* */
 	ETHTOOL_A_CABLE_TEST_TDR_CFG,		/* nest - *_TDR_CFG_* */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_CABLE_TEST_TDR_CNT,
 	ETHTOOL_A_CABLE_TEST_TDR_MAX = __ETHTOOL_A_CABLE_TEST_TDR_CNT - 1
-पूर्ण;
+};
 
 /* CABLE TEST TDR NOTIFY */
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_CABLE_AMPLITUDE_UNSPEC,
 	ETHTOOL_A_CABLE_AMPLITUDE_PAIR,         /* u8 */
 	ETHTOOL_A_CABLE_AMPLITUDE_mV,           /* s16 */
 
 	__ETHTOOL_A_CABLE_AMPLITUDE_CNT,
 	ETHTOOL_A_CABLE_AMPLITUDE_MAX = (__ETHTOOL_A_CABLE_AMPLITUDE_CNT - 1)
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_CABLE_PULSE_UNSPEC,
 	ETHTOOL_A_CABLE_PULSE_mV,		/* s16 */
 
 	__ETHTOOL_A_CABLE_PULSE_CNT,
 	ETHTOOL_A_CABLE_PULSE_MAX = (__ETHTOOL_A_CABLE_PULSE_CNT - 1)
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_CABLE_STEP_UNSPEC,
 	ETHTOOL_A_CABLE_STEP_FIRST_DISTANCE,	/* u32 */
 	ETHTOOL_A_CABLE_STEP_LAST_DISTANCE,	/* u32 */
@@ -561,9 +560,9 @@
 
 	__ETHTOOL_A_CABLE_STEP_CNT,
 	ETHTOOL_A_CABLE_STEP_MAX = (__ETHTOOL_A_CABLE_STEP_CNT - 1)
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_CABLE_TDR_NEST_UNSPEC,
 	ETHTOOL_A_CABLE_TDR_NEST_STEP,		/* nest - ETHTTOOL_A_CABLE_STEP */
 	ETHTOOL_A_CABLE_TDR_NEST_AMPLITUDE,	/* nest - ETHTOOL_A_CABLE_AMPLITUDE */
@@ -571,76 +570,76 @@
 
 	__ETHTOOL_A_CABLE_TDR_NEST_CNT,
 	ETHTOOL_A_CABLE_TDR_NEST_MAX = (__ETHTOOL_A_CABLE_TDR_NEST_CNT - 1)
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_CABLE_TEST_TDR_NTF_UNSPEC,
 	ETHTOOL_A_CABLE_TEST_TDR_NTF_HEADER,	/* nest - ETHTOOL_A_HEADER_* */
 	ETHTOOL_A_CABLE_TEST_TDR_NTF_STATUS,	/* u8 - _STARTED/_COMPLETE */
 	ETHTOOL_A_CABLE_TEST_TDR_NTF_NEST,	/* nest - of results: */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_CABLE_TEST_TDR_NTF_CNT,
 	ETHTOOL_A_CABLE_TEST_TDR_NTF_MAX = __ETHTOOL_A_CABLE_TEST_TDR_NTF_CNT - 1
-पूर्ण;
+};
 
 /* TUNNEL INFO */
 
-क्रमागत अणु
+enum {
 	ETHTOOL_UDP_TUNNEL_TYPE_VXLAN,
 	ETHTOOL_UDP_TUNNEL_TYPE_GENEVE,
 	ETHTOOL_UDP_TUNNEL_TYPE_VXLAN_GPE,
 
 	__ETHTOOL_UDP_TUNNEL_TYPE_CNT
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_TUNNEL_UDP_ENTRY_UNSPEC,
 
 	ETHTOOL_A_TUNNEL_UDP_ENTRY_PORT,		/* be16 */
 	ETHTOOL_A_TUNNEL_UDP_ENTRY_TYPE,		/* u32 */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_TUNNEL_UDP_ENTRY_CNT,
 	ETHTOOL_A_TUNNEL_UDP_ENTRY_MAX = (__ETHTOOL_A_TUNNEL_UDP_ENTRY_CNT - 1)
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_TUNNEL_UDP_TABLE_UNSPEC,
 
 	ETHTOOL_A_TUNNEL_UDP_TABLE_SIZE,		/* u32 */
 	ETHTOOL_A_TUNNEL_UDP_TABLE_TYPES,		/* bitset */
 	ETHTOOL_A_TUNNEL_UDP_TABLE_ENTRY,		/* nest - _UDP_ENTRY_* */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_TUNNEL_UDP_TABLE_CNT,
 	ETHTOOL_A_TUNNEL_UDP_TABLE_MAX = (__ETHTOOL_A_TUNNEL_UDP_TABLE_CNT - 1)
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_TUNNEL_UDP_UNSPEC,
 
 	ETHTOOL_A_TUNNEL_UDP_TABLE,			/* nest - _UDP_TABLE_* */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_TUNNEL_UDP_CNT,
 	ETHTOOL_A_TUNNEL_UDP_MAX = (__ETHTOOL_A_TUNNEL_UDP_CNT - 1)
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_TUNNEL_INFO_UNSPEC,
 	ETHTOOL_A_TUNNEL_INFO_HEADER,			/* nest - _A_HEADER_* */
 
 	ETHTOOL_A_TUNNEL_INFO_UDP_PORTS,		/* nest - _UDP_TABLE */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_TUNNEL_INFO_CNT,
 	ETHTOOL_A_TUNNEL_INFO_MAX = (__ETHTOOL_A_TUNNEL_INFO_CNT - 1)
-पूर्ण;
+};
 
 /* FEC */
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_FEC_UNSPEC,
 	ETHTOOL_A_FEC_HEADER,				/* nest - _A_HEADER_* */
 	ETHTOOL_A_FEC_MODES,				/* bitset */
@@ -650,9 +649,9 @@
 
 	__ETHTOOL_A_FEC_CNT,
 	ETHTOOL_A_FEC_MAX = (__ETHTOOL_A_FEC_CNT - 1)
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_FEC_STAT_UNSPEC,
 	ETHTOOL_A_FEC_STAT_PAD,
 
@@ -660,14 +659,14 @@
 	ETHTOOL_A_FEC_STAT_UNCORR,			/* array, u64 */
 	ETHTOOL_A_FEC_STAT_CORR_BITS,			/* array, u64 */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_FEC_STAT_CNT,
 	ETHTOOL_A_FEC_STAT_MAX = (__ETHTOOL_A_FEC_STAT_CNT - 1)
-पूर्ण;
+};
 
 /* MODULE EEPROM */
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_MODULE_EEPROM_UNSPEC,
 	ETHTOOL_A_MODULE_EEPROM_HEADER,			/* nest - _A_HEADER_* */
 
@@ -680,11 +679,11 @@
 
 	__ETHTOOL_A_MODULE_EEPROM_CNT,
 	ETHTOOL_A_MODULE_EEPROM_MAX = (__ETHTOOL_A_MODULE_EEPROM_CNT - 1)
-पूर्ण;
+};
 
 /* STATS */
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_STATS_UNSPEC,
 	ETHTOOL_A_STATS_PAD,
 	ETHTOOL_A_STATS_HEADER,			/* nest - _A_HEADER_* */
@@ -692,22 +691,22 @@
 
 	ETHTOOL_A_STATS_GRP,			/* nest - _A_STATS_GRP_* */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_STATS_CNT,
 	ETHTOOL_A_STATS_MAX = (__ETHTOOL_A_STATS_CNT - 1)
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ETHTOOL_STATS_ETH_PHY,
 	ETHTOOL_STATS_ETH_MAC,
 	ETHTOOL_STATS_ETH_CTRL,
 	ETHTOOL_STATS_RMON,
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_STATS_CNT
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ETHTOOL_A_STATS_GRP_UNSPEC,
 	ETHTOOL_A_STATS_GRP_PAD,
 
@@ -723,21 +722,21 @@
 	ETHTOOL_A_STATS_GRP_HIST_BKT_HI,	/* u32 */
 	ETHTOOL_A_STATS_GRP_HIST_VAL,		/* u64 */
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_STATS_GRP_CNT,
 	ETHTOOL_A_STATS_GRP_MAX = (__ETHTOOL_A_STATS_CNT - 1)
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	/* 30.3.2.1.5 aSymbolErrorDuringCarrier */
 	ETHTOOL_A_STATS_ETH_PHY_5_SYM_ERR,
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_STATS_ETH_PHY_CNT,
 	ETHTOOL_A_STATS_ETH_PHY_MAX = (__ETHTOOL_A_STATS_ETH_PHY_CNT - 1)
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	/* 30.3.1.1.2 aFramesTransmittedOK */
 	ETHTOOL_A_STATS_ETH_MAC_2_TX_PKT,
 	/* 30.3.1.1.3 aSingleCollisionFrames */
@@ -784,12 +783,12 @@
 	/* 30.3.1.1.25 aFrameTooLongErrors */
 	ETHTOOL_A_STATS_ETH_MAC_25_TOO_LONG_ERR,
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_STATS_ETH_MAC_CNT,
 	ETHTOOL_A_STATS_ETH_MAC_MAX = (__ETHTOOL_A_STATS_ETH_MAC_CNT - 1)
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	/* 30.3.3.3 aMACControlFramesTransmitted */
 	ETHTOOL_A_STATS_ETH_CTRL_3_TX,
 	/* 30.3.3.4 aMACControlFramesReceived */
@@ -797,12 +796,12 @@
 	/* 30.3.3.5 aUnsupportedOpcodesReceived */
 	ETHTOOL_A_STATS_ETH_CTRL_5_RX_UNSUP,
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_STATS_ETH_CTRL_CNT,
 	ETHTOOL_A_STATS_ETH_CTRL_MAX = (__ETHTOOL_A_STATS_ETH_CTRL_CNT - 1)
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	/* etherStatsUndersizePkts */
 	ETHTOOL_A_STATS_RMON_UNDERSIZE,
 	/* etherStatsOversizePkts */
@@ -812,15 +811,15 @@
 	/* etherStatsJabbers */
 	ETHTOOL_A_STATS_RMON_JABBER,
 
-	/* add new स्थिरants above here */
+	/* add new constants above here */
 	__ETHTOOL_A_STATS_RMON_CNT,
 	ETHTOOL_A_STATS_RMON_MAX = (__ETHTOOL_A_STATS_RMON_CNT - 1)
-पूर्ण;
+};
 
 /* generic netlink info */
-#घोषणा ETHTOOL_GENL_NAME "ethtool"
-#घोषणा ETHTOOL_GENL_VERSION 1
+#define ETHTOOL_GENL_NAME "ethtool"
+#define ETHTOOL_GENL_VERSION 1
 
-#घोषणा ETHTOOL_MCGRP_MONITOR_NAME "monitor"
+#define ETHTOOL_MCGRP_MONITOR_NAME "monitor"
 
-#पूर्ण_अगर /* _UAPI_LINUX_ETHTOOL_NETLINK_H_ */
+#endif /* _UAPI_LINUX_ETHTOOL_NETLINK_H_ */

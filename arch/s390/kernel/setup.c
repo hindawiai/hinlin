@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  S390 version
  *    Copyright IBM Corp. 1999, 2012
- *    Author(s): Harपंचांगut Penner (hp@de.ibm.com),
+ *    Author(s): Hartmut Penner (hp@de.ibm.com),
  *               Martin Schwidefsky (schwidefsky@de.ibm.com)
  *
  *  Derived from "arch/i386/kernel/setup.c"
@@ -14,612 +13,612 @@
  * This file handles the architecture-dependent parts of initialization
  */
 
-#घोषणा KMSG_COMPONENT "setup"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "setup"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/export.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/task.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/unistd.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/user.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/initrd.h>
-#समावेश <linux/root_dev.h>
-#समावेश <linux/console.h>
-#समावेश <linux/kernel_स्थिति.स>
-#समावेश <linux/dma-map-ops.h>
-#समावेश <linux/device.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/pfn.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/reboot.h>
-#समावेश <linux/topology.h>
-#समावेश <linux/kexec.h>
-#समावेश <linux/crash_dump.h>
-#समावेश <linux/memory.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/start_kernel.h>
-#समावेश <linux/hugetlb.h>
+#include <linux/errno.h>
+#include <linux/export.h>
+#include <linux/sched.h>
+#include <linux/sched/task.h>
+#include <linux/cpu.h>
+#include <linux/kernel.h>
+#include <linux/memblock.h>
+#include <linux/mm.h>
+#include <linux/stddef.h>
+#include <linux/unistd.h>
+#include <linux/ptrace.h>
+#include <linux/random.h>
+#include <linux/user.h>
+#include <linux/tty.h>
+#include <linux/ioport.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/initrd.h>
+#include <linux/root_dev.h>
+#include <linux/console.h>
+#include <linux/kernel_stat.h>
+#include <linux/dma-map-ops.h>
+#include <linux/device.h>
+#include <linux/notifier.h>
+#include <linux/pfn.h>
+#include <linux/ctype.h>
+#include <linux/reboot.h>
+#include <linux/topology.h>
+#include <linux/kexec.h>
+#include <linux/crash_dump.h>
+#include <linux/memory.h>
+#include <linux/compat.h>
+#include <linux/start_kernel.h>
+#include <linux/hugetlb.h>
 
-#समावेश <यंत्र/boot_data.h>
-#समावेश <यंत्र/ipl.h>
-#समावेश <यंत्र/facility.h>
-#समावेश <यंत्र/smp.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/cpcmd.h>
-#समावेश <यंत्र/lowcore.h>
-#समावेश <यंत्र/nmi.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/sections.h>
-#समावेश <यंत्र/ebcdic.h>
-#समावेश <यंत्र/diag.h>
-#समावेश <यंत्र/os_info.h>
-#समावेश <यंत्र/sclp.h>
-#समावेश <यंत्र/stacktrace.h>
-#समावेश <यंत्र/sysinfo.h>
-#समावेश <यंत्र/numa.h>
-#समावेश <यंत्र/alternative.h>
-#समावेश <यंत्र/nospec-branch.h>
-#समावेश <यंत्र/mem_detect.h>
-#समावेश <यंत्र/uv.h>
-#समावेश <यंत्र/यंत्र-offsets.h>
-#समावेश "entry.h"
+#include <asm/boot_data.h>
+#include <asm/ipl.h>
+#include <asm/facility.h>
+#include <asm/smp.h>
+#include <asm/mmu_context.h>
+#include <asm/cpcmd.h>
+#include <asm/lowcore.h>
+#include <asm/nmi.h>
+#include <asm/irq.h>
+#include <asm/page.h>
+#include <asm/ptrace.h>
+#include <asm/sections.h>
+#include <asm/ebcdic.h>
+#include <asm/diag.h>
+#include <asm/os_info.h>
+#include <asm/sclp.h>
+#include <asm/stacktrace.h>
+#include <asm/sysinfo.h>
+#include <asm/numa.h>
+#include <asm/alternative.h>
+#include <asm/nospec-branch.h>
+#include <asm/mem_detect.h>
+#include <asm/uv.h>
+#include <asm/asm-offsets.h>
+#include "entry.h"
 
 /*
  * Machine setup..
  */
-अचिन्हित पूर्णांक console_mode = 0;
+unsigned int console_mode = 0;
 EXPORT_SYMBOL(console_mode);
 
-अचिन्हित पूर्णांक console_devno = -1;
+unsigned int console_devno = -1;
 EXPORT_SYMBOL(console_devno);
 
-अचिन्हित पूर्णांक console_irq = -1;
+unsigned int console_irq = -1;
 EXPORT_SYMBOL(console_irq);
 
-अचिन्हित दीर्घ elf_hwcap __पढ़ो_mostly = 0;
-अक्षर elf_platक्रमm[ELF_PLATFORM_SIZE];
+unsigned long elf_hwcap __read_mostly = 0;
+char elf_platform[ELF_PLATFORM_SIZE];
 
-अचिन्हित दीर्घ पूर्णांक_hwcap = 0;
+unsigned long int_hwcap = 0;
 
-पूर्णांक __bootdata(noexec_disabled);
-अचिन्हित दीर्घ __bootdata(ident_map_size);
-अचिन्हित दीर्घ __bootdata(vदो_स्मृति_size);
-काष्ठा mem_detect_info __bootdata(mem_detect);
+int __bootdata(noexec_disabled);
+unsigned long __bootdata(ident_map_size);
+unsigned long __bootdata(vmalloc_size);
+struct mem_detect_info __bootdata(mem_detect);
 
-काष्ठा exception_table_entry *__bootdata_preserved(__start_dma_ex_table);
-काष्ठा exception_table_entry *__bootdata_preserved(__stop_dma_ex_table);
-अचिन्हित दीर्घ __bootdata_preserved(__stext_dma);
-अचिन्हित दीर्घ __bootdata_preserved(__etext_dma);
-अचिन्हित दीर्घ __bootdata_preserved(__sdma);
-अचिन्हित दीर्घ __bootdata_preserved(__edma);
-अचिन्हित दीर्घ __bootdata_preserved(__kaslr_offset);
-अचिन्हित पूर्णांक __bootdata_preserved(zlib_dfltcc_support);
+struct exception_table_entry *__bootdata_preserved(__start_dma_ex_table);
+struct exception_table_entry *__bootdata_preserved(__stop_dma_ex_table);
+unsigned long __bootdata_preserved(__stext_dma);
+unsigned long __bootdata_preserved(__etext_dma);
+unsigned long __bootdata_preserved(__sdma);
+unsigned long __bootdata_preserved(__edma);
+unsigned long __bootdata_preserved(__kaslr_offset);
+unsigned int __bootdata_preserved(zlib_dfltcc_support);
 EXPORT_SYMBOL(zlib_dfltcc_support);
 
-अचिन्हित दीर्घ VMALLOC_START;
+unsigned long VMALLOC_START;
 EXPORT_SYMBOL(VMALLOC_START);
 
-अचिन्हित दीर्घ VMALLOC_END;
+unsigned long VMALLOC_END;
 EXPORT_SYMBOL(VMALLOC_END);
 
-काष्ठा page *vmemmap;
+struct page *vmemmap;
 EXPORT_SYMBOL(vmemmap);
-अचिन्हित दीर्घ vmemmap_size;
+unsigned long vmemmap_size;
 
-अचिन्हित दीर्घ MODULES_VADDR;
-अचिन्हित दीर्घ MODULES_END;
+unsigned long MODULES_VADDR;
+unsigned long MODULES_END;
 
-/* An array with a poपूर्णांकer to the lowcore of every CPU. */
-काष्ठा lowcore *lowcore_ptr[NR_CPUS];
+/* An array with a pointer to the lowcore of every CPU. */
+struct lowcore *lowcore_ptr[NR_CPUS];
 EXPORT_SYMBOL(lowcore_ptr);
 
 /*
  * The Write Back bit position in the physaddr is given by the SLPC PCI.
- * Leaving the mask zero always uses ग_लिखो through which is safe
+ * Leaving the mask zero always uses write through which is safe
  */
-अचिन्हित दीर्घ mio_wb_bit_mask __ro_after_init;
+unsigned long mio_wb_bit_mask __ro_after_init;
 
 /*
- * This is set up by the setup-routine at boot-समय
- * क्रम S390 need to find out, what we have to setup
+ * This is set up by the setup-routine at boot-time
+ * for S390 need to find out, what we have to setup
  * using address 0x10400 ...
  */
 
-#समावेश <यंत्र/setup.h>
+#include <asm/setup.h>
 
 /*
  * condev= and conmode= setup parameter.
  */
 
-अटल पूर्णांक __init condev_setup(अक्षर *str)
-अणु
-	पूर्णांक vdev;
+static int __init condev_setup(char *str)
+{
+	int vdev;
 
-	vdev = simple_म_से_अदीर्घ(str, &str, 0);
-	अगर (vdev >= 0 && vdev < 65536) अणु
+	vdev = simple_strtoul(str, &str, 0);
+	if (vdev >= 0 && vdev < 65536) {
 		console_devno = vdev;
 		console_irq = -1;
-	पूर्ण
-	वापस 1;
-पूर्ण
+	}
+	return 1;
+}
 
 __setup("condev=", condev_setup);
 
-अटल व्योम __init set_preferred_console(व्योम)
-अणु
-	अगर (CONSOLE_IS_3215 || CONSOLE_IS_SCLP)
-		add_preferred_console("ttyS", 0, शून्य);
-	अन्यथा अगर (CONSOLE_IS_3270)
-		add_preferred_console("tty3270", 0, शून्य);
-	अन्यथा अगर (CONSOLE_IS_VT220)
-		add_preferred_console("ttyS", 1, शून्य);
-	अन्यथा अगर (CONSOLE_IS_HVC)
-		add_preferred_console("hvc", 0, शून्य);
-पूर्ण
+static void __init set_preferred_console(void)
+{
+	if (CONSOLE_IS_3215 || CONSOLE_IS_SCLP)
+		add_preferred_console("ttyS", 0, NULL);
+	else if (CONSOLE_IS_3270)
+		add_preferred_console("tty3270", 0, NULL);
+	else if (CONSOLE_IS_VT220)
+		add_preferred_console("ttyS", 1, NULL);
+	else if (CONSOLE_IS_HVC)
+		add_preferred_console("hvc", 0, NULL);
+}
 
-अटल पूर्णांक __init conmode_setup(अक्षर *str)
-अणु
-#अगर defined(CONFIG_SCLP_CONSOLE) || defined(CONFIG_SCLP_VT220_CONSOLE)
-	अगर (!म_भेद(str, "hwc") || !म_भेद(str, "sclp"))
+static int __init conmode_setup(char *str)
+{
+#if defined(CONFIG_SCLP_CONSOLE) || defined(CONFIG_SCLP_VT220_CONSOLE)
+	if (!strcmp(str, "hwc") || !strcmp(str, "sclp"))
                 SET_CONSOLE_SCLP;
-#पूर्ण_अगर
-#अगर defined(CONFIG_TN3215_CONSOLE)
-	अगर (!म_भेद(str, "3215"))
+#endif
+#if defined(CONFIG_TN3215_CONSOLE)
+	if (!strcmp(str, "3215"))
 		SET_CONSOLE_3215;
-#पूर्ण_अगर
-#अगर defined(CONFIG_TN3270_CONSOLE)
-	अगर (!म_भेद(str, "3270"))
+#endif
+#if defined(CONFIG_TN3270_CONSOLE)
+	if (!strcmp(str, "3270"))
 		SET_CONSOLE_3270;
-#पूर्ण_अगर
+#endif
 	set_preferred_console();
-        वापस 1;
-पूर्ण
+        return 1;
+}
 
 __setup("conmode=", conmode_setup);
 
-अटल व्योम __init conmode_शेष(व्योम)
-अणु
-	अक्षर query_buffer[1024];
-	अक्षर *ptr;
+static void __init conmode_default(void)
+{
+	char query_buffer[1024];
+	char *ptr;
 
-        अगर (MACHINE_IS_VM) अणु
-		cpcmd("QUERY CONSOLE", query_buffer, 1024, शून्य);
-		console_devno = simple_म_से_अदीर्घ(query_buffer + 5, शून्य, 16);
-		ptr = म_माला(query_buffer, "SUBCHANNEL =");
-		console_irq = simple_म_से_अदीर्घ(ptr + 13, शून्य, 16);
-		cpcmd("QUERY TERM", query_buffer, 1024, शून्य);
-		ptr = म_माला(query_buffer, "CONMODE");
+        if (MACHINE_IS_VM) {
+		cpcmd("QUERY CONSOLE", query_buffer, 1024, NULL);
+		console_devno = simple_strtoul(query_buffer + 5, NULL, 16);
+		ptr = strstr(query_buffer, "SUBCHANNEL =");
+		console_irq = simple_strtoul(ptr + 13, NULL, 16);
+		cpcmd("QUERY TERM", query_buffer, 1024, NULL);
+		ptr = strstr(query_buffer, "CONMODE");
 		/*
 		 * Set the conmode to 3215 so that the device recognition 
 		 * will set the cu_type of the console to 3215. If the
-		 * conmode is 3270 and we करोn't set it back then both
+		 * conmode is 3270 and we don't set it back then both
 		 * 3215 and the 3270 driver will try to access the console
 		 * device (3215 as console and 3270 as normal tty).
 		 */
-		cpcmd("TERM CONMODE 3215", शून्य, 0, शून्य);
-		अगर (ptr == शून्य) अणु
-#अगर defined(CONFIG_SCLP_CONSOLE) || defined(CONFIG_SCLP_VT220_CONSOLE)
+		cpcmd("TERM CONMODE 3215", NULL, 0, NULL);
+		if (ptr == NULL) {
+#if defined(CONFIG_SCLP_CONSOLE) || defined(CONFIG_SCLP_VT220_CONSOLE)
 			SET_CONSOLE_SCLP;
-#पूर्ण_अगर
-			वापस;
-		पूर्ण
-		अगर (str_has_prefix(ptr + 8, "3270")) अणु
-#अगर defined(CONFIG_TN3270_CONSOLE)
+#endif
+			return;
+		}
+		if (str_has_prefix(ptr + 8, "3270")) {
+#if defined(CONFIG_TN3270_CONSOLE)
 			SET_CONSOLE_3270;
-#या_अगर defined(CONFIG_TN3215_CONSOLE)
+#elif defined(CONFIG_TN3215_CONSOLE)
 			SET_CONSOLE_3215;
-#या_अगर defined(CONFIG_SCLP_CONSOLE) || defined(CONFIG_SCLP_VT220_CONSOLE)
+#elif defined(CONFIG_SCLP_CONSOLE) || defined(CONFIG_SCLP_VT220_CONSOLE)
 			SET_CONSOLE_SCLP;
-#पूर्ण_अगर
-		पूर्ण अन्यथा अगर (str_has_prefix(ptr + 8, "3215")) अणु
-#अगर defined(CONFIG_TN3215_CONSOLE)
+#endif
+		} else if (str_has_prefix(ptr + 8, "3215")) {
+#if defined(CONFIG_TN3215_CONSOLE)
 			SET_CONSOLE_3215;
-#या_अगर defined(CONFIG_TN3270_CONSOLE)
+#elif defined(CONFIG_TN3270_CONSOLE)
 			SET_CONSOLE_3270;
-#या_अगर defined(CONFIG_SCLP_CONSOLE) || defined(CONFIG_SCLP_VT220_CONSOLE)
+#elif defined(CONFIG_SCLP_CONSOLE) || defined(CONFIG_SCLP_VT220_CONSOLE)
 			SET_CONSOLE_SCLP;
-#पूर्ण_अगर
-		पूर्ण
-	पूर्ण अन्यथा अगर (MACHINE_IS_KVM) अणु
-		अगर (sclp.has_vt220 && IS_ENABLED(CONFIG_SCLP_VT220_CONSOLE))
+#endif
+		}
+	} else if (MACHINE_IS_KVM) {
+		if (sclp.has_vt220 && IS_ENABLED(CONFIG_SCLP_VT220_CONSOLE))
 			SET_CONSOLE_VT220;
-		अन्यथा अगर (sclp.has_linemode && IS_ENABLED(CONFIG_SCLP_CONSOLE))
+		else if (sclp.has_linemode && IS_ENABLED(CONFIG_SCLP_CONSOLE))
 			SET_CONSOLE_SCLP;
-		अन्यथा
+		else
 			SET_CONSOLE_HVC;
-	पूर्ण अन्यथा अणु
-#अगर defined(CONFIG_SCLP_CONSOLE) || defined(CONFIG_SCLP_VT220_CONSOLE)
+	} else {
+#if defined(CONFIG_SCLP_CONSOLE) || defined(CONFIG_SCLP_VT220_CONSOLE)
 		SET_CONSOLE_SCLP;
-#पूर्ण_अगर
-	पूर्ण
-पूर्ण
+#endif
+	}
+}
 
-#अगर_घोषित CONFIG_CRASH_DUMP
-अटल व्योम __init setup_zfcpdump(व्योम)
-अणु
-	अगर (!is_ipl_type_dump())
-		वापस;
-	अगर (OLDMEM_BASE)
-		वापस;
-	म_जोड़ो(boot_command_line, " cio_ignore=all,!ipldev,!condev");
+#ifdef CONFIG_CRASH_DUMP
+static void __init setup_zfcpdump(void)
+{
+	if (!is_ipl_type_dump())
+		return;
+	if (OLDMEM_BASE)
+		return;
+	strcat(boot_command_line, " cio_ignore=all,!ipldev,!condev");
 	console_loglevel = 2;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम setup_zfcpdump(व्योम) अणुपूर्ण
-#पूर्ण_अगर /* CONFIG_CRASH_DUMP */
+}
+#else
+static inline void setup_zfcpdump(void) {}
+#endif /* CONFIG_CRASH_DUMP */
 
  /*
- * Reboot, halt and घातer_off stubs. They just call _machine_restart,
- * _machine_halt or _machine_घातer_off. 
+ * Reboot, halt and power_off stubs. They just call _machine_restart,
+ * _machine_halt or _machine_power_off. 
  */
 
-व्योम machine_restart(अक्षर *command)
-अणु
-	अगर ((!in_पूर्णांकerrupt() && !in_atomic()) || oops_in_progress)
+void machine_restart(char *command)
+{
+	if ((!in_interrupt() && !in_atomic()) || oops_in_progress)
 		/*
-		 * Only unblank the console अगर we are called in enabled
-		 * context or a bust_spinlocks cleared the way क्रम us.
+		 * Only unblank the console if we are called in enabled
+		 * context or a bust_spinlocks cleared the way for us.
 		 */
 		console_unblank();
 	_machine_restart(command);
-पूर्ण
+}
 
-व्योम machine_halt(व्योम)
-अणु
-	अगर (!in_पूर्णांकerrupt() || oops_in_progress)
+void machine_halt(void)
+{
+	if (!in_interrupt() || oops_in_progress)
 		/*
-		 * Only unblank the console अगर we are called in enabled
-		 * context or a bust_spinlocks cleared the way क्रम us.
+		 * Only unblank the console if we are called in enabled
+		 * context or a bust_spinlocks cleared the way for us.
 		 */
 		console_unblank();
 	_machine_halt();
-पूर्ण
+}
 
-व्योम machine_घातer_off(व्योम)
-अणु
-	अगर (!in_पूर्णांकerrupt() || oops_in_progress)
+void machine_power_off(void)
+{
+	if (!in_interrupt() || oops_in_progress)
 		/*
-		 * Only unblank the console अगर we are called in enabled
-		 * context or a bust_spinlocks cleared the way क्रम us.
+		 * Only unblank the console if we are called in enabled
+		 * context or a bust_spinlocks cleared the way for us.
 		 */
 		console_unblank();
-	_machine_घातer_off();
-पूर्ण
+	_machine_power_off();
+}
 
 /*
- * Dummy घातer off function.
+ * Dummy power off function.
  */
-व्योम (*pm_घातer_off)(व्योम) = machine_घातer_off;
-EXPORT_SYMBOL_GPL(pm_घातer_off);
+void (*pm_power_off)(void) = machine_power_off;
+EXPORT_SYMBOL_GPL(pm_power_off);
 
-व्योम *restart_stack;
+void *restart_stack;
 
-अचिन्हित दीर्घ stack_alloc(व्योम)
-अणु
-#अगर_घोषित CONFIG_VMAP_STACK
-	वापस (अचिन्हित दीर्घ)__vदो_स्मृति_node(THREAD_SIZE, THREAD_SIZE,
+unsigned long stack_alloc(void)
+{
+#ifdef CONFIG_VMAP_STACK
+	return (unsigned long)__vmalloc_node(THREAD_SIZE, THREAD_SIZE,
 			THREADINFO_GFP, NUMA_NO_NODE,
-			__builtin_वापस_address(0));
-#अन्यथा
-	वापस __get_मुक्त_pages(GFP_KERNEL, THREAD_SIZE_ORDER);
-#पूर्ण_अगर
-पूर्ण
+			__builtin_return_address(0));
+#else
+	return __get_free_pages(GFP_KERNEL, THREAD_SIZE_ORDER);
+#endif
+}
 
-व्योम stack_मुक्त(अचिन्हित दीर्घ stack)
-अणु
-#अगर_घोषित CONFIG_VMAP_STACK
-	vमुक्त((व्योम *) stack);
-#अन्यथा
-	मुक्त_pages(stack, THREAD_SIZE_ORDER);
-#पूर्ण_अगर
-पूर्ण
+void stack_free(unsigned long stack)
+{
+#ifdef CONFIG_VMAP_STACK
+	vfree((void *) stack);
+#else
+	free_pages(stack, THREAD_SIZE_ORDER);
+#endif
+}
 
-पूर्णांक __init arch_early_irq_init(व्योम)
-अणु
-	अचिन्हित दीर्घ stack;
+int __init arch_early_irq_init(void)
+{
+	unsigned long stack;
 
-	stack = __get_मुक्त_pages(GFP_KERNEL, THREAD_SIZE_ORDER);
-	अगर (!stack)
+	stack = __get_free_pages(GFP_KERNEL, THREAD_SIZE_ORDER);
+	if (!stack)
 		panic("Couldn't allocate async stack");
 	S390_lowcore.async_stack = stack + STACK_INIT_OFFSET;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init stack_पुनः_स्मृति(व्योम)
-अणु
-	अचिन्हित दीर्घ old, new;
+static int __init stack_realloc(void)
+{
+	unsigned long old, new;
 
 	old = S390_lowcore.async_stack - STACK_INIT_OFFSET;
 	new = stack_alloc();
-	अगर (!new)
+	if (!new)
 		panic("Couldn't allocate async stack");
 	WRITE_ONCE(S390_lowcore.async_stack, new + STACK_INIT_OFFSET);
-	मुक्त_pages(old, THREAD_SIZE_ORDER);
+	free_pages(old, THREAD_SIZE_ORDER);
 
 	old = S390_lowcore.mcck_stack - STACK_INIT_OFFSET;
 	new = stack_alloc();
-	अगर (!new)
+	if (!new)
 		panic("Couldn't allocate machine check stack");
 	WRITE_ONCE(S390_lowcore.mcck_stack, new + STACK_INIT_OFFSET);
-	memblock_मुक्त_late(old, THREAD_SIZE);
-	वापस 0;
-पूर्ण
-early_initcall(stack_पुनः_स्मृति);
+	memblock_free_late(old, THREAD_SIZE);
+	return 0;
+}
+early_initcall(stack_realloc);
 
-व्योम __init arch_call_rest_init(व्योम)
-अणु
-	अचिन्हित दीर्घ stack;
+void __init arch_call_rest_init(void)
+{
+	unsigned long stack;
 
 	stack = stack_alloc();
-	अगर (!stack)
+	if (!stack)
 		panic("Couldn't allocate kernel stack");
-	current->stack = (व्योम *) stack;
-#अगर_घोषित CONFIG_VMAP_STACK
-	current->stack_vm_area = (व्योम *) stack;
-#पूर्ण_अगर
+	current->stack = (void *) stack;
+#ifdef CONFIG_VMAP_STACK
+	current->stack_vm_area = (void *) stack;
+#endif
 	set_task_stack_end_magic(current);
 	stack += STACK_INIT_OFFSET;
 	S390_lowcore.kernel_stack = stack;
 	CALL_ON_STACK_NORETURN(rest_init, stack);
-पूर्ण
+}
 
-अटल व्योम __init setup_lowcore_dat_off(व्योम)
-अणु
-	अचिन्हित दीर्घ पूर्णांक_psw_mask = PSW_KERNEL_BITS;
-	अचिन्हित दीर्घ mcck_stack;
-	काष्ठा lowcore *lc;
+static void __init setup_lowcore_dat_off(void)
+{
+	unsigned long int_psw_mask = PSW_KERNEL_BITS;
+	unsigned long mcck_stack;
+	struct lowcore *lc;
 
-	अगर (IS_ENABLED(CONFIG_KASAN))
-		पूर्णांक_psw_mask |= PSW_MASK_DAT;
+	if (IS_ENABLED(CONFIG_KASAN))
+		int_psw_mask |= PSW_MASK_DAT;
 
 	/*
-	 * Setup lowcore क्रम boot cpu
+	 * Setup lowcore for boot cpu
 	 */
-	BUILD_BUG_ON(माप(काष्ठा lowcore) != LC_PAGES * PAGE_SIZE);
-	lc = memblock_alloc_low(माप(*lc), माप(*lc));
-	अगर (!lc)
+	BUILD_BUG_ON(sizeof(struct lowcore) != LC_PAGES * PAGE_SIZE);
+	lc = memblock_alloc_low(sizeof(*lc), sizeof(*lc));
+	if (!lc)
 		panic("%s: Failed to allocate %zu bytes align=%zx\n",
-		      __func__, माप(*lc), माप(*lc));
+		      __func__, sizeof(*lc), sizeof(*lc));
 
 	lc->restart_psw.mask = PSW_KERNEL_BITS;
-	lc->restart_psw.addr = (अचिन्हित दीर्घ) restart_पूर्णांक_handler;
-	lc->बाह्यal_new_psw.mask = पूर्णांक_psw_mask | PSW_MASK_MCHECK;
-	lc->बाह्यal_new_psw.addr = (अचिन्हित दीर्घ) ext_पूर्णांक_handler;
-	lc->svc_new_psw.mask = पूर्णांक_psw_mask | PSW_MASK_MCHECK;
-	lc->svc_new_psw.addr = (अचिन्हित दीर्घ) प्रणाली_call;
-	lc->program_new_psw.mask = पूर्णांक_psw_mask | PSW_MASK_MCHECK;
-	lc->program_new_psw.addr = (अचिन्हित दीर्घ) pgm_check_handler;
+	lc->restart_psw.addr = (unsigned long) restart_int_handler;
+	lc->external_new_psw.mask = int_psw_mask | PSW_MASK_MCHECK;
+	lc->external_new_psw.addr = (unsigned long) ext_int_handler;
+	lc->svc_new_psw.mask = int_psw_mask | PSW_MASK_MCHECK;
+	lc->svc_new_psw.addr = (unsigned long) system_call;
+	lc->program_new_psw.mask = int_psw_mask | PSW_MASK_MCHECK;
+	lc->program_new_psw.addr = (unsigned long) pgm_check_handler;
 	lc->mcck_new_psw.mask = PSW_KERNEL_BITS;
-	lc->mcck_new_psw.addr = (अचिन्हित दीर्घ) mcck_पूर्णांक_handler;
-	lc->io_new_psw.mask = पूर्णांक_psw_mask | PSW_MASK_MCHECK;
-	lc->io_new_psw.addr = (अचिन्हित दीर्घ) io_पूर्णांक_handler;
-	lc->घड़ी_comparator = घड़ी_comparator_max;
-	lc->nodat_stack = ((अचिन्हित दीर्घ) &init_thपढ़ो_जोड़)
-		+ THREAD_SIZE - STACK_FRAME_OVERHEAD - माप(काष्ठा pt_regs);
-	lc->current_task = (अचिन्हित दीर्घ)&init_task;
+	lc->mcck_new_psw.addr = (unsigned long) mcck_int_handler;
+	lc->io_new_psw.mask = int_psw_mask | PSW_MASK_MCHECK;
+	lc->io_new_psw.addr = (unsigned long) io_int_handler;
+	lc->clock_comparator = clock_comparator_max;
+	lc->nodat_stack = ((unsigned long) &init_thread_union)
+		+ THREAD_SIZE - STACK_FRAME_OVERHEAD - sizeof(struct pt_regs);
+	lc->current_task = (unsigned long)&init_task;
 	lc->lpp = LPP_MAGIC;
 	lc->machine_flags = S390_lowcore.machine_flags;
 	lc->preempt_count = S390_lowcore.preempt_count;
 	lc->stfl_fac_list = S390_lowcore.stfl_fac_list;
-	स_नकल(lc->stfle_fac_list, S390_lowcore.stfle_fac_list,
-	       माप(lc->stfle_fac_list));
-	स_नकल(lc->alt_stfle_fac_list, S390_lowcore.alt_stfle_fac_list,
-	       माप(lc->alt_stfle_fac_list));
+	memcpy(lc->stfle_fac_list, S390_lowcore.stfle_fac_list,
+	       sizeof(lc->stfle_fac_list));
+	memcpy(lc->alt_stfle_fac_list, S390_lowcore.alt_stfle_fac_list,
+	       sizeof(lc->alt_stfle_fac_list));
 	nmi_alloc_boot_cpu(lc);
-	lc->sys_enter_समयr = S390_lowcore.sys_enter_समयr;
-	lc->निकास_समयr = S390_lowcore.निकास_समयr;
-	lc->user_समयr = S390_lowcore.user_समयr;
-	lc->प्रणाली_समयr = S390_lowcore.प्रणाली_समयr;
-	lc->steal_समयr = S390_lowcore.steal_समयr;
-	lc->last_update_समयr = S390_lowcore.last_update_समयr;
-	lc->last_update_घड़ी = S390_lowcore.last_update_घड़ी;
+	lc->sys_enter_timer = S390_lowcore.sys_enter_timer;
+	lc->exit_timer = S390_lowcore.exit_timer;
+	lc->user_timer = S390_lowcore.user_timer;
+	lc->system_timer = S390_lowcore.system_timer;
+	lc->steal_timer = S390_lowcore.steal_timer;
+	lc->last_update_timer = S390_lowcore.last_update_timer;
+	lc->last_update_clock = S390_lowcore.last_update_clock;
 
 	/*
-	 * Allocate the global restart stack which is the same क्रम
-	 * all CPUs in cast *one* of them करोes a PSW restart.
+	 * Allocate the global restart stack which is the same for
+	 * all CPUs in cast *one* of them does a PSW restart.
 	 */
 	restart_stack = memblock_alloc(THREAD_SIZE, THREAD_SIZE);
-	अगर (!restart_stack)
+	if (!restart_stack)
 		panic("%s: Failed to allocate %lu bytes align=0x%lx\n",
 		      __func__, THREAD_SIZE, THREAD_SIZE);
 	restart_stack += STACK_INIT_OFFSET;
 
 	/*
-	 * Set up PSW restart to call ipl.c:करो_restart(). Copy the relevant
-	 * restart data to the असलolute zero lowcore. This is necessary अगर
-	 * PSW restart is करोne on an offline CPU that has lowcore zero.
+	 * Set up PSW restart to call ipl.c:do_restart(). Copy the relevant
+	 * restart data to the absolute zero lowcore. This is necessary if
+	 * PSW restart is done on an offline CPU that has lowcore zero.
 	 */
-	lc->restart_stack = (अचिन्हित दीर्घ) restart_stack;
-	lc->restart_fn = (अचिन्हित दीर्घ) करो_restart;
+	lc->restart_stack = (unsigned long) restart_stack;
+	lc->restart_fn = (unsigned long) do_restart;
 	lc->restart_data = 0;
 	lc->restart_source = -1UL;
 
-	mcck_stack = (अचिन्हित दीर्घ)memblock_alloc(THREAD_SIZE, THREAD_SIZE);
-	अगर (!mcck_stack)
+	mcck_stack = (unsigned long)memblock_alloc(THREAD_SIZE, THREAD_SIZE);
+	if (!mcck_stack)
 		panic("%s: Failed to allocate %lu bytes align=0x%lx\n",
 		      __func__, THREAD_SIZE, THREAD_SIZE);
 	lc->mcck_stack = mcck_stack + STACK_INIT_OFFSET;
 
-	/* Setup असलolute zero lowcore */
-	mem_assign_असलolute(S390_lowcore.restart_stack, lc->restart_stack);
-	mem_assign_असलolute(S390_lowcore.restart_fn, lc->restart_fn);
-	mem_assign_असलolute(S390_lowcore.restart_data, lc->restart_data);
-	mem_assign_असलolute(S390_lowcore.restart_source, lc->restart_source);
-	mem_assign_असलolute(S390_lowcore.restart_psw, lc->restart_psw);
+	/* Setup absolute zero lowcore */
+	mem_assign_absolute(S390_lowcore.restart_stack, lc->restart_stack);
+	mem_assign_absolute(S390_lowcore.restart_fn, lc->restart_fn);
+	mem_assign_absolute(S390_lowcore.restart_data, lc->restart_data);
+	mem_assign_absolute(S390_lowcore.restart_source, lc->restart_source);
+	mem_assign_absolute(S390_lowcore.restart_psw, lc->restart_psw);
 
 	lc->spinlock_lockval = arch_spin_lockval(0);
 	lc->spinlock_index = 0;
 	arch_spin_lock_setup(0);
 	lc->br_r1_trampoline = 0x07f1;	/* br %r1 */
-	lc->वापस_lpswe = gen_lpswe(__LC_RETURN_PSW);
-	lc->वापस_mcck_lpswe = gen_lpswe(__LC_RETURN_MCCK_PSW);
+	lc->return_lpswe = gen_lpswe(__LC_RETURN_PSW);
+	lc->return_mcck_lpswe = gen_lpswe(__LC_RETURN_MCCK_PSW);
 
-	set_prefix((u32)(अचिन्हित दीर्घ) lc);
+	set_prefix((u32)(unsigned long) lc);
 	lowcore_ptr[0] = lc;
-पूर्ण
+}
 
-अटल व्योम __init setup_lowcore_dat_on(व्योम)
-अणु
+static void __init setup_lowcore_dat_on(void)
+{
 	__ctl_clear_bit(0, 28);
-	S390_lowcore.बाह्यal_new_psw.mask |= PSW_MASK_DAT;
+	S390_lowcore.external_new_psw.mask |= PSW_MASK_DAT;
 	S390_lowcore.svc_new_psw.mask |= PSW_MASK_DAT;
 	S390_lowcore.program_new_psw.mask |= PSW_MASK_DAT;
 	S390_lowcore.io_new_psw.mask |= PSW_MASK_DAT;
 	__ctl_set_bit(0, 28);
-पूर्ण
+}
 
-अटल काष्ठा resource code_resource = अणु
+static struct resource code_resource = {
 	.name  = "Kernel code",
 	.flags = IORESOURCE_BUSY | IORESOURCE_SYSTEM_RAM,
-पूर्ण;
+};
 
-अटल काष्ठा resource data_resource = अणु
+static struct resource data_resource = {
 	.name = "Kernel data",
 	.flags = IORESOURCE_BUSY | IORESOURCE_SYSTEM_RAM,
-पूर्ण;
+};
 
-अटल काष्ठा resource bss_resource = अणु
+static struct resource bss_resource = {
 	.name = "Kernel bss",
 	.flags = IORESOURCE_BUSY | IORESOURCE_SYSTEM_RAM,
-पूर्ण;
+};
 
-अटल काष्ठा resource __initdata *standard_resources[] = अणु
+static struct resource __initdata *standard_resources[] = {
 	&code_resource,
 	&data_resource,
 	&bss_resource,
-पूर्ण;
+};
 
-अटल व्योम __init setup_resources(व्योम)
-अणु
-	काष्ठा resource *res, *std_res, *sub_res;
+static void __init setup_resources(void)
+{
+	struct resource *res, *std_res, *sub_res;
 	phys_addr_t start, end;
-	पूर्णांक j;
+	int j;
 	u64 i;
 
-	code_resource.start = (अचिन्हित दीर्घ) _text;
-	code_resource.end = (अचिन्हित दीर्घ) _etext - 1;
-	data_resource.start = (अचिन्हित दीर्घ) _etext;
-	data_resource.end = (अचिन्हित दीर्घ) _edata - 1;
-	bss_resource.start = (अचिन्हित दीर्घ) __bss_start;
-	bss_resource.end = (अचिन्हित दीर्घ) __bss_stop - 1;
+	code_resource.start = (unsigned long) _text;
+	code_resource.end = (unsigned long) _etext - 1;
+	data_resource.start = (unsigned long) _etext;
+	data_resource.end = (unsigned long) _edata - 1;
+	bss_resource.start = (unsigned long) __bss_start;
+	bss_resource.end = (unsigned long) __bss_stop - 1;
 
-	क्रम_each_mem_range(i, &start, &end) अणु
-		res = memblock_alloc(माप(*res), 8);
-		अगर (!res)
+	for_each_mem_range(i, &start, &end) {
+		res = memblock_alloc(sizeof(*res), 8);
+		if (!res)
 			panic("%s: Failed to allocate %zu bytes align=0x%x\n",
-			      __func__, माप(*res), 8);
+			      __func__, sizeof(*res), 8);
 		res->flags = IORESOURCE_BUSY | IORESOURCE_SYSTEM_RAM;
 
 		res->name = "System RAM";
 		res->start = start;
 		/*
-		 * In memblock, end poपूर्णांकs to the first byte after the
-		 * range जबतक in resourses, end poपूर्णांकs to the last byte in
+		 * In memblock, end points to the first byte after the
+		 * range while in resourses, end points to the last byte in
 		 * the range.
 		 */
 		res->end = end - 1;
 		request_resource(&iomem_resource, res);
 
-		क्रम (j = 0; j < ARRAY_SIZE(standard_resources); j++) अणु
+		for (j = 0; j < ARRAY_SIZE(standard_resources); j++) {
 			std_res = standard_resources[j];
-			अगर (std_res->start < res->start ||
+			if (std_res->start < res->start ||
 			    std_res->start > res->end)
-				जारी;
-			अगर (std_res->end > res->end) अणु
-				sub_res = memblock_alloc(माप(*sub_res), 8);
-				अगर (!sub_res)
+				continue;
+			if (std_res->end > res->end) {
+				sub_res = memblock_alloc(sizeof(*sub_res), 8);
+				if (!sub_res)
 					panic("%s: Failed to allocate %zu bytes align=0x%x\n",
-					      __func__, माप(*sub_res), 8);
+					      __func__, sizeof(*sub_res), 8);
 				*sub_res = *std_res;
 				sub_res->end = res->end;
 				std_res->start = res->end + 1;
 				request_resource(res, sub_res);
-			पूर्ण अन्यथा अणु
+			} else {
 				request_resource(res, std_res);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-#अगर_घोषित CONFIG_CRASH_DUMP
+			}
+		}
+	}
+#ifdef CONFIG_CRASH_DUMP
 	/*
-	 * Re-add हटाओd crash kernel memory as reserved memory. This makes
-	 * sure it will be mapped with the identity mapping and काष्ठा pages
+	 * Re-add removed crash kernel memory as reserved memory. This makes
+	 * sure it will be mapped with the identity mapping and struct pages
 	 * will be created, so it can be resized later on.
 	 * However add it later since the crash kernel resource should not be
 	 * part of the System RAM resource.
 	 */
-	अगर (crashk_res.end) अणु
+	if (crashk_res.end) {
 		memblock_add_node(crashk_res.start, resource_size(&crashk_res), 0);
 		memblock_reserve(crashk_res.start, resource_size(&crashk_res));
 		insert_resource(&iomem_resource, &crashk_res);
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+	}
+#endif
+}
 
-अटल व्योम __init setup_ident_map_size(व्योम)
-अणु
-	अचिन्हित दीर्घ vmax, पंचांगp;
+static void __init setup_ident_map_size(void)
+{
+	unsigned long vmax, tmp;
 
 	/* Choose kernel address space layout: 3 or 4 levels. */
-	पंचांगp = ident_map_size / PAGE_SIZE;
-	पंचांगp = पंचांगp * (माप(काष्ठा page) + PAGE_SIZE);
-	अगर (पंचांगp + vदो_स्मृति_size + MODULES_LEN <= _REGION2_SIZE)
+	tmp = ident_map_size / PAGE_SIZE;
+	tmp = tmp * (sizeof(struct page) + PAGE_SIZE);
+	if (tmp + vmalloc_size + MODULES_LEN <= _REGION2_SIZE)
 		vmax = _REGION2_SIZE; /* 3-level kernel page table */
-	अन्यथा
+	else
 		vmax = _REGION1_SIZE; /* 4-level kernel page table */
 	/* module area is at the end of the kernel address space. */
 	MODULES_END = vmax;
-	अगर (is_prot_virt_host())
+	if (is_prot_virt_host())
 		adjust_to_uv_max(&MODULES_END);
-#अगर_घोषित CONFIG_KASAN
+#ifdef CONFIG_KASAN
 	vmax = _REGION1_SIZE;
 	MODULES_END = kasan_vmax;
-#पूर्ण_अगर
+#endif
 	MODULES_VADDR = MODULES_END - MODULES_LEN;
 	VMALLOC_END = MODULES_VADDR;
-	VMALLOC_START = VMALLOC_END - vदो_स्मृति_size;
+	VMALLOC_START = VMALLOC_END - vmalloc_size;
 
-	/* Split reमुख्यing भव space between 1:1 mapping & vmemmap array */
-	पंचांगp = VMALLOC_START / (PAGE_SIZE + माप(काष्ठा page));
-	/* vmemmap contains a multiple of PAGES_PER_SECTION काष्ठा pages */
-	पंचांगp = SECTION_ALIGN_UP(पंचांगp);
-	पंचांगp = VMALLOC_START - पंचांगp * माप(काष्ठा page);
-	पंचांगp &= ~((vmax >> 11) - 1);	/* align to page table level */
-	पंचांगp = min(पंचांगp, 1UL << MAX_PHYSMEM_BITS);
-	vmemmap = (काष्ठा page *) पंचांगp;
+	/* Split remaining virtual space between 1:1 mapping & vmemmap array */
+	tmp = VMALLOC_START / (PAGE_SIZE + sizeof(struct page));
+	/* vmemmap contains a multiple of PAGES_PER_SECTION struct pages */
+	tmp = SECTION_ALIGN_UP(tmp);
+	tmp = VMALLOC_START - tmp * sizeof(struct page);
+	tmp &= ~((vmax >> 11) - 1);	/* align to page table level */
+	tmp = min(tmp, 1UL << MAX_PHYSMEM_BITS);
+	vmemmap = (struct page *) tmp;
 
 	/* Take care that ident_map_size <= vmemmap */
-	ident_map_size = min(ident_map_size, (अचिन्हित दीर्घ)vmemmap);
-#अगर_घोषित CONFIG_KASAN
+	ident_map_size = min(ident_map_size, (unsigned long)vmemmap);
+#ifdef CONFIG_KASAN
 	ident_map_size = min(ident_map_size, KASAN_SHADOW_START);
-#पूर्ण_अगर
-	vmemmap_size = SECTION_ALIGN_UP(ident_map_size / PAGE_SIZE) * माप(काष्ठा page);
-#अगर_घोषित CONFIG_KASAN
-	/* move vmemmap above kasan shaकरोw only अगर stands in a way */
-	अगर (KASAN_SHADOW_END > (अचिन्हित दीर्घ)vmemmap &&
-	    (अचिन्हित दीर्घ)vmemmap + vmemmap_size > KASAN_SHADOW_START)
-		vmemmap = max(vmemmap, (काष्ठा page *)KASAN_SHADOW_END);
-#पूर्ण_अगर
+#endif
+	vmemmap_size = SECTION_ALIGN_UP(ident_map_size / PAGE_SIZE) * sizeof(struct page);
+#ifdef CONFIG_KASAN
+	/* move vmemmap above kasan shadow only if stands in a way */
+	if (KASAN_SHADOW_END > (unsigned long)vmemmap &&
+	    (unsigned long)vmemmap + vmemmap_size > KASAN_SHADOW_START)
+		vmemmap = max(vmemmap, (struct page *)KASAN_SHADOW_END);
+#endif
 	max_pfn = max_low_pfn = PFN_DOWN(ident_map_size);
-	memblock_हटाओ(ident_map_size, अच_दीर्घ_उच्च);
+	memblock_remove(ident_map_size, ULONG_MAX);
 
 	pr_notice("The maximum memory size is %luMB\n", ident_map_size >> 20);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_CRASH_DUMP
+#ifdef CONFIG_CRASH_DUMP
 
 /*
  * When kdump is enabled, we have to ensure that no memory from the area
@@ -627,259 +626,259 @@ early_initcall(stack_पुनः_स्मृति);
  * the crashkernel memory region when kdump is triggered. The crashkernel
  * memory region can never get offlined (pages are unmovable).
  */
-अटल पूर्णांक kdump_mem_notअगरier(काष्ठा notअगरier_block *nb,
-			      अचिन्हित दीर्घ action, व्योम *data)
-अणु
-	काष्ठा memory_notअगरy *arg = data;
+static int kdump_mem_notifier(struct notifier_block *nb,
+			      unsigned long action, void *data)
+{
+	struct memory_notify *arg = data;
 
-	अगर (action != MEM_GOING_OFFLINE)
-		वापस NOTIFY_OK;
-	अगर (arg->start_pfn < PFN_DOWN(resource_size(&crashk_res)))
-		वापस NOTIFY_BAD;
-	वापस NOTIFY_OK;
-पूर्ण
+	if (action != MEM_GOING_OFFLINE)
+		return NOTIFY_OK;
+	if (arg->start_pfn < PFN_DOWN(resource_size(&crashk_res)))
+		return NOTIFY_BAD;
+	return NOTIFY_OK;
+}
 
-अटल काष्ठा notअगरier_block kdump_mem_nb = अणु
-	.notअगरier_call = kdump_mem_notअगरier,
-पूर्ण;
+static struct notifier_block kdump_mem_nb = {
+	.notifier_call = kdump_mem_notifier,
+};
 
-#पूर्ण_अगर
-
-/*
- * Make sure that the area above identity mapping is रक्षित
- */
-अटल व्योम __init reserve_above_ident_map(व्योम)
-अणु
-	memblock_reserve(ident_map_size, अच_दीर्घ_उच्च);
-पूर्ण
+#endif
 
 /*
- * Make sure that oldmem, where the dump is stored, is रक्षित
+ * Make sure that the area above identity mapping is protected
  */
-अटल व्योम __init reserve_oldmem(व्योम)
-अणु
-#अगर_घोषित CONFIG_CRASH_DUMP
-	अगर (OLDMEM_BASE)
-		/* Forget all memory above the running kdump प्रणाली */
-		memblock_reserve(OLDMEM_SIZE, (phys_addr_t)अच_दीर्घ_उच्च);
-#पूर्ण_अगर
-पूर्ण
+static void __init reserve_above_ident_map(void)
+{
+	memblock_reserve(ident_map_size, ULONG_MAX);
+}
 
 /*
- * Make sure that oldmem, where the dump is stored, is रक्षित
+ * Make sure that oldmem, where the dump is stored, is protected
  */
-अटल व्योम __init हटाओ_oldmem(व्योम)
-अणु
-#अगर_घोषित CONFIG_CRASH_DUMP
-	अगर (OLDMEM_BASE)
-		/* Forget all memory above the running kdump प्रणाली */
-		memblock_हटाओ(OLDMEM_SIZE, (phys_addr_t)अच_दीर्घ_उच्च);
-#पूर्ण_अगर
-पूर्ण
+static void __init reserve_oldmem(void)
+{
+#ifdef CONFIG_CRASH_DUMP
+	if (OLDMEM_BASE)
+		/* Forget all memory above the running kdump system */
+		memblock_reserve(OLDMEM_SIZE, (phys_addr_t)ULONG_MAX);
+#endif
+}
 
 /*
- * Reserve memory क्रम kdump kernel to be loaded with kexec
+ * Make sure that oldmem, where the dump is stored, is protected
  */
-अटल व्योम __init reserve_crashkernel(व्योम)
-अणु
-#अगर_घोषित CONFIG_CRASH_DUMP
-	अचिन्हित दीर्घ दीर्घ crash_base, crash_size;
+static void __init remove_oldmem(void)
+{
+#ifdef CONFIG_CRASH_DUMP
+	if (OLDMEM_BASE)
+		/* Forget all memory above the running kdump system */
+		memblock_remove(OLDMEM_SIZE, (phys_addr_t)ULONG_MAX);
+#endif
+}
+
+/*
+ * Reserve memory for kdump kernel to be loaded with kexec
+ */
+static void __init reserve_crashkernel(void)
+{
+#ifdef CONFIG_CRASH_DUMP
+	unsigned long long crash_base, crash_size;
 	phys_addr_t low, high;
-	पूर्णांक rc;
+	int rc;
 
 	rc = parse_crashkernel(boot_command_line, ident_map_size, &crash_size,
 			       &crash_base);
 
 	crash_base = ALIGN(crash_base, KEXEC_CRASH_MEM_ALIGN);
 	crash_size = ALIGN(crash_size, KEXEC_CRASH_MEM_ALIGN);
-	अगर (rc || crash_size == 0)
-		वापस;
+	if (rc || crash_size == 0)
+		return;
 
-	अगर (memblock.memory.regions[0].size < crash_size) अणु
+	if (memblock.memory.regions[0].size < crash_size) {
 		pr_info("crashkernel reservation failed: %s\n",
 			"first memory chunk must be at least crashkernel size");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	low = crash_base ?: OLDMEM_BASE;
 	high = low + crash_size;
-	अगर (low >= OLDMEM_BASE && high <= OLDMEM_BASE + OLDMEM_SIZE) अणु
-		/* The crashkernel fits पूर्णांकo OLDMEM, reuse OLDMEM */
+	if (low >= OLDMEM_BASE && high <= OLDMEM_BASE + OLDMEM_SIZE) {
+		/* The crashkernel fits into OLDMEM, reuse OLDMEM */
 		crash_base = low;
-	पूर्ण अन्यथा अणु
-		/* Find suitable area in मुक्त memory */
-		low = max_t(अचिन्हित दीर्घ, crash_size, sclp.hsa_size);
-		high = crash_base ? crash_base + crash_size : अच_दीर्घ_उच्च;
+	} else {
+		/* Find suitable area in free memory */
+		low = max_t(unsigned long, crash_size, sclp.hsa_size);
+		high = crash_base ? crash_base + crash_size : ULONG_MAX;
 
-		अगर (crash_base && crash_base < low) अणु
+		if (crash_base && crash_base < low) {
 			pr_info("crashkernel reservation failed: %s\n",
 				"crash_base too low");
-			वापस;
-		पूर्ण
+			return;
+		}
 		low = crash_base ?: low;
 		crash_base = memblock_find_in_range(low, high, crash_size,
 						    KEXEC_CRASH_MEM_ALIGN);
-	पूर्ण
+	}
 
-	अगर (!crash_base) अणु
+	if (!crash_base) {
 		pr_info("crashkernel reservation failed: %s\n",
 			"no suitable area found");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (रेजिस्टर_memory_notअगरier(&kdump_mem_nb))
-		वापस;
+	if (register_memory_notifier(&kdump_mem_nb))
+		return;
 
-	अगर (!OLDMEM_BASE && MACHINE_IS_VM)
+	if (!OLDMEM_BASE && MACHINE_IS_VM)
 		diag10_range(PFN_DOWN(crash_base), PFN_DOWN(crash_size));
 	crashk_res.start = crash_base;
 	crashk_res.end = crash_base + crash_size - 1;
-	memblock_हटाओ(crash_base, crash_size);
+	memblock_remove(crash_base, crash_size);
 	pr_info("Reserving %lluMB of memory at %lluMB "
 		"for crashkernel (System RAM: %luMB)\n",
 		crash_size >> 20, crash_base >> 20,
-		(अचिन्हित दीर्घ)memblock.memory.total_size >> 20);
+		(unsigned long)memblock.memory.total_size >> 20);
 	os_info_crashkernel_add(crash_base, crash_size);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 /*
  * Reserve the initrd from being used by memblock
  */
-अटल व्योम __init reserve_initrd(व्योम)
-अणु
-#अगर_घोषित CONFIG_BLK_DEV_INITRD
-	अगर (!INITRD_START || !INITRD_SIZE)
-		वापस;
+static void __init reserve_initrd(void)
+{
+#ifdef CONFIG_BLK_DEV_INITRD
+	if (!INITRD_START || !INITRD_SIZE)
+		return;
 	initrd_start = INITRD_START;
 	initrd_end = initrd_start + INITRD_SIZE;
 	memblock_reserve(INITRD_START, INITRD_SIZE);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 /*
- * Reserve the memory area used to pass the certअगरicate lists
+ * Reserve the memory area used to pass the certificate lists
  */
-अटल व्योम __init reserve_certअगरicate_list(व्योम)
-अणु
-	अगर (ipl_cert_list_addr)
+static void __init reserve_certificate_list(void)
+{
+	if (ipl_cert_list_addr)
 		memblock_reserve(ipl_cert_list_addr, ipl_cert_list_size);
-पूर्ण
+}
 
-अटल व्योम __init reserve_mem_detect_info(व्योम)
-अणु
-	अचिन्हित दीर्घ start, size;
+static void __init reserve_mem_detect_info(void)
+{
+	unsigned long start, size;
 
 	get_mem_detect_reserved(&start, &size);
-	अगर (size)
+	if (size)
 		memblock_reserve(start, size);
-पूर्ण
+}
 
-अटल व्योम __init मुक्त_mem_detect_info(व्योम)
-अणु
-	अचिन्हित दीर्घ start, size;
+static void __init free_mem_detect_info(void)
+{
+	unsigned long start, size;
 
 	get_mem_detect_reserved(&start, &size);
-	अगर (size)
-		memblock_मुक्त(start, size);
-पूर्ण
+	if (size)
+		memblock_free(start, size);
+}
 
-अटल स्थिर अक्षर * __init get_mem_info_source(व्योम)
-अणु
-	चयन (mem_detect.info_source) अणु
-	हाल MEM_DETECT_SCLP_STOR_INFO:
-		वापस "sclp storage info";
-	हाल MEM_DETECT_DIAG260:
-		वापस "diag260";
-	हाल MEM_DETECT_SCLP_READ_INFO:
-		वापस "sclp read info";
-	हाल MEM_DETECT_BIN_SEARCH:
-		वापस "binary search";
-	पूर्ण
-	वापस "none";
-पूर्ण
+static const char * __init get_mem_info_source(void)
+{
+	switch (mem_detect.info_source) {
+	case MEM_DETECT_SCLP_STOR_INFO:
+		return "sclp storage info";
+	case MEM_DETECT_DIAG260:
+		return "diag260";
+	case MEM_DETECT_SCLP_READ_INFO:
+		return "sclp read info";
+	case MEM_DETECT_BIN_SEARCH:
+		return "binary search";
+	}
+	return "none";
+}
 
-अटल व्योम __init memblock_add_mem_detect_info(व्योम)
-अणु
-	अचिन्हित दीर्घ start, end;
-	पूर्णांक i;
+static void __init memblock_add_mem_detect_info(void)
+{
+	unsigned long start, end;
+	int i;
 
 	pr_debug("physmem info source: %s (%hhd)\n",
 		 get_mem_info_source(), mem_detect.info_source);
-	/* keep memblock lists बंद to the kernel */
+	/* keep memblock lists close to the kernel */
 	memblock_set_bottom_up(true);
-	क्रम_each_mem_detect_block(i, &start, &end) अणु
+	for_each_mem_detect_block(i, &start, &end) {
 		memblock_add(start, end - start);
 		memblock_physmem_add(start, end - start);
-	पूर्ण
+	}
 	memblock_set_bottom_up(false);
-	memblock_set_node(0, अच_दीर्घ_उच्च, &memblock.memory, 0);
+	memblock_set_node(0, ULONG_MAX, &memblock.memory, 0);
 	memblock_dump_all();
-पूर्ण
+}
 
 /*
- * Check क्रम initrd being in usable memory
+ * Check for initrd being in usable memory
  */
-अटल व्योम __init check_initrd(व्योम)
-अणु
-#अगर_घोषित CONFIG_BLK_DEV_INITRD
-	अगर (INITRD_START && INITRD_SIZE &&
-	    !memblock_is_region_memory(INITRD_START, INITRD_SIZE)) अणु
+static void __init check_initrd(void)
+{
+#ifdef CONFIG_BLK_DEV_INITRD
+	if (INITRD_START && INITRD_SIZE &&
+	    !memblock_is_region_memory(INITRD_START, INITRD_SIZE)) {
 		pr_err("The initial RAM disk does not fit into the memory\n");
-		memblock_मुक्त(INITRD_START, INITRD_SIZE);
+		memblock_free(INITRD_START, INITRD_SIZE);
 		initrd_start = initrd_end = 0;
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+	}
+#endif
+}
 
 /*
- * Reserve memory used क्रम lowcore/command line/kernel image.
+ * Reserve memory used for lowcore/command line/kernel image.
  */
-अटल व्योम __init reserve_kernel(व्योम)
-अणु
-	अचिन्हित दीर्घ start_pfn = PFN_UP(__pa(_end));
+static void __init reserve_kernel(void)
+{
+	unsigned long start_pfn = PFN_UP(__pa(_end));
 
 	memblock_reserve(0, HEAD_END);
-	memblock_reserve((अचिन्हित दीर्घ)_stext, PFN_PHYS(start_pfn)
-			 - (अचिन्हित दीर्घ)_stext);
+	memblock_reserve((unsigned long)_stext, PFN_PHYS(start_pfn)
+			 - (unsigned long)_stext);
 	memblock_reserve(__sdma, __edma - __sdma);
-पूर्ण
+}
 
-अटल व्योम __init setup_memory(व्योम)
-अणु
+static void __init setup_memory(void)
+{
 	phys_addr_t start, end;
 	u64 i;
 
 	/*
-	 * Init storage key क्रम present memory
+	 * Init storage key for present memory
 	 */
-	क्रम_each_mem_range(i, &start, &end)
+	for_each_mem_range(i, &start, &end)
 		storage_key_init_range(start, end);
 
 	psw_set_key(PAGE_DEFAULT_KEY);
 
 	/* Only cosmetics */
-	memblock_enक्रमce_memory_limit(memblock_end_of_DRAM());
-पूर्ण
+	memblock_enforce_memory_limit(memblock_end_of_DRAM());
+}
 
 /*
  * Setup hardware capabilities.
  */
-अटल पूर्णांक __init setup_hwcaps(व्योम)
-अणु
-	अटल स्थिर पूर्णांक stfl_bits[6] = अणु 0, 2, 7, 17, 19, 21 पूर्ण;
-	काष्ठा cpuid cpu_id;
-	पूर्णांक i;
+static int __init setup_hwcaps(void)
+{
+	static const int stfl_bits[6] = { 0, 2, 7, 17, 19, 21 };
+	struct cpuid cpu_id;
+	int i;
 
 	/*
 	 * The store facility list bits numbers as found in the principles
 	 * of operation are numbered with bit 1UL<<31 as number 0 to
 	 * bit 1UL<<0 as number 31.
-	 *   Bit 0: inकाष्ठाions named N3, "backported" to esa-mode
+	 *   Bit 0: instructions named N3, "backported" to esa-mode
 	 *   Bit 2: z/Architecture mode is active
 	 *   Bit 7: the store-facility-list-extended facility is installed
 	 *   Bit 17: the message-security assist is installed
-	 *   Bit 19: the दीर्घ-displacement facility is installed
+	 *   Bit 19: the long-displacement facility is installed
 	 *   Bit 21: the extended-immediate facility is installed
 	 *   Bit 22: extended-translation facility 3 is installed
 	 *   Bit 30: extended-translation facility 3 enhancement facility
@@ -889,37 +888,37 @@ early_initcall(stack_पुनः_स्मृति);
 	 *   HWCAP_S390_LDISP bit 4, HWCAP_S390_EIMM bit 5 and
 	 *   HWCAP_S390_ETF3EH bit 8 (22 && 30).
 	 */
-	क्रम (i = 0; i < 6; i++)
-		अगर (test_facility(stfl_bits[i]))
+	for (i = 0; i < 6; i++)
+		if (test_facility(stfl_bits[i]))
 			elf_hwcap |= 1UL << i;
 
-	अगर (test_facility(22) && test_facility(30))
+	if (test_facility(22) && test_facility(30))
 		elf_hwcap |= HWCAP_S390_ETF3EH;
 
 	/*
-	 * Check क्रम additional facilities with store-facility-list-extended.
-	 * stfle stores द्विगुनwords (8 byte) with bit 1ULL<<63 as bit 0
-	 * and 1ULL<<0 as bit 63. Bits 0-31 contain the same inक्रमmation
+	 * Check for additional facilities with store-facility-list-extended.
+	 * stfle stores doublewords (8 byte) with bit 1ULL<<63 as bit 0
+	 * and 1ULL<<0 as bit 63. Bits 0-31 contain the same information
 	 * as stored by stfl, bits 32-xxx contain additional facilities.
 	 * How many facility words are stored depends on the number of
-	 * द्विगुनwords passed to the inकाष्ठाion. The additional facilities
+	 * doublewords passed to the instruction. The additional facilities
 	 * are:
-	 *   Bit 42: decimal भग्नing poपूर्णांक facility is installed
-	 *   Bit 44: perक्रमm भग्नing poपूर्णांक operation facility is installed
+	 *   Bit 42: decimal floating point facility is installed
+	 *   Bit 44: perform floating point operation facility is installed
 	 * translated to:
 	 *   HWCAP_S390_DFP bit 6 (42 && 44).
 	 */
-	अगर ((elf_hwcap & (1UL << 2)) && test_facility(42) && test_facility(44))
+	if ((elf_hwcap & (1UL << 2)) && test_facility(42) && test_facility(44))
 		elf_hwcap |= HWCAP_S390_DFP;
 
 	/*
 	 * Huge page support HWCAP_S390_HPAGE is bit 7.
 	 */
-	अगर (MACHINE_HAS_EDAT1)
+	if (MACHINE_HAS_EDAT1)
 		elf_hwcap |= HWCAP_S390_HPAGE;
 
 	/*
-	 * 64-bit रेजिस्टर support क्रम 31-bit processes
+	 * 64-bit register support for 31-bit processes
 	 * HWCAP_S390_HIGH_GPRS is bit 9.
 	 */
 	elf_hwcap |= HWCAP_S390_HIGH_GPRS;
@@ -927,7 +926,7 @@ early_initcall(stack_पुनः_स्मृति);
 	/*
 	 * Transactional execution support HWCAP_S390_TE is bit 10.
 	 */
-	अगर (MACHINE_HAS_TE)
+	if (MACHINE_HAS_TE)
 		elf_hwcap |= HWCAP_S390_TE;
 
 	/*
@@ -935,243 +934,243 @@ early_initcall(stack_पुनः_स्मृति);
 	 * can be disabled with the "novx" parameter. Use MACHINE_HAS_VX
 	 * instead of facility bit 129.
 	 */
-	अगर (MACHINE_HAS_VX) अणु
+	if (MACHINE_HAS_VX) {
 		elf_hwcap |= HWCAP_S390_VXRS;
-		अगर (test_facility(134))
+		if (test_facility(134))
 			elf_hwcap |= HWCAP_S390_VXRS_BCD;
-		अगर (test_facility(135))
+		if (test_facility(135))
 			elf_hwcap |= HWCAP_S390_VXRS_EXT;
-		अगर (test_facility(148))
+		if (test_facility(148))
 			elf_hwcap |= HWCAP_S390_VXRS_EXT2;
-		अगर (test_facility(152))
+		if (test_facility(152))
 			elf_hwcap |= HWCAP_S390_VXRS_PDE;
-	पूर्ण
-	अगर (test_facility(150))
+	}
+	if (test_facility(150))
 		elf_hwcap |= HWCAP_S390_SORT;
-	अगर (test_facility(151))
+	if (test_facility(151))
 		elf_hwcap |= HWCAP_S390_DFLT;
 
 	/*
 	 * Guarded storage support HWCAP_S390_GS is bit 12.
 	 */
-	अगर (MACHINE_HAS_GS)
+	if (MACHINE_HAS_GS)
 		elf_hwcap |= HWCAP_S390_GS;
 
 	get_cpu_id(&cpu_id);
-	add_device_अक्रमomness(&cpu_id, माप(cpu_id));
-	चयन (cpu_id.machine) अणु
-	हाल 0x2064:
-	हाल 0x2066:
-	शेष:	/* Use "z900" as शेष क्रम 64 bit kernels. */
-		म_नकल(elf_platक्रमm, "z900");
-		अवरोध;
-	हाल 0x2084:
-	हाल 0x2086:
-		म_नकल(elf_platक्रमm, "z990");
-		अवरोध;
-	हाल 0x2094:
-	हाल 0x2096:
-		म_नकल(elf_platक्रमm, "z9-109");
-		अवरोध;
-	हाल 0x2097:
-	हाल 0x2098:
-		म_नकल(elf_platक्रमm, "z10");
-		अवरोध;
-	हाल 0x2817:
-	हाल 0x2818:
-		म_नकल(elf_platक्रमm, "z196");
-		अवरोध;
-	हाल 0x2827:
-	हाल 0x2828:
-		म_नकल(elf_platक्रमm, "zEC12");
-		अवरोध;
-	हाल 0x2964:
-	हाल 0x2965:
-		म_नकल(elf_platक्रमm, "z13");
-		अवरोध;
-	हाल 0x3906:
-	हाल 0x3907:
-		म_नकल(elf_platक्रमm, "z14");
-		अवरोध;
-	हाल 0x8561:
-	हाल 0x8562:
-		म_नकल(elf_platक्रमm, "z15");
-		अवरोध;
-	पूर्ण
+	add_device_randomness(&cpu_id, sizeof(cpu_id));
+	switch (cpu_id.machine) {
+	case 0x2064:
+	case 0x2066:
+	default:	/* Use "z900" as default for 64 bit kernels. */
+		strcpy(elf_platform, "z900");
+		break;
+	case 0x2084:
+	case 0x2086:
+		strcpy(elf_platform, "z990");
+		break;
+	case 0x2094:
+	case 0x2096:
+		strcpy(elf_platform, "z9-109");
+		break;
+	case 0x2097:
+	case 0x2098:
+		strcpy(elf_platform, "z10");
+		break;
+	case 0x2817:
+	case 0x2818:
+		strcpy(elf_platform, "z196");
+		break;
+	case 0x2827:
+	case 0x2828:
+		strcpy(elf_platform, "zEC12");
+		break;
+	case 0x2964:
+	case 0x2965:
+		strcpy(elf_platform, "z13");
+		break;
+	case 0x3906:
+	case 0x3907:
+		strcpy(elf_platform, "z14");
+		break;
+	case 0x8561:
+	case 0x8562:
+		strcpy(elf_platform, "z15");
+		break;
+	}
 
 	/*
 	 * Virtualization support HWCAP_INT_SIE is bit 0.
 	 */
-	अगर (sclp.has_sief2)
-		पूर्णांक_hwcap |= HWCAP_INT_SIE;
+	if (sclp.has_sief2)
+		int_hwcap |= HWCAP_INT_SIE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 arch_initcall(setup_hwcaps);
 
 /*
- * Add प्रणाली inक्रमmation as device अक्रमomness
+ * Add system information as device randomness
  */
-अटल व्योम __init setup_अक्रमomness(व्योम)
-अणु
-	काष्ठा sysinfo_3_2_2 *vmms;
+static void __init setup_randomness(void)
+{
+	struct sysinfo_3_2_2 *vmms;
 
-	vmms = (काष्ठा sysinfo_3_2_2 *) memblock_phys_alloc(PAGE_SIZE,
+	vmms = (struct sysinfo_3_2_2 *) memblock_phys_alloc(PAGE_SIZE,
 							    PAGE_SIZE);
-	अगर (!vmms)
+	if (!vmms)
 		panic("Failed to allocate memory for sysinfo structure\n");
 
-	अगर (stsi(vmms, 3, 2, 2) == 0 && vmms->count)
-		add_device_अक्रमomness(&vmms->vm, माप(vmms->vm[0]) * vmms->count);
-	memblock_मुक्त((अचिन्हित दीर्घ) vmms, PAGE_SIZE);
-पूर्ण
+	if (stsi(vmms, 3, 2, 2) == 0 && vmms->count)
+		add_device_randomness(&vmms->vm, sizeof(vmms->vm[0]) * vmms->count);
+	memblock_free((unsigned long) vmms, PAGE_SIZE);
+}
 
 /*
- * Find the correct size क्रम the task_काष्ठा. This depends on
- * the size of the काष्ठा fpu at the end of the thपढ़ो_काष्ठा
- * which is embedded in the task_काष्ठा.
+ * Find the correct size for the task_struct. This depends on
+ * the size of the struct fpu at the end of the thread_struct
+ * which is embedded in the task_struct.
  */
-अटल व्योम __init setup_task_size(व्योम)
-अणु
-	पूर्णांक task_size = माप(काष्ठा task_काष्ठा);
+static void __init setup_task_size(void)
+{
+	int task_size = sizeof(struct task_struct);
 
-	अगर (!MACHINE_HAS_VX) अणु
-		task_size -= माप(__vector128) * __NUM_VXRS;
-		task_size += माप(freg_t) * __NUM_FPRS;
-	पूर्ण
-	arch_task_काष्ठा_size = task_size;
-पूर्ण
+	if (!MACHINE_HAS_VX) {
+		task_size -= sizeof(__vector128) * __NUM_VXRS;
+		task_size += sizeof(freg_t) * __NUM_FPRS;
+	}
+	arch_task_struct_size = task_size;
+}
 
 /*
  * Issue diagnose 318 to set the control program name and
  * version codes.
  */
-अटल व्योम __init setup_control_program_code(व्योम)
-अणु
-	जोड़ diag318_info diag318_info = अणु
+static void __init setup_control_program_code(void)
+{
+	union diag318_info diag318_info = {
 		.cpnc = CPNC_LINUX,
 		.cpvc = 0,
-	पूर्ण;
+	};
 
-	अगर (!sclp.has_diag318)
-		वापस;
+	if (!sclp.has_diag318)
+		return;
 
 	diag_stat_inc(DIAG_STAT_X318);
-	यंत्र अस्थिर("diag %0,0,0x318\n" : : "d" (diag318_info.val));
-पूर्ण
+	asm volatile("diag %0,0,0x318\n" : : "d" (diag318_info.val));
+}
 
 /*
- * Prपूर्णांक the component list from the IPL report
+ * Print the component list from the IPL report
  */
-अटल व्योम __init log_component_list(व्योम)
-अणु
-	काष्ठा ipl_rb_component_entry *ptr, *end;
-	अक्षर *str;
+static void __init log_component_list(void)
+{
+	struct ipl_rb_component_entry *ptr, *end;
+	char *str;
 
-	अगर (!early_ipl_comp_list_addr)
-		वापस;
-	अगर (ipl_block.hdr.flags & IPL_PL_FLAG_SIPL)
+	if (!early_ipl_comp_list_addr)
+		return;
+	if (ipl_block.hdr.flags & IPL_PL_FLAG_SIPL)
 		pr_info("Linux is running with Secure-IPL enabled\n");
-	अन्यथा
+	else
 		pr_info("Linux is running with Secure-IPL disabled\n");
-	ptr = (व्योम *) early_ipl_comp_list_addr;
-	end = (व्योम *) ptr + early_ipl_comp_list_size;
+	ptr = (void *) early_ipl_comp_list_addr;
+	end = (void *) ptr + early_ipl_comp_list_size;
 	pr_info("The IPL report contains the following components:\n");
-	जबतक (ptr < end) अणु
-		अगर (ptr->flags & IPL_RB_COMPONENT_FLAG_SIGNED) अणु
-			अगर (ptr->flags & IPL_RB_COMPONENT_FLAG_VERIFIED)
+	while (ptr < end) {
+		if (ptr->flags & IPL_RB_COMPONENT_FLAG_SIGNED) {
+			if (ptr->flags & IPL_RB_COMPONENT_FLAG_VERIFIED)
 				str = "signed, verified";
-			अन्यथा
+			else
 				str = "signed, verification failed";
-		पूर्ण अन्यथा अणु
+		} else {
 			str = "not signed";
-		पूर्ण
+		}
 		pr_info("%016llx - %016llx (%s)\n",
 			ptr->addr, ptr->addr + ptr->len, str);
 		ptr++;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Setup function called from init/मुख्य.c just after the banner
- * was prपूर्णांकed.
+ * Setup function called from init/main.c just after the banner
+ * was printed.
  */
 
-व्योम __init setup_arch(अक्षर **cmdline_p)
-अणु
+void __init setup_arch(char **cmdline_p)
+{
         /*
-         * prपूर्णांक what head.S has found out about the machine
+         * print what head.S has found out about the machine
          */
-	अगर (MACHINE_IS_VM)
+	if (MACHINE_IS_VM)
 		pr_info("Linux is running as a z/VM "
 			"guest operating system in 64-bit mode\n");
-	अन्यथा अगर (MACHINE_IS_KVM)
+	else if (MACHINE_IS_KVM)
 		pr_info("Linux is running under KVM in 64-bit mode\n");
-	अन्यथा अगर (MACHINE_IS_LPAR)
+	else if (MACHINE_IS_LPAR)
 		pr_info("Linux is running natively in 64-bit mode\n");
-	अन्यथा
+	else
 		pr_info("Linux is running as a guest in 64-bit mode\n");
 
 	log_component_list();
 
 	/* Have one command line that is parsed and saved in /proc/cmdline */
-	/* boot_command_line has been alपढ़ोy set up in early.c */
+	/* boot_command_line has been already set up in early.c */
 	*cmdline_p = boot_command_line;
 
         ROOT_DEV = Root_RAM0;
 
-	init_mm.start_code = (अचिन्हित दीर्घ) _text;
-	init_mm.end_code = (अचिन्हित दीर्घ) _etext;
-	init_mm.end_data = (अचिन्हित दीर्घ) _edata;
-	init_mm.brk = (अचिन्हित दीर्घ) _end;
+	init_mm.start_code = (unsigned long) _text;
+	init_mm.end_code = (unsigned long) _etext;
+	init_mm.end_data = (unsigned long) _edata;
+	init_mm.brk = (unsigned long) _end;
 
-	अगर (IS_ENABLED(CONFIG_EXPOLINE_AUTO))
-		nospec_स्वतः_detect();
+	if (IS_ENABLED(CONFIG_EXPOLINE_AUTO))
+		nospec_auto_detect();
 
 	jump_label_init();
 	parse_early_param();
-#अगर_घोषित CONFIG_CRASH_DUMP
+#ifdef CONFIG_CRASH_DUMP
 	/* Deactivate elfcorehdr= kernel parameter */
 	elfcorehdr_addr = ELFCORE_ADDR_MAX;
-#पूर्ण_अगर
+#endif
 
 	os_info_init();
 	setup_ipl();
 	setup_task_size();
 	setup_control_program_code();
 
-	/* Do some memory reservations *beक्रमe* memory is added to memblock */
+	/* Do some memory reservations *before* memory is added to memblock */
 	reserve_above_ident_map();
 	reserve_oldmem();
 	reserve_kernel();
 	reserve_initrd();
-	reserve_certअगरicate_list();
+	reserve_certificate_list();
 	reserve_mem_detect_info();
 	memblock_allow_resize();
 
-	/* Get inक्रमmation about *all* installed memory */
+	/* Get information about *all* installed memory */
 	memblock_add_mem_detect_info();
 
-	मुक्त_mem_detect_info();
-	हटाओ_oldmem();
+	free_mem_detect_info();
+	remove_oldmem();
 
 	setup_uv();
 	setup_ident_map_size();
 	setup_memory();
 	dma_contiguous_reserve(ident_map_size);
 	vmcp_cma_reserve();
-	अगर (MACHINE_HAS_EDAT2)
+	if (MACHINE_HAS_EDAT2)
 		hugetlb_cma_reserve(PUD_SHIFT - PAGE_SHIFT);
 
 	check_initrd();
 	reserve_crashkernel();
-#अगर_घोषित CONFIG_CRASH_DUMP
+#ifdef CONFIG_CRASH_DUMP
 	/*
-	 * Be aware that smp_save_dump_cpus() triggers a प्रणाली reset.
-	 * Thereक्रमe CPU and device initialization should be करोne afterwards.
+	 * Be aware that smp_save_dump_cpus() triggers a system reset.
+	 * Therefore CPU and device initialization should be done afterwards.
 	 */
 	smp_save_dump_cpus();
-#पूर्ण_अगर
+#endif
 
 	setup_resources();
 	setup_lowcore_dat_off();
@@ -1183,7 +1182,7 @@ arch_initcall(setup_hwcaps);
 	topology_init_early();
 
 	/*
-	 * Create kernel page tables and चयन to भव addressing.
+	 * Create kernel page tables and switch to virtual addressing.
 	 */
         paging_init();
 
@@ -1193,17 +1192,17 @@ arch_initcall(setup_hwcaps);
 	 */
 	setup_lowcore_dat_on();
 
-        /* Setup शेष console */
-	conmode_शेष();
+        /* Setup default console */
+	conmode_default();
 	set_preferred_console();
 
-	apply_alternative_inकाष्ठाions();
-	अगर (IS_ENABLED(CONFIG_EXPOLINE))
+	apply_alternative_instructions();
+	if (IS_ENABLED(CONFIG_EXPOLINE))
 		nospec_init_branches();
 
 	/* Setup zfcp/nvme dump support */
 	setup_zfcpdump();
 
-	/* Add प्रणाली specअगरic data to the अक्रमom pool */
-	setup_अक्रमomness();
-पूर्ण
+	/* Add system specific data to the random pool */
+	setup_randomness();
+}

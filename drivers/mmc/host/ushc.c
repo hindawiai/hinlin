@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * USB SD Host Controller (USHC) controller driver.
  *
@@ -11,16 +10,16 @@
  *     unsupported).
  *
  * References:
- *   [USHC] USB SD Host Controller specअगरication (CS-118793-SP)
+ *   [USHC] USB SD Host Controller specification (CS-118793-SP)
  */
-#समावेश <linux/module.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/mmc/host.h>
+#include <linux/module.h>
+#include <linux/usb.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/dma-mapping.h>
+#include <linux/mmc/host.h>
 
-क्रमागत ushc_request अणु
+enum ushc_request {
 	USHC_GET_CAPS  = 0x00,
 	USHC_HOST_CTRL = 0x01,
 	USHC_PWR_CTRL  = 0x02,
@@ -28,409 +27,409 @@
 	USHC_EXEC_CMD  = 0x04,
 	USHC_READ_RESP = 0x05,
 	USHC_RESET     = 0x06,
-पूर्ण;
+};
 
-क्रमागत ushc_request_type अणु
-	USHC_GET_CAPS_TYPE  = USB_सूची_IN  | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
-	USHC_HOST_CTRL_TYPE = USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
-	USHC_PWR_CTRL_TYPE  = USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
-	USHC_CLK_FREQ_TYPE  = USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
-	USHC_EXEC_CMD_TYPE  = USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
-	USHC_READ_RESP_TYPE = USB_सूची_IN  | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
-	USHC_RESET_TYPE     = USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
-पूर्ण;
+enum ushc_request_type {
+	USHC_GET_CAPS_TYPE  = USB_DIR_IN  | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+	USHC_HOST_CTRL_TYPE = USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+	USHC_PWR_CTRL_TYPE  = USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+	USHC_CLK_FREQ_TYPE  = USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+	USHC_EXEC_CMD_TYPE  = USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+	USHC_READ_RESP_TYPE = USB_DIR_IN  | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+	USHC_RESET_TYPE     = USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+};
 
-#घोषणा USHC_GET_CAPS_VERSION_MASK 0xff
-#घोषणा USHC_GET_CAPS_3V3      (1 << 8)
-#घोषणा USHC_GET_CAPS_3V0      (1 << 9)
-#घोषणा USHC_GET_CAPS_1V8      (1 << 10)
-#घोषणा USHC_GET_CAPS_HIGH_SPD (1 << 16)
+#define USHC_GET_CAPS_VERSION_MASK 0xff
+#define USHC_GET_CAPS_3V3      (1 << 8)
+#define USHC_GET_CAPS_3V0      (1 << 9)
+#define USHC_GET_CAPS_1V8      (1 << 10)
+#define USHC_GET_CAPS_HIGH_SPD (1 << 16)
 
-#घोषणा USHC_HOST_CTRL_4BIT     (1 << 1)
-#घोषणा USHC_HOST_CTRL_HIGH_SPD (1 << 0)
+#define USHC_HOST_CTRL_4BIT     (1 << 1)
+#define USHC_HOST_CTRL_HIGH_SPD (1 << 0)
 
-#घोषणा USHC_PWR_CTRL_OFF 0x00
-#घोषणा USHC_PWR_CTRL_3V3 0x01
-#घोषणा USHC_PWR_CTRL_3V0 0x02
-#घोषणा USHC_PWR_CTRL_1V8 0x03
+#define USHC_PWR_CTRL_OFF 0x00
+#define USHC_PWR_CTRL_3V3 0x01
+#define USHC_PWR_CTRL_3V0 0x02
+#define USHC_PWR_CTRL_1V8 0x03
 
-#घोषणा USHC_READ_RESP_BUSY        (1 << 4)
-#घोषणा USHC_READ_RESP_ERR_TIMEOUT (1 << 3)
-#घोषणा USHC_READ_RESP_ERR_CRC     (1 << 2)
-#घोषणा USHC_READ_RESP_ERR_DAT     (1 << 1)
-#घोषणा USHC_READ_RESP_ERR_CMD     (1 << 0)
-#घोषणा USHC_READ_RESP_ERR_MASK    0x0f
+#define USHC_READ_RESP_BUSY        (1 << 4)
+#define USHC_READ_RESP_ERR_TIMEOUT (1 << 3)
+#define USHC_READ_RESP_ERR_CRC     (1 << 2)
+#define USHC_READ_RESP_ERR_DAT     (1 << 1)
+#define USHC_READ_RESP_ERR_CMD     (1 << 0)
+#define USHC_READ_RESP_ERR_MASK    0x0f
 
-काष्ठा ushc_cbw अणु
+struct ushc_cbw {
 	__u8 signature;
 	__u8 cmd_idx;
 	__le16 block_size;
 	__le32 arg;
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
-#घोषणा USHC_CBW_SIGNATURE 'C'
+#define USHC_CBW_SIGNATURE 'C'
 
-काष्ठा ushc_csw अणु
+struct ushc_csw {
 	__u8 signature;
 	__u8 status;
 	__le32 response;
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
-#घोषणा USHC_CSW_SIGNATURE 'S'
+#define USHC_CSW_SIGNATURE 'S'
 
-काष्ठा ushc_पूर्णांक_data अणु
+struct ushc_int_data {
 	u8 status;
 	u8 reserved[3];
-पूर्ण;
+};
 
-#घोषणा USHC_INT_STATUS_SDIO_INT     (1 << 1)
-#घोषणा USHC_INT_STATUS_CARD_PRESENT (1 << 0)
+#define USHC_INT_STATUS_SDIO_INT     (1 << 1)
+#define USHC_INT_STATUS_CARD_PRESENT (1 << 0)
 
 
-काष्ठा ushc_data अणु
-	काष्ठा usb_device *usb_dev;
-	काष्ठा mmc_host *mmc;
+struct ushc_data {
+	struct usb_device *usb_dev;
+	struct mmc_host *mmc;
 
-	काष्ठा urb *पूर्णांक_urb;
-	काष्ठा ushc_पूर्णांक_data *पूर्णांक_data;
+	struct urb *int_urb;
+	struct ushc_int_data *int_data;
 
-	काष्ठा urb *cbw_urb;
-	काष्ठा ushc_cbw *cbw;
+	struct urb *cbw_urb;
+	struct ushc_cbw *cbw;
 
-	काष्ठा urb *data_urb;
+	struct urb *data_urb;
 
-	काष्ठा urb *csw_urb;
-	काष्ठा ushc_csw *csw;
+	struct urb *csw_urb;
+	struct ushc_csw *csw;
 
 	spinlock_t lock;
-	काष्ठा mmc_request *current_req;
+	struct mmc_request *current_req;
 	u32 caps;
 	u16 host_ctrl;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 	u8 last_status;
-	पूर्णांक घड़ी_freq;
-पूर्ण;
+	int clock_freq;
+};
 
-#घोषणा DISCONNECTED    0
-#घोषणा INT_EN          1
-#घोषणा IGNORE_NEXT_INT 2
+#define DISCONNECTED    0
+#define INT_EN          1
+#define IGNORE_NEXT_INT 2
 
-अटल व्योम data_callback(काष्ठा urb *urb);
+static void data_callback(struct urb *urb);
 
-अटल पूर्णांक ushc_hw_reset(काष्ठा ushc_data *ushc)
-अणु
-	वापस usb_control_msg(ushc->usb_dev, usb_sndctrlpipe(ushc->usb_dev, 0),
+static int ushc_hw_reset(struct ushc_data *ushc)
+{
+	return usb_control_msg(ushc->usb_dev, usb_sndctrlpipe(ushc->usb_dev, 0),
 			       USHC_RESET, USHC_RESET_TYPE,
-			       0, 0, शून्य, 0, 100);
-पूर्ण
+			       0, 0, NULL, 0, 100);
+}
 
-अटल पूर्णांक ushc_hw_get_caps(काष्ठा ushc_data *ushc)
-अणु
-	पूर्णांक ret;
-	पूर्णांक version;
+static int ushc_hw_get_caps(struct ushc_data *ushc)
+{
+	int ret;
+	int version;
 
 	ret = usb_control_msg(ushc->usb_dev, usb_rcvctrlpipe(ushc->usb_dev, 0),
 			      USHC_GET_CAPS, USHC_GET_CAPS_TYPE,
-			      0, 0, &ushc->caps, माप(ushc->caps), 100);
-	अगर (ret < 0)
-		वापस ret;
+			      0, 0, &ushc->caps, sizeof(ushc->caps), 100);
+	if (ret < 0)
+		return ret;
 
 	ushc->caps = le32_to_cpu(ushc->caps);
 
 	version = ushc->caps & USHC_GET_CAPS_VERSION_MASK;
-	अगर (version != 0x02) अणु
+	if (version != 0x02) {
 		dev_err(&ushc->usb_dev->dev, "controller version %d is not supported\n", version);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ushc_hw_set_host_ctrl(काष्ठा ushc_data *ushc, u16 mask, u16 val)
-अणु
+static int ushc_hw_set_host_ctrl(struct ushc_data *ushc, u16 mask, u16 val)
+{
 	u16 host_ctrl;
-	पूर्णांक ret;
+	int ret;
 
 	host_ctrl = (ushc->host_ctrl & ~mask) | val;
 	ret = usb_control_msg(ushc->usb_dev, usb_sndctrlpipe(ushc->usb_dev, 0),
 			      USHC_HOST_CTRL, USHC_HOST_CTRL_TYPE,
-			      host_ctrl, 0, शून्य, 0, 100);
-	अगर (ret < 0)
-		वापस ret;
+			      host_ctrl, 0, NULL, 0, 100);
+	if (ret < 0)
+		return ret;
 	ushc->host_ctrl = host_ctrl;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम पूर्णांक_callback(काष्ठा urb *urb)
-अणु
-	काष्ठा ushc_data *ushc = urb->context;
+static void int_callback(struct urb *urb)
+{
+	struct ushc_data *ushc = urb->context;
 	u8 status, last_status;
 
-	अगर (urb->status < 0)
-		वापस;
+	if (urb->status < 0)
+		return;
 
-	status = ushc->पूर्णांक_data->status;
+	status = ushc->int_data->status;
 	last_status = ushc->last_status;
 	ushc->last_status = status;
 
 	/*
-	 * Ignore the card पूर्णांकerrupt status on पूर्णांकerrupt transfers that
-	 * were submitted जबतक card पूर्णांकerrupts where disabled.
+	 * Ignore the card interrupt status on interrupt transfers that
+	 * were submitted while card interrupts where disabled.
 	 *
-	 * This aव्योम occasional spurious पूर्णांकerrupts when enabling
-	 * पूर्णांकerrupts immediately after clearing the source on the card.
+	 * This avoid occasional spurious interrupts when enabling
+	 * interrupts immediately after clearing the source on the card.
 	 */
 
-	अगर (!test_and_clear_bit(IGNORE_NEXT_INT, &ushc->flags)
+	if (!test_and_clear_bit(IGNORE_NEXT_INT, &ushc->flags)
 	    && test_bit(INT_EN, &ushc->flags)
-	    && status & USHC_INT_STATUS_SDIO_INT) अणु
-		mmc_संकेत_sdio_irq(ushc->mmc);
-	पूर्ण
+	    && status & USHC_INT_STATUS_SDIO_INT) {
+		mmc_signal_sdio_irq(ushc->mmc);
+	}
 
-	अगर ((status ^ last_status) & USHC_INT_STATUS_CARD_PRESENT)
-		mmc_detect_change(ushc->mmc, msecs_to_jअगरfies(100));
+	if ((status ^ last_status) & USHC_INT_STATUS_CARD_PRESENT)
+		mmc_detect_change(ushc->mmc, msecs_to_jiffies(100));
 
-	अगर (!test_bit(INT_EN, &ushc->flags))
+	if (!test_bit(INT_EN, &ushc->flags))
 		set_bit(IGNORE_NEXT_INT, &ushc->flags);
-	usb_submit_urb(ushc->पूर्णांक_urb, GFP_ATOMIC);
-पूर्ण
+	usb_submit_urb(ushc->int_urb, GFP_ATOMIC);
+}
 
-अटल व्योम cbw_callback(काष्ठा urb *urb)
-अणु
-	काष्ठा ushc_data *ushc = urb->context;
+static void cbw_callback(struct urb *urb)
+{
+	struct ushc_data *ushc = urb->context;
 
-	अगर (urb->status != 0) अणु
+	if (urb->status != 0) {
 		usb_unlink_urb(ushc->data_urb);
 		usb_unlink_urb(ushc->csw_urb);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम data_callback(काष्ठा urb *urb)
-अणु
-	काष्ठा ushc_data *ushc = urb->context;
+static void data_callback(struct urb *urb)
+{
+	struct ushc_data *ushc = urb->context;
 
-	अगर (urb->status != 0)
+	if (urb->status != 0)
 		usb_unlink_urb(ushc->csw_urb);
-पूर्ण
+}
 
-अटल व्योम csw_callback(काष्ठा urb *urb)
-अणु
-	काष्ठा ushc_data *ushc = urb->context;
-	काष्ठा mmc_request *req = ushc->current_req;
-	पूर्णांक status;
+static void csw_callback(struct urb *urb)
+{
+	struct ushc_data *ushc = urb->context;
+	struct mmc_request *req = ushc->current_req;
+	int status;
 
 	status = ushc->csw->status;
 
-	अगर (urb->status != 0) अणु
+	if (urb->status != 0) {
 		req->cmd->error = urb->status;
-	पूर्ण अन्यथा अगर (status & USHC_READ_RESP_ERR_CMD) अणु
-		अगर (status & USHC_READ_RESP_ERR_CRC)
+	} else if (status & USHC_READ_RESP_ERR_CMD) {
+		if (status & USHC_READ_RESP_ERR_CRC)
 			req->cmd->error = -EIO;
-		अन्यथा
+		else
 			req->cmd->error = -ETIMEDOUT;
-	पूर्ण
-	अगर (req->data) अणु
-		अगर (status & USHC_READ_RESP_ERR_DAT) अणु
-			अगर (status & USHC_READ_RESP_ERR_CRC)
+	}
+	if (req->data) {
+		if (status & USHC_READ_RESP_ERR_DAT) {
+			if (status & USHC_READ_RESP_ERR_CRC)
 				req->data->error = -EIO;
-			अन्यथा
+			else
 				req->data->error = -ETIMEDOUT;
 			req->data->bytes_xfered = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			req->data->bytes_xfered = req->data->blksz * req->data->blocks;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	req->cmd->resp[0] = le32_to_cpu(ushc->csw->response);
 
-	mmc_request_करोne(ushc->mmc, req);
-पूर्ण
+	mmc_request_done(ushc->mmc, req);
+}
 
-अटल व्योम ushc_request(काष्ठा mmc_host *mmc, काष्ठा mmc_request *req)
-अणु
-	काष्ठा ushc_data *ushc = mmc_priv(mmc);
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+static void ushc_request(struct mmc_host *mmc, struct mmc_request *req)
+{
+	struct ushc_data *ushc = mmc_priv(mmc);
+	int ret;
+	unsigned long flags;
 
 	spin_lock_irqsave(&ushc->lock, flags);
 
-	अगर (test_bit(DISCONNECTED, &ushc->flags)) अणु
+	if (test_bit(DISCONNECTED, &ushc->flags)) {
 		ret = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Version 2 firmware करोesn't support the R2 response क्रमmat. */
-	अगर (req->cmd->flags & MMC_RSP_136) अणु
+	/* Version 2 firmware doesn't support the R2 response format. */
+	if (req->cmd->flags & MMC_RSP_136) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* The Astoria's data FIFOs don't work with घड़ी speeds < 5MHz so
+	/* The Astoria's data FIFOs don't work with clock speeds < 5MHz so
 	   limit commands with data to 6MHz or more. */
-	अगर (req->data && ushc->घड़ी_freq < 6000000) अणु
+	if (req->data && ushc->clock_freq < 6000000) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ushc->current_req = req;
 
 	/* Start cmd with CBW. */
 	ushc->cbw->cmd_idx = cpu_to_le16(req->cmd->opcode);
-	अगर (req->data)
+	if (req->data)
 		ushc->cbw->block_size = cpu_to_le16(req->data->blksz);
-	अन्यथा
+	else
 		ushc->cbw->block_size = 0;
 	ushc->cbw->arg = cpu_to_le32(req->cmd->arg);
 
 	ret = usb_submit_urb(ushc->cbw_urb, GFP_ATOMIC);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
-	/* Submit data (अगर any). */
-	अगर (req->data) अणु
-		काष्ठा mmc_data *data = req->data;
-		पूर्णांक pipe;
+	/* Submit data (if any). */
+	if (req->data) {
+		struct mmc_data *data = req->data;
+		int pipe;
 
-		अगर (data->flags & MMC_DATA_READ)
+		if (data->flags & MMC_DATA_READ)
 			pipe = usb_rcvbulkpipe(ushc->usb_dev, 6);
-		अन्यथा
+		else
 			pipe = usb_sndbulkpipe(ushc->usb_dev, 2);
 
 		usb_fill_bulk_urb(ushc->data_urb, ushc->usb_dev, pipe,
-				  शून्य, data->sg->length,
+				  NULL, data->sg->length,
 				  data_callback, ushc);
 		ushc->data_urb->num_sgs = 1;
 		ushc->data_urb->sg = data->sg;
 		ret = usb_submit_urb(ushc->data_urb, GFP_ATOMIC);
-		अगर (ret < 0)
-			जाओ out;
-	पूर्ण
+		if (ret < 0)
+			goto out;
+	}
 
 	/* Submit CSW. */
 	ret = usb_submit_urb(ushc->csw_urb, GFP_ATOMIC);
 
 out:
 	spin_unlock_irqrestore(&ushc->lock, flags);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		usb_unlink_urb(ushc->cbw_urb);
 		usb_unlink_urb(ushc->data_urb);
 		req->cmd->error = ret;
-		mmc_request_करोne(mmc, req);
-	पूर्ण
-पूर्ण
+		mmc_request_done(mmc, req);
+	}
+}
 
-अटल पूर्णांक ushc_set_घातer(काष्ठा ushc_data *ushc, अचिन्हित अक्षर घातer_mode)
-अणु
+static int ushc_set_power(struct ushc_data *ushc, unsigned char power_mode)
+{
 	u16 voltage;
 
-	चयन (घातer_mode) अणु
-	हाल MMC_POWER_OFF:
+	switch (power_mode) {
+	case MMC_POWER_OFF:
 		voltage = USHC_PWR_CTRL_OFF;
-		अवरोध;
-	हाल MMC_POWER_UP:
-	हाल MMC_POWER_ON:
+		break;
+	case MMC_POWER_UP:
+	case MMC_POWER_ON:
 		voltage = USHC_PWR_CTRL_3V3;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस usb_control_msg(ushc->usb_dev, usb_sndctrlpipe(ushc->usb_dev, 0),
+	return usb_control_msg(ushc->usb_dev, usb_sndctrlpipe(ushc->usb_dev, 0),
 			       USHC_PWR_CTRL, USHC_PWR_CTRL_TYPE,
-			       voltage, 0, शून्य, 0, 100);
-पूर्ण
+			       voltage, 0, NULL, 0, 100);
+}
 
-अटल पूर्णांक ushc_set_bus_width(काष्ठा ushc_data *ushc, पूर्णांक bus_width)
-अणु
-	वापस ushc_hw_set_host_ctrl(ushc, USHC_HOST_CTRL_4BIT,
+static int ushc_set_bus_width(struct ushc_data *ushc, int bus_width)
+{
+	return ushc_hw_set_host_ctrl(ushc, USHC_HOST_CTRL_4BIT,
 				     bus_width == 4 ? USHC_HOST_CTRL_4BIT : 0);
-पूर्ण
+}
 
-अटल पूर्णांक ushc_set_bus_freq(काष्ठा ushc_data *ushc, पूर्णांक clk, bool enable_hs)
-अणु
-	पूर्णांक ret;
+static int ushc_set_bus_freq(struct ushc_data *ushc, int clk, bool enable_hs)
+{
+	int ret;
 
-	/* Hardware can't detect पूर्णांकerrupts जबतक the घड़ी is off. */
-	अगर (clk == 0)
+	/* Hardware can't detect interrupts while the clock is off. */
+	if (clk == 0)
 		clk = 400000;
 
 	ret = ushc_hw_set_host_ctrl(ushc, USHC_HOST_CTRL_HIGH_SPD,
 				    enable_hs ? USHC_HOST_CTRL_HIGH_SPD : 0);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = usb_control_msg(ushc->usb_dev, usb_sndctrlpipe(ushc->usb_dev, 0),
 			      USHC_CLK_FREQ, USHC_CLK_FREQ_TYPE,
-			      clk & 0xffff, (clk >> 16) & 0xffff, शून्य, 0, 100);
-	अगर (ret < 0)
-		वापस ret;
+			      clk & 0xffff, (clk >> 16) & 0xffff, NULL, 0, 100);
+	if (ret < 0)
+		return ret;
 
-	ushc->घड़ी_freq = clk;
-	वापस 0;
-पूर्ण
+	ushc->clock_freq = clk;
+	return 0;
+}
 
-अटल व्योम ushc_set_ios(काष्ठा mmc_host *mmc, काष्ठा mmc_ios *ios)
-अणु
-	काष्ठा ushc_data *ushc = mmc_priv(mmc);
+static void ushc_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
+{
+	struct ushc_data *ushc = mmc_priv(mmc);
 
-	ushc_set_घातer(ushc, ios->घातer_mode);
+	ushc_set_power(ushc, ios->power_mode);
 	ushc_set_bus_width(ushc, 1 << ios->bus_width);
-	ushc_set_bus_freq(ushc, ios->घड़ी, ios->timing == MMC_TIMING_SD_HS);
-पूर्ण
+	ushc_set_bus_freq(ushc, ios->clock, ios->timing == MMC_TIMING_SD_HS);
+}
 
-अटल पूर्णांक ushc_get_cd(काष्ठा mmc_host *mmc)
-अणु
-	काष्ठा ushc_data *ushc = mmc_priv(mmc);
+static int ushc_get_cd(struct mmc_host *mmc)
+{
+	struct ushc_data *ushc = mmc_priv(mmc);
 
-	वापस !!(ushc->last_status & USHC_INT_STATUS_CARD_PRESENT);
-पूर्ण
+	return !!(ushc->last_status & USHC_INT_STATUS_CARD_PRESENT);
+}
 
-अटल व्योम ushc_enable_sdio_irq(काष्ठा mmc_host *mmc, पूर्णांक enable)
-अणु
-	काष्ठा ushc_data *ushc = mmc_priv(mmc);
+static void ushc_enable_sdio_irq(struct mmc_host *mmc, int enable)
+{
+	struct ushc_data *ushc = mmc_priv(mmc);
 
-	अगर (enable)
+	if (enable)
 		set_bit(INT_EN, &ushc->flags);
-	अन्यथा
+	else
 		clear_bit(INT_EN, &ushc->flags);
-पूर्ण
+}
 
-अटल व्योम ushc_clean_up(काष्ठा ushc_data *ushc)
-अणु
-	usb_मुक्त_urb(ushc->पूर्णांक_urb);
-	usb_मुक्त_urb(ushc->csw_urb);
-	usb_मुक्त_urb(ushc->data_urb);
-	usb_मुक्त_urb(ushc->cbw_urb);
+static void ushc_clean_up(struct ushc_data *ushc)
+{
+	usb_free_urb(ushc->int_urb);
+	usb_free_urb(ushc->csw_urb);
+	usb_free_urb(ushc->data_urb);
+	usb_free_urb(ushc->cbw_urb);
 
-	kमुक्त(ushc->पूर्णांक_data);
-	kमुक्त(ushc->cbw);
-	kमुक्त(ushc->csw);
+	kfree(ushc->int_data);
+	kfree(ushc->cbw);
+	kfree(ushc->csw);
 
-	mmc_मुक्त_host(ushc->mmc);
-पूर्ण
+	mmc_free_host(ushc->mmc);
+}
 
-अटल स्थिर काष्ठा mmc_host_ops ushc_ops = अणु
+static const struct mmc_host_ops ushc_ops = {
 	.request         = ushc_request,
 	.set_ios         = ushc_set_ios,
 	.get_cd          = ushc_get_cd,
 	.enable_sdio_irq = ushc_enable_sdio_irq,
-पूर्ण;
+};
 
-अटल पूर्णांक ushc_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf, स्थिर काष्ठा usb_device_id *id)
-अणु
-	काष्ठा usb_device *usb_dev = पूर्णांकerface_to_usbdev(पूर्णांकf);
-	काष्ठा mmc_host *mmc;
-	काष्ठा ushc_data *ushc;
-	पूर्णांक ret;
+static int ushc_probe(struct usb_interface *intf, const struct usb_device_id *id)
+{
+	struct usb_device *usb_dev = interface_to_usbdev(intf);
+	struct mmc_host *mmc;
+	struct ushc_data *ushc;
+	int ret;
 
-	अगर (पूर्णांकf->cur_altsetting->desc.bNumEndpoपूर्णांकs < 1)
-		वापस -ENODEV;
+	if (intf->cur_altsetting->desc.bNumEndpoints < 1)
+		return -ENODEV;
 
-	mmc = mmc_alloc_host(माप(काष्ठा ushc_data), &पूर्णांकf->dev);
-	अगर (mmc == शून्य)
-		वापस -ENOMEM;
+	mmc = mmc_alloc_host(sizeof(struct ushc_data), &intf->dev);
+	if (mmc == NULL)
+		return -ENOMEM;
 	ushc = mmc_priv(mmc);
-	usb_set_पूर्णांकfdata(पूर्णांकf, ushc);
+	usb_set_intfdata(intf, ushc);
 
 	ushc->usb_dev = usb_dev;
 	ushc->mmc = mmc;
@@ -438,13 +437,13 @@ out:
 	spin_lock_init(&ushc->lock);
 
 	ret = ushc_hw_reset(ushc);
-	अगर (ret < 0)
-		जाओ err;
+	if (ret < 0)
+		goto err;
 
 	/* Read capabilities. */
 	ret = ushc_hw_get_caps(ushc);
-	अगर (ret < 0)
-		जाओ err;
+	if (ret < 0)
+		goto err;
 
 	mmc->ops = &ushc_ops;
 
@@ -460,107 +459,107 @@ out:
 	mmc->max_blk_size  = 512;
 	mmc->max_blk_count = 511;
 
-	ushc->पूर्णांक_urb = usb_alloc_urb(0, GFP_KERNEL);
-	अगर (ushc->पूर्णांक_urb == शून्य) अणु
+	ushc->int_urb = usb_alloc_urb(0, GFP_KERNEL);
+	if (ushc->int_urb == NULL) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
-	ushc->पूर्णांक_data = kzalloc(माप(काष्ठा ushc_पूर्णांक_data), GFP_KERNEL);
-	अगर (ushc->पूर्णांक_data == शून्य) अणु
+		goto err;
+	}
+	ushc->int_data = kzalloc(sizeof(struct ushc_int_data), GFP_KERNEL);
+	if (ushc->int_data == NULL) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
-	usb_fill_पूर्णांक_urb(ushc->पूर्णांक_urb, ushc->usb_dev,
-			 usb_rcvपूर्णांकpipe(usb_dev,
-					पूर्णांकf->cur_altsetting->endpoपूर्णांक[0].desc.bEndpoपूर्णांकAddress),
-			 ushc->पूर्णांक_data, माप(काष्ठा ushc_पूर्णांक_data),
-			 पूर्णांक_callback, ushc,
-			 पूर्णांकf->cur_altsetting->endpoपूर्णांक[0].desc.bInterval);
+		goto err;
+	}
+	usb_fill_int_urb(ushc->int_urb, ushc->usb_dev,
+			 usb_rcvintpipe(usb_dev,
+					intf->cur_altsetting->endpoint[0].desc.bEndpointAddress),
+			 ushc->int_data, sizeof(struct ushc_int_data),
+			 int_callback, ushc,
+			 intf->cur_altsetting->endpoint[0].desc.bInterval);
 
 	ushc->cbw_urb = usb_alloc_urb(0, GFP_KERNEL);
-	अगर (ushc->cbw_urb == शून्य) अणु
+	if (ushc->cbw_urb == NULL) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
-	ushc->cbw = kzalloc(माप(काष्ठा ushc_cbw), GFP_KERNEL);
-	अगर (ushc->cbw == शून्य) अणु
+		goto err;
+	}
+	ushc->cbw = kzalloc(sizeof(struct ushc_cbw), GFP_KERNEL);
+	if (ushc->cbw == NULL) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	ushc->cbw->signature = USHC_CBW_SIGNATURE;
 
 	usb_fill_bulk_urb(ushc->cbw_urb, ushc->usb_dev, usb_sndbulkpipe(usb_dev, 2),
-			  ushc->cbw, माप(काष्ठा ushc_cbw),
+			  ushc->cbw, sizeof(struct ushc_cbw),
 			  cbw_callback, ushc);
 
 	ushc->data_urb = usb_alloc_urb(0, GFP_KERNEL);
-	अगर (ushc->data_urb == शून्य) अणु
+	if (ushc->data_urb == NULL) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ushc->csw_urb = usb_alloc_urb(0, GFP_KERNEL);
-	अगर (ushc->csw_urb == शून्य) अणु
+	if (ushc->csw_urb == NULL) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
-	ushc->csw = kzalloc(माप(काष्ठा ushc_csw), GFP_KERNEL);
-	अगर (ushc->csw == शून्य) अणु
+		goto err;
+	}
+	ushc->csw = kzalloc(sizeof(struct ushc_csw), GFP_KERNEL);
+	if (ushc->csw == NULL) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	usb_fill_bulk_urb(ushc->csw_urb, ushc->usb_dev, usb_rcvbulkpipe(usb_dev, 6),
-			  ushc->csw, माप(काष्ठा ushc_csw),
+			  ushc->csw, sizeof(struct ushc_csw),
 			  csw_callback, ushc);
 
 	ret = mmc_add_host(ushc->mmc);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	ret = usb_submit_urb(ushc->पूर्णांक_urb, GFP_KERNEL);
-	अगर (ret < 0) अणु
-		mmc_हटाओ_host(ushc->mmc);
-		जाओ err;
-	पूर्ण
+	ret = usb_submit_urb(ushc->int_urb, GFP_KERNEL);
+	if (ret < 0) {
+		mmc_remove_host(ushc->mmc);
+		goto err;
+	}
 
-	वापस 0;
+	return 0;
 
 err:
 	ushc_clean_up(ushc);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ushc_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा ushc_data *ushc = usb_get_पूर्णांकfdata(पूर्णांकf);
+static void ushc_disconnect(struct usb_interface *intf)
+{
+	struct ushc_data *ushc = usb_get_intfdata(intf);
 
 	spin_lock_irq(&ushc->lock);
 	set_bit(DISCONNECTED, &ushc->flags);
 	spin_unlock_irq(&ushc->lock);
 
-	usb_समाप्त_urb(ushc->पूर्णांक_urb);
-	usb_समाप्त_urb(ushc->cbw_urb);
-	usb_समाप्त_urb(ushc->data_urb);
-	usb_समाप्त_urb(ushc->csw_urb);
+	usb_kill_urb(ushc->int_urb);
+	usb_kill_urb(ushc->cbw_urb);
+	usb_kill_urb(ushc->data_urb);
+	usb_kill_urb(ushc->csw_urb);
 
-	mmc_हटाओ_host(ushc->mmc);
+	mmc_remove_host(ushc->mmc);
 
 	ushc_clean_up(ushc);
-पूर्ण
+}
 
-अटल काष्ठा usb_device_id ushc_id_table[] = अणु
+static struct usb_device_id ushc_id_table[] = {
 	/* CSR USB SD Host Controller */
-	अणु USB_DEVICE(0x0a12, 0x5d10) पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+	{ USB_DEVICE(0x0a12, 0x5d10) },
+	{ },
+};
 MODULE_DEVICE_TABLE(usb, ushc_id_table);
 
-अटल काष्ठा usb_driver ushc_driver = अणु
+static struct usb_driver ushc_driver = {
 	.name       = "ushc",
 	.id_table   = ushc_id_table,
 	.probe      = ushc_probe,
 	.disconnect = ushc_disconnect,
-पूर्ण;
+};
 
 module_usb_driver(ushc_driver);
 

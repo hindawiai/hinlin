@@ -1,31 +1,30 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (c) 2014 MunकरोReader S.L.
+ * Copyright (c) 2014 MundoReader S.L.
  * Author: Heiko Stuebner <heiko@sntech.de>
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/syscore_ops.h>
-#समावेश <dt-bindings/घड़ी/rk3288-cru.h>
-#समावेश "clk.h"
+#include <linux/clk-provider.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/syscore_ops.h>
+#include <dt-bindings/clock/rk3288-cru.h>
+#include "clk.h"
 
-#घोषणा RK3288_GRF_SOC_CON(x)	(0x244 + x * 4)
-#घोषणा RK3288_GRF_SOC_STATUS1	0x284
+#define RK3288_GRF_SOC_CON(x)	(0x244 + x * 4)
+#define RK3288_GRF_SOC_STATUS1	0x284
 
-क्रमागत rk3288_variant अणु
+enum rk3288_variant {
 	RK3288_CRU,
 	RK3288W_CRU,
-पूर्ण;
+};
 
-क्रमागत rk3288_plls अणु
+enum rk3288_plls {
 	apll, dpll, cpll, gpll, npll,
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pll_rate_table rk3288_pll_rates[] = अणु
+static struct rockchip_pll_rate_table rk3288_pll_rates[] = {
 	RK3066_PLL_RATE(2208000000, 1, 92, 1),
 	RK3066_PLL_RATE(2184000000, 1, 91, 1),
 	RK3066_PLL_RATE(2160000000, 1, 90, 1),
@@ -119,30 +118,30 @@
 	RK3066_PLL_RATE( 160000000, 1, 80, 12),
 	RK3066_PLL_RATE( 157500000, 1, 105, 16),
 	RK3066_PLL_RATE( 126000000, 1, 84, 16),
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+	{ /* sentinel */ },
+};
 
-#घोषणा RK3288_DIV_ACLK_CORE_M0_MASK	0xf
-#घोषणा RK3288_DIV_ACLK_CORE_M0_SHIFT	0
-#घोषणा RK3288_DIV_ACLK_CORE_MP_MASK	0xf
-#घोषणा RK3288_DIV_ACLK_CORE_MP_SHIFT	4
-#घोषणा RK3288_DIV_L2RAM_MASK		0x7
-#घोषणा RK3288_DIV_L2RAM_SHIFT		0
-#घोषणा RK3288_DIV_ATCLK_MASK		0x1f
-#घोषणा RK3288_DIV_ATCLK_SHIFT		4
-#घोषणा RK3288_DIV_PCLK_DBGPRE_MASK	0x1f
-#घोषणा RK3288_DIV_PCLK_DBGPRE_SHIFT	9
+#define RK3288_DIV_ACLK_CORE_M0_MASK	0xf
+#define RK3288_DIV_ACLK_CORE_M0_SHIFT	0
+#define RK3288_DIV_ACLK_CORE_MP_MASK	0xf
+#define RK3288_DIV_ACLK_CORE_MP_SHIFT	4
+#define RK3288_DIV_L2RAM_MASK		0x7
+#define RK3288_DIV_L2RAM_SHIFT		0
+#define RK3288_DIV_ATCLK_MASK		0x1f
+#define RK3288_DIV_ATCLK_SHIFT		4
+#define RK3288_DIV_PCLK_DBGPRE_MASK	0x1f
+#define RK3288_DIV_PCLK_DBGPRE_SHIFT	9
 
-#घोषणा RK3288_CLKSEL0(_core_m0, _core_mp)				\
-	अणु								\
+#define RK3288_CLKSEL0(_core_m0, _core_mp)				\
+	{								\
 		.reg = RK3288_CLKSEL_CON(0),				\
 		.val = HIWORD_UPDATE(_core_m0, RK3288_DIV_ACLK_CORE_M0_MASK, \
 				RK3288_DIV_ACLK_CORE_M0_SHIFT) |	\
 		       HIWORD_UPDATE(_core_mp, RK3288_DIV_ACLK_CORE_MP_MASK, \
 				RK3288_DIV_ACLK_CORE_MP_SHIFT),		\
-	पूर्ण
-#घोषणा RK3288_CLKSEL37(_l2ram, _atclk, _pclk_dbg_pre)			\
-	अणु								\
+	}
+#define RK3288_CLKSEL37(_l2ram, _atclk, _pclk_dbg_pre)			\
+	{								\
 		.reg = RK3288_CLKSEL_CON(37),				\
 		.val = HIWORD_UPDATE(_l2ram, RK3288_DIV_L2RAM_MASK,	\
 				RK3288_DIV_L2RAM_SHIFT) |		\
@@ -151,18 +150,18 @@
 		       HIWORD_UPDATE(_pclk_dbg_pre,			\
 				RK3288_DIV_PCLK_DBGPRE_MASK,		\
 				RK3288_DIV_PCLK_DBGPRE_SHIFT),		\
-	पूर्ण
+	}
 
-#घोषणा RK3288_CPUCLK_RATE(_prate, _core_m0, _core_mp, _l2ram, _atclk, _pdbg) \
-	अणु								\
+#define RK3288_CPUCLK_RATE(_prate, _core_m0, _core_mp, _l2ram, _atclk, _pdbg) \
+	{								\
 		.prate = _prate,					\
-		.भागs = अणु						\
+		.divs = {						\
 			RK3288_CLKSEL0(_core_m0, _core_mp),		\
 			RK3288_CLKSEL37(_l2ram, _atclk, _pdbg),		\
-		पूर्ण,							\
-	पूर्ण
+		},							\
+	}
 
-अटल काष्ठा rockchip_cpuclk_rate_table rk3288_cpuclk_rates[] __initdata = अणु
+static struct rockchip_cpuclk_rate_table rk3288_cpuclk_rates[] __initdata = {
 	RK3288_CPUCLK_RATE(1800000000, 1, 3, 1, 3, 3),
 	RK3288_CPUCLK_RATE(1704000000, 1, 3, 1, 3, 3),
 	RK3288_CPUCLK_RATE(1608000000, 1, 3, 1, 3, 3),
@@ -177,110 +176,110 @@
 	RK3288_CPUCLK_RATE( 312000000, 1, 3, 1, 3, 3),
 	RK3288_CPUCLK_RATE( 216000000, 1, 3, 1, 3, 3),
 	RK3288_CPUCLK_RATE( 126000000, 1, 3, 1, 3, 3),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा rockchip_cpuclk_reg_data rk3288_cpuclk_data = अणु
+static const struct rockchip_cpuclk_reg_data rk3288_cpuclk_data = {
 	.core_reg[0] = RK3288_CLKSEL_CON(0),
-	.भाग_core_shअगरt[0] = 8,
-	.भाग_core_mask[0] = 0x1f,
+	.div_core_shift[0] = 8,
+	.div_core_mask[0] = 0x1f,
 	.num_cores = 1,
 	.mux_core_alt = 1,
-	.mux_core_मुख्य = 0,
-	.mux_core_shअगरt = 15,
+	.mux_core_main = 0,
+	.mux_core_shift = 15,
 	.mux_core_mask = 0x1,
-पूर्ण;
+};
 
-PNAME(mux_pll_p)		= अणु "xin24m", "xin32k" पूर्ण;
-PNAME(mux_armclk_p)		= अणु "apll_core", "gpll_core" पूर्ण;
-PNAME(mux_ddrphy_p)		= अणु "dpll_ddr", "gpll_ddr" पूर्ण;
-PNAME(mux_aclk_cpu_src_p)	= अणु "cpll_aclk_cpu", "gpll_aclk_cpu" पूर्ण;
+PNAME(mux_pll_p)		= { "xin24m", "xin32k" };
+PNAME(mux_armclk_p)		= { "apll_core", "gpll_core" };
+PNAME(mux_ddrphy_p)		= { "dpll_ddr", "gpll_ddr" };
+PNAME(mux_aclk_cpu_src_p)	= { "cpll_aclk_cpu", "gpll_aclk_cpu" };
 
-PNAME(mux_pll_src_cpll_gpll_p)		= अणु "cpll", "gpll" पूर्ण;
-PNAME(mux_pll_src_npll_cpll_gpll_p)	= अणु "npll", "cpll", "gpll" पूर्ण;
-PNAME(mux_pll_src_cpll_gpll_npll_p)	= अणु "cpll", "gpll", "npll" पूर्ण;
-PNAME(mux_pll_src_cpll_gpll_usb480m_p)	= अणु "cpll", "gpll", "unstable:usbphy480m_src" पूर्ण;
-PNAME(mux_pll_src_cpll_gll_usb_npll_p)	= अणु "cpll", "gpll", "unstable:usbphy480m_src", "npll" पूर्ण;
+PNAME(mux_pll_src_cpll_gpll_p)		= { "cpll", "gpll" };
+PNAME(mux_pll_src_npll_cpll_gpll_p)	= { "npll", "cpll", "gpll" };
+PNAME(mux_pll_src_cpll_gpll_npll_p)	= { "cpll", "gpll", "npll" };
+PNAME(mux_pll_src_cpll_gpll_usb480m_p)	= { "cpll", "gpll", "unstable:usbphy480m_src" };
+PNAME(mux_pll_src_cpll_gll_usb_npll_p)	= { "cpll", "gpll", "unstable:usbphy480m_src", "npll" };
 
-PNAME(mux_mmc_src_p)	= अणु "cpll", "gpll", "xin24m", "xin24m" पूर्ण;
-PNAME(mux_i2s_pre_p)	= अणु "i2s_src", "i2s_frac", "ext_i2s", "xin12m" पूर्ण;
-PNAME(mux_i2s_clkout_p)	= अणु "i2s_pre", "xin12m" पूर्ण;
-PNAME(mux_spdअगर_p)	= अणु "spdif_pre", "spdif_frac", "xin12m" पूर्ण;
-PNAME(mux_spdअगर_8ch_p)	= अणु "spdif_8ch_pre", "spdif_8ch_frac", "xin12m" पूर्ण;
-PNAME(mux_uart0_p)	= अणु "uart0_src", "uart0_frac", "xin24m" पूर्ण;
-PNAME(mux_uart1_p)	= अणु "uart1_src", "uart1_frac", "xin24m" पूर्ण;
-PNAME(mux_uart2_p)	= अणु "uart2_src", "uart2_frac", "xin24m" पूर्ण;
-PNAME(mux_uart3_p)	= अणु "uart3_src", "uart3_frac", "xin24m" पूर्ण;
-PNAME(mux_uart4_p)	= अणु "uart4_src", "uart4_frac", "xin24m" पूर्ण;
-PNAME(mux_vip_out_p)	= अणु "vip_src", "xin24m" पूर्ण;
-PNAME(mux_mac_p)	= अणु "mac_pll_src", "ext_gmac" पूर्ण;
-PNAME(mux_hsadcout_p)	= अणु "hsadc_src", "ext_hsadc" पूर्ण;
-PNAME(mux_edp_24m_p)	= अणु "ext_edp_24m", "xin24m" पूर्ण;
-PNAME(mux_tspout_p)	= अणु "cpll", "gpll", "npll", "xin27m" पूर्ण;
+PNAME(mux_mmc_src_p)	= { "cpll", "gpll", "xin24m", "xin24m" };
+PNAME(mux_i2s_pre_p)	= { "i2s_src", "i2s_frac", "ext_i2s", "xin12m" };
+PNAME(mux_i2s_clkout_p)	= { "i2s_pre", "xin12m" };
+PNAME(mux_spdif_p)	= { "spdif_pre", "spdif_frac", "xin12m" };
+PNAME(mux_spdif_8ch_p)	= { "spdif_8ch_pre", "spdif_8ch_frac", "xin12m" };
+PNAME(mux_uart0_p)	= { "uart0_src", "uart0_frac", "xin24m" };
+PNAME(mux_uart1_p)	= { "uart1_src", "uart1_frac", "xin24m" };
+PNAME(mux_uart2_p)	= { "uart2_src", "uart2_frac", "xin24m" };
+PNAME(mux_uart3_p)	= { "uart3_src", "uart3_frac", "xin24m" };
+PNAME(mux_uart4_p)	= { "uart4_src", "uart4_frac", "xin24m" };
+PNAME(mux_vip_out_p)	= { "vip_src", "xin24m" };
+PNAME(mux_mac_p)	= { "mac_pll_src", "ext_gmac" };
+PNAME(mux_hsadcout_p)	= { "hsadc_src", "ext_hsadc" };
+PNAME(mux_edp_24m_p)	= { "ext_edp_24m", "xin24m" };
+PNAME(mux_tspout_p)	= { "cpll", "gpll", "npll", "xin27m" };
 
-PNAME(mux_aclk_vcodec_pre_p)	= अणु "aclk_vdpu", "aclk_vepu" पूर्ण;
-PNAME(mux_usbphy480m_p)		= अणु "sclk_otgphy1_480m", "sclk_otgphy2_480m",
-				    "sclk_otgphy0_480m" पूर्ण;
-PNAME(mux_hsicphy480m_p)	= अणु "cpll", "gpll", "usbphy480m_src" पूर्ण;
-PNAME(mux_hsicphy12m_p)		= अणु "hsicphy12m_xin12m", "hsicphy12m_usbphy" पूर्ण;
+PNAME(mux_aclk_vcodec_pre_p)	= { "aclk_vdpu", "aclk_vepu" };
+PNAME(mux_usbphy480m_p)		= { "sclk_otgphy1_480m", "sclk_otgphy2_480m",
+				    "sclk_otgphy0_480m" };
+PNAME(mux_hsicphy480m_p)	= { "cpll", "gpll", "usbphy480m_src" };
+PNAME(mux_hsicphy12m_p)		= { "hsicphy12m_xin12m", "hsicphy12m_usbphy" };
 
-अटल काष्ठा rockchip_pll_घड़ी rk3288_pll_clks[] __initdata = अणु
+static struct rockchip_pll_clock rk3288_pll_clks[] __initdata = {
 	[apll] = PLL(pll_rk3066, PLL_APLL, "apll", mux_pll_p, 0, RK3288_PLL_CON(0),
 		     RK3288_MODE_CON, 0, 6, 0, rk3288_pll_rates),
 	[dpll] = PLL(pll_rk3066, PLL_DPLL, "dpll", mux_pll_p, 0, RK3288_PLL_CON(4),
-		     RK3288_MODE_CON, 4, 5, 0, शून्य),
+		     RK3288_MODE_CON, 4, 5, 0, NULL),
 	[cpll] = PLL(pll_rk3066, PLL_CPLL, "cpll", mux_pll_p, 0, RK3288_PLL_CON(8),
 		     RK3288_MODE_CON, 8, 7, ROCKCHIP_PLL_SYNC_RATE, rk3288_pll_rates),
 	[gpll] = PLL(pll_rk3066, PLL_GPLL, "gpll", mux_pll_p, 0, RK3288_PLL_CON(12),
 		     RK3288_MODE_CON, 12, 8, ROCKCHIP_PLL_SYNC_RATE, rk3288_pll_rates),
 	[npll] = PLL(pll_rk3066, PLL_NPLL, "npll",  mux_pll_p, 0, RK3288_PLL_CON(16),
 		     RK3288_MODE_CON, 14, 9, ROCKCHIP_PLL_SYNC_RATE, rk3288_pll_rates),
-पूर्ण;
+};
 
-अटल काष्ठा clk_भाग_प्रकारable भाग_hclk_cpu_t[] = अणु
-	अणु .val = 0, .भाग = 1 पूर्ण,
-	अणु .val = 1, .भाग = 2 पूर्ण,
-	अणु .val = 3, .भाग = 4 पूर्ण,
-	अणु /* sentinel */पूर्ण,
-पूर्ण;
+static struct clk_div_table div_hclk_cpu_t[] = {
+	{ .val = 0, .div = 1 },
+	{ .val = 1, .div = 2 },
+	{ .val = 3, .div = 4 },
+	{ /* sentinel */},
+};
 
-#घोषणा MFLAGS CLK_MUX_HIWORD_MASK
-#घोषणा DFLAGS CLK_DIVIDER_HIWORD_MASK
-#घोषणा GFLAGS (CLK_GATE_HIWORD_MASK | CLK_GATE_SET_TO_DISABLE)
-#घोषणा IFLAGS ROCKCHIP_INVERTER_HIWORD_MASK
+#define MFLAGS CLK_MUX_HIWORD_MASK
+#define DFLAGS CLK_DIVIDER_HIWORD_MASK
+#define GFLAGS (CLK_GATE_HIWORD_MASK | CLK_GATE_SET_TO_DISABLE)
+#define IFLAGS ROCKCHIP_INVERTER_HIWORD_MASK
 
-अटल काष्ठा rockchip_clk_branch rk3288_i2s_fracmux __initdata =
+static struct rockchip_clk_branch rk3288_i2s_fracmux __initdata =
 	MUX(0, "i2s_pre", mux_i2s_pre_p, CLK_SET_RATE_PARENT,
 			RK3288_CLKSEL_CON(4), 8, 2, MFLAGS);
 
-अटल काष्ठा rockchip_clk_branch rk3288_spdअगर_fracmux __initdata =
-	MUX(0, "spdif_mux", mux_spdअगर_p, CLK_SET_RATE_PARENT,
+static struct rockchip_clk_branch rk3288_spdif_fracmux __initdata =
+	MUX(0, "spdif_mux", mux_spdif_p, CLK_SET_RATE_PARENT,
 			RK3288_CLKSEL_CON(5), 8, 2, MFLAGS);
 
-अटल काष्ठा rockchip_clk_branch rk3288_spdअगर_8ch_fracmux __initdata =
-	MUX(0, "spdif_8ch_mux", mux_spdअगर_8ch_p, CLK_SET_RATE_PARENT,
+static struct rockchip_clk_branch rk3288_spdif_8ch_fracmux __initdata =
+	MUX(0, "spdif_8ch_mux", mux_spdif_8ch_p, CLK_SET_RATE_PARENT,
 			RK3288_CLKSEL_CON(40), 8, 2, MFLAGS);
 
-अटल काष्ठा rockchip_clk_branch rk3288_uart0_fracmux __initdata =
+static struct rockchip_clk_branch rk3288_uart0_fracmux __initdata =
 	MUX(SCLK_UART0, "sclk_uart0", mux_uart0_p, CLK_SET_RATE_PARENT,
 			RK3288_CLKSEL_CON(13), 8, 2, MFLAGS);
 
-अटल काष्ठा rockchip_clk_branch rk3288_uart1_fracmux __initdata =
+static struct rockchip_clk_branch rk3288_uart1_fracmux __initdata =
 	MUX(SCLK_UART1, "sclk_uart1", mux_uart1_p, CLK_SET_RATE_PARENT,
 			RK3288_CLKSEL_CON(14), 8, 2, MFLAGS);
 
-अटल काष्ठा rockchip_clk_branch rk3288_uart2_fracmux __initdata =
+static struct rockchip_clk_branch rk3288_uart2_fracmux __initdata =
 	MUX(SCLK_UART2, "sclk_uart2", mux_uart2_p, CLK_SET_RATE_PARENT,
 			RK3288_CLKSEL_CON(15), 8, 2, MFLAGS);
 
-अटल काष्ठा rockchip_clk_branch rk3288_uart3_fracmux __initdata =
+static struct rockchip_clk_branch rk3288_uart3_fracmux __initdata =
 	MUX(SCLK_UART3, "sclk_uart3", mux_uart3_p, CLK_SET_RATE_PARENT,
 			RK3288_CLKSEL_CON(16), 8, 2, MFLAGS);
 
-अटल काष्ठा rockchip_clk_branch rk3288_uart4_fracmux __initdata =
+static struct rockchip_clk_branch rk3288_uart4_fracmux __initdata =
 	MUX(SCLK_UART4, "sclk_uart4", mux_uart4_p, CLK_SET_RATE_PARENT,
 			RK3288_CLKSEL_CON(3), 8, 2, MFLAGS);
 
-अटल काष्ठा rockchip_clk_branch rk3288_clk_branches[] __initdata = अणु
+static struct rockchip_clk_branch rk3288_clk_branches[] __initdata = {
 	/*
 	 * Clock-Architecture Diagram 1
 	 */
@@ -346,7 +345,7 @@ PNAME(mux_hsicphy12m_p)		= अणु "hsicphy12m_xin12m", "hsicphy12m_usbphy" �
 			RK3288_CLKSEL_CON(1), 12, 3, DFLAGS,
 			RK3288_CLKGATE_CON(0), 5, GFLAGS),
 	COMPOSITE_NOMUX_DIVTBL(HCLK_CPU, "hclk_cpu", "aclk_cpu_pre", CLK_IGNORE_UNUSED,
-			RK3288_CLKSEL_CON(1), 8, 2, DFLAGS, भाग_hclk_cpu_t,
+			RK3288_CLKSEL_CON(1), 8, 2, DFLAGS, div_hclk_cpu_t,
 			RK3288_CLKGATE_CON(0), 4, GFLAGS),
 	GATE(0, "c2c_host", "aclk_cpu_src", 0,
 			RK3288_CLKGATE_CON(13), 8, GFLAGS),
@@ -379,7 +378,7 @@ PNAME(mux_hsicphy12m_p)		= अणु "hsicphy12m_xin12m", "hsicphy12m_usbphy" �
 	COMPOSITE_FRACMUX(0, "spdif_frac", "spdif_src", CLK_SET_RATE_PARENT,
 			RK3288_CLKSEL_CON(9), 0,
 			RK3288_CLKGATE_CON(4), 5, GFLAGS,
-			&rk3288_spdअगर_fracmux),
+			&rk3288_spdif_fracmux),
 	GATE(SCLK_SPDIF, "sclk_spdif", "spdif_mux", CLK_SET_RATE_PARENT,
 			RK3288_CLKGATE_CON(4), 6, GFLAGS),
 	COMPOSITE_NOMUX(0, "spdif_8ch_pre", "spdif_src", CLK_SET_RATE_PARENT,
@@ -388,7 +387,7 @@ PNAME(mux_hsicphy12m_p)		= अणु "hsicphy12m_xin12m", "hsicphy12m_usbphy" �
 	COMPOSITE_FRACMUX(0, "spdif_8ch_frac", "spdif_8ch_pre", CLK_SET_RATE_PARENT,
 			RK3288_CLKSEL_CON(41), 0,
 			RK3288_CLKGATE_CON(4), 8, GFLAGS,
-			&rk3288_spdअगर_8ch_fracmux),
+			&rk3288_spdif_8ch_fracmux),
 	GATE(SCLK_SPDIF8CH, "sclk_spdif_8ch", "spdif_8ch_mux", CLK_SET_RATE_PARENT,
 			RK3288_CLKGATE_CON(4), 9, GFLAGS),
 
@@ -576,10 +575,10 @@ PNAME(mux_hsicphy12m_p)		= अणु "hsicphy12m_xin12m", "hsicphy12m_usbphy" �
 	GATE(SCLK_PS2C, "sclk_ps2c", "xin24m", 0,
 			RK3288_CLKGATE_CON(5), 13, GFLAGS),
 
-	COMPOSITE(SCLK_न_अंकDC0, "sclk_nandc0", mux_pll_src_cpll_gpll_p, 0,
+	COMPOSITE(SCLK_NANDC0, "sclk_nandc0", mux_pll_src_cpll_gpll_p, 0,
 			RK3288_CLKSEL_CON(38), 7, 1, MFLAGS, 0, 5, DFLAGS,
 			RK3288_CLKGATE_CON(5), 5, GFLAGS),
-	COMPOSITE(SCLK_न_अंकDC1, "sclk_nandc1", mux_pll_src_cpll_gpll_p, 0,
+	COMPOSITE(SCLK_NANDC1, "sclk_nandc1", mux_pll_src_cpll_gpll_p, 0,
 			RK3288_CLKSEL_CON(38), 15, 1, MFLAGS, 8, 5, DFLAGS,
 			RK3288_CLKGATE_CON(5), 6, GFLAGS),
 
@@ -695,7 +694,7 @@ PNAME(mux_hsicphy12m_p)		= अणु "hsicphy12m_xin12m", "hsicphy12m_usbphy" �
 	GATE(PCLK_EFUSE256, "pclk_efuse_256", "pclk_cpu", 0, RK3288_CLKGATE_CON(11), 10, GFLAGS),
 	GATE(PCLK_RKPWM, "pclk_rkpwm", "pclk_cpu", 0, RK3288_CLKGATE_CON(11), 11, GFLAGS),
 
-	/* ddrctrl [DDR Controller PHY घड़ी] gates */
+	/* ddrctrl [DDR Controller PHY clock] gates */
 	GATE(0, "nclk_ddrupctl0", "ddrphy", CLK_IGNORE_UNUSED, RK3288_CLKGATE_CON(11), 4, GFLAGS),
 	GATE(0, "nclk_ddrupctl1", "ddrphy", CLK_IGNORE_UNUSED, RK3288_CLKGATE_CON(11), 5, GFLAGS),
 
@@ -721,8 +720,8 @@ PNAME(mux_hsicphy12m_p)		= अणु "hsicphy12m_xin12m", "hsicphy12m_usbphy" �
 	GATE(0, "hclk_peri_ahb_arbi", "hclk_peri", CLK_IGNORE_UNUSED, RK3288_CLKGATE_CON(7), 10, GFLAGS),
 	GATE(0, "hclk_emem", "hclk_peri", CLK_IGNORE_UNUSED, RK3288_CLKGATE_CON(7), 12, GFLAGS),
 	GATE(0, "hclk_mem", "hclk_peri", CLK_IGNORE_UNUSED, RK3288_CLKGATE_CON(7), 13, GFLAGS),
-	GATE(HCLK_न_अंकDC0, "hclk_nandc0", "hclk_peri", 0, RK3288_CLKGATE_CON(7), 14, GFLAGS),
-	GATE(HCLK_न_अंकDC1, "hclk_nandc1", "hclk_peri", 0, RK3288_CLKGATE_CON(7), 15, GFLAGS),
+	GATE(HCLK_NANDC0, "hclk_nandc0", "hclk_peri", 0, RK3288_CLKGATE_CON(7), 14, GFLAGS),
+	GATE(HCLK_NANDC1, "hclk_nandc1", "hclk_peri", 0, RK3288_CLKGATE_CON(7), 15, GFLAGS),
 	GATE(HCLK_TSP, "hclk_tsp", "hclk_peri", 0, RK3288_CLKGATE_CON(8), 8, GFLAGS),
 	GATE(HCLK_SDMMC, "hclk_sdmmc", "hclk_peri", 0, RK3288_CLKGATE_CON(8), 3, GFLAGS),
 	GATE(HCLK_SDIO0, "hclk_sdio0", "hclk_peri", 0, RK3288_CLKGATE_CON(8), 4, GFLAGS),
@@ -771,7 +770,7 @@ PNAME(mux_hsicphy12m_p)		= अणु "hsicphy12m_xin12m", "hsicphy12m_usbphy" �
 	GATE(PCLK_GRF, "pclk_grf", "pclk_pd_alive", CLK_IGNORE_UNUSED, RK3288_CLKGATE_CON(14), 11, GFLAGS),
 	GATE(0, "pclk_alive_niu", "pclk_pd_alive", 0, RK3288_CLKGATE_CON(14), 12, GFLAGS),
 
-	/* Watchकरोg pclk is controlled by RK3288_SGRF_SOC_CON0[1]. */
+	/* Watchdog pclk is controlled by RK3288_SGRF_SOC_CON0[1]. */
 	SGRF_GATE(PCLK_WDT, "pclk_wdt", "pclk_pd_alive"),
 
 	/* pclk_pd_pmu gates */
@@ -815,26 +814,26 @@ PNAME(mux_hsicphy12m_p)		= अणु "hsicphy12m_xin12m", "hsicphy12m_usbphy" �
 	GATE(ACLK_RGA_NIU, "aclk_rga_niu", "aclk_rga_pre", 0, RK3288_CLKGATE_CON(15), 13, GFLAGS),
 
 	/*
-	 * Other ungrouped घड़ीs.
+	 * Other ungrouped clocks.
 	 */
 
 	GATE(0, "pclk_vip_in", "ext_vip", 0, RK3288_CLKGATE_CON(16), 0, GFLAGS),
 	INVERTER(0, "pclk_vip", "pclk_vip_in", RK3288_CLKSEL_CON(29), 4, IFLAGS),
 	GATE(PCLK_ISP_IN, "pclk_isp_in", "ext_isp", 0, RK3288_CLKGATE_CON(16), 3, GFLAGS),
 	INVERTER(0, "pclk_isp", "pclk_isp_in", RK3288_CLKSEL_CON(29), 3, IFLAGS),
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_clk_branch rk3288w_hclkvio_branch[] __initdata = अणु
+static struct rockchip_clk_branch rk3288w_hclkvio_branch[] __initdata = {
 	DIV(0, "hclk_vio", "aclk_vio1", 0,
 			RK3288_CLKSEL_CON(28), 8, 5, DFLAGS),
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_clk_branch rk3288_hclkvio_branch[] __initdata = अणु
+static struct rockchip_clk_branch rk3288_hclkvio_branch[] __initdata = {
 	DIV(0, "hclk_vio", "aclk_vio0", 0,
 			RK3288_CLKSEL_CON(28), 8, 5, DFLAGS),
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर rk3288_critical_घड़ीs[] __initस्थिर = अणु
+static const char *const rk3288_critical_clocks[] __initconst = {
 	"aclk_cpu",
 	"aclk_peri",
 	"aclk_peri_niu",
@@ -847,18 +846,18 @@ PNAME(mux_hsicphy12m_p)		= अणु "hsicphy12m_xin12m", "hsicphy12m_usbphy" �
 	"pclk_pd_pmu",
 	"pclk_pmu_niu",
 	"pmu_hclk_otg0",
-	/* pwm-regulators on some boards, so hanकरोff-critical later */
+	/* pwm-regulators on some boards, so handoff-critical later */
 	"pclk_rkpwm",
-पूर्ण;
+};
 
-अटल व्योम __iomem *rk3288_cru_base;
+static void __iomem *rk3288_cru_base;
 
 /*
- * Some CRU रेजिस्टरs will be reset in maskrom when the प्रणाली
+ * Some CRU registers will be reset in maskrom when the system
  * wakes up from fastboot.
- * So save them beक्रमe suspend, restore them after resume.
+ * So save them before suspend, restore them after resume.
  */
-अटल स्थिर पूर्णांक rk3288_saved_cru_reg_ids[] = अणु
+static const int rk3288_saved_cru_reg_ids[] = {
 	RK3288_MODE_CON,
 	RK3288_CLKSEL_CON(0),
 	RK3288_CLKSEL_CON(1),
@@ -866,127 +865,127 @@ PNAME(mux_hsicphy12m_p)		= अणु "hsicphy12m_xin12m", "hsicphy12m_usbphy" �
 	RK3288_CLKSEL_CON(33),
 	RK3288_CLKSEL_CON(37),
 
-	/* We turn aclk_dmac1 on क्रम suspend; this will restore it */
+	/* We turn aclk_dmac1 on for suspend; this will restore it */
 	RK3288_CLKGATE_CON(10),
-पूर्ण;
+};
 
-अटल u32 rk3288_saved_cru_regs[ARRAY_SIZE(rk3288_saved_cru_reg_ids)];
+static u32 rk3288_saved_cru_regs[ARRAY_SIZE(rk3288_saved_cru_reg_ids)];
 
-अटल पूर्णांक rk3288_clk_suspend(व्योम)
-अणु
-	पूर्णांक i, reg_id;
+static int rk3288_clk_suspend(void)
+{
+	int i, reg_id;
 
-	क्रम (i = 0; i < ARRAY_SIZE(rk3288_saved_cru_reg_ids); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(rk3288_saved_cru_reg_ids); i++) {
 		reg_id = rk3288_saved_cru_reg_ids[i];
 
 		rk3288_saved_cru_regs[i] =
-				पढ़ोl_relaxed(rk3288_cru_base + reg_id);
-	पूर्ण
+				readl_relaxed(rk3288_cru_base + reg_id);
+	}
 
 	/*
-	 * Going पूर्णांकo deep sleep (specअगरically setting PMU_CLR_DMA in
+	 * Going into deep sleep (specifically setting PMU_CLR_DMA in
 	 * RK3288_PMU_PWRMODE_CON1) appears to fail unless
 	 * "aclk_dmac1" is on.
 	 */
-	ग_लिखोl_relaxed(1 << (12 + 16),
+	writel_relaxed(1 << (12 + 16),
 		       rk3288_cru_base + RK3288_CLKGATE_CON(10));
 
 	/*
-	 * Switch PLLs other than DPLL (क्रम SDRAM) to slow mode to
-	 * aव्योम crashes on resume. The Mask ROM on the प्रणाली will
-	 * put APLL, CPLL, and GPLL पूर्णांकo slow mode at resume समय
+	 * Switch PLLs other than DPLL (for SDRAM) to slow mode to
+	 * avoid crashes on resume. The Mask ROM on the system will
+	 * put APLL, CPLL, and GPLL into slow mode at resume time
 	 * anyway (which is why we restore them), but we might not
-	 * even make it to the Mask ROM अगर this isn't करोne at suspend
-	 * समय.
+	 * even make it to the Mask ROM if this isn't done at suspend
+	 * time.
 	 *
-	 * NOTE: only APLL truly matters here, but we'll करो them all.
+	 * NOTE: only APLL truly matters here, but we'll do them all.
 	 */
 
-	ग_लिखोl_relaxed(0xf3030000, rk3288_cru_base + RK3288_MODE_CON);
+	writel_relaxed(0xf3030000, rk3288_cru_base + RK3288_MODE_CON);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम rk3288_clk_resume(व्योम)
-अणु
-	पूर्णांक i, reg_id;
+static void rk3288_clk_resume(void)
+{
+	int i, reg_id;
 
-	क्रम (i = ARRAY_SIZE(rk3288_saved_cru_reg_ids) - 1; i >= 0; i--) अणु
+	for (i = ARRAY_SIZE(rk3288_saved_cru_reg_ids) - 1; i >= 0; i--) {
 		reg_id = rk3288_saved_cru_reg_ids[i];
 
-		ग_लिखोl_relaxed(rk3288_saved_cru_regs[i] | 0xffff0000,
+		writel_relaxed(rk3288_saved_cru_regs[i] | 0xffff0000,
 			       rk3288_cru_base + reg_id);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम rk3288_clk_shutकरोwn(व्योम)
-अणु
-	ग_लिखोl_relaxed(0xf3030000, rk3288_cru_base + RK3288_MODE_CON);
-पूर्ण
+static void rk3288_clk_shutdown(void)
+{
+	writel_relaxed(0xf3030000, rk3288_cru_base + RK3288_MODE_CON);
+}
 
-अटल काष्ठा syscore_ops rk3288_clk_syscore_ops = अणु
+static struct syscore_ops rk3288_clk_syscore_ops = {
 	.suspend = rk3288_clk_suspend,
 	.resume = rk3288_clk_resume,
-पूर्ण;
+};
 
-अटल व्योम __init rk3288_common_init(काष्ठा device_node *np,
-				      क्रमागत rk3288_variant soc)
-अणु
-	काष्ठा rockchip_clk_provider *ctx;
+static void __init rk3288_common_init(struct device_node *np,
+				      enum rk3288_variant soc)
+{
+	struct rockchip_clk_provider *ctx;
 
 	rk3288_cru_base = of_iomap(np, 0);
-	अगर (!rk3288_cru_base) अणु
+	if (!rk3288_cru_base) {
 		pr_err("%s: could not map cru region\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ctx = rockchip_clk_init(np, rk3288_cru_base, CLK_NR_CLKS);
-	अगर (IS_ERR(ctx)) अणु
+	if (IS_ERR(ctx)) {
 		pr_err("%s: rockchip clk init failed\n", __func__);
 		iounmap(rk3288_cru_base);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	rockchip_clk_रेजिस्टर_plls(ctx, rk3288_pll_clks,
+	rockchip_clk_register_plls(ctx, rk3288_pll_clks,
 				   ARRAY_SIZE(rk3288_pll_clks),
 				   RK3288_GRF_SOC_STATUS1);
-	rockchip_clk_रेजिस्टर_branches(ctx, rk3288_clk_branches,
+	rockchip_clk_register_branches(ctx, rk3288_clk_branches,
 				  ARRAY_SIZE(rk3288_clk_branches));
 
-	अगर (soc == RK3288W_CRU)
-		rockchip_clk_रेजिस्टर_branches(ctx, rk3288w_hclkvio_branch,
+	if (soc == RK3288W_CRU)
+		rockchip_clk_register_branches(ctx, rk3288w_hclkvio_branch,
 					       ARRAY_SIZE(rk3288w_hclkvio_branch));
-	अन्यथा
-		rockchip_clk_रेजिस्टर_branches(ctx, rk3288_hclkvio_branch,
+	else
+		rockchip_clk_register_branches(ctx, rk3288_hclkvio_branch,
 					       ARRAY_SIZE(rk3288_hclkvio_branch));
 
-	rockchip_clk_protect_critical(rk3288_critical_घड़ीs,
-				      ARRAY_SIZE(rk3288_critical_घड़ीs));
+	rockchip_clk_protect_critical(rk3288_critical_clocks,
+				      ARRAY_SIZE(rk3288_critical_clocks));
 
-	rockchip_clk_रेजिस्टर_armclk(ctx, ARMCLK, "armclk",
+	rockchip_clk_register_armclk(ctx, ARMCLK, "armclk",
 			mux_armclk_p, ARRAY_SIZE(mux_armclk_p),
 			&rk3288_cpuclk_data, rk3288_cpuclk_rates,
 			ARRAY_SIZE(rk3288_cpuclk_rates));
 
-	rockchip_रेजिस्टर_softrst(np, 12,
+	rockchip_register_softrst(np, 12,
 				  rk3288_cru_base + RK3288_SOFTRST_CON(0),
 				  ROCKCHIP_SOFTRST_HIWORD_MASK);
 
-	rockchip_रेजिस्टर_restart_notअगरier(ctx, RK3288_GLB_SRST_FST,
-					   rk3288_clk_shutकरोwn);
-	रेजिस्टर_syscore_ops(&rk3288_clk_syscore_ops);
+	rockchip_register_restart_notifier(ctx, RK3288_GLB_SRST_FST,
+					   rk3288_clk_shutdown);
+	register_syscore_ops(&rk3288_clk_syscore_ops);
 
 	rockchip_clk_of_add_provider(np, ctx);
-पूर्ण
+}
 
-अटल व्योम __init rk3288_clk_init(काष्ठा device_node *np)
-अणु
+static void __init rk3288_clk_init(struct device_node *np)
+{
 	rk3288_common_init(np, RK3288_CRU);
-पूर्ण
+}
 CLK_OF_DECLARE(rk3288_cru, "rockchip,rk3288-cru", rk3288_clk_init);
 
-अटल व्योम __init rk3288w_clk_init(काष्ठा device_node *np)
-अणु
+static void __init rk3288w_clk_init(struct device_node *np)
+{
 	rk3288_common_init(np, RK3288W_CRU);
-पूर्ण
+}
 CLK_OF_DECLARE(rk3288w_cru, "rockchip,rk3288w-cru", rk3288w_clk_init);

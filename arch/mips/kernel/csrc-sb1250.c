@@ -1,72 +1,71 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2000, 2001 Broadcom Corporation
  */
-#समावेश <linux/घड़ीsource.h>
-#समावेश <linux/sched_घड़ी.h>
+#include <linux/clocksource.h>
+#include <linux/sched_clock.h>
 
-#समावेश <यंत्र/addrspace.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/समय.स>
+#include <asm/addrspace.h>
+#include <asm/io.h>
+#include <asm/time.h>
 
-#समावेश <यंत्र/sibyte/sb1250.h>
-#समावेश <यंत्र/sibyte/sb1250_regs.h>
-#समावेश <यंत्र/sibyte/sb1250_पूर्णांक.h>
-#समावेश <यंत्र/sibyte/sb1250_scd.h>
+#include <asm/sibyte/sb1250.h>
+#include <asm/sibyte/sb1250_regs.h>
+#include <asm/sibyte/sb1250_int.h>
+#include <asm/sibyte/sb1250_scd.h>
 
-#घोषणा SB1250_HPT_NUM		3
-#घोषणा SB1250_HPT_VALUE	M_SCD_TIMER_CNT /* max value */
+#define SB1250_HPT_NUM		3
+#define SB1250_HPT_VALUE	M_SCD_TIMER_CNT /* max value */
 
 /*
- * The HPT is मुक्त running from SB1250_HPT_VALUE करोwn to 0 then starts over
+ * The HPT is free running from SB1250_HPT_VALUE down to 0 then starts over
  * again.
  */
-अटल अंतरभूत u64 sb1250_hpt_get_cycles(व्योम)
-अणु
-	अचिन्हित पूर्णांक count;
-	व्योम __iomem *addr;
+static inline u64 sb1250_hpt_get_cycles(void)
+{
+	unsigned int count;
+	void __iomem *addr;
 
 	addr = IOADDR(A_SCD_TIMER_REGISTER(SB1250_HPT_NUM, R_SCD_TIMER_CNT));
-	count = G_SCD_TIMER_CNT(__raw_पढ़ोq(addr));
+	count = G_SCD_TIMER_CNT(__raw_readq(addr));
 
-	वापस SB1250_HPT_VALUE - count;
-पूर्ण
+	return SB1250_HPT_VALUE - count;
+}
 
-अटल u64 sb1250_hpt_पढ़ो(काष्ठा घड़ीsource *cs)
-अणु
-	वापस sb1250_hpt_get_cycles();
-पूर्ण
+static u64 sb1250_hpt_read(struct clocksource *cs)
+{
+	return sb1250_hpt_get_cycles();
+}
 
-काष्ठा घड़ीsource bcm1250_घड़ीsource = अणु
+struct clocksource bcm1250_clocksource = {
 	.name	= "bcm1250-counter-3",
 	.rating = 200,
-	.पढ़ो	= sb1250_hpt_पढ़ो,
+	.read	= sb1250_hpt_read,
 	.mask	= CLOCKSOURCE_MASK(23),
 	.flags	= CLOCK_SOURCE_IS_CONTINUOUS,
-पूर्ण;
+};
 
-अटल u64 notrace sb1250_पढ़ो_sched_घड़ी(व्योम)
-अणु
-	वापस sb1250_hpt_get_cycles();
-पूर्ण
+static u64 notrace sb1250_read_sched_clock(void)
+{
+	return sb1250_hpt_get_cycles();
+}
 
-व्योम __init sb1250_घड़ीsource_init(व्योम)
-अणु
-	काष्ठा घड़ीsource *cs = &bcm1250_घड़ीsource;
+void __init sb1250_clocksource_init(void)
+{
+	struct clocksource *cs = &bcm1250_clocksource;
 
-	/* Setup hpt using समयr #3 but करो not enable irq क्रम it */
-	__raw_ग_लिखोq(0,
+	/* Setup hpt using timer #3 but do not enable irq for it */
+	__raw_writeq(0,
 		     IOADDR(A_SCD_TIMER_REGISTER(SB1250_HPT_NUM,
 						 R_SCD_TIMER_CFG)));
-	__raw_ग_लिखोq(SB1250_HPT_VALUE,
+	__raw_writeq(SB1250_HPT_VALUE,
 		     IOADDR(A_SCD_TIMER_REGISTER(SB1250_HPT_NUM,
 						 R_SCD_TIMER_INIT)));
-	__raw_ग_लिखोq(M_SCD_TIMER_ENABLE | M_SCD_TIMER_MODE_CONTINUOUS,
+	__raw_writeq(M_SCD_TIMER_ENABLE | M_SCD_TIMER_MODE_CONTINUOUS,
 		     IOADDR(A_SCD_TIMER_REGISTER(SB1250_HPT_NUM,
 						 R_SCD_TIMER_CFG)));
 
-	घड़ीsource_रेजिस्टर_hz(cs, V_SCD_TIMER_FREQ);
+	clocksource_register_hz(cs, V_SCD_TIMER_FREQ);
 
-	sched_घड़ी_रेजिस्टर(sb1250_पढ़ो_sched_घड़ी, 23, V_SCD_TIMER_FREQ);
-पूर्ण
+	sched_clock_register(sb1250_read_sched_clock, 23, V_SCD_TIMER_FREQ);
+}

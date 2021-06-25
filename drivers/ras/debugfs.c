@@ -1,60 +1,59 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/debugfs.h>
-#समावेश <linux/ras.h>
-#समावेश "debugfs.h"
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/debugfs.h>
+#include <linux/ras.h>
+#include "debugfs.h"
 
-काष्ठा dentry *ras_debugfs_dir;
+struct dentry *ras_debugfs_dir;
 
-अटल atomic_t trace_count = ATOMIC_INIT(0);
+static atomic_t trace_count = ATOMIC_INIT(0);
 
-पूर्णांक ras_userspace_consumers(व्योम)
-अणु
-	वापस atomic_पढ़ो(&trace_count);
-पूर्ण
+int ras_userspace_consumers(void)
+{
+	return atomic_read(&trace_count);
+}
 EXPORT_SYMBOL_GPL(ras_userspace_consumers);
 
-अटल पूर्णांक trace_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	वापस atomic_पढ़ो(&trace_count);
-पूर्ण
+static int trace_show(struct seq_file *m, void *v)
+{
+	return atomic_read(&trace_count);
+}
 
-अटल पूर्णांक trace_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
+static int trace_open(struct inode *inode, struct file *file)
+{
 	atomic_inc(&trace_count);
-	वापस single_खोलो(file, trace_show, शून्य);
-पूर्ण
+	return single_open(file, trace_show, NULL);
+}
 
-अटल पूर्णांक trace_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
+static int trace_release(struct inode *inode, struct file *file)
+{
 	atomic_dec(&trace_count);
-	वापस single_release(inode, file);
-पूर्ण
+	return single_release(inode, file);
+}
 
-अटल स्थिर काष्ठा file_operations trace_fops = अणु
-	.खोलो    = trace_खोलो,
-	.पढ़ो    = seq_पढ़ो,
+static const struct file_operations trace_fops = {
+	.open    = trace_open,
+	.read    = seq_read,
 	.llseek  = seq_lseek,
 	.release = trace_release,
-पूर्ण;
+};
 
-पूर्णांक __init ras_add_daemon_trace(व्योम)
-अणु
-	काष्ठा dentry *fentry;
+int __init ras_add_daemon_trace(void)
+{
+	struct dentry *fentry;
 
-	अगर (!ras_debugfs_dir)
-		वापस -ENOENT;
+	if (!ras_debugfs_dir)
+		return -ENOENT;
 
 	fentry = debugfs_create_file("daemon_active", S_IRUSR, ras_debugfs_dir,
-				     शून्य, &trace_fops);
-	अगर (!fentry)
-		वापस -ENODEV;
+				     NULL, &trace_fops);
+	if (!fentry)
+		return -ENODEV;
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
-व्योम __init ras_debugfs_init(व्योम)
-अणु
-	ras_debugfs_dir = debugfs_create_dir("ras", शून्य);
-पूर्ण
+void __init ras_debugfs_init(void)
+{
+	ras_debugfs_dir = debugfs_create_dir("ras", NULL);
+}

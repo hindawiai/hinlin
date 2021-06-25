@@ -1,409 +1,408 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *
  *  Copyright (C) 2005 Mike Isely <isely@pobox.com>
  */
 
-#समावेश "pvrusb2-context.h"
-#समावेश "pvrusb2-io.h"
-#समावेश "pvrusb2-ioread.h"
-#समावेश "pvrusb2-hdw.h"
-#समावेश "pvrusb2-debug.h"
-#समावेश <linux/रुको.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
+#include "pvrusb2-context.h"
+#include "pvrusb2-io.h"
+#include "pvrusb2-ioread.h"
+#include "pvrusb2-hdw.h"
+#include "pvrusb2-debug.h"
+#include <linux/wait.h>
+#include <linux/kthread.h>
+#include <linux/errno.h>
+#include <linux/string.h>
+#include <linux/slab.h>
 
-अटल काष्ठा pvr2_context *pvr2_context_exist_first;
-अटल काष्ठा pvr2_context *pvr2_context_exist_last;
-अटल काष्ठा pvr2_context *pvr2_context_notअगरy_first;
-अटल काष्ठा pvr2_context *pvr2_context_notअगरy_last;
-अटल DEFINE_MUTEX(pvr2_context_mutex);
-अटल DECLARE_WAIT_QUEUE_HEAD(pvr2_context_sync_data);
-अटल DECLARE_WAIT_QUEUE_HEAD(pvr2_context_cleanup_data);
-अटल पूर्णांक pvr2_context_cleanup_flag;
-अटल पूर्णांक pvr2_context_cleaned_flag;
-अटल काष्ठा task_काष्ठा *pvr2_context_thपढ़ो_ptr;
+static struct pvr2_context *pvr2_context_exist_first;
+static struct pvr2_context *pvr2_context_exist_last;
+static struct pvr2_context *pvr2_context_notify_first;
+static struct pvr2_context *pvr2_context_notify_last;
+static DEFINE_MUTEX(pvr2_context_mutex);
+static DECLARE_WAIT_QUEUE_HEAD(pvr2_context_sync_data);
+static DECLARE_WAIT_QUEUE_HEAD(pvr2_context_cleanup_data);
+static int pvr2_context_cleanup_flag;
+static int pvr2_context_cleaned_flag;
+static struct task_struct *pvr2_context_thread_ptr;
 
 
-अटल व्योम pvr2_context_set_notअगरy(काष्ठा pvr2_context *mp, पूर्णांक fl)
-अणु
-	पूर्णांक संकेत_flag = 0;
+static void pvr2_context_set_notify(struct pvr2_context *mp, int fl)
+{
+	int signal_flag = 0;
 	mutex_lock(&pvr2_context_mutex);
-	अगर (fl) अणु
-		अगर (!mp->notअगरy_flag) अणु
-			संकेत_flag = (pvr2_context_notअगरy_first == शून्य);
-			mp->notअगरy_prev = pvr2_context_notअगरy_last;
-			mp->notअगरy_next = शून्य;
-			pvr2_context_notअगरy_last = mp;
-			अगर (mp->notअगरy_prev) अणु
-				mp->notअगरy_prev->notअगरy_next = mp;
-			पूर्ण अन्यथा अणु
-				pvr2_context_notअगरy_first = mp;
-			पूर्ण
-			mp->notअगरy_flag = !0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (mp->notअगरy_flag) अणु
-			mp->notअगरy_flag = 0;
-			अगर (mp->notअगरy_next) अणु
-				mp->notअगरy_next->notअगरy_prev = mp->notअगरy_prev;
-			पूर्ण अन्यथा अणु
-				pvr2_context_notअगरy_last = mp->notअगरy_prev;
-			पूर्ण
-			अगर (mp->notअगरy_prev) अणु
-				mp->notअगरy_prev->notअगरy_next = mp->notअगरy_next;
-			पूर्ण अन्यथा अणु
-				pvr2_context_notअगरy_first = mp->notअगरy_next;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+	if (fl) {
+		if (!mp->notify_flag) {
+			signal_flag = (pvr2_context_notify_first == NULL);
+			mp->notify_prev = pvr2_context_notify_last;
+			mp->notify_next = NULL;
+			pvr2_context_notify_last = mp;
+			if (mp->notify_prev) {
+				mp->notify_prev->notify_next = mp;
+			} else {
+				pvr2_context_notify_first = mp;
+			}
+			mp->notify_flag = !0;
+		}
+	} else {
+		if (mp->notify_flag) {
+			mp->notify_flag = 0;
+			if (mp->notify_next) {
+				mp->notify_next->notify_prev = mp->notify_prev;
+			} else {
+				pvr2_context_notify_last = mp->notify_prev;
+			}
+			if (mp->notify_prev) {
+				mp->notify_prev->notify_next = mp->notify_next;
+			} else {
+				pvr2_context_notify_first = mp->notify_next;
+			}
+		}
+	}
 	mutex_unlock(&pvr2_context_mutex);
-	अगर (संकेत_flag) wake_up(&pvr2_context_sync_data);
-पूर्ण
+	if (signal_flag) wake_up(&pvr2_context_sync_data);
+}
 
 
-अटल व्योम pvr2_context_destroy(काष्ठा pvr2_context *mp)
-अणु
+static void pvr2_context_destroy(struct pvr2_context *mp)
+{
 	pvr2_trace(PVR2_TRACE_CTXT,"pvr2_context %p (destroy)",mp);
 	pvr2_hdw_destroy(mp->hdw);
-	pvr2_context_set_notअगरy(mp, 0);
+	pvr2_context_set_notify(mp, 0);
 	mutex_lock(&pvr2_context_mutex);
-	अगर (mp->exist_next) अणु
+	if (mp->exist_next) {
 		mp->exist_next->exist_prev = mp->exist_prev;
-	पूर्ण अन्यथा अणु
+	} else {
 		pvr2_context_exist_last = mp->exist_prev;
-	पूर्ण
-	अगर (mp->exist_prev) अणु
+	}
+	if (mp->exist_prev) {
 		mp->exist_prev->exist_next = mp->exist_next;
-	पूर्ण अन्यथा अणु
+	} else {
 		pvr2_context_exist_first = mp->exist_next;
-	पूर्ण
-	अगर (!pvr2_context_exist_first) अणु
-		/* Trigger wakeup on control thपढ़ो in हाल it is रुकोing
-		   क्रम an निकास condition. */
+	}
+	if (!pvr2_context_exist_first) {
+		/* Trigger wakeup on control thread in case it is waiting
+		   for an exit condition. */
 		wake_up(&pvr2_context_sync_data);
-	पूर्ण
+	}
 	mutex_unlock(&pvr2_context_mutex);
-	kमुक्त(mp);
-पूर्ण
+	kfree(mp);
+}
 
 
-अटल व्योम pvr2_context_notअगरy(काष्ठा pvr2_context *mp)
-अणु
-	pvr2_context_set_notअगरy(mp,!0);
-पूर्ण
+static void pvr2_context_notify(struct pvr2_context *mp)
+{
+	pvr2_context_set_notify(mp,!0);
+}
 
 
-अटल व्योम pvr2_context_check(काष्ठा pvr2_context *mp)
-अणु
-	काष्ठा pvr2_channel *ch1, *ch2;
+static void pvr2_context_check(struct pvr2_context *mp)
+{
+	struct pvr2_channel *ch1, *ch2;
 	pvr2_trace(PVR2_TRACE_CTXT,
 		   "pvr2_context %p (notify)", mp);
-	अगर (!mp->initialized_flag && !mp->disconnect_flag) अणु
+	if (!mp->initialized_flag && !mp->disconnect_flag) {
 		mp->initialized_flag = !0;
 		pvr2_trace(PVR2_TRACE_CTXT,
 			   "pvr2_context %p (initialize)", mp);
 		/* Finish hardware initialization */
-		अगर (pvr2_hdw_initialize(mp->hdw,
-					(व्योम (*)(व्योम *))pvr2_context_notअगरy,
-					mp)) अणु
+		if (pvr2_hdw_initialize(mp->hdw,
+					(void (*)(void *))pvr2_context_notify,
+					mp)) {
 			mp->video_stream.stream =
 				pvr2_hdw_get_video_stream(mp->hdw);
-			/* Trigger पूर्णांकerface initialization.  By करोing this
+			/* Trigger interface initialization.  By doing this
 			   here initialization runs in our own safe and
-			   cozy thपढ़ो context. */
-			अगर (mp->setup_func) mp->setup_func(mp);
-		पूर्ण अन्यथा अणु
+			   cozy thread context. */
+			if (mp->setup_func) mp->setup_func(mp);
+		} else {
 			pvr2_trace(PVR2_TRACE_CTXT,
 				   "pvr2_context %p (thread skipping setup)",
 				   mp);
 			/* Even though initialization did not succeed,
-			   we're still going to जारी anyway.  We need
-			   to करो this in order to aरुको the expected
+			   we're still going to continue anyway.  We need
+			   to do this in order to await the expected
 			   disconnect (which we will detect in the normal
 			   course of operation). */
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (ch1 = mp->mc_first; ch1; ch1 = ch2) अणु
+	for (ch1 = mp->mc_first; ch1; ch1 = ch2) {
 		ch2 = ch1->mc_next;
-		अगर (ch1->check_func) ch1->check_func(ch1);
-	पूर्ण
+		if (ch1->check_func) ch1->check_func(ch1);
+	}
 
-	अगर (mp->disconnect_flag && !mp->mc_first) अणु
+	if (mp->disconnect_flag && !mp->mc_first) {
 		/* Go away... */
 		pvr2_context_destroy(mp);
-		वापस;
-	पूर्ण
-पूर्ण
+		return;
+	}
+}
 
 
-अटल पूर्णांक pvr2_context_shutok(व्योम)
-अणु
-	वापस pvr2_context_cleanup_flag && (pvr2_context_exist_first == शून्य);
-पूर्ण
+static int pvr2_context_shutok(void)
+{
+	return pvr2_context_cleanup_flag && (pvr2_context_exist_first == NULL);
+}
 
 
-अटल पूर्णांक pvr2_context_thपढ़ो_func(व्योम *foo)
-अणु
-	काष्ठा pvr2_context *mp;
+static int pvr2_context_thread_func(void *foo)
+{
+	struct pvr2_context *mp;
 
 	pvr2_trace(PVR2_TRACE_CTXT,"pvr2_context thread start");
 
-	करो अणु
-		जबतक ((mp = pvr2_context_notअगरy_first) != शून्य) अणु
-			pvr2_context_set_notअगरy(mp, 0);
+	do {
+		while ((mp = pvr2_context_notify_first) != NULL) {
+			pvr2_context_set_notify(mp, 0);
 			pvr2_context_check(mp);
-		पूर्ण
-		रुको_event_पूर्णांकerruptible(
+		}
+		wait_event_interruptible(
 			pvr2_context_sync_data,
-			((pvr2_context_notअगरy_first != शून्य) ||
+			((pvr2_context_notify_first != NULL) ||
 			 pvr2_context_shutok()));
-	पूर्ण जबतक (!pvr2_context_shutok());
+	} while (!pvr2_context_shutok());
 
 	pvr2_context_cleaned_flag = !0;
 	wake_up(&pvr2_context_cleanup_data);
 
 	pvr2_trace(PVR2_TRACE_CTXT,"pvr2_context thread cleaned up");
 
-	रुको_event_पूर्णांकerruptible(
+	wait_event_interruptible(
 		pvr2_context_sync_data,
-		kthपढ़ो_should_stop());
+		kthread_should_stop());
 
 	pvr2_trace(PVR2_TRACE_CTXT,"pvr2_context thread end");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-पूर्णांक pvr2_context_global_init(व्योम)
-अणु
-	pvr2_context_thपढ़ो_ptr = kthपढ़ो_run(pvr2_context_thपढ़ो_func,
-					      शून्य,
+int pvr2_context_global_init(void)
+{
+	pvr2_context_thread_ptr = kthread_run(pvr2_context_thread_func,
+					      NULL,
 					      "pvrusb2-context");
-	वापस IS_ERR(pvr2_context_thपढ़ो_ptr) ? -ENOMEM : 0;
-पूर्ण
+	return IS_ERR(pvr2_context_thread_ptr) ? -ENOMEM : 0;
+}
 
 
-व्योम pvr2_context_global_करोne(व्योम)
-अणु
+void pvr2_context_global_done(void)
+{
 	pvr2_context_cleanup_flag = !0;
 	wake_up(&pvr2_context_sync_data);
-	रुको_event_पूर्णांकerruptible(
+	wait_event_interruptible(
 		pvr2_context_cleanup_data,
 		pvr2_context_cleaned_flag);
-	kthपढ़ो_stop(pvr2_context_thपढ़ो_ptr);
-पूर्ण
+	kthread_stop(pvr2_context_thread_ptr);
+}
 
 
-काष्ठा pvr2_context *pvr2_context_create(
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf,
-	स्थिर काष्ठा usb_device_id *devid,
-	व्योम (*setup_func)(काष्ठा pvr2_context *))
-अणु
-	काष्ठा pvr2_context *mp = शून्य;
-	mp = kzalloc(माप(*mp),GFP_KERNEL);
-	अगर (!mp) जाओ करोne;
+struct pvr2_context *pvr2_context_create(
+	struct usb_interface *intf,
+	const struct usb_device_id *devid,
+	void (*setup_func)(struct pvr2_context *))
+{
+	struct pvr2_context *mp = NULL;
+	mp = kzalloc(sizeof(*mp),GFP_KERNEL);
+	if (!mp) goto done;
 	pvr2_trace(PVR2_TRACE_CTXT,"pvr2_context %p (create)",mp);
 	mp->setup_func = setup_func;
 	mutex_init(&mp->mutex);
 	mutex_lock(&pvr2_context_mutex);
 	mp->exist_prev = pvr2_context_exist_last;
-	mp->exist_next = शून्य;
+	mp->exist_next = NULL;
 	pvr2_context_exist_last = mp;
-	अगर (mp->exist_prev) अणु
+	if (mp->exist_prev) {
 		mp->exist_prev->exist_next = mp;
-	पूर्ण अन्यथा अणु
+	} else {
 		pvr2_context_exist_first = mp;
-	पूर्ण
+	}
 	mutex_unlock(&pvr2_context_mutex);
-	mp->hdw = pvr2_hdw_create(पूर्णांकf,devid);
-	अगर (!mp->hdw) अणु
+	mp->hdw = pvr2_hdw_create(intf,devid);
+	if (!mp->hdw) {
 		pvr2_context_destroy(mp);
-		mp = शून्य;
-		जाओ करोne;
-	पूर्ण
-	pvr2_context_set_notअगरy(mp, !0);
- करोne:
-	वापस mp;
-पूर्ण
+		mp = NULL;
+		goto done;
+	}
+	pvr2_context_set_notify(mp, !0);
+ done:
+	return mp;
+}
 
 
-अटल व्योम pvr2_context_reset_input_limits(काष्ठा pvr2_context *mp)
-अणु
-	अचिन्हित पूर्णांक पंचांगsk,mmsk;
-	काष्ठा pvr2_channel *cp;
-	काष्ठा pvr2_hdw *hdw = mp->hdw;
+static void pvr2_context_reset_input_limits(struct pvr2_context *mp)
+{
+	unsigned int tmsk,mmsk;
+	struct pvr2_channel *cp;
+	struct pvr2_hdw *hdw = mp->hdw;
 	mmsk = pvr2_hdw_get_input_available(hdw);
-	पंचांगsk = mmsk;
-	क्रम (cp = mp->mc_first; cp; cp = cp->mc_next) अणु
-		अगर (!cp->input_mask) जारी;
-		पंचांगsk &= cp->input_mask;
-	पूर्ण
-	pvr2_hdw_set_input_allowed(hdw,mmsk,पंचांगsk);
+	tmsk = mmsk;
+	for (cp = mp->mc_first; cp; cp = cp->mc_next) {
+		if (!cp->input_mask) continue;
+		tmsk &= cp->input_mask;
+	}
+	pvr2_hdw_set_input_allowed(hdw,mmsk,tmsk);
 	pvr2_hdw_commit_ctl(hdw);
-पूर्ण
+}
 
 
-अटल व्योम pvr2_context_enter(काष्ठा pvr2_context *mp)
-अणु
+static void pvr2_context_enter(struct pvr2_context *mp)
+{
 	mutex_lock(&mp->mutex);
-पूर्ण
+}
 
 
-अटल व्योम pvr2_context_निकास(काष्ठा pvr2_context *mp)
-अणु
-	पूर्णांक destroy_flag = 0;
-	अगर (!(mp->mc_first || !mp->disconnect_flag)) अणु
+static void pvr2_context_exit(struct pvr2_context *mp)
+{
+	int destroy_flag = 0;
+	if (!(mp->mc_first || !mp->disconnect_flag)) {
 		destroy_flag = !0;
-	पूर्ण
+	}
 	mutex_unlock(&mp->mutex);
-	अगर (destroy_flag) pvr2_context_notअगरy(mp);
-पूर्ण
+	if (destroy_flag) pvr2_context_notify(mp);
+}
 
 
-व्योम pvr2_context_disconnect(काष्ठा pvr2_context *mp)
-अणु
+void pvr2_context_disconnect(struct pvr2_context *mp)
+{
 	pvr2_hdw_disconnect(mp->hdw);
 	mp->disconnect_flag = !0;
-	pvr2_context_notअगरy(mp);
-पूर्ण
+	pvr2_context_notify(mp);
+}
 
 
-व्योम pvr2_channel_init(काष्ठा pvr2_channel *cp,काष्ठा pvr2_context *mp)
-अणु
+void pvr2_channel_init(struct pvr2_channel *cp,struct pvr2_context *mp)
+{
 	pvr2_context_enter(mp);
 	cp->hdw = mp->hdw;
 	cp->mc_head = mp;
-	cp->mc_next = शून्य;
+	cp->mc_next = NULL;
 	cp->mc_prev = mp->mc_last;
-	अगर (mp->mc_last) अणु
+	if (mp->mc_last) {
 		mp->mc_last->mc_next = cp;
-	पूर्ण अन्यथा अणु
+	} else {
 		mp->mc_first = cp;
-	पूर्ण
+	}
 	mp->mc_last = cp;
-	pvr2_context_निकास(mp);
-पूर्ण
+	pvr2_context_exit(mp);
+}
 
 
-अटल व्योम pvr2_channel_disclaim_stream(काष्ठा pvr2_channel *cp)
-अणु
-	अगर (!cp->stream) वापस;
-	pvr2_stream_समाप्त(cp->stream->stream);
-	cp->stream->user = शून्य;
-	cp->stream = शून्य;
-पूर्ण
+static void pvr2_channel_disclaim_stream(struct pvr2_channel *cp)
+{
+	if (!cp->stream) return;
+	pvr2_stream_kill(cp->stream->stream);
+	cp->stream->user = NULL;
+	cp->stream = NULL;
+}
 
 
-व्योम pvr2_channel_करोne(काष्ठा pvr2_channel *cp)
-अणु
-	काष्ठा pvr2_context *mp = cp->mc_head;
+void pvr2_channel_done(struct pvr2_channel *cp)
+{
+	struct pvr2_context *mp = cp->mc_head;
 	pvr2_context_enter(mp);
 	cp->input_mask = 0;
 	pvr2_channel_disclaim_stream(cp);
 	pvr2_context_reset_input_limits(mp);
-	अगर (cp->mc_next) अणु
+	if (cp->mc_next) {
 		cp->mc_next->mc_prev = cp->mc_prev;
-	पूर्ण अन्यथा अणु
+	} else {
 		mp->mc_last = cp->mc_prev;
-	पूर्ण
-	अगर (cp->mc_prev) अणु
+	}
+	if (cp->mc_prev) {
 		cp->mc_prev->mc_next = cp->mc_next;
-	पूर्ण अन्यथा अणु
+	} else {
 		mp->mc_first = cp->mc_next;
-	पूर्ण
-	cp->hdw = शून्य;
-	pvr2_context_निकास(mp);
-पूर्ण
+	}
+	cp->hdw = NULL;
+	pvr2_context_exit(mp);
+}
 
 
-पूर्णांक pvr2_channel_limit_inमाला_दो(काष्ठा pvr2_channel *cp,अचिन्हित पूर्णांक cmsk)
-अणु
-	अचिन्हित पूर्णांक पंचांगsk,mmsk;
-	पूर्णांक ret = 0;
-	काष्ठा pvr2_channel *p2;
-	काष्ठा pvr2_hdw *hdw = cp->hdw;
+int pvr2_channel_limit_inputs(struct pvr2_channel *cp,unsigned int cmsk)
+{
+	unsigned int tmsk,mmsk;
+	int ret = 0;
+	struct pvr2_channel *p2;
+	struct pvr2_hdw *hdw = cp->hdw;
 
 	mmsk = pvr2_hdw_get_input_available(hdw);
 	cmsk &= mmsk;
-	अगर (cmsk == cp->input_mask) अणु
-		/* No change; nothing to करो */
-		वापस 0;
-	पूर्ण
+	if (cmsk == cp->input_mask) {
+		/* No change; nothing to do */
+		return 0;
+	}
 
 	pvr2_context_enter(cp->mc_head);
-	करो अणु
-		अगर (!cmsk) अणु
+	do {
+		if (!cmsk) {
 			cp->input_mask = 0;
 			pvr2_context_reset_input_limits(cp->mc_head);
-			अवरोध;
-		पूर्ण
-		पंचांगsk = mmsk;
-		क्रम (p2 = cp->mc_head->mc_first; p2; p2 = p2->mc_next) अणु
-			अगर (p2 == cp) जारी;
-			अगर (!p2->input_mask) जारी;
-			पंचांगsk &= p2->input_mask;
-		पूर्ण
-		अगर (!(पंचांगsk & cmsk)) अणु
+			break;
+		}
+		tmsk = mmsk;
+		for (p2 = cp->mc_head->mc_first; p2; p2 = p2->mc_next) {
+			if (p2 == cp) continue;
+			if (!p2->input_mask) continue;
+			tmsk &= p2->input_mask;
+		}
+		if (!(tmsk & cmsk)) {
 			ret = -EPERM;
-			अवरोध;
-		पूर्ण
-		पंचांगsk &= cmsk;
-		अगर ((ret = pvr2_hdw_set_input_allowed(hdw,mmsk,पंचांगsk)) != 0) अणु
+			break;
+		}
+		tmsk &= cmsk;
+		if ((ret = pvr2_hdw_set_input_allowed(hdw,mmsk,tmsk)) != 0) {
 			/* Internal failure changing allowed list; probably
-			   should not happen, but react अगर it करोes. */
-			अवरोध;
-		पूर्ण
+			   should not happen, but react if it does. */
+			break;
+		}
 		cp->input_mask = cmsk;
 		pvr2_hdw_commit_ctl(hdw);
-	पूर्ण जबतक (0);
-	pvr2_context_निकास(cp->mc_head);
-	वापस ret;
-पूर्ण
+	} while (0);
+	pvr2_context_exit(cp->mc_head);
+	return ret;
+}
 
 
-अचिन्हित पूर्णांक pvr2_channel_get_limited_inमाला_दो(काष्ठा pvr2_channel *cp)
-अणु
-	वापस cp->input_mask;
-पूर्ण
+unsigned int pvr2_channel_get_limited_inputs(struct pvr2_channel *cp)
+{
+	return cp->input_mask;
+}
 
 
-पूर्णांक pvr2_channel_claim_stream(काष्ठा pvr2_channel *cp,
-			      काष्ठा pvr2_context_stream *sp)
-अणु
-	पूर्णांक code = 0;
-	pvr2_context_enter(cp->mc_head); करो अणु
-		अगर (sp == cp->stream) अवरोध;
-		अगर (sp && sp->user) अणु
+int pvr2_channel_claim_stream(struct pvr2_channel *cp,
+			      struct pvr2_context_stream *sp)
+{
+	int code = 0;
+	pvr2_context_enter(cp->mc_head); do {
+		if (sp == cp->stream) break;
+		if (sp && sp->user) {
 			code = -EBUSY;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		pvr2_channel_disclaim_stream(cp);
-		अगर (!sp) अवरोध;
+		if (!sp) break;
 		sp->user = cp;
 		cp->stream = sp;
-	पूर्ण जबतक (0);
-	pvr2_context_निकास(cp->mc_head);
-	वापस code;
-पूर्ण
+	} while (0);
+	pvr2_context_exit(cp->mc_head);
+	return code;
+}
 
 
-// This is the marker क्रम the real beginning of a legitimate mpeg2 stream.
-अटल अक्षर stream_sync_key[] = अणु
+// This is the marker for the real beginning of a legitimate mpeg2 stream.
+static char stream_sync_key[] = {
 	0x00, 0x00, 0x01, 0xba,
-पूर्ण;
+};
 
-काष्ठा pvr2_ioपढ़ो *pvr2_channel_create_mpeg_stream(
-	काष्ठा pvr2_context_stream *sp)
-अणु
-	काष्ठा pvr2_ioपढ़ो *cp;
-	cp = pvr2_ioपढ़ो_create();
-	अगर (!cp) वापस शून्य;
-	pvr2_ioपढ़ो_setup(cp,sp->stream);
-	pvr2_ioपढ़ो_set_sync_key(cp,stream_sync_key,माप(stream_sync_key));
-	वापस cp;
-पूर्ण
+struct pvr2_ioread *pvr2_channel_create_mpeg_stream(
+	struct pvr2_context_stream *sp)
+{
+	struct pvr2_ioread *cp;
+	cp = pvr2_ioread_create();
+	if (!cp) return NULL;
+	pvr2_ioread_setup(cp,sp->stream);
+	pvr2_ioread_set_sync_key(cp,stream_sync_key,sizeof(stream_sync_key));
+	return cp;
+}

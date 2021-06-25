@@ -1,79 +1,78 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2018 Spपढ़ोtrum Communications Inc.
+ * Copyright (C) 2018 Spreadtrum Communications Inc.
  * Copyright (C) 2018 Linaro Ltd.
  */
 
-#समावेश <linux/cpu.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/syscore_ops.h>
+#include <linux/cpu.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/pm.h>
+#include <linux/regmap.h>
+#include <linux/syscore_ops.h>
 
-#घोषणा SC27XX_PWR_PD_HW	0xc2c
-#घोषणा SC27XX_PWR_OFF_EN	BIT(0)
-#घोषणा SC27XX_SLP_CTRL		0xdf0
-#घोषणा SC27XX_LDO_XTL_EN	BIT(3)
+#define SC27XX_PWR_PD_HW	0xc2c
+#define SC27XX_PWR_OFF_EN	BIT(0)
+#define SC27XX_SLP_CTRL		0xdf0
+#define SC27XX_LDO_XTL_EN	BIT(3)
 
-अटल काष्ठा regmap *regmap;
+static struct regmap *regmap;
 
 /*
- * On Spपढ़ोtrum platक्रमm, we need घातer off प्रणाली through बाह्यal SC27xx
+ * On Spreadtrum platform, we need power off system through external SC27xx
  * series PMICs, and it is one similar SPI bus mapped by regmap to access PMIC,
  * which is not fast io access.
  *
- * So beक्रमe stopping other cores, we need release other cores' resource by
- * taking cpus करोwn to aव्योम racing regmap or spi mutex lock when घातeroff
- * प्रणाली through PMIC.
+ * So before stopping other cores, we need release other cores' resource by
+ * taking cpus down to avoid racing regmap or spi mutex lock when poweroff
+ * system through PMIC.
  */
-अटल व्योम sc27xx_घातeroff_shutकरोwn(व्योम)
-अणु
-#अगर_घोषित CONFIG_HOTPLUG_CPU
-	पूर्णांक cpu;
+static void sc27xx_poweroff_shutdown(void)
+{
+#ifdef CONFIG_HOTPLUG_CPU
+	int cpu;
 
-	क्रम_each_online_cpu(cpu) अणु
-		अगर (cpu != smp_processor_id())
-			हटाओ_cpu(cpu);
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+	for_each_online_cpu(cpu) {
+		if (cpu != smp_processor_id())
+			remove_cpu(cpu);
+	}
+#endif
+}
 
-अटल काष्ठा syscore_ops घातeroff_syscore_ops = अणु
-	.shutकरोwn = sc27xx_घातeroff_shutकरोwn,
-पूर्ण;
+static struct syscore_ops poweroff_syscore_ops = {
+	.shutdown = sc27xx_poweroff_shutdown,
+};
 
-अटल व्योम sc27xx_घातeroff_करो_घातeroff(व्योम)
-अणु
-	/* Disable the बाह्यal subsys connection's घातer firstly */
-	regmap_ग_लिखो(regmap, SC27XX_SLP_CTRL, SC27XX_LDO_XTL_EN);
+static void sc27xx_poweroff_do_poweroff(void)
+{
+	/* Disable the external subsys connection's power firstly */
+	regmap_write(regmap, SC27XX_SLP_CTRL, SC27XX_LDO_XTL_EN);
 
-	regmap_ग_लिखो(regmap, SC27XX_PWR_PD_HW, SC27XX_PWR_OFF_EN);
-पूर्ण
+	regmap_write(regmap, SC27XX_PWR_PD_HW, SC27XX_PWR_OFF_EN);
+}
 
-अटल पूर्णांक sc27xx_घातeroff_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	अगर (regmap)
-		वापस -EINVAL;
+static int sc27xx_poweroff_probe(struct platform_device *pdev)
+{
+	if (regmap)
+		return -EINVAL;
 
-	regmap = dev_get_regmap(pdev->dev.parent, शून्य);
-	अगर (!regmap)
-		वापस -ENODEV;
+	regmap = dev_get_regmap(pdev->dev.parent, NULL);
+	if (!regmap)
+		return -ENODEV;
 
-	pm_घातer_off = sc27xx_घातeroff_करो_घातeroff;
-	रेजिस्टर_syscore_ops(&घातeroff_syscore_ops);
-	वापस 0;
-पूर्ण
+	pm_power_off = sc27xx_poweroff_do_poweroff;
+	register_syscore_ops(&poweroff_syscore_ops);
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver sc27xx_घातeroff_driver = अणु
-	.probe = sc27xx_घातeroff_probe,
-	.driver = अणु
+static struct platform_driver sc27xx_poweroff_driver = {
+	.probe = sc27xx_poweroff_probe,
+	.driver = {
 		.name = "sc27xx-poweroff",
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(sc27xx_घातeroff_driver);
+	},
+};
+module_platform_driver(sc27xx_poweroff_driver);
 
 MODULE_DESCRIPTION("Power off driver for SC27XX PMIC Device");
 MODULE_AUTHOR("Baolin Wang <baolin.wang@unisoc.com>");

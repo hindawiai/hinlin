@@ -1,36 +1,35 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2014-2016, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#समावेश <soc/tegra/ivc.h>
+#include <soc/tegra/ivc.h>
 
-#घोषणा TEGRA_IVC_ALIGN 64
+#define TEGRA_IVC_ALIGN 64
 
 /*
  * IVC channel reset protocol.
  *
  * Each end uses its tx_channel.state to indicate its synchronization state.
  */
-क्रमागत tegra_ivc_state अणु
+enum tegra_ivc_state {
 	/*
-	 * This value is zero क्रम backwards compatibility with services that
+	 * This value is zero for backwards compatibility with services that
 	 * assume channels to be initially zeroed. Such channels are in an
 	 * initially valid state, but cannot be asynchronously reset, and must
-	 * मुख्यtain a valid state at all बार.
+	 * maintain a valid state at all times.
 	 *
 	 * The transmitting end can enter the established state from the sync or
-	 * ack state when it observes the receiving endpoपूर्णांक in the ack or
+	 * ack state when it observes the receiving endpoint in the ack or
 	 * established state, indicating that has cleared the counters in our
 	 * rx_channel.
 	 */
 	TEGRA_IVC_STATE_ESTABLISHED = 0,
 
 	/*
-	 * If an endpoपूर्णांक is observed in the sync state, the remote endpoपूर्णांक is
+	 * If an endpoint is observed in the sync state, the remote endpoint is
 	 * allowed to clear the counters it owns asynchronously with respect to
-	 * the current endpoपूर्णांक. Thereक्रमe, the current endpoपूर्णांक is no दीर्घer
+	 * the current endpoint. Therefore, the current endpoint is no longer
 	 * allowed to communicate.
 	 */
 	TEGRA_IVC_STATE_SYNC,
@@ -38,60 +37,60 @@
 	/*
 	 * When the transmitting end observes the receiving end in the sync
 	 * state, it can clear the w_count and r_count and transition to the ack
-	 * state. If the remote endpoपूर्णांक observes us in the ack state, it can
-	 * वापस to the established state once it has cleared its counters.
+	 * state. If the remote endpoint observes us in the ack state, it can
+	 * return to the established state once it has cleared its counters.
 	 */
 	TEGRA_IVC_STATE_ACK
-पूर्ण;
+};
 
 /*
- * This काष्ठाure is भागided पूर्णांकo two-cache aligned parts, the first is only
- * written through the tx.channel poपूर्णांकer, जबतक the second is only written
- * through the rx.channel poपूर्णांकer. This delineates ownership of the cache
- * lines, which is critical to perक्रमmance and necessary in non-cache coherent
+ * This structure is divided into two-cache aligned parts, the first is only
+ * written through the tx.channel pointer, while the second is only written
+ * through the rx.channel pointer. This delineates ownership of the cache
+ * lines, which is critical to performance and necessary in non-cache coherent
  * implementations.
  */
-काष्ठा tegra_ivc_header अणु
-	जोड़ अणु
-		काष्ठा अणु
+struct tegra_ivc_header {
+	union {
+		struct {
 			/* fields owned by the transmitting end */
 			u32 count;
 			u32 state;
-		पूर्ण;
+		};
 
 		u8 pad[TEGRA_IVC_ALIGN];
-	पूर्ण tx;
+	} tx;
 
-	जोड़ अणु
+	union {
 		/* fields owned by the receiving end */
 		u32 count;
 		u8 pad[TEGRA_IVC_ALIGN];
-	पूर्ण rx;
-पूर्ण;
+	} rx;
+};
 
-अटल अंतरभूत व्योम tegra_ivc_invalidate(काष्ठा tegra_ivc *ivc, dma_addr_t phys)
-अणु
-	अगर (!ivc->peer)
-		वापस;
+static inline void tegra_ivc_invalidate(struct tegra_ivc *ivc, dma_addr_t phys)
+{
+	if (!ivc->peer)
+		return;
 
-	dma_sync_single_क्रम_cpu(ivc->peer, phys, TEGRA_IVC_ALIGN,
+	dma_sync_single_for_cpu(ivc->peer, phys, TEGRA_IVC_ALIGN,
 				DMA_FROM_DEVICE);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम tegra_ivc_flush(काष्ठा tegra_ivc *ivc, dma_addr_t phys)
-अणु
-	अगर (!ivc->peer)
-		वापस;
+static inline void tegra_ivc_flush(struct tegra_ivc *ivc, dma_addr_t phys)
+{
+	if (!ivc->peer)
+		return;
 
-	dma_sync_single_क्रम_device(ivc->peer, phys, TEGRA_IVC_ALIGN,
+	dma_sync_single_for_device(ivc->peer, phys, TEGRA_IVC_ALIGN,
 				   DMA_TO_DEVICE);
-पूर्ण
+}
 
-अटल अंतरभूत bool tegra_ivc_empty(काष्ठा tegra_ivc *ivc,
-				   काष्ठा tegra_ivc_header *header)
-अणु
+static inline bool tegra_ivc_empty(struct tegra_ivc *ivc,
+				   struct tegra_ivc_header *header)
+{
 	/*
-	 * This function perक्रमms multiple checks on the same values with
+	 * This function performs multiple checks on the same values with
 	 * security implications, so create snapshots with READ_ONCE() to
 	 * ensure that these checks use the same values.
 	 */
@@ -99,74 +98,74 @@
 	u32 rx = READ_ONCE(header->rx.count);
 
 	/*
-	 * Perक्रमm an over-full check to prevent denial of service attacks
-	 * where a server could be easily fooled पूर्णांकo believing that there's
-	 * an extremely large number of frames पढ़ोy, since receivers are not
-	 * expected to check क्रम full or over-full conditions.
+	 * Perform an over-full check to prevent denial of service attacks
+	 * where a server could be easily fooled into believing that there's
+	 * an extremely large number of frames ready, since receivers are not
+	 * expected to check for full or over-full conditions.
 	 *
-	 * Although the channel isn't empty, this is an invalid हाल caused by
-	 * a potentially malicious peer, so वापसing empty is safer, because
+	 * Although the channel isn't empty, this is an invalid case caused by
+	 * a potentially malicious peer, so returning empty is safer, because
 	 * it gives the impression that the channel has gone silent.
 	 */
-	अगर (tx - rx > ivc->num_frames)
-		वापस true;
+	if (tx - rx > ivc->num_frames)
+		return true;
 
-	वापस tx == rx;
-पूर्ण
+	return tx == rx;
+}
 
-अटल अंतरभूत bool tegra_ivc_full(काष्ठा tegra_ivc *ivc,
-				  काष्ठा tegra_ivc_header *header)
-अणु
+static inline bool tegra_ivc_full(struct tegra_ivc *ivc,
+				  struct tegra_ivc_header *header)
+{
 	u32 tx = READ_ONCE(header->tx.count);
 	u32 rx = READ_ONCE(header->rx.count);
 
 	/*
-	 * Invalid हालs where the counters indicate that the queue is over
+	 * Invalid cases where the counters indicate that the queue is over
 	 * capacity also appear full.
 	 */
-	वापस tx - rx >= ivc->num_frames;
-पूर्ण
+	return tx - rx >= ivc->num_frames;
+}
 
-अटल अंतरभूत u32 tegra_ivc_available(काष्ठा tegra_ivc *ivc,
-				      काष्ठा tegra_ivc_header *header)
-अणु
+static inline u32 tegra_ivc_available(struct tegra_ivc *ivc,
+				      struct tegra_ivc_header *header)
+{
 	u32 tx = READ_ONCE(header->tx.count);
 	u32 rx = READ_ONCE(header->rx.count);
 
 	/*
 	 * This function isn't expected to be used in scenarios where an
 	 * over-full situation can lead to denial of service attacks. See the
-	 * comment in tegra_ivc_empty() क्रम an explanation about special
+	 * comment in tegra_ivc_empty() for an explanation about special
 	 * over-full considerations.
 	 */
-	वापस tx - rx;
-पूर्ण
+	return tx - rx;
+}
 
-अटल अंतरभूत व्योम tegra_ivc_advance_tx(काष्ठा tegra_ivc *ivc)
-अणु
+static inline void tegra_ivc_advance_tx(struct tegra_ivc *ivc)
+{
 	WRITE_ONCE(ivc->tx.channel->tx.count,
 		   READ_ONCE(ivc->tx.channel->tx.count) + 1);
 
-	अगर (ivc->tx.position == ivc->num_frames - 1)
+	if (ivc->tx.position == ivc->num_frames - 1)
 		ivc->tx.position = 0;
-	अन्यथा
+	else
 		ivc->tx.position++;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम tegra_ivc_advance_rx(काष्ठा tegra_ivc *ivc)
-अणु
+static inline void tegra_ivc_advance_rx(struct tegra_ivc *ivc)
+{
 	WRITE_ONCE(ivc->rx.channel->rx.count,
 		   READ_ONCE(ivc->rx.channel->rx.count) + 1);
 
-	अगर (ivc->rx.position == ivc->num_frames - 1)
+	if (ivc->rx.position == ivc->num_frames - 1)
 		ivc->rx.position = 0;
-	अन्यथा
+	else
 		ivc->rx.position++;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक tegra_ivc_check_पढ़ो(काष्ठा tegra_ivc *ivc)
-अणु
-	अचिन्हित पूर्णांक offset = दुरत्व(काष्ठा tegra_ivc_header, tx.count);
+static inline int tegra_ivc_check_read(struct tegra_ivc *ivc)
+{
+	unsigned int offset = offsetof(struct tegra_ivc_header, tx.count);
 
 	/*
 	 * tx.channel->state is set locally, so it is not synchronized with
@@ -176,187 +175,187 @@
 	 * asynchronous transition of rx.channel->state to
 	 * TEGRA_IVC_STATE_ACK is not allowed.
 	 */
-	अगर (ivc->tx.channel->tx.state != TEGRA_IVC_STATE_ESTABLISHED)
-		वापस -ECONNRESET;
+	if (ivc->tx.channel->tx.state != TEGRA_IVC_STATE_ESTABLISHED)
+		return -ECONNRESET;
 
 	/*
-	 * Aव्योम unnecessary invalidations when perक्रमming repeated accesses
-	 * to an IVC channel by checking the old queue poपूर्णांकers first.
+	 * Avoid unnecessary invalidations when performing repeated accesses
+	 * to an IVC channel by checking the old queue pointers first.
 	 *
-	 * Synchronization is only necessary when these poपूर्णांकers indicate
+	 * Synchronization is only necessary when these pointers indicate
 	 * empty or full.
 	 */
-	अगर (!tegra_ivc_empty(ivc, ivc->rx.channel))
-		वापस 0;
+	if (!tegra_ivc_empty(ivc, ivc->rx.channel))
+		return 0;
 
 	tegra_ivc_invalidate(ivc, ivc->rx.phys + offset);
 
-	अगर (tegra_ivc_empty(ivc, ivc->rx.channel))
-		वापस -ENOSPC;
+	if (tegra_ivc_empty(ivc, ivc->rx.channel))
+		return -ENOSPC;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक tegra_ivc_check_ग_लिखो(काष्ठा tegra_ivc *ivc)
-अणु
-	अचिन्हित पूर्णांक offset = दुरत्व(काष्ठा tegra_ivc_header, rx.count);
+static inline int tegra_ivc_check_write(struct tegra_ivc *ivc)
+{
+	unsigned int offset = offsetof(struct tegra_ivc_header, rx.count);
 
-	अगर (ivc->tx.channel->tx.state != TEGRA_IVC_STATE_ESTABLISHED)
-		वापस -ECONNRESET;
+	if (ivc->tx.channel->tx.state != TEGRA_IVC_STATE_ESTABLISHED)
+		return -ECONNRESET;
 
-	अगर (!tegra_ivc_full(ivc, ivc->tx.channel))
-		वापस 0;
+	if (!tegra_ivc_full(ivc, ivc->tx.channel))
+		return 0;
 
 	tegra_ivc_invalidate(ivc, ivc->tx.phys + offset);
 
-	अगर (tegra_ivc_full(ivc, ivc->tx.channel))
-		वापस -ENOSPC;
+	if (tegra_ivc_full(ivc, ivc->tx.channel))
+		return -ENOSPC;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम *tegra_ivc_frame_virt(काष्ठा tegra_ivc *ivc,
-				  काष्ठा tegra_ivc_header *header,
-				  अचिन्हित पूर्णांक frame)
-अणु
-	अगर (WARN_ON(frame >= ivc->num_frames))
-		वापस ERR_PTR(-EINVAL);
+static void *tegra_ivc_frame_virt(struct tegra_ivc *ivc,
+				  struct tegra_ivc_header *header,
+				  unsigned int frame)
+{
+	if (WARN_ON(frame >= ivc->num_frames))
+		return ERR_PTR(-EINVAL);
 
-	वापस (व्योम *)(header + 1) + ivc->frame_size * frame;
-पूर्ण
+	return (void *)(header + 1) + ivc->frame_size * frame;
+}
 
-अटल अंतरभूत dma_addr_t tegra_ivc_frame_phys(काष्ठा tegra_ivc *ivc,
+static inline dma_addr_t tegra_ivc_frame_phys(struct tegra_ivc *ivc,
 					      dma_addr_t phys,
-					      अचिन्हित पूर्णांक frame)
-अणु
-	अचिन्हित दीर्घ offset;
+					      unsigned int frame)
+{
+	unsigned long offset;
 
-	offset = माप(काष्ठा tegra_ivc_header) + ivc->frame_size * frame;
+	offset = sizeof(struct tegra_ivc_header) + ivc->frame_size * frame;
 
-	वापस phys + offset;
-पूर्ण
+	return phys + offset;
+}
 
-अटल अंतरभूत व्योम tegra_ivc_invalidate_frame(काष्ठा tegra_ivc *ivc,
+static inline void tegra_ivc_invalidate_frame(struct tegra_ivc *ivc,
 					      dma_addr_t phys,
-					      अचिन्हित पूर्णांक frame,
-					      अचिन्हित पूर्णांक offset,
-					      माप_प्रकार size)
-अणु
-	अगर (!ivc->peer || WARN_ON(frame >= ivc->num_frames))
-		वापस;
+					      unsigned int frame,
+					      unsigned int offset,
+					      size_t size)
+{
+	if (!ivc->peer || WARN_ON(frame >= ivc->num_frames))
+		return;
 
 	phys = tegra_ivc_frame_phys(ivc, phys, frame) + offset;
 
-	dma_sync_single_क्रम_cpu(ivc->peer, phys, size, DMA_FROM_DEVICE);
-पूर्ण
+	dma_sync_single_for_cpu(ivc->peer, phys, size, DMA_FROM_DEVICE);
+}
 
-अटल अंतरभूत व्योम tegra_ivc_flush_frame(काष्ठा tegra_ivc *ivc,
+static inline void tegra_ivc_flush_frame(struct tegra_ivc *ivc,
 					 dma_addr_t phys,
-					 अचिन्हित पूर्णांक frame,
-					 अचिन्हित पूर्णांक offset,
-					 माप_प्रकार size)
-अणु
-	अगर (!ivc->peer || WARN_ON(frame >= ivc->num_frames))
-		वापस;
+					 unsigned int frame,
+					 unsigned int offset,
+					 size_t size)
+{
+	if (!ivc->peer || WARN_ON(frame >= ivc->num_frames))
+		return;
 
 	phys = tegra_ivc_frame_phys(ivc, phys, frame) + offset;
 
-	dma_sync_single_क्रम_device(ivc->peer, phys, size, DMA_TO_DEVICE);
-पूर्ण
+	dma_sync_single_for_device(ivc->peer, phys, size, DMA_TO_DEVICE);
+}
 
 /* directly peek at the next frame rx'ed */
-व्योम *tegra_ivc_पढ़ो_get_next_frame(काष्ठा tegra_ivc *ivc)
-अणु
-	पूर्णांक err;
+void *tegra_ivc_read_get_next_frame(struct tegra_ivc *ivc)
+{
+	int err;
 
-	अगर (WARN_ON(ivc == शून्य))
-		वापस ERR_PTR(-EINVAL);
+	if (WARN_ON(ivc == NULL))
+		return ERR_PTR(-EINVAL);
 
-	err = tegra_ivc_check_पढ़ो(ivc);
-	अगर (err < 0)
-		वापस ERR_PTR(err);
+	err = tegra_ivc_check_read(ivc);
+	if (err < 0)
+		return ERR_PTR(err);
 
 	/*
 	 * Order observation of ivc->rx.position potentially indicating new
-	 * data beक्रमe data पढ़ो.
+	 * data before data read.
 	 */
 	smp_rmb();
 
 	tegra_ivc_invalidate_frame(ivc, ivc->rx.phys, ivc->rx.position, 0,
 				   ivc->frame_size);
 
-	वापस tegra_ivc_frame_virt(ivc, ivc->rx.channel, ivc->rx.position);
-पूर्ण
-EXPORT_SYMBOL(tegra_ivc_पढ़ो_get_next_frame);
+	return tegra_ivc_frame_virt(ivc, ivc->rx.channel, ivc->rx.position);
+}
+EXPORT_SYMBOL(tegra_ivc_read_get_next_frame);
 
-पूर्णांक tegra_ivc_पढ़ो_advance(काष्ठा tegra_ivc *ivc)
-अणु
-	अचिन्हित पूर्णांक rx = दुरत्व(काष्ठा tegra_ivc_header, rx.count);
-	अचिन्हित पूर्णांक tx = दुरत्व(काष्ठा tegra_ivc_header, tx.count);
-	पूर्णांक err;
+int tegra_ivc_read_advance(struct tegra_ivc *ivc)
+{
+	unsigned int rx = offsetof(struct tegra_ivc_header, rx.count);
+	unsigned int tx = offsetof(struct tegra_ivc_header, tx.count);
+	int err;
 
 	/*
-	 * No पढ़ो barriers or synchronization here: the caller is expected to
-	 * have alपढ़ोy observed the channel non-empty. This check is just to
+	 * No read barriers or synchronization here: the caller is expected to
+	 * have already observed the channel non-empty. This check is just to
 	 * catch programming errors.
 	 */
-	err = tegra_ivc_check_पढ़ो(ivc);
-	अगर (err < 0)
-		वापस err;
+	err = tegra_ivc_check_read(ivc);
+	if (err < 0)
+		return err;
 
 	tegra_ivc_advance_rx(ivc);
 
 	tegra_ivc_flush(ivc, ivc->rx.phys + rx);
 
 	/*
-	 * Ensure our ग_लिखो to ivc->rx.position occurs beक्रमe our पढ़ो from
+	 * Ensure our write to ivc->rx.position occurs before our read from
 	 * ivc->tx.position.
 	 */
 	smp_mb();
 
 	/*
-	 * Notअगरy only upon transition from full to non-full. The available
+	 * Notify only upon transition from full to non-full. The available
 	 * count can only asynchronously increase, so the worst possible
-	 * side-effect will be a spurious notअगरication.
+	 * side-effect will be a spurious notification.
 	 */
 	tegra_ivc_invalidate(ivc, ivc->rx.phys + tx);
 
-	अगर (tegra_ivc_available(ivc, ivc->rx.channel) == ivc->num_frames - 1)
-		ivc->notअगरy(ivc, ivc->notअगरy_data);
+	if (tegra_ivc_available(ivc, ivc->rx.channel) == ivc->num_frames - 1)
+		ivc->notify(ivc, ivc->notify_data);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(tegra_ivc_पढ़ो_advance);
+	return 0;
+}
+EXPORT_SYMBOL(tegra_ivc_read_advance);
 
 /* directly poke at the next frame to be tx'ed */
-व्योम *tegra_ivc_ग_लिखो_get_next_frame(काष्ठा tegra_ivc *ivc)
-अणु
-	पूर्णांक err;
+void *tegra_ivc_write_get_next_frame(struct tegra_ivc *ivc)
+{
+	int err;
 
-	err = tegra_ivc_check_ग_लिखो(ivc);
-	अगर (err < 0)
-		वापस ERR_PTR(err);
+	err = tegra_ivc_check_write(ivc);
+	if (err < 0)
+		return ERR_PTR(err);
 
-	वापस tegra_ivc_frame_virt(ivc, ivc->tx.channel, ivc->tx.position);
-पूर्ण
-EXPORT_SYMBOL(tegra_ivc_ग_लिखो_get_next_frame);
+	return tegra_ivc_frame_virt(ivc, ivc->tx.channel, ivc->tx.position);
+}
+EXPORT_SYMBOL(tegra_ivc_write_get_next_frame);
 
 /* advance the tx buffer */
-पूर्णांक tegra_ivc_ग_लिखो_advance(काष्ठा tegra_ivc *ivc)
-अणु
-	अचिन्हित पूर्णांक tx = दुरत्व(काष्ठा tegra_ivc_header, tx.count);
-	अचिन्हित पूर्णांक rx = दुरत्व(काष्ठा tegra_ivc_header, rx.count);
-	पूर्णांक err;
+int tegra_ivc_write_advance(struct tegra_ivc *ivc)
+{
+	unsigned int tx = offsetof(struct tegra_ivc_header, tx.count);
+	unsigned int rx = offsetof(struct tegra_ivc_header, rx.count);
+	int err;
 
-	err = tegra_ivc_check_ग_लिखो(ivc);
-	अगर (err < 0)
-		वापस err;
+	err = tegra_ivc_check_write(ivc);
+	if (err < 0)
+		return err;
 
 	tegra_ivc_flush_frame(ivc, ivc->tx.phys, ivc->tx.position, 0,
 			      ivc->frame_size);
 
 	/*
-	 * Order any possible stores to the frame beक्रमe update of
+	 * Order any possible stores to the frame before update of
 	 * ivc->tx.position.
 	 */
 	smp_wmb();
@@ -365,69 +364,69 @@ EXPORT_SYMBOL(tegra_ivc_ग_लिखो_get_next_frame);
 	tegra_ivc_flush(ivc, ivc->tx.phys + tx);
 
 	/*
-	 * Ensure our ग_लिखो to ivc->tx.position occurs beक्रमe our पढ़ो from
+	 * Ensure our write to ivc->tx.position occurs before our read from
 	 * ivc->rx.position.
 	 */
 	smp_mb();
 
 	/*
-	 * Notअगरy only upon transition from empty to non-empty. The available
+	 * Notify only upon transition from empty to non-empty. The available
 	 * count can only asynchronously decrease, so the worst possible
-	 * side-effect will be a spurious notअगरication.
+	 * side-effect will be a spurious notification.
 	 */
 	tegra_ivc_invalidate(ivc, ivc->tx.phys + rx);
 
-	अगर (tegra_ivc_available(ivc, ivc->tx.channel) == 1)
-		ivc->notअगरy(ivc, ivc->notअगरy_data);
+	if (tegra_ivc_available(ivc, ivc->tx.channel) == 1)
+		ivc->notify(ivc, ivc->notify_data);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(tegra_ivc_ग_लिखो_advance);
+	return 0;
+}
+EXPORT_SYMBOL(tegra_ivc_write_advance);
 
-व्योम tegra_ivc_reset(काष्ठा tegra_ivc *ivc)
-अणु
-	अचिन्हित पूर्णांक offset = दुरत्व(काष्ठा tegra_ivc_header, tx.count);
+void tegra_ivc_reset(struct tegra_ivc *ivc)
+{
+	unsigned int offset = offsetof(struct tegra_ivc_header, tx.count);
 
 	ivc->tx.channel->tx.state = TEGRA_IVC_STATE_SYNC;
 	tegra_ivc_flush(ivc, ivc->tx.phys + offset);
-	ivc->notअगरy(ivc, ivc->notअगरy_data);
-पूर्ण
+	ivc->notify(ivc, ivc->notify_data);
+}
 EXPORT_SYMBOL(tegra_ivc_reset);
 
 /*
  * =======================================================
- *  IVC State Transition Table - see tegra_ivc_notअगरied()
+ *  IVC State Transition Table - see tegra_ivc_notified()
  * =======================================================
  *
  *	local	remote	action
  *	-----	------	-----------------------------------
  *	SYNC	EST	<none>
- *	SYNC	ACK	reset counters; move to EST; notअगरy
- *	SYNC	SYNC	reset counters; move to ACK; notअगरy
- *	ACK	EST	move to EST; notअगरy
- *	ACK	ACK	move to EST; notअगरy
- *	ACK	SYNC	reset counters; move to ACK; notअगरy
+ *	SYNC	ACK	reset counters; move to EST; notify
+ *	SYNC	SYNC	reset counters; move to ACK; notify
+ *	ACK	EST	move to EST; notify
+ *	ACK	ACK	move to EST; notify
+ *	ACK	SYNC	reset counters; move to ACK; notify
  *	EST	EST	<none>
  *	EST	ACK	<none>
- *	EST	SYNC	reset counters; move to ACK; notअगरy
+ *	EST	SYNC	reset counters; move to ACK; notify
  *
  * ===============================================================
  */
 
-पूर्णांक tegra_ivc_notअगरied(काष्ठा tegra_ivc *ivc)
-अणु
-	अचिन्हित पूर्णांक offset = दुरत्व(काष्ठा tegra_ivc_header, tx.count);
-	क्रमागत tegra_ivc_state state;
+int tegra_ivc_notified(struct tegra_ivc *ivc)
+{
+	unsigned int offset = offsetof(struct tegra_ivc_header, tx.count);
+	enum tegra_ivc_state state;
 
 	/* Copy the receiver's state out of shared memory. */
 	tegra_ivc_invalidate(ivc, ivc->rx.phys + offset);
 	state = READ_ONCE(ivc->rx.channel->tx.state);
 
-	अगर (state == TEGRA_IVC_STATE_SYNC) अणु
-		offset = दुरत्व(काष्ठा tegra_ivc_header, tx.count);
+	if (state == TEGRA_IVC_STATE_SYNC) {
+		offset = offsetof(struct tegra_ivc_header, tx.count);
 
 		/*
-		 * Order observation of TEGRA_IVC_STATE_SYNC beक्रमe stores
+		 * Order observation of TEGRA_IVC_STATE_SYNC before stores
 		 * clearing tx.channel.
 		 */
 		smp_rmb();
@@ -435,7 +434,7 @@ EXPORT_SYMBOL(tegra_ivc_reset);
 		/*
 		 * Reset tx.channel counters. The remote end is in the SYNC
 		 * state and won't make progress until we change our state,
-		 * so the counters are not in use at this समय.
+		 * so the counters are not in use at this time.
 		 */
 		ivc->tx.channel->tx.count = 0;
 		ivc->rx.channel->rx.count = 0;
@@ -444,29 +443,29 @@ EXPORT_SYMBOL(tegra_ivc_reset);
 		ivc->rx.position = 0;
 
 		/*
-		 * Ensure that counters appear cleared beक्रमe new state can be
+		 * Ensure that counters appear cleared before new state can be
 		 * observed.
 		 */
 		smp_wmb();
 
 		/*
 		 * Move to ACK state. We have just cleared our counters, so it
-		 * is now safe क्रम the remote end to start using these values.
+		 * is now safe for the remote end to start using these values.
 		 */
 		ivc->tx.channel->tx.state = TEGRA_IVC_STATE_ACK;
 		tegra_ivc_flush(ivc, ivc->tx.phys + offset);
 
 		/*
-		 * Notअगरy remote end to observe state transition.
+		 * Notify remote end to observe state transition.
 		 */
-		ivc->notअगरy(ivc, ivc->notअगरy_data);
+		ivc->notify(ivc, ivc->notify_data);
 
-	पूर्ण अन्यथा अगर (ivc->tx.channel->tx.state == TEGRA_IVC_STATE_SYNC &&
-		   state == TEGRA_IVC_STATE_ACK) अणु
-		offset = दुरत्व(काष्ठा tegra_ivc_header, tx.count);
+	} else if (ivc->tx.channel->tx.state == TEGRA_IVC_STATE_SYNC &&
+		   state == TEGRA_IVC_STATE_ACK) {
+		offset = offsetof(struct tegra_ivc_header, tx.count);
 
 		/*
-		 * Order observation of ivc_state_sync beक्रमe stores clearing
+		 * Order observation of ivc_state_sync before stores clearing
 		 * tx_channel.
 		 */
 		smp_rmb();
@@ -474,7 +473,7 @@ EXPORT_SYMBOL(tegra_ivc_reset);
 		/*
 		 * Reset tx.channel counters. The remote end is in the ACK
 		 * state and won't make progress until we change our state,
-		 * so the counters are not in use at this समय.
+		 * so the counters are not in use at this time.
 		 */
 		ivc->tx.channel->tx.count = 0;
 		ivc->rx.channel->rx.count = 0;
@@ -483,182 +482,182 @@ EXPORT_SYMBOL(tegra_ivc_reset);
 		ivc->rx.position = 0;
 
 		/*
-		 * Ensure that counters appear cleared beक्रमe new state can be
+		 * Ensure that counters appear cleared before new state can be
 		 * observed.
 		 */
 		smp_wmb();
 
 		/*
 		 * Move to ESTABLISHED state. We know that the remote end has
-		 * alपढ़ोy cleared its counters, so it is safe to start
-		 * writing/पढ़ोing on this channel.
+		 * already cleared its counters, so it is safe to start
+		 * writing/reading on this channel.
 		 */
 		ivc->tx.channel->tx.state = TEGRA_IVC_STATE_ESTABLISHED;
 		tegra_ivc_flush(ivc, ivc->tx.phys + offset);
 
 		/*
-		 * Notअगरy remote end to observe state transition.
+		 * Notify remote end to observe state transition.
 		 */
-		ivc->notअगरy(ivc, ivc->notअगरy_data);
+		ivc->notify(ivc, ivc->notify_data);
 
-	पूर्ण अन्यथा अगर (ivc->tx.channel->tx.state == TEGRA_IVC_STATE_ACK) अणु
-		offset = दुरत्व(काष्ठा tegra_ivc_header, tx.count);
+	} else if (ivc->tx.channel->tx.state == TEGRA_IVC_STATE_ACK) {
+		offset = offsetof(struct tegra_ivc_header, tx.count);
 
 		/*
-		 * At this poपूर्णांक, we have observed the peer to be in either
+		 * At this point, we have observed the peer to be in either
 		 * the ACK or ESTABLISHED state. Next, order observation of
-		 * peer state beक्रमe storing to tx.channel.
+		 * peer state before storing to tx.channel.
 		 */
 		smp_rmb();
 
 		/*
 		 * Move to ESTABLISHED state. We know that we have previously
 		 * cleared our counters, and we know that the remote end has
-		 * cleared its counters, so it is safe to start writing/पढ़ोing
+		 * cleared its counters, so it is safe to start writing/reading
 		 * on this channel.
 		 */
 		ivc->tx.channel->tx.state = TEGRA_IVC_STATE_ESTABLISHED;
 		tegra_ivc_flush(ivc, ivc->tx.phys + offset);
 
 		/*
-		 * Notअगरy remote end to observe state transition.
+		 * Notify remote end to observe state transition.
 		 */
-		ivc->notअगरy(ivc, ivc->notअगरy_data);
+		ivc->notify(ivc, ivc->notify_data);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * There is no need to handle any further action. Either the
-		 * channel is alपढ़ोy fully established, or we are रुकोing क्रम
+		 * channel is already fully established, or we are waiting for
 		 * the remote end to catch up with our current state. Refer
 		 * to the diagram in "IVC State Transition Table" above.
 		 */
-	पूर्ण
+	}
 
-	अगर (ivc->tx.channel->tx.state != TEGRA_IVC_STATE_ESTABLISHED)
-		वापस -EAGAIN;
+	if (ivc->tx.channel->tx.state != TEGRA_IVC_STATE_ESTABLISHED)
+		return -EAGAIN;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(tegra_ivc_notअगरied);
+	return 0;
+}
+EXPORT_SYMBOL(tegra_ivc_notified);
 
-माप_प्रकार tegra_ivc_align(माप_प्रकार size)
-अणु
-	वापस ALIGN(size, TEGRA_IVC_ALIGN);
-पूर्ण
+size_t tegra_ivc_align(size_t size)
+{
+	return ALIGN(size, TEGRA_IVC_ALIGN);
+}
 EXPORT_SYMBOL(tegra_ivc_align);
 
-अचिन्हित tegra_ivc_total_queue_size(अचिन्हित queue_size)
-अणु
-	अगर (!IS_ALIGNED(queue_size, TEGRA_IVC_ALIGN)) अणु
+unsigned tegra_ivc_total_queue_size(unsigned queue_size)
+{
+	if (!IS_ALIGNED(queue_size, TEGRA_IVC_ALIGN)) {
 		pr_err("%s: queue_size (%u) must be %u-byte aligned\n",
 		       __func__, queue_size, TEGRA_IVC_ALIGN);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस queue_size + माप(काष्ठा tegra_ivc_header);
-पूर्ण
+	return queue_size + sizeof(struct tegra_ivc_header);
+}
 EXPORT_SYMBOL(tegra_ivc_total_queue_size);
 
-अटल पूर्णांक tegra_ivc_check_params(अचिन्हित दीर्घ rx, अचिन्हित दीर्घ tx,
-				  अचिन्हित पूर्णांक num_frames, माप_प्रकार frame_size)
-अणु
-	BUILD_BUG_ON(!IS_ALIGNED(दुरत्व(काष्ठा tegra_ivc_header, tx.count),
+static int tegra_ivc_check_params(unsigned long rx, unsigned long tx,
+				  unsigned int num_frames, size_t frame_size)
+{
+	BUILD_BUG_ON(!IS_ALIGNED(offsetof(struct tegra_ivc_header, tx.count),
 				 TEGRA_IVC_ALIGN));
-	BUILD_BUG_ON(!IS_ALIGNED(दुरत्व(काष्ठा tegra_ivc_header, rx.count),
+	BUILD_BUG_ON(!IS_ALIGNED(offsetof(struct tegra_ivc_header, rx.count),
 				 TEGRA_IVC_ALIGN));
-	BUILD_BUG_ON(!IS_ALIGNED(माप(काष्ठा tegra_ivc_header),
+	BUILD_BUG_ON(!IS_ALIGNED(sizeof(struct tegra_ivc_header),
 				 TEGRA_IVC_ALIGN));
 
-	अगर ((uपूर्णांक64_t)num_frames * (uपूर्णांक64_t)frame_size >= 0x100000000UL) अणु
+	if ((uint64_t)num_frames * (uint64_t)frame_size >= 0x100000000UL) {
 		pr_err("num_frames * frame_size overflows\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!IS_ALIGNED(frame_size, TEGRA_IVC_ALIGN)) अणु
+	if (!IS_ALIGNED(frame_size, TEGRA_IVC_ALIGN)) {
 		pr_err("frame size not adequately aligned: %zu\n", frame_size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * The headers must at least be aligned enough क्रम counters
+	 * The headers must at least be aligned enough for counters
 	 * to be accessed atomically.
 	 */
-	अगर (!IS_ALIGNED(rx, TEGRA_IVC_ALIGN)) अणु
+	if (!IS_ALIGNED(rx, TEGRA_IVC_ALIGN)) {
 		pr_err("IVC channel start not aligned: %#lx\n", rx);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!IS_ALIGNED(tx, TEGRA_IVC_ALIGN)) अणु
+	if (!IS_ALIGNED(tx, TEGRA_IVC_ALIGN)) {
 		pr_err("IVC channel start not aligned: %#lx\n", tx);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (rx < tx) अणु
-		अगर (rx + frame_size * num_frames > tx) अणु
+	if (rx < tx) {
+		if (rx + frame_size * num_frames > tx) {
 			pr_err("queue regions overlap: %#lx + %zx > %#lx\n",
 			       rx, frame_size * num_frames, tx);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (tx + frame_size * num_frames > rx) अणु
+			return -EINVAL;
+		}
+	} else {
+		if (tx + frame_size * num_frames > rx) {
 			pr_err("queue regions overlap: %#lx + %zx > %#lx\n",
 			       tx, frame_size * num_frames, rx);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tegra_ivc_init(काष्ठा tegra_ivc *ivc, काष्ठा device *peer, व्योम *rx,
-		   dma_addr_t rx_phys, व्योम *tx, dma_addr_t tx_phys,
-		   अचिन्हित पूर्णांक num_frames, माप_प्रकार frame_size,
-		   व्योम (*notअगरy)(काष्ठा tegra_ivc *ivc, व्योम *data),
-		   व्योम *data)
-अणु
-	माप_प्रकार queue_size;
-	पूर्णांक err;
+int tegra_ivc_init(struct tegra_ivc *ivc, struct device *peer, void *rx,
+		   dma_addr_t rx_phys, void *tx, dma_addr_t tx_phys,
+		   unsigned int num_frames, size_t frame_size,
+		   void (*notify)(struct tegra_ivc *ivc, void *data),
+		   void *data)
+{
+	size_t queue_size;
+	int err;
 
-	अगर (WARN_ON(!ivc || !notअगरy))
-		वापस -EINVAL;
+	if (WARN_ON(!ivc || !notify))
+		return -EINVAL;
 
 	/*
-	 * All sizes that can be वापसed by communication functions should
-	 * fit in an पूर्णांक.
+	 * All sizes that can be returned by communication functions should
+	 * fit in an int.
 	 */
-	अगर (frame_size > पूर्णांक_उच्च)
-		वापस -E2BIG;
+	if (frame_size > INT_MAX)
+		return -E2BIG;
 
-	err = tegra_ivc_check_params((अचिन्हित दीर्घ)rx, (अचिन्हित दीर्घ)tx,
+	err = tegra_ivc_check_params((unsigned long)rx, (unsigned long)tx,
 				     num_frames, frame_size);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	queue_size = tegra_ivc_total_queue_size(num_frames * frame_size);
 
-	अगर (peer) अणु
+	if (peer) {
 		ivc->rx.phys = dma_map_single(peer, rx, queue_size,
-					      DMA_BIसूचीECTIONAL);
-		अगर (dma_mapping_error(peer, ivc->rx.phys))
-			वापस -ENOMEM;
+					      DMA_BIDIRECTIONAL);
+		if (dma_mapping_error(peer, ivc->rx.phys))
+			return -ENOMEM;
 
 		ivc->tx.phys = dma_map_single(peer, tx, queue_size,
-					      DMA_BIसूचीECTIONAL);
-		अगर (dma_mapping_error(peer, ivc->tx.phys)) अणु
+					      DMA_BIDIRECTIONAL);
+		if (dma_mapping_error(peer, ivc->tx.phys)) {
 			dma_unmap_single(peer, ivc->rx.phys, queue_size,
-					 DMA_BIसूचीECTIONAL);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+					 DMA_BIDIRECTIONAL);
+			return -ENOMEM;
+		}
+	} else {
 		ivc->rx.phys = rx_phys;
 		ivc->tx.phys = tx_phys;
-	पूर्ण
+	}
 
 	ivc->rx.channel = rx;
 	ivc->tx.channel = tx;
 	ivc->peer = peer;
-	ivc->notअगरy = notअगरy;
-	ivc->notअगरy_data = data;
+	ivc->notify = notify;
+	ivc->notify_data = data;
 	ivc->frame_size = frame_size;
 	ivc->num_frames = num_frames;
 
@@ -669,20 +668,20 @@ EXPORT_SYMBOL(tegra_ivc_total_queue_size);
 	ivc->tx.position = 0;
 	ivc->rx.position = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(tegra_ivc_init);
 
-व्योम tegra_ivc_cleanup(काष्ठा tegra_ivc *ivc)
-अणु
-	अगर (ivc->peer) अणु
-		माप_प्रकार size = tegra_ivc_total_queue_size(ivc->num_frames *
+void tegra_ivc_cleanup(struct tegra_ivc *ivc)
+{
+	if (ivc->peer) {
+		size_t size = tegra_ivc_total_queue_size(ivc->num_frames *
 							 ivc->frame_size);
 
 		dma_unmap_single(ivc->peer, ivc->rx.phys, size,
-				 DMA_BIसूचीECTIONAL);
+				 DMA_BIDIRECTIONAL);
 		dma_unmap_single(ivc->peer, ivc->tx.phys, size,
-				 DMA_BIसूचीECTIONAL);
-	पूर्ण
-पूर्ण
+				 DMA_BIDIRECTIONAL);
+	}
+}
 EXPORT_SYMBOL(tegra_ivc_cleanup);

@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *      uvc_isight.c  --  USB Video Class driver - iSight support
  *
  *	Copyright (C) 2006-2007
  *		Ivan N. Zlatev <contact@i-nz.net>
  *	Copyright (C) 2008-2009
- *		Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
+ *		Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  */
 
-#समावेश <linux/usb.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
+#include <linux/usb.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
 
-#समावेश "uvcvideo.h"
+#include "uvcvideo.h"
 
 /* Built-in iSight webcams implements most of UVC 1.0 except a
- * dअगरferent packet क्रमmat. Instead of sending a header at the
+ * different packet format. Instead of sending a header at the
  * beginning of each isochronous transfer payload, the webcam sends a
  * single header per image (on its own in a packet), followed by
  * packets containing data only.
@@ -32,105 +31,105 @@
  * The header can be prefixed by an optional, unknown-purpose byte.
  */
 
-अटल पूर्णांक isight_decode(काष्ठा uvc_video_queue *queue, काष्ठा uvc_buffer *buf,
-		स्थिर u8 *data, अचिन्हित पूर्णांक len)
-अणु
-	अटल स्थिर u8 hdr[] = अणु
+static int isight_decode(struct uvc_video_queue *queue, struct uvc_buffer *buf,
+		const u8 *data, unsigned int len)
+{
+	static const u8 hdr[] = {
 		0x11, 0x22, 0x33, 0x44,
 		0xde, 0xad, 0xbe, 0xef,
 		0xde, 0xad, 0xfa, 0xce
-	पूर्ण;
+	};
 
-	काष्ठा uvc_streaming *stream = uvc_queue_to_stream(queue);
-	अचिन्हित पूर्णांक maxlen, nbytes;
+	struct uvc_streaming *stream = uvc_queue_to_stream(queue);
+	unsigned int maxlen, nbytes;
 	u8 *mem;
-	पूर्णांक is_header = 0;
+	int is_header = 0;
 
-	अगर (buf == शून्य)
-		वापस 0;
+	if (buf == NULL)
+		return 0;
 
-	अगर ((len >= 14 && स_भेद(&data[2], hdr, 12) == 0) ||
-	    (len >= 15 && स_भेद(&data[3], hdr, 12) == 0)) अणु
+	if ((len >= 14 && memcmp(&data[2], hdr, 12) == 0) ||
+	    (len >= 15 && memcmp(&data[3], hdr, 12) == 0)) {
 		uvc_dbg(stream->dev, FRAME, "iSight header found\n");
 		is_header = 1;
-	पूर्ण
+	}
 
-	/* Synchronize to the input stream by रुकोing क्रम a header packet. */
-	अगर (buf->state != UVC_BUF_STATE_ACTIVE) अणु
-		अगर (!is_header) अणु
+	/* Synchronize to the input stream by waiting for a header packet. */
+	if (buf->state != UVC_BUF_STATE_ACTIVE) {
+		if (!is_header) {
 			uvc_dbg(stream->dev, FRAME,
 				"Dropping packet (out of sync)\n");
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		buf->state = UVC_BUF_STATE_ACTIVE;
-	पूर्ण
+	}
 
-	/* Mark the buffer as करोne अगर we're at the beginning of a new frame.
+	/* Mark the buffer as done if we're at the beginning of a new frame.
 	 *
-	 * Empty buffers (bytesused == 0) करोn't trigger end of frame detection
-	 * as it करोesn't make sense to वापस an empty buffer.
+	 * Empty buffers (bytesused == 0) don't trigger end of frame detection
+	 * as it doesn't make sense to return an empty buffer.
 	 */
-	अगर (is_header && buf->bytesused != 0) अणु
+	if (is_header && buf->bytesused != 0) {
 		buf->state = UVC_BUF_STATE_DONE;
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
 	/* Copy the video data to the buffer. Skip header packets, as they
 	 * contain no data.
 	 */
-	अगर (!is_header) अणु
+	if (!is_header) {
 		maxlen = buf->length - buf->bytesused;
 		mem = buf->mem + buf->bytesused;
 		nbytes = min(len, maxlen);
-		स_नकल(mem, data, nbytes);
+		memcpy(mem, data, nbytes);
 		buf->bytesused += nbytes;
 
-		अगर (len > maxlen || buf->bytesused == buf->length) अणु
+		if (len > maxlen || buf->bytesused == buf->length) {
 			uvc_dbg(stream->dev, FRAME,
 				"Frame complete (overflow)\n");
 			buf->state = UVC_BUF_STATE_DONE;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम uvc_video_decode_isight(काष्ठा uvc_urb *uvc_urb, काष्ठा uvc_buffer *buf,
-			काष्ठा uvc_buffer *meta_buf)
-अणु
-	काष्ठा urb *urb = uvc_urb->urb;
-	काष्ठा uvc_streaming *stream = uvc_urb->stream;
-	पूर्णांक ret, i;
+void uvc_video_decode_isight(struct uvc_urb *uvc_urb, struct uvc_buffer *buf,
+			struct uvc_buffer *meta_buf)
+{
+	struct urb *urb = uvc_urb->urb;
+	struct uvc_streaming *stream = uvc_urb->stream;
+	int ret, i;
 
-	क्रम (i = 0; i < urb->number_of_packets; ++i) अणु
-		अगर (urb->iso_frame_desc[i].status < 0) अणु
+	for (i = 0; i < urb->number_of_packets; ++i) {
+		if (urb->iso_frame_desc[i].status < 0) {
 			uvc_dbg(stream->dev, FRAME,
 				"USB isochronous frame lost (%d)\n",
 				urb->iso_frame_desc[i].status);
-		पूर्ण
+		}
 
 		/* Decode the payload packet.
 		 * uvc_video_decode is entered twice when a frame transition
 		 * has been detected because the end of frame can only be
 		 * reliably detected when the first packet of the new frame
 		 * is processed. The first pass detects the transition and
-		 * बंदs the previous frame's buffer, the second pass
+		 * closes the previous frame's buffer, the second pass
 		 * processes the data of the first payload of the new frame.
 		 */
-		करो अणु
+		do {
 			ret = isight_decode(&stream->queue, buf,
 					urb->transfer_buffer +
 					urb->iso_frame_desc[i].offset,
 					urb->iso_frame_desc[i].actual_length);
 
-			अगर (buf == शून्य)
-				अवरोध;
+			if (buf == NULL)
+				break;
 
-			अगर (buf->state == UVC_BUF_STATE_DONE ||
+			if (buf->state == UVC_BUF_STATE_DONE ||
 			    buf->state == UVC_BUF_STATE_ERROR)
 				buf = uvc_queue_next_buffer(&stream->queue,
 							buf);
-		पूर्ण जबतक (ret == -EAGAIN);
-	पूर्ण
-पूर्ण
+		} while (ret == -EAGAIN);
+	}
+}

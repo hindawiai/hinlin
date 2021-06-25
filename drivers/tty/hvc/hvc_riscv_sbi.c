@@ -1,60 +1,59 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2008 David Gibson, IBM Corporation
- * Copyright (C) 2012 Regents of the University of Calअगरornia
+ * Copyright (C) 2012 Regents of the University of California
  * Copyright (C) 2017 SiFive
  */
 
-#समावेश <linux/console.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/types.h>
+#include <linux/console.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/moduleparam.h>
+#include <linux/types.h>
 
-#समावेश <यंत्र/sbi.h>
+#include <asm/sbi.h>
 
-#समावेश "hvc_console.h"
+#include "hvc_console.h"
 
-अटल पूर्णांक hvc_sbi_tty_put(uपूर्णांक32_t vtermno, स्थिर अक्षर *buf, पूर्णांक count)
-अणु
-	पूर्णांक i;
+static int hvc_sbi_tty_put(uint32_t vtermno, const char *buf, int count)
+{
+	int i;
 
-	क्रम (i = 0; i < count; i++)
-		sbi_console_अक्षर_दो(buf[i]);
+	for (i = 0; i < count; i++)
+		sbi_console_putchar(buf[i]);
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल पूर्णांक hvc_sbi_tty_get(uपूर्णांक32_t vtermno, अक्षर *buf, पूर्णांक count)
-अणु
-	पूर्णांक i, c;
+static int hvc_sbi_tty_get(uint32_t vtermno, char *buf, int count)
+{
+	int i, c;
 
-	क्रम (i = 0; i < count; i++) अणु
-		c = sbi_console_अक्षर_लो();
-		अगर (c < 0)
-			अवरोध;
+	for (i = 0; i < count; i++) {
+		c = sbi_console_getchar();
+		if (c < 0)
+			break;
 		buf[i] = c;
-	पूर्ण
+	}
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल स्थिर काष्ठा hv_ops hvc_sbi_ops = अणु
-	.get_अक्षरs = hvc_sbi_tty_get,
-	.put_अक्षरs = hvc_sbi_tty_put,
-पूर्ण;
+static const struct hv_ops hvc_sbi_ops = {
+	.get_chars = hvc_sbi_tty_get,
+	.put_chars = hvc_sbi_tty_put,
+};
 
-अटल पूर्णांक __init hvc_sbi_init(व्योम)
-अणु
-	वापस PTR_ERR_OR_ZERO(hvc_alloc(0, 0, &hvc_sbi_ops, 16));
-पूर्ण
+static int __init hvc_sbi_init(void)
+{
+	return PTR_ERR_OR_ZERO(hvc_alloc(0, 0, &hvc_sbi_ops, 16));
+}
 device_initcall(hvc_sbi_init);
 
-अटल पूर्णांक __init hvc_sbi_console_init(व्योम)
-अणु
+static int __init hvc_sbi_console_init(void)
+{
 	hvc_instantiate(0, 0, &hvc_sbi_ops);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 console_initcall(hvc_sbi_console_init);

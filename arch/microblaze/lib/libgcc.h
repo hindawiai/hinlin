@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_LIBGCC_H
-#घोषणा __ASM_LIBGCC_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_LIBGCC_H
+#define __ASM_LIBGCC_H
 
-#समावेश <यंत्र/byteorder.h>
+#include <asm/byteorder.h>
 
-प्रकार पूर्णांक word_type __attribute__ ((mode (__word__)));
+typedef int word_type __attribute__ ((mode (__word__)));
 
-#अगर_घोषित __BIG_ENDIAN
-काष्ठा DWकाष्ठा अणु
-	पूर्णांक high, low;
-पूर्ण;
-#या_अगर defined(__LITTLE_ENDIAN)
-काष्ठा DWकाष्ठा अणु
-	पूर्णांक low, high;
-पूर्ण;
-#अन्यथा
-#त्रुटि I feel sick.
-#पूर्ण_अगर
+#ifdef __BIG_ENDIAN
+struct DWstruct {
+	int high, low;
+};
+#elif defined(__LITTLE_ENDIAN)
+struct DWstruct {
+	int low, high;
+};
+#else
+#error I feel sick.
+#endif
 
-प्रकार जोड़ अणु
-	काष्ठा DWकाष्ठा s;
-	दीर्घ दीर्घ ll;
-पूर्ण DWजोड़;
+typedef union {
+	struct DWstruct s;
+	long long ll;
+} DWunion;
 
-बाह्य दीर्घ दीर्घ __ashldi3(दीर्घ दीर्घ u, word_type b);
-बाह्य दीर्घ दीर्घ __ashrdi3(दीर्घ दीर्घ u, word_type b);
-बाह्य word_type __cmpdi2(दीर्घ दीर्घ a, दीर्घ दीर्घ b);
-बाह्य दीर्घ दीर्घ __lshrdi3(दीर्घ दीर्घ u, word_type b);
-बाह्य दीर्घ दीर्घ __muldi3(दीर्घ दीर्घ u, दीर्घ दीर्घ v);
-बाह्य word_type __ucmpdi2(अचिन्हित दीर्घ दीर्घ a, अचिन्हित दीर्घ दीर्घ b);
+extern long long __ashldi3(long long u, word_type b);
+extern long long __ashrdi3(long long u, word_type b);
+extern word_type __cmpdi2(long long a, long long b);
+extern long long __lshrdi3(long long u, word_type b);
+extern long long __muldi3(long long u, long long v);
+extern word_type __ucmpdi2(unsigned long long a, unsigned long long b);
 
-#पूर्ण_अगर /* __ASM_LIBGCC_H */
+#endif /* __ASM_LIBGCC_H */

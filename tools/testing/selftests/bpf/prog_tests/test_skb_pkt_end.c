@@ -1,42 +1,41 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
-#समावेश <test_progs.h>
-#समावेश <network_helpers.h>
-#समावेश "skb_pkt_end.skel.h"
+#include <test_progs.h>
+#include <network_helpers.h>
+#include "skb_pkt_end.skel.h"
 
-अटल पूर्णांक sanity_run(काष्ठा bpf_program *prog)
-अणु
+static int sanity_run(struct bpf_program *prog)
+{
 	__u32 duration, retval;
-	पूर्णांक err, prog_fd;
+	int err, prog_fd;
 
 	prog_fd = bpf_program__fd(prog);
-	err = bpf_prog_test_run(prog_fd, 1, &pkt_v4, माप(pkt_v4),
-				शून्य, शून्य, &retval, &duration);
-	अगर (CHECK(err || retval != 123, "test_run",
+	err = bpf_prog_test_run(prog_fd, 1, &pkt_v4, sizeof(pkt_v4),
+				NULL, NULL, &retval, &duration);
+	if (CHECK(err || retval != 123, "test_run",
 		  "err %d errno %d retval %d duration %d\n",
-		  err, त्रुटि_सं, retval, duration))
-		वापस -1;
-	वापस 0;
-पूर्ण
+		  err, errno, retval, duration))
+		return -1;
+	return 0;
+}
 
-व्योम test_test_skb_pkt_end(व्योम)
-अणु
-	काष्ठा skb_pkt_end *skb_pkt_end_skel = शून्य;
+void test_test_skb_pkt_end(void)
+{
+	struct skb_pkt_end *skb_pkt_end_skel = NULL;
 	__u32 duration = 0;
-	पूर्णांक err;
+	int err;
 
-	skb_pkt_end_skel = skb_pkt_end__खोलो_and_load();
-	अगर (CHECK(!skb_pkt_end_skel, "skb_pkt_end_skel_load", "skb_pkt_end skeleton failed\n"))
-		जाओ cleanup;
+	skb_pkt_end_skel = skb_pkt_end__open_and_load();
+	if (CHECK(!skb_pkt_end_skel, "skb_pkt_end_skel_load", "skb_pkt_end skeleton failed\n"))
+		goto cleanup;
 
 	err = skb_pkt_end__attach(skb_pkt_end_skel);
-	अगर (CHECK(err, "skb_pkt_end_attach", "skb_pkt_end attach failed: %d\n", err))
-		जाओ cleanup;
+	if (CHECK(err, "skb_pkt_end_attach", "skb_pkt_end attach failed: %d\n", err))
+		goto cleanup;
 
-	अगर (sanity_run(skb_pkt_end_skel->progs.मुख्य_prog))
-		जाओ cleanup;
+	if (sanity_run(skb_pkt_end_skel->progs.main_prog))
+		goto cleanup;
 
 cleanup:
 	skb_pkt_end__destroy(skb_pkt_end_skel);
-पूर्ण
+}

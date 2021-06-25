@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2014 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,74 +21,74 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "dp.h"
-#समावेश "conn.h"
-#समावेश "head.h"
-#समावेश "ior.h"
+#include "dp.h"
+#include "conn.h"
+#include "head.h"
+#include "ior.h"
 
-#समावेश <subdev/मूलप्रण.स>
-#समावेश <subdev/bios/init.h>
-#समावेश <subdev/gpपन.स>
-#समावेश <subdev/i2c.h>
+#include <subdev/bios.h>
+#include <subdev/bios/init.h>
+#include <subdev/gpio.h>
+#include <subdev/i2c.h>
 
-#समावेश <nvअगर/event.h>
+#include <nvif/event.h>
 
-/* IED scripts are no दीर्घer used by UEFI/RM from Ampere, but have been updated क्रम
- * the x86 option ROM.  However, the relevant VBIOS table versions weren't modअगरied,
+/* IED scripts are no longer used by UEFI/RM from Ampere, but have been updated for
+ * the x86 option ROM.  However, the relevant VBIOS table versions weren't modified,
  * so we're unable to detect this in a nice way.
  */
-#घोषणा AMPERE_IED_HACK(disp) ((disp)->engine.subdev.device->card_type >= GA100)
+#define AMPERE_IED_HACK(disp) ((disp)->engine.subdev.device->card_type >= GA100)
 
-काष्ठा lt_state अणु
-	काष्ठा nvkm_dp *dp;
+struct lt_state {
+	struct nvkm_dp *dp;
 	u8  stat[6];
 	u8  conf[4];
 	bool pc2;
 	u8  pc2stat;
 	u8  pc2conf[2];
-पूर्ण;
+};
 
-अटल पूर्णांक
-nvkm_dp_train_sense(काष्ठा lt_state *lt, bool pc, u32 delay)
-अणु
-	काष्ठा nvkm_dp *dp = lt->dp;
-	पूर्णांक ret;
+static int
+nvkm_dp_train_sense(struct lt_state *lt, bool pc, u32 delay)
+{
+	struct nvkm_dp *dp = lt->dp;
+	int ret;
 
-	अगर (dp->dpcd[DPCD_RC0E_AUX_RD_INTERVAL])
+	if (dp->dpcd[DPCD_RC0E_AUX_RD_INTERVAL])
 		mdelay(dp->dpcd[DPCD_RC0E_AUX_RD_INTERVAL] * 4);
-	अन्यथा
+	else
 		udelay(delay);
 
 	ret = nvkm_rdaux(dp->aux, DPCD_LS02, lt->stat, 6);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (pc) अणु
+	if (pc) {
 		ret = nvkm_rdaux(dp->aux, DPCD_LS0C, &lt->pc2stat, 1);
-		अगर (ret)
+		if (ret)
 			lt->pc2stat = 0x00;
 		OUTP_TRACE(&dp->outp, "status %6ph pc2 %02x",
 			   lt->stat, lt->pc2stat);
-	पूर्ण अन्यथा अणु
+	} else {
 		OUTP_TRACE(&dp->outp, "status %6ph", lt->stat);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_dp_train_drive(काष्ठा lt_state *lt, bool pc)
-अणु
-	काष्ठा nvkm_dp *dp = lt->dp;
-	काष्ठा nvkm_ior *ior = dp->outp.ior;
-	काष्ठा nvkm_bios *bios = ior->disp->engine.subdev.device->bios;
-	काष्ठा nvbios_dpout info;
-	काष्ठा nvbios_dpcfg ocfg;
+static int
+nvkm_dp_train_drive(struct lt_state *lt, bool pc)
+{
+	struct nvkm_dp *dp = lt->dp;
+	struct nvkm_ior *ior = dp->outp.ior;
+	struct nvkm_bios *bios = ior->disp->engine.subdev.device->bios;
+	struct nvbios_dpout info;
+	struct nvbios_dpcfg ocfg;
 	u8  ver, hdr, cnt, len;
 	u32 data;
-	पूर्णांक ret, i;
+	int ret, i;
 
-	क्रम (i = 0; i < ior->dp.nr; i++) अणु
+	for (i = 0; i < ior->dp.nr; i++) {
 		u8 lane = (lt->stat[4 + (i >> 1)] >> ((i & 1) * 4)) & 0xf;
 		u8 lpc2 = (lt->pc2stat >> (i * 2)) & 0x3;
 		u8 lpre = (lane & 0x0c) >> 2;
@@ -98,15 +97,15 @@ nvkm_dp_train_drive(काष्ठा lt_state *lt, bool pc)
 		u8 hipe = 3;
 		u8 hipc = 3;
 
-		अगर (lpc2 >= hipc)
+		if (lpc2 >= hipc)
 			lpc2 = hipc | DPCD_LC0F_LANE0_MAX_POST_CURSOR2_REACHED;
-		अगर (lpre >= hipe) अणु
+		if (lpre >= hipe) {
 			lpre = hipe | DPCD_LC03_MAX_SWING_REACHED; /* yes. */
 			lvsw = hivs = 3 - (lpre & 3);
-		पूर्ण अन्यथा
-		अगर (lvsw >= hivs) अणु
+		} else
+		if (lvsw >= hivs) {
 			lvsw = hivs | DPCD_LC03_MAX_SWING_REACHED;
-		पूर्ण
+		}
 
 		lt->conf[i] = (lpre << 3) | lvsw;
 		lt->pc2conf[i >> 1] |= lpc2 << ((i & 1) * 4);
@@ -117,36 +116,36 @@ nvkm_dp_train_drive(काष्ठा lt_state *lt, bool pc)
 		data = nvbios_dpout_match(bios, dp->outp.info.hasht,
 						dp->outp.info.hashm,
 					  &ver, &hdr, &cnt, &len, &info);
-		अगर (!data)
-			जारी;
+		if (!data)
+			continue;
 
 		data = nvbios_dpcfg_match(bios, data, lpc2 & 3, lvsw & 3,
 					  lpre & 3, &ver, &hdr, &cnt, &len,
 					  &ocfg);
-		अगर (!data)
-			जारी;
+		if (!data)
+			continue;
 
 		ior->func->dp.drive(ior, i, ocfg.pc, ocfg.dc,
 					    ocfg.pe, ocfg.tx_pu);
-	पूर्ण
+	}
 
 	ret = nvkm_wraux(dp->aux, DPCD_LC03(0), lt->conf, 4);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (pc) अणु
+	if (pc) {
 		ret = nvkm_wraux(dp->aux, DPCD_LC0F, lt->pc2conf, 2);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-nvkm_dp_train_pattern(काष्ठा lt_state *lt, u8 pattern)
-अणु
-	काष्ठा nvkm_dp *dp = lt->dp;
+static void
+nvkm_dp_train_pattern(struct lt_state *lt, u8 pattern)
+{
+	struct nvkm_dp *dp = lt->dp;
 	u8 sink_tp;
 
 	OUTP_TRACE(&dp->outp, "training pattern %d", pattern);
@@ -156,98 +155,98 @@ nvkm_dp_train_pattern(काष्ठा lt_state *lt, u8 pattern)
 	sink_tp &= ~DPCD_LC02_TRAINING_PATTERN_SET;
 	sink_tp |= pattern;
 	nvkm_wraux(dp->aux, DPCD_LC02, &sink_tp, 1);
-पूर्ण
+}
 
-अटल पूर्णांक
-nvkm_dp_train_eq(काष्ठा lt_state *lt)
-अणु
-	bool eq_करोne = false, cr_करोne = true;
-	पूर्णांक tries = 0, i;
+static int
+nvkm_dp_train_eq(struct lt_state *lt)
+{
+	bool eq_done = false, cr_done = true;
+	int tries = 0, i;
 
-	अगर (lt->dp->dpcd[DPCD_RC02] & DPCD_RC02_TPS3_SUPPORTED)
+	if (lt->dp->dpcd[DPCD_RC02] & DPCD_RC02_TPS3_SUPPORTED)
 		nvkm_dp_train_pattern(lt, 3);
-	अन्यथा
+	else
 		nvkm_dp_train_pattern(lt, 2);
 
-	करो अणु
-		अगर ((tries &&
+	do {
+		if ((tries &&
 		    nvkm_dp_train_drive(lt, lt->pc2)) ||
 		    nvkm_dp_train_sense(lt, lt->pc2, 400))
-			अवरोध;
+			break;
 
-		eq_करोne = !!(lt->stat[2] & DPCD_LS04_INTERLANE_ALIGN_DONE);
-		क्रम (i = 0; i < lt->dp->outp.ior->dp.nr && eq_करोne; i++) अणु
+		eq_done = !!(lt->stat[2] & DPCD_LS04_INTERLANE_ALIGN_DONE);
+		for (i = 0; i < lt->dp->outp.ior->dp.nr && eq_done; i++) {
 			u8 lane = (lt->stat[i >> 1] >> ((i & 1) * 4)) & 0xf;
-			अगर (!(lane & DPCD_LS02_LANE0_CR_DONE))
-				cr_करोne = false;
-			अगर (!(lane & DPCD_LS02_LANE0_CHANNEL_EQ_DONE) ||
+			if (!(lane & DPCD_LS02_LANE0_CR_DONE))
+				cr_done = false;
+			if (!(lane & DPCD_LS02_LANE0_CHANNEL_EQ_DONE) ||
 			    !(lane & DPCD_LS02_LANE0_SYMBOL_LOCKED))
-				eq_करोne = false;
-		पूर्ण
-	पूर्ण जबतक (!eq_करोne && cr_करोne && ++tries <= 5);
+				eq_done = false;
+		}
+	} while (!eq_done && cr_done && ++tries <= 5);
 
-	वापस eq_करोne ? 0 : -1;
-पूर्ण
+	return eq_done ? 0 : -1;
+}
 
-अटल पूर्णांक
-nvkm_dp_train_cr(काष्ठा lt_state *lt)
-अणु
-	bool cr_करोne = false, पात = false;
-	पूर्णांक voltage = lt->conf[0] & DPCD_LC03_VOLTAGE_SWING_SET;
-	पूर्णांक tries = 0, i;
+static int
+nvkm_dp_train_cr(struct lt_state *lt)
+{
+	bool cr_done = false, abort = false;
+	int voltage = lt->conf[0] & DPCD_LC03_VOLTAGE_SWING_SET;
+	int tries = 0, i;
 
 	nvkm_dp_train_pattern(lt, 1);
 
-	करो अणु
-		अगर (nvkm_dp_train_drive(lt, false) ||
+	do {
+		if (nvkm_dp_train_drive(lt, false) ||
 		    nvkm_dp_train_sense(lt, false, 100))
-			अवरोध;
+			break;
 
-		cr_करोne = true;
-		क्रम (i = 0; i < lt->dp->outp.ior->dp.nr; i++) अणु
+		cr_done = true;
+		for (i = 0; i < lt->dp->outp.ior->dp.nr; i++) {
 			u8 lane = (lt->stat[i >> 1] >> ((i & 1) * 4)) & 0xf;
-			अगर (!(lane & DPCD_LS02_LANE0_CR_DONE)) अणु
-				cr_करोne = false;
-				अगर (lt->conf[i] & DPCD_LC03_MAX_SWING_REACHED)
-					पात = true;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+			if (!(lane & DPCD_LS02_LANE0_CR_DONE)) {
+				cr_done = false;
+				if (lt->conf[i] & DPCD_LC03_MAX_SWING_REACHED)
+					abort = true;
+				break;
+			}
+		}
 
-		अगर ((lt->conf[0] & DPCD_LC03_VOLTAGE_SWING_SET) != voltage) अणु
+		if ((lt->conf[0] & DPCD_LC03_VOLTAGE_SWING_SET) != voltage) {
 			voltage = lt->conf[0] & DPCD_LC03_VOLTAGE_SWING_SET;
 			tries = 0;
-		पूर्ण
-	पूर्ण जबतक (!cr_करोne && !पात && ++tries < 5);
+		}
+	} while (!cr_done && !abort && ++tries < 5);
 
-	वापस cr_करोne ? 0 : -1;
-पूर्ण
+	return cr_done ? 0 : -1;
+}
 
-अटल पूर्णांक
-nvkm_dp_train_links(काष्ठा nvkm_dp *dp)
-अणु
-	काष्ठा nvkm_ior *ior = dp->outp.ior;
-	काष्ठा nvkm_disp *disp = dp->outp.disp;
-	काष्ठा nvkm_subdev *subdev = &disp->engine.subdev;
-	काष्ठा nvkm_bios *bios = subdev->device->bios;
-	काष्ठा lt_state lt = अणु
+static int
+nvkm_dp_train_links(struct nvkm_dp *dp)
+{
+	struct nvkm_ior *ior = dp->outp.ior;
+	struct nvkm_disp *disp = dp->outp.disp;
+	struct nvkm_subdev *subdev = &disp->engine.subdev;
+	struct nvkm_bios *bios = subdev->device->bios;
+	struct lt_state lt = {
 		.dp = dp,
-	पूर्ण;
+	};
 	u32 lnkcmp;
 	u8 sink[2];
-	पूर्णांक ret;
+	int ret;
 
 	OUTP_DBG(&dp->outp, "training %d x %d MB/s",
 		 ior->dp.nr, ior->dp.bw * 27);
 
 	/* Intersect misc. capabilities of the OR and sink. */
-	अगर (disp->engine.subdev.device->chipset < 0xd0)
+	if (disp->engine.subdev.device->chipset < 0xd0)
 		dp->dpcd[DPCD_RC02] &= ~DPCD_RC02_TPS3_SUPPORTED;
 	lt.pc2 = dp->dpcd[DPCD_RC02] & DPCD_RC02_TPS3_SUPPORTED;
 
-	अगर (AMPERE_IED_HACK(disp) && (lnkcmp = lt.dp->info.script[0])) अणु
-		/* Execute Beक्रमeLinkTraining script from DP Info table. */
-		जबतक (ior->dp.bw < nvbios_rd08(bios, lnkcmp))
+	if (AMPERE_IED_HACK(disp) && (lnkcmp = lt.dp->info.script[0])) {
+		/* Execute BeforeLinkTraining script from DP Info table. */
+		while (ior->dp.bw < nvbios_rd08(bios, lnkcmp))
 			lnkcmp += 3;
 		lnkcmp = nvbios_rd16(bios, lnkcmp + 1);
 
@@ -256,174 +255,174 @@ nvkm_dp_train_links(काष्ठा nvkm_dp *dp)
 			init.or   = ior->id;
 			init.link = ior->asy.link;
 		);
-	पूर्ण
+	}
 
 	/* Set desired link configuration on the source. */
-	अगर ((lnkcmp = lt.dp->info.lnkcmp)) अणु
-		अगर (dp->version < 0x30) अणु
-			जबतक ((ior->dp.bw * 2700) < nvbios_rd16(bios, lnkcmp))
+	if ((lnkcmp = lt.dp->info.lnkcmp)) {
+		if (dp->version < 0x30) {
+			while ((ior->dp.bw * 2700) < nvbios_rd16(bios, lnkcmp))
 				lnkcmp += 4;
 			lnkcmp = nvbios_rd16(bios, lnkcmp + 2);
-		पूर्ण अन्यथा अणु
-			जबतक (ior->dp.bw < nvbios_rd08(bios, lnkcmp))
+		} else {
+			while (ior->dp.bw < nvbios_rd08(bios, lnkcmp))
 				lnkcmp += 3;
 			lnkcmp = nvbios_rd16(bios, lnkcmp + 1);
-		पूर्ण
+		}
 
 		nvbios_init(subdev, lnkcmp,
 			init.outp = &dp->outp.info;
 			init.or   = ior->id;
 			init.link = ior->asy.link;
 		);
-	पूर्ण
+	}
 
 	ret = ior->func->dp.links(ior, dp->aux);
-	अगर (ret) अणु
-		अगर (ret < 0) अणु
+	if (ret) {
+		if (ret < 0) {
 			OUTP_ERR(&dp->outp, "train failed with %d", ret);
-			वापस ret;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+			return ret;
+		}
+		return 0;
+	}
 
-	ior->func->dp.घातer(ior, ior->dp.nr);
+	ior->func->dp.power(ior, ior->dp.nr);
 
 	/* Set desired link configuration on the sink. */
 	sink[0] = ior->dp.bw;
 	sink[1] = ior->dp.nr;
-	अगर (ior->dp.ef)
+	if (ior->dp.ef)
 		sink[1] |= DPCD_LC01_ENHANCED_FRAME_EN;
 
 	ret = nvkm_wraux(dp->aux, DPCD_LC00_LINK_BW_SET, sink, 2);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Attempt to train the link in this configuration. */
-	स_रखो(lt.stat, 0x00, माप(lt.stat));
+	memset(lt.stat, 0x00, sizeof(lt.stat));
 	ret = nvkm_dp_train_cr(&lt);
-	अगर (ret == 0)
+	if (ret == 0)
 		ret = nvkm_dp_train_eq(&lt);
 	nvkm_dp_train_pattern(&lt, 0);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम
-nvkm_dp_train_fini(काष्ठा nvkm_dp *dp)
-अणु
+static void
+nvkm_dp_train_fini(struct nvkm_dp *dp)
+{
 	/* Execute AfterLinkTraining script from DP Info table. */
 	nvbios_init(&dp->outp.disp->engine.subdev, dp->info.script[1],
 		init.outp = &dp->outp.info;
 		init.or   = dp->outp.ior->id;
 		init.link = dp->outp.ior->asy.link;
 	);
-पूर्ण
+}
 
-अटल व्योम
-nvkm_dp_train_init(काष्ठा nvkm_dp *dp)
-अणु
-	/* Execute EnableSpपढ़ो/DisableSpपढ़ो script from DP Info table. */
-	अगर (dp->dpcd[DPCD_RC03] & DPCD_RC03_MAX_DOWNSPREAD) अणु
+static void
+nvkm_dp_train_init(struct nvkm_dp *dp)
+{
+	/* Execute EnableSpread/DisableSpread script from DP Info table. */
+	if (dp->dpcd[DPCD_RC03] & DPCD_RC03_MAX_DOWNSPREAD) {
 		nvbios_init(&dp->outp.disp->engine.subdev, dp->info.script[2],
 			init.outp = &dp->outp.info;
 			init.or   = dp->outp.ior->id;
 			init.link = dp->outp.ior->asy.link;
 		);
-	पूर्ण अन्यथा अणु
+	} else {
 		nvbios_init(&dp->outp.disp->engine.subdev, dp->info.script[3],
 			init.outp = &dp->outp.info;
 			init.or   = dp->outp.ior->id;
 			init.link = dp->outp.ior->asy.link;
 		);
-	पूर्ण
+	}
 
-	अगर (!AMPERE_IED_HACK(dp->outp.disp)) अणु
-		/* Execute Beक्रमeLinkTraining script from DP Info table. */
+	if (!AMPERE_IED_HACK(dp->outp.disp)) {
+		/* Execute BeforeLinkTraining script from DP Info table. */
 		nvbios_init(&dp->outp.disp->engine.subdev, dp->info.script[0],
 			init.outp = &dp->outp.info;
 			init.or   = dp->outp.ior->id;
 			init.link = dp->outp.ior->asy.link;
 		);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा dp_rates अणु
+static const struct dp_rates {
 	u32 rate;
 	u8  bw;
 	u8  nr;
-पूर्ण nvkm_dp_rates[] = अणु
-	अणु 2160000, 0x14, 4 पूर्ण,
-	अणु 1080000, 0x0a, 4 पूर्ण,
-	अणु 1080000, 0x14, 2 पूर्ण,
-	अणु  648000, 0x06, 4 पूर्ण,
-	अणु  540000, 0x0a, 2 पूर्ण,
-	अणु  540000, 0x14, 1 पूर्ण,
-	अणु  324000, 0x06, 2 पूर्ण,
-	अणु  270000, 0x0a, 1 पूर्ण,
-	अणु  162000, 0x06, 1 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+} nvkm_dp_rates[] = {
+	{ 2160000, 0x14, 4 },
+	{ 1080000, 0x0a, 4 },
+	{ 1080000, 0x14, 2 },
+	{  648000, 0x06, 4 },
+	{  540000, 0x0a, 2 },
+	{  540000, 0x14, 1 },
+	{  324000, 0x06, 2 },
+	{  270000, 0x0a, 1 },
+	{  162000, 0x06, 1 },
+	{}
+};
 
-अटल पूर्णांक
-nvkm_dp_train(काष्ठा nvkm_dp *dp, u32 dataKBps)
-अणु
-	काष्ठा nvkm_ior *ior = dp->outp.ior;
-	स्थिर u8 sink_nr = dp->dpcd[DPCD_RC02] & DPCD_RC02_MAX_LANE_COUNT;
-	स्थिर u8 sink_bw = dp->dpcd[DPCD_RC01_MAX_LINK_RATE];
-	स्थिर u8 outp_nr = dp->outp.info.dpconf.link_nr;
-	स्थिर u8 outp_bw = dp->outp.info.dpconf.link_bw;
-	स्थिर काष्ठा dp_rates *failsafe = शून्य, *cfg;
-	पूर्णांक ret = -EINVAL;
+static int
+nvkm_dp_train(struct nvkm_dp *dp, u32 dataKBps)
+{
+	struct nvkm_ior *ior = dp->outp.ior;
+	const u8 sink_nr = dp->dpcd[DPCD_RC02] & DPCD_RC02_MAX_LANE_COUNT;
+	const u8 sink_bw = dp->dpcd[DPCD_RC01_MAX_LINK_RATE];
+	const u8 outp_nr = dp->outp.info.dpconf.link_nr;
+	const u8 outp_bw = dp->outp.info.dpconf.link_bw;
+	const struct dp_rates *failsafe = NULL, *cfg;
+	int ret = -EINVAL;
 	u8  pwr;
 
 	/* Find the lowest configuration of the OR that can support
 	 * the required link rate.
 	 *
-	 * We will refuse to program the OR to lower rates, even अगर
-	 * link training fails at higher rates (or even अगर the sink
+	 * We will refuse to program the OR to lower rates, even if
+	 * link training fails at higher rates (or even if the sink
 	 * can't support the rate at all, though the DD is supposed
 	 * to prevent such situations from happening).
 	 *
-	 * Attempting to करो so can cause the entire display to hang,
+	 * Attempting to do so can cause the entire display to hang,
 	 * and it's better to have a failed modeset than that.
 	 */
-	क्रम (cfg = nvkm_dp_rates; cfg->rate; cfg++) अणु
-		अगर (cfg->nr <= outp_nr && cfg->bw <= outp_bw) अणु
+	for (cfg = nvkm_dp_rates; cfg->rate; cfg++) {
+		if (cfg->nr <= outp_nr && cfg->bw <= outp_bw) {
 			/* Try to respect sink limits too when selecting
 			 * lowest link configuration.
 			 */
-			अगर (!failsafe ||
+			if (!failsafe ||
 			    (cfg->nr <= sink_nr && cfg->bw <= sink_bw))
 				failsafe = cfg;
-		पूर्ण
+		}
 
-		अगर (failsafe && cfg[1].rate < dataKBps)
-			अवरोध;
-	पूर्ण
+		if (failsafe && cfg[1].rate < dataKBps)
+			break;
+	}
 
-	अगर (WARN_ON(!failsafe))
-		वापस ret;
+	if (WARN_ON(!failsafe))
+		return ret;
 
-	/* Ensure sink is not in a low-घातer state. */
-	अगर (!nvkm_rdaux(dp->aux, DPCD_SC00, &pwr, 1)) अणु
-		अगर ((pwr & DPCD_SC00_SET_POWER) != DPCD_SC00_SET_POWER_D0) अणु
+	/* Ensure sink is not in a low-power state. */
+	if (!nvkm_rdaux(dp->aux, DPCD_SC00, &pwr, 1)) {
+		if ((pwr & DPCD_SC00_SET_POWER) != DPCD_SC00_SET_POWER_D0) {
 			pwr &= ~DPCD_SC00_SET_POWER;
 			pwr |=  DPCD_SC00_SET_POWER_D0;
 			nvkm_wraux(dp->aux, DPCD_SC00, &pwr, 1);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Link training. */
 	OUTP_DBG(&dp->outp, "training (min: %d x %d MB/s)",
 		 failsafe->nr, failsafe->bw * 27);
 	nvkm_dp_train_init(dp);
-	क्रम (cfg = nvkm_dp_rates; ret < 0 && cfg <= failsafe; cfg++) अणु
+	for (cfg = nvkm_dp_rates; ret < 0 && cfg <= failsafe; cfg++) {
 		/* Skip configurations not supported by both OR and sink. */
-		अगर ((cfg->nr > outp_nr || cfg->bw > outp_bw ||
-		     cfg->nr > sink_nr || cfg->bw > sink_bw)) अणु
-			अगर (cfg != failsafe)
-				जारी;
+		if ((cfg->nr > outp_nr || cfg->bw > outp_bw ||
+		     cfg->nr > sink_nr || cfg->bw > sink_bw)) {
+			if (cfg != failsafe)
+				continue;
 			OUTP_ERR(&dp->outp, "link rate unsupported by sink");
-		पूर्ण
+		}
 		ior->dp.mst = dp->lt.mst;
 		ior->dp.ef = dp->dpcd[DPCD_RC02] & DPCD_RC02_ENHANCED_FRAME_CAP;
 		ior->dp.bw = cfg->bw;
@@ -431,20 +430,20 @@ nvkm_dp_train(काष्ठा nvkm_dp *dp, u32 dataKBps)
 
 		/* Program selected link configuration. */
 		ret = nvkm_dp_train_links(dp);
-	पूर्ण
+	}
 	nvkm_dp_train_fini(dp);
-	अगर (ret < 0)
+	if (ret < 0)
 		OUTP_ERR(&dp->outp, "training failed");
-	अन्यथा
+	else
 		OUTP_DBG(&dp->outp, "training done");
-	atomic_set(&dp->lt.करोne, 1);
-	वापस ret;
-पूर्ण
+	atomic_set(&dp->lt.done, 1);
+	return ret;
+}
 
-अटल व्योम
-nvkm_dp_disable(काष्ठा nvkm_outp *outp, काष्ठा nvkm_ior *ior)
-अणु
-	काष्ठा nvkm_dp *dp = nvkm_dp(outp);
+static void
+nvkm_dp_disable(struct nvkm_outp *outp, struct nvkm_ior *ior)
+{
+	struct nvkm_dp *dp = nvkm_dp(outp);
 
 	/* Execute DisableLT script from DP Info Table. */
 	nvbios_init(&ior->disp->engine.subdev, dp->info.script[4],
@@ -452,268 +451,268 @@ nvkm_dp_disable(काष्ठा nvkm_outp *outp, काष्ठा nvkm_ior 
 		init.or   = ior->id;
 		init.link = ior->arm.link;
 	);
-पूर्ण
+}
 
-अटल व्योम
-nvkm_dp_release(काष्ठा nvkm_outp *outp)
-अणु
-	काष्ठा nvkm_dp *dp = nvkm_dp(outp);
+static void
+nvkm_dp_release(struct nvkm_outp *outp)
+{
+	struct nvkm_dp *dp = nvkm_dp(outp);
 
-	/* Prevent link from being retrained अगर sink sends an IRQ. */
-	atomic_set(&dp->lt.करोne, 0);
+	/* Prevent link from being retrained if sink sends an IRQ. */
+	atomic_set(&dp->lt.done, 0);
 	dp->outp.ior->dp.nr = 0;
-पूर्ण
+}
 
-अटल पूर्णांक
-nvkm_dp_acquire(काष्ठा nvkm_outp *outp)
-अणु
-	काष्ठा nvkm_dp *dp = nvkm_dp(outp);
-	काष्ठा nvkm_ior *ior = dp->outp.ior;
-	काष्ठा nvkm_head *head;
+static int
+nvkm_dp_acquire(struct nvkm_outp *outp)
+{
+	struct nvkm_dp *dp = nvkm_dp(outp);
+	struct nvkm_ior *ior = dp->outp.ior;
+	struct nvkm_head *head;
 	bool retrain = true;
 	u32 datakbps = 0;
 	u32 dataKBps;
 	u32 linkKBps;
 	u8  stat[3];
-	पूर्णांक ret, i;
+	int ret, i;
 
 	mutex_lock(&dp->mutex);
 
 	/* Check that link configuration meets current requirements. */
-	list_क्रम_each_entry(head, &outp->disp->head, head) अणु
-		अगर (ior->asy.head & (1 << head->id)) अणु
-			u32 khz = (head->asy.hz >> ior->asy.rgभाग) / 1000;
+	list_for_each_entry(head, &outp->disp->head, head) {
+		if (ior->asy.head & (1 << head->id)) {
+			u32 khz = (head->asy.hz >> ior->asy.rgdiv) / 1000;
 			datakbps += khz * head->asy.or.depth;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	linkKBps = ior->dp.bw * 27000 * ior->dp.nr;
 	dataKBps = DIV_ROUND_UP(datakbps, 8);
 	OUTP_DBG(&dp->outp, "data %d KB/s link %d KB/s mst %d->%d",
 		 dataKBps, linkKBps, ior->dp.mst, dp->lt.mst);
-	अगर (linkKBps < dataKBps || ior->dp.mst != dp->lt.mst) अणु
+	if (linkKBps < dataKBps || ior->dp.mst != dp->lt.mst) {
 		OUTP_DBG(&dp->outp, "link requirements changed");
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* Check that link is still trained. */
 	ret = nvkm_rdaux(dp->aux, DPCD_LS02, stat, 3);
-	अगर (ret) अणु
+	if (ret) {
 		OUTP_DBG(&dp->outp,
 			 "failed to read link status, assuming no sink");
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (stat[2] & DPCD_LS04_INTERLANE_ALIGN_DONE) अणु
-		क्रम (i = 0; i < ior->dp.nr; i++) अणु
+	if (stat[2] & DPCD_LS04_INTERLANE_ALIGN_DONE) {
+		for (i = 0; i < ior->dp.nr; i++) {
 			u8 lane = (stat[i >> 1] >> ((i & 1) * 4)) & 0x0f;
-			अगर (!(lane & DPCD_LS02_LANE0_CR_DONE) ||
+			if (!(lane & DPCD_LS02_LANE0_CR_DONE) ||
 			    !(lane & DPCD_LS02_LANE0_CHANNEL_EQ_DONE) ||
-			    !(lane & DPCD_LS02_LANE0_SYMBOL_LOCKED)) अणु
+			    !(lane & DPCD_LS02_LANE0_SYMBOL_LOCKED)) {
 				OUTP_DBG(&dp->outp,
 					 "lane %d not equalised", lane);
-				जाओ करोne;
-			पूर्ण
-		पूर्ण
+				goto done;
+			}
+		}
 		retrain = false;
-	पूर्ण अन्यथा अणु
+	} else {
 		OUTP_DBG(&dp->outp, "no inter-lane alignment");
-	पूर्ण
+	}
 
-करोne:
-	अगर (retrain || !atomic_पढ़ो(&dp->lt.करोne))
+done:
+	if (retrain || !atomic_read(&dp->lt.done))
 		ret = nvkm_dp_train(dp, dataKBps);
 	mutex_unlock(&dp->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool
-nvkm_dp_enable(काष्ठा nvkm_dp *dp, bool enable)
-अणु
-	काष्ठा nvkm_i2c_aux *aux = dp->aux;
+static bool
+nvkm_dp_enable(struct nvkm_dp *dp, bool enable)
+{
+	struct nvkm_i2c_aux *aux = dp->aux;
 
-	अगर (enable) अणु
-		अगर (!dp->present) अणु
+	if (enable) {
+		if (!dp->present) {
 			OUTP_DBG(&dp->outp, "aux power -> always");
 			nvkm_i2c_aux_monitor(aux, true);
 			dp->present = true;
-		पूर्ण
+		}
 
-		अगर (!nvkm_rdaux(aux, DPCD_RC00_DPCD_REV, dp->dpcd,
-				माप(dp->dpcd)))
-			वापस true;
-	पूर्ण
+		if (!nvkm_rdaux(aux, DPCD_RC00_DPCD_REV, dp->dpcd,
+				sizeof(dp->dpcd)))
+			return true;
+	}
 
-	अगर (dp->present) अणु
+	if (dp->present) {
 		OUTP_DBG(&dp->outp, "aux power -> demand");
 		nvkm_i2c_aux_monitor(aux, false);
 		dp->present = false;
-	पूर्ण
+	}
 
-	atomic_set(&dp->lt.करोne, 0);
-	वापस false;
-पूर्ण
+	atomic_set(&dp->lt.done, 0);
+	return false;
+}
 
-अटल पूर्णांक
-nvkm_dp_hpd(काष्ठा nvkm_notअगरy *notअगरy)
-अणु
-	स्थिर काष्ठा nvkm_i2c_ntfy_rep *line = notअगरy->data;
-	काष्ठा nvkm_dp *dp = container_of(notअगरy, typeof(*dp), hpd);
-	काष्ठा nvkm_conn *conn = dp->outp.conn;
-	काष्ठा nvkm_disp *disp = dp->outp.disp;
-	काष्ठा nvअगर_notअगरy_conn_rep_v0 rep = अणुपूर्ण;
+static int
+nvkm_dp_hpd(struct nvkm_notify *notify)
+{
+	const struct nvkm_i2c_ntfy_rep *line = notify->data;
+	struct nvkm_dp *dp = container_of(notify, typeof(*dp), hpd);
+	struct nvkm_conn *conn = dp->outp.conn;
+	struct nvkm_disp *disp = dp->outp.disp;
+	struct nvif_notify_conn_rep_v0 rep = {};
 
 	OUTP_DBG(&dp->outp, "HPD: %d", line->mask);
-	अगर (line->mask & NVKM_I2C_IRQ) अणु
-		अगर (atomic_पढ़ो(&dp->lt.करोne))
+	if (line->mask & NVKM_I2C_IRQ) {
+		if (atomic_read(&dp->lt.done))
 			dp->outp.func->acquire(&dp->outp);
 		rep.mask |= NVIF_NOTIFY_CONN_V0_IRQ;
-	पूर्ण अन्यथा अणु
+	} else {
 		nvkm_dp_enable(dp, true);
-	पूर्ण
+	}
 
-	अगर (line->mask & NVKM_I2C_UNPLUG)
+	if (line->mask & NVKM_I2C_UNPLUG)
 		rep.mask |= NVIF_NOTIFY_CONN_V0_UNPLUG;
-	अगर (line->mask & NVKM_I2C_PLUG)
+	if (line->mask & NVKM_I2C_PLUG)
 		rep.mask |= NVIF_NOTIFY_CONN_V0_PLUG;
 
-	nvkm_event_send(&disp->hpd, rep.mask, conn->index, &rep, माप(rep));
-	वापस NVKM_NOTIFY_KEEP;
-पूर्ण
+	nvkm_event_send(&disp->hpd, rep.mask, conn->index, &rep, sizeof(rep));
+	return NVKM_NOTIFY_KEEP;
+}
 
-अटल व्योम
-nvkm_dp_fini(काष्ठा nvkm_outp *outp)
-अणु
-	काष्ठा nvkm_dp *dp = nvkm_dp(outp);
-	nvkm_notअगरy_put(&dp->hpd);
+static void
+nvkm_dp_fini(struct nvkm_outp *outp)
+{
+	struct nvkm_dp *dp = nvkm_dp(outp);
+	nvkm_notify_put(&dp->hpd);
 	nvkm_dp_enable(dp, false);
-पूर्ण
+}
 
-अटल व्योम
-nvkm_dp_init(काष्ठा nvkm_outp *outp)
-अणु
-	काष्ठा nvkm_gpio *gpio = outp->disp->engine.subdev.device->gpio;
-	काष्ठा nvkm_dp *dp = nvkm_dp(outp);
+static void
+nvkm_dp_init(struct nvkm_outp *outp)
+{
+	struct nvkm_gpio *gpio = outp->disp->engine.subdev.device->gpio;
+	struct nvkm_dp *dp = nvkm_dp(outp);
 
-	nvkm_notअगरy_put(&dp->outp.conn->hpd);
+	nvkm_notify_put(&dp->outp.conn->hpd);
 
-	/* eDP panels need घातering on by us (अगर the VBIOS करोesn't शेष it
-	 * to on) beक्रमe करोing any AUX channel transactions.  LVDS panel घातer
-	 * is handled by the SOR itself, and not required क्रम LVDS DDC.
+	/* eDP panels need powering on by us (if the VBIOS doesn't default it
+	 * to on) before doing any AUX channel transactions.  LVDS panel power
+	 * is handled by the SOR itself, and not required for LVDS DDC.
 	 */
-	अगर (dp->outp.conn->info.type == DCB_CONNECTOR_eDP) अणु
-		पूर्णांक घातer = nvkm_gpio_get(gpio, 0, DCB_GPIO_PANEL_POWER, 0xff);
-		अगर (घातer == 0)
+	if (dp->outp.conn->info.type == DCB_CONNECTOR_eDP) {
+		int power = nvkm_gpio_get(gpio, 0, DCB_GPIO_PANEL_POWER, 0xff);
+		if (power == 0)
 			nvkm_gpio_set(gpio, 0, DCB_GPIO_PANEL_POWER, 0xff, 1);
 
-		/* We delay here unconditionally, even अगर alपढ़ोy घातered,
-		 * because some laptop panels having a signअगरicant resume
-		 * delay beक्रमe the panel begins responding.
+		/* We delay here unconditionally, even if already powered,
+		 * because some laptop panels having a significant resume
+		 * delay before the panel begins responding.
 		 *
-		 * This is likely a bit of a hack, but no better idea क्रम
+		 * This is likely a bit of a hack, but no better idea for
 		 * handling this at the moment.
 		 */
 		msleep(300);
 
 		/* If the eDP panel can't be detected, we need to restore
-		 * the panel घातer GPIO to aव्योम अवरोधing another output.
+		 * the panel power GPIO to avoid breaking another output.
 		 */
-		अगर (!nvkm_dp_enable(dp, true) && घातer == 0)
+		if (!nvkm_dp_enable(dp, true) && power == 0)
 			nvkm_gpio_set(gpio, 0, DCB_GPIO_PANEL_POWER, 0xff, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		nvkm_dp_enable(dp, true);
-	पूर्ण
+	}
 
-	nvkm_notअगरy_get(&dp->hpd);
-पूर्ण
+	nvkm_notify_get(&dp->hpd);
+}
 
-अटल व्योम *
-nvkm_dp_dtor(काष्ठा nvkm_outp *outp)
-अणु
-	काष्ठा nvkm_dp *dp = nvkm_dp(outp);
-	nvkm_notअगरy_fini(&dp->hpd);
-	वापस dp;
-पूर्ण
+static void *
+nvkm_dp_dtor(struct nvkm_outp *outp)
+{
+	struct nvkm_dp *dp = nvkm_dp(outp);
+	nvkm_notify_fini(&dp->hpd);
+	return dp;
+}
 
-अटल स्थिर काष्ठा nvkm_outp_func
-nvkm_dp_func = अणु
+static const struct nvkm_outp_func
+nvkm_dp_func = {
 	.dtor = nvkm_dp_dtor,
 	.init = nvkm_dp_init,
 	.fini = nvkm_dp_fini,
 	.acquire = nvkm_dp_acquire,
 	.release = nvkm_dp_release,
 	.disable = nvkm_dp_disable,
-पूर्ण;
+};
 
-अटल पूर्णांक
-nvkm_dp_ctor(काष्ठा nvkm_disp *disp, पूर्णांक index, काष्ठा dcb_output *dcbE,
-	     काष्ठा nvkm_i2c_aux *aux, काष्ठा nvkm_dp *dp)
-अणु
-	काष्ठा nvkm_device *device = disp->engine.subdev.device;
-	काष्ठा nvkm_bios *bios = device->bios;
-	काष्ठा nvkm_i2c *i2c = device->i2c;
+static int
+nvkm_dp_ctor(struct nvkm_disp *disp, int index, struct dcb_output *dcbE,
+	     struct nvkm_i2c_aux *aux, struct nvkm_dp *dp)
+{
+	struct nvkm_device *device = disp->engine.subdev.device;
+	struct nvkm_bios *bios = device->bios;
+	struct nvkm_i2c *i2c = device->i2c;
 	u8  hdr, cnt, len;
 	u32 data;
-	पूर्णांक ret;
+	int ret;
 
 	ret = nvkm_outp_ctor(&nvkm_dp_func, disp, index, dcbE, &dp->outp);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	dp->aux = aux;
-	अगर (!dp->aux) अणु
+	if (!dp->aux) {
 		OUTP_ERR(&dp->outp, "no aux");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* bios data is not optional */
 	data = nvbios_dpout_match(bios, dp->outp.info.hasht,
 				  dp->outp.info.hashm, &dp->version,
 				  &hdr, &cnt, &len, &dp->info);
-	अगर (!data) अणु
+	if (!data) {
 		OUTP_ERR(&dp->outp, "no bios dp data");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	OUTP_DBG(&dp->outp, "bios dp %02x %02x %02x %02x",
 		 dp->version, hdr, cnt, len);
 
 	/* hotplug detect, replaces gpio-based mechanism with aux events */
-	ret = nvkm_notअगरy_init(शून्य, &i2c->event, nvkm_dp_hpd, true,
-			       &(काष्ठा nvkm_i2c_ntfy_req) अणु
+	ret = nvkm_notify_init(NULL, &i2c->event, nvkm_dp_hpd, true,
+			       &(struct nvkm_i2c_ntfy_req) {
 				.mask = NVKM_I2C_PLUG | NVKM_I2C_UNPLUG |
 					NVKM_I2C_IRQ,
 				.port = dp->aux->id,
-			       पूर्ण,
-			       माप(काष्ठा nvkm_i2c_ntfy_req),
-			       माप(काष्ठा nvkm_i2c_ntfy_rep),
+			       },
+			       sizeof(struct nvkm_i2c_ntfy_req),
+			       sizeof(struct nvkm_i2c_ntfy_rep),
 			       &dp->hpd);
-	अगर (ret) अणु
+	if (ret) {
 		OUTP_ERR(&dp->outp, "error monitoring aux hpd: %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	mutex_init(&dp->mutex);
-	atomic_set(&dp->lt.करोne, 0);
-	वापस 0;
-पूर्ण
+	atomic_set(&dp->lt.done, 0);
+	return 0;
+}
 
-पूर्णांक
-nvkm_dp_new(काष्ठा nvkm_disp *disp, पूर्णांक index, काष्ठा dcb_output *dcbE,
-	    काष्ठा nvkm_outp **poutp)
-अणु
-	काष्ठा nvkm_i2c *i2c = disp->engine.subdev.device->i2c;
-	काष्ठा nvkm_i2c_aux *aux;
-	काष्ठा nvkm_dp *dp;
+int
+nvkm_dp_new(struct nvkm_disp *disp, int index, struct dcb_output *dcbE,
+	    struct nvkm_outp **poutp)
+{
+	struct nvkm_i2c *i2c = disp->engine.subdev.device->i2c;
+	struct nvkm_i2c_aux *aux;
+	struct nvkm_dp *dp;
 
-	अगर (dcbE->location == 0)
+	if (dcbE->location == 0)
 		aux = nvkm_i2c_aux_find(i2c, NVKM_I2C_AUX_CCB(dcbE->i2c_index));
-	अन्यथा
+	else
 		aux = nvkm_i2c_aux_find(i2c, NVKM_I2C_AUX_EXT(dcbE->extdev));
 
-	अगर (!(dp = kzalloc(माप(*dp), GFP_KERNEL)))
-		वापस -ENOMEM;
+	if (!(dp = kzalloc(sizeof(*dp), GFP_KERNEL)))
+		return -ENOMEM;
 	*poutp = &dp->outp;
 
-	वापस nvkm_dp_ctor(disp, index, dcbE, aux, dp);
-पूर्ण
+	return nvkm_dp_ctor(disp, index, dcbE, aux, dp);
+}

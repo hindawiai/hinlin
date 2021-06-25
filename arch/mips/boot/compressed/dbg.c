@@ -1,38 +1,37 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * MIPS-specअगरic debug support क्रम pre-boot environment
+ * MIPS-specific debug support for pre-boot environment
  *
- * NOTE: अ_दो() is board specअगरic, अगर your board have a 16550 compatible uart,
- * please select SYS_SUPPORTS_ZBOOT_UART16550 क्रम your machine. othewise, you
- * need to implement your own अ_दो().
+ * NOTE: putc() is board specific, if your board have a 16550 compatible uart,
+ * please select SYS_SUPPORTS_ZBOOT_UART16550 for your machine. othewise, you
+ * need to implement your own putc().
  */
-#समावेश <linux/compiler.h>
-#समावेश <linux/types.h>
+#include <linux/compiler.h>
+#include <linux/types.h>
 
-व्योम __weak अ_दो(अक्षर c)
-अणु
-पूर्ण
+void __weak putc(char c)
+{
+}
 
-व्योम माला_दो(स्थिर अक्षर *s)
-अणु
-	अक्षर c;
-	जबतक ((c = *s++) != '\0') अणु
-		अ_दो(c);
-		अगर (c == '\n')
-			अ_दो('\r');
-	पूर्ण
-पूर्ण
+void puts(const char *s)
+{
+	char c;
+	while ((c = *s++) != '\0') {
+		putc(c);
+		if (c == '\n')
+			putc('\r');
+	}
+}
 
-व्योम puthex(अचिन्हित दीर्घ दीर्घ val)
-अणु
+void puthex(unsigned long long val)
+{
 
-	अचिन्हित अक्षर buf[10];
-	पूर्णांक i;
-	क्रम (i = 7; i >= 0; i--) अणु
+	unsigned char buf[10];
+	int i;
+	for (i = 7; i >= 0; i--) {
 		buf[i] = "0123456789ABCDEF"[val & 0x0F];
 		val >>= 4;
-	पूर्ण
+	}
 	buf[8] = '\0';
-	माला_दो(buf);
-पूर्ण
+	puts(buf);
+}

@@ -1,199 +1,198 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Multipath TCP
  *
  * Copyright (c) 2017 - 2019, Intel Corporation.
  */
 
-#घोषणा pr_fmt(fmt) "MPTCP: " fmt
+#define pr_fmt(fmt) "MPTCP: " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/netdevice.h>
-#समावेश <crypto/algapi.h>
-#समावेश <crypto/sha2.h>
-#समावेश <net/sock.h>
-#समावेश <net/inet_common.h>
-#समावेश <net/inet_hashtables.h>
-#समावेश <net/protocol.h>
-#समावेश <net/tcp.h>
-#अगर IS_ENABLED(CONFIG_MPTCP_IPV6)
-#समावेश <net/ip6_route.h>
-#समावेश <net/transp_v6.h>
-#पूर्ण_अगर
-#समावेश <net/mptcp.h>
-#समावेश <uapi/linux/mptcp.h>
-#समावेश "protocol.h"
-#समावेश "mib.h"
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/netdevice.h>
+#include <crypto/algapi.h>
+#include <crypto/sha2.h>
+#include <net/sock.h>
+#include <net/inet_common.h>
+#include <net/inet_hashtables.h>
+#include <net/protocol.h>
+#include <net/tcp.h>
+#if IS_ENABLED(CONFIG_MPTCP_IPV6)
+#include <net/ip6_route.h>
+#include <net/transp_v6.h>
+#endif
+#include <net/mptcp.h>
+#include <uapi/linux/mptcp.h>
+#include "protocol.h"
+#include "mib.h"
 
-#समावेश <trace/events/mptcp.h>
+#include <trace/events/mptcp.h>
 
-अटल व्योम mptcp_subflow_ops_unकरो_override(काष्ठा sock *ssk);
+static void mptcp_subflow_ops_undo_override(struct sock *ssk);
 
-अटल व्योम SUBFLOW_REQ_INC_STATS(काष्ठा request_sock *req,
-				  क्रमागत linux_mptcp_mib_field field)
-अणु
+static void SUBFLOW_REQ_INC_STATS(struct request_sock *req,
+				  enum linux_mptcp_mib_field field)
+{
 	MPTCP_INC_STATS(sock_net(req_to_sk(req)), field);
-पूर्ण
+}
 
-अटल व्योम subflow_req_deकाष्ठाor(काष्ठा request_sock *req)
-अणु
-	काष्ठा mptcp_subflow_request_sock *subflow_req = mptcp_subflow_rsk(req);
+static void subflow_req_destructor(struct request_sock *req)
+{
+	struct mptcp_subflow_request_sock *subflow_req = mptcp_subflow_rsk(req);
 
 	pr_debug("subflow_req=%p", subflow_req);
 
-	अगर (subflow_req->msk)
-		sock_put((काष्ठा sock *)subflow_req->msk);
+	if (subflow_req->msk)
+		sock_put((struct sock *)subflow_req->msk);
 
 	mptcp_token_destroy_request(req);
-	tcp_request_sock_ops.deकाष्ठाor(req);
-पूर्ण
+	tcp_request_sock_ops.destructor(req);
+}
 
-अटल व्योम subflow_generate_hmac(u64 key1, u64 key2, u32 nonce1, u32 nonce2,
-				  व्योम *hmac)
-अणु
+static void subflow_generate_hmac(u64 key1, u64 key2, u32 nonce1, u32 nonce2,
+				  void *hmac)
+{
 	u8 msg[8];
 
 	put_unaligned_be32(nonce1, &msg[0]);
 	put_unaligned_be32(nonce2, &msg[4]);
 
 	mptcp_crypto_hmac_sha(key1, key2, msg, 8, hmac);
-पूर्ण
+}
 
-अटल bool mptcp_can_accept_new_subflow(स्थिर काष्ठा mptcp_sock *msk)
-अणु
-	वापस mptcp_is_fully_established((व्योम *)msk) &&
+static bool mptcp_can_accept_new_subflow(const struct mptcp_sock *msk)
+{
+	return mptcp_is_fully_established((void *)msk) &&
 	       READ_ONCE(msk->pm.accept_subflow);
-पूर्ण
+}
 
-/* validate received token and create truncated hmac and nonce क्रम SYN-ACK */
-अटल व्योम subflow_req_create_thmac(काष्ठा mptcp_subflow_request_sock *subflow_req)
-अणु
-	काष्ठा mptcp_sock *msk = subflow_req->msk;
+/* validate received token and create truncated hmac and nonce for SYN-ACK */
+static void subflow_req_create_thmac(struct mptcp_subflow_request_sock *subflow_req)
+{
+	struct mptcp_sock *msk = subflow_req->msk;
 	u8 hmac[SHA256_DIGEST_SIZE];
 
-	get_अक्रमom_bytes(&subflow_req->local_nonce, माप(u32));
+	get_random_bytes(&subflow_req->local_nonce, sizeof(u32));
 
 	subflow_generate_hmac(msk->local_key, msk->remote_key,
 			      subflow_req->local_nonce,
 			      subflow_req->remote_nonce, hmac);
 
 	subflow_req->thmac = get_unaligned_be64(hmac);
-पूर्ण
+}
 
-अटल काष्ठा mptcp_sock *subflow_token_join_request(काष्ठा request_sock *req)
-अणु
-	काष्ठा mptcp_subflow_request_sock *subflow_req = mptcp_subflow_rsk(req);
-	काष्ठा mptcp_sock *msk;
-	पूर्णांक local_id;
+static struct mptcp_sock *subflow_token_join_request(struct request_sock *req)
+{
+	struct mptcp_subflow_request_sock *subflow_req = mptcp_subflow_rsk(req);
+	struct mptcp_sock *msk;
+	int local_id;
 
 	msk = mptcp_token_get_sock(subflow_req->token);
-	अगर (!msk) अणु
+	if (!msk) {
 		SUBFLOW_REQ_INC_STATS(req, MPTCP_MIB_JOINNOTOKEN);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	local_id = mptcp_pm_get_local_id(msk, (काष्ठा sock_common *)req);
-	अगर (local_id < 0) अणु
-		sock_put((काष्ठा sock *)msk);
-		वापस शून्य;
-	पूर्ण
+	local_id = mptcp_pm_get_local_id(msk, (struct sock_common *)req);
+	if (local_id < 0) {
+		sock_put((struct sock *)msk);
+		return NULL;
+	}
 	subflow_req->local_id = local_id;
 
-	वापस msk;
-पूर्ण
+	return msk;
+}
 
-अटल व्योम subflow_init_req(काष्ठा request_sock *req, स्थिर काष्ठा sock *sk_listener)
-अणु
-	काष्ठा mptcp_subflow_request_sock *subflow_req = mptcp_subflow_rsk(req);
+static void subflow_init_req(struct request_sock *req, const struct sock *sk_listener)
+{
+	struct mptcp_subflow_request_sock *subflow_req = mptcp_subflow_rsk(req);
 
 	subflow_req->mp_capable = 0;
 	subflow_req->mp_join = 0;
-	subflow_req->msk = शून्य;
+	subflow_req->msk = NULL;
 	mptcp_token_init_request(req);
-पूर्ण
+}
 
-अटल bool subflow_use_dअगरferent_sport(काष्ठा mptcp_sock *msk, स्थिर काष्ठा sock *sk)
-अणु
-	वापस inet_sk(sk)->inet_sport != inet_sk((काष्ठा sock *)msk)->inet_sport;
-पूर्ण
+static bool subflow_use_different_sport(struct mptcp_sock *msk, const struct sock *sk)
+{
+	return inet_sk(sk)->inet_sport != inet_sk((struct sock *)msk)->inet_sport;
+}
 
-अटल व्योम subflow_add_reset_reason(काष्ठा sk_buff *skb, u8 reason)
-अणु
-	काष्ठा mptcp_ext *mpext = skb_ext_add(skb, SKB_EXT_MPTCP);
+static void subflow_add_reset_reason(struct sk_buff *skb, u8 reason)
+{
+	struct mptcp_ext *mpext = skb_ext_add(skb, SKB_EXT_MPTCP);
 
-	अगर (mpext) अणु
-		स_रखो(mpext, 0, माप(*mpext));
+	if (mpext) {
+		memset(mpext, 0, sizeof(*mpext));
 		mpext->reset_reason = reason;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Init mptcp request socket.
  *
- * Returns an error code अगर a JOIN has failed and a TCP reset
+ * Returns an error code if a JOIN has failed and a TCP reset
  * should be sent.
  */
-अटल पूर्णांक subflow_check_req(काष्ठा request_sock *req,
-			     स्थिर काष्ठा sock *sk_listener,
-			     काष्ठा sk_buff *skb)
-अणु
-	काष्ठा mptcp_subflow_context *listener = mptcp_subflow_ctx(sk_listener);
-	काष्ठा mptcp_subflow_request_sock *subflow_req = mptcp_subflow_rsk(req);
-	काष्ठा mptcp_options_received mp_opt;
+static int subflow_check_req(struct request_sock *req,
+			     const struct sock *sk_listener,
+			     struct sk_buff *skb)
+{
+	struct mptcp_subflow_context *listener = mptcp_subflow_ctx(sk_listener);
+	struct mptcp_subflow_request_sock *subflow_req = mptcp_subflow_rsk(req);
+	struct mptcp_options_received mp_opt;
 
 	pr_debug("subflow_req=%p, listener=%p", subflow_req, listener);
 
-#अगर_घोषित CONFIG_TCP_MD5SIG
-	/* no MPTCP अगर MD5SIG is enabled on this socket or we may run out of
+#ifdef CONFIG_TCP_MD5SIG
+	/* no MPTCP if MD5SIG is enabled on this socket or we may run out of
 	 * TCP option space.
 	 */
-	अगर (rcu_access_poपूर्णांकer(tcp_sk(sk_listener)->md5sig_info))
-		वापस -EINVAL;
-#पूर्ण_अगर
+	if (rcu_access_pointer(tcp_sk(sk_listener)->md5sig_info))
+		return -EINVAL;
+#endif
 
 	mptcp_get_options(skb, &mp_opt);
 
-	अगर (mp_opt.mp_capable) अणु
+	if (mp_opt.mp_capable) {
 		SUBFLOW_REQ_INC_STATS(req, MPTCP_MIB_MPCAPABLEPASSIVE);
 
-		अगर (mp_opt.mp_join)
-			वापस 0;
-	पूर्ण अन्यथा अगर (mp_opt.mp_join) अणु
+		if (mp_opt.mp_join)
+			return 0;
+	} else if (mp_opt.mp_join) {
 		SUBFLOW_REQ_INC_STATS(req, MPTCP_MIB_JOINSYNRX);
-	पूर्ण
+	}
 
-	अगर (mp_opt.mp_capable && listener->request_mptcp) अणु
-		पूर्णांक err, retries = 4;
+	if (mp_opt.mp_capable && listener->request_mptcp) {
+		int err, retries = 4;
 
 		subflow_req->ssn_offset = TCP_SKB_CB(skb)->seq;
 again:
-		करो अणु
-			get_अक्रमom_bytes(&subflow_req->local_key, माप(subflow_req->local_key));
-		पूर्ण जबतक (subflow_req->local_key == 0);
+		do {
+			get_random_bytes(&subflow_req->local_key, sizeof(subflow_req->local_key));
+		} while (subflow_req->local_key == 0);
 
-		अगर (unlikely(req->syncookie)) अणु
+		if (unlikely(req->syncookie)) {
 			mptcp_crypto_key_sha(subflow_req->local_key,
 					     &subflow_req->token,
 					     &subflow_req->idsn);
-			अगर (mptcp_token_exists(subflow_req->token)) अणु
-				अगर (retries-- > 0)
-					जाओ again;
+			if (mptcp_token_exists(subflow_req->token)) {
+				if (retries-- > 0)
+					goto again;
 				SUBFLOW_REQ_INC_STATS(req, MPTCP_MIB_TOKENFALLBACKINIT);
-			पूर्ण अन्यथा अणु
+			} else {
 				subflow_req->mp_capable = 1;
-			पूर्ण
-			वापस 0;
-		पूर्ण
+			}
+			return 0;
+		}
 
 		err = mptcp_token_new_request(req);
-		अगर (err == 0)
+		if (err == 0)
 			subflow_req->mp_capable = 1;
-		अन्यथा अगर (retries-- > 0)
-			जाओ again;
-		अन्यथा
+		else if (retries-- > 0)
+			goto again;
+		else
 			SUBFLOW_REQ_INC_STATS(req, MPTCP_MIB_TOKENFALLBACKINIT);
 
-	पूर्ण अन्यथा अगर (mp_opt.mp_join && listener->request_mptcp) अणु
+	} else if (mp_opt.mp_join && listener->request_mptcp) {
 		subflow_req->ssn_offset = TCP_SKB_CB(skb)->seq;
 		subflow_req->mp_join = 1;
 		subflow_req->backup = mp_opt.backup;
@@ -202,137 +201,137 @@ again:
 		subflow_req->remote_nonce = mp_opt.nonce;
 		subflow_req->msk = subflow_token_join_request(req);
 
-		/* Can't fall back to TCP in this हाल. */
-		अगर (!subflow_req->msk) अणु
+		/* Can't fall back to TCP in this case. */
+		if (!subflow_req->msk) {
 			subflow_add_reset_reason(skb, MPTCP_RST_EMPTCP);
-			वापस -EPERM;
-		पूर्ण
+			return -EPERM;
+		}
 
-		अगर (subflow_use_dअगरferent_sport(subflow_req->msk, sk_listener)) अणु
+		if (subflow_use_different_sport(subflow_req->msk, sk_listener)) {
 			pr_debug("syn inet_sport=%d %d",
 				 ntohs(inet_sk(sk_listener)->inet_sport),
-				 ntohs(inet_sk((काष्ठा sock *)subflow_req->msk)->inet_sport));
-			अगर (!mptcp_pm_sport_in_anno_list(subflow_req->msk, sk_listener)) अणु
-				sock_put((काष्ठा sock *)subflow_req->msk);
+				 ntohs(inet_sk((struct sock *)subflow_req->msk)->inet_sport));
+			if (!mptcp_pm_sport_in_anno_list(subflow_req->msk, sk_listener)) {
+				sock_put((struct sock *)subflow_req->msk);
 				mptcp_token_destroy_request(req);
-				tcp_request_sock_ops.deकाष्ठाor(req);
-				subflow_req->msk = शून्य;
+				tcp_request_sock_ops.destructor(req);
+				subflow_req->msk = NULL;
 				subflow_req->mp_join = 0;
 				SUBFLOW_REQ_INC_STATS(req, MPTCP_MIB_MISMATCHPORTSYNRX);
-				वापस -EPERM;
-			पूर्ण
+				return -EPERM;
+			}
 			SUBFLOW_REQ_INC_STATS(req, MPTCP_MIB_JOINPORTSYNRX);
-		पूर्ण
+		}
 
 		subflow_req_create_thmac(subflow_req);
 
-		अगर (unlikely(req->syncookie)) अणु
-			अगर (mptcp_can_accept_new_subflow(subflow_req->msk))
+		if (unlikely(req->syncookie)) {
+			if (mptcp_can_accept_new_subflow(subflow_req->msk))
 				subflow_init_req_cookie_join_save(subflow_req, skb);
-		पूर्ण
+		}
 
 		pr_debug("token=%u, remote_nonce=%u msk=%p", subflow_req->token,
 			 subflow_req->remote_nonce, subflow_req->msk);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mptcp_subflow_init_cookie_req(काष्ठा request_sock *req,
-				  स्थिर काष्ठा sock *sk_listener,
-				  काष्ठा sk_buff *skb)
-अणु
-	काष्ठा mptcp_subflow_context *listener = mptcp_subflow_ctx(sk_listener);
-	काष्ठा mptcp_subflow_request_sock *subflow_req = mptcp_subflow_rsk(req);
-	काष्ठा mptcp_options_received mp_opt;
-	पूर्णांक err;
+int mptcp_subflow_init_cookie_req(struct request_sock *req,
+				  const struct sock *sk_listener,
+				  struct sk_buff *skb)
+{
+	struct mptcp_subflow_context *listener = mptcp_subflow_ctx(sk_listener);
+	struct mptcp_subflow_request_sock *subflow_req = mptcp_subflow_rsk(req);
+	struct mptcp_options_received mp_opt;
+	int err;
 
 	subflow_init_req(req, sk_listener);
 	mptcp_get_options(skb, &mp_opt);
 
-	अगर (mp_opt.mp_capable && mp_opt.mp_join)
-		वापस -EINVAL;
+	if (mp_opt.mp_capable && mp_opt.mp_join)
+		return -EINVAL;
 
-	अगर (mp_opt.mp_capable && listener->request_mptcp) अणु
-		अगर (mp_opt.sndr_key == 0)
-			वापस -EINVAL;
+	if (mp_opt.mp_capable && listener->request_mptcp) {
+		if (mp_opt.sndr_key == 0)
+			return -EINVAL;
 
 		subflow_req->local_key = mp_opt.rcvr_key;
 		err = mptcp_token_new_request(req);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		subflow_req->mp_capable = 1;
 		subflow_req->ssn_offset = TCP_SKB_CB(skb)->seq - 1;
-	पूर्ण अन्यथा अगर (mp_opt.mp_join && listener->request_mptcp) अणु
-		अगर (!mptcp_token_join_cookie_init_state(subflow_req, skb))
-			वापस -EINVAL;
+	} else if (mp_opt.mp_join && listener->request_mptcp) {
+		if (!mptcp_token_join_cookie_init_state(subflow_req, skb))
+			return -EINVAL;
 
-		अगर (mptcp_can_accept_new_subflow(subflow_req->msk))
+		if (mptcp_can_accept_new_subflow(subflow_req->msk))
 			subflow_req->mp_join = 1;
 
 		subflow_req->ssn_offset = TCP_SKB_CB(skb)->seq - 1;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(mptcp_subflow_init_cookie_req);
 
-अटल काष्ठा dst_entry *subflow_v4_route_req(स्थिर काष्ठा sock *sk,
-					      काष्ठा sk_buff *skb,
-					      काष्ठा flowi *fl,
-					      काष्ठा request_sock *req)
-अणु
-	काष्ठा dst_entry *dst;
-	पूर्णांक err;
+static struct dst_entry *subflow_v4_route_req(const struct sock *sk,
+					      struct sk_buff *skb,
+					      struct flowi *fl,
+					      struct request_sock *req)
+{
+	struct dst_entry *dst;
+	int err;
 
 	tcp_rsk(req)->is_mptcp = 1;
 	subflow_init_req(req, sk);
 
 	dst = tcp_request_sock_ipv4_ops.route_req(sk, skb, fl, req);
-	अगर (!dst)
-		वापस शून्य;
+	if (!dst)
+		return NULL;
 
 	err = subflow_check_req(req, sk, skb);
-	अगर (err == 0)
-		वापस dst;
+	if (err == 0)
+		return dst;
 
 	dst_release(dst);
-	अगर (!req->syncookie)
+	if (!req->syncookie)
 		tcp_request_sock_ops.send_reset(sk, skb);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-#अगर IS_ENABLED(CONFIG_MPTCP_IPV6)
-अटल काष्ठा dst_entry *subflow_v6_route_req(स्थिर काष्ठा sock *sk,
-					      काष्ठा sk_buff *skb,
-					      काष्ठा flowi *fl,
-					      काष्ठा request_sock *req)
-अणु
-	काष्ठा dst_entry *dst;
-	पूर्णांक err;
+#if IS_ENABLED(CONFIG_MPTCP_IPV6)
+static struct dst_entry *subflow_v6_route_req(const struct sock *sk,
+					      struct sk_buff *skb,
+					      struct flowi *fl,
+					      struct request_sock *req)
+{
+	struct dst_entry *dst;
+	int err;
 
 	tcp_rsk(req)->is_mptcp = 1;
 	subflow_init_req(req, sk);
 
 	dst = tcp_request_sock_ipv6_ops.route_req(sk, skb, fl, req);
-	अगर (!dst)
-		वापस शून्य;
+	if (!dst)
+		return NULL;
 
 	err = subflow_check_req(req, sk, skb);
-	अगर (err == 0)
-		वापस dst;
+	if (err == 0)
+		return dst;
 
 	dst_release(dst);
-	अगर (!req->syncookie)
+	if (!req->syncookie)
 		tcp6_request_sock_ops.send_reset(sk, skb);
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर
+	return NULL;
+}
+#endif
 
-/* validate received truncated hmac and create hmac क्रम third ACK */
-अटल bool subflow_thmac_valid(काष्ठा mptcp_subflow_context *subflow)
-अणु
+/* validate received truncated hmac and create hmac for third ACK */
+static bool subflow_thmac_valid(struct mptcp_subflow_context *subflow)
+{
 	u8 hmac[SHA256_DIGEST_SIZE];
 	u64 thmac;
 
@@ -343,67 +342,67 @@ EXPORT_SYMBOL_GPL(mptcp_subflow_init_cookie_req);
 	thmac = get_unaligned_be64(hmac);
 	pr_debug("subflow=%p, token=%u, thmac=%llu, subflow->thmac=%llu\n",
 		 subflow, subflow->token,
-		 (अचिन्हित दीर्घ दीर्घ)thmac,
-		 (अचिन्हित दीर्घ दीर्घ)subflow->thmac);
+		 (unsigned long long)thmac,
+		 (unsigned long long)subflow->thmac);
 
-	वापस thmac == subflow->thmac;
-पूर्ण
+	return thmac == subflow->thmac;
+}
 
-व्योम mptcp_subflow_reset(काष्ठा sock *ssk)
-अणु
-	काष्ठा mptcp_subflow_context *subflow = mptcp_subflow_ctx(ssk);
-	काष्ठा sock *sk = subflow->conn;
+void mptcp_subflow_reset(struct sock *ssk)
+{
+	struct mptcp_subflow_context *subflow = mptcp_subflow_ctx(ssk);
+	struct sock *sk = subflow->conn;
 
-	/* must hold: tcp_करोne() could drop last reference on parent */
+	/* must hold: tcp_done() could drop last reference on parent */
 	sock_hold(sk);
 
 	tcp_set_state(ssk, TCP_CLOSE);
 	tcp_send_active_reset(ssk, GFP_ATOMIC);
-	tcp_करोne(ssk);
-	अगर (!test_and_set_bit(MPTCP_WORK_CLOSE_SUBFLOW, &mptcp_sk(sk)->flags) &&
+	tcp_done(ssk);
+	if (!test_and_set_bit(MPTCP_WORK_CLOSE_SUBFLOW, &mptcp_sk(sk)->flags) &&
 	    schedule_work(&mptcp_sk(sk)->work))
-		वापस; /* worker will put sk क्रम us */
+		return; /* worker will put sk for us */
 
 	sock_put(sk);
-पूर्ण
+}
 
-अटल bool subflow_use_dअगरferent_dport(काष्ठा mptcp_sock *msk, स्थिर काष्ठा sock *sk)
-अणु
-	वापस inet_sk(sk)->inet_dport != inet_sk((काष्ठा sock *)msk)->inet_dport;
-पूर्ण
+static bool subflow_use_different_dport(struct mptcp_sock *msk, const struct sock *sk)
+{
+	return inet_sk(sk)->inet_dport != inet_sk((struct sock *)msk)->inet_dport;
+}
 
-अटल व्योम subflow_finish_connect(काष्ठा sock *sk, स्थिर काष्ठा sk_buff *skb)
-अणु
-	काष्ठा mptcp_subflow_context *subflow = mptcp_subflow_ctx(sk);
-	काष्ठा mptcp_options_received mp_opt;
-	काष्ठा sock *parent = subflow->conn;
+static void subflow_finish_connect(struct sock *sk, const struct sk_buff *skb)
+{
+	struct mptcp_subflow_context *subflow = mptcp_subflow_ctx(sk);
+	struct mptcp_options_received mp_opt;
+	struct sock *parent = subflow->conn;
 
 	subflow->icsk_af_ops->sk_rx_dst_set(sk, skb);
 
-	अगर (inet_sk_state_load(parent) == TCP_SYN_SENT) अणु
+	if (inet_sk_state_load(parent) == TCP_SYN_SENT) {
 		inet_sk_state_store(parent, TCP_ESTABLISHED);
 		parent->sk_state_change(parent);
-	पूर्ण
+	}
 
 	/* be sure no special action on any packet other than syn-ack */
-	अगर (subflow->conn_finished)
-		वापस;
+	if (subflow->conn_finished)
+		return;
 
 	mptcp_propagate_sndbuf(parent, sk);
-	subflow->rel_ग_लिखो_seq = 1;
+	subflow->rel_write_seq = 1;
 	subflow->conn_finished = 1;
 	subflow->ssn_offset = TCP_SKB_CB(skb)->seq;
 	pr_debug("subflow=%p synack seq=%x", subflow, subflow->ssn_offset);
 
 	mptcp_get_options(skb, &mp_opt);
-	अगर (subflow->request_mptcp) अणु
-		अगर (!mp_opt.mp_capable) अणु
+	if (subflow->request_mptcp) {
+		if (!mp_opt.mp_capable) {
 			MPTCP_INC_STATS(sock_net(sk),
 					MPTCP_MIB_MPCAPABLEACTIVEFALLBACK);
-			mptcp_करो_fallback(sk);
+			mptcp_do_fallback(sk);
 			pr_fallback(mptcp_sk(subflow->conn));
-			जाओ fallback;
-		पूर्ण
+			goto fallback;
+		}
 
 		subflow->mp_capable = 1;
 		subflow->can_ack = 1;
@@ -412,257 +411,257 @@ EXPORT_SYMBOL_GPL(mptcp_subflow_init_cookie_req);
 			 subflow->remote_key);
 		MPTCP_INC_STATS(sock_net(sk), MPTCP_MIB_MPCAPABLEACTIVEACK);
 		mptcp_finish_connect(sk);
-	पूर्ण अन्यथा अगर (subflow->request_join) अणु
+	} else if (subflow->request_join) {
 		u8 hmac[SHA256_DIGEST_SIZE];
 
-		अगर (!mp_opt.mp_join) अणु
+		if (!mp_opt.mp_join) {
 			subflow->reset_reason = MPTCP_RST_EMPTCP;
-			जाओ करो_reset;
-		पूर्ण
+			goto do_reset;
+		}
 
 		subflow->thmac = mp_opt.thmac;
 		subflow->remote_nonce = mp_opt.nonce;
 		pr_debug("subflow=%p, thmac=%llu, remote_nonce=%u", subflow,
 			 subflow->thmac, subflow->remote_nonce);
 
-		अगर (!subflow_thmac_valid(subflow)) अणु
+		if (!subflow_thmac_valid(subflow)) {
 			MPTCP_INC_STATS(sock_net(sk), MPTCP_MIB_JOINACKMAC);
 			subflow->reset_reason = MPTCP_RST_EMPTCP;
-			जाओ करो_reset;
-		पूर्ण
+			goto do_reset;
+		}
 
 		subflow_generate_hmac(subflow->local_key, subflow->remote_key,
 				      subflow->local_nonce,
 				      subflow->remote_nonce,
 				      hmac);
-		स_नकल(subflow->hmac, hmac, MPTCPOPT_HMAC_LEN);
+		memcpy(subflow->hmac, hmac, MPTCPOPT_HMAC_LEN);
 
-		अगर (!mptcp_finish_join(sk))
-			जाओ करो_reset;
+		if (!mptcp_finish_join(sk))
+			goto do_reset;
 
 		subflow->mp_join = 1;
 		MPTCP_INC_STATS(sock_net(sk), MPTCP_MIB_JOINSYNACKRX);
 
-		अगर (subflow_use_dअगरferent_dport(mptcp_sk(parent), sk)) अणु
+		if (subflow_use_different_dport(mptcp_sk(parent), sk)) {
 			pr_debug("synack inet_dport=%d %d",
 				 ntohs(inet_sk(sk)->inet_dport),
 				 ntohs(inet_sk(parent)->inet_dport));
 			MPTCP_INC_STATS(sock_net(sk), MPTCP_MIB_JOINPORTSYNACKRX);
-		पूर्ण
-	पूर्ण अन्यथा अगर (mptcp_check_fallback(sk)) अणु
+		}
+	} else if (mptcp_check_fallback(sk)) {
 fallback:
 		mptcp_rcv_space_init(mptcp_sk(parent), sk);
-	पूर्ण
-	वापस;
+	}
+	return;
 
-करो_reset:
+do_reset:
 	subflow->reset_transient = 0;
 	mptcp_subflow_reset(sk);
-पूर्ण
+}
 
-काष्ठा request_sock_ops mptcp_subflow_request_sock_ops;
+struct request_sock_ops mptcp_subflow_request_sock_ops;
 EXPORT_SYMBOL_GPL(mptcp_subflow_request_sock_ops);
-अटल काष्ठा tcp_request_sock_ops subflow_request_sock_ipv4_ops;
+static struct tcp_request_sock_ops subflow_request_sock_ipv4_ops;
 
-अटल पूर्णांक subflow_v4_conn_request(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा mptcp_subflow_context *subflow = mptcp_subflow_ctx(sk);
+static int subflow_v4_conn_request(struct sock *sk, struct sk_buff *skb)
+{
+	struct mptcp_subflow_context *subflow = mptcp_subflow_ctx(sk);
 
 	pr_debug("subflow=%p", subflow);
 
 	/* Never answer to SYNs sent to broadcast or multicast */
-	अगर (skb_rtable(skb)->rt_flags & (RTCF_BROADCAST | RTCF_MULTICAST))
-		जाओ drop;
+	if (skb_rtable(skb)->rt_flags & (RTCF_BROADCAST | RTCF_MULTICAST))
+		goto drop;
 
-	वापस tcp_conn_request(&mptcp_subflow_request_sock_ops,
+	return tcp_conn_request(&mptcp_subflow_request_sock_ops,
 				&subflow_request_sock_ipv4_ops,
 				sk, skb);
 drop:
 	tcp_listendrop(sk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर IS_ENABLED(CONFIG_MPTCP_IPV6)
-अटल काष्ठा tcp_request_sock_ops subflow_request_sock_ipv6_ops;
-अटल काष्ठा inet_connection_sock_af_ops subflow_v6_specअगरic;
-अटल काष्ठा inet_connection_sock_af_ops subflow_v6m_specअगरic;
-अटल काष्ठा proto tcpv6_prot_override;
+#if IS_ENABLED(CONFIG_MPTCP_IPV6)
+static struct tcp_request_sock_ops subflow_request_sock_ipv6_ops;
+static struct inet_connection_sock_af_ops subflow_v6_specific;
+static struct inet_connection_sock_af_ops subflow_v6m_specific;
+static struct proto tcpv6_prot_override;
 
-अटल पूर्णांक subflow_v6_conn_request(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा mptcp_subflow_context *subflow = mptcp_subflow_ctx(sk);
+static int subflow_v6_conn_request(struct sock *sk, struct sk_buff *skb)
+{
+	struct mptcp_subflow_context *subflow = mptcp_subflow_ctx(sk);
 
 	pr_debug("subflow=%p", subflow);
 
-	अगर (skb->protocol == htons(ETH_P_IP))
-		वापस subflow_v4_conn_request(sk, skb);
+	if (skb->protocol == htons(ETH_P_IP))
+		return subflow_v4_conn_request(sk, skb);
 
-	अगर (!ipv6_unicast_destination(skb))
-		जाओ drop;
+	if (!ipv6_unicast_destination(skb))
+		goto drop;
 
-	अगर (ipv6_addr_v4mapped(&ipv6_hdr(skb)->saddr)) अणु
-		__IP6_INC_STATS(sock_net(sk), शून्य, IPSTATS_MIB_INHDRERRORS);
-		वापस 0;
-	पूर्ण
+	if (ipv6_addr_v4mapped(&ipv6_hdr(skb)->saddr)) {
+		__IP6_INC_STATS(sock_net(sk), NULL, IPSTATS_MIB_INHDRERRORS);
+		return 0;
+	}
 
-	वापस tcp_conn_request(&mptcp_subflow_request_sock_ops,
+	return tcp_conn_request(&mptcp_subflow_request_sock_ops,
 				&subflow_request_sock_ipv6_ops, sk, skb);
 
 drop:
 	tcp_listendrop(sk);
-	वापस 0; /* करोn't send reset */
-पूर्ण
-#पूर्ण_अगर
+	return 0; /* don't send reset */
+}
+#endif
 
 /* validate hmac received in third ACK */
-अटल bool subflow_hmac_valid(स्थिर काष्ठा request_sock *req,
-			       स्थिर काष्ठा mptcp_options_received *mp_opt)
-अणु
-	स्थिर काष्ठा mptcp_subflow_request_sock *subflow_req;
+static bool subflow_hmac_valid(const struct request_sock *req,
+			       const struct mptcp_options_received *mp_opt)
+{
+	const struct mptcp_subflow_request_sock *subflow_req;
 	u8 hmac[SHA256_DIGEST_SIZE];
-	काष्ठा mptcp_sock *msk;
+	struct mptcp_sock *msk;
 
 	subflow_req = mptcp_subflow_rsk(req);
 	msk = subflow_req->msk;
-	अगर (!msk)
-		वापस false;
+	if (!msk)
+		return false;
 
 	subflow_generate_hmac(msk->remote_key, msk->local_key,
 			      subflow_req->remote_nonce,
 			      subflow_req->local_nonce, hmac);
 
-	वापस !crypto_memneq(hmac, mp_opt->hmac, MPTCPOPT_HMAC_LEN);
-पूर्ण
+	return !crypto_memneq(hmac, mp_opt->hmac, MPTCPOPT_HMAC_LEN);
+}
 
-अटल व्योम mptcp_sock_deकाष्ठा(काष्ठा sock *sk)
-अणु
-	/* अगर new mptcp socket isn't accepted, it is free'd
+static void mptcp_sock_destruct(struct sock *sk)
+{
+	/* if new mptcp socket isn't accepted, it is free'd
 	 * from the tcp listener sockets request queue, linked
 	 * from req->sk.  The tcp socket is released.
 	 * This calls the ULP release function which will
-	 * also हटाओ the mptcp socket, via
+	 * also remove the mptcp socket, via
 	 * sock_put(ctx->conn).
 	 *
 	 * Problem is that the mptcp socket will be in
 	 * ESTABLISHED state and will not have the SOCK_DEAD flag.
-	 * Both result in warnings from inet_sock_deकाष्ठा.
+	 * Both result in warnings from inet_sock_destruct.
 	 */
-	अगर ((1 << sk->sk_state) & (TCPF_ESTABLISHED | TCPF_CLOSE_WAIT)) अणु
+	if ((1 << sk->sk_state) & (TCPF_ESTABLISHED | TCPF_CLOSE_WAIT)) {
 		sk->sk_state = TCP_CLOSE;
 		WARN_ON_ONCE(sk->sk_socket);
 		sock_orphan(sk);
-	पूर्ण
+	}
 
 	mptcp_destroy_common(mptcp_sk(sk));
-	inet_sock_deकाष्ठा(sk);
-पूर्ण
+	inet_sock_destruct(sk);
+}
 
-अटल व्योम mptcp_क्रमce_बंद(काष्ठा sock *sk)
-अणु
+static void mptcp_force_close(struct sock *sk)
+{
 	inet_sk_state_store(sk, TCP_CLOSE);
 	sk_common_release(sk);
-पूर्ण
+}
 
-अटल व्योम subflow_ulp_fallback(काष्ठा sock *sk,
-				 काष्ठा mptcp_subflow_context *old_ctx)
-अणु
-	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
+static void subflow_ulp_fallback(struct sock *sk,
+				 struct mptcp_subflow_context *old_ctx)
+{
+	struct inet_connection_sock *icsk = inet_csk(sk);
 
 	mptcp_subflow_tcp_fallback(sk, old_ctx);
-	icsk->icsk_ulp_ops = शून्य;
-	rcu_assign_poपूर्णांकer(icsk->icsk_ulp_data, शून्य);
+	icsk->icsk_ulp_ops = NULL;
+	rcu_assign_pointer(icsk->icsk_ulp_data, NULL);
 	tcp_sk(sk)->is_mptcp = 0;
 
-	mptcp_subflow_ops_unकरो_override(sk);
-पूर्ण
+	mptcp_subflow_ops_undo_override(sk);
+}
 
-अटल व्योम subflow_drop_ctx(काष्ठा sock *ssk)
-अणु
-	काष्ठा mptcp_subflow_context *ctx = mptcp_subflow_ctx(ssk);
+static void subflow_drop_ctx(struct sock *ssk)
+{
+	struct mptcp_subflow_context *ctx = mptcp_subflow_ctx(ssk);
 
-	अगर (!ctx)
-		वापस;
+	if (!ctx)
+		return;
 
 	subflow_ulp_fallback(ssk, ctx);
-	अगर (ctx->conn)
+	if (ctx->conn)
 		sock_put(ctx->conn);
 
-	kमुक्त_rcu(ctx, rcu);
-पूर्ण
+	kfree_rcu(ctx, rcu);
+}
 
-व्योम mptcp_subflow_fully_established(काष्ठा mptcp_subflow_context *subflow,
-				     काष्ठा mptcp_options_received *mp_opt)
-अणु
-	काष्ठा mptcp_sock *msk = mptcp_sk(subflow->conn);
+void mptcp_subflow_fully_established(struct mptcp_subflow_context *subflow,
+				     struct mptcp_options_received *mp_opt)
+{
+	struct mptcp_sock *msk = mptcp_sk(subflow->conn);
 
 	subflow->remote_key = mp_opt->sndr_key;
 	subflow->fully_established = 1;
 	subflow->can_ack = 1;
 	WRITE_ONCE(msk->fully_established, true);
-पूर्ण
+}
 
-अटल काष्ठा sock *subflow_syn_recv_sock(स्थिर काष्ठा sock *sk,
-					  काष्ठा sk_buff *skb,
-					  काष्ठा request_sock *req,
-					  काष्ठा dst_entry *dst,
-					  काष्ठा request_sock *req_unhash,
+static struct sock *subflow_syn_recv_sock(const struct sock *sk,
+					  struct sk_buff *skb,
+					  struct request_sock *req,
+					  struct dst_entry *dst,
+					  struct request_sock *req_unhash,
 					  bool *own_req)
-अणु
-	काष्ठा mptcp_subflow_context *listener = mptcp_subflow_ctx(sk);
-	काष्ठा mptcp_subflow_request_sock *subflow_req;
-	काष्ठा mptcp_options_received mp_opt;
+{
+	struct mptcp_subflow_context *listener = mptcp_subflow_ctx(sk);
+	struct mptcp_subflow_request_sock *subflow_req;
+	struct mptcp_options_received mp_opt;
 	bool fallback, fallback_is_fatal;
-	काष्ठा sock *new_msk = शून्य;
-	काष्ठा sock *child;
+	struct sock *new_msk = NULL;
+	struct sock *child;
 
 	pr_debug("listener=%p, req=%p, conn=%p", listener, req, listener->conn);
 
-	/* After child creation we must look क्रम 'mp_capable' even when options
+	/* After child creation we must look for 'mp_capable' even when options
 	 * are not parsed
 	 */
 	mp_opt.mp_capable = 0;
 
-	/* hopefully temporary handling क्रम MP_JOIN+syncookie */
+	/* hopefully temporary handling for MP_JOIN+syncookie */
 	subflow_req = mptcp_subflow_rsk(req);
 	fallback_is_fatal = tcp_rsk(req)->is_mptcp && subflow_req->mp_join;
 	fallback = !tcp_rsk(req)->is_mptcp;
-	अगर (fallback)
-		जाओ create_child;
+	if (fallback)
+		goto create_child;
 
-	/* अगर the sk is MP_CAPABLE, we try to fetch the client key */
-	अगर (subflow_req->mp_capable) अणु
-		/* we can receive and accept an in-winकरोw, out-of-order pkt,
+	/* if the sk is MP_CAPABLE, we try to fetch the client key */
+	if (subflow_req->mp_capable) {
+		/* we can receive and accept an in-window, out-of-order pkt,
 		 * which may not carry the MP_CAPABLE opt even on mptcp enabled
 		 * paths: always try to extract the peer key, and fallback
-		 * क्रम packets missing it.
+		 * for packets missing it.
 		 * Even OoO DSS packets coming legitly after dropped or
-		 * reordered MPC will cause fallback, but we करोn't have other
+		 * reordered MPC will cause fallback, but we don't have other
 		 * options.
 		 */
 		mptcp_get_options(skb, &mp_opt);
-		अगर (!mp_opt.mp_capable) अणु
+		if (!mp_opt.mp_capable) {
 			fallback = true;
-			जाओ create_child;
-		पूर्ण
+			goto create_child;
+		}
 
 		new_msk = mptcp_sk_clone(listener->conn, &mp_opt, req);
-		अगर (!new_msk)
+		if (!new_msk)
 			fallback = true;
-	पूर्ण अन्यथा अगर (subflow_req->mp_join) अणु
+	} else if (subflow_req->mp_join) {
 		mptcp_get_options(skb, &mp_opt);
-		अगर (!mp_opt.mp_join || !subflow_hmac_valid(req, &mp_opt) ||
-		    !mptcp_can_accept_new_subflow(subflow_req->msk)) अणु
+		if (!mp_opt.mp_join || !subflow_hmac_valid(req, &mp_opt) ||
+		    !mptcp_can_accept_new_subflow(subflow_req->msk)) {
 			SUBFLOW_REQ_INC_STATS(req, MPTCP_MIB_JOINACKMAC);
 			fallback = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 create_child:
 	child = listener->icsk_af_ops->syn_recv_sock(sk, skb, req, dst,
 						     req_unhash, own_req);
 
-	अगर (child && *own_req) अणु
-		काष्ठा mptcp_subflow_context *ctx = mptcp_subflow_ctx(child);
+	if (child && *own_req) {
+		struct mptcp_subflow_context *ctx = mptcp_subflow_ctx(child);
 
 		tcp_rsk(req)->drop_req = false;
 
@@ -670,273 +669,273 @@ create_child:
 		 * checking above. In the latter scenario we additionally need
 		 * to reset the context to non MPTCP status.
 		 */
-		अगर (!ctx || fallback) अणु
-			अगर (fallback_is_fatal) अणु
+		if (!ctx || fallback) {
+			if (fallback_is_fatal) {
 				subflow_add_reset_reason(skb, MPTCP_RST_EMPTCP);
-				जाओ dispose_child;
-			पूर्ण
+				goto dispose_child;
+			}
 
 			subflow_drop_ctx(child);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/* ssk inherits options of listener sk */
 		ctx->setsockopt_seq = listener->setsockopt_seq;
 
-		अगर (ctx->mp_capable) अणु
-			/* this can't race with mptcp_बंद(), as the msk is
+		if (ctx->mp_capable) {
+			/* this can't race with mptcp_close(), as the msk is
 			 * not yet exposted to user-space
 			 */
-			inet_sk_state_store((व्योम *)new_msk, TCP_ESTABLISHED);
+			inet_sk_state_store((void *)new_msk, TCP_ESTABLISHED);
 
 			/* record the newly created socket as the first msk
-			 * subflow, but करोn't link it yet पूर्णांकo conn_list
+			 * subflow, but don't link it yet into conn_list
 			 */
 			WRITE_ONCE(mptcp_sk(new_msk)->first, child);
 
 			/* new mpc subflow takes ownership of the newly
 			 * created mptcp socket
 			 */
-			new_msk->sk_deकाष्ठा = mptcp_sock_deकाष्ठा;
+			new_msk->sk_destruct = mptcp_sock_destruct;
 			mptcp_sk(new_msk)->setsockopt_seq = ctx->setsockopt_seq;
 			mptcp_pm_new_connection(mptcp_sk(new_msk), child, 1);
 			mptcp_token_accept(subflow_req, mptcp_sk(new_msk));
 			ctx->conn = new_msk;
-			new_msk = शून्य;
+			new_msk = NULL;
 
 			/* with OoO packets we can reach here without ingress
 			 * mpc option
 			 */
-			अगर (mp_opt.mp_capable)
+			if (mp_opt.mp_capable)
 				mptcp_subflow_fully_established(ctx, &mp_opt);
-		पूर्ण अन्यथा अगर (ctx->mp_join) अणु
-			काष्ठा mptcp_sock *owner;
+		} else if (ctx->mp_join) {
+			struct mptcp_sock *owner;
 
 			owner = subflow_req->msk;
-			अगर (!owner) अणु
+			if (!owner) {
 				subflow_add_reset_reason(skb, MPTCP_RST_EPROHIBIT);
-				जाओ dispose_child;
-			पूर्ण
+				goto dispose_child;
+			}
 
 			/* move the msk reference ownership to the subflow */
-			subflow_req->msk = शून्य;
-			ctx->conn = (काष्ठा sock *)owner;
+			subflow_req->msk = NULL;
+			ctx->conn = (struct sock *)owner;
 
-			अगर (subflow_use_dअगरferent_sport(owner, sk)) अणु
+			if (subflow_use_different_sport(owner, sk)) {
 				pr_debug("ack inet_sport=%d %d",
 					 ntohs(inet_sk(sk)->inet_sport),
-					 ntohs(inet_sk((काष्ठा sock *)owner)->inet_sport));
-				अगर (!mptcp_pm_sport_in_anno_list(owner, sk)) अणु
+					 ntohs(inet_sk((struct sock *)owner)->inet_sport));
+				if (!mptcp_pm_sport_in_anno_list(owner, sk)) {
 					SUBFLOW_REQ_INC_STATS(req, MPTCP_MIB_MISMATCHPORTACKRX);
-					जाओ dispose_child;
-				पूर्ण
+					goto dispose_child;
+				}
 				SUBFLOW_REQ_INC_STATS(req, MPTCP_MIB_JOINPORTACKRX);
-			पूर्ण
+			}
 
-			अगर (!mptcp_finish_join(child))
-				जाओ dispose_child;
+			if (!mptcp_finish_join(child))
+				goto dispose_child;
 
 			SUBFLOW_REQ_INC_STATS(req, MPTCP_MIB_JOINACKRX);
 			tcp_rsk(req)->drop_req = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 out:
-	/* dispose of the left over mptcp master, अगर any */
-	अगर (unlikely(new_msk))
-		mptcp_क्रमce_बंद(new_msk);
+	/* dispose of the left over mptcp master, if any */
+	if (unlikely(new_msk))
+		mptcp_force_close(new_msk);
 
-	/* check क्रम expected invariant - should never trigger, just help
+	/* check for expected invariant - should never trigger, just help
 	 * catching eariler subtle bugs
 	 */
 	WARN_ON_ONCE(child && *own_req && tcp_sk(child)->is_mptcp &&
 		     (!mptcp_subflow_ctx(child) ||
 		      !mptcp_subflow_ctx(child)->conn));
-	वापस child;
+	return child;
 
 dispose_child:
 	subflow_drop_ctx(child);
 	tcp_rsk(req)->drop_req = true;
-	inet_csk_prepare_क्रम_destroy_sock(child);
-	tcp_करोne(child);
+	inet_csk_prepare_for_destroy_sock(child);
+	tcp_done(child);
 	req->rsk_ops->send_reset(sk, skb);
 
 	/* The last child reference will be released by the caller */
-	वापस child;
-पूर्ण
+	return child;
+}
 
-अटल काष्ठा inet_connection_sock_af_ops subflow_specअगरic;
-अटल काष्ठा proto tcp_prot_override;
+static struct inet_connection_sock_af_ops subflow_specific;
+static struct proto tcp_prot_override;
 
-क्रमागत mapping_status अणु
+enum mapping_status {
 	MAPPING_OK,
 	MAPPING_INVALID,
 	MAPPING_EMPTY,
 	MAPPING_DATA_FIN,
 	MAPPING_DUMMY
-पूर्ण;
+};
 
-अटल u64 expand_seq(u64 old_seq, u16 old_data_len, u64 seq)
-अणु
-	अगर ((u32)seq == (u32)old_seq)
-		वापस old_seq;
+static u64 expand_seq(u64 old_seq, u16 old_data_len, u64 seq)
+{
+	if ((u32)seq == (u32)old_seq)
+		return old_seq;
 
 	/* Assume map covers data not mapped yet. */
-	वापस seq | ((old_seq + old_data_len + 1) & GENMASK_ULL(63, 32));
-पूर्ण
+	return seq | ((old_seq + old_data_len + 1) & GENMASK_ULL(63, 32));
+}
 
-अटल व्योम dbg_bad_map(काष्ठा mptcp_subflow_context *subflow, u32 ssn)
-अणु
+static void dbg_bad_map(struct mptcp_subflow_context *subflow, u32 ssn)
+{
 	pr_debug("Bad mapping: ssn=%d map_seq=%d map_data_len=%d",
 		 ssn, subflow->map_subflow_seq, subflow->map_data_len);
-पूर्ण
+}
 
-अटल bool skb_is_fully_mapped(काष्ठा sock *ssk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा mptcp_subflow_context *subflow = mptcp_subflow_ctx(ssk);
-	अचिन्हित पूर्णांक skb_consumed;
+static bool skb_is_fully_mapped(struct sock *ssk, struct sk_buff *skb)
+{
+	struct mptcp_subflow_context *subflow = mptcp_subflow_ctx(ssk);
+	unsigned int skb_consumed;
 
 	skb_consumed = tcp_sk(ssk)->copied_seq - TCP_SKB_CB(skb)->seq;
-	अगर (WARN_ON_ONCE(skb_consumed >= skb->len))
-		वापस true;
+	if (WARN_ON_ONCE(skb_consumed >= skb->len))
+		return true;
 
-	वापस skb->len - skb_consumed <= subflow->map_data_len -
+	return skb->len - skb_consumed <= subflow->map_data_len -
 					  mptcp_subflow_get_map_offset(subflow);
-पूर्ण
+}
 
-अटल bool validate_mapping(काष्ठा sock *ssk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा mptcp_subflow_context *subflow = mptcp_subflow_ctx(ssk);
+static bool validate_mapping(struct sock *ssk, struct sk_buff *skb)
+{
+	struct mptcp_subflow_context *subflow = mptcp_subflow_ctx(ssk);
 	u32 ssn = tcp_sk(ssk)->copied_seq - subflow->ssn_offset;
 
-	अगर (unlikely(beक्रमe(ssn, subflow->map_subflow_seq))) अणु
+	if (unlikely(before(ssn, subflow->map_subflow_seq))) {
 		/* Mapping covers data later in the subflow stream,
 		 * currently unsupported.
 		 */
 		dbg_bad_map(subflow, ssn);
-		वापस false;
-	पूर्ण
-	अगर (unlikely(!beक्रमe(ssn, subflow->map_subflow_seq +
-				  subflow->map_data_len))) अणु
-		/* Mapping करोes covers past subflow data, invalid */
+		return false;
+	}
+	if (unlikely(!before(ssn, subflow->map_subflow_seq +
+				  subflow->map_data_len))) {
+		/* Mapping does covers past subflow data, invalid */
 		dbg_bad_map(subflow, ssn);
-		वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+		return false;
+	}
+	return true;
+}
 
-अटल क्रमागत mapping_status get_mapping_status(काष्ठा sock *ssk,
-					      काष्ठा mptcp_sock *msk)
-अणु
-	काष्ठा mptcp_subflow_context *subflow = mptcp_subflow_ctx(ssk);
-	काष्ठा mptcp_ext *mpext;
-	काष्ठा sk_buff *skb;
+static enum mapping_status get_mapping_status(struct sock *ssk,
+					      struct mptcp_sock *msk)
+{
+	struct mptcp_subflow_context *subflow = mptcp_subflow_ctx(ssk);
+	struct mptcp_ext *mpext;
+	struct sk_buff *skb;
 	u16 data_len;
 	u64 map_seq;
 
 	skb = skb_peek(&ssk->sk_receive_queue);
-	अगर (!skb)
-		वापस MAPPING_EMPTY;
+	if (!skb)
+		return MAPPING_EMPTY;
 
-	अगर (mptcp_check_fallback(ssk))
-		वापस MAPPING_DUMMY;
+	if (mptcp_check_fallback(ssk))
+		return MAPPING_DUMMY;
 
 	mpext = mptcp_get_ext(skb);
-	अगर (!mpext || !mpext->use_map) अणु
-		अगर (!subflow->map_valid && !skb->len) अणु
+	if (!mpext || !mpext->use_map) {
+		if (!subflow->map_valid && !skb->len) {
 			/* the TCP stack deliver 0 len FIN pkt to the receive
 			 * queue, that is the only 0len pkts ever expected here,
-			 * and we can admit no mapping only क्रम 0 len pkts
+			 * and we can admit no mapping only for 0 len pkts
 			 */
-			अगर (!(TCP_SKB_CB(skb)->tcp_flags & TCPHDR_FIN))
+			if (!(TCP_SKB_CB(skb)->tcp_flags & TCPHDR_FIN))
 				WARN_ONCE(1, "0len seq %d:%d flags %x",
 					  TCP_SKB_CB(skb)->seq,
 					  TCP_SKB_CB(skb)->end_seq,
 					  TCP_SKB_CB(skb)->tcp_flags);
 			sk_eat_skb(ssk, skb);
-			वापस MAPPING_EMPTY;
-		पूर्ण
+			return MAPPING_EMPTY;
+		}
 
-		अगर (!subflow->map_valid)
-			वापस MAPPING_INVALID;
+		if (!subflow->map_valid)
+			return MAPPING_INVALID;
 
-		जाओ validate_seq;
-	पूर्ण
+		goto validate_seq;
+	}
 
 	trace_get_mapping_status(mpext);
 
 	data_len = mpext->data_len;
-	अगर (data_len == 0) अणु
+	if (data_len == 0) {
 		MPTCP_INC_STATS(sock_net(ssk), MPTCP_MIB_INFINITEMAPRX);
-		वापस MAPPING_INVALID;
-	पूर्ण
+		return MAPPING_INVALID;
+	}
 
-	अगर (mpext->data_fin == 1) अणु
-		अगर (data_len == 1) अणु
+	if (mpext->data_fin == 1) {
+		if (data_len == 1) {
 			bool updated = mptcp_update_rcv_data_fin(msk, mpext->data_seq,
 								 mpext->dsn64);
 			pr_debug("DATA_FIN with no payload seq=%llu", mpext->data_seq);
-			अगर (subflow->map_valid) अणु
+			if (subflow->map_valid) {
 				/* A DATA_FIN might arrive in a DSS
-				 * option beक्रमe the previous mapping
+				 * option before the previous mapping
 				 * has been fully consumed. Continue
 				 * handling the existing mapping.
 				 */
 				skb_ext_del(skb, SKB_EXT_MPTCP);
-				वापस MAPPING_OK;
-			पूर्ण अन्यथा अणु
-				अगर (updated && schedule_work(&msk->work))
-					sock_hold((काष्ठा sock *)msk);
+				return MAPPING_OK;
+			} else {
+				if (updated && schedule_work(&msk->work))
+					sock_hold((struct sock *)msk);
 
-				वापस MAPPING_DATA_FIN;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				return MAPPING_DATA_FIN;
+			}
+		} else {
 			u64 data_fin_seq = mpext->data_seq + data_len - 1;
 
 			/* If mpext->data_seq is a 32-bit value, data_fin_seq
 			 * must also be limited to 32 bits.
 			 */
-			अगर (!mpext->dsn64)
+			if (!mpext->dsn64)
 				data_fin_seq &= GENMASK_ULL(31, 0);
 
 			mptcp_update_rcv_data_fin(msk, data_fin_seq, mpext->dsn64);
 			pr_debug("DATA_FIN with mapping seq=%llu dsn64=%d",
 				 data_fin_seq, mpext->dsn64);
-		पूर्ण
+		}
 
-		/* Adjust क्रम DATA_FIN using 1 byte of sequence space */
+		/* Adjust for DATA_FIN using 1 byte of sequence space */
 		data_len--;
-	पूर्ण
+	}
 
-	अगर (!mpext->dsn64) अणु
+	if (!mpext->dsn64) {
 		map_seq = expand_seq(subflow->map_seq, subflow->map_data_len,
 				     mpext->data_seq);
 		pr_debug("expanded seq=%llu", subflow->map_seq);
-	पूर्ण अन्यथा अणु
+	} else {
 		map_seq = mpext->data_seq;
-	पूर्ण
+	}
 	WRITE_ONCE(mptcp_sk(subflow->conn)->use_64bit_ack, !!mpext->dsn64);
 
-	अगर (subflow->map_valid) अणु
+	if (subflow->map_valid) {
 		/* Allow replacing only with an identical map */
-		अगर (subflow->map_seq == map_seq &&
+		if (subflow->map_seq == map_seq &&
 		    subflow->map_subflow_seq == mpext->subflow_seq &&
-		    subflow->map_data_len == data_len) अणु
+		    subflow->map_data_len == data_len) {
 			skb_ext_del(skb, SKB_EXT_MPTCP);
-			वापस MAPPING_OK;
-		पूर्ण
+			return MAPPING_OK;
+		}
 
 		/* If this skb data are fully covered by the current mapping,
 		 * the new map would need caching, which is not supported
 		 */
-		अगर (skb_is_fully_mapped(ssk, skb)) अणु
+		if (skb_is_fully_mapped(ssk, skb)) {
 			MPTCP_INC_STATS(sock_net(ssk), MPTCP_MIB_DSSNOMATCH);
-			वापस MAPPING_INVALID;
-		पूर्ण
+			return MAPPING_INVALID;
+		}
 
 		/* will validate the next map after consuming the current one */
-		वापस MAPPING_OK;
-	पूर्ण
+		return MAPPING_OK;
+	}
 
 	subflow->map_seq = map_seq;
 	subflow->map_subflow_seq = mpext->subflow_seq;
@@ -951,17 +950,17 @@ validate_seq:
 	/* we revalidate valid mapping on new skb, because we must ensure
 	 * the current skb is completely covered by the available mapping
 	 */
-	अगर (!validate_mapping(ssk, skb))
-		वापस MAPPING_INVALID;
+	if (!validate_mapping(ssk, skb))
+		return MAPPING_INVALID;
 
 	skb_ext_del(skb, SKB_EXT_MPTCP);
-	वापस MAPPING_OK;
-पूर्ण
+	return MAPPING_OK;
+}
 
-अटल व्योम mptcp_subflow_discard_data(काष्ठा sock *ssk, काष्ठा sk_buff *skb,
+static void mptcp_subflow_discard_data(struct sock *ssk, struct sk_buff *skb,
 				       u64 limit)
-अणु
-	काष्ठा mptcp_subflow_context *subflow = mptcp_subflow_ctx(ssk);
+{
+	struct mptcp_subflow_context *subflow = mptcp_subflow_ctx(ssk);
 	bool fin = TCP_SKB_CB(skb)->tcp_flags & TCPHDR_FIN;
 	u32 incr;
 
@@ -971,94 +970,94 @@ validate_seq:
 		 subflow->map_subflow_seq);
 	MPTCP_INC_STATS(sock_net(ssk), MPTCP_MIB_DUPDATA);
 	tcp_sk(ssk)->copied_seq += incr;
-	अगर (!beक्रमe(tcp_sk(ssk)->copied_seq, TCP_SKB_CB(skb)->end_seq))
+	if (!before(tcp_sk(ssk)->copied_seq, TCP_SKB_CB(skb)->end_seq))
 		sk_eat_skb(ssk, skb);
-	अगर (mptcp_subflow_get_map_offset(subflow) >= subflow->map_data_len)
+	if (mptcp_subflow_get_map_offset(subflow) >= subflow->map_data_len)
 		subflow->map_valid = 0;
-पूर्ण
+}
 
-/* sched mptcp worker to हटाओ the subflow अगर no more data is pending */
-अटल व्योम subflow_sched_work_अगर_बंदd(काष्ठा mptcp_sock *msk, काष्ठा sock *ssk)
-अणु
-	काष्ठा sock *sk = (काष्ठा sock *)msk;
+/* sched mptcp worker to remove the subflow if no more data is pending */
+static void subflow_sched_work_if_closed(struct mptcp_sock *msk, struct sock *ssk)
+{
+	struct sock *sk = (struct sock *)msk;
 
-	अगर (likely(ssk->sk_state != TCP_CLOSE))
-		वापस;
+	if (likely(ssk->sk_state != TCP_CLOSE))
+		return;
 
-	अगर (skb_queue_empty(&ssk->sk_receive_queue) &&
-	    !test_and_set_bit(MPTCP_WORK_CLOSE_SUBFLOW, &msk->flags)) अणु
+	if (skb_queue_empty(&ssk->sk_receive_queue) &&
+	    !test_and_set_bit(MPTCP_WORK_CLOSE_SUBFLOW, &msk->flags)) {
 		sock_hold(sk);
-		अगर (!schedule_work(&msk->work))
+		if (!schedule_work(&msk->work))
 			sock_put(sk);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल bool subflow_check_data_avail(काष्ठा sock *ssk)
-अणु
-	काष्ठा mptcp_subflow_context *subflow = mptcp_subflow_ctx(ssk);
-	क्रमागत mapping_status status;
-	काष्ठा mptcp_sock *msk;
-	काष्ठा sk_buff *skb;
+static bool subflow_check_data_avail(struct sock *ssk)
+{
+	struct mptcp_subflow_context *subflow = mptcp_subflow_ctx(ssk);
+	enum mapping_status status;
+	struct mptcp_sock *msk;
+	struct sk_buff *skb;
 
-	अगर (!skb_peek(&ssk->sk_receive_queue))
+	if (!skb_peek(&ssk->sk_receive_queue))
 		WRITE_ONCE(subflow->data_avail, 0);
-	अगर (subflow->data_avail)
-		वापस true;
+	if (subflow->data_avail)
+		return true;
 
 	msk = mptcp_sk(subflow->conn);
-	क्रम (;;) अणु
+	for (;;) {
 		u64 ack_seq;
 		u64 old_ack;
 
 		status = get_mapping_status(ssk, msk);
 		trace_subflow_check_data_avail(status, skb_peek(&ssk->sk_receive_queue));
-		अगर (unlikely(status == MAPPING_INVALID))
-			जाओ fallback;
+		if (unlikely(status == MAPPING_INVALID))
+			goto fallback;
 
-		अगर (unlikely(status == MAPPING_DUMMY))
-			जाओ fallback;
+		if (unlikely(status == MAPPING_DUMMY))
+			goto fallback;
 
-		अगर (status != MAPPING_OK)
-			जाओ no_data;
+		if (status != MAPPING_OK)
+			goto no_data;
 
 		skb = skb_peek(&ssk->sk_receive_queue);
-		अगर (WARN_ON_ONCE(!skb))
-			जाओ no_data;
+		if (WARN_ON_ONCE(!skb))
+			goto no_data;
 
-		/* अगर msk lacks the remote key, this subflow must provide an
+		/* if msk lacks the remote key, this subflow must provide an
 		 * MP_CAPABLE-based mapping
 		 */
-		अगर (unlikely(!READ_ONCE(msk->can_ack))) अणु
-			अगर (!subflow->mpc_map)
-				जाओ fallback;
+		if (unlikely(!READ_ONCE(msk->can_ack))) {
+			if (!subflow->mpc_map)
+				goto fallback;
 			WRITE_ONCE(msk->remote_key, subflow->remote_key);
 			WRITE_ONCE(msk->ack_seq, subflow->map_seq);
 			WRITE_ONCE(msk->can_ack, true);
-		पूर्ण
+		}
 
 		old_ack = READ_ONCE(msk->ack_seq);
 		ack_seq = mptcp_subflow_get_mapped_dsn(subflow);
 		pr_debug("msk ack_seq=%llx subflow ack_seq=%llx", old_ack,
 			 ack_seq);
-		अगर (unlikely(beक्रमe64(ack_seq, old_ack))) अणु
+		if (unlikely(before64(ack_seq, old_ack))) {
 			mptcp_subflow_discard_data(ssk, skb, old_ack - ack_seq);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		WRITE_ONCE(subflow->data_avail, MPTCP_SUBFLOW_DATA_AVAIL);
-		अवरोध;
-	पूर्ण
-	वापस true;
+		break;
+	}
+	return true;
 
 no_data:
-	subflow_sched_work_अगर_बंदd(msk, ssk);
-	वापस false;
+	subflow_sched_work_if_closed(msk, ssk);
+	return false;
 
 fallback:
 	/* RFC 8684 section 3.7. */
-	अगर (subflow->mp_join || subflow->fully_established) अणु
-		/* fatal protocol error, बंद the socket.
-		 * subflow_error_report() will पूर्णांकroduce the appropriate barriers
+	if (subflow->mp_join || subflow->fully_established) {
+		/* fatal protocol error, close the socket.
+		 * subflow_error_report() will introduce the appropriate barriers
 		 */
 		ssk->sk_err = EBADMSG;
 		tcp_set_state(ssk, TCP_CLOSE);
@@ -1066,36 +1065,36 @@ fallback:
 		subflow->reset_reason = MPTCP_RST_EMPTCP;
 		tcp_send_active_reset(ssk, GFP_ATOMIC);
 		WRITE_ONCE(subflow->data_avail, 0);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	__mptcp_करो_fallback(msk);
+	__mptcp_do_fallback(msk);
 	skb = skb_peek(&ssk->sk_receive_queue);
 	subflow->map_valid = 1;
 	subflow->map_seq = READ_ONCE(msk->ack_seq);
 	subflow->map_data_len = skb->len;
 	subflow->map_subflow_seq = tcp_sk(ssk)->copied_seq - subflow->ssn_offset;
 	WRITE_ONCE(subflow->data_avail, MPTCP_SUBFLOW_DATA_AVAIL);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-bool mptcp_subflow_data_available(काष्ठा sock *sk)
-अणु
-	काष्ठा mptcp_subflow_context *subflow = mptcp_subflow_ctx(sk);
+bool mptcp_subflow_data_available(struct sock *sk)
+{
+	struct mptcp_subflow_context *subflow = mptcp_subflow_ctx(sk);
 
-	/* check अगर current mapping is still valid */
-	अगर (subflow->map_valid &&
-	    mptcp_subflow_get_map_offset(subflow) >= subflow->map_data_len) अणु
+	/* check if current mapping is still valid */
+	if (subflow->map_valid &&
+	    mptcp_subflow_get_map_offset(subflow) >= subflow->map_data_len) {
 		subflow->map_valid = 0;
 		WRITE_ONCE(subflow->data_avail, 0);
 
 		pr_debug("Done with mapping: seq=%u data_len=%u",
 			 subflow->map_subflow_seq,
 			 subflow->map_data_len);
-	पूर्ण
+	}
 
-	वापस subflow_check_data_avail(sk);
-पूर्ण
+	return subflow_check_data_avail(sk);
+}
 
 /* If ssk has an mptcp parent socket, use the mptcp rcvbuf occupancy,
  * not the ssk one.
@@ -1106,32 +1105,32 @@ bool mptcp_subflow_data_available(काष्ठा sock *sk)
  * as far as mptcp peer is concerned that data is still inflight.
  * DSS ACK is updated when skb is moved to the mptcp rx queue.
  */
-व्योम mptcp_space(स्थिर काष्ठा sock *ssk, पूर्णांक *space, पूर्णांक *full_space)
-अणु
-	स्थिर काष्ठा mptcp_subflow_context *subflow = mptcp_subflow_ctx(ssk);
-	स्थिर काष्ठा sock *sk = subflow->conn;
+void mptcp_space(const struct sock *ssk, int *space, int *full_space)
+{
+	const struct mptcp_subflow_context *subflow = mptcp_subflow_ctx(ssk);
+	const struct sock *sk = subflow->conn;
 
 	*space = __mptcp_space(sk);
 	*full_space = tcp_full_space(sk);
-पूर्ण
+}
 
-व्योम __mptcp_error_report(काष्ठा sock *sk)
-अणु
-	काष्ठा mptcp_subflow_context *subflow;
-	काष्ठा mptcp_sock *msk = mptcp_sk(sk);
+void __mptcp_error_report(struct sock *sk)
+{
+	struct mptcp_subflow_context *subflow;
+	struct mptcp_sock *msk = mptcp_sk(sk);
 
-	mptcp_क्रम_each_subflow(msk, subflow) अणु
-		काष्ठा sock *ssk = mptcp_subflow_tcp_sock(subflow);
-		पूर्णांक err = sock_error(ssk);
+	mptcp_for_each_subflow(msk, subflow) {
+		struct sock *ssk = mptcp_subflow_tcp_sock(subflow);
+		int err = sock_error(ssk);
 
-		अगर (!err)
-			जारी;
+		if (!err)
+			continue;
 
 		/* only propagate errors on fallen-back sockets or
 		 * on MPC connect
 		 */
-		अगर (sk->sk_state != TCP_SYN_SENT && !__mptcp_check_fallback(msk))
-			जारी;
+		if (sk->sk_state != TCP_SYN_SENT && !__mptcp_check_fallback(msk))
+			continue;
 
 		inet_sk_state_store(sk, inet_sk_state_load(ssk));
 		sk->sk_err = -err;
@@ -1139,172 +1138,172 @@ bool mptcp_subflow_data_available(काष्ठा sock *sk)
 		/* This barrier is coupled with smp_rmb() in mptcp_poll() */
 		smp_wmb();
 		sk->sk_error_report(sk);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम subflow_error_report(काष्ठा sock *ssk)
-अणु
-	काष्ठा sock *sk = mptcp_subflow_ctx(ssk)->conn;
+static void subflow_error_report(struct sock *ssk)
+{
+	struct sock *sk = mptcp_subflow_ctx(ssk)->conn;
 
 	mptcp_data_lock(sk);
-	अगर (!sock_owned_by_user(sk))
+	if (!sock_owned_by_user(sk))
 		__mptcp_error_report(sk);
-	अन्यथा
+	else
 		set_bit(MPTCP_ERROR_REPORT,  &mptcp_sk(sk)->flags);
 	mptcp_data_unlock(sk);
-पूर्ण
+}
 
-अटल व्योम subflow_data_पढ़ोy(काष्ठा sock *sk)
-अणु
-	काष्ठा mptcp_subflow_context *subflow = mptcp_subflow_ctx(sk);
+static void subflow_data_ready(struct sock *sk)
+{
+	struct mptcp_subflow_context *subflow = mptcp_subflow_ctx(sk);
 	u16 state = 1 << inet_sk_state_load(sk);
-	काष्ठा sock *parent = subflow->conn;
-	काष्ठा mptcp_sock *msk;
+	struct sock *parent = subflow->conn;
+	struct mptcp_sock *msk;
 
 	msk = mptcp_sk(parent);
-	अगर (state & TCPF_LISTEN) अणु
-		/* MPJ subflow are हटाओd from accept queue beक्रमe reaching here,
-		 * aव्योम stray wakeups
+	if (state & TCPF_LISTEN) {
+		/* MPJ subflow are removed from accept queue before reaching here,
+		 * avoid stray wakeups
 		 */
-		अगर (reqsk_queue_empty(&inet_csk(sk)->icsk_accept_queue))
-			वापस;
+		if (reqsk_queue_empty(&inet_csk(sk)->icsk_accept_queue))
+			return;
 
 		set_bit(MPTCP_DATA_READY, &msk->flags);
-		parent->sk_data_पढ़ोy(parent);
-		वापस;
-	पूर्ण
+		parent->sk_data_ready(parent);
+		return;
+	}
 
 	WARN_ON_ONCE(!__mptcp_check_fallback(msk) && !subflow->mp_capable &&
 		     !subflow->mp_join && !(state & TCPF_CLOSE));
 
-	अगर (mptcp_subflow_data_available(sk))
-		mptcp_data_पढ़ोy(parent, sk);
-	अन्यथा अगर (unlikely(sk->sk_err))
+	if (mptcp_subflow_data_available(sk))
+		mptcp_data_ready(parent, sk);
+	else if (unlikely(sk->sk_err))
 		subflow_error_report(sk);
-पूर्ण
+}
 
-अटल व्योम subflow_ग_लिखो_space(काष्ठा sock *ssk)
-अणु
-	काष्ठा sock *sk = mptcp_subflow_ctx(ssk)->conn;
+static void subflow_write_space(struct sock *ssk)
+{
+	struct sock *sk = mptcp_subflow_ctx(ssk)->conn;
 
 	mptcp_propagate_sndbuf(sk, ssk);
-	mptcp_ग_लिखो_space(sk);
-पूर्ण
+	mptcp_write_space(sk);
+}
 
-अटल काष्ठा inet_connection_sock_af_ops *
-subflow_शेष_af_ops(काष्ठा sock *sk)
-अणु
-#अगर IS_ENABLED(CONFIG_MPTCP_IPV6)
-	अगर (sk->sk_family == AF_INET6)
-		वापस &subflow_v6_specअगरic;
-#पूर्ण_अगर
-	वापस &subflow_specअगरic;
-पूर्ण
+static struct inet_connection_sock_af_ops *
+subflow_default_af_ops(struct sock *sk)
+{
+#if IS_ENABLED(CONFIG_MPTCP_IPV6)
+	if (sk->sk_family == AF_INET6)
+		return &subflow_v6_specific;
+#endif
+	return &subflow_specific;
+}
 
-#अगर IS_ENABLED(CONFIG_MPTCP_IPV6)
-व्योम mptcpv6_handle_mapped(काष्ठा sock *sk, bool mapped)
-अणु
-	काष्ठा mptcp_subflow_context *subflow = mptcp_subflow_ctx(sk);
-	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
-	काष्ठा inet_connection_sock_af_ops *target;
+#if IS_ENABLED(CONFIG_MPTCP_IPV6)
+void mptcpv6_handle_mapped(struct sock *sk, bool mapped)
+{
+	struct mptcp_subflow_context *subflow = mptcp_subflow_ctx(sk);
+	struct inet_connection_sock *icsk = inet_csk(sk);
+	struct inet_connection_sock_af_ops *target;
 
-	target = mapped ? &subflow_v6m_specअगरic : subflow_शेष_af_ops(sk);
+	target = mapped ? &subflow_v6m_specific : subflow_default_af_ops(sk);
 
 	pr_debug("subflow=%p family=%d ops=%p target=%p mapped=%d",
 		 subflow, sk->sk_family, icsk->icsk_af_ops, target, mapped);
 
-	अगर (likely(icsk->icsk_af_ops == target))
-		वापस;
+	if (likely(icsk->icsk_af_ops == target))
+		return;
 
 	subflow->icsk_af_ops = icsk->icsk_af_ops;
 	icsk->icsk_af_ops = target;
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-व्योम mptcp_info2sockaddr(स्थिर काष्ठा mptcp_addr_info *info,
-			 काष्ठा sockaddr_storage *addr,
-			 अचिन्हित लघु family)
-अणु
-	स_रखो(addr, 0, माप(*addr));
+void mptcp_info2sockaddr(const struct mptcp_addr_info *info,
+			 struct sockaddr_storage *addr,
+			 unsigned short family)
+{
+	memset(addr, 0, sizeof(*addr));
 	addr->ss_family = family;
-	अगर (addr->ss_family == AF_INET) अणु
-		काष्ठा sockaddr_in *in_addr = (काष्ठा sockaddr_in *)addr;
+	if (addr->ss_family == AF_INET) {
+		struct sockaddr_in *in_addr = (struct sockaddr_in *)addr;
 
-		अगर (info->family == AF_INET)
+		if (info->family == AF_INET)
 			in_addr->sin_addr = info->addr;
-#अगर IS_ENABLED(CONFIG_MPTCP_IPV6)
-		अन्यथा अगर (ipv6_addr_v4mapped(&info->addr6))
+#if IS_ENABLED(CONFIG_MPTCP_IPV6)
+		else if (ipv6_addr_v4mapped(&info->addr6))
 			in_addr->sin_addr.s_addr = info->addr6.s6_addr32[3];
-#पूर्ण_अगर
+#endif
 		in_addr->sin_port = info->port;
-	पूर्ण
-#अगर IS_ENABLED(CONFIG_MPTCP_IPV6)
-	अन्यथा अगर (addr->ss_family == AF_INET6) अणु
-		काष्ठा sockaddr_in6 *in6_addr = (काष्ठा sockaddr_in6 *)addr;
+	}
+#if IS_ENABLED(CONFIG_MPTCP_IPV6)
+	else if (addr->ss_family == AF_INET6) {
+		struct sockaddr_in6 *in6_addr = (struct sockaddr_in6 *)addr;
 
-		अगर (info->family == AF_INET)
+		if (info->family == AF_INET)
 			ipv6_addr_set_v4mapped(info->addr.s_addr,
 					       &in6_addr->sin6_addr);
-		अन्यथा
+		else
 			in6_addr->sin6_addr = info->addr6;
 		in6_addr->sin6_port = info->port;
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+	}
+#endif
+}
 
-पूर्णांक __mptcp_subflow_connect(काष्ठा sock *sk, स्थिर काष्ठा mptcp_addr_info *loc,
-			    स्थिर काष्ठा mptcp_addr_info *remote,
-			    u8 flags, पूर्णांक अगरindex)
-अणु
-	काष्ठा mptcp_sock *msk = mptcp_sk(sk);
-	काष्ठा mptcp_subflow_context *subflow;
-	काष्ठा sockaddr_storage addr;
-	पूर्णांक remote_id = remote->id;
-	पूर्णांक local_id = loc->id;
-	काष्ठा socket *sf;
-	काष्ठा sock *ssk;
+int __mptcp_subflow_connect(struct sock *sk, const struct mptcp_addr_info *loc,
+			    const struct mptcp_addr_info *remote,
+			    u8 flags, int ifindex)
+{
+	struct mptcp_sock *msk = mptcp_sk(sk);
+	struct mptcp_subflow_context *subflow;
+	struct sockaddr_storage addr;
+	int remote_id = remote->id;
+	int local_id = loc->id;
+	struct socket *sf;
+	struct sock *ssk;
 	u32 remote_token;
-	पूर्णांक addrlen;
-	पूर्णांक err;
+	int addrlen;
+	int err;
 
-	अगर (!mptcp_is_fully_established(sk))
-		वापस -ENOTCONN;
+	if (!mptcp_is_fully_established(sk))
+		return -ENOTCONN;
 
 	err = mptcp_subflow_create_socket(sk, &sf);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	ssk = sf->sk;
 	subflow = mptcp_subflow_ctx(ssk);
-	करो अणु
-		get_अक्रमom_bytes(&subflow->local_nonce, माप(u32));
-	पूर्ण जबतक (!subflow->local_nonce);
+	do {
+		get_random_bytes(&subflow->local_nonce, sizeof(u32));
+	} while (!subflow->local_nonce);
 
-	अगर (!local_id) अणु
-		err = mptcp_pm_get_local_id(msk, (काष्ठा sock_common *)ssk);
-		अगर (err < 0)
-			जाओ failed;
+	if (!local_id) {
+		err = mptcp_pm_get_local_id(msk, (struct sock_common *)ssk);
+		if (err < 0)
+			goto failed;
 
 		local_id = err;
-	पूर्ण
+	}
 
 	subflow->remote_key = msk->remote_key;
 	subflow->local_key = msk->local_key;
 	subflow->token = msk->token;
 	mptcp_info2sockaddr(loc, &addr, ssk->sk_family);
 
-	addrlen = माप(काष्ठा sockaddr_in);
-#अगर IS_ENABLED(CONFIG_MPTCP_IPV6)
-	अगर (addr.ss_family == AF_INET6)
-		addrlen = माप(काष्ठा sockaddr_in6);
-#पूर्ण_अगर
-	ssk->sk_bound_dev_अगर = अगरindex;
-	err = kernel_bind(sf, (काष्ठा sockaddr *)&addr, addrlen);
-	अगर (err)
-		जाओ failed;
+	addrlen = sizeof(struct sockaddr_in);
+#if IS_ENABLED(CONFIG_MPTCP_IPV6)
+	if (addr.ss_family == AF_INET6)
+		addrlen = sizeof(struct sockaddr_in6);
+#endif
+	ssk->sk_bound_dev_if = ifindex;
+	err = kernel_bind(sf, (struct sockaddr *)&addr, addrlen);
+	if (err)
+		goto failed;
 
-	mptcp_crypto_key_sha(subflow->remote_key, &remote_token, शून्य);
+	mptcp_crypto_key_sha(subflow->remote_key, &remote_token, NULL);
 	pr_debug("msk=%p remote_token=%u local_id=%d remote_id=%d", msk,
 		 remote_token, local_id, remote_id);
 	subflow->remote_token = remote_token;
@@ -1316,14 +1315,14 @@ subflow_शेष_af_ops(काष्ठा sock *sk)
 
 	mptcp_add_pending_subflow(msk, subflow);
 	mptcp_sockopt_sync(msk, ssk);
-	err = kernel_connect(sf, (काष्ठा sockaddr *)&addr, addrlen, O_NONBLOCK);
-	अगर (err && err != -EINPROGRESS)
-		जाओ failed_unlink;
+	err = kernel_connect(sf, (struct sockaddr *)&addr, addrlen, O_NONBLOCK);
+	if (err && err != -EINPROGRESS)
+		goto failed_unlink;
 
 	/* discard the subflow socket */
 	mptcp_sock_graft(ssk, sk->sk_socket);
 	iput(SOCK_INODE(sf));
-	वापस err;
+	return err;
 
 failed_unlink:
 	spin_lock_bh(&msk->join_list_lock);
@@ -1334,95 +1333,95 @@ failed_unlink:
 failed:
 	subflow->disposable = 1;
 	sock_release(sf);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mptcp_attach_cgroup(काष्ठा sock *parent, काष्ठा sock *child)
-अणु
-#अगर_घोषित CONFIG_SOCK_CGROUP_DATA
-	काष्ठा sock_cgroup_data *parent_skcd = &parent->sk_cgrp_data,
+static void mptcp_attach_cgroup(struct sock *parent, struct sock *child)
+{
+#ifdef CONFIG_SOCK_CGROUP_DATA
+	struct sock_cgroup_data *parent_skcd = &parent->sk_cgrp_data,
 				*child_skcd = &child->sk_cgrp_data;
 
-	/* only the additional subflows created by kworkers have to be modअगरied */
-	अगर (cgroup_id(sock_cgroup_ptr(parent_skcd)) !=
-	    cgroup_id(sock_cgroup_ptr(child_skcd))) अणु
-#अगर_घोषित CONFIG_MEMCG
-		काष्ठा mem_cgroup *memcg = parent->sk_memcg;
+	/* only the additional subflows created by kworkers have to be modified */
+	if (cgroup_id(sock_cgroup_ptr(parent_skcd)) !=
+	    cgroup_id(sock_cgroup_ptr(child_skcd))) {
+#ifdef CONFIG_MEMCG
+		struct mem_cgroup *memcg = parent->sk_memcg;
 
-		mem_cgroup_sk_मुक्त(child);
-		अगर (memcg && css_tryget(&memcg->css))
+		mem_cgroup_sk_free(child);
+		if (memcg && css_tryget(&memcg->css))
 			child->sk_memcg = memcg;
-#पूर्ण_अगर /* CONFIG_MEMCG */
+#endif /* CONFIG_MEMCG */
 
-		cgroup_sk_मुक्त(child_skcd);
+		cgroup_sk_free(child_skcd);
 		*child_skcd = *parent_skcd;
 		cgroup_sk_clone(child_skcd);
-	पूर्ण
-#पूर्ण_अगर /* CONFIG_SOCK_CGROUP_DATA */
-पूर्ण
+	}
+#endif /* CONFIG_SOCK_CGROUP_DATA */
+}
 
-अटल व्योम mptcp_subflow_ops_override(काष्ठा sock *ssk)
-अणु
-#अगर IS_ENABLED(CONFIG_MPTCP_IPV6)
-	अगर (ssk->sk_prot == &tcpv6_prot)
+static void mptcp_subflow_ops_override(struct sock *ssk)
+{
+#if IS_ENABLED(CONFIG_MPTCP_IPV6)
+	if (ssk->sk_prot == &tcpv6_prot)
 		ssk->sk_prot = &tcpv6_prot_override;
-	अन्यथा
-#पूर्ण_अगर
+	else
+#endif
 		ssk->sk_prot = &tcp_prot_override;
-पूर्ण
+}
 
-अटल व्योम mptcp_subflow_ops_unकरो_override(काष्ठा sock *ssk)
-अणु
-#अगर IS_ENABLED(CONFIG_MPTCP_IPV6)
-	अगर (ssk->sk_prot == &tcpv6_prot_override)
+static void mptcp_subflow_ops_undo_override(struct sock *ssk)
+{
+#if IS_ENABLED(CONFIG_MPTCP_IPV6)
+	if (ssk->sk_prot == &tcpv6_prot_override)
 		ssk->sk_prot = &tcpv6_prot;
-	अन्यथा
-#पूर्ण_अगर
+	else
+#endif
 		ssk->sk_prot = &tcp_prot;
-पूर्ण
-पूर्णांक mptcp_subflow_create_socket(काष्ठा sock *sk, काष्ठा socket **new_sock)
-अणु
-	काष्ठा mptcp_subflow_context *subflow;
-	काष्ठा net *net = sock_net(sk);
-	काष्ठा socket *sf;
-	पूर्णांक err;
+}
+int mptcp_subflow_create_socket(struct sock *sk, struct socket **new_sock)
+{
+	struct mptcp_subflow_context *subflow;
+	struct net *net = sock_net(sk);
+	struct socket *sf;
+	int err;
 
 	/* un-accepted server sockets can reach here - on bad configuration
-	 * bail early to aव्योम greater trouble later
+	 * bail early to avoid greater trouble later
 	 */
-	अगर (unlikely(!sk->sk_socket))
-		वापस -EINVAL;
+	if (unlikely(!sk->sk_socket))
+		return -EINVAL;
 
 	err = sock_create_kern(net, sk->sk_family, SOCK_STREAM, IPPROTO_TCP,
 			       &sf);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	lock_sock(sf->sk);
 
 	/* the newly created socket has to be in the same cgroup as its parent */
 	mptcp_attach_cgroup(sk, sf->sk);
 
-	/* kernel sockets करो not by शेष acquire net ref, but TCP समयr
+	/* kernel sockets do not by default acquire net ref, but TCP timer
 	 * needs it.
 	 */
 	sf->sk->sk_net_refcnt = 1;
 	get_net(net);
-#अगर_घोषित CONFIG_PROC_FS
+#ifdef CONFIG_PROC_FS
 	this_cpu_add(*net->core.sock_inuse, 1);
-#पूर्ण_अगर
+#endif
 	err = tcp_set_ulp(sf->sk, "mptcp");
 	release_sock(sf->sk);
 
-	अगर (err) अणु
+	if (err) {
 		sock_release(sf);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	/* the newly created socket really beदीर्घs to the owning MPTCP master
-	 * socket, even अगर क्रम additional subflows the allocation is perक्रमmed
+	/* the newly created socket really belongs to the owning MPTCP master
+	 * socket, even if for additional subflows the allocation is performed
 	 * by a kernel workqueue. Adjust inode references, so that the
-	 * procfs/diag पूर्णांकeraces really show this one beदीर्घing to the correct
+	 * procfs/diag interaces really show this one belonging to the correct
 	 * user.
 	 */
 	SOCK_INODE(sf)->i_ino = SOCK_INODE(sk->sk_socket)->i_ino;
@@ -1437,20 +1436,20 @@ failed:
 	subflow->conn = sk;
 	mptcp_subflow_ops_override(sf->sk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा mptcp_subflow_context *subflow_create_ctx(काष्ठा sock *sk,
+static struct mptcp_subflow_context *subflow_create_ctx(struct sock *sk,
 							gfp_t priority)
-अणु
-	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
-	काष्ठा mptcp_subflow_context *ctx;
+{
+	struct inet_connection_sock *icsk = inet_csk(sk);
+	struct mptcp_subflow_context *ctx;
 
-	ctx = kzalloc(माप(*ctx), priority);
-	अगर (!ctx)
-		वापस शून्य;
+	ctx = kzalloc(sizeof(*ctx), priority);
+	if (!ctx)
+		return NULL;
 
-	rcu_assign_poपूर्णांकer(icsk->icsk_ulp_data, ctx);
+	rcu_assign_pointer(icsk->icsk_ulp_data, ctx);
 	INIT_LIST_HEAD(&ctx->node);
 	INIT_LIST_HEAD(&ctx->delegated_node);
 
@@ -1458,154 +1457,154 @@ failed:
 
 	ctx->tcp_sock = sk;
 
-	वापस ctx;
-पूर्ण
+	return ctx;
+}
 
-अटल व्योम __subflow_state_change(काष्ठा sock *sk)
-अणु
-	काष्ठा socket_wq *wq;
+static void __subflow_state_change(struct sock *sk)
+{
+	struct socket_wq *wq;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	wq = rcu_dereference(sk->sk_wq);
-	अगर (skwq_has_sleeper(wq))
-		wake_up_पूर्णांकerruptible_all(&wq->रुको);
-	rcu_पढ़ो_unlock();
-पूर्ण
+	if (skwq_has_sleeper(wq))
+		wake_up_interruptible_all(&wq->wait);
+	rcu_read_unlock();
+}
 
-अटल bool subflow_is_करोne(स्थिर काष्ठा sock *sk)
-अणु
-	वापस sk->sk_shutकरोwn & RCV_SHUTDOWN || sk->sk_state == TCP_CLOSE;
-पूर्ण
+static bool subflow_is_done(const struct sock *sk)
+{
+	return sk->sk_shutdown & RCV_SHUTDOWN || sk->sk_state == TCP_CLOSE;
+}
 
-अटल व्योम subflow_state_change(काष्ठा sock *sk)
-अणु
-	काष्ठा mptcp_subflow_context *subflow = mptcp_subflow_ctx(sk);
-	काष्ठा sock *parent = subflow->conn;
+static void subflow_state_change(struct sock *sk)
+{
+	struct mptcp_subflow_context *subflow = mptcp_subflow_ctx(sk);
+	struct sock *parent = subflow->conn;
 
 	__subflow_state_change(sk);
 
-	अगर (subflow_simultaneous_connect(sk)) अणु
+	if (subflow_simultaneous_connect(sk)) {
 		mptcp_propagate_sndbuf(parent, sk);
-		mptcp_करो_fallback(sk);
+		mptcp_do_fallback(sk);
 		mptcp_rcv_space_init(mptcp_sk(parent), sk);
 		pr_fallback(mptcp_sk(parent));
 		subflow->conn_finished = 1;
-		अगर (inet_sk_state_load(parent) == TCP_SYN_SENT) अणु
+		if (inet_sk_state_load(parent) == TCP_SYN_SENT) {
 			inet_sk_state_store(parent, TCP_ESTABLISHED);
 			parent->sk_state_change(parent);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* as recvmsg() करोes not acquire the subflow socket क्रम ssk selection
-	 * a fin packet carrying a DSS can be unnoticed अगर we करोn't trigger
+	/* as recvmsg() does not acquire the subflow socket for ssk selection
+	 * a fin packet carrying a DSS can be unnoticed if we don't trigger
 	 * the data available machinery here.
 	 */
-	अगर (mptcp_subflow_data_available(sk))
-		mptcp_data_पढ़ोy(parent, sk);
-	अन्यथा अगर (unlikely(sk->sk_err))
+	if (mptcp_subflow_data_available(sk))
+		mptcp_data_ready(parent, sk);
+	else if (unlikely(sk->sk_err))
 		subflow_error_report(sk);
 
-	subflow_sched_work_अगर_बंदd(mptcp_sk(parent), sk);
+	subflow_sched_work_if_closed(mptcp_sk(parent), sk);
 
-	अगर (__mptcp_check_fallback(mptcp_sk(parent)) &&
-	    !subflow->rx_eof && subflow_is_करोne(sk)) अणु
+	if (__mptcp_check_fallback(mptcp_sk(parent)) &&
+	    !subflow->rx_eof && subflow_is_done(sk)) {
 		subflow->rx_eof = 1;
 		mptcp_subflow_eof(parent);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक subflow_ulp_init(काष्ठा sock *sk)
-अणु
-	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
-	काष्ठा mptcp_subflow_context *ctx;
-	काष्ठा tcp_sock *tp = tcp_sk(sk);
-	पूर्णांक err = 0;
+static int subflow_ulp_init(struct sock *sk)
+{
+	struct inet_connection_sock *icsk = inet_csk(sk);
+	struct mptcp_subflow_context *ctx;
+	struct tcp_sock *tp = tcp_sk(sk);
+	int err = 0;
 
 	/* disallow attaching ULP to a socket unless it has been
 	 * created with sock_create_kern()
 	 */
-	अगर (!sk->sk_kern_sock) अणु
+	if (!sk->sk_kern_sock) {
 		err = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ctx = subflow_create_ctx(sk, GFP_KERNEL);
-	अगर (!ctx) अणु
+	if (!ctx) {
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	pr_debug("subflow=%p, family=%d", ctx, sk->sk_family);
 
 	tp->is_mptcp = 1;
 	ctx->icsk_af_ops = icsk->icsk_af_ops;
-	icsk->icsk_af_ops = subflow_शेष_af_ops(sk);
-	ctx->tcp_data_पढ़ोy = sk->sk_data_पढ़ोy;
+	icsk->icsk_af_ops = subflow_default_af_ops(sk);
+	ctx->tcp_data_ready = sk->sk_data_ready;
 	ctx->tcp_state_change = sk->sk_state_change;
-	ctx->tcp_ग_लिखो_space = sk->sk_ग_लिखो_space;
+	ctx->tcp_write_space = sk->sk_write_space;
 	ctx->tcp_error_report = sk->sk_error_report;
-	sk->sk_data_पढ़ोy = subflow_data_पढ़ोy;
-	sk->sk_ग_लिखो_space = subflow_ग_लिखो_space;
+	sk->sk_data_ready = subflow_data_ready;
+	sk->sk_write_space = subflow_write_space;
 	sk->sk_state_change = subflow_state_change;
 	sk->sk_error_report = subflow_error_report;
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम subflow_ulp_release(काष्ठा sock *ssk)
-अणु
-	काष्ठा mptcp_subflow_context *ctx = mptcp_subflow_ctx(ssk);
+static void subflow_ulp_release(struct sock *ssk)
+{
+	struct mptcp_subflow_context *ctx = mptcp_subflow_ctx(ssk);
 	bool release = true;
-	काष्ठा sock *sk;
+	struct sock *sk;
 
-	अगर (!ctx)
-		वापस;
+	if (!ctx)
+		return;
 
 	sk = ctx->conn;
-	अगर (sk) अणु
-		/* अगर the msk has been orphaned, keep the ctx
-		 * alive, will be मुक्तd by __mptcp_बंद_ssk(),
+	if (sk) {
+		/* if the msk has been orphaned, keep the ctx
+		 * alive, will be freed by __mptcp_close_ssk(),
 		 * when the subflow is still unaccepted
 		 */
 		release = ctx->disposable || list_empty(&ctx->node);
 		sock_put(sk);
-	पूर्ण
+	}
 
-	mptcp_subflow_ops_unकरो_override(ssk);
-	अगर (release)
-		kमुक्त_rcu(ctx, rcu);
-पूर्ण
+	mptcp_subflow_ops_undo_override(ssk);
+	if (release)
+		kfree_rcu(ctx, rcu);
+}
 
-अटल व्योम subflow_ulp_clone(स्थिर काष्ठा request_sock *req,
-			      काष्ठा sock *newsk,
-			      स्थिर gfp_t priority)
-अणु
-	काष्ठा mptcp_subflow_request_sock *subflow_req = mptcp_subflow_rsk(req);
-	काष्ठा mptcp_subflow_context *old_ctx = mptcp_subflow_ctx(newsk);
-	काष्ठा mptcp_subflow_context *new_ctx;
+static void subflow_ulp_clone(const struct request_sock *req,
+			      struct sock *newsk,
+			      const gfp_t priority)
+{
+	struct mptcp_subflow_request_sock *subflow_req = mptcp_subflow_rsk(req);
+	struct mptcp_subflow_context *old_ctx = mptcp_subflow_ctx(newsk);
+	struct mptcp_subflow_context *new_ctx;
 
-	अगर (!tcp_rsk(req)->is_mptcp ||
-	    (!subflow_req->mp_capable && !subflow_req->mp_join)) अणु
+	if (!tcp_rsk(req)->is_mptcp ||
+	    (!subflow_req->mp_capable && !subflow_req->mp_join)) {
 		subflow_ulp_fallback(newsk, old_ctx);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	new_ctx = subflow_create_ctx(newsk, priority);
-	अगर (!new_ctx) अणु
+	if (!new_ctx) {
 		subflow_ulp_fallback(newsk, old_ctx);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	new_ctx->conn_finished = 1;
 	new_ctx->icsk_af_ops = old_ctx->icsk_af_ops;
-	new_ctx->tcp_data_पढ़ोy = old_ctx->tcp_data_पढ़ोy;
+	new_ctx->tcp_data_ready = old_ctx->tcp_data_ready;
 	new_ctx->tcp_state_change = old_ctx->tcp_state_change;
-	new_ctx->tcp_ग_लिखो_space = old_ctx->tcp_ग_लिखो_space;
+	new_ctx->tcp_write_space = old_ctx->tcp_write_space;
 	new_ctx->tcp_error_report = old_ctx->tcp_error_report;
-	new_ctx->rel_ग_लिखो_seq = 1;
+	new_ctx->rel_write_seq = 1;
 	new_ctx->tcp_sock = newsk;
 
-	अगर (subflow_req->mp_capable) अणु
+	if (subflow_req->mp_capable) {
 		/* see comments in subflow_syn_recv_sock(), MPTCP connection
 		 * is fully established only after we receive the remote key
 		 */
@@ -1614,7 +1613,7 @@ out:
 		new_ctx->token = subflow_req->token;
 		new_ctx->ssn_offset = subflow_req->ssn_offset;
 		new_ctx->idsn = subflow_req->idsn;
-	पूर्ण अन्यथा अगर (subflow_req->mp_join) अणु
+	} else if (subflow_req->mp_join) {
 		new_ctx->ssn_offset = subflow_req->ssn_offset;
 		new_ctx->mp_join = 1;
 		new_ctx->fully_established = 1;
@@ -1623,84 +1622,84 @@ out:
 		new_ctx->remote_id = subflow_req->remote_id;
 		new_ctx->token = subflow_req->token;
 		new_ctx->thmac = subflow_req->thmac;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम tcp_release_cb_override(काष्ठा sock *ssk)
-अणु
-	काष्ठा mptcp_subflow_context *subflow = mptcp_subflow_ctx(ssk);
+static void tcp_release_cb_override(struct sock *ssk)
+{
+	struct mptcp_subflow_context *subflow = mptcp_subflow_ctx(ssk);
 
-	अगर (mptcp_subflow_has_delegated_action(subflow))
+	if (mptcp_subflow_has_delegated_action(subflow))
 		mptcp_subflow_process_delegated(ssk);
 
 	tcp_release_cb(ssk);
-पूर्ण
+}
 
-अटल काष्ठा tcp_ulp_ops subflow_ulp_ops __पढ़ो_mostly = अणु
+static struct tcp_ulp_ops subflow_ulp_ops __read_mostly = {
 	.name		= "mptcp",
 	.owner		= THIS_MODULE,
 	.init		= subflow_ulp_init,
 	.release	= subflow_ulp_release,
 	.clone		= subflow_ulp_clone,
-पूर्ण;
+};
 
-अटल पूर्णांक subflow_ops_init(काष्ठा request_sock_ops *subflow_ops)
-अणु
-	subflow_ops->obj_size = माप(काष्ठा mptcp_subflow_request_sock);
+static int subflow_ops_init(struct request_sock_ops *subflow_ops)
+{
+	subflow_ops->obj_size = sizeof(struct mptcp_subflow_request_sock);
 	subflow_ops->slab_name = "request_sock_subflow";
 
 	subflow_ops->slab = kmem_cache_create(subflow_ops->slab_name,
 					      subflow_ops->obj_size, 0,
 					      SLAB_ACCOUNT |
 					      SLAB_TYPESAFE_BY_RCU,
-					      शून्य);
-	अगर (!subflow_ops->slab)
-		वापस -ENOMEM;
+					      NULL);
+	if (!subflow_ops->slab)
+		return -ENOMEM;
 
-	subflow_ops->deकाष्ठाor = subflow_req_deकाष्ठाor;
+	subflow_ops->destructor = subflow_req_destructor;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम __init mptcp_subflow_init(व्योम)
-अणु
+void __init mptcp_subflow_init(void)
+{
 	mptcp_subflow_request_sock_ops = tcp_request_sock_ops;
-	अगर (subflow_ops_init(&mptcp_subflow_request_sock_ops) != 0)
+	if (subflow_ops_init(&mptcp_subflow_request_sock_ops) != 0)
 		panic("MPTCP: failed to init subflow request sock ops\n");
 
 	subflow_request_sock_ipv4_ops = tcp_request_sock_ipv4_ops;
 	subflow_request_sock_ipv4_ops.route_req = subflow_v4_route_req;
 
-	subflow_specअगरic = ipv4_specअगरic;
-	subflow_specअगरic.conn_request = subflow_v4_conn_request;
-	subflow_specअगरic.syn_recv_sock = subflow_syn_recv_sock;
-	subflow_specअगरic.sk_rx_dst_set = subflow_finish_connect;
+	subflow_specific = ipv4_specific;
+	subflow_specific.conn_request = subflow_v4_conn_request;
+	subflow_specific.syn_recv_sock = subflow_syn_recv_sock;
+	subflow_specific.sk_rx_dst_set = subflow_finish_connect;
 
 	tcp_prot_override = tcp_prot;
 	tcp_prot_override.release_cb = tcp_release_cb_override;
 
-#अगर IS_ENABLED(CONFIG_MPTCP_IPV6)
+#if IS_ENABLED(CONFIG_MPTCP_IPV6)
 	subflow_request_sock_ipv6_ops = tcp_request_sock_ipv6_ops;
 	subflow_request_sock_ipv6_ops.route_req = subflow_v6_route_req;
 
-	subflow_v6_specअगरic = ipv6_specअगरic;
-	subflow_v6_specअगरic.conn_request = subflow_v6_conn_request;
-	subflow_v6_specअगरic.syn_recv_sock = subflow_syn_recv_sock;
-	subflow_v6_specअगरic.sk_rx_dst_set = subflow_finish_connect;
+	subflow_v6_specific = ipv6_specific;
+	subflow_v6_specific.conn_request = subflow_v6_conn_request;
+	subflow_v6_specific.syn_recv_sock = subflow_syn_recv_sock;
+	subflow_v6_specific.sk_rx_dst_set = subflow_finish_connect;
 
-	subflow_v6m_specअगरic = subflow_v6_specअगरic;
-	subflow_v6m_specअगरic.queue_xmit = ipv4_specअगरic.queue_xmit;
-	subflow_v6m_specअगरic.send_check = ipv4_specअगरic.send_check;
-	subflow_v6m_specअगरic.net_header_len = ipv4_specअगरic.net_header_len;
-	subflow_v6m_specअगरic.mtu_reduced = ipv4_specअगरic.mtu_reduced;
-	subflow_v6m_specअगरic.net_frag_header_len = 0;
+	subflow_v6m_specific = subflow_v6_specific;
+	subflow_v6m_specific.queue_xmit = ipv4_specific.queue_xmit;
+	subflow_v6m_specific.send_check = ipv4_specific.send_check;
+	subflow_v6m_specific.net_header_len = ipv4_specific.net_header_len;
+	subflow_v6m_specific.mtu_reduced = ipv4_specific.mtu_reduced;
+	subflow_v6m_specific.net_frag_header_len = 0;
 
 	tcpv6_prot_override = tcpv6_prot;
 	tcpv6_prot_override.release_cb = tcp_release_cb_override;
-#पूर्ण_अगर
+#endif
 
 	mptcp_diag_subflow_init(&subflow_ulp_ops);
 
-	अगर (tcp_रेजिस्टर_ulp(&subflow_ulp_ops) != 0)
+	if (tcp_register_ulp(&subflow_ulp_ops) != 0)
 		panic("MPTCP: failed to register subflows to ULP\n");
-पूर्ण
+}

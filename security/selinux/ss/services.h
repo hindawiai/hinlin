@@ -1,39 +1,38 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Implementation of the security services.
  *
  * Author : Stephen Smalley, <sds@tycho.nsa.gov>
  */
-#अगर_अघोषित _SS_SERVICES_H_
-#घोषणा _SS_SERVICES_H_
+#ifndef _SS_SERVICES_H_
+#define _SS_SERVICES_H_
 
-#समावेश "policydb.h"
+#include "policydb.h"
 
-/* Mapping क्रम a single class */
-काष्ठा selinux_mapping अणु
-	u16 value; /* policy value क्रम class */
-	अचिन्हित पूर्णांक num_perms; /* number of permissions in class */
-	u32 perms[माप(u32) * 8]; /* policy values क्रम permissions */
-पूर्ण;
+/* Mapping for a single class */
+struct selinux_mapping {
+	u16 value; /* policy value for class */
+	unsigned int num_perms; /* number of permissions in class */
+	u32 perms[sizeof(u32) * 8]; /* policy values for permissions */
+};
 
-/* Map क्रम all of the classes, with array size */
-काष्ठा selinux_map अणु
-	काष्ठा selinux_mapping *mapping; /* indexed by class */
+/* Map for all of the classes, with array size */
+struct selinux_map {
+	struct selinux_mapping *mapping; /* indexed by class */
 	u16 size; /* array size of mapping */
-पूर्ण;
+};
 
-काष्ठा selinux_policy अणु
-	काष्ठा sidtab *sidtab;
-	काष्ठा policydb policydb;
-	काष्ठा selinux_map map;
+struct selinux_policy {
+	struct sidtab *sidtab;
+	struct policydb policydb;
+	struct selinux_map map;
 	u32 latest_granting;
-पूर्ण __अक्रमomize_layout;
+} __randomize_layout;
 
-व्योम services_compute_xperms_drivers(काष्ठा extended_perms *xperms,
-				काष्ठा avtab_node *node);
+void services_compute_xperms_drivers(struct extended_perms *xperms,
+				struct avtab_node *node);
 
-व्योम services_compute_xperms_decision(काष्ठा extended_perms_decision *xpermd,
-					काष्ठा avtab_node *node);
+void services_compute_xperms_decision(struct extended_perms_decision *xpermd,
+					struct avtab_node *node);
 
-#पूर्ण_अगर	/* _SS_SERVICES_H_ */
+#endif	/* _SS_SERVICES_H_ */

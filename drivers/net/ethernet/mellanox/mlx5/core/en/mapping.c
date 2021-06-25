@@ -1,219 +1,218 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
+// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2018 Mellanox Technologies */
 
-#समावेश <linux/jhash.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/xarray.h>
-#समावेश <linux/hashtable.h>
+#include <linux/jhash.h>
+#include <linux/slab.h>
+#include <linux/xarray.h>
+#include <linux/hashtable.h>
 
-#समावेश "mapping.h"
+#include "mapping.h"
 
-#घोषणा MAPPING_GRACE_PERIOD 2000
+#define MAPPING_GRACE_PERIOD 2000
 
-काष्ठा mapping_ctx अणु
-	काष्ठा xarray xarray;
+struct mapping_ctx {
+	struct xarray xarray;
 	DECLARE_HASHTABLE(ht, 8);
-	काष्ठा mutex lock; /* Guards hashtable and xarray */
-	अचिन्हित दीर्घ max_id;
-	माप_प्रकार data_size;
+	struct mutex lock; /* Guards hashtable and xarray */
+	unsigned long max_id;
+	size_t data_size;
 	bool delayed_removal;
-	काष्ठा delayed_work dwork;
-	काष्ठा list_head pending_list;
+	struct delayed_work dwork;
+	struct list_head pending_list;
 	spinlock_t pending_list_lock; /* Guards pending list */
-पूर्ण;
+};
 
-काष्ठा mapping_item अणु
-	काष्ठा rcu_head rcu;
-	काष्ठा list_head list;
-	अचिन्हित दीर्घ समयout;
-	काष्ठा hlist_node node;
-	पूर्णांक cnt;
+struct mapping_item {
+	struct rcu_head rcu;
+	struct list_head list;
+	unsigned long timeout;
+	struct hlist_node node;
+	int cnt;
 	u32 id;
-	अक्षर data[];
-पूर्ण;
+	char data[];
+};
 
-पूर्णांक mapping_add(काष्ठा mapping_ctx *ctx, व्योम *data, u32 *id)
-अणु
-	काष्ठा mapping_item *mi;
-	पूर्णांक err = -ENOMEM;
+int mapping_add(struct mapping_ctx *ctx, void *data, u32 *id)
+{
+	struct mapping_item *mi;
+	int err = -ENOMEM;
 	u32 hash_key;
 
 	mutex_lock(&ctx->lock);
 
 	hash_key = jhash(data, ctx->data_size, 0);
-	hash_क्रम_each_possible(ctx->ht, mi, node, hash_key) अणु
-		अगर (!स_भेद(data, mi->data, ctx->data_size))
-			जाओ attach;
-	पूर्ण
+	hash_for_each_possible(ctx->ht, mi, node, hash_key) {
+		if (!memcmp(data, mi->data, ctx->data_size))
+			goto attach;
+	}
 
-	mi = kzalloc(माप(*mi) + ctx->data_size, GFP_KERNEL);
-	अगर (!mi)
-		जाओ err_alloc;
+	mi = kzalloc(sizeof(*mi) + ctx->data_size, GFP_KERNEL);
+	if (!mi)
+		goto err_alloc;
 
-	स_नकल(mi->data, data, ctx->data_size);
+	memcpy(mi->data, data, ctx->data_size);
 	hash_add(ctx->ht, &mi->node, hash_key);
 
 	err = xa_alloc(&ctx->xarray, &mi->id, mi, XA_LIMIT(1, ctx->max_id),
 		       GFP_KERNEL);
-	अगर (err)
-		जाओ err_assign;
+	if (err)
+		goto err_assign;
 attach:
 	++mi->cnt;
 	*id = mi->id;
 
 	mutex_unlock(&ctx->lock);
 
-	वापस 0;
+	return 0;
 
 err_assign:
 	hash_del(&mi->node);
-	kमुक्त(mi);
+	kfree(mi);
 err_alloc:
 	mutex_unlock(&ctx->lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mapping_हटाओ_and_मुक्त(काष्ठा mapping_ctx *ctx,
-				    काष्ठा mapping_item *mi)
-अणु
+static void mapping_remove_and_free(struct mapping_ctx *ctx,
+				    struct mapping_item *mi)
+{
 	xa_erase(&ctx->xarray, mi->id);
-	kमुक्त_rcu(mi, rcu);
-पूर्ण
+	kfree_rcu(mi, rcu);
+}
 
-अटल व्योम mapping_मुक्त_item(काष्ठा mapping_ctx *ctx,
-			      काष्ठा mapping_item *mi)
-अणु
-	अगर (!ctx->delayed_removal) अणु
-		mapping_हटाओ_and_मुक्त(ctx, mi);
-		वापस;
-	पूर्ण
+static void mapping_free_item(struct mapping_ctx *ctx,
+			      struct mapping_item *mi)
+{
+	if (!ctx->delayed_removal) {
+		mapping_remove_and_free(ctx, mi);
+		return;
+	}
 
-	mi->समयout = jअगरfies + msecs_to_jअगरfies(MAPPING_GRACE_PERIOD);
+	mi->timeout = jiffies + msecs_to_jiffies(MAPPING_GRACE_PERIOD);
 
 	spin_lock(&ctx->pending_list_lock);
 	list_add_tail(&mi->list, &ctx->pending_list);
 	spin_unlock(&ctx->pending_list_lock);
 
 	schedule_delayed_work(&ctx->dwork, MAPPING_GRACE_PERIOD);
-पूर्ण
+}
 
-पूर्णांक mapping_हटाओ(काष्ठा mapping_ctx *ctx, u32 id)
-अणु
-	अचिन्हित दीर्घ index = id;
-	काष्ठा mapping_item *mi;
-	पूर्णांक err = -ENOENT;
+int mapping_remove(struct mapping_ctx *ctx, u32 id)
+{
+	unsigned long index = id;
+	struct mapping_item *mi;
+	int err = -ENOENT;
 
 	mutex_lock(&ctx->lock);
 	mi = xa_load(&ctx->xarray, index);
-	अगर (!mi)
-		जाओ out;
+	if (!mi)
+		goto out;
 	err = 0;
 
-	अगर (--mi->cnt > 0)
-		जाओ out;
+	if (--mi->cnt > 0)
+		goto out;
 
 	hash_del(&mi->node);
-	mapping_मुक्त_item(ctx, mi);
+	mapping_free_item(ctx, mi);
 out:
 	mutex_unlock(&ctx->lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक mapping_find(काष्ठा mapping_ctx *ctx, u32 id, व्योम *data)
-अणु
-	अचिन्हित दीर्घ index = id;
-	काष्ठा mapping_item *mi;
-	पूर्णांक err = -ENOENT;
+int mapping_find(struct mapping_ctx *ctx, u32 id, void *data)
+{
+	unsigned long index = id;
+	struct mapping_item *mi;
+	int err = -ENOENT;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	mi = xa_load(&ctx->xarray, index);
-	अगर (!mi)
-		जाओ err_find;
+	if (!mi)
+		goto err_find;
 
-	स_नकल(data, mi->data, ctx->data_size);
+	memcpy(data, mi->data, ctx->data_size);
 	err = 0;
 
 err_find:
-	rcu_पढ़ो_unlock();
-	वापस err;
-पूर्ण
+	rcu_read_unlock();
+	return err;
+}
 
-अटल व्योम
-mapping_हटाओ_and_मुक्त_list(काष्ठा mapping_ctx *ctx, काष्ठा list_head *list)
-अणु
-	काष्ठा mapping_item *mi;
+static void
+mapping_remove_and_free_list(struct mapping_ctx *ctx, struct list_head *list)
+{
+	struct mapping_item *mi;
 
-	list_क्रम_each_entry(mi, list, list)
-		mapping_हटाओ_and_मुक्त(ctx, mi);
-पूर्ण
+	list_for_each_entry(mi, list, list)
+		mapping_remove_and_free(ctx, mi);
+}
 
-अटल व्योम mapping_work_handler(काष्ठा work_काष्ठा *work)
-अणु
-	अचिन्हित दीर्घ min_समयout = 0, now = jअगरfies;
-	काष्ठा mapping_item *mi, *next;
+static void mapping_work_handler(struct work_struct *work)
+{
+	unsigned long min_timeout = 0, now = jiffies;
+	struct mapping_item *mi, *next;
 	LIST_HEAD(pending_items);
-	काष्ठा mapping_ctx *ctx;
+	struct mapping_ctx *ctx;
 
-	ctx = container_of(work, काष्ठा mapping_ctx, dwork.work);
+	ctx = container_of(work, struct mapping_ctx, dwork.work);
 
 	spin_lock(&ctx->pending_list_lock);
-	list_क्रम_each_entry_safe(mi, next, &ctx->pending_list, list) अणु
-		अगर (समय_after(now, mi->समयout))
+	list_for_each_entry_safe(mi, next, &ctx->pending_list, list) {
+		if (time_after(now, mi->timeout))
 			list_move(&mi->list, &pending_items);
-		अन्यथा अगर (!min_समयout ||
-			 समय_beक्रमe(mi->समयout, min_समयout))
-			min_समयout = mi->समयout;
-	पूर्ण
+		else if (!min_timeout ||
+			 time_before(mi->timeout, min_timeout))
+			min_timeout = mi->timeout;
+	}
 	spin_unlock(&ctx->pending_list_lock);
 
-	mapping_हटाओ_and_मुक्त_list(ctx, &pending_items);
+	mapping_remove_and_free_list(ctx, &pending_items);
 
-	अगर (min_समयout)
-		schedule_delayed_work(&ctx->dwork, असल(min_समयout - now));
-पूर्ण
+	if (min_timeout)
+		schedule_delayed_work(&ctx->dwork, abs(min_timeout - now));
+}
 
-अटल व्योम mapping_flush_work(काष्ठा mapping_ctx *ctx)
-अणु
-	अगर (!ctx->delayed_removal)
-		वापस;
+static void mapping_flush_work(struct mapping_ctx *ctx)
+{
+	if (!ctx->delayed_removal)
+		return;
 
 	cancel_delayed_work_sync(&ctx->dwork);
-	mapping_हटाओ_and_मुक्त_list(ctx, &ctx->pending_list);
-पूर्ण
+	mapping_remove_and_free_list(ctx, &ctx->pending_list);
+}
 
-काष्ठा mapping_ctx *
-mapping_create(माप_प्रकार data_size, u32 max_id, bool delayed_removal)
-अणु
-	काष्ठा mapping_ctx *ctx;
+struct mapping_ctx *
+mapping_create(size_t data_size, u32 max_id, bool delayed_removal)
+{
+	struct mapping_ctx *ctx;
 
-	ctx = kzalloc(माप(*ctx), GFP_KERNEL);
-	अगर (!ctx)
-		वापस ERR_PTR(-ENOMEM);
+	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
+	if (!ctx)
+		return ERR_PTR(-ENOMEM);
 
-	ctx->max_id = max_id ? max_id : अच_पूर्णांक_उच्च;
+	ctx->max_id = max_id ? max_id : UINT_MAX;
 	ctx->data_size = data_size;
 
-	अगर (delayed_removal) अणु
+	if (delayed_removal) {
 		INIT_DELAYED_WORK(&ctx->dwork, mapping_work_handler);
 		INIT_LIST_HEAD(&ctx->pending_list);
 		spin_lock_init(&ctx->pending_list_lock);
 		ctx->delayed_removal = true;
-	पूर्ण
+	}
 
 	mutex_init(&ctx->lock);
 	xa_init_flags(&ctx->xarray, XA_FLAGS_ALLOC1);
 
-	वापस ctx;
-पूर्ण
+	return ctx;
+}
 
-व्योम mapping_destroy(काष्ठा mapping_ctx *ctx)
-अणु
+void mapping_destroy(struct mapping_ctx *ctx)
+{
 	mapping_flush_work(ctx);
 	xa_destroy(&ctx->xarray);
 	mutex_destroy(&ctx->lock);
 
-	kमुक्त(ctx);
-पूर्ण
+	kfree(ctx);
+}

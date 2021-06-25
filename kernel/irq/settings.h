@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Internal header to deal with irq_desc->status which will be नामd
+ * Internal header to deal with irq_desc->status which will be renamed
  * to irq_desc->settings.
  */
-क्रमागत अणु
+enum {
 	_IRQ_DEFAULT_INIT_FLAGS	= IRQ_DEFAULT_INIT_FLAGS,
 	_IRQ_PER_CPU		= IRQ_PER_CPU,
 	_IRQ_LEVEL		= IRQ_LEVEL,
@@ -20,158 +19,158 @@
 	_IRQ_DISABLE_UNLAZY	= IRQ_DISABLE_UNLAZY,
 	_IRQ_HIDDEN		= IRQ_HIDDEN,
 	_IRQF_MODIFY_MASK	= IRQF_MODIFY_MASK,
-पूर्ण;
+};
 
-#घोषणा IRQ_PER_CPU		GOT_YOU_MORON
-#घोषणा IRQ_NO_BALANCING	GOT_YOU_MORON
-#घोषणा IRQ_LEVEL		GOT_YOU_MORON
-#घोषणा IRQ_NOPROBE		GOT_YOU_MORON
-#घोषणा IRQ_NOREQUEST		GOT_YOU_MORON
-#घोषणा IRQ_NOTHREAD		GOT_YOU_MORON
-#घोषणा IRQ_NOAUTOEN		GOT_YOU_MORON
-#घोषणा IRQ_NESTED_THREAD	GOT_YOU_MORON
-#घोषणा IRQ_PER_CPU_DEVID	GOT_YOU_MORON
-#घोषणा IRQ_IS_POLLED		GOT_YOU_MORON
-#घोषणा IRQ_DISABLE_UNLAZY	GOT_YOU_MORON
-#घोषणा IRQ_HIDDEN		GOT_YOU_MORON
-#अघोषित IRQF_MODIFY_MASK
-#घोषणा IRQF_MODIFY_MASK	GOT_YOU_MORON
+#define IRQ_PER_CPU		GOT_YOU_MORON
+#define IRQ_NO_BALANCING	GOT_YOU_MORON
+#define IRQ_LEVEL		GOT_YOU_MORON
+#define IRQ_NOPROBE		GOT_YOU_MORON
+#define IRQ_NOREQUEST		GOT_YOU_MORON
+#define IRQ_NOTHREAD		GOT_YOU_MORON
+#define IRQ_NOAUTOEN		GOT_YOU_MORON
+#define IRQ_NESTED_THREAD	GOT_YOU_MORON
+#define IRQ_PER_CPU_DEVID	GOT_YOU_MORON
+#define IRQ_IS_POLLED		GOT_YOU_MORON
+#define IRQ_DISABLE_UNLAZY	GOT_YOU_MORON
+#define IRQ_HIDDEN		GOT_YOU_MORON
+#undef IRQF_MODIFY_MASK
+#define IRQF_MODIFY_MASK	GOT_YOU_MORON
 
-अटल अंतरभूत व्योम
-irq_settings_clr_and_set(काष्ठा irq_desc *desc, u32 clr, u32 set)
-अणु
+static inline void
+irq_settings_clr_and_set(struct irq_desc *desc, u32 clr, u32 set)
+{
 	desc->status_use_accessors &= ~(clr & _IRQF_MODIFY_MASK);
 	desc->status_use_accessors |= (set & _IRQF_MODIFY_MASK);
-पूर्ण
+}
 
-अटल अंतरभूत bool irq_settings_is_per_cpu(काष्ठा irq_desc *desc)
-अणु
-	वापस desc->status_use_accessors & _IRQ_PER_CPU;
-पूर्ण
+static inline bool irq_settings_is_per_cpu(struct irq_desc *desc)
+{
+	return desc->status_use_accessors & _IRQ_PER_CPU;
+}
 
-अटल अंतरभूत bool irq_settings_is_per_cpu_devid(काष्ठा irq_desc *desc)
-अणु
-	वापस desc->status_use_accessors & _IRQ_PER_CPU_DEVID;
-पूर्ण
+static inline bool irq_settings_is_per_cpu_devid(struct irq_desc *desc)
+{
+	return desc->status_use_accessors & _IRQ_PER_CPU_DEVID;
+}
 
-अटल अंतरभूत व्योम irq_settings_set_per_cpu(काष्ठा irq_desc *desc)
-अणु
+static inline void irq_settings_set_per_cpu(struct irq_desc *desc)
+{
 	desc->status_use_accessors |= _IRQ_PER_CPU;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम irq_settings_set_no_balancing(काष्ठा irq_desc *desc)
-अणु
+static inline void irq_settings_set_no_balancing(struct irq_desc *desc)
+{
 	desc->status_use_accessors |= _IRQ_NO_BALANCING;
-पूर्ण
+}
 
-अटल अंतरभूत bool irq_settings_has_no_balance_set(काष्ठा irq_desc *desc)
-अणु
-	वापस desc->status_use_accessors & _IRQ_NO_BALANCING;
-पूर्ण
+static inline bool irq_settings_has_no_balance_set(struct irq_desc *desc)
+{
+	return desc->status_use_accessors & _IRQ_NO_BALANCING;
+}
 
-अटल अंतरभूत u32 irq_settings_get_trigger_mask(काष्ठा irq_desc *desc)
-अणु
-	वापस desc->status_use_accessors & IRQ_TYPE_SENSE_MASK;
-पूर्ण
+static inline u32 irq_settings_get_trigger_mask(struct irq_desc *desc)
+{
+	return desc->status_use_accessors & IRQ_TYPE_SENSE_MASK;
+}
 
-अटल अंतरभूत व्योम
-irq_settings_set_trigger_mask(काष्ठा irq_desc *desc, u32 mask)
-अणु
+static inline void
+irq_settings_set_trigger_mask(struct irq_desc *desc, u32 mask)
+{
 	desc->status_use_accessors &= ~IRQ_TYPE_SENSE_MASK;
 	desc->status_use_accessors |= mask & IRQ_TYPE_SENSE_MASK;
-पूर्ण
+}
 
-अटल अंतरभूत bool irq_settings_is_level(काष्ठा irq_desc *desc)
-अणु
-	वापस desc->status_use_accessors & _IRQ_LEVEL;
-पूर्ण
+static inline bool irq_settings_is_level(struct irq_desc *desc)
+{
+	return desc->status_use_accessors & _IRQ_LEVEL;
+}
 
-अटल अंतरभूत व्योम irq_settings_clr_level(काष्ठा irq_desc *desc)
-अणु
+static inline void irq_settings_clr_level(struct irq_desc *desc)
+{
 	desc->status_use_accessors &= ~_IRQ_LEVEL;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम irq_settings_set_level(काष्ठा irq_desc *desc)
-अणु
+static inline void irq_settings_set_level(struct irq_desc *desc)
+{
 	desc->status_use_accessors |= _IRQ_LEVEL;
-पूर्ण
+}
 
-अटल अंतरभूत bool irq_settings_can_request(काष्ठा irq_desc *desc)
-अणु
-	वापस !(desc->status_use_accessors & _IRQ_NOREQUEST);
-पूर्ण
+static inline bool irq_settings_can_request(struct irq_desc *desc)
+{
+	return !(desc->status_use_accessors & _IRQ_NOREQUEST);
+}
 
-अटल अंतरभूत व्योम irq_settings_clr_norequest(काष्ठा irq_desc *desc)
-अणु
+static inline void irq_settings_clr_norequest(struct irq_desc *desc)
+{
 	desc->status_use_accessors &= ~_IRQ_NOREQUEST;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम irq_settings_set_norequest(काष्ठा irq_desc *desc)
-अणु
+static inline void irq_settings_set_norequest(struct irq_desc *desc)
+{
 	desc->status_use_accessors |= _IRQ_NOREQUEST;
-पूर्ण
+}
 
-अटल अंतरभूत bool irq_settings_can_thपढ़ो(काष्ठा irq_desc *desc)
-अणु
-	वापस !(desc->status_use_accessors & _IRQ_NOTHREAD);
-पूर्ण
+static inline bool irq_settings_can_thread(struct irq_desc *desc)
+{
+	return !(desc->status_use_accessors & _IRQ_NOTHREAD);
+}
 
-अटल अंतरभूत व्योम irq_settings_clr_nothपढ़ो(काष्ठा irq_desc *desc)
-अणु
+static inline void irq_settings_clr_nothread(struct irq_desc *desc)
+{
 	desc->status_use_accessors &= ~_IRQ_NOTHREAD;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम irq_settings_set_nothपढ़ो(काष्ठा irq_desc *desc)
-अणु
+static inline void irq_settings_set_nothread(struct irq_desc *desc)
+{
 	desc->status_use_accessors |= _IRQ_NOTHREAD;
-पूर्ण
+}
 
-अटल अंतरभूत bool irq_settings_can_probe(काष्ठा irq_desc *desc)
-अणु
-	वापस !(desc->status_use_accessors & _IRQ_NOPROBE);
-पूर्ण
+static inline bool irq_settings_can_probe(struct irq_desc *desc)
+{
+	return !(desc->status_use_accessors & _IRQ_NOPROBE);
+}
 
-अटल अंतरभूत व्योम irq_settings_clr_noprobe(काष्ठा irq_desc *desc)
-अणु
+static inline void irq_settings_clr_noprobe(struct irq_desc *desc)
+{
 	desc->status_use_accessors &= ~_IRQ_NOPROBE;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम irq_settings_set_noprobe(काष्ठा irq_desc *desc)
-अणु
+static inline void irq_settings_set_noprobe(struct irq_desc *desc)
+{
 	desc->status_use_accessors |= _IRQ_NOPROBE;
-पूर्ण
+}
 
-अटल अंतरभूत bool irq_settings_can_move_pcntxt(काष्ठा irq_desc *desc)
-अणु
-	वापस desc->status_use_accessors & _IRQ_MOVE_PCNTXT;
-पूर्ण
+static inline bool irq_settings_can_move_pcntxt(struct irq_desc *desc)
+{
+	return desc->status_use_accessors & _IRQ_MOVE_PCNTXT;
+}
 
-अटल अंतरभूत bool irq_settings_can_स्वतःenable(काष्ठा irq_desc *desc)
-अणु
-	वापस !(desc->status_use_accessors & _IRQ_NOAUTOEN);
-पूर्ण
+static inline bool irq_settings_can_autoenable(struct irq_desc *desc)
+{
+	return !(desc->status_use_accessors & _IRQ_NOAUTOEN);
+}
 
-अटल अंतरभूत bool irq_settings_is_nested_thपढ़ो(काष्ठा irq_desc *desc)
-अणु
-	वापस desc->status_use_accessors & _IRQ_NESTED_THREAD;
-पूर्ण
+static inline bool irq_settings_is_nested_thread(struct irq_desc *desc)
+{
+	return desc->status_use_accessors & _IRQ_NESTED_THREAD;
+}
 
-अटल अंतरभूत bool irq_settings_is_polled(काष्ठा irq_desc *desc)
-अणु
-	वापस desc->status_use_accessors & _IRQ_IS_POLLED;
-पूर्ण
+static inline bool irq_settings_is_polled(struct irq_desc *desc)
+{
+	return desc->status_use_accessors & _IRQ_IS_POLLED;
+}
 
-अटल अंतरभूत bool irq_settings_disable_unlazy(काष्ठा irq_desc *desc)
-अणु
-	वापस desc->status_use_accessors & _IRQ_DISABLE_UNLAZY;
-पूर्ण
+static inline bool irq_settings_disable_unlazy(struct irq_desc *desc)
+{
+	return desc->status_use_accessors & _IRQ_DISABLE_UNLAZY;
+}
 
-अटल अंतरभूत व्योम irq_settings_clr_disable_unlazy(काष्ठा irq_desc *desc)
-अणु
+static inline void irq_settings_clr_disable_unlazy(struct irq_desc *desc)
+{
 	desc->status_use_accessors &= ~_IRQ_DISABLE_UNLAZY;
-पूर्ण
+}
 
-अटल अंतरभूत bool irq_settings_is_hidden(काष्ठा irq_desc *desc)
-अणु
-	वापस desc->status_use_accessors & _IRQ_HIDDEN;
-पूर्ण
+static inline bool irq_settings_is_hidden(struct irq_desc *desc)
+{
+	return desc->status_use_accessors & _IRQ_HIDDEN;
+}

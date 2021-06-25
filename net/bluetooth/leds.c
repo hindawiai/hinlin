@@ -1,101 +1,100 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2015, Heiner Kallweit <hkallweit1@gmail.com>
  */
 
-#समावेश <net/bluetooth/bluetooth.h>
-#समावेश <net/bluetooth/hci_core.h>
+#include <net/bluetooth/bluetooth.h>
+#include <net/bluetooth/hci_core.h>
 
-#समावेश "leds.h"
+#include "leds.h"
 
-DEFINE_LED_TRIGGER(bt_घातer_led_trigger);
+DEFINE_LED_TRIGGER(bt_power_led_trigger);
 
-काष्ठा hci_basic_led_trigger अणु
-	काष्ठा led_trigger	led_trigger;
-	काष्ठा hci_dev		*hdev;
-पूर्ण;
+struct hci_basic_led_trigger {
+	struct led_trigger	led_trigger;
+	struct hci_dev		*hdev;
+};
 
-#घोषणा to_hci_basic_led_trigger(arg) container_of(arg, \
-			काष्ठा hci_basic_led_trigger, led_trigger)
+#define to_hci_basic_led_trigger(arg) container_of(arg, \
+			struct hci_basic_led_trigger, led_trigger)
 
-व्योम hci_leds_update_घातered(काष्ठा hci_dev *hdev, bool enabled)
-अणु
-	अगर (hdev->घातer_led)
-		led_trigger_event(hdev->घातer_led,
+void hci_leds_update_powered(struct hci_dev *hdev, bool enabled)
+{
+	if (hdev->power_led)
+		led_trigger_event(hdev->power_led,
 				  enabled ? LED_FULL : LED_OFF);
 
-	अगर (!enabled) अणु
-		काष्ठा hci_dev *d;
+	if (!enabled) {
+		struct hci_dev *d;
 
-		पढ़ो_lock(&hci_dev_list_lock);
+		read_lock(&hci_dev_list_lock);
 
-		list_क्रम_each_entry(d, &hci_dev_list, list) अणु
-			अगर (test_bit(HCI_UP, &d->flags))
+		list_for_each_entry(d, &hci_dev_list, list) {
+			if (test_bit(HCI_UP, &d->flags))
 				enabled = true;
-		पूर्ण
+		}
 
-		पढ़ो_unlock(&hci_dev_list_lock);
-	पूर्ण
+		read_unlock(&hci_dev_list_lock);
+	}
 
-	led_trigger_event(bt_घातer_led_trigger, enabled ? LED_FULL : LED_OFF);
-पूर्ण
+	led_trigger_event(bt_power_led_trigger, enabled ? LED_FULL : LED_OFF);
+}
 
-अटल पूर्णांक घातer_activate(काष्ठा led_classdev *led_cdev)
-अणु
-	काष्ठा hci_basic_led_trigger *htrig;
-	bool घातered;
+static int power_activate(struct led_classdev *led_cdev)
+{
+	struct hci_basic_led_trigger *htrig;
+	bool powered;
 
 	htrig = to_hci_basic_led_trigger(led_cdev->trigger);
-	घातered = test_bit(HCI_UP, &htrig->hdev->flags);
+	powered = test_bit(HCI_UP, &htrig->hdev->flags);
 
-	led_trigger_event(led_cdev->trigger, घातered ? LED_FULL : LED_OFF);
+	led_trigger_event(led_cdev->trigger, powered ? LED_FULL : LED_OFF);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा led_trigger *led_allocate_basic(काष्ठा hci_dev *hdev,
-			पूर्णांक (*activate)(काष्ठा led_classdev *led_cdev),
-			स्थिर अक्षर *name)
-अणु
-	काष्ठा hci_basic_led_trigger *htrig;
+static struct led_trigger *led_allocate_basic(struct hci_dev *hdev,
+			int (*activate)(struct led_classdev *led_cdev),
+			const char *name)
+{
+	struct hci_basic_led_trigger *htrig;
 
-	htrig =	devm_kzalloc(&hdev->dev, माप(*htrig), GFP_KERNEL);
-	अगर (!htrig)
-		वापस शून्य;
+	htrig =	devm_kzalloc(&hdev->dev, sizeof(*htrig), GFP_KERNEL);
+	if (!htrig)
+		return NULL;
 
 	htrig->hdev = hdev;
 	htrig->led_trigger.activate = activate;
-	htrig->led_trigger.name = devm_kaप्र_लिखो(&hdev->dev, GFP_KERNEL,
+	htrig->led_trigger.name = devm_kasprintf(&hdev->dev, GFP_KERNEL,
 						 "%s-%s", hdev->name,
 						 name);
-	अगर (!htrig->led_trigger.name)
-		जाओ err_alloc;
+	if (!htrig->led_trigger.name)
+		goto err_alloc;
 
-	अगर (devm_led_trigger_रेजिस्टर(&hdev->dev, &htrig->led_trigger))
-		जाओ err_रेजिस्टर;
+	if (devm_led_trigger_register(&hdev->dev, &htrig->led_trigger))
+		goto err_register;
 
-	वापस &htrig->led_trigger;
+	return &htrig->led_trigger;
 
-err_रेजिस्टर:
-	devm_kमुक्त(&hdev->dev, (व्योम *)htrig->led_trigger.name);
+err_register:
+	devm_kfree(&hdev->dev, (void *)htrig->led_trigger.name);
 err_alloc:
-	devm_kमुक्त(&hdev->dev, htrig);
-	वापस शून्य;
-पूर्ण
+	devm_kfree(&hdev->dev, htrig);
+	return NULL;
+}
 
-व्योम hci_leds_init(काष्ठा hci_dev *hdev)
-अणु
-	/* initialize घातer_led */
-	hdev->घातer_led = led_allocate_basic(hdev, घातer_activate, "power");
-पूर्ण
+void hci_leds_init(struct hci_dev *hdev)
+{
+	/* initialize power_led */
+	hdev->power_led = led_allocate_basic(hdev, power_activate, "power");
+}
 
-व्योम bt_leds_init(व्योम)
-अणु
-	led_trigger_रेजिस्टर_simple("bluetooth-power", &bt_घातer_led_trigger);
-पूर्ण
+void bt_leds_init(void)
+{
+	led_trigger_register_simple("bluetooth-power", &bt_power_led_trigger);
+}
 
-व्योम bt_leds_cleanup(व्योम)
-अणु
-	led_trigger_unरेजिस्टर_simple(bt_घातer_led_trigger);
-पूर्ण
+void bt_leds_cleanup(void)
+{
+	led_trigger_unregister_simple(bt_power_led_trigger);
+}

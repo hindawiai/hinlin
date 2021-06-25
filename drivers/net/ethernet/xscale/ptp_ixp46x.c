@@ -1,231 +1,230 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * PTP 1588 घड़ी using the IXP46X
+ * PTP 1588 clock using the IXP46X
  *
  * Copyright (C) 2010 OMICRON electronics GmbH
  */
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/irq.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/gpio.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/irq.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
 
-#समावेश <linux/ptp_घड़ी_kernel.h>
+#include <linux/ptp_clock_kernel.h>
 
-#समावेश "ixp46x_ts.h"
+#include "ixp46x_ts.h"
 
-#घोषणा DRIVER		"ptp_ixp46x"
-#घोषणा N_EXT_TS	2
-#घोषणा MASTER_GPIO	8
-#घोषणा MASTER_IRQ	25
-#घोषणा SLAVE_GPIO	7
-#घोषणा SLAVE_IRQ	24
+#define DRIVER		"ptp_ixp46x"
+#define N_EXT_TS	2
+#define MASTER_GPIO	8
+#define MASTER_IRQ	25
+#define SLAVE_GPIO	7
+#define SLAVE_IRQ	24
 
-काष्ठा ixp_घड़ी अणु
-	काष्ठा ixp46x_ts_regs *regs;
-	काष्ठा ptp_घड़ी *ptp_घड़ी;
-	काष्ठा ptp_घड़ी_info caps;
-	पूर्णांक exts0_enabled;
-	पूर्णांक exts1_enabled;
-पूर्ण;
+struct ixp_clock {
+	struct ixp46x_ts_regs *regs;
+	struct ptp_clock *ptp_clock;
+	struct ptp_clock_info caps;
+	int exts0_enabled;
+	int exts1_enabled;
+};
 
-DEFINE_SPINLOCK(रेजिस्टर_lock);
+DEFINE_SPINLOCK(register_lock);
 
 /*
  * Register access functions
  */
 
-अटल u64 ixp_sysसमय_पढ़ो(काष्ठा ixp46x_ts_regs *regs)
-अणु
+static u64 ixp_systime_read(struct ixp46x_ts_regs *regs)
+{
 	u64 ns;
 	u32 lo, hi;
 
-	lo = __raw_पढ़ोl(&regs->sysसमय_lo);
-	hi = __raw_पढ़ोl(&regs->sysसमय_hi);
+	lo = __raw_readl(&regs->systime_lo);
+	hi = __raw_readl(&regs->systime_hi);
 
 	ns = ((u64) hi) << 32;
 	ns |= lo;
 	ns <<= TICKS_NS_SHIFT;
 
-	वापस ns;
-पूर्ण
+	return ns;
+}
 
-अटल व्योम ixp_sysसमय_ग_लिखो(काष्ठा ixp46x_ts_regs *regs, u64 ns)
-अणु
+static void ixp_systime_write(struct ixp46x_ts_regs *regs, u64 ns)
+{
 	u32 hi, lo;
 
 	ns >>= TICKS_NS_SHIFT;
 	hi = ns >> 32;
 	lo = ns & 0xffffffff;
 
-	__raw_ग_लिखोl(lo, &regs->sysसमय_lo);
-	__raw_ग_लिखोl(hi, &regs->sysसमय_hi);
-पूर्ण
+	__raw_writel(lo, &regs->systime_lo);
+	__raw_writel(hi, &regs->systime_hi);
+}
 
 /*
  * Interrupt service routine
  */
 
-अटल irqवापस_t isr(पूर्णांक irq, व्योम *priv)
-अणु
-	काष्ठा ixp_घड़ी *ixp_घड़ी = priv;
-	काष्ठा ixp46x_ts_regs *regs = ixp_घड़ी->regs;
-	काष्ठा ptp_घड़ी_event event;
+static irqreturn_t isr(int irq, void *priv)
+{
+	struct ixp_clock *ixp_clock = priv;
+	struct ixp46x_ts_regs *regs = ixp_clock->regs;
+	struct ptp_clock_event event;
 	u32 ack = 0, lo, hi, val;
 
-	val = __raw_पढ़ोl(&regs->event);
+	val = __raw_readl(&regs->event);
 
-	अगर (val & TSER_SNS) अणु
+	if (val & TSER_SNS) {
 		ack |= TSER_SNS;
-		अगर (ixp_घड़ी->exts0_enabled) अणु
-			hi = __raw_पढ़ोl(&regs->यंत्रs_hi);
-			lo = __raw_पढ़ोl(&regs->यंत्रs_lo);
+		if (ixp_clock->exts0_enabled) {
+			hi = __raw_readl(&regs->asms_hi);
+			lo = __raw_readl(&regs->asms_lo);
 			event.type = PTP_CLOCK_EXTTS;
 			event.index = 0;
-			event.बारtamp = ((u64) hi) << 32;
-			event.बारtamp |= lo;
-			event.बारtamp <<= TICKS_NS_SHIFT;
-			ptp_घड़ी_event(ixp_घड़ी->ptp_घड़ी, &event);
-		पूर्ण
-	पूर्ण
+			event.timestamp = ((u64) hi) << 32;
+			event.timestamp |= lo;
+			event.timestamp <<= TICKS_NS_SHIFT;
+			ptp_clock_event(ixp_clock->ptp_clock, &event);
+		}
+	}
 
-	अगर (val & TSER_SNM) अणु
+	if (val & TSER_SNM) {
 		ack |= TSER_SNM;
-		अगर (ixp_घड़ी->exts1_enabled) अणु
-			hi = __raw_पढ़ोl(&regs->amms_hi);
-			lo = __raw_पढ़ोl(&regs->amms_lo);
+		if (ixp_clock->exts1_enabled) {
+			hi = __raw_readl(&regs->amms_hi);
+			lo = __raw_readl(&regs->amms_lo);
 			event.type = PTP_CLOCK_EXTTS;
 			event.index = 1;
-			event.बारtamp = ((u64) hi) << 32;
-			event.बारtamp |= lo;
-			event.बारtamp <<= TICKS_NS_SHIFT;
-			ptp_घड़ी_event(ixp_घड़ी->ptp_घड़ी, &event);
-		पूर्ण
-	पूर्ण
+			event.timestamp = ((u64) hi) << 32;
+			event.timestamp |= lo;
+			event.timestamp <<= TICKS_NS_SHIFT;
+			ptp_clock_event(ixp_clock->ptp_clock, &event);
+		}
+	}
 
-	अगर (val & TTIPEND)
+	if (val & TTIPEND)
 		ack |= TTIPEND; /* this bit seems to be always set */
 
-	अगर (ack) अणु
-		__raw_ग_लिखोl(ack, &regs->event);
-		वापस IRQ_HANDLED;
-	पूर्ण अन्यथा
-		वापस IRQ_NONE;
-पूर्ण
+	if (ack) {
+		__raw_writel(ack, &regs->event);
+		return IRQ_HANDLED;
+	} else
+		return IRQ_NONE;
+}
 
 /*
- * PTP घड़ी operations
+ * PTP clock operations
  */
 
-अटल पूर्णांक ptp_ixp_adjfreq(काष्ठा ptp_घड़ी_info *ptp, s32 ppb)
-अणु
+static int ptp_ixp_adjfreq(struct ptp_clock_info *ptp, s32 ppb)
+{
 	u64 adj;
-	u32 dअगरf, addend;
-	पूर्णांक neg_adj = 0;
-	काष्ठा ixp_घड़ी *ixp_घड़ी = container_of(ptp, काष्ठा ixp_घड़ी, caps);
-	काष्ठा ixp46x_ts_regs *regs = ixp_घड़ी->regs;
+	u32 diff, addend;
+	int neg_adj = 0;
+	struct ixp_clock *ixp_clock = container_of(ptp, struct ixp_clock, caps);
+	struct ixp46x_ts_regs *regs = ixp_clock->regs;
 
-	अगर (ppb < 0) अणु
+	if (ppb < 0) {
 		neg_adj = 1;
 		ppb = -ppb;
-	पूर्ण
+	}
 	addend = DEFAULT_ADDEND;
 	adj = addend;
 	adj *= ppb;
-	dअगरf = भाग_u64(adj, 1000000000ULL);
+	diff = div_u64(adj, 1000000000ULL);
 
-	addend = neg_adj ? addend - dअगरf : addend + dअगरf;
+	addend = neg_adj ? addend - diff : addend + diff;
 
-	__raw_ग_लिखोl(addend, &regs->addend);
+	__raw_writel(addend, &regs->addend);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ptp_ixp_adjसमय(काष्ठा ptp_घड़ी_info *ptp, s64 delta)
-अणु
+static int ptp_ixp_adjtime(struct ptp_clock_info *ptp, s64 delta)
+{
 	s64 now;
-	अचिन्हित दीर्घ flags;
-	काष्ठा ixp_घड़ी *ixp_घड़ी = container_of(ptp, काष्ठा ixp_घड़ी, caps);
-	काष्ठा ixp46x_ts_regs *regs = ixp_घड़ी->regs;
+	unsigned long flags;
+	struct ixp_clock *ixp_clock = container_of(ptp, struct ixp_clock, caps);
+	struct ixp46x_ts_regs *regs = ixp_clock->regs;
 
-	spin_lock_irqsave(&रेजिस्टर_lock, flags);
+	spin_lock_irqsave(&register_lock, flags);
 
-	now = ixp_sysसमय_पढ़ो(regs);
+	now = ixp_systime_read(regs);
 	now += delta;
-	ixp_sysसमय_ग_लिखो(regs, now);
+	ixp_systime_write(regs, now);
 
-	spin_unlock_irqrestore(&रेजिस्टर_lock, flags);
+	spin_unlock_irqrestore(&register_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ptp_ixp_समय_लो(काष्ठा ptp_घड़ी_info *ptp, काष्ठा बारpec64 *ts)
-अणु
+static int ptp_ixp_gettime(struct ptp_clock_info *ptp, struct timespec64 *ts)
+{
 	u64 ns;
-	अचिन्हित दीर्घ flags;
-	काष्ठा ixp_घड़ी *ixp_घड़ी = container_of(ptp, काष्ठा ixp_घड़ी, caps);
-	काष्ठा ixp46x_ts_regs *regs = ixp_घड़ी->regs;
+	unsigned long flags;
+	struct ixp_clock *ixp_clock = container_of(ptp, struct ixp_clock, caps);
+	struct ixp46x_ts_regs *regs = ixp_clock->regs;
 
-	spin_lock_irqsave(&रेजिस्टर_lock, flags);
+	spin_lock_irqsave(&register_lock, flags);
 
-	ns = ixp_sysसमय_पढ़ो(regs);
+	ns = ixp_systime_read(regs);
 
-	spin_unlock_irqrestore(&रेजिस्टर_lock, flags);
+	spin_unlock_irqrestore(&register_lock, flags);
 
-	*ts = ns_to_बारpec64(ns);
-	वापस 0;
-पूर्ण
+	*ts = ns_to_timespec64(ns);
+	return 0;
+}
 
-अटल पूर्णांक ptp_ixp_समय_रखो(काष्ठा ptp_घड़ी_info *ptp,
-			   स्थिर काष्ठा बारpec64 *ts)
-अणु
+static int ptp_ixp_settime(struct ptp_clock_info *ptp,
+			   const struct timespec64 *ts)
+{
 	u64 ns;
-	अचिन्हित दीर्घ flags;
-	काष्ठा ixp_घड़ी *ixp_घड़ी = container_of(ptp, काष्ठा ixp_घड़ी, caps);
-	काष्ठा ixp46x_ts_regs *regs = ixp_घड़ी->regs;
+	unsigned long flags;
+	struct ixp_clock *ixp_clock = container_of(ptp, struct ixp_clock, caps);
+	struct ixp46x_ts_regs *regs = ixp_clock->regs;
 
-	ns = बारpec64_to_ns(ts);
+	ns = timespec64_to_ns(ts);
 
-	spin_lock_irqsave(&रेजिस्टर_lock, flags);
+	spin_lock_irqsave(&register_lock, flags);
 
-	ixp_sysसमय_ग_लिखो(regs, ns);
+	ixp_systime_write(regs, ns);
 
-	spin_unlock_irqrestore(&रेजिस्टर_lock, flags);
+	spin_unlock_irqrestore(&register_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ptp_ixp_enable(काष्ठा ptp_घड़ी_info *ptp,
-			  काष्ठा ptp_घड़ी_request *rq, पूर्णांक on)
-अणु
-	काष्ठा ixp_घड़ी *ixp_घड़ी = container_of(ptp, काष्ठा ixp_घड़ी, caps);
+static int ptp_ixp_enable(struct ptp_clock_info *ptp,
+			  struct ptp_clock_request *rq, int on)
+{
+	struct ixp_clock *ixp_clock = container_of(ptp, struct ixp_clock, caps);
 
-	चयन (rq->type) अणु
-	हाल PTP_CLK_REQ_EXTTS:
-		चयन (rq->extts.index) अणु
-		हाल 0:
-			ixp_घड़ी->exts0_enabled = on ? 1 : 0;
-			अवरोध;
-		हाल 1:
-			ixp_घड़ी->exts1_enabled = on ? 1 : 0;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-		वापस 0;
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (rq->type) {
+	case PTP_CLK_REQ_EXTTS:
+		switch (rq->extts.index) {
+		case 0:
+			ixp_clock->exts0_enabled = on ? 1 : 0;
+			break;
+		case 1:
+			ixp_clock->exts1_enabled = on ? 1 : 0;
+			break;
+		default:
+			return -EINVAL;
+		}
+		return 0;
+	default:
+		break;
+	}
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल स्थिर काष्ठा ptp_घड़ी_info ptp_ixp_caps = अणु
+static const struct ptp_clock_info ptp_ixp_caps = {
 	.owner		= THIS_MODULE,
 	.name		= "IXP46X timer",
 	.max_adj	= 66666655,
@@ -233,97 +232,97 @@ DEFINE_SPINLOCK(रेजिस्टर_lock);
 	.n_pins		= 0,
 	.pps		= 0,
 	.adjfreq	= ptp_ixp_adjfreq,
-	.adjसमय	= ptp_ixp_adjसमय,
-	.समय_लो64	= ptp_ixp_समय_लो,
-	.समय_रखो64	= ptp_ixp_समय_रखो,
+	.adjtime	= ptp_ixp_adjtime,
+	.gettime64	= ptp_ixp_gettime,
+	.settime64	= ptp_ixp_settime,
 	.enable		= ptp_ixp_enable,
-पूर्ण;
+};
 
 /* module operations */
 
-अटल काष्ठा ixp_घड़ी ixp_घड़ी;
+static struct ixp_clock ixp_clock;
 
-अटल पूर्णांक setup_पूर्णांकerrupt(पूर्णांक gpio)
-अणु
-	पूर्णांक irq;
-	पूर्णांक err;
+static int setup_interrupt(int gpio)
+{
+	int irq;
+	int err;
 
 	err = gpio_request(gpio, "ixp4-ptp");
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = gpio_direction_input(gpio);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	irq = gpio_to_irq(gpio);
-	अगर (irq < 0)
-		वापस irq;
+	if (irq < 0)
+		return irq;
 
 	err = irq_set_irq_type(irq, IRQF_TRIGGER_FALLING);
-	अगर (err) अणु
+	if (err) {
 		pr_err("cannot set trigger type for irq %d\n", irq);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	err = request_irq(irq, isr, 0, DRIVER, &ixp_घड़ी);
-	अगर (err) अणु
+	err = request_irq(irq, isr, 0, DRIVER, &ixp_clock);
+	if (err) {
 		pr_err("request_irq failed for irq %d\n", irq);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-अटल व्योम __निकास ptp_ixp_निकास(व्योम)
-अणु
-	मुक्त_irq(MASTER_IRQ, &ixp_घड़ी);
-	मुक्त_irq(SLAVE_IRQ, &ixp_घड़ी);
+static void __exit ptp_ixp_exit(void)
+{
+	free_irq(MASTER_IRQ, &ixp_clock);
+	free_irq(SLAVE_IRQ, &ixp_clock);
 	ixp46x_phc_index = -1;
-	ptp_घड़ी_unरेजिस्टर(ixp_घड़ी.ptp_घड़ी);
-पूर्ण
+	ptp_clock_unregister(ixp_clock.ptp_clock);
+}
 
-अटल पूर्णांक __init ptp_ixp_init(व्योम)
-अणु
-	अगर (!cpu_is_ixp46x())
-		वापस -ENODEV;
+static int __init ptp_ixp_init(void)
+{
+	if (!cpu_is_ixp46x())
+		return -ENODEV;
 
-	ixp_घड़ी.regs =
-		(काष्ठा ixp46x_ts_regs __iomem *) IXP4XX_TIMESYNC_BASE_VIRT;
+	ixp_clock.regs =
+		(struct ixp46x_ts_regs __iomem *) IXP4XX_TIMESYNC_BASE_VIRT;
 
-	ixp_घड़ी.caps = ptp_ixp_caps;
+	ixp_clock.caps = ptp_ixp_caps;
 
-	ixp_घड़ी.ptp_घड़ी = ptp_घड़ी_रेजिस्टर(&ixp_घड़ी.caps, शून्य);
+	ixp_clock.ptp_clock = ptp_clock_register(&ixp_clock.caps, NULL);
 
-	अगर (IS_ERR(ixp_घड़ी.ptp_घड़ी))
-		वापस PTR_ERR(ixp_घड़ी.ptp_घड़ी);
+	if (IS_ERR(ixp_clock.ptp_clock))
+		return PTR_ERR(ixp_clock.ptp_clock);
 
-	ixp46x_phc_index = ptp_घड़ी_index(ixp_घड़ी.ptp_घड़ी);
+	ixp46x_phc_index = ptp_clock_index(ixp_clock.ptp_clock);
 
-	__raw_ग_लिखोl(DEFAULT_ADDEND, &ixp_घड़ी.regs->addend);
-	__raw_ग_लिखोl(1, &ixp_घड़ी.regs->trgt_lo);
-	__raw_ग_लिखोl(0, &ixp_घड़ी.regs->trgt_hi);
-	__raw_ग_लिखोl(TTIPEND, &ixp_घड़ी.regs->event);
+	__raw_writel(DEFAULT_ADDEND, &ixp_clock.regs->addend);
+	__raw_writel(1, &ixp_clock.regs->trgt_lo);
+	__raw_writel(0, &ixp_clock.regs->trgt_hi);
+	__raw_writel(TTIPEND, &ixp_clock.regs->event);
 
-	अगर (MASTER_IRQ != setup_पूर्णांकerrupt(MASTER_GPIO)) अणु
+	if (MASTER_IRQ != setup_interrupt(MASTER_GPIO)) {
 		pr_err("failed to setup gpio %d as irq\n", MASTER_GPIO);
-		जाओ no_master;
-	पूर्ण
-	अगर (SLAVE_IRQ != setup_पूर्णांकerrupt(SLAVE_GPIO)) अणु
+		goto no_master;
+	}
+	if (SLAVE_IRQ != setup_interrupt(SLAVE_GPIO)) {
 		pr_err("failed to setup gpio %d as irq\n", SLAVE_GPIO);
-		जाओ no_slave;
-	पूर्ण
+		goto no_slave;
+	}
 
-	वापस 0;
+	return 0;
 no_slave:
-	मुक्त_irq(MASTER_IRQ, &ixp_घड़ी);
+	free_irq(MASTER_IRQ, &ixp_clock);
 no_master:
-	ptp_घड़ी_unरेजिस्टर(ixp_घड़ी.ptp_घड़ी);
-	वापस -ENODEV;
-पूर्ण
+	ptp_clock_unregister(ixp_clock.ptp_clock);
+	return -ENODEV;
+}
 
 module_init(ptp_ixp_init);
-module_निकास(ptp_ixp_निकास);
+module_exit(ptp_ixp_exit);
 
 MODULE_AUTHOR("Richard Cochran <richardcochran@gmail.com>");
 MODULE_DESCRIPTION("PTP clock using the IXP46X timer");

@@ -1,18 +1,17 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: LGPL-2.1
-// Copyright (C) 2018, 2019 Red Hat Inc, Arnalकरो Carvalho de Melo <acme@redhat.com>
+// SPDX-License-Identifier: LGPL-2.1
+// Copyright (C) 2018, 2019 Red Hat Inc, Arnaldo Carvalho de Melo <acme@redhat.com>
 //
-#अगर_अघोषित HAVE_GET_CURRENT_सूची_NAME
-#समावेश "get_current_dir_name.h"
-#समावेश <unistd.h>
-#समावेश <मानककोष.स>
+#ifndef HAVE_GET_CURRENT_DIR_NAME
+#include "get_current_dir_name.h"
+#include <unistd.h>
+#include <stdlib.h>
 
 /* Android's 'bionic' library, for one, doesn't have this */
 
-अक्षर *get_current_dir_name(व्योम)
-अणु
-	अक्षर pwd[PATH_MAX];
+char *get_current_dir_name(void)
+{
+	char pwd[PATH_MAX];
 
-	वापस अ_लोwd(pwd, माप(pwd)) == शून्य ? शून्य : strdup(pwd);
-पूर्ण
-#पूर्ण_अगर // HAVE_GET_CURRENT_सूची_NAME
+	return getcwd(pwd, sizeof(pwd)) == NULL ? NULL : strdup(pwd);
+}
+#endif // HAVE_GET_CURRENT_DIR_NAME

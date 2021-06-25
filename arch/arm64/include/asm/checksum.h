@@ -1,50 +1,49 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2016 ARM Ltd.
  */
-#अगर_अघोषित __ASM_CHECKSUM_H
-#घोषणा __ASM_CHECKSUM_H
+#ifndef __ASM_CHECKSUM_H
+#define __ASM_CHECKSUM_H
 
-#समावेश <linux/in6.h>
+#include <linux/in6.h>
 
-#घोषणा _HAVE_ARCH_IPV6_CSUM
-__sum16 csum_ipv6_magic(स्थिर काष्ठा in6_addr *saddr,
-			स्थिर काष्ठा in6_addr *daddr,
+#define _HAVE_ARCH_IPV6_CSUM
+__sum16 csum_ipv6_magic(const struct in6_addr *saddr,
+			const struct in6_addr *daddr,
 			__u32 len, __u8 proto, __wsum sum);
 
-अटल अंतरभूत __sum16 csum_fold(__wsum csum)
-अणु
-	u32 sum = (__क्रमce u32)csum;
+static inline __sum16 csum_fold(__wsum csum)
+{
+	u32 sum = (__force u32)csum;
 	sum += (sum >> 16) | (sum << 16);
-	वापस ~(__क्रमce __sum16)(sum >> 16);
-पूर्ण
-#घोषणा csum_fold csum_fold
+	return ~(__force __sum16)(sum >> 16);
+}
+#define csum_fold csum_fold
 
-अटल अंतरभूत __sum16 ip_fast_csum(स्थिर व्योम *iph, अचिन्हित पूर्णांक ihl)
-अणु
-	__uपूर्णांक128_t पंचांगp;
+static inline __sum16 ip_fast_csum(const void *iph, unsigned int ihl)
+{
+	__uint128_t tmp;
 	u64 sum;
-	पूर्णांक n = ihl; /* we want it चिन्हित */
+	int n = ihl; /* we want it signed */
 
-	पंचांगp = *(स्थिर __uपूर्णांक128_t *)iph;
+	tmp = *(const __uint128_t *)iph;
 	iph += 16;
 	n -= 4;
-	पंचांगp += ((पंचांगp >> 64) | (पंचांगp << 64));
-	sum = पंचांगp >> 64;
-	करो अणु
-		sum += *(स्थिर u32 *)iph;
+	tmp += ((tmp >> 64) | (tmp << 64));
+	sum = tmp >> 64;
+	do {
+		sum += *(const u32 *)iph;
 		iph += 4;
-	पूर्ण जबतक (--n > 0);
+	} while (--n > 0);
 
 	sum += ((sum >> 32) | (sum << 32));
-	वापस csum_fold((__क्रमce __wsum)(sum >> 32));
-पूर्ण
-#घोषणा ip_fast_csum ip_fast_csum
+	return csum_fold((__force __wsum)(sum >> 32));
+}
+#define ip_fast_csum ip_fast_csum
 
-बाह्य अचिन्हित पूर्णांक करो_csum(स्थिर अचिन्हित अक्षर *buff, पूर्णांक len);
-#घोषणा करो_csum करो_csum
+extern unsigned int do_csum(const unsigned char *buff, int len);
+#define do_csum do_csum
 
-#समावेश <यंत्र-generic/checksum.h>
+#include <asm-generic/checksum.h>
 
-#पूर्ण_अगर	/* __ASM_CHECKSUM_H */
+#endif	/* __ASM_CHECKSUM_H */

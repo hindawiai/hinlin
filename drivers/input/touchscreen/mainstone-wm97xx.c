@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * मुख्यstone-wm97xx.c  --  Mainstone Continuous Touch screen driver क्रम
+ * mainstone-wm97xx.c  --  Mainstone Continuous Touch screen driver for
  *                         Wolfson WM97xx AC97 Codecs.
  *
  * Copyright 2004, 2007 Wolfson Microelectronics PLC.
@@ -18,174 +17,174 @@
  *       - processors supported:- Intel XScale PXA25x, PXA26x, PXA27x
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/wm97xx.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/gpपन.स>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/kernel.h>
+#include <linux/delay.h>
+#include <linux/irq.h>
+#include <linux/interrupt.h>
+#include <linux/wm97xx.h>
+#include <linux/io.h>
+#include <linux/gpio.h>
 
-#समावेश <mach/regs-ac97.h>
+#include <mach/regs-ac97.h>
 
-#समावेश <यंत्र/mach-types.h>
+#include <asm/mach-types.h>
 
-काष्ठा continuous अणु
+struct continuous {
 	u16 id;    /* codec id */
 	u8 code;   /* continuous code */
-	u8 पढ़ोs;  /* number of coord पढ़ोs per पढ़ो cycle */
+	u8 reads;  /* number of coord reads per read cycle */
 	u32 speed; /* number of coords per second */
-पूर्ण;
+};
 
-#घोषणा WM_READS(sp) ((sp / HZ) + 1)
+#define WM_READS(sp) ((sp / HZ) + 1)
 
-अटल स्थिर काष्ठा continuous cinfo[] = अणु
-	अणुWM9705_ID2, 0, WM_READS(94), 94पूर्ण,
-	अणुWM9705_ID2, 1, WM_READS(188), 188पूर्ण,
-	अणुWM9705_ID2, 2, WM_READS(375), 375पूर्ण,
-	अणुWM9705_ID2, 3, WM_READS(750), 750पूर्ण,
-	अणुWM9712_ID2, 0, WM_READS(94), 94पूर्ण,
-	अणुWM9712_ID2, 1, WM_READS(188), 188पूर्ण,
-	अणुWM9712_ID2, 2, WM_READS(375), 375पूर्ण,
-	अणुWM9712_ID2, 3, WM_READS(750), 750पूर्ण,
-	अणुWM9713_ID2, 0, WM_READS(94), 94पूर्ण,
-	अणुWM9713_ID2, 1, WM_READS(120), 120पूर्ण,
-	अणुWM9713_ID2, 2, WM_READS(154), 154पूर्ण,
-	अणुWM9713_ID2, 3, WM_READS(188), 188पूर्ण,
-पूर्ण;
+static const struct continuous cinfo[] = {
+	{WM9705_ID2, 0, WM_READS(94), 94},
+	{WM9705_ID2, 1, WM_READS(188), 188},
+	{WM9705_ID2, 2, WM_READS(375), 375},
+	{WM9705_ID2, 3, WM_READS(750), 750},
+	{WM9712_ID2, 0, WM_READS(94), 94},
+	{WM9712_ID2, 1, WM_READS(188), 188},
+	{WM9712_ID2, 2, WM_READS(375), 375},
+	{WM9712_ID2, 3, WM_READS(750), 750},
+	{WM9713_ID2, 0, WM_READS(94), 94},
+	{WM9713_ID2, 1, WM_READS(120), 120},
+	{WM9713_ID2, 2, WM_READS(154), 154},
+	{WM9713_ID2, 3, WM_READS(188), 188},
+};
 
 /* continuous speed index */
-अटल पूर्णांक sp_idx;
-अटल u16 last, tries;
-अटल पूर्णांक irq;
+static int sp_idx;
+static u16 last, tries;
+static int irq;
 
 /*
  * Pen sampling frequency (Hz) in continuous mode.
  */
-अटल पूर्णांक cont_rate = 200;
-module_param(cont_rate, पूर्णांक, 0);
+static int cont_rate = 200;
+module_param(cont_rate, int, 0);
 MODULE_PARM_DESC(cont_rate, "Sampling rate in continuous mode (Hz)");
 
 /*
- * Pen करोwn detection.
+ * Pen down detection.
  *
- * This driver can either poll or use an पूर्णांकerrupt to indicate a pen करोwn
+ * This driver can either poll or use an interrupt to indicate a pen down
  * event. If the irq request fails then it will fall back to polling mode.
  */
-अटल पूर्णांक pen_पूर्णांक;
-module_param(pen_पूर्णांक, पूर्णांक, 0);
-MODULE_PARM_DESC(pen_पूर्णांक, "Pen down detection (1 = interrupt, 0 = polling)");
+static int pen_int;
+module_param(pen_int, int, 0);
+MODULE_PARM_DESC(pen_int, "Pen down detection (1 = interrupt, 0 = polling)");
 
 /*
- * Pressure पढ़ोback.
+ * Pressure readback.
  *
- * Set to 1 to पढ़ो back pen करोwn pressure
+ * Set to 1 to read back pen down pressure
  */
-अटल पूर्णांक pressure;
-module_param(pressure, पूर्णांक, 0);
+static int pressure;
+module_param(pressure, int, 0);
 MODULE_PARM_DESC(pressure, "Pressure readback (1 = pressure, 0 = no pressure)");
 
 /*
  * AC97 touch data slot.
  *
- * Touch screen पढ़ोback data ac97 slot
+ * Touch screen readback data ac97 slot
  */
-अटल पूर्णांक ac97_touch_slot = 5;
-module_param(ac97_touch_slot, पूर्णांक, 0);
+static int ac97_touch_slot = 5;
+module_param(ac97_touch_slot, int, 0);
 MODULE_PARM_DESC(ac97_touch_slot, "Touch screen data slot AC97 number");
 
 
 /* flush AC97 slot 5 FIFO on pxa machines */
-#अगर_घोषित CONFIG_PXA27x
-अटल व्योम wm97xx_acc_pen_up(काष्ठा wm97xx *wm)
-अणु
-	schedule_समयout_unपूर्णांकerruptible(1);
+#ifdef CONFIG_PXA27x
+static void wm97xx_acc_pen_up(struct wm97xx *wm)
+{
+	schedule_timeout_uninterruptible(1);
 
-	जबतक (MISR & (1 << 2))
+	while (MISR & (1 << 2))
 		MODR;
-पूर्ण
-#अन्यथा
-अटल व्योम wm97xx_acc_pen_up(काष्ठा wm97xx *wm)
-अणु
-	अचिन्हित पूर्णांक count;
+}
+#else
+static void wm97xx_acc_pen_up(struct wm97xx *wm)
+{
+	unsigned int count;
 
-	schedule_समयout_unपूर्णांकerruptible(1);
+	schedule_timeout_uninterruptible(1);
 
-	क्रम (count = 0; count < 16; count++)
+	for (count = 0; count < 16; count++)
 		MODR;
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल पूर्णांक wm97xx_acc_pen_करोwn(काष्ठा wm97xx *wm)
-अणु
+static int wm97xx_acc_pen_down(struct wm97xx *wm)
+{
 	u16 x, y, p = 0x100 | WM97XX_ADCSEL_PRES;
-	पूर्णांक पढ़ोs = 0;
+	int reads = 0;
 
-	/* When the AC97 queue has been drained we need to allow समय
+	/* When the AC97 queue has been drained we need to allow time
 	 * to buffer up samples otherwise we end up spinning polling
-	 * क्रम samples.  The controller can't have a suitably low
-	 * threshold set to use the notअगरications it gives.
+	 * for samples.  The controller can't have a suitably low
+	 * threshold set to use the notifications it gives.
 	 */
-	schedule_समयout_unपूर्णांकerruptible(1);
+	schedule_timeout_uninterruptible(1);
 
-	अगर (tries > 5) अणु
+	if (tries > 5) {
 		tries = 0;
-		वापस RC_PENUP;
-	पूर्ण
+		return RC_PENUP;
+	}
 
 	x = MODR;
-	अगर (x == last) अणु
+	if (x == last) {
 		tries++;
-		वापस RC_AGAIN;
-	पूर्ण
+		return RC_AGAIN;
+	}
 	last = x;
-	करो अणु
-		अगर (पढ़ोs)
+	do {
+		if (reads)
 			x = MODR;
 		y = MODR;
-		अगर (pressure)
+		if (pressure)
 			p = MODR;
 
 		dev_dbg(wm->dev, "Raw coordinates: x=%x, y=%x, p=%x\n",
 			x, y, p);
 
 		/* are samples valid */
-		अगर ((x & WM97XX_ADCSEL_MASK) != WM97XX_ADCSEL_X ||
+		if ((x & WM97XX_ADCSEL_MASK) != WM97XX_ADCSEL_X ||
 		    (y & WM97XX_ADCSEL_MASK) != WM97XX_ADCSEL_Y ||
 		    (p & WM97XX_ADCSEL_MASK) != WM97XX_ADCSEL_PRES)
-			जाओ up;
+			goto up;
 
 		/* coordinate is good */
 		tries = 0;
-		input_report_असल(wm->input_dev, ABS_X, x & 0xfff);
-		input_report_असल(wm->input_dev, ABS_Y, y & 0xfff);
-		input_report_असल(wm->input_dev, ABS_PRESSURE, p & 0xfff);
+		input_report_abs(wm->input_dev, ABS_X, x & 0xfff);
+		input_report_abs(wm->input_dev, ABS_Y, y & 0xfff);
+		input_report_abs(wm->input_dev, ABS_PRESSURE, p & 0xfff);
 		input_report_key(wm->input_dev, BTN_TOUCH, (p != 0));
 		input_sync(wm->input_dev);
-		पढ़ोs++;
-	पूर्ण जबतक (पढ़ोs < cinfo[sp_idx].पढ़ोs);
+		reads++;
+	} while (reads < cinfo[sp_idx].reads);
 up:
-	वापस RC_PENDOWN | RC_AGAIN;
-पूर्ण
+	return RC_PENDOWN | RC_AGAIN;
+}
 
-अटल पूर्णांक wm97xx_acc_startup(काष्ठा wm97xx *wm)
-अणु
-	पूर्णांक idx = 0, ret = 0;
+static int wm97xx_acc_startup(struct wm97xx *wm)
+{
+	int idx = 0, ret = 0;
 
 	/* check we have a codec */
-	अगर (wm->ac97 == शून्य)
-		वापस -ENODEV;
+	if (wm->ac97 == NULL)
+		return -ENODEV;
 
 	/* Go you big red fire engine */
-	क्रम (idx = 0; idx < ARRAY_SIZE(cinfo); idx++) अणु
-		अगर (wm->id != cinfo[idx].id)
-			जारी;
+	for (idx = 0; idx < ARRAY_SIZE(cinfo); idx++) {
+		if (wm->id != cinfo[idx].id)
+			continue;
 		sp_idx = idx;
-		अगर (cont_rate <= cinfo[idx].speed)
-			अवरोध;
-	पूर्ण
+		if (cont_rate <= cinfo[idx].speed)
+			break;
+	}
 	wm->acc_rate = cinfo[sp_idx].code;
 	wm->acc_slot = ac97_touch_slot;
 	dev_info(wm->dev,
@@ -193,39 +192,39 @@ up:
 		 cinfo[sp_idx].speed);
 
 	/* IRQ driven touchscreen is used on Palm hardware */
-	अगर (machine_is_palmt5() || machine_is_palmtx() || machine_is_palmld()) अणु
-		pen_पूर्णांक = 1;
+	if (machine_is_palmt5() || machine_is_palmtx() || machine_is_palmld()) {
+		pen_int = 1;
 		irq = 27;
-		/* There is some obscure mutant of WM9712 पूर्णांकerbred with WM9713
+		/* There is some obscure mutant of WM9712 interbred with WM9713
 		 * used on Palm HW */
 		wm->variant = WM97xx_WM1613;
-	पूर्ण अन्यथा अगर (machine_is_मुख्यstone() && pen_पूर्णांक)
+	} else if (machine_is_mainstone() && pen_int)
 		irq = 4;
 
-	अगर (irq) अणु
+	if (irq) {
 		ret = gpio_request(irq, "Touchscreen IRQ");
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
 		ret = gpio_direction_input(irq);
-		अगर (ret) अणु
-			gpio_मुक्त(irq);
-			जाओ out;
-		पूर्ण
+		if (ret) {
+			gpio_free(irq);
+			goto out;
+		}
 
 		wm->pen_irq = gpio_to_irq(irq);
 		irq_set_irq_type(wm->pen_irq, IRQ_TYPE_EDGE_BOTH);
-	पूर्ण अन्यथा /* pen irq not supported */
-		pen_पूर्णांक = 0;
+	} else /* pen irq not supported */
+		pen_int = 0;
 
-	/* codec specअगरic irq config */
-	अगर (pen_पूर्णांक) अणु
-		चयन (wm->id) अणु
-		हाल WM9705_ID2:
-			अवरोध;
-		हाल WM9712_ID2:
-		हाल WM9713_ID2:
-			/* use PEN_DOWN GPIO 13 to निश्चित IRQ on GPIO line 2 */
+	/* codec specific irq config */
+	if (pen_int) {
+		switch (wm->id) {
+		case WM9705_ID2:
+			break;
+		case WM9712_ID2:
+		case WM9713_ID2:
+			/* use PEN_DOWN GPIO 13 to assert IRQ on GPIO line 2 */
 			wm97xx_config_gpio(wm, WM97XX_GPIO_13, WM97XX_GPIO_IN,
 					   WM97XX_GPIO_POL_HIGH,
 					   WM97XX_GPIO_STICKY,
@@ -234,72 +233,72 @@ up:
 					   WM97XX_GPIO_POL_HIGH,
 					   WM97XX_GPIO_NOTSTICKY,
 					   WM97XX_GPIO_NOWAKE);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_err(wm->dev,
 				"pen down irq not supported on this device\n");
-			pen_पूर्णांक = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			pen_int = 0;
+			break;
+		}
+	}
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम wm97xx_acc_shutकरोwn(काष्ठा wm97xx *wm)
-अणु
-	/* codec specअगरic deconfig */
-	अगर (pen_पूर्णांक) अणु
-		अगर (irq)
-			gpio_मुक्त(irq);
+static void wm97xx_acc_shutdown(struct wm97xx *wm)
+{
+	/* codec specific deconfig */
+	if (pen_int) {
+		if (irq)
+			gpio_free(irq);
 		wm->pen_irq = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम wm97xx_irq_enable(काष्ठा wm97xx *wm, पूर्णांक enable)
-अणु
-	अगर (enable)
+static void wm97xx_irq_enable(struct wm97xx *wm, int enable)
+{
+	if (enable)
 		enable_irq(wm->pen_irq);
-	अन्यथा
+	else
 		disable_irq_nosync(wm->pen_irq);
-पूर्ण
+}
 
-अटल काष्ठा wm97xx_mach_ops मुख्यstone_mach_ops = अणु
+static struct wm97xx_mach_ops mainstone_mach_ops = {
 	.acc_enabled = 1,
 	.acc_pen_up = wm97xx_acc_pen_up,
-	.acc_pen_करोwn = wm97xx_acc_pen_करोwn,
+	.acc_pen_down = wm97xx_acc_pen_down,
 	.acc_startup = wm97xx_acc_startup,
-	.acc_shutकरोwn = wm97xx_acc_shutकरोwn,
+	.acc_shutdown = wm97xx_acc_shutdown,
 	.irq_enable = wm97xx_irq_enable,
 	.irq_gpio = WM97XX_GPIO_2,
-पूर्ण;
+};
 
-अटल पूर्णांक मुख्यstone_wm97xx_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा wm97xx *wm = platक्रमm_get_drvdata(pdev);
+static int mainstone_wm97xx_probe(struct platform_device *pdev)
+{
+	struct wm97xx *wm = platform_get_drvdata(pdev);
 
-	वापस wm97xx_रेजिस्टर_mach_ops(wm, &मुख्यstone_mach_ops);
-पूर्ण
+	return wm97xx_register_mach_ops(wm, &mainstone_mach_ops);
+}
 
-अटल पूर्णांक मुख्यstone_wm97xx_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा wm97xx *wm = platक्रमm_get_drvdata(pdev);
+static int mainstone_wm97xx_remove(struct platform_device *pdev)
+{
+	struct wm97xx *wm = platform_get_drvdata(pdev);
 
-	wm97xx_unरेजिस्टर_mach_ops(wm);
-	वापस 0;
-पूर्ण
+	wm97xx_unregister_mach_ops(wm);
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver मुख्यstone_wm97xx_driver = अणु
-	.probe = मुख्यstone_wm97xx_probe,
-	.हटाओ = मुख्यstone_wm97xx_हटाओ,
-	.driver = अणु
+static struct platform_driver mainstone_wm97xx_driver = {
+	.probe = mainstone_wm97xx_probe,
+	.remove = mainstone_wm97xx_remove,
+	.driver = {
 		.name = "wm97xx-touch",
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(मुख्यstone_wm97xx_driver);
+	},
+};
+module_platform_driver(mainstone_wm97xx_driver);
 
-/* Module inक्रमmation */
+/* Module information */
 MODULE_AUTHOR("Liam Girdwood <lrg@slimlogic.co.uk>");
 MODULE_DESCRIPTION("wm97xx continuous touch driver for mainstone");
 MODULE_LICENSE("GPL");

@@ -1,40 +1,39 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: LGPL-2.1
+// SPDX-License-Identifier: LGPL-2.1
 /*
  * trace/beauty/x86_msr.c
  *
- *  Copyright (C) 2019, Red Hat Inc, Arnalकरो Carvalho de Melo <acme@redhat.com>
+ *  Copyright (C) 2019, Red Hat Inc, Arnaldo Carvalho de Melo <acme@redhat.com>
  */
 
-#समावेश "trace/beauty/beauty.h"
+#include "trace/beauty/beauty.h"
 
-#समावेश "trace/beauty/generated/x86_arch_MSRs_array.c"
+#include "trace/beauty/generated/x86_arch_MSRs_array.c"
 
-अटल DEFINE_STRARRAY(x86_MSRs, "MSR_");
-अटल DEFINE_STRARRAY_OFFSET(x86_64_specअगरic_MSRs, "MSR_", x86_64_specअगरic_MSRs_offset);
-अटल DEFINE_STRARRAY_OFFSET(x86_AMD_V_KVM_MSRs, "MSR_", x86_AMD_V_KVM_MSRs_offset);
+static DEFINE_STRARRAY(x86_MSRs, "MSR_");
+static DEFINE_STRARRAY_OFFSET(x86_64_specific_MSRs, "MSR_", x86_64_specific_MSRs_offset);
+static DEFINE_STRARRAY_OFFSET(x86_AMD_V_KVM_MSRs, "MSR_", x86_AMD_V_KVM_MSRs_offset);
 
-अटल काष्ठा strarray *x86_MSRs_tables[] = अणु
+static struct strarray *x86_MSRs_tables[] = {
 	&strarray__x86_MSRs,
-	&strarray__x86_64_specअगरic_MSRs,
+	&strarray__x86_64_specific_MSRs,
 	&strarray__x86_AMD_V_KVM_MSRs,
-पूर्ण;
+};
 
-अटल DEFINE_STRARRAYS(x86_MSRs_tables);
+static DEFINE_STRARRAYS(x86_MSRs_tables);
 
-अटल माप_प्रकार x86_MSR__scnम_लिखो(अचिन्हित दीर्घ msr, अक्षर *bf, माप_प्रकार size, bool show_prefix)
-अणु
-	वापस strarrays__scnम_लिखो(&strarrays__x86_MSRs_tables, bf, size, "%#x", show_prefix, msr);
-पूर्ण
+static size_t x86_MSR__scnprintf(unsigned long msr, char *bf, size_t size, bool show_prefix)
+{
+	return strarrays__scnprintf(&strarrays__x86_MSRs_tables, bf, size, "%#x", show_prefix, msr);
+}
 
-माप_प्रकार syscall_arg__scnम_लिखो_x86_MSR(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg)
-अणु
-	अचिन्हित दीर्घ flags = arg->val;
+size_t syscall_arg__scnprintf_x86_MSR(char *bf, size_t size, struct syscall_arg *arg)
+{
+	unsigned long flags = arg->val;
 
-	वापस x86_MSR__scnम_लिखो(flags, bf, size, arg->show_string_prefix);
-पूर्ण
+	return x86_MSR__scnprintf(flags, bf, size, arg->show_string_prefix);
+}
 
-bool syscall_arg__म_से_अदीर्घ_x86_MSR(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg __maybe_unused, u64 *ret)
-अणु
-	वापस strarrays__म_से_अदीर्घ(&strarrays__x86_MSRs_tables, bf, size, ret);
-पूर्ण
+bool syscall_arg__strtoul_x86_MSR(char *bf, size_t size, struct syscall_arg *arg __maybe_unused, u64 *ret)
+{
+	return strarrays__strtoul(&strarrays__x86_MSRs_tables, bf, size, ret);
+}

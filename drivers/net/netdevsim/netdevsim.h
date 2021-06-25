@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2017 Netronome Systems, Inc.
  *
@@ -14,77 +13,77 @@
  * THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
  */
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/device.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/u64_stats_sync.h>
-#समावेश <net/devlink.h>
-#समावेश <net/udp_tunnel.h>
-#समावेश <net/xdp.h>
+#include <linux/debugfs.h>
+#include <linux/device.h>
+#include <linux/ethtool.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/netdevice.h>
+#include <linux/u64_stats_sync.h>
+#include <net/devlink.h>
+#include <net/udp_tunnel.h>
+#include <net/xdp.h>
 
-#घोषणा DRV_NAME	"netdevsim"
+#define DRV_NAME	"netdevsim"
 
-#घोषणा NSIM_XDP_MAX_MTU	4000
+#define NSIM_XDP_MAX_MTU	4000
 
-#घोषणा NSIM_EA(extack, msg)	NL_SET_ERR_MSG_MOD((extack), msg)
+#define NSIM_EA(extack, msg)	NL_SET_ERR_MSG_MOD((extack), msg)
 
-#घोषणा NSIM_IPSEC_MAX_SA_COUNT		33
-#घोषणा NSIM_IPSEC_VALID		BIT(31)
-#घोषणा NSIM_UDP_TUNNEL_N_PORTS		4
+#define NSIM_IPSEC_MAX_SA_COUNT		33
+#define NSIM_IPSEC_VALID		BIT(31)
+#define NSIM_UDP_TUNNEL_N_PORTS		4
 
-काष्ठा nsim_sa अणु
-	काष्ठा xfrm_state *xs;
+struct nsim_sa {
+	struct xfrm_state *xs;
 	__be32 ipaddr[4];
 	u32 key[4];
 	u32 salt;
 	bool used;
 	bool crypt;
 	bool rx;
-पूर्ण;
+};
 
-काष्ठा nsim_ipsec अणु
-	काष्ठा nsim_sa sa[NSIM_IPSEC_MAX_SA_COUNT];
-	काष्ठा dentry *pfile;
+struct nsim_ipsec {
+	struct nsim_sa sa[NSIM_IPSEC_MAX_SA_COUNT];
+	struct dentry *pfile;
 	u32 count;
 	u32 tx;
 	u32 ok;
-पूर्ण;
+};
 
-काष्ठा nsim_ethtool_छोड़ोparam अणु
+struct nsim_ethtool_pauseparam {
 	bool rx;
 	bool tx;
 	bool report_stats_rx;
 	bool report_stats_tx;
-पूर्ण;
+};
 
-काष्ठा nsim_ethtool अणु
+struct nsim_ethtool {
 	u32 get_err;
 	u32 set_err;
-	काष्ठा nsim_ethtool_छोड़ोparam छोड़ोparam;
-	काष्ठा ethtool_coalesce coalesce;
-	काष्ठा ethtool_ringparam ring;
-	काष्ठा ethtool_fecparam fec;
-पूर्ण;
+	struct nsim_ethtool_pauseparam pauseparam;
+	struct ethtool_coalesce coalesce;
+	struct ethtool_ringparam ring;
+	struct ethtool_fecparam fec;
+};
 
-काष्ठा netdevsim अणु
-	काष्ठा net_device *netdev;
-	काष्ठा nsim_dev *nsim_dev;
-	काष्ठा nsim_dev_port *nsim_dev_port;
+struct netdevsim {
+	struct net_device *netdev;
+	struct nsim_dev *nsim_dev;
+	struct nsim_dev_port *nsim_dev_port;
 
 	u64 tx_packets;
 	u64 tx_bytes;
-	काष्ठा u64_stats_sync syncp;
+	struct u64_stats_sync syncp;
 
-	काष्ठा nsim_bus_dev *nsim_bus_dev;
+	struct nsim_bus_dev *nsim_bus_dev;
 
-	काष्ठा bpf_prog	*bpf_offloaded;
+	struct bpf_prog	*bpf_offloaded;
 	u32 bpf_offloaded_id;
 
-	काष्ठा xdp_attachment_info xdp;
-	काष्ठा xdp_attachment_info xdp_hw;
+	struct xdp_attachment_info xdp;
+	struct xdp_attachment_info xdp_hw;
 
 	bool bpf_tc_accept;
 	bool bpf_tc_non_bound_accept;
@@ -92,76 +91,76 @@
 	bool bpf_xdpoffload_accept;
 
 	bool bpf_map_accept;
-	काष्ठा nsim_ipsec ipsec;
-	काष्ठा अणु
+	struct nsim_ipsec ipsec;
+	struct {
 		u32 inject_error;
 		u32 sleep;
 		u32 __ports[2][NSIM_UDP_TUNNEL_N_PORTS];
 		u32 (*ports)[NSIM_UDP_TUNNEL_N_PORTS];
-		काष्ठा debugfs_u32_array dfs_ports[2];
-	पूर्ण udp_ports;
+		struct debugfs_u32_array dfs_ports[2];
+	} udp_ports;
 
-	काष्ठा nsim_ethtool ethtool;
-पूर्ण;
+	struct nsim_ethtool ethtool;
+};
 
-काष्ठा netdevsim *
-nsim_create(काष्ठा nsim_dev *nsim_dev, काष्ठा nsim_dev_port *nsim_dev_port);
-व्योम nsim_destroy(काष्ठा netdevsim *ns);
+struct netdevsim *
+nsim_create(struct nsim_dev *nsim_dev, struct nsim_dev_port *nsim_dev_port);
+void nsim_destroy(struct netdevsim *ns);
 
-व्योम nsim_ethtool_init(काष्ठा netdevsim *ns);
+void nsim_ethtool_init(struct netdevsim *ns);
 
-व्योम nsim_udp_tunnels_debugfs_create(काष्ठा nsim_dev *nsim_dev);
-पूर्णांक nsim_udp_tunnels_info_create(काष्ठा nsim_dev *nsim_dev,
-				 काष्ठा net_device *dev);
-व्योम nsim_udp_tunnels_info_destroy(काष्ठा net_device *dev);
+void nsim_udp_tunnels_debugfs_create(struct nsim_dev *nsim_dev);
+int nsim_udp_tunnels_info_create(struct nsim_dev *nsim_dev,
+				 struct net_device *dev);
+void nsim_udp_tunnels_info_destroy(struct net_device *dev);
 
-#अगर_घोषित CONFIG_BPF_SYSCALL
-पूर्णांक nsim_bpf_dev_init(काष्ठा nsim_dev *nsim_dev);
-व्योम nsim_bpf_dev_निकास(काष्ठा nsim_dev *nsim_dev);
-पूर्णांक nsim_bpf_init(काष्ठा netdevsim *ns);
-व्योम nsim_bpf_uninit(काष्ठा netdevsim *ns);
-पूर्णांक nsim_bpf(काष्ठा net_device *dev, काष्ठा netdev_bpf *bpf);
-पूर्णांक nsim_bpf_disable_tc(काष्ठा netdevsim *ns);
-पूर्णांक nsim_bpf_setup_tc_block_cb(क्रमागत tc_setup_type type,
-			       व्योम *type_data, व्योम *cb_priv);
-#अन्यथा
+#ifdef CONFIG_BPF_SYSCALL
+int nsim_bpf_dev_init(struct nsim_dev *nsim_dev);
+void nsim_bpf_dev_exit(struct nsim_dev *nsim_dev);
+int nsim_bpf_init(struct netdevsim *ns);
+void nsim_bpf_uninit(struct netdevsim *ns);
+int nsim_bpf(struct net_device *dev, struct netdev_bpf *bpf);
+int nsim_bpf_disable_tc(struct netdevsim *ns);
+int nsim_bpf_setup_tc_block_cb(enum tc_setup_type type,
+			       void *type_data, void *cb_priv);
+#else
 
-अटल अंतरभूत पूर्णांक nsim_bpf_dev_init(काष्ठा nsim_dev *nsim_dev)
-अणु
-	वापस 0;
-पूर्ण
+static inline int nsim_bpf_dev_init(struct nsim_dev *nsim_dev)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम nsim_bpf_dev_निकास(काष्ठा nsim_dev *nsim_dev)
-अणु
-पूर्ण
-अटल अंतरभूत पूर्णांक nsim_bpf_init(काष्ठा netdevsim *ns)
-अणु
-	वापस 0;
-पूर्ण
+static inline void nsim_bpf_dev_exit(struct nsim_dev *nsim_dev)
+{
+}
+static inline int nsim_bpf_init(struct netdevsim *ns)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम nsim_bpf_uninit(काष्ठा netdevsim *ns)
-अणु
-पूर्ण
+static inline void nsim_bpf_uninit(struct netdevsim *ns)
+{
+}
 
-अटल अंतरभूत पूर्णांक nsim_bpf(काष्ठा net_device *dev, काष्ठा netdev_bpf *bpf)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int nsim_bpf(struct net_device *dev, struct netdev_bpf *bpf)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक nsim_bpf_disable_tc(काष्ठा netdevsim *ns)
-अणु
-	वापस 0;
-पूर्ण
+static inline int nsim_bpf_disable_tc(struct netdevsim *ns)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक
-nsim_bpf_setup_tc_block_cb(क्रमागत tc_setup_type type, व्योम *type_data,
-			   व्योम *cb_priv)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
-#पूर्ण_अगर
+static inline int
+nsim_bpf_setup_tc_block_cb(enum tc_setup_type type, void *type_data,
+			   void *cb_priv)
+{
+	return -EOPNOTSUPP;
+}
+#endif
 
-क्रमागत nsim_resource_id अणु
+enum nsim_resource_id {
 	NSIM_RESOURCE_NONE,   /* DEVLINK_RESOURCE_ID_PARENT_TOP */
 	NSIM_RESOURCE_IPV4,
 	NSIM_RESOURCE_IPV4_FIB,
@@ -170,127 +169,127 @@ nsim_bpf_setup_tc_block_cb(क्रमागत tc_setup_type type, व्य�
 	NSIM_RESOURCE_IPV6_FIB,
 	NSIM_RESOURCE_IPV6_FIB_RULES,
 	NSIM_RESOURCE_NEXTHOPS,
-पूर्ण;
+};
 
-काष्ठा nsim_dev_health अणु
-	काष्ठा devlink_health_reporter *empty_reporter;
-	काष्ठा devlink_health_reporter *dummy_reporter;
-	काष्ठा dentry *ddir;
-	अक्षर *recovered_अवरोध_msg;
+struct nsim_dev_health {
+	struct devlink_health_reporter *empty_reporter;
+	struct devlink_health_reporter *dummy_reporter;
+	struct dentry *ddir;
+	char *recovered_break_msg;
 	u32 binary_len;
 	bool fail_recover;
-पूर्ण;
+};
 
-पूर्णांक nsim_dev_health_init(काष्ठा nsim_dev *nsim_dev, काष्ठा devlink *devlink);
-व्योम nsim_dev_health_निकास(काष्ठा nsim_dev *nsim_dev);
+int nsim_dev_health_init(struct nsim_dev *nsim_dev, struct devlink *devlink);
+void nsim_dev_health_exit(struct nsim_dev *nsim_dev);
 
-#अगर IS_ENABLED(CONFIG_PSAMPLE)
-पूर्णांक nsim_dev_psample_init(काष्ठा nsim_dev *nsim_dev);
-व्योम nsim_dev_psample_निकास(काष्ठा nsim_dev *nsim_dev);
-#अन्यथा
-अटल अंतरभूत पूर्णांक nsim_dev_psample_init(काष्ठा nsim_dev *nsim_dev)
-अणु
-	वापस 0;
-पूर्ण
+#if IS_ENABLED(CONFIG_PSAMPLE)
+int nsim_dev_psample_init(struct nsim_dev *nsim_dev);
+void nsim_dev_psample_exit(struct nsim_dev *nsim_dev);
+#else
+static inline int nsim_dev_psample_init(struct nsim_dev *nsim_dev)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम nsim_dev_psample_निकास(काष्ठा nsim_dev *nsim_dev)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void nsim_dev_psample_exit(struct nsim_dev *nsim_dev)
+{
+}
+#endif
 
-काष्ठा nsim_dev_port अणु
-	काष्ठा list_head list;
-	काष्ठा devlink_port devlink_port;
-	अचिन्हित पूर्णांक port_index;
-	काष्ठा dentry *ddir;
-	काष्ठा netdevsim *ns;
-पूर्ण;
+struct nsim_dev_port {
+	struct list_head list;
+	struct devlink_port devlink_port;
+	unsigned int port_index;
+	struct dentry *ddir;
+	struct netdevsim *ns;
+};
 
-काष्ठा nsim_dev अणु
-	काष्ठा nsim_bus_dev *nsim_bus_dev;
-	काष्ठा nsim_fib_data *fib_data;
-	काष्ठा nsim_trap_data *trap_data;
-	काष्ठा dentry *ddir;
-	काष्ठा dentry *ports_ddir;
-	काष्ठा dentry *take_snapshot;
-	काष्ठा bpf_offload_dev *bpf_dev;
+struct nsim_dev {
+	struct nsim_bus_dev *nsim_bus_dev;
+	struct nsim_fib_data *fib_data;
+	struct nsim_trap_data *trap_data;
+	struct dentry *ddir;
+	struct dentry *ports_ddir;
+	struct dentry *take_snapshot;
+	struct bpf_offload_dev *bpf_dev;
 	bool bpf_bind_accept;
-	bool bpf_bind_verअगरier_accept;
-	u32 bpf_bind_verअगरier_delay;
-	काष्ठा dentry *ddir_bpf_bound_progs;
+	bool bpf_bind_verifier_accept;
+	u32 bpf_bind_verifier_delay;
+	struct dentry *ddir_bpf_bound_progs;
 	u32 prog_id_gen;
-	काष्ठा list_head bpf_bound_progs;
-	काष्ठा list_head bpf_bound_maps;
-	काष्ठा netdev_phys_item_id चयन_id;
-	काष्ठा list_head port_list;
-	काष्ठा mutex port_list_lock; /* protects port list */
+	struct list_head bpf_bound_progs;
+	struct list_head bpf_bound_maps;
+	struct netdev_phys_item_id switch_id;
+	struct list_head port_list;
+	struct mutex port_list_lock; /* protects port list */
 	bool fw_update_status;
-	u32 fw_update_overग_लिखो_mask;
+	u32 fw_update_overwrite_mask;
 	u32 max_macs;
 	bool test1;
-	bool करोnt_allow_reload;
+	bool dont_allow_reload;
 	bool fail_reload;
-	काष्ठा devlink_region *dummy_region;
-	काष्ठा nsim_dev_health health;
-	काष्ठा flow_action_cookie *fa_cookie;
+	struct devlink_region *dummy_region;
+	struct nsim_dev_health health;
+	struct flow_action_cookie *fa_cookie;
 	spinlock_t fa_cookie_lock; /* protects fa_cookie */
 	bool fail_trap_group_set;
 	bool fail_trap_policer_set;
 	bool fail_trap_policer_counter_get;
-	काष्ठा अणु
-		काष्ठा udp_tunnel_nic_shared utn_shared;
+	struct {
+		struct udp_tunnel_nic_shared utn_shared;
 		u32 __ports[2][NSIM_UDP_TUNNEL_N_PORTS];
 		bool sync_all;
-		bool खोलो_only;
+		bool open_only;
 		bool ipv4_only;
 		bool shared;
-		bool अटल_iana_vxlan;
+		bool static_iana_vxlan;
 		u32 sleep;
-	पूर्ण udp_ports;
-	काष्ठा nsim_dev_psample *psample;
-पूर्ण;
+	} udp_ports;
+	struct nsim_dev_psample *psample;
+};
 
-अटल अंतरभूत काष्ठा net *nsim_dev_net(काष्ठा nsim_dev *nsim_dev)
-अणु
-	वापस devlink_net(priv_to_devlink(nsim_dev));
-पूर्ण
+static inline struct net *nsim_dev_net(struct nsim_dev *nsim_dev)
+{
+	return devlink_net(priv_to_devlink(nsim_dev));
+}
 
-पूर्णांक nsim_dev_init(व्योम);
-व्योम nsim_dev_निकास(व्योम);
-पूर्णांक nsim_dev_probe(काष्ठा nsim_bus_dev *nsim_bus_dev);
-व्योम nsim_dev_हटाओ(काष्ठा nsim_bus_dev *nsim_bus_dev);
-पूर्णांक nsim_dev_port_add(काष्ठा nsim_bus_dev *nsim_bus_dev,
-		      अचिन्हित पूर्णांक port_index);
-पूर्णांक nsim_dev_port_del(काष्ठा nsim_bus_dev *nsim_bus_dev,
-		      अचिन्हित पूर्णांक port_index);
+int nsim_dev_init(void);
+void nsim_dev_exit(void);
+int nsim_dev_probe(struct nsim_bus_dev *nsim_bus_dev);
+void nsim_dev_remove(struct nsim_bus_dev *nsim_bus_dev);
+int nsim_dev_port_add(struct nsim_bus_dev *nsim_bus_dev,
+		      unsigned int port_index);
+int nsim_dev_port_del(struct nsim_bus_dev *nsim_bus_dev,
+		      unsigned int port_index);
 
-काष्ठा nsim_fib_data *nsim_fib_create(काष्ठा devlink *devlink,
-				      काष्ठा netlink_ext_ack *extack);
-व्योम nsim_fib_destroy(काष्ठा devlink *devlink, काष्ठा nsim_fib_data *fib_data);
-u64 nsim_fib_get_val(काष्ठा nsim_fib_data *fib_data,
-		     क्रमागत nsim_resource_id res_id, bool max);
+struct nsim_fib_data *nsim_fib_create(struct devlink *devlink,
+				      struct netlink_ext_ack *extack);
+void nsim_fib_destroy(struct devlink *devlink, struct nsim_fib_data *fib_data);
+u64 nsim_fib_get_val(struct nsim_fib_data *fib_data,
+		     enum nsim_resource_id res_id, bool max);
 
-#अगर IS_ENABLED(CONFIG_XFRM_OFFLOAD)
-व्योम nsim_ipsec_init(काष्ठा netdevsim *ns);
-व्योम nsim_ipsec_tearकरोwn(काष्ठा netdevsim *ns);
-bool nsim_ipsec_tx(काष्ठा netdevsim *ns, काष्ठा sk_buff *skb);
-#अन्यथा
-अटल अंतरभूत व्योम nsim_ipsec_init(काष्ठा netdevsim *ns)
-अणु
-पूर्ण
+#if IS_ENABLED(CONFIG_XFRM_OFFLOAD)
+void nsim_ipsec_init(struct netdevsim *ns);
+void nsim_ipsec_teardown(struct netdevsim *ns);
+bool nsim_ipsec_tx(struct netdevsim *ns, struct sk_buff *skb);
+#else
+static inline void nsim_ipsec_init(struct netdevsim *ns)
+{
+}
 
-अटल अंतरभूत व्योम nsim_ipsec_tearकरोwn(काष्ठा netdevsim *ns)
-अणु
-पूर्ण
+static inline void nsim_ipsec_teardown(struct netdevsim *ns)
+{
+}
 
-अटल अंतरभूत bool nsim_ipsec_tx(काष्ठा netdevsim *ns, काष्ठा sk_buff *skb)
-अणु
-	वापस true;
-पूर्ण
-#पूर्ण_अगर
+static inline bool nsim_ipsec_tx(struct netdevsim *ns, struct sk_buff *skb)
+{
+	return true;
+}
+#endif
 
-काष्ठा nsim_vf_config अणु
-	पूर्णांक link_state;
+struct nsim_vf_config {
+	int link_state;
 	u16 min_tx_rate;
 	u16 max_tx_rate;
 	u16 vlan;
@@ -300,21 +299,21 @@ bool nsim_ipsec_tx(काष्ठा netdevsim *ns, काष्ठा sk_buff 
 	bool spoofchk_enabled;
 	bool trusted;
 	bool rss_query_enabled;
-पूर्ण;
+};
 
-काष्ठा nsim_bus_dev अणु
-	काष्ठा device dev;
-	काष्ठा list_head list;
-	अचिन्हित पूर्णांक port_count;
-	काष्ठा net *initial_net; /* Purpose of this is to carry net poपूर्णांकer
-				  * during the probe समय only.
+struct nsim_bus_dev {
+	struct device dev;
+	struct list_head list;
+	unsigned int port_count;
+	struct net *initial_net; /* Purpose of this is to carry net pointer
+				  * during the probe time only.
 				  */
-	अचिन्हित पूर्णांक num_vfs;
-	काष्ठा nsim_vf_config *vfconfigs;
-	/* Lock क्रम devlink->reload_enabled in netdevsim module */
-	काष्ठा mutex nsim_bus_reload_lock;
+	unsigned int num_vfs;
+	struct nsim_vf_config *vfconfigs;
+	/* Lock for devlink->reload_enabled in netdevsim module */
+	struct mutex nsim_bus_reload_lock;
 	bool init;
-पूर्ण;
+};
 
-पूर्णांक nsim_bus_init(व्योम);
-व्योम nsim_bus_निकास(व्योम);
+int nsim_bus_init(void);
+void nsim_bus_exit(void);

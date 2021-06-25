@@ -1,200 +1,199 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2014-2015, The Linux Foundation. All rights reserved.
  */
 
-#समावेश "edp.h"
-#समावेश "edp.xml.h"
+#include "edp.h"
+#include "edp.xml.h"
 
-#घोषणा AUX_CMD_FIFO_LEN	144
-#घोषणा AUX_CMD_NATIVE_MAX	16
-#घोषणा AUX_CMD_I2C_MAX		128
+#define AUX_CMD_FIFO_LEN	144
+#define AUX_CMD_NATIVE_MAX	16
+#define AUX_CMD_I2C_MAX		128
 
-#घोषणा EDP_INTR_AUX_I2C_ERR	\
+#define EDP_INTR_AUX_I2C_ERR	\
 	(EDP_INTERRUPT_REG_1_WRONG_ADDR | EDP_INTERRUPT_REG_1_TIMEOUT | \
 	EDP_INTERRUPT_REG_1_NACK_DEFER | EDP_INTERRUPT_REG_1_WRONG_DATA_CNT | \
 	EDP_INTERRUPT_REG_1_I2C_NACK | EDP_INTERRUPT_REG_1_I2C_DEFER)
-#घोषणा EDP_INTR_TRANS_STATUS	\
+#define EDP_INTR_TRANS_STATUS	\
 	(EDP_INTERRUPT_REG_1_AUX_I2C_DONE | EDP_INTR_AUX_I2C_ERR)
 
-काष्ठा edp_aux अणु
-	व्योम __iomem *base;
+struct edp_aux {
+	void __iomem *base;
 	bool msg_err;
 
-	काष्ठा completion msg_comp;
+	struct completion msg_comp;
 
 	/* To prevent the message transaction routine from reentry. */
-	काष्ठा mutex msg_mutex;
+	struct mutex msg_mutex;
 
-	काष्ठा drm_dp_aux drm_aux;
-पूर्ण;
-#घोषणा to_edp_aux(x) container_of(x, काष्ठा edp_aux, drm_aux)
+	struct drm_dp_aux drm_aux;
+};
+#define to_edp_aux(x) container_of(x, struct edp_aux, drm_aux)
 
-अटल पूर्णांक edp_msg_fअगरo_tx(काष्ठा edp_aux *aux, काष्ठा drm_dp_aux_msg *msg)
-अणु
+static int edp_msg_fifo_tx(struct edp_aux *aux, struct drm_dp_aux_msg *msg)
+{
 	u32 data[4];
 	u32 reg, len;
 	bool native = msg->request & (DP_AUX_NATIVE_WRITE & DP_AUX_NATIVE_READ);
-	bool पढ़ो = msg->request & (DP_AUX_I2C_READ & DP_AUX_NATIVE_READ);
+	bool read = msg->request & (DP_AUX_I2C_READ & DP_AUX_NATIVE_READ);
 	u8 *msgdata = msg->buffer;
-	पूर्णांक i;
+	int i;
 
-	अगर (पढ़ो)
+	if (read)
 		len = 4;
-	अन्यथा
+	else
 		len = msg->size + 4;
 
 	/*
-	 * cmd fअगरo only has depth of 144 bytes
+	 * cmd fifo only has depth of 144 bytes
 	 */
-	अगर (len > AUX_CMD_FIFO_LEN)
-		वापस -EINVAL;
+	if (len > AUX_CMD_FIFO_LEN)
+		return -EINVAL;
 
-	/* Pack cmd and ग_लिखो to HW */
+	/* Pack cmd and write to HW */
 	data[0] = (msg->address >> 16) & 0xf;	/* addr[19:16] */
-	अगर (पढ़ो)
+	if (read)
 		data[0] |=  BIT(4);		/* R/W */
 
 	data[1] = (msg->address >> 8) & 0xff;	/* addr[15:8] */
 	data[2] = msg->address & 0xff;		/* addr[7:0] */
 	data[3] = (msg->size - 1) & 0xff;	/* len[7:0] */
 
-	क्रम (i = 0; i < len; i++) अणु
+	for (i = 0; i < len; i++) {
 		reg = (i < 4) ? data[i] : msgdata[i - 4];
-		reg = EDP_AUX_DATA_DATA(reg); /* index = 0, ग_लिखो */
-		अगर (i == 0)
+		reg = EDP_AUX_DATA_DATA(reg); /* index = 0, write */
+		if (i == 0)
 			reg |= EDP_AUX_DATA_INDEX_WRITE;
-		edp_ग_लिखो(aux->base + REG_EDP_AUX_DATA, reg);
-	पूर्ण
+		edp_write(aux->base + REG_EDP_AUX_DATA, reg);
+	}
 
 	reg = 0; /* Transaction number is always 1 */
-	अगर (!native) /* i2c */
+	if (!native) /* i2c */
 		reg |= EDP_AUX_TRANS_CTRL_I2C;
 
 	reg |= EDP_AUX_TRANS_CTRL_GO;
-	edp_ग_लिखो(aux->base + REG_EDP_AUX_TRANS_CTRL, reg);
+	edp_write(aux->base + REG_EDP_AUX_TRANS_CTRL, reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक edp_msg_fअगरo_rx(काष्ठा edp_aux *aux, काष्ठा drm_dp_aux_msg *msg)
-अणु
+static int edp_msg_fifo_rx(struct edp_aux *aux, struct drm_dp_aux_msg *msg)
+{
 	u32 data;
 	u8 *dp;
-	पूर्णांक i;
+	int i;
 	u32 len = msg->size;
 
-	edp_ग_लिखो(aux->base + REG_EDP_AUX_DATA,
+	edp_write(aux->base + REG_EDP_AUX_DATA,
 		EDP_AUX_DATA_INDEX_WRITE | EDP_AUX_DATA_READ); /* index = 0 */
 
 	dp = msg->buffer;
 
 	/* discard first byte */
-	data = edp_पढ़ो(aux->base + REG_EDP_AUX_DATA);
-	क्रम (i = 0; i < len; i++) अणु
-		data = edp_पढ़ो(aux->base + REG_EDP_AUX_DATA);
+	data = edp_read(aux->base + REG_EDP_AUX_DATA);
+	for (i = 0; i < len; i++) {
+		data = edp_read(aux->base + REG_EDP_AUX_DATA);
 		dp[i] = (u8)((data >> 8) & 0xff);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * This function करोes the real job to process an AUX transaction.
+ * This function does the real job to process an AUX transaction.
  * It will call msm_edp_aux_ctrl() function to reset the AUX channel,
- * अगर the रुकोing is समयout.
- * The caller who triggers the transaction should aव्योम the
- * msm_edp_aux_ctrl() running concurrently in other thपढ़ोs, i.e.
+ * if the waiting is timeout.
+ * The caller who triggers the transaction should avoid the
+ * msm_edp_aux_ctrl() running concurrently in other threads, i.e.
  * start transaction only when AUX channel is fully enabled.
  */
-अटल sमाप_प्रकार edp_aux_transfer(काष्ठा drm_dp_aux *drm_aux,
-		काष्ठा drm_dp_aux_msg *msg)
-अणु
-	काष्ठा edp_aux *aux = to_edp_aux(drm_aux);
-	sमाप_प्रकार ret;
-	अचिन्हित दीर्घ समय_left;
+static ssize_t edp_aux_transfer(struct drm_dp_aux *drm_aux,
+		struct drm_dp_aux_msg *msg)
+{
+	struct edp_aux *aux = to_edp_aux(drm_aux);
+	ssize_t ret;
+	unsigned long time_left;
 	bool native = msg->request & (DP_AUX_NATIVE_WRITE & DP_AUX_NATIVE_READ);
-	bool पढ़ो = msg->request & (DP_AUX_I2C_READ & DP_AUX_NATIVE_READ);
+	bool read = msg->request & (DP_AUX_I2C_READ & DP_AUX_NATIVE_READ);
 
 	/* Ignore address only message */
-	अगर ((msg->size == 0) || (msg->buffer == शून्य)) अणु
+	if ((msg->size == 0) || (msg->buffer == NULL)) {
 		msg->reply = native ?
 			DP_AUX_NATIVE_REPLY_ACK : DP_AUX_I2C_REPLY_ACK;
-		वापस msg->size;
-	पूर्ण
+		return msg->size;
+	}
 
 	/* msg sanity check */
-	अगर ((native && (msg->size > AUX_CMD_NATIVE_MAX)) ||
-		(msg->size > AUX_CMD_I2C_MAX)) अणु
+	if ((native && (msg->size > AUX_CMD_NATIVE_MAX)) ||
+		(msg->size > AUX_CMD_I2C_MAX)) {
 		pr_err("%s: invalid msg: size(%zu), request(%x)\n",
 			__func__, msg->size, msg->request);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_lock(&aux->msg_mutex);
 
 	aux->msg_err = false;
 	reinit_completion(&aux->msg_comp);
 
-	ret = edp_msg_fअगरo_tx(aux, msg);
-	अगर (ret < 0)
-		जाओ unlock_निकास;
+	ret = edp_msg_fifo_tx(aux, msg);
+	if (ret < 0)
+		goto unlock_exit;
 
 	DBG("wait_for_completion");
-	समय_left = रुको_क्रम_completion_समयout(&aux->msg_comp,
-						msecs_to_jअगरfies(300));
-	अगर (!समय_left) अणु
+	time_left = wait_for_completion_timeout(&aux->msg_comp,
+						msecs_to_jiffies(300));
+	if (!time_left) {
 		/*
 		 * Clear GO and reset AUX channel
 		 * to cancel the current transaction.
 		 */
-		edp_ग_लिखो(aux->base + REG_EDP_AUX_TRANS_CTRL, 0);
+		edp_write(aux->base + REG_EDP_AUX_TRANS_CTRL, 0);
 		msm_edp_aux_ctrl(aux, 1);
 		pr_err("%s: aux timeout,\n", __func__);
 		ret = -ETIMEDOUT;
-		जाओ unlock_निकास;
-	पूर्ण
+		goto unlock_exit;
+	}
 	DBG("completion");
 
-	अगर (!aux->msg_err) अणु
-		अगर (पढ़ो) अणु
-			ret = edp_msg_fअगरo_rx(aux, msg);
-			अगर (ret < 0)
-				जाओ unlock_निकास;
-		पूर्ण
+	if (!aux->msg_err) {
+		if (read) {
+			ret = edp_msg_fifo_rx(aux, msg);
+			if (ret < 0)
+				goto unlock_exit;
+		}
 
 		msg->reply = native ?
 			DP_AUX_NATIVE_REPLY_ACK : DP_AUX_I2C_REPLY_ACK;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Reply defer to retry */
 		msg->reply = native ?
 			DP_AUX_NATIVE_REPLY_DEFER : DP_AUX_I2C_REPLY_DEFER;
 		/*
-		 * The sleep समय in caller is not दीर्घ enough to make sure
-		 * our H/W completes transactions. Add more defer समय here.
+		 * The sleep time in caller is not long enough to make sure
+		 * our H/W completes transactions. Add more defer time here.
 		 */
 		msleep(100);
-	पूर्ण
+	}
 
-	/* Return requested size क्रम success or retry */
+	/* Return requested size for success or retry */
 	ret = msg->size;
 
-unlock_निकास:
+unlock_exit:
 	mutex_unlock(&aux->msg_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम *msm_edp_aux_init(काष्ठा device *dev, व्योम __iomem *regbase,
-	काष्ठा drm_dp_aux **drm_aux)
-अणु
-	काष्ठा edp_aux *aux = शून्य;
-	पूर्णांक ret;
+void *msm_edp_aux_init(struct device *dev, void __iomem *regbase,
+	struct drm_dp_aux **drm_aux)
+{
+	struct edp_aux *aux = NULL;
+	int ret;
 
 	DBG("");
-	aux = devm_kzalloc(dev, माप(*aux), GFP_KERNEL);
-	अगर (!aux)
-		वापस शून्य;
+	aux = devm_kzalloc(dev, sizeof(*aux), GFP_KERNEL);
+	if (!aux)
+		return NULL;
 
 	aux->base = regbase;
 	mutex_init(&aux->msg_mutex);
@@ -203,63 +202,63 @@ unlock_निकास:
 	aux->drm_aux.name = "msm_edp_aux";
 	aux->drm_aux.dev = dev;
 	aux->drm_aux.transfer = edp_aux_transfer;
-	ret = drm_dp_aux_रेजिस्टर(&aux->drm_aux);
-	अगर (ret) अणु
+	ret = drm_dp_aux_register(&aux->drm_aux);
+	if (ret) {
 		pr_err("%s: failed to register drm aux: %d\n", __func__, ret);
 		mutex_destroy(&aux->msg_mutex);
-	पूर्ण
+	}
 
-	अगर (drm_aux && aux)
+	if (drm_aux && aux)
 		*drm_aux = &aux->drm_aux;
 
-	वापस aux;
-पूर्ण
+	return aux;
+}
 
-व्योम msm_edp_aux_destroy(काष्ठा device *dev, काष्ठा edp_aux *aux)
-अणु
-	अगर (aux) अणु
-		drm_dp_aux_unरेजिस्टर(&aux->drm_aux);
+void msm_edp_aux_destroy(struct device *dev, struct edp_aux *aux)
+{
+	if (aux) {
+		drm_dp_aux_unregister(&aux->drm_aux);
 		mutex_destroy(&aux->msg_mutex);
-	पूर्ण
-पूर्ण
+	}
+}
 
-irqवापस_t msm_edp_aux_irq(काष्ठा edp_aux *aux, u32 isr)
-अणु
-	अगर (isr & EDP_INTR_TRANS_STATUS) अणु
+irqreturn_t msm_edp_aux_irq(struct edp_aux *aux, u32 isr)
+{
+	if (isr & EDP_INTR_TRANS_STATUS) {
 		DBG("isr=%x", isr);
-		edp_ग_लिखो(aux->base + REG_EDP_AUX_TRANS_CTRL, 0);
+		edp_write(aux->base + REG_EDP_AUX_TRANS_CTRL, 0);
 
-		अगर (isr & EDP_INTR_AUX_I2C_ERR)
+		if (isr & EDP_INTR_AUX_I2C_ERR)
 			aux->msg_err = true;
-		अन्यथा
+		else
 			aux->msg_err = false;
 
 		complete(&aux->msg_comp);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-व्योम msm_edp_aux_ctrl(काष्ठा edp_aux *aux, पूर्णांक enable)
-अणु
+void msm_edp_aux_ctrl(struct edp_aux *aux, int enable)
+{
 	u32 data;
 
 	DBG("enable=%d", enable);
-	data = edp_पढ़ो(aux->base + REG_EDP_AUX_CTRL);
+	data = edp_read(aux->base + REG_EDP_AUX_CTRL);
 
-	अगर (enable) अणु
+	if (enable) {
 		data |= EDP_AUX_CTRL_RESET;
-		edp_ग_लिखो(aux->base + REG_EDP_AUX_CTRL, data);
+		edp_write(aux->base + REG_EDP_AUX_CTRL, data);
 		/* Make sure full reset */
 		wmb();
 		usleep_range(500, 1000);
 
 		data &= ~EDP_AUX_CTRL_RESET;
 		data |= EDP_AUX_CTRL_ENABLE;
-		edp_ग_लिखो(aux->base + REG_EDP_AUX_CTRL, data);
-	पूर्ण अन्यथा अणु
+		edp_write(aux->base + REG_EDP_AUX_CTRL, data);
+	} else {
 		data &= ~EDP_AUX_CTRL_ENABLE;
-		edp_ग_लिखो(aux->base + REG_EDP_AUX_CTRL, data);
-	पूर्ण
-पूर्ण
+		edp_write(aux->base + REG_EDP_AUX_CTRL, data);
+	}
+}
 

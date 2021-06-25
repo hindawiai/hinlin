@@ -1,198 +1,197 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
- * Copyright तऊ 2016-2018 Intel Corporation
+ * Copyright © 2016-2018 Intel Corporation
  */
 
-#समावेश "i915_drv.h"
+#include "i915_drv.h"
 
-#समावेश "i915_active.h"
-#समावेश "i915_syncmap.h"
-#समावेश "intel_gt.h"
-#समावेश "intel_ring.h"
-#समावेश "intel_timeline.h"
+#include "i915_active.h"
+#include "i915_syncmap.h"
+#include "intel_gt.h"
+#include "intel_ring.h"
+#include "intel_timeline.h"
 
-#घोषणा TIMELINE_SEQNO_BYTES 8
+#define TIMELINE_SEQNO_BYTES 8
 
-अटल काष्ठा i915_vma *hwsp_alloc(काष्ठा पूर्णांकel_gt *gt)
-अणु
-	काष्ठा drm_i915_निजी *i915 = gt->i915;
-	काष्ठा drm_i915_gem_object *obj;
-	काष्ठा i915_vma *vma;
+static struct i915_vma *hwsp_alloc(struct intel_gt *gt)
+{
+	struct drm_i915_private *i915 = gt->i915;
+	struct drm_i915_gem_object *obj;
+	struct i915_vma *vma;
 
-	obj = i915_gem_object_create_पूर्णांकernal(i915, PAGE_SIZE);
-	अगर (IS_ERR(obj))
-		वापस ERR_CAST(obj);
+	obj = i915_gem_object_create_internal(i915, PAGE_SIZE);
+	if (IS_ERR(obj))
+		return ERR_CAST(obj);
 
 	i915_gem_object_set_cache_coherency(obj, I915_CACHE_LLC);
 
-	vma = i915_vma_instance(obj, &gt->ggtt->vm, शून्य);
-	अगर (IS_ERR(vma))
+	vma = i915_vma_instance(obj, &gt->ggtt->vm, NULL);
+	if (IS_ERR(vma))
 		i915_gem_object_put(obj);
 
-	वापस vma;
-पूर्ण
+	return vma;
+}
 
 __i915_active_call
-अटल व्योम __समयline_retire(काष्ठा i915_active *active)
-अणु
-	काष्ठा पूर्णांकel_समयline *tl =
+static void __timeline_retire(struct i915_active *active)
+{
+	struct intel_timeline *tl =
 		container_of(active, typeof(*tl), active);
 
 	i915_vma_unpin(tl->hwsp_ggtt);
-	पूर्णांकel_समयline_put(tl);
-पूर्ण
+	intel_timeline_put(tl);
+}
 
-अटल पूर्णांक __समयline_active(काष्ठा i915_active *active)
-अणु
-	काष्ठा पूर्णांकel_समयline *tl =
+static int __timeline_active(struct i915_active *active)
+{
+	struct intel_timeline *tl =
 		container_of(active, typeof(*tl), active);
 
 	__i915_vma_pin(tl->hwsp_ggtt);
-	पूर्णांकel_समयline_get(tl);
-	वापस 0;
-पूर्ण
+	intel_timeline_get(tl);
+	return 0;
+}
 
-I915_SELFTEST_EXPORT पूर्णांक
-पूर्णांकel_समयline_pin_map(काष्ठा पूर्णांकel_समयline *समयline)
-अणु
-	काष्ठा drm_i915_gem_object *obj = समयline->hwsp_ggtt->obj;
-	u32 ofs = offset_in_page(समयline->hwsp_offset);
-	व्योम *vaddr;
+I915_SELFTEST_EXPORT int
+intel_timeline_pin_map(struct intel_timeline *timeline)
+{
+	struct drm_i915_gem_object *obj = timeline->hwsp_ggtt->obj;
+	u32 ofs = offset_in_page(timeline->hwsp_offset);
+	void *vaddr;
 
 	vaddr = i915_gem_object_pin_map(obj, I915_MAP_WB);
-	अगर (IS_ERR(vaddr))
-		वापस PTR_ERR(vaddr);
+	if (IS_ERR(vaddr))
+		return PTR_ERR(vaddr);
 
-	समयline->hwsp_map = vaddr;
-	समयline->hwsp_seqno = स_रखो(vaddr + ofs, 0, TIMELINE_SEQNO_BYTES);
+	timeline->hwsp_map = vaddr;
+	timeline->hwsp_seqno = memset(vaddr + ofs, 0, TIMELINE_SEQNO_BYTES);
 	clflush(vaddr + ofs);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_समयline_init(काष्ठा पूर्णांकel_समयline *समयline,
-			       काष्ठा पूर्णांकel_gt *gt,
-			       काष्ठा i915_vma *hwsp,
-			       अचिन्हित पूर्णांक offset)
-अणु
-	kref_init(&समयline->kref);
-	atomic_set(&समयline->pin_count, 0);
+static int intel_timeline_init(struct intel_timeline *timeline,
+			       struct intel_gt *gt,
+			       struct i915_vma *hwsp,
+			       unsigned int offset)
+{
+	kref_init(&timeline->kref);
+	atomic_set(&timeline->pin_count, 0);
 
-	समयline->gt = gt;
+	timeline->gt = gt;
 
-	अगर (hwsp) अणु
-		समयline->hwsp_offset = offset;
-		समयline->hwsp_ggtt = i915_vma_get(hwsp);
-	पूर्ण अन्यथा अणु
-		समयline->has_initial_bपढ़ोcrumb = true;
+	if (hwsp) {
+		timeline->hwsp_offset = offset;
+		timeline->hwsp_ggtt = i915_vma_get(hwsp);
+	} else {
+		timeline->has_initial_breadcrumb = true;
 		hwsp = hwsp_alloc(gt);
-		अगर (IS_ERR(hwsp))
-			वापस PTR_ERR(hwsp);
-		समयline->hwsp_ggtt = hwsp;
-	पूर्ण
+		if (IS_ERR(hwsp))
+			return PTR_ERR(hwsp);
+		timeline->hwsp_ggtt = hwsp;
+	}
 
-	समयline->hwsp_map = शून्य;
-	समयline->hwsp_seqno = (व्योम *)(दीर्घ)समयline->hwsp_offset;
+	timeline->hwsp_map = NULL;
+	timeline->hwsp_seqno = (void *)(long)timeline->hwsp_offset;
 
-	GEM_BUG_ON(समयline->hwsp_offset >= hwsp->size);
+	GEM_BUG_ON(timeline->hwsp_offset >= hwsp->size);
 
-	समयline->fence_context = dma_fence_context_alloc(1);
+	timeline->fence_context = dma_fence_context_alloc(1);
 
-	mutex_init(&समयline->mutex);
+	mutex_init(&timeline->mutex);
 
-	INIT_ACTIVE_FENCE(&समयline->last_request);
-	INIT_LIST_HEAD(&समयline->requests);
+	INIT_ACTIVE_FENCE(&timeline->last_request);
+	INIT_LIST_HEAD(&timeline->requests);
 
-	i915_syncmap_init(&समयline->sync);
-	i915_active_init(&समयline->active, __समयline_active, __समयline_retire);
+	i915_syncmap_init(&timeline->sync);
+	i915_active_init(&timeline->active, __timeline_active, __timeline_retire);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम पूर्णांकel_gt_init_समयlines(काष्ठा पूर्णांकel_gt *gt)
-अणु
-	काष्ठा पूर्णांकel_gt_समयlines *समयlines = &gt->समयlines;
+void intel_gt_init_timelines(struct intel_gt *gt)
+{
+	struct intel_gt_timelines *timelines = &gt->timelines;
 
-	spin_lock_init(&समयlines->lock);
-	INIT_LIST_HEAD(&समयlines->active_list);
-पूर्ण
+	spin_lock_init(&timelines->lock);
+	INIT_LIST_HEAD(&timelines->active_list);
+}
 
-अटल व्योम पूर्णांकel_समयline_fini(काष्ठा rcu_head *rcu)
-अणु
-	काष्ठा पूर्णांकel_समयline *समयline =
-		container_of(rcu, काष्ठा पूर्णांकel_समयline, rcu);
+static void intel_timeline_fini(struct rcu_head *rcu)
+{
+	struct intel_timeline *timeline =
+		container_of(rcu, struct intel_timeline, rcu);
 
-	अगर (समयline->hwsp_map)
-		i915_gem_object_unpin_map(समयline->hwsp_ggtt->obj);
+	if (timeline->hwsp_map)
+		i915_gem_object_unpin_map(timeline->hwsp_ggtt->obj);
 
-	i915_vma_put(समयline->hwsp_ggtt);
-	i915_active_fini(&समयline->active);
-	kमुक्त(समयline);
-पूर्ण
+	i915_vma_put(timeline->hwsp_ggtt);
+	i915_active_fini(&timeline->active);
+	kfree(timeline);
+}
 
-काष्ठा पूर्णांकel_समयline *
-__पूर्णांकel_समयline_create(काष्ठा पूर्णांकel_gt *gt,
-			काष्ठा i915_vma *global_hwsp,
-			अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा पूर्णांकel_समयline *समयline;
-	पूर्णांक err;
+struct intel_timeline *
+__intel_timeline_create(struct intel_gt *gt,
+			struct i915_vma *global_hwsp,
+			unsigned int offset)
+{
+	struct intel_timeline *timeline;
+	int err;
 
-	समयline = kzalloc(माप(*समयline), GFP_KERNEL);
-	अगर (!समयline)
-		वापस ERR_PTR(-ENOMEM);
+	timeline = kzalloc(sizeof(*timeline), GFP_KERNEL);
+	if (!timeline)
+		return ERR_PTR(-ENOMEM);
 
-	err = पूर्णांकel_समयline_init(समयline, gt, global_hwsp, offset);
-	अगर (err) अणु
-		kमुक्त(समयline);
-		वापस ERR_PTR(err);
-	पूर्ण
+	err = intel_timeline_init(timeline, gt, global_hwsp, offset);
+	if (err) {
+		kfree(timeline);
+		return ERR_PTR(err);
+	}
 
-	वापस समयline;
-पूर्ण
+	return timeline;
+}
 
-काष्ठा पूर्णांकel_समयline *
-पूर्णांकel_समयline_create_from_engine(काष्ठा पूर्णांकel_engine_cs *engine,
-				  अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा i915_vma *hwsp = engine->status_page.vma;
-	काष्ठा पूर्णांकel_समयline *tl;
+struct intel_timeline *
+intel_timeline_create_from_engine(struct intel_engine_cs *engine,
+				  unsigned int offset)
+{
+	struct i915_vma *hwsp = engine->status_page.vma;
+	struct intel_timeline *tl;
 
-	tl = __पूर्णांकel_समयline_create(engine->gt, hwsp, offset);
-	अगर (IS_ERR(tl))
-		वापस tl;
+	tl = __intel_timeline_create(engine->gt, hwsp, offset);
+	if (IS_ERR(tl))
+		return tl;
 
-	/* Borrow a nearby lock; we only create these समयlines during init */
+	/* Borrow a nearby lock; we only create these timelines during init */
 	mutex_lock(&hwsp->vm->mutex);
-	list_add_tail(&tl->engine_link, &engine->status_page.समयlines);
+	list_add_tail(&tl->engine_link, &engine->status_page.timelines);
 	mutex_unlock(&hwsp->vm->mutex);
 
-	वापस tl;
-पूर्ण
+	return tl;
+}
 
-व्योम __पूर्णांकel_समयline_pin(काष्ठा पूर्णांकel_समयline *tl)
-अणु
-	GEM_BUG_ON(!atomic_पढ़ो(&tl->pin_count));
+void __intel_timeline_pin(struct intel_timeline *tl)
+{
+	GEM_BUG_ON(!atomic_read(&tl->pin_count));
 	atomic_inc(&tl->pin_count);
-पूर्ण
+}
 
-पूर्णांक पूर्णांकel_समयline_pin(काष्ठा पूर्णांकel_समयline *tl, काष्ठा i915_gem_ww_ctx *ww)
-अणु
-	पूर्णांक err;
+int intel_timeline_pin(struct intel_timeline *tl, struct i915_gem_ww_ctx *ww)
+{
+	int err;
 
-	अगर (atomic_add_unless(&tl->pin_count, 1, 0))
-		वापस 0;
+	if (atomic_add_unless(&tl->pin_count, 1, 0))
+		return 0;
 
-	अगर (!tl->hwsp_map) अणु
-		err = पूर्णांकel_समयline_pin_map(tl);
-		अगर (err)
-			वापस err;
-	पूर्ण
+	if (!tl->hwsp_map) {
+		err = intel_timeline_pin_map(tl);
+		if (err)
+			return err;
+	}
 
 	err = i915_ggtt_pin(tl->hwsp_ggtt, ww, 0, PIN_HIGH);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	tl->hwsp_offset =
 		i915_ggtt_offset(tl->hwsp_ggtt) +
@@ -201,282 +200,282 @@ __पूर्णांकel_समयline_create(काष्ठा पूर�
 		 tl->fence_context, tl->hwsp_offset);
 
 	i915_active_acquire(&tl->active);
-	अगर (atomic_fetch_inc(&tl->pin_count)) अणु
+	if (atomic_fetch_inc(&tl->pin_count)) {
 		i915_active_release(&tl->active);
 		__i915_vma_unpin(tl->hwsp_ggtt);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम पूर्णांकel_समयline_reset_seqno(स्थिर काष्ठा पूर्णांकel_समयline *tl)
-अणु
+void intel_timeline_reset_seqno(const struct intel_timeline *tl)
+{
 	u32 *hwsp_seqno = (u32 *)tl->hwsp_seqno;
 	/* Must be pinned to be writable, and no requests in flight. */
-	GEM_BUG_ON(!atomic_पढ़ो(&tl->pin_count));
+	GEM_BUG_ON(!atomic_read(&tl->pin_count));
 
-	स_रखो(hwsp_seqno + 1, 0, TIMELINE_SEQNO_BYTES - माप(*hwsp_seqno));
+	memset(hwsp_seqno + 1, 0, TIMELINE_SEQNO_BYTES - sizeof(*hwsp_seqno));
 	WRITE_ONCE(*hwsp_seqno, tl->seqno);
 	clflush(hwsp_seqno);
-पूर्ण
+}
 
-व्योम पूर्णांकel_समयline_enter(काष्ठा पूर्णांकel_समयline *tl)
-अणु
-	काष्ठा पूर्णांकel_gt_समयlines *समयlines = &tl->gt->समयlines;
+void intel_timeline_enter(struct intel_timeline *tl)
+{
+	struct intel_gt_timelines *timelines = &tl->gt->timelines;
 
 	/*
-	 * Pretend we are serialised by the समयline->mutex.
+	 * Pretend we are serialised by the timeline->mutex.
 	 *
 	 * While generally true, there are a few exceptions to the rule
-	 * क्रम the engine->kernel_context being used to manage घातer
+	 * for the engine->kernel_context being used to manage power
 	 * transitions. As the engine_park may be called from under any
-	 * समयline, it uses the घातer mutex as a global serialisation
-	 * lock to prevent any other request entering its समयline.
+	 * timeline, it uses the power mutex as a global serialisation
+	 * lock to prevent any other request entering its timeline.
 	 *
 	 * The rule is generally tl->mutex, otherwise engine->wakeref.mutex.
 	 *
-	 * However, पूर्णांकel_gt_retire_request() करोes not know which engine
-	 * it is retiring aदीर्घ and so cannot partake in the engine-pm
+	 * However, intel_gt_retire_request() does not know which engine
+	 * it is retiring along and so cannot partake in the engine-pm
 	 * barrier, and there we use the tl->active_count as a means to
-	 * pin the समयline in the active_list जबतक the locks are dropped.
+	 * pin the timeline in the active_list while the locks are dropped.
 	 * Ergo, as that is outside of the engine-pm barrier, we need to
 	 * use atomic to manipulate tl->active_count.
 	 */
-	lockdep_निश्चित_held(&tl->mutex);
+	lockdep_assert_held(&tl->mutex);
 
-	अगर (atomic_add_unless(&tl->active_count, 1, 0))
-		वापस;
+	if (atomic_add_unless(&tl->active_count, 1, 0))
+		return;
 
-	spin_lock(&समयlines->lock);
-	अगर (!atomic_fetch_inc(&tl->active_count)) अणु
+	spin_lock(&timelines->lock);
+	if (!atomic_fetch_inc(&tl->active_count)) {
 		/*
-		 * The HWSP is अस्थिर, and may have been lost जबतक inactive,
+		 * The HWSP is volatile, and may have been lost while inactive,
 		 * e.g. across suspend/resume. Be paranoid, and ensure that
-		 * the HWSP value matches our seqno so we करोn't proclaim
-		 * the next request as alपढ़ोy complete.
+		 * the HWSP value matches our seqno so we don't proclaim
+		 * the next request as already complete.
 		 */
-		पूर्णांकel_समयline_reset_seqno(tl);
-		list_add_tail(&tl->link, &समयlines->active_list);
-	पूर्ण
-	spin_unlock(&समयlines->lock);
-पूर्ण
+		intel_timeline_reset_seqno(tl);
+		list_add_tail(&tl->link, &timelines->active_list);
+	}
+	spin_unlock(&timelines->lock);
+}
 
-व्योम पूर्णांकel_समयline_निकास(काष्ठा पूर्णांकel_समयline *tl)
-अणु
-	काष्ठा पूर्णांकel_gt_समयlines *समयlines = &tl->gt->समयlines;
+void intel_timeline_exit(struct intel_timeline *tl)
+{
+	struct intel_gt_timelines *timelines = &tl->gt->timelines;
 
-	/* See पूर्णांकel_समयline_enter() */
-	lockdep_निश्चित_held(&tl->mutex);
+	/* See intel_timeline_enter() */
+	lockdep_assert_held(&tl->mutex);
 
-	GEM_BUG_ON(!atomic_पढ़ो(&tl->active_count));
-	अगर (atomic_add_unless(&tl->active_count, -1, 1))
-		वापस;
+	GEM_BUG_ON(!atomic_read(&tl->active_count));
+	if (atomic_add_unless(&tl->active_count, -1, 1))
+		return;
 
-	spin_lock(&समयlines->lock);
-	अगर (atomic_dec_and_test(&tl->active_count))
+	spin_lock(&timelines->lock);
+	if (atomic_dec_and_test(&tl->active_count))
 		list_del(&tl->link);
-	spin_unlock(&समयlines->lock);
+	spin_unlock(&timelines->lock);
 
 	/*
-	 * Since this समयline is idle, all bariers upon which we were रुकोing
+	 * Since this timeline is idle, all bariers upon which we were waiting
 	 * must also be complete and so we can discard the last used barriers
-	 * without loss of inक्रमmation.
+	 * without loss of information.
 	 */
-	i915_syncmap_मुक्त(&tl->sync);
-पूर्ण
+	i915_syncmap_free(&tl->sync);
+}
 
-अटल u32 समयline_advance(काष्ठा पूर्णांकel_समयline *tl)
-अणु
-	GEM_BUG_ON(!atomic_पढ़ो(&tl->pin_count));
-	GEM_BUG_ON(tl->seqno & tl->has_initial_bपढ़ोcrumb);
+static u32 timeline_advance(struct intel_timeline *tl)
+{
+	GEM_BUG_ON(!atomic_read(&tl->pin_count));
+	GEM_BUG_ON(tl->seqno & tl->has_initial_breadcrumb);
 
-	वापस tl->seqno += 1 + tl->has_initial_bपढ़ोcrumb;
-पूर्ण
+	return tl->seqno += 1 + tl->has_initial_breadcrumb;
+}
 
-अटल noअंतरभूत पूर्णांक
-__पूर्णांकel_समयline_get_seqno(काष्ठा पूर्णांकel_समयline *tl,
+static noinline int
+__intel_timeline_get_seqno(struct intel_timeline *tl,
 			   u32 *seqno)
-अणु
+{
 	u32 next_ofs = offset_in_page(tl->hwsp_offset + TIMELINE_SEQNO_BYTES);
 
-	/* w/a: bit 5 needs to be zero क्रम MI_FLUSH_DW address. */
-	अगर (TIMELINE_SEQNO_BYTES <= BIT(5) && (next_ofs & BIT(5)))
+	/* w/a: bit 5 needs to be zero for MI_FLUSH_DW address. */
+	if (TIMELINE_SEQNO_BYTES <= BIT(5) && (next_ofs & BIT(5)))
 		next_ofs = offset_in_page(next_ofs + BIT(5));
 
 	tl->hwsp_offset = i915_ggtt_offset(tl->hwsp_ggtt) + next_ofs;
 	tl->hwsp_seqno = tl->hwsp_map + next_ofs;
-	पूर्णांकel_समयline_reset_seqno(tl);
+	intel_timeline_reset_seqno(tl);
 
-	*seqno = समयline_advance(tl);
+	*seqno = timeline_advance(tl);
 	GEM_BUG_ON(i915_seqno_passed(*tl->hwsp_seqno, *seqno));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक पूर्णांकel_समयline_get_seqno(काष्ठा पूर्णांकel_समयline *tl,
-			     काष्ठा i915_request *rq,
+int intel_timeline_get_seqno(struct intel_timeline *tl,
+			     struct i915_request *rq,
 			     u32 *seqno)
-अणु
-	*seqno = समयline_advance(tl);
+{
+	*seqno = timeline_advance(tl);
 
-	/* Replace the HWSP on wraparound क्रम HW semaphores */
-	अगर (unlikely(!*seqno && tl->has_initial_bपढ़ोcrumb))
-		वापस __पूर्णांकel_समयline_get_seqno(tl, seqno);
+	/* Replace the HWSP on wraparound for HW semaphores */
+	if (unlikely(!*seqno && tl->has_initial_breadcrumb))
+		return __intel_timeline_get_seqno(tl, seqno);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक पूर्णांकel_समयline_पढ़ो_hwsp(काष्ठा i915_request *from,
-			     काष्ठा i915_request *to,
+int intel_timeline_read_hwsp(struct i915_request *from,
+			     struct i915_request *to,
 			     u32 *hwsp)
-अणु
-	काष्ठा पूर्णांकel_समयline *tl;
-	पूर्णांक err;
+{
+	struct intel_timeline *tl;
+	int err;
 
-	rcu_पढ़ो_lock();
-	tl = rcu_dereference(from->समयline);
-	अगर (i915_request_संकेतed(from) ||
-	    !i915_active_acquire_अगर_busy(&tl->active))
-		tl = शून्य;
+	rcu_read_lock();
+	tl = rcu_dereference(from->timeline);
+	if (i915_request_signaled(from) ||
+	    !i915_active_acquire_if_busy(&tl->active))
+		tl = NULL;
 
-	अगर (tl) अणु
+	if (tl) {
 		/* hwsp_offset may wraparound, so use from->hwsp_seqno */
 		*hwsp = i915_ggtt_offset(tl->hwsp_ggtt) +
 			offset_in_page(from->hwsp_seqno);
-	पूर्ण
+	}
 
-	/* ensure we रुको on the right request, अगर not, we completed */
-	अगर (tl && __i915_request_is_complete(from)) अणु
+	/* ensure we wait on the right request, if not, we completed */
+	if (tl && __i915_request_is_complete(from)) {
 		i915_active_release(&tl->active);
-		tl = शून्य;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		tl = NULL;
+	}
+	rcu_read_unlock();
 
-	अगर (!tl)
-		वापस 1;
+	if (!tl)
+		return 1;
 
-	/* Can't करो semaphore रुकोs on kernel context */
-	अगर (!tl->has_initial_bपढ़ोcrumb) अणु
+	/* Can't do semaphore waits on kernel context */
+	if (!tl->has_initial_breadcrumb) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = i915_active_add_request(&tl->active, to);
 
 out:
 	i915_active_release(&tl->active);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम पूर्णांकel_समयline_unpin(काष्ठा पूर्णांकel_समयline *tl)
-अणु
-	GEM_BUG_ON(!atomic_पढ़ो(&tl->pin_count));
-	अगर (!atomic_dec_and_test(&tl->pin_count))
-		वापस;
+void intel_timeline_unpin(struct intel_timeline *tl)
+{
+	GEM_BUG_ON(!atomic_read(&tl->pin_count));
+	if (!atomic_dec_and_test(&tl->pin_count))
+		return;
 
 	i915_active_release(&tl->active);
 	__i915_vma_unpin(tl->hwsp_ggtt);
-पूर्ण
+}
 
-व्योम __पूर्णांकel_समयline_मुक्त(काष्ठा kref *kref)
-अणु
-	काष्ठा पूर्णांकel_समयline *समयline =
-		container_of(kref, typeof(*समयline), kref);
+void __intel_timeline_free(struct kref *kref)
+{
+	struct intel_timeline *timeline =
+		container_of(kref, typeof(*timeline), kref);
 
-	GEM_BUG_ON(atomic_पढ़ो(&समयline->pin_count));
-	GEM_BUG_ON(!list_empty(&समयline->requests));
-	GEM_BUG_ON(समयline->retire);
+	GEM_BUG_ON(atomic_read(&timeline->pin_count));
+	GEM_BUG_ON(!list_empty(&timeline->requests));
+	GEM_BUG_ON(timeline->retire);
 
-	call_rcu(&समयline->rcu, पूर्णांकel_समयline_fini);
-पूर्ण
+	call_rcu(&timeline->rcu, intel_timeline_fini);
+}
 
-व्योम पूर्णांकel_gt_fini_समयlines(काष्ठा पूर्णांकel_gt *gt)
-अणु
-	काष्ठा पूर्णांकel_gt_समयlines *समयlines = &gt->समयlines;
+void intel_gt_fini_timelines(struct intel_gt *gt)
+{
+	struct intel_gt_timelines *timelines = &gt->timelines;
 
-	GEM_BUG_ON(!list_empty(&समयlines->active_list));
-पूर्ण
+	GEM_BUG_ON(!list_empty(&timelines->active_list));
+}
 
-व्योम पूर्णांकel_gt_show_समयlines(काष्ठा पूर्णांकel_gt *gt,
-			     काष्ठा drm_prपूर्णांकer *m,
-			     व्योम (*show_request)(काष्ठा drm_prपूर्णांकer *m,
-						  स्थिर काष्ठा i915_request *rq,
-						  स्थिर अक्षर *prefix,
-						  पूर्णांक indent))
-अणु
-	काष्ठा पूर्णांकel_gt_समयlines *समयlines = &gt->समयlines;
-	काष्ठा पूर्णांकel_समयline *tl, *tn;
-	LIST_HEAD(मुक्त);
+void intel_gt_show_timelines(struct intel_gt *gt,
+			     struct drm_printer *m,
+			     void (*show_request)(struct drm_printer *m,
+						  const struct i915_request *rq,
+						  const char *prefix,
+						  int indent))
+{
+	struct intel_gt_timelines *timelines = &gt->timelines;
+	struct intel_timeline *tl, *tn;
+	LIST_HEAD(free);
 
-	spin_lock(&समयlines->lock);
-	list_क्रम_each_entry_safe(tl, tn, &समयlines->active_list, link) अणु
-		अचिन्हित दीर्घ count, पढ़ोy, inflight;
-		काष्ठा i915_request *rq, *rn;
-		काष्ठा dma_fence *fence;
+	spin_lock(&timelines->lock);
+	list_for_each_entry_safe(tl, tn, &timelines->active_list, link) {
+		unsigned long count, ready, inflight;
+		struct i915_request *rq, *rn;
+		struct dma_fence *fence;
 
-		अगर (!mutex_trylock(&tl->mutex)) अणु
-			drm_म_लिखो(m, "Timeline %llx: busy; skipping\n",
+		if (!mutex_trylock(&tl->mutex)) {
+			drm_printf(m, "Timeline %llx: busy; skipping\n",
 				   tl->fence_context);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		पूर्णांकel_समयline_get(tl);
-		GEM_BUG_ON(!atomic_पढ़ो(&tl->active_count));
+		intel_timeline_get(tl);
+		GEM_BUG_ON(!atomic_read(&tl->active_count));
 		atomic_inc(&tl->active_count); /* pin the list element */
-		spin_unlock(&समयlines->lock);
+		spin_unlock(&timelines->lock);
 
 		count = 0;
-		पढ़ोy = 0;
+		ready = 0;
 		inflight = 0;
-		list_क्रम_each_entry_safe(rq, rn, &tl->requests, link) अणु
-			अगर (i915_request_completed(rq))
-				जारी;
+		list_for_each_entry_safe(rq, rn, &tl->requests, link) {
+			if (i915_request_completed(rq))
+				continue;
 
 			count++;
-			अगर (i915_request_is_पढ़ोy(rq))
-				पढ़ोy++;
-			अगर (i915_request_is_active(rq))
+			if (i915_request_is_ready(rq))
+				ready++;
+			if (i915_request_is_active(rq))
 				inflight++;
-		पूर्ण
+		}
 
-		drm_म_लिखो(m, "Timeline %llx: { ", tl->fence_context);
-		drm_म_लिखो(m, "count: %lu, ready: %lu, inflight: %lu",
-			   count, पढ़ोy, inflight);
-		drm_म_लिखो(m, ", seqno: { current: %d, last: %d }",
+		drm_printf(m, "Timeline %llx: { ", tl->fence_context);
+		drm_printf(m, "count: %lu, ready: %lu, inflight: %lu",
+			   count, ready, inflight);
+		drm_printf(m, ", seqno: { current: %d, last: %d }",
 			   *tl->hwsp_seqno, tl->seqno);
 		fence = i915_active_fence_get(&tl->last_request);
-		अगर (fence) अणु
-			drm_म_लिखो(m, ", engine: %s",
+		if (fence) {
+			drm_printf(m, ", engine: %s",
 				   to_request(fence)->engine->name);
 			dma_fence_put(fence);
-		पूर्ण
-		drm_म_लिखो(m, " }\n");
+		}
+		drm_printf(m, " }\n");
 
-		अगर (show_request) अणु
-			list_क्रम_each_entry_safe(rq, rn, &tl->requests, link)
+		if (show_request) {
+			list_for_each_entry_safe(rq, rn, &tl->requests, link)
 				show_request(m, rq, "", 2);
-		पूर्ण
+		}
 
 		mutex_unlock(&tl->mutex);
-		spin_lock(&समयlines->lock);
+		spin_lock(&timelines->lock);
 
 		/* Resume list iteration after reacquiring spinlock */
 		list_safe_reset_next(tl, tn, link);
-		अगर (atomic_dec_and_test(&tl->active_count))
+		if (atomic_dec_and_test(&tl->active_count))
 			list_del(&tl->link);
 
 		/* Defer the final release to after the spinlock */
-		अगर (refcount_dec_and_test(&tl->kref.refcount)) अणु
-			GEM_BUG_ON(atomic_पढ़ो(&tl->active_count));
-			list_add(&tl->link, &मुक्त);
-		पूर्ण
-	पूर्ण
-	spin_unlock(&समयlines->lock);
+		if (refcount_dec_and_test(&tl->kref.refcount)) {
+			GEM_BUG_ON(atomic_read(&tl->active_count));
+			list_add(&tl->link, &free);
+		}
+	}
+	spin_unlock(&timelines->lock);
 
-	list_क्रम_each_entry_safe(tl, tn, &मुक्त, link)
-		__पूर्णांकel_समयline_मुक्त(&tl->kref);
-पूर्ण
+	list_for_each_entry_safe(tl, tn, &free, link)
+		__intel_timeline_free(&tl->kref);
+}
 
-#अगर IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
-#समावेश "gt/selftests/mock_timeline.c"
-#समावेश "gt/selftest_timeline.c"
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
+#include "gt/selftests/mock_timeline.c"
+#include "gt/selftest_timeline.c"
+#endif

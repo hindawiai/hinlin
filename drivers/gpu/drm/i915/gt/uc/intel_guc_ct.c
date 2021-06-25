@@ -1,162 +1,161 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
- * Copyright तऊ 2016-2019 Intel Corporation
+ * Copyright © 2016-2019 Intel Corporation
  */
 
-#समावेश "i915_drv.h"
-#समावेश "intel_guc_ct.h"
-#समावेश "gt/intel_gt.h"
+#include "i915_drv.h"
+#include "intel_guc_ct.h"
+#include "gt/intel_gt.h"
 
-#घोषणा CT_ERROR(_ct, _fmt, ...) \
+#define CT_ERROR(_ct, _fmt, ...) \
 	DRM_DEV_ERROR(ct_to_dev(_ct), "CT: " _fmt, ##__VA_ARGS__)
-#अगर_घोषित CONFIG_DRM_I915_DEBUG_GUC
-#घोषणा CT_DEBUG(_ct, _fmt, ...) \
+#ifdef CONFIG_DRM_I915_DEBUG_GUC
+#define CT_DEBUG(_ct, _fmt, ...) \
 	DRM_DEV_DEBUG_DRIVER(ct_to_dev(_ct), "CT: " _fmt, ##__VA_ARGS__)
-#अन्यथा
-#घोषणा CT_DEBUG(...)	करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+#else
+#define CT_DEBUG(...)	do { } while (0)
+#endif
 
-काष्ठा ct_request अणु
-	काष्ठा list_head link;
+struct ct_request {
+	struct list_head link;
 	u32 fence;
 	u32 status;
 	u32 response_len;
 	u32 *response_buf;
-पूर्ण;
+};
 
-काष्ठा ct_incoming_request अणु
-	काष्ठा list_head link;
+struct ct_incoming_request {
+	struct list_head link;
 	u32 msg[];
-पूर्ण;
+};
 
-क्रमागत अणु CTB_SEND = 0, CTB_RECV = 1 पूर्ण;
+enum { CTB_SEND = 0, CTB_RECV = 1 };
 
-क्रमागत अणु CTB_OWNER_HOST = 0 पूर्ण;
+enum { CTB_OWNER_HOST = 0 };
 
-अटल व्योम ct_incoming_request_worker_func(काष्ठा work_काष्ठा *w);
+static void ct_incoming_request_worker_func(struct work_struct *w);
 
 /**
- * पूर्णांकel_guc_ct_init_early - Initialize CT state without requiring device access
- * @ct: poपूर्णांकer to CT काष्ठा
+ * intel_guc_ct_init_early - Initialize CT state without requiring device access
+ * @ct: pointer to CT struct
  */
-व्योम पूर्णांकel_guc_ct_init_early(काष्ठा पूर्णांकel_guc_ct *ct)
-अणु
+void intel_guc_ct_init_early(struct intel_guc_ct *ct)
+{
 	spin_lock_init(&ct->requests.lock);
 	INIT_LIST_HEAD(&ct->requests.pending);
 	INIT_LIST_HEAD(&ct->requests.incoming);
 	INIT_WORK(&ct->requests.worker, ct_incoming_request_worker_func);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा पूर्णांकel_guc *ct_to_guc(काष्ठा पूर्णांकel_guc_ct *ct)
-अणु
-	वापस container_of(ct, काष्ठा पूर्णांकel_guc, ct);
-पूर्ण
+static inline struct intel_guc *ct_to_guc(struct intel_guc_ct *ct)
+{
+	return container_of(ct, struct intel_guc, ct);
+}
 
-अटल अंतरभूत काष्ठा पूर्णांकel_gt *ct_to_gt(काष्ठा पूर्णांकel_guc_ct *ct)
-अणु
-	वापस guc_to_gt(ct_to_guc(ct));
-पूर्ण
+static inline struct intel_gt *ct_to_gt(struct intel_guc_ct *ct)
+{
+	return guc_to_gt(ct_to_guc(ct));
+}
 
-अटल अंतरभूत काष्ठा drm_i915_निजी *ct_to_i915(काष्ठा पूर्णांकel_guc_ct *ct)
-अणु
-	वापस ct_to_gt(ct)->i915;
-पूर्ण
+static inline struct drm_i915_private *ct_to_i915(struct intel_guc_ct *ct)
+{
+	return ct_to_gt(ct)->i915;
+}
 
-अटल अंतरभूत काष्ठा device *ct_to_dev(काष्ठा पूर्णांकel_guc_ct *ct)
-अणु
-	वापस ct_to_i915(ct)->drm.dev;
-पूर्ण
+static inline struct device *ct_to_dev(struct intel_guc_ct *ct)
+{
+	return ct_to_i915(ct)->drm.dev;
+}
 
-अटल अंतरभूत स्थिर अक्षर *guc_ct_buffer_type_to_str(u32 type)
-अणु
-	चयन (type) अणु
-	हाल INTEL_GUC_CT_BUFFER_TYPE_SEND:
-		वापस "SEND";
-	हाल INTEL_GUC_CT_BUFFER_TYPE_RECV:
-		वापस "RECV";
-	शेष:
-		वापस "<invalid>";
-	पूर्ण
-पूर्ण
+static inline const char *guc_ct_buffer_type_to_str(u32 type)
+{
+	switch (type) {
+	case INTEL_GUC_CT_BUFFER_TYPE_SEND:
+		return "SEND";
+	case INTEL_GUC_CT_BUFFER_TYPE_RECV:
+		return "RECV";
+	default:
+		return "<invalid>";
+	}
+}
 
-अटल व्योम guc_ct_buffer_desc_init(काष्ठा guc_ct_buffer_desc *desc,
+static void guc_ct_buffer_desc_init(struct guc_ct_buffer_desc *desc,
 				    u32 cmds_addr, u32 size)
-अणु
-	स_रखो(desc, 0, माप(*desc));
+{
+	memset(desc, 0, sizeof(*desc));
 	desc->addr = cmds_addr;
 	desc->size = size;
 	desc->owner = CTB_OWNER_HOST;
-पूर्ण
+}
 
-अटल व्योम guc_ct_buffer_desc_reset(काष्ठा guc_ct_buffer_desc *desc)
-अणु
+static void guc_ct_buffer_desc_reset(struct guc_ct_buffer_desc *desc)
+{
 	desc->head = 0;
 	desc->tail = 0;
 	desc->is_in_error = 0;
-पूर्ण
+}
 
-अटल पूर्णांक guc_action_रेजिस्टर_ct_buffer(काष्ठा पूर्णांकel_guc *guc,
+static int guc_action_register_ct_buffer(struct intel_guc *guc,
 					 u32 desc_addr,
 					 u32 type)
-अणु
-	u32 action[] = अणु
+{
+	u32 action[] = {
 		INTEL_GUC_ACTION_REGISTER_COMMAND_TRANSPORT_BUFFER,
 		desc_addr,
-		माप(काष्ठा guc_ct_buffer_desc),
+		sizeof(struct guc_ct_buffer_desc),
 		type
-	पूर्ण;
+	};
 
 	/* Can't use generic send(), CT registration must go over MMIO */
-	वापस पूर्णांकel_guc_send_mmio(guc, action, ARRAY_SIZE(action), शून्य, 0);
-पूर्ण
+	return intel_guc_send_mmio(guc, action, ARRAY_SIZE(action), NULL, 0);
+}
 
-अटल पूर्णांक ct_रेजिस्टर_buffer(काष्ठा पूर्णांकel_guc_ct *ct, u32 desc_addr, u32 type)
-अणु
-	पूर्णांक err = guc_action_रेजिस्टर_ct_buffer(ct_to_guc(ct), desc_addr, type);
+static int ct_register_buffer(struct intel_guc_ct *ct, u32 desc_addr, u32 type)
+{
+	int err = guc_action_register_ct_buffer(ct_to_guc(ct), desc_addr, type);
 
-	अगर (unlikely(err))
+	if (unlikely(err))
 		CT_ERROR(ct, "Failed to register %s buffer (err=%d)\n",
 			 guc_ct_buffer_type_to_str(type), err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक guc_action_deरेजिस्टर_ct_buffer(काष्ठा पूर्णांकel_guc *guc, u32 type)
-अणु
-	u32 action[] = अणु
+static int guc_action_deregister_ct_buffer(struct intel_guc *guc, u32 type)
+{
+	u32 action[] = {
 		INTEL_GUC_ACTION_DEREGISTER_COMMAND_TRANSPORT_BUFFER,
 		CTB_OWNER_HOST,
 		type
-	पूर्ण;
+	};
 
 	/* Can't use generic send(), CT deregistration must go over MMIO */
-	वापस पूर्णांकel_guc_send_mmio(guc, action, ARRAY_SIZE(action), शून्य, 0);
-पूर्ण
+	return intel_guc_send_mmio(guc, action, ARRAY_SIZE(action), NULL, 0);
+}
 
-अटल पूर्णांक ct_deरेजिस्टर_buffer(काष्ठा पूर्णांकel_guc_ct *ct, u32 type)
-अणु
-	पूर्णांक err = guc_action_deरेजिस्टर_ct_buffer(ct_to_guc(ct), type);
+static int ct_deregister_buffer(struct intel_guc_ct *ct, u32 type)
+{
+	int err = guc_action_deregister_ct_buffer(ct_to_guc(ct), type);
 
-	अगर (unlikely(err))
+	if (unlikely(err))
 		CT_ERROR(ct, "Failed to deregister %s buffer (err=%d)\n",
 			 guc_ct_buffer_type_to_str(type), err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * पूर्णांकel_guc_ct_init - Init buffer-based communication
- * @ct: poपूर्णांकer to CT काष्ठा
+ * intel_guc_ct_init - Init buffer-based communication
+ * @ct: pointer to CT struct
  *
- * Allocate memory required क्रम buffer-based communication.
+ * Allocate memory required for buffer-based communication.
  *
- * Return: 0 on success, a negative त्रुटि_सं code on failure.
+ * Return: 0 on success, a negative errno code on failure.
  */
-पूर्णांक पूर्णांकel_guc_ct_init(काष्ठा पूर्णांकel_guc_ct *ct)
-अणु
-	काष्ठा पूर्णांकel_guc *guc = ct_to_guc(ct);
-	व्योम *blob;
-	पूर्णांक err;
-	पूर्णांक i;
+int intel_guc_ct_init(struct intel_guc_ct *ct)
+{
+	struct intel_guc *guc = ct_to_guc(ct);
+	void *blob;
+	int err;
+	int i;
 
 	GEM_BUG_ON(ct->vma);
 
@@ -175,123 +174,123 @@
 	 *      |                               PAGE/4
 	 *      |_______________________________|
 	 *
-	 * Each message can use a maximum of 32 dwords and we करोn't expect to
-	 * have more than 1 in flight at any समय, so we have enough space.
+	 * Each message can use a maximum of 32 dwords and we don't expect to
+	 * have more than 1 in flight at any time, so we have enough space.
 	 * Some logic further ahead will rely on the fact that there is only 1
-	 * page and that it is always mapped, so अगर the size is changed the
+	 * page and that it is always mapped, so if the size is changed the
 	 * other code will need updating as well.
 	 */
 
-	err = पूर्णांकel_guc_allocate_and_map_vma(guc, PAGE_SIZE, &ct->vma, &blob);
-	अगर (unlikely(err)) अणु
+	err = intel_guc_allocate_and_map_vma(guc, PAGE_SIZE, &ct->vma, &blob);
+	if (unlikely(err)) {
 		CT_ERROR(ct, "Failed to allocate CT channel (err=%d)\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	CT_DEBUG(ct, "vma base=%#x\n", पूर्णांकel_guc_ggtt_offset(guc, ct->vma));
+	CT_DEBUG(ct, "vma base=%#x\n", intel_guc_ggtt_offset(guc, ct->vma));
 
-	/* store poपूर्णांकers to desc and cmds */
-	क्रम (i = 0; i < ARRAY_SIZE(ct->ctbs); i++) अणु
+	/* store pointers to desc and cmds */
+	for (i = 0; i < ARRAY_SIZE(ct->ctbs); i++) {
 		GEM_BUG_ON((i !=  CTB_SEND) && (i != CTB_RECV));
 		ct->ctbs[i].desc = blob + PAGE_SIZE/4 * i;
 		ct->ctbs[i].cmds = blob + PAGE_SIZE/4 * i + PAGE_SIZE/2;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * पूर्णांकel_guc_ct_fini - Fini buffer-based communication
- * @ct: poपूर्णांकer to CT काष्ठा
+ * intel_guc_ct_fini - Fini buffer-based communication
+ * @ct: pointer to CT struct
  *
- * Deallocate memory required क्रम buffer-based communication.
+ * Deallocate memory required for buffer-based communication.
  */
-व्योम पूर्णांकel_guc_ct_fini(काष्ठा पूर्णांकel_guc_ct *ct)
-अणु
+void intel_guc_ct_fini(struct intel_guc_ct *ct)
+{
 	GEM_BUG_ON(ct->enabled);
 
 	i915_vma_unpin_and_release(&ct->vma, I915_VMA_RELEASE_MAP);
-	स_रखो(ct, 0, माप(*ct));
-पूर्ण
+	memset(ct, 0, sizeof(*ct));
+}
 
 /**
- * पूर्णांकel_guc_ct_enable - Enable buffer based command transport.
- * @ct: poपूर्णांकer to CT काष्ठा
+ * intel_guc_ct_enable - Enable buffer based command transport.
+ * @ct: pointer to CT struct
  *
- * Return: 0 on success, a negative त्रुटि_सं code on failure.
+ * Return: 0 on success, a negative errno code on failure.
  */
-पूर्णांक पूर्णांकel_guc_ct_enable(काष्ठा पूर्णांकel_guc_ct *ct)
-अणु
-	काष्ठा पूर्णांकel_guc *guc = ct_to_guc(ct);
+int intel_guc_ct_enable(struct intel_guc_ct *ct)
+{
+	struct intel_guc *guc = ct_to_guc(ct);
 	u32 base, cmds, size;
-	पूर्णांक err;
-	पूर्णांक i;
+	int err;
+	int i;
 
 	GEM_BUG_ON(ct->enabled);
 
-	/* vma should be alपढ़ोy allocated and map'ed */
+	/* vma should be already allocated and map'ed */
 	GEM_BUG_ON(!ct->vma);
-	base = पूर्णांकel_guc_ggtt_offset(guc, ct->vma);
+	base = intel_guc_ggtt_offset(guc, ct->vma);
 
 	/* (re)initialize descriptors
 	 * cmds buffers are in the second half of the blob page
 	 */
-	क्रम (i = 0; i < ARRAY_SIZE(ct->ctbs); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(ct->ctbs); i++) {
 		GEM_BUG_ON((i != CTB_SEND) && (i != CTB_RECV));
 		cmds = base + PAGE_SIZE / 4 * i + PAGE_SIZE / 2;
 		size = PAGE_SIZE / 4;
 		CT_DEBUG(ct, "%d: addr=%#x size=%u\n", i, cmds, size);
 		guc_ct_buffer_desc_init(ct->ctbs[i].desc, cmds, size);
-	पूर्ण
+	}
 
 	/*
 	 * Register both CT buffers starting with RECV buffer.
 	 * Descriptors are in first half of the blob.
 	 */
-	err = ct_रेजिस्टर_buffer(ct, base + PAGE_SIZE / 4 * CTB_RECV,
+	err = ct_register_buffer(ct, base + PAGE_SIZE / 4 * CTB_RECV,
 				 INTEL_GUC_CT_BUFFER_TYPE_RECV);
-	अगर (unlikely(err))
-		जाओ err_out;
+	if (unlikely(err))
+		goto err_out;
 
-	err = ct_रेजिस्टर_buffer(ct, base + PAGE_SIZE / 4 * CTB_SEND,
+	err = ct_register_buffer(ct, base + PAGE_SIZE / 4 * CTB_SEND,
 				 INTEL_GUC_CT_BUFFER_TYPE_SEND);
-	अगर (unlikely(err))
-		जाओ err_deरेजिस्टर;
+	if (unlikely(err))
+		goto err_deregister;
 
 	ct->enabled = true;
 
-	वापस 0;
+	return 0;
 
-err_deरेजिस्टर:
-	ct_deरेजिस्टर_buffer(ct, INTEL_GUC_CT_BUFFER_TYPE_RECV);
+err_deregister:
+	ct_deregister_buffer(ct, INTEL_GUC_CT_BUFFER_TYPE_RECV);
 err_out:
 	CT_ERROR(ct, "Failed to open open CT channel (err=%d)\n", err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * पूर्णांकel_guc_ct_disable - Disable buffer based command transport.
- * @ct: poपूर्णांकer to CT काष्ठा
+ * intel_guc_ct_disable - Disable buffer based command transport.
+ * @ct: pointer to CT struct
  */
-व्योम पूर्णांकel_guc_ct_disable(काष्ठा पूर्णांकel_guc_ct *ct)
-अणु
-	काष्ठा पूर्णांकel_guc *guc = ct_to_guc(ct);
+void intel_guc_ct_disable(struct intel_guc_ct *ct)
+{
+	struct intel_guc *guc = ct_to_guc(ct);
 
 	GEM_BUG_ON(!ct->enabled);
 
 	ct->enabled = false;
 
-	अगर (पूर्णांकel_guc_is_fw_running(guc)) अणु
-		ct_deरेजिस्टर_buffer(ct, INTEL_GUC_CT_BUFFER_TYPE_SEND);
-		ct_deरेजिस्टर_buffer(ct, INTEL_GUC_CT_BUFFER_TYPE_RECV);
-	पूर्ण
-पूर्ण
+	if (intel_guc_is_fw_running(guc)) {
+		ct_deregister_buffer(ct, INTEL_GUC_CT_BUFFER_TYPE_SEND);
+		ct_deregister_buffer(ct, INTEL_GUC_CT_BUFFER_TYPE_RECV);
+	}
+}
 
-अटल u32 ct_get_next_fence(काष्ठा पूर्णांकel_guc_ct *ct)
-अणु
+static u32 ct_get_next_fence(struct intel_guc_ct *ct)
+{
 	/* For now it's trivial */
-	वापस ++ct->requests.last_fence;
-पूर्ण
+	return ++ct->requests.last_fence;
+}
 
 /**
  * DOC: CTB Host to GuC request
@@ -305,55 +304,55 @@ err_out:
  *      +   HEADER   +---------+---------+---------+---------+
  *      |            |    0    |    1    |   ...   |    n    |
  *      +============+=========+=========+=========+=========+
- *      |  len >= 1  |  FENCE  |     request specअगरic data   |
+ *      |  len >= 1  |  FENCE  |     request specific data   |
  *      +------+-----+---------+---------+---------+---------+
  *
  *                   ^-----------------len-------------------^
  */
 
-अटल पूर्णांक ct_ग_लिखो(काष्ठा पूर्णांकel_guc_ct *ct,
-		    स्थिर u32 *action,
+static int ct_write(struct intel_guc_ct *ct,
+		    const u32 *action,
 		    u32 len /* in dwords */,
 		    u32 fence,
 		    bool want_response)
-अणु
-	काष्ठा पूर्णांकel_guc_ct_buffer *ctb = &ct->ctbs[CTB_SEND];
-	काष्ठा guc_ct_buffer_desc *desc = ctb->desc;
+{
+	struct intel_guc_ct_buffer *ctb = &ct->ctbs[CTB_SEND];
+	struct guc_ct_buffer_desc *desc = ctb->desc;
 	u32 head = desc->head;
 	u32 tail = desc->tail;
 	u32 size = desc->size;
 	u32 used;
 	u32 header;
 	u32 *cmds = ctb->cmds;
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 
-	अगर (unlikely(desc->is_in_error))
-		वापस -EPIPE;
+	if (unlikely(desc->is_in_error))
+		return -EPIPE;
 
-	अगर (unlikely(!IS_ALIGNED(head | tail | size, 4) ||
+	if (unlikely(!IS_ALIGNED(head | tail | size, 4) ||
 		     (tail | head) >= size))
-		जाओ corrupted;
+		goto corrupted;
 
-	/* later calculations will be करोne in dwords */
+	/* later calculations will be done in dwords */
 	head /= 4;
 	tail /= 4;
 	size /= 4;
 
 	/*
-	 * tail == head condition indicates empty. GuC FW करोes not support
+	 * tail == head condition indicates empty. GuC FW does not support
 	 * using up the entire buffer to get tail == head meaning full.
 	 */
-	अगर (tail < head)
+	if (tail < head)
 		used = (size - head) + tail;
-	अन्यथा
+	else
 		used = tail - head;
 
-	/* make sure there is a space including extra dw क्रम the fence */
-	अगर (unlikely(used + len + 1 >= size))
-		वापस -ENOSPC;
+	/* make sure there is a space including extra dw for the fence */
+	if (unlikely(used + len + 1 >= size))
+		return -ENOSPC;
 
 	/*
-	 * Write the message. The क्रमmat is the following:
+	 * Write the message. The format is the following:
 	 * DW0: header (including action code)
 	 * DW1: fence
 	 * DW2+: action data
@@ -372,122 +371,122 @@ err_out:
 	cmds[tail] = fence;
 	tail = (tail + 1) % size;
 
-	क्रम (i = 1; i < len; i++) अणु
+	for (i = 1; i < len; i++) {
 		cmds[tail] = action[i];
 		tail = (tail + 1) % size;
-	पूर्ण
+	}
 	GEM_BUG_ON(tail > size);
 
 	/* now update desc tail (back in bytes) */
 	desc->tail = tail * 4;
-	वापस 0;
+	return 0;
 
 corrupted:
 	CT_ERROR(ct, "Corrupted descriptor addr=%#x head=%u tail=%u size=%u\n",
 		 desc->addr, desc->head, desc->tail, desc->size);
 	desc->is_in_error = 1;
-	वापस -EPIPE;
-पूर्ण
+	return -EPIPE;
+}
 
 /**
- * रुको_क्रम_ctb_desc_update - Wait क्रम the CT buffer descriptor update.
+ * wait_for_ctb_desc_update - Wait for the CT buffer descriptor update.
  * @desc:	buffer descriptor
  * @fence:	response fence
- * @status:	placeholder क्रम status
+ * @status:	placeholder for status
  *
  * Guc will update CT buffer descriptor with new fence and status
- * after processing the command identअगरied by the fence. Wait क्रम
- * specअगरied fence and then पढ़ो from the descriptor status of the
+ * after processing the command identified by the fence. Wait for
+ * specified fence and then read from the descriptor status of the
  * command.
  *
  * Return:
  * *	0 response received (status is valid)
- * *	-ETIMEDOUT no response within hardcoded समयout
+ * *	-ETIMEDOUT no response within hardcoded timeout
  * *	-EPROTO no response, CT buffer is in error
  */
-अटल पूर्णांक रुको_क्रम_ctb_desc_update(काष्ठा guc_ct_buffer_desc *desc,
+static int wait_for_ctb_desc_update(struct guc_ct_buffer_desc *desc,
 				    u32 fence,
 				    u32 *status)
-अणु
-	पूर्णांक err;
+{
+	int err;
 
 	/*
 	 * Fast commands should complete in less than 10us, so sample quickly
-	 * up to that length of समय, then चयन to a slower sleep-रुको loop.
-	 * No GuC command should ever take दीर्घer than 10ms.
+	 * up to that length of time, then switch to a slower sleep-wait loop.
+	 * No GuC command should ever take longer than 10ms.
 	 */
-#घोषणा करोne (READ_ONCE(desc->fence) == fence)
-	err = रुको_क्रम_us(करोne, 10);
-	अगर (err)
-		err = रुको_क्रम(करोne, 10);
-#अघोषित करोne
+#define done (READ_ONCE(desc->fence) == fence)
+	err = wait_for_us(done, 10);
+	if (err)
+		err = wait_for(done, 10);
+#undef done
 
-	अगर (unlikely(err)) अणु
+	if (unlikely(err)) {
 		DRM_ERROR("CT: fence %u failed; reported fence=%u\n",
 			  fence, desc->fence);
 
-		अगर (WARN_ON(desc->is_in_error)) अणु
+		if (WARN_ON(desc->is_in_error)) {
 			/* Something went wrong with the messaging, try to reset
-			 * the buffer and hope क्रम the best
+			 * the buffer and hope for the best
 			 */
 			guc_ct_buffer_desc_reset(desc);
 			err = -EPROTO;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	*status = desc->status;
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * रुको_क्रम_ct_request_update - Wait क्रम CT request state update.
- * @req:	poपूर्णांकer to pending request
- * @status:	placeholder क्रम status
+ * wait_for_ct_request_update - Wait for CT request state update.
+ * @req:	pointer to pending request
+ * @status:	placeholder for status
  *
  * For each sent request, Guc shall send bac CT response message.
  * Our message handler will update status of tracked request once
  * response message with given fence is received. Wait here and
- * check क्रम valid response status value.
+ * check for valid response status value.
  *
  * Return:
  * *	0 response received (status is valid)
- * *	-ETIMEDOUT no response within hardcoded समयout
+ * *	-ETIMEDOUT no response within hardcoded timeout
  */
-अटल पूर्णांक रुको_क्रम_ct_request_update(काष्ठा ct_request *req, u32 *status)
-अणु
-	पूर्णांक err;
+static int wait_for_ct_request_update(struct ct_request *req, u32 *status)
+{
+	int err;
 
 	/*
 	 * Fast commands should complete in less than 10us, so sample quickly
-	 * up to that length of समय, then चयन to a slower sleep-रुको loop.
-	 * No GuC command should ever take दीर्घer than 10ms.
+	 * up to that length of time, then switch to a slower sleep-wait loop.
+	 * No GuC command should ever take longer than 10ms.
 	 */
-#घोषणा करोne INTEL_GUC_MSG_IS_RESPONSE(READ_ONCE(req->status))
-	err = रुको_क्रम_us(करोne, 10);
-	अगर (err)
-		err = रुको_क्रम(करोne, 10);
-#अघोषित करोne
+#define done INTEL_GUC_MSG_IS_RESPONSE(READ_ONCE(req->status))
+	err = wait_for_us(done, 10);
+	if (err)
+		err = wait_for(done, 10);
+#undef done
 
-	अगर (unlikely(err))
+	if (unlikely(err))
 		DRM_ERROR("CT: fence %u err %d\n", req->fence, err);
 
 	*status = req->status;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ct_send(काष्ठा पूर्णांकel_guc_ct *ct,
-		   स्थिर u32 *action,
+static int ct_send(struct intel_guc_ct *ct,
+		   const u32 *action,
 		   u32 len,
 		   u32 *response_buf,
 		   u32 response_buf_size,
 		   u32 *status)
-अणु
-	काष्ठा पूर्णांकel_guc_ct_buffer *ctb = &ct->ctbs[CTB_SEND];
-	काष्ठा guc_ct_buffer_desc *desc = ctb->desc;
-	काष्ठा ct_request request;
-	अचिन्हित दीर्घ flags;
+{
+	struct intel_guc_ct_buffer *ctb = &ct->ctbs[CTB_SEND];
+	struct guc_ct_buffer_desc *desc = ctb->desc;
+	struct ct_request request;
+	unsigned long flags;
 	u32 fence;
-	पूर्णांक err;
+	int err;
 
 	GEM_BUG_ON(!ct->enabled);
 	GEM_BUG_ON(!len);
@@ -504,120 +503,120 @@ corrupted:
 	list_add_tail(&request.link, &ct->requests.pending);
 	spin_unlock_irqrestore(&ct->requests.lock, flags);
 
-	err = ct_ग_लिखो(ct, action, len, fence, !!response_buf);
-	अगर (unlikely(err))
-		जाओ unlink;
+	err = ct_write(ct, action, len, fence, !!response_buf);
+	if (unlikely(err))
+		goto unlink;
 
-	पूर्णांकel_guc_notअगरy(ct_to_guc(ct));
+	intel_guc_notify(ct_to_guc(ct));
 
-	अगर (response_buf)
-		err = रुको_क्रम_ct_request_update(&request, status);
-	अन्यथा
-		err = रुको_क्रम_ctb_desc_update(desc, fence, status);
-	अगर (unlikely(err))
-		जाओ unlink;
+	if (response_buf)
+		err = wait_for_ct_request_update(&request, status);
+	else
+		err = wait_for_ctb_desc_update(desc, fence, status);
+	if (unlikely(err))
+		goto unlink;
 
-	अगर (!INTEL_GUC_MSG_IS_RESPONSE_SUCCESS(*status)) अणु
+	if (!INTEL_GUC_MSG_IS_RESPONSE_SUCCESS(*status)) {
 		err = -EIO;
-		जाओ unlink;
-	पूर्ण
+		goto unlink;
+	}
 
-	अगर (response_buf) अणु
+	if (response_buf) {
 		/* There shall be no data in the status */
 		WARN_ON(INTEL_GUC_MSG_TO_DATA(request.status));
 		/* Return actual response len */
 		err = request.response_len;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* There shall be no response payload */
 		WARN_ON(request.response_len);
 		/* Return data decoded from the status dword */
 		err = INTEL_GUC_MSG_TO_DATA(*status);
-	पूर्ण
+	}
 
 unlink:
 	spin_lock_irqsave(&ct->requests.lock, flags);
 	list_del(&request.link);
 	spin_unlock_irqrestore(&ct->requests.lock, flags);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
  * Command Transport (CT) buffer based GuC send function.
  */
-पूर्णांक पूर्णांकel_guc_ct_send(काष्ठा पूर्णांकel_guc_ct *ct, स्थिर u32 *action, u32 len,
+int intel_guc_ct_send(struct intel_guc_ct *ct, const u32 *action, u32 len,
 		      u32 *response_buf, u32 response_buf_size)
-अणु
-	काष्ठा पूर्णांकel_guc *guc = ct_to_guc(ct);
+{
+	struct intel_guc *guc = ct_to_guc(ct);
 	u32 status = ~0; /* undefined */
-	पूर्णांक ret;
+	int ret;
 
-	अगर (unlikely(!ct->enabled)) अणु
+	if (unlikely(!ct->enabled)) {
 		WARN(1, "Unexpected send: action=%#x\n", *action);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	mutex_lock(&guc->send_mutex);
 
 	ret = ct_send(ct, action, len, response_buf, response_buf_size, &status);
-	अगर (unlikely(ret < 0)) अणु
+	if (unlikely(ret < 0)) {
 		CT_ERROR(ct, "Sending action %#x failed (err=%d status=%#X)\n",
 			 action[0], ret, status);
-	पूर्ण अन्यथा अगर (unlikely(ret)) अणु
+	} else if (unlikely(ret)) {
 		CT_DEBUG(ct, "send action %#x returned %d (%#x)\n",
 			 action[0], ret, ret);
-	पूर्ण
+	}
 
 	mutex_unlock(&guc->send_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक ct_header_get_len(u32 header)
-अणु
-	वापस (header >> GUC_CT_MSG_LEN_SHIFT) & GUC_CT_MSG_LEN_MASK;
-पूर्ण
+static inline unsigned int ct_header_get_len(u32 header)
+{
+	return (header >> GUC_CT_MSG_LEN_SHIFT) & GUC_CT_MSG_LEN_MASK;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक ct_header_get_action(u32 header)
-अणु
-	वापस (header >> GUC_CT_MSG_ACTION_SHIFT) & GUC_CT_MSG_ACTION_MASK;
-पूर्ण
+static inline unsigned int ct_header_get_action(u32 header)
+{
+	return (header >> GUC_CT_MSG_ACTION_SHIFT) & GUC_CT_MSG_ACTION_MASK;
+}
 
-अटल अंतरभूत bool ct_header_is_response(u32 header)
-अणु
-	वापस !!(header & GUC_CT_MSG_IS_RESPONSE);
-पूर्ण
+static inline bool ct_header_is_response(u32 header)
+{
+	return !!(header & GUC_CT_MSG_IS_RESPONSE);
+}
 
-अटल पूर्णांक ct_पढ़ो(काष्ठा पूर्णांकel_guc_ct *ct, u32 *data)
-अणु
-	काष्ठा पूर्णांकel_guc_ct_buffer *ctb = &ct->ctbs[CTB_RECV];
-	काष्ठा guc_ct_buffer_desc *desc = ctb->desc;
+static int ct_read(struct intel_guc_ct *ct, u32 *data)
+{
+	struct intel_guc_ct_buffer *ctb = &ct->ctbs[CTB_RECV];
+	struct guc_ct_buffer_desc *desc = ctb->desc;
 	u32 head = desc->head;
 	u32 tail = desc->tail;
 	u32 size = desc->size;
 	u32 *cmds = ctb->cmds;
 	s32 available;
-	अचिन्हित पूर्णांक len;
-	अचिन्हित पूर्णांक i;
+	unsigned int len;
+	unsigned int i;
 
-	अगर (unlikely(desc->is_in_error))
-		वापस -EPIPE;
+	if (unlikely(desc->is_in_error))
+		return -EPIPE;
 
-	अगर (unlikely(!IS_ALIGNED(head | tail | size, 4) ||
+	if (unlikely(!IS_ALIGNED(head | tail | size, 4) ||
 		     (tail | head) >= size))
-		जाओ corrupted;
+		goto corrupted;
 
-	/* later calculations will be करोne in dwords */
+	/* later calculations will be done in dwords */
 	head /= 4;
 	tail /= 4;
 	size /= 4;
 
 	/* tail == head condition indicates empty */
 	available = tail - head;
-	अगर (unlikely(available == 0))
-		वापस -ENODATA;
+	if (unlikely(available == 0))
+		return -ENODATA;
 
-	/* beware of buffer wrap हाल */
-	अगर (unlikely(available < 0))
+	/* beware of buffer wrap case */
+	if (unlikely(available < 0))
 		available += size;
 	CT_DEBUG(ct, "available %d (%u:%u)\n", available, head, tail);
 	GEM_BUG_ON(available < 0);
@@ -627,31 +626,31 @@ unlink:
 
 	/* message len with header */
 	len = ct_header_get_len(data[0]) + 1;
-	अगर (unlikely(len > (u32)available)) अणु
+	if (unlikely(len > (u32)available)) {
 		CT_ERROR(ct, "Incomplete message %*ph %*ph %*ph\n",
 			 4, data,
 			 4 * (head + available - 1 > size ?
 			      size - head : available - 1), &cmds[head],
 			 4 * (head + available - 1 > size ?
 			      available - 1 - size + head : 0), &cmds[0]);
-		जाओ corrupted;
-	पूर्ण
+		goto corrupted;
+	}
 
-	क्रम (i = 1; i < len; i++) अणु
+	for (i = 1; i < len; i++) {
 		data[i] = cmds[head];
 		head = (head + 1) % size;
-	पूर्ण
+	}
 	CT_DEBUG(ct, "received %*ph\n", 4 * len, data);
 
 	desc->head = head * 4;
-	वापस 0;
+	return 0;
 
 corrupted:
 	CT_ERROR(ct, "Corrupted descriptor addr=%#x head=%u tail=%u size=%u\n",
 		 desc->addr, desc->head, desc->tail, desc->size);
 	desc->is_in_error = 1;
-	वापस -EPIPE;
-पूर्ण
+	return -EPIPE;
+}
 
 /**
  * DOC: CTB GuC to Host response
@@ -665,111 +664,111 @@ corrupted:
  *      +   HEADER   +---------+---------+---------+---------+---------+
  *      |            |    0    |    1    |    2    |   ...   |    n    |
  *      +============+=========+=========+=========+=========+=========+
- *      |  len >= 2  |  FENCE  |  STATUS |   response specअगरic data    |
+ *      |  len >= 2  |  FENCE  |  STATUS |   response specific data    |
  *      +------+-----+---------+---------+---------+---------+---------+
  *
  *                   ^-----------------------len-----------------------^
  */
 
-अटल पूर्णांक ct_handle_response(काष्ठा पूर्णांकel_guc_ct *ct, स्थिर u32 *msg)
-अणु
+static int ct_handle_response(struct intel_guc_ct *ct, const u32 *msg)
+{
 	u32 header = msg[0];
 	u32 len = ct_header_get_len(header);
-	u32 msgsize = (len + 1) * माप(u32); /* msg size in bytes w/header */
+	u32 msgsize = (len + 1) * sizeof(u32); /* msg size in bytes w/header */
 	u32 fence;
 	u32 status;
 	u32 datalen;
-	काष्ठा ct_request *req;
+	struct ct_request *req;
 	bool found = false;
 
 	GEM_BUG_ON(!ct_header_is_response(header));
 	GEM_BUG_ON(!in_irq());
 
 	/* Response payload shall at least include fence and status */
-	अगर (unlikely(len < 2)) अणु
+	if (unlikely(len < 2)) {
 		CT_ERROR(ct, "Corrupted response %*ph\n", msgsize, msg);
-		वापस -EPROTO;
-	पूर्ण
+		return -EPROTO;
+	}
 
 	fence = msg[1];
 	status = msg[2];
 	datalen = len - 2;
 
 	/* Format of the status follows RESPONSE message */
-	अगर (unlikely(!INTEL_GUC_MSG_IS_RESPONSE(status))) अणु
+	if (unlikely(!INTEL_GUC_MSG_IS_RESPONSE(status))) {
 		CT_ERROR(ct, "Corrupted response %*ph\n", msgsize, msg);
-		वापस -EPROTO;
-	पूर्ण
+		return -EPROTO;
+	}
 
 	CT_DEBUG(ct, "response fence %u status %#x\n", fence, status);
 
 	spin_lock(&ct->requests.lock);
-	list_क्रम_each_entry(req, &ct->requests.pending, link) अणु
-		अगर (unlikely(fence != req->fence)) अणु
+	list_for_each_entry(req, &ct->requests.pending, link) {
+		if (unlikely(fence != req->fence)) {
 			CT_DEBUG(ct, "request %u awaits response\n",
 				 req->fence);
-			जारी;
-		पूर्ण
-		अगर (unlikely(datalen > req->response_len)) अणु
+			continue;
+		}
+		if (unlikely(datalen > req->response_len)) {
 			CT_ERROR(ct, "Response for %u is too long %*ph\n",
 				 req->fence, msgsize, msg);
 			datalen = 0;
-		पूर्ण
-		अगर (datalen)
-			स_नकल(req->response_buf, msg + 3, 4 * datalen);
+		}
+		if (datalen)
+			memcpy(req->response_buf, msg + 3, 4 * datalen);
 		req->response_len = datalen;
 		WRITE_ONCE(req->status, status);
 		found = true;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	spin_unlock(&ct->requests.lock);
 
-	अगर (!found)
+	if (!found)
 		CT_ERROR(ct, "Unsolicited response %*ph\n", msgsize, msg);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ct_process_request(काष्ठा पूर्णांकel_guc_ct *ct,
-			       u32 action, u32 len, स्थिर u32 *payload)
-अणु
-	काष्ठा पूर्णांकel_guc *guc = ct_to_guc(ct);
-	पूर्णांक ret;
+static void ct_process_request(struct intel_guc_ct *ct,
+			       u32 action, u32 len, const u32 *payload)
+{
+	struct intel_guc *guc = ct_to_guc(ct);
+	int ret;
 
 	CT_DEBUG(ct, "request %x %*ph\n", action, 4 * len, payload);
 
-	चयन (action) अणु
-	हाल INTEL_GUC_ACTION_DEFAULT:
-		ret = पूर्णांकel_guc_to_host_process_recv_msg(guc, payload, len);
-		अगर (unlikely(ret))
-			जाओ fail_unexpected;
-		अवरोध;
+	switch (action) {
+	case INTEL_GUC_ACTION_DEFAULT:
+		ret = intel_guc_to_host_process_recv_msg(guc, payload, len);
+		if (unlikely(ret))
+			goto fail_unexpected;
+		break;
 
-	शेष:
+	default:
 fail_unexpected:
 		CT_ERROR(ct, "Unexpected request %x %*ph\n",
 			 action, 4 * len, payload);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल bool ct_process_incoming_requests(काष्ठा पूर्णांकel_guc_ct *ct)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा ct_incoming_request *request;
+static bool ct_process_incoming_requests(struct intel_guc_ct *ct)
+{
+	unsigned long flags;
+	struct ct_incoming_request *request;
 	u32 header;
 	u32 *payload;
-	bool करोne;
+	bool done;
 
 	spin_lock_irqsave(&ct->requests.lock, flags);
 	request = list_first_entry_or_null(&ct->requests.incoming,
-					   काष्ठा ct_incoming_request, link);
-	अगर (request)
+					   struct ct_incoming_request, link);
+	if (request)
 		list_del(&request->link);
-	करोne = !!list_empty(&ct->requests.incoming);
+	done = !!list_empty(&ct->requests.incoming);
 	spin_unlock_irqrestore(&ct->requests.lock, flags);
 
-	अगर (!request)
-		वापस true;
+	if (!request)
+		return true;
 
 	header = request->msg[0];
 	payload = &request->msg[1];
@@ -778,20 +777,20 @@ fail_unexpected:
 			   ct_header_get_len(header),
 			   payload);
 
-	kमुक्त(request);
-	वापस करोne;
-पूर्ण
+	kfree(request);
+	return done;
+}
 
-अटल व्योम ct_incoming_request_worker_func(काष्ठा work_काष्ठा *w)
-अणु
-	काष्ठा पूर्णांकel_guc_ct *ct =
-		container_of(w, काष्ठा पूर्णांकel_guc_ct, requests.worker);
-	bool करोne;
+static void ct_incoming_request_worker_func(struct work_struct *w)
+{
+	struct intel_guc_ct *ct =
+		container_of(w, struct intel_guc_ct, requests.worker);
+	bool done;
 
-	करोne = ct_process_incoming_requests(ct);
-	अगर (!करोne)
-		queue_work(प्रणाली_unbound_wq, &ct->requests.worker);
-पूर्ण
+	done = ct_process_incoming_requests(ct);
+	if (!done)
+		queue_work(system_unbound_wq, &ct->requests.worker);
+}
 
 /**
  * DOC: CTB GuC to Host request
@@ -805,59 +804,59 @@ fail_unexpected:
  *      +   HEADER   +---------+---------+---------+---------+---------+
  *      |            |    0    |    1    |    2    |   ...   |    n    |
  *      +============+=========+=========+=========+=========+=========+
- *      |     len    |            request specअगरic data                |
+ *      |     len    |            request specific data                |
  *      +------+-----+---------+---------+---------+---------+---------+
  *
  *                   ^-----------------------len-----------------------^
  */
 
-अटल पूर्णांक ct_handle_request(काष्ठा पूर्णांकel_guc_ct *ct, स्थिर u32 *msg)
-अणु
+static int ct_handle_request(struct intel_guc_ct *ct, const u32 *msg)
+{
 	u32 header = msg[0];
 	u32 len = ct_header_get_len(header);
-	u32 msgsize = (len + 1) * माप(u32); /* msg size in bytes w/header */
-	काष्ठा ct_incoming_request *request;
-	अचिन्हित दीर्घ flags;
+	u32 msgsize = (len + 1) * sizeof(u32); /* msg size in bytes w/header */
+	struct ct_incoming_request *request;
+	unsigned long flags;
 
 	GEM_BUG_ON(ct_header_is_response(header));
 
-	request = kदो_स्मृति(माप(*request) + msgsize, GFP_ATOMIC);
-	अगर (unlikely(!request)) अणु
+	request = kmalloc(sizeof(*request) + msgsize, GFP_ATOMIC);
+	if (unlikely(!request)) {
 		CT_ERROR(ct, "Dropping request %*ph\n", msgsize, msg);
-		वापस 0; /* XXX: -ENOMEM ? */
-	पूर्ण
-	स_नकल(request->msg, msg, msgsize);
+		return 0; /* XXX: -ENOMEM ? */
+	}
+	memcpy(request->msg, msg, msgsize);
 
 	spin_lock_irqsave(&ct->requests.lock, flags);
 	list_add_tail(&request->link, &ct->requests.incoming);
 	spin_unlock_irqrestore(&ct->requests.lock, flags);
 
-	queue_work(प्रणाली_unbound_wq, &ct->requests.worker);
-	वापस 0;
-पूर्ण
+	queue_work(system_unbound_wq, &ct->requests.worker);
+	return 0;
+}
 
 /*
  * When we're communicating with the GuC over CT, GuC uses events
- * to notअगरy us about new messages being posted on the RECV buffer.
+ * to notify us about new messages being posted on the RECV buffer.
  */
-व्योम पूर्णांकel_guc_ct_event_handler(काष्ठा पूर्णांकel_guc_ct *ct)
-अणु
-	u32 msg[GUC_CT_MSG_LEN_MASK + 1]; /* one extra dw क्रम the header */
-	पूर्णांक err = 0;
+void intel_guc_ct_event_handler(struct intel_guc_ct *ct)
+{
+	u32 msg[GUC_CT_MSG_LEN_MASK + 1]; /* one extra dw for the header */
+	int err = 0;
 
-	अगर (unlikely(!ct->enabled)) अणु
+	if (unlikely(!ct->enabled)) {
 		WARN(1, "Unexpected GuC event received while CT disabled!\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	करो अणु
-		err = ct_पढ़ो(ct, msg);
-		अगर (err)
-			अवरोध;
+	do {
+		err = ct_read(ct, msg);
+		if (err)
+			break;
 
-		अगर (ct_header_is_response(msg[0]))
+		if (ct_header_is_response(msg[0]))
 			err = ct_handle_response(ct, msg);
-		अन्यथा
+		else
 			err = ct_handle_request(ct, msg);
-	पूर्ण जबतक (!err);
-पूर्ण
+	} while (!err);
+}

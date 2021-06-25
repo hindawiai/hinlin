@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,51 +21,51 @@
  *
  */
 
-#अगर_अघोषित VEGA20_THERMAL_H
-#घोषणा VEGA20_THERMAL_H
+#ifndef VEGA20_THERMAL_H
+#define VEGA20_THERMAL_H
 
-#समावेश "hwmgr.h"
+#include "hwmgr.h"
 
-काष्ठा vega20_temperature अणु
-	uपूर्णांक16_t edge_temp;
-	uपूर्णांक16_t hot_spot_temp;
-	uपूर्णांक16_t hbm_temp;
-	uपूर्णांक16_t vr_soc_temp;
-	uपूर्णांक16_t vr_mem_temp;
-	uपूर्णांक16_t liquid1_temp;
-	uपूर्णांक16_t liquid2_temp;
-	uपूर्णांक16_t plx_temp;
-पूर्ण;
+struct vega20_temperature {
+	uint16_t edge_temp;
+	uint16_t hot_spot_temp;
+	uint16_t hbm_temp;
+	uint16_t vr_soc_temp;
+	uint16_t vr_mem_temp;
+	uint16_t liquid1_temp;
+	uint16_t liquid2_temp;
+	uint16_t plx_temp;
+};
 
-#घोषणा VEGA20_THERMAL_HIGH_ALERT_MASK         0x1
-#घोषणा VEGA20_THERMAL_LOW_ALERT_MASK          0x2
+#define VEGA20_THERMAL_HIGH_ALERT_MASK         0x1
+#define VEGA20_THERMAL_LOW_ALERT_MASK          0x2
 
-#घोषणा VEGA20_THERMAL_MINIMUM_TEMP_READING    -256
-#घोषणा VEGA20_THERMAL_MAXIMUM_TEMP_READING    255
+#define VEGA20_THERMAL_MINIMUM_TEMP_READING    -256
+#define VEGA20_THERMAL_MAXIMUM_TEMP_READING    255
 
-#घोषणा VEGA20_THERMAL_MINIMUM_ALERT_TEMP      0
-#घोषणा VEGA20_THERMAL_MAXIMUM_ALERT_TEMP      255
+#define VEGA20_THERMAL_MINIMUM_ALERT_TEMP      0
+#define VEGA20_THERMAL_MAXIMUM_ALERT_TEMP      255
 
-#घोषणा FDO_PWM_MODE_STATIC  1
-#घोषणा FDO_PWM_MODE_STATIC_RPM 5
+#define FDO_PWM_MODE_STATIC  1
+#define FDO_PWM_MODE_STATIC_RPM 5
 
-बाह्य पूर्णांक vega20_thermal_get_temperature(काष्ठा pp_hwmgr *hwmgr);
-बाह्य पूर्णांक vega20_fan_ctrl_get_fan_speed_info(काष्ठा pp_hwmgr *hwmgr,
-		काष्ठा phm_fan_speed_info *fan_speed_info);
-बाह्य पूर्णांक vega20_fan_ctrl_get_fan_speed_rpm(काष्ठा pp_hwmgr *hwmgr,
-		uपूर्णांक32_t *speed);
-बाह्य पूर्णांक vega20_fan_ctrl_set_fan_speed_rpm(काष्ठा pp_hwmgr *hwmgr,
-		uपूर्णांक32_t speed);
-बाह्य पूर्णांक vega20_fan_ctrl_get_fan_speed_percent(काष्ठा pp_hwmgr *hwmgr,
-		uपूर्णांक32_t *speed);
-बाह्य पूर्णांक vega20_fan_ctrl_set_fan_speed_percent(काष्ठा pp_hwmgr *hwmgr,
-		uपूर्णांक32_t speed);
-बाह्य पूर्णांक vega20_fan_ctrl_stop_smc_fan_control(काष्ठा pp_hwmgr *hwmgr);
-बाह्य पूर्णांक vega20_fan_ctrl_start_smc_fan_control(काष्ठा pp_hwmgr *hwmgr);
-बाह्य पूर्णांक vega20_thermal_disable_alert(काष्ठा pp_hwmgr *hwmgr);
-बाह्य पूर्णांक vega20_start_thermal_controller(काष्ठा pp_hwmgr *hwmgr,
-				काष्ठा PP_TemperatureRange *range);
-बाह्य पूर्णांक vega20_thermal_stop_thermal_controller(काष्ठा pp_hwmgr *hwmgr);
+extern int vega20_thermal_get_temperature(struct pp_hwmgr *hwmgr);
+extern int vega20_fan_ctrl_get_fan_speed_info(struct pp_hwmgr *hwmgr,
+		struct phm_fan_speed_info *fan_speed_info);
+extern int vega20_fan_ctrl_get_fan_speed_rpm(struct pp_hwmgr *hwmgr,
+		uint32_t *speed);
+extern int vega20_fan_ctrl_set_fan_speed_rpm(struct pp_hwmgr *hwmgr,
+		uint32_t speed);
+extern int vega20_fan_ctrl_get_fan_speed_percent(struct pp_hwmgr *hwmgr,
+		uint32_t *speed);
+extern int vega20_fan_ctrl_set_fan_speed_percent(struct pp_hwmgr *hwmgr,
+		uint32_t speed);
+extern int vega20_fan_ctrl_stop_smc_fan_control(struct pp_hwmgr *hwmgr);
+extern int vega20_fan_ctrl_start_smc_fan_control(struct pp_hwmgr *hwmgr);
+extern int vega20_thermal_disable_alert(struct pp_hwmgr *hwmgr);
+extern int vega20_start_thermal_controller(struct pp_hwmgr *hwmgr,
+				struct PP_TemperatureRange *range);
+extern int vega20_thermal_stop_thermal_controller(struct pp_hwmgr *hwmgr);
 
-#पूर्ण_अगर
+#endif
 

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * OpenRISC Linux
  *
@@ -12,51 +11,51 @@
  * Copyright (C) 2010-2011 Jonas Bonn <jonas@southpole.se>
  * et al.
  */
-#अगर_अघोषित __ASM_OPENRISC_ELF_H
-#घोषणा __ASM_OPENRISC_ELF_H
+#ifndef __ASM_OPENRISC_ELF_H
+#define __ASM_OPENRISC_ELF_H
 
 
-#समावेश <linux/types.h>
-#समावेश <uapi/यंत्र/elf.h>
+#include <linux/types.h>
+#include <uapi/asm/elf.h>
 
 /*
- * This is used to ensure we करोn't load something क्रम the wrong architecture.
+ * This is used to ensure we don't load something for the wrong architecture.
  */
 
-#घोषणा elf_check_arch(x) \
+#define elf_check_arch(x) \
 	(((x)->e_machine == EM_OR32) || ((x)->e_machine == EM_OPENRISC))
 
-/* This is the location that an ET_DYN program is loaded अगर exec'ed.  Typical
+/* This is the location that an ET_DYN program is loaded if exec'ed.  Typical
    use of this is to invoke "./ld.so someprog" to test out a new version of
    the loader.  We need to make sure that it is out of the way of the program
-   that it will "exec", and that there is sufficient room क्रम the brk.  */
+   that it will "exec", and that there is sufficient room for the brk.  */
 
-#घोषणा ELF_ET_DYN_BASE         (0x08000000)
+#define ELF_ET_DYN_BASE         (0x08000000)
 
 /*
  * Enable dump using regset.
  * This covers all of general/DSP/FPU regs.
  */
-#घोषणा CORE_DUMP_USE_REGSET
+#define CORE_DUMP_USE_REGSET
 
-#घोषणा ELF_EXEC_PAGESIZE	8192
+#define ELF_EXEC_PAGESIZE	8192
 
-बाह्य व्योम dump_elf_thपढ़ो(elf_greg_t *dest, काष्ठा pt_regs *pt);
-#घोषणा ELF_CORE_COPY_REGS(dest, regs) dump_elf_thपढ़ो(dest, regs);
+extern void dump_elf_thread(elf_greg_t *dest, struct pt_regs *pt);
+#define ELF_CORE_COPY_REGS(dest, regs) dump_elf_thread(dest, regs);
 
 /* This yields a mask that user programs can use to figure out what
-   inकाष्ठाion set this cpu supports.  This could be करोne in userspace,
-   but it's not easy, and we've alपढ़ोy करोne it here.  */
+   instruction set this cpu supports.  This could be done in userspace,
+   but it's not easy, and we've already done it here.  */
 
-#घोषणा ELF_HWCAP	(0)
+#define ELF_HWCAP	(0)
 
 /* This yields a string that ld.so will use to load implementation
-   specअगरic libraries क्रम optimization.  This is more specअगरic in
-   पूर्णांकent than poking at uname or /proc/cpuinfo.
+   specific libraries for optimization.  This is more specific in
+   intent than poking at uname or /proc/cpuinfo.
 
-   For the moment, we have only optimizations क्रम the Intel generations,
+   For the moment, we have only optimizations for the Intel generations,
    but that could change... */
 
-#घोषणा ELF_PLATFORM	(शून्य)
+#define ELF_PLATFORM	(NULL)
 
-#पूर्ण_अगर
+#endif

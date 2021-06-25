@@ -1,208 +1,207 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2018 ARM Limited, All Rights Reserved.
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  */
 
-#घोषणा pr_fmt(fmt) "GICv3: " fmt
+#define pr_fmt(fmt) "GICv3: " fmt
 
-#समावेश <linux/dma-iommu.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/msi.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_pci.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
+#include <linux/dma-iommu.h>
+#include <linux/irq.h>
+#include <linux/irqdomain.h>
+#include <linux/kernel.h>
+#include <linux/msi.h>
+#include <linux/of_address.h>
+#include <linux/of_pci.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
 
-#समावेश <linux/irqchip/arm-gic-v3.h>
+#include <linux/irqchip/arm-gic-v3.h>
 
-काष्ठा mbi_range अणु
+struct mbi_range {
 	u32			spi_start;
 	u32			nr_spis;
-	अचिन्हित दीर्घ		*bm;
-पूर्ण;
+	unsigned long		*bm;
+};
 
-अटल DEFINE_MUTEX(mbi_lock);
-अटल phys_addr_t		mbi_phys_base;
-अटल काष्ठा mbi_range		*mbi_ranges;
-अटल अचिन्हित पूर्णांक		mbi_range_nr;
+static DEFINE_MUTEX(mbi_lock);
+static phys_addr_t		mbi_phys_base;
+static struct mbi_range		*mbi_ranges;
+static unsigned int		mbi_range_nr;
 
-अटल काष्ठा irq_chip mbi_irq_chip = अणु
+static struct irq_chip mbi_irq_chip = {
 	.name			= "MBI",
 	.irq_mask		= irq_chip_mask_parent,
 	.irq_unmask		= irq_chip_unmask_parent,
 	.irq_eoi		= irq_chip_eoi_parent,
 	.irq_set_type		= irq_chip_set_type_parent,
 	.irq_set_affinity	= irq_chip_set_affinity_parent,
-पूर्ण;
+};
 
-अटल पूर्णांक mbi_irq_gic_करोमुख्य_alloc(काष्ठा irq_करोमुख्य *करोमुख्य,
-				       अचिन्हित पूर्णांक virq,
+static int mbi_irq_gic_domain_alloc(struct irq_domain *domain,
+				       unsigned int virq,
 				       irq_hw_number_t hwirq)
-अणु
-	काष्ठा irq_fwspec fwspec;
-	काष्ठा irq_data *d;
-	पूर्णांक err;
+{
+	struct irq_fwspec fwspec;
+	struct irq_data *d;
+	int err;
 
 	/*
 	 * Using ACPI? There is no MBI support in the spec, you
 	 * shouldn't even be here.
 	 */
-	अगर (!is_of_node(करोमुख्य->parent->fwnode))
-		वापस -EINVAL;
+	if (!is_of_node(domain->parent->fwnode))
+		return -EINVAL;
 
 	/*
-	 * Let's शेष to edge. This is consistent with traditional
-	 * MSIs, and प्रणालीs requiring level संकेतing will just
-	 * enक्रमce the trigger on their own.
+	 * Let's default to edge. This is consistent with traditional
+	 * MSIs, and systems requiring level signaling will just
+	 * enforce the trigger on their own.
 	 */
-	fwspec.fwnode = करोमुख्य->parent->fwnode;
+	fwspec.fwnode = domain->parent->fwnode;
 	fwspec.param_count = 3;
 	fwspec.param[0] = 0;
 	fwspec.param[1] = hwirq - 32;
 	fwspec.param[2] = IRQ_TYPE_EDGE_RISING;
 
-	err = irq_करोमुख्य_alloc_irqs_parent(करोमुख्य, virq, 1, &fwspec);
-	अगर (err)
-		वापस err;
+	err = irq_domain_alloc_irqs_parent(domain, virq, 1, &fwspec);
+	if (err)
+		return err;
 
-	d = irq_करोमुख्य_get_irq_data(करोमुख्य->parent, virq);
-	वापस d->chip->irq_set_type(d, IRQ_TYPE_EDGE_RISING);
-पूर्ण
+	d = irq_domain_get_irq_data(domain->parent, virq);
+	return d->chip->irq_set_type(d, IRQ_TYPE_EDGE_RISING);
+}
 
-अटल व्योम mbi_मुक्त_msi(काष्ठा mbi_range *mbi, अचिन्हित पूर्णांक hwirq,
-			 पूर्णांक nr_irqs)
-अणु
+static void mbi_free_msi(struct mbi_range *mbi, unsigned int hwirq,
+			 int nr_irqs)
+{
 	mutex_lock(&mbi_lock);
-	biपंचांगap_release_region(mbi->bm, hwirq - mbi->spi_start,
+	bitmap_release_region(mbi->bm, hwirq - mbi->spi_start,
 			      get_count_order(nr_irqs));
 	mutex_unlock(&mbi_lock);
-पूर्ण
+}
 
-अटल पूर्णांक mbi_irq_करोमुख्य_alloc(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक virq,
-				   अचिन्हित पूर्णांक nr_irqs, व्योम *args)
-अणु
+static int mbi_irq_domain_alloc(struct irq_domain *domain, unsigned int virq,
+				   unsigned int nr_irqs, void *args)
+{
 	msi_alloc_info_t *info = args;
-	काष्ठा mbi_range *mbi = शून्य;
-	पूर्णांक hwirq, offset, i, err = 0;
+	struct mbi_range *mbi = NULL;
+	int hwirq, offset, i, err = 0;
 
 	mutex_lock(&mbi_lock);
-	क्रम (i = 0; i < mbi_range_nr; i++) अणु
-		offset = biपंचांगap_find_मुक्त_region(mbi_ranges[i].bm,
+	for (i = 0; i < mbi_range_nr; i++) {
+		offset = bitmap_find_free_region(mbi_ranges[i].bm,
 						 mbi_ranges[i].nr_spis,
 						 get_count_order(nr_irqs));
-		अगर (offset >= 0) अणु
+		if (offset >= 0) {
 			mbi = &mbi_ranges[i];
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	mutex_unlock(&mbi_lock);
 
-	अगर (!mbi)
-		वापस -ENOSPC;
+	if (!mbi)
+		return -ENOSPC;
 
 	hwirq = mbi->spi_start + offset;
 
 	err = iommu_dma_prepare_msi(info->desc,
 				    mbi_phys_base + GICD_SETSPI_NSR);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	क्रम (i = 0; i < nr_irqs; i++) अणु
-		err = mbi_irq_gic_करोमुख्य_alloc(करोमुख्य, virq + i, hwirq + i);
-		अगर (err)
-			जाओ fail;
+	for (i = 0; i < nr_irqs; i++) {
+		err = mbi_irq_gic_domain_alloc(domain, virq + i, hwirq + i);
+		if (err)
+			goto fail;
 
-		irq_करोमुख्य_set_hwirq_and_chip(करोमुख्य, virq + i, hwirq + i,
+		irq_domain_set_hwirq_and_chip(domain, virq + i, hwirq + i,
 					      &mbi_irq_chip, mbi);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 fail:
-	irq_करोमुख्य_मुक्त_irqs_parent(करोमुख्य, virq, nr_irqs);
-	mbi_मुक्त_msi(mbi, hwirq, nr_irqs);
-	वापस err;
-पूर्ण
+	irq_domain_free_irqs_parent(domain, virq, nr_irqs);
+	mbi_free_msi(mbi, hwirq, nr_irqs);
+	return err;
+}
 
-अटल व्योम mbi_irq_करोमुख्य_मुक्त(काष्ठा irq_करोमुख्य *करोमुख्य,
-				अचिन्हित पूर्णांक virq, अचिन्हित पूर्णांक nr_irqs)
-अणु
-	काष्ठा irq_data *d = irq_करोमुख्य_get_irq_data(करोमुख्य, virq);
-	काष्ठा mbi_range *mbi = irq_data_get_irq_chip_data(d);
+static void mbi_irq_domain_free(struct irq_domain *domain,
+				unsigned int virq, unsigned int nr_irqs)
+{
+	struct irq_data *d = irq_domain_get_irq_data(domain, virq);
+	struct mbi_range *mbi = irq_data_get_irq_chip_data(d);
 
-	mbi_मुक्त_msi(mbi, d->hwirq, nr_irqs);
-	irq_करोमुख्य_मुक्त_irqs_parent(करोमुख्य, virq, nr_irqs);
-पूर्ण
+	mbi_free_msi(mbi, d->hwirq, nr_irqs);
+	irq_domain_free_irqs_parent(domain, virq, nr_irqs);
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops mbi_करोमुख्य_ops = अणु
-	.alloc			= mbi_irq_करोमुख्य_alloc,
-	.मुक्त			= mbi_irq_करोमुख्य_मुक्त,
-पूर्ण;
+static const struct irq_domain_ops mbi_domain_ops = {
+	.alloc			= mbi_irq_domain_alloc,
+	.free			= mbi_irq_domain_free,
+};
 
-अटल व्योम mbi_compose_msi_msg(काष्ठा irq_data *data, काष्ठा msi_msg *msg)
-अणु
+static void mbi_compose_msi_msg(struct irq_data *data, struct msi_msg *msg)
+{
 	msg[0].address_hi = upper_32_bits(mbi_phys_base + GICD_SETSPI_NSR);
 	msg[0].address_lo = lower_32_bits(mbi_phys_base + GICD_SETSPI_NSR);
 	msg[0].data = data->parent_data->hwirq;
 
 	iommu_dma_compose_msi_msg(irq_data_get_msi_desc(data), msg);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PCI_MSI
-/* PCI-specअगरic irqchip */
-अटल व्योम mbi_mask_msi_irq(काष्ठा irq_data *d)
-अणु
+#ifdef CONFIG_PCI_MSI
+/* PCI-specific irqchip */
+static void mbi_mask_msi_irq(struct irq_data *d)
+{
 	pci_msi_mask_irq(d);
 	irq_chip_mask_parent(d);
-पूर्ण
+}
 
-अटल व्योम mbi_unmask_msi_irq(काष्ठा irq_data *d)
-अणु
+static void mbi_unmask_msi_irq(struct irq_data *d)
+{
 	pci_msi_unmask_irq(d);
 	irq_chip_unmask_parent(d);
-पूर्ण
+}
 
-अटल काष्ठा irq_chip mbi_msi_irq_chip = अणु
+static struct irq_chip mbi_msi_irq_chip = {
 	.name			= "MSI",
 	.irq_mask		= mbi_mask_msi_irq,
 	.irq_unmask		= mbi_unmask_msi_irq,
 	.irq_eoi		= irq_chip_eoi_parent,
 	.irq_compose_msi_msg	= mbi_compose_msi_msg,
-	.irq_ग_लिखो_msi_msg	= pci_msi_करोमुख्य_ग_लिखो_msg,
-पूर्ण;
+	.irq_write_msi_msg	= pci_msi_domain_write_msg,
+};
 
-अटल काष्ठा msi_करोमुख्य_info mbi_msi_करोमुख्य_info = अणु
+static struct msi_domain_info mbi_msi_domain_info = {
 	.flags	= (MSI_FLAG_USE_DEF_DOM_OPS | MSI_FLAG_USE_DEF_CHIP_OPS |
 		   MSI_FLAG_PCI_MSIX | MSI_FLAG_MULTI_PCI_MSI),
 	.chip	= &mbi_msi_irq_chip,
-पूर्ण;
+};
 
-अटल पूर्णांक mbi_allocate_pci_करोमुख्य(काष्ठा irq_करोमुख्य *nexus_करोमुख्य,
-				   काष्ठा irq_करोमुख्य **pci_करोमुख्य)
-अणु
-	*pci_करोमुख्य = pci_msi_create_irq_करोमुख्य(nexus_करोमुख्य->parent->fwnode,
-						&mbi_msi_करोमुख्य_info,
-						nexus_करोमुख्य);
-	अगर (!*pci_करोमुख्य)
-		वापस -ENOMEM;
+static int mbi_allocate_pci_domain(struct irq_domain *nexus_domain,
+				   struct irq_domain **pci_domain)
+{
+	*pci_domain = pci_msi_create_irq_domain(nexus_domain->parent->fwnode,
+						&mbi_msi_domain_info,
+						nexus_domain);
+	if (!*pci_domain)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक mbi_allocate_pci_करोमुख्य(काष्ठा irq_करोमुख्य *nexus_करोमुख्य,
-				   काष्ठा irq_करोमुख्य **pci_करोमुख्य)
-अणु
-	*pci_करोमुख्य = शून्य;
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#else
+static int mbi_allocate_pci_domain(struct irq_domain *nexus_domain,
+				   struct irq_domain **pci_domain)
+{
+	*pci_domain = NULL;
+	return 0;
+}
+#endif
 
-अटल व्योम mbi_compose_mbi_msg(काष्ठा irq_data *data, काष्ठा msi_msg *msg)
-अणु
+static void mbi_compose_mbi_msg(struct irq_data *data, struct msi_msg *msg)
+{
 	mbi_compose_msi_msg(data, msg);
 
 	msg[1].address_hi = upper_32_bits(mbi_phys_base + GICD_CLRSPI_NSR);
@@ -210,129 +209,129 @@ fail:
 	msg[1].data = data->parent_data->hwirq;
 
 	iommu_dma_compose_msi_msg(irq_data_get_msi_desc(data), &msg[1]);
-पूर्ण
+}
 
-/* Platक्रमm-MSI specअगरic irqchip */
-अटल काष्ठा irq_chip mbi_pmsi_irq_chip = अणु
+/* Platform-MSI specific irqchip */
+static struct irq_chip mbi_pmsi_irq_chip = {
 	.name			= "pMSI",
 	.irq_set_type		= irq_chip_set_type_parent,
 	.irq_compose_msi_msg	= mbi_compose_mbi_msg,
 	.flags			= IRQCHIP_SUPPORTS_LEVEL_MSI,
-पूर्ण;
+};
 
-अटल काष्ठा msi_करोमुख्य_ops mbi_pmsi_ops = अणु
-पूर्ण;
+static struct msi_domain_ops mbi_pmsi_ops = {
+};
 
-अटल काष्ठा msi_करोमुख्य_info mbi_pmsi_करोमुख्य_info = अणु
+static struct msi_domain_info mbi_pmsi_domain_info = {
 	.flags	= (MSI_FLAG_USE_DEF_DOM_OPS | MSI_FLAG_USE_DEF_CHIP_OPS |
 		   MSI_FLAG_LEVEL_CAPABLE),
 	.ops	= &mbi_pmsi_ops,
 	.chip	= &mbi_pmsi_irq_chip,
-पूर्ण;
+};
 
-अटल पूर्णांक mbi_allocate_करोमुख्यs(काष्ठा irq_करोमुख्य *parent)
-अणु
-	काष्ठा irq_करोमुख्य *nexus_करोमुख्य, *pci_करोमुख्य, *plat_करोमुख्य;
-	पूर्णांक err;
+static int mbi_allocate_domains(struct irq_domain *parent)
+{
+	struct irq_domain *nexus_domain, *pci_domain, *plat_domain;
+	int err;
 
-	nexus_करोमुख्य = irq_करोमुख्य_create_tree(parent->fwnode,
-					      &mbi_करोमुख्य_ops, शून्य);
-	अगर (!nexus_करोमुख्य)
-		वापस -ENOMEM;
+	nexus_domain = irq_domain_create_tree(parent->fwnode,
+					      &mbi_domain_ops, NULL);
+	if (!nexus_domain)
+		return -ENOMEM;
 
-	irq_करोमुख्य_update_bus_token(nexus_करोमुख्य, DOMAIN_BUS_NEXUS);
-	nexus_करोमुख्य->parent = parent;
+	irq_domain_update_bus_token(nexus_domain, DOMAIN_BUS_NEXUS);
+	nexus_domain->parent = parent;
 
-	err = mbi_allocate_pci_करोमुख्य(nexus_करोमुख्य, &pci_करोमुख्य);
+	err = mbi_allocate_pci_domain(nexus_domain, &pci_domain);
 
-	plat_करोमुख्य = platक्रमm_msi_create_irq_करोमुख्य(parent->fwnode,
-						     &mbi_pmsi_करोमुख्य_info,
-						     nexus_करोमुख्य);
+	plat_domain = platform_msi_create_irq_domain(parent->fwnode,
+						     &mbi_pmsi_domain_info,
+						     nexus_domain);
 
-	अगर (err || !plat_करोमुख्य) अणु
-		अगर (plat_करोमुख्य)
-			irq_करोमुख्य_हटाओ(plat_करोमुख्य);
-		अगर (pci_करोमुख्य)
-			irq_करोमुख्य_हटाओ(pci_करोमुख्य);
-		irq_करोमुख्य_हटाओ(nexus_करोमुख्य);
-		वापस -ENOMEM;
-	पूर्ण
+	if (err || !plat_domain) {
+		if (plat_domain)
+			irq_domain_remove(plat_domain);
+		if (pci_domain)
+			irq_domain_remove(pci_domain);
+		irq_domain_remove(nexus_domain);
+		return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक __init mbi_init(काष्ठा fwnode_handle *fwnode, काष्ठा irq_करोमुख्य *parent)
-अणु
-	काष्ठा device_node *np;
-	स्थिर __be32 *reg;
-	पूर्णांक ret, n;
+int __init mbi_init(struct fwnode_handle *fwnode, struct irq_domain *parent)
+{
+	struct device_node *np;
+	const __be32 *reg;
+	int ret, n;
 
 	np = to_of_node(fwnode);
 
-	अगर (!of_property_पढ़ो_bool(np, "msi-controller"))
-		वापस 0;
+	if (!of_property_read_bool(np, "msi-controller"))
+		return 0;
 
-	n = of_property_count_elems_of_size(np, "mbi-ranges", माप(u32));
-	अगर (n <= 0 || n % 2)
-		वापस -EINVAL;
+	n = of_property_count_elems_of_size(np, "mbi-ranges", sizeof(u32));
+	if (n <= 0 || n % 2)
+		return -EINVAL;
 
 	mbi_range_nr = n / 2;
-	mbi_ranges = kसुस्मृति(mbi_range_nr, माप(*mbi_ranges), GFP_KERNEL);
-	अगर (!mbi_ranges)
-		वापस -ENOMEM;
+	mbi_ranges = kcalloc(mbi_range_nr, sizeof(*mbi_ranges), GFP_KERNEL);
+	if (!mbi_ranges)
+		return -ENOMEM;
 
-	क्रम (n = 0; n < mbi_range_nr; n++) अणु
-		ret = of_property_पढ़ो_u32_index(np, "mbi-ranges", n * 2,
+	for (n = 0; n < mbi_range_nr; n++) {
+		ret = of_property_read_u32_index(np, "mbi-ranges", n * 2,
 						 &mbi_ranges[n].spi_start);
-		अगर (ret)
-			जाओ err_मुक्त_mbi;
-		ret = of_property_पढ़ो_u32_index(np, "mbi-ranges", n * 2 + 1,
+		if (ret)
+			goto err_free_mbi;
+		ret = of_property_read_u32_index(np, "mbi-ranges", n * 2 + 1,
 						 &mbi_ranges[n].nr_spis);
-		अगर (ret)
-			जाओ err_मुक्त_mbi;
+		if (ret)
+			goto err_free_mbi;
 
-		mbi_ranges[n].bm = kसुस्मृति(BITS_TO_LONGS(mbi_ranges[n].nr_spis),
-					   माप(दीर्घ), GFP_KERNEL);
-		अगर (!mbi_ranges[n].bm) अणु
+		mbi_ranges[n].bm = kcalloc(BITS_TO_LONGS(mbi_ranges[n].nr_spis),
+					   sizeof(long), GFP_KERNEL);
+		if (!mbi_ranges[n].bm) {
 			ret = -ENOMEM;
-			जाओ err_मुक्त_mbi;
-		पूर्ण
+			goto err_free_mbi;
+		}
 		pr_info("MBI range [%d:%d]\n", mbi_ranges[n].spi_start,
 			mbi_ranges[n].spi_start + mbi_ranges[n].nr_spis - 1);
-	पूर्ण
+	}
 
-	reg = of_get_property(np, "mbi-alias", शून्य);
-	अगर (reg) अणु
+	reg = of_get_property(np, "mbi-alias", NULL);
+	if (reg) {
 		mbi_phys_base = of_translate_address(np, reg);
-		अगर (mbi_phys_base == (phys_addr_t)OF_BAD_ADDR) अणु
+		if (mbi_phys_base == (phys_addr_t)OF_BAD_ADDR) {
 			ret = -ENXIO;
-			जाओ err_मुक्त_mbi;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		काष्ठा resource res;
+			goto err_free_mbi;
+		}
+	} else {
+		struct resource res;
 
-		अगर (of_address_to_resource(np, 0, &res)) अणु
+		if (of_address_to_resource(np, 0, &res)) {
 			ret = -ENXIO;
-			जाओ err_मुक्त_mbi;
-		पूर्ण
+			goto err_free_mbi;
+		}
 
 		mbi_phys_base = res.start;
-	पूर्ण
+	}
 
 	pr_info("Using MBI frame %pa\n", &mbi_phys_base);
 
-	ret = mbi_allocate_करोमुख्यs(parent);
-	अगर (ret)
-		जाओ err_मुक्त_mbi;
+	ret = mbi_allocate_domains(parent);
+	if (ret)
+		goto err_free_mbi;
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_mbi:
-	अगर (mbi_ranges) अणु
-		क्रम (n = 0; n < mbi_range_nr; n++)
-			kमुक्त(mbi_ranges[n].bm);
-		kमुक्त(mbi_ranges);
-	पूर्ण
+err_free_mbi:
+	if (mbi_ranges) {
+		for (n = 0; n < mbi_range_nr; n++)
+			kfree(mbi_ranges[n].bm);
+		kfree(mbi_ranges);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

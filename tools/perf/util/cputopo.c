@@ -1,354 +1,353 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <sys/param.h>
-#समावेश <sys/utsname.h>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <api/fs/fs.h>
-#समावेश <linux/zभाग.स>
-#समावेश <perf/cpumap.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <sys/param.h>
+#include <sys/utsname.h>
+#include <inttypes.h>
+#include <stdlib.h>
+#include <string.h>
+#include <api/fs/fs.h>
+#include <linux/zalloc.h>
+#include <perf/cpumap.h>
 
-#समावेश "cputopo.h"
-#समावेश "cpumap.h"
-#समावेश "debug.h"
-#समावेश "env.h"
+#include "cputopo.h"
+#include "cpumap.h"
+#include "debug.h"
+#include "env.h"
 
-#घोषणा CORE_SIB_FMT \
+#define CORE_SIB_FMT \
 	"%s/devices/system/cpu/cpu%d/topology/core_siblings_list"
-#घोषणा DIE_SIB_FMT \
+#define DIE_SIB_FMT \
 	"%s/devices/system/cpu/cpu%d/topology/die_cpus_list"
-#घोषणा THRD_SIB_FMT \
+#define THRD_SIB_FMT \
 	"%s/devices/system/cpu/cpu%d/topology/thread_siblings_list"
-#घोषणा THRD_SIB_FMT_NEW \
+#define THRD_SIB_FMT_NEW \
 	"%s/devices/system/cpu/cpu%d/topology/core_cpus_list"
-#घोषणा NODE_ONLINE_FMT \
+#define NODE_ONLINE_FMT \
 	"%s/devices/system/node/online"
-#घोषणा NODE_MEMINFO_FMT \
+#define NODE_MEMINFO_FMT \
 	"%s/devices/system/node/node%d/meminfo"
-#घोषणा NODE_CPULIST_FMT \
+#define NODE_CPULIST_FMT \
 	"%s/devices/system/node/node%d/cpulist"
 
-अटल पूर्णांक build_cpu_topology(काष्ठा cpu_topology *tp, पूर्णांक cpu)
-अणु
-	खाता *fp;
-	अक्षर filename[MAXPATHLEN];
-	अक्षर *buf = शून्य, *p;
-	माप_प्रकार len = 0;
-	sमाप_प्रकार sret;
+static int build_cpu_topology(struct cpu_topology *tp, int cpu)
+{
+	FILE *fp;
+	char filename[MAXPATHLEN];
+	char *buf = NULL, *p;
+	size_t len = 0;
+	ssize_t sret;
 	u32 i = 0;
-	पूर्णांक ret = -1;
+	int ret = -1;
 
-	scnम_लिखो(filename, MAXPATHLEN, CORE_SIB_FMT,
-		  sysfs__mountpoपूर्णांक(), cpu);
-	fp = ख_खोलो(filename, "r");
-	अगर (!fp)
-		जाओ try_dies;
+	scnprintf(filename, MAXPATHLEN, CORE_SIB_FMT,
+		  sysfs__mountpoint(), cpu);
+	fp = fopen(filename, "r");
+	if (!fp)
+		goto try_dies;
 
 	sret = getline(&buf, &len, fp);
-	ख_बंद(fp);
-	अगर (sret <= 0)
-		जाओ try_dies;
+	fclose(fp);
+	if (sret <= 0)
+		goto try_dies;
 
-	p = म_अक्षर(buf, '\n');
-	अगर (p)
+	p = strchr(buf, '\n');
+	if (p)
 		*p = '\0';
 
-	क्रम (i = 0; i < tp->core_sib; i++) अणु
-		अगर (!म_भेद(buf, tp->core_siblings[i]))
-			अवरोध;
-	पूर्ण
-	अगर (i == tp->core_sib) अणु
+	for (i = 0; i < tp->core_sib; i++) {
+		if (!strcmp(buf, tp->core_siblings[i]))
+			break;
+	}
+	if (i == tp->core_sib) {
 		tp->core_siblings[i] = buf;
 		tp->core_sib++;
-		buf = शून्य;
+		buf = NULL;
 		len = 0;
-	पूर्ण
+	}
 	ret = 0;
 
 try_dies:
-	अगर (!tp->die_siblings)
-		जाओ try_thपढ़ोs;
+	if (!tp->die_siblings)
+		goto try_threads;
 
-	scnम_लिखो(filename, MAXPATHLEN, DIE_SIB_FMT,
-		  sysfs__mountpoपूर्णांक(), cpu);
-	fp = ख_खोलो(filename, "r");
-	अगर (!fp)
-		जाओ try_thपढ़ोs;
+	scnprintf(filename, MAXPATHLEN, DIE_SIB_FMT,
+		  sysfs__mountpoint(), cpu);
+	fp = fopen(filename, "r");
+	if (!fp)
+		goto try_threads;
 
 	sret = getline(&buf, &len, fp);
-	ख_बंद(fp);
-	अगर (sret <= 0)
-		जाओ try_thपढ़ोs;
+	fclose(fp);
+	if (sret <= 0)
+		goto try_threads;
 
-	p = म_अक्षर(buf, '\n');
-	अगर (p)
+	p = strchr(buf, '\n');
+	if (p)
 		*p = '\0';
 
-	क्रम (i = 0; i < tp->die_sib; i++) अणु
-		अगर (!म_भेद(buf, tp->die_siblings[i]))
-			अवरोध;
-	पूर्ण
-	अगर (i == tp->die_sib) अणु
+	for (i = 0; i < tp->die_sib; i++) {
+		if (!strcmp(buf, tp->die_siblings[i]))
+			break;
+	}
+	if (i == tp->die_sib) {
 		tp->die_siblings[i] = buf;
 		tp->die_sib++;
-		buf = शून्य;
+		buf = NULL;
 		len = 0;
-	पूर्ण
+	}
 	ret = 0;
 
-try_thपढ़ोs:
-	scnम_लिखो(filename, MAXPATHLEN, THRD_SIB_FMT_NEW,
-		  sysfs__mountpoपूर्णांक(), cpu);
-	अगर (access(filename, F_OK) == -1) अणु
-		scnम_लिखो(filename, MAXPATHLEN, THRD_SIB_FMT,
-			  sysfs__mountpoपूर्णांक(), cpu);
-	पूर्ण
-	fp = ख_खोलो(filename, "r");
-	अगर (!fp)
-		जाओ करोne;
+try_threads:
+	scnprintf(filename, MAXPATHLEN, THRD_SIB_FMT_NEW,
+		  sysfs__mountpoint(), cpu);
+	if (access(filename, F_OK) == -1) {
+		scnprintf(filename, MAXPATHLEN, THRD_SIB_FMT,
+			  sysfs__mountpoint(), cpu);
+	}
+	fp = fopen(filename, "r");
+	if (!fp)
+		goto done;
 
-	अगर (getline(&buf, &len, fp) <= 0)
-		जाओ करोne;
+	if (getline(&buf, &len, fp) <= 0)
+		goto done;
 
-	p = म_अक्षर(buf, '\n');
-	अगर (p)
+	p = strchr(buf, '\n');
+	if (p)
 		*p = '\0';
 
-	क्रम (i = 0; i < tp->thपढ़ो_sib; i++) अणु
-		अगर (!म_भेद(buf, tp->thपढ़ो_siblings[i]))
-			अवरोध;
-	पूर्ण
-	अगर (i == tp->thपढ़ो_sib) अणु
-		tp->thपढ़ो_siblings[i] = buf;
-		tp->thपढ़ो_sib++;
-		buf = शून्य;
-	पूर्ण
+	for (i = 0; i < tp->thread_sib; i++) {
+		if (!strcmp(buf, tp->thread_siblings[i]))
+			break;
+	}
+	if (i == tp->thread_sib) {
+		tp->thread_siblings[i] = buf;
+		tp->thread_sib++;
+		buf = NULL;
+	}
 	ret = 0;
-करोne:
-	अगर (fp)
-		ख_बंद(fp);
-	मुक्त(buf);
-	वापस ret;
-पूर्ण
+done:
+	if (fp)
+		fclose(fp);
+	free(buf);
+	return ret;
+}
 
-व्योम cpu_topology__delete(काष्ठा cpu_topology *tp)
-अणु
+void cpu_topology__delete(struct cpu_topology *tp)
+{
 	u32 i;
 
-	अगर (!tp)
-		वापस;
+	if (!tp)
+		return;
 
-	क्रम (i = 0 ; i < tp->core_sib; i++)
-		zमुक्त(&tp->core_siblings[i]);
+	for (i = 0 ; i < tp->core_sib; i++)
+		zfree(&tp->core_siblings[i]);
 
-	अगर (tp->die_sib) अणु
-		क्रम (i = 0 ; i < tp->die_sib; i++)
-			zमुक्त(&tp->die_siblings[i]);
-	पूर्ण
+	if (tp->die_sib) {
+		for (i = 0 ; i < tp->die_sib; i++)
+			zfree(&tp->die_siblings[i]);
+	}
 
-	क्रम (i = 0 ; i < tp->thपढ़ो_sib; i++)
-		zमुक्त(&tp->thपढ़ो_siblings[i]);
+	for (i = 0 ; i < tp->thread_sib; i++)
+		zfree(&tp->thread_siblings[i]);
 
-	मुक्त(tp);
-पूर्ण
+	free(tp);
+}
 
-अटल bool has_die_topology(व्योम)
-अणु
-	अक्षर filename[MAXPATHLEN];
-	काष्ठा utsname uts;
+static bool has_die_topology(void)
+{
+	char filename[MAXPATHLEN];
+	struct utsname uts;
 
-	अगर (uname(&uts) < 0)
-		वापस false;
+	if (uname(&uts) < 0)
+		return false;
 
-	अगर (म_भेदन(uts.machine, "x86_64", 6))
-		वापस false;
+	if (strncmp(uts.machine, "x86_64", 6))
+		return false;
 
-	scnम_लिखो(filename, MAXPATHLEN, DIE_SIB_FMT,
-		  sysfs__mountpoपूर्णांक(), 0);
-	अगर (access(filename, F_OK) == -1)
-		वापस false;
+	scnprintf(filename, MAXPATHLEN, DIE_SIB_FMT,
+		  sysfs__mountpoint(), 0);
+	if (access(filename, F_OK) == -1)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-काष्ठा cpu_topology *cpu_topology__new(व्योम)
-अणु
-	काष्ठा cpu_topology *tp = शून्य;
-	व्योम *addr;
+struct cpu_topology *cpu_topology__new(void)
+{
+	struct cpu_topology *tp = NULL;
+	void *addr;
 	u32 nr, i, nr_addr;
-	माप_प्रकार sz;
-	दीर्घ ncpus;
-	पूर्णांक ret = -1;
-	काष्ठा perf_cpu_map *map;
+	size_t sz;
+	long ncpus;
+	int ret = -1;
+	struct perf_cpu_map *map;
 	bool has_die = has_die_topology();
 
 	ncpus = cpu__max_present_cpu();
 
 	/* build online CPU map */
-	map = perf_cpu_map__new(शून्य);
-	अगर (map == शून्य) अणु
+	map = perf_cpu_map__new(NULL);
+	if (map == NULL) {
 		pr_debug("failed to get system cpumap\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	nr = (u32)(ncpus & अच_पूर्णांक_उच्च);
+	nr = (u32)(ncpus & UINT_MAX);
 
-	sz = nr * माप(अक्षर *);
-	अगर (has_die)
+	sz = nr * sizeof(char *);
+	if (has_die)
 		nr_addr = 3;
-	अन्यथा
+	else
 		nr_addr = 2;
-	addr = सुस्मृति(1, माप(*tp) + nr_addr * sz);
-	अगर (!addr)
-		जाओ out_मुक्त;
+	addr = calloc(1, sizeof(*tp) + nr_addr * sz);
+	if (!addr)
+		goto out_free;
 
 	tp = addr;
-	addr += माप(*tp);
+	addr += sizeof(*tp);
 	tp->core_siblings = addr;
 	addr += sz;
-	अगर (has_die) अणु
+	if (has_die) {
 		tp->die_siblings = addr;
 		addr += sz;
-	पूर्ण
-	tp->thपढ़ो_siblings = addr;
+	}
+	tp->thread_siblings = addr;
 
-	क्रम (i = 0; i < nr; i++) अणु
-		अगर (!cpu_map__has(map, i))
-			जारी;
+	for (i = 0; i < nr; i++) {
+		if (!cpu_map__has(map, i))
+			continue;
 
 		ret = build_cpu_topology(tp, i);
-		अगर (ret < 0)
-			अवरोध;
-	पूर्ण
+		if (ret < 0)
+			break;
+	}
 
-out_मुक्त:
+out_free:
 	perf_cpu_map__put(map);
-	अगर (ret) अणु
+	if (ret) {
 		cpu_topology__delete(tp);
-		tp = शून्य;
-	पूर्ण
-	वापस tp;
-पूर्ण
+		tp = NULL;
+	}
+	return tp;
+}
 
-अटल पूर्णांक load_numa_node(काष्ठा numa_topology_node *node, पूर्णांक nr)
-अणु
-	अक्षर str[MAXPATHLEN];
-	अक्षर field[32];
-	अक्षर *buf = शून्य, *p;
-	माप_प्रकार len = 0;
-	पूर्णांक ret = -1;
-	खाता *fp;
+static int load_numa_node(struct numa_topology_node *node, int nr)
+{
+	char str[MAXPATHLEN];
+	char field[32];
+	char *buf = NULL, *p;
+	size_t len = 0;
+	int ret = -1;
+	FILE *fp;
 	u64 mem;
 
 	node->node = (u32) nr;
 
-	scnम_लिखो(str, MAXPATHLEN, NODE_MEMINFO_FMT,
-		  sysfs__mountpoपूर्णांक(), nr);
-	fp = ख_खोलो(str, "r");
-	अगर (!fp)
-		वापस -1;
+	scnprintf(str, MAXPATHLEN, NODE_MEMINFO_FMT,
+		  sysfs__mountpoint(), nr);
+	fp = fopen(str, "r");
+	if (!fp)
+		return -1;
 
-	जबतक (getline(&buf, &len, fp) > 0) अणु
+	while (getline(&buf, &len, fp) > 0) {
 		/* skip over invalid lines */
-		अगर (!म_अक्षर(buf, ':'))
-			जारी;
-		अगर (माला_पूछो(buf, "%*s %*d %31s %"PRIu64, field, &mem) != 2)
-			जाओ err;
-		अगर (!म_भेद(field, "MemTotal:"))
+		if (!strchr(buf, ':'))
+			continue;
+		if (sscanf(buf, "%*s %*d %31s %"PRIu64, field, &mem) != 2)
+			goto err;
+		if (!strcmp(field, "MemTotal:"))
 			node->mem_total = mem;
-		अगर (!म_भेद(field, "MemFree:"))
-			node->mem_मुक्त = mem;
-		अगर (node->mem_total && node->mem_मुक्त)
-			अवरोध;
-	पूर्ण
+		if (!strcmp(field, "MemFree:"))
+			node->mem_free = mem;
+		if (node->mem_total && node->mem_free)
+			break;
+	}
 
-	ख_बंद(fp);
-	fp = शून्य;
+	fclose(fp);
+	fp = NULL;
 
-	scnम_लिखो(str, MAXPATHLEN, NODE_CPULIST_FMT,
-		  sysfs__mountpoपूर्णांक(), nr);
+	scnprintf(str, MAXPATHLEN, NODE_CPULIST_FMT,
+		  sysfs__mountpoint(), nr);
 
-	fp = ख_खोलो(str, "r");
-	अगर (!fp)
-		वापस -1;
+	fp = fopen(str, "r");
+	if (!fp)
+		return -1;
 
-	अगर (getline(&buf, &len, fp) <= 0)
-		जाओ err;
+	if (getline(&buf, &len, fp) <= 0)
+		goto err;
 
-	p = म_अक्षर(buf, '\n');
-	अगर (p)
+	p = strchr(buf, '\n');
+	if (p)
 		*p = '\0';
 
 	node->cpus = buf;
-	ख_बंद(fp);
-	वापस 0;
+	fclose(fp);
+	return 0;
 
 err:
-	मुक्त(buf);
-	अगर (fp)
-		ख_बंद(fp);
-	वापस ret;
-पूर्ण
+	free(buf);
+	if (fp)
+		fclose(fp);
+	return ret;
+}
 
-काष्ठा numa_topology *numa_topology__new(व्योम)
-अणु
-	काष्ठा perf_cpu_map *node_map = शून्य;
-	काष्ठा numa_topology *tp = शून्य;
-	अक्षर path[MAXPATHLEN];
-	अक्षर *buf = शून्य;
-	माप_प्रकार len = 0;
+struct numa_topology *numa_topology__new(void)
+{
+	struct perf_cpu_map *node_map = NULL;
+	struct numa_topology *tp = NULL;
+	char path[MAXPATHLEN];
+	char *buf = NULL;
+	size_t len = 0;
 	u32 nr, i;
-	खाता *fp;
-	अक्षर *c;
+	FILE *fp;
+	char *c;
 
-	scnम_लिखो(path, MAXPATHLEN, NODE_ONLINE_FMT,
-		  sysfs__mountpoपूर्णांक());
+	scnprintf(path, MAXPATHLEN, NODE_ONLINE_FMT,
+		  sysfs__mountpoint());
 
-	fp = ख_खोलो(path, "r");
-	अगर (!fp)
-		वापस शून्य;
+	fp = fopen(path, "r");
+	if (!fp)
+		return NULL;
 
-	अगर (getline(&buf, &len, fp) <= 0)
-		जाओ out;
+	if (getline(&buf, &len, fp) <= 0)
+		goto out;
 
-	c = म_अक्षर(buf, '\n');
-	अगर (c)
+	c = strchr(buf, '\n');
+	if (c)
 		*c = '\0';
 
 	node_map = perf_cpu_map__new(buf);
-	अगर (!node_map)
-		जाओ out;
+	if (!node_map)
+		goto out;
 
 	nr = (u32) node_map->nr;
 
-	tp = zalloc(माप(*tp) + माप(tp->nodes[0])*nr);
-	अगर (!tp)
-		जाओ out;
+	tp = zalloc(sizeof(*tp) + sizeof(tp->nodes[0])*nr);
+	if (!tp)
+		goto out;
 
 	tp->nr = nr;
 
-	क्रम (i = 0; i < nr; i++) अणु
-		अगर (load_numa_node(&tp->nodes[i], node_map->map[i])) अणु
+	for (i = 0; i < nr; i++) {
+		if (load_numa_node(&tp->nodes[i], node_map->map[i])) {
 			numa_topology__delete(tp);
-			tp = शून्य;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			tp = NULL;
+			break;
+		}
+	}
 
 out:
-	मुक्त(buf);
-	ख_बंद(fp);
+	free(buf);
+	fclose(fp);
 	perf_cpu_map__put(node_map);
-	वापस tp;
-पूर्ण
+	return tp;
+}
 
-व्योम numa_topology__delete(काष्ठा numa_topology *tp)
-अणु
+void numa_topology__delete(struct numa_topology *tp)
+{
 	u32 i;
 
-	क्रम (i = 0; i < tp->nr; i++)
-		zमुक्त(&tp->nodes[i].cpus);
+	for (i = 0; i < tp->nr; i++)
+		zfree(&tp->nodes[i].cpus);
 
-	मुक्त(tp);
-पूर्ण
+	free(tp);
+}

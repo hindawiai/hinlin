@@ -1,85 +1,84 @@
-<शैली गुरु>
 /*
- * Support क्रम hardware-assisted userspace पूर्णांकerrupt masking.
+ * Support for hardware-assisted userspace interrupt masking.
  *
  * Copyright (C) 2010  Paul Mundt
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  */
-#घोषणा pr_fmt(fmt) "intc: " fmt
+#define pr_fmt(fmt) "intc: " fmt
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/device.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/sizes.h>
-#समावेश "internals.h"
+#include <linux/errno.h>
+#include <linux/device.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/stat.h>
+#include <linux/sizes.h>
+#include "internals.h"
 
-अटल व्योम __iomem *uimask;
+static void __iomem *uimask;
 
-अटल sमाप_प्रकार
-show_पूर्णांकc_userimask(काष्ठा device *dev,
-		    काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", (__raw_पढ़ोl(uimask) >> 4) & 0xf);
-पूर्ण
+static ssize_t
+show_intc_userimask(struct device *dev,
+		    struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", (__raw_readl(uimask) >> 4) & 0xf);
+}
 
-अटल sमाप_प्रकार
-store_पूर्णांकc_userimask(काष्ठा device *dev,
-		     काष्ठा device_attribute *attr,
-		     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	अचिन्हित दीर्घ level;
+static ssize_t
+store_intc_userimask(struct device *dev,
+		     struct device_attribute *attr,
+		     const char *buf, size_t count)
+{
+	unsigned long level;
 
-	level = simple_म_से_अदीर्घ(buf, शून्य, 10);
+	level = simple_strtoul(buf, NULL, 10);
 
 	/*
 	 * Minimal acceptable IRQ levels are in the 2 - 16 range, but
-	 * these are chomped so as to not पूर्णांकerfere with normal IRQs.
+	 * these are chomped so as to not interfere with normal IRQs.
 	 *
-	 * Level 1 is a special हाल on some CPUs in that it's not
+	 * Level 1 is a special case on some CPUs in that it's not
 	 * directly settable, but given that USERIMASK cuts off below a
-	 * certain level, we करोn't care about this limitation here.
+	 * certain level, we don't care about this limitation here.
 	 * Level 0 on the other hand equates to user masking disabled.
 	 *
-	 * We use the शेष priority level as a cut off so that only
-	 * special हाल opt-in IRQs can be mangled.
+	 * We use the default priority level as a cut off so that only
+	 * special case opt-in IRQs can be mangled.
 	 */
-	अगर (level >= पूर्णांकc_get_dfl_prio_level())
-		वापस -EINVAL;
+	if (level >= intc_get_dfl_prio_level())
+		return -EINVAL;
 
-	__raw_ग_लिखोl(0xa5 << 24 | level << 4, uimask);
+	__raw_writel(0xa5 << 24 | level << 4, uimask);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(userimask, S_IRUSR | S_IWUSR,
-		   show_पूर्णांकc_userimask, store_पूर्णांकc_userimask);
+static DEVICE_ATTR(userimask, S_IRUSR | S_IWUSR,
+		   show_intc_userimask, store_intc_userimask);
 
 
-अटल पूर्णांक __init userimask_sysdev_init(व्योम)
-अणु
-	अगर (unlikely(!uimask))
-		वापस -ENXIO;
+static int __init userimask_sysdev_init(void)
+{
+	if (unlikely(!uimask))
+		return -ENXIO;
 
-	वापस device_create_file(पूर्णांकc_subsys.dev_root, &dev_attr_userimask);
-पूर्ण
+	return device_create_file(intc_subsys.dev_root, &dev_attr_userimask);
+}
 late_initcall(userimask_sysdev_init);
 
-पूर्णांक रेजिस्टर_पूर्णांकc_userimask(अचिन्हित दीर्घ addr)
-अणु
-	अगर (unlikely(uimask))
-		वापस -EBUSY;
+int register_intc_userimask(unsigned long addr)
+{
+	if (unlikely(uimask))
+		return -EBUSY;
 
 	uimask = ioremap(addr, SZ_4K);
-	अगर (unlikely(!uimask))
-		वापस -ENOMEM;
+	if (unlikely(!uimask))
+		return -ENOMEM;
 
 	pr_info("userimask support registered for levels 0 -> %d\n",
-		पूर्णांकc_get_dfl_prio_level() - 1);
+		intc_get_dfl_prio_level() - 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

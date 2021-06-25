@@ -1,10 +1,9 @@
-<शैली गुरु>
 /*
- * HDMI header definition क्रम OMAP4 HDMI CEC IP
+ * HDMI header definition for OMAP4 HDMI CEC IP
  *
  * Copyright 2016-2017 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  *
- * This program is मुक्त software; you may redistribute it and/or modअगरy
+ * This program is free software; you may redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -18,39 +17,39 @@
  * SOFTWARE.
  */
 
-#अगर_अघोषित _HDMI4_CEC_H_
-#घोषणा _HDMI4_CEC_H_
+#ifndef _HDMI4_CEC_H_
+#define _HDMI4_CEC_H_
 
-काष्ठा hdmi_core_data;
-काष्ठा hdmi_wp_data;
-काष्ठा platक्रमm_device;
+struct hdmi_core_data;
+struct hdmi_wp_data;
+struct platform_device;
 
 /* HDMI CEC funcs */
-#अगर_घोषित CONFIG_OMAP4_DSS_HDMI_CEC
-व्योम hdmi4_cec_set_phys_addr(काष्ठा hdmi_core_data *core, u16 pa);
-व्योम hdmi4_cec_irq(काष्ठा hdmi_core_data *core);
-पूर्णांक hdmi4_cec_init(काष्ठा platक्रमm_device *pdev, काष्ठा hdmi_core_data *core,
-		  काष्ठा hdmi_wp_data *wp);
-व्योम hdmi4_cec_uninit(काष्ठा hdmi_core_data *core);
-#अन्यथा
-अटल अंतरभूत व्योम hdmi4_cec_set_phys_addr(काष्ठा hdmi_core_data *core, u16 pa)
-अणु
-पूर्ण
+#ifdef CONFIG_OMAP4_DSS_HDMI_CEC
+void hdmi4_cec_set_phys_addr(struct hdmi_core_data *core, u16 pa);
+void hdmi4_cec_irq(struct hdmi_core_data *core);
+int hdmi4_cec_init(struct platform_device *pdev, struct hdmi_core_data *core,
+		  struct hdmi_wp_data *wp);
+void hdmi4_cec_uninit(struct hdmi_core_data *core);
+#else
+static inline void hdmi4_cec_set_phys_addr(struct hdmi_core_data *core, u16 pa)
+{
+}
 
-अटल अंतरभूत व्योम hdmi4_cec_irq(काष्ठा hdmi_core_data *core)
-अणु
-पूर्ण
+static inline void hdmi4_cec_irq(struct hdmi_core_data *core)
+{
+}
 
-अटल अंतरभूत पूर्णांक hdmi4_cec_init(काष्ठा platक्रमm_device *pdev,
-				काष्ठा hdmi_core_data *core,
-				काष्ठा hdmi_wp_data *wp)
-अणु
-	वापस 0;
-पूर्ण
+static inline int hdmi4_cec_init(struct platform_device *pdev,
+				struct hdmi_core_data *core,
+				struct hdmi_wp_data *wp)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम hdmi4_cec_uninit(काष्ठा hdmi_core_data *core)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void hdmi4_cec_uninit(struct hdmi_core_data *core)
+{
+}
+#endif
 
-#पूर्ण_अगर
+#endif

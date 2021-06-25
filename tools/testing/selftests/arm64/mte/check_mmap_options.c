@@ -1,210 +1,209 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2020 ARM Limited
 
-#घोषणा _GNU_SOURCE
+#define _GNU_SOURCE
 
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <संकेत.स>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <ucontext.h>
-#समावेश <sys/mman.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/types.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ucontext.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
-#समावेश "kselftest.h"
-#समावेश "mte_common_util.h"
-#समावेश "mte_def.h"
+#include "kselftest.h"
+#include "mte_common_util.h"
+#include "mte_def.h"
 
-#घोषणा RUNS			(MT_TAG_COUNT)
-#घोषणा UNDERFLOW		MT_GRANULE_SIZE
-#घोषणा OVERFLOW		MT_GRANULE_SIZE
-#घोषणा TAG_CHECK_ON		0
-#घोषणा TAG_CHECK_OFF		1
+#define RUNS			(MT_TAG_COUNT)
+#define UNDERFLOW		MT_GRANULE_SIZE
+#define OVERFLOW		MT_GRANULE_SIZE
+#define TAG_CHECK_ON		0
+#define TAG_CHECK_OFF		1
 
-अटल माप_प्रकार page_size;
-अटल पूर्णांक sizes[] = अणु
+static size_t page_size;
+static int sizes[] = {
 	1, 537, 989, 1269, MT_GRANULE_SIZE - 1, MT_GRANULE_SIZE,
 	/* page size - 1*/ 0, /* page_size */ 0, /* page size + 1 */ 0
-पूर्ण;
+};
 
-अटल पूर्णांक check_mte_memory(अक्षर *ptr, पूर्णांक size, पूर्णांक mode, पूर्णांक tag_check)
-अणु
-	mte_initialize_current_context(mode, (uपूर्णांकptr_t)ptr, size);
-	स_रखो(ptr, '1', size);
-	mte_रुको_after_trig();
-	अगर (cur_mte_cxt.fault_valid == true)
-		वापस KSFT_FAIL;
+static int check_mte_memory(char *ptr, int size, int mode, int tag_check)
+{
+	mte_initialize_current_context(mode, (uintptr_t)ptr, size);
+	memset(ptr, '1', size);
+	mte_wait_after_trig();
+	if (cur_mte_cxt.fault_valid == true)
+		return KSFT_FAIL;
 
-	mte_initialize_current_context(mode, (uपूर्णांकptr_t)ptr, -UNDERFLOW);
-	स_रखो(ptr - UNDERFLOW, '2', UNDERFLOW);
-	mte_रुको_after_trig();
-	अगर (cur_mte_cxt.fault_valid == false && tag_check == TAG_CHECK_ON)
-		वापस KSFT_FAIL;
-	अगर (cur_mte_cxt.fault_valid == true && tag_check == TAG_CHECK_OFF)
-		वापस KSFT_FAIL;
+	mte_initialize_current_context(mode, (uintptr_t)ptr, -UNDERFLOW);
+	memset(ptr - UNDERFLOW, '2', UNDERFLOW);
+	mte_wait_after_trig();
+	if (cur_mte_cxt.fault_valid == false && tag_check == TAG_CHECK_ON)
+		return KSFT_FAIL;
+	if (cur_mte_cxt.fault_valid == true && tag_check == TAG_CHECK_OFF)
+		return KSFT_FAIL;
 
-	mte_initialize_current_context(mode, (uपूर्णांकptr_t)ptr, size + OVERFLOW);
-	स_रखो(ptr + size, '3', OVERFLOW);
-	mte_रुको_after_trig();
-	अगर (cur_mte_cxt.fault_valid == false && tag_check == TAG_CHECK_ON)
-		वापस KSFT_FAIL;
-	अगर (cur_mte_cxt.fault_valid == true && tag_check == TAG_CHECK_OFF)
-		वापस KSFT_FAIL;
+	mte_initialize_current_context(mode, (uintptr_t)ptr, size + OVERFLOW);
+	memset(ptr + size, '3', OVERFLOW);
+	mte_wait_after_trig();
+	if (cur_mte_cxt.fault_valid == false && tag_check == TAG_CHECK_ON)
+		return KSFT_FAIL;
+	if (cur_mte_cxt.fault_valid == true && tag_check == TAG_CHECK_OFF)
+		return KSFT_FAIL;
 
-	वापस KSFT_PASS;
-पूर्ण
+	return KSFT_PASS;
+}
 
-अटल पूर्णांक check_anonymous_memory_mapping(पूर्णांक mem_type, पूर्णांक mode, पूर्णांक mapping, पूर्णांक tag_check)
-अणु
-	अक्षर *ptr, *map_ptr;
-	पूर्णांक run, result, map_size;
-	पूर्णांक item = माप(sizes)/माप(पूर्णांक);
+static int check_anonymous_memory_mapping(int mem_type, int mode, int mapping, int tag_check)
+{
+	char *ptr, *map_ptr;
+	int run, result, map_size;
+	int item = sizeof(sizes)/sizeof(int);
 
-	item = माप(sizes)/माप(पूर्णांक);
-	mte_चयन_mode(mode, MTE_ALLOW_NON_ZERO_TAG);
-	क्रम (run = 0; run < item; run++) अणु
+	item = sizeof(sizes)/sizeof(int);
+	mte_switch_mode(mode, MTE_ALLOW_NON_ZERO_TAG);
+	for (run = 0; run < item; run++) {
 		map_size = sizes[run] + OVERFLOW + UNDERFLOW;
-		map_ptr = (अक्षर *)mte_allocate_memory(map_size, mem_type, mapping, false);
-		अगर (check_allocated_memory(map_ptr, map_size, mem_type, false) != KSFT_PASS)
-			वापस KSFT_FAIL;
+		map_ptr = (char *)mte_allocate_memory(map_size, mem_type, mapping, false);
+		if (check_allocated_memory(map_ptr, map_size, mem_type, false) != KSFT_PASS)
+			return KSFT_FAIL;
 
 		ptr = map_ptr + UNDERFLOW;
-		mte_initialize_current_context(mode, (uपूर्णांकptr_t)ptr, sizes[run]);
+		mte_initialize_current_context(mode, (uintptr_t)ptr, sizes[run]);
 		/* Only mte enabled memory will allow tag insertion */
-		ptr = mte_insert_tags((व्योम *)ptr, sizes[run]);
-		अगर (!ptr || cur_mte_cxt.fault_valid == true) अणु
-			ksft_prपूर्णांक_msg("FAIL: Insert tags on anonymous mmap memory\n");
-			munmap((व्योम *)map_ptr, map_size);
-			वापस KSFT_FAIL;
-		पूर्ण
+		ptr = mte_insert_tags((void *)ptr, sizes[run]);
+		if (!ptr || cur_mte_cxt.fault_valid == true) {
+			ksft_print_msg("FAIL: Insert tags on anonymous mmap memory\n");
+			munmap((void *)map_ptr, map_size);
+			return KSFT_FAIL;
+		}
 		result = check_mte_memory(ptr, sizes[run], mode, tag_check);
-		mte_clear_tags((व्योम *)ptr, sizes[run]);
-		mte_मुक्त_memory((व्योम *)map_ptr, map_size, mem_type, false);
-		अगर (result == KSFT_FAIL)
-			वापस KSFT_FAIL;
-	पूर्ण
-	वापस KSFT_PASS;
-पूर्ण
+		mte_clear_tags((void *)ptr, sizes[run]);
+		mte_free_memory((void *)map_ptr, map_size, mem_type, false);
+		if (result == KSFT_FAIL)
+			return KSFT_FAIL;
+	}
+	return KSFT_PASS;
+}
 
-अटल पूर्णांक check_file_memory_mapping(पूर्णांक mem_type, पूर्णांक mode, पूर्णांक mapping, पूर्णांक tag_check)
-अणु
-	अक्षर *ptr, *map_ptr;
-	पूर्णांक run, fd, map_size;
-	पूर्णांक total = माप(sizes)/माप(पूर्णांक);
-	पूर्णांक result = KSFT_PASS;
+static int check_file_memory_mapping(int mem_type, int mode, int mapping, int tag_check)
+{
+	char *ptr, *map_ptr;
+	int run, fd, map_size;
+	int total = sizeof(sizes)/sizeof(int);
+	int result = KSFT_PASS;
 
-	mte_चयन_mode(mode, MTE_ALLOW_NON_ZERO_TAG);
-	क्रम (run = 0; run < total; run++) अणु
+	mte_switch_mode(mode, MTE_ALLOW_NON_ZERO_TAG);
+	for (run = 0; run < total; run++) {
 		fd = create_temp_file();
-		अगर (fd == -1)
-			वापस KSFT_FAIL;
+		if (fd == -1)
+			return KSFT_FAIL;
 
 		map_size = sizes[run] + UNDERFLOW + OVERFLOW;
-		map_ptr = (अक्षर *)mte_allocate_file_memory(map_size, mem_type, mapping, false, fd);
-		अगर (check_allocated_memory(map_ptr, map_size, mem_type, false) != KSFT_PASS) अणु
-			बंद(fd);
-			वापस KSFT_FAIL;
-		पूर्ण
+		map_ptr = (char *)mte_allocate_file_memory(map_size, mem_type, mapping, false, fd);
+		if (check_allocated_memory(map_ptr, map_size, mem_type, false) != KSFT_PASS) {
+			close(fd);
+			return KSFT_FAIL;
+		}
 		ptr = map_ptr + UNDERFLOW;
-		mte_initialize_current_context(mode, (uपूर्णांकptr_t)ptr, sizes[run]);
+		mte_initialize_current_context(mode, (uintptr_t)ptr, sizes[run]);
 		/* Only mte enabled memory will allow tag insertion */
-		ptr = mte_insert_tags((व्योम *)ptr, sizes[run]);
-		अगर (!ptr || cur_mte_cxt.fault_valid == true) अणु
-			ksft_prपूर्णांक_msg("FAIL: Insert tags on file based memory\n");
-			munmap((व्योम *)map_ptr, map_size);
-			बंद(fd);
-			वापस KSFT_FAIL;
-		पूर्ण
+		ptr = mte_insert_tags((void *)ptr, sizes[run]);
+		if (!ptr || cur_mte_cxt.fault_valid == true) {
+			ksft_print_msg("FAIL: Insert tags on file based memory\n");
+			munmap((void *)map_ptr, map_size);
+			close(fd);
+			return KSFT_FAIL;
+		}
 		result = check_mte_memory(ptr, sizes[run], mode, tag_check);
-		mte_clear_tags((व्योम *)ptr, sizes[run]);
-		munmap((व्योम *)map_ptr, map_size);
-		बंद(fd);
-		अगर (result == KSFT_FAIL)
-			अवरोध;
-	पूर्ण
-	वापस result;
-पूर्ण
+		mte_clear_tags((void *)ptr, sizes[run]);
+		munmap((void *)map_ptr, map_size);
+		close(fd);
+		if (result == KSFT_FAIL)
+			break;
+	}
+	return result;
+}
 
-अटल पूर्णांक check_clear_prot_mte_flag(पूर्णांक mem_type, पूर्णांक mode, पूर्णांक mapping)
-अणु
-	अक्षर *ptr, *map_ptr;
-	पूर्णांक run, prot_flag, result, fd, map_size;
-	पूर्णांक total = माप(sizes)/माप(पूर्णांक);
+static int check_clear_prot_mte_flag(int mem_type, int mode, int mapping)
+{
+	char *ptr, *map_ptr;
+	int run, prot_flag, result, fd, map_size;
+	int total = sizeof(sizes)/sizeof(int);
 
 	prot_flag = PROT_READ | PROT_WRITE;
-	mte_चयन_mode(mode, MTE_ALLOW_NON_ZERO_TAG);
-	क्रम (run = 0; run < total; run++) अणु
+	mte_switch_mode(mode, MTE_ALLOW_NON_ZERO_TAG);
+	for (run = 0; run < total; run++) {
 		map_size = sizes[run] + OVERFLOW + UNDERFLOW;
-		ptr = (अक्षर *)mte_allocate_memory_tag_range(sizes[run], mem_type, mapping,
+		ptr = (char *)mte_allocate_memory_tag_range(sizes[run], mem_type, mapping,
 							    UNDERFLOW, OVERFLOW);
-		अगर (check_allocated_memory_range(ptr, sizes[run], mem_type,
+		if (check_allocated_memory_range(ptr, sizes[run], mem_type,
 						 UNDERFLOW, OVERFLOW) != KSFT_PASS)
-			वापस KSFT_FAIL;
+			return KSFT_FAIL;
 		map_ptr = ptr - UNDERFLOW;
-		/* Try to clear PROT_MTE property and verअगरy it by tag checking */
-		अगर (mprotect(map_ptr, map_size, prot_flag)) अणु
-			mte_मुक्त_memory_tag_range((व्योम *)ptr, sizes[run], mem_type,
+		/* Try to clear PROT_MTE property and verify it by tag checking */
+		if (mprotect(map_ptr, map_size, prot_flag)) {
+			mte_free_memory_tag_range((void *)ptr, sizes[run], mem_type,
 						  UNDERFLOW, OVERFLOW);
-			ksft_prपूर्णांक_msg("FAIL: mprotect not ignoring clear PROT_MTE property\n");
-			वापस KSFT_FAIL;
-		पूर्ण
+			ksft_print_msg("FAIL: mprotect not ignoring clear PROT_MTE property\n");
+			return KSFT_FAIL;
+		}
 		result = check_mte_memory(ptr, sizes[run], mode, TAG_CHECK_ON);
-		mte_मुक्त_memory_tag_range((व्योम *)ptr, sizes[run], mem_type, UNDERFLOW, OVERFLOW);
-		अगर (result != KSFT_PASS)
-			वापस KSFT_FAIL;
+		mte_free_memory_tag_range((void *)ptr, sizes[run], mem_type, UNDERFLOW, OVERFLOW);
+		if (result != KSFT_PASS)
+			return KSFT_FAIL;
 
 		fd = create_temp_file();
-		अगर (fd == -1)
-			वापस KSFT_FAIL;
-		ptr = (अक्षर *)mte_allocate_file_memory_tag_range(sizes[run], mem_type, mapping,
+		if (fd == -1)
+			return KSFT_FAIL;
+		ptr = (char *)mte_allocate_file_memory_tag_range(sizes[run], mem_type, mapping,
 								 UNDERFLOW, OVERFLOW, fd);
-		अगर (check_allocated_memory_range(ptr, sizes[run], mem_type,
-						 UNDERFLOW, OVERFLOW) != KSFT_PASS) अणु
-			बंद(fd);
-			वापस KSFT_FAIL;
-		पूर्ण
+		if (check_allocated_memory_range(ptr, sizes[run], mem_type,
+						 UNDERFLOW, OVERFLOW) != KSFT_PASS) {
+			close(fd);
+			return KSFT_FAIL;
+		}
 		map_ptr = ptr - UNDERFLOW;
-		/* Try to clear PROT_MTE property and verअगरy it by tag checking */
-		अगर (mprotect(map_ptr, map_size, prot_flag)) अणु
-			ksft_prपूर्णांक_msg("FAIL: mprotect not ignoring clear PROT_MTE property\n");
-			mte_मुक्त_memory_tag_range((व्योम *)ptr, sizes[run], mem_type,
+		/* Try to clear PROT_MTE property and verify it by tag checking */
+		if (mprotect(map_ptr, map_size, prot_flag)) {
+			ksft_print_msg("FAIL: mprotect not ignoring clear PROT_MTE property\n");
+			mte_free_memory_tag_range((void *)ptr, sizes[run], mem_type,
 						  UNDERFLOW, OVERFLOW);
-			बंद(fd);
-			वापस KSFT_FAIL;
-		पूर्ण
+			close(fd);
+			return KSFT_FAIL;
+		}
 		result = check_mte_memory(ptr, sizes[run], mode, TAG_CHECK_ON);
-		mte_मुक्त_memory_tag_range((व्योम *)ptr, sizes[run], mem_type, UNDERFLOW, OVERFLOW);
-		बंद(fd);
-		अगर (result != KSFT_PASS)
-			वापस KSFT_FAIL;
-	पूर्ण
-	वापस KSFT_PASS;
-पूर्ण
+		mte_free_memory_tag_range((void *)ptr, sizes[run], mem_type, UNDERFLOW, OVERFLOW);
+		close(fd);
+		if (result != KSFT_PASS)
+			return KSFT_FAIL;
+	}
+	return KSFT_PASS;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	पूर्णांक err;
-	पूर्णांक item = माप(sizes)/माप(पूर्णांक);
+int main(int argc, char *argv[])
+{
+	int err;
+	int item = sizeof(sizes)/sizeof(int);
 
-	err = mte_शेष_setup();
-	अगर (err)
-		वापस err;
+	err = mte_default_setup();
+	if (err)
+		return err;
 	page_size = getpagesize();
-	अगर (!page_size) अणु
-		ksft_prपूर्णांक_msg("ERR: Unable to get page size\n");
-		वापस KSFT_FAIL;
-	पूर्ण
+	if (!page_size) {
+		ksft_print_msg("ERR: Unable to get page size\n");
+		return KSFT_FAIL;
+	}
 	sizes[item - 3] = page_size - 1;
 	sizes[item - 2] = page_size;
 	sizes[item - 1] = page_size + 1;
 
-	/* Register संकेत handlers */
-	mte_रेजिस्टर_संकेत(SIGBUS, mte_शेष_handler);
-	mte_रेजिस्टर_संकेत(संक_अंश, mte_शेष_handler);
+	/* Register signal handlers */
+	mte_register_signal(SIGBUS, mte_default_handler);
+	mte_register_signal(SIGSEGV, mte_default_handler);
 
 	/* Set test plan */
 	ksft_set_plan(22);
@@ -262,6 +261,6 @@
 	"Check clear PROT_MTE flags with private mapping and sync error mode and mmap/mprotect memory\n");
 
 	mte_restore_setup();
-	ksft_prपूर्णांक_cnts();
-	वापस ksft_get_fail_cnt() == 0 ? KSFT_PASS : KSFT_FAIL;
-पूर्ण
+	ksft_print_cnts();
+	return ksft_get_fail_cnt() == 0 ? KSFT_PASS : KSFT_FAIL;
+}

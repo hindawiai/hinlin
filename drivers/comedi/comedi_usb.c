@@ -1,151 +1,150 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * comedi_usb.c
- * Comedi USB driver specअगरic functions.
+ * Comedi USB driver specific functions.
  *
  * COMEDI - Linux Control and Measurement Device Interface
  * Copyright (C) 1997-2000 David A. Schleef <ds@schleef.org>
  */
 
-#समावेश <linux/module.h>
+#include <linux/module.h>
 
-#समावेश "comedi_usb.h"
+#include "comedi_usb.h"
 
 /**
- * comedi_to_usb_पूर्णांकerface() - Return USB पूर्णांकerface attached to COMEDI device
+ * comedi_to_usb_interface() - Return USB interface attached to COMEDI device
  * @dev: COMEDI device.
  *
- * Assuming @dev->hw_dev is non-%शून्य, it is assumed to be poपूर्णांकing to a
- * a &काष्ठा device embedded in a &काष्ठा usb_पूर्णांकerface.
+ * Assuming @dev->hw_dev is non-%NULL, it is assumed to be pointing to a
+ * a &struct device embedded in a &struct usb_interface.
  *
- * Return: Attached USB पूर्णांकerface अगर @dev->hw_dev is non-%शून्य.
- * Return %शून्य अगर @dev->hw_dev is %शून्य.
+ * Return: Attached USB interface if @dev->hw_dev is non-%NULL.
+ * Return %NULL if @dev->hw_dev is %NULL.
  */
-काष्ठा usb_पूर्णांकerface *comedi_to_usb_पूर्णांकerface(काष्ठा comedi_device *dev)
-अणु
-	वापस dev->hw_dev ? to_usb_पूर्णांकerface(dev->hw_dev) : शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(comedi_to_usb_पूर्णांकerface);
+struct usb_interface *comedi_to_usb_interface(struct comedi_device *dev)
+{
+	return dev->hw_dev ? to_usb_interface(dev->hw_dev) : NULL;
+}
+EXPORT_SYMBOL_GPL(comedi_to_usb_interface);
 
 /**
  * comedi_to_usb_dev() - Return USB device attached to COMEDI device
  * @dev: COMEDI device.
  *
- * Assuming @dev->hw_dev is non-%शून्य, it is assumed to be poपूर्णांकing to a
- * a &काष्ठा device embedded in a &काष्ठा usb_पूर्णांकerface.
+ * Assuming @dev->hw_dev is non-%NULL, it is assumed to be pointing to a
+ * a &struct device embedded in a &struct usb_interface.
  *
- * Return: USB device to which the USB पूर्णांकerface beदीर्घs अगर @dev->hw_dev is
- * non-%शून्य.  Return %शून्य अगर @dev->hw_dev is %शून्य.
+ * Return: USB device to which the USB interface belongs if @dev->hw_dev is
+ * non-%NULL.  Return %NULL if @dev->hw_dev is %NULL.
  */
-काष्ठा usb_device *comedi_to_usb_dev(काष्ठा comedi_device *dev)
-अणु
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf = comedi_to_usb_पूर्णांकerface(dev);
+struct usb_device *comedi_to_usb_dev(struct comedi_device *dev)
+{
+	struct usb_interface *intf = comedi_to_usb_interface(dev);
 
-	वापस पूर्णांकf ? पूर्णांकerface_to_usbdev(पूर्णांकf) : शून्य;
-पूर्ण
+	return intf ? interface_to_usbdev(intf) : NULL;
+}
 EXPORT_SYMBOL_GPL(comedi_to_usb_dev);
 
 /**
- * comedi_usb_स्वतः_config() - Configure/probe a USB COMEDI driver
- * @पूर्णांकf: USB पूर्णांकerface.
+ * comedi_usb_auto_config() - Configure/probe a USB COMEDI driver
+ * @intf: USB interface.
  * @driver: Registered COMEDI driver.
- * @context: Driver specअगरic data, passed to comedi_स्वतः_config().
+ * @context: Driver specific data, passed to comedi_auto_config().
  *
  * Typically called from the usb_driver (*probe) function.  Auto-configure a
- * COMEDI device, using a poपूर्णांकer to the &काष्ठा device embedded in *@पूर्णांकf as
- * the hardware device.  The @context value माला_लो passed through to @driver's
+ * COMEDI device, using a pointer to the &struct device embedded in *@intf as
+ * the hardware device.  The @context value gets passed through to @driver's
  * "auto_attach" handler.  The "auto_attach" handler may call
- * comedi_to_usb_पूर्णांकerface() on the passed in COMEDI device to recover @पूर्णांकf.
+ * comedi_to_usb_interface() on the passed in COMEDI device to recover @intf.
  *
- * Return: The result of calling comedi_स्वतः_config() (%0 on success, or
+ * Return: The result of calling comedi_auto_config() (%0 on success, or
  * a negative error number on failure).
  */
-पूर्णांक comedi_usb_स्वतः_config(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
-			   काष्ठा comedi_driver *driver,
-			   अचिन्हित दीर्घ context)
-अणु
-	वापस comedi_स्वतः_config(&पूर्णांकf->dev, driver, context);
-पूर्ण
-EXPORT_SYMBOL_GPL(comedi_usb_स्वतः_config);
+int comedi_usb_auto_config(struct usb_interface *intf,
+			   struct comedi_driver *driver,
+			   unsigned long context)
+{
+	return comedi_auto_config(&intf->dev, driver, context);
+}
+EXPORT_SYMBOL_GPL(comedi_usb_auto_config);
 
 /**
- * comedi_usb_स्वतः_unconfig() - Unconfigure/disconnect a USB COMEDI device
- * @पूर्णांकf: USB पूर्णांकerface.
+ * comedi_usb_auto_unconfig() - Unconfigure/disconnect a USB COMEDI device
+ * @intf: USB interface.
  *
  * Typically called from the usb_driver (*disconnect) function.
- * Auto-unconfigure a COMEDI device attached to this USB पूर्णांकerface, using a
- * poपूर्णांकer to the &काष्ठा device embedded in *@पूर्णांकf as the hardware device.
+ * Auto-unconfigure a COMEDI device attached to this USB interface, using a
+ * pointer to the &struct device embedded in *@intf as the hardware device.
  * The COMEDI driver's "detach" handler will be called during unconfiguration
  * of the COMEDI device.
  *
- * Note that the COMEDI device may have alपढ़ोy been unconfigured using the
- * %COMEDI_DEVCONFIG ioctl, in which हाल this attempt to unconfigure it
+ * Note that the COMEDI device may have already been unconfigured using the
+ * %COMEDI_DEVCONFIG ioctl, in which case this attempt to unconfigure it
  * again should be ignored.
  */
-व्योम comedi_usb_स्वतः_unconfig(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	comedi_स्वतः_unconfig(&पूर्णांकf->dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(comedi_usb_स्वतः_unconfig);
+void comedi_usb_auto_unconfig(struct usb_interface *intf)
+{
+	comedi_auto_unconfig(&intf->dev);
+}
+EXPORT_SYMBOL_GPL(comedi_usb_auto_unconfig);
 
 /**
- * comedi_usb_driver_रेजिस्टर() - Register a USB COMEDI driver
- * @comedi_driver: COMEDI driver to be रेजिस्टरed.
- * @usb_driver: USB driver to be रेजिस्टरed.
+ * comedi_usb_driver_register() - Register a USB COMEDI driver
+ * @comedi_driver: COMEDI driver to be registered.
+ * @usb_driver: USB driver to be registered.
  *
  * This function is called from the module_init() of USB COMEDI driver modules
- * to रेजिस्टर the COMEDI driver and the USB driver.  Do not call it directly,
+ * to register the COMEDI driver and the USB driver.  Do not call it directly,
  * use the module_comedi_usb_driver() helper macro instead.
  *
  * Return: %0 on success, or a negative error number on failure.
  */
-पूर्णांक comedi_usb_driver_रेजिस्टर(काष्ठा comedi_driver *comedi_driver,
-			       काष्ठा usb_driver *usb_driver)
-अणु
-	पूर्णांक ret;
+int comedi_usb_driver_register(struct comedi_driver *comedi_driver,
+			       struct usb_driver *usb_driver)
+{
+	int ret;
 
-	ret = comedi_driver_रेजिस्टर(comedi_driver);
-	अगर (ret < 0)
-		वापस ret;
+	ret = comedi_driver_register(comedi_driver);
+	if (ret < 0)
+		return ret;
 
-	ret = usb_रेजिस्टर(usb_driver);
-	अगर (ret < 0) अणु
-		comedi_driver_unरेजिस्टर(comedi_driver);
-		वापस ret;
-	पूर्ण
+	ret = usb_register(usb_driver);
+	if (ret < 0) {
+		comedi_driver_unregister(comedi_driver);
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(comedi_usb_driver_रेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(comedi_usb_driver_register);
 
 /**
- * comedi_usb_driver_unरेजिस्टर() - Unरेजिस्टर a USB COMEDI driver
- * @comedi_driver: COMEDI driver to be रेजिस्टरed.
- * @usb_driver: USB driver to be रेजिस्टरed.
+ * comedi_usb_driver_unregister() - Unregister a USB COMEDI driver
+ * @comedi_driver: COMEDI driver to be registered.
+ * @usb_driver: USB driver to be registered.
  *
- * This function is called from the module_निकास() of USB COMEDI driver modules
- * to unरेजिस्टर the USB driver and the COMEDI driver.  Do not call it
+ * This function is called from the module_exit() of USB COMEDI driver modules
+ * to unregister the USB driver and the COMEDI driver.  Do not call it
  * directly, use the module_comedi_usb_driver() helper macro instead.
  */
-व्योम comedi_usb_driver_unरेजिस्टर(काष्ठा comedi_driver *comedi_driver,
-				  काष्ठा usb_driver *usb_driver)
-अणु
-	usb_deरेजिस्टर(usb_driver);
-	comedi_driver_unरेजिस्टर(comedi_driver);
-पूर्ण
-EXPORT_SYMBOL_GPL(comedi_usb_driver_unरेजिस्टर);
+void comedi_usb_driver_unregister(struct comedi_driver *comedi_driver,
+				  struct usb_driver *usb_driver)
+{
+	usb_deregister(usb_driver);
+	comedi_driver_unregister(comedi_driver);
+}
+EXPORT_SYMBOL_GPL(comedi_usb_driver_unregister);
 
-अटल पूर्णांक __init comedi_usb_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static int __init comedi_usb_init(void)
+{
+	return 0;
+}
 module_init(comedi_usb_init);
 
-अटल व्योम __निकास comedi_usb_निकास(व्योम)
-अणु
-पूर्ण
-module_निकास(comedi_usb_निकास);
+static void __exit comedi_usb_exit(void)
+{
+}
+module_exit(comedi_usb_exit);
 
 MODULE_AUTHOR("https://www.comedi.org");
 MODULE_DESCRIPTION("Comedi USB interface module");

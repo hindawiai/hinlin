@@ -1,125 +1,124 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Oxक्रमd Semiconductor OXNAS न_अंकD driver
+ * Oxford Semiconductor OXNAS NAND driver
 
  * Copyright (C) 2016 Neil Armstrong <narmstrong@baylibre.com>
  * Heavily based on plat_nand.c :
  * Author: Vitaly Wool <vitalywool@gmail.com>
  * Copyright (C) 2013 Ma Haijun <mahaijuns@gmail.com>
- * Copyright (C) 2012 John Crispin <blogic@खोलोwrt.org>
+ * Copyright (C) 2012 John Crispin <blogic@openwrt.org>
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/reset.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/rawnand.h>
-#समावेश <linux/mtd/partitions.h>
-#समावेश <linux/of.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/reset.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/rawnand.h>
+#include <linux/mtd/partitions.h>
+#include <linux/of.h>
 
 /* Nand commands */
-#घोषणा OXNAS_न_अंकD_CMD_ALE		BIT(18)
-#घोषणा OXNAS_न_अंकD_CMD_CLE		BIT(19)
+#define OXNAS_NAND_CMD_ALE		BIT(18)
+#define OXNAS_NAND_CMD_CLE		BIT(19)
 
-#घोषणा OXNAS_न_अंकD_MAX_CHIPS	1
+#define OXNAS_NAND_MAX_CHIPS	1
 
-काष्ठा oxnas_nand_ctrl अणु
-	काष्ठा nand_controller base;
-	व्योम __iomem *io_base;
-	काष्ठा clk *clk;
-	काष्ठा nand_chip *chips[OXNAS_न_अंकD_MAX_CHIPS];
-	अचिन्हित पूर्णांक nchips;
-पूर्ण;
+struct oxnas_nand_ctrl {
+	struct nand_controller base;
+	void __iomem *io_base;
+	struct clk *clk;
+	struct nand_chip *chips[OXNAS_NAND_MAX_CHIPS];
+	unsigned int nchips;
+};
 
-अटल uपूर्णांक8_t oxnas_nand_पढ़ो_byte(काष्ठा nand_chip *chip)
-अणु
-	काष्ठा oxnas_nand_ctrl *oxnas = nand_get_controller_data(chip);
+static uint8_t oxnas_nand_read_byte(struct nand_chip *chip)
+{
+	struct oxnas_nand_ctrl *oxnas = nand_get_controller_data(chip);
 
-	वापस पढ़ोb(oxnas->io_base);
-पूर्ण
+	return readb(oxnas->io_base);
+}
 
-अटल व्योम oxnas_nand_पढ़ो_buf(काष्ठा nand_chip *chip, u8 *buf, पूर्णांक len)
-अणु
-	काष्ठा oxnas_nand_ctrl *oxnas = nand_get_controller_data(chip);
+static void oxnas_nand_read_buf(struct nand_chip *chip, u8 *buf, int len)
+{
+	struct oxnas_nand_ctrl *oxnas = nand_get_controller_data(chip);
 
-	ioपढ़ो8_rep(oxnas->io_base, buf, len);
-पूर्ण
+	ioread8_rep(oxnas->io_base, buf, len);
+}
 
-अटल व्योम oxnas_nand_ग_लिखो_buf(काष्ठा nand_chip *chip, स्थिर u8 *buf,
-				 पूर्णांक len)
-अणु
-	काष्ठा oxnas_nand_ctrl *oxnas = nand_get_controller_data(chip);
+static void oxnas_nand_write_buf(struct nand_chip *chip, const u8 *buf,
+				 int len)
+{
+	struct oxnas_nand_ctrl *oxnas = nand_get_controller_data(chip);
 
-	ioग_लिखो8_rep(oxnas->io_base, buf, len);
-पूर्ण
+	iowrite8_rep(oxnas->io_base, buf, len);
+}
 
 /* Single CS command control */
-अटल व्योम oxnas_nand_cmd_ctrl(काष्ठा nand_chip *chip, पूर्णांक cmd,
-				अचिन्हित पूर्णांक ctrl)
-अणु
-	काष्ठा oxnas_nand_ctrl *oxnas = nand_get_controller_data(chip);
+static void oxnas_nand_cmd_ctrl(struct nand_chip *chip, int cmd,
+				unsigned int ctrl)
+{
+	struct oxnas_nand_ctrl *oxnas = nand_get_controller_data(chip);
 
-	अगर (ctrl & न_अंकD_CLE)
-		ग_लिखोb(cmd, oxnas->io_base + OXNAS_न_अंकD_CMD_CLE);
-	अन्यथा अगर (ctrl & न_अंकD_ALE)
-		ग_लिखोb(cmd, oxnas->io_base + OXNAS_न_अंकD_CMD_ALE);
-पूर्ण
+	if (ctrl & NAND_CLE)
+		writeb(cmd, oxnas->io_base + OXNAS_NAND_CMD_CLE);
+	else if (ctrl & NAND_ALE)
+		writeb(cmd, oxnas->io_base + OXNAS_NAND_CMD_ALE);
+}
 
 /*
- * Probe क्रम the न_अंकD device.
+ * Probe for the NAND device.
  */
-अटल पूर्णांक oxnas_nand_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा device_node *nand_np;
-	काष्ठा oxnas_nand_ctrl *oxnas;
-	काष्ठा nand_chip *chip;
-	काष्ठा mtd_info *mtd;
-	काष्ठा resource *res;
-	पूर्णांक count = 0;
-	पूर्णांक err = 0;
-	पूर्णांक i;
+static int oxnas_nand_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct device_node *nand_np;
+	struct oxnas_nand_ctrl *oxnas;
+	struct nand_chip *chip;
+	struct mtd_info *mtd;
+	struct resource *res;
+	int count = 0;
+	int err = 0;
+	int i;
 
-	/* Allocate memory क्रम the device काष्ठाure (and zero it) */
-	oxnas = devm_kzalloc(&pdev->dev, माप(*oxnas),
+	/* Allocate memory for the device structure (and zero it) */
+	oxnas = devm_kzalloc(&pdev->dev, sizeof(*oxnas),
 			     GFP_KERNEL);
-	अगर (!oxnas)
-		वापस -ENOMEM;
+	if (!oxnas)
+		return -ENOMEM;
 
 	nand_controller_init(&oxnas->base);
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	oxnas->io_base = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(oxnas->io_base))
-		वापस PTR_ERR(oxnas->io_base);
+	if (IS_ERR(oxnas->io_base))
+		return PTR_ERR(oxnas->io_base);
 
-	oxnas->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(oxnas->clk))
-		oxnas->clk = शून्य;
+	oxnas->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(oxnas->clk))
+		oxnas->clk = NULL;
 
 	/* Only a single chip node is supported */
 	count = of_get_child_count(np);
-	अगर (count > 1)
-		वापस -EINVAL;
+	if (count > 1)
+		return -EINVAL;
 
 	err = clk_prepare_enable(oxnas->clk);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	device_reset_optional(&pdev->dev);
 
-	क्रम_each_child_of_node(np, nand_np) अणु
-		chip = devm_kzalloc(&pdev->dev, माप(काष्ठा nand_chip),
+	for_each_child_of_node(np, nand_np) {
+		chip = devm_kzalloc(&pdev->dev, sizeof(struct nand_chip),
 				    GFP_KERNEL);
-		अगर (!chip) अणु
+		if (!chip) {
 			err = -ENOMEM;
-			जाओ err_release_child;
-		पूर्ण
+			goto err_release_child;
+		}
 
 		chip->controller = &oxnas->base;
 
@@ -131,82 +130,82 @@
 		mtd->priv = chip;
 
 		chip->legacy.cmd_ctrl = oxnas_nand_cmd_ctrl;
-		chip->legacy.पढ़ो_buf = oxnas_nand_पढ़ो_buf;
-		chip->legacy.पढ़ो_byte = oxnas_nand_पढ़ो_byte;
-		chip->legacy.ग_लिखो_buf = oxnas_nand_ग_लिखो_buf;
+		chip->legacy.read_buf = oxnas_nand_read_buf;
+		chip->legacy.read_byte = oxnas_nand_read_byte;
+		chip->legacy.write_buf = oxnas_nand_write_buf;
 		chip->legacy.chip_delay = 30;
 
 		/* Scan to find existence of the device */
 		err = nand_scan(chip, 1);
-		अगर (err)
-			जाओ err_release_child;
+		if (err)
+			goto err_release_child;
 
-		err = mtd_device_रेजिस्टर(mtd, शून्य, 0);
-		अगर (err)
-			जाओ err_cleanup_nand;
+		err = mtd_device_register(mtd, NULL, 0);
+		if (err)
+			goto err_cleanup_nand;
 
 		oxnas->chips[oxnas->nchips++] = chip;
-	पूर्ण
+	}
 
-	/* Exit अगर no chips found */
-	अगर (!oxnas->nchips) अणु
+	/* Exit if no chips found */
+	if (!oxnas->nchips) {
 		err = -ENODEV;
-		जाओ err_clk_unprepare;
-	पूर्ण
+		goto err_clk_unprepare;
+	}
 
-	platक्रमm_set_drvdata(pdev, oxnas);
+	platform_set_drvdata(pdev, oxnas);
 
-	वापस 0;
+	return 0;
 
 err_cleanup_nand:
 	nand_cleanup(chip);
 err_release_child:
 	of_node_put(nand_np);
 
-	क्रम (i = 0; i < oxnas->nchips; i++) अणु
+	for (i = 0; i < oxnas->nchips; i++) {
 		chip = oxnas->chips[i];
-		WARN_ON(mtd_device_unरेजिस्टर(nand_to_mtd(chip)));
+		WARN_ON(mtd_device_unregister(nand_to_mtd(chip)));
 		nand_cleanup(chip);
-	पूर्ण
+	}
 
 err_clk_unprepare:
 	clk_disable_unprepare(oxnas->clk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक oxnas_nand_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा oxnas_nand_ctrl *oxnas = platक्रमm_get_drvdata(pdev);
-	काष्ठा nand_chip *chip;
-	पूर्णांक i;
+static int oxnas_nand_remove(struct platform_device *pdev)
+{
+	struct oxnas_nand_ctrl *oxnas = platform_get_drvdata(pdev);
+	struct nand_chip *chip;
+	int i;
 
-	क्रम (i = 0; i < oxnas->nchips; i++) अणु
+	for (i = 0; i < oxnas->nchips; i++) {
 		chip = oxnas->chips[i];
-		WARN_ON(mtd_device_unरेजिस्टर(nand_to_mtd(chip)));
+		WARN_ON(mtd_device_unregister(nand_to_mtd(chip)));
 		nand_cleanup(chip);
-	पूर्ण
+	}
 
 	clk_disable_unprepare(oxnas->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id oxnas_nand_match[] = अणु
-	अणु .compatible = "oxsemi,ox820-nand" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id oxnas_nand_match[] = {
+	{ .compatible = "oxsemi,ox820-nand" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, oxnas_nand_match);
 
-अटल काष्ठा platक्रमm_driver oxnas_nand_driver = अणु
+static struct platform_driver oxnas_nand_driver = {
 	.probe	= oxnas_nand_probe,
-	.हटाओ	= oxnas_nand_हटाओ,
-	.driver	= अणु
+	.remove	= oxnas_nand_remove,
+	.driver	= {
 		.name		= "oxnas_nand",
 		.of_match_table = oxnas_nand_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(oxnas_nand_driver);
+module_platform_driver(oxnas_nand_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Neil Armstrong <narmstrong@baylibre.com>");

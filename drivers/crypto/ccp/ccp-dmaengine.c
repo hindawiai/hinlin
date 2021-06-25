@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * AMD Cryptographic Coprocessor (CCP) driver
  *
@@ -8,124 +7,124 @@
  * Author: Gary R Hook <gary.hook@amd.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/ccp.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/dma-mapping.h>
+#include <linux/dmaengine.h>
+#include <linux/spinlock.h>
+#include <linux/mutex.h>
+#include <linux/ccp.h>
 
-#समावेश "ccp-dev.h"
-#समावेश "../../dma/dmaengine.h"
+#include "ccp-dev.h"
+#include "../../dma/dmaengine.h"
 
-#घोषणा CCP_DMA_WIDTH(_mask)		\
-(अणु					\
+#define CCP_DMA_WIDTH(_mask)		\
+({					\
 	u64 mask = _mask + 1;		\
 	(mask == 0) ? 64 : fls64(mask);	\
-पूर्ण)
+})
 
-/* The CCP as a DMA provider can be configured क्रम खुला or निजी
- * channels. Default is specअगरied in the vdata क्रम the device (PCI ID).
- * This module parameter will override क्रम all channels on all devices:
- *   dma_chan_attr = 0x2 to क्रमce all channels खुला
- *                 = 0x1 to क्रमce all channels निजी
+/* The CCP as a DMA provider can be configured for public or private
+ * channels. Default is specified in the vdata for the device (PCI ID).
+ * This module parameter will override for all channels on all devices:
+ *   dma_chan_attr = 0x2 to force all channels public
+ *                 = 0x1 to force all channels private
  *                 = 0x0 to defer to the vdata setting
  *                 = any other value: warning, revert to 0x0
  */
-अटल अचिन्हित पूर्णांक dma_chan_attr = CCP_DMA_DFLT;
-module_param(dma_chan_attr, uपूर्णांक, 0444);
+static unsigned int dma_chan_attr = CCP_DMA_DFLT;
+module_param(dma_chan_attr, uint, 0444);
 MODULE_PARM_DESC(dma_chan_attr, "Set DMA channel visibility: 0 (default) = device defaults, 1 = make private, 2 = make public");
 
-अटल अचिन्हित पूर्णांक dmaengine = 1;
-module_param(dmaengine, uपूर्णांक, 0444);
+static unsigned int dmaengine = 1;
+module_param(dmaengine, uint, 0444);
 MODULE_PARM_DESC(dmaengine, "Register services with the DMA subsystem (any non-zero value, default: 1)");
 
-अटल अचिन्हित पूर्णांक ccp_get_dma_chan_attr(काष्ठा ccp_device *ccp)
-अणु
-	चयन (dma_chan_attr) अणु
-	हाल CCP_DMA_DFLT:
-		वापस ccp->vdata->dma_chan_attr;
+static unsigned int ccp_get_dma_chan_attr(struct ccp_device *ccp)
+{
+	switch (dma_chan_attr) {
+	case CCP_DMA_DFLT:
+		return ccp->vdata->dma_chan_attr;
 
-	हाल CCP_DMA_PRIV:
-		वापस DMA_PRIVATE;
+	case CCP_DMA_PRIV:
+		return DMA_PRIVATE;
 
-	हाल CCP_DMA_PUB:
-		वापस 0;
+	case CCP_DMA_PUB:
+		return 0;
 
-	शेष:
+	default:
 		dev_info_once(ccp->dev, "Invalid value for dma_chan_attr: %d\n",
 			      dma_chan_attr);
-		वापस ccp->vdata->dma_chan_attr;
-	पूर्ण
-पूर्ण
+		return ccp->vdata->dma_chan_attr;
+	}
+}
 
-अटल व्योम ccp_मुक्त_cmd_resources(काष्ठा ccp_device *ccp,
-				   काष्ठा list_head *list)
-अणु
-	काष्ठा ccp_dma_cmd *cmd, *cपंचांगp;
+static void ccp_free_cmd_resources(struct ccp_device *ccp,
+				   struct list_head *list)
+{
+	struct ccp_dma_cmd *cmd, *ctmp;
 
-	list_क्रम_each_entry_safe(cmd, cपंचांगp, list, entry) अणु
+	list_for_each_entry_safe(cmd, ctmp, list, entry) {
 		list_del(&cmd->entry);
-		kmem_cache_मुक्त(ccp->dma_cmd_cache, cmd);
-	पूर्ण
-पूर्ण
+		kmem_cache_free(ccp->dma_cmd_cache, cmd);
+	}
+}
 
-अटल व्योम ccp_मुक्त_desc_resources(काष्ठा ccp_device *ccp,
-				    काष्ठा list_head *list)
-अणु
-	काष्ठा ccp_dma_desc *desc, *dपंचांगp;
+static void ccp_free_desc_resources(struct ccp_device *ccp,
+				    struct list_head *list)
+{
+	struct ccp_dma_desc *desc, *dtmp;
 
-	list_क्रम_each_entry_safe(desc, dपंचांगp, list, entry) अणु
-		ccp_मुक्त_cmd_resources(ccp, &desc->active);
-		ccp_मुक्त_cmd_resources(ccp, &desc->pending);
+	list_for_each_entry_safe(desc, dtmp, list, entry) {
+		ccp_free_cmd_resources(ccp, &desc->active);
+		ccp_free_cmd_resources(ccp, &desc->pending);
 
 		list_del(&desc->entry);
-		kmem_cache_मुक्त(ccp->dma_desc_cache, desc);
-	पूर्ण
-पूर्ण
+		kmem_cache_free(ccp->dma_desc_cache, desc);
+	}
+}
 
-अटल व्योम ccp_मुक्त_chan_resources(काष्ठा dma_chan *dma_chan)
-अणु
-	काष्ठा ccp_dma_chan *chan = container_of(dma_chan, काष्ठा ccp_dma_chan,
+static void ccp_free_chan_resources(struct dma_chan *dma_chan)
+{
+	struct ccp_dma_chan *chan = container_of(dma_chan, struct ccp_dma_chan,
 						 dma_chan);
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	dev_dbg(chan->ccp->dev, "%s - chan=%p\n", __func__, chan);
 
 	spin_lock_irqsave(&chan->lock, flags);
 
-	ccp_मुक्त_desc_resources(chan->ccp, &chan->complete);
-	ccp_मुक्त_desc_resources(chan->ccp, &chan->active);
-	ccp_मुक्त_desc_resources(chan->ccp, &chan->pending);
-	ccp_मुक्त_desc_resources(chan->ccp, &chan->created);
+	ccp_free_desc_resources(chan->ccp, &chan->complete);
+	ccp_free_desc_resources(chan->ccp, &chan->active);
+	ccp_free_desc_resources(chan->ccp, &chan->pending);
+	ccp_free_desc_resources(chan->ccp, &chan->created);
 
 	spin_unlock_irqrestore(&chan->lock, flags);
-पूर्ण
+}
 
-अटल व्योम ccp_cleanup_desc_resources(काष्ठा ccp_device *ccp,
-				       काष्ठा list_head *list)
-अणु
-	काष्ठा ccp_dma_desc *desc, *dपंचांगp;
+static void ccp_cleanup_desc_resources(struct ccp_device *ccp,
+				       struct list_head *list)
+{
+	struct ccp_dma_desc *desc, *dtmp;
 
-	list_क्रम_each_entry_safe_reverse(desc, dपंचांगp, list, entry) अणु
-		अगर (!async_tx_test_ack(&desc->tx_desc))
-			जारी;
+	list_for_each_entry_safe_reverse(desc, dtmp, list, entry) {
+		if (!async_tx_test_ack(&desc->tx_desc))
+			continue;
 
 		dev_dbg(ccp->dev, "%s - desc=%p\n", __func__, desc);
 
-		ccp_मुक्त_cmd_resources(ccp, &desc->active);
-		ccp_मुक्त_cmd_resources(ccp, &desc->pending);
+		ccp_free_cmd_resources(ccp, &desc->active);
+		ccp_free_cmd_resources(ccp, &desc->pending);
 
 		list_del(&desc->entry);
-		kmem_cache_मुक्त(ccp->dma_desc_cache, desc);
-	पूर्ण
-पूर्ण
+		kmem_cache_free(ccp->dma_desc_cache, desc);
+	}
+}
 
-अटल व्योम ccp_करो_cleanup(अचिन्हित दीर्घ data)
-अणु
-	काष्ठा ccp_dma_chan *chan = (काष्ठा ccp_dma_chan *)data;
-	अचिन्हित दीर्घ flags;
+static void ccp_do_cleanup(unsigned long data)
+{
+	struct ccp_dma_chan *chan = (struct ccp_dma_chan *)data;
+	unsigned long flags;
 
 	dev_dbg(chan->ccp->dev, "%s - chan=%s\n", __func__,
 		dma_chan_name(&chan->dma_chan));
@@ -135,90 +134,90 @@ MODULE_PARM_DESC(dmaengine, "Register services with the DMA subsystem (any non-z
 	ccp_cleanup_desc_resources(chan->ccp, &chan->complete);
 
 	spin_unlock_irqrestore(&chan->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक ccp_issue_next_cmd(काष्ठा ccp_dma_desc *desc)
-अणु
-	काष्ठा ccp_dma_cmd *cmd;
-	पूर्णांक ret;
+static int ccp_issue_next_cmd(struct ccp_dma_desc *desc)
+{
+	struct ccp_dma_cmd *cmd;
+	int ret;
 
-	cmd = list_first_entry(&desc->pending, काष्ठा ccp_dma_cmd, entry);
+	cmd = list_first_entry(&desc->pending, struct ccp_dma_cmd, entry);
 	list_move(&cmd->entry, &desc->active);
 
 	dev_dbg(desc->ccp->dev, "%s - tx %d, cmd=%p\n", __func__,
 		desc->tx_desc.cookie, cmd);
 
 	ret = ccp_enqueue_cmd(&cmd->ccp_cmd);
-	अगर (!ret || (ret == -EINPROGRESS) || (ret == -EBUSY))
-		वापस 0;
+	if (!ret || (ret == -EINPROGRESS) || (ret == -EBUSY))
+		return 0;
 
 	dev_dbg(desc->ccp->dev, "%s - error: ret=%d, tx %d, cmd=%p\n", __func__,
 		ret, desc->tx_desc.cookie, cmd);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ccp_मुक्त_active_cmd(काष्ठा ccp_dma_desc *desc)
-अणु
-	काष्ठा ccp_dma_cmd *cmd;
+static void ccp_free_active_cmd(struct ccp_dma_desc *desc)
+{
+	struct ccp_dma_cmd *cmd;
 
-	cmd = list_first_entry_or_null(&desc->active, काष्ठा ccp_dma_cmd,
+	cmd = list_first_entry_or_null(&desc->active, struct ccp_dma_cmd,
 				       entry);
-	अगर (!cmd)
-		वापस;
+	if (!cmd)
+		return;
 
 	dev_dbg(desc->ccp->dev, "%s - freeing tx %d cmd=%p\n",
 		__func__, desc->tx_desc.cookie, cmd);
 
 	list_del(&cmd->entry);
-	kmem_cache_मुक्त(desc->ccp->dma_cmd_cache, cmd);
-पूर्ण
+	kmem_cache_free(desc->ccp->dma_cmd_cache, cmd);
+}
 
-अटल काष्ठा ccp_dma_desc *__ccp_next_dma_desc(काष्ठा ccp_dma_chan *chan,
-						काष्ठा ccp_dma_desc *desc)
-अणु
+static struct ccp_dma_desc *__ccp_next_dma_desc(struct ccp_dma_chan *chan,
+						struct ccp_dma_desc *desc)
+{
 	/* Move current DMA descriptor to the complete list */
-	अगर (desc)
+	if (desc)
 		list_move(&desc->entry, &chan->complete);
 
 	/* Get the next DMA descriptor on the active list */
-	desc = list_first_entry_or_null(&chan->active, काष्ठा ccp_dma_desc,
+	desc = list_first_entry_or_null(&chan->active, struct ccp_dma_desc,
 					entry);
 
-	वापस desc;
-पूर्ण
+	return desc;
+}
 
-अटल काष्ठा ccp_dma_desc *ccp_handle_active_desc(काष्ठा ccp_dma_chan *chan,
-						   काष्ठा ccp_dma_desc *desc)
-अणु
-	काष्ठा dma_async_tx_descriptor *tx_desc;
-	अचिन्हित दीर्घ flags;
+static struct ccp_dma_desc *ccp_handle_active_desc(struct ccp_dma_chan *chan,
+						   struct ccp_dma_desc *desc)
+{
+	struct dma_async_tx_descriptor *tx_desc;
+	unsigned long flags;
 
 	/* Loop over descriptors until one is found with commands */
-	करो अणु
-		अगर (desc) अणु
-			/* Remove the DMA command from the list and मुक्त it */
-			ccp_मुक्त_active_cmd(desc);
+	do {
+		if (desc) {
+			/* Remove the DMA command from the list and free it */
+			ccp_free_active_cmd(desc);
 
-			अगर (!list_empty(&desc->pending)) अणु
+			if (!list_empty(&desc->pending)) {
 				/* No errors, keep going */
-				अगर (desc->status != DMA_ERROR)
-					वापस desc;
+				if (desc->status != DMA_ERROR)
+					return desc;
 
-				/* Error, मुक्त reमुख्यing commands and move on */
-				ccp_मुक्त_cmd_resources(desc->ccp,
+				/* Error, free remaining commands and move on */
+				ccp_free_cmd_resources(desc->ccp,
 						       &desc->pending);
-			पूर्ण
+			}
 
 			tx_desc = &desc->tx_desc;
-		पूर्ण अन्यथा अणु
-			tx_desc = शून्य;
-		पूर्ण
+		} else {
+			tx_desc = NULL;
+		}
 
 		spin_lock_irqsave(&chan->lock, flags);
 
-		अगर (desc) अणु
-			अगर (desc->status != DMA_ERROR)
+		if (desc) {
+			if (desc->status != DMA_ERROR)
 				desc->status = DMA_COMPLETE;
 
 			dev_dbg(desc->ccp->dev,
@@ -227,83 +226,83 @@ MODULE_PARM_DESC(dmaengine, "Register services with the DMA subsystem (any non-z
 
 			dma_cookie_complete(tx_desc);
 			dma_descriptor_unmap(tx_desc);
-		पूर्ण
+		}
 
 		desc = __ccp_next_dma_desc(chan, desc);
 
 		spin_unlock_irqrestore(&chan->lock, flags);
 
-		अगर (tx_desc) अणु
-			dmaengine_desc_get_callback_invoke(tx_desc, शून्य);
+		if (tx_desc) {
+			dmaengine_desc_get_callback_invoke(tx_desc, NULL);
 
 			dma_run_dependencies(tx_desc);
-		पूर्ण
-	पूर्ण जबतक (desc);
+		}
+	} while (desc);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा ccp_dma_desc *__ccp_pending_to_active(काष्ठा ccp_dma_chan *chan)
-अणु
-	काष्ठा ccp_dma_desc *desc;
+static struct ccp_dma_desc *__ccp_pending_to_active(struct ccp_dma_chan *chan)
+{
+	struct ccp_dma_desc *desc;
 
-	अगर (list_empty(&chan->pending))
-		वापस शून्य;
+	if (list_empty(&chan->pending))
+		return NULL;
 
 	desc = list_empty(&chan->active)
-		? list_first_entry(&chan->pending, काष्ठा ccp_dma_desc, entry)
-		: शून्य;
+		? list_first_entry(&chan->pending, struct ccp_dma_desc, entry)
+		: NULL;
 
 	list_splice_tail_init(&chan->pending, &chan->active);
 
-	वापस desc;
-पूर्ण
+	return desc;
+}
 
-अटल व्योम ccp_cmd_callback(व्योम *data, पूर्णांक err)
-अणु
-	काष्ठा ccp_dma_desc *desc = data;
-	काष्ठा ccp_dma_chan *chan;
-	पूर्णांक ret;
+static void ccp_cmd_callback(void *data, int err)
+{
+	struct ccp_dma_desc *desc = data;
+	struct ccp_dma_chan *chan;
+	int ret;
 
-	अगर (err == -EINPROGRESS)
-		वापस;
+	if (err == -EINPROGRESS)
+		return;
 
-	chan = container_of(desc->tx_desc.chan, काष्ठा ccp_dma_chan,
+	chan = container_of(desc->tx_desc.chan, struct ccp_dma_chan,
 			    dma_chan);
 
 	dev_dbg(chan->ccp->dev, "%s - tx %d callback, err=%d\n",
 		__func__, desc->tx_desc.cookie, err);
 
-	अगर (err)
+	if (err)
 		desc->status = DMA_ERROR;
 
-	जबतक (true) अणु
-		/* Check क्रम DMA descriptor completion */
+	while (true) {
+		/* Check for DMA descriptor completion */
 		desc = ccp_handle_active_desc(chan, desc);
 
-		/* Don't submit cmd अगर no descriptor or DMA is छोड़ोd */
-		अगर (!desc || (chan->status == DMA_PAUSED))
-			अवरोध;
+		/* Don't submit cmd if no descriptor or DMA is paused */
+		if (!desc || (chan->status == DMA_PAUSED))
+			break;
 
 		ret = ccp_issue_next_cmd(desc);
-		अगर (!ret)
-			अवरोध;
+		if (!ret)
+			break;
 
 		desc->status = DMA_ERROR;
-	पूर्ण
+	}
 
 	tasklet_schedule(&chan->cleanup_tasklet);
-पूर्ण
+}
 
-अटल dma_cookie_t ccp_tx_submit(काष्ठा dma_async_tx_descriptor *tx_desc)
-अणु
-	काष्ठा ccp_dma_desc *desc = container_of(tx_desc, काष्ठा ccp_dma_desc,
+static dma_cookie_t ccp_tx_submit(struct dma_async_tx_descriptor *tx_desc)
+{
+	struct ccp_dma_desc *desc = container_of(tx_desc, struct ccp_dma_desc,
 						 tx_desc);
-	काष्ठा ccp_dma_chan *chan;
+	struct ccp_dma_chan *chan;
 	dma_cookie_t cookie;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	chan = container_of(tx_desc->chan, काष्ठा ccp_dma_chan, dma_chan);
+	chan = container_of(tx_desc->chan, struct ccp_dma_chan, dma_chan);
 
 	spin_lock_irqsave(&chan->lock, flags);
 
@@ -316,28 +315,28 @@ MODULE_PARM_DESC(dmaengine, "Register services with the DMA subsystem (any non-z
 	dev_dbg(chan->ccp->dev, "%s - added tx descriptor %d to pending list\n",
 		__func__, cookie);
 
-	वापस cookie;
-पूर्ण
+	return cookie;
+}
 
-अटल काष्ठा ccp_dma_cmd *ccp_alloc_dma_cmd(काष्ठा ccp_dma_chan *chan)
-अणु
-	काष्ठा ccp_dma_cmd *cmd;
+static struct ccp_dma_cmd *ccp_alloc_dma_cmd(struct ccp_dma_chan *chan)
+{
+	struct ccp_dma_cmd *cmd;
 
 	cmd = kmem_cache_alloc(chan->ccp->dma_cmd_cache, GFP_NOWAIT);
-	अगर (cmd)
-		स_रखो(cmd, 0, माप(*cmd));
+	if (cmd)
+		memset(cmd, 0, sizeof(*cmd));
 
-	वापस cmd;
-पूर्ण
+	return cmd;
+}
 
-अटल काष्ठा ccp_dma_desc *ccp_alloc_dma_desc(काष्ठा ccp_dma_chan *chan,
-					       अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा ccp_dma_desc *desc;
+static struct ccp_dma_desc *ccp_alloc_dma_desc(struct ccp_dma_chan *chan,
+					       unsigned long flags)
+{
+	struct ccp_dma_desc *desc;
 
 	desc = kmem_cache_zalloc(chan->ccp->dma_desc_cache, GFP_NOWAIT);
-	अगर (!desc)
-		वापस शून्य;
+	if (!desc)
+		return NULL;
 
 	dma_async_tx_descriptor_init(&desc->tx_desc, &chan->dma_chan);
 	desc->tx_desc.flags = flags;
@@ -348,38 +347,38 @@ MODULE_PARM_DESC(dmaengine, "Register services with the DMA subsystem (any non-z
 	INIT_LIST_HEAD(&desc->active);
 	desc->status = DMA_IN_PROGRESS;
 
-	वापस desc;
-पूर्ण
+	return desc;
+}
 
-अटल काष्ठा ccp_dma_desc *ccp_create_desc(काष्ठा dma_chan *dma_chan,
-					    काष्ठा scatterlist *dst_sg,
-					    अचिन्हित पूर्णांक dst_nents,
-					    काष्ठा scatterlist *src_sg,
-					    अचिन्हित पूर्णांक src_nents,
-					    अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा ccp_dma_chan *chan = container_of(dma_chan, काष्ठा ccp_dma_chan,
+static struct ccp_dma_desc *ccp_create_desc(struct dma_chan *dma_chan,
+					    struct scatterlist *dst_sg,
+					    unsigned int dst_nents,
+					    struct scatterlist *src_sg,
+					    unsigned int src_nents,
+					    unsigned long flags)
+{
+	struct ccp_dma_chan *chan = container_of(dma_chan, struct ccp_dma_chan,
 						 dma_chan);
-	काष्ठा ccp_device *ccp = chan->ccp;
-	काष्ठा ccp_dma_desc *desc;
-	काष्ठा ccp_dma_cmd *cmd;
-	काष्ठा ccp_cmd *ccp_cmd;
-	काष्ठा ccp_passthru_nomap_engine *ccp_pt;
-	अचिन्हित पूर्णांक src_offset, src_len;
-	अचिन्हित पूर्णांक dst_offset, dst_len;
-	अचिन्हित पूर्णांक len;
-	अचिन्हित दीर्घ sflags;
-	माप_प्रकार total_len;
+	struct ccp_device *ccp = chan->ccp;
+	struct ccp_dma_desc *desc;
+	struct ccp_dma_cmd *cmd;
+	struct ccp_cmd *ccp_cmd;
+	struct ccp_passthru_nomap_engine *ccp_pt;
+	unsigned int src_offset, src_len;
+	unsigned int dst_offset, dst_len;
+	unsigned int len;
+	unsigned long sflags;
+	size_t total_len;
 
-	अगर (!dst_sg || !src_sg)
-		वापस शून्य;
+	if (!dst_sg || !src_sg)
+		return NULL;
 
-	अगर (!dst_nents || !src_nents)
-		वापस शून्य;
+	if (!dst_nents || !src_nents)
+		return NULL;
 
 	desc = ccp_alloc_dma_desc(chan, flags);
-	अगर (!desc)
-		वापस शून्य;
+	if (!desc)
+		return NULL;
 
 	total_len = 0;
 
@@ -389,40 +388,40 @@ MODULE_PARM_DESC(dmaengine, "Register services with the DMA subsystem (any non-z
 	dst_len = sg_dma_len(dst_sg);
 	dst_offset = 0;
 
-	जबतक (true) अणु
-		अगर (!src_len) अणु
+	while (true) {
+		if (!src_len) {
 			src_nents--;
-			अगर (!src_nents)
-				अवरोध;
+			if (!src_nents)
+				break;
 
 			src_sg = sg_next(src_sg);
-			अगर (!src_sg)
-				अवरोध;
+			if (!src_sg)
+				break;
 
 			src_len = sg_dma_len(src_sg);
 			src_offset = 0;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!dst_len) अणु
+		if (!dst_len) {
 			dst_nents--;
-			अगर (!dst_nents)
-				अवरोध;
+			if (!dst_nents)
+				break;
 
 			dst_sg = sg_next(dst_sg);
-			अगर (!dst_sg)
-				अवरोध;
+			if (!dst_sg)
+				break;
 
 			dst_len = sg_dma_len(dst_sg);
 			dst_offset = 0;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		len = min(dst_len, src_len);
 
 		cmd = ccp_alloc_dma_cmd(chan);
-		अगर (!cmd)
-			जाओ err;
+		if (!cmd)
+			goto err;
 
 		ccp_cmd = &cmd->ccp_cmd;
 		ccp_cmd->ccp = chan->ccp;
@@ -453,12 +452,12 @@ MODULE_PARM_DESC(dmaengine, "Register services with the DMA subsystem (any non-z
 
 		dst_len -= len;
 		dst_offset += len;
-	पूर्ण
+	}
 
 	desc->len = total_len;
 
-	अगर (list_empty(&desc->pending))
-		जाओ err;
+	if (list_empty(&desc->pending))
+		goto err;
 
 	dev_dbg(ccp->dev, "%s - desc=%p\n", __func__, desc);
 
@@ -468,23 +467,23 @@ MODULE_PARM_DESC(dmaengine, "Register services with the DMA subsystem (any non-z
 
 	spin_unlock_irqrestore(&chan->lock, sflags);
 
-	वापस desc;
+	return desc;
 
 err:
-	ccp_मुक्त_cmd_resources(ccp, &desc->pending);
-	kmem_cache_मुक्त(ccp->dma_desc_cache, desc);
+	ccp_free_cmd_resources(ccp, &desc->pending);
+	kmem_cache_free(ccp->dma_desc_cache, desc);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *ccp_prep_dma_स_नकल(
-	काष्ठा dma_chan *dma_chan, dma_addr_t dst, dma_addr_t src, माप_प्रकार len,
-	अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा ccp_dma_chan *chan = container_of(dma_chan, काष्ठा ccp_dma_chan,
+static struct dma_async_tx_descriptor *ccp_prep_dma_memcpy(
+	struct dma_chan *dma_chan, dma_addr_t dst, dma_addr_t src, size_t len,
+	unsigned long flags)
+{
+	struct ccp_dma_chan *chan = container_of(dma_chan, struct ccp_dma_chan,
 						 dma_chan);
-	काष्ठा ccp_dma_desc *desc;
-	काष्ठा scatterlist dst_sg, src_sg;
+	struct ccp_dma_desc *desc;
+	struct scatterlist dst_sg, src_sg;
 
 	dev_dbg(chan->ccp->dev,
 		"%s - src=%pad, dst=%pad, len=%zu, flags=%#lx\n",
@@ -499,32 +498,32 @@ err:
 	sg_dma_len(&src_sg) = len;
 
 	desc = ccp_create_desc(dma_chan, &dst_sg, 1, &src_sg, 1, flags);
-	अगर (!desc)
-		वापस शून्य;
+	if (!desc)
+		return NULL;
 
-	वापस &desc->tx_desc;
-पूर्ण
+	return &desc->tx_desc;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *ccp_prep_dma_पूर्णांकerrupt(
-	काष्ठा dma_chan *dma_chan, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा ccp_dma_chan *chan = container_of(dma_chan, काष्ठा ccp_dma_chan,
+static struct dma_async_tx_descriptor *ccp_prep_dma_interrupt(
+	struct dma_chan *dma_chan, unsigned long flags)
+{
+	struct ccp_dma_chan *chan = container_of(dma_chan, struct ccp_dma_chan,
 						 dma_chan);
-	काष्ठा ccp_dma_desc *desc;
+	struct ccp_dma_desc *desc;
 
 	desc = ccp_alloc_dma_desc(chan, flags);
-	अगर (!desc)
-		वापस शून्य;
+	if (!desc)
+		return NULL;
 
-	वापस &desc->tx_desc;
-पूर्ण
+	return &desc->tx_desc;
+}
 
-अटल व्योम ccp_issue_pending(काष्ठा dma_chan *dma_chan)
-अणु
-	काष्ठा ccp_dma_chan *chan = container_of(dma_chan, काष्ठा ccp_dma_chan,
+static void ccp_issue_pending(struct dma_chan *dma_chan)
+{
+	struct ccp_dma_chan *chan = container_of(dma_chan, struct ccp_dma_chan,
 						 dma_chan);
-	काष्ठा ccp_dma_desc *desc;
-	अचिन्हित दीर्घ flags;
+	struct ccp_dma_desc *desc;
+	unsigned long flags;
 
 	dev_dbg(chan->ccp->dev, "%s\n", __func__);
 
@@ -535,69 +534,69 @@ err:
 	spin_unlock_irqrestore(&chan->lock, flags);
 
 	/* If there was nothing active, start processing */
-	अगर (desc)
+	if (desc)
 		ccp_cmd_callback(desc, 0);
-पूर्ण
+}
 
-अटल क्रमागत dma_status ccp_tx_status(काष्ठा dma_chan *dma_chan,
+static enum dma_status ccp_tx_status(struct dma_chan *dma_chan,
 				     dma_cookie_t cookie,
-				     काष्ठा dma_tx_state *state)
-अणु
-	काष्ठा ccp_dma_chan *chan = container_of(dma_chan, काष्ठा ccp_dma_chan,
+				     struct dma_tx_state *state)
+{
+	struct ccp_dma_chan *chan = container_of(dma_chan, struct ccp_dma_chan,
 						 dma_chan);
-	काष्ठा ccp_dma_desc *desc;
-	क्रमागत dma_status ret;
-	अचिन्हित दीर्घ flags;
+	struct ccp_dma_desc *desc;
+	enum dma_status ret;
+	unsigned long flags;
 
-	अगर (chan->status == DMA_PAUSED) अणु
+	if (chan->status == DMA_PAUSED) {
 		ret = DMA_PAUSED;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = dma_cookie_status(dma_chan, cookie, state);
-	अगर (ret == DMA_COMPLETE) अणु
+	if (ret == DMA_COMPLETE) {
 		spin_lock_irqsave(&chan->lock, flags);
 
-		/* Get status from complete chain, अगर still there */
-		list_क्रम_each_entry(desc, &chan->complete, entry) अणु
-			अगर (desc->tx_desc.cookie != cookie)
-				जारी;
+		/* Get status from complete chain, if still there */
+		list_for_each_entry(desc, &chan->complete, entry) {
+			if (desc->tx_desc.cookie != cookie)
+				continue;
 
 			ret = desc->status;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		spin_unlock_irqrestore(&chan->lock, flags);
-	पूर्ण
+	}
 
 out:
 	dev_dbg(chan->ccp->dev, "%s - %u\n", __func__, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ccp_छोड़ो(काष्ठा dma_chan *dma_chan)
-अणु
-	काष्ठा ccp_dma_chan *chan = container_of(dma_chan, काष्ठा ccp_dma_chan,
+static int ccp_pause(struct dma_chan *dma_chan)
+{
+	struct ccp_dma_chan *chan = container_of(dma_chan, struct ccp_dma_chan,
 						 dma_chan);
 
 	chan->status = DMA_PAUSED;
 
-	/*TODO: Wait क्रम active DMA to complete beक्रमe वापसing? */
+	/*TODO: Wait for active DMA to complete before returning? */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ccp_resume(काष्ठा dma_chan *dma_chan)
-अणु
-	काष्ठा ccp_dma_chan *chan = container_of(dma_chan, काष्ठा ccp_dma_chan,
+static int ccp_resume(struct dma_chan *dma_chan)
+{
+	struct ccp_dma_chan *chan = container_of(dma_chan, struct ccp_dma_chan,
 						 dma_chan);
-	काष्ठा ccp_dma_desc *desc;
-	अचिन्हित दीर्घ flags;
+	struct ccp_dma_desc *desc;
+	unsigned long flags;
 
 	spin_lock_irqsave(&chan->lock, flags);
 
-	desc = list_first_entry_or_null(&chan->active, काष्ठा ccp_dma_desc,
+	desc = list_first_entry_or_null(&chan->active, struct ccp_dma_desc,
 					entry);
 
 	spin_unlock_irqrestore(&chan->lock, flags);
@@ -606,82 +605,82 @@ out:
 	chan->status = DMA_IN_PROGRESS;
 
 	/* If there was something active, re-start */
-	अगर (desc)
+	if (desc)
 		ccp_cmd_callback(desc, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ccp_terminate_all(काष्ठा dma_chan *dma_chan)
-अणु
-	काष्ठा ccp_dma_chan *chan = container_of(dma_chan, काष्ठा ccp_dma_chan,
+static int ccp_terminate_all(struct dma_chan *dma_chan)
+{
+	struct ccp_dma_chan *chan = container_of(dma_chan, struct ccp_dma_chan,
 						 dma_chan);
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	dev_dbg(chan->ccp->dev, "%s\n", __func__);
 
-	/*TODO: Wait क्रम active DMA to complete beक्रमe continuing */
+	/*TODO: Wait for active DMA to complete before continuing */
 
 	spin_lock_irqsave(&chan->lock, flags);
 
 	/*TODO: Purge the complete list? */
-	ccp_मुक्त_desc_resources(chan->ccp, &chan->active);
-	ccp_मुक्त_desc_resources(chan->ccp, &chan->pending);
-	ccp_मुक्त_desc_resources(chan->ccp, &chan->created);
+	ccp_free_desc_resources(chan->ccp, &chan->active);
+	ccp_free_desc_resources(chan->ccp, &chan->pending);
+	ccp_free_desc_resources(chan->ccp, &chan->created);
 
 	spin_unlock_irqrestore(&chan->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ccp_dmaengine_रेजिस्टर(काष्ठा ccp_device *ccp)
-अणु
-	काष्ठा ccp_dma_chan *chan;
-	काष्ठा dma_device *dma_dev = &ccp->dma_dev;
-	काष्ठा dma_chan *dma_chan;
-	अक्षर *dma_cmd_cache_name;
-	अक्षर *dma_desc_cache_name;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+int ccp_dmaengine_register(struct ccp_device *ccp)
+{
+	struct ccp_dma_chan *chan;
+	struct dma_device *dma_dev = &ccp->dma_dev;
+	struct dma_chan *dma_chan;
+	char *dma_cmd_cache_name;
+	char *dma_desc_cache_name;
+	unsigned int i;
+	int ret;
 
-	अगर (!dmaengine)
-		वापस 0;
+	if (!dmaengine)
+		return 0;
 
-	ccp->ccp_dma_chan = devm_kसुस्मृति(ccp->dev, ccp->cmd_q_count,
-					 माप(*(ccp->ccp_dma_chan)),
+	ccp->ccp_dma_chan = devm_kcalloc(ccp->dev, ccp->cmd_q_count,
+					 sizeof(*(ccp->ccp_dma_chan)),
 					 GFP_KERNEL);
-	अगर (!ccp->ccp_dma_chan)
-		वापस -ENOMEM;
+	if (!ccp->ccp_dma_chan)
+		return -ENOMEM;
 
-	dma_cmd_cache_name = devm_kaप्र_लिखो(ccp->dev, GFP_KERNEL,
+	dma_cmd_cache_name = devm_kasprintf(ccp->dev, GFP_KERNEL,
 					    "%s-dmaengine-cmd-cache",
 					    ccp->name);
-	अगर (!dma_cmd_cache_name)
-		वापस -ENOMEM;
+	if (!dma_cmd_cache_name)
+		return -ENOMEM;
 
 	ccp->dma_cmd_cache = kmem_cache_create(dma_cmd_cache_name,
-					       माप(काष्ठा ccp_dma_cmd),
-					       माप(व्योम *),
-					       SLAB_HWCACHE_ALIGN, शून्य);
-	अगर (!ccp->dma_cmd_cache)
-		वापस -ENOMEM;
+					       sizeof(struct ccp_dma_cmd),
+					       sizeof(void *),
+					       SLAB_HWCACHE_ALIGN, NULL);
+	if (!ccp->dma_cmd_cache)
+		return -ENOMEM;
 
-	dma_desc_cache_name = devm_kaप्र_लिखो(ccp->dev, GFP_KERNEL,
+	dma_desc_cache_name = devm_kasprintf(ccp->dev, GFP_KERNEL,
 					     "%s-dmaengine-desc-cache",
 					     ccp->name);
-	अगर (!dma_desc_cache_name) अणु
+	if (!dma_desc_cache_name) {
 		ret = -ENOMEM;
-		जाओ err_cache;
-	पूर्ण
+		goto err_cache;
+	}
 
 	ccp->dma_desc_cache = kmem_cache_create(dma_desc_cache_name,
-						माप(काष्ठा ccp_dma_desc),
-						माप(व्योम *),
-						SLAB_HWCACHE_ALIGN, शून्य);
-	अगर (!ccp->dma_desc_cache) अणु
+						sizeof(struct ccp_dma_desc),
+						sizeof(void *),
+						SLAB_HWCACHE_ALIGN, NULL);
+	if (!ccp->dma_desc_cache) {
 		ret = -ENOMEM;
-		जाओ err_cache;
-	पूर्ण
+		goto err_cache;
+	}
 
 	dma_dev->dev = ccp->dev;
 	dma_dev->src_addr_widths = CCP_DMA_WIDTH(dma_get_mask(ccp->dev));
@@ -691,17 +690,17 @@ out:
 	dma_cap_set(DMA_MEMCPY, dma_dev->cap_mask);
 	dma_cap_set(DMA_INTERRUPT, dma_dev->cap_mask);
 
-	/* The DMA channels क्रम this device can be set to खुला or निजी,
+	/* The DMA channels for this device can be set to public or private,
 	 * and overridden by the module parameter dma_chan_attr.
 	 * Default: according to the value in vdata (dma_chan_attr=0)
-	 * dma_chan_attr=0x1: all channels निजी (override vdata)
-	 * dma_chan_attr=0x2: all channels खुला (override vdata)
+	 * dma_chan_attr=0x1: all channels private (override vdata)
+	 * dma_chan_attr=0x2: all channels public (override vdata)
 	 */
-	अगर (ccp_get_dma_chan_attr(ccp) == DMA_PRIVATE)
+	if (ccp_get_dma_chan_attr(ccp) == DMA_PRIVATE)
 		dma_cap_set(DMA_PRIVATE, dma_dev->cap_mask);
 
 	INIT_LIST_HEAD(&dma_dev->channels);
-	क्रम (i = 0; i < ccp->cmd_q_count; i++) अणु
+	for (i = 0; i < ccp->cmd_q_count; i++) {
 		chan = ccp->ccp_dma_chan + i;
 		dma_chan = &chan->dma_chan;
 
@@ -713,29 +712,29 @@ out:
 		INIT_LIST_HEAD(&chan->active);
 		INIT_LIST_HEAD(&chan->complete);
 
-		tasklet_init(&chan->cleanup_tasklet, ccp_करो_cleanup,
-			     (अचिन्हित दीर्घ)chan);
+		tasklet_init(&chan->cleanup_tasklet, ccp_do_cleanup,
+			     (unsigned long)chan);
 
 		dma_chan->device = dma_dev;
 		dma_cookie_init(dma_chan);
 
 		list_add_tail(&dma_chan->device_node, &dma_dev->channels);
-	पूर्ण
+	}
 
-	dma_dev->device_मुक्त_chan_resources = ccp_मुक्त_chan_resources;
-	dma_dev->device_prep_dma_स_नकल = ccp_prep_dma_स_नकल;
-	dma_dev->device_prep_dma_पूर्णांकerrupt = ccp_prep_dma_पूर्णांकerrupt;
+	dma_dev->device_free_chan_resources = ccp_free_chan_resources;
+	dma_dev->device_prep_dma_memcpy = ccp_prep_dma_memcpy;
+	dma_dev->device_prep_dma_interrupt = ccp_prep_dma_interrupt;
 	dma_dev->device_issue_pending = ccp_issue_pending;
 	dma_dev->device_tx_status = ccp_tx_status;
-	dma_dev->device_छोड़ो = ccp_छोड़ो;
+	dma_dev->device_pause = ccp_pause;
 	dma_dev->device_resume = ccp_resume;
 	dma_dev->device_terminate_all = ccp_terminate_all;
 
-	ret = dma_async_device_रेजिस्टर(dma_dev);
-	अगर (ret)
-		जाओ err_reg;
+	ret = dma_async_device_register(dma_dev);
+	if (ret)
+		goto err_reg;
 
-	वापस 0;
+	return 0;
 
 err_reg:
 	kmem_cache_destroy(ccp->dma_desc_cache);
@@ -743,18 +742,18 @@ err_reg:
 err_cache:
 	kmem_cache_destroy(ccp->dma_cmd_cache);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम ccp_dmaengine_unरेजिस्टर(काष्ठा ccp_device *ccp)
-अणु
-	काष्ठा dma_device *dma_dev = &ccp->dma_dev;
+void ccp_dmaengine_unregister(struct ccp_device *ccp)
+{
+	struct dma_device *dma_dev = &ccp->dma_dev;
 
-	अगर (!dmaengine)
-		वापस;
+	if (!dmaengine)
+		return;
 
-	dma_async_device_unरेजिस्टर(dma_dev);
+	dma_async_device_unregister(dma_dev);
 
 	kmem_cache_destroy(ccp->dma_desc_cache);
 	kmem_cache_destroy(ccp->dma_cmd_cache);
-पूर्ण
+}

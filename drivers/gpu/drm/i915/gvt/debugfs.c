@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright(c) 2011-2017 Intel Corporation. All rights reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -21,185 +20,185 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#समावेश <linux/debugfs.h>
-#समावेश <linux/list_sort.h>
-#समावेश "i915_drv.h"
-#समावेश "gvt.h"
+#include <linux/debugfs.h>
+#include <linux/list_sort.h>
+#include "i915_drv.h"
+#include "gvt.h"
 
-काष्ठा mmio_dअगरf_param अणु
-	काष्ठा पूर्णांकel_vgpu *vgpu;
-	पूर्णांक total;
-	पूर्णांक dअगरf;
-	काष्ठा list_head dअगरf_mmio_list;
-पूर्ण;
+struct mmio_diff_param {
+	struct intel_vgpu *vgpu;
+	int total;
+	int diff;
+	struct list_head diff_mmio_list;
+};
 
-काष्ठा dअगरf_mmio अणु
-	काष्ठा list_head node;
+struct diff_mmio {
+	struct list_head node;
 	u32 offset;
 	u32 preg;
 	u32 vreg;
-पूर्ण;
+};
 
-/* Compare two dअगरf_mmio items. */
-अटल पूर्णांक mmio_offset_compare(व्योम *priv,
-	स्थिर काष्ठा list_head *a, स्थिर काष्ठा list_head *b)
-अणु
-	काष्ठा dअगरf_mmio *ma;
-	काष्ठा dअगरf_mmio *mb;
+/* Compare two diff_mmio items. */
+static int mmio_offset_compare(void *priv,
+	const struct list_head *a, const struct list_head *b)
+{
+	struct diff_mmio *ma;
+	struct diff_mmio *mb;
 
-	ma = container_of(a, काष्ठा dअगरf_mmio, node);
-	mb = container_of(b, काष्ठा dअगरf_mmio, node);
-	अगर (ma->offset < mb->offset)
-		वापस -1;
-	अन्यथा अगर (ma->offset > mb->offset)
-		वापस 1;
-	वापस 0;
-पूर्ण
+	ma = container_of(a, struct diff_mmio, node);
+	mb = container_of(b, struct diff_mmio, node);
+	if (ma->offset < mb->offset)
+		return -1;
+	else if (ma->offset > mb->offset)
+		return 1;
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक mmio_dअगरf_handler(काष्ठा पूर्णांकel_gvt *gvt,
-				    u32 offset, व्योम *data)
-अणु
-	काष्ठा mmio_dअगरf_param *param = data;
-	काष्ठा dअगरf_mmio *node;
+static inline int mmio_diff_handler(struct intel_gvt *gvt,
+				    u32 offset, void *data)
+{
+	struct mmio_diff_param *param = data;
+	struct diff_mmio *node;
 	u32 preg, vreg;
 
-	preg = पूर्णांकel_uncore_पढ़ो_notrace(gvt->gt->uncore, _MMIO(offset));
+	preg = intel_uncore_read_notrace(gvt->gt->uncore, _MMIO(offset));
 	vreg = vgpu_vreg(param->vgpu, offset);
 
-	अगर (preg != vreg) अणु
-		node = kदो_स्मृति(माप(*node), GFP_ATOMIC);
-		अगर (!node)
-			वापस -ENOMEM;
+	if (preg != vreg) {
+		node = kmalloc(sizeof(*node), GFP_ATOMIC);
+		if (!node)
+			return -ENOMEM;
 
 		node->offset = offset;
 		node->preg = preg;
 		node->vreg = vreg;
-		list_add(&node->node, &param->dअगरf_mmio_list);
-		param->dअगरf++;
-	पूर्ण
+		list_add(&node->node, &param->diff_mmio_list);
+		param->diff++;
+	}
 	param->total++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Show the all the dअगरferent values of tracked mmio. */
-अटल पूर्णांक vgpu_mmio_dअगरf_show(काष्ठा seq_file *s, व्योम *unused)
-अणु
-	काष्ठा पूर्णांकel_vgpu *vgpu = s->निजी;
-	काष्ठा पूर्णांकel_gvt *gvt = vgpu->gvt;
-	काष्ठा mmio_dअगरf_param param = अणु
+/* Show the all the different values of tracked mmio. */
+static int vgpu_mmio_diff_show(struct seq_file *s, void *unused)
+{
+	struct intel_vgpu *vgpu = s->private;
+	struct intel_gvt *gvt = vgpu->gvt;
+	struct mmio_diff_param param = {
 		.vgpu = vgpu,
 		.total = 0,
-		.dअगरf = 0,
-	पूर्ण;
-	काष्ठा dअगरf_mmio *node, *next;
+		.diff = 0,
+	};
+	struct diff_mmio *node, *next;
 
-	INIT_LIST_HEAD(&param.dअगरf_mmio_list);
+	INIT_LIST_HEAD(&param.diff_mmio_list);
 
 	mutex_lock(&gvt->lock);
 	spin_lock_bh(&gvt->scheduler.mmio_context_lock);
 
 	mmio_hw_access_pre(gvt->gt);
-	/* Recognize all the dअगरf mmios to list. */
-	पूर्णांकel_gvt_क्रम_each_tracked_mmio(gvt, mmio_dअगरf_handler, &param);
+	/* Recognize all the diff mmios to list. */
+	intel_gvt_for_each_tracked_mmio(gvt, mmio_diff_handler, &param);
 	mmio_hw_access_post(gvt->gt);
 
 	spin_unlock_bh(&gvt->scheduler.mmio_context_lock);
 	mutex_unlock(&gvt->lock);
 
 	/* In an ascending order by mmio offset. */
-	list_sort(शून्य, &param.dअगरf_mmio_list, mmio_offset_compare);
+	list_sort(NULL, &param.diff_mmio_list, mmio_offset_compare);
 
-	seq_म_लिखो(s, "%-8s %-8s %-8s %-8s\n", "Offset", "HW", "vGPU", "Diff");
-	list_क्रम_each_entry_safe(node, next, &param.dअगरf_mmio_list, node) अणु
-		u32 dअगरf = node->preg ^ node->vreg;
+	seq_printf(s, "%-8s %-8s %-8s %-8s\n", "Offset", "HW", "vGPU", "Diff");
+	list_for_each_entry_safe(node, next, &param.diff_mmio_list, node) {
+		u32 diff = node->preg ^ node->vreg;
 
-		seq_म_लिखो(s, "%08x %08x %08x %*pbl\n",
+		seq_printf(s, "%08x %08x %08x %*pbl\n",
 			   node->offset, node->preg, node->vreg,
-			   32, &dअगरf);
+			   32, &diff);
 		list_del(&node->node);
-		kमुक्त(node);
-	पूर्ण
-	seq_म_लिखो(s, "Total: %d, Diff: %d\n", param.total, param.dअगरf);
-	वापस 0;
-पूर्ण
-DEFINE_SHOW_ATTRIBUTE(vgpu_mmio_dअगरf);
+		kfree(node);
+	}
+	seq_printf(s, "Total: %d, Diff: %d\n", param.total, param.diff);
+	return 0;
+}
+DEFINE_SHOW_ATTRIBUTE(vgpu_mmio_diff);
 
-अटल पूर्णांक
-vgpu_scan_nonprivbb_get(व्योम *data, u64 *val)
-अणु
-	काष्ठा पूर्णांकel_vgpu *vgpu = (काष्ठा पूर्णांकel_vgpu *)data;
+static int
+vgpu_scan_nonprivbb_get(void *data, u64 *val)
+{
+	struct intel_vgpu *vgpu = (struct intel_vgpu *)data;
 
 	*val = vgpu->scan_nonprivbb;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * set/unset bit engine_id of vgpu->scan_nonprivbb to turn on/off scanning
  * of non-privileged batch buffer. e.g.
- * अगर vgpu->scan_nonprivbb=3, then it will scan non-privileged batch buffer
+ * if vgpu->scan_nonprivbb=3, then it will scan non-privileged batch buffer
  * on engine 0 and 1.
  */
-अटल पूर्णांक
-vgpu_scan_nonprivbb_set(व्योम *data, u64 val)
-अणु
-	काष्ठा पूर्णांकel_vgpu *vgpu = (काष्ठा पूर्णांकel_vgpu *)data;
+static int
+vgpu_scan_nonprivbb_set(void *data, u64 val)
+{
+	struct intel_vgpu *vgpu = (struct intel_vgpu *)data;
 
 	vgpu->scan_nonprivbb = val;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SIMPLE_ATTRIBUTE(vgpu_scan_nonprivbb_fops,
 			vgpu_scan_nonprivbb_get, vgpu_scan_nonprivbb_set,
 			"0x%llx\n");
 
 /**
- * पूर्णांकel_gvt_debugfs_add_vgpu - रेजिस्टर debugfs entries क्रम a vGPU
+ * intel_gvt_debugfs_add_vgpu - register debugfs entries for a vGPU
  * @vgpu: a vGPU
  */
-व्योम पूर्णांकel_gvt_debugfs_add_vgpu(काष्ठा पूर्णांकel_vgpu *vgpu)
-अणु
-	अक्षर name[16] = "";
+void intel_gvt_debugfs_add_vgpu(struct intel_vgpu *vgpu)
+{
+	char name[16] = "";
 
-	snम_लिखो(name, 16, "vgpu%d", vgpu->id);
+	snprintf(name, 16, "vgpu%d", vgpu->id);
 	vgpu->debugfs = debugfs_create_dir(name, vgpu->gvt->debugfs_root);
 
 	debugfs_create_bool("active", 0444, vgpu->debugfs, &vgpu->active);
 	debugfs_create_file("mmio_diff", 0444, vgpu->debugfs, vgpu,
-			    &vgpu_mmio_dअगरf_fops);
+			    &vgpu_mmio_diff_fops);
 	debugfs_create_file("scan_nonprivbb", 0644, vgpu->debugfs, vgpu,
 			    &vgpu_scan_nonprivbb_fops);
-पूर्ण
+}
 
 /**
- * पूर्णांकel_gvt_debugfs_हटाओ_vgpu - हटाओ debugfs entries of a vGPU
+ * intel_gvt_debugfs_remove_vgpu - remove debugfs entries of a vGPU
  * @vgpu: a vGPU
  */
-व्योम पूर्णांकel_gvt_debugfs_हटाओ_vgpu(काष्ठा पूर्णांकel_vgpu *vgpu)
-अणु
-	debugfs_हटाओ_recursive(vgpu->debugfs);
-	vgpu->debugfs = शून्य;
-पूर्ण
+void intel_gvt_debugfs_remove_vgpu(struct intel_vgpu *vgpu)
+{
+	debugfs_remove_recursive(vgpu->debugfs);
+	vgpu->debugfs = NULL;
+}
 
 /**
- * पूर्णांकel_gvt_debugfs_init - रेजिस्टर gvt debugfs root entry
+ * intel_gvt_debugfs_init - register gvt debugfs root entry
  * @gvt: GVT device
  */
-व्योम पूर्णांकel_gvt_debugfs_init(काष्ठा पूर्णांकel_gvt *gvt)
-अणु
-	काष्ठा drm_minor *minor = gvt->gt->i915->drm.primary;
+void intel_gvt_debugfs_init(struct intel_gvt *gvt)
+{
+	struct drm_minor *minor = gvt->gt->i915->drm.primary;
 
 	gvt->debugfs_root = debugfs_create_dir("gvt", minor->debugfs_root);
 
-	debugfs_create_uदीर्घ("num_tracked_mmio", 0444, gvt->debugfs_root,
+	debugfs_create_ulong("num_tracked_mmio", 0444, gvt->debugfs_root,
 			     &gvt->mmio.num_tracked_mmio);
-पूर्ण
+}
 
 /**
- * पूर्णांकel_gvt_debugfs_clean - हटाओ debugfs entries
+ * intel_gvt_debugfs_clean - remove debugfs entries
  * @gvt: GVT device
  */
-व्योम पूर्णांकel_gvt_debugfs_clean(काष्ठा पूर्णांकel_gvt *gvt)
-अणु
-	debugfs_हटाओ_recursive(gvt->debugfs_root);
-	gvt->debugfs_root = शून्य;
-पूर्ण
+void intel_gvt_debugfs_clean(struct intel_gvt *gvt)
+{
+	debugfs_remove_recursive(gvt->debugfs_root);
+	gvt->debugfs_root = NULL;
+}

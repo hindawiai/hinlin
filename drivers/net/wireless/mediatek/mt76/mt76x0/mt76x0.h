@@ -1,61 +1,60 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (C) 2014 Felix Fietkau <nbd@खोलोwrt.org>
+ * Copyright (C) 2014 Felix Fietkau <nbd@openwrt.org>
  * Copyright (C) 2015 Jakub Kicinski <kubakici@wp.pl>
  * Copyright (C) 2018 Stanislaw Gruszka <stf_xl@wp.pl>
  */
 
-#अगर_अघोषित MT76X0U_H
-#घोषणा MT76X0U_H
+#ifndef MT76X0U_H
+#define MT76X0U_H
 
-#समावेश <linux/bitfield.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/device.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/completion.h>
-#समावेश <net/mac80211.h>
-#समावेश <linux/debugfs.h>
+#include <linux/bitfield.h>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include <linux/mutex.h>
+#include <linux/usb.h>
+#include <linux/completion.h>
+#include <net/mac80211.h>
+#include <linux/debugfs.h>
 
-#समावेश "../mt76x02.h"
-#समावेश "eeprom.h"
+#include "../mt76x02.h"
+#include "eeprom.h"
 
-#घोषणा MT7610E_FIRMWARE		"mediatek/mt7610e.bin"
-#घोषणा MT7650E_FIRMWARE		"mediatek/mt7650e.bin"
+#define MT7610E_FIRMWARE		"mediatek/mt7610e.bin"
+#define MT7650E_FIRMWARE		"mediatek/mt7650e.bin"
 
-#घोषणा MT7610U_FIRMWARE		"mediatek/mt7610u.bin"
+#define MT7610U_FIRMWARE		"mediatek/mt7610u.bin"
 
-#घोषणा MT_USB_AGGR_SIZE_LIMIT		21 /* * 1024B */
-#घोषणा MT_USB_AGGR_TIMEOUT		0x80 /* * 33ns */
+#define MT_USB_AGGR_SIZE_LIMIT		21 /* * 1024B */
+#define MT_USB_AGGR_TIMEOUT		0x80 /* * 33ns */
 
-अटल अंतरभूत bool is_mt7610e(काष्ठा mt76x02_dev *dev)
-अणु
-	अगर (!mt76_is_mmio(&dev->mt76))
-		वापस false;
+static inline bool is_mt7610e(struct mt76x02_dev *dev)
+{
+	if (!mt76_is_mmio(&dev->mt76))
+		return false;
 
-	वापस mt76_chip(&dev->mt76) == 0x7610;
-पूर्ण
+	return mt76_chip(&dev->mt76) == 0x7610;
+}
 
-अटल अंतरभूत bool is_mt7630(काष्ठा mt76x02_dev *dev)
-अणु
-	वापस mt76_chip(&dev->mt76) == 0x7630;
-पूर्ण
+static inline bool is_mt7630(struct mt76x02_dev *dev)
+{
+	return mt76_chip(&dev->mt76) == 0x7630;
+}
 
 /* Init */
-पूर्णांक mt76x0_init_hardware(काष्ठा mt76x02_dev *dev);
-पूर्णांक mt76x0_रेजिस्टर_device(काष्ठा mt76x02_dev *dev);
-व्योम mt76x0_chip_onoff(काष्ठा mt76x02_dev *dev, bool enable, bool reset);
+int mt76x0_init_hardware(struct mt76x02_dev *dev);
+int mt76x0_register_device(struct mt76x02_dev *dev);
+void mt76x0_chip_onoff(struct mt76x02_dev *dev, bool enable, bool reset);
 
-व्योम mt76x0_mac_stop(काष्ठा mt76x02_dev *dev);
+void mt76x0_mac_stop(struct mt76x02_dev *dev);
 
-पूर्णांक mt76x0_config(काष्ठा ieee80211_hw *hw, u32 changed);
+int mt76x0_config(struct ieee80211_hw *hw, u32 changed);
 
 /* PHY */
-व्योम mt76x0_phy_init(काष्ठा mt76x02_dev *dev);
-पूर्णांक mt76x0_phy_रुको_bbp_पढ़ोy(काष्ठा mt76x02_dev *dev);
-व्योम mt76x0_phy_set_channel(काष्ठा mt76x02_dev *dev,
-			    काष्ठा cfg80211_chan_def *chandef);
-व्योम mt76x0_phy_set_txघातer(काष्ठा mt76x02_dev *dev);
-व्योम mt76x0_phy_calibrate(काष्ठा mt76x02_dev *dev, bool घातer_on);
-#पूर्ण_अगर
+void mt76x0_phy_init(struct mt76x02_dev *dev);
+int mt76x0_phy_wait_bbp_ready(struct mt76x02_dev *dev);
+void mt76x0_phy_set_channel(struct mt76x02_dev *dev,
+			    struct cfg80211_chan_def *chandef);
+void mt76x0_phy_set_txpower(struct mt76x02_dev *dev);
+void mt76x0_phy_calibrate(struct mt76x02_dev *dev, bool power_on);
+#endif

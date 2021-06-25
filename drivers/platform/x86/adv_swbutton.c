@@ -1,70 +1,69 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  adv_swbutton.c - Software Button Interface Driver.
  *
  *  (C) Copyright 2020 Advantech Corporation, Inc
  *
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/input.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/input.h>
+#include <linux/acpi.h>
+#include <linux/platform_device.h>
 
-#घोषणा ACPI_BUTTON_HID_SWBTN               "AHC0310"
+#define ACPI_BUTTON_HID_SWBTN               "AHC0310"
 
-#घोषणा ACPI_BUTTON_NOTIFY_SWBTN_RELEASE    0x86
-#घोषणा ACPI_BUTTON_NOTIFY_SWBTN_PRESSED    0x85
+#define ACPI_BUTTON_NOTIFY_SWBTN_RELEASE    0x86
+#define ACPI_BUTTON_NOTIFY_SWBTN_PRESSED    0x85
 
-काष्ठा adv_swbutton अणु
-	काष्ठा input_dev *input;
-	अक्षर phys[32];
-पूर्ण;
+struct adv_swbutton {
+	struct input_dev *input;
+	char phys[32];
+};
 
 /*-------------------------------------------------------------------------
  *                               Driver Interface
  *--------------------------------------------------------------------------
  */
-अटल व्योम adv_swbutton_notअगरy(acpi_handle handle, u32 event, व्योम *context)
-अणु
-	काष्ठा platक्रमm_device *device = context;
-	काष्ठा adv_swbutton *button = dev_get_drvdata(&device->dev);
+static void adv_swbutton_notify(acpi_handle handle, u32 event, void *context)
+{
+	struct platform_device *device = context;
+	struct adv_swbutton *button = dev_get_drvdata(&device->dev);
 
-	चयन (event) अणु
-	हाल ACPI_BUTTON_NOTIFY_SWBTN_RELEASE:
+	switch (event) {
+	case ACPI_BUTTON_NOTIFY_SWBTN_RELEASE:
 		input_report_key(button->input, KEY_PROG1, 0);
 		input_sync(button->input);
-		अवरोध;
-	हाल ACPI_BUTTON_NOTIFY_SWBTN_PRESSED:
+		break;
+	case ACPI_BUTTON_NOTIFY_SWBTN_PRESSED:
 		input_report_key(button->input, KEY_PROG1, 1);
 		input_sync(button->input);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_dbg(&device->dev, "Unsupported event [0x%x]\n", event);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक adv_swbutton_probe(काष्ठा platक्रमm_device *device)
-अणु
-	काष्ठा adv_swbutton *button;
-	काष्ठा input_dev *input;
+static int adv_swbutton_probe(struct platform_device *device)
+{
+	struct adv_swbutton *button;
+	struct input_dev *input;
 	acpi_handle handle = ACPI_HANDLE(&device->dev);
 	acpi_status status;
-	पूर्णांक error;
+	int error;
 
-	button = devm_kzalloc(&device->dev, माप(*button), GFP_KERNEL);
-	अगर (!button)
-		वापस -ENOMEM;
+	button = devm_kzalloc(&device->dev, sizeof(*button), GFP_KERNEL);
+	if (!button)
+		return -ENOMEM;
 
 	dev_set_drvdata(&device->dev, button);
 
 	input = devm_input_allocate_device(&device->dev);
-	अगर (!input)
-		वापस -ENOMEM;
+	if (!input)
+		return -ENOMEM;
 
 	button->input = input;
-	snम_लिखो(button->phys, माप(button->phys), "%s/button/input0", ACPI_BUTTON_HID_SWBTN);
+	snprintf(button->phys, sizeof(button->phys), "%s/button/input0", ACPI_BUTTON_HID_SWBTN);
 
 	input->name = "Advantech Software Button";
 	input->phys = button->phys;
@@ -73,49 +72,49 @@
 	set_bit(EV_REP, input->evbit);
 	input_set_capability(input, EV_KEY, KEY_PROG1);
 
-	error = input_रेजिस्टर_device(input);
-	अगर (error)
-		वापस error;
+	error = input_register_device(input);
+	if (error)
+		return error;
 
 	device_init_wakeup(&device->dev, true);
 
-	status = acpi_install_notअगरy_handler(handle,
+	status = acpi_install_notify_handler(handle,
 					     ACPI_DEVICE_NOTIFY,
-					     adv_swbutton_notअगरy,
+					     adv_swbutton_notify,
 					     device);
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		dev_err(&device->dev, "Error installing notify handler\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adv_swbutton_हटाओ(काष्ठा platक्रमm_device *device)
-अणु
+static int adv_swbutton_remove(struct platform_device *device)
+{
 	acpi_handle handle = ACPI_HANDLE(&device->dev);
 
-	acpi_हटाओ_notअगरy_handler(handle, ACPI_DEVICE_NOTIFY,
-				   adv_swbutton_notअगरy);
+	acpi_remove_notify_handler(handle, ACPI_DEVICE_NOTIFY,
+				   adv_swbutton_notify);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा acpi_device_id button_device_ids[] = अणु
-	अणुACPI_BUTTON_HID_SWBTN, 0पूर्ण,
-	अणु"", 0पूर्ण,
-पूर्ण;
+static const struct acpi_device_id button_device_ids[] = {
+	{ACPI_BUTTON_HID_SWBTN, 0},
+	{"", 0},
+};
 MODULE_DEVICE_TABLE(acpi, button_device_ids);
 
-अटल काष्ठा platक्रमm_driver adv_swbutton_driver = अणु
-	.driver = अणु
+static struct platform_driver adv_swbutton_driver = {
+	.driver = {
 		.name = "adv_swbutton",
 		.acpi_match_table = button_device_ids,
-	पूर्ण,
+	},
 	.probe = adv_swbutton_probe,
-	.हटाओ = adv_swbutton_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(adv_swbutton_driver);
+	.remove = adv_swbutton_remove,
+};
+module_platform_driver(adv_swbutton_driver);
 
 MODULE_AUTHOR("Andrea Ho");
 MODULE_DESCRIPTION("Advantech ACPI SW Button Driver");

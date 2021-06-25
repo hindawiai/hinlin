@@ -1,16 +1,15 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <मानक_निवेशt.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <stdint.h>
 
-अस्थिर uपूर्णांक64_t x;
+volatile uint64_t x;
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	uपूर्णांक64_t old, new = argc;
+int main(int argc, char *argv[])
+{
+	uint64_t old, new = argc;
 
-	(व्योम)argv;
-	करो अणु
+	(void)argv;
+	do {
 		old = __sync_val_compare_and_swap(&x, 0, 0);
-	पूर्ण जबतक (!__sync_bool_compare_and_swap(&x, old, new));
-	वापस old == new;
-पूर्ण
+	} while (!__sync_bool_compare_and_swap(&x, old, new));
+	return old == new;
+}

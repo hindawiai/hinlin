@@ -1,58 +1,57 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-#अगर_अघोषित _ASM_POWERPC_JUMP_LABEL_H
-#घोषणा _ASM_POWERPC_JUMP_LABEL_H
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#ifndef _ASM_POWERPC_JUMP_LABEL_H
+#define _ASM_POWERPC_JUMP_LABEL_H
 
 /*
  * Copyright 2010 Michael Ellerman, IBM Corp.
  */
 
-#अगर_अघोषित __ASSEMBLY__
-#समावेश <linux/types.h>
+#ifndef __ASSEMBLY__
+#include <linux/types.h>
 
-#समावेश <यंत्र/feature-fixups.h>
-#समावेश <यंत्र/यंत्र-स्थिर.h>
+#include <asm/feature-fixups.h>
+#include <asm/asm-const.h>
 
-#घोषणा JUMP_ENTRY_TYPE		stringअगरy_in_c(FTR_ENTRY_LONG)
-#घोषणा JUMP_LABEL_NOP_SIZE	4
+#define JUMP_ENTRY_TYPE		stringify_in_c(FTR_ENTRY_LONG)
+#define JUMP_LABEL_NOP_SIZE	4
 
-अटल __always_अंतरभूत bool arch_अटल_branch(काष्ठा अटल_key *key, bool branch)
-अणु
-	यंत्र_अस्थिर_जाओ("1:\n\t"
+static __always_inline bool arch_static_branch(struct static_key *key, bool branch)
+{
+	asm_volatile_goto("1:\n\t"
 		 "nop # arch_static_branch\n\t"
 		 ".pushsection __jump_table,  \"aw\"\n\t"
 		 ".long 1b - ., %l[l_yes] - .\n\t"
 		 JUMP_ENTRY_TYPE "%c0 - .\n\t"
 		 ".popsection \n\t"
-		 : :  "i" (&((अक्षर *)key)[branch]) : : l_yes);
+		 : :  "i" (&((char *)key)[branch]) : : l_yes);
 
-	वापस false;
+	return false;
 l_yes:
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल __always_अंतरभूत bool arch_अटल_branch_jump(काष्ठा अटल_key *key, bool branch)
-अणु
-	यंत्र_अस्थिर_जाओ("1:\n\t"
+static __always_inline bool arch_static_branch_jump(struct static_key *key, bool branch)
+{
+	asm_volatile_goto("1:\n\t"
 		 "b %l[l_yes] # arch_static_branch_jump\n\t"
 		 ".pushsection __jump_table,  \"aw\"\n\t"
 		 ".long 1b - ., %l[l_yes] - .\n\t"
 		 JUMP_ENTRY_TYPE "%c0 - .\n\t"
 		 ".popsection \n\t"
-		 : :  "i" (&((अक्षर *)key)[branch]) : : l_yes);
+		 : :  "i" (&((char *)key)[branch]) : : l_yes);
 
-	वापस false;
+	return false;
 l_yes:
-	वापस true;
-पूर्ण
+	return true;
+}
 
-#अन्यथा
-#घोषणा ARCH_STATIC_BRANCH(LABEL, KEY)		\
+#else
+#define ARCH_STATIC_BRANCH(LABEL, KEY)		\
 1098:	nop;					\
 	.pushsection __jump_table, "aw";	\
-	.दीर्घ 1098b - ., LABEL - .;		\
+	.long 1098b - ., LABEL - .;		\
 	FTR_ENTRY_LONG KEY - .;			\
 	.popsection
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर /* _ASM_POWERPC_JUMP_LABEL_H */
+#endif /* _ASM_POWERPC_JUMP_LABEL_H */

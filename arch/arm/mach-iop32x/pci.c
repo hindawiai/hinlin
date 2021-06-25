@@ -1,96 +1,95 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * arch/arm/plat-iop/pci.c
  *
- * PCI support क्रम the Intel IOP32X and IOP33X processors
+ * PCI support for the Intel IOP32X and IOP33X processors
  *
  * Author: Rory Bolt <rorybolt@pacbell.net>
  * Copyright (C) 2002 Rory Bolt
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/init.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/संकेत.स>
-#समावेश <यंत्र/mach/pci.h>
-#समावेश "hardware.h"
-#समावेश "iop3xx.h"
+#include <linux/kernel.h>
+#include <linux/pci.h>
+#include <linux/slab.h>
+#include <linux/mm.h>
+#include <linux/init.h>
+#include <linux/ioport.h>
+#include <linux/io.h>
+#include <asm/irq.h>
+#include <asm/signal.h>
+#include <asm/mach/pci.h>
+#include "hardware.h"
+#include "iop3xx.h"
 
-// #घोषणा DEBUG
+// #define DEBUG
 
-#अगर_घोषित DEBUG
-#घोषणा  DBG(x...) prपूर्णांकk(x)
-#अन्यथा
-#घोषणा  DBG(x...) करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+#ifdef DEBUG
+#define  DBG(x...) printk(x)
+#else
+#define  DBG(x...) do { } while (0)
+#endif
 
 /*
  * This routine builds either a type0 or type1 configuration command.  If the
- * bus is on the 803xx then a type0 made, अन्यथा a type1 is created.
+ * bus is on the 803xx then a type0 made, else a type1 is created.
  */
-अटल u32 iop3xx_cfg_address(काष्ठा pci_bus *bus, पूर्णांक devfn, पूर्णांक where)
-अणु
-	काष्ठा pci_sys_data *sys = bus->sysdata;
+static u32 iop3xx_cfg_address(struct pci_bus *bus, int devfn, int where)
+{
+	struct pci_sys_data *sys = bus->sysdata;
 	u32 addr;
 
-	अगर (sys->busnr == bus->number)
+	if (sys->busnr == bus->number)
 		addr = 1 << (PCI_SLOT(devfn) + 16) | (PCI_SLOT(devfn) << 11);
-	अन्यथा
+	else
 		addr = bus->number << 16 | PCI_SLOT(devfn) << 11 | 1;
 
 	addr |=	PCI_FUNC(devfn) << 8 | (where & ~3);
 
-	वापस addr;
-पूर्ण
+	return addr;
+}
 
 /*
  * This routine checks the status of the last configuration cycle.  If an error
- * was detected it वापसs a 1, अन्यथा it वापसs a 0.  The errors being checked
- * are parity, master पात, target पात (master and target).  These types of
+ * was detected it returns a 1, else it returns a 0.  The errors being checked
+ * are parity, master abort, target abort (master and target).  These types of
  * errors occur during a config cycle where there is no device, like during
  * the discovery stage.
  */
-अटल पूर्णांक iop3xx_pci_status(व्योम)
-अणु
-	अचिन्हित पूर्णांक status;
-	पूर्णांक ret = 0;
+static int iop3xx_pci_status(void)
+{
+	unsigned int status;
+	int ret = 0;
 
 	/*
-	 * Check the status रेजिस्टरs.
+	 * Check the status registers.
 	 */
 	status = *IOP3XX_ATUSR;
-	अगर (status & 0xf900) अणु
+	if (status & 0xf900) {
 		DBG("\t\t\tPCI: P0 - status = 0x%08x\n", status);
 		*IOP3XX_ATUSR = status & 0xf900;
 		ret = 1;
-	पूर्ण
+	}
 
 	status = *IOP3XX_ATUISR;
-	अगर (status & 0x679f) अणु
+	if (status & 0x679f) {
 		DBG("\t\t\tPCI: P1 - status = 0x%08x\n", status);
 		*IOP3XX_ATUISR = status & 0x679f;
 		ret = 1;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Simply ग_लिखो the address रेजिस्टर and पढ़ो the configuration
+ * Simply write the address register and read the configuration
  * data.  Note that the 4 nops ensure that we are able to handle
- * a delayed पात (in theory.)
+ * a delayed abort (in theory.)
  */
-अटल u32 iop3xx_पढ़ो(अचिन्हित दीर्घ addr)
-अणु
+static u32 iop3xx_read(unsigned long addr)
+{
 	u32 val;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 		"str	%1, [%2]\n\t"
 		"ldr	%0, [%3]\n\t"
 		"nop\n\t"
@@ -100,50 +99,50 @@
 		: "=r" (val)
 		: "r" (addr), "r" (IOP3XX_OCCAR), "r" (IOP3XX_OCCDR));
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
 /*
- * The पढ़ो routines must check the error status of the last configuration
- * cycle.  If there was an error, the routine वापसs all hex f's.
+ * The read routines must check the error status of the last configuration
+ * cycle.  If there was an error, the routine returns all hex f's.
  */
-अटल पूर्णांक
-iop3xx_पढ़ो_config(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक where,
-		पूर्णांक size, u32 *value)
-अणु
-	अचिन्हित दीर्घ addr = iop3xx_cfg_address(bus, devfn, where);
-	u32 val = iop3xx_पढ़ो(addr) >> ((where & 3) * 8);
+static int
+iop3xx_read_config(struct pci_bus *bus, unsigned int devfn, int where,
+		int size, u32 *value)
+{
+	unsigned long addr = iop3xx_cfg_address(bus, devfn, where);
+	u32 val = iop3xx_read(addr) >> ((where & 3) * 8);
 
-	अगर (iop3xx_pci_status())
+	if (iop3xx_pci_status())
 		val = 0xffffffff;
 
 	*value = val;
 
-	वापस PCIBIOS_SUCCESSFUL;
-पूर्ण
+	return PCIBIOS_SUCCESSFUL;
+}
 
-अटल पूर्णांक
-iop3xx_ग_लिखो_config(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक where,
-		पूर्णांक size, u32 value)
-अणु
-	अचिन्हित दीर्घ addr = iop3xx_cfg_address(bus, devfn, where);
+static int
+iop3xx_write_config(struct pci_bus *bus, unsigned int devfn, int where,
+		int size, u32 value)
+{
+	unsigned long addr = iop3xx_cfg_address(bus, devfn, where);
 	u32 val;
 
-	अगर (size != 4) अणु
-		val = iop3xx_पढ़ो(addr);
-		अगर (iop3xx_pci_status())
-			वापस PCIBIOS_SUCCESSFUL;
+	if (size != 4) {
+		val = iop3xx_read(addr);
+		if (iop3xx_pci_status())
+			return PCIBIOS_SUCCESSFUL;
 
 		where = (where & 3) * 8;
 
-		अगर (size == 1)
+		if (size == 1)
 			val &= ~(0xff << where);
-		अन्यथा
+		else
 			val &= ~(0xffff << where);
 
 		*IOP3XX_OCCDR = val | value << where;
-	पूर्ण अन्यथा अणु
-		यंत्र अस्थिर(
+	} else {
+		asm volatile(
 			"str	%1, [%2]\n\t"
 			"str	%0, [%3]\n\t"
 			"nop\n\t"
@@ -153,45 +152,45 @@ iop3xx_ग_लिखो_config(काष्ठा pci_bus *bus, अचिन्�
 			:
 			: "r" (value), "r" (addr),
 			  "r" (IOP3XX_OCCAR), "r" (IOP3XX_OCCDR));
-	पूर्ण
+	}
 
-	वापस PCIBIOS_SUCCESSFUL;
-पूर्ण
+	return PCIBIOS_SUCCESSFUL;
+}
 
-काष्ठा pci_ops iop3xx_ops = अणु
-	.पढ़ो	= iop3xx_पढ़ो_config,
-	.ग_लिखो	= iop3xx_ग_लिखो_config,
-पूर्ण;
+struct pci_ops iop3xx_ops = {
+	.read	= iop3xx_read_config,
+	.write	= iop3xx_write_config,
+};
 
 /*
- * When a PCI device करोes not exist during config cycles, the 80200 माला_लो a
- * bus error instead of वापसing 0xffffffff. This handler simply वापसs.
+ * When a PCI device does not exist during config cycles, the 80200 gets a
+ * bus error instead of returning 0xffffffff. This handler simply returns.
  */
-अटल पूर्णांक
-iop3xx_pci_पात(अचिन्हित दीर्घ addr, अचिन्हित पूर्णांक fsr, काष्ठा pt_regs *regs)
-अणु
+static int
+iop3xx_pci_abort(unsigned long addr, unsigned int fsr, struct pt_regs *regs)
+{
 	DBG("PCI abort: address = 0x%08lx fsr = 0x%03x PC = 0x%08lx LR = 0x%08lx\n",
 		addr, fsr, regs->ARM_pc, regs->ARM_lr);
 
 	/*
-	 * If it was an imprecise पात, then we need to correct the
-	 * वापस address to be _after_ the inकाष्ठाion.
+	 * If it was an imprecise abort, then we need to correct the
+	 * return address to be _after_ the instruction.
 	 */
-	अगर (fsr & (1 << 10))
+	if (fsr & (1 << 10))
 		regs->ARM_pc += 4;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक iop3xx_pci_setup(पूर्णांक nr, काष्ठा pci_sys_data *sys)
-अणु
-	काष्ठा resource *res;
+int iop3xx_pci_setup(int nr, struct pci_sys_data *sys)
+{
+	struct resource *res;
 
-	अगर (nr != 0)
-		वापस 0;
+	if (nr != 0)
+		return 0;
 
-	res = kzalloc(माप(काष्ठा resource), GFP_KERNEL);
-	अगर (!res)
+	res = kzalloc(sizeof(struct resource), GFP_KERNEL);
+	if (!res)
 		panic("PCI: unable to alloc resources");
 
 	res->start = IOP3XX_PCI_LOWER_MEM_PA;
@@ -201,7 +200,7 @@ iop3xx_pci_पात(अचिन्हित दीर्घ addr, अचिन
 	request_resource(&iomem_resource, res);
 
 	/*
-	 * Use whatever translation is alपढ़ोy setup.
+	 * Use whatever translation is already setup.
 	 */
 	sys->mem_offset = IOP3XX_PCI_LOWER_MEM_PA - *IOP3XX_OMWTVR0;
 
@@ -209,11 +208,11 @@ iop3xx_pci_पात(अचिन्हित दीर्घ addr, अचिन
 
 	pci_ioremap_io(0, IOP3XX_PCI_LOWER_IO_PA);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-व्योम __init iop3xx_atu_setup(व्योम)
-अणु
+void __init iop3xx_atu_setup(void)
+{
 	/* BAR 0 ( Disabled ) */
 	*IOP3XX_IAUBAR0 = 0x0;
 	*IOP3XX_IABAR0  = 0x0;
@@ -237,11 +236,11 @@ iop3xx_pci_पात(अचिन्हित दीर्घ addr, अचिन
 
 	*IOP3XX_IATVR2 = PHYS_OFFSET;
 
-	/* Outbound winकरोw 0 */
+	/* Outbound window 0 */
 	*IOP3XX_OMWTVR0 = IOP3XX_PCI_LOWER_MEM_BA;
 	*IOP3XX_OUMWTVR0 = 0;
 
-	/* Outbound winकरोw 1 */
+	/* Outbound window 1 */
 	*IOP3XX_OMWTVR1 = IOP3XX_PCI_LOWER_MEM_BA +
 			  IOP3XX_PCI_MEM_WINDOW_SIZE / 2;
 	*IOP3XX_OUMWTVR1 = 0;
@@ -261,15 +260,15 @@ iop3xx_pci_पात(अचिन्हित दीर्घ addr, अचिन
 	*IOP3XX_ATUCMD |= PCI_COMMAND_MEMORY | PCI_COMMAND_MASTER |
 			       PCI_COMMAND_PARITY | PCI_COMMAND_SERR;
 	*IOP3XX_ATUCR |= IOP3XX_ATUCR_OUT_EN;
-पूर्ण
+}
 
-व्योम __init iop3xx_atu_disable(व्योम)
-अणु
+void __init iop3xx_atu_disable(void)
+{
 	*IOP3XX_ATUCMD = 0;
 	*IOP3XX_ATUCR = 0;
 
-	/* रुको क्रम cycles to quiesce */
-	जबतक (*IOP3XX_PCSR & (IOP3XX_PCSR_OUT_Q_BUSY |
+	/* wait for cycles to quiesce */
+	while (*IOP3XX_PCSR & (IOP3XX_PCSR_OUT_Q_BUSY |
 				     IOP3XX_PCSR_IN_Q_BUSY))
 		cpu_relax();
 
@@ -296,31 +295,31 @@ iop3xx_pci_पात(अचिन्हित दीर्घ addr, अचिन
 	*IOP3XX_IATVR3  = 0x0;
 	*IOP3XX_IALR3   = 0x0;
 
-	/* Clear the outbound winकरोws */
+	/* Clear the outbound windows */
 	*IOP3XX_OIOWTVR  = 0;
 
-	/* Outbound winकरोw 0 */
+	/* Outbound window 0 */
 	*IOP3XX_OMWTVR0 = 0;
 	*IOP3XX_OUMWTVR0 = 0;
 
-	/* Outbound winकरोw 1 */
+	/* Outbound window 1 */
 	*IOP3XX_OMWTVR1 = 0;
 	*IOP3XX_OUMWTVR1 = 0;
-पूर्ण
+}
 
 /* Flag to determine whether the ATU is initialized and the PCI bus scanned */
-पूर्णांक init_atu;
+int init_atu;
 
-पूर्णांक iop3xx_get_init_atu(व्योम) अणु
-	/* check अगर शेष has been overridden */
-	अगर (init_atu != IOP3XX_INIT_ATU_DEFAULT)
-		वापस init_atu;
-	अन्यथा
-		वापस IOP3XX_INIT_ATU_DISABLE;
-पूर्ण
+int iop3xx_get_init_atu(void) {
+	/* check if default has been overridden */
+	if (init_atu != IOP3XX_INIT_ATU_DEFAULT)
+		return init_atu;
+	else
+		return IOP3XX_INIT_ATU_DISABLE;
+}
 
-अटल व्योम __init iop3xx_atu_debug(व्योम)
-अणु
+static void __init iop3xx_atu_debug(void)
+{
 	DBG("PCI: Intel IOP3xx PCI init.\n");
 	DBG("PCI: Outbound memory window 0: PCI 0x%08x%08x\n",
 		*IOP3XX_OUMWTVR0, *IOP3XX_OMWTVR0);
@@ -344,59 +343,59 @@ iop3xx_pci_पात(अचिन्हित दीर्घ addr, अचिन
 	DBG("ATU: IOP3XX_ATUCMD=0x%04x\n", *IOP3XX_ATUCMD);
 	DBG("ATU: IOP3XX_ATUCR=0x%08x\n", *IOP3XX_ATUCR);
 
-	hook_fault_code(16+6, iop3xx_pci_पात, SIGBUS, 0, "imprecise external abort");
-पूर्ण
+	hook_fault_code(16+6, iop3xx_pci_abort, SIGBUS, 0, "imprecise external abort");
+}
 
-/* क्रम platक्रमms that might be host-bus-adapters */
-व्योम __init iop3xx_pci_preinit_cond(व्योम)
-अणु
-	अगर (iop3xx_get_init_atu() == IOP3XX_INIT_ATU_ENABLE) अणु
+/* for platforms that might be host-bus-adapters */
+void __init iop3xx_pci_preinit_cond(void)
+{
+	if (iop3xx_get_init_atu() == IOP3XX_INIT_ATU_ENABLE) {
 		iop3xx_atu_disable();
 		iop3xx_atu_setup();
 		iop3xx_atu_debug();
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम __init iop3xx_pci_preinit(व्योम)
-अणु
+void __init iop3xx_pci_preinit(void)
+{
 	pcibios_min_mem = 0;
 
 	iop3xx_atu_disable();
 	iop3xx_atu_setup();
 	iop3xx_atu_debug();
-पूर्ण
+}
 
 /* allow init_atu to be user overridden */
-अटल पूर्णांक __init iop3xx_init_atu_setup(अक्षर *str)
-अणु
+static int __init iop3xx_init_atu_setup(char *str)
+{
 	init_atu = IOP3XX_INIT_ATU_DEFAULT;
-	अगर (str) अणु
-		जबतक (*str != '\0') अणु
-			चयन (*str) अणु
-			हाल 'y':
-			हाल 'Y':
+	if (str) {
+		while (*str != '\0') {
+			switch (*str) {
+			case 'y':
+			case 'Y':
 				init_atu = IOP3XX_INIT_ATU_ENABLE;
-				अवरोध;
-			हाल 'n':
-			हाल 'N':
+				break;
+			case 'n':
+			case 'N':
 				init_atu = IOP3XX_INIT_ATU_DISABLE;
-				अवरोध;
-			हाल ',':
-			हाल '=':
-				अवरोध;
-			शेष:
-				prपूर्णांकk(KERN_DEBUG "\"%s\" malformed at "
+				break;
+			case ',':
+			case '=':
+				break;
+			default:
+				printk(KERN_DEBUG "\"%s\" malformed at "
 					    "character: \'%c\'",
 					    __func__,
 					    *str);
 				*(str + 1) = '\0';
-			पूर्ण
+			}
 			str++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 __setup("iop3xx_init_atu", iop3xx_init_atu_setup);
 

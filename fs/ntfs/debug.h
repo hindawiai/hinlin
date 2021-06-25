@@ -1,58 +1,57 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * debug.h - NTFS kernel debug support. Part of the Linux-NTFS project.
  *
  * Copyright (c) 2001-2004 Anton Altaparmakov
  */
 
-#अगर_अघोषित _LINUX_NTFS_DEBUG_H
-#घोषणा _LINUX_NTFS_DEBUG_H
+#ifndef _LINUX_NTFS_DEBUG_H
+#define _LINUX_NTFS_DEBUG_H
 
-#समावेश <linux/fs.h>
+#include <linux/fs.h>
 
-#समावेश "runlist.h"
+#include "runlist.h"
 
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 
-बाह्य पूर्णांक debug_msgs;
+extern int debug_msgs;
 
-बाह्य __म_लिखो(4, 5)
-व्योम __ntfs_debug(स्थिर अक्षर *file, पूर्णांक line, स्थिर अक्षर *function,
-		  स्थिर अक्षर *क्रमmat, ...);
+extern __printf(4, 5)
+void __ntfs_debug(const char *file, int line, const char *function,
+		  const char *format, ...);
 /**
- * ntfs_debug - ग_लिखो a debug level message to syslog
- * @f:		a म_लिखो क्रमmat string containing the message
- * @...:	the variables to substitute पूर्णांकo @f
+ * ntfs_debug - write a debug level message to syslog
+ * @f:		a printf format string containing the message
+ * @...:	the variables to substitute into @f
  *
- * ntfs_debug() ग_लिखोs a DEBUG level message to the syslog but only अगर the
- * driver was compiled with -DDEBUG. Otherwise, the call turns पूर्णांकo a NOP.
+ * ntfs_debug() writes a DEBUG level message to the syslog but only if the
+ * driver was compiled with -DDEBUG. Otherwise, the call turns into a NOP.
  */
-#घोषणा ntfs_debug(f, a...)						\
-	__ntfs_debug(__खाता__, __LINE__, __func__, f, ##a)
+#define ntfs_debug(f, a...)						\
+	__ntfs_debug(__FILE__, __LINE__, __func__, f, ##a)
 
-बाह्य व्योम ntfs_debug_dump_runlist(स्थिर runlist_element *rl);
+extern void ntfs_debug_dump_runlist(const runlist_element *rl);
 
-#अन्यथा	/* !DEBUG */
+#else	/* !DEBUG */
 
-#घोषणा ntfs_debug(fmt, ...)						\
-करो अणु									\
-	अगर (0)								\
-		no_prपूर्णांकk(fmt, ##__VA_ARGS__);				\
-पूर्ण जबतक (0)
+#define ntfs_debug(fmt, ...)						\
+do {									\
+	if (0)								\
+		no_printk(fmt, ##__VA_ARGS__);				\
+} while (0)
 
-#घोषणा ntfs_debug_dump_runlist(rl)	करो अणुपूर्ण जबतक (0)
+#define ntfs_debug_dump_runlist(rl)	do {} while (0)
 
-#पूर्ण_अगर	/* !DEBUG */
+#endif	/* !DEBUG */
 
-बाह्य  __म_लिखो(3, 4)
-व्योम __ntfs_warning(स्थिर अक्षर *function, स्थिर काष्ठा super_block *sb,
-		    स्थिर अक्षर *fmt, ...);
-#घोषणा ntfs_warning(sb, f, a...)	__ntfs_warning(__func__, sb, f, ##a)
+extern  __printf(3, 4)
+void __ntfs_warning(const char *function, const struct super_block *sb,
+		    const char *fmt, ...);
+#define ntfs_warning(sb, f, a...)	__ntfs_warning(__func__, sb, f, ##a)
 
-बाह्य  __म_लिखो(3, 4)
-व्योम __ntfs_error(स्थिर अक्षर *function, स्थिर काष्ठा super_block *sb,
-		  स्थिर अक्षर *fmt, ...);
-#घोषणा ntfs_error(sb, f, a...)		__ntfs_error(__func__, sb, f, ##a)
+extern  __printf(3, 4)
+void __ntfs_error(const char *function, const struct super_block *sb,
+		  const char *fmt, ...);
+#define ntfs_error(sb, f, a...)		__ntfs_error(__func__, sb, f, ##a)
 
-#पूर्ण_अगर /* _LINUX_NTFS_DEBUG_H */
+#endif /* _LINUX_NTFS_DEBUG_H */

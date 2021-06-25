@@ -1,28 +1,27 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * sha512_base.h - core logic क्रम SHA-512 implementations
+ * sha512_base.h - core logic for SHA-512 implementations
  *
  * Copyright (C) 2015 Linaro Ltd <ard.biesheuvel@linaro.org>
  */
 
-#अगर_अघोषित _CRYPTO_SHA512_BASE_H
-#घोषणा _CRYPTO_SHA512_BASE_H
+#ifndef _CRYPTO_SHA512_BASE_H
+#define _CRYPTO_SHA512_BASE_H
 
-#समावेश <crypto/पूर्णांकernal/hash.h>
-#समावेश <crypto/sha2.h>
-#समावेश <linux/crypto.h>
-#समावेश <linux/module.h>
-#समावेश <linux/माला.स>
+#include <crypto/internal/hash.h>
+#include <crypto/sha2.h>
+#include <linux/crypto.h>
+#include <linux/module.h>
+#include <linux/string.h>
 
-#समावेश <यंत्र/unaligned.h>
+#include <asm/unaligned.h>
 
-प्रकार व्योम (sha512_block_fn)(काष्ठा sha512_state *sst, u8 स्थिर *src,
-			       पूर्णांक blocks);
+typedef void (sha512_block_fn)(struct sha512_state *sst, u8 const *src,
+			       int blocks);
 
-अटल अंतरभूत पूर्णांक sha384_base_init(काष्ठा shash_desc *desc)
-अणु
-	काष्ठा sha512_state *sctx = shash_desc_ctx(desc);
+static inline int sha384_base_init(struct shash_desc *desc)
+{
+	struct sha512_state *sctx = shash_desc_ctx(desc);
 
 	sctx->state[0] = SHA384_H0;
 	sctx->state[1] = SHA384_H1;
@@ -34,12 +33,12 @@
 	sctx->state[7] = SHA384_H7;
 	sctx->count[0] = sctx->count[1] = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक sha512_base_init(काष्ठा shash_desc *desc)
-अणु
-	काष्ठा sha512_state *sctx = shash_desc_ctx(desc);
+static inline int sha512_base_init(struct shash_desc *desc)
+{
+	struct sha512_state *sctx = shash_desc_ctx(desc);
 
 	sctx->state[0] = SHA512_H0;
 	sctx->state[1] = SHA512_H1;
@@ -51,85 +50,85 @@
 	sctx->state[7] = SHA512_H7;
 	sctx->count[0] = sctx->count[1] = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक sha512_base_करो_update(काष्ठा shash_desc *desc,
-					स्थिर u8 *data,
-					अचिन्हित पूर्णांक len,
+static inline int sha512_base_do_update(struct shash_desc *desc,
+					const u8 *data,
+					unsigned int len,
 					sha512_block_fn *block_fn)
-अणु
-	काष्ठा sha512_state *sctx = shash_desc_ctx(desc);
-	अचिन्हित पूर्णांक partial = sctx->count[0] % SHA512_BLOCK_SIZE;
+{
+	struct sha512_state *sctx = shash_desc_ctx(desc);
+	unsigned int partial = sctx->count[0] % SHA512_BLOCK_SIZE;
 
 	sctx->count[0] += len;
-	अगर (sctx->count[0] < len)
+	if (sctx->count[0] < len)
 		sctx->count[1]++;
 
-	अगर (unlikely((partial + len) >= SHA512_BLOCK_SIZE)) अणु
-		पूर्णांक blocks;
+	if (unlikely((partial + len) >= SHA512_BLOCK_SIZE)) {
+		int blocks;
 
-		अगर (partial) अणु
-			पूर्णांक p = SHA512_BLOCK_SIZE - partial;
+		if (partial) {
+			int p = SHA512_BLOCK_SIZE - partial;
 
-			स_नकल(sctx->buf + partial, data, p);
+			memcpy(sctx->buf + partial, data, p);
 			data += p;
 			len -= p;
 
 			block_fn(sctx, sctx->buf, 1);
-		पूर्ण
+		}
 
 		blocks = len / SHA512_BLOCK_SIZE;
 		len %= SHA512_BLOCK_SIZE;
 
-		अगर (blocks) अणु
+		if (blocks) {
 			block_fn(sctx, data, blocks);
 			data += blocks * SHA512_BLOCK_SIZE;
-		पूर्ण
+		}
 		partial = 0;
-	पूर्ण
-	अगर (len)
-		स_नकल(sctx->buf + partial, data, len);
+	}
+	if (len)
+		memcpy(sctx->buf + partial, data, len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक sha512_base_करो_finalize(काष्ठा shash_desc *desc,
+static inline int sha512_base_do_finalize(struct shash_desc *desc,
 					  sha512_block_fn *block_fn)
-अणु
-	स्थिर पूर्णांक bit_offset = SHA512_BLOCK_SIZE - माप(__be64[2]);
-	काष्ठा sha512_state *sctx = shash_desc_ctx(desc);
+{
+	const int bit_offset = SHA512_BLOCK_SIZE - sizeof(__be64[2]);
+	struct sha512_state *sctx = shash_desc_ctx(desc);
 	__be64 *bits = (__be64 *)(sctx->buf + bit_offset);
-	अचिन्हित पूर्णांक partial = sctx->count[0] % SHA512_BLOCK_SIZE;
+	unsigned int partial = sctx->count[0] % SHA512_BLOCK_SIZE;
 
 	sctx->buf[partial++] = 0x80;
-	अगर (partial > bit_offset) अणु
-		स_रखो(sctx->buf + partial, 0x0, SHA512_BLOCK_SIZE - partial);
+	if (partial > bit_offset) {
+		memset(sctx->buf + partial, 0x0, SHA512_BLOCK_SIZE - partial);
 		partial = 0;
 
 		block_fn(sctx, sctx->buf, 1);
-	पूर्ण
+	}
 
-	स_रखो(sctx->buf + partial, 0x0, bit_offset - partial);
+	memset(sctx->buf + partial, 0x0, bit_offset - partial);
 	bits[0] = cpu_to_be64(sctx->count[1] << 3 | sctx->count[0] >> 61);
 	bits[1] = cpu_to_be64(sctx->count[0] << 3);
 	block_fn(sctx, sctx->buf, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक sha512_base_finish(काष्ठा shash_desc *desc, u8 *out)
-अणु
-	अचिन्हित पूर्णांक digest_size = crypto_shash_digestsize(desc->tfm);
-	काष्ठा sha512_state *sctx = shash_desc_ctx(desc);
+static inline int sha512_base_finish(struct shash_desc *desc, u8 *out)
+{
+	unsigned int digest_size = crypto_shash_digestsize(desc->tfm);
+	struct sha512_state *sctx = shash_desc_ctx(desc);
 	__be64 *digest = (__be64 *)out;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; digest_size > 0; i++, digest_size -= माप(__be64))
+	for (i = 0; digest_size > 0; i++, digest_size -= sizeof(__be64))
 		put_unaligned_be64(sctx->state[i], digest++);
 
-	memzero_explicit(sctx, माप(*sctx));
-	वापस 0;
-पूर्ण
+	memzero_explicit(sctx, sizeof(*sctx));
+	return 0;
+}
 
-#पूर्ण_अगर /* _CRYPTO_SHA512_BASE_H */
+#endif /* _CRYPTO_SHA512_BASE_H */

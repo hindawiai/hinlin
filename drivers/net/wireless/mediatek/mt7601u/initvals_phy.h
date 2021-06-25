@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * (c) Copyright 2002-2010, Ralink Technology, Inc.
  * Copyright (C) 2015 Jakub Kicinski <kubakici@wp.pl>
  */
 
-#अगर_अघोषित __MT7601U_PHY_INITVALS_H
-#घोषणा __MT7601U_PHY_INITVALS_H
+#ifndef __MT7601U_PHY_INITVALS_H
+#define __MT7601U_PHY_INITVALS_H
 
-#घोषणा RF_REG_PAIR(bank, reg, value)				\
-	अणु MT_MCU_MEMMAP_RF | (bank) << 16 | (reg), value पूर्ण
+#define RF_REG_PAIR(bank, reg, value)				\
+	{ MT_MCU_MEMMAP_RF | (bank) << 16 | (reg), value }
 
-अटल स्थिर काष्ठा mt76_reg_pair rf_central[] = अणु
-	/* Bank 0 - क्रम central blocks: BG, PLL, XTAL, LO, ADC/DAC */
+static const struct mt76_reg_pair rf_central[] = {
+	/* Bank 0 - for central blocks: BG, PLL, XTAL, LO, ADC/DAC */
 	RF_REG_PAIR(0,	 0, 0x02),
 	RF_REG_PAIR(0,	 1, 0x01),
 	RF_REG_PAIR(0,	 2, 0x11),
@@ -63,9 +62,9 @@
 	RF_REG_PAIR(0,	42, 0x1b),
 	RF_REG_PAIR(0,	43, 0x02),
 	RF_REG_PAIR(0,	44, 0x00),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mt76_reg_pair rf_channel[] = अणु
+static const struct mt76_reg_pair rf_channel[] = {
 	RF_REG_PAIR(4,	 0, 0x01),
 	RF_REG_PAIR(4,	 1, 0x00),
 	RF_REG_PAIR(4,	 2, 0x00),
@@ -131,9 +130,9 @@
 	RF_REG_PAIR(4,	61, 0x10),
 	RF_REG_PAIR(4,	62, 0x1c),
 	RF_REG_PAIR(4,	63, 0x00), /* reserved */
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mt76_reg_pair rf_vga[] = अणु
+static const struct mt76_reg_pair rf_vga[] = {
 	RF_REG_PAIR(5,	 0, 0x47),
 	RF_REG_PAIR(5,	 1, 0x00),
 	RF_REG_PAIR(5,	 2, 0x00),
@@ -193,92 +192,92 @@
 	RF_REG_PAIR(5,	61, 0x02),
 	RF_REG_PAIR(5,	62, 0x00),
 	RF_REG_PAIR(5,	63, 0x00),
-पूर्ण;
+};
 
-/* TODO: BBP178 is set to 0xff क्रम "CCK CH14 OBW" which overrides the settings
- *	 from channel चयनing. Seems stupid at best.
+/* TODO: BBP178 is set to 0xff for "CCK CH14 OBW" which overrides the settings
+ *	 from channel switching. Seems stupid at best.
  */
-अटल स्थिर काष्ठा mt76_reg_pair bbp_high_temp[] = अणु
-	अणु  75, 0x60 पूर्ण,
-	अणु  92, 0x02 पूर्ण,
-	अणु 178, 0xff पूर्ण, /* For CCK CH14 OBW */
-	अणु 195, 0x88 पूर्ण, अणु 196, 0x60 पूर्ण,
-पूर्ण, bbp_high_temp_bw20[] = अणु
-	अणु  69, 0x12 पूर्ण,
-	अणु  91, 0x07 पूर्ण,
-	अणु 195, 0x23 पूर्ण, अणु 196, 0x17 पूर्ण,
-	अणु 195, 0x24 पूर्ण, अणु 196, 0x06 पूर्ण,
-	अणु 195, 0x81 पूर्ण, अणु 196, 0x12 पूर्ण,
-	अणु 195, 0x83 पूर्ण, अणु 196, 0x17 पूर्ण,
-पूर्ण, bbp_high_temp_bw40[] = अणु
-	अणु  69, 0x15 पूर्ण,
-	अणु  91, 0x04 पूर्ण,
-	अणु 195, 0x23 पूर्ण, अणु 196, 0x12 पूर्ण,
-	अणु 195, 0x24 पूर्ण, अणु 196, 0x08 पूर्ण,
-	अणु 195, 0x81 पूर्ण, अणु 196, 0x15 पूर्ण,
-	अणु 195, 0x83 पूर्ण, अणु 196, 0x16 पूर्ण,
-पूर्ण, bbp_low_temp[] = अणु
-	अणु 178, 0xff पूर्ण, /* For CCK CH14 OBW */
-पूर्ण, bbp_low_temp_bw20[] = अणु
-	अणु  69, 0x12 पूर्ण,
-	अणु  75, 0x5e पूर्ण,
-	अणु  91, 0x07 पूर्ण,
-	अणु  92, 0x02 पूर्ण,
-	अणु 195, 0x23 पूर्ण, अणु 196, 0x17 पूर्ण,
-	अणु 195, 0x24 पूर्ण, अणु 196, 0x06 पूर्ण,
-	अणु 195, 0x81 पूर्ण, अणु 196, 0x12 पूर्ण,
-	अणु 195, 0x83 पूर्ण, अणु 196, 0x17 पूर्ण,
-	अणु 195, 0x88 पूर्ण, अणु 196, 0x5e पूर्ण,
-पूर्ण, bbp_low_temp_bw40[] = अणु
-	अणु  69, 0x15 पूर्ण,
-	अणु  75, 0x5c पूर्ण,
-	अणु  91, 0x04 पूर्ण,
-	अणु  92, 0x03 पूर्ण,
-	अणु 195, 0x23 पूर्ण, अणु 196, 0x10 पूर्ण,
-	अणु 195, 0x24 पूर्ण, अणु 196, 0x08 पूर्ण,
-	अणु 195, 0x81 पूर्ण, अणु 196, 0x15 पूर्ण,
-	अणु 195, 0x83 पूर्ण, अणु 196, 0x16 पूर्ण,
-	अणु 195, 0x88 पूर्ण, अणु 196, 0x5b पूर्ण,
-पूर्ण, bbp_normal_temp[] = अणु
-	अणु  75, 0x60 पूर्ण,
-	अणु  92, 0x02 पूर्ण,
-	अणु 178, 0xff पूर्ण, /* For CCK CH14 OBW */
-	अणु 195, 0x88 पूर्ण, अणु 196, 0x60 पूर्ण,
-पूर्ण, bbp_normal_temp_bw20[] = अणु
-	अणु  69, 0x12 पूर्ण,
-	अणु  91, 0x07 पूर्ण,
-	अणु 195, 0x23 पूर्ण, अणु 196, 0x17 पूर्ण,
-	अणु 195, 0x24 पूर्ण, अणु 196, 0x06 पूर्ण,
-	अणु 195, 0x81 पूर्ण, अणु 196, 0x12 पूर्ण,
-	अणु 195, 0x83 पूर्ण, अणु 196, 0x17 पूर्ण,
-पूर्ण, bbp_normal_temp_bw40[] = अणु
-	अणु  69, 0x15 पूर्ण,
-	अणु  91, 0x04 पूर्ण,
-	अणु 195, 0x23 पूर्ण, अणु 196, 0x12 पूर्ण,
-	अणु 195, 0x24 पूर्ण, अणु 196, 0x08 पूर्ण,
-	अणु 195, 0x81 पूर्ण, अणु 196, 0x15 पूर्ण,
-	अणु 195, 0x83 पूर्ण, अणु 196, 0x16 पूर्ण,
-पूर्ण;
+static const struct mt76_reg_pair bbp_high_temp[] = {
+	{  75, 0x60 },
+	{  92, 0x02 },
+	{ 178, 0xff }, /* For CCK CH14 OBW */
+	{ 195, 0x88 }, { 196, 0x60 },
+}, bbp_high_temp_bw20[] = {
+	{  69, 0x12 },
+	{  91, 0x07 },
+	{ 195, 0x23 }, { 196, 0x17 },
+	{ 195, 0x24 }, { 196, 0x06 },
+	{ 195, 0x81 }, { 196, 0x12 },
+	{ 195, 0x83 }, { 196, 0x17 },
+}, bbp_high_temp_bw40[] = {
+	{  69, 0x15 },
+	{  91, 0x04 },
+	{ 195, 0x23 }, { 196, 0x12 },
+	{ 195, 0x24 }, { 196, 0x08 },
+	{ 195, 0x81 }, { 196, 0x15 },
+	{ 195, 0x83 }, { 196, 0x16 },
+}, bbp_low_temp[] = {
+	{ 178, 0xff }, /* For CCK CH14 OBW */
+}, bbp_low_temp_bw20[] = {
+	{  69, 0x12 },
+	{  75, 0x5e },
+	{  91, 0x07 },
+	{  92, 0x02 },
+	{ 195, 0x23 }, { 196, 0x17 },
+	{ 195, 0x24 }, { 196, 0x06 },
+	{ 195, 0x81 }, { 196, 0x12 },
+	{ 195, 0x83 }, { 196, 0x17 },
+	{ 195, 0x88 }, { 196, 0x5e },
+}, bbp_low_temp_bw40[] = {
+	{  69, 0x15 },
+	{  75, 0x5c },
+	{  91, 0x04 },
+	{  92, 0x03 },
+	{ 195, 0x23 }, { 196, 0x10 },
+	{ 195, 0x24 }, { 196, 0x08 },
+	{ 195, 0x81 }, { 196, 0x15 },
+	{ 195, 0x83 }, { 196, 0x16 },
+	{ 195, 0x88 }, { 196, 0x5b },
+}, bbp_normal_temp[] = {
+	{  75, 0x60 },
+	{  92, 0x02 },
+	{ 178, 0xff }, /* For CCK CH14 OBW */
+	{ 195, 0x88 }, { 196, 0x60 },
+}, bbp_normal_temp_bw20[] = {
+	{  69, 0x12 },
+	{  91, 0x07 },
+	{ 195, 0x23 }, { 196, 0x17 },
+	{ 195, 0x24 }, { 196, 0x06 },
+	{ 195, 0x81 }, { 196, 0x12 },
+	{ 195, 0x83 }, { 196, 0x17 },
+}, bbp_normal_temp_bw40[] = {
+	{  69, 0x15 },
+	{  91, 0x04 },
+	{ 195, 0x23 }, { 196, 0x12 },
+	{ 195, 0x24 }, { 196, 0x08 },
+	{ 195, 0x81 }, { 196, 0x15 },
+	{ 195, 0x83 }, { 196, 0x16 },
+};
 
-#घोषणा BBP_TABLE(arr) अणु arr, ARRAY_SIZE(arr), पूर्ण
+#define BBP_TABLE(arr) { arr, ARRAY_SIZE(arr), }
 
-अटल स्थिर काष्ठा reg_table अणु
-	स्थिर काष्ठा mt76_reg_pair *regs;
-	माप_प्रकार n;
-पूर्ण bbp_mode_table[3][3] = अणु
-	अणु
+static const struct reg_table {
+	const struct mt76_reg_pair *regs;
+	size_t n;
+} bbp_mode_table[3][3] = {
+	{
 		BBP_TABLE(bbp_normal_temp_bw20),
 		BBP_TABLE(bbp_normal_temp_bw40),
 		BBP_TABLE(bbp_normal_temp),
-	पूर्ण, अणु
+	}, {
 		BBP_TABLE(bbp_high_temp_bw20),
 		BBP_TABLE(bbp_high_temp_bw40),
 		BBP_TABLE(bbp_high_temp),
-	पूर्ण, अणु
+	}, {
 		BBP_TABLE(bbp_low_temp_bw20),
 		BBP_TABLE(bbp_low_temp_bw40),
 		BBP_TABLE(bbp_low_temp),
-	पूर्ण
-पूर्ण;
+	}
+};
 
-#पूर्ण_अगर
+#endif

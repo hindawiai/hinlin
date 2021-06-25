@@ -1,149 +1,148 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  */
-#अगर_अघोषित _ASM_PCI_H
-#घोषणा _ASM_PCI_H
+#ifndef _ASM_PCI_H
+#define _ASM_PCI_H
 
-#समावेश <linux/mm.h>
+#include <linux/mm.h>
 
-#अगर_घोषित __KERNEL__
+#ifdef __KERNEL__
 
 /*
- * This file essentially defines the पूर्णांकerface between board
- * specअगरic PCI code and MIPS common PCI code.	Should potentially put
- * पूर्णांकo include/यंत्र/pci.h file.
+ * This file essentially defines the interface between board
+ * specific PCI code and MIPS common PCI code.	Should potentially put
+ * into include/asm/pci.h file.
  */
 
-#समावेश <linux/ioport.h>
-#समावेश <linux/list.h>
-#समावेश <linux/of.h>
+#include <linux/ioport.h>
+#include <linux/list.h>
+#include <linux/of.h>
 
-#अगर_घोषित CONFIG_PCI_DRIVERS_LEGACY
+#ifdef CONFIG_PCI_DRIVERS_LEGACY
 
 /*
  * Each pci channel is a top-level PCI bus seem by CPU.	 A machine  with
  * multiple PCI channels may have multiple PCI host controllers or a
  * single controller supporting multiple channels.
  */
-काष्ठा pci_controller अणु
-	काष्ठा list_head list;
-	काष्ठा pci_bus *bus;
-	काष्ठा device_node *of_node;
+struct pci_controller {
+	struct list_head list;
+	struct pci_bus *bus;
+	struct device_node *of_node;
 
-	काष्ठा pci_ops *pci_ops;
-	काष्ठा resource *mem_resource;
-	अचिन्हित दीर्घ mem_offset;
-	काष्ठा resource *io_resource;
-	अचिन्हित दीर्घ io_offset;
-	अचिन्हित दीर्घ io_map_base;
+	struct pci_ops *pci_ops;
+	struct resource *mem_resource;
+	unsigned long mem_offset;
+	struct resource *io_resource;
+	unsigned long io_offset;
+	unsigned long io_map_base;
 
-#अगर_अघोषित CONFIG_PCI_DOMAINS_GENERIC
-	अचिन्हित पूर्णांक index;
+#ifndef CONFIG_PCI_DOMAINS_GENERIC
+	unsigned int index;
 	/* For compatibility with current (as of July 2003) pciutils
-	   and XFree86. Eventually will be हटाओd. */
-	अचिन्हित पूर्णांक need_करोमुख्य_info;
-#पूर्ण_अगर
+	   and XFree86. Eventually will be removed. */
+	unsigned int need_domain_info;
+#endif
 
-	/* Optional access methods क्रम पढ़ोing/writing the bus number
+	/* Optional access methods for reading/writing the bus number
 	   of the PCI controller */
-	पूर्णांक (*get_busno)(व्योम);
-	व्योम (*set_busno)(पूर्णांक busno);
-पूर्ण;
+	int (*get_busno)(void);
+	void (*set_busno)(int busno);
+};
 
 /*
- * Used by boards to रेजिस्टर their PCI busses beक्रमe the actual scanning.
+ * Used by boards to register their PCI busses before the actual scanning.
  */
-बाह्य व्योम रेजिस्टर_pci_controller(काष्ठा pci_controller *hose);
+extern void register_pci_controller(struct pci_controller *hose);
 
 /*
  * board supplied pci irq fixup routine
  */
-बाह्य पूर्णांक pcibios_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin);
+extern int pcibios_map_irq(const struct pci_dev *dev, u8 slot, u8 pin);
 
-/* Do platक्रमm specअगरic device initialization at pci_enable_device() समय */
-बाह्य पूर्णांक pcibios_plat_dev_init(काष्ठा pci_dev *dev);
+/* Do platform specific device initialization at pci_enable_device() time */
+extern int pcibios_plat_dev_init(struct pci_dev *dev);
 
-बाह्य अक्षर * (*pcibios_plat_setup)(अक्षर *str);
+extern char * (*pcibios_plat_setup)(char *str);
 
-#अगर_घोषित CONFIG_OF
+#ifdef CONFIG_OF
 /* this function parses memory ranges from a device node */
-बाह्य व्योम pci_load_of_ranges(काष्ठा pci_controller *hose,
-			       काष्ठा device_node *node);
-#अन्यथा
-अटल अंतरभूत व्योम pci_load_of_ranges(काष्ठा pci_controller *hose,
-				      काष्ठा device_node *node) अणुपूर्ण
-#पूर्ण_अगर
+extern void pci_load_of_ranges(struct pci_controller *hose,
+			       struct device_node *node);
+#else
+static inline void pci_load_of_ranges(struct pci_controller *hose,
+				      struct device_node *node) {}
+#endif
 
-#अगर_घोषित CONFIG_PCI_DOMAINS_GENERIC
-अटल अंतरभूत व्योम set_pci_need_करोमुख्य_info(काष्ठा pci_controller *hose,
-					    पूर्णांक need_करोमुख्य_info)
-अणु
-	/* nothing to करो */
-पूर्ण
-#या_अगर defined(CONFIG_PCI_DOMAINS)
-अटल अंतरभूत व्योम set_pci_need_करोमुख्य_info(काष्ठा pci_controller *hose,
-					    पूर्णांक need_करोमुख्य_info)
-अणु
-	hose->need_करोमुख्य_info = need_करोमुख्य_info;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PCI_DOMAINS */
+#ifdef CONFIG_PCI_DOMAINS_GENERIC
+static inline void set_pci_need_domain_info(struct pci_controller *hose,
+					    int need_domain_info)
+{
+	/* nothing to do */
+}
+#elif defined(CONFIG_PCI_DOMAINS)
+static inline void set_pci_need_domain_info(struct pci_controller *hose,
+					    int need_domain_info)
+{
+	hose->need_domain_info = need_domain_info;
+}
+#endif /* CONFIG_PCI_DOMAINS */
 
-#पूर्ण_अगर
+#endif
 
-/* Can be used to override the logic in pci_scan_bus क्रम skipping
-   alपढ़ोy-configured bus numbers - to be used क्रम buggy BIOSes
+/* Can be used to override the logic in pci_scan_bus for skipping
+   already-configured bus numbers - to be used for buggy BIOSes
    or architectures with incomplete PCI setup by the loader */
-अटल अंतरभूत अचिन्हित पूर्णांक pcibios_assign_all_busses(व्योम)
-अणु
-	वापस 1;
-पूर्ण
+static inline unsigned int pcibios_assign_all_busses(void)
+{
+	return 1;
+}
 
-बाह्य अचिन्हित दीर्घ PCIBIOS_MIN_IO;
-बाह्य अचिन्हित दीर्घ PCIBIOS_MIN_MEM;
+extern unsigned long PCIBIOS_MIN_IO;
+extern unsigned long PCIBIOS_MIN_MEM;
 
-#घोषणा PCIBIOS_MIN_CARDBUS_IO	0x4000
+#define PCIBIOS_MIN_CARDBUS_IO	0x4000
 
-#घोषणा HAVE_PCI_MMAP
-#घोषणा ARCH_GENERIC_PCI_MMAP_RESOURCE
+#define HAVE_PCI_MMAP
+#define ARCH_GENERIC_PCI_MMAP_RESOURCE
 
 /*
  * Dynamic DMA mapping stuff.
- * MIPS has everything mapped अटलally.
+ * MIPS has everything mapped statically.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/माला.स>
-#समावेश <यंत्र/पन.स>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/scatterlist.h>
+#include <linux/string.h>
+#include <asm/io.h>
 
-#अगर_घोषित CONFIG_PCI_DOMAINS_GENERIC
-अटल अंतरभूत पूर्णांक pci_proc_करोमुख्य(काष्ठा pci_bus *bus)
-अणु
-	वापस pci_करोमुख्य_nr(bus);
-पूर्ण
-#या_अगर defined(CONFIG_PCI_DOMAINS)
-#घोषणा pci_करोमुख्य_nr(bus) ((काष्ठा pci_controller *)(bus)->sysdata)->index
+#ifdef CONFIG_PCI_DOMAINS_GENERIC
+static inline int pci_proc_domain(struct pci_bus *bus)
+{
+	return pci_domain_nr(bus);
+}
+#elif defined(CONFIG_PCI_DOMAINS)
+#define pci_domain_nr(bus) ((struct pci_controller *)(bus)->sysdata)->index
 
-अटल अंतरभूत पूर्णांक pci_proc_करोमुख्य(काष्ठा pci_bus *bus)
-अणु
-	काष्ठा pci_controller *hose = bus->sysdata;
-	वापस hose->need_करोमुख्य_info;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PCI_DOMAINS */
+static inline int pci_proc_domain(struct pci_bus *bus)
+{
+	struct pci_controller *hose = bus->sysdata;
+	return hose->need_domain_info;
+}
+#endif /* CONFIG_PCI_DOMAINS */
 
-#पूर्ण_अगर /* __KERNEL__ */
+#endif /* __KERNEL__ */
 
-/* Do platक्रमm specअगरic device initialization at pci_enable_device() समय */
-बाह्य पूर्णांक pcibios_plat_dev_init(काष्ठा pci_dev *dev);
+/* Do platform specific device initialization at pci_enable_device() time */
+extern int pcibios_plat_dev_init(struct pci_dev *dev);
 
-/* Chances are this पूर्णांकerrupt is wired PC-style ...  */
-अटल अंतरभूत पूर्णांक pci_get_legacy_ide_irq(काष्ठा pci_dev *dev, पूर्णांक channel)
-अणु
-	वापस channel ? 15 : 14;
-पूर्ण
+/* Chances are this interrupt is wired PC-style ...  */
+static inline int pci_get_legacy_ide_irq(struct pci_dev *dev, int channel)
+{
+	return channel ? 15 : 14;
+}
 
-#पूर्ण_अगर /* _ASM_PCI_H */
+#endif /* _ASM_PCI_H */

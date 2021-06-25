@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: ((GPL-2.0 WITH Linux-syscall-note) OR BSD-3-Clause) */
+/* SPDX-License-Identifier: ((GPL-2.0 WITH Linux-syscall-note) OR BSD-3-Clause) */
 /*
  * Copyright (c) 2014, Ericsson AB
  * All rights reserved.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary क्रमm must reproduce the above copyright
+ * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    करोcumentation and/or other materials provided with the distribution.
+ *    documentation and/or other materials provided with the distribution.
  * 3. Neither the names of the copyright holders nor the names of its
- *    contributors may be used to enकरोrse or promote products derived from
- *    this software without specअगरic prior written permission.
+ *    contributors may be used to endorse or promote products derived from
+ *    this software without specific prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") version 2 as published by the Free
@@ -24,7 +23,7 @@
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -33,14 +32,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#अगर_अघोषित _LINUX_TIPC_NETLINK_H_
-#घोषणा _LINUX_TIPC_NETLINK_H_
+#ifndef _LINUX_TIPC_NETLINK_H_
+#define _LINUX_TIPC_NETLINK_H_
 
-#घोषणा TIPC_GENL_V2_NAME      "TIPCv2"
-#घोषणा TIPC_GENL_V2_VERSION   0x1
+#define TIPC_GENL_V2_NAME      "TIPCv2"
+#define TIPC_GENL_V2_VERSION   0x1
 
 /* Netlink commands */
-क्रमागत अणु
+enum {
 	TIPC_NL_UNSPEC,
 	TIPC_NL_LEGACY,
 	TIPC_NL_BEARER_DISABLE,
@@ -70,10 +69,10 @@
 
 	__TIPC_NL_CMD_MAX,
 	TIPC_NL_CMD_MAX = __TIPC_NL_CMD_MAX - 1
-पूर्ण;
+};
 
 /* Top level netlink attributes */
-क्रमागत अणु
+enum {
 	TIPC_NLA_UNSPEC,
 	TIPC_NLA_BEARER,		/* nest */
 	TIPC_NLA_SOCK,			/* nest */
@@ -88,10 +87,10 @@
 
 	__TIPC_NLA_MAX,
 	TIPC_NLA_MAX = __TIPC_NLA_MAX - 1
-पूर्ण;
+};
 
 /* Bearer info */
-क्रमागत अणु
+enum {
 	TIPC_NLA_BEARER_UNSPEC,
 	TIPC_NLA_BEARER_NAME,		/* string */
 	TIPC_NLA_BEARER_PROP,		/* nest */
@@ -100,9 +99,9 @@
 
 	__TIPC_NLA_BEARER_MAX,
 	TIPC_NLA_BEARER_MAX = __TIPC_NLA_BEARER_MAX - 1
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	TIPC_NLA_UDP_UNSPEC,
 	TIPC_NLA_UDP_LOCAL,		/* sockaddr_storage */
 	TIPC_NLA_UDP_REMOTE,		/* sockaddr_storage */
@@ -110,9 +109,9 @@
 
 	__TIPC_NLA_UDP_MAX,
 	TIPC_NLA_UDP_MAX = __TIPC_NLA_UDP_MAX - 1
-पूर्ण;
+};
 /* Socket info */
-क्रमागत अणु
+enum {
 	TIPC_NLA_SOCK_UNSPEC,
 	TIPC_NLA_SOCK_ADDR,		/* u32 */
 	TIPC_NLA_SOCK_REF,		/* u32 */
@@ -129,10 +128,10 @@
 
 	__TIPC_NLA_SOCK_MAX,
 	TIPC_NLA_SOCK_MAX = __TIPC_NLA_SOCK_MAX - 1
-पूर्ण;
+};
 
 /* Link info */
-क्रमागत अणु
+enum {
 	TIPC_NLA_LINK_UNSPEC,
 	TIPC_NLA_LINK_NAME,		/* string */
 	TIPC_NLA_LINK_DEST,		/* u32 */
@@ -147,20 +146,20 @@
 
 	__TIPC_NLA_LINK_MAX,
 	TIPC_NLA_LINK_MAX = __TIPC_NLA_LINK_MAX - 1
-पूर्ण;
+};
 
 /* Media info */
-क्रमागत अणु
+enum {
 	TIPC_NLA_MEDIA_UNSPEC,
 	TIPC_NLA_MEDIA_NAME,		/* string */
 	TIPC_NLA_MEDIA_PROP,		/* nest */
 
 	__TIPC_NLA_MEDIA_MAX,
 	TIPC_NLA_MEDIA_MAX = __TIPC_NLA_MEDIA_MAX - 1
-पूर्ण;
+};
 
 /* Node info */
-क्रमागत अणु
+enum {
 	TIPC_NLA_NODE_UNSPEC,
 	TIPC_NLA_NODE_ADDR,		/* u32 */
 	TIPC_NLA_NODE_UP,		/* flag */
@@ -171,10 +170,10 @@
 
 	__TIPC_NLA_NODE_MAX,
 	TIPC_NLA_NODE_MAX = __TIPC_NLA_NODE_MAX - 1
-पूर्ण;
+};
 
 /* Net info */
-क्रमागत अणु
+enum {
 	TIPC_NLA_NET_UNSPEC,
 	TIPC_NLA_NET_ID,		/* u32 */
 	TIPC_NLA_NET_ADDR,		/* u32 */
@@ -184,19 +183,19 @@
 
 	__TIPC_NLA_NET_MAX,
 	TIPC_NLA_NET_MAX = __TIPC_NLA_NET_MAX - 1
-पूर्ण;
+};
 
 /* Name table info */
-क्रमागत अणु
+enum {
 	TIPC_NLA_NAME_TABLE_UNSPEC,
 	TIPC_NLA_NAME_TABLE_PUBL,	/* nest */
 
 	__TIPC_NLA_NAME_TABLE_MAX,
 	TIPC_NLA_NAME_TABLE_MAX = __TIPC_NLA_NAME_TABLE_MAX - 1
-पूर्ण;
+};
 
 /* Monitor info */
-क्रमागत अणु
+enum {
 	TIPC_NLA_MON_UNSPEC,
 	TIPC_NLA_MON_ACTIVATION_THRESHOLD,	/* u32 */
 	TIPC_NLA_MON_REF,			/* u32 */
@@ -207,10 +206,10 @@
 
 	__TIPC_NLA_MON_MAX,
 	TIPC_NLA_MON_MAX = __TIPC_NLA_MON_MAX - 1
-पूर्ण;
+};
 
 /* Publication info */
-क्रमागत अणु
+enum {
 	TIPC_NLA_PUBL_UNSPEC,
 
 	TIPC_NLA_PUBL_TYPE,		/* u32 */
@@ -223,10 +222,10 @@
 
 	__TIPC_NLA_PUBL_MAX,
 	TIPC_NLA_PUBL_MAX = __TIPC_NLA_PUBL_MAX - 1
-पूर्ण;
+};
 
 /* Monitor peer info */
-क्रमागत अणु
+enum {
 	TIPC_NLA_MON_PEER_UNSPEC,
 
 	TIPC_NLA_MON_PEER_ADDR,			/* u32 */
@@ -241,10 +240,10 @@
 
 	__TIPC_NLA_MON_PEER_MAX,
 	TIPC_NLA_MON_PEER_MAX = __TIPC_NLA_MON_PEER_MAX - 1
-पूर्ण;
+};
 
 /* Nest, socket group info */
-क्रमागत अणु
+enum {
 	TIPC_NLA_SOCK_GROUP_ID,			/* u32 */
 	TIPC_NLA_SOCK_GROUP_OPEN,		/* flag */
 	TIPC_NLA_SOCK_GROUP_NODE_SCOPE,		/* flag */
@@ -254,10 +253,10 @@
 
 	__TIPC_NLA_SOCK_GROUP_MAX,
 	TIPC_NLA_SOCK_GROUP_MAX = __TIPC_NLA_SOCK_GROUP_MAX - 1
-पूर्ण;
+};
 
 /* Nest, connection info */
-क्रमागत अणु
+enum {
 	TIPC_NLA_CON_UNSPEC,
 
 	TIPC_NLA_CON_FLAG,		/* flag */
@@ -268,10 +267,10 @@
 
 	__TIPC_NLA_CON_MAX,
 	TIPC_NLA_CON_MAX = __TIPC_NLA_CON_MAX - 1
-पूर्ण;
+};
 
 /* Nest, socket statistics info */
-क्रमागत अणु
+enum {
 	TIPC_NLA_SOCK_STAT_RCVQ,	/* u32 */
 	TIPC_NLA_SOCK_STAT_SENDQ,	/* u32 */
 	TIPC_NLA_SOCK_STAT_LINK_CONG,	/* flag */
@@ -280,10 +279,10 @@
 
 	__TIPC_NLA_SOCK_STAT_MAX,
 	TIPC_NLA_SOCK_STAT_MAX = __TIPC_NLA_SOCK_STAT_MAX - 1
-पूर्ण;
+};
 
-/* Nest, link propreties. Valid क्रम link, media and bearer */
-क्रमागत अणु
+/* Nest, link propreties. Valid for link, media and bearer */
+enum {
 	TIPC_NLA_PROP_UNSPEC,
 
 	TIPC_NLA_PROP_PRIO,		/* u32 */
@@ -295,10 +294,10 @@
 
 	__TIPC_NLA_PROP_MAX,
 	TIPC_NLA_PROP_MAX = __TIPC_NLA_PROP_MAX - 1
-पूर्ण;
+};
 
 /* Nest, statistics info */
-क्रमागत अणु
+enum {
 	TIPC_NLA_STATS_UNSPEC,
 
 	TIPC_NLA_STATS_RX_INFO,		/* u32 */
@@ -337,6 +336,6 @@
 
 	__TIPC_NLA_STATS_MAX,
 	TIPC_NLA_STATS_MAX = __TIPC_NLA_STATS_MAX - 1
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

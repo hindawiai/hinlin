@@ -1,36 +1,35 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Intel Elkhart Lake PCH pinctrl/GPIO driver
  *
  * Copyright (C) 2019, Intel Corporation
- * Author: Andy Shevchenko <andriy.shevchenko@linux.पूर्णांकel.com>
+ * Author: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
  */
 
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/mod_devicetable.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
 
-#समावेश <linux/pinctrl/pinctrl.h>
+#include <linux/pinctrl/pinctrl.h>
 
-#समावेश "pinctrl-intel.h"
+#include "pinctrl-intel.h"
 
-#घोषणा EHL_PAD_OWN	0x020
-#घोषणा EHL_PADCFGLOCK	0x080
-#घोषणा EHL_HOSTSW_OWN	0x0b0
-#घोषणा EHL_GPI_IS	0x100
-#घोषणा EHL_GPI_IE	0x120
+#define EHL_PAD_OWN	0x020
+#define EHL_PADCFGLOCK	0x080
+#define EHL_HOSTSW_OWN	0x0b0
+#define EHL_GPI_IS	0x100
+#define EHL_GPI_IE	0x120
 
-#घोषणा EHL_GPP(r, s, e)				\
-	अणु						\
+#define EHL_GPP(r, s, e)				\
+	{						\
 		.reg_num = (r),				\
 		.base = (s),				\
 		.size = ((e) - (s) + 1),		\
-	पूर्ण
+	}
 
-#घोषणा EHL_COMMUNITY(s, e, g)				\
-	अणु						\
-		.paकरोwn_offset = EHL_PAD_OWN,		\
+#define EHL_COMMUNITY(s, e, g)				\
+	{						\
+		.padown_offset = EHL_PAD_OWN,		\
 		.padcfglock_offset = EHL_PADCFGLOCK,	\
 		.hostown_offset = EHL_HOSTSW_OWN,	\
 		.is_offset = EHL_GPI_IS,		\
@@ -39,10 +38,10 @@
 		.npins = ((e) - (s) + 1),		\
 		.gpps = (g),				\
 		.ngpps = ARRAY_SIZE(g),			\
-	पूर्ण
+	}
 
 /* Elkhart Lake */
-अटल स्थिर काष्ठा pinctrl_pin_desc ehl_community0_pins[] = अणु
+static const struct pinctrl_pin_desc ehl_community0_pins[] = {
 	/* GPP_B */
 	PINCTRL_PIN(0, "CORE_VID_0"),
 	PINCTRL_PIN(1, "CORE_VID_1"),
@@ -113,27 +112,27 @@
 	PINCTRL_PIN(64, "ESPI_RESETB"),
 	PINCTRL_PIN(65, "SD3_WP"),
 	PINCTRL_PIN(66, "ESPI_CLK_LOOPBK"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_padgroup ehl_community0_gpps[] = अणु
+static const struct intel_padgroup ehl_community0_gpps[] = {
 	EHL_GPP(0, 0, 25),	/* GPP_B */
 	EHL_GPP(1, 26, 41),	/* GPP_T */
 	EHL_GPP(2, 42, 66),	/* GPP_G */
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_community ehl_community0[] = अणु
+static const struct intel_community ehl_community0[] = {
 	EHL_COMMUNITY(0, 66, ehl_community0_gpps),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data ehl_community0_soc_data = अणु
+static const struct intel_pinctrl_soc_data ehl_community0_soc_data = {
 	.uid = "0",
 	.pins = ehl_community0_pins,
 	.npins = ARRAY_SIZE(ehl_community0_pins),
 	.communities = ehl_community0,
 	.ncommunities = ARRAY_SIZE(ehl_community0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा pinctrl_pin_desc ehl_community1_pins[] = अणु
+static const struct pinctrl_pin_desc ehl_community1_pins[] = {
 	/* GPP_V */
 	PINCTRL_PIN(0, "EMMC_CMD"),
 	PINCTRL_PIN(1, "EMMC_DATA0"),
@@ -252,29 +251,29 @@
 	PINCTRL_PIN(110, "vI2S2_TXD"),
 	PINCTRL_PIN(111, "vI2S2_RXD"),
 	PINCTRL_PIN(112, "vSD3_CD_B"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_padgroup ehl_community1_gpps[] = अणु
+static const struct intel_padgroup ehl_community1_gpps[] = {
 	EHL_GPP(0, 0, 15),	/* GPP_V */
 	EHL_GPP(1, 16, 39),	/* GPP_H */
 	EHL_GPP(2, 40, 60),	/* GPP_D */
 	EHL_GPP(3, 61, 84),	/* GPP_U */
 	EHL_GPP(4, 85, 112),	/* vGPIO */
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_community ehl_community1[] = अणु
+static const struct intel_community ehl_community1[] = {
 	EHL_COMMUNITY(0, 112, ehl_community1_gpps),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data ehl_community1_soc_data = अणु
+static const struct intel_pinctrl_soc_data ehl_community1_soc_data = {
 	.uid = "1",
 	.pins = ehl_community1_pins,
 	.npins = ARRAY_SIZE(ehl_community1_pins),
 	.communities = ehl_community1,
 	.ncommunities = ARRAY_SIZE(ehl_community1),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा pinctrl_pin_desc ehl_community3_pins[] = अणु
+static const struct pinctrl_pin_desc ehl_community3_pins[] = {
 	/* CPU */
 	PINCTRL_PIN(0, "HDACPU_SDI"),
 	PINCTRL_PIN(1, "HDACPU_SDO"),
@@ -326,28 +325,28 @@
 	PINCTRL_PIN(44, "ESPI_USB_OCB_1"),
 	PINCTRL_PIN(45, "ESPI_USB_OCB_2"),
 	PINCTRL_PIN(46, "ESPI_USB_OCB_3"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_padgroup ehl_community3_gpps[] = अणु
+static const struct intel_padgroup ehl_community3_gpps[] = {
 	EHL_GPP(0, 0, 16),	/* CPU */
 	EHL_GPP(1, 17, 18),	/* GPP_S */
 	EHL_GPP(2, 19, 42),	/* GPP_A */
 	EHL_GPP(3, 43, 46),	/* vGPIO_3 */
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_community ehl_community3[] = अणु
+static const struct intel_community ehl_community3[] = {
 	EHL_COMMUNITY(0, 46, ehl_community3_gpps),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data ehl_community3_soc_data = अणु
+static const struct intel_pinctrl_soc_data ehl_community3_soc_data = {
 	.uid = "3",
 	.pins = ehl_community3_pins,
 	.npins = ARRAY_SIZE(ehl_community3_pins),
 	.communities = ehl_community3,
 	.ncommunities = ARRAY_SIZE(ehl_community3),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा pinctrl_pin_desc ehl_community4_pins[] = अणु
+static const struct pinctrl_pin_desc ehl_community4_pins[] = {
 	/* GPP_C */
 	PINCTRL_PIN(0, "SMBCLK"),
 	PINCTRL_PIN(1, "SMBDATA"),
@@ -432,28 +431,28 @@
 	PINCTRL_PIN(77, "DDPC_CTRLDATA"),
 	PINCTRL_PIN(78, "DDPC_CTRLCLK"),
 	PINCTRL_PIN(79, "SPI1_CLK_LOOPBK"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_padgroup ehl_community4_gpps[] = अणु
+static const struct intel_padgroup ehl_community4_gpps[] = {
 	EHL_GPP(0, 0, 23),	/* GPP_C */
 	EHL_GPP(1, 24, 48),	/* GPP_F */
 	EHL_GPP(2, 49, 54),	/* HVCMOS */
 	EHL_GPP(3, 55, 79),	/* GPP_E */
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_community ehl_community4[] = अणु
+static const struct intel_community ehl_community4[] = {
 	EHL_COMMUNITY(0, 79, ehl_community4_gpps),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data ehl_community4_soc_data = अणु
+static const struct intel_pinctrl_soc_data ehl_community4_soc_data = {
 	.uid = "4",
 	.pins = ehl_community4_pins,
 	.npins = ARRAY_SIZE(ehl_community4_pins),
 	.communities = ehl_community4,
 	.ncommunities = ARRAY_SIZE(ehl_community4),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा pinctrl_pin_desc ehl_community5_pins[] = अणु
+static const struct pinctrl_pin_desc ehl_community5_pins[] = {
 	/* GPP_R */
 	PINCTRL_PIN(0, "HDA_BCLK"),
 	PINCTRL_PIN(1, "HDA_SYNC"),
@@ -463,51 +462,51 @@
 	PINCTRL_PIN(5, "HDA_SDI_1"),
 	PINCTRL_PIN(6, "GPP_R_6"),
 	PINCTRL_PIN(7, "GPP_R_7"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_padgroup ehl_community5_gpps[] = अणु
+static const struct intel_padgroup ehl_community5_gpps[] = {
 	EHL_GPP(0, 0, 7),	/* GPP_R */
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_community ehl_community5[] = अणु
+static const struct intel_community ehl_community5[] = {
 	EHL_COMMUNITY(0, 7, ehl_community5_gpps),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data ehl_community5_soc_data = अणु
+static const struct intel_pinctrl_soc_data ehl_community5_soc_data = {
 	.uid = "5",
 	.pins = ehl_community5_pins,
 	.npins = ARRAY_SIZE(ehl_community5_pins),
 	.communities = ehl_community5,
 	.ncommunities = ARRAY_SIZE(ehl_community5),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data *ehl_soc_data_array[] = अणु
+static const struct intel_pinctrl_soc_data *ehl_soc_data_array[] = {
 	&ehl_community0_soc_data,
 	&ehl_community1_soc_data,
 	&ehl_community3_soc_data,
 	&ehl_community4_soc_data,
 	&ehl_community5_soc_data,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा acpi_device_id ehl_pinctrl_acpi_match[] = अणु
-	अणु "INTC1020", (kernel_uदीर्घ_t)ehl_soc_data_array पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct acpi_device_id ehl_pinctrl_acpi_match[] = {
+	{ "INTC1020", (kernel_ulong_t)ehl_soc_data_array },
+	{ }
+};
 MODULE_DEVICE_TABLE(acpi, ehl_pinctrl_acpi_match);
 
-अटल INTEL_PINCTRL_PM_OPS(ehl_pinctrl_pm_ops);
+static INTEL_PINCTRL_PM_OPS(ehl_pinctrl_pm_ops);
 
-अटल काष्ठा platक्रमm_driver ehl_pinctrl_driver = अणु
-	.probe = पूर्णांकel_pinctrl_probe_by_uid,
-	.driver = अणु
+static struct platform_driver ehl_pinctrl_driver = {
+	.probe = intel_pinctrl_probe_by_uid,
+	.driver = {
 		.name = "elkhartlake-pinctrl",
 		.acpi_match_table = ehl_pinctrl_acpi_match,
 		.pm = &ehl_pinctrl_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(ehl_pinctrl_driver);
+module_platform_driver(ehl_pinctrl_driver);
 
 MODULE_AUTHOR("Andy Shevchenko <andriy.shevchenko@linux.intel.com>");
 MODULE_DESCRIPTION("Intel Elkhart Lake PCH pinctrl/GPIO driver");

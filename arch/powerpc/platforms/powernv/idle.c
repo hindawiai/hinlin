@@ -1,292 +1,291 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * PowerNV cpuidle code
  *
  * Copyright 2015 IBM Corp.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/of.h>
-#समावेश <linux/device.h>
-#समावेश <linux/cpu.h>
+#include <linux/types.h>
+#include <linux/mm.h>
+#include <linux/slab.h>
+#include <linux/of.h>
+#include <linux/device.h>
+#include <linux/cpu.h>
 
-#समावेश <यंत्र/यंत्र-prototypes.h>
-#समावेश <यंत्र/firmware.h>
-#समावेश <यंत्र/पूर्णांकerrupt.h>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/opal.h>
-#समावेश <यंत्र/cputhपढ़ोs.h>
-#समावेश <यंत्र/cpuidle.h>
-#समावेश <यंत्र/code-patching.h>
-#समावेश <यंत्र/smp.h>
-#समावेश <यंत्र/runlatch.h>
-#समावेश <यंत्र/dbell.h>
+#include <asm/asm-prototypes.h>
+#include <asm/firmware.h>
+#include <asm/interrupt.h>
+#include <asm/machdep.h>
+#include <asm/opal.h>
+#include <asm/cputhreads.h>
+#include <asm/cpuidle.h>
+#include <asm/code-patching.h>
+#include <asm/smp.h>
+#include <asm/runlatch.h>
+#include <asm/dbell.h>
 
-#समावेश "powernv.h"
-#समावेश "subcore.h"
+#include "powernv.h"
+#include "subcore.h"
 
-/* Power ISA 3.0 allows क्रम stop states 0x0 - 0xF */
-#घोषणा MAX_STOP_STATE	0xF
+/* Power ISA 3.0 allows for stop states 0x0 - 0xF */
+#define MAX_STOP_STATE	0xF
 
-#घोषणा P9_STOP_SPR_MSR 2000
-#घोषणा P9_STOP_SPR_PSSCR      855
+#define P9_STOP_SPR_MSR 2000
+#define P9_STOP_SPR_PSSCR      855
 
-अटल u32 supported_cpuidle_states;
-काष्ठा pnv_idle_states_t *pnv_idle_states;
-पूर्णांक nr_pnv_idle_states;
+static u32 supported_cpuidle_states;
+struct pnv_idle_states_t *pnv_idle_states;
+int nr_pnv_idle_states;
 
 /*
- * The शेष stop state that will be used by ppc_md.घातer_save
- * function on platक्रमms that support stop inकाष्ठाion.
+ * The default stop state that will be used by ppc_md.power_save
+ * function on platforms that support stop instruction.
  */
-अटल u64 pnv_शेष_stop_val;
-अटल u64 pnv_शेष_stop_mask;
-अटल bool शेष_stop_found;
+static u64 pnv_default_stop_val;
+static u64 pnv_default_stop_mask;
+static bool default_stop_found;
 
 /*
  * First stop state levels when SPR and TB loss can occur.
  */
-अटल u64 pnv_first_tb_loss_level = MAX_STOP_STATE + 1;
-अटल u64 deep_spr_loss_state = MAX_STOP_STATE + 1;
+static u64 pnv_first_tb_loss_level = MAX_STOP_STATE + 1;
+static u64 deep_spr_loss_state = MAX_STOP_STATE + 1;
 
 /*
  * psscr value and mask of the deepest stop idle state.
  * Used when a cpu is offlined.
  */
-अटल u64 pnv_deepest_stop_psscr_val;
-अटल u64 pnv_deepest_stop_psscr_mask;
-अटल u64 pnv_deepest_stop_flag;
-अटल bool deepest_stop_found;
+static u64 pnv_deepest_stop_psscr_val;
+static u64 pnv_deepest_stop_psscr_mask;
+static u64 pnv_deepest_stop_flag;
+static bool deepest_stop_found;
 
-अटल अचिन्हित दीर्घ घातer7_offline_type;
+static unsigned long power7_offline_type;
 
-अटल पूर्णांक pnv_save_sprs_क्रम_deep_states(व्योम)
-अणु
-	पूर्णांक cpu;
-	पूर्णांक rc;
+static int pnv_save_sprs_for_deep_states(void)
+{
+	int cpu;
+	int rc;
 
 	/*
 	 * hid0, hid1, hid4, hid5, hmeer and lpcr values are symmetric across
 	 * all cpus at boot. Get these reg values of current cpu and use the
 	 * same across all cpus.
 	 */
-	uपूर्णांक64_t lpcr_val	= mfspr(SPRN_LPCR);
-	uपूर्णांक64_t hid0_val	= mfspr(SPRN_HID0);
-	uपूर्णांक64_t hmeer_val	= mfspr(SPRN_HMEER);
-	uपूर्णांक64_t msr_val = MSR_IDLE;
-	uपूर्णांक64_t psscr_val = pnv_deepest_stop_psscr_val;
+	uint64_t lpcr_val	= mfspr(SPRN_LPCR);
+	uint64_t hid0_val	= mfspr(SPRN_HID0);
+	uint64_t hmeer_val	= mfspr(SPRN_HMEER);
+	uint64_t msr_val = MSR_IDLE;
+	uint64_t psscr_val = pnv_deepest_stop_psscr_val;
 
-	क्रम_each_present_cpu(cpu) अणु
-		uपूर्णांक64_t pir = get_hard_smp_processor_id(cpu);
-		uपूर्णांक64_t hsprg0_val = (uपूर्णांक64_t)paca_ptrs[cpu];
+	for_each_present_cpu(cpu) {
+		uint64_t pir = get_hard_smp_processor_id(cpu);
+		uint64_t hsprg0_val = (uint64_t)paca_ptrs[cpu];
 
 		rc = opal_slw_set_reg(pir, SPRN_HSPRG0, hsprg0_val);
-		अगर (rc != 0)
-			वापस rc;
+		if (rc != 0)
+			return rc;
 
 		rc = opal_slw_set_reg(pir, SPRN_LPCR, lpcr_val);
-		अगर (rc != 0)
-			वापस rc;
+		if (rc != 0)
+			return rc;
 
-		अगर (cpu_has_feature(CPU_FTR_ARCH_300)) अणु
+		if (cpu_has_feature(CPU_FTR_ARCH_300)) {
 			rc = opal_slw_set_reg(pir, P9_STOP_SPR_MSR, msr_val);
-			अगर (rc)
-				वापस rc;
+			if (rc)
+				return rc;
 
 			rc = opal_slw_set_reg(pir,
 					      P9_STOP_SPR_PSSCR, psscr_val);
 
-			अगर (rc)
-				वापस rc;
-		पूर्ण
+			if (rc)
+				return rc;
+		}
 
-		/* HIDs are per core रेजिस्टरs */
-		अगर (cpu_thपढ़ो_in_core(cpu) == 0) अणु
+		/* HIDs are per core registers */
+		if (cpu_thread_in_core(cpu) == 0) {
 
 			rc = opal_slw_set_reg(pir, SPRN_HMEER, hmeer_val);
-			अगर (rc != 0)
-				वापस rc;
+			if (rc != 0)
+				return rc;
 
 			rc = opal_slw_set_reg(pir, SPRN_HID0, hid0_val);
-			अगर (rc != 0)
-				वापस rc;
+			if (rc != 0)
+				return rc;
 
 			/* Only p8 needs to set extra HID regiters */
-			अगर (!cpu_has_feature(CPU_FTR_ARCH_300)) अणु
-				uपूर्णांक64_t hid1_val = mfspr(SPRN_HID1);
-				uपूर्णांक64_t hid4_val = mfspr(SPRN_HID4);
-				uपूर्णांक64_t hid5_val = mfspr(SPRN_HID5);
+			if (!cpu_has_feature(CPU_FTR_ARCH_300)) {
+				uint64_t hid1_val = mfspr(SPRN_HID1);
+				uint64_t hid4_val = mfspr(SPRN_HID4);
+				uint64_t hid5_val = mfspr(SPRN_HID5);
 
 				rc = opal_slw_set_reg(pir, SPRN_HID1, hid1_val);
-				अगर (rc != 0)
-					वापस rc;
+				if (rc != 0)
+					return rc;
 
 				rc = opal_slw_set_reg(pir, SPRN_HID4, hid4_val);
-				अगर (rc != 0)
-					वापस rc;
+				if (rc != 0)
+					return rc;
 
 				rc = opal_slw_set_reg(pir, SPRN_HID5, hid5_val);
-				अगर (rc != 0)
-					वापस rc;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				if (rc != 0)
+					return rc;
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-u32 pnv_get_supported_cpuidle_states(व्योम)
-अणु
-	वापस supported_cpuidle_states;
-पूर्ण
+u32 pnv_get_supported_cpuidle_states(void)
+{
+	return supported_cpuidle_states;
+}
 EXPORT_SYMBOL_GPL(pnv_get_supported_cpuidle_states);
 
-अटल व्योम pnv_fastsleep_workaround_apply(व्योम *info)
+static void pnv_fastsleep_workaround_apply(void *info)
 
-अणु
-	पूर्णांक rc;
-	पूर्णांक *err = info;
+{
+	int rc;
+	int *err = info;
 
 	rc = opal_config_cpu_idle_state(OPAL_CONFIG_IDLE_FASTSLEEP,
 					OPAL_CONFIG_IDLE_APPLY);
-	अगर (rc)
+	if (rc)
 		*err = 1;
-पूर्ण
+}
 
-अटल bool घातer7_fastsleep_workaround_entry = true;
-अटल bool घातer7_fastsleep_workaround_निकास = true;
+static bool power7_fastsleep_workaround_entry = true;
+static bool power7_fastsleep_workaround_exit = true;
 
 /*
  * Used to store fastsleep workaround state
- * 0 - Workaround applied/unकरोne at fastsleep entry/निकास path (Default)
- * 1 - Workaround applied once, never unकरोne.
+ * 0 - Workaround applied/undone at fastsleep entry/exit path (Default)
+ * 1 - Workaround applied once, never undone.
  */
-अटल u8 fastsleep_workaround_applyonce;
+static u8 fastsleep_workaround_applyonce;
 
-अटल sमाप_प्रकार show_fastsleep_workaround_applyonce(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%u\n", fastsleep_workaround_applyonce);
-पूर्ण
+static ssize_t show_fastsleep_workaround_applyonce(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%u\n", fastsleep_workaround_applyonce);
+}
 
-अटल sमाप_प्रकार store_fastsleep_workaround_applyonce(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
-		माप_प्रकार count)
-अणु
-	cpumask_t primary_thपढ़ो_mask;
-	पूर्णांक err;
+static ssize_t store_fastsleep_workaround_applyonce(struct device *dev,
+		struct device_attribute *attr, const char *buf,
+		size_t count)
+{
+	cpumask_t primary_thread_mask;
+	int err;
 	u8 val;
 
-	अगर (kstrtou8(buf, 0, &val) || val != 1)
-		वापस -EINVAL;
+	if (kstrtou8(buf, 0, &val) || val != 1)
+		return -EINVAL;
 
-	अगर (fastsleep_workaround_applyonce == 1)
-		वापस count;
+	if (fastsleep_workaround_applyonce == 1)
+		return count;
 
 	/*
 	 * fastsleep_workaround_applyonce = 1 implies
 	 * fastsleep workaround needs to be left in 'applied' state on all
 	 * the cores. Do this by-
-	 * 1. Disable the 'undo' workaround in fastsleep निकास path
-	 * 2. Sendi IPIs to all the cores which have at least one online thपढ़ो
+	 * 1. Disable the 'undo' workaround in fastsleep exit path
+	 * 2. Sendi IPIs to all the cores which have at least one online thread
 	 * 3. Disable the 'apply' workaround in fastsleep entry path
 	 *
-	 * There is no need to send ipi to cores which have all thपढ़ोs
-	 * offlined, as last thपढ़ो of the core entering fastsleep or deeper
+	 * There is no need to send ipi to cores which have all threads
+	 * offlined, as last thread of the core entering fastsleep or deeper
 	 * state would have applied workaround.
 	 */
-	घातer7_fastsleep_workaround_निकास = false;
+	power7_fastsleep_workaround_exit = false;
 
 	get_online_cpus();
-	primary_thपढ़ो_mask = cpu_online_cores_map();
-	on_each_cpu_mask(&primary_thपढ़ो_mask,
+	primary_thread_mask = cpu_online_cores_map();
+	on_each_cpu_mask(&primary_thread_mask,
 				pnv_fastsleep_workaround_apply,
 				&err, 1);
 	put_online_cpus();
-	अगर (err) अणु
+	if (err) {
 		pr_err("fastsleep_workaround_applyonce change failed while running pnv_fastsleep_workaround_apply");
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	घातer7_fastsleep_workaround_entry = false;
+	power7_fastsleep_workaround_entry = false;
 
 	fastsleep_workaround_applyonce = 1;
 
-	वापस count;
+	return count;
 fail:
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-अटल DEVICE_ATTR(fastsleep_workaround_applyonce, 0600,
+static DEVICE_ATTR(fastsleep_workaround_applyonce, 0600,
 			show_fastsleep_workaround_applyonce,
 			store_fastsleep_workaround_applyonce);
 
-अटल अंतरभूत व्योम atomic_start_thपढ़ो_idle(व्योम)
-अणु
-	पूर्णांक cpu = raw_smp_processor_id();
-	पूर्णांक first = cpu_first_thपढ़ो_sibling(cpu);
-	पूर्णांक thपढ़ो_nr = cpu_thपढ़ो_in_core(cpu);
-	अचिन्हित दीर्घ *state = &paca_ptrs[first]->idle_state;
+static inline void atomic_start_thread_idle(void)
+{
+	int cpu = raw_smp_processor_id();
+	int first = cpu_first_thread_sibling(cpu);
+	int thread_nr = cpu_thread_in_core(cpu);
+	unsigned long *state = &paca_ptrs[first]->idle_state;
 
-	clear_bit(thपढ़ो_nr, state);
-पूर्ण
+	clear_bit(thread_nr, state);
+}
 
-अटल अंतरभूत व्योम atomic_stop_thपढ़ो_idle(व्योम)
-अणु
-	पूर्णांक cpu = raw_smp_processor_id();
-	पूर्णांक first = cpu_first_thपढ़ो_sibling(cpu);
-	पूर्णांक thपढ़ो_nr = cpu_thपढ़ो_in_core(cpu);
-	अचिन्हित दीर्घ *state = &paca_ptrs[first]->idle_state;
+static inline void atomic_stop_thread_idle(void)
+{
+	int cpu = raw_smp_processor_id();
+	int first = cpu_first_thread_sibling(cpu);
+	int thread_nr = cpu_thread_in_core(cpu);
+	unsigned long *state = &paca_ptrs[first]->idle_state;
 
-	set_bit(thपढ़ो_nr, state);
-पूर्ण
+	set_bit(thread_nr, state);
+}
 
-अटल अंतरभूत व्योम atomic_lock_thपढ़ो_idle(व्योम)
-अणु
-	पूर्णांक cpu = raw_smp_processor_id();
-	पूर्णांक first = cpu_first_thपढ़ो_sibling(cpu);
-	अचिन्हित दीर्घ *state = &paca_ptrs[first]->idle_state;
+static inline void atomic_lock_thread_idle(void)
+{
+	int cpu = raw_smp_processor_id();
+	int first = cpu_first_thread_sibling(cpu);
+	unsigned long *state = &paca_ptrs[first]->idle_state;
 
-	जबतक (unlikely(test_and_set_bit_lock(NR_PNV_CORE_IDLE_LOCK_BIT, state)))
+	while (unlikely(test_and_set_bit_lock(NR_PNV_CORE_IDLE_LOCK_BIT, state)))
 		barrier();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम atomic_unlock_and_stop_thपढ़ो_idle(व्योम)
-अणु
-	पूर्णांक cpu = raw_smp_processor_id();
-	पूर्णांक first = cpu_first_thपढ़ो_sibling(cpu);
-	अचिन्हित दीर्घ thपढ़ो = 1UL << cpu_thपढ़ो_in_core(cpu);
-	अचिन्हित दीर्घ *state = &paca_ptrs[first]->idle_state;
+static inline void atomic_unlock_and_stop_thread_idle(void)
+{
+	int cpu = raw_smp_processor_id();
+	int first = cpu_first_thread_sibling(cpu);
+	unsigned long thread = 1UL << cpu_thread_in_core(cpu);
+	unsigned long *state = &paca_ptrs[first]->idle_state;
 	u64 s = READ_ONCE(*state);
-	u64 new, पंचांगp;
+	u64 new, tmp;
 
 	BUG_ON(!(s & PNV_CORE_IDLE_LOCK_BIT));
-	BUG_ON(s & thपढ़ो);
+	BUG_ON(s & thread);
 
 again:
-	new = (s | thपढ़ो) & ~PNV_CORE_IDLE_LOCK_BIT;
-	पंचांगp = cmpxchg(state, s, new);
-	अगर (unlikely(पंचांगp != s)) अणु
-		s = पंचांगp;
-		जाओ again;
-	पूर्ण
-पूर्ण
+	new = (s | thread) & ~PNV_CORE_IDLE_LOCK_BIT;
+	tmp = cmpxchg(state, s, new);
+	if (unlikely(tmp != s)) {
+		s = tmp;
+		goto again;
+	}
+}
 
-अटल अंतरभूत व्योम atomic_unlock_thपढ़ो_idle(व्योम)
-अणु
-	पूर्णांक cpu = raw_smp_processor_id();
-	पूर्णांक first = cpu_first_thपढ़ो_sibling(cpu);
-	अचिन्हित दीर्घ *state = &paca_ptrs[first]->idle_state;
+static inline void atomic_unlock_thread_idle(void)
+{
+	int cpu = raw_smp_processor_id();
+	int first = cpu_first_thread_sibling(cpu);
+	unsigned long *state = &paca_ptrs[first]->idle_state;
 
 	BUG_ON(!test_bit(NR_PNV_CORE_IDLE_LOCK_BIT, state));
 	clear_bit_unlock(NR_PNV_CORE_IDLE_LOCK_BIT, state);
-पूर्ण
+}
 
 /* P7 and P8 */
-काष्ठा p7_sprs अणु
+struct p7_sprs {
 	/* per core */
 	u64 tscr;
 	u64 worc;
@@ -295,7 +294,7 @@ again:
 	u64 sdr1;
 	u64 rpr;
 
-	/* per thपढ़ो */
+	/* per thread */
 	u64 lpcr;
 	u64 hfscr;
 	u64 fscr;
@@ -304,42 +303,42 @@ again:
 	u64 dscr;
 	u64 wort;
 
-	/* per thपढ़ो SPRs that get lost in shallow states */
+	/* per thread SPRs that get lost in shallow states */
 	u64 amr;
 	u64 iamr;
 	u64 amor;
 	u64 uamor;
-पूर्ण;
+};
 
-अटल अचिन्हित दीर्घ घातer7_idle_insn(अचिन्हित दीर्घ type)
-अणु
-	पूर्णांक cpu = raw_smp_processor_id();
-	पूर्णांक first = cpu_first_thपढ़ो_sibling(cpu);
-	अचिन्हित दीर्घ *state = &paca_ptrs[first]->idle_state;
-	अचिन्हित दीर्घ thपढ़ो = 1UL << cpu_thपढ़ो_in_core(cpu);
-	अचिन्हित दीर्घ core_thपढ़ो_mask = (1UL << thपढ़ोs_per_core) - 1;
-	अचिन्हित दीर्घ srr1;
+static unsigned long power7_idle_insn(unsigned long type)
+{
+	int cpu = raw_smp_processor_id();
+	int first = cpu_first_thread_sibling(cpu);
+	unsigned long *state = &paca_ptrs[first]->idle_state;
+	unsigned long thread = 1UL << cpu_thread_in_core(cpu);
+	unsigned long core_thread_mask = (1UL << threads_per_core) - 1;
+	unsigned long srr1;
 	bool full_winkle;
-	काष्ठा p7_sprs sprs = अणुपूर्ण; /* aव्योम false use-uninitialised */
+	struct p7_sprs sprs = {}; /* avoid false use-uninitialised */
 	bool sprs_saved = false;
-	पूर्णांक rc;
+	int rc;
 
-	अगर (unlikely(type != PNV_THREAD_NAP)) अणु
-		atomic_lock_thपढ़ो_idle();
+	if (unlikely(type != PNV_THREAD_NAP)) {
+		atomic_lock_thread_idle();
 
-		BUG_ON(!(*state & thपढ़ो));
-		*state &= ~thपढ़ो;
+		BUG_ON(!(*state & thread));
+		*state &= ~thread;
 
-		अगर (घातer7_fastsleep_workaround_entry) अणु
-			अगर ((*state & core_thपढ़ो_mask) == 0) अणु
+		if (power7_fastsleep_workaround_entry) {
+			if ((*state & core_thread_mask) == 0) {
 				rc = opal_config_cpu_idle_state(
 						OPAL_CONFIG_IDLE_FASTSLEEP,
 						OPAL_CONFIG_IDLE_APPLY);
 				BUG_ON(rc);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (type == PNV_THREAD_WINKLE) अणु
+		if (type == PNV_THREAD_WINKLE) {
 			sprs.tscr	= mfspr(SPRN_TSCR);
 			sprs.worc	= mfspr(SPRN_WORC);
 
@@ -347,10 +346,10 @@ again:
 			sprs.rpr	= mfspr(SPRN_RPR);
 
 			sprs.lpcr	= mfspr(SPRN_LPCR);
-			अगर (cpu_has_feature(CPU_FTR_ARCH_207S)) अणु
+			if (cpu_has_feature(CPU_FTR_ARCH_207S)) {
 				sprs.hfscr	= mfspr(SPRN_HFSCR);
 				sprs.fscr	= mfspr(SPRN_FSCR);
-			पूर्ण
+			}
 			sprs.purr	= mfspr(SPRN_PURR);
 			sprs.spurr	= mfspr(SPRN_SPURR);
 			sprs.dscr	= mfspr(SPRN_DSCR);
@@ -359,109 +358,109 @@ again:
 			sprs_saved = true;
 
 			/*
-			 * Increment winkle counter and set all winkle bits अगर
-			 * all thपढ़ोs are winkling. This allows wakeup side to
+			 * Increment winkle counter and set all winkle bits if
+			 * all threads are winkling. This allows wakeup side to
 			 * distinguish between fast sleep and winkle state
-			 * loss. Fast sleep still has to resync the समयbase so
+			 * loss. Fast sleep still has to resync the timebase so
 			 * this may not be a really big win.
 			 */
 			*state += 1 << PNV_CORE_IDLE_WINKLE_COUNT_SHIFT;
-			अगर ((*state & PNV_CORE_IDLE_WINKLE_COUNT_BITS)
+			if ((*state & PNV_CORE_IDLE_WINKLE_COUNT_BITS)
 					>> PNV_CORE_IDLE_WINKLE_COUNT_SHIFT
-					== thपढ़ोs_per_core)
+					== threads_per_core)
 				*state |= PNV_CORE_IDLE_THREAD_WINKLE_BITS;
 			WARN_ON((*state & PNV_CORE_IDLE_WINKLE_COUNT_BITS) == 0);
-		पूर्ण
+		}
 
-		atomic_unlock_thपढ़ो_idle();
-	पूर्ण
+		atomic_unlock_thread_idle();
+	}
 
-	अगर (cpu_has_feature(CPU_FTR_ARCH_207S)) अणु
+	if (cpu_has_feature(CPU_FTR_ARCH_207S)) {
 		sprs.amr	= mfspr(SPRN_AMR);
 		sprs.iamr	= mfspr(SPRN_IAMR);
 		sprs.amor	= mfspr(SPRN_AMOR);
 		sprs.uamor	= mfspr(SPRN_UAMOR);
-	पूर्ण
+	}
 
-	local_paca->thपढ़ो_idle_state = type;
+	local_paca->thread_idle_state = type;
 	srr1 = isa206_idle_insn_mayloss(type);		/* go idle */
-	local_paca->thपढ़ो_idle_state = PNV_THREAD_RUNNING;
+	local_paca->thread_idle_state = PNV_THREAD_RUNNING;
 
 	WARN_ON_ONCE(!srr1);
 	WARN_ON_ONCE(mfmsr() & (MSR_IR|MSR_DR));
 
-	अगर (cpu_has_feature(CPU_FTR_ARCH_207S)) अणु
-		अगर ((srr1 & SRR1_WAKESTATE) != SRR1_WS_NOLOSS) अणु
+	if (cpu_has_feature(CPU_FTR_ARCH_207S)) {
+		if ((srr1 & SRR1_WAKESTATE) != SRR1_WS_NOLOSS) {
 			/*
-			 * We करोn't need an isync after the mtsprs here because
-			 * the upcoming mपंचांगsrd is execution synchronizing.
+			 * We don't need an isync after the mtsprs here because
+			 * the upcoming mtmsrd is execution synchronizing.
 			 */
 			mtspr(SPRN_AMR,		sprs.amr);
 			mtspr(SPRN_IAMR,	sprs.iamr);
 			mtspr(SPRN_AMOR,	sprs.amor);
 			mtspr(SPRN_UAMOR,	sprs.uamor);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (unlikely((srr1 & SRR1_WAKEMASK_P8) == SRR1_WAKEHMI))
-		hmi_exception_realmode(शून्य);
+	if (unlikely((srr1 & SRR1_WAKEMASK_P8) == SRR1_WAKEHMI))
+		hmi_exception_realmode(NULL);
 
-	अगर (likely((srr1 & SRR1_WAKESTATE) != SRR1_WS_HVLOSS)) अणु
-		अगर (unlikely(type != PNV_THREAD_NAP)) अणु
-			atomic_lock_thपढ़ो_idle();
-			अगर (type == PNV_THREAD_WINKLE) अणु
+	if (likely((srr1 & SRR1_WAKESTATE) != SRR1_WS_HVLOSS)) {
+		if (unlikely(type != PNV_THREAD_NAP)) {
+			atomic_lock_thread_idle();
+			if (type == PNV_THREAD_WINKLE) {
 				WARN_ON((*state & PNV_CORE_IDLE_WINKLE_COUNT_BITS) == 0);
 				*state -= 1 << PNV_CORE_IDLE_WINKLE_COUNT_SHIFT;
-				*state &= ~(thपढ़ो << PNV_CORE_IDLE_THREAD_WINKLE_BITS_SHIFT);
-			पूर्ण
-			atomic_unlock_and_stop_thपढ़ो_idle();
-		पूर्ण
-		वापस srr1;
-	पूर्ण
+				*state &= ~(thread << PNV_CORE_IDLE_THREAD_WINKLE_BITS_SHIFT);
+			}
+			atomic_unlock_and_stop_thread_idle();
+		}
+		return srr1;
+	}
 
 	/* HV state loss */
 	BUG_ON(type == PNV_THREAD_NAP);
 
-	atomic_lock_thपढ़ो_idle();
+	atomic_lock_thread_idle();
 
 	full_winkle = false;
-	अगर (type == PNV_THREAD_WINKLE) अणु
+	if (type == PNV_THREAD_WINKLE) {
 		WARN_ON((*state & PNV_CORE_IDLE_WINKLE_COUNT_BITS) == 0);
 		*state -= 1 << PNV_CORE_IDLE_WINKLE_COUNT_SHIFT;
-		अगर (*state & (thपढ़ो << PNV_CORE_IDLE_THREAD_WINKLE_BITS_SHIFT)) अणु
-			*state &= ~(thपढ़ो << PNV_CORE_IDLE_THREAD_WINKLE_BITS_SHIFT);
+		if (*state & (thread << PNV_CORE_IDLE_THREAD_WINKLE_BITS_SHIFT)) {
+			*state &= ~(thread << PNV_CORE_IDLE_THREAD_WINKLE_BITS_SHIFT);
 			full_winkle = true;
 			BUG_ON(!sprs_saved);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	WARN_ON(*state & thपढ़ो);
+	WARN_ON(*state & thread);
 
-	अगर ((*state & core_thपढ़ो_mask) != 0)
-		जाओ core_woken;
+	if ((*state & core_thread_mask) != 0)
+		goto core_woken;
 
 	/* Per-core SPRs */
-	अगर (full_winkle) अणु
+	if (full_winkle) {
 		mtspr(SPRN_TSCR,	sprs.tscr);
 		mtspr(SPRN_WORC,	sprs.worc);
-	पूर्ण
+	}
 
-	अगर (घातer7_fastsleep_workaround_निकास) अणु
+	if (power7_fastsleep_workaround_exit) {
 		rc = opal_config_cpu_idle_state(OPAL_CONFIG_IDLE_FASTSLEEP,
 						OPAL_CONFIG_IDLE_UNDO);
 		BUG_ON(rc);
-	पूर्ण
+	}
 
 	/* TB */
-	अगर (opal_resync_समयbase() != OPAL_SUCCESS)
+	if (opal_resync_timebase() != OPAL_SUCCESS)
 		BUG();
 
 core_woken:
-	अगर (!full_winkle)
-		जाओ subcore_woken;
+	if (!full_winkle)
+		goto subcore_woken;
 
-	अगर ((*state & local_paca->subcore_sibling_mask) != 0)
-		जाओ subcore_woken;
+	if ((*state & local_paca->subcore_sibling_mask) != 0)
+		goto subcore_woken;
 
 	/* Per-subcore SPRs */
 	mtspr(SPRN_SDR1,	sprs.sdr1);
@@ -469,23 +468,23 @@ core_woken:
 
 subcore_woken:
 	/*
-	 * isync after restoring shared SPRs and beक्रमe unlocking. Unlock
-	 * only contains hwsync which करोes not necessarily करो the right
-	 * thing क्रम SPRs.
+	 * isync after restoring shared SPRs and before unlocking. Unlock
+	 * only contains hwsync which does not necessarily do the right
+	 * thing for SPRs.
 	 */
 	isync();
-	atomic_unlock_and_stop_thपढ़ो_idle();
+	atomic_unlock_and_stop_thread_idle();
 
-	/* Fast sleep करोes not lose SPRs */
-	अगर (!full_winkle)
-		वापस srr1;
+	/* Fast sleep does not lose SPRs */
+	if (!full_winkle)
+		return srr1;
 
-	/* Per-thपढ़ो SPRs */
+	/* Per-thread SPRs */
 	mtspr(SPRN_LPCR,	sprs.lpcr);
-	अगर (cpu_has_feature(CPU_FTR_ARCH_207S)) अणु
+	if (cpu_has_feature(CPU_FTR_ARCH_207S)) {
 		mtspr(SPRN_HFSCR,	sprs.hfscr);
 		mtspr(SPRN_FSCR,	sprs.fscr);
-	पूर्ण
+	}
 	mtspr(SPRN_PURR,	sprs.purr);
 	mtspr(SPRN_SPURR,	sprs.spurr);
 	mtspr(SPRN_DSCR,	sprs.dscr);
@@ -494,25 +493,25 @@ subcore_woken:
 	mtspr(SPRN_SPRG3,	local_paca->sprg_vdso);
 
 	/*
-	 * The SLB has to be restored here, but it someबार still
+	 * The SLB has to be restored here, but it sometimes still
 	 * contains entries, so the __ variant must be used to prevent
 	 * multi hits.
 	 */
 	__slb_restore_bolted_realmode();
 
-	वापस srr1;
-पूर्ण
+	return srr1;
+}
 
-बाह्य अचिन्हित दीर्घ idle_kvm_start_guest(अचिन्हित दीर्घ srr1);
+extern unsigned long idle_kvm_start_guest(unsigned long srr1);
 
-#अगर_घोषित CONFIG_HOTPLUG_CPU
-अटल अचिन्हित दीर्घ घातer7_offline(व्योम)
-अणु
-	अचिन्हित दीर्घ srr1;
+#ifdef CONFIG_HOTPLUG_CPU
+static unsigned long power7_offline(void)
+{
+	unsigned long srr1;
 
-	mपंचांगsr(MSR_IDLE);
+	mtmsr(MSR_IDLE);
 
-#अगर_घोषित CONFIG_KVM_BOOK3S_HV_POSSIBLE
+#ifdef CONFIG_KVM_BOOK3S_HV_POSSIBLE
 	/* Tell KVM we're entering idle. */
 	/******************************************************/
 	/*  N O T E   W E L L    ! ! !    N O T E   W E L L   */
@@ -520,69 +519,69 @@ subcore_woken:
 	/* MUST occur in real mode, i.e. with the MMU off,    */
 	/* and the MMU must stay off until we clear this flag */
 	/* and test HSTATE_HWTHREAD_REQ(r13) in               */
-	/* pnv_घातersave_wakeup in this file.                 */
-	/* The reason is that another thपढ़ो can चयन the   */
+	/* pnv_powersave_wakeup in this file.                 */
+	/* The reason is that another thread can switch the   */
 	/* MMU to a guest context whenever this flag is set   */
-	/* to KVM_HWTHREAD_IN_IDLE, and अगर the MMU was on,    */
-	/* that would potentially cause this thपढ़ो to start  */
-	/* executing inकाष्ठाions from guest memory in        */
+	/* to KVM_HWTHREAD_IN_IDLE, and if the MMU was on,    */
+	/* that would potentially cause this thread to start  */
+	/* executing instructions from guest memory in        */
 	/* hypervisor mode, leading to a host crash or data   */
 	/* corruption, or worse.                              */
 	/******************************************************/
-	local_paca->kvm_hstate.hwthपढ़ो_state = KVM_HWTHREAD_IN_IDLE;
-#पूर्ण_अगर
+	local_paca->kvm_hstate.hwthread_state = KVM_HWTHREAD_IN_IDLE;
+#endif
 
 	__ppc64_runlatch_off();
-	srr1 = घातer7_idle_insn(घातer7_offline_type);
+	srr1 = power7_idle_insn(power7_offline_type);
 	__ppc64_runlatch_on();
 
-#अगर_घोषित CONFIG_KVM_BOOK3S_HV_POSSIBLE
-	local_paca->kvm_hstate.hwthपढ़ो_state = KVM_HWTHREAD_IN_KERNEL;
-	/* Order setting hwthपढ़ो_state vs. testing hwthपढ़ो_req */
+#ifdef CONFIG_KVM_BOOK3S_HV_POSSIBLE
+	local_paca->kvm_hstate.hwthread_state = KVM_HWTHREAD_IN_KERNEL;
+	/* Order setting hwthread_state vs. testing hwthread_req */
 	smp_mb();
-	अगर (local_paca->kvm_hstate.hwthपढ़ो_req)
+	if (local_paca->kvm_hstate.hwthread_req)
 		srr1 = idle_kvm_start_guest(srr1);
-#पूर्ण_अगर
+#endif
 
-	mपंचांगsr(MSR_KERNEL);
+	mtmsr(MSR_KERNEL);
 
-	वापस srr1;
-पूर्ण
-#पूर्ण_अगर
+	return srr1;
+}
+#endif
 
-व्योम घातer7_idle_type(अचिन्हित दीर्घ type)
-अणु
-	अचिन्हित दीर्घ srr1;
+void power7_idle_type(unsigned long type)
+{
+	unsigned long srr1;
 
-	अगर (!prep_irq_क्रम_idle_irqsoff())
-		वापस;
+	if (!prep_irq_for_idle_irqsoff())
+		return;
 
-	mपंचांगsr(MSR_IDLE);
+	mtmsr(MSR_IDLE);
 	__ppc64_runlatch_off();
-	srr1 = घातer7_idle_insn(type);
+	srr1 = power7_idle_insn(type);
 	__ppc64_runlatch_on();
-	mपंचांगsr(MSR_KERNEL);
+	mtmsr(MSR_KERNEL);
 
-	fini_irq_क्रम_idle_irqsoff();
+	fini_irq_for_idle_irqsoff();
 	irq_set_pending_from_srr1(srr1);
-पूर्ण
+}
 
-अटल व्योम घातer7_idle(व्योम)
-अणु
-	अगर (!घातersave_nap)
-		वापस;
+static void power7_idle(void)
+{
+	if (!powersave_nap)
+		return;
 
-	घातer7_idle_type(PNV_THREAD_NAP);
-पूर्ण
+	power7_idle_type(PNV_THREAD_NAP);
+}
 
-काष्ठा p9_sprs अणु
+struct p9_sprs {
 	/* per core */
 	u64 ptcr;
 	u64 rpr;
 	u64 tscr;
 	u64 ldbar;
 
-	/* per thपढ़ो */
+	/* per thread */
 	u64 lpcr;
 	u64 hfscr;
 	u64 fscr;
@@ -598,38 +597,38 @@ subcore_woken:
 	u32 mmcr1;
 	u64 mmcr2;
 
-	/* per thपढ़ो SPRs that get lost in shallow states */
+	/* per thread SPRs that get lost in shallow states */
 	u64 amr;
 	u64 iamr;
 	u64 amor;
 	u64 uamor;
-पूर्ण;
+};
 
-अटल अचिन्हित दीर्घ घातer9_idle_stop(अचिन्हित दीर्घ psscr, bool mmu_on)
-अणु
-	पूर्णांक cpu = raw_smp_processor_id();
-	पूर्णांक first = cpu_first_thपढ़ो_sibling(cpu);
-	अचिन्हित दीर्घ *state = &paca_ptrs[first]->idle_state;
-	अचिन्हित दीर्घ core_thपढ़ो_mask = (1UL << thपढ़ोs_per_core) - 1;
-	अचिन्हित दीर्घ srr1;
-	अचिन्हित दीर्घ pls;
-	अचिन्हित दीर्घ mmcr0 = 0;
-	अचिन्हित दीर्घ mmcra = 0;
-	काष्ठा p9_sprs sprs = अणुपूर्ण; /* aव्योम false used-uninitialised */
+static unsigned long power9_idle_stop(unsigned long psscr, bool mmu_on)
+{
+	int cpu = raw_smp_processor_id();
+	int first = cpu_first_thread_sibling(cpu);
+	unsigned long *state = &paca_ptrs[first]->idle_state;
+	unsigned long core_thread_mask = (1UL << threads_per_core) - 1;
+	unsigned long srr1;
+	unsigned long pls;
+	unsigned long mmcr0 = 0;
+	unsigned long mmcra = 0;
+	struct p9_sprs sprs = {}; /* avoid false used-uninitialised */
 	bool sprs_saved = false;
 
-	अगर (!(psscr & (PSSCR_EC|PSSCR_ESL))) अणु
-		/* EC=ESL=0 हाल */
+	if (!(psscr & (PSSCR_EC|PSSCR_ESL))) {
+		/* EC=ESL=0 case */
 
 		BUG_ON(!mmu_on);
 
 		/*
 		 * Wake synchronously. SRESET via xscom may still cause
-		 * a 0x100 घातersave wakeup with SRR1 reason!
+		 * a 0x100 powersave wakeup with SRR1 reason!
 		 */
 		srr1 = isa300_idle_stop_noloss(psscr);		/* go idle */
-		अगर (likely(!srr1))
-			वापस 0;
+		if (likely(!srr1))
+			return 0;
 
 		/*
 		 * Registers not saved, can't recover!
@@ -637,32 +636,32 @@ subcore_woken:
 		 */
 		BUG_ON((srr1 & SRR1_WAKESTATE) != SRR1_WS_NOLOSS);
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* EC=ESL=1 हाल */
-#अगर_घोषित CONFIG_KVM_BOOK3S_HV_POSSIBLE
-	अगर (cpu_has_feature(CPU_FTR_P9_TM_XER_SO_BUG)) अणु
+	/* EC=ESL=1 case */
+#ifdef CONFIG_KVM_BOOK3S_HV_POSSIBLE
+	if (cpu_has_feature(CPU_FTR_P9_TM_XER_SO_BUG)) {
 		local_paca->requested_psscr = psscr;
-		/* order setting requested_psscr vs testing करोnt_stop */
+		/* order setting requested_psscr vs testing dont_stop */
 		smp_mb();
-		अगर (atomic_पढ़ो(&local_paca->करोnt_stop)) अणु
+		if (atomic_read(&local_paca->dont_stop)) {
 			local_paca->requested_psscr = 0;
-			वापस 0;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+			return 0;
+		}
+	}
+#endif
 
-	अगर (!cpu_has_feature(CPU_FTR_POWER9_DD2_1)) अणु
+	if (!cpu_has_feature(CPU_FTR_POWER9_DD2_1)) {
 		 /*
 		  * POWER9 DD2 can incorrectly set PMAO when waking up
 		  * after a state-loss idle. Saving and restoring MMCR0
 		  * over idle is a workaround.
 		  */
 		mmcr0		= mfspr(SPRN_MMCR0);
-	पूर्ण
+	}
 
-	अगर ((psscr & PSSCR_RL_MASK) >= deep_spr_loss_state) अणु
+	if ((psscr & PSSCR_RL_MASK) >= deep_spr_loss_state) {
 		sprs.lpcr	= mfspr(SPRN_LPCR);
 		sprs.hfscr	= mfspr(SPRN_HFSCR);
 		sprs.fscr	= mfspr(SPRN_FSCR);
@@ -681,13 +680,13 @@ subcore_woken:
 		sprs.ptcr	= mfspr(SPRN_PTCR);
 		sprs.rpr	= mfspr(SPRN_RPR);
 		sprs.tscr	= mfspr(SPRN_TSCR);
-		अगर (!firmware_has_feature(FW_FEATURE_ULTRAVISOR))
+		if (!firmware_has_feature(FW_FEATURE_ULTRAVISOR))
 			sprs.ldbar = mfspr(SPRN_LDBAR);
 
 		sprs_saved = true;
 
-		atomic_start_thपढ़ो_idle();
-	पूर्ण
+		atomic_start_thread_idle();
+	}
 
 	sprs.amr	= mfspr(SPRN_AMR);
 	sprs.iamr	= mfspr(SPRN_IAMR);
@@ -696,19 +695,19 @@ subcore_woken:
 
 	srr1 = isa300_idle_stop_mayloss(psscr);		/* go idle */
 
-#अगर_घोषित CONFIG_KVM_BOOK3S_HV_POSSIBLE
+#ifdef CONFIG_KVM_BOOK3S_HV_POSSIBLE
 	local_paca->requested_psscr = 0;
-#पूर्ण_अगर
+#endif
 
 	psscr = mfspr(SPRN_PSSCR);
 
 	WARN_ON_ONCE(!srr1);
 	WARN_ON_ONCE(mfmsr() & (MSR_IR|MSR_DR));
 
-	अगर ((srr1 & SRR1_WAKESTATE) != SRR1_WS_NOLOSS) अणु
+	if ((srr1 & SRR1_WAKESTATE) != SRR1_WS_NOLOSS) {
 		/*
-		 * We करोn't need an isync after the mtsprs here because the
-		 * upcoming mपंचांगsrd is execution synchronizing.
+		 * We don't need an isync after the mtsprs here because the
+		 * upcoming mtmsrd is execution synchronizing.
 		 */
 		mtspr(SPRN_AMR,		sprs.amr);
 		mtspr(SPRN_IAMR,	sprs.iamr);
@@ -716,14 +715,14 @@ subcore_woken:
 		mtspr(SPRN_UAMOR,	sprs.uamor);
 
 		/*
-		 * Workaround क्रम POWER9 DD2.0, अगर we lost resources, the ERAT
+		 * Workaround for POWER9 DD2.0, if we lost resources, the ERAT
 		 * might have been corrupted and needs flushing. We also need
 		 * to reload MMCR0 (see mmcr0 comment above).
 		 */
-		अगर (!cpu_has_feature(CPU_FTR_POWER9_DD2_1)) अणु
-			यंत्र अस्थिर(PPC_ISA_3_0_INVALIDATE_ERAT);
+		if (!cpu_has_feature(CPU_FTR_POWER9_DD2_1)) {
+			asm volatile(PPC_ISA_3_0_INVALIDATE_ERAT);
 			mtspr(SPRN_MMCR0, mmcr0);
-		पूर्ण
+		}
 
 		/*
 		 * DD2.2 and earlier need to set then clear bit 60 in MMCRA
@@ -734,53 +733,53 @@ subcore_woken:
 		mtspr(SPRN_MMCRA, mmcra);
 		mmcra &= ~PPC_BIT(60);
 		mtspr(SPRN_MMCRA, mmcra);
-	पूर्ण
+	}
 
-	अगर (unlikely((srr1 & SRR1_WAKEMASK_P8) == SRR1_WAKEHMI))
-		hmi_exception_realmode(शून्य);
+	if (unlikely((srr1 & SRR1_WAKEMASK_P8) == SRR1_WAKEHMI))
+		hmi_exception_realmode(NULL);
 
 	/*
-	 * On POWER9, SRR1 bits करो not match exactly as expected.
+	 * On POWER9, SRR1 bits do not match exactly as expected.
 	 * SRR1_WS_GPRLOSS (10b) can also result in SPR loss, so
-	 * just always test PSSCR क्रम SPR/TB state loss.
+	 * just always test PSSCR for SPR/TB state loss.
 	 */
 	pls = (psscr & PSSCR_PLS) >> PSSCR_PLS_SHIFT;
-	अगर (likely(pls < deep_spr_loss_state)) अणु
-		अगर (sprs_saved)
-			atomic_stop_thपढ़ो_idle();
-		जाओ out;
-	पूर्ण
+	if (likely(pls < deep_spr_loss_state)) {
+		if (sprs_saved)
+			atomic_stop_thread_idle();
+		goto out;
+	}
 
 	/* HV state loss */
 	BUG_ON(!sprs_saved);
 
-	atomic_lock_thपढ़ो_idle();
+	atomic_lock_thread_idle();
 
-	अगर ((*state & core_thपढ़ो_mask) != 0)
-		जाओ core_woken;
+	if ((*state & core_thread_mask) != 0)
+		goto core_woken;
 
 	/* Per-core SPRs */
 	mtspr(SPRN_PTCR,	sprs.ptcr);
 	mtspr(SPRN_RPR,		sprs.rpr);
 	mtspr(SPRN_TSCR,	sprs.tscr);
 
-	अगर (pls >= pnv_first_tb_loss_level) अणु
+	if (pls >= pnv_first_tb_loss_level) {
 		/* TB loss */
-		अगर (opal_resync_समयbase() != OPAL_SUCCESS)
+		if (opal_resync_timebase() != OPAL_SUCCESS)
 			BUG();
-	पूर्ण
+	}
 
 	/*
-	 * isync after restoring shared SPRs and beक्रमe unlocking. Unlock
-	 * only contains hwsync which करोes not necessarily करो the right
-	 * thing क्रम SPRs.
+	 * isync after restoring shared SPRs and before unlocking. Unlock
+	 * only contains hwsync which does not necessarily do the right
+	 * thing for SPRs.
 	 */
 	isync();
 
 core_woken:
-	atomic_unlock_and_stop_thपढ़ो_idle();
+	atomic_unlock_and_stop_thread_idle();
 
-	/* Per-thपढ़ो SPRs */
+	/* Per-thread SPRs */
 	mtspr(SPRN_LPCR,	sprs.lpcr);
 	mtspr(SPRN_HFSCR,	sprs.hfscr);
 	mtspr(SPRN_FSCR,	sprs.fscr);
@@ -795,130 +794,130 @@ core_woken:
 	mtspr(SPRN_MMCR0,	sprs.mmcr0);
 	mtspr(SPRN_MMCR1,	sprs.mmcr1);
 	mtspr(SPRN_MMCR2,	sprs.mmcr2);
-	अगर (!firmware_has_feature(FW_FEATURE_ULTRAVISOR))
+	if (!firmware_has_feature(FW_FEATURE_ULTRAVISOR))
 		mtspr(SPRN_LDBAR, sprs.ldbar);
 
 	mtspr(SPRN_SPRG3,	local_paca->sprg_vdso);
 
-	अगर (!radix_enabled())
+	if (!radix_enabled())
 		__slb_restore_bolted_realmode();
 
 out:
-	अगर (mmu_on)
-		mपंचांगsr(MSR_KERNEL);
+	if (mmu_on)
+		mtmsr(MSR_KERNEL);
 
-	वापस srr1;
-पूर्ण
+	return srr1;
+}
 
-#अगर_घोषित CONFIG_KVM_BOOK3S_HV_POSSIBLE
+#ifdef CONFIG_KVM_BOOK3S_HV_POSSIBLE
 /*
- * This is used in working around bugs in thपढ़ो reconfiguration
+ * This is used in working around bugs in thread reconfiguration
  * on POWER9 (at least up to Nimbus DD2.2) relating to transactional
- * memory and the way that XER[SO] is checkpoपूर्णांकed.
- * This function क्रमces the core पूर्णांकo SMT4 in order by asking
- * all other thपढ़ोs not to stop, and sending a message to any
+ * memory and the way that XER[SO] is checkpointed.
+ * This function forces the core into SMT4 in order by asking
+ * all other threads not to stop, and sending a message to any
  * that are in a stop state.
  * Must be called with preemption disabled.
  */
-व्योम pnv_घातer9_क्रमce_smt4_catch(व्योम)
-अणु
-	पूर्णांक cpu, cpu0, thr;
-	पूर्णांक awake_thपढ़ोs = 1;		/* this thपढ़ो is awake */
-	पूर्णांक poke_thपढ़ोs = 0;
-	पूर्णांक need_awake = thपढ़ोs_per_core;
+void pnv_power9_force_smt4_catch(void)
+{
+	int cpu, cpu0, thr;
+	int awake_threads = 1;		/* this thread is awake */
+	int poke_threads = 0;
+	int need_awake = threads_per_core;
 
 	cpu = smp_processor_id();
-	cpu0 = cpu & ~(thपढ़ोs_per_core - 1);
-	क्रम (thr = 0; thr < thपढ़ोs_per_core; ++thr) अणु
-		अगर (cpu != cpu0 + thr)
-			atomic_inc(&paca_ptrs[cpu0+thr]->करोnt_stop);
-	पूर्ण
-	/* order setting करोnt_stop vs testing requested_psscr */
+	cpu0 = cpu & ~(threads_per_core - 1);
+	for (thr = 0; thr < threads_per_core; ++thr) {
+		if (cpu != cpu0 + thr)
+			atomic_inc(&paca_ptrs[cpu0+thr]->dont_stop);
+	}
+	/* order setting dont_stop vs testing requested_psscr */
 	smp_mb();
-	क्रम (thr = 0; thr < thपढ़ोs_per_core; ++thr) अणु
-		अगर (!paca_ptrs[cpu0+thr]->requested_psscr)
-			++awake_thपढ़ोs;
-		अन्यथा
-			poke_thपढ़ोs |= (1 << thr);
-	पूर्ण
+	for (thr = 0; thr < threads_per_core; ++thr) {
+		if (!paca_ptrs[cpu0+thr]->requested_psscr)
+			++awake_threads;
+		else
+			poke_threads |= (1 << thr);
+	}
 
-	/* If at least 3 thपढ़ोs are awake, the core is in SMT4 alपढ़ोy */
-	अगर (awake_thपढ़ोs < need_awake) अणु
-		/* We have to wake some thपढ़ोs; we'll use msgsnd */
-		क्रम (thr = 0; thr < thपढ़ोs_per_core; ++thr) अणु
-			अगर (poke_thपढ़ोs & (1 << thr)) अणु
+	/* If at least 3 threads are awake, the core is in SMT4 already */
+	if (awake_threads < need_awake) {
+		/* We have to wake some threads; we'll use msgsnd */
+		for (thr = 0; thr < threads_per_core; ++thr) {
+			if (poke_threads & (1 << thr)) {
 				ppc_msgsnd_sync();
 				ppc_msgsnd(PPC_DBELL_MSGTYPE, 0,
 					   paca_ptrs[cpu0+thr]->hw_cpu_id);
-			पूर्ण
-		पूर्ण
-		/* now spin until at least 3 thपढ़ोs are awake */
-		करो अणु
-			क्रम (thr = 0; thr < thपढ़ोs_per_core; ++thr) अणु
-				अगर ((poke_thपढ़ोs & (1 << thr)) &&
-				    !paca_ptrs[cpu0+thr]->requested_psscr) अणु
-					++awake_thपढ़ोs;
-					poke_thपढ़ोs &= ~(1 << thr);
-				पूर्ण
-			पूर्ण
-		पूर्ण जबतक (awake_thपढ़ोs < need_awake);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(pnv_घातer9_क्रमce_smt4_catch);
+			}
+		}
+		/* now spin until at least 3 threads are awake */
+		do {
+			for (thr = 0; thr < threads_per_core; ++thr) {
+				if ((poke_threads & (1 << thr)) &&
+				    !paca_ptrs[cpu0+thr]->requested_psscr) {
+					++awake_threads;
+					poke_threads &= ~(1 << thr);
+				}
+			}
+		} while (awake_threads < need_awake);
+	}
+}
+EXPORT_SYMBOL_GPL(pnv_power9_force_smt4_catch);
 
-व्योम pnv_घातer9_क्रमce_smt4_release(व्योम)
-अणु
-	पूर्णांक cpu, cpu0, thr;
+void pnv_power9_force_smt4_release(void)
+{
+	int cpu, cpu0, thr;
 
 	cpu = smp_processor_id();
-	cpu0 = cpu & ~(thपढ़ोs_per_core - 1);
+	cpu0 = cpu & ~(threads_per_core - 1);
 
-	/* clear all the करोnt_stop flags */
-	क्रम (thr = 0; thr < thपढ़ोs_per_core; ++thr) अणु
-		अगर (cpu != cpu0 + thr)
-			atomic_dec(&paca_ptrs[cpu0+thr]->करोnt_stop);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(pnv_घातer9_क्रमce_smt4_release);
-#पूर्ण_अगर /* CONFIG_KVM_BOOK3S_HV_POSSIBLE */
+	/* clear all the dont_stop flags */
+	for (thr = 0; thr < threads_per_core; ++thr) {
+		if (cpu != cpu0 + thr)
+			atomic_dec(&paca_ptrs[cpu0+thr]->dont_stop);
+	}
+}
+EXPORT_SYMBOL_GPL(pnv_power9_force_smt4_release);
+#endif /* CONFIG_KVM_BOOK3S_HV_POSSIBLE */
 
-काष्ठा p10_sprs अणु
+struct p10_sprs {
 	/*
 	 * SPRs that get lost in shallow states:
 	 *
 	 * P10 loses CR, LR, CTR, FPSCR, VSCR, XER, TAR, SPRG2, and HSPRG1
 	 * isa300 idle routines restore CR, LR.
-	 * CTR is अस्थिर
-	 * idle thपढ़ो करोesn't use FP or VEC
-	 * kernel करोesn't use TAR
-	 * HSPRG1 is only live in HV पूर्णांकerrupt entry
+	 * CTR is volatile
+	 * idle thread doesn't use FP or VEC
+	 * kernel doesn't use TAR
+	 * HSPRG1 is only live in HV interrupt entry
 	 * SPRG2 is only live in KVM guests, KVM handles it.
 	 */
-पूर्ण;
+};
 
-अटल अचिन्हित दीर्घ घातer10_idle_stop(अचिन्हित दीर्घ psscr, bool mmu_on)
-अणु
-	पूर्णांक cpu = raw_smp_processor_id();
-	पूर्णांक first = cpu_first_thपढ़ो_sibling(cpu);
-	अचिन्हित दीर्घ *state = &paca_ptrs[first]->idle_state;
-	अचिन्हित दीर्घ core_thपढ़ो_mask = (1UL << thपढ़ोs_per_core) - 1;
-	अचिन्हित दीर्घ srr1;
-	अचिन्हित दीर्घ pls;
-//	काष्ठा p10_sprs sprs = अणुपूर्ण; /* aव्योम false used-uninitialised */
+static unsigned long power10_idle_stop(unsigned long psscr, bool mmu_on)
+{
+	int cpu = raw_smp_processor_id();
+	int first = cpu_first_thread_sibling(cpu);
+	unsigned long *state = &paca_ptrs[first]->idle_state;
+	unsigned long core_thread_mask = (1UL << threads_per_core) - 1;
+	unsigned long srr1;
+	unsigned long pls;
+//	struct p10_sprs sprs = {}; /* avoid false used-uninitialised */
 	bool sprs_saved = false;
 
-	अगर (!(psscr & (PSSCR_EC|PSSCR_ESL))) अणु
-		/* EC=ESL=0 हाल */
+	if (!(psscr & (PSSCR_EC|PSSCR_ESL))) {
+		/* EC=ESL=0 case */
 
 		BUG_ON(!mmu_on);
 
 		/*
 		 * Wake synchronously. SRESET via xscom may still cause
-		 * a 0x100 घातersave wakeup with SRR1 reason!
+		 * a 0x100 powersave wakeup with SRR1 reason!
 		 */
 		srr1 = isa300_idle_stop_noloss(psscr);		/* go idle */
-		अगर (likely(!srr1))
-			वापस 0;
+		if (likely(!srr1))
+			return 0;
 
 		/*
 		 * Registers not saved, can't recover!
@@ -926,17 +925,17 @@ EXPORT_SYMBOL_GPL(pnv_घातer9_क्रमce_smt4_release);
 		 */
 		BUG_ON((srr1 & SRR1_WAKESTATE) != SRR1_WS_NOLOSS);
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* EC=ESL=1 हाल */
-	अगर ((psscr & PSSCR_RL_MASK) >= deep_spr_loss_state) अणु
-		/* XXX: save SPRs क्रम deep state loss here. */
+	/* EC=ESL=1 case */
+	if ((psscr & PSSCR_RL_MASK) >= deep_spr_loss_state) {
+		/* XXX: save SPRs for deep state loss here. */
 
 		sprs_saved = true;
 
-		atomic_start_thपढ़ो_idle();
-	पूर्ण
+		atomic_start_thread_idle();
+	}
 
 	srr1 = isa300_idle_stop_mayloss(psscr);		/* go idle */
 
@@ -945,186 +944,186 @@ EXPORT_SYMBOL_GPL(pnv_घातer9_क्रमce_smt4_release);
 	WARN_ON_ONCE(!srr1);
 	WARN_ON_ONCE(mfmsr() & (MSR_IR|MSR_DR));
 
-	अगर (unlikely((srr1 & SRR1_WAKEMASK_P8) == SRR1_WAKEHMI))
-		hmi_exception_realmode(शून्य);
+	if (unlikely((srr1 & SRR1_WAKEMASK_P8) == SRR1_WAKEHMI))
+		hmi_exception_realmode(NULL);
 
 	/*
-	 * On POWER10, SRR1 bits करो not match exactly as expected.
+	 * On POWER10, SRR1 bits do not match exactly as expected.
 	 * SRR1_WS_GPRLOSS (10b) can also result in SPR loss, so
-	 * just always test PSSCR क्रम SPR/TB state loss.
+	 * just always test PSSCR for SPR/TB state loss.
 	 */
 	pls = (psscr & PSSCR_PLS) >> PSSCR_PLS_SHIFT;
-	अगर (likely(pls < deep_spr_loss_state)) अणु
-		अगर (sprs_saved)
-			atomic_stop_thपढ़ो_idle();
-		जाओ out;
-	पूर्ण
+	if (likely(pls < deep_spr_loss_state)) {
+		if (sprs_saved)
+			atomic_stop_thread_idle();
+		goto out;
+	}
 
 	/* HV state loss */
 	BUG_ON(!sprs_saved);
 
-	atomic_lock_thपढ़ो_idle();
+	atomic_lock_thread_idle();
 
-	अगर ((*state & core_thपढ़ो_mask) != 0)
-		जाओ core_woken;
+	if ((*state & core_thread_mask) != 0)
+		goto core_woken;
 
 	/* XXX: restore per-core SPRs here */
 
-	अगर (pls >= pnv_first_tb_loss_level) अणु
+	if (pls >= pnv_first_tb_loss_level) {
 		/* TB loss */
-		अगर (opal_resync_समयbase() != OPAL_SUCCESS)
+		if (opal_resync_timebase() != OPAL_SUCCESS)
 			BUG();
-	पूर्ण
+	}
 
 	/*
-	 * isync after restoring shared SPRs and beक्रमe unlocking. Unlock
-	 * only contains hwsync which करोes not necessarily करो the right
-	 * thing क्रम SPRs.
+	 * isync after restoring shared SPRs and before unlocking. Unlock
+	 * only contains hwsync which does not necessarily do the right
+	 * thing for SPRs.
 	 */
 	isync();
 
 core_woken:
-	atomic_unlock_and_stop_thपढ़ो_idle();
+	atomic_unlock_and_stop_thread_idle();
 
-	/* XXX: restore per-thपढ़ो SPRs here */
+	/* XXX: restore per-thread SPRs here */
 
-	अगर (!radix_enabled())
+	if (!radix_enabled())
 		__slb_restore_bolted_realmode();
 
 out:
-	अगर (mmu_on)
-		mपंचांगsr(MSR_KERNEL);
+	if (mmu_on)
+		mtmsr(MSR_KERNEL);
 
-	वापस srr1;
-पूर्ण
+	return srr1;
+}
 
-#अगर_घोषित CONFIG_HOTPLUG_CPU
-अटल अचिन्हित दीर्घ arch300_offline_stop(अचिन्हित दीर्घ psscr)
-अणु
-	अचिन्हित दीर्घ srr1;
+#ifdef CONFIG_HOTPLUG_CPU
+static unsigned long arch300_offline_stop(unsigned long psscr)
+{
+	unsigned long srr1;
 
-#अगर_अघोषित CONFIG_KVM_BOOK3S_HV_POSSIBLE
+#ifndef CONFIG_KVM_BOOK3S_HV_POSSIBLE
 	__ppc64_runlatch_off();
-	अगर (cpu_has_feature(CPU_FTR_ARCH_31))
-		srr1 = घातer10_idle_stop(psscr, true);
-	अन्यथा
-		srr1 = घातer9_idle_stop(psscr, true);
+	if (cpu_has_feature(CPU_FTR_ARCH_31))
+		srr1 = power10_idle_stop(psscr, true);
+	else
+		srr1 = power9_idle_stop(psscr, true);
 	__ppc64_runlatch_on();
-#अन्यथा
+#else
 	/*
 	 * Tell KVM we're entering idle.
-	 * This करोes not have to be करोne in real mode because the P9 MMU
-	 * is independent per-thपढ़ो. Some steppings share radix/hash mode
-	 * between thपढ़ोs, but in that हाल KVM has a barrier sync in real
-	 * mode beक्रमe and after चयनing between radix and hash.
+	 * This does not have to be done in real mode because the P9 MMU
+	 * is independent per-thread. Some steppings share radix/hash mode
+	 * between threads, but in that case KVM has a barrier sync in real
+	 * mode before and after switching between radix and hash.
 	 *
 	 * kvm_start_guest must still be called in real mode though, hence
 	 * the false argument.
 	 */
-	local_paca->kvm_hstate.hwthपढ़ो_state = KVM_HWTHREAD_IN_IDLE;
+	local_paca->kvm_hstate.hwthread_state = KVM_HWTHREAD_IN_IDLE;
 
 	__ppc64_runlatch_off();
-	अगर (cpu_has_feature(CPU_FTR_ARCH_31))
-		srr1 = घातer10_idle_stop(psscr, false);
-	अन्यथा
-		srr1 = घातer9_idle_stop(psscr, false);
+	if (cpu_has_feature(CPU_FTR_ARCH_31))
+		srr1 = power10_idle_stop(psscr, false);
+	else
+		srr1 = power9_idle_stop(psscr, false);
 	__ppc64_runlatch_on();
 
-	local_paca->kvm_hstate.hwthपढ़ो_state = KVM_HWTHREAD_IN_KERNEL;
-	/* Order setting hwthपढ़ो_state vs. testing hwthपढ़ो_req */
+	local_paca->kvm_hstate.hwthread_state = KVM_HWTHREAD_IN_KERNEL;
+	/* Order setting hwthread_state vs. testing hwthread_req */
 	smp_mb();
-	अगर (local_paca->kvm_hstate.hwthपढ़ो_req)
+	if (local_paca->kvm_hstate.hwthread_req)
 		srr1 = idle_kvm_start_guest(srr1);
-	mपंचांगsr(MSR_KERNEL);
-#पूर्ण_अगर
+	mtmsr(MSR_KERNEL);
+#endif
 
-	वापस srr1;
-पूर्ण
-#पूर्ण_अगर
+	return srr1;
+}
+#endif
 
-व्योम arch300_idle_type(अचिन्हित दीर्घ stop_psscr_val,
-				      अचिन्हित दीर्घ stop_psscr_mask)
-अणु
-	अचिन्हित दीर्घ psscr;
-	अचिन्हित दीर्घ srr1;
+void arch300_idle_type(unsigned long stop_psscr_val,
+				      unsigned long stop_psscr_mask)
+{
+	unsigned long psscr;
+	unsigned long srr1;
 
-	अगर (!prep_irq_क्रम_idle_irqsoff())
-		वापस;
+	if (!prep_irq_for_idle_irqsoff())
+		return;
 
 	psscr = mfspr(SPRN_PSSCR);
 	psscr = (psscr & ~stop_psscr_mask) | stop_psscr_val;
 
 	__ppc64_runlatch_off();
-	अगर (cpu_has_feature(CPU_FTR_ARCH_31))
-		srr1 = घातer10_idle_stop(psscr, true);
-	अन्यथा
-		srr1 = घातer9_idle_stop(psscr, true);
+	if (cpu_has_feature(CPU_FTR_ARCH_31))
+		srr1 = power10_idle_stop(psscr, true);
+	else
+		srr1 = power9_idle_stop(psscr, true);
 	__ppc64_runlatch_on();
 
-	fini_irq_क्रम_idle_irqsoff();
+	fini_irq_for_idle_irqsoff();
 
 	irq_set_pending_from_srr1(srr1);
-पूर्ण
+}
 
 /*
- * Used क्रम ppc_md.घातer_save which needs a function with no parameters
+ * Used for ppc_md.power_save which needs a function with no parameters
  */
-अटल व्योम arch300_idle(व्योम)
-अणु
-	arch300_idle_type(pnv_शेष_stop_val, pnv_शेष_stop_mask);
-पूर्ण
+static void arch300_idle(void)
+{
+	arch300_idle_type(pnv_default_stop_val, pnv_default_stop_mask);
+}
 
-#अगर_घोषित CONFIG_HOTPLUG_CPU
+#ifdef CONFIG_HOTPLUG_CPU
 
-व्योम pnv_program_cpu_hotplug_lpcr(अचिन्हित पूर्णांक cpu, u64 lpcr_val)
-अणु
+void pnv_program_cpu_hotplug_lpcr(unsigned int cpu, u64 lpcr_val)
+{
 	u64 pir = get_hard_smp_processor_id(cpu);
 
 	mtspr(SPRN_LPCR, lpcr_val);
 
 	/*
-	 * Program the LPCR via stop-api only अगर the deepest stop state
+	 * Program the LPCR via stop-api only if the deepest stop state
 	 * can lose hypervisor context.
 	 */
-	अगर (supported_cpuidle_states & OPAL_PM_LOSE_FULL_CONTEXT)
+	if (supported_cpuidle_states & OPAL_PM_LOSE_FULL_CONTEXT)
 		opal_slw_set_reg(pir, SPRN_LPCR, lpcr_val);
-पूर्ण
+}
 
 /*
- * pnv_cpu_offline: A function that माला_दो the CPU पूर्णांकo the deepest
- * available platक्रमm idle state on a CPU-Offline.
- * पूर्णांकerrupts hard disabled and no lazy irq pending.
+ * pnv_cpu_offline: A function that puts the CPU into the deepest
+ * available platform idle state on a CPU-Offline.
+ * interrupts hard disabled and no lazy irq pending.
  */
-अचिन्हित दीर्घ pnv_cpu_offline(अचिन्हित पूर्णांक cpu)
-अणु
-	अचिन्हित दीर्घ srr1;
+unsigned long pnv_cpu_offline(unsigned int cpu)
+{
+	unsigned long srr1;
 
 	__ppc64_runlatch_off();
 
-	अगर (cpu_has_feature(CPU_FTR_ARCH_300) && deepest_stop_found) अणु
-		अचिन्हित दीर्घ psscr;
+	if (cpu_has_feature(CPU_FTR_ARCH_300) && deepest_stop_found) {
+		unsigned long psscr;
 
 		psscr = mfspr(SPRN_PSSCR);
 		psscr = (psscr & ~pnv_deepest_stop_psscr_mask) |
 						pnv_deepest_stop_psscr_val;
 		srr1 = arch300_offline_stop(psscr);
-	पूर्ण अन्यथा अगर (cpu_has_feature(CPU_FTR_ARCH_206) && घातer7_offline_type) अणु
-		srr1 = घातer7_offline();
-	पूर्ण अन्यथा अणु
+	} else if (cpu_has_feature(CPU_FTR_ARCH_206) && power7_offline_type) {
+		srr1 = power7_offline();
+	} else {
 		/* This is the fallback method. We emulate snooze */
-		जबतक (!generic_check_cpu_restart(cpu)) अणु
+		while (!generic_check_cpu_restart(cpu)) {
 			HMT_low();
 			HMT_very_low();
-		पूर्ण
+		}
 		srr1 = 0;
 		HMT_medium();
-	पूर्ण
+	}
 
 	__ppc64_runlatch_on();
 
-	वापस srr1;
-पूर्ण
-#पूर्ण_अगर
+	return srr1;
+}
+#endif
 
 /*
  * Power ISA 3.0 idle initialization.
@@ -1140,7 +1139,7 @@ out:
  *
  * PSSCR key fields:
  *	Bits 0:3  - Power-Saving Level Status (PLS). This field indicates the
- *	lowest घातer-saving state the thपढ़ो entered since stop inकाष्ठाion was
+ *	lowest power-saving state the thread entered since stop instruction was
  *	last executed.
  *
  *	Bit 41 - Status Disable(SD)
@@ -1152,358 +1151,358 @@ out:
  *	1 - Allows state loss
  *
  *	Bit 43 - Exit Criterion
- *	0 - Exit from घातer-save mode on any पूर्णांकerrupt
- *	1 - Exit from घातer-save mode controlled by LPCR's PECE bits
+ *	0 - Exit from power-save mode on any interrupt
+ *	1 - Exit from power-save mode controlled by LPCR's PECE bits
  *
  *	Bits 44:47 - Power-Saving Level Limit
- *	This limits the घातer-saving level that can be entered पूर्णांकo.
+ *	This limits the power-saving level that can be entered into.
  *
  *	Bits 60:63 - Requested Level
- *	Used to specअगरy which घातer-saving level must be entered on executing
- *	stop inकाष्ठाion
+ *	Used to specify which power-saving level must be entered on executing
+ *	stop instruction
  */
 
-पूर्णांक validate_psscr_val_mask(u64 *psscr_val, u64 *psscr_mask, u32 flags)
-अणु
-	पूर्णांक err = 0;
+int validate_psscr_val_mask(u64 *psscr_val, u64 *psscr_mask, u32 flags)
+{
+	int err = 0;
 
 	/*
 	 * psscr_mask == 0xf indicates an older firmware.
-	 * Set reमुख्यing fields of psscr to the शेष values.
+	 * Set remaining fields of psscr to the default values.
 	 * See NOTE above definition of PSSCR_HV_DEFAULT_VAL
 	 */
-	अगर (*psscr_mask == 0xf) अणु
+	if (*psscr_mask == 0xf) {
 		*psscr_val = *psscr_val | PSSCR_HV_DEFAULT_VAL;
 		*psscr_mask = PSSCR_HV_DEFAULT_MASK;
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/*
 	 * New firmware is expected to set the psscr_val bits correctly.
-	 * Validate that the following invariants are correctly मुख्यtained by
+	 * Validate that the following invariants are correctly maintained by
 	 * the new firmware.
 	 * - ESL bit value matches the EC bit value.
-	 * - ESL bit is set क्रम all the deep stop states.
+	 * - ESL bit is set for all the deep stop states.
 	 */
-	अगर (GET_PSSCR_ESL(*psscr_val) != GET_PSSCR_EC(*psscr_val)) अणु
+	if (GET_PSSCR_ESL(*psscr_val) != GET_PSSCR_EC(*psscr_val)) {
 		err = ERR_EC_ESL_MISMATCH;
-	पूर्ण अन्यथा अगर ((flags & OPAL_PM_LOSE_FULL_CONTEXT) &&
-		GET_PSSCR_ESL(*psscr_val) == 0) अणु
+	} else if ((flags & OPAL_PM_LOSE_FULL_CONTEXT) &&
+		GET_PSSCR_ESL(*psscr_val) == 0) {
 		err = ERR_DEEP_STATE_ESL_MISMATCH;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * pnv_arch300_idle_init: Initializes the शेष idle state, first
+ * pnv_arch300_idle_init: Initializes the default idle state, first
  *                        deep idle state and deepest idle state on
  *                        ISA 3.0 CPUs.
  *
- * @np: /ibm,opal/घातer-mgt device node
+ * @np: /ibm,opal/power-mgt device node
  * @flags: cpu-idle-state-flags array
  * @dt_idle_states: Number of idle state entries
  * Returns 0 on success
  */
-अटल व्योम __init pnv_arch300_idle_init(व्योम)
-अणु
+static void __init pnv_arch300_idle_init(void)
+{
 	u64 max_residency_ns = 0;
-	पूर्णांक i;
+	int i;
 
 	/* stop is not really architected, we only have p9,p10 drivers */
-	अगर (!pvr_version_is(PVR_POWER10) && !pvr_version_is(PVR_POWER9))
-		वापस;
+	if (!pvr_version_is(PVR_POWER10) && !pvr_version_is(PVR_POWER9))
+		return;
 
 	/*
-	 * pnv_deepest_stop_अणुval,maskपूर्ण should be set to values corresponding to
+	 * pnv_deepest_stop_{val,mask} should be set to values corresponding to
 	 * the deepest stop state.
 	 *
-	 * pnv_शेष_stop_अणुval,maskपूर्ण should be set to values corresponding to
+	 * pnv_default_stop_{val,mask} should be set to values corresponding to
 	 * the deepest loss-less (OPAL_PM_STOP_INST_FAST) stop state.
 	 */
 	pnv_first_tb_loss_level = MAX_STOP_STATE + 1;
 	deep_spr_loss_state = MAX_STOP_STATE + 1;
-	क्रम (i = 0; i < nr_pnv_idle_states; i++) अणु
-		पूर्णांक err;
-		काष्ठा pnv_idle_states_t *state = &pnv_idle_states[i];
+	for (i = 0; i < nr_pnv_idle_states; i++) {
+		int err;
+		struct pnv_idle_states_t *state = &pnv_idle_states[i];
 		u64 psscr_rl = state->psscr_val & PSSCR_RL_MASK;
 
-		/* No deep loss driver implemented क्रम POWER10 yet */
-		अगर (pvr_version_is(PVR_POWER10) &&
+		/* No deep loss driver implemented for POWER10 yet */
+		if (pvr_version_is(PVR_POWER10) &&
 				state->flags & (OPAL_PM_TIMEBASE_STOP|OPAL_PM_LOSE_FULL_CONTEXT))
-			जारी;
+			continue;
 
-		अगर ((state->flags & OPAL_PM_TIMEBASE_STOP) &&
+		if ((state->flags & OPAL_PM_TIMEBASE_STOP) &&
 		     (pnv_first_tb_loss_level > psscr_rl))
 			pnv_first_tb_loss_level = psscr_rl;
 
-		अगर ((state->flags & OPAL_PM_LOSE_FULL_CONTEXT) &&
+		if ((state->flags & OPAL_PM_LOSE_FULL_CONTEXT) &&
 		     (deep_spr_loss_state > psscr_rl))
 			deep_spr_loss_state = psscr_rl;
 
 		/*
-		 * The idle code करोes not deal with TB loss occurring
-		 * in a shallower state than SPR loss, so क्रमce it to
-		 * behave like SPRs are lost अगर TB is lost. POWER9 would
-		 * never encouter this, but a POWER8 core would अगर it
-		 * implemented the stop inकाष्ठाion. So this is क्रम क्रमward
+		 * The idle code does not deal with TB loss occurring
+		 * in a shallower state than SPR loss, so force it to
+		 * behave like SPRs are lost if TB is lost. POWER9 would
+		 * never encouter this, but a POWER8 core would if it
+		 * implemented the stop instruction. So this is for forward
 		 * compatibility.
 		 */
-		अगर ((state->flags & OPAL_PM_TIMEBASE_STOP) &&
+		if ((state->flags & OPAL_PM_TIMEBASE_STOP) &&
 		     (deep_spr_loss_state > psscr_rl))
 			deep_spr_loss_state = psscr_rl;
 
 		err = validate_psscr_val_mask(&state->psscr_val,
 					      &state->psscr_mask,
 					      state->flags);
-		अगर (err) अणु
+		if (err) {
 			report_invalid_psscr_val(state->psscr_val, err);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		state->valid = true;
 
-		अगर (max_residency_ns < state->residency_ns) अणु
+		if (max_residency_ns < state->residency_ns) {
 			max_residency_ns = state->residency_ns;
 			pnv_deepest_stop_psscr_val = state->psscr_val;
 			pnv_deepest_stop_psscr_mask = state->psscr_mask;
 			pnv_deepest_stop_flag = state->flags;
 			deepest_stop_found = true;
-		पूर्ण
+		}
 
-		अगर (!शेष_stop_found &&
-		    (state->flags & OPAL_PM_STOP_INST_FAST)) अणु
-			pnv_शेष_stop_val = state->psscr_val;
-			pnv_शेष_stop_mask = state->psscr_mask;
-			शेष_stop_found = true;
+		if (!default_stop_found &&
+		    (state->flags & OPAL_PM_STOP_INST_FAST)) {
+			pnv_default_stop_val = state->psscr_val;
+			pnv_default_stop_mask = state->psscr_mask;
+			default_stop_found = true;
 			WARN_ON(state->flags & OPAL_PM_LOSE_FULL_CONTEXT);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (unlikely(!शेष_stop_found)) अणु
+	if (unlikely(!default_stop_found)) {
 		pr_warn("cpuidle-powernv: No suitable default stop state found. Disabling platform idle.\n");
-	पूर्ण अन्यथा अणु
-		ppc_md.घातer_save = arch300_idle;
+	} else {
+		ppc_md.power_save = arch300_idle;
 		pr_info("cpuidle-powernv: Default stop: psscr = 0x%016llx,mask=0x%016llx\n",
-			pnv_शेष_stop_val, pnv_शेष_stop_mask);
-	पूर्ण
+			pnv_default_stop_val, pnv_default_stop_mask);
+	}
 
-	अगर (unlikely(!deepest_stop_found)) अणु
+	if (unlikely(!deepest_stop_found)) {
 		pr_warn("cpuidle-powernv: No suitable stop state for CPU-Hotplug. Offlined CPUs will busy wait");
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_info("cpuidle-powernv: Deepest stop: psscr = 0x%016llx,mask=0x%016llx\n",
 			pnv_deepest_stop_psscr_val,
 			pnv_deepest_stop_psscr_mask);
-	पूर्ण
+	}
 
 	pr_info("cpuidle-powernv: First stop level that may lose SPRs = 0x%llx\n",
 		deep_spr_loss_state);
 
 	pr_info("cpuidle-powernv: First stop level that may lose timebase = 0x%llx\n",
 		pnv_first_tb_loss_level);
-पूर्ण
+}
 
-अटल व्योम __init pnv_disable_deep_states(व्योम)
-अणु
+static void __init pnv_disable_deep_states(void)
+{
 	/*
 	 * The stop-api is unable to restore hypervisor
-	 * resources on wakeup from platक्रमm idle states which
+	 * resources on wakeup from platform idle states which
 	 * lose full context. So disable such states.
 	 */
 	supported_cpuidle_states &= ~OPAL_PM_LOSE_FULL_CONTEXT;
 	pr_warn("cpuidle-powernv: Disabling idle states that lose full context\n");
 	pr_warn("cpuidle-powernv: Idle power-savings, CPU-Hotplug affected\n");
 
-	अगर (cpu_has_feature(CPU_FTR_ARCH_300) &&
-	    (pnv_deepest_stop_flag & OPAL_PM_LOSE_FULL_CONTEXT)) अणु
+	if (cpu_has_feature(CPU_FTR_ARCH_300) &&
+	    (pnv_deepest_stop_flag & OPAL_PM_LOSE_FULL_CONTEXT)) {
 		/*
-		 * Use the शेष stop state क्रम CPU-Hotplug
-		 * अगर available.
+		 * Use the default stop state for CPU-Hotplug
+		 * if available.
 		 */
-		अगर (शेष_stop_found) अणु
-			pnv_deepest_stop_psscr_val = pnv_शेष_stop_val;
-			pnv_deepest_stop_psscr_mask = pnv_शेष_stop_mask;
+		if (default_stop_found) {
+			pnv_deepest_stop_psscr_val = pnv_default_stop_val;
+			pnv_deepest_stop_psscr_mask = pnv_default_stop_mask;
 			pr_warn("cpuidle-powernv: Offlined CPUs will stop with psscr = 0x%016llx\n",
 				pnv_deepest_stop_psscr_val);
-		पूर्ण अन्यथा अणु /* Fallback to snooze loop क्रम CPU-Hotplug */
+		} else { /* Fallback to snooze loop for CPU-Hotplug */
 			deepest_stop_found = false;
 			pr_warn("cpuidle-powernv: Offlined CPUs will busy wait\n");
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
- * Probe device tree क्रम supported idle states
+ * Probe device tree for supported idle states
  */
-अटल व्योम __init pnv_probe_idle_states(व्योम)
-अणु
-	पूर्णांक i;
+static void __init pnv_probe_idle_states(void)
+{
+	int i;
 
-	अगर (nr_pnv_idle_states < 0) अणु
+	if (nr_pnv_idle_states < 0) {
 		pr_warn("cpuidle-powernv: no idle states found in the DT\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (cpu_has_feature(CPU_FTR_ARCH_300))
+	if (cpu_has_feature(CPU_FTR_ARCH_300))
 		pnv_arch300_idle_init();
 
-	क्रम (i = 0; i < nr_pnv_idle_states; i++)
+	for (i = 0; i < nr_pnv_idle_states; i++)
 		supported_cpuidle_states |= pnv_idle_states[i].flags;
-पूर्ण
+}
 
 /*
- * This function parses device-tree and populates all the inक्रमmation
- * पूर्णांकo pnv_idle_states काष्ठाure. It also sets up nr_pnv_idle_states
+ * This function parses device-tree and populates all the information
+ * into pnv_idle_states structure. It also sets up nr_pnv_idle_states
  * which is the number of cpuidle states discovered through device-tree.
  */
 
-अटल पूर्णांक pnv_parse_cpuidle_dt(व्योम)
-अणु
-	काष्ठा device_node *np;
-	पूर्णांक nr_idle_states, i;
-	पूर्णांक rc = 0;
+static int pnv_parse_cpuidle_dt(void)
+{
+	struct device_node *np;
+	int nr_idle_states, i;
+	int rc = 0;
 	u32 *temp_u32;
 	u64 *temp_u64;
-	स्थिर अक्षर **temp_string;
+	const char **temp_string;
 
 	np = of_find_node_by_path("/ibm,opal/power-mgt");
-	अगर (!np) अणु
+	if (!np) {
 		pr_warn("opal: PowerMgmt Node not found\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	nr_idle_states = of_property_count_u32_elems(np,
 						"ibm,cpu-idle-state-flags");
 
-	pnv_idle_states = kसुस्मृति(nr_idle_states, माप(*pnv_idle_states),
+	pnv_idle_states = kcalloc(nr_idle_states, sizeof(*pnv_idle_states),
 				  GFP_KERNEL);
-	temp_u32 = kसुस्मृति(nr_idle_states, माप(u32),  GFP_KERNEL);
-	temp_u64 = kसुस्मृति(nr_idle_states, माप(u64),  GFP_KERNEL);
-	temp_string = kसुस्मृति(nr_idle_states, माप(अक्षर *),  GFP_KERNEL);
+	temp_u32 = kcalloc(nr_idle_states, sizeof(u32),  GFP_KERNEL);
+	temp_u64 = kcalloc(nr_idle_states, sizeof(u64),  GFP_KERNEL);
+	temp_string = kcalloc(nr_idle_states, sizeof(char *),  GFP_KERNEL);
 
-	अगर (!(pnv_idle_states && temp_u32 && temp_u64 && temp_string)) अणु
+	if (!(pnv_idle_states && temp_u32 && temp_u64 && temp_string)) {
 		pr_err("Could not allocate memory for dt parsing\n");
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Read flags */
-	अगर (of_property_पढ़ो_u32_array(np, "ibm,cpu-idle-state-flags",
-				       temp_u32, nr_idle_states)) अणु
+	if (of_property_read_u32_array(np, "ibm,cpu-idle-state-flags",
+				       temp_u32, nr_idle_states)) {
 		pr_warn("cpuidle-powernv: missing ibm,cpu-idle-state-flags in DT\n");
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
-	क्रम (i = 0; i < nr_idle_states; i++)
+		goto out;
+	}
+	for (i = 0; i < nr_idle_states; i++)
 		pnv_idle_states[i].flags = temp_u32[i];
 
 	/* Read latencies */
-	अगर (of_property_पढ़ो_u32_array(np, "ibm,cpu-idle-state-latencies-ns",
-				       temp_u32, nr_idle_states)) अणु
+	if (of_property_read_u32_array(np, "ibm,cpu-idle-state-latencies-ns",
+				       temp_u32, nr_idle_states)) {
 		pr_warn("cpuidle-powernv: missing ibm,cpu-idle-state-latencies-ns in DT\n");
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
-	क्रम (i = 0; i < nr_idle_states; i++)
+		goto out;
+	}
+	for (i = 0; i < nr_idle_states; i++)
 		pnv_idle_states[i].latency_ns = temp_u32[i];
 
 	/* Read residencies */
-	अगर (of_property_पढ़ो_u32_array(np, "ibm,cpu-idle-state-residency-ns",
-				       temp_u32, nr_idle_states)) अणु
+	if (of_property_read_u32_array(np, "ibm,cpu-idle-state-residency-ns",
+				       temp_u32, nr_idle_states)) {
 		pr_warn("cpuidle-powernv: missing ibm,cpu-idle-state-residency-ns in DT\n");
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
-	क्रम (i = 0; i < nr_idle_states; i++)
+		goto out;
+	}
+	for (i = 0; i < nr_idle_states; i++)
 		pnv_idle_states[i].residency_ns = temp_u32[i];
 
-	/* For घातer9 and later */
-	अगर (cpu_has_feature(CPU_FTR_ARCH_300)) अणु
+	/* For power9 and later */
+	if (cpu_has_feature(CPU_FTR_ARCH_300)) {
 		/* Read pm_crtl_val */
-		अगर (of_property_पढ़ो_u64_array(np, "ibm,cpu-idle-state-psscr",
-					       temp_u64, nr_idle_states)) अणु
+		if (of_property_read_u64_array(np, "ibm,cpu-idle-state-psscr",
+					       temp_u64, nr_idle_states)) {
 			pr_warn("cpuidle-powernv: missing ibm,cpu-idle-state-psscr in DT\n");
 			rc = -EINVAL;
-			जाओ out;
-		पूर्ण
-		क्रम (i = 0; i < nr_idle_states; i++)
+			goto out;
+		}
+		for (i = 0; i < nr_idle_states; i++)
 			pnv_idle_states[i].psscr_val = temp_u64[i];
 
 		/* Read pm_crtl_mask */
-		अगर (of_property_पढ़ो_u64_array(np, "ibm,cpu-idle-state-psscr-mask",
-					       temp_u64, nr_idle_states)) अणु
+		if (of_property_read_u64_array(np, "ibm,cpu-idle-state-psscr-mask",
+					       temp_u64, nr_idle_states)) {
 			pr_warn("cpuidle-powernv: missing ibm,cpu-idle-state-psscr-mask in DT\n");
 			rc = -EINVAL;
-			जाओ out;
-		पूर्ण
-		क्रम (i = 0; i < nr_idle_states; i++)
+			goto out;
+		}
+		for (i = 0; i < nr_idle_states; i++)
 			pnv_idle_states[i].psscr_mask = temp_u64[i];
-	पूर्ण
+	}
 
 	/*
-	 * घातer8 specअगरic properties ibm,cpu-idle-state-pmicr-mask and
+	 * power8 specific properties ibm,cpu-idle-state-pmicr-mask and
 	 * ibm,cpu-idle-state-pmicr-val were never used and there is no
 	 * plan to use it in near future. Hence, not parsing these properties
 	 */
 
-	अगर (of_property_पढ़ो_string_array(np, "ibm,cpu-idle-state-names",
-					  temp_string, nr_idle_states) < 0) अणु
+	if (of_property_read_string_array(np, "ibm,cpu-idle-state-names",
+					  temp_string, nr_idle_states) < 0) {
 		pr_warn("cpuidle-powernv: missing ibm,cpu-idle-state-names in DT\n");
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
-	क्रम (i = 0; i < nr_idle_states; i++)
+		goto out;
+	}
+	for (i = 0; i < nr_idle_states; i++)
 		strlcpy(pnv_idle_states[i].name, temp_string[i],
 			PNV_IDLE_NAME_LEN);
 	nr_pnv_idle_states = nr_idle_states;
 	rc = 0;
 out:
-	kमुक्त(temp_u32);
-	kमुक्त(temp_u64);
-	kमुक्त(temp_string);
-	वापस rc;
-पूर्ण
+	kfree(temp_u32);
+	kfree(temp_u64);
+	kfree(temp_string);
+	return rc;
+}
 
-अटल पूर्णांक __init pnv_init_idle_states(व्योम)
-अणु
-	पूर्णांक cpu;
-	पूर्णांक rc = 0;
+static int __init pnv_init_idle_states(void)
+{
+	int cpu;
+	int rc = 0;
 
 	/* Set up PACA fields */
-	क्रम_each_present_cpu(cpu) अणु
-		काष्ठा paca_काष्ठा *p = paca_ptrs[cpu];
+	for_each_present_cpu(cpu) {
+		struct paca_struct *p = paca_ptrs[cpu];
 
 		p->idle_state = 0;
-		अगर (cpu == cpu_first_thपढ़ो_sibling(cpu))
-			p->idle_state = (1 << thपढ़ोs_per_core) - 1;
+		if (cpu == cpu_first_thread_sibling(cpu))
+			p->idle_state = (1 << threads_per_core) - 1;
 
-		अगर (!cpu_has_feature(CPU_FTR_ARCH_300)) अणु
+		if (!cpu_has_feature(CPU_FTR_ARCH_300)) {
 			/* P7/P8 nap */
-			p->thपढ़ो_idle_state = PNV_THREAD_RUNNING;
-		पूर्ण अन्यथा अगर (pvr_version_is(PVR_POWER9)) अणु
+			p->thread_idle_state = PNV_THREAD_RUNNING;
+		} else if (pvr_version_is(PVR_POWER9)) {
 			/* P9 stop workarounds */
-#अगर_घोषित CONFIG_KVM_BOOK3S_HV_POSSIBLE
+#ifdef CONFIG_KVM_BOOK3S_HV_POSSIBLE
 			p->requested_psscr = 0;
-			atomic_set(&p->करोnt_stop, 0);
-#पूर्ण_अगर
-		पूर्ण
-	पूर्ण
+			atomic_set(&p->dont_stop, 0);
+#endif
+		}
+	}
 
-	/* In हाल we error out nr_pnv_idle_states will be zero */
+	/* In case we error out nr_pnv_idle_states will be zero */
 	nr_pnv_idle_states = 0;
 	supported_cpuidle_states = 0;
 
-	अगर (cpuidle_disable != IDLE_NO_OVERRIDE)
-		जाओ out;
+	if (cpuidle_disable != IDLE_NO_OVERRIDE)
+		goto out;
 	rc = pnv_parse_cpuidle_dt();
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 	pnv_probe_idle_states();
 
-	अगर (!cpu_has_feature(CPU_FTR_ARCH_300)) अणु
-		अगर (!(supported_cpuidle_states & OPAL_PM_SLEEP_ENABLED_ER1)) अणु
-			घातer7_fastsleep_workaround_entry = false;
-			घातer7_fastsleep_workaround_निकास = false;
-		पूर्ण अन्यथा अणु
+	if (!cpu_has_feature(CPU_FTR_ARCH_300)) {
+		if (!(supported_cpuidle_states & OPAL_PM_SLEEP_ENABLED_ER1)) {
+			power7_fastsleep_workaround_entry = false;
+			power7_fastsleep_workaround_exit = false;
+		} else {
 			/*
 			 * OPAL_PM_SLEEP_ENABLED_ER1 is set. It indicates that
 			 * workaround is needed to use fastsleep. Provide sysfs
@@ -1512,29 +1511,29 @@ out:
 			 */
 			device_create_file(cpu_subsys.dev_root,
 				&dev_attr_fastsleep_workaround_applyonce);
-		पूर्ण
+		}
 
 		update_subcore_sibling_mask();
 
-		अगर (supported_cpuidle_states & OPAL_PM_NAP_ENABLED) अणु
-			ppc_md.घातer_save = घातer7_idle;
-			घातer7_offline_type = PNV_THREAD_NAP;
-		पूर्ण
+		if (supported_cpuidle_states & OPAL_PM_NAP_ENABLED) {
+			ppc_md.power_save = power7_idle;
+			power7_offline_type = PNV_THREAD_NAP;
+		}
 
-		अगर ((supported_cpuidle_states & OPAL_PM_WINKLE_ENABLED) &&
+		if ((supported_cpuidle_states & OPAL_PM_WINKLE_ENABLED) &&
 			   (supported_cpuidle_states & OPAL_PM_LOSE_FULL_CONTEXT))
-			घातer7_offline_type = PNV_THREAD_WINKLE;
-		अन्यथा अगर ((supported_cpuidle_states & OPAL_PM_SLEEP_ENABLED) ||
+			power7_offline_type = PNV_THREAD_WINKLE;
+		else if ((supported_cpuidle_states & OPAL_PM_SLEEP_ENABLED) ||
 			   (supported_cpuidle_states & OPAL_PM_SLEEP_ENABLED_ER1))
-			घातer7_offline_type = PNV_THREAD_SLEEP;
-	पूर्ण
+			power7_offline_type = PNV_THREAD_SLEEP;
+	}
 
-	अगर (supported_cpuidle_states & OPAL_PM_LOSE_FULL_CONTEXT) अणु
-		अगर (pnv_save_sprs_क्रम_deep_states())
+	if (supported_cpuidle_states & OPAL_PM_LOSE_FULL_CONTEXT) {
+		if (pnv_save_sprs_for_deep_states())
 			pnv_disable_deep_states();
-	पूर्ण
+	}
 
 out:
-	वापस 0;
-पूर्ण
-machine_subsys_initcall(घातernv, pnv_init_idle_states);
+	return 0;
+}
+machine_subsys_initcall(powernv, pnv_init_idle_states);

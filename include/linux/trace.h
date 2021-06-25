@@ -1,47 +1,46 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_TRACE_H
-#घोषणा _LINUX_TRACE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_TRACE_H
+#define _LINUX_TRACE_H
 
-#अगर_घोषित CONFIG_TRACING
+#ifdef CONFIG_TRACING
 
-#घोषणा TRACE_EXPORT_FUNCTION	BIT(0)
-#घोषणा TRACE_EXPORT_EVENT	BIT(1)
-#घोषणा TRACE_EXPORT_MARKER	BIT(2)
+#define TRACE_EXPORT_FUNCTION	BIT(0)
+#define TRACE_EXPORT_EVENT	BIT(1)
+#define TRACE_EXPORT_MARKER	BIT(2)
 
 /*
  * The trace export - an export of Ftrace output. The trace_export
- * can process traces and export them to a रेजिस्टरed destination as
+ * can process traces and export them to a registered destination as
  * an addition to the current only output of Ftrace - i.e. ring buffer.
  *
  * If you want traces to be sent to some other place rather than ring
- * buffer only, just need to रेजिस्टर a new trace_export and implement
- * its own .ग_लिखो() function क्रम writing traces to the storage.
+ * buffer only, just need to register a new trace_export and implement
+ * its own .write() function for writing traces to the storage.
  *
- * next		- poपूर्णांकer to the next trace_export
- * ग_लिखो	- copy traces which have been delt with ->commit() to
+ * next		- pointer to the next trace_export
+ * write	- copy traces which have been delt with ->commit() to
  *		  the destination
  * flags	- which ftrace to be exported
  */
-काष्ठा trace_export अणु
-	काष्ठा trace_export __rcu	*next;
-	व्योम (*ग_लिखो)(काष्ठा trace_export *, स्थिर व्योम *, अचिन्हित पूर्णांक);
-	पूर्णांक flags;
-पूर्ण;
+struct trace_export {
+	struct trace_export __rcu	*next;
+	void (*write)(struct trace_export *, const void *, unsigned int);
+	int flags;
+};
 
-पूर्णांक रेजिस्टर_ftrace_export(काष्ठा trace_export *export);
-पूर्णांक unरेजिस्टर_ftrace_export(काष्ठा trace_export *export);
+int register_ftrace_export(struct trace_export *export);
+int unregister_ftrace_export(struct trace_export *export);
 
-काष्ठा trace_array;
+struct trace_array;
 
-व्योम trace_prपूर्णांकk_init_buffers(व्योम);
-__म_लिखो(3, 4)
-पूर्णांक trace_array_prपूर्णांकk(काष्ठा trace_array *tr, अचिन्हित दीर्घ ip,
-		       स्थिर अक्षर *fmt, ...);
-पूर्णांक trace_array_init_prपूर्णांकk(काष्ठा trace_array *tr);
-व्योम trace_array_put(काष्ठा trace_array *tr);
-काष्ठा trace_array *trace_array_get_by_name(स्थिर अक्षर *name);
-पूर्णांक trace_array_destroy(काष्ठा trace_array *tr);
-#पूर्ण_अगर	/* CONFIG_TRACING */
+void trace_printk_init_buffers(void);
+__printf(3, 4)
+int trace_array_printk(struct trace_array *tr, unsigned long ip,
+		       const char *fmt, ...);
+int trace_array_init_printk(struct trace_array *tr);
+void trace_array_put(struct trace_array *tr);
+struct trace_array *trace_array_get_by_name(const char *name);
+int trace_array_destroy(struct trace_array *tr);
+#endif	/* CONFIG_TRACING */
 
-#पूर्ण_अगर	/* _LINUX_TRACE_H */
+#endif	/* _LINUX_TRACE_H */

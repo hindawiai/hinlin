@@ -1,67 +1,66 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  */
 
-#अगर_अघोषित _DPU_FORMATS_H
-#घोषणा _DPU_FORMATS_H
+#ifndef _DPU_FORMATS_H
+#define _DPU_FORMATS_H
 
-#समावेश <drm/drm_fourcc.h>
-#समावेश "msm_gem.h"
-#समावेश "dpu_hw_mdss.h"
+#include <drm/drm_fourcc.h>
+#include "msm_gem.h"
+#include "dpu_hw_mdss.h"
 
 /**
- * dpu_get_dpu_क्रमmat_ext() - Returns dpu क्रमmat काष्ठाure poपूर्णांकer.
- * @क्रमmat:          DRM FourCC Code
- * @modअगरiers:       क्रमmat modअगरier array from client, one per plane
+ * dpu_get_dpu_format_ext() - Returns dpu format structure pointer.
+ * @format:          DRM FourCC Code
+ * @modifiers:       format modifier array from client, one per plane
  */
-स्थिर काष्ठा dpu_क्रमmat *dpu_get_dpu_क्रमmat_ext(
-		स्थिर uपूर्णांक32_t क्रमmat,
-		स्थिर uपूर्णांक64_t modअगरier);
+const struct dpu_format *dpu_get_dpu_format_ext(
+		const uint32_t format,
+		const uint64_t modifier);
 
-#घोषणा dpu_get_dpu_क्रमmat(f) dpu_get_dpu_क्रमmat_ext(f, 0)
+#define dpu_get_dpu_format(f) dpu_get_dpu_format_ext(f, 0)
 
 /**
- * dpu_get_msm_क्रमmat - get an dpu_क्रमmat by its msm_क्रमmat base
- *                     callback function रेजिस्टरs with the msm_kms layer
+ * dpu_get_msm_format - get an dpu_format by its msm_format base
+ *                     callback function registers with the msm_kms layer
  * @kms:             kms driver
- * @क्रमmat:          DRM FourCC Code
- * @modअगरiers:       data layout modअगरier
+ * @format:          DRM FourCC Code
+ * @modifiers:       data layout modifier
  */
-स्थिर काष्ठा msm_क्रमmat *dpu_get_msm_क्रमmat(
-		काष्ठा msm_kms *kms,
-		स्थिर uपूर्णांक32_t क्रमmat,
-		स्थिर uपूर्णांक64_t modअगरiers);
+const struct msm_format *dpu_get_msm_format(
+		struct msm_kms *kms,
+		const uint32_t format,
+		const uint64_t modifiers);
 
 /**
- * dpu_क्रमmat_check_modअगरied_क्रमmat - validate क्रमmat and buffers क्रम
- *                   dpu non-standard, i.e. modअगरied क्रमmat
+ * dpu_format_check_modified_format - validate format and buffers for
+ *                   dpu non-standard, i.e. modified format
  * @kms:             kms driver
- * @msm_fmt:         poपूर्णांकer to the msm_fmt base poपूर्णांकer of an dpu_क्रमmat
- * @cmd:             fb_cmd2 काष्ठाure user request
+ * @msm_fmt:         pointer to the msm_fmt base pointer of an dpu_format
+ * @cmd:             fb_cmd2 structure user request
  * @bos:             gem buffer object list
  *
  * Return: error code on failure, 0 on success
  */
-पूर्णांक dpu_क्रमmat_check_modअगरied_क्रमmat(
-		स्थिर काष्ठा msm_kms *kms,
-		स्थिर काष्ठा msm_क्रमmat *msm_fmt,
-		स्थिर काष्ठा drm_mode_fb_cmd2 *cmd,
-		काष्ठा drm_gem_object **bos);
+int dpu_format_check_modified_format(
+		const struct msm_kms *kms,
+		const struct msm_format *msm_fmt,
+		const struct drm_mode_fb_cmd2 *cmd,
+		struct drm_gem_object **bos);
 
 /**
- * dpu_क्रमmat_populate_layout - populate the given क्रमmat layout based on
- *                     mmu, fb, and क्रमmat found in the fb
- * @aspace:            address space poपूर्णांकer
- * @fb:                framebuffer poपूर्णांकer
- * @fmtl:              क्रमmat layout काष्ठाure to populate
+ * dpu_format_populate_layout - populate the given format layout based on
+ *                     mmu, fb, and format found in the fb
+ * @aspace:            address space pointer
+ * @fb:                framebuffer pointer
+ * @fmtl:              format layout structure to populate
  *
- * Return: error code on failure, -EAGAIN अगर success but the addresses
- *         are the same as beक्रमe or 0 अगर new addresses were populated
+ * Return: error code on failure, -EAGAIN if success but the addresses
+ *         are the same as before or 0 if new addresses were populated
  */
-पूर्णांक dpu_क्रमmat_populate_layout(
-		काष्ठा msm_gem_address_space *aspace,
-		काष्ठा drm_framebuffer *fb,
-		काष्ठा dpu_hw_fmt_layout *fmtl);
+int dpu_format_populate_layout(
+		struct msm_gem_address_space *aspace,
+		struct drm_framebuffer *fb,
+		struct dpu_hw_fmt_layout *fmtl);
 
-#पूर्ण_अगर /*_DPU_FORMATS_H */
+#endif /*_DPU_FORMATS_H */

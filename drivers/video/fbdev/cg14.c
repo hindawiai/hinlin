@@ -1,46 +1,45 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* cg14.c: CGFOURTEEN frame buffer driver
  *
  * Copyright (C) 2003, 2006 David S. Miller (davem@davemloft.net)
  * Copyright (C) 1996,1998 Jakub Jelinek (jj@ultra.linux.cz)
  * Copyright (C) 1995 Miguel de Icaza (miguel@nuclecu.unam.mx)
  *
- * Driver layout based loosely on tgafb.c, see that file क्रम credits.
+ * Driver layout based loosely on tgafb.c, see that file for credits.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/of_device.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/string.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/fb.h>
+#include <linux/mm.h>
+#include <linux/uaccess.h>
+#include <linux/of_device.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/fbपन.स>
+#include <asm/io.h>
+#include <asm/fbio.h>
 
-#समावेश "sbuslib.h"
+#include "sbuslib.h"
 
 /*
  * Local functions.
  */
 
-अटल पूर्णांक cg14_setcolreg(अचिन्हित, अचिन्हित, अचिन्हित, अचिन्हित,
-			 अचिन्हित, काष्ठा fb_info *);
+static int cg14_setcolreg(unsigned, unsigned, unsigned, unsigned,
+			 unsigned, struct fb_info *);
 
-अटल पूर्णांक cg14_mmap(काष्ठा fb_info *, काष्ठा vm_area_काष्ठा *);
-अटल पूर्णांक cg14_ioctl(काष्ठा fb_info *, अचिन्हित पूर्णांक, अचिन्हित दीर्घ);
-अटल पूर्णांक cg14_pan_display(काष्ठा fb_var_screeninfo *, काष्ठा fb_info *);
+static int cg14_mmap(struct fb_info *, struct vm_area_struct *);
+static int cg14_ioctl(struct fb_info *, unsigned int, unsigned long);
+static int cg14_pan_display(struct fb_var_screeninfo *, struct fb_info *);
 
 /*
  *  Frame buffer operations
  */
 
-अटल स्थिर काष्ठा fb_ops cg14_ops = अणु
+static const struct fb_ops cg14_ops = {
 	.owner			= THIS_MODULE,
 	.fb_setcolreg		= cg14_setcolreg,
 	.fb_pan_display		= cg14_pan_display,
@@ -49,65 +48,65 @@
 	.fb_imageblit		= cfb_imageblit,
 	.fb_mmap		= cg14_mmap,
 	.fb_ioctl		= cg14_ioctl,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.fb_compat_ioctl	= sbusfb_compat_ioctl,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-#घोषणा CG14_MCR_INTENABLE_SHIFT	7
-#घोषणा CG14_MCR_INTENABLE_MASK		0x80
-#घोषणा CG14_MCR_VIDENABLE_SHIFT	6
-#घोषणा CG14_MCR_VIDENABLE_MASK		0x40
-#घोषणा CG14_MCR_PIXMODE_SHIFT		4
-#घोषणा CG14_MCR_PIXMODE_MASK		0x30
-#घोषणा CG14_MCR_TMR_SHIFT		2
-#घोषणा CG14_MCR_TMR_MASK		0x0c
-#घोषणा CG14_MCR_TMENABLE_SHIFT		1
-#घोषणा CG14_MCR_TMENABLE_MASK		0x02
-#घोषणा CG14_MCR_RESET_SHIFT		0
-#घोषणा CG14_MCR_RESET_MASK		0x01
-#घोषणा CG14_REV_REVISION_SHIFT		4
-#घोषणा CG14_REV_REVISION_MASK		0xf0
-#घोषणा CG14_REV_IMPL_SHIFT		0
-#घोषणा CG14_REV_IMPL_MASK		0x0f
-#घोषणा CG14_VBR_FRAMEBASE_SHIFT	12
-#घोषणा CG14_VBR_FRAMEBASE_MASK		0x00fff000
-#घोषणा CG14_VMCR1_SETUP_SHIFT		0
-#घोषणा CG14_VMCR1_SETUP_MASK		0x000001ff
-#घोषणा CG14_VMCR1_VCONFIG_SHIFT	9
-#घोषणा CG14_VMCR1_VCONFIG_MASK		0x00000e00
-#घोषणा CG14_VMCR2_REFRESH_SHIFT	0
-#घोषणा CG14_VMCR2_REFRESH_MASK		0x00000001
-#घोषणा CG14_VMCR2_TESTROWCNT_SHIFT	1
-#घोषणा CG14_VMCR2_TESTROWCNT_MASK	0x00000002
-#घोषणा CG14_VMCR2_FBCONFIG_SHIFT	2
-#घोषणा CG14_VMCR2_FBCONFIG_MASK	0x0000000c
-#घोषणा CG14_VCR_REFRESHREQ_SHIFT	0
-#घोषणा CG14_VCR_REFRESHREQ_MASK	0x000003ff
-#घोषणा CG14_VCR1_REFRESHENA_SHIFT	10
-#घोषणा CG14_VCR1_REFRESHENA_MASK	0x00000400
-#घोषणा CG14_VCA_CAD_SHIFT		0
-#घोषणा CG14_VCA_CAD_MASK		0x000003ff
-#घोषणा CG14_VCA_VERS_SHIFT		10
-#घोषणा CG14_VCA_VERS_MASK		0x00000c00
-#घोषणा CG14_VCA_RAMSPEED_SHIFT		12
-#घोषणा CG14_VCA_RAMSPEED_MASK		0x00001000
-#घोषणा CG14_VCA_8MB_SHIFT		13
-#घोषणा CG14_VCA_8MB_MASK		0x00002000
+#define CG14_MCR_INTENABLE_SHIFT	7
+#define CG14_MCR_INTENABLE_MASK		0x80
+#define CG14_MCR_VIDENABLE_SHIFT	6
+#define CG14_MCR_VIDENABLE_MASK		0x40
+#define CG14_MCR_PIXMODE_SHIFT		4
+#define CG14_MCR_PIXMODE_MASK		0x30
+#define CG14_MCR_TMR_SHIFT		2
+#define CG14_MCR_TMR_MASK		0x0c
+#define CG14_MCR_TMENABLE_SHIFT		1
+#define CG14_MCR_TMENABLE_MASK		0x02
+#define CG14_MCR_RESET_SHIFT		0
+#define CG14_MCR_RESET_MASK		0x01
+#define CG14_REV_REVISION_SHIFT		4
+#define CG14_REV_REVISION_MASK		0xf0
+#define CG14_REV_IMPL_SHIFT		0
+#define CG14_REV_IMPL_MASK		0x0f
+#define CG14_VBR_FRAMEBASE_SHIFT	12
+#define CG14_VBR_FRAMEBASE_MASK		0x00fff000
+#define CG14_VMCR1_SETUP_SHIFT		0
+#define CG14_VMCR1_SETUP_MASK		0x000001ff
+#define CG14_VMCR1_VCONFIG_SHIFT	9
+#define CG14_VMCR1_VCONFIG_MASK		0x00000e00
+#define CG14_VMCR2_REFRESH_SHIFT	0
+#define CG14_VMCR2_REFRESH_MASK		0x00000001
+#define CG14_VMCR2_TESTROWCNT_SHIFT	1
+#define CG14_VMCR2_TESTROWCNT_MASK	0x00000002
+#define CG14_VMCR2_FBCONFIG_SHIFT	2
+#define CG14_VMCR2_FBCONFIG_MASK	0x0000000c
+#define CG14_VCR_REFRESHREQ_SHIFT	0
+#define CG14_VCR_REFRESHREQ_MASK	0x000003ff
+#define CG14_VCR1_REFRESHENA_SHIFT	10
+#define CG14_VCR1_REFRESHENA_MASK	0x00000400
+#define CG14_VCA_CAD_SHIFT		0
+#define CG14_VCA_CAD_MASK		0x000003ff
+#define CG14_VCA_VERS_SHIFT		10
+#define CG14_VCA_VERS_MASK		0x00000c00
+#define CG14_VCA_RAMSPEED_SHIFT		12
+#define CG14_VCA_RAMSPEED_MASK		0x00001000
+#define CG14_VCA_8MB_SHIFT		13
+#define CG14_VCA_8MB_MASK		0x00002000
 
-#घोषणा CG14_MCR_PIXMODE_8		0
-#घोषणा CG14_MCR_PIXMODE_16		2
-#घोषणा CG14_MCR_PIXMODE_32		3
+#define CG14_MCR_PIXMODE_8		0
+#define CG14_MCR_PIXMODE_16		2
+#define CG14_MCR_PIXMODE_32		3
 
-काष्ठा cg14_regsअणु
+struct cg14_regs{
 	u8 mcr;	/* Master Control Reg */
 	u8 ppr;	/* Packed Pixel Reg */
-	u8 पंचांगs[2];	/* Test Mode Status Regs */
+	u8 tms[2];	/* Test Mode Status Regs */
 	u8 msr;	/* Master Status Reg */
 	u8 fsr;	/* Fault Status Reg */
 	u8 rev;	/* Revision & Impl */
 	u8 ccr;	/* Clock Control Reg */
-	u32 पंचांगr;	/* Test Mode Read Back */
+	u32 tmr;	/* Test Mode Read Back */
 	u8 mod;	/* Monitor Operation Data Reg */
 	u8 acr;	/* Aux Control */
 	u8 xxx0[6];
@@ -132,12 +131,12 @@
 	u32 vmcr;	/* VBC Master Control */
 	u32 vcr;	/* VBC refresh */
 	u32 vca;	/* VBC Config */
-पूर्ण;
+};
 
-#घोषणा CG14_CCR_ENABLE	0x04
-#घोषणा CG14_CCR_SELECT 0x02	/* HW/Full screen */
+#define CG14_CCR_ENABLE	0x04
+#define CG14_CCR_SELECT 0x02	/* HW/Full screen */
 
-काष्ठा cg14_cursor अणु
+struct cg14_cursor {
 	u32 cpl0[32];	/* Enable plane 0 */
 	u32 cpl1[32];  /* Color selection plane */
 	u8 ccr;	/* Cursor Control Reg */
@@ -147,11 +146,11 @@
 	u32 color0;
 	u32 color1;
 	u32 xxx1[0x1bc];
-	u32 cpl0i[32];	/* Enable plane 0 स्वतःinc */
-	u32 cpl1i[32]; /* Color selection स्वतःinc */
-पूर्ण;
+	u32 cpl0i[32];	/* Enable plane 0 autoinc */
+	u32 cpl1i[32]; /* Color selection autoinc */
+};
 
-काष्ठा cg14_dac अणु
+struct cg14_dac {
 	u8 addr;	/* Address Register */
 	u8 xxx0[255];
 	u8 glut;	/* Gamma table */
@@ -159,99 +158,99 @@
 	u8 select;	/* Register Select */
 	u8 xxx2[255];
 	u8 mode;	/* Mode Register */
-पूर्ण;
+};
 
-काष्ठा cg14_xlutअणु
+struct cg14_xlut{
 	u8 x_xlut [256];
 	u8 x_xlutd [256];
 	u8 xxx0[0x600];
 	u8 x_xlut_inc [256];
 	u8 x_xlutd_inc [256];
-पूर्ण;
+};
 
 /* Color look up table (clut) */
-/* Each one of these arrays hold the color lookup table (क्रम 256
- * colors) क्रम each MDI page (I assume then there should be 4 MDI
+/* Each one of these arrays hold the color lookup table (for 256
+ * colors) for each MDI page (I assume then there should be 4 MDI
  * pages, I still wonder what they are.  I have seen NeXTStep split
- * the screen in four parts, जबतक operating in 24 bits mode.  Each
- * पूर्णांकeger holds 4 values: alpha value (transparency channel, thanks
+ * the screen in four parts, while operating in 24 bits mode.  Each
+ * integer holds 4 values: alpha value (transparency channel, thanks
  * go to John Stone (johns@umr.edu) from OpenBSD), red, green and blue
  *
  * I currently use the clut instead of the Xlut
  */
-काष्ठा cg14_clut अणु
+struct cg14_clut {
 	u32 c_clut [256];
-	u32 c_clutd [256];    /* i wonder what the 'd' is क्रम */
+	u32 c_clutd [256];    /* i wonder what the 'd' is for */
 	u32 c_clut_inc [256];
 	u32 c_clutd_inc [256];
-पूर्ण;
+};
 
-#घोषणा CG14_MMAP_ENTRIES	16
+#define CG14_MMAP_ENTRIES	16
 
-काष्ठा cg14_par अणु
+struct cg14_par {
 	spinlock_t		lock;
-	काष्ठा cg14_regs	__iomem *regs;
-	काष्ठा cg14_clut	__iomem *clut;
-	काष्ठा cg14_cursor	__iomem *cursor;
+	struct cg14_regs	__iomem *regs;
+	struct cg14_clut	__iomem *clut;
+	struct cg14_cursor	__iomem *cursor;
 
 	u32			flags;
-#घोषणा CG14_FLAG_BLANKED	0x00000001
+#define CG14_FLAG_BLANKED	0x00000001
 
-	अचिन्हित दीर्घ		iospace;
+	unsigned long		iospace;
 
-	काष्ठा sbus_mmap_map	mmap_map[CG14_MMAP_ENTRIES];
+	struct sbus_mmap_map	mmap_map[CG14_MMAP_ENTRIES];
 
-	पूर्णांक			mode;
-	पूर्णांक			ramsize;
-पूर्ण;
+	int			mode;
+	int			ramsize;
+};
 
-अटल व्योम __cg14_reset(काष्ठा cg14_par *par)
-अणु
-	काष्ठा cg14_regs __iomem *regs = par->regs;
+static void __cg14_reset(struct cg14_par *par)
+{
+	struct cg14_regs __iomem *regs = par->regs;
 	u8 val;
 
-	val = sbus_पढ़ोb(&regs->mcr);
+	val = sbus_readb(&regs->mcr);
 	val &= ~(CG14_MCR_PIXMODE_MASK);
-	sbus_ग_लिखोb(val, &regs->mcr);
-पूर्ण
+	sbus_writeb(val, &regs->mcr);
+}
 
-अटल पूर्णांक cg14_pan_display(काष्ठा fb_var_screeninfo *var, काष्ठा fb_info *info)
-अणु
-	काष्ठा cg14_par *par = (काष्ठा cg14_par *) info->par;
-	अचिन्हित दीर्घ flags;
+static int cg14_pan_display(struct fb_var_screeninfo *var, struct fb_info *info)
+{
+	struct cg14_par *par = (struct cg14_par *) info->par;
+	unsigned long flags;
 
-	/* We just use this to catch चयनes out of
+	/* We just use this to catch switches out of
 	 * graphics mode.
 	 */
 	spin_lock_irqsave(&par->lock, flags);
 	__cg14_reset(par);
 	spin_unlock_irqrestore(&par->lock, flags);
 
-	अगर (var->xoffset || var->yoffset || var->vmode)
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+	if (var->xoffset || var->yoffset || var->vmode)
+		return -EINVAL;
+	return 0;
+}
 
 /**
- *      cg14_setcolreg - Optional function. Sets a color रेजिस्टर.
+ *      cg14_setcolreg - Optional function. Sets a color register.
  *      @regno: boolean, 0 copy local, 1 get_user() function
- *      @red: frame buffer colormap काष्ठाure
+ *      @red: frame buffer colormap structure
  *      @green: The green value which can be up to 16 bits wide
  *      @blue:  The blue value which can be up to 16 bits wide.
  *      @transp: If supported the alpha value which can be up to 16 bits wide.
- *      @info: frame buffer info काष्ठाure
+ *      @info: frame buffer info structure
  */
-अटल पूर्णांक cg14_setcolreg(अचिन्हित regno,
-			  अचिन्हित red, अचिन्हित green, अचिन्हित blue,
-			  अचिन्हित transp, काष्ठा fb_info *info)
-अणु
-	काष्ठा cg14_par *par = (काष्ठा cg14_par *) info->par;
-	काष्ठा cg14_clut __iomem *clut = par->clut;
-	अचिन्हित दीर्घ flags;
+static int cg14_setcolreg(unsigned regno,
+			  unsigned red, unsigned green, unsigned blue,
+			  unsigned transp, struct fb_info *info)
+{
+	struct cg14_par *par = (struct cg14_par *) info->par;
+	struct cg14_clut __iomem *clut = par->clut;
+	unsigned long flags;
 	u32 val;
 
-	अगर (regno >= 256)
-		वापस 1;
+	if (regno >= 256)
+		return 1;
 
 	red >>= 8;
 	green >>= 8;
@@ -259,38 +258,38 @@
 	val = (red | (green << 8) | (blue << 16));
 
 	spin_lock_irqsave(&par->lock, flags);
-	sbus_ग_लिखोl(val, &clut->c_clut[regno]);
+	sbus_writel(val, &clut->c_clut[regno]);
 	spin_unlock_irqrestore(&par->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cg14_mmap(काष्ठा fb_info *info, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा cg14_par *par = (काष्ठा cg14_par *) info->par;
+static int cg14_mmap(struct fb_info *info, struct vm_area_struct *vma)
+{
+	struct cg14_par *par = (struct cg14_par *) info->par;
 
-	वापस sbusfb_mmap_helper(par->mmap_map,
+	return sbusfb_mmap_helper(par->mmap_map,
 				  info->fix.smem_start, info->fix.smem_len,
 				  par->iospace, vma);
-पूर्ण
+}
 
-अटल पूर्णांक cg14_ioctl(काष्ठा fb_info *info, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा cg14_par *par = (काष्ठा cg14_par *) info->par;
-	काष्ठा cg14_regs __iomem *regs = par->regs;
-	काष्ठा mdi_cfginfo kmdi, __user *mdii;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक cur_mode, mode, ret = 0;
+static int cg14_ioctl(struct fb_info *info, unsigned int cmd, unsigned long arg)
+{
+	struct cg14_par *par = (struct cg14_par *) info->par;
+	struct cg14_regs __iomem *regs = par->regs;
+	struct mdi_cfginfo kmdi, __user *mdii;
+	unsigned long flags;
+	int cur_mode, mode, ret = 0;
 
-	चयन (cmd) अणु
-	हाल MDI_RESET:
+	switch (cmd) {
+	case MDI_RESET:
 		spin_lock_irqsave(&par->lock, flags);
 		__cg14_reset(par);
 		spin_unlock_irqrestore(&par->lock, flags);
-		अवरोध;
+		break;
 
-	हाल MDI_GET_CFGINFO:
-		स_रखो(&kmdi, 0, माप(kmdi));
+	case MDI_GET_CFGINFO:
+		memset(&kmdi, 0, sizeof(kmdi));
 
 		spin_lock_irqsave(&par->lock, flags);
 		kmdi.mdi_type = FBTYPE_MDICOLOR;
@@ -301,63 +300,63 @@
 		kmdi.mdi_size = par->ramsize;
 		spin_unlock_irqrestore(&par->lock, flags);
 
-		mdii = (काष्ठा mdi_cfginfo __user *) arg;
-		अगर (copy_to_user(mdii, &kmdi, माप(kmdi)))
+		mdii = (struct mdi_cfginfo __user *) arg;
+		if (copy_to_user(mdii, &kmdi, sizeof(kmdi)))
 			ret = -EFAULT;
-		अवरोध;
+		break;
 
-	हाल MDI_SET_PIXELMODE:
-		अगर (get_user(mode, (पूर्णांक __user *) arg)) अणु
+	case MDI_SET_PIXELMODE:
+		if (get_user(mode, (int __user *) arg)) {
 			ret = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		spin_lock_irqsave(&par->lock, flags);
-		cur_mode = sbus_पढ़ोb(&regs->mcr);
+		cur_mode = sbus_readb(&regs->mcr);
 		cur_mode &= ~CG14_MCR_PIXMODE_MASK;
-		चयन(mode) अणु
-		हाल MDI_32_PIX:
+		switch(mode) {
+		case MDI_32_PIX:
 			cur_mode |= (CG14_MCR_PIXMODE_32 <<
 				     CG14_MCR_PIXMODE_SHIFT);
-			अवरोध;
+			break;
 
-		हाल MDI_16_PIX:
+		case MDI_16_PIX:
 			cur_mode |= (CG14_MCR_PIXMODE_16 <<
 				     CG14_MCR_PIXMODE_SHIFT);
-			अवरोध;
+			break;
 
-		हाल MDI_8_PIX:
-			अवरोध;
+		case MDI_8_PIX:
+			break;
 
-		शेष:
+		default:
 			ret = -ENOSYS;
-			अवरोध;
-		पूर्ण
-		अगर (!ret) अणु
-			sbus_ग_लिखोb(cur_mode, &regs->mcr);
+			break;
+		}
+		if (!ret) {
+			sbus_writeb(cur_mode, &regs->mcr);
 			par->mode = mode;
-		पूर्ण
+		}
 		spin_unlock_irqrestore(&par->lock, flags);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		ret = sbusfb_ioctl_helper(cmd, arg, info,
 					  FBTYPE_MDICOLOR, 8,
 					  info->fix.smem_len);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  *  Initialisation
  */
 
-अटल व्योम cg14_init_fix(काष्ठा fb_info *info, पूर्णांक linebytes,
-			  काष्ठा device_node *dp)
-अणु
-	snम_लिखो(info->fix.id, माप(info->fix.id), "%pOFn", dp);
+static void cg14_init_fix(struct fb_info *info, int linebytes,
+			  struct device_node *dp)
+{
+	snprintf(info->fix.id, sizeof(info->fix.id), "%pOFn", dp);
 
 	info->fix.type = FB_TYPE_PACKED_PIXELS;
 	info->fix.visual = FB_VISUAL_PSEUDOCOLOR;
@@ -365,116 +364,116 @@
 	info->fix.line_length = linebytes;
 
 	info->fix.accel = FB_ACCEL_SUN_CG14;
-पूर्ण
+}
 
-अटल काष्ठा sbus_mmap_map __cg14_mmap_map[CG14_MMAP_ENTRIES] = अणु
-	अणु
+static struct sbus_mmap_map __cg14_mmap_map[CG14_MMAP_ENTRIES] = {
+	{
 		.voff	= CG14_REGS,
 		.poff	= 0x80000000,
 		.size	= 0x1000
-	पूर्ण,
-	अणु
+	},
+	{
 		.voff	= CG14_XLUT,
 		.poff	= 0x80003000,
 		.size	= 0x1000
-	पूर्ण,
-	अणु
+	},
+	{
 		.voff	= CG14_CLUT1,
 		.poff	= 0x80004000,
 		.size	= 0x1000
-	पूर्ण,
-	अणु
+	},
+	{
 		.voff	= CG14_CLUT2,
 		.poff	= 0x80005000,
 		.size	= 0x1000
-	पूर्ण,
-	अणु
+	},
+	{
 		.voff	= CG14_CLUT3,
 		.poff	= 0x80006000,
 		.size	= 0x1000
-	पूर्ण,
-	अणु
+	},
+	{
 		.voff	= CG3_MMAP_OFFSET - 0x7000,
 		.poff	= 0x80000000,
 		.size	= 0x7000
-	पूर्ण,
-	अणु
+	},
+	{
 		.voff	= CG3_MMAP_OFFSET,
 		.poff	= 0x00000000,
 		.size	= SBUS_MMAP_FBSIZE(1)
-	पूर्ण,
-	अणु
+	},
+	{
 		.voff	= MDI_CURSOR_MAP,
 		.poff	= 0x80001000,
 		.size	= 0x1000
-	पूर्ण,
-	अणु
+	},
+	{
 		.voff	= MDI_CHUNKY_BGR_MAP,
 		.poff	= 0x01000000,
 		.size	= 0x400000
-	पूर्ण,
-	अणु
+	},
+	{
 		.voff	= MDI_PLANAR_X16_MAP,
 		.poff	= 0x02000000,
 		.size	= 0x200000
-	पूर्ण,
-	अणु
+	},
+	{
 		.voff	= MDI_PLANAR_C16_MAP,
 		.poff	= 0x02800000,
 		.size	= 0x200000
-	पूर्ण,
-	अणु
+	},
+	{
 		.voff	= MDI_PLANAR_X32_MAP,
 		.poff	= 0x03000000,
 		.size	= 0x100000
-	पूर्ण,
-	अणु
+	},
+	{
 		.voff	= MDI_PLANAR_B32_MAP,
 		.poff	= 0x03400000,
 		.size	= 0x100000
-	पूर्ण,
-	अणु
+	},
+	{
 		.voff	= MDI_PLANAR_G32_MAP,
 		.poff	= 0x03800000,
 		.size	= 0x100000
-	पूर्ण,
-	अणु
+	},
+	{
 		.voff	= MDI_PLANAR_R32_MAP,
 		.poff	= 0x03c00000,
 		.size	= 0x100000
-	पूर्ण,
-	अणु .size = 0 पूर्ण
-पूर्ण;
+	},
+	{ .size = 0 }
+};
 
-अटल व्योम cg14_unmap_regs(काष्ठा platक्रमm_device *op, काष्ठा fb_info *info,
-			    काष्ठा cg14_par *par)
-अणु
-	अगर (par->regs)
+static void cg14_unmap_regs(struct platform_device *op, struct fb_info *info,
+			    struct cg14_par *par)
+{
+	if (par->regs)
 		of_iounmap(&op->resource[0],
-			   par->regs, माप(काष्ठा cg14_regs));
-	अगर (par->clut)
+			   par->regs, sizeof(struct cg14_regs));
+	if (par->clut)
 		of_iounmap(&op->resource[0],
-			   par->clut, माप(काष्ठा cg14_clut));
-	अगर (par->cursor)
+			   par->clut, sizeof(struct cg14_clut));
+	if (par->cursor)
 		of_iounmap(&op->resource[0],
-			   par->cursor, माप(काष्ठा cg14_cursor));
-	अगर (info->screen_base)
+			   par->cursor, sizeof(struct cg14_cursor));
+	if (info->screen_base)
 		of_iounmap(&op->resource[1],
 			   info->screen_base, info->fix.smem_len);
-पूर्ण
+}
 
-अटल पूर्णांक cg14_probe(काष्ठा platक्रमm_device *op)
-अणु
-	काष्ठा device_node *dp = op->dev.of_node;
-	काष्ठा fb_info *info;
-	काष्ठा cg14_par *par;
-	पूर्णांक is_8mb, linebytes, i, err;
+static int cg14_probe(struct platform_device *op)
+{
+	struct device_node *dp = op->dev.of_node;
+	struct fb_info *info;
+	struct cg14_par *par;
+	int is_8mb, linebytes, i, err;
 
-	info = framebuffer_alloc(माप(काष्ठा cg14_par), &op->dev);
+	info = framebuffer_alloc(sizeof(struct cg14_par), &op->dev);
 
 	err = -ENOMEM;
-	अगर (!info)
-		जाओ out_err;
+	if (!info)
+		goto out_err;
 	par = info->par;
 
 	spin_lock_init(&par->lock);
@@ -484,52 +483,52 @@
 	info->var.green.length = 8;
 	info->var.blue.length = 8;
 
-	linebytes = of_getपूर्णांकprop_शेष(dp, "linebytes",
+	linebytes = of_getintprop_default(dp, "linebytes",
 					  info->var.xres);
 	info->fix.smem_len = PAGE_ALIGN(linebytes * info->var.yres);
 
-	अगर (of_node_name_eq(dp->parent, "sbus") ||
-	    of_node_name_eq(dp->parent, "sbi")) अणु
+	if (of_node_name_eq(dp->parent, "sbus") ||
+	    of_node_name_eq(dp->parent, "sbi")) {
 		info->fix.smem_start = op->resource[0].start;
 		par->iospace = op->resource[0].flags & IORESOURCE_BITS;
-	पूर्ण अन्यथा अणु
+	} else {
 		info->fix.smem_start = op->resource[1].start;
 		par->iospace = op->resource[0].flags & IORESOURCE_BITS;
-	पूर्ण
+	}
 
 	par->regs = of_ioremap(&op->resource[0], 0,
-			       माप(काष्ठा cg14_regs), "cg14 regs");
+			       sizeof(struct cg14_regs), "cg14 regs");
 	par->clut = of_ioremap(&op->resource[0], CG14_CLUT1,
-			       माप(काष्ठा cg14_clut), "cg14 clut");
+			       sizeof(struct cg14_clut), "cg14 clut");
 	par->cursor = of_ioremap(&op->resource[0], CG14_CURSORREGS,
-				 माप(काष्ठा cg14_cursor), "cg14 cursor");
+				 sizeof(struct cg14_cursor), "cg14 cursor");
 
 	info->screen_base = of_ioremap(&op->resource[1], 0,
 				       info->fix.smem_len, "cg14 ram");
 
-	अगर (!par->regs || !par->clut || !par->cursor || !info->screen_base)
-		जाओ out_unmap_regs;
+	if (!par->regs || !par->clut || !par->cursor || !info->screen_base)
+		goto out_unmap_regs;
 
 	is_8mb = (resource_size(&op->resource[1]) == (8 * 1024 * 1024));
 
-	BUILD_BUG_ON(माप(par->mmap_map) != माप(__cg14_mmap_map));
+	BUILD_BUG_ON(sizeof(par->mmap_map) != sizeof(__cg14_mmap_map));
 		
-	स_नकल(&par->mmap_map, &__cg14_mmap_map, माप(par->mmap_map));
+	memcpy(&par->mmap_map, &__cg14_mmap_map, sizeof(par->mmap_map));
 
-	क्रम (i = 0; i < CG14_MMAP_ENTRIES; i++) अणु
-		काष्ठा sbus_mmap_map *map = &par->mmap_map[i];
+	for (i = 0; i < CG14_MMAP_ENTRIES; i++) {
+		struct sbus_mmap_map *map = &par->mmap_map[i];
 
-		अगर (!map->size)
-			अवरोध;
-		अगर (map->poff & 0x80000000)
+		if (!map->size)
+			break;
+		if (map->poff & 0x80000000)
 			map->poff = (map->poff & 0x7fffffff) +
 				(op->resource[0].start -
 				 op->resource[1].start);
-		अगर (is_8mb &&
+		if (is_8mb &&
 		    map->size >= 0x100000 &&
 		    map->size <= 0x400000)
 			map->size *= 2;
-	पूर्ण
+	}
 
 	par->mode = MDI_8_PIX;
 	par->ramsize = (is_8mb ? 0x800000 : 0x400000);
@@ -539,25 +538,25 @@
 
 	__cg14_reset(par);
 
-	अगर (fb_alloc_cmap(&info->cmap, 256, 0))
-		जाओ out_unmap_regs;
+	if (fb_alloc_cmap(&info->cmap, 256, 0))
+		goto out_unmap_regs;
 
 	fb_set_cmap(&info->cmap, info);
 
 	cg14_init_fix(info, linebytes, dp);
 
-	err = रेजिस्टर_framebuffer(info);
-	अगर (err < 0)
-		जाओ out_dealloc_cmap;
+	err = register_framebuffer(info);
+	if (err < 0)
+		goto out_dealloc_cmap;
 
 	dev_set_drvdata(&op->dev, info);
 
-	prपूर्णांकk(KERN_INFO "%pOF: cgfourteen at %lx:%lx, %dMB\n",
+	printk(KERN_INFO "%pOF: cgfourteen at %lx:%lx, %dMB\n",
 	       dp,
 	       par->iospace, info->fix.smem_start,
 	       par->ramsize >> 20);
 
-	वापस 0;
+	return 0;
 
 out_dealloc_cmap:
 	fb_dealloc_cmap(&info->cmap);
@@ -567,56 +566,56 @@ out_unmap_regs:
 	framebuffer_release(info);
 
 out_err:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक cg14_हटाओ(काष्ठा platक्रमm_device *op)
-अणु
-	काष्ठा fb_info *info = dev_get_drvdata(&op->dev);
-	काष्ठा cg14_par *par = info->par;
+static int cg14_remove(struct platform_device *op)
+{
+	struct fb_info *info = dev_get_drvdata(&op->dev);
+	struct cg14_par *par = info->par;
 
-	unरेजिस्टर_framebuffer(info);
+	unregister_framebuffer(info);
 	fb_dealloc_cmap(&info->cmap);
 
 	cg14_unmap_regs(op, info, par);
 
 	framebuffer_release(info);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id cg14_match[] = अणु
-	अणु
+static const struct of_device_id cg14_match[] = {
+	{
 		.name = "cgfourteen",
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 MODULE_DEVICE_TABLE(of, cg14_match);
 
-अटल काष्ठा platक्रमm_driver cg14_driver = अणु
-	.driver = अणु
+static struct platform_driver cg14_driver = {
+	.driver = {
 		.name = "cg14",
 		.of_match_table = cg14_match,
-	पूर्ण,
+	},
 	.probe		= cg14_probe,
-	.हटाओ		= cg14_हटाओ,
-पूर्ण;
+	.remove		= cg14_remove,
+};
 
-अटल पूर्णांक __init cg14_init(व्योम)
-अणु
-	अगर (fb_get_options("cg14fb", शून्य))
-		वापस -ENODEV;
+static int __init cg14_init(void)
+{
+	if (fb_get_options("cg14fb", NULL))
+		return -ENODEV;
 
-	वापस platक्रमm_driver_रेजिस्टर(&cg14_driver);
-पूर्ण
+	return platform_driver_register(&cg14_driver);
+}
 
-अटल व्योम __निकास cg14_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&cg14_driver);
-पूर्ण
+static void __exit cg14_exit(void)
+{
+	platform_driver_unregister(&cg14_driver);
+}
 
 module_init(cg14_init);
-module_निकास(cg14_निकास);
+module_exit(cg14_exit);
 
 MODULE_DESCRIPTION("framebuffer driver for CGfourteen chipsets");
 MODULE_AUTHOR("David S. Miller <davem@davemloft.net>");

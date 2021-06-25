@@ -1,11 +1,10 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
- * A small micro-assembler. It is पूर्णांकentionally kept simple, करोes only
- * support a subset of inकाष्ठाions, and करोes not try to hide pipeline
+ * A small micro-assembler. It is intentionally kept simple, does only
+ * support a subset of instructions, and does not try to hide pipeline
  * effects like branch delay slots.
  *
  * Copyright (C) 2004, 2005, 2006, 2008	 Thiemo Seufer
@@ -14,23 +13,23 @@
  * Copyright (C) 2012, 2013  MIPS Technologies, Inc.  All rights reserved.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
 
-#समावेश <यंत्र/inst.h>
-#समावेश <यंत्र/elf.h>
-#समावेश <यंत्र/bugs.h>
-#समावेश <यंत्र/uयंत्र.h>
+#include <asm/inst.h>
+#include <asm/elf.h>
+#include <asm/bugs.h>
+#include <asm/uasm.h>
 
-#घोषणा RS_MASK		0x1f
-#घोषणा RS_SH		21
-#घोषणा RT_MASK		0x1f
-#घोषणा RT_SH		16
-#घोषणा SCIMM_MASK	0xfffff
-#घोषणा SCIMM_SH	6
+#define RS_MASK		0x1f
+#define RS_SH		21
+#define RT_MASK		0x1f
+#define RT_SH		16
+#define SCIMM_MASK	0xfffff
+#define SCIMM_SH	6
 
-/* This macro sets the non-variable bits of an inकाष्ठाion. */
-#घोषणा M(a, b, c, d, e, f)					\
+/* This macro sets the non-variable bits of an instruction. */
+#define M(a, b, c, d, e, f)					\
 	((a) << OP_SH						\
 	 | (b) << RS_SH						\
 	 | (c) << RT_SH						\
@@ -38,203 +37,203 @@
 	 | (e) << RE_SH						\
 	 | (f) << FUNC_SH)
 
-/* This macro sets the non-variable bits of an R6 inकाष्ठाion. */
-#घोषणा M6(a, b, c, d, e)					\
+/* This macro sets the non-variable bits of an R6 instruction. */
+#define M6(a, b, c, d, e)					\
 	((a) << OP_SH						\
 	 | (b) << RS_SH						\
 	 | (c) << RT_SH						\
 	 | (d) << SIMM9_SH					\
 	 | (e) << FUNC_SH)
 
-#समावेश "uasm.c"
+#include "uasm.c"
 
-अटल स्थिर काष्ठा insn insn_table[insn_invalid] = अणु
-	[insn_addiu]	= अणुM(addiu_op, 0, 0, 0, 0, 0), RS | RT | SIMMपूर्ण,
-	[insn_addu]	= अणुM(spec_op, 0, 0, 0, 0, addu_op), RS | RT | RDपूर्ण,
-	[insn_and]	= अणुM(spec_op, 0, 0, 0, 0, and_op), RS | RT | RDपूर्ण,
-	[insn_andi]	= अणुM(andi_op, 0, 0, 0, 0, 0), RS | RT | UIMMपूर्ण,
-	[insn_bbit0]	= अणुM(lwc2_op, 0, 0, 0, 0, 0), RS | RT | BIMMपूर्ण,
-	[insn_bbit1]	= अणुM(swc2_op, 0, 0, 0, 0, 0), RS | RT | BIMMपूर्ण,
-	[insn_beq]	= अणुM(beq_op, 0, 0, 0, 0, 0), RS | RT | BIMMपूर्ण,
-	[insn_beql]	= अणुM(beql_op, 0, 0, 0, 0, 0), RS | RT | BIMMपूर्ण,
-	[insn_bgez]	= अणुM(bcond_op, 0, bgez_op, 0, 0, 0), RS | BIMMपूर्ण,
-	[insn_bgezl]	= अणुM(bcond_op, 0, bgezl_op, 0, 0, 0), RS | BIMMपूर्ण,
-	[insn_bgtz]	= अणुM(bgtz_op, 0, 0, 0, 0, 0), RS | BIMMपूर्ण,
-	[insn_blez]	= अणुM(blez_op, 0, 0, 0, 0, 0), RS | BIMMपूर्ण,
-	[insn_bltz]	= अणुM(bcond_op, 0, bltz_op, 0, 0, 0), RS | BIMMपूर्ण,
-	[insn_bltzl]	= अणुM(bcond_op, 0, bltzl_op, 0, 0, 0), RS | BIMMपूर्ण,
-	[insn_bne]	= अणुM(bne_op, 0, 0, 0, 0, 0), RS | RT | BIMMपूर्ण,
-	[insn_अवरोध]	= अणुM(spec_op, 0, 0, 0, 0, अवरोध_op), SCIMMपूर्ण,
-#अगर_अघोषित CONFIG_CPU_MIPSR6
-	[insn_cache]	= अणुM(cache_op, 0, 0, 0, 0, 0),  RS | RT | SIMMपूर्ण,
-#अन्यथा
-	[insn_cache]	= अणुM6(spec3_op, 0, 0, 0, cache6_op),  RS | RT | SIMM9पूर्ण,
-#पूर्ण_अगर
-	[insn_cfc1]	= अणुM(cop1_op, cfc_op, 0, 0, 0, 0), RT | RDपूर्ण,
-	[insn_cfcmsa]	= अणुM(msa_op, 0, msa_cfc_op, 0, 0, msa_elm_op), RD | REपूर्ण,
-	[insn_ctc1]	= अणुM(cop1_op, ctc_op, 0, 0, 0, 0), RT | RDपूर्ण,
-	[insn_ctcmsa]	= अणुM(msa_op, 0, msa_ctc_op, 0, 0, msa_elm_op), RD | REपूर्ण,
-	[insn_daddiu]	= अणुM(daddiu_op, 0, 0, 0, 0, 0), RS | RT | SIMMपूर्ण,
-	[insn_daddu]	= अणुM(spec_op, 0, 0, 0, 0, daddu_op), RS | RT | RDपूर्ण,
-	[insn_dभागu]	= अणुM(spec_op, 0, 0, 0, 0, dभागu_op), RS | RTपूर्ण,
-	[insn_dभागu_r6]	= अणुM(spec_op, 0, 0, 0, dभागu_dभागu6_op, dभागu_op),
-				RS | RT | RDपूर्ण,
-	[insn_di]	= अणुM(cop0_op, mfmc0_op, 0, 12, 0, 0), RTपूर्ण,
-	[insn_dins]	= अणुM(spec3_op, 0, 0, 0, 0, dins_op), RS | RT | RD | REपूर्ण,
-	[insn_dinsm]	= अणुM(spec3_op, 0, 0, 0, 0, dinsm_op), RS | RT | RD | REपूर्ण,
-	[insn_dinsu]	= अणुM(spec3_op, 0, 0, 0, 0, dinsu_op), RS | RT | RD | REपूर्ण,
-	[insn_भागu]	= अणुM(spec_op, 0, 0, 0, 0, भागu_op), RS | RTपूर्ण,
-	[insn_भागu_r6]	= अणुM(spec_op, 0, 0, 0, भागu_भागu6_op, भागu_op),
-				RS | RT | RDपूर्ण,
-	[insn_dmfc0]	= अणुM(cop0_op, dmfc_op, 0, 0, 0, 0), RT | RD | SETपूर्ण,
-	[insn_dmodu]	= अणुM(spec_op, 0, 0, 0, dभागu_dmodu_op, dभागu_op),
-				RS | RT | RDपूर्ण,
-	[insn_dmtc0]	= अणुM(cop0_op, dmtc_op, 0, 0, 0, 0), RT | RD | SETपूर्ण,
-	[insn_dmultu]	= अणुM(spec_op, 0, 0, 0, 0, dmultu_op), RS | RTपूर्ण,
-	[insn_dmulu]	= अणुM(spec_op, 0, 0, 0, dmult_dmul_op, dmultu_op),
-				RS | RT | RDपूर्ण,
-	[insn_drotr]	= अणुM(spec_op, 1, 0, 0, 0, dsrl_op), RT | RD | REपूर्ण,
-	[insn_drotr32]	= अणुM(spec_op, 1, 0, 0, 0, dsrl32_op), RT | RD | REपूर्ण,
-	[insn_dsbh]	= अणुM(spec3_op, 0, 0, 0, dsbh_op, dbshfl_op), RT | RDपूर्ण,
-	[insn_dshd]	= अणुM(spec3_op, 0, 0, 0, dshd_op, dbshfl_op), RT | RDपूर्ण,
-	[insn_dsll]	= अणुM(spec_op, 0, 0, 0, 0, dsll_op), RT | RD | REपूर्ण,
-	[insn_dsll32]	= अणुM(spec_op, 0, 0, 0, 0, dsll32_op), RT | RD | REपूर्ण,
-	[insn_dsllv]	= अणुM(spec_op, 0, 0, 0, 0, dsllv_op),  RS | RT | RDपूर्ण,
-	[insn_dsra]	= अणुM(spec_op, 0, 0, 0, 0, dsra_op), RT | RD | REपूर्ण,
-	[insn_dsra32]	= अणुM(spec_op, 0, 0, 0, 0, dsra32_op), RT | RD | REपूर्ण,
-	[insn_dsrav]	= अणुM(spec_op, 0, 0, 0, 0, dsrav_op),  RS | RT | RDपूर्ण,
-	[insn_dsrl]	= अणुM(spec_op, 0, 0, 0, 0, dsrl_op), RT | RD | REपूर्ण,
-	[insn_dsrl32]	= अणुM(spec_op, 0, 0, 0, 0, dsrl32_op), RT | RD | REपूर्ण,
-	[insn_dsrlv]	= अणुM(spec_op, 0, 0, 0, 0, dsrlv_op),  RS | RT | RDपूर्ण,
-	[insn_dsubu]	= अणुM(spec_op, 0, 0, 0, 0, dsubu_op), RS | RT | RDपूर्ण,
-	[insn_eret]	= अणुM(cop0_op, cop_op, 0, 0, 0, eret_op),  0पूर्ण,
-	[insn_ext]	= अणुM(spec3_op, 0, 0, 0, 0, ext_op), RS | RT | RD | REपूर्ण,
-	[insn_ins]	= अणुM(spec3_op, 0, 0, 0, 0, ins_op), RS | RT | RD | REपूर्ण,
-	[insn_j]	= अणुM(j_op, 0, 0, 0, 0, 0),  JIMMपूर्ण,
-	[insn_jal]	= अणुM(jal_op, 0, 0, 0, 0, 0),	JIMMपूर्ण,
-	[insn_jalr]	= अणुM(spec_op, 0, 0, 0, 0, jalr_op), RS | RDपूर्ण,
-#अगर_अघोषित CONFIG_CPU_MIPSR6
-	[insn_jr]	= अणुM(spec_op, 0, 0, 0, 0, jr_op),  RSपूर्ण,
-#अन्यथा
-	[insn_jr]	= अणुM(spec_op, 0, 0, 0, 0, jalr_op),  RSपूर्ण,
-#पूर्ण_अगर
-	[insn_lb]	= अणुM(lb_op, 0, 0, 0, 0, 0), RS | RT | SIMMपूर्ण,
-	[insn_lbu]	= अणुM(lbu_op, 0, 0, 0, 0, 0), RS | RT | SIMMपूर्ण,
-	[insn_ld]	= अणुM(ld_op, 0, 0, 0, 0, 0),  RS | RT | SIMMपूर्ण,
-	[insn_lddir]	= अणुM(lwc2_op, 0, 0, 0, lddir_op, mult_op), RS | RT | RDपूर्ण,
-	[insn_ldpte]	= अणुM(lwc2_op, 0, 0, 0, ldpte_op, mult_op), RS | RDपूर्ण,
-	[insn_ldx]	= अणुM(spec3_op, 0, 0, 0, ldx_op, lx_op), RS | RT | RDपूर्ण,
-	[insn_lh]	= अणुM(lh_op, 0, 0, 0, 0, 0),  RS | RT | SIMMपूर्ण,
-	[insn_lhu]	= अणुM(lhu_op, 0, 0, 0, 0, 0),  RS | RT | SIMMपूर्ण,
-#अगर_अघोषित CONFIG_CPU_MIPSR6
-	[insn_ll]	= अणुM(ll_op, 0, 0, 0, 0, 0),  RS | RT | SIMMपूर्ण,
-	[insn_lld]	= अणुM(lld_op, 0, 0, 0, 0, 0),	RS | RT | SIMMपूर्ण,
-#अन्यथा
-	[insn_ll]	= अणुM6(spec3_op, 0, 0, 0, ll6_op),  RS | RT | SIMM9पूर्ण,
-	[insn_lld]	= अणुM6(spec3_op, 0, 0, 0, lld6_op),  RS | RT | SIMM9पूर्ण,
-#पूर्ण_अगर
-	[insn_lui]	= अणुM(lui_op, 0, 0, 0, 0, 0),	RT | SIMMपूर्ण,
-	[insn_lw]	= अणुM(lw_op, 0, 0, 0, 0, 0),  RS | RT | SIMMपूर्ण,
-	[insn_lwu]	= अणुM(lwu_op, 0, 0, 0, 0, 0),  RS | RT | SIMMपूर्ण,
-	[insn_lwx]	= अणुM(spec3_op, 0, 0, 0, lwx_op, lx_op), RS | RT | RDपूर्ण,
-	[insn_mfc0]	= अणुM(cop0_op, mfc_op, 0, 0, 0, 0),  RT | RD | SETपूर्ण,
-	[insn_mfhc0]	= अणुM(cop0_op, mfhc0_op, 0, 0, 0, 0),  RT | RD | SETपूर्ण,
-	[insn_mfhi]	= अणुM(spec_op, 0, 0, 0, 0, mfhi_op), RDपूर्ण,
-	[insn_mflo]	= अणुM(spec_op, 0, 0, 0, 0, mflo_op), RDपूर्ण,
-	[insn_modu]	= अणुM(spec_op, 0, 0, 0, भागu_modu_op, भागu_op),
-				RS | RT | RDपूर्ण,
-	[insn_movn]	= अणुM(spec_op, 0, 0, 0, 0, movn_op), RS | RT | RDपूर्ण,
-	[insn_movz]	= अणुM(spec_op, 0, 0, 0, 0, movz_op), RS | RT | RDपूर्ण,
-	[insn_mtc0]	= अणुM(cop0_op, mtc_op, 0, 0, 0, 0),  RT | RD | SETपूर्ण,
-	[insn_mthc0]	= अणुM(cop0_op, mthc0_op, 0, 0, 0, 0),  RT | RD | SETपूर्ण,
-	[insn_mthi]	= अणुM(spec_op, 0, 0, 0, 0, mthi_op), RSपूर्ण,
-	[insn_mtlo]	= अणुM(spec_op, 0, 0, 0, 0, mtlo_op), RSपूर्ण,
-	[insn_mulu]	= अणुM(spec_op, 0, 0, 0, multu_mulu_op, multu_op),
-				RS | RT | RDपूर्ण,
-#अगर_अघोषित CONFIG_CPU_MIPSR6
-	[insn_mul]	= अणुM(spec2_op, 0, 0, 0, 0, mul_op), RS | RT | RDपूर्ण,
-#अन्यथा
-	[insn_mul]	= अणुM(spec_op, 0, 0, 0, mult_mul_op, mult_op), RS | RT | RDपूर्ण,
-#पूर्ण_अगर
-	[insn_multu]	= अणुM(spec_op, 0, 0, 0, 0, multu_op), RS | RTपूर्ण,
-	[insn_nor]	= अणुM(spec_op, 0, 0, 0, 0, nor_op),  RS | RT | RDपूर्ण,
-	[insn_or]	= अणुM(spec_op, 0, 0, 0, 0, or_op),  RS | RT | RDपूर्ण,
-	[insn_ori]	= अणुM(ori_op, 0, 0, 0, 0, 0),	RS | RT | UIMMपूर्ण,
-#अगर_अघोषित CONFIG_CPU_MIPSR6
-	[insn_pref]	= अणुM(pref_op, 0, 0, 0, 0, 0),  RS | RT | SIMMपूर्ण,
-#अन्यथा
-	[insn_pref]	= अणुM6(spec3_op, 0, 0, 0, pref6_op),  RS | RT | SIMM9पूर्ण,
-#पूर्ण_अगर
-	[insn_rfe]	= अणुM(cop0_op, cop_op, 0, 0, 0, rfe_op),  0पूर्ण,
-	[insn_rotr]	= अणुM(spec_op, 1, 0, 0, 0, srl_op),  RT | RD | REपूर्ण,
-	[insn_sb]	= अणुM(sb_op, 0, 0, 0, 0, 0),  RS | RT | SIMMपूर्ण,
-#अगर_अघोषित CONFIG_CPU_MIPSR6
-	[insn_sc]	= अणुM(sc_op, 0, 0, 0, 0, 0),  RS | RT | SIMMपूर्ण,
-	[insn_scd]	= अणुM(scd_op, 0, 0, 0, 0, 0),	RS | RT | SIMMपूर्ण,
-#अन्यथा
-	[insn_sc]	= अणुM6(spec3_op, 0, 0, 0, sc6_op),  RS | RT | SIMM9पूर्ण,
-	[insn_scd]	= अणुM6(spec3_op, 0, 0, 0, scd6_op),  RS | RT | SIMM9पूर्ण,
-#पूर्ण_अगर
-	[insn_sd]	= अणुM(sd_op, 0, 0, 0, 0, 0),  RS | RT | SIMMपूर्ण,
-	[insn_seleqz]	= अणुM(spec_op, 0, 0, 0, 0, seleqz_op), RS | RT | RDपूर्ण,
-	[insn_selnez]	= अणुM(spec_op, 0, 0, 0, 0, selnez_op), RS | RT | RDपूर्ण,
-	[insn_sh]	= अणुM(sh_op, 0, 0, 0, 0, 0),  RS | RT | SIMMपूर्ण,
-	[insn_sll]	= अणुM(spec_op, 0, 0, 0, 0, sll_op),  RT | RD | REपूर्ण,
-	[insn_sllv]	= अणुM(spec_op, 0, 0, 0, 0, sllv_op),  RS | RT | RDपूर्ण,
-	[insn_slt]	= अणुM(spec_op, 0, 0, 0, 0, slt_op),  RS | RT | RDपूर्ण,
-	[insn_slti]	= अणुM(slti_op, 0, 0, 0, 0, 0), RS | RT | SIMMपूर्ण,
-	[insn_sltiu]	= अणुM(sltiu_op, 0, 0, 0, 0, 0), RS | RT | SIMMपूर्ण,
-	[insn_sltu]	= अणुM(spec_op, 0, 0, 0, 0, sltu_op), RS | RT | RDपूर्ण,
-	[insn_sra]	= अणुM(spec_op, 0, 0, 0, 0, sra_op),  RT | RD | REपूर्ण,
-	[insn_srav]	= अणुM(spec_op, 0, 0, 0, 0, srav_op), RS | RT | RDपूर्ण,
-	[insn_srl]	= अणुM(spec_op, 0, 0, 0, 0, srl_op),  RT | RD | REपूर्ण,
-	[insn_srlv]	= अणुM(spec_op, 0, 0, 0, 0, srlv_op),  RS | RT | RDपूर्ण,
-	[insn_subu]	= अणुM(spec_op, 0, 0, 0, 0, subu_op),	RS | RT | RDपूर्ण,
-	[insn_sw]	= अणुM(sw_op, 0, 0, 0, 0, 0),  RS | RT | SIMMपूर्ण,
-	[insn_sync]	= अणुM(spec_op, 0, 0, 0, 0, sync_op), REपूर्ण,
-	[insn_syscall]	= अणुM(spec_op, 0, 0, 0, 0, syscall_op), SCIMMपूर्ण,
-	[insn_tlbp]	= अणुM(cop0_op, cop_op, 0, 0, 0, tlbp_op),  0पूर्ण,
-	[insn_tlbr]	= अणुM(cop0_op, cop_op, 0, 0, 0, tlbr_op),  0पूर्ण,
-	[insn_tlbwi]	= अणुM(cop0_op, cop_op, 0, 0, 0, tlbwi_op),  0पूर्ण,
-	[insn_tlbwr]	= अणुM(cop0_op, cop_op, 0, 0, 0, tlbwr_op),  0पूर्ण,
-	[insn_रुको]	= अणुM(cop0_op, cop_op, 0, 0, 0, रुको_op), SCIMMपूर्ण,
-	[insn_wsbh]	= अणुM(spec3_op, 0, 0, 0, wsbh_op, bshfl_op), RT | RDपूर्ण,
-	[insn_xor]	= अणुM(spec_op, 0, 0, 0, 0, xor_op),  RS | RT | RDपूर्ण,
-	[insn_xori]	= अणुM(xori_op, 0, 0, 0, 0, 0),  RS | RT | UIMMपूर्ण,
-	[insn_yield]	= अणुM(spec3_op, 0, 0, 0, 0, yield_op), RS | RDपूर्ण,
-पूर्ण;
+static const struct insn insn_table[insn_invalid] = {
+	[insn_addiu]	= {M(addiu_op, 0, 0, 0, 0, 0), RS | RT | SIMM},
+	[insn_addu]	= {M(spec_op, 0, 0, 0, 0, addu_op), RS | RT | RD},
+	[insn_and]	= {M(spec_op, 0, 0, 0, 0, and_op), RS | RT | RD},
+	[insn_andi]	= {M(andi_op, 0, 0, 0, 0, 0), RS | RT | UIMM},
+	[insn_bbit0]	= {M(lwc2_op, 0, 0, 0, 0, 0), RS | RT | BIMM},
+	[insn_bbit1]	= {M(swc2_op, 0, 0, 0, 0, 0), RS | RT | BIMM},
+	[insn_beq]	= {M(beq_op, 0, 0, 0, 0, 0), RS | RT | BIMM},
+	[insn_beql]	= {M(beql_op, 0, 0, 0, 0, 0), RS | RT | BIMM},
+	[insn_bgez]	= {M(bcond_op, 0, bgez_op, 0, 0, 0), RS | BIMM},
+	[insn_bgezl]	= {M(bcond_op, 0, bgezl_op, 0, 0, 0), RS | BIMM},
+	[insn_bgtz]	= {M(bgtz_op, 0, 0, 0, 0, 0), RS | BIMM},
+	[insn_blez]	= {M(blez_op, 0, 0, 0, 0, 0), RS | BIMM},
+	[insn_bltz]	= {M(bcond_op, 0, bltz_op, 0, 0, 0), RS | BIMM},
+	[insn_bltzl]	= {M(bcond_op, 0, bltzl_op, 0, 0, 0), RS | BIMM},
+	[insn_bne]	= {M(bne_op, 0, 0, 0, 0, 0), RS | RT | BIMM},
+	[insn_break]	= {M(spec_op, 0, 0, 0, 0, break_op), SCIMM},
+#ifndef CONFIG_CPU_MIPSR6
+	[insn_cache]	= {M(cache_op, 0, 0, 0, 0, 0),  RS | RT | SIMM},
+#else
+	[insn_cache]	= {M6(spec3_op, 0, 0, 0, cache6_op),  RS | RT | SIMM9},
+#endif
+	[insn_cfc1]	= {M(cop1_op, cfc_op, 0, 0, 0, 0), RT | RD},
+	[insn_cfcmsa]	= {M(msa_op, 0, msa_cfc_op, 0, 0, msa_elm_op), RD | RE},
+	[insn_ctc1]	= {M(cop1_op, ctc_op, 0, 0, 0, 0), RT | RD},
+	[insn_ctcmsa]	= {M(msa_op, 0, msa_ctc_op, 0, 0, msa_elm_op), RD | RE},
+	[insn_daddiu]	= {M(daddiu_op, 0, 0, 0, 0, 0), RS | RT | SIMM},
+	[insn_daddu]	= {M(spec_op, 0, 0, 0, 0, daddu_op), RS | RT | RD},
+	[insn_ddivu]	= {M(spec_op, 0, 0, 0, 0, ddivu_op), RS | RT},
+	[insn_ddivu_r6]	= {M(spec_op, 0, 0, 0, ddivu_ddivu6_op, ddivu_op),
+				RS | RT | RD},
+	[insn_di]	= {M(cop0_op, mfmc0_op, 0, 12, 0, 0), RT},
+	[insn_dins]	= {M(spec3_op, 0, 0, 0, 0, dins_op), RS | RT | RD | RE},
+	[insn_dinsm]	= {M(spec3_op, 0, 0, 0, 0, dinsm_op), RS | RT | RD | RE},
+	[insn_dinsu]	= {M(spec3_op, 0, 0, 0, 0, dinsu_op), RS | RT | RD | RE},
+	[insn_divu]	= {M(spec_op, 0, 0, 0, 0, divu_op), RS | RT},
+	[insn_divu_r6]	= {M(spec_op, 0, 0, 0, divu_divu6_op, divu_op),
+				RS | RT | RD},
+	[insn_dmfc0]	= {M(cop0_op, dmfc_op, 0, 0, 0, 0), RT | RD | SET},
+	[insn_dmodu]	= {M(spec_op, 0, 0, 0, ddivu_dmodu_op, ddivu_op),
+				RS | RT | RD},
+	[insn_dmtc0]	= {M(cop0_op, dmtc_op, 0, 0, 0, 0), RT | RD | SET},
+	[insn_dmultu]	= {M(spec_op, 0, 0, 0, 0, dmultu_op), RS | RT},
+	[insn_dmulu]	= {M(spec_op, 0, 0, 0, dmult_dmul_op, dmultu_op),
+				RS | RT | RD},
+	[insn_drotr]	= {M(spec_op, 1, 0, 0, 0, dsrl_op), RT | RD | RE},
+	[insn_drotr32]	= {M(spec_op, 1, 0, 0, 0, dsrl32_op), RT | RD | RE},
+	[insn_dsbh]	= {M(spec3_op, 0, 0, 0, dsbh_op, dbshfl_op), RT | RD},
+	[insn_dshd]	= {M(spec3_op, 0, 0, 0, dshd_op, dbshfl_op), RT | RD},
+	[insn_dsll]	= {M(spec_op, 0, 0, 0, 0, dsll_op), RT | RD | RE},
+	[insn_dsll32]	= {M(spec_op, 0, 0, 0, 0, dsll32_op), RT | RD | RE},
+	[insn_dsllv]	= {M(spec_op, 0, 0, 0, 0, dsllv_op),  RS | RT | RD},
+	[insn_dsra]	= {M(spec_op, 0, 0, 0, 0, dsra_op), RT | RD | RE},
+	[insn_dsra32]	= {M(spec_op, 0, 0, 0, 0, dsra32_op), RT | RD | RE},
+	[insn_dsrav]	= {M(spec_op, 0, 0, 0, 0, dsrav_op),  RS | RT | RD},
+	[insn_dsrl]	= {M(spec_op, 0, 0, 0, 0, dsrl_op), RT | RD | RE},
+	[insn_dsrl32]	= {M(spec_op, 0, 0, 0, 0, dsrl32_op), RT | RD | RE},
+	[insn_dsrlv]	= {M(spec_op, 0, 0, 0, 0, dsrlv_op),  RS | RT | RD},
+	[insn_dsubu]	= {M(spec_op, 0, 0, 0, 0, dsubu_op), RS | RT | RD},
+	[insn_eret]	= {M(cop0_op, cop_op, 0, 0, 0, eret_op),  0},
+	[insn_ext]	= {M(spec3_op, 0, 0, 0, 0, ext_op), RS | RT | RD | RE},
+	[insn_ins]	= {M(spec3_op, 0, 0, 0, 0, ins_op), RS | RT | RD | RE},
+	[insn_j]	= {M(j_op, 0, 0, 0, 0, 0),  JIMM},
+	[insn_jal]	= {M(jal_op, 0, 0, 0, 0, 0),	JIMM},
+	[insn_jalr]	= {M(spec_op, 0, 0, 0, 0, jalr_op), RS | RD},
+#ifndef CONFIG_CPU_MIPSR6
+	[insn_jr]	= {M(spec_op, 0, 0, 0, 0, jr_op),  RS},
+#else
+	[insn_jr]	= {M(spec_op, 0, 0, 0, 0, jalr_op),  RS},
+#endif
+	[insn_lb]	= {M(lb_op, 0, 0, 0, 0, 0), RS | RT | SIMM},
+	[insn_lbu]	= {M(lbu_op, 0, 0, 0, 0, 0), RS | RT | SIMM},
+	[insn_ld]	= {M(ld_op, 0, 0, 0, 0, 0),  RS | RT | SIMM},
+	[insn_lddir]	= {M(lwc2_op, 0, 0, 0, lddir_op, mult_op), RS | RT | RD},
+	[insn_ldpte]	= {M(lwc2_op, 0, 0, 0, ldpte_op, mult_op), RS | RD},
+	[insn_ldx]	= {M(spec3_op, 0, 0, 0, ldx_op, lx_op), RS | RT | RD},
+	[insn_lh]	= {M(lh_op, 0, 0, 0, 0, 0),  RS | RT | SIMM},
+	[insn_lhu]	= {M(lhu_op, 0, 0, 0, 0, 0),  RS | RT | SIMM},
+#ifndef CONFIG_CPU_MIPSR6
+	[insn_ll]	= {M(ll_op, 0, 0, 0, 0, 0),  RS | RT | SIMM},
+	[insn_lld]	= {M(lld_op, 0, 0, 0, 0, 0),	RS | RT | SIMM},
+#else
+	[insn_ll]	= {M6(spec3_op, 0, 0, 0, ll6_op),  RS | RT | SIMM9},
+	[insn_lld]	= {M6(spec3_op, 0, 0, 0, lld6_op),  RS | RT | SIMM9},
+#endif
+	[insn_lui]	= {M(lui_op, 0, 0, 0, 0, 0),	RT | SIMM},
+	[insn_lw]	= {M(lw_op, 0, 0, 0, 0, 0),  RS | RT | SIMM},
+	[insn_lwu]	= {M(lwu_op, 0, 0, 0, 0, 0),  RS | RT | SIMM},
+	[insn_lwx]	= {M(spec3_op, 0, 0, 0, lwx_op, lx_op), RS | RT | RD},
+	[insn_mfc0]	= {M(cop0_op, mfc_op, 0, 0, 0, 0),  RT | RD | SET},
+	[insn_mfhc0]	= {M(cop0_op, mfhc0_op, 0, 0, 0, 0),  RT | RD | SET},
+	[insn_mfhi]	= {M(spec_op, 0, 0, 0, 0, mfhi_op), RD},
+	[insn_mflo]	= {M(spec_op, 0, 0, 0, 0, mflo_op), RD},
+	[insn_modu]	= {M(spec_op, 0, 0, 0, divu_modu_op, divu_op),
+				RS | RT | RD},
+	[insn_movn]	= {M(spec_op, 0, 0, 0, 0, movn_op), RS | RT | RD},
+	[insn_movz]	= {M(spec_op, 0, 0, 0, 0, movz_op), RS | RT | RD},
+	[insn_mtc0]	= {M(cop0_op, mtc_op, 0, 0, 0, 0),  RT | RD | SET},
+	[insn_mthc0]	= {M(cop0_op, mthc0_op, 0, 0, 0, 0),  RT | RD | SET},
+	[insn_mthi]	= {M(spec_op, 0, 0, 0, 0, mthi_op), RS},
+	[insn_mtlo]	= {M(spec_op, 0, 0, 0, 0, mtlo_op), RS},
+	[insn_mulu]	= {M(spec_op, 0, 0, 0, multu_mulu_op, multu_op),
+				RS | RT | RD},
+#ifndef CONFIG_CPU_MIPSR6
+	[insn_mul]	= {M(spec2_op, 0, 0, 0, 0, mul_op), RS | RT | RD},
+#else
+	[insn_mul]	= {M(spec_op, 0, 0, 0, mult_mul_op, mult_op), RS | RT | RD},
+#endif
+	[insn_multu]	= {M(spec_op, 0, 0, 0, 0, multu_op), RS | RT},
+	[insn_nor]	= {M(spec_op, 0, 0, 0, 0, nor_op),  RS | RT | RD},
+	[insn_or]	= {M(spec_op, 0, 0, 0, 0, or_op),  RS | RT | RD},
+	[insn_ori]	= {M(ori_op, 0, 0, 0, 0, 0),	RS | RT | UIMM},
+#ifndef CONFIG_CPU_MIPSR6
+	[insn_pref]	= {M(pref_op, 0, 0, 0, 0, 0),  RS | RT | SIMM},
+#else
+	[insn_pref]	= {M6(spec3_op, 0, 0, 0, pref6_op),  RS | RT | SIMM9},
+#endif
+	[insn_rfe]	= {M(cop0_op, cop_op, 0, 0, 0, rfe_op),  0},
+	[insn_rotr]	= {M(spec_op, 1, 0, 0, 0, srl_op),  RT | RD | RE},
+	[insn_sb]	= {M(sb_op, 0, 0, 0, 0, 0),  RS | RT | SIMM},
+#ifndef CONFIG_CPU_MIPSR6
+	[insn_sc]	= {M(sc_op, 0, 0, 0, 0, 0),  RS | RT | SIMM},
+	[insn_scd]	= {M(scd_op, 0, 0, 0, 0, 0),	RS | RT | SIMM},
+#else
+	[insn_sc]	= {M6(spec3_op, 0, 0, 0, sc6_op),  RS | RT | SIMM9},
+	[insn_scd]	= {M6(spec3_op, 0, 0, 0, scd6_op),  RS | RT | SIMM9},
+#endif
+	[insn_sd]	= {M(sd_op, 0, 0, 0, 0, 0),  RS | RT | SIMM},
+	[insn_seleqz]	= {M(spec_op, 0, 0, 0, 0, seleqz_op), RS | RT | RD},
+	[insn_selnez]	= {M(spec_op, 0, 0, 0, 0, selnez_op), RS | RT | RD},
+	[insn_sh]	= {M(sh_op, 0, 0, 0, 0, 0),  RS | RT | SIMM},
+	[insn_sll]	= {M(spec_op, 0, 0, 0, 0, sll_op),  RT | RD | RE},
+	[insn_sllv]	= {M(spec_op, 0, 0, 0, 0, sllv_op),  RS | RT | RD},
+	[insn_slt]	= {M(spec_op, 0, 0, 0, 0, slt_op),  RS | RT | RD},
+	[insn_slti]	= {M(slti_op, 0, 0, 0, 0, 0), RS | RT | SIMM},
+	[insn_sltiu]	= {M(sltiu_op, 0, 0, 0, 0, 0), RS | RT | SIMM},
+	[insn_sltu]	= {M(spec_op, 0, 0, 0, 0, sltu_op), RS | RT | RD},
+	[insn_sra]	= {M(spec_op, 0, 0, 0, 0, sra_op),  RT | RD | RE},
+	[insn_srav]	= {M(spec_op, 0, 0, 0, 0, srav_op), RS | RT | RD},
+	[insn_srl]	= {M(spec_op, 0, 0, 0, 0, srl_op),  RT | RD | RE},
+	[insn_srlv]	= {M(spec_op, 0, 0, 0, 0, srlv_op),  RS | RT | RD},
+	[insn_subu]	= {M(spec_op, 0, 0, 0, 0, subu_op),	RS | RT | RD},
+	[insn_sw]	= {M(sw_op, 0, 0, 0, 0, 0),  RS | RT | SIMM},
+	[insn_sync]	= {M(spec_op, 0, 0, 0, 0, sync_op), RE},
+	[insn_syscall]	= {M(spec_op, 0, 0, 0, 0, syscall_op), SCIMM},
+	[insn_tlbp]	= {M(cop0_op, cop_op, 0, 0, 0, tlbp_op),  0},
+	[insn_tlbr]	= {M(cop0_op, cop_op, 0, 0, 0, tlbr_op),  0},
+	[insn_tlbwi]	= {M(cop0_op, cop_op, 0, 0, 0, tlbwi_op),  0},
+	[insn_tlbwr]	= {M(cop0_op, cop_op, 0, 0, 0, tlbwr_op),  0},
+	[insn_wait]	= {M(cop0_op, cop_op, 0, 0, 0, wait_op), SCIMM},
+	[insn_wsbh]	= {M(spec3_op, 0, 0, 0, wsbh_op, bshfl_op), RT | RD},
+	[insn_xor]	= {M(spec_op, 0, 0, 0, 0, xor_op),  RS | RT | RD},
+	[insn_xori]	= {M(xori_op, 0, 0, 0, 0, 0),  RS | RT | UIMM},
+	[insn_yield]	= {M(spec3_op, 0, 0, 0, 0, yield_op), RS | RD},
+};
 
-#अघोषित M
+#undef M
 
-अटल अंतरभूत u32 build_bimm(s32 arg)
-अणु
+static inline u32 build_bimm(s32 arg)
+{
 	WARN(arg > 0x1ffff || arg < -0x20000,
 	     KERN_WARNING "Micro-assembler field overflow\n");
 
 	WARN(arg & 0x3, KERN_WARNING "Invalid micro-assembler branch target\n");
 
-	वापस ((arg < 0) ? (1 << 15) : 0) | ((arg >> 2) & 0x7fff);
-पूर्ण
+	return ((arg < 0) ? (1 << 15) : 0) | ((arg >> 2) & 0x7fff);
+}
 
-अटल अंतरभूत u32 build_jimm(u32 arg)
-अणु
+static inline u32 build_jimm(u32 arg)
+{
 	WARN(arg & ~(JIMM_MASK << 2),
 	     KERN_WARNING "Micro-assembler field overflow\n");
 
-	वापस (arg >> 2) & JIMM_MASK;
-पूर्ण
+	return (arg >> 2) & JIMM_MASK;
+}
 
 /*
  * The order of opcode arguments is implicitly left to right,
  * starting with RS and ending with FUNC or IMM.
  */
-अटल व्योम build_insn(u32 **buf, क्रमागत opcode opc, ...)
-अणु
-	स्थिर काष्ठा insn *ip;
-	बहु_सूची ap;
+static void build_insn(u32 **buf, enum opcode opc, ...)
+{
+	const struct insn *ip;
+	va_list ap;
 	u32 op;
 
-	अगर (opc < 0 || opc >= insn_invalid ||
+	if (opc < 0 || opc >= insn_invalid ||
 	    (opc == insn_daddiu && r4k_daddiu_bug()) ||
 	    (insn_table[opc].match == 0 && insn_table[opc].fields == 0))
 		panic("Unsupported Micro-assembler instruction %d", opc);
@@ -242,50 +241,50 @@
 	ip = &insn_table[opc];
 
 	op = ip->match;
-	बहु_शुरू(ap, opc);
-	अगर (ip->fields & RS)
-		op |= build_rs(बहु_तर्क(ap, u32));
-	अगर (ip->fields & RT)
-		op |= build_rt(बहु_तर्क(ap, u32));
-	अगर (ip->fields & RD)
-		op |= build_rd(बहु_तर्क(ap, u32));
-	अगर (ip->fields & RE)
-		op |= build_re(बहु_तर्क(ap, u32));
-	अगर (ip->fields & SIMM)
-		op |= build_simm(बहु_तर्क(ap, s32));
-	अगर (ip->fields & UIMM)
-		op |= build_uimm(बहु_तर्क(ap, u32));
-	अगर (ip->fields & BIMM)
-		op |= build_bimm(बहु_तर्क(ap, s32));
-	अगर (ip->fields & JIMM)
-		op |= build_jimm(बहु_तर्क(ap, u32));
-	अगर (ip->fields & FUNC)
-		op |= build_func(बहु_तर्क(ap, u32));
-	अगर (ip->fields & SET)
-		op |= build_set(बहु_तर्क(ap, u32));
-	अगर (ip->fields & SCIMM)
-		op |= build_scimm(बहु_तर्क(ap, u32));
-	अगर (ip->fields & SIMM9)
-		op |= build_scimm9(बहु_तर्क(ap, u32));
-	बहु_पूर्ण(ap);
+	va_start(ap, opc);
+	if (ip->fields & RS)
+		op |= build_rs(va_arg(ap, u32));
+	if (ip->fields & RT)
+		op |= build_rt(va_arg(ap, u32));
+	if (ip->fields & RD)
+		op |= build_rd(va_arg(ap, u32));
+	if (ip->fields & RE)
+		op |= build_re(va_arg(ap, u32));
+	if (ip->fields & SIMM)
+		op |= build_simm(va_arg(ap, s32));
+	if (ip->fields & UIMM)
+		op |= build_uimm(va_arg(ap, u32));
+	if (ip->fields & BIMM)
+		op |= build_bimm(va_arg(ap, s32));
+	if (ip->fields & JIMM)
+		op |= build_jimm(va_arg(ap, u32));
+	if (ip->fields & FUNC)
+		op |= build_func(va_arg(ap, u32));
+	if (ip->fields & SET)
+		op |= build_set(va_arg(ap, u32));
+	if (ip->fields & SCIMM)
+		op |= build_scimm(va_arg(ap, u32));
+	if (ip->fields & SIMM9)
+		op |= build_scimm9(va_arg(ap, u32));
+	va_end(ap);
 
 	**buf = op;
 	(*buf)++;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-__resolve_relocs(काष्ठा uयंत्र_reloc *rel, काष्ठा uयंत्र_label *lab)
-अणु
-	दीर्घ laddr = (दीर्घ)lab->addr;
-	दीर्घ raddr = (दीर्घ)rel->addr;
+static inline void
+__resolve_relocs(struct uasm_reloc *rel, struct uasm_label *lab)
+{
+	long laddr = (long)lab->addr;
+	long raddr = (long)rel->addr;
 
-	चयन (rel->type) अणु
-	हाल R_MIPS_PC16:
+	switch (rel->type) {
+	case R_MIPS_PC16:
 		*rel->addr |= build_bimm(laddr - (raddr + 4));
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		panic("Unsupported Micro-assembler relocation %d",
 		      rel->type);
-	पूर्ण
-पूर्ण
+	}
+}

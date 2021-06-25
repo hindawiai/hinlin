@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_SH_TYPES_H
-#घोषणा __ASM_SH_TYPES_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_SH_TYPES_H
+#define __ASM_SH_TYPES_H
 
-#समावेश <uapi/यंत्र/types.h>
+#include <uapi/asm/types.h>
 
 /*
- * These aren't exported outside the kernel to aव्योम name space clashes
+ * These aren't exported outside the kernel to avoid name space clashes
  */
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-प्रकार u16 insn_माप_प्रकार;
-प्रकार u32 reg_माप_प्रकार;
+typedef u16 insn_size_t;
+typedef u32 reg_size_t;
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
-#पूर्ण_अगर /* __ASM_SH_TYPES_H */
+#endif /* __ASSEMBLY__ */
+#endif /* __ASM_SH_TYPES_H */

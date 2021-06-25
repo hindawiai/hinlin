@@ -1,191 +1,190 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * inet_diag.c	Module क्रम monitoring INET transport protocols sockets.
+ * inet_diag.c	Module for monitoring INET transport protocols sockets.
  *
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/cache.h>
-#समावेश <linux/init.h>
-#समावेश <linux/समय.स>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/fcntl.h>
+#include <linux/random.h>
+#include <linux/slab.h>
+#include <linux/cache.h>
+#include <linux/init.h>
+#include <linux/time.h>
 
-#समावेश <net/icmp.h>
-#समावेश <net/tcp.h>
-#समावेश <net/ipv6.h>
-#समावेश <net/inet_common.h>
-#समावेश <net/inet_connection_sock.h>
-#समावेश <net/inet_hashtables.h>
-#समावेश <net/inet_समयरुको_sock.h>
-#समावेश <net/inet6_hashtables.h>
-#समावेश <net/bpf_sk_storage.h>
-#समावेश <net/netlink.h>
+#include <net/icmp.h>
+#include <net/tcp.h>
+#include <net/ipv6.h>
+#include <net/inet_common.h>
+#include <net/inet_connection_sock.h>
+#include <net/inet_hashtables.h>
+#include <net/inet_timewait_sock.h>
+#include <net/inet6_hashtables.h>
+#include <net/bpf_sk_storage.h>
+#include <net/netlink.h>
 
-#समावेश <linux/inet.h>
-#समावेश <linux/मानकघोष.स>
+#include <linux/inet.h>
+#include <linux/stddef.h>
 
-#समावेश <linux/inet_diag.h>
-#समावेश <linux/sock_diag.h>
+#include <linux/inet_diag.h>
+#include <linux/sock_diag.h>
 
-अटल स्थिर काष्ठा inet_diag_handler **inet_diag_table;
+static const struct inet_diag_handler **inet_diag_table;
 
-काष्ठा inet_diag_entry अणु
-	स्थिर __be32 *saddr;
-	स्थिर __be32 *daddr;
+struct inet_diag_entry {
+	const __be32 *saddr;
+	const __be32 *daddr;
 	u16 sport;
 	u16 dport;
 	u16 family;
 	u16 userlocks;
-	u32 अगरindex;
+	u32 ifindex;
 	u32 mark;
-#अगर_घोषित CONFIG_SOCK_CGROUP_DATA
+#ifdef CONFIG_SOCK_CGROUP_DATA
 	u64 cgroup_id;
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल DEFINE_MUTEX(inet_diag_table_mutex);
+static DEFINE_MUTEX(inet_diag_table_mutex);
 
-अटल स्थिर काष्ठा inet_diag_handler *inet_diag_lock_handler(पूर्णांक proto)
-अणु
-	अगर (proto < 0 || proto >= IPPROTO_MAX) अणु
+static const struct inet_diag_handler *inet_diag_lock_handler(int proto)
+{
+	if (proto < 0 || proto >= IPPROTO_MAX) {
 		mutex_lock(&inet_diag_table_mutex);
-		वापस ERR_PTR(-ENOENT);
-	पूर्ण
+		return ERR_PTR(-ENOENT);
+	}
 
-	अगर (!inet_diag_table[proto])
+	if (!inet_diag_table[proto])
 		sock_load_diag_module(AF_INET, proto);
 
 	mutex_lock(&inet_diag_table_mutex);
-	अगर (!inet_diag_table[proto])
-		वापस ERR_PTR(-ENOENT);
+	if (!inet_diag_table[proto])
+		return ERR_PTR(-ENOENT);
 
-	वापस inet_diag_table[proto];
-पूर्ण
+	return inet_diag_table[proto];
+}
 
-अटल व्योम inet_diag_unlock_handler(स्थिर काष्ठा inet_diag_handler *handler)
-अणु
+static void inet_diag_unlock_handler(const struct inet_diag_handler *handler)
+{
 	mutex_unlock(&inet_diag_table_mutex);
-पूर्ण
+}
 
-व्योम inet_diag_msg_common_fill(काष्ठा inet_diag_msg *r, काष्ठा sock *sk)
-अणु
+void inet_diag_msg_common_fill(struct inet_diag_msg *r, struct sock *sk)
+{
 	r->idiag_family = sk->sk_family;
 
 	r->id.idiag_sport = htons(sk->sk_num);
 	r->id.idiag_dport = sk->sk_dport;
-	r->id.idiag_अगर = sk->sk_bound_dev_अगर;
+	r->id.idiag_if = sk->sk_bound_dev_if;
 	sock_diag_save_cookie(sk, r->id.idiag_cookie);
 
-#अगर IS_ENABLED(CONFIG_IPV6)
-	अगर (sk->sk_family == AF_INET6) अणु
-		*(काष्ठा in6_addr *)r->id.idiag_src = sk->sk_v6_rcv_saddr;
-		*(काष्ठा in6_addr *)r->id.idiag_dst = sk->sk_v6_daddr;
-	पूर्ण अन्यथा
-#पूर्ण_अगर
-	अणु
-	स_रखो(&r->id.idiag_src, 0, माप(r->id.idiag_src));
-	स_रखो(&r->id.idiag_dst, 0, माप(r->id.idiag_dst));
+#if IS_ENABLED(CONFIG_IPV6)
+	if (sk->sk_family == AF_INET6) {
+		*(struct in6_addr *)r->id.idiag_src = sk->sk_v6_rcv_saddr;
+		*(struct in6_addr *)r->id.idiag_dst = sk->sk_v6_daddr;
+	} else
+#endif
+	{
+	memset(&r->id.idiag_src, 0, sizeof(r->id.idiag_src));
+	memset(&r->id.idiag_dst, 0, sizeof(r->id.idiag_dst));
 
 	r->id.idiag_src[0] = sk->sk_rcv_saddr;
 	r->id.idiag_dst[0] = sk->sk_daddr;
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(inet_diag_msg_common_fill);
 
-अटल माप_प्रकार inet_sk_attr_size(काष्ठा sock *sk,
-				स्थिर काष्ठा inet_diag_req_v2 *req,
+static size_t inet_sk_attr_size(struct sock *sk,
+				const struct inet_diag_req_v2 *req,
 				bool net_admin)
-अणु
-	स्थिर काष्ठा inet_diag_handler *handler;
-	माप_प्रकार aux = 0;
+{
+	const struct inet_diag_handler *handler;
+	size_t aux = 0;
 
 	handler = inet_diag_table[req->sdiag_protocol];
-	अगर (handler && handler->idiag_get_aux_size)
+	if (handler && handler->idiag_get_aux_size)
 		aux = handler->idiag_get_aux_size(sk, net_admin);
 
-	वापस	  nla_total_size(माप(काष्ठा tcp_info))
-		+ nla_total_size(माप(काष्ठा inet_diag_msg))
+	return	  nla_total_size(sizeof(struct tcp_info))
+		+ nla_total_size(sizeof(struct inet_diag_msg))
 		+ inet_diag_msg_attrs_size()
-		+ nla_total_size(माप(काष्ठा inet_diag_meminfo))
-		+ nla_total_size(SK_MEMINFO_VARS * माप(u32))
+		+ nla_total_size(sizeof(struct inet_diag_meminfo))
+		+ nla_total_size(SK_MEMINFO_VARS * sizeof(u32))
 		+ nla_total_size(TCP_CA_NAME_MAX)
-		+ nla_total_size(माप(काष्ठा tcpvegas_info))
+		+ nla_total_size(sizeof(struct tcpvegas_info))
 		+ aux
 		+ 64;
-पूर्ण
+}
 
-पूर्णांक inet_diag_msg_attrs_fill(काष्ठा sock *sk, काष्ठा sk_buff *skb,
-			     काष्ठा inet_diag_msg *r, पूर्णांक ext,
-			     काष्ठा user_namespace *user_ns,
+int inet_diag_msg_attrs_fill(struct sock *sk, struct sk_buff *skb,
+			     struct inet_diag_msg *r, int ext,
+			     struct user_namespace *user_ns,
 			     bool net_admin)
-अणु
-	स्थिर काष्ठा inet_sock *inet = inet_sk(sk);
-	काष्ठा inet_diag_sockopt inet_sockopt;
+{
+	const struct inet_sock *inet = inet_sk(sk);
+	struct inet_diag_sockopt inet_sockopt;
 
-	अगर (nla_put_u8(skb, INET_DIAG_SHUTDOWN, sk->sk_shutकरोwn))
-		जाओ errout;
+	if (nla_put_u8(skb, INET_DIAG_SHUTDOWN, sk->sk_shutdown))
+		goto errout;
 
-	/* IPv6 dual-stack sockets use inet->tos क्रम IPv4 connections,
+	/* IPv6 dual-stack sockets use inet->tos for IPv4 connections,
 	 * hence this needs to be included regardless of socket family.
 	 */
-	अगर (ext & (1 << (INET_DIAG_TOS - 1)))
-		अगर (nla_put_u8(skb, INET_DIAG_TOS, inet->tos) < 0)
-			जाओ errout;
+	if (ext & (1 << (INET_DIAG_TOS - 1)))
+		if (nla_put_u8(skb, INET_DIAG_TOS, inet->tos) < 0)
+			goto errout;
 
-#अगर IS_ENABLED(CONFIG_IPV6)
-	अगर (r->idiag_family == AF_INET6) अणु
-		अगर (ext & (1 << (INET_DIAG_TCLASS - 1)))
-			अगर (nla_put_u8(skb, INET_DIAG_TCLASS,
+#if IS_ENABLED(CONFIG_IPV6)
+	if (r->idiag_family == AF_INET6) {
+		if (ext & (1 << (INET_DIAG_TCLASS - 1)))
+			if (nla_put_u8(skb, INET_DIAG_TCLASS,
 				       inet6_sk(sk)->tclass) < 0)
-				जाओ errout;
+				goto errout;
 
-		अगर (((1 << sk->sk_state) & (TCPF_LISTEN | TCPF_CLOSE)) &&
+		if (((1 << sk->sk_state) & (TCPF_LISTEN | TCPF_CLOSE)) &&
 		    nla_put_u8(skb, INET_DIAG_SKV6ONLY, ipv6_only_sock(sk)))
-			जाओ errout;
-	पूर्ण
-#पूर्ण_अगर
+			goto errout;
+	}
+#endif
 
-	अगर (net_admin && nla_put_u32(skb, INET_DIAG_MARK, sk->sk_mark))
-		जाओ errout;
+	if (net_admin && nla_put_u32(skb, INET_DIAG_MARK, sk->sk_mark))
+		goto errout;
 
-	अगर (ext & (1 << (INET_DIAG_CLASS_ID - 1)) ||
-	    ext & (1 << (INET_DIAG_TCLASS - 1))) अणु
+	if (ext & (1 << (INET_DIAG_CLASS_ID - 1)) ||
+	    ext & (1 << (INET_DIAG_TCLASS - 1))) {
 		u32 classid = 0;
 
-#अगर_घोषित CONFIG_SOCK_CGROUP_DATA
+#ifdef CONFIG_SOCK_CGROUP_DATA
 		classid = sock_cgroup_classid(&sk->sk_cgrp_data);
-#पूर्ण_अगर
-		/* Fallback to socket priority अगर class id isn't set.
+#endif
+		/* Fallback to socket priority if class id isn't set.
 		 * Classful qdiscs use it as direct reference to class.
 		 * For cgroup2 classid is always zero.
 		 */
-		अगर (!classid)
+		if (!classid)
 			classid = sk->sk_priority;
 
-		अगर (nla_put_u32(skb, INET_DIAG_CLASS_ID, classid))
-			जाओ errout;
-	पूर्ण
+		if (nla_put_u32(skb, INET_DIAG_CLASS_ID, classid))
+			goto errout;
+	}
 
-#अगर_घोषित CONFIG_SOCK_CGROUP_DATA
-	अगर (nla_put_u64_64bit(skb, INET_DIAG_CGROUP_ID,
+#ifdef CONFIG_SOCK_CGROUP_DATA
+	if (nla_put_u64_64bit(skb, INET_DIAG_CGROUP_ID,
 			      cgroup_id(sock_cgroup_ptr(&sk->sk_cgrp_data)),
 			      INET_DIAG_PAD))
-		जाओ errout;
-#पूर्ण_अगर
+		goto errout;
+#endif
 
 	r->idiag_uid = from_kuid_munged(user_ns, sock_i_uid(sk));
 	r->idiag_inode = sock_i_ino(sk);
 
-	स_रखो(&inet_sockopt, 0, माप(inet_sockopt));
+	memset(&inet_sockopt, 0, sizeof(inet_sockopt));
 	inet_sockopt.recverr	= inet->recverr;
 	inet_sockopt.is_icsk	= inet->is_icsk;
-	inet_sockopt.मुक्तbind	= inet->मुक्तbind;
+	inet_sockopt.freebind	= inet->freebind;
 	inet_sockopt.hdrincl	= inet->hdrincl;
 	inet_sockopt.mc_loop	= inet->mc_loop;
 	inet_sockopt.transparent = inet->transparent;
@@ -194,241 +193,241 @@ EXPORT_SYMBOL_GPL(inet_diag_msg_common_fill);
 	inet_sockopt.bind_address_no_port = inet->bind_address_no_port;
 	inet_sockopt.recverr_rfc4884 = inet->recverr_rfc4884;
 	inet_sockopt.defer_connect = inet->defer_connect;
-	अगर (nla_put(skb, INET_DIAG_SOCKOPT, माप(inet_sockopt),
+	if (nla_put(skb, INET_DIAG_SOCKOPT, sizeof(inet_sockopt),
 		    &inet_sockopt))
-		जाओ errout;
+		goto errout;
 
-	वापस 0;
+	return 0;
 errout:
-	वापस 1;
-पूर्ण
+	return 1;
+}
 EXPORT_SYMBOL_GPL(inet_diag_msg_attrs_fill);
 
-अटल पूर्णांक inet_diag_parse_attrs(स्थिर काष्ठा nlmsghdr *nlh, पूर्णांक hdrlen,
-				 काष्ठा nlattr **req_nlas)
-अणु
-	काष्ठा nlattr *nla;
-	पूर्णांक reमुख्यing;
+static int inet_diag_parse_attrs(const struct nlmsghdr *nlh, int hdrlen,
+				 struct nlattr **req_nlas)
+{
+	struct nlattr *nla;
+	int remaining;
 
-	nlmsg_क्रम_each_attr(nla, nlh, hdrlen, reमुख्यing) अणु
-		पूर्णांक type = nla_type(nla);
+	nlmsg_for_each_attr(nla, nlh, hdrlen, remaining) {
+		int type = nla_type(nla);
 
-		अगर (type == INET_DIAG_REQ_PROTOCOL && nla_len(nla) != माप(u32))
-			वापस -EINVAL;
+		if (type == INET_DIAG_REQ_PROTOCOL && nla_len(nla) != sizeof(u32))
+			return -EINVAL;
 
-		अगर (type < __INET_DIAG_REQ_MAX)
+		if (type < __INET_DIAG_REQ_MAX)
 			req_nlas[type] = nla;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक inet_diag_get_protocol(स्थिर काष्ठा inet_diag_req_v2 *req,
-				  स्थिर काष्ठा inet_diag_dump_data *data)
-अणु
-	अगर (data->req_nlas[INET_DIAG_REQ_PROTOCOL])
-		वापस nla_get_u32(data->req_nlas[INET_DIAG_REQ_PROTOCOL]);
-	वापस req->sdiag_protocol;
-पूर्ण
+static int inet_diag_get_protocol(const struct inet_diag_req_v2 *req,
+				  const struct inet_diag_dump_data *data)
+{
+	if (data->req_nlas[INET_DIAG_REQ_PROTOCOL])
+		return nla_get_u32(data->req_nlas[INET_DIAG_REQ_PROTOCOL]);
+	return req->sdiag_protocol;
+}
 
-#घोषणा MAX_DUMP_ALLOC_SIZE (KMALLOC_MAX_SIZE - SKB_DATA_ALIGN(माप(काष्ठा skb_shared_info)))
+#define MAX_DUMP_ALLOC_SIZE (KMALLOC_MAX_SIZE - SKB_DATA_ALIGN(sizeof(struct skb_shared_info)))
 
-पूर्णांक inet_sk_diag_fill(काष्ठा sock *sk, काष्ठा inet_connection_sock *icsk,
-		      काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb,
-		      स्थिर काष्ठा inet_diag_req_v2 *req,
+int inet_sk_diag_fill(struct sock *sk, struct inet_connection_sock *icsk,
+		      struct sk_buff *skb, struct netlink_callback *cb,
+		      const struct inet_diag_req_v2 *req,
 		      u16 nlmsg_flags, bool net_admin)
-अणु
-	स्थिर काष्ठा tcp_congestion_ops *ca_ops;
-	स्थिर काष्ठा inet_diag_handler *handler;
-	काष्ठा inet_diag_dump_data *cb_data;
-	पूर्णांक ext = req->idiag_ext;
-	काष्ठा inet_diag_msg *r;
-	काष्ठा nlmsghdr  *nlh;
-	काष्ठा nlattr *attr;
-	व्योम *info = शून्य;
+{
+	const struct tcp_congestion_ops *ca_ops;
+	const struct inet_diag_handler *handler;
+	struct inet_diag_dump_data *cb_data;
+	int ext = req->idiag_ext;
+	struct inet_diag_msg *r;
+	struct nlmsghdr  *nlh;
+	struct nlattr *attr;
+	void *info = NULL;
 
 	cb_data = cb->data;
 	handler = inet_diag_table[inet_diag_get_protocol(req, cb_data)];
 	BUG_ON(!handler);
 
 	nlh = nlmsg_put(skb, NETLINK_CB(cb->skb).portid, cb->nlh->nlmsg_seq,
-			cb->nlh->nlmsg_type, माप(*r), nlmsg_flags);
-	अगर (!nlh)
-		वापस -EMSGSIZE;
+			cb->nlh->nlmsg_type, sizeof(*r), nlmsg_flags);
+	if (!nlh)
+		return -EMSGSIZE;
 
 	r = nlmsg_data(nlh);
 	BUG_ON(!sk_fullsock(sk));
 
 	inet_diag_msg_common_fill(r, sk);
 	r->idiag_state = sk->sk_state;
-	r->idiag_समयr = 0;
+	r->idiag_timer = 0;
 	r->idiag_retrans = 0;
 
-	अगर (inet_diag_msg_attrs_fill(sk, skb, r, ext,
+	if (inet_diag_msg_attrs_fill(sk, skb, r, ext,
 				     sk_user_ns(NETLINK_CB(cb->skb).sk),
 				     net_admin))
-		जाओ errout;
+		goto errout;
 
-	अगर (ext & (1 << (INET_DIAG_MEMINFO - 1))) अणु
-		काष्ठा inet_diag_meminfo minfo = अणु
+	if (ext & (1 << (INET_DIAG_MEMINFO - 1))) {
+		struct inet_diag_meminfo minfo = {
 			.idiag_rmem = sk_rmem_alloc_get(sk),
 			.idiag_wmem = READ_ONCE(sk->sk_wmem_queued),
-			.idiag_fmem = sk->sk_क्रमward_alloc,
-			.idiag_पंचांगem = sk_wmem_alloc_get(sk),
-		पूर्ण;
+			.idiag_fmem = sk->sk_forward_alloc,
+			.idiag_tmem = sk_wmem_alloc_get(sk),
+		};
 
-		अगर (nla_put(skb, INET_DIAG_MEMINFO, माप(minfo), &minfo) < 0)
-			जाओ errout;
-	पूर्ण
+		if (nla_put(skb, INET_DIAG_MEMINFO, sizeof(minfo), &minfo) < 0)
+			goto errout;
+	}
 
-	अगर (ext & (1 << (INET_DIAG_SKMEMINFO - 1)))
-		अगर (sock_diag_put_meminfo(sk, skb, INET_DIAG_SKMEMINFO))
-			जाओ errout;
+	if (ext & (1 << (INET_DIAG_SKMEMINFO - 1)))
+		if (sock_diag_put_meminfo(sk, skb, INET_DIAG_SKMEMINFO))
+			goto errout;
 
 	/*
-	 * RAW sockets might have user-defined protocols asचिन्हित,
+	 * RAW sockets might have user-defined protocols assigned,
 	 * so report the one supplied on socket creation.
 	 */
-	अगर (sk->sk_type == SOCK_RAW) अणु
-		अगर (nla_put_u8(skb, INET_DIAG_PROTOCOL, sk->sk_protocol))
-			जाओ errout;
-	पूर्ण
+	if (sk->sk_type == SOCK_RAW) {
+		if (nla_put_u8(skb, INET_DIAG_PROTOCOL, sk->sk_protocol))
+			goto errout;
+	}
 
-	अगर (!icsk) अणु
-		handler->idiag_get_info(sk, r, शून्य);
-		जाओ out;
-	पूर्ण
+	if (!icsk) {
+		handler->idiag_get_info(sk, r, NULL);
+		goto out;
+	}
 
-	अगर (icsk->icsk_pending == ICSK_TIME_RETRANS ||
+	if (icsk->icsk_pending == ICSK_TIME_RETRANS ||
 	    icsk->icsk_pending == ICSK_TIME_REO_TIMEOUT ||
-	    icsk->icsk_pending == ICSK_TIME_LOSS_PROBE) अणु
-		r->idiag_समयr = 1;
+	    icsk->icsk_pending == ICSK_TIME_LOSS_PROBE) {
+		r->idiag_timer = 1;
 		r->idiag_retrans = icsk->icsk_retransmits;
 		r->idiag_expires =
-			jअगरfies_delta_to_msecs(icsk->icsk_समयout - jअगरfies);
-	पूर्ण अन्यथा अगर (icsk->icsk_pending == ICSK_TIME_PROBE0) अणु
-		r->idiag_समयr = 4;
+			jiffies_delta_to_msecs(icsk->icsk_timeout - jiffies);
+	} else if (icsk->icsk_pending == ICSK_TIME_PROBE0) {
+		r->idiag_timer = 4;
 		r->idiag_retrans = icsk->icsk_probes_out;
 		r->idiag_expires =
-			jअगरfies_delta_to_msecs(icsk->icsk_समयout - jअगरfies);
-	पूर्ण अन्यथा अगर (समयr_pending(&sk->sk_समयr)) अणु
-		r->idiag_समयr = 2;
+			jiffies_delta_to_msecs(icsk->icsk_timeout - jiffies);
+	} else if (timer_pending(&sk->sk_timer)) {
+		r->idiag_timer = 2;
 		r->idiag_retrans = icsk->icsk_probes_out;
 		r->idiag_expires =
-			jअगरfies_delta_to_msecs(sk->sk_समयr.expires - jअगरfies);
-	पूर्ण अन्यथा अणु
-		r->idiag_समयr = 0;
+			jiffies_delta_to_msecs(sk->sk_timer.expires - jiffies);
+	} else {
+		r->idiag_timer = 0;
 		r->idiag_expires = 0;
-	पूर्ण
+	}
 
-	अगर ((ext & (1 << (INET_DIAG_INFO - 1))) && handler->idiag_info_size) अणु
+	if ((ext & (1 << (INET_DIAG_INFO - 1))) && handler->idiag_info_size) {
 		attr = nla_reserve_64bit(skb, INET_DIAG_INFO,
 					 handler->idiag_info_size,
 					 INET_DIAG_PAD);
-		अगर (!attr)
-			जाओ errout;
+		if (!attr)
+			goto errout;
 
 		info = nla_data(attr);
-	पूर्ण
+	}
 
-	अगर (ext & (1 << (INET_DIAG_CONG - 1))) अणु
-		पूर्णांक err = 0;
+	if (ext & (1 << (INET_DIAG_CONG - 1))) {
+		int err = 0;
 
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		ca_ops = READ_ONCE(icsk->icsk_ca_ops);
-		अगर (ca_ops)
+		if (ca_ops)
 			err = nla_put_string(skb, INET_DIAG_CONG, ca_ops->name);
-		rcu_पढ़ो_unlock();
-		अगर (err < 0)
-			जाओ errout;
-	पूर्ण
+		rcu_read_unlock();
+		if (err < 0)
+			goto errout;
+	}
 
 	handler->idiag_get_info(sk, r, info);
 
-	अगर (ext & (1 << (INET_DIAG_INFO - 1)) && handler->idiag_get_aux)
-		अगर (handler->idiag_get_aux(sk, net_admin, skb) < 0)
-			जाओ errout;
+	if (ext & (1 << (INET_DIAG_INFO - 1)) && handler->idiag_get_aux)
+		if (handler->idiag_get_aux(sk, net_admin, skb) < 0)
+			goto errout;
 
-	अगर (sk->sk_state < TCP_TIME_WAIT) अणु
-		जोड़ tcp_cc_info info;
-		माप_प्रकार sz = 0;
-		पूर्णांक attr;
+	if (sk->sk_state < TCP_TIME_WAIT) {
+		union tcp_cc_info info;
+		size_t sz = 0;
+		int attr;
 
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		ca_ops = READ_ONCE(icsk->icsk_ca_ops);
-		अगर (ca_ops && ca_ops->get_info)
+		if (ca_ops && ca_ops->get_info)
 			sz = ca_ops->get_info(sk, ext, &attr, &info);
-		rcu_पढ़ो_unlock();
-		अगर (sz && nla_put(skb, attr, sz, &info) < 0)
-			जाओ errout;
-	पूर्ण
+		rcu_read_unlock();
+		if (sz && nla_put(skb, attr, sz, &info) < 0)
+			goto errout;
+	}
 
-	/* Keep it at the end क्रम potential retry with a larger skb,
-	 * or अन्यथा करो best-efक्रमt fitting, which is only करोne क्रम the
+	/* Keep it at the end for potential retry with a larger skb,
+	 * or else do best-effort fitting, which is only done for the
 	 * first_nlmsg.
 	 */
-	अगर (cb_data->bpf_stg_diag) अणु
-		bool first_nlmsg = ((अचिन्हित अक्षर *)nlh == skb->data);
-		अचिन्हित पूर्णांक prev_min_dump_alloc;
-		अचिन्हित पूर्णांक total_nla_size = 0;
-		अचिन्हित पूर्णांक msg_len;
-		पूर्णांक err;
+	if (cb_data->bpf_stg_diag) {
+		bool first_nlmsg = ((unsigned char *)nlh == skb->data);
+		unsigned int prev_min_dump_alloc;
+		unsigned int total_nla_size = 0;
+		unsigned int msg_len;
+		int err;
 
-		msg_len = skb_tail_poपूर्णांकer(skb) - (अचिन्हित अक्षर *)nlh;
+		msg_len = skb_tail_pointer(skb) - (unsigned char *)nlh;
 		err = bpf_sk_storage_diag_put(cb_data->bpf_stg_diag, sk, skb,
 					      INET_DIAG_SK_BPF_STORAGES,
 					      &total_nla_size);
 
-		अगर (!err)
-			जाओ out;
+		if (!err)
+			goto out;
 
 		total_nla_size += msg_len;
 		prev_min_dump_alloc = cb->min_dump_alloc;
-		अगर (total_nla_size > prev_min_dump_alloc)
+		if (total_nla_size > prev_min_dump_alloc)
 			cb->min_dump_alloc = min_t(u32, total_nla_size,
 						   MAX_DUMP_ALLOC_SIZE);
 
-		अगर (!first_nlmsg)
-			जाओ errout;
+		if (!first_nlmsg)
+			goto errout;
 
-		अगर (cb->min_dump_alloc > prev_min_dump_alloc)
+		if (cb->min_dump_alloc > prev_min_dump_alloc)
 			/* Retry with pskb_expand_head() with
-			 * __GFP_सूचीECT_RECLAIM
+			 * __GFP_DIRECT_RECLAIM
 			 */
-			जाओ errout;
+			goto errout;
 
 		WARN_ON_ONCE(total_nla_size <= prev_min_dump_alloc);
 
-		/* Send what we have क्रम this sk
+		/* Send what we have for this sk
 		 * and move on to the next sk in the following
 		 * dump()
 		 */
-	पूर्ण
+	}
 
 out:
 	nlmsg_end(skb, nlh);
-	वापस 0;
+	return 0;
 
 errout:
 	nlmsg_cancel(skb, nlh);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 EXPORT_SYMBOL_GPL(inet_sk_diag_fill);
 
-अटल पूर्णांक inet_twsk_diag_fill(काष्ठा sock *sk,
-			       काष्ठा sk_buff *skb,
-			       काष्ठा netlink_callback *cb,
+static int inet_twsk_diag_fill(struct sock *sk,
+			       struct sk_buff *skb,
+			       struct netlink_callback *cb,
 			       u16 nlmsg_flags)
-अणु
-	काष्ठा inet_समयरुको_sock *tw = inet_twsk(sk);
-	काष्ठा inet_diag_msg *r;
-	काष्ठा nlmsghdr *nlh;
-	दीर्घ पंचांगo;
+{
+	struct inet_timewait_sock *tw = inet_twsk(sk);
+	struct inet_diag_msg *r;
+	struct nlmsghdr *nlh;
+	long tmo;
 
 	nlh = nlmsg_put(skb, NETLINK_CB(cb->skb).portid,
 			cb->nlh->nlmsg_seq, cb->nlh->nlmsg_type,
-			माप(*r), nlmsg_flags);
-	अगर (!nlh)
-		वापस -EMSGSIZE;
+			sizeof(*r), nlmsg_flags);
+	if (!nlh)
+		return -EMSGSIZE;
 
 	r = nlmsg_data(nlh);
 	BUG_ON(tw->tw_state != TCP_TIME_WAIT);
@@ -437,204 +436,204 @@ EXPORT_SYMBOL_GPL(inet_sk_diag_fill);
 	r->idiag_retrans      = 0;
 
 	r->idiag_state	      = tw->tw_substate;
-	r->idiag_समयr	      = 3;
-	पंचांगo = tw->tw_समयr.expires - jअगरfies;
-	r->idiag_expires      = jअगरfies_delta_to_msecs(पंचांगo);
+	r->idiag_timer	      = 3;
+	tmo = tw->tw_timer.expires - jiffies;
+	r->idiag_expires      = jiffies_delta_to_msecs(tmo);
 	r->idiag_rqueue	      = 0;
 	r->idiag_wqueue	      = 0;
 	r->idiag_uid	      = 0;
 	r->idiag_inode	      = 0;
 
 	nlmsg_end(skb, nlh);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक inet_req_diag_fill(काष्ठा sock *sk, काष्ठा sk_buff *skb,
-			      काष्ठा netlink_callback *cb,
+static int inet_req_diag_fill(struct sock *sk, struct sk_buff *skb,
+			      struct netlink_callback *cb,
 			      u16 nlmsg_flags, bool net_admin)
-अणु
-	काष्ठा request_sock *reqsk = inet_reqsk(sk);
-	काष्ठा inet_diag_msg *r;
-	काष्ठा nlmsghdr *nlh;
-	दीर्घ पंचांगo;
+{
+	struct request_sock *reqsk = inet_reqsk(sk);
+	struct inet_diag_msg *r;
+	struct nlmsghdr *nlh;
+	long tmo;
 
 	nlh = nlmsg_put(skb, NETLINK_CB(cb->skb).portid, cb->nlh->nlmsg_seq,
-			cb->nlh->nlmsg_type, माप(*r), nlmsg_flags);
-	अगर (!nlh)
-		वापस -EMSGSIZE;
+			cb->nlh->nlmsg_type, sizeof(*r), nlmsg_flags);
+	if (!nlh)
+		return -EMSGSIZE;
 
 	r = nlmsg_data(nlh);
 	inet_diag_msg_common_fill(r, sk);
 	r->idiag_state = TCP_SYN_RECV;
-	r->idiag_समयr = 1;
+	r->idiag_timer = 1;
 	r->idiag_retrans = reqsk->num_retrans;
 
-	BUILD_BUG_ON(दुरत्व(काष्ठा inet_request_sock, ir_cookie) !=
-		     दुरत्व(काष्ठा sock, sk_cookie));
+	BUILD_BUG_ON(offsetof(struct inet_request_sock, ir_cookie) !=
+		     offsetof(struct sock, sk_cookie));
 
-	पंचांगo = inet_reqsk(sk)->rsk_समयr.expires - jअगरfies;
-	r->idiag_expires = jअगरfies_delta_to_msecs(पंचांगo);
+	tmo = inet_reqsk(sk)->rsk_timer.expires - jiffies;
+	r->idiag_expires = jiffies_delta_to_msecs(tmo);
 	r->idiag_rqueue	= 0;
 	r->idiag_wqueue	= 0;
 	r->idiag_uid	= 0;
 	r->idiag_inode	= 0;
 
-	अगर (net_admin && nla_put_u32(skb, INET_DIAG_MARK,
-				     inet_rsk(reqsk)->ir_mark)) अणु
+	if (net_admin && nla_put_u32(skb, INET_DIAG_MARK,
+				     inet_rsk(reqsk)->ir_mark)) {
 		nlmsg_cancel(skb, nlh);
-		वापस -EMSGSIZE;
-	पूर्ण
+		return -EMSGSIZE;
+	}
 
 	nlmsg_end(skb, nlh);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sk_diag_fill(काष्ठा sock *sk, काष्ठा sk_buff *skb,
-			काष्ठा netlink_callback *cb,
-			स्थिर काष्ठा inet_diag_req_v2 *r,
+static int sk_diag_fill(struct sock *sk, struct sk_buff *skb,
+			struct netlink_callback *cb,
+			const struct inet_diag_req_v2 *r,
 			u16 nlmsg_flags, bool net_admin)
-अणु
-	अगर (sk->sk_state == TCP_TIME_WAIT)
-		वापस inet_twsk_diag_fill(sk, skb, cb, nlmsg_flags);
+{
+	if (sk->sk_state == TCP_TIME_WAIT)
+		return inet_twsk_diag_fill(sk, skb, cb, nlmsg_flags);
 
-	अगर (sk->sk_state == TCP_NEW_SYN_RECV)
-		वापस inet_req_diag_fill(sk, skb, cb, nlmsg_flags, net_admin);
+	if (sk->sk_state == TCP_NEW_SYN_RECV)
+		return inet_req_diag_fill(sk, skb, cb, nlmsg_flags, net_admin);
 
-	वापस inet_sk_diag_fill(sk, inet_csk(sk), skb, cb, r, nlmsg_flags,
+	return inet_sk_diag_fill(sk, inet_csk(sk), skb, cb, r, nlmsg_flags,
 				 net_admin);
-पूर्ण
+}
 
-काष्ठा sock *inet_diag_find_one_icsk(काष्ठा net *net,
-				     काष्ठा inet_hashinfo *hashinfo,
-				     स्थिर काष्ठा inet_diag_req_v2 *req)
-अणु
-	काष्ठा sock *sk;
+struct sock *inet_diag_find_one_icsk(struct net *net,
+				     struct inet_hashinfo *hashinfo,
+				     const struct inet_diag_req_v2 *req)
+{
+	struct sock *sk;
 
-	rcu_पढ़ो_lock();
-	अगर (req->sdiag_family == AF_INET)
-		sk = inet_lookup(net, hashinfo, शून्य, 0, req->id.idiag_dst[0],
+	rcu_read_lock();
+	if (req->sdiag_family == AF_INET)
+		sk = inet_lookup(net, hashinfo, NULL, 0, req->id.idiag_dst[0],
 				 req->id.idiag_dport, req->id.idiag_src[0],
-				 req->id.idiag_sport, req->id.idiag_अगर);
-#अगर IS_ENABLED(CONFIG_IPV6)
-	अन्यथा अगर (req->sdiag_family == AF_INET6) अणु
-		अगर (ipv6_addr_v4mapped((काष्ठा in6_addr *)req->id.idiag_dst) &&
-		    ipv6_addr_v4mapped((काष्ठा in6_addr *)req->id.idiag_src))
-			sk = inet_lookup(net, hashinfo, शून्य, 0, req->id.idiag_dst[3],
+				 req->id.idiag_sport, req->id.idiag_if);
+#if IS_ENABLED(CONFIG_IPV6)
+	else if (req->sdiag_family == AF_INET6) {
+		if (ipv6_addr_v4mapped((struct in6_addr *)req->id.idiag_dst) &&
+		    ipv6_addr_v4mapped((struct in6_addr *)req->id.idiag_src))
+			sk = inet_lookup(net, hashinfo, NULL, 0, req->id.idiag_dst[3],
 					 req->id.idiag_dport, req->id.idiag_src[3],
-					 req->id.idiag_sport, req->id.idiag_अगर);
-		अन्यथा
-			sk = inet6_lookup(net, hashinfo, शून्य, 0,
-					  (काष्ठा in6_addr *)req->id.idiag_dst,
+					 req->id.idiag_sport, req->id.idiag_if);
+		else
+			sk = inet6_lookup(net, hashinfo, NULL, 0,
+					  (struct in6_addr *)req->id.idiag_dst,
 					  req->id.idiag_dport,
-					  (काष्ठा in6_addr *)req->id.idiag_src,
+					  (struct in6_addr *)req->id.idiag_src,
 					  req->id.idiag_sport,
-					  req->id.idiag_अगर);
-	पूर्ण
-#पूर्ण_अगर
-	अन्यथा अणु
-		rcu_पढ़ो_unlock();
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	अगर (!sk)
-		वापस ERR_PTR(-ENOENT);
+					  req->id.idiag_if);
+	}
+#endif
+	else {
+		rcu_read_unlock();
+		return ERR_PTR(-EINVAL);
+	}
+	rcu_read_unlock();
+	if (!sk)
+		return ERR_PTR(-ENOENT);
 
-	अगर (sock_diag_check_cookie(sk, req->id.idiag_cookie)) अणु
+	if (sock_diag_check_cookie(sk, req->id.idiag_cookie)) {
 		sock_gen_put(sk);
-		वापस ERR_PTR(-ENOENT);
-	पूर्ण
+		return ERR_PTR(-ENOENT);
+	}
 
-	वापस sk;
-पूर्ण
+	return sk;
+}
 EXPORT_SYMBOL_GPL(inet_diag_find_one_icsk);
 
-पूर्णांक inet_diag_dump_one_icsk(काष्ठा inet_hashinfo *hashinfo,
-			    काष्ठा netlink_callback *cb,
-			    स्थिर काष्ठा inet_diag_req_v2 *req)
-अणु
-	काष्ठा sk_buff *in_skb = cb->skb;
+int inet_diag_dump_one_icsk(struct inet_hashinfo *hashinfo,
+			    struct netlink_callback *cb,
+			    const struct inet_diag_req_v2 *req)
+{
+	struct sk_buff *in_skb = cb->skb;
 	bool net_admin = netlink_net_capable(in_skb, CAP_NET_ADMIN);
-	काष्ठा net *net = sock_net(in_skb->sk);
-	काष्ठा sk_buff *rep;
-	काष्ठा sock *sk;
-	पूर्णांक err;
+	struct net *net = sock_net(in_skb->sk);
+	struct sk_buff *rep;
+	struct sock *sk;
+	int err;
 
 	sk = inet_diag_find_one_icsk(net, hashinfo, req);
-	अगर (IS_ERR(sk))
-		वापस PTR_ERR(sk);
+	if (IS_ERR(sk))
+		return PTR_ERR(sk);
 
 	rep = nlmsg_new(inet_sk_attr_size(sk, req, net_admin), GFP_KERNEL);
-	अगर (!rep) अणु
+	if (!rep) {
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = sk_diag_fill(sk, rep, cb, req, 0, net_admin);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		WARN_ON(err == -EMSGSIZE);
-		nlmsg_मुक्त(rep);
-		जाओ out;
-	पूर्ण
+		nlmsg_free(rep);
+		goto out;
+	}
 	err = netlink_unicast(net->diag_nlsk, rep, NETLINK_CB(in_skb).portid,
 			      MSG_DONTWAIT);
-	अगर (err > 0)
+	if (err > 0)
 		err = 0;
 
 out:
-	अगर (sk)
+	if (sk)
 		sock_gen_put(sk);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL_GPL(inet_diag_dump_one_icsk);
 
-अटल पूर्णांक inet_diag_cmd_exact(पूर्णांक cmd, काष्ठा sk_buff *in_skb,
-			       स्थिर काष्ठा nlmsghdr *nlh,
-			       पूर्णांक hdrlen,
-			       स्थिर काष्ठा inet_diag_req_v2 *req)
-अणु
-	स्थिर काष्ठा inet_diag_handler *handler;
-	काष्ठा inet_diag_dump_data dump_data;
-	पूर्णांक err, protocol;
+static int inet_diag_cmd_exact(int cmd, struct sk_buff *in_skb,
+			       const struct nlmsghdr *nlh,
+			       int hdrlen,
+			       const struct inet_diag_req_v2 *req)
+{
+	const struct inet_diag_handler *handler;
+	struct inet_diag_dump_data dump_data;
+	int err, protocol;
 
-	स_रखो(&dump_data, 0, माप(dump_data));
+	memset(&dump_data, 0, sizeof(dump_data));
 	err = inet_diag_parse_attrs(nlh, hdrlen, dump_data.req_nlas);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	protocol = inet_diag_get_protocol(req, &dump_data);
 
 	handler = inet_diag_lock_handler(protocol);
-	अगर (IS_ERR(handler)) अणु
+	if (IS_ERR(handler)) {
 		err = PTR_ERR(handler);
-	पूर्ण अन्यथा अगर (cmd == SOCK_DIAG_BY_FAMILY) अणु
-		काष्ठा netlink_callback cb = अणु
+	} else if (cmd == SOCK_DIAG_BY_FAMILY) {
+		struct netlink_callback cb = {
 			.nlh = nlh,
 			.skb = in_skb,
 			.data = &dump_data,
-		पूर्ण;
+		};
 		err = handler->dump_one(&cb, req);
-	पूर्ण अन्यथा अगर (cmd == SOCK_DESTROY && handler->destroy) अणु
+	} else if (cmd == SOCK_DESTROY && handler->destroy) {
 		err = handler->destroy(in_skb, req);
-	पूर्ण अन्यथा अणु
+	} else {
 		err = -EOPNOTSUPP;
-	पूर्ण
+	}
 	inet_diag_unlock_handler(handler);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक bitstring_match(स्थिर __be32 *a1, स्थिर __be32 *a2, पूर्णांक bits)
-अणु
-	पूर्णांक words = bits >> 5;
+static int bitstring_match(const __be32 *a1, const __be32 *a2, int bits)
+{
+	int words = bits >> 5;
 
 	bits &= 0x1f;
 
-	अगर (words) अणु
-		अगर (स_भेद(a1, a2, words << 2))
-			वापस 0;
-	पूर्ण
-	अगर (bits) अणु
+	if (words) {
+		if (memcmp(a1, a2, words << 2))
+			return 0;
+	}
+	if (bits) {
 		__be32 w1, w2;
 		__be32 mask;
 
@@ -643,637 +642,637 @@ EXPORT_SYMBOL_GPL(inet_diag_dump_one_icsk);
 
 		mask = htonl((0xffffffff) << (32 - bits));
 
-		अगर ((w1 ^ w2) & mask)
-			वापस 0;
-	पूर्ण
+		if ((w1 ^ w2) & mask)
+			return 0;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक inet_diag_bc_run(स्थिर काष्ठा nlattr *_bc,
-			    स्थिर काष्ठा inet_diag_entry *entry)
-अणु
-	स्थिर व्योम *bc = nla_data(_bc);
-	पूर्णांक len = nla_len(_bc);
+static int inet_diag_bc_run(const struct nlattr *_bc,
+			    const struct inet_diag_entry *entry)
+{
+	const void *bc = nla_data(_bc);
+	int len = nla_len(_bc);
 
-	जबतक (len > 0) अणु
-		पूर्णांक yes = 1;
-		स्थिर काष्ठा inet_diag_bc_op *op = bc;
+	while (len > 0) {
+		int yes = 1;
+		const struct inet_diag_bc_op *op = bc;
 
-		चयन (op->code) अणु
-		हाल INET_DIAG_BC_NOP:
-			अवरोध;
-		हाल INET_DIAG_BC_JMP:
+		switch (op->code) {
+		case INET_DIAG_BC_NOP:
+			break;
+		case INET_DIAG_BC_JMP:
 			yes = 0;
-			अवरोध;
-		हाल INET_DIAG_BC_S_EQ:
+			break;
+		case INET_DIAG_BC_S_EQ:
 			yes = entry->sport == op[1].no;
-			अवरोध;
-		हाल INET_DIAG_BC_S_GE:
+			break;
+		case INET_DIAG_BC_S_GE:
 			yes = entry->sport >= op[1].no;
-			अवरोध;
-		हाल INET_DIAG_BC_S_LE:
+			break;
+		case INET_DIAG_BC_S_LE:
 			yes = entry->sport <= op[1].no;
-			अवरोध;
-		हाल INET_DIAG_BC_D_EQ:
+			break;
+		case INET_DIAG_BC_D_EQ:
 			yes = entry->dport == op[1].no;
-			अवरोध;
-		हाल INET_DIAG_BC_D_GE:
+			break;
+		case INET_DIAG_BC_D_GE:
 			yes = entry->dport >= op[1].no;
-			अवरोध;
-		हाल INET_DIAG_BC_D_LE:
+			break;
+		case INET_DIAG_BC_D_LE:
 			yes = entry->dport <= op[1].no;
-			अवरोध;
-		हाल INET_DIAG_BC_AUTO:
+			break;
+		case INET_DIAG_BC_AUTO:
 			yes = !(entry->userlocks & SOCK_BINDPORT_LOCK);
-			अवरोध;
-		हाल INET_DIAG_BC_S_COND:
-		हाल INET_DIAG_BC_D_COND: अणु
-			स्थिर काष्ठा inet_diag_hostcond *cond;
-			स्थिर __be32 *addr;
+			break;
+		case INET_DIAG_BC_S_COND:
+		case INET_DIAG_BC_D_COND: {
+			const struct inet_diag_hostcond *cond;
+			const __be32 *addr;
 
-			cond = (स्थिर काष्ठा inet_diag_hostcond *)(op + 1);
-			अगर (cond->port != -1 &&
+			cond = (const struct inet_diag_hostcond *)(op + 1);
+			if (cond->port != -1 &&
 			    cond->port != (op->code == INET_DIAG_BC_S_COND ?
-					     entry->sport : entry->dport)) अणु
+					     entry->sport : entry->dport)) {
 				yes = 0;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			अगर (op->code == INET_DIAG_BC_S_COND)
+			if (op->code == INET_DIAG_BC_S_COND)
 				addr = entry->saddr;
-			अन्यथा
+			else
 				addr = entry->daddr;
 
-			अगर (cond->family != AF_UNSPEC &&
-			    cond->family != entry->family) अणु
-				अगर (entry->family == AF_INET6 &&
-				    cond->family == AF_INET) अणु
-					अगर (addr[0] == 0 && addr[1] == 0 &&
+			if (cond->family != AF_UNSPEC &&
+			    cond->family != entry->family) {
+				if (entry->family == AF_INET6 &&
+				    cond->family == AF_INET) {
+					if (addr[0] == 0 && addr[1] == 0 &&
 					    addr[2] == htonl(0xffff) &&
 					    bitstring_match(addr + 3,
 							    cond->addr,
 							    cond->prefix_len))
-						अवरोध;
-				पूर्ण
+						break;
+				}
 				yes = 0;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			अगर (cond->prefix_len == 0)
-				अवरोध;
-			अगर (bitstring_match(addr, cond->addr,
+			if (cond->prefix_len == 0)
+				break;
+			if (bitstring_match(addr, cond->addr,
 					    cond->prefix_len))
-				अवरोध;
+				break;
 			yes = 0;
-			अवरोध;
-		पूर्ण
-		हाल INET_DIAG_BC_DEV_COND: अणु
-			u32 अगरindex;
+			break;
+		}
+		case INET_DIAG_BC_DEV_COND: {
+			u32 ifindex;
 
-			अगरindex = *((स्थिर u32 *)(op + 1));
-			अगर (अगरindex != entry->अगरindex)
+			ifindex = *((const u32 *)(op + 1));
+			if (ifindex != entry->ifindex)
 				yes = 0;
-			अवरोध;
-		पूर्ण
-		हाल INET_DIAG_BC_MARK_COND: अणु
-			काष्ठा inet_diag_markcond *cond;
+			break;
+		}
+		case INET_DIAG_BC_MARK_COND: {
+			struct inet_diag_markcond *cond;
 
-			cond = (काष्ठा inet_diag_markcond *)(op + 1);
-			अगर ((entry->mark & cond->mask) != cond->mark)
+			cond = (struct inet_diag_markcond *)(op + 1);
+			if ((entry->mark & cond->mask) != cond->mark)
 				yes = 0;
-			अवरोध;
-		पूर्ण
-#अगर_घोषित CONFIG_SOCK_CGROUP_DATA
-		हाल INET_DIAG_BC_CGROUP_COND: अणु
+			break;
+		}
+#ifdef CONFIG_SOCK_CGROUP_DATA
+		case INET_DIAG_BC_CGROUP_COND: {
 			u64 cgroup_id;
 
-			cgroup_id = get_unaligned((स्थिर u64 *)(op + 1));
-			अगर (cgroup_id != entry->cgroup_id)
+			cgroup_id = get_unaligned((const u64 *)(op + 1));
+			if (cgroup_id != entry->cgroup_id)
 				yes = 0;
-			अवरोध;
-		पूर्ण
-#पूर्ण_अगर
-		पूर्ण
+			break;
+		}
+#endif
+		}
 
-		अगर (yes) अणु
+		if (yes) {
 			len -= op->yes;
 			bc += op->yes;
-		पूर्ण अन्यथा अणु
+		} else {
 			len -= op->no;
 			bc += op->no;
-		पूर्ण
-	पूर्ण
-	वापस len == 0;
-पूर्ण
+		}
+	}
+	return len == 0;
+}
 
-/* This helper is available क्रम all sockets (ESTABLISH, TIMEWAIT, SYN_RECV)
+/* This helper is available for all sockets (ESTABLISH, TIMEWAIT, SYN_RECV)
  */
-अटल व्योम entry_fill_addrs(काष्ठा inet_diag_entry *entry,
-			     स्थिर काष्ठा sock *sk)
-अणु
-#अगर IS_ENABLED(CONFIG_IPV6)
-	अगर (sk->sk_family == AF_INET6) अणु
+static void entry_fill_addrs(struct inet_diag_entry *entry,
+			     const struct sock *sk)
+{
+#if IS_ENABLED(CONFIG_IPV6)
+	if (sk->sk_family == AF_INET6) {
 		entry->saddr = sk->sk_v6_rcv_saddr.s6_addr32;
 		entry->daddr = sk->sk_v6_daddr.s6_addr32;
-	पूर्ण अन्यथा
-#पूर्ण_अगर
-	अणु
+	} else
+#endif
+	{
 		entry->saddr = &sk->sk_rcv_saddr;
 		entry->daddr = &sk->sk_daddr;
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक inet_diag_bc_sk(स्थिर काष्ठा nlattr *bc, काष्ठा sock *sk)
-अणु
-	काष्ठा inet_sock *inet = inet_sk(sk);
-	काष्ठा inet_diag_entry entry;
+int inet_diag_bc_sk(const struct nlattr *bc, struct sock *sk)
+{
+	struct inet_sock *inet = inet_sk(sk);
+	struct inet_diag_entry entry;
 
-	अगर (!bc)
-		वापस 1;
+	if (!bc)
+		return 1;
 
 	entry.family = sk->sk_family;
 	entry_fill_addrs(&entry, sk);
 	entry.sport = inet->inet_num;
 	entry.dport = ntohs(inet->inet_dport);
-	entry.अगरindex = sk->sk_bound_dev_अगर;
+	entry.ifindex = sk->sk_bound_dev_if;
 	entry.userlocks = sk_fullsock(sk) ? sk->sk_userlocks : 0;
-	अगर (sk_fullsock(sk))
+	if (sk_fullsock(sk))
 		entry.mark = sk->sk_mark;
-	अन्यथा अगर (sk->sk_state == TCP_NEW_SYN_RECV)
+	else if (sk->sk_state == TCP_NEW_SYN_RECV)
 		entry.mark = inet_rsk(inet_reqsk(sk))->ir_mark;
-	अन्यथा
+	else
 		entry.mark = 0;
-#अगर_घोषित CONFIG_SOCK_CGROUP_DATA
+#ifdef CONFIG_SOCK_CGROUP_DATA
 	entry.cgroup_id = sk_fullsock(sk) ?
 		cgroup_id(sock_cgroup_ptr(&sk->sk_cgrp_data)) : 0;
-#पूर्ण_अगर
+#endif
 
-	वापस inet_diag_bc_run(bc, &entry);
-पूर्ण
+	return inet_diag_bc_run(bc, &entry);
+}
 EXPORT_SYMBOL_GPL(inet_diag_bc_sk);
 
-अटल पूर्णांक valid_cc(स्थिर व्योम *bc, पूर्णांक len, पूर्णांक cc)
-अणु
-	जबतक (len >= 0) अणु
-		स्थिर काष्ठा inet_diag_bc_op *op = bc;
+static int valid_cc(const void *bc, int len, int cc)
+{
+	while (len >= 0) {
+		const struct inet_diag_bc_op *op = bc;
 
-		अगर (cc > len)
-			वापस 0;
-		अगर (cc == len)
-			वापस 1;
-		अगर (op->yes < 4 || op->yes & 3)
-			वापस 0;
+		if (cc > len)
+			return 0;
+		if (cc == len)
+			return 1;
+		if (op->yes < 4 || op->yes & 3)
+			return 0;
 		len -= op->yes;
 		bc  += op->yes;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-/* data is u32 अगरindex */
-अटल bool valid_devcond(स्थिर काष्ठा inet_diag_bc_op *op, पूर्णांक len,
-			  पूर्णांक *min_len)
-अणु
-	/* Check अगरindex space. */
-	*min_len += माप(u32);
-	अगर (len < *min_len)
-		वापस false;
+/* data is u32 ifindex */
+static bool valid_devcond(const struct inet_diag_bc_op *op, int len,
+			  int *min_len)
+{
+	/* Check ifindex space. */
+	*min_len += sizeof(u32);
+	if (len < *min_len)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 /* Validate an inet_diag_hostcond. */
-अटल bool valid_hostcond(स्थिर काष्ठा inet_diag_bc_op *op, पूर्णांक len,
-			   पूर्णांक *min_len)
-अणु
-	काष्ठा inet_diag_hostcond *cond;
-	पूर्णांक addr_len;
+static bool valid_hostcond(const struct inet_diag_bc_op *op, int len,
+			   int *min_len)
+{
+	struct inet_diag_hostcond *cond;
+	int addr_len;
 
 	/* Check hostcond space. */
-	*min_len += माप(काष्ठा inet_diag_hostcond);
-	अगर (len < *min_len)
-		वापस false;
-	cond = (काष्ठा inet_diag_hostcond *)(op + 1);
+	*min_len += sizeof(struct inet_diag_hostcond);
+	if (len < *min_len)
+		return false;
+	cond = (struct inet_diag_hostcond *)(op + 1);
 
 	/* Check address family and address length. */
-	चयन (cond->family) अणु
-	हाल AF_UNSPEC:
+	switch (cond->family) {
+	case AF_UNSPEC:
 		addr_len = 0;
-		अवरोध;
-	हाल AF_INET:
-		addr_len = माप(काष्ठा in_addr);
-		अवरोध;
-	हाल AF_INET6:
-		addr_len = माप(काष्ठा in6_addr);
-		अवरोध;
-	शेष:
-		वापस false;
-	पूर्ण
+		break;
+	case AF_INET:
+		addr_len = sizeof(struct in_addr);
+		break;
+	case AF_INET6:
+		addr_len = sizeof(struct in6_addr);
+		break;
+	default:
+		return false;
+	}
 	*min_len += addr_len;
-	अगर (len < *min_len)
-		वापस false;
+	if (len < *min_len)
+		return false;
 
 	/* Check prefix length (in bits) vs address length (in bytes). */
-	अगर (cond->prefix_len > 8 * addr_len)
-		वापस false;
+	if (cond->prefix_len > 8 * addr_len)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-/* Validate a port comparison चालक. */
-अटल bool valid_port_comparison(स्थिर काष्ठा inet_diag_bc_op *op,
-				  पूर्णांक len, पूर्णांक *min_len)
-अणु
+/* Validate a port comparison operator. */
+static bool valid_port_comparison(const struct inet_diag_bc_op *op,
+				  int len, int *min_len)
+{
 	/* Port comparisons put the port in a follow-on inet_diag_bc_op. */
-	*min_len += माप(काष्ठा inet_diag_bc_op);
-	अगर (len < *min_len)
-		वापस false;
-	वापस true;
-पूर्ण
+	*min_len += sizeof(struct inet_diag_bc_op);
+	if (len < *min_len)
+		return false;
+	return true;
+}
 
-अटल bool valid_markcond(स्थिर काष्ठा inet_diag_bc_op *op, पूर्णांक len,
-			   पूर्णांक *min_len)
-अणु
-	*min_len += माप(काष्ठा inet_diag_markcond);
-	वापस len >= *min_len;
-पूर्ण
+static bool valid_markcond(const struct inet_diag_bc_op *op, int len,
+			   int *min_len)
+{
+	*min_len += sizeof(struct inet_diag_markcond);
+	return len >= *min_len;
+}
 
-#अगर_घोषित CONFIG_SOCK_CGROUP_DATA
-अटल bool valid_cgroupcond(स्थिर काष्ठा inet_diag_bc_op *op, पूर्णांक len,
-			     पूर्णांक *min_len)
-अणु
-	*min_len += माप(u64);
-	वापस len >= *min_len;
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_SOCK_CGROUP_DATA
+static bool valid_cgroupcond(const struct inet_diag_bc_op *op, int len,
+			     int *min_len)
+{
+	*min_len += sizeof(u64);
+	return len >= *min_len;
+}
+#endif
 
-अटल पूर्णांक inet_diag_bc_audit(स्थिर काष्ठा nlattr *attr,
-			      स्थिर काष्ठा sk_buff *skb)
-अणु
+static int inet_diag_bc_audit(const struct nlattr *attr,
+			      const struct sk_buff *skb)
+{
 	bool net_admin = netlink_net_capable(skb, CAP_NET_ADMIN);
-	स्थिर व्योम *bytecode, *bc;
-	पूर्णांक bytecode_len, len;
+	const void *bytecode, *bc;
+	int bytecode_len, len;
 
-	अगर (!attr || nla_len(attr) < माप(काष्ठा inet_diag_bc_op))
-		वापस -EINVAL;
+	if (!attr || nla_len(attr) < sizeof(struct inet_diag_bc_op))
+		return -EINVAL;
 
 	bytecode = bc = nla_data(attr);
 	len = bytecode_len = nla_len(attr);
 
-	जबतक (len > 0) अणु
-		पूर्णांक min_len = माप(काष्ठा inet_diag_bc_op);
-		स्थिर काष्ठा inet_diag_bc_op *op = bc;
+	while (len > 0) {
+		int min_len = sizeof(struct inet_diag_bc_op);
+		const struct inet_diag_bc_op *op = bc;
 
-		चयन (op->code) अणु
-		हाल INET_DIAG_BC_S_COND:
-		हाल INET_DIAG_BC_D_COND:
-			अगर (!valid_hostcond(bc, len, &min_len))
-				वापस -EINVAL;
-			अवरोध;
-		हाल INET_DIAG_BC_DEV_COND:
-			अगर (!valid_devcond(bc, len, &min_len))
-				वापस -EINVAL;
-			अवरोध;
-		हाल INET_DIAG_BC_S_EQ:
-		हाल INET_DIAG_BC_S_GE:
-		हाल INET_DIAG_BC_S_LE:
-		हाल INET_DIAG_BC_D_EQ:
-		हाल INET_DIAG_BC_D_GE:
-		हाल INET_DIAG_BC_D_LE:
-			अगर (!valid_port_comparison(bc, len, &min_len))
-				वापस -EINVAL;
-			अवरोध;
-		हाल INET_DIAG_BC_MARK_COND:
-			अगर (!net_admin)
-				वापस -EPERM;
-			अगर (!valid_markcond(bc, len, &min_len))
-				वापस -EINVAL;
-			अवरोध;
-#अगर_घोषित CONFIG_SOCK_CGROUP_DATA
-		हाल INET_DIAG_BC_CGROUP_COND:
-			अगर (!valid_cgroupcond(bc, len, &min_len))
-				वापस -EINVAL;
-			अवरोध;
-#पूर्ण_अगर
-		हाल INET_DIAG_BC_AUTO:
-		हाल INET_DIAG_BC_JMP:
-		हाल INET_DIAG_BC_NOP:
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
+		switch (op->code) {
+		case INET_DIAG_BC_S_COND:
+		case INET_DIAG_BC_D_COND:
+			if (!valid_hostcond(bc, len, &min_len))
+				return -EINVAL;
+			break;
+		case INET_DIAG_BC_DEV_COND:
+			if (!valid_devcond(bc, len, &min_len))
+				return -EINVAL;
+			break;
+		case INET_DIAG_BC_S_EQ:
+		case INET_DIAG_BC_S_GE:
+		case INET_DIAG_BC_S_LE:
+		case INET_DIAG_BC_D_EQ:
+		case INET_DIAG_BC_D_GE:
+		case INET_DIAG_BC_D_LE:
+			if (!valid_port_comparison(bc, len, &min_len))
+				return -EINVAL;
+			break;
+		case INET_DIAG_BC_MARK_COND:
+			if (!net_admin)
+				return -EPERM;
+			if (!valid_markcond(bc, len, &min_len))
+				return -EINVAL;
+			break;
+#ifdef CONFIG_SOCK_CGROUP_DATA
+		case INET_DIAG_BC_CGROUP_COND:
+			if (!valid_cgroupcond(bc, len, &min_len))
+				return -EINVAL;
+			break;
+#endif
+		case INET_DIAG_BC_AUTO:
+		case INET_DIAG_BC_JMP:
+		case INET_DIAG_BC_NOP:
+			break;
+		default:
+			return -EINVAL;
+		}
 
-		अगर (op->code != INET_DIAG_BC_NOP) अणु
-			अगर (op->no < min_len || op->no > len + 4 || op->no & 3)
-				वापस -EINVAL;
-			अगर (op->no < len &&
+		if (op->code != INET_DIAG_BC_NOP) {
+			if (op->no < min_len || op->no > len + 4 || op->no & 3)
+				return -EINVAL;
+			if (op->no < len &&
 			    !valid_cc(bytecode, bytecode_len, len - op->no))
-				वापस -EINVAL;
-		पूर्ण
+				return -EINVAL;
+		}
 
-		अगर (op->yes < min_len || op->yes > len + 4 || op->yes & 3)
-			वापस -EINVAL;
+		if (op->yes < min_len || op->yes > len + 4 || op->yes & 3)
+			return -EINVAL;
 		bc  += op->yes;
 		len -= op->yes;
-	पूर्ण
-	वापस len == 0 ? 0 : -EINVAL;
-पूर्ण
+	}
+	return len == 0 ? 0 : -EINVAL;
+}
 
-अटल व्योम twsk_build_निश्चित(व्योम)
-अणु
-	BUILD_BUG_ON(दुरत्व(काष्ठा inet_समयरुको_sock, tw_family) !=
-		     दुरत्व(काष्ठा sock, sk_family));
+static void twsk_build_assert(void)
+{
+	BUILD_BUG_ON(offsetof(struct inet_timewait_sock, tw_family) !=
+		     offsetof(struct sock, sk_family));
 
-	BUILD_BUG_ON(दुरत्व(काष्ठा inet_समयरुको_sock, tw_num) !=
-		     दुरत्व(काष्ठा inet_sock, inet_num));
+	BUILD_BUG_ON(offsetof(struct inet_timewait_sock, tw_num) !=
+		     offsetof(struct inet_sock, inet_num));
 
-	BUILD_BUG_ON(दुरत्व(काष्ठा inet_समयरुको_sock, tw_dport) !=
-		     दुरत्व(काष्ठा inet_sock, inet_dport));
+	BUILD_BUG_ON(offsetof(struct inet_timewait_sock, tw_dport) !=
+		     offsetof(struct inet_sock, inet_dport));
 
-	BUILD_BUG_ON(दुरत्व(काष्ठा inet_समयरुको_sock, tw_rcv_saddr) !=
-		     दुरत्व(काष्ठा inet_sock, inet_rcv_saddr));
+	BUILD_BUG_ON(offsetof(struct inet_timewait_sock, tw_rcv_saddr) !=
+		     offsetof(struct inet_sock, inet_rcv_saddr));
 
-	BUILD_BUG_ON(दुरत्व(काष्ठा inet_समयरुको_sock, tw_daddr) !=
-		     दुरत्व(काष्ठा inet_sock, inet_daddr));
+	BUILD_BUG_ON(offsetof(struct inet_timewait_sock, tw_daddr) !=
+		     offsetof(struct inet_sock, inet_daddr));
 
-#अगर IS_ENABLED(CONFIG_IPV6)
-	BUILD_BUG_ON(दुरत्व(काष्ठा inet_समयरुको_sock, tw_v6_rcv_saddr) !=
-		     दुरत्व(काष्ठा sock, sk_v6_rcv_saddr));
+#if IS_ENABLED(CONFIG_IPV6)
+	BUILD_BUG_ON(offsetof(struct inet_timewait_sock, tw_v6_rcv_saddr) !=
+		     offsetof(struct sock, sk_v6_rcv_saddr));
 
-	BUILD_BUG_ON(दुरत्व(काष्ठा inet_समयरुको_sock, tw_v6_daddr) !=
-		     दुरत्व(काष्ठा sock, sk_v6_daddr));
-#पूर्ण_अगर
-पूर्ण
+	BUILD_BUG_ON(offsetof(struct inet_timewait_sock, tw_v6_daddr) !=
+		     offsetof(struct sock, sk_v6_daddr));
+#endif
+}
 
-व्योम inet_diag_dump_icsk(काष्ठा inet_hashinfo *hashinfo, काष्ठा sk_buff *skb,
-			 काष्ठा netlink_callback *cb,
-			 स्थिर काष्ठा inet_diag_req_v2 *r)
-अणु
+void inet_diag_dump_icsk(struct inet_hashinfo *hashinfo, struct sk_buff *skb,
+			 struct netlink_callback *cb,
+			 const struct inet_diag_req_v2 *r)
+{
 	bool net_admin = netlink_net_capable(cb->skb, CAP_NET_ADMIN);
-	काष्ठा inet_diag_dump_data *cb_data = cb->data;
-	काष्ठा net *net = sock_net(skb->sk);
+	struct inet_diag_dump_data *cb_data = cb->data;
+	struct net *net = sock_net(skb->sk);
 	u32 idiag_states = r->idiag_states;
-	पूर्णांक i, num, s_i, s_num;
-	काष्ठा nlattr *bc;
-	काष्ठा sock *sk;
+	int i, num, s_i, s_num;
+	struct nlattr *bc;
+	struct sock *sk;
 
 	bc = cb_data->inet_diag_nla_bc;
-	अगर (idiag_states & TCPF_SYN_RECV)
+	if (idiag_states & TCPF_SYN_RECV)
 		idiag_states |= TCPF_NEW_SYN_RECV;
 	s_i = cb->args[1];
 	s_num = num = cb->args[2];
 
-	अगर (cb->args[0] == 0) अणु
-		अगर (!(idiag_states & TCPF_LISTEN) || r->id.idiag_dport)
-			जाओ skip_listen_ht;
+	if (cb->args[0] == 0) {
+		if (!(idiag_states & TCPF_LISTEN) || r->id.idiag_dport)
+			goto skip_listen_ht;
 
-		क्रम (i = s_i; i < INET_LHTABLE_SIZE; i++) अणु
-			काष्ठा inet_listen_hashbucket *ilb;
-			काष्ठा hlist_nulls_node *node;
+		for (i = s_i; i < INET_LHTABLE_SIZE; i++) {
+			struct inet_listen_hashbucket *ilb;
+			struct hlist_nulls_node *node;
 
 			num = 0;
 			ilb = &hashinfo->listening_hash[i];
 			spin_lock(&ilb->lock);
-			sk_nulls_क्रम_each(sk, node, &ilb->nulls_head) अणु
-				काष्ठा inet_sock *inet = inet_sk(sk);
+			sk_nulls_for_each(sk, node, &ilb->nulls_head) {
+				struct inet_sock *inet = inet_sk(sk);
 
-				अगर (!net_eq(sock_net(sk), net))
-					जारी;
+				if (!net_eq(sock_net(sk), net))
+					continue;
 
-				अगर (num < s_num) अणु
+				if (num < s_num) {
 					num++;
-					जारी;
-				पूर्ण
+					continue;
+				}
 
-				अगर (r->sdiag_family != AF_UNSPEC &&
+				if (r->sdiag_family != AF_UNSPEC &&
 				    sk->sk_family != r->sdiag_family)
-					जाओ next_listen;
+					goto next_listen;
 
-				अगर (r->id.idiag_sport != inet->inet_sport &&
+				if (r->id.idiag_sport != inet->inet_sport &&
 				    r->id.idiag_sport)
-					जाओ next_listen;
+					goto next_listen;
 
-				अगर (!inet_diag_bc_sk(bc, sk))
-					जाओ next_listen;
+				if (!inet_diag_bc_sk(bc, sk))
+					goto next_listen;
 
-				अगर (inet_sk_diag_fill(sk, inet_csk(sk), skb,
+				if (inet_sk_diag_fill(sk, inet_csk(sk), skb,
 						      cb, r, NLM_F_MULTI,
-						      net_admin) < 0) अणु
+						      net_admin) < 0) {
 					spin_unlock(&ilb->lock);
-					जाओ करोne;
-				पूर्ण
+					goto done;
+				}
 
 next_listen:
 				++num;
-			पूर्ण
+			}
 			spin_unlock(&ilb->lock);
 
 			s_num = 0;
-		पूर्ण
+		}
 skip_listen_ht:
 		cb->args[0] = 1;
 		s_i = num = s_num = 0;
-	पूर्ण
+	}
 
-	अगर (!(idiag_states & ~TCPF_LISTEN))
-		जाओ out;
+	if (!(idiag_states & ~TCPF_LISTEN))
+		goto out;
 
-#घोषणा SKARR_SZ 16
-	क्रम (i = s_i; i <= hashinfo->ehash_mask; i++) अणु
-		काष्ठा inet_ehash_bucket *head = &hashinfo->ehash[i];
+#define SKARR_SZ 16
+	for (i = s_i; i <= hashinfo->ehash_mask; i++) {
+		struct inet_ehash_bucket *head = &hashinfo->ehash[i];
 		spinlock_t *lock = inet_ehash_lockp(hashinfo, i);
-		काष्ठा hlist_nulls_node *node;
-		काष्ठा sock *sk_arr[SKARR_SZ];
-		पूर्णांक num_arr[SKARR_SZ];
-		पूर्णांक idx, accum, res;
+		struct hlist_nulls_node *node;
+		struct sock *sk_arr[SKARR_SZ];
+		int num_arr[SKARR_SZ];
+		int idx, accum, res;
 
-		अगर (hlist_nulls_empty(&head->chain))
-			जारी;
+		if (hlist_nulls_empty(&head->chain))
+			continue;
 
-		अगर (i > s_i)
+		if (i > s_i)
 			s_num = 0;
 
 next_chunk:
 		num = 0;
 		accum = 0;
 		spin_lock_bh(lock);
-		sk_nulls_क्रम_each(sk, node, &head->chain) अणु
-			पूर्णांक state;
+		sk_nulls_for_each(sk, node, &head->chain) {
+			int state;
 
-			अगर (!net_eq(sock_net(sk), net))
-				जारी;
-			अगर (num < s_num)
-				जाओ next_normal;
+			if (!net_eq(sock_net(sk), net))
+				continue;
+			if (num < s_num)
+				goto next_normal;
 			state = (sk->sk_state == TCP_TIME_WAIT) ?
 				inet_twsk(sk)->tw_substate : sk->sk_state;
-			अगर (!(idiag_states & (1 << state)))
-				जाओ next_normal;
-			अगर (r->sdiag_family != AF_UNSPEC &&
+			if (!(idiag_states & (1 << state)))
+				goto next_normal;
+			if (r->sdiag_family != AF_UNSPEC &&
 			    sk->sk_family != r->sdiag_family)
-				जाओ next_normal;
-			अगर (r->id.idiag_sport != htons(sk->sk_num) &&
+				goto next_normal;
+			if (r->id.idiag_sport != htons(sk->sk_num) &&
 			    r->id.idiag_sport)
-				जाओ next_normal;
-			अगर (r->id.idiag_dport != sk->sk_dport &&
+				goto next_normal;
+			if (r->id.idiag_dport != sk->sk_dport &&
 			    r->id.idiag_dport)
-				जाओ next_normal;
-			twsk_build_निश्चित();
+				goto next_normal;
+			twsk_build_assert();
 
-			अगर (!inet_diag_bc_sk(bc, sk))
-				जाओ next_normal;
+			if (!inet_diag_bc_sk(bc, sk))
+				goto next_normal;
 
-			अगर (!refcount_inc_not_zero(&sk->sk_refcnt))
-				जाओ next_normal;
+			if (!refcount_inc_not_zero(&sk->sk_refcnt))
+				goto next_normal;
 
 			num_arr[accum] = num;
 			sk_arr[accum] = sk;
-			अगर (++accum == SKARR_SZ)
-				अवरोध;
+			if (++accum == SKARR_SZ)
+				break;
 next_normal:
 			++num;
-		पूर्ण
+		}
 		spin_unlock_bh(lock);
 		res = 0;
-		क्रम (idx = 0; idx < accum; idx++) अणु
-			अगर (res >= 0) अणु
+		for (idx = 0; idx < accum; idx++) {
+			if (res >= 0) {
 				res = sk_diag_fill(sk_arr[idx], skb, cb, r,
 						   NLM_F_MULTI, net_admin);
-				अगर (res < 0)
+				if (res < 0)
 					num = num_arr[idx];
-			पूर्ण
+			}
 			sock_gen_put(sk_arr[idx]);
-		पूर्ण
-		अगर (res < 0)
-			अवरोध;
+		}
+		if (res < 0)
+			break;
 		cond_resched();
-		अगर (accum == SKARR_SZ) अणु
+		if (accum == SKARR_SZ) {
 			s_num = num + 1;
-			जाओ next_chunk;
-		पूर्ण
-	पूर्ण
+			goto next_chunk;
+		}
+	}
 
-करोne:
+done:
 	cb->args[1] = i;
 	cb->args[2] = num;
 out:
 	;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(inet_diag_dump_icsk);
 
-अटल पूर्णांक __inet_diag_dump(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb,
-			    स्थिर काष्ठा inet_diag_req_v2 *r)
-अणु
-	काष्ठा inet_diag_dump_data *cb_data = cb->data;
-	स्थिर काष्ठा inet_diag_handler *handler;
+static int __inet_diag_dump(struct sk_buff *skb, struct netlink_callback *cb,
+			    const struct inet_diag_req_v2 *r)
+{
+	struct inet_diag_dump_data *cb_data = cb->data;
+	const struct inet_diag_handler *handler;
 	u32 prev_min_dump_alloc;
-	पूर्णांक protocol, err = 0;
+	int protocol, err = 0;
 
 	protocol = inet_diag_get_protocol(r, cb_data);
 
 again:
 	prev_min_dump_alloc = cb->min_dump_alloc;
 	handler = inet_diag_lock_handler(protocol);
-	अगर (!IS_ERR(handler))
+	if (!IS_ERR(handler))
 		handler->dump(skb, cb, r);
-	अन्यथा
+	else
 		err = PTR_ERR(handler);
 	inet_diag_unlock_handler(handler);
 
 	/* The skb is not large enough to fit one sk info and
-	 * inet_sk_diag_fill() has requested क्रम a larger skb.
+	 * inet_sk_diag_fill() has requested for a larger skb.
 	 */
-	अगर (!skb->len && cb->min_dump_alloc > prev_min_dump_alloc) अणु
+	if (!skb->len && cb->min_dump_alloc > prev_min_dump_alloc) {
 		err = pskb_expand_head(skb, 0, cb->min_dump_alloc, GFP_KERNEL);
-		अगर (!err)
-			जाओ again;
-	पूर्ण
+		if (!err)
+			goto again;
+	}
 
-	वापस err ? : skb->len;
-पूर्ण
+	return err ? : skb->len;
+}
 
-अटल पूर्णांक inet_diag_dump(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
-अणु
-	वापस __inet_diag_dump(skb, cb, nlmsg_data(cb->nlh));
-पूर्ण
+static int inet_diag_dump(struct sk_buff *skb, struct netlink_callback *cb)
+{
+	return __inet_diag_dump(skb, cb, nlmsg_data(cb->nlh));
+}
 
-अटल पूर्णांक __inet_diag_dump_start(काष्ठा netlink_callback *cb, पूर्णांक hdrlen)
-अणु
-	स्थिर काष्ठा nlmsghdr *nlh = cb->nlh;
-	काष्ठा inet_diag_dump_data *cb_data;
-	काष्ठा sk_buff *skb = cb->skb;
-	काष्ठा nlattr *nla;
-	पूर्णांक err;
+static int __inet_diag_dump_start(struct netlink_callback *cb, int hdrlen)
+{
+	const struct nlmsghdr *nlh = cb->nlh;
+	struct inet_diag_dump_data *cb_data;
+	struct sk_buff *skb = cb->skb;
+	struct nlattr *nla;
+	int err;
 
-	cb_data = kzalloc(माप(*cb_data), GFP_KERNEL);
-	अगर (!cb_data)
-		वापस -ENOMEM;
+	cb_data = kzalloc(sizeof(*cb_data), GFP_KERNEL);
+	if (!cb_data)
+		return -ENOMEM;
 
 	err = inet_diag_parse_attrs(nlh, hdrlen, cb_data->req_nlas);
-	अगर (err) अणु
-		kमुक्त(cb_data);
-		वापस err;
-	पूर्ण
+	if (err) {
+		kfree(cb_data);
+		return err;
+	}
 	nla = cb_data->inet_diag_nla_bc;
-	अगर (nla) अणु
+	if (nla) {
 		err = inet_diag_bc_audit(nla, skb);
-		अगर (err) अणु
-			kमुक्त(cb_data);
-			वापस err;
-		पूर्ण
-	पूर्ण
+		if (err) {
+			kfree(cb_data);
+			return err;
+		}
+	}
 
 	nla = cb_data->inet_diag_nla_bpf_stgs;
-	अगर (nla) अणु
-		काष्ठा bpf_sk_storage_diag *bpf_stg_diag;
+	if (nla) {
+		struct bpf_sk_storage_diag *bpf_stg_diag;
 
 		bpf_stg_diag = bpf_sk_storage_diag_alloc(nla);
-		अगर (IS_ERR(bpf_stg_diag)) अणु
-			kमुक्त(cb_data);
-			वापस PTR_ERR(bpf_stg_diag);
-		पूर्ण
+		if (IS_ERR(bpf_stg_diag)) {
+			kfree(cb_data);
+			return PTR_ERR(bpf_stg_diag);
+		}
 		cb_data->bpf_stg_diag = bpf_stg_diag;
-	पूर्ण
+	}
 
 	cb->data = cb_data;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक inet_diag_dump_start(काष्ठा netlink_callback *cb)
-अणु
-	वापस __inet_diag_dump_start(cb, माप(काष्ठा inet_diag_req_v2));
-पूर्ण
+static int inet_diag_dump_start(struct netlink_callback *cb)
+{
+	return __inet_diag_dump_start(cb, sizeof(struct inet_diag_req_v2));
+}
 
-अटल पूर्णांक inet_diag_dump_start_compat(काष्ठा netlink_callback *cb)
-अणु
-	वापस __inet_diag_dump_start(cb, माप(काष्ठा inet_diag_req));
-पूर्ण
+static int inet_diag_dump_start_compat(struct netlink_callback *cb)
+{
+	return __inet_diag_dump_start(cb, sizeof(struct inet_diag_req));
+}
 
-अटल पूर्णांक inet_diag_dump_करोne(काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा inet_diag_dump_data *cb_data = cb->data;
+static int inet_diag_dump_done(struct netlink_callback *cb)
+{
+	struct inet_diag_dump_data *cb_data = cb->data;
 
-	bpf_sk_storage_diag_मुक्त(cb_data->bpf_stg_diag);
-	kमुक्त(cb->data);
+	bpf_sk_storage_diag_free(cb_data->bpf_stg_diag);
+	kfree(cb->data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक inet_diag_type2proto(पूर्णांक type)
-अणु
-	चयन (type) अणु
-	हाल TCPDIAG_GETSOCK:
-		वापस IPPROTO_TCP;
-	हाल DCCPDIAG_GETSOCK:
-		वापस IPPROTO_DCCP;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static int inet_diag_type2proto(int type)
+{
+	switch (type) {
+	case TCPDIAG_GETSOCK:
+		return IPPROTO_TCP;
+	case DCCPDIAG_GETSOCK:
+		return IPPROTO_DCCP;
+	default:
+		return 0;
+	}
+}
 
-अटल पूर्णांक inet_diag_dump_compat(काष्ठा sk_buff *skb,
-				 काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा inet_diag_req *rc = nlmsg_data(cb->nlh);
-	काष्ठा inet_diag_req_v2 req;
+static int inet_diag_dump_compat(struct sk_buff *skb,
+				 struct netlink_callback *cb)
+{
+	struct inet_diag_req *rc = nlmsg_data(cb->nlh);
+	struct inet_diag_req_v2 req;
 
 	req.sdiag_family = AF_UNSPEC; /* compatibility */
 	req.sdiag_protocol = inet_diag_type2proto(cb->nlh->nlmsg_type);
@@ -1281,14 +1280,14 @@ again:
 	req.idiag_states = rc->idiag_states;
 	req.id = rc->id;
 
-	वापस __inet_diag_dump(skb, cb, &req);
-पूर्ण
+	return __inet_diag_dump(skb, cb, &req);
+}
 
-अटल पूर्णांक inet_diag_get_exact_compat(काष्ठा sk_buff *in_skb,
-				      स्थिर काष्ठा nlmsghdr *nlh)
-अणु
-	काष्ठा inet_diag_req *rc = nlmsg_data(nlh);
-	काष्ठा inet_diag_req_v2 req;
+static int inet_diag_get_exact_compat(struct sk_buff *in_skb,
+				      const struct nlmsghdr *nlh)
+{
+	struct inet_diag_req *rc = nlmsg_data(nlh);
+	struct inet_diag_req_v2 req;
 
 	req.sdiag_family = rc->idiag_family;
 	req.sdiag_protocol = inet_diag_type2proto(nlh->nlmsg_type);
@@ -1296,187 +1295,187 @@ again:
 	req.idiag_states = rc->idiag_states;
 	req.id = rc->id;
 
-	वापस inet_diag_cmd_exact(SOCK_DIAG_BY_FAMILY, in_skb, nlh,
-				   माप(काष्ठा inet_diag_req), &req);
-पूर्ण
+	return inet_diag_cmd_exact(SOCK_DIAG_BY_FAMILY, in_skb, nlh,
+				   sizeof(struct inet_diag_req), &req);
+}
 
-अटल पूर्णांक inet_diag_rcv_msg_compat(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh)
-अणु
-	पूर्णांक hdrlen = माप(काष्ठा inet_diag_req);
-	काष्ठा net *net = sock_net(skb->sk);
+static int inet_diag_rcv_msg_compat(struct sk_buff *skb, struct nlmsghdr *nlh)
+{
+	int hdrlen = sizeof(struct inet_diag_req);
+	struct net *net = sock_net(skb->sk);
 
-	अगर (nlh->nlmsg_type >= INET_DIAG_GETSOCK_MAX ||
+	if (nlh->nlmsg_type >= INET_DIAG_GETSOCK_MAX ||
 	    nlmsg_len(nlh) < hdrlen)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (nlh->nlmsg_flags & NLM_F_DUMP) अणु
-		काष्ठा netlink_dump_control c = अणु
+	if (nlh->nlmsg_flags & NLM_F_DUMP) {
+		struct netlink_dump_control c = {
 			.start = inet_diag_dump_start_compat,
-			.करोne = inet_diag_dump_करोne,
+			.done = inet_diag_dump_done,
 			.dump = inet_diag_dump_compat,
-		पूर्ण;
-		वापस netlink_dump_start(net->diag_nlsk, skb, nlh, &c);
-	पूर्ण
+		};
+		return netlink_dump_start(net->diag_nlsk, skb, nlh, &c);
+	}
 
-	वापस inet_diag_get_exact_compat(skb, nlh);
-पूर्ण
+	return inet_diag_get_exact_compat(skb, nlh);
+}
 
-अटल पूर्णांक inet_diag_handler_cmd(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *h)
-अणु
-	पूर्णांक hdrlen = माप(काष्ठा inet_diag_req_v2);
-	काष्ठा net *net = sock_net(skb->sk);
+static int inet_diag_handler_cmd(struct sk_buff *skb, struct nlmsghdr *h)
+{
+	int hdrlen = sizeof(struct inet_diag_req_v2);
+	struct net *net = sock_net(skb->sk);
 
-	अगर (nlmsg_len(h) < hdrlen)
-		वापस -EINVAL;
+	if (nlmsg_len(h) < hdrlen)
+		return -EINVAL;
 
-	अगर (h->nlmsg_type == SOCK_DIAG_BY_FAMILY &&
-	    h->nlmsg_flags & NLM_F_DUMP) अणु
-		काष्ठा netlink_dump_control c = अणु
+	if (h->nlmsg_type == SOCK_DIAG_BY_FAMILY &&
+	    h->nlmsg_flags & NLM_F_DUMP) {
+		struct netlink_dump_control c = {
 			.start = inet_diag_dump_start,
-			.करोne = inet_diag_dump_करोne,
+			.done = inet_diag_dump_done,
 			.dump = inet_diag_dump,
-		पूर्ण;
-		वापस netlink_dump_start(net->diag_nlsk, skb, h, &c);
-	पूर्ण
+		};
+		return netlink_dump_start(net->diag_nlsk, skb, h, &c);
+	}
 
-	वापस inet_diag_cmd_exact(h->nlmsg_type, skb, h, hdrlen,
+	return inet_diag_cmd_exact(h->nlmsg_type, skb, h, hdrlen,
 				   nlmsg_data(h));
-पूर्ण
+}
 
-अटल
-पूर्णांक inet_diag_handler_get_info(काष्ठा sk_buff *skb, काष्ठा sock *sk)
-अणु
-	स्थिर काष्ठा inet_diag_handler *handler;
-	काष्ठा nlmsghdr *nlh;
-	काष्ठा nlattr *attr;
-	काष्ठा inet_diag_msg *r;
-	व्योम *info = शून्य;
-	पूर्णांक err = 0;
+static
+int inet_diag_handler_get_info(struct sk_buff *skb, struct sock *sk)
+{
+	const struct inet_diag_handler *handler;
+	struct nlmsghdr *nlh;
+	struct nlattr *attr;
+	struct inet_diag_msg *r;
+	void *info = NULL;
+	int err = 0;
 
-	nlh = nlmsg_put(skb, 0, 0, SOCK_DIAG_BY_FAMILY, माप(*r), 0);
-	अगर (!nlh)
-		वापस -ENOMEM;
+	nlh = nlmsg_put(skb, 0, 0, SOCK_DIAG_BY_FAMILY, sizeof(*r), 0);
+	if (!nlh)
+		return -ENOMEM;
 
 	r = nlmsg_data(nlh);
-	स_रखो(r, 0, माप(*r));
+	memset(r, 0, sizeof(*r));
 	inet_diag_msg_common_fill(r, sk);
-	अगर (sk->sk_type == SOCK_DGRAM || sk->sk_type == SOCK_STREAM)
+	if (sk->sk_type == SOCK_DGRAM || sk->sk_type == SOCK_STREAM)
 		r->id.idiag_sport = inet_sk(sk)->inet_sport;
 	r->idiag_state = sk->sk_state;
 
-	अगर ((err = nla_put_u8(skb, INET_DIAG_PROTOCOL, sk->sk_protocol))) अणु
+	if ((err = nla_put_u8(skb, INET_DIAG_PROTOCOL, sk->sk_protocol))) {
 		nlmsg_cancel(skb, nlh);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	handler = inet_diag_lock_handler(sk->sk_protocol);
-	अगर (IS_ERR(handler)) अणु
+	if (IS_ERR(handler)) {
 		inet_diag_unlock_handler(handler);
 		nlmsg_cancel(skb, nlh);
-		वापस PTR_ERR(handler);
-	पूर्ण
+		return PTR_ERR(handler);
+	}
 
 	attr = handler->idiag_info_size
 		? nla_reserve_64bit(skb, INET_DIAG_INFO,
 				    handler->idiag_info_size,
 				    INET_DIAG_PAD)
-		: शून्य;
-	अगर (attr)
+		: NULL;
+	if (attr)
 		info = nla_data(attr);
 
 	handler->idiag_get_info(sk, r, info);
 	inet_diag_unlock_handler(handler);
 
 	nlmsg_end(skb, nlh);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा sock_diag_handler inet_diag_handler = अणु
+static const struct sock_diag_handler inet_diag_handler = {
 	.family = AF_INET,
 	.dump = inet_diag_handler_cmd,
 	.get_info = inet_diag_handler_get_info,
 	.destroy = inet_diag_handler_cmd,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sock_diag_handler inet6_diag_handler = अणु
+static const struct sock_diag_handler inet6_diag_handler = {
 	.family = AF_INET6,
 	.dump = inet_diag_handler_cmd,
 	.get_info = inet_diag_handler_get_info,
 	.destroy = inet_diag_handler_cmd,
-पूर्ण;
+};
 
-पूर्णांक inet_diag_रेजिस्टर(स्थिर काष्ठा inet_diag_handler *h)
-अणु
-	स्थिर __u16 type = h->idiag_type;
-	पूर्णांक err = -EINVAL;
+int inet_diag_register(const struct inet_diag_handler *h)
+{
+	const __u16 type = h->idiag_type;
+	int err = -EINVAL;
 
-	अगर (type >= IPPROTO_MAX)
-		जाओ out;
+	if (type >= IPPROTO_MAX)
+		goto out;
 
 	mutex_lock(&inet_diag_table_mutex);
 	err = -EEXIST;
-	अगर (!inet_diag_table[type]) अणु
+	if (!inet_diag_table[type]) {
 		inet_diag_table[type] = h;
 		err = 0;
-	पूर्ण
+	}
 	mutex_unlock(&inet_diag_table_mutex);
 out:
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL_GPL(inet_diag_रेजिस्टर);
+	return err;
+}
+EXPORT_SYMBOL_GPL(inet_diag_register);
 
-व्योम inet_diag_unरेजिस्टर(स्थिर काष्ठा inet_diag_handler *h)
-अणु
-	स्थिर __u16 type = h->idiag_type;
+void inet_diag_unregister(const struct inet_diag_handler *h)
+{
+	const __u16 type = h->idiag_type;
 
-	अगर (type >= IPPROTO_MAX)
-		वापस;
+	if (type >= IPPROTO_MAX)
+		return;
 
 	mutex_lock(&inet_diag_table_mutex);
-	inet_diag_table[type] = शून्य;
+	inet_diag_table[type] = NULL;
 	mutex_unlock(&inet_diag_table_mutex);
-पूर्ण
-EXPORT_SYMBOL_GPL(inet_diag_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(inet_diag_unregister);
 
-अटल पूर्णांक __init inet_diag_init(व्योम)
-अणु
-	स्थिर पूर्णांक inet_diag_table_size = (IPPROTO_MAX *
-					  माप(काष्ठा inet_diag_handler *));
-	पूर्णांक err = -ENOMEM;
+static int __init inet_diag_init(void)
+{
+	const int inet_diag_table_size = (IPPROTO_MAX *
+					  sizeof(struct inet_diag_handler *));
+	int err = -ENOMEM;
 
 	inet_diag_table = kzalloc(inet_diag_table_size, GFP_KERNEL);
-	अगर (!inet_diag_table)
-		जाओ out;
+	if (!inet_diag_table)
+		goto out;
 
-	err = sock_diag_रेजिस्टर(&inet_diag_handler);
-	अगर (err)
-		जाओ out_मुक्त_nl;
+	err = sock_diag_register(&inet_diag_handler);
+	if (err)
+		goto out_free_nl;
 
-	err = sock_diag_रेजिस्टर(&inet6_diag_handler);
-	अगर (err)
-		जाओ out_मुक्त_inet;
+	err = sock_diag_register(&inet6_diag_handler);
+	if (err)
+		goto out_free_inet;
 
-	sock_diag_रेजिस्टर_inet_compat(inet_diag_rcv_msg_compat);
+	sock_diag_register_inet_compat(inet_diag_rcv_msg_compat);
 out:
-	वापस err;
+	return err;
 
-out_मुक्त_inet:
-	sock_diag_unरेजिस्टर(&inet_diag_handler);
-out_मुक्त_nl:
-	kमुक्त(inet_diag_table);
-	जाओ out;
-पूर्ण
+out_free_inet:
+	sock_diag_unregister(&inet_diag_handler);
+out_free_nl:
+	kfree(inet_diag_table);
+	goto out;
+}
 
-अटल व्योम __निकास inet_diag_निकास(व्योम)
-अणु
-	sock_diag_unरेजिस्टर(&inet6_diag_handler);
-	sock_diag_unरेजिस्टर(&inet_diag_handler);
-	sock_diag_unरेजिस्टर_inet_compat(inet_diag_rcv_msg_compat);
-	kमुक्त(inet_diag_table);
-पूर्ण
+static void __exit inet_diag_exit(void)
+{
+	sock_diag_unregister(&inet6_diag_handler);
+	sock_diag_unregister(&inet_diag_handler);
+	sock_diag_unregister_inet_compat(inet_diag_rcv_msg_compat);
+	kfree(inet_diag_table);
+}
 
 module_init(inet_diag_init);
-module_निकास(inet_diag_निकास);
+module_exit(inet_diag_exit);
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_NET_PF_PROTO_TYPE(PF_NETLINK, NETLINK_SOCK_DIAG, 2 /* AF_INET */);
 MODULE_ALIAS_NET_PF_PROTO_TYPE(PF_NETLINK, NETLINK_SOCK_DIAG, 10 /* AF_INET6 */);

@@ -1,133 +1,132 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*  Copyright(c) 2021 Intel Corporation. */
 
-#समावेश <यंत्र/sgx.h>
+#include <asm/sgx.h>
 
-#समावेश "cpuid.h"
-#समावेश "kvm_cache_regs.h"
-#समावेश "nested.h"
-#समावेश "sgx.h"
-#समावेश "vmx.h"
-#समावेश "x86.h"
+#include "cpuid.h"
+#include "kvm_cache_regs.h"
+#include "nested.h"
+#include "sgx.h"
+#include "vmx.h"
+#include "x86.h"
 
-bool __पढ़ो_mostly enable_sgx = 1;
+bool __read_mostly enable_sgx = 1;
 module_param_named(sgx, enable_sgx, bool, 0444);
 
-/* Initial value of guest's भव SGX_LEPUBKEYHASHn MSRs */
-अटल u64 sgx_pubkey_hash[4] __ro_after_init;
+/* Initial value of guest's virtual SGX_LEPUBKEYHASHn MSRs */
+static u64 sgx_pubkey_hash[4] __ro_after_init;
 
 /*
- * ENCLS's memory opeअक्रमs use a fixed segment (DS) and a fixed
+ * ENCLS's memory operands use a fixed segment (DS) and a fixed
  * address size based on the mode.  Related prefixes are ignored.
  */
-अटल पूर्णांक sgx_get_encls_gva(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ offset,
-			     पूर्णांक size, पूर्णांक alignment, gva_t *gva)
-अणु
-	काष्ठा kvm_segment s;
+static int sgx_get_encls_gva(struct kvm_vcpu *vcpu, unsigned long offset,
+			     int size, int alignment, gva_t *gva)
+{
+	struct kvm_segment s;
 	bool fault;
 
-	/* Skip vmcs.GUEST_DS retrieval क्रम 64-bit mode to aव्योम VMREADs. */
+	/* Skip vmcs.GUEST_DS retrieval for 64-bit mode to avoid VMREADs. */
 	*gva = offset;
-	अगर (!is_दीर्घ_mode(vcpu)) अणु
+	if (!is_long_mode(vcpu)) {
 		vmx_get_segment(vcpu, &s, VCPU_SREG_DS);
 		*gva += s.base;
-	पूर्ण
+	}
 
-	अगर (!IS_ALIGNED(*gva, alignment)) अणु
+	if (!IS_ALIGNED(*gva, alignment)) {
 		fault = true;
-	पूर्ण अन्यथा अगर (likely(is_दीर्घ_mode(vcpu))) अणु
+	} else if (likely(is_long_mode(vcpu))) {
 		fault = is_noncanonical_address(*gva, vcpu);
-	पूर्ण अन्यथा अणु
+	} else {
 		*gva &= 0xffffffff;
 		fault = (s.unusable) ||
 			(s.type != 2 && s.type != 3) ||
 			(*gva > s.limit) ||
 			((s.base != 0 || s.limit != 0xffffffff) &&
 			(((u64)*gva + size - 1) > s.limit + 1));
-	पूर्ण
-	अगर (fault)
+	}
+	if (fault)
 		kvm_inject_gp(vcpu, 0);
-	वापस fault ? -EINVAL : 0;
-पूर्ण
+	return fault ? -EINVAL : 0;
+}
 
-अटल व्योम sgx_handle_emulation_failure(काष्ठा kvm_vcpu *vcpu, u64 addr,
-					 अचिन्हित पूर्णांक size)
-अणु
-	vcpu->run->निकास_reason = KVM_EXIT_INTERNAL_ERROR;
-	vcpu->run->पूर्णांकernal.suberror = KVM_INTERNAL_ERROR_EMULATION;
-	vcpu->run->पूर्णांकernal.ndata = 2;
-	vcpu->run->पूर्णांकernal.data[0] = addr;
-	vcpu->run->पूर्णांकernal.data[1] = size;
-पूर्ण
+static void sgx_handle_emulation_failure(struct kvm_vcpu *vcpu, u64 addr,
+					 unsigned int size)
+{
+	vcpu->run->exit_reason = KVM_EXIT_INTERNAL_ERROR;
+	vcpu->run->internal.suberror = KVM_INTERNAL_ERROR_EMULATION;
+	vcpu->run->internal.ndata = 2;
+	vcpu->run->internal.data[0] = addr;
+	vcpu->run->internal.data[1] = size;
+}
 
-अटल पूर्णांक sgx_पढ़ो_hva(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ hva, व्योम *data,
-			अचिन्हित पूर्णांक size)
-अणु
-	अगर (__copy_from_user(data, (व्योम __user *)hva, size)) अणु
+static int sgx_read_hva(struct kvm_vcpu *vcpu, unsigned long hva, void *data,
+			unsigned int size)
+{
+	if (__copy_from_user(data, (void __user *)hva, size)) {
 		sgx_handle_emulation_failure(vcpu, hva, size);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sgx_gva_to_gpa(काष्ठा kvm_vcpu *vcpu, gva_t gva, bool ग_लिखो,
+static int sgx_gva_to_gpa(struct kvm_vcpu *vcpu, gva_t gva, bool write,
 			  gpa_t *gpa)
-अणु
-	काष्ठा x86_exception ex;
+{
+	struct x86_exception ex;
 
-	अगर (ग_लिखो)
-		*gpa = kvm_mmu_gva_to_gpa_ग_लिखो(vcpu, gva, &ex);
-	अन्यथा
-		*gpa = kvm_mmu_gva_to_gpa_पढ़ो(vcpu, gva, &ex);
+	if (write)
+		*gpa = kvm_mmu_gva_to_gpa_write(vcpu, gva, &ex);
+	else
+		*gpa = kvm_mmu_gva_to_gpa_read(vcpu, gva, &ex);
 
-	अगर (*gpa == UNMAPPED_GVA) अणु
+	if (*gpa == UNMAPPED_GVA) {
 		kvm_inject_emulated_page_fault(vcpu, &ex);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sgx_gpa_to_hva(काष्ठा kvm_vcpu *vcpu, gpa_t gpa, अचिन्हित दीर्घ *hva)
-अणु
+static int sgx_gpa_to_hva(struct kvm_vcpu *vcpu, gpa_t gpa, unsigned long *hva)
+{
 	*hva = kvm_vcpu_gfn_to_hva(vcpu, PFN_DOWN(gpa));
-	अगर (kvm_is_error_hva(*hva)) अणु
+	if (kvm_is_error_hva(*hva)) {
 		sgx_handle_emulation_failure(vcpu, gpa, 1);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	*hva |= gpa & ~PAGE_MASK;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sgx_inject_fault(काष्ठा kvm_vcpu *vcpu, gva_t gva, पूर्णांक trapnr)
-अणु
-	काष्ठा x86_exception ex;
+static int sgx_inject_fault(struct kvm_vcpu *vcpu, gva_t gva, int trapnr)
+{
+	struct x86_exception ex;
 
 	/*
 	 * A non-EPCM #PF indicates a bad userspace HVA.  This *should* check
-	 * क्रम PFEC.SGX and not assume any #PF on SGX2 originated in the EPC,
+	 * for PFEC.SGX and not assume any #PF on SGX2 originated in the EPC,
 	 * but the error code isn't (yet) plumbed through the ENCLS helpers.
 	 */
-	अगर (trapnr == PF_VECTOR && !boot_cpu_has(X86_FEATURE_SGX2)) अणु
-		vcpu->run->निकास_reason = KVM_EXIT_INTERNAL_ERROR;
-		vcpu->run->पूर्णांकernal.suberror = KVM_INTERNAL_ERROR_EMULATION;
-		vcpu->run->पूर्णांकernal.ndata = 0;
-		वापस 0;
-	पूर्ण
+	if (trapnr == PF_VECTOR && !boot_cpu_has(X86_FEATURE_SGX2)) {
+		vcpu->run->exit_reason = KVM_EXIT_INTERNAL_ERROR;
+		vcpu->run->internal.suberror = KVM_INTERNAL_ERROR_EMULATION;
+		vcpu->run->internal.ndata = 0;
+		return 0;
+	}
 
 	/*
 	 * If the guest thinks it's running on SGX2 hardware, inject an SGX
-	 * #PF अगर the fault matches an EPCM fault signature (#GP on SGX1,
+	 * #PF if the fault matches an EPCM fault signature (#GP on SGX1,
 	 * #PF on SGX2).  The assumption is that EPCM faults are much more
 	 * likely than a bad userspace address.
 	 */
-	अगर ((trapnr == PF_VECTOR || !boot_cpu_has(X86_FEATURE_SGX2)) &&
-	    guest_cpuid_has(vcpu, X86_FEATURE_SGX2)) अणु
-		स_रखो(&ex, 0, माप(ex));
+	if ((trapnr == PF_VECTOR || !boot_cpu_has(X86_FEATURE_SGX2)) &&
+	    guest_cpuid_has(vcpu, X86_FEATURE_SGX2)) {
+		memset(&ex, 0, sizeof(ex));
 		ex.vector = PF_VECTOR;
 		ex.error_code = PFERR_PRESENT_MASK | PFERR_WRITE_MASK |
 				PFERR_SGX_MASK;
@@ -135,369 +134,369 @@ module_param_named(sgx, enable_sgx, bool, 0444);
 		ex.error_code_valid = true;
 		ex.nested_page_fault = false;
 		kvm_inject_page_fault(vcpu, &ex);
-	पूर्ण अन्यथा अणु
+	} else {
 		kvm_inject_gp(vcpu, 0);
-	पूर्ण
-	वापस 1;
-पूर्ण
+	}
+	return 1;
+}
 
-अटल पूर्णांक __handle_encls_ecreate(काष्ठा kvm_vcpu *vcpu,
-				  काष्ठा sgx_pageinfo *pageinfo,
-				  अचिन्हित दीर्घ secs_hva,
+static int __handle_encls_ecreate(struct kvm_vcpu *vcpu,
+				  struct sgx_pageinfo *pageinfo,
+				  unsigned long secs_hva,
 				  gva_t secs_gva)
-अणु
-	काष्ठा sgx_secs *contents = (काष्ठा sgx_secs *)pageinfo->contents;
-	काष्ठा kvm_cpuid_entry2 *sgx_12_0, *sgx_12_1;
+{
+	struct sgx_secs *contents = (struct sgx_secs *)pageinfo->contents;
+	struct kvm_cpuid_entry2 *sgx_12_0, *sgx_12_1;
 	u64 attributes, xfrm, size;
 	u32 miscselect;
 	u8 max_size_log2;
-	पूर्णांक trapnr, ret;
+	int trapnr, ret;
 
 	sgx_12_0 = kvm_find_cpuid_entry(vcpu, 0x12, 0);
 	sgx_12_1 = kvm_find_cpuid_entry(vcpu, 0x12, 1);
-	अगर (!sgx_12_0 || !sgx_12_1) अणु
-		vcpu->run->निकास_reason = KVM_EXIT_INTERNAL_ERROR;
-		vcpu->run->पूर्णांकernal.suberror = KVM_INTERNAL_ERROR_EMULATION;
-		vcpu->run->पूर्णांकernal.ndata = 0;
-		वापस 0;
-	पूर्ण
+	if (!sgx_12_0 || !sgx_12_1) {
+		vcpu->run->exit_reason = KVM_EXIT_INTERNAL_ERROR;
+		vcpu->run->internal.suberror = KVM_INTERNAL_ERROR_EMULATION;
+		vcpu->run->internal.ndata = 0;
+		return 0;
+	}
 
 	miscselect = contents->miscselect;
 	attributes = contents->attributes;
 	xfrm = contents->xfrm;
 	size = contents->size;
 
-	/* Enक्रमce restriction of access to the PROVISIONKEY. */
-	अगर (!vcpu->kvm->arch.sgx_provisioning_allowed &&
-	    (attributes & SGX_ATTR_PROVISIONKEY)) अणु
-		अगर (sgx_12_1->eax & SGX_ATTR_PROVISIONKEY)
+	/* Enforce restriction of access to the PROVISIONKEY. */
+	if (!vcpu->kvm->arch.sgx_provisioning_allowed &&
+	    (attributes & SGX_ATTR_PROVISIONKEY)) {
+		if (sgx_12_1->eax & SGX_ATTR_PROVISIONKEY)
 			pr_warn_once("KVM: SGX PROVISIONKEY advertised but not allowed\n");
 		kvm_inject_gp(vcpu, 0);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	/* Enक्रमce CPUID restrictions on MISCSELECT, ATTRIBUTES and XFRM. */
-	अगर ((u32)miscselect & ~sgx_12_0->ebx ||
+	/* Enforce CPUID restrictions on MISCSELECT, ATTRIBUTES and XFRM. */
+	if ((u32)miscselect & ~sgx_12_0->ebx ||
 	    (u32)attributes & ~sgx_12_1->eax ||
 	    (u32)(attributes >> 32) & ~sgx_12_1->ebx ||
 	    (u32)xfrm & ~sgx_12_1->ecx ||
-	    (u32)(xfrm >> 32) & ~sgx_12_1->edx) अणु
+	    (u32)(xfrm >> 32) & ~sgx_12_1->edx) {
 		kvm_inject_gp(vcpu, 0);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	/* Enक्रमce CPUID restriction on max enclave size. */
+	/* Enforce CPUID restriction on max enclave size. */
 	max_size_log2 = (attributes & SGX_ATTR_MODE64BIT) ? sgx_12_0->edx >> 8 :
 							    sgx_12_0->edx;
-	अगर (size >= BIT_ULL(max_size_log2))
+	if (size >= BIT_ULL(max_size_log2))
 		kvm_inject_gp(vcpu, 0);
 
 	/*
-	 * sgx_virt_ecreate() वापसs:
+	 * sgx_virt_ecreate() returns:
 	 *  1) 0:	ECREATE was successful
 	 *  2) -EFAULT:	ECREATE was run but faulted, and trapnr was set to the
 	 *		exception number.
 	 *  3) -EINVAL:	access_ok() on @secs_hva failed. This should never
 	 *		happen as KVM checks host addresses at memslot creation.
-	 *		sgx_virt_ecreate() has alपढ़ोy warned in this हाल.
+	 *		sgx_virt_ecreate() has already warned in this case.
 	 */
-	ret = sgx_virt_ecreate(pageinfo, (व्योम __user *)secs_hva, &trapnr);
-	अगर (!ret)
-		वापस kvm_skip_emulated_inकाष्ठाion(vcpu);
-	अगर (ret == -EFAULT)
-		वापस sgx_inject_fault(vcpu, secs_gva, trapnr);
+	ret = sgx_virt_ecreate(pageinfo, (void __user *)secs_hva, &trapnr);
+	if (!ret)
+		return kvm_skip_emulated_instruction(vcpu);
+	if (ret == -EFAULT)
+		return sgx_inject_fault(vcpu, secs_gva, trapnr);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक handle_encls_ecreate(काष्ठा kvm_vcpu *vcpu)
-अणु
+static int handle_encls_ecreate(struct kvm_vcpu *vcpu)
+{
 	gva_t pageinfo_gva, secs_gva;
 	gva_t metadata_gva, contents_gva;
 	gpa_t metadata_gpa, contents_gpa, secs_gpa;
-	अचिन्हित दीर्घ metadata_hva, contents_hva, secs_hva;
-	काष्ठा sgx_pageinfo pageinfo;
-	काष्ठा sgx_secs *contents;
-	काष्ठा x86_exception ex;
-	पूर्णांक r;
+	unsigned long metadata_hva, contents_hva, secs_hva;
+	struct sgx_pageinfo pageinfo;
+	struct sgx_secs *contents;
+	struct x86_exception ex;
+	int r;
 
-	अगर (sgx_get_encls_gva(vcpu, kvm_rbx_पढ़ो(vcpu), 32, 32, &pageinfo_gva) ||
-	    sgx_get_encls_gva(vcpu, kvm_rcx_पढ़ो(vcpu), 4096, 4096, &secs_gva))
-		वापस 1;
+	if (sgx_get_encls_gva(vcpu, kvm_rbx_read(vcpu), 32, 32, &pageinfo_gva) ||
+	    sgx_get_encls_gva(vcpu, kvm_rcx_read(vcpu), 4096, 4096, &secs_gva))
+		return 1;
 
 	/*
-	 * Copy the PAGEINFO to local memory, its poपूर्णांकers need to be
-	 * translated, i.e. we need to करो a deep copy/translate.
+	 * Copy the PAGEINFO to local memory, its pointers need to be
+	 * translated, i.e. we need to do a deep copy/translate.
 	 */
-	r = kvm_पढ़ो_guest_virt(vcpu, pageinfo_gva, &pageinfo,
-				माप(pageinfo), &ex);
-	अगर (r == X86EMUL_PROPAGATE_FAULT) अणु
+	r = kvm_read_guest_virt(vcpu, pageinfo_gva, &pageinfo,
+				sizeof(pageinfo), &ex);
+	if (r == X86EMUL_PROPAGATE_FAULT) {
 		kvm_inject_emulated_page_fault(vcpu, &ex);
-		वापस 1;
-	पूर्ण अन्यथा अगर (r != X86EMUL_CONTINUE) अणु
+		return 1;
+	} else if (r != X86EMUL_CONTINUE) {
 		sgx_handle_emulation_failure(vcpu, pageinfo_gva,
-					     माप(pageinfo));
-		वापस 0;
-	पूर्ण
+					     sizeof(pageinfo));
+		return 0;
+	}
 
-	अगर (sgx_get_encls_gva(vcpu, pageinfo.metadata, 64, 64, &metadata_gva) ||
+	if (sgx_get_encls_gva(vcpu, pageinfo.metadata, 64, 64, &metadata_gva) ||
 	    sgx_get_encls_gva(vcpu, pageinfo.contents, 4096, 4096,
 			      &contents_gva))
-		वापस 1;
+		return 1;
 
 	/*
-	 * Translate the SECINFO, SOURCE and SECS poपूर्णांकers from GVA to GPA.
+	 * Translate the SECINFO, SOURCE and SECS pointers from GVA to GPA.
 	 * Resume the guest on failure to inject a #PF.
 	 */
-	अगर (sgx_gva_to_gpa(vcpu, metadata_gva, false, &metadata_gpa) ||
+	if (sgx_gva_to_gpa(vcpu, metadata_gva, false, &metadata_gpa) ||
 	    sgx_gva_to_gpa(vcpu, contents_gva, false, &contents_gpa) ||
 	    sgx_gva_to_gpa(vcpu, secs_gva, true, &secs_gpa))
-		वापस 1;
+		return 1;
 
 	/*
 	 * ...and then to HVA.  The order of accesses isn't architectural, i.e.
-	 * KVM करोesn't have to fully process one address at a समय.  Exit to
-	 * userspace अगर a GPA is invalid.
+	 * KVM doesn't have to fully process one address at a time.  Exit to
+	 * userspace if a GPA is invalid.
 	 */
-	अगर (sgx_gpa_to_hva(vcpu, metadata_gpa, &metadata_hva) ||
+	if (sgx_gpa_to_hva(vcpu, metadata_gpa, &metadata_hva) ||
 	    sgx_gpa_to_hva(vcpu, contents_gpa, &contents_hva) ||
 	    sgx_gpa_to_hva(vcpu, secs_gpa, &secs_hva))
-		वापस 0;
+		return 0;
 
 	/*
-	 * Copy contents पूर्णांकo kernel memory to prevent TOCTOU attack. E.g. the
-	 * guest could करो ECREATE w/ SECS.SGX_ATTR_PROVISIONKEY=0, and
+	 * Copy contents into kernel memory to prevent TOCTOU attack. E.g. the
+	 * guest could do ECREATE w/ SECS.SGX_ATTR_PROVISIONKEY=0, and
 	 * simultaneously set SGX_ATTR_PROVISIONKEY to bypass the check to
-	 * enक्रमce restriction of access to the PROVISIONKEY.
+	 * enforce restriction of access to the PROVISIONKEY.
 	 */
-	contents = (काष्ठा sgx_secs *)__get_मुक्त_page(GFP_KERNEL_ACCOUNT);
-	अगर (!contents)
-		वापस -ENOMEM;
+	contents = (struct sgx_secs *)__get_free_page(GFP_KERNEL_ACCOUNT);
+	if (!contents)
+		return -ENOMEM;
 
-	/* Exit to userspace अगर copying from a host userspace address fails. */
-	अगर (sgx_पढ़ो_hva(vcpu, contents_hva, (व्योम *)contents, PAGE_SIZE)) अणु
-		मुक्त_page((अचिन्हित दीर्घ)contents);
-		वापस 0;
-	पूर्ण
+	/* Exit to userspace if copying from a host userspace address fails. */
+	if (sgx_read_hva(vcpu, contents_hva, (void *)contents, PAGE_SIZE)) {
+		free_page((unsigned long)contents);
+		return 0;
+	}
 
 	pageinfo.metadata = metadata_hva;
 	pageinfo.contents = (u64)contents;
 
 	r = __handle_encls_ecreate(vcpu, &pageinfo, secs_hva, secs_gva);
 
-	मुक्त_page((अचिन्हित दीर्घ)contents);
+	free_page((unsigned long)contents);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक handle_encls_einit(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अचिन्हित दीर्घ sig_hva, secs_hva, token_hva, rflags;
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+static int handle_encls_einit(struct kvm_vcpu *vcpu)
+{
+	unsigned long sig_hva, secs_hva, token_hva, rflags;
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 	gva_t sig_gva, secs_gva, token_gva;
 	gpa_t sig_gpa, secs_gpa, token_gpa;
-	पूर्णांक ret, trapnr;
+	int ret, trapnr;
 
-	अगर (sgx_get_encls_gva(vcpu, kvm_rbx_पढ़ो(vcpu), 1808, 4096, &sig_gva) ||
-	    sgx_get_encls_gva(vcpu, kvm_rcx_पढ़ो(vcpu), 4096, 4096, &secs_gva) ||
-	    sgx_get_encls_gva(vcpu, kvm_rdx_पढ़ो(vcpu), 304, 512, &token_gva))
-		वापस 1;
+	if (sgx_get_encls_gva(vcpu, kvm_rbx_read(vcpu), 1808, 4096, &sig_gva) ||
+	    sgx_get_encls_gva(vcpu, kvm_rcx_read(vcpu), 4096, 4096, &secs_gva) ||
+	    sgx_get_encls_gva(vcpu, kvm_rdx_read(vcpu), 304, 512, &token_gva))
+		return 1;
 
 	/*
-	 * Translate the SIGSTRUCT, SECS and TOKEN poपूर्णांकers from GVA to GPA.
+	 * Translate the SIGSTRUCT, SECS and TOKEN pointers from GVA to GPA.
 	 * Resume the guest on failure to inject a #PF.
 	 */
-	अगर (sgx_gva_to_gpa(vcpu, sig_gva, false, &sig_gpa) ||
+	if (sgx_gva_to_gpa(vcpu, sig_gva, false, &sig_gpa) ||
 	    sgx_gva_to_gpa(vcpu, secs_gva, true, &secs_gpa) ||
 	    sgx_gva_to_gpa(vcpu, token_gva, false, &token_gpa))
-		वापस 1;
+		return 1;
 
 	/*
 	 * ...and then to HVA.  The order of accesses isn't architectural, i.e.
-	 * KVM करोesn't have to fully process one address at a समय.  Exit to
-	 * userspace अगर a GPA is invalid.  Note, all काष्ठाures are aligned and
+	 * KVM doesn't have to fully process one address at a time.  Exit to
+	 * userspace if a GPA is invalid.  Note, all structures are aligned and
 	 * cannot split pages.
 	 */
-	अगर (sgx_gpa_to_hva(vcpu, sig_gpa, &sig_hva) ||
+	if (sgx_gpa_to_hva(vcpu, sig_gpa, &sig_hva) ||
 	    sgx_gpa_to_hva(vcpu, secs_gpa, &secs_hva) ||
 	    sgx_gpa_to_hva(vcpu, token_gpa, &token_hva))
-		वापस 0;
+		return 0;
 
-	ret = sgx_virt_einit((व्योम __user *)sig_hva, (व्योम __user *)token_hva,
-			     (व्योम __user *)secs_hva,
+	ret = sgx_virt_einit((void __user *)sig_hva, (void __user *)token_hva,
+			     (void __user *)secs_hva,
 			     vmx->msr_ia32_sgxlepubkeyhash, &trapnr);
 
-	अगर (ret == -EFAULT)
-		वापस sgx_inject_fault(vcpu, secs_gva, trapnr);
+	if (ret == -EFAULT)
+		return sgx_inject_fault(vcpu, secs_gva, trapnr);
 
 	/*
-	 * sgx_virt_einit() वापसs -EINVAL when access_ok() fails on @sig_hva,
+	 * sgx_virt_einit() returns -EINVAL when access_ok() fails on @sig_hva,
 	 * @token_hva or @secs_hva. This should never happen as KVM checks host
-	 * addresses at memslot creation. sgx_virt_einit() has alपढ़ोy warned
-	 * in this हाल, so just वापस.
+	 * addresses at memslot creation. sgx_virt_einit() has already warned
+	 * in this case, so just return.
 	 */
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	rflags = vmx_get_rflags(vcpu) & ~(X86_EFLAGS_CF | X86_EFLAGS_PF |
 					  X86_EFLAGS_AF | X86_EFLAGS_SF |
 					  X86_EFLAGS_OF);
-	अगर (ret)
+	if (ret)
 		rflags |= X86_EFLAGS_ZF;
-	अन्यथा
+	else
 		rflags &= ~X86_EFLAGS_ZF;
 	vmx_set_rflags(vcpu, rflags);
 
-	kvm_rax_ग_लिखो(vcpu, ret);
-	वापस kvm_skip_emulated_inकाष्ठाion(vcpu);
-पूर्ण
+	kvm_rax_write(vcpu, ret);
+	return kvm_skip_emulated_instruction(vcpu);
+}
 
-अटल अंतरभूत bool encls_leaf_enabled_in_guest(काष्ठा kvm_vcpu *vcpu, u32 leaf)
-अणु
-	अगर (!enable_sgx || !guest_cpuid_has(vcpu, X86_FEATURE_SGX))
-		वापस false;
+static inline bool encls_leaf_enabled_in_guest(struct kvm_vcpu *vcpu, u32 leaf)
+{
+	if (!enable_sgx || !guest_cpuid_has(vcpu, X86_FEATURE_SGX))
+		return false;
 
-	अगर (leaf >= ECREATE && leaf <= ETRACK)
-		वापस guest_cpuid_has(vcpu, X86_FEATURE_SGX1);
+	if (leaf >= ECREATE && leaf <= ETRACK)
+		return guest_cpuid_has(vcpu, X86_FEATURE_SGX1);
 
-	अगर (leaf >= EAUG && leaf <= EMODT)
-		वापस guest_cpuid_has(vcpu, X86_FEATURE_SGX2);
+	if (leaf >= EAUG && leaf <= EMODT)
+		return guest_cpuid_has(vcpu, X86_FEATURE_SGX2);
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल अंतरभूत bool sgx_enabled_in_guest_bios(काष्ठा kvm_vcpu *vcpu)
-अणु
-	स्थिर u64 bits = FEAT_CTL_SGX_ENABLED | FEAT_CTL_LOCKED;
+static inline bool sgx_enabled_in_guest_bios(struct kvm_vcpu *vcpu)
+{
+	const u64 bits = FEAT_CTL_SGX_ENABLED | FEAT_CTL_LOCKED;
 
-	वापस (to_vmx(vcpu)->msr_ia32_feature_control & bits) == bits;
-पूर्ण
+	return (to_vmx(vcpu)->msr_ia32_feature_control & bits) == bits;
+}
 
-पूर्णांक handle_encls(काष्ठा kvm_vcpu *vcpu)
-अणु
-	u32 leaf = (u32)kvm_rax_पढ़ो(vcpu);
+int handle_encls(struct kvm_vcpu *vcpu)
+{
+	u32 leaf = (u32)kvm_rax_read(vcpu);
 
-	अगर (!encls_leaf_enabled_in_guest(vcpu, leaf)) अणु
+	if (!encls_leaf_enabled_in_guest(vcpu, leaf)) {
 		kvm_queue_exception(vcpu, UD_VECTOR);
-	पूर्ण अन्यथा अगर (!sgx_enabled_in_guest_bios(vcpu)) अणु
+	} else if (!sgx_enabled_in_guest_bios(vcpu)) {
 		kvm_inject_gp(vcpu, 0);
-	पूर्ण अन्यथा अणु
-		अगर (leaf == ECREATE)
-			वापस handle_encls_ecreate(vcpu);
-		अगर (leaf == EINIT)
-			वापस handle_encls_einit(vcpu);
+	} else {
+		if (leaf == ECREATE)
+			return handle_encls_ecreate(vcpu);
+		if (leaf == EINIT)
+			return handle_encls_einit(vcpu);
 		WARN(1, "KVM: unexpected exit on ENCLS[%u]", leaf);
-		vcpu->run->निकास_reason = KVM_EXIT_UNKNOWN;
-		vcpu->run->hw.hardware_निकास_reason = EXIT_REASON_ENCLS;
-		वापस 0;
-	पूर्ण
-	वापस 1;
-पूर्ण
+		vcpu->run->exit_reason = KVM_EXIT_UNKNOWN;
+		vcpu->run->hw.hardware_exit_reason = EXIT_REASON_ENCLS;
+		return 0;
+	}
+	return 1;
+}
 
-व्योम setup_शेष_sgx_lepubkeyhash(व्योम)
-अणु
+void setup_default_sgx_lepubkeyhash(void)
+{
 	/*
-	 * Use Intel's शेष value क्रम Skylake hardware अगर Launch Control is
-	 * not supported, i.e. Intel's hash is hardcoded पूर्णांकo silicon, or अगर
+	 * Use Intel's default value for Skylake hardware if Launch Control is
+	 * not supported, i.e. Intel's hash is hardcoded into silicon, or if
 	 * Launch Control is supported and enabled, i.e. mimic the reset value
-	 * and let the guest ग_लिखो the MSRs at will.  If Launch Control is
+	 * and let the guest write the MSRs at will.  If Launch Control is
 	 * supported but disabled, then use the current MSR values as the hash
-	 * MSRs exist but are पढ़ो-only (locked and not writable).
+	 * MSRs exist but are read-only (locked and not writable).
 	 */
-	अगर (!enable_sgx || boot_cpu_has(X86_FEATURE_SGX_LC) ||
-	    rdmsrl_safe(MSR_IA32_SGXLEPUBKEYHASH0, &sgx_pubkey_hash[0])) अणु
+	if (!enable_sgx || boot_cpu_has(X86_FEATURE_SGX_LC) ||
+	    rdmsrl_safe(MSR_IA32_SGXLEPUBKEYHASH0, &sgx_pubkey_hash[0])) {
 		sgx_pubkey_hash[0] = 0xa6053e051270b7acULL;
 		sgx_pubkey_hash[1] = 0x6cfbe8ba8b3b413dULL;
 		sgx_pubkey_hash[2] = 0xc4916d99f2b3735dULL;
 		sgx_pubkey_hash[3] = 0xd4f8c05909f9bb3bULL;
-	पूर्ण अन्यथा अणु
-		/* MSR_IA32_SGXLEPUBKEYHASH0 is पढ़ो above */
+	} else {
+		/* MSR_IA32_SGXLEPUBKEYHASH0 is read above */
 		rdmsrl(MSR_IA32_SGXLEPUBKEYHASH1, sgx_pubkey_hash[1]);
 		rdmsrl(MSR_IA32_SGXLEPUBKEYHASH2, sgx_pubkey_hash[2]);
 		rdmsrl(MSR_IA32_SGXLEPUBKEYHASH3, sgx_pubkey_hash[3]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम vcpu_setup_sgx_lepubkeyhash(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+void vcpu_setup_sgx_lepubkeyhash(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 
-	स_नकल(vmx->msr_ia32_sgxlepubkeyhash, sgx_pubkey_hash,
-	       माप(sgx_pubkey_hash));
-पूर्ण
+	memcpy(vmx->msr_ia32_sgxlepubkeyhash, sgx_pubkey_hash,
+	       sizeof(sgx_pubkey_hash));
+}
 
 /*
- * ECREATE must be पूर्णांकercepted to enक्रमce MISCSELECT, ATTRIBUTES and XFRM
- * restrictions अगर the guest's allowed-1 settings भागerge from hardware.
+ * ECREATE must be intercepted to enforce MISCSELECT, ATTRIBUTES and XFRM
+ * restrictions if the guest's allowed-1 settings diverge from hardware.
  */
-अटल bool sgx_पूर्णांकercept_encls_ecreate(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा kvm_cpuid_entry2 *guest_cpuid;
+static bool sgx_intercept_encls_ecreate(struct kvm_vcpu *vcpu)
+{
+	struct kvm_cpuid_entry2 *guest_cpuid;
 	u32 eax, ebx, ecx, edx;
 
-	अगर (!vcpu->kvm->arch.sgx_provisioning_allowed)
-		वापस true;
+	if (!vcpu->kvm->arch.sgx_provisioning_allowed)
+		return true;
 
 	guest_cpuid = kvm_find_cpuid_entry(vcpu, 0x12, 0);
-	अगर (!guest_cpuid)
-		वापस true;
+	if (!guest_cpuid)
+		return true;
 
 	cpuid_count(0x12, 0, &eax, &ebx, &ecx, &edx);
-	अगर (guest_cpuid->ebx != ebx || guest_cpuid->edx != edx)
-		वापस true;
+	if (guest_cpuid->ebx != ebx || guest_cpuid->edx != edx)
+		return true;
 
 	guest_cpuid = kvm_find_cpuid_entry(vcpu, 0x12, 1);
-	अगर (!guest_cpuid)
-		वापस true;
+	if (!guest_cpuid)
+		return true;
 
 	cpuid_count(0x12, 1, &eax, &ebx, &ecx, &edx);
-	अगर (guest_cpuid->eax != eax || guest_cpuid->ebx != ebx ||
+	if (guest_cpuid->eax != eax || guest_cpuid->ebx != ebx ||
 	    guest_cpuid->ecx != ecx || guest_cpuid->edx != edx)
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-व्योम vmx_ग_लिखो_encls_biपंचांगap(काष्ठा kvm_vcpu *vcpu, काष्ठा vmcs12 *vmcs12)
-अणु
+void vmx_write_encls_bitmap(struct kvm_vcpu *vcpu, struct vmcs12 *vmcs12)
+{
 	/*
-	 * There is no software enable bit क्रम SGX that is भवized by
+	 * There is no software enable bit for SGX that is virtualized by
 	 * hardware, e.g. there's no CR4.SGXE, so when SGX is disabled in the
 	 * guest (either by the host or by the guest's BIOS) but enabled in the
 	 * host, trap all ENCLS leafs and inject #UD/#GP as needed to emulate
-	 * the expected प्रणाली behavior क्रम ENCLS.
+	 * the expected system behavior for ENCLS.
 	 */
-	u64 biपंचांगap = -1ull;
+	u64 bitmap = -1ull;
 
-	/* Nothing to करो अगर hardware करोesn't support SGX */
-	अगर (!cpu_has_vmx_encls_vmनिकास())
-		वापस;
+	/* Nothing to do if hardware doesn't support SGX */
+	if (!cpu_has_vmx_encls_vmexit())
+		return;
 
-	अगर (guest_cpuid_has(vcpu, X86_FEATURE_SGX) &&
-	    sgx_enabled_in_guest_bios(vcpu)) अणु
-		अगर (guest_cpuid_has(vcpu, X86_FEATURE_SGX1)) अणु
-			biपंचांगap &= ~GENMASK_ULL(ETRACK, ECREATE);
-			अगर (sgx_पूर्णांकercept_encls_ecreate(vcpu))
-				biपंचांगap |= (1 << ECREATE);
-		पूर्ण
+	if (guest_cpuid_has(vcpu, X86_FEATURE_SGX) &&
+	    sgx_enabled_in_guest_bios(vcpu)) {
+		if (guest_cpuid_has(vcpu, X86_FEATURE_SGX1)) {
+			bitmap &= ~GENMASK_ULL(ETRACK, ECREATE);
+			if (sgx_intercept_encls_ecreate(vcpu))
+				bitmap |= (1 << ECREATE);
+		}
 
-		अगर (guest_cpuid_has(vcpu, X86_FEATURE_SGX2))
-			biपंचांगap &= ~GENMASK_ULL(EMODT, EAUG);
+		if (guest_cpuid_has(vcpu, X86_FEATURE_SGX2))
+			bitmap &= ~GENMASK_ULL(EMODT, EAUG);
 
 		/*
-		 * Trap and execute EINIT अगर launch control is enabled in the
-		 * host using the guest's values क्रम launch control MSRs, even
-		 * अगर the guest's values are fixed to hardware शेष values.
+		 * Trap and execute EINIT if launch control is enabled in the
+		 * host using the guest's values for launch control MSRs, even
+		 * if the guest's values are fixed to hardware default values.
 		 * The MSRs are not loaded/saved on VM-Enter/VM-Exit as writing
 		 * the MSRs is extraordinarily expensive.
 		 */
-		अगर (boot_cpu_has(X86_FEATURE_SGX_LC))
-			biपंचांगap |= (1 << EINIT);
+		if (boot_cpu_has(X86_FEATURE_SGX_LC))
+			bitmap |= (1 << EINIT);
 
-		अगर (!vmcs12 && is_guest_mode(vcpu))
+		if (!vmcs12 && is_guest_mode(vcpu))
 			vmcs12 = get_vmcs12(vcpu);
-		अगर (vmcs12 && nested_cpu_has_encls_निकास(vmcs12))
-			biपंचांगap |= vmcs12->encls_निकासing_biपंचांगap;
-	पूर्ण
-	vmcs_ग_लिखो64(ENCLS_EXITING_BITMAP, biपंचांगap);
-पूर्ण
+		if (vmcs12 && nested_cpu_has_encls_exit(vmcs12))
+			bitmap |= vmcs12->encls_exiting_bitmap;
+	}
+	vmcs_write64(ENCLS_EXITING_BITMAP, bitmap);
+}

@@ -1,138 +1,137 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/ceph/ceph_debug.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/ceph/ceph_debug.h>
 
-#समावेश <linux/module.h>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/err.h>
+#include <linux/slab.h>
 
-#समावेश <linux/ceph/types.h>
-#समावेश <linux/ceph/decode.h>
-#समावेश <linux/ceph/libceph.h>
-#समावेश <linux/ceph/messenger.h>
-#समावेश "auth_none.h"
-#समावेश "auth_x.h"
+#include <linux/ceph/types.h>
+#include <linux/ceph/decode.h>
+#include <linux/ceph/libceph.h>
+#include <linux/ceph/messenger.h>
+#include "auth_none.h"
+#include "auth_x.h"
 
 
 /*
  * get protocol handler
  */
-अटल u32 supported_protocols[] = अणु
+static u32 supported_protocols[] = {
 	CEPH_AUTH_NONE,
 	CEPH_AUTH_CEPHX
-पूर्ण;
+};
 
-अटल पूर्णांक init_protocol(काष्ठा ceph_auth_client *ac, पूर्णांक proto)
-अणु
-	करोut("%s proto %d\n", __func__, proto);
+static int init_protocol(struct ceph_auth_client *ac, int proto)
+{
+	dout("%s proto %d\n", __func__, proto);
 
-	चयन (proto) अणु
-	हाल CEPH_AUTH_NONE:
-		वापस ceph_auth_none_init(ac);
-	हाल CEPH_AUTH_CEPHX:
-		वापस ceph_x_init(ac);
-	शेष:
+	switch (proto) {
+	case CEPH_AUTH_NONE:
+		return ceph_auth_none_init(ac);
+	case CEPH_AUTH_CEPHX:
+		return ceph_x_init(ac);
+	default:
 		pr_err("bad auth protocol %d\n", proto);
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return -EINVAL;
+	}
+}
 
-अटल व्योम set_global_id(काष्ठा ceph_auth_client *ac, u64 global_id)
-अणु
-	करोut("%s global_id %llu\n", __func__, global_id);
+static void set_global_id(struct ceph_auth_client *ac, u64 global_id)
+{
+	dout("%s global_id %llu\n", __func__, global_id);
 
-	अगर (!global_id)
+	if (!global_id)
 		pr_err("got zero global_id\n");
 
-	अगर (ac->global_id && global_id != ac->global_id)
+	if (ac->global_id && global_id != ac->global_id)
 		pr_err("global_id changed from %llu to %llu\n", ac->global_id,
 		       global_id);
 
 	ac->global_id = global_id;
-पूर्ण
+}
 
 /*
- * setup, tearकरोwn.
+ * setup, teardown.
  */
-काष्ठा ceph_auth_client *ceph_auth_init(स्थिर अक्षर *name,
-					स्थिर काष्ठा ceph_crypto_key *key,
-					स्थिर पूर्णांक *con_modes)
-अणु
-	काष्ठा ceph_auth_client *ac;
-	पूर्णांक ret;
+struct ceph_auth_client *ceph_auth_init(const char *name,
+					const struct ceph_crypto_key *key,
+					const int *con_modes)
+{
+	struct ceph_auth_client *ac;
+	int ret;
 
 	ret = -ENOMEM;
-	ac = kzalloc(माप(*ac), GFP_NOFS);
-	अगर (!ac)
-		जाओ out;
+	ac = kzalloc(sizeof(*ac), GFP_NOFS);
+	if (!ac)
+		goto out;
 
 	mutex_init(&ac->mutex);
 	ac->negotiating = true;
-	अगर (name)
+	if (name)
 		ac->name = name;
-	अन्यथा
+	else
 		ac->name = CEPH_AUTH_NAME_DEFAULT;
 	ac->key = key;
 	ac->preferred_mode = con_modes[0];
 	ac->fallback_mode = con_modes[1];
 
-	करोut("%s name '%s' preferred_mode %d fallback_mode %d\n", __func__,
+	dout("%s name '%s' preferred_mode %d fallback_mode %d\n", __func__,
 	     ac->name, ac->preferred_mode, ac->fallback_mode);
-	वापस ac;
+	return ac;
 
 out:
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
-व्योम ceph_auth_destroy(काष्ठा ceph_auth_client *ac)
-अणु
-	करोut("auth_destroy %p\n", ac);
-	अगर (ac->ops)
+void ceph_auth_destroy(struct ceph_auth_client *ac)
+{
+	dout("auth_destroy %p\n", ac);
+	if (ac->ops)
 		ac->ops->destroy(ac);
-	kमुक्त(ac);
-पूर्ण
+	kfree(ac);
+}
 
 /*
  * Reset occurs when reconnecting to the monitor.
  */
-व्योम ceph_auth_reset(काष्ठा ceph_auth_client *ac)
-अणु
+void ceph_auth_reset(struct ceph_auth_client *ac)
+{
 	mutex_lock(&ac->mutex);
-	करोut("auth_reset %p\n", ac);
-	अगर (ac->ops && !ac->negotiating)
+	dout("auth_reset %p\n", ac);
+	if (ac->ops && !ac->negotiating)
 		ac->ops->reset(ac);
 	ac->negotiating = true;
 	mutex_unlock(&ac->mutex);
-पूर्ण
+}
 
 /*
  * EntityName, not to be confused with entity_name_t
  */
-पूर्णांक ceph_auth_entity_name_encode(स्थिर अक्षर *name, व्योम **p, व्योम *end)
-अणु
-	पूर्णांक len = म_माप(name);
+int ceph_auth_entity_name_encode(const char *name, void **p, void *end)
+{
+	int len = strlen(name);
 
-	अगर (*p + 2*माप(u32) + len > end)
-		वापस -दुस्फल;
+	if (*p + 2*sizeof(u32) + len > end)
+		return -ERANGE;
 	ceph_encode_32(p, CEPH_ENTITY_TYPE_CLIENT);
 	ceph_encode_32(p, len);
 	ceph_encode_copy(p, name, len);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Initiate protocol negotiation with monitor.  Include entity name
  * and list supported protocols.
  */
-पूर्णांक ceph_auth_build_hello(काष्ठा ceph_auth_client *ac, व्योम *buf, माप_प्रकार len)
-अणु
-	काष्ठा ceph_mon_request_header *monhdr = buf;
-	व्योम *p = monhdr + 1, *end = buf + len, *lenp;
-	पूर्णांक i, num;
-	पूर्णांक ret;
+int ceph_auth_build_hello(struct ceph_auth_client *ac, void *buf, size_t len)
+{
+	struct ceph_mon_request_header *monhdr = buf;
+	void *p = monhdr + 1, *end = buf + len, *lenp;
+	int i, num;
+	int ret;
 
 	mutex_lock(&ac->mutex);
-	करोut("auth_build_hello\n");
+	dout("auth_build_hello\n");
 	monhdr->have_version = 0;
 	monhdr->session_mon = cpu_to_le16(-1);
 	monhdr->session_mon_tid = 0;
@@ -140,327 +139,327 @@ out:
 	ceph_encode_32(&p, CEPH_AUTH_UNKNOWN);  /* no protocol, yet */
 
 	lenp = p;
-	p += माप(u32);
+	p += sizeof(u32);
 
-	ceph_decode_need(&p, end, 1 + माप(u32), bad);
+	ceph_decode_need(&p, end, 1 + sizeof(u32), bad);
 	ceph_encode_8(&p, 1);
 	num = ARRAY_SIZE(supported_protocols);
 	ceph_encode_32(&p, num);
-	ceph_decode_need(&p, end, num * माप(u32), bad);
-	क्रम (i = 0; i < num; i++)
+	ceph_decode_need(&p, end, num * sizeof(u32), bad);
+	for (i = 0; i < num; i++)
 		ceph_encode_32(&p, supported_protocols[i]);
 
 	ret = ceph_auth_entity_name_encode(ac->name, &p, end);
-	अगर (ret < 0)
-		जाओ out;
-	ceph_decode_need(&p, end, माप(u64), bad);
+	if (ret < 0)
+		goto out;
+	ceph_decode_need(&p, end, sizeof(u64), bad);
 	ceph_encode_64(&p, ac->global_id);
 
-	ceph_encode_32(&lenp, p - lenp - माप(u32));
+	ceph_encode_32(&lenp, p - lenp - sizeof(u32));
 	ret = p - buf;
 out:
 	mutex_unlock(&ac->mutex);
-	वापस ret;
+	return ret;
 
 bad:
-	ret = -दुस्फल;
-	जाओ out;
-पूर्ण
+	ret = -ERANGE;
+	goto out;
+}
 
-अटल पूर्णांक build_request(काष्ठा ceph_auth_client *ac, bool add_header,
-			 व्योम *buf, पूर्णांक buf_len)
-अणु
-	व्योम *end = buf + buf_len;
-	व्योम *p;
-	पूर्णांक ret;
+static int build_request(struct ceph_auth_client *ac, bool add_header,
+			 void *buf, int buf_len)
+{
+	void *end = buf + buf_len;
+	void *p;
+	int ret;
 
 	p = buf;
-	अगर (add_header) अणु
-		/* काष्ठा ceph_mon_request_header + protocol */
+	if (add_header) {
+		/* struct ceph_mon_request_header + protocol */
 		ceph_encode_64_safe(&p, end, 0, e_range);
 		ceph_encode_16_safe(&p, end, -1, e_range);
 		ceph_encode_64_safe(&p, end, 0, e_range);
 		ceph_encode_32_safe(&p, end, ac->protocol, e_range);
-	पूर्ण
+	}
 
-	ceph_encode_need(&p, end, माप(u32), e_range);
-	ret = ac->ops->build_request(ac, p + माप(u32), end);
-	अगर (ret < 0) अणु
+	ceph_encode_need(&p, end, sizeof(u32), e_range);
+	ret = ac->ops->build_request(ac, p + sizeof(u32), end);
+	if (ret < 0) {
 		pr_err("auth protocol '%s' building request failed: %d\n",
 		       ceph_auth_proto_name(ac->protocol), ret);
-		वापस ret;
-	पूर्ण
-	करोut(" built request %d bytes\n", ret);
+		return ret;
+	}
+	dout(" built request %d bytes\n", ret);
 	ceph_encode_32(&p, ret);
-	वापस p + ret - buf;
+	return p + ret - buf;
 
 e_range:
-	वापस -दुस्फल;
-पूर्ण
+	return -ERANGE;
+}
 
 /*
  * Handle auth message from monitor.
  */
-पूर्णांक ceph_handle_auth_reply(काष्ठा ceph_auth_client *ac,
-			   व्योम *buf, माप_प्रकार len,
-			   व्योम *reply_buf, माप_प्रकार reply_len)
-अणु
-	व्योम *p = buf;
-	व्योम *end = buf + len;
-	पूर्णांक protocol;
+int ceph_handle_auth_reply(struct ceph_auth_client *ac,
+			   void *buf, size_t len,
+			   void *reply_buf, size_t reply_len)
+{
+	void *p = buf;
+	void *end = buf + len;
+	int protocol;
 	s32 result;
 	u64 global_id;
-	व्योम *payload, *payload_end;
-	पूर्णांक payload_len;
-	अक्षर *result_msg;
-	पूर्णांक result_msg_len;
-	पूर्णांक ret = -EINVAL;
+	void *payload, *payload_end;
+	int payload_len;
+	char *result_msg;
+	int result_msg_len;
+	int ret = -EINVAL;
 
 	mutex_lock(&ac->mutex);
-	करोut("handle_auth_reply %p %p\n", p, end);
-	ceph_decode_need(&p, end, माप(u32) * 3 + माप(u64), bad);
+	dout("handle_auth_reply %p %p\n", p, end);
+	ceph_decode_need(&p, end, sizeof(u32) * 3 + sizeof(u64), bad);
 	protocol = ceph_decode_32(&p);
 	result = ceph_decode_32(&p);
 	global_id = ceph_decode_64(&p);
 	payload_len = ceph_decode_32(&p);
 	payload = p;
 	p += payload_len;
-	ceph_decode_need(&p, end, माप(u32), bad);
+	ceph_decode_need(&p, end, sizeof(u32), bad);
 	result_msg_len = ceph_decode_32(&p);
 	result_msg = p;
 	p += result_msg_len;
-	अगर (p != end)
-		जाओ bad;
+	if (p != end)
+		goto bad;
 
-	करोut(" result %d '%.*s' gid %llu len %d\n", result, result_msg_len,
+	dout(" result %d '%.*s' gid %llu len %d\n", result, result_msg_len,
 	     result_msg, global_id, payload_len);
 
 	payload_end = payload + payload_len;
 
-	अगर (ac->negotiating) अणु
-		/* server करोes not support our protocols? */
-		अगर (!protocol && result < 0) अणु
+	if (ac->negotiating) {
+		/* server does not support our protocols? */
+		if (!protocol && result < 0) {
 			ret = result;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		/* set up (new) protocol handler? */
-		अगर (ac->protocol && ac->protocol != protocol) अणु
+		if (ac->protocol && ac->protocol != protocol) {
 			ac->ops->destroy(ac);
 			ac->protocol = 0;
-			ac->ops = शून्य;
-		पूर्ण
-		अगर (ac->protocol != protocol) अणु
+			ac->ops = NULL;
+		}
+		if (ac->protocol != protocol) {
 			ret = init_protocol(ac, protocol);
-			अगर (ret) अणु
+			if (ret) {
 				pr_err("auth protocol '%s' init failed: %d\n",
 				       ceph_auth_proto_name(protocol), ret);
-				जाओ out;
-			पूर्ण
-		पूर्ण
+				goto out;
+			}
+		}
 
 		ac->negotiating = false;
-	पूर्ण
+	}
 
 	ret = ac->ops->handle_reply(ac, result, payload, payload_end,
-				    शून्य, शून्य, शून्य, शून्य);
-	अगर (ret == -EAGAIN) अणु
+				    NULL, NULL, NULL, NULL);
+	if (ret == -EAGAIN) {
 		ret = build_request(ac, true, reply_buf, reply_len);
-		जाओ out;
-	पूर्ण अन्यथा अगर (ret) अणु
+		goto out;
+	} else if (ret) {
 		pr_err("auth protocol '%s' mauth authentication failed: %d\n",
 		       ceph_auth_proto_name(ac->protocol), result);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	set_global_id(ac, global_id);
 
 out:
 	mutex_unlock(&ac->mutex);
-	वापस ret;
+	return ret;
 
 bad:
 	pr_err("failed to decode auth msg\n");
 	ret = -EINVAL;
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-पूर्णांक ceph_build_auth(काष्ठा ceph_auth_client *ac,
-		    व्योम *msg_buf, माप_प्रकार msg_len)
-अणु
-	पूर्णांक ret = 0;
+int ceph_build_auth(struct ceph_auth_client *ac,
+		    void *msg_buf, size_t msg_len)
+{
+	int ret = 0;
 
 	mutex_lock(&ac->mutex);
-	अगर (ac->ops->should_authenticate(ac))
+	if (ac->ops->should_authenticate(ac))
 		ret = build_request(ac, true, msg_buf, msg_len);
 	mutex_unlock(&ac->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ceph_auth_is_authenticated(काष्ठा ceph_auth_client *ac)
-अणु
-	पूर्णांक ret = 0;
+int ceph_auth_is_authenticated(struct ceph_auth_client *ac)
+{
+	int ret = 0;
 
 	mutex_lock(&ac->mutex);
-	अगर (ac->ops)
+	if (ac->ops)
 		ret = ac->ops->is_authenticated(ac);
 	mutex_unlock(&ac->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(ceph_auth_is_authenticated);
 
-पूर्णांक __ceph_auth_get_authorizer(काष्ठा ceph_auth_client *ac,
-			       काष्ठा ceph_auth_handshake *auth,
-			       पूर्णांक peer_type, bool क्रमce_new,
-			       पूर्णांक *proto, पूर्णांक *pref_mode, पूर्णांक *fallb_mode)
-अणु
-	पूर्णांक ret;
+int __ceph_auth_get_authorizer(struct ceph_auth_client *ac,
+			       struct ceph_auth_handshake *auth,
+			       int peer_type, bool force_new,
+			       int *proto, int *pref_mode, int *fallb_mode)
+{
+	int ret;
 
 	mutex_lock(&ac->mutex);
-	अगर (क्रमce_new && auth->authorizer) अणु
+	if (force_new && auth->authorizer) {
 		ceph_auth_destroy_authorizer(auth->authorizer);
-		auth->authorizer = शून्य;
-	पूर्ण
-	अगर (!auth->authorizer)
+		auth->authorizer = NULL;
+	}
+	if (!auth->authorizer)
 		ret = ac->ops->create_authorizer(ac, peer_type, auth);
-	अन्यथा अगर (ac->ops->update_authorizer)
+	else if (ac->ops->update_authorizer)
 		ret = ac->ops->update_authorizer(ac, peer_type, auth);
-	अन्यथा
+	else
 		ret = 0;
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	*proto = ac->protocol;
-	अगर (pref_mode && fallb_mode) अणु
+	if (pref_mode && fallb_mode) {
 		*pref_mode = ac->preferred_mode;
 		*fallb_mode = ac->fallback_mode;
-	पूर्ण
+	}
 
 out:
 	mutex_unlock(&ac->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(__ceph_auth_get_authorizer);
 
-व्योम ceph_auth_destroy_authorizer(काष्ठा ceph_authorizer *a)
-अणु
+void ceph_auth_destroy_authorizer(struct ceph_authorizer *a)
+{
 	a->destroy(a);
-पूर्ण
+}
 EXPORT_SYMBOL(ceph_auth_destroy_authorizer);
 
-पूर्णांक ceph_auth_add_authorizer_challenge(काष्ठा ceph_auth_client *ac,
-				       काष्ठा ceph_authorizer *a,
-				       व्योम *challenge_buf,
-				       पूर्णांक challenge_buf_len)
-अणु
-	पूर्णांक ret = 0;
+int ceph_auth_add_authorizer_challenge(struct ceph_auth_client *ac,
+				       struct ceph_authorizer *a,
+				       void *challenge_buf,
+				       int challenge_buf_len)
+{
+	int ret = 0;
 
 	mutex_lock(&ac->mutex);
-	अगर (ac->ops && ac->ops->add_authorizer_challenge)
+	if (ac->ops && ac->ops->add_authorizer_challenge)
 		ret = ac->ops->add_authorizer_challenge(ac, a, challenge_buf,
 							challenge_buf_len);
 	mutex_unlock(&ac->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(ceph_auth_add_authorizer_challenge);
 
-पूर्णांक ceph_auth_verअगरy_authorizer_reply(काष्ठा ceph_auth_client *ac,
-				      काष्ठा ceph_authorizer *a,
-				      व्योम *reply, पूर्णांक reply_len,
-				      u8 *session_key, पूर्णांक *session_key_len,
-				      u8 *con_secret, पूर्णांक *con_secret_len)
-अणु
-	पूर्णांक ret = 0;
+int ceph_auth_verify_authorizer_reply(struct ceph_auth_client *ac,
+				      struct ceph_authorizer *a,
+				      void *reply, int reply_len,
+				      u8 *session_key, int *session_key_len,
+				      u8 *con_secret, int *con_secret_len)
+{
+	int ret = 0;
 
 	mutex_lock(&ac->mutex);
-	अगर (ac->ops && ac->ops->verअगरy_authorizer_reply)
-		ret = ac->ops->verअगरy_authorizer_reply(ac, a,
+	if (ac->ops && ac->ops->verify_authorizer_reply)
+		ret = ac->ops->verify_authorizer_reply(ac, a,
 			reply, reply_len, session_key, session_key_len,
 			con_secret, con_secret_len);
 	mutex_unlock(&ac->mutex);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(ceph_auth_verअगरy_authorizer_reply);
+	return ret;
+}
+EXPORT_SYMBOL(ceph_auth_verify_authorizer_reply);
 
-व्योम ceph_auth_invalidate_authorizer(काष्ठा ceph_auth_client *ac, पूर्णांक peer_type)
-अणु
+void ceph_auth_invalidate_authorizer(struct ceph_auth_client *ac, int peer_type)
+{
 	mutex_lock(&ac->mutex);
-	अगर (ac->ops && ac->ops->invalidate_authorizer)
+	if (ac->ops && ac->ops->invalidate_authorizer)
 		ac->ops->invalidate_authorizer(ac, peer_type);
 	mutex_unlock(&ac->mutex);
-पूर्ण
+}
 EXPORT_SYMBOL(ceph_auth_invalidate_authorizer);
 
 /*
  * msgr2 authentication
  */
 
-अटल bool contains(स्थिर पूर्णांक *arr, पूर्णांक cnt, पूर्णांक val)
-अणु
-	पूर्णांक i;
+static bool contains(const int *arr, int cnt, int val)
+{
+	int i;
 
-	क्रम (i = 0; i < cnt; i++) अणु
-		अगर (arr[i] == val)
-			वापस true;
-	पूर्ण
+	for (i = 0; i < cnt; i++) {
+		if (arr[i] == val)
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक encode_con_modes(व्योम **p, व्योम *end, पूर्णांक pref_mode, पूर्णांक fallb_mode)
-अणु
+static int encode_con_modes(void **p, void *end, int pref_mode, int fallb_mode)
+{
 	WARN_ON(pref_mode == CEPH_CON_MODE_UNKNOWN);
-	अगर (fallb_mode != CEPH_CON_MODE_UNKNOWN) अणु
+	if (fallb_mode != CEPH_CON_MODE_UNKNOWN) {
 		ceph_encode_32_safe(p, end, 2, e_range);
 		ceph_encode_32_safe(p, end, pref_mode, e_range);
 		ceph_encode_32_safe(p, end, fallb_mode, e_range);
-	पूर्ण अन्यथा अणु
+	} else {
 		ceph_encode_32_safe(p, end, 1, e_range);
 		ceph_encode_32_safe(p, end, pref_mode, e_range);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 e_range:
-	वापस -दुस्फल;
-पूर्ण
+	return -ERANGE;
+}
 
 /*
  * Similar to ceph_auth_build_hello().
  */
-पूर्णांक ceph_auth_get_request(काष्ठा ceph_auth_client *ac, व्योम *buf, पूर्णांक buf_len)
-अणु
-	पूर्णांक proto = ac->key ? CEPH_AUTH_CEPHX : CEPH_AUTH_NONE;
-	व्योम *end = buf + buf_len;
-	व्योम *lenp;
-	व्योम *p;
-	पूर्णांक ret;
+int ceph_auth_get_request(struct ceph_auth_client *ac, void *buf, int buf_len)
+{
+	int proto = ac->key ? CEPH_AUTH_CEPHX : CEPH_AUTH_NONE;
+	void *end = buf + buf_len;
+	void *lenp;
+	void *p;
+	int ret;
 
 	mutex_lock(&ac->mutex);
-	अगर (ac->protocol == CEPH_AUTH_UNKNOWN) अणु
+	if (ac->protocol == CEPH_AUTH_UNKNOWN) {
 		ret = init_protocol(ac, proto);
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("auth protocol '%s' init failed: %d\n",
 			       ceph_auth_proto_name(proto), ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto out;
+		}
+	} else {
 		WARN_ON(ac->protocol != proto);
 		ac->ops->reset(ac);
-	पूर्ण
+	}
 
 	p = buf;
 	ceph_encode_32_safe(&p, end, ac->protocol, e_range);
 	ret = encode_con_modes(&p, end, ac->preferred_mode, ac->fallback_mode);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	lenp = p;
-	p += 4;  /* space क्रम len */
+	p += 4;  /* space for len */
 
 	ceph_encode_8_safe(&p, end, CEPH_AUTH_MODE_MON, e_range);
 	ret = ceph_auth_entity_name_encode(ac->name, &p, end);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ceph_encode_64_safe(&p, end, ac->global_id, e_range);
 	ceph_encode_32(&lenp, p - lenp - 4);
@@ -468,196 +467,196 @@ e_range:
 
 out:
 	mutex_unlock(&ac->mutex);
-	वापस ret;
+	return ret;
 
 e_range:
-	ret = -दुस्फल;
-	जाओ out;
-पूर्ण
+	ret = -ERANGE;
+	goto out;
+}
 
-पूर्णांक ceph_auth_handle_reply_more(काष्ठा ceph_auth_client *ac, व्योम *reply,
-				पूर्णांक reply_len, व्योम *buf, पूर्णांक buf_len)
-अणु
-	पूर्णांक ret;
+int ceph_auth_handle_reply_more(struct ceph_auth_client *ac, void *reply,
+				int reply_len, void *buf, int buf_len)
+{
+	int ret;
 
 	mutex_lock(&ac->mutex);
 	ret = ac->ops->handle_reply(ac, 0, reply, reply + reply_len,
-				    शून्य, शून्य, शून्य, शून्य);
-	अगर (ret == -EAGAIN)
+				    NULL, NULL, NULL, NULL);
+	if (ret == -EAGAIN)
 		ret = build_request(ac, false, buf, buf_len);
-	अन्यथा
+	else
 		WARN_ON(ret >= 0);
 	mutex_unlock(&ac->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ceph_auth_handle_reply_करोne(काष्ठा ceph_auth_client *ac,
-				u64 global_id, व्योम *reply, पूर्णांक reply_len,
-				u8 *session_key, पूर्णांक *session_key_len,
-				u8 *con_secret, पूर्णांक *con_secret_len)
-अणु
-	पूर्णांक ret;
+int ceph_auth_handle_reply_done(struct ceph_auth_client *ac,
+				u64 global_id, void *reply, int reply_len,
+				u8 *session_key, int *session_key_len,
+				u8 *con_secret, int *con_secret_len)
+{
+	int ret;
 
 	mutex_lock(&ac->mutex);
 	ret = ac->ops->handle_reply(ac, 0, reply, reply + reply_len,
 				    session_key, session_key_len,
 				    con_secret, con_secret_len);
-	अगर (!ret)
+	if (!ret)
 		set_global_id(ac, global_id);
 	mutex_unlock(&ac->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-bool ceph_auth_handle_bad_method(काष्ठा ceph_auth_client *ac,
-				 पूर्णांक used_proto, पूर्णांक result,
-				 स्थिर पूर्णांक *allowed_protos, पूर्णांक proto_cnt,
-				 स्थिर पूर्णांक *allowed_modes, पूर्णांक mode_cnt)
-अणु
+bool ceph_auth_handle_bad_method(struct ceph_auth_client *ac,
+				 int used_proto, int result,
+				 const int *allowed_protos, int proto_cnt,
+				 const int *allowed_modes, int mode_cnt)
+{
 	mutex_lock(&ac->mutex);
 	WARN_ON(used_proto != ac->protocol);
 
-	अगर (result == -EOPNOTSUPP) अणु
-		अगर (!contains(allowed_protos, proto_cnt, ac->protocol)) अणु
+	if (result == -EOPNOTSUPP) {
+		if (!contains(allowed_protos, proto_cnt, ac->protocol)) {
 			pr_err("auth protocol '%s' not allowed\n",
 			       ceph_auth_proto_name(ac->protocol));
-			जाओ not_allowed;
-		पूर्ण
-		अगर (!contains(allowed_modes, mode_cnt, ac->preferred_mode) &&
+			goto not_allowed;
+		}
+		if (!contains(allowed_modes, mode_cnt, ac->preferred_mode) &&
 		    (ac->fallback_mode == CEPH_CON_MODE_UNKNOWN ||
-		     !contains(allowed_modes, mode_cnt, ac->fallback_mode))) अणु
+		     !contains(allowed_modes, mode_cnt, ac->fallback_mode))) {
 			pr_err("preferred mode '%s' not allowed\n",
 			       ceph_con_mode_name(ac->preferred_mode));
-			अगर (ac->fallback_mode == CEPH_CON_MODE_UNKNOWN)
+			if (ac->fallback_mode == CEPH_CON_MODE_UNKNOWN)
 				pr_err("no fallback mode\n");
-			अन्यथा
+			else
 				pr_err("fallback mode '%s' not allowed\n",
 				       ceph_con_mode_name(ac->fallback_mode));
-			जाओ not_allowed;
-		पूर्ण
-	पूर्ण
+			goto not_allowed;
+		}
+	}
 
 	WARN_ON(result == -EOPNOTSUPP || result >= 0);
 	pr_err("auth protocol '%s' msgr authentication failed: %d\n",
 	       ceph_auth_proto_name(ac->protocol), result);
 
 	mutex_unlock(&ac->mutex);
-	वापस true;
+	return true;
 
 not_allowed:
 	mutex_unlock(&ac->mutex);
-	वापस false;
-पूर्ण
+	return false;
+}
 
-पूर्णांक ceph_auth_get_authorizer(काष्ठा ceph_auth_client *ac,
-			     काष्ठा ceph_auth_handshake *auth,
-			     पूर्णांक peer_type, व्योम *buf, पूर्णांक *buf_len)
-अणु
-	व्योम *end = buf + *buf_len;
-	पूर्णांक pref_mode, fallb_mode;
-	पूर्णांक proto;
-	व्योम *p;
-	पूर्णांक ret;
+int ceph_auth_get_authorizer(struct ceph_auth_client *ac,
+			     struct ceph_auth_handshake *auth,
+			     int peer_type, void *buf, int *buf_len)
+{
+	void *end = buf + *buf_len;
+	int pref_mode, fallb_mode;
+	int proto;
+	void *p;
+	int ret;
 
 	ret = __ceph_auth_get_authorizer(ac, auth, peer_type, true, &proto,
 					 &pref_mode, &fallb_mode);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	p = buf;
 	ceph_encode_32_safe(&p, end, proto, e_range);
 	ret = encode_con_modes(&p, end, pref_mode, fallb_mode);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ceph_encode_32_safe(&p, end, auth->authorizer_buf_len, e_range);
 	*buf_len = p - buf;
-	वापस 0;
+	return 0;
 
 e_range:
-	वापस -दुस्फल;
-पूर्ण
+	return -ERANGE;
+}
 EXPORT_SYMBOL(ceph_auth_get_authorizer);
 
-पूर्णांक ceph_auth_handle_svc_reply_more(काष्ठा ceph_auth_client *ac,
-				    काष्ठा ceph_auth_handshake *auth,
-				    व्योम *reply, पूर्णांक reply_len,
-				    व्योम *buf, पूर्णांक *buf_len)
-अणु
-	व्योम *end = buf + *buf_len;
-	व्योम *p;
-	पूर्णांक ret;
+int ceph_auth_handle_svc_reply_more(struct ceph_auth_client *ac,
+				    struct ceph_auth_handshake *auth,
+				    void *reply, int reply_len,
+				    void *buf, int *buf_len)
+{
+	void *end = buf + *buf_len;
+	void *p;
+	int ret;
 
 	ret = ceph_auth_add_authorizer_challenge(ac, auth->authorizer,
 						 reply, reply_len);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	p = buf;
 	ceph_encode_32_safe(&p, end, auth->authorizer_buf_len, e_range);
 	*buf_len = p - buf;
-	वापस 0;
+	return 0;
 
 e_range:
-	वापस -दुस्फल;
-पूर्ण
+	return -ERANGE;
+}
 EXPORT_SYMBOL(ceph_auth_handle_svc_reply_more);
 
-पूर्णांक ceph_auth_handle_svc_reply_करोne(काष्ठा ceph_auth_client *ac,
-				    काष्ठा ceph_auth_handshake *auth,
-				    व्योम *reply, पूर्णांक reply_len,
-				    u8 *session_key, पूर्णांक *session_key_len,
-				    u8 *con_secret, पूर्णांक *con_secret_len)
-अणु
-	वापस ceph_auth_verअगरy_authorizer_reply(ac, auth->authorizer,
+int ceph_auth_handle_svc_reply_done(struct ceph_auth_client *ac,
+				    struct ceph_auth_handshake *auth,
+				    void *reply, int reply_len,
+				    u8 *session_key, int *session_key_len,
+				    u8 *con_secret, int *con_secret_len)
+{
+	return ceph_auth_verify_authorizer_reply(ac, auth->authorizer,
 		reply, reply_len, session_key, session_key_len,
 		con_secret, con_secret_len);
-पूर्ण
-EXPORT_SYMBOL(ceph_auth_handle_svc_reply_करोne);
+}
+EXPORT_SYMBOL(ceph_auth_handle_svc_reply_done);
 
-bool ceph_auth_handle_bad_authorizer(काष्ठा ceph_auth_client *ac,
-				     पूर्णांक peer_type, पूर्णांक used_proto, पूर्णांक result,
-				     स्थिर पूर्णांक *allowed_protos, पूर्णांक proto_cnt,
-				     स्थिर पूर्णांक *allowed_modes, पूर्णांक mode_cnt)
-अणु
+bool ceph_auth_handle_bad_authorizer(struct ceph_auth_client *ac,
+				     int peer_type, int used_proto, int result,
+				     const int *allowed_protos, int proto_cnt,
+				     const int *allowed_modes, int mode_cnt)
+{
 	mutex_lock(&ac->mutex);
 	WARN_ON(used_proto != ac->protocol);
 
-	अगर (result == -EOPNOTSUPP) अणु
-		अगर (!contains(allowed_protos, proto_cnt, ac->protocol)) अणु
+	if (result == -EOPNOTSUPP) {
+		if (!contains(allowed_protos, proto_cnt, ac->protocol)) {
 			pr_err("auth protocol '%s' not allowed by %s\n",
 			       ceph_auth_proto_name(ac->protocol),
 			       ceph_entity_type_name(peer_type));
-			जाओ not_allowed;
-		पूर्ण
-		अगर (!contains(allowed_modes, mode_cnt, ac->preferred_mode) &&
+			goto not_allowed;
+		}
+		if (!contains(allowed_modes, mode_cnt, ac->preferred_mode) &&
 		    (ac->fallback_mode == CEPH_CON_MODE_UNKNOWN ||
-		     !contains(allowed_modes, mode_cnt, ac->fallback_mode))) अणु
+		     !contains(allowed_modes, mode_cnt, ac->fallback_mode))) {
 			pr_err("preferred mode '%s' not allowed by %s\n",
 			       ceph_con_mode_name(ac->preferred_mode),
 			       ceph_entity_type_name(peer_type));
-			अगर (ac->fallback_mode == CEPH_CON_MODE_UNKNOWN)
+			if (ac->fallback_mode == CEPH_CON_MODE_UNKNOWN)
 				pr_err("no fallback mode\n");
-			अन्यथा
+			else
 				pr_err("fallback mode '%s' not allowed by %s\n",
 				       ceph_con_mode_name(ac->fallback_mode),
 				       ceph_entity_type_name(peer_type));
-			जाओ not_allowed;
-		पूर्ण
-	पूर्ण
+			goto not_allowed;
+		}
+	}
 
 	WARN_ON(result == -EOPNOTSUPP || result >= 0);
 	pr_err("auth protocol '%s' authorization to %s failed: %d\n",
 	       ceph_auth_proto_name(ac->protocol),
 	       ceph_entity_type_name(peer_type), result);
 
-	अगर (ac->ops->invalidate_authorizer)
+	if (ac->ops->invalidate_authorizer)
 		ac->ops->invalidate_authorizer(ac, peer_type);
 
 	mutex_unlock(&ac->mutex);
-	वापस true;
+	return true;
 
 not_allowed:
 	mutex_unlock(&ac->mutex);
-	वापस false;
-पूर्ण
+	return false;
+}
 EXPORT_SYMBOL(ceph_auth_handle_bad_authorizer);

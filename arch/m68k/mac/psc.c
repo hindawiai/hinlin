@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *	Apple Peripheral System Controller (PSC)
  *
@@ -9,159 +8,159 @@
  * TO DO:
  *
  * Try to figure out what's going on in pIFR5 and pIFR6. There seem to be
- * persisant पूर्णांकerrupt conditions in those रेजिस्टरs and I have no idea what
- * they are. Granted it करोesn't affect since we're not enabling any पूर्णांकerrupts
+ * persisant interrupt conditions in those registers and I have no idea what
+ * they are. Granted it doesn't affect since we're not enabling any interrupts
  * on those levels at the moment, but it would be nice to know. I have a feeling
- * they aren't actually पूर्णांकerrupt lines but data lines (to the DSP?)
+ * they aren't actually interrupt lines but data lines (to the DSP?)
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/irq.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/irq.h>
 
-#समावेश <यंत्र/traps.h>
-#समावेश <यंत्र/macपूर्णांकosh.h>
-#समावेश <यंत्र/macपूर्णांकs.h>
-#समावेश <यंत्र/mac_psc.h>
+#include <asm/traps.h>
+#include <asm/macintosh.h>
+#include <asm/macints.h>
+#include <asm/mac_psc.h>
 
-#घोषणा DEBUG_PSC
+#define DEBUG_PSC
 
-अस्थिर __u8 *psc;
+volatile __u8 *psc;
 EXPORT_SYMBOL_GPL(psc);
 
 /*
  * Debugging dump, used in various places to see what's going on.
  */
 
-अटल व्योम psc_debug_dump(व्योम)
-अणु
-	पूर्णांक	i;
+static void psc_debug_dump(void)
+{
+	int	i;
 
-	अगर (!psc)
-		वापस;
+	if (!psc)
+		return;
 
-	क्रम (i = 0x30 ; i < 0x70 ; i += 0x10) अणु
-		prपूर्णांकk(KERN_DEBUG "PSC #%d:  IFR = 0x%02X IER = 0x%02X\n",
+	for (i = 0x30 ; i < 0x70 ; i += 0x10) {
+		printk(KERN_DEBUG "PSC #%d:  IFR = 0x%02X IER = 0x%02X\n",
 			i >> 4,
-			(पूर्णांक) psc_पढ़ो_byte(pIFRbase + i),
-			(पूर्णांक) psc_पढ़ो_byte(pIERbase + i));
-	पूर्ण
-पूर्ण
+			(int) psc_read_byte(pIFRbase + i),
+			(int) psc_read_byte(pIERbase + i));
+	}
+}
 
 /*
- * Try to समाप्त all DMA channels on the PSC. Not sure how this his
- * supposed to work; this is code lअगरted from macmace.c and then
+ * Try to kill all DMA channels on the PSC. Not sure how this his
+ * supposed to work; this is code lifted from macmace.c and then
  * expanded to cover what I think are the other 7 channels.
  */
 
-अटल __init व्योम psc_dma_die_die_die(व्योम)
-अणु
-	पूर्णांक i;
+static __init void psc_dma_die_die_die(void)
+{
+	int i;
 
-	क्रम (i = 0 ; i < 9 ; i++) अणु
-		psc_ग_लिखो_word(PSC_CTL_BASE + (i << 4), 0x8800);
-		psc_ग_लिखो_word(PSC_CTL_BASE + (i << 4), 0x1000);
-		psc_ग_लिखो_word(PSC_CMD_BASE + (i << 5), 0x1100);
-		psc_ग_लिखो_word(PSC_CMD_BASE + (i << 5) + 0x10, 0x1100);
-	पूर्ण
-पूर्ण
+	for (i = 0 ; i < 9 ; i++) {
+		psc_write_word(PSC_CTL_BASE + (i << 4), 0x8800);
+		psc_write_word(PSC_CTL_BASE + (i << 4), 0x1000);
+		psc_write_word(PSC_CMD_BASE + (i << 5), 0x1100);
+		psc_write_word(PSC_CMD_BASE + (i << 5) + 0x10, 0x1100);
+	}
+}
 
 /*
- * Initialize the PSC. For now this just involves shutting करोwn all
- * पूर्णांकerrupt sources using the IERs.
+ * Initialize the PSC. For now this just involves shutting down all
+ * interrupt sources using the IERs.
  */
 
-व्योम __init psc_init(व्योम)
-अणु
-	पूर्णांक i;
+void __init psc_init(void)
+{
+	int i;
 
-	अगर (macपूर्णांकosh_config->ident != MAC_MODEL_C660
-	 && macपूर्णांकosh_config->ident != MAC_MODEL_Q840)
-	अणु
-		psc = शून्य;
-		वापस;
-	पूर्ण
+	if (macintosh_config->ident != MAC_MODEL_C660
+	 && macintosh_config->ident != MAC_MODEL_Q840)
+	{
+		psc = NULL;
+		return;
+	}
 
 	/*
 	 * The PSC is always at the same spot, but using psc
 	 * keeps things consistent with the psc_xxxx functions.
 	 */
 
-	psc = (व्योम *) PSC_BASE;
+	psc = (void *) PSC_BASE;
 
 	pr_debug("PSC detected at %p\n", psc);
 
 	psc_dma_die_die_die();
 
-#अगर_घोषित DEBUG_PSC
+#ifdef DEBUG_PSC
 	psc_debug_dump();
-#पूर्ण_अगर
+#endif
 	/*
-	 * Mask and clear all possible पूर्णांकerrupts
+	 * Mask and clear all possible interrupts
 	 */
 
-	क्रम (i = 0x30 ; i < 0x70 ; i += 0x10) अणु
-		psc_ग_लिखो_byte(pIERbase + i, 0x0F);
-		psc_ग_लिखो_byte(pIFRbase + i, 0x0F);
-	पूर्ण
-पूर्ण
+	for (i = 0x30 ; i < 0x70 ; i += 0x10) {
+		psc_write_byte(pIERbase + i, 0x0F);
+		psc_write_byte(pIFRbase + i, 0x0F);
+	}
+}
 
 /*
- * PSC पूर्णांकerrupt handler. It's a lot like the VIA पूर्णांकerrupt handler.
+ * PSC interrupt handler. It's a lot like the VIA interrupt handler.
  */
 
-अटल व्योम psc_irq(काष्ठा irq_desc *desc)
-अणु
-	अचिन्हित पूर्णांक offset = (अचिन्हित पूर्णांक)irq_desc_get_handler_data(desc);
-	अचिन्हित पूर्णांक irq = irq_desc_get_irq(desc);
-	पूर्णांक pIFR	= pIFRbase + offset;
-	पूर्णांक pIER	= pIERbase + offset;
-	पूर्णांक irq_num;
-	अचिन्हित अक्षर irq_bit, events;
+static void psc_irq(struct irq_desc *desc)
+{
+	unsigned int offset = (unsigned int)irq_desc_get_handler_data(desc);
+	unsigned int irq = irq_desc_get_irq(desc);
+	int pIFR	= pIFRbase + offset;
+	int pIER	= pIERbase + offset;
+	int irq_num;
+	unsigned char irq_bit, events;
 
-	events = psc_पढ़ो_byte(pIFR) & psc_पढ़ो_byte(pIER) & 0xF;
-	अगर (!events)
-		वापस;
+	events = psc_read_byte(pIFR) & psc_read_byte(pIER) & 0xF;
+	if (!events)
+		return;
 
 	irq_num = irq << 3;
 	irq_bit = 1;
-	करो अणु
-		अगर (events & irq_bit) अणु
-			psc_ग_लिखो_byte(pIFR, irq_bit);
+	do {
+		if (events & irq_bit) {
+			psc_write_byte(pIFR, irq_bit);
 			generic_handle_irq(irq_num);
-		पूर्ण
+		}
 		irq_num++;
 		irq_bit <<= 1;
-	पूर्ण जबतक (events >= irq_bit);
-पूर्ण
+	} while (events >= irq_bit);
+}
 
 /*
- * Register the PSC पूर्णांकerrupt dispatchers क्रम स्वतःvector पूर्णांकerrupts 3-6.
+ * Register the PSC interrupt dispatchers for autovector interrupts 3-6.
  */
 
-व्योम __init psc_रेजिस्टर_पूर्णांकerrupts(व्योम)
-अणु
-	irq_set_chained_handler_and_data(IRQ_AUTO_3, psc_irq, (व्योम *)0x30);
-	irq_set_chained_handler_and_data(IRQ_AUTO_4, psc_irq, (व्योम *)0x40);
-	irq_set_chained_handler_and_data(IRQ_AUTO_5, psc_irq, (व्योम *)0x50);
-	irq_set_chained_handler_and_data(IRQ_AUTO_6, psc_irq, (व्योम *)0x60);
-पूर्ण
+void __init psc_register_interrupts(void)
+{
+	irq_set_chained_handler_and_data(IRQ_AUTO_3, psc_irq, (void *)0x30);
+	irq_set_chained_handler_and_data(IRQ_AUTO_4, psc_irq, (void *)0x40);
+	irq_set_chained_handler_and_data(IRQ_AUTO_5, psc_irq, (void *)0x50);
+	irq_set_chained_handler_and_data(IRQ_AUTO_6, psc_irq, (void *)0x60);
+}
 
-व्योम psc_irq_enable(पूर्णांक irq) अणु
-	पूर्णांक irq_src	= IRQ_SRC(irq);
-	पूर्णांक irq_idx	= IRQ_IDX(irq);
-	पूर्णांक pIER	= pIERbase + (irq_src << 4);
+void psc_irq_enable(int irq) {
+	int irq_src	= IRQ_SRC(irq);
+	int irq_idx	= IRQ_IDX(irq);
+	int pIER	= pIERbase + (irq_src << 4);
 
-	psc_ग_लिखो_byte(pIER, (1 << irq_idx) | 0x80);
-पूर्ण
+	psc_write_byte(pIER, (1 << irq_idx) | 0x80);
+}
 
-व्योम psc_irq_disable(पूर्णांक irq) अणु
-	पूर्णांक irq_src	= IRQ_SRC(irq);
-	पूर्णांक irq_idx	= IRQ_IDX(irq);
-	पूर्णांक pIER	= pIERbase + (irq_src << 4);
+void psc_irq_disable(int irq) {
+	int irq_src	= IRQ_SRC(irq);
+	int irq_idx	= IRQ_IDX(irq);
+	int pIER	= pIERbase + (irq_src << 4);
 
-	psc_ग_लिखो_byte(pIER, 1 << irq_idx);
-पूर्ण
+	psc_write_byte(pIER, 1 << irq_idx);
+}

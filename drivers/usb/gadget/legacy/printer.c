@@ -1,29 +1,28 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * prपूर्णांकer.c -- Prपूर्णांकer gadget driver
+ * printer.c -- Printer gadget driver
  *
  * Copyright (C) 2003-2005 David Brownell
  * Copyright (C) 2006 Craig W. Nadler
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <यंत्र/byteorder.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <asm/byteorder.h>
 
-#समावेश <linux/usb/ch9.h>
-#समावेश <linux/usb/composite.h>
-#समावेश <linux/usb/gadget.h>
-#समावेश <linux/usb/g_prपूर्णांकer.h>
+#include <linux/usb/ch9.h>
+#include <linux/usb/composite.h>
+#include <linux/usb/gadget.h>
+#include <linux/usb/g_printer.h>
 
 USB_GADGET_COMPOSITE_OPTIONS();
 
-#घोषणा DRIVER_DESC		"Printer Gadget"
-#घोषणा DRIVER_VERSION		"2015 FEB 17"
+#define DRIVER_DESC		"Printer Gadget"
+#define DRIVER_VERSION		"2015 FEB 17"
 
-अटल स्थिर अक्षर लघुname [] = "printer";
+static const char shortname [] = "printer";
 
-#समावेश "u_printer.h"
+#include "u_printer.h"
 
 /*-------------------------------------------------------------------------*/
 
@@ -31,195 +30,195 @@ USB_GADGET_COMPOSITE_OPTIONS();
  * Instead:  allocate your own, using normal USB-IF procedures.
  */
 
-/* Thanks to NetChip Technologies क्रम करोnating this product ID.
+/* Thanks to NetChip Technologies for donating this product ID.
  */
-#घोषणा PRINTER_VENDOR_NUM	0x0525		/* NetChip */
-#घोषणा PRINTER_PRODUCT_NUM	0xa4a8		/* Linux-USB Prपूर्णांकer Gadget */
+#define PRINTER_VENDOR_NUM	0x0525		/* NetChip */
+#define PRINTER_PRODUCT_NUM	0xa4a8		/* Linux-USB Printer Gadget */
 
-/* Some प्रणालीs will want dअगरferent product identअगरiers published in the
+/* Some systems will want different product identifiers published in the
  * device descriptor, either numbers or strings or both.  These string
- * parameters are in UTF-8 (superset of ASCII's 7 bit अक्षरacters).
+ * parameters are in UTF-8 (superset of ASCII's 7 bit characters).
  */
 
-module_param_named(iSerialNum, coverग_लिखो.serial_number, अक्षरp, S_IRUGO);
+module_param_named(iSerialNum, coverwrite.serial_number, charp, S_IRUGO);
 MODULE_PARM_DESC(iSerialNum, "1");
 
-अटल अक्षर *iPNPstring;
-module_param(iPNPstring, अक्षरp, S_IRUGO);
+static char *iPNPstring;
+module_param(iPNPstring, charp, S_IRUGO);
 MODULE_PARM_DESC(iPNPstring, "MFG:linux;MDL:g_printer;CLS:PRINTER;SN:1;");
 
-/* Number of requests to allocate per endpoपूर्णांक, not used क्रम ep0. */
-अटल अचिन्हित qlen = 10;
-module_param(qlen, uपूर्णांक, S_IRUGO|S_IWUSR);
+/* Number of requests to allocate per endpoint, not used for ep0. */
+static unsigned qlen = 10;
+module_param(qlen, uint, S_IRUGO|S_IWUSR);
 
-#घोषणा QLEN	qlen
+#define QLEN	qlen
 
-अटल काष्ठा usb_function_instance *fi_prपूर्णांकer;
-अटल काष्ठा usb_function *f_prपूर्णांकer;
+static struct usb_function_instance *fi_printer;
+static struct usb_function *f_printer;
 
 /*-------------------------------------------------------------------------*/
 
 /*
- * DESCRIPTORS ... most are अटल, but strings and (full) configuration
+ * DESCRIPTORS ... most are static, but strings and (full) configuration
  * descriptors are built on demand.
  */
 
-अटल काष्ठा usb_device_descriptor device_desc = अणु
-	.bLength =		माप device_desc,
+static struct usb_device_descriptor device_desc = {
+	.bLength =		sizeof device_desc,
 	.bDescriptorType =	USB_DT_DEVICE,
 	/* .bcdUSB = DYNAMIC */
 	.bDeviceClass =		USB_CLASS_PER_INTERFACE,
 	.bDeviceSubClass =	0,
 	.bDeviceProtocol =	0,
-	.idVenकरोr =		cpu_to_le16(PRINTER_VENDOR_NUM),
+	.idVendor =		cpu_to_le16(PRINTER_VENDOR_NUM),
 	.idProduct =		cpu_to_le16(PRINTER_PRODUCT_NUM),
 	.bNumConfigurations =	1
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा usb_descriptor_header *otg_desc[2];
+static const struct usb_descriptor_header *otg_desc[2];
 
 /*-------------------------------------------------------------------------*/
 
 /* descriptors that are built on-demand */
 
-अटल अक्षर				product_desc [40] = DRIVER_DESC;
-अटल अक्षर				serial_num [40] = "1";
-अटल अक्षर				*pnp_string =
+static char				product_desc [40] = DRIVER_DESC;
+static char				serial_num [40] = "1";
+static char				*pnp_string =
 	"MFG:linux;MDL:g_printer;CLS:PRINTER;SN:1;";
 
-/* अटल strings, in UTF-8 */
-अटल काष्ठा usb_string		strings [] = अणु
+/* static strings, in UTF-8 */
+static struct usb_string		strings [] = {
 	[USB_GADGET_MANUFACTURER_IDX].s = "",
 	[USB_GADGET_PRODUCT_IDX].s = product_desc,
 	[USB_GADGET_SERIAL_IDX].s =	serial_num,
-	अणु  पूर्ण		/* end of list */
-पूर्ण;
+	{  }		/* end of list */
+};
 
-अटल काष्ठा usb_gadget_strings	stringtab_dev = अणु
+static struct usb_gadget_strings	stringtab_dev = {
 	.language	= 0x0409,	/* en-us */
 	.strings	= strings,
-पूर्ण;
+};
 
-अटल काष्ठा usb_gadget_strings *dev_strings[] = अणु
+static struct usb_gadget_strings *dev_strings[] = {
 	&stringtab_dev,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा usb_configuration prपूर्णांकer_cfg_driver = अणु
+static struct usb_configuration printer_cfg_driver = {
 	.label			= "printer",
 	.bConfigurationValue	= 1,
 	.bmAttributes		= USB_CONFIG_ATT_ONE | USB_CONFIG_ATT_SELFPOWER,
-पूर्ण;
+};
 
-अटल पूर्णांक prपूर्णांकer_करो_config(काष्ठा usb_configuration *c)
-अणु
-	काष्ठा usb_gadget	*gadget = c->cdev->gadget;
-	पूर्णांक			status = 0;
+static int printer_do_config(struct usb_configuration *c)
+{
+	struct usb_gadget	*gadget = c->cdev->gadget;
+	int			status = 0;
 
-	usb_ep_स्वतःconfig_reset(gadget);
+	usb_ep_autoconfig_reset(gadget);
 
-	usb_gadget_set_selfघातered(gadget);
+	usb_gadget_set_selfpowered(gadget);
 
-	अगर (gadget_is_otg(gadget)) अणु
-		prपूर्णांकer_cfg_driver.descriptors = otg_desc;
-		prपूर्णांकer_cfg_driver.bmAttributes |= USB_CONFIG_ATT_WAKEUP;
-	पूर्ण
+	if (gadget_is_otg(gadget)) {
+		printer_cfg_driver.descriptors = otg_desc;
+		printer_cfg_driver.bmAttributes |= USB_CONFIG_ATT_WAKEUP;
+	}
 
-	f_prपूर्णांकer = usb_get_function(fi_prपूर्णांकer);
-	अगर (IS_ERR(f_prपूर्णांकer))
-		वापस PTR_ERR(f_prपूर्णांकer);
+	f_printer = usb_get_function(fi_printer);
+	if (IS_ERR(f_printer))
+		return PTR_ERR(f_printer);
 
-	status = usb_add_function(c, f_prपूर्णांकer);
-	अगर (status < 0)
-		usb_put_function(f_prपूर्णांकer);
+	status = usb_add_function(c, f_printer);
+	if (status < 0)
+		usb_put_function(f_printer);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक prपूर्णांकer_bind(काष्ठा usb_composite_dev *cdev)
-अणु
-	काष्ठा f_prपूर्णांकer_opts *opts;
-	पूर्णांक ret;
+static int printer_bind(struct usb_composite_dev *cdev)
+{
+	struct f_printer_opts *opts;
+	int ret;
 
-	fi_prपूर्णांकer = usb_get_function_instance("printer");
-	अगर (IS_ERR(fi_prपूर्णांकer))
-		वापस PTR_ERR(fi_prपूर्णांकer);
+	fi_printer = usb_get_function_instance("printer");
+	if (IS_ERR(fi_printer))
+		return PTR_ERR(fi_printer);
 
-	opts = container_of(fi_prपूर्णांकer, काष्ठा f_prपूर्णांकer_opts, func_inst);
+	opts = container_of(fi_printer, struct f_printer_opts, func_inst);
 	opts->minor = 0;
 	opts->q_len = QLEN;
-	अगर (iPNPstring) अणु
+	if (iPNPstring) {
 		opts->pnp_string = kstrdup(iPNPstring, GFP_KERNEL);
-		अगर (!opts->pnp_string) अणु
+		if (!opts->pnp_string) {
 			ret = -ENOMEM;
-			जाओ fail_put_func_inst;
-		पूर्ण
+			goto fail_put_func_inst;
+		}
 		opts->pnp_string_allocated = true;
 		/*
-		 * we करोn't मुक्त this memory in हाल of error
-		 * as prपूर्णांकer cleanup func will करो this क्रम us
+		 * we don't free this memory in case of error
+		 * as printer cleanup func will do this for us
 		 */
-	पूर्ण अन्यथा अणु
+	} else {
 		opts->pnp_string = pnp_string;
-	पूर्ण
+	}
 
 	ret = usb_string_ids_tab(cdev, strings);
-	अगर (ret < 0)
-		जाओ fail_put_func_inst;
+	if (ret < 0)
+		goto fail_put_func_inst;
 
 	device_desc.iManufacturer = strings[USB_GADGET_MANUFACTURER_IDX].id;
 	device_desc.iProduct = strings[USB_GADGET_PRODUCT_IDX].id;
 	device_desc.iSerialNumber = strings[USB_GADGET_SERIAL_IDX].id;
 
-	अगर (gadget_is_otg(cdev->gadget) && !otg_desc[0]) अणु
-		काष्ठा usb_descriptor_header *usb_desc;
+	if (gadget_is_otg(cdev->gadget) && !otg_desc[0]) {
+		struct usb_descriptor_header *usb_desc;
 
 		usb_desc = usb_otg_descriptor_alloc(cdev->gadget);
-		अगर (!usb_desc) अणु
+		if (!usb_desc) {
 			ret = -ENOMEM;
-			जाओ fail_put_func_inst;
-		पूर्ण
+			goto fail_put_func_inst;
+		}
 		usb_otg_descriptor_init(cdev->gadget, usb_desc);
 		otg_desc[0] = usb_desc;
-		otg_desc[1] = शून्य;
-	पूर्ण
+		otg_desc[1] = NULL;
+	}
 
-	ret = usb_add_config(cdev, &prपूर्णांकer_cfg_driver, prपूर्णांकer_करो_config);
-	अगर (ret)
-		जाओ fail_मुक्त_otg_desc;
+	ret = usb_add_config(cdev, &printer_cfg_driver, printer_do_config);
+	if (ret)
+		goto fail_free_otg_desc;
 
-	usb_composite_overग_लिखो_options(cdev, &coverग_लिखो);
-	वापस ret;
+	usb_composite_overwrite_options(cdev, &coverwrite);
+	return ret;
 
-fail_मुक्त_otg_desc:
-	kमुक्त(otg_desc[0]);
-	otg_desc[0] = शून्य;
+fail_free_otg_desc:
+	kfree(otg_desc[0]);
+	otg_desc[0] = NULL;
 fail_put_func_inst:
-	usb_put_function_instance(fi_prपूर्णांकer);
-	वापस ret;
-पूर्ण
+	usb_put_function_instance(fi_printer);
+	return ret;
+}
 
-अटल पूर्णांक prपूर्णांकer_unbind(काष्ठा usb_composite_dev *cdev)
-अणु
-	usb_put_function(f_prपूर्णांकer);
-	usb_put_function_instance(fi_prपूर्णांकer);
+static int printer_unbind(struct usb_composite_dev *cdev)
+{
+	usb_put_function(f_printer);
+	usb_put_function_instance(fi_printer);
 
-	kमुक्त(otg_desc[0]);
-	otg_desc[0] = शून्य;
+	kfree(otg_desc[0]);
+	otg_desc[0] = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा usb_composite_driver prपूर्णांकer_driver = अणु
-	.name           = लघुname,
+static struct usb_composite_driver printer_driver = {
+	.name           = shortname,
 	.dev            = &device_desc,
 	.strings        = dev_strings,
 	.max_speed      = USB_SPEED_SUPER,
-	.bind		= prपूर्णांकer_bind,
-	.unbind		= prपूर्णांकer_unbind,
-पूर्ण;
+	.bind		= printer_bind,
+	.unbind		= printer_unbind,
+};
 
-module_usb_composite_driver(prपूर्णांकer_driver);
+module_usb_composite_driver(printer_driver);
 
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_AUTHOR("Craig Nadler");

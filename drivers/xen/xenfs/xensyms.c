@@ -1,153 +1,152 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/init.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/slab.h>
-#समावेश <xen/पूर्णांकerface/platक्रमm.h>
-#समावेश <यंत्र/xen/hypercall.h>
-#समावेश <xen/xen-ops.h>
-#समावेश "xenfs.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/init.h>
+#include <linux/seq_file.h>
+#include <linux/fs.h>
+#include <linux/mm.h>
+#include <linux/proc_fs.h>
+#include <linux/slab.h>
+#include <xen/interface/platform.h>
+#include <asm/xen/hypercall.h>
+#include <xen/xen-ops.h>
+#include "xenfs.h"
 
 
-#घोषणा XEN_KSYM_NAME_LEN 127 /* Hypervisor may have dअगरferent name length */
+#define XEN_KSYM_NAME_LEN 127 /* Hypervisor may have different name length */
 
-काष्ठा xensyms अणु
-	काष्ठा xen_platक्रमm_op op;
-	अक्षर *name;
-	uपूर्णांक32_t namelen;
-पूर्ण;
+struct xensyms {
+	struct xen_platform_op op;
+	char *name;
+	uint32_t namelen;
+};
 
 /* Grab next output page from the hypervisor */
-अटल पूर्णांक xensyms_next_sym(काष्ठा xensyms *xs)
-अणु
-	पूर्णांक ret;
-	काष्ठा xenpf_symdata *symdata = &xs->op.u.symdata;
-	uपूर्णांक64_t symnum;
+static int xensyms_next_sym(struct xensyms *xs)
+{
+	int ret;
+	struct xenpf_symdata *symdata = &xs->op.u.symdata;
+	uint64_t symnum;
 
-	स_रखो(xs->name, 0, xs->namelen);
+	memset(xs->name, 0, xs->namelen);
 	symdata->namelen = xs->namelen;
 
 	symnum = symdata->symnum;
 
-	ret = HYPERVISOR_platक्रमm_op(&xs->op);
-	अगर (ret < 0)
-		वापस ret;
+	ret = HYPERVISOR_platform_op(&xs->op);
+	if (ret < 0)
+		return ret;
 
 	/*
-	 * If hypervisor's symbol didn't fit पूर्णांकo the buffer then allocate
+	 * If hypervisor's symbol didn't fit into the buffer then allocate
 	 * a larger buffer and try again.
 	 */
-	अगर (unlikely(symdata->namelen > xs->namelen)) अणु
-		kमुक्त(xs->name);
+	if (unlikely(symdata->namelen > xs->namelen)) {
+		kfree(xs->name);
 
 		xs->namelen = symdata->namelen;
 		xs->name = kzalloc(xs->namelen, GFP_KERNEL);
-		अगर (!xs->name)
-			वापस -ENOMEM;
+		if (!xs->name)
+			return -ENOMEM;
 
 		set_xen_guest_handle(symdata->name, xs->name);
 		symdata->symnum--; /* Rewind */
 
-		ret = HYPERVISOR_platक्रमm_op(&xs->op);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		ret = HYPERVISOR_platform_op(&xs->op);
+		if (ret < 0)
+			return ret;
+	}
 
-	अगर (symdata->symnum == symnum)
+	if (symdata->symnum == symnum)
 		/* End of symbols */
-		वापस 1;
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम *xensyms_start(काष्ठा seq_file *m, loff_t *pos)
-अणु
-	काष्ठा xensyms *xs = (काष्ठा xensyms *)m->निजी;
+static void *xensyms_start(struct seq_file *m, loff_t *pos)
+{
+	struct xensyms *xs = (struct xensyms *)m->private;
 
 	xs->op.u.symdata.symnum = *pos;
 
-	अगर (xensyms_next_sym(xs))
-		वापस शून्य;
+	if (xensyms_next_sym(xs))
+		return NULL;
 
-	वापस m->निजी;
-पूर्ण
+	return m->private;
+}
 
-अटल व्योम *xensyms_next(काष्ठा seq_file *m, व्योम *p, loff_t *pos)
-अणु
-	काष्ठा xensyms *xs = (काष्ठा xensyms *)m->निजी;
+static void *xensyms_next(struct seq_file *m, void *p, loff_t *pos)
+{
+	struct xensyms *xs = (struct xensyms *)m->private;
 
 	xs->op.u.symdata.symnum = ++(*pos);
 
-	अगर (xensyms_next_sym(xs))
-		वापस शून्य;
+	if (xensyms_next_sym(xs))
+		return NULL;
 
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल पूर्णांक xensyms_show(काष्ठा seq_file *m, व्योम *p)
-अणु
-	काष्ठा xensyms *xs = (काष्ठा xensyms *)m->निजी;
-	काष्ठा xenpf_symdata *symdata = &xs->op.u.symdata;
+static int xensyms_show(struct seq_file *m, void *p)
+{
+	struct xensyms *xs = (struct xensyms *)m->private;
+	struct xenpf_symdata *symdata = &xs->op.u.symdata;
 
-	seq_म_लिखो(m, "%016llx %c %s\n", symdata->address,
+	seq_printf(m, "%016llx %c %s\n", symdata->address,
 		   symdata->type, xs->name);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम xensyms_stop(काष्ठा seq_file *m, व्योम *p)
-अणु
-पूर्ण
+static void xensyms_stop(struct seq_file *m, void *p)
+{
+}
 
-अटल स्थिर काष्ठा seq_operations xensyms_seq_ops = अणु
+static const struct seq_operations xensyms_seq_ops = {
 	.start = xensyms_start,
 	.next = xensyms_next,
 	.show = xensyms_show,
 	.stop = xensyms_stop,
-पूर्ण;
+};
 
-अटल पूर्णांक xensyms_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा seq_file *m;
-	काष्ठा xensyms *xs;
-	पूर्णांक ret;
+static int xensyms_open(struct inode *inode, struct file *file)
+{
+	struct seq_file *m;
+	struct xensyms *xs;
+	int ret;
 
-	ret = seq_खोलो_निजी(file, &xensyms_seq_ops,
-			       माप(काष्ठा xensyms));
-	अगर (ret)
-		वापस ret;
+	ret = seq_open_private(file, &xensyms_seq_ops,
+			       sizeof(struct xensyms));
+	if (ret)
+		return ret;
 
-	m = file->निजी_data;
-	xs = (काष्ठा xensyms *)m->निजी;
+	m = file->private_data;
+	xs = (struct xensyms *)m->private;
 
 	xs->namelen = XEN_KSYM_NAME_LEN + 1;
 	xs->name = kzalloc(xs->namelen, GFP_KERNEL);
-	अगर (!xs->name) अणु
-		seq_release_निजी(inode, file);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!xs->name) {
+		seq_release_private(inode, file);
+		return -ENOMEM;
+	}
 	set_xen_guest_handle(xs->op.u.symdata.name, xs->name);
 	xs->op.cmd = XENPF_get_symbol;
 	xs->op.u.symdata.namelen = xs->namelen;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xensyms_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा seq_file *m = file->निजी_data;
-	काष्ठा xensyms *xs = (काष्ठा xensyms *)m->निजी;
+static int xensyms_release(struct inode *inode, struct file *file)
+{
+	struct seq_file *m = file->private_data;
+	struct xensyms *xs = (struct xensyms *)m->private;
 
-	kमुक्त(xs->name);
-	वापस seq_release_निजी(inode, file);
-पूर्ण
+	kfree(xs->name);
+	return seq_release_private(inode, file);
+}
 
-स्थिर काष्ठा file_operations xensyms_ops = अणु
-	.खोलो = xensyms_खोलो,
-	.पढ़ो = seq_पढ़ो,
+const struct file_operations xensyms_ops = {
+	.open = xensyms_open,
+	.read = seq_read,
 	.llseek = seq_lseek,
 	.release = xensyms_release
-पूर्ण;
+};

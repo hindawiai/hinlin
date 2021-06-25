@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
-#अगर_अघोषित __NET_CFG80211_WEXT_H
-#घोषणा __NET_CFG80211_WEXT_H
+/* SPDX-License-Identifier: GPL-2.0-only */
+#ifndef __NET_CFG80211_WEXT_H
+#define __NET_CFG80211_WEXT_H
 /*
- * 802.11 device and configuration पूर्णांकerface -- wext handlers
+ * 802.11 device and configuration interface -- wext handlers
  *
  * Copyright 2006-2010	Johannes Berg <johannes@sipsolutions.net>
  */
 
-#समावेश <linux/netdevice.h>
-#समावेश <linux/wireless.h>
-#समावेश <net/iw_handler.h>
+#include <linux/netdevice.h>
+#include <linux/wireless.h>
+#include <net/iw_handler.h>
 
 /*
  * Temporary wext handlers & helper functions
@@ -18,36 +17,36 @@
  * These are used only by drivers that aren't yet fully
  * converted to cfg80211.
  */
-पूर्णांक cfg80211_wext_giwname(काष्ठा net_device *dev,
-			  काष्ठा iw_request_info *info,
-			  अक्षर *name, अक्षर *extra);
-पूर्णांक cfg80211_wext_siwmode(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			  u32 *mode, अक्षर *extra);
-पूर्णांक cfg80211_wext_giwmode(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			  u32 *mode, अक्षर *extra);
-पूर्णांक cfg80211_wext_siwscan(काष्ठा net_device *dev,
-			  काष्ठा iw_request_info *info,
-			  जोड़ iwreq_data *wrqu, अक्षर *extra);
-पूर्णांक cfg80211_wext_giwscan(काष्ठा net_device *dev,
-			  काष्ठा iw_request_info *info,
-			  काष्ठा iw_poपूर्णांक *data, अक्षर *extra);
-पूर्णांक cfg80211_wext_giwrange(काष्ठा net_device *dev,
-			   काष्ठा iw_request_info *info,
-			   काष्ठा iw_poपूर्णांक *data, अक्षर *extra);
-पूर्णांक cfg80211_wext_siwrts(काष्ठा net_device *dev,
-			 काष्ठा iw_request_info *info,
-			 काष्ठा iw_param *rts, अक्षर *extra);
-पूर्णांक cfg80211_wext_giwrts(काष्ठा net_device *dev,
-			 काष्ठा iw_request_info *info,
-			 काष्ठा iw_param *rts, अक्षर *extra);
-पूर्णांक cfg80211_wext_siwfrag(काष्ठा net_device *dev,
-			  काष्ठा iw_request_info *info,
-			  काष्ठा iw_param *frag, अक्षर *extra);
-पूर्णांक cfg80211_wext_giwfrag(काष्ठा net_device *dev,
-			  काष्ठा iw_request_info *info,
-			  काष्ठा iw_param *frag, अक्षर *extra);
-पूर्णांक cfg80211_wext_giwretry(काष्ठा net_device *dev,
-			   काष्ठा iw_request_info *info,
-			   काष्ठा iw_param *retry, अक्षर *extra);
+int cfg80211_wext_giwname(struct net_device *dev,
+			  struct iw_request_info *info,
+			  char *name, char *extra);
+int cfg80211_wext_siwmode(struct net_device *dev, struct iw_request_info *info,
+			  u32 *mode, char *extra);
+int cfg80211_wext_giwmode(struct net_device *dev, struct iw_request_info *info,
+			  u32 *mode, char *extra);
+int cfg80211_wext_siwscan(struct net_device *dev,
+			  struct iw_request_info *info,
+			  union iwreq_data *wrqu, char *extra);
+int cfg80211_wext_giwscan(struct net_device *dev,
+			  struct iw_request_info *info,
+			  struct iw_point *data, char *extra);
+int cfg80211_wext_giwrange(struct net_device *dev,
+			   struct iw_request_info *info,
+			   struct iw_point *data, char *extra);
+int cfg80211_wext_siwrts(struct net_device *dev,
+			 struct iw_request_info *info,
+			 struct iw_param *rts, char *extra);
+int cfg80211_wext_giwrts(struct net_device *dev,
+			 struct iw_request_info *info,
+			 struct iw_param *rts, char *extra);
+int cfg80211_wext_siwfrag(struct net_device *dev,
+			  struct iw_request_info *info,
+			  struct iw_param *frag, char *extra);
+int cfg80211_wext_giwfrag(struct net_device *dev,
+			  struct iw_request_info *info,
+			  struct iw_param *frag, char *extra);
+int cfg80211_wext_giwretry(struct net_device *dev,
+			   struct iw_request_info *info,
+			   struct iw_param *retry, char *extra);
 
-#पूर्ण_अगर /* __NET_CFG80211_WEXT_H */
+#endif /* __NET_CFG80211_WEXT_H */

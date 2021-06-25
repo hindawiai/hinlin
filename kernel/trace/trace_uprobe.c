@@ -1,465 +1,464 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * uprobes-based tracing events
  *
  * Copyright (C) IBM Corporation, 2010-2012
  * Author:	Srikar Dronamraju <srikar@linux.vnet.ibm.com>
  */
-#घोषणा pr_fmt(fmt)	"trace_uprobe: " fmt
+#define pr_fmt(fmt)	"trace_uprobe: " fmt
 
-#समावेश <linux/security.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/module.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/uprobes.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/rculist.h>
+#include <linux/security.h>
+#include <linux/ctype.h>
+#include <linux/module.h>
+#include <linux/uaccess.h>
+#include <linux/uprobes.h>
+#include <linux/namei.h>
+#include <linux/string.h>
+#include <linux/rculist.h>
 
-#समावेश "trace_dynevent.h"
-#समावेश "trace_probe.h"
-#समावेश "trace_probe_tmpl.h"
+#include "trace_dynevent.h"
+#include "trace_probe.h"
+#include "trace_probe_tmpl.h"
 
-#घोषणा UPROBE_EVENT_SYSTEM	"uprobes"
+#define UPROBE_EVENT_SYSTEM	"uprobes"
 
-काष्ठा uprobe_trace_entry_head अणु
-	काष्ठा trace_entry	ent;
-	अचिन्हित दीर्घ		vaddr[];
-पूर्ण;
+struct uprobe_trace_entry_head {
+	struct trace_entry	ent;
+	unsigned long		vaddr[];
+};
 
-#घोषणा SIZखातापूर्ण_TRACE_ENTRY(is_वापस)			\
-	(माप(काष्ठा uprobe_trace_entry_head) +	\
-	 माप(अचिन्हित दीर्घ) * (is_वापस ? 2 : 1))
+#define SIZEOF_TRACE_ENTRY(is_return)			\
+	(sizeof(struct uprobe_trace_entry_head) +	\
+	 sizeof(unsigned long) * (is_return ? 2 : 1))
 
-#घोषणा DATAOF_TRACE_ENTRY(entry, is_वापस)		\
-	((व्योम*)(entry) + SIZखातापूर्ण_TRACE_ENTRY(is_वापस))
+#define DATAOF_TRACE_ENTRY(entry, is_return)		\
+	((void*)(entry) + SIZEOF_TRACE_ENTRY(is_return))
 
-अटल पूर्णांक trace_uprobe_create(स्थिर अक्षर *raw_command);
-अटल पूर्णांक trace_uprobe_show(काष्ठा seq_file *m, काष्ठा dyn_event *ev);
-अटल पूर्णांक trace_uprobe_release(काष्ठा dyn_event *ev);
-अटल bool trace_uprobe_is_busy(काष्ठा dyn_event *ev);
-अटल bool trace_uprobe_match(स्थिर अक्षर *प्रणाली, स्थिर अक्षर *event,
-			पूर्णांक argc, स्थिर अक्षर **argv, काष्ठा dyn_event *ev);
+static int trace_uprobe_create(const char *raw_command);
+static int trace_uprobe_show(struct seq_file *m, struct dyn_event *ev);
+static int trace_uprobe_release(struct dyn_event *ev);
+static bool trace_uprobe_is_busy(struct dyn_event *ev);
+static bool trace_uprobe_match(const char *system, const char *event,
+			int argc, const char **argv, struct dyn_event *ev);
 
-अटल काष्ठा dyn_event_operations trace_uprobe_ops = अणु
+static struct dyn_event_operations trace_uprobe_ops = {
 	.create = trace_uprobe_create,
 	.show = trace_uprobe_show,
 	.is_busy = trace_uprobe_is_busy,
-	.मुक्त = trace_uprobe_release,
+	.free = trace_uprobe_release,
 	.match = trace_uprobe_match,
-पूर्ण;
+};
 
 /*
  * uprobe event core functions
  */
-काष्ठा trace_uprobe अणु
-	काष्ठा dyn_event		devent;
-	काष्ठा uprobe_consumer		consumer;
-	काष्ठा path			path;
-	काष्ठा inode			*inode;
-	अक्षर				*filename;
-	अचिन्हित दीर्घ			offset;
-	अचिन्हित दीर्घ			ref_ctr_offset;
-	अचिन्हित दीर्घ			nhit;
-	काष्ठा trace_probe		tp;
-पूर्ण;
+struct trace_uprobe {
+	struct dyn_event		devent;
+	struct uprobe_consumer		consumer;
+	struct path			path;
+	struct inode			*inode;
+	char				*filename;
+	unsigned long			offset;
+	unsigned long			ref_ctr_offset;
+	unsigned long			nhit;
+	struct trace_probe		tp;
+};
 
-अटल bool is_trace_uprobe(काष्ठा dyn_event *ev)
-अणु
-	वापस ev->ops == &trace_uprobe_ops;
-पूर्ण
+static bool is_trace_uprobe(struct dyn_event *ev)
+{
+	return ev->ops == &trace_uprobe_ops;
+}
 
-अटल काष्ठा trace_uprobe *to_trace_uprobe(काष्ठा dyn_event *ev)
-अणु
-	वापस container_of(ev, काष्ठा trace_uprobe, devent);
-पूर्ण
+static struct trace_uprobe *to_trace_uprobe(struct dyn_event *ev)
+{
+	return container_of(ev, struct trace_uprobe, devent);
+}
 
 /**
- * क्रम_each_trace_uprobe - iterate over the trace_uprobe list
- * @pos:	the काष्ठा trace_uprobe * क्रम each entry
- * @dpos:	the काष्ठा dyn_event * to use as a loop cursor
+ * for_each_trace_uprobe - iterate over the trace_uprobe list
+ * @pos:	the struct trace_uprobe * for each entry
+ * @dpos:	the struct dyn_event * to use as a loop cursor
  */
-#घोषणा क्रम_each_trace_uprobe(pos, dpos)	\
-	क्रम_each_dyn_event(dpos)		\
-		अगर (is_trace_uprobe(dpos) && (pos = to_trace_uprobe(dpos)))
+#define for_each_trace_uprobe(pos, dpos)	\
+	for_each_dyn_event(dpos)		\
+		if (is_trace_uprobe(dpos) && (pos = to_trace_uprobe(dpos)))
 
-#घोषणा SIZखातापूर्ण_TRACE_UPROBE(n)				\
-	(दुरत्व(काष्ठा trace_uprobe, tp.args) +	\
-	(माप(काष्ठा probe_arg) * (n)))
+#define SIZEOF_TRACE_UPROBE(n)				\
+	(offsetof(struct trace_uprobe, tp.args) +	\
+	(sizeof(struct probe_arg) * (n)))
 
-अटल पूर्णांक रेजिस्टर_uprobe_event(काष्ठा trace_uprobe *tu);
-अटल पूर्णांक unरेजिस्टर_uprobe_event(काष्ठा trace_uprobe *tu);
+static int register_uprobe_event(struct trace_uprobe *tu);
+static int unregister_uprobe_event(struct trace_uprobe *tu);
 
-काष्ठा uprobe_dispatch_data अणु
-	काष्ठा trace_uprobe	*tu;
-	अचिन्हित दीर्घ		bp_addr;
-पूर्ण;
+struct uprobe_dispatch_data {
+	struct trace_uprobe	*tu;
+	unsigned long		bp_addr;
+};
 
-अटल पूर्णांक uprobe_dispatcher(काष्ठा uprobe_consumer *con, काष्ठा pt_regs *regs);
-अटल पूर्णांक uretprobe_dispatcher(काष्ठा uprobe_consumer *con,
-				अचिन्हित दीर्घ func, काष्ठा pt_regs *regs);
+static int uprobe_dispatcher(struct uprobe_consumer *con, struct pt_regs *regs);
+static int uretprobe_dispatcher(struct uprobe_consumer *con,
+				unsigned long func, struct pt_regs *regs);
 
-#अगर_घोषित CONFIG_STACK_GROWSUP
-अटल अचिन्हित दीर्घ adjust_stack_addr(अचिन्हित दीर्घ addr, अचिन्हित पूर्णांक n)
-अणु
-	वापस addr - (n * माप(दीर्घ));
-पूर्ण
-#अन्यथा
-अटल अचिन्हित दीर्घ adjust_stack_addr(अचिन्हित दीर्घ addr, अचिन्हित पूर्णांक n)
-अणु
-	वापस addr + (n * माप(दीर्घ));
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_STACK_GROWSUP
+static unsigned long adjust_stack_addr(unsigned long addr, unsigned int n)
+{
+	return addr - (n * sizeof(long));
+}
+#else
+static unsigned long adjust_stack_addr(unsigned long addr, unsigned int n)
+{
+	return addr + (n * sizeof(long));
+}
+#endif
 
-अटल अचिन्हित दीर्घ get_user_stack_nth(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक n)
-अणु
-	अचिन्हित दीर्घ ret;
-	अचिन्हित दीर्घ addr = user_stack_poपूर्णांकer(regs);
+static unsigned long get_user_stack_nth(struct pt_regs *regs, unsigned int n)
+{
+	unsigned long ret;
+	unsigned long addr = user_stack_pointer(regs);
 
 	addr = adjust_stack_addr(addr, n);
 
-	अगर (copy_from_user(&ret, (व्योम __क्रमce __user *) addr, माप(ret)))
-		वापस 0;
+	if (copy_from_user(&ret, (void __force __user *) addr, sizeof(ret)))
+		return 0;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Uprobes-specअगरic fetch functions
+ * Uprobes-specific fetch functions
  */
-अटल nokprobe_अंतरभूत पूर्णांक
-probe_mem_पढ़ो(व्योम *dest, व्योम *src, माप_प्रकार size)
-अणु
-	व्योम __user *vaddr = (व्योम __क्रमce __user *)src;
+static nokprobe_inline int
+probe_mem_read(void *dest, void *src, size_t size)
+{
+	void __user *vaddr = (void __force __user *)src;
 
-	वापस copy_from_user(dest, vaddr, size) ? -EFAULT : 0;
-पूर्ण
+	return copy_from_user(dest, vaddr, size) ? -EFAULT : 0;
+}
 
-अटल nokprobe_अंतरभूत पूर्णांक
-probe_mem_पढ़ो_user(व्योम *dest, व्योम *src, माप_प्रकार size)
-अणु
-	वापस probe_mem_पढ़ो(dest, src, size);
-पूर्ण
+static nokprobe_inline int
+probe_mem_read_user(void *dest, void *src, size_t size)
+{
+	return probe_mem_read(dest, src, size);
+}
 
 /*
  * Fetch a null-terminated string. Caller MUST set *(u32 *)dest with max
  * length and relative data location.
  */
-अटल nokprobe_अंतरभूत पूर्णांक
-fetch_store_string(अचिन्हित दीर्घ addr, व्योम *dest, व्योम *base)
-अणु
-	दीर्घ ret;
+static nokprobe_inline int
+fetch_store_string(unsigned long addr, void *dest, void *base)
+{
+	long ret;
 	u32 loc = *(u32 *)dest;
-	पूर्णांक maxlen  = get_loc_len(loc);
+	int maxlen  = get_loc_len(loc);
 	u8 *dst = get_loc_data(dest, base);
-	व्योम __user *src = (व्योम __क्रमce __user *) addr;
+	void __user *src = (void __force __user *) addr;
 
-	अगर (unlikely(!maxlen))
-		वापस -ENOMEM;
+	if (unlikely(!maxlen))
+		return -ENOMEM;
 
-	अगर (addr == FETCH_TOKEN_COMM)
+	if (addr == FETCH_TOKEN_COMM)
 		ret = strlcpy(dst, current->comm, maxlen);
-	अन्यथा
-		ret = म_नकलन_from_user(dst, src, maxlen);
-	अगर (ret >= 0) अणु
-		अगर (ret == maxlen)
+	else
+		ret = strncpy_from_user(dst, src, maxlen);
+	if (ret >= 0) {
+		if (ret == maxlen)
 			dst[ret - 1] = '\0';
-		अन्यथा
+		else
 			/*
-			 * Include the terminating null byte. In this हाल it
-			 * was copied by म_नकलन_from_user but not accounted
-			 * क्रम in ret.
+			 * Include the terminating null byte. In this case it
+			 * was copied by strncpy_from_user but not accounted
+			 * for in ret.
 			 */
 			ret++;
-		*(u32 *)dest = make_data_loc(ret, (व्योम *)dst - base);
-	पूर्ण
+		*(u32 *)dest = make_data_loc(ret, (void *)dst - base);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल nokprobe_अंतरभूत पूर्णांक
-fetch_store_string_user(अचिन्हित दीर्घ addr, व्योम *dest, व्योम *base)
-अणु
-	वापस fetch_store_string(addr, dest, base);
-पूर्ण
+static nokprobe_inline int
+fetch_store_string_user(unsigned long addr, void *dest, void *base)
+{
+	return fetch_store_string(addr, dest, base);
+}
 
 /* Return the length of string -- including null terminal byte */
-अटल nokprobe_अंतरभूत पूर्णांक
-fetch_store_म_माप(अचिन्हित दीर्घ addr)
-अणु
-	पूर्णांक len;
-	व्योम __user *vaddr = (व्योम __क्रमce __user *) addr;
+static nokprobe_inline int
+fetch_store_strlen(unsigned long addr)
+{
+	int len;
+	void __user *vaddr = (void __force __user *) addr;
 
-	अगर (addr == FETCH_TOKEN_COMM)
-		len = म_माप(current->comm) + 1;
-	अन्यथा
+	if (addr == FETCH_TOKEN_COMM)
+		len = strlen(current->comm) + 1;
+	else
 		len = strnlen_user(vaddr, MAX_STRING_SIZE);
 
-	वापस (len > MAX_STRING_SIZE) ? 0 : len;
-पूर्ण
+	return (len > MAX_STRING_SIZE) ? 0 : len;
+}
 
-अटल nokprobe_अंतरभूत पूर्णांक
-fetch_store_म_माप_user(अचिन्हित दीर्घ addr)
-अणु
-	वापस fetch_store_म_माप(addr);
-पूर्ण
+static nokprobe_inline int
+fetch_store_strlen_user(unsigned long addr)
+{
+	return fetch_store_strlen(addr);
+}
 
-अटल अचिन्हित दीर्घ translate_user_vaddr(अचिन्हित दीर्घ file_offset)
-अणु
-	अचिन्हित दीर्घ base_addr;
-	काष्ठा uprobe_dispatch_data *udd;
+static unsigned long translate_user_vaddr(unsigned long file_offset)
+{
+	unsigned long base_addr;
+	struct uprobe_dispatch_data *udd;
 
-	udd = (व्योम *) current->utask->vaddr;
+	udd = (void *) current->utask->vaddr;
 
 	base_addr = udd->bp_addr - udd->tu->offset;
-	वापस base_addr + file_offset;
-पूर्ण
+	return base_addr + file_offset;
+}
 
-/* Note that we करोn't verअगरy it, since the code करोes not come from user space */
-अटल पूर्णांक
-process_fetch_insn(काष्ठा fetch_insn *code, काष्ठा pt_regs *regs, व्योम *dest,
-		   व्योम *base)
-अणु
-	अचिन्हित दीर्घ val;
+/* Note that we don't verify it, since the code does not come from user space */
+static int
+process_fetch_insn(struct fetch_insn *code, struct pt_regs *regs, void *dest,
+		   void *base)
+{
+	unsigned long val;
 
 	/* 1st stage: get value from context */
-	चयन (code->op) अणु
-	हाल FETCH_OP_REG:
-		val = regs_get_रेजिस्टर(regs, code->param);
-		अवरोध;
-	हाल FETCH_OP_STACK:
+	switch (code->op) {
+	case FETCH_OP_REG:
+		val = regs_get_register(regs, code->param);
+		break;
+	case FETCH_OP_STACK:
 		val = get_user_stack_nth(regs, code->param);
-		अवरोध;
-	हाल FETCH_OP_STACKP:
-		val = user_stack_poपूर्णांकer(regs);
-		अवरोध;
-	हाल FETCH_OP_RETVAL:
-		val = regs_वापस_value(regs);
-		अवरोध;
-	हाल FETCH_OP_IMM:
+		break;
+	case FETCH_OP_STACKP:
+		val = user_stack_pointer(regs);
+		break;
+	case FETCH_OP_RETVAL:
+		val = regs_return_value(regs);
+		break;
+	case FETCH_OP_IMM:
 		val = code->immediate;
-		अवरोध;
-	हाल FETCH_OP_COMM:
+		break;
+	case FETCH_OP_COMM:
 		val = FETCH_TOKEN_COMM;
-		अवरोध;
-	हाल FETCH_OP_DATA:
-		val = (अचिन्हित दीर्घ)code->data;
-		अवरोध;
-	हाल FETCH_OP_FOFFS:
+		break;
+	case FETCH_OP_DATA:
+		val = (unsigned long)code->data;
+		break;
+	case FETCH_OP_FOFFS:
 		val = translate_user_vaddr(code->immediate);
-		अवरोध;
-	शेष:
-		वापस -EILSEQ;
-	पूर्ण
+		break;
+	default:
+		return -EILSEQ;
+	}
 	code++;
 
-	वापस process_fetch_insn_bottom(code, val, dest, base);
-पूर्ण
+	return process_fetch_insn_bottom(code, val, dest, base);
+}
 NOKPROBE_SYMBOL(process_fetch_insn)
 
-अटल अंतरभूत व्योम init_trace_uprobe_filter(काष्ठा trace_uprobe_filter *filter)
-अणु
+static inline void init_trace_uprobe_filter(struct trace_uprobe_filter *filter)
+{
 	rwlock_init(&filter->rwlock);
-	filter->nr_प्रणालीwide = 0;
+	filter->nr_systemwide = 0;
 	INIT_LIST_HEAD(&filter->perf_events);
-पूर्ण
+}
 
-अटल अंतरभूत bool uprobe_filter_is_empty(काष्ठा trace_uprobe_filter *filter)
-अणु
-	वापस !filter->nr_प्रणालीwide && list_empty(&filter->perf_events);
-पूर्ण
+static inline bool uprobe_filter_is_empty(struct trace_uprobe_filter *filter)
+{
+	return !filter->nr_systemwide && list_empty(&filter->perf_events);
+}
 
-अटल अंतरभूत bool is_ret_probe(काष्ठा trace_uprobe *tu)
-अणु
-	वापस tu->consumer.ret_handler != शून्य;
-पूर्ण
+static inline bool is_ret_probe(struct trace_uprobe *tu)
+{
+	return tu->consumer.ret_handler != NULL;
+}
 
-अटल bool trace_uprobe_is_busy(काष्ठा dyn_event *ev)
-अणु
-	काष्ठा trace_uprobe *tu = to_trace_uprobe(ev);
+static bool trace_uprobe_is_busy(struct dyn_event *ev)
+{
+	struct trace_uprobe *tu = to_trace_uprobe(ev);
 
-	वापस trace_probe_is_enabled(&tu->tp);
-पूर्ण
+	return trace_probe_is_enabled(&tu->tp);
+}
 
-अटल bool trace_uprobe_match_command_head(काष्ठा trace_uprobe *tu,
-					    पूर्णांक argc, स्थिर अक्षर **argv)
-अणु
-	अक्षर buf[MAX_ARGSTR_LEN + 1];
-	पूर्णांक len;
+static bool trace_uprobe_match_command_head(struct trace_uprobe *tu,
+					    int argc, const char **argv)
+{
+	char buf[MAX_ARGSTR_LEN + 1];
+	int len;
 
-	अगर (!argc)
-		वापस true;
+	if (!argc)
+		return true;
 
-	len = म_माप(tu->filename);
-	अगर (म_भेदन(tu->filename, argv[0], len) || argv[0][len] != ':')
-		वापस false;
+	len = strlen(tu->filename);
+	if (strncmp(tu->filename, argv[0], len) || argv[0][len] != ':')
+		return false;
 
-	अगर (tu->ref_ctr_offset == 0)
-		snम_लिखो(buf, माप(buf), "0x%0*lx",
-				(पूर्णांक)(माप(व्योम *) * 2), tu->offset);
-	अन्यथा
-		snम_लिखो(buf, माप(buf), "0x%0*lx(0x%lx)",
-				(पूर्णांक)(माप(व्योम *) * 2), tu->offset,
+	if (tu->ref_ctr_offset == 0)
+		snprintf(buf, sizeof(buf), "0x%0*lx",
+				(int)(sizeof(void *) * 2), tu->offset);
+	else
+		snprintf(buf, sizeof(buf), "0x%0*lx(0x%lx)",
+				(int)(sizeof(void *) * 2), tu->offset,
 				tu->ref_ctr_offset);
-	अगर (म_भेद(buf, &argv[0][len + 1]))
-		वापस false;
+	if (strcmp(buf, &argv[0][len + 1]))
+		return false;
 
 	argc--; argv++;
 
-	वापस trace_probe_match_command_args(&tu->tp, argc, argv);
-पूर्ण
+	return trace_probe_match_command_args(&tu->tp, argc, argv);
+}
 
-अटल bool trace_uprobe_match(स्थिर अक्षर *प्रणाली, स्थिर अक्षर *event,
-			पूर्णांक argc, स्थिर अक्षर **argv, काष्ठा dyn_event *ev)
-अणु
-	काष्ठा trace_uprobe *tu = to_trace_uprobe(ev);
+static bool trace_uprobe_match(const char *system, const char *event,
+			int argc, const char **argv, struct dyn_event *ev)
+{
+	struct trace_uprobe *tu = to_trace_uprobe(ev);
 
-	वापस म_भेद(trace_probe_name(&tu->tp), event) == 0 &&
-	   (!प्रणाली || म_भेद(trace_probe_group_name(&tu->tp), प्रणाली) == 0) &&
+	return strcmp(trace_probe_name(&tu->tp), event) == 0 &&
+	   (!system || strcmp(trace_probe_group_name(&tu->tp), system) == 0) &&
 	   trace_uprobe_match_command_head(tu, argc, argv);
-पूर्ण
+}
 
-अटल nokprobe_अंतरभूत काष्ठा trace_uprobe *
-trace_uprobe_primary_from_call(काष्ठा trace_event_call *call)
-अणु
-	काष्ठा trace_probe *tp;
+static nokprobe_inline struct trace_uprobe *
+trace_uprobe_primary_from_call(struct trace_event_call *call)
+{
+	struct trace_probe *tp;
 
 	tp = trace_probe_primary_from_call(call);
-	अगर (WARN_ON_ONCE(!tp))
-		वापस शून्य;
+	if (WARN_ON_ONCE(!tp))
+		return NULL;
 
-	वापस container_of(tp, काष्ठा trace_uprobe, tp);
-पूर्ण
+	return container_of(tp, struct trace_uprobe, tp);
+}
 
 /*
  * Allocate new trace_uprobe and initialize it (including uprobes).
  */
-अटल काष्ठा trace_uprobe *
-alloc_trace_uprobe(स्थिर अक्षर *group, स्थिर अक्षर *event, पूर्णांक nargs, bool is_ret)
-अणु
-	काष्ठा trace_uprobe *tu;
-	पूर्णांक ret;
+static struct trace_uprobe *
+alloc_trace_uprobe(const char *group, const char *event, int nargs, bool is_ret)
+{
+	struct trace_uprobe *tu;
+	int ret;
 
-	tu = kzalloc(SIZखातापूर्ण_TRACE_UPROBE(nargs), GFP_KERNEL);
-	अगर (!tu)
-		वापस ERR_PTR(-ENOMEM);
+	tu = kzalloc(SIZEOF_TRACE_UPROBE(nargs), GFP_KERNEL);
+	if (!tu)
+		return ERR_PTR(-ENOMEM);
 
 	ret = trace_probe_init(&tu->tp, event, group, true);
-	अगर (ret < 0)
-		जाओ error;
+	if (ret < 0)
+		goto error;
 
 	dyn_event_init(&tu->devent, &trace_uprobe_ops);
 	tu->consumer.handler = uprobe_dispatcher;
-	अगर (is_ret)
+	if (is_ret)
 		tu->consumer.ret_handler = uretprobe_dispatcher;
 	init_trace_uprobe_filter(tu->tp.event->filter);
-	वापस tu;
+	return tu;
 
 error:
-	kमुक्त(tu);
+	kfree(tu);
 
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
-अटल व्योम मुक्त_trace_uprobe(काष्ठा trace_uprobe *tu)
-अणु
-	अगर (!tu)
-		वापस;
+static void free_trace_uprobe(struct trace_uprobe *tu)
+{
+	if (!tu)
+		return;
 
 	path_put(&tu->path);
 	trace_probe_cleanup(&tu->tp);
-	kमुक्त(tu->filename);
-	kमुक्त(tu);
-पूर्ण
+	kfree(tu->filename);
+	kfree(tu);
+}
 
-अटल काष्ठा trace_uprobe *find_probe_event(स्थिर अक्षर *event, स्थिर अक्षर *group)
-अणु
-	काष्ठा dyn_event *pos;
-	काष्ठा trace_uprobe *tu;
+static struct trace_uprobe *find_probe_event(const char *event, const char *group)
+{
+	struct dyn_event *pos;
+	struct trace_uprobe *tu;
 
-	क्रम_each_trace_uprobe(tu, pos)
-		अगर (म_भेद(trace_probe_name(&tu->tp), event) == 0 &&
-		    म_भेद(trace_probe_group_name(&tu->tp), group) == 0)
-			वापस tu;
+	for_each_trace_uprobe(tu, pos)
+		if (strcmp(trace_probe_name(&tu->tp), event) == 0 &&
+		    strcmp(trace_probe_group_name(&tu->tp), group) == 0)
+			return tu;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-/* Unरेजिस्टर a trace_uprobe and probe_event */
-अटल पूर्णांक unरेजिस्टर_trace_uprobe(काष्ठा trace_uprobe *tu)
-अणु
-	पूर्णांक ret;
+/* Unregister a trace_uprobe and probe_event */
+static int unregister_trace_uprobe(struct trace_uprobe *tu)
+{
+	int ret;
 
-	अगर (trace_probe_has_sibling(&tu->tp))
-		जाओ unreg;
+	if (trace_probe_has_sibling(&tu->tp))
+		goto unreg;
 
-	ret = unरेजिस्टर_uprobe_event(tu);
-	अगर (ret)
-		वापस ret;
+	ret = unregister_uprobe_event(tu);
+	if (ret)
+		return ret;
 
 unreg:
-	dyn_event_हटाओ(&tu->devent);
+	dyn_event_remove(&tu->devent);
 	trace_probe_unlink(&tu->tp);
-	मुक्त_trace_uprobe(tu);
-	वापस 0;
-पूर्ण
+	free_trace_uprobe(tu);
+	return 0;
+}
 
-अटल bool trace_uprobe_has_same_uprobe(काष्ठा trace_uprobe *orig,
-					 काष्ठा trace_uprobe *comp)
-अणु
-	काष्ठा trace_probe_event *tpe = orig->tp.event;
-	काष्ठा trace_probe *pos;
-	काष्ठा inode *comp_inode = d_real_inode(comp->path.dentry);
-	पूर्णांक i;
+static bool trace_uprobe_has_same_uprobe(struct trace_uprobe *orig,
+					 struct trace_uprobe *comp)
+{
+	struct trace_probe_event *tpe = orig->tp.event;
+	struct trace_probe *pos;
+	struct inode *comp_inode = d_real_inode(comp->path.dentry);
+	int i;
 
-	list_क्रम_each_entry(pos, &tpe->probes, list) अणु
-		orig = container_of(pos, काष्ठा trace_uprobe, tp);
-		अगर (comp_inode != d_real_inode(orig->path.dentry) ||
+	list_for_each_entry(pos, &tpe->probes, list) {
+		orig = container_of(pos, struct trace_uprobe, tp);
+		if (comp_inode != d_real_inode(orig->path.dentry) ||
 		    comp->offset != orig->offset)
-			जारी;
+			continue;
 
 		/*
 		 * trace_probe_compare_arg_type() ensured that nr_args and
 		 * each argument name and type are same. Let's compare comm.
 		 */
-		क्रम (i = 0; i < orig->tp.nr_args; i++) अणु
-			अगर (म_भेद(orig->tp.args[i].comm,
+		for (i = 0; i < orig->tp.nr_args; i++) {
+			if (strcmp(orig->tp.args[i].comm,
 				   comp->tp.args[i].comm))
-				अवरोध;
-		पूर्ण
+				break;
+		}
 
-		अगर (i == orig->tp.nr_args)
-			वापस true;
-	पूर्ण
+		if (i == orig->tp.nr_args)
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक append_trace_uprobe(काष्ठा trace_uprobe *tu, काष्ठा trace_uprobe *to)
-अणु
-	पूर्णांक ret;
+static int append_trace_uprobe(struct trace_uprobe *tu, struct trace_uprobe *to)
+{
+	int ret;
 
 	ret = trace_probe_compare_arg_type(&tu->tp, &to->tp);
-	अगर (ret) अणु
+	if (ret) {
 		/* Note that argument starts index = 2 */
 		trace_probe_log_set_index(ret + 1);
 		trace_probe_log_err(0, DIFF_ARG_TYPE);
-		वापस -EEXIST;
-	पूर्ण
-	अगर (trace_uprobe_has_same_uprobe(to, tu)) अणु
+		return -EEXIST;
+	}
+	if (trace_uprobe_has_same_uprobe(to, tu)) {
 		trace_probe_log_set_index(0);
 		trace_probe_log_err(0, SAME_PROBE);
-		वापस -EEXIST;
-	पूर्ण
+		return -EEXIST;
+	}
 
 	/* Append to existing event */
 	ret = trace_probe_append(&tu->tp, &to->tp);
-	अगर (!ret)
+	if (!ret)
 		dyn_event_add(&tu->devent);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Uprobe with multiple reference counter is not allowed. i.e.
@@ -467,1152 +466,1152 @@ unreg:
  * match as well. Though, there is one exception: If user is
  * replacing old trace_uprobe with new one(same group/event),
  * then we allow same uprobe with new reference counter as far
- * as the new one करोes not conflict with any other existing
+ * as the new one does not conflict with any other existing
  * ones.
  */
-अटल पूर्णांक validate_ref_ctr_offset(काष्ठा trace_uprobe *new)
-अणु
-	काष्ठा dyn_event *pos;
-	काष्ठा trace_uprobe *पंचांगp;
-	काष्ठा inode *new_inode = d_real_inode(new->path.dentry);
+static int validate_ref_ctr_offset(struct trace_uprobe *new)
+{
+	struct dyn_event *pos;
+	struct trace_uprobe *tmp;
+	struct inode *new_inode = d_real_inode(new->path.dentry);
 
-	क्रम_each_trace_uprobe(पंचांगp, pos) अणु
-		अगर (new_inode == d_real_inode(पंचांगp->path.dentry) &&
-		    new->offset == पंचांगp->offset &&
-		    new->ref_ctr_offset != पंचांगp->ref_ctr_offset) अणु
+	for_each_trace_uprobe(tmp, pos) {
+		if (new_inode == d_real_inode(tmp->path.dentry) &&
+		    new->offset == tmp->offset &&
+		    new->ref_ctr_offset != tmp->ref_ctr_offset) {
 			pr_warn("Reference counter offset mismatch.");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -EINVAL;
+		}
+	}
+	return 0;
+}
 
 /* Register a trace_uprobe and probe_event */
-अटल पूर्णांक रेजिस्टर_trace_uprobe(काष्ठा trace_uprobe *tu)
-अणु
-	काष्ठा trace_uprobe *old_tu;
-	पूर्णांक ret;
+static int register_trace_uprobe(struct trace_uprobe *tu)
+{
+	struct trace_uprobe *old_tu;
+	int ret;
 
 	mutex_lock(&event_mutex);
 
 	ret = validate_ref_ctr_offset(tu);
-	अगर (ret)
-		जाओ end;
+	if (ret)
+		goto end;
 
-	/* रेजिस्टर as an event */
+	/* register as an event */
 	old_tu = find_probe_event(trace_probe_name(&tu->tp),
 				  trace_probe_group_name(&tu->tp));
-	अगर (old_tu) अणु
-		अगर (is_ret_probe(tu) != is_ret_probe(old_tu)) अणु
+	if (old_tu) {
+		if (is_ret_probe(tu) != is_ret_probe(old_tu)) {
 			trace_probe_log_set_index(0);
 			trace_probe_log_err(0, DIFF_PROBE_TYPE);
 			ret = -EEXIST;
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = append_trace_uprobe(tu, old_tu);
-		पूर्ण
-		जाओ end;
-	पूर्ण
+		}
+		goto end;
+	}
 
-	ret = रेजिस्टर_uprobe_event(tu);
-	अगर (ret) अणु
+	ret = register_uprobe_event(tu);
+	if (ret) {
 		pr_warn("Failed to register probe event(%d)\n", ret);
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	dyn_event_add(&tu->devent);
 
 end:
 	mutex_unlock(&event_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Argument syntax:
- *  - Add uprobe: p|r[:[GRP/]EVENT] PATH:OFFSET[%वापस][(REF)] [FETCHARGS]
+ *  - Add uprobe: p|r[:[GRP/]EVENT] PATH:OFFSET[%return][(REF)] [FETCHARGS]
  */
-अटल पूर्णांक __trace_uprobe_create(पूर्णांक argc, स्थिर अक्षर **argv)
-अणु
-	काष्ठा trace_uprobe *tu;
-	स्थिर अक्षर *event = शून्य, *group = UPROBE_EVENT_SYSTEM;
-	अक्षर *arg, *filename, *rctr, *rctr_end, *पंचांगp;
-	अक्षर buf[MAX_EVENT_NAME_LEN];
-	काष्ठा path path;
-	अचिन्हित दीर्घ offset, ref_ctr_offset;
-	bool is_वापस = false;
-	पूर्णांक i, ret;
+static int __trace_uprobe_create(int argc, const char **argv)
+{
+	struct trace_uprobe *tu;
+	const char *event = NULL, *group = UPROBE_EVENT_SYSTEM;
+	char *arg, *filename, *rctr, *rctr_end, *tmp;
+	char buf[MAX_EVENT_NAME_LEN];
+	struct path path;
+	unsigned long offset, ref_ctr_offset;
+	bool is_return = false;
+	int i, ret;
 
 	ret = 0;
 	ref_ctr_offset = 0;
 
-	चयन (argv[0][0]) अणु
-	हाल 'r':
-		is_वापस = true;
-		अवरोध;
-	हाल 'p':
-		अवरोध;
-	शेष:
-		वापस -ECANCELED;
-	पूर्ण
+	switch (argv[0][0]) {
+	case 'r':
+		is_return = true;
+		break;
+	case 'p':
+		break;
+	default:
+		return -ECANCELED;
+	}
 
-	अगर (argc < 2)
-		वापस -ECANCELED;
+	if (argc < 2)
+		return -ECANCELED;
 
-	अगर (argv[0][1] == ':')
+	if (argv[0][1] == ':')
 		event = &argv[0][2];
 
-	अगर (!म_अक्षर(argv[1], '/'))
-		वापस -ECANCELED;
+	if (!strchr(argv[1], '/'))
+		return -ECANCELED;
 
 	filename = kstrdup(argv[1], GFP_KERNEL);
-	अगर (!filename)
-		वापस -ENOMEM;
+	if (!filename)
+		return -ENOMEM;
 
-	/* Find the last occurrence, in हाल the path contains ':' too. */
-	arg = म_खोजप(filename, ':');
-	अगर (!arg || !है_अंक(arg[1])) अणु
-		kमुक्त(filename);
-		वापस -ECANCELED;
-	पूर्ण
+	/* Find the last occurrence, in case the path contains ':' too. */
+	arg = strrchr(filename, ':');
+	if (!arg || !isdigit(arg[1])) {
+		kfree(filename);
+		return -ECANCELED;
+	}
 
 	trace_probe_log_init("trace_uprobe", argc, argv);
 	trace_probe_log_set_index(1);	/* filename is the 2nd argument */
 
 	*arg++ = '\0';
 	ret = kern_path(filename, LOOKUP_FOLLOW, &path);
-	अगर (ret) अणु
-		trace_probe_log_err(0, खाता_NOT_FOUND);
-		kमुक्त(filename);
+	if (ret) {
+		trace_probe_log_err(0, FILE_NOT_FOUND);
+		kfree(filename);
 		trace_probe_log_clear();
-		वापस ret;
-	पूर्ण
-	अगर (!d_is_reg(path.dentry)) अणु
-		trace_probe_log_err(0, NO_REGULAR_खाता);
+		return ret;
+	}
+	if (!d_is_reg(path.dentry)) {
+		trace_probe_log_err(0, NO_REGULAR_FILE);
 		ret = -EINVAL;
-		जाओ fail_address_parse;
-	पूर्ण
+		goto fail_address_parse;
+	}
 
-	/* Parse reference counter offset अगर specअगरied. */
-	rctr = म_अक्षर(arg, '(');
-	अगर (rctr) अणु
-		rctr_end = म_अक्षर(rctr, ')');
-		अगर (!rctr_end) अणु
+	/* Parse reference counter offset if specified. */
+	rctr = strchr(arg, '(');
+	if (rctr) {
+		rctr_end = strchr(rctr, ')');
+		if (!rctr_end) {
 			ret = -EINVAL;
-			rctr_end = rctr + म_माप(rctr);
+			rctr_end = rctr + strlen(rctr);
 			trace_probe_log_err(rctr_end - filename,
 					    REFCNT_OPEN_BRACE);
-			जाओ fail_address_parse;
-		पूर्ण अन्यथा अगर (rctr_end[1] != '\0') अणु
+			goto fail_address_parse;
+		} else if (rctr_end[1] != '\0') {
 			ret = -EINVAL;
 			trace_probe_log_err(rctr_end + 1 - filename,
 					    BAD_REFCNT_SUFFIX);
-			जाओ fail_address_parse;
-		पूर्ण
+			goto fail_address_parse;
+		}
 
 		*rctr++ = '\0';
 		*rctr_end = '\0';
-		ret = kम_से_अदीर्घ(rctr, 0, &ref_ctr_offset);
-		अगर (ret) अणु
+		ret = kstrtoul(rctr, 0, &ref_ctr_offset);
+		if (ret) {
 			trace_probe_log_err(rctr - filename, BAD_REFCNT);
-			जाओ fail_address_parse;
-		पूर्ण
-	पूर्ण
+			goto fail_address_parse;
+		}
+	}
 
-	/* Check अगर there is %वापस suffix */
-	पंचांगp = म_अक्षर(arg, '%');
-	अगर (पंचांगp) अणु
-		अगर (!म_भेद(पंचांगp, "%return")) अणु
-			*पंचांगp = '\0';
-			is_वापस = true;
-		पूर्ण अन्यथा अणु
-			trace_probe_log_err(पंचांगp - filename, BAD_ADDR_SUFFIX);
+	/* Check if there is %return suffix */
+	tmp = strchr(arg, '%');
+	if (tmp) {
+		if (!strcmp(tmp, "%return")) {
+			*tmp = '\0';
+			is_return = true;
+		} else {
+			trace_probe_log_err(tmp - filename, BAD_ADDR_SUFFIX);
 			ret = -EINVAL;
-			जाओ fail_address_parse;
-		पूर्ण
-	पूर्ण
+			goto fail_address_parse;
+		}
+	}
 
 	/* Parse uprobe offset. */
-	ret = kम_से_अदीर्घ(arg, 0, &offset);
-	अगर (ret) अणु
+	ret = kstrtoul(arg, 0, &offset);
+	if (ret) {
 		trace_probe_log_err(arg - filename, BAD_UPROBE_OFFS);
-		जाओ fail_address_parse;
-	पूर्ण
+		goto fail_address_parse;
+	}
 
 	/* setup a probe */
 	trace_probe_log_set_index(0);
-	अगर (event) अणु
+	if (event) {
 		ret = traceprobe_parse_event_name(&event, &group, buf,
 						  event - argv[0]);
-		अगर (ret)
-			जाओ fail_address_parse;
-	पूर्ण अन्यथा अणु
-		अक्षर *tail;
-		अक्षर *ptr;
+		if (ret)
+			goto fail_address_parse;
+	} else {
+		char *tail;
+		char *ptr;
 
 		tail = kstrdup(kbasename(filename), GFP_KERNEL);
-		अगर (!tail) अणु
+		if (!tail) {
 			ret = -ENOMEM;
-			जाओ fail_address_parse;
-		पूर्ण
+			goto fail_address_parse;
+		}
 
 		ptr = strpbrk(tail, ".-_");
-		अगर (ptr)
+		if (ptr)
 			*ptr = '\0';
 
-		snम_लिखो(buf, MAX_EVENT_NAME_LEN, "%c_%s_0x%lx", 'p', tail, offset);
+		snprintf(buf, MAX_EVENT_NAME_LEN, "%c_%s_0x%lx", 'p', tail, offset);
 		event = buf;
-		kमुक्त(tail);
-	पूर्ण
+		kfree(tail);
+	}
 
 	argc -= 2;
 	argv += 2;
 
-	tu = alloc_trace_uprobe(group, event, argc, is_वापस);
-	अगर (IS_ERR(tu)) अणु
+	tu = alloc_trace_uprobe(group, event, argc, is_return);
+	if (IS_ERR(tu)) {
 		ret = PTR_ERR(tu);
-		/* This must वापस -ENOMEM otherwise there is a bug */
+		/* This must return -ENOMEM otherwise there is a bug */
 		WARN_ON_ONCE(ret != -ENOMEM);
-		जाओ fail_address_parse;
-	पूर्ण
+		goto fail_address_parse;
+	}
 	tu->offset = offset;
 	tu->ref_ctr_offset = ref_ctr_offset;
 	tu->path = path;
 	tu->filename = filename;
 
 	/* parse arguments */
-	क्रम (i = 0; i < argc && i < MAX_TRACE_ARGS; i++) अणु
-		पंचांगp = kstrdup(argv[i], GFP_KERNEL);
-		अगर (!पंचांगp) अणु
+	for (i = 0; i < argc && i < MAX_TRACE_ARGS; i++) {
+		tmp = kstrdup(argv[i], GFP_KERNEL);
+		if (!tmp) {
 			ret = -ENOMEM;
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
 		trace_probe_log_set_index(i + 2);
-		ret = traceprobe_parse_probe_arg(&tu->tp, i, पंचांगp,
-					is_वापस ? TPARG_FL_RETURN : 0);
-		kमुक्त(पंचांगp);
-		अगर (ret)
-			जाओ error;
-	पूर्ण
+		ret = traceprobe_parse_probe_arg(&tu->tp, i, tmp,
+					is_return ? TPARG_FL_RETURN : 0);
+		kfree(tmp);
+		if (ret)
+			goto error;
+	}
 
-	ret = traceprobe_set_prपूर्णांक_fmt(&tu->tp, is_ret_probe(tu));
-	अगर (ret < 0)
-		जाओ error;
+	ret = traceprobe_set_print_fmt(&tu->tp, is_ret_probe(tu));
+	if (ret < 0)
+		goto error;
 
-	ret = रेजिस्टर_trace_uprobe(tu);
-	अगर (!ret)
-		जाओ out;
+	ret = register_trace_uprobe(tu);
+	if (!ret)
+		goto out;
 
 error:
-	मुक्त_trace_uprobe(tu);
+	free_trace_uprobe(tu);
 out:
 	trace_probe_log_clear();
-	वापस ret;
+	return ret;
 
 fail_address_parse:
 	trace_probe_log_clear();
 	path_put(&path);
-	kमुक्त(filename);
+	kfree(filename);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक trace_uprobe_create(स्थिर अक्षर *raw_command)
-अणु
-	वापस trace_probe_create(raw_command, __trace_uprobe_create);
-पूर्ण
+int trace_uprobe_create(const char *raw_command)
+{
+	return trace_probe_create(raw_command, __trace_uprobe_create);
+}
 
-अटल पूर्णांक create_or_delete_trace_uprobe(स्थिर अक्षर *raw_command)
-अणु
-	पूर्णांक ret;
+static int create_or_delete_trace_uprobe(const char *raw_command)
+{
+	int ret;
 
-	अगर (raw_command[0] == '-')
-		वापस dyn_event_release(raw_command, &trace_uprobe_ops);
+	if (raw_command[0] == '-')
+		return dyn_event_release(raw_command, &trace_uprobe_ops);
 
 	ret = trace_uprobe_create(raw_command);
-	वापस ret == -ECANCELED ? -EINVAL : ret;
-पूर्ण
+	return ret == -ECANCELED ? -EINVAL : ret;
+}
 
-अटल पूर्णांक trace_uprobe_release(काष्ठा dyn_event *ev)
-अणु
-	काष्ठा trace_uprobe *tu = to_trace_uprobe(ev);
+static int trace_uprobe_release(struct dyn_event *ev)
+{
+	struct trace_uprobe *tu = to_trace_uprobe(ev);
 
-	वापस unरेजिस्टर_trace_uprobe(tu);
-पूर्ण
+	return unregister_trace_uprobe(tu);
+}
 
-/* Probes listing पूर्णांकerfaces */
-अटल पूर्णांक trace_uprobe_show(काष्ठा seq_file *m, काष्ठा dyn_event *ev)
-अणु
-	काष्ठा trace_uprobe *tu = to_trace_uprobe(ev);
-	अक्षर c = is_ret_probe(tu) ? 'r' : 'p';
-	पूर्णांक i;
+/* Probes listing interfaces */
+static int trace_uprobe_show(struct seq_file *m, struct dyn_event *ev)
+{
+	struct trace_uprobe *tu = to_trace_uprobe(ev);
+	char c = is_ret_probe(tu) ? 'r' : 'p';
+	int i;
 
-	seq_म_लिखो(m, "%c:%s/%s %s:0x%0*lx", c, trace_probe_group_name(&tu->tp),
+	seq_printf(m, "%c:%s/%s %s:0x%0*lx", c, trace_probe_group_name(&tu->tp),
 			trace_probe_name(&tu->tp), tu->filename,
-			(पूर्णांक)(माप(व्योम *) * 2), tu->offset);
+			(int)(sizeof(void *) * 2), tu->offset);
 
-	अगर (tu->ref_ctr_offset)
-		seq_म_लिखो(m, "(0x%lx)", tu->ref_ctr_offset);
+	if (tu->ref_ctr_offset)
+		seq_printf(m, "(0x%lx)", tu->ref_ctr_offset);
 
-	क्रम (i = 0; i < tu->tp.nr_args; i++)
-		seq_म_लिखो(m, " %s=%s", tu->tp.args[i].name, tu->tp.args[i].comm);
+	for (i = 0; i < tu->tp.nr_args; i++)
+		seq_printf(m, " %s=%s", tu->tp.args[i].name, tu->tp.args[i].comm);
 
-	seq_अ_दो(m, '\n');
-	वापस 0;
-पूर्ण
+	seq_putc(m, '\n');
+	return 0;
+}
 
-अटल पूर्णांक probes_seq_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा dyn_event *ev = v;
+static int probes_seq_show(struct seq_file *m, void *v)
+{
+	struct dyn_event *ev = v;
 
-	अगर (!is_trace_uprobe(ev))
-		वापस 0;
+	if (!is_trace_uprobe(ev))
+		return 0;
 
-	वापस trace_uprobe_show(m, ev);
-पूर्ण
+	return trace_uprobe_show(m, ev);
+}
 
-अटल स्थिर काष्ठा seq_operations probes_seq_op = अणु
+static const struct seq_operations probes_seq_op = {
 	.start  = dyn_event_seq_start,
 	.next   = dyn_event_seq_next,
 	.stop   = dyn_event_seq_stop,
 	.show   = probes_seq_show
-पूर्ण;
+};
 
-अटल पूर्णांक probes_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	पूर्णांक ret;
+static int probes_open(struct inode *inode, struct file *file)
+{
+	int ret;
 
-	ret = security_locked_करोwn(LOCKDOWN_TRACEFS);
-	अगर (ret)
-		वापस ret;
+	ret = security_locked_down(LOCKDOWN_TRACEFS);
+	if (ret)
+		return ret;
 
-	अगर ((file->f_mode & FMODE_WRITE) && (file->f_flags & O_TRUNC)) अणु
+	if ((file->f_mode & FMODE_WRITE) && (file->f_flags & O_TRUNC)) {
 		ret = dyn_events_release_all(&trace_uprobe_ops);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस seq_खोलो(file, &probes_seq_op);
-पूर्ण
+	return seq_open(file, &probes_seq_op);
+}
 
-अटल sमाप_प्रकार probes_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer,
-			    माप_प्रकार count, loff_t *ppos)
-अणु
-	वापस trace_parse_run_command(file, buffer, count, ppos,
+static ssize_t probes_write(struct file *file, const char __user *buffer,
+			    size_t count, loff_t *ppos)
+{
+	return trace_parse_run_command(file, buffer, count, ppos,
 					create_or_delete_trace_uprobe);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा file_operations uprobe_events_ops = अणु
+static const struct file_operations uprobe_events_ops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= probes_खोलो,
-	.पढ़ो		= seq_पढ़ो,
+	.open		= probes_open,
+	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.release	= seq_release,
-	.ग_लिखो		= probes_ग_लिखो,
-पूर्ण;
+	.write		= probes_write,
+};
 
-/* Probes profiling पूर्णांकerfaces */
-अटल पूर्णांक probes_profile_seq_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा dyn_event *ev = v;
-	काष्ठा trace_uprobe *tu;
+/* Probes profiling interfaces */
+static int probes_profile_seq_show(struct seq_file *m, void *v)
+{
+	struct dyn_event *ev = v;
+	struct trace_uprobe *tu;
 
-	अगर (!is_trace_uprobe(ev))
-		वापस 0;
+	if (!is_trace_uprobe(ev))
+		return 0;
 
 	tu = to_trace_uprobe(ev);
-	seq_म_लिखो(m, "  %s %-44s %15lu\n", tu->filename,
+	seq_printf(m, "  %s %-44s %15lu\n", tu->filename,
 			trace_probe_name(&tu->tp), tu->nhit);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा seq_operations profile_seq_op = अणु
+static const struct seq_operations profile_seq_op = {
 	.start  = dyn_event_seq_start,
 	.next   = dyn_event_seq_next,
 	.stop   = dyn_event_seq_stop,
 	.show	= probes_profile_seq_show
-पूर्ण;
+};
 
-अटल पूर्णांक profile_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	पूर्णांक ret;
+static int profile_open(struct inode *inode, struct file *file)
+{
+	int ret;
 
-	ret = security_locked_करोwn(LOCKDOWN_TRACEFS);
-	अगर (ret)
-		वापस ret;
+	ret = security_locked_down(LOCKDOWN_TRACEFS);
+	if (ret)
+		return ret;
 
-	वापस seq_खोलो(file, &profile_seq_op);
-पूर्ण
+	return seq_open(file, &profile_seq_op);
+}
 
-अटल स्थिर काष्ठा file_operations uprobe_profile_ops = अणु
+static const struct file_operations uprobe_profile_ops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= profile_खोलो,
-	.पढ़ो		= seq_पढ़ो,
+	.open		= profile_open,
+	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.release	= seq_release,
-पूर्ण;
+};
 
-काष्ठा uprobe_cpu_buffer अणु
-	काष्ठा mutex mutex;
-	व्योम *buf;
-पूर्ण;
-अटल काष्ठा uprobe_cpu_buffer __percpu *uprobe_cpu_buffer;
-अटल पूर्णांक uprobe_buffer_refcnt;
+struct uprobe_cpu_buffer {
+	struct mutex mutex;
+	void *buf;
+};
+static struct uprobe_cpu_buffer __percpu *uprobe_cpu_buffer;
+static int uprobe_buffer_refcnt;
 
-अटल पूर्णांक uprobe_buffer_init(व्योम)
-अणु
-	पूर्णांक cpu, err_cpu;
+static int uprobe_buffer_init(void)
+{
+	int cpu, err_cpu;
 
-	uprobe_cpu_buffer = alloc_percpu(काष्ठा uprobe_cpu_buffer);
-	अगर (uprobe_cpu_buffer == शून्य)
-		वापस -ENOMEM;
+	uprobe_cpu_buffer = alloc_percpu(struct uprobe_cpu_buffer);
+	if (uprobe_cpu_buffer == NULL)
+		return -ENOMEM;
 
-	क्रम_each_possible_cpu(cpu) अणु
-		काष्ठा page *p = alloc_pages_node(cpu_to_node(cpu),
+	for_each_possible_cpu(cpu) {
+		struct page *p = alloc_pages_node(cpu_to_node(cpu),
 						  GFP_KERNEL, 0);
-		अगर (p == शून्य) अणु
+		if (p == NULL) {
 			err_cpu = cpu;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 		per_cpu_ptr(uprobe_cpu_buffer, cpu)->buf = page_address(p);
 		mutex_init(&per_cpu_ptr(uprobe_cpu_buffer, cpu)->mutex);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	क्रम_each_possible_cpu(cpu) अणु
-		अगर (cpu == err_cpu)
-			अवरोध;
-		मुक्त_page((अचिन्हित दीर्घ)per_cpu_ptr(uprobe_cpu_buffer, cpu)->buf);
-	पूर्ण
+	for_each_possible_cpu(cpu) {
+		if (cpu == err_cpu)
+			break;
+		free_page((unsigned long)per_cpu_ptr(uprobe_cpu_buffer, cpu)->buf);
+	}
 
-	मुक्त_percpu(uprobe_cpu_buffer);
-	वापस -ENOMEM;
-पूर्ण
+	free_percpu(uprobe_cpu_buffer);
+	return -ENOMEM;
+}
 
-अटल पूर्णांक uprobe_buffer_enable(व्योम)
-अणु
-	पूर्णांक ret = 0;
+static int uprobe_buffer_enable(void)
+{
+	int ret = 0;
 
 	BUG_ON(!mutex_is_locked(&event_mutex));
 
-	अगर (uprobe_buffer_refcnt++ == 0) अणु
+	if (uprobe_buffer_refcnt++ == 0) {
 		ret = uprobe_buffer_init();
-		अगर (ret < 0)
+		if (ret < 0)
 			uprobe_buffer_refcnt--;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम uprobe_buffer_disable(व्योम)
-अणु
-	पूर्णांक cpu;
+static void uprobe_buffer_disable(void)
+{
+	int cpu;
 
 	BUG_ON(!mutex_is_locked(&event_mutex));
 
-	अगर (--uprobe_buffer_refcnt == 0) अणु
-		क्रम_each_possible_cpu(cpu)
-			मुक्त_page((अचिन्हित दीर्घ)per_cpu_ptr(uprobe_cpu_buffer,
+	if (--uprobe_buffer_refcnt == 0) {
+		for_each_possible_cpu(cpu)
+			free_page((unsigned long)per_cpu_ptr(uprobe_cpu_buffer,
 							     cpu)->buf);
 
-		मुक्त_percpu(uprobe_cpu_buffer);
-		uprobe_cpu_buffer = शून्य;
-	पूर्ण
-पूर्ण
+		free_percpu(uprobe_cpu_buffer);
+		uprobe_cpu_buffer = NULL;
+	}
+}
 
-अटल काष्ठा uprobe_cpu_buffer *uprobe_buffer_get(व्योम)
-अणु
-	काष्ठा uprobe_cpu_buffer *ucb;
-	पूर्णांक cpu;
+static struct uprobe_cpu_buffer *uprobe_buffer_get(void)
+{
+	struct uprobe_cpu_buffer *ucb;
+	int cpu;
 
 	cpu = raw_smp_processor_id();
 	ucb = per_cpu_ptr(uprobe_cpu_buffer, cpu);
 
 	/*
-	 * Use per-cpu buffers क्रम fastest access, but we might migrate
+	 * Use per-cpu buffers for fastest access, but we might migrate
 	 * so the mutex makes sure we have sole access to it.
 	 */
 	mutex_lock(&ucb->mutex);
 
-	वापस ucb;
-पूर्ण
+	return ucb;
+}
 
-अटल व्योम uprobe_buffer_put(काष्ठा uprobe_cpu_buffer *ucb)
-अणु
+static void uprobe_buffer_put(struct uprobe_cpu_buffer *ucb)
+{
 	mutex_unlock(&ucb->mutex);
-पूर्ण
+}
 
-अटल व्योम __uprobe_trace_func(काष्ठा trace_uprobe *tu,
-				अचिन्हित दीर्घ func, काष्ठा pt_regs *regs,
-				काष्ठा uprobe_cpu_buffer *ucb, पूर्णांक dsize,
-				काष्ठा trace_event_file *trace_file)
-अणु
-	काष्ठा uprobe_trace_entry_head *entry;
-	काष्ठा trace_buffer *buffer;
-	काष्ठा ring_buffer_event *event;
-	व्योम *data;
-	पूर्णांक size, esize;
-	काष्ठा trace_event_call *call = trace_probe_event_call(&tu->tp);
+static void __uprobe_trace_func(struct trace_uprobe *tu,
+				unsigned long func, struct pt_regs *regs,
+				struct uprobe_cpu_buffer *ucb, int dsize,
+				struct trace_event_file *trace_file)
+{
+	struct uprobe_trace_entry_head *entry;
+	struct trace_buffer *buffer;
+	struct ring_buffer_event *event;
+	void *data;
+	int size, esize;
+	struct trace_event_call *call = trace_probe_event_call(&tu->tp);
 
 	WARN_ON(call != trace_file->event_call);
 
-	अगर (WARN_ON_ONCE(tu->tp.size + dsize > PAGE_SIZE))
-		वापस;
+	if (WARN_ON_ONCE(tu->tp.size + dsize > PAGE_SIZE))
+		return;
 
-	अगर (trace_trigger_soft_disabled(trace_file))
-		वापस;
+	if (trace_trigger_soft_disabled(trace_file))
+		return;
 
-	esize = SIZखातापूर्ण_TRACE_ENTRY(is_ret_probe(tu));
+	esize = SIZEOF_TRACE_ENTRY(is_ret_probe(tu));
 	size = esize + tu->tp.size + dsize;
 	event = trace_event_buffer_lock_reserve(&buffer, trace_file,
 						call->event.type, size, 0);
-	अगर (!event)
-		वापस;
+	if (!event)
+		return;
 
 	entry = ring_buffer_event_data(event);
-	अगर (is_ret_probe(tu)) अणु
+	if (is_ret_probe(tu)) {
 		entry->vaddr[0] = func;
-		entry->vaddr[1] = inकाष्ठाion_poपूर्णांकer(regs);
+		entry->vaddr[1] = instruction_pointer(regs);
 		data = DATAOF_TRACE_ENTRY(entry, true);
-	पूर्ण अन्यथा अणु
-		entry->vaddr[0] = inकाष्ठाion_poपूर्णांकer(regs);
+	} else {
+		entry->vaddr[0] = instruction_pointer(regs);
 		data = DATAOF_TRACE_ENTRY(entry, false);
-	पूर्ण
+	}
 
-	स_नकल(data, ucb->buf, tu->tp.size + dsize);
+	memcpy(data, ucb->buf, tu->tp.size + dsize);
 
 	event_trigger_unlock_commit(trace_file, buffer, event, entry, 0);
-पूर्ण
+}
 
 /* uprobe handler */
-अटल पूर्णांक uprobe_trace_func(काष्ठा trace_uprobe *tu, काष्ठा pt_regs *regs,
-			     काष्ठा uprobe_cpu_buffer *ucb, पूर्णांक dsize)
-अणु
-	काष्ठा event_file_link *link;
+static int uprobe_trace_func(struct trace_uprobe *tu, struct pt_regs *regs,
+			     struct uprobe_cpu_buffer *ucb, int dsize)
+{
+	struct event_file_link *link;
 
-	अगर (is_ret_probe(tu))
-		वापस 0;
+	if (is_ret_probe(tu))
+		return 0;
 
-	rcu_पढ़ो_lock();
-	trace_probe_क्रम_each_link_rcu(link, &tu->tp)
+	rcu_read_lock();
+	trace_probe_for_each_link_rcu(link, &tu->tp)
 		__uprobe_trace_func(tu, 0, regs, ucb, dsize, link->file);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम uretprobe_trace_func(काष्ठा trace_uprobe *tu, अचिन्हित दीर्घ func,
-				 काष्ठा pt_regs *regs,
-				 काष्ठा uprobe_cpu_buffer *ucb, पूर्णांक dsize)
-अणु
-	काष्ठा event_file_link *link;
+static void uretprobe_trace_func(struct trace_uprobe *tu, unsigned long func,
+				 struct pt_regs *regs,
+				 struct uprobe_cpu_buffer *ucb, int dsize)
+{
+	struct event_file_link *link;
 
-	rcu_पढ़ो_lock();
-	trace_probe_क्रम_each_link_rcu(link, &tu->tp)
+	rcu_read_lock();
+	trace_probe_for_each_link_rcu(link, &tu->tp)
 		__uprobe_trace_func(tu, func, regs, ucb, dsize, link->file);
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
-/* Event entry prपूर्णांकers */
-अटल क्रमागत prपूर्णांक_line_t
-prपूर्णांक_uprobe_event(काष्ठा trace_iterator *iter, पूर्णांक flags, काष्ठा trace_event *event)
-अणु
-	काष्ठा uprobe_trace_entry_head *entry;
-	काष्ठा trace_seq *s = &iter->seq;
-	काष्ठा trace_uprobe *tu;
+/* Event entry printers */
+static enum print_line_t
+print_uprobe_event(struct trace_iterator *iter, int flags, struct trace_event *event)
+{
+	struct uprobe_trace_entry_head *entry;
+	struct trace_seq *s = &iter->seq;
+	struct trace_uprobe *tu;
 	u8 *data;
 
-	entry = (काष्ठा uprobe_trace_entry_head *)iter->ent;
+	entry = (struct uprobe_trace_entry_head *)iter->ent;
 	tu = trace_uprobe_primary_from_call(
-		container_of(event, काष्ठा trace_event_call, event));
-	अगर (unlikely(!tu))
-		जाओ out;
+		container_of(event, struct trace_event_call, event));
+	if (unlikely(!tu))
+		goto out;
 
-	अगर (is_ret_probe(tu)) अणु
-		trace_seq_म_लिखो(s, "%s: (0x%lx <- 0x%lx)",
+	if (is_ret_probe(tu)) {
+		trace_seq_printf(s, "%s: (0x%lx <- 0x%lx)",
 				 trace_probe_name(&tu->tp),
 				 entry->vaddr[1], entry->vaddr[0]);
 		data = DATAOF_TRACE_ENTRY(entry, true);
-	पूर्ण अन्यथा अणु
-		trace_seq_म_लिखो(s, "%s: (0x%lx)",
+	} else {
+		trace_seq_printf(s, "%s: (0x%lx)",
 				 trace_probe_name(&tu->tp),
 				 entry->vaddr[0]);
 		data = DATAOF_TRACE_ENTRY(entry, false);
-	पूर्ण
+	}
 
-	अगर (prपूर्णांक_probe_args(s, tu->tp.args, tu->tp.nr_args, data, entry) < 0)
-		जाओ out;
+	if (print_probe_args(s, tu->tp.args, tu->tp.nr_args, data, entry) < 0)
+		goto out;
 
-	trace_seq_अ_दो(s, '\n');
+	trace_seq_putc(s, '\n');
 
  out:
-	वापस trace_handle_वापस(s);
-पूर्ण
+	return trace_handle_return(s);
+}
 
-प्रकार bool (*filter_func_t)(काष्ठा uprobe_consumer *self,
-				क्रमागत uprobe_filter_ctx ctx,
-				काष्ठा mm_काष्ठा *mm);
+typedef bool (*filter_func_t)(struct uprobe_consumer *self,
+				enum uprobe_filter_ctx ctx,
+				struct mm_struct *mm);
 
-अटल पूर्णांक trace_uprobe_enable(काष्ठा trace_uprobe *tu, filter_func_t filter)
-अणु
-	पूर्णांक ret;
+static int trace_uprobe_enable(struct trace_uprobe *tu, filter_func_t filter)
+{
+	int ret;
 
 	tu->consumer.filter = filter;
 	tu->inode = d_real_inode(tu->path.dentry);
 
-	अगर (tu->ref_ctr_offset)
-		ret = uprobe_रेजिस्टर_refctr(tu->inode, tu->offset,
+	if (tu->ref_ctr_offset)
+		ret = uprobe_register_refctr(tu->inode, tu->offset,
 				tu->ref_ctr_offset, &tu->consumer);
-	अन्यथा
-		ret = uprobe_रेजिस्टर(tu->inode, tu->offset, &tu->consumer);
+	else
+		ret = uprobe_register(tu->inode, tu->offset, &tu->consumer);
 
-	अगर (ret)
-		tu->inode = शून्य;
+	if (ret)
+		tu->inode = NULL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __probe_event_disable(काष्ठा trace_probe *tp)
-अणु
-	काष्ठा trace_probe *pos;
-	काष्ठा trace_uprobe *tu;
+static void __probe_event_disable(struct trace_probe *tp)
+{
+	struct trace_probe *pos;
+	struct trace_uprobe *tu;
 
-	tu = container_of(tp, काष्ठा trace_uprobe, tp);
+	tu = container_of(tp, struct trace_uprobe, tp);
 	WARN_ON(!uprobe_filter_is_empty(tu->tp.event->filter));
 
-	list_क्रम_each_entry(pos, trace_probe_probe_list(tp), list) अणु
-		tu = container_of(pos, काष्ठा trace_uprobe, tp);
-		अगर (!tu->inode)
-			जारी;
+	list_for_each_entry(pos, trace_probe_probe_list(tp), list) {
+		tu = container_of(pos, struct trace_uprobe, tp);
+		if (!tu->inode)
+			continue;
 
-		uprobe_unरेजिस्टर(tu->inode, tu->offset, &tu->consumer);
-		tu->inode = शून्य;
-	पूर्ण
-पूर्ण
+		uprobe_unregister(tu->inode, tu->offset, &tu->consumer);
+		tu->inode = NULL;
+	}
+}
 
-अटल पूर्णांक probe_event_enable(काष्ठा trace_event_call *call,
-			काष्ठा trace_event_file *file, filter_func_t filter)
-अणु
-	काष्ठा trace_probe *pos, *tp;
-	काष्ठा trace_uprobe *tu;
+static int probe_event_enable(struct trace_event_call *call,
+			struct trace_event_file *file, filter_func_t filter)
+{
+	struct trace_probe *pos, *tp;
+	struct trace_uprobe *tu;
 	bool enabled;
-	पूर्णांक ret;
+	int ret;
 
 	tp = trace_probe_primary_from_call(call);
-	अगर (WARN_ON_ONCE(!tp))
-		वापस -ENODEV;
+	if (WARN_ON_ONCE(!tp))
+		return -ENODEV;
 	enabled = trace_probe_is_enabled(tp);
 
 	/* This may also change "enabled" state */
-	अगर (file) अणु
-		अगर (trace_probe_test_flag(tp, TP_FLAG_PROखाता))
-			वापस -EINTR;
+	if (file) {
+		if (trace_probe_test_flag(tp, TP_FLAG_PROFILE))
+			return -EINTR;
 
 		ret = trace_probe_add_file(tp, file);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण अन्यथा अणु
-		अगर (trace_probe_test_flag(tp, TP_FLAG_TRACE))
-			वापस -EINTR;
+		if (ret < 0)
+			return ret;
+	} else {
+		if (trace_probe_test_flag(tp, TP_FLAG_TRACE))
+			return -EINTR;
 
-		trace_probe_set_flag(tp, TP_FLAG_PROखाता);
-	पूर्ण
+		trace_probe_set_flag(tp, TP_FLAG_PROFILE);
+	}
 
-	tu = container_of(tp, काष्ठा trace_uprobe, tp);
+	tu = container_of(tp, struct trace_uprobe, tp);
 	WARN_ON(!uprobe_filter_is_empty(tu->tp.event->filter));
 
-	अगर (enabled)
-		वापस 0;
+	if (enabled)
+		return 0;
 
 	ret = uprobe_buffer_enable();
-	अगर (ret)
-		जाओ err_flags;
+	if (ret)
+		goto err_flags;
 
-	list_क्रम_each_entry(pos, trace_probe_probe_list(tp), list) अणु
-		tu = container_of(pos, काष्ठा trace_uprobe, tp);
+	list_for_each_entry(pos, trace_probe_probe_list(tp), list) {
+		tu = container_of(pos, struct trace_uprobe, tp);
 		ret = trace_uprobe_enable(tu, filter);
-		अगर (ret) अणु
+		if (ret) {
 			__probe_event_disable(tp);
-			जाओ err_buffer;
-		पूर्ण
-	पूर्ण
+			goto err_buffer;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
  err_buffer:
 	uprobe_buffer_disable();
 
  err_flags:
-	अगर (file)
-		trace_probe_हटाओ_file(tp, file);
-	अन्यथा
-		trace_probe_clear_flag(tp, TP_FLAG_PROखाता);
+	if (file)
+		trace_probe_remove_file(tp, file);
+	else
+		trace_probe_clear_flag(tp, TP_FLAG_PROFILE);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम probe_event_disable(काष्ठा trace_event_call *call,
-				काष्ठा trace_event_file *file)
-अणु
-	काष्ठा trace_probe *tp;
+static void probe_event_disable(struct trace_event_call *call,
+				struct trace_event_file *file)
+{
+	struct trace_probe *tp;
 
 	tp = trace_probe_primary_from_call(call);
-	अगर (WARN_ON_ONCE(!tp))
-		वापस;
+	if (WARN_ON_ONCE(!tp))
+		return;
 
-	अगर (!trace_probe_is_enabled(tp))
-		वापस;
+	if (!trace_probe_is_enabled(tp))
+		return;
 
-	अगर (file) अणु
-		अगर (trace_probe_हटाओ_file(tp, file) < 0)
-			वापस;
+	if (file) {
+		if (trace_probe_remove_file(tp, file) < 0)
+			return;
 
-		अगर (trace_probe_is_enabled(tp))
-			वापस;
-	पूर्ण अन्यथा
-		trace_probe_clear_flag(tp, TP_FLAG_PROखाता);
+		if (trace_probe_is_enabled(tp))
+			return;
+	} else
+		trace_probe_clear_flag(tp, TP_FLAG_PROFILE);
 
 	__probe_event_disable(tp);
 	uprobe_buffer_disable();
-पूर्ण
+}
 
-अटल पूर्णांक uprobe_event_define_fields(काष्ठा trace_event_call *event_call)
-अणु
-	पूर्णांक ret, size;
-	काष्ठा uprobe_trace_entry_head field;
-	काष्ठा trace_uprobe *tu;
+static int uprobe_event_define_fields(struct trace_event_call *event_call)
+{
+	int ret, size;
+	struct uprobe_trace_entry_head field;
+	struct trace_uprobe *tu;
 
 	tu = trace_uprobe_primary_from_call(event_call);
-	अगर (unlikely(!tu))
-		वापस -ENODEV;
+	if (unlikely(!tu))
+		return -ENODEV;
 
-	अगर (is_ret_probe(tu)) अणु
-		DEFINE_FIELD(अचिन्हित दीर्घ, vaddr[0], FIELD_STRING_FUNC, 0);
-		DEFINE_FIELD(अचिन्हित दीर्घ, vaddr[1], FIELD_STRING_RETIP, 0);
-		size = SIZखातापूर्ण_TRACE_ENTRY(true);
-	पूर्ण अन्यथा अणु
-		DEFINE_FIELD(अचिन्हित दीर्घ, vaddr[0], FIELD_STRING_IP, 0);
-		size = SIZखातापूर्ण_TRACE_ENTRY(false);
-	पूर्ण
+	if (is_ret_probe(tu)) {
+		DEFINE_FIELD(unsigned long, vaddr[0], FIELD_STRING_FUNC, 0);
+		DEFINE_FIELD(unsigned long, vaddr[1], FIELD_STRING_RETIP, 0);
+		size = SIZEOF_TRACE_ENTRY(true);
+	} else {
+		DEFINE_FIELD(unsigned long, vaddr[0], FIELD_STRING_IP, 0);
+		size = SIZEOF_TRACE_ENTRY(false);
+	}
 
-	वापस traceprobe_define_arg_fields(event_call, size, &tu->tp);
-पूर्ण
+	return traceprobe_define_arg_fields(event_call, size, &tu->tp);
+}
 
-#अगर_घोषित CONFIG_PERF_EVENTS
-अटल bool
-__uprobe_perf_filter(काष्ठा trace_uprobe_filter *filter, काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा perf_event *event;
+#ifdef CONFIG_PERF_EVENTS
+static bool
+__uprobe_perf_filter(struct trace_uprobe_filter *filter, struct mm_struct *mm)
+{
+	struct perf_event *event;
 
-	अगर (filter->nr_प्रणालीwide)
-		वापस true;
+	if (filter->nr_systemwide)
+		return true;
 
-	list_क्रम_each_entry(event, &filter->perf_events, hw.tp_list) अणु
-		अगर (event->hw.target->mm == mm)
-			वापस true;
-	पूर्ण
+	list_for_each_entry(event, &filter->perf_events, hw.tp_list) {
+		if (event->hw.target->mm == mm)
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल अंतरभूत bool
-trace_uprobe_filter_event(काष्ठा trace_uprobe_filter *filter,
-			  काष्ठा perf_event *event)
-अणु
-	वापस __uprobe_perf_filter(filter, event->hw.target->mm);
-पूर्ण
+static inline bool
+trace_uprobe_filter_event(struct trace_uprobe_filter *filter,
+			  struct perf_event *event)
+{
+	return __uprobe_perf_filter(filter, event->hw.target->mm);
+}
 
-अटल bool trace_uprobe_filter_हटाओ(काष्ठा trace_uprobe_filter *filter,
-				       काष्ठा perf_event *event)
-अणु
-	bool करोne;
+static bool trace_uprobe_filter_remove(struct trace_uprobe_filter *filter,
+				       struct perf_event *event)
+{
+	bool done;
 
-	ग_लिखो_lock(&filter->rwlock);
-	अगर (event->hw.target) अणु
+	write_lock(&filter->rwlock);
+	if (event->hw.target) {
 		list_del(&event->hw.tp_list);
-		करोne = filter->nr_प्रणालीwide ||
+		done = filter->nr_systemwide ||
 			(event->hw.target->flags & PF_EXITING) ||
 			trace_uprobe_filter_event(filter, event);
-	पूर्ण अन्यथा अणु
-		filter->nr_प्रणालीwide--;
-		करोne = filter->nr_प्रणालीwide;
-	पूर्ण
-	ग_लिखो_unlock(&filter->rwlock);
+	} else {
+		filter->nr_systemwide--;
+		done = filter->nr_systemwide;
+	}
+	write_unlock(&filter->rwlock);
 
-	वापस करोne;
-पूर्ण
+	return done;
+}
 
-/* This वापसs true अगर the filter always covers target mm */
-अटल bool trace_uprobe_filter_add(काष्ठा trace_uprobe_filter *filter,
-				    काष्ठा perf_event *event)
-अणु
-	bool करोne;
+/* This returns true if the filter always covers target mm */
+static bool trace_uprobe_filter_add(struct trace_uprobe_filter *filter,
+				    struct perf_event *event)
+{
+	bool done;
 
-	ग_लिखो_lock(&filter->rwlock);
-	अगर (event->hw.target) अणु
+	write_lock(&filter->rwlock);
+	if (event->hw.target) {
 		/*
-		 * event->parent != शून्य means copy_process(), we can aव्योम
+		 * event->parent != NULL means copy_process(), we can avoid
 		 * uprobe_apply(). current->mm must be probed and we can rely
-		 * on dup_mmap() which preserves the alपढ़ोy installed bp's.
+		 * on dup_mmap() which preserves the already installed bp's.
 		 *
 		 * attr.enable_on_exec means that exec/mmap will install the
-		 * अवरोधpoपूर्णांकs we need.
+		 * breakpoints we need.
 		 */
-		करोne = filter->nr_प्रणालीwide ||
+		done = filter->nr_systemwide ||
 			event->parent || event->attr.enable_on_exec ||
 			trace_uprobe_filter_event(filter, event);
 		list_add(&event->hw.tp_list, &filter->perf_events);
-	पूर्ण अन्यथा अणु
-		करोne = filter->nr_प्रणालीwide;
-		filter->nr_प्रणालीwide++;
-	पूर्ण
-	ग_लिखो_unlock(&filter->rwlock);
+	} else {
+		done = filter->nr_systemwide;
+		filter->nr_systemwide++;
+	}
+	write_unlock(&filter->rwlock);
 
-	वापस करोne;
-पूर्ण
+	return done;
+}
 
-अटल पूर्णांक uprobe_perf_बंद(काष्ठा trace_event_call *call,
-			     काष्ठा perf_event *event)
-अणु
-	काष्ठा trace_probe *pos, *tp;
-	काष्ठा trace_uprobe *tu;
-	पूर्णांक ret = 0;
+static int uprobe_perf_close(struct trace_event_call *call,
+			     struct perf_event *event)
+{
+	struct trace_probe *pos, *tp;
+	struct trace_uprobe *tu;
+	int ret = 0;
 
 	tp = trace_probe_primary_from_call(call);
-	अगर (WARN_ON_ONCE(!tp))
-		वापस -ENODEV;
+	if (WARN_ON_ONCE(!tp))
+		return -ENODEV;
 
-	tu = container_of(tp, काष्ठा trace_uprobe, tp);
-	अगर (trace_uprobe_filter_हटाओ(tu->tp.event->filter, event))
-		वापस 0;
+	tu = container_of(tp, struct trace_uprobe, tp);
+	if (trace_uprobe_filter_remove(tu->tp.event->filter, event))
+		return 0;
 
-	list_क्रम_each_entry(pos, trace_probe_probe_list(tp), list) अणु
-		tu = container_of(pos, काष्ठा trace_uprobe, tp);
+	list_for_each_entry(pos, trace_probe_probe_list(tp), list) {
+		tu = container_of(pos, struct trace_uprobe, tp);
 		ret = uprobe_apply(tu->inode, tu->offset, &tu->consumer, false);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+		if (ret)
+			break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक uprobe_perf_खोलो(काष्ठा trace_event_call *call,
-			    काष्ठा perf_event *event)
-अणु
-	काष्ठा trace_probe *pos, *tp;
-	काष्ठा trace_uprobe *tu;
-	पूर्णांक err = 0;
+static int uprobe_perf_open(struct trace_event_call *call,
+			    struct perf_event *event)
+{
+	struct trace_probe *pos, *tp;
+	struct trace_uprobe *tu;
+	int err = 0;
 
 	tp = trace_probe_primary_from_call(call);
-	अगर (WARN_ON_ONCE(!tp))
-		वापस -ENODEV;
+	if (WARN_ON_ONCE(!tp))
+		return -ENODEV;
 
-	tu = container_of(tp, काष्ठा trace_uprobe, tp);
-	अगर (trace_uprobe_filter_add(tu->tp.event->filter, event))
-		वापस 0;
+	tu = container_of(tp, struct trace_uprobe, tp);
+	if (trace_uprobe_filter_add(tu->tp.event->filter, event))
+		return 0;
 
-	list_क्रम_each_entry(pos, trace_probe_probe_list(tp), list) अणु
+	list_for_each_entry(pos, trace_probe_probe_list(tp), list) {
 		err = uprobe_apply(tu->inode, tu->offset, &tu->consumer, true);
-		अगर (err) अणु
-			uprobe_perf_बंद(call, event);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		if (err) {
+			uprobe_perf_close(call, event);
+			break;
+		}
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल bool uprobe_perf_filter(काष्ठा uprobe_consumer *uc,
-				क्रमागत uprobe_filter_ctx ctx, काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा trace_uprobe_filter *filter;
-	काष्ठा trace_uprobe *tu;
-	पूर्णांक ret;
+static bool uprobe_perf_filter(struct uprobe_consumer *uc,
+				enum uprobe_filter_ctx ctx, struct mm_struct *mm)
+{
+	struct trace_uprobe_filter *filter;
+	struct trace_uprobe *tu;
+	int ret;
 
-	tu = container_of(uc, काष्ठा trace_uprobe, consumer);
+	tu = container_of(uc, struct trace_uprobe, consumer);
 	filter = tu->tp.event->filter;
 
-	पढ़ो_lock(&filter->rwlock);
+	read_lock(&filter->rwlock);
 	ret = __uprobe_perf_filter(filter, mm);
-	पढ़ो_unlock(&filter->rwlock);
+	read_unlock(&filter->rwlock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __uprobe_perf_func(काष्ठा trace_uprobe *tu,
-			       अचिन्हित दीर्घ func, काष्ठा pt_regs *regs,
-			       काष्ठा uprobe_cpu_buffer *ucb, पूर्णांक dsize)
-अणु
-	काष्ठा trace_event_call *call = trace_probe_event_call(&tu->tp);
-	काष्ठा uprobe_trace_entry_head *entry;
-	काष्ठा hlist_head *head;
-	व्योम *data;
-	पूर्णांक size, esize;
-	पूर्णांक rctx;
+static void __uprobe_perf_func(struct trace_uprobe *tu,
+			       unsigned long func, struct pt_regs *regs,
+			       struct uprobe_cpu_buffer *ucb, int dsize)
+{
+	struct trace_event_call *call = trace_probe_event_call(&tu->tp);
+	struct uprobe_trace_entry_head *entry;
+	struct hlist_head *head;
+	void *data;
+	int size, esize;
+	int rctx;
 
-	अगर (bpf_prog_array_valid(call)) अणु
+	if (bpf_prog_array_valid(call)) {
 		u32 ret;
 
 		preempt_disable();
 		ret = trace_call_bpf(call, regs);
 		preempt_enable();
-		अगर (!ret)
-			वापस;
-	पूर्ण
+		if (!ret)
+			return;
+	}
 
-	esize = SIZखातापूर्ण_TRACE_ENTRY(is_ret_probe(tu));
+	esize = SIZEOF_TRACE_ENTRY(is_ret_probe(tu));
 
 	size = esize + tu->tp.size + dsize;
-	size = ALIGN(size + माप(u32), माप(u64)) - माप(u32);
-	अगर (WARN_ONCE(size > PERF_MAX_TRACE_SIZE, "profile buffer not large enough"))
-		वापस;
+	size = ALIGN(size + sizeof(u32), sizeof(u64)) - sizeof(u32);
+	if (WARN_ONCE(size > PERF_MAX_TRACE_SIZE, "profile buffer not large enough"))
+		return;
 
 	preempt_disable();
 	head = this_cpu_ptr(call->perf_events);
-	अगर (hlist_empty(head))
-		जाओ out;
+	if (hlist_empty(head))
+		goto out;
 
-	entry = perf_trace_buf_alloc(size, शून्य, &rctx);
-	अगर (!entry)
-		जाओ out;
+	entry = perf_trace_buf_alloc(size, NULL, &rctx);
+	if (!entry)
+		goto out;
 
-	अगर (is_ret_probe(tu)) अणु
+	if (is_ret_probe(tu)) {
 		entry->vaddr[0] = func;
-		entry->vaddr[1] = inकाष्ठाion_poपूर्णांकer(regs);
+		entry->vaddr[1] = instruction_pointer(regs);
 		data = DATAOF_TRACE_ENTRY(entry, true);
-	पूर्ण अन्यथा अणु
-		entry->vaddr[0] = inकाष्ठाion_poपूर्णांकer(regs);
+	} else {
+		entry->vaddr[0] = instruction_pointer(regs);
 		data = DATAOF_TRACE_ENTRY(entry, false);
-	पूर्ण
+	}
 
-	स_नकल(data, ucb->buf, tu->tp.size + dsize);
+	memcpy(data, ucb->buf, tu->tp.size + dsize);
 
-	अगर (size - esize > tu->tp.size + dsize) अणु
-		पूर्णांक len = tu->tp.size + dsize;
+	if (size - esize > tu->tp.size + dsize) {
+		int len = tu->tp.size + dsize;
 
-		स_रखो(data + len, 0, size - esize - len);
-	पूर्ण
+		memset(data + len, 0, size - esize - len);
+	}
 
 	perf_trace_buf_submit(entry, size, rctx, call->event.type, 1, regs,
-			      head, शून्य);
+			      head, NULL);
  out:
 	preempt_enable();
-पूर्ण
+}
 
 /* uprobe profile handler */
-अटल पूर्णांक uprobe_perf_func(काष्ठा trace_uprobe *tu, काष्ठा pt_regs *regs,
-			    काष्ठा uprobe_cpu_buffer *ucb, पूर्णांक dsize)
-अणु
-	अगर (!uprobe_perf_filter(&tu->consumer, 0, current->mm))
-		वापस UPROBE_HANDLER_REMOVE;
+static int uprobe_perf_func(struct trace_uprobe *tu, struct pt_regs *regs,
+			    struct uprobe_cpu_buffer *ucb, int dsize)
+{
+	if (!uprobe_perf_filter(&tu->consumer, 0, current->mm))
+		return UPROBE_HANDLER_REMOVE;
 
-	अगर (!is_ret_probe(tu))
+	if (!is_ret_probe(tu))
 		__uprobe_perf_func(tu, 0, regs, ucb, dsize);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम uretprobe_perf_func(काष्ठा trace_uprobe *tu, अचिन्हित दीर्घ func,
-				काष्ठा pt_regs *regs,
-				काष्ठा uprobe_cpu_buffer *ucb, पूर्णांक dsize)
-अणु
+static void uretprobe_perf_func(struct trace_uprobe *tu, unsigned long func,
+				struct pt_regs *regs,
+				struct uprobe_cpu_buffer *ucb, int dsize)
+{
 	__uprobe_perf_func(tu, func, regs, ucb, dsize);
-पूर्ण
+}
 
-पूर्णांक bpf_get_uprobe_info(स्थिर काष्ठा perf_event *event, u32 *fd_type,
-			स्थिर अक्षर **filename, u64 *probe_offset,
-			bool perf_type_tracepoपूर्णांक)
-अणु
-	स्थिर अक्षर *pevent = trace_event_name(event->tp_event);
-	स्थिर अक्षर *group = event->tp_event->class->प्रणाली;
-	काष्ठा trace_uprobe *tu;
+int bpf_get_uprobe_info(const struct perf_event *event, u32 *fd_type,
+			const char **filename, u64 *probe_offset,
+			bool perf_type_tracepoint)
+{
+	const char *pevent = trace_event_name(event->tp_event);
+	const char *group = event->tp_event->class->system;
+	struct trace_uprobe *tu;
 
-	अगर (perf_type_tracepoपूर्णांक)
+	if (perf_type_tracepoint)
 		tu = find_probe_event(pevent, group);
-	अन्यथा
+	else
 		tu = trace_uprobe_primary_from_call(event->tp_event);
-	अगर (!tu)
-		वापस -EINVAL;
+	if (!tu)
+		return -EINVAL;
 
 	*fd_type = is_ret_probe(tu) ? BPF_FD_TYPE_URETPROBE
 				    : BPF_FD_TYPE_UPROBE;
 	*filename = tu->filename;
 	*probe_offset = tu->offset;
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर	/* CONFIG_PERF_EVENTS */
+	return 0;
+}
+#endif	/* CONFIG_PERF_EVENTS */
 
-अटल पूर्णांक
-trace_uprobe_रेजिस्टर(काष्ठा trace_event_call *event, क्रमागत trace_reg type,
-		      व्योम *data)
-अणु
-	काष्ठा trace_event_file *file = data;
+static int
+trace_uprobe_register(struct trace_event_call *event, enum trace_reg type,
+		      void *data)
+{
+	struct trace_event_file *file = data;
 
-	चयन (type) अणु
-	हाल TRACE_REG_REGISTER:
-		वापस probe_event_enable(event, file, शून्य);
+	switch (type) {
+	case TRACE_REG_REGISTER:
+		return probe_event_enable(event, file, NULL);
 
-	हाल TRACE_REG_UNREGISTER:
+	case TRACE_REG_UNREGISTER:
 		probe_event_disable(event, file);
-		वापस 0;
+		return 0;
 
-#अगर_घोषित CONFIG_PERF_EVENTS
-	हाल TRACE_REG_PERF_REGISTER:
-		वापस probe_event_enable(event, शून्य, uprobe_perf_filter);
+#ifdef CONFIG_PERF_EVENTS
+	case TRACE_REG_PERF_REGISTER:
+		return probe_event_enable(event, NULL, uprobe_perf_filter);
 
-	हाल TRACE_REG_PERF_UNREGISTER:
-		probe_event_disable(event, शून्य);
-		वापस 0;
+	case TRACE_REG_PERF_UNREGISTER:
+		probe_event_disable(event, NULL);
+		return 0;
 
-	हाल TRACE_REG_PERF_OPEN:
-		वापस uprobe_perf_खोलो(event, data);
+	case TRACE_REG_PERF_OPEN:
+		return uprobe_perf_open(event, data);
 
-	हाल TRACE_REG_PERF_CLOSE:
-		वापस uprobe_perf_बंद(event, data);
+	case TRACE_REG_PERF_CLOSE:
+		return uprobe_perf_close(event, data);
 
-#पूर्ण_अगर
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+#endif
+	default:
+		return 0;
+	}
+}
 
-अटल पूर्णांक uprobe_dispatcher(काष्ठा uprobe_consumer *con, काष्ठा pt_regs *regs)
-अणु
-	काष्ठा trace_uprobe *tu;
-	काष्ठा uprobe_dispatch_data udd;
-	काष्ठा uprobe_cpu_buffer *ucb;
-	पूर्णांक dsize, esize;
-	पूर्णांक ret = 0;
+static int uprobe_dispatcher(struct uprobe_consumer *con, struct pt_regs *regs)
+{
+	struct trace_uprobe *tu;
+	struct uprobe_dispatch_data udd;
+	struct uprobe_cpu_buffer *ucb;
+	int dsize, esize;
+	int ret = 0;
 
 
-	tu = container_of(con, काष्ठा trace_uprobe, consumer);
+	tu = container_of(con, struct trace_uprobe, consumer);
 	tu->nhit++;
 
 	udd.tu = tu;
-	udd.bp_addr = inकाष्ठाion_poपूर्णांकer(regs);
+	udd.bp_addr = instruction_pointer(regs);
 
-	current->utask->vaddr = (अचिन्हित दीर्घ) &udd;
+	current->utask->vaddr = (unsigned long) &udd;
 
-	अगर (WARN_ON_ONCE(!uprobe_cpu_buffer))
-		वापस 0;
+	if (WARN_ON_ONCE(!uprobe_cpu_buffer))
+		return 0;
 
 	dsize = __get_data_size(&tu->tp, regs);
-	esize = SIZखातापूर्ण_TRACE_ENTRY(is_ret_probe(tu));
+	esize = SIZEOF_TRACE_ENTRY(is_ret_probe(tu));
 
 	ucb = uprobe_buffer_get();
 	store_trace_args(ucb->buf, &tu->tp, regs, esize, dsize);
 
-	अगर (trace_probe_test_flag(&tu->tp, TP_FLAG_TRACE))
+	if (trace_probe_test_flag(&tu->tp, TP_FLAG_TRACE))
 		ret |= uprobe_trace_func(tu, regs, ucb, dsize);
 
-#अगर_घोषित CONFIG_PERF_EVENTS
-	अगर (trace_probe_test_flag(&tu->tp, TP_FLAG_PROखाता))
+#ifdef CONFIG_PERF_EVENTS
+	if (trace_probe_test_flag(&tu->tp, TP_FLAG_PROFILE))
 		ret |= uprobe_perf_func(tu, regs, ucb, dsize);
-#पूर्ण_अगर
+#endif
 	uprobe_buffer_put(ucb);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक uretprobe_dispatcher(काष्ठा uprobe_consumer *con,
-				अचिन्हित दीर्घ func, काष्ठा pt_regs *regs)
-अणु
-	काष्ठा trace_uprobe *tu;
-	काष्ठा uprobe_dispatch_data udd;
-	काष्ठा uprobe_cpu_buffer *ucb;
-	पूर्णांक dsize, esize;
+static int uretprobe_dispatcher(struct uprobe_consumer *con,
+				unsigned long func, struct pt_regs *regs)
+{
+	struct trace_uprobe *tu;
+	struct uprobe_dispatch_data udd;
+	struct uprobe_cpu_buffer *ucb;
+	int dsize, esize;
 
-	tu = container_of(con, काष्ठा trace_uprobe, consumer);
+	tu = container_of(con, struct trace_uprobe, consumer);
 
 	udd.tu = tu;
 	udd.bp_addr = func;
 
-	current->utask->vaddr = (अचिन्हित दीर्घ) &udd;
+	current->utask->vaddr = (unsigned long) &udd;
 
-	अगर (WARN_ON_ONCE(!uprobe_cpu_buffer))
-		वापस 0;
+	if (WARN_ON_ONCE(!uprobe_cpu_buffer))
+		return 0;
 
 	dsize = __get_data_size(&tu->tp, regs);
-	esize = SIZखातापूर्ण_TRACE_ENTRY(is_ret_probe(tu));
+	esize = SIZEOF_TRACE_ENTRY(is_ret_probe(tu));
 
 	ucb = uprobe_buffer_get();
 	store_trace_args(ucb->buf, &tu->tp, regs, esize, dsize);
 
-	अगर (trace_probe_test_flag(&tu->tp, TP_FLAG_TRACE))
+	if (trace_probe_test_flag(&tu->tp, TP_FLAG_TRACE))
 		uretprobe_trace_func(tu, func, regs, ucb, dsize);
 
-#अगर_घोषित CONFIG_PERF_EVENTS
-	अगर (trace_probe_test_flag(&tu->tp, TP_FLAG_PROखाता))
+#ifdef CONFIG_PERF_EVENTS
+	if (trace_probe_test_flag(&tu->tp, TP_FLAG_PROFILE))
 		uretprobe_perf_func(tu, func, regs, ucb, dsize);
-#पूर्ण_अगर
+#endif
 	uprobe_buffer_put(ucb);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा trace_event_functions uprobe_funcs = अणु
-	.trace		= prपूर्णांक_uprobe_event
-पूर्ण;
+static struct trace_event_functions uprobe_funcs = {
+	.trace		= print_uprobe_event
+};
 
-अटल काष्ठा trace_event_fields uprobe_fields_array[] = अणु
-	अणु .type = TRACE_FUNCTION_TYPE,
-	  .define_fields = uprobe_event_define_fields पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static struct trace_event_fields uprobe_fields_array[] = {
+	{ .type = TRACE_FUNCTION_TYPE,
+	  .define_fields = uprobe_event_define_fields },
+	{}
+};
 
-अटल अंतरभूत व्योम init_trace_event_call(काष्ठा trace_uprobe *tu)
-अणु
-	काष्ठा trace_event_call *call = trace_probe_event_call(&tu->tp);
+static inline void init_trace_event_call(struct trace_uprobe *tu)
+{
+	struct trace_event_call *call = trace_probe_event_call(&tu->tp);
 	call->event.funcs = &uprobe_funcs;
 	call->class->fields_array = uprobe_fields_array;
 
 	call->flags = TRACE_EVENT_FL_UPROBE | TRACE_EVENT_FL_CAP_ANY;
-	call->class->reg = trace_uprobe_रेजिस्टर;
-पूर्ण
+	call->class->reg = trace_uprobe_register;
+}
 
-अटल पूर्णांक रेजिस्टर_uprobe_event(काष्ठा trace_uprobe *tu)
-अणु
+static int register_uprobe_event(struct trace_uprobe *tu)
+{
 	init_trace_event_call(tu);
 
-	वापस trace_probe_रेजिस्टर_event_call(&tu->tp);
-पूर्ण
+	return trace_probe_register_event_call(&tu->tp);
+}
 
-अटल पूर्णांक unरेजिस्टर_uprobe_event(काष्ठा trace_uprobe *tu)
-अणु
-	वापस trace_probe_unरेजिस्टर_event_call(&tu->tp);
-पूर्ण
+static int unregister_uprobe_event(struct trace_uprobe *tu)
+{
+	return trace_probe_unregister_event_call(&tu->tp);
+}
 
-#अगर_घोषित CONFIG_PERF_EVENTS
-काष्ठा trace_event_call *
-create_local_trace_uprobe(अक्षर *name, अचिन्हित दीर्घ offs,
-			  अचिन्हित दीर्घ ref_ctr_offset, bool is_वापस)
-अणु
-	काष्ठा trace_uprobe *tu;
-	काष्ठा path path;
-	पूर्णांक ret;
+#ifdef CONFIG_PERF_EVENTS
+struct trace_event_call *
+create_local_trace_uprobe(char *name, unsigned long offs,
+			  unsigned long ref_ctr_offset, bool is_return)
+{
+	struct trace_uprobe *tu;
+	struct path path;
+	int ret;
 
 	ret = kern_path(name, LOOKUP_FOLLOW, &path);
-	अगर (ret)
-		वापस ERR_PTR(ret);
+	if (ret)
+		return ERR_PTR(ret);
 
-	अगर (!d_is_reg(path.dentry)) अणु
+	if (!d_is_reg(path.dentry)) {
 		path_put(&path);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
 	/*
 	 * local trace_kprobes are not added to dyn_event, so they are never
-	 * searched in find_trace_kprobe(). Thereक्रमe, there is no concern of
+	 * searched in find_trace_kprobe(). Therefore, there is no concern of
 	 * duplicated name "DUMMY_EVENT" here.
 	 */
 	tu = alloc_trace_uprobe(UPROBE_EVENT_SYSTEM, "DUMMY_EVENT", 0,
-				is_वापस);
+				is_return);
 
-	अगर (IS_ERR(tu)) अणु
+	if (IS_ERR(tu)) {
 		pr_info("Failed to allocate trace_uprobe.(%d)\n",
-			(पूर्णांक)PTR_ERR(tu));
+			(int)PTR_ERR(tu));
 		path_put(&path);
-		वापस ERR_CAST(tu);
-	पूर्ण
+		return ERR_CAST(tu);
+	}
 
 	tu->offset = offs;
 	tu->path = path;
@@ -1620,46 +1619,46 @@ create_local_trace_uprobe(अक्षर *name, अचिन्हित दी
 	tu->filename = kstrdup(name, GFP_KERNEL);
 	init_trace_event_call(tu);
 
-	अगर (traceprobe_set_prपूर्णांक_fmt(&tu->tp, is_ret_probe(tu)) < 0) अणु
+	if (traceprobe_set_print_fmt(&tu->tp, is_ret_probe(tu)) < 0) {
 		ret = -ENOMEM;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	वापस trace_probe_event_call(&tu->tp);
+	return trace_probe_event_call(&tu->tp);
 error:
-	मुक्त_trace_uprobe(tu);
-	वापस ERR_PTR(ret);
-पूर्ण
+	free_trace_uprobe(tu);
+	return ERR_PTR(ret);
+}
 
-व्योम destroy_local_trace_uprobe(काष्ठा trace_event_call *event_call)
-अणु
-	काष्ठा trace_uprobe *tu;
+void destroy_local_trace_uprobe(struct trace_event_call *event_call)
+{
+	struct trace_uprobe *tu;
 
 	tu = trace_uprobe_primary_from_call(event_call);
 
-	मुक्त_trace_uprobe(tu);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PERF_EVENTS */
+	free_trace_uprobe(tu);
+}
+#endif /* CONFIG_PERF_EVENTS */
 
-/* Make a trace पूर्णांकerface क्रम controlling probe poपूर्णांकs */
-अटल __init पूर्णांक init_uprobe_trace(व्योम)
-अणु
-	पूर्णांक ret;
+/* Make a trace interface for controlling probe points */
+static __init int init_uprobe_trace(void)
+{
+	int ret;
 
-	ret = dyn_event_रेजिस्टर(&trace_uprobe_ops);
-	अगर (ret)
-		वापस ret;
+	ret = dyn_event_register(&trace_uprobe_ops);
+	if (ret)
+		return ret;
 
 	ret = tracing_init_dentry();
-	अगर (ret)
-		वापस 0;
+	if (ret)
+		return 0;
 
-	trace_create_file("uprobe_events", 0644, शून्य,
-				    शून्य, &uprobe_events_ops);
-	/* Profile पूर्णांकerface */
-	trace_create_file("uprobe_profile", 0444, शून्य,
-				    शून्य, &uprobe_profile_ops);
-	वापस 0;
-पूर्ण
+	trace_create_file("uprobe_events", 0644, NULL,
+				    NULL, &uprobe_events_ops);
+	/* Profile interface */
+	trace_create_file("uprobe_profile", 0444, NULL,
+				    NULL, &uprobe_profile_ops);
+	return 0;
+}
 
 fs_initcall(init_uprobe_trace);

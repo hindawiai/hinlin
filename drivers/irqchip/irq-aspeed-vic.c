@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright (C) 2015 - Ben Herrenschmidt, IBM Corp.
  *
- *  Driver क्रम Aspeed "new" VIC as found in SoC generation 3 and later
+ *  Driver for Aspeed "new" VIC as found in SoC generation 3 and later
  *
  *  Based on irq-vic.c:
  *
@@ -11,212 +10,212 @@
  *  Copyright (C) 2000 Deep Blue Solutions Ltd
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/init.h>
-#समावेश <linux/list.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqchip.h>
-#समावेश <linux/irqchip/chained_irq.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/syscore_ops.h>
-#समावेश <linux/device.h>
-#समावेश <linux/slab.h>
+#include <linux/export.h>
+#include <linux/init.h>
+#include <linux/list.h>
+#include <linux/io.h>
+#include <linux/irq.h>
+#include <linux/irqchip.h>
+#include <linux/irqchip/chained_irq.h>
+#include <linux/irqdomain.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/syscore_ops.h>
+#include <linux/device.h>
+#include <linux/slab.h>
 
-#समावेश <यंत्र/exception.h>
-#समावेश <यंत्र/irq.h>
+#include <asm/exception.h>
+#include <asm/irq.h>
 
 /* These definitions correspond to the "new mapping" of the
- * रेजिस्टर set that पूर्णांकerleaves "high" and "low". The offsets
- * below are क्रम the "low" रेजिस्टर, add 4 to get to the high one
+ * register set that interleaves "high" and "low". The offsets
+ * below are for the "low" register, add 4 to get to the high one
  */
-#घोषणा AVIC_IRQ_STATUS		0x00
-#घोषणा AVIC_FIQ_STATUS		0x08
-#घोषणा AVIC_RAW_STATUS		0x10
-#घोषणा AVIC_INT_SELECT		0x18
-#घोषणा AVIC_INT_ENABLE		0x20
-#घोषणा AVIC_INT_ENABLE_CLR	0x28
-#घोषणा AVIC_INT_TRIGGER	0x30
-#घोषणा AVIC_INT_TRIGGER_CLR	0x38
-#घोषणा AVIC_INT_SENSE		0x40
-#घोषणा AVIC_INT_DUAL_EDGE	0x48
-#घोषणा AVIC_INT_EVENT		0x50
-#घोषणा AVIC_EDGE_CLR		0x58
-#घोषणा AVIC_EDGE_STATUS	0x60
+#define AVIC_IRQ_STATUS		0x00
+#define AVIC_FIQ_STATUS		0x08
+#define AVIC_RAW_STATUS		0x10
+#define AVIC_INT_SELECT		0x18
+#define AVIC_INT_ENABLE		0x20
+#define AVIC_INT_ENABLE_CLR	0x28
+#define AVIC_INT_TRIGGER	0x30
+#define AVIC_INT_TRIGGER_CLR	0x38
+#define AVIC_INT_SENSE		0x40
+#define AVIC_INT_DUAL_EDGE	0x48
+#define AVIC_INT_EVENT		0x50
+#define AVIC_EDGE_CLR		0x58
+#define AVIC_EDGE_STATUS	0x60
 
-#घोषणा NUM_IRQS		64
+#define NUM_IRQS		64
 
-काष्ठा aspeed_vic अणु
-	व्योम __iomem		*base;
+struct aspeed_vic {
+	void __iomem		*base;
 	u32			edge_sources[2];
-	काष्ठा irq_करोमुख्य	*करोm;
-पूर्ण;
-अटल काष्ठा aspeed_vic *प्रणाली_avic;
+	struct irq_domain	*dom;
+};
+static struct aspeed_vic *system_avic;
 
-अटल व्योम vic_init_hw(काष्ठा aspeed_vic *vic)
-अणु
+static void vic_init_hw(struct aspeed_vic *vic)
+{
 	u32 sense;
 
-	/* Disable all पूर्णांकerrupts */
-	ग_लिखोl(0xffffffff, vic->base + AVIC_INT_ENABLE_CLR);
-	ग_लिखोl(0xffffffff, vic->base + AVIC_INT_ENABLE_CLR + 4);
+	/* Disable all interrupts */
+	writel(0xffffffff, vic->base + AVIC_INT_ENABLE_CLR);
+	writel(0xffffffff, vic->base + AVIC_INT_ENABLE_CLR + 4);
 
 	/* Make sure no soft trigger is on */
-	ग_लिखोl(0xffffffff, vic->base + AVIC_INT_TRIGGER_CLR);
-	ग_लिखोl(0xffffffff, vic->base + AVIC_INT_TRIGGER_CLR + 4);
+	writel(0xffffffff, vic->base + AVIC_INT_TRIGGER_CLR);
+	writel(0xffffffff, vic->base + AVIC_INT_TRIGGER_CLR + 4);
 
 	/* Set everything to be IRQ */
-	ग_लिखोl(0, vic->base + AVIC_INT_SELECT);
-	ग_लिखोl(0, vic->base + AVIC_INT_SELECT + 4);
+	writel(0, vic->base + AVIC_INT_SELECT);
+	writel(0, vic->base + AVIC_INT_SELECT + 4);
 
-	/* Some पूर्णांकerrupts have a programmable high/low level trigger
-	 * (4 GPIO direct inमाला_दो), क्रम now we assume this was configured
-	 * by firmware. We पढ़ो which ones are edge now.
+	/* Some interrupts have a programmable high/low level trigger
+	 * (4 GPIO direct inputs), for now we assume this was configured
+	 * by firmware. We read which ones are edge now.
 	 */
-	sense = पढ़ोl(vic->base + AVIC_INT_SENSE);
+	sense = readl(vic->base + AVIC_INT_SENSE);
 	vic->edge_sources[0] = ~sense;
-	sense = पढ़ोl(vic->base + AVIC_INT_SENSE + 4);
+	sense = readl(vic->base + AVIC_INT_SENSE + 4);
 	vic->edge_sources[1] = ~sense;
 
 	/* Clear edge detection latches */
-	ग_लिखोl(0xffffffff, vic->base + AVIC_EDGE_CLR);
-	ग_लिखोl(0xffffffff, vic->base + AVIC_EDGE_CLR + 4);
-पूर्ण
+	writel(0xffffffff, vic->base + AVIC_EDGE_CLR);
+	writel(0xffffffff, vic->base + AVIC_EDGE_CLR + 4);
+}
 
-अटल व्योम __exception_irq_entry avic_handle_irq(काष्ठा pt_regs *regs)
-अणु
-	काष्ठा aspeed_vic *vic = प्रणाली_avic;
+static void __exception_irq_entry avic_handle_irq(struct pt_regs *regs)
+{
+	struct aspeed_vic *vic = system_avic;
 	u32 stat, irq;
 
-	क्रम (;;) अणु
+	for (;;) {
 		irq = 0;
-		stat = पढ़ोl_relaxed(vic->base + AVIC_IRQ_STATUS);
-		अगर (!stat) अणु
-			stat = पढ़ोl_relaxed(vic->base + AVIC_IRQ_STATUS + 4);
+		stat = readl_relaxed(vic->base + AVIC_IRQ_STATUS);
+		if (!stat) {
+			stat = readl_relaxed(vic->base + AVIC_IRQ_STATUS + 4);
 			irq = 32;
-		पूर्ण
-		अगर (stat == 0)
-			अवरोध;
+		}
+		if (stat == 0)
+			break;
 		irq += ffs(stat) - 1;
-		handle_करोमुख्य_irq(vic->करोm, irq, regs);
-	पूर्ण
-पूर्ण
+		handle_domain_irq(vic->dom, irq, regs);
+	}
+}
 
-अटल व्योम avic_ack_irq(काष्ठा irq_data *d)
-अणु
-	काष्ठा aspeed_vic *vic = irq_data_get_irq_chip_data(d);
-	अचिन्हित पूर्णांक sidx = d->hwirq >> 5;
-	अचिन्हित पूर्णांक sbit = 1u << (d->hwirq & 0x1f);
+static void avic_ack_irq(struct irq_data *d)
+{
+	struct aspeed_vic *vic = irq_data_get_irq_chip_data(d);
+	unsigned int sidx = d->hwirq >> 5;
+	unsigned int sbit = 1u << (d->hwirq & 0x1f);
 
-	/* Clear edge latch क्रम edge पूर्णांकerrupts, nop क्रम level */
-	अगर (vic->edge_sources[sidx] & sbit)
-		ग_लिखोl(sbit, vic->base + AVIC_EDGE_CLR + sidx * 4);
-पूर्ण
+	/* Clear edge latch for edge interrupts, nop for level */
+	if (vic->edge_sources[sidx] & sbit)
+		writel(sbit, vic->base + AVIC_EDGE_CLR + sidx * 4);
+}
 
-अटल व्योम avic_mask_irq(काष्ठा irq_data *d)
-अणु
-	काष्ठा aspeed_vic *vic = irq_data_get_irq_chip_data(d);
-	अचिन्हित पूर्णांक sidx = d->hwirq >> 5;
-	अचिन्हित पूर्णांक sbit = 1u << (d->hwirq & 0x1f);
+static void avic_mask_irq(struct irq_data *d)
+{
+	struct aspeed_vic *vic = irq_data_get_irq_chip_data(d);
+	unsigned int sidx = d->hwirq >> 5;
+	unsigned int sbit = 1u << (d->hwirq & 0x1f);
 
-	ग_लिखोl(sbit, vic->base + AVIC_INT_ENABLE_CLR + sidx * 4);
-पूर्ण
+	writel(sbit, vic->base + AVIC_INT_ENABLE_CLR + sidx * 4);
+}
 
-अटल व्योम avic_unmask_irq(काष्ठा irq_data *d)
-अणु
-	काष्ठा aspeed_vic *vic = irq_data_get_irq_chip_data(d);
-	अचिन्हित पूर्णांक sidx = d->hwirq >> 5;
-	अचिन्हित पूर्णांक sbit = 1u << (d->hwirq & 0x1f);
+static void avic_unmask_irq(struct irq_data *d)
+{
+	struct aspeed_vic *vic = irq_data_get_irq_chip_data(d);
+	unsigned int sidx = d->hwirq >> 5;
+	unsigned int sbit = 1u << (d->hwirq & 0x1f);
 
-	ग_लिखोl(sbit, vic->base + AVIC_INT_ENABLE + sidx * 4);
-पूर्ण
+	writel(sbit, vic->base + AVIC_INT_ENABLE + sidx * 4);
+}
 
 /* For level irq, faster than going through a nop "ack" and mask */
-अटल व्योम avic_mask_ack_irq(काष्ठा irq_data *d)
-अणु
-	काष्ठा aspeed_vic *vic = irq_data_get_irq_chip_data(d);
-	अचिन्हित पूर्णांक sidx = d->hwirq >> 5;
-	अचिन्हित पूर्णांक sbit = 1u << (d->hwirq & 0x1f);
+static void avic_mask_ack_irq(struct irq_data *d)
+{
+	struct aspeed_vic *vic = irq_data_get_irq_chip_data(d);
+	unsigned int sidx = d->hwirq >> 5;
+	unsigned int sbit = 1u << (d->hwirq & 0x1f);
 
 	/* First mask */
-	ग_लिखोl(sbit, vic->base + AVIC_INT_ENABLE_CLR + sidx * 4);
+	writel(sbit, vic->base + AVIC_INT_ENABLE_CLR + sidx * 4);
 
-	/* Then clear edge latch क्रम edge पूर्णांकerrupts */
-	अगर (vic->edge_sources[sidx] & sbit)
-		ग_लिखोl(sbit, vic->base + AVIC_EDGE_CLR + sidx * 4);
-पूर्ण
+	/* Then clear edge latch for edge interrupts */
+	if (vic->edge_sources[sidx] & sbit)
+		writel(sbit, vic->base + AVIC_EDGE_CLR + sidx * 4);
+}
 
-अटल काष्ठा irq_chip avic_chip = अणु
+static struct irq_chip avic_chip = {
 	.name		= "AVIC",
 	.irq_ack	= avic_ack_irq,
 	.irq_mask	= avic_mask_irq,
 	.irq_unmask	= avic_unmask_irq,
 	.irq_mask_ack	= avic_mask_ack_irq,
-पूर्ण;
+};
 
-अटल पूर्णांक avic_map(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक irq,
+static int avic_map(struct irq_domain *d, unsigned int irq,
 		    irq_hw_number_t hwirq)
-अणु
-	काष्ठा aspeed_vic *vic = d->host_data;
-	अचिन्हित पूर्णांक sidx = hwirq >> 5;
-	अचिन्हित पूर्णांक sbit = 1u << (hwirq & 0x1f);
+{
+	struct aspeed_vic *vic = d->host_data;
+	unsigned int sidx = hwirq >> 5;
+	unsigned int sbit = 1u << (hwirq & 0x1f);
 
-	/* Check अगर पूर्णांकerrupt exists */
-	अगर (sidx > 1)
-		वापस -EPERM;
+	/* Check if interrupt exists */
+	if (sidx > 1)
+		return -EPERM;
 
-	अगर (vic->edge_sources[sidx] & sbit)
+	if (vic->edge_sources[sidx] & sbit)
 		irq_set_chip_and_handler(irq, &avic_chip, handle_edge_irq);
-	अन्यथा
+	else
 		irq_set_chip_and_handler(irq, &avic_chip, handle_level_irq);
 	irq_set_chip_data(irq, vic);
 	irq_set_probe(irq);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops avic_करोm_ops = अणु
+static const struct irq_domain_ops avic_dom_ops = {
 	.map = avic_map,
-	.xlate = irq_करोमुख्य_xlate_onetwocell,
-पूर्ण;
+	.xlate = irq_domain_xlate_onetwocell,
+};
 
-अटल पूर्णांक __init avic_of_init(काष्ठा device_node *node,
-			       काष्ठा device_node *parent)
-अणु
-	व्योम __iomem *regs;
-	काष्ठा aspeed_vic *vic;
+static int __init avic_of_init(struct device_node *node,
+			       struct device_node *parent)
+{
+	void __iomem *regs;
+	struct aspeed_vic *vic;
 
-	अगर (WARN(parent, "non-root Aspeed VIC not supported"))
-		वापस -EINVAL;
-	अगर (WARN(प्रणाली_avic, "duplicate Aspeed VIC not supported"))
-		वापस -EINVAL;
+	if (WARN(parent, "non-root Aspeed VIC not supported"))
+		return -EINVAL;
+	if (WARN(system_avic, "duplicate Aspeed VIC not supported"))
+		return -EINVAL;
 
 	regs = of_iomap(node, 0);
-	अगर (WARN_ON(!regs))
-		वापस -EIO;
+	if (WARN_ON(!regs))
+		return -EIO;
 
-	vic = kzalloc(माप(काष्ठा aspeed_vic), GFP_KERNEL);
-	अगर (WARN_ON(!vic)) अणु
+	vic = kzalloc(sizeof(struct aspeed_vic), GFP_KERNEL);
+	if (WARN_ON(!vic)) {
 		iounmap(regs);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	vic->base = regs;
 
 	/* Initialize sources, all masked */
 	vic_init_hw(vic);
 
-	/* Ready to receive पूर्णांकerrupts */
-	प्रणाली_avic = vic;
+	/* Ready to receive interrupts */
+	system_avic = vic;
 	set_handle_irq(avic_handle_irq);
 
-	/* Register our करोमुख्य */
-	vic->करोm = irq_करोमुख्य_add_simple(node, NUM_IRQS, 0,
-					 &avic_करोm_ops, vic);
+	/* Register our domain */
+	vic->dom = irq_domain_add_simple(node, NUM_IRQS, 0,
+					 &avic_dom_ops, vic);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 IRQCHIP_DECLARE(ast2400_vic, "aspeed,ast2400-vic", avic_of_init);
 IRQCHIP_DECLARE(ast2500_vic, "aspeed,ast2500-vic", avic_of_init);

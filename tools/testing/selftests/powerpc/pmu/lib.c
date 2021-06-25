@@ -1,228 +1,227 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2014, Michael Ellerman, IBM Corp.
  */
 
-#घोषणा _GNU_SOURCE	/* For CPU_ZERO etc. */
+#define _GNU_SOURCE	/* For CPU_ZERO etc. */
 
-#समावेश <त्रुटिसं.स>
-#समावेश <sched.h>
-#समावेश <समलाँघ.स>
-#समावेश <मानककोष.स>
-#समावेश <sys/रुको.h>
+#include <errno.h>
+#include <sched.h>
+#include <setjmp.h>
+#include <stdlib.h>
+#include <sys/wait.h>
 
-#समावेश "utils.h"
-#समावेश "lib.h"
+#include "utils.h"
+#include "lib.h"
 
 
-पूर्णांक bind_to_cpu(पूर्णांक cpu)
-अणु
+int bind_to_cpu(int cpu)
+{
 	cpu_set_t mask;
 
-	म_लिखो("Binding to cpu %d\n", cpu);
+	printf("Binding to cpu %d\n", cpu);
 
 	CPU_ZERO(&mask);
 	CPU_SET(cpu, &mask);
 
-	वापस sched_setaffinity(0, माप(mask), &mask);
-पूर्ण
+	return sched_setaffinity(0, sizeof(mask), &mask);
+}
 
-#घोषणा PARENT_TOKEN	0xAA
-#घोषणा CHILD_TOKEN	0x55
+#define PARENT_TOKEN	0xAA
+#define CHILD_TOKEN	0x55
 
-पूर्णांक sync_with_child(जोड़ pipe पढ़ो_pipe, जोड़ pipe ग_लिखो_pipe)
-अणु
-	अक्षर c = PARENT_TOKEN;
+int sync_with_child(union pipe read_pipe, union pipe write_pipe)
+{
+	char c = PARENT_TOKEN;
 
-	FAIL_IF(ग_लिखो(ग_लिखो_pipe.ग_लिखो_fd, &c, 1) != 1);
-	FAIL_IF(पढ़ो(पढ़ो_pipe.पढ़ो_fd, &c, 1) != 1);
-	अगर (c != CHILD_TOKEN) /* someबार expected */
-		वापस 1;
+	FAIL_IF(write(write_pipe.write_fd, &c, 1) != 1);
+	FAIL_IF(read(read_pipe.read_fd, &c, 1) != 1);
+	if (c != CHILD_TOKEN) /* sometimes expected */
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक रुको_क्रम_parent(जोड़ pipe पढ़ो_pipe)
-अणु
-	अक्षर c;
+int wait_for_parent(union pipe read_pipe)
+{
+	char c;
 
-	FAIL_IF(पढ़ो(पढ़ो_pipe.पढ़ो_fd, &c, 1) != 1);
+	FAIL_IF(read(read_pipe.read_fd, &c, 1) != 1);
 	FAIL_IF(c != PARENT_TOKEN);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक notअगरy_parent(जोड़ pipe ग_लिखो_pipe)
-अणु
-	अक्षर c = CHILD_TOKEN;
+int notify_parent(union pipe write_pipe)
+{
+	char c = CHILD_TOKEN;
 
-	FAIL_IF(ग_लिखो(ग_लिखो_pipe.ग_लिखो_fd, &c, 1) != 1);
+	FAIL_IF(write(write_pipe.write_fd, &c, 1) != 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक notअगरy_parent_of_error(जोड़ pipe ग_लिखो_pipe)
-अणु
-	अक्षर c = ~CHILD_TOKEN;
+int notify_parent_of_error(union pipe write_pipe)
+{
+	char c = ~CHILD_TOKEN;
 
-	FAIL_IF(ग_लिखो(ग_लिखो_pipe.ग_लिखो_fd, &c, 1) != 1);
+	FAIL_IF(write(write_pipe.write_fd, &c, 1) != 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक रुको_क्रम_child(pid_t child_pid)
-अणु
-	पूर्णांक rc;
+int wait_for_child(pid_t child_pid)
+{
+	int rc;
 
-	अगर (रुकोpid(child_pid, &rc, 0) == -1) अणु
-		लिखो_त्रुटि("waitpid");
-		वापस 1;
-	पूर्ण
+	if (waitpid(child_pid, &rc, 0) == -1) {
+		perror("waitpid");
+		return 1;
+	}
 
-	अगर (WIFEXITED(rc))
+	if (WIFEXITED(rc))
 		rc = WEXITSTATUS(rc);
-	अन्यथा
+	else
 		rc = 1; /* Signal or other */
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक समाप्त_child_and_रुको(pid_t child_pid)
-अणु
-	समाप्त(child_pid, संक_इति);
+int kill_child_and_wait(pid_t child_pid)
+{
+	kill(child_pid, SIGTERM);
 
-	वापस रुको_क्रम_child(child_pid);
-पूर्ण
+	return wait_for_child(child_pid);
+}
 
-अटल पूर्णांक eat_cpu_child(जोड़ pipe पढ़ो_pipe, जोड़ pipe ग_लिखो_pipe)
-अणु
-	अस्थिर पूर्णांक i = 0;
+static int eat_cpu_child(union pipe read_pipe, union pipe write_pipe)
+{
+	volatile int i = 0;
 
 	/*
-	 * We are just here to eat cpu and die. So make sure we can be समाप्तed,
-	 * and also करोn't करो any custom संक_इति handling.
+	 * We are just here to eat cpu and die. So make sure we can be killed,
+	 * and also don't do any custom SIGTERM handling.
 	 */
-	संकेत(संक_इति, संक_पूर्व);
+	signal(SIGTERM, SIG_DFL);
 
-	notअगरy_parent(ग_लिखो_pipe);
-	रुको_क्रम_parent(पढ़ो_pipe);
+	notify_parent(write_pipe);
+	wait_for_parent(read_pipe);
 
-	/* Soak up cpu क्रमever */
-	जबतक (1) i++;
+	/* Soak up cpu forever */
+	while (1) i++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-pid_t eat_cpu(पूर्णांक (test_function)(व्योम))
-अणु
-	जोड़ pipe पढ़ो_pipe, ग_लिखो_pipe;
-	पूर्णांक cpu, rc;
+pid_t eat_cpu(int (test_function)(void))
+{
+	union pipe read_pipe, write_pipe;
+	int cpu, rc;
 	pid_t pid;
 
 	cpu = pick_online_cpu();
 	FAIL_IF(cpu < 0);
 	FAIL_IF(bind_to_cpu(cpu));
 
-	अगर (pipe(पढ़ो_pipe.fds) == -1)
-		वापस -1;
+	if (pipe(read_pipe.fds) == -1)
+		return -1;
 
-	अगर (pipe(ग_लिखो_pipe.fds) == -1)
-		वापस -1;
+	if (pipe(write_pipe.fds) == -1)
+		return -1;
 
-	pid = विभाजन();
-	अगर (pid == 0)
-		निकास(eat_cpu_child(ग_लिखो_pipe, पढ़ो_pipe));
+	pid = fork();
+	if (pid == 0)
+		exit(eat_cpu_child(write_pipe, read_pipe));
 
-	अगर (sync_with_child(पढ़ो_pipe, ग_लिखो_pipe)) अणु
+	if (sync_with_child(read_pipe, write_pipe)) {
 		rc = -1;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	म_लिखो("main test running as pid %d\n", getpid());
+	printf("main test running as pid %d\n", getpid());
 
 	rc = test_function();
 out:
-	समाप्त(pid, SIGKILL);
+	kill(pid, SIGKILL);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-काष्ठा addr_range libc, vdso;
+struct addr_range libc, vdso;
 
-पूर्णांक parse_proc_maps(व्योम)
-अणु
-	अचिन्हित दीर्घ start, end;
-	अक्षर execute, name[128];
-	खाता *f;
-	पूर्णांक rc;
+int parse_proc_maps(void)
+{
+	unsigned long start, end;
+	char execute, name[128];
+	FILE *f;
+	int rc;
 
-	f = ख_खोलो("/proc/self/maps", "r");
-	अगर (!f) अणु
-		लिखो_त्रुटि("fopen");
-		वापस -1;
-	पूर्ण
+	f = fopen("/proc/self/maps", "r");
+	if (!f) {
+		perror("fopen");
+		return -1;
+	}
 
-	करो अणु
+	do {
 		/* This skips line with no executable which is what we want */
-		rc = ख_पूछो(f, "%lx-%lx %*c%*c%c%*c %*x %*d:%*d %*d %127s\n",
+		rc = fscanf(f, "%lx-%lx %*c%*c%c%*c %*x %*d:%*d %*d %127s\n",
 			    &start, &end, &execute, name);
-		अगर (rc <= 0)
-			अवरोध;
+		if (rc <= 0)
+			break;
 
-		अगर (execute != 'x')
-			जारी;
+		if (execute != 'x')
+			continue;
 
-		अगर (म_माला(name, "libc")) अणु
+		if (strstr(name, "libc")) {
 			libc.first = start;
 			libc.last = end - 1;
-		पूर्ण अन्यथा अगर (म_माला(name, "[vdso]")) अणु
+		} else if (strstr(name, "[vdso]")) {
 			vdso.first = start;
 			vdso.last = end - 1;
-		पूर्ण
-	पूर्ण जबतक(1);
+		}
+	} while(1);
 
-	ख_बंद(f);
+	fclose(f);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा PARANOID_PATH	"/proc/sys/kernel/perf_event_paranoid"
+#define PARANOID_PATH	"/proc/sys/kernel/perf_event_paranoid"
 
-bool require_paranoia_below(पूर्णांक level)
-अणु
-	दीर्घ current;
-	अक्षर *end, buf[16];
-	खाता *f;
+bool require_paranoia_below(int level)
+{
+	long current;
+	char *end, buf[16];
+	FILE *f;
 	bool rc;
 
 	rc = false;
 
-	f = ख_खोलो(PARANOID_PATH, "r");
-	अगर (!f) अणु
-		लिखो_त्रुटि("fopen");
-		जाओ out;
-	पूर्ण
+	f = fopen(PARANOID_PATH, "r");
+	if (!f) {
+		perror("fopen");
+		goto out;
+	}
 
-	अगर (!ख_माला_लो(buf, माप(buf), f)) अणु
-		म_लिखो("Couldn't read " PARANOID_PATH "?\n");
-		जाओ out_बंद;
-	पूर्ण
+	if (!fgets(buf, sizeof(buf), f)) {
+		printf("Couldn't read " PARANOID_PATH "?\n");
+		goto out_close;
+	}
 
-	current = म_से_दीर्घ(buf, &end, 10);
+	current = strtol(buf, &end, 10);
 
-	अगर (end == buf) अणु
-		म_लिखो("Couldn't parse " PARANOID_PATH "?\n");
-		जाओ out_बंद;
-	पूर्ण
+	if (end == buf) {
+		printf("Couldn't parse " PARANOID_PATH "?\n");
+		goto out_close;
+	}
 
-	अगर (current >= level)
-		जाओ out_बंद;
+	if (current >= level)
+		goto out_close;
 
 	rc = true;
-out_बंद:
-	ख_बंद(f);
+out_close:
+	fclose(f);
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 

@@ -1,26 +1,25 @@
-<शैली गुरु>
 /*
-  Copyright (c), 2004-2005,2007-2010 Trident Microप्रणालीs, Inc.
+  Copyright (c), 2004-2005,2007-2010 Trident Microsystems, Inc.
   All rights reserved.
 
-  Redistribution and use in source and binary क्रमms, with or without
-  modअगरication, are permitted provided that the following conditions are met:
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
 
   * Redistributions of source code must retain the above copyright notice,
     this list of conditions and the following disclaimer.
-  * Redistributions in binary क्रमm must reproduce the above copyright notice,
-    this list of conditions and the following disclaimer in the करोcumentation
+  * Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
 	and/or other materials provided with the distribution.
-  * Neither the name of Trident Microप्रणालीs nor Hauppauge Computer Works
-    nor the names of its contributors may be used to enकरोrse or promote
-	products derived from this software without specअगरic prior written
+  * Neither the name of Trident Microsystems nor Hauppauge Computer Works
+    nor the names of its contributors may be used to endorse or promote
+	products derived from this software without specific prior written
 	permission.
 
   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
   ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-  LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
   CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
   SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -28,13 +27,13 @@
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   POSSIBILITY OF SUCH DAMAGE.
 
-  DRXJ specअगरic implementation of DRX driver
+  DRXJ specific implementation of DRX driver
   authors: Dragan Savic, Milos Nikolic, Mihajlo Katona, Tao Ding, Paul Janssen
 
-  The Linux DVB Driver क्रम Micronas DRX39xx family (drx3933j) was
-  written by Devin Heiपंचांगueller <devin.heiपंचांगueller@kernelद_असल.com>
+  The Linux DVB Driver for Micronas DRX39xx family (drx3933j) was
+  written by Devin Heitmueller <devin.heitmueller@kernellabs.com>
 
-  This program is मुक्त software; you can redistribute it and/or modअगरy
+  This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2 of the License, or
   (at your option) any later version.
@@ -43,160 +42,160 @@
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 
-  GNU General Public License क्रम more details.
+  GNU General Public License for more details.
 
   You should have received a copy of the GNU General Public License
-  aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+  along with this program; if not, write to the Free Software
   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
 /*-----------------------------------------------------------------------------
-INCLUDE खाताS
+INCLUDE FILES
 ----------------------------------------------------------------------------*/
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
+#define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/भाग64.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/string.h>
+#include <linux/slab.h>
+#include <asm/div64.h>
 
-#समावेश <media/dvb_frontend.h>
-#समावेश "drx39xxj.h"
+#include <media/dvb_frontend.h>
+#include "drx39xxj.h"
 
-#समावेश "drxj.h"
-#समावेश "drxj_map.h"
+#include "drxj.h"
+#include "drxj_map.h"
 
 /*============================================================================*/
 /*=== DEFINES ================================================================*/
 /*============================================================================*/
 
-#घोषणा DRX39XX_MAIN_FIRMWARE "dvb-fe-drxj-mc-1.0.8.fw"
+#define DRX39XX_MAIN_FIRMWARE "dvb-fe-drxj-mc-1.0.8.fw"
 
 /*
-* \मrief Maximum u32 value.
+* \brief Maximum u32 value.
 */
-#अगर_अघोषित MAX_U32
-#घोषणा MAX_U32  ((u32) (0xFFFFFFFFL))
-#पूर्ण_अगर
+#ifndef MAX_U32
+#define MAX_U32  ((u32) (0xFFFFFFFFL))
+#endif
 
 /* Customer configurable hardware settings, etc */
-#अगर_अघोषित MPEG_SERIAL_OUTPUT_PIN_DRIVE_STRENGTH
-#घोषणा MPEG_SERIAL_OUTPUT_PIN_DRIVE_STRENGTH 0x02
-#पूर्ण_अगर
+#ifndef MPEG_SERIAL_OUTPUT_PIN_DRIVE_STRENGTH
+#define MPEG_SERIAL_OUTPUT_PIN_DRIVE_STRENGTH 0x02
+#endif
 
-#अगर_अघोषित MPEG_PARALLEL_OUTPUT_PIN_DRIVE_STRENGTH
-#घोषणा MPEG_PARALLEL_OUTPUT_PIN_DRIVE_STRENGTH 0x02
-#पूर्ण_अगर
+#ifndef MPEG_PARALLEL_OUTPUT_PIN_DRIVE_STRENGTH
+#define MPEG_PARALLEL_OUTPUT_PIN_DRIVE_STRENGTH 0x02
+#endif
 
-#अगर_अघोषित MPEG_OUTPUT_CLK_DRIVE_STRENGTH
-#घोषणा MPEG_OUTPUT_CLK_DRIVE_STRENGTH 0x06
-#पूर्ण_अगर
+#ifndef MPEG_OUTPUT_CLK_DRIVE_STRENGTH
+#define MPEG_OUTPUT_CLK_DRIVE_STRENGTH 0x06
+#endif
 
-#अगर_अघोषित OOB_CRX_DRIVE_STRENGTH
-#घोषणा OOB_CRX_DRIVE_STRENGTH 0x02
-#पूर्ण_अगर
+#ifndef OOB_CRX_DRIVE_STRENGTH
+#define OOB_CRX_DRIVE_STRENGTH 0x02
+#endif
 
-#अगर_अघोषित OOB_DRX_DRIVE_STRENGTH
-#घोषणा OOB_DRX_DRIVE_STRENGTH 0x02
-#पूर्ण_अगर
-/*** START DJCOMBO patches to DRXJ रेजिस्टरmap स्थिरants *********************/
-/*** रेजिस्टरmap 200706071303 from drxj **************************************/
-#घोषणा   ATV_TOP_CR_AMP_TH_FM                                              0x0
-#घोषणा   ATV_TOP_CR_AMP_TH_L                                               0xA
-#घोषणा   ATV_TOP_CR_AMP_TH_LP                                              0xA
-#घोषणा   ATV_TOP_CR_AMP_TH_BG                                              0x8
-#घोषणा   ATV_TOP_CR_AMP_TH_DK                                              0x8
-#घोषणा   ATV_TOP_CR_AMP_TH_I                                               0x8
-#घोषणा     ATV_TOP_CR_CONT_CR_D_MN                                         0x18
-#घोषणा     ATV_TOP_CR_CONT_CR_D_FM                                         0x0
-#घोषणा     ATV_TOP_CR_CONT_CR_D_L                                          0x20
-#घोषणा     ATV_TOP_CR_CONT_CR_D_LP                                         0x20
-#घोषणा     ATV_TOP_CR_CONT_CR_D_BG                                         0x18
-#घोषणा     ATV_TOP_CR_CONT_CR_D_DK                                         0x18
-#घोषणा     ATV_TOP_CR_CONT_CR_D_I                                          0x18
-#घोषणा     ATV_TOP_CR_CONT_CR_I_MN                                         0x80
-#घोषणा     ATV_TOP_CR_CONT_CR_I_FM                                         0x0
-#घोषणा     ATV_TOP_CR_CONT_CR_I_L                                          0x80
-#घोषणा     ATV_TOP_CR_CONT_CR_I_LP                                         0x80
-#घोषणा     ATV_TOP_CR_CONT_CR_I_BG                                         0x80
-#घोषणा     ATV_TOP_CR_CONT_CR_I_DK                                         0x80
-#घोषणा     ATV_TOP_CR_CONT_CR_I_I                                          0x80
-#घोषणा     ATV_TOP_CR_CONT_CR_P_MN                                         0x4
-#घोषणा     ATV_TOP_CR_CONT_CR_P_FM                                         0x0
-#घोषणा     ATV_TOP_CR_CONT_CR_P_L                                          0x4
-#घोषणा     ATV_TOP_CR_CONT_CR_P_LP                                         0x4
-#घोषणा     ATV_TOP_CR_CONT_CR_P_BG                                         0x4
-#घोषणा     ATV_TOP_CR_CONT_CR_P_DK                                         0x4
-#घोषणा     ATV_TOP_CR_CONT_CR_P_I                                          0x4
-#घोषणा   ATV_TOP_CR_OVM_TH_MN                                              0xA0
-#घोषणा   ATV_TOP_CR_OVM_TH_FM                                              0x0
-#घोषणा   ATV_TOP_CR_OVM_TH_L                                               0xA0
-#घोषणा   ATV_TOP_CR_OVM_TH_LP                                              0xA0
-#घोषणा   ATV_TOP_CR_OVM_TH_BG                                              0xA0
-#घोषणा   ATV_TOP_CR_OVM_TH_DK                                              0xA0
-#घोषणा   ATV_TOP_CR_OVM_TH_I                                               0xA0
-#घोषणा     ATV_TOP_EQU0_EQU_C0_FM                                          0x0
-#घोषणा     ATV_TOP_EQU0_EQU_C0_L                                           0x3
-#घोषणा     ATV_TOP_EQU0_EQU_C0_LP                                          0x3
-#घोषणा     ATV_TOP_EQU0_EQU_C0_BG                                          0x7
-#घोषणा     ATV_TOP_EQU0_EQU_C0_DK                                          0x0
-#घोषणा     ATV_TOP_EQU0_EQU_C0_I                                           0x3
-#घोषणा     ATV_TOP_EQU1_EQU_C1_FM                                          0x0
-#घोषणा     ATV_TOP_EQU1_EQU_C1_L                                           0x1F6
-#घोषणा     ATV_TOP_EQU1_EQU_C1_LP                                          0x1F6
-#घोषणा     ATV_TOP_EQU1_EQU_C1_BG                                          0x197
-#घोषणा     ATV_TOP_EQU1_EQU_C1_DK                                          0x198
-#घोषणा     ATV_TOP_EQU1_EQU_C1_I                                           0x1F6
-#घोषणा     ATV_TOP_EQU2_EQU_C2_FM                                          0x0
-#घोषणा     ATV_TOP_EQU2_EQU_C2_L                                           0x28
-#घोषणा     ATV_TOP_EQU2_EQU_C2_LP                                          0x28
-#घोषणा     ATV_TOP_EQU2_EQU_C2_BG                                          0xC5
-#घोषणा     ATV_TOP_EQU2_EQU_C2_DK                                          0xB0
-#घोषणा     ATV_TOP_EQU2_EQU_C2_I                                           0x28
-#घोषणा     ATV_TOP_EQU3_EQU_C3_FM                                          0x0
-#घोषणा     ATV_TOP_EQU3_EQU_C3_L                                           0x192
-#घोषणा     ATV_TOP_EQU3_EQU_C3_LP                                          0x192
-#घोषणा     ATV_TOP_EQU3_EQU_C3_BG                                          0x12E
-#घोषणा     ATV_TOP_EQU3_EQU_C3_DK                                          0x18E
-#घोषणा     ATV_TOP_EQU3_EQU_C3_I                                           0x192
-#घोषणा     ATV_TOP_STD_MODE_MN                                             0x0
-#घोषणा     ATV_TOP_STD_MODE_FM                                             0x1
-#घोषणा     ATV_TOP_STD_MODE_L                                              0x0
-#घोषणा     ATV_TOP_STD_MODE_LP                                             0x0
-#घोषणा     ATV_TOP_STD_MODE_BG                                             0x0
-#घोषणा     ATV_TOP_STD_MODE_DK                                             0x0
-#घोषणा     ATV_TOP_STD_MODE_I                                              0x0
-#घोषणा     ATV_TOP_STD_VID_POL_MN                                          0x0
-#घोषणा     ATV_TOP_STD_VID_POL_FM                                          0x0
-#घोषणा     ATV_TOP_STD_VID_POL_L                                           0x2
-#घोषणा     ATV_TOP_STD_VID_POL_LP                                          0x2
-#घोषणा     ATV_TOP_STD_VID_POL_BG                                          0x0
-#घोषणा     ATV_TOP_STD_VID_POL_DK                                          0x0
-#घोषणा     ATV_TOP_STD_VID_POL_I                                           0x0
-#घोषणा   ATV_TOP_VID_AMP_MN                                                0x380
-#घोषणा   ATV_TOP_VID_AMP_FM                                                0x0
-#घोषणा   ATV_TOP_VID_AMP_L                                                 0xF50
-#घोषणा   ATV_TOP_VID_AMP_LP                                                0xF50
-#घोषणा   ATV_TOP_VID_AMP_BG                                                0x380
-#घोषणा   ATV_TOP_VID_AMP_DK                                                0x394
-#घोषणा   ATV_TOP_VID_AMP_I                                                 0x3D8
-#घोषणा   IQM_CF_OUT_ENA_OFDM__M                                            0x4
-#घोषणा     IQM_FS_ADJ_SEL_B_QAM                                            0x1
-#घोषणा     IQM_FS_ADJ_SEL_B_OFF                                            0x0
-#घोषणा     IQM_FS_ADJ_SEL_B_VSB                                            0x2
-#घोषणा     IQM_RC_ADJ_SEL_B_OFF                                            0x0
-#घोषणा     IQM_RC_ADJ_SEL_B_QAM                                            0x1
-#घोषणा     IQM_RC_ADJ_SEL_B_VSB                                            0x2
-/*** END DJCOMBO patches to DRXJ रेजिस्टरmap *********************************/
+#ifndef OOB_DRX_DRIVE_STRENGTH
+#define OOB_DRX_DRIVE_STRENGTH 0x02
+#endif
+/*** START DJCOMBO patches to DRXJ registermap constants *********************/
+/*** registermap 200706071303 from drxj **************************************/
+#define   ATV_TOP_CR_AMP_TH_FM                                              0x0
+#define   ATV_TOP_CR_AMP_TH_L                                               0xA
+#define   ATV_TOP_CR_AMP_TH_LP                                              0xA
+#define   ATV_TOP_CR_AMP_TH_BG                                              0x8
+#define   ATV_TOP_CR_AMP_TH_DK                                              0x8
+#define   ATV_TOP_CR_AMP_TH_I                                               0x8
+#define     ATV_TOP_CR_CONT_CR_D_MN                                         0x18
+#define     ATV_TOP_CR_CONT_CR_D_FM                                         0x0
+#define     ATV_TOP_CR_CONT_CR_D_L                                          0x20
+#define     ATV_TOP_CR_CONT_CR_D_LP                                         0x20
+#define     ATV_TOP_CR_CONT_CR_D_BG                                         0x18
+#define     ATV_TOP_CR_CONT_CR_D_DK                                         0x18
+#define     ATV_TOP_CR_CONT_CR_D_I                                          0x18
+#define     ATV_TOP_CR_CONT_CR_I_MN                                         0x80
+#define     ATV_TOP_CR_CONT_CR_I_FM                                         0x0
+#define     ATV_TOP_CR_CONT_CR_I_L                                          0x80
+#define     ATV_TOP_CR_CONT_CR_I_LP                                         0x80
+#define     ATV_TOP_CR_CONT_CR_I_BG                                         0x80
+#define     ATV_TOP_CR_CONT_CR_I_DK                                         0x80
+#define     ATV_TOP_CR_CONT_CR_I_I                                          0x80
+#define     ATV_TOP_CR_CONT_CR_P_MN                                         0x4
+#define     ATV_TOP_CR_CONT_CR_P_FM                                         0x0
+#define     ATV_TOP_CR_CONT_CR_P_L                                          0x4
+#define     ATV_TOP_CR_CONT_CR_P_LP                                         0x4
+#define     ATV_TOP_CR_CONT_CR_P_BG                                         0x4
+#define     ATV_TOP_CR_CONT_CR_P_DK                                         0x4
+#define     ATV_TOP_CR_CONT_CR_P_I                                          0x4
+#define   ATV_TOP_CR_OVM_TH_MN                                              0xA0
+#define   ATV_TOP_CR_OVM_TH_FM                                              0x0
+#define   ATV_TOP_CR_OVM_TH_L                                               0xA0
+#define   ATV_TOP_CR_OVM_TH_LP                                              0xA0
+#define   ATV_TOP_CR_OVM_TH_BG                                              0xA0
+#define   ATV_TOP_CR_OVM_TH_DK                                              0xA0
+#define   ATV_TOP_CR_OVM_TH_I                                               0xA0
+#define     ATV_TOP_EQU0_EQU_C0_FM                                          0x0
+#define     ATV_TOP_EQU0_EQU_C0_L                                           0x3
+#define     ATV_TOP_EQU0_EQU_C0_LP                                          0x3
+#define     ATV_TOP_EQU0_EQU_C0_BG                                          0x7
+#define     ATV_TOP_EQU0_EQU_C0_DK                                          0x0
+#define     ATV_TOP_EQU0_EQU_C0_I                                           0x3
+#define     ATV_TOP_EQU1_EQU_C1_FM                                          0x0
+#define     ATV_TOP_EQU1_EQU_C1_L                                           0x1F6
+#define     ATV_TOP_EQU1_EQU_C1_LP                                          0x1F6
+#define     ATV_TOP_EQU1_EQU_C1_BG                                          0x197
+#define     ATV_TOP_EQU1_EQU_C1_DK                                          0x198
+#define     ATV_TOP_EQU1_EQU_C1_I                                           0x1F6
+#define     ATV_TOP_EQU2_EQU_C2_FM                                          0x0
+#define     ATV_TOP_EQU2_EQU_C2_L                                           0x28
+#define     ATV_TOP_EQU2_EQU_C2_LP                                          0x28
+#define     ATV_TOP_EQU2_EQU_C2_BG                                          0xC5
+#define     ATV_TOP_EQU2_EQU_C2_DK                                          0xB0
+#define     ATV_TOP_EQU2_EQU_C2_I                                           0x28
+#define     ATV_TOP_EQU3_EQU_C3_FM                                          0x0
+#define     ATV_TOP_EQU3_EQU_C3_L                                           0x192
+#define     ATV_TOP_EQU3_EQU_C3_LP                                          0x192
+#define     ATV_TOP_EQU3_EQU_C3_BG                                          0x12E
+#define     ATV_TOP_EQU3_EQU_C3_DK                                          0x18E
+#define     ATV_TOP_EQU3_EQU_C3_I                                           0x192
+#define     ATV_TOP_STD_MODE_MN                                             0x0
+#define     ATV_TOP_STD_MODE_FM                                             0x1
+#define     ATV_TOP_STD_MODE_L                                              0x0
+#define     ATV_TOP_STD_MODE_LP                                             0x0
+#define     ATV_TOP_STD_MODE_BG                                             0x0
+#define     ATV_TOP_STD_MODE_DK                                             0x0
+#define     ATV_TOP_STD_MODE_I                                              0x0
+#define     ATV_TOP_STD_VID_POL_MN                                          0x0
+#define     ATV_TOP_STD_VID_POL_FM                                          0x0
+#define     ATV_TOP_STD_VID_POL_L                                           0x2
+#define     ATV_TOP_STD_VID_POL_LP                                          0x2
+#define     ATV_TOP_STD_VID_POL_BG                                          0x0
+#define     ATV_TOP_STD_VID_POL_DK                                          0x0
+#define     ATV_TOP_STD_VID_POL_I                                           0x0
+#define   ATV_TOP_VID_AMP_MN                                                0x380
+#define   ATV_TOP_VID_AMP_FM                                                0x0
+#define   ATV_TOP_VID_AMP_L                                                 0xF50
+#define   ATV_TOP_VID_AMP_LP                                                0xF50
+#define   ATV_TOP_VID_AMP_BG                                                0x380
+#define   ATV_TOP_VID_AMP_DK                                                0x394
+#define   ATV_TOP_VID_AMP_I                                                 0x3D8
+#define   IQM_CF_OUT_ENA_OFDM__M                                            0x4
+#define     IQM_FS_ADJ_SEL_B_QAM                                            0x1
+#define     IQM_FS_ADJ_SEL_B_OFF                                            0x0
+#define     IQM_FS_ADJ_SEL_B_VSB                                            0x2
+#define     IQM_RC_ADJ_SEL_B_OFF                                            0x0
+#define     IQM_RC_ADJ_SEL_B_QAM                                            0x1
+#define     IQM_RC_ADJ_SEL_B_VSB                                            0x2
+/*** END DJCOMBO patches to DRXJ registermap *********************************/
 
-#समावेश "drx_driver_version.h"
+#include "drx_driver_version.h"
 
-/* #घोषणा DRX_DEBUG */
-#अगर_घोषित DRX_DEBUG
-#समावेश <मानकपन.स>
-#पूर्ण_अगर
+/* #define DRX_DEBUG */
+#ifdef DRX_DEBUG
+#include <stdio.h>
+#endif
 
 /*-----------------------------------------------------------------------------
 ENUMS
@@ -205,159 +204,159 @@ ENUMS
 /*-----------------------------------------------------------------------------
 DEFINES
 ----------------------------------------------------------------------------*/
-#अगर_अघोषित DRXJ_WAKE_UP_KEY
-#घोषणा DRXJ_WAKE_UP_KEY (demod->my_i2c_dev_addr->i2c_addr)
-#पूर्ण_अगर
+#ifndef DRXJ_WAKE_UP_KEY
+#define DRXJ_WAKE_UP_KEY (demod->my_i2c_dev_addr->i2c_addr)
+#endif
 
 /*
 * \def DRXJ_DEF_I2C_ADDR
-* \मrief Default I2C address of a demodulator instance.
+* \brief Default I2C address of a demodulator instance.
 */
-#घोषणा DRXJ_DEF_I2C_ADDR (0x52)
+#define DRXJ_DEF_I2C_ADDR (0x52)
 
 /*
 * \def DRXJ_DEF_DEMOD_DEV_ID
-* \मrief Default device identअगरier of a demodultor instance.
+* \brief Default device identifier of a demodultor instance.
 */
-#घोषणा DRXJ_DEF_DEMOD_DEV_ID      (1)
+#define DRXJ_DEF_DEMOD_DEV_ID      (1)
 
 /*
 * \def DRXJ_SCAN_TIMEOUT
-* \मrief Timeout value क्रम रुकोing on demod lock during channel scan (millisec).
+* \brief Timeout value for waiting on demod lock during channel scan (millisec).
 */
-#घोषणा DRXJ_SCAN_TIMEOUT    1000
+#define DRXJ_SCAN_TIMEOUT    1000
 
 /*
 * \def HI_I2C_DELAY
-* \मrief HI timing delay क्रम I2C timing (in nano seconds)
+* \brief HI timing delay for I2C timing (in nano seconds)
 *
 *  Used to compute HI_CFG_DIV
 */
-#घोषणा HI_I2C_DELAY    42
+#define HI_I2C_DELAY    42
 
 /*
 * \def HI_I2C_BRIDGE_DELAY
-* \मrief HI timing delay क्रम I2C timing (in nano seconds)
+* \brief HI timing delay for I2C timing (in nano seconds)
 *
 *  Used to compute HI_CFG_BDL
 */
-#घोषणा HI_I2C_BRIDGE_DELAY   750
+#define HI_I2C_BRIDGE_DELAY   750
 
 /*
-* \मrief Time Winकरोw क्रम MER and SER Measurement in Units of Segment duration.
+* \brief Time Window for MER and SER Measurement in Units of Segment duration.
 */
-#घोषणा VSB_TOP_MEASUREMENT_PERIOD  64
-#घोषणा SYMBOLS_PER_SEGMENT         832
+#define VSB_TOP_MEASUREMENT_PERIOD  64
+#define SYMBOLS_PER_SEGMENT         832
 
 /*
-* \मrief bit rate and segment rate स्थिरants used क्रम SER and BER.
+* \brief bit rate and segment rate constants used for SER and BER.
 */
 /* values taken from the QAM microcode */
-#घोषणा DRXJ_QAM_SL_SIG_POWER_QAM_UNKNOWN 0
-#घोषणा DRXJ_QAM_SL_SIG_POWER_QPSK        32768
-#घोषणा DRXJ_QAM_SL_SIG_POWER_QAM8        24576
-#घोषणा DRXJ_QAM_SL_SIG_POWER_QAM16       40960
-#घोषणा DRXJ_QAM_SL_SIG_POWER_QAM32       20480
-#घोषणा DRXJ_QAM_SL_SIG_POWER_QAM64       43008
-#घोषणा DRXJ_QAM_SL_SIG_POWER_QAM128      20992
-#घोषणा DRXJ_QAM_SL_SIG_POWER_QAM256      43520
+#define DRXJ_QAM_SL_SIG_POWER_QAM_UNKNOWN 0
+#define DRXJ_QAM_SL_SIG_POWER_QPSK        32768
+#define DRXJ_QAM_SL_SIG_POWER_QAM8        24576
+#define DRXJ_QAM_SL_SIG_POWER_QAM16       40960
+#define DRXJ_QAM_SL_SIG_POWER_QAM32       20480
+#define DRXJ_QAM_SL_SIG_POWER_QAM64       43008
+#define DRXJ_QAM_SL_SIG_POWER_QAM128      20992
+#define DRXJ_QAM_SL_SIG_POWER_QAM256      43520
 /*
-* \मrief Min supported symbolrates.
+* \brief Min supported symbolrates.
 */
-#अगर_अघोषित DRXJ_QAM_SYMBOLRATE_MIN
-#घोषणा DRXJ_QAM_SYMBOLRATE_MIN          (520000)
-#पूर्ण_अगर
+#ifndef DRXJ_QAM_SYMBOLRATE_MIN
+#define DRXJ_QAM_SYMBOLRATE_MIN          (520000)
+#endif
 
 /*
-* \मrief Max supported symbolrates.
+* \brief Max supported symbolrates.
 */
-#अगर_अघोषित DRXJ_QAM_SYMBOLRATE_MAX
-#घोषणा DRXJ_QAM_SYMBOLRATE_MAX         (7233000)
-#पूर्ण_अगर
+#ifndef DRXJ_QAM_SYMBOLRATE_MAX
+#define DRXJ_QAM_SYMBOLRATE_MAX         (7233000)
+#endif
 
 /*
 * \def DRXJ_QAM_MAX_WAITTIME
-* \मrief Maximal रुको समय क्रम QAM स्वतः स्थिरellation in ms
+* \brief Maximal wait time for QAM auto constellation in ms
 */
-#अगर_अघोषित DRXJ_QAM_MAX_WAITTIME
-#घोषणा DRXJ_QAM_MAX_WAITTIME 900
-#पूर्ण_अगर
+#ifndef DRXJ_QAM_MAX_WAITTIME
+#define DRXJ_QAM_MAX_WAITTIME 900
+#endif
 
-#अगर_अघोषित DRXJ_QAM_FEC_LOCK_WAITTIME
-#घोषणा DRXJ_QAM_FEC_LOCK_WAITTIME 150
-#पूर्ण_अगर
+#ifndef DRXJ_QAM_FEC_LOCK_WAITTIME
+#define DRXJ_QAM_FEC_LOCK_WAITTIME 150
+#endif
 
-#अगर_अघोषित DRXJ_QAM_DEMOD_LOCK_EXT_WAITTIME
-#घोषणा DRXJ_QAM_DEMOD_LOCK_EXT_WAITTIME 200
-#पूर्ण_अगर
+#ifndef DRXJ_QAM_DEMOD_LOCK_EXT_WAITTIME
+#define DRXJ_QAM_DEMOD_LOCK_EXT_WAITTIME 200
+#endif
 
 /*
 * \def SCU status and results
-* \मrief SCU
+* \brief SCU
 */
-#घोषणा DRX_SCU_READY               0
-#घोषणा DRXJ_MAX_WAITTIME           100	/* ms */
-#घोषणा FEC_RS_MEASUREMENT_PERIOD   12894	/* 1 sec */
-#घोषणा FEC_RS_MEASUREMENT_PRESCALE 1	/* n sec */
+#define DRX_SCU_READY               0
+#define DRXJ_MAX_WAITTIME           100	/* ms */
+#define FEC_RS_MEASUREMENT_PERIOD   12894	/* 1 sec */
+#define FEC_RS_MEASUREMENT_PRESCALE 1	/* n sec */
 
 /*
 * \def DRX_AUD_MAX_DEVIATION
-* \मrief Needed क्रम calculation of prescale feature in AUD
+* \brief Needed for calculation of prescale feature in AUD
 */
-#अगर_अघोषित DRXJ_AUD_MAX_FM_DEVIATION
-#घोषणा DRXJ_AUD_MAX_FM_DEVIATION  100	/* kHz */
-#पूर्ण_अगर
+#ifndef DRXJ_AUD_MAX_FM_DEVIATION
+#define DRXJ_AUD_MAX_FM_DEVIATION  100	/* kHz */
+#endif
 
 /*
-* \मrief Needed क्रम calculation of NICAM prescale feature in AUD
+* \brief Needed for calculation of NICAM prescale feature in AUD
 */
-#अगर_अघोषित DRXJ_AUD_MAX_NICAM_PRESCALE
-#घोषणा DRXJ_AUD_MAX_NICAM_PRESCALE  (9)	/* dB */
-#पूर्ण_अगर
+#ifndef DRXJ_AUD_MAX_NICAM_PRESCALE
+#define DRXJ_AUD_MAX_NICAM_PRESCALE  (9)	/* dB */
+#endif
 
 /*
-* \मrief Needed क्रम calculation of NICAM prescale feature in AUD
+* \brief Needed for calculation of NICAM prescale feature in AUD
 */
-#अगर_अघोषित DRXJ_AUD_MAX_WAITTIME
-#घोषणा DRXJ_AUD_MAX_WAITTIME  250	/* ms */
-#पूर्ण_अगर
+#ifndef DRXJ_AUD_MAX_WAITTIME
+#define DRXJ_AUD_MAX_WAITTIME  250	/* ms */
+#endif
 
 /* ATV config changed flags */
-#घोषणा DRXJ_ATV_CHANGED_COEF          (0x00000001UL)
-#घोषणा DRXJ_ATV_CHANGED_PEAK_FLT      (0x00000008UL)
-#घोषणा DRXJ_ATV_CHANGED_NOISE_FLT     (0x00000010UL)
-#घोषणा DRXJ_ATV_CHANGED_OUTPUT        (0x00000020UL)
-#घोषणा DRXJ_ATV_CHANGED_SIF_ATT       (0x00000040UL)
+#define DRXJ_ATV_CHANGED_COEF          (0x00000001UL)
+#define DRXJ_ATV_CHANGED_PEAK_FLT      (0x00000008UL)
+#define DRXJ_ATV_CHANGED_NOISE_FLT     (0x00000010UL)
+#define DRXJ_ATV_CHANGED_OUTPUT        (0x00000020UL)
+#define DRXJ_ATV_CHANGED_SIF_ATT       (0x00000040UL)
 
 /* UIO define */
-#घोषणा DRX_UIO_MODE_FIRMWARE_SMA DRX_UIO_MODE_FIRMWARE0
-#घोषणा DRX_UIO_MODE_FIRMWARE_SAW DRX_UIO_MODE_FIRMWARE1
+#define DRX_UIO_MODE_FIRMWARE_SMA DRX_UIO_MODE_FIRMWARE0
+#define DRX_UIO_MODE_FIRMWARE_SAW DRX_UIO_MODE_FIRMWARE1
 
 /*
  * MICROCODE RELATED DEFINES
  */
 
-/* Magic word क्रम checking correct Endianness of microcode data */
-#घोषणा DRX_UCODE_MAGIC_WORD         ((((u16)'H')<<8)+((u16)'L'))
+/* Magic word for checking correct Endianness of microcode data */
+#define DRX_UCODE_MAGIC_WORD         ((((u16)'H')<<8)+((u16)'L'))
 
 /* CRC flag in ucode header, flags field. */
-#घोषणा DRX_UCODE_CRC_FLAG           (0x0001)
+#define DRX_UCODE_CRC_FLAG           (0x0001)
 
 /*
- * Maximum size of buffer used to verअगरy the microcode.
+ * Maximum size of buffer used to verify the microcode.
  * Must be an even number
  */
-#घोषणा DRX_UCODE_MAX_BUF_SIZE       (DRXDAP_MAX_RCHUNKSIZE)
+#define DRX_UCODE_MAX_BUF_SIZE       (DRXDAP_MAX_RCHUNKSIZE)
 
-#अगर DRX_UCODE_MAX_BUF_SIZE & 1
-#त्रुटि DRX_UCODE_MAX_BUF_SIZE must be an even number
-#पूर्ण_अगर
+#if DRX_UCODE_MAX_BUF_SIZE & 1
+#error DRX_UCODE_MAX_BUF_SIZE must be an even number
+#endif
 
 /*
  * Power mode macros
  */
 
-#घोषणा DRX_ISPOWERDOWNMODE(mode) ((mode == DRX_POWER_MODE_9) || \
+#define DRX_ISPOWERDOWNMODE(mode) ((mode == DRX_POWER_MODE_9) || \
 				       (mode == DRX_POWER_MODE_10) || \
 				       (mode == DRX_POWER_MODE_11) || \
 				       (mode == DRX_POWER_MODE_12) || \
@@ -368,7 +367,7 @@ DEFINES
 				       (mode == DRX_POWER_DOWN))
 
 /* Pin safe mode macro */
-#घोषणा DRXJ_PIN_SAFE_MODE 0x0000
+#define DRXJ_PIN_SAFE_MODE 0x0000
 /*============================================================================*/
 /*=== GLOBAL VARIABLEs =======================================================*/
 /*============================================================================*/
@@ -376,123 +375,123 @@ DEFINES
 */
 
 /*
-* \मrief Temporary रेजिस्टर definitions.
-*        (रेजिस्टर definitions that are not yet available in रेजिस्टर master)
+* \brief Temporary register definitions.
+*        (register definitions that are not yet available in register master)
 */
 
 /*****************************************************************************/
-/* Audio block 0x103 is ग_लिखो only. To aव्योम shaकरोwing in driver accessing   */
-/* RAM addresses directly. This must be READ ONLY to aव्योम problems.         */
-/* Writing to the पूर्णांकerface addresses are more than only writing the RAM     */
+/* Audio block 0x103 is write only. To avoid shadowing in driver accessing   */
+/* RAM addresses directly. This must be READ ONLY to avoid problems.         */
+/* Writing to the interface addresses are more than only writing the RAM     */
 /* locations                                                                 */
 /*****************************************************************************/
 /*
-* \मrief RAM location of MODUS रेजिस्टरs
+* \brief RAM location of MODUS registers
 */
-#घोषणा AUD_DEM_RAM_MODUS_HI__A              0x10204A3
-#घोषणा AUD_DEM_RAM_MODUS_HI__M              0xF000
+#define AUD_DEM_RAM_MODUS_HI__A              0x10204A3
+#define AUD_DEM_RAM_MODUS_HI__M              0xF000
 
-#घोषणा AUD_DEM_RAM_MODUS_LO__A              0x10204A4
-#घोषणा AUD_DEM_RAM_MODUS_LO__M              0x0FFF
-
-/*
-* \मrief RAM location of I2S config रेजिस्टरs
-*/
-#घोषणा AUD_DEM_RAM_I2S_CONFIG1__A           0x10204B1
-#घोषणा AUD_DEM_RAM_I2S_CONFIG2__A           0x10204B2
+#define AUD_DEM_RAM_MODUS_LO__A              0x10204A4
+#define AUD_DEM_RAM_MODUS_LO__M              0x0FFF
 
 /*
-* \मrief RAM location of DCO config रेजिस्टरs
+* \brief RAM location of I2S config registers
 */
-#घोषणा AUD_DEM_RAM_DCO_B_HI__A              0x1020461
-#घोषणा AUD_DEM_RAM_DCO_B_LO__A              0x1020462
-#घोषणा AUD_DEM_RAM_DCO_A_HI__A              0x1020463
-#घोषणा AUD_DEM_RAM_DCO_A_LO__A              0x1020464
+#define AUD_DEM_RAM_I2S_CONFIG1__A           0x10204B1
+#define AUD_DEM_RAM_I2S_CONFIG2__A           0x10204B2
 
 /*
-* \मrief RAM location of Threshold रेजिस्टरs
+* \brief RAM location of DCO config registers
 */
-#घोषणा AUD_DEM_RAM_NICAM_THRSHLD__A         0x102045A
-#घोषणा AUD_DEM_RAM_A2_THRSHLD__A            0x10204BB
-#घोषणा AUD_DEM_RAM_BTSC_THRSHLD__A          0x10204A6
+#define AUD_DEM_RAM_DCO_B_HI__A              0x1020461
+#define AUD_DEM_RAM_DCO_B_LO__A              0x1020462
+#define AUD_DEM_RAM_DCO_A_HI__A              0x1020463
+#define AUD_DEM_RAM_DCO_A_LO__A              0x1020464
 
 /*
-* \मrief RAM location of Carrier Threshold रेजिस्टरs
+* \brief RAM location of Threshold registers
 */
-#घोषणा AUD_DEM_RAM_CM_A_THRSHLD__A          0x10204AF
-#घोषणा AUD_DEM_RAM_CM_B_THRSHLD__A          0x10204B0
+#define AUD_DEM_RAM_NICAM_THRSHLD__A         0x102045A
+#define AUD_DEM_RAM_A2_THRSHLD__A            0x10204BB
+#define AUD_DEM_RAM_BTSC_THRSHLD__A          0x10204A6
 
 /*
-* \मrief FM Matrix रेजिस्टर fix
+* \brief RAM location of Carrier Threshold registers
 */
-#अगर_घोषित AUD_DEM_WR_FM_MATRIX__A
-#अघोषित  AUD_DEM_WR_FM_MATRIX__A
-#पूर्ण_अगर
-#घोषणा AUD_DEM_WR_FM_MATRIX__A              0x105006F
+#define AUD_DEM_RAM_CM_A_THRSHLD__A          0x10204AF
+#define AUD_DEM_RAM_CM_B_THRSHLD__A          0x10204B0
+
+/*
+* \brief FM Matrix register fix
+*/
+#ifdef AUD_DEM_WR_FM_MATRIX__A
+#undef  AUD_DEM_WR_FM_MATRIX__A
+#endif
+#define AUD_DEM_WR_FM_MATRIX__A              0x105006F
 
 /*============================================================================*/
 /*
-* \मrief Defines required क्रम audio
+* \brief Defines required for audio
 */
-#घोषणा AUD_VOLUME_ZERO_DB                      115
-#घोषणा AUD_VOLUME_DB_MIN                       -60
-#घोषणा AUD_VOLUME_DB_MAX                       12
-#घोषणा AUD_CARRIER_STRENGTH_QP_0DB             0x4000
-#घोषणा AUD_CARRIER_STRENGTH_QP_0DB_LOG10T100   421
-#घोषणा AUD_MAX_AVC_REF_LEVEL                   15
-#घोषणा AUD_I2S_FREQUENCY_MAX                   48000UL
-#घोषणा AUD_I2S_FREQUENCY_MIN                   12000UL
-#घोषणा AUD_RDS_ARRAY_SIZE                      18
+#define AUD_VOLUME_ZERO_DB                      115
+#define AUD_VOLUME_DB_MIN                       -60
+#define AUD_VOLUME_DB_MAX                       12
+#define AUD_CARRIER_STRENGTH_QP_0DB             0x4000
+#define AUD_CARRIER_STRENGTH_QP_0DB_LOG10T100   421
+#define AUD_MAX_AVC_REF_LEVEL                   15
+#define AUD_I2S_FREQUENCY_MAX                   48000UL
+#define AUD_I2S_FREQUENCY_MIN                   12000UL
+#define AUD_RDS_ARRAY_SIZE                      18
 
 /*
-* \मrief Needed क्रम calculation of prescale feature in AUD
+* \brief Needed for calculation of prescale feature in AUD
 */
-#अगर_अघोषित DRX_AUD_MAX_FM_DEVIATION
-#घोषणा DRX_AUD_MAX_FM_DEVIATION  (100)	/* kHz */
-#पूर्ण_अगर
+#ifndef DRX_AUD_MAX_FM_DEVIATION
+#define DRX_AUD_MAX_FM_DEVIATION  (100)	/* kHz */
+#endif
 
 /*
-* \मrief Needed क्रम calculation of NICAM prescale feature in AUD
+* \brief Needed for calculation of NICAM prescale feature in AUD
 */
-#अगर_अघोषित DRX_AUD_MAX_NICAM_PRESCALE
-#घोषणा DRX_AUD_MAX_NICAM_PRESCALE  (9)	/* dB */
-#पूर्ण_अगर
+#ifndef DRX_AUD_MAX_NICAM_PRESCALE
+#define DRX_AUD_MAX_NICAM_PRESCALE  (9)	/* dB */
+#endif
 
 /*============================================================================*/
-/* Values क्रम I2S Master/Slave pin configurations */
-#घोषणा SIO_PDR_I2S_CL_CFG_MODE__MASTER      0x0004
-#घोषणा SIO_PDR_I2S_CL_CFG_DRIVE__MASTER     0x0008
-#घोषणा SIO_PDR_I2S_CL_CFG_MODE__SLAVE       0x0004
-#घोषणा SIO_PDR_I2S_CL_CFG_DRIVE__SLAVE      0x0000
+/* Values for I2S Master/Slave pin configurations */
+#define SIO_PDR_I2S_CL_CFG_MODE__MASTER      0x0004
+#define SIO_PDR_I2S_CL_CFG_DRIVE__MASTER     0x0008
+#define SIO_PDR_I2S_CL_CFG_MODE__SLAVE       0x0004
+#define SIO_PDR_I2S_CL_CFG_DRIVE__SLAVE      0x0000
 
-#घोषणा SIO_PDR_I2S_DA_CFG_MODE__MASTER      0x0003
-#घोषणा SIO_PDR_I2S_DA_CFG_DRIVE__MASTER     0x0008
-#घोषणा SIO_PDR_I2S_DA_CFG_MODE__SLAVE       0x0003
-#घोषणा SIO_PDR_I2S_DA_CFG_DRIVE__SLAVE      0x0008
+#define SIO_PDR_I2S_DA_CFG_MODE__MASTER      0x0003
+#define SIO_PDR_I2S_DA_CFG_DRIVE__MASTER     0x0008
+#define SIO_PDR_I2S_DA_CFG_MODE__SLAVE       0x0003
+#define SIO_PDR_I2S_DA_CFG_DRIVE__SLAVE      0x0008
 
-#घोषणा SIO_PDR_I2S_WS_CFG_MODE__MASTER      0x0004
-#घोषणा SIO_PDR_I2S_WS_CFG_DRIVE__MASTER     0x0008
-#घोषणा SIO_PDR_I2S_WS_CFG_MODE__SLAVE       0x0004
-#घोषणा SIO_PDR_I2S_WS_CFG_DRIVE__SLAVE      0x0000
+#define SIO_PDR_I2S_WS_CFG_MODE__MASTER      0x0004
+#define SIO_PDR_I2S_WS_CFG_DRIVE__MASTER     0x0008
+#define SIO_PDR_I2S_WS_CFG_MODE__SLAVE       0x0004
+#define SIO_PDR_I2S_WS_CFG_DRIVE__SLAVE      0x0000
 
 /*============================================================================*/
 /*=== REGISTER ACCESS MACROS =================================================*/
 /*============================================================================*/
 
 /*
-* This macro is used to create byte arrays क्रम block ग_लिखोs.
-* Block ग_लिखोs speed up I2C traffic between host and demod.
+* This macro is used to create byte arrays for block writes.
+* Block writes speed up I2C traffic between host and demod.
 * The macro takes care of the required byte order in a 16 bits word.
 * x -> lowbyte(x), highbyte(x)
 */
-#घोषणा DRXJ_16TO8(x) ((u8) (((u16)x) & 0xFF)), \
+#define DRXJ_16TO8(x) ((u8) (((u16)x) & 0xFF)), \
 		       ((u8)((((u16)x)>>8)&0xFF))
 /*
-* This macro is used to convert byte array to 16 bit रेजिस्टर value क्रम block पढ़ो.
-* Block पढ़ो speed up I2C traffic between host and demod.
+* This macro is used to convert byte array to 16 bit register value for block read.
+* Block read speed up I2C traffic between host and demod.
 * The macro takes care of the required byte order in a 16 bits word.
 */
-#घोषणा DRXJ_8TO16(x) ((u16) (x[0] | (x[1] << 8)))
+#define DRXJ_8TO16(x) ((u16) (x[0] | (x[1] << 8)))
 
 /*============================================================================*/
 /*=== MISC DEFINES ===========================================================*/
@@ -503,15 +502,15 @@ DEFINES
 /*============================================================================*/
 
 /*
-* \मrief General maximum number of retries क्रम ucode command पूर्णांकerfaces
+* \brief General maximum number of retries for ucode command interfaces
 */
-#घोषणा DRXJ_MAX_RETRIES (100)
+#define DRXJ_MAX_RETRIES (100)
 
 /*============================================================================*/
 /*=== STANDARD RELATED MACROS ================================================*/
 /*============================================================================*/
 
-#घोषणा DRXJ_ISATVSTD(std) ((std == DRX_STANDARD_PAL_SECAM_BG) || \
+#define DRXJ_ISATVSTD(std) ((std == DRX_STANDARD_PAL_SECAM_BG) || \
 			       (std == DRX_STANDARD_PAL_SECAM_DK) || \
 			       (std == DRX_STANDARD_PAL_SECAM_I) || \
 			       (std == DRX_STANDARD_PAL_SECAM_L) || \
@@ -519,7 +518,7 @@ DEFINES
 			       (std == DRX_STANDARD_NTSC) || \
 			       (std == DRX_STANDARD_FM))
 
-#घोषणा DRXJ_ISQAMSTD(std) ((std == DRX_STANDARD_ITU_A) || \
+#define DRXJ_ISQAMSTD(std) ((std == DRX_STANDARD_ITU_A) || \
 			       (std == DRX_STANDARD_ITU_B) || \
 			       (std == DRX_STANDARD_ITU_C) || \
 			       (std == DRX_STANDARD_ITU_D))
@@ -528,63 +527,63 @@ DEFINES
 GLOBAL VARIABLES
 ----------------------------------------------------------------------------*/
 /*
- * DRXJ DAP काष्ठाures
+ * DRXJ DAP structures
  */
 
-अटल पूर्णांक drxdap_fasi_पढ़ो_block(काष्ठा i2c_device_addr *dev_addr,
+static int drxdap_fasi_read_block(struct i2c_device_addr *dev_addr,
 				      u32 addr,
 				      u16 datasize,
 				      u8 *data, u32 flags);
 
 
-अटल पूर्णांक drxj_dap_पढ़ो_modअगरy_ग_लिखो_reg16(काष्ठा i2c_device_addr *dev_addr,
+static int drxj_dap_read_modify_write_reg16(struct i2c_device_addr *dev_addr,
 						 u32 waddr,
 						 u32 raddr,
 						 u16 wdata, u16 *rdata);
 
-अटल पूर्णांक drxj_dap_पढ़ो_reg16(काष्ठा i2c_device_addr *dev_addr,
+static int drxj_dap_read_reg16(struct i2c_device_addr *dev_addr,
 				      u32 addr,
 				      u16 *data, u32 flags);
 
-अटल पूर्णांक drxdap_fasi_पढ़ो_reg32(काष्ठा i2c_device_addr *dev_addr,
+static int drxdap_fasi_read_reg32(struct i2c_device_addr *dev_addr,
 				      u32 addr,
 				      u32 *data, u32 flags);
 
-अटल पूर्णांक drxdap_fasi_ग_लिखो_block(काष्ठा i2c_device_addr *dev_addr,
+static int drxdap_fasi_write_block(struct i2c_device_addr *dev_addr,
 				       u32 addr,
 				       u16 datasize,
 				       u8 *data, u32 flags);
 
-अटल पूर्णांक drxj_dap_ग_लिखो_reg16(काष्ठा i2c_device_addr *dev_addr,
+static int drxj_dap_write_reg16(struct i2c_device_addr *dev_addr,
 				       u32 addr,
 				       u16 data, u32 flags);
 
-अटल पूर्णांक drxdap_fasi_ग_लिखो_reg32(काष्ठा i2c_device_addr *dev_addr,
+static int drxdap_fasi_write_reg32(struct i2c_device_addr *dev_addr,
 				       u32 addr,
 				       u32 data, u32 flags);
 
-अटल काष्ठा drxj_data drxj_data_g = अणु
-	false,			/* has_lna : true अगर LNA (aka PGA) present      */
-	false,			/* has_oob : true अगर OOB supported              */
-	false,			/* has_ntsc: true अगर NTSC supported             */
-	false,			/* has_btsc: true अगर BTSC supported             */
-	false,			/* has_smatx: true अगर SMA_TX pin is available   */
-	false,			/* has_smarx: true अगर SMA_RX pin is available   */
-	false,			/* has_gpio : true अगर GPIO pin is available     */
-	false,			/* has_irqn : true अगर IRQN pin is available     */
+static struct drxj_data drxj_data_g = {
+	false,			/* has_lna : true if LNA (aka PGA) present      */
+	false,			/* has_oob : true if OOB supported              */
+	false,			/* has_ntsc: true if NTSC supported             */
+	false,			/* has_btsc: true if BTSC supported             */
+	false,			/* has_smatx: true if SMA_TX pin is available   */
+	false,			/* has_smarx: true if SMA_RX pin is available   */
+	false,			/* has_gpio : true if GPIO pin is available     */
+	false,			/* has_irqn : true if IRQN pin is available     */
 	0,			/* mfx A1/A2/A... */
 
 	/* tuner settings */
-	false,			/* tuner mirrors RF संकेत    */
+	false,			/* tuner mirrors RF signal    */
 	/* standard/channel settings */
 	DRX_STANDARD_UNKNOWN,	/* current standard           */
-	DRX_CONSTELLATION_AUTO,	/* स्थिरellation              */
+	DRX_CONSTELLATION_AUTO,	/* constellation              */
 	0,			/* frequency in KHz           */
 	DRX_BANDWIDTH_UNKNOWN,	/* curr_bandwidth              */
 	DRX_MIRROR_NO,		/* mirror                     */
 
-	/* संकेत quality inक्रमmation: */
-	/* शेष values taken from the QAM Programming guide */
+	/* signal quality information: */
+	/* default values taken from the QAM Programming guide */
 	/*   fec_bits_desired should not be less than 4000000    */
 	4000000,		/* fec_bits_desired    */
 	5,			/* fec_vd_plen         */
@@ -597,7 +596,7 @@ GLOBAL VARIABLES
 	0,			/* pkt_err_acc_start    */
 
 	/* HI configuration */
-	0,			/* hi_cfg_timing_भाग    */
+	0,			/* hi_cfg_timing_div    */
 	0,			/* hi_cfg_bridge_delay  */
 	0,			/* hi_cfg_wake_up_key    */
 	0,			/* hi_cfg_ctrl         */
@@ -612,8 +611,8 @@ GLOBAL VARIABLES
 	false,			/* pos_image          */
 	/* RC setting */
 	0UL,			/* iqm_rc_rate_ofs      */
-	/* AUD inक्रमmation */
-/*   false,                  * flagSetAUDकरोne    */
+	/* AUD information */
+/*   false,                  * flagSetAUDdone    */
 /*   false,                  * detectedRDS       */
 /*   true,                   * flagASDRequest    */
 /*   false,                  * flagHDevClear     */
@@ -622,45 +621,45 @@ GLOBAL VARIABLES
 
 	/* ATV configuration */
 	0UL,			/* flags cfg changes */
-	/* shaकरोw of ATV_TOP_EQU0__A */
-	अणु-5,
+	/* shadow of ATV_TOP_EQU0__A */
+	{-5,
 	 ATV_TOP_EQU0_EQU_C0_FM,
 	 ATV_TOP_EQU0_EQU_C0_L,
 	 ATV_TOP_EQU0_EQU_C0_LP,
 	 ATV_TOP_EQU0_EQU_C0_BG,
 	 ATV_TOP_EQU0_EQU_C0_DK,
-	 ATV_TOP_EQU0_EQU_C0_Iपूर्ण,
-	/* shaकरोw of ATV_TOP_EQU1__A */
-	अणु-50,
+	 ATV_TOP_EQU0_EQU_C0_I},
+	/* shadow of ATV_TOP_EQU1__A */
+	{-50,
 	 ATV_TOP_EQU1_EQU_C1_FM,
 	 ATV_TOP_EQU1_EQU_C1_L,
 	 ATV_TOP_EQU1_EQU_C1_LP,
 	 ATV_TOP_EQU1_EQU_C1_BG,
 	 ATV_TOP_EQU1_EQU_C1_DK,
-	 ATV_TOP_EQU1_EQU_C1_Iपूर्ण,
-	/* shaकरोw of ATV_TOP_EQU2__A */
-	अणु210,
+	 ATV_TOP_EQU1_EQU_C1_I},
+	/* shadow of ATV_TOP_EQU2__A */
+	{210,
 	 ATV_TOP_EQU2_EQU_C2_FM,
 	 ATV_TOP_EQU2_EQU_C2_L,
 	 ATV_TOP_EQU2_EQU_C2_LP,
 	 ATV_TOP_EQU2_EQU_C2_BG,
 	 ATV_TOP_EQU2_EQU_C2_DK,
-	 ATV_TOP_EQU2_EQU_C2_Iपूर्ण,
-	/* shaकरोw of ATV_TOP_EQU3__A */
-	अणु-160,
+	 ATV_TOP_EQU2_EQU_C2_I},
+	/* shadow of ATV_TOP_EQU3__A */
+	{-160,
 	 ATV_TOP_EQU3_EQU_C3_FM,
 	 ATV_TOP_EQU3_EQU_C3_L,
 	 ATV_TOP_EQU3_EQU_C3_LP,
 	 ATV_TOP_EQU3_EQU_C3_BG,
 	 ATV_TOP_EQU3_EQU_C3_DK,
-	 ATV_TOP_EQU3_EQU_C3_Iपूर्ण,
+	 ATV_TOP_EQU3_EQU_C3_I},
 	false,			/* flag: true=bypass             */
-	ATV_TOP_VID_PEAK__PRE,	/* shaकरोw of ATV_TOP_VID_PEAK__A */
-	ATV_TOP_NOISE_TH__PRE,	/* shaकरोw of ATV_TOP_NOISE_TH__A */
+	ATV_TOP_VID_PEAK__PRE,	/* shadow of ATV_TOP_VID_PEAK__A */
+	ATV_TOP_NOISE_TH__PRE,	/* shadow of ATV_TOP_NOISE_TH__A */
 	true,			/* flag CVBS output enable       */
 	false,			/* flag SIF output enable        */
 	DRXJ_SIF_ATTENUATION_0DB,	/* current SIF att setting       */
-	अणु			/* qam_rf_agc_cfg */
+	{			/* qam_rf_agc_cfg */
 	 DRX_STANDARD_ITU_B,	/* standard            */
 	 DRX_AGC_CTRL_AUTO,	/* ctrl_mode            */
 	 0,			/* output_level         */
@@ -669,88 +668,88 @@ GLOBAL VARIABLES
 	 0x0000,		/* speed               */
 	 0x0000,		/* top                 */
 	 0x0000			/* c.o.c.              */
-	 पूर्ण,
-	अणु			/* qam_अगर_agc_cfg */
+	 },
+	{			/* qam_if_agc_cfg */
 	 DRX_STANDARD_ITU_B,	/* standard            */
 	 DRX_AGC_CTRL_AUTO,	/* ctrl_mode            */
 	 0,			/* output_level         */
 	 0,			/* min_output_level      */
 	 0xFFFF,		/* max_output_level      */
 	 0x0000,		/* speed               */
-	 0x0000,		/* top    (करोn't care) */
-	 0x0000			/* c.o.c. (करोn't care) */
-	 पूर्ण,
-	अणु			/* vsb_rf_agc_cfg */
+	 0x0000,		/* top    (don't care) */
+	 0x0000			/* c.o.c. (don't care) */
+	 },
+	{			/* vsb_rf_agc_cfg */
 	 DRX_STANDARD_8VSB,	/* standard       */
 	 DRX_AGC_CTRL_AUTO,	/* ctrl_mode       */
 	 0,			/* output_level    */
 	 0,			/* min_output_level */
 	 0xFFFF,		/* max_output_level */
 	 0x0000,		/* speed          */
-	 0x0000,		/* top    (करोn't care) */
-	 0x0000			/* c.o.c. (करोn't care) */
-	 पूर्ण,
-	अणु			/* vsb_अगर_agc_cfg */
+	 0x0000,		/* top    (don't care) */
+	 0x0000			/* c.o.c. (don't care) */
+	 },
+	{			/* vsb_if_agc_cfg */
 	 DRX_STANDARD_8VSB,	/* standard       */
 	 DRX_AGC_CTRL_AUTO,	/* ctrl_mode       */
 	 0,			/* output_level    */
 	 0,			/* min_output_level */
 	 0xFFFF,		/* max_output_level */
 	 0x0000,		/* speed          */
-	 0x0000,		/* top    (करोn't care) */
-	 0x0000			/* c.o.c. (करोn't care) */
-	 पूर्ण,
+	 0x0000,		/* top    (don't care) */
+	 0x0000			/* c.o.c. (don't care) */
+	 },
 	0,			/* qam_pga_cfg */
 	0,			/* vsb_pga_cfg */
-	अणु			/* qam_pre_saw_cfg */
+	{			/* qam_pre_saw_cfg */
 	 DRX_STANDARD_ITU_B,	/* standard  */
 	 0,			/* reference */
 	 false			/* use_pre_saw */
-	 पूर्ण,
-	अणु			/* vsb_pre_saw_cfg */
+	 },
+	{			/* vsb_pre_saw_cfg */
 	 DRX_STANDARD_8VSB,	/* standard  */
 	 0,			/* reference */
 	 false			/* use_pre_saw */
-	 पूर्ण,
+	 },
 
-	/* Version inक्रमmation */
-#अगर_अघोषित _CH_
-	अणु
-	 "01234567890",		/* human पढ़ोable version microcode             */
-	 "01234567890"		/* human पढ़ोable version device specअगरic code  */
-	 पूर्ण,
-	अणु
-	 अणु			/* काष्ठा drx_version क्रम microcode                   */
+	/* Version information */
+#ifndef _CH_
+	{
+	 "01234567890",		/* human readable version microcode             */
+	 "01234567890"		/* human readable version device specific code  */
+	 },
+	{
+	 {			/* struct drx_version for microcode                   */
 	  DRX_MODULE_UNKNOWN,
-	  (अक्षर *)(शून्य),
+	  (char *)(NULL),
 	  0,
 	  0,
 	  0,
-	  (अक्षर *)(शून्य)
-	  पूर्ण,
-	 अणु			/* काष्ठा drx_version क्रम device specअगरic code */
+	  (char *)(NULL)
+	  },
+	 {			/* struct drx_version for device specific code */
 	  DRX_MODULE_UNKNOWN,
-	  (अक्षर *)(शून्य),
+	  (char *)(NULL),
 	  0,
 	  0,
 	  0,
-	  (अक्षर *)(शून्य)
-	  पूर्ण
-	 पूर्ण,
-	अणु
-	 अणु			/* काष्ठा drx_version_list क्रम microcode */
-	  (काष्ठा drx_version *) (शून्य),
-	  (काष्ठा drx_version_list *) (शून्य)
-	  पूर्ण,
-	 अणु			/* काष्ठा drx_version_list क्रम device specअगरic code */
-	  (काष्ठा drx_version *) (शून्य),
-	  (काष्ठा drx_version_list *) (शून्य)
-	  पूर्ण
-	 पूर्ण,
-#पूर्ण_अगर
+	  (char *)(NULL)
+	  }
+	 },
+	{
+	 {			/* struct drx_version_list for microcode */
+	  (struct drx_version *) (NULL),
+	  (struct drx_version_list *) (NULL)
+	  },
+	 {			/* struct drx_version_list for device specific code */
+	  (struct drx_version *) (NULL),
+	  (struct drx_version_list *) (NULL)
+	  }
+	 },
+#endif
 	false,			/* smart_ant_inverted */
-	/* Tracking filter setting क्रम OOB  */
-	अणु
+	/* Tracking filter setting for OOB  */
+	{
 	 12000,
 	 9300,
 	 6600,
@@ -758,21 +757,21 @@ GLOBAL VARIABLES
 	 3700,
 	 3000,
 	 2000,
-	 0पूर्ण,
-	false,			/* oob_घातer_on           */
-	0,			/* mpeg_ts_अटल_bitrate  */
+	 0},
+	false,			/* oob_power_on           */
+	0,			/* mpeg_ts_static_bitrate  */
 	false,			/* disable_te_ihandling   */
 	false,			/* bit_reverse_mpeg_outout */
-	DRXJ_MPEGOUTPUT_CLOCK_RATE_AUTO,	/* mpeg_output_घड़ी_rate */
+	DRXJ_MPEGOUTPUT_CLOCK_RATE_AUTO,	/* mpeg_output_clock_rate */
 	DRXJ_MPEG_START_WIDTH_1CLKCYC,	/* mpeg_start_width */
 
-	/* Pre SAW & Agc configuration क्रम ATV */
-	अणु
+	/* Pre SAW & Agc configuration for ATV */
+	{
 	 DRX_STANDARD_NTSC,	/* standard     */
 	 7,			/* reference    */
 	 true			/* use_pre_saw    */
-	 पूर्ण,
-	अणु			/* ATV RF-AGC */
+	 },
+	{			/* ATV RF-AGC */
 	 DRX_STANDARD_NTSC,	/* standard              */
 	 DRX_AGC_CTRL_AUTO,	/* ctrl_mode              */
 	 0,			/* output_level           */
@@ -781,8 +780,8 @@ GLOBAL VARIABLES
 	 3,			/* speed                 */
 	 9500,			/* top                   */
 	 4000			/* cut-off current       */
-	 पूर्ण,
-	अणु			/* ATV IF-AGC */
+	 },
+	{			/* ATV IF-AGC */
 	 DRX_STANDARD_NTSC,	/* standard              */
 	 DRX_AGC_CTRL_AUTO,	/* ctrl_mode              */
 	 0,			/* output_level           */
@@ -791,7 +790,7 @@ GLOBAL VARIABLES
 	 3,			/* speed                 */
 	 2400,			/* top                   */
 	 0			/* c.o.c.         (d.c.) */
-	 पूर्ण,
+	 },
 	140,			/* ATV PGA config */
 	0,			/* curr_symbol_rate */
 
@@ -802,67 +801,67 @@ GLOBAL VARIABLES
 	SIO_PDR_SMA_TX_CFG__PRE,	/* pdr_safe_restore_val_sma_tx */
 
 	4,			/* oob_pre_saw            */
-	DRXJ_OOB_LO_POW_MINUS10DB,	/* oob_lo_घात             */
-	अणु
+	DRXJ_OOB_LO_POW_MINUS10DB,	/* oob_lo_pow             */
+	{
 	 false			/* aud_data, only first member */
-	 पूर्ण,
-पूर्ण;
+	 },
+};
 
 /*
-* \खar drxj_शेष_addr_g
-* \मrief Default I2C address and device identअगरier.
+* \var drxj_default_addr_g
+* \brief Default I2C address and device identifier.
 */
-अटल काष्ठा i2c_device_addr drxj_शेष_addr_g = अणु
+static struct i2c_device_addr drxj_default_addr_g = {
 	DRXJ_DEF_I2C_ADDR,	/* i2c address */
 	DRXJ_DEF_DEMOD_DEV_ID	/* device id */
-पूर्ण;
+};
 
 /*
-* \खar drxj_शेष_comm_attr_g
-* \मrief Default common attributes of a drxj demodulator instance.
+* \var drxj_default_comm_attr_g
+* \brief Default common attributes of a drxj demodulator instance.
 */
-अटल काष्ठा drx_common_attr drxj_शेष_comm_attr_g = अणु
-	शून्य,			/* ucode file           */
-	true,			/* ucode verअगरy चयन  */
-	अणु0पूर्ण,			/* version record       */
+static struct drx_common_attr drxj_default_comm_attr_g = {
+	NULL,			/* ucode file           */
+	true,			/* ucode verify switch  */
+	{0},			/* version record       */
 
-	44000,			/* IF in kHz in हाल no tuner instance is used  */
-	(151875 - 0),		/* प्रणाली घड़ी frequency in kHz                */
+	44000,			/* IF in kHz in case no tuner instance is used  */
+	(151875 - 0),		/* system clock frequency in kHz                */
 	0,			/* oscillator frequency kHz                     */
-	0,			/* oscillator deviation in ppm, चिन्हित          */
+	0,			/* oscillator deviation in ppm, signed          */
 	false,			/* If true mirror frequency spectrum            */
-	अणु
+	{
 	 /* MPEG output configuration */
 	 true,			/* If true, enable MPEG output   */
 	 false,			/* If true, insert RS byte       */
 	 false,			/* If true, parallel out otherwise serial */
-	 false,			/* If true, invert DATA संकेतs  */
-	 false,			/* If true, invert ERR संकेत    */
-	 false,			/* If true, invert STR संकेतs   */
-	 false,			/* If true, invert VAL संकेतs   */
-	 false,			/* If true, invert CLK संकेतs   */
-	 true,			/* If true, अटल MPEG घड़ीrate will
-				   be used, otherwise घड़ीrate will
+	 false,			/* If true, invert DATA signals  */
+	 false,			/* If true, invert ERR signal    */
+	 false,			/* If true, invert STR signals   */
+	 false,			/* If true, invert VAL signals   */
+	 false,			/* If true, invert CLK signals   */
+	 true,			/* If true, static MPEG clockrate will
+				   be used, otherwise clockrate will
 				   adapt to the bitrate of the TS */
-	 19392658UL,		/* Maximum bitrate in b/s in हाल
-				   अटल घड़ीrate is selected */
-	 DRX_MPEG_STR_WIDTH_1	/* MPEG Start width in घड़ी cycles */
-	 पूर्ण,
+	 19392658UL,		/* Maximum bitrate in b/s in case
+				   static clockrate is selected */
+	 DRX_MPEG_STR_WIDTH_1	/* MPEG Start width in clock cycles */
+	 },
 	/* Initilisations below can be omitted, they require no user input and
-	   are initially 0, शून्य or false. The compiler will initialize them to these
+	   are initially 0, NULL or false. The compiler will initialize them to these
 	   values when omitted.  */
-	false,			/* is_खोलोed */
+	false,			/* is_opened */
 
 	/* SCAN */
-	शून्य,			/* no scan params yet               */
+	NULL,			/* no scan params yet               */
 	0,			/* current scan index               */
 	0,			/* next scan frequency              */
-	false,			/* scan पढ़ोy flag                  */
+	false,			/* scan ready flag                  */
 	0,			/* max channels to scan             */
 	0,			/* nr of channels scanned           */
-	शून्य,			/* शेष scan function            */
-	शून्य,			/* शेष context poपूर्णांकer          */
-	0,			/* millisec to रुको क्रम demod lock  */
+	NULL,			/* default scan function            */
+	NULL,			/* default context pointer          */
+	0,			/* millisec to wait for demod lock  */
 	DRXJ_DEMOD_LOCK,	/* desired lock               */
 	false,
 
@@ -877,48 +876,48 @@ GLOBAL VARIABLES
 	false,			/* If Agc Polarity                     */
 	false,			/* tuner slow mode                     */
 
-	अणु			/* current channel (all 0)             */
+	{			/* current channel (all 0)             */
 	 0UL			/* channel.frequency */
-	 पूर्ण,
+	 },
 	DRX_STANDARD_UNKNOWN,	/* current standard */
 	DRX_STANDARD_UNKNOWN,	/* previous standard */
 	DRX_STANDARD_UNKNOWN,	/* di_cache_standard   */
 	false,			/* use_bootloader */
 	0UL,			/* capabilities */
 	0			/* mfx */
-पूर्ण;
+};
 
 /*
-* \खar drxj_शेष_demod_g
-* \मrief Default drxj demodulator instance.
+* \var drxj_default_demod_g
+* \brief Default drxj demodulator instance.
 */
-अटल काष्ठा drx_demod_instance drxj_शेष_demod_g = अणु
-	&drxj_शेष_addr_g,	/* i2c address & device id */
-	&drxj_शेष_comm_attr_g,	/* demod common attributes */
-	&drxj_data_g		/* demod device specअगरic attributes */
-पूर्ण;
+static struct drx_demod_instance drxj_default_demod_g = {
+	&drxj_default_addr_g,	/* i2c address & device id */
+	&drxj_default_comm_attr_g,	/* demod common attributes */
+	&drxj_data_g		/* demod device specific attributes */
+};
 
 /*
-* \मrief Default audio data काष्ठाure क्रम DRK demodulator instance.
+* \brief Default audio data structure for DRK demodulator instance.
 *
-* This काष्ठाure is DRXK specअगरic.
+* This structure is DRXK specific.
 *
 */
-अटल काष्ठा drx_aud_data drxj_शेष_aud_data_g = अणु
+static struct drx_aud_data drxj_default_aud_data_g = {
 	false,			/* audio_is_active */
 	DRX_AUD_STANDARD_AUTO,	/* audio_standard  */
 
 	/* i2sdata */
-	अणु
+	{
 	 false,			/* output_enable   */
 	 48000,			/* frequency      */
 	 DRX_I2S_MODE_MASTER,	/* mode           */
 	 DRX_I2S_WORDLENGTH_32,	/* word_length     */
 	 DRX_I2S_POLARITY_RIGHT,	/* polarity       */
-	 DRX_I2S_FORMAT_WS_WITH_DATA	/* क्रमmat         */
-	 पूर्ण,
+	 DRX_I2S_FORMAT_WS_WITH_DATA	/* format         */
+	 },
 	/* volume            */
-	अणु
+	{
 	 true,			/* mute;          */
 	 0,			/* volume         */
 	 DRX_AUD_AVC_OFF,	/* avc_mode        */
@@ -927,64 +926,64 @@ GLOBAL VARIABLES
 	 DRX_AUD_AVC_MAX_ATTEN_24DB,	/* avc_max_atten    */
 	 0,			/* strength_left   */
 	 0			/* strength_right  */
-	 पूर्ण,
-	DRX_AUD_AUTO_SOUND_SELECT_ON_CHANGE_ON,	/* स्वतः_sound */
+	 },
+	DRX_AUD_AUTO_SOUND_SELECT_ON_CHANGE_ON,	/* auto_sound */
 	/*  ass_thresholds */
-	अणु
+	{
 	 440,			/* A2    */
 	 12,			/* BTSC  */
 	 700,			/* NICAM */
-	 पूर्ण,
+	 },
 	/* carrier */
-	अणु
+	{
 	 /* a */
-	 अणु
+	 {
 	  42,			/* thres */
 	  DRX_NO_CARRIER_NOISE,	/* opt   */
-	  0,			/* shअगरt */
+	  0,			/* shift */
 	  0			/* dco   */
-	  पूर्ण,
+	  },
 	 /* b */
-	 अणु
+	 {
 	  42,			/* thres */
 	  DRX_NO_CARRIER_MUTE,	/* opt   */
-	  0,			/* shअगरt */
+	  0,			/* shift */
 	  0			/* dco   */
-	  पूर्ण,
+	  },
 
-	 पूर्ण,
+	 },
 	/* mixer */
-	अणु
+	{
 	 DRX_AUD_SRC_STEREO_OR_A,	/* source_i2s */
 	 DRX_AUD_I2S_MATRIX_STEREO,	/* matrix_i2s */
 	 DRX_AUD_FM_MATRIX_SOUND_A	/* matrix_fm  */
-	 पूर्ण,
+	 },
 	DRX_AUD_DEVIATION_NORMAL,	/* deviation */
 	DRX_AUD_AVSYNC_OFF,	/* av_sync */
 
 	/* prescale */
-	अणु
+	{
 	 DRX_AUD_MAX_FM_DEVIATION,	/* fm_deviation */
 	 DRX_AUD_MAX_NICAM_PRESCALE	/* nicam_gain */
-	 पूर्ण,
+	 },
 	DRX_AUD_FM_DEEMPH_75US,	/* deemph */
 	DRX_BTSC_STEREO,	/* btsc_detect */
 	0,			/* rds_data_counter */
 	false			/* rds_data_present */
-पूर्ण;
+};
 
 /*-----------------------------------------------------------------------------
 STRUCTURES
 ----------------------------------------------------------------------------*/
-काष्ठा drxjeq_stat अणु
+struct drxjeq_stat {
 	u16 eq_mse;
 	u8 eq_mode;
 	u8 eq_ctrl;
 	u8 eq_stat;
-पूर्ण;
+};
 
 /* HI command */
-काष्ठा drxj_hi_cmd अणु
+struct drxj_hi_cmd {
 	u16 cmd;
 	u16 param1;
 	u16 param2;
@@ -992,49 +991,49 @@ STRUCTURES
 	u16 param4;
 	u16 param5;
 	u16 param6;
-पूर्ण;
+};
 
 /*============================================================================*/
 /*=== MICROCODE RELATED STRUCTURES ===========================================*/
 /*============================================================================*/
 
 /*
- * काष्ठा drxu_code_block_hdr - Structure of the microcode block headers
+ * struct drxu_code_block_hdr - Structure of the microcode block headers
  *
  * @addr:	Destination address of the data in this block
  * @size:	Size of the block data following this header counted in
  *		16 bits words
- * @CRC:	CRC value of the data block, only valid अगर CRC flag is
+ * @CRC:	CRC value of the data block, only valid if CRC flag is
  *		set.
  */
-काष्ठा drxu_code_block_hdr अणु
+struct drxu_code_block_hdr {
 	u32 addr;
 	u16 size;
 	u16 flags;
 	u16 CRC;
-पूर्ण;
+};
 
 /*-----------------------------------------------------------------------------
 FUNCTIONS
 ----------------------------------------------------------------------------*/
 /* Some prototypes */
-अटल पूर्णांक
-hi_command(काष्ठा i2c_device_addr *dev_addr,
-	   स्थिर काष्ठा drxj_hi_cmd *cmd, u16 *result);
+static int
+hi_command(struct i2c_device_addr *dev_addr,
+	   const struct drxj_hi_cmd *cmd, u16 *result);
 
-अटल पूर्णांक
-ctrl_lock_status(काष्ठा drx_demod_instance *demod, क्रमागत drx_lock_status *lock_stat);
+static int
+ctrl_lock_status(struct drx_demod_instance *demod, enum drx_lock_status *lock_stat);
 
-अटल पूर्णांक
-ctrl_घातer_mode(काष्ठा drx_demod_instance *demod, क्रमागत drx_घातer_mode *mode);
+static int
+ctrl_power_mode(struct drx_demod_instance *demod, enum drx_power_mode *mode);
 
-अटल पूर्णांक घातer_करोwn_aud(काष्ठा drx_demod_instance *demod);
+static int power_down_aud(struct drx_demod_instance *demod);
 
-अटल पूर्णांक
-ctrl_set_cfg_pre_saw(काष्ठा drx_demod_instance *demod, काष्ठा drxj_cfg_pre_saw *pre_saw);
+static int
+ctrl_set_cfg_pre_saw(struct drx_demod_instance *demod, struct drxj_cfg_pre_saw *pre_saw);
 
-अटल पूर्णांक
-ctrl_set_cfg_afe_gain(काष्ठा drx_demod_instance *demod, काष्ठा drxj_cfg_afe_gain *afe_gain);
+static int
+ctrl_set_cfg_afe_gain(struct drx_demod_instance *demod, struct drxj_cfg_afe_gain *afe_gain);
 
 /*============================================================================*/
 /*============================================================================*/
@@ -1046,18 +1045,18 @@ ctrl_set_cfg_afe_gain(काष्ठा drx_demod_instance *demod, काष्
 /*============================================================================*/
 
 /*
-* \पn u32 frac28(u32 N, u32 D)
-* \मrief Compute: (1<<28)*N/D
+* \fn u32 frac28(u32 N, u32 D)
+* \brief Compute: (1<<28)*N/D
 * \param N 32 bits
 * \param D 32 bits
-* \लeturn (1<<28)*N/D
-* This function is used to aव्योम भग्नing-poपूर्णांक calculations as they may
-* not be present on the target platक्रमm.
+* \return (1<<28)*N/D
+* This function is used to avoid floating-point calculations as they may
+* not be present on the target platform.
 
-* frac28 perक्रमms an अचिन्हित 28/28 bits भागision to 32-bit fixed poपूर्णांक
-* fraction used क्रम setting the Frequency Shअगरter रेजिस्टरs.
+* frac28 performs an unsigned 28/28 bits division to 32-bit fixed point
+* fraction used for setting the Frequency Shifter registers.
 * N and D can hold numbers up to width: 28-bits.
-* The 4 bits पूर्णांकeger part and the 28 bits fractional part are calculated.
+* The 4 bits integer part and the 28 bits fractional part are calculated.
 
 * Usage condition: ((1<<28)*n)/d < ((1<<32)-1) => (n/d) < 15.999
 
@@ -1065,33 +1064,33 @@ ctrl_set_cfg_afe_gain(काष्ठा drx_demod_instance *demod, काष्
 * D: 0...(1<<28)-1
 * Q: 0...(1<<32)-1
 */
-अटल u32 frac28(u32 N, u32 D)
-अणु
-	पूर्णांक i = 0;
+static u32 frac28(u32 N, u32 D)
+{
+	int i = 0;
 	u32 Q1 = 0;
 	u32 R0 = 0;
 
-	R0 = (N % D) << 4;	/* 32-28 == 4 shअगरts possible at max */
-	Q1 = N / D;		/* पूर्णांकeger part, only the 4 least signअगरicant bits
+	R0 = (N % D) << 4;	/* 32-28 == 4 shifts possible at max */
+	Q1 = N / D;		/* integer part, only the 4 least significant bits
 				   will be visible in the result */
 
-	/* भागision using radix 16, 7 nibbles in the result */
-	क्रम (i = 0; i < 7; i++) अणु
+	/* division using radix 16, 7 nibbles in the result */
+	for (i = 0; i < 7; i++) {
 		Q1 = (Q1 << 4) | R0 / D;
 		R0 = (R0 % D) << 4;
-	पूर्ण
+	}
 	/* rounding */
-	अगर ((R0 >> 3) >= D)
+	if ((R0 >> 3) >= D)
 		Q1++;
 
-	वापस Q1;
-पूर्ण
+	return Q1;
+}
 
 /*
-* \पn u32 log1_बार100( u32 x)
-* \मrief Compute: 100*log10(x)
+* \fn u32 log1_times100( u32 x)
+* \brief Compute: 100*log10(x)
 * \param x 32 bits
-* \लeturn 100*log10(x)
+* \return 100*log10(x)
 *
 * 100*log10(x)
 * = 100*(log2(x)/log2(10)))
@@ -1103,16 +1102,16 @@ ctrl_set_cfg_afe_gain(काष्ठा drx_demod_instance *demod, काष्
 * where y = 2^k and 1<= (x/y) < 2
 */
 
-अटल u32 log1_बार100(u32 x)
-अणु
-	अटल स्थिर u8 scale = 15;
-	अटल स्थिर u8 index_width = 5;
+static u32 log1_times100(u32 x)
+{
+	static const u8 scale = 15;
+	static const u8 index_width = 5;
 	/*
 	   log2lut[n] = (1<<scale) * 200 * log2( 1.0 + ( (1.0/(1<<INDEXWIDTH)) * n ))
 	   0 <= n < ((1<<INDEXWIDTH)+1)
 	 */
 
-	अटल स्थिर u32 log2lut[] = अणु
+	static const u32 log2lut[] = {
 		0,		/* 0.000000 */
 		290941,		/* 290941.300628 */
 		573196,		/* 573196.476418 */
@@ -1146,7 +1145,7 @@ ctrl_set_cfg_afe_gain(काष्ठा drx_demod_instance *demod, काष्
 		6253421,	/* 6253420.939751 */
 		6404702,	/* 6404701.706649 */
 		6553600,	/* 6553600.000000 */
-	पूर्ण;
+	};
 
 	u8 i = 0;
 	u32 y = 0;
@@ -1154,32 +1153,32 @@ ctrl_set_cfg_afe_gain(काष्ठा drx_demod_instance *demod, काष्
 	u32 k = 0;
 	u32 r = 0;
 
-	अगर (x == 0)
-		वापस 0;
+	if (x == 0)
+		return 0;
 
 	/* Scale x (normalize) */
 	/* computing y in log(x/y) = log(x) - log(y) */
-	अगर ((x & (((u32) (-1)) << (scale + 1))) == 0) अणु
-		क्रम (k = scale; k > 0; k--) अणु
-			अगर (x & (((u32) 1) << scale))
-				अवरोध;
+	if ((x & (((u32) (-1)) << (scale + 1))) == 0) {
+		for (k = scale; k > 0; k--) {
+			if (x & (((u32) 1) << scale))
+				break;
 			x <<= 1;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		क्रम (k = scale; k < 31; k++) अणु
-			अगर ((x & (((u32) (-1)) << (scale + 1))) == 0)
-				अवरोध;
+		}
+	} else {
+		for (k = scale; k < 31; k++) {
+			if ((x & (((u32) (-1)) << (scale + 1))) == 0)
+				break;
 			x >>= 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/*
-	   Now x has binary poपूर्णांक between bit[scale] and bit[scale-1]
+	   Now x has binary point between bit[scale] and bit[scale-1]
 	   and 1.0 <= x < 2.0 */
 
-	/* correction क्रम भागision: log(x) = log(x/y)+log(y) */
+	/* correction for division: log(x) = log(x/y)+log(y) */
 	y = k * ((((u32) 1) << scale) * 200);
 
-	/* हटाओ पूर्णांकeger part */
+	/* remove integer part */
 	x &= ((((u32) 1) << scale) - 1);
 	/* get index */
 	i = (u8) (x >> (scale - index_width));
@@ -1192,64 +1191,64 @@ ctrl_set_cfg_afe_gain(काष्ठा drx_demod_instance *demod, काष्
 	y /= 108853;		/* (log2(10) << scale) */
 	r = (y >> 1);
 	/* rounding */
-	अगर (y & ((u32)1))
+	if (y & ((u32)1))
 		r++;
 
-	वापस r;
+	return r;
 
-पूर्ण
+}
 
 /*
-* \पn u32 frac_बार1e6( u16 N, u32 D)
-* \मrief Compute: (N/D) * 1000000.
+* \fn u32 frac_times1e6( u16 N, u32 D)
+* \brief Compute: (N/D) * 1000000.
 * \param N nominator 16-bits.
 * \param D denominator 32-bits.
-* \लeturn u32
-* \लetval ((N/D) * 1000000), 32 bits
+* \return u32
+* \retval ((N/D) * 1000000), 32 bits
 *
 * No check on D=0!
 */
-अटल u32 frac_बार1e6(u32 N, u32 D)
-अणु
-	u32 reमुख्यder = 0;
+static u32 frac_times1e6(u32 N, u32 D)
+{
+	u32 remainder = 0;
 	u32 frac = 0;
 
 	/*
 	   frac = (N * 1000000) / D
 	   To let it fit in a 32 bits computation:
 	   frac = (N * (1000000 >> 4)) / (D >> 4)
-	   This would result in a problem in हाल D < 16 (भाग by 0).
-	   So we करो it more elaborate as shown below.
+	   This would result in a problem in case D < 16 (div by 0).
+	   So we do it more elaborate as shown below.
 	 */
 	frac = (((u32) N) * (1000000 >> 4)) / D;
 	frac <<= 4;
-	reमुख्यder = (((u32) N) * (1000000 >> 4)) % D;
-	reमुख्यder <<= 4;
-	frac += reमुख्यder / D;
-	reमुख्यder = reमुख्यder % D;
-	अगर ((reमुख्यder * 2) > D)
+	remainder = (((u32) N) * (1000000 >> 4)) % D;
+	remainder <<= 4;
+	frac += remainder / D;
+	remainder = remainder % D;
+	if ((remainder * 2) > D)
 		frac++;
 
-	वापस frac;
-पूर्ण
+	return frac;
+}
 
 /*============================================================================*/
 
 
 /*
-* \मrief Values क्रम NICAM prescaler gain. Computed from dB to पूर्णांकeger
-*        and rounded. For calc used क्रमmula: 16*10^(prescaleGain[dB]/20).
+* \brief Values for NICAM prescaler gain. Computed from dB to integer
+*        and rounded. For calc used formula: 16*10^(prescaleGain[dB]/20).
 *
 */
-#अगर 0
-/* Currently, unused as we lack support क्रम analog TV */
-अटल स्थिर u16 nicam_presc_table_val[43] = अणु
+#if 0
+/* Currently, unused as we lack support for analog TV */
+static const u16 nicam_presc_table_val[43] = {
 	1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 4, 4,
 	5, 5, 6, 6, 7, 8, 9, 10, 11, 13, 14, 16,
 	18, 20, 23, 25, 28, 32, 36, 40, 45,
 	51, 57, 64, 71, 80, 90, 101, 113, 127
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
 /*============================================================================*/
 /*==                        END HELPER FUNCTIONS                            ==*/
@@ -1262,61 +1261,61 @@ ctrl_set_cfg_afe_gain(काष्ठा drx_demod_instance *demod, काष्
 /*============================================================================*/
 
 /*
-   This layer takes care of some device specअगरic रेजिस्टर access protocols:
-   -conversion to लघु address क्रमmat
+   This layer takes care of some device specific register access protocols:
+   -conversion to short address format
    -access to audio block
    This layer is placed between the drx_dap_fasi and the rest of the drxj
-   specअगरic implementation. This layer can use address map knowledge whereas
+   specific implementation. This layer can use address map knowledge whereas
    dap_fasi may not use memory map knowledge.
 
-   * For audio currently only 16 bits पढ़ो and ग_लिखो रेजिस्टर access is
+   * For audio currently only 16 bits read and write register access is
      supported. More is not needed. RMW and 32 or 8 bit access on audio
-     रेजिस्टरs will have undefined behaviour. Flags (RMW, CRC reset, broadcast
+     registers will have undefined behaviour. Flags (RMW, CRC reset, broadcast
      single/multi master) will be ignored.
 
-   TODO: check ignoring single/multimaster is ok क्रम AUD access ?
+   TODO: check ignoring single/multimaster is ok for AUD access ?
 */
 
-#घोषणा DRXJ_ISAUDWRITE(addr) (((((addr)>>16)&1) == 1) ? true : false)
-#घोषणा DRXJ_DAP_AUDTRIF_TIMEOUT 80	/* millisec */
+#define DRXJ_ISAUDWRITE(addr) (((((addr)>>16)&1) == 1) ? true : false)
+#define DRXJ_DAP_AUDTRIF_TIMEOUT 80	/* millisec */
 /*============================================================================*/
 
 /*
-* \पn bool is_handled_by_aud_tr_अगर( u32 addr )
-* \मrief Check अगर this address is handled by the audio token ring पूर्णांकerface.
+* \fn bool is_handled_by_aud_tr_if( u32 addr )
+* \brief Check if this address is handled by the audio token ring interface.
 * \param addr
-* \लeturn bool
-* \लetval true  Yes, handled by audio token ring पूर्णांकerface
-* \लetval false No, not handled by audio token ring पूर्णांकerface
+* \return bool
+* \retval true  Yes, handled by audio token ring interface
+* \retval false No, not handled by audio token ring interface
 *
 */
-अटल
-bool is_handled_by_aud_tr_अगर(u32 addr)
-अणु
+static
+bool is_handled_by_aud_tr_if(u32 addr)
+{
 	bool retval = false;
 
-	अगर ((DRXDAP_FASI_ADDR2BLOCK(addr) == 4) &&
+	if ((DRXDAP_FASI_ADDR2BLOCK(addr) == 4) &&
 	    (DRXDAP_FASI_ADDR2BANK(addr) > 1) &&
-	    (DRXDAP_FASI_ADDR2BANK(addr) < 6)) अणु
+	    (DRXDAP_FASI_ADDR2BANK(addr) < 6)) {
 		retval = true;
-	पूर्ण
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /*============================================================================*/
 
-पूर्णांक drxbsp_i2c_ग_लिखो_पढ़ो(काष्ठा i2c_device_addr *w_dev_addr,
+int drxbsp_i2c_write_read(struct i2c_device_addr *w_dev_addr,
 				 u16 w_count,
 				 u8 *wData,
-				 काष्ठा i2c_device_addr *r_dev_addr,
+				 struct i2c_device_addr *r_dev_addr,
 				 u16 r_count, u8 *r_data)
-अणु
-	काष्ठा drx39xxj_state *state;
-	काष्ठा i2c_msg msg[2];
-	अचिन्हित पूर्णांक num_msgs;
+{
+	struct drx39xxj_state *state;
+	struct i2c_msg msg[2];
+	unsigned int num_msgs;
 
-	अगर (w_dev_addr == शून्य) अणु
+	if (w_dev_addr == NULL) {
 		/* Read only */
 		state = r_dev_addr->user_data;
 		msg[0].addr = r_dev_addr->i2c_addr >> 1;
@@ -1324,7 +1323,7 @@ bool is_handled_by_aud_tr_अगर(u32 addr)
 		msg[0].buf = r_data;
 		msg[0].len = r_count;
 		num_msgs = 1;
-	पूर्ण अन्यथा अगर (r_dev_addr == शून्य) अणु
+	} else if (r_dev_addr == NULL) {
 		/* Write only */
 		state = w_dev_addr->user_data;
 		msg[0].addr = w_dev_addr->i2c_addr >> 1;
@@ -1332,8 +1331,8 @@ bool is_handled_by_aud_tr_अगर(u32 addr)
 		msg[0].buf = wData;
 		msg[0].len = w_count;
 		num_msgs = 1;
-	पूर्ण अन्यथा अणु
-		/* Both ग_लिखो and पढ़ो */
+	} else {
+		/* Both write and read */
 		state = w_dev_addr->user_data;
 		msg[0].addr = w_dev_addr->i2c_addr >> 1;
 		msg[0].flags = 0;
@@ -1344,25 +1343,25 @@ bool is_handled_by_aud_tr_अगर(u32 addr)
 		msg[1].buf = r_data;
 		msg[1].len = r_count;
 		num_msgs = 2;
-	पूर्ण
+	}
 
-	अगर (state->i2c == शून्य) अणु
+	if (state->i2c == NULL) {
 		pr_err("i2c was zero, aborting\n");
-		वापस 0;
-	पूर्ण
-	अगर (i2c_transfer(state->i2c, msg, num_msgs) != num_msgs) अणु
+		return 0;
+	}
+	if (i2c_transfer(state->i2c, msg, num_msgs) != num_msgs) {
 		pr_warn("drx3933: I2C write/read failed\n");
-		वापस -EREMOTEIO;
-	पूर्ण
+		return -EREMOTEIO;
+	}
 
-#अगर_घोषित DJH_DEBUG
-	अगर (w_dev_addr == शून्य || r_dev_addr == शून्य)
-		वापस 0;
+#ifdef DJH_DEBUG
+	if (w_dev_addr == NULL || r_dev_addr == NULL)
+		return 0;
 
 	state = w_dev_addr->user_data;
 
-	अगर (state->i2c == शून्य)
-		वापस 0;
+	if (state->i2c == NULL)
+		return 0;
 
 	msg[0].addr = w_dev_addr->i2c_addr;
 	msg[0].flags = 0;
@@ -1377,75 +1376,75 @@ bool is_handled_by_aud_tr_अगर(u32 addr)
 	pr_debug("drx3933 i2c operation addr=%x i2c=%p, wc=%x rc=%x\n",
 	       w_dev_addr->i2c_addr, state->i2c, w_count, r_count);
 
-	अगर (i2c_transfer(state->i2c, msg, 2) != 2) अणु
+	if (i2c_transfer(state->i2c, msg, 2) != 2) {
 		pr_warn("drx3933: I2C write/read failed\n");
-		वापस -EREMOTEIO;
-	पूर्ण
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+		return -EREMOTEIO;
+	}
+#endif
+	return 0;
+}
 
 /*============================================================================*/
 
 /*****************************
 *
-* पूर्णांक drxdap_fasi_पढ़ो_block (
-*      काष्ठा i2c_device_addr *dev_addr,      -- address of I2C device
-*      u32 addr,         -- address of chip रेजिस्टर/memory
-*      u16            datasize,     -- number of bytes to पढ़ो
+* int drxdap_fasi_read_block (
+*      struct i2c_device_addr *dev_addr,      -- address of I2C device
+*      u32 addr,         -- address of chip register/memory
+*      u16            datasize,     -- number of bytes to read
 *      u8 *data,         -- data to receive
 *      u32 flags)        -- special device flags
 *
 * Read block data from chip address. Because the chip is word oriented,
-* the number of bytes to पढ़ो must be even.
+* the number of bytes to read must be even.
 *
 * Make sure that the buffer to receive the data is large enough.
 *
 * Although this function expects an even number of bytes, it is still byte
-* oriented, and the data पढ़ो back is NOT translated to the endianness of
-* the target platक्रमm.
+* oriented, and the data read back is NOT translated to the endianness of
+* the target platform.
 *
 * Output:
-* - 0     अगर पढ़ोing was successful
-*                  in that हाल: data पढ़ो is in *data.
-* - -EIO  अगर anything went wrong
+* - 0     if reading was successful
+*                  in that case: data read is in *data.
+* - -EIO  if anything went wrong
 *
 ******************************/
 
-अटल पूर्णांक drxdap_fasi_पढ़ो_block(काष्ठा i2c_device_addr *dev_addr,
+static int drxdap_fasi_read_block(struct i2c_device_addr *dev_addr,
 					 u32 addr,
 					 u16 datasize,
 					 u8 *data, u32 flags)
-अणु
+{
 	u8 buf[4];
 	u16 bufx;
-	पूर्णांक rc;
+	int rc;
 	u16 overhead_size = 0;
 
 	/* Check parameters ******************************************************* */
-	अगर (dev_addr == शून्य)
-		वापस -EINVAL;
+	if (dev_addr == NULL)
+		return -EINVAL;
 
 	overhead_size = (IS_I2C_10BIT(dev_addr->i2c_addr) ? 2 : 1) +
 	    (DRXDAP_FASI_LONG_FORMAT(addr) ? 4 : 2);
 
-	अगर ((DRXDAP_FASI_OFFSET_TOO_LARGE(addr)) ||
+	if ((DRXDAP_FASI_OFFSET_TOO_LARGE(addr)) ||
 	    ((!(DRXDAPFASI_LONG_ADDR_ALLOWED)) &&
 	     DRXDAP_FASI_LONG_FORMAT(addr)) ||
 	    (overhead_size > (DRXDAP_MAX_WCHUNKSIZE)) ||
-	    ((datasize != 0) && (data == शून्य)) || ((datasize & 1) == 1)) अणु
-		वापस -EINVAL;
-	पूर्ण
+	    ((datasize != 0) && (data == NULL)) || ((datasize & 1) == 1)) {
+		return -EINVAL;
+	}
 
-	/* ReadModअगरyWrite & mode flag bits are not allowed */
+	/* ReadModifyWrite & mode flag bits are not allowed */
 	flags &= (~DRXDAP_FASI_RMW & ~DRXDAP_FASI_MODEFLAGS);
-#अगर DRXDAP_SINGLE_MASTER
+#if DRXDAP_SINGLE_MASTER
 	flags |= DRXDAP_FASI_SINGLE_MASTER;
-#पूर्ण_अगर
+#endif
 
 	/* Read block from I2C **************************************************** */
-	करो अणु
-		u16 toकरो = (datasize < DRXDAP_MAX_RCHUNKSIZE ?
+	do {
+		u16 todo = (datasize < DRXDAP_MAX_RCHUNKSIZE ?
 			      datasize : DRXDAP_MAX_RCHUNKSIZE);
 
 		bufx = 0;
@@ -1453,215 +1452,215 @@ bool is_handled_by_aud_tr_अगर(u32 addr)
 		addr &= ~DRXDAP_FASI_FLAGS;
 		addr |= flags;
 
-#अगर ((DRXDAPFASI_LONG_ADDR_ALLOWED == 1) && (DRXDAPFASI_SHORT_ADDR_ALLOWED == 1))
-		/* लघु क्रमmat address preferred but दीर्घ क्रमmat otherwise */
-		अगर (DRXDAP_FASI_LONG_FORMAT(addr)) अणु
-#पूर्ण_अगर
-#अगर (DRXDAPFASI_LONG_ADDR_ALLOWED == 1)
+#if ((DRXDAPFASI_LONG_ADDR_ALLOWED == 1) && (DRXDAPFASI_SHORT_ADDR_ALLOWED == 1))
+		/* short format address preferred but long format otherwise */
+		if (DRXDAP_FASI_LONG_FORMAT(addr)) {
+#endif
+#if (DRXDAPFASI_LONG_ADDR_ALLOWED == 1)
 			buf[bufx++] = (u8) (((addr << 1) & 0xFF) | 0x01);
 			buf[bufx++] = (u8) ((addr >> 16) & 0xFF);
 			buf[bufx++] = (u8) ((addr >> 24) & 0xFF);
 			buf[bufx++] = (u8) ((addr >> 7) & 0xFF);
-#पूर्ण_अगर
-#अगर ((DRXDAPFASI_LONG_ADDR_ALLOWED == 1) && (DRXDAPFASI_SHORT_ADDR_ALLOWED == 1))
-		पूर्ण अन्यथा अणु
-#पूर्ण_अगर
-#अगर (DRXDAPFASI_SHORT_ADDR_ALLOWED == 1)
+#endif
+#if ((DRXDAPFASI_LONG_ADDR_ALLOWED == 1) && (DRXDAPFASI_SHORT_ADDR_ALLOWED == 1))
+		} else {
+#endif
+#if (DRXDAPFASI_SHORT_ADDR_ALLOWED == 1)
 			buf[bufx++] = (u8) ((addr << 1) & 0xFF);
 			buf[bufx++] =
 			    (u8) (((addr >> 16) & 0x0F) |
 				    ((addr >> 18) & 0xF0));
-#पूर्ण_अगर
-#अगर ((DRXDAPFASI_LONG_ADDR_ALLOWED == 1) && (DRXDAPFASI_SHORT_ADDR_ALLOWED == 1))
-		पूर्ण
-#पूर्ण_अगर
+#endif
+#if ((DRXDAPFASI_LONG_ADDR_ALLOWED == 1) && (DRXDAPFASI_SHORT_ADDR_ALLOWED == 1))
+		}
+#endif
 
-#अगर DRXDAP_SINGLE_MASTER
+#if DRXDAP_SINGLE_MASTER
 		/*
-		 * In single master mode, split the पढ़ो and ग_लिखो actions.
-		 * No special action is needed क्रम ग_लिखो chunks here.
+		 * In single master mode, split the read and write actions.
+		 * No special action is needed for write chunks here.
 		 */
-		rc = drxbsp_i2c_ग_लिखो_पढ़ो(dev_addr, bufx, buf,
-					   शून्य, 0, शून्य);
-		अगर (rc == 0)
-			rc = drxbsp_i2c_ग_लिखो_पढ़ो(शून्य, 0, शून्य, dev_addr, toकरो, data);
-#अन्यथा
-		/* In multi master mode, करो everything in one RW action */
-		rc = drxbsp_i2c_ग_लिखो_पढ़ो(dev_addr, bufx, buf, dev_addr, toकरो,
+		rc = drxbsp_i2c_write_read(dev_addr, bufx, buf,
+					   NULL, 0, NULL);
+		if (rc == 0)
+			rc = drxbsp_i2c_write_read(NULL, 0, NULL, dev_addr, todo, data);
+#else
+		/* In multi master mode, do everything in one RW action */
+		rc = drxbsp_i2c_write_read(dev_addr, bufx, buf, dev_addr, todo,
 					  data);
-#पूर्ण_अगर
-		data += toकरो;
-		addr += (toकरो >> 1);
-		datasize -= toकरो;
-	पूर्ण जबतक (datasize && rc == 0);
+#endif
+		data += todo;
+		addr += (todo >> 1);
+		datasize -= todo;
+	} while (datasize && rc == 0);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 
 /*****************************
 *
-* पूर्णांक drxdap_fasi_पढ़ो_reg16 (
-*     काष्ठा i2c_device_addr *dev_addr, -- address of I2C device
-*     u32 addr,    -- address of chip रेजिस्टर/memory
+* int drxdap_fasi_read_reg16 (
+*     struct i2c_device_addr *dev_addr, -- address of I2C device
+*     u32 addr,    -- address of chip register/memory
 *     u16 *data,    -- data to receive
 *     u32 flags)   -- special device flags
 *
-* Read one 16-bit रेजिस्टर or memory location. The data received back is
-* converted back to the target platक्रमm's endianness.
+* Read one 16-bit register or memory location. The data received back is
+* converted back to the target platform's endianness.
 *
 * Output:
-* - 0     अगर पढ़ोing was successful
-*                  in that हाल: पढ़ो data is at *data
-* - -EIO  अगर anything went wrong
+* - 0     if reading was successful
+*                  in that case: read data is at *data
+* - -EIO  if anything went wrong
 *
 ******************************/
 
-अटल पूर्णांक drxdap_fasi_पढ़ो_reg16(काष्ठा i2c_device_addr *dev_addr,
+static int drxdap_fasi_read_reg16(struct i2c_device_addr *dev_addr,
 					 u32 addr,
 					 u16 *data, u32 flags)
-अणु
-	u8 buf[माप(*data)];
-	पूर्णांक rc;
+{
+	u8 buf[sizeof(*data)];
+	int rc;
 
-	अगर (!data)
-		वापस -EINVAL;
+	if (!data)
+		return -EINVAL;
 
-	rc = drxdap_fasi_पढ़ो_block(dev_addr, addr, माप(*data), buf, flags);
+	rc = drxdap_fasi_read_block(dev_addr, addr, sizeof(*data), buf, flags);
 	*data = buf[0] + (((u16) buf[1]) << 8);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*****************************
 *
-* पूर्णांक drxdap_fasi_पढ़ो_reg32 (
-*     काष्ठा i2c_device_addr *dev_addr, -- address of I2C device
-*     u32 addr,    -- address of chip रेजिस्टर/memory
+* int drxdap_fasi_read_reg32 (
+*     struct i2c_device_addr *dev_addr, -- address of I2C device
+*     u32 addr,    -- address of chip register/memory
 *     u32 *data,    -- data to receive
 *     u32 flags)   -- special device flags
 *
-* Read one 32-bit रेजिस्टर or memory location. The data received back is
-* converted back to the target platक्रमm's endianness.
+* Read one 32-bit register or memory location. The data received back is
+* converted back to the target platform's endianness.
 *
 * Output:
-* - 0     अगर पढ़ोing was successful
-*                  in that हाल: पढ़ो data is at *data
-* - -EIO  अगर anything went wrong
+* - 0     if reading was successful
+*                  in that case: read data is at *data
+* - -EIO  if anything went wrong
 *
 ******************************/
 
-अटल पूर्णांक drxdap_fasi_पढ़ो_reg32(काष्ठा i2c_device_addr *dev_addr,
+static int drxdap_fasi_read_reg32(struct i2c_device_addr *dev_addr,
 					 u32 addr,
 					 u32 *data, u32 flags)
-अणु
-	u8 buf[माप(*data)];
-	पूर्णांक rc;
+{
+	u8 buf[sizeof(*data)];
+	int rc;
 
-	अगर (!data)
-		वापस -EINVAL;
+	if (!data)
+		return -EINVAL;
 
-	rc = drxdap_fasi_पढ़ो_block(dev_addr, addr, माप(*data), buf, flags);
+	rc = drxdap_fasi_read_block(dev_addr, addr, sizeof(*data), buf, flags);
 	*data = (((u32) buf[0]) << 0) +
 	    (((u32) buf[1]) << 8) +
 	    (((u32) buf[2]) << 16) + (((u32) buf[3]) << 24);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*****************************
 *
-* पूर्णांक drxdap_fasi_ग_लिखो_block (
-*      काष्ठा i2c_device_addr *dev_addr,    -- address of I2C device
-*      u32 addr,       -- address of chip रेजिस्टर/memory
-*      u16            datasize,   -- number of bytes to पढ़ो
+* int drxdap_fasi_write_block (
+*      struct i2c_device_addr *dev_addr,    -- address of I2C device
+*      u32 addr,       -- address of chip register/memory
+*      u16            datasize,   -- number of bytes to read
 *      u8 *data,       -- data to receive
 *      u32 flags)      -- special device flags
 *
 * Write block data to chip address. Because the chip is word oriented,
-* the number of bytes to ग_लिखो must be even.
+* the number of bytes to write must be even.
 *
 * Although this function expects an even number of bytes, it is still byte
 * oriented, and the data being written is NOT translated from the endianness of
-* the target platक्रमm.
+* the target platform.
 *
 * Output:
-* - 0     अगर writing was successful
-* - -EIO  अगर anything went wrong
+* - 0     if writing was successful
+* - -EIO  if anything went wrong
 *
 ******************************/
 
-अटल पूर्णांक drxdap_fasi_ग_लिखो_block(काष्ठा i2c_device_addr *dev_addr,
+static int drxdap_fasi_write_block(struct i2c_device_addr *dev_addr,
 					  u32 addr,
 					  u16 datasize,
 					  u8 *data, u32 flags)
-अणु
+{
 	u8 buf[DRXDAP_MAX_WCHUNKSIZE];
-	पूर्णांक st = -EIO;
-	पूर्णांक first_err = 0;
+	int st = -EIO;
+	int first_err = 0;
 	u16 overhead_size = 0;
 	u16 block_size = 0;
 
 	/* Check parameters ******************************************************* */
-	अगर (dev_addr == शून्य)
-		वापस -EINVAL;
+	if (dev_addr == NULL)
+		return -EINVAL;
 
 	overhead_size = (IS_I2C_10BIT(dev_addr->i2c_addr) ? 2 : 1) +
 	    (DRXDAP_FASI_LONG_FORMAT(addr) ? 4 : 2);
 
-	अगर ((DRXDAP_FASI_OFFSET_TOO_LARGE(addr)) ||
+	if ((DRXDAP_FASI_OFFSET_TOO_LARGE(addr)) ||
 	    ((!(DRXDAPFASI_LONG_ADDR_ALLOWED)) &&
 	     DRXDAP_FASI_LONG_FORMAT(addr)) ||
 	    (overhead_size > (DRXDAP_MAX_WCHUNKSIZE)) ||
-	    ((datasize != 0) && (data == शून्य)) || ((datasize & 1) == 1))
-		वापस -EINVAL;
+	    ((datasize != 0) && (data == NULL)) || ((datasize & 1) == 1))
+		return -EINVAL;
 
 	flags &= DRXDAP_FASI_FLAGS;
 	flags &= ~DRXDAP_FASI_MODEFLAGS;
-#अगर DRXDAP_SINGLE_MASTER
+#if DRXDAP_SINGLE_MASTER
 	flags |= DRXDAP_FASI_SINGLE_MASTER;
-#पूर्ण_अगर
+#endif
 
 	/* Write block to I2C ***************************************************** */
 	block_size = ((DRXDAP_MAX_WCHUNKSIZE) - overhead_size) & ~1;
-	करो अणु
-		u16 toकरो = 0;
+	do {
+		u16 todo = 0;
 		u16 bufx = 0;
 
 		/* Buffer device address */
 		addr &= ~DRXDAP_FASI_FLAGS;
 		addr |= flags;
-#अगर (((DRXDAPFASI_LONG_ADDR_ALLOWED) == 1) && ((DRXDAPFASI_SHORT_ADDR_ALLOWED) == 1))
-		/* लघु क्रमmat address preferred but दीर्घ क्रमmat otherwise */
-		अगर (DRXDAP_FASI_LONG_FORMAT(addr)) अणु
-#पूर्ण_अगर
-#अगर ((DRXDAPFASI_LONG_ADDR_ALLOWED) == 1)
+#if (((DRXDAPFASI_LONG_ADDR_ALLOWED) == 1) && ((DRXDAPFASI_SHORT_ADDR_ALLOWED) == 1))
+		/* short format address preferred but long format otherwise */
+		if (DRXDAP_FASI_LONG_FORMAT(addr)) {
+#endif
+#if ((DRXDAPFASI_LONG_ADDR_ALLOWED) == 1)
 			buf[bufx++] = (u8) (((addr << 1) & 0xFF) | 0x01);
 			buf[bufx++] = (u8) ((addr >> 16) & 0xFF);
 			buf[bufx++] = (u8) ((addr >> 24) & 0xFF);
 			buf[bufx++] = (u8) ((addr >> 7) & 0xFF);
-#पूर्ण_अगर
-#अगर (((DRXDAPFASI_LONG_ADDR_ALLOWED) == 1) && ((DRXDAPFASI_SHORT_ADDR_ALLOWED) == 1))
-		पूर्ण अन्यथा अणु
-#पूर्ण_अगर
-#अगर ((DRXDAPFASI_SHORT_ADDR_ALLOWED) == 1)
+#endif
+#if (((DRXDAPFASI_LONG_ADDR_ALLOWED) == 1) && ((DRXDAPFASI_SHORT_ADDR_ALLOWED) == 1))
+		} else {
+#endif
+#if ((DRXDAPFASI_SHORT_ADDR_ALLOWED) == 1)
 			buf[bufx++] = (u8) ((addr << 1) & 0xFF);
 			buf[bufx++] =
 			    (u8) (((addr >> 16) & 0x0F) |
 				    ((addr >> 18) & 0xF0));
-#पूर्ण_अगर
-#अगर (((DRXDAPFASI_LONG_ADDR_ALLOWED) == 1) && ((DRXDAPFASI_SHORT_ADDR_ALLOWED) == 1))
-		पूर्ण
-#पूर्ण_अगर
+#endif
+#if (((DRXDAPFASI_LONG_ADDR_ALLOWED) == 1) && ((DRXDAPFASI_SHORT_ADDR_ALLOWED) == 1))
+		}
+#endif
 
 		/*
-		   In single master mode block_size can be 0. In such a हाल this I2C
-		   sequense will be visible: (1) ग_लिखो address अणुi2c addr,
-		   4 bytes chip addressपूर्ण (2) ग_लिखो data अणुi2c addr, 4 bytes data पूर्ण
-		   (3) ग_लिखो address (4) ग_लिखो data etc...
+		   In single master mode block_size can be 0. In such a case this I2C
+		   sequense will be visible: (1) write address {i2c addr,
+		   4 bytes chip address} (2) write data {i2c addr, 4 bytes data }
+		   (3) write address (4) write data etc...
 		   Address must be rewritten because HI is reset after data transport and
 		   expects an address.
 		 */
-		toकरो = (block_size < datasize ? block_size : datasize);
-		अगर (toकरो == 0) अणु
+		todo = (block_size < datasize ? block_size : datasize);
+		if (todo == 0) {
 			u16 overhead_size_i2c_addr = 0;
 			u16 data_block_size = 0;
 
@@ -1670,452 +1669,452 @@ bool is_handled_by_aud_tr_अगर(u32 addr)
 			data_block_size =
 			    (DRXDAP_MAX_WCHUNKSIZE - overhead_size_i2c_addr) & ~1;
 
-			/* ग_लिखो device address */
-			st = drxbsp_i2c_ग_लिखो_पढ़ो(dev_addr,
+			/* write device address */
+			st = drxbsp_i2c_write_read(dev_addr,
 						  (u16) (bufx),
 						  buf,
-						  (काष्ठा i2c_device_addr *)(शून्य),
-						  0, (u8 *)(शून्य));
+						  (struct i2c_device_addr *)(NULL),
+						  0, (u8 *)(NULL));
 
-			अगर ((st != 0) && (first_err == 0)) अणु
-				/* at the end, वापस the first error encountered */
+			if ((st != 0) && (first_err == 0)) {
+				/* at the end, return the first error encountered */
 				first_err = st;
-			पूर्ण
+			}
 			bufx = 0;
-			toकरो =
+			todo =
 			    (data_block_size <
 			     datasize ? data_block_size : datasize);
-		पूर्ण
-		स_नकल(&buf[bufx], data, toकरो);
-		/* ग_लिखो (address अगर can करो and) data */
-		st = drxbsp_i2c_ग_लिखो_पढ़ो(dev_addr,
-					  (u16) (bufx + toकरो),
+		}
+		memcpy(&buf[bufx], data, todo);
+		/* write (address if can do and) data */
+		st = drxbsp_i2c_write_read(dev_addr,
+					  (u16) (bufx + todo),
 					  buf,
-					  (काष्ठा i2c_device_addr *)(शून्य),
-					  0, (u8 *)(शून्य));
+					  (struct i2c_device_addr *)(NULL),
+					  0, (u8 *)(NULL));
 
-		अगर ((st != 0) && (first_err == 0)) अणु
-			/* at the end, वापस the first error encountered */
+		if ((st != 0) && (first_err == 0)) {
+			/* at the end, return the first error encountered */
 			first_err = st;
-		पूर्ण
-		datasize -= toकरो;
-		data += toकरो;
-		addr += (toकरो >> 1);
-	पूर्ण जबतक (datasize);
+		}
+		datasize -= todo;
+		data += todo;
+		addr += (todo >> 1);
+	} while (datasize);
 
-	वापस first_err;
-पूर्ण
+	return first_err;
+}
 
 /*****************************
 *
-* पूर्णांक drxdap_fasi_ग_लिखो_reg16 (
-*     काष्ठा i2c_device_addr *dev_addr, -- address of I2C device
-*     u32 addr,    -- address of chip रेजिस्टर/memory
+* int drxdap_fasi_write_reg16 (
+*     struct i2c_device_addr *dev_addr, -- address of I2C device
+*     u32 addr,    -- address of chip register/memory
 *     u16            data,    -- data to send
 *     u32 flags)   -- special device flags
 *
-* Write one 16-bit रेजिस्टर or memory location. The data being written is
-* converted from the target platक्रमm's endianness to little endian.
+* Write one 16-bit register or memory location. The data being written is
+* converted from the target platform's endianness to little endian.
 *
 * Output:
-* - 0     अगर writing was successful
-* - -EIO  अगर anything went wrong
+* - 0     if writing was successful
+* - -EIO  if anything went wrong
 *
 ******************************/
 
-अटल पूर्णांक drxdap_fasi_ग_लिखो_reg16(काष्ठा i2c_device_addr *dev_addr,
+static int drxdap_fasi_write_reg16(struct i2c_device_addr *dev_addr,
 					  u32 addr,
 					  u16 data, u32 flags)
-अणु
-	u8 buf[माप(data)];
+{
+	u8 buf[sizeof(data)];
 
 	buf[0] = (u8) ((data >> 0) & 0xFF);
 	buf[1] = (u8) ((data >> 8) & 0xFF);
 
-	वापस drxdap_fasi_ग_लिखो_block(dev_addr, addr, माप(data), buf, flags);
-पूर्ण
+	return drxdap_fasi_write_block(dev_addr, addr, sizeof(data), buf, flags);
+}
 
 /*****************************
 *
-* पूर्णांक drxdap_fasi_पढ़ो_modअगरy_ग_लिखो_reg16 (
-*      काष्ठा i2c_device_addr *dev_addr,   -- address of I2C device
-*      u32 waddr,     -- address of chip रेजिस्टर/memory
-*      u32 raddr,     -- chip address to पढ़ो back from
+* int drxdap_fasi_read_modify_write_reg16 (
+*      struct i2c_device_addr *dev_addr,   -- address of I2C device
+*      u32 waddr,     -- address of chip register/memory
+*      u32 raddr,     -- chip address to read back from
 *      u16            wdata,     -- data to send
 *      u16 *rdata)     -- data to receive back
 *
-* Write 16-bit data, then पढ़ो back the original contents of that location.
-* Requires दीर्घ addressing क्रमmat to be allowed.
+* Write 16-bit data, then read back the original contents of that location.
+* Requires long addressing format to be allowed.
 *
-* Beक्रमe sending data, the data is converted to little endian. The
-* data received back is converted back to the target platक्रमm's endianness.
+* Before sending data, the data is converted to little endian. The
+* data received back is converted back to the target platform's endianness.
 *
-* WARNING: This function is only guaranteed to work अगर there is one
+* WARNING: This function is only guaranteed to work if there is one
 * master on the I2C bus.
 *
 * Output:
-* - 0     अगर पढ़ोing was successful
-*                  in that हाल: पढ़ो back data is at *rdata
-* - -EIO  अगर anything went wrong
+* - 0     if reading was successful
+*                  in that case: read back data is at *rdata
+* - -EIO  if anything went wrong
 *
 ******************************/
 
-अटल पूर्णांक drxdap_fasi_पढ़ो_modअगरy_ग_लिखो_reg16(काष्ठा i2c_device_addr *dev_addr,
+static int drxdap_fasi_read_modify_write_reg16(struct i2c_device_addr *dev_addr,
 						    u32 waddr,
 						    u32 raddr,
 						    u16 wdata, u16 *rdata)
-अणु
-	पूर्णांक rc = -EIO;
+{
+	int rc = -EIO;
 
-#अगर (DRXDAPFASI_LONG_ADDR_ALLOWED == 1)
-	अगर (rdata == शून्य)
-		वापस -EINVAL;
+#if (DRXDAPFASI_LONG_ADDR_ALLOWED == 1)
+	if (rdata == NULL)
+		return -EINVAL;
 
-	rc = drxdap_fasi_ग_लिखो_reg16(dev_addr, waddr, wdata, DRXDAP_FASI_RMW);
-	अगर (rc == 0)
-		rc = drxdap_fasi_पढ़ो_reg16(dev_addr, raddr, rdata, 0);
-#पूर्ण_अगर
+	rc = drxdap_fasi_write_reg16(dev_addr, waddr, wdata, DRXDAP_FASI_RMW);
+	if (rc == 0)
+		rc = drxdap_fasi_read_reg16(dev_addr, raddr, rdata, 0);
+#endif
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*****************************
 *
-* पूर्णांक drxdap_fasi_ग_लिखो_reg32 (
-*     काष्ठा i2c_device_addr *dev_addr, -- address of I2C device
-*     u32 addr,    -- address of chip रेजिस्टर/memory
+* int drxdap_fasi_write_reg32 (
+*     struct i2c_device_addr *dev_addr, -- address of I2C device
+*     u32 addr,    -- address of chip register/memory
 *     u32            data,    -- data to send
 *     u32 flags)   -- special device flags
 *
-* Write one 32-bit रेजिस्टर or memory location. The data being written is
-* converted from the target platक्रमm's endianness to little endian.
+* Write one 32-bit register or memory location. The data being written is
+* converted from the target platform's endianness to little endian.
 *
 * Output:
-* - 0     अगर writing was successful
-* - -EIO  अगर anything went wrong
+* - 0     if writing was successful
+* - -EIO  if anything went wrong
 *
 ******************************/
 
-अटल पूर्णांक drxdap_fasi_ग_लिखो_reg32(काष्ठा i2c_device_addr *dev_addr,
+static int drxdap_fasi_write_reg32(struct i2c_device_addr *dev_addr,
 					  u32 addr,
 					  u32 data, u32 flags)
-अणु
-	u8 buf[माप(data)];
+{
+	u8 buf[sizeof(data)];
 
 	buf[0] = (u8) ((data >> 0) & 0xFF);
 	buf[1] = (u8) ((data >> 8) & 0xFF);
 	buf[2] = (u8) ((data >> 16) & 0xFF);
 	buf[3] = (u8) ((data >> 24) & 0xFF);
 
-	वापस drxdap_fasi_ग_लिखो_block(dev_addr, addr, माप(data), buf, flags);
-पूर्ण
+	return drxdap_fasi_write_block(dev_addr, addr, sizeof(data), buf, flags);
+}
 
 /*============================================================================*/
 
 /*
-* \पn पूर्णांक drxj_dap_rm_ग_लिखो_reg16लघु
-* \मrief Read modअगरy ग_लिखो 16 bits audio रेजिस्टर using लघु क्रमmat only.
+* \fn int drxj_dap_rm_write_reg16short
+* \brief Read modify write 16 bits audio register using short format only.
 * \param dev_addr
-* \param waddr    Address to ग_लिखो to
-* \param raddr    Address to पढ़ो from (usually SIO_HI_RA_RAM_S0_RMWBUF__A)
-* \param wdata    Data to ग_लिखो
-* \param rdata    Buffer क्रम data to पढ़ो
-* \लeturn पूर्णांक
-* \लetval 0 Success
-* \लetval -EIO Timeout, I2C error, illegal bank
+* \param waddr    Address to write to
+* \param raddr    Address to read from (usually SIO_HI_RA_RAM_S0_RMWBUF__A)
+* \param wdata    Data to write
+* \param rdata    Buffer for data to read
+* \return int
+* \retval 0 Success
+* \retval -EIO Timeout, I2C error, illegal bank
 *
-* 16 bits रेजिस्टर पढ़ो modअगरy ग_लिखो access using लघु addressing क्रमmat only.
-* Requires knowledge of the रेजिस्टरmap, thus device dependent.
-* Using DAP FASI directly to aव्योम endless recursion of RMWs to audio रेजिस्टरs.
+* 16 bits register read modify write access using short addressing format only.
+* Requires knowledge of the registermap, thus device dependent.
+* Using DAP FASI directly to avoid endless recursion of RMWs to audio registers.
 *
 */
 
-/* TODO correct define should be #अगर ( DRXDAPFASI_SHORT_ADDR_ALLOWED==1 )
-   See comments drxj_dap_पढ़ो_modअगरy_ग_लिखो_reg16 */
-#अगर (DRXDAPFASI_LONG_ADDR_ALLOWED == 0)
-अटल पूर्णांक drxj_dap_rm_ग_लिखो_reg16लघु(काष्ठा i2c_device_addr *dev_addr,
+/* TODO correct define should be #if ( DRXDAPFASI_SHORT_ADDR_ALLOWED==1 )
+   See comments drxj_dap_read_modify_write_reg16 */
+#if (DRXDAPFASI_LONG_ADDR_ALLOWED == 0)
+static int drxj_dap_rm_write_reg16short(struct i2c_device_addr *dev_addr,
 					      u32 waddr,
 					      u32 raddr,
 					      u16 wdata, u16 *rdata)
-अणु
-	पूर्णांक rc;
+{
+	int rc;
 
-	अगर (rdata == शून्य)
-		वापस -EINVAL;
+	if (rdata == NULL)
+		return -EINVAL;
 
 	/* Set RMW flag */
-	rc = drxdap_fasi_ग_लिखो_reg16(dev_addr,
+	rc = drxdap_fasi_write_reg16(dev_addr,
 					      SIO_HI_RA_RAM_S0_FLG_ACC__A,
 					      SIO_HI_RA_RAM_S0_FLG_ACC_S0_RWM__M,
 					      0x0000);
-	अगर (rc == 0) अणु
+	if (rc == 0) {
 		/* Write new data: triggers RMW */
-		rc = drxdap_fasi_ग_लिखो_reg16(dev_addr, waddr, wdata,
+		rc = drxdap_fasi_write_reg16(dev_addr, waddr, wdata,
 						      0x0000);
-	पूर्ण
-	अगर (rc == 0) अणु
+	}
+	if (rc == 0) {
 		/* Read old data */
-		rc = drxdap_fasi_पढ़ो_reg16(dev_addr, raddr, rdata,
+		rc = drxdap_fasi_read_reg16(dev_addr, raddr, rdata,
 						     0x0000);
-	पूर्ण
-	अगर (rc == 0) अणु
+	}
+	if (rc == 0) {
 		/* Reset RMW flag */
-		rc = drxdap_fasi_ग_लिखो_reg16(dev_addr,
+		rc = drxdap_fasi_write_reg16(dev_addr,
 						      SIO_HI_RA_RAM_S0_FLG_ACC__A,
 						      0, 0x0000);
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
-#पूर्ण_अगर
+	return rc;
+}
+#endif
 
 /*============================================================================*/
 
-अटल पूर्णांक drxj_dap_पढ़ो_modअगरy_ग_लिखो_reg16(काष्ठा i2c_device_addr *dev_addr,
+static int drxj_dap_read_modify_write_reg16(struct i2c_device_addr *dev_addr,
 						 u32 waddr,
 						 u32 raddr,
 						 u16 wdata, u16 *rdata)
-अणु
-	/* TODO: correct लघु/दीर्घ addressing क्रमmat decision,
-	   now दीर्घ क्रमmat has higher prio then लघु because लघु also
-	   needs virt bnks (not impl yet) क्रम certain audio रेजिस्टरs */
-#अगर (DRXDAPFASI_LONG_ADDR_ALLOWED == 1)
-	वापस drxdap_fasi_पढ़ो_modअगरy_ग_लिखो_reg16(dev_addr,
+{
+	/* TODO: correct short/long addressing format decision,
+	   now long format has higher prio then short because short also
+	   needs virt bnks (not impl yet) for certain audio registers */
+#if (DRXDAPFASI_LONG_ADDR_ALLOWED == 1)
+	return drxdap_fasi_read_modify_write_reg16(dev_addr,
 							  waddr,
 							  raddr, wdata, rdata);
-#अन्यथा
-	वापस drxj_dap_rm_ग_लिखो_reg16लघु(dev_addr, waddr, raddr, wdata, rdata);
-#पूर्ण_अगर
-पूर्ण
+#else
+	return drxj_dap_rm_write_reg16short(dev_addr, waddr, raddr, wdata, rdata);
+#endif
+}
 
 
 /*============================================================================*/
 
 /*
-* \पn पूर्णांक drxj_dap_पढ़ो_aud_reg16
-* \मrief Read 16 bits audio रेजिस्टर
+* \fn int drxj_dap_read_aud_reg16
+* \brief Read 16 bits audio register
 * \param dev_addr
 * \param addr
 * \param data
-* \लeturn पूर्णांक
-* \लetval 0 Success
-* \लetval -EIO Timeout, I2C error, illegal bank
+* \return int
+* \retval 0 Success
+* \retval -EIO Timeout, I2C error, illegal bank
 *
-* 16 bits रेजिस्टर पढ़ो access via audio token ring पूर्णांकerface.
+* 16 bits register read access via audio token ring interface.
 *
 */
-अटल पूर्णांक drxj_dap_पढ़ो_aud_reg16(काष्ठा i2c_device_addr *dev_addr,
+static int drxj_dap_read_aud_reg16(struct i2c_device_addr *dev_addr,
 					 u32 addr, u16 *data)
-अणु
-	u32 start_समयr = 0;
-	u32 current_समयr = 0;
-	u32 delta_समयr = 0;
+{
+	u32 start_timer = 0;
+	u32 current_timer = 0;
+	u32 delta_timer = 0;
 	u16 tr_status = 0;
-	पूर्णांक stat = -EIO;
+	int stat = -EIO;
 
-	/* No पढ़ो possible क्रम bank 3, वापस with error */
-	अगर (DRXDAP_FASI_ADDR2BANK(addr) == 3) अणु
+	/* No read possible for bank 3, return with error */
+	if (DRXDAP_FASI_ADDR2BANK(addr) == 3) {
 		stat = -EINVAL;
-	पूर्ण अन्यथा अणु
-		स्थिर u32 ग_लिखो_bit = ((dr_xaddr_t) 1) << 16;
+	} else {
+		const u32 write_bit = ((dr_xaddr_t) 1) << 16;
 
-		/* Force reset ग_लिखो bit */
-		addr &= (~ग_लिखो_bit);
+		/* Force reset write bit */
+		addr &= (~write_bit);
 
-		/* Set up पढ़ो */
-		start_समयr = jअगरfies_to_msecs(jअगरfies);
-		करो अणु
-			/* RMW to aud TR IF until request is granted or समयout */
-			stat = drxj_dap_पढ़ो_modअगरy_ग_लिखो_reg16(dev_addr,
+		/* Set up read */
+		start_timer = jiffies_to_msecs(jiffies);
+		do {
+			/* RMW to aud TR IF until request is granted or timeout */
+			stat = drxj_dap_read_modify_write_reg16(dev_addr,
 							     addr,
 							     SIO_HI_RA_RAM_S0_RMWBUF__A,
 							     0x0000, &tr_status);
 
-			अगर (stat != 0)
-				अवरोध;
+			if (stat != 0)
+				break;
 
-			current_समयr = jअगरfies_to_msecs(jअगरfies);
-			delta_समयr = current_समयr - start_समयr;
-			अगर (delta_समयr > DRXJ_DAP_AUDTRIF_TIMEOUT) अणु
+			current_timer = jiffies_to_msecs(jiffies);
+			delta_timer = current_timer - start_timer;
+			if (delta_timer > DRXJ_DAP_AUDTRIF_TIMEOUT) {
 				stat = -EIO;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-		पूर्ण जबतक (((tr_status & AUD_TOP_TR_CTR_FIFO_LOCK__M) ==
+		} while (((tr_status & AUD_TOP_TR_CTR_FIFO_LOCK__M) ==
 			  AUD_TOP_TR_CTR_FIFO_LOCK_LOCKED) ||
 			 ((tr_status & AUD_TOP_TR_CTR_FIFO_FULL__M) ==
 			  AUD_TOP_TR_CTR_FIFO_FULL_FULL));
-	पूर्ण			/* अगर ( DRXDAP_FASI_ADDR2BANK(addr)!=3 ) */
+	}			/* if ( DRXDAP_FASI_ADDR2BANK(addr)!=3 ) */
 
-	/* Wait क्रम पढ़ो पढ़ोy status or समयout */
-	अगर (stat == 0) अणु
-		start_समयr = jअगरfies_to_msecs(jअगरfies);
+	/* Wait for read ready status or timeout */
+	if (stat == 0) {
+		start_timer = jiffies_to_msecs(jiffies);
 
-		जबतक ((tr_status & AUD_TOP_TR_CTR_FIFO_RD_RDY__M) !=
-		       AUD_TOP_TR_CTR_FIFO_RD_RDY_READY) अणु
-			stat = drxj_dap_पढ़ो_reg16(dev_addr,
+		while ((tr_status & AUD_TOP_TR_CTR_FIFO_RD_RDY__M) !=
+		       AUD_TOP_TR_CTR_FIFO_RD_RDY_READY) {
+			stat = drxj_dap_read_reg16(dev_addr,
 						  AUD_TOP_TR_CTR__A,
 						  &tr_status, 0x0000);
-			अगर (stat != 0)
-				अवरोध;
+			if (stat != 0)
+				break;
 
-			current_समयr = jअगरfies_to_msecs(jअगरfies);
-			delta_समयr = current_समयr - start_समयr;
-			अगर (delta_समयr > DRXJ_DAP_AUDTRIF_TIMEOUT) अणु
+			current_timer = jiffies_to_msecs(jiffies);
+			delta_timer = current_timer - start_timer;
+			if (delta_timer > DRXJ_DAP_AUDTRIF_TIMEOUT) {
 				stat = -EIO;
-				अवरोध;
-			पूर्ण
-		पूर्ण		/* जबतक ( ... ) */
-	पूर्ण
+				break;
+			}
+		}		/* while ( ... ) */
+	}
 
 	/* Read value */
-	अगर (stat == 0)
-		stat = drxj_dap_पढ़ो_modअगरy_ग_लिखो_reg16(dev_addr,
+	if (stat == 0)
+		stat = drxj_dap_read_modify_write_reg16(dev_addr,
 						     AUD_TOP_TR_RD_REG__A,
 						     SIO_HI_RA_RAM_S0_RMWBUF__A,
 						     0x0000, data);
-	वापस stat;
-पूर्ण
+	return stat;
+}
 
 /*============================================================================*/
 
-अटल पूर्णांक drxj_dap_पढ़ो_reg16(काष्ठा i2c_device_addr *dev_addr,
+static int drxj_dap_read_reg16(struct i2c_device_addr *dev_addr,
 				      u32 addr,
 				      u16 *data, u32 flags)
-अणु
-	पूर्णांक stat = -EIO;
+{
+	int stat = -EIO;
 
 	/* Check param */
-	अगर ((dev_addr == शून्य) || (data == शून्य))
-		वापस -EINVAL;
+	if ((dev_addr == NULL) || (data == NULL))
+		return -EINVAL;
 
-	अगर (is_handled_by_aud_tr_अगर(addr))
-		stat = drxj_dap_पढ़ो_aud_reg16(dev_addr, addr, data);
-	अन्यथा
-		stat = drxdap_fasi_पढ़ो_reg16(dev_addr, addr, data, flags);
+	if (is_handled_by_aud_tr_if(addr))
+		stat = drxj_dap_read_aud_reg16(dev_addr, addr, data);
+	else
+		stat = drxdap_fasi_read_reg16(dev_addr, addr, data, flags);
 
-	वापस stat;
-पूर्ण
+	return stat;
+}
 /*============================================================================*/
 
 /*
-* \पn पूर्णांक drxj_dap_ग_लिखो_aud_reg16
-* \मrief Write 16 bits audio रेजिस्टर
+* \fn int drxj_dap_write_aud_reg16
+* \brief Write 16 bits audio register
 * \param dev_addr
 * \param addr
 * \param data
-* \लeturn पूर्णांक
-* \लetval 0 Success
-* \लetval -EIO Timeout, I2C error, illegal bank
+* \return int
+* \retval 0 Success
+* \retval -EIO Timeout, I2C error, illegal bank
 *
-* 16 bits रेजिस्टर ग_लिखो access via audio token ring पूर्णांकerface.
+* 16 bits register write access via audio token ring interface.
 *
 */
-अटल पूर्णांक drxj_dap_ग_लिखो_aud_reg16(काष्ठा i2c_device_addr *dev_addr,
+static int drxj_dap_write_aud_reg16(struct i2c_device_addr *dev_addr,
 					  u32 addr, u16 data)
-अणु
-	पूर्णांक stat = -EIO;
+{
+	int stat = -EIO;
 
-	/* No ग_लिखो possible क्रम bank 2, वापस with error */
-	अगर (DRXDAP_FASI_ADDR2BANK(addr) == 2) अणु
+	/* No write possible for bank 2, return with error */
+	if (DRXDAP_FASI_ADDR2BANK(addr) == 2) {
 		stat = -EINVAL;
-	पूर्ण अन्यथा अणु
-		u32 start_समयr = 0;
-		u32 current_समयr = 0;
-		u32 delta_समयr = 0;
+	} else {
+		u32 start_timer = 0;
+		u32 current_timer = 0;
+		u32 delta_timer = 0;
 		u16 tr_status = 0;
-		स्थिर u32 ग_लिखो_bit = ((dr_xaddr_t) 1) << 16;
+		const u32 write_bit = ((dr_xaddr_t) 1) << 16;
 
-		/* Force ग_लिखो bit */
-		addr |= ग_लिखो_bit;
-		start_समयr = jअगरfies_to_msecs(jअगरfies);
-		करो अणु
-			/* RMW to aud TR IF until request is granted or समयout */
-			stat = drxj_dap_पढ़ो_modअगरy_ग_लिखो_reg16(dev_addr,
+		/* Force write bit */
+		addr |= write_bit;
+		start_timer = jiffies_to_msecs(jiffies);
+		do {
+			/* RMW to aud TR IF until request is granted or timeout */
+			stat = drxj_dap_read_modify_write_reg16(dev_addr,
 							     addr,
 							     SIO_HI_RA_RAM_S0_RMWBUF__A,
 							     data, &tr_status);
-			अगर (stat != 0)
-				अवरोध;
+			if (stat != 0)
+				break;
 
-			current_समयr = jअगरfies_to_msecs(jअगरfies);
-			delta_समयr = current_समयr - start_समयr;
-			अगर (delta_समयr > DRXJ_DAP_AUDTRIF_TIMEOUT) अणु
+			current_timer = jiffies_to_msecs(jiffies);
+			delta_timer = current_timer - start_timer;
+			if (delta_timer > DRXJ_DAP_AUDTRIF_TIMEOUT) {
 				stat = -EIO;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-		पूर्ण जबतक (((tr_status & AUD_TOP_TR_CTR_FIFO_LOCK__M) ==
+		} while (((tr_status & AUD_TOP_TR_CTR_FIFO_LOCK__M) ==
 			  AUD_TOP_TR_CTR_FIFO_LOCK_LOCKED) ||
 			 ((tr_status & AUD_TOP_TR_CTR_FIFO_FULL__M) ==
 			  AUD_TOP_TR_CTR_FIFO_FULL_FULL));
 
-	पूर्ण			/* अगर ( DRXDAP_FASI_ADDR2BANK(addr)!=2 ) */
+	}			/* if ( DRXDAP_FASI_ADDR2BANK(addr)!=2 ) */
 
-	वापस stat;
-पूर्ण
+	return stat;
+}
 
 /*============================================================================*/
 
-अटल पूर्णांक drxj_dap_ग_लिखो_reg16(काष्ठा i2c_device_addr *dev_addr,
+static int drxj_dap_write_reg16(struct i2c_device_addr *dev_addr,
 				       u32 addr,
 				       u16 data, u32 flags)
-अणु
-	पूर्णांक stat = -EIO;
+{
+	int stat = -EIO;
 
 	/* Check param */
-	अगर (dev_addr == शून्य)
-		वापस -EINVAL;
+	if (dev_addr == NULL)
+		return -EINVAL;
 
-	अगर (is_handled_by_aud_tr_अगर(addr))
-		stat = drxj_dap_ग_लिखो_aud_reg16(dev_addr, addr, data);
-	अन्यथा
-		stat = drxdap_fasi_ग_लिखो_reg16(dev_addr,
+	if (is_handled_by_aud_tr_if(addr))
+		stat = drxj_dap_write_aud_reg16(dev_addr, addr, data);
+	else
+		stat = drxdap_fasi_write_reg16(dev_addr,
 							    addr, data, flags);
 
-	वापस stat;
-पूर्ण
+	return stat;
+}
 
 /*============================================================================*/
 
 /* Free data ram in SIO HI */
-#घोषणा SIO_HI_RA_RAM_USR_BEGIN__A 0x420040
-#घोषणा SIO_HI_RA_RAM_USR_END__A   0x420060
+#define SIO_HI_RA_RAM_USR_BEGIN__A 0x420040
+#define SIO_HI_RA_RAM_USR_END__A   0x420060
 
-#घोषणा DRXJ_HI_ATOMIC_BUF_START (SIO_HI_RA_RAM_USR_BEGIN__A)
-#घोषणा DRXJ_HI_ATOMIC_BUF_END   (SIO_HI_RA_RAM_USR_BEGIN__A + 7)
-#घोषणा DRXJ_HI_ATOMIC_READ      SIO_HI_RA_RAM_PAR_3_ACP_RW_READ
-#घोषणा DRXJ_HI_ATOMIC_WRITE     SIO_HI_RA_RAM_PAR_3_ACP_RW_WRITE
+#define DRXJ_HI_ATOMIC_BUF_START (SIO_HI_RA_RAM_USR_BEGIN__A)
+#define DRXJ_HI_ATOMIC_BUF_END   (SIO_HI_RA_RAM_USR_BEGIN__A + 7)
+#define DRXJ_HI_ATOMIC_READ      SIO_HI_RA_RAM_PAR_3_ACP_RW_READ
+#define DRXJ_HI_ATOMIC_WRITE     SIO_HI_RA_RAM_PAR_3_ACP_RW_WRITE
 
 /*
-* \पn पूर्णांक drxj_dap_atomic_पढ़ो_ग_लिखो_block()
-* \मrief Basic access routine क्रम atomic पढ़ो or ग_लिखो access
-* \param dev_addr  poपूर्णांकer to i2c dev address
+* \fn int drxj_dap_atomic_read_write_block()
+* \brief Basic access routine for atomic read or write access
+* \param dev_addr  pointer to i2c dev address
 * \param addr     destination/source address
 * \param datasize size of data buffer in bytes
-* \param data     poपूर्णांकer to data buffer
-* \लeturn पूर्णांक
-* \लetval 0 Success
-* \लetval -EIO Timeout, I2C error, illegal bank
+* \param data     pointer to data buffer
+* \return int
+* \retval 0 Success
+* \retval -EIO Timeout, I2C error, illegal bank
 *
 */
-अटल
-पूर्णांक drxj_dap_atomic_पढ़ो_ग_लिखो_block(काष्ठा i2c_device_addr *dev_addr,
+static
+int drxj_dap_atomic_read_write_block(struct i2c_device_addr *dev_addr,
 					  u32 addr,
 					  u16 datasize,
-					  u8 *data, bool पढ़ो_flag)
-अणु
-	काष्ठा drxj_hi_cmd hi_cmd;
-	पूर्णांक rc;
+					  u8 *data, bool read_flag)
+{
+	struct drxj_hi_cmd hi_cmd;
+	int rc;
 	u16 word;
 	u16 dummy = 0;
 	u16 i = 0;
 
 	/* Parameter check */
-	अगर (!data || !dev_addr || ((datasize % 2)) || ((datasize / 2) > 8))
-		वापस -EINVAL;
+	if (!data || !dev_addr || ((datasize % 2)) || ((datasize / 2) > 8))
+		return -EINVAL;
 
-	/* Set up HI parameters to पढ़ो or ग_लिखो n bytes */
+	/* Set up HI parameters to read or write n bytes */
 	hi_cmd.cmd = SIO_HI_RA_RAM_CMD_ATOMIC_COPY;
 	hi_cmd.param1 =
 	    (u16) ((DRXDAP_FASI_ADDR2BLOCK(DRXJ_HI_ATOMIC_BUF_START) << 6) +
@@ -2123,77 +2122,77 @@ bool is_handled_by_aud_tr_अगर(u32 addr)
 	hi_cmd.param2 =
 	    (u16) DRXDAP_FASI_ADDR2OFFSET(DRXJ_HI_ATOMIC_BUF_START);
 	hi_cmd.param3 = (u16) ((datasize / 2) - 1);
-	अगर (!पढ़ो_flag)
+	if (!read_flag)
 		hi_cmd.param3 |= DRXJ_HI_ATOMIC_WRITE;
-	अन्यथा
+	else
 		hi_cmd.param3 |= DRXJ_HI_ATOMIC_READ;
 	hi_cmd.param4 = (u16) ((DRXDAP_FASI_ADDR2BLOCK(addr) << 6) +
 				DRXDAP_FASI_ADDR2BANK(addr));
 	hi_cmd.param5 = (u16) DRXDAP_FASI_ADDR2OFFSET(addr);
 
-	अगर (!पढ़ो_flag) अणु
-		/* ग_लिखो data to buffer */
-		क्रम (i = 0; i < (datasize / 2); i++) अणु
+	if (!read_flag) {
+		/* write data to buffer */
+		for (i = 0; i < (datasize / 2); i++) {
 
 			word = ((u16) data[2 * i]);
 			word += (((u16) data[(2 * i) + 1]) << 8);
-			drxj_dap_ग_लिखो_reg16(dev_addr,
+			drxj_dap_write_reg16(dev_addr,
 					     (DRXJ_HI_ATOMIC_BUF_START + i),
 					    word, 0);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	rc = hi_command(dev_addr, &hi_cmd, &dummy);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	अगर (पढ़ो_flag) अणु
-		/* पढ़ो data from buffer */
-		क्रम (i = 0; i < (datasize / 2); i++) अणु
-			rc = drxj_dap_पढ़ो_reg16(dev_addr,
+	if (read_flag) {
+		/* read data from buffer */
+		for (i = 0; i < (datasize / 2); i++) {
+			rc = drxj_dap_read_reg16(dev_addr,
 						 (DRXJ_HI_ATOMIC_BUF_START + i),
 						 &word, 0);
-			अगर (rc) अणु
+			if (rc) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 			data[2 * i] = (u8) (word & 0xFF);
 			data[(2 * i) + 1] = (u8) (word >> 8);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 rw_error:
-	वापस rc;
+	return rc;
 
-पूर्ण
+}
 
 /*============================================================================*/
 
 /*
-* \पn पूर्णांक drxj_dap_atomic_पढ़ो_reg32()
-* \मrief Atomic पढ़ो of 32 bits words
+* \fn int drxj_dap_atomic_read_reg32()
+* \brief Atomic read of 32 bits words
 */
-अटल
-पूर्णांक drxj_dap_atomic_पढ़ो_reg32(काष्ठा i2c_device_addr *dev_addr,
+static
+int drxj_dap_atomic_read_reg32(struct i2c_device_addr *dev_addr,
 				     u32 addr,
 				     u32 *data, u32 flags)
-अणु
-	u8 buf[माप(*data)] = अणु 0 पूर्ण;
-	पूर्णांक rc;
+{
+	u8 buf[sizeof(*data)] = { 0 };
+	int rc;
 	u32 word = 0;
 
-	अगर (!data)
-		वापस -EINVAL;
+	if (!data)
+		return -EINVAL;
 
-	rc = drxj_dap_atomic_पढ़ो_ग_लिखो_block(dev_addr, addr,
-					      माप(*data), buf, true);
+	rc = drxj_dap_atomic_read_write_block(dev_addr, addr,
+					      sizeof(*data), buf, true);
 
-	अगर (rc < 0)
-		वापस 0;
+	if (rc < 0)
+		return 0;
 
 	word = (u32) buf[3];
 	word <<= 8;
@@ -2205,8 +2204,8 @@ rw_error:
 
 	*data = word;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*============================================================================*/
 
@@ -2221,228 +2220,228 @@ rw_error:
 /*============================================================================*/
 
 /*
-* \पn पूर्णांक hi_cfg_command()
-* \मrief Configure HI with settings stored in the demod काष्ठाure.
+* \fn int hi_cfg_command()
+* \brief Configure HI with settings stored in the demod structure.
 * \param demod Demodulator.
-* \लeturn पूर्णांक.
+* \return int.
 *
 * This routine was created because to much orthogonal settings have
-* been put पूर्णांकo one HI API function (configure). Especially the I2C bridge
+* been put into one HI API function (configure). Especially the I2C bridge
 * enable/disable should not need re-configuration of the HI.
 *
 */
-अटल पूर्णांक hi_cfg_command(स्थिर काष्ठा drx_demod_instance *demod)
-अणु
-	काष्ठा drxj_data *ext_attr = (काष्ठा drxj_data *) (शून्य);
-	काष्ठा drxj_hi_cmd hi_cmd;
+static int hi_cfg_command(const struct drx_demod_instance *demod)
+{
+	struct drxj_data *ext_attr = (struct drxj_data *) (NULL);
+	struct drxj_hi_cmd hi_cmd;
 	u16 result = 0;
-	पूर्णांक rc;
+	int rc;
 
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
 
 	hi_cmd.cmd = SIO_HI_RA_RAM_CMD_CONFIG;
 	hi_cmd.param1 = SIO_HI_RA_RAM_PAR_1_PAR1_SEC_KEY;
-	hi_cmd.param2 = ext_attr->hi_cfg_timing_भाग;
+	hi_cmd.param2 = ext_attr->hi_cfg_timing_div;
 	hi_cmd.param3 = ext_attr->hi_cfg_bridge_delay;
 	hi_cmd.param4 = ext_attr->hi_cfg_wake_up_key;
 	hi_cmd.param5 = ext_attr->hi_cfg_ctrl;
 	hi_cmd.param6 = ext_attr->hi_cfg_transmit;
 
 	rc = hi_command(demod->my_i2c_dev_addr, &hi_cmd, &result);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	/* Reset घातer करोwn flag (set one call only) */
+	/* Reset power down flag (set one call only) */
 	ext_attr->hi_cfg_ctrl &= (~(SIO_HI_RA_RAM_PAR_5_CFG_SLEEP_ZZZ));
 
-	वापस 0;
+	return 0;
 
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
-* \पn पूर्णांक hi_command()
-* \मrief Configure HI with settings stored in the demod काष्ठाure.
+* \fn int hi_command()
+* \brief Configure HI with settings stored in the demod structure.
 * \param dev_addr I2C address.
 * \param cmd HI command.
 * \param result HI command result.
-* \लeturn पूर्णांक.
+* \return int.
 *
 * Sends command to HI
 *
 */
-अटल पूर्णांक
-hi_command(काष्ठा i2c_device_addr *dev_addr, स्थिर काष्ठा drxj_hi_cmd *cmd, u16 *result)
-अणु
-	u16 रुको_cmd = 0;
+static int
+hi_command(struct i2c_device_addr *dev_addr, const struct drxj_hi_cmd *cmd, u16 *result)
+{
+	u16 wait_cmd = 0;
 	u16 nr_retries = 0;
-	bool घातerकरोwn_cmd = false;
-	पूर्णांक rc;
+	bool powerdown_cmd = false;
+	int rc;
 
 	/* Write parameters */
-	चयन (cmd->cmd) अणु
+	switch (cmd->cmd) {
 
-	हाल SIO_HI_RA_RAM_CMD_CONFIG:
-	हाल SIO_HI_RA_RAM_CMD_ATOMIC_COPY:
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_HI_RA_RAM_PAR_6__A, cmd->param6, 0);
-		अगर (rc != 0) अणु
+	case SIO_HI_RA_RAM_CMD_CONFIG:
+	case SIO_HI_RA_RAM_CMD_ATOMIC_COPY:
+		rc = drxj_dap_write_reg16(dev_addr, SIO_HI_RA_RAM_PAR_6__A, cmd->param6, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_HI_RA_RAM_PAR_5__A, cmd->param5, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SIO_HI_RA_RAM_PAR_5__A, cmd->param5, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_HI_RA_RAM_PAR_4__A, cmd->param4, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SIO_HI_RA_RAM_PAR_4__A, cmd->param4, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_HI_RA_RAM_PAR_3__A, cmd->param3, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SIO_HI_RA_RAM_PAR_3__A, cmd->param3, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 		fallthrough;
-	हाल SIO_HI_RA_RAM_CMD_BRDCTRL:
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_HI_RA_RAM_PAR_2__A, cmd->param2, 0);
-		अगर (rc != 0) अणु
+	case SIO_HI_RA_RAM_CMD_BRDCTRL:
+		rc = drxj_dap_write_reg16(dev_addr, SIO_HI_RA_RAM_PAR_2__A, cmd->param2, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_HI_RA_RAM_PAR_1__A, cmd->param1, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SIO_HI_RA_RAM_PAR_1__A, cmd->param1, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 		fallthrough;
-	हाल SIO_HI_RA_RAM_CMD_शून्य:
+	case SIO_HI_RA_RAM_CMD_NULL:
 		/* No parameters */
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
 	/* Write command */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_HI_RA_RAM_CMD__A, cmd->cmd, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SIO_HI_RA_RAM_CMD__A, cmd->cmd, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	अगर ((cmd->cmd) == SIO_HI_RA_RAM_CMD_RESET)
+	if ((cmd->cmd) == SIO_HI_RA_RAM_CMD_RESET)
 		msleep(1);
 
-	/* Detect घातer करोwn to omit पढ़ोing result */
-	घातerकरोwn_cmd = (bool) ((cmd->cmd == SIO_HI_RA_RAM_CMD_CONFIG) &&
+	/* Detect power down to omit reading result */
+	powerdown_cmd = (bool) ((cmd->cmd == SIO_HI_RA_RAM_CMD_CONFIG) &&
 				  (((cmd->
 				     param5) & SIO_HI_RA_RAM_PAR_5_CFG_SLEEP__M)
 				   == SIO_HI_RA_RAM_PAR_5_CFG_SLEEP_ZZZ));
-	अगर (!घातerकरोwn_cmd) अणु
+	if (!powerdown_cmd) {
 		/* Wait until command rdy */
-		करो अणु
+		do {
 			nr_retries++;
-			अगर (nr_retries > DRXJ_MAX_RETRIES) अणु
+			if (nr_retries > DRXJ_MAX_RETRIES) {
 				pr_err("timeout\n");
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 
-			rc = drxj_dap_पढ़ो_reg16(dev_addr, SIO_HI_RA_RAM_CMD__A, &रुको_cmd, 0);
-			अगर (rc != 0) अणु
+			rc = drxj_dap_read_reg16(dev_addr, SIO_HI_RA_RAM_CMD__A, &wait_cmd, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-		पूर्ण जबतक (रुको_cmd != 0);
+				goto rw_error;
+			}
+		} while (wait_cmd != 0);
 
 		/* Read result */
-		rc = drxj_dap_पढ़ो_reg16(dev_addr, SIO_HI_RA_RAM_RES__A, result, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_read_reg16(dev_addr, SIO_HI_RA_RAM_RES__A, result, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 
-	पूर्ण
-	/* अगर ( घातerकरोwn_cmd == true ) */
-	वापस 0;
+	}
+	/* if ( powerdown_cmd == true ) */
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
-* \पn पूर्णांक init_hi( स्थिर काष्ठा drx_demod_instance *demod )
-* \मrief Initialise and configurate HI.
-* \param demod poपूर्णांकer to demod data.
-* \लeturn पूर्णांक Return status.
-* \लetval 0 Success.
-* \लetval -EIO Failure.
+* \fn int init_hi( const struct drx_demod_instance *demod )
+* \brief Initialise and configurate HI.
+* \param demod pointer to demod data.
+* \return int Return status.
+* \retval 0 Success.
+* \retval -EIO Failure.
 *
 * Needs to know Psys (System Clock period) and Posc (Osc Clock period)
 * Need to store configuration in driver because of the way I2C
 * bridging is controlled.
 *
 */
-अटल पूर्णांक init_hi(स्थिर काष्ठा drx_demod_instance *demod)
-अणु
-	काष्ठा drxj_data *ext_attr = (काष्ठा drxj_data *) (शून्य);
-	काष्ठा drx_common_attr *common_attr = (काष्ठा drx_common_attr *) (शून्य);
-	काष्ठा i2c_device_addr *dev_addr = (काष्ठा i2c_device_addr *)(शून्य);
-	पूर्णांक rc;
+static int init_hi(const struct drx_demod_instance *demod)
+{
+	struct drxj_data *ext_attr = (struct drxj_data *) (NULL);
+	struct drx_common_attr *common_attr = (struct drx_common_attr *) (NULL);
+	struct i2c_device_addr *dev_addr = (struct i2c_device_addr *)(NULL);
+	int rc;
 
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
-	common_attr = (काष्ठा drx_common_attr *) demod->my_common_attr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
+	common_attr = (struct drx_common_attr *) demod->my_common_attr;
 	dev_addr = demod->my_i2c_dev_addr;
 
-	/* PATCH क्रम bug 5003, HI ucode v3.1.0 */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, 0x4301D7, 0x801, 0);
-	अगर (rc != 0) अणु
+	/* PATCH for bug 5003, HI ucode v3.1.0 */
+	rc = drxj_dap_write_reg16(dev_addr, 0x4301D7, 0x801, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	/* Timing भाग, 250ns/Psys */
-	/* Timing भाग, = ( delay (nano seconds) * sysclk (kHz) )/ 1000 */
-	ext_attr->hi_cfg_timing_भाग =
-	    (u16) ((common_attr->sys_घड़ी_freq / 1000) * HI_I2C_DELAY) / 1000;
+	/* Timing div, 250ns/Psys */
+	/* Timing div, = ( delay (nano seconds) * sysclk (kHz) )/ 1000 */
+	ext_attr->hi_cfg_timing_div =
+	    (u16) ((common_attr->sys_clock_freq / 1000) * HI_I2C_DELAY) / 1000;
 	/* Clipping */
-	अगर ((ext_attr->hi_cfg_timing_भाग) > SIO_HI_RA_RAM_PAR_2_CFG_DIV__M)
-		ext_attr->hi_cfg_timing_भाग = SIO_HI_RA_RAM_PAR_2_CFG_DIV__M;
-	/* Bridge delay, uses oscilator घड़ी */
+	if ((ext_attr->hi_cfg_timing_div) > SIO_HI_RA_RAM_PAR_2_CFG_DIV__M)
+		ext_attr->hi_cfg_timing_div = SIO_HI_RA_RAM_PAR_2_CFG_DIV__M;
+	/* Bridge delay, uses oscilator clock */
 	/* Delay = ( delay (nano seconds) * oscclk (kHz) )/ 1000 */
 	/* SDA brdige delay */
 	ext_attr->hi_cfg_bridge_delay =
-	    (u16) ((common_attr->osc_घड़ी_freq / 1000) * HI_I2C_BRIDGE_DELAY) /
+	    (u16) ((common_attr->osc_clock_freq / 1000) * HI_I2C_BRIDGE_DELAY) /
 	    1000;
 	/* Clipping */
-	अगर ((ext_attr->hi_cfg_bridge_delay) > SIO_HI_RA_RAM_PAR_3_CFG_DBL_SDA__M)
+	if ((ext_attr->hi_cfg_bridge_delay) > SIO_HI_RA_RAM_PAR_3_CFG_DBL_SDA__M)
 		ext_attr->hi_cfg_bridge_delay = SIO_HI_RA_RAM_PAR_3_CFG_DBL_SDA__M;
-	/* SCL bridge delay, same as SDA क्रम now */
+	/* SCL bridge delay, same as SDA for now */
 	ext_attr->hi_cfg_bridge_delay += ((ext_attr->hi_cfg_bridge_delay) <<
 				      SIO_HI_RA_RAM_PAR_3_CFG_DBL_SCL__B);
-	/* Wakeup key, setting the पढ़ो flag (as suggest in the करोcumentation) करोes
-	   not always result पूर्णांकo a working solution (barebones worked VI2C failed).
-	   Not setting the bit works in all हालs . */
+	/* Wakeup key, setting the read flag (as suggest in the documentation) does
+	   not always result into a working solution (barebones worked VI2C failed).
+	   Not setting the bit works in all cases . */
 	ext_attr->hi_cfg_wake_up_key = DRXJ_WAKE_UP_KEY;
-	/* port/bridge/घातer करोwn ctrl */
+	/* port/bridge/power down ctrl */
 	ext_attr->hi_cfg_ctrl = (SIO_HI_RA_RAM_PAR_5_CFG_SLV0_SLAVE);
-	/* transit mode समय out delay and watch करोg भागider */
+	/* transit mode time out delay and watch dog divider */
 	ext_attr->hi_cfg_transmit = SIO_HI_RA_RAM_PAR_6__PRE;
 
 	rc = hi_cfg_command(demod);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	वापस 0;
+	return 0;
 
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*============================================================================*/
 /*==                   END HOST INTERFACE FUNCTIONS                         ==*/
@@ -2455,100 +2454,100 @@ rw_error:
 /*============================================================================*/
 
 /*
-* \पn पूर्णांक get_device_capabilities()
-* \मrief Get and store device capabilities.
-* \param demod  Poपूर्णांकer to demodulator instance.
-* \लeturn पूर्णांक.
-* \लeturn 0    Success
-* \लetval -EIO Failure
+* \fn int get_device_capabilities()
+* \brief Get and store device capabilities.
+* \param demod  Pointer to demodulator instance.
+* \return int.
+* \return 0    Success
+* \retval -EIO Failure
 *
-* Depending on pullकरोwns on MDx pins the following पूर्णांकernals are set:
-*  * common_attr->osc_घड़ी_freq
+* Depending on pulldowns on MDx pins the following internals are set:
+*  * common_attr->osc_clock_freq
 *  * ext_attr->has_lna
 *  * ext_attr->has_ntsc
 *  * ext_attr->has_btsc
 *  * ext_attr->has_oob
 *
 */
-अटल पूर्णांक get_device_capabilities(काष्ठा drx_demod_instance *demod)
-अणु
-	काष्ठा drx_common_attr *common_attr = (काष्ठा drx_common_attr *) (शून्य);
-	काष्ठा drxj_data *ext_attr = (काष्ठा drxj_data *) शून्य;
-	काष्ठा i2c_device_addr *dev_addr = (काष्ठा i2c_device_addr *)(शून्य);
+static int get_device_capabilities(struct drx_demod_instance *demod)
+{
+	struct drx_common_attr *common_attr = (struct drx_common_attr *) (NULL);
+	struct drxj_data *ext_attr = (struct drxj_data *) NULL;
+	struct i2c_device_addr *dev_addr = (struct i2c_device_addr *)(NULL);
 	u16 sio_pdr_ohw_cfg = 0;
 	u32 sio_top_jtagid_lo = 0;
 	u16 bid = 0;
-	पूर्णांक rc;
+	int rc;
 
-	common_attr = (काष्ठा drx_common_attr *) demod->my_common_attr;
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
+	common_attr = (struct drx_common_attr *) demod->my_common_attr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
 	dev_addr = demod->my_i2c_dev_addr;
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_TOP_COMM_KEY__A, SIO_TOP_COMM_KEY_KEY, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SIO_TOP_COMM_KEY__A, SIO_TOP_COMM_KEY_KEY, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, SIO_PDR_OHW_CFG__A, &sio_pdr_ohw_cfg, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_read_reg16(dev_addr, SIO_PDR_OHW_CFG__A, &sio_pdr_ohw_cfg, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_TOP_COMM_KEY__A, SIO_TOP_COMM_KEY__PRE, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SIO_TOP_COMM_KEY__A, SIO_TOP_COMM_KEY__PRE, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	चयन ((sio_pdr_ohw_cfg & SIO_PDR_OHW_CFG_FREF_SEL__M)) अणु
-	हाल 0:
+	switch ((sio_pdr_ohw_cfg & SIO_PDR_OHW_CFG_FREF_SEL__M)) {
+	case 0:
 		/* ignore (bypass ?) */
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		/* 27 MHz */
-		common_attr->osc_घड़ी_freq = 27000;
-		अवरोध;
-	हाल 2:
+		common_attr->osc_clock_freq = 27000;
+		break;
+	case 2:
 		/* 20.25 MHz */
-		common_attr->osc_घड़ी_freq = 20250;
-		अवरोध;
-	हाल 3:
+		common_attr->osc_clock_freq = 20250;
+		break;
+	case 3:
 		/* 4 MHz */
-		common_attr->osc_घड़ी_freq = 4000;
-		अवरोध;
-	शेष:
-		वापस -EIO;
-	पूर्ण
+		common_attr->osc_clock_freq = 4000;
+		break;
+	default:
+		return -EIO;
+	}
 
 	/*
 	   Determine device capabilities
 	   Based on pinning v47
 	 */
-	rc = drxdap_fasi_पढ़ो_reg32(dev_addr, SIO_TOP_JTAGID_LO__A, &sio_top_jtagid_lo, 0);
-	अगर (rc != 0) अणु
+	rc = drxdap_fasi_read_reg32(dev_addr, SIO_TOP_JTAGID_LO__A, &sio_top_jtagid_lo, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	ext_attr->mfx = (u8) ((sio_top_jtagid_lo >> 29) & 0xF);
 
-	चयन ((sio_top_jtagid_lo >> 12) & 0xFF) अणु
-	हाल 0x31:
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_TOP_COMM_KEY__A, SIO_TOP_COMM_KEY_KEY, 0);
-		अगर (rc != 0) अणु
+	switch ((sio_top_jtagid_lo >> 12) & 0xFF) {
+	case 0x31:
+		rc = drxj_dap_write_reg16(dev_addr, SIO_TOP_COMM_KEY__A, SIO_TOP_COMM_KEY_KEY, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_पढ़ो_reg16(dev_addr, SIO_PDR_UIO_IN_HI__A, &bid, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_read_reg16(dev_addr, SIO_PDR_UIO_IN_HI__A, &bid, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 		bid = (bid >> 10) & 0xf;
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_TOP_COMM_KEY__A, SIO_TOP_COMM_KEY__PRE, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_write_reg16(dev_addr, SIO_TOP_COMM_KEY__A, SIO_TOP_COMM_KEY__PRE, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 
 		ext_attr->has_lna = true;
 		ext_attr->has_ntsc = false;
@@ -2558,8 +2557,8 @@ rw_error:
 		ext_attr->has_smarx = false;
 		ext_attr->has_gpio = false;
 		ext_attr->has_irqn = false;
-		अवरोध;
-	हाल 0x33:
+		break;
+	case 0x33:
 		ext_attr->has_lna = false;
 		ext_attr->has_ntsc = false;
 		ext_attr->has_btsc = false;
@@ -2568,8 +2567,8 @@ rw_error:
 		ext_attr->has_smarx = false;
 		ext_attr->has_gpio = false;
 		ext_attr->has_irqn = false;
-		अवरोध;
-	हाल 0x45:
+		break;
+	case 0x45:
 		ext_attr->has_lna = true;
 		ext_attr->has_ntsc = true;
 		ext_attr->has_btsc = false;
@@ -2578,8 +2577,8 @@ rw_error:
 		ext_attr->has_smarx = true;
 		ext_attr->has_gpio = true;
 		ext_attr->has_irqn = false;
-		अवरोध;
-	हाल 0x46:
+		break;
+	case 0x46:
 		ext_attr->has_lna = false;
 		ext_attr->has_ntsc = true;
 		ext_attr->has_btsc = false;
@@ -2588,8 +2587,8 @@ rw_error:
 		ext_attr->has_smarx = true;
 		ext_attr->has_gpio = true;
 		ext_attr->has_irqn = false;
-		अवरोध;
-	हाल 0x41:
+		break;
+	case 0x41:
 		ext_attr->has_lna = true;
 		ext_attr->has_ntsc = true;
 		ext_attr->has_btsc = true;
@@ -2598,8 +2597,8 @@ rw_error:
 		ext_attr->has_smarx = true;
 		ext_attr->has_gpio = true;
 		ext_attr->has_irqn = false;
-		अवरोध;
-	हाल 0x43:
+		break;
+	case 0x43:
 		ext_attr->has_lna = false;
 		ext_attr->has_ntsc = true;
 		ext_attr->has_btsc = true;
@@ -2608,8 +2607,8 @@ rw_error:
 		ext_attr->has_smarx = true;
 		ext_attr->has_gpio = true;
 		ext_attr->has_irqn = false;
-		अवरोध;
-	हाल 0x32:
+		break;
+	case 0x32:
 		ext_attr->has_lna = true;
 		ext_attr->has_ntsc = false;
 		ext_attr->has_btsc = false;
@@ -2618,8 +2617,8 @@ rw_error:
 		ext_attr->has_smarx = true;
 		ext_attr->has_gpio = true;
 		ext_attr->has_irqn = true;
-		अवरोध;
-	हाल 0x34:
+		break;
+	case 0x34:
 		ext_attr->has_lna = false;
 		ext_attr->has_ntsc = true;
 		ext_attr->has_btsc = true;
@@ -2628,8 +2627,8 @@ rw_error:
 		ext_attr->has_smarx = true;
 		ext_attr->has_gpio = true;
 		ext_attr->has_irqn = true;
-		अवरोध;
-	हाल 0x42:
+		break;
+	case 0x42:
 		ext_attr->has_lna = true;
 		ext_attr->has_ntsc = true;
 		ext_attr->has_btsc = true;
@@ -2638,8 +2637,8 @@ rw_error:
 		ext_attr->has_smarx = true;
 		ext_attr->has_gpio = true;
 		ext_attr->has_irqn = true;
-		अवरोध;
-	हाल 0x44:
+		break;
+	case 0x44:
 		ext_attr->has_lna = false;
 		ext_attr->has_ntsc = true;
 		ext_attr->has_btsc = true;
@@ -2648,89 +2647,89 @@ rw_error:
 		ext_attr->has_smarx = true;
 		ext_attr->has_gpio = true;
 		ext_attr->has_irqn = true;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* Unknown device variant */
-		वापस -EIO;
-		अवरोध;
-	पूर्ण
+		return -EIO;
+		break;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
-* \पn पूर्णांक घातer_up_device()
-* \मrief Power up device.
-* \param demod  Poपूर्णांकer to demodulator instance.
-* \लeturn पूर्णांक.
-* \लeturn 0    Success
-* \लetval -EIO Failure, I2C or max retries reached
+* \fn int power_up_device()
+* \brief Power up device.
+* \param demod  Pointer to demodulator instance.
+* \return int.
+* \return 0    Success
+* \retval -EIO Failure, I2C or max retries reached
 *
 */
 
-#अगर_अघोषित DRXJ_MAX_RETRIES_POWERUP
-#घोषणा DRXJ_MAX_RETRIES_POWERUP 10
-#पूर्ण_अगर
+#ifndef DRXJ_MAX_RETRIES_POWERUP
+#define DRXJ_MAX_RETRIES_POWERUP 10
+#endif
 
-अटल पूर्णांक घातer_up_device(काष्ठा drx_demod_instance *demod)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = (काष्ठा i2c_device_addr *)(शून्य);
+static int power_up_device(struct drx_demod_instance *demod)
+{
+	struct i2c_device_addr *dev_addr = (struct i2c_device_addr *)(NULL);
 	u8 data = 0;
 	u16 retry_count = 0;
-	काष्ठा i2c_device_addr wake_up_addr;
+	struct i2c_device_addr wake_up_addr;
 
 	dev_addr = demod->my_i2c_dev_addr;
 	wake_up_addr.i2c_addr = DRXJ_WAKE_UP_KEY;
 	wake_up_addr.i2c_dev_id = dev_addr->i2c_dev_id;
 	wake_up_addr.user_data = dev_addr->user_data;
 	/*
-	 * I2C access may fail in this हाल: no ack
-	 * dummy ग_लिखो must be used to wake uop device, dummy पढ़ो must be used to
-	 * reset HI state machine (aव्योमing actual ग_लिखोs)
+	 * I2C access may fail in this case: no ack
+	 * dummy write must be used to wake uop device, dummy read must be used to
+	 * reset HI state machine (avoiding actual writes)
 	 */
-	करो अणु
+	do {
 		data = 0;
-		drxbsp_i2c_ग_लिखो_पढ़ो(&wake_up_addr, 1, &data,
-				      (काष्ठा i2c_device_addr *)(शून्य), 0,
-				     (u8 *)(शून्य));
+		drxbsp_i2c_write_read(&wake_up_addr, 1, &data,
+				      (struct i2c_device_addr *)(NULL), 0,
+				     (u8 *)(NULL));
 		msleep(10);
 		retry_count++;
-	पूर्ण जबतक ((drxbsp_i2c_ग_लिखो_पढ़ो
-		  ((काष्ठा i2c_device_addr *) (शून्य), 0, (u8 *)(शून्य), dev_addr, 1,
+	} while ((drxbsp_i2c_write_read
+		  ((struct i2c_device_addr *) (NULL), 0, (u8 *)(NULL), dev_addr, 1,
 		   &data)
 		  != 0) && (retry_count < DRXJ_MAX_RETRIES_POWERUP));
 
-	/* Need some recovery समय .... */
+	/* Need some recovery time .... */
 	msleep(10);
 
-	अगर (retry_count == DRXJ_MAX_RETRIES_POWERUP)
-		वापस -EIO;
+	if (retry_count == DRXJ_MAX_RETRIES_POWERUP)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*----------------------------------------------------------------------------*/
 /* MPEG Output Configuration Functions - begin                                */
 /*----------------------------------------------------------------------------*/
 /*
-* \पn पूर्णांक ctrl_set_cfg_mpeg_output()
-* \मrief Set MPEG output configuration of the device.
-* \param devmod  Poपूर्णांकer to demodulator instance.
-* \param cfg_data Poपूर्णांकer to mpeg output configuaration.
-* \लeturn पूर्णांक.
+* \fn int ctrl_set_cfg_mpeg_output()
+* \brief Set MPEG output configuration of the device.
+* \param devmod  Pointer to demodulator instance.
+* \param cfg_data Pointer to mpeg output configuaration.
+* \return int.
 *
 *  Configure MPEG output parameters.
 *
 */
-अटल पूर्णांक
-ctrl_set_cfg_mpeg_output(काष्ठा drx_demod_instance *demod, काष्ठा drx_cfg_mpeg_output *cfg_data)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = (काष्ठा i2c_device_addr *)(शून्य);
-	काष्ठा drxj_data *ext_attr = (काष्ठा drxj_data *) (शून्य);
-	काष्ठा drx_common_attr *common_attr = (काष्ठा drx_common_attr *) (शून्य);
-	पूर्णांक rc;
+static int
+ctrl_set_cfg_mpeg_output(struct drx_demod_instance *demod, struct drx_cfg_mpeg_output *cfg_data)
+{
+	struct i2c_device_addr *dev_addr = (struct i2c_device_addr *)(NULL);
+	struct drxj_data *ext_attr = (struct drxj_data *) (NULL);
+	struct drx_common_attr *common_attr = (struct drx_common_attr *) (NULL);
+	int rc;
 	u16 fec_oc_reg_mode = 0;
 	u16 fec_oc_reg_ipr_mode = 0;
 	u16 fec_oc_reg_ipr_invert = 0;
@@ -2738,7 +2737,7 @@ ctrl_set_cfg_mpeg_output(काष्ठा drx_demod_instance *demod, काष
 	u32 rcn_rate = 0;
 	u32 nr_bits = 0;
 	u16 sio_pdr_md_cfg = 0;
-	/* data mask क्रम the output data byte */
+	/* data mask for the output data byte */
 	u16 invert_data_mask =
 	    FEC_OC_IPR_INVERT_MD7__M | FEC_OC_IPR_INVERT_MD6__M |
 	    FEC_OC_IPR_INVERT_MD5__M | FEC_OC_IPR_INVERT_MD4__M |
@@ -2746,272 +2745,272 @@ ctrl_set_cfg_mpeg_output(काष्ठा drx_demod_instance *demod, काष
 	    FEC_OC_IPR_INVERT_MD1__M | FEC_OC_IPR_INVERT_MD0__M;
 
 	/* check arguments */
-	अगर ((demod == शून्य) || (cfg_data == शून्य))
-		वापस -EINVAL;
+	if ((demod == NULL) || (cfg_data == NULL))
+		return -EINVAL;
 
 	dev_addr = demod->my_i2c_dev_addr;
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
-	common_attr = (काष्ठा drx_common_attr *) demod->my_common_attr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
+	common_attr = (struct drx_common_attr *) demod->my_common_attr;
 
-	अगर (cfg_data->enable_mpeg_output == true) अणु
-		/* quick and dirty patch to set MPEG in हाल current std is not
+	if (cfg_data->enable_mpeg_output == true) {
+		/* quick and dirty patch to set MPEG in case current std is not
 		   producing MPEG */
-		चयन (ext_attr->standard) अणु
-		हाल DRX_STANDARD_8VSB:
-		हाल DRX_STANDARD_ITU_A:
-		हाल DRX_STANDARD_ITU_B:
-		हाल DRX_STANDARD_ITU_C:
-			अवरोध;
-		शेष:
-			वापस 0;
-		पूर्ण
+		switch (ext_attr->standard) {
+		case DRX_STANDARD_8VSB:
+		case DRX_STANDARD_ITU_A:
+		case DRX_STANDARD_ITU_B:
+		case DRX_STANDARD_ITU_C:
+			break;
+		default:
+			return 0;
+		}
 
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_OCR_INVERT__A, 0, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_write_reg16(dev_addr, FEC_OC_OCR_INVERT__A, 0, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		चयन (ext_attr->standard) अणु
-		हाल DRX_STANDARD_8VSB:
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_FCT_USAGE__A, 7, 0);
-			अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		switch (ext_attr->standard) {
+		case DRX_STANDARD_8VSB:
+			rc = drxj_dap_write_reg16(dev_addr, FEC_OC_FCT_USAGE__A, 7, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण	/* 2048 bytes fअगरo ram */
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_TMD_CTL_UPD_RATE__A, 10, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}	/* 2048 bytes fifo ram */
+			rc = drxj_dap_write_reg16(dev_addr, FEC_OC_TMD_CTL_UPD_RATE__A, 10, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_TMD_INT_UPD_RATE__A, 10, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, FEC_OC_TMD_INT_UPD_RATE__A, 10, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_AVR_PARM_A__A, 5, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, FEC_OC_AVR_PARM_A__A, 5, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_AVR_PARM_B__A, 7, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, FEC_OC_AVR_PARM_B__A, 7, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_RCN_GAIN__A, 10, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, FEC_OC_RCN_GAIN__A, 10, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			/* Low Water Mark क्रम synchronization  */
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_SNC_LWM__A, 3, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			/* Low Water Mark for synchronization  */
+			rc = drxj_dap_write_reg16(dev_addr, FEC_OC_SNC_LWM__A, 3, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			/* High Water Mark क्रम synchronization */
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_SNC_HWM__A, 5, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			/* High Water Mark for synchronization */
+			rc = drxj_dap_write_reg16(dev_addr, FEC_OC_SNC_HWM__A, 5, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			अवरोध;
-		हाल DRX_STANDARD_ITU_A:
-		हाल DRX_STANDARD_ITU_C:
-			चयन (ext_attr->स्थिरellation) अणु
-			हाल DRX_CONSTELLATION_QAM256:
+				goto rw_error;
+			}
+			break;
+		case DRX_STANDARD_ITU_A:
+		case DRX_STANDARD_ITU_C:
+			switch (ext_attr->constellation) {
+			case DRX_CONSTELLATION_QAM256:
 				nr_bits = 8;
-				अवरोध;
-			हाल DRX_CONSTELLATION_QAM128:
+				break;
+			case DRX_CONSTELLATION_QAM128:
 				nr_bits = 7;
-				अवरोध;
-			हाल DRX_CONSTELLATION_QAM64:
+				break;
+			case DRX_CONSTELLATION_QAM64:
 				nr_bits = 6;
-				अवरोध;
-			हाल DRX_CONSTELLATION_QAM32:
+				break;
+			case DRX_CONSTELLATION_QAM32:
 				nr_bits = 5;
-				अवरोध;
-			हाल DRX_CONSTELLATION_QAM16:
+				break;
+			case DRX_CONSTELLATION_QAM16:
 				nr_bits = 4;
-				अवरोध;
-			शेष:
-				वापस -EIO;
-			पूर्ण	/* ext_attr->स्थिरellation */
+				break;
+			default:
+				return -EIO;
+			}	/* ext_attr->constellation */
 			/* max_bit_rate = symbol_rate * nr_bits * coef */
 			/* coef = 188/204                          */
 			max_bit_rate =
 			    (ext_attr->curr_symbol_rate / 8) * nr_bits * 188;
 			fallthrough;	/* as b/c Annex A/C need following settings */
-		हाल DRX_STANDARD_ITU_B:
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_FCT_USAGE__A, FEC_OC_FCT_USAGE__PRE, 0);
-			अगर (rc != 0) अणु
+		case DRX_STANDARD_ITU_B:
+			rc = drxj_dap_write_reg16(dev_addr, FEC_OC_FCT_USAGE__A, FEC_OC_FCT_USAGE__PRE, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_TMD_CTL_UPD_RATE__A, FEC_OC_TMD_CTL_UPD_RATE__PRE, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, FEC_OC_TMD_CTL_UPD_RATE__A, FEC_OC_TMD_CTL_UPD_RATE__PRE, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_TMD_INT_UPD_RATE__A, 5, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, FEC_OC_TMD_INT_UPD_RATE__A, 5, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_AVR_PARM_A__A, FEC_OC_AVR_PARM_A__PRE, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, FEC_OC_AVR_PARM_A__A, FEC_OC_AVR_PARM_A__PRE, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_AVR_PARM_B__A, FEC_OC_AVR_PARM_B__PRE, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, FEC_OC_AVR_PARM_B__A, FEC_OC_AVR_PARM_B__PRE, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			अगर (cfg_data->अटल_clk == true) अणु
-				rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_RCN_GAIN__A, 0xD, 0);
-				अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			if (cfg_data->static_clk == true) {
+				rc = drxj_dap_write_reg16(dev_addr, FEC_OC_RCN_GAIN__A, 0xD, 0);
+				if (rc != 0) {
 					pr_err("error %d\n", rc);
-					जाओ rw_error;
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_RCN_GAIN__A, FEC_OC_RCN_GAIN__PRE, 0);
-				अगर (rc != 0) अणु
+					goto rw_error;
+				}
+			} else {
+				rc = drxj_dap_write_reg16(dev_addr, FEC_OC_RCN_GAIN__A, FEC_OC_RCN_GAIN__PRE, 0);
+				if (rc != 0) {
 					pr_err("error %d\n", rc);
-					जाओ rw_error;
-				पूर्ण
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_SNC_LWM__A, 2, 0);
-			अगर (rc != 0) अणु
+					goto rw_error;
+				}
+			}
+			rc = drxj_dap_write_reg16(dev_addr, FEC_OC_SNC_LWM__A, 2, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_SNC_HWM__A, 12, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, FEC_OC_SNC_HWM__A, 12, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण		/* चयन (standard) */
+				goto rw_error;
+			}
+			break;
+		default:
+			break;
+		}		/* switch (standard) */
 
 		/* Check insertion of the Reed-Solomon parity bytes */
-		rc = drxj_dap_पढ़ो_reg16(dev_addr, FEC_OC_MODE__A, &fec_oc_reg_mode, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_read_reg16(dev_addr, FEC_OC_MODE__A, &fec_oc_reg_mode, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_पढ़ो_reg16(dev_addr, FEC_OC_IPR_MODE__A, &fec_oc_reg_ipr_mode, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_read_reg16(dev_addr, FEC_OC_IPR_MODE__A, &fec_oc_reg_ipr_mode, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		अगर (cfg_data->insert_rs_byte == true) अणु
-			/* enable parity symbol क्रमward */
+			goto rw_error;
+		}
+		if (cfg_data->insert_rs_byte == true) {
+			/* enable parity symbol forward */
 			fec_oc_reg_mode |= FEC_OC_MODE_PARITY__M;
 			/* MVAL disable during parity bytes */
 			fec_oc_reg_ipr_mode |= FEC_OC_IPR_MODE_MVAL_DIS_PAR__M;
-			चयन (ext_attr->standard) अणु
-			हाल DRX_STANDARD_8VSB:
+			switch (ext_attr->standard) {
+			case DRX_STANDARD_8VSB:
 				rcn_rate = 0x004854D3;
-				अवरोध;
-			हाल DRX_STANDARD_ITU_B:
+				break;
+			case DRX_STANDARD_ITU_B:
 				fec_oc_reg_mode |= FEC_OC_MODE_TRANSPARENT__M;
-				चयन (ext_attr->स्थिरellation) अणु
-				हाल DRX_CONSTELLATION_QAM256:
+				switch (ext_attr->constellation) {
+				case DRX_CONSTELLATION_QAM256:
 					rcn_rate = 0x008945E7;
-					अवरोध;
-				हाल DRX_CONSTELLATION_QAM64:
+					break;
+				case DRX_CONSTELLATION_QAM64:
 					rcn_rate = 0x005F64D4;
-					अवरोध;
-				शेष:
-					वापस -EIO;
-				पूर्ण
-				अवरोध;
-			हाल DRX_STANDARD_ITU_A:
-			हाल DRX_STANDARD_ITU_C:
+					break;
+				default:
+					return -EIO;
+				}
+				break;
+			case DRX_STANDARD_ITU_A:
+			case DRX_STANDARD_ITU_C:
 				/* insert_rs_byte = true -> coef = 188/188 -> 1, RS bits are in MPEG output */
 				rcn_rate =
 				    (frac28
 				     (max_bit_rate,
-				      (u32) (common_attr->sys_घड़ी_freq / 8))) /
+				      (u32) (common_attr->sys_clock_freq / 8))) /
 				    188;
-				अवरोध;
-			शेष:
-				वापस -EIO;
-			पूर्ण	/* ext_attr->standard */
-		पूर्ण अन्यथा अणु	/* insert_rs_byte == false */
+				break;
+			default:
+				return -EIO;
+			}	/* ext_attr->standard */
+		} else {	/* insert_rs_byte == false */
 
-			/* disable parity symbol क्रमward */
+			/* disable parity symbol forward */
 			fec_oc_reg_mode &= (~FEC_OC_MODE_PARITY__M);
 			/* MVAL enable during parity bytes */
 			fec_oc_reg_ipr_mode &= (~FEC_OC_IPR_MODE_MVAL_DIS_PAR__M);
-			चयन (ext_attr->standard) अणु
-			हाल DRX_STANDARD_8VSB:
+			switch (ext_attr->standard) {
+			case DRX_STANDARD_8VSB:
 				rcn_rate = 0x0041605C;
-				अवरोध;
-			हाल DRX_STANDARD_ITU_B:
+				break;
+			case DRX_STANDARD_ITU_B:
 				fec_oc_reg_mode &= (~FEC_OC_MODE_TRANSPARENT__M);
-				चयन (ext_attr->स्थिरellation) अणु
-				हाल DRX_CONSTELLATION_QAM256:
+				switch (ext_attr->constellation) {
+				case DRX_CONSTELLATION_QAM256:
 					rcn_rate = 0x0082D6A0;
-					अवरोध;
-				हाल DRX_CONSTELLATION_QAM64:
+					break;
+				case DRX_CONSTELLATION_QAM64:
 					rcn_rate = 0x005AEC1A;
-					अवरोध;
-				शेष:
-					वापस -EIO;
-				पूर्ण
-				अवरोध;
-			हाल DRX_STANDARD_ITU_A:
-			हाल DRX_STANDARD_ITU_C:
+					break;
+				default:
+					return -EIO;
+				}
+				break;
+			case DRX_STANDARD_ITU_A:
+			case DRX_STANDARD_ITU_C:
 				/* insert_rs_byte = false -> coef = 188/204, RS bits not in MPEG output */
 				rcn_rate =
 				    (frac28
 				     (max_bit_rate,
-				      (u32) (common_attr->sys_घड़ी_freq / 8))) /
+				      (u32) (common_attr->sys_clock_freq / 8))) /
 				    204;
-				अवरोध;
-			शेष:
-				वापस -EIO;
-			पूर्ण	/* ext_attr->standard */
-		पूर्ण
+				break;
+			default:
+				return -EIO;
+			}	/* ext_attr->standard */
+		}
 
-		अगर (cfg_data->enable_parallel == true) अणु	/* MPEG data output is parallel -> clear ipr_mode[0] */
+		if (cfg_data->enable_parallel == true) {	/* MPEG data output is parallel -> clear ipr_mode[0] */
 			fec_oc_reg_ipr_mode &= (~(FEC_OC_IPR_MODE_SERIAL__M));
-		पूर्ण अन्यथा अणु	/* MPEG data output is serial -> set ipr_mode[0] */
+		} else {	/* MPEG data output is serial -> set ipr_mode[0] */
 			fec_oc_reg_ipr_mode |= FEC_OC_IPR_MODE_SERIAL__M;
-		पूर्ण
+		}
 
 		/* Control slective inversion of output bits */
-		अगर (cfg_data->invert_data == true)
+		if (cfg_data->invert_data == true)
 			fec_oc_reg_ipr_invert |= invert_data_mask;
-		अन्यथा
+		else
 			fec_oc_reg_ipr_invert &= (~(invert_data_mask));
 
-		अगर (cfg_data->invert_err == true)
+		if (cfg_data->invert_err == true)
 			fec_oc_reg_ipr_invert |= FEC_OC_IPR_INVERT_MERR__M;
-		अन्यथा
+		else
 			fec_oc_reg_ipr_invert &= (~(FEC_OC_IPR_INVERT_MERR__M));
 
-		अगर (cfg_data->invert_str == true)
+		if (cfg_data->invert_str == true)
 			fec_oc_reg_ipr_invert |= FEC_OC_IPR_INVERT_MSTRT__M;
-		अन्यथा
+		else
 			fec_oc_reg_ipr_invert &= (~(FEC_OC_IPR_INVERT_MSTRT__M));
 
-		अगर (cfg_data->invert_val == true)
+		if (cfg_data->invert_val == true)
 			fec_oc_reg_ipr_invert |= FEC_OC_IPR_INVERT_MVAL__M;
-		अन्यथा
+		else
 			fec_oc_reg_ipr_invert &= (~(FEC_OC_IPR_INVERT_MVAL__M));
 
-		अगर (cfg_data->invert_clk == true)
+		if (cfg_data->invert_clk == true)
 			fec_oc_reg_ipr_invert |= FEC_OC_IPR_INVERT_MCLK__M;
-		अन्यथा
+		else
 			fec_oc_reg_ipr_invert &= (~(FEC_OC_IPR_INVERT_MCLK__M));
 
 
-		अगर (cfg_data->अटल_clk == true) अणु	/* Static mode */
+		if (cfg_data->static_clk == true) {	/* Static mode */
 			u32 dto_rate = 0;
 			u32 bit_rate = 0;
 			u16 fec_oc_dto_burst_len = 0;
@@ -3019,334 +3018,334 @@ ctrl_set_cfg_mpeg_output(काष्ठा drx_demod_instance *demod, काष
 
 			fec_oc_dto_burst_len = FEC_OC_DTO_BURST_LEN__PRE;
 
-			चयन (ext_attr->standard) अणु
-			हाल DRX_STANDARD_8VSB:
+			switch (ext_attr->standard) {
+			case DRX_STANDARD_8VSB:
 				fec_oc_dto_period = 4;
-				अगर (cfg_data->insert_rs_byte == true)
+				if (cfg_data->insert_rs_byte == true)
 					fec_oc_dto_burst_len = 208;
-				अवरोध;
-			हाल DRX_STANDARD_ITU_A:
-				अणु
+				break;
+			case DRX_STANDARD_ITU_A:
+				{
 					u32 symbol_rate_th = 6400000;
-					अगर (cfg_data->insert_rs_byte == true) अणु
+					if (cfg_data->insert_rs_byte == true) {
 						fec_oc_dto_burst_len = 204;
 						symbol_rate_th = 5900000;
-					पूर्ण
-					अगर (ext_attr->curr_symbol_rate >=
-					    symbol_rate_th) अणु
+					}
+					if (ext_attr->curr_symbol_rate >=
+					    symbol_rate_th) {
 						fec_oc_dto_period = 0;
-					पूर्ण अन्यथा अणु
+					} else {
 						fec_oc_dto_period = 1;
-					पूर्ण
-				पूर्ण
-				अवरोध;
-			हाल DRX_STANDARD_ITU_B:
+					}
+				}
+				break;
+			case DRX_STANDARD_ITU_B:
 				fec_oc_dto_period = 1;
-				अगर (cfg_data->insert_rs_byte == true)
+				if (cfg_data->insert_rs_byte == true)
 					fec_oc_dto_burst_len = 128;
-				अवरोध;
-			हाल DRX_STANDARD_ITU_C:
+				break;
+			case DRX_STANDARD_ITU_C:
 				fec_oc_dto_period = 1;
-				अगर (cfg_data->insert_rs_byte == true)
+				if (cfg_data->insert_rs_byte == true)
 					fec_oc_dto_burst_len = 204;
-				अवरोध;
-			शेष:
-				वापस -EIO;
-			पूर्ण
+				break;
+			default:
+				return -EIO;
+			}
 			bit_rate =
-			    common_attr->sys_घड़ी_freq * 1000 / (fec_oc_dto_period +
+			    common_attr->sys_clock_freq * 1000 / (fec_oc_dto_period +
 							       2);
 			dto_rate =
-			    frac28(bit_rate, common_attr->sys_घड़ी_freq * 1000);
+			    frac28(bit_rate, common_attr->sys_clock_freq * 1000);
 			dto_rate >>= 3;
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_DTO_RATE_HI__A, (u16)((dto_rate >> 16) & FEC_OC_DTO_RATE_HI__M), 0);
-			अगर (rc != 0) अणु
+			rc = drxj_dap_write_reg16(dev_addr, FEC_OC_DTO_RATE_HI__A, (u16)((dto_rate >> 16) & FEC_OC_DTO_RATE_HI__M), 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_DTO_RATE_LO__A, (u16)(dto_rate & FEC_OC_DTO_RATE_LO_RATE_LO__M), 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, FEC_OC_DTO_RATE_LO__A, (u16)(dto_rate & FEC_OC_DTO_RATE_LO_RATE_LO__M), 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_DTO_MODE__A, FEC_OC_DTO_MODE_DYNAMIC__M | FEC_OC_DTO_MODE_OFFSET_ENABLE__M, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, FEC_OC_DTO_MODE__A, FEC_OC_DTO_MODE_DYNAMIC__M | FEC_OC_DTO_MODE_OFFSET_ENABLE__M, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_FCT_MODE__A, FEC_OC_FCT_MODE_RAT_ENA__M | FEC_OC_FCT_MODE_VIRT_ENA__M, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, FEC_OC_FCT_MODE__A, FEC_OC_FCT_MODE_RAT_ENA__M | FEC_OC_FCT_MODE_VIRT_ENA__M, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_DTO_BURST_LEN__A, fec_oc_dto_burst_len, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, FEC_OC_DTO_BURST_LEN__A, fec_oc_dto_burst_len, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			अगर (ext_attr->mpeg_output_घड़ी_rate != DRXJ_MPEGOUTPUT_CLOCK_RATE_AUTO)
-				fec_oc_dto_period = ext_attr->mpeg_output_घड़ी_rate - 1;
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_DTO_PERIOD__A, fec_oc_dto_period, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			if (ext_attr->mpeg_output_clock_rate != DRXJ_MPEGOUTPUT_CLOCK_RATE_AUTO)
+				fec_oc_dto_period = ext_attr->mpeg_output_clock_rate - 1;
+			rc = drxj_dap_write_reg16(dev_addr, FEC_OC_DTO_PERIOD__A, fec_oc_dto_period, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-		पूर्ण अन्यथा अणु	/* Dynamic mode */
+				goto rw_error;
+			}
+		} else {	/* Dynamic mode */
 
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_DTO_MODE__A, FEC_OC_DTO_MODE_DYNAMIC__M, 0);
-			अगर (rc != 0) अणु
+			rc = drxj_dap_write_reg16(dev_addr, FEC_OC_DTO_MODE__A, FEC_OC_DTO_MODE_DYNAMIC__M, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_FCT_MODE__A, 0, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, FEC_OC_FCT_MODE__A, 0, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-		पूर्ण
+				goto rw_error;
+			}
+		}
 
-		rc = drxdap_fasi_ग_लिखो_reg32(dev_addr, FEC_OC_RCN_CTL_RATE_LO__A, rcn_rate, 0);
-		अगर (rc != 0) अणु
+		rc = drxdap_fasi_write_reg32(dev_addr, FEC_OC_RCN_CTL_RATE_LO__A, rcn_rate, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 
-		/* Write appropriate रेजिस्टरs with requested configuration */
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_MODE__A, fec_oc_reg_mode, 0);
-		अगर (rc != 0) अणु
+		/* Write appropriate registers with requested configuration */
+		rc = drxj_dap_write_reg16(dev_addr, FEC_OC_MODE__A, fec_oc_reg_mode, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_IPR_MODE__A, fec_oc_reg_ipr_mode, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, FEC_OC_IPR_MODE__A, fec_oc_reg_ipr_mode, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_IPR_INVERT__A, fec_oc_reg_ipr_invert, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, FEC_OC_IPR_INVERT__A, fec_oc_reg_ipr_invert, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 
-		/* enabling क्रम both parallel and serial now */
-		/*  Write magic word to enable pdr reg ग_लिखो */
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_TOP_COMM_KEY__A, 0xFABA, 0);
-		अगर (rc != 0) अणु
+		/* enabling for both parallel and serial now */
+		/*  Write magic word to enable pdr reg write */
+		rc = drxj_dap_write_reg16(dev_addr, SIO_TOP_COMM_KEY__A, 0xFABA, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		/*  Set MPEG TS pads to outpuपंचांगode */
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MSTRT_CFG__A, 0x0013, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		/*  Set MPEG TS pads to outputmode */
+		rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MSTRT_CFG__A, 0x0013, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MERR_CFG__A, 0x0013, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MERR_CFG__A, 0x0013, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MCLK_CFG__A, MPEG_OUTPUT_CLK_DRIVE_STRENGTH << SIO_PDR_MCLK_CFG_DRIVE__B | 0x03 << SIO_PDR_MCLK_CFG_MODE__B, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MCLK_CFG__A, MPEG_OUTPUT_CLK_DRIVE_STRENGTH << SIO_PDR_MCLK_CFG_DRIVE__B | 0x03 << SIO_PDR_MCLK_CFG_MODE__B, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MVAL_CFG__A, 0x0013, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MVAL_CFG__A, 0x0013, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 		sio_pdr_md_cfg =
 		    MPEG_SERIAL_OUTPUT_PIN_DRIVE_STRENGTH <<
 		    SIO_PDR_MD0_CFG_DRIVE__B | 0x03 << SIO_PDR_MD0_CFG_MODE__B;
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MD0_CFG__A, sio_pdr_md_cfg, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MD0_CFG__A, sio_pdr_md_cfg, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		अगर (cfg_data->enable_parallel == true) अणु	/* MPEG data output is parallel -> set MD1 to MD7 to output mode */
+			goto rw_error;
+		}
+		if (cfg_data->enable_parallel == true) {	/* MPEG data output is parallel -> set MD1 to MD7 to output mode */
 			sio_pdr_md_cfg =
 			    MPEG_PARALLEL_OUTPUT_PIN_DRIVE_STRENGTH <<
 			    SIO_PDR_MD0_CFG_DRIVE__B | 0x03 <<
 			    SIO_PDR_MD0_CFG_MODE__B;
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MD0_CFG__A, sio_pdr_md_cfg, 0);
-			अगर (rc != 0) अणु
+			rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MD0_CFG__A, sio_pdr_md_cfg, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MD1_CFG__A, sio_pdr_md_cfg, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MD1_CFG__A, sio_pdr_md_cfg, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MD2_CFG__A, sio_pdr_md_cfg, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MD2_CFG__A, sio_pdr_md_cfg, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MD3_CFG__A, sio_pdr_md_cfg, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MD3_CFG__A, sio_pdr_md_cfg, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MD4_CFG__A, sio_pdr_md_cfg, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MD4_CFG__A, sio_pdr_md_cfg, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MD5_CFG__A, sio_pdr_md_cfg, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MD5_CFG__A, sio_pdr_md_cfg, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MD6_CFG__A, sio_pdr_md_cfg, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MD6_CFG__A, sio_pdr_md_cfg, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MD7_CFG__A, sio_pdr_md_cfg, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MD7_CFG__A, sio_pdr_md_cfg, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-		पूर्ण अन्यथा अणु	/* MPEG data output is serial -> set MD1 to MD7 to tri-state */
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MD1_CFG__A, 0x0000, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+		} else {	/* MPEG data output is serial -> set MD1 to MD7 to tri-state */
+			rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MD1_CFG__A, 0x0000, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MD2_CFG__A, 0x0000, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MD2_CFG__A, 0x0000, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MD3_CFG__A, 0x0000, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MD3_CFG__A, 0x0000, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MD4_CFG__A, 0x0000, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MD4_CFG__A, 0x0000, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MD5_CFG__A, 0x0000, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MD5_CFG__A, 0x0000, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MD6_CFG__A, 0x0000, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MD6_CFG__A, 0x0000, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MD7_CFG__A, 0x0000, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MD7_CFG__A, 0x0000, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-		पूर्ण
+				goto rw_error;
+			}
+		}
 		/*  Enable Monitor Bus output over MPEG pads and ctl input */
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MON_CFG__A, 0x0000, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MON_CFG__A, 0x0000, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		/*  Write nomagic word to enable pdr reg ग_लिखो */
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_TOP_COMM_KEY__A, 0x0000, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		/*  Write nomagic word to enable pdr reg write */
+		rc = drxj_dap_write_reg16(dev_addr, SIO_TOP_COMM_KEY__A, 0x0000, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/*  Write magic word to enable pdr reg ग_लिखो */
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_TOP_COMM_KEY__A, 0xFABA, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+	} else {
+		/*  Write magic word to enable pdr reg write */
+		rc = drxj_dap_write_reg16(dev_addr, SIO_TOP_COMM_KEY__A, 0xFABA, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		/*  Set MPEG TS pads to inpuपंचांगode */
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MSTRT_CFG__A, 0x0000, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		/*  Set MPEG TS pads to inputmode */
+		rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MSTRT_CFG__A, 0x0000, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MERR_CFG__A, 0x0000, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MERR_CFG__A, 0x0000, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MCLK_CFG__A, 0x0000, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MCLK_CFG__A, 0x0000, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MVAL_CFG__A, 0x0000, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MVAL_CFG__A, 0x0000, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MD0_CFG__A, 0x0000, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MD0_CFG__A, 0x0000, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MD1_CFG__A, 0x0000, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MD1_CFG__A, 0x0000, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MD2_CFG__A, 0x0000, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MD2_CFG__A, 0x0000, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MD3_CFG__A, 0x0000, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MD3_CFG__A, 0x0000, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MD4_CFG__A, 0x0000, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MD4_CFG__A, 0x0000, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MD5_CFG__A, 0x0000, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MD5_CFG__A, 0x0000, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MD6_CFG__A, 0x0000, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MD6_CFG__A, 0x0000, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MD7_CFG__A, 0x0000, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MD7_CFG__A, 0x0000, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 		/* Enable Monitor Bus output over MPEG pads and ctl input */
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_MON_CFG__A, 0x0000, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_MON_CFG__A, 0x0000, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		/* Write nomagic word to enable pdr reg ग_लिखो */
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_TOP_COMM_KEY__A, 0x0000, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		/* Write nomagic word to enable pdr reg write */
+		rc = drxj_dap_write_reg16(dev_addr, SIO_TOP_COMM_KEY__A, 0x0000, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
+			goto rw_error;
+		}
+	}
 
-	/* save values क्रम restore after re-acquire */
+	/* save values for restore after re-acquire */
 	common_attr->mpeg_cfg.enable_mpeg_output = cfg_data->enable_mpeg_output;
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*----------------------------------------------------------------------------*/
 
@@ -3360,163 +3359,163 @@ rw_error:
 /*----------------------------------------------------------------------------*/
 
 /*
-* \पn पूर्णांक set_mpegtei_handling()
-* \मrief Activate MPEG TEI handling settings.
-* \param devmod  Poपूर्णांकer to demodulator instance.
-* \लeturn पूर्णांक.
+* \fn int set_mpegtei_handling()
+* \brief Activate MPEG TEI handling settings.
+* \param devmod  Pointer to demodulator instance.
+* \return int.
 *
 * This routine should be called during a set channel of QAM/VSB
 *
 */
-अटल पूर्णांक set_mpegtei_handling(काष्ठा drx_demod_instance *demod)
-अणु
-	काष्ठा drxj_data *ext_attr = (काष्ठा drxj_data *) (शून्य);
-	काष्ठा i2c_device_addr *dev_addr = (काष्ठा i2c_device_addr *)(शून्य);
-	पूर्णांक rc;
+static int set_mpegtei_handling(struct drx_demod_instance *demod)
+{
+	struct drxj_data *ext_attr = (struct drxj_data *) (NULL);
+	struct i2c_device_addr *dev_addr = (struct i2c_device_addr *)(NULL);
+	int rc;
 	u16 fec_oc_dpr_mode = 0;
 	u16 fec_oc_snc_mode = 0;
 	u16 fec_oc_ems_mode = 0;
 
 	dev_addr = demod->my_i2c_dev_addr;
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
 
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, FEC_OC_DPR_MODE__A, &fec_oc_dpr_mode, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_read_reg16(dev_addr, FEC_OC_DPR_MODE__A, &fec_oc_dpr_mode, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, FEC_OC_SNC_MODE__A, &fec_oc_snc_mode, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_read_reg16(dev_addr, FEC_OC_SNC_MODE__A, &fec_oc_snc_mode, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, FEC_OC_EMS_MODE__A, &fec_oc_ems_mode, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_read_reg16(dev_addr, FEC_OC_EMS_MODE__A, &fec_oc_ems_mode, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	/* reset to शेष, allow TEI bit to be changed */
+	/* reset to default, allow TEI bit to be changed */
 	fec_oc_dpr_mode &= (~FEC_OC_DPR_MODE_ERR_DISABLE__M);
 	fec_oc_snc_mode &= (~(FEC_OC_SNC_MODE_ERROR_CTL__M |
 			   FEC_OC_SNC_MODE_CORR_DISABLE__M));
 	fec_oc_ems_mode &= (~FEC_OC_EMS_MODE_MODE__M);
 
-	अगर (ext_attr->disable_te_ihandling) अणु
-		/* करो not change TEI bit */
+	if (ext_attr->disable_te_ihandling) {
+		/* do not change TEI bit */
 		fec_oc_dpr_mode |= FEC_OC_DPR_MODE_ERR_DISABLE__M;
 		fec_oc_snc_mode |= FEC_OC_SNC_MODE_CORR_DISABLE__M |
 		    ((0x2) << (FEC_OC_SNC_MODE_ERROR_CTL__B));
 		fec_oc_ems_mode |= ((0x01) << (FEC_OC_EMS_MODE_MODE__B));
-	पूर्ण
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_DPR_MODE__A, fec_oc_dpr_mode, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, FEC_OC_DPR_MODE__A, fec_oc_dpr_mode, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_SNC_MODE__A, fec_oc_snc_mode, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, FEC_OC_SNC_MODE__A, fec_oc_snc_mode, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_EMS_MODE__A, fec_oc_ems_mode, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, FEC_OC_EMS_MODE__A, fec_oc_ems_mode, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*----------------------------------------------------------------------------*/
 /*
-* \पn पूर्णांक bit_reverse_mpeg_output()
-* \मrief Set MPEG output bit-endian settings.
-* \param devmod  Poपूर्णांकer to demodulator instance.
-* \लeturn पूर्णांक.
+* \fn int bit_reverse_mpeg_output()
+* \brief Set MPEG output bit-endian settings.
+* \param devmod  Pointer to demodulator instance.
+* \return int.
 *
 * This routine should be called during a set channel of QAM/VSB
 *
 */
-अटल पूर्णांक bit_reverse_mpeg_output(काष्ठा drx_demod_instance *demod)
-अणु
-	काष्ठा drxj_data *ext_attr = (काष्ठा drxj_data *) (शून्य);
-	काष्ठा i2c_device_addr *dev_addr = (काष्ठा i2c_device_addr *)(शून्य);
-	पूर्णांक rc;
+static int bit_reverse_mpeg_output(struct drx_demod_instance *demod)
+{
+	struct drxj_data *ext_attr = (struct drxj_data *) (NULL);
+	struct i2c_device_addr *dev_addr = (struct i2c_device_addr *)(NULL);
+	int rc;
 	u16 fec_oc_ipr_mode = 0;
 
 	dev_addr = demod->my_i2c_dev_addr;
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
 
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, FEC_OC_IPR_MODE__A, &fec_oc_ipr_mode, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_read_reg16(dev_addr, FEC_OC_IPR_MODE__A, &fec_oc_ipr_mode, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	/* reset to शेष (normal bit order) */
+	/* reset to default (normal bit order) */
 	fec_oc_ipr_mode &= (~FEC_OC_IPR_MODE_REVERSE_ORDER__M);
 
-	अगर (ext_attr->bit_reverse_mpeg_outout)
+	if (ext_attr->bit_reverse_mpeg_outout)
 		fec_oc_ipr_mode |= FEC_OC_IPR_MODE_REVERSE_ORDER__M;
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_IPR_MODE__A, fec_oc_ipr_mode, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, FEC_OC_IPR_MODE__A, fec_oc_ipr_mode, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*----------------------------------------------------------------------------*/
 /*
-* \पn पूर्णांक set_mpeg_start_width()
-* \मrief Set MPEG start width.
-* \param devmod  Poपूर्णांकer to demodulator instance.
-* \लeturn पूर्णांक.
+* \fn int set_mpeg_start_width()
+* \brief Set MPEG start width.
+* \param devmod  Pointer to demodulator instance.
+* \return int.
 *
 * This routine should be called during a set channel of QAM/VSB
 *
 */
-अटल पूर्णांक set_mpeg_start_width(काष्ठा drx_demod_instance *demod)
-अणु
-	काष्ठा drxj_data *ext_attr = (काष्ठा drxj_data *) (शून्य);
-	काष्ठा i2c_device_addr *dev_addr = (काष्ठा i2c_device_addr *)(शून्य);
-	काष्ठा drx_common_attr *common_attr = (काष्ठा drx_common_attr *) शून्य;
-	पूर्णांक rc;
+static int set_mpeg_start_width(struct drx_demod_instance *demod)
+{
+	struct drxj_data *ext_attr = (struct drxj_data *) (NULL);
+	struct i2c_device_addr *dev_addr = (struct i2c_device_addr *)(NULL);
+	struct drx_common_attr *common_attr = (struct drx_common_attr *) NULL;
+	int rc;
 	u16 fec_oc_comm_mb = 0;
 
 	dev_addr = demod->my_i2c_dev_addr;
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
 	common_attr = demod->my_common_attr;
 
-	अगर ((common_attr->mpeg_cfg.अटल_clk == true)
-	    && (common_attr->mpeg_cfg.enable_parallel == false)) अणु
-		rc = drxj_dap_पढ़ो_reg16(dev_addr, FEC_OC_COMM_MB__A, &fec_oc_comm_mb, 0);
-		अगर (rc != 0) अणु
+	if ((common_attr->mpeg_cfg.static_clk == true)
+	    && (common_attr->mpeg_cfg.enable_parallel == false)) {
+		rc = drxj_dap_read_reg16(dev_addr, FEC_OC_COMM_MB__A, &fec_oc_comm_mb, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 		fec_oc_comm_mb &= ~FEC_OC_COMM_MB_CTL_ON;
-		अगर (ext_attr->mpeg_start_width == DRXJ_MPEG_START_WIDTH_8CLKCYC)
+		if (ext_attr->mpeg_start_width == DRXJ_MPEG_START_WIDTH_8CLKCYC)
 			fec_oc_comm_mb |= FEC_OC_COMM_MB_CTL_ON;
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_COMM_MB__A, fec_oc_comm_mb, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_write_reg16(dev_addr, FEC_OC_COMM_MB__A, fec_oc_comm_mb, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
+			goto rw_error;
+		}
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*----------------------------------------------------------------------------*/
 /* miscellaneous configurations - end                             */
@@ -3526,340 +3525,340 @@ rw_error:
 /* UIO Configuration Functions - begin                                        */
 /*----------------------------------------------------------------------------*/
 /*
-* \पn पूर्णांक ctrl_set_uio_cfg()
-* \मrief Configure modus opअक्रमi UIO.
-* \param demod Poपूर्णांकer to demodulator instance.
-* \param uio_cfg Poपूर्णांकer to a configuration setting क्रम a certain UIO.
-* \लeturn पूर्णांक.
+* \fn int ctrl_set_uio_cfg()
+* \brief Configure modus oprandi UIO.
+* \param demod Pointer to demodulator instance.
+* \param uio_cfg Pointer to a configuration setting for a certain UIO.
+* \return int.
 */
-अटल पूर्णांक ctrl_set_uio_cfg(काष्ठा drx_demod_instance *demod, काष्ठा drxuio_cfg *uio_cfg)
-अणु
-	काष्ठा drxj_data *ext_attr = (काष्ठा drxj_data *) (शून्य);
-	पूर्णांक rc;
+static int ctrl_set_uio_cfg(struct drx_demod_instance *demod, struct drxuio_cfg *uio_cfg)
+{
+	struct drxj_data *ext_attr = (struct drxj_data *) (NULL);
+	int rc;
 
-	अगर ((uio_cfg == शून्य) || (demod == शून्य))
-		वापस -EINVAL;
+	if ((uio_cfg == NULL) || (demod == NULL))
+		return -EINVAL;
 
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
 
-	/*  Write magic word to enable pdr reg ग_लिखो               */
-	rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr, SIO_TOP_COMM_KEY__A, SIO_TOP_COMM_KEY_KEY, 0);
-	अगर (rc != 0) अणु
+	/*  Write magic word to enable pdr reg write               */
+	rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr, SIO_TOP_COMM_KEY__A, SIO_TOP_COMM_KEY_KEY, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	चयन (uio_cfg->uio) अणु
+		goto rw_error;
+	}
+	switch (uio_cfg->uio) {
       /*====================================================================*/
-	हाल DRX_UIO1:
+	case DRX_UIO1:
 		/* DRX_UIO1: SMA_TX UIO-1 */
-		अगर (!ext_attr->has_smatx)
-			वापस -EIO;
-		चयन (uio_cfg->mode) अणु
-		हाल DRX_UIO_MODE_FIRMWARE_SMA:
-		हाल DRX_UIO_MODE_FIRMWARE_SAW:
-		हाल DRX_UIO_MODE_READWRITE:
+		if (!ext_attr->has_smatx)
+			return -EIO;
+		switch (uio_cfg->mode) {
+		case DRX_UIO_MODE_FIRMWARE_SMA:
+		case DRX_UIO_MODE_FIRMWARE_SAW:
+		case DRX_UIO_MODE_READWRITE:
 			ext_attr->uio_sma_tx_mode = uio_cfg->mode;
-			अवरोध;
-		हाल DRX_UIO_MODE_DISABLE:
+			break;
+		case DRX_UIO_MODE_DISABLE:
 			ext_attr->uio_sma_tx_mode = uio_cfg->mode;
-			/* pad configuration रेजिस्टर is set 0 - input mode */
-			rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr, SIO_PDR_SMA_TX_CFG__A, 0, 0);
-			अगर (rc != 0) अणु
+			/* pad configuration register is set 0 - input mode */
+			rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr, SIO_PDR_SMA_TX_CFG__A, 0, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण		/* चयन ( uio_cfg->mode ) */
-		अवरोध;
+				goto rw_error;
+			}
+			break;
+		default:
+			return -EINVAL;
+		}		/* switch ( uio_cfg->mode ) */
+		break;
       /*====================================================================*/
-	हाल DRX_UIO2:
+	case DRX_UIO2:
 		/* DRX_UIO2: SMA_RX UIO-2 */
-		अगर (!ext_attr->has_smarx)
-			वापस -EIO;
-		चयन (uio_cfg->mode) अणु
-		हाल DRX_UIO_MODE_FIRMWARE0:
-		हाल DRX_UIO_MODE_READWRITE:
+		if (!ext_attr->has_smarx)
+			return -EIO;
+		switch (uio_cfg->mode) {
+		case DRX_UIO_MODE_FIRMWARE0:
+		case DRX_UIO_MODE_READWRITE:
 			ext_attr->uio_sma_rx_mode = uio_cfg->mode;
-			अवरोध;
-		हाल DRX_UIO_MODE_DISABLE:
+			break;
+		case DRX_UIO_MODE_DISABLE:
 			ext_attr->uio_sma_rx_mode = uio_cfg->mode;
-			/* pad configuration रेजिस्टर is set 0 - input mode */
-			rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr, SIO_PDR_SMA_RX_CFG__A, 0, 0);
-			अगर (rc != 0) अणु
+			/* pad configuration register is set 0 - input mode */
+			rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr, SIO_PDR_SMA_RX_CFG__A, 0, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण		/* चयन ( uio_cfg->mode ) */
-		अवरोध;
+				goto rw_error;
+			}
+			break;
+		default:
+			return -EINVAL;
+		}		/* switch ( uio_cfg->mode ) */
+		break;
       /*====================================================================*/
-	हाल DRX_UIO3:
+	case DRX_UIO3:
 		/* DRX_UIO3: GPIO UIO-3 */
-		अगर (!ext_attr->has_gpio)
-			वापस -EIO;
-		चयन (uio_cfg->mode) अणु
-		हाल DRX_UIO_MODE_FIRMWARE0:
-		हाल DRX_UIO_MODE_READWRITE:
+		if (!ext_attr->has_gpio)
+			return -EIO;
+		switch (uio_cfg->mode) {
+		case DRX_UIO_MODE_FIRMWARE0:
+		case DRX_UIO_MODE_READWRITE:
 			ext_attr->uio_gpio_mode = uio_cfg->mode;
-			अवरोध;
-		हाल DRX_UIO_MODE_DISABLE:
+			break;
+		case DRX_UIO_MODE_DISABLE:
 			ext_attr->uio_gpio_mode = uio_cfg->mode;
-			/* pad configuration रेजिस्टर is set 0 - input mode */
-			rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr, SIO_PDR_GPIO_CFG__A, 0, 0);
-			अगर (rc != 0) अणु
+			/* pad configuration register is set 0 - input mode */
+			rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr, SIO_PDR_GPIO_CFG__A, 0, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण		/* चयन ( uio_cfg->mode ) */
-		अवरोध;
+				goto rw_error;
+			}
+			break;
+		default:
+			return -EINVAL;
+		}		/* switch ( uio_cfg->mode ) */
+		break;
       /*====================================================================*/
-	हाल DRX_UIO4:
+	case DRX_UIO4:
 		/* DRX_UIO4: IRQN UIO-4 */
-		अगर (!ext_attr->has_irqn)
-			वापस -EIO;
-		चयन (uio_cfg->mode) अणु
-		हाल DRX_UIO_MODE_READWRITE:
+		if (!ext_attr->has_irqn)
+			return -EIO;
+		switch (uio_cfg->mode) {
+		case DRX_UIO_MODE_READWRITE:
 			ext_attr->uio_irqn_mode = uio_cfg->mode;
-			अवरोध;
-		हाल DRX_UIO_MODE_DISABLE:
-			/* pad configuration रेजिस्टर is set 0 - input mode */
-			rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr, SIO_PDR_IRQN_CFG__A, 0, 0);
-			अगर (rc != 0) अणु
+			break;
+		case DRX_UIO_MODE_DISABLE:
+			/* pad configuration register is set 0 - input mode */
+			rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr, SIO_PDR_IRQN_CFG__A, 0, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 			ext_attr->uio_irqn_mode = uio_cfg->mode;
-			अवरोध;
-		हाल DRX_UIO_MODE_FIRMWARE0:
-		शेष:
-			वापस -EINVAL;
-		पूर्ण		/* चयन ( uio_cfg->mode ) */
-		अवरोध;
+			break;
+		case DRX_UIO_MODE_FIRMWARE0:
+		default:
+			return -EINVAL;
+		}		/* switch ( uio_cfg->mode ) */
+		break;
       /*====================================================================*/
-	शेष:
-		वापस -EINVAL;
-	पूर्ण			/* चयन ( uio_cfg->uio ) */
+	default:
+		return -EINVAL;
+	}			/* switch ( uio_cfg->uio ) */
 
-	/*  Write magic word to disable pdr reg ग_लिखो               */
-	rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr, SIO_TOP_COMM_KEY__A, 0x0000, 0);
-	अगर (rc != 0) अणु
+	/*  Write magic word to disable pdr reg write               */
+	rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr, SIO_TOP_COMM_KEY__A, 0x0000, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
-* \पn पूर्णांक ctrl_uio_ग_लिखो()
-* \मrief Write to a UIO.
-* \param demod Poपूर्णांकer to demodulator instance.
-* \param uio_data Poपूर्णांकer to data container क्रम a certain UIO.
-* \लeturn पूर्णांक.
+* \fn int ctrl_uio_write()
+* \brief Write to a UIO.
+* \param demod Pointer to demodulator instance.
+* \param uio_data Pointer to data container for a certain UIO.
+* \return int.
 */
-अटल पूर्णांक
-ctrl_uio_ग_लिखो(काष्ठा drx_demod_instance *demod, काष्ठा drxuio_data *uio_data)
-अणु
-	काष्ठा drxj_data *ext_attr = (काष्ठा drxj_data *) (शून्य);
-	पूर्णांक rc;
+static int
+ctrl_uio_write(struct drx_demod_instance *demod, struct drxuio_data *uio_data)
+{
+	struct drxj_data *ext_attr = (struct drxj_data *) (NULL);
+	int rc;
 	u16 pin_cfg_value = 0;
 	u16 value = 0;
 
-	अगर ((uio_data == शून्य) || (demod == शून्य))
-		वापस -EINVAL;
+	if ((uio_data == NULL) || (demod == NULL))
+		return -EINVAL;
 
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
 
-	/*  Write magic word to enable pdr reg ग_लिखो               */
-	rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr, SIO_TOP_COMM_KEY__A, SIO_TOP_COMM_KEY_KEY, 0);
-	अगर (rc != 0) अणु
+	/*  Write magic word to enable pdr reg write               */
+	rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr, SIO_TOP_COMM_KEY__A, SIO_TOP_COMM_KEY_KEY, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	चयन (uio_data->uio) अणु
+		goto rw_error;
+	}
+	switch (uio_data->uio) {
       /*====================================================================*/
-	हाल DRX_UIO1:
+	case DRX_UIO1:
 		/* DRX_UIO1: SMA_TX UIO-1 */
-		अगर (!ext_attr->has_smatx)
-			वापस -EIO;
-		अगर ((ext_attr->uio_sma_tx_mode != DRX_UIO_MODE_READWRITE)
-		    && (ext_attr->uio_sma_tx_mode != DRX_UIO_MODE_FIRMWARE_SAW)) अणु
-			वापस -EIO;
-		पूर्ण
+		if (!ext_attr->has_smatx)
+			return -EIO;
+		if ((ext_attr->uio_sma_tx_mode != DRX_UIO_MODE_READWRITE)
+		    && (ext_attr->uio_sma_tx_mode != DRX_UIO_MODE_FIRMWARE_SAW)) {
+			return -EIO;
+		}
 		pin_cfg_value = 0;
-		/* io_pad_cfg रेजिस्टर (8 bit reg.) MSB bit is 1 (शेष value) */
+		/* io_pad_cfg register (8 bit reg.) MSB bit is 1 (default value) */
 		pin_cfg_value |= 0x0113;
 		/* io_pad_cfg_mode output mode is drive always */
-		/* io_pad_cfg_drive is set to घातer 2 (23 mA) */
+		/* io_pad_cfg_drive is set to power 2 (23 mA) */
 
-		/* ग_लिखो to io pad configuration रेजिस्टर - output mode */
-		rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr, SIO_PDR_SMA_TX_CFG__A, pin_cfg_value, 0);
-		अगर (rc != 0) अणु
+		/* write to io pad configuration register - output mode */
+		rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr, SIO_PDR_SMA_TX_CFG__A, pin_cfg_value, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 
 		/* use corresponding bit in io data output registar */
-		rc = drxj_dap_पढ़ो_reg16(demod->my_i2c_dev_addr, SIO_PDR_UIO_OUT_LO__A, &value, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_read_reg16(demod->my_i2c_dev_addr, SIO_PDR_UIO_OUT_LO__A, &value, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		अगर (!uio_data->value)
-			value &= 0x7FFF;	/* ग_लिखो zero to 15th bit - 1st UIO */
-		अन्यथा
-			value |= 0x8000;	/* ग_लिखो one to 15th bit - 1st UIO */
+			goto rw_error;
+		}
+		if (!uio_data->value)
+			value &= 0x7FFF;	/* write zero to 15th bit - 1st UIO */
+		else
+			value |= 0x8000;	/* write one to 15th bit - 1st UIO */
 
-		/* ग_लिखो back to io data output रेजिस्टर */
-		rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr, SIO_PDR_UIO_OUT_LO__A, value, 0);
-		अगर (rc != 0) अणु
+		/* write back to io data output register */
+		rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr, SIO_PDR_UIO_OUT_LO__A, value, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		अवरोध;
+			goto rw_error;
+		}
+		break;
    /*======================================================================*/
-	हाल DRX_UIO2:
+	case DRX_UIO2:
 		/* DRX_UIO2: SMA_RX UIO-2 */
-		अगर (!ext_attr->has_smarx)
-			वापस -EIO;
-		अगर (ext_attr->uio_sma_rx_mode != DRX_UIO_MODE_READWRITE)
-			वापस -EIO;
+		if (!ext_attr->has_smarx)
+			return -EIO;
+		if (ext_attr->uio_sma_rx_mode != DRX_UIO_MODE_READWRITE)
+			return -EIO;
 
 		pin_cfg_value = 0;
-		/* io_pad_cfg रेजिस्टर (8 bit reg.) MSB bit is 1 (शेष value) */
+		/* io_pad_cfg register (8 bit reg.) MSB bit is 1 (default value) */
 		pin_cfg_value |= 0x0113;
 		/* io_pad_cfg_mode output mode is drive always */
-		/* io_pad_cfg_drive is set to घातer 2 (23 mA) */
+		/* io_pad_cfg_drive is set to power 2 (23 mA) */
 
-		/* ग_लिखो to io pad configuration रेजिस्टर - output mode */
-		rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr, SIO_PDR_SMA_RX_CFG__A, pin_cfg_value, 0);
-		अगर (rc != 0) अणु
+		/* write to io pad configuration register - output mode */
+		rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr, SIO_PDR_SMA_RX_CFG__A, pin_cfg_value, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 
 		/* use corresponding bit in io data output registar */
-		rc = drxj_dap_पढ़ो_reg16(demod->my_i2c_dev_addr, SIO_PDR_UIO_OUT_LO__A, &value, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_read_reg16(demod->my_i2c_dev_addr, SIO_PDR_UIO_OUT_LO__A, &value, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		अगर (!uio_data->value)
-			value &= 0xBFFF;	/* ग_लिखो zero to 14th bit - 2nd UIO */
-		अन्यथा
-			value |= 0x4000;	/* ग_लिखो one to 14th bit - 2nd UIO */
+			goto rw_error;
+		}
+		if (!uio_data->value)
+			value &= 0xBFFF;	/* write zero to 14th bit - 2nd UIO */
+		else
+			value |= 0x4000;	/* write one to 14th bit - 2nd UIO */
 
-		/* ग_लिखो back to io data output रेजिस्टर */
-		rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr, SIO_PDR_UIO_OUT_LO__A, value, 0);
-		अगर (rc != 0) अणु
+		/* write back to io data output register */
+		rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr, SIO_PDR_UIO_OUT_LO__A, value, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		अवरोध;
+			goto rw_error;
+		}
+		break;
    /*====================================================================*/
-	हाल DRX_UIO3:
+	case DRX_UIO3:
 		/* DRX_UIO3: ASEL UIO-3 */
-		अगर (!ext_attr->has_gpio)
-			वापस -EIO;
-		अगर (ext_attr->uio_gpio_mode != DRX_UIO_MODE_READWRITE)
-			वापस -EIO;
+		if (!ext_attr->has_gpio)
+			return -EIO;
+		if (ext_attr->uio_gpio_mode != DRX_UIO_MODE_READWRITE)
+			return -EIO;
 
 		pin_cfg_value = 0;
-		/* io_pad_cfg रेजिस्टर (8 bit reg.) MSB bit is 1 (शेष value) */
+		/* io_pad_cfg register (8 bit reg.) MSB bit is 1 (default value) */
 		pin_cfg_value |= 0x0113;
 		/* io_pad_cfg_mode output mode is drive always */
-		/* io_pad_cfg_drive is set to घातer 2 (23 mA) */
+		/* io_pad_cfg_drive is set to power 2 (23 mA) */
 
-		/* ग_लिखो to io pad configuration रेजिस्टर - output mode */
-		rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr, SIO_PDR_GPIO_CFG__A, pin_cfg_value, 0);
-		अगर (rc != 0) अणु
+		/* write to io pad configuration register - output mode */
+		rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr, SIO_PDR_GPIO_CFG__A, pin_cfg_value, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 
 		/* use corresponding bit in io data output registar */
-		rc = drxj_dap_पढ़ो_reg16(demod->my_i2c_dev_addr, SIO_PDR_UIO_OUT_HI__A, &value, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_read_reg16(demod->my_i2c_dev_addr, SIO_PDR_UIO_OUT_HI__A, &value, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		अगर (!uio_data->value)
-			value &= 0xFFFB;	/* ग_लिखो zero to 2nd bit - 3rd UIO */
-		अन्यथा
-			value |= 0x0004;	/* ग_लिखो one to 2nd bit - 3rd UIO */
+			goto rw_error;
+		}
+		if (!uio_data->value)
+			value &= 0xFFFB;	/* write zero to 2nd bit - 3rd UIO */
+		else
+			value |= 0x0004;	/* write one to 2nd bit - 3rd UIO */
 
-		/* ग_लिखो back to io data output रेजिस्टर */
-		rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr, SIO_PDR_UIO_OUT_HI__A, value, 0);
-		अगर (rc != 0) अणु
+		/* write back to io data output register */
+		rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr, SIO_PDR_UIO_OUT_HI__A, value, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		अवरोध;
+			goto rw_error;
+		}
+		break;
    /*=====================================================================*/
-	हाल DRX_UIO4:
+	case DRX_UIO4:
 		/* DRX_UIO4: IRQN UIO-4 */
-		अगर (!ext_attr->has_irqn)
-			वापस -EIO;
+		if (!ext_attr->has_irqn)
+			return -EIO;
 
-		अगर (ext_attr->uio_irqn_mode != DRX_UIO_MODE_READWRITE)
-			वापस -EIO;
+		if (ext_attr->uio_irqn_mode != DRX_UIO_MODE_READWRITE)
+			return -EIO;
 
 		pin_cfg_value = 0;
-		/* io_pad_cfg रेजिस्टर (8 bit reg.) MSB bit is 1 (शेष value) */
+		/* io_pad_cfg register (8 bit reg.) MSB bit is 1 (default value) */
 		pin_cfg_value |= 0x0113;
 		/* io_pad_cfg_mode output mode is drive always */
-		/* io_pad_cfg_drive is set to घातer 2 (23 mA) */
+		/* io_pad_cfg_drive is set to power 2 (23 mA) */
 
-		/* ग_लिखो to io pad configuration रेजिस्टर - output mode */
-		rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr, SIO_PDR_IRQN_CFG__A, pin_cfg_value, 0);
-		अगर (rc != 0) अणु
+		/* write to io pad configuration register - output mode */
+		rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr, SIO_PDR_IRQN_CFG__A, pin_cfg_value, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 
 		/* use corresponding bit in io data output registar */
-		rc = drxj_dap_पढ़ो_reg16(demod->my_i2c_dev_addr, SIO_PDR_UIO_OUT_LO__A, &value, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_read_reg16(demod->my_i2c_dev_addr, SIO_PDR_UIO_OUT_LO__A, &value, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		अगर (uio_data->value == false)
-			value &= 0xEFFF;	/* ग_लिखो zero to 12th bit - 4th UIO */
-		अन्यथा
-			value |= 0x1000;	/* ग_लिखो one to 12th bit - 4th UIO */
+			goto rw_error;
+		}
+		if (uio_data->value == false)
+			value &= 0xEFFF;	/* write zero to 12th bit - 4th UIO */
+		else
+			value |= 0x1000;	/* write one to 12th bit - 4th UIO */
 
-		/* ग_लिखो back to io data output रेजिस्टर */
-		rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr, SIO_PDR_UIO_OUT_LO__A, value, 0);
-		अगर (rc != 0) अणु
+		/* write back to io data output register */
+		rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr, SIO_PDR_UIO_OUT_LO__A, value, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		अवरोध;
+			goto rw_error;
+		}
+		break;
       /*=====================================================================*/
-	शेष:
-		वापस -EINVAL;
-	पूर्ण			/* चयन ( uio_data->uio ) */
+	default:
+		return -EINVAL;
+	}			/* switch ( uio_data->uio ) */
 
-	/*  Write magic word to disable pdr reg ग_लिखो               */
-	rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr, SIO_TOP_COMM_KEY__A, 0x0000, 0);
-	अगर (rc != 0) अणु
+	/*  Write magic word to disable pdr reg write               */
+	rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr, SIO_TOP_COMM_KEY__A, 0x0000, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*---------------------------------------------------------------------------*/
 /* UIO Configuration Functions - end                                         */
@@ -3869,32 +3868,32 @@ rw_error:
 /* I2C Bridge Functions - begin                                               */
 /*----------------------------------------------------------------------------*/
 /*
-* \पn पूर्णांक ctrl_i2c_bridge()
-* \मrief Open or बंद the I2C चयन to tuner.
-* \param demod Poपूर्णांकer to demodulator instance.
-* \param bridge_बंदd Poपूर्णांकer to bool indication अगर bridge is बंदd not.
-* \लeturn पूर्णांक.
+* \fn int ctrl_i2c_bridge()
+* \brief Open or close the I2C switch to tuner.
+* \param demod Pointer to demodulator instance.
+* \param bridge_closed Pointer to bool indication if bridge is closed not.
+* \return int.
 
 */
-अटल पूर्णांक
-ctrl_i2c_bridge(काष्ठा drx_demod_instance *demod, bool *bridge_बंदd)
-अणु
-	काष्ठा drxj_hi_cmd hi_cmd;
+static int
+ctrl_i2c_bridge(struct drx_demod_instance *demod, bool *bridge_closed)
+{
+	struct drxj_hi_cmd hi_cmd;
 	u16 result = 0;
 
 	/* check arguments */
-	अगर (bridge_बंदd == शून्य)
-		वापस -EINVAL;
+	if (bridge_closed == NULL)
+		return -EINVAL;
 
 	hi_cmd.cmd = SIO_HI_RA_RAM_CMD_BRDCTRL;
 	hi_cmd.param1 = SIO_HI_RA_RAM_PAR_1_PAR1_SEC_KEY;
-	अगर (*bridge_बंदd)
+	if (*bridge_closed)
 		hi_cmd.param2 = SIO_HI_RA_RAM_PAR_2_BRD_CFG_CLOSED;
-	अन्यथा
+	else
 		hi_cmd.param2 = SIO_HI_RA_RAM_PAR_2_BRD_CFG_OPEN;
 
-	वापस hi_command(demod->my_i2c_dev_addr, &hi_cmd, &result);
-पूर्ण
+	return hi_command(demod->my_i2c_dev_addr, &hi_cmd, &result);
+}
 
 /*----------------------------------------------------------------------------*/
 /* I2C Bridge Functions - end                                                 */
@@ -3904,269 +3903,269 @@ ctrl_i2c_bridge(काष्ठा drx_demod_instance *demod, bool *bridge_ब�
 /* Smart antenna Functions - begin                                            */
 /*----------------------------------------------------------------------------*/
 /*
-* \पn पूर्णांक smart_ant_init()
-* \मrief Initialize Smart Antenna.
-* \param poपूर्णांकer to काष्ठा drx_demod_instance.
-* \लeturn पूर्णांक.
+* \fn int smart_ant_init()
+* \brief Initialize Smart Antenna.
+* \param pointer to struct drx_demod_instance.
+* \return int.
 *
 */
-अटल पूर्णांक smart_ant_init(काष्ठा drx_demod_instance *demod)
-अणु
-	काष्ठा drxj_data *ext_attr = शून्य;
-	काष्ठा i2c_device_addr *dev_addr = शून्य;
-	काष्ठा drxuio_cfg uio_cfg = अणु DRX_UIO1, DRX_UIO_MODE_FIRMWARE_SMA पूर्ण;
-	पूर्णांक rc;
+static int smart_ant_init(struct drx_demod_instance *demod)
+{
+	struct drxj_data *ext_attr = NULL;
+	struct i2c_device_addr *dev_addr = NULL;
+	struct drxuio_cfg uio_cfg = { DRX_UIO1, DRX_UIO_MODE_FIRMWARE_SMA };
+	int rc;
 	u16 data = 0;
 
 	dev_addr = demod->my_i2c_dev_addr;
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
 
-	/*  Write magic word to enable pdr reg ग_लिखो               */
-	rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr, SIO_TOP_COMM_KEY__A, SIO_TOP_COMM_KEY_KEY, 0);
-	अगर (rc != 0) अणु
+	/*  Write magic word to enable pdr reg write               */
+	rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr, SIO_TOP_COMM_KEY__A, SIO_TOP_COMM_KEY_KEY, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	/* init smart antenna */
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, SIO_SA_TX_COMMAND__A, &data, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_read_reg16(dev_addr, SIO_SA_TX_COMMAND__A, &data, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	अगर (ext_attr->smart_ant_inverted) अणु
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_SA_TX_COMMAND__A, (data | SIO_SA_TX_COMMAND_TX_INVERT__M) | SIO_SA_TX_COMMAND_TX_ENABLE__M, 0);
-		अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	if (ext_attr->smart_ant_inverted) {
+		rc = drxj_dap_write_reg16(dev_addr, SIO_SA_TX_COMMAND__A, (data | SIO_SA_TX_COMMAND_TX_INVERT__M) | SIO_SA_TX_COMMAND_TX_ENABLE__M, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_SA_TX_COMMAND__A, (data & (~SIO_SA_TX_COMMAND_TX_INVERT__M)) | SIO_SA_TX_COMMAND_TX_ENABLE__M, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+	} else {
+		rc = drxj_dap_write_reg16(dev_addr, SIO_SA_TX_COMMAND__A, (data & (~SIO_SA_TX_COMMAND_TX_INVERT__M)) | SIO_SA_TX_COMMAND_TX_ENABLE__M, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
+			goto rw_error;
+		}
+	}
 
 	/* config SMA_TX pin to smart antenna mode */
 	rc = ctrl_set_uio_cfg(demod, &uio_cfg);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr, SIO_PDR_SMA_TX_CFG__A, 0x13, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr, SIO_PDR_SMA_TX_CFG__A, 0x13, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr, SIO_PDR_SMA_TX_GPIO_FNC__A, 0x03, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr, SIO_PDR_SMA_TX_GPIO_FNC__A, 0x03, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	/*  Write magic word to disable pdr reg ग_लिखो               */
-	rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr, SIO_TOP_COMM_KEY__A, 0x0000, 0);
-	अगर (rc != 0) अणु
+	/*  Write magic word to disable pdr reg write               */
+	rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr, SIO_TOP_COMM_KEY__A, 0x0000, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक scu_command(काष्ठा i2c_device_addr *dev_addr, काष्ठा drxjscu_cmd *cmd)
-अणु
-	पूर्णांक rc;
+static int scu_command(struct i2c_device_addr *dev_addr, struct drxjscu_cmd *cmd)
+{
+	int rc;
 	u16 cur_cmd = 0;
-	अचिन्हित दीर्घ समयout;
+	unsigned long timeout;
 
 	/* Check param */
-	अगर (cmd == शून्य)
-		वापस -EINVAL;
+	if (cmd == NULL)
+		return -EINVAL;
 
-	/* Wait until SCU command पूर्णांकerface is पढ़ोy to receive command */
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, SCU_RAM_COMMAND__A, &cur_cmd, 0);
-	अगर (rc != 0) अणु
+	/* Wait until SCU command interface is ready to receive command */
+	rc = drxj_dap_read_reg16(dev_addr, SCU_RAM_COMMAND__A, &cur_cmd, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	अगर (cur_cmd != DRX_SCU_READY)
-		वापस -EIO;
+		goto rw_error;
+	}
+	if (cur_cmd != DRX_SCU_READY)
+		return -EIO;
 
-	चयन (cmd->parameter_len) अणु
-	हाल 5:
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_PARAM_4__A, *(cmd->parameter + 4), 0);
-		अगर (rc != 0) अणु
+	switch (cmd->parameter_len) {
+	case 5:
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_PARAM_4__A, *(cmd->parameter + 4), 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 		fallthrough;
-	हाल 4:
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_PARAM_3__A, *(cmd->parameter + 3), 0);
-		अगर (rc != 0) अणु
+	case 4:
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_PARAM_3__A, *(cmd->parameter + 3), 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 		fallthrough;
-	हाल 3:
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_PARAM_2__A, *(cmd->parameter + 2), 0);
-		अगर (rc != 0) अणु
+	case 3:
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_PARAM_2__A, *(cmd->parameter + 2), 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 		fallthrough;
-	हाल 2:
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_PARAM_1__A, *(cmd->parameter + 1), 0);
-		अगर (rc != 0) अणु
+	case 2:
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_PARAM_1__A, *(cmd->parameter + 1), 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 		fallthrough;
-	हाल 1:
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_PARAM_0__A, *(cmd->parameter + 0), 0);
-		अगर (rc != 0) अणु
+	case 1:
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_PARAM_0__A, *(cmd->parameter + 0), 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 		fallthrough;
-	हाल 0:
-		/* करो nothing */
-		अवरोध;
-	शेष:
+	case 0:
+		/* do nothing */
+		break;
+	default:
 		/* this number of parameters is not supported */
-		वापस -EIO;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_COMMAND__A, cmd->command, 0);
-	अगर (rc != 0) अणु
+		return -EIO;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_COMMAND__A, cmd->command, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	/* Wait until SCU has processed command */
-	समयout = jअगरfies + msecs_to_jअगरfies(DRXJ_MAX_WAITTIME);
-	जबतक (समय_is_after_jअगरfies(समयout)) अणु
-		rc = drxj_dap_पढ़ो_reg16(dev_addr, SCU_RAM_COMMAND__A, &cur_cmd, 0);
-		अगर (rc != 0) अणु
+	timeout = jiffies + msecs_to_jiffies(DRXJ_MAX_WAITTIME);
+	while (time_is_after_jiffies(timeout)) {
+		rc = drxj_dap_read_reg16(dev_addr, SCU_RAM_COMMAND__A, &cur_cmd, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		अगर (cur_cmd == DRX_SCU_READY)
-			अवरोध;
+			goto rw_error;
+		}
+		if (cur_cmd == DRX_SCU_READY)
+			break;
 		usleep_range(1000, 2000);
-	पूर्ण
+	}
 
-	अगर (cur_cmd != DRX_SCU_READY)
-		वापस -EIO;
+	if (cur_cmd != DRX_SCU_READY)
+		return -EIO;
 
-	/* पढ़ो results */
-	अगर ((cmd->result_len > 0) && (cmd->result != शून्य)) अणु
+	/* read results */
+	if ((cmd->result_len > 0) && (cmd->result != NULL)) {
 		s16 err;
 
-		चयन (cmd->result_len) अणु
-		हाल 4:
-			rc = drxj_dap_पढ़ो_reg16(dev_addr, SCU_RAM_PARAM_3__A, cmd->result + 3, 0);
-			अगर (rc != 0) अणु
+		switch (cmd->result_len) {
+		case 4:
+			rc = drxj_dap_read_reg16(dev_addr, SCU_RAM_PARAM_3__A, cmd->result + 3, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 			fallthrough;
-		हाल 3:
-			rc = drxj_dap_पढ़ो_reg16(dev_addr, SCU_RAM_PARAM_2__A, cmd->result + 2, 0);
-			अगर (rc != 0) अणु
+		case 3:
+			rc = drxj_dap_read_reg16(dev_addr, SCU_RAM_PARAM_2__A, cmd->result + 2, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 			fallthrough;
-		हाल 2:
-			rc = drxj_dap_पढ़ो_reg16(dev_addr, SCU_RAM_PARAM_1__A, cmd->result + 1, 0);
-			अगर (rc != 0) अणु
+		case 2:
+			rc = drxj_dap_read_reg16(dev_addr, SCU_RAM_PARAM_1__A, cmd->result + 1, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 			fallthrough;
-		हाल 1:
-			rc = drxj_dap_पढ़ो_reg16(dev_addr, SCU_RAM_PARAM_0__A, cmd->result + 0, 0);
-			अगर (rc != 0) अणु
+		case 1:
+			rc = drxj_dap_read_reg16(dev_addr, SCU_RAM_PARAM_0__A, cmd->result + 0, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 			fallthrough;
-		हाल 0:
-			/* करो nothing */
-			अवरोध;
-		शेष:
+		case 0:
+			/* do nothing */
+			break;
+		default:
 			/* this number of parameters is not supported */
-			वापस -EIO;
-		पूर्ण
+			return -EIO;
+		}
 
-		/* Check अगर an error was reported by SCU */
+		/* Check if an error was reported by SCU */
 		err = cmd->result[0];
 
 		/* check a few fixed error codes */
-		अगर ((err == (s16) SCU_RAM_PARAM_0_RESULT_UNKSTD)
+		if ((err == (s16) SCU_RAM_PARAM_0_RESULT_UNKSTD)
 		    || (err == (s16) SCU_RAM_PARAM_0_RESULT_UNKCMD)
 		    || (err == (s16) SCU_RAM_PARAM_0_RESULT_INVPAR)
 		    || (err == (s16) SCU_RAM_PARAM_0_RESULT_SIZE)
-		    ) अणु
-			वापस -EINVAL;
-		पूर्ण
+		    ) {
+			return -EINVAL;
+		}
 		/* here it is assumed that negative means error, and positive no error */
-		अन्यथा अगर (err < 0)
-			वापस -EIO;
-		अन्यथा
-			वापस 0;
-	पूर्ण
+		else if (err < 0)
+			return -EIO;
+		else
+			return 0;
+	}
 
-	वापस 0;
+	return 0;
 
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
-* \पn पूर्णांक DRXJ_DAP_SCUAtomicReadWriteBlock()
-* \मrief Basic access routine क्रम SCU atomic पढ़ो or ग_लिखो access
-* \param dev_addr  poपूर्णांकer to i2c dev address
+* \fn int DRXJ_DAP_SCUAtomicReadWriteBlock()
+* \brief Basic access routine for SCU atomic read or write access
+* \param dev_addr  pointer to i2c dev address
 * \param addr     destination/source address
 * \param datasize size of data buffer in bytes
-* \param data     poपूर्णांकer to data buffer
-* \लeturn पूर्णांक
-* \लetval 0 Success
-* \लetval -EIO Timeout, I2C error, illegal bank
+* \param data     pointer to data buffer
+* \return int
+* \retval 0 Success
+* \retval -EIO Timeout, I2C error, illegal bank
 *
 */
-#घोषणा ADDR_AT_SCU_SPACE(x) ((x - 0x82E000) * 2)
-अटल
-पूर्णांक drxj_dap_scu_atomic_पढ़ो_ग_लिखो_block(काष्ठा i2c_device_addr *dev_addr, u32 addr, u16 datasize,	/* max 30 bytes because the limit of SCU parameter */
-					      u8 *data, bool पढ़ो_flag)
-अणु
-	काष्ठा drxjscu_cmd scu_cmd;
-	पूर्णांक rc;
+#define ADDR_AT_SCU_SPACE(x) ((x - 0x82E000) * 2)
+static
+int drxj_dap_scu_atomic_read_write_block(struct i2c_device_addr *dev_addr, u32 addr, u16 datasize,	/* max 30 bytes because the limit of SCU parameter */
+					      u8 *data, bool read_flag)
+{
+	struct drxjscu_cmd scu_cmd;
+	int rc;
 	u16 set_param_parameters[18];
 	u16 cmd_result[15];
 
 	/* Parameter check */
-	अगर (!data || !dev_addr || (datasize % 2) || ((datasize / 2) > 16))
-		वापस -EINVAL;
+	if (!data || !dev_addr || (datasize % 2) || ((datasize / 2) > 16))
+		return -EINVAL;
 
 	set_param_parameters[1] = (u16) ADDR_AT_SCU_SPACE(addr);
-	अगर (पढ़ो_flag) अणु		/* पढ़ो */
+	if (read_flag) {		/* read */
 		set_param_parameters[0] = ((~(0x0080)) & datasize);
 		scu_cmd.parameter_len = 2;
 		scu_cmd.result_len = datasize / 2 + 2;
-	पूर्ण अन्यथा अणु
-		पूर्णांक i = 0;
+	} else {
+		int i = 0;
 
 		set_param_parameters[0] = 0x0080 | datasize;
-		क्रम (i = 0; i < (datasize / 2); i++) अणु
+		for (i = 0; i < (datasize / 2); i++) {
 			set_param_parameters[i + 2] =
 			    (data[2 * i] | (data[(2 * i) + 1] << 8));
-		पूर्ण
+		}
 		scu_cmd.parameter_len = datasize / 2 + 2;
 		scu_cmd.result_len = 1;
-	पूर्ण
+	}
 
 	scu_cmd.command =
 	    SCU_RAM_COMMAND_STANDARD_TOP |
@@ -4174,196 +4173,196 @@ rw_error:
 	scu_cmd.result = cmd_result;
 	scu_cmd.parameter = set_param_parameters;
 	rc = scu_command(dev_addr, &scu_cmd);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	अगर (पढ़ो_flag) अणु
-		पूर्णांक i = 0;
-		/* पढ़ो data from buffer */
-		क्रम (i = 0; i < (datasize / 2); i++) अणु
+	if (read_flag) {
+		int i = 0;
+		/* read data from buffer */
+		for (i = 0; i < (datasize / 2); i++) {
 			data[2 * i] = (u8) (scu_cmd.result[i + 2] & 0xFF);
 			data[(2 * i) + 1] = (u8) (scu_cmd.result[i + 2] >> 8);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 rw_error:
-	वापस rc;
+	return rc;
 
-पूर्ण
+}
 
 /*============================================================================*/
 
 /*
-* \पn पूर्णांक DRXJ_DAP_AtomicReadReg16()
-* \मrief Atomic पढ़ो of 16 bits words
+* \fn int DRXJ_DAP_AtomicReadReg16()
+* \brief Atomic read of 16 bits words
 */
-अटल
-पूर्णांक drxj_dap_scu_atomic_पढ़ो_reg16(काष्ठा i2c_device_addr *dev_addr,
+static
+int drxj_dap_scu_atomic_read_reg16(struct i2c_device_addr *dev_addr,
 					 u32 addr,
 					 u16 *data, u32 flags)
-अणु
-	u8 buf[2] = अणु 0 पूर्ण;
-	पूर्णांक rc;
+{
+	u8 buf[2] = { 0 };
+	int rc;
 	u16 word = 0;
 
-	अगर (!data)
-		वापस -EINVAL;
+	if (!data)
+		return -EINVAL;
 
-	rc = drxj_dap_scu_atomic_पढ़ो_ग_लिखो_block(dev_addr, addr, 2, buf, true);
-	अगर (rc < 0)
-		वापस rc;
+	rc = drxj_dap_scu_atomic_read_write_block(dev_addr, addr, 2, buf, true);
+	if (rc < 0)
+		return rc;
 
 	word = (u16) (buf[0] + (buf[1] << 8));
 
 	*data = word;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*============================================================================*/
 /*
-* \पn पूर्णांक drxj_dap_scu_atomic_ग_लिखो_reg16()
-* \मrief Atomic पढ़ो of 16 bits words
+* \fn int drxj_dap_scu_atomic_write_reg16()
+* \brief Atomic read of 16 bits words
 */
-अटल
-पूर्णांक drxj_dap_scu_atomic_ग_लिखो_reg16(काष्ठा i2c_device_addr *dev_addr,
+static
+int drxj_dap_scu_atomic_write_reg16(struct i2c_device_addr *dev_addr,
 					  u32 addr,
 					  u16 data, u32 flags)
-अणु
+{
 	u8 buf[2];
-	पूर्णांक rc;
+	int rc;
 
 	buf[0] = (u8) (data & 0xff);
 	buf[1] = (u8) ((data >> 8) & 0xff);
 
-	rc = drxj_dap_scu_atomic_पढ़ो_ग_लिखो_block(dev_addr, addr, 2, buf, false);
+	rc = drxj_dap_scu_atomic_read_write_block(dev_addr, addr, 2, buf, false);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /* -------------------------------------------------------------------------- */
 /*
-* \मrief Measure result of ADC synchronisation
+* \brief Measure result of ADC synchronisation
 * \param demod demod instance
-* \param count (वापसed) count
-* \लeturn पूर्णांक.
-* \लetval 0    Success
-* \लetval -EIO Failure: I2C error
+* \param count (returned) count
+* \return int.
+* \retval 0    Success
+* \retval -EIO Failure: I2C error
 *
 */
-अटल पूर्णांक adc_sync_measurement(काष्ठा drx_demod_instance *demod, u16 *count)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = शून्य;
-	पूर्णांक rc;
+static int adc_sync_measurement(struct drx_demod_instance *demod, u16 *count)
+{
+	struct i2c_device_addr *dev_addr = NULL;
+	int rc;
 	u16 data = 0;
 
 	dev_addr = demod->my_i2c_dev_addr;
 
 	/* Start measurement */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_COMM_EXEC__A, IQM_AF_COMM_EXEC_ACTIVE, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, IQM_AF_COMM_EXEC__A, IQM_AF_COMM_EXEC_ACTIVE, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_START_LOCK__A, 1, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, IQM_AF_START_LOCK__A, 1, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	/* Wait at least 3*128*(1/sysclk) <<< 1 millisec */
 	msleep(1);
 
 	*count = 0;
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, IQM_AF_PHASE0__A, &data, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_read_reg16(dev_addr, IQM_AF_PHASE0__A, &data, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	अगर (data == 127)
+		goto rw_error;
+	}
+	if (data == 127)
 		*count = *count + 1;
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, IQM_AF_PHASE1__A, &data, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_read_reg16(dev_addr, IQM_AF_PHASE1__A, &data, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	अगर (data == 127)
+		goto rw_error;
+	}
+	if (data == 127)
 		*count = *count + 1;
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, IQM_AF_PHASE2__A, &data, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_read_reg16(dev_addr, IQM_AF_PHASE2__A, &data, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	अगर (data == 127)
+		goto rw_error;
+	}
+	if (data == 127)
 		*count = *count + 1;
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
-* \मrief Synchronize analog and digital घड़ी करोमुख्यs
+* \brief Synchronize analog and digital clock domains
 * \param demod demod instance
-* \लeturn पूर्णांक.
-* \लetval 0    Success
-* \लetval -EIO Failure: I2C error or failure to synchronize
+* \return int.
+* \retval 0    Success
+* \retval -EIO Failure: I2C error or failure to synchronize
 *
 * An IQM reset will also reset the results of this synchronization.
 * After an IQM reset this routine needs to be called again.
 *
 */
 
-अटल पूर्णांक adc_synchronization(काष्ठा drx_demod_instance *demod)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = शून्य;
-	पूर्णांक rc;
+static int adc_synchronization(struct drx_demod_instance *demod)
+{
+	struct i2c_device_addr *dev_addr = NULL;
+	int rc;
 	u16 count = 0;
 
 	dev_addr = demod->my_i2c_dev_addr;
 
 	rc = adc_sync_measurement(demod, &count);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	अगर (count == 1) अणु
-		/* Try sampling on a dअगरferent edge */
+	if (count == 1) {
+		/* Try sampling on a different edge */
 		u16 clk_neg = 0;
 
-		rc = drxj_dap_पढ़ो_reg16(dev_addr, IQM_AF_CLKNEG__A, &clk_neg, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_read_reg16(dev_addr, IQM_AF_CLKNEG__A, &clk_neg, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 
 		clk_neg ^= IQM_AF_CLKNEG_CLKNEGDATA__M;
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_CLKNEG__A, clk_neg, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_write_reg16(dev_addr, IQM_AF_CLKNEG__A, clk_neg, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 
 		rc = adc_sync_measurement(demod, &count);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
+			goto rw_error;
+		}
+	}
 
 	/* TODO: implement fallback scenarios */
-	अगर (count < 2)
-		वापस -EIO;
+	if (count < 2)
+		return -EIO;
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*============================================================================*/
 /*==                      END AUXILIARY FUNCTIONS                           ==*/
@@ -4375,20 +4374,20 @@ rw_error:
 /*============================================================================*/
 /*============================================================================*/
 /*
-* \पn पूर्णांक init_agc ()
-* \मrief Initialize AGC क्रम all standards.
+* \fn int init_agc ()
+* \brief Initialize AGC for all standards.
 * \param demod instance of demodulator.
-* \param channel poपूर्णांकer to channel data.
-* \लeturn पूर्णांक.
+* \param channel pointer to channel data.
+* \return int.
 */
-अटल पूर्णांक init_agc(काष्ठा drx_demod_instance *demod)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = शून्य;
-	काष्ठा drx_common_attr *common_attr = शून्य;
-	काष्ठा drxj_data *ext_attr = शून्य;
-	काष्ठा drxj_cfg_agc *p_agc_rf_settings = शून्य;
-	काष्ठा drxj_cfg_agc *p_agc_अगर_settings = शून्य;
-	पूर्णांक rc;
+static int init_agc(struct drx_demod_instance *demod)
+{
+	struct i2c_device_addr *dev_addr = NULL;
+	struct drx_common_attr *common_attr = NULL;
+	struct drxj_data *ext_attr = NULL;
+	struct drxj_cfg_agc *p_agc_rf_settings = NULL;
+	struct drxj_cfg_agc *p_agc_if_settings = NULL;
+	int rc;
 	u16 ingain_tgt_max = 0;
 	u16 clp_dir_to = 0;
 	u16 sns_sum_max = 0;
@@ -4397,20 +4396,20 @@ rw_error:
 	u16 ki_innergain_min = 0;
 	u16 agc_ki = 0;
 	u16 ki_max = 0;
-	u16 अगर_iaccu_hi_tgt_min = 0;
+	u16 if_iaccu_hi_tgt_min = 0;
 	u16 data = 0;
 	u16 agc_ki_dgain = 0;
 	u16 ki_min = 0;
 	u16 clp_ctrl_mode = 0;
 	u16 agc_rf = 0;
-	u16 agc_अगर = 0;
+	u16 agc_if = 0;
 
 	dev_addr = demod->my_i2c_dev_addr;
-	common_attr = (काष्ठा drx_common_attr *) demod->my_common_attr;
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
+	common_attr = (struct drx_common_attr *) demod->my_common_attr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
 
-	चयन (ext_attr->standard) अणु
-	हाल DRX_STANDARD_8VSB:
+	switch (ext_attr->standard) {
+	case DRX_STANDARD_8VSB:
 		clp_sum_max = 1023;
 		clp_dir_to = (u16) (-9);
 		sns_sum_max = 1023;
@@ -4418,82 +4417,82 @@ rw_error:
 		ki_innergain_min = (u16) (-32768);
 		ki_max = 0x032C;
 		agc_ki_dgain = 0xC;
-		अगर_iaccu_hi_tgt_min = 2047;
+		if_iaccu_hi_tgt_min = 2047;
 		ki_min = 0x0117;
 		ingain_tgt_max = 16383;
 		clp_ctrl_mode = 0;
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_KI_MINGAIN__A, 0x7fff, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_KI_MINGAIN__A, 0x7fff, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_KI_MAXGAIN__A, 0x0, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_KI_MAXGAIN__A, 0x0, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_CLP_SUM__A, 0, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_CLP_SUM__A, 0, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_CLP_CYCCNT__A, 0, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_CLP_CYCCNT__A, 0, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_CLP_सूची_WD__A, 0, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_CLP_DIR_WD__A, 0, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_CLP_सूची_STP__A, 1, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_CLP_DIR_STP__A, 1, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_SNS_SUM__A, 0, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_SNS_SUM__A, 0, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_SNS_CYCCNT__A, 0, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_SNS_CYCCNT__A, 0, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_SNS_सूची_WD__A, 0, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_SNS_DIR_WD__A, 0, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_SNS_सूची_STP__A, 1, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_SNS_DIR_STP__A, 1, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_INGAIN__A, 1024, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_INGAIN__A, 1024, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_VSB_AGC_POW_TGT__A, 22600, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_VSB_AGC_POW_TGT__A, 22600, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_INGAIN_TGT__A, 13200, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_INGAIN_TGT__A, 13200, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		p_agc_अगर_settings = &(ext_attr->vsb_अगर_agc_cfg);
+			goto rw_error;
+		}
+		p_agc_if_settings = &(ext_attr->vsb_if_agc_cfg);
 		p_agc_rf_settings = &(ext_attr->vsb_rf_agc_cfg);
-		अवरोध;
-#अगर_अघोषित DRXJ_VSB_ONLY
-	हाल DRX_STANDARD_ITU_A:
-	हाल DRX_STANDARD_ITU_C:
-	हाल DRX_STANDARD_ITU_B:
+		break;
+#ifndef DRXJ_VSB_ONLY
+	case DRX_STANDARD_ITU_A:
+	case DRX_STANDARD_ITU_C:
+	case DRX_STANDARD_ITU_B:
 		ingain_tgt_max = 5119;
 		clp_sum_max = 1023;
 		clp_dir_to = (u16) (-5);
@@ -4501,883 +4500,883 @@ rw_error:
 		sns_dir_to = (u16) (-3);
 		ki_innergain_min = 0;
 		ki_max = 0x0657;
-		अगर_iaccu_hi_tgt_min = 2047;
+		if_iaccu_hi_tgt_min = 2047;
 		agc_ki_dgain = 0x7;
 		ki_min = 0x0117;
 		clp_ctrl_mode = 0;
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_KI_MINGAIN__A, 0x7fff, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_KI_MINGAIN__A, 0x7fff, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_KI_MAXGAIN__A, 0x0, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_KI_MAXGAIN__A, 0x0, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_CLP_SUM__A, 0, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_CLP_SUM__A, 0, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_CLP_CYCCNT__A, 0, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_CLP_CYCCNT__A, 0, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_CLP_सूची_WD__A, 0, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_CLP_DIR_WD__A, 0, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_CLP_सूची_STP__A, 1, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_CLP_DIR_STP__A, 1, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_SNS_SUM__A, 0, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_SNS_SUM__A, 0, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_SNS_CYCCNT__A, 0, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_SNS_CYCCNT__A, 0, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_SNS_सूची_WD__A, 0, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_SNS_DIR_WD__A, 0, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_SNS_सूची_STP__A, 1, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_SNS_DIR_STP__A, 1, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		p_agc_अगर_settings = &(ext_attr->qam_अगर_agc_cfg);
+			goto rw_error;
+		}
+		p_agc_if_settings = &(ext_attr->qam_if_agc_cfg);
 		p_agc_rf_settings = &(ext_attr->qam_rf_agc_cfg);
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_INGAIN_TGT__A, p_agc_अगर_settings->top, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_INGAIN_TGT__A, p_agc_if_settings->top, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 
-		rc = drxj_dap_पढ़ो_reg16(dev_addr, SCU_RAM_AGC_KI__A, &agc_ki, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_read_reg16(dev_addr, SCU_RAM_AGC_KI__A, &agc_ki, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 		agc_ki &= 0xf000;
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_KI__A, agc_ki, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_KI__A, agc_ki, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+			goto rw_error;
+		}
+		break;
+#endif
+	default:
+		return -EINVAL;
+	}
 
-	/* क्रम new AGC पूर्णांकerface */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_INGAIN_TGT_MIN__A, p_agc_अगर_settings->top, 0);
-	अगर (rc != 0) अणु
+	/* for new AGC interface */
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_INGAIN_TGT_MIN__A, p_agc_if_settings->top, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_INGAIN__A, p_agc_अगर_settings->top, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_INGAIN__A, p_agc_if_settings->top, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण	/* Gain fed from inner to outer AGC */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_INGAIN_TGT_MAX__A, ingain_tgt_max, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}	/* Gain fed from inner to outer AGC */
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_INGAIN_TGT_MAX__A, ingain_tgt_max, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_IF_IACCU_HI_TGT_MIN__A, अगर_iaccu_hi_tgt_min, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_IF_IACCU_HI_TGT_MIN__A, if_iaccu_hi_tgt_min, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_IF_IACCU_HI__A, 0, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_IF_IACCU_HI__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण	/* set to p_agc_settings->top beक्रमe */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_IF_IACCU_LO__A, 0, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}	/* set to p_agc_settings->top before */
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_IF_IACCU_LO__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_RF_IACCU_HI__A, 0, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_RF_IACCU_HI__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_RF_IACCU_LO__A, 0, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_RF_IACCU_LO__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_RF_MAX__A, 32767, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_RF_MAX__A, 32767, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_CLP_SUM_MAX__A, clp_sum_max, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_CLP_SUM_MAX__A, clp_sum_max, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_SNS_SUM_MAX__A, sns_sum_max, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_SNS_SUM_MAX__A, sns_sum_max, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_KI_INNERGAIN_MIN__A, ki_innergain_min, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_KI_INNERGAIN_MIN__A, ki_innergain_min, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_FAST_SNS_CTRL_DELAY__A, 50, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_FAST_SNS_CTRL_DELAY__A, 50, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_KI_CYCLEN__A, 500, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_KI_CYCLEN__A, 500, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_SNS_CYCLEN__A, 500, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_SNS_CYCLEN__A, 500, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_KI_MAXMINGAIN_TH__A, 20, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_KI_MAXMINGAIN_TH__A, 20, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_KI_MIN__A, ki_min, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_KI_MIN__A, ki_min, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_KI_MAX__A, ki_max, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_KI_MAX__A, ki_max, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_KI_RED__A, 0, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_KI_RED__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_CLP_SUM_MIN__A, 8, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_CLP_SUM_MIN__A, 8, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_CLP_CYCLEN__A, 500, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_CLP_CYCLEN__A, 500, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_CLP_सूची_TO__A, clp_dir_to, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_CLP_DIR_TO__A, clp_dir_to, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_SNS_SUM_MIN__A, 8, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_SNS_SUM_MIN__A, 8, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_SNS_सूची_TO__A, sns_dir_to, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_SNS_DIR_TO__A, sns_dir_to, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_FAST_CLP_CTRL_DELAY__A, 50, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_FAST_CLP_CTRL_DELAY__A, 50, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_CLP_CTRL_MODE__A, clp_ctrl_mode, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_CLP_CTRL_MODE__A, clp_ctrl_mode, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	agc_rf = 0x800 + p_agc_rf_settings->cut_off_current;
-	अगर (common_attr->tuner_rf_agc_pol == true)
+	if (common_attr->tuner_rf_agc_pol == true)
 		agc_rf = 0x87ff - agc_rf;
 
-	agc_अगर = 0x800;
-	अगर (common_attr->tuner_अगर_agc_pol == true)
+	agc_if = 0x800;
+	if (common_attr->tuner_if_agc_pol == true)
 		agc_rf = 0x87ff - agc_rf;
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_AGC_RF__A, agc_rf, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, IQM_AF_AGC_RF__A, agc_rf, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_AGC_IF__A, agc_अगर, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, IQM_AF_AGC_IF__A, agc_if, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	/* Set/restore Ki DGAIN factor */
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, SCU_RAM_AGC_KI__A, &data, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_read_reg16(dev_addr, SCU_RAM_AGC_KI__A, &data, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	data &= ~SCU_RAM_AGC_KI_DGAIN__M;
 	data |= (agc_ki_dgain << SCU_RAM_AGC_KI_DGAIN__B);
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_AGC_KI__A, data, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_AGC_KI__A, data, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
-* \पn पूर्णांक set_frequency ()
-* \मrief Set frequency shअगरt.
+* \fn int set_frequency ()
+* \brief Set frequency shift.
 * \param demod instance of demodulator.
-* \param channel poपूर्णांकer to channel data.
+* \param channel pointer to channel data.
 * \param tuner_freq_offset residual frequency from tuner.
-* \लeturn पूर्णांक.
+* \return int.
 */
-अटल पूर्णांक
-set_frequency(काष्ठा drx_demod_instance *demod,
-	      काष्ठा drx_channel *channel, s32 tuner_freq_offset)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
-	काष्ठा drxj_data *ext_attr = demod->my_ext_attr;
-	पूर्णांक rc;
+static int
+set_frequency(struct drx_demod_instance *demod,
+	      struct drx_channel *channel, s32 tuner_freq_offset)
+{
+	struct i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
+	struct drxj_data *ext_attr = demod->my_ext_attr;
+	int rc;
 	s32 sampling_frequency = 0;
-	s32 frequency_shअगरt = 0;
-	s32 अगर_freq_actual = 0;
+	s32 frequency_shift = 0;
+	s32 if_freq_actual = 0;
 	s32 rf_freq_residual = -1 * tuner_freq_offset;
 	s32 adc_freq = 0;
-	s32 पूर्णांकermediate_freq = 0;
+	s32 intermediate_freq = 0;
 	u32 iqm_fs_rate_ofs = 0;
 	bool adc_flip = true;
 	bool select_pos_image = false;
 	bool rf_mirror;
 	bool tuner_mirror;
 	bool image_to_select;
-	s32 fm_frequency_shअगरt = 0;
+	s32 fm_frequency_shift = 0;
 
 	rf_mirror = (ext_attr->mirror == DRX_MIRROR_YES) ? true : false;
 	tuner_mirror = demod->my_common_attr->mirror_freq_spect ? false : true;
 	/*
-	   Program frequency shअगरter
-	   No need to account क्रम mirroring on RF
+	   Program frequency shifter
+	   No need to account for mirroring on RF
 	 */
-	चयन (ext_attr->standard) अणु
-	हाल DRX_STANDARD_ITU_A:
-	हाल DRX_STANDARD_ITU_C:
-	हाल DRX_STANDARD_PAL_SECAM_LP:
-	हाल DRX_STANDARD_8VSB:
+	switch (ext_attr->standard) {
+	case DRX_STANDARD_ITU_A:
+	case DRX_STANDARD_ITU_C:
+	case DRX_STANDARD_PAL_SECAM_LP:
+	case DRX_STANDARD_8VSB:
 		select_pos_image = true;
-		अवरोध;
-	हाल DRX_STANDARD_FM:
+		break;
+	case DRX_STANDARD_FM:
 		/* After IQM FS sound carrier must appear at 4 Mhz in spect.
-		   Sound carrier is alपढ़ोy 3Mhz above centre frequency due
-		   to tuner setting so now add an extra shअगरt of 1MHz... */
-		fm_frequency_shअगरt = 1000;
+		   Sound carrier is already 3Mhz above centre frequency due
+		   to tuner setting so now add an extra shift of 1MHz... */
+		fm_frequency_shift = 1000;
 		fallthrough;
-	हाल DRX_STANDARD_ITU_B:
-	हाल DRX_STANDARD_NTSC:
-	हाल DRX_STANDARD_PAL_SECAM_BG:
-	हाल DRX_STANDARD_PAL_SECAM_DK:
-	हाल DRX_STANDARD_PAL_SECAM_I:
-	हाल DRX_STANDARD_PAL_SECAM_L:
+	case DRX_STANDARD_ITU_B:
+	case DRX_STANDARD_NTSC:
+	case DRX_STANDARD_PAL_SECAM_BG:
+	case DRX_STANDARD_PAL_SECAM_DK:
+	case DRX_STANDARD_PAL_SECAM_I:
+	case DRX_STANDARD_PAL_SECAM_L:
 		select_pos_image = false;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	पूर्णांकermediate_freq = demod->my_common_attr->पूर्णांकermediate_freq;
-	sampling_frequency = demod->my_common_attr->sys_घड़ी_freq / 3;
-	अगर (tuner_mirror)
-		अगर_freq_actual = पूर्णांकermediate_freq + rf_freq_residual + fm_frequency_shअगरt;
-	अन्यथा
-		अगर_freq_actual = पूर्णांकermediate_freq - rf_freq_residual - fm_frequency_shअगरt;
-	अगर (अगर_freq_actual > sampling_frequency / 2) अणु
+		break;
+	default:
+		return -EINVAL;
+	}
+	intermediate_freq = demod->my_common_attr->intermediate_freq;
+	sampling_frequency = demod->my_common_attr->sys_clock_freq / 3;
+	if (tuner_mirror)
+		if_freq_actual = intermediate_freq + rf_freq_residual + fm_frequency_shift;
+	else
+		if_freq_actual = intermediate_freq - rf_freq_residual - fm_frequency_shift;
+	if (if_freq_actual > sampling_frequency / 2) {
 		/* adc mirrors */
-		adc_freq = sampling_frequency - अगर_freq_actual;
+		adc_freq = sampling_frequency - if_freq_actual;
 		adc_flip = true;
-	पूर्ण अन्यथा अणु
-		/* adc करोesn't mirror */
-		adc_freq = अगर_freq_actual;
+	} else {
+		/* adc doesn't mirror */
+		adc_freq = if_freq_actual;
 		adc_flip = false;
-	पूर्ण
+	}
 
-	frequency_shअगरt = adc_freq;
+	frequency_shift = adc_freq;
 	image_to_select =
 	    (bool) (rf_mirror ^ tuner_mirror ^ adc_flip ^ select_pos_image);
-	iqm_fs_rate_ofs = frac28(frequency_shअगरt, sampling_frequency);
+	iqm_fs_rate_ofs = frac28(frequency_shift, sampling_frequency);
 
-	अगर (image_to_select)
+	if (image_to_select)
 		iqm_fs_rate_ofs = ~iqm_fs_rate_ofs + 1;
 
-	/* Program frequency shअगरter with tuner offset compensation */
-	/* frequency_shअगरt += tuner_freq_offset; TODO */
-	rc = drxdap_fasi_ग_लिखो_reg32(dev_addr, IQM_FS_RATE_OFS_LO__A, iqm_fs_rate_ofs, 0);
-	अगर (rc != 0) अणु
+	/* Program frequency shifter with tuner offset compensation */
+	/* frequency_shift += tuner_freq_offset; TODO */
+	rc = drxdap_fasi_write_reg32(dev_addr, IQM_FS_RATE_OFS_LO__A, iqm_fs_rate_ofs, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	ext_attr->iqm_fs_rate_ofs = iqm_fs_rate_ofs;
 	ext_attr->pos_image = (bool) (rf_mirror ^ tuner_mirror ^ select_pos_image);
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
-* \पn पूर्णांक get_acc_pkt_err()
-* \मrief Retrieve संकेत strength क्रम VSB and QAM.
-* \param demod Poपूर्णांकer to demod instance
-* \param packet_err Poपूर्णांकer to packet error
-* \लeturn पूर्णांक.
-* \लetval 0 sig_strength contains valid data.
-* \लetval -EINVAL sig_strength is शून्य.
-* \लetval -EIO Erroneous data, sig_strength contains invalid data.
+* \fn int get_acc_pkt_err()
+* \brief Retrieve signal strength for VSB and QAM.
+* \param demod Pointer to demod instance
+* \param packet_err Pointer to packet error
+* \return int.
+* \retval 0 sig_strength contains valid data.
+* \retval -EINVAL sig_strength is NULL.
+* \retval -EIO Erroneous data, sig_strength contains invalid data.
 */
-#अगर_घोषित DRXJ_SIGNAL_ACCUM_ERR
-अटल पूर्णांक get_acc_pkt_err(काष्ठा drx_demod_instance *demod, u16 *packet_err)
-अणु
-	पूर्णांक rc;
-	अटल u16 pkt_err;
-	अटल u16 last_pkt_err;
+#ifdef DRXJ_SIGNAL_ACCUM_ERR
+static int get_acc_pkt_err(struct drx_demod_instance *demod, u16 *packet_err)
+{
+	int rc;
+	static u16 pkt_err;
+	static u16 last_pkt_err;
 	u16 data = 0;
-	काष्ठा drxj_data *ext_attr = शून्य;
-	काष्ठा i2c_device_addr *dev_addr = शून्य;
+	struct drxj_data *ext_attr = NULL;
+	struct i2c_device_addr *dev_addr = NULL;
 
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
 	dev_addr = demod->my_i2c_dev_addr;
 
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, SCU_RAM_FEC_ACCUM_PKT_FAILURES__A, &data, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_read_reg16(dev_addr, SCU_RAM_FEC_ACCUM_PKT_FAILURES__A, &data, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	अगर (ext_attr->reset_pkt_err_acc) अणु
+		goto rw_error;
+	}
+	if (ext_attr->reset_pkt_err_acc) {
 		last_pkt_err = data;
 		pkt_err = 0;
 		ext_attr->reset_pkt_err_acc = false;
-	पूर्ण
+	}
 
-	अगर (data < last_pkt_err) अणु
+	if (data < last_pkt_err) {
 		pkt_err += 0xffff - last_pkt_err;
 		pkt_err += data;
-	पूर्ण अन्यथा अणु
+	} else {
 		pkt_err += (data - last_pkt_err);
-	पूर्ण
+	}
 	*packet_err = pkt_err;
 	last_pkt_err = data;
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
-#पूर्ण_अगर
+	return rc;
+}
+#endif
 
 
 /*============================================================================*/
 
 /*
-* \पn पूर्णांक set_agc_rf ()
-* \मrief Configure RF AGC
+* \fn int set_agc_rf ()
+* \brief Configure RF AGC
 * \param demod instance of demodulator.
-* \param agc_settings AGC configuration काष्ठाure
-* \लeturn पूर्णांक.
+* \param agc_settings AGC configuration structure
+* \return int.
 */
-अटल पूर्णांक
-set_agc_rf(काष्ठा drx_demod_instance *demod, काष्ठा drxj_cfg_agc *agc_settings, bool atomic)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = शून्य;
-	काष्ठा drxj_data *ext_attr = शून्य;
-	काष्ठा drxj_cfg_agc *p_agc_settings = शून्य;
-	काष्ठा drx_common_attr *common_attr = शून्य;
-	पूर्णांक rc;
-	drx_ग_लिखो_reg16func_t scu_wr16 = शून्य;
-	drx_पढ़ो_reg16func_t scu_rr16 = शून्य;
+static int
+set_agc_rf(struct drx_demod_instance *demod, struct drxj_cfg_agc *agc_settings, bool atomic)
+{
+	struct i2c_device_addr *dev_addr = NULL;
+	struct drxj_data *ext_attr = NULL;
+	struct drxj_cfg_agc *p_agc_settings = NULL;
+	struct drx_common_attr *common_attr = NULL;
+	int rc;
+	drx_write_reg16func_t scu_wr16 = NULL;
+	drx_read_reg16func_t scu_rr16 = NULL;
 
-	common_attr = (काष्ठा drx_common_attr *) demod->my_common_attr;
+	common_attr = (struct drx_common_attr *) demod->my_common_attr;
 	dev_addr = demod->my_i2c_dev_addr;
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
 
-	अगर (atomic) अणु
-		scu_rr16 = drxj_dap_scu_atomic_पढ़ो_reg16;
-		scu_wr16 = drxj_dap_scu_atomic_ग_लिखो_reg16;
-	पूर्ण अन्यथा अणु
-		scu_rr16 = drxj_dap_पढ़ो_reg16;
-		scu_wr16 = drxj_dap_ग_लिखो_reg16;
-	पूर्ण
+	if (atomic) {
+		scu_rr16 = drxj_dap_scu_atomic_read_reg16;
+		scu_wr16 = drxj_dap_scu_atomic_write_reg16;
+	} else {
+		scu_rr16 = drxj_dap_read_reg16;
+		scu_wr16 = drxj_dap_write_reg16;
+	}
 
-	/* Configure AGC only अगर standard is currently active */
-	अगर ((ext_attr->standard == agc_settings->standard) ||
+	/* Configure AGC only if standard is currently active */
+	if ((ext_attr->standard == agc_settings->standard) ||
 	    (DRXJ_ISQAMSTD(ext_attr->standard) &&
 	     DRXJ_ISQAMSTD(agc_settings->standard)) ||
 	    (DRXJ_ISATVSTD(ext_attr->standard) &&
-	     DRXJ_ISATVSTD(agc_settings->standard))) अणु
+	     DRXJ_ISATVSTD(agc_settings->standard))) {
 		u16 data = 0;
 
-		चयन (agc_settings->ctrl_mode) अणु
-		हाल DRX_AGC_CTRL_AUTO:
+		switch (agc_settings->ctrl_mode) {
+		case DRX_AGC_CTRL_AUTO:
 
 			/* Enable RF AGC DAC */
-			rc = drxj_dap_पढ़ो_reg16(dev_addr, IQM_AF_STDBY__A, &data, 0);
-			अगर (rc != 0) अणु
+			rc = drxj_dap_read_reg16(dev_addr, IQM_AF_STDBY__A, &data, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 			data |= IQM_AF_STDBY_STDBY_TAGC_RF_A2_ACTIVE;
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_STDBY__A, data, 0);
-			अगर (rc != 0) अणु
+			rc = drxj_dap_write_reg16(dev_addr, IQM_AF_STDBY__A, data, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 
 			/* Enable SCU RF AGC loop */
 			rc = (*scu_rr16)(dev_addr, SCU_RAM_AGC_KI__A, &data, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 			data &= ~SCU_RAM_AGC_KI_RF__M;
-			अगर (ext_attr->standard == DRX_STANDARD_8VSB)
+			if (ext_attr->standard == DRX_STANDARD_8VSB)
 				data |= (2 << SCU_RAM_AGC_KI_RF__B);
-			अन्यथा अगर (DRXJ_ISQAMSTD(ext_attr->standard))
+			else if (DRXJ_ISQAMSTD(ext_attr->standard))
 				data |= (5 << SCU_RAM_AGC_KI_RF__B);
-			अन्यथा
+			else
 				data |= (4 << SCU_RAM_AGC_KI_RF__B);
 
-			अगर (common_attr->tuner_rf_agc_pol)
+			if (common_attr->tuner_rf_agc_pol)
 				data |= SCU_RAM_AGC_KI_INV_RF_POL__M;
-			अन्यथा
+			else
 				data &= ~SCU_RAM_AGC_KI_INV_RF_POL__M;
 			rc = (*scu_wr16)(dev_addr, SCU_RAM_AGC_KI__A, data, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 
 			/* Set speed ( using complementary reduction value ) */
 			rc = (*scu_rr16)(dev_addr, SCU_RAM_AGC_KI_RED__A, &data, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 			data &= ~SCU_RAM_AGC_KI_RED_RAGC_RED__M;
 			rc = (*scu_wr16)(dev_addr, SCU_RAM_AGC_KI_RED__A, (~(agc_settings->speed << SCU_RAM_AGC_KI_RED_RAGC_RED__B) & SCU_RAM_AGC_KI_RED_RAGC_RED__M) | data, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 
-			अगर (agc_settings->standard == DRX_STANDARD_8VSB)
-				p_agc_settings = &(ext_attr->vsb_अगर_agc_cfg);
-			अन्यथा अगर (DRXJ_ISQAMSTD(agc_settings->standard))
-				p_agc_settings = &(ext_attr->qam_अगर_agc_cfg);
-			अन्यथा अगर (DRXJ_ISATVSTD(agc_settings->standard))
-				p_agc_settings = &(ext_attr->atv_अगर_agc_cfg);
-			अन्यथा
-				वापस -EINVAL;
+			if (agc_settings->standard == DRX_STANDARD_8VSB)
+				p_agc_settings = &(ext_attr->vsb_if_agc_cfg);
+			else if (DRXJ_ISQAMSTD(agc_settings->standard))
+				p_agc_settings = &(ext_attr->qam_if_agc_cfg);
+			else if (DRXJ_ISATVSTD(agc_settings->standard))
+				p_agc_settings = &(ext_attr->atv_if_agc_cfg);
+			else
+				return -EINVAL;
 
-			/* Set TOP, only अगर IF-AGC is in AUTO mode */
-			अगर (p_agc_settings->ctrl_mode == DRX_AGC_CTRL_AUTO) अणु
+			/* Set TOP, only if IF-AGC is in AUTO mode */
+			if (p_agc_settings->ctrl_mode == DRX_AGC_CTRL_AUTO) {
 				rc = (*scu_wr16)(dev_addr, SCU_RAM_AGC_IF_IACCU_HI_TGT_MAX__A, agc_settings->top, 0);
-				अगर (rc != 0) अणु
+				if (rc != 0) {
 					pr_err("error %d\n", rc);
-					जाओ rw_error;
-				पूर्ण
+					goto rw_error;
+				}
 				rc = (*scu_wr16)(dev_addr, SCU_RAM_AGC_IF_IACCU_HI_TGT__A, agc_settings->top, 0);
-				अगर (rc != 0) अणु
+				if (rc != 0) {
 					pr_err("error %d\n", rc);
-					जाओ rw_error;
-				पूर्ण
-			पूर्ण
+					goto rw_error;
+				}
+			}
 
 			/* Cut-Off current */
 			rc = (*scu_wr16)(dev_addr, SCU_RAM_AGC_RF_IACCU_HI_CO__A, agc_settings->cut_off_current, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			अवरोध;
-		हाल DRX_AGC_CTRL_USER:
+				goto rw_error;
+			}
+			break;
+		case DRX_AGC_CTRL_USER:
 
 			/* Enable RF AGC DAC */
-			rc = drxj_dap_पढ़ो_reg16(dev_addr, IQM_AF_STDBY__A, &data, 0);
-			अगर (rc != 0) अणु
+			rc = drxj_dap_read_reg16(dev_addr, IQM_AF_STDBY__A, &data, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 			data |= IQM_AF_STDBY_STDBY_TAGC_RF_A2_ACTIVE;
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_STDBY__A, data, 0);
-			अगर (rc != 0) अणु
+			rc = drxj_dap_write_reg16(dev_addr, IQM_AF_STDBY__A, data, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 
 			/* Disable SCU RF AGC loop */
 			rc = (*scu_rr16)(dev_addr, SCU_RAM_AGC_KI__A, &data, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 			data &= ~SCU_RAM_AGC_KI_RF__M;
-			अगर (common_attr->tuner_rf_agc_pol)
+			if (common_attr->tuner_rf_agc_pol)
 				data |= SCU_RAM_AGC_KI_INV_RF_POL__M;
-			अन्यथा
+			else
 				data &= ~SCU_RAM_AGC_KI_INV_RF_POL__M;
 			rc = (*scu_wr16)(dev_addr, SCU_RAM_AGC_KI__A, data, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 
 			/* Write value to output pin */
 			rc = (*scu_wr16)(dev_addr, SCU_RAM_AGC_RF_IACCU_HI__A, agc_settings->output_level, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			अवरोध;
-		हाल DRX_AGC_CTRL_OFF:
+				goto rw_error;
+			}
+			break;
+		case DRX_AGC_CTRL_OFF:
 
 			/* Disable RF AGC DAC */
-			rc = drxj_dap_पढ़ो_reg16(dev_addr, IQM_AF_STDBY__A, &data, 0);
-			अगर (rc != 0) अणु
+			rc = drxj_dap_read_reg16(dev_addr, IQM_AF_STDBY__A, &data, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 			data &= (~IQM_AF_STDBY_STDBY_TAGC_RF_A2_ACTIVE);
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_STDBY__A, data, 0);
-			अगर (rc != 0) अणु
+			rc = drxj_dap_write_reg16(dev_addr, IQM_AF_STDBY__A, data, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 
 			/* Disable SCU RF AGC loop */
 			rc = (*scu_rr16)(dev_addr, SCU_RAM_AGC_KI__A, &data, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 			data &= ~SCU_RAM_AGC_KI_RF__M;
 			rc = (*scu_wr16)(dev_addr, SCU_RAM_AGC_KI__A, data, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण		/* चयन ( agcsettings->ctrl_mode ) */
-	पूर्ण
+				goto rw_error;
+			}
+			break;
+		default:
+			return -EINVAL;
+		}		/* switch ( agcsettings->ctrl_mode ) */
+	}
 
 	/* Store rf agc settings */
-	चयन (agc_settings->standard) अणु
-	हाल DRX_STANDARD_8VSB:
+	switch (agc_settings->standard) {
+	case DRX_STANDARD_8VSB:
 		ext_attr->vsb_rf_agc_cfg = *agc_settings;
-		अवरोध;
-#अगर_अघोषित DRXJ_VSB_ONLY
-	हाल DRX_STANDARD_ITU_A:
-	हाल DRX_STANDARD_ITU_B:
-	हाल DRX_STANDARD_ITU_C:
+		break;
+#ifndef DRXJ_VSB_ONLY
+	case DRX_STANDARD_ITU_A:
+	case DRX_STANDARD_ITU_B:
+	case DRX_STANDARD_ITU_C:
 		ext_attr->qam_rf_agc_cfg = *agc_settings;
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
-		वापस -EIO;
-	पूर्ण
+		break;
+#endif
+	default:
+		return -EIO;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
-* \पn पूर्णांक set_agc_अगर ()
-* \मrief Configure If AGC
+* \fn int set_agc_if ()
+* \brief Configure If AGC
 * \param demod instance of demodulator.
-* \param agc_settings AGC configuration काष्ठाure
-* \लeturn पूर्णांक.
+* \param agc_settings AGC configuration structure
+* \return int.
 */
-अटल पूर्णांक
-set_agc_अगर(काष्ठा drx_demod_instance *demod, काष्ठा drxj_cfg_agc *agc_settings, bool atomic)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = शून्य;
-	काष्ठा drxj_data *ext_attr = शून्य;
-	काष्ठा drxj_cfg_agc *p_agc_settings = शून्य;
-	काष्ठा drx_common_attr *common_attr = शून्य;
-	drx_ग_लिखो_reg16func_t scu_wr16 = शून्य;
-	drx_पढ़ो_reg16func_t scu_rr16 = शून्य;
-	पूर्णांक rc;
+static int
+set_agc_if(struct drx_demod_instance *demod, struct drxj_cfg_agc *agc_settings, bool atomic)
+{
+	struct i2c_device_addr *dev_addr = NULL;
+	struct drxj_data *ext_attr = NULL;
+	struct drxj_cfg_agc *p_agc_settings = NULL;
+	struct drx_common_attr *common_attr = NULL;
+	drx_write_reg16func_t scu_wr16 = NULL;
+	drx_read_reg16func_t scu_rr16 = NULL;
+	int rc;
 
-	common_attr = (काष्ठा drx_common_attr *) demod->my_common_attr;
+	common_attr = (struct drx_common_attr *) demod->my_common_attr;
 	dev_addr = demod->my_i2c_dev_addr;
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
 
-	अगर (atomic) अणु
-		scu_rr16 = drxj_dap_scu_atomic_पढ़ो_reg16;
-		scu_wr16 = drxj_dap_scu_atomic_ग_लिखो_reg16;
-	पूर्ण अन्यथा अणु
-		scu_rr16 = drxj_dap_पढ़ो_reg16;
-		scu_wr16 = drxj_dap_ग_लिखो_reg16;
-	पूर्ण
+	if (atomic) {
+		scu_rr16 = drxj_dap_scu_atomic_read_reg16;
+		scu_wr16 = drxj_dap_scu_atomic_write_reg16;
+	} else {
+		scu_rr16 = drxj_dap_read_reg16;
+		scu_wr16 = drxj_dap_write_reg16;
+	}
 
-	/* Configure AGC only अगर standard is currently active */
-	अगर ((ext_attr->standard == agc_settings->standard) ||
+	/* Configure AGC only if standard is currently active */
+	if ((ext_attr->standard == agc_settings->standard) ||
 	    (DRXJ_ISQAMSTD(ext_attr->standard) &&
 	     DRXJ_ISQAMSTD(agc_settings->standard)) ||
 	    (DRXJ_ISATVSTD(ext_attr->standard) &&
-	     DRXJ_ISATVSTD(agc_settings->standard))) अणु
+	     DRXJ_ISATVSTD(agc_settings->standard))) {
 		u16 data = 0;
 
-		चयन (agc_settings->ctrl_mode) अणु
-		हाल DRX_AGC_CTRL_AUTO:
+		switch (agc_settings->ctrl_mode) {
+		case DRX_AGC_CTRL_AUTO:
 			/* Enable IF AGC DAC */
-			rc = drxj_dap_पढ़ो_reg16(dev_addr, IQM_AF_STDBY__A, &data, 0);
-			अगर (rc != 0) अणु
+			rc = drxj_dap_read_reg16(dev_addr, IQM_AF_STDBY__A, &data, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 			data |= IQM_AF_STDBY_STDBY_TAGC_IF_A2_ACTIVE;
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_STDBY__A, data, 0);
-			अगर (rc != 0) अणु
+			rc = drxj_dap_write_reg16(dev_addr, IQM_AF_STDBY__A, data, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 
 			/* Enable SCU IF AGC loop */
 			rc = (*scu_rr16)(dev_addr, SCU_RAM_AGC_KI__A, &data, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 			data &= ~SCU_RAM_AGC_KI_IF_AGC_DISABLE__M;
 			data &= ~SCU_RAM_AGC_KI_IF__M;
-			अगर (ext_attr->standard == DRX_STANDARD_8VSB)
+			if (ext_attr->standard == DRX_STANDARD_8VSB)
 				data |= (3 << SCU_RAM_AGC_KI_IF__B);
-			अन्यथा अगर (DRXJ_ISQAMSTD(ext_attr->standard))
+			else if (DRXJ_ISQAMSTD(ext_attr->standard))
 				data |= (6 << SCU_RAM_AGC_KI_IF__B);
-			अन्यथा
+			else
 				data |= (5 << SCU_RAM_AGC_KI_IF__B);
 
-			अगर (common_attr->tuner_अगर_agc_pol)
+			if (common_attr->tuner_if_agc_pol)
 				data |= SCU_RAM_AGC_KI_INV_IF_POL__M;
-			अन्यथा
+			else
 				data &= ~SCU_RAM_AGC_KI_INV_IF_POL__M;
 			rc = (*scu_wr16)(dev_addr, SCU_RAM_AGC_KI__A, data, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 
 			/* Set speed (using complementary reduction value) */
 			rc = (*scu_rr16)(dev_addr, SCU_RAM_AGC_KI_RED__A, &data, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 			data &= ~SCU_RAM_AGC_KI_RED_IAGC_RED__M;
 			rc = (*scu_wr16) (dev_addr, SCU_RAM_AGC_KI_RED__A, (~(agc_settings->speed << SCU_RAM_AGC_KI_RED_IAGC_RED__B) & SCU_RAM_AGC_KI_RED_IAGC_RED__M) | data, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 
-			अगर (agc_settings->standard == DRX_STANDARD_8VSB)
+			if (agc_settings->standard == DRX_STANDARD_8VSB)
 				p_agc_settings = &(ext_attr->vsb_rf_agc_cfg);
-			अन्यथा अगर (DRXJ_ISQAMSTD(agc_settings->standard))
+			else if (DRXJ_ISQAMSTD(agc_settings->standard))
 				p_agc_settings = &(ext_attr->qam_rf_agc_cfg);
-			अन्यथा अगर (DRXJ_ISATVSTD(agc_settings->standard))
+			else if (DRXJ_ISATVSTD(agc_settings->standard))
 				p_agc_settings = &(ext_attr->atv_rf_agc_cfg);
-			अन्यथा
-				वापस -EINVAL;
+			else
+				return -EINVAL;
 
 			/* Restore TOP */
-			अगर (p_agc_settings->ctrl_mode == DRX_AGC_CTRL_AUTO) अणु
+			if (p_agc_settings->ctrl_mode == DRX_AGC_CTRL_AUTO) {
 				rc = (*scu_wr16)(dev_addr, SCU_RAM_AGC_IF_IACCU_HI_TGT_MAX__A, p_agc_settings->top, 0);
-				अगर (rc != 0) अणु
+				if (rc != 0) {
 					pr_err("error %d\n", rc);
-					जाओ rw_error;
-				पूर्ण
+					goto rw_error;
+				}
 				rc = (*scu_wr16)(dev_addr, SCU_RAM_AGC_IF_IACCU_HI_TGT__A, p_agc_settings->top, 0);
-				अगर (rc != 0) अणु
+				if (rc != 0) {
 					pr_err("error %d\n", rc);
-					जाओ rw_error;
-				पूर्ण
-			पूर्ण अन्यथा अणु
+					goto rw_error;
+				}
+			} else {
 				rc = (*scu_wr16)(dev_addr, SCU_RAM_AGC_IF_IACCU_HI_TGT_MAX__A, 0, 0);
-				अगर (rc != 0) अणु
+				if (rc != 0) {
 					pr_err("error %d\n", rc);
-					जाओ rw_error;
-				पूर्ण
+					goto rw_error;
+				}
 				rc = (*scu_wr16)(dev_addr, SCU_RAM_AGC_IF_IACCU_HI_TGT__A, 0, 0);
-				अगर (rc != 0) अणु
+				if (rc != 0) {
 					pr_err("error %d\n", rc);
-					जाओ rw_error;
-				पूर्ण
-			पूर्ण
-			अवरोध;
+					goto rw_error;
+				}
+			}
+			break;
 
-		हाल DRX_AGC_CTRL_USER:
+		case DRX_AGC_CTRL_USER:
 
 			/* Enable IF AGC DAC */
-			rc = drxj_dap_पढ़ो_reg16(dev_addr, IQM_AF_STDBY__A, &data, 0);
-			अगर (rc != 0) अणु
+			rc = drxj_dap_read_reg16(dev_addr, IQM_AF_STDBY__A, &data, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 			data |= IQM_AF_STDBY_STDBY_TAGC_IF_A2_ACTIVE;
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_STDBY__A, data, 0);
-			अगर (rc != 0) अणु
+			rc = drxj_dap_write_reg16(dev_addr, IQM_AF_STDBY__A, data, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 
 			/* Disable SCU IF AGC loop */
 			rc = (*scu_rr16)(dev_addr, SCU_RAM_AGC_KI__A, &data, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 			data &= ~SCU_RAM_AGC_KI_IF_AGC_DISABLE__M;
 			data |= SCU_RAM_AGC_KI_IF_AGC_DISABLE__M;
-			अगर (common_attr->tuner_अगर_agc_pol)
+			if (common_attr->tuner_if_agc_pol)
 				data |= SCU_RAM_AGC_KI_INV_IF_POL__M;
-			अन्यथा
+			else
 				data &= ~SCU_RAM_AGC_KI_INV_IF_POL__M;
 			rc = (*scu_wr16)(dev_addr, SCU_RAM_AGC_KI__A, data, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 
 			/* Write value to output pin */
 			rc = (*scu_wr16)(dev_addr, SCU_RAM_AGC_IF_IACCU_HI_TGT_MAX__A, agc_settings->output_level, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			अवरोध;
+				goto rw_error;
+			}
+			break;
 
-		हाल DRX_AGC_CTRL_OFF:
+		case DRX_AGC_CTRL_OFF:
 
 			/* Disable If AGC DAC */
-			rc = drxj_dap_पढ़ो_reg16(dev_addr, IQM_AF_STDBY__A, &data, 0);
-			अगर (rc != 0) अणु
+			rc = drxj_dap_read_reg16(dev_addr, IQM_AF_STDBY__A, &data, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 			data &= (~IQM_AF_STDBY_STDBY_TAGC_IF_A2_ACTIVE);
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_STDBY__A, data, 0);
-			अगर (rc != 0) अणु
+			rc = drxj_dap_write_reg16(dev_addr, IQM_AF_STDBY__A, data, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 
 			/* Disable SCU IF AGC loop */
 			rc = (*scu_rr16)(dev_addr, SCU_RAM_AGC_KI__A, &data, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 			data &= ~SCU_RAM_AGC_KI_IF_AGC_DISABLE__M;
 			data |= SCU_RAM_AGC_KI_IF_AGC_DISABLE__M;
 			rc = (*scu_wr16)(dev_addr, SCU_RAM_AGC_KI__A, data, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण		/* चयन ( agcsettings->ctrl_mode ) */
+				goto rw_error;
+			}
+			break;
+		default:
+			return -EINVAL;
+		}		/* switch ( agcsettings->ctrl_mode ) */
 
-		/* always set the top to support configurations without अगर-loop */
+		/* always set the top to support configurations without if-loop */
 		rc = (*scu_wr16) (dev_addr, SCU_RAM_AGC_INGAIN_TGT_MIN__A, agc_settings->top, 0);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
+			goto rw_error;
+		}
+	}
 
-	/* Store अगर agc settings */
-	चयन (agc_settings->standard) अणु
-	हाल DRX_STANDARD_8VSB:
-		ext_attr->vsb_अगर_agc_cfg = *agc_settings;
-		अवरोध;
-#अगर_अघोषित DRXJ_VSB_ONLY
-	हाल DRX_STANDARD_ITU_A:
-	हाल DRX_STANDARD_ITU_B:
-	हाल DRX_STANDARD_ITU_C:
-		ext_attr->qam_अगर_agc_cfg = *agc_settings;
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
-		वापस -EIO;
-	पूर्ण
+	/* Store if agc settings */
+	switch (agc_settings->standard) {
+	case DRX_STANDARD_8VSB:
+		ext_attr->vsb_if_agc_cfg = *agc_settings;
+		break;
+#ifndef DRXJ_VSB_ONLY
+	case DRX_STANDARD_ITU_A:
+	case DRX_STANDARD_ITU_B:
+	case DRX_STANDARD_ITU_C:
+		ext_attr->qam_if_agc_cfg = *agc_settings;
+		break;
+#endif
+	default:
+		return -EIO;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
-* \पn पूर्णांक set_iqm_af ()
-* \मrief Configure IQM AF रेजिस्टरs
+* \fn int set_iqm_af ()
+* \brief Configure IQM AF registers
 * \param demod instance of demodulator.
 * \param active
-* \लeturn पूर्णांक.
+* \return int.
 */
-अटल पूर्णांक set_iqm_af(काष्ठा drx_demod_instance *demod, bool active)
-अणु
+static int set_iqm_af(struct drx_demod_instance *demod, bool active)
+{
 	u16 data = 0;
-	काष्ठा i2c_device_addr *dev_addr = शून्य;
-	पूर्णांक rc;
+	struct i2c_device_addr *dev_addr = NULL;
+	int rc;
 
 	dev_addr = demod->my_i2c_dev_addr;
 
 	/* Configure IQM */
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, IQM_AF_STDBY__A, &data, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_read_reg16(dev_addr, IQM_AF_STDBY__A, &data, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	अगर (!active)
+		goto rw_error;
+	}
+	if (!active)
 		data &= ((~IQM_AF_STDBY_STDBY_ADC_A2_ACTIVE) & (~IQM_AF_STDBY_STDBY_AMP_A2_ACTIVE) & (~IQM_AF_STDBY_STDBY_PD_A2_ACTIVE) & (~IQM_AF_STDBY_STDBY_TAGC_IF_A2_ACTIVE) & (~IQM_AF_STDBY_STDBY_TAGC_RF_A2_ACTIVE));
-	अन्यथा
+	else
 		data |= (IQM_AF_STDBY_STDBY_ADC_A2_ACTIVE | IQM_AF_STDBY_STDBY_AMP_A2_ACTIVE | IQM_AF_STDBY_STDBY_PD_A2_ACTIVE | IQM_AF_STDBY_STDBY_TAGC_IF_A2_ACTIVE | IQM_AF_STDBY_STDBY_TAGC_RF_A2_ACTIVE);
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_STDBY__A, data, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, IQM_AF_STDBY__A, data, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*============================================================================*/
 /*==              END 8VSB & QAM COMMON DATAPATH FUNCTIONS                  ==*/
@@ -5390,23 +5389,23 @@ rw_error:
 /*============================================================================*/
 
 /*
-* \पn पूर्णांक घातer_करोwn_vsb ()
-* \मrief Powr करोwn QAM related blocks.
+* \fn int power_down_vsb ()
+* \brief Powr down QAM related blocks.
 * \param demod instance of demodulator.
-* \param channel poपूर्णांकer to channel data.
-* \लeturn पूर्णांक.
+* \param channel pointer to channel data.
+* \return int.
 */
-अटल पूर्णांक घातer_करोwn_vsb(काष्ठा drx_demod_instance *demod, bool primary)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
-	काष्ठा drxjscu_cmd cmd_scu = अणु /* command     */ 0,
+static int power_down_vsb(struct drx_demod_instance *demod, bool primary)
+{
+	struct i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
+	struct drxjscu_cmd cmd_scu = { /* command     */ 0,
 		/* parameter_len */ 0,
 		/* result_len    */ 0,
-		/* *parameter   */ शून्य,
-		/* *result      */ शून्य
-	पूर्ण;
-	काष्ठा drx_cfg_mpeg_output cfg_mpeg_output;
-	पूर्णांक rc;
+		/* *parameter   */ NULL,
+		/* *result      */ NULL
+	};
+	struct drx_cfg_mpeg_output cfg_mpeg_output;
+	int rc;
 	u16 cmd_result = 0;
 
 	/*
@@ -5417,88 +5416,88 @@ rw_error:
 	    SCU_RAM_COMMAND_CMD_DEMOD_STOP;
 	cmd_scu.parameter_len = 0;
 	cmd_scu.result_len = 1;
-	cmd_scu.parameter = शून्य;
+	cmd_scu.parameter = NULL;
 	cmd_scu.result = &cmd_result;
 	rc = scu_command(dev_addr, &cmd_scu);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	/* stop all comm_exec */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_COMM_EXEC__A, FEC_COMM_EXEC_STOP, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, FEC_COMM_EXEC__A, FEC_COMM_EXEC_STOP, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, VSB_COMM_EXEC__A, VSB_COMM_EXEC_STOP, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, VSB_COMM_EXEC__A, VSB_COMM_EXEC_STOP, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	अगर (primary) अणु
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_COMM_EXEC__A, IQM_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	if (primary) {
+		rc = drxj_dap_write_reg16(dev_addr, IQM_COMM_EXEC__A, IQM_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 		rc = set_iqm_af(demod, false);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_FS_COMM_EXEC__A, IQM_FS_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+	} else {
+		rc = drxj_dap_write_reg16(dev_addr, IQM_FS_COMM_EXEC__A, IQM_FS_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_FD_COMM_EXEC__A, IQM_FD_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_FD_COMM_EXEC__A, IQM_FD_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_RC_COMM_EXEC__A, IQM_RC_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_RC_COMM_EXEC__A, IQM_RC_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_RT_COMM_EXEC__A, IQM_RT_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_RT_COMM_EXEC__A, IQM_RT_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_CF_COMM_EXEC__A, IQM_CF_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_CF_COMM_EXEC__A, IQM_CF_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
+			goto rw_error;
+		}
+	}
 
 	cfg_mpeg_output.enable_mpeg_output = false;
 	rc = ctrl_set_cfg_mpeg_output(demod, &cfg_mpeg_output);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
-* \पn पूर्णांक set_vsb_leak_n_gain ()
-* \मrief Set ATSC demod.
+* \fn int set_vsb_leak_n_gain ()
+* \brief Set ATSC demod.
 * \param demod instance of demodulator.
-* \लeturn पूर्णांक.
+* \return int.
 */
-अटल पूर्णांक set_vsb_leak_n_gain(काष्ठा drx_demod_instance *demod)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = शून्य;
-	पूर्णांक rc;
+static int set_vsb_leak_n_gain(struct drx_demod_instance *demod)
+{
+	struct i2c_device_addr *dev_addr = NULL;
+	int rc;
 
-	अटल स्थिर u8 vsb_ffe_leak_gain_ram0[] = अणु
+	static const u8 vsb_ffe_leak_gain_ram0[] = {
 		DRXJ_16TO8(0x8),	/* FFETRAINLKRATIO1  */
 		DRXJ_16TO8(0x8),	/* FFETRAINLKRATIO2  */
 		DRXJ_16TO8(0x8),	/* FFETRAINLKRATIO3  */
@@ -5627,9 +5626,9 @@ rw_error:
 		DRXJ_16TO8(0x1010),	/* FIRRCA1GAIN6 */
 		DRXJ_16TO8(0x1010),	/* FIRRCA1GAIN7 */
 		DRXJ_16TO8(0x1010)	/* FIRRCA1GAIN8 */
-	पूर्ण;
+	};
 
-	अटल स्थिर u8 vsb_ffe_leak_gain_ram1[] = अणु
+	static const u8 vsb_ffe_leak_gain_ram1[] = {
 		DRXJ_16TO8(0x1010),	/* FIRRCA1GAIN9 */
 		DRXJ_16TO8(0x0808),	/* FIRRCA1GAIN10 */
 		DRXJ_16TO8(0x0808),	/* FIRRCA1GAIN11 */
@@ -5684,42 +5683,42 @@ rw_error:
 		DRXJ_16TO8(0x1010),	/* DFERCA2GAIN */
 		DRXJ_16TO8(0x1818),	/* DFEDDM1GAIN */
 		DRXJ_16TO8(0x1212)	/* DFEDDM2GAIN */
-	पूर्ण;
+	};
 
 	dev_addr = demod->my_i2c_dev_addr;
-	rc = drxdap_fasi_ग_लिखो_block(dev_addr, VSB_SYSCTRL_RAM0_FFETRAINLKRATIO1__A, माप(vsb_ffe_leak_gain_ram0), ((u8 *)vsb_ffe_leak_gain_ram0), 0);
-	अगर (rc != 0) अणु
+	rc = drxdap_fasi_write_block(dev_addr, VSB_SYSCTRL_RAM0_FFETRAINLKRATIO1__A, sizeof(vsb_ffe_leak_gain_ram0), ((u8 *)vsb_ffe_leak_gain_ram0), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxdap_fasi_ग_लिखो_block(dev_addr, VSB_SYSCTRL_RAM1_FIRRCA1GAIN9__A, माप(vsb_ffe_leak_gain_ram1), ((u8 *)vsb_ffe_leak_gain_ram1), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxdap_fasi_write_block(dev_addr, VSB_SYSCTRL_RAM1_FIRRCA1GAIN9__A, sizeof(vsb_ffe_leak_gain_ram1), ((u8 *)vsb_ffe_leak_gain_ram1), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
-* \पn पूर्णांक set_vsb()
-* \मrief Set 8VSB demod.
+* \fn int set_vsb()
+* \brief Set 8VSB demod.
 * \param demod instance of demodulator.
-* \लeturn पूर्णांक.
+* \return int.
 *
 */
-अटल पूर्णांक set_vsb(काष्ठा drx_demod_instance *demod)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = शून्य;
-	पूर्णांक rc;
-	काष्ठा drx_common_attr *common_attr = शून्य;
-	काष्ठा drxjscu_cmd cmd_scu;
-	काष्ठा drxj_data *ext_attr = शून्य;
+static int set_vsb(struct drx_demod_instance *demod)
+{
+	struct i2c_device_addr *dev_addr = NULL;
+	int rc;
+	struct drx_common_attr *common_attr = NULL;
+	struct drxjscu_cmd cmd_scu;
+	struct drxj_data *ext_attr = NULL;
 	u16 cmd_result = 0;
 	u16 cmd_param = 0;
-	अटल स्थिर u8 vsb_taps_re[] = अणु
+	static const u8 vsb_taps_re[] = {
 		DRXJ_16TO8(-2),	/* re0  */
 		DRXJ_16TO8(4),	/* re1  */
 		DRXJ_16TO8(1),	/* re2  */
@@ -5748,377 +5747,377 @@ rw_error:
 		DRXJ_16TO8(-201),	/* re25 */
 		DRXJ_16TO8(-31),	/* re26 */
 		DRXJ_16TO8(629)	/* re27 */
-	पूर्ण;
+	};
 
 	dev_addr = demod->my_i2c_dev_addr;
-	common_attr = (काष्ठा drx_common_attr *) demod->my_common_attr;
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
+	common_attr = (struct drx_common_attr *) demod->my_common_attr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
 
 	/* stop all comm_exec */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_COMM_EXEC__A, FEC_COMM_EXEC_STOP, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, FEC_COMM_EXEC__A, FEC_COMM_EXEC_STOP, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, VSB_COMM_EXEC__A, VSB_COMM_EXEC_STOP, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, VSB_COMM_EXEC__A, VSB_COMM_EXEC_STOP, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_FS_COMM_EXEC__A, IQM_FS_COMM_EXEC_STOP, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, IQM_FS_COMM_EXEC__A, IQM_FS_COMM_EXEC_STOP, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_FD_COMM_EXEC__A, IQM_FD_COMM_EXEC_STOP, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, IQM_FD_COMM_EXEC__A, IQM_FD_COMM_EXEC_STOP, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_RC_COMM_EXEC__A, IQM_RC_COMM_EXEC_STOP, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, IQM_RC_COMM_EXEC__A, IQM_RC_COMM_EXEC_STOP, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_RT_COMM_EXEC__A, IQM_RT_COMM_EXEC_STOP, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, IQM_RT_COMM_EXEC__A, IQM_RT_COMM_EXEC_STOP, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_CF_COMM_EXEC__A, IQM_CF_COMM_EXEC_STOP, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, IQM_CF_COMM_EXEC__A, IQM_CF_COMM_EXEC_STOP, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	/* reset demodulator */
 	cmd_scu.command = SCU_RAM_COMMAND_STANDARD_VSB
 	    | SCU_RAM_COMMAND_CMD_DEMOD_RESET;
 	cmd_scu.parameter_len = 0;
 	cmd_scu.result_len = 1;
-	cmd_scu.parameter = शून्य;
+	cmd_scu.parameter = NULL;
 	cmd_scu.result = &cmd_result;
 	rc = scu_command(dev_addr, &cmd_scu);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_DCF_BYPASS__A, 1, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, IQM_AF_DCF_BYPASS__A, 1, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_FS_ADJ_SEL__A, IQM_FS_ADJ_SEL_B_VSB, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, IQM_FS_ADJ_SEL__A, IQM_FS_ADJ_SEL_B_VSB, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_RC_ADJ_SEL__A, IQM_RC_ADJ_SEL_B_VSB, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, IQM_RC_ADJ_SEL__A, IQM_RC_ADJ_SEL_B_VSB, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	ext_attr->iqm_rc_rate_ofs = 0x00AD0D79;
-	rc = drxdap_fasi_ग_लिखो_reg32(dev_addr, IQM_RC_RATE_OFS_LO__A, ext_attr->iqm_rc_rate_ofs, 0);
-	अगर (rc != 0) अणु
+	rc = drxdap_fasi_write_reg32(dev_addr, IQM_RC_RATE_OFS_LO__A, ext_attr->iqm_rc_rate_ofs, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, VSB_TOP_CFAGC_GAINSHIFT__A, 4, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, VSB_TOP_CFAGC_GAINSHIFT__A, 4, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, VSB_TOP_CYGN1TRK__A, 1, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, VSB_TOP_CYGN1TRK__A, 1, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_RC_CROUT_ENA__A, 1, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, IQM_RC_CROUT_ENA__A, 1, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_RC_STRETCH__A, 28, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, IQM_RC_STRETCH__A, 28, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_RT_ACTIVE__A, 0, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, IQM_RT_ACTIVE__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_CF_SYMMETRIC__A, 0, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, IQM_CF_SYMMETRIC__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_CF_MIDTAP__A, 3, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, IQM_CF_MIDTAP__A, 3, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_CF_OUT_ENA__A, IQM_CF_OUT_ENA_VSB__M, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, IQM_CF_OUT_ENA__A, IQM_CF_OUT_ENA_VSB__M, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_CF_SCALE__A, 1393, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, IQM_CF_SCALE__A, 1393, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_CF_SCALE_SH__A, 0, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, IQM_CF_SCALE_SH__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_CF_POW_MEAS_LEN__A, 1, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, IQM_CF_POW_MEAS_LEN__A, 1, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxdap_fasi_ग_लिखो_block(dev_addr, IQM_CF_TAP_RE0__A, माप(vsb_taps_re), ((u8 *)vsb_taps_re), 0);
-	अगर (rc != 0) अणु
+	rc = drxdap_fasi_write_block(dev_addr, IQM_CF_TAP_RE0__A, sizeof(vsb_taps_re), ((u8 *)vsb_taps_re), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxdap_fasi_ग_लिखो_block(dev_addr, IQM_CF_TAP_IM0__A, माप(vsb_taps_re), ((u8 *)vsb_taps_re), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxdap_fasi_write_block(dev_addr, IQM_CF_TAP_IM0__A, sizeof(vsb_taps_re), ((u8 *)vsb_taps_re), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, VSB_TOP_BNTHRESH__A, 330, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, VSB_TOP_BNTHRESH__A, 330, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण	/* set higher threshold */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, VSB_TOP_CLPLASTNUM__A, 90, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}	/* set higher threshold */
+	rc = drxj_dap_write_reg16(dev_addr, VSB_TOP_CLPLASTNUM__A, 90, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण	/* burst detection on   */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, VSB_TOP_SNRTH_RCA1__A, 0x0042, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}	/* burst detection on   */
+	rc = drxj_dap_write_reg16(dev_addr, VSB_TOP_SNRTH_RCA1__A, 0x0042, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण	/* drop thresholds by 1 dB */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, VSB_TOP_SNRTH_RCA2__A, 0x0053, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}	/* drop thresholds by 1 dB */
+	rc = drxj_dap_write_reg16(dev_addr, VSB_TOP_SNRTH_RCA2__A, 0x0053, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण	/* drop thresholds by 2 dB */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, VSB_TOP_EQCTRL__A, 0x1, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}	/* drop thresholds by 2 dB */
+	rc = drxj_dap_write_reg16(dev_addr, VSB_TOP_EQCTRL__A, 0x1, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण	/* cma on               */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_GPIO__A, 0, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}	/* cma on               */
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_GPIO__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण	/* GPIO               */
+		goto rw_error;
+	}	/* GPIO               */
 
-	/* Initialize the FEC Subप्रणाली */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_TOP_ANNEX__A, FEC_TOP_ANNEX_D, 0);
-	अगर (rc != 0) अणु
+	/* Initialize the FEC Subsystem */
+	rc = drxj_dap_write_reg16(dev_addr, FEC_TOP_ANNEX__A, FEC_TOP_ANNEX_D, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	अणु
+		goto rw_error;
+	}
+	{
 		u16 fec_oc_snc_mode = 0;
-		rc = drxj_dap_पढ़ो_reg16(dev_addr, FEC_OC_SNC_MODE__A, &fec_oc_snc_mode, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_read_reg16(dev_addr, FEC_OC_SNC_MODE__A, &fec_oc_snc_mode, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 		/* output data even when not locked */
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_SNC_MODE__A, fec_oc_snc_mode | FEC_OC_SNC_MODE_UNLOCK_ENABLE__M, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_write_reg16(dev_addr, FEC_OC_SNC_MODE__A, fec_oc_snc_mode | FEC_OC_SNC_MODE_UNLOCK_ENABLE__M, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
+			goto rw_error;
+		}
+	}
 
 	/* set clip */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_CLP_LEN__A, 0, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, IQM_AF_CLP_LEN__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_CLP_TH__A, 470, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, IQM_AF_CLP_TH__A, 470, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_SNS_LEN__A, 0, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, IQM_AF_SNS_LEN__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, VSB_TOP_SNRTH_PT__A, 0xD4, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, VSB_TOP_SNRTH_PT__A, 0xD4, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	/* no transparent, no A&C framing; parity is set in mpegoutput */
-	अणु
+	{
 		u16 fec_oc_reg_mode = 0;
-		rc = drxj_dap_पढ़ो_reg16(dev_addr, FEC_OC_MODE__A, &fec_oc_reg_mode, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_read_reg16(dev_addr, FEC_OC_MODE__A, &fec_oc_reg_mode, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_MODE__A, fec_oc_reg_mode & (~(FEC_OC_MODE_TRANSPARENT__M | FEC_OC_MODE_CLEAR__M | FEC_OC_MODE_RETAIN_FRAMING__M)), 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, FEC_OC_MODE__A, fec_oc_reg_mode & (~(FEC_OC_MODE_TRANSPARENT__M | FEC_OC_MODE_CLEAR__M | FEC_OC_MODE_RETAIN_FRAMING__M)), 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
+			goto rw_error;
+		}
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_DI_TIMEOUT_LO__A, 0, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, FEC_DI_TIMEOUT_LO__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण	/* समयout counter क्रम restarting */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_DI_TIMEOUT_HI__A, 3, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}	/* timeout counter for restarting */
+	rc = drxj_dap_write_reg16(dev_addr, FEC_DI_TIMEOUT_HI__A, 3, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_RS_MODE__A, 0, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, FEC_RS_MODE__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण	/* bypass disabled */
+		goto rw_error;
+	}	/* bypass disabled */
 	/* initialize RS packet error measurement parameters */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_RS_MEASUREMENT_PERIOD__A, FEC_RS_MEASUREMENT_PERIOD, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, FEC_RS_MEASUREMENT_PERIOD__A, FEC_RS_MEASUREMENT_PERIOD, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_RS_MEASUREMENT_PRESCALE__A, FEC_RS_MEASUREMENT_PRESCALE, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, FEC_RS_MEASUREMENT_PRESCALE__A, FEC_RS_MEASUREMENT_PRESCALE, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	/* init measurement period of MER/SER */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, VSB_TOP_MEASUREMENT_PERIOD__A, VSB_TOP_MEASUREMENT_PERIOD, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, VSB_TOP_MEASUREMENT_PERIOD__A, VSB_TOP_MEASUREMENT_PERIOD, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxdap_fasi_ग_लिखो_reg32(dev_addr, SCU_RAM_FEC_ACCUM_CW_CORRECTED_LO__A, 0, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxdap_fasi_write_reg32(dev_addr, SCU_RAM_FEC_ACCUM_CW_CORRECTED_LO__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_FEC_MEAS_COUNT__A, 0, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_FEC_MEAS_COUNT__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_FEC_ACCUM_PKT_FAILURES__A, 0, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_FEC_ACCUM_PKT_FAILURES__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, VSB_TOP_CKGN1TRK__A, 128, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, VSB_TOP_CKGN1TRK__A, 128, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	/* B-Input to ADC, PGA+filter in standby */
-	अगर (!ext_attr->has_lna) अणु
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_AMUX__A, 0x02, 0);
-		अगर (rc != 0) अणु
+	if (!ext_attr->has_lna) {
+		rc = drxj_dap_write_reg16(dev_addr, IQM_AF_AMUX__A, 0x02, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
+			goto rw_error;
+		}
+	}
 
 	/* turn on IQMAF. It has to be in front of setAgc**() */
 	rc = set_iqm_af(demod, true);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	rc = adc_synchronization(demod);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	rc = init_agc(demod);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = set_agc_अगर(demod, &(ext_attr->vsb_अगर_agc_cfg), false);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = set_agc_if(demod, &(ext_attr->vsb_if_agc_cfg), false);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	rc = set_agc_rf(demod, &(ext_attr->vsb_rf_agc_cfg), false);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	अणु
-		/* TODO fix this, store a काष्ठा drxj_cfg_afe_gain काष्ठाure in काष्ठा drxj_data instead
+		goto rw_error;
+	}
+	{
+		/* TODO fix this, store a struct drxj_cfg_afe_gain structure in struct drxj_data instead
 		   of only the gain */
-		काष्ठा drxj_cfg_afe_gain vsb_pga_cfg = अणु DRX_STANDARD_8VSB, 0 पूर्ण;
+		struct drxj_cfg_afe_gain vsb_pga_cfg = { DRX_STANDARD_8VSB, 0 };
 
 		vsb_pga_cfg.gain = ext_attr->vsb_pga_cfg;
 		rc = ctrl_set_cfg_afe_gain(demod, &vsb_pga_cfg);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
+			goto rw_error;
+		}
+	}
 	rc = ctrl_set_cfg_pre_saw(demod, &(ext_attr->vsb_pre_saw_cfg));
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	/* Mpeg output has to be in front of FEC active */
 	rc = set_mpegtei_handling(demod);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	rc = bit_reverse_mpeg_output(demod);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	rc = set_mpeg_start_width(demod);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	अणु
+		goto rw_error;
+	}
+	{
 		/* TODO: move to set_standard after hardware reset value problem is solved */
 		/* Configure initial MPEG output */
-		काष्ठा drx_cfg_mpeg_output cfg_mpeg_output;
+		struct drx_cfg_mpeg_output cfg_mpeg_output;
 
-		स_नकल(&cfg_mpeg_output, &common_attr->mpeg_cfg, माप(cfg_mpeg_output));
+		memcpy(&cfg_mpeg_output, &common_attr->mpeg_cfg, sizeof(cfg_mpeg_output));
 		cfg_mpeg_output.enable_mpeg_output = true;
 
 		rc = ctrl_set_cfg_mpeg_output(demod, &cfg_mpeg_output);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
+			goto rw_error;
+		}
+	}
 
 	/* TBD: what parameters should be set */
 	cmd_param = 0x00;	/* Default mode AGC on, etc */
@@ -6129,145 +6128,145 @@ rw_error:
 	cmd_scu.parameter = &cmd_param;
 	cmd_scu.result = &cmd_result;
 	rc = scu_command(dev_addr, &cmd_scu);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, VSB_TOP_BEAGC_GAINSHIFT__A, 0x0004, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, VSB_TOP_BEAGC_GAINSHIFT__A, 0x0004, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, VSB_TOP_SNRTH_PT__A, 0x00D2, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, VSB_TOP_SNRTH_PT__A, 0x00D2, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, VSB_TOP_SYSSMTRNCTRL__A, VSB_TOP_SYSSMTRNCTRL__PRE | VSB_TOP_SYSSMTRNCTRL_NCOTIMEOUTCNTEN__M, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, VSB_TOP_SYSSMTRNCTRL__A, VSB_TOP_SYSSMTRNCTRL__PRE | VSB_TOP_SYSSMTRNCTRL_NCOTIMEOUTCNTEN__M, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, VSB_TOP_BEDETCTRL__A, 0x142, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, VSB_TOP_BEDETCTRL__A, 0x142, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, VSB_TOP_LBAGCREFLVL__A, 640, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, VSB_TOP_LBAGCREFLVL__A, 640, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, VSB_TOP_CYGN1ACQ__A, 4, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, VSB_TOP_CYGN1ACQ__A, 4, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, VSB_TOP_CYGN1TRK__A, 2, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, VSB_TOP_CYGN1TRK__A, 2, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, VSB_TOP_CYGN2TRK__A, 3, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, VSB_TOP_CYGN2TRK__A, 3, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	/* start demodulator */
 	cmd_scu.command = SCU_RAM_COMMAND_STANDARD_VSB
 	    | SCU_RAM_COMMAND_CMD_DEMOD_START;
 	cmd_scu.parameter_len = 0;
 	cmd_scu.result_len = 1;
-	cmd_scu.parameter = शून्य;
+	cmd_scu.parameter = NULL;
 	cmd_scu.result = &cmd_result;
 	rc = scu_command(dev_addr, &cmd_scu);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_COMM_EXEC__A, IQM_COMM_EXEC_ACTIVE, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, IQM_COMM_EXEC__A, IQM_COMM_EXEC_ACTIVE, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, VSB_COMM_EXEC__A, VSB_COMM_EXEC_ACTIVE, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, VSB_COMM_EXEC__A, VSB_COMM_EXEC_ACTIVE, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_COMM_EXEC__A, FEC_COMM_EXEC_ACTIVE, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, FEC_COMM_EXEC__A, FEC_COMM_EXEC_ACTIVE, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
-* \पn अटल लघु get_vsb_post_rs_pck_err(काष्ठा i2c_device_addr *dev_addr, u16 *PckErrs)
-* \मrief Get the values of packet error in 8VSB mode
-* \लeturn Error code
+* \fn static short get_vsb_post_rs_pck_err(struct i2c_device_addr *dev_addr, u16 *PckErrs)
+* \brief Get the values of packet error in 8VSB mode
+* \return Error code
 */
-अटल पूर्णांक get_vsb_post_rs_pck_err(काष्ठा i2c_device_addr *dev_addr,
+static int get_vsb_post_rs_pck_err(struct i2c_device_addr *dev_addr,
 				   u32 *pck_errs, u32 *pck_count)
-अणु
-	पूर्णांक rc;
+{
+	int rc;
 	u16 data = 0;
 	u16 period = 0;
 	u16 prescale = 0;
 	u16 packet_errors_mant = 0;
 	u16 packet_errors_exp = 0;
 
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, FEC_RS_NR_FAILURES__A, &data, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_read_reg16(dev_addr, FEC_RS_NR_FAILURES__A, &data, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	packet_errors_mant = data & FEC_RS_NR_FAILURES_FIXED_MANT__M;
 	packet_errors_exp = (data & FEC_RS_NR_FAILURES_EXP__M)
 	    >> FEC_RS_NR_FAILURES_EXP__B;
 	period = FEC_RS_MEASUREMENT_PERIOD;
 	prescale = FEC_RS_MEASUREMENT_PRESCALE;
 	/* packet error rate = (error packet number) per second */
-	/* 77.3 us is समय क्रम per packet */
-	अगर (period * prescale == 0) अणु
+	/* 77.3 us is time for per packet */
+	if (period * prescale == 0) {
 		pr_err("error: period and/or prescale is zero!\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	*pck_errs = packet_errors_mant * (1 << packet_errors_exp);
 	*pck_count = period * prescale * 77;
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
-* \पn अटल लघु GetVSBBer(काष्ठा i2c_device_addr *dev_addr, u32 *ber)
-* \मrief Get the values of ber in VSB mode
-* \लeturn Error code
+* \fn static short GetVSBBer(struct i2c_device_addr *dev_addr, u32 *ber)
+* \brief Get the values of ber in VSB mode
+* \return Error code
 */
-अटल पूर्णांक get_vs_bpost_viterbi_ber(काष्ठा i2c_device_addr *dev_addr,
+static int get_vs_bpost_viterbi_ber(struct i2c_device_addr *dev_addr,
 				    u32 *ber, u32 *cnt)
-अणु
-	पूर्णांक rc;
+{
+	int rc;
 	u16 data = 0;
 	u16 period = 0;
 	u16 prescale = 0;
 	u16 bit_errors_mant = 0;
 	u16 bit_errors_exp = 0;
 
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, FEC_RS_NR_BIT_ERRORS__A, &data, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_read_reg16(dev_addr, FEC_RS_NR_BIT_ERRORS__A, &data, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	period = FEC_RS_MEASUREMENT_PERIOD;
 	prescale = FEC_RS_MEASUREMENT_PRESCALE;
 
@@ -6277,66 +6276,66 @@ rw_error:
 
 	*cnt = period * prescale * 207 * ((bit_errors_exp > 2) ? 1 : 8);
 
-	अगर (((bit_errors_mant << bit_errors_exp) >> 3) > 68700)
+	if (((bit_errors_mant << bit_errors_exp) >> 3) > 68700)
 		*ber = (*cnt) * 26570;
-	अन्यथा अणु
-		अगर (period * prescale == 0) अणु
+	else {
+		if (period * prescale == 0) {
 			pr_err("error: period and/or prescale is zero!\n");
-			वापस -EIO;
-		पूर्ण
+			return -EIO;
+		}
 		*ber = bit_errors_mant << ((bit_errors_exp > 2) ?
 			(bit_errors_exp - 3) : bit_errors_exp);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
-* \पn अटल लघु get_vs_bpre_viterbi_ber(काष्ठा i2c_device_addr *dev_addr, u32 *ber)
-* \मrief Get the values of ber in VSB mode
-* \लeturn Error code
+* \fn static short get_vs_bpre_viterbi_ber(struct i2c_device_addr *dev_addr, u32 *ber)
+* \brief Get the values of ber in VSB mode
+* \return Error code
 */
-अटल पूर्णांक get_vs_bpre_viterbi_ber(काष्ठा i2c_device_addr *dev_addr,
+static int get_vs_bpre_viterbi_ber(struct i2c_device_addr *dev_addr,
 				   u32 *ber, u32 *cnt)
-अणु
+{
 	u16 data = 0;
-	पूर्णांक rc;
+	int rc;
 
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, VSB_TOP_NR_SYM_ERRS__A, &data, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_read_reg16(dev_addr, VSB_TOP_NR_SYM_ERRS__A, &data, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	*ber = data;
 	*cnt = VSB_TOP_MEASUREMENT_PERIOD * SYMBOLS_PER_SEGMENT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
-* \पn अटल पूर्णांक get_vsbmer(काष्ठा i2c_device_addr *dev_addr, u16 *mer)
-* \मrief Get the values of MER
-* \लeturn Error code
+* \fn static int get_vsbmer(struct i2c_device_addr *dev_addr, u16 *mer)
+* \brief Get the values of MER
+* \return Error code
 */
-अटल पूर्णांक get_vsbmer(काष्ठा i2c_device_addr *dev_addr, u16 *mer)
-अणु
-	पूर्णांक rc;
+static int get_vsbmer(struct i2c_device_addr *dev_addr, u16 *mer)
+{
+	int rc;
 	u16 data_hi = 0;
 
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, VSB_TOP_ERR_ENERGY_H__A, &data_hi, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_read_reg16(dev_addr, VSB_TOP_ERR_ENERGY_H__A, &data_hi, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	*mer =
-	    (u16) (log1_बार100(21504) - log1_बार100((data_hi << 6) / 52));
+	    (u16) (log1_times100(21504) - log1_times100((data_hi << 6) / 52));
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 
 /*============================================================================*/
@@ -6350,24 +6349,24 @@ rw_error:
 /*============================================================================*/
 
 /*
-* \पn पूर्णांक घातer_करोwn_qam ()
-* \मrief Powr करोwn QAM related blocks.
+* \fn int power_down_qam ()
+* \brief Powr down QAM related blocks.
 * \param demod instance of demodulator.
-* \param channel poपूर्णांकer to channel data.
-* \लeturn पूर्णांक.
+* \param channel pointer to channel data.
+* \return int.
 */
-अटल पूर्णांक घातer_करोwn_qam(काष्ठा drx_demod_instance *demod, bool primary)
-अणु
-	काष्ठा drxjscu_cmd cmd_scu = अणु /* command      */ 0,
+static int power_down_qam(struct drx_demod_instance *demod, bool primary)
+{
+	struct drxjscu_cmd cmd_scu = { /* command      */ 0,
 		/* parameter_len */ 0,
 		/* result_len    */ 0,
-		/* *parameter   */ शून्य,
-		/* *result      */ शून्य
-	पूर्ण;
-	पूर्णांक rc;
-	काष्ठा i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
-	काष्ठा drx_cfg_mpeg_output cfg_mpeg_output;
-	काष्ठा drx_common_attr *common_attr = demod->my_common_attr;
+		/* *parameter   */ NULL,
+		/* *result      */ NULL
+	};
+	int rc;
+	struct i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
+	struct drx_cfg_mpeg_output cfg_mpeg_output;
+	struct drx_common_attr *common_attr = demod->my_common_attr;
 	u16 cmd_result = 0;
 
 	/*
@@ -6375,1504 +6374,1504 @@ rw_error:
 	   resets IQM, QAM and FEC HW blocks
 	 */
 	/* stop all comm_exec */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_COMM_EXEC__A, FEC_COMM_EXEC_STOP, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, FEC_COMM_EXEC__A, FEC_COMM_EXEC_STOP, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_COMM_EXEC__A, QAM_COMM_EXEC_STOP, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, QAM_COMM_EXEC__A, QAM_COMM_EXEC_STOP, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	cmd_scu.command = SCU_RAM_COMMAND_STANDARD_QAM |
 	    SCU_RAM_COMMAND_CMD_DEMOD_STOP;
 	cmd_scu.parameter_len = 0;
 	cmd_scu.result_len = 1;
-	cmd_scu.parameter = शून्य;
+	cmd_scu.parameter = NULL;
 	cmd_scu.result = &cmd_result;
 	rc = scu_command(dev_addr, &cmd_scu);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	अगर (primary) अणु
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_COMM_EXEC__A, IQM_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+	if (primary) {
+		rc = drxj_dap_write_reg16(dev_addr, IQM_COMM_EXEC__A, IQM_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 		rc = set_iqm_af(demod, false);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_FS_COMM_EXEC__A, IQM_FS_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+	} else {
+		rc = drxj_dap_write_reg16(dev_addr, IQM_FS_COMM_EXEC__A, IQM_FS_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_FD_COMM_EXEC__A, IQM_FD_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_FD_COMM_EXEC__A, IQM_FD_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_RC_COMM_EXEC__A, IQM_RC_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_RC_COMM_EXEC__A, IQM_RC_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_RT_COMM_EXEC__A, IQM_RT_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_RT_COMM_EXEC__A, IQM_RT_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_CF_COMM_EXEC__A, IQM_CF_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_CF_COMM_EXEC__A, IQM_CF_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
+			goto rw_error;
+		}
+	}
 
-	स_नकल(&cfg_mpeg_output, &common_attr->mpeg_cfg, माप(cfg_mpeg_output));
+	memcpy(&cfg_mpeg_output, &common_attr->mpeg_cfg, sizeof(cfg_mpeg_output));
 	cfg_mpeg_output.enable_mpeg_output = false;
 
 	rc = ctrl_set_cfg_mpeg_output(demod, &cfg_mpeg_output);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*============================================================================*/
 
 /*
-* \पn पूर्णांक set_qam_measurement ()
-* \मrief Setup of the QAM Measuremnt पूर्णांकervals क्रम संकेत quality
+* \fn int set_qam_measurement ()
+* \brief Setup of the QAM Measuremnt intervals for signal quality
 * \param demod instance of demod.
-* \param स्थिरellation current स्थिरellation.
-* \लeturn पूर्णांक.
+* \param constellation current constellation.
+* \return int.
 *
 *  NOTE:
-*  Take पूर्णांकo account that क्रम certain settings the errorcounters can overflow.
-*  The implementation करोes not check this.
+*  Take into account that for certain settings the errorcounters can overflow.
+*  The implementation does not check this.
 *
-*  TODO: overriding the ext_attr->fec_bits_desired by स्थिरellation dependent
-*  स्थिरants to get a measurement period of approx. 1 sec. Remove fec_bits_desired
+*  TODO: overriding the ext_attr->fec_bits_desired by constellation dependent
+*  constants to get a measurement period of approx. 1 sec. Remove fec_bits_desired
 *  field ?
 *
 */
-#अगर_अघोषित DRXJ_VSB_ONLY
-अटल पूर्णांक
-set_qam_measurement(काष्ठा drx_demod_instance *demod,
-		    क्रमागत drx_modulation स्थिरellation, u32 symbol_rate)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = शून्य;	/* device address क्रम I2C ग_लिखोs */
-	काष्ठा drxj_data *ext_attr = शून्य;	/* Global data container क्रम DRXJ specअगरic data */
-	पूर्णांक rc;
+#ifndef DRXJ_VSB_ONLY
+static int
+set_qam_measurement(struct drx_demod_instance *demod,
+		    enum drx_modulation constellation, u32 symbol_rate)
+{
+	struct i2c_device_addr *dev_addr = NULL;	/* device address for I2C writes */
+	struct drxj_data *ext_attr = NULL;	/* Global data container for DRXJ specific data */
+	int rc;
 	u32 fec_bits_desired = 0;	/* BER accounting period */
 	u16 fec_rs_plen = 0;	/* defines RS BER measurement period */
 	u16 fec_rs_prescale = 0;	/* ReedSolomon Measurement Prescale */
-	u32 fec_rs_period = 0;	/* Value क्रम corresponding I2C रेजिस्टर */
+	u32 fec_rs_period = 0;	/* Value for corresponding I2C register */
 	u32 fec_rs_bit_cnt = 0;	/* Actual precise amount of bits */
-	u32 fec_oc_snc_fail_period = 0;	/* Value क्रम corresponding I2C रेजिस्टर */
-	u32 qam_vd_period = 0;	/* Value क्रम corresponding I2C रेजिस्टर */
+	u32 fec_oc_snc_fail_period = 0;	/* Value for corresponding I2C register */
+	u32 qam_vd_period = 0;	/* Value for corresponding I2C register */
 	u32 qam_vd_bit_cnt = 0;	/* Actual precise amount of bits */
 	u16 fec_vd_plen = 0;	/* no of trellis symbols: VD SER measur period */
 	u16 qam_vd_prescale = 0;	/* Viterbi Measurement Prescale */
 
 	dev_addr = demod->my_i2c_dev_addr;
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
 
 	fec_bits_desired = ext_attr->fec_bits_desired;
 	fec_rs_prescale = ext_attr->fec_rs_prescale;
 
-	चयन (स्थिरellation) अणु
-	हाल DRX_CONSTELLATION_QAM16:
+	switch (constellation) {
+	case DRX_CONSTELLATION_QAM16:
 		fec_bits_desired = 4 * symbol_rate;
-		अवरोध;
-	हाल DRX_CONSTELLATION_QAM32:
+		break;
+	case DRX_CONSTELLATION_QAM32:
 		fec_bits_desired = 5 * symbol_rate;
-		अवरोध;
-	हाल DRX_CONSTELLATION_QAM64:
+		break;
+	case DRX_CONSTELLATION_QAM64:
 		fec_bits_desired = 6 * symbol_rate;
-		अवरोध;
-	हाल DRX_CONSTELLATION_QAM128:
+		break;
+	case DRX_CONSTELLATION_QAM128:
 		fec_bits_desired = 7 * symbol_rate;
-		अवरोध;
-	हाल DRX_CONSTELLATION_QAM256:
+		break;
+	case DRX_CONSTELLATION_QAM256:
 		fec_bits_desired = 8 * symbol_rate;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	/* Parameters क्रम Reed-Solomon Decoder */
-	/* fecrs_period = (पूर्णांक)उच्चमान(FEC_BITS_DESIRED/(fecrs_prescale*plen)) */
+	/* Parameters for Reed-Solomon Decoder */
+	/* fecrs_period = (int)ceil(FEC_BITS_DESIRED/(fecrs_prescale*plen)) */
 	/* rs_bit_cnt   = fecrs_period*fecrs_prescale*plen                  */
 	/*     result is within 32 bit arithmetic ->                        */
-	/*     no need क्रम mult or frac functions                           */
+	/*     no need for mult or frac functions                           */
 
-	/* TODO: use स्थिरant instead of calculation and हटाओ the fec_rs_plen in ext_attr */
-	चयन (ext_attr->standard) अणु
-	हाल DRX_STANDARD_ITU_A:
-	हाल DRX_STANDARD_ITU_C:
+	/* TODO: use constant instead of calculation and remove the fec_rs_plen in ext_attr */
+	switch (ext_attr->standard) {
+	case DRX_STANDARD_ITU_A:
+	case DRX_STANDARD_ITU_C:
 		fec_rs_plen = 204 * 8;
-		अवरोध;
-	हाल DRX_STANDARD_ITU_B:
+		break;
+	case DRX_STANDARD_ITU_B:
 		fec_rs_plen = 128 * 7;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	ext_attr->fec_rs_plen = fec_rs_plen;	/* क्रम getSigQual */
+	ext_attr->fec_rs_plen = fec_rs_plen;	/* for getSigQual */
 	fec_rs_bit_cnt = fec_rs_prescale * fec_rs_plen;	/* temp storage   */
-	अगर (fec_rs_bit_cnt == 0) अणु
+	if (fec_rs_bit_cnt == 0) {
 		pr_err("error: fec_rs_bit_cnt is zero!\n");
-		वापस -EIO;
-	पूर्ण
-	fec_rs_period = fec_bits_desired / fec_rs_bit_cnt + 1;	/* उच्चमान */
-	अगर (ext_attr->standard != DRX_STANDARD_ITU_B)
+		return -EIO;
+	}
+	fec_rs_period = fec_bits_desired / fec_rs_bit_cnt + 1;	/* ceil */
+	if (ext_attr->standard != DRX_STANDARD_ITU_B)
 		fec_oc_snc_fail_period = fec_rs_period;
 
-	/* limit to max 16 bit value (I2C रेजिस्टर width) अगर needed */
-	अगर (fec_rs_period > 0xFFFF)
+	/* limit to max 16 bit value (I2C register width) if needed */
+	if (fec_rs_period > 0xFFFF)
 		fec_rs_period = 0xFFFF;
 
-	/* ग_लिखो corresponding रेजिस्टरs */
-	चयन (ext_attr->standard) अणु
-	हाल DRX_STANDARD_ITU_A:
-	हाल DRX_STANDARD_ITU_C:
-		अवरोध;
-	हाल DRX_STANDARD_ITU_B:
-		चयन (स्थिरellation) अणु
-		हाल DRX_CONSTELLATION_QAM64:
+	/* write corresponding registers */
+	switch (ext_attr->standard) {
+	case DRX_STANDARD_ITU_A:
+	case DRX_STANDARD_ITU_C:
+		break;
+	case DRX_STANDARD_ITU_B:
+		switch (constellation) {
+		case DRX_CONSTELLATION_QAM64:
 			fec_rs_period = 31581;
 			fec_oc_snc_fail_period = 17932;
-			अवरोध;
-		हाल DRX_CONSTELLATION_QAM256:
+			break;
+		case DRX_CONSTELLATION_QAM256:
 			fec_rs_period = 45446;
 			fec_oc_snc_fail_period = 25805;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_OC_SNC_FAIL_PERIOD__A, (u16)fec_oc_snc_fail_period, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, FEC_OC_SNC_FAIL_PERIOD__A, (u16)fec_oc_snc_fail_period, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_RS_MEASUREMENT_PERIOD__A, (u16)fec_rs_period, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, FEC_RS_MEASUREMENT_PERIOD__A, (u16)fec_rs_period, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_RS_MEASUREMENT_PRESCALE__A, fec_rs_prescale, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, FEC_RS_MEASUREMENT_PRESCALE__A, fec_rs_prescale, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	ext_attr->fec_rs_period = (u16) fec_rs_period;
 	ext_attr->fec_rs_prescale = fec_rs_prescale;
-	rc = drxdap_fasi_ग_लिखो_reg32(dev_addr, SCU_RAM_FEC_ACCUM_CW_CORRECTED_LO__A, 0, 0);
-	अगर (rc != 0) अणु
+	rc = drxdap_fasi_write_reg32(dev_addr, SCU_RAM_FEC_ACCUM_CW_CORRECTED_LO__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_FEC_MEAS_COUNT__A, 0, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_FEC_MEAS_COUNT__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_FEC_ACCUM_PKT_FAILURES__A, 0, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_FEC_ACCUM_PKT_FAILURES__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	अगर (ext_attr->standard == DRX_STANDARD_ITU_B) अणु
-		/* Parameters क्रम Viterbi Decoder */
-		/* qamvd_period = (पूर्णांक)उच्चमान(FEC_BITS_DESIRED/                      */
-		/*                    (qamvd_prescale*plen*(qam_स्थिरellation+1))) */
+	if (ext_attr->standard == DRX_STANDARD_ITU_B) {
+		/* Parameters for Viterbi Decoder */
+		/* qamvd_period = (int)ceil(FEC_BITS_DESIRED/                      */
+		/*                    (qamvd_prescale*plen*(qam_constellation+1))) */
 		/* vd_bit_cnt   = qamvd_period*qamvd_prescale*plen                 */
 		/*     result is within 32 bit arithmetic ->                       */
-		/*     no need क्रम mult or frac functions                          */
+		/*     no need for mult or frac functions                          */
 
 		/* a(8 bit) * b(8 bit) = 16 bit result => mult32 not needed */
 		fec_vd_plen = ext_attr->fec_vd_plen;
 		qam_vd_prescale = ext_attr->qam_vd_prescale;
 		qam_vd_bit_cnt = qam_vd_prescale * fec_vd_plen;	/* temp storage */
 
-		चयन (स्थिरellation) अणु
-		हाल DRX_CONSTELLATION_QAM64:
+		switch (constellation) {
+		case DRX_CONSTELLATION_QAM64:
 			/* a(16 bit) * b(4 bit) = 20 bit result => mult32 not needed */
 			qam_vd_period =
 			    qam_vd_bit_cnt * (QAM_TOP_CONSTELLATION_QAM64 + 1)
 			    * (QAM_TOP_CONSTELLATION_QAM64 + 1);
-			अवरोध;
-		हाल DRX_CONSTELLATION_QAM256:
+			break;
+		case DRX_CONSTELLATION_QAM256:
 			/* a(16 bit) * b(5 bit) = 21 bit result => mult32 not needed */
 			qam_vd_period =
 			    qam_vd_bit_cnt * (QAM_TOP_CONSTELLATION_QAM256 + 1)
 			    * (QAM_TOP_CONSTELLATION_QAM256 + 1);
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-		अगर (qam_vd_period == 0) अणु
+			break;
+		default:
+			return -EINVAL;
+		}
+		if (qam_vd_period == 0) {
 			pr_err("error: qam_vd_period is zero!\n");
-			वापस -EIO;
-		पूर्ण
+			return -EIO;
+		}
 		qam_vd_period = fec_bits_desired / qam_vd_period;
-		/* limit to max 16 bit value (I2C रेजिस्टर width) अगर needed */
-		अगर (qam_vd_period > 0xFFFF)
+		/* limit to max 16 bit value (I2C register width) if needed */
+		if (qam_vd_period > 0xFFFF)
 			qam_vd_period = 0xFFFF;
 
 		/* a(16 bit) * b(16 bit) = 32 bit result => mult32 not needed */
 		qam_vd_bit_cnt *= qam_vd_period;
 
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_VD_MEASUREMENT_PERIOD__A, (u16)qam_vd_period, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_write_reg16(dev_addr, QAM_VD_MEASUREMENT_PERIOD__A, (u16)qam_vd_period, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_VD_MEASUREMENT_PRESCALE__A, qam_vd_prescale, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, QAM_VD_MEASUREMENT_PRESCALE__A, qam_vd_prescale, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 		ext_attr->qam_vd_period = (u16) qam_vd_period;
 		ext_attr->qam_vd_prescale = qam_vd_prescale;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*============================================================================*/
 
 /*
-* \पn पूर्णांक set_qam16 ()
-* \मrief QAM16 specअगरic setup
+* \fn int set_qam16 ()
+* \brief QAM16 specific setup
 * \param demod instance of demod.
-* \लeturn पूर्णांक.
+* \return int.
 */
-अटल पूर्णांक set_qam16(काष्ठा drx_demod_instance *demod)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
-	पूर्णांक rc;
-	अटल स्थिर u8 qam_dq_qual_fun[] = अणु
+static int set_qam16(struct drx_demod_instance *demod)
+{
+	struct i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
+	int rc;
+	static const u8 qam_dq_qual_fun[] = {
 		DRXJ_16TO8(2),	/* fun0  */
 		DRXJ_16TO8(2),	/* fun1  */
 		DRXJ_16TO8(2),	/* fun2  */
 		DRXJ_16TO8(2),	/* fun3  */
 		DRXJ_16TO8(3),	/* fun4  */
 		DRXJ_16TO8(3),	/* fun5  */
-	पूर्ण;
-	अटल स्थिर u8 qam_eq_cma_rad[] = अणु
+	};
+	static const u8 qam_eq_cma_rad[] = {
 		DRXJ_16TO8(13517),	/* RAD0  */
 		DRXJ_16TO8(13517),	/* RAD1  */
 		DRXJ_16TO8(13517),	/* RAD2  */
 		DRXJ_16TO8(13517),	/* RAD3  */
 		DRXJ_16TO8(13517),	/* RAD4  */
 		DRXJ_16TO8(13517),	/* RAD5  */
-	पूर्ण;
+	};
 
-	rc = drxdap_fasi_ग_लिखो_block(dev_addr, QAM_DQ_QUAL_FUN0__A, माप(qam_dq_qual_fun), ((u8 *)qam_dq_qual_fun), 0);
-	अगर (rc != 0) अणु
+	rc = drxdap_fasi_write_block(dev_addr, QAM_DQ_QUAL_FUN0__A, sizeof(qam_dq_qual_fun), ((u8 *)qam_dq_qual_fun), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxdap_fasi_ग_लिखो_block(dev_addr, SCU_RAM_QAM_EQ_CMA_RAD0__A, माप(qam_eq_cma_rad), ((u8 *)qam_eq_cma_rad), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxdap_fasi_write_block(dev_addr, SCU_RAM_QAM_EQ_CMA_RAD0__A, sizeof(qam_eq_cma_rad), ((u8 *)qam_eq_cma_rad), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_RTH__A, 140, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_RTH__A, 140, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_FTH__A, 50, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_FTH__A, 50, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_PTH__A, 120, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_PTH__A, 120, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_QTH__A, 230, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_QTH__A, 230, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_CTH__A, 95, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_CTH__A, 95, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_MTH__A, 105, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_MTH__A, 105, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_RATE_LIM__A, 40, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_RATE_LIM__A, 40, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_FREQ_LIM__A, 56, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_FREQ_LIM__A, 56, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_COUNT_LIM__A, 3, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_COUNT_LIM__A, 3, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_MEDIAN_AV_MULT__A, 16, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_MEDIAN_AV_MULT__A, 16, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_RADIUS_AV_LIMIT__A, 220, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_RADIUS_AV_LIMIT__A, 220, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET1__A, 25, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET1__A, 25, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET2__A, 6, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET2__A, 6, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET3__A, (u16)(-24), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET3__A, (u16)(-24), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET4__A, (u16)(-65), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET4__A, (u16)(-65), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET5__A, (u16)(-127), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET5__A, (u16)(-127), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CA_FINE__A, 15, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CA_FINE__A, 15, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CA_COARSE__A, 40, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CA_COARSE__A, 40, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CP_FINE__A, 2, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CP_FINE__A, 2, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CP_MEDIUM__A, 20, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CP_MEDIUM__A, 20, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CP_COARSE__A, 255, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CP_COARSE__A, 255, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CI_FINE__A, 2, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CI_FINE__A, 2, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CI_MEDIUM__A, 10, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CI_MEDIUM__A, 10, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CI_COARSE__A, 50, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CI_COARSE__A, 50, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EP_FINE__A, 12, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EP_FINE__A, 12, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EP_MEDIUM__A, 24, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EP_MEDIUM__A, 24, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EP_COARSE__A, 24, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EP_COARSE__A, 24, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EI_FINE__A, 12, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EI_FINE__A, 12, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EI_MEDIUM__A, 16, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EI_MEDIUM__A, 16, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EI_COARSE__A, 16, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EI_COARSE__A, 16, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF_FINE__A, 16, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF_FINE__A, 16, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF_MEDIUM__A, 32, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF_MEDIUM__A, 32, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF_COARSE__A, 240, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF_COARSE__A, 240, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_FINE__A, 5, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_FINE__A, 5, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_MEDIUM__A, 15, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_MEDIUM__A, 15, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_COARSE__A, 32, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_COARSE__A, 32, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_SL_SIG_POWER__A, 40960, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_SL_SIG_POWER__A, 40960, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*============================================================================*/
 
 /*
-* \पn पूर्णांक set_qam32 ()
-* \मrief QAM32 specअगरic setup
+* \fn int set_qam32 ()
+* \brief QAM32 specific setup
 * \param demod instance of demod.
-* \लeturn पूर्णांक.
+* \return int.
 */
-अटल पूर्णांक set_qam32(काष्ठा drx_demod_instance *demod)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
-	पूर्णांक rc;
-	अटल स्थिर u8 qam_dq_qual_fun[] = अणु
+static int set_qam32(struct drx_demod_instance *demod)
+{
+	struct i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
+	int rc;
+	static const u8 qam_dq_qual_fun[] = {
 		DRXJ_16TO8(3),	/* fun0  */
 		DRXJ_16TO8(3),	/* fun1  */
 		DRXJ_16TO8(3),	/* fun2  */
 		DRXJ_16TO8(3),	/* fun3  */
 		DRXJ_16TO8(4),	/* fun4  */
 		DRXJ_16TO8(4),	/* fun5  */
-	पूर्ण;
-	अटल स्थिर u8 qam_eq_cma_rad[] = अणु
+	};
+	static const u8 qam_eq_cma_rad[] = {
 		DRXJ_16TO8(6707),	/* RAD0  */
 		DRXJ_16TO8(6707),	/* RAD1  */
 		DRXJ_16TO8(6707),	/* RAD2  */
 		DRXJ_16TO8(6707),	/* RAD3  */
 		DRXJ_16TO8(6707),	/* RAD4  */
 		DRXJ_16TO8(6707),	/* RAD5  */
-	पूर्ण;
+	};
 
-	rc = drxdap_fasi_ग_लिखो_block(dev_addr, QAM_DQ_QUAL_FUN0__A, माप(qam_dq_qual_fun), ((u8 *)qam_dq_qual_fun), 0);
-	अगर (rc != 0) अणु
+	rc = drxdap_fasi_write_block(dev_addr, QAM_DQ_QUAL_FUN0__A, sizeof(qam_dq_qual_fun), ((u8 *)qam_dq_qual_fun), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxdap_fasi_ग_लिखो_block(dev_addr, SCU_RAM_QAM_EQ_CMA_RAD0__A, माप(qam_eq_cma_rad), ((u8 *)qam_eq_cma_rad), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxdap_fasi_write_block(dev_addr, SCU_RAM_QAM_EQ_CMA_RAD0__A, sizeof(qam_eq_cma_rad), ((u8 *)qam_eq_cma_rad), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_RTH__A, 90, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_RTH__A, 90, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_FTH__A, 50, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_FTH__A, 50, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_PTH__A, 100, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_PTH__A, 100, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_QTH__A, 170, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_QTH__A, 170, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_CTH__A, 80, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_CTH__A, 80, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_MTH__A, 100, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_MTH__A, 100, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_RATE_LIM__A, 40, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_RATE_LIM__A, 40, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_FREQ_LIM__A, 56, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_FREQ_LIM__A, 56, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_COUNT_LIM__A, 3, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_COUNT_LIM__A, 3, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_MEDIAN_AV_MULT__A, 12, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_MEDIAN_AV_MULT__A, 12, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_RADIUS_AV_LIMIT__A, 140, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_RADIUS_AV_LIMIT__A, 140, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET1__A, (u16)(-8), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET1__A, (u16)(-8), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET2__A, (u16)(-16), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET2__A, (u16)(-16), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET3__A, (u16)(-26), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET3__A, (u16)(-26), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET4__A, (u16)(-56), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET4__A, (u16)(-56), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET5__A, (u16)(-86), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET5__A, (u16)(-86), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CA_FINE__A, 15, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CA_FINE__A, 15, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CA_COARSE__A, 40, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CA_COARSE__A, 40, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CP_FINE__A, 2, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CP_FINE__A, 2, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CP_MEDIUM__A, 20, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CP_MEDIUM__A, 20, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CP_COARSE__A, 255, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CP_COARSE__A, 255, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CI_FINE__A, 2, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CI_FINE__A, 2, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CI_MEDIUM__A, 10, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CI_MEDIUM__A, 10, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CI_COARSE__A, 50, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CI_COARSE__A, 50, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EP_FINE__A, 12, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EP_FINE__A, 12, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EP_MEDIUM__A, 24, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EP_MEDIUM__A, 24, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EP_COARSE__A, 24, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EP_COARSE__A, 24, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EI_FINE__A, 12, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EI_FINE__A, 12, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EI_MEDIUM__A, 16, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EI_MEDIUM__A, 16, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EI_COARSE__A, 16, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EI_COARSE__A, 16, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF_FINE__A, 16, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF_FINE__A, 16, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF_MEDIUM__A, 32, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF_MEDIUM__A, 32, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF_COARSE__A, 176, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF_COARSE__A, 176, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_FINE__A, 5, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_FINE__A, 5, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_MEDIUM__A, 15, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_MEDIUM__A, 15, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_COARSE__A, 8, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_COARSE__A, 8, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_SL_SIG_POWER__A, 20480, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_SL_SIG_POWER__A, 20480, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*============================================================================*/
 
 /*
-* \पn पूर्णांक set_qam64 ()
-* \मrief QAM64 specअगरic setup
+* \fn int set_qam64 ()
+* \brief QAM64 specific setup
 * \param demod instance of demod.
-* \लeturn पूर्णांक.
+* \return int.
 */
-अटल पूर्णांक set_qam64(काष्ठा drx_demod_instance *demod)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
-	पूर्णांक rc;
-	अटल स्थिर u8 qam_dq_qual_fun[] = अणु
-		/* this is hw reset value. no necessary to re-ग_लिखो */
+static int set_qam64(struct drx_demod_instance *demod)
+{
+	struct i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
+	int rc;
+	static const u8 qam_dq_qual_fun[] = {
+		/* this is hw reset value. no necessary to re-write */
 		DRXJ_16TO8(4),	/* fun0  */
 		DRXJ_16TO8(4),	/* fun1  */
 		DRXJ_16TO8(4),	/* fun2  */
 		DRXJ_16TO8(4),	/* fun3  */
 		DRXJ_16TO8(6),	/* fun4  */
 		DRXJ_16TO8(6),	/* fun5  */
-	पूर्ण;
-	अटल स्थिर u8 qam_eq_cma_rad[] = अणु
+	};
+	static const u8 qam_eq_cma_rad[] = {
 		DRXJ_16TO8(13336),	/* RAD0  */
 		DRXJ_16TO8(12618),	/* RAD1  */
 		DRXJ_16TO8(11988),	/* RAD2  */
 		DRXJ_16TO8(13809),	/* RAD3  */
 		DRXJ_16TO8(13809),	/* RAD4  */
 		DRXJ_16TO8(15609),	/* RAD5  */
-	पूर्ण;
+	};
 
-	rc = drxdap_fasi_ग_लिखो_block(dev_addr, QAM_DQ_QUAL_FUN0__A, माप(qam_dq_qual_fun), ((u8 *)qam_dq_qual_fun), 0);
-	अगर (rc != 0) अणु
+	rc = drxdap_fasi_write_block(dev_addr, QAM_DQ_QUAL_FUN0__A, sizeof(qam_dq_qual_fun), ((u8 *)qam_dq_qual_fun), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxdap_fasi_ग_लिखो_block(dev_addr, SCU_RAM_QAM_EQ_CMA_RAD0__A, माप(qam_eq_cma_rad), ((u8 *)qam_eq_cma_rad), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxdap_fasi_write_block(dev_addr, SCU_RAM_QAM_EQ_CMA_RAD0__A, sizeof(qam_eq_cma_rad), ((u8 *)qam_eq_cma_rad), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_RTH__A, 105, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_RTH__A, 105, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_FTH__A, 60, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_FTH__A, 60, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_PTH__A, 100, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_PTH__A, 100, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_QTH__A, 195, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_QTH__A, 195, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_CTH__A, 80, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_CTH__A, 80, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_MTH__A, 84, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_MTH__A, 84, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_RATE_LIM__A, 40, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_RATE_LIM__A, 40, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_FREQ_LIM__A, 32, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_FREQ_LIM__A, 32, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_COUNT_LIM__A, 3, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_COUNT_LIM__A, 3, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_MEDIAN_AV_MULT__A, 12, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_MEDIAN_AV_MULT__A, 12, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_RADIUS_AV_LIMIT__A, 141, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_RADIUS_AV_LIMIT__A, 141, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET1__A, 7, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET1__A, 7, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET2__A, 0, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET2__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET3__A, (u16)(-15), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET3__A, (u16)(-15), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET4__A, (u16)(-45), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET4__A, (u16)(-45), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET5__A, (u16)(-80), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET5__A, (u16)(-80), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CA_FINE__A, 15, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CA_FINE__A, 15, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CA_COARSE__A, 40, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CA_COARSE__A, 40, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CP_FINE__A, 2, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CP_FINE__A, 2, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CP_MEDIUM__A, 30, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CP_MEDIUM__A, 30, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CP_COARSE__A, 255, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CP_COARSE__A, 255, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CI_FINE__A, 2, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CI_FINE__A, 2, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CI_MEDIUM__A, 15, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CI_MEDIUM__A, 15, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CI_COARSE__A, 80, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CI_COARSE__A, 80, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EP_FINE__A, 12, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EP_FINE__A, 12, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EP_MEDIUM__A, 24, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EP_MEDIUM__A, 24, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EP_COARSE__A, 24, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EP_COARSE__A, 24, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EI_FINE__A, 12, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EI_FINE__A, 12, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EI_MEDIUM__A, 16, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EI_MEDIUM__A, 16, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EI_COARSE__A, 16, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EI_COARSE__A, 16, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF_FINE__A, 16, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF_FINE__A, 16, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF_MEDIUM__A, 48, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF_MEDIUM__A, 48, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF_COARSE__A, 160, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF_COARSE__A, 160, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_FINE__A, 5, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_FINE__A, 5, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_MEDIUM__A, 15, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_MEDIUM__A, 15, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_COARSE__A, 32, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_COARSE__A, 32, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_SL_SIG_POWER__A, 43008, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_SL_SIG_POWER__A, 43008, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*============================================================================*/
 
 /*
-* \पn पूर्णांक set_qam128 ()
-* \मrief QAM128 specअगरic setup
+* \fn int set_qam128 ()
+* \brief QAM128 specific setup
 * \param demod: instance of demod.
-* \लeturn पूर्णांक.
+* \return int.
 */
-अटल पूर्णांक set_qam128(काष्ठा drx_demod_instance *demod)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
-	पूर्णांक rc;
-	अटल स्थिर u8 qam_dq_qual_fun[] = अणु
+static int set_qam128(struct drx_demod_instance *demod)
+{
+	struct i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
+	int rc;
+	static const u8 qam_dq_qual_fun[] = {
 		DRXJ_16TO8(6),	/* fun0  */
 		DRXJ_16TO8(6),	/* fun1  */
 		DRXJ_16TO8(6),	/* fun2  */
 		DRXJ_16TO8(6),	/* fun3  */
 		DRXJ_16TO8(9),	/* fun4  */
 		DRXJ_16TO8(9),	/* fun5  */
-	पूर्ण;
-	अटल स्थिर u8 qam_eq_cma_rad[] = अणु
+	};
+	static const u8 qam_eq_cma_rad[] = {
 		DRXJ_16TO8(6164),	/* RAD0  */
 		DRXJ_16TO8(6598),	/* RAD1  */
 		DRXJ_16TO8(6394),	/* RAD2  */
 		DRXJ_16TO8(6409),	/* RAD3  */
 		DRXJ_16TO8(6656),	/* RAD4  */
 		DRXJ_16TO8(7238),	/* RAD5  */
-	पूर्ण;
+	};
 
-	rc = drxdap_fasi_ग_लिखो_block(dev_addr, QAM_DQ_QUAL_FUN0__A, माप(qam_dq_qual_fun), ((u8 *)qam_dq_qual_fun), 0);
-	अगर (rc != 0) अणु
+	rc = drxdap_fasi_write_block(dev_addr, QAM_DQ_QUAL_FUN0__A, sizeof(qam_dq_qual_fun), ((u8 *)qam_dq_qual_fun), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxdap_fasi_ग_लिखो_block(dev_addr, SCU_RAM_QAM_EQ_CMA_RAD0__A, माप(qam_eq_cma_rad), ((u8 *)qam_eq_cma_rad), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxdap_fasi_write_block(dev_addr, SCU_RAM_QAM_EQ_CMA_RAD0__A, sizeof(qam_eq_cma_rad), ((u8 *)qam_eq_cma_rad), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_RTH__A, 50, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_RTH__A, 50, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_FTH__A, 60, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_FTH__A, 60, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_PTH__A, 100, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_PTH__A, 100, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_QTH__A, 140, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_QTH__A, 140, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_CTH__A, 80, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_CTH__A, 80, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_MTH__A, 100, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_MTH__A, 100, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_RATE_LIM__A, 40, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_RATE_LIM__A, 40, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_FREQ_LIM__A, 32, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_FREQ_LIM__A, 32, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_COUNT_LIM__A, 3, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_COUNT_LIM__A, 3, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_MEDIAN_AV_MULT__A, 8, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_MEDIAN_AV_MULT__A, 8, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_RADIUS_AV_LIMIT__A, 65, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_RADIUS_AV_LIMIT__A, 65, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET1__A, 5, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET1__A, 5, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET2__A, 3, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET2__A, 3, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET3__A, (u16)(-1), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET3__A, (u16)(-1), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET4__A, 12, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET4__A, 12, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET5__A, (u16)(-23), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET5__A, (u16)(-23), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CA_FINE__A, 15, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CA_FINE__A, 15, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CA_COARSE__A, 40, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CA_COARSE__A, 40, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CP_FINE__A, 2, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CP_FINE__A, 2, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CP_MEDIUM__A, 40, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CP_MEDIUM__A, 40, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CP_COARSE__A, 255, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CP_COARSE__A, 255, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CI_FINE__A, 2, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CI_FINE__A, 2, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CI_MEDIUM__A, 20, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CI_MEDIUM__A, 20, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CI_COARSE__A, 80, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CI_COARSE__A, 80, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EP_FINE__A, 12, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EP_FINE__A, 12, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EP_MEDIUM__A, 24, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EP_MEDIUM__A, 24, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EP_COARSE__A, 24, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EP_COARSE__A, 24, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EI_FINE__A, 12, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EI_FINE__A, 12, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EI_MEDIUM__A, 16, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EI_MEDIUM__A, 16, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EI_COARSE__A, 16, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EI_COARSE__A, 16, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF_FINE__A, 16, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF_FINE__A, 16, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF_MEDIUM__A, 32, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF_MEDIUM__A, 32, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF_COARSE__A, 144, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF_COARSE__A, 144, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_FINE__A, 5, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_FINE__A, 5, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_MEDIUM__A, 15, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_MEDIUM__A, 15, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_COARSE__A, 16, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_COARSE__A, 16, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_SL_SIG_POWER__A, 20992, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_SL_SIG_POWER__A, 20992, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*============================================================================*/
 
 /*
-* \पn पूर्णांक set_qam256 ()
-* \मrief QAM256 specअगरic setup
+* \fn int set_qam256 ()
+* \brief QAM256 specific setup
 * \param demod: instance of demod.
-* \लeturn पूर्णांक.
+* \return int.
 */
-अटल पूर्णांक set_qam256(काष्ठा drx_demod_instance *demod)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
-	पूर्णांक rc;
-	अटल स्थिर u8 qam_dq_qual_fun[] = अणु
+static int set_qam256(struct drx_demod_instance *demod)
+{
+	struct i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
+	int rc;
+	static const u8 qam_dq_qual_fun[] = {
 		DRXJ_16TO8(8),	/* fun0  */
 		DRXJ_16TO8(8),	/* fun1  */
 		DRXJ_16TO8(8),	/* fun2  */
 		DRXJ_16TO8(8),	/* fun3  */
 		DRXJ_16TO8(12),	/* fun4  */
 		DRXJ_16TO8(12),	/* fun5  */
-	पूर्ण;
-	अटल स्थिर u8 qam_eq_cma_rad[] = अणु
+	};
+	static const u8 qam_eq_cma_rad[] = {
 		DRXJ_16TO8(12345),	/* RAD0  */
 		DRXJ_16TO8(12345),	/* RAD1  */
 		DRXJ_16TO8(13626),	/* RAD2  */
 		DRXJ_16TO8(12931),	/* RAD3  */
 		DRXJ_16TO8(14719),	/* RAD4  */
 		DRXJ_16TO8(15356),	/* RAD5  */
-	पूर्ण;
+	};
 
-	rc = drxdap_fasi_ग_लिखो_block(dev_addr, QAM_DQ_QUAL_FUN0__A, माप(qam_dq_qual_fun), ((u8 *)qam_dq_qual_fun), 0);
-	अगर (rc != 0) अणु
+	rc = drxdap_fasi_write_block(dev_addr, QAM_DQ_QUAL_FUN0__A, sizeof(qam_dq_qual_fun), ((u8 *)qam_dq_qual_fun), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxdap_fasi_ग_लिखो_block(dev_addr, SCU_RAM_QAM_EQ_CMA_RAD0__A, माप(qam_eq_cma_rad), ((u8 *)qam_eq_cma_rad), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxdap_fasi_write_block(dev_addr, SCU_RAM_QAM_EQ_CMA_RAD0__A, sizeof(qam_eq_cma_rad), ((u8 *)qam_eq_cma_rad), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_RTH__A, 50, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_RTH__A, 50, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_FTH__A, 60, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_FTH__A, 60, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_PTH__A, 100, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_PTH__A, 100, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_QTH__A, 150, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_QTH__A, 150, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_CTH__A, 80, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_CTH__A, 80, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_MTH__A, 110, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_MTH__A, 110, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_RATE_LIM__A, 40, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_RATE_LIM__A, 40, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_FREQ_LIM__A, 16, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_FREQ_LIM__A, 16, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_COUNT_LIM__A, 3, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_COUNT_LIM__A, 3, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_MEDIAN_AV_MULT__A, 8, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_MEDIAN_AV_MULT__A, 8, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_RADIUS_AV_LIMIT__A, 74, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_RADIUS_AV_LIMIT__A, 74, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET1__A, 18, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET1__A, 18, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET2__A, 13, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET2__A, 13, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET3__A, 7, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET3__A, 7, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET4__A, 0, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET4__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET5__A, (u16)(-8), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_LCAVG_OFFSET5__A, (u16)(-8), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CA_FINE__A, 15, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CA_FINE__A, 15, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CA_COARSE__A, 40, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CA_COARSE__A, 40, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CP_FINE__A, 2, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CP_FINE__A, 2, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CP_MEDIUM__A, 50, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CP_MEDIUM__A, 50, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CP_COARSE__A, 255, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CP_COARSE__A, 255, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CI_FINE__A, 2, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CI_FINE__A, 2, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CI_MEDIUM__A, 25, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CI_MEDIUM__A, 25, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CI_COARSE__A, 80, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CI_COARSE__A, 80, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EP_FINE__A, 12, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EP_FINE__A, 12, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EP_MEDIUM__A, 24, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EP_MEDIUM__A, 24, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EP_COARSE__A, 24, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EP_COARSE__A, 24, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EI_FINE__A, 12, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EI_FINE__A, 12, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EI_MEDIUM__A, 16, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EI_MEDIUM__A, 16, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_EI_COARSE__A, 16, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_EI_COARSE__A, 16, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF_FINE__A, 16, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF_FINE__A, 16, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF_MEDIUM__A, 48, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF_MEDIUM__A, 48, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF_COARSE__A, 80, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF_COARSE__A, 80, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_FINE__A, 5, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_FINE__A, 5, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_MEDIUM__A, 15, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_MEDIUM__A, 15, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_COARSE__A, 16, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_LC_CF1_COARSE__A, 16, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_SL_SIG_POWER__A, 43520, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_SL_SIG_POWER__A, 43520, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*============================================================================*/
-#घोषणा QAM_SET_OP_ALL 0x1
-#घोषणा QAM_SET_OP_CONSTELLATION 0x2
-#घोषणा QAM_SET_OP_SPECTRUM 0X4
+#define QAM_SET_OP_ALL 0x1
+#define QAM_SET_OP_CONSTELLATION 0x2
+#define QAM_SET_OP_SPECTRUM 0X4
 
 /*
-* \पn पूर्णांक set_qam ()
-* \मrief Set QAM demod.
+* \fn int set_qam ()
+* \brief Set QAM demod.
 * \param demod:   instance of demod.
-* \param channel: poपूर्णांकer to channel data.
-* \लeturn पूर्णांक.
+* \param channel: pointer to channel data.
+* \return int.
 */
-अटल पूर्णांक
-set_qam(काष्ठा drx_demod_instance *demod,
-	काष्ठा drx_channel *channel, s32 tuner_freq_offset, u32 op)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = शून्य;
-	काष्ठा drxj_data *ext_attr = शून्य;
-	काष्ठा drx_common_attr *common_attr = शून्य;
-	पूर्णांक rc;
+static int
+set_qam(struct drx_demod_instance *demod,
+	struct drx_channel *channel, s32 tuner_freq_offset, u32 op)
+{
+	struct i2c_device_addr *dev_addr = NULL;
+	struct drxj_data *ext_attr = NULL;
+	struct drx_common_attr *common_attr = NULL;
+	int rc;
 	u32 adc_frequency = 0;
 	u32 iqm_rc_rate = 0;
 	u16 cmd_result = 0;
 	u16 lc_symbol_freq = 0;
 	u16 iqm_rc_stretch = 0;
 	u16 set_env_parameters = 0;
-	u16 set_param_parameters[2] = अणु 0 पूर्ण;
-	काष्ठा drxjscu_cmd cmd_scu = अणु /* command      */ 0,
+	u16 set_param_parameters[2] = { 0 };
+	struct drxjscu_cmd cmd_scu = { /* command      */ 0,
 		/* parameter_len */ 0,
 		/* result_len    */ 0,
-		/* parameter    */ शून्य,
-		/* result       */ शून्य
-	पूर्ण;
-	अटल स्थिर u8 qam_a_taps[] = अणु
+		/* parameter    */ NULL,
+		/* result       */ NULL
+	};
+	static const u8 qam_a_taps[] = {
 		DRXJ_16TO8(-1),	/* re0  */
 		DRXJ_16TO8(1),	/* re1  */
 		DRXJ_16TO8(1),	/* re2  */
@@ -7901,8 +7900,8 @@ set_qam(काष्ठा drx_demod_instance *demod,
 		DRXJ_16TO8(-190),	/* re25 */
 		DRXJ_16TO8(-40),	/* re26 */
 		DRXJ_16TO8(619)	/* re27 */
-	पूर्ण;
-	अटल स्थिर u8 qam_b64_taps[] = अणु
+	};
+	static const u8 qam_b64_taps[] = {
 		DRXJ_16TO8(0),	/* re0  */
 		DRXJ_16TO8(-2),	/* re1  */
 		DRXJ_16TO8(1),	/* re2  */
@@ -7931,8 +7930,8 @@ set_qam(काष्ठा drx_demod_instance *demod,
 		DRXJ_16TO8(-185),	/* re25 */
 		DRXJ_16TO8(-46),	/* re26 */
 		DRXJ_16TO8(614)	/* re27 */
-	पूर्ण;
-	अटल स्थिर u8 qam_b256_taps[] = अणु
+	};
+	static const u8 qam_b256_taps[] = {
 		DRXJ_16TO8(-2),	/* re0  */
 		DRXJ_16TO8(4),	/* re1  */
 		DRXJ_16TO8(1),	/* re2  */
@@ -7961,8 +7960,8 @@ set_qam(काष्ठा drx_demod_instance *demod,
 		DRXJ_16TO8(-201),	/* re25 */
 		DRXJ_16TO8(-32),	/* re26 */
 		DRXJ_16TO8(628)	/* re27 */
-	पूर्ण;
-	अटल स्थिर u8 qam_c_taps[] = अणु
+	};
+	static const u8 qam_c_taps[] = {
 		DRXJ_16TO8(-3),	/* re0  */
 		DRXJ_16TO8(3),	/* re1  */
 		DRXJ_16TO8(2),	/* re2  */
@@ -7991,37 +7990,37 @@ set_qam(काष्ठा drx_demod_instance *demod,
 		DRXJ_16TO8(-197),	/* re25 */
 		DRXJ_16TO8(-33),	/* re26 */
 		DRXJ_16TO8(626)	/* re27 */
-	पूर्ण;
+	};
 
 	dev_addr = demod->my_i2c_dev_addr;
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
-	common_attr = (काष्ठा drx_common_attr *) demod->my_common_attr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
+	common_attr = (struct drx_common_attr *) demod->my_common_attr;
 
-	अगर ((op & QAM_SET_OP_ALL) || (op & QAM_SET_OP_CONSTELLATION)) अणु
-		अगर (ext_attr->standard == DRX_STANDARD_ITU_B) अणु
-			चयन (channel->स्थिरellation) अणु
-			हाल DRX_CONSTELLATION_QAM256:
+	if ((op & QAM_SET_OP_ALL) || (op & QAM_SET_OP_CONSTELLATION)) {
+		if (ext_attr->standard == DRX_STANDARD_ITU_B) {
+			switch (channel->constellation) {
+			case DRX_CONSTELLATION_QAM256:
 				iqm_rc_rate = 0x00AE3562;
 				lc_symbol_freq =
 				    QAM_LC_SYMBOL_FREQ_FREQ_QAM_B_256;
 				channel->symbolrate = 5360537;
 				iqm_rc_stretch = IQM_RC_STRETCH_QAM_B_256;
-				अवरोध;
-			हाल DRX_CONSTELLATION_QAM64:
+				break;
+			case DRX_CONSTELLATION_QAM64:
 				iqm_rc_rate = 0x00C05A0E;
 				lc_symbol_freq = 409;
 				channel->symbolrate = 5056941;
 				iqm_rc_stretch = IQM_RC_STRETCH_QAM_B_64;
-				अवरोध;
-			शेष:
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			adc_frequency = (common_attr->sys_घड़ी_freq * 1000) / 3;
-			अगर (channel->symbolrate == 0) अणु
+				break;
+			default:
+				return -EINVAL;
+			}
+		} else {
+			adc_frequency = (common_attr->sys_clock_freq * 1000) / 3;
+			if (channel->symbolrate == 0) {
 				pr_err("error: channel symbolrate is zero!\n");
-				वापस -EIO;
-			पूर्ण
+				return -EIO;
+			}
 			iqm_rc_rate =
 			    (adc_frequency / channel->symbolrate) * (1 << 21) +
 			    (frac28
@@ -8032,86 +8031,86 @@ set_qam(काष्ठा drx_demod_instance *demod,
 				     (channel->symbolrate +
 				      (adc_frequency >> 13),
 				      adc_frequency) >> 16);
-			अगर (lc_symbol_freq > 511)
+			if (lc_symbol_freq > 511)
 				lc_symbol_freq = 511;
 
 			iqm_rc_stretch = 21;
-		पूर्ण
+		}
 
-		अगर (ext_attr->standard == DRX_STANDARD_ITU_A) अणु
+		if (ext_attr->standard == DRX_STANDARD_ITU_A) {
 			set_env_parameters = QAM_TOP_ANNEX_A;	/* annex             */
-			set_param_parameters[0] = channel->स्थिरellation;	/* स्थिरellation     */
-			set_param_parameters[1] = DRX_INTERLEAVEMODE_I12_J17;	/* पूर्णांकerleave mode   */
-		पूर्ण अन्यथा अगर (ext_attr->standard == DRX_STANDARD_ITU_B) अणु
+			set_param_parameters[0] = channel->constellation;	/* constellation     */
+			set_param_parameters[1] = DRX_INTERLEAVEMODE_I12_J17;	/* interleave mode   */
+		} else if (ext_attr->standard == DRX_STANDARD_ITU_B) {
 			set_env_parameters = QAM_TOP_ANNEX_B;	/* annex             */
-			set_param_parameters[0] = channel->स्थिरellation;	/* स्थिरellation     */
-			set_param_parameters[1] = channel->पूर्णांकerleavemode;	/* पूर्णांकerleave mode   */
-		पूर्ण अन्यथा अगर (ext_attr->standard == DRX_STANDARD_ITU_C) अणु
+			set_param_parameters[0] = channel->constellation;	/* constellation     */
+			set_param_parameters[1] = channel->interleavemode;	/* interleave mode   */
+		} else if (ext_attr->standard == DRX_STANDARD_ITU_C) {
 			set_env_parameters = QAM_TOP_ANNEX_C;	/* annex             */
-			set_param_parameters[0] = channel->स्थिरellation;	/* स्थिरellation     */
-			set_param_parameters[1] = DRX_INTERLEAVEMODE_I12_J17;	/* पूर्णांकerleave mode   */
-		पूर्ण अन्यथा अणु
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			set_param_parameters[0] = channel->constellation;	/* constellation     */
+			set_param_parameters[1] = DRX_INTERLEAVEMODE_I12_J17;	/* interleave mode   */
+		} else {
+			return -EINVAL;
+		}
+	}
 
-	अगर (op & QAM_SET_OP_ALL) अणु
+	if (op & QAM_SET_OP_ALL) {
 		/*
 		   STEP 1: reset demodulator
 		   resets IQM, QAM and FEC HW blocks
 		   resets SCU variables
 		 */
 		/* stop all comm_exec */
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_COMM_EXEC__A, FEC_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_write_reg16(dev_addr, FEC_COMM_EXEC__A, FEC_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_COMM_EXEC__A, QAM_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, QAM_COMM_EXEC__A, QAM_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_FS_COMM_EXEC__A, IQM_FS_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_FS_COMM_EXEC__A, IQM_FS_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_FD_COMM_EXEC__A, IQM_FD_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_FD_COMM_EXEC__A, IQM_FD_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_RC_COMM_EXEC__A, IQM_RC_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_RC_COMM_EXEC__A, IQM_RC_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_RT_COMM_EXEC__A, IQM_RT_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_RT_COMM_EXEC__A, IQM_RT_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_CF_COMM_EXEC__A, IQM_CF_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_CF_COMM_EXEC__A, IQM_CF_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 
 		cmd_scu.command = SCU_RAM_COMMAND_STANDARD_QAM |
 		    SCU_RAM_COMMAND_CMD_DEMOD_RESET;
 		cmd_scu.parameter_len = 0;
 		cmd_scu.result_len = 1;
-		cmd_scu.parameter = शून्य;
+		cmd_scu.parameter = NULL;
 		cmd_scu.result = &cmd_result;
 		rc = scu_command(dev_addr, &cmd_scu);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
+			goto rw_error;
+		}
+	}
 
-	अगर ((op & QAM_SET_OP_ALL) || (op & QAM_SET_OP_CONSTELLATION)) अणु
+	if ((op & QAM_SET_OP_ALL) || (op & QAM_SET_OP_CONSTELLATION)) {
 		/*
 		   STEP 2: configure demodulator
 		   -set env
@@ -8124,10 +8123,10 @@ set_qam(काष्ठा drx_demod_instance *demod,
 		cmd_scu.parameter = &set_env_parameters;
 		cmd_scu.result = &cmd_result;
 		rc = scu_command(dev_addr, &cmd_scu);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 
 		cmd_scu.command = SCU_RAM_COMMAND_STANDARD_QAM |
 		    SCU_RAM_COMMAND_CMD_DEMOD_SET_PARAM;
@@ -8136,1219 +8135,1219 @@ set_qam(काष्ठा drx_demod_instance *demod,
 		cmd_scu.parameter = set_param_parameters;
 		cmd_scu.result = &cmd_result;
 		rc = scu_command(dev_addr, &cmd_scu);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 		/* set symbol rate */
-		rc = drxdap_fasi_ग_लिखो_reg32(dev_addr, IQM_RC_RATE_OFS_LO__A, iqm_rc_rate, 0);
-		अगर (rc != 0) अणु
+		rc = drxdap_fasi_write_reg32(dev_addr, IQM_RC_RATE_OFS_LO__A, iqm_rc_rate, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 		ext_attr->iqm_rc_rate_ofs = iqm_rc_rate;
-		rc = set_qam_measurement(demod, channel->स्थिरellation, channel->symbolrate);
-		अगर (rc != 0) अणु
+		rc = set_qam_measurement(demod, channel->constellation, channel->symbolrate);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
-	/* STEP 3: enable the प्रणाली in a mode where the ADC provides valid संकेत
-	   setup स्थिरellation independent रेजिस्टरs */
+			goto rw_error;
+		}
+	}
+	/* STEP 3: enable the system in a mode where the ADC provides valid signal
+	   setup constellation independent registers */
 	/* from qam_cmd.py script (qam_driver_b) */
-	/* TODO: हटाओ re-ग_लिखोs of HW reset values */
-	अगर ((op & QAM_SET_OP_ALL) || (op & QAM_SET_OP_SPECTRUM)) अणु
+	/* TODO: remove re-writes of HW reset values */
+	if ((op & QAM_SET_OP_ALL) || (op & QAM_SET_OP_SPECTRUM)) {
 		rc = set_frequency(demod, channel, tuner_freq_offset);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
+			goto rw_error;
+		}
+	}
 
-	अगर ((op & QAM_SET_OP_ALL) || (op & QAM_SET_OP_CONSTELLATION)) अणु
+	if ((op & QAM_SET_OP_ALL) || (op & QAM_SET_OP_CONSTELLATION)) {
 
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_LC_SYMBOL_FREQ__A, lc_symbol_freq, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_write_reg16(dev_addr, QAM_LC_SYMBOL_FREQ__A, lc_symbol_freq, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_RC_STRETCH__A, iqm_rc_stretch, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_RC_STRETCH__A, iqm_rc_stretch, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
+			goto rw_error;
+		}
+	}
 
-	अगर (op & QAM_SET_OP_ALL) अणु
-		अगर (!ext_attr->has_lna) अणु
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_AMUX__A, 0x02, 0);
-			अगर (rc != 0) अणु
+	if (op & QAM_SET_OP_ALL) {
+		if (!ext_attr->has_lna) {
+			rc = drxj_dap_write_reg16(dev_addr, IQM_AF_AMUX__A, 0x02, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_CF_SYMMETRIC__A, 0, 0);
-		अगर (rc != 0) अणु
+				goto rw_error;
+			}
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_CF_SYMMETRIC__A, 0, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_CF_MIDTAP__A, 3, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_CF_MIDTAP__A, 3, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_CF_OUT_ENA__A, IQM_CF_OUT_ENA_QAM__M, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_CF_OUT_ENA__A, IQM_CF_OUT_ENA_QAM__M, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_WR_RSV_0__A, 0x5f, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_WR_RSV_0__A, 0x5f, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण	/* scu temporary shut करोwn agc */
+			goto rw_error;
+		}	/* scu temporary shut down agc */
 
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_SYNC_SEL__A, 3, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_write_reg16(dev_addr, IQM_AF_SYNC_SEL__A, 3, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_CLP_LEN__A, 0, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_AF_CLP_LEN__A, 0, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_CLP_TH__A, 448, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_AF_CLP_TH__A, 448, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_SNS_LEN__A, 0, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_AF_SNS_LEN__A, 0, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_PDREF__A, 4, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_AF_PDREF__A, 4, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_STDBY__A, 0x10, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_AF_STDBY__A, 0x10, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_PGA_GAIN__A, 11, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_AF_PGA_GAIN__A, 11, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_CF_POW_MEAS_LEN__A, 1, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_write_reg16(dev_addr, IQM_CF_POW_MEAS_LEN__A, 1, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_CF_SCALE_SH__A, IQM_CF_SCALE_SH__PRE, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_CF_SCALE_SH__A, IQM_CF_SCALE_SH__PRE, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण	/*! reset शेष val ! */
+			goto rw_error;
+		}	/*! reset default val ! */
 
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_SY_TIMEOUT__A, QAM_SY_TIMEOUT__PRE, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_write_reg16(dev_addr, QAM_SY_TIMEOUT__A, QAM_SY_TIMEOUT__PRE, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण	/*! reset शेष val ! */
-		अगर (ext_attr->standard == DRX_STANDARD_ITU_B) अणु
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_SY_SYNC_LWM__A, QAM_SY_SYNC_LWM__PRE, 0);
-			अगर (rc != 0) अणु
+			goto rw_error;
+		}	/*! reset default val ! */
+		if (ext_attr->standard == DRX_STANDARD_ITU_B) {
+			rc = drxj_dap_write_reg16(dev_addr, QAM_SY_SYNC_LWM__A, QAM_SY_SYNC_LWM__PRE, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण	/*! reset शेष val ! */
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_SY_SYNC_AWM__A, QAM_SY_SYNC_AWM__PRE, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}	/*! reset default val ! */
+			rc = drxj_dap_write_reg16(dev_addr, QAM_SY_SYNC_AWM__A, QAM_SY_SYNC_AWM__PRE, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण	/*! reset शेष val ! */
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_SY_SYNC_HWM__A, QAM_SY_SYNC_HWM__PRE, 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}	/*! reset default val ! */
+			rc = drxj_dap_write_reg16(dev_addr, QAM_SY_SYNC_HWM__A, QAM_SY_SYNC_HWM__PRE, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण	/*! reset शेष val ! */
-		पूर्ण अन्यथा अणु
-			चयन (channel->स्थिरellation) अणु
-			हाल DRX_CONSTELLATION_QAM16:
-			हाल DRX_CONSTELLATION_QAM64:
-			हाल DRX_CONSTELLATION_QAM256:
-				rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_SY_SYNC_LWM__A, 0x03, 0);
-				अगर (rc != 0) अणु
+				goto rw_error;
+			}	/*! reset default val ! */
+		} else {
+			switch (channel->constellation) {
+			case DRX_CONSTELLATION_QAM16:
+			case DRX_CONSTELLATION_QAM64:
+			case DRX_CONSTELLATION_QAM256:
+				rc = drxj_dap_write_reg16(dev_addr, QAM_SY_SYNC_LWM__A, 0x03, 0);
+				if (rc != 0) {
 					pr_err("error %d\n", rc);
-					जाओ rw_error;
-				पूर्ण
-				rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_SY_SYNC_AWM__A, 0x04, 0);
-				अगर (rc != 0) अणु
+					goto rw_error;
+				}
+				rc = drxj_dap_write_reg16(dev_addr, QAM_SY_SYNC_AWM__A, 0x04, 0);
+				if (rc != 0) {
 					pr_err("error %d\n", rc);
-					जाओ rw_error;
-				पूर्ण
-				rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_SY_SYNC_HWM__A, QAM_SY_SYNC_HWM__PRE, 0);
-				अगर (rc != 0) अणु
+					goto rw_error;
+				}
+				rc = drxj_dap_write_reg16(dev_addr, QAM_SY_SYNC_HWM__A, QAM_SY_SYNC_HWM__PRE, 0);
+				if (rc != 0) {
 					pr_err("error %d\n", rc);
-					जाओ rw_error;
-				पूर्ण	/*! reset शेष val ! */
-				अवरोध;
-			हाल DRX_CONSTELLATION_QAM32:
-			हाल DRX_CONSTELLATION_QAM128:
-				rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_SY_SYNC_LWM__A, 0x03, 0);
-				अगर (rc != 0) अणु
+					goto rw_error;
+				}	/*! reset default val ! */
+				break;
+			case DRX_CONSTELLATION_QAM32:
+			case DRX_CONSTELLATION_QAM128:
+				rc = drxj_dap_write_reg16(dev_addr, QAM_SY_SYNC_LWM__A, 0x03, 0);
+				if (rc != 0) {
 					pr_err("error %d\n", rc);
-					जाओ rw_error;
-				पूर्ण
-				rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_SY_SYNC_AWM__A, 0x05, 0);
-				अगर (rc != 0) अणु
+					goto rw_error;
+				}
+				rc = drxj_dap_write_reg16(dev_addr, QAM_SY_SYNC_AWM__A, 0x05, 0);
+				if (rc != 0) {
 					pr_err("error %d\n", rc);
-					जाओ rw_error;
-				पूर्ण
-				rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_SY_SYNC_HWM__A, 0x06, 0);
-				अगर (rc != 0) अणु
+					goto rw_error;
+				}
+				rc = drxj_dap_write_reg16(dev_addr, QAM_SY_SYNC_HWM__A, 0x06, 0);
+				if (rc != 0) {
 					pr_err("error %d\n", rc);
-					जाओ rw_error;
-				पूर्ण
-				अवरोध;
-			शेष:
-				वापस -EIO;
-			पूर्ण	/* चयन */
-		पूर्ण
+					goto rw_error;
+				}
+				break;
+			default:
+				return -EIO;
+			}	/* switch */
+		}
 
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_LC_MODE__A, QAM_LC_MODE__PRE, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_write_reg16(dev_addr, QAM_LC_MODE__A, QAM_LC_MODE__PRE, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण	/*! reset शेष val ! */
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_LC_RATE_LIMIT__A, 3, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}	/*! reset default val ! */
+		rc = drxj_dap_write_reg16(dev_addr, QAM_LC_RATE_LIMIT__A, 3, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_LC_LPF_FACTORP__A, 4, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, QAM_LC_LPF_FACTORP__A, 4, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_LC_LPF_FACTORI__A, 4, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, QAM_LC_LPF_FACTORI__A, 4, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_LC_MODE__A, 7, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, QAM_LC_MODE__A, 7, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_LC_QUAL_TAB0__A, 1, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, QAM_LC_QUAL_TAB0__A, 1, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_LC_QUAL_TAB1__A, 1, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, QAM_LC_QUAL_TAB1__A, 1, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_LC_QUAL_TAB2__A, 1, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, QAM_LC_QUAL_TAB2__A, 1, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_LC_QUAL_TAB3__A, 1, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, QAM_LC_QUAL_TAB3__A, 1, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_LC_QUAL_TAB4__A, 2, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, QAM_LC_QUAL_TAB4__A, 2, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_LC_QUAL_TAB5__A, 2, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, QAM_LC_QUAL_TAB5__A, 2, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_LC_QUAL_TAB6__A, 2, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, QAM_LC_QUAL_TAB6__A, 2, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_LC_QUAL_TAB8__A, 2, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, QAM_LC_QUAL_TAB8__A, 2, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_LC_QUAL_TAB9__A, 2, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, QAM_LC_QUAL_TAB9__A, 2, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_LC_QUAL_TAB10__A, 2, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, QAM_LC_QUAL_TAB10__A, 2, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_LC_QUAL_TAB12__A, 2, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, QAM_LC_QUAL_TAB12__A, 2, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_LC_QUAL_TAB15__A, 3, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, QAM_LC_QUAL_TAB15__A, 3, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_LC_QUAL_TAB16__A, 3, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, QAM_LC_QUAL_TAB16__A, 3, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_LC_QUAL_TAB20__A, 4, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, QAM_LC_QUAL_TAB20__A, 4, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_LC_QUAL_TAB25__A, 4, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, QAM_LC_QUAL_TAB25__A, 4, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_FS_ADJ_SEL__A, 1, 0);
-		अगर (rc != 0) अणु
+		rc = drxj_dap_write_reg16(dev_addr, IQM_FS_ADJ_SEL__A, 1, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_RC_ADJ_SEL__A, 1, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_RC_ADJ_SEL__A, 1, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_CF_ADJ_SEL__A, 1, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_CF_ADJ_SEL__A, 1, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_CF_POW_MEAS_LEN__A, 0, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_CF_POW_MEAS_LEN__A, 0, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_GPIO__A, 0, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_GPIO__A, 0, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 
 		/* No more resets of the IQM, current standard correctly set =>
 		   now AGCs can be configured. */
 		/* turn on IQMAF. It has to be in front of setAgc**() */
 		rc = set_iqm_af(demod, true);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 		rc = adc_synchronization(demod);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 
 		rc = init_agc(demod);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = set_agc_अगर(demod, &(ext_attr->qam_अगर_agc_cfg), false);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = set_agc_if(demod, &(ext_attr->qam_if_agc_cfg), false);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 		rc = set_agc_rf(demod, &(ext_attr->qam_rf_agc_cfg), false);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		अणु
-			/* TODO fix this, store a काष्ठा drxj_cfg_afe_gain काष्ठाure in काष्ठा drxj_data instead
+			goto rw_error;
+		}
+		{
+			/* TODO fix this, store a struct drxj_cfg_afe_gain structure in struct drxj_data instead
 			   of only the gain */
-			काष्ठा drxj_cfg_afe_gain qam_pga_cfg = अणु DRX_STANDARD_ITU_B, 0 पूर्ण;
+			struct drxj_cfg_afe_gain qam_pga_cfg = { DRX_STANDARD_ITU_B, 0 };
 
 			qam_pga_cfg.gain = ext_attr->qam_pga_cfg;
 			rc = ctrl_set_cfg_afe_gain(demod, &qam_pga_cfg);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-		पूर्ण
+				goto rw_error;
+			}
+		}
 		rc = ctrl_set_cfg_pre_saw(demod, &(ext_attr->qam_pre_saw_cfg));
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
+			goto rw_error;
+		}
+	}
 
-	अगर ((op & QAM_SET_OP_ALL) || (op & QAM_SET_OP_CONSTELLATION)) अणु
-		अगर (ext_attr->standard == DRX_STANDARD_ITU_A) अणु
-			rc = drxdap_fasi_ग_लिखो_block(dev_addr, IQM_CF_TAP_RE0__A, माप(qam_a_taps), ((u8 *)qam_a_taps), 0);
-			अगर (rc != 0) अणु
+	if ((op & QAM_SET_OP_ALL) || (op & QAM_SET_OP_CONSTELLATION)) {
+		if (ext_attr->standard == DRX_STANDARD_ITU_A) {
+			rc = drxdap_fasi_write_block(dev_addr, IQM_CF_TAP_RE0__A, sizeof(qam_a_taps), ((u8 *)qam_a_taps), 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxdap_fasi_ग_लिखो_block(dev_addr, IQM_CF_TAP_IM0__A, माप(qam_a_taps), ((u8 *)qam_a_taps), 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxdap_fasi_write_block(dev_addr, IQM_CF_TAP_IM0__A, sizeof(qam_a_taps), ((u8 *)qam_a_taps), 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-		पूर्ण अन्यथा अगर (ext_attr->standard == DRX_STANDARD_ITU_B) अणु
-			चयन (channel->स्थिरellation) अणु
-			हाल DRX_CONSTELLATION_QAM64:
-				rc = drxdap_fasi_ग_लिखो_block(dev_addr, IQM_CF_TAP_RE0__A, माप(qam_b64_taps), ((u8 *)qam_b64_taps), 0);
-				अगर (rc != 0) अणु
+				goto rw_error;
+			}
+		} else if (ext_attr->standard == DRX_STANDARD_ITU_B) {
+			switch (channel->constellation) {
+			case DRX_CONSTELLATION_QAM64:
+				rc = drxdap_fasi_write_block(dev_addr, IQM_CF_TAP_RE0__A, sizeof(qam_b64_taps), ((u8 *)qam_b64_taps), 0);
+				if (rc != 0) {
 					pr_err("error %d\n", rc);
-					जाओ rw_error;
-				पूर्ण
-				rc = drxdap_fasi_ग_लिखो_block(dev_addr, IQM_CF_TAP_IM0__A, माप(qam_b64_taps), ((u8 *)qam_b64_taps), 0);
-				अगर (rc != 0) अणु
+					goto rw_error;
+				}
+				rc = drxdap_fasi_write_block(dev_addr, IQM_CF_TAP_IM0__A, sizeof(qam_b64_taps), ((u8 *)qam_b64_taps), 0);
+				if (rc != 0) {
 					pr_err("error %d\n", rc);
-					जाओ rw_error;
-				पूर्ण
-				अवरोध;
-			हाल DRX_CONSTELLATION_QAM256:
-				rc = drxdap_fasi_ग_लिखो_block(dev_addr, IQM_CF_TAP_RE0__A, माप(qam_b256_taps), ((u8 *)qam_b256_taps), 0);
-				अगर (rc != 0) अणु
+					goto rw_error;
+				}
+				break;
+			case DRX_CONSTELLATION_QAM256:
+				rc = drxdap_fasi_write_block(dev_addr, IQM_CF_TAP_RE0__A, sizeof(qam_b256_taps), ((u8 *)qam_b256_taps), 0);
+				if (rc != 0) {
 					pr_err("error %d\n", rc);
-					जाओ rw_error;
-				पूर्ण
-				rc = drxdap_fasi_ग_लिखो_block(dev_addr, IQM_CF_TAP_IM0__A, माप(qam_b256_taps), ((u8 *)qam_b256_taps), 0);
-				अगर (rc != 0) अणु
+					goto rw_error;
+				}
+				rc = drxdap_fasi_write_block(dev_addr, IQM_CF_TAP_IM0__A, sizeof(qam_b256_taps), ((u8 *)qam_b256_taps), 0);
+				if (rc != 0) {
 					pr_err("error %d\n", rc);
-					जाओ rw_error;
-				पूर्ण
-				अवरोध;
-			शेष:
-				वापस -EIO;
-			पूर्ण
-		पूर्ण अन्यथा अगर (ext_attr->standard == DRX_STANDARD_ITU_C) अणु
-			rc = drxdap_fasi_ग_लिखो_block(dev_addr, IQM_CF_TAP_RE0__A, माप(qam_c_taps), ((u8 *)qam_c_taps), 0);
-			अगर (rc != 0) अणु
+					goto rw_error;
+				}
+				break;
+			default:
+				return -EIO;
+			}
+		} else if (ext_attr->standard == DRX_STANDARD_ITU_C) {
+			rc = drxdap_fasi_write_block(dev_addr, IQM_CF_TAP_RE0__A, sizeof(qam_c_taps), ((u8 *)qam_c_taps), 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxdap_fasi_ग_लिखो_block(dev_addr, IQM_CF_TAP_IM0__A, माप(qam_c_taps), ((u8 *)qam_c_taps), 0);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			rc = drxdap_fasi_write_block(dev_addr, IQM_CF_TAP_IM0__A, sizeof(qam_c_taps), ((u8 *)qam_c_taps), 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-		पूर्ण
+				goto rw_error;
+			}
+		}
 
-		/* SETP 4: स्थिरellation specअगरic setup */
-		चयन (channel->स्थिरellation) अणु
-		हाल DRX_CONSTELLATION_QAM16:
+		/* SETP 4: constellation specific setup */
+		switch (channel->constellation) {
+		case DRX_CONSTELLATION_QAM16:
 			rc = set_qam16(demod);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			अवरोध;
-		हाल DRX_CONSTELLATION_QAM32:
+				goto rw_error;
+			}
+			break;
+		case DRX_CONSTELLATION_QAM32:
 			rc = set_qam32(demod);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			अवरोध;
-		हाल DRX_CONSTELLATION_QAM64:
+				goto rw_error;
+			}
+			break;
+		case DRX_CONSTELLATION_QAM64:
 			rc = set_qam64(demod);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			अवरोध;
-		हाल DRX_CONSTELLATION_QAM128:
+				goto rw_error;
+			}
+			break;
+		case DRX_CONSTELLATION_QAM128:
 			rc = set_qam128(demod);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			अवरोध;
-		हाल DRX_CONSTELLATION_QAM256:
+				goto rw_error;
+			}
+			break;
+		case DRX_CONSTELLATION_QAM256:
 			rc = set_qam256(demod);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			अवरोध;
-		शेष:
-			वापस -EIO;
-		पूर्ण		/* चयन */
-	पूर्ण
+				goto rw_error;
+			}
+			break;
+		default:
+			return -EIO;
+		}		/* switch */
+	}
 
-	अगर ((op & QAM_SET_OP_ALL)) अणु
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_CF_SCALE_SH__A, 0, 0);
-		अगर (rc != 0) अणु
+	if ((op & QAM_SET_OP_ALL)) {
+		rc = drxj_dap_write_reg16(dev_addr, IQM_CF_SCALE_SH__A, 0, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 
 		/* Mpeg output has to be in front of FEC active */
 		rc = set_mpegtei_handling(demod);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 		rc = bit_reverse_mpeg_output(demod);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 		rc = set_mpeg_start_width(demod);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		अणु
+			goto rw_error;
+		}
+		{
 			/* TODO: move to set_standard after hardware reset value problem is solved */
 			/* Configure initial MPEG output */
-			काष्ठा drx_cfg_mpeg_output cfg_mpeg_output;
+			struct drx_cfg_mpeg_output cfg_mpeg_output;
 
-			स_नकल(&cfg_mpeg_output, &common_attr->mpeg_cfg, माप(cfg_mpeg_output));
+			memcpy(&cfg_mpeg_output, &common_attr->mpeg_cfg, sizeof(cfg_mpeg_output));
 			cfg_mpeg_output.enable_mpeg_output = true;
 
 			rc = ctrl_set_cfg_mpeg_output(demod, &cfg_mpeg_output);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto rw_error;
+			}
+		}
+	}
 
-	अगर ((op & QAM_SET_OP_ALL) || (op & QAM_SET_OP_CONSTELLATION)) अणु
+	if ((op & QAM_SET_OP_ALL) || (op & QAM_SET_OP_CONSTELLATION)) {
 
 		/* STEP 5: start QAM demodulator (starts FEC, QAM and IQM HW) */
 		cmd_scu.command = SCU_RAM_COMMAND_STANDARD_QAM |
 		    SCU_RAM_COMMAND_CMD_DEMOD_START;
 		cmd_scu.parameter_len = 0;
 		cmd_scu.result_len = 1;
-		cmd_scu.parameter = शून्य;
+		cmd_scu.parameter = NULL;
 		cmd_scu.result = &cmd_result;
 		rc = scu_command(dev_addr, &cmd_scu);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
+			goto rw_error;
+		}
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_COMM_EXEC__A, IQM_COMM_EXEC_ACTIVE, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, IQM_COMM_EXEC__A, IQM_COMM_EXEC_ACTIVE, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_COMM_EXEC__A, QAM_COMM_EXEC_ACTIVE, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, QAM_COMM_EXEC__A, QAM_COMM_EXEC_ACTIVE, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, FEC_COMM_EXEC__A, FEC_COMM_EXEC_ACTIVE, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, FEC_COMM_EXEC__A, FEC_COMM_EXEC_ACTIVE, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*============================================================================*/
-अटल पूर्णांक ctrl_get_qam_sig_quality(काष्ठा drx_demod_instance *demod);
+static int ctrl_get_qam_sig_quality(struct drx_demod_instance *demod);
 
-अटल पूर्णांक qam_flip_spec(काष्ठा drx_demod_instance *demod, काष्ठा drx_channel *channel)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
-	काष्ठा drxj_data *ext_attr = demod->my_ext_attr;
-	पूर्णांक rc;
+static int qam_flip_spec(struct drx_demod_instance *demod, struct drx_channel *channel)
+{
+	struct i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
+	struct drxj_data *ext_attr = demod->my_ext_attr;
+	int rc;
 	u32 iqm_fs_rate_ofs = 0;
 	u32 iqm_fs_rate_lo = 0;
 	u16 qam_ctl_ena = 0;
 	u16 data = 0;
 	u16 equ_mode = 0;
 	u16 fsm_state = 0;
-	पूर्णांक i = 0;
-	पूर्णांक ofsofs = 0;
+	int i = 0;
+	int ofsofs = 0;
 
 	/* Silence the controlling of lc, equ, and the acquisition state machine */
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, SCU_RAM_QAM_CTL_ENA__A, &qam_ctl_ena, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_read_reg16(dev_addr, SCU_RAM_QAM_CTL_ENA__A, &qam_ctl_ena, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_CTL_ENA__A, qam_ctl_ena & ~(SCU_RAM_QAM_CTL_ENA_ACQ__M | SCU_RAM_QAM_CTL_ENA_EQU__M | SCU_RAM_QAM_CTL_ENA_LC__M), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_CTL_ENA__A, qam_ctl_ena & ~(SCU_RAM_QAM_CTL_ENA_ACQ__M | SCU_RAM_QAM_CTL_ENA_EQU__M | SCU_RAM_QAM_CTL_ENA_LC__M), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	/* मुक्तze the frequency control loop */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_LC_CF__A, 0, 0);
-	अगर (rc != 0) अणु
+	/* freeze the frequency control loop */
+	rc = drxj_dap_write_reg16(dev_addr, QAM_LC_CF__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_LC_CF1__A, 0, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, QAM_LC_CF1__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_atomic_पढ़ो_reg32(dev_addr, IQM_FS_RATE_OFS_LO__A, &iqm_fs_rate_ofs, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_atomic_read_reg32(dev_addr, IQM_FS_RATE_OFS_LO__A, &iqm_fs_rate_ofs, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_atomic_पढ़ो_reg32(dev_addr, IQM_FS_RATE_LO__A, &iqm_fs_rate_lo, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_atomic_read_reg32(dev_addr, IQM_FS_RATE_LO__A, &iqm_fs_rate_lo, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	ofsofs = iqm_fs_rate_lo - iqm_fs_rate_ofs;
 	iqm_fs_rate_ofs = ~iqm_fs_rate_ofs + 1;
 	iqm_fs_rate_ofs -= 2 * ofsofs;
 
-	/* मुक्तze dq/fq updating */
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, QAM_DQ_MODE__A, &data, 0);
-	अगर (rc != 0) अणु
+	/* freeze dq/fq updating */
+	rc = drxj_dap_read_reg16(dev_addr, QAM_DQ_MODE__A, &data, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	data = (data & 0xfff9);
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_DQ_MODE__A, data, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, QAM_DQ_MODE__A, data, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_FQ_MODE__A, data, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, QAM_FQ_MODE__A, data, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	/* lc_cp / _ci / _ca */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_LC_CI__A, 0, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, QAM_LC_CI__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_LC_EP__A, 0, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, QAM_LC_EP__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_FQ_LA_FACTOR__A, 0, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, QAM_FQ_LA_FACTOR__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	/* flip the spec */
-	rc = drxdap_fasi_ग_लिखो_reg32(dev_addr, IQM_FS_RATE_OFS_LO__A, iqm_fs_rate_ofs, 0);
-	अगर (rc != 0) अणु
+	rc = drxdap_fasi_write_reg32(dev_addr, IQM_FS_RATE_OFS_LO__A, iqm_fs_rate_ofs, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	ext_attr->iqm_fs_rate_ofs = iqm_fs_rate_ofs;
 	ext_attr->pos_image = (ext_attr->pos_image) ? false : true;
 
-	/* मुक्तze dq/fq updating */
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, QAM_DQ_MODE__A, &data, 0);
-	अगर (rc != 0) अणु
+	/* freeze dq/fq updating */
+	rc = drxj_dap_read_reg16(dev_addr, QAM_DQ_MODE__A, &data, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	equ_mode = data;
 	data = (data & 0xfff9);
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_DQ_MODE__A, data, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, QAM_DQ_MODE__A, data, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_FQ_MODE__A, data, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, QAM_FQ_MODE__A, data, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	क्रम (i = 0; i < 28; i++) अणु
-		rc = drxj_dap_पढ़ो_reg16(dev_addr, QAM_DQ_TAP_IM_EL0__A + (2 * i), &data, 0);
-		अगर (rc != 0) अणु
+	for (i = 0; i < 28; i++) {
+		rc = drxj_dap_read_reg16(dev_addr, QAM_DQ_TAP_IM_EL0__A + (2 * i), &data, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_DQ_TAP_IM_EL0__A + (2 * i), -data, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, QAM_DQ_TAP_IM_EL0__A + (2 * i), -data, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
+			goto rw_error;
+		}
+	}
 
-	क्रम (i = 0; i < 24; i++) अणु
-		rc = drxj_dap_पढ़ो_reg16(dev_addr, QAM_FQ_TAP_IM_EL0__A + (2 * i), &data, 0);
-		अगर (rc != 0) अणु
+	for (i = 0; i < 24; i++) {
+		rc = drxj_dap_read_reg16(dev_addr, QAM_FQ_TAP_IM_EL0__A + (2 * i), &data, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_FQ_TAP_IM_EL0__A + (2 * i), -data, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, QAM_FQ_TAP_IM_EL0__A + (2 * i), -data, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
+			goto rw_error;
+		}
+	}
 
 	data = equ_mode;
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_DQ_MODE__A, data, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, QAM_DQ_MODE__A, data, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, QAM_FQ_MODE__A, data, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, QAM_FQ_MODE__A, data, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_FSM_STATE_TGT__A, 4, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_FSM_STATE_TGT__A, 4, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	i = 0;
-	जबतक ((fsm_state != 4) && (i++ < 100)) अणु
-		rc = drxj_dap_पढ़ो_reg16(dev_addr, SCU_RAM_QAM_FSM_STATE__A, &fsm_state, 0);
-		अगर (rc != 0) अणु
+	while ((fsm_state != 4) && (i++ < 100)) {
+		rc = drxj_dap_read_reg16(dev_addr, SCU_RAM_QAM_FSM_STATE__A, &fsm_state, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_QAM_CTL_ENA__A, (qam_ctl_ena | 0x0016), 0);
-	अगर (rc != 0) अणु
+			goto rw_error;
+		}
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_QAM_CTL_ENA__A, (qam_ctl_ena | 0x0016), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
+	return rc;
 
-पूर्ण
+}
 
-#घोषणा  NO_LOCK        0x0
-#घोषणा  DEMOD_LOCKED   0x1
-#घोषणा  SYNC_FLIPPED   0x2
-#घोषणा  SPEC_MIRRORED  0x4
+#define  NO_LOCK        0x0
+#define  DEMOD_LOCKED   0x1
+#define  SYNC_FLIPPED   0x2
+#define  SPEC_MIRRORED  0x4
 /*
-* \पn पूर्णांक qam64स्वतः ()
-* \मrief स्वतः करो sync pattern चयनing and mirroring.
+* \fn int qam64auto ()
+* \brief auto do sync pattern switching and mirroring.
 * \param demod:   instance of demod.
-* \param channel: poपूर्णांकer to channel data.
+* \param channel: pointer to channel data.
 * \param tuner_freq_offset: tuner frequency offset.
-* \param lock_status: poपूर्णांकer to lock status.
-* \लeturn पूर्णांक.
+* \param lock_status: pointer to lock status.
+* \return int.
 */
-अटल पूर्णांक
-qam64स्वतः(काष्ठा drx_demod_instance *demod,
-	  काष्ठा drx_channel *channel,
-	  s32 tuner_freq_offset, क्रमागत drx_lock_status *lock_status)
-अणु
-	काष्ठा drxj_data *ext_attr = demod->my_ext_attr;
-	काष्ठा i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
-	काष्ठा drx39xxj_state *state = dev_addr->user_data;
-	काष्ठा dtv_frontend_properties *p = &state->frontend.dtv_property_cache;
-	पूर्णांक rc;
+static int
+qam64auto(struct drx_demod_instance *demod,
+	  struct drx_channel *channel,
+	  s32 tuner_freq_offset, enum drx_lock_status *lock_status)
+{
+	struct drxj_data *ext_attr = demod->my_ext_attr;
+	struct i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
+	struct drx39xxj_state *state = dev_addr->user_data;
+	struct dtv_frontend_properties *p = &state->frontend.dtv_property_cache;
+	int rc;
 	u32 lck_state = NO_LOCK;
-	u32 start_समय = 0;
-	u32 d_locked_समय = 0;
-	u32 समयout_ofs = 0;
+	u32 start_time = 0;
+	u32 d_locked_time = 0;
+	u32 timeout_ofs = 0;
 	u16 data = 0;
 
-	/* बाह्यal attributes क्रम storing acquired channel स्थिरellation */
+	/* external attributes for storing acquired channel constellation */
 	*lock_status = DRX_NOT_LOCKED;
-	start_समय = jअगरfies_to_msecs(jअगरfies);
+	start_time = jiffies_to_msecs(jiffies);
 	lck_state = NO_LOCK;
-	करो अणु
+	do {
 		rc = ctrl_lock_status(demod, lock_status);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 
-		चयन (lck_state) अणु
-		हाल NO_LOCK:
-			अगर (*lock_status == DRXJ_DEMOD_LOCK) अणु
+		switch (lck_state) {
+		case NO_LOCK:
+			if (*lock_status == DRXJ_DEMOD_LOCK) {
 				rc = ctrl_get_qam_sig_quality(demod);
-				अगर (rc != 0) अणु
+				if (rc != 0) {
 					pr_err("error %d\n", rc);
-					जाओ rw_error;
-				पूर्ण
-				अगर (p->cnr.stat[0].svalue > 20800) अणु
+					goto rw_error;
+				}
+				if (p->cnr.stat[0].svalue > 20800) {
 					lck_state = DEMOD_LOCKED;
-					/* some delay to see अगर fec_lock possible TODO find the right value */
-					समयout_ofs += DRXJ_QAM_DEMOD_LOCK_EXT_WAITTIME;	/* see something, रुकोing दीर्घer */
-					d_locked_समय = jअगरfies_to_msecs(jअगरfies);
-				पूर्ण
-			पूर्ण
-			अवरोध;
-		हाल DEMOD_LOCKED:
-			अगर ((*lock_status == DRXJ_DEMOD_LOCK) &&	/* still demod_lock in 150ms */
-			    ((jअगरfies_to_msecs(jअगरfies) - d_locked_समय) >
-			     DRXJ_QAM_FEC_LOCK_WAITTIME)) अणु
-				rc = drxj_dap_पढ़ो_reg16(demod->my_i2c_dev_addr, QAM_SY_TIMEOUT__A, &data, 0);
-				अगर (rc != 0) अणु
+					/* some delay to see if fec_lock possible TODO find the right value */
+					timeout_ofs += DRXJ_QAM_DEMOD_LOCK_EXT_WAITTIME;	/* see something, waiting longer */
+					d_locked_time = jiffies_to_msecs(jiffies);
+				}
+			}
+			break;
+		case DEMOD_LOCKED:
+			if ((*lock_status == DRXJ_DEMOD_LOCK) &&	/* still demod_lock in 150ms */
+			    ((jiffies_to_msecs(jiffies) - d_locked_time) >
+			     DRXJ_QAM_FEC_LOCK_WAITTIME)) {
+				rc = drxj_dap_read_reg16(demod->my_i2c_dev_addr, QAM_SY_TIMEOUT__A, &data, 0);
+				if (rc != 0) {
 					pr_err("error %d\n", rc);
-					जाओ rw_error;
-				पूर्ण
-				rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr, QAM_SY_TIMEOUT__A, data | 0x1, 0);
-				अगर (rc != 0) अणु
+					goto rw_error;
+				}
+				rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr, QAM_SY_TIMEOUT__A, data | 0x1, 0);
+				if (rc != 0) {
 					pr_err("error %d\n", rc);
-					जाओ rw_error;
-				पूर्ण
+					goto rw_error;
+				}
 				lck_state = SYNC_FLIPPED;
 				msleep(10);
-			पूर्ण
-			अवरोध;
-		हाल SYNC_FLIPPED:
-			अगर (*lock_status == DRXJ_DEMOD_LOCK) अणु
-				अगर (channel->mirror == DRX_MIRROR_AUTO) अणु
+			}
+			break;
+		case SYNC_FLIPPED:
+			if (*lock_status == DRXJ_DEMOD_LOCK) {
+				if (channel->mirror == DRX_MIRROR_AUTO) {
 					/* flip sync pattern back */
-					rc = drxj_dap_पढ़ो_reg16(demod->my_i2c_dev_addr, QAM_SY_TIMEOUT__A, &data, 0);
-					अगर (rc != 0) अणु
+					rc = drxj_dap_read_reg16(demod->my_i2c_dev_addr, QAM_SY_TIMEOUT__A, &data, 0);
+					if (rc != 0) {
 						pr_err("error %d\n", rc);
-						जाओ rw_error;
-					पूर्ण
-					rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr, QAM_SY_TIMEOUT__A, data & 0xFFFE, 0);
-					अगर (rc != 0) अणु
+						goto rw_error;
+					}
+					rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr, QAM_SY_TIMEOUT__A, data & 0xFFFE, 0);
+					if (rc != 0) {
 						pr_err("error %d\n", rc);
-						जाओ rw_error;
-					पूर्ण
+						goto rw_error;
+					}
 					/* flip spectrum */
 					ext_attr->mirror = DRX_MIRROR_YES;
 					rc = qam_flip_spec(demod, channel);
-					अगर (rc != 0) अणु
+					if (rc != 0) {
 						pr_err("error %d\n", rc);
-						जाओ rw_error;
-					पूर्ण
+						goto rw_error;
+					}
 					lck_state = SPEC_MIRRORED;
-					/* reset समयr TODO: still need 500ms? */
-					start_समय = d_locked_समय =
-					    jअगरfies_to_msecs(jअगरfies);
-					समयout_ofs = 0;
-				पूर्ण अन्यथा अणु	/* no need to रुको lock */
+					/* reset timer TODO: still need 500ms? */
+					start_time = d_locked_time =
+					    jiffies_to_msecs(jiffies);
+					timeout_ofs = 0;
+				} else {	/* no need to wait lock */
 
-					start_समय =
-					    jअगरfies_to_msecs(jअगरfies) -
-					    DRXJ_QAM_MAX_WAITTIME - समयout_ofs;
-				पूर्ण
-			पूर्ण
-			अवरोध;
-		हाल SPEC_MIRRORED:
-			अगर ((*lock_status == DRXJ_DEMOD_LOCK) &&	/* still demod_lock in 150ms */
-			    ((jअगरfies_to_msecs(jअगरfies) - d_locked_समय) >
-			     DRXJ_QAM_FEC_LOCK_WAITTIME)) अणु
+					start_time =
+					    jiffies_to_msecs(jiffies) -
+					    DRXJ_QAM_MAX_WAITTIME - timeout_ofs;
+				}
+			}
+			break;
+		case SPEC_MIRRORED:
+			if ((*lock_status == DRXJ_DEMOD_LOCK) &&	/* still demod_lock in 150ms */
+			    ((jiffies_to_msecs(jiffies) - d_locked_time) >
+			     DRXJ_QAM_FEC_LOCK_WAITTIME)) {
 				rc = ctrl_get_qam_sig_quality(demod);
-				अगर (rc != 0) अणु
+				if (rc != 0) {
 					pr_err("error %d\n", rc);
-					जाओ rw_error;
-				पूर्ण
-				अगर (p->cnr.stat[0].svalue > 20800) अणु
-					rc = drxj_dap_पढ़ो_reg16(demod->my_i2c_dev_addr, QAM_SY_TIMEOUT__A, &data, 0);
-					अगर (rc != 0) अणु
+					goto rw_error;
+				}
+				if (p->cnr.stat[0].svalue > 20800) {
+					rc = drxj_dap_read_reg16(demod->my_i2c_dev_addr, QAM_SY_TIMEOUT__A, &data, 0);
+					if (rc != 0) {
 						pr_err("error %d\n", rc);
-						जाओ rw_error;
-					पूर्ण
-					rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr, QAM_SY_TIMEOUT__A, data | 0x1, 0);
-					अगर (rc != 0) अणु
+						goto rw_error;
+					}
+					rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr, QAM_SY_TIMEOUT__A, data | 0x1, 0);
+					if (rc != 0) {
 						pr_err("error %d\n", rc);
-						जाओ rw_error;
-					पूर्ण
-					/* no need to रुको lock */
-					start_समय =
-					    jअगरfies_to_msecs(jअगरfies) -
-					    DRXJ_QAM_MAX_WAITTIME - समयout_ofs;
-				पूर्ण
-			पूर्ण
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+						goto rw_error;
+					}
+					/* no need to wait lock */
+					start_time =
+					    jiffies_to_msecs(jiffies) -
+					    DRXJ_QAM_MAX_WAITTIME - timeout_ofs;
+				}
+			}
+			break;
+		default:
+			break;
+		}
 		msleep(10);
-	पूर्ण जबतक
+	} while
 	    ((*lock_status != DRX_LOCKED) &&
 	     (*lock_status != DRX_NEVER_LOCK) &&
-	     ((jअगरfies_to_msecs(jअगरfies) - start_समय) <
-	      (DRXJ_QAM_MAX_WAITTIME + समयout_ofs))
+	     ((jiffies_to_msecs(jiffies) - start_time) <
+	      (DRXJ_QAM_MAX_WAITTIME + timeout_ofs))
 	    );
 	/* Returning control to application ... */
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
-* \पn पूर्णांक qam256स्वतः ()
-* \मrief स्वतः करो sync pattern चयनing and mirroring.
+* \fn int qam256auto ()
+* \brief auto do sync pattern switching and mirroring.
 * \param demod:   instance of demod.
-* \param channel: poपूर्णांकer to channel data.
+* \param channel: pointer to channel data.
 * \param tuner_freq_offset: tuner frequency offset.
-* \param lock_status: poपूर्णांकer to lock status.
-* \लeturn पूर्णांक.
+* \param lock_status: pointer to lock status.
+* \return int.
 */
-अटल पूर्णांक
-qam256स्वतः(काष्ठा drx_demod_instance *demod,
-	   काष्ठा drx_channel *channel,
-	   s32 tuner_freq_offset, क्रमागत drx_lock_status *lock_status)
-अणु
-	काष्ठा drxj_data *ext_attr = demod->my_ext_attr;
-	काष्ठा i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
-	काष्ठा drx39xxj_state *state = dev_addr->user_data;
-	काष्ठा dtv_frontend_properties *p = &state->frontend.dtv_property_cache;
-	पूर्णांक rc;
+static int
+qam256auto(struct drx_demod_instance *demod,
+	   struct drx_channel *channel,
+	   s32 tuner_freq_offset, enum drx_lock_status *lock_status)
+{
+	struct drxj_data *ext_attr = demod->my_ext_attr;
+	struct i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
+	struct drx39xxj_state *state = dev_addr->user_data;
+	struct dtv_frontend_properties *p = &state->frontend.dtv_property_cache;
+	int rc;
 	u32 lck_state = NO_LOCK;
-	u32 start_समय = 0;
-	u32 d_locked_समय = 0;
-	u32 समयout_ofs = DRXJ_QAM_DEMOD_LOCK_EXT_WAITTIME;
+	u32 start_time = 0;
+	u32 d_locked_time = 0;
+	u32 timeout_ofs = DRXJ_QAM_DEMOD_LOCK_EXT_WAITTIME;
 
-	/* बाह्यal attributes क्रम storing acquired channel स्थिरellation */
+	/* external attributes for storing acquired channel constellation */
 	*lock_status = DRX_NOT_LOCKED;
-	start_समय = jअगरfies_to_msecs(jअगरfies);
+	start_time = jiffies_to_msecs(jiffies);
 	lck_state = NO_LOCK;
-	करो अणु
+	do {
 		rc = ctrl_lock_status(demod, lock_status);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		चयन (lck_state) अणु
-		हाल NO_LOCK:
-			अगर (*lock_status == DRXJ_DEMOD_LOCK) अणु
+			goto rw_error;
+		}
+		switch (lck_state) {
+		case NO_LOCK:
+			if (*lock_status == DRXJ_DEMOD_LOCK) {
 				rc = ctrl_get_qam_sig_quality(demod);
-				अगर (rc != 0) अणु
+				if (rc != 0) {
 					pr_err("error %d\n", rc);
-					जाओ rw_error;
-				पूर्ण
-				अगर (p->cnr.stat[0].svalue > 26800) अणु
+					goto rw_error;
+				}
+				if (p->cnr.stat[0].svalue > 26800) {
 					lck_state = DEMOD_LOCKED;
-					समयout_ofs += DRXJ_QAM_DEMOD_LOCK_EXT_WAITTIME;	/* see something, रुको दीर्घer */
-					d_locked_समय = jअगरfies_to_msecs(jअगरfies);
-				पूर्ण
-			पूर्ण
-			अवरोध;
-		हाल DEMOD_LOCKED:
-			अगर (*lock_status == DRXJ_DEMOD_LOCK) अणु
-				अगर ((channel->mirror == DRX_MIRROR_AUTO) &&
-				    ((jअगरfies_to_msecs(jअगरfies) - d_locked_समय) >
-				     DRXJ_QAM_FEC_LOCK_WAITTIME)) अणु
+					timeout_ofs += DRXJ_QAM_DEMOD_LOCK_EXT_WAITTIME;	/* see something, wait longer */
+					d_locked_time = jiffies_to_msecs(jiffies);
+				}
+			}
+			break;
+		case DEMOD_LOCKED:
+			if (*lock_status == DRXJ_DEMOD_LOCK) {
+				if ((channel->mirror == DRX_MIRROR_AUTO) &&
+				    ((jiffies_to_msecs(jiffies) - d_locked_time) >
+				     DRXJ_QAM_FEC_LOCK_WAITTIME)) {
 					ext_attr->mirror = DRX_MIRROR_YES;
 					rc = qam_flip_spec(demod, channel);
-					अगर (rc != 0) अणु
+					if (rc != 0) {
 						pr_err("error %d\n", rc);
-						जाओ rw_error;
-					पूर्ण
+						goto rw_error;
+					}
 					lck_state = SPEC_MIRRORED;
-					/* reset समयr TODO: still need 300ms? */
-					start_समय = jअगरfies_to_msecs(jअगरfies);
-					समयout_ofs = -DRXJ_QAM_MAX_WAITTIME / 2;
-				पूर्ण
-			पूर्ण
-			अवरोध;
-		हाल SPEC_MIRRORED:
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+					/* reset timer TODO: still need 300ms? */
+					start_time = jiffies_to_msecs(jiffies);
+					timeout_ofs = -DRXJ_QAM_MAX_WAITTIME / 2;
+				}
+			}
+			break;
+		case SPEC_MIRRORED:
+			break;
+		default:
+			break;
+		}
 		msleep(10);
-	पूर्ण जबतक
+	} while
 	    ((*lock_status < DRX_LOCKED) &&
 	     (*lock_status != DRX_NEVER_LOCK) &&
-	     ((jअगरfies_to_msecs(jअगरfies) - start_समय) <
-	      (DRXJ_QAM_MAX_WAITTIME + समयout_ofs)));
+	     ((jiffies_to_msecs(jiffies) - start_time) <
+	      (DRXJ_QAM_MAX_WAITTIME + timeout_ofs)));
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
-* \पn पूर्णांक set_qam_channel ()
-* \मrief Set QAM channel according to the requested स्थिरellation.
+* \fn int set_qam_channel ()
+* \brief Set QAM channel according to the requested constellation.
 * \param demod:   instance of demod.
-* \param channel: poपूर्णांकer to channel data.
-* \लeturn पूर्णांक.
+* \param channel: pointer to channel data.
+* \return int.
 */
-अटल पूर्णांक
-set_qam_channel(काष्ठा drx_demod_instance *demod,
-	       काष्ठा drx_channel *channel, s32 tuner_freq_offset)
-अणु
-	काष्ठा drxj_data *ext_attr = शून्य;
-	पूर्णांक rc;
-	क्रमागत drx_lock_status lock_status = DRX_NOT_LOCKED;
-	bool स्वतः_flag = false;
+static int
+set_qam_channel(struct drx_demod_instance *demod,
+	       struct drx_channel *channel, s32 tuner_freq_offset)
+{
+	struct drxj_data *ext_attr = NULL;
+	int rc;
+	enum drx_lock_status lock_status = DRX_NOT_LOCKED;
+	bool auto_flag = false;
 
-	/* बाह्यal attributes क्रम storing acquired channel स्थिरellation */
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
+	/* external attributes for storing acquired channel constellation */
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
 
-	/* set QAM channel स्थिरellation */
-	चयन (channel->स्थिरellation) अणु
-	हाल DRX_CONSTELLATION_QAM16:
-	हाल DRX_CONSTELLATION_QAM32:
-	हाल DRX_CONSTELLATION_QAM128:
-		वापस -EINVAL;
-	हाल DRX_CONSTELLATION_QAM64:
-	हाल DRX_CONSTELLATION_QAM256:
-		अगर (ext_attr->standard != DRX_STANDARD_ITU_B)
-			वापस -EINVAL;
+	/* set QAM channel constellation */
+	switch (channel->constellation) {
+	case DRX_CONSTELLATION_QAM16:
+	case DRX_CONSTELLATION_QAM32:
+	case DRX_CONSTELLATION_QAM128:
+		return -EINVAL;
+	case DRX_CONSTELLATION_QAM64:
+	case DRX_CONSTELLATION_QAM256:
+		if (ext_attr->standard != DRX_STANDARD_ITU_B)
+			return -EINVAL;
 
-		ext_attr->स्थिरellation = channel->स्थिरellation;
-		अगर (channel->mirror == DRX_MIRROR_AUTO)
+		ext_attr->constellation = channel->constellation;
+		if (channel->mirror == DRX_MIRROR_AUTO)
 			ext_attr->mirror = DRX_MIRROR_NO;
-		अन्यथा
+		else
 			ext_attr->mirror = channel->mirror;
 
 		rc = set_qam(demod, channel, tuner_freq_offset, QAM_SET_OP_ALL);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 
-		अगर (channel->स्थिरellation == DRX_CONSTELLATION_QAM64)
-			rc = qam64स्वतः(demod, channel, tuner_freq_offset,
+		if (channel->constellation == DRX_CONSTELLATION_QAM64)
+			rc = qam64auto(demod, channel, tuner_freq_offset,
 				       &lock_status);
-		अन्यथा
-			rc = qam256स्वतः(demod, channel, tuner_freq_offset,
+		else
+			rc = qam256auto(demod, channel, tuner_freq_offset,
 					&lock_status);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		अवरोध;
-	हाल DRX_CONSTELLATION_AUTO:	/* क्रम channel scan */
-		अगर (ext_attr->standard == DRX_STANDARD_ITU_B) अणु
+			goto rw_error;
+		}
+		break;
+	case DRX_CONSTELLATION_AUTO:	/* for channel scan */
+		if (ext_attr->standard == DRX_STANDARD_ITU_B) {
 			u16 qam_ctl_ena = 0;
 
-			स्वतः_flag = true;
+			auto_flag = true;
 
-			/* try to lock शेष QAM स्थिरellation: QAM256 */
-			channel->स्थिरellation = DRX_CONSTELLATION_QAM256;
-			ext_attr->स्थिरellation = DRX_CONSTELLATION_QAM256;
-			अगर (channel->mirror == DRX_MIRROR_AUTO)
+			/* try to lock default QAM constellation: QAM256 */
+			channel->constellation = DRX_CONSTELLATION_QAM256;
+			ext_attr->constellation = DRX_CONSTELLATION_QAM256;
+			if (channel->mirror == DRX_MIRROR_AUTO)
 				ext_attr->mirror = DRX_MIRROR_NO;
-			अन्यथा
+			else
 				ext_attr->mirror = channel->mirror;
 			rc = set_qam(demod, channel, tuner_freq_offset,
 				     QAM_SET_OP_ALL);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = qam256स्वतः(demod, channel, tuner_freq_offset,
+				goto rw_error;
+			}
+			rc = qam256auto(demod, channel, tuner_freq_offset,
 					&lock_status);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 
-			अगर (lock_status >= DRX_LOCKED) अणु
-				channel->स्थिरellation = DRX_CONSTELLATION_AUTO;
-				अवरोध;
-			पूर्ण
+			if (lock_status >= DRX_LOCKED) {
+				channel->constellation = DRX_CONSTELLATION_AUTO;
+				break;
+			}
 
-			/* QAM254 not locked. Try QAM64 स्थिरellation */
-			channel->स्थिरellation = DRX_CONSTELLATION_QAM64;
-			ext_attr->स्थिरellation = DRX_CONSTELLATION_QAM64;
-			अगर (channel->mirror == DRX_MIRROR_AUTO)
+			/* QAM254 not locked. Try QAM64 constellation */
+			channel->constellation = DRX_CONSTELLATION_QAM64;
+			ext_attr->constellation = DRX_CONSTELLATION_QAM64;
+			if (channel->mirror == DRX_MIRROR_AUTO)
 				ext_attr->mirror = DRX_MIRROR_NO;
-			अन्यथा
+			else
 				ext_attr->mirror = channel->mirror;
 
-			rc = drxj_dap_पढ़ो_reg16(demod->my_i2c_dev_addr,
+			rc = drxj_dap_read_reg16(demod->my_i2c_dev_addr,
 						     SCU_RAM_QAM_CTL_ENA__A,
 						     &qam_ctl_ena, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr,
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr,
 						      SCU_RAM_QAM_CTL_ENA__A,
 						      qam_ctl_ena & ~SCU_RAM_QAM_CTL_ENA_ACQ__M, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr,
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr,
 						      SCU_RAM_QAM_FSM_STATE_TGT__A,
 						      0x2, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण	/* क्रमce to rate hunting */
+				goto rw_error;
+			}	/* force to rate hunting */
 
 			rc = set_qam(demod, channel, tuner_freq_offset,
 				     QAM_SET_OP_CONSTELLATION);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr,
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr,
 						      SCU_RAM_QAM_CTL_ENA__A,
 						      qam_ctl_ena, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 
-			rc = qam64स्वतः(demod, channel, tuner_freq_offset,
+			rc = qam64auto(demod, channel, tuner_freq_offset,
 				       &lock_status);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 
-			channel->स्थिरellation = DRX_CONSTELLATION_AUTO;
-		पूर्ण अन्यथा अगर (ext_attr->standard == DRX_STANDARD_ITU_C) अणु
+			channel->constellation = DRX_CONSTELLATION_AUTO;
+		} else if (ext_attr->standard == DRX_STANDARD_ITU_C) {
 			u16 qam_ctl_ena = 0;
 
-			channel->स्थिरellation = DRX_CONSTELLATION_QAM64;
-			ext_attr->स्थिरellation = DRX_CONSTELLATION_QAM64;
-			स्वतः_flag = true;
+			channel->constellation = DRX_CONSTELLATION_QAM64;
+			ext_attr->constellation = DRX_CONSTELLATION_QAM64;
+			auto_flag = true;
 
-			अगर (channel->mirror == DRX_MIRROR_AUTO)
+			if (channel->mirror == DRX_MIRROR_AUTO)
 				ext_attr->mirror = DRX_MIRROR_NO;
-			अन्यथा
+			else
 				ext_attr->mirror = channel->mirror;
-			rc = drxj_dap_पढ़ो_reg16(demod->my_i2c_dev_addr,
+			rc = drxj_dap_read_reg16(demod->my_i2c_dev_addr,
 						     SCU_RAM_QAM_CTL_ENA__A,
 						     &qam_ctl_ena, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr,
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr,
 						      SCU_RAM_QAM_CTL_ENA__A,
 						      qam_ctl_ena & ~SCU_RAM_QAM_CTL_ENA_ACQ__M, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr,
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr,
 						      SCU_RAM_QAM_FSM_STATE_TGT__A,
 						      0x2, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण	/* क्रमce to rate hunting */
+				goto rw_error;
+			}	/* force to rate hunting */
 
 			rc = set_qam(demod, channel, tuner_freq_offset,
 				     QAM_SET_OP_CONSTELLATION);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = drxj_dap_ग_लिखो_reg16(demod->my_i2c_dev_addr,
+				goto rw_error;
+			}
+			rc = drxj_dap_write_reg16(demod->my_i2c_dev_addr,
 						      SCU_RAM_QAM_CTL_ENA__A,
 						      qam_ctl_ena, 0);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			rc = qam64स्वतः(demod, channel, tuner_freq_offset,
+				goto rw_error;
+			}
+			rc = qam64auto(demod, channel, tuner_freq_offset,
 				       &lock_status);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			channel->स्थिरellation = DRX_CONSTELLATION_AUTO;
-		पूर्ण अन्यथा अणु
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+				goto rw_error;
+			}
+			channel->constellation = DRX_CONSTELLATION_AUTO;
+		} else {
+			return -EINVAL;
+		}
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
 	/* restore starting value */
-	अगर (स्वतः_flag)
-		channel->स्थिरellation = DRX_CONSTELLATION_AUTO;
-	वापस rc;
-पूर्ण
+	if (auto_flag)
+		channel->constellation = DRX_CONSTELLATION_AUTO;
+	return rc;
+}
 
 /*============================================================================*/
 
 /*
-* \पn अटल लघु get_qamrs_err_count(काष्ठा i2c_device_addr *dev_addr)
-* \मrief Get RS error count in QAM mode (used क्रम post RS BER calculation)
-* \लeturn Error code
+* \fn static short get_qamrs_err_count(struct i2c_device_addr *dev_addr)
+* \brief Get RS error count in QAM mode (used for post RS BER calculation)
+* \return Error code
 *
 * precondition: measurement period & measurement prescale must be set
 *
 */
-अटल पूर्णांक
-get_qamrs_err_count(काष्ठा i2c_device_addr *dev_addr,
-		    काष्ठा drxjrs_errors *rs_errors)
-अणु
-	पूर्णांक rc;
+static int
+get_qamrs_err_count(struct i2c_device_addr *dev_addr,
+		    struct drxjrs_errors *rs_errors)
+{
+	int rc;
 	u16 nr_bit_errors = 0,
 	    nr_symbol_errors = 0,
 	    nr_packet_errors = 0, nr_failures = 0, nr_snc_par_fail_count = 0;
 
 	/* check arguments */
-	अगर (dev_addr == शून्य)
-		वापस -EINVAL;
+	if (dev_addr == NULL)
+		return -EINVAL;
 
 	/* all reported errors are received in the  */
 	/* most recently finished measurement period */
 	/*   no of pre RS bit errors */
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, FEC_RS_NR_BIT_ERRORS__A, &nr_bit_errors, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_read_reg16(dev_addr, FEC_RS_NR_BIT_ERRORS__A, &nr_bit_errors, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	/*   no of symbol errors      */
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, FEC_RS_NR_SYMBOL_ERRORS__A, &nr_symbol_errors, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_read_reg16(dev_addr, FEC_RS_NR_SYMBOL_ERRORS__A, &nr_symbol_errors, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	/*   no of packet errors      */
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, FEC_RS_NR_PACKET_ERRORS__A, &nr_packet_errors, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_read_reg16(dev_addr, FEC_RS_NR_PACKET_ERRORS__A, &nr_packet_errors, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	/*   no of failures to decode */
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, FEC_RS_NR_FAILURES__A, &nr_failures, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_read_reg16(dev_addr, FEC_RS_NR_FAILURES__A, &nr_failures, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	/*   no of post RS bit erros  */
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, FEC_OC_SNC_FAIL_COUNT__A, &nr_snc_par_fail_count, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_read_reg16(dev_addr, FEC_OC_SNC_FAIL_COUNT__A, &nr_snc_par_fail_count, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	/* TODO: NOTE */
-	/* These रेजिस्टर values are fetched in non-atomic fashion           */
-	/* It is possible that the पढ़ो values contain unrelated inक्रमmation */
+	/* These register values are fetched in non-atomic fashion           */
+	/* It is possible that the read values contain unrelated information */
 
 	rs_errors->nr_bit_errors = nr_bit_errors & FEC_RS_NR_BIT_ERRORS__M;
 	rs_errors->nr_symbol_errors = nr_symbol_errors & FEC_RS_NR_SYMBOL_ERRORS__M;
@@ -9357,132 +9356,132 @@ get_qamrs_err_count(काष्ठा i2c_device_addr *dev_addr,
 	rs_errors->nr_snc_par_fail_count =
 	    nr_snc_par_fail_count & FEC_OC_SNC_FAIL_COUNT__M;
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*============================================================================*/
 
 /*
- * \पn पूर्णांक get_sig_strength()
- * \मrief Retrieve संकेत strength क्रम VSB and QAM.
- * \param demod Poपूर्णांकer to demod instance
- * \param u16-t Poपूर्णांकer to संकेत strength data; range 0, .. , 100.
- * \लeturn पूर्णांक.
- * \लetval 0 sig_strength contains valid data.
- * \लetval -EINVAL sig_strength is शून्य.
- * \लetval -EIO Erroneous data, sig_strength contains invalid data.
+ * \fn int get_sig_strength()
+ * \brief Retrieve signal strength for VSB and QAM.
+ * \param demod Pointer to demod instance
+ * \param u16-t Pointer to signal strength data; range 0, .. , 100.
+ * \return int.
+ * \retval 0 sig_strength contains valid data.
+ * \retval -EINVAL sig_strength is NULL.
+ * \retval -EIO Erroneous data, sig_strength contains invalid data.
  */
-#घोषणा DRXJ_AGC_TOP    0x2800
-#घोषणा DRXJ_AGC_SNS    0x1600
-#घोषणा DRXJ_RFAGC_MAX  0x3fff
-#घोषणा DRXJ_RFAGC_MIN  0x800
+#define DRXJ_AGC_TOP    0x2800
+#define DRXJ_AGC_SNS    0x1600
+#define DRXJ_RFAGC_MAX  0x3fff
+#define DRXJ_RFAGC_MIN  0x800
 
-अटल पूर्णांक get_sig_strength(काष्ठा drx_demod_instance *demod, u16 *sig_strength)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
-	पूर्णांक rc;
+static int get_sig_strength(struct drx_demod_instance *demod, u16 *sig_strength)
+{
+	struct i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
+	int rc;
 	u16 rf_gain = 0;
-	u16 अगर_gain = 0;
-	u16 अगर_agc_sns = 0;
-	u16 अगर_agc_top = 0;
+	u16 if_gain = 0;
+	u16 if_agc_sns = 0;
+	u16 if_agc_top = 0;
 	u16 rf_agc_max = 0;
 	u16 rf_agc_min = 0;
 
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, IQM_AF_AGC_IF__A, &अगर_gain, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_read_reg16(dev_addr, IQM_AF_AGC_IF__A, &if_gain, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	अगर_gain &= IQM_AF_AGC_IF__M;
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, IQM_AF_AGC_RF__A, &rf_gain, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	if_gain &= IQM_AF_AGC_IF__M;
+	rc = drxj_dap_read_reg16(dev_addr, IQM_AF_AGC_RF__A, &rf_gain, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	rf_gain &= IQM_AF_AGC_RF__M;
 
-	अगर_agc_sns = DRXJ_AGC_SNS;
-	अगर_agc_top = DRXJ_AGC_TOP;
+	if_agc_sns = DRXJ_AGC_SNS;
+	if_agc_top = DRXJ_AGC_TOP;
 	rf_agc_max = DRXJ_RFAGC_MAX;
 	rf_agc_min = DRXJ_RFAGC_MIN;
 
-	अगर (अगर_gain > अगर_agc_top) अणु
-		अगर (rf_gain > rf_agc_max)
+	if (if_gain > if_agc_top) {
+		if (rf_gain > rf_agc_max)
 			*sig_strength = 100;
-		अन्यथा अगर (rf_gain > rf_agc_min) अणु
-			अगर (rf_agc_max == rf_agc_min) अणु
+		else if (rf_gain > rf_agc_min) {
+			if (rf_agc_max == rf_agc_min) {
 				pr_err("error: rf_agc_max == rf_agc_min\n");
-				वापस -EIO;
-			पूर्ण
+				return -EIO;
+			}
 			*sig_strength =
 			75 + 25 * (rf_gain - rf_agc_min) / (rf_agc_max -
 								rf_agc_min);
-		पूर्ण अन्यथा
+		} else
 			*sig_strength = 75;
-	पूर्ण अन्यथा अगर (अगर_gain > अगर_agc_sns) अणु
-		अगर (अगर_agc_top == अगर_agc_sns) अणु
+	} else if (if_gain > if_agc_sns) {
+		if (if_agc_top == if_agc_sns) {
 			pr_err("error: if_agc_top == if_agc_sns\n");
-			वापस -EIO;
-		पूर्ण
+			return -EIO;
+		}
 		*sig_strength =
-		20 + 55 * (अगर_gain - अगर_agc_sns) / (अगर_agc_top - अगर_agc_sns);
-	पूर्ण अन्यथा अणु
-		अगर (!अगर_agc_sns) अणु
+		20 + 55 * (if_gain - if_agc_sns) / (if_agc_top - if_agc_sns);
+	} else {
+		if (!if_agc_sns) {
 			pr_err("error: if_agc_sns is zero!\n");
-			वापस -EIO;
-		पूर्ण
-		*sig_strength = (20 * अगर_gain / अगर_agc_sns);
-	पूर्ण
+			return -EIO;
+		}
+		*sig_strength = (20 * if_gain / if_agc_sns);
+	}
 
-	अगर (*sig_strength <= 7)
+	if (*sig_strength <= 7)
 		*sig_strength = 0;
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
-* \पn पूर्णांक ctrl_get_qam_sig_quality()
-* \मrief Retrieve QAM संकेत quality from device.
-* \param devmod Poपूर्णांकer to demodulator instance.
-* \param sig_quality Poपूर्णांकer to संकेत quality data.
-* \लeturn पूर्णांक.
-* \लetval 0 sig_quality contains valid data.
-* \लetval -EINVAL sig_quality is शून्य.
-* \लetval -EIO Erroneous data, sig_quality contains invalid data.
+* \fn int ctrl_get_qam_sig_quality()
+* \brief Retrieve QAM signal quality from device.
+* \param devmod Pointer to demodulator instance.
+* \param sig_quality Pointer to signal quality data.
+* \return int.
+* \retval 0 sig_quality contains valid data.
+* \retval -EINVAL sig_quality is NULL.
+* \retval -EIO Erroneous data, sig_quality contains invalid data.
 
 *  Pre-condition: Device must be started and in lock.
 */
-अटल पूर्णांक
-ctrl_get_qam_sig_quality(काष्ठा drx_demod_instance *demod)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
-	काष्ठा drxj_data *ext_attr = demod->my_ext_attr;
-	काष्ठा drx39xxj_state *state = dev_addr->user_data;
-	काष्ठा dtv_frontend_properties *p = &state->frontend.dtv_property_cache;
-	काष्ठा drxjrs_errors measuredrs_errors = अणु 0, 0, 0, 0, 0 पूर्ण;
-	क्रमागत drx_modulation स्थिरellation = ext_attr->स्थिरellation;
-	पूर्णांक rc;
+static int
+ctrl_get_qam_sig_quality(struct drx_demod_instance *demod)
+{
+	struct i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
+	struct drxj_data *ext_attr = demod->my_ext_attr;
+	struct drx39xxj_state *state = dev_addr->user_data;
+	struct dtv_frontend_properties *p = &state->frontend.dtv_property_cache;
+	struct drxjrs_errors measuredrs_errors = { 0, 0, 0, 0, 0 };
+	enum drx_modulation constellation = ext_attr->constellation;
+	int rc;
 
 	u32 pre_bit_err_rs = 0;	/* pre RedSolomon Bit Error Rate */
 	u32 post_bit_err_rs = 0;	/* post RedSolomon Bit Error Rate */
 	u32 pkt_errs = 0;	/* no of packet errors in RS */
-	u16 qam_sl_err_घातer = 0;	/* accumulated error between raw and sliced symbols */
+	u16 qam_sl_err_power = 0;	/* accumulated error between raw and sliced symbols */
 	u16 qsym_err_vd = 0;	/* quadrature symbol errors in QAM_VD */
 	u16 fec_oc_period = 0;	/* SNC sync failure measurement period */
 	u16 fec_rs_prescale = 0;	/* ReedSolomon Measurement Prescale */
-	u16 fec_rs_period = 0;	/* Value क्रम corresponding I2C रेजिस्टर */
-	/* calculation स्थिरants */
+	u16 fec_rs_period = 0;	/* Value for corresponding I2C register */
+	/* calculation constants */
 	u32 rs_bit_cnt = 0;	/* RedSolomon Bit Count */
-	u32 qam_sl_sig_घातer = 0;	/* used क्रम MER, depends of QAM स्थिरellation */
-	/* पूर्णांकermediate results */
-	u32 e = 0;		/* exponent value used क्रम QAM BER/SER */
-	u32 m = 0;		/* mantisa value used क्रम QAM BER/SER */
+	u32 qam_sl_sig_power = 0;	/* used for MER, depends of QAM constellation */
+	/* intermediate results */
+	u32 e = 0;		/* exponent value used for QAM BER/SER */
+	u32 m = 0;		/* mantisa value used for QAM BER/SER */
 	u32 ber_cnt = 0;	/* BER count */
-	/* संकेत quality info */
+	/* signal quality info */
 	u32 qam_sl_mer = 0;	/* QAM MER */
 	u32 qam_pre_rs_ber = 0;	/* Pre RedSolomon BER */
 	u32 qam_post_rs_ber = 0;	/* Post RedSolomon BER */
@@ -9493,27 +9492,27 @@ ctrl_get_qam_sig_quality(काष्ठा drx_demod_instance *demod)
 
 	p->block_count.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 
-	/* पढ़ो the physical रेजिस्टरs */
+	/* read the physical registers */
 	/*   Get the RS error data */
 	rc = get_qamrs_err_count(dev_addr, &measuredrs_errors);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	/* get the रेजिस्टर value needed क्रम MER */
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, QAM_SL_ERR_POWER__A, &qam_sl_err_घातer, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	/* get the register value needed for MER */
+	rc = drxj_dap_read_reg16(dev_addr, QAM_SL_ERR_POWER__A, &qam_sl_err_power, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	/* get the रेजिस्टर value needed क्रम post RS BER */
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, FEC_OC_SNC_FAIL_PERIOD__A, &fec_oc_period, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	/* get the register value needed for post RS BER */
+	rc = drxj_dap_read_reg16(dev_addr, FEC_OC_SNC_FAIL_PERIOD__A, &fec_oc_period, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	/* get स्थिरants needed क्रम संकेत quality calculation */
+	/* get constants needed for signal quality calculation */
 	fec_rs_period = ext_attr->fec_rs_period;
 	fec_rs_prescale = ext_attr->fec_rs_prescale;
 	rs_bit_cnt = fec_rs_period * fec_rs_prescale * ext_attr->fec_rs_plen;
@@ -9522,49 +9521,49 @@ ctrl_get_qam_sig_quality(काष्ठा drx_demod_instance *demod)
 	vd_bit_cnt = qam_vd_period * qam_vd_prescale * ext_attr->fec_vd_plen;
 
 	/* DRXJ_QAM_SL_SIG_POWER_QAMxxx  * 4     */
-	चयन (स्थिरellation) अणु
-	हाल DRX_CONSTELLATION_QAM16:
-		qam_sl_sig_घातer = DRXJ_QAM_SL_SIG_POWER_QAM16 << 2;
-		अवरोध;
-	हाल DRX_CONSTELLATION_QAM32:
-		qam_sl_sig_घातer = DRXJ_QAM_SL_SIG_POWER_QAM32 << 2;
-		अवरोध;
-	हाल DRX_CONSTELLATION_QAM64:
-		qam_sl_sig_घातer = DRXJ_QAM_SL_SIG_POWER_QAM64 << 2;
-		अवरोध;
-	हाल DRX_CONSTELLATION_QAM128:
-		qam_sl_sig_घातer = DRXJ_QAM_SL_SIG_POWER_QAM128 << 2;
-		अवरोध;
-	हाल DRX_CONSTELLATION_QAM256:
-		qam_sl_sig_घातer = DRXJ_QAM_SL_SIG_POWER_QAM256 << 2;
-		अवरोध;
-	शेष:
-		वापस -EIO;
-	पूर्ण
+	switch (constellation) {
+	case DRX_CONSTELLATION_QAM16:
+		qam_sl_sig_power = DRXJ_QAM_SL_SIG_POWER_QAM16 << 2;
+		break;
+	case DRX_CONSTELLATION_QAM32:
+		qam_sl_sig_power = DRXJ_QAM_SL_SIG_POWER_QAM32 << 2;
+		break;
+	case DRX_CONSTELLATION_QAM64:
+		qam_sl_sig_power = DRXJ_QAM_SL_SIG_POWER_QAM64 << 2;
+		break;
+	case DRX_CONSTELLATION_QAM128:
+		qam_sl_sig_power = DRXJ_QAM_SL_SIG_POWER_QAM128 << 2;
+		break;
+	case DRX_CONSTELLATION_QAM256:
+		qam_sl_sig_power = DRXJ_QAM_SL_SIG_POWER_QAM256 << 2;
+		break;
+	default:
+		return -EIO;
+	}
 
 	/* ------------------------------ */
 	/* MER Calculation                */
 	/* ------------------------------ */
-	/* MER is good अगर it is above 27.5 क्रम QAM256 or 21.5 क्रम QAM64 */
+	/* MER is good if it is above 27.5 for QAM256 or 21.5 for QAM64 */
 
-	/* 10.0*log10(qam_sl_sig_घातer * 4.0 / qam_sl_err_घातer); */
-	अगर (qam_sl_err_घातer == 0)
+	/* 10.0*log10(qam_sl_sig_power * 4.0 / qam_sl_err_power); */
+	if (qam_sl_err_power == 0)
 		qam_sl_mer = 0;
-	अन्यथा
-		qam_sl_mer = log1_बार100(qam_sl_sig_घातer) - log1_बार100((u32)qam_sl_err_घातer);
+	else
+		qam_sl_mer = log1_times100(qam_sl_sig_power) - log1_times100((u32)qam_sl_err_power);
 
 	/* ----------------------------------------- */
 	/* Pre Viterbi Symbol Error Rate Calculation */
 	/* ----------------------------------------- */
-	/* pre viterbi SER is good अगर it is below 0.025 */
+	/* pre viterbi SER is good if it is below 0.025 */
 
-	/* get the रेजिस्टर value */
+	/* get the register value */
 	/*   no of quadrature symbol errors */
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, QAM_VD_NR_QSYM_ERRORS__A, &qsym_err_vd, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_read_reg16(dev_addr, QAM_VD_NR_QSYM_ERRORS__A, &qsym_err_vd, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	/* Extract the Exponent and the Mantisa  */
 	/* of number of quadrature symbol errors */
 	e = (qsym_err_vd & QAM_VD_NR_QSYM_ERRORS_EXP__M) >>
@@ -9572,17 +9571,17 @@ ctrl_get_qam_sig_quality(काष्ठा drx_demod_instance *demod)
 	m = (qsym_err_vd & QAM_VD_NR_SYMBOL_ERRORS_FIXED_MANT__M) >>
 	    QAM_VD_NR_SYMBOL_ERRORS_FIXED_MANT__B;
 
-	अगर ((m << e) >> 3 > 549752)
+	if ((m << e) >> 3 > 549752)
 		qam_vd_ser = 500000 * vd_bit_cnt * ((e > 2) ? 1 : 8) / 8;
-	अन्यथा
+	else
 		qam_vd_ser = m << ((e > 2) ? (e - 3) : e);
 
 	/* --------------------------------------- */
 	/* pre and post RedSolomon BER Calculation */
 	/* --------------------------------------- */
-	/* pre RS BER is good अगर it is below 3.5e-4 */
+	/* pre RS BER is good if it is below 3.5e-4 */
 
-	/* get the रेजिस्टर values */
+	/* get the register values */
 	pre_bit_err_rs = (u32) measuredrs_errors.nr_bit_errors;
 	pkt_errs = post_bit_err_rs = (u32) measuredrs_errors.nr_snc_par_fail_count;
 
@@ -9595,10 +9594,10 @@ ctrl_get_qam_sig_quality(काष्ठा drx_demod_instance *demod)
 
 	ber_cnt = m << e;
 
-	/*qam_pre_rs_ber = frac_बार1e6( ber_cnt, rs_bit_cnt ); */
-	अगर (m > (rs_bit_cnt >> (e + 1)) || (rs_bit_cnt >> e) == 0)
+	/*qam_pre_rs_ber = frac_times1e6( ber_cnt, rs_bit_cnt ); */
+	if (m > (rs_bit_cnt >> (e + 1)) || (rs_bit_cnt >> e) == 0)
 		qam_pre_rs_ber = 500000 * rs_bit_cnt >> e;
-	अन्यथा
+	else
 		qam_pre_rs_ber = ber_cnt;
 
 	/* post RS BER = 1000000* (11.17 * FEC_OC_SNC_FAIL_COUNT__A) /  */
@@ -9607,20 +9606,20 @@ ctrl_get_qam_sig_quality(काष्ठा drx_demod_instance *demod)
 	   => c = (1000000*100*11.17)/1504 =
 	   post RS BER = (( c* FEC_OC_SNC_FAIL_COUNT__A) /
 	   (100 * FEC_OC_SNC_FAIL_PERIOD__A)
-	   *100 and /100 is क्रम more precision.
+	   *100 and /100 is for more precision.
 	   => (20 bits * 12 bits) /(16 bits * 7 bits)  => safe in 32 bits computation
 
 	   Precision errors still possible.
 	 */
-	अगर (!fec_oc_period) अणु
+	if (!fec_oc_period) {
 		qam_post_rs_ber = 0xFFFFFFFF;
-	पूर्ण अन्यथा अणु
+	} else {
 		e = post_bit_err_rs * 742686;
 		m = fec_oc_period * 100;
 		qam_post_rs_ber = e / m;
-	पूर्ण
+	}
 
-	/* fill संकेत quality data काष्ठाure */
+	/* fill signal quality data structure */
 	p->pre_bit_count.stat[0].scale = FE_SCALE_COUNTER;
 	p->post_bit_count.stat[0].scale = FE_SCALE_COUNTER;
 	p->pre_bit_error.stat[0].scale = FE_SCALE_COUNTER;
@@ -9629,28 +9628,28 @@ ctrl_get_qam_sig_quality(काष्ठा drx_demod_instance *demod)
 	p->cnr.stat[0].scale = FE_SCALE_DECIBEL;
 
 	p->cnr.stat[0].svalue = ((u16) qam_sl_mer) * 100;
-	अगर (ext_attr->standard == DRX_STANDARD_ITU_B) अणु
+	if (ext_attr->standard == DRX_STANDARD_ITU_B) {
 		p->pre_bit_error.stat[0].uvalue += qam_vd_ser;
 		p->pre_bit_count.stat[0].uvalue += vd_bit_cnt * ((e > 2) ? 1 : 8) / 8;
-	पूर्ण अन्यथा अणु
+	} else {
 		p->pre_bit_error.stat[0].uvalue += qam_pre_rs_ber;
 		p->pre_bit_count.stat[0].uvalue += rs_bit_cnt >> e;
-	पूर्ण
+	}
 
 	p->post_bit_error.stat[0].uvalue += qam_post_rs_ber;
 	p->post_bit_count.stat[0].uvalue += rs_bit_cnt >> e;
 
 	p->block_error.stat[0].uvalue += pkt_errs;
 
-#अगर_घोषित DRXJ_SIGNAL_ACCUM_ERR
+#ifdef DRXJ_SIGNAL_ACCUM_ERR
 	rc = get_acc_pkt_err(demod, &sig_quality->packet_error);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-#पूर्ण_अगर
+		goto rw_error;
+	}
+#endif
 
-	वापस 0;
+	return 0;
 rw_error:
 	p->pre_bit_count.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 	p->post_bit_count.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
@@ -9659,10 +9658,10 @@ rw_error:
 	p->block_error.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 	p->cnr.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-#पूर्ण_अगर /* #अगर_अघोषित DRXJ_VSB_ONLY */
+#endif /* #ifndef DRXJ_VSB_ONLY */
 
 /*============================================================================*/
 /*==                     END QAM DATAPATH FUNCTIONS                         ==*/
@@ -9679,23 +9678,23 @@ rw_error:
 
    NTSC/FM AGCs
 
-      Four AGCs are used क्रम NTSC:
-      (1) RF (used to attenuate the input संकेत in हाल of to much घातer)
-      (2) IF (used to attenuate the input संकेत in हाल of to much घातer)
-      (3) Video AGC (used to amplअगरy the output संकेत in हाल input to low)
-      (4) SIF AGC (used to amplअगरy the output संकेत in हाल input to low)
+      Four AGCs are used for NTSC:
+      (1) RF (used to attenuate the input signal in case of to much power)
+      (2) IF (used to attenuate the input signal in case of to much power)
+      (3) Video AGC (used to amplify the output signal in case input to low)
+      (4) SIF AGC (used to amplify the output signal in case input to low)
 
       Video AGC is coupled to RF and IF. SIF AGC is not coupled. It is assumed
       that the coupling between Video AGC and the RF and IF AGCs also works in
       favor of the SIF AGC.
 
-      Three AGCs are used क्रम FM:
-      (1) RF (used to attenuate the input संकेत in हाल of to much घातer)
-      (2) IF (used to attenuate the input संकेत in हाल of to much घातer)
-      (3) SIF AGC (used to amplअगरy the output संकेत in हाल input to low)
+      Three AGCs are used for FM:
+      (1) RF (used to attenuate the input signal in case of to much power)
+      (2) IF (used to attenuate the input signal in case of to much power)
+      (3) SIF AGC (used to amplify the output signal in case input to low)
 
       The SIF AGC is now coupled to the RF/IF AGCs.
-      The SIF AGC is needed क्रम both SIF output and the पूर्णांकernal SIF संकेत to
+      The SIF AGC is needed for both SIF output and the internal SIF signal to
       the AUD block.
 
       RF and IF AGCs DACs are part of AFE, Video and SIF AGC DACs are part of
@@ -9704,54 +9703,54 @@ rw_error:
 
    ATV SETTINGS
 
-      (Shaकरोw settings will not be used क्रम now, they will be implemented
+      (Shadow settings will not be used for now, they will be implemented
        later on because of the schedule)
 
-      Several HW/SCU "settings" can be used क्रम ATV. The standard selection
-      will reset most of these settings. To aव्योम that the end user application
-      has to perक्रमm these settings each समय the ATV or FM standards is
-      selected the driver will shaकरोw these settings. This enables the end user
-      to perक्रमm the settings only once after a drx_खोलो(). The driver must
-      ग_लिखो the shaकरोw settings to HW/SCU in हाल:
+      Several HW/SCU "settings" can be used for ATV. The standard selection
+      will reset most of these settings. To avoid that the end user application
+      has to perform these settings each time the ATV or FM standards is
+      selected the driver will shadow these settings. This enables the end user
+      to perform the settings only once after a drx_open(). The driver must
+      write the shadow settings to HW/SCU in case:
 	 ( setstandard FM/ATV) ||
 	 ( settings have changed && FM/ATV standard is active)
-      The shaकरोw settings will be stored in the device specअगरic data container.
-      A set of flags will be defined to flag changes in shaकरोw settings.
-      A routine will be implemented to ग_लिखो all changed shaकरोw settings to
+      The shadow settings will be stored in the device specific data container.
+      A set of flags will be defined to flag changes in shadow settings.
+      A routine will be implemented to write all changed shadow settings to
       HW/SCU.
 
       The "settings" will consist of: AGC settings, filter settings etc.
 
-      Disadvantage of use of shaकरोw settings:
-      Direct changes in HW/SCU रेजिस्टरs will not be reflected in the
-      shaकरोw settings and these changes will be overwritten during a next
+      Disadvantage of use of shadow settings:
+      Direct changes in HW/SCU registers will not be reflected in the
+      shadow settings and these changes will be overwritten during a next
       update. This can happen during evaluation. This will not be a problem
-      क्रम normal customer usage.
+      for normal customer usage.
 */
 /* -------------------------------------------------------------------------- */
 
 /*
-* \पn पूर्णांक घातer_करोwn_atv ()
-* \मrief Power करोwn ATV.
+* \fn int power_down_atv ()
+* \brief Power down ATV.
 * \param demod instance of demodulator
-* \param standard either NTSC or FM (sub stअक्रमard क्रम ATV )
-* \लeturn पूर्णांक.
+* \param standard either NTSC or FM (sub strandard for ATV )
+* \return int.
 *
 *  Stops and thus resets ATV and IQM block
-*  SIF and CVBS ADC are घातered करोwn
-*  Calls audio घातer करोwn
+*  SIF and CVBS ADC are powered down
+*  Calls audio power down
 */
-अटल पूर्णांक
-घातer_करोwn_atv(काष्ठा drx_demod_instance *demod, क्रमागत drx_standard standard, bool primary)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
-	काष्ठा drxjscu_cmd cmd_scu = अणु /* command      */ 0,
+static int
+power_down_atv(struct drx_demod_instance *demod, enum drx_standard standard, bool primary)
+{
+	struct i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
+	struct drxjscu_cmd cmd_scu = { /* command      */ 0,
 		/* parameter_len */ 0,
 		/* result_len    */ 0,
-		/* *parameter   */ शून्य,
-		/* *result      */ शून्य
-	पूर्ण;
-	पूर्णांक rc;
+		/* *parameter   */ NULL,
+		/* *result      */ NULL
+	};
+	int rc;
 	u16 cmd_result = 0;
 
 	/* ATV NTSC */
@@ -9761,258 +9760,258 @@ rw_error:
 	    SCU_RAM_COMMAND_CMD_DEMOD_STOP;
 	cmd_scu.parameter_len = 0;
 	cmd_scu.result_len = 1;
-	cmd_scu.parameter = शून्य;
+	cmd_scu.parameter = NULL;
 	cmd_scu.result = &cmd_result;
 	rc = scu_command(dev_addr, &cmd_scu);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	/* Disable ATV outमाला_दो (ATV reset enables CVBS, unकरो this) */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, ATV_TOP_STDBY__A, (ATV_TOP_STDBY_SIF_STDBY_STANDBY & (~ATV_TOP_STDBY_CVBS_STDBY_A2_ACTIVE)), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	/* Disable ATV outputs (ATV reset enables CVBS, undo this) */
+	rc = drxj_dap_write_reg16(dev_addr, ATV_TOP_STDBY__A, (ATV_TOP_STDBY_SIF_STDBY_STANDBY & (~ATV_TOP_STDBY_CVBS_STDBY_A2_ACTIVE)), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, ATV_COMM_EXEC__A, ATV_COMM_EXEC_STOP, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, ATV_COMM_EXEC__A, ATV_COMM_EXEC_STOP, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	अगर (primary) अणु
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_COMM_EXEC__A, IQM_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	if (primary) {
+		rc = drxj_dap_write_reg16(dev_addr, IQM_COMM_EXEC__A, IQM_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 		rc = set_iqm_af(demod, false);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_FS_COMM_EXEC__A, IQM_FS_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+	} else {
+		rc = drxj_dap_write_reg16(dev_addr, IQM_FS_COMM_EXEC__A, IQM_FS_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_FD_COMM_EXEC__A, IQM_FD_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_FD_COMM_EXEC__A, IQM_FD_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_RC_COMM_EXEC__A, IQM_RC_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_RC_COMM_EXEC__A, IQM_RC_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_RT_COMM_EXEC__A, IQM_RT_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_RT_COMM_EXEC__A, IQM_RT_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_CF_COMM_EXEC__A, IQM_CF_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, IQM_CF_COMM_EXEC__A, IQM_CF_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
-	rc = घातer_करोwn_aud(demod);
-	अगर (rc != 0) अणु
+			goto rw_error;
+		}
+	}
+	rc = power_down_aud(demod);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*============================================================================*/
 
 /*
-* \मrief Power up AUD.
+* \brief Power up AUD.
 * \param demod instance of demodulator
-* \लeturn पूर्णांक.
+* \return int.
 *
 */
-अटल पूर्णांक घातer_करोwn_aud(काष्ठा drx_demod_instance *demod)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = शून्य;
-	काष्ठा drxj_data *ext_attr = शून्य;
-	पूर्णांक rc;
+static int power_down_aud(struct drx_demod_instance *demod)
+{
+	struct i2c_device_addr *dev_addr = NULL;
+	struct drxj_data *ext_attr = NULL;
+	int rc;
 
-	dev_addr = (काष्ठा i2c_device_addr *)demod->my_i2c_dev_addr;
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
+	dev_addr = (struct i2c_device_addr *)demod->my_i2c_dev_addr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, AUD_COMM_EXEC__A, AUD_COMM_EXEC_STOP, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, AUD_COMM_EXEC__A, AUD_COMM_EXEC_STOP, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	ext_attr->aud_data.audio_is_active = false;
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
-* \पn पूर्णांक set_orx_nsu_aox()
-* \मrief Configure OrxNsuAox क्रम OOB
+* \fn int set_orx_nsu_aox()
+* \brief Configure OrxNsuAox for OOB
 * \param demod instance of demodulator.
 * \param active
-* \लeturn पूर्णांक.
+* \return int.
 */
-अटल पूर्णांक set_orx_nsu_aox(काष्ठा drx_demod_instance *demod, bool active)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
-	पूर्णांक rc;
+static int set_orx_nsu_aox(struct drx_demod_instance *demod, bool active)
+{
+	struct i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
+	int rc;
 	u16 data = 0;
 
 	/* Configure NSU_AOX */
-	rc = drxj_dap_पढ़ो_reg16(dev_addr, ORX_NSU_AOX_STDBY_W__A, &data, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_read_reg16(dev_addr, ORX_NSU_AOX_STDBY_W__A, &data, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	अगर (!active)
+		goto rw_error;
+	}
+	if (!active)
 		data &= ((~ORX_NSU_AOX_STDBY_W_STDBYADC_A2_ON) & (~ORX_NSU_AOX_STDBY_W_STDBYAMP_A2_ON) & (~ORX_NSU_AOX_STDBY_W_STDBYBIAS_A2_ON) & (~ORX_NSU_AOX_STDBY_W_STDBYPLL_A2_ON) & (~ORX_NSU_AOX_STDBY_W_STDBYPD_A2_ON) & (~ORX_NSU_AOX_STDBY_W_STDBYTAGC_IF_A2_ON) & (~ORX_NSU_AOX_STDBY_W_STDBYTAGC_RF_A2_ON) & (~ORX_NSU_AOX_STDBY_W_STDBYFLT_A2_ON));
-	अन्यथा
+	else
 		data |= (ORX_NSU_AOX_STDBY_W_STDBYADC_A2_ON | ORX_NSU_AOX_STDBY_W_STDBYAMP_A2_ON | ORX_NSU_AOX_STDBY_W_STDBYBIAS_A2_ON | ORX_NSU_AOX_STDBY_W_STDBYPLL_A2_ON | ORX_NSU_AOX_STDBY_W_STDBYPD_A2_ON | ORX_NSU_AOX_STDBY_W_STDBYTAGC_IF_A2_ON | ORX_NSU_AOX_STDBY_W_STDBYTAGC_RF_A2_ON | ORX_NSU_AOX_STDBY_W_STDBYFLT_A2_ON);
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, ORX_NSU_AOX_STDBY_W__A, data, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, ORX_NSU_AOX_STDBY_W__A, data, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
-* \पn पूर्णांक ctrl_set_oob()
-* \मrief Set OOB channel to be used.
+* \fn int ctrl_set_oob()
+* \brief Set OOB channel to be used.
 * \param demod instance of demodulator
-* \param oob_param OOB parameters क्रम channel setting.
-* \पrequency should be in KHz
-* \लeturn पूर्णांक.
+* \param oob_param OOB parameters for channel setting.
+* \frequency should be in KHz
+* \return int.
 *
 * Accepts  only. Returns error otherwise.
 * Demapper value is written after scu_command START
 * because START command causes COMM_EXEC transition
-* from 0 to 1 which causes all रेजिस्टरs to be
+* from 0 to 1 which causes all registers to be
 * overwritten with initial value
 *
 */
 
 /* Nyquist filter impulse response */
-#घोषणा IMPULSE_COSINE_ALPHA_0_3    अणु-3, -4, -1, 6, 10, 7, -5, -20, -25, -10, 29, 79, 123, 140पूर्ण	/*वर्ग_मूल उठाओd-cosine filter with alpha=0.3 */
-#घोषणा IMPULSE_COSINE_ALPHA_0_5    अणु 2, 0, -2, -2, 2, 5, 2, -10, -20, -14, 20, 74, 125, 145पूर्ण	/*वर्ग_मूल उठाओd-cosine filter with alpha=0.5 */
-#घोषणा IMPULSE_COSINE_ALPHA_RO_0_5 अणु 0, 0, 1, 2, 3, 0, -7, -15, -16,  0, 34, 77, 114, 128पूर्ण	/*full उठाओd-cosine filter with alpha=0.5 (receiver only) */
+#define IMPULSE_COSINE_ALPHA_0_3    {-3, -4, -1, 6, 10, 7, -5, -20, -25, -10, 29, 79, 123, 140}	/*sqrt raised-cosine filter with alpha=0.3 */
+#define IMPULSE_COSINE_ALPHA_0_5    { 2, 0, -2, -2, 2, 5, 2, -10, -20, -14, 20, 74, 125, 145}	/*sqrt raised-cosine filter with alpha=0.5 */
+#define IMPULSE_COSINE_ALPHA_RO_0_5 { 0, 0, 1, 2, 3, 0, -7, -15, -16,  0, 34, 77, 114, 128}	/*full raised-cosine filter with alpha=0.5 (receiver only) */
 
-/* Coefficients क्रम the nyquist filter (total: 27 taps) */
-#घोषणा NYQFILTERLEN 27
+/* Coefficients for the nyquist filter (total: 27 taps) */
+#define NYQFILTERLEN 27
 
-अटल पूर्णांक ctrl_set_oob(काष्ठा drx_demod_instance *demod, काष्ठा drxoob *oob_param)
-अणु
-	पूर्णांक rc;
+static int ctrl_set_oob(struct drx_demod_instance *demod, struct drxoob *oob_param)
+{
+	int rc;
 	s32 freq = 0;	/* KHz */
-	काष्ठा i2c_device_addr *dev_addr = शून्य;
-	काष्ठा drxj_data *ext_attr = शून्य;
+	struct i2c_device_addr *dev_addr = NULL;
+	struct drxj_data *ext_attr = NULL;
 	u16 i = 0;
 	bool mirror_freq_spect_oob = false;
 	u16 trk_filter_value = 0;
-	काष्ठा drxjscu_cmd scu_cmd;
+	struct drxjscu_cmd scu_cmd;
 	u16 set_param_parameters[3];
-	u16 cmd_result[2] = अणु 0, 0 पूर्ण;
-	s16 nyquist_coeffs[4][(NYQFILTERLEN + 1) / 2] = अणु
+	u16 cmd_result[2] = { 0, 0 };
+	s16 nyquist_coeffs[4][(NYQFILTERLEN + 1) / 2] = {
 		IMPULSE_COSINE_ALPHA_0_3,	/* Target Mode 0 */
 		IMPULSE_COSINE_ALPHA_0_3,	/* Target Mode 1 */
 		IMPULSE_COSINE_ALPHA_0_5,	/* Target Mode 2 */
 		IMPULSE_COSINE_ALPHA_RO_0_5	/* Target Mode 3 */
-	पूर्ण;
-	u8 mode_val[4] = अणु 2, 2, 0, 1 पूर्ण;
-	u8 pfi_coeffs[4][6] = अणु
-		अणुDRXJ_16TO8(-92), DRXJ_16TO8(-108), DRXJ_16TO8(100)पूर्ण,	/* TARGET_MODE = 0:     PFI_A = -23/32; PFI_B = -54/32;  PFI_C = 25/32; fg = 0.5 MHz (Att=26dB) */
-		अणुDRXJ_16TO8(-64), DRXJ_16TO8(-80), DRXJ_16TO8(80)पूर्ण,	/* TARGET_MODE = 1:     PFI_A = -16/32; PFI_B = -40/32;  PFI_C = 20/32; fg = 1.0 MHz (Att=28dB) */
-		अणुDRXJ_16TO8(-80), DRXJ_16TO8(-98), DRXJ_16TO8(92)पूर्ण,	/* TARGET_MODE = 2, 3:  PFI_A = -20/32; PFI_B = -49/32;  PFI_C = 23/32; fg = 0.8 MHz (Att=25dB) */
-		अणुDRXJ_16TO8(-80), DRXJ_16TO8(-98), DRXJ_16TO8(92)पूर्ण	/* TARGET_MODE = 2, 3:  PFI_A = -20/32; PFI_B = -49/32;  PFI_C = 23/32; fg = 0.8 MHz (Att=25dB) */
-	पूर्ण;
+	};
+	u8 mode_val[4] = { 2, 2, 0, 1 };
+	u8 pfi_coeffs[4][6] = {
+		{DRXJ_16TO8(-92), DRXJ_16TO8(-108), DRXJ_16TO8(100)},	/* TARGET_MODE = 0:     PFI_A = -23/32; PFI_B = -54/32;  PFI_C = 25/32; fg = 0.5 MHz (Att=26dB) */
+		{DRXJ_16TO8(-64), DRXJ_16TO8(-80), DRXJ_16TO8(80)},	/* TARGET_MODE = 1:     PFI_A = -16/32; PFI_B = -40/32;  PFI_C = 20/32; fg = 1.0 MHz (Att=28dB) */
+		{DRXJ_16TO8(-80), DRXJ_16TO8(-98), DRXJ_16TO8(92)},	/* TARGET_MODE = 2, 3:  PFI_A = -20/32; PFI_B = -49/32;  PFI_C = 23/32; fg = 0.8 MHz (Att=25dB) */
+		{DRXJ_16TO8(-80), DRXJ_16TO8(-98), DRXJ_16TO8(92)}	/* TARGET_MODE = 2, 3:  PFI_A = -20/32; PFI_B = -49/32;  PFI_C = 23/32; fg = 0.8 MHz (Att=25dB) */
+	};
 	u16 mode_index;
 
 	dev_addr = demod->my_i2c_dev_addr;
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
 	mirror_freq_spect_oob = ext_attr->mirror_freq_spect_oob;
 
 	/* Check parameters */
-	अगर (oob_param == शून्य) अणु
-		/* घातer off oob module  */
+	if (oob_param == NULL) {
+		/* power off oob module  */
 		scu_cmd.command = SCU_RAM_COMMAND_STANDARD_OOB
 		    | SCU_RAM_COMMAND_CMD_DEMOD_STOP;
 		scu_cmd.parameter_len = 0;
 		scu_cmd.result_len = 1;
 		scu_cmd.result = cmd_result;
 		rc = scu_command(dev_addr, &scu_cmd);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 		rc = set_orx_nsu_aox(demod, false);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, ORX_COMM_EXEC__A, ORX_COMM_EXEC_STOP, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, ORX_COMM_EXEC__A, ORX_COMM_EXEC_STOP, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 
-		ext_attr->oob_घातer_on = false;
-		वापस 0;
-	पूर्ण
+		ext_attr->oob_power_on = false;
+		return 0;
+	}
 
 	freq = oob_param->frequency;
-	अगर ((freq < 70000) || (freq > 130000))
-		वापस -EIO;
+	if ((freq < 70000) || (freq > 130000))
+		return -EIO;
 	freq = (freq - 50000) / 50;
 
-	अणु
+	{
 		u16 index = 0;
-		u16 reमुख्यder = 0;
+		u16 remainder = 0;
 		u16 *trk_filtercfg = ext_attr->oob_trk_filter_cfg;
 
 		index = (u16) ((freq - 400) / 200);
-		reमुख्यder = (u16) ((freq - 400) % 200);
+		remainder = (u16) ((freq - 400) % 200);
 		trk_filter_value =
 		    trk_filtercfg[index] - (trk_filtercfg[index] -
 					   trk_filtercfg[index +
-							1]) / 10 * reमुख्यder /
+							1]) / 10 * remainder /
 		    20;
-	पूर्ण
+	}
 
    /********/
 	/* Stop  */
    /********/
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, ORX_COMM_EXEC__A, ORX_COMM_EXEC_STOP, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, ORX_COMM_EXEC__A, ORX_COMM_EXEC_STOP, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	scu_cmd.command = SCU_RAM_COMMAND_STANDARD_OOB
 	    | SCU_RAM_COMMAND_CMD_DEMOD_STOP;
 	scu_cmd.parameter_len = 0;
 	scu_cmd.result_len = 1;
 	scu_cmd.result = cmd_result;
 	rc = scu_command(dev_addr, &scu_cmd);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
    /********/
 	/* Reset */
    /********/
@@ -10022,10 +10021,10 @@ rw_error:
 	scu_cmd.result_len = 1;
 	scu_cmd.result = cmd_result;
 	rc = scu_command(dev_addr, &scu_cmd);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
    /**********/
 	/* SET_ENV */
    /**********/
@@ -10034,63 +10033,63 @@ rw_error:
 	    | SCU_RAM_COMMAND_CMD_DEMOD_SET_ENV;
 	scu_cmd.parameter_len = 3;
 	/* 1-data rate;2-frequency */
-	चयन (oob_param->standard) अणु
-	हाल DRX_OOB_MODE_A:
-		अगर (
-			   /* संकेत is transmitted inverted */
+	switch (oob_param->standard) {
+	case DRX_OOB_MODE_A:
+		if (
+			   /* signal is transmitted inverted */
 			   ((oob_param->spectrum_inverted == true) &&
-			    /* and tuner is not mirroring the संकेत */
+			    /* and tuner is not mirroring the signal */
 			    (!mirror_freq_spect_oob)) |
 			   /* or */
-			   /* संकेत is transmitted noninverted */
+			   /* signal is transmitted noninverted */
 			   ((oob_param->spectrum_inverted == false) &&
-			    /* and tuner is mirroring the संकेत */
+			    /* and tuner is mirroring the signal */
 			    (mirror_freq_spect_oob))
 		    )
 			set_param_parameters[0] =
 			    SCU_RAM_ORX_RF_RX_DATA_RATE_2048KBPS_INVSPEC;
-		अन्यथा
+		else
 			set_param_parameters[0] =
 			    SCU_RAM_ORX_RF_RX_DATA_RATE_2048KBPS_REGSPEC;
-		अवरोध;
-	हाल DRX_OOB_MODE_B_GRADE_A:
-		अगर (
-			   /* संकेत is transmitted inverted */
+		break;
+	case DRX_OOB_MODE_B_GRADE_A:
+		if (
+			   /* signal is transmitted inverted */
 			   ((oob_param->spectrum_inverted == true) &&
-			    /* and tuner is not mirroring the संकेत */
+			    /* and tuner is not mirroring the signal */
 			    (!mirror_freq_spect_oob)) |
 			   /* or */
-			   /* संकेत is transmitted noninverted */
+			   /* signal is transmitted noninverted */
 			   ((oob_param->spectrum_inverted == false) &&
-			    /* and tuner is mirroring the संकेत */
+			    /* and tuner is mirroring the signal */
 			    (mirror_freq_spect_oob))
 		    )
 			set_param_parameters[0] =
 			    SCU_RAM_ORX_RF_RX_DATA_RATE_1544KBPS_INVSPEC;
-		अन्यथा
+		else
 			set_param_parameters[0] =
 			    SCU_RAM_ORX_RF_RX_DATA_RATE_1544KBPS_REGSPEC;
-		अवरोध;
-	हाल DRX_OOB_MODE_B_GRADE_B:
-	शेष:
-		अगर (
-			   /* संकेत is transmitted inverted */
+		break;
+	case DRX_OOB_MODE_B_GRADE_B:
+	default:
+		if (
+			   /* signal is transmitted inverted */
 			   ((oob_param->spectrum_inverted == true) &&
-			    /* and tuner is not mirroring the संकेत */
+			    /* and tuner is not mirroring the signal */
 			    (!mirror_freq_spect_oob)) |
 			   /* or */
-			   /* संकेत is transmitted noninverted */
+			   /* signal is transmitted noninverted */
 			   ((oob_param->spectrum_inverted == false) &&
-			    /* and tuner is mirroring the संकेत */
+			    /* and tuner is mirroring the signal */
 			    (mirror_freq_spect_oob))
 		    )
 			set_param_parameters[0] =
 			    SCU_RAM_ORX_RF_RX_DATA_RATE_3088KBPS_INVSPEC;
-		अन्यथा
+		else
 			set_param_parameters[0] =
 			    SCU_RAM_ORX_RF_RX_DATA_RATE_3088KBPS_REGSPEC;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	set_param_parameters[1] = (u16) (freq & 0xFFFF);
 	set_param_parameters[2] = trk_filter_value;
 	scu_cmd.parameter = set_param_parameters;
@@ -10098,293 +10097,293 @@ rw_error:
 	scu_cmd.result = cmd_result;
 	mode_index = mode_val[(set_param_parameters[0] & 0xC0) >> 6];
 	rc = scu_command(dev_addr, &scu_cmd);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_TOP_COMM_KEY__A, 0xFABA, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SIO_TOP_COMM_KEY__A, 0xFABA, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण	/*  Write magic word to enable pdr reg ग_लिखो  */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_OOB_CRX_CFG__A, OOB_CRX_DRIVE_STRENGTH << SIO_PDR_OOB_CRX_CFG_DRIVE__B | 0x03 << SIO_PDR_OOB_CRX_CFG_MODE__B, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}	/*  Write magic word to enable pdr reg write  */
+	rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_OOB_CRX_CFG__A, OOB_CRX_DRIVE_STRENGTH << SIO_PDR_OOB_CRX_CFG_DRIVE__B | 0x03 << SIO_PDR_OOB_CRX_CFG_MODE__B, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_PDR_OOB_DRX_CFG__A, OOB_DRX_DRIVE_STRENGTH << SIO_PDR_OOB_DRX_CFG_DRIVE__B | 0x03 << SIO_PDR_OOB_DRX_CFG_MODE__B, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SIO_PDR_OOB_DRX_CFG__A, OOB_DRX_DRIVE_STRENGTH << SIO_PDR_OOB_DRX_CFG_DRIVE__B | 0x03 << SIO_PDR_OOB_DRX_CFG_MODE__B, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_TOP_COMM_KEY__A, 0x0000, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SIO_TOP_COMM_KEY__A, 0x0000, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण	/*  Write magic word to disable pdr reg ग_लिखो */
+		goto rw_error;
+	}	/*  Write magic word to disable pdr reg write */
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, ORX_TOP_COMM_KEY__A, 0, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, ORX_TOP_COMM_KEY__A, 0, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, ORX_FWP_AAG_LEN_W__A, 16000, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, ORX_FWP_AAG_LEN_W__A, 16000, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, ORX_FWP_AAG_THR_W__A, 40, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, ORX_FWP_AAG_THR_W__A, 40, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	/* ddc */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, ORX_DDC_OFO_SET_W__A, ORX_DDC_OFO_SET_W__PRE, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, ORX_DDC_OFO_SET_W__A, ORX_DDC_OFO_SET_W__PRE, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	/* nsu */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, ORX_NSU_AOX_LOPOW_W__A, ext_attr->oob_lo_घात, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, ORX_NSU_AOX_LOPOW_W__A, ext_attr->oob_lo_pow, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	/* initialization क्रम target mode */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_TARGET_MODE__A, SCU_RAM_ORX_TARGET_MODE_2048KBPS_SQRT, 0);
-	अगर (rc != 0) अणु
+	/* initialization for target mode */
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_TARGET_MODE__A, SCU_RAM_ORX_TARGET_MODE_2048KBPS_SQRT, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_FREQ_GAIN_CORR__A, SCU_RAM_ORX_FREQ_GAIN_CORR_2048KBPS, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_FREQ_GAIN_CORR__A, SCU_RAM_ORX_FREQ_GAIN_CORR_2048KBPS, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	/* Reset bits क्रम timing and freq. recovery */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_RST_CPH__A, 0x0001, 0);
-	अगर (rc != 0) अणु
+	/* Reset bits for timing and freq. recovery */
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_RST_CPH__A, 0x0001, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_RST_CTI__A, 0x0002, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_RST_CTI__A, 0x0002, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_RST_KRN__A, 0x0004, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_RST_KRN__A, 0x0004, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_RST_KRP__A, 0x0008, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_RST_KRP__A, 0x0008, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	/* AGN_LOCK = अणु2048>>3, -2048, 8, -8, 0, 1पूर्ण; */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_AGN_LOCK_TH__A, 2048 >> 3, 0);
-	अगर (rc != 0) अणु
+	/* AGN_LOCK = {2048>>3, -2048, 8, -8, 0, 1}; */
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_AGN_LOCK_TH__A, 2048 >> 3, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_AGN_LOCK_TOTH__A, (u16)(-2048), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_AGN_LOCK_TOTH__A, (u16)(-2048), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_AGN_ONLOCK_TTH__A, 8, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_AGN_ONLOCK_TTH__A, 8, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_AGN_UNLOCK_TTH__A, (u16)(-8), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_AGN_UNLOCK_TTH__A, (u16)(-8), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_AGN_LOCK_MASK__A, 1, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_AGN_LOCK_MASK__A, 1, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	/* DGN_LOCK = अणु10, -2048, 8, -8, 0, 1<<1पूर्ण; */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_DGN_LOCK_TH__A, 10, 0);
-	अगर (rc != 0) अणु
+	/* DGN_LOCK = {10, -2048, 8, -8, 0, 1<<1}; */
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_DGN_LOCK_TH__A, 10, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_DGN_LOCK_TOTH__A, (u16)(-2048), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_DGN_LOCK_TOTH__A, (u16)(-2048), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_DGN_ONLOCK_TTH__A, 8, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_DGN_ONLOCK_TTH__A, 8, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_DGN_UNLOCK_TTH__A, (u16)(-8), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_DGN_UNLOCK_TTH__A, (u16)(-8), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_DGN_LOCK_MASK__A, 1 << 1, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_DGN_LOCK_MASK__A, 1 << 1, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	/* FRQ_LOCK = अणु15,-2048, 8, -8, 0, 1<<2पूर्ण; */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_FRQ_LOCK_TH__A, 17, 0);
-	अगर (rc != 0) अणु
+	/* FRQ_LOCK = {15,-2048, 8, -8, 0, 1<<2}; */
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_FRQ_LOCK_TH__A, 17, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_FRQ_LOCK_TOTH__A, (u16)(-2048), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_FRQ_LOCK_TOTH__A, (u16)(-2048), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_FRQ_ONLOCK_TTH__A, 8, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_FRQ_ONLOCK_TTH__A, 8, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_FRQ_UNLOCK_TTH__A, (u16)(-8), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_FRQ_UNLOCK_TTH__A, (u16)(-8), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_FRQ_LOCK_MASK__A, 1 << 2, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_FRQ_LOCK_MASK__A, 1 << 2, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	/* PHA_LOCK = अणु5000, -2048, 8, -8, 0, 1<<3पूर्ण; */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_PHA_LOCK_TH__A, 3000, 0);
-	अगर (rc != 0) अणु
+	/* PHA_LOCK = {5000, -2048, 8, -8, 0, 1<<3}; */
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_PHA_LOCK_TH__A, 3000, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_PHA_LOCK_TOTH__A, (u16)(-2048), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_PHA_LOCK_TOTH__A, (u16)(-2048), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_PHA_ONLOCK_TTH__A, 8, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_PHA_ONLOCK_TTH__A, 8, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_PHA_UNLOCK_TTH__A, (u16)(-8), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_PHA_UNLOCK_TTH__A, (u16)(-8), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_PHA_LOCK_MASK__A, 1 << 3, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_PHA_LOCK_MASK__A, 1 << 3, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	/* TIM_LOCK = अणु300,      -2048, 8, -8, 0, 1<<4पूर्ण; */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_TIM_LOCK_TH__A, 400, 0);
-	अगर (rc != 0) अणु
+	/* TIM_LOCK = {300,      -2048, 8, -8, 0, 1<<4}; */
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_TIM_LOCK_TH__A, 400, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_TIM_LOCK_TOTH__A, (u16)(-2048), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_TIM_LOCK_TOTH__A, (u16)(-2048), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_TIM_ONLOCK_TTH__A, 8, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_TIM_ONLOCK_TTH__A, 8, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_TIM_UNLOCK_TTH__A, (u16)(-8), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_TIM_UNLOCK_TTH__A, (u16)(-8), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_TIM_LOCK_MASK__A, 1 << 4, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_TIM_LOCK_MASK__A, 1 << 4, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	/* EQU_LOCK = अणु20,      -2048, 8, -8, 0, 1<<5पूर्ण; */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_EQU_LOCK_TH__A, 20, 0);
-	अगर (rc != 0) अणु
+	/* EQU_LOCK = {20,      -2048, 8, -8, 0, 1<<5}; */
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_EQU_LOCK_TH__A, 20, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_EQU_LOCK_TOTH__A, (u16)(-2048), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_EQU_LOCK_TOTH__A, (u16)(-2048), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_EQU_ONLOCK_TTH__A, 4, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_EQU_ONLOCK_TTH__A, 4, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_EQU_UNLOCK_TTH__A, (u16)(-4), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_EQU_UNLOCK_TTH__A, (u16)(-4), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_ORX_EQU_LOCK_MASK__A, 1 << 5, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_ORX_EQU_LOCK_MASK__A, 1 << 5, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	/* PRE-Filter coefficients (PFI) */
-	rc = drxdap_fasi_ग_लिखो_block(dev_addr, ORX_FWP_PFI_A_W__A, माप(pfi_coeffs[mode_index]), ((u8 *)pfi_coeffs[mode_index]), 0);
-	अगर (rc != 0) अणु
+	rc = drxdap_fasi_write_block(dev_addr, ORX_FWP_PFI_A_W__A, sizeof(pfi_coeffs[mode_index]), ((u8 *)pfi_coeffs[mode_index]), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, ORX_TOP_MDE_W__A, mode_index, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, ORX_TOP_MDE_W__A, mode_index, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	/* NYQUIST-Filter coefficients (NYQ) */
-	क्रम (i = 0; i < (NYQFILTERLEN + 1) / 2; i++) अणु
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, ORX_FWP_NYQ_ADR_W__A, i, 0);
-		अगर (rc != 0) अणु
+	for (i = 0; i < (NYQFILTERLEN + 1) / 2; i++) {
+		rc = drxj_dap_write_reg16(dev_addr, ORX_FWP_NYQ_ADR_W__A, i, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, ORX_FWP_NYQ_COF_RW__A, nyquist_coeffs[mode_index][i], 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, ORX_FWP_NYQ_COF_RW__A, nyquist_coeffs[mode_index][i], 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, ORX_FWP_NYQ_ADR_W__A, 31, 0);
-	अगर (rc != 0) अणु
+			goto rw_error;
+		}
+	}
+	rc = drxj_dap_write_reg16(dev_addr, ORX_FWP_NYQ_ADR_W__A, 31, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, ORX_COMM_EXEC__A, ORX_COMM_EXEC_ACTIVE, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, ORX_COMM_EXEC__A, ORX_COMM_EXEC_ACTIVE, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	/********/
 	/* Start */
 	/********/
@@ -10394,28 +10393,28 @@ rw_error:
 	scu_cmd.result_len = 1;
 	scu_cmd.result = cmd_result;
 	rc = scu_command(dev_addr, &scu_cmd);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	rc = set_orx_nsu_aox(demod, true);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, ORX_NSU_AOX_STHR_W__A, ext_attr->oob_pre_saw, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, ORX_NSU_AOX_STHR_W__A, ext_attr->oob_pre_saw, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	ext_attr->oob_घातer_on = true;
+	ext_attr->oob_power_on = true;
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*============================================================================*/
 /*==                     END OOB DATAPATH FUNCTIONS                         ==*/
@@ -10429,281 +10428,281 @@ rw_error:
   ===== ctrl_set_channel() ==========================================================
   ===========================================================================*/
 /*
-* \पn पूर्णांक ctrl_set_channel()
-* \मrief Select a new transmission channel.
+* \fn int ctrl_set_channel()
+* \brief Select a new transmission channel.
 * \param demod instance of demod.
-* \param channel Poपूर्णांकer to channel data.
-* \लeturn पूर्णांक.
+* \param channel Pointer to channel data.
+* \return int.
 *
-* In हाल the tuner module is not used and in हाल of NTSC/FM the pogrammer
+* In case the tuner module is not used and in case of NTSC/FM the pogrammer
 * must tune the tuner to the centre frequency of the NTSC/FM channel.
 *
 */
-अटल पूर्णांक
-ctrl_set_channel(काष्ठा drx_demod_instance *demod, काष्ठा drx_channel *channel)
-अणु
-	पूर्णांक rc;
+static int
+ctrl_set_channel(struct drx_demod_instance *demod, struct drx_channel *channel)
+{
+	int rc;
 	s32 tuner_freq_offset = 0;
-	काष्ठा drxj_data *ext_attr = शून्य;
-	काष्ठा i2c_device_addr *dev_addr = शून्य;
-	क्रमागत drx_standard standard = DRX_STANDARD_UNKNOWN;
-#अगर_अघोषित DRXJ_VSB_ONLY
+	struct drxj_data *ext_attr = NULL;
+	struct i2c_device_addr *dev_addr = NULL;
+	enum drx_standard standard = DRX_STANDARD_UNKNOWN;
+#ifndef DRXJ_VSB_ONLY
 	u32 min_symbol_rate = 0;
 	u32 max_symbol_rate = 0;
-	पूर्णांक bandwidth_temp = 0;
-	पूर्णांक bandwidth = 0;
-#पूर्ण_अगर
+	int bandwidth_temp = 0;
+	int bandwidth = 0;
+#endif
    /*== check arguments ======================================================*/
-	अगर ((demod == शून्य) || (channel == शून्य))
-		वापस -EINVAL;
+	if ((demod == NULL) || (channel == NULL))
+		return -EINVAL;
 
 	dev_addr = demod->my_i2c_dev_addr;
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
 	standard = ext_attr->standard;
 
 	/* check valid standards */
-	चयन (standard) अणु
-	हाल DRX_STANDARD_8VSB:
-#अगर_अघोषित DRXJ_VSB_ONLY
-	हाल DRX_STANDARD_ITU_A:
-	हाल DRX_STANDARD_ITU_B:
-	हाल DRX_STANDARD_ITU_C:
-#पूर्ण_अगर /* DRXJ_VSB_ONLY */
-		अवरोध;
-	हाल DRX_STANDARD_UNKNOWN:
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (standard) {
+	case DRX_STANDARD_8VSB:
+#ifndef DRXJ_VSB_ONLY
+	case DRX_STANDARD_ITU_A:
+	case DRX_STANDARD_ITU_B:
+	case DRX_STANDARD_ITU_C:
+#endif /* DRXJ_VSB_ONLY */
+		break;
+	case DRX_STANDARD_UNKNOWN:
+	default:
+		return -EINVAL;
+	}
 
 	/* check bandwidth QAM annex B, NTSC and 8VSB */
-	अगर ((standard == DRX_STANDARD_ITU_B) ||
+	if ((standard == DRX_STANDARD_ITU_B) ||
 	    (standard == DRX_STANDARD_8VSB) ||
-	    (standard == DRX_STANDARD_NTSC)) अणु
-		चयन (channel->bandwidth) अणु
-		हाल DRX_BANDWIDTH_6MHZ:
-		हाल DRX_BANDWIDTH_UNKNOWN:
+	    (standard == DRX_STANDARD_NTSC)) {
+		switch (channel->bandwidth) {
+		case DRX_BANDWIDTH_6MHZ:
+		case DRX_BANDWIDTH_UNKNOWN:
 			channel->bandwidth = DRX_BANDWIDTH_6MHZ;
-			अवरोध;
-		हाल DRX_BANDWIDTH_8MHZ:
-		हाल DRX_BANDWIDTH_7MHZ:
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			break;
+		case DRX_BANDWIDTH_8MHZ:
+		case DRX_BANDWIDTH_7MHZ:
+		default:
+			return -EINVAL;
+		}
+	}
 
 	/* For QAM annex A and annex C:
-	   -check symbolrate and स्थिरellation
+	   -check symbolrate and constellation
 	   -derive bandwidth from symbolrate (input bandwidth is ignored)
 	 */
-#अगर_अघोषित DRXJ_VSB_ONLY
-	अगर ((standard == DRX_STANDARD_ITU_A) ||
-	    (standard == DRX_STANDARD_ITU_C)) अणु
-		काष्ठा drxuio_cfg uio_cfg = अणु DRX_UIO1, DRX_UIO_MODE_FIRMWARE_SAW पूर्ण;
-		पूर्णांक bw_rolloff_factor = 0;
+#ifndef DRXJ_VSB_ONLY
+	if ((standard == DRX_STANDARD_ITU_A) ||
+	    (standard == DRX_STANDARD_ITU_C)) {
+		struct drxuio_cfg uio_cfg = { DRX_UIO1, DRX_UIO_MODE_FIRMWARE_SAW };
+		int bw_rolloff_factor = 0;
 
 		bw_rolloff_factor = (standard == DRX_STANDARD_ITU_A) ? 115 : 113;
 		min_symbol_rate = DRXJ_QAM_SYMBOLRATE_MIN;
 		max_symbol_rate = DRXJ_QAM_SYMBOLRATE_MAX;
-		/* config SMA_TX pin to SAW चयन mode */
+		/* config SMA_TX pin to SAW switch mode */
 		rc = ctrl_set_uio_cfg(demod, &uio_cfg);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 
-		अगर (channel->symbolrate < min_symbol_rate ||
-		    channel->symbolrate > max_symbol_rate) अणु
-			वापस -EINVAL;
-		पूर्ण
+		if (channel->symbolrate < min_symbol_rate ||
+		    channel->symbolrate > max_symbol_rate) {
+			return -EINVAL;
+		}
 
-		चयन (channel->स्थिरellation) अणु
-		हाल DRX_CONSTELLATION_QAM16:
-		हाल DRX_CONSTELLATION_QAM32:
-		हाल DRX_CONSTELLATION_QAM64:
-		हाल DRX_CONSTELLATION_QAM128:
-		हाल DRX_CONSTELLATION_QAM256:
+		switch (channel->constellation) {
+		case DRX_CONSTELLATION_QAM16:
+		case DRX_CONSTELLATION_QAM32:
+		case DRX_CONSTELLATION_QAM64:
+		case DRX_CONSTELLATION_QAM128:
+		case DRX_CONSTELLATION_QAM256:
 			bandwidth_temp = channel->symbolrate * bw_rolloff_factor;
 			bandwidth = bandwidth_temp / 100;
 
-			अगर ((bandwidth_temp % 100) >= 50)
+			if ((bandwidth_temp % 100) >= 50)
 				bandwidth++;
 
-			अगर (bandwidth <= 6100000) अणु
+			if (bandwidth <= 6100000) {
 				channel->bandwidth = DRX_BANDWIDTH_6MHZ;
-			पूर्ण अन्यथा अगर ((bandwidth > 6100000)
-				   && (bandwidth <= 7100000)) अणु
+			} else if ((bandwidth > 6100000)
+				   && (bandwidth <= 7100000)) {
 				channel->bandwidth = DRX_BANDWIDTH_7MHZ;
-			पूर्ण अन्यथा अगर (bandwidth > 7100000) अणु
+			} else if (bandwidth > 7100000) {
 				channel->bandwidth = DRX_BANDWIDTH_8MHZ;
-			पूर्ण
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			}
+			break;
+		default:
+			return -EINVAL;
+		}
+	}
 
 	/* For QAM annex B:
-	   -check स्थिरellation
+	   -check constellation
 	 */
-	अगर (standard == DRX_STANDARD_ITU_B) अणु
-		चयन (channel->स्थिरellation) अणु
-		हाल DRX_CONSTELLATION_AUTO:
-		हाल DRX_CONSTELLATION_QAM256:
-		हाल DRX_CONSTELLATION_QAM64:
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
+	if (standard == DRX_STANDARD_ITU_B) {
+		switch (channel->constellation) {
+		case DRX_CONSTELLATION_AUTO:
+		case DRX_CONSTELLATION_QAM256:
+		case DRX_CONSTELLATION_QAM64:
+			break;
+		default:
+			return -EINVAL;
+		}
 
-		चयन (channel->पूर्णांकerleavemode) अणु
-		हाल DRX_INTERLEAVEMODE_I128_J1:
-		हाल DRX_INTERLEAVEMODE_I128_J1_V2:
-		हाल DRX_INTERLEAVEMODE_I128_J2:
-		हाल DRX_INTERLEAVEMODE_I64_J2:
-		हाल DRX_INTERLEAVEMODE_I128_J3:
-		हाल DRX_INTERLEAVEMODE_I32_J4:
-		हाल DRX_INTERLEAVEMODE_I128_J4:
-		हाल DRX_INTERLEAVEMODE_I16_J8:
-		हाल DRX_INTERLEAVEMODE_I128_J5:
-		हाल DRX_INTERLEAVEMODE_I8_J16:
-		हाल DRX_INTERLEAVEMODE_I128_J6:
-		हाल DRX_INTERLEAVEMODE_I128_J7:
-		हाल DRX_INTERLEAVEMODE_I128_J8:
-		हाल DRX_INTERLEAVEMODE_I12_J17:
-		हाल DRX_INTERLEAVEMODE_I5_J4:
-		हाल DRX_INTERLEAVEMODE_B52_M240:
-		हाल DRX_INTERLEAVEMODE_B52_M720:
-		हाल DRX_INTERLEAVEMODE_UNKNOWN:
-		हाल DRX_INTERLEAVEMODE_AUTO:
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+		switch (channel->interleavemode) {
+		case DRX_INTERLEAVEMODE_I128_J1:
+		case DRX_INTERLEAVEMODE_I128_J1_V2:
+		case DRX_INTERLEAVEMODE_I128_J2:
+		case DRX_INTERLEAVEMODE_I64_J2:
+		case DRX_INTERLEAVEMODE_I128_J3:
+		case DRX_INTERLEAVEMODE_I32_J4:
+		case DRX_INTERLEAVEMODE_I128_J4:
+		case DRX_INTERLEAVEMODE_I16_J8:
+		case DRX_INTERLEAVEMODE_I128_J5:
+		case DRX_INTERLEAVEMODE_I8_J16:
+		case DRX_INTERLEAVEMODE_I128_J6:
+		case DRX_INTERLEAVEMODE_I128_J7:
+		case DRX_INTERLEAVEMODE_I128_J8:
+		case DRX_INTERLEAVEMODE_I12_J17:
+		case DRX_INTERLEAVEMODE_I5_J4:
+		case DRX_INTERLEAVEMODE_B52_M240:
+		case DRX_INTERLEAVEMODE_B52_M720:
+		case DRX_INTERLEAVEMODE_UNKNOWN:
+		case DRX_INTERLEAVEMODE_AUTO:
+			break;
+		default:
+			return -EINVAL;
+		}
+	}
 
-	अगर ((ext_attr->uio_sma_tx_mode) == DRX_UIO_MODE_FIRMWARE_SAW) अणु
-		/* SAW SW, user UIO is used क्रम चयनable SAW */
-		काष्ठा drxuio_data uio1 = अणु DRX_UIO1, false पूर्ण;
+	if ((ext_attr->uio_sma_tx_mode) == DRX_UIO_MODE_FIRMWARE_SAW) {
+		/* SAW SW, user UIO is used for switchable SAW */
+		struct drxuio_data uio1 = { DRX_UIO1, false };
 
-		चयन (channel->bandwidth) अणु
-		हाल DRX_BANDWIDTH_8MHZ:
+		switch (channel->bandwidth) {
+		case DRX_BANDWIDTH_8MHZ:
 			uio1.value = true;
-			अवरोध;
-		हाल DRX_BANDWIDTH_7MHZ:
+			break;
+		case DRX_BANDWIDTH_7MHZ:
 			uio1.value = false;
-			अवरोध;
-		हाल DRX_BANDWIDTH_6MHZ:
+			break;
+		case DRX_BANDWIDTH_6MHZ:
 			uio1.value = false;
-			अवरोध;
-		हाल DRX_BANDWIDTH_UNKNOWN:
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
+			break;
+		case DRX_BANDWIDTH_UNKNOWN:
+		default:
+			return -EINVAL;
+		}
 
-		rc = ctrl_uio_ग_लिखो(demod, &uio1);
-		अगर (rc != 0) अणु
+		rc = ctrl_uio_write(demod, &uio1);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर /* DRXJ_VSB_ONLY */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_COMM_EXEC__A, SCU_COMM_EXEC_ACTIVE, 0);
-	अगर (rc != 0) अणु
+			goto rw_error;
+		}
+	}
+#endif /* DRXJ_VSB_ONLY */
+	rc = drxj_dap_write_reg16(dev_addr, SCU_COMM_EXEC__A, SCU_COMM_EXEC_ACTIVE, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	tuner_freq_offset = 0;
 
-   /*== Setup demod क्रम specअगरic standard ====================================*/
-	चयन (standard) अणु
-	हाल DRX_STANDARD_8VSB:
-		अगर (channel->mirror == DRX_MIRROR_AUTO)
+   /*== Setup demod for specific standard ====================================*/
+	switch (standard) {
+	case DRX_STANDARD_8VSB:
+		if (channel->mirror == DRX_MIRROR_AUTO)
 			ext_attr->mirror = DRX_MIRROR_NO;
-		अन्यथा
+		else
 			ext_attr->mirror = channel->mirror;
 		rc = set_vsb(demod);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 		rc = set_frequency(demod, channel, tuner_freq_offset);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		अवरोध;
-#अगर_अघोषित DRXJ_VSB_ONLY
-	हाल DRX_STANDARD_ITU_A:
-	हाल DRX_STANDARD_ITU_B:
-	हाल DRX_STANDARD_ITU_C:
+			goto rw_error;
+		}
+		break;
+#ifndef DRXJ_VSB_ONLY
+	case DRX_STANDARD_ITU_A:
+	case DRX_STANDARD_ITU_B:
+	case DRX_STANDARD_ITU_C:
 		rc = set_qam_channel(demod, channel, tuner_freq_offset);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		अवरोध;
-#पूर्ण_अगर
-	हाल DRX_STANDARD_UNKNOWN:
-	शेष:
-		वापस -EIO;
-	पूर्ण
+			goto rw_error;
+		}
+		break;
+#endif
+	case DRX_STANDARD_UNKNOWN:
+	default:
+		return -EIO;
+	}
 
 	/* flag the packet error counter reset */
 	ext_attr->reset_pkt_err_acc = true;
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*=============================================================================
   ===== SigQuality() ==========================================================
   ===========================================================================*/
 
 /*
-* \पn पूर्णांक ctrl_sig_quality()
-* \मrief Retrieve संकेत quality क्रमm device.
-* \param devmod Poपूर्णांकer to demodulator instance.
-* \param sig_quality Poपूर्णांकer to संकेत quality data.
-* \लeturn पूर्णांक.
-* \लetval 0 sig_quality contains valid data.
-* \लetval -EINVAL sig_quality is शून्य.
-* \लetval -EIO Erroneous data, sig_quality contains invalid data.
+* \fn int ctrl_sig_quality()
+* \brief Retrieve signal quality form device.
+* \param devmod Pointer to demodulator instance.
+* \param sig_quality Pointer to signal quality data.
+* \return int.
+* \retval 0 sig_quality contains valid data.
+* \retval -EINVAL sig_quality is NULL.
+* \retval -EIO Erroneous data, sig_quality contains invalid data.
 
 */
-अटल पूर्णांक
-ctrl_sig_quality(काष्ठा drx_demod_instance *demod,
-		 क्रमागत drx_lock_status lock_status)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
-	काष्ठा drxj_data *ext_attr = demod->my_ext_attr;
-	काष्ठा drx39xxj_state *state = dev_addr->user_data;
-	काष्ठा dtv_frontend_properties *p = &state->frontend.dtv_property_cache;
-	क्रमागत drx_standard standard = ext_attr->standard;
-	पूर्णांक rc;
+static int
+ctrl_sig_quality(struct drx_demod_instance *demod,
+		 enum drx_lock_status lock_status)
+{
+	struct i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
+	struct drxj_data *ext_attr = demod->my_ext_attr;
+	struct drx39xxj_state *state = dev_addr->user_data;
+	struct dtv_frontend_properties *p = &state->frontend.dtv_property_cache;
+	enum drx_standard standard = ext_attr->standard;
+	int rc;
 	u32 ber, cnt, err, pkt;
 	u16 mer, strength = 0;
 
 	rc = get_sig_strength(demod, &strength);
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		pr_err("error getting signal strength %d\n", rc);
 		p->strength.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
-	पूर्ण अन्यथा अणु
+	} else {
 		p->strength.stat[0].scale = FE_SCALE_RELATIVE;
 		p->strength.stat[0].uvalue = 65535UL *  strength/ 100;
-	पूर्ण
+	}
 
-	चयन (standard) अणु
-	हाल DRX_STANDARD_8VSB:
-#अगर_घोषित DRXJ_SIGNAL_ACCUM_ERR
+	switch (standard) {
+	case DRX_STANDARD_8VSB:
+#ifdef DRXJ_SIGNAL_ACCUM_ERR
 		rc = get_acc_pkt_err(demod, &pkt);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-#पूर्ण_अगर
-		अगर (lock_status != DRXJ_DEMOD_LOCK && lock_status != DRX_LOCKED) अणु
+			goto rw_error;
+		}
+#endif
+		if (lock_status != DRXJ_DEMOD_LOCK && lock_status != DRX_LOCKED) {
 			p->pre_bit_count.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 			p->pre_bit_error.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 			p->post_bit_count.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
@@ -10711,291 +10710,291 @@ ctrl_sig_quality(काष्ठा drx_demod_instance *demod,
 			p->block_count.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 			p->block_error.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 			p->cnr.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
-		पूर्ण अन्यथा अणु
+		} else {
 			rc = get_vsb_post_rs_pck_err(dev_addr, &err, &pkt);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d getting UCB\n", rc);
 				p->block_error.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
-			पूर्ण अन्यथा अणु
+			} else {
 				p->block_error.stat[0].scale = FE_SCALE_COUNTER;
 				p->block_error.stat[0].uvalue += err;
 				p->block_count.stat[0].scale = FE_SCALE_COUNTER;
 				p->block_count.stat[0].uvalue += pkt;
-			पूर्ण
+			}
 
 			/* PostViterbi is compute in steps of 10^(-6) */
 			rc = get_vs_bpre_viterbi_ber(dev_addr, &ber, &cnt);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d getting pre-ber\n", rc);
 				p->pre_bit_error.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
-			पूर्ण अन्यथा अणु
+			} else {
 				p->pre_bit_error.stat[0].scale = FE_SCALE_COUNTER;
 				p->pre_bit_error.stat[0].uvalue += ber;
 				p->pre_bit_count.stat[0].scale = FE_SCALE_COUNTER;
 				p->pre_bit_count.stat[0].uvalue += cnt;
-			पूर्ण
+			}
 
 			rc = get_vs_bpost_viterbi_ber(dev_addr, &ber, &cnt);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d getting post-ber\n", rc);
 				p->post_bit_error.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
-			पूर्ण अन्यथा अणु
+			} else {
 				p->post_bit_error.stat[0].scale = FE_SCALE_COUNTER;
 				p->post_bit_error.stat[0].uvalue += ber;
 				p->post_bit_count.stat[0].scale = FE_SCALE_COUNTER;
 				p->post_bit_count.stat[0].uvalue += cnt;
-			पूर्ण
+			}
 			rc = get_vsbmer(dev_addr, &mer);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d getting MER\n", rc);
 				p->cnr.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
-			पूर्ण अन्यथा अणु
+			} else {
 				p->cnr.stat[0].svalue = mer * 100;
 				p->cnr.stat[0].scale = FE_SCALE_DECIBEL;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-#अगर_अघोषित DRXJ_VSB_ONLY
-	हाल DRX_STANDARD_ITU_A:
-	हाल DRX_STANDARD_ITU_B:
-	हाल DRX_STANDARD_ITU_C:
+			}
+		}
+		break;
+#ifndef DRXJ_VSB_ONLY
+	case DRX_STANDARD_ITU_A:
+	case DRX_STANDARD_ITU_B:
+	case DRX_STANDARD_ITU_C:
 		rc = ctrl_get_qam_sig_quality(demod);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
-		वापस -EIO;
-	पूर्ण
+			goto rw_error;
+		}
+		break;
+#endif
+	default:
+		return -EIO;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*============================================================================*/
 
 /*
-* \पn पूर्णांक ctrl_lock_status()
-* \मrief Retrieve lock status .
-* \param dev_addr Poपूर्णांकer to demodulator device address.
-* \param lock_stat Poपूर्णांकer to lock status काष्ठाure.
-* \लeturn पूर्णांक.
+* \fn int ctrl_lock_status()
+* \brief Retrieve lock status .
+* \param dev_addr Pointer to demodulator device address.
+* \param lock_stat Pointer to lock status structure.
+* \return int.
 *
 */
-अटल पूर्णांक
-ctrl_lock_status(काष्ठा drx_demod_instance *demod, क्रमागत drx_lock_status *lock_stat)
-अणु
-	क्रमागत drx_standard standard = DRX_STANDARD_UNKNOWN;
-	काष्ठा drxj_data *ext_attr = शून्य;
-	काष्ठा i2c_device_addr *dev_addr = शून्य;
-	काष्ठा drxjscu_cmd cmd_scu = अणु /* command      */ 0,
+static int
+ctrl_lock_status(struct drx_demod_instance *demod, enum drx_lock_status *lock_stat)
+{
+	enum drx_standard standard = DRX_STANDARD_UNKNOWN;
+	struct drxj_data *ext_attr = NULL;
+	struct i2c_device_addr *dev_addr = NULL;
+	struct drxjscu_cmd cmd_scu = { /* command      */ 0,
 		/* parameter_len */ 0,
 		/* result_len    */ 0,
-		/* *parameter   */ शून्य,
-		/* *result      */ शून्य
-	पूर्ण;
-	पूर्णांक rc;
-	u16 cmd_result[2] = अणु 0, 0 पूर्ण;
+		/* *parameter   */ NULL,
+		/* *result      */ NULL
+	};
+	int rc;
+	u16 cmd_result[2] = { 0, 0 };
 	u16 demod_lock = SCU_RAM_PARAM_1_RES_DEMOD_GET_LOCK_DEMOD_LOCKED;
 
 	/* check arguments */
-	अगर ((demod == शून्य) || (lock_stat == शून्य))
-		वापस -EINVAL;
+	if ((demod == NULL) || (lock_stat == NULL))
+		return -EINVAL;
 
 	dev_addr = demod->my_i2c_dev_addr;
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
 	standard = ext_attr->standard;
 
 	*lock_stat = DRX_NOT_LOCKED;
 
 	/* define the SCU command code */
-	चयन (standard) अणु
-	हाल DRX_STANDARD_8VSB:
+	switch (standard) {
+	case DRX_STANDARD_8VSB:
 		cmd_scu.command = SCU_RAM_COMMAND_STANDARD_VSB |
 		    SCU_RAM_COMMAND_CMD_DEMOD_GET_LOCK;
 		demod_lock |= 0x6;
-		अवरोध;
-#अगर_अघोषित DRXJ_VSB_ONLY
-	हाल DRX_STANDARD_ITU_A:
-	हाल DRX_STANDARD_ITU_B:
-	हाल DRX_STANDARD_ITU_C:
+		break;
+#ifndef DRXJ_VSB_ONLY
+	case DRX_STANDARD_ITU_A:
+	case DRX_STANDARD_ITU_B:
+	case DRX_STANDARD_ITU_C:
 		cmd_scu.command = SCU_RAM_COMMAND_STANDARD_QAM |
 		    SCU_RAM_COMMAND_CMD_DEMOD_GET_LOCK;
-		अवरोध;
-#पूर्ण_अगर
-	हाल DRX_STANDARD_UNKNOWN:
-	शेष:
-		वापस -EIO;
-	पूर्ण
+		break;
+#endif
+	case DRX_STANDARD_UNKNOWN:
+	default:
+		return -EIO;
+	}
 
 	/* define the SCU command parameters and execute the command */
 	cmd_scu.parameter_len = 0;
 	cmd_scu.result_len = 2;
-	cmd_scu.parameter = शून्य;
+	cmd_scu.parameter = NULL;
 	cmd_scu.result = cmd_result;
 	rc = scu_command(dev_addr, &cmd_scu);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	/* set the lock status */
-	अगर (cmd_scu.result[1] < demod_lock) अणु
+	if (cmd_scu.result[1] < demod_lock) {
 		/* 0x0000 NOT LOCKED */
 		*lock_stat = DRX_NOT_LOCKED;
-	पूर्ण अन्यथा अगर (cmd_scu.result[1] < SCU_RAM_PARAM_1_RES_DEMOD_GET_LOCK_LOCKED) अणु
+	} else if (cmd_scu.result[1] < SCU_RAM_PARAM_1_RES_DEMOD_GET_LOCK_LOCKED) {
 		*lock_stat = DRXJ_DEMOD_LOCK;
-	पूर्ण अन्यथा अगर (cmd_scu.result[1] <
-		   SCU_RAM_PARAM_1_RES_DEMOD_GET_LOCK_NEVER_LOCK) अणु
-		/* 0x8000 DEMOD + FEC LOCKED (प्रणाली lock) */
+	} else if (cmd_scu.result[1] <
+		   SCU_RAM_PARAM_1_RES_DEMOD_GET_LOCK_NEVER_LOCK) {
+		/* 0x8000 DEMOD + FEC LOCKED (system lock) */
 		*lock_stat = DRX_LOCKED;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* 0xC000 NEVER LOCKED */
-		/* (प्रणाली will never be able to lock to the संकेत) */
+		/* (system will never be able to lock to the signal) */
 		*lock_stat = DRX_NEVER_LOCK;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*============================================================================*/
 
 /*
-* \पn पूर्णांक ctrl_set_standard()
-* \मrief Set modulation standard to be used.
+* \fn int ctrl_set_standard()
+* \brief Set modulation standard to be used.
 * \param standard Modulation standard.
-* \लeturn पूर्णांक.
+* \return int.
 *
-* Setup stuff क्रम the desired demodulation standard.
-* Disable and घातer करोwn the previous selected demodulation standard
+* Setup stuff for the desired demodulation standard.
+* Disable and power down the previous selected demodulation standard
 *
 */
-अटल पूर्णांक
-ctrl_set_standard(काष्ठा drx_demod_instance *demod, क्रमागत drx_standard *standard)
-अणु
-	काष्ठा drxj_data *ext_attr = शून्य;
-	पूर्णांक rc;
-	क्रमागत drx_standard prev_standard;
+static int
+ctrl_set_standard(struct drx_demod_instance *demod, enum drx_standard *standard)
+{
+	struct drxj_data *ext_attr = NULL;
+	int rc;
+	enum drx_standard prev_standard;
 
 	/* check arguments */
-	अगर ((standard == शून्य) || (demod == शून्य))
-		वापस -EINVAL;
+	if ((standard == NULL) || (demod == NULL))
+		return -EINVAL;
 
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
 	prev_standard = ext_attr->standard;
 
 	/*
-	   Stop and घातer करोwn previous standard
+	   Stop and power down previous standard
 	 */
-	चयन (prev_standard) अणु
-#अगर_अघोषित DRXJ_VSB_ONLY
-	हाल DRX_STANDARD_ITU_A:
-	हाल DRX_STANDARD_ITU_B:
-	हाल DRX_STANDARD_ITU_C:
-		rc = घातer_करोwn_qam(demod, false);
-		अगर (rc != 0) अणु
+	switch (prev_standard) {
+#ifndef DRXJ_VSB_ONLY
+	case DRX_STANDARD_ITU_A:
+	case DRX_STANDARD_ITU_B:
+	case DRX_STANDARD_ITU_C:
+		rc = power_down_qam(demod, false);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		अवरोध;
-#पूर्ण_अगर
-	हाल DRX_STANDARD_8VSB:
-		rc = घातer_करोwn_vsb(demod, false);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		break;
+#endif
+	case DRX_STANDARD_8VSB:
+		rc = power_down_vsb(demod, false);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		अवरोध;
-	हाल DRX_STANDARD_UNKNOWN:
+			goto rw_error;
+		}
+		break;
+	case DRX_STANDARD_UNKNOWN:
 		/* Do nothing */
-		अवरोध;
-	हाल DRX_STANDARD_AUTO:
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	case DRX_STANDARD_AUTO:
+	default:
+		return -EINVAL;
+	}
 
 	/*
-	   Initialize channel independent रेजिस्टरs
+	   Initialize channel independent registers
 	   Power up new standard
 	 */
 	ext_attr->standard = *standard;
 
-	चयन (*standard) अणु
-#अगर_अघोषित DRXJ_VSB_ONLY
-	हाल DRX_STANDARD_ITU_A:
-	हाल DRX_STANDARD_ITU_B:
-	हाल DRX_STANDARD_ITU_C:
-		करो अणु
+	switch (*standard) {
+#ifndef DRXJ_VSB_ONLY
+	case DRX_STANDARD_ITU_A:
+	case DRX_STANDARD_ITU_B:
+	case DRX_STANDARD_ITU_C:
+		do {
 			u16 dummy;
-			rc = drxj_dap_पढ़ो_reg16(demod->my_i2c_dev_addr, SCU_RAM_VERSION_HI__A, &dummy, 0);
-			अगर (rc != 0) अणु
+			rc = drxj_dap_read_reg16(demod->my_i2c_dev_addr, SCU_RAM_VERSION_HI__A, &dummy, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-		पूर्ण जबतक (0);
-		अवरोध;
-#पूर्ण_अगर
-	हाल DRX_STANDARD_8VSB:
+				goto rw_error;
+			}
+		} while (0);
+		break;
+#endif
+	case DRX_STANDARD_8VSB:
 		rc = set_vsb_leak_n_gain(demod);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		अवरोध;
-	शेष:
+			goto rw_error;
+		}
+		break;
+	default:
 		ext_attr->standard = DRX_STANDARD_UNKNOWN;
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
 	/* Don't know what the standard is now ... try again */
 	ext_attr->standard = DRX_STANDARD_UNKNOWN;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*============================================================================*/
 
-अटल व्योम drxj_reset_mode(काष्ठा drxj_data *ext_attr)
-अणु
-	/* Initialize शेष AFE configuration क्रम QAM */
-	अगर (ext_attr->has_lna) अणु
+static void drxj_reset_mode(struct drxj_data *ext_attr)
+{
+	/* Initialize default AFE configuration for QAM */
+	if (ext_attr->has_lna) {
 		/* IF AGC off, PGA active */
-#अगर_अघोषित DRXJ_VSB_ONLY
-		ext_attr->qam_अगर_agc_cfg.standard = DRX_STANDARD_ITU_B;
-		ext_attr->qam_अगर_agc_cfg.ctrl_mode = DRX_AGC_CTRL_OFF;
+#ifndef DRXJ_VSB_ONLY
+		ext_attr->qam_if_agc_cfg.standard = DRX_STANDARD_ITU_B;
+		ext_attr->qam_if_agc_cfg.ctrl_mode = DRX_AGC_CTRL_OFF;
 		ext_attr->qam_pga_cfg = 140 + (11 * 13);
-#पूर्ण_अगर
-		ext_attr->vsb_अगर_agc_cfg.standard = DRX_STANDARD_8VSB;
-		ext_attr->vsb_अगर_agc_cfg.ctrl_mode = DRX_AGC_CTRL_OFF;
+#endif
+		ext_attr->vsb_if_agc_cfg.standard = DRX_STANDARD_8VSB;
+		ext_attr->vsb_if_agc_cfg.ctrl_mode = DRX_AGC_CTRL_OFF;
 		ext_attr->vsb_pga_cfg = 140 + (11 * 13);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* IF AGC on, PGA not active */
-#अगर_अघोषित DRXJ_VSB_ONLY
-		ext_attr->qam_अगर_agc_cfg.standard = DRX_STANDARD_ITU_B;
-		ext_attr->qam_अगर_agc_cfg.ctrl_mode = DRX_AGC_CTRL_AUTO;
-		ext_attr->qam_अगर_agc_cfg.min_output_level = 0;
-		ext_attr->qam_अगर_agc_cfg.max_output_level = 0x7FFF;
-		ext_attr->qam_अगर_agc_cfg.speed = 3;
-		ext_attr->qam_अगर_agc_cfg.top = 1297;
+#ifndef DRXJ_VSB_ONLY
+		ext_attr->qam_if_agc_cfg.standard = DRX_STANDARD_ITU_B;
+		ext_attr->qam_if_agc_cfg.ctrl_mode = DRX_AGC_CTRL_AUTO;
+		ext_attr->qam_if_agc_cfg.min_output_level = 0;
+		ext_attr->qam_if_agc_cfg.max_output_level = 0x7FFF;
+		ext_attr->qam_if_agc_cfg.speed = 3;
+		ext_attr->qam_if_agc_cfg.top = 1297;
 		ext_attr->qam_pga_cfg = 140;
-#पूर्ण_अगर
-		ext_attr->vsb_अगर_agc_cfg.standard = DRX_STANDARD_8VSB;
-		ext_attr->vsb_अगर_agc_cfg.ctrl_mode = DRX_AGC_CTRL_AUTO;
-		ext_attr->vsb_अगर_agc_cfg.min_output_level = 0;
-		ext_attr->vsb_अगर_agc_cfg.max_output_level = 0x7FFF;
-		ext_attr->vsb_अगर_agc_cfg.speed = 3;
-		ext_attr->vsb_अगर_agc_cfg.top = 1024;
+#endif
+		ext_attr->vsb_if_agc_cfg.standard = DRX_STANDARD_8VSB;
+		ext_attr->vsb_if_agc_cfg.ctrl_mode = DRX_AGC_CTRL_AUTO;
+		ext_attr->vsb_if_agc_cfg.min_output_level = 0;
+		ext_attr->vsb_if_agc_cfg.max_output_level = 0x7FFF;
+		ext_attr->vsb_if_agc_cfg.speed = 3;
+		ext_attr->vsb_if_agc_cfg.top = 1024;
 		ext_attr->vsb_pga_cfg = 140;
-	पूर्ण
-	/* TODO: हटाओ min_output_level and max_output_level क्रम both QAM and VSB after */
+	}
+	/* TODO: remove min_output_level and max_output_level for both QAM and VSB after */
 	/* mc has not used them */
-#अगर_अघोषित DRXJ_VSB_ONLY
+#ifndef DRXJ_VSB_ONLY
 	ext_attr->qam_rf_agc_cfg.standard = DRX_STANDARD_ITU_B;
 	ext_attr->qam_rf_agc_cfg.ctrl_mode = DRX_AGC_CTRL_AUTO;
 	ext_attr->qam_rf_agc_cfg.min_output_level = 0;
@@ -11006,8 +11005,8 @@ rw_error:
 	ext_attr->qam_pre_saw_cfg.standard = DRX_STANDARD_ITU_B;
 	ext_attr->qam_pre_saw_cfg.reference = 0x07;
 	ext_attr->qam_pre_saw_cfg.use_pre_saw = true;
-#पूर्ण_अगर
-	/* Initialize शेष AFE configuration क्रम VSB */
+#endif
+	/* Initialize default AFE configuration for VSB */
 	ext_attr->vsb_rf_agc_cfg.standard = DRX_STANDARD_8VSB;
 	ext_attr->vsb_rf_agc_cfg.ctrl_mode = DRX_AGC_CTRL_AUTO;
 	ext_attr->vsb_rf_agc_cfg.min_output_level = 0;
@@ -11018,307 +11017,307 @@ rw_error:
 	ext_attr->vsb_pre_saw_cfg.standard = DRX_STANDARD_8VSB;
 	ext_attr->vsb_pre_saw_cfg.reference = 0x07;
 	ext_attr->vsb_pre_saw_cfg.use_pre_saw = true;
-पूर्ण
+}
 
 /*
-* \पn पूर्णांक ctrl_घातer_mode()
-* \मrief Set the घातer mode of the device to the specअगरied घातer mode
-* \param demod Poपूर्णांकer to demodulator instance.
-* \param mode  Poपूर्णांकer to new घातer mode.
-* \लeturn पूर्णांक.
-* \लetval 0          Success
-* \लetval -EIO       I2C error or other failure
-* \लetval -EINVAL Invalid mode argument.
+* \fn int ctrl_power_mode()
+* \brief Set the power mode of the device to the specified power mode
+* \param demod Pointer to demodulator instance.
+* \param mode  Pointer to new power mode.
+* \return int.
+* \retval 0          Success
+* \retval -EIO       I2C error or other failure
+* \retval -EINVAL Invalid mode argument.
 *
 *
 */
-अटल पूर्णांक
-ctrl_घातer_mode(काष्ठा drx_demod_instance *demod, क्रमागत drx_घातer_mode *mode)
-अणु
-	काष्ठा drx_common_attr *common_attr = (काष्ठा drx_common_attr *) शून्य;
-	काष्ठा drxj_data *ext_attr = (काष्ठा drxj_data *) शून्य;
-	काष्ठा i2c_device_addr *dev_addr = (काष्ठा i2c_device_addr *)शून्य;
-	पूर्णांक rc;
+static int
+ctrl_power_mode(struct drx_demod_instance *demod, enum drx_power_mode *mode)
+{
+	struct drx_common_attr *common_attr = (struct drx_common_attr *) NULL;
+	struct drxj_data *ext_attr = (struct drxj_data *) NULL;
+	struct i2c_device_addr *dev_addr = (struct i2c_device_addr *)NULL;
+	int rc;
 	u16 sio_cc_pwd_mode = 0;
 
-	common_attr = (काष्ठा drx_common_attr *) demod->my_common_attr;
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
+	common_attr = (struct drx_common_attr *) demod->my_common_attr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
 	dev_addr = demod->my_i2c_dev_addr;
 
 	/* Check arguments */
-	अगर (mode == शून्य)
-		वापस -EINVAL;
+	if (mode == NULL)
+		return -EINVAL;
 
-	/* If alपढ़ोy in requested घातer mode, करो nothing */
-	अगर (common_attr->current_घातer_mode == *mode)
-		वापस 0;
+	/* If already in requested power mode, do nothing */
+	if (common_attr->current_power_mode == *mode)
+		return 0;
 
-	चयन (*mode) अणु
-	हाल DRX_POWER_UP:
-	हाल DRXJ_POWER_DOWN_MAIN_PATH:
+	switch (*mode) {
+	case DRX_POWER_UP:
+	case DRXJ_POWER_DOWN_MAIN_PATH:
 		sio_cc_pwd_mode = SIO_CC_PWD_MODE_LEVEL_NONE;
-		अवरोध;
-	हाल DRXJ_POWER_DOWN_CORE:
+		break;
+	case DRXJ_POWER_DOWN_CORE:
 		sio_cc_pwd_mode = SIO_CC_PWD_MODE_LEVEL_CLOCK;
-		अवरोध;
-	हाल DRXJ_POWER_DOWN_PLL:
+		break;
+	case DRXJ_POWER_DOWN_PLL:
 		sio_cc_pwd_mode = SIO_CC_PWD_MODE_LEVEL_PLL;
-		अवरोध;
-	हाल DRX_POWER_DOWN:
+		break;
+	case DRX_POWER_DOWN:
 		sio_cc_pwd_mode = SIO_CC_PWD_MODE_LEVEL_OSC;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* Unknow sleep mode */
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Check अगर device needs to be घातered up */
-	अगर ((common_attr->current_घातer_mode != DRX_POWER_UP)) अणु
-		rc = घातer_up_device(demod);
-		अगर (rc != 0) अणु
+	/* Check if device needs to be powered up */
+	if ((common_attr->current_power_mode != DRX_POWER_UP)) {
+		rc = power_up_device(demod);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
+			goto rw_error;
+		}
+	}
 
-	अगर (*mode == DRX_POWER_UP) अणु
+	if (*mode == DRX_POWER_UP) {
 		/* Restore analog & pin configuration */
 
-		/* Initialize शेष AFE configuration क्रम VSB */
+		/* Initialize default AFE configuration for VSB */
 		drxj_reset_mode(ext_attr);
-	पूर्ण अन्यथा अणु
-		/* Power करोwn to requested mode */
-		/* Backup some रेजिस्टर settings */
+	} else {
+		/* Power down to requested mode */
+		/* Backup some register settings */
 		/* Set pins with possible pull-ups connected to them in input mode */
-		/* Analog घातer करोwn */
-		/* ADC घातer करोwn */
-		/* Power करोwn device */
+		/* Analog power down */
+		/* ADC power down */
+		/* Power down device */
 		/* stop all comm_exec */
 		/*
-		   Stop and घातer करोwn previous standard
+		   Stop and power down previous standard
 		 */
 
-		चयन (ext_attr->standard) अणु
-		हाल DRX_STANDARD_ITU_A:
-		हाल DRX_STANDARD_ITU_B:
-		हाल DRX_STANDARD_ITU_C:
-			rc = घातer_करोwn_qam(demod, true);
-			अगर (rc != 0) अणु
+		switch (ext_attr->standard) {
+		case DRX_STANDARD_ITU_A:
+		case DRX_STANDARD_ITU_B:
+		case DRX_STANDARD_ITU_C:
+			rc = power_down_qam(demod, true);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			अवरोध;
-		हाल DRX_STANDARD_8VSB:
-			rc = घातer_करोwn_vsb(demod, true);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			break;
+		case DRX_STANDARD_8VSB:
+			rc = power_down_vsb(demod, true);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			अवरोध;
-		हाल DRX_STANDARD_PAL_SECAM_BG:
-		हाल DRX_STANDARD_PAL_SECAM_DK:
-		हाल DRX_STANDARD_PAL_SECAM_I:
-		हाल DRX_STANDARD_PAL_SECAM_L:
-		हाल DRX_STANDARD_PAL_SECAM_LP:
-		हाल DRX_STANDARD_NTSC:
-		हाल DRX_STANDARD_FM:
-			rc = घातer_करोwn_atv(demod, ext_attr->standard, true);
-			अगर (rc != 0) अणु
+				goto rw_error;
+			}
+			break;
+		case DRX_STANDARD_PAL_SECAM_BG:
+		case DRX_STANDARD_PAL_SECAM_DK:
+		case DRX_STANDARD_PAL_SECAM_I:
+		case DRX_STANDARD_PAL_SECAM_L:
+		case DRX_STANDARD_PAL_SECAM_LP:
+		case DRX_STANDARD_NTSC:
+		case DRX_STANDARD_FM:
+			rc = power_down_atv(demod, ext_attr->standard, true);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-			अवरोध;
-		हाल DRX_STANDARD_UNKNOWN:
+				goto rw_error;
+			}
+			break;
+		case DRX_STANDARD_UNKNOWN:
 			/* Do nothing */
-			अवरोध;
-		हाल DRX_STANDARD_AUTO:
-		शेष:
-			वापस -EIO;
-		पूर्ण
+			break;
+		case DRX_STANDARD_AUTO:
+		default:
+			return -EIO;
+		}
 		ext_attr->standard = DRX_STANDARD_UNKNOWN;
-	पूर्ण
+	}
 
-	अगर (*mode != DRXJ_POWER_DOWN_MAIN_PATH) अणु
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_CC_PWD_MODE__A, sio_cc_pwd_mode, 0);
-		अगर (rc != 0) अणु
+	if (*mode != DRXJ_POWER_DOWN_MAIN_PATH) {
+		rc = drxj_dap_write_reg16(dev_addr, SIO_CC_PWD_MODE__A, sio_cc_pwd_mode, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_CC_UPDATE__A, SIO_CC_UPDATE_KEY, 0);
-		अगर (rc != 0) अणु
+			goto rw_error;
+		}
+		rc = drxj_dap_write_reg16(dev_addr, SIO_CC_UPDATE__A, SIO_CC_UPDATE_KEY, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
+			goto rw_error;
+		}
 
-		अगर ((*mode != DRX_POWER_UP)) अणु
-			/* Initialize HI, wakeup key especially beक्रमe put IC to sleep */
+		if ((*mode != DRX_POWER_UP)) {
+			/* Initialize HI, wakeup key especially before put IC to sleep */
 			rc = init_hi(demod);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
+				goto rw_error;
+			}
 
 			ext_attr->hi_cfg_ctrl |= SIO_HI_RA_RAM_PAR_5_CFG_SLEEP_ZZZ;
 			rc = hi_cfg_command(demod);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto rw_error;
+			}
+		}
+	}
 
-	common_attr->current_घातer_mode = *mode;
+	common_attr->current_power_mode = *mode;
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*============================================================================*/
 /*== CTRL Set/Get Config related functions ===================================*/
 /*============================================================================*/
 
 /*
-* \पn पूर्णांक ctrl_set_cfg_pre_saw()
-* \मrief Set Pre-saw reference.
+* \fn int ctrl_set_cfg_pre_saw()
+* \brief Set Pre-saw reference.
 * \param demod demod instance
 * \param u16 *
-* \लeturn पूर्णांक.
+* \return int.
 *
 * Check arguments
-* Dispatch handling to standard specअगरic function.
+* Dispatch handling to standard specific function.
 *
 */
-अटल पूर्णांक
-ctrl_set_cfg_pre_saw(काष्ठा drx_demod_instance *demod, काष्ठा drxj_cfg_pre_saw *pre_saw)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = शून्य;
-	काष्ठा drxj_data *ext_attr = शून्य;
-	पूर्णांक rc;
+static int
+ctrl_set_cfg_pre_saw(struct drx_demod_instance *demod, struct drxj_cfg_pre_saw *pre_saw)
+{
+	struct i2c_device_addr *dev_addr = NULL;
+	struct drxj_data *ext_attr = NULL;
+	int rc;
 
 	dev_addr = demod->my_i2c_dev_addr;
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
 
 	/* check arguments */
-	अगर ((pre_saw == शून्य) || (pre_saw->reference > IQM_AF_PDREF__M)
-	    ) अणु
-		वापस -EINVAL;
-	पूर्ण
+	if ((pre_saw == NULL) || (pre_saw->reference > IQM_AF_PDREF__M)
+	    ) {
+		return -EINVAL;
+	}
 
-	/* Only अगर standard is currently active */
-	अगर ((ext_attr->standard == pre_saw->standard) ||
+	/* Only if standard is currently active */
+	if ((ext_attr->standard == pre_saw->standard) ||
 	    (DRXJ_ISQAMSTD(ext_attr->standard) &&
 	     DRXJ_ISQAMSTD(pre_saw->standard)) ||
 	    (DRXJ_ISATVSTD(ext_attr->standard) &&
-	     DRXJ_ISATVSTD(pre_saw->standard))) अणु
-		rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_PDREF__A, pre_saw->reference, 0);
-		अगर (rc != 0) अणु
+	     DRXJ_ISATVSTD(pre_saw->standard))) {
+		rc = drxj_dap_write_reg16(dev_addr, IQM_AF_PDREF__A, pre_saw->reference, 0);
+		if (rc != 0) {
 			pr_err("error %d\n", rc);
-			जाओ rw_error;
-		पूर्ण
-	पूर्ण
+			goto rw_error;
+		}
+	}
 
 	/* Store pre-saw settings */
-	चयन (pre_saw->standard) अणु
-	हाल DRX_STANDARD_8VSB:
+	switch (pre_saw->standard) {
+	case DRX_STANDARD_8VSB:
 		ext_attr->vsb_pre_saw_cfg = *pre_saw;
-		अवरोध;
-#अगर_अघोषित DRXJ_VSB_ONLY
-	हाल DRX_STANDARD_ITU_A:
-	हाल DRX_STANDARD_ITU_B:
-	हाल DRX_STANDARD_ITU_C:
+		break;
+#ifndef DRXJ_VSB_ONLY
+	case DRX_STANDARD_ITU_A:
+	case DRX_STANDARD_ITU_B:
+	case DRX_STANDARD_ITU_C:
 		ext_attr->qam_pre_saw_cfg = *pre_saw;
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+#endif
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*============================================================================*/
 
 /*
-* \पn पूर्णांक ctrl_set_cfg_afe_gain()
-* \मrief Set AFE Gain.
+* \fn int ctrl_set_cfg_afe_gain()
+* \brief Set AFE Gain.
 * \param demod demod instance
 * \param u16 *
-* \लeturn पूर्णांक.
+* \return int.
 *
 * Check arguments
-* Dispatch handling to standard specअगरic function.
+* Dispatch handling to standard specific function.
 *
 */
-अटल पूर्णांक
-ctrl_set_cfg_afe_gain(काष्ठा drx_demod_instance *demod, काष्ठा drxj_cfg_afe_gain *afe_gain)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = शून्य;
-	काष्ठा drxj_data *ext_attr = शून्य;
-	पूर्णांक rc;
+static int
+ctrl_set_cfg_afe_gain(struct drx_demod_instance *demod, struct drxj_cfg_afe_gain *afe_gain)
+{
+	struct i2c_device_addr *dev_addr = NULL;
+	struct drxj_data *ext_attr = NULL;
+	int rc;
 	u8 gain = 0;
 
 	/* check arguments */
-	अगर (afe_gain == शून्य)
-		वापस -EINVAL;
+	if (afe_gain == NULL)
+		return -EINVAL;
 
 	dev_addr = demod->my_i2c_dev_addr;
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
 
-	चयन (afe_gain->standard) अणु
-	हाल DRX_STANDARD_8VSB:	fallthrough;
-#अगर_अघोषित DRXJ_VSB_ONLY
-	हाल DRX_STANDARD_ITU_A:
-	हाल DRX_STANDARD_ITU_B:
-	हाल DRX_STANDARD_ITU_C:
-#पूर्ण_अगर
+	switch (afe_gain->standard) {
+	case DRX_STANDARD_8VSB:	fallthrough;
+#ifndef DRXJ_VSB_ONLY
+	case DRX_STANDARD_ITU_A:
+	case DRX_STANDARD_ITU_B:
+	case DRX_STANDARD_ITU_C:
+#endif
 		/* Do nothing */
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	/* TODO PGA gain is also written by microcode (at least by QAM and VSB)
-	   So I (PJ) think पूर्णांकerface requires choice between स्वतः, user mode */
+	   So I (PJ) think interface requires choice between auto, user mode */
 
-	अगर (afe_gain->gain >= 329)
+	if (afe_gain->gain >= 329)
 		gain = 15;
-	अन्यथा अगर (afe_gain->gain <= 147)
+	else if (afe_gain->gain <= 147)
 		gain = 0;
-	अन्यथा
+	else
 		gain = (afe_gain->gain - 140 + 6) / 13;
 
-	/* Only अगर standard is currently active */
-	अगर (ext_attr->standard == afe_gain->standard) अणु
-			rc = drxj_dap_ग_लिखो_reg16(dev_addr, IQM_AF_PGA_GAIN__A, gain, 0);
-			अगर (rc != 0) अणु
+	/* Only if standard is currently active */
+	if (ext_attr->standard == afe_gain->standard) {
+			rc = drxj_dap_write_reg16(dev_addr, IQM_AF_PGA_GAIN__A, gain, 0);
+			if (rc != 0) {
 				pr_err("error %d\n", rc);
-				जाओ rw_error;
-			पूर्ण
-		पूर्ण
+				goto rw_error;
+			}
+		}
 
 	/* Store AFE Gain settings */
-	चयन (afe_gain->standard) अणु
-	हाल DRX_STANDARD_8VSB:
+	switch (afe_gain->standard) {
+	case DRX_STANDARD_8VSB:
 		ext_attr->vsb_pga_cfg = gain * 13 + 140;
-		अवरोध;
-#अगर_अघोषित DRXJ_VSB_ONLY
-	हाल DRX_STANDARD_ITU_A:
-	हाल DRX_STANDARD_ITU_B:
-	हाल DRX_STANDARD_ITU_C:
+		break;
+#ifndef DRXJ_VSB_ONLY
+	case DRX_STANDARD_ITU_A:
+	case DRX_STANDARD_ITU_B:
+	case DRX_STANDARD_ITU_C:
 		ext_attr->qam_pga_cfg = gain * 13 + 140;
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
-		वापस -EIO;
-	पूर्ण
+		break;
+#endif
+	default:
+		return -EIO;
+	}
 
-	वापस 0;
+	return 0;
 rw_error:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*============================================================================*/
 
@@ -11326,181 +11325,181 @@ rw_error:
 /*=============================================================================
 ===== EXPORTED FUNCTIONS ====================================================*/
 
-अटल पूर्णांक drx_ctrl_u_code(काष्ठा drx_demod_instance *demod,
-		       काष्ठा drxu_code_info *mc_info,
-		       क्रमागत drxu_code_action action);
-अटल पूर्णांक drxj_set_lna_state(काष्ठा drx_demod_instance *demod, bool state);
+static int drx_ctrl_u_code(struct drx_demod_instance *demod,
+		       struct drxu_code_info *mc_info,
+		       enum drxu_code_action action);
+static int drxj_set_lna_state(struct drx_demod_instance *demod, bool state);
 
 /*
-* \पn drxj_खोलो()
-* \मrief Open the demod instance, configure device, configure drxdriver
-* \लeturn Status_t Return status.
+* \fn drxj_open()
+* \brief Open the demod instance, configure device, configure drxdriver
+* \return Status_t Return status.
 *
-* drxj_खोलो() can be called with a शून्य ucode image => no ucode upload.
-* This means that drxj_खोलो() must NOT contain SCU commands or, in general,
+* drxj_open() can be called with a NULL ucode image => no ucode upload.
+* This means that drxj_open() must NOT contain SCU commands or, in general,
 * rely on SCU or AUD ucode to be present.
 *
 */
 
-अटल पूर्णांक drxj_खोलो(काष्ठा drx_demod_instance *demod)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = शून्य;
-	काष्ठा drxj_data *ext_attr = शून्य;
-	काष्ठा drx_common_attr *common_attr = शून्य;
+static int drxj_open(struct drx_demod_instance *demod)
+{
+	struct i2c_device_addr *dev_addr = NULL;
+	struct drxj_data *ext_attr = NULL;
+	struct drx_common_attr *common_attr = NULL;
 	u32 driver_version = 0;
-	काष्ठा drxu_code_info ucode_info;
-	काष्ठा drx_cfg_mpeg_output cfg_mpeg_output;
-	पूर्णांक rc;
-	क्रमागत drx_घातer_mode घातer_mode = DRX_POWER_UP;
+	struct drxu_code_info ucode_info;
+	struct drx_cfg_mpeg_output cfg_mpeg_output;
+	int rc;
+	enum drx_power_mode power_mode = DRX_POWER_UP;
 
-	अगर ((demod == शून्य) ||
-	    (demod->my_common_attr == शून्य) ||
-	    (demod->my_ext_attr == शून्य) ||
-	    (demod->my_i2c_dev_addr == शून्य) ||
-	    (demod->my_common_attr->is_खोलोed)) अणु
-		वापस -EINVAL;
-	पूर्ण
+	if ((demod == NULL) ||
+	    (demod->my_common_attr == NULL) ||
+	    (demod->my_ext_attr == NULL) ||
+	    (demod->my_i2c_dev_addr == NULL) ||
+	    (demod->my_common_attr->is_opened)) {
+		return -EINVAL;
+	}
 
 	/* Check arguments */
-	अगर (demod->my_ext_attr == शून्य)
-		वापस -EINVAL;
+	if (demod->my_ext_attr == NULL)
+		return -EINVAL;
 
 	dev_addr = demod->my_i2c_dev_addr;
-	ext_attr = (काष्ठा drxj_data *) demod->my_ext_attr;
-	common_attr = (काष्ठा drx_common_attr *) demod->my_common_attr;
+	ext_attr = (struct drxj_data *) demod->my_ext_attr;
+	common_attr = (struct drx_common_attr *) demod->my_common_attr;
 
-	rc = ctrl_घातer_mode(demod, &घातer_mode);
-	अगर (rc != 0) अणु
+	rc = ctrl_power_mode(demod, &power_mode);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	अगर (घातer_mode != DRX_POWER_UP) अणु
+		goto rw_error;
+	}
+	if (power_mode != DRX_POWER_UP) {
 		rc = -EINVAL;
 		pr_err("failed to powerup device\n");
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	/* has to be in front of setIqmAf and setOrxNsuAox */
 	rc = get_device_capabilities(demod);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	/*
-	 * Soft reset of sys- and osc-घड़ीकरोमुख्य
+	 * Soft reset of sys- and osc-clockdomain
 	 *
-	 * HACK: On winकरोws, it ग_लिखोs a 0x07 here, instead of just 0x03.
-	 * As we didn't load the firmware here yet, we should करो the same.
+	 * HACK: On windows, it writes a 0x07 here, instead of just 0x03.
+	 * As we didn't load the firmware here yet, we should do the same.
 	 * Btw, this is coherent with DRX-K, where we send reset codes
-	 * क्रम modulation (OFTM, in DRX-k), SYS and OSC घड़ी करोमुख्यs.
+	 * for modulation (OFTM, in DRX-k), SYS and OSC clock domains.
 	 */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_CC_SOFT_RST__A, (0x04 | SIO_CC_SOFT_RST_SYS__M | SIO_CC_SOFT_RST_OSC__M), 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SIO_CC_SOFT_RST__A, (0x04 | SIO_CC_SOFT_RST_SYS__M | SIO_CC_SOFT_RST_OSC__M), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SIO_CC_UPDATE__A, SIO_CC_UPDATE_KEY, 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SIO_CC_UPDATE__A, SIO_CC_UPDATE_KEY, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	msleep(1);
 
-	/* TODO first make sure that everything keeps working beक्रमe enabling this */
+	/* TODO first make sure that everything keeps working before enabling this */
 	/* PowerDownAnalogBlocks() */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, ATV_TOP_STDBY__A, (~ATV_TOP_STDBY_CVBS_STDBY_A2_ACTIVE) | ATV_TOP_STDBY_SIF_STDBY_STANDBY, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, ATV_TOP_STDBY__A, (~ATV_TOP_STDBY_CVBS_STDBY_A2_ACTIVE) | ATV_TOP_STDBY_SIF_STDBY_STANDBY, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	rc = set_iqm_af(demod, false);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	rc = set_orx_nsu_aox(demod, false);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	rc = init_hi(demod);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	/* disable mpegoutput pins */
-	स_नकल(&cfg_mpeg_output, &common_attr->mpeg_cfg, माप(cfg_mpeg_output));
+	memcpy(&cfg_mpeg_output, &common_attr->mpeg_cfg, sizeof(cfg_mpeg_output));
 	cfg_mpeg_output.enable_mpeg_output = false;
 
 	rc = ctrl_set_cfg_mpeg_output(demod, &cfg_mpeg_output);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	/* Stop AUD Inक्रमm SetAudio it will need to करो all setting */
-	rc = घातer_करोwn_aud(demod);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	/* Stop AUD Inform SetAudio it will need to do all setting */
+	rc = power_down_aud(demod);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 	/* Stop SCU */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_COMM_EXEC__A, SCU_COMM_EXEC_STOP, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_COMM_EXEC__A, SCU_COMM_EXEC_STOP, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	/* Upload microcode */
-	अगर (common_attr->microcode_file != शून्य) अणु
-		/* Dirty trick to use common ucode upload & verअगरy,
-		   pretend device is alपढ़ोy खोलो */
-		common_attr->is_खोलोed = true;
+	if (common_attr->microcode_file != NULL) {
+		/* Dirty trick to use common ucode upload & verify,
+		   pretend device is already open */
+		common_attr->is_opened = true;
 		ucode_info.mc_file = common_attr->microcode_file;
 
-		अगर (DRX_ISPOWERDOWNMODE(demod->my_common_attr->current_घातer_mode)) अणु
+		if (DRX_ISPOWERDOWNMODE(demod->my_common_attr->current_power_mode)) {
 			pr_err("Should powerup before loading the firmware.");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		rc = drx_ctrl_u_code(demod, &ucode_info, UCODE_UPLOAD);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			pr_err("error %d while uploading the firmware\n", rc);
-			जाओ rw_error;
-		पूर्ण
-		अगर (common_attr->verअगरy_microcode == true) अणु
+			goto rw_error;
+		}
+		if (common_attr->verify_microcode == true) {
 			rc = drx_ctrl_u_code(demod, &ucode_info, UCODE_VERIFY);
-			अगर (rc != 0) अणु
+			if (rc != 0) {
 				pr_err("error %d while verifying the firmware\n",
 				       rc);
-				जाओ rw_error;
-			पूर्ण
-		पूर्ण
-		common_attr->is_खोलोed = false;
-	पूर्ण
+				goto rw_error;
+			}
+		}
+		common_attr->is_opened = false;
+	}
 
-	/* Run SCU क्रम a little जबतक to initialize microcode version numbers */
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_COMM_EXEC__A, SCU_COMM_EXEC_ACTIVE, 0);
-	अगर (rc != 0) अणु
+	/* Run SCU for a little while to initialize microcode version numbers */
+	rc = drxj_dap_write_reg16(dev_addr, SCU_COMM_EXEC__A, SCU_COMM_EXEC_ACTIVE, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	/* Initialize scan समयout */
-	common_attr->scan_demod_lock_समयout = DRXJ_SCAN_TIMEOUT;
+	/* Initialize scan timeout */
+	common_attr->scan_demod_lock_timeout = DRXJ_SCAN_TIMEOUT;
 	common_attr->scan_desired_lock = DRX_LOCKED;
 
 	drxj_reset_mode(ext_attr);
 	ext_attr->standard = DRX_STANDARD_UNKNOWN;
 
 	rc = smart_ant_init(demod);
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	/* Stamp driver version number in SCU data RAM in BCD code
 	   Done to enable field application engineers to retrieve drxdriver version
@@ -11521,81 +11520,81 @@ rw_error:
 	driver_version += (VERSION_PATCH / 10) % 10;
 	driver_version <<= 4;
 	driver_version += (VERSION_PATCH % 10);
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_DRIVER_VER_HI__A, (u16)(driver_version >> 16), 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_DRIVER_VER_HI__A, (u16)(driver_version >> 16), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_RAM_DRIVER_VER_LO__A, (u16)(driver_version & 0xFFFF), 0);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	rc = drxj_dap_write_reg16(dev_addr, SCU_RAM_DRIVER_VER_LO__A, (u16)(driver_version & 0xFFFF), 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = ctrl_set_oob(demod, शून्य);
-	अगर (rc != 0) अणु
+	rc = ctrl_set_oob(demod, NULL);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	/* refresh the audio data काष्ठाure with शेष */
-	ext_attr->aud_data = drxj_शेष_aud_data_g;
+	/* refresh the audio data structure with default */
+	ext_attr->aud_data = drxj_default_aud_data_g;
 
-	demod->my_common_attr->is_खोलोed = true;
+	demod->my_common_attr->is_opened = true;
 	drxj_set_lna_state(demod, false);
-	वापस 0;
+	return 0;
 rw_error:
-	common_attr->is_खोलोed = false;
-	वापस rc;
-पूर्ण
+	common_attr->is_opened = false;
+	return rc;
+}
 
 /*============================================================================*/
 /*
-* \पn drxj_बंद()
-* \मrief Close the demod instance, घातer करोwn the device
-* \लeturn Status_t Return status.
+* \fn drxj_close()
+* \brief Close the demod instance, power down the device
+* \return Status_t Return status.
 *
 */
-अटल पूर्णांक drxj_बंद(काष्ठा drx_demod_instance *demod)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
-	पूर्णांक rc;
-	क्रमागत drx_घातer_mode घातer_mode = DRX_POWER_UP;
+static int drxj_close(struct drx_demod_instance *demod)
+{
+	struct i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
+	int rc;
+	enum drx_power_mode power_mode = DRX_POWER_UP;
 
-	अगर ((demod->my_common_attr == शून्य) ||
-	    (demod->my_ext_attr == शून्य) ||
-	    (demod->my_i2c_dev_addr == शून्य) ||
-	    (!demod->my_common_attr->is_खोलोed)) अणु
-		वापस -EINVAL;
-	पूर्ण
+	if ((demod->my_common_attr == NULL) ||
+	    (demod->my_ext_attr == NULL) ||
+	    (demod->my_i2c_dev_addr == NULL) ||
+	    (!demod->my_common_attr->is_opened)) {
+		return -EINVAL;
+	}
 
-	/* घातer up */
-	rc = ctrl_घातer_mode(demod, &घातer_mode);
-	अगर (rc != 0) अणु
+	/* power up */
+	rc = ctrl_power_mode(demod, &power_mode);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
-	rc = drxj_dap_ग_लिखो_reg16(dev_addr, SCU_COMM_EXEC__A, SCU_COMM_EXEC_ACTIVE, 0);
-	अगर (rc != 0) अणु
+	rc = drxj_dap_write_reg16(dev_addr, SCU_COMM_EXEC__A, SCU_COMM_EXEC_ACTIVE, 0);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
-	घातer_mode = DRX_POWER_DOWN;
-	rc = ctrl_घातer_mode(demod, &घातer_mode);
-	अगर (rc != 0) अणु
+		goto rw_error;
+	}
+	power_mode = DRX_POWER_DOWN;
+	rc = ctrl_power_mode(demod, &power_mode);
+	if (rc != 0) {
 		pr_err("error %d\n", rc);
-		जाओ rw_error;
-	पूर्ण
+		goto rw_error;
+	}
 
 	DRX_ATTR_ISOPENED(demod) = false;
 
-	वापस 0;
+	return 0;
 rw_error:
 	DRX_ATTR_ISOPENED(demod) = false;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * Microcode related functions
@@ -11603,50 +11602,50 @@ rw_error:
 
 /*
  * drx_u_code_compute_crc	- Compute CRC of block of microcode data.
- * @block_data: Poपूर्णांकer to microcode data.
+ * @block_data: Pointer to microcode data.
  * @nr_words:   Size of microcode block (number of 16 bits words).
  *
- * वापसs The computed CRC residue.
+ * returns The computed CRC residue.
  */
-अटल u16 drx_u_code_compute_crc(u8 *block_data, u16 nr_words)
-अणु
+static u16 drx_u_code_compute_crc(u8 *block_data, u16 nr_words)
+{
 	u16 i = 0;
 	u16 j = 0;
 	u32 crc_word = 0;
 	u32 carry = 0;
 
-	जबतक (i < nr_words) अणु
+	while (i < nr_words) {
 		crc_word |= (u32)be16_to_cpu(*(__be16 *)(block_data));
-		क्रम (j = 0; j < 16; j++) अणु
+		for (j = 0; j < 16; j++) {
 			crc_word <<= 1;
-			अगर (carry != 0)
+			if (carry != 0)
 				crc_word ^= 0x80050000UL;
 			carry = crc_word & 0x80000000UL;
-		पूर्ण
+		}
 		i++;
-		block_data += (माप(u16));
-	पूर्ण
-	वापस (u16)(crc_word >> 16);
-पूर्ण
+		block_data += (sizeof(u16));
+	}
+	return (u16)(crc_word >> 16);
+}
 
 /*
- * drx_check_firmware - checks अगर the loaded firmware is valid
+ * drx_check_firmware - checks if the loaded firmware is valid
  *
- * @demod:	demod काष्ठाure
- * @mc_data:	poपूर्णांकer to the start of the firmware
+ * @demod:	demod structure
+ * @mc_data:	pointer to the start of the firmware
  * @size:	firmware size
  */
-अटल पूर्णांक drx_check_firmware(काष्ठा drx_demod_instance *demod, u8 *mc_data,
-			  अचिन्हित size)
-अणु
-	काष्ठा drxu_code_block_hdr block_hdr;
-	पूर्णांक i;
-	अचिन्हित count = 2 * माप(u16);
+static int drx_check_firmware(struct drx_demod_instance *demod, u8 *mc_data,
+			  unsigned size)
+{
+	struct drxu_code_block_hdr block_hdr;
+	int i;
+	unsigned count = 2 * sizeof(u16);
 	u32 mc_dev_type, mc_version, mc_base_version;
-	u16 mc_nr_of_blks = be16_to_cpu(*(__be16 *)(mc_data + माप(u16)));
+	u16 mc_nr_of_blks = be16_to_cpu(*(__be16 *)(mc_data + sizeof(u16)));
 
 	/*
-	 * Scan microcode blocks first क्रम version info
+	 * Scan microcode blocks first for version info
 	 * and firmware check
 	 */
 
@@ -11656,43 +11655,43 @@ rw_error:
 	DRX_ATTR_MCRECORD(demod).mc_version = 0;
 	DRX_ATTR_MCRECORD(demod).mc_base_version = 0;
 
-	क्रम (i = 0; i < mc_nr_of_blks; i++) अणु
-		अगर (count + 3 * माप(u16) + माप(u32) > size)
-			जाओ eof;
+	for (i = 0; i < mc_nr_of_blks; i++) {
+		if (count + 3 * sizeof(u16) + sizeof(u32) > size)
+			goto eof;
 
 		/* Process block header */
 		block_hdr.addr = be32_to_cpu(*(__be32 *)(mc_data + count));
-		count += माप(u32);
+		count += sizeof(u32);
 		block_hdr.size = be16_to_cpu(*(__be16 *)(mc_data + count));
-		count += माप(u16);
+		count += sizeof(u16);
 		block_hdr.flags = be16_to_cpu(*(__be16 *)(mc_data + count));
-		count += माप(u16);
+		count += sizeof(u16);
 		block_hdr.CRC = be16_to_cpu(*(__be16 *)(mc_data + count));
-		count += माप(u16);
+		count += sizeof(u16);
 
 		pr_debug("%u: addr %u, size %u, flags 0x%04x, CRC 0x%04x\n",
 			count, block_hdr.addr, block_hdr.size, block_hdr.flags,
 			block_hdr.CRC);
 
-		अगर (block_hdr.flags & 0x8) अणु
-			u8 *auxblk = ((व्योम *)mc_data) + block_hdr.addr;
+		if (block_hdr.flags & 0x8) {
+			u8 *auxblk = ((void *)mc_data) + block_hdr.addr;
 			u16 auxtype;
 
-			अगर (block_hdr.addr + माप(u16) > size)
-				जाओ eof;
+			if (block_hdr.addr + sizeof(u16) > size)
+				goto eof;
 
 			auxtype = be16_to_cpu(*(__be16 *)(auxblk));
 
 			/* Aux block. Check type */
-			अगर (DRX_ISMCVERTYPE(auxtype)) अणु
-				अगर (block_hdr.addr + 2 * माप(u16) + 2 * माप (u32) > size)
-					जाओ eof;
+			if (DRX_ISMCVERTYPE(auxtype)) {
+				if (block_hdr.addr + 2 * sizeof(u16) + 2 * sizeof (u32) > size)
+					goto eof;
 
-				auxblk += माप(u16);
+				auxblk += sizeof(u16);
 				mc_dev_type = be32_to_cpu(*(__be32 *)(auxblk));
-				auxblk += माप(u32);
+				auxblk += sizeof(u32);
 				mc_version = be32_to_cpu(*(__be32 *)(auxblk));
-				auxblk += माप(u32);
+				auxblk += sizeof(u32);
 				mc_base_version = be32_to_cpu(*(__be32 *)(auxblk));
 
 				DRX_ATTR_MCRECORD(demod).aux_type = auxtype;
@@ -11703,116 +11702,116 @@ rw_error:
 				pr_info("Firmware dev %x, ver %x, base ver %x\n",
 					mc_dev_type, mc_version, mc_base_version);
 
-			पूर्ण
-		पूर्ण अन्यथा अगर (count + block_hdr.size * माप(u16) > size)
-			जाओ eof;
+			}
+		} else if (count + block_hdr.size * sizeof(u16) > size)
+			goto eof;
 
-		count += block_hdr.size * माप(u16);
-	पूर्ण
-	वापस 0;
+		count += block_hdr.size * sizeof(u16);
+	}
+	return 0;
 eof:
 	pr_err("Firmware is truncated at pos %u/%u\n", count, size);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /*
- * drx_ctrl_u_code - Handle microcode upload or verअगरy.
+ * drx_ctrl_u_code - Handle microcode upload or verify.
  * @dev_addr: Address of device.
- * @mc_info:  Poपूर्णांकer to inक्रमmation about microcode data.
+ * @mc_info:  Pointer to information about microcode data.
  * @action:  Either UCODE_UPLOAD or UCODE_VERIFY
  *
- * This function वापसs:
+ * This function returns:
  *	0:
- *		- In हाल of UCODE_UPLOAD: code is successfully uploaded.
- *               - In हाल of UCODE_VERIFY: image on device is equal to
+ *		- In case of UCODE_UPLOAD: code is successfully uploaded.
+ *               - In case of UCODE_VERIFY: image on device is equal to
  *		  image provided to this control function.
  *	-EIO:
- *		- In हाल of UCODE_UPLOAD: I2C error.
- *		- In हाल of UCODE_VERIFY: I2C error or image on device
+ *		- In case of UCODE_UPLOAD: I2C error.
+ *		- In case of UCODE_VERIFY: I2C error or image on device
  *		  is not equal to image provided to this control function.
  *	-EINVAL:
  *		- Invalid arguments.
  *		- Provided image is corrupt
  */
-अटल पूर्णांक drx_ctrl_u_code(काष्ठा drx_demod_instance *demod,
-		       काष्ठा drxu_code_info *mc_info,
-		       क्रमागत drxu_code_action action)
-अणु
-	काष्ठा i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
-	पूर्णांक rc;
+static int drx_ctrl_u_code(struct drx_demod_instance *demod,
+		       struct drxu_code_info *mc_info,
+		       enum drxu_code_action action)
+{
+	struct i2c_device_addr *dev_addr = demod->my_i2c_dev_addr;
+	int rc;
 	u16 i = 0;
 	u16 mc_nr_of_blks = 0;
 	u16 mc_magic_word = 0;
-	स्थिर u8 *mc_data_init = शून्य;
-	u8 *mc_data = शून्य;
-	अचिन्हित size;
-	अक्षर *mc_file;
+	const u8 *mc_data_init = NULL;
+	u8 *mc_data = NULL;
+	unsigned size;
+	char *mc_file;
 
 	/* Check arguments */
-	अगर (!mc_info || !mc_info->mc_file)
-		वापस -EINVAL;
+	if (!mc_info || !mc_info->mc_file)
+		return -EINVAL;
 
 	mc_file = mc_info->mc_file;
 
-	अगर (!demod->firmware) अणु
-		स्थिर काष्ठा firmware *fw = शून्य;
+	if (!demod->firmware) {
+		const struct firmware *fw = NULL;
 
 		rc = request_firmware(&fw, mc_file, demod->i2c->dev.parent);
-		अगर (rc < 0) अणु
+		if (rc < 0) {
 			pr_err("Couldn't read firmware %s\n", mc_file);
-			वापस rc;
-		पूर्ण
+			return rc;
+		}
 		demod->firmware = fw;
 
-		अगर (demod->firmware->size < 2 * माप(u16)) अणु
+		if (demod->firmware->size < 2 * sizeof(u16)) {
 			rc = -EINVAL;
 			pr_err("Firmware is too short!\n");
-			जाओ release;
-		पूर्ण
+			goto release;
+		}
 
 		pr_info("Firmware %s, size %zu\n",
 			mc_file, demod->firmware->size);
-	पूर्ण
+	}
 
 	mc_data_init = demod->firmware->data;
 	size = demod->firmware->size;
 
-	mc_data = (व्योम *)mc_data_init;
+	mc_data = (void *)mc_data_init;
 	/* Check data */
 	mc_magic_word = be16_to_cpu(*(__be16 *)(mc_data));
-	mc_data += माप(u16);
+	mc_data += sizeof(u16);
 	mc_nr_of_blks = be16_to_cpu(*(__be16 *)(mc_data));
-	mc_data += माप(u16);
+	mc_data += sizeof(u16);
 
-	अगर ((mc_magic_word != DRX_UCODE_MAGIC_WORD) || (mc_nr_of_blks == 0)) अणु
+	if ((mc_magic_word != DRX_UCODE_MAGIC_WORD) || (mc_nr_of_blks == 0)) {
 		rc = -EINVAL;
 		pr_err("Firmware magic word doesn't match\n");
-		जाओ release;
-	पूर्ण
+		goto release;
+	}
 
-	अगर (action == UCODE_UPLOAD) अणु
+	if (action == UCODE_UPLOAD) {
 		rc = drx_check_firmware(demod, (u8 *)mc_data_init, size);
-		अगर (rc)
-			जाओ release;
+		if (rc)
+			goto release;
 		pr_info("Uploading firmware %s\n", mc_file);
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_info("Verifying if firmware upload was ok.\n");
-	पूर्ण
+	}
 
 	/* Process microcode blocks */
-	क्रम (i = 0; i < mc_nr_of_blks; i++) अणु
-		काष्ठा drxu_code_block_hdr block_hdr;
+	for (i = 0; i < mc_nr_of_blks; i++) {
+		struct drxu_code_block_hdr block_hdr;
 		u16 mc_block_nr_bytes = 0;
 
 		/* Process block header */
 		block_hdr.addr = be32_to_cpu(*(__be32 *)(mc_data));
-		mc_data += माप(u32);
+		mc_data += sizeof(u32);
 		block_hdr.size = be16_to_cpu(*(__be16 *)(mc_data));
-		mc_data += माप(u16);
+		mc_data += sizeof(u16);
 		block_hdr.flags = be16_to_cpu(*(__be16 *)(mc_data));
-		mc_data += माप(u16);
+		mc_data += sizeof(u16);
 		block_hdr.CRC = be16_to_cpu(*(__be16 *)(mc_data));
-		mc_data += माप(u16);
+		mc_data += sizeof(u16);
 
 		pr_debug("%zd: addr %u, size %u, flags 0x%04x, CRC 0x%04x\n",
 			(mc_data - mc_data_init), block_hdr.addr,
@@ -11820,495 +11819,495 @@ eof:
 
 		/* Check block header on:
 		   - data larger than 64Kb
-		   - अगर CRC enabled check CRC
+		   - if CRC enabled check CRC
 		 */
-		अगर ((block_hdr.size > 0x7FFF) ||
+		if ((block_hdr.size > 0x7FFF) ||
 		    (((block_hdr.flags & DRX_UCODE_CRC_FLAG) != 0) &&
 		     (block_hdr.CRC != drx_u_code_compute_crc(mc_data, block_hdr.size)))
-		    ) अणु
+		    ) {
 			/* Wrong data ! */
 			rc = -EINVAL;
 			pr_err("firmware CRC is wrong\n");
-			जाओ release;
-		पूर्ण
+			goto release;
+		}
 
-		अगर (!block_hdr.size)
-			जारी;
+		if (!block_hdr.size)
+			continue;
 
-		mc_block_nr_bytes = block_hdr.size * ((u16) माप(u16));
+		mc_block_nr_bytes = block_hdr.size * ((u16) sizeof(u16));
 
-		/* Perक्रमm the desired action */
-		चयन (action) अणु
-		हाल UCODE_UPLOAD:	/* Upload microcode */
-			अगर (drxdap_fasi_ग_लिखो_block(dev_addr,
+		/* Perform the desired action */
+		switch (action) {
+		case UCODE_UPLOAD:	/* Upload microcode */
+			if (drxdap_fasi_write_block(dev_addr,
 							block_hdr.addr,
 							mc_block_nr_bytes,
-							mc_data, 0x0000)) अणु
+							mc_data, 0x0000)) {
 				rc = -EIO;
 				pr_err("error writing firmware at pos %zd\n",
 				       mc_data - mc_data_init);
-				जाओ release;
-			पूर्ण
-			अवरोध;
-		हाल UCODE_VERIFY: अणु	/* Verअगरy uploaded microcode */
-			पूर्णांक result = 0;
+				goto release;
+			}
+			break;
+		case UCODE_VERIFY: {	/* Verify uploaded microcode */
+			int result = 0;
 			u8 mc_data_buffer[DRX_UCODE_MAX_BUF_SIZE];
 			u32 bytes_to_comp = 0;
 			u32 bytes_left = mc_block_nr_bytes;
 			u32 curr_addr = block_hdr.addr;
 			u8 *curr_ptr = mc_data;
 
-			जबतक (bytes_left != 0) अणु
-				अगर (bytes_left > DRX_UCODE_MAX_BUF_SIZE)
+			while (bytes_left != 0) {
+				if (bytes_left > DRX_UCODE_MAX_BUF_SIZE)
 					bytes_to_comp = DRX_UCODE_MAX_BUF_SIZE;
-				अन्यथा
+				else
 					bytes_to_comp = bytes_left;
 
-				अगर (drxdap_fasi_पढ़ो_block(dev_addr,
+				if (drxdap_fasi_read_block(dev_addr,
 						    curr_addr,
 						    (u16)bytes_to_comp,
 						    (u8 *)mc_data_buffer,
-						    0x0000)) अणु
+						    0x0000)) {
 					pr_err("error reading firmware at pos %zd\n",
 					       mc_data - mc_data_init);
-					वापस -EIO;
-				पूर्ण
+					return -EIO;
+				}
 
-				result = स_भेद(curr_ptr, mc_data_buffer,
+				result = memcmp(curr_ptr, mc_data_buffer,
 						bytes_to_comp);
 
-				अगर (result) अणु
+				if (result) {
 					pr_err("error verifying firmware at pos %zd\n",
 					       mc_data - mc_data_init);
-					वापस -EIO;
-				पूर्ण
+					return -EIO;
+				}
 
 				curr_addr += ((dr_xaddr_t)(bytes_to_comp / 2));
 				curr_ptr =&(curr_ptr[bytes_to_comp]);
 				bytes_left -=((u32) bytes_to_comp);
-			पूर्ण
-			अवरोध;
-		पूर्ण
-		शेष:
-			वापस -EINVAL;
+			}
+			break;
+		}
+		default:
+			return -EINVAL;
 
-		पूर्ण
+		}
 		mc_data += mc_block_nr_bytes;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 release:
 	release_firmware(demod->firmware);
-	demod->firmware = शून्य;
+	demod->firmware = NULL;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-/* caller is expected to check अगर lna is supported beक्रमe enabling */
-अटल पूर्णांक drxj_set_lna_state(काष्ठा drx_demod_instance *demod, bool state)
-अणु
-	काष्ठा drxuio_cfg uio_cfg;
-	काष्ठा drxuio_data uio_data;
-	पूर्णांक result;
+/* caller is expected to check if lna is supported before enabling */
+static int drxj_set_lna_state(struct drx_demod_instance *demod, bool state)
+{
+	struct drxuio_cfg uio_cfg;
+	struct drxuio_data uio_data;
+	int result;
 
 	uio_cfg.uio = DRX_UIO1;
 	uio_cfg.mode = DRX_UIO_MODE_READWRITE;
-	/* Configure user-I/O #3: enable पढ़ो/ग_लिखो */
+	/* Configure user-I/O #3: enable read/write */
 	result = ctrl_set_uio_cfg(demod, &uio_cfg);
-	अगर (result) अणु
+	if (result) {
 		pr_err("Failed to setup LNA GPIO!\n");
-		वापस result;
-	पूर्ण
+		return result;
+	}
 
 	uio_data.uio = DRX_UIO1;
 	uio_data.value = state;
-	result = ctrl_uio_ग_लिखो(demod, &uio_data);
-	अगर (result != 0) अणु
+	result = ctrl_uio_write(demod, &uio_data);
+	if (result != 0) {
 		pr_err("Failed to %sable LNA!\n",
 		       state ? "en" : "dis");
-		वापस result;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return result;
+	}
+	return 0;
+}
 
 /*
- * The Linux DVB Driver क्रम Micronas DRX39xx family (drx3933j)
+ * The Linux DVB Driver for Micronas DRX39xx family (drx3933j)
  *
- * Written by Devin Heiपंचांगueller <devin.heiपंचांगueller@kernelद_असल.com>
+ * Written by Devin Heitmueller <devin.heitmueller@kernellabs.com>
  */
 
-अटल पूर्णांक drx39xxj_set_घातerstate(काष्ठा dvb_frontend *fe, पूर्णांक enable)
-अणु
-	काष्ठा drx39xxj_state *state = fe->demodulator_priv;
-	काष्ठा drx_demod_instance *demod = state->demod;
-	पूर्णांक result;
-	क्रमागत drx_घातer_mode घातer_mode;
+static int drx39xxj_set_powerstate(struct dvb_frontend *fe, int enable)
+{
+	struct drx39xxj_state *state = fe->demodulator_priv;
+	struct drx_demod_instance *demod = state->demod;
+	int result;
+	enum drx_power_mode power_mode;
 
-	अगर (enable)
-		घातer_mode = DRX_POWER_UP;
-	अन्यथा
-		घातer_mode = DRX_POWER_DOWN;
+	if (enable)
+		power_mode = DRX_POWER_UP;
+	else
+		power_mode = DRX_POWER_DOWN;
 
-	result = ctrl_घातer_mode(demod, &घातer_mode);
-	अगर (result != 0) अणु
+	result = ctrl_power_mode(demod, &power_mode);
+	if (result != 0) {
 		pr_err("Power state change failed\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक drx39xxj_पढ़ो_status(काष्ठा dvb_frontend *fe, क्रमागत fe_status *status)
-अणु
-	काष्ठा drx39xxj_state *state = fe->demodulator_priv;
-	काष्ठा drx_demod_instance *demod = state->demod;
-	पूर्णांक result;
-	क्रमागत drx_lock_status lock_status;
+static int drx39xxj_read_status(struct dvb_frontend *fe, enum fe_status *status)
+{
+	struct drx39xxj_state *state = fe->demodulator_priv;
+	struct drx_demod_instance *demod = state->demod;
+	int result;
+	enum drx_lock_status lock_status;
 
 	*status = 0;
 
 	result = ctrl_lock_status(demod, &lock_status);
-	अगर (result != 0) अणु
+	if (result != 0) {
 		pr_err("drx39xxj: could not get lock status!\n");
 		*status = 0;
-	पूर्ण
+	}
 
-	चयन (lock_status) अणु
-	हाल DRX_NEVER_LOCK:
+	switch (lock_status) {
+	case DRX_NEVER_LOCK:
 		*status = 0;
 		pr_err("drx says NEVER_LOCK\n");
-		अवरोध;
-	हाल DRX_NOT_LOCKED:
+		break;
+	case DRX_NOT_LOCKED:
 		*status = 0;
-		अवरोध;
-	हाल DRX_LOCK_STATE_1:
-	हाल DRX_LOCK_STATE_2:
-	हाल DRX_LOCK_STATE_3:
-	हाल DRX_LOCK_STATE_4:
-	हाल DRX_LOCK_STATE_5:
-	हाल DRX_LOCK_STATE_6:
-	हाल DRX_LOCK_STATE_7:
-	हाल DRX_LOCK_STATE_8:
-	हाल DRX_LOCK_STATE_9:
+		break;
+	case DRX_LOCK_STATE_1:
+	case DRX_LOCK_STATE_2:
+	case DRX_LOCK_STATE_3:
+	case DRX_LOCK_STATE_4:
+	case DRX_LOCK_STATE_5:
+	case DRX_LOCK_STATE_6:
+	case DRX_LOCK_STATE_7:
+	case DRX_LOCK_STATE_8:
+	case DRX_LOCK_STATE_9:
 		*status = FE_HAS_SIGNAL
 		    | FE_HAS_CARRIER | FE_HAS_VITERBI | FE_HAS_SYNC;
-		अवरोध;
-	हाल DRX_LOCKED:
+		break;
+	case DRX_LOCKED:
 		*status = FE_HAS_SIGNAL
 		    | FE_HAS_CARRIER
 		    | FE_HAS_VITERBI | FE_HAS_SYNC | FE_HAS_LOCK;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_err("Lock state unknown %d\n", lock_status);
-	पूर्ण
+	}
 	ctrl_sig_quality(demod, lock_status);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक drx39xxj_पढ़ो_ber(काष्ठा dvb_frontend *fe, u32 *ber)
-अणु
-	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
+static int drx39xxj_read_ber(struct dvb_frontend *fe, u32 *ber)
+{
+	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
 
-	अगर (p->pre_bit_error.stat[0].scale == FE_SCALE_NOT_AVAILABLE) अणु
+	if (p->pre_bit_error.stat[0].scale == FE_SCALE_NOT_AVAILABLE) {
 		*ber = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!p->pre_bit_count.stat[0].uvalue) अणु
-		अगर (!p->pre_bit_error.stat[0].uvalue)
+	if (!p->pre_bit_count.stat[0].uvalue) {
+		if (!p->pre_bit_error.stat[0].uvalue)
 			*ber = 0;
-		अन्यथा
+		else
 			*ber = 1000000;
-	पूर्ण अन्यथा अणु
-		*ber = frac_बार1e6(p->pre_bit_error.stat[0].uvalue,
+	} else {
+		*ber = frac_times1e6(p->pre_bit_error.stat[0].uvalue,
 				     p->pre_bit_count.stat[0].uvalue);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक drx39xxj_पढ़ो_संकेत_strength(काष्ठा dvb_frontend *fe,
+static int drx39xxj_read_signal_strength(struct dvb_frontend *fe,
 					 u16 *strength)
-अणु
-	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
+{
+	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
 
-	अगर (p->strength.stat[0].scale == FE_SCALE_NOT_AVAILABLE) अणु
+	if (p->strength.stat[0].scale == FE_SCALE_NOT_AVAILABLE) {
 		*strength = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	*strength = p->strength.stat[0].uvalue;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक drx39xxj_पढ़ो_snr(काष्ठा dvb_frontend *fe, u16 *snr)
-अणु
-	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
-	u64 पंचांगp64;
+static int drx39xxj_read_snr(struct dvb_frontend *fe, u16 *snr)
+{
+	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
+	u64 tmp64;
 
-	अगर (p->cnr.stat[0].scale == FE_SCALE_NOT_AVAILABLE) अणु
+	if (p->cnr.stat[0].scale == FE_SCALE_NOT_AVAILABLE) {
 		*snr = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	पंचांगp64 = p->cnr.stat[0].svalue;
-	करो_भाग(पंचांगp64, 10);
-	*snr = पंचांगp64;
-	वापस 0;
-पूर्ण
+	tmp64 = p->cnr.stat[0].svalue;
+	do_div(tmp64, 10);
+	*snr = tmp64;
+	return 0;
+}
 
-अटल पूर्णांक drx39xxj_पढ़ो_ucblocks(काष्ठा dvb_frontend *fe, u32 *ucb)
-अणु
-	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
+static int drx39xxj_read_ucblocks(struct dvb_frontend *fe, u32 *ucb)
+{
+	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
 
-	अगर (p->block_error.stat[0].scale == FE_SCALE_NOT_AVAILABLE) अणु
+	if (p->block_error.stat[0].scale == FE_SCALE_NOT_AVAILABLE) {
 		*ucb = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	*ucb = p->block_error.stat[0].uvalue;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक drx39xxj_set_frontend(काष्ठा dvb_frontend *fe)
-अणु
-#अगर_घोषित DJH_DEBUG
-	पूर्णांक i;
-#पूर्ण_अगर
-	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
-	काष्ठा drx39xxj_state *state = fe->demodulator_priv;
-	काष्ठा drx_demod_instance *demod = state->demod;
-	क्रमागत drx_standard standard = DRX_STANDARD_8VSB;
-	काष्ठा drx_channel channel;
-	पूर्णांक result;
-	अटल स्थिर काष्ठा drx_channel def_channel = अणु
+static int drx39xxj_set_frontend(struct dvb_frontend *fe)
+{
+#ifdef DJH_DEBUG
+	int i;
+#endif
+	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
+	struct drx39xxj_state *state = fe->demodulator_priv;
+	struct drx_demod_instance *demod = state->demod;
+	enum drx_standard standard = DRX_STANDARD_8VSB;
+	struct drx_channel channel;
+	int result;
+	static const struct drx_channel def_channel = {
 		/* frequency      */ 0,
 		/* bandwidth      */ DRX_BANDWIDTH_6MHZ,
 		/* mirror         */ DRX_MIRROR_NO,
-		/* स्थिरellation  */ DRX_CONSTELLATION_AUTO,
+		/* constellation  */ DRX_CONSTELLATION_AUTO,
 		/* hierarchy      */ DRX_HIERARCHY_UNKNOWN,
 		/* priority       */ DRX_PRIORITY_UNKNOWN,
 		/* coderate       */ DRX_CODERATE_UNKNOWN,
 		/* guard          */ DRX_GUARD_UNKNOWN,
-		/* ffपंचांगode        */ DRX_FFTMODE_UNKNOWN,
-		/* classअगरication */ DRX_CLASSIFICATION_AUTO,
+		/* fftmode        */ DRX_FFTMODE_UNKNOWN,
+		/* classification */ DRX_CLASSIFICATION_AUTO,
 		/* symbolrate     */ 5057000,
-		/* पूर्णांकerleavemode */ DRX_INTERLEAVEMODE_UNKNOWN,
+		/* interleavemode */ DRX_INTERLEAVEMODE_UNKNOWN,
 		/* ldpc           */ DRX_LDPC_UNKNOWN,
 		/* carrier        */ DRX_CARRIER_UNKNOWN,
 		/* frame mode     */ DRX_FRAMEMODE_UNKNOWN
-	पूर्ण;
-	u32 स्थिरellation = DRX_CONSTELLATION_AUTO;
+	};
+	u32 constellation = DRX_CONSTELLATION_AUTO;
 
 	/* Bring the demod out of sleep */
-	drx39xxj_set_घातerstate(fe, 1);
+	drx39xxj_set_powerstate(fe, 1);
 
-	अगर (fe->ops.tuner_ops.set_params) अणु
-		u32 पूर्णांक_freq;
+	if (fe->ops.tuner_ops.set_params) {
+		u32 int_freq;
 
-		अगर (fe->ops.i2c_gate_ctrl)
+		if (fe->ops.i2c_gate_ctrl)
 			fe->ops.i2c_gate_ctrl(fe, 1);
 
 		/* Set tuner to desired frequency and standard */
 		fe->ops.tuner_ops.set_params(fe);
 
 		/* Use the tuner's IF */
-		अगर (fe->ops.tuner_ops.get_अगर_frequency) अणु
-			fe->ops.tuner_ops.get_अगर_frequency(fe, &पूर्णांक_freq);
-			demod->my_common_attr->पूर्णांकermediate_freq = पूर्णांक_freq / 1000;
-		पूर्ण
+		if (fe->ops.tuner_ops.get_if_frequency) {
+			fe->ops.tuner_ops.get_if_frequency(fe, &int_freq);
+			demod->my_common_attr->intermediate_freq = int_freq / 1000;
+		}
 
-		अगर (fe->ops.i2c_gate_ctrl)
+		if (fe->ops.i2c_gate_ctrl)
 			fe->ops.i2c_gate_ctrl(fe, 0);
-	पूर्ण
+	}
 
-	चयन (p->delivery_प्रणाली) अणु
-	हाल SYS_ATSC:
+	switch (p->delivery_system) {
+	case SYS_ATSC:
 		standard = DRX_STANDARD_8VSB;
-		अवरोध;
-	हाल SYS_DVBC_ANNEX_B:
+		break;
+	case SYS_DVBC_ANNEX_B:
 		standard = DRX_STANDARD_ITU_B;
 
-		चयन (p->modulation) अणु
-		हाल QAM_64:
-			स्थिरellation = DRX_CONSTELLATION_QAM64;
-			अवरोध;
-		हाल QAM_256:
-			स्थिरellation = DRX_CONSTELLATION_QAM256;
-			अवरोध;
-		शेष:
-			स्थिरellation = DRX_CONSTELLATION_AUTO;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	/* Set the standard (will be घातered up अगर necessary */
+		switch (p->modulation) {
+		case QAM_64:
+			constellation = DRX_CONSTELLATION_QAM64;
+			break;
+		case QAM_256:
+			constellation = DRX_CONSTELLATION_QAM256;
+			break;
+		default:
+			constellation = DRX_CONSTELLATION_AUTO;
+			break;
+		}
+		break;
+	default:
+		return -EINVAL;
+	}
+	/* Set the standard (will be powered up if necessary */
 	result = ctrl_set_standard(demod, &standard);
-	अगर (result != 0) अणु
+	if (result != 0) {
 		pr_err("Failed to set standard! result=%02x\n",
 			result);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* set channel parameters */
 	channel = def_channel;
 	channel.frequency = p->frequency / 1000;
 	channel.bandwidth = DRX_BANDWIDTH_6MHZ;
-	channel.स्थिरellation = स्थिरellation;
+	channel.constellation = constellation;
 
 	/* program channel */
 	result = ctrl_set_channel(demod, &channel);
-	अगर (result != 0) अणु
+	if (result != 0) {
 		pr_err("Failed to set channel!\n");
-		वापस -EINVAL;
-	पूर्ण
-	/* Just क्रम giggles, let's shut off the LNA again.... */
+		return -EINVAL;
+	}
+	/* Just for giggles, let's shut off the LNA again.... */
 	drxj_set_lna_state(demod, false);
 
-	/* After set_frontend, except क्रम strength, stats aren't available */
+	/* After set_frontend, except for strength, stats aren't available */
 	p->strength.stat[0].scale = FE_SCALE_RELATIVE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक drx39xxj_sleep(काष्ठा dvb_frontend *fe)
-अणु
-	/* घातer-करोwn the demodulator */
-	वापस drx39xxj_set_घातerstate(fe, 0);
-पूर्ण
+static int drx39xxj_sleep(struct dvb_frontend *fe)
+{
+	/* power-down the demodulator */
+	return drx39xxj_set_powerstate(fe, 0);
+}
 
-अटल पूर्णांक drx39xxj_i2c_gate_ctrl(काष्ठा dvb_frontend *fe, पूर्णांक enable)
-अणु
-	काष्ठा drx39xxj_state *state = fe->demodulator_priv;
-	काष्ठा drx_demod_instance *demod = state->demod;
+static int drx39xxj_i2c_gate_ctrl(struct dvb_frontend *fe, int enable)
+{
+	struct drx39xxj_state *state = fe->demodulator_priv;
+	struct drx_demod_instance *demod = state->demod;
 	bool i2c_gate_state;
-	पूर्णांक result;
+	int result;
 
-#अगर_घोषित DJH_DEBUG
+#ifdef DJH_DEBUG
 	pr_debug("i2c gate call: enable=%d state=%d\n", enable,
-	       state->i2c_gate_खोलो);
-#पूर्ण_अगर
+	       state->i2c_gate_open);
+#endif
 
-	अगर (enable)
+	if (enable)
 		i2c_gate_state = true;
-	अन्यथा
+	else
 		i2c_gate_state = false;
 
-	अगर (state->i2c_gate_खोलो == enable) अणु
-		/* We're alपढ़ोy in the desired state */
-		वापस 0;
-	पूर्ण
+	if (state->i2c_gate_open == enable) {
+		/* We're already in the desired state */
+		return 0;
+	}
 
 	result = ctrl_i2c_bridge(demod, &i2c_gate_state);
-	अगर (result != 0) अणु
+	if (result != 0) {
 		pr_err("drx39xxj: could not open i2c gate [%d]\n",
 		       result);
 		dump_stack();
-	पूर्ण अन्यथा अणु
-		state->i2c_gate_खोलो = enable;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	} else {
+		state->i2c_gate_open = enable;
+	}
+	return 0;
+}
 
-अटल पूर्णांक drx39xxj_init(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा drx39xxj_state *state = fe->demodulator_priv;
-	काष्ठा drx_demod_instance *demod = state->demod;
-	पूर्णांक rc = 0;
+static int drx39xxj_init(struct dvb_frontend *fe)
+{
+	struct drx39xxj_state *state = fe->demodulator_priv;
+	struct drx_demod_instance *demod = state->demod;
+	int rc = 0;
 
-	अगर (fe->निकास == DVB_FE_DEVICE_RESUME) अणु
-		/* so drxj_खोलो() करोes what it needs to करो */
-		demod->my_common_attr->is_खोलोed = false;
-		rc = drxj_खोलो(demod);
-		अगर (rc != 0)
+	if (fe->exit == DVB_FE_DEVICE_RESUME) {
+		/* so drxj_open() does what it needs to do */
+		demod->my_common_attr->is_opened = false;
+		rc = drxj_open(demod);
+		if (rc != 0)
 			pr_err("drx39xxj_init(): DRX open failed rc=%d!\n", rc);
-	पूर्ण अन्यथा
-		drx39xxj_set_घातerstate(fe, 1);
+	} else
+		drx39xxj_set_powerstate(fe, 1);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक drx39xxj_set_lna(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
-	काष्ठा drx39xxj_state *state = fe->demodulator_priv;
-	काष्ठा drx_demod_instance *demod = state->demod;
-	काष्ठा drxj_data *ext_attr = demod->my_ext_attr;
+static int drx39xxj_set_lna(struct dvb_frontend *fe)
+{
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+	struct drx39xxj_state *state = fe->demodulator_priv;
+	struct drx_demod_instance *demod = state->demod;
+	struct drxj_data *ext_attr = demod->my_ext_attr;
 
-	अगर (c->lna) अणु
-		अगर (!ext_attr->has_lna) अणु
+	if (c->lna) {
+		if (!ext_attr->has_lna) {
 			pr_err("LNA is not supported on this device!\n");
-			वापस -EINVAL;
+			return -EINVAL;
 
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस drxj_set_lna_state(demod, c->lna);
-पूर्ण
+	return drxj_set_lna_state(demod, c->lna);
+}
 
-अटल पूर्णांक drx39xxj_get_tune_settings(काष्ठा dvb_frontend *fe,
-				      काष्ठा dvb_frontend_tune_settings *tune)
-अणु
+static int drx39xxj_get_tune_settings(struct dvb_frontend *fe,
+				      struct dvb_frontend_tune_settings *tune)
+{
 	tune->min_delay_ms = 1000;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम drx39xxj_release(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा drx39xxj_state *state = fe->demodulator_priv;
-	काष्ठा drx_demod_instance *demod = state->demod;
+static void drx39xxj_release(struct dvb_frontend *fe)
+{
+	struct drx39xxj_state *state = fe->demodulator_priv;
+	struct drx_demod_instance *demod = state->demod;
 
-	/* अगर device is हटाओd करोn't access it */
-	अगर (fe->निकास != DVB_FE_DEVICE_REMOVED)
-		drxj_बंद(demod);
+	/* if device is removed don't access it */
+	if (fe->exit != DVB_FE_DEVICE_REMOVED)
+		drxj_close(demod);
 
-	kमुक्त(demod->my_ext_attr);
-	kमुक्त(demod->my_common_attr);
-	kमुक्त(demod->my_i2c_dev_addr);
+	kfree(demod->my_ext_attr);
+	kfree(demod->my_common_attr);
+	kfree(demod->my_i2c_dev_addr);
 	release_firmware(demod->firmware);
-	kमुक्त(demod);
-	kमुक्त(state);
-पूर्ण
+	kfree(demod);
+	kfree(state);
+}
 
-अटल स्थिर काष्ठा dvb_frontend_ops drx39xxj_ops;
+static const struct dvb_frontend_ops drx39xxj_ops;
 
-काष्ठा dvb_frontend *drx39xxj_attach(काष्ठा i2c_adapter *i2c)
-अणु
-	काष्ठा drx39xxj_state *state = शून्य;
-	काष्ठा i2c_device_addr *demod_addr = शून्य;
-	काष्ठा drx_common_attr *demod_comm_attr = शून्य;
-	काष्ठा drxj_data *demod_ext_attr = शून्य;
-	काष्ठा drx_demod_instance *demod = शून्य;
-	काष्ठा dtv_frontend_properties *p;
-	पूर्णांक result;
+struct dvb_frontend *drx39xxj_attach(struct i2c_adapter *i2c)
+{
+	struct drx39xxj_state *state = NULL;
+	struct i2c_device_addr *demod_addr = NULL;
+	struct drx_common_attr *demod_comm_attr = NULL;
+	struct drxj_data *demod_ext_attr = NULL;
+	struct drx_demod_instance *demod = NULL;
+	struct dtv_frontend_properties *p;
+	int result;
 
-	/* allocate memory क्रम the पूर्णांकernal state */
-	state = kzalloc(माप(काष्ठा drx39xxj_state), GFP_KERNEL);
-	अगर (state == शून्य)
-		जाओ error;
+	/* allocate memory for the internal state */
+	state = kzalloc(sizeof(struct drx39xxj_state), GFP_KERNEL);
+	if (state == NULL)
+		goto error;
 
-	demod = kmemdup(&drxj_शेष_demod_g,
-			माप(काष्ठा drx_demod_instance), GFP_KERNEL);
-	अगर (demod == शून्य)
-		जाओ error;
+	demod = kmemdup(&drxj_default_demod_g,
+			sizeof(struct drx_demod_instance), GFP_KERNEL);
+	if (demod == NULL)
+		goto error;
 
-	demod_addr = kmemdup(&drxj_शेष_addr_g,
-			     माप(काष्ठा i2c_device_addr), GFP_KERNEL);
-	अगर (demod_addr == शून्य)
-		जाओ error;
+	demod_addr = kmemdup(&drxj_default_addr_g,
+			     sizeof(struct i2c_device_addr), GFP_KERNEL);
+	if (demod_addr == NULL)
+		goto error;
 
-	demod_comm_attr = kmemdup(&drxj_शेष_comm_attr_g,
-				  माप(काष्ठा drx_common_attr), GFP_KERNEL);
-	अगर (demod_comm_attr == शून्य)
-		जाओ error;
+	demod_comm_attr = kmemdup(&drxj_default_comm_attr_g,
+				  sizeof(struct drx_common_attr), GFP_KERNEL);
+	if (demod_comm_attr == NULL)
+		goto error;
 
-	demod_ext_attr = kmemdup(&drxj_data_g, माप(काष्ठा drxj_data),
+	demod_ext_attr = kmemdup(&drxj_data_g, sizeof(struct drxj_data),
 				 GFP_KERNEL);
-	अगर (demod_ext_attr == शून्य)
-		जाओ error;
+	if (demod_ext_attr == NULL)
+		goto error;
 
 	/* setup the state */
 	state->i2c = i2c;
@@ -12319,26 +12318,26 @@ release:
 	demod->my_common_attr = demod_comm_attr;
 	demod->my_i2c_dev_addr->user_data = state;
 	demod->my_common_attr->microcode_file = DRX39XX_MAIN_FIRMWARE;
-	demod->my_common_attr->verअगरy_microcode = true;
-	demod->my_common_attr->पूर्णांकermediate_freq = 5000;
-	demod->my_common_attr->current_घातer_mode = DRX_POWER_DOWN;
+	demod->my_common_attr->verify_microcode = true;
+	demod->my_common_attr->intermediate_freq = 5000;
+	demod->my_common_attr->current_power_mode = DRX_POWER_DOWN;
 	demod->my_ext_attr = demod_ext_attr;
-	((काष्ठा drxj_data *)demod_ext_attr)->uio_sma_tx_mode = DRX_UIO_MODE_READWRITE;
+	((struct drxj_data *)demod_ext_attr)->uio_sma_tx_mode = DRX_UIO_MODE_READWRITE;
 	demod->i2c = i2c;
 
-	result = drxj_खोलो(demod);
-	अगर (result != 0) अणु
+	result = drxj_open(demod);
+	if (result != 0) {
 		pr_err("DRX open failed!  Aborting\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	/* create dvb_frontend */
-	स_नकल(&state->frontend.ops, &drx39xxj_ops,
-	       माप(काष्ठा dvb_frontend_ops));
+	memcpy(&state->frontend.ops, &drx39xxj_ops,
+	       sizeof(struct dvb_frontend_ops));
 
 	state->frontend.demodulator_priv = state;
 
-	/* Initialize stats - needed क्रम DVBv5 stats to work */
+	/* Initialize stats - needed for DVBv5 stats to work */
 	p = &state->frontend.dtv_property_cache;
 	p->strength.len = 1;
 	p->pre_bit_count.len = 1;
@@ -12358,42 +12357,42 @@ release:
 	p->block_error.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 	p->cnr.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 
-	वापस &state->frontend;
+	return &state->frontend;
 
 error:
-	kमुक्त(demod_ext_attr);
-	kमुक्त(demod_comm_attr);
-	kमुक्त(demod_addr);
-	kमुक्त(demod);
-	kमुक्त(state);
+	kfree(demod_ext_attr);
+	kfree(demod_comm_attr);
+	kfree(demod_addr);
+	kfree(demod);
+	kfree(state);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL(drx39xxj_attach);
 
-अटल स्थिर काष्ठा dvb_frontend_ops drx39xxj_ops = अणु
-	.delsys = अणु SYS_ATSC, SYS_DVBC_ANNEX_B पूर्ण,
-	.info = अणु
+static const struct dvb_frontend_ops drx39xxj_ops = {
+	.delsys = { SYS_ATSC, SYS_DVBC_ANNEX_B },
+	.info = {
 		 .name = "Micronas DRX39xxj family Frontend",
 		 .frequency_min_hz =  51 * MHz,
 		 .frequency_max_hz = 858 * MHz,
 		 .frequency_stepsize_hz = 62500,
 		 .caps = FE_CAN_QAM_64 | FE_CAN_QAM_256 | FE_CAN_8VSB
-	पूर्ण,
+	},
 
 	.init = drx39xxj_init,
 	.i2c_gate_ctrl = drx39xxj_i2c_gate_ctrl,
 	.sleep = drx39xxj_sleep,
 	.set_frontend = drx39xxj_set_frontend,
 	.get_tune_settings = drx39xxj_get_tune_settings,
-	.पढ़ो_status = drx39xxj_पढ़ो_status,
-	.पढ़ो_ber = drx39xxj_पढ़ो_ber,
-	.पढ़ो_संकेत_strength = drx39xxj_पढ़ो_संकेत_strength,
-	.पढ़ो_snr = drx39xxj_पढ़ो_snr,
-	.पढ़ो_ucblocks = drx39xxj_पढ़ो_ucblocks,
+	.read_status = drx39xxj_read_status,
+	.read_ber = drx39xxj_read_ber,
+	.read_signal_strength = drx39xxj_read_signal_strength,
+	.read_snr = drx39xxj_read_snr,
+	.read_ucblocks = drx39xxj_read_ucblocks,
 	.release = drx39xxj_release,
 	.set_lna = drx39xxj_set_lna,
-पूर्ण;
+};
 
 MODULE_DESCRIPTION("Micronas DRX39xxj Frontend");
 MODULE_AUTHOR("Devin Heitmueller");

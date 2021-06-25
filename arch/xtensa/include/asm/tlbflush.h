@@ -1,206 +1,205 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2001 - 2013 Tensilica Inc.
  */
 
-#अगर_अघोषित _XTENSA_TLBFLUSH_H
-#घोषणा _XTENSA_TLBFLUSH_H
+#ifndef _XTENSA_TLBFLUSH_H
+#define _XTENSA_TLBFLUSH_H
 
-#समावेश <linux/stringअगरy.h>
-#समावेश <यंत्र/processor.h>
+#include <linux/stringify.h>
+#include <asm/processor.h>
 
-#घोषणा DTLB_WAY_PGD	7
+#define DTLB_WAY_PGD	7
 
-#घोषणा ITLB_ARF_WAYS	4
-#घोषणा DTLB_ARF_WAYS	4
+#define ITLB_ARF_WAYS	4
+#define DTLB_ARF_WAYS	4
 
-#घोषणा ITLB_HIT_BIT	3
-#घोषणा DTLB_HIT_BIT	4
+#define ITLB_HIT_BIT	3
+#define DTLB_HIT_BIT	4
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
 /* TLB flushing:
  *
  *  - flush_tlb_all() flushes all processes TLB entries
- *  - flush_tlb_mm(mm) flushes the specअगरied mm context TLB entries
+ *  - flush_tlb_mm(mm) flushes the specified mm context TLB entries
  *  - flush_tlb_page(mm, vmaddr) flushes a single page
  *  - flush_tlb_range(mm, start, end) flushes a range of pages
  */
 
-व्योम local_flush_tlb_all(व्योम);
-व्योम local_flush_tlb_mm(काष्ठा mm_काष्ठा *mm);
-व्योम local_flush_tlb_page(काष्ठा vm_area_काष्ठा *vma,
-		अचिन्हित दीर्घ page);
-व्योम local_flush_tlb_range(काष्ठा vm_area_काष्ठा *vma,
-		अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
-व्योम local_flush_tlb_kernel_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
+void local_flush_tlb_all(void);
+void local_flush_tlb_mm(struct mm_struct *mm);
+void local_flush_tlb_page(struct vm_area_struct *vma,
+		unsigned long page);
+void local_flush_tlb_range(struct vm_area_struct *vma,
+		unsigned long start, unsigned long end);
+void local_flush_tlb_kernel_range(unsigned long start, unsigned long end);
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 
-व्योम flush_tlb_all(व्योम);
-व्योम flush_tlb_mm(काष्ठा mm_काष्ठा *);
-व्योम flush_tlb_page(काष्ठा vm_area_काष्ठा *, अचिन्हित दीर्घ);
-व्योम flush_tlb_range(काष्ठा vm_area_काष्ठा *, अचिन्हित दीर्घ,
-		अचिन्हित दीर्घ);
-व्योम flush_tlb_kernel_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
+void flush_tlb_all(void);
+void flush_tlb_mm(struct mm_struct *);
+void flush_tlb_page(struct vm_area_struct *, unsigned long);
+void flush_tlb_range(struct vm_area_struct *, unsigned long,
+		unsigned long);
+void flush_tlb_kernel_range(unsigned long start, unsigned long end);
 
-#अन्यथा /* !CONFIG_SMP */
+#else /* !CONFIG_SMP */
 
-#घोषणा flush_tlb_all()			   local_flush_tlb_all()
-#घोषणा flush_tlb_mm(mm)		   local_flush_tlb_mm(mm)
-#घोषणा flush_tlb_page(vma, page)	   local_flush_tlb_page(vma, page)
-#घोषणा flush_tlb_range(vma, vmaddr, end)  local_flush_tlb_range(vma, vmaddr, \
+#define flush_tlb_all()			   local_flush_tlb_all()
+#define flush_tlb_mm(mm)		   local_flush_tlb_mm(mm)
+#define flush_tlb_page(vma, page)	   local_flush_tlb_page(vma, page)
+#define flush_tlb_range(vma, vmaddr, end)  local_flush_tlb_range(vma, vmaddr, \
 								 end)
-#घोषणा flush_tlb_kernel_range(start, end) local_flush_tlb_kernel_range(start, \
+#define flush_tlb_kernel_range(start, end) local_flush_tlb_kernel_range(start, \
 									end)
 
-#पूर्ण_अगर /* CONFIG_SMP */
+#endif /* CONFIG_SMP */
 
 /* TLB operations. */
 
-अटल अंतरभूत अचिन्हित दीर्घ itlb_probe(अचिन्हित दीर्घ addr)
-अणु
-	अचिन्हित दीर्घ पंचांगp;
-	__यंत्र__ __अस्थिर__("pitlb  %0, %1\n\t" : "=a" (पंचांगp) : "a" (addr));
-	वापस पंचांगp;
-पूर्ण
+static inline unsigned long itlb_probe(unsigned long addr)
+{
+	unsigned long tmp;
+	__asm__ __volatile__("pitlb  %0, %1\n\t" : "=a" (tmp) : "a" (addr));
+	return tmp;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ dtlb_probe(अचिन्हित दीर्घ addr)
-अणु
-	अचिन्हित दीर्घ पंचांगp;
-	__यंत्र__ __अस्थिर__("pdtlb  %0, %1\n\t" : "=a" (पंचांगp) : "a" (addr));
-	वापस पंचांगp;
-पूर्ण
+static inline unsigned long dtlb_probe(unsigned long addr)
+{
+	unsigned long tmp;
+	__asm__ __volatile__("pdtlb  %0, %1\n\t" : "=a" (tmp) : "a" (addr));
+	return tmp;
+}
 
-अटल अंतरभूत व्योम invalidate_itlb_entry (अचिन्हित दीर्घ probe)
-अणु
-	__यंत्र__ __अस्थिर__("iitlb  %0; isync\n\t" : : "a" (probe));
-पूर्ण
+static inline void invalidate_itlb_entry (unsigned long probe)
+{
+	__asm__ __volatile__("iitlb  %0; isync\n\t" : : "a" (probe));
+}
 
-अटल अंतरभूत व्योम invalidate_dtlb_entry (अचिन्हित दीर्घ probe)
-अणु
-	__यंत्र__ __अस्थिर__("idtlb  %0; dsync\n\t" : : "a" (probe));
-पूर्ण
+static inline void invalidate_dtlb_entry (unsigned long probe)
+{
+	__asm__ __volatile__("idtlb  %0; dsync\n\t" : : "a" (probe));
+}
 
 /* Use the .._no_isync functions with caution.  Generally, these are
- * handy क्रम bulk invalidates followed by a single 'isync'.  The
+ * handy for bulk invalidates followed by a single 'isync'.  The
  * caller must follow up with an 'isync', which can be relatively
  * expensive on some Xtensa implementations.
  */
-अटल अंतरभूत व्योम invalidate_itlb_entry_no_isync (अचिन्हित entry)
-अणु
+static inline void invalidate_itlb_entry_no_isync (unsigned entry)
+{
 	/* Caller must follow up with 'isync'. */
-	__यंत्र__ __अस्थिर__ ("iitlb  %0\n" : : "a" (entry) );
-पूर्ण
+	__asm__ __volatile__ ("iitlb  %0\n" : : "a" (entry) );
+}
 
-अटल अंतरभूत व्योम invalidate_dtlb_entry_no_isync (अचिन्हित entry)
-अणु
+static inline void invalidate_dtlb_entry_no_isync (unsigned entry)
+{
 	/* Caller must follow up with 'isync'. */
-	__यंत्र__ __अस्थिर__ ("idtlb  %0\n" : : "a" (entry) );
-पूर्ण
+	__asm__ __volatile__ ("idtlb  %0\n" : : "a" (entry) );
+}
 
-अटल अंतरभूत व्योम set_itlbcfg_रेजिस्टर (अचिन्हित दीर्घ val)
-अणु
-	__यंत्र__ __अस्थिर__("wsr  %0, itlbcfg\n\t" "isync\n\t"
+static inline void set_itlbcfg_register (unsigned long val)
+{
+	__asm__ __volatile__("wsr  %0, itlbcfg\n\t" "isync\n\t"
 			     : : "a" (val));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_dtlbcfg_रेजिस्टर (अचिन्हित दीर्घ val)
-अणु
-	__यंत्र__ __अस्थिर__("wsr  %0, dtlbcfg; dsync\n\t"
+static inline void set_dtlbcfg_register (unsigned long val)
+{
+	__asm__ __volatile__("wsr  %0, dtlbcfg; dsync\n\t"
 	    		     : : "a" (val));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_ptevaddr_रेजिस्टर (अचिन्हित दीर्घ val)
-अणु
-	__यंत्र__ __अस्थिर__(" wsr  %0, ptevaddr; isync\n"
+static inline void set_ptevaddr_register (unsigned long val)
+{
+	__asm__ __volatile__(" wsr  %0, ptevaddr; isync\n"
 			     : : "a" (val));
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ पढ़ो_ptevaddr_रेजिस्टर (व्योम)
-अणु
-	अचिन्हित दीर्घ पंचांगp;
-	__यंत्र__ __अस्थिर__("rsr  %0, ptevaddr\n\t" : "=a" (पंचांगp));
-	वापस पंचांगp;
-पूर्ण
+static inline unsigned long read_ptevaddr_register (void)
+{
+	unsigned long tmp;
+	__asm__ __volatile__("rsr  %0, ptevaddr\n\t" : "=a" (tmp));
+	return tmp;
+}
 
-अटल अंतरभूत व्योम ग_लिखो_dtlb_entry (pte_t entry, पूर्णांक way)
-अणु
-	__यंत्र__ __अस्थिर__("wdtlb  %1, %0; dsync\n\t"
+static inline void write_dtlb_entry (pte_t entry, int way)
+{
+	__asm__ __volatile__("wdtlb  %1, %0; dsync\n\t"
 			     : : "r" (way), "r" (entry) );
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ग_लिखो_itlb_entry (pte_t entry, पूर्णांक way)
-अणु
-	__यंत्र__ __अस्थिर__("witlb  %1, %0; isync\n\t"
+static inline void write_itlb_entry (pte_t entry, int way)
+{
+	__asm__ __volatile__("witlb  %1, %0; isync\n\t"
 	                     : : "r" (way), "r" (entry) );
-पूर्ण
+}
 
-अटल अंतरभूत व्योम invalidate_page_directory (व्योम)
-अणु
+static inline void invalidate_page_directory (void)
+{
 	invalidate_dtlb_entry (DTLB_WAY_PGD);
 	invalidate_dtlb_entry (DTLB_WAY_PGD+1);
 	invalidate_dtlb_entry (DTLB_WAY_PGD+2);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम invalidate_itlb_mapping (अचिन्हित address)
-अणु
-	अचिन्हित दीर्घ tlb_entry;
-	अगर (((tlb_entry = itlb_probe(address)) & (1 << ITLB_HIT_BIT)) != 0)
+static inline void invalidate_itlb_mapping (unsigned address)
+{
+	unsigned long tlb_entry;
+	if (((tlb_entry = itlb_probe(address)) & (1 << ITLB_HIT_BIT)) != 0)
 		invalidate_itlb_entry(tlb_entry);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम invalidate_dtlb_mapping (अचिन्हित address)
-अणु
-	अचिन्हित दीर्घ tlb_entry;
-	अगर (((tlb_entry = dtlb_probe(address)) & (1 << DTLB_HIT_BIT)) != 0)
+static inline void invalidate_dtlb_mapping (unsigned address)
+{
+	unsigned long tlb_entry;
+	if (((tlb_entry = dtlb_probe(address)) & (1 << DTLB_HIT_BIT)) != 0)
 		invalidate_dtlb_entry(tlb_entry);
-पूर्ण
+}
 
 /*
- * DO NOT USE THESE FUNCTIONS.  These inकाष्ठाions aren't part of the Xtensa
- * ISA and exist only क्रम test purposes..
- * You may find it helpful क्रम MMU debugging, however.
+ * DO NOT USE THESE FUNCTIONS.  These instructions aren't part of the Xtensa
+ * ISA and exist only for test purposes..
+ * You may find it helpful for MMU debugging, however.
  *
- * 'at' is the unmodअगरied input रेजिस्टर
- * 'as' is the output रेजिस्टर, as follows (specअगरic to the Linux config):
+ * 'at' is the unmodified input register
+ * 'as' is the output register, as follows (specific to the Linux config):
  *
- *      as[31..12] contain the भव address
+ *      as[31..12] contain the virtual address
  *      as[11..08] are meaningless
  *      as[07..00] contain the asid
  */
 
-अटल अंतरभूत अचिन्हित दीर्घ पढ़ो_dtlb_भव (पूर्णांक way)
-अणु
-	अचिन्हित दीर्घ पंचांगp;
-	__यंत्र__ __अस्थिर__("rdtlb0  %0, %1\n\t" : "=a" (पंचांगp), "+a" (way));
-	वापस पंचांगp;
-पूर्ण
+static inline unsigned long read_dtlb_virtual (int way)
+{
+	unsigned long tmp;
+	__asm__ __volatile__("rdtlb0  %0, %1\n\t" : "=a" (tmp), "+a" (way));
+	return tmp;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ पढ़ो_dtlb_translation (पूर्णांक way)
-अणु
-	अचिन्हित दीर्घ पंचांगp;
-	__यंत्र__ __अस्थिर__("rdtlb1  %0, %1\n\t" : "=a" (पंचांगp), "+a" (way));
-	वापस पंचांगp;
-पूर्ण
+static inline unsigned long read_dtlb_translation (int way)
+{
+	unsigned long tmp;
+	__asm__ __volatile__("rdtlb1  %0, %1\n\t" : "=a" (tmp), "+a" (way));
+	return tmp;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ पढ़ो_itlb_भव (पूर्णांक way)
-अणु
-	अचिन्हित दीर्घ पंचांगp;
-	__यंत्र__ __अस्थिर__("ritlb0  %0, %1\n\t" : "=a" (पंचांगp), "+a" (way));
-	वापस पंचांगp;
-पूर्ण
+static inline unsigned long read_itlb_virtual (int way)
+{
+	unsigned long tmp;
+	__asm__ __volatile__("ritlb0  %0, %1\n\t" : "=a" (tmp), "+a" (way));
+	return tmp;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ पढ़ो_itlb_translation (पूर्णांक way)
-अणु
-	अचिन्हित दीर्घ पंचांगp;
-	__यंत्र__ __अस्थिर__("ritlb1  %0, %1\n\t" : "=a" (पंचांगp), "+a" (way));
-	वापस पंचांगp;
-पूर्ण
+static inline unsigned long read_itlb_translation (int way)
+{
+	unsigned long tmp;
+	__asm__ __volatile__("ritlb1  %0, %1\n\t" : "=a" (tmp), "+a" (way));
+	return tmp;
+}
 
-#पूर्ण_अगर	/* __ASSEMBLY__ */
-#पूर्ण_अगर	/* _XTENSA_TLBFLUSH_H */
+#endif	/* __ASSEMBLY__ */
+#endif	/* _XTENSA_TLBFLUSH_H */

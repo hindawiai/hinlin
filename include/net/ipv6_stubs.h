@@ -1,87 +1,86 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _IPV6_STUBS_H
-#घोषणा _IPV6_STUBS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _IPV6_STUBS_H
+#define _IPV6_STUBS_H
 
-#समावेश <linux/in6.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <net/dst.h>
-#समावेश <net/flow.h>
-#समावेश <net/neighbour.h>
-#समावेश <net/sock.h>
+#include <linux/in6.h>
+#include <linux/netdevice.h>
+#include <linux/skbuff.h>
+#include <net/dst.h>
+#include <net/flow.h>
+#include <net/neighbour.h>
+#include <net/sock.h>
 
-/* काष्ठाs from net/ip6_fib.h */
-काष्ठा fib6_info;
-काष्ठा fib6_nh;
-काष्ठा fib6_config;
-काष्ठा fib6_result;
+/* structs from net/ip6_fib.h */
+struct fib6_info;
+struct fib6_nh;
+struct fib6_config;
+struct fib6_result;
 
 /* This is ugly, ideally these symbols should be built
- * पूर्णांकo the core kernel.
+ * into the core kernel.
  */
-काष्ठा ipv6_stub अणु
-	पूर्णांक (*ipv6_sock_mc_join)(काष्ठा sock *sk, पूर्णांक अगरindex,
-				 स्थिर काष्ठा in6_addr *addr);
-	पूर्णांक (*ipv6_sock_mc_drop)(काष्ठा sock *sk, पूर्णांक अगरindex,
-				 स्थिर काष्ठा in6_addr *addr);
-	काष्ठा dst_entry *(*ipv6_dst_lookup_flow)(काष्ठा net *net,
-						  स्थिर काष्ठा sock *sk,
-						  काष्ठा flowi6 *fl6,
-						  स्थिर काष्ठा in6_addr *final_dst);
-	पूर्णांक (*ipv6_route_input)(काष्ठा sk_buff *skb);
+struct ipv6_stub {
+	int (*ipv6_sock_mc_join)(struct sock *sk, int ifindex,
+				 const struct in6_addr *addr);
+	int (*ipv6_sock_mc_drop)(struct sock *sk, int ifindex,
+				 const struct in6_addr *addr);
+	struct dst_entry *(*ipv6_dst_lookup_flow)(struct net *net,
+						  const struct sock *sk,
+						  struct flowi6 *fl6,
+						  const struct in6_addr *final_dst);
+	int (*ipv6_route_input)(struct sk_buff *skb);
 
-	काष्ठा fib6_table *(*fib6_get_table)(काष्ठा net *net, u32 id);
-	पूर्णांक (*fib6_lookup)(काष्ठा net *net, पूर्णांक oअगर, काष्ठा flowi6 *fl6,
-			   काष्ठा fib6_result *res, पूर्णांक flags);
-	पूर्णांक (*fib6_table_lookup)(काष्ठा net *net, काष्ठा fib6_table *table,
-				 पूर्णांक oअगर, काष्ठा flowi6 *fl6,
-				 काष्ठा fib6_result *res, पूर्णांक flags);
-	व्योम (*fib6_select_path)(स्थिर काष्ठा net *net, काष्ठा fib6_result *res,
-				 काष्ठा flowi6 *fl6, पूर्णांक oअगर, bool oअगर_match,
-				 स्थिर काष्ठा sk_buff *skb, पूर्णांक strict);
-	u32 (*ip6_mtu_from_fib6)(स्थिर काष्ठा fib6_result *res,
-				 स्थिर काष्ठा in6_addr *daddr,
-				 स्थिर काष्ठा in6_addr *saddr);
+	struct fib6_table *(*fib6_get_table)(struct net *net, u32 id);
+	int (*fib6_lookup)(struct net *net, int oif, struct flowi6 *fl6,
+			   struct fib6_result *res, int flags);
+	int (*fib6_table_lookup)(struct net *net, struct fib6_table *table,
+				 int oif, struct flowi6 *fl6,
+				 struct fib6_result *res, int flags);
+	void (*fib6_select_path)(const struct net *net, struct fib6_result *res,
+				 struct flowi6 *fl6, int oif, bool oif_match,
+				 const struct sk_buff *skb, int strict);
+	u32 (*ip6_mtu_from_fib6)(const struct fib6_result *res,
+				 const struct in6_addr *daddr,
+				 const struct in6_addr *saddr);
 
-	पूर्णांक (*fib6_nh_init)(काष्ठा net *net, काष्ठा fib6_nh *fib6_nh,
-			    काष्ठा fib6_config *cfg, gfp_t gfp_flags,
-			    काष्ठा netlink_ext_ack *extack);
-	व्योम (*fib6_nh_release)(काष्ठा fib6_nh *fib6_nh);
-	व्योम (*fib6_update_sernum)(काष्ठा net *net, काष्ठा fib6_info *rt);
-	पूर्णांक (*ip6_del_rt)(काष्ठा net *net, काष्ठा fib6_info *rt, bool skip_notअगरy);
-	व्योम (*fib6_rt_update)(काष्ठा net *net, काष्ठा fib6_info *rt,
-			       काष्ठा nl_info *info);
+	int (*fib6_nh_init)(struct net *net, struct fib6_nh *fib6_nh,
+			    struct fib6_config *cfg, gfp_t gfp_flags,
+			    struct netlink_ext_ack *extack);
+	void (*fib6_nh_release)(struct fib6_nh *fib6_nh);
+	void (*fib6_update_sernum)(struct net *net, struct fib6_info *rt);
+	int (*ip6_del_rt)(struct net *net, struct fib6_info *rt, bool skip_notify);
+	void (*fib6_rt_update)(struct net *net, struct fib6_info *rt,
+			       struct nl_info *info);
 
-	व्योम (*udpv6_encap_enable)(व्योम);
-	व्योम (*ndisc_send_na)(काष्ठा net_device *dev, स्थिर काष्ठा in6_addr *daddr,
-			      स्थिर काष्ठा in6_addr *solicited_addr,
+	void (*udpv6_encap_enable)(void);
+	void (*ndisc_send_na)(struct net_device *dev, const struct in6_addr *daddr,
+			      const struct in6_addr *solicited_addr,
 			      bool router, bool solicited, bool override, bool inc_opt);
-#अगर IS_ENABLED(CONFIG_XFRM)
-	व्योम (*xfrm6_local_rxpmtu)(काष्ठा sk_buff *skb, u32 mtu);
-	पूर्णांक (*xfrm6_udp_encap_rcv)(काष्ठा sock *sk, काष्ठा sk_buff *skb);
-	पूर्णांक (*xfrm6_rcv_encap)(काष्ठा sk_buff *skb, पूर्णांक nexthdr, __be32 spi,
-			       पूर्णांक encap_type);
-#पूर्ण_अगर
-	काष्ठा neigh_table *nd_tbl;
+#if IS_ENABLED(CONFIG_XFRM)
+	void (*xfrm6_local_rxpmtu)(struct sk_buff *skb, u32 mtu);
+	int (*xfrm6_udp_encap_rcv)(struct sock *sk, struct sk_buff *skb);
+	int (*xfrm6_rcv_encap)(struct sk_buff *skb, int nexthdr, __be32 spi,
+			       int encap_type);
+#endif
+	struct neigh_table *nd_tbl;
 
-	पूर्णांक (*ipv6_fragment)(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb,
-			     पूर्णांक (*output)(काष्ठा net *, काष्ठा sock *, काष्ठा sk_buff *));
-	काष्ठा net_device *(*ipv6_dev_find)(काष्ठा net *net, स्थिर काष्ठा in6_addr *addr,
-					    काष्ठा net_device *dev);
-पूर्ण;
-बाह्य स्थिर काष्ठा ipv6_stub *ipv6_stub __पढ़ो_mostly;
+	int (*ipv6_fragment)(struct net *net, struct sock *sk, struct sk_buff *skb,
+			     int (*output)(struct net *, struct sock *, struct sk_buff *));
+	struct net_device *(*ipv6_dev_find)(struct net *net, const struct in6_addr *addr,
+					    struct net_device *dev);
+};
+extern const struct ipv6_stub *ipv6_stub __read_mostly;
 
 /* A stub used by bpf helpers. Similarly ugly as ipv6_stub */
-काष्ठा ipv6_bpf_stub अणु
-	पूर्णांक (*inet6_bind)(काष्ठा sock *sk, काष्ठा sockaddr *uaddr, पूर्णांक addr_len,
+struct ipv6_bpf_stub {
+	int (*inet6_bind)(struct sock *sk, struct sockaddr *uaddr, int addr_len,
 			  u32 flags);
-	काष्ठा sock *(*udp6_lib_lookup)(काष्ठा net *net,
-				     स्थिर काष्ठा in6_addr *saddr, __be16 sport,
-				     स्थिर काष्ठा in6_addr *daddr, __be16 dport,
-				     पूर्णांक dअगर, पूर्णांक sdअगर, काष्ठा udp_table *tbl,
-				     काष्ठा sk_buff *skb);
-पूर्ण;
-बाह्य स्थिर काष्ठा ipv6_bpf_stub *ipv6_bpf_stub __पढ़ो_mostly;
+	struct sock *(*udp6_lib_lookup)(struct net *net,
+				     const struct in6_addr *saddr, __be16 sport,
+				     const struct in6_addr *daddr, __be16 dport,
+				     int dif, int sdif, struct udp_table *tbl,
+				     struct sk_buff *skb);
+};
+extern const struct ipv6_bpf_stub *ipv6_bpf_stub __read_mostly;
 
-#पूर्ण_अगर
+#endif

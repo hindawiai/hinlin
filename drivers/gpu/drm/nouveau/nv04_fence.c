@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,92 +21,92 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "nouveau_drv.h"
-#समावेश "nouveau_dma.h"
-#समावेश "nouveau_fence.h"
+#include "nouveau_drv.h"
+#include "nouveau_dma.h"
+#include "nouveau_fence.h"
 
-#समावेश <nvअगर/अगर0004.h>
-#समावेश <nvअगर/push006c.h>
+#include <nvif/if0004.h>
+#include <nvif/push006c.h>
 
-काष्ठा nv04_fence_chan अणु
-	काष्ठा nouveau_fence_chan base;
-पूर्ण;
+struct nv04_fence_chan {
+	struct nouveau_fence_chan base;
+};
 
-काष्ठा nv04_fence_priv अणु
-	काष्ठा nouveau_fence_priv base;
-पूर्ण;
+struct nv04_fence_priv {
+	struct nouveau_fence_priv base;
+};
 
-अटल पूर्णांक
-nv04_fence_emit(काष्ठा nouveau_fence *fence)
-अणु
-	काष्ठा nvअगर_push *push = fence->channel->chan.push;
-	पूर्णांक ret = PUSH_WAIT(push, 2);
-	अगर (ret == 0) अणु
+static int
+nv04_fence_emit(struct nouveau_fence *fence)
+{
+	struct nvif_push *push = fence->channel->chan.push;
+	int ret = PUSH_WAIT(push, 2);
+	if (ret == 0) {
 		PUSH_NVSQ(push, NV_SW, 0x0150, fence->base.seqno);
 		PUSH_KICK(push);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक
-nv04_fence_sync(काष्ठा nouveau_fence *fence,
-		काष्ठा nouveau_channel *prev, काष्ठा nouveau_channel *chan)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static int
+nv04_fence_sync(struct nouveau_fence *fence,
+		struct nouveau_channel *prev, struct nouveau_channel *chan)
+{
+	return -ENODEV;
+}
 
-अटल u32
-nv04_fence_पढ़ो(काष्ठा nouveau_channel *chan)
-अणु
-	काष्ठा nv04_nvsw_get_ref_v0 args = अणुपूर्ण;
-	WARN_ON(nvअगर_object_mthd(&chan->nvsw, NV04_NVSW_GET_REF,
-				 &args, माप(args)));
-	वापस args.ref;
-पूर्ण
+static u32
+nv04_fence_read(struct nouveau_channel *chan)
+{
+	struct nv04_nvsw_get_ref_v0 args = {};
+	WARN_ON(nvif_object_mthd(&chan->nvsw, NV04_NVSW_GET_REF,
+				 &args, sizeof(args)));
+	return args.ref;
+}
 
-अटल व्योम
-nv04_fence_context_del(काष्ठा nouveau_channel *chan)
-अणु
-	काष्ठा nv04_fence_chan *fctx = chan->fence;
+static void
+nv04_fence_context_del(struct nouveau_channel *chan)
+{
+	struct nv04_fence_chan *fctx = chan->fence;
 	nouveau_fence_context_del(&fctx->base);
-	chan->fence = शून्य;
-	nouveau_fence_context_मुक्त(&fctx->base);
-पूर्ण
+	chan->fence = NULL;
+	nouveau_fence_context_free(&fctx->base);
+}
 
-अटल पूर्णांक
-nv04_fence_context_new(काष्ठा nouveau_channel *chan)
-अणु
-	काष्ठा nv04_fence_chan *fctx = kzalloc(माप(*fctx), GFP_KERNEL);
-	अगर (fctx) अणु
+static int
+nv04_fence_context_new(struct nouveau_channel *chan)
+{
+	struct nv04_fence_chan *fctx = kzalloc(sizeof(*fctx), GFP_KERNEL);
+	if (fctx) {
 		nouveau_fence_context_new(chan, &fctx->base);
 		fctx->base.emit = nv04_fence_emit;
 		fctx->base.sync = nv04_fence_sync;
-		fctx->base.पढ़ो = nv04_fence_पढ़ो;
+		fctx->base.read = nv04_fence_read;
 		chan->fence = fctx;
-		वापस 0;
-	पूर्ण
-	वापस -ENOMEM;
-पूर्ण
+		return 0;
+	}
+	return -ENOMEM;
+}
 
-अटल व्योम
-nv04_fence_destroy(काष्ठा nouveau_drm *drm)
-अणु
-	काष्ठा nv04_fence_priv *priv = drm->fence;
-	drm->fence = शून्य;
-	kमुक्त(priv);
-पूर्ण
+static void
+nv04_fence_destroy(struct nouveau_drm *drm)
+{
+	struct nv04_fence_priv *priv = drm->fence;
+	drm->fence = NULL;
+	kfree(priv);
+}
 
-पूर्णांक
-nv04_fence_create(काष्ठा nouveau_drm *drm)
-अणु
-	काष्ठा nv04_fence_priv *priv;
+int
+nv04_fence_create(struct nouveau_drm *drm)
+{
+	struct nv04_fence_priv *priv;
 
-	priv = drm->fence = kzalloc(माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = drm->fence = kzalloc(sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->base.dtor = nv04_fence_destroy;
 	priv->base.context_new = nv04_fence_context_new;
 	priv->base.context_del = nv04_fence_context_del;
-	वापस 0;
-पूर्ण
+	return 0;
+}

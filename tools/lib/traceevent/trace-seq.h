@@ -1,56 +1,55 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: LGPL-2.1
+// SPDX-License-Identifier: LGPL-2.1
 /*
  * Copyright (C) 2009, 2010 Red Hat Inc, Steven Rostedt <srostedt@redhat.com>
  *
  */
 
-#अगर_अघोषित _TRACE_SEQ_H
-#घोषणा _TRACE_SEQ_H
+#ifndef _TRACE_SEQ_H
+#define _TRACE_SEQ_H
 
-#समावेश <मानकतर्क.स>
-#समावेश <मानकपन.स>
+#include <stdarg.h>
+#include <stdio.h>
 
 /* ----------------------- trace_seq ----------------------- */
 
-#अगर_अघोषित TRACE_SEQ_BUF_SIZE
-#घोषणा TRACE_SEQ_BUF_SIZE 4096
-#पूर्ण_अगर
+#ifndef TRACE_SEQ_BUF_SIZE
+#define TRACE_SEQ_BUF_SIZE 4096
+#endif
 
-क्रमागत trace_seq_fail अणु
+enum trace_seq_fail {
 	TRACE_SEQ__GOOD,
 	TRACE_SEQ__BUFFER_POISONED,
 	TRACE_SEQ__MEM_ALLOC_FAILED,
-पूर्ण;
+};
 
 /*
  * Trace sequences are used to allow a function to call several other functions
  * to create a string of data to use (up to a max of PAGE_SIZE).
  */
 
-काष्ठा trace_seq अणु
-	अक्षर			*buffer;
-	अचिन्हित पूर्णांक		buffer_size;
-	अचिन्हित पूर्णांक		len;
-	अचिन्हित पूर्णांक		पढ़ोpos;
-	क्रमागत trace_seq_fail	state;
-पूर्ण;
+struct trace_seq {
+	char			*buffer;
+	unsigned int		buffer_size;
+	unsigned int		len;
+	unsigned int		readpos;
+	enum trace_seq_fail	state;
+};
 
-व्योम trace_seq_init(काष्ठा trace_seq *s);
-व्योम trace_seq_reset(काष्ठा trace_seq *s);
-व्योम trace_seq_destroy(काष्ठा trace_seq *s);
+void trace_seq_init(struct trace_seq *s);
+void trace_seq_reset(struct trace_seq *s);
+void trace_seq_destroy(struct trace_seq *s);
 
-बाह्य पूर्णांक trace_seq_म_लिखो(काष्ठा trace_seq *s, स्थिर अक्षर *fmt, ...)
-	__attribute__ ((क्रमmat (म_लिखो, 2, 3)));
-बाह्य पूर्णांक trace_seq_भ_लिखो(काष्ठा trace_seq *s, स्थिर अक्षर *fmt, बहु_सूची args)
-	__attribute__ ((क्रमmat (म_लिखो, 2, 0)));
+extern int trace_seq_printf(struct trace_seq *s, const char *fmt, ...)
+	__attribute__ ((format (printf, 2, 3)));
+extern int trace_seq_vprintf(struct trace_seq *s, const char *fmt, va_list args)
+	__attribute__ ((format (printf, 2, 0)));
 
-बाह्य पूर्णांक trace_seq_माला_दो(काष्ठा trace_seq *s, स्थिर अक्षर *str);
-बाह्य पूर्णांक trace_seq_अ_दो(काष्ठा trace_seq *s, अचिन्हित अक्षर c);
+extern int trace_seq_puts(struct trace_seq *s, const char *str);
+extern int trace_seq_putc(struct trace_seq *s, unsigned char c);
 
-बाह्य व्योम trace_seq_terminate(काष्ठा trace_seq *s);
+extern void trace_seq_terminate(struct trace_seq *s);
 
-बाह्य पूर्णांक trace_seq_करो_ख_लिखो(काष्ठा trace_seq *s, खाता *fp);
-बाह्य पूर्णांक trace_seq_करो_म_लिखो(काष्ठा trace_seq *s);
+extern int trace_seq_do_fprintf(struct trace_seq *s, FILE *fp);
+extern int trace_seq_do_printf(struct trace_seq *s);
 
-#पूर्ण_अगर /* _TRACE_SEQ_H */
+#endif /* _TRACE_SEQ_H */

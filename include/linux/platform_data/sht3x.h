@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2016 Sensirion AG, Switzerland
  * Author: David Frey <david.frey@sensirion.com>
  * Author: Pascal Sachs <pascal.sachs@sensirion.com>
  */
 
-#अगर_अघोषित __SHT3X_H_
-#घोषणा __SHT3X_H_
+#ifndef __SHT3X_H_
+#define __SHT3X_H_
 
-काष्ठा sht3x_platक्रमm_data अणु
+struct sht3x_platform_data {
 	bool blocking_io;
 	bool high_precision;
-पूर्ण;
-#पूर्ण_अगर /* __SHT3X_H_ */
+};
+#endif /* __SHT3X_H_ */

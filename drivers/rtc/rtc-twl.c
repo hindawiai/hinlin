@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * rtc-twl.c -- TWL Real Time Clock पूर्णांकerface
+ * rtc-twl.c -- TWL Real Time Clock interface
  *
  * Copyright (C) 2007 MontaVista Software, Inc
  * Author: Alexandre Rusev <source@mvista.com>
@@ -15,30 +14,30 @@
  *   Copyright (C) 2006 David Brownell
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/bcd.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/of.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/rtc.h>
+#include <linux/bcd.h>
+#include <linux/platform_device.h>
+#include <linux/interrupt.h>
+#include <linux/of.h>
 
-#समावेश <linux/mfd/twl.h>
+#include <linux/mfd/twl.h>
 
-क्रमागत twl_class अणु
+enum twl_class {
 	TWL_4030 = 0,
 	TWL_6030,
-पूर्ण;
+};
 
 /*
- * RTC block रेजिस्टर offsets (use TWL_MODULE_RTC)
+ * RTC block register offsets (use TWL_MODULE_RTC)
  */
-क्रमागत अणु
+enum {
 	REG_SECONDS_REG = 0,
 	REG_MINUTES_REG,
 	REG_HOURS_REG,
@@ -60,8 +59,8 @@
 
 	REG_RTC_COMP_LSB_REG,
 	REG_RTC_COMP_MSB_REG,
-पूर्ण;
-अटल स्थिर u8 twl4030_rtc_reg_map[] = अणु
+};
+static const u8 twl4030_rtc_reg_map[] = {
 	[REG_SECONDS_REG] = 0x00,
 	[REG_MINUTES_REG] = 0x01,
 	[REG_HOURS_REG] = 0x02,
@@ -83,8 +82,8 @@
 
 	[REG_RTC_COMP_LSB_REG] = 0x10,
 	[REG_RTC_COMP_MSB_REG] = 0x11,
-पूर्ण;
-अटल स्थिर u8 twl6030_rtc_reg_map[] = अणु
+};
+static const u8 twl6030_rtc_reg_map[] = {
 	[REG_SECONDS_REG] = 0x00,
 	[REG_MINUTES_REG] = 0x01,
 	[REG_HOURS_REG] = 0x02,
@@ -106,553 +105,553 @@
 
 	[REG_RTC_COMP_LSB_REG] = 0x13,
 	[REG_RTC_COMP_MSB_REG] = 0x14,
-पूर्ण;
+};
 
 /* RTC_CTRL_REG bitfields */
-#घोषणा BIT_RTC_CTRL_REG_STOP_RTC_M              0x01
-#घोषणा BIT_RTC_CTRL_REG_ROUND_30S_M             0x02
-#घोषणा BIT_RTC_CTRL_REG_AUTO_COMP_M             0x04
-#घोषणा BIT_RTC_CTRL_REG_MODE_12_24_M            0x08
-#घोषणा BIT_RTC_CTRL_REG_TEST_MODE_M             0x10
-#घोषणा BIT_RTC_CTRL_REG_SET_32_COUNTER_M        0x20
-#घोषणा BIT_RTC_CTRL_REG_GET_TIME_M              0x40
-#घोषणा BIT_RTC_CTRL_REG_RTC_V_OPT               0x80
+#define BIT_RTC_CTRL_REG_STOP_RTC_M              0x01
+#define BIT_RTC_CTRL_REG_ROUND_30S_M             0x02
+#define BIT_RTC_CTRL_REG_AUTO_COMP_M             0x04
+#define BIT_RTC_CTRL_REG_MODE_12_24_M            0x08
+#define BIT_RTC_CTRL_REG_TEST_MODE_M             0x10
+#define BIT_RTC_CTRL_REG_SET_32_COUNTER_M        0x20
+#define BIT_RTC_CTRL_REG_GET_TIME_M              0x40
+#define BIT_RTC_CTRL_REG_RTC_V_OPT               0x80
 
 /* RTC_STATUS_REG bitfields */
-#घोषणा BIT_RTC_STATUS_REG_RUN_M                 0x02
-#घोषणा BIT_RTC_STATUS_REG_1S_EVENT_M            0x04
-#घोषणा BIT_RTC_STATUS_REG_1M_EVENT_M            0x08
-#घोषणा BIT_RTC_STATUS_REG_1H_EVENT_M            0x10
-#घोषणा BIT_RTC_STATUS_REG_1D_EVENT_M            0x20
-#घोषणा BIT_RTC_STATUS_REG_ALARM_M               0x40
-#घोषणा BIT_RTC_STATUS_REG_POWER_UP_M            0x80
+#define BIT_RTC_STATUS_REG_RUN_M                 0x02
+#define BIT_RTC_STATUS_REG_1S_EVENT_M            0x04
+#define BIT_RTC_STATUS_REG_1M_EVENT_M            0x08
+#define BIT_RTC_STATUS_REG_1H_EVENT_M            0x10
+#define BIT_RTC_STATUS_REG_1D_EVENT_M            0x20
+#define BIT_RTC_STATUS_REG_ALARM_M               0x40
+#define BIT_RTC_STATUS_REG_POWER_UP_M            0x80
 
 /* RTC_INTERRUPTS_REG bitfields */
-#घोषणा BIT_RTC_INTERRUPTS_REG_EVERY_M           0x03
-#घोषणा BIT_RTC_INTERRUPTS_REG_IT_TIMER_M        0x04
-#घोषणा BIT_RTC_INTERRUPTS_REG_IT_ALARM_M        0x08
+#define BIT_RTC_INTERRUPTS_REG_EVERY_M           0x03
+#define BIT_RTC_INTERRUPTS_REG_IT_TIMER_M        0x04
+#define BIT_RTC_INTERRUPTS_REG_IT_ALARM_M        0x08
 
 
-/* REG_SECONDS_REG through REG_YEARS_REG is how many रेजिस्टरs? */
-#घोषणा ALL_TIME_REGS		6
+/* REG_SECONDS_REG through REG_YEARS_REG is how many registers? */
+#define ALL_TIME_REGS		6
 
 /*----------------------------------------------------------------------*/
-काष्ठा twl_rtc अणु
-	काष्ठा device *dev;
-	काष्ठा rtc_device *rtc;
+struct twl_rtc {
+	struct device *dev;
+	struct rtc_device *rtc;
 	u8 *reg_map;
 	/*
-	 * Cache the value क्रम समयr/alarm पूर्णांकerrupts रेजिस्टर; this is
+	 * Cache the value for timer/alarm interrupts register; this is
 	 * only changed by callers holding rtc ops lock (or resume).
 	 */
-	अचिन्हित अक्षर rtc_irq_bits;
+	unsigned char rtc_irq_bits;
 	bool wake_enabled;
-#अगर_घोषित CONFIG_PM_SLEEP
-	अचिन्हित अक्षर irqstat;
-#पूर्ण_अगर
-	क्रमागत twl_class class;
-पूर्ण;
+#ifdef CONFIG_PM_SLEEP
+	unsigned char irqstat;
+#endif
+	enum twl_class class;
+};
 
 /*
- * Supports 1 byte पढ़ो from TWL RTC रेजिस्टर.
+ * Supports 1 byte read from TWL RTC register.
  */
-अटल पूर्णांक twl_rtc_पढ़ो_u8(काष्ठा twl_rtc *twl_rtc, u8 *data, u8 reg)
-अणु
-	पूर्णांक ret;
+static int twl_rtc_read_u8(struct twl_rtc *twl_rtc, u8 *data, u8 reg)
+{
+	int ret;
 
-	ret = twl_i2c_पढ़ो_u8(TWL_MODULE_RTC, data, (twl_rtc->reg_map[reg]));
-	अगर (ret < 0)
+	ret = twl_i2c_read_u8(TWL_MODULE_RTC, data, (twl_rtc->reg_map[reg]));
+	if (ret < 0)
 		pr_err("Could not read TWL register %X - error %d\n", reg, ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Supports 1 byte ग_लिखो to TWL RTC रेजिस्टरs.
+ * Supports 1 byte write to TWL RTC registers.
  */
-अटल पूर्णांक twl_rtc_ग_लिखो_u8(काष्ठा twl_rtc *twl_rtc, u8 data, u8 reg)
-अणु
-	पूर्णांक ret;
+static int twl_rtc_write_u8(struct twl_rtc *twl_rtc, u8 data, u8 reg)
+{
+	int ret;
 
-	ret = twl_i2c_ग_लिखो_u8(TWL_MODULE_RTC, data, (twl_rtc->reg_map[reg]));
-	अगर (ret < 0)
+	ret = twl_i2c_write_u8(TWL_MODULE_RTC, data, (twl_rtc->reg_map[reg]));
+	if (ret < 0)
 		pr_err("Could not write TWL register %X - error %d\n",
 		       reg, ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Enable 1/second update and/or alarm पूर्णांकerrupts.
+ * Enable 1/second update and/or alarm interrupts.
  */
-अटल पूर्णांक set_rtc_irq_bit(काष्ठा twl_rtc *twl_rtc, अचिन्हित अक्षर bit)
-अणु
-	अचिन्हित अक्षर val;
-	पूर्णांक ret;
+static int set_rtc_irq_bit(struct twl_rtc *twl_rtc, unsigned char bit)
+{
+	unsigned char val;
+	int ret;
 
-	/* अगर the bit is set, वापस from here */
-	अगर (twl_rtc->rtc_irq_bits & bit)
-		वापस 0;
+	/* if the bit is set, return from here */
+	if (twl_rtc->rtc_irq_bits & bit)
+		return 0;
 
 	val = twl_rtc->rtc_irq_bits | bit;
 	val &= ~BIT_RTC_INTERRUPTS_REG_EVERY_M;
-	ret = twl_rtc_ग_लिखो_u8(twl_rtc, val, REG_RTC_INTERRUPTS_REG);
-	अगर (ret == 0)
+	ret = twl_rtc_write_u8(twl_rtc, val, REG_RTC_INTERRUPTS_REG);
+	if (ret == 0)
 		twl_rtc->rtc_irq_bits = val;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Disable update and/or alarm पूर्णांकerrupts.
+ * Disable update and/or alarm interrupts.
  */
-अटल पूर्णांक mask_rtc_irq_bit(काष्ठा twl_rtc *twl_rtc, अचिन्हित अक्षर bit)
-अणु
-	अचिन्हित अक्षर val;
-	पूर्णांक ret;
+static int mask_rtc_irq_bit(struct twl_rtc *twl_rtc, unsigned char bit)
+{
+	unsigned char val;
+	int ret;
 
-	/* अगर the bit is clear, वापस from here */
-	अगर (!(twl_rtc->rtc_irq_bits & bit))
-		वापस 0;
+	/* if the bit is clear, return from here */
+	if (!(twl_rtc->rtc_irq_bits & bit))
+		return 0;
 
 	val = twl_rtc->rtc_irq_bits & ~bit;
-	ret = twl_rtc_ग_लिखो_u8(twl_rtc, val, REG_RTC_INTERRUPTS_REG);
-	अगर (ret == 0)
+	ret = twl_rtc_write_u8(twl_rtc, val, REG_RTC_INTERRUPTS_REG);
+	if (ret == 0)
 		twl_rtc->rtc_irq_bits = val;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक twl_rtc_alarm_irq_enable(काष्ठा device *dev, अचिन्हित enabled)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा twl_rtc *twl_rtc = dev_get_drvdata(dev);
-	पूर्णांक irq = platक्रमm_get_irq(pdev, 0);
-	पूर्णांक ret;
+static int twl_rtc_alarm_irq_enable(struct device *dev, unsigned enabled)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct twl_rtc *twl_rtc = dev_get_drvdata(dev);
+	int irq = platform_get_irq(pdev, 0);
+	int ret;
 
-	अगर (enabled) अणु
+	if (enabled) {
 		ret = set_rtc_irq_bit(twl_rtc,
 				      BIT_RTC_INTERRUPTS_REG_IT_ALARM_M);
-		अगर (device_can_wakeup(dev) && !twl_rtc->wake_enabled) अणु
+		if (device_can_wakeup(dev) && !twl_rtc->wake_enabled) {
 			enable_irq_wake(irq);
 			twl_rtc->wake_enabled = true;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		ret = mask_rtc_irq_bit(twl_rtc,
 				       BIT_RTC_INTERRUPTS_REG_IT_ALARM_M);
-		अगर (twl_rtc->wake_enabled) अणु
+		if (twl_rtc->wake_enabled) {
 			disable_irq_wake(irq);
 			twl_rtc->wake_enabled = false;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Gets current TWL RTC समय and date parameters.
+ * Gets current TWL RTC time and date parameters.
  *
- * The RTC's समय/alarm representation is not what स_जमट(3) requires
+ * The RTC's time/alarm representation is not what gmtime(3) requires
  * Linux to use:
  *
  *  - Months are 1..12 vs Linux 0-11
  *  - Years are 0..99 vs Linux 1900..N (we assume 21st century)
  */
-अटल पूर्णांक twl_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा twl_rtc *twl_rtc = dev_get_drvdata(dev);
-	अचिन्हित अक्षर rtc_data[ALL_TIME_REGS];
-	पूर्णांक ret;
+static int twl_rtc_read_time(struct device *dev, struct rtc_time *tm)
+{
+	struct twl_rtc *twl_rtc = dev_get_drvdata(dev);
+	unsigned char rtc_data[ALL_TIME_REGS];
+	int ret;
 	u8 save_control;
 	u8 rtc_control;
 
-	ret = twl_rtc_पढ़ो_u8(twl_rtc, &save_control, REG_RTC_CTRL_REG);
-	अगर (ret < 0) अणु
+	ret = twl_rtc_read_u8(twl_rtc, &save_control, REG_RTC_CTRL_REG);
+	if (ret < 0) {
 		dev_err(dev, "%s: reading CTRL_REG, error %d\n", __func__, ret);
-		वापस ret;
-	पूर्ण
-	/* क्रम twl6030/32 make sure BIT_RTC_CTRL_REG_GET_TIME_M is clear */
-	अगर (twl_rtc->class == TWL_6030) अणु
-		अगर (save_control & BIT_RTC_CTRL_REG_GET_TIME_M) अणु
+		return ret;
+	}
+	/* for twl6030/32 make sure BIT_RTC_CTRL_REG_GET_TIME_M is clear */
+	if (twl_rtc->class == TWL_6030) {
+		if (save_control & BIT_RTC_CTRL_REG_GET_TIME_M) {
 			save_control &= ~BIT_RTC_CTRL_REG_GET_TIME_M;
-			ret = twl_rtc_ग_लिखो_u8(twl_rtc, save_control,
+			ret = twl_rtc_write_u8(twl_rtc, save_control,
 					       REG_RTC_CTRL_REG);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				dev_err(dev, "%s clr GET_TIME, error %d\n",
 					__func__, ret);
-				वापस ret;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return ret;
+			}
+		}
+	}
 
-	/* Copy RTC counting रेजिस्टरs to अटल रेजिस्टरs or latches */
+	/* Copy RTC counting registers to static registers or latches */
 	rtc_control = save_control | BIT_RTC_CTRL_REG_GET_TIME_M;
 
-	/* क्रम twl6030/32 enable पढ़ो access to अटल shaकरोwed रेजिस्टरs */
-	अगर (twl_rtc->class == TWL_6030)
+	/* for twl6030/32 enable read access to static shadowed registers */
+	if (twl_rtc->class == TWL_6030)
 		rtc_control |= BIT_RTC_CTRL_REG_RTC_V_OPT;
 
-	ret = twl_rtc_ग_लिखो_u8(twl_rtc, rtc_control, REG_RTC_CTRL_REG);
-	अगर (ret < 0) अणु
+	ret = twl_rtc_write_u8(twl_rtc, rtc_control, REG_RTC_CTRL_REG);
+	if (ret < 0) {
 		dev_err(dev, "%s: writing CTRL_REG, error %d\n", __func__, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = twl_i2c_पढ़ो(TWL_MODULE_RTC, rtc_data,
+	ret = twl_i2c_read(TWL_MODULE_RTC, rtc_data,
 			(twl_rtc->reg_map[REG_SECONDS_REG]), ALL_TIME_REGS);
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "%s: reading data, error %d\n", __func__, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* क्रम twl6030 restore original state of rtc control रेजिस्टर */
-	अगर (twl_rtc->class == TWL_6030) अणु
-		ret = twl_rtc_ग_लिखो_u8(twl_rtc, save_control, REG_RTC_CTRL_REG);
-		अगर (ret < 0) अणु
+	/* for twl6030 restore original state of rtc control register */
+	if (twl_rtc->class == TWL_6030) {
+		ret = twl_rtc_write_u8(twl_rtc, save_control, REG_RTC_CTRL_REG);
+		if (ret < 0) {
 			dev_err(dev, "%s: restore CTRL_REG, error %d\n",
 				__func__, ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	पंचांग->पंचांग_sec = bcd2bin(rtc_data[0]);
-	पंचांग->पंचांग_min = bcd2bin(rtc_data[1]);
-	पंचांग->पंचांग_hour = bcd2bin(rtc_data[2]);
-	पंचांग->पंचांग_mday = bcd2bin(rtc_data[3]);
-	पंचांग->पंचांग_mon = bcd2bin(rtc_data[4]) - 1;
-	पंचांग->पंचांग_year = bcd2bin(rtc_data[5]) + 100;
+	tm->tm_sec = bcd2bin(rtc_data[0]);
+	tm->tm_min = bcd2bin(rtc_data[1]);
+	tm->tm_hour = bcd2bin(rtc_data[2]);
+	tm->tm_mday = bcd2bin(rtc_data[3]);
+	tm->tm_mon = bcd2bin(rtc_data[4]) - 1;
+	tm->tm_year = bcd2bin(rtc_data[5]) + 100;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक twl_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा twl_rtc *twl_rtc = dev_get_drvdata(dev);
-	अचिन्हित अक्षर save_control;
-	अचिन्हित अक्षर rtc_data[ALL_TIME_REGS];
-	पूर्णांक ret;
+static int twl_rtc_set_time(struct device *dev, struct rtc_time *tm)
+{
+	struct twl_rtc *twl_rtc = dev_get_drvdata(dev);
+	unsigned char save_control;
+	unsigned char rtc_data[ALL_TIME_REGS];
+	int ret;
 
-	rtc_data[0] = bin2bcd(पंचांग->पंचांग_sec);
-	rtc_data[1] = bin2bcd(पंचांग->पंचांग_min);
-	rtc_data[2] = bin2bcd(पंचांग->पंचांग_hour);
-	rtc_data[3] = bin2bcd(पंचांग->पंचांग_mday);
-	rtc_data[4] = bin2bcd(पंचांग->पंचांग_mon + 1);
-	rtc_data[5] = bin2bcd(पंचांग->पंचांग_year - 100);
+	rtc_data[0] = bin2bcd(tm->tm_sec);
+	rtc_data[1] = bin2bcd(tm->tm_min);
+	rtc_data[2] = bin2bcd(tm->tm_hour);
+	rtc_data[3] = bin2bcd(tm->tm_mday);
+	rtc_data[4] = bin2bcd(tm->tm_mon + 1);
+	rtc_data[5] = bin2bcd(tm->tm_year - 100);
 
-	/* Stop RTC जबतक updating the TC रेजिस्टरs */
-	ret = twl_rtc_पढ़ो_u8(twl_rtc, &save_control, REG_RTC_CTRL_REG);
-	अगर (ret < 0)
-		जाओ out;
+	/* Stop RTC while updating the TC registers */
+	ret = twl_rtc_read_u8(twl_rtc, &save_control, REG_RTC_CTRL_REG);
+	if (ret < 0)
+		goto out;
 
 	save_control &= ~BIT_RTC_CTRL_REG_STOP_RTC_M;
-	ret = twl_rtc_ग_लिखो_u8(twl_rtc, save_control, REG_RTC_CTRL_REG);
-	अगर (ret < 0)
-		जाओ out;
+	ret = twl_rtc_write_u8(twl_rtc, save_control, REG_RTC_CTRL_REG);
+	if (ret < 0)
+		goto out;
 
-	/* update all the समय रेजिस्टरs in one shot */
-	ret = twl_i2c_ग_लिखो(TWL_MODULE_RTC, rtc_data,
+	/* update all the time registers in one shot */
+	ret = twl_i2c_write(TWL_MODULE_RTC, rtc_data,
 		(twl_rtc->reg_map[REG_SECONDS_REG]), ALL_TIME_REGS);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "rtc_set_time error %d\n", ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Start back RTC */
 	save_control |= BIT_RTC_CTRL_REG_STOP_RTC_M;
-	ret = twl_rtc_ग_लिखो_u8(twl_rtc, save_control, REG_RTC_CTRL_REG);
+	ret = twl_rtc_write_u8(twl_rtc, save_control, REG_RTC_CTRL_REG);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Gets current TWL RTC alarm समय.
+ * Gets current TWL RTC alarm time.
  */
-अटल पूर्णांक twl_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alm)
-अणु
-	काष्ठा twl_rtc *twl_rtc = dev_get_drvdata(dev);
-	अचिन्हित अक्षर rtc_data[ALL_TIME_REGS];
-	पूर्णांक ret;
+static int twl_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alm)
+{
+	struct twl_rtc *twl_rtc = dev_get_drvdata(dev);
+	unsigned char rtc_data[ALL_TIME_REGS];
+	int ret;
 
-	ret = twl_i2c_पढ़ो(TWL_MODULE_RTC, rtc_data,
+	ret = twl_i2c_read(TWL_MODULE_RTC, rtc_data,
 			twl_rtc->reg_map[REG_ALARM_SECONDS_REG], ALL_TIME_REGS);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "rtc_read_alarm error %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* some of these fields may be wildcard/"match all" */
-	alm->समय.पंचांग_sec = bcd2bin(rtc_data[0]);
-	alm->समय.पंचांग_min = bcd2bin(rtc_data[1]);
-	alm->समय.पंचांग_hour = bcd2bin(rtc_data[2]);
-	alm->समय.पंचांग_mday = bcd2bin(rtc_data[3]);
-	alm->समय.पंचांग_mon = bcd2bin(rtc_data[4]) - 1;
-	alm->समय.पंचांग_year = bcd2bin(rtc_data[5]) + 100;
+	alm->time.tm_sec = bcd2bin(rtc_data[0]);
+	alm->time.tm_min = bcd2bin(rtc_data[1]);
+	alm->time.tm_hour = bcd2bin(rtc_data[2]);
+	alm->time.tm_mday = bcd2bin(rtc_data[3]);
+	alm->time.tm_mon = bcd2bin(rtc_data[4]) - 1;
+	alm->time.tm_year = bcd2bin(rtc_data[5]) + 100;
 
 	/* report cached alarm enable state */
-	अगर (twl_rtc->rtc_irq_bits & BIT_RTC_INTERRUPTS_REG_IT_ALARM_M)
+	if (twl_rtc->rtc_irq_bits & BIT_RTC_INTERRUPTS_REG_IT_ALARM_M)
 		alm->enabled = 1;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक twl_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alm)
-अणु
-	काष्ठा twl_rtc *twl_rtc = dev_get_drvdata(dev);
+static int twl_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alm)
+{
+	struct twl_rtc *twl_rtc = dev_get_drvdata(dev);
 
-	अचिन्हित अक्षर alarm_data[ALL_TIME_REGS];
-	पूर्णांक ret;
+	unsigned char alarm_data[ALL_TIME_REGS];
+	int ret;
 
 	ret = twl_rtc_alarm_irq_enable(dev, 0);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	alarm_data[0] = bin2bcd(alm->समय.पंचांग_sec);
-	alarm_data[1] = bin2bcd(alm->समय.पंचांग_min);
-	alarm_data[2] = bin2bcd(alm->समय.पंचांग_hour);
-	alarm_data[3] = bin2bcd(alm->समय.पंचांग_mday);
-	alarm_data[4] = bin2bcd(alm->समय.पंचांग_mon + 1);
-	alarm_data[5] = bin2bcd(alm->समय.पंचांग_year - 100);
+	alarm_data[0] = bin2bcd(alm->time.tm_sec);
+	alarm_data[1] = bin2bcd(alm->time.tm_min);
+	alarm_data[2] = bin2bcd(alm->time.tm_hour);
+	alarm_data[3] = bin2bcd(alm->time.tm_mday);
+	alarm_data[4] = bin2bcd(alm->time.tm_mon + 1);
+	alarm_data[5] = bin2bcd(alm->time.tm_year - 100);
 
-	/* update all the alarm रेजिस्टरs in one shot */
-	ret = twl_i2c_ग_लिखो(TWL_MODULE_RTC, alarm_data,
+	/* update all the alarm registers in one shot */
+	ret = twl_i2c_write(TWL_MODULE_RTC, alarm_data,
 			twl_rtc->reg_map[REG_ALARM_SECONDS_REG], ALL_TIME_REGS);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "rtc_set_alarm error %d\n", ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (alm->enabled)
+	if (alm->enabled)
 		ret = twl_rtc_alarm_irq_enable(dev, 1);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल irqवापस_t twl_rtc_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा twl_rtc *twl_rtc = data;
-	अचिन्हित दीर्घ events;
-	पूर्णांक ret = IRQ_NONE;
-	पूर्णांक res;
+static irqreturn_t twl_rtc_interrupt(int irq, void *data)
+{
+	struct twl_rtc *twl_rtc = data;
+	unsigned long events;
+	int ret = IRQ_NONE;
+	int res;
 	u8 rd_reg;
 
-	res = twl_rtc_पढ़ो_u8(twl_rtc, &rd_reg, REG_RTC_STATUS_REG);
-	अगर (res)
-		जाओ out;
+	res = twl_rtc_read_u8(twl_rtc, &rd_reg, REG_RTC_STATUS_REG);
+	if (res)
+		goto out;
 	/*
-	 * Figure out source of पूर्णांकerrupt: ALARM or TIMER in RTC_STATUS_REG.
-	 * only one (ALARM or RTC) पूर्णांकerrupt source may be enabled
-	 * at समय, we also could check our results
-	 * by पढ़ोing RTS_INTERRUPTS_REGISTER[IT_TIMER,IT_ALARM]
+	 * Figure out source of interrupt: ALARM or TIMER in RTC_STATUS_REG.
+	 * only one (ALARM or RTC) interrupt source may be enabled
+	 * at time, we also could check our results
+	 * by reading RTS_INTERRUPTS_REGISTER[IT_TIMER,IT_ALARM]
 	 */
-	अगर (rd_reg & BIT_RTC_STATUS_REG_ALARM_M)
+	if (rd_reg & BIT_RTC_STATUS_REG_ALARM_M)
 		events = RTC_IRQF | RTC_AF;
-	अन्यथा
+	else
 		events = RTC_IRQF | RTC_PF;
 
-	res = twl_rtc_ग_लिखो_u8(twl_rtc, BIT_RTC_STATUS_REG_ALARM_M,
+	res = twl_rtc_write_u8(twl_rtc, BIT_RTC_STATUS_REG_ALARM_M,
 			       REG_RTC_STATUS_REG);
-	अगर (res)
-		जाओ out;
+	if (res)
+		goto out;
 
-	अगर (twl_rtc->class == TWL_4030) अणु
+	if (twl_rtc->class == TWL_4030) {
 		/* Clear on Read enabled. RTC_IT bit of TWL4030_INT_PWR_ISR1
-		 * needs 2 पढ़ोs to clear the पूर्णांकerrupt. One पढ़ो is करोne in
-		 * करो_twl_pwrirq(). Doing the second पढ़ो, to clear
+		 * needs 2 reads to clear the interrupt. One read is done in
+		 * do_twl_pwrirq(). Doing the second read, to clear
 		 * the bit.
 		 *
-		 * FIXME the reason PWR_ISR1 needs an extra पढ़ो is that
+		 * FIXME the reason PWR_ISR1 needs an extra read is that
 		 * RTC_IF retriggered until we cleared REG_ALARM_M above.
-		 * But re-पढ़ोing like this is a bad hack; by करोing so we
-		 * risk wrongly clearing status क्रम some other IRQ (losing
-		 * the पूर्णांकerrupt).  Be smarter about handling RTC_UF ...
+		 * But re-reading like this is a bad hack; by doing so we
+		 * risk wrongly clearing status for some other IRQ (losing
+		 * the interrupt).  Be smarter about handling RTC_UF ...
 		 */
-		res = twl_i2c_पढ़ो_u8(TWL4030_MODULE_INT,
+		res = twl_i2c_read_u8(TWL4030_MODULE_INT,
 			&rd_reg, TWL4030_INT_PWR_ISR1);
-		अगर (res)
-			जाओ out;
-	पूर्ण
+		if (res)
+			goto out;
+	}
 
-	/* Notअगरy RTC core on event */
+	/* Notify RTC core on event */
 	rtc_update_irq(twl_rtc->rtc, 1, events);
 
 	ret = IRQ_HANDLED;
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा rtc_class_ops twl_rtc_ops = अणु
-	.पढ़ो_समय	= twl_rtc_पढ़ो_समय,
-	.set_समय	= twl_rtc_set_समय,
-	.पढ़ो_alarm	= twl_rtc_पढ़ो_alarm,
+static const struct rtc_class_ops twl_rtc_ops = {
+	.read_time	= twl_rtc_read_time,
+	.set_time	= twl_rtc_set_time,
+	.read_alarm	= twl_rtc_read_alarm,
 	.set_alarm	= twl_rtc_set_alarm,
 	.alarm_irq_enable = twl_rtc_alarm_irq_enable,
-पूर्ण;
+};
 
 /*----------------------------------------------------------------------*/
 
-अटल पूर्णांक twl_rtc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा twl_rtc *twl_rtc;
-	काष्ठा device_node *np = pdev->dev.of_node;
-	पूर्णांक ret = -EINVAL;
-	पूर्णांक irq = platक्रमm_get_irq(pdev, 0);
+static int twl_rtc_probe(struct platform_device *pdev)
+{
+	struct twl_rtc *twl_rtc;
+	struct device_node *np = pdev->dev.of_node;
+	int ret = -EINVAL;
+	int irq = platform_get_irq(pdev, 0);
 	u8 rd_reg;
 
-	अगर (!np) अणु
+	if (!np) {
 		dev_err(&pdev->dev, "no DT info\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (irq <= 0)
-		वापस ret;
+	if (irq <= 0)
+		return ret;
 
-	twl_rtc = devm_kzalloc(&pdev->dev, माप(*twl_rtc), GFP_KERNEL);
-	अगर (!twl_rtc)
-		वापस -ENOMEM;
+	twl_rtc = devm_kzalloc(&pdev->dev, sizeof(*twl_rtc), GFP_KERNEL);
+	if (!twl_rtc)
+		return -ENOMEM;
 
-	अगर (twl_class_is_4030()) अणु
+	if (twl_class_is_4030()) {
 		twl_rtc->class = TWL_4030;
 		twl_rtc->reg_map = (u8 *)twl4030_rtc_reg_map;
-	पूर्ण अन्यथा अगर (twl_class_is_6030()) अणु
+	} else if (twl_class_is_6030()) {
 		twl_rtc->class = TWL_6030;
 		twl_rtc->reg_map = (u8 *)twl6030_rtc_reg_map;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(&pdev->dev, "TWL Class not supported.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = twl_rtc_पढ़ो_u8(twl_rtc, &rd_reg, REG_RTC_STATUS_REG);
-	अगर (ret < 0)
-		वापस ret;
+	ret = twl_rtc_read_u8(twl_rtc, &rd_reg, REG_RTC_STATUS_REG);
+	if (ret < 0)
+		return ret;
 
-	अगर (rd_reg & BIT_RTC_STATUS_REG_POWER_UP_M)
+	if (rd_reg & BIT_RTC_STATUS_REG_POWER_UP_M)
 		dev_warn(&pdev->dev, "Power up reset detected.\n");
 
-	अगर (rd_reg & BIT_RTC_STATUS_REG_ALARM_M)
+	if (rd_reg & BIT_RTC_STATUS_REG_ALARM_M)
 		dev_warn(&pdev->dev, "Pending Alarm interrupt detected.\n");
 
-	/* Clear RTC Power up reset and pending alarm पूर्णांकerrupts */
-	ret = twl_rtc_ग_लिखो_u8(twl_rtc, rd_reg, REG_RTC_STATUS_REG);
-	अगर (ret < 0)
-		वापस ret;
+	/* Clear RTC Power up reset and pending alarm interrupts */
+	ret = twl_rtc_write_u8(twl_rtc, rd_reg, REG_RTC_STATUS_REG);
+	if (ret < 0)
+		return ret;
 
-	अगर (twl_rtc->class == TWL_6030) अणु
-		twl6030_पूर्णांकerrupt_unmask(TWL6030_RTC_INT_MASK,
+	if (twl_rtc->class == TWL_6030) {
+		twl6030_interrupt_unmask(TWL6030_RTC_INT_MASK,
 			REG_INT_MSK_LINE_A);
-		twl6030_पूर्णांकerrupt_unmask(TWL6030_RTC_INT_MASK,
+		twl6030_interrupt_unmask(TWL6030_RTC_INT_MASK,
 			REG_INT_MSK_STS_A);
-	पूर्ण
+	}
 
 	dev_info(&pdev->dev, "Enabling TWL-RTC\n");
-	ret = twl_rtc_ग_लिखो_u8(twl_rtc, BIT_RTC_CTRL_REG_STOP_RTC_M,
+	ret = twl_rtc_write_u8(twl_rtc, BIT_RTC_CTRL_REG_STOP_RTC_M,
 			       REG_RTC_CTRL_REG);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* ensure पूर्णांकerrupts are disabled, bootloaders can be strange */
-	ret = twl_rtc_ग_लिखो_u8(twl_rtc, 0, REG_RTC_INTERRUPTS_REG);
-	अगर (ret < 0)
+	/* ensure interrupts are disabled, bootloaders can be strange */
+	ret = twl_rtc_write_u8(twl_rtc, 0, REG_RTC_INTERRUPTS_REG);
+	if (ret < 0)
 		dev_warn(&pdev->dev, "unable to disable interrupt\n");
 
 	/* init cached IRQ enable bits */
-	ret = twl_rtc_पढ़ो_u8(twl_rtc, &twl_rtc->rtc_irq_bits,
+	ret = twl_rtc_read_u8(twl_rtc, &twl_rtc->rtc_irq_bits,
 			      REG_RTC_INTERRUPTS_REG);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	platक्रमm_set_drvdata(pdev, twl_rtc);
+	platform_set_drvdata(pdev, twl_rtc);
 	device_init_wakeup(&pdev->dev, 1);
 
-	twl_rtc->rtc = devm_rtc_device_रेजिस्टर(&pdev->dev, pdev->name,
+	twl_rtc->rtc = devm_rtc_device_register(&pdev->dev, pdev->name,
 					&twl_rtc_ops, THIS_MODULE);
-	अगर (IS_ERR(twl_rtc->rtc)) अणु
+	if (IS_ERR(twl_rtc->rtc)) {
 		dev_err(&pdev->dev, "can't register RTC device, err %ld\n",
 			PTR_ERR(twl_rtc->rtc));
-		वापस PTR_ERR(twl_rtc->rtc);
-	पूर्ण
+		return PTR_ERR(twl_rtc->rtc);
+	}
 
-	ret = devm_request_thपढ़ोed_irq(&pdev->dev, irq, शून्य,
-					twl_rtc_पूर्णांकerrupt,
+	ret = devm_request_threaded_irq(&pdev->dev, irq, NULL,
+					twl_rtc_interrupt,
 					IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 					dev_name(&twl_rtc->rtc->dev), twl_rtc);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "IRQ is not free.\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Disable all TWL RTC module पूर्णांकerrupts.
- * Sets status flag to मुक्त.
+ * Disable all TWL RTC module interrupts.
+ * Sets status flag to free.
  */
-अटल पूर्णांक twl_rtc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा twl_rtc *twl_rtc = platक्रमm_get_drvdata(pdev);
+static int twl_rtc_remove(struct platform_device *pdev)
+{
+	struct twl_rtc *twl_rtc = platform_get_drvdata(pdev);
 
 	/* leave rtc running, but disable irqs */
 	mask_rtc_irq_bit(twl_rtc, BIT_RTC_INTERRUPTS_REG_IT_ALARM_M);
 	mask_rtc_irq_bit(twl_rtc, BIT_RTC_INTERRUPTS_REG_IT_TIMER_M);
-	अगर (twl_rtc->class == TWL_6030) अणु
-		twl6030_पूर्णांकerrupt_mask(TWL6030_RTC_INT_MASK,
+	if (twl_rtc->class == TWL_6030) {
+		twl6030_interrupt_mask(TWL6030_RTC_INT_MASK,
 			REG_INT_MSK_LINE_A);
-		twl6030_पूर्णांकerrupt_mask(TWL6030_RTC_INT_MASK,
+		twl6030_interrupt_mask(TWL6030_RTC_INT_MASK,
 			REG_INT_MSK_STS_A);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम twl_rtc_shutकरोwn(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा twl_rtc *twl_rtc = platक्रमm_get_drvdata(pdev);
+static void twl_rtc_shutdown(struct platform_device *pdev)
+{
+	struct twl_rtc *twl_rtc = platform_get_drvdata(pdev);
 
-	/* mask समयr पूर्णांकerrupts, but leave alarm पूर्णांकerrupts on to enable
-	   घातer-on when alarm is triggered */
+	/* mask timer interrupts, but leave alarm interrupts on to enable
+	   power-on when alarm is triggered */
 	mask_rtc_irq_bit(twl_rtc, BIT_RTC_INTERRUPTS_REG_IT_TIMER_M);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक twl_rtc_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा twl_rtc *twl_rtc = dev_get_drvdata(dev);
+#ifdef CONFIG_PM_SLEEP
+static int twl_rtc_suspend(struct device *dev)
+{
+	struct twl_rtc *twl_rtc = dev_get_drvdata(dev);
 
 	twl_rtc->irqstat = twl_rtc->rtc_irq_bits;
 
 	mask_rtc_irq_bit(twl_rtc, BIT_RTC_INTERRUPTS_REG_IT_TIMER_M);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक twl_rtc_resume(काष्ठा device *dev)
-अणु
-	काष्ठा twl_rtc *twl_rtc = dev_get_drvdata(dev);
+static int twl_rtc_resume(struct device *dev)
+{
+	struct twl_rtc *twl_rtc = dev_get_drvdata(dev);
 
 	set_rtc_irq_bit(twl_rtc, twl_rtc->irqstat);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(twl_rtc_pm_ops, twl_rtc_suspend, twl_rtc_resume);
+static SIMPLE_DEV_PM_OPS(twl_rtc_pm_ops, twl_rtc_suspend, twl_rtc_resume);
 
-अटल स्थिर काष्ठा of_device_id twl_rtc_of_match[] = अणु
-	अणु.compatible = "ti,twl4030-rtc", पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id twl_rtc_of_match[] = {
+	{.compatible = "ti,twl4030-rtc", },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, twl_rtc_of_match);
 
-अटल काष्ठा platक्रमm_driver twl4030rtc_driver = अणु
+static struct platform_driver twl4030rtc_driver = {
 	.probe		= twl_rtc_probe,
-	.हटाओ		= twl_rtc_हटाओ,
-	.shutकरोwn	= twl_rtc_shutकरोwn,
-	.driver		= अणु
+	.remove		= twl_rtc_remove,
+	.shutdown	= twl_rtc_shutdown,
+	.driver		= {
 		.name		= "twl_rtc",
 		.pm		= &twl_rtc_pm_ops,
 		.of_match_table = twl_rtc_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(twl4030rtc_driver);
+module_platform_driver(twl4030rtc_driver);
 
 MODULE_AUTHOR("Texas Instruments, MontaVista Software");
 MODULE_LICENSE("GPL");

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2013 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,186 +21,186 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "priv.h"
+#include "priv.h"
 
-#समावेश <core/firmware.h>
-#समावेश <subdev/समयr.h>
+#include <core/firmware.h>
+#include <subdev/timer.h>
 
 bool
-nvkm_pmu_fan_controlled(काष्ठा nvkm_device *device)
-अणु
-	काष्ठा nvkm_pmu *pmu = device->pmu;
+nvkm_pmu_fan_controlled(struct nvkm_device *device)
+{
+	struct nvkm_pmu *pmu = device->pmu;
 
-	/* Internal PMU FW करोes not currently control fans in any way,
+	/* Internal PMU FW does not currently control fans in any way,
 	 * allow SW control of fans instead.
 	 */
-	अगर (pmu && pmu->func->code.size)
-		वापस false;
+	if (pmu && pmu->func->code.size)
+		return false;
 
 	/* Default (board-loaded, or VBIOS PMU/PREOS) PMU FW on Fermi
-	 * and newer स्वतःmatically control the fan speed, which would
-	 * पूर्णांकerfere with SW control.
+	 * and newer automatically control the fan speed, which would
+	 * interfere with SW control.
 	 */
-	वापस (device->chipset >= 0xc0);
-पूर्ण
+	return (device->chipset >= 0xc0);
+}
 
-व्योम
-nvkm_pmu_pgob(काष्ठा nvkm_pmu *pmu, bool enable)
-अणु
-	अगर (pmu && pmu->func->pgob)
+void
+nvkm_pmu_pgob(struct nvkm_pmu *pmu, bool enable)
+{
+	if (pmu && pmu->func->pgob)
 		pmu->func->pgob(pmu, enable);
-पूर्ण
+}
 
-अटल व्योम
-nvkm_pmu_recv(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा nvkm_pmu *pmu = container_of(work, typeof(*pmu), recv.work);
-	वापस pmu->func->recv(pmu);
-पूर्ण
+static void
+nvkm_pmu_recv(struct work_struct *work)
+{
+	struct nvkm_pmu *pmu = container_of(work, typeof(*pmu), recv.work);
+	return pmu->func->recv(pmu);
+}
 
-पूर्णांक
-nvkm_pmu_send(काष्ठा nvkm_pmu *pmu, u32 reply[2],
+int
+nvkm_pmu_send(struct nvkm_pmu *pmu, u32 reply[2],
 	      u32 process, u32 message, u32 data0, u32 data1)
-अणु
-	अगर (!pmu || !pmu->func->send)
-		वापस -ENODEV;
-	वापस pmu->func->send(pmu, reply, process, message, data0, data1);
-पूर्ण
+{
+	if (!pmu || !pmu->func->send)
+		return -ENODEV;
+	return pmu->func->send(pmu, reply, process, message, data0, data1);
+}
 
-अटल व्योम
-nvkm_pmu_पूर्णांकr(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_pmu *pmu = nvkm_pmu(subdev);
-	अगर (!pmu->func->पूर्णांकr)
-		वापस;
-	pmu->func->पूर्णांकr(pmu);
-पूर्ण
+static void
+nvkm_pmu_intr(struct nvkm_subdev *subdev)
+{
+	struct nvkm_pmu *pmu = nvkm_pmu(subdev);
+	if (!pmu->func->intr)
+		return;
+	pmu->func->intr(pmu);
+}
 
-अटल पूर्णांक
-nvkm_pmu_fini(काष्ठा nvkm_subdev *subdev, bool suspend)
-अणु
-	काष्ठा nvkm_pmu *pmu = nvkm_pmu(subdev);
+static int
+nvkm_pmu_fini(struct nvkm_subdev *subdev, bool suspend)
+{
+	struct nvkm_pmu *pmu = nvkm_pmu(subdev);
 
-	अगर (pmu->func->fini)
+	if (pmu->func->fini)
 		pmu->func->fini(pmu);
 
 	flush_work(&pmu->recv.work);
 
-	reinit_completion(&pmu->wpr_पढ़ोy);
+	reinit_completion(&pmu->wpr_ready);
 
 	nvkm_falcon_cmdq_fini(pmu->lpq);
 	nvkm_falcon_cmdq_fini(pmu->hpq);
-	pmu->iniपंचांगsg_received = false;
-	वापस 0;
-पूर्ण
+	pmu->initmsg_received = false;
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_pmu_reset(काष्ठा nvkm_pmu *pmu)
-अणु
-	काष्ठा nvkm_device *device = pmu->subdev.device;
+static int
+nvkm_pmu_reset(struct nvkm_pmu *pmu)
+{
+	struct nvkm_device *device = pmu->subdev.device;
 
-	अगर (!pmu->func->enabled(pmu))
-		वापस 0;
+	if (!pmu->func->enabled(pmu))
+		return 0;
 
-	/* Inhibit पूर्णांकerrupts, and रुको क्रम idle. */
+	/* Inhibit interrupts, and wait for idle. */
 	nvkm_wr32(device, 0x10a014, 0x0000ffff);
 	nvkm_msec(device, 2000,
-		अगर (!nvkm_rd32(device, 0x10a04c))
-			अवरोध;
+		if (!nvkm_rd32(device, 0x10a04c))
+			break;
 	);
 
 	/* Reset. */
-	अगर (pmu->func->reset)
+	if (pmu->func->reset)
 		pmu->func->reset(pmu);
 
-	/* Wait क्रम IMEM/DMEM scrubbing to be complete. */
+	/* Wait for IMEM/DMEM scrubbing to be complete. */
 	nvkm_msec(device, 2000,
-		अगर (!(nvkm_rd32(device, 0x10a10c) & 0x00000006))
-			अवरोध;
+		if (!(nvkm_rd32(device, 0x10a10c) & 0x00000006))
+			break;
 	);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_pmu_preinit(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_pmu *pmu = nvkm_pmu(subdev);
-	वापस nvkm_pmu_reset(pmu);
-पूर्ण
+static int
+nvkm_pmu_preinit(struct nvkm_subdev *subdev)
+{
+	struct nvkm_pmu *pmu = nvkm_pmu(subdev);
+	return nvkm_pmu_reset(pmu);
+}
 
-अटल पूर्णांक
-nvkm_pmu_init(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_pmu *pmu = nvkm_pmu(subdev);
-	पूर्णांक ret = nvkm_pmu_reset(pmu);
-	अगर (ret == 0 && pmu->func->init)
+static int
+nvkm_pmu_init(struct nvkm_subdev *subdev)
+{
+	struct nvkm_pmu *pmu = nvkm_pmu(subdev);
+	int ret = nvkm_pmu_reset(pmu);
+	if (ret == 0 && pmu->func->init)
 		ret = pmu->func->init(pmu);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम *
-nvkm_pmu_dtor(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_pmu *pmu = nvkm_pmu(subdev);
+static void *
+nvkm_pmu_dtor(struct nvkm_subdev *subdev)
+{
+	struct nvkm_pmu *pmu = nvkm_pmu(subdev);
 	nvkm_falcon_msgq_del(&pmu->msgq);
 	nvkm_falcon_cmdq_del(&pmu->lpq);
 	nvkm_falcon_cmdq_del(&pmu->hpq);
 	nvkm_falcon_qmgr_del(&pmu->qmgr);
 	nvkm_falcon_dtor(&pmu->falcon);
 	mutex_destroy(&pmu->send.mutex);
-	वापस nvkm_pmu(subdev);
-पूर्ण
+	return nvkm_pmu(subdev);
+}
 
-अटल स्थिर काष्ठा nvkm_subdev_func
-nvkm_pmu = अणु
+static const struct nvkm_subdev_func
+nvkm_pmu = {
 	.dtor = nvkm_pmu_dtor,
 	.preinit = nvkm_pmu_preinit,
 	.init = nvkm_pmu_init,
 	.fini = nvkm_pmu_fini,
-	.पूर्णांकr = nvkm_pmu_पूर्णांकr,
-पूर्ण;
+	.intr = nvkm_pmu_intr,
+};
 
-पूर्णांक
-nvkm_pmu_ctor(स्थिर काष्ठा nvkm_pmu_fwअगर *fwअगर, काष्ठा nvkm_device *device,
-	      क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_pmu *pmu)
-अणु
-	पूर्णांक ret;
+int
+nvkm_pmu_ctor(const struct nvkm_pmu_fwif *fwif, struct nvkm_device *device,
+	      enum nvkm_subdev_type type, int inst, struct nvkm_pmu *pmu)
+{
+	int ret;
 
 	nvkm_subdev_ctor(&nvkm_pmu, device, type, inst, &pmu->subdev);
 
 	mutex_init(&pmu->send.mutex);
 
 	INIT_WORK(&pmu->recv.work, nvkm_pmu_recv);
-	init_रुकोqueue_head(&pmu->recv.रुको);
+	init_waitqueue_head(&pmu->recv.wait);
 
-	fwअगर = nvkm_firmware_load(&pmu->subdev, fwअगर, "Pmu", pmu);
-	अगर (IS_ERR(fwअगर))
-		वापस PTR_ERR(fwअगर);
+	fwif = nvkm_firmware_load(&pmu->subdev, fwif, "Pmu", pmu);
+	if (IS_ERR(fwif))
+		return PTR_ERR(fwif);
 
-	pmu->func = fwअगर->func;
+	pmu->func = fwif->func;
 
 	ret = nvkm_falcon_ctor(pmu->func->flcn, &pmu->subdev, pmu->subdev.name,
 			       0x10a000, &pmu->falcon);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर ((ret = nvkm_falcon_qmgr_new(&pmu->falcon, &pmu->qmgr)) ||
+	if ((ret = nvkm_falcon_qmgr_new(&pmu->falcon, &pmu->qmgr)) ||
 	    (ret = nvkm_falcon_cmdq_new(pmu->qmgr, "hpq", &pmu->hpq)) ||
 	    (ret = nvkm_falcon_cmdq_new(pmu->qmgr, "lpq", &pmu->lpq)) ||
 	    (ret = nvkm_falcon_msgq_new(pmu->qmgr, "msgq", &pmu->msgq)))
-		वापस ret;
+		return ret;
 
-	init_completion(&pmu->wpr_पढ़ोy);
-	वापस 0;
-पूर्ण
+	init_completion(&pmu->wpr_ready);
+	return 0;
+}
 
-पूर्णांक
-nvkm_pmu_new_(स्थिर काष्ठा nvkm_pmu_fwअगर *fwअगर, काष्ठा nvkm_device *device,
-	      क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_pmu **ppmu)
-अणु
-	काष्ठा nvkm_pmu *pmu;
-	अगर (!(pmu = *ppmu = kzalloc(माप(*pmu), GFP_KERNEL)))
-		वापस -ENOMEM;
-	वापस nvkm_pmu_ctor(fwअगर, device, type, inst, *ppmu);
-पूर्ण
+int
+nvkm_pmu_new_(const struct nvkm_pmu_fwif *fwif, struct nvkm_device *device,
+	      enum nvkm_subdev_type type, int inst, struct nvkm_pmu **ppmu)
+{
+	struct nvkm_pmu *pmu;
+	if (!(pmu = *ppmu = kzalloc(sizeof(*pmu), GFP_KERNEL)))
+		return -ENOMEM;
+	return nvkm_pmu_ctor(fwif, device, type, inst, *ppmu);
+}

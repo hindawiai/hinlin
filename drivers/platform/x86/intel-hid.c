@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  *  Intel HID event & 5 button array driver
  *
@@ -7,126 +6,126 @@
  *  Copyright (C) 2015 Andrew Lutomirski <luto@kernel.org>
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/input.h>
-#समावेश <linux/input/sparse-keymap.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/suspend.h>
+#include <linux/acpi.h>
+#include <linux/dmi.h>
+#include <linux/input.h>
+#include <linux/input/sparse-keymap.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/suspend.h>
 
-/* When NOT in tablet mode, VGBS वापसs with the flag 0x40 */
-#घोषणा TABLET_MODE_FLAG BIT(6)
+/* When NOT in tablet mode, VGBS returns with the flag 0x40 */
+#define TABLET_MODE_FLAG BIT(6)
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Alex Hung");
 
-अटल स्थिर काष्ठा acpi_device_id पूर्णांकel_hid_ids[] = अणु
-	अणु"INT33D5", 0पूर्ण,
-	अणु"INTC1051", 0पूर्ण,
-	अणु"INTC1054", 0पूर्ण,
-	अणु"", 0पूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(acpi, पूर्णांकel_hid_ids);
+static const struct acpi_device_id intel_hid_ids[] = {
+	{"INT33D5", 0},
+	{"INTC1051", 0},
+	{"INTC1054", 0},
+	{"", 0},
+};
+MODULE_DEVICE_TABLE(acpi, intel_hid_ids);
 
 /* In theory, these are HID usages. */
-अटल स्थिर काष्ठा key_entry पूर्णांकel_hid_keymap[] = अणु
-	/* 1: LSuper (Page 0x07, usage 0xE3) -- unclear what to करो */
-	/* 2: Toggle SW_ROTATE_LOCK -- easy to implement अगर seen in wild */
-	अणु KE_KEY, 3, अणु KEY_NUMLOCK पूर्ण पूर्ण,
-	अणु KE_KEY, 4, अणु KEY_HOME पूर्ण पूर्ण,
-	अणु KE_KEY, 5, अणु KEY_END पूर्ण पूर्ण,
-	अणु KE_KEY, 6, अणु KEY_PAGEUP पूर्ण पूर्ण,
-	अणु KE_KEY, 7, अणु KEY_PAGEDOWN पूर्ण पूर्ण,
-	अणु KE_KEY, 8, अणु KEY_RFKILL पूर्ण पूर्ण,
-	अणु KE_KEY, 9, अणु KEY_POWER पूर्ण पूर्ण,
-	अणु KE_KEY, 11, अणु KEY_SLEEP पूर्ण पूर्ण,
-	/* 13 has two dअगरferent meanings in the spec -- ignore it. */
-	अणु KE_KEY, 14, अणु KEY_STOPCD पूर्ण पूर्ण,
-	अणु KE_KEY, 15, अणु KEY_PLAYPAUSE पूर्ण पूर्ण,
-	अणु KE_KEY, 16, अणु KEY_MUTE पूर्ण पूर्ण,
-	अणु KE_KEY, 17, अणु KEY_VOLUMEUP पूर्ण पूर्ण,
-	अणु KE_KEY, 18, अणु KEY_VOLUMEDOWN पूर्ण पूर्ण,
-	अणु KE_KEY, 19, अणु KEY_BRIGHTNESSUP पूर्ण पूर्ण,
-	अणु KE_KEY, 20, अणु KEY_BRIGHTNESSDOWN पूर्ण पूर्ण,
+static const struct key_entry intel_hid_keymap[] = {
+	/* 1: LSuper (Page 0x07, usage 0xE3) -- unclear what to do */
+	/* 2: Toggle SW_ROTATE_LOCK -- easy to implement if seen in wild */
+	{ KE_KEY, 3, { KEY_NUMLOCK } },
+	{ KE_KEY, 4, { KEY_HOME } },
+	{ KE_KEY, 5, { KEY_END } },
+	{ KE_KEY, 6, { KEY_PAGEUP } },
+	{ KE_KEY, 7, { KEY_PAGEDOWN } },
+	{ KE_KEY, 8, { KEY_RFKILL } },
+	{ KE_KEY, 9, { KEY_POWER } },
+	{ KE_KEY, 11, { KEY_SLEEP } },
+	/* 13 has two different meanings in the spec -- ignore it. */
+	{ KE_KEY, 14, { KEY_STOPCD } },
+	{ KE_KEY, 15, { KEY_PLAYPAUSE } },
+	{ KE_KEY, 16, { KEY_MUTE } },
+	{ KE_KEY, 17, { KEY_VOLUMEUP } },
+	{ KE_KEY, 18, { KEY_VOLUMEDOWN } },
+	{ KE_KEY, 19, { KEY_BRIGHTNESSUP } },
+	{ KE_KEY, 20, { KEY_BRIGHTNESSDOWN } },
 	/* 27: wake -- needs special handling */
-	अणु KE_END पूर्ण,
-पूर्ण;
+	{ KE_END },
+};
 
-/* 5 button array notअगरication value. */
-अटल स्थिर काष्ठा key_entry पूर्णांकel_array_keymap[] = अणु
-	अणु KE_KEY,    0xC2, अणु KEY_LEFTMETA पूर्ण पूर्ण,                /* Press */
-	अणु KE_IGNORE, 0xC3, अणु KEY_LEFTMETA पूर्ण पूर्ण,                /* Release */
-	अणु KE_KEY,    0xC4, अणु KEY_VOLUMEUP पूर्ण पूर्ण,                /* Press */
-	अणु KE_IGNORE, 0xC5, अणु KEY_VOLUMEUP पूर्ण पूर्ण,                /* Release */
-	अणु KE_KEY,    0xC6, अणु KEY_VOLUMEDOWN पूर्ण पूर्ण,              /* Press */
-	अणु KE_IGNORE, 0xC7, अणु KEY_VOLUMEDOWN पूर्ण पूर्ण,              /* Release */
-	अणु KE_KEY,    0xC8, अणु KEY_ROTATE_LOCK_TOGGLE पूर्ण पूर्ण,      /* Press */
-	अणु KE_IGNORE, 0xC9, अणु KEY_ROTATE_LOCK_TOGGLE पूर्ण पूर्ण,      /* Release */
-	अणु KE_KEY,    0xCE, अणु KEY_POWER पूर्ण पूर्ण,                   /* Press */
-	अणु KE_IGNORE, 0xCF, अणु KEY_POWER पूर्ण पूर्ण,                   /* Release */
-	अणु KE_END पूर्ण,
-पूर्ण;
+/* 5 button array notification value. */
+static const struct key_entry intel_array_keymap[] = {
+	{ KE_KEY,    0xC2, { KEY_LEFTMETA } },                /* Press */
+	{ KE_IGNORE, 0xC3, { KEY_LEFTMETA } },                /* Release */
+	{ KE_KEY,    0xC4, { KEY_VOLUMEUP } },                /* Press */
+	{ KE_IGNORE, 0xC5, { KEY_VOLUMEUP } },                /* Release */
+	{ KE_KEY,    0xC6, { KEY_VOLUMEDOWN } },              /* Press */
+	{ KE_IGNORE, 0xC7, { KEY_VOLUMEDOWN } },              /* Release */
+	{ KE_KEY,    0xC8, { KEY_ROTATE_LOCK_TOGGLE } },      /* Press */
+	{ KE_IGNORE, 0xC9, { KEY_ROTATE_LOCK_TOGGLE } },      /* Release */
+	{ KE_KEY,    0xCE, { KEY_POWER } },                   /* Press */
+	{ KE_IGNORE, 0xCF, { KEY_POWER } },                   /* Release */
+	{ KE_END },
+};
 
-अटल स्थिर काष्ठा dmi_प्रणाली_id button_array_table[] = अणु
-	अणु
+static const struct dmi_system_id button_array_table[] = {
+	{
 		.ident = "Wacom MobileStudio Pro 13",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Wacom Co.,Ltd"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Wacom MobileStudio Pro 13"),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.ident = "Wacom MobileStudio Pro 16",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Wacom Co.,Ltd"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Wacom MobileStudio Pro 16"),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.ident = "HP Spectre x2 (2015)",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "HP"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "HP Spectre x2 Detachable"),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.ident = "Lenovo ThinkPad X1 Tablet Gen 2",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
 			DMI_MATCH(DMI_PRODUCT_FAMILY, "ThinkPad X1 Tablet Gen 2"),
-		पूर्ण,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+		},
+	},
+	{ }
+};
 
 /*
- * Some convertible use the पूर्णांकel-hid ACPI पूर्णांकerface to report SW_TABLET_MODE,
+ * Some convertible use the intel-hid ACPI interface to report SW_TABLET_MODE,
  * these need to be compared via a DMI based authorization list because some
- * models have unreliable VGBS वापस which could cause incorrect
+ * models have unreliable VGBS return which could cause incorrect
  * SW_TABLET_MODE report.
  */
-अटल स्थिर काष्ठा dmi_प्रणाली_id dmi_vgbs_allow_list[] = अणु
-	अणु
-		.matches = अणु
+static const struct dmi_system_id dmi_vgbs_allow_list[] = {
+	{
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "HP"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "HP Spectre x360 Convertible 15-df0xxx"),
-		पूर्ण,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+		},
+	},
+	{ }
+};
 
-काष्ठा पूर्णांकel_hid_priv अणु
-	काष्ठा input_dev *input_dev;
-	काष्ठा input_dev *array;
-	काष्ठा input_dev *चयनes;
+struct intel_hid_priv {
+	struct input_dev *input_dev;
+	struct input_dev *array;
+	struct input_dev *switches;
 	bool wakeup_mode;
-पूर्ण;
+};
 
-#घोषणा HID_EVENT_FILTER_UUID	"eeec56b3-4442-408f-a792-4edd4d758054"
+#define HID_EVENT_FILTER_UUID	"eeec56b3-4442-408f-a792-4edd4d758054"
 
-क्रमागत पूर्णांकel_hid_dsm_fn_codes अणु
+enum intel_hid_dsm_fn_codes {
 	INTEL_HID_DSM_FN_INVALID,
 	INTEL_HID_DSM_BTNL_FN,
 	INTEL_HID_DSM_HDMM_FN,
@@ -138,10 +137,10 @@ MODULE_DEVICE_TABLE(acpi, पूर्णांकel_hid_ids);
 	INTEL_HID_DSM_VGBS_FN,
 	INTEL_HID_DSM_HEBC_V2_FN,
 	INTEL_HID_DSM_FN_MAX
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *पूर्णांकel_hid_dsm_fn_to_method[INTEL_HID_DSM_FN_MAX] = अणु
-	शून्य,
+static const char *intel_hid_dsm_fn_to_method[INTEL_HID_DSM_FN_MAX] = {
+	NULL,
 	"BTNL",
 	"HDMM",
 	"HDSM",
@@ -151,591 +150,591 @@ MODULE_DEVICE_TABLE(acpi, पूर्णांकel_hid_ids);
 	"HEBC",
 	"VGBS",
 	"HEBC"
-पूर्ण;
+};
 
-अटल अचिन्हित दीर्घ दीर्घ पूर्णांकel_hid_dsm_fn_mask;
-अटल guid_t पूर्णांकel_dsm_guid;
+static unsigned long long intel_hid_dsm_fn_mask;
+static guid_t intel_dsm_guid;
 
-अटल bool पूर्णांकel_hid_execute_method(acpi_handle handle,
-				     क्रमागत पूर्णांकel_hid_dsm_fn_codes fn_index,
-				     अचिन्हित दीर्घ दीर्घ arg)
-अणु
-	जोड़ acpi_object *obj, argv4, req;
+static bool intel_hid_execute_method(acpi_handle handle,
+				     enum intel_hid_dsm_fn_codes fn_index,
+				     unsigned long long arg)
+{
+	union acpi_object *obj, argv4, req;
 	acpi_status status;
-	अक्षर *method_name;
+	char *method_name;
 
-	अगर (fn_index <= INTEL_HID_DSM_FN_INVALID ||
+	if (fn_index <= INTEL_HID_DSM_FN_INVALID ||
 	    fn_index >= INTEL_HID_DSM_FN_MAX)
-		वापस false;
+		return false;
 
-	method_name = (अक्षर *)पूर्णांकel_hid_dsm_fn_to_method[fn_index];
+	method_name = (char *)intel_hid_dsm_fn_to_method[fn_index];
 
-	अगर (!(पूर्णांकel_hid_dsm_fn_mask & BIT(fn_index)))
-		जाओ skip_dsm_exec;
+	if (!(intel_hid_dsm_fn_mask & BIT(fn_index)))
+		goto skip_dsm_exec;
 
-	/* All methods expects a package with one पूर्णांकeger element */
+	/* All methods expects a package with one integer element */
 	req.type = ACPI_TYPE_INTEGER;
-	req.पूर्णांकeger.value = arg;
+	req.integer.value = arg;
 
 	argv4.type = ACPI_TYPE_PACKAGE;
 	argv4.package.count = 1;
 	argv4.package.elements = &req;
 
-	obj = acpi_evaluate_dsm(handle, &पूर्णांकel_dsm_guid, 1, fn_index, &argv4);
-	अगर (obj) अणु
+	obj = acpi_evaluate_dsm(handle, &intel_dsm_guid, 1, fn_index, &argv4);
+	if (obj) {
 		acpi_handle_debug(handle, "Exec DSM Fn code: %d[%s] success\n",
 				  fn_index, method_name);
 		ACPI_FREE(obj);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
 skip_dsm_exec:
 	status = acpi_execute_simple_method(handle, method_name, arg);
-	अगर (ACPI_SUCCESS(status))
-		वापस true;
+	if (ACPI_SUCCESS(status))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool पूर्णांकel_hid_evaluate_method(acpi_handle handle,
-				      क्रमागत पूर्णांकel_hid_dsm_fn_codes fn_index,
-				      अचिन्हित दीर्घ दीर्घ *result)
-अणु
-	जोड़ acpi_object *obj;
+static bool intel_hid_evaluate_method(acpi_handle handle,
+				      enum intel_hid_dsm_fn_codes fn_index,
+				      unsigned long long *result)
+{
+	union acpi_object *obj;
 	acpi_status status;
-	अक्षर *method_name;
+	char *method_name;
 
-	अगर (fn_index <= INTEL_HID_DSM_FN_INVALID ||
+	if (fn_index <= INTEL_HID_DSM_FN_INVALID ||
 	    fn_index >= INTEL_HID_DSM_FN_MAX)
-		वापस false;
+		return false;
 
-	method_name = (अक्षर *)पूर्णांकel_hid_dsm_fn_to_method[fn_index];
+	method_name = (char *)intel_hid_dsm_fn_to_method[fn_index];
 
-	अगर (!(पूर्णांकel_hid_dsm_fn_mask & fn_index))
-		जाओ skip_dsm_eval;
+	if (!(intel_hid_dsm_fn_mask & fn_index))
+		goto skip_dsm_eval;
 
-	obj = acpi_evaluate_dsm_typed(handle, &पूर्णांकel_dsm_guid,
+	obj = acpi_evaluate_dsm_typed(handle, &intel_dsm_guid,
 				      1, fn_index,
-				      शून्य,  ACPI_TYPE_INTEGER);
-	अगर (obj) अणु
-		*result = obj->पूर्णांकeger.value;
+				      NULL,  ACPI_TYPE_INTEGER);
+	if (obj) {
+		*result = obj->integer.value;
 		acpi_handle_debug(handle,
 				  "Eval DSM Fn code: %d[%s] results: 0x%llx\n",
 				  fn_index, method_name, *result);
 		ACPI_FREE(obj);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
 skip_dsm_eval:
-	status = acpi_evaluate_पूर्णांकeger(handle, method_name, शून्य, result);
-	अगर (ACPI_SUCCESS(status))
-		वापस true;
+	status = acpi_evaluate_integer(handle, method_name, NULL, result);
+	if (ACPI_SUCCESS(status))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम पूर्णांकel_hid_init_dsm(acpi_handle handle)
-अणु
-	जोड़ acpi_object *obj;
+static void intel_hid_init_dsm(acpi_handle handle)
+{
+	union acpi_object *obj;
 
-	guid_parse(HID_EVENT_FILTER_UUID, &पूर्णांकel_dsm_guid);
+	guid_parse(HID_EVENT_FILTER_UUID, &intel_dsm_guid);
 
-	obj = acpi_evaluate_dsm_typed(handle, &पूर्णांकel_dsm_guid, 1, 0, शून्य,
+	obj = acpi_evaluate_dsm_typed(handle, &intel_dsm_guid, 1, 0, NULL,
 				      ACPI_TYPE_BUFFER);
-	अगर (obj) अणु
-		चयन (obj->buffer.length) अणु
-		शेष:
-		हाल 2:
-			पूर्णांकel_hid_dsm_fn_mask = *(u16 *)obj->buffer.poपूर्णांकer;
-			अवरोध;
-		हाल 1:
-			पूर्णांकel_hid_dsm_fn_mask = *obj->buffer.poपूर्णांकer;
-			अवरोध;
-		हाल 0:
+	if (obj) {
+		switch (obj->buffer.length) {
+		default:
+		case 2:
+			intel_hid_dsm_fn_mask = *(u16 *)obj->buffer.pointer;
+			break;
+		case 1:
+			intel_hid_dsm_fn_mask = *obj->buffer.pointer;
+			break;
+		case 0:
 			acpi_handle_warn(handle, "intel_hid_dsm_fn_mask length is zero\n");
-			पूर्णांकel_hid_dsm_fn_mask = 0;
-			अवरोध;
-		पूर्ण
+			intel_hid_dsm_fn_mask = 0;
+			break;
+		}
 		ACPI_FREE(obj);
-	पूर्ण
+	}
 
 	acpi_handle_debug(handle, "intel_hid_dsm_fn_mask = %llx\n",
-			  पूर्णांकel_hid_dsm_fn_mask);
-पूर्ण
+			  intel_hid_dsm_fn_mask);
+}
 
-अटल पूर्णांक पूर्णांकel_hid_set_enable(काष्ठा device *device, bool enable)
-अणु
+static int intel_hid_set_enable(struct device *device, bool enable)
+{
 	acpi_handle handle = ACPI_HANDLE(device);
 
-	/* Enable|disable features - घातer button is always enabled */
-	अगर (!पूर्णांकel_hid_execute_method(handle, INTEL_HID_DSM_HDSM_FN,
-				      enable)) अणु
+	/* Enable|disable features - power button is always enabled */
+	if (!intel_hid_execute_method(handle, INTEL_HID_DSM_HDSM_FN,
+				      enable)) {
 		dev_warn(device, "failed to %sable hotkeys\n",
 			 enable ? "en" : "dis");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम पूर्णांकel_button_array_enable(काष्ठा device *device, bool enable)
-अणु
-	काष्ठा पूर्णांकel_hid_priv *priv = dev_get_drvdata(device);
+static void intel_button_array_enable(struct device *device, bool enable)
+{
+	struct intel_hid_priv *priv = dev_get_drvdata(device);
 	acpi_handle handle = ACPI_HANDLE(device);
-	अचिन्हित दीर्घ दीर्घ button_cap;
+	unsigned long long button_cap;
 	acpi_status status;
 
-	अगर (!priv->array)
-		वापस;
+	if (!priv->array)
+		return;
 
-	/* Query supported platक्रमm features */
-	status = acpi_evaluate_पूर्णांकeger(handle, "BTNC", शून्य, &button_cap);
-	अगर (ACPI_FAILURE(status)) अणु
+	/* Query supported platform features */
+	status = acpi_evaluate_integer(handle, "BTNC", NULL, &button_cap);
+	if (ACPI_FAILURE(status)) {
 		dev_warn(device, "failed to get button capability\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Enable|disable features - घातer button is always enabled */
-	अगर (!पूर्णांकel_hid_execute_method(handle, INTEL_HID_DSM_BTNE_FN,
+	/* Enable|disable features - power button is always enabled */
+	if (!intel_hid_execute_method(handle, INTEL_HID_DSM_BTNE_FN,
 				      enable ? button_cap : 1))
 		dev_warn(device, "failed to set button capability\n");
-पूर्ण
+}
 
-अटल पूर्णांक पूर्णांकel_hid_pm_prepare(काष्ठा device *device)
-अणु
-	अगर (device_may_wakeup(device)) अणु
-		काष्ठा पूर्णांकel_hid_priv *priv = dev_get_drvdata(device);
+static int intel_hid_pm_prepare(struct device *device)
+{
+	if (device_may_wakeup(device)) {
+		struct intel_hid_priv *priv = dev_get_drvdata(device);
 
 		priv->wakeup_mode = true;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल व्योम पूर्णांकel_hid_pm_complete(काष्ठा device *device)
-अणु
-	काष्ठा पूर्णांकel_hid_priv *priv = dev_get_drvdata(device);
+static void intel_hid_pm_complete(struct device *device)
+{
+	struct intel_hid_priv *priv = dev_get_drvdata(device);
 
 	priv->wakeup_mode = false;
-पूर्ण
+}
 
-अटल पूर्णांक पूर्णांकel_hid_pl_suspend_handler(काष्ठा device *device)
-अणु
-	पूर्णांकel_button_array_enable(device, false);
+static int intel_hid_pl_suspend_handler(struct device *device)
+{
+	intel_button_array_enable(device, false);
 
-	अगर (!pm_suspend_no_platक्रमm())
-		पूर्णांकel_hid_set_enable(device, false);
+	if (!pm_suspend_no_platform())
+		intel_hid_set_enable(device, false);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_hid_pl_resume_handler(काष्ठा device *device)
-अणु
-	पूर्णांकel_hid_pm_complete(device);
+static int intel_hid_pl_resume_handler(struct device *device)
+{
+	intel_hid_pm_complete(device);
 
-	अगर (!pm_suspend_no_platक्रमm())
-		पूर्णांकel_hid_set_enable(device, true);
+	if (!pm_suspend_no_platform())
+		intel_hid_set_enable(device, true);
 
-	पूर्णांकel_button_array_enable(device, true);
-	वापस 0;
-पूर्ण
+	intel_button_array_enable(device, true);
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops पूर्णांकel_hid_pl_pm_ops = अणु
-	.prepare = पूर्णांकel_hid_pm_prepare,
-	.complete = पूर्णांकel_hid_pm_complete,
-	.मुक्तze  = पूर्णांकel_hid_pl_suspend_handler,
-	.thaw  = पूर्णांकel_hid_pl_resume_handler,
-	.restore  = पूर्णांकel_hid_pl_resume_handler,
-	.suspend  = पूर्णांकel_hid_pl_suspend_handler,
-	.resume  = पूर्णांकel_hid_pl_resume_handler,
-पूर्ण;
+static const struct dev_pm_ops intel_hid_pl_pm_ops = {
+	.prepare = intel_hid_pm_prepare,
+	.complete = intel_hid_pm_complete,
+	.freeze  = intel_hid_pl_suspend_handler,
+	.thaw  = intel_hid_pl_resume_handler,
+	.restore  = intel_hid_pl_resume_handler,
+	.suspend  = intel_hid_pl_suspend_handler,
+	.resume  = intel_hid_pl_resume_handler,
+};
 
-अटल पूर्णांक पूर्णांकel_hid_input_setup(काष्ठा platक्रमm_device *device)
-अणु
-	काष्ठा पूर्णांकel_hid_priv *priv = dev_get_drvdata(&device->dev);
-	पूर्णांक ret;
+static int intel_hid_input_setup(struct platform_device *device)
+{
+	struct intel_hid_priv *priv = dev_get_drvdata(&device->dev);
+	int ret;
 
 	priv->input_dev = devm_input_allocate_device(&device->dev);
-	अगर (!priv->input_dev)
-		वापस -ENOMEM;
+	if (!priv->input_dev)
+		return -ENOMEM;
 
-	ret = sparse_keymap_setup(priv->input_dev, पूर्णांकel_hid_keymap, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = sparse_keymap_setup(priv->input_dev, intel_hid_keymap, NULL);
+	if (ret)
+		return ret;
 
 	priv->input_dev->name = "Intel HID events";
 	priv->input_dev->id.bustype = BUS_HOST;
 
-	वापस input_रेजिस्टर_device(priv->input_dev);
-पूर्ण
+	return input_register_device(priv->input_dev);
+}
 
-अटल पूर्णांक पूर्णांकel_button_array_input_setup(काष्ठा platक्रमm_device *device)
-अणु
-	काष्ठा पूर्णांकel_hid_priv *priv = dev_get_drvdata(&device->dev);
-	पूर्णांक ret;
+static int intel_button_array_input_setup(struct platform_device *device)
+{
+	struct intel_hid_priv *priv = dev_get_drvdata(&device->dev);
+	int ret;
 
-	/* Setup input device क्रम 5 button array */
+	/* Setup input device for 5 button array */
 	priv->array = devm_input_allocate_device(&device->dev);
-	अगर (!priv->array)
-		वापस -ENOMEM;
+	if (!priv->array)
+		return -ENOMEM;
 
-	ret = sparse_keymap_setup(priv->array, पूर्णांकel_array_keymap, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = sparse_keymap_setup(priv->array, intel_array_keymap, NULL);
+	if (ret)
+		return ret;
 
 	priv->array->name = "Intel HID 5 button array";
 	priv->array->id.bustype = BUS_HOST;
 
-	वापस input_रेजिस्टर_device(priv->array);
-पूर्ण
+	return input_register_device(priv->array);
+}
 
-अटल पूर्णांक पूर्णांकel_hid_चयनes_setup(काष्ठा platक्रमm_device *device)
-अणु
-	काष्ठा पूर्णांकel_hid_priv *priv = dev_get_drvdata(&device->dev);
+static int intel_hid_switches_setup(struct platform_device *device)
+{
+	struct intel_hid_priv *priv = dev_get_drvdata(&device->dev);
 
-	/* Setup input device क्रम चयनes */
-	priv->चयनes = devm_input_allocate_device(&device->dev);
-	अगर (!priv->चयनes)
-		वापस -ENOMEM;
+	/* Setup input device for switches */
+	priv->switches = devm_input_allocate_device(&device->dev);
+	if (!priv->switches)
+		return -ENOMEM;
 
-	__set_bit(EV_SW, priv->चयनes->evbit);
-	__set_bit(SW_TABLET_MODE, priv->चयनes->swbit);
+	__set_bit(EV_SW, priv->switches->evbit);
+	__set_bit(SW_TABLET_MODE, priv->switches->swbit);
 
-	priv->चयनes->name = "Intel HID switches";
-	priv->चयनes->id.bustype = BUS_HOST;
-	वापस input_रेजिस्टर_device(priv->चयनes);
-पूर्ण
+	priv->switches->name = "Intel HID switches";
+	priv->switches->id.bustype = BUS_HOST;
+	return input_register_device(priv->switches);
+}
 
-अटल व्योम report_tablet_mode_state(काष्ठा platक्रमm_device *device)
-अणु
-	काष्ठा पूर्णांकel_hid_priv *priv = dev_get_drvdata(&device->dev);
+static void report_tablet_mode_state(struct platform_device *device)
+{
+	struct intel_hid_priv *priv = dev_get_drvdata(&device->dev);
 	acpi_handle handle = ACPI_HANDLE(&device->dev);
-	अचिन्हित दीर्घ दीर्घ vgbs;
-	पूर्णांक m;
+	unsigned long long vgbs;
+	int m;
 
-	अगर (!पूर्णांकel_hid_evaluate_method(handle, INTEL_HID_DSM_VGBS_FN, &vgbs))
-		वापस;
+	if (!intel_hid_evaluate_method(handle, INTEL_HID_DSM_VGBS_FN, &vgbs))
+		return;
 
 	m = !(vgbs & TABLET_MODE_FLAG);
-	input_report_चयन(priv->चयनes, SW_TABLET_MODE, m);
-	input_sync(priv->चयनes);
-पूर्ण
+	input_report_switch(priv->switches, SW_TABLET_MODE, m);
+	input_sync(priv->switches);
+}
 
-अटल bool report_tablet_mode_event(काष्ठा input_dev *input_dev, u32 event)
-अणु
-	अगर (!input_dev)
-		वापस false;
+static bool report_tablet_mode_event(struct input_dev *input_dev, u32 event)
+{
+	if (!input_dev)
+		return false;
 
-	चयन (event) अणु
-	हाल 0xcc:
-		input_report_चयन(input_dev, SW_TABLET_MODE, 1);
+	switch (event) {
+	case 0xcc:
+		input_report_switch(input_dev, SW_TABLET_MODE, 1);
 		input_sync(input_dev);
-		वापस true;
-	हाल 0xcd:
-		input_report_चयन(input_dev, SW_TABLET_MODE, 0);
+		return true;
+	case 0xcd:
+		input_report_switch(input_dev, SW_TABLET_MODE, 0);
 		input_sync(input_dev);
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल व्योम notअगरy_handler(acpi_handle handle, u32 event, व्योम *context)
-अणु
-	काष्ठा platक्रमm_device *device = context;
-	काष्ठा पूर्णांकel_hid_priv *priv = dev_get_drvdata(&device->dev);
-	अचिन्हित दीर्घ दीर्घ ev_index;
-	पूर्णांक err;
+static void notify_handler(acpi_handle handle, u32 event, void *context)
+{
+	struct platform_device *device = context;
+	struct intel_hid_priv *priv = dev_get_drvdata(&device->dev);
+	unsigned long long ev_index;
+	int err;
 
 	/*
-	 * Some convertible have unreliable VGBS वापस which could cause incorrect
-	 * SW_TABLET_MODE report, in these हालs we enable support when receiving
+	 * Some convertible have unreliable VGBS return which could cause incorrect
+	 * SW_TABLET_MODE report, in these cases we enable support when receiving
 	 * the first event instead of during driver setup.
 	 *
 	 * Some 360 degree hinges (yoga) style 2-in-1 devices use 2 accelerometers
 	 * to allow the OS to determine the angle between the display and the base
-	 * of the device. On Winकरोws these are पढ़ो by a special HingeAngleService
-	 * process which calls an ACPI DSM (Device Specअगरic Method) on the
-	 * ACPI KIOX010A device node क्रम the sensor in the display, to let the
-	 * firmware know अगर the 2-in-1 is in tablet- or laptop-mode so that it can
-	 * disable the kbd and touchpad to aव्योम spurious input in tablet-mode.
+	 * of the device. On Windows these are read by a special HingeAngleService
+	 * process which calls an ACPI DSM (Device Specific Method) on the
+	 * ACPI KIOX010A device node for the sensor in the display, to let the
+	 * firmware know if the 2-in-1 is in tablet- or laptop-mode so that it can
+	 * disable the kbd and touchpad to avoid spurious input in tablet-mode.
 	 *
-	 * The linux kxcjk1013 driver calls the DSM क्रम this once at probe समय
+	 * The linux kxcjk1013 driver calls the DSM for this once at probe time
 	 * to ensure that the builtin kbd and touchpad work. On some devices this
-	 * causes a "spurious" 0xcd event on the पूर्णांकel-hid ACPI dev. In this हाल
-	 * there is not a functional tablet-mode चयन, so we should not रेजिस्टर
-	 * the tablet-mode चयन device.
+	 * causes a "spurious" 0xcd event on the intel-hid ACPI dev. In this case
+	 * there is not a functional tablet-mode switch, so we should not register
+	 * the tablet-mode switch device.
 	 */
-	अगर (!priv->चयनes && (event == 0xcc || event == 0xcd) &&
-	    !acpi_dev_present("KIOX010A", शून्य, -1)) अणु
+	if (!priv->switches && (event == 0xcc || event == 0xcd) &&
+	    !acpi_dev_present("KIOX010A", NULL, -1)) {
 		dev_info(&device->dev, "switch event received, enable switches supports\n");
-		err = पूर्णांकel_hid_चयनes_setup(device);
-		अगर (err)
+		err = intel_hid_switches_setup(device);
+		if (err)
 			pr_err("Failed to setup Intel HID switches\n");
-	पूर्ण
+	}
 
-	अगर (priv->wakeup_mode) अणु
+	if (priv->wakeup_mode) {
 		/*
-		 * Needed क्रम wakeup from suspend-to-idle to work on some
-		 * platक्रमms that करोn't expose the 5-button array, but still
-		 * send notअगरies with the घातer button event code to this
-		 * device object on घातer button actions जबतक suspended.
+		 * Needed for wakeup from suspend-to-idle to work on some
+		 * platforms that don't expose the 5-button array, but still
+		 * send notifies with the power button event code to this
+		 * device object on power button actions while suspended.
 		 */
-		अगर (event == 0xce)
-			जाओ wakeup;
+		if (event == 0xce)
+			goto wakeup;
 
 		/*
 		 * Some devices send (duplicate) tablet-mode events when moved
-		 * around even though the mode has not changed; and they करो this
+		 * around even though the mode has not changed; and they do this
 		 * even when suspended.
-		 * Update the चयन state in हाल it changed and then वापस
-		 * without waking up to aव्योम spurious wakeups.
+		 * Update the switch state in case it changed and then return
+		 * without waking up to avoid spurious wakeups.
 		 */
-		अगर (event == 0xcc || event == 0xcd) अणु
-			report_tablet_mode_event(priv->चयनes, event);
-			वापस;
-		पूर्ण
+		if (event == 0xcc || event == 0xcd) {
+			report_tablet_mode_event(priv->switches, event);
+			return;
+		}
 
 		/* Wake up on 5-button array events only. */
-		अगर (event == 0xc0 || !priv->array)
-			वापस;
+		if (event == 0xc0 || !priv->array)
+			return;
 
-		अगर (!sparse_keymap_entry_from_scancode(priv->array, event)) अणु
+		if (!sparse_keymap_entry_from_scancode(priv->array, event)) {
 			dev_info(&device->dev, "unknown event 0x%x\n", event);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 wakeup:
 		pm_wakeup_hard_event(&device->dev);
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * Needed क्रम suspend to work on some platक्रमms that करोn't expose
-	 * the 5-button array, but still send notअगरies with घातer button
-	 * event code to this device object on घातer button actions.
+	 * Needed for suspend to work on some platforms that don't expose
+	 * the 5-button array, but still send notifies with power button
+	 * event code to this device object on power button actions.
 	 *
-	 * Report the घातer button press and release.
+	 * Report the power button press and release.
 	 */
-	अगर (!priv->array) अणु
-		अगर (event == 0xce) अणु
+	if (!priv->array) {
+		if (event == 0xce) {
 			input_report_key(priv->input_dev, KEY_POWER, 1);
 			input_sync(priv->input_dev);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		अगर (event == 0xcf) अणु
+		if (event == 0xcf) {
 			input_report_key(priv->input_dev, KEY_POWER, 0);
 			input_sync(priv->input_dev);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
-	अगर (report_tablet_mode_event(priv->चयनes, event))
-		वापस;
+	if (report_tablet_mode_event(priv->switches, event))
+		return;
 
-	/* 0xC0 is क्रम HID events, other values are क्रम 5 button array */
-	अगर (event != 0xc0) अणु
-		अगर (!priv->array ||
+	/* 0xC0 is for HID events, other values are for 5 button array */
+	if (event != 0xc0) {
+		if (!priv->array ||
 		    !sparse_keymap_report_event(priv->array, event, 1, true))
 			dev_dbg(&device->dev, "unknown event 0x%x\n", event);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!पूर्णांकel_hid_evaluate_method(handle, INTEL_HID_DSM_HDEM_FN,
-				       &ev_index)) अणु
+	if (!intel_hid_evaluate_method(handle, INTEL_HID_DSM_HDEM_FN,
+				       &ev_index)) {
 		dev_warn(&device->dev, "failed to get event index\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!sparse_keymap_report_event(priv->input_dev, ev_index, 1, true))
+	if (!sparse_keymap_report_event(priv->input_dev, ev_index, 1, true))
 		dev_dbg(&device->dev, "unknown event index 0x%llx\n",
 			 ev_index);
-पूर्ण
+}
 
-अटल bool button_array_present(काष्ठा platक्रमm_device *device)
-अणु
+static bool button_array_present(struct platform_device *device)
+{
 	acpi_handle handle = ACPI_HANDLE(&device->dev);
-	अचिन्हित दीर्घ दीर्घ event_cap;
+	unsigned long long event_cap;
 
-	अगर (पूर्णांकel_hid_evaluate_method(handle, INTEL_HID_DSM_HEBC_V2_FN,
-				      &event_cap)) अणु
-		/* Check presence of 5 button array or v2 घातer button */
-		अगर (event_cap & 0x60000)
-			वापस true;
-	पूर्ण
+	if (intel_hid_evaluate_method(handle, INTEL_HID_DSM_HEBC_V2_FN,
+				      &event_cap)) {
+		/* Check presence of 5 button array or v2 power button */
+		if (event_cap & 0x60000)
+			return true;
+	}
 
-	अगर (पूर्णांकel_hid_evaluate_method(handle, INTEL_HID_DSM_HEBC_V1_FN,
-				      &event_cap)) अणु
-		अगर (event_cap & 0x20000)
-			वापस true;
-	पूर्ण
+	if (intel_hid_evaluate_method(handle, INTEL_HID_DSM_HEBC_V1_FN,
+				      &event_cap)) {
+		if (event_cap & 0x20000)
+			return true;
+	}
 
-	अगर (dmi_check_प्रणाली(button_array_table))
-		वापस true;
+	if (dmi_check_system(button_array_table))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक पूर्णांकel_hid_probe(काष्ठा platक्रमm_device *device)
-अणु
+static int intel_hid_probe(struct platform_device *device)
+{
 	acpi_handle handle = ACPI_HANDLE(&device->dev);
-	अचिन्हित दीर्घ दीर्घ mode;
-	काष्ठा पूर्णांकel_hid_priv *priv;
+	unsigned long long mode;
+	struct intel_hid_priv *priv;
 	acpi_status status;
-	पूर्णांक err;
+	int err;
 
-	पूर्णांकel_hid_init_dsm(handle);
+	intel_hid_init_dsm(handle);
 
-	अगर (!पूर्णांकel_hid_evaluate_method(handle, INTEL_HID_DSM_HDMM_FN, &mode)) अणु
+	if (!intel_hid_evaluate_method(handle, INTEL_HID_DSM_HDMM_FN, &mode)) {
 		dev_warn(&device->dev, "failed to read mode\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (mode != 0) अणु
+	if (mode != 0) {
 		/*
 		 * This driver only implements "simple" mode.  There appear
 		 * to be no other modes, but we should be paranoid and check
-		 * क्रम compatibility.
+		 * for compatibility.
 		 */
 		dev_info(&device->dev, "platform is not in simple mode\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	priv = devm_kzalloc(&device->dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&device->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 	dev_set_drvdata(&device->dev, priv);
 
-	err = पूर्णांकel_hid_input_setup(device);
-	अगर (err) अणु
+	err = intel_hid_input_setup(device);
+	if (err) {
 		pr_err("Failed to setup Intel HID hotkeys\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/* Setup 5 button array */
-	अगर (button_array_present(device)) अणु
+	if (button_array_present(device)) {
 		dev_info(&device->dev, "platform supports 5 button array\n");
-		err = पूर्णांकel_button_array_input_setup(device);
-		अगर (err)
+		err = intel_button_array_input_setup(device);
+		if (err)
 			pr_err("Failed to setup Intel 5 button array hotkeys\n");
-	पूर्ण
+	}
 
-	/* Setup चयनes क्रम devices that we know VGBS वापस correctly */
-	अगर (dmi_check_प्रणाली(dmi_vgbs_allow_list)) अणु
+	/* Setup switches for devices that we know VGBS return correctly */
+	if (dmi_check_system(dmi_vgbs_allow_list)) {
 		dev_info(&device->dev, "platform supports switches\n");
-		err = पूर्णांकel_hid_चयनes_setup(device);
-		अगर (err)
+		err = intel_hid_switches_setup(device);
+		if (err)
 			pr_err("Failed to setup Intel HID switches\n");
-		अन्यथा
+		else
 			report_tablet_mode_state(device);
-	पूर्ण
+	}
 
-	status = acpi_install_notअगरy_handler(handle,
+	status = acpi_install_notify_handler(handle,
 					     ACPI_DEVICE_NOTIFY,
-					     notअगरy_handler,
+					     notify_handler,
 					     device);
-	अगर (ACPI_FAILURE(status))
-		वापस -EBUSY;
+	if (ACPI_FAILURE(status))
+		return -EBUSY;
 
-	err = पूर्णांकel_hid_set_enable(&device->dev, true);
-	अगर (err)
-		जाओ err_हटाओ_notअगरy;
+	err = intel_hid_set_enable(&device->dev, true);
+	if (err)
+		goto err_remove_notify;
 
-	अगर (priv->array) अणु
-		अचिन्हित दीर्घ दीर्घ dummy;
+	if (priv->array) {
+		unsigned long long dummy;
 
-		पूर्णांकel_button_array_enable(&device->dev, true);
+		intel_button_array_enable(&device->dev, true);
 
-		/* Call button load method to enable HID घातer button */
-		अगर (!पूर्णांकel_hid_evaluate_method(handle, INTEL_HID_DSM_BTNL_FN,
-					       &dummy)) अणु
+		/* Call button load method to enable HID power button */
+		if (!intel_hid_evaluate_method(handle, INTEL_HID_DSM_BTNL_FN,
+					       &dummy)) {
 			dev_warn(&device->dev,
 				 "failed to enable HID power button\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	device_init_wakeup(&device->dev, true);
 	/*
-	 * In order क्रम प्रणाली wakeup to work, the EC GPE has to be marked as
-	 * a wakeup one, so करो that here (this setting will persist, but it has
-	 * no effect until the wakeup mask is set क्रम the EC GPE).
+	 * In order for system wakeup to work, the EC GPE has to be marked as
+	 * a wakeup one, so do that here (this setting will persist, but it has
+	 * no effect until the wakeup mask is set for the EC GPE).
 	 */
-	acpi_ec_mark_gpe_क्रम_wake();
-	वापस 0;
+	acpi_ec_mark_gpe_for_wake();
+	return 0;
 
-err_हटाओ_notअगरy:
-	acpi_हटाओ_notअगरy_handler(handle, ACPI_DEVICE_NOTIFY, notअगरy_handler);
+err_remove_notify:
+	acpi_remove_notify_handler(handle, ACPI_DEVICE_NOTIFY, notify_handler);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक पूर्णांकel_hid_हटाओ(काष्ठा platक्रमm_device *device)
-अणु
+static int intel_hid_remove(struct platform_device *device)
+{
 	acpi_handle handle = ACPI_HANDLE(&device->dev);
 
 	device_init_wakeup(&device->dev, false);
-	acpi_हटाओ_notअगरy_handler(handle, ACPI_DEVICE_NOTIFY, notअगरy_handler);
-	पूर्णांकel_hid_set_enable(&device->dev, false);
-	पूर्णांकel_button_array_enable(&device->dev, false);
+	acpi_remove_notify_handler(handle, ACPI_DEVICE_NOTIFY, notify_handler);
+	intel_hid_set_enable(&device->dev, false);
+	intel_button_array_enable(&device->dev, false);
 
 	/*
-	 * Even अगर we failed to shut off the event stream, we can still
+	 * Even if we failed to shut off the event stream, we can still
 	 * safely detach from the device.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver पूर्णांकel_hid_pl_driver = अणु
-	.driver = अणु
+static struct platform_driver intel_hid_pl_driver = {
+	.driver = {
 		.name = "intel-hid",
-		.acpi_match_table = पूर्णांकel_hid_ids,
-		.pm = &पूर्णांकel_hid_pl_pm_ops,
-	पूर्ण,
-	.probe = पूर्णांकel_hid_probe,
-	.हटाओ = पूर्णांकel_hid_हटाओ,
-पूर्ण;
+		.acpi_match_table = intel_hid_ids,
+		.pm = &intel_hid_pl_pm_ops,
+	},
+	.probe = intel_hid_probe,
+	.remove = intel_hid_remove,
+};
 
 /*
- * Unक्रमtunately, some laptops provide a _HID="INT33D5" device with
+ * Unfortunately, some laptops provide a _HID="INT33D5" device with
  * _CID="PNP0C02".  This causes the pnpacpi scan driver to claim the
- * ACPI node, so no platक्रमm device will be created.  The pnpacpi
+ * ACPI node, so no platform device will be created.  The pnpacpi
  * driver rejects this device in subsequent processing, so no physical
  * node is created at all.
  *
  * As a workaround until the ACPI core figures out how to handle
- * this corner हाल, manually ask the ACPI platक्रमm device code to
+ * this corner case, manually ask the ACPI platform device code to
  * claim the ACPI node.
  */
-अटल acpi_status __init
-check_acpi_dev(acpi_handle handle, u32 lvl, व्योम *context, व्योम **rv)
-अणु
-	स्थिर काष्ठा acpi_device_id *ids = context;
-	काष्ठा acpi_device *dev;
+static acpi_status __init
+check_acpi_dev(acpi_handle handle, u32 lvl, void *context, void **rv)
+{
+	const struct acpi_device_id *ids = context;
+	struct acpi_device *dev;
 
-	अगर (acpi_bus_get_device(handle, &dev) != 0)
-		वापस AE_OK;
+	if (acpi_bus_get_device(handle, &dev) != 0)
+		return AE_OK;
 
-	अगर (acpi_match_device_ids(dev, ids) == 0)
-		अगर (!IS_ERR_OR_शून्य(acpi_create_platक्रमm_device(dev, शून्य)))
+	if (acpi_match_device_ids(dev, ids) == 0)
+		if (!IS_ERR_OR_NULL(acpi_create_platform_device(dev, NULL)))
 			dev_info(&dev->dev,
 				 "intel-hid: created platform device\n");
 
-	वापस AE_OK;
-पूर्ण
+	return AE_OK;
+}
 
-अटल पूर्णांक __init पूर्णांकel_hid_init(व्योम)
-अणु
+static int __init intel_hid_init(void)
+{
 	acpi_walk_namespace(ACPI_TYPE_DEVICE, ACPI_ROOT_OBJECT,
-			    ACPI_UINT32_MAX, check_acpi_dev, शून्य,
-			    (व्योम *)पूर्णांकel_hid_ids, शून्य);
+			    ACPI_UINT32_MAX, check_acpi_dev, NULL,
+			    (void *)intel_hid_ids, NULL);
 
-	वापस platक्रमm_driver_रेजिस्टर(&पूर्णांकel_hid_pl_driver);
-पूर्ण
-module_init(पूर्णांकel_hid_init);
+	return platform_driver_register(&intel_hid_pl_driver);
+}
+module_init(intel_hid_init);
 
-अटल व्योम __निकास पूर्णांकel_hid_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&पूर्णांकel_hid_pl_driver);
-पूर्ण
-module_निकास(पूर्णांकel_hid_निकास);
+static void __exit intel_hid_exit(void)
+{
+	platform_driver_unregister(&intel_hid_pl_driver);
+}
+module_exit(intel_hid_exit);

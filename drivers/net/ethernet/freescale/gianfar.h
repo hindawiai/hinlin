@@ -1,565 +1,564 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * drivers/net/ethernet/मुक्तscale/gianfar.h
+ * drivers/net/ethernet/freescale/gianfar.h
  *
  * Gianfar Ethernet Driver
- * Driver क्रम FEC on MPC8540 and TSEC on MPC8540/MPC8560
+ * Driver for FEC on MPC8540 and TSEC on MPC8540/MPC8560
  * Based on 8260_io/fcc_enet.c
  *
  * Author: Andy Fleming
- * Maपूर्णांकainer: Kumar Gala
- * Modअगरier: Sandeep Gopalpet <sandeep.kumar@मुक्तscale.com>
+ * Maintainer: Kumar Gala
+ * Modifier: Sandeep Gopalpet <sandeep.kumar@freescale.com>
  *
  * Copyright 2002-2009, 2011-2013 Freescale Semiconductor, Inc.
  *
- *  Still left to करो:
- *      -Add support क्रम module parameters
- *	-Add patch क्रम ethtool phys id
+ *  Still left to do:
+ *      -Add support for module parameters
+ *	-Add patch for ethtool phys id
  */
-#अगर_अघोषित __GIANFAR_H
-#घोषणा __GIANFAR_H
+#ifndef __GIANFAR_H
+#define __GIANFAR_H
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/mii.h>
-#समावेश <linux/phy.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/slab.h>
+#include <linux/interrupt.h>
+#include <linux/delay.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/skbuff.h>
+#include <linux/spinlock.h>
+#include <linux/mm.h>
+#include <linux/mii.h>
+#include <linux/phy.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/irq.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/module.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/ethtool.h>
+#include <asm/io.h>
+#include <asm/irq.h>
+#include <linux/uaccess.h>
+#include <linux/module.h>
+#include <linux/crc32.h>
+#include <linux/workqueue.h>
+#include <linux/ethtool.h>
 
-काष्ठा ethtool_flow_spec_container अणु
-	काष्ठा ethtool_rx_flow_spec fs;
-	काष्ठा list_head list;
-पूर्ण;
+struct ethtool_flow_spec_container {
+	struct ethtool_rx_flow_spec fs;
+	struct list_head list;
+};
 
-काष्ठा ethtool_rx_list अणु
-	काष्ठा list_head list;
-	अचिन्हित पूर्णांक count;
-पूर्ण;
+struct ethtool_rx_list {
+	struct list_head list;
+	unsigned int count;
+};
 
 /* The maximum number of packets to be handled in one call of gfar_poll */
-#घोषणा GFAR_DEV_WEIGHT 64
+#define GFAR_DEV_WEIGHT 64
 
-/* Length क्रम FCB */
-#घोषणा GMAC_FCB_LEN 8
+/* Length for FCB */
+#define GMAC_FCB_LEN 8
 
-/* Length क्रम TxPAL */
-#घोषणा GMAC_TXPAL_LEN 16
+/* Length for TxPAL */
+#define GMAC_TXPAL_LEN 16
 
 /* Default padding amount */
-#घोषणा DEFAULT_PADDING 2
+#define DEFAULT_PADDING 2
 
 /* Number of bytes to align the rx bufs to */
-#घोषणा RXBUF_ALIGNMENT 64
+#define RXBUF_ALIGNMENT 64
 
-#घोषणा DRV_NAME "gfar-enet"
+#define DRV_NAME "gfar-enet"
 
 /* MAXIMUM NUMBER OF QUEUES SUPPORTED */
-#घोषणा MAX_TX_QS	0x8
-#घोषणा MAX_RX_QS	0x8
+#define MAX_TX_QS	0x8
+#define MAX_RX_QS	0x8
 
 /* MAXIMUM NUMBER OF GROUPS SUPPORTED */
-#घोषणा MAXGROUPS 0x2
+#define MAXGROUPS 0x2
 
-/* These need to be घातers of 2 क्रम this driver */
-#घोषणा DEFAULT_TX_RING_SIZE	256
-#घोषणा DEFAULT_RX_RING_SIZE	256
+/* These need to be powers of 2 for this driver */
+#define DEFAULT_TX_RING_SIZE	256
+#define DEFAULT_RX_RING_SIZE	256
 
-#घोषणा GFAR_RX_BUFF_ALLOC	16
+#define GFAR_RX_BUFF_ALLOC	16
 
-#घोषणा GFAR_RX_MAX_RING_SIZE   256
-#घोषणा GFAR_TX_MAX_RING_SIZE   256
+#define GFAR_RX_MAX_RING_SIZE   256
+#define GFAR_TX_MAX_RING_SIZE   256
 
-#घोषणा FBTHR_SHIFT        24
-#घोषणा DEFAULT_RX_LFC_THR  16
-#घोषणा DEFAULT_LFC_PTVVAL  4
+#define FBTHR_SHIFT        24
+#define DEFAULT_RX_LFC_THR  16
+#define DEFAULT_LFC_PTVVAL  4
 
-#घोषणा GFAR_RXB_TRUESIZE 2048
-#घोषणा GFAR_SKBFRAG_OVR (RXBUF_ALIGNMENT \
-			  + SKB_DATA_ALIGN(माप(काष्ठा skb_shared_info)))
-#घोषणा GFAR_RXB_SIZE roundकरोwn(GFAR_RXB_TRUESIZE - GFAR_SKBFRAG_OVR, 64)
-#घोषणा GFAR_SKBFRAG_SIZE (GFAR_RXB_SIZE + GFAR_SKBFRAG_OVR)
+#define GFAR_RXB_TRUESIZE 2048
+#define GFAR_SKBFRAG_OVR (RXBUF_ALIGNMENT \
+			  + SKB_DATA_ALIGN(sizeof(struct skb_shared_info)))
+#define GFAR_RXB_SIZE rounddown(GFAR_RXB_TRUESIZE - GFAR_SKBFRAG_OVR, 64)
+#define GFAR_SKBFRAG_SIZE (GFAR_RXB_SIZE + GFAR_SKBFRAG_OVR)
 
-#घोषणा TX_RING_MOD_MASK(size) (size-1)
-#घोषणा RX_RING_MOD_MASK(size) (size-1)
-#घोषणा GFAR_JUMBO_FRAME_SIZE 9600
+#define TX_RING_MOD_MASK(size) (size-1)
+#define RX_RING_MOD_MASK(size) (size-1)
+#define GFAR_JUMBO_FRAME_SIZE 9600
 
-#घोषणा DEFAULT_FIFO_TX_THR 0x100
-#घोषणा DEFAULT_FIFO_TX_STARVE 0x40
-#घोषणा DEFAULT_FIFO_TX_STARVE_OFF 0x80
+#define DEFAULT_FIFO_TX_THR 0x100
+#define DEFAULT_FIFO_TX_STARVE 0x40
+#define DEFAULT_FIFO_TX_STARVE_OFF 0x80
 
-/* The number of Exact Match रेजिस्टरs */
-#घोषणा GFAR_EM_NUM	15
+/* The number of Exact Match registers */
+#define GFAR_EM_NUM	15
 
-/* Latency of पूर्णांकerface घड़ी in nanoseconds */
-/* Interface घड़ी latency , in this हाल, means the
- * समय described by a value of 1 in the पूर्णांकerrupt
- * coalescing रेजिस्टरs' समय fields.  Since those fields
- * refer to the समय it takes क्रम 64 घड़ीs to pass, the
+/* Latency of interface clock in nanoseconds */
+/* Interface clock latency , in this case, means the
+ * time described by a value of 1 in the interrupt
+ * coalescing registers' time fields.  Since those fields
+ * refer to the time it takes for 64 clocks to pass, the
  * latencies are as such:
- * GBIT = 125MHz => 8ns/घड़ी => 8*64 ns / tick
- * 100 = 25 MHz => 40ns/घड़ी => 40*64 ns / tick
- * 10 = 2.5 MHz => 400ns/घड़ी => 400*64 ns / tick
+ * GBIT = 125MHz => 8ns/clock => 8*64 ns / tick
+ * 100 = 25 MHz => 40ns/clock => 40*64 ns / tick
+ * 10 = 2.5 MHz => 400ns/clock => 400*64 ns / tick
  */
-#घोषणा GFAR_GBIT_TIME  512
-#घोषणा GFAR_100_TIME   2560
-#घोषणा GFAR_10_TIME    25600
+#define GFAR_GBIT_TIME  512
+#define GFAR_100_TIME   2560
+#define GFAR_10_TIME    25600
 
-#घोषणा DEFAULT_TX_COALESCE 1
-#घोषणा DEFAULT_TXCOUNT	16
-#घोषणा DEFAULT_TXTIME	21
+#define DEFAULT_TX_COALESCE 1
+#define DEFAULT_TXCOUNT	16
+#define DEFAULT_TXTIME	21
 
-#घोषणा DEFAULT_RXTIME	21
+#define DEFAULT_RXTIME	21
 
-#घोषणा DEFAULT_RX_COALESCE 0
-#घोषणा DEFAULT_RXCOUNT	0
+#define DEFAULT_RX_COALESCE 0
+#define DEFAULT_RXCOUNT	0
 
-/* TBI रेजिस्टर addresses */
-#घोषणा MII_TBICON		0x11
+/* TBI register addresses */
+#define MII_TBICON		0x11
 
-/* TBICON रेजिस्टर bit fields */
-#घोषणा TBICON_CLK_SELECT	0x0020
+/* TBICON register bit fields */
+#define TBICON_CLK_SELECT	0x0020
 
-/* MAC रेजिस्टर bits */
-#घोषणा MACCFG1_SOFT_RESET	0x80000000
-#घोषणा MACCFG1_RESET_RX_MC	0x00080000
-#घोषणा MACCFG1_RESET_TX_MC	0x00040000
-#घोषणा MACCFG1_RESET_RX_FUN	0x00020000
-#घोषणा	MACCFG1_RESET_TX_FUN	0x00010000
-#घोषणा MACCFG1_LOOPBACK	0x00000100
-#घोषणा MACCFG1_RX_FLOW		0x00000020
-#घोषणा MACCFG1_TX_FLOW		0x00000010
-#घोषणा MACCFG1_SYNCD_RX_EN	0x00000008
-#घोषणा MACCFG1_RX_EN		0x00000004
-#घोषणा MACCFG1_SYNCD_TX_EN	0x00000002
-#घोषणा MACCFG1_TX_EN		0x00000001
+/* MAC register bits */
+#define MACCFG1_SOFT_RESET	0x80000000
+#define MACCFG1_RESET_RX_MC	0x00080000
+#define MACCFG1_RESET_TX_MC	0x00040000
+#define MACCFG1_RESET_RX_FUN	0x00020000
+#define	MACCFG1_RESET_TX_FUN	0x00010000
+#define MACCFG1_LOOPBACK	0x00000100
+#define MACCFG1_RX_FLOW		0x00000020
+#define MACCFG1_TX_FLOW		0x00000010
+#define MACCFG1_SYNCD_RX_EN	0x00000008
+#define MACCFG1_RX_EN		0x00000004
+#define MACCFG1_SYNCD_TX_EN	0x00000002
+#define MACCFG1_TX_EN		0x00000001
 
-#घोषणा MACCFG2_INIT_SETTINGS	0x00007205
-#घोषणा MACCFG2_FULL_DUPLEX	0x00000001
-#घोषणा MACCFG2_IF              0x00000300
-#घोषणा MACCFG2_MII             0x00000100
-#घोषणा MACCFG2_GMII            0x00000200
-#घोषणा MACCFG2_HUGEFRAME	0x00000020
-#घोषणा MACCFG2_LENGTHCHECK	0x00000010
-#घोषणा MACCFG2_MPEN		0x00000008
+#define MACCFG2_INIT_SETTINGS	0x00007205
+#define MACCFG2_FULL_DUPLEX	0x00000001
+#define MACCFG2_IF              0x00000300
+#define MACCFG2_MII             0x00000100
+#define MACCFG2_GMII            0x00000200
+#define MACCFG2_HUGEFRAME	0x00000020
+#define MACCFG2_LENGTHCHECK	0x00000010
+#define MACCFG2_MPEN		0x00000008
 
-#घोषणा ECNTRL_FIFM		0x00008000
-#घोषणा ECNTRL_INIT_SETTINGS	0x00001000
-#घोषणा ECNTRL_TBI_MODE         0x00000020
-#घोषणा ECNTRL_REDUCED_MODE	0x00000010
-#घोषणा ECNTRL_R100		0x00000008
-#घोषणा ECNTRL_REDUCED_MII_MODE	0x00000004
-#घोषणा ECNTRL_SGMII_MODE	0x00000002
+#define ECNTRL_FIFM		0x00008000
+#define ECNTRL_INIT_SETTINGS	0x00001000
+#define ECNTRL_TBI_MODE         0x00000020
+#define ECNTRL_REDUCED_MODE	0x00000010
+#define ECNTRL_R100		0x00000008
+#define ECNTRL_REDUCED_MII_MODE	0x00000004
+#define ECNTRL_SGMII_MODE	0x00000002
 
-#घोषणा MINFLR_INIT_SETTINGS	0x00000040
+#define MINFLR_INIT_SETTINGS	0x00000040
 
 /* Tqueue control */
-#घोषणा TQUEUE_EN0		0x00008000
-#घोषणा TQUEUE_EN1		0x00004000
-#घोषणा TQUEUE_EN2		0x00002000
-#घोषणा TQUEUE_EN3		0x00001000
-#घोषणा TQUEUE_EN4		0x00000800
-#घोषणा TQUEUE_EN5		0x00000400
-#घोषणा TQUEUE_EN6		0x00000200
-#घोषणा TQUEUE_EN7		0x00000100
-#घोषणा TQUEUE_EN_ALL		0x0000FF00
+#define TQUEUE_EN0		0x00008000
+#define TQUEUE_EN1		0x00004000
+#define TQUEUE_EN2		0x00002000
+#define TQUEUE_EN3		0x00001000
+#define TQUEUE_EN4		0x00000800
+#define TQUEUE_EN5		0x00000400
+#define TQUEUE_EN6		0x00000200
+#define TQUEUE_EN7		0x00000100
+#define TQUEUE_EN_ALL		0x0000FF00
 
-#घोषणा TR03WT_WT0_MASK		0xFF000000
-#घोषणा TR03WT_WT1_MASK		0x00FF0000
-#घोषणा TR03WT_WT2_MASK		0x0000FF00
-#घोषणा TR03WT_WT3_MASK		0x000000FF
+#define TR03WT_WT0_MASK		0xFF000000
+#define TR03WT_WT1_MASK		0x00FF0000
+#define TR03WT_WT2_MASK		0x0000FF00
+#define TR03WT_WT3_MASK		0x000000FF
 
-#घोषणा TR47WT_WT4_MASK		0xFF000000
-#घोषणा TR47WT_WT5_MASK		0x00FF0000
-#घोषणा TR47WT_WT6_MASK		0x0000FF00
-#घोषणा TR47WT_WT7_MASK		0x000000FF
+#define TR47WT_WT4_MASK		0xFF000000
+#define TR47WT_WT5_MASK		0x00FF0000
+#define TR47WT_WT6_MASK		0x0000FF00
+#define TR47WT_WT7_MASK		0x000000FF
 
 /* Rqueue control */
-#घोषणा RQUEUE_EX0		0x00800000
-#घोषणा RQUEUE_EX1		0x00400000
-#घोषणा RQUEUE_EX2		0x00200000
-#घोषणा RQUEUE_EX3		0x00100000
-#घोषणा RQUEUE_EX4		0x00080000
-#घोषणा RQUEUE_EX5		0x00040000
-#घोषणा RQUEUE_EX6		0x00020000
-#घोषणा RQUEUE_EX7		0x00010000
-#घोषणा RQUEUE_EX_ALL		0x00FF0000
+#define RQUEUE_EX0		0x00800000
+#define RQUEUE_EX1		0x00400000
+#define RQUEUE_EX2		0x00200000
+#define RQUEUE_EX3		0x00100000
+#define RQUEUE_EX4		0x00080000
+#define RQUEUE_EX5		0x00040000
+#define RQUEUE_EX6		0x00020000
+#define RQUEUE_EX7		0x00010000
+#define RQUEUE_EX_ALL		0x00FF0000
 
-#घोषणा RQUEUE_EN0		0x00000080
-#घोषणा RQUEUE_EN1		0x00000040
-#घोषणा RQUEUE_EN2		0x00000020
-#घोषणा RQUEUE_EN3		0x00000010
-#घोषणा RQUEUE_EN4		0x00000008
-#घोषणा RQUEUE_EN5		0x00000004
-#घोषणा RQUEUE_EN6		0x00000002
-#घोषणा RQUEUE_EN7		0x00000001
-#घोषणा RQUEUE_EN_ALL		0x000000FF
+#define RQUEUE_EN0		0x00000080
+#define RQUEUE_EN1		0x00000040
+#define RQUEUE_EN2		0x00000020
+#define RQUEUE_EN3		0x00000010
+#define RQUEUE_EN4		0x00000008
+#define RQUEUE_EN5		0x00000004
+#define RQUEUE_EN6		0x00000002
+#define RQUEUE_EN7		0x00000001
+#define RQUEUE_EN_ALL		0x000000FF
 
-/* Init to करो tx snooping क्रम buffers and descriptors */
-#घोषणा DMACTRL_INIT_SETTINGS   0x000000c3
-#घोषणा DMACTRL_GRS             0x00000010
-#घोषणा DMACTRL_GTS             0x00000008
+/* Init to do tx snooping for buffers and descriptors */
+#define DMACTRL_INIT_SETTINGS   0x000000c3
+#define DMACTRL_GRS             0x00000010
+#define DMACTRL_GTS             0x00000008
 
-#घोषणा TSTAT_CLEAR_THALT_ALL	0xFF000000
-#घोषणा TSTAT_CLEAR_THALT	0x80000000
-#घोषणा TSTAT_CLEAR_THALT0	0x80000000
-#घोषणा TSTAT_CLEAR_THALT1	0x40000000
-#घोषणा TSTAT_CLEAR_THALT2	0x20000000
-#घोषणा TSTAT_CLEAR_THALT3	0x10000000
-#घोषणा TSTAT_CLEAR_THALT4	0x08000000
-#घोषणा TSTAT_CLEAR_THALT5	0x04000000
-#घोषणा TSTAT_CLEAR_THALT6	0x02000000
-#घोषणा TSTAT_CLEAR_THALT7	0x01000000
+#define TSTAT_CLEAR_THALT_ALL	0xFF000000
+#define TSTAT_CLEAR_THALT	0x80000000
+#define TSTAT_CLEAR_THALT0	0x80000000
+#define TSTAT_CLEAR_THALT1	0x40000000
+#define TSTAT_CLEAR_THALT2	0x20000000
+#define TSTAT_CLEAR_THALT3	0x10000000
+#define TSTAT_CLEAR_THALT4	0x08000000
+#define TSTAT_CLEAR_THALT5	0x04000000
+#define TSTAT_CLEAR_THALT6	0x02000000
+#define TSTAT_CLEAR_THALT7	0x01000000
 
 /* Interrupt coalescing macros */
-#घोषणा IC_ICEN			0x80000000
-#घोषणा IC_ICFT_MASK		0x1fe00000
-#घोषणा IC_ICFT_SHIFT		21
-#घोषणा mk_ic_icft(x)		\
-	(((अचिन्हित पूर्णांक)x << IC_ICFT_SHIFT)&IC_ICFT_MASK)
-#घोषणा IC_ICTT_MASK		0x0000ffff
-#घोषणा mk_ic_ictt(x)		(x&IC_ICTT_MASK)
+#define IC_ICEN			0x80000000
+#define IC_ICFT_MASK		0x1fe00000
+#define IC_ICFT_SHIFT		21
+#define mk_ic_icft(x)		\
+	(((unsigned int)x << IC_ICFT_SHIFT)&IC_ICFT_MASK)
+#define IC_ICTT_MASK		0x0000ffff
+#define mk_ic_ictt(x)		(x&IC_ICTT_MASK)
 
-#घोषणा mk_ic_value(count, समय) (IC_ICEN | \
+#define mk_ic_value(count, time) (IC_ICEN | \
 				mk_ic_icft(count) | \
-				mk_ic_ictt(समय))
-#घोषणा get_icft_value(ic)	(((अचिन्हित दीर्घ)ic & IC_ICFT_MASK) >> \
+				mk_ic_ictt(time))
+#define get_icft_value(ic)	(((unsigned long)ic & IC_ICFT_MASK) >> \
 				 IC_ICFT_SHIFT)
-#घोषणा get_ictt_value(ic)	((अचिन्हित दीर्घ)ic & IC_ICTT_MASK)
+#define get_ictt_value(ic)	((unsigned long)ic & IC_ICTT_MASK)
 
-#घोषणा DEFAULT_TXIC mk_ic_value(DEFAULT_TXCOUNT, DEFAULT_TXTIME)
-#घोषणा DEFAULT_RXIC mk_ic_value(DEFAULT_RXCOUNT, DEFAULT_RXTIME)
+#define DEFAULT_TXIC mk_ic_value(DEFAULT_TXCOUNT, DEFAULT_TXTIME)
+#define DEFAULT_RXIC mk_ic_value(DEFAULT_RXCOUNT, DEFAULT_RXTIME)
 
-#घोषणा RCTRL_TS_ENABLE 	0x01000000
-#घोषणा RCTRL_PAL_MASK		0x001f0000
-#घोषणा RCTRL_LFC		0x00004000
-#घोषणा RCTRL_VLEX		0x00002000
-#घोषणा RCTRL_FILREN		0x00001000
-#घोषणा RCTRL_GHTX		0x00000400
-#घोषणा RCTRL_IPCSEN		0x00000200
-#घोषणा RCTRL_TUCSEN		0x00000100
-#घोषणा RCTRL_PRSDEP_MASK	0x000000c0
-#घोषणा RCTRL_PRSDEP_INIT	0x000000c0
-#घोषणा RCTRL_PRSFM		0x00000020
-#घोषणा RCTRL_PROM		0x00000008
-#घोषणा RCTRL_EMEN		0x00000002
-#घोषणा RCTRL_REQ_PARSER	(RCTRL_VLEX | RCTRL_IPCSEN | \
+#define RCTRL_TS_ENABLE 	0x01000000
+#define RCTRL_PAL_MASK		0x001f0000
+#define RCTRL_LFC		0x00004000
+#define RCTRL_VLEX		0x00002000
+#define RCTRL_FILREN		0x00001000
+#define RCTRL_GHTX		0x00000400
+#define RCTRL_IPCSEN		0x00000200
+#define RCTRL_TUCSEN		0x00000100
+#define RCTRL_PRSDEP_MASK	0x000000c0
+#define RCTRL_PRSDEP_INIT	0x000000c0
+#define RCTRL_PRSFM		0x00000020
+#define RCTRL_PROM		0x00000008
+#define RCTRL_EMEN		0x00000002
+#define RCTRL_REQ_PARSER	(RCTRL_VLEX | RCTRL_IPCSEN | \
 				 RCTRL_TUCSEN | RCTRL_FILREN)
-#घोषणा RCTRL_CHECKSUMMING	(RCTRL_IPCSEN | RCTRL_TUCSEN | \
+#define RCTRL_CHECKSUMMING	(RCTRL_IPCSEN | RCTRL_TUCSEN | \
 				RCTRL_PRSDEP_INIT)
-#घोषणा RCTRL_EXTHASH		(RCTRL_GHTX)
-#घोषणा RCTRL_VLAN		(RCTRL_PRSDEP_INIT)
-#घोषणा RCTRL_PADDING(x)	((x << 16) & RCTRL_PAL_MASK)
+#define RCTRL_EXTHASH		(RCTRL_GHTX)
+#define RCTRL_VLAN		(RCTRL_PRSDEP_INIT)
+#define RCTRL_PADDING(x)	((x << 16) & RCTRL_PAL_MASK)
 
 
-#घोषणा RSTAT_CLEAR_RHALT	0x00800000
-#घोषणा RSTAT_CLEAR_RXF0	0x00000080
-#घोषणा RSTAT_RXF_MASK		0x000000ff
+#define RSTAT_CLEAR_RHALT	0x00800000
+#define RSTAT_CLEAR_RXF0	0x00000080
+#define RSTAT_RXF_MASK		0x000000ff
 
-#घोषणा TCTRL_IPCSEN		0x00004000
-#घोषणा TCTRL_TUCSEN		0x00002000
-#घोषणा TCTRL_VLINS		0x00001000
-#घोषणा TCTRL_THDF		0x00000800
-#घोषणा TCTRL_RFCPAUSE		0x00000010
-#घोषणा TCTRL_TFCPAUSE		0x00000008
-#घोषणा TCTRL_TXSCHED_MASK	0x00000006
-#घोषणा TCTRL_TXSCHED_INIT	0x00000000
+#define TCTRL_IPCSEN		0x00004000
+#define TCTRL_TUCSEN		0x00002000
+#define TCTRL_VLINS		0x00001000
+#define TCTRL_THDF		0x00000800
+#define TCTRL_RFCPAUSE		0x00000010
+#define TCTRL_TFCPAUSE		0x00000008
+#define TCTRL_TXSCHED_MASK	0x00000006
+#define TCTRL_TXSCHED_INIT	0x00000000
 /* priority scheduling */
-#घोषणा TCTRL_TXSCHED_PRIO	0x00000002
+#define TCTRL_TXSCHED_PRIO	0x00000002
 /* weighted round-robin scheduling (WRRS) */
-#घोषणा TCTRL_TXSCHED_WRRS	0x00000004
-/* शेष WRRS weight and policy setting,
- * tailored to the tr03wt and tr47wt रेजिस्टरs:
- * equal weight क्रम all Tx Qs, measured in 64byte units
+#define TCTRL_TXSCHED_WRRS	0x00000004
+/* default WRRS weight and policy setting,
+ * tailored to the tr03wt and tr47wt registers:
+ * equal weight for all Tx Qs, measured in 64byte units
  */
-#घोषणा DEFAULT_WRRS_WEIGHT	0x18181818
+#define DEFAULT_WRRS_WEIGHT	0x18181818
 
-#घोषणा TCTRL_INIT_CSUM		(TCTRL_TUCSEN | TCTRL_IPCSEN)
+#define TCTRL_INIT_CSUM		(TCTRL_TUCSEN | TCTRL_IPCSEN)
 
-#घोषणा IEVENT_INIT_CLEAR	0xffffffff
-#घोषणा IEVENT_BABR		0x80000000
-#घोषणा IEVENT_RXC		0x40000000
-#घोषणा IEVENT_BSY		0x20000000
-#घोषणा IEVENT_EBERR		0x10000000
-#घोषणा IEVENT_MSRO		0x04000000
-#घोषणा IEVENT_GTSC		0x02000000
-#घोषणा IEVENT_BABT		0x01000000
-#घोषणा IEVENT_TXC		0x00800000
-#घोषणा IEVENT_TXE		0x00400000
-#घोषणा IEVENT_TXB		0x00200000
-#घोषणा IEVENT_TXF		0x00100000
-#घोषणा IEVENT_LC		0x00040000
-#घोषणा IEVENT_CRL		0x00020000
-#घोषणा IEVENT_XFUN		0x00010000
-#घोषणा IEVENT_RXB0		0x00008000
-#घोषणा IEVENT_MAG		0x00000800
-#घोषणा IEVENT_GRSC		0x00000100
-#घोषणा IEVENT_RXF0		0x00000080
-#घोषणा IEVENT_FGPI		0x00000010
-#घोषणा IEVENT_FIR		0x00000008
-#घोषणा IEVENT_FIQ		0x00000004
-#घोषणा IEVENT_DPE		0x00000002
-#घोषणा IEVENT_PERR		0x00000001
-#घोषणा IEVENT_RX_MASK          (IEVENT_RXB0 | IEVENT_RXF0 | IEVENT_BSY)
-#घोषणा IEVENT_TX_MASK          (IEVENT_TXB | IEVENT_TXF)
-#घोषणा IEVENT_RTX_MASK         (IEVENT_RX_MASK | IEVENT_TX_MASK)
-#घोषणा IEVENT_ERR_MASK         \
+#define IEVENT_INIT_CLEAR	0xffffffff
+#define IEVENT_BABR		0x80000000
+#define IEVENT_RXC		0x40000000
+#define IEVENT_BSY		0x20000000
+#define IEVENT_EBERR		0x10000000
+#define IEVENT_MSRO		0x04000000
+#define IEVENT_GTSC		0x02000000
+#define IEVENT_BABT		0x01000000
+#define IEVENT_TXC		0x00800000
+#define IEVENT_TXE		0x00400000
+#define IEVENT_TXB		0x00200000
+#define IEVENT_TXF		0x00100000
+#define IEVENT_LC		0x00040000
+#define IEVENT_CRL		0x00020000
+#define IEVENT_XFUN		0x00010000
+#define IEVENT_RXB0		0x00008000
+#define IEVENT_MAG		0x00000800
+#define IEVENT_GRSC		0x00000100
+#define IEVENT_RXF0		0x00000080
+#define IEVENT_FGPI		0x00000010
+#define IEVENT_FIR		0x00000008
+#define IEVENT_FIQ		0x00000004
+#define IEVENT_DPE		0x00000002
+#define IEVENT_PERR		0x00000001
+#define IEVENT_RX_MASK          (IEVENT_RXB0 | IEVENT_RXF0 | IEVENT_BSY)
+#define IEVENT_TX_MASK          (IEVENT_TXB | IEVENT_TXF)
+#define IEVENT_RTX_MASK         (IEVENT_RX_MASK | IEVENT_TX_MASK)
+#define IEVENT_ERR_MASK         \
 (IEVENT_RXC | IEVENT_BSY | IEVENT_EBERR | IEVENT_MSRO | \
  IEVENT_BABT | IEVENT_TXC | IEVENT_TXE | IEVENT_LC \
  | IEVENT_CRL | IEVENT_XFUN | IEVENT_DPE | IEVENT_PERR \
  | IEVENT_MAG | IEVENT_BABR)
 
-#घोषणा IMASK_INIT_CLEAR	0x00000000
-#घोषणा IMASK_BABR              0x80000000
-#घोषणा IMASK_RXC               0x40000000
-#घोषणा IMASK_BSY               0x20000000
-#घोषणा IMASK_EBERR             0x10000000
-#घोषणा IMASK_MSRO		0x04000000
-#घोषणा IMASK_GTSC              0x02000000
-#घोषणा IMASK_BABT		0x01000000
-#घोषणा IMASK_TXC               0x00800000
-#घोषणा IMASK_TXEEN		0x00400000
-#घोषणा IMASK_TXBEN		0x00200000
-#घोषणा IMASK_TXFEN             0x00100000
-#घोषणा IMASK_LC		0x00040000
-#घोषणा IMASK_CRL		0x00020000
-#घोषणा IMASK_XFUN		0x00010000
-#घोषणा IMASK_RXB0              0x00008000
-#घोषणा IMASK_MAG		0x00000800
-#घोषणा IMASK_GRSC              0x00000100
-#घोषणा IMASK_RXFEN0		0x00000080
-#घोषणा IMASK_FGPI		0x00000010
-#घोषणा IMASK_FIR		0x00000008
-#घोषणा IMASK_FIQ		0x00000004
-#घोषणा IMASK_DPE		0x00000002
-#घोषणा IMASK_PERR		0x00000001
-#घोषणा IMASK_DEFAULT  (IMASK_TXEEN | IMASK_TXFEN | IMASK_TXBEN | \
+#define IMASK_INIT_CLEAR	0x00000000
+#define IMASK_BABR              0x80000000
+#define IMASK_RXC               0x40000000
+#define IMASK_BSY               0x20000000
+#define IMASK_EBERR             0x10000000
+#define IMASK_MSRO		0x04000000
+#define IMASK_GTSC              0x02000000
+#define IMASK_BABT		0x01000000
+#define IMASK_TXC               0x00800000
+#define IMASK_TXEEN		0x00400000
+#define IMASK_TXBEN		0x00200000
+#define IMASK_TXFEN             0x00100000
+#define IMASK_LC		0x00040000
+#define IMASK_CRL		0x00020000
+#define IMASK_XFUN		0x00010000
+#define IMASK_RXB0              0x00008000
+#define IMASK_MAG		0x00000800
+#define IMASK_GRSC              0x00000100
+#define IMASK_RXFEN0		0x00000080
+#define IMASK_FGPI		0x00000010
+#define IMASK_FIR		0x00000008
+#define IMASK_FIQ		0x00000004
+#define IMASK_DPE		0x00000002
+#define IMASK_PERR		0x00000001
+#define IMASK_DEFAULT  (IMASK_TXEEN | IMASK_TXFEN | IMASK_TXBEN | \
 		IMASK_RXFEN0 | IMASK_BSY | IMASK_EBERR | IMASK_BABR | \
 		IMASK_XFUN | IMASK_RXC | IMASK_BABT | IMASK_DPE \
 		| IMASK_PERR)
-#घोषणा IMASK_RX_DEFAULT (IMASK_RXFEN0 | IMASK_BSY)
-#घोषणा IMASK_TX_DEFAULT (IMASK_TXFEN | IMASK_TXBEN)
+#define IMASK_RX_DEFAULT (IMASK_RXFEN0 | IMASK_BSY)
+#define IMASK_TX_DEFAULT (IMASK_TXFEN | IMASK_TXBEN)
 
-#घोषणा IMASK_RX_DISABLED ((~(IMASK_RX_DEFAULT)) & IMASK_DEFAULT)
-#घोषणा IMASK_TX_DISABLED ((~(IMASK_TX_DEFAULT)) & IMASK_DEFAULT)
+#define IMASK_RX_DISABLED ((~(IMASK_RX_DEFAULT)) & IMASK_DEFAULT)
+#define IMASK_TX_DISABLED ((~(IMASK_TX_DEFAULT)) & IMASK_DEFAULT)
 
 /* Attribute fields */
 
-/* This enables rx snooping क्रम buffers and descriptors */
-#घोषणा ATTR_BDSTASH		0x00000800
+/* This enables rx snooping for buffers and descriptors */
+#define ATTR_BDSTASH		0x00000800
 
-#घोषणा ATTR_BUFSTASH		0x00004000
+#define ATTR_BUFSTASH		0x00004000
 
-#घोषणा ATTR_SNOOPING		0x000000c0
-#घोषणा ATTR_INIT_SETTINGS      ATTR_SNOOPING
+#define ATTR_SNOOPING		0x000000c0
+#define ATTR_INIT_SETTINGS      ATTR_SNOOPING
 
-#घोषणा ATTRELI_INIT_SETTINGS   0x0
-#घोषणा ATTRELI_EL_MASK		0x3fff0000
-#घोषणा ATTRELI_EL(x) (x << 16)
-#घोषणा ATTRELI_EI_MASK		0x00003fff
-#घोषणा ATTRELI_EI(x) (x)
+#define ATTRELI_INIT_SETTINGS   0x0
+#define ATTRELI_EL_MASK		0x3fff0000
+#define ATTRELI_EL(x) (x << 16)
+#define ATTRELI_EI_MASK		0x00003fff
+#define ATTRELI_EI(x) (x)
 
-#घोषणा BD_LFLAG(flags) ((flags) << 16)
-#घोषणा BD_LENGTH_MASK		0x0000ffff
+#define BD_LFLAG(flags) ((flags) << 16)
+#define BD_LENGTH_MASK		0x0000ffff
 
-#घोषणा FPR_खाताR_MASK	0xFFFFFFFF
-#घोषणा MAX_खाताR_IDX	0xFF
+#define FPR_FILER_MASK	0xFFFFFFFF
+#define MAX_FILER_IDX	0xFF
 
-/* This शेष RIR value directly corresponds
+/* This default RIR value directly corresponds
  * to the 3-bit hash value generated */
-#घोषणा DEFAULT_8RXQ_RIR0	0x05397700
+#define DEFAULT_8RXQ_RIR0	0x05397700
 /* Map even hash values to Q0, and odd ones to Q1 */
-#घोषणा DEFAULT_2RXQ_RIR0	0x04104100
+#define DEFAULT_2RXQ_RIR0	0x04104100
 
-/* RQFCR रेजिस्टर bits */
-#घोषणा RQFCR_GPI		0x80000000
-#घोषणा RQFCR_HASHTBL_Q		0x00000000
-#घोषणा RQFCR_HASHTBL_0		0x00020000
-#घोषणा RQFCR_HASHTBL_1		0x00040000
-#घोषणा RQFCR_HASHTBL_2		0x00060000
-#घोषणा RQFCR_HASHTBL_3		0x00080000
-#घोषणा RQFCR_HASH		0x00010000
-#घोषणा RQFCR_QUEUE		0x0000FC00
-#घोषणा RQFCR_CLE		0x00000200
-#घोषणा RQFCR_RJE		0x00000100
-#घोषणा RQFCR_AND		0x00000080
-#घोषणा RQFCR_CMP_EXACT		0x00000000
-#घोषणा RQFCR_CMP_MATCH		0x00000020
-#घोषणा RQFCR_CMP_NOEXACT	0x00000040
-#घोषणा RQFCR_CMP_NOMATCH	0x00000060
+/* RQFCR register bits */
+#define RQFCR_GPI		0x80000000
+#define RQFCR_HASHTBL_Q		0x00000000
+#define RQFCR_HASHTBL_0		0x00020000
+#define RQFCR_HASHTBL_1		0x00040000
+#define RQFCR_HASHTBL_2		0x00060000
+#define RQFCR_HASHTBL_3		0x00080000
+#define RQFCR_HASH		0x00010000
+#define RQFCR_QUEUE		0x0000FC00
+#define RQFCR_CLE		0x00000200
+#define RQFCR_RJE		0x00000100
+#define RQFCR_AND		0x00000080
+#define RQFCR_CMP_EXACT		0x00000000
+#define RQFCR_CMP_MATCH		0x00000020
+#define RQFCR_CMP_NOEXACT	0x00000040
+#define RQFCR_CMP_NOMATCH	0x00000060
 
 /* RQFCR PID values */
-#घोषणा	RQFCR_PID_MASK		0x00000000
-#घोषणा	RQFCR_PID_PARSE		0x00000001
-#घोषणा	RQFCR_PID_ARB		0x00000002
-#घोषणा	RQFCR_PID_DAH		0x00000003
-#घोषणा	RQFCR_PID_DAL		0x00000004
-#घोषणा	RQFCR_PID_SAH		0x00000005
-#घोषणा	RQFCR_PID_SAL		0x00000006
-#घोषणा	RQFCR_PID_ETY		0x00000007
-#घोषणा	RQFCR_PID_VID		0x00000008
-#घोषणा	RQFCR_PID_PRI		0x00000009
-#घोषणा	RQFCR_PID_TOS		0x0000000A
-#घोषणा	RQFCR_PID_L4P		0x0000000B
-#घोषणा	RQFCR_PID_DIA		0x0000000C
-#घोषणा	RQFCR_PID_SIA		0x0000000D
-#घोषणा	RQFCR_PID_DPT		0x0000000E
-#घोषणा	RQFCR_PID_SPT		0x0000000F
+#define	RQFCR_PID_MASK		0x00000000
+#define	RQFCR_PID_PARSE		0x00000001
+#define	RQFCR_PID_ARB		0x00000002
+#define	RQFCR_PID_DAH		0x00000003
+#define	RQFCR_PID_DAL		0x00000004
+#define	RQFCR_PID_SAH		0x00000005
+#define	RQFCR_PID_SAL		0x00000006
+#define	RQFCR_PID_ETY		0x00000007
+#define	RQFCR_PID_VID		0x00000008
+#define	RQFCR_PID_PRI		0x00000009
+#define	RQFCR_PID_TOS		0x0000000A
+#define	RQFCR_PID_L4P		0x0000000B
+#define	RQFCR_PID_DIA		0x0000000C
+#define	RQFCR_PID_SIA		0x0000000D
+#define	RQFCR_PID_DPT		0x0000000E
+#define	RQFCR_PID_SPT		0x0000000F
 
 /* RQFPR when PID is 0x0001 */
-#घोषणा RQFPR_HDR_GE_512	0x00200000
-#घोषणा RQFPR_LERR		0x00100000
-#घोषणा RQFPR_RAR		0x00080000
-#घोषणा RQFPR_RARQ		0x00040000
-#घोषणा RQFPR_AR		0x00020000
-#घोषणा RQFPR_ARQ		0x00010000
-#घोषणा RQFPR_EBC		0x00008000
-#घोषणा RQFPR_VLN		0x00004000
-#घोषणा RQFPR_CFI		0x00002000
-#घोषणा RQFPR_JUM		0x00001000
-#घोषणा RQFPR_IPF		0x00000800
-#घोषणा RQFPR_FIF		0x00000400
-#घोषणा RQFPR_IPV4		0x00000200
-#घोषणा RQFPR_IPV6		0x00000100
-#घोषणा RQFPR_ICC		0x00000080
-#घोषणा RQFPR_ICV		0x00000040
-#घोषणा RQFPR_TCP		0x00000020
-#घोषणा RQFPR_UDP		0x00000010
-#घोषणा RQFPR_TUC		0x00000008
-#घोषणा RQFPR_TUV		0x00000004
-#घोषणा RQFPR_PER		0x00000002
-#घोषणा RQFPR_EER		0x00000001
+#define RQFPR_HDR_GE_512	0x00200000
+#define RQFPR_LERR		0x00100000
+#define RQFPR_RAR		0x00080000
+#define RQFPR_RARQ		0x00040000
+#define RQFPR_AR		0x00020000
+#define RQFPR_ARQ		0x00010000
+#define RQFPR_EBC		0x00008000
+#define RQFPR_VLN		0x00004000
+#define RQFPR_CFI		0x00002000
+#define RQFPR_JUM		0x00001000
+#define RQFPR_IPF		0x00000800
+#define RQFPR_FIF		0x00000400
+#define RQFPR_IPV4		0x00000200
+#define RQFPR_IPV6		0x00000100
+#define RQFPR_ICC		0x00000080
+#define RQFPR_ICV		0x00000040
+#define RQFPR_TCP		0x00000020
+#define RQFPR_UDP		0x00000010
+#define RQFPR_TUC		0x00000008
+#define RQFPR_TUV		0x00000004
+#define RQFPR_PER		0x00000002
+#define RQFPR_EER		0x00000001
 
 /* TxBD status field bits */
-#घोषणा TXBD_READY		0x8000
-#घोषणा TXBD_PADCRC		0x4000
-#घोषणा TXBD_WRAP		0x2000
-#घोषणा TXBD_INTERRUPT		0x1000
-#घोषणा TXBD_LAST		0x0800
-#घोषणा TXBD_CRC		0x0400
-#घोषणा TXBD_DEF		0x0200
-#घोषणा TXBD_HUGEFRAME		0x0080
-#घोषणा TXBD_LATECOLLISION	0x0080
-#घोषणा TXBD_RETRYLIMIT		0x0040
-#घोषणा	TXBD_RETRYCOUNTMASK	0x003c
-#घोषणा TXBD_UNDERRUN		0x0002
-#घोषणा TXBD_TOE		0x0002
+#define TXBD_READY		0x8000
+#define TXBD_PADCRC		0x4000
+#define TXBD_WRAP		0x2000
+#define TXBD_INTERRUPT		0x1000
+#define TXBD_LAST		0x0800
+#define TXBD_CRC		0x0400
+#define TXBD_DEF		0x0200
+#define TXBD_HUGEFRAME		0x0080
+#define TXBD_LATECOLLISION	0x0080
+#define TXBD_RETRYLIMIT		0x0040
+#define	TXBD_RETRYCOUNTMASK	0x003c
+#define TXBD_UNDERRUN		0x0002
+#define TXBD_TOE		0x0002
 
 /* Tx FCB param bits */
-#घोषणा TXFCB_VLN		0x80
-#घोषणा TXFCB_IP		0x40
-#घोषणा TXFCB_IP6		0x20
-#घोषणा TXFCB_TUP		0x10
-#घोषणा TXFCB_UDP		0x08
-#घोषणा TXFCB_CIP		0x04
-#घोषणा TXFCB_CTU		0x02
-#घोषणा TXFCB_NPH		0x01
-#घोषणा TXFCB_DEFAULT 		(TXFCB_IP|TXFCB_TUP|TXFCB_CTU|TXFCB_NPH)
+#define TXFCB_VLN		0x80
+#define TXFCB_IP		0x40
+#define TXFCB_IP6		0x20
+#define TXFCB_TUP		0x10
+#define TXFCB_UDP		0x08
+#define TXFCB_CIP		0x04
+#define TXFCB_CTU		0x02
+#define TXFCB_NPH		0x01
+#define TXFCB_DEFAULT 		(TXFCB_IP|TXFCB_TUP|TXFCB_CTU|TXFCB_NPH)
 
 /* RxBD status field bits */
-#घोषणा RXBD_EMPTY		0x8000
-#घोषणा RXBD_RO1		0x4000
-#घोषणा RXBD_WRAP		0x2000
-#घोषणा RXBD_INTERRUPT		0x1000
-#घोषणा RXBD_LAST		0x0800
-#घोषणा RXBD_FIRST		0x0400
-#घोषणा RXBD_MISS		0x0100
-#घोषणा RXBD_BROADCAST		0x0080
-#घोषणा RXBD_MULTICAST		0x0040
-#घोषणा RXBD_LARGE		0x0020
-#घोषणा RXBD_NONOCTET		0x0010
-#घोषणा RXBD_SHORT		0x0008
-#घोषणा RXBD_CRCERR		0x0004
-#घोषणा RXBD_OVERRUN		0x0002
-#घोषणा RXBD_TRUNCATED		0x0001
-#घोषणा RXBD_STATS		0x01ff
-#घोषणा RXBD_ERR		(RXBD_LARGE | RXBD_SHORT | RXBD_NONOCTET 	\
+#define RXBD_EMPTY		0x8000
+#define RXBD_RO1		0x4000
+#define RXBD_WRAP		0x2000
+#define RXBD_INTERRUPT		0x1000
+#define RXBD_LAST		0x0800
+#define RXBD_FIRST		0x0400
+#define RXBD_MISS		0x0100
+#define RXBD_BROADCAST		0x0080
+#define RXBD_MULTICAST		0x0040
+#define RXBD_LARGE		0x0020
+#define RXBD_NONOCTET		0x0010
+#define RXBD_SHORT		0x0008
+#define RXBD_CRCERR		0x0004
+#define RXBD_OVERRUN		0x0002
+#define RXBD_TRUNCATED		0x0001
+#define RXBD_STATS		0x01ff
+#define RXBD_ERR		(RXBD_LARGE | RXBD_SHORT | RXBD_NONOCTET 	\
 				| RXBD_CRCERR | RXBD_OVERRUN			\
 				| RXBD_TRUNCATED)
 
 /* Rx FCB status field bits */
-#घोषणा RXFCB_VLN		0x8000
-#घोषणा RXFCB_IP		0x4000
-#घोषणा RXFCB_IP6		0x2000
-#घोषणा RXFCB_TUP		0x1000
-#घोषणा RXFCB_CIP		0x0800
-#घोषणा RXFCB_CTU		0x0400
-#घोषणा RXFCB_EIP		0x0200
-#घोषणा RXFCB_ETU		0x0100
-#घोषणा RXFCB_CSUM_MASK		0x0f00
-#घोषणा RXFCB_PERR_MASK		0x000c
-#घोषणा RXFCB_PERR_BADL3	0x0008
+#define RXFCB_VLN		0x8000
+#define RXFCB_IP		0x4000
+#define RXFCB_IP6		0x2000
+#define RXFCB_TUP		0x1000
+#define RXFCB_CIP		0x0800
+#define RXFCB_CTU		0x0400
+#define RXFCB_EIP		0x0200
+#define RXFCB_ETU		0x0100
+#define RXFCB_CSUM_MASK		0x0f00
+#define RXFCB_PERR_MASK		0x000c
+#define RXFCB_PERR_BADL3	0x0008
 
-#घोषणा GFAR_INT_NAME_MAX	(IFNAMSIZ + 6)	/* '_g#_xx' */
+#define GFAR_INT_NAME_MAX	(IFNAMSIZ + 6)	/* '_g#_xx' */
 
-#घोषणा GFAR_WOL_MAGIC		0x00000001
-#घोषणा GFAR_WOL_खाताR_UCAST	0x00000002
+#define GFAR_WOL_MAGIC		0x00000001
+#define GFAR_WOL_FILER_UCAST	0x00000002
 
-काष्ठा txbd8
-अणु
-	जोड़ अणु
-		काष्ठा अणु
+struct txbd8
+{
+	union {
+		struct {
 			__be16	status;	/* Status Fields */
 			__be16	length;	/* Buffer length */
-		पूर्ण;
+		};
 		__be32 lstatus;
-	पूर्ण;
-	__be32	bufPtr;	/* Buffer Poपूर्णांकer */
-पूर्ण;
+	};
+	__be32	bufPtr;	/* Buffer Pointer */
+};
 
-काष्ठा txfcb अणु
+struct txfcb {
 	u8	flags;
-	u8	ptp;    /* Flag to enable tx बारtamping */
+	u8	ptp;    /* Flag to enable tx timestamping */
 	u8	l4os;	/* Level 4 Header Offset */
 	u8	l3os; 	/* Level 3 Header Offset */
-	__be16	phcs;	/* Pseuकरो-header Checksum */
+	__be16	phcs;	/* Pseudo-header Checksum */
 	__be16	vlctl;	/* VLAN control word */
-पूर्ण;
+};
 
-काष्ठा rxbd8
-अणु
-	जोड़ अणु
-		काष्ठा अणु
+struct rxbd8
+{
+	union {
+		struct {
 			__be16	status;	/* Status Fields */
 			__be16	length;	/* Buffer Length */
-		पूर्ण;
+		};
 		__be32 lstatus;
-	पूर्ण;
-	__be32	bufPtr;	/* Buffer Poपूर्णांकer */
-पूर्ण;
+	};
+	__be32	bufPtr;	/* Buffer Pointer */
+};
 
-काष्ठा rxfcb अणु
+struct rxfcb {
 	__be16	flags;
 	u8	rq;	/* Receive Queue index */
 	u8	pro;	/* Layer 4 Protocol */
 	u16	reserved;
 	__be16	vlctl;	/* VLAN control word */
-पूर्ण;
+};
 
-काष्ठा gianfar_skb_cb अणु
-	अचिन्हित पूर्णांक bytes_sent; /* bytes-on-wire (i.e. no FCB) */
-पूर्ण;
+struct gianfar_skb_cb {
+	unsigned int bytes_sent; /* bytes-on-wire (i.e. no FCB) */
+};
 
-#घोषणा GFAR_CB(skb) ((काष्ठा gianfar_skb_cb *)((skb)->cb))
+#define GFAR_CB(skb) ((struct gianfar_skb_cb *)((skb)->cb))
 
-काष्ठा rmon_mib
-अणु
+struct rmon_mib
+{
 	u32	tr64;	/* 0x.680 - Transmit and Receive 64-byte Frame Counter */
 	u32	tr127;	/* 0x.684 - Transmit and Receive 65-127 byte Frame Counter */
 	u32	tr255;	/* 0x.688 - Transmit and Receive 128-255 byte Frame Counter */
@@ -586,13 +585,13 @@
 	u32	rdrp;	/* 0x.6dc - Receive Drop Counter */
 	u32	tbyt;	/* 0x.6e0 - Transmit Byte Counter Counter */
 	u32	tpkt;	/* 0x.6e4 - Transmit Packet Counter */
-	u32	पंचांगca;	/* 0x.6e8 - Transmit Multicast Packet Counter */
+	u32	tmca;	/* 0x.6e8 - Transmit Multicast Packet Counter */
 	u32	tbca;	/* 0x.6ec - Transmit Broadcast Packet Counter */
 	u32	txpf;	/* 0x.6f0 - Transmit Pause Control Frame Counter */
 	u32	tdfr;	/* 0x.6f4 - Transmit Deferral Packet Counter */
 	u32	tedf;	/* 0x.6f8 - Transmit Excessive Deferral Packet Counter */
 	u32	tscl;	/* 0x.6fc - Transmit Single Collision Packet Counter */
-	u32	पंचांगcl;	/* 0x.700 - Transmit Multiple Collision Packet Counter */
+	u32	tmcl;	/* 0x.700 - Transmit Multiple Collision Packet Counter */
 	u32	tlcl;	/* 0x.704 - Transmit Late Collision Packet Counter */
 	u32	txcl;	/* 0x.708 - Transmit Excessive Collision Packet Counter */
 	u32	tncl;	/* 0x.70c - Transmit Total Collision Counter */
@@ -608,12 +607,12 @@
 	u32	car2;	/* 0x.734 - Carry Register Two */
 	u32	cam1;	/* 0x.738 - Carry Mask Register One */
 	u32	cam2;	/* 0x.73c - Carry Mask Register Two */
-पूर्ण;
+};
 
-काष्ठा gfar_extra_stats अणु
+struct gfar_extra_stats {
 	atomic64_t rx_alloc_err;
 	atomic64_t rx_large;
-	atomic64_t rx_लघु;
+	atomic64_t rx_short;
 	atomic64_t rx_nonoctet;
 	atomic64_t rx_crcerr;
 	atomic64_t rx_overrun;
@@ -623,71 +622,71 @@
 	atomic64_t eberr;
 	atomic64_t tx_babt;
 	atomic64_t tx_underrun;
-	atomic64_t tx_समयout;
-पूर्ण;
+	atomic64_t tx_timeout;
+};
 
-#घोषणा GFAR_RMON_LEN ((माप(काष्ठा rmon_mib) - 16)/माप(u32))
-#घोषणा GFAR_EXTRA_STATS_LEN \
-	(माप(काष्ठा gfar_extra_stats)/माप(atomic64_t))
+#define GFAR_RMON_LEN ((sizeof(struct rmon_mib) - 16)/sizeof(u32))
+#define GFAR_EXTRA_STATS_LEN \
+	(sizeof(struct gfar_extra_stats)/sizeof(atomic64_t))
 
 /* Number of stats exported via ethtool */
-#घोषणा GFAR_STATS_LEN (GFAR_RMON_LEN + GFAR_EXTRA_STATS_LEN)
+#define GFAR_STATS_LEN (GFAR_RMON_LEN + GFAR_EXTRA_STATS_LEN)
 
-काष्ठा gfar अणु
-	u32	tsec_id;	/* 0x.000 - Controller ID रेजिस्टर */
-	u32	tsec_id2;	/* 0x.004 - Controller ID2 रेजिस्टर */
+struct gfar {
+	u32	tsec_id;	/* 0x.000 - Controller ID register */
+	u32	tsec_id2;	/* 0x.004 - Controller ID2 register */
 	u8	res1[8];
 	u32	ievent;		/* 0x.010 - Interrupt Event Register */
 	u32	imask;		/* 0x.014 - Interrupt Mask Register */
 	u32	edis;		/* 0x.018 - Error Disabled Register */
-	u32	emapg;		/* 0x.01c - Group Error mapping रेजिस्टर */
+	u32	emapg;		/* 0x.01c - Group Error mapping register */
 	u32	ecntrl;		/* 0x.020 - Ethernet Control Register */
 	u32	minflr;		/* 0x.024 - Minimum Frame Length Register */
 	u32	ptv;		/* 0x.028 - Pause Time Value Register */
 	u32	dmactrl;	/* 0x.02c - DMA Control Register */
 	u32	tbipa;		/* 0x.030 - TBI PHY Address Register */
 	u8	res2[28];
-	u32	fअगरo_rx_छोड़ो;	/* 0x.050 - FIFO receive छोड़ो start threshold
-					रेजिस्टर */
-	u32	fअगरo_rx_छोड़ो_shutoff;	/* x.054 - FIFO receive starve shutoff
-						रेजिस्टर */
-	u32	fअगरo_rx_alarm;	/* 0x.058 - FIFO receive alarm start threshold
-						रेजिस्टर */
-	u32	fअगरo_rx_alarm_shutoff;	/*0x.05c - FIFO receive alarm  starve
-						shutoff रेजिस्टर */
+	u32	fifo_rx_pause;	/* 0x.050 - FIFO receive pause start threshold
+					register */
+	u32	fifo_rx_pause_shutoff;	/* x.054 - FIFO receive starve shutoff
+						register */
+	u32	fifo_rx_alarm;	/* 0x.058 - FIFO receive alarm start threshold
+						register */
+	u32	fifo_rx_alarm_shutoff;	/*0x.05c - FIFO receive alarm  starve
+						shutoff register */
 	u8	res3[44];
-	u32	fअगरo_tx_thr;	/* 0x.08c - FIFO transmit threshold रेजिस्टर */
+	u32	fifo_tx_thr;	/* 0x.08c - FIFO transmit threshold register */
 	u8	res4[8];
-	u32	fअगरo_tx_starve;	/* 0x.098 - FIFO transmit starve रेजिस्टर */
-	u32	fअगरo_tx_starve_shutoff;	/* 0x.09c - FIFO transmit starve shutoff रेजिस्टर */
+	u32	fifo_tx_starve;	/* 0x.098 - FIFO transmit starve register */
+	u32	fifo_tx_starve_shutoff;	/* 0x.09c - FIFO transmit starve shutoff register */
 	u8	res5[96];
 	u32	tctrl;		/* 0x.100 - Transmit Control Register */
 	u32	tstat;		/* 0x.104 - Transmit Status Register */
 	u32	dfvlan;		/* 0x.108 - Default VLAN Control word */
 	u32	tbdlen;		/* 0x.10c - Transmit Buffer Descriptor Data Length Register */
 	u32	txic;		/* 0x.110 - Transmit Interrupt Coalescing Configuration Register */
-	u32	tqueue;		/* 0x.114 - Transmit queue control रेजिस्टर */
+	u32	tqueue;		/* 0x.114 - Transmit queue control register */
 	u8	res7[40];
 	u32	tr03wt;		/* 0x.140 - TxBD Rings 0-3 round-robin weightings */
 	u32	tr47wt;		/* 0x.144 - TxBD Rings 4-7 round-robin weightings */
 	u8	res8[52];
-	u32	tbdbph;		/* 0x.17c - Tx data buffer poपूर्णांकer high */
+	u32	tbdbph;		/* 0x.17c - Tx data buffer pointer high */
 	u8	res9a[4];
-	u32	tbptr0;		/* 0x.184 - TxBD Poपूर्णांकer क्रम ring 0 */
+	u32	tbptr0;		/* 0x.184 - TxBD Pointer for ring 0 */
 	u8	res9b[4];
-	u32	tbptr1;		/* 0x.18c - TxBD Poपूर्णांकer क्रम ring 1 */
+	u32	tbptr1;		/* 0x.18c - TxBD Pointer for ring 1 */
 	u8	res9c[4];
-	u32	tbptr2;		/* 0x.194 - TxBD Poपूर्णांकer क्रम ring 2 */
+	u32	tbptr2;		/* 0x.194 - TxBD Pointer for ring 2 */
 	u8	res9d[4];
-	u32	tbptr3;		/* 0x.19c - TxBD Poपूर्णांकer क्रम ring 3 */
+	u32	tbptr3;		/* 0x.19c - TxBD Pointer for ring 3 */
 	u8	res9e[4];
-	u32	tbptr4;		/* 0x.1a4 - TxBD Poपूर्णांकer क्रम ring 4 */
+	u32	tbptr4;		/* 0x.1a4 - TxBD Pointer for ring 4 */
 	u8	res9f[4];
-	u32	tbptr5;		/* 0x.1ac - TxBD Poपूर्णांकer क्रम ring 5 */
+	u32	tbptr5;		/* 0x.1ac - TxBD Pointer for ring 5 */
 	u8	res9g[4];
-	u32	tbptr6;		/* 0x.1b4 - TxBD Poपूर्णांकer क्रम ring 6 */
+	u32	tbptr6;		/* 0x.1b4 - TxBD Pointer for ring 6 */
 	u8	res9h[4];
-	u32	tbptr7;		/* 0x.1bc - TxBD Poपूर्णांकer क्रम ring 7 */
+	u32	tbptr7;		/* 0x.1bc - TxBD Pointer for ring 7 */
 	u8	res9[64];
 	u32	tbaseh;		/* 0x.200 - TxBD base address high */
 	u32	tbase0;		/* 0x.204 - TxBD Base Address of ring 0 */
@@ -710,35 +709,35 @@
 	u32	rstat;		/* 0x.304 - Receive Status Register */
 	u8	res12[8];
 	u32	rxic;		/* 0x.310 - Receive Interrupt Coalescing Configuration Register */
-	u32	rqueue;		/* 0x.314 - Receive queue control रेजिस्टर */
-	u32	rir0;		/* 0x.318 - Ring mapping रेजिस्टर 0 */
-	u32	rir1;		/* 0x.31c - Ring mapping रेजिस्टर 1 */
-	u32	rir2;		/* 0x.320 - Ring mapping रेजिस्टर 2 */
-	u32	rir3;		/* 0x.324 - Ring mapping रेजिस्टर 3 */
+	u32	rqueue;		/* 0x.314 - Receive queue control register */
+	u32	rir0;		/* 0x.318 - Ring mapping register 0 */
+	u32	rir1;		/* 0x.31c - Ring mapping register 1 */
+	u32	rir2;		/* 0x.320 - Ring mapping register 2 */
+	u32	rir3;		/* 0x.324 - Ring mapping register 3 */
 	u8	res13[8];
-	u32	rbअगरx;		/* 0x.330 - Receive bit field extract control रेजिस्टर */
-	u32	rqfar;		/* 0x.334 - Receive queue filing table address रेजिस्टर */
-	u32	rqfcr;		/* 0x.338 - Receive queue filing table control रेजिस्टर */
-	u32	rqfpr;		/* 0x.33c - Receive queue filing table property रेजिस्टर */
+	u32	rbifx;		/* 0x.330 - Receive bit field extract control register */
+	u32	rqfar;		/* 0x.334 - Receive queue filing table address register */
+	u32	rqfcr;		/* 0x.338 - Receive queue filing table control register */
+	u32	rqfpr;		/* 0x.33c - Receive queue filing table property register */
 	u32	mrblr;		/* 0x.340 - Maximum Receive Buffer Length Register */
 	u8	res14[56];
-	u32	rbdbph;		/* 0x.37c - Rx data buffer poपूर्णांकer high */
+	u32	rbdbph;		/* 0x.37c - Rx data buffer pointer high */
 	u8	res15a[4];
-	u32	rbptr0;		/* 0x.384 - RxBD poपूर्णांकer क्रम ring 0 */
+	u32	rbptr0;		/* 0x.384 - RxBD pointer for ring 0 */
 	u8	res15b[4];
-	u32	rbptr1;		/* 0x.38c - RxBD poपूर्णांकer क्रम ring 1 */
+	u32	rbptr1;		/* 0x.38c - RxBD pointer for ring 1 */
 	u8	res15c[4];
-	u32	rbptr2;		/* 0x.394 - RxBD poपूर्णांकer क्रम ring 2 */
+	u32	rbptr2;		/* 0x.394 - RxBD pointer for ring 2 */
 	u8	res15d[4];
-	u32	rbptr3;		/* 0x.39c - RxBD poपूर्णांकer क्रम ring 3 */
+	u32	rbptr3;		/* 0x.39c - RxBD pointer for ring 3 */
 	u8	res15e[4];
-	u32	rbptr4;		/* 0x.3a4 - RxBD poपूर्णांकer क्रम ring 4 */
+	u32	rbptr4;		/* 0x.3a4 - RxBD pointer for ring 4 */
 	u8	res15f[4];
-	u32	rbptr5;		/* 0x.3ac - RxBD poपूर्णांकer क्रम ring 5 */
+	u32	rbptr5;		/* 0x.3ac - RxBD pointer for ring 5 */
 	u8	res15g[4];
-	u32	rbptr6;		/* 0x.3b4 - RxBD poपूर्णांकer क्रम ring 6 */
+	u32	rbptr6;		/* 0x.3b4 - RxBD pointer for ring 6 */
 	u8	res15h[4];
-	u32	rbptr7;		/* 0x.3bc - RxBD poपूर्णांकer क्रम ring 7 */
+	u32	rbptr7;		/* 0x.3bc - RxBD pointer for ring 7 */
 	u8	res16[64];
 	u32	rbaseh;		/* 0x.400 - RxBD base address high */
 	u32	rbase0;		/* 0x.404 - RxBD base address of ring 0 */
@@ -759,13 +758,13 @@
 	u8	res17[192];
 	u32	maccfg1;	/* 0x.500 - MAC Configuration 1 Register */
 	u32	maccfg2;	/* 0x.504 - MAC Configuration 2 Register */
-	u32	ipgअगरg;		/* 0x.508 - Inter Packet Gap/Inter Frame Gap Register */
+	u32	ipgifg;		/* 0x.508 - Inter Packet Gap/Inter Frame Gap Register */
 	u32	hafdup;		/* 0x.50c - Half Duplex Register */
 	u32	maxfrm;		/* 0x.510 - Maximum Frame Length Register */
 	u8	res18[12];
 	u8	gfar_mii_regs[24];	/* See gianfar_phy.h */
-	u32	अगरctrl;		/* 0x.538 - Interface control रेजिस्टर */
-	u32	अगरstat;		/* 0x.53c - Interface Status Register */
+	u32	ifctrl;		/* 0x.538 - Interface control register */
+	u32	ifstat;		/* 0x.53c - Interface Status Register */
 	u32	macstnaddr1;	/* 0x.540 - Station Address Part 1 Register */
 	u32	macstnaddr2;	/* 0x.544 - Station Address Part 2 Register */
 	u32	mac01addr1;	/* 0x.548 - MAC exact match address 1, part 1 */
@@ -799,511 +798,511 @@
 	u32	mac15addr1;	/* 0x.5b8 - MAC exact match address 15, part 1*/
 	u32	mac15addr2;	/* 0x.5bc - MAC exact match address 15, part 2*/
 	u8	res20[192];
-	काष्ठा rmon_mib	rmon;	/* 0x.680-0x.73c */
+	struct rmon_mib	rmon;	/* 0x.680-0x.73c */
 	u32	rrej;		/* 0x.740 - Receive filer rejected packet counter */
 	u8	res21[188];
-	u32	igaddr0;	/* 0x.800 - Inभागdual/Group address रेजिस्टर 0*/
-	u32	igaddr1;	/* 0x.804 - Inभागdual/Group address रेजिस्टर 1*/
-	u32	igaddr2;	/* 0x.808 - Inभागdual/Group address रेजिस्टर 2*/
-	u32	igaddr3;	/* 0x.80c - Inभागdual/Group address रेजिस्टर 3*/
-	u32	igaddr4;	/* 0x.810 - Inभागdual/Group address रेजिस्टर 4*/
-	u32	igaddr5;	/* 0x.814 - Inभागdual/Group address रेजिस्टर 5*/
-	u32	igaddr6;	/* 0x.818 - Inभागdual/Group address रेजिस्टर 6*/
-	u32	igaddr7;	/* 0x.81c - Inभागdual/Group address रेजिस्टर 7*/
+	u32	igaddr0;	/* 0x.800 - Indivdual/Group address register 0*/
+	u32	igaddr1;	/* 0x.804 - Indivdual/Group address register 1*/
+	u32	igaddr2;	/* 0x.808 - Indivdual/Group address register 2*/
+	u32	igaddr3;	/* 0x.80c - Indivdual/Group address register 3*/
+	u32	igaddr4;	/* 0x.810 - Indivdual/Group address register 4*/
+	u32	igaddr5;	/* 0x.814 - Indivdual/Group address register 5*/
+	u32	igaddr6;	/* 0x.818 - Indivdual/Group address register 6*/
+	u32	igaddr7;	/* 0x.81c - Indivdual/Group address register 7*/
 	u8	res22[96];
-	u32	gaddr0;		/* 0x.880 - Group address रेजिस्टर 0 */
-	u32	gaddr1;		/* 0x.884 - Group address रेजिस्टर 1 */
-	u32	gaddr2;		/* 0x.888 - Group address रेजिस्टर 2 */
-	u32	gaddr3;		/* 0x.88c - Group address रेजिस्टर 3 */
-	u32	gaddr4;		/* 0x.890 - Group address रेजिस्टर 4 */
-	u32	gaddr5;		/* 0x.894 - Group address रेजिस्टर 5 */
-	u32	gaddr6;		/* 0x.898 - Group address रेजिस्टर 6 */
-	u32	gaddr7;		/* 0x.89c - Group address रेजिस्टर 7 */
+	u32	gaddr0;		/* 0x.880 - Group address register 0 */
+	u32	gaddr1;		/* 0x.884 - Group address register 1 */
+	u32	gaddr2;		/* 0x.888 - Group address register 2 */
+	u32	gaddr3;		/* 0x.88c - Group address register 3 */
+	u32	gaddr4;		/* 0x.890 - Group address register 4 */
+	u32	gaddr5;		/* 0x.894 - Group address register 5 */
+	u32	gaddr6;		/* 0x.898 - Group address register 6 */
+	u32	gaddr7;		/* 0x.89c - Group address register 7 */
 	u8	res23a[352];
-	u32	fअगरocfg;	/* 0x.a00 - FIFO पूर्णांकerface config रेजिस्टर */
+	u32	fifocfg;	/* 0x.a00 - FIFO interface config register */
 	u8	res23b[252];
 	u8	res23c[248];
 	u32	attr;		/* 0x.bf8 - Attributes Register */
 	u32	attreli;	/* 0x.bfc - Attributes Extract Length and Extract Index Register */
-	u32	rqprm0;	/* 0x.c00 - Receive queue parameters रेजिस्टर 0 */
-	u32	rqprm1;	/* 0x.c04 - Receive queue parameters रेजिस्टर 1 */
-	u32	rqprm2;	/* 0x.c08 - Receive queue parameters रेजिस्टर 2 */
-	u32	rqprm3;	/* 0x.c0c - Receive queue parameters रेजिस्टर 3 */
-	u32	rqprm4;	/* 0x.c10 - Receive queue parameters रेजिस्टर 4 */
-	u32	rqprm5;	/* 0x.c14 - Receive queue parameters रेजिस्टर 5 */
-	u32	rqprm6;	/* 0x.c18 - Receive queue parameters रेजिस्टर 6 */
-	u32	rqprm7;	/* 0x.c1c - Receive queue parameters रेजिस्टर 7 */
+	u32	rqprm0;	/* 0x.c00 - Receive queue parameters register 0 */
+	u32	rqprm1;	/* 0x.c04 - Receive queue parameters register 1 */
+	u32	rqprm2;	/* 0x.c08 - Receive queue parameters register 2 */
+	u32	rqprm3;	/* 0x.c0c - Receive queue parameters register 3 */
+	u32	rqprm4;	/* 0x.c10 - Receive queue parameters register 4 */
+	u32	rqprm5;	/* 0x.c14 - Receive queue parameters register 5 */
+	u32	rqprm6;	/* 0x.c18 - Receive queue parameters register 6 */
+	u32	rqprm7;	/* 0x.c1c - Receive queue parameters register 7 */
 	u8	res24[36];
-	u32	rfbptr0; /* 0x.c44 - Last मुक्त RxBD poपूर्णांकer क्रम ring 0 */
+	u32	rfbptr0; /* 0x.c44 - Last free RxBD pointer for ring 0 */
 	u8	res24a[4];
-	u32	rfbptr1; /* 0x.c4c - Last मुक्त RxBD poपूर्णांकer क्रम ring 1 */
+	u32	rfbptr1; /* 0x.c4c - Last free RxBD pointer for ring 1 */
 	u8	res24b[4];
-	u32	rfbptr2; /* 0x.c54 - Last मुक्त RxBD poपूर्णांकer क्रम ring 2 */
+	u32	rfbptr2; /* 0x.c54 - Last free RxBD pointer for ring 2 */
 	u8	res24c[4];
-	u32	rfbptr3; /* 0x.c5c - Last मुक्त RxBD poपूर्णांकer क्रम ring 3 */
+	u32	rfbptr3; /* 0x.c5c - Last free RxBD pointer for ring 3 */
 	u8	res24d[4];
-	u32	rfbptr4; /* 0x.c64 - Last मुक्त RxBD poपूर्णांकer क्रम ring 4 */
+	u32	rfbptr4; /* 0x.c64 - Last free RxBD pointer for ring 4 */
 	u8	res24e[4];
-	u32	rfbptr5; /* 0x.c6c - Last मुक्त RxBD poपूर्णांकer क्रम ring 5 */
+	u32	rfbptr5; /* 0x.c6c - Last free RxBD pointer for ring 5 */
 	u8	res24f[4];
-	u32	rfbptr6; /* 0x.c74 - Last मुक्त RxBD poपूर्णांकer क्रम ring 6 */
+	u32	rfbptr6; /* 0x.c74 - Last free RxBD pointer for ring 6 */
 	u8	res24g[4];
-	u32	rfbptr7; /* 0x.c7c - Last मुक्त RxBD poपूर्णांकer क्रम ring 7 */
+	u32	rfbptr7; /* 0x.c7c - Last free RxBD pointer for ring 7 */
 	u8	res24h[4];
 	u8	res24x[556];
-	u32	isrg0;		/* 0x.eb0 - Interrupt steering group 0 रेजिस्टर */
-	u32	isrg1;		/* 0x.eb4 - Interrupt steering group 1 रेजिस्टर */
-	u32	isrg2;		/* 0x.eb8 - Interrupt steering group 2 रेजिस्टर */
-	u32	isrg3;		/* 0x.ebc - Interrupt steering group 3 रेजिस्टर */
+	u32	isrg0;		/* 0x.eb0 - Interrupt steering group 0 register */
+	u32	isrg1;		/* 0x.eb4 - Interrupt steering group 1 register */
+	u32	isrg2;		/* 0x.eb8 - Interrupt steering group 2 register */
+	u32	isrg3;		/* 0x.ebc - Interrupt steering group 3 register */
 	u8	res25[16];
-	u32	rxic0;		/* 0x.ed0 - Ring 0 Rx पूर्णांकerrupt coalescing */
-	u32	rxic1;		/* 0x.ed4 - Ring 1 Rx पूर्णांकerrupt coalescing */
-	u32	rxic2;		/* 0x.ed8 - Ring 2 Rx पूर्णांकerrupt coalescing */
-	u32	rxic3;		/* 0x.edc - Ring 3 Rx पूर्णांकerrupt coalescing */
-	u32	rxic4;		/* 0x.ee0 - Ring 4 Rx पूर्णांकerrupt coalescing */
-	u32	rxic5;		/* 0x.ee4 - Ring 5 Rx पूर्णांकerrupt coalescing */
-	u32	rxic6;		/* 0x.ee8 - Ring 6 Rx पूर्णांकerrupt coalescing */
-	u32	rxic7;		/* 0x.eec - Ring 7 Rx पूर्णांकerrupt coalescing */
+	u32	rxic0;		/* 0x.ed0 - Ring 0 Rx interrupt coalescing */
+	u32	rxic1;		/* 0x.ed4 - Ring 1 Rx interrupt coalescing */
+	u32	rxic2;		/* 0x.ed8 - Ring 2 Rx interrupt coalescing */
+	u32	rxic3;		/* 0x.edc - Ring 3 Rx interrupt coalescing */
+	u32	rxic4;		/* 0x.ee0 - Ring 4 Rx interrupt coalescing */
+	u32	rxic5;		/* 0x.ee4 - Ring 5 Rx interrupt coalescing */
+	u32	rxic6;		/* 0x.ee8 - Ring 6 Rx interrupt coalescing */
+	u32	rxic7;		/* 0x.eec - Ring 7 Rx interrupt coalescing */
 	u8	res26[32];
-	u32	txic0;		/* 0x.f10 - Ring 0 Tx पूर्णांकerrupt coalescing */
-	u32	txic1;		/* 0x.f14 - Ring 1 Tx पूर्णांकerrupt coalescing */
-	u32	txic2;		/* 0x.f18 - Ring 2 Tx पूर्णांकerrupt coalescing */
-	u32	txic3;		/* 0x.f1c - Ring 3 Tx पूर्णांकerrupt coalescing */
-	u32	txic4;		/* 0x.f20 - Ring 4 Tx पूर्णांकerrupt coalescing */
-	u32	txic5;		/* 0x.f24 - Ring 5 Tx पूर्णांकerrupt coalescing */
-	u32	txic6;		/* 0x.f28 - Ring 6 Tx पूर्णांकerrupt coalescing */
-	u32	txic7;		/* 0x.f2c - Ring 7 Tx पूर्णांकerrupt coalescing */
+	u32	txic0;		/* 0x.f10 - Ring 0 Tx interrupt coalescing */
+	u32	txic1;		/* 0x.f14 - Ring 1 Tx interrupt coalescing */
+	u32	txic2;		/* 0x.f18 - Ring 2 Tx interrupt coalescing */
+	u32	txic3;		/* 0x.f1c - Ring 3 Tx interrupt coalescing */
+	u32	txic4;		/* 0x.f20 - Ring 4 Tx interrupt coalescing */
+	u32	txic5;		/* 0x.f24 - Ring 5 Tx interrupt coalescing */
+	u32	txic6;		/* 0x.f28 - Ring 6 Tx interrupt coalescing */
+	u32	txic7;		/* 0x.f2c - Ring 7 Tx interrupt coalescing */
 	u8	res27[208];
-पूर्ण;
+};
 
 /* Flags related to gianfar device features */
-#घोषणा FSL_GIANFAR_DEV_HAS_GIGABIT		0x00000001
-#घोषणा FSL_GIANFAR_DEV_HAS_COALESCE		0x00000002
-#घोषणा FSL_GIANFAR_DEV_HAS_RMON		0x00000004
-#घोषणा FSL_GIANFAR_DEV_HAS_MULTI_INTR		0x00000008
-#घोषणा FSL_GIANFAR_DEV_HAS_CSUM		0x00000010
-#घोषणा FSL_GIANFAR_DEV_HAS_VLAN		0x00000020
-#घोषणा FSL_GIANFAR_DEV_HAS_EXTENDED_HASH	0x00000040
-#घोषणा FSL_GIANFAR_DEV_HAS_MAGIC_PACKET	0x00000100
-#घोषणा FSL_GIANFAR_DEV_HAS_BD_STASHING		0x00000200
-#घोषणा FSL_GIANFAR_DEV_HAS_BUF_STASHING	0x00000400
-#घोषणा FSL_GIANFAR_DEV_HAS_TIMER		0x00000800
-#घोषणा FSL_GIANFAR_DEV_HAS_WAKE_ON_खाताR	0x00001000
-#घोषणा FSL_GIANFAR_DEV_HAS_RX_खाताR		0x00002000
+#define FSL_GIANFAR_DEV_HAS_GIGABIT		0x00000001
+#define FSL_GIANFAR_DEV_HAS_COALESCE		0x00000002
+#define FSL_GIANFAR_DEV_HAS_RMON		0x00000004
+#define FSL_GIANFAR_DEV_HAS_MULTI_INTR		0x00000008
+#define FSL_GIANFAR_DEV_HAS_CSUM		0x00000010
+#define FSL_GIANFAR_DEV_HAS_VLAN		0x00000020
+#define FSL_GIANFAR_DEV_HAS_EXTENDED_HASH	0x00000040
+#define FSL_GIANFAR_DEV_HAS_MAGIC_PACKET	0x00000100
+#define FSL_GIANFAR_DEV_HAS_BD_STASHING		0x00000200
+#define FSL_GIANFAR_DEV_HAS_BUF_STASHING	0x00000400
+#define FSL_GIANFAR_DEV_HAS_TIMER		0x00000800
+#define FSL_GIANFAR_DEV_HAS_WAKE_ON_FILER	0x00001000
+#define FSL_GIANFAR_DEV_HAS_RX_FILER		0x00002000
 
-#अगर (MAXGROUPS == 2)
-#घोषणा DEFAULT_MAPPING 	0xAA
-#अन्यथा
-#घोषणा DEFAULT_MAPPING 	0xFF
-#पूर्ण_अगर
+#if (MAXGROUPS == 2)
+#define DEFAULT_MAPPING 	0xAA
+#else
+#define DEFAULT_MAPPING 	0xFF
+#endif
 
-#घोषणा ISRG_RR0	0x80000000
-#घोषणा ISRG_TR0	0x00800000
+#define ISRG_RR0	0x80000000
+#define ISRG_TR0	0x00800000
 
 /* The same driver can operate in two modes */
 /* SQ_SG_MODE: Single Queue Single Group Mode
  * 		(Backward compatible mode)
  * MQ_MG_MODE: Multi Queue Multi Group mode
  */
-क्रमागत अणु
+enum {
 	SQ_SG_MODE = 0,
 	MQ_MG_MODE
-पूर्ण;
+};
 
 /*
  * Per TX queue stats
  */
-काष्ठा tx_q_stats अणु
-	अचिन्हित दीर्घ tx_packets;
-	अचिन्हित दीर्घ tx_bytes;
-पूर्ण;
+struct tx_q_stats {
+	unsigned long tx_packets;
+	unsigned long tx_bytes;
+};
 
 /**
- *	काष्ठा gfar_priv_tx_q - per tx queue काष्ठाure
+ *	struct gfar_priv_tx_q - per tx queue structure
  *	@txlock: per queue tx spin lock
- *	@tx_skbuff:skb poपूर्णांकers
- *	@skb_curtx: to be used skb poपूर्णांकer
- *	@skb_dirtytx:the last used skb poपूर्णांकer
+ *	@tx_skbuff:skb pointers
+ *	@skb_curtx: to be used skb pointer
+ *	@skb_dirtytx:the last used skb pointer
  *	@stats: bytes/packets stats
  *	@qindex: index of this queue
- *	@dev: back poपूर्णांकer to the dev काष्ठाure
- *	@grp: back poपूर्णांकer to the group to which this queue beदीर्घs
+ *	@dev: back pointer to the dev structure
+ *	@grp: back pointer to the group to which this queue belongs
  *	@tx_bd_base: First tx buffer descriptor
- *	@cur_tx: Next मुक्त ring entry
+ *	@cur_tx: Next free ring entry
  *	@dirty_tx: First buffer in line to be transmitted
  *	@tx_ring_size: Tx ring size
- *	@num_txbdमुक्त: number of मुक्त TxBds
+ *	@num_txbdfree: number of free TxBds
  *	@txcoalescing: enable/disable tx coalescing
- *	@txic: transmit पूर्णांकerrupt coalescing value
- *	@txcount: coalescing value अगर based on tx frame count
- *	@txसमय: coalescing value अगर based on समय
+ *	@txic: transmit interrupt coalescing value
+ *	@txcount: coalescing value if based on tx frame count
+ *	@txtime: coalescing value if based on time
  */
-काष्ठा gfar_priv_tx_q अणु
+struct gfar_priv_tx_q {
 	/* cacheline 1 */
 	spinlock_t txlock __attribute__ ((aligned (SMP_CACHE_BYTES)));
-	काष्ठा	txbd8 *tx_bd_base;
-	काष्ठा	txbd8 *cur_tx;
-	अचिन्हित पूर्णांक num_txbdमुक्त;
-	अचिन्हित लघु skb_curtx;
-	अचिन्हित लघु tx_ring_size;
-	काष्ठा tx_q_stats stats;
-	काष्ठा gfar_priv_grp *grp;
+	struct	txbd8 *tx_bd_base;
+	struct	txbd8 *cur_tx;
+	unsigned int num_txbdfree;
+	unsigned short skb_curtx;
+	unsigned short tx_ring_size;
+	struct tx_q_stats stats;
+	struct gfar_priv_grp *grp;
 	/* cacheline 2 */
-	काष्ठा net_device *dev;
-	काष्ठा sk_buff **tx_skbuff;
-	काष्ठा	txbd8 *dirty_tx;
-	अचिन्हित लघु skb_dirtytx;
-	अचिन्हित लघु qindex;
-	/* Configuration info क्रम the coalescing features */
-	अचिन्हित पूर्णांक txcoalescing;
-	अचिन्हित दीर्घ txic;
+	struct net_device *dev;
+	struct sk_buff **tx_skbuff;
+	struct	txbd8 *dirty_tx;
+	unsigned short skb_dirtytx;
+	unsigned short qindex;
+	/* Configuration info for the coalescing features */
+	unsigned int txcoalescing;
+	unsigned long txic;
 	dma_addr_t tx_bd_dma_base;
-पूर्ण;
+};
 
 /*
  * Per RX queue stats
  */
-काष्ठा rx_q_stats अणु
-	अचिन्हित दीर्घ rx_packets;
-	अचिन्हित दीर्घ rx_bytes;
-	अचिन्हित दीर्घ rx_dropped;
-पूर्ण;
+struct rx_q_stats {
+	unsigned long rx_packets;
+	unsigned long rx_bytes;
+	unsigned long rx_dropped;
+};
 
-काष्ठा gfar_rx_buff अणु
+struct gfar_rx_buff {
 	dma_addr_t dma;
-	काष्ठा page *page;
-	अचिन्हित पूर्णांक page_offset;
-पूर्ण;
+	struct page *page;
+	unsigned int page_offset;
+};
 
 /**
- *	काष्ठा gfar_priv_rx_q - per rx queue काष्ठाure
- *	@rx_buff: Array of buffer info metadata काष्ठाs
+ *	struct gfar_priv_rx_q - per rx queue structure
+ *	@rx_buff: Array of buffer info metadata structs
  *	@rx_bd_base: First rx buffer descriptor
  *	@next_to_use: index of the next buffer to be alloc'd
  *	@next_to_clean: index of the next buffer to be cleaned
  *	@qindex: index of this queue
- *	@ndev: back poपूर्णांकer to net_device
+ *	@ndev: back pointer to net_device
  *	@rx_ring_size: Rx ring size
  *	@rxcoalescing: enable/disable rx-coalescing
- *	@rxic: receive पूर्णांकerrupt coalescing vlaue
+ *	@rxic: receive interrupt coalescing vlaue
  */
 
-काष्ठा gfar_priv_rx_q अणु
-	काष्ठा	gfar_rx_buff *rx_buff __aligned(SMP_CACHE_BYTES);
-	काष्ठा	rxbd8 *rx_bd_base;
-	काष्ठा	net_device *ndev;
-	काष्ठा	device *dev;
+struct gfar_priv_rx_q {
+	struct	gfar_rx_buff *rx_buff __aligned(SMP_CACHE_BYTES);
+	struct	rxbd8 *rx_bd_base;
+	struct	net_device *ndev;
+	struct	device *dev;
 	u16 rx_ring_size;
 	u16 qindex;
-	काष्ठा	gfar_priv_grp *grp;
+	struct	gfar_priv_grp *grp;
 	u16 next_to_clean;
 	u16 next_to_use;
 	u16 next_to_alloc;
-	काष्ठा	sk_buff *skb;
-	काष्ठा rx_q_stats stats;
+	struct	sk_buff *skb;
+	struct rx_q_stats stats;
 	u32 __iomem *rfbptr;
-	अचिन्हित अक्षर rxcoalescing;
-	अचिन्हित दीर्घ rxic;
+	unsigned char rxcoalescing;
+	unsigned long rxic;
 	dma_addr_t rx_bd_dma_base;
-पूर्ण;
+};
 
-क्रमागत gfar_irqinfo_id अणु
+enum gfar_irqinfo_id {
 	GFAR_TX = 0,
 	GFAR_RX = 1,
 	GFAR_ER = 2,
 	GFAR_NUM_IRQS = 3
-पूर्ण;
+};
 
-काष्ठा gfar_irqinfo अणु
-	अचिन्हित पूर्णांक irq;
-	अक्षर name[GFAR_INT_NAME_MAX];
-पूर्ण;
+struct gfar_irqinfo {
+	unsigned int irq;
+	char name[GFAR_INT_NAME_MAX];
+};
 
 /**
- *	काष्ठा gfar_priv_grp - per group काष्ठाure
+ *	struct gfar_priv_grp - per group structure
  *	@napi: the napi poll function
- *	@priv: back poपूर्णांकer to the priv काष्ठाure
- *	@regs: the ioremapped रेजिस्टर space क्रम this group
- *	@irqinfo: TX/RX/ER irq data क्रम this group
+ *	@priv: back pointer to the priv structure
+ *	@regs: the ioremapped register space for this group
+ *	@irqinfo: TX/RX/ER irq data for this group
  */
 
-काष्ठा gfar_priv_grp अणु
+struct gfar_priv_grp {
 	spinlock_t grplock __aligned(SMP_CACHE_BYTES);
-	काष्ठा	napi_काष्ठा napi_rx;
-	काष्ठा	napi_काष्ठा napi_tx;
-	काष्ठा gfar __iomem *regs;
-	काष्ठा gfar_priv_tx_q *tx_queue;
-	काष्ठा gfar_priv_rx_q *rx_queue;
-	अचिन्हित पूर्णांक tstat;
-	अचिन्हित पूर्णांक rstat;
+	struct	napi_struct napi_rx;
+	struct	napi_struct napi_tx;
+	struct gfar __iomem *regs;
+	struct gfar_priv_tx_q *tx_queue;
+	struct gfar_priv_rx_q *rx_queue;
+	unsigned int tstat;
+	unsigned int rstat;
 
-	काष्ठा gfar_निजी *priv;
-	अचिन्हित दीर्घ num_tx_queues;
-	अचिन्हित दीर्घ tx_bit_map;
-	अचिन्हित दीर्घ num_rx_queues;
-	अचिन्हित दीर्घ rx_bit_map;
+	struct gfar_private *priv;
+	unsigned long num_tx_queues;
+	unsigned long tx_bit_map;
+	unsigned long num_rx_queues;
+	unsigned long rx_bit_map;
 
-	काष्ठा gfar_irqinfo *irqinfo[GFAR_NUM_IRQS];
-पूर्ण;
+	struct gfar_irqinfo *irqinfo[GFAR_NUM_IRQS];
+};
 
-#घोषणा gfar_irq(grp, ID) \
+#define gfar_irq(grp, ID) \
 	((grp)->irqinfo[GFAR_##ID])
 
-क्रमागत gfar_errata अणु
+enum gfar_errata {
 	GFAR_ERRATA_74		= 0x01,
 	GFAR_ERRATA_76		= 0x02,
 	GFAR_ERRATA_A002	= 0x04,
 	GFAR_ERRATA_12		= 0x08, /* a.k.a errata eTSEC49 */
-पूर्ण;
+};
 
-क्रमागत gfar_dev_state अणु
+enum gfar_dev_state {
 	GFAR_DOWN = 1,
 	GFAR_RESETTING
-पूर्ण;
+};
 
 /* Struct stolen almost completely (and shamelessly) from the FCC enet source
  * (Ok, that's not so true anymore, but there is a family resemblance)
  * The GFAR buffer descriptors track the ring buffers.  The rx_bd_base
- * and tx_bd_base always poपूर्णांक to the currently available buffer.
+ * and tx_bd_base always point to the currently available buffer.
  * The dirty_tx tracks the current buffer that is being sent by the
  * controller.  The cur_tx and dirty_tx are equal under both completely
- * empty and completely full conditions.  The empty/पढ़ोy indicator in
+ * empty and completely full conditions.  The empty/ready indicator in
  * the buffer descriptor determines the actual condition.
  */
-काष्ठा gfar_निजी अणु
-	काष्ठा device *dev;
-	काष्ठा net_device *ndev;
-	क्रमागत gfar_errata errata;
+struct gfar_private {
+	struct device *dev;
+	struct net_device *ndev;
+	enum gfar_errata errata;
 
 	u16 uses_rxfcb;
 	u16 padding;
 	u32 device_flags;
 
-	/* HW समय stamping enabled flag */
-	पूर्णांक hwts_rx_en;
-	पूर्णांक hwts_tx_en;
+	/* HW time stamping enabled flag */
+	int hwts_rx_en;
+	int hwts_tx_en;
 
-	काष्ठा gfar_priv_tx_q *tx_queue[MAX_TX_QS];
-	काष्ठा gfar_priv_rx_q *rx_queue[MAX_RX_QS];
-	काष्ठा gfar_priv_grp gfargrp[MAXGROUPS];
+	struct gfar_priv_tx_q *tx_queue[MAX_TX_QS];
+	struct gfar_priv_rx_q *rx_queue[MAX_RX_QS];
+	struct gfar_priv_grp gfargrp[MAXGROUPS];
 
-	अचिन्हित दीर्घ state;
+	unsigned long state;
 
-	अचिन्हित लघु mode;
-	अचिन्हित पूर्णांक num_tx_queues;
-	अचिन्हित पूर्णांक num_rx_queues;
-	अचिन्हित पूर्णांक num_grps;
-	पूर्णांक tx_actual_en;
+	unsigned short mode;
+	unsigned int num_tx_queues;
+	unsigned int num_rx_queues;
+	unsigned int num_grps;
+	int tx_actual_en;
 
 	/* Network Statistics */
-	काष्ठा gfar_extra_stats extra_stats;
+	struct gfar_extra_stats extra_stats;
 
 	/* PHY stuff */
-	phy_पूर्णांकerface_t पूर्णांकerface;
-	काष्ठा device_node *phy_node;
-	काष्ठा device_node *tbi_node;
-	काष्ठा mii_bus *mii_bus;
-	पूर्णांक oldspeed;
-	पूर्णांक oldduplex;
-	पूर्णांक oldlink;
+	phy_interface_t interface;
+	struct device_node *phy_node;
+	struct device_node *tbi_node;
+	struct mii_bus *mii_bus;
+	int oldspeed;
+	int oldduplex;
+	int oldlink;
 
-	uपूर्णांक32_t msg_enable;
+	uint32_t msg_enable;
 
-	काष्ठा work_काष्ठा reset_task;
+	struct work_struct reset_task;
 
-	काष्ठा platक्रमm_device *ofdev;
-	अचिन्हित अक्षर
+	struct platform_device *ofdev;
+	unsigned char
 		extended_hash:1,
 		bd_stash_en:1,
 		rx_filer_enable:1,
 		/* Enable priorty based Tx scheduling in Hw */
 		prio_sched_en:1,
 		/* Flow control flags */
-		छोड़ो_aneg_en:1,
-		tx_छोड़ो_en:1,
-		rx_छोड़ो_en:1;
+		pause_aneg_en:1,
+		tx_pause_en:1,
+		rx_pause_en:1;
 
-	/* The total tx and rx ring size क्रम the enabled queues */
-	अचिन्हित पूर्णांक total_tx_ring_size;
-	अचिन्हित पूर्णांक total_rx_ring_size;
+	/* The total tx and rx ring size for the enabled queues */
+	unsigned int total_tx_ring_size;
+	unsigned int total_rx_ring_size;
 
 	u32 rqueue;
 	u32 tqueue;
 
 	/* RX per device parameters */
-	अचिन्हित पूर्णांक rx_stash_size;
-	अचिन्हित पूर्णांक rx_stash_index;
+	unsigned int rx_stash_size;
+	unsigned int rx_stash_index;
 
 	u32 cur_filer_idx;
 
 	/* RX queue filer rule set*/
-	काष्ठा ethtool_rx_list rx_list;
-	काष्ठा mutex rx_queue_access;
+	struct ethtool_rx_list rx_list;
+	struct mutex rx_queue_access;
 
-	/* Hash रेजिस्टरs and their width */
+	/* Hash registers and their width */
 	u32 __iomem *hash_regs[16];
-	पूर्णांक hash_width;
+	int hash_width;
 
 	/* wake-on-lan settings */
 	u16 wol_opts;
 	u16 wol_supported;
 
 	/*Filer table*/
-	अचिन्हित पूर्णांक ftp_rqfpr[MAX_खाताR_IDX + 1];
-	अचिन्हित पूर्णांक ftp_rqfcr[MAX_खाताR_IDX + 1];
-पूर्ण;
+	unsigned int ftp_rqfpr[MAX_FILER_IDX + 1];
+	unsigned int ftp_rqfcr[MAX_FILER_IDX + 1];
+};
 
 
-अटल अंतरभूत पूर्णांक gfar_has_errata(काष्ठा gfar_निजी *priv,
-				  क्रमागत gfar_errata err)
-अणु
-	वापस priv->errata & err;
-पूर्ण
+static inline int gfar_has_errata(struct gfar_private *priv,
+				  enum gfar_errata err)
+{
+	return priv->errata & err;
+}
 
-अटल अंतरभूत u32 gfar_पढ़ो(अचिन्हित __iomem *addr)
-अणु
+static inline u32 gfar_read(unsigned __iomem *addr)
+{
 	u32 val;
-	val = ioपढ़ो32be(addr);
-	वापस val;
-पूर्ण
+	val = ioread32be(addr);
+	return val;
+}
 
-अटल अंतरभूत व्योम gfar_ग_लिखो(अचिन्हित __iomem *addr, u32 val)
-अणु
-	ioग_लिखो32be(val, addr);
-पूर्ण
+static inline void gfar_write(unsigned __iomem *addr, u32 val)
+{
+	iowrite32be(val, addr);
+}
 
-अटल अंतरभूत व्योम gfar_ग_लिखो_filer(काष्ठा gfar_निजी *priv,
-		अचिन्हित पूर्णांक far, अचिन्हित पूर्णांक fcr, अचिन्हित पूर्णांक fpr)
-अणु
-	काष्ठा gfar __iomem *regs = priv->gfargrp[0].regs;
+static inline void gfar_write_filer(struct gfar_private *priv,
+		unsigned int far, unsigned int fcr, unsigned int fpr)
+{
+	struct gfar __iomem *regs = priv->gfargrp[0].regs;
 
-	gfar_ग_लिखो(&regs->rqfar, far);
-	gfar_ग_लिखो(&regs->rqfcr, fcr);
-	gfar_ग_लिखो(&regs->rqfpr, fpr);
-पूर्ण
+	gfar_write(&regs->rqfar, far);
+	gfar_write(&regs->rqfcr, fcr);
+	gfar_write(&regs->rqfpr, fpr);
+}
 
-अटल अंतरभूत व्योम gfar_पढ़ो_filer(काष्ठा gfar_निजी *priv,
-		अचिन्हित पूर्णांक far, अचिन्हित पूर्णांक *fcr, अचिन्हित पूर्णांक *fpr)
-अणु
-	काष्ठा gfar __iomem *regs = priv->gfargrp[0].regs;
+static inline void gfar_read_filer(struct gfar_private *priv,
+		unsigned int far, unsigned int *fcr, unsigned int *fpr)
+{
+	struct gfar __iomem *regs = priv->gfargrp[0].regs;
 
-	gfar_ग_लिखो(&regs->rqfar, far);
-	*fcr = gfar_पढ़ो(&regs->rqfcr);
-	*fpr = gfar_पढ़ो(&regs->rqfpr);
-पूर्ण
+	gfar_write(&regs->rqfar, far);
+	*fcr = gfar_read(&regs->rqfcr);
+	*fpr = gfar_read(&regs->rqfpr);
+}
 
-अटल अंतरभूत व्योम gfar_ग_लिखो_isrg(काष्ठा gfar_निजी *priv)
-अणु
-	काष्ठा gfar __iomem *regs = priv->gfargrp[0].regs;
+static inline void gfar_write_isrg(struct gfar_private *priv)
+{
+	struct gfar __iomem *regs = priv->gfargrp[0].regs;
 	u32 __iomem *baddr = &regs->isrg0;
 	u32 isrg = 0;
-	पूर्णांक grp_idx, i;
+	int grp_idx, i;
 
-	क्रम (grp_idx = 0; grp_idx < priv->num_grps; grp_idx++) अणु
-		काष्ठा gfar_priv_grp *grp = &priv->gfargrp[grp_idx];
+	for (grp_idx = 0; grp_idx < priv->num_grps; grp_idx++) {
+		struct gfar_priv_grp *grp = &priv->gfargrp[grp_idx];
 
-		क्रम_each_set_bit(i, &grp->rx_bit_map, priv->num_rx_queues) अणु
+		for_each_set_bit(i, &grp->rx_bit_map, priv->num_rx_queues) {
 			isrg |= (ISRG_RR0 >> i);
-		पूर्ण
+		}
 
-		क्रम_each_set_bit(i, &grp->tx_bit_map, priv->num_tx_queues) अणु
+		for_each_set_bit(i, &grp->tx_bit_map, priv->num_tx_queues) {
 			isrg |= (ISRG_TR0 >> i);
-		पूर्ण
+		}
 
-		gfar_ग_लिखो(baddr, isrg);
+		gfar_write(baddr, isrg);
 
 		baddr++;
 		isrg = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत पूर्णांक gfar_is_dma_stopped(काष्ठा gfar_निजी *priv)
-अणु
-	काष्ठा gfar __iomem *regs = priv->gfargrp[0].regs;
+static inline int gfar_is_dma_stopped(struct gfar_private *priv)
+{
+	struct gfar __iomem *regs = priv->gfargrp[0].regs;
 
-	वापस ((gfar_पढ़ो(&regs->ievent) & (IEVENT_GRSC | IEVENT_GTSC)) ==
+	return ((gfar_read(&regs->ievent) & (IEVENT_GRSC | IEVENT_GTSC)) ==
 	       (IEVENT_GRSC | IEVENT_GTSC));
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक gfar_is_rx_dma_stopped(काष्ठा gfar_निजी *priv)
-अणु
-	काष्ठा gfar __iomem *regs = priv->gfargrp[0].regs;
+static inline int gfar_is_rx_dma_stopped(struct gfar_private *priv)
+{
+	struct gfar __iomem *regs = priv->gfargrp[0].regs;
 
-	वापस gfar_पढ़ो(&regs->ievent) & IEVENT_GRSC;
-पूर्ण
+	return gfar_read(&regs->ievent) & IEVENT_GRSC;
+}
 
-अटल अंतरभूत व्योम gfar_wmb(व्योम)
-अणु
-#अगर defined(CONFIG_PPC)
-	/* The घातerpc-specअगरic eieio() is used, as wmb() has too strong
+static inline void gfar_wmb(void)
+{
+#if defined(CONFIG_PPC)
+	/* The powerpc-specific eieio() is used, as wmb() has too strong
 	 * semantics (it requires synchronization between cacheable and
-	 * uncacheable mappings, which eieio() करोesn't provide and which we
-	 * करोn't need), thus requiring a more expensive sync inकाष्ठाion.  At
-	 * some poपूर्णांक, the set of architecture-independent barrier functions
+	 * uncacheable mappings, which eieio() doesn't provide and which we
+	 * don't need), thus requiring a more expensive sync instruction.  At
+	 * some point, the set of architecture-independent barrier functions
 	 * should be expanded to include weaker barriers.
 	 */
 	eieio();
-#अन्यथा
-	wmb(); /* order ग_लिखो acesses क्रम BD (or FCB) fields */
-#पूर्ण_अगर
-पूर्ण
+#else
+	wmb(); /* order write acesses for BD (or FCB) fields */
+#endif
+}
 
-अटल अंतरभूत व्योम gfar_clear_txbd_status(काष्ठा txbd8 *bdp)
-अणु
+static inline void gfar_clear_txbd_status(struct txbd8 *bdp)
+{
 	u32 lstatus = be32_to_cpu(bdp->lstatus);
 
 	lstatus &= BD_LFLAG(TXBD_WRAP);
 	bdp->lstatus = cpu_to_be32(lstatus);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक gfar_rxbd_unused(काष्ठा gfar_priv_rx_q *rxq)
-अणु
-	अगर (rxq->next_to_clean > rxq->next_to_use)
-		वापस rxq->next_to_clean - rxq->next_to_use - 1;
+static inline int gfar_rxbd_unused(struct gfar_priv_rx_q *rxq)
+{
+	if (rxq->next_to_clean > rxq->next_to_use)
+		return rxq->next_to_clean - rxq->next_to_use - 1;
 
-	वापस rxq->rx_ring_size + rxq->next_to_clean - rxq->next_to_use - 1;
-पूर्ण
+	return rxq->rx_ring_size + rxq->next_to_clean - rxq->next_to_use - 1;
+}
 
-अटल अंतरभूत u32 gfar_rxbd_dma_lastमुक्त(काष्ठा gfar_priv_rx_q *rxq)
-अणु
-	काष्ठा rxbd8 *bdp;
+static inline u32 gfar_rxbd_dma_lastfree(struct gfar_priv_rx_q *rxq)
+{
+	struct rxbd8 *bdp;
 	u32 bdp_dma;
-	पूर्णांक i;
+	int i;
 
 	i = rxq->next_to_use ? rxq->next_to_use - 1 : rxq->rx_ring_size - 1;
 	bdp = &rxq->rx_bd_base[i];
 	bdp_dma = lower_32_bits(rxq->rx_bd_dma_base);
-	bdp_dma += (uपूर्णांकptr_t)bdp - (uपूर्णांकptr_t)rxq->rx_bd_base;
+	bdp_dma += (uintptr_t)bdp - (uintptr_t)rxq->rx_bd_base;
 
-	वापस bdp_dma;
-पूर्ण
+	return bdp_dma;
+}
 
-पूर्णांक startup_gfar(काष्ठा net_device *dev);
-व्योम stop_gfar(काष्ठा net_device *dev);
-व्योम gfar_mac_reset(काष्ठा gfar_निजी *priv);
-पूर्णांक gfar_set_features(काष्ठा net_device *dev, netdev_features_t features);
+int startup_gfar(struct net_device *dev);
+void stop_gfar(struct net_device *dev);
+void gfar_mac_reset(struct gfar_private *priv);
+int gfar_set_features(struct net_device *dev, netdev_features_t features);
 
-बाह्य स्थिर काष्ठा ethtool_ops gfar_ethtool_ops;
+extern const struct ethtool_ops gfar_ethtool_ops;
 
-#घोषणा MAX_खाताR_CACHE_IDX (2*(MAX_खाताR_IDX))
+#define MAX_FILER_CACHE_IDX (2*(MAX_FILER_IDX))
 
-#घोषणा RQFCR_PID_PRI_MASK 0xFFFFFFF8
-#घोषणा RQFCR_PID_L4P_MASK 0xFFFFFF00
-#घोषणा RQFCR_PID_VID_MASK 0xFFFFF000
-#घोषणा RQFCR_PID_PORT_MASK 0xFFFF0000
-#घोषणा RQFCR_PID_MAC_MASK 0xFF000000
+#define RQFCR_PID_PRI_MASK 0xFFFFFFF8
+#define RQFCR_PID_L4P_MASK 0xFFFFFF00
+#define RQFCR_PID_VID_MASK 0xFFFFF000
+#define RQFCR_PID_PORT_MASK 0xFFFF0000
+#define RQFCR_PID_MAC_MASK 0xFF000000
 
 /* Represents a receive filer table entry */
-काष्ठा gfar_filer_entry अणु
+struct gfar_filer_entry {
 	u32 ctrl;
 	u32 prop;
-पूर्ण;
+};
 
 
-/* The 20 additional entries are a shaकरोw क्रम one extra element */
-काष्ठा filer_table अणु
+/* The 20 additional entries are a shadow for one extra element */
+struct filer_table {
 	u32 index;
-	काष्ठा gfar_filer_entry fe[MAX_खाताR_CACHE_IDX + 20];
-पूर्ण;
+	struct gfar_filer_entry fe[MAX_FILER_CACHE_IDX + 20];
+};
 
-#पूर्ण_अगर /* __GIANFAR_H */
+#endif /* __GIANFAR_H */

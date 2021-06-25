@@ -1,147 +1,146 @@
-<शैली गुरु>
 /*
- * Xtensa MX पूर्णांकerrupt distributor
+ * Xtensa MX interrupt distributor
  *
  * Copyright (C) 2002 - 2013 Tensilica, Inc.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqchip.h>
-#समावेश <linux/of.h>
+#include <linux/interrupt.h>
+#include <linux/irqdomain.h>
+#include <linux/irq.h>
+#include <linux/irqchip.h>
+#include <linux/of.h>
 
-#समावेश <यंत्र/mxregs.h>
+#include <asm/mxregs.h>
 
-#घोषणा HW_IRQ_IPI_COUNT 2
-#घोषणा HW_IRQ_MX_BASE 2
-#घोषणा HW_IRQ_EXTERN_BASE 3
+#define HW_IRQ_IPI_COUNT 2
+#define HW_IRQ_MX_BASE 2
+#define HW_IRQ_EXTERN_BASE 3
 
-अटल DEFINE_PER_CPU(अचिन्हित पूर्णांक, cached_irq_mask);
+static DEFINE_PER_CPU(unsigned int, cached_irq_mask);
 
-अटल पूर्णांक xtensa_mx_irq_map(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक irq,
+static int xtensa_mx_irq_map(struct irq_domain *d, unsigned int irq,
 		irq_hw_number_t hw)
-अणु
-	अगर (hw < HW_IRQ_IPI_COUNT) अणु
-		काष्ठा irq_chip *irq_chip = d->host_data;
+{
+	if (hw < HW_IRQ_IPI_COUNT) {
+		struct irq_chip *irq_chip = d->host_data;
 		irq_set_chip_and_handler_name(irq, irq_chip,
 				handle_percpu_irq, "ipi");
 		irq_set_status_flags(irq, IRQ_LEVEL);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	irqd_set_single_target(irq_desc_get_irq_data(irq_to_desc(irq)));
-	वापस xtensa_irq_map(d, irq, hw);
-पूर्ण
+	return xtensa_irq_map(d, irq, hw);
+}
 
 /*
- * Device Tree IRQ specअगरier translation function which works with one or
+ * Device Tree IRQ specifier translation function which works with one or
  * two cell bindings. First cell value maps directly to the hwirq number.
- * Second cell अगर present specअगरies whether hwirq number is बाह्यal (1) or
- * पूर्णांकernal (0).
+ * Second cell if present specifies whether hwirq number is external (1) or
+ * internal (0).
  */
-अटल पूर्णांक xtensa_mx_irq_करोमुख्य_xlate(काष्ठा irq_करोमुख्य *d,
-		काष्ठा device_node *ctrlr,
-		स्थिर u32 *पूर्णांकspec, अचिन्हित पूर्णांक पूर्णांकsize,
-		अचिन्हित दीर्घ *out_hwirq, अचिन्हित पूर्णांक *out_type)
-अणु
-	वापस xtensa_irq_करोमुख्य_xlate(पूर्णांकspec, पूर्णांकsize,
-			पूर्णांकspec[0], पूर्णांकspec[0] + HW_IRQ_EXTERN_BASE,
+static int xtensa_mx_irq_domain_xlate(struct irq_domain *d,
+		struct device_node *ctrlr,
+		const u32 *intspec, unsigned int intsize,
+		unsigned long *out_hwirq, unsigned int *out_type)
+{
+	return xtensa_irq_domain_xlate(intspec, intsize,
+			intspec[0], intspec[0] + HW_IRQ_EXTERN_BASE,
 			out_hwirq, out_type);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops xtensa_mx_irq_करोमुख्य_ops = अणु
-	.xlate = xtensa_mx_irq_करोमुख्य_xlate,
+static const struct irq_domain_ops xtensa_mx_irq_domain_ops = {
+	.xlate = xtensa_mx_irq_domain_xlate,
 	.map = xtensa_mx_irq_map,
-पूर्ण;
+};
 
-व्योम secondary_init_irq(व्योम)
-अणु
-	__this_cpu_ग_लिखो(cached_irq_mask,
+void secondary_init_irq(void)
+{
+	__this_cpu_write(cached_irq_mask,
 			XCHAL_INTTYPE_MASK_EXTERN_EDGE |
 			XCHAL_INTTYPE_MASK_EXTERN_LEVEL);
 	xtensa_set_sr(XCHAL_INTTYPE_MASK_EXTERN_EDGE |
-			XCHAL_INTTYPE_MASK_EXTERN_LEVEL, पूर्णांकenable);
-पूर्ण
+			XCHAL_INTTYPE_MASK_EXTERN_LEVEL, intenable);
+}
 
-अटल व्योम xtensa_mx_irq_mask(काष्ठा irq_data *d)
-अणु
-	अचिन्हित पूर्णांक mask = 1u << d->hwirq;
+static void xtensa_mx_irq_mask(struct irq_data *d)
+{
+	unsigned int mask = 1u << d->hwirq;
 
-	अगर (mask & (XCHAL_INTTYPE_MASK_EXTERN_EDGE |
-		    XCHAL_INTTYPE_MASK_EXTERN_LEVEL)) अणु
-		अचिन्हित पूर्णांक ext_irq = xtensa_get_ext_irq_no(d->hwirq);
+	if (mask & (XCHAL_INTTYPE_MASK_EXTERN_EDGE |
+		    XCHAL_INTTYPE_MASK_EXTERN_LEVEL)) {
+		unsigned int ext_irq = xtensa_get_ext_irq_no(d->hwirq);
 
-		अगर (ext_irq >= HW_IRQ_MX_BASE) अणु
+		if (ext_irq >= HW_IRQ_MX_BASE) {
 			set_er(1u << (ext_irq - HW_IRQ_MX_BASE), MIENG);
-			वापस;
-		पूर्ण
-	पूर्ण
-	mask = __this_cpu_पढ़ो(cached_irq_mask) & ~mask;
-	__this_cpu_ग_लिखो(cached_irq_mask, mask);
-	xtensa_set_sr(mask, पूर्णांकenable);
-पूर्ण
+			return;
+		}
+	}
+	mask = __this_cpu_read(cached_irq_mask) & ~mask;
+	__this_cpu_write(cached_irq_mask, mask);
+	xtensa_set_sr(mask, intenable);
+}
 
-अटल व्योम xtensa_mx_irq_unmask(काष्ठा irq_data *d)
-अणु
-	अचिन्हित पूर्णांक mask = 1u << d->hwirq;
+static void xtensa_mx_irq_unmask(struct irq_data *d)
+{
+	unsigned int mask = 1u << d->hwirq;
 
-	अगर (mask & (XCHAL_INTTYPE_MASK_EXTERN_EDGE |
-		    XCHAL_INTTYPE_MASK_EXTERN_LEVEL)) अणु
-		अचिन्हित पूर्णांक ext_irq = xtensa_get_ext_irq_no(d->hwirq);
+	if (mask & (XCHAL_INTTYPE_MASK_EXTERN_EDGE |
+		    XCHAL_INTTYPE_MASK_EXTERN_LEVEL)) {
+		unsigned int ext_irq = xtensa_get_ext_irq_no(d->hwirq);
 
-		अगर (ext_irq >= HW_IRQ_MX_BASE) अणु
+		if (ext_irq >= HW_IRQ_MX_BASE) {
 			set_er(1u << (ext_irq - HW_IRQ_MX_BASE), MIENGSET);
-			वापस;
-		पूर्ण
-	पूर्ण
-	mask |= __this_cpu_पढ़ो(cached_irq_mask);
-	__this_cpu_ग_लिखो(cached_irq_mask, mask);
-	xtensa_set_sr(mask, पूर्णांकenable);
-पूर्ण
+			return;
+		}
+	}
+	mask |= __this_cpu_read(cached_irq_mask);
+	__this_cpu_write(cached_irq_mask, mask);
+	xtensa_set_sr(mask, intenable);
+}
 
-अटल व्योम xtensa_mx_irq_enable(काष्ठा irq_data *d)
-अणु
+static void xtensa_mx_irq_enable(struct irq_data *d)
+{
 	xtensa_mx_irq_unmask(d);
-पूर्ण
+}
 
-अटल व्योम xtensa_mx_irq_disable(काष्ठा irq_data *d)
-अणु
+static void xtensa_mx_irq_disable(struct irq_data *d)
+{
 	xtensa_mx_irq_mask(d);
-पूर्ण
+}
 
-अटल व्योम xtensa_mx_irq_ack(काष्ठा irq_data *d)
-अणु
-	xtensa_set_sr(1 << d->hwirq, पूर्णांकclear);
-पूर्ण
+static void xtensa_mx_irq_ack(struct irq_data *d)
+{
+	xtensa_set_sr(1 << d->hwirq, intclear);
+}
 
-अटल पूर्णांक xtensa_mx_irq_retrigger(काष्ठा irq_data *d)
-अणु
-	अचिन्हित पूर्णांक mask = 1u << d->hwirq;
+static int xtensa_mx_irq_retrigger(struct irq_data *d)
+{
+	unsigned int mask = 1u << d->hwirq;
 
-	अगर (WARN_ON(mask & ~XCHAL_INTTYPE_MASK_SOFTWARE))
-		वापस 0;
-	xtensa_set_sr(mask, पूर्णांकset);
-	वापस 1;
-पूर्ण
+	if (WARN_ON(mask & ~XCHAL_INTTYPE_MASK_SOFTWARE))
+		return 0;
+	xtensa_set_sr(mask, intset);
+	return 1;
+}
 
-अटल पूर्णांक xtensa_mx_irq_set_affinity(काष्ठा irq_data *d,
-		स्थिर काष्ठा cpumask *dest, bool क्रमce)
-अणु
-	पूर्णांक cpu = cpumask_any_and(dest, cpu_online_mask);
-	अचिन्हित mask = 1u << cpu;
+static int xtensa_mx_irq_set_affinity(struct irq_data *d,
+		const struct cpumask *dest, bool force)
+{
+	int cpu = cpumask_any_and(dest, cpu_online_mask);
+	unsigned mask = 1u << cpu;
 
 	set_er(mask, MIROUT(d->hwirq - HW_IRQ_MX_BASE));
 	irq_data_update_effective_affinity(d, cpumask_of(cpu));
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
-अटल काष्ठा irq_chip xtensa_mx_irq_chip = अणु
+static struct irq_chip xtensa_mx_irq_chip = {
 	.name		= "xtensa-mx",
 	.irq_enable	= xtensa_mx_irq_enable,
 	.irq_disable	= xtensa_mx_irq_disable,
@@ -150,27 +149,27 @@
 	.irq_ack	= xtensa_mx_irq_ack,
 	.irq_retrigger	= xtensa_mx_irq_retrigger,
 	.irq_set_affinity = xtensa_mx_irq_set_affinity,
-पूर्ण;
+};
 
-पूर्णांक __init xtensa_mx_init_legacy(काष्ठा device_node *पूर्णांकerrupt_parent)
-अणु
-	काष्ठा irq_करोमुख्य *root_करोमुख्य =
-		irq_करोमुख्य_add_legacy(शून्य, NR_IRQS - 1, 1, 0,
-				&xtensa_mx_irq_करोमुख्य_ops,
+int __init xtensa_mx_init_legacy(struct device_node *interrupt_parent)
+{
+	struct irq_domain *root_domain =
+		irq_domain_add_legacy(NULL, NR_IRQS - 1, 1, 0,
+				&xtensa_mx_irq_domain_ops,
 				&xtensa_mx_irq_chip);
-	irq_set_शेष_host(root_करोमुख्य);
+	irq_set_default_host(root_domain);
 	secondary_init_irq();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init xtensa_mx_init(काष्ठा device_node *np,
-		काष्ठा device_node *पूर्णांकerrupt_parent)
-अणु
-	काष्ठा irq_करोमुख्य *root_करोमुख्य =
-		irq_करोमुख्य_add_linear(np, NR_IRQS, &xtensa_mx_irq_करोमुख्य_ops,
+static int __init xtensa_mx_init(struct device_node *np,
+		struct device_node *interrupt_parent)
+{
+	struct irq_domain *root_domain =
+		irq_domain_add_linear(np, NR_IRQS, &xtensa_mx_irq_domain_ops,
 				&xtensa_mx_irq_chip);
-	irq_set_शेष_host(root_करोमुख्य);
+	irq_set_default_host(root_domain);
 	secondary_init_irq();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 IRQCHIP_DECLARE(xtensa_mx_irq_chip, "cdns,xtensa-mx", xtensa_mx_init);

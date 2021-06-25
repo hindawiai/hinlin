@@ -1,18 +1,17 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2001 - 2005 Tensilica Inc.
  */
 
-#अगर_अघोषित _ASM_VERMAGIC_H
-#घोषणा _ASM_VERMAGIC_H
+#ifndef _ASM_VERMAGIC_H
+#define _ASM_VERMAGIC_H
 
-#समावेश <linux/stringअगरy.h>
-#समावेश <variant/core.h>
+#include <linux/stringify.h>
+#include <variant/core.h>
 
-#घोषणा MODULE_ARCH_VERMAGIC "xtensa-" __stringअगरy(XCHAL_CORE_ID) " "
+#define MODULE_ARCH_VERMAGIC "xtensa-" __stringify(XCHAL_CORE_ID) " "
 
-#पूर्ण_अगर	/* _ASM_VERMAGIC_H */
+#endif	/* _ASM_VERMAGIC_H */

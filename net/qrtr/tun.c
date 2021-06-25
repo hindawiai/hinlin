@@ -1,177 +1,176 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2018, Linaro Ltd */
 
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/module.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/uaccess.h>
+#include <linux/miscdevice.h>
+#include <linux/module.h>
+#include <linux/poll.h>
+#include <linux/skbuff.h>
+#include <linux/uaccess.h>
 
-#समावेश "qrtr.h"
+#include "qrtr.h"
 
-काष्ठा qrtr_tun अणु
-	काष्ठा qrtr_endpoपूर्णांक ep;
+struct qrtr_tun {
+	struct qrtr_endpoint ep;
 
-	काष्ठा sk_buff_head queue;
-	रुको_queue_head_t पढ़ोq;
-पूर्ण;
+	struct sk_buff_head queue;
+	wait_queue_head_t readq;
+};
 
-अटल पूर्णांक qrtr_tun_send(काष्ठा qrtr_endpoपूर्णांक *ep, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा qrtr_tun *tun = container_of(ep, काष्ठा qrtr_tun, ep);
+static int qrtr_tun_send(struct qrtr_endpoint *ep, struct sk_buff *skb)
+{
+	struct qrtr_tun *tun = container_of(ep, struct qrtr_tun, ep);
 
 	skb_queue_tail(&tun->queue, skb);
 
-	/* wake up any blocking processes, रुकोing क्रम new data */
-	wake_up_पूर्णांकerruptible(&tun->पढ़ोq);
+	/* wake up any blocking processes, waiting for new data */
+	wake_up_interruptible(&tun->readq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qrtr_tun_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा qrtr_tun *tun;
-	पूर्णांक ret;
+static int qrtr_tun_open(struct inode *inode, struct file *filp)
+{
+	struct qrtr_tun *tun;
+	int ret;
 
-	tun = kzalloc(माप(*tun), GFP_KERNEL);
-	अगर (!tun)
-		वापस -ENOMEM;
+	tun = kzalloc(sizeof(*tun), GFP_KERNEL);
+	if (!tun)
+		return -ENOMEM;
 
 	skb_queue_head_init(&tun->queue);
-	init_रुकोqueue_head(&tun->पढ़ोq);
+	init_waitqueue_head(&tun->readq);
 
 	tun->ep.xmit = qrtr_tun_send;
 
-	filp->निजी_data = tun;
+	filp->private_data = tun;
 
-	ret = qrtr_endpoपूर्णांक_रेजिस्टर(&tun->ep, QRTR_EP_NID_AUTO);
-	अगर (ret)
-		जाओ out;
+	ret = qrtr_endpoint_register(&tun->ep, QRTR_EP_NID_AUTO);
+	if (ret)
+		goto out;
 
-	वापस 0;
+	return 0;
 
 out:
-	filp->निजी_data = शून्य;
-	kमुक्त(tun);
-	वापस ret;
-पूर्ण
+	filp->private_data = NULL;
+	kfree(tun);
+	return ret;
+}
 
-अटल sमाप_प्रकार qrtr_tun_पढ़ो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *to)
-अणु
-	काष्ठा file *filp = iocb->ki_filp;
-	काष्ठा qrtr_tun *tun = filp->निजी_data;
-	काष्ठा sk_buff *skb;
-	पूर्णांक count;
+static ssize_t qrtr_tun_read_iter(struct kiocb *iocb, struct iov_iter *to)
+{
+	struct file *filp = iocb->ki_filp;
+	struct qrtr_tun *tun = filp->private_data;
+	struct sk_buff *skb;
+	int count;
 
-	जबतक (!(skb = skb_dequeue(&tun->queue))) अणु
-		अगर (filp->f_flags & O_NONBLOCK)
-			वापस -EAGAIN;
+	while (!(skb = skb_dequeue(&tun->queue))) {
+		if (filp->f_flags & O_NONBLOCK)
+			return -EAGAIN;
 
-		/* Wait until we get data or the endpoपूर्णांक goes away */
-		अगर (रुको_event_पूर्णांकerruptible(tun->पढ़ोq,
+		/* Wait until we get data or the endpoint goes away */
+		if (wait_event_interruptible(tun->readq,
 					     !skb_queue_empty(&tun->queue)))
-			वापस -ERESTARTSYS;
-	पूर्ण
+			return -ERESTARTSYS;
+	}
 
-	count = min_t(माप_प्रकार, iov_iter_count(to), skb->len);
-	अगर (copy_to_iter(skb->data, count, to) != count)
+	count = min_t(size_t, iov_iter_count(to), skb->len);
+	if (copy_to_iter(skb->data, count, to) != count)
 		count = -EFAULT;
 
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार qrtr_tun_ग_लिखो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
-अणु
-	काष्ठा file *filp = iocb->ki_filp;
-	काष्ठा qrtr_tun *tun = filp->निजी_data;
-	माप_प्रकार len = iov_iter_count(from);
-	sमाप_प्रकार ret;
-	व्योम *kbuf;
+static ssize_t qrtr_tun_write_iter(struct kiocb *iocb, struct iov_iter *from)
+{
+	struct file *filp = iocb->ki_filp;
+	struct qrtr_tun *tun = filp->private_data;
+	size_t len = iov_iter_count(from);
+	ssize_t ret;
+	void *kbuf;
 
-	अगर (!len)
-		वापस -EINVAL;
+	if (!len)
+		return -EINVAL;
 
-	अगर (len > KMALLOC_MAX_SIZE)
-		वापस -ENOMEM;
+	if (len > KMALLOC_MAX_SIZE)
+		return -ENOMEM;
 
 	kbuf = kzalloc(len, GFP_KERNEL);
-	अगर (!kbuf)
-		वापस -ENOMEM;
+	if (!kbuf)
+		return -ENOMEM;
 
-	अगर (!copy_from_iter_full(kbuf, len, from)) अणु
-		kमुक्त(kbuf);
-		वापस -EFAULT;
-	पूर्ण
+	if (!copy_from_iter_full(kbuf, len, from)) {
+		kfree(kbuf);
+		return -EFAULT;
+	}
 
-	ret = qrtr_endpoपूर्णांक_post(&tun->ep, kbuf, len);
+	ret = qrtr_endpoint_post(&tun->ep, kbuf, len);
 
-	kमुक्त(kbuf);
-	वापस ret < 0 ? ret : len;
-पूर्ण
+	kfree(kbuf);
+	return ret < 0 ? ret : len;
+}
 
-अटल __poll_t qrtr_tun_poll(काष्ठा file *filp, poll_table *रुको)
-अणु
-	काष्ठा qrtr_tun *tun = filp->निजी_data;
+static __poll_t qrtr_tun_poll(struct file *filp, poll_table *wait)
+{
+	struct qrtr_tun *tun = filp->private_data;
 	__poll_t mask = 0;
 
-	poll_रुको(filp, &tun->पढ़ोq, रुको);
+	poll_wait(filp, &tun->readq, wait);
 
-	अगर (!skb_queue_empty(&tun->queue))
+	if (!skb_queue_empty(&tun->queue))
 		mask |= EPOLLIN | EPOLLRDNORM;
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल पूर्णांक qrtr_tun_release(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा qrtr_tun *tun = filp->निजी_data;
+static int qrtr_tun_release(struct inode *inode, struct file *filp)
+{
+	struct qrtr_tun *tun = filp->private_data;
 
-	qrtr_endpoपूर्णांक_unरेजिस्टर(&tun->ep);
+	qrtr_endpoint_unregister(&tun->ep);
 
 	/* Discard all SKBs */
 	skb_queue_purge(&tun->queue);
 
-	kमुक्त(tun);
+	kfree(tun);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations qrtr_tun_ops = अणु
+static const struct file_operations qrtr_tun_ops = {
 	.owner = THIS_MODULE,
-	.खोलो = qrtr_tun_खोलो,
+	.open = qrtr_tun_open,
 	.poll = qrtr_tun_poll,
-	.पढ़ो_iter = qrtr_tun_पढ़ो_iter,
-	.ग_लिखो_iter = qrtr_tun_ग_लिखो_iter,
+	.read_iter = qrtr_tun_read_iter,
+	.write_iter = qrtr_tun_write_iter,
 	.release = qrtr_tun_release,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice qrtr_tun_miscdev = अणु
+static struct miscdevice qrtr_tun_miscdev = {
 	MISC_DYNAMIC_MINOR,
 	"qrtr-tun",
 	&qrtr_tun_ops,
-पूर्ण;
+};
 
-अटल पूर्णांक __init qrtr_tun_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init qrtr_tun_init(void)
+{
+	int ret;
 
-	ret = misc_रेजिस्टर(&qrtr_tun_miscdev);
-	अगर (ret)
+	ret = misc_register(&qrtr_tun_miscdev);
+	if (ret)
 		pr_err("failed to register Qualcomm IPC Router tun device\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास qrtr_tun_निकास(व्योम)
-अणु
-	misc_deरेजिस्टर(&qrtr_tun_miscdev);
-पूर्ण
+static void __exit qrtr_tun_exit(void)
+{
+	misc_deregister(&qrtr_tun_miscdev);
+}
 
 module_init(qrtr_tun_init);
-module_निकास(qrtr_tun_निकास);
+module_exit(qrtr_tun_exit);
 
 MODULE_DESCRIPTION("Qualcomm IPC Router TUN device");
 MODULE_LICENSE("GPL v2");

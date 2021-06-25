@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2005,2006,2007,2008 IBM Corporation
  *
@@ -8,222 +7,222 @@
  * Kylene Hall <kjhall@us.ibm.com>
  *
  * File: ima_crypto.c
- *	Calculates md5/sha1 file hash, ढाँचा hash, boot-aggreate hash
+ *	Calculates md5/sha1 file hash, template hash, boot-aggreate hash
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/ratelimit.h>
-#समावेश <linux/file.h>
-#समावेश <linux/crypto.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
-#समावेश <crypto/hash.h>
+#include <linux/kernel.h>
+#include <linux/moduleparam.h>
+#include <linux/ratelimit.h>
+#include <linux/file.h>
+#include <linux/crypto.h>
+#include <linux/scatterlist.h>
+#include <linux/err.h>
+#include <linux/slab.h>
+#include <crypto/hash.h>
 
-#समावेश "ima.h"
+#include "ima.h"
 
-/* minimum file size क्रम ahash use */
-अटल अचिन्हित दीर्घ ima_ahash_minsize;
-module_param_named(ahash_minsize, ima_ahash_minsize, uदीर्घ, 0644);
+/* minimum file size for ahash use */
+static unsigned long ima_ahash_minsize;
+module_param_named(ahash_minsize, ima_ahash_minsize, ulong, 0644);
 MODULE_PARM_DESC(ahash_minsize, "Minimum file size for ahash use");
 
-/* शेष is 0 - 1 page. */
-अटल पूर्णांक ima_maxorder;
-अटल अचिन्हित पूर्णांक ima_bufsize = PAGE_SIZE;
+/* default is 0 - 1 page. */
+static int ima_maxorder;
+static unsigned int ima_bufsize = PAGE_SIZE;
 
-अटल पूर्णांक param_set_bufsize(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
-अणु
-	अचिन्हित दीर्घ दीर्घ size;
-	पूर्णांक order;
+static int param_set_bufsize(const char *val, const struct kernel_param *kp)
+{
+	unsigned long long size;
+	int order;
 
-	size = memparse(val, शून्य);
+	size = memparse(val, NULL);
 	order = get_order(size);
-	अगर (order >= MAX_ORDER)
-		वापस -EINVAL;
+	if (order >= MAX_ORDER)
+		return -EINVAL;
 	ima_maxorder = order;
 	ima_bufsize = PAGE_SIZE << order;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा kernel_param_ops param_ops_bufsize = अणु
+static const struct kernel_param_ops param_ops_bufsize = {
 	.set = param_set_bufsize,
-	.get = param_get_uपूर्णांक,
-पूर्ण;
-#घोषणा param_check_bufsize(name, p) __param_check(name, p, अचिन्हित पूर्णांक)
+	.get = param_get_uint,
+};
+#define param_check_bufsize(name, p) __param_check(name, p, unsigned int)
 
 module_param_named(ahash_bufsize, ima_bufsize, bufsize, 0644);
 MODULE_PARM_DESC(ahash_bufsize, "Maximum ahash buffer size");
 
-अटल काष्ठा crypto_shash *ima_shash_tfm;
-अटल काष्ठा crypto_ahash *ima_ahash_tfm;
+static struct crypto_shash *ima_shash_tfm;
+static struct crypto_ahash *ima_ahash_tfm;
 
-काष्ठा ima_algo_desc अणु
-	काष्ठा crypto_shash *tfm;
-	क्रमागत hash_algo algo;
-पूर्ण;
+struct ima_algo_desc {
+	struct crypto_shash *tfm;
+	enum hash_algo algo;
+};
 
-पूर्णांक ima_sha1_idx __ro_after_init;
-पूर्णांक ima_hash_algo_idx __ro_after_init;
+int ima_sha1_idx __ro_after_init;
+int ima_hash_algo_idx __ro_after_init;
 /*
- * Additional number of slots reserved, as needed, क्रम SHA1
- * and IMA शेष algo.
+ * Additional number of slots reserved, as needed, for SHA1
+ * and IMA default algo.
  */
-पूर्णांक ima_extra_slots __ro_after_init;
+int ima_extra_slots __ro_after_init;
 
-अटल काष्ठा ima_algo_desc *ima_algo_array;
+static struct ima_algo_desc *ima_algo_array;
 
-अटल पूर्णांक __init ima_init_ima_crypto(व्योम)
-अणु
-	दीर्घ rc;
+static int __init ima_init_ima_crypto(void)
+{
+	long rc;
 
 	ima_shash_tfm = crypto_alloc_shash(hash_algo_name[ima_hash_algo], 0, 0);
-	अगर (IS_ERR(ima_shash_tfm)) अणु
+	if (IS_ERR(ima_shash_tfm)) {
 		rc = PTR_ERR(ima_shash_tfm);
 		pr_err("Can not allocate %s (reason: %ld)\n",
 		       hash_algo_name[ima_hash_algo], rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 	pr_info("Allocated hash algorithm: %s\n",
 		hash_algo_name[ima_hash_algo]);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा crypto_shash *ima_alloc_tfm(क्रमागत hash_algo algo)
-अणु
-	काष्ठा crypto_shash *tfm = ima_shash_tfm;
-	पूर्णांक rc, i;
+static struct crypto_shash *ima_alloc_tfm(enum hash_algo algo)
+{
+	struct crypto_shash *tfm = ima_shash_tfm;
+	int rc, i;
 
-	अगर (algo < 0 || algo >= HASH_ALGO__LAST)
+	if (algo < 0 || algo >= HASH_ALGO__LAST)
 		algo = ima_hash_algo;
 
-	अगर (algo == ima_hash_algo)
-		वापस tfm;
+	if (algo == ima_hash_algo)
+		return tfm;
 
-	क्रम (i = 0; i < NR_BANKS(ima_tpm_chip) + ima_extra_slots; i++)
-		अगर (ima_algo_array[i].tfm && ima_algo_array[i].algo == algo)
-			वापस ima_algo_array[i].tfm;
+	for (i = 0; i < NR_BANKS(ima_tpm_chip) + ima_extra_slots; i++)
+		if (ima_algo_array[i].tfm && ima_algo_array[i].algo == algo)
+			return ima_algo_array[i].tfm;
 
 	tfm = crypto_alloc_shash(hash_algo_name[algo], 0, 0);
-	अगर (IS_ERR(tfm)) अणु
+	if (IS_ERR(tfm)) {
 		rc = PTR_ERR(tfm);
 		pr_err("Can not allocate %s (reason: %d)\n",
 		       hash_algo_name[algo], rc);
-	पूर्ण
-	वापस tfm;
-पूर्ण
+	}
+	return tfm;
+}
 
-पूर्णांक __init ima_init_crypto(व्योम)
-अणु
-	क्रमागत hash_algo algo;
-	दीर्घ rc;
-	पूर्णांक i;
+int __init ima_init_crypto(void)
+{
+	enum hash_algo algo;
+	long rc;
+	int i;
 
 	rc = ima_init_ima_crypto();
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	ima_sha1_idx = -1;
 	ima_hash_algo_idx = -1;
 
-	क्रम (i = 0; i < NR_BANKS(ima_tpm_chip); i++) अणु
+	for (i = 0; i < NR_BANKS(ima_tpm_chip); i++) {
 		algo = ima_tpm_chip->allocated_banks[i].crypto_id;
-		अगर (algo == HASH_ALGO_SHA1)
+		if (algo == HASH_ALGO_SHA1)
 			ima_sha1_idx = i;
 
-		अगर (algo == ima_hash_algo)
+		if (algo == ima_hash_algo)
 			ima_hash_algo_idx = i;
-	पूर्ण
+	}
 
-	अगर (ima_sha1_idx < 0) अणु
+	if (ima_sha1_idx < 0) {
 		ima_sha1_idx = NR_BANKS(ima_tpm_chip) + ima_extra_slots++;
-		अगर (ima_hash_algo == HASH_ALGO_SHA1)
+		if (ima_hash_algo == HASH_ALGO_SHA1)
 			ima_hash_algo_idx = ima_sha1_idx;
-	पूर्ण
+	}
 
-	अगर (ima_hash_algo_idx < 0)
+	if (ima_hash_algo_idx < 0)
 		ima_hash_algo_idx = NR_BANKS(ima_tpm_chip) + ima_extra_slots++;
 
-	ima_algo_array = kसुस्मृति(NR_BANKS(ima_tpm_chip) + ima_extra_slots,
-				 माप(*ima_algo_array), GFP_KERNEL);
-	अगर (!ima_algo_array) अणु
+	ima_algo_array = kcalloc(NR_BANKS(ima_tpm_chip) + ima_extra_slots,
+				 sizeof(*ima_algo_array), GFP_KERNEL);
+	if (!ima_algo_array) {
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (i = 0; i < NR_BANKS(ima_tpm_chip); i++) अणु
+	for (i = 0; i < NR_BANKS(ima_tpm_chip); i++) {
 		algo = ima_tpm_chip->allocated_banks[i].crypto_id;
 		ima_algo_array[i].algo = algo;
 
 		/* unknown TPM algorithm */
-		अगर (algo == HASH_ALGO__LAST)
-			जारी;
+		if (algo == HASH_ALGO__LAST)
+			continue;
 
-		अगर (algo == ima_hash_algo) अणु
+		if (algo == ima_hash_algo) {
 			ima_algo_array[i].tfm = ima_shash_tfm;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		ima_algo_array[i].tfm = ima_alloc_tfm(algo);
-		अगर (IS_ERR(ima_algo_array[i].tfm)) अणु
-			अगर (algo == HASH_ALGO_SHA1) अणु
+		if (IS_ERR(ima_algo_array[i].tfm)) {
+			if (algo == HASH_ALGO_SHA1) {
 				rc = PTR_ERR(ima_algo_array[i].tfm);
-				ima_algo_array[i].tfm = शून्य;
-				जाओ out_array;
-			पूर्ण
+				ima_algo_array[i].tfm = NULL;
+				goto out_array;
+			}
 
-			ima_algo_array[i].tfm = शून्य;
-		पूर्ण
-	पूर्ण
+			ima_algo_array[i].tfm = NULL;
+		}
+	}
 
-	अगर (ima_sha1_idx >= NR_BANKS(ima_tpm_chip)) अणु
-		अगर (ima_hash_algo == HASH_ALGO_SHA1) अणु
+	if (ima_sha1_idx >= NR_BANKS(ima_tpm_chip)) {
+		if (ima_hash_algo == HASH_ALGO_SHA1) {
 			ima_algo_array[ima_sha1_idx].tfm = ima_shash_tfm;
-		पूर्ण अन्यथा अणु
+		} else {
 			ima_algo_array[ima_sha1_idx].tfm =
 						ima_alloc_tfm(HASH_ALGO_SHA1);
-			अगर (IS_ERR(ima_algo_array[ima_sha1_idx].tfm)) अणु
+			if (IS_ERR(ima_algo_array[ima_sha1_idx].tfm)) {
 				rc = PTR_ERR(ima_algo_array[ima_sha1_idx].tfm);
-				जाओ out_array;
-			पूर्ण
-		पूर्ण
+				goto out_array;
+			}
+		}
 
 		ima_algo_array[ima_sha1_idx].algo = HASH_ALGO_SHA1;
-	पूर्ण
+	}
 
-	अगर (ima_hash_algo_idx >= NR_BANKS(ima_tpm_chip) &&
-	    ima_hash_algo_idx != ima_sha1_idx) अणु
+	if (ima_hash_algo_idx >= NR_BANKS(ima_tpm_chip) &&
+	    ima_hash_algo_idx != ima_sha1_idx) {
 		ima_algo_array[ima_hash_algo_idx].tfm = ima_shash_tfm;
 		ima_algo_array[ima_hash_algo_idx].algo = ima_hash_algo;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 out_array:
-	क्रम (i = 0; i < NR_BANKS(ima_tpm_chip) + ima_extra_slots; i++) अणु
-		अगर (!ima_algo_array[i].tfm ||
+	for (i = 0; i < NR_BANKS(ima_tpm_chip) + ima_extra_slots; i++) {
+		if (!ima_algo_array[i].tfm ||
 		    ima_algo_array[i].tfm == ima_shash_tfm)
-			जारी;
+			continue;
 
-		crypto_मुक्त_shash(ima_algo_array[i].tfm);
-	पूर्ण
+		crypto_free_shash(ima_algo_array[i].tfm);
+	}
 out:
-	crypto_मुक्त_shash(ima_shash_tfm);
-	वापस rc;
-पूर्ण
+	crypto_free_shash(ima_shash_tfm);
+	return rc;
+}
 
-अटल व्योम ima_मुक्त_tfm(काष्ठा crypto_shash *tfm)
-अणु
-	पूर्णांक i;
+static void ima_free_tfm(struct crypto_shash *tfm)
+{
+	int i;
 
-	अगर (tfm == ima_shash_tfm)
-		वापस;
+	if (tfm == ima_shash_tfm)
+		return;
 
-	क्रम (i = 0; i < NR_BANKS(ima_tpm_chip) + ima_extra_slots; i++)
-		अगर (ima_algo_array[i].tfm == tfm)
-			वापस;
+	for (i = 0; i < NR_BANKS(ima_tpm_chip) + ima_extra_slots; i++)
+		if (ima_algo_array[i].tfm == tfm)
+			return;
 
-	crypto_मुक्त_shash(tfm);
-पूर्ण
+	crypto_free_shash(tfm);
+}
 
 /**
  * ima_alloc_pages() - Allocate contiguous pages.
@@ -231,235 +230,235 @@ out:
  * @allocated_size: Returned size of actual allocation.
  * @last_warn:      Should the min_size allocation warn or not.
  *
- * Tries to करो opportunistic allocation क्रम memory first trying to allocate
+ * Tries to do opportunistic allocation for memory first trying to allocate
  * max_size amount of memory and then splitting that until zero order is
  * reached. Allocation is tried without generating allocation warnings unless
  * last_warn is set. Last_warn set affects only last allocation of zero order.
  *
- * By शेष, ima_maxorder is 0 and it is equivalent to kदो_स्मृति(GFP_KERNEL)
+ * By default, ima_maxorder is 0 and it is equivalent to kmalloc(GFP_KERNEL)
  *
- * Return poपूर्णांकer to allocated memory, or शून्य on failure.
+ * Return pointer to allocated memory, or NULL on failure.
  */
-अटल व्योम *ima_alloc_pages(loff_t max_size, माप_प्रकार *allocated_size,
-			     पूर्णांक last_warn)
-अणु
-	व्योम *ptr;
-	पूर्णांक order = ima_maxorder;
+static void *ima_alloc_pages(loff_t max_size, size_t *allocated_size,
+			     int last_warn)
+{
+	void *ptr;
+	int order = ima_maxorder;
 	gfp_t gfp_mask = __GFP_RECLAIM | __GFP_NOWARN | __GFP_NORETRY;
 
-	अगर (order)
+	if (order)
 		order = min(get_order(max_size), order);
 
-	क्रम (; order; order--) अणु
-		ptr = (व्योम *)__get_मुक्त_pages(gfp_mask, order);
-		अगर (ptr) अणु
+	for (; order; order--) {
+		ptr = (void *)__get_free_pages(gfp_mask, order);
+		if (ptr) {
 			*allocated_size = PAGE_SIZE << order;
-			वापस ptr;
-		पूर्ण
-	पूर्ण
+			return ptr;
+		}
+	}
 
 	/* order is zero - one page */
 
 	gfp_mask = GFP_KERNEL;
 
-	अगर (!last_warn)
+	if (!last_warn)
 		gfp_mask |= __GFP_NOWARN;
 
-	ptr = (व्योम *)__get_मुक्त_pages(gfp_mask, 0);
-	अगर (ptr) अणु
+	ptr = (void *)__get_free_pages(gfp_mask, 0);
+	if (ptr) {
 		*allocated_size = PAGE_SIZE;
-		वापस ptr;
-	पूर्ण
+		return ptr;
+	}
 
 	*allocated_size = 0;
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
- * ima_मुक्त_pages() - Free pages allocated by ima_alloc_pages().
- * @ptr:  Poपूर्णांकer to allocated pages.
+ * ima_free_pages() - Free pages allocated by ima_alloc_pages().
+ * @ptr:  Pointer to allocated pages.
  * @size: Size of allocated buffer.
  */
-अटल व्योम ima_मुक्त_pages(व्योम *ptr, माप_प्रकार size)
-अणु
-	अगर (!ptr)
-		वापस;
-	मुक्त_pages((अचिन्हित दीर्घ)ptr, get_order(size));
-पूर्ण
+static void ima_free_pages(void *ptr, size_t size)
+{
+	if (!ptr)
+		return;
+	free_pages((unsigned long)ptr, get_order(size));
+}
 
-अटल काष्ठा crypto_ahash *ima_alloc_atfm(क्रमागत hash_algo algo)
-अणु
-	काष्ठा crypto_ahash *tfm = ima_ahash_tfm;
-	पूर्णांक rc;
+static struct crypto_ahash *ima_alloc_atfm(enum hash_algo algo)
+{
+	struct crypto_ahash *tfm = ima_ahash_tfm;
+	int rc;
 
-	अगर (algo < 0 || algo >= HASH_ALGO__LAST)
+	if (algo < 0 || algo >= HASH_ALGO__LAST)
 		algo = ima_hash_algo;
 
-	अगर (algo != ima_hash_algo || !tfm) अणु
+	if (algo != ima_hash_algo || !tfm) {
 		tfm = crypto_alloc_ahash(hash_algo_name[algo], 0, 0);
-		अगर (!IS_ERR(tfm)) अणु
-			अगर (algo == ima_hash_algo)
+		if (!IS_ERR(tfm)) {
+			if (algo == ima_hash_algo)
 				ima_ahash_tfm = tfm;
-		पूर्ण अन्यथा अणु
+		} else {
 			rc = PTR_ERR(tfm);
 			pr_err("Can not allocate %s (reason: %d)\n",
 			       hash_algo_name[algo], rc);
-		पूर्ण
-	पूर्ण
-	वापस tfm;
-पूर्ण
+		}
+	}
+	return tfm;
+}
 
-अटल व्योम ima_मुक्त_atfm(काष्ठा crypto_ahash *tfm)
-अणु
-	अगर (tfm != ima_ahash_tfm)
-		crypto_मुक्त_ahash(tfm);
-पूर्ण
+static void ima_free_atfm(struct crypto_ahash *tfm)
+{
+	if (tfm != ima_ahash_tfm)
+		crypto_free_ahash(tfm);
+}
 
-अटल अंतरभूत पूर्णांक ahash_रुको(पूर्णांक err, काष्ठा crypto_रुको *रुको)
-अणु
+static inline int ahash_wait(int err, struct crypto_wait *wait)
+{
 
-	err = crypto_रुको_req(err, रुको);
+	err = crypto_wait_req(err, wait);
 
-	अगर (err)
+	if (err)
 		pr_crit_ratelimited("ahash calculation failed: err: %d\n", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ima_calc_file_hash_atfm(काष्ठा file *file,
-				   काष्ठा ima_digest_data *hash,
-				   काष्ठा crypto_ahash *tfm)
-अणु
+static int ima_calc_file_hash_atfm(struct file *file,
+				   struct ima_digest_data *hash,
+				   struct crypto_ahash *tfm)
+{
 	loff_t i_size, offset;
-	अक्षर *rbuf[2] = अणु शून्य, पूर्ण;
-	पूर्णांक rc, rbuf_len, active = 0, ahash_rc = 0;
-	काष्ठा ahash_request *req;
-	काष्ठा scatterlist sg[1];
-	काष्ठा crypto_रुको रुको;
-	माप_प्रकार rbuf_size[2];
+	char *rbuf[2] = { NULL, };
+	int rc, rbuf_len, active = 0, ahash_rc = 0;
+	struct ahash_request *req;
+	struct scatterlist sg[1];
+	struct crypto_wait wait;
+	size_t rbuf_size[2];
 
 	hash->length = crypto_ahash_digestsize(tfm);
 
 	req = ahash_request_alloc(tfm, GFP_KERNEL);
-	अगर (!req)
-		वापस -ENOMEM;
+	if (!req)
+		return -ENOMEM;
 
-	crypto_init_रुको(&रुको);
+	crypto_init_wait(&wait);
 	ahash_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG |
 				   CRYPTO_TFM_REQ_MAY_SLEEP,
-				   crypto_req_करोne, &रुको);
+				   crypto_req_done, &wait);
 
-	rc = ahash_रुको(crypto_ahash_init(req), &रुको);
-	अगर (rc)
-		जाओ out1;
+	rc = ahash_wait(crypto_ahash_init(req), &wait);
+	if (rc)
+		goto out1;
 
-	i_size = i_size_पढ़ो(file_inode(file));
+	i_size = i_size_read(file_inode(file));
 
-	अगर (i_size == 0)
-		जाओ out2;
+	if (i_size == 0)
+		goto out2;
 
 	/*
 	 * Try to allocate maximum size of memory.
-	 * Fail अगर even a single page cannot be allocated.
+	 * Fail if even a single page cannot be allocated.
 	 */
 	rbuf[0] = ima_alloc_pages(i_size, &rbuf_size[0], 1);
-	अगर (!rbuf[0]) अणु
+	if (!rbuf[0]) {
 		rc = -ENOMEM;
-		जाओ out1;
-	पूर्ण
+		goto out1;
+	}
 
-	/* Only allocate one buffer अगर that is enough. */
-	अगर (i_size > rbuf_size[0]) अणु
+	/* Only allocate one buffer if that is enough. */
+	if (i_size > rbuf_size[0]) {
 		/*
 		 * Try to allocate secondary buffer. If that fails fallback to
 		 * using single buffering. Use previous memory allocation size
-		 * as baseline क्रम possible allocation size.
+		 * as baseline for possible allocation size.
 		 */
 		rbuf[1] = ima_alloc_pages(i_size - rbuf_size[0],
 					  &rbuf_size[1], 0);
-	पूर्ण
+	}
 
-	क्रम (offset = 0; offset < i_size; offset += rbuf_len) अणु
-		अगर (!rbuf[1] && offset) अणु
+	for (offset = 0; offset < i_size; offset += rbuf_len) {
+		if (!rbuf[1] && offset) {
 			/* Not using two buffers, and it is not the first
-			 * पढ़ो/request, रुको क्रम the completion of the
+			 * read/request, wait for the completion of the
 			 * previous ahash_update() request.
 			 */
-			rc = ahash_रुको(ahash_rc, &रुको);
-			अगर (rc)
-				जाओ out3;
-		पूर्ण
-		/* पढ़ो buffer */
+			rc = ahash_wait(ahash_rc, &wait);
+			if (rc)
+				goto out3;
+		}
+		/* read buffer */
 		rbuf_len = min_t(loff_t, i_size - offset, rbuf_size[active]);
-		rc = पूर्णांकegrity_kernel_पढ़ो(file, offset, rbuf[active],
+		rc = integrity_kernel_read(file, offset, rbuf[active],
 					   rbuf_len);
-		अगर (rc != rbuf_len) अणु
-			अगर (rc >= 0)
+		if (rc != rbuf_len) {
+			if (rc >= 0)
 				rc = -EINVAL;
 			/*
-			 * Forward current rc, करो not overग_लिखो with वापस value
-			 * from ahash_रुको()
+			 * Forward current rc, do not overwrite with return value
+			 * from ahash_wait()
 			 */
-			ahash_रुको(ahash_rc, &रुको);
-			जाओ out3;
-		पूर्ण
+			ahash_wait(ahash_rc, &wait);
+			goto out3;
+		}
 
-		अगर (rbuf[1] && offset) अणु
+		if (rbuf[1] && offset) {
 			/* Using two buffers, and it is not the first
-			 * पढ़ो/request, रुको क्रम the completion of the
+			 * read/request, wait for the completion of the
 			 * previous ahash_update() request.
 			 */
-			rc = ahash_रुको(ahash_rc, &रुको);
-			अगर (rc)
-				जाओ out3;
-		पूर्ण
+			rc = ahash_wait(ahash_rc, &wait);
+			if (rc)
+				goto out3;
+		}
 
 		sg_init_one(&sg[0], rbuf[active], rbuf_len);
-		ahash_request_set_crypt(req, sg, शून्य, rbuf_len);
+		ahash_request_set_crypt(req, sg, NULL, rbuf_len);
 
 		ahash_rc = crypto_ahash_update(req);
 
-		अगर (rbuf[1])
-			active = !active; /* swap buffers, अगर we use two */
-	पूर्ण
-	/* रुको क्रम the last update request to complete */
-	rc = ahash_रुको(ahash_rc, &रुको);
+		if (rbuf[1])
+			active = !active; /* swap buffers, if we use two */
+	}
+	/* wait for the last update request to complete */
+	rc = ahash_wait(ahash_rc, &wait);
 out3:
-	ima_मुक्त_pages(rbuf[0], rbuf_size[0]);
-	ima_मुक्त_pages(rbuf[1], rbuf_size[1]);
+	ima_free_pages(rbuf[0], rbuf_size[0]);
+	ima_free_pages(rbuf[1], rbuf_size[1]);
 out2:
-	अगर (!rc) अणु
-		ahash_request_set_crypt(req, शून्य, hash->digest, 0);
-		rc = ahash_रुको(crypto_ahash_final(req), &रुको);
-	पूर्ण
+	if (!rc) {
+		ahash_request_set_crypt(req, NULL, hash->digest, 0);
+		rc = ahash_wait(crypto_ahash_final(req), &wait);
+	}
 out1:
-	ahash_request_मुक्त(req);
-	वापस rc;
-पूर्ण
+	ahash_request_free(req);
+	return rc;
+}
 
-अटल पूर्णांक ima_calc_file_ahash(काष्ठा file *file, काष्ठा ima_digest_data *hash)
-अणु
-	काष्ठा crypto_ahash *tfm;
-	पूर्णांक rc;
+static int ima_calc_file_ahash(struct file *file, struct ima_digest_data *hash)
+{
+	struct crypto_ahash *tfm;
+	int rc;
 
 	tfm = ima_alloc_atfm(hash->algo);
-	अगर (IS_ERR(tfm))
-		वापस PTR_ERR(tfm);
+	if (IS_ERR(tfm))
+		return PTR_ERR(tfm);
 
 	rc = ima_calc_file_hash_atfm(file, hash, tfm);
 
-	ima_मुक्त_atfm(tfm);
+	ima_free_atfm(tfm);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक ima_calc_file_hash_tfm(काष्ठा file *file,
-				  काष्ठा ima_digest_data *hash,
-				  काष्ठा crypto_shash *tfm)
-अणु
+static int ima_calc_file_hash_tfm(struct file *file,
+				  struct ima_digest_data *hash,
+				  struct crypto_shash *tfm)
+{
 	loff_t i_size, offset = 0;
-	अक्षर *rbuf;
-	पूर्णांक rc;
+	char *rbuf;
+	int rc;
 	SHASH_DESC_ON_STACK(shash, tfm);
 
 	shash->tfm = tfm;
@@ -467,341 +466,341 @@ out1:
 	hash->length = crypto_shash_digestsize(tfm);
 
 	rc = crypto_shash_init(shash);
-	अगर (rc != 0)
-		वापस rc;
+	if (rc != 0)
+		return rc;
 
-	i_size = i_size_पढ़ो(file_inode(file));
+	i_size = i_size_read(file_inode(file));
 
-	अगर (i_size == 0)
-		जाओ out;
+	if (i_size == 0)
+		goto out;
 
 	rbuf = kzalloc(PAGE_SIZE, GFP_KERNEL);
-	अगर (!rbuf)
-		वापस -ENOMEM;
+	if (!rbuf)
+		return -ENOMEM;
 
-	जबतक (offset < i_size) अणु
-		पूर्णांक rbuf_len;
+	while (offset < i_size) {
+		int rbuf_len;
 
-		rbuf_len = पूर्णांकegrity_kernel_पढ़ो(file, offset, rbuf, PAGE_SIZE);
-		अगर (rbuf_len < 0) अणु
+		rbuf_len = integrity_kernel_read(file, offset, rbuf, PAGE_SIZE);
+		if (rbuf_len < 0) {
 			rc = rbuf_len;
-			अवरोध;
-		पूर्ण
-		अगर (rbuf_len == 0) अणु	/* unexpected खातापूर्ण */
+			break;
+		}
+		if (rbuf_len == 0) {	/* unexpected EOF */
 			rc = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		offset += rbuf_len;
 
 		rc = crypto_shash_update(shash, rbuf, rbuf_len);
-		अगर (rc)
-			अवरोध;
-	पूर्ण
-	kमुक्त(rbuf);
+		if (rc)
+			break;
+	}
+	kfree(rbuf);
 out:
-	अगर (!rc)
+	if (!rc)
 		rc = crypto_shash_final(shash, hash->digest);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक ima_calc_file_shash(काष्ठा file *file, काष्ठा ima_digest_data *hash)
-अणु
-	काष्ठा crypto_shash *tfm;
-	पूर्णांक rc;
+static int ima_calc_file_shash(struct file *file, struct ima_digest_data *hash)
+{
+	struct crypto_shash *tfm;
+	int rc;
 
 	tfm = ima_alloc_tfm(hash->algo);
-	अगर (IS_ERR(tfm))
-		वापस PTR_ERR(tfm);
+	if (IS_ERR(tfm))
+		return PTR_ERR(tfm);
 
 	rc = ima_calc_file_hash_tfm(file, hash, tfm);
 
-	ima_मुक्त_tfm(tfm);
+	ima_free_tfm(tfm);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * ima_calc_file_hash - calculate file hash
  *
- * Asynchronous hash (ahash) allows using HW acceleration क्रम calculating
- * a hash. ahash perक्रमmance varies क्रम dअगरferent data sizes on dअगरferent
- * crypto accelerators. shash perक्रमmance might be better क्रम smaller files.
- * The 'ima.ahash_minsize' module parameter allows specअगरying the best
- * minimum file size क्रम using ahash on the प्रणाली.
+ * Asynchronous hash (ahash) allows using HW acceleration for calculating
+ * a hash. ahash performance varies for different data sizes on different
+ * crypto accelerators. shash performance might be better for smaller files.
+ * The 'ima.ahash_minsize' module parameter allows specifying the best
+ * minimum file size for using ahash on the system.
  *
- * If the ima.ahash_minsize parameter is not specअगरied, this function uses
- * shash क्रम the hash calculation.  If ahash fails, it falls back to using
+ * If the ima.ahash_minsize parameter is not specified, this function uses
+ * shash for the hash calculation.  If ahash fails, it falls back to using
  * shash.
  */
-पूर्णांक ima_calc_file_hash(काष्ठा file *file, काष्ठा ima_digest_data *hash)
-अणु
+int ima_calc_file_hash(struct file *file, struct ima_digest_data *hash)
+{
 	loff_t i_size;
-	पूर्णांक rc;
-	काष्ठा file *f = file;
+	int rc;
+	struct file *f = file;
 	bool new_file_instance = false;
 
 	/*
-	 * For consistency, fail file's खोलोed with the O_सूचीECT flag on
-	 * fileप्रणालीs mounted with/without DAX option.
+	 * For consistency, fail file's opened with the O_DIRECT flag on
+	 * filesystems mounted with/without DAX option.
 	 */
-	अगर (file->f_flags & O_सूचीECT) अणु
+	if (file->f_flags & O_DIRECT) {
 		hash->length = hash_digest_size[ima_hash_algo];
 		hash->algo = ima_hash_algo;
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Open a new file instance in O_RDONLY अगर we cannot पढ़ो */
-	अगर (!(file->f_mode & FMODE_READ)) अणु
-		पूर्णांक flags = file->f_flags & ~(O_WRONLY | O_APPEND |
+	/* Open a new file instance in O_RDONLY if we cannot read */
+	if (!(file->f_mode & FMODE_READ)) {
+		int flags = file->f_flags & ~(O_WRONLY | O_APPEND |
 				O_TRUNC | O_CREAT | O_NOCTTY | O_EXCL);
 		flags |= O_RDONLY;
-		f = dentry_खोलो(&file->f_path, flags, file->f_cred);
-		अगर (IS_ERR(f))
-			वापस PTR_ERR(f);
+		f = dentry_open(&file->f_path, flags, file->f_cred);
+		if (IS_ERR(f))
+			return PTR_ERR(f);
 
 		new_file_instance = true;
-	पूर्ण
+	}
 
-	i_size = i_size_पढ़ो(file_inode(f));
+	i_size = i_size_read(file_inode(f));
 
-	अगर (ima_ahash_minsize && i_size >= ima_ahash_minsize) अणु
+	if (ima_ahash_minsize && i_size >= ima_ahash_minsize) {
 		rc = ima_calc_file_ahash(f, hash);
-		अगर (!rc)
-			जाओ out;
-	पूर्ण
+		if (!rc)
+			goto out;
+	}
 
 	rc = ima_calc_file_shash(f, hash);
 out:
-	अगर (new_file_instance)
+	if (new_file_instance)
 		fput(f);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * Calculate the hash of ढाँचा data
+ * Calculate the hash of template data
  */
-अटल पूर्णांक ima_calc_field_array_hash_tfm(काष्ठा ima_field_data *field_data,
-					 काष्ठा ima_ढाँचा_entry *entry,
-					 पूर्णांक tfm_idx)
-अणु
+static int ima_calc_field_array_hash_tfm(struct ima_field_data *field_data,
+					 struct ima_template_entry *entry,
+					 int tfm_idx)
+{
 	SHASH_DESC_ON_STACK(shash, ima_algo_array[tfm_idx].tfm);
-	काष्ठा ima_ढाँचा_desc *td = entry->ढाँचा_desc;
-	पूर्णांक num_fields = entry->ढाँचा_desc->num_fields;
-	पूर्णांक rc, i;
+	struct ima_template_desc *td = entry->template_desc;
+	int num_fields = entry->template_desc->num_fields;
+	int rc, i;
 
 	shash->tfm = ima_algo_array[tfm_idx].tfm;
 
 	rc = crypto_shash_init(shash);
-	अगर (rc != 0)
-		वापस rc;
+	if (rc != 0)
+		return rc;
 
-	क्रम (i = 0; i < num_fields; i++) अणु
-		u8 buffer[IMA_EVENT_NAME_LEN_MAX + 1] = अणु 0 पूर्ण;
+	for (i = 0; i < num_fields; i++) {
+		u8 buffer[IMA_EVENT_NAME_LEN_MAX + 1] = { 0 };
 		u8 *data_to_hash = field_data[i].data;
 		u32 datalen = field_data[i].len;
 		u32 datalen_to_hash =
 		    !ima_canonical_fmt ? datalen : cpu_to_le32(datalen);
 
-		अगर (म_भेद(td->name, IMA_TEMPLATE_IMA_NAME) != 0) अणु
+		if (strcmp(td->name, IMA_TEMPLATE_IMA_NAME) != 0) {
 			rc = crypto_shash_update(shash,
-						(स्थिर u8 *) &datalen_to_hash,
-						माप(datalen_to_hash));
-			अगर (rc)
-				अवरोध;
-		पूर्ण अन्यथा अगर (म_भेद(td->fields[i]->field_id, "n") == 0) अणु
-			स_नकल(buffer, data_to_hash, datalen);
+						(const u8 *) &datalen_to_hash,
+						sizeof(datalen_to_hash));
+			if (rc)
+				break;
+		} else if (strcmp(td->fields[i]->field_id, "n") == 0) {
+			memcpy(buffer, data_to_hash, datalen);
 			data_to_hash = buffer;
 			datalen = IMA_EVENT_NAME_LEN_MAX + 1;
-		पूर्ण
+		}
 		rc = crypto_shash_update(shash, data_to_hash, datalen);
-		अगर (rc)
-			अवरोध;
-	पूर्ण
+		if (rc)
+			break;
+	}
 
-	अगर (!rc)
+	if (!rc)
 		rc = crypto_shash_final(shash, entry->digests[tfm_idx].digest);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक ima_calc_field_array_hash(काष्ठा ima_field_data *field_data,
-			      काष्ठा ima_ढाँचा_entry *entry)
-अणु
+int ima_calc_field_array_hash(struct ima_field_data *field_data,
+			      struct ima_template_entry *entry)
+{
 	u16 alg_id;
-	पूर्णांक rc, i;
+	int rc, i;
 
 	rc = ima_calc_field_array_hash_tfm(field_data, entry, ima_sha1_idx);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	entry->digests[ima_sha1_idx].alg_id = TPM_ALG_SHA1;
 
-	क्रम (i = 0; i < NR_BANKS(ima_tpm_chip) + ima_extra_slots; i++) अणु
-		अगर (i == ima_sha1_idx)
-			जारी;
+	for (i = 0; i < NR_BANKS(ima_tpm_chip) + ima_extra_slots; i++) {
+		if (i == ima_sha1_idx)
+			continue;
 
-		अगर (i < NR_BANKS(ima_tpm_chip)) अणु
+		if (i < NR_BANKS(ima_tpm_chip)) {
 			alg_id = ima_tpm_chip->allocated_banks[i].alg_id;
 			entry->digests[i].alg_id = alg_id;
-		पूर्ण
+		}
 
-		/* क्रम unmapped TPM algorithms digest is still a padded SHA1 */
-		अगर (!ima_algo_array[i].tfm) अणु
-			स_नकल(entry->digests[i].digest,
+		/* for unmapped TPM algorithms digest is still a padded SHA1 */
+		if (!ima_algo_array[i].tfm) {
+			memcpy(entry->digests[i].digest,
 			       entry->digests[ima_sha1_idx].digest,
 			       TPM_DIGEST_SIZE);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		rc = ima_calc_field_array_hash_tfm(field_data, entry, i);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
-	वापस rc;
-पूर्ण
+		if (rc)
+			return rc;
+	}
+	return rc;
+}
 
-अटल पूर्णांक calc_buffer_ahash_atfm(स्थिर व्योम *buf, loff_t len,
-				  काष्ठा ima_digest_data *hash,
-				  काष्ठा crypto_ahash *tfm)
-अणु
-	काष्ठा ahash_request *req;
-	काष्ठा scatterlist sg;
-	काष्ठा crypto_रुको रुको;
-	पूर्णांक rc, ahash_rc = 0;
+static int calc_buffer_ahash_atfm(const void *buf, loff_t len,
+				  struct ima_digest_data *hash,
+				  struct crypto_ahash *tfm)
+{
+	struct ahash_request *req;
+	struct scatterlist sg;
+	struct crypto_wait wait;
+	int rc, ahash_rc = 0;
 
 	hash->length = crypto_ahash_digestsize(tfm);
 
 	req = ahash_request_alloc(tfm, GFP_KERNEL);
-	अगर (!req)
-		वापस -ENOMEM;
+	if (!req)
+		return -ENOMEM;
 
-	crypto_init_रुको(&रुको);
+	crypto_init_wait(&wait);
 	ahash_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG |
 				   CRYPTO_TFM_REQ_MAY_SLEEP,
-				   crypto_req_करोne, &रुको);
+				   crypto_req_done, &wait);
 
-	rc = ahash_रुको(crypto_ahash_init(req), &रुको);
-	अगर (rc)
-		जाओ out;
+	rc = ahash_wait(crypto_ahash_init(req), &wait);
+	if (rc)
+		goto out;
 
 	sg_init_one(&sg, buf, len);
-	ahash_request_set_crypt(req, &sg, शून्य, len);
+	ahash_request_set_crypt(req, &sg, NULL, len);
 
 	ahash_rc = crypto_ahash_update(req);
 
-	/* रुको क्रम the update request to complete */
-	rc = ahash_रुको(ahash_rc, &रुको);
-	अगर (!rc) अणु
-		ahash_request_set_crypt(req, शून्य, hash->digest, 0);
-		rc = ahash_रुको(crypto_ahash_final(req), &रुको);
-	पूर्ण
+	/* wait for the update request to complete */
+	rc = ahash_wait(ahash_rc, &wait);
+	if (!rc) {
+		ahash_request_set_crypt(req, NULL, hash->digest, 0);
+		rc = ahash_wait(crypto_ahash_final(req), &wait);
+	}
 out:
-	ahash_request_मुक्त(req);
-	वापस rc;
-पूर्ण
+	ahash_request_free(req);
+	return rc;
+}
 
-अटल पूर्णांक calc_buffer_ahash(स्थिर व्योम *buf, loff_t len,
-			     काष्ठा ima_digest_data *hash)
-अणु
-	काष्ठा crypto_ahash *tfm;
-	पूर्णांक rc;
+static int calc_buffer_ahash(const void *buf, loff_t len,
+			     struct ima_digest_data *hash)
+{
+	struct crypto_ahash *tfm;
+	int rc;
 
 	tfm = ima_alloc_atfm(hash->algo);
-	अगर (IS_ERR(tfm))
-		वापस PTR_ERR(tfm);
+	if (IS_ERR(tfm))
+		return PTR_ERR(tfm);
 
 	rc = calc_buffer_ahash_atfm(buf, len, hash, tfm);
 
-	ima_मुक्त_atfm(tfm);
+	ima_free_atfm(tfm);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक calc_buffer_shash_tfm(स्थिर व्योम *buf, loff_t size,
-				काष्ठा ima_digest_data *hash,
-				काष्ठा crypto_shash *tfm)
-अणु
+static int calc_buffer_shash_tfm(const void *buf, loff_t size,
+				struct ima_digest_data *hash,
+				struct crypto_shash *tfm)
+{
 	SHASH_DESC_ON_STACK(shash, tfm);
-	अचिन्हित पूर्णांक len;
-	पूर्णांक rc;
+	unsigned int len;
+	int rc;
 
 	shash->tfm = tfm;
 
 	hash->length = crypto_shash_digestsize(tfm);
 
 	rc = crypto_shash_init(shash);
-	अगर (rc != 0)
-		वापस rc;
+	if (rc != 0)
+		return rc;
 
-	जबतक (size) अणु
+	while (size) {
 		len = size < PAGE_SIZE ? size : PAGE_SIZE;
 		rc = crypto_shash_update(shash, buf, len);
-		अगर (rc)
-			अवरोध;
+		if (rc)
+			break;
 		buf += len;
 		size -= len;
-	पूर्ण
+	}
 
-	अगर (!rc)
+	if (!rc)
 		rc = crypto_shash_final(shash, hash->digest);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक calc_buffer_shash(स्थिर व्योम *buf, loff_t len,
-			     काष्ठा ima_digest_data *hash)
-अणु
-	काष्ठा crypto_shash *tfm;
-	पूर्णांक rc;
+static int calc_buffer_shash(const void *buf, loff_t len,
+			     struct ima_digest_data *hash)
+{
+	struct crypto_shash *tfm;
+	int rc;
 
 	tfm = ima_alloc_tfm(hash->algo);
-	अगर (IS_ERR(tfm))
-		वापस PTR_ERR(tfm);
+	if (IS_ERR(tfm))
+		return PTR_ERR(tfm);
 
 	rc = calc_buffer_shash_tfm(buf, len, hash, tfm);
 
-	ima_मुक्त_tfm(tfm);
-	वापस rc;
-पूर्ण
+	ima_free_tfm(tfm);
+	return rc;
+}
 
-पूर्णांक ima_calc_buffer_hash(स्थिर व्योम *buf, loff_t len,
-			 काष्ठा ima_digest_data *hash)
-अणु
-	पूर्णांक rc;
+int ima_calc_buffer_hash(const void *buf, loff_t len,
+			 struct ima_digest_data *hash)
+{
+	int rc;
 
-	अगर (ima_ahash_minsize && len >= ima_ahash_minsize) अणु
+	if (ima_ahash_minsize && len >= ima_ahash_minsize) {
 		rc = calc_buffer_ahash(buf, len, hash);
-		अगर (!rc)
-			वापस 0;
-	पूर्ण
+		if (!rc)
+			return 0;
+	}
 
-	वापस calc_buffer_shash(buf, len, hash);
-पूर्ण
+	return calc_buffer_shash(buf, len, hash);
+}
 
-अटल व्योम ima_pcrपढ़ो(u32 idx, काष्ठा tpm_digest *d)
-अणु
-	अगर (!ima_tpm_chip)
-		वापस;
+static void ima_pcrread(u32 idx, struct tpm_digest *d)
+{
+	if (!ima_tpm_chip)
+		return;
 
-	अगर (tpm_pcr_पढ़ो(ima_tpm_chip, idx, d) != 0)
+	if (tpm_pcr_read(ima_tpm_chip, idx, d) != 0)
 		pr_err("Error Communicating to TPM chip\n");
-पूर्ण
+}
 
 /*
- * The boot_aggregate is a cumulative hash over TPM रेजिस्टरs 0 - 7.  With
- * TPM 1.2 the boot_aggregate was based on पढ़ोing the SHA1 PCRs, but with
+ * The boot_aggregate is a cumulative hash over TPM registers 0 - 7.  With
+ * TPM 1.2 the boot_aggregate was based on reading the SHA1 PCRs, but with
  * TPM 2.0 hash agility, TPM chips could support multiple TPM PCR banks,
- * allowing firmware to configure and enable dअगरferent banks.
+ * allowing firmware to configure and enable different banks.
  *
- * Knowing which TPM bank is पढ़ो to calculate the boot_aggregate digest
- * needs to be conveyed to a verअगरier.  For this reason, use the same
- * hash algorithm क्रम पढ़ोing the TPM PCRs as क्रम calculating the boot
+ * Knowing which TPM bank is read to calculate the boot_aggregate digest
+ * needs to be conveyed to a verifier.  For this reason, use the same
+ * hash algorithm for reading the TPM PCRs as for calculating the boot
  * aggregate digest as stored in the measurement list.
  */
-अटल पूर्णांक ima_calc_boot_aggregate_tfm(अक्षर *digest, u16 alg_id,
-				       काष्ठा crypto_shash *tfm)
-अणु
-	काष्ठा tpm_digest d = अणु .alg_id = alg_id, .digest = अणु0पूर्ण पूर्ण;
-	पूर्णांक rc;
+static int ima_calc_boot_aggregate_tfm(char *digest, u16 alg_id,
+				       struct crypto_shash *tfm)
+{
+	struct tpm_digest d = { .alg_id = alg_id, .digest = {0} };
+	int rc;
 	u32 i;
 	SHASH_DESC_ON_STACK(shash, tfm);
 
@@ -811,72 +810,72 @@ out:
 		 d.alg_id);
 
 	rc = crypto_shash_init(shash);
-	अगर (rc != 0)
-		वापस rc;
+	if (rc != 0)
+		return rc;
 
-	/* cumulative digest over TPM रेजिस्टरs 0-7 */
-	क्रम (i = TPM_PCR0; i < TPM_PCR8; i++) अणु
-		ima_pcrपढ़ो(i, &d);
+	/* cumulative digest over TPM registers 0-7 */
+	for (i = TPM_PCR0; i < TPM_PCR8; i++) {
+		ima_pcrread(i, &d);
 		/* now accumulate with current aggregate */
 		rc = crypto_shash_update(shash, d.digest,
 					 crypto_shash_digestsize(tfm));
-		अगर (rc != 0)
-			वापस rc;
-	पूर्ण
+		if (rc != 0)
+			return rc;
+	}
 	/*
-	 * Extend cumulative digest over TPM रेजिस्टरs 8-9, which contain
-	 * measurement क्रम the kernel command line (reg. 8) and image (reg. 9)
+	 * Extend cumulative digest over TPM registers 8-9, which contain
+	 * measurement for the kernel command line (reg. 8) and image (reg. 9)
 	 * in a typical PCR allocation. Registers 8-9 are only included in
-	 * non-SHA1 boot_aggregate digests to aव्योम ambiguity.
+	 * non-SHA1 boot_aggregate digests to avoid ambiguity.
 	 */
-	अगर (alg_id != TPM_ALG_SHA1) अणु
-		क्रम (i = TPM_PCR8; i < TPM_PCR10; i++) अणु
-			ima_pcrपढ़ो(i, &d);
+	if (alg_id != TPM_ALG_SHA1) {
+		for (i = TPM_PCR8; i < TPM_PCR10; i++) {
+			ima_pcrread(i, &d);
 			rc = crypto_shash_update(shash, d.digest,
 						crypto_shash_digestsize(tfm));
-		पूर्ण
-	पूर्ण
-	अगर (!rc)
+		}
+	}
+	if (!rc)
 		crypto_shash_final(shash, digest);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक ima_calc_boot_aggregate(काष्ठा ima_digest_data *hash)
-अणु
-	काष्ठा crypto_shash *tfm;
+int ima_calc_boot_aggregate(struct ima_digest_data *hash)
+{
+	struct crypto_shash *tfm;
 	u16 crypto_id, alg_id;
-	पूर्णांक rc, i, bank_idx = -1;
+	int rc, i, bank_idx = -1;
 
-	क्रम (i = 0; i < ima_tpm_chip->nr_allocated_banks; i++) अणु
+	for (i = 0; i < ima_tpm_chip->nr_allocated_banks; i++) {
 		crypto_id = ima_tpm_chip->allocated_banks[i].crypto_id;
-		अगर (crypto_id == hash->algo) अणु
+		if (crypto_id == hash->algo) {
 			bank_idx = i;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (crypto_id == HASH_ALGO_SHA256)
+		if (crypto_id == HASH_ALGO_SHA256)
 			bank_idx = i;
 
-		अगर (bank_idx == -1 && crypto_id == HASH_ALGO_SHA1)
+		if (bank_idx == -1 && crypto_id == HASH_ALGO_SHA1)
 			bank_idx = i;
-	पूर्ण
+	}
 
-	अगर (bank_idx == -1) अणु
+	if (bank_idx == -1) {
 		pr_err("No suitable TPM algorithm for boot aggregate\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	hash->algo = ima_tpm_chip->allocated_banks[bank_idx].crypto_id;
 
 	tfm = ima_alloc_tfm(hash->algo);
-	अगर (IS_ERR(tfm))
-		वापस PTR_ERR(tfm);
+	if (IS_ERR(tfm))
+		return PTR_ERR(tfm);
 
 	hash->length = crypto_shash_digestsize(tfm);
 	alg_id = ima_tpm_chip->allocated_banks[bank_idx].alg_id;
 	rc = ima_calc_boot_aggregate_tfm(hash->digest, alg_id, tfm);
 
-	ima_मुक्त_tfm(tfm);
+	ima_free_tfm(tfm);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}

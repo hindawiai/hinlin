@@ -1,30 +1,29 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
  */
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/libnvdimm.h>
-#समावेश <linux/genभाग.स>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/ndctl.h>
-#समावेश <linux/sizes.h>
-#समावेश <linux/list.h>
-#समावेश <linux/slab.h>
-#समावेश <nd-core.h>
-#समावेश <पूर्णांकel.h>
-#समावेश <nfit.h>
-#समावेश <nd.h>
-#समावेश "nfit_test.h"
-#समावेश "../watermark.h"
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/platform_device.h>
+#include <linux/dma-mapping.h>
+#include <linux/workqueue.h>
+#include <linux/libnvdimm.h>
+#include <linux/genalloc.h>
+#include <linux/vmalloc.h>
+#include <linux/device.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/ndctl.h>
+#include <linux/sizes.h>
+#include <linux/list.h>
+#include <linux/slab.h>
+#include <nd-core.h>
+#include <intel.h>
+#include <nfit.h>
+#include <nd.h>
+#include "nfit_test.h"
+#include "../watermark.h"
 
-#समावेश <यंत्र/mce.h>
+#include <asm/mce.h>
 
 /*
  * Generate an NFIT table to describe the following topology:
@@ -56,31 +55,31 @@
  *
  *
  * *) In this layout we have four dimms and two memory controllers in one
- *    socket.  Each unique पूर्णांकerface (BLK or PMEM) to DPA space
- *    is identअगरied by a region device with a dynamically asचिन्हित id.
+ *    socket.  Each unique interface (BLK or PMEM) to DPA space
+ *    is identified by a region device with a dynamically assigned id.
  *
- * *) The first portion of dimm0 and dimm1 are पूर्णांकerleaved as REGION0.
+ * *) The first portion of dimm0 and dimm1 are interleaved as REGION0.
  *    A single PMEM namespace "pm0.0" is created using half of the
  *    REGION0 SPA-range.  REGION0 spans dimm0 and dimm1.  PMEM namespace
  *    allocate from from the bottom of a region.  The unallocated
  *    portion of REGION0 aliases with REGION2 and REGION3.  That
  *    unallacted capacity is reclaimed as BLK namespaces ("blk2.0" and
  *    "blk3.0") starting at the base of each DIMM to offset (a) in those
- *    DIMMs.  "pm0.0", "blk2.0" and "blk3.0" are मुक्त-क्रमm पढ़ोable
- *    names that can be asचिन्हित to a namespace.
+ *    DIMMs.  "pm0.0", "blk2.0" and "blk3.0" are free-form readable
+ *    names that can be assigned to a namespace.
  *
- * *) In the last portion of dimm0 and dimm1 we have an पूर्णांकerleaved
+ * *) In the last portion of dimm0 and dimm1 we have an interleaved
  *    SPA range, REGION1, that spans those two dimms as well as dimm2
  *    and dimm3.  Some of REGION1 allocated to a PMEM namespace named
- *    "pm1.0" the rest is reclaimed in 4 BLK namespaces (क्रम each
- *    dimm in the पूर्णांकerleave set), "blk2.1", "blk3.1", "blk4.0", and
+ *    "pm1.0" the rest is reclaimed in 4 BLK namespaces (for each
+ *    dimm in the interleave set), "blk2.1", "blk3.1", "blk4.0", and
  *    "blk5.0".
  *
- * *) The portion of dimm2 and dimm3 that करो not participate in the
- *    REGION1 पूर्णांकerleaved SPA range (i.e. the DPA address below offset
+ * *) The portion of dimm2 and dimm3 that do not participate in the
+ *    REGION1 interleaved SPA range (i.e. the DPA address below offset
  *    (b) are also included in the "blk4.0" and "blk5.0" namespaces.
  *    Note, that BLK namespaces need not be contiguous in DPA-space, and
- *    can consume aliased capacity from multiple पूर्णांकerleave sets.
+ *    can consume aliased capacity from multiple interleave sets.
  *
  * BUS1: Legacy NVDIMM (single contiguous range)
  *
@@ -91,11 +90,11 @@
  * |---------------------|
  * +---------------------+
  *
- * *) A NFIT-table may describe a simple प्रणाली-physical-address range
+ * *) A NFIT-table may describe a simple system-physical-address range
  *    with no BLK aliasing.  This type of region may optionally
  *    reference an NVDIMM.
  */
-क्रमागत अणु
+enum {
 	NUM_PM  = 3,
 	NUM_DCR = 5,
 	NUM_HINTS = 8,
@@ -111,20 +110,20 @@
 	SPA2_SIZE = DIMM_SIZE,
 	BDW_SIZE = 64 << 8,
 	DCR_SIZE = 12,
-	NUM_NFITS = 2, /* permit testing multiple NFITs per प्रणाली */
-पूर्ण;
+	NUM_NFITS = 2, /* permit testing multiple NFITs per system */
+};
 
-काष्ठा nfit_test_dcr अणु
+struct nfit_test_dcr {
 	__le64 bdw_addr;
 	__le32 bdw_status;
 	__u8 aperature[BDW_SIZE];
-पूर्ण;
+};
 
-#घोषणा NFIT_DIMM_HANDLE(node, socket, imc, chan, dimm) \
+#define NFIT_DIMM_HANDLE(node, socket, imc, chan, dimm) \
 	(((node & 0xfff) << 16) | ((socket & 0xf) << 12) \
 	 | ((imc & 0xf) << 8) | ((chan & 0xf) << 4) | (dimm & 0xf))
 
-अटल u32 handle[] = अणु
+static u32 handle[] = {
 	[0] = NFIT_DIMM_HANDLE(0, 0, 0, 0, 0),
 	[1] = NFIT_DIMM_HANDLE(0, 0, 0, 0, 1),
 	[2] = NFIT_DIMM_HANDLE(0, 0, 1, 0, 0),
@@ -132,20 +131,20 @@
 	[4] = NFIT_DIMM_HANDLE(0, 1, 0, 0, 0),
 	[5] = NFIT_DIMM_HANDLE(1, 0, 0, 0, 0),
 	[6] = NFIT_DIMM_HANDLE(1, 0, 0, 0, 1),
-पूर्ण;
+};
 
-अटल अचिन्हित दीर्घ dimm_fail_cmd_flags[ARRAY_SIZE(handle)];
-अटल पूर्णांक dimm_fail_cmd_code[ARRAY_SIZE(handle)];
-काष्ठा nfit_test_sec अणु
+static unsigned long dimm_fail_cmd_flags[ARRAY_SIZE(handle)];
+static int dimm_fail_cmd_code[ARRAY_SIZE(handle)];
+struct nfit_test_sec {
 	u8 state;
 	u8 ext_state;
 	u8 old_state;
 	u8 passphrase[32];
 	u8 master_passphrase[32];
-	u64 overग_लिखो_end_समय;
-पूर्ण dimm_sec_info[NUM_DCR];
+	u64 overwrite_end_time;
+} dimm_sec_info[NUM_DCR];
 
-अटल स्थिर काष्ठा nd_पूर्णांकel_smart smart_def = अणु
+static const struct nd_intel_smart smart_def = {
 	.flags = ND_INTEL_SMART_HEALTH_VALID
 		| ND_INTEL_SMART_SPARES_VALID
 		| ND_INTEL_SMART_ALARM_VALID
@@ -162,119 +161,119 @@
 	.alarm_flags = ND_INTEL_SMART_SPARE_TRIP
 		| ND_INTEL_SMART_TEMP_TRIP,
 	.ait_status = 1,
-	.lअगरe_used = 5,
-	.shutकरोwn_state = 0,
-	.shutकरोwn_count = 42,
-	.venकरोr_size = 0,
-पूर्ण;
+	.life_used = 5,
+	.shutdown_state = 0,
+	.shutdown_count = 42,
+	.vendor_size = 0,
+};
 
-काष्ठा nfit_test_fw अणु
-	क्रमागत पूर्णांकel_fw_update_state state;
+struct nfit_test_fw {
+	enum intel_fw_update_state state;
 	u32 context;
 	u64 version;
 	u32 size_received;
-	u64 end_समय;
+	u64 end_time;
 	bool armed;
 	bool missed_activate;
-	अचिन्हित दीर्घ last_activate;
-पूर्ण;
+	unsigned long last_activate;
+};
 
-काष्ठा nfit_test अणु
-	काष्ठा acpi_nfit_desc acpi_desc;
-	काष्ठा platक्रमm_device pdev;
-	काष्ठा list_head resources;
-	व्योम *nfit_buf;
+struct nfit_test {
+	struct acpi_nfit_desc acpi_desc;
+	struct platform_device pdev;
+	struct list_head resources;
+	void *nfit_buf;
 	dma_addr_t nfit_dma;
-	माप_प्रकार nfit_size;
-	माप_प्रकार nfit_filled;
-	पूर्णांक dcr_idx;
-	पूर्णांक num_dcr;
-	पूर्णांक num_pm;
-	व्योम **dimm;
+	size_t nfit_size;
+	size_t nfit_filled;
+	int dcr_idx;
+	int num_dcr;
+	int num_pm;
+	void **dimm;
 	dma_addr_t *dimm_dma;
-	व्योम **flush;
+	void **flush;
 	dma_addr_t *flush_dma;
-	व्योम **label;
+	void **label;
 	dma_addr_t *label_dma;
-	व्योम **spa_set;
+	void **spa_set;
 	dma_addr_t *spa_set_dma;
-	काष्ठा nfit_test_dcr **dcr;
+	struct nfit_test_dcr **dcr;
 	dma_addr_t *dcr_dma;
-	पूर्णांक (*alloc)(काष्ठा nfit_test *t);
-	व्योम (*setup)(काष्ठा nfit_test *t);
-	पूर्णांक setup_hotplug;
-	जोड़ acpi_object **_fit;
+	int (*alloc)(struct nfit_test *t);
+	void (*setup)(struct nfit_test *t);
+	int setup_hotplug;
+	union acpi_object **_fit;
 	dma_addr_t _fit_dma;
-	काष्ठा ars_state अणु
-		काष्ठा nd_cmd_ars_status *ars_status;
-		अचिन्हित दीर्घ deadline;
+	struct ars_state {
+		struct nd_cmd_ars_status *ars_status;
+		unsigned long deadline;
 		spinlock_t lock;
-	पूर्ण ars_state;
-	काष्ठा device *dimm_dev[ARRAY_SIZE(handle)];
-	काष्ठा nd_पूर्णांकel_smart *smart;
-	काष्ठा nd_पूर्णांकel_smart_threshold *smart_threshold;
-	काष्ठा badrange badrange;
-	काष्ठा work_काष्ठा work;
-	काष्ठा nfit_test_fw *fw;
-पूर्ण;
+	} ars_state;
+	struct device *dimm_dev[ARRAY_SIZE(handle)];
+	struct nd_intel_smart *smart;
+	struct nd_intel_smart_threshold *smart_threshold;
+	struct badrange badrange;
+	struct work_struct work;
+	struct nfit_test_fw *fw;
+};
 
-अटल काष्ठा workqueue_काष्ठा *nfit_wq;
+static struct workqueue_struct *nfit_wq;
 
-अटल काष्ठा gen_pool *nfit_pool;
+static struct gen_pool *nfit_pool;
 
-अटल स्थिर अक्षर zero_key[NVDIMM_PASSPHRASE_LEN];
+static const char zero_key[NVDIMM_PASSPHRASE_LEN];
 
-अटल काष्ठा nfit_test *to_nfit_test(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+static struct nfit_test *to_nfit_test(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
 
-	वापस container_of(pdev, काष्ठा nfit_test, pdev);
-पूर्ण
+	return container_of(pdev, struct nfit_test, pdev);
+}
 
-अटल पूर्णांक nd_पूर्णांकel_test_get_fw_info(काष्ठा nfit_test *t,
-		काष्ठा nd_पूर्णांकel_fw_info *nd_cmd, अचिन्हित पूर्णांक buf_len,
-		पूर्णांक idx)
-अणु
-	काष्ठा device *dev = &t->pdev.dev;
-	काष्ठा nfit_test_fw *fw = &t->fw[idx];
+static int nd_intel_test_get_fw_info(struct nfit_test *t,
+		struct nd_intel_fw_info *nd_cmd, unsigned int buf_len,
+		int idx)
+{
+	struct device *dev = &t->pdev.dev;
+	struct nfit_test_fw *fw = &t->fw[idx];
 
 	dev_dbg(dev, "%s(nfit_test: %p nd_cmd: %p, buf_len: %u, idx: %d\n",
 			__func__, t, nd_cmd, buf_len, idx);
 
-	अगर (buf_len < माप(*nd_cmd))
-		वापस -EINVAL;
+	if (buf_len < sizeof(*nd_cmd))
+		return -EINVAL;
 
 	nd_cmd->status = 0;
 	nd_cmd->storage_size = INTEL_FW_STORAGE_SIZE;
 	nd_cmd->max_send_len = INTEL_FW_MAX_SEND_LEN;
-	nd_cmd->query_पूर्णांकerval = INTEL_FW_QUERY_INTERVAL;
-	nd_cmd->max_query_समय = INTEL_FW_QUERY_MAX_TIME;
+	nd_cmd->query_interval = INTEL_FW_QUERY_INTERVAL;
+	nd_cmd->max_query_time = INTEL_FW_QUERY_MAX_TIME;
 	nd_cmd->update_cap = 0;
 	nd_cmd->fis_version = INTEL_FW_FIS_VERSION;
 	nd_cmd->run_version = 0;
 	nd_cmd->updated_version = fw->version;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nd_पूर्णांकel_test_start_update(काष्ठा nfit_test *t,
-		काष्ठा nd_पूर्णांकel_fw_start *nd_cmd, अचिन्हित पूर्णांक buf_len,
-		पूर्णांक idx)
-अणु
-	काष्ठा device *dev = &t->pdev.dev;
-	काष्ठा nfit_test_fw *fw = &t->fw[idx];
+static int nd_intel_test_start_update(struct nfit_test *t,
+		struct nd_intel_fw_start *nd_cmd, unsigned int buf_len,
+		int idx)
+{
+	struct device *dev = &t->pdev.dev;
+	struct nfit_test_fw *fw = &t->fw[idx];
 
 	dev_dbg(dev, "%s(nfit_test: %p nd_cmd: %p buf_len: %u idx: %d)\n",
 			__func__, t, nd_cmd, buf_len, idx);
 
-	अगर (buf_len < माप(*nd_cmd))
-		वापस -EINVAL;
+	if (buf_len < sizeof(*nd_cmd))
+		return -EINVAL;
 
-	अगर (fw->state != FW_STATE_NEW) अणु
+	if (fw->state != FW_STATE_NEW) {
 		/* extended status, FW update in progress */
 		nd_cmd->status = 0x10007;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	fw->state = FW_STATE_IN_PROGRESS;
 	fw->context++;
@@ -284,22 +283,22 @@
 
 	dev_dbg(dev, "%s: context issued: %#x\n", __func__, nd_cmd->context);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nd_पूर्णांकel_test_send_data(काष्ठा nfit_test *t,
-		काष्ठा nd_पूर्णांकel_fw_send_data *nd_cmd, अचिन्हित पूर्णांक buf_len,
-		पूर्णांक idx)
-अणु
-	काष्ठा device *dev = &t->pdev.dev;
-	काष्ठा nfit_test_fw *fw = &t->fw[idx];
+static int nd_intel_test_send_data(struct nfit_test *t,
+		struct nd_intel_fw_send_data *nd_cmd, unsigned int buf_len,
+		int idx)
+{
+	struct device *dev = &t->pdev.dev;
+	struct nfit_test_fw *fw = &t->fw[idx];
 	u32 *status = (u32 *)&nd_cmd->data[nd_cmd->length];
 
 	dev_dbg(dev, "%s(nfit_test: %p nd_cmd: %p buf_len: %u idx: %d)\n",
 			__func__, t, nd_cmd, buf_len, idx);
 
-	अगर (buf_len < माप(*nd_cmd))
-		वापस -EINVAL;
+	if (buf_len < sizeof(*nd_cmd))
+		return -EINVAL;
 
 
 	dev_dbg(dev, "%s: cmd->status: %#x\n", __func__, *status);
@@ -307,238 +306,238 @@
 	dev_dbg(dev, "%s: cmd->data[%u]: %#x\n", __func__, nd_cmd->length-1,
 			nd_cmd->data[nd_cmd->length-1]);
 
-	अगर (fw->state != FW_STATE_IN_PROGRESS) अणु
+	if (fw->state != FW_STATE_IN_PROGRESS) {
 		dev_dbg(dev, "%s: not in IN_PROGRESS state\n", __func__);
 		*status = 0x5;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (nd_cmd->context != fw->context) अणु
+	if (nd_cmd->context != fw->context) {
 		dev_dbg(dev, "%s: incorrect context: in: %#x correct: %#x\n",
 				__func__, nd_cmd->context, fw->context);
 		*status = 0x10007;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
 	 * check offset + len > size of fw storage
 	 * check length is > max send length
 	 */
-	अगर (nd_cmd->offset + nd_cmd->length > INTEL_FW_STORAGE_SIZE ||
-			nd_cmd->length > INTEL_FW_MAX_SEND_LEN) अणु
+	if (nd_cmd->offset + nd_cmd->length > INTEL_FW_STORAGE_SIZE ||
+			nd_cmd->length > INTEL_FW_MAX_SEND_LEN) {
 		*status = 0x3;
 		dev_dbg(dev, "%s: buffer boundary violation\n", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	fw->size_received += nd_cmd->length;
 	dev_dbg(dev, "%s: copying %u bytes, %u bytes so far\n",
 			__func__, nd_cmd->length, fw->size_received);
 	*status = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nd_पूर्णांकel_test_finish_fw(काष्ठा nfit_test *t,
-		काष्ठा nd_पूर्णांकel_fw_finish_update *nd_cmd,
-		अचिन्हित पूर्णांक buf_len, पूर्णांक idx)
-अणु
-	काष्ठा device *dev = &t->pdev.dev;
-	काष्ठा nfit_test_fw *fw = &t->fw[idx];
+static int nd_intel_test_finish_fw(struct nfit_test *t,
+		struct nd_intel_fw_finish_update *nd_cmd,
+		unsigned int buf_len, int idx)
+{
+	struct device *dev = &t->pdev.dev;
+	struct nfit_test_fw *fw = &t->fw[idx];
 
 	dev_dbg(dev, "%s(nfit_test: %p nd_cmd: %p buf_len: %u idx: %d)\n",
 			__func__, t, nd_cmd, buf_len, idx);
 
-	अगर (fw->state == FW_STATE_UPDATED) अणु
-		/* update alपढ़ोy करोne, need activation */
+	if (fw->state == FW_STATE_UPDATED) {
+		/* update already done, need activation */
 		nd_cmd->status = 0x20007;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	dev_dbg(dev, "%s: context: %#x  ctrl_flags: %#x\n",
 			__func__, nd_cmd->context, nd_cmd->ctrl_flags);
 
-	चयन (nd_cmd->ctrl_flags) अणु
-	हाल 0: /* finish */
-		अगर (nd_cmd->context != fw->context) अणु
+	switch (nd_cmd->ctrl_flags) {
+	case 0: /* finish */
+		if (nd_cmd->context != fw->context) {
 			dev_dbg(dev, "%s: incorrect context: in: %#x correct: %#x\n",
 					__func__, nd_cmd->context,
 					fw->context);
 			nd_cmd->status = 0x10007;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		nd_cmd->status = 0;
 		fw->state = FW_STATE_VERIFY;
-		/* set 1 second of समय क्रम firmware "update" */
-		fw->end_समय = jअगरfies + HZ;
-		अवरोध;
+		/* set 1 second of time for firmware "update" */
+		fw->end_time = jiffies + HZ;
+		break;
 
-	हाल 1: /* पात */
+	case 1: /* abort */
 		fw->size_received = 0;
-		/* successfully पातed status */
+		/* successfully aborted status */
 		nd_cmd->status = 0x40007;
 		fw->state = FW_STATE_NEW;
 		dev_dbg(dev, "%s: abort successful\n", __func__);
-		अवरोध;
+		break;
 
-	शेष: /* bad control flag */
+	default: /* bad control flag */
 		dev_warn(dev, "%s: unknown control flag: %#x\n",
 				__func__, nd_cmd->ctrl_flags);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nd_पूर्णांकel_test_finish_query(काष्ठा nfit_test *t,
-		काष्ठा nd_पूर्णांकel_fw_finish_query *nd_cmd,
-		अचिन्हित पूर्णांक buf_len, पूर्णांक idx)
-अणु
-	काष्ठा device *dev = &t->pdev.dev;
-	काष्ठा nfit_test_fw *fw = &t->fw[idx];
+static int nd_intel_test_finish_query(struct nfit_test *t,
+		struct nd_intel_fw_finish_query *nd_cmd,
+		unsigned int buf_len, int idx)
+{
+	struct device *dev = &t->pdev.dev;
+	struct nfit_test_fw *fw = &t->fw[idx];
 
 	dev_dbg(dev, "%s(nfit_test: %p nd_cmd: %p buf_len: %u idx: %d)\n",
 			__func__, t, nd_cmd, buf_len, idx);
 
-	अगर (buf_len < माप(*nd_cmd))
-		वापस -EINVAL;
+	if (buf_len < sizeof(*nd_cmd))
+		return -EINVAL;
 
-	अगर (nd_cmd->context != fw->context) अणु
+	if (nd_cmd->context != fw->context) {
 		dev_dbg(dev, "%s: incorrect context: in: %#x correct: %#x\n",
 				__func__, nd_cmd->context, fw->context);
 		nd_cmd->status = 0x10007;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	dev_dbg(dev, "%s context: %#x\n", __func__, nd_cmd->context);
 
-	चयन (fw->state) अणु
-	हाल FW_STATE_NEW:
+	switch (fw->state) {
+	case FW_STATE_NEW:
 		nd_cmd->updated_fw_rev = 0;
 		nd_cmd->status = 0;
 		dev_dbg(dev, "%s: new state\n", __func__);
-		अवरोध;
+		break;
 
-	हाल FW_STATE_IN_PROGRESS:
+	case FW_STATE_IN_PROGRESS:
 		/* sequencing error */
 		nd_cmd->status = 0x40007;
 		nd_cmd->updated_fw_rev = 0;
 		dev_dbg(dev, "%s: sequence error\n", __func__);
-		अवरोध;
+		break;
 
-	हाल FW_STATE_VERIFY:
-		अगर (समय_is_after_jअगरfies64(fw->end_समय)) अणु
+	case FW_STATE_VERIFY:
+		if (time_is_after_jiffies64(fw->end_time)) {
 			nd_cmd->updated_fw_rev = 0;
 			nd_cmd->status = 0x20007;
 			dev_dbg(dev, "%s: still verifying\n", __func__);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		dev_dbg(dev, "%s: transition out verify\n", __func__);
 		fw->state = FW_STATE_UPDATED;
 		fw->missed_activate = false;
 		/* fall through */
-	हाल FW_STATE_UPDATED:
+	case FW_STATE_UPDATED:
 		nd_cmd->status = 0;
 		/* bogus test version */
 		fw->version = nd_cmd->updated_fw_rev =
 			INTEL_FW_FAKE_VERSION;
 		dev_dbg(dev, "%s: updated\n", __func__);
-		अवरोध;
+		break;
 
-	शेष: /* we should never get here */
-		वापस -EINVAL;
-	पूर्ण
+	default: /* we should never get here */
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nfit_test_cmd_get_config_size(काष्ठा nd_cmd_get_config_size *nd_cmd,
-		अचिन्हित पूर्णांक buf_len)
-अणु
-	अगर (buf_len < माप(*nd_cmd))
-		वापस -EINVAL;
+static int nfit_test_cmd_get_config_size(struct nd_cmd_get_config_size *nd_cmd,
+		unsigned int buf_len)
+{
+	if (buf_len < sizeof(*nd_cmd))
+		return -EINVAL;
 
 	nd_cmd->status = 0;
 	nd_cmd->config_size = LABEL_SIZE;
 	nd_cmd->max_xfer = SZ_4K;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nfit_test_cmd_get_config_data(काष्ठा nd_cmd_get_config_data_hdr
-		*nd_cmd, अचिन्हित पूर्णांक buf_len, व्योम *label)
-अणु
-	अचिन्हित पूर्णांक len, offset = nd_cmd->in_offset;
-	पूर्णांक rc;
+static int nfit_test_cmd_get_config_data(struct nd_cmd_get_config_data_hdr
+		*nd_cmd, unsigned int buf_len, void *label)
+{
+	unsigned int len, offset = nd_cmd->in_offset;
+	int rc;
 
-	अगर (buf_len < माप(*nd_cmd))
-		वापस -EINVAL;
-	अगर (offset >= LABEL_SIZE)
-		वापस -EINVAL;
-	अगर (nd_cmd->in_length + माप(*nd_cmd) > buf_len)
-		वापस -EINVAL;
+	if (buf_len < sizeof(*nd_cmd))
+		return -EINVAL;
+	if (offset >= LABEL_SIZE)
+		return -EINVAL;
+	if (nd_cmd->in_length + sizeof(*nd_cmd) > buf_len)
+		return -EINVAL;
 
 	nd_cmd->status = 0;
 	len = min(nd_cmd->in_length, LABEL_SIZE - offset);
-	स_नकल(nd_cmd->out_buf, label + offset, len);
-	rc = buf_len - माप(*nd_cmd) - len;
+	memcpy(nd_cmd->out_buf, label + offset, len);
+	rc = buf_len - sizeof(*nd_cmd) - len;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक nfit_test_cmd_set_config_data(काष्ठा nd_cmd_set_config_hdr *nd_cmd,
-		अचिन्हित पूर्णांक buf_len, व्योम *label)
-अणु
-	अचिन्हित पूर्णांक len, offset = nd_cmd->in_offset;
+static int nfit_test_cmd_set_config_data(struct nd_cmd_set_config_hdr *nd_cmd,
+		unsigned int buf_len, void *label)
+{
+	unsigned int len, offset = nd_cmd->in_offset;
 	u32 *status;
-	पूर्णांक rc;
+	int rc;
 
-	अगर (buf_len < माप(*nd_cmd))
-		वापस -EINVAL;
-	अगर (offset >= LABEL_SIZE)
-		वापस -EINVAL;
-	अगर (nd_cmd->in_length + माप(*nd_cmd) + 4 > buf_len)
-		वापस -EINVAL;
+	if (buf_len < sizeof(*nd_cmd))
+		return -EINVAL;
+	if (offset >= LABEL_SIZE)
+		return -EINVAL;
+	if (nd_cmd->in_length + sizeof(*nd_cmd) + 4 > buf_len)
+		return -EINVAL;
 
-	status = (व्योम *)nd_cmd + nd_cmd->in_length + माप(*nd_cmd);
+	status = (void *)nd_cmd + nd_cmd->in_length + sizeof(*nd_cmd);
 	*status = 0;
 	len = min(nd_cmd->in_length, LABEL_SIZE - offset);
-	स_नकल(label + offset, nd_cmd->in_buf, len);
-	rc = buf_len - माप(*nd_cmd) - (len + 4);
+	memcpy(label + offset, nd_cmd->in_buf, len);
+	rc = buf_len - sizeof(*nd_cmd) - (len + 4);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-#घोषणा NFIT_TEST_CLEAR_ERR_UNIT 256
+#define NFIT_TEST_CLEAR_ERR_UNIT 256
 
-अटल पूर्णांक nfit_test_cmd_ars_cap(काष्ठा nd_cmd_ars_cap *nd_cmd,
-		अचिन्हित पूर्णांक buf_len)
-अणु
-	पूर्णांक ars_recs;
+static int nfit_test_cmd_ars_cap(struct nd_cmd_ars_cap *nd_cmd,
+		unsigned int buf_len)
+{
+	int ars_recs;
 
-	अगर (buf_len < माप(*nd_cmd))
-		वापस -EINVAL;
+	if (buf_len < sizeof(*nd_cmd))
+		return -EINVAL;
 
-	/* क्रम testing, only store up to n records that fit within 4k */
-	ars_recs = SZ_4K / माप(काष्ठा nd_ars_record);
+	/* for testing, only store up to n records that fit within 4k */
+	ars_recs = SZ_4K / sizeof(struct nd_ars_record);
 
-	nd_cmd->max_ars_out = माप(काष्ठा nd_cmd_ars_status)
-		+ ars_recs * माप(काष्ठा nd_ars_record);
+	nd_cmd->max_ars_out = sizeof(struct nd_cmd_ars_status)
+		+ ars_recs * sizeof(struct nd_ars_record);
 	nd_cmd->status = (ND_ARS_PERSISTENT | ND_ARS_VOLATILE) << 16;
 	nd_cmd->clear_err_unit = NFIT_TEST_CLEAR_ERR_UNIT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम post_ars_status(काष्ठा ars_state *ars_state,
-		काष्ठा badrange *badrange, u64 addr, u64 len)
-अणु
-	काष्ठा nd_cmd_ars_status *ars_status;
-	काष्ठा nd_ars_record *ars_record;
-	काष्ठा badrange_entry *be;
+static void post_ars_status(struct ars_state *ars_state,
+		struct badrange *badrange, u64 addr, u64 len)
+{
+	struct nd_cmd_ars_status *ars_status;
+	struct nd_ars_record *ars_record;
+	struct badrange_entry *be;
 	u64 end = addr + len - 1;
-	पूर्णांक i = 0;
+	int i = 0;
 
-	ars_state->deadline = jअगरfies + 1*HZ;
+	ars_state->deadline = jiffies + 1*HZ;
 	ars_status = ars_state->ars_status;
 	ars_status->status = 0;
 	ars_status->address = addr;
@@ -546,13 +545,13 @@
 	ars_status->type = ND_ARS_PERSISTENT;
 
 	spin_lock(&badrange->lock);
-	list_क्रम_each_entry(be, &badrange->list, list) अणु
+	list_for_each_entry(be, &badrange->list, list) {
 		u64 be_end = be->start + be->length - 1;
 		u64 rstart, rend;
 
 		/* skip entries outside the range */
-		अगर (be_end < addr || be->start > end)
-			जारी;
+		if (be_end < addr || be->start > end)
+			continue;
 
 		rstart = (be->start < addr) ? addr : be->start;
 		rend = (be_end < end) ? be_end : end;
@@ -561,132 +560,132 @@
 		ars_record->err_address = rstart;
 		ars_record->length = rend - rstart + 1;
 		i++;
-	पूर्ण
+	}
 	spin_unlock(&badrange->lock);
 	ars_status->num_records = i;
-	ars_status->out_length = माप(काष्ठा nd_cmd_ars_status)
-		+ i * माप(काष्ठा nd_ars_record);
-पूर्ण
+	ars_status->out_length = sizeof(struct nd_cmd_ars_status)
+		+ i * sizeof(struct nd_ars_record);
+}
 
-अटल पूर्णांक nfit_test_cmd_ars_start(काष्ठा nfit_test *t,
-		काष्ठा ars_state *ars_state,
-		काष्ठा nd_cmd_ars_start *ars_start, अचिन्हित पूर्णांक buf_len,
-		पूर्णांक *cmd_rc)
-अणु
-	अगर (buf_len < माप(*ars_start))
-		वापस -EINVAL;
+static int nfit_test_cmd_ars_start(struct nfit_test *t,
+		struct ars_state *ars_state,
+		struct nd_cmd_ars_start *ars_start, unsigned int buf_len,
+		int *cmd_rc)
+{
+	if (buf_len < sizeof(*ars_start))
+		return -EINVAL;
 
 	spin_lock(&ars_state->lock);
-	अगर (समय_beक्रमe(jअगरfies, ars_state->deadline)) अणु
+	if (time_before(jiffies, ars_state->deadline)) {
 		ars_start->status = NFIT_ARS_START_BUSY;
 		*cmd_rc = -EBUSY;
-	पूर्ण अन्यथा अणु
+	} else {
 		ars_start->status = 0;
-		ars_start->scrub_समय = 1;
+		ars_start->scrub_time = 1;
 		post_ars_status(ars_state, &t->badrange, ars_start->address,
 				ars_start->length);
 		*cmd_rc = 0;
-	पूर्ण
+	}
 	spin_unlock(&ars_state->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nfit_test_cmd_ars_status(काष्ठा ars_state *ars_state,
-		काष्ठा nd_cmd_ars_status *ars_status, अचिन्हित पूर्णांक buf_len,
-		पूर्णांक *cmd_rc)
-अणु
-	अगर (buf_len < ars_state->ars_status->out_length)
-		वापस -EINVAL;
+static int nfit_test_cmd_ars_status(struct ars_state *ars_state,
+		struct nd_cmd_ars_status *ars_status, unsigned int buf_len,
+		int *cmd_rc)
+{
+	if (buf_len < ars_state->ars_status->out_length)
+		return -EINVAL;
 
 	spin_lock(&ars_state->lock);
-	अगर (समय_beक्रमe(jअगरfies, ars_state->deadline)) अणु
-		स_रखो(ars_status, 0, buf_len);
+	if (time_before(jiffies, ars_state->deadline)) {
+		memset(ars_status, 0, buf_len);
 		ars_status->status = NFIT_ARS_STATUS_BUSY;
-		ars_status->out_length = माप(*ars_status);
+		ars_status->out_length = sizeof(*ars_status);
 		*cmd_rc = -EBUSY;
-	पूर्ण अन्यथा अणु
-		स_नकल(ars_status, ars_state->ars_status,
+	} else {
+		memcpy(ars_status, ars_state->ars_status,
 				ars_state->ars_status->out_length);
 		*cmd_rc = 0;
-	पूर्ण
+	}
 	spin_unlock(&ars_state->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nfit_test_cmd_clear_error(काष्ठा nfit_test *t,
-		काष्ठा nd_cmd_clear_error *clear_err,
-		अचिन्हित पूर्णांक buf_len, पूर्णांक *cmd_rc)
-अणु
-	स्थिर u64 mask = NFIT_TEST_CLEAR_ERR_UNIT - 1;
-	अगर (buf_len < माप(*clear_err))
-		वापस -EINVAL;
+static int nfit_test_cmd_clear_error(struct nfit_test *t,
+		struct nd_cmd_clear_error *clear_err,
+		unsigned int buf_len, int *cmd_rc)
+{
+	const u64 mask = NFIT_TEST_CLEAR_ERR_UNIT - 1;
+	if (buf_len < sizeof(*clear_err))
+		return -EINVAL;
 
-	अगर ((clear_err->address & mask) || (clear_err->length & mask))
-		वापस -EINVAL;
+	if ((clear_err->address & mask) || (clear_err->length & mask))
+		return -EINVAL;
 
-	badrange_क्रमget(&t->badrange, clear_err->address, clear_err->length);
+	badrange_forget(&t->badrange, clear_err->address, clear_err->length);
 	clear_err->status = 0;
 	clear_err->cleared = clear_err->length;
 	*cmd_rc = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा region_search_spa अणु
+struct region_search_spa {
 	u64 addr;
-	काष्ठा nd_region *region;
-पूर्ण;
+	struct nd_region *region;
+};
 
-अटल पूर्णांक is_region_device(काष्ठा device *dev)
-अणु
-	वापस !म_भेदन(dev->kobj.name, "region", 6);
-पूर्ण
+static int is_region_device(struct device *dev)
+{
+	return !strncmp(dev->kobj.name, "region", 6);
+}
 
-अटल पूर्णांक nfit_test_search_region_spa(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा region_search_spa *ctx = data;
-	काष्ठा nd_region *nd_region;
-	resource_माप_प्रकार ndr_end;
+static int nfit_test_search_region_spa(struct device *dev, void *data)
+{
+	struct region_search_spa *ctx = data;
+	struct nd_region *nd_region;
+	resource_size_t ndr_end;
 
-	अगर (!is_region_device(dev))
-		वापस 0;
+	if (!is_region_device(dev))
+		return 0;
 
 	nd_region = to_nd_region(dev);
 	ndr_end = nd_region->ndr_start + nd_region->ndr_size;
 
-	अगर (ctx->addr >= nd_region->ndr_start && ctx->addr < ndr_end) अणु
+	if (ctx->addr >= nd_region->ndr_start && ctx->addr < ndr_end) {
 		ctx->region = nd_region;
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nfit_test_search_spa(काष्ठा nvdimm_bus *bus,
-		काष्ठा nd_cmd_translate_spa *spa)
-अणु
-	पूर्णांक ret;
-	काष्ठा nd_region *nd_region = शून्य;
-	काष्ठा nvdimm *nvdimm = शून्य;
-	काष्ठा nd_mapping *nd_mapping = शून्य;
-	काष्ठा region_search_spa ctx = अणु
+static int nfit_test_search_spa(struct nvdimm_bus *bus,
+		struct nd_cmd_translate_spa *spa)
+{
+	int ret;
+	struct nd_region *nd_region = NULL;
+	struct nvdimm *nvdimm = NULL;
+	struct nd_mapping *nd_mapping = NULL;
+	struct region_search_spa ctx = {
 		.addr = spa->spa,
-		.region = शून्य,
-	पूर्ण;
+		.region = NULL,
+	};
 	u64 dpa;
 
-	ret = device_क्रम_each_child(&bus->dev, &ctx,
+	ret = device_for_each_child(&bus->dev, &ctx,
 				nfit_test_search_region_spa);
 
-	अगर (!ret)
-		वापस -ENODEV;
+	if (!ret)
+		return -ENODEV;
 
 	nd_region = ctx.region;
 
 	dpa = ctx.addr - nd_region->ndr_start;
 
 	/*
-	 * last dimm is selected क्रम test
+	 * last dimm is selected for test
 	 */
 	nd_mapping = &nd_region->mapping[nd_region->ndr_mappings - 1];
 	nvdimm = nd_mapping->nvdimm;
@@ -695,51 +694,51 @@
 	spa->num_nvdimms = 1;
 	spa->devices[0].dpa = dpa;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nfit_test_cmd_translate_spa(काष्ठा nvdimm_bus *bus,
-		काष्ठा nd_cmd_translate_spa *spa, अचिन्हित पूर्णांक buf_len)
-अणु
-	अगर (buf_len < spa->translate_length)
-		वापस -EINVAL;
+static int nfit_test_cmd_translate_spa(struct nvdimm_bus *bus,
+		struct nd_cmd_translate_spa *spa, unsigned int buf_len)
+{
+	if (buf_len < spa->translate_length)
+		return -EINVAL;
 
-	अगर (nfit_test_search_spa(bus, spa) < 0 || !spa->num_nvdimms)
+	if (nfit_test_search_spa(bus, spa) < 0 || !spa->num_nvdimms)
 		spa->status = 2;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nfit_test_cmd_smart(काष्ठा nd_पूर्णांकel_smart *smart, अचिन्हित पूर्णांक buf_len,
-		काष्ठा nd_पूर्णांकel_smart *smart_data)
-अणु
-	अगर (buf_len < माप(*smart))
-		वापस -EINVAL;
-	स_नकल(smart, smart_data, माप(*smart));
-	वापस 0;
-पूर्ण
+static int nfit_test_cmd_smart(struct nd_intel_smart *smart, unsigned int buf_len,
+		struct nd_intel_smart *smart_data)
+{
+	if (buf_len < sizeof(*smart))
+		return -EINVAL;
+	memcpy(smart, smart_data, sizeof(*smart));
+	return 0;
+}
 
-अटल पूर्णांक nfit_test_cmd_smart_threshold(
-		काष्ठा nd_पूर्णांकel_smart_threshold *out,
-		अचिन्हित पूर्णांक buf_len,
-		काष्ठा nd_पूर्णांकel_smart_threshold *smart_t)
-अणु
-	अगर (buf_len < माप(*smart_t))
-		वापस -EINVAL;
-	स_नकल(out, smart_t, माप(*smart_t));
-	वापस 0;
-पूर्ण
+static int nfit_test_cmd_smart_threshold(
+		struct nd_intel_smart_threshold *out,
+		unsigned int buf_len,
+		struct nd_intel_smart_threshold *smart_t)
+{
+	if (buf_len < sizeof(*smart_t))
+		return -EINVAL;
+	memcpy(out, smart_t, sizeof(*smart_t));
+	return 0;
+}
 
-अटल व्योम smart_notअगरy(काष्ठा device *bus_dev,
-		काष्ठा device *dimm_dev, काष्ठा nd_पूर्णांकel_smart *smart,
-		काष्ठा nd_पूर्णांकel_smart_threshold *thresh)
-अणु
+static void smart_notify(struct device *bus_dev,
+		struct device *dimm_dev, struct nd_intel_smart *smart,
+		struct nd_intel_smart_threshold *thresh)
+{
 	dev_dbg(dimm_dev, "%s: alarm: %#x spares: %d (%d) mtemp: %d (%d) ctemp: %d (%d)\n",
 			__func__, thresh->alarm_control, thresh->spares,
 			smart->spares, thresh->media_temperature,
 			smart->media_temperature, thresh->ctrl_temperature,
 			smart->ctrl_temperature);
-	अगर (((thresh->alarm_control & ND_INTEL_SMART_SPARE_TRIP)
+	if (((thresh->alarm_control & ND_INTEL_SMART_SPARE_TRIP)
 				&& smart->spares
 				<= thresh->spares)
 			|| ((thresh->alarm_control & ND_INTEL_SMART_TEMP_TRIP)
@@ -749,884 +748,884 @@
 				&& smart->ctrl_temperature
 				>= thresh->ctrl_temperature)
 			|| (smart->health != ND_INTEL_SMART_NON_CRITICAL_HEALTH)
-			|| (smart->shutकरोwn_state != 0)) अणु
+			|| (smart->shutdown_state != 0)) {
 		device_lock(bus_dev);
-		__acpi_nvdimm_notअगरy(dimm_dev, 0x81);
+		__acpi_nvdimm_notify(dimm_dev, 0x81);
 		device_unlock(bus_dev);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक nfit_test_cmd_smart_set_threshold(
-		काष्ठा nd_पूर्णांकel_smart_set_threshold *in,
-		अचिन्हित पूर्णांक buf_len,
-		काष्ठा nd_पूर्णांकel_smart_threshold *thresh,
-		काष्ठा nd_पूर्णांकel_smart *smart,
-		काष्ठा device *bus_dev, काष्ठा device *dimm_dev)
-अणु
-	अचिन्हित पूर्णांक size;
+static int nfit_test_cmd_smart_set_threshold(
+		struct nd_intel_smart_set_threshold *in,
+		unsigned int buf_len,
+		struct nd_intel_smart_threshold *thresh,
+		struct nd_intel_smart *smart,
+		struct device *bus_dev, struct device *dimm_dev)
+{
+	unsigned int size;
 
-	size = माप(*in) - 4;
-	अगर (buf_len < size)
-		वापस -EINVAL;
-	स_नकल(thresh->data, in, size);
+	size = sizeof(*in) - 4;
+	if (buf_len < size)
+		return -EINVAL;
+	memcpy(thresh->data, in, size);
 	in->status = 0;
-	smart_notअगरy(bus_dev, dimm_dev, smart, thresh);
+	smart_notify(bus_dev, dimm_dev, smart, thresh);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nfit_test_cmd_smart_inject(
-		काष्ठा nd_पूर्णांकel_smart_inject *inj,
-		अचिन्हित पूर्णांक buf_len,
-		काष्ठा nd_पूर्णांकel_smart_threshold *thresh,
-		काष्ठा nd_पूर्णांकel_smart *smart,
-		काष्ठा device *bus_dev, काष्ठा device *dimm_dev)
-अणु
-	अगर (buf_len != माप(*inj))
-		वापस -EINVAL;
+static int nfit_test_cmd_smart_inject(
+		struct nd_intel_smart_inject *inj,
+		unsigned int buf_len,
+		struct nd_intel_smart_threshold *thresh,
+		struct nd_intel_smart *smart,
+		struct device *bus_dev, struct device *dimm_dev)
+{
+	if (buf_len != sizeof(*inj))
+		return -EINVAL;
 
-	अगर (inj->flags & ND_INTEL_SMART_INJECT_MTEMP) अणु
-		अगर (inj->mtemp_enable)
+	if (inj->flags & ND_INTEL_SMART_INJECT_MTEMP) {
+		if (inj->mtemp_enable)
 			smart->media_temperature = inj->media_temperature;
-		अन्यथा
+		else
 			smart->media_temperature = smart_def.media_temperature;
-	पूर्ण
-	अगर (inj->flags & ND_INTEL_SMART_INJECT_SPARE) अणु
-		अगर (inj->spare_enable)
+	}
+	if (inj->flags & ND_INTEL_SMART_INJECT_SPARE) {
+		if (inj->spare_enable)
 			smart->spares = inj->spares;
-		अन्यथा
+		else
 			smart->spares = smart_def.spares;
-	पूर्ण
-	अगर (inj->flags & ND_INTEL_SMART_INJECT_FATAL) अणु
-		अगर (inj->fatal_enable)
+	}
+	if (inj->flags & ND_INTEL_SMART_INJECT_FATAL) {
+		if (inj->fatal_enable)
 			smart->health = ND_INTEL_SMART_FATAL_HEALTH;
-		अन्यथा
+		else
 			smart->health = ND_INTEL_SMART_NON_CRITICAL_HEALTH;
-	पूर्ण
-	अगर (inj->flags & ND_INTEL_SMART_INJECT_SHUTDOWN) अणु
-		अगर (inj->unsafe_shutकरोwn_enable) अणु
-			smart->shutकरोwn_state = 1;
-			smart->shutकरोwn_count++;
-		पूर्ण अन्यथा
-			smart->shutकरोwn_state = 0;
-	पूर्ण
+	}
+	if (inj->flags & ND_INTEL_SMART_INJECT_SHUTDOWN) {
+		if (inj->unsafe_shutdown_enable) {
+			smart->shutdown_state = 1;
+			smart->shutdown_count++;
+		} else
+			smart->shutdown_state = 0;
+	}
 	inj->status = 0;
-	smart_notअगरy(bus_dev, dimm_dev, smart, thresh);
+	smart_notify(bus_dev, dimm_dev, smart, thresh);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम uc_error_notअगरy(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा nfit_test *t = container_of(work, typeof(*t), work);
+static void uc_error_notify(struct work_struct *work)
+{
+	struct nfit_test *t = container_of(work, typeof(*t), work);
 
-	__acpi_nfit_notअगरy(&t->pdev.dev, t, NFIT_NOTIFY_UC_MEMORY_ERROR);
-पूर्ण
+	__acpi_nfit_notify(&t->pdev.dev, t, NFIT_NOTIFY_UC_MEMORY_ERROR);
+}
 
-अटल पूर्णांक nfit_test_cmd_ars_error_inject(काष्ठा nfit_test *t,
-		काष्ठा nd_cmd_ars_err_inj *err_inj, अचिन्हित पूर्णांक buf_len)
-अणु
-	पूर्णांक rc;
+static int nfit_test_cmd_ars_error_inject(struct nfit_test *t,
+		struct nd_cmd_ars_err_inj *err_inj, unsigned int buf_len)
+{
+	int rc;
 
-	अगर (buf_len != माप(*err_inj)) अणु
+	if (buf_len != sizeof(*err_inj)) {
 		rc = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (err_inj->err_inj_spa_range_length <= 0) अणु
+	if (err_inj->err_inj_spa_range_length <= 0) {
 		rc = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	rc =  badrange_add(&t->badrange, err_inj->err_inj_spa_range_base,
 			err_inj->err_inj_spa_range_length);
-	अगर (rc < 0)
-		जाओ err;
+	if (rc < 0)
+		goto err;
 
-	अगर (err_inj->err_inj_options & (1 << ND_ARS_ERR_INJ_OPT_NOTIFY))
+	if (err_inj->err_inj_options & (1 << ND_ARS_ERR_INJ_OPT_NOTIFY))
 		queue_work(nfit_wq, &t->work);
 
 	err_inj->status = 0;
-	वापस 0;
+	return 0;
 
 err:
 	err_inj->status = NFIT_ARS_INJECT_INVALID;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक nfit_test_cmd_ars_inject_clear(काष्ठा nfit_test *t,
-		काष्ठा nd_cmd_ars_err_inj_clr *err_clr, अचिन्हित पूर्णांक buf_len)
-अणु
-	पूर्णांक rc;
+static int nfit_test_cmd_ars_inject_clear(struct nfit_test *t,
+		struct nd_cmd_ars_err_inj_clr *err_clr, unsigned int buf_len)
+{
+	int rc;
 
-	अगर (buf_len != माप(*err_clr)) अणु
+	if (buf_len != sizeof(*err_clr)) {
 		rc = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (err_clr->err_inj_clr_spa_range_length <= 0) अणु
+	if (err_clr->err_inj_clr_spa_range_length <= 0) {
 		rc = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	badrange_क्रमget(&t->badrange, err_clr->err_inj_clr_spa_range_base,
+	badrange_forget(&t->badrange, err_clr->err_inj_clr_spa_range_base,
 			err_clr->err_inj_clr_spa_range_length);
 
 	err_clr->status = 0;
-	वापस 0;
+	return 0;
 
 err:
 	err_clr->status = NFIT_ARS_INJECT_INVALID;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक nfit_test_cmd_ars_inject_status(काष्ठा nfit_test *t,
-		काष्ठा nd_cmd_ars_err_inj_stat *err_stat,
-		अचिन्हित पूर्णांक buf_len)
-अणु
-	काष्ठा badrange_entry *be;
-	पूर्णांक max = SZ_4K / माप(काष्ठा nd_error_stat_query_record);
-	पूर्णांक i = 0;
+static int nfit_test_cmd_ars_inject_status(struct nfit_test *t,
+		struct nd_cmd_ars_err_inj_stat *err_stat,
+		unsigned int buf_len)
+{
+	struct badrange_entry *be;
+	int max = SZ_4K / sizeof(struct nd_error_stat_query_record);
+	int i = 0;
 
 	err_stat->status = 0;
 	spin_lock(&t->badrange.lock);
-	list_क्रम_each_entry(be, &t->badrange.list, list) अणु
+	list_for_each_entry(be, &t->badrange.list, list) {
 		err_stat->record[i].err_inj_stat_spa_range_base = be->start;
 		err_stat->record[i].err_inj_stat_spa_range_length = be->length;
 		i++;
-		अगर (i > max)
-			अवरोध;
-	पूर्ण
+		if (i > max)
+			break;
+	}
 	spin_unlock(&t->badrange.lock);
 	err_stat->inj_err_rec_count = i;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nd_पूर्णांकel_test_cmd_set_lss_status(काष्ठा nfit_test *t,
-		काष्ठा nd_पूर्णांकel_lss *nd_cmd, अचिन्हित पूर्णांक buf_len)
-अणु
-	काष्ठा device *dev = &t->pdev.dev;
+static int nd_intel_test_cmd_set_lss_status(struct nfit_test *t,
+		struct nd_intel_lss *nd_cmd, unsigned int buf_len)
+{
+	struct device *dev = &t->pdev.dev;
 
-	अगर (buf_len < माप(*nd_cmd))
-		वापस -EINVAL;
+	if (buf_len < sizeof(*nd_cmd))
+		return -EINVAL;
 
-	चयन (nd_cmd->enable) अणु
-	हाल 0:
+	switch (nd_cmd->enable) {
+	case 0:
 		nd_cmd->status = 0;
 		dev_dbg(dev, "%s: Latch System Shutdown Status disabled\n",
 				__func__);
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		nd_cmd->status = 0;
 		dev_dbg(dev, "%s: Latch System Shutdown Status enabled\n",
 				__func__);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_warn(dev, "Unknown enable value: %#x\n", nd_cmd->enable);
 		nd_cmd->status = 0x3;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक override_वापस_code(पूर्णांक dimm, अचिन्हित पूर्णांक func, पूर्णांक rc)
-अणु
-	अगर ((1 << func) & dimm_fail_cmd_flags[dimm]) अणु
-		अगर (dimm_fail_cmd_code[dimm])
-			वापस dimm_fail_cmd_code[dimm];
-		वापस -EIO;
-	पूर्ण
-	वापस rc;
-पूर्ण
+static int override_return_code(int dimm, unsigned int func, int rc)
+{
+	if ((1 << func) & dimm_fail_cmd_flags[dimm]) {
+		if (dimm_fail_cmd_code[dimm])
+			return dimm_fail_cmd_code[dimm];
+		return -EIO;
+	}
+	return rc;
+}
 
-अटल पूर्णांक nd_पूर्णांकel_test_cmd_security_status(काष्ठा nfit_test *t,
-		काष्ठा nd_पूर्णांकel_get_security_state *nd_cmd,
-		अचिन्हित पूर्णांक buf_len, पूर्णांक dimm)
-अणु
-	काष्ठा device *dev = &t->pdev.dev;
-	काष्ठा nfit_test_sec *sec = &dimm_sec_info[dimm];
+static int nd_intel_test_cmd_security_status(struct nfit_test *t,
+		struct nd_intel_get_security_state *nd_cmd,
+		unsigned int buf_len, int dimm)
+{
+	struct device *dev = &t->pdev.dev;
+	struct nfit_test_sec *sec = &dimm_sec_info[dimm];
 
 	nd_cmd->status = 0;
 	nd_cmd->state = sec->state;
 	nd_cmd->extended_state = sec->ext_state;
 	dev_dbg(dev, "security state (%#x) returned\n", nd_cmd->state);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nd_पूर्णांकel_test_cmd_unlock_unit(काष्ठा nfit_test *t,
-		काष्ठा nd_पूर्णांकel_unlock_unit *nd_cmd,
-		अचिन्हित पूर्णांक buf_len, पूर्णांक dimm)
-अणु
-	काष्ठा device *dev = &t->pdev.dev;
-	काष्ठा nfit_test_sec *sec = &dimm_sec_info[dimm];
+static int nd_intel_test_cmd_unlock_unit(struct nfit_test *t,
+		struct nd_intel_unlock_unit *nd_cmd,
+		unsigned int buf_len, int dimm)
+{
+	struct device *dev = &t->pdev.dev;
+	struct nfit_test_sec *sec = &dimm_sec_info[dimm];
 
-	अगर (!(sec->state & ND_INTEL_SEC_STATE_LOCKED) ||
-			(sec->state & ND_INTEL_SEC_STATE_FROZEN)) अणु
+	if (!(sec->state & ND_INTEL_SEC_STATE_LOCKED) ||
+			(sec->state & ND_INTEL_SEC_STATE_FROZEN)) {
 		nd_cmd->status = ND_INTEL_STATUS_INVALID_STATE;
 		dev_dbg(dev, "unlock unit: invalid state: %#x\n",
 				sec->state);
-	पूर्ण अन्यथा अगर (स_भेद(nd_cmd->passphrase, sec->passphrase,
-				ND_INTEL_PASSPHRASE_SIZE) != 0) अणु
+	} else if (memcmp(nd_cmd->passphrase, sec->passphrase,
+				ND_INTEL_PASSPHRASE_SIZE) != 0) {
 		nd_cmd->status = ND_INTEL_STATUS_INVALID_PASS;
 		dev_dbg(dev, "unlock unit: invalid passphrase\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		nd_cmd->status = 0;
 		sec->state = ND_INTEL_SEC_STATE_ENABLED;
 		dev_dbg(dev, "Unit unlocked\n");
-	पूर्ण
+	}
 
 	dev_dbg(dev, "unlocking status returned: %#x\n", nd_cmd->status);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nd_पूर्णांकel_test_cmd_set_pass(काष्ठा nfit_test *t,
-		काष्ठा nd_पूर्णांकel_set_passphrase *nd_cmd,
-		अचिन्हित पूर्णांक buf_len, पूर्णांक dimm)
-अणु
-	काष्ठा device *dev = &t->pdev.dev;
-	काष्ठा nfit_test_sec *sec = &dimm_sec_info[dimm];
+static int nd_intel_test_cmd_set_pass(struct nfit_test *t,
+		struct nd_intel_set_passphrase *nd_cmd,
+		unsigned int buf_len, int dimm)
+{
+	struct device *dev = &t->pdev.dev;
+	struct nfit_test_sec *sec = &dimm_sec_info[dimm];
 
-	अगर (sec->state & ND_INTEL_SEC_STATE_FROZEN) अणु
+	if (sec->state & ND_INTEL_SEC_STATE_FROZEN) {
 		nd_cmd->status = ND_INTEL_STATUS_INVALID_STATE;
 		dev_dbg(dev, "set passphrase: wrong security state\n");
-	पूर्ण अन्यथा अगर (स_भेद(nd_cmd->old_pass, sec->passphrase,
-				ND_INTEL_PASSPHRASE_SIZE) != 0) अणु
+	} else if (memcmp(nd_cmd->old_pass, sec->passphrase,
+				ND_INTEL_PASSPHRASE_SIZE) != 0) {
 		nd_cmd->status = ND_INTEL_STATUS_INVALID_PASS;
 		dev_dbg(dev, "set passphrase: wrong passphrase\n");
-	पूर्ण अन्यथा अणु
-		स_नकल(sec->passphrase, nd_cmd->new_pass,
+	} else {
+		memcpy(sec->passphrase, nd_cmd->new_pass,
 				ND_INTEL_PASSPHRASE_SIZE);
 		sec->state |= ND_INTEL_SEC_STATE_ENABLED;
 		nd_cmd->status = 0;
 		dev_dbg(dev, "passphrase updated\n");
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nd_पूर्णांकel_test_cmd_मुक्तze_lock(काष्ठा nfit_test *t,
-		काष्ठा nd_पूर्णांकel_मुक्तze_lock *nd_cmd,
-		अचिन्हित पूर्णांक buf_len, पूर्णांक dimm)
-अणु
-	काष्ठा device *dev = &t->pdev.dev;
-	काष्ठा nfit_test_sec *sec = &dimm_sec_info[dimm];
+static int nd_intel_test_cmd_freeze_lock(struct nfit_test *t,
+		struct nd_intel_freeze_lock *nd_cmd,
+		unsigned int buf_len, int dimm)
+{
+	struct device *dev = &t->pdev.dev;
+	struct nfit_test_sec *sec = &dimm_sec_info[dimm];
 
-	अगर (!(sec->state & ND_INTEL_SEC_STATE_ENABLED)) अणु
+	if (!(sec->state & ND_INTEL_SEC_STATE_ENABLED)) {
 		nd_cmd->status = ND_INTEL_STATUS_INVALID_STATE;
 		dev_dbg(dev, "freeze lock: wrong security state\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		sec->state |= ND_INTEL_SEC_STATE_FROZEN;
 		nd_cmd->status = 0;
 		dev_dbg(dev, "security frozen\n");
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nd_पूर्णांकel_test_cmd_disable_pass(काष्ठा nfit_test *t,
-		काष्ठा nd_पूर्णांकel_disable_passphrase *nd_cmd,
-		अचिन्हित पूर्णांक buf_len, पूर्णांक dimm)
-अणु
-	काष्ठा device *dev = &t->pdev.dev;
-	काष्ठा nfit_test_sec *sec = &dimm_sec_info[dimm];
+static int nd_intel_test_cmd_disable_pass(struct nfit_test *t,
+		struct nd_intel_disable_passphrase *nd_cmd,
+		unsigned int buf_len, int dimm)
+{
+	struct device *dev = &t->pdev.dev;
+	struct nfit_test_sec *sec = &dimm_sec_info[dimm];
 
-	अगर (!(sec->state & ND_INTEL_SEC_STATE_ENABLED) ||
-			(sec->state & ND_INTEL_SEC_STATE_FROZEN)) अणु
+	if (!(sec->state & ND_INTEL_SEC_STATE_ENABLED) ||
+			(sec->state & ND_INTEL_SEC_STATE_FROZEN)) {
 		nd_cmd->status = ND_INTEL_STATUS_INVALID_STATE;
 		dev_dbg(dev, "disable passphrase: wrong security state\n");
-	पूर्ण अन्यथा अगर (स_भेद(nd_cmd->passphrase, sec->passphrase,
-				ND_INTEL_PASSPHRASE_SIZE) != 0) अणु
+	} else if (memcmp(nd_cmd->passphrase, sec->passphrase,
+				ND_INTEL_PASSPHRASE_SIZE) != 0) {
 		nd_cmd->status = ND_INTEL_STATUS_INVALID_PASS;
 		dev_dbg(dev, "disable passphrase: wrong passphrase\n");
-	पूर्ण अन्यथा अणु
-		स_रखो(sec->passphrase, 0, ND_INTEL_PASSPHRASE_SIZE);
+	} else {
+		memset(sec->passphrase, 0, ND_INTEL_PASSPHRASE_SIZE);
 		sec->state = 0;
 		dev_dbg(dev, "disable passphrase: done\n");
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nd_पूर्णांकel_test_cmd_secure_erase(काष्ठा nfit_test *t,
-		काष्ठा nd_पूर्णांकel_secure_erase *nd_cmd,
-		अचिन्हित पूर्णांक buf_len, पूर्णांक dimm)
-अणु
-	काष्ठा device *dev = &t->pdev.dev;
-	काष्ठा nfit_test_sec *sec = &dimm_sec_info[dimm];
+static int nd_intel_test_cmd_secure_erase(struct nfit_test *t,
+		struct nd_intel_secure_erase *nd_cmd,
+		unsigned int buf_len, int dimm)
+{
+	struct device *dev = &t->pdev.dev;
+	struct nfit_test_sec *sec = &dimm_sec_info[dimm];
 
-	अगर (sec->state & ND_INTEL_SEC_STATE_FROZEN) अणु
+	if (sec->state & ND_INTEL_SEC_STATE_FROZEN) {
 		nd_cmd->status = ND_INTEL_STATUS_INVALID_STATE;
 		dev_dbg(dev, "secure erase: wrong security state\n");
-	पूर्ण अन्यथा अगर (स_भेद(nd_cmd->passphrase, sec->passphrase,
-				ND_INTEL_PASSPHRASE_SIZE) != 0) अणु
+	} else if (memcmp(nd_cmd->passphrase, sec->passphrase,
+				ND_INTEL_PASSPHRASE_SIZE) != 0) {
 		nd_cmd->status = ND_INTEL_STATUS_INVALID_PASS;
 		dev_dbg(dev, "secure erase: wrong passphrase\n");
-	पूर्ण अन्यथा अणु
-		अगर (!(sec->state & ND_INTEL_SEC_STATE_ENABLED)
-				&& (स_भेद(nd_cmd->passphrase, zero_key,
-					ND_INTEL_PASSPHRASE_SIZE) != 0)) अणु
+	} else {
+		if (!(sec->state & ND_INTEL_SEC_STATE_ENABLED)
+				&& (memcmp(nd_cmd->passphrase, zero_key,
+					ND_INTEL_PASSPHRASE_SIZE) != 0)) {
 			dev_dbg(dev, "invalid zero key\n");
-			वापस 0;
-		पूर्ण
-		स_रखो(sec->passphrase, 0, ND_INTEL_PASSPHRASE_SIZE);
-		स_रखो(sec->master_passphrase, 0, ND_INTEL_PASSPHRASE_SIZE);
+			return 0;
+		}
+		memset(sec->passphrase, 0, ND_INTEL_PASSPHRASE_SIZE);
+		memset(sec->master_passphrase, 0, ND_INTEL_PASSPHRASE_SIZE);
 		sec->state = 0;
 		sec->ext_state = ND_INTEL_SEC_ESTATE_ENABLED;
 		dev_dbg(dev, "secure erase: done\n");
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nd_पूर्णांकel_test_cmd_overग_लिखो(काष्ठा nfit_test *t,
-		काष्ठा nd_पूर्णांकel_overग_लिखो *nd_cmd,
-		अचिन्हित पूर्णांक buf_len, पूर्णांक dimm)
-अणु
-	काष्ठा device *dev = &t->pdev.dev;
-	काष्ठा nfit_test_sec *sec = &dimm_sec_info[dimm];
+static int nd_intel_test_cmd_overwrite(struct nfit_test *t,
+		struct nd_intel_overwrite *nd_cmd,
+		unsigned int buf_len, int dimm)
+{
+	struct device *dev = &t->pdev.dev;
+	struct nfit_test_sec *sec = &dimm_sec_info[dimm];
 
-	अगर ((sec->state & ND_INTEL_SEC_STATE_ENABLED) &&
-			स_भेद(nd_cmd->passphrase, sec->passphrase,
-				ND_INTEL_PASSPHRASE_SIZE) != 0) अणु
+	if ((sec->state & ND_INTEL_SEC_STATE_ENABLED) &&
+			memcmp(nd_cmd->passphrase, sec->passphrase,
+				ND_INTEL_PASSPHRASE_SIZE) != 0) {
 		nd_cmd->status = ND_INTEL_STATUS_INVALID_PASS;
 		dev_dbg(dev, "overwrite: wrong passphrase\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	sec->old_state = sec->state;
 	sec->state = ND_INTEL_SEC_STATE_OVERWRITE;
 	dev_dbg(dev, "overwrite progressing.\n");
-	sec->overग_लिखो_end_समय = get_jअगरfies_64() + 5 * HZ;
+	sec->overwrite_end_time = get_jiffies_64() + 5 * HZ;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nd_पूर्णांकel_test_cmd_query_overग_लिखो(काष्ठा nfit_test *t,
-		काष्ठा nd_पूर्णांकel_query_overग_लिखो *nd_cmd,
-		अचिन्हित पूर्णांक buf_len, पूर्णांक dimm)
-अणु
-	काष्ठा device *dev = &t->pdev.dev;
-	काष्ठा nfit_test_sec *sec = &dimm_sec_info[dimm];
+static int nd_intel_test_cmd_query_overwrite(struct nfit_test *t,
+		struct nd_intel_query_overwrite *nd_cmd,
+		unsigned int buf_len, int dimm)
+{
+	struct device *dev = &t->pdev.dev;
+	struct nfit_test_sec *sec = &dimm_sec_info[dimm];
 
-	अगर (!(sec->state & ND_INTEL_SEC_STATE_OVERWRITE)) अणु
+	if (!(sec->state & ND_INTEL_SEC_STATE_OVERWRITE)) {
 		nd_cmd->status = ND_INTEL_STATUS_OQUERY_SEQUENCE_ERR;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (समय_is_beक्रमe_jअगरfies64(sec->overग_लिखो_end_समय)) अणु
-		sec->overग_लिखो_end_समय = 0;
+	if (time_is_before_jiffies64(sec->overwrite_end_time)) {
+		sec->overwrite_end_time = 0;
 		sec->state = sec->old_state;
 		sec->old_state = 0;
 		sec->ext_state = ND_INTEL_SEC_ESTATE_ENABLED;
 		dev_dbg(dev, "overwrite is complete\n");
-	पूर्ण अन्यथा
+	} else
 		nd_cmd->status = ND_INTEL_STATUS_OQUERY_INPROGRESS;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nd_पूर्णांकel_test_cmd_master_set_pass(काष्ठा nfit_test *t,
-		काष्ठा nd_पूर्णांकel_set_master_passphrase *nd_cmd,
-		अचिन्हित पूर्णांक buf_len, पूर्णांक dimm)
-अणु
-	काष्ठा device *dev = &t->pdev.dev;
-	काष्ठा nfit_test_sec *sec = &dimm_sec_info[dimm];
+static int nd_intel_test_cmd_master_set_pass(struct nfit_test *t,
+		struct nd_intel_set_master_passphrase *nd_cmd,
+		unsigned int buf_len, int dimm)
+{
+	struct device *dev = &t->pdev.dev;
+	struct nfit_test_sec *sec = &dimm_sec_info[dimm];
 
-	अगर (!(sec->ext_state & ND_INTEL_SEC_ESTATE_ENABLED)) अणु
+	if (!(sec->ext_state & ND_INTEL_SEC_ESTATE_ENABLED)) {
 		nd_cmd->status = ND_INTEL_STATUS_NOT_SUPPORTED;
 		dev_dbg(dev, "master set passphrase: in wrong state\n");
-	पूर्ण अन्यथा अगर (sec->ext_state & ND_INTEL_SEC_ESTATE_PLIMIT) अणु
+	} else if (sec->ext_state & ND_INTEL_SEC_ESTATE_PLIMIT) {
 		nd_cmd->status = ND_INTEL_STATUS_INVALID_STATE;
 		dev_dbg(dev, "master set passphrase: in wrong security state\n");
-	पूर्ण अन्यथा अगर (स_भेद(nd_cmd->old_pass, sec->master_passphrase,
-				ND_INTEL_PASSPHRASE_SIZE) != 0) अणु
+	} else if (memcmp(nd_cmd->old_pass, sec->master_passphrase,
+				ND_INTEL_PASSPHRASE_SIZE) != 0) {
 		nd_cmd->status = ND_INTEL_STATUS_INVALID_PASS;
 		dev_dbg(dev, "master set passphrase: wrong passphrase\n");
-	पूर्ण अन्यथा अणु
-		स_नकल(sec->master_passphrase, nd_cmd->new_pass,
+	} else {
+		memcpy(sec->master_passphrase, nd_cmd->new_pass,
 				ND_INTEL_PASSPHRASE_SIZE);
 		sec->ext_state = ND_INTEL_SEC_ESTATE_ENABLED;
 		dev_dbg(dev, "master passphrase: updated\n");
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nd_पूर्णांकel_test_cmd_master_secure_erase(काष्ठा nfit_test *t,
-		काष्ठा nd_पूर्णांकel_master_secure_erase *nd_cmd,
-		अचिन्हित पूर्णांक buf_len, पूर्णांक dimm)
-अणु
-	काष्ठा device *dev = &t->pdev.dev;
-	काष्ठा nfit_test_sec *sec = &dimm_sec_info[dimm];
+static int nd_intel_test_cmd_master_secure_erase(struct nfit_test *t,
+		struct nd_intel_master_secure_erase *nd_cmd,
+		unsigned int buf_len, int dimm)
+{
+	struct device *dev = &t->pdev.dev;
+	struct nfit_test_sec *sec = &dimm_sec_info[dimm];
 
-	अगर (!(sec->ext_state & ND_INTEL_SEC_ESTATE_ENABLED)) अणु
+	if (!(sec->ext_state & ND_INTEL_SEC_ESTATE_ENABLED)) {
 		nd_cmd->status = ND_INTEL_STATUS_NOT_SUPPORTED;
 		dev_dbg(dev, "master secure erase: in wrong state\n");
-	पूर्ण अन्यथा अगर (sec->ext_state & ND_INTEL_SEC_ESTATE_PLIMIT) अणु
+	} else if (sec->ext_state & ND_INTEL_SEC_ESTATE_PLIMIT) {
 		nd_cmd->status = ND_INTEL_STATUS_INVALID_STATE;
 		dev_dbg(dev, "master secure erase: in wrong security state\n");
-	पूर्ण अन्यथा अगर (स_भेद(nd_cmd->passphrase, sec->master_passphrase,
-				ND_INTEL_PASSPHRASE_SIZE) != 0) अणु
+	} else if (memcmp(nd_cmd->passphrase, sec->master_passphrase,
+				ND_INTEL_PASSPHRASE_SIZE) != 0) {
 		nd_cmd->status = ND_INTEL_STATUS_INVALID_PASS;
 		dev_dbg(dev, "master secure erase: wrong passphrase\n");
-	पूर्ण अन्यथा अणु
-		/* we करो not erase master state passphrase ever */
+	} else {
+		/* we do not erase master state passphrase ever */
 		sec->ext_state = ND_INTEL_SEC_ESTATE_ENABLED;
-		स_रखो(sec->passphrase, 0, ND_INTEL_PASSPHRASE_SIZE);
+		memset(sec->passphrase, 0, ND_INTEL_PASSPHRASE_SIZE);
 		sec->state = 0;
 		dev_dbg(dev, "master secure erase: done\n");
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ last_activate;
+static unsigned long last_activate;
 
-अटल पूर्णांक nvdimm_bus_पूर्णांकel_fw_activate_businfo(काष्ठा nfit_test *t,
-		काष्ठा nd_पूर्णांकel_bus_fw_activate_businfo *nd_cmd,
-		अचिन्हित पूर्णांक buf_len)
-अणु
-	पूर्णांक i, armed = 0;
-	पूर्णांक state;
-	u64 पंचांगo;
+static int nvdimm_bus_intel_fw_activate_businfo(struct nfit_test *t,
+		struct nd_intel_bus_fw_activate_businfo *nd_cmd,
+		unsigned int buf_len)
+{
+	int i, armed = 0;
+	int state;
+	u64 tmo;
 
-	क्रम (i = 0; i < NUM_DCR; i++) अणु
-		काष्ठा nfit_test_fw *fw = &t->fw[i];
+	for (i = 0; i < NUM_DCR; i++) {
+		struct nfit_test_fw *fw = &t->fw[i];
 
-		अगर (fw->armed)
+		if (fw->armed)
 			armed++;
-	पूर्ण
+	}
 
 	/*
 	 * Emulate 3 second activation max, and 1 second incremental
-	 * quiesce समय per dimm requiring multiple activates to get all
+	 * quiesce time per dimm requiring multiple activates to get all
 	 * DIMMs updated.
 	 */
-	अगर (armed)
+	if (armed)
 		state = ND_INTEL_FWA_ARMED;
-	अन्यथा अगर (!last_activate || समय_after(jअगरfies, last_activate + 3 * HZ))
+	else if (!last_activate || time_after(jiffies, last_activate + 3 * HZ))
 		state = ND_INTEL_FWA_IDLE;
-	अन्यथा
+	else
 		state = ND_INTEL_FWA_BUSY;
 
-	पंचांगo = armed * USEC_PER_SEC;
-	*nd_cmd = (काष्ठा nd_पूर्णांकel_bus_fw_activate_businfo) अणु
+	tmo = armed * USEC_PER_SEC;
+	*nd_cmd = (struct nd_intel_bus_fw_activate_businfo) {
 		.capability = ND_INTEL_BUS_FWA_CAP_FWQUIESCE
 			| ND_INTEL_BUS_FWA_CAP_OSQUIESCE
 			| ND_INTEL_BUS_FWA_CAP_RESET,
 		.state = state,
-		.activate_पंचांगo = पंचांगo,
-		.cpu_quiesce_पंचांगo = पंचांगo,
-		.io_quiesce_पंचांगo = पंचांगo,
-		.max_quiesce_पंचांगo = 3 * USEC_PER_SEC,
-	पूर्ण;
+		.activate_tmo = tmo,
+		.cpu_quiesce_tmo = tmo,
+		.io_quiesce_tmo = tmo,
+		.max_quiesce_tmo = 3 * USEC_PER_SEC,
+	};
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nvdimm_bus_पूर्णांकel_fw_activate(काष्ठा nfit_test *t,
-		काष्ठा nd_पूर्णांकel_bus_fw_activate *nd_cmd,
-		अचिन्हित पूर्णांक buf_len)
-अणु
-	काष्ठा nd_पूर्णांकel_bus_fw_activate_businfo info;
+static int nvdimm_bus_intel_fw_activate(struct nfit_test *t,
+		struct nd_intel_bus_fw_activate *nd_cmd,
+		unsigned int buf_len)
+{
+	struct nd_intel_bus_fw_activate_businfo info;
 	u32 status = 0;
-	पूर्णांक i;
+	int i;
 
-	nvdimm_bus_पूर्णांकel_fw_activate_businfo(t, &info, माप(info));
-	अगर (info.state == ND_INTEL_FWA_BUSY)
+	nvdimm_bus_intel_fw_activate_businfo(t, &info, sizeof(info));
+	if (info.state == ND_INTEL_FWA_BUSY)
 		status = ND_INTEL_BUS_FWA_STATUS_BUSY;
-	अन्यथा अगर (info.activate_पंचांगo > info.max_quiesce_पंचांगo)
+	else if (info.activate_tmo > info.max_quiesce_tmo)
 		status = ND_INTEL_BUS_FWA_STATUS_TMO;
-	अन्यथा अगर (info.state == ND_INTEL_FWA_IDLE)
+	else if (info.state == ND_INTEL_FWA_IDLE)
 		status = ND_INTEL_BUS_FWA_STATUS_NOARM;
 
 	dev_dbg(&t->pdev.dev, "status: %d\n", status);
 	nd_cmd->status = status;
-	अगर (status && status != ND_INTEL_BUS_FWA_STATUS_TMO)
-		वापस 0;
+	if (status && status != ND_INTEL_BUS_FWA_STATUS_TMO)
+		return 0;
 
-	last_activate = jअगरfies;
-	क्रम (i = 0; i < NUM_DCR; i++) अणु
-		काष्ठा nfit_test_fw *fw = &t->fw[i];
+	last_activate = jiffies;
+	for (i = 0; i < NUM_DCR; i++) {
+		struct nfit_test_fw *fw = &t->fw[i];
 
-		अगर (!fw->armed)
-			जारी;
-		अगर (fw->state != FW_STATE_UPDATED)
+		if (!fw->armed)
+			continue;
+		if (fw->state != FW_STATE_UPDATED)
 			fw->missed_activate = true;
-		अन्यथा
+		else
 			fw->state = FW_STATE_NEW;
 		fw->armed = false;
 		fw->last_activate = last_activate;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nd_पूर्णांकel_test_cmd_fw_activate_dimminfo(काष्ठा nfit_test *t,
-		काष्ठा nd_पूर्णांकel_fw_activate_dimminfo *nd_cmd,
-		अचिन्हित पूर्णांक buf_len, पूर्णांक dimm)
-अणु
-	काष्ठा nd_पूर्णांकel_bus_fw_activate_businfo info;
-	काष्ठा nfit_test_fw *fw = &t->fw[dimm];
+static int nd_intel_test_cmd_fw_activate_dimminfo(struct nfit_test *t,
+		struct nd_intel_fw_activate_dimminfo *nd_cmd,
+		unsigned int buf_len, int dimm)
+{
+	struct nd_intel_bus_fw_activate_businfo info;
+	struct nfit_test_fw *fw = &t->fw[dimm];
 	u32 result, state;
 
-	nvdimm_bus_पूर्णांकel_fw_activate_businfo(t, &info, माप(info));
+	nvdimm_bus_intel_fw_activate_businfo(t, &info, sizeof(info));
 
-	अगर (info.state == ND_INTEL_FWA_BUSY)
+	if (info.state == ND_INTEL_FWA_BUSY)
 		state = ND_INTEL_FWA_BUSY;
-	अन्यथा अगर (info.state == ND_INTEL_FWA_IDLE)
+	else if (info.state == ND_INTEL_FWA_IDLE)
 		state = ND_INTEL_FWA_IDLE;
-	अन्यथा अगर (fw->armed)
+	else if (fw->armed)
 		state = ND_INTEL_FWA_ARMED;
-	अन्यथा
+	else
 		state = ND_INTEL_FWA_IDLE;
 
 	result = ND_INTEL_DIMM_FWA_NONE;
-	अगर (last_activate && fw->last_activate == last_activate &&
-			state == ND_INTEL_FWA_IDLE) अणु
-		अगर (fw->missed_activate)
+	if (last_activate && fw->last_activate == last_activate &&
+			state == ND_INTEL_FWA_IDLE) {
+		if (fw->missed_activate)
 			result = ND_INTEL_DIMM_FWA_NOTSTAGED;
-		अन्यथा
+		else
 			result = ND_INTEL_DIMM_FWA_SUCCESS;
-	पूर्ण
+	}
 
-	*nd_cmd = (काष्ठा nd_पूर्णांकel_fw_activate_dimminfo) अणु
+	*nd_cmd = (struct nd_intel_fw_activate_dimminfo) {
 		.result = result,
 		.state = state,
-	पूर्ण;
+	};
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nd_पूर्णांकel_test_cmd_fw_activate_arm(काष्ठा nfit_test *t,
-		काष्ठा nd_पूर्णांकel_fw_activate_arm *nd_cmd,
-		अचिन्हित पूर्णांक buf_len, पूर्णांक dimm)
-अणु
-	काष्ठा nfit_test_fw *fw = &t->fw[dimm];
+static int nd_intel_test_cmd_fw_activate_arm(struct nfit_test *t,
+		struct nd_intel_fw_activate_arm *nd_cmd,
+		unsigned int buf_len, int dimm)
+{
+	struct nfit_test_fw *fw = &t->fw[dimm];
 
 	fw->armed = nd_cmd->activate_arm == ND_INTEL_DIMM_FWA_ARM;
 	nd_cmd->status = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक get_dimm(काष्ठा nfit_mem *nfit_mem, अचिन्हित पूर्णांक func)
-अणु
-	पूर्णांक i;
+static int get_dimm(struct nfit_mem *nfit_mem, unsigned int func)
+{
+	int i;
 
 	/* lookup per-dimm data */
-	क्रम (i = 0; i < ARRAY_SIZE(handle); i++)
-		अगर (__to_nfit_memdev(nfit_mem)->device_handle == handle[i])
-			अवरोध;
-	अगर (i >= ARRAY_SIZE(handle))
-		वापस -ENXIO;
-	वापस i;
-पूर्ण
+	for (i = 0; i < ARRAY_SIZE(handle); i++)
+		if (__to_nfit_memdev(nfit_mem)->device_handle == handle[i])
+			break;
+	if (i >= ARRAY_SIZE(handle))
+		return -ENXIO;
+	return i;
+}
 
-अटल व्योम nfit_ctl_dbg(काष्ठा acpi_nfit_desc *acpi_desc,
-		काष्ठा nvdimm *nvdimm, अचिन्हित पूर्णांक cmd, व्योम *buf,
-		अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा nfit_test *t = container_of(acpi_desc, typeof(*t), acpi_desc);
-	अचिन्हित पूर्णांक func = cmd;
-	अचिन्हित पूर्णांक family = 0;
+static void nfit_ctl_dbg(struct acpi_nfit_desc *acpi_desc,
+		struct nvdimm *nvdimm, unsigned int cmd, void *buf,
+		unsigned int len)
+{
+	struct nfit_test *t = container_of(acpi_desc, typeof(*t), acpi_desc);
+	unsigned int func = cmd;
+	unsigned int family = 0;
 
-	अगर (cmd == ND_CMD_CALL) अणु
-		काष्ठा nd_cmd_pkg *pkg = buf;
+	if (cmd == ND_CMD_CALL) {
+		struct nd_cmd_pkg *pkg = buf;
 
 		len = pkg->nd_size_in;
 		family = pkg->nd_family;
 		buf = pkg->nd_payload;
 		func = pkg->nd_command;
-	पूर्ण
+	}
 	dev_dbg(&t->pdev.dev, "%s family: %d cmd: %d: func: %d input length: %d\n",
 			nvdimm ? nvdimm_name(nvdimm) : "bus", family, cmd, func,
 			len);
-	prपूर्णांक_hex_dump_debug("nvdimm in  ", DUMP_PREFIX_OFFSET, 16, 4,
+	print_hex_dump_debug("nvdimm in  ", DUMP_PREFIX_OFFSET, 16, 4,
 			buf, min(len, 256u), true);
-पूर्ण
+}
 
-अटल पूर्णांक nfit_test_ctl(काष्ठा nvdimm_bus_descriptor *nd_desc,
-		काष्ठा nvdimm *nvdimm, अचिन्हित पूर्णांक cmd, व्योम *buf,
-		अचिन्हित पूर्णांक buf_len, पूर्णांक *cmd_rc)
-अणु
-	काष्ठा acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
-	काष्ठा nfit_test *t = container_of(acpi_desc, typeof(*t), acpi_desc);
-	अचिन्हित पूर्णांक func = cmd;
-	पूर्णांक i, rc = 0, __cmd_rc;
+static int nfit_test_ctl(struct nvdimm_bus_descriptor *nd_desc,
+		struct nvdimm *nvdimm, unsigned int cmd, void *buf,
+		unsigned int buf_len, int *cmd_rc)
+{
+	struct acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
+	struct nfit_test *t = container_of(acpi_desc, typeof(*t), acpi_desc);
+	unsigned int func = cmd;
+	int i, rc = 0, __cmd_rc;
 
-	अगर (!cmd_rc)
+	if (!cmd_rc)
 		cmd_rc = &__cmd_rc;
 	*cmd_rc = 0;
 
 	nfit_ctl_dbg(acpi_desc, nvdimm, cmd, buf, buf_len);
 
-	अगर (nvdimm) अणु
-		काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
-		अचिन्हित दीर्घ cmd_mask = nvdimm_cmd_mask(nvdimm);
+	if (nvdimm) {
+		struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+		unsigned long cmd_mask = nvdimm_cmd_mask(nvdimm);
 
-		अगर (!nfit_mem)
-			वापस -ENOTTY;
+		if (!nfit_mem)
+			return -ENOTTY;
 
-		अगर (cmd == ND_CMD_CALL) अणु
-			काष्ठा nd_cmd_pkg *call_pkg = buf;
+		if (cmd == ND_CMD_CALL) {
+			struct nd_cmd_pkg *call_pkg = buf;
 
 			buf_len = call_pkg->nd_size_in + call_pkg->nd_size_out;
-			buf = (व्योम *) call_pkg->nd_payload;
+			buf = (void *) call_pkg->nd_payload;
 			func = call_pkg->nd_command;
-			अगर (call_pkg->nd_family != nfit_mem->family)
-				वापस -ENOTTY;
+			if (call_pkg->nd_family != nfit_mem->family)
+				return -ENOTTY;
 
 			i = get_dimm(nfit_mem, func);
-			अगर (i < 0)
-				वापस i;
-			अगर (i >= NUM_DCR) अणु
+			if (i < 0)
+				return i;
+			if (i >= NUM_DCR) {
 				dev_WARN_ONCE(&t->pdev.dev, 1,
 						"ND_CMD_CALL only valid for nfit_test0\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
-			चयन (func) अणु
-			हाल NVDIMM_INTEL_GET_SECURITY_STATE:
-				rc = nd_पूर्णांकel_test_cmd_security_status(t,
+			switch (func) {
+			case NVDIMM_INTEL_GET_SECURITY_STATE:
+				rc = nd_intel_test_cmd_security_status(t,
 						buf, buf_len, i);
-				अवरोध;
-			हाल NVDIMM_INTEL_UNLOCK_UNIT:
-				rc = nd_पूर्णांकel_test_cmd_unlock_unit(t,
+				break;
+			case NVDIMM_INTEL_UNLOCK_UNIT:
+				rc = nd_intel_test_cmd_unlock_unit(t,
 						buf, buf_len, i);
-				अवरोध;
-			हाल NVDIMM_INTEL_SET_PASSPHRASE:
-				rc = nd_पूर्णांकel_test_cmd_set_pass(t,
+				break;
+			case NVDIMM_INTEL_SET_PASSPHRASE:
+				rc = nd_intel_test_cmd_set_pass(t,
 						buf, buf_len, i);
-				अवरोध;
-			हाल NVDIMM_INTEL_DISABLE_PASSPHRASE:
-				rc = nd_पूर्णांकel_test_cmd_disable_pass(t,
+				break;
+			case NVDIMM_INTEL_DISABLE_PASSPHRASE:
+				rc = nd_intel_test_cmd_disable_pass(t,
 						buf, buf_len, i);
-				अवरोध;
-			हाल NVDIMM_INTEL_FREEZE_LOCK:
-				rc = nd_पूर्णांकel_test_cmd_मुक्तze_lock(t,
+				break;
+			case NVDIMM_INTEL_FREEZE_LOCK:
+				rc = nd_intel_test_cmd_freeze_lock(t,
 						buf, buf_len, i);
-				अवरोध;
-			हाल NVDIMM_INTEL_SECURE_ERASE:
-				rc = nd_पूर्णांकel_test_cmd_secure_erase(t,
+				break;
+			case NVDIMM_INTEL_SECURE_ERASE:
+				rc = nd_intel_test_cmd_secure_erase(t,
 						buf, buf_len, i);
-				अवरोध;
-			हाल NVDIMM_INTEL_OVERWRITE:
-				rc = nd_पूर्णांकel_test_cmd_overग_लिखो(t,
+				break;
+			case NVDIMM_INTEL_OVERWRITE:
+				rc = nd_intel_test_cmd_overwrite(t,
 						buf, buf_len, i);
-				अवरोध;
-			हाल NVDIMM_INTEL_QUERY_OVERWRITE:
-				rc = nd_पूर्णांकel_test_cmd_query_overग_लिखो(t,
+				break;
+			case NVDIMM_INTEL_QUERY_OVERWRITE:
+				rc = nd_intel_test_cmd_query_overwrite(t,
 						buf, buf_len, i);
-				अवरोध;
-			हाल NVDIMM_INTEL_SET_MASTER_PASSPHRASE:
-				rc = nd_पूर्णांकel_test_cmd_master_set_pass(t,
+				break;
+			case NVDIMM_INTEL_SET_MASTER_PASSPHRASE:
+				rc = nd_intel_test_cmd_master_set_pass(t,
 						buf, buf_len, i);
-				अवरोध;
-			हाल NVDIMM_INTEL_MASTER_SECURE_ERASE:
-				rc = nd_पूर्णांकel_test_cmd_master_secure_erase(t,
+				break;
+			case NVDIMM_INTEL_MASTER_SECURE_ERASE:
+				rc = nd_intel_test_cmd_master_secure_erase(t,
 						buf, buf_len, i);
-				अवरोध;
-			हाल NVDIMM_INTEL_FW_ACTIVATE_DIMMINFO:
-				rc = nd_पूर्णांकel_test_cmd_fw_activate_dimminfo(
+				break;
+			case NVDIMM_INTEL_FW_ACTIVATE_DIMMINFO:
+				rc = nd_intel_test_cmd_fw_activate_dimminfo(
 					t, buf, buf_len, i);
-				अवरोध;
-			हाल NVDIMM_INTEL_FW_ACTIVATE_ARM:
-				rc = nd_पूर्णांकel_test_cmd_fw_activate_arm(
+				break;
+			case NVDIMM_INTEL_FW_ACTIVATE_ARM:
+				rc = nd_intel_test_cmd_fw_activate_arm(
 					t, buf, buf_len, i);
-				अवरोध;
-			हाल ND_INTEL_ENABLE_LSS_STATUS:
-				rc = nd_पूर्णांकel_test_cmd_set_lss_status(t,
+				break;
+			case ND_INTEL_ENABLE_LSS_STATUS:
+				rc = nd_intel_test_cmd_set_lss_status(t,
 						buf, buf_len);
-				अवरोध;
-			हाल ND_INTEL_FW_GET_INFO:
-				rc = nd_पूर्णांकel_test_get_fw_info(t, buf,
+				break;
+			case ND_INTEL_FW_GET_INFO:
+				rc = nd_intel_test_get_fw_info(t, buf,
 						buf_len, i);
-				अवरोध;
-			हाल ND_INTEL_FW_START_UPDATE:
-				rc = nd_पूर्णांकel_test_start_update(t, buf,
+				break;
+			case ND_INTEL_FW_START_UPDATE:
+				rc = nd_intel_test_start_update(t, buf,
 						buf_len, i);
-				अवरोध;
-			हाल ND_INTEL_FW_SEND_DATA:
-				rc = nd_पूर्णांकel_test_send_data(t, buf,
+				break;
+			case ND_INTEL_FW_SEND_DATA:
+				rc = nd_intel_test_send_data(t, buf,
 						buf_len, i);
-				अवरोध;
-			हाल ND_INTEL_FW_FINISH_UPDATE:
-				rc = nd_पूर्णांकel_test_finish_fw(t, buf,
+				break;
+			case ND_INTEL_FW_FINISH_UPDATE:
+				rc = nd_intel_test_finish_fw(t, buf,
 						buf_len, i);
-				अवरोध;
-			हाल ND_INTEL_FW_FINISH_QUERY:
-				rc = nd_पूर्णांकel_test_finish_query(t, buf,
+				break;
+			case ND_INTEL_FW_FINISH_QUERY:
+				rc = nd_intel_test_finish_query(t, buf,
 						buf_len, i);
-				अवरोध;
-			हाल ND_INTEL_SMART:
+				break;
+			case ND_INTEL_SMART:
 				rc = nfit_test_cmd_smart(buf, buf_len,
 						&t->smart[i]);
-				अवरोध;
-			हाल ND_INTEL_SMART_THRESHOLD:
+				break;
+			case ND_INTEL_SMART_THRESHOLD:
 				rc = nfit_test_cmd_smart_threshold(buf,
 						buf_len,
 						&t->smart_threshold[i]);
-				अवरोध;
-			हाल ND_INTEL_SMART_SET_THRESHOLD:
+				break;
+			case ND_INTEL_SMART_SET_THRESHOLD:
 				rc = nfit_test_cmd_smart_set_threshold(buf,
 						buf_len,
 						&t->smart_threshold[i],
 						&t->smart[i],
 						&t->pdev.dev, t->dimm_dev[i]);
-				अवरोध;
-			हाल ND_INTEL_SMART_INJECT:
+				break;
+			case ND_INTEL_SMART_INJECT:
 				rc = nfit_test_cmd_smart_inject(buf,
 						buf_len,
 						&t->smart_threshold[i],
 						&t->smart[i],
 						&t->pdev.dev, t->dimm_dev[i]);
-				अवरोध;
-			शेष:
-				वापस -ENOTTY;
-			पूर्ण
-			वापस override_वापस_code(i, func, rc);
-		पूर्ण
+				break;
+			default:
+				return -ENOTTY;
+			}
+			return override_return_code(i, func, rc);
+		}
 
-		अगर (!test_bit(cmd, &cmd_mask)
+		if (!test_bit(cmd, &cmd_mask)
 				|| !test_bit(func, &nfit_mem->dsm_mask))
-			वापस -ENOTTY;
+			return -ENOTTY;
 
 		i = get_dimm(nfit_mem, func);
-		अगर (i < 0)
-			वापस i;
+		if (i < 0)
+			return i;
 
-		चयन (func) अणु
-		हाल ND_CMD_GET_CONFIG_SIZE:
+		switch (func) {
+		case ND_CMD_GET_CONFIG_SIZE:
 			rc = nfit_test_cmd_get_config_size(buf, buf_len);
-			अवरोध;
-		हाल ND_CMD_GET_CONFIG_DATA:
+			break;
+		case ND_CMD_GET_CONFIG_DATA:
 			rc = nfit_test_cmd_get_config_data(buf, buf_len,
 				t->label[i - t->dcr_idx]);
-			अवरोध;
-		हाल ND_CMD_SET_CONFIG_DATA:
+			break;
+		case ND_CMD_SET_CONFIG_DATA:
 			rc = nfit_test_cmd_set_config_data(buf, buf_len,
 				t->label[i - t->dcr_idx]);
-			अवरोध;
-		शेष:
-			वापस -ENOTTY;
-		पूर्ण
-		वापस override_वापस_code(i, func, rc);
-	पूर्ण अन्यथा अणु
-		काष्ठा ars_state *ars_state = &t->ars_state;
-		काष्ठा nd_cmd_pkg *call_pkg = buf;
+			break;
+		default:
+			return -ENOTTY;
+		}
+		return override_return_code(i, func, rc);
+	} else {
+		struct ars_state *ars_state = &t->ars_state;
+		struct nd_cmd_pkg *call_pkg = buf;
 
-		अगर (!nd_desc)
-			वापस -ENOTTY;
+		if (!nd_desc)
+			return -ENOTTY;
 
-		अगर (cmd == ND_CMD_CALL && call_pkg->nd_family
-				== NVDIMM_BUS_FAMILY_NFIT) अणु
+		if (cmd == ND_CMD_CALL && call_pkg->nd_family
+				== NVDIMM_BUS_FAMILY_NFIT) {
 			func = call_pkg->nd_command;
 			buf_len = call_pkg->nd_size_in + call_pkg->nd_size_out;
-			buf = (व्योम *) call_pkg->nd_payload;
+			buf = (void *) call_pkg->nd_payload;
 
-			चयन (func) अणु
-			हाल NFIT_CMD_TRANSLATE_SPA:
+			switch (func) {
+			case NFIT_CMD_TRANSLATE_SPA:
 				rc = nfit_test_cmd_translate_spa(
 					acpi_desc->nvdimm_bus, buf, buf_len);
-				वापस rc;
-			हाल NFIT_CMD_ARS_INJECT_SET:
+				return rc;
+			case NFIT_CMD_ARS_INJECT_SET:
 				rc = nfit_test_cmd_ars_error_inject(t, buf,
 					buf_len);
-				वापस rc;
-			हाल NFIT_CMD_ARS_INJECT_CLEAR:
+				return rc;
+			case NFIT_CMD_ARS_INJECT_CLEAR:
 				rc = nfit_test_cmd_ars_inject_clear(t, buf,
 					buf_len);
-				वापस rc;
-			हाल NFIT_CMD_ARS_INJECT_GET:
+				return rc;
+			case NFIT_CMD_ARS_INJECT_GET:
 				rc = nfit_test_cmd_ars_inject_status(t, buf,
 					buf_len);
-				वापस rc;
-			शेष:
-				वापस -ENOTTY;
-			पूर्ण
-		पूर्ण अन्यथा अगर (cmd == ND_CMD_CALL && call_pkg->nd_family
-				== NVDIMM_BUS_FAMILY_INTEL) अणु
+				return rc;
+			default:
+				return -ENOTTY;
+			}
+		} else if (cmd == ND_CMD_CALL && call_pkg->nd_family
+				== NVDIMM_BUS_FAMILY_INTEL) {
 			func = call_pkg->nd_command;
 			buf_len = call_pkg->nd_size_in + call_pkg->nd_size_out;
-			buf = (व्योम *) call_pkg->nd_payload;
+			buf = (void *) call_pkg->nd_payload;
 
-			चयन (func) अणु
-			हाल NVDIMM_BUS_INTEL_FW_ACTIVATE_BUSINFO:
-				rc = nvdimm_bus_पूर्णांकel_fw_activate_businfo(t,
+			switch (func) {
+			case NVDIMM_BUS_INTEL_FW_ACTIVATE_BUSINFO:
+				rc = nvdimm_bus_intel_fw_activate_businfo(t,
 						buf, buf_len);
-				वापस rc;
-			हाल NVDIMM_BUS_INTEL_FW_ACTIVATE:
-				rc = nvdimm_bus_पूर्णांकel_fw_activate(t, buf,
+				return rc;
+			case NVDIMM_BUS_INTEL_FW_ACTIVATE:
+				rc = nvdimm_bus_intel_fw_activate(t, buf,
 						buf_len);
-				वापस rc;
-			शेष:
-				वापस -ENOTTY;
-			पूर्ण
-		पूर्ण अन्यथा अगर (cmd == ND_CMD_CALL)
-			वापस -ENOTTY;
+				return rc;
+			default:
+				return -ENOTTY;
+			}
+		} else if (cmd == ND_CMD_CALL)
+			return -ENOTTY;
 
-		अगर (!nd_desc || !test_bit(cmd, &nd_desc->cmd_mask))
-			वापस -ENOTTY;
+		if (!nd_desc || !test_bit(cmd, &nd_desc->cmd_mask))
+			return -ENOTTY;
 
-		चयन (func) अणु
-		हाल ND_CMD_ARS_CAP:
+		switch (func) {
+		case ND_CMD_ARS_CAP:
 			rc = nfit_test_cmd_ars_cap(buf, buf_len);
-			अवरोध;
-		हाल ND_CMD_ARS_START:
+			break;
+		case ND_CMD_ARS_START:
 			rc = nfit_test_cmd_ars_start(t, ars_state, buf,
 					buf_len, cmd_rc);
-			अवरोध;
-		हाल ND_CMD_ARS_STATUS:
+			break;
+		case ND_CMD_ARS_STATUS:
 			rc = nfit_test_cmd_ars_status(ars_state, buf, buf_len,
 					cmd_rc);
-			अवरोध;
-		हाल ND_CMD_CLEAR_ERROR:
+			break;
+		case ND_CMD_CLEAR_ERROR:
 			rc = nfit_test_cmd_clear_error(t, buf, buf_len, cmd_rc);
-			अवरोध;
-		शेष:
-			वापस -ENOTTY;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			return -ENOTTY;
+		}
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल DEFINE_SPINLOCK(nfit_test_lock);
-अटल काष्ठा nfit_test *instances[NUM_NFITS];
+static DEFINE_SPINLOCK(nfit_test_lock);
+static struct nfit_test *instances[NUM_NFITS];
 
-अटल व्योम release_nfit_res(व्योम *data)
-अणु
-	काष्ठा nfit_test_resource *nfit_res = data;
+static void release_nfit_res(void *data)
+{
+	struct nfit_test_resource *nfit_res = data;
 
 	spin_lock(&nfit_test_lock);
 	list_del(&nfit_res->list);
 	spin_unlock(&nfit_test_lock);
 
-	अगर (resource_size(&nfit_res->res) >= DIMM_SIZE)
-		gen_pool_मुक्त(nfit_pool, nfit_res->res.start,
+	if (resource_size(&nfit_res->res) >= DIMM_SIZE)
+		gen_pool_free(nfit_pool, nfit_res->res.start,
 				resource_size(&nfit_res->res));
-	vमुक्त(nfit_res->buf);
-	kमुक्त(nfit_res);
-पूर्ण
+	vfree(nfit_res->buf);
+	kfree(nfit_res);
+}
 
-अटल व्योम *__test_alloc(काष्ठा nfit_test *t, माप_प्रकार size, dma_addr_t *dma,
-		व्योम *buf)
-अणु
-	काष्ठा device *dev = &t->pdev.dev;
-	काष्ठा nfit_test_resource *nfit_res = kzalloc(माप(*nfit_res),
+static void *__test_alloc(struct nfit_test *t, size_t size, dma_addr_t *dma,
+		void *buf)
+{
+	struct device *dev = &t->pdev.dev;
+	struct nfit_test_resource *nfit_res = kzalloc(sizeof(*nfit_res),
 			GFP_KERNEL);
-	पूर्णांक rc;
+	int rc;
 
-	अगर (!buf || !nfit_res || !*dma)
-		जाओ err;
+	if (!buf || !nfit_res || !*dma)
+		goto err;
 	rc = devm_add_action(dev, release_nfit_res, nfit_res);
-	अगर (rc)
-		जाओ err;
+	if (rc)
+		goto err;
 	INIT_LIST_HEAD(&nfit_res->list);
-	स_रखो(buf, 0, size);
+	memset(buf, 0, size);
 	nfit_res->dev = dev;
 	nfit_res->buf = buf;
 	nfit_res->res.start = *dma;
@@ -1638,393 +1637,393 @@ err:
 	list_add(&nfit_res->list, &t->resources);
 	spin_unlock(&nfit_test_lock);
 
-	वापस nfit_res->buf;
+	return nfit_res->buf;
  err:
-	अगर (*dma && size >= DIMM_SIZE)
-		gen_pool_मुक्त(nfit_pool, *dma, size);
-	अगर (buf)
-		vमुक्त(buf);
-	kमुक्त(nfit_res);
-	वापस शून्य;
-पूर्ण
+	if (*dma && size >= DIMM_SIZE)
+		gen_pool_free(nfit_pool, *dma, size);
+	if (buf)
+		vfree(buf);
+	kfree(nfit_res);
+	return NULL;
+}
 
-अटल व्योम *test_alloc(काष्ठा nfit_test *t, माप_प्रकार size, dma_addr_t *dma)
-अणु
-	काष्ठा genpool_data_align data = अणु
+static void *test_alloc(struct nfit_test *t, size_t size, dma_addr_t *dma)
+{
+	struct genpool_data_align data = {
 		.align = SZ_128M,
-	पूर्ण;
-	व्योम *buf = vदो_स्मृति(size);
+	};
+	void *buf = vmalloc(size);
 
-	अगर (size >= DIMM_SIZE)
+	if (size >= DIMM_SIZE)
 		*dma = gen_pool_alloc_algo(nfit_pool, size,
 				gen_pool_first_fit_align, &data);
-	अन्यथा
-		*dma = (अचिन्हित दीर्घ) buf;
-	वापस __test_alloc(t, size, dma, buf);
-पूर्ण
+	else
+		*dma = (unsigned long) buf;
+	return __test_alloc(t, size, dma, buf);
+}
 
-अटल काष्ठा nfit_test_resource *nfit_test_lookup(resource_माप_प्रकार addr)
-अणु
-	पूर्णांक i;
+static struct nfit_test_resource *nfit_test_lookup(resource_size_t addr)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(instances); i++) अणु
-		काष्ठा nfit_test_resource *n, *nfit_res = शून्य;
-		काष्ठा nfit_test *t = instances[i];
+	for (i = 0; i < ARRAY_SIZE(instances); i++) {
+		struct nfit_test_resource *n, *nfit_res = NULL;
+		struct nfit_test *t = instances[i];
 
-		अगर (!t)
-			जारी;
+		if (!t)
+			continue;
 		spin_lock(&nfit_test_lock);
-		list_क्रम_each_entry(n, &t->resources, list) अणु
-			अगर (addr >= n->res.start && (addr < n->res.start
-						+ resource_size(&n->res))) अणु
+		list_for_each_entry(n, &t->resources, list) {
+			if (addr >= n->res.start && (addr < n->res.start
+						+ resource_size(&n->res))) {
 				nfit_res = n;
-				अवरोध;
-			पूर्ण अन्यथा अगर (addr >= (अचिन्हित दीर्घ) n->buf
-					&& (addr < (अचिन्हित दीर्घ) n->buf
-						+ resource_size(&n->res))) अणु
+				break;
+			} else if (addr >= (unsigned long) n->buf
+					&& (addr < (unsigned long) n->buf
+						+ resource_size(&n->res))) {
 				nfit_res = n;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 		spin_unlock(&nfit_test_lock);
-		अगर (nfit_res)
-			वापस nfit_res;
-	पूर्ण
+		if (nfit_res)
+			return nfit_res;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक ars_state_init(काष्ठा device *dev, काष्ठा ars_state *ars_state)
-अणु
-	/* क्रम testing, only store up to n records that fit within 4k */
+static int ars_state_init(struct device *dev, struct ars_state *ars_state)
+{
+	/* for testing, only store up to n records that fit within 4k */
 	ars_state->ars_status = devm_kzalloc(dev,
-			माप(काष्ठा nd_cmd_ars_status) + SZ_4K, GFP_KERNEL);
-	अगर (!ars_state->ars_status)
-		वापस -ENOMEM;
+			sizeof(struct nd_cmd_ars_status) + SZ_4K, GFP_KERNEL);
+	if (!ars_state->ars_status)
+		return -ENOMEM;
 	spin_lock_init(&ars_state->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम put_dimms(व्योम *data)
-अणु
-	काष्ठा nfit_test *t = data;
-	पूर्णांक i;
+static void put_dimms(void *data)
+{
+	struct nfit_test *t = data;
+	int i;
 
-	क्रम (i = 0; i < t->num_dcr; i++)
-		अगर (t->dimm_dev[i])
-			device_unरेजिस्टर(t->dimm_dev[i]);
-पूर्ण
+	for (i = 0; i < t->num_dcr; i++)
+		if (t->dimm_dev[i])
+			device_unregister(t->dimm_dev[i]);
+}
 
-अटल काष्ठा class *nfit_test_dimm;
+static struct class *nfit_test_dimm;
 
-अटल पूर्णांक dimm_name_to_id(काष्ठा device *dev)
-अणु
-	पूर्णांक dimm;
+static int dimm_name_to_id(struct device *dev)
+{
+	int dimm;
 
-	अगर (माला_पूछो(dev_name(dev), "test_dimm%d", &dimm) != 1)
-		वापस -ENXIO;
-	वापस dimm;
-पूर्ण
+	if (sscanf(dev_name(dev), "test_dimm%d", &dimm) != 1)
+		return -ENXIO;
+	return dimm;
+}
 
-अटल sमाप_प्रकार handle_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		अक्षर *buf)
-अणु
-	पूर्णांक dimm = dimm_name_to_id(dev);
+static ssize_t handle_show(struct device *dev, struct device_attribute *attr,
+		char *buf)
+{
+	int dimm = dimm_name_to_id(dev);
 
-	अगर (dimm < 0)
-		वापस dimm;
+	if (dimm < 0)
+		return dimm;
 
-	वापस प्र_लिखो(buf, "%#x\n", handle[dimm]);
-पूर्ण
+	return sprintf(buf, "%#x\n", handle[dimm]);
+}
 DEVICE_ATTR_RO(handle);
 
-अटल sमाप_प्रकार fail_cmd_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		अक्षर *buf)
-अणु
-	पूर्णांक dimm = dimm_name_to_id(dev);
+static ssize_t fail_cmd_show(struct device *dev, struct device_attribute *attr,
+		char *buf)
+{
+	int dimm = dimm_name_to_id(dev);
 
-	अगर (dimm < 0)
-		वापस dimm;
+	if (dimm < 0)
+		return dimm;
 
-	वापस प्र_लिखो(buf, "%#lx\n", dimm_fail_cmd_flags[dimm]);
-पूर्ण
+	return sprintf(buf, "%#lx\n", dimm_fail_cmd_flags[dimm]);
+}
 
-अटल sमाप_प्रकार fail_cmd_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	पूर्णांक dimm = dimm_name_to_id(dev);
-	अचिन्हित दीर्घ val;
-	sमाप_प्रकार rc;
+static ssize_t fail_cmd_store(struct device *dev, struct device_attribute *attr,
+		const char *buf, size_t size)
+{
+	int dimm = dimm_name_to_id(dev);
+	unsigned long val;
+	ssize_t rc;
 
-	अगर (dimm < 0)
-		वापस dimm;
+	if (dimm < 0)
+		return dimm;
 
-	rc = kम_से_दीर्घ(buf, 0, &val);
-	अगर (rc)
-		वापस rc;
+	rc = kstrtol(buf, 0, &val);
+	if (rc)
+		return rc;
 
 	dimm_fail_cmd_flags[dimm] = val;
-	वापस size;
-पूर्ण
-अटल DEVICE_ATTR_RW(fail_cmd);
+	return size;
+}
+static DEVICE_ATTR_RW(fail_cmd);
 
-अटल sमाप_प्रकार fail_cmd_code_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		अक्षर *buf)
-अणु
-	पूर्णांक dimm = dimm_name_to_id(dev);
+static ssize_t fail_cmd_code_show(struct device *dev, struct device_attribute *attr,
+		char *buf)
+{
+	int dimm = dimm_name_to_id(dev);
 
-	अगर (dimm < 0)
-		वापस dimm;
+	if (dimm < 0)
+		return dimm;
 
-	वापस प्र_लिखो(buf, "%d\n", dimm_fail_cmd_code[dimm]);
-पूर्ण
+	return sprintf(buf, "%d\n", dimm_fail_cmd_code[dimm]);
+}
 
-अटल sमाप_प्रकार fail_cmd_code_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	पूर्णांक dimm = dimm_name_to_id(dev);
-	अचिन्हित दीर्घ val;
-	sमाप_प्रकार rc;
+static ssize_t fail_cmd_code_store(struct device *dev, struct device_attribute *attr,
+		const char *buf, size_t size)
+{
+	int dimm = dimm_name_to_id(dev);
+	unsigned long val;
+	ssize_t rc;
 
-	अगर (dimm < 0)
-		वापस dimm;
+	if (dimm < 0)
+		return dimm;
 
-	rc = kम_से_दीर्घ(buf, 0, &val);
-	अगर (rc)
-		वापस rc;
+	rc = kstrtol(buf, 0, &val);
+	if (rc)
+		return rc;
 
 	dimm_fail_cmd_code[dimm] = val;
-	वापस size;
-पूर्ण
-अटल DEVICE_ATTR_RW(fail_cmd_code);
+	return size;
+}
+static DEVICE_ATTR_RW(fail_cmd_code);
 
-अटल sमाप_प्रकार lock_dimm_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	पूर्णांक dimm = dimm_name_to_id(dev);
-	काष्ठा nfit_test_sec *sec = &dimm_sec_info[dimm];
+static ssize_t lock_dimm_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t size)
+{
+	int dimm = dimm_name_to_id(dev);
+	struct nfit_test_sec *sec = &dimm_sec_info[dimm];
 
 	sec->state = ND_INTEL_SEC_STATE_ENABLED | ND_INTEL_SEC_STATE_LOCKED;
-	वापस size;
-पूर्ण
-अटल DEVICE_ATTR_WO(lock_dimm);
+	return size;
+}
+static DEVICE_ATTR_WO(lock_dimm);
 
-अटल काष्ठा attribute *nfit_test_dimm_attributes[] = अणु
+static struct attribute *nfit_test_dimm_attributes[] = {
 	&dev_attr_fail_cmd.attr,
 	&dev_attr_fail_cmd_code.attr,
 	&dev_attr_handle.attr,
 	&dev_attr_lock_dimm.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा attribute_group nfit_test_dimm_attribute_group = अणु
+static struct attribute_group nfit_test_dimm_attribute_group = {
 	.attrs = nfit_test_dimm_attributes,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *nfit_test_dimm_attribute_groups[] = अणु
+static const struct attribute_group *nfit_test_dimm_attribute_groups[] = {
 	&nfit_test_dimm_attribute_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल पूर्णांक nfit_test_dimm_init(काष्ठा nfit_test *t)
-अणु
-	पूर्णांक i;
+static int nfit_test_dimm_init(struct nfit_test *t)
+{
+	int i;
 
-	अगर (devm_add_action_or_reset(&t->pdev.dev, put_dimms, t))
-		वापस -ENOMEM;
-	क्रम (i = 0; i < t->num_dcr; i++) अणु
+	if (devm_add_action_or_reset(&t->pdev.dev, put_dimms, t))
+		return -ENOMEM;
+	for (i = 0; i < t->num_dcr; i++) {
 		t->dimm_dev[i] = device_create_with_groups(nfit_test_dimm,
-				&t->pdev.dev, 0, शून्य,
+				&t->pdev.dev, 0, NULL,
 				nfit_test_dimm_attribute_groups,
 				"test_dimm%d", i + t->dcr_idx);
-		अगर (!t->dimm_dev[i])
-			वापस -ENOMEM;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (!t->dimm_dev[i])
+			return -ENOMEM;
+	}
+	return 0;
+}
 
-अटल व्योम security_init(काष्ठा nfit_test *t)
-अणु
-	पूर्णांक i;
+static void security_init(struct nfit_test *t)
+{
+	int i;
 
-	क्रम (i = 0; i < t->num_dcr; i++) अणु
-		काष्ठा nfit_test_sec *sec = &dimm_sec_info[i];
+	for (i = 0; i < t->num_dcr; i++) {
+		struct nfit_test_sec *sec = &dimm_sec_info[i];
 
 		sec->ext_state = ND_INTEL_SEC_ESTATE_ENABLED;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम smart_init(काष्ठा nfit_test *t)
-अणु
-	पूर्णांक i;
-	स्थिर काष्ठा nd_पूर्णांकel_smart_threshold smart_t_data = अणु
+static void smart_init(struct nfit_test *t)
+{
+	int i;
+	const struct nd_intel_smart_threshold smart_t_data = {
 		.alarm_control = ND_INTEL_SMART_SPARE_TRIP
 			| ND_INTEL_SMART_TEMP_TRIP,
 		.media_temperature = 40 * 16,
 		.ctrl_temperature = 30 * 16,
 		.spares = 5,
-	पूर्ण;
+	};
 
-	क्रम (i = 0; i < t->num_dcr; i++) अणु
-		स_नकल(&t->smart[i], &smart_def, माप(smart_def));
-		स_नकल(&t->smart_threshold[i], &smart_t_data,
-				माप(smart_t_data));
-	पूर्ण
-पूर्ण
+	for (i = 0; i < t->num_dcr; i++) {
+		memcpy(&t->smart[i], &smart_def, sizeof(smart_def));
+		memcpy(&t->smart_threshold[i], &smart_t_data,
+				sizeof(smart_t_data));
+	}
+}
 
-अटल माप_प्रकार माप_spa(काष्ठा acpi_nfit_प्रणाली_address *spa)
-अणु
+static size_t sizeof_spa(struct acpi_nfit_system_address *spa)
+{
 	/* until spa location cookie support is added... */
-	वापस माप(*spa) - 8;
-पूर्ण
+	return sizeof(*spa) - 8;
+}
 
-अटल पूर्णांक nfit_test0_alloc(काष्ठा nfit_test *t)
-अणु
-	काष्ठा acpi_nfit_प्रणाली_address *spa = शून्य;
-	माप_प्रकार nfit_size = माप_spa(spa) * NUM_SPA
-			+ माप(काष्ठा acpi_nfit_memory_map) * NUM_MEM
-			+ माप(काष्ठा acpi_nfit_control_region) * NUM_DCR
-			+ दुरत्व(काष्ठा acpi_nfit_control_region,
-					winकरोw_size) * NUM_DCR
-			+ माप(काष्ठा acpi_nfit_data_region) * NUM_BDW
-			+ (माप(काष्ठा acpi_nfit_flush_address)
-					+ माप(u64) * NUM_HINTS) * NUM_DCR
-			+ माप(काष्ठा acpi_nfit_capabilities);
-	पूर्णांक i;
+static int nfit_test0_alloc(struct nfit_test *t)
+{
+	struct acpi_nfit_system_address *spa = NULL;
+	size_t nfit_size = sizeof_spa(spa) * NUM_SPA
+			+ sizeof(struct acpi_nfit_memory_map) * NUM_MEM
+			+ sizeof(struct acpi_nfit_control_region) * NUM_DCR
+			+ offsetof(struct acpi_nfit_control_region,
+					window_size) * NUM_DCR
+			+ sizeof(struct acpi_nfit_data_region) * NUM_BDW
+			+ (sizeof(struct acpi_nfit_flush_address)
+					+ sizeof(u64) * NUM_HINTS) * NUM_DCR
+			+ sizeof(struct acpi_nfit_capabilities);
+	int i;
 
 	t->nfit_buf = test_alloc(t, nfit_size, &t->nfit_dma);
-	अगर (!t->nfit_buf)
-		वापस -ENOMEM;
+	if (!t->nfit_buf)
+		return -ENOMEM;
 	t->nfit_size = nfit_size;
 
 	t->spa_set[0] = test_alloc(t, SPA0_SIZE, &t->spa_set_dma[0]);
-	अगर (!t->spa_set[0])
-		वापस -ENOMEM;
+	if (!t->spa_set[0])
+		return -ENOMEM;
 
 	t->spa_set[1] = test_alloc(t, SPA1_SIZE, &t->spa_set_dma[1]);
-	अगर (!t->spa_set[1])
-		वापस -ENOMEM;
+	if (!t->spa_set[1])
+		return -ENOMEM;
 
 	t->spa_set[2] = test_alloc(t, SPA0_SIZE, &t->spa_set_dma[2]);
-	अगर (!t->spa_set[2])
-		वापस -ENOMEM;
+	if (!t->spa_set[2])
+		return -ENOMEM;
 
-	क्रम (i = 0; i < t->num_dcr; i++) अणु
+	for (i = 0; i < t->num_dcr; i++) {
 		t->dimm[i] = test_alloc(t, DIMM_SIZE, &t->dimm_dma[i]);
-		अगर (!t->dimm[i])
-			वापस -ENOMEM;
+		if (!t->dimm[i])
+			return -ENOMEM;
 
 		t->label[i] = test_alloc(t, LABEL_SIZE, &t->label_dma[i]);
-		अगर (!t->label[i])
-			वापस -ENOMEM;
-		प्र_लिखो(t->label[i], "label%d", i);
+		if (!t->label[i])
+			return -ENOMEM;
+		sprintf(t->label[i], "label%d", i);
 
 		t->flush[i] = test_alloc(t, max(PAGE_SIZE,
-					माप(u64) * NUM_HINTS),
+					sizeof(u64) * NUM_HINTS),
 				&t->flush_dma[i]);
-		अगर (!t->flush[i])
-			वापस -ENOMEM;
-	पूर्ण
+		if (!t->flush[i])
+			return -ENOMEM;
+	}
 
-	क्रम (i = 0; i < t->num_dcr; i++) अणु
+	for (i = 0; i < t->num_dcr; i++) {
 		t->dcr[i] = test_alloc(t, LABEL_SIZE, &t->dcr_dma[i]);
-		अगर (!t->dcr[i])
-			वापस -ENOMEM;
-	पूर्ण
+		if (!t->dcr[i])
+			return -ENOMEM;
+	}
 
-	t->_fit = test_alloc(t, माप(जोड़ acpi_object **), &t->_fit_dma);
-	अगर (!t->_fit)
-		वापस -ENOMEM;
+	t->_fit = test_alloc(t, sizeof(union acpi_object **), &t->_fit_dma);
+	if (!t->_fit)
+		return -ENOMEM;
 
-	अगर (nfit_test_dimm_init(t))
-		वापस -ENOMEM;
+	if (nfit_test_dimm_init(t))
+		return -ENOMEM;
 	smart_init(t);
 	security_init(t);
-	वापस ars_state_init(&t->pdev.dev, &t->ars_state);
-पूर्ण
+	return ars_state_init(&t->pdev.dev, &t->ars_state);
+}
 
-अटल पूर्णांक nfit_test1_alloc(काष्ठा nfit_test *t)
-अणु
-	काष्ठा acpi_nfit_प्रणाली_address *spa = शून्य;
-	माप_प्रकार nfit_size = माप_spa(spa) * 2
-		+ माप(काष्ठा acpi_nfit_memory_map) * 2
-		+ दुरत्व(काष्ठा acpi_nfit_control_region, winकरोw_size) * 2;
-	पूर्णांक i;
+static int nfit_test1_alloc(struct nfit_test *t)
+{
+	struct acpi_nfit_system_address *spa = NULL;
+	size_t nfit_size = sizeof_spa(spa) * 2
+		+ sizeof(struct acpi_nfit_memory_map) * 2
+		+ offsetof(struct acpi_nfit_control_region, window_size) * 2;
+	int i;
 
 	t->nfit_buf = test_alloc(t, nfit_size, &t->nfit_dma);
-	अगर (!t->nfit_buf)
-		वापस -ENOMEM;
+	if (!t->nfit_buf)
+		return -ENOMEM;
 	t->nfit_size = nfit_size;
 
 	t->spa_set[0] = test_alloc(t, SPA2_SIZE, &t->spa_set_dma[0]);
-	अगर (!t->spa_set[0])
-		वापस -ENOMEM;
+	if (!t->spa_set[0])
+		return -ENOMEM;
 
-	क्रम (i = 0; i < t->num_dcr; i++) अणु
+	for (i = 0; i < t->num_dcr; i++) {
 		t->label[i] = test_alloc(t, LABEL_SIZE, &t->label_dma[i]);
-		अगर (!t->label[i])
-			वापस -ENOMEM;
-		प्र_लिखो(t->label[i], "label%d", i);
-	पूर्ण
+		if (!t->label[i])
+			return -ENOMEM;
+		sprintf(t->label[i], "label%d", i);
+	}
 
 	t->spa_set[1] = test_alloc(t, SPA_VCD_SIZE, &t->spa_set_dma[1]);
-	अगर (!t->spa_set[1])
-		वापस -ENOMEM;
+	if (!t->spa_set[1])
+		return -ENOMEM;
 
-	अगर (nfit_test_dimm_init(t))
-		वापस -ENOMEM;
+	if (nfit_test_dimm_init(t))
+		return -ENOMEM;
 	smart_init(t);
-	वापस ars_state_init(&t->pdev.dev, &t->ars_state);
-पूर्ण
+	return ars_state_init(&t->pdev.dev, &t->ars_state);
+}
 
-अटल व्योम dcr_common_init(काष्ठा acpi_nfit_control_region *dcr)
-अणु
-	dcr->venकरोr_id = 0xabcd;
+static void dcr_common_init(struct acpi_nfit_control_region *dcr)
+{
+	dcr->vendor_id = 0xabcd;
 	dcr->device_id = 0;
 	dcr->revision_id = 1;
 	dcr->valid_fields = 1;
 	dcr->manufacturing_location = 0xa;
 	dcr->manufacturing_date = cpu_to_be16(2016);
-पूर्ण
+}
 
-अटल व्योम nfit_test0_setup(काष्ठा nfit_test *t)
-अणु
-	स्थिर पूर्णांक flush_hपूर्णांक_size = माप(काष्ठा acpi_nfit_flush_address)
-		+ (माप(u64) * NUM_HINTS);
-	काष्ठा acpi_nfit_desc *acpi_desc;
-	काष्ठा acpi_nfit_memory_map *memdev;
-	व्योम *nfit_buf = t->nfit_buf;
-	काष्ठा acpi_nfit_प्रणाली_address *spa;
-	काष्ठा acpi_nfit_control_region *dcr;
-	काष्ठा acpi_nfit_data_region *bdw;
-	काष्ठा acpi_nfit_flush_address *flush;
-	काष्ठा acpi_nfit_capabilities *pcap;
-	अचिन्हित पूर्णांक offset = 0, i;
-	अचिन्हित दीर्घ *acpi_mask;
+static void nfit_test0_setup(struct nfit_test *t)
+{
+	const int flush_hint_size = sizeof(struct acpi_nfit_flush_address)
+		+ (sizeof(u64) * NUM_HINTS);
+	struct acpi_nfit_desc *acpi_desc;
+	struct acpi_nfit_memory_map *memdev;
+	void *nfit_buf = t->nfit_buf;
+	struct acpi_nfit_system_address *spa;
+	struct acpi_nfit_control_region *dcr;
+	struct acpi_nfit_data_region *bdw;
+	struct acpi_nfit_flush_address *flush;
+	struct acpi_nfit_capabilities *pcap;
+	unsigned int offset = 0, i;
+	unsigned long *acpi_mask;
 
 	/*
-	 * spa0 (पूर्णांकerleave first half of dimm0 and dimm1, note storage
-	 * करोes not actually alias the related block-data-winकरोw
+	 * spa0 (interleave first half of dimm0 and dimm1, note storage
+	 * does not actually alias the related block-data-window
 	 * regions)
 	 */
 	spa = nfit_buf;
 	spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-	spa->header.length = माप_spa(spa);
-	स_नकल(spa->range_guid, to_nfit_uuid(NFIT_SPA_PM), 16);
+	spa->header.length = sizeof_spa(spa);
+	memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_PM), 16);
 	spa->range_index = 0+1;
 	spa->address = t->spa_set_dma[0];
 	spa->length = SPA0_SIZE;
 	offset += spa->header.length;
 
 	/*
-	 * spa1 (पूर्णांकerleave last half of the 4 DIMMS, note storage
-	 * करोes not actually alias the related block-data-winकरोw
+	 * spa1 (interleave last half of the 4 DIMMS, note storage
+	 * does not actually alias the related block-data-window
 	 * regions)
 	 */
 	spa = nfit_buf + offset;
 	spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-	spa->header.length = माप_spa(spa);
-	स_नकल(spa->range_guid, to_nfit_uuid(NFIT_SPA_PM), 16);
+	spa->header.length = sizeof_spa(spa);
+	memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_PM), 16);
 	spa->range_index = 1+1;
 	spa->address = t->spa_set_dma[1];
 	spa->length = SPA1_SIZE;
@@ -2033,8 +2032,8 @@ DEVICE_ATTR_RO(handle);
 	/* spa2 (dcr0) dimm0 */
 	spa = nfit_buf + offset;
 	spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-	spa->header.length = माप_spa(spa);
-	स_नकल(spa->range_guid, to_nfit_uuid(NFIT_SPA_DCR), 16);
+	spa->header.length = sizeof_spa(spa);
+	memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_DCR), 16);
 	spa->range_index = 2+1;
 	spa->address = t->dcr_dma[0];
 	spa->length = DCR_SIZE;
@@ -2043,8 +2042,8 @@ DEVICE_ATTR_RO(handle);
 	/* spa3 (dcr1) dimm1 */
 	spa = nfit_buf + offset;
 	spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-	spa->header.length = माप_spa(spa);
-	स_नकल(spa->range_guid, to_nfit_uuid(NFIT_SPA_DCR), 16);
+	spa->header.length = sizeof_spa(spa);
+	memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_DCR), 16);
 	spa->range_index = 3+1;
 	spa->address = t->dcr_dma[1];
 	spa->length = DCR_SIZE;
@@ -2053,8 +2052,8 @@ DEVICE_ATTR_RO(handle);
 	/* spa4 (dcr2) dimm2 */
 	spa = nfit_buf + offset;
 	spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-	spa->header.length = माप_spa(spa);
-	स_नकल(spa->range_guid, to_nfit_uuid(NFIT_SPA_DCR), 16);
+	spa->header.length = sizeof_spa(spa);
+	memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_DCR), 16);
 	spa->range_index = 4+1;
 	spa->address = t->dcr_dma[2];
 	spa->length = DCR_SIZE;
@@ -2063,48 +2062,48 @@ DEVICE_ATTR_RO(handle);
 	/* spa5 (dcr3) dimm3 */
 	spa = nfit_buf + offset;
 	spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-	spa->header.length = माप_spa(spa);
-	स_नकल(spa->range_guid, to_nfit_uuid(NFIT_SPA_DCR), 16);
+	spa->header.length = sizeof_spa(spa);
+	memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_DCR), 16);
 	spa->range_index = 5+1;
 	spa->address = t->dcr_dma[3];
 	spa->length = DCR_SIZE;
 	offset += spa->header.length;
 
-	/* spa6 (bdw क्रम dcr0) dimm0 */
+	/* spa6 (bdw for dcr0) dimm0 */
 	spa = nfit_buf + offset;
 	spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-	spa->header.length = माप_spa(spa);
-	स_नकल(spa->range_guid, to_nfit_uuid(NFIT_SPA_BDW), 16);
+	spa->header.length = sizeof_spa(spa);
+	memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_BDW), 16);
 	spa->range_index = 6+1;
 	spa->address = t->dimm_dma[0];
 	spa->length = DIMM_SIZE;
 	offset += spa->header.length;
 
-	/* spa7 (bdw क्रम dcr1) dimm1 */
+	/* spa7 (bdw for dcr1) dimm1 */
 	spa = nfit_buf + offset;
 	spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-	spa->header.length = माप_spa(spa);
-	स_नकल(spa->range_guid, to_nfit_uuid(NFIT_SPA_BDW), 16);
+	spa->header.length = sizeof_spa(spa);
+	memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_BDW), 16);
 	spa->range_index = 7+1;
 	spa->address = t->dimm_dma[1];
 	spa->length = DIMM_SIZE;
 	offset += spa->header.length;
 
-	/* spa8 (bdw क्रम dcr2) dimm2 */
+	/* spa8 (bdw for dcr2) dimm2 */
 	spa = nfit_buf + offset;
 	spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-	spa->header.length = माप_spa(spa);
-	स_नकल(spa->range_guid, to_nfit_uuid(NFIT_SPA_BDW), 16);
+	spa->header.length = sizeof_spa(spa);
+	memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_BDW), 16);
 	spa->range_index = 8+1;
 	spa->address = t->dimm_dma[2];
 	spa->length = DIMM_SIZE;
 	offset += spa->header.length;
 
-	/* spa9 (bdw क्रम dcr3) dimm3 */
+	/* spa9 (bdw for dcr3) dimm3 */
 	spa = nfit_buf + offset;
 	spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-	spa->header.length = माप_spa(spa);
-	स_नकल(spa->range_guid, to_nfit_uuid(NFIT_SPA_BDW), 16);
+	spa->header.length = sizeof_spa(spa);
+	memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_BDW), 16);
 	spa->range_index = 9+1;
 	spa->address = t->dimm_dma[3];
 	spa->length = DIMM_SIZE;
@@ -2113,7 +2112,7 @@ DEVICE_ATTR_RO(handle);
 	/* mem-region0 (spa0, dimm0) */
 	memdev = nfit_buf + offset;
 	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-	memdev->header.length = माप(*memdev);
+	memdev->header.length = sizeof(*memdev);
 	memdev->device_handle = handle[0];
 	memdev->physical_id = 0;
 	memdev->region_id = 0;
@@ -2122,14 +2121,14 @@ DEVICE_ATTR_RO(handle);
 	memdev->region_size = SPA0_SIZE/2;
 	memdev->region_offset = 1;
 	memdev->address = 0;
-	memdev->पूर्णांकerleave_index = 0;
-	memdev->पूर्णांकerleave_ways = 2;
+	memdev->interleave_index = 0;
+	memdev->interleave_ways = 2;
 	offset += memdev->header.length;
 
 	/* mem-region1 (spa0, dimm1) */
 	memdev = nfit_buf + offset;
 	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-	memdev->header.length = माप(*memdev);
+	memdev->header.length = sizeof(*memdev);
 	memdev->device_handle = handle[1];
 	memdev->physical_id = 1;
 	memdev->region_id = 0;
@@ -2138,15 +2137,15 @@ DEVICE_ATTR_RO(handle);
 	memdev->region_size = SPA0_SIZE/2;
 	memdev->region_offset = (1 << 8);
 	memdev->address = 0;
-	memdev->पूर्णांकerleave_index = 0;
-	memdev->पूर्णांकerleave_ways = 2;
+	memdev->interleave_index = 0;
+	memdev->interleave_ways = 2;
 	memdev->flags = ACPI_NFIT_MEM_HEALTH_ENABLED;
 	offset += memdev->header.length;
 
 	/* mem-region2 (spa1, dimm0) */
 	memdev = nfit_buf + offset;
 	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-	memdev->header.length = माप(*memdev);
+	memdev->header.length = sizeof(*memdev);
 	memdev->device_handle = handle[0];
 	memdev->physical_id = 0;
 	memdev->region_id = 1;
@@ -2155,15 +2154,15 @@ DEVICE_ATTR_RO(handle);
 	memdev->region_size = SPA1_SIZE/4;
 	memdev->region_offset = (1 << 16);
 	memdev->address = SPA0_SIZE/2;
-	memdev->पूर्णांकerleave_index = 0;
-	memdev->पूर्णांकerleave_ways = 4;
+	memdev->interleave_index = 0;
+	memdev->interleave_ways = 4;
 	memdev->flags = ACPI_NFIT_MEM_HEALTH_ENABLED;
 	offset += memdev->header.length;
 
 	/* mem-region3 (spa1, dimm1) */
 	memdev = nfit_buf + offset;
 	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-	memdev->header.length = माप(*memdev);
+	memdev->header.length = sizeof(*memdev);
 	memdev->device_handle = handle[1];
 	memdev->physical_id = 1;
 	memdev->region_id = 1;
@@ -2172,14 +2171,14 @@ DEVICE_ATTR_RO(handle);
 	memdev->region_size = SPA1_SIZE/4;
 	memdev->region_offset = (1 << 24);
 	memdev->address = SPA0_SIZE/2;
-	memdev->पूर्णांकerleave_index = 0;
-	memdev->पूर्णांकerleave_ways = 4;
+	memdev->interleave_index = 0;
+	memdev->interleave_ways = 4;
 	offset += memdev->header.length;
 
 	/* mem-region4 (spa1, dimm2) */
 	memdev = nfit_buf + offset;
 	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-	memdev->header.length = माप(*memdev);
+	memdev->header.length = sizeof(*memdev);
 	memdev->device_handle = handle[2];
 	memdev->physical_id = 2;
 	memdev->region_id = 0;
@@ -2188,15 +2187,15 @@ DEVICE_ATTR_RO(handle);
 	memdev->region_size = SPA1_SIZE/4;
 	memdev->region_offset = (1ULL << 32);
 	memdev->address = SPA0_SIZE/2;
-	memdev->पूर्णांकerleave_index = 0;
-	memdev->पूर्णांकerleave_ways = 4;
+	memdev->interleave_index = 0;
+	memdev->interleave_ways = 4;
 	memdev->flags = ACPI_NFIT_MEM_HEALTH_ENABLED;
 	offset += memdev->header.length;
 
 	/* mem-region5 (spa1, dimm3) */
 	memdev = nfit_buf + offset;
 	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-	memdev->header.length = माप(*memdev);
+	memdev->header.length = sizeof(*memdev);
 	memdev->device_handle = handle[3];
 	memdev->physical_id = 3;
 	memdev->region_id = 0;
@@ -2205,14 +2204,14 @@ DEVICE_ATTR_RO(handle);
 	memdev->region_size = SPA1_SIZE/4;
 	memdev->region_offset = (1ULL << 40);
 	memdev->address = SPA0_SIZE/2;
-	memdev->पूर्णांकerleave_index = 0;
-	memdev->पूर्णांकerleave_ways = 4;
+	memdev->interleave_index = 0;
+	memdev->interleave_ways = 4;
 	offset += memdev->header.length;
 
 	/* mem-region6 (spa/dcr0, dimm0) */
 	memdev = nfit_buf + offset;
 	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-	memdev->header.length = माप(*memdev);
+	memdev->header.length = sizeof(*memdev);
 	memdev->device_handle = handle[0];
 	memdev->physical_id = 0;
 	memdev->region_id = 0;
@@ -2221,14 +2220,14 @@ DEVICE_ATTR_RO(handle);
 	memdev->region_size = 0;
 	memdev->region_offset = 0;
 	memdev->address = 0;
-	memdev->पूर्णांकerleave_index = 0;
-	memdev->पूर्णांकerleave_ways = 1;
+	memdev->interleave_index = 0;
+	memdev->interleave_ways = 1;
 	offset += memdev->header.length;
 
 	/* mem-region7 (spa/dcr1, dimm1) */
 	memdev = nfit_buf + offset;
 	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-	memdev->header.length = माप(*memdev);
+	memdev->header.length = sizeof(*memdev);
 	memdev->device_handle = handle[1];
 	memdev->physical_id = 1;
 	memdev->region_id = 0;
@@ -2237,14 +2236,14 @@ DEVICE_ATTR_RO(handle);
 	memdev->region_size = 0;
 	memdev->region_offset = 0;
 	memdev->address = 0;
-	memdev->पूर्णांकerleave_index = 0;
-	memdev->पूर्णांकerleave_ways = 1;
+	memdev->interleave_index = 0;
+	memdev->interleave_ways = 1;
 	offset += memdev->header.length;
 
 	/* mem-region8 (spa/dcr2, dimm2) */
 	memdev = nfit_buf + offset;
 	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-	memdev->header.length = माप(*memdev);
+	memdev->header.length = sizeof(*memdev);
 	memdev->device_handle = handle[2];
 	memdev->physical_id = 2;
 	memdev->region_id = 0;
@@ -2253,14 +2252,14 @@ DEVICE_ATTR_RO(handle);
 	memdev->region_size = 0;
 	memdev->region_offset = 0;
 	memdev->address = 0;
-	memdev->पूर्णांकerleave_index = 0;
-	memdev->पूर्णांकerleave_ways = 1;
+	memdev->interleave_index = 0;
+	memdev->interleave_ways = 1;
 	offset += memdev->header.length;
 
 	/* mem-region9 (spa/dcr3, dimm3) */
 	memdev = nfit_buf + offset;
 	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-	memdev->header.length = माप(*memdev);
+	memdev->header.length = sizeof(*memdev);
 	memdev->device_handle = handle[3];
 	memdev->physical_id = 3;
 	memdev->region_id = 0;
@@ -2269,14 +2268,14 @@ DEVICE_ATTR_RO(handle);
 	memdev->region_size = 0;
 	memdev->region_offset = 0;
 	memdev->address = 0;
-	memdev->पूर्णांकerleave_index = 0;
-	memdev->पूर्णांकerleave_ways = 1;
+	memdev->interleave_index = 0;
+	memdev->interleave_ways = 1;
 	offset += memdev->header.length;
 
 	/* mem-region10 (spa/bdw0, dimm0) */
 	memdev = nfit_buf + offset;
 	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-	memdev->header.length = माप(*memdev);
+	memdev->header.length = sizeof(*memdev);
 	memdev->device_handle = handle[0];
 	memdev->physical_id = 0;
 	memdev->region_id = 0;
@@ -2285,14 +2284,14 @@ DEVICE_ATTR_RO(handle);
 	memdev->region_size = 0;
 	memdev->region_offset = 0;
 	memdev->address = 0;
-	memdev->पूर्णांकerleave_index = 0;
-	memdev->पूर्णांकerleave_ways = 1;
+	memdev->interleave_index = 0;
+	memdev->interleave_ways = 1;
 	offset += memdev->header.length;
 
 	/* mem-region11 (spa/bdw1, dimm1) */
 	memdev = nfit_buf + offset;
 	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-	memdev->header.length = माप(*memdev);
+	memdev->header.length = sizeof(*memdev);
 	memdev->device_handle = handle[1];
 	memdev->physical_id = 1;
 	memdev->region_id = 0;
@@ -2301,14 +2300,14 @@ DEVICE_ATTR_RO(handle);
 	memdev->region_size = 0;
 	memdev->region_offset = 0;
 	memdev->address = 0;
-	memdev->पूर्णांकerleave_index = 0;
-	memdev->पूर्णांकerleave_ways = 1;
+	memdev->interleave_index = 0;
+	memdev->interleave_ways = 1;
 	offset += memdev->header.length;
 
 	/* mem-region12 (spa/bdw2, dimm2) */
 	memdev = nfit_buf + offset;
 	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-	memdev->header.length = माप(*memdev);
+	memdev->header.length = sizeof(*memdev);
 	memdev->device_handle = handle[2];
 	memdev->physical_id = 2;
 	memdev->region_id = 0;
@@ -2317,14 +2316,14 @@ DEVICE_ATTR_RO(handle);
 	memdev->region_size = 0;
 	memdev->region_offset = 0;
 	memdev->address = 0;
-	memdev->पूर्णांकerleave_index = 0;
-	memdev->पूर्णांकerleave_ways = 1;
+	memdev->interleave_index = 0;
+	memdev->interleave_ways = 1;
 	offset += memdev->header.length;
 
 	/* mem-region13 (spa/dcr3, dimm3) */
 	memdev = nfit_buf + offset;
 	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-	memdev->header.length = माप(*memdev);
+	memdev->header.length = sizeof(*memdev);
 	memdev->device_handle = handle[3];
 	memdev->physical_id = 3;
 	memdev->region_id = 0;
@@ -2333,21 +2332,21 @@ DEVICE_ATTR_RO(handle);
 	memdev->region_size = 0;
 	memdev->region_offset = 0;
 	memdev->address = 0;
-	memdev->पूर्णांकerleave_index = 0;
-	memdev->पूर्णांकerleave_ways = 1;
+	memdev->interleave_index = 0;
+	memdev->interleave_ways = 1;
 	memdev->flags = ACPI_NFIT_MEM_HEALTH_ENABLED;
 	offset += memdev->header.length;
 
 	/* dcr-descriptor0: blk */
 	dcr = nfit_buf + offset;
 	dcr->header.type = ACPI_NFIT_TYPE_CONTROL_REGION;
-	dcr->header.length = माप(*dcr);
+	dcr->header.length = sizeof(*dcr);
 	dcr->region_index = 0+1;
 	dcr_common_init(dcr);
 	dcr->serial_number = ~handle[0];
 	dcr->code = NFIT_FIC_BLK;
-	dcr->winकरोws = 1;
-	dcr->winकरोw_size = DCR_SIZE;
+	dcr->windows = 1;
+	dcr->window_size = DCR_SIZE;
 	dcr->command_offset = 0;
 	dcr->command_size = 8;
 	dcr->status_offset = 8;
@@ -2357,13 +2356,13 @@ DEVICE_ATTR_RO(handle);
 	/* dcr-descriptor1: blk */
 	dcr = nfit_buf + offset;
 	dcr->header.type = ACPI_NFIT_TYPE_CONTROL_REGION;
-	dcr->header.length = माप(*dcr);
+	dcr->header.length = sizeof(*dcr);
 	dcr->region_index = 1+1;
 	dcr_common_init(dcr);
 	dcr->serial_number = ~handle[1];
 	dcr->code = NFIT_FIC_BLK;
-	dcr->winकरोws = 1;
-	dcr->winकरोw_size = DCR_SIZE;
+	dcr->windows = 1;
+	dcr->window_size = DCR_SIZE;
 	dcr->command_offset = 0;
 	dcr->command_size = 8;
 	dcr->status_offset = 8;
@@ -2373,13 +2372,13 @@ DEVICE_ATTR_RO(handle);
 	/* dcr-descriptor2: blk */
 	dcr = nfit_buf + offset;
 	dcr->header.type = ACPI_NFIT_TYPE_CONTROL_REGION;
-	dcr->header.length = माप(*dcr);
+	dcr->header.length = sizeof(*dcr);
 	dcr->region_index = 2+1;
 	dcr_common_init(dcr);
 	dcr->serial_number = ~handle[2];
 	dcr->code = NFIT_FIC_BLK;
-	dcr->winकरोws = 1;
-	dcr->winकरोw_size = DCR_SIZE;
+	dcr->windows = 1;
+	dcr->window_size = DCR_SIZE;
 	dcr->command_offset = 0;
 	dcr->command_size = 8;
 	dcr->status_offset = 8;
@@ -2389,13 +2388,13 @@ DEVICE_ATTR_RO(handle);
 	/* dcr-descriptor3: blk */
 	dcr = nfit_buf + offset;
 	dcr->header.type = ACPI_NFIT_TYPE_CONTROL_REGION;
-	dcr->header.length = माप(*dcr);
+	dcr->header.length = sizeof(*dcr);
 	dcr->region_index = 3+1;
 	dcr_common_init(dcr);
 	dcr->serial_number = ~handle[3];
 	dcr->code = NFIT_FIC_BLK;
-	dcr->winकरोws = 1;
-	dcr->winकरोw_size = DCR_SIZE;
+	dcr->windows = 1;
+	dcr->window_size = DCR_SIZE;
 	dcr->command_offset = 0;
 	dcr->command_size = 8;
 	dcr->status_offset = 8;
@@ -2405,57 +2404,57 @@ DEVICE_ATTR_RO(handle);
 	/* dcr-descriptor0: pmem */
 	dcr = nfit_buf + offset;
 	dcr->header.type = ACPI_NFIT_TYPE_CONTROL_REGION;
-	dcr->header.length = दुरत्व(काष्ठा acpi_nfit_control_region,
-			winकरोw_size);
+	dcr->header.length = offsetof(struct acpi_nfit_control_region,
+			window_size);
 	dcr->region_index = 4+1;
 	dcr_common_init(dcr);
 	dcr->serial_number = ~handle[0];
 	dcr->code = NFIT_FIC_BYTEN;
-	dcr->winकरोws = 0;
+	dcr->windows = 0;
 	offset += dcr->header.length;
 
 	/* dcr-descriptor1: pmem */
 	dcr = nfit_buf + offset;
 	dcr->header.type = ACPI_NFIT_TYPE_CONTROL_REGION;
-	dcr->header.length = दुरत्व(काष्ठा acpi_nfit_control_region,
-			winकरोw_size);
+	dcr->header.length = offsetof(struct acpi_nfit_control_region,
+			window_size);
 	dcr->region_index = 5+1;
 	dcr_common_init(dcr);
 	dcr->serial_number = ~handle[1];
 	dcr->code = NFIT_FIC_BYTEN;
-	dcr->winकरोws = 0;
+	dcr->windows = 0;
 	offset += dcr->header.length;
 
 	/* dcr-descriptor2: pmem */
 	dcr = nfit_buf + offset;
 	dcr->header.type = ACPI_NFIT_TYPE_CONTROL_REGION;
-	dcr->header.length = दुरत्व(काष्ठा acpi_nfit_control_region,
-			winकरोw_size);
+	dcr->header.length = offsetof(struct acpi_nfit_control_region,
+			window_size);
 	dcr->region_index = 6+1;
 	dcr_common_init(dcr);
 	dcr->serial_number = ~handle[2];
 	dcr->code = NFIT_FIC_BYTEN;
-	dcr->winकरोws = 0;
+	dcr->windows = 0;
 	offset += dcr->header.length;
 
 	/* dcr-descriptor3: pmem */
 	dcr = nfit_buf + offset;
 	dcr->header.type = ACPI_NFIT_TYPE_CONTROL_REGION;
-	dcr->header.length = दुरत्व(काष्ठा acpi_nfit_control_region,
-			winकरोw_size);
+	dcr->header.length = offsetof(struct acpi_nfit_control_region,
+			window_size);
 	dcr->region_index = 7+1;
 	dcr_common_init(dcr);
 	dcr->serial_number = ~handle[3];
 	dcr->code = NFIT_FIC_BYTEN;
-	dcr->winकरोws = 0;
+	dcr->windows = 0;
 	offset += dcr->header.length;
 
 	/* bdw0 (spa/dcr0, dimm0) */
 	bdw = nfit_buf + offset;
 	bdw->header.type = ACPI_NFIT_TYPE_DATA_REGION;
-	bdw->header.length = माप(*bdw);
+	bdw->header.length = sizeof(*bdw);
 	bdw->region_index = 0+1;
-	bdw->winकरोws = 1;
+	bdw->windows = 1;
 	bdw->offset = 0;
 	bdw->size = BDW_SIZE;
 	bdw->capacity = DIMM_SIZE;
@@ -2465,9 +2464,9 @@ DEVICE_ATTR_RO(handle);
 	/* bdw1 (spa/dcr1, dimm1) */
 	bdw = nfit_buf + offset;
 	bdw->header.type = ACPI_NFIT_TYPE_DATA_REGION;
-	bdw->header.length = माप(*bdw);
+	bdw->header.length = sizeof(*bdw);
 	bdw->region_index = 1+1;
-	bdw->winकरोws = 1;
+	bdw->windows = 1;
 	bdw->offset = 0;
 	bdw->size = BDW_SIZE;
 	bdw->capacity = DIMM_SIZE;
@@ -2477,9 +2476,9 @@ DEVICE_ATTR_RO(handle);
 	/* bdw2 (spa/dcr2, dimm2) */
 	bdw = nfit_buf + offset;
 	bdw->header.type = ACPI_NFIT_TYPE_DATA_REGION;
-	bdw->header.length = माप(*bdw);
+	bdw->header.length = sizeof(*bdw);
 	bdw->region_index = 2+1;
-	bdw->winकरोws = 1;
+	bdw->windows = 1;
 	bdw->offset = 0;
 	bdw->size = BDW_SIZE;
 	bdw->capacity = DIMM_SIZE;
@@ -2489,9 +2488,9 @@ DEVICE_ATTR_RO(handle);
 	/* bdw3 (spa/dcr3, dimm3) */
 	bdw = nfit_buf + offset;
 	bdw->header.type = ACPI_NFIT_TYPE_DATA_REGION;
-	bdw->header.length = माप(*bdw);
+	bdw->header.length = sizeof(*bdw);
 	bdw->region_index = 3+1;
-	bdw->winकरोws = 1;
+	bdw->windows = 1;
 	bdw->offset = 0;
 	bdw->size = BDW_SIZE;
 	bdw->capacity = DIMM_SIZE;
@@ -2501,62 +2500,62 @@ DEVICE_ATTR_RO(handle);
 	/* flush0 (dimm0) */
 	flush = nfit_buf + offset;
 	flush->header.type = ACPI_NFIT_TYPE_FLUSH_ADDRESS;
-	flush->header.length = flush_hपूर्णांक_size;
+	flush->header.length = flush_hint_size;
 	flush->device_handle = handle[0];
-	flush->hपूर्णांक_count = NUM_HINTS;
-	क्रम (i = 0; i < NUM_HINTS; i++)
-		flush->hपूर्णांक_address[i] = t->flush_dma[0] + i * माप(u64);
+	flush->hint_count = NUM_HINTS;
+	for (i = 0; i < NUM_HINTS; i++)
+		flush->hint_address[i] = t->flush_dma[0] + i * sizeof(u64);
 	offset += flush->header.length;
 
 	/* flush1 (dimm1) */
 	flush = nfit_buf + offset;
 	flush->header.type = ACPI_NFIT_TYPE_FLUSH_ADDRESS;
-	flush->header.length = flush_hपूर्णांक_size;
+	flush->header.length = flush_hint_size;
 	flush->device_handle = handle[1];
-	flush->hपूर्णांक_count = NUM_HINTS;
-	क्रम (i = 0; i < NUM_HINTS; i++)
-		flush->hपूर्णांक_address[i] = t->flush_dma[1] + i * माप(u64);
+	flush->hint_count = NUM_HINTS;
+	for (i = 0; i < NUM_HINTS; i++)
+		flush->hint_address[i] = t->flush_dma[1] + i * sizeof(u64);
 	offset += flush->header.length;
 
 	/* flush2 (dimm2) */
 	flush = nfit_buf + offset;
 	flush->header.type = ACPI_NFIT_TYPE_FLUSH_ADDRESS;
-	flush->header.length = flush_hपूर्णांक_size;
+	flush->header.length = flush_hint_size;
 	flush->device_handle = handle[2];
-	flush->hपूर्णांक_count = NUM_HINTS;
-	क्रम (i = 0; i < NUM_HINTS; i++)
-		flush->hपूर्णांक_address[i] = t->flush_dma[2] + i * माप(u64);
+	flush->hint_count = NUM_HINTS;
+	for (i = 0; i < NUM_HINTS; i++)
+		flush->hint_address[i] = t->flush_dma[2] + i * sizeof(u64);
 	offset += flush->header.length;
 
 	/* flush3 (dimm3) */
 	flush = nfit_buf + offset;
 	flush->header.type = ACPI_NFIT_TYPE_FLUSH_ADDRESS;
-	flush->header.length = flush_hपूर्णांक_size;
+	flush->header.length = flush_hint_size;
 	flush->device_handle = handle[3];
-	flush->hपूर्णांक_count = NUM_HINTS;
-	क्रम (i = 0; i < NUM_HINTS; i++)
-		flush->hपूर्णांक_address[i] = t->flush_dma[3] + i * माप(u64);
+	flush->hint_count = NUM_HINTS;
+	for (i = 0; i < NUM_HINTS; i++)
+		flush->hint_address[i] = t->flush_dma[3] + i * sizeof(u64);
 	offset += flush->header.length;
 
-	/* platक्रमm capabilities */
+	/* platform capabilities */
 	pcap = nfit_buf + offset;
 	pcap->header.type = ACPI_NFIT_TYPE_CAPABILITIES;
-	pcap->header.length = माप(*pcap);
+	pcap->header.length = sizeof(*pcap);
 	pcap->highest_capability = 1;
 	pcap->capabilities = ACPI_NFIT_CAPABILITY_MEM_FLUSH;
 	offset += pcap->header.length;
 
-	अगर (t->setup_hotplug) अणु
+	if (t->setup_hotplug) {
 		/* dcr-descriptor4: blk */
 		dcr = nfit_buf + offset;
 		dcr->header.type = ACPI_NFIT_TYPE_CONTROL_REGION;
-		dcr->header.length = माप(*dcr);
+		dcr->header.length = sizeof(*dcr);
 		dcr->region_index = 8+1;
 		dcr_common_init(dcr);
 		dcr->serial_number = ~handle[4];
 		dcr->code = NFIT_FIC_BLK;
-		dcr->winकरोws = 1;
-		dcr->winकरोw_size = DCR_SIZE;
+		dcr->windows = 1;
+		dcr->window_size = DCR_SIZE;
 		dcr->command_offset = 0;
 		dcr->command_size = 8;
 		dcr->status_offset = 8;
@@ -2566,21 +2565,21 @@ DEVICE_ATTR_RO(handle);
 		/* dcr-descriptor4: pmem */
 		dcr = nfit_buf + offset;
 		dcr->header.type = ACPI_NFIT_TYPE_CONTROL_REGION;
-		dcr->header.length = दुरत्व(काष्ठा acpi_nfit_control_region,
-				winकरोw_size);
+		dcr->header.length = offsetof(struct acpi_nfit_control_region,
+				window_size);
 		dcr->region_index = 9+1;
 		dcr_common_init(dcr);
 		dcr->serial_number = ~handle[4];
 		dcr->code = NFIT_FIC_BYTEN;
-		dcr->winकरोws = 0;
+		dcr->windows = 0;
 		offset += dcr->header.length;
 
 		/* bdw4 (spa/dcr4, dimm4) */
 		bdw = nfit_buf + offset;
 		bdw->header.type = ACPI_NFIT_TYPE_DATA_REGION;
-		bdw->header.length = माप(*bdw);
+		bdw->header.length = sizeof(*bdw);
 		bdw->region_index = 8+1;
-		bdw->winकरोws = 1;
+		bdw->windows = 1;
 		bdw->offset = 0;
 		bdw->size = BDW_SIZE;
 		bdw->capacity = DIMM_SIZE;
@@ -2590,32 +2589,32 @@ DEVICE_ATTR_RO(handle);
 		/* spa10 (dcr4) dimm4 */
 		spa = nfit_buf + offset;
 		spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-		spa->header.length = माप_spa(spa);
-		स_नकल(spa->range_guid, to_nfit_uuid(NFIT_SPA_DCR), 16);
+		spa->header.length = sizeof_spa(spa);
+		memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_DCR), 16);
 		spa->range_index = 10+1;
 		spa->address = t->dcr_dma[4];
 		spa->length = DCR_SIZE;
 		offset += spa->header.length;
 
 		/*
-		 * spa11 (single-dimm पूर्णांकerleave क्रम hotplug, note storage
-		 * करोes not actually alias the related block-data-winकरोw
+		 * spa11 (single-dimm interleave for hotplug, note storage
+		 * does not actually alias the related block-data-window
 		 * regions)
 		 */
 		spa = nfit_buf + offset;
 		spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-		spa->header.length = माप_spa(spa);
-		स_नकल(spa->range_guid, to_nfit_uuid(NFIT_SPA_PM), 16);
+		spa->header.length = sizeof_spa(spa);
+		memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_PM), 16);
 		spa->range_index = 11+1;
 		spa->address = t->spa_set_dma[2];
 		spa->length = SPA0_SIZE;
 		offset += spa->header.length;
 
-		/* spa12 (bdw क्रम dcr4) dimm4 */
+		/* spa12 (bdw for dcr4) dimm4 */
 		spa = nfit_buf + offset;
 		spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-		spa->header.length = माप_spa(spa);
-		स_नकल(spa->range_guid, to_nfit_uuid(NFIT_SPA_BDW), 16);
+		spa->header.length = sizeof_spa(spa);
+		memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_BDW), 16);
 		spa->range_index = 12+1;
 		spa->address = t->dimm_dma[4];
 		spa->length = DIMM_SIZE;
@@ -2624,7 +2623,7 @@ DEVICE_ATTR_RO(handle);
 		/* mem-region14 (spa/dcr4, dimm4) */
 		memdev = nfit_buf + offset;
 		memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-		memdev->header.length = माप(*memdev);
+		memdev->header.length = sizeof(*memdev);
 		memdev->device_handle = handle[4];
 		memdev->physical_id = 4;
 		memdev->region_id = 0;
@@ -2633,14 +2632,14 @@ DEVICE_ATTR_RO(handle);
 		memdev->region_size = 0;
 		memdev->region_offset = 0;
 		memdev->address = 0;
-		memdev->पूर्णांकerleave_index = 0;
-		memdev->पूर्णांकerleave_ways = 1;
+		memdev->interleave_index = 0;
+		memdev->interleave_ways = 1;
 		offset += memdev->header.length;
 
 		/* mem-region15 (spa11, dimm4) */
 		memdev = nfit_buf + offset;
 		memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-		memdev->header.length = माप(*memdev);
+		memdev->header.length = sizeof(*memdev);
 		memdev->device_handle = handle[4];
 		memdev->physical_id = 4;
 		memdev->region_id = 0;
@@ -2649,15 +2648,15 @@ DEVICE_ATTR_RO(handle);
 		memdev->region_size = SPA0_SIZE;
 		memdev->region_offset = (1ULL << 48);
 		memdev->address = 0;
-		memdev->पूर्णांकerleave_index = 0;
-		memdev->पूर्णांकerleave_ways = 1;
+		memdev->interleave_index = 0;
+		memdev->interleave_ways = 1;
 		memdev->flags = ACPI_NFIT_MEM_HEALTH_ENABLED;
 		offset += memdev->header.length;
 
 		/* mem-region16 (spa/bdw4, dimm4) */
 		memdev = nfit_buf + offset;
 		memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-		memdev->header.length = माप(*memdev);
+		memdev->header.length = sizeof(*memdev);
 		memdev->device_handle = handle[4];
 		memdev->physical_id = 4;
 		memdev->region_id = 0;
@@ -2666,24 +2665,24 @@ DEVICE_ATTR_RO(handle);
 		memdev->region_size = 0;
 		memdev->region_offset = 0;
 		memdev->address = 0;
-		memdev->पूर्णांकerleave_index = 0;
-		memdev->पूर्णांकerleave_ways = 1;
+		memdev->interleave_index = 0;
+		memdev->interleave_ways = 1;
 		offset += memdev->header.length;
 
 		/* flush3 (dimm4) */
 		flush = nfit_buf + offset;
 		flush->header.type = ACPI_NFIT_TYPE_FLUSH_ADDRESS;
-		flush->header.length = flush_hपूर्णांक_size;
+		flush->header.length = flush_hint_size;
 		flush->device_handle = handle[4];
-		flush->hपूर्णांक_count = NUM_HINTS;
-		क्रम (i = 0; i < NUM_HINTS; i++)
-			flush->hपूर्णांक_address[i] = t->flush_dma[4]
-				+ i * माप(u64);
+		flush->hint_count = NUM_HINTS;
+		for (i = 0; i < NUM_HINTS; i++)
+			flush->hint_address[i] = t->flush_dma[4]
+				+ i * sizeof(u64);
 		offset += flush->header.length;
 
 		/* sanity check to make sure we've filled the buffer */
 		WARN_ON(offset != t->nfit_size);
-	पूर्ण
+	}
 
 	t->nfit_filled = offset;
 
@@ -2691,75 +2690,75 @@ DEVICE_ATTR_RO(handle);
 			SPA0_SIZE);
 
 	acpi_desc = &t->acpi_desc;
-	set_bit(ND_CMD_GET_CONFIG_SIZE, &acpi_desc->dimm_cmd_क्रमce_en);
-	set_bit(ND_CMD_GET_CONFIG_DATA, &acpi_desc->dimm_cmd_क्रमce_en);
-	set_bit(ND_CMD_SET_CONFIG_DATA, &acpi_desc->dimm_cmd_क्रमce_en);
-	set_bit(ND_INTEL_SMART, &acpi_desc->dimm_cmd_क्रमce_en);
-	set_bit(ND_INTEL_SMART_THRESHOLD, &acpi_desc->dimm_cmd_क्रमce_en);
-	set_bit(ND_INTEL_SMART_SET_THRESHOLD, &acpi_desc->dimm_cmd_क्रमce_en);
-	set_bit(ND_INTEL_SMART_INJECT, &acpi_desc->dimm_cmd_क्रमce_en);
-	set_bit(ND_CMD_ARS_CAP, &acpi_desc->bus_cmd_क्रमce_en);
-	set_bit(ND_CMD_ARS_START, &acpi_desc->bus_cmd_क्रमce_en);
-	set_bit(ND_CMD_ARS_STATUS, &acpi_desc->bus_cmd_क्रमce_en);
-	set_bit(ND_CMD_CLEAR_ERROR, &acpi_desc->bus_cmd_क्रमce_en);
-	set_bit(ND_CMD_CALL, &acpi_desc->bus_cmd_क्रमce_en);
+	set_bit(ND_CMD_GET_CONFIG_SIZE, &acpi_desc->dimm_cmd_force_en);
+	set_bit(ND_CMD_GET_CONFIG_DATA, &acpi_desc->dimm_cmd_force_en);
+	set_bit(ND_CMD_SET_CONFIG_DATA, &acpi_desc->dimm_cmd_force_en);
+	set_bit(ND_INTEL_SMART, &acpi_desc->dimm_cmd_force_en);
+	set_bit(ND_INTEL_SMART_THRESHOLD, &acpi_desc->dimm_cmd_force_en);
+	set_bit(ND_INTEL_SMART_SET_THRESHOLD, &acpi_desc->dimm_cmd_force_en);
+	set_bit(ND_INTEL_SMART_INJECT, &acpi_desc->dimm_cmd_force_en);
+	set_bit(ND_CMD_ARS_CAP, &acpi_desc->bus_cmd_force_en);
+	set_bit(ND_CMD_ARS_START, &acpi_desc->bus_cmd_force_en);
+	set_bit(ND_CMD_ARS_STATUS, &acpi_desc->bus_cmd_force_en);
+	set_bit(ND_CMD_CLEAR_ERROR, &acpi_desc->bus_cmd_force_en);
+	set_bit(ND_CMD_CALL, &acpi_desc->bus_cmd_force_en);
 	set_bit(NFIT_CMD_TRANSLATE_SPA, &acpi_desc->bus_dsm_mask);
 	set_bit(NFIT_CMD_ARS_INJECT_SET, &acpi_desc->bus_dsm_mask);
 	set_bit(NFIT_CMD_ARS_INJECT_CLEAR, &acpi_desc->bus_dsm_mask);
 	set_bit(NFIT_CMD_ARS_INJECT_GET, &acpi_desc->bus_dsm_mask);
-	set_bit(ND_INTEL_FW_GET_INFO, &acpi_desc->dimm_cmd_क्रमce_en);
-	set_bit(ND_INTEL_FW_START_UPDATE, &acpi_desc->dimm_cmd_क्रमce_en);
-	set_bit(ND_INTEL_FW_SEND_DATA, &acpi_desc->dimm_cmd_क्रमce_en);
-	set_bit(ND_INTEL_FW_FINISH_UPDATE, &acpi_desc->dimm_cmd_क्रमce_en);
-	set_bit(ND_INTEL_FW_FINISH_QUERY, &acpi_desc->dimm_cmd_क्रमce_en);
-	set_bit(ND_INTEL_ENABLE_LSS_STATUS, &acpi_desc->dimm_cmd_क्रमce_en);
+	set_bit(ND_INTEL_FW_GET_INFO, &acpi_desc->dimm_cmd_force_en);
+	set_bit(ND_INTEL_FW_START_UPDATE, &acpi_desc->dimm_cmd_force_en);
+	set_bit(ND_INTEL_FW_SEND_DATA, &acpi_desc->dimm_cmd_force_en);
+	set_bit(ND_INTEL_FW_FINISH_UPDATE, &acpi_desc->dimm_cmd_force_en);
+	set_bit(ND_INTEL_FW_FINISH_QUERY, &acpi_desc->dimm_cmd_force_en);
+	set_bit(ND_INTEL_ENABLE_LSS_STATUS, &acpi_desc->dimm_cmd_force_en);
 	set_bit(NVDIMM_INTEL_GET_SECURITY_STATE,
-			&acpi_desc->dimm_cmd_क्रमce_en);
-	set_bit(NVDIMM_INTEL_SET_PASSPHRASE, &acpi_desc->dimm_cmd_क्रमce_en);
+			&acpi_desc->dimm_cmd_force_en);
+	set_bit(NVDIMM_INTEL_SET_PASSPHRASE, &acpi_desc->dimm_cmd_force_en);
 	set_bit(NVDIMM_INTEL_DISABLE_PASSPHRASE,
-			&acpi_desc->dimm_cmd_क्रमce_en);
-	set_bit(NVDIMM_INTEL_UNLOCK_UNIT, &acpi_desc->dimm_cmd_क्रमce_en);
-	set_bit(NVDIMM_INTEL_FREEZE_LOCK, &acpi_desc->dimm_cmd_क्रमce_en);
-	set_bit(NVDIMM_INTEL_SECURE_ERASE, &acpi_desc->dimm_cmd_क्रमce_en);
-	set_bit(NVDIMM_INTEL_OVERWRITE, &acpi_desc->dimm_cmd_क्रमce_en);
-	set_bit(NVDIMM_INTEL_QUERY_OVERWRITE, &acpi_desc->dimm_cmd_क्रमce_en);
+			&acpi_desc->dimm_cmd_force_en);
+	set_bit(NVDIMM_INTEL_UNLOCK_UNIT, &acpi_desc->dimm_cmd_force_en);
+	set_bit(NVDIMM_INTEL_FREEZE_LOCK, &acpi_desc->dimm_cmd_force_en);
+	set_bit(NVDIMM_INTEL_SECURE_ERASE, &acpi_desc->dimm_cmd_force_en);
+	set_bit(NVDIMM_INTEL_OVERWRITE, &acpi_desc->dimm_cmd_force_en);
+	set_bit(NVDIMM_INTEL_QUERY_OVERWRITE, &acpi_desc->dimm_cmd_force_en);
 	set_bit(NVDIMM_INTEL_SET_MASTER_PASSPHRASE,
-			&acpi_desc->dimm_cmd_क्रमce_en);
+			&acpi_desc->dimm_cmd_force_en);
 	set_bit(NVDIMM_INTEL_MASTER_SECURE_ERASE,
-			&acpi_desc->dimm_cmd_क्रमce_en);
-	set_bit(NVDIMM_INTEL_FW_ACTIVATE_DIMMINFO, &acpi_desc->dimm_cmd_क्रमce_en);
-	set_bit(NVDIMM_INTEL_FW_ACTIVATE_ARM, &acpi_desc->dimm_cmd_क्रमce_en);
+			&acpi_desc->dimm_cmd_force_en);
+	set_bit(NVDIMM_INTEL_FW_ACTIVATE_DIMMINFO, &acpi_desc->dimm_cmd_force_en);
+	set_bit(NVDIMM_INTEL_FW_ACTIVATE_ARM, &acpi_desc->dimm_cmd_force_en);
 
 	acpi_mask = &acpi_desc->family_dsm_mask[NVDIMM_BUS_FAMILY_INTEL];
 	set_bit(NVDIMM_BUS_INTEL_FW_ACTIVATE_BUSINFO, acpi_mask);
 	set_bit(NVDIMM_BUS_INTEL_FW_ACTIVATE, acpi_mask);
-पूर्ण
+}
 
-अटल व्योम nfit_test1_setup(काष्ठा nfit_test *t)
-अणु
-	माप_प्रकार offset;
-	व्योम *nfit_buf = t->nfit_buf;
-	काष्ठा acpi_nfit_memory_map *memdev;
-	काष्ठा acpi_nfit_control_region *dcr;
-	काष्ठा acpi_nfit_प्रणाली_address *spa;
-	काष्ठा acpi_nfit_desc *acpi_desc;
+static void nfit_test1_setup(struct nfit_test *t)
+{
+	size_t offset;
+	void *nfit_buf = t->nfit_buf;
+	struct acpi_nfit_memory_map *memdev;
+	struct acpi_nfit_control_region *dcr;
+	struct acpi_nfit_system_address *spa;
+	struct acpi_nfit_desc *acpi_desc;
 
 	offset = 0;
 	/* spa0 (flat range with no bdw aliasing) */
 	spa = nfit_buf + offset;
 	spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-	spa->header.length = माप_spa(spa);
-	स_नकल(spa->range_guid, to_nfit_uuid(NFIT_SPA_PM), 16);
+	spa->header.length = sizeof_spa(spa);
+	memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_PM), 16);
 	spa->range_index = 0+1;
 	spa->address = t->spa_set_dma[0];
 	spa->length = SPA2_SIZE;
 	offset += spa->header.length;
 
-	/* भव cd region */
+	/* virtual cd region */
 	spa = nfit_buf + offset;
 	spa->header.type = ACPI_NFIT_TYPE_SYSTEM_ADDRESS;
-	spa->header.length = माप_spa(spa);
-	स_नकल(spa->range_guid, to_nfit_uuid(NFIT_SPA_VCD), 16);
+	spa->header.length = sizeof_spa(spa);
+	memcpy(spa->range_guid, to_nfit_uuid(NFIT_SPA_VCD), 16);
 	spa->range_index = 0;
 	spa->address = t->spa_set_dma[1];
 	spa->length = SPA_VCD_SIZE;
@@ -2768,7 +2767,7 @@ DEVICE_ATTR_RO(handle);
 	/* mem-region0 (spa0, dimm0) */
 	memdev = nfit_buf + offset;
 	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-	memdev->header.length = माप(*memdev);
+	memdev->header.length = sizeof(*memdev);
 	memdev->device_handle = handle[5];
 	memdev->physical_id = 0;
 	memdev->region_id = 0;
@@ -2777,8 +2776,8 @@ DEVICE_ATTR_RO(handle);
 	memdev->region_size = SPA2_SIZE;
 	memdev->region_offset = 0;
 	memdev->address = 0;
-	memdev->पूर्णांकerleave_index = 0;
-	memdev->पूर्णांकerleave_ways = 1;
+	memdev->interleave_index = 0;
+	memdev->interleave_ways = 1;
 	memdev->flags = ACPI_NFIT_MEM_SAVE_FAILED | ACPI_NFIT_MEM_RESTORE_FAILED
 		| ACPI_NFIT_MEM_FLUSH_FAILED | ACPI_NFIT_MEM_HEALTH_OBSERVED
 		| ACPI_NFIT_MEM_NOT_ARMED;
@@ -2787,18 +2786,18 @@ DEVICE_ATTR_RO(handle);
 	/* dcr-descriptor0 */
 	dcr = nfit_buf + offset;
 	dcr->header.type = ACPI_NFIT_TYPE_CONTROL_REGION;
-	dcr->header.length = दुरत्व(काष्ठा acpi_nfit_control_region,
-			winकरोw_size);
+	dcr->header.length = offsetof(struct acpi_nfit_control_region,
+			window_size);
 	dcr->region_index = 0+1;
 	dcr_common_init(dcr);
 	dcr->serial_number = ~handle[5];
 	dcr->code = NFIT_FIC_BYTE;
-	dcr->winकरोws = 0;
+	dcr->windows = 0;
 	offset += dcr->header.length;
 
 	memdev = nfit_buf + offset;
 	memdev->header.type = ACPI_NFIT_TYPE_MEMORY_MAP;
-	memdev->header.length = माप(*memdev);
+	memdev->header.length = sizeof(*memdev);
 	memdev->device_handle = handle[6];
 	memdev->physical_id = 0;
 	memdev->region_id = 0;
@@ -2807,21 +2806,21 @@ DEVICE_ATTR_RO(handle);
 	memdev->region_size = SPA2_SIZE;
 	memdev->region_offset = 0;
 	memdev->address = 0;
-	memdev->पूर्णांकerleave_index = 0;
-	memdev->पूर्णांकerleave_ways = 1;
+	memdev->interleave_index = 0;
+	memdev->interleave_ways = 1;
 	memdev->flags = ACPI_NFIT_MEM_MAP_FAILED;
 	offset += memdev->header.length;
 
 	/* dcr-descriptor1 */
 	dcr = nfit_buf + offset;
 	dcr->header.type = ACPI_NFIT_TYPE_CONTROL_REGION;
-	dcr->header.length = दुरत्व(काष्ठा acpi_nfit_control_region,
-			winकरोw_size);
+	dcr->header.length = offsetof(struct acpi_nfit_control_region,
+			window_size);
 	dcr->region_index = 0+2;
 	dcr_common_init(dcr);
 	dcr->serial_number = ~handle[6];
 	dcr->code = NFIT_FIC_BYTE;
-	dcr->winकरोws = 0;
+	dcr->windows = 0;
 	offset += dcr->header.length;
 
 	/* sanity check to make sure we've filled the buffer */
@@ -2833,102 +2832,102 @@ DEVICE_ATTR_RO(handle);
 			SPA2_SIZE);
 
 	acpi_desc = &t->acpi_desc;
-	set_bit(ND_CMD_ARS_CAP, &acpi_desc->bus_cmd_क्रमce_en);
-	set_bit(ND_CMD_ARS_START, &acpi_desc->bus_cmd_क्रमce_en);
-	set_bit(ND_CMD_ARS_STATUS, &acpi_desc->bus_cmd_क्रमce_en);
-	set_bit(ND_CMD_CLEAR_ERROR, &acpi_desc->bus_cmd_क्रमce_en);
-	set_bit(ND_INTEL_ENABLE_LSS_STATUS, &acpi_desc->dimm_cmd_क्रमce_en);
-	set_bit(ND_CMD_GET_CONFIG_SIZE, &acpi_desc->dimm_cmd_क्रमce_en);
-	set_bit(ND_CMD_GET_CONFIG_DATA, &acpi_desc->dimm_cmd_क्रमce_en);
-	set_bit(ND_CMD_SET_CONFIG_DATA, &acpi_desc->dimm_cmd_क्रमce_en);
-पूर्ण
+	set_bit(ND_CMD_ARS_CAP, &acpi_desc->bus_cmd_force_en);
+	set_bit(ND_CMD_ARS_START, &acpi_desc->bus_cmd_force_en);
+	set_bit(ND_CMD_ARS_STATUS, &acpi_desc->bus_cmd_force_en);
+	set_bit(ND_CMD_CLEAR_ERROR, &acpi_desc->bus_cmd_force_en);
+	set_bit(ND_INTEL_ENABLE_LSS_STATUS, &acpi_desc->dimm_cmd_force_en);
+	set_bit(ND_CMD_GET_CONFIG_SIZE, &acpi_desc->dimm_cmd_force_en);
+	set_bit(ND_CMD_GET_CONFIG_DATA, &acpi_desc->dimm_cmd_force_en);
+	set_bit(ND_CMD_SET_CONFIG_DATA, &acpi_desc->dimm_cmd_force_en);
+}
 
-अटल पूर्णांक nfit_test_blk_करो_io(काष्ठा nd_blk_region *ndbr, resource_माप_प्रकार dpa,
-		व्योम *iobuf, u64 len, पूर्णांक rw)
-अणु
-	काष्ठा nfit_blk *nfit_blk = ndbr->blk_provider_data;
-	काष्ठा nfit_blk_mmio *mmio = &nfit_blk->mmio[BDW];
-	काष्ठा nd_region *nd_region = &ndbr->nd_region;
-	अचिन्हित पूर्णांक lane;
+static int nfit_test_blk_do_io(struct nd_blk_region *ndbr, resource_size_t dpa,
+		void *iobuf, u64 len, int rw)
+{
+	struct nfit_blk *nfit_blk = ndbr->blk_provider_data;
+	struct nfit_blk_mmio *mmio = &nfit_blk->mmio[BDW];
+	struct nd_region *nd_region = &ndbr->nd_region;
+	unsigned int lane;
 
 	lane = nd_region_acquire_lane(nd_region);
-	अगर (rw)
-		स_नकल(mmio->addr.base + dpa, iobuf, len);
-	अन्यथा अणु
-		स_नकल(iobuf, mmio->addr.base + dpa, len);
+	if (rw)
+		memcpy(mmio->addr.base + dpa, iobuf, len);
+	else {
+		memcpy(iobuf, mmio->addr.base + dpa, len);
 
 		/* give us some some coverage of the arch_invalidate_pmem() API */
 		arch_invalidate_pmem(mmio->addr.base + dpa, len);
-	पूर्ण
+	}
 	nd_region_release_lane(nd_region, lane);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ nfit_ctl_handle;
+static unsigned long nfit_ctl_handle;
 
-जोड़ acpi_object *result;
+union acpi_object *result;
 
-अटल जोड़ acpi_object *nfit_test_evaluate_dsm(acpi_handle handle,
-		स्थिर guid_t *guid, u64 rev, u64 func, जोड़ acpi_object *argv4)
-अणु
-	अगर (handle != &nfit_ctl_handle)
-		वापस ERR_PTR(-ENXIO);
+static union acpi_object *nfit_test_evaluate_dsm(acpi_handle handle,
+		const guid_t *guid, u64 rev, u64 func, union acpi_object *argv4)
+{
+	if (handle != &nfit_ctl_handle)
+		return ERR_PTR(-ENXIO);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक setup_result(व्योम *buf, माप_प्रकार size)
-अणु
-	result = kदो_स्मृति(माप(जोड़ acpi_object) + size, GFP_KERNEL);
-	अगर (!result)
-		वापस -ENOMEM;
+static int setup_result(void *buf, size_t size)
+{
+	result = kmalloc(sizeof(union acpi_object) + size, GFP_KERNEL);
+	if (!result)
+		return -ENOMEM;
 	result->package.type = ACPI_TYPE_BUFFER,
-	result->buffer.poपूर्णांकer = (व्योम *) (result + 1);
+	result->buffer.pointer = (void *) (result + 1);
 	result->buffer.length = size;
-	स_नकल(result->buffer.poपूर्णांकer, buf, size);
-	स_रखो(buf, 0, size);
-	वापस 0;
-पूर्ण
+	memcpy(result->buffer.pointer, buf, size);
+	memset(buf, 0, size);
+	return 0;
+}
 
-अटल पूर्णांक nfit_ctl_test(काष्ठा device *dev)
-अणु
-	पूर्णांक rc, cmd_rc;
-	काष्ठा nvdimm *nvdimm;
-	काष्ठा acpi_device *adev;
-	काष्ठा nfit_mem *nfit_mem;
-	काष्ठा nd_ars_record *record;
-	काष्ठा acpi_nfit_desc *acpi_desc;
-	स्थिर u64 test_val = 0x0123456789abcdefULL;
-	अचिन्हित दीर्घ mask, cmd_size, offset;
-	काष्ठा nfit_ctl_test_cmd अणु
-		काष्ठा nd_cmd_pkg pkg;
-		जोड़ अणु
-			काष्ठा nd_cmd_get_config_size cfg_size;
-			काष्ठा nd_cmd_clear_error clear_err;
-			काष्ठा nd_cmd_ars_status ars_stat;
-			काष्ठा nd_cmd_ars_cap ars_cap;
-			काष्ठा nd_पूर्णांकel_bus_fw_activate_businfo fwa_info;
-			अक्षर buf[माप(काष्ठा nd_cmd_ars_status)
-				+ माप(काष्ठा nd_ars_record)];
-		पूर्ण;
-	पूर्ण cmd;
+static int nfit_ctl_test(struct device *dev)
+{
+	int rc, cmd_rc;
+	struct nvdimm *nvdimm;
+	struct acpi_device *adev;
+	struct nfit_mem *nfit_mem;
+	struct nd_ars_record *record;
+	struct acpi_nfit_desc *acpi_desc;
+	const u64 test_val = 0x0123456789abcdefULL;
+	unsigned long mask, cmd_size, offset;
+	struct nfit_ctl_test_cmd {
+		struct nd_cmd_pkg pkg;
+		union {
+			struct nd_cmd_get_config_size cfg_size;
+			struct nd_cmd_clear_error clear_err;
+			struct nd_cmd_ars_status ars_stat;
+			struct nd_cmd_ars_cap ars_cap;
+			struct nd_intel_bus_fw_activate_businfo fwa_info;
+			char buf[sizeof(struct nd_cmd_ars_status)
+				+ sizeof(struct nd_ars_record)];
+		};
+	} cmd;
 
-	adev = devm_kzalloc(dev, माप(*adev), GFP_KERNEL);
-	अगर (!adev)
-		वापस -ENOMEM;
-	*adev = (काष्ठा acpi_device) अणु
+	adev = devm_kzalloc(dev, sizeof(*adev), GFP_KERNEL);
+	if (!adev)
+		return -ENOMEM;
+	*adev = (struct acpi_device) {
 		.handle = &nfit_ctl_handle,
-		.dev = अणु
+		.dev = {
 			.init_name = "test-adev",
-		पूर्ण,
-	पूर्ण;
+		},
+	};
 
-	acpi_desc = devm_kzalloc(dev, माप(*acpi_desc), GFP_KERNEL);
-	अगर (!acpi_desc)
-		वापस -ENOMEM;
-	*acpi_desc = (काष्ठा acpi_nfit_desc) अणु
-		.nd_desc = अणु
+	acpi_desc = devm_kzalloc(dev, sizeof(*acpi_desc), GFP_KERNEL);
+	if (!acpi_desc)
+		return -ENOMEM;
+	*acpi_desc = (struct acpi_nfit_desc) {
+		.nd_desc = {
 			.cmd_mask = 1UL << ND_CMD_ARS_CAP
 				| 1UL << ND_CMD_ARS_START
 				| 1UL << ND_CMD_ARS_STATUS
@@ -2939,7 +2938,7 @@ DEVICE_ATTR_RO(handle);
 			.ndctl = acpi_nfit_ctl,
 			.bus_family_mask = 1UL << NVDIMM_BUS_FAMILY_NFIT
 				| 1UL << NVDIMM_BUS_FAMILY_INTEL,
-		पूर्ण,
+		},
 		.bus_dsm_mask = 1UL << NFIT_CMD_TRANSLATE_SPA
 			| 1UL << NFIT_CMD_ARS_INJECT_SET
 			| 1UL << NFIT_CMD_ARS_INJECT_CLEAR
@@ -2947,354 +2946,354 @@ DEVICE_ATTR_RO(handle);
 		.family_dsm_mask[NVDIMM_BUS_FAMILY_INTEL] =
 			NVDIMM_BUS_INTEL_FW_ACTIVATE_CMDMASK,
 		.dev = &adev->dev,
-	पूर्ण;
+	};
 
-	nfit_mem = devm_kzalloc(dev, माप(*nfit_mem), GFP_KERNEL);
-	अगर (!nfit_mem)
-		वापस -ENOMEM;
+	nfit_mem = devm_kzalloc(dev, sizeof(*nfit_mem), GFP_KERNEL);
+	if (!nfit_mem)
+		return -ENOMEM;
 
 	mask = 1UL << ND_CMD_SMART | 1UL << ND_CMD_SMART_THRESHOLD
 		| 1UL << ND_CMD_DIMM_FLAGS | 1UL << ND_CMD_GET_CONFIG_SIZE
 		| 1UL << ND_CMD_GET_CONFIG_DATA | 1UL << ND_CMD_SET_CONFIG_DATA
 		| 1UL << ND_CMD_VENDOR;
-	*nfit_mem = (काष्ठा nfit_mem) अणु
+	*nfit_mem = (struct nfit_mem) {
 		.adev = adev,
 		.family = NVDIMM_FAMILY_INTEL,
 		.dsm_mask = mask,
-	पूर्ण;
+	};
 
-	nvdimm = devm_kzalloc(dev, माप(*nvdimm), GFP_KERNEL);
-	अगर (!nvdimm)
-		वापस -ENOMEM;
-	*nvdimm = (काष्ठा nvdimm) अणु
+	nvdimm = devm_kzalloc(dev, sizeof(*nvdimm), GFP_KERNEL);
+	if (!nvdimm)
+		return -ENOMEM;
+	*nvdimm = (struct nvdimm) {
 		.provider_data = nfit_mem,
 		.cmd_mask = mask,
-		.dev = अणु
+		.dev = {
 			.init_name = "test-dimm",
-		पूर्ण,
-	पूर्ण;
+		},
+	};
 
 
 	/* basic checkout of a typical 'get config size' command */
-	cmd_size = माप(cmd.cfg_size);
-	cmd.cfg_size = (काष्ठा nd_cmd_get_config_size) अणु
+	cmd_size = sizeof(cmd.cfg_size);
+	cmd.cfg_size = (struct nd_cmd_get_config_size) {
 		.status = 0,
 		.config_size = SZ_128K,
 		.max_xfer = SZ_4K,
-	पूर्ण;
+	};
 	rc = setup_result(cmd.buf, cmd_size);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 	rc = acpi_nfit_ctl(&acpi_desc->nd_desc, nvdimm, ND_CMD_GET_CONFIG_SIZE,
 			cmd.buf, cmd_size, &cmd_rc);
 
-	अगर (rc < 0 || cmd_rc || cmd.cfg_size.status != 0
+	if (rc < 0 || cmd_rc || cmd.cfg_size.status != 0
 			|| cmd.cfg_size.config_size != SZ_128K
-			|| cmd.cfg_size.max_xfer != SZ_4K) अणु
+			|| cmd.cfg_size.max_xfer != SZ_4K) {
 		dev_dbg(dev, "%s: failed at: %d rc: %d cmd_rc: %d\n",
 				__func__, __LINE__, rc, cmd_rc);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 
 	/* test ars_status with zero output */
-	cmd_size = दुरत्व(काष्ठा nd_cmd_ars_status, address);
-	cmd.ars_stat = (काष्ठा nd_cmd_ars_status) अणु
+	cmd_size = offsetof(struct nd_cmd_ars_status, address);
+	cmd.ars_stat = (struct nd_cmd_ars_status) {
 		.out_length = 0,
-	पूर्ण;
+	};
 	rc = setup_result(cmd.buf, cmd_size);
-	अगर (rc)
-		वापस rc;
-	rc = acpi_nfit_ctl(&acpi_desc->nd_desc, शून्य, ND_CMD_ARS_STATUS,
+	if (rc)
+		return rc;
+	rc = acpi_nfit_ctl(&acpi_desc->nd_desc, NULL, ND_CMD_ARS_STATUS,
 			cmd.buf, cmd_size, &cmd_rc);
 
-	अगर (rc < 0 || cmd_rc) अणु
+	if (rc < 0 || cmd_rc) {
 		dev_dbg(dev, "%s: failed at: %d rc: %d cmd_rc: %d\n",
 				__func__, __LINE__, rc, cmd_rc);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 
 	/* test ars_cap with benign extended status */
-	cmd_size = माप(cmd.ars_cap);
-	cmd.ars_cap = (काष्ठा nd_cmd_ars_cap) अणु
+	cmd_size = sizeof(cmd.ars_cap);
+	cmd.ars_cap = (struct nd_cmd_ars_cap) {
 		.status = ND_ARS_PERSISTENT << 16,
-	पूर्ण;
-	offset = दुरत्व(काष्ठा nd_cmd_ars_cap, status);
+	};
+	offset = offsetof(struct nd_cmd_ars_cap, status);
 	rc = setup_result(cmd.buf + offset, cmd_size - offset);
-	अगर (rc)
-		वापस rc;
-	rc = acpi_nfit_ctl(&acpi_desc->nd_desc, शून्य, ND_CMD_ARS_CAP,
+	if (rc)
+		return rc;
+	rc = acpi_nfit_ctl(&acpi_desc->nd_desc, NULL, ND_CMD_ARS_CAP,
 			cmd.buf, cmd_size, &cmd_rc);
 
-	अगर (rc < 0 || cmd_rc) अणु
+	if (rc < 0 || cmd_rc) {
 		dev_dbg(dev, "%s: failed at: %d rc: %d cmd_rc: %d\n",
 				__func__, __LINE__, rc, cmd_rc);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 
 	/* test ars_status with 'status' trimmed from 'out_length' */
-	cmd_size = माप(cmd.ars_stat) + माप(काष्ठा nd_ars_record);
-	cmd.ars_stat = (काष्ठा nd_cmd_ars_status) अणु
+	cmd_size = sizeof(cmd.ars_stat) + sizeof(struct nd_ars_record);
+	cmd.ars_stat = (struct nd_cmd_ars_status) {
 		.out_length = cmd_size - 4,
-	पूर्ण;
+	};
 	record = &cmd.ars_stat.records[0];
-	*record = (काष्ठा nd_ars_record) अणु
+	*record = (struct nd_ars_record) {
 		.length = test_val,
-	पूर्ण;
+	};
 	rc = setup_result(cmd.buf, cmd_size);
-	अगर (rc)
-		वापस rc;
-	rc = acpi_nfit_ctl(&acpi_desc->nd_desc, शून्य, ND_CMD_ARS_STATUS,
+	if (rc)
+		return rc;
+	rc = acpi_nfit_ctl(&acpi_desc->nd_desc, NULL, ND_CMD_ARS_STATUS,
 			cmd.buf, cmd_size, &cmd_rc);
 
-	अगर (rc < 0 || cmd_rc || record->length != test_val) अणु
+	if (rc < 0 || cmd_rc || record->length != test_val) {
 		dev_dbg(dev, "%s: failed at: %d rc: %d cmd_rc: %d\n",
 				__func__, __LINE__, rc, cmd_rc);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 
 	/* test ars_status with 'Output (Size)' including 'status' */
-	cmd_size = माप(cmd.ars_stat) + माप(काष्ठा nd_ars_record);
-	cmd.ars_stat = (काष्ठा nd_cmd_ars_status) अणु
+	cmd_size = sizeof(cmd.ars_stat) + sizeof(struct nd_ars_record);
+	cmd.ars_stat = (struct nd_cmd_ars_status) {
 		.out_length = cmd_size,
-	पूर्ण;
+	};
 	record = &cmd.ars_stat.records[0];
-	*record = (काष्ठा nd_ars_record) अणु
+	*record = (struct nd_ars_record) {
 		.length = test_val,
-	पूर्ण;
+	};
 	rc = setup_result(cmd.buf, cmd_size);
-	अगर (rc)
-		वापस rc;
-	rc = acpi_nfit_ctl(&acpi_desc->nd_desc, शून्य, ND_CMD_ARS_STATUS,
+	if (rc)
+		return rc;
+	rc = acpi_nfit_ctl(&acpi_desc->nd_desc, NULL, ND_CMD_ARS_STATUS,
 			cmd.buf, cmd_size, &cmd_rc);
 
-	अगर (rc < 0 || cmd_rc || record->length != test_val) अणु
+	if (rc < 0 || cmd_rc || record->length != test_val) {
 		dev_dbg(dev, "%s: failed at: %d rc: %d cmd_rc: %d\n",
 				__func__, __LINE__, rc, cmd_rc);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 
-	/* test extended status क्रम get_config_size results in failure */
-	cmd_size = माप(cmd.cfg_size);
-	cmd.cfg_size = (काष्ठा nd_cmd_get_config_size) अणु
+	/* test extended status for get_config_size results in failure */
+	cmd_size = sizeof(cmd.cfg_size);
+	cmd.cfg_size = (struct nd_cmd_get_config_size) {
 		.status = 1 << 16,
-	पूर्ण;
+	};
 	rc = setup_result(cmd.buf, cmd_size);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 	rc = acpi_nfit_ctl(&acpi_desc->nd_desc, nvdimm, ND_CMD_GET_CONFIG_SIZE,
 			cmd.buf, cmd_size, &cmd_rc);
 
-	अगर (rc < 0 || cmd_rc >= 0) अणु
+	if (rc < 0 || cmd_rc >= 0) {
 		dev_dbg(dev, "%s: failed at: %d rc: %d cmd_rc: %d\n",
 				__func__, __LINE__, rc, cmd_rc);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	/* test clear error */
-	cmd_size = माप(cmd.clear_err);
-	cmd.clear_err = (काष्ठा nd_cmd_clear_error) अणु
+	cmd_size = sizeof(cmd.clear_err);
+	cmd.clear_err = (struct nd_cmd_clear_error) {
 		.length = 512,
 		.cleared = 512,
-	पूर्ण;
+	};
 	rc = setup_result(cmd.buf, cmd_size);
-	अगर (rc)
-		वापस rc;
-	rc = acpi_nfit_ctl(&acpi_desc->nd_desc, शून्य, ND_CMD_CLEAR_ERROR,
+	if (rc)
+		return rc;
+	rc = acpi_nfit_ctl(&acpi_desc->nd_desc, NULL, ND_CMD_CLEAR_ERROR,
 			cmd.buf, cmd_size, &cmd_rc);
-	अगर (rc < 0 || cmd_rc) अणु
+	if (rc < 0 || cmd_rc) {
 		dev_dbg(dev, "%s: failed at: %d rc: %d cmd_rc: %d\n",
 				__func__, __LINE__, rc, cmd_rc);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	/* test firmware activate bus info */
-	cmd_size = माप(cmd.fwa_info);
-	cmd = (काष्ठा nfit_ctl_test_cmd) अणु
-		.pkg = अणु
+	cmd_size = sizeof(cmd.fwa_info);
+	cmd = (struct nfit_ctl_test_cmd) {
+		.pkg = {
 			.nd_command = NVDIMM_BUS_INTEL_FW_ACTIVATE_BUSINFO,
 			.nd_family = NVDIMM_BUS_FAMILY_INTEL,
 			.nd_size_out = cmd_size,
 			.nd_fw_size = cmd_size,
-		पूर्ण,
-		.fwa_info = अणु
+		},
+		.fwa_info = {
 			.state = ND_INTEL_FWA_IDLE,
 			.capability = ND_INTEL_BUS_FWA_CAP_FWQUIESCE
 				| ND_INTEL_BUS_FWA_CAP_OSQUIESCE,
-			.activate_पंचांगo = 1,
-			.cpu_quiesce_पंचांगo = 1,
-			.io_quiesce_पंचांगo = 1,
-			.max_quiesce_पंचांगo = 1,
-		पूर्ण,
-	पूर्ण;
+			.activate_tmo = 1,
+			.cpu_quiesce_tmo = 1,
+			.io_quiesce_tmo = 1,
+			.max_quiesce_tmo = 1,
+		},
+	};
 	rc = setup_result(cmd.buf, cmd_size);
-	अगर (rc)
-		वापस rc;
-	rc = acpi_nfit_ctl(&acpi_desc->nd_desc, शून्य, ND_CMD_CALL,
-			&cmd, माप(cmd.pkg) + cmd_size, &cmd_rc);
-	अगर (rc < 0 || cmd_rc) अणु
+	if (rc)
+		return rc;
+	rc = acpi_nfit_ctl(&acpi_desc->nd_desc, NULL, ND_CMD_CALL,
+			&cmd, sizeof(cmd.pkg) + cmd_size, &cmd_rc);
+	if (rc < 0 || cmd_rc) {
 		dev_dbg(dev, "%s: failed at: %d rc: %d cmd_rc: %d\n",
 				__func__, __LINE__, rc, cmd_rc);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nfit_test_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा nvdimm_bus_descriptor *nd_desc;
-	काष्ठा acpi_nfit_desc *acpi_desc;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा nfit_test *nfit_test;
-	काष्ठा nfit_mem *nfit_mem;
-	जोड़ acpi_object *obj;
-	पूर्णांक rc;
+static int nfit_test_probe(struct platform_device *pdev)
+{
+	struct nvdimm_bus_descriptor *nd_desc;
+	struct acpi_nfit_desc *acpi_desc;
+	struct device *dev = &pdev->dev;
+	struct nfit_test *nfit_test;
+	struct nfit_mem *nfit_mem;
+	union acpi_object *obj;
+	int rc;
 
-	अगर (म_भेद(dev_name(&pdev->dev), "nfit_test.0") == 0) अणु
+	if (strcmp(dev_name(&pdev->dev), "nfit_test.0") == 0) {
 		rc = nfit_ctl_test(&pdev->dev);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		if (rc)
+			return rc;
+	}
 
 	nfit_test = to_nfit_test(&pdev->dev);
 
 	/* common alloc */
-	अगर (nfit_test->num_dcr) अणु
-		पूर्णांक num = nfit_test->num_dcr;
+	if (nfit_test->num_dcr) {
+		int num = nfit_test->num_dcr;
 
-		nfit_test->dimm = devm_kसुस्मृति(dev, num, माप(व्योम *),
+		nfit_test->dimm = devm_kcalloc(dev, num, sizeof(void *),
 				GFP_KERNEL);
-		nfit_test->dimm_dma = devm_kसुस्मृति(dev, num, माप(dma_addr_t),
+		nfit_test->dimm_dma = devm_kcalloc(dev, num, sizeof(dma_addr_t),
 				GFP_KERNEL);
-		nfit_test->flush = devm_kसुस्मृति(dev, num, माप(व्योम *),
+		nfit_test->flush = devm_kcalloc(dev, num, sizeof(void *),
 				GFP_KERNEL);
-		nfit_test->flush_dma = devm_kसुस्मृति(dev, num, माप(dma_addr_t),
+		nfit_test->flush_dma = devm_kcalloc(dev, num, sizeof(dma_addr_t),
 				GFP_KERNEL);
-		nfit_test->label = devm_kसुस्मृति(dev, num, माप(व्योम *),
+		nfit_test->label = devm_kcalloc(dev, num, sizeof(void *),
 				GFP_KERNEL);
-		nfit_test->label_dma = devm_kसुस्मृति(dev, num,
-				माप(dma_addr_t), GFP_KERNEL);
-		nfit_test->dcr = devm_kसुस्मृति(dev, num,
-				माप(काष्ठा nfit_test_dcr *), GFP_KERNEL);
-		nfit_test->dcr_dma = devm_kसुस्मृति(dev, num,
-				माप(dma_addr_t), GFP_KERNEL);
-		nfit_test->smart = devm_kसुस्मृति(dev, num,
-				माप(काष्ठा nd_पूर्णांकel_smart), GFP_KERNEL);
-		nfit_test->smart_threshold = devm_kसुस्मृति(dev, num,
-				माप(काष्ठा nd_पूर्णांकel_smart_threshold),
+		nfit_test->label_dma = devm_kcalloc(dev, num,
+				sizeof(dma_addr_t), GFP_KERNEL);
+		nfit_test->dcr = devm_kcalloc(dev, num,
+				sizeof(struct nfit_test_dcr *), GFP_KERNEL);
+		nfit_test->dcr_dma = devm_kcalloc(dev, num,
+				sizeof(dma_addr_t), GFP_KERNEL);
+		nfit_test->smart = devm_kcalloc(dev, num,
+				sizeof(struct nd_intel_smart), GFP_KERNEL);
+		nfit_test->smart_threshold = devm_kcalloc(dev, num,
+				sizeof(struct nd_intel_smart_threshold),
 				GFP_KERNEL);
-		nfit_test->fw = devm_kसुस्मृति(dev, num,
-				माप(काष्ठा nfit_test_fw), GFP_KERNEL);
-		अगर (nfit_test->dimm && nfit_test->dimm_dma && nfit_test->label
+		nfit_test->fw = devm_kcalloc(dev, num,
+				sizeof(struct nfit_test_fw), GFP_KERNEL);
+		if (nfit_test->dimm && nfit_test->dimm_dma && nfit_test->label
 				&& nfit_test->label_dma && nfit_test->dcr
 				&& nfit_test->dcr_dma && nfit_test->flush
 				&& nfit_test->flush_dma
 				&& nfit_test->fw)
 			/* pass */;
-		अन्यथा
-			वापस -ENOMEM;
-	पूर्ण
+		else
+			return -ENOMEM;
+	}
 
-	अगर (nfit_test->num_pm) अणु
-		पूर्णांक num = nfit_test->num_pm;
+	if (nfit_test->num_pm) {
+		int num = nfit_test->num_pm;
 
-		nfit_test->spa_set = devm_kसुस्मृति(dev, num, माप(व्योम *),
+		nfit_test->spa_set = devm_kcalloc(dev, num, sizeof(void *),
 				GFP_KERNEL);
-		nfit_test->spa_set_dma = devm_kसुस्मृति(dev, num,
-				माप(dma_addr_t), GFP_KERNEL);
-		अगर (nfit_test->spa_set && nfit_test->spa_set_dma)
+		nfit_test->spa_set_dma = devm_kcalloc(dev, num,
+				sizeof(dma_addr_t), GFP_KERNEL);
+		if (nfit_test->spa_set && nfit_test->spa_set_dma)
 			/* pass */;
-		अन्यथा
-			वापस -ENOMEM;
-	पूर्ण
+		else
+			return -ENOMEM;
+	}
 
-	/* per-nfit specअगरic alloc */
-	अगर (nfit_test->alloc(nfit_test))
-		वापस -ENOMEM;
+	/* per-nfit specific alloc */
+	if (nfit_test->alloc(nfit_test))
+		return -ENOMEM;
 
 	nfit_test->setup(nfit_test);
 	acpi_desc = &nfit_test->acpi_desc;
 	acpi_nfit_desc_init(acpi_desc, &pdev->dev);
-	acpi_desc->blk_करो_io = nfit_test_blk_करो_io;
+	acpi_desc->blk_do_io = nfit_test_blk_do_io;
 	nd_desc = &acpi_desc->nd_desc;
-	nd_desc->provider_name = शून्य;
+	nd_desc->provider_name = NULL;
 	nd_desc->module = THIS_MODULE;
 	nd_desc->ndctl = nfit_test_ctl;
 
 	rc = acpi_nfit_init(acpi_desc, nfit_test->nfit_buf,
 			nfit_test->nfit_filled);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	rc = devm_add_action_or_reset(&pdev->dev, acpi_nfit_shutकरोwn, acpi_desc);
-	अगर (rc)
-		वापस rc;
+	rc = devm_add_action_or_reset(&pdev->dev, acpi_nfit_shutdown, acpi_desc);
+	if (rc)
+		return rc;
 
-	अगर (nfit_test->setup != nfit_test0_setup)
-		वापस 0;
+	if (nfit_test->setup != nfit_test0_setup)
+		return 0;
 
 	nfit_test->setup_hotplug = 1;
 	nfit_test->setup(nfit_test);
 
-	obj = kzalloc(माप(*obj), GFP_KERNEL);
-	अगर (!obj)
-		वापस -ENOMEM;
+	obj = kzalloc(sizeof(*obj), GFP_KERNEL);
+	if (!obj)
+		return -ENOMEM;
 	obj->type = ACPI_TYPE_BUFFER;
 	obj->buffer.length = nfit_test->nfit_size;
-	obj->buffer.poपूर्णांकer = nfit_test->nfit_buf;
+	obj->buffer.pointer = nfit_test->nfit_buf;
 	*(nfit_test->_fit) = obj;
-	__acpi_nfit_notअगरy(&pdev->dev, nfit_test, 0x80);
+	__acpi_nfit_notify(&pdev->dev, nfit_test, 0x80);
 
-	/* associate dimm devices with nfit_mem data क्रम notअगरication testing */
+	/* associate dimm devices with nfit_mem data for notification testing */
 	mutex_lock(&acpi_desc->init_mutex);
-	list_क्रम_each_entry(nfit_mem, &acpi_desc->dimms, list) अणु
+	list_for_each_entry(nfit_mem, &acpi_desc->dimms, list) {
 		u32 nfit_handle = __to_nfit_memdev(nfit_mem)->device_handle;
-		पूर्णांक i;
+		int i;
 
-		क्रम (i = 0; i < ARRAY_SIZE(handle); i++)
-			अगर (nfit_handle == handle[i])
+		for (i = 0; i < ARRAY_SIZE(handle); i++)
+			if (nfit_handle == handle[i])
 				dev_set_drvdata(nfit_test->dimm_dev[i],
 						nfit_mem);
-	पूर्ण
+	}
 	mutex_unlock(&acpi_desc->init_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nfit_test_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस 0;
-पूर्ण
+static int nfit_test_remove(struct platform_device *pdev)
+{
+	return 0;
+}
 
-अटल व्योम nfit_test_release(काष्ठा device *dev)
-अणु
-	काष्ठा nfit_test *nfit_test = to_nfit_test(dev);
+static void nfit_test_release(struct device *dev)
+{
+	struct nfit_test *nfit_test = to_nfit_test(dev);
 
-	kमुक्त(nfit_test);
-पूर्ण
+	kfree(nfit_test);
+}
 
-अटल स्थिर काष्ठा platक्रमm_device_id nfit_test_id[] = अणु
-	अणु KBUILD_MODNAME पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct platform_device_id nfit_test_id[] = {
+	{ KBUILD_MODNAME },
+	{ },
+};
 
-अटल काष्ठा platक्रमm_driver nfit_test_driver = अणु
+static struct platform_driver nfit_test_driver = {
 	.probe = nfit_test_probe,
-	.हटाओ = nfit_test_हटाओ,
-	.driver = अणु
+	.remove = nfit_test_remove,
+	.driver = {
 		.name = KBUILD_MODNAME,
-	पूर्ण,
+	},
 	.id_table = nfit_test_id,
-पूर्ण;
+};
 
-अटल __init पूर्णांक nfit_test_init(व्योम)
-अणु
-	पूर्णांक rc, i;
+static __init int nfit_test_init(void)
+{
+	int rc, i;
 
 	pmem_test();
 	libnvdimm_test();
@@ -3302,122 +3301,122 @@ DEVICE_ATTR_RO(handle);
 	device_dax_test();
 	dax_pmem_test();
 	dax_pmem_core_test();
-#अगर_घोषित CONFIG_DEV_DAX_PMEM_COMPAT
+#ifdef CONFIG_DEV_DAX_PMEM_COMPAT
 	dax_pmem_compat_test();
-#पूर्ण_अगर
+#endif
 
 	nfit_test_setup(nfit_test_lookup, nfit_test_evaluate_dsm);
 
-	nfit_wq = create_singlethपढ़ो_workqueue("nfit");
-	अगर (!nfit_wq)
-		वापस -ENOMEM;
+	nfit_wq = create_singlethread_workqueue("nfit");
+	if (!nfit_wq)
+		return -ENOMEM;
 
 	nfit_test_dimm = class_create(THIS_MODULE, "nfit_test_dimm");
-	अगर (IS_ERR(nfit_test_dimm)) अणु
+	if (IS_ERR(nfit_test_dimm)) {
 		rc = PTR_ERR(nfit_test_dimm);
-		जाओ err_रेजिस्टर;
-	पूर्ण
+		goto err_register;
+	}
 
 	nfit_pool = gen_pool_create(ilog2(SZ_4M), NUMA_NO_NODE);
-	अगर (!nfit_pool) अणु
+	if (!nfit_pool) {
 		rc = -ENOMEM;
-		जाओ err_रेजिस्टर;
-	पूर्ण
+		goto err_register;
+	}
 
-	अगर (gen_pool_add(nfit_pool, SZ_4G, SZ_4G, NUMA_NO_NODE)) अणु
+	if (gen_pool_add(nfit_pool, SZ_4G, SZ_4G, NUMA_NO_NODE)) {
 		rc = -ENOMEM;
-		जाओ err_रेजिस्टर;
-	पूर्ण
+		goto err_register;
+	}
 
-	क्रम (i = 0; i < NUM_NFITS; i++) अणु
-		काष्ठा nfit_test *nfit_test;
-		काष्ठा platक्रमm_device *pdev;
+	for (i = 0; i < NUM_NFITS; i++) {
+		struct nfit_test *nfit_test;
+		struct platform_device *pdev;
 
-		nfit_test = kzalloc(माप(*nfit_test), GFP_KERNEL);
-		अगर (!nfit_test) अणु
+		nfit_test = kzalloc(sizeof(*nfit_test), GFP_KERNEL);
+		if (!nfit_test) {
 			rc = -ENOMEM;
-			जाओ err_रेजिस्टर;
-		पूर्ण
+			goto err_register;
+		}
 		INIT_LIST_HEAD(&nfit_test->resources);
 		badrange_init(&nfit_test->badrange);
-		चयन (i) अणु
-		हाल 0:
+		switch (i) {
+		case 0:
 			nfit_test->num_pm = NUM_PM;
 			nfit_test->dcr_idx = 0;
 			nfit_test->num_dcr = NUM_DCR;
 			nfit_test->alloc = nfit_test0_alloc;
 			nfit_test->setup = nfit_test0_setup;
-			अवरोध;
-		हाल 1:
+			break;
+		case 1:
 			nfit_test->num_pm = 2;
 			nfit_test->dcr_idx = NUM_DCR;
 			nfit_test->num_dcr = 2;
 			nfit_test->alloc = nfit_test1_alloc;
 			nfit_test->setup = nfit_test1_setup;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			rc = -EINVAL;
-			जाओ err_रेजिस्टर;
-		पूर्ण
+			goto err_register;
+		}
 		pdev = &nfit_test->pdev;
 		pdev->name = KBUILD_MODNAME;
 		pdev->id = i;
 		pdev->dev.release = nfit_test_release;
-		rc = platक्रमm_device_रेजिस्टर(pdev);
-		अगर (rc) अणु
+		rc = platform_device_register(pdev);
+		if (rc) {
 			put_device(&pdev->dev);
-			जाओ err_रेजिस्टर;
-		पूर्ण
+			goto err_register;
+		}
 		get_device(&pdev->dev);
 
 		rc = dma_coerce_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64));
-		अगर (rc)
-			जाओ err_रेजिस्टर;
+		if (rc)
+			goto err_register;
 
 		instances[i] = nfit_test;
-		INIT_WORK(&nfit_test->work, uc_error_notअगरy);
-	पूर्ण
+		INIT_WORK(&nfit_test->work, uc_error_notify);
+	}
 
-	rc = platक्रमm_driver_रेजिस्टर(&nfit_test_driver);
-	अगर (rc)
-		जाओ err_रेजिस्टर;
-	वापस 0;
+	rc = platform_driver_register(&nfit_test_driver);
+	if (rc)
+		goto err_register;
+	return 0;
 
- err_रेजिस्टर:
-	अगर (nfit_pool)
+ err_register:
+	if (nfit_pool)
 		gen_pool_destroy(nfit_pool);
 
 	destroy_workqueue(nfit_wq);
-	क्रम (i = 0; i < NUM_NFITS; i++)
-		अगर (instances[i])
-			platक्रमm_device_unरेजिस्टर(&instances[i]->pdev);
-	nfit_test_tearकरोwn();
-	क्रम (i = 0; i < NUM_NFITS; i++)
-		अगर (instances[i])
+	for (i = 0; i < NUM_NFITS; i++)
+		if (instances[i])
+			platform_device_unregister(&instances[i]->pdev);
+	nfit_test_teardown();
+	for (i = 0; i < NUM_NFITS; i++)
+		if (instances[i])
 			put_device(&instances[i]->pdev.dev);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल __निकास व्योम nfit_test_निकास(व्योम)
-अणु
-	पूर्णांक i;
+static __exit void nfit_test_exit(void)
+{
+	int i;
 
 	flush_workqueue(nfit_wq);
 	destroy_workqueue(nfit_wq);
-	क्रम (i = 0; i < NUM_NFITS; i++)
-		platक्रमm_device_unरेजिस्टर(&instances[i]->pdev);
-	platक्रमm_driver_unरेजिस्टर(&nfit_test_driver);
-	nfit_test_tearकरोwn();
+	for (i = 0; i < NUM_NFITS; i++)
+		platform_device_unregister(&instances[i]->pdev);
+	platform_driver_unregister(&nfit_test_driver);
+	nfit_test_teardown();
 
 	gen_pool_destroy(nfit_pool);
 
-	क्रम (i = 0; i < NUM_NFITS; i++)
+	for (i = 0; i < NUM_NFITS; i++)
 		put_device(&instances[i]->pdev.dev);
 	class_destroy(nfit_test_dimm);
-पूर्ण
+}
 
 module_init(nfit_test_init);
-module_निकास(nfit_test_निकास);
+module_exit(nfit_test_exit);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Intel Corporation");

@@ -1,63 +1,62 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* linux/arch/sparc/kernel/sys_sparc.c
  *
- * This file contains various अक्रमom प्रणाली calls that
+ * This file contains various random system calls that
  * have a non-standard calling sequence on the Linux/sparc
- * platक्रमm.
+ * platform.
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/sched/debug.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/file.h>
-#समावेश <linux/sem.h>
-#समावेश <linux/msg.h>
-#समावेश <linux/shm.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/utsname.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/ipc.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/sched/signal.h>
+#include <linux/sched/mm.h>
+#include <linux/sched/debug.h>
+#include <linux/mm.h>
+#include <linux/fs.h>
+#include <linux/file.h>
+#include <linux/sem.h>
+#include <linux/msg.h>
+#include <linux/shm.h>
+#include <linux/stat.h>
+#include <linux/syscalls.h>
+#include <linux/mman.h>
+#include <linux/utsname.h>
+#include <linux/smp.h>
+#include <linux/ipc.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/unistd.h>
+#include <linux/uaccess.h>
+#include <asm/unistd.h>
 
-#समावेश "systbls.h"
+#include "systbls.h"
 
-/* #घोषणा DEBUG_UNIMP_SYSCALL */
+/* #define DEBUG_UNIMP_SYSCALL */
 
 /* XXX Make this per-binary type, this way we can detect the type of
  * XXX a binary.  Every Sparc executable calls this very early on.
  */
 SYSCALL_DEFINE0(getpagesize)
-अणु
-	वापस PAGE_SIZE; /* Possibly older binaries want 8192 on sun4's? */
-पूर्ण
+{
+	return PAGE_SIZE; /* Possibly older binaries want 8192 on sun4's? */
+}
 
-अचिन्हित दीर्घ arch_get_unmapped_area(काष्ठा file *filp, अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len, अचिन्हित दीर्घ pgoff, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा vm_unmapped_area_info info;
+unsigned long arch_get_unmapped_area(struct file *filp, unsigned long addr, unsigned long len, unsigned long pgoff, unsigned long flags)
+{
+	struct vm_unmapped_area_info info;
 
-	अगर (flags & MAP_FIXED) अणु
-		/* We करो not accept a shared mapping अगर it would violate
-		 * cache aliasing स्थिरraपूर्णांकs.
+	if (flags & MAP_FIXED) {
+		/* We do not accept a shared mapping if it would violate
+		 * cache aliasing constraints.
 		 */
-		अगर ((flags & MAP_SHARED) &&
+		if ((flags & MAP_SHARED) &&
 		    ((addr - (pgoff << PAGE_SHIFT)) & (SHMLBA - 1)))
-			वापस -EINVAL;
-		वापस addr;
-	पूर्ण
+			return -EINVAL;
+		return addr;
+	}
 
-	/* See यंत्र-sparc/uaccess.h */
-	अगर (len > TASK_SIZE - PAGE_SIZE)
-		वापस -ENOMEM;
-	अगर (!addr)
+	/* See asm-sparc/uaccess.h */
+	if (len > TASK_SIZE - PAGE_SIZE)
+		return -ENOMEM;
+	if (!addr)
 		addr = TASK_UNMAPPED_BASE;
 
 	info.flags = 0;
@@ -67,158 +66,158 @@ SYSCALL_DEFINE0(getpagesize)
 	info.align_mask = (flags & MAP_SHARED) ?
 		(PAGE_MASK & (SHMLBA - 1)) : 0;
 	info.align_offset = pgoff << PAGE_SHIFT;
-	वापस vm_unmapped_area(&info);
-पूर्ण
+	return vm_unmapped_area(&info);
+}
 
 /*
- * sys_pipe() is the normal C calling standard क्रम creating
- * a pipe. It's not the way unix traditionally करोes this, though.
+ * sys_pipe() is the normal C calling standard for creating
+ * a pipe. It's not the way unix traditionally does this, though.
  */
 SYSCALL_DEFINE0(sparc_pipe)
-अणु
-	पूर्णांक fd[2];
-	पूर्णांक error;
+{
+	int fd[2];
+	int error;
 
-	error = करो_pipe_flags(fd, 0);
-	अगर (error)
-		जाओ out;
+	error = do_pipe_flags(fd, 0);
+	if (error)
+		goto out;
 	current_pt_regs()->u_regs[UREG_I1] = fd[1];
 	error = fd[0];
 out:
-	वापस error;
-पूर्ण
+	return error;
+}
 
-पूर्णांक sparc_mmap_check(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len)
-अणु
-	/* See यंत्र-sparc/uaccess.h */
-	अगर (len > TASK_SIZE - PAGE_SIZE || addr + len > TASK_SIZE - PAGE_SIZE)
-		वापस -EINVAL;
+int sparc_mmap_check(unsigned long addr, unsigned long len)
+{
+	/* See asm-sparc/uaccess.h */
+	if (len > TASK_SIZE - PAGE_SIZE || addr + len > TASK_SIZE - PAGE_SIZE)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Linux version of mmap */
 
-SYSCALL_DEFINE6(mmap2, अचिन्हित दीर्घ, addr, अचिन्हित दीर्घ, len,
-	अचिन्हित दीर्घ, prot, अचिन्हित दीर्घ, flags, अचिन्हित दीर्घ, fd,
-	अचिन्हित दीर्घ, pgoff)
-अणु
-	/* Make sure the shअगरt क्रम mmap2 is स्थिरant (12), no matter what PAGE_SIZE
+SYSCALL_DEFINE6(mmap2, unsigned long, addr, unsigned long, len,
+	unsigned long, prot, unsigned long, flags, unsigned long, fd,
+	unsigned long, pgoff)
+{
+	/* Make sure the shift for mmap2 is constant (12), no matter what PAGE_SIZE
 	   we have. */
-	वापस ksys_mmap_pgoff(addr, len, prot, flags, fd,
+	return ksys_mmap_pgoff(addr, len, prot, flags, fd,
 			       pgoff >> (PAGE_SHIFT - 12));
-पूर्ण
+}
 
-SYSCALL_DEFINE6(mmap, अचिन्हित दीर्घ, addr, अचिन्हित दीर्घ, len,
-	अचिन्हित दीर्घ, prot, अचिन्हित दीर्घ, flags, अचिन्हित दीर्घ, fd,
-	अचिन्हित दीर्घ, off)
-अणु
+SYSCALL_DEFINE6(mmap, unsigned long, addr, unsigned long, len,
+	unsigned long, prot, unsigned long, flags, unsigned long, fd,
+	unsigned long, off)
+{
 	/* no alignment check? */
-	वापस ksys_mmap_pgoff(addr, len, prot, flags, fd, off >> PAGE_SHIFT);
-पूर्ण
+	return ksys_mmap_pgoff(addr, len, prot, flags, fd, off >> PAGE_SHIFT);
+}
 
-SYSCALL_DEFINE5(sparc_remap_file_pages, अचिन्हित दीर्घ, start, अचिन्हित दीर्घ, size,
-			   अचिन्हित दीर्घ, prot, अचिन्हित दीर्घ, pgoff,
-			   अचिन्हित दीर्घ, flags)
-अणु
-	/* This works on an existing mmap so we करोn't need to validate
-	 * the range as that was करोne at the original mmap call.
+SYSCALL_DEFINE5(sparc_remap_file_pages, unsigned long, start, unsigned long, size,
+			   unsigned long, prot, unsigned long, pgoff,
+			   unsigned long, flags)
+{
+	/* This works on an existing mmap so we don't need to validate
+	 * the range as that was done at the original mmap call.
 	 */
-	वापस sys_remap_file_pages(start, size, prot,
+	return sys_remap_file_pages(start, size, prot,
 				    (pgoff >> (PAGE_SHIFT - 12)), flags);
-पूर्ण
+}
 
 SYSCALL_DEFINE0(nis_syscall)
-अणु
-	अटल पूर्णांक count = 0;
-	काष्ठा pt_regs *regs = current_pt_regs();
+{
+	static int count = 0;
+	struct pt_regs *regs = current_pt_regs();
 
-	अगर (count++ > 5)
-		वापस -ENOSYS;
-	prपूर्णांकk ("%s[%d]: Unimplemented SPARC system call %d\n",
-		current->comm, task_pid_nr(current), (पूर्णांक)regs->u_regs[1]);
-#अगर_घोषित DEBUG_UNIMP_SYSCALL	
+	if (count++ > 5)
+		return -ENOSYS;
+	printk ("%s[%d]: Unimplemented SPARC system call %d\n",
+		current->comm, task_pid_nr(current), (int)regs->u_regs[1]);
+#ifdef DEBUG_UNIMP_SYSCALL	
 	show_regs (regs);
-#पूर्ण_अगर
-	वापस -ENOSYS;
-पूर्ण
+#endif
+	return -ENOSYS;
+}
 
-/* #घोषणा DEBUG_SPARC_BREAKPOINT */
+/* #define DEBUG_SPARC_BREAKPOINT */
 
-यंत्रlinkage व्योम
-sparc_अवरोधpoपूर्णांक (काष्ठा pt_regs *regs)
-अणु
+asmlinkage void
+sparc_breakpoint (struct pt_regs *regs)
+{
 
-#अगर_घोषित DEBUG_SPARC_BREAKPOINT
-        prपूर्णांकk ("TRAP: Entering kernel PC=%x, nPC=%x\n", regs->pc, regs->npc);
-#पूर्ण_अगर
-	क्रमce_sig_fault(SIGTRAP, TRAP_BRKPT, (व्योम __user *)regs->pc, 0);
+#ifdef DEBUG_SPARC_BREAKPOINT
+        printk ("TRAP: Entering kernel PC=%x, nPC=%x\n", regs->pc, regs->npc);
+#endif
+	force_sig_fault(SIGTRAP, TRAP_BRKPT, (void __user *)regs->pc, 0);
 
-#अगर_घोषित DEBUG_SPARC_BREAKPOINT
-	prपूर्णांकk ("TRAP: Returning to space: PC=%x nPC=%x\n", regs->pc, regs->npc);
-#पूर्ण_अगर
-पूर्ण
+#ifdef DEBUG_SPARC_BREAKPOINT
+	printk ("TRAP: Returning to space: PC=%x nPC=%x\n", regs->pc, regs->npc);
+#endif
+}
 
-SYSCALL_DEFINE3(sparc_sigaction, पूर्णांक, sig,
-		काष्ठा old_sigaction __user *,act,
-		काष्ठा old_sigaction __user *,oact)
-अणु
+SYSCALL_DEFINE3(sparc_sigaction, int, sig,
+		struct old_sigaction __user *,act,
+		struct old_sigaction __user *,oact)
+{
 	WARN_ON_ONCE(sig >= 0);
-	वापस sys_sigaction(-sig, act, oact);
-पूर्ण
+	return sys_sigaction(-sig, act, oact);
+}
 
-SYSCALL_DEFINE5(rt_sigaction, पूर्णांक, sig,
-		 स्थिर काष्ठा sigaction __user *, act,
-		 काष्ठा sigaction __user *, oact,
-		 व्योम __user *, restorer,
-		 माप_प्रकार, sigsetsize)
-अणु
-	काष्ठा k_sigaction new_ka, old_ka;
-	पूर्णांक ret;
+SYSCALL_DEFINE5(rt_sigaction, int, sig,
+		 const struct sigaction __user *, act,
+		 struct sigaction __user *, oact,
+		 void __user *, restorer,
+		 size_t, sigsetsize)
+{
+	struct k_sigaction new_ka, old_ka;
+	int ret;
 
 	/* XXX: Don't preclude handling different sized sigset_t's.  */
-	अगर (sigsetsize != माप(sigset_t))
-		वापस -EINVAL;
+	if (sigsetsize != sizeof(sigset_t))
+		return -EINVAL;
 
-	अगर (act) अणु
+	if (act) {
 		new_ka.ka_restorer = restorer;
-		अगर (copy_from_user(&new_ka.sa, act, माप(*act)))
-			वापस -EFAULT;
-	पूर्ण
+		if (copy_from_user(&new_ka.sa, act, sizeof(*act)))
+			return -EFAULT;
+	}
 
-	ret = करो_sigaction(sig, act ? &new_ka : शून्य, oact ? &old_ka : शून्य);
+	ret = do_sigaction(sig, act ? &new_ka : NULL, oact ? &old_ka : NULL);
 
-	अगर (!ret && oact) अणु
-		अगर (copy_to_user(oact, &old_ka.sa, माप(*oact)))
-			वापस -EFAULT;
-	पूर्ण
+	if (!ret && oact) {
+		if (copy_to_user(oact, &old_ka.sa, sizeof(*oact)))
+			return -EFAULT;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-SYSCALL_DEFINE2(getकरोमुख्यname, अक्षर __user *, name, पूर्णांक, len)
-अणु
-	पूर्णांक nlen, err;
-	अक्षर पंचांगp[__NEW_UTS_LEN + 1];
+SYSCALL_DEFINE2(getdomainname, char __user *, name, int, len)
+{
+	int nlen, err;
+	char tmp[__NEW_UTS_LEN + 1];
 
-	अगर (len < 0)
-		वापस -EINVAL;
+	if (len < 0)
+		return -EINVAL;
 
-	करोwn_पढ़ो(&uts_sem);
+	down_read(&uts_sem);
 
-	nlen = म_माप(utsname()->करोमुख्यname) + 1;
+	nlen = strlen(utsname()->domainname) + 1;
 	err = -EINVAL;
-	अगर (nlen > len)
-		जाओ out_unlock;
-	स_नकल(पंचांगp, utsname()->करोमुख्यname, nlen);
+	if (nlen > len)
+		goto out_unlock;
+	memcpy(tmp, utsname()->domainname, nlen);
 
-	up_पढ़ो(&uts_sem);
+	up_read(&uts_sem);
 
-	अगर (copy_to_user(name, पंचांगp, nlen))
-		वापस -EFAULT;
-	वापस 0;
+	if (copy_to_user(name, tmp, nlen))
+		return -EFAULT;
+	return 0;
 
 out_unlock:
-	up_पढ़ो(&uts_sem);
-	वापस err;
-पूर्ण
+	up_read(&uts_sem);
+	return err;
+}

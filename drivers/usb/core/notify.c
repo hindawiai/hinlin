@@ -1,69 +1,68 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * All the USB notअगरy logic
+ * All the USB notify logic
  *
- * (C) Copyright 2005 Greg Kroah-Harपंचांगan <gregkh@suse.de>
+ * (C) Copyright 2005 Greg Kroah-Hartman <gregkh@suse.de>
  *
- * notअगरier functions originally based on those in kernel/sys.c
+ * notifier functions originally based on those in kernel/sys.c
  * but fixed up to not be so broken.
  *
  * Released under the GPLv2 only.
  */
 
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/export.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/mutex.h>
-#समावेश "usb.h"
+#include <linux/kernel.h>
+#include <linux/export.h>
+#include <linux/notifier.h>
+#include <linux/usb.h>
+#include <linux/mutex.h>
+#include "usb.h"
 
-अटल BLOCKING_NOTIFIER_HEAD(usb_notअगरier_list);
+static BLOCKING_NOTIFIER_HEAD(usb_notifier_list);
 
 /**
- * usb_रेजिस्टर_notअगरy - रेजिस्टर a notअगरier callback whenever a usb change happens
- * @nb: poपूर्णांकer to the notअगरier block क्रम the callback events.
+ * usb_register_notify - register a notifier callback whenever a usb change happens
+ * @nb: pointer to the notifier block for the callback events.
  *
- * These changes are either USB devices or busses being added or हटाओd.
+ * These changes are either USB devices or busses being added or removed.
  */
-व्योम usb_रेजिस्टर_notअगरy(काष्ठा notअगरier_block *nb)
-अणु
-	blocking_notअगरier_chain_रेजिस्टर(&usb_notअगरier_list, nb);
-पूर्ण
-EXPORT_SYMBOL_GPL(usb_रेजिस्टर_notअगरy);
+void usb_register_notify(struct notifier_block *nb)
+{
+	blocking_notifier_chain_register(&usb_notifier_list, nb);
+}
+EXPORT_SYMBOL_GPL(usb_register_notify);
 
 /**
- * usb_unरेजिस्टर_notअगरy - unरेजिस्टर a notअगरier callback
- * @nb: poपूर्णांकer to the notअगरier block क्रम the callback events.
+ * usb_unregister_notify - unregister a notifier callback
+ * @nb: pointer to the notifier block for the callback events.
  *
- * usb_रेजिस्टर_notअगरy() must have been previously called क्रम this function
+ * usb_register_notify() must have been previously called for this function
  * to work properly.
  */
-व्योम usb_unरेजिस्टर_notअगरy(काष्ठा notअगरier_block *nb)
-अणु
-	blocking_notअगरier_chain_unरेजिस्टर(&usb_notअगरier_list, nb);
-पूर्ण
-EXPORT_SYMBOL_GPL(usb_unरेजिस्टर_notअगरy);
+void usb_unregister_notify(struct notifier_block *nb)
+{
+	blocking_notifier_chain_unregister(&usb_notifier_list, nb);
+}
+EXPORT_SYMBOL_GPL(usb_unregister_notify);
 
 
-व्योम usb_notअगरy_add_device(काष्ठा usb_device *udev)
-अणु
-	blocking_notअगरier_call_chain(&usb_notअगरier_list, USB_DEVICE_ADD, udev);
-पूर्ण
+void usb_notify_add_device(struct usb_device *udev)
+{
+	blocking_notifier_call_chain(&usb_notifier_list, USB_DEVICE_ADD, udev);
+}
 
-व्योम usb_notअगरy_हटाओ_device(काष्ठा usb_device *udev)
-अणु
-	blocking_notअगरier_call_chain(&usb_notअगरier_list,
+void usb_notify_remove_device(struct usb_device *udev)
+{
+	blocking_notifier_call_chain(&usb_notifier_list,
 			USB_DEVICE_REMOVE, udev);
-पूर्ण
+}
 
-व्योम usb_notअगरy_add_bus(काष्ठा usb_bus *ubus)
-अणु
-	blocking_notअगरier_call_chain(&usb_notअगरier_list, USB_BUS_ADD, ubus);
-पूर्ण
+void usb_notify_add_bus(struct usb_bus *ubus)
+{
+	blocking_notifier_call_chain(&usb_notifier_list, USB_BUS_ADD, ubus);
+}
 
-व्योम usb_notअगरy_हटाओ_bus(काष्ठा usb_bus *ubus)
-अणु
-	blocking_notअगरier_call_chain(&usb_notअगरier_list, USB_BUS_REMOVE, ubus);
-पूर्ण
+void usb_notify_remove_bus(struct usb_bus *ubus)
+{
+	blocking_notifier_call_chain(&usb_notifier_list, USB_BUS_REMOVE, ubus);
+}

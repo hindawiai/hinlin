@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier:  GPL-2.0
+// SPDX-License-Identifier:  GPL-2.0
 // (C) 2017-2018 Synopsys, Inc. (www.synopsys.com)
 
 /*
@@ -8,37 +7,37 @@
  * Author: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/dmapool.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/io-64-nonatomic-lo-hi.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_dma.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/property.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
+#include <linux/bitops.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/dmaengine.h>
+#include <linux/dmapool.h>
+#include <linux/dma-mapping.h>
+#include <linux/err.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/iopoll.h>
+#include <linux/io-64-nonatomic-lo-hi.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_dma.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/property.h>
+#include <linux/slab.h>
+#include <linux/types.h>
 
-#समावेश "dw-axi-dmac.h"
-#समावेश "../dmaengine.h"
-#समावेश "../virt-dma.h"
+#include "dw-axi-dmac.h"
+#include "../dmaengine.h"
+#include "../virt-dma.h"
 
 /*
  * The set of bus widths supported by the DMA controller. DW AXI DMAC supports
- * master data bus width up to 512 bits (क्रम both AXI master पूर्णांकerfaces), but
+ * master data bus width up to 512 bits (for both AXI master interfaces), but
  * it depends on IP block configurarion.
  */
-#घोषणा AXI_DMA_BUSWIDTHS		  \
+#define AXI_DMA_BUSWIDTHS		  \
 	(DMA_SLAVE_BUSWIDTH_1_BYTE	| \
 	DMA_SLAVE_BUSWIDTH_2_BYTES	| \
 	DMA_SLAVE_BUSWIDTH_4_BYTES	| \
@@ -47,548 +46,548 @@
 	DMA_SLAVE_BUSWIDTH_32_BYTES	| \
 	DMA_SLAVE_BUSWIDTH_64_BYTES)
 
-अटल अंतरभूत व्योम
-axi_dma_ioग_लिखो32(काष्ठा axi_dma_chip *chip, u32 reg, u32 val)
-अणु
-	ioग_लिखो32(val, chip->regs + reg);
-पूर्ण
+static inline void
+axi_dma_iowrite32(struct axi_dma_chip *chip, u32 reg, u32 val)
+{
+	iowrite32(val, chip->regs + reg);
+}
 
-अटल अंतरभूत u32 axi_dma_ioपढ़ो32(काष्ठा axi_dma_chip *chip, u32 reg)
-अणु
-	वापस ioपढ़ो32(chip->regs + reg);
-पूर्ण
+static inline u32 axi_dma_ioread32(struct axi_dma_chip *chip, u32 reg)
+{
+	return ioread32(chip->regs + reg);
+}
 
-अटल अंतरभूत व्योम
-axi_chan_ioग_लिखो32(काष्ठा axi_dma_chan *chan, u32 reg, u32 val)
-अणु
-	ioग_लिखो32(val, chan->chan_regs + reg);
-पूर्ण
+static inline void
+axi_chan_iowrite32(struct axi_dma_chan *chan, u32 reg, u32 val)
+{
+	iowrite32(val, chan->chan_regs + reg);
+}
 
-अटल अंतरभूत u32 axi_chan_ioपढ़ो32(काष्ठा axi_dma_chan *chan, u32 reg)
-अणु
-	वापस ioपढ़ो32(chan->chan_regs + reg);
-पूर्ण
+static inline u32 axi_chan_ioread32(struct axi_dma_chan *chan, u32 reg)
+{
+	return ioread32(chan->chan_regs + reg);
+}
 
-अटल अंतरभूत व्योम
-axi_chan_ioग_लिखो64(काष्ठा axi_dma_chan *chan, u32 reg, u64 val)
-अणु
+static inline void
+axi_chan_iowrite64(struct axi_dma_chan *chan, u32 reg, u64 val)
+{
 	/*
-	 * We split one 64 bit ग_लिखो क्रम two 32 bit ग_लिखो as some HW करोesn't
+	 * We split one 64 bit write for two 32 bit write as some HW doesn't
 	 * support 64 bit access.
 	 */
-	ioग_लिखो32(lower_32_bits(val), chan->chan_regs + reg);
-	ioग_लिखो32(upper_32_bits(val), chan->chan_regs + reg + 4);
-पूर्ण
+	iowrite32(lower_32_bits(val), chan->chan_regs + reg);
+	iowrite32(upper_32_bits(val), chan->chan_regs + reg + 4);
+}
 
-अटल अंतरभूत व्योम axi_dma_disable(काष्ठा axi_dma_chip *chip)
-अणु
+static inline void axi_dma_disable(struct axi_dma_chip *chip)
+{
 	u32 val;
 
-	val = axi_dma_ioपढ़ो32(chip, DMAC_CFG);
+	val = axi_dma_ioread32(chip, DMAC_CFG);
 	val &= ~DMAC_EN_MASK;
-	axi_dma_ioग_लिखो32(chip, DMAC_CFG, val);
-पूर्ण
+	axi_dma_iowrite32(chip, DMAC_CFG, val);
+}
 
-अटल अंतरभूत व्योम axi_dma_enable(काष्ठा axi_dma_chip *chip)
-अणु
+static inline void axi_dma_enable(struct axi_dma_chip *chip)
+{
 	u32 val;
 
-	val = axi_dma_ioपढ़ो32(chip, DMAC_CFG);
+	val = axi_dma_ioread32(chip, DMAC_CFG);
 	val |= DMAC_EN_MASK;
-	axi_dma_ioग_लिखो32(chip, DMAC_CFG, val);
-पूर्ण
+	axi_dma_iowrite32(chip, DMAC_CFG, val);
+}
 
-अटल अंतरभूत व्योम axi_dma_irq_disable(काष्ठा axi_dma_chip *chip)
-अणु
+static inline void axi_dma_irq_disable(struct axi_dma_chip *chip)
+{
 	u32 val;
 
-	val = axi_dma_ioपढ़ो32(chip, DMAC_CFG);
+	val = axi_dma_ioread32(chip, DMAC_CFG);
 	val &= ~INT_EN_MASK;
-	axi_dma_ioग_लिखो32(chip, DMAC_CFG, val);
-पूर्ण
+	axi_dma_iowrite32(chip, DMAC_CFG, val);
+}
 
-अटल अंतरभूत व्योम axi_dma_irq_enable(काष्ठा axi_dma_chip *chip)
-अणु
+static inline void axi_dma_irq_enable(struct axi_dma_chip *chip)
+{
 	u32 val;
 
-	val = axi_dma_ioपढ़ो32(chip, DMAC_CFG);
+	val = axi_dma_ioread32(chip, DMAC_CFG);
 	val |= INT_EN_MASK;
-	axi_dma_ioग_लिखो32(chip, DMAC_CFG, val);
-पूर्ण
+	axi_dma_iowrite32(chip, DMAC_CFG, val);
+}
 
-अटल अंतरभूत व्योम axi_chan_irq_disable(काष्ठा axi_dma_chan *chan, u32 irq_mask)
-अणु
+static inline void axi_chan_irq_disable(struct axi_dma_chan *chan, u32 irq_mask)
+{
 	u32 val;
 
-	अगर (likely(irq_mask == DWAXIDMAC_IRQ_ALL)) अणु
-		axi_chan_ioग_लिखो32(chan, CH_INTSTATUS_ENA, DWAXIDMAC_IRQ_NONE);
-	पूर्ण अन्यथा अणु
-		val = axi_chan_ioपढ़ो32(chan, CH_INTSTATUS_ENA);
+	if (likely(irq_mask == DWAXIDMAC_IRQ_ALL)) {
+		axi_chan_iowrite32(chan, CH_INTSTATUS_ENA, DWAXIDMAC_IRQ_NONE);
+	} else {
+		val = axi_chan_ioread32(chan, CH_INTSTATUS_ENA);
 		val &= ~irq_mask;
-		axi_chan_ioग_लिखो32(chan, CH_INTSTATUS_ENA, val);
-	पूर्ण
-पूर्ण
+		axi_chan_iowrite32(chan, CH_INTSTATUS_ENA, val);
+	}
+}
 
-अटल अंतरभूत व्योम axi_chan_irq_set(काष्ठा axi_dma_chan *chan, u32 irq_mask)
-अणु
-	axi_chan_ioग_लिखो32(chan, CH_INTSTATUS_ENA, irq_mask);
-पूर्ण
+static inline void axi_chan_irq_set(struct axi_dma_chan *chan, u32 irq_mask)
+{
+	axi_chan_iowrite32(chan, CH_INTSTATUS_ENA, irq_mask);
+}
 
-अटल अंतरभूत व्योम axi_chan_irq_sig_set(काष्ठा axi_dma_chan *chan, u32 irq_mask)
-अणु
-	axi_chan_ioग_लिखो32(chan, CH_INTSIGNAL_ENA, irq_mask);
-पूर्ण
+static inline void axi_chan_irq_sig_set(struct axi_dma_chan *chan, u32 irq_mask)
+{
+	axi_chan_iowrite32(chan, CH_INTSIGNAL_ENA, irq_mask);
+}
 
-अटल अंतरभूत व्योम axi_chan_irq_clear(काष्ठा axi_dma_chan *chan, u32 irq_mask)
-अणु
-	axi_chan_ioग_लिखो32(chan, CH_INTCLEAR, irq_mask);
-पूर्ण
+static inline void axi_chan_irq_clear(struct axi_dma_chan *chan, u32 irq_mask)
+{
+	axi_chan_iowrite32(chan, CH_INTCLEAR, irq_mask);
+}
 
-अटल अंतरभूत u32 axi_chan_irq_पढ़ो(काष्ठा axi_dma_chan *chan)
-अणु
-	वापस axi_chan_ioपढ़ो32(chan, CH_INTSTATUS);
-पूर्ण
+static inline u32 axi_chan_irq_read(struct axi_dma_chan *chan)
+{
+	return axi_chan_ioread32(chan, CH_INTSTATUS);
+}
 
-अटल अंतरभूत व्योम axi_chan_disable(काष्ठा axi_dma_chan *chan)
-अणु
+static inline void axi_chan_disable(struct axi_dma_chan *chan)
+{
 	u32 val;
 
-	val = axi_dma_ioपढ़ो32(chan->chip, DMAC_CHEN);
+	val = axi_dma_ioread32(chan->chip, DMAC_CHEN);
 	val &= ~(BIT(chan->id) << DMAC_CHAN_EN_SHIFT);
 	val |=   BIT(chan->id) << DMAC_CHAN_EN_WE_SHIFT;
-	axi_dma_ioग_लिखो32(chan->chip, DMAC_CHEN, val);
-पूर्ण
+	axi_dma_iowrite32(chan->chip, DMAC_CHEN, val);
+}
 
-अटल अंतरभूत व्योम axi_chan_enable(काष्ठा axi_dma_chan *chan)
-अणु
+static inline void axi_chan_enable(struct axi_dma_chan *chan)
+{
 	u32 val;
 
-	val = axi_dma_ioपढ़ो32(chan->chip, DMAC_CHEN);
+	val = axi_dma_ioread32(chan->chip, DMAC_CHEN);
 	val |= BIT(chan->id) << DMAC_CHAN_EN_SHIFT |
 	       BIT(chan->id) << DMAC_CHAN_EN_WE_SHIFT;
-	axi_dma_ioग_लिखो32(chan->chip, DMAC_CHEN, val);
-पूर्ण
+	axi_dma_iowrite32(chan->chip, DMAC_CHEN, val);
+}
 
-अटल अंतरभूत bool axi_chan_is_hw_enable(काष्ठा axi_dma_chan *chan)
-अणु
+static inline bool axi_chan_is_hw_enable(struct axi_dma_chan *chan)
+{
 	u32 val;
 
-	val = axi_dma_ioपढ़ो32(chan->chip, DMAC_CHEN);
+	val = axi_dma_ioread32(chan->chip, DMAC_CHEN);
 
-	वापस !!(val & (BIT(chan->id) << DMAC_CHAN_EN_SHIFT));
-पूर्ण
+	return !!(val & (BIT(chan->id) << DMAC_CHAN_EN_SHIFT));
+}
 
-अटल व्योम axi_dma_hw_init(काष्ठा axi_dma_chip *chip)
-अणु
+static void axi_dma_hw_init(struct axi_dma_chip *chip)
+{
 	u32 i;
 
-	क्रम (i = 0; i < chip->dw->hdata->nr_channels; i++) अणु
+	for (i = 0; i < chip->dw->hdata->nr_channels; i++) {
 		axi_chan_irq_disable(&chip->dw->chan[i], DWAXIDMAC_IRQ_ALL);
 		axi_chan_disable(&chip->dw->chan[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u32 axi_chan_get_xfer_width(काष्ठा axi_dma_chan *chan, dma_addr_t src,
-				   dma_addr_t dst, माप_प्रकार len)
-अणु
+static u32 axi_chan_get_xfer_width(struct axi_dma_chan *chan, dma_addr_t src,
+				   dma_addr_t dst, size_t len)
+{
 	u32 max_width = chan->chip->dw->hdata->m_data_width;
 
-	वापस __ffs(src | dst | len | BIT(max_width));
-पूर्ण
+	return __ffs(src | dst | len | BIT(max_width));
+}
 
-अटल अंतरभूत स्थिर अक्षर *axi_chan_name(काष्ठा axi_dma_chan *chan)
-अणु
-	वापस dma_chan_name(&chan->vc.chan);
-पूर्ण
+static inline const char *axi_chan_name(struct axi_dma_chan *chan)
+{
+	return dma_chan_name(&chan->vc.chan);
+}
 
-अटल काष्ठा axi_dma_desc *axi_desc_alloc(u32 num)
-अणु
-	काष्ठा axi_dma_desc *desc;
+static struct axi_dma_desc *axi_desc_alloc(u32 num)
+{
+	struct axi_dma_desc *desc;
 
-	desc = kzalloc(माप(*desc), GFP_NOWAIT);
-	अगर (!desc)
-		वापस शून्य;
+	desc = kzalloc(sizeof(*desc), GFP_NOWAIT);
+	if (!desc)
+		return NULL;
 
-	desc->hw_desc = kसुस्मृति(num, माप(*desc->hw_desc), GFP_NOWAIT);
-	अगर (!desc->hw_desc) अणु
-		kमुक्त(desc);
-		वापस शून्य;
-	पूर्ण
+	desc->hw_desc = kcalloc(num, sizeof(*desc->hw_desc), GFP_NOWAIT);
+	if (!desc->hw_desc) {
+		kfree(desc);
+		return NULL;
+	}
 
-	वापस desc;
-पूर्ण
+	return desc;
+}
 
-अटल काष्ठा axi_dma_lli *axi_desc_get(काष्ठा axi_dma_chan *chan,
+static struct axi_dma_lli *axi_desc_get(struct axi_dma_chan *chan,
 					dma_addr_t *addr)
-अणु
-	काष्ठा axi_dma_lli *lli;
+{
+	struct axi_dma_lli *lli;
 	dma_addr_t phys;
 
 	lli = dma_pool_zalloc(chan->desc_pool, GFP_NOWAIT, &phys);
-	अगर (unlikely(!lli)) अणु
+	if (unlikely(!lli)) {
 		dev_err(chan2dev(chan), "%s: not enough descriptors available\n",
 			axi_chan_name(chan));
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	atomic_inc(&chan->descs_allocated);
 	*addr = phys;
 
-	वापस lli;
-पूर्ण
+	return lli;
+}
 
-अटल व्योम axi_desc_put(काष्ठा axi_dma_desc *desc)
-अणु
-	काष्ठा axi_dma_chan *chan = desc->chan;
-	पूर्णांक count = atomic_पढ़ो(&chan->descs_allocated);
-	काष्ठा axi_dma_hw_desc *hw_desc;
-	पूर्णांक descs_put;
+static void axi_desc_put(struct axi_dma_desc *desc)
+{
+	struct axi_dma_chan *chan = desc->chan;
+	int count = atomic_read(&chan->descs_allocated);
+	struct axi_dma_hw_desc *hw_desc;
+	int descs_put;
 
-	क्रम (descs_put = 0; descs_put < count; descs_put++) अणु
+	for (descs_put = 0; descs_put < count; descs_put++) {
 		hw_desc = &desc->hw_desc[descs_put];
-		dma_pool_मुक्त(chan->desc_pool, hw_desc->lli, hw_desc->llp);
-	पूर्ण
+		dma_pool_free(chan->desc_pool, hw_desc->lli, hw_desc->llp);
+	}
 
-	kमुक्त(desc->hw_desc);
-	kमुक्त(desc);
+	kfree(desc->hw_desc);
+	kfree(desc);
 	atomic_sub(descs_put, &chan->descs_allocated);
 	dev_vdbg(chan2dev(chan), "%s: %d descs put, %d still allocated\n",
 		axi_chan_name(chan), descs_put,
-		atomic_पढ़ो(&chan->descs_allocated));
-पूर्ण
+		atomic_read(&chan->descs_allocated));
+}
 
-अटल व्योम vchan_desc_put(काष्ठा virt_dma_desc *vdesc)
-अणु
+static void vchan_desc_put(struct virt_dma_desc *vdesc)
+{
 	axi_desc_put(vd_to_axi_desc(vdesc));
-पूर्ण
+}
 
-अटल क्रमागत dma_status
-dma_chan_tx_status(काष्ठा dma_chan *dchan, dma_cookie_t cookie,
-		  काष्ठा dma_tx_state *txstate)
-अणु
-	काष्ठा axi_dma_chan *chan = dchan_to_axi_dma_chan(dchan);
-	काष्ठा virt_dma_desc *vdesc;
-	क्रमागत dma_status status;
+static enum dma_status
+dma_chan_tx_status(struct dma_chan *dchan, dma_cookie_t cookie,
+		  struct dma_tx_state *txstate)
+{
+	struct axi_dma_chan *chan = dchan_to_axi_dma_chan(dchan);
+	struct virt_dma_desc *vdesc;
+	enum dma_status status;
 	u32 completed_length;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 	u32 completed_blocks;
-	माप_प्रकार bytes = 0;
+	size_t bytes = 0;
 	u32 length;
 	u32 len;
 
 	status = dma_cookie_status(dchan, cookie, txstate);
-	अगर (status == DMA_COMPLETE || !txstate)
-		वापस status;
+	if (status == DMA_COMPLETE || !txstate)
+		return status;
 
 	spin_lock_irqsave(&chan->vc.lock, flags);
 
 	vdesc = vchan_find_desc(&chan->vc, cookie);
-	अगर (vdesc) अणु
+	if (vdesc) {
 		length = vd_to_axi_desc(vdesc)->length;
 		completed_blocks = vd_to_axi_desc(vdesc)->completed_blocks;
 		len = vd_to_axi_desc(vdesc)->hw_desc[0].len;
 		completed_length = completed_blocks * len;
 		bytes = length - completed_length;
-	पूर्ण अन्यथा अणु
+	} else {
 		bytes = vd_to_axi_desc(vdesc)->length;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&chan->vc.lock, flags);
 	dma_set_residue(txstate, bytes);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम ग_लिखो_desc_llp(काष्ठा axi_dma_hw_desc *desc, dma_addr_t adr)
-अणु
+static void write_desc_llp(struct axi_dma_hw_desc *desc, dma_addr_t adr)
+{
 	desc->lli->llp = cpu_to_le64(adr);
-पूर्ण
+}
 
-अटल व्योम ग_लिखो_chan_llp(काष्ठा axi_dma_chan *chan, dma_addr_t adr)
-अणु
-	axi_chan_ioग_लिखो64(chan, CH_LLP, adr);
-पूर्ण
+static void write_chan_llp(struct axi_dma_chan *chan, dma_addr_t adr)
+{
+	axi_chan_iowrite64(chan, CH_LLP, adr);
+}
 
-अटल व्योम dw_axi_dma_set_byte_halfword(काष्ठा axi_dma_chan *chan, bool set)
-अणु
+static void dw_axi_dma_set_byte_halfword(struct axi_dma_chan *chan, bool set)
+{
 	u32 offset = DMAC_APB_BYTE_WR_CH_EN;
 	u32 reg_width, val;
 
-	अगर (!chan->chip->apb_regs) अणु
+	if (!chan->chip->apb_regs) {
 		dev_dbg(chan->chip->dev, "apb_regs not initialized\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	reg_width = __ffs(chan->config.dst_addr_width);
-	अगर (reg_width == DWAXIDMAC_TRANS_WIDTH_16)
+	if (reg_width == DWAXIDMAC_TRANS_WIDTH_16)
 		offset = DMAC_APB_HALFWORD_WR_CH_EN;
 
-	val = ioपढ़ो32(chan->chip->apb_regs + offset);
+	val = ioread32(chan->chip->apb_regs + offset);
 
-	अगर (set)
+	if (set)
 		val |= BIT(chan->id);
-	अन्यथा
+	else
 		val &= ~BIT(chan->id);
 
-	ioग_लिखो32(val, chan->chip->apb_regs + offset);
-पूर्ण
+	iowrite32(val, chan->chip->apb_regs + offset);
+}
 /* Called in chan locked context */
-अटल व्योम axi_chan_block_xfer_start(काष्ठा axi_dma_chan *chan,
-				      काष्ठा axi_dma_desc *first)
-अणु
+static void axi_chan_block_xfer_start(struct axi_dma_chan *chan,
+				      struct axi_dma_desc *first)
+{
 	u32 priority = chan->chip->dw->hdata->priority[chan->id];
 	u32 reg, irq_mask;
-	u8 lms = 0; /* Select AXI0 master क्रम LLI fetching */
+	u8 lms = 0; /* Select AXI0 master for LLI fetching */
 
-	अगर (unlikely(axi_chan_is_hw_enable(chan))) अणु
+	if (unlikely(axi_chan_is_hw_enable(chan))) {
 		dev_err(chan2dev(chan), "%s is non-idle!\n",
 			axi_chan_name(chan));
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	axi_dma_enable(chan->chip);
 
 	reg = (DWAXIDMAC_MBLK_TYPE_LL << CH_CFG_L_DST_MULTBLK_TYPE_POS |
 	       DWAXIDMAC_MBLK_TYPE_LL << CH_CFG_L_SRC_MULTBLK_TYPE_POS);
-	axi_chan_ioग_लिखो32(chan, CH_CFG_L, reg);
+	axi_chan_iowrite32(chan, CH_CFG_L, reg);
 
 	reg = (DWAXIDMAC_TT_FC_MEM_TO_MEM_DMAC << CH_CFG_H_TT_FC_POS |
 	       priority << CH_CFG_H_PRIORITY_POS |
 	       DWAXIDMAC_HS_SEL_HW << CH_CFG_H_HS_SEL_DST_POS |
 	       DWAXIDMAC_HS_SEL_HW << CH_CFG_H_HS_SEL_SRC_POS);
-	चयन (chan->direction) अणु
-	हाल DMA_MEM_TO_DEV:
+	switch (chan->direction) {
+	case DMA_MEM_TO_DEV:
 		dw_axi_dma_set_byte_halfword(chan, true);
 		reg |= (chan->config.device_fc ?
 			DWAXIDMAC_TT_FC_MEM_TO_PER_DST :
 			DWAXIDMAC_TT_FC_MEM_TO_PER_DMAC)
 			<< CH_CFG_H_TT_FC_POS;
-		अवरोध;
-	हाल DMA_DEV_TO_MEM:
+		break;
+	case DMA_DEV_TO_MEM:
 		reg |= (chan->config.device_fc ?
 			DWAXIDMAC_TT_FC_PER_TO_MEM_SRC :
 			DWAXIDMAC_TT_FC_PER_TO_MEM_DMAC)
 			<< CH_CFG_H_TT_FC_POS;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	axi_chan_ioग_लिखो32(chan, CH_CFG_H, reg);
+		break;
+	default:
+		break;
+	}
+	axi_chan_iowrite32(chan, CH_CFG_H, reg);
 
-	ग_लिखो_chan_llp(chan, first->hw_desc[0].llp | lms);
+	write_chan_llp(chan, first->hw_desc[0].llp | lms);
 
 	irq_mask = DWAXIDMAC_IRQ_DMA_TRF | DWAXIDMAC_IRQ_ALL_ERR;
 	axi_chan_irq_sig_set(chan, irq_mask);
 
-	/* Generate 'suspend' status but don't generate पूर्णांकerrupt */
+	/* Generate 'suspend' status but don't generate interrupt */
 	irq_mask |= DWAXIDMAC_IRQ_SUSPENDED;
 	axi_chan_irq_set(chan, irq_mask);
 
 	axi_chan_enable(chan);
-पूर्ण
+}
 
-अटल व्योम axi_chan_start_first_queued(काष्ठा axi_dma_chan *chan)
-अणु
-	काष्ठा axi_dma_desc *desc;
-	काष्ठा virt_dma_desc *vd;
+static void axi_chan_start_first_queued(struct axi_dma_chan *chan)
+{
+	struct axi_dma_desc *desc;
+	struct virt_dma_desc *vd;
 
 	vd = vchan_next_desc(&chan->vc);
-	अगर (!vd)
-		वापस;
+	if (!vd)
+		return;
 
 	desc = vd_to_axi_desc(vd);
 	dev_vdbg(chan2dev(chan), "%s: started %u\n", axi_chan_name(chan),
 		vd->tx.cookie);
 	axi_chan_block_xfer_start(chan, desc);
-पूर्ण
+}
 
-अटल व्योम dma_chan_issue_pending(काष्ठा dma_chan *dchan)
-अणु
-	काष्ठा axi_dma_chan *chan = dchan_to_axi_dma_chan(dchan);
-	अचिन्हित दीर्घ flags;
+static void dma_chan_issue_pending(struct dma_chan *dchan)
+{
+	struct axi_dma_chan *chan = dchan_to_axi_dma_chan(dchan);
+	unsigned long flags;
 
 	spin_lock_irqsave(&chan->vc.lock, flags);
-	अगर (vchan_issue_pending(&chan->vc))
+	if (vchan_issue_pending(&chan->vc))
 		axi_chan_start_first_queued(chan);
 	spin_unlock_irqrestore(&chan->vc.lock, flags);
-पूर्ण
+}
 
-अटल व्योम dw_axi_dma_synchronize(काष्ठा dma_chan *dchan)
-अणु
-	काष्ठा axi_dma_chan *chan = dchan_to_axi_dma_chan(dchan);
+static void dw_axi_dma_synchronize(struct dma_chan *dchan)
+{
+	struct axi_dma_chan *chan = dchan_to_axi_dma_chan(dchan);
 
 	vchan_synchronize(&chan->vc);
-पूर्ण
+}
 
-अटल पूर्णांक dma_chan_alloc_chan_resources(काष्ठा dma_chan *dchan)
-अणु
-	काष्ठा axi_dma_chan *chan = dchan_to_axi_dma_chan(dchan);
+static int dma_chan_alloc_chan_resources(struct dma_chan *dchan)
+{
+	struct axi_dma_chan *chan = dchan_to_axi_dma_chan(dchan);
 
 	/* ASSERT: channel is idle */
-	अगर (axi_chan_is_hw_enable(chan)) अणु
+	if (axi_chan_is_hw_enable(chan)) {
 		dev_err(chan2dev(chan), "%s is non-idle!\n",
 			axi_chan_name(chan));
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	/* LLI address must be aligned to a 64-byte boundary */
 	chan->desc_pool = dma_pool_create(dev_name(chan2dev(chan)),
 					  chan->chip->dev,
-					  माप(काष्ठा axi_dma_lli),
+					  sizeof(struct axi_dma_lli),
 					  64, 0);
-	अगर (!chan->desc_pool) अणु
+	if (!chan->desc_pool) {
 		dev_err(chan2dev(chan), "No memory for descriptors\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	dev_vdbg(dchan2dev(dchan), "%s: allocating\n", axi_chan_name(chan));
 
-	pm_runसमय_get(chan->chip->dev);
+	pm_runtime_get(chan->chip->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dma_chan_मुक्त_chan_resources(काष्ठा dma_chan *dchan)
-अणु
-	काष्ठा axi_dma_chan *chan = dchan_to_axi_dma_chan(dchan);
+static void dma_chan_free_chan_resources(struct dma_chan *dchan)
+{
+	struct axi_dma_chan *chan = dchan_to_axi_dma_chan(dchan);
 
 	/* ASSERT: channel is idle */
-	अगर (axi_chan_is_hw_enable(chan))
+	if (axi_chan_is_hw_enable(chan))
 		dev_err(dchan2dev(dchan), "%s is non-idle!\n",
 			axi_chan_name(chan));
 
 	axi_chan_disable(chan);
 	axi_chan_irq_disable(chan, DWAXIDMAC_IRQ_ALL);
 
-	vchan_मुक्त_chan_resources(&chan->vc);
+	vchan_free_chan_resources(&chan->vc);
 
 	dma_pool_destroy(chan->desc_pool);
-	chan->desc_pool = शून्य;
+	chan->desc_pool = NULL;
 	dev_vdbg(dchan2dev(dchan),
 		 "%s: free resources, descriptor still allocated: %u\n",
-		 axi_chan_name(chan), atomic_पढ़ो(&chan->descs_allocated));
+		 axi_chan_name(chan), atomic_read(&chan->descs_allocated));
 
-	pm_runसमय_put(chan->chip->dev);
-पूर्ण
+	pm_runtime_put(chan->chip->dev);
+}
 
-अटल व्योम dw_axi_dma_set_hw_channel(काष्ठा axi_dma_chip *chip,
+static void dw_axi_dma_set_hw_channel(struct axi_dma_chip *chip,
 				      u32 handshake_num, bool set)
-अणु
-	अचिन्हित दीर्घ start = 0;
-	अचिन्हित दीर्घ reg_value;
-	अचिन्हित दीर्घ reg_mask;
-	अचिन्हित दीर्घ reg_set;
-	अचिन्हित दीर्घ mask;
-	अचिन्हित दीर्घ val;
+{
+	unsigned long start = 0;
+	unsigned long reg_value;
+	unsigned long reg_mask;
+	unsigned long reg_set;
+	unsigned long mask;
+	unsigned long val;
 
-	अगर (!chip->apb_regs) अणु
+	if (!chip->apb_regs) {
 		dev_dbg(chip->dev, "apb_regs not initialized\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * An unused DMA channel has a शेष value of 0x3F.
+	 * An unused DMA channel has a default value of 0x3F.
 	 * Lock the DMA channel by assign a handshake number to the channel.
 	 * Unlock the DMA channel by assign 0x3F to the channel.
 	 */
-	अगर (set) अणु
+	if (set) {
 		reg_set = UNUSED_CHANNEL;
 		val = handshake_num;
-	पूर्ण अन्यथा अणु
+	} else {
 		reg_set = handshake_num;
 		val = UNUSED_CHANNEL;
-	पूर्ण
+	}
 
-	reg_value = lo_hi_पढ़ोq(chip->apb_regs + DMAC_APB_HW_HS_SEL_0);
+	reg_value = lo_hi_readq(chip->apb_regs + DMAC_APB_HW_HS_SEL_0);
 
-	क्रम_each_set_clump8(start, reg_mask, &reg_value, 64) अणु
-		अगर (reg_mask == reg_set) अणु
+	for_each_set_clump8(start, reg_mask, &reg_value, 64) {
+		if (reg_mask == reg_set) {
 			mask = GENMASK_ULL(start + 7, start);
 			reg_value &= ~mask;
 			reg_value |= rol64(val, start);
-			lo_hi_ग_लिखोq(reg_value,
+			lo_hi_writeq(reg_value,
 				     chip->apb_regs + DMAC_APB_HW_HS_SEL_0);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
 /*
- * If DW_axi_dmac sees CHx_CTL.ShaकरोwReg_Or_LLI_Last bit of the fetched LLI
+ * If DW_axi_dmac sees CHx_CTL.ShadowReg_Or_LLI_Last bit of the fetched LLI
  * as 1, it understands that the current block is the final block in the
  * transfer and completes the DMA transfer operation at the end of current
  * block transfer.
  */
-अटल व्योम set_desc_last(काष्ठा axi_dma_hw_desc *desc)
-अणु
+static void set_desc_last(struct axi_dma_hw_desc *desc)
+{
 	u32 val;
 
 	val = le32_to_cpu(desc->lli->ctl_hi);
 	val |= CH_CTL_H_LLI_LAST;
 	desc->lli->ctl_hi = cpu_to_le32(val);
-पूर्ण
+}
 
-अटल व्योम ग_लिखो_desc_sar(काष्ठा axi_dma_hw_desc *desc, dma_addr_t adr)
-अणु
+static void write_desc_sar(struct axi_dma_hw_desc *desc, dma_addr_t adr)
+{
 	desc->lli->sar = cpu_to_le64(adr);
-पूर्ण
+}
 
-अटल व्योम ग_लिखो_desc_dar(काष्ठा axi_dma_hw_desc *desc, dma_addr_t adr)
-अणु
+static void write_desc_dar(struct axi_dma_hw_desc *desc, dma_addr_t adr)
+{
 	desc->lli->dar = cpu_to_le64(adr);
-पूर्ण
+}
 
-अटल व्योम set_desc_src_master(काष्ठा axi_dma_hw_desc *desc)
-अणु
+static void set_desc_src_master(struct axi_dma_hw_desc *desc)
+{
 	u32 val;
 
-	/* Select AXI0 क्रम source master */
+	/* Select AXI0 for source master */
 	val = le32_to_cpu(desc->lli->ctl_lo);
 	val &= ~CH_CTL_L_SRC_MAST;
 	desc->lli->ctl_lo = cpu_to_le32(val);
-पूर्ण
+}
 
-अटल व्योम set_desc_dest_master(काष्ठा axi_dma_hw_desc *hw_desc,
-				 काष्ठा axi_dma_desc *desc)
-अणु
+static void set_desc_dest_master(struct axi_dma_hw_desc *hw_desc,
+				 struct axi_dma_desc *desc)
+{
 	u32 val;
 
-	/* Select AXI1 क्रम source master अगर available */
+	/* Select AXI1 for source master if available */
 	val = le32_to_cpu(hw_desc->lli->ctl_lo);
-	अगर (desc->chan->chip->dw->hdata->nr_masters > 1)
+	if (desc->chan->chip->dw->hdata->nr_masters > 1)
 		val |= CH_CTL_L_DST_MAST;
-	अन्यथा
+	else
 		val &= ~CH_CTL_L_DST_MAST;
 
 	hw_desc->lli->ctl_lo = cpu_to_le32(val);
-पूर्ण
+}
 
-अटल पूर्णांक dw_axi_dma_set_hw_desc(काष्ठा axi_dma_chan *chan,
-				  काष्ठा axi_dma_hw_desc *hw_desc,
-				  dma_addr_t mem_addr, माप_प्रकार len)
-अणु
-	अचिन्हित पूर्णांक data_width = BIT(chan->chip->dw->hdata->m_data_width);
-	अचिन्हित पूर्णांक reg_width;
-	अचिन्हित पूर्णांक mem_width;
+static int dw_axi_dma_set_hw_desc(struct axi_dma_chan *chan,
+				  struct axi_dma_hw_desc *hw_desc,
+				  dma_addr_t mem_addr, size_t len)
+{
+	unsigned int data_width = BIT(chan->chip->dw->hdata->m_data_width);
+	unsigned int reg_width;
+	unsigned int mem_width;
 	dma_addr_t device_addr;
-	माप_प्रकार axi_block_ts;
-	माप_प्रकार block_ts;
+	size_t axi_block_ts;
+	size_t block_ts;
 	u32 ctllo, ctlhi;
 	u32 burst_len;
 
 	axi_block_ts = chan->chip->dw->hdata->block_size[chan->id];
 
 	mem_width = __ffs(data_width | mem_addr | len);
-	अगर (mem_width > DWAXIDMAC_TRANS_WIDTH_32)
+	if (mem_width > DWAXIDMAC_TRANS_WIDTH_32)
 		mem_width = DWAXIDMAC_TRANS_WIDTH_32;
 
-	अगर (!IS_ALIGNED(mem_addr, 4)) अणु
+	if (!IS_ALIGNED(mem_addr, 4)) {
 		dev_err(chan->chip->dev, "invalid buffer alignment\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (chan->direction) अणु
-	हाल DMA_MEM_TO_DEV:
+	switch (chan->direction) {
+	case DMA_MEM_TO_DEV:
 		reg_width = __ffs(chan->config.dst_addr_width);
 		device_addr = chan->config.dst_addr;
 		ctllo = reg_width << CH_CTL_L_DST_WIDTH_POS |
@@ -596,8 +595,8 @@ dma_chan_tx_status(काष्ठा dma_chan *dchan, dma_cookie_t cookie,
 			DWAXIDMAC_CH_CTL_L_NOINC << CH_CTL_L_DST_INC_POS |
 			DWAXIDMAC_CH_CTL_L_INC << CH_CTL_L_SRC_INC_POS;
 		block_ts = len >> mem_width;
-		अवरोध;
-	हाल DMA_DEV_TO_MEM:
+		break;
+	case DMA_DEV_TO_MEM:
 		reg_width = __ffs(chan->config.src_addr_width);
 		device_addr = chan->config.src_addr;
 		ctllo = reg_width << CH_CTL_L_SRC_WIDTH_POS |
@@ -605,36 +604,36 @@ dma_chan_tx_status(काष्ठा dma_chan *dchan, dma_cookie_t cookie,
 			DWAXIDMAC_CH_CTL_L_INC << CH_CTL_L_DST_INC_POS |
 			DWAXIDMAC_CH_CTL_L_NOINC << CH_CTL_L_SRC_INC_POS;
 		block_ts = len >> reg_width;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (block_ts > axi_block_ts)
-		वापस -EINVAL;
+	if (block_ts > axi_block_ts)
+		return -EINVAL;
 
 	hw_desc->lli = axi_desc_get(chan, &hw_desc->llp);
-	अगर (unlikely(!hw_desc->lli))
-		वापस -ENOMEM;
+	if (unlikely(!hw_desc->lli))
+		return -ENOMEM;
 
 	ctlhi = CH_CTL_H_LLI_VALID;
 
-	अगर (chan->chip->dw->hdata->restrict_axi_burst_len) अणु
+	if (chan->chip->dw->hdata->restrict_axi_burst_len) {
 		burst_len = chan->chip->dw->hdata->axi_rw_burst_len;
 		ctlhi |= CH_CTL_H_ARLEN_EN | CH_CTL_H_AWLEN_EN |
 			 burst_len << CH_CTL_H_ARLEN_POS |
 			 burst_len << CH_CTL_H_AWLEN_POS;
-	पूर्ण
+	}
 
 	hw_desc->lli->ctl_hi = cpu_to_le32(ctlhi);
 
-	अगर (chan->direction == DMA_MEM_TO_DEV) अणु
-		ग_लिखो_desc_sar(hw_desc, mem_addr);
-		ग_लिखो_desc_dar(hw_desc, device_addr);
-	पूर्ण अन्यथा अणु
-		ग_लिखो_desc_sar(hw_desc, device_addr);
-		ग_लिखो_desc_dar(hw_desc, mem_addr);
-	पूर्ण
+	if (chan->direction == DMA_MEM_TO_DEV) {
+		write_desc_sar(hw_desc, mem_addr);
+		write_desc_dar(hw_desc, device_addr);
+	} else {
+		write_desc_sar(hw_desc, device_addr);
+		write_desc_dar(hw_desc, mem_addr);
+	}
 
 	hw_desc->lli->block_ts_lo = cpu_to_le32(block_ts - 1);
 
@@ -645,62 +644,62 @@ dma_chan_tx_status(काष्ठा dma_chan *dchan, dma_cookie_t cookie,
 	set_desc_src_master(hw_desc);
 
 	hw_desc->len = len;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल माप_प्रकार calculate_block_len(काष्ठा axi_dma_chan *chan,
-				  dma_addr_t dma_addr, माप_प्रकार buf_len,
-				  क्रमागत dma_transfer_direction direction)
-अणु
+static size_t calculate_block_len(struct axi_dma_chan *chan,
+				  dma_addr_t dma_addr, size_t buf_len,
+				  enum dma_transfer_direction direction)
+{
 	u32 data_width, reg_width, mem_width;
-	माप_प्रकार axi_block_ts, block_len;
+	size_t axi_block_ts, block_len;
 
 	axi_block_ts = chan->chip->dw->hdata->block_size[chan->id];
 
-	चयन (direction) अणु
-	हाल DMA_MEM_TO_DEV:
+	switch (direction) {
+	case DMA_MEM_TO_DEV:
 		data_width = BIT(chan->chip->dw->hdata->m_data_width);
 		mem_width = __ffs(data_width | dma_addr | buf_len);
-		अगर (mem_width > DWAXIDMAC_TRANS_WIDTH_32)
+		if (mem_width > DWAXIDMAC_TRANS_WIDTH_32)
 			mem_width = DWAXIDMAC_TRANS_WIDTH_32;
 
 		block_len = axi_block_ts << mem_width;
-		अवरोध;
-	हाल DMA_DEV_TO_MEM:
+		break;
+	case DMA_DEV_TO_MEM:
 		reg_width = __ffs(chan->config.src_addr_width);
 		block_len = axi_block_ts << reg_width;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		block_len = 0;
-	पूर्ण
+	}
 
-	वापस block_len;
-पूर्ण
+	return block_len;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-dw_axi_dma_chan_prep_cyclic(काष्ठा dma_chan *dchan, dma_addr_t dma_addr,
-			    माप_प्रकार buf_len, माप_प्रकार period_len,
-			    क्रमागत dma_transfer_direction direction,
-			    अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा axi_dma_chan *chan = dchan_to_axi_dma_chan(dchan);
-	काष्ठा axi_dma_hw_desc *hw_desc = शून्य;
-	काष्ठा axi_dma_desc *desc = शून्य;
+static struct dma_async_tx_descriptor *
+dw_axi_dma_chan_prep_cyclic(struct dma_chan *dchan, dma_addr_t dma_addr,
+			    size_t buf_len, size_t period_len,
+			    enum dma_transfer_direction direction,
+			    unsigned long flags)
+{
+	struct axi_dma_chan *chan = dchan_to_axi_dma_chan(dchan);
+	struct axi_dma_hw_desc *hw_desc = NULL;
+	struct axi_dma_desc *desc = NULL;
 	dma_addr_t src_addr = dma_addr;
 	u32 num_periods, num_segments;
-	माप_प्रकार axi_block_len;
+	size_t axi_block_len;
 	u32 total_segments;
 	u32 segment_len;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक status;
+	unsigned int i;
+	int status;
 	u64 llp = 0;
-	u8 lms = 0; /* Select AXI0 master क्रम LLI fetching */
+	u8 lms = 0; /* Select AXI0 master for LLI fetching */
 
 	num_periods = buf_len / period_len;
 
 	axi_block_len = calculate_block_len(chan, dma_addr, buf_len, direction);
-	अगर (axi_block_len == 0)
-		वापस शून्य;
+	if (axi_block_len == 0)
+		return NULL;
 
 	num_segments = DIV_ROUND_UP(period_len, axi_block_len);
 	segment_len = DIV_ROUND_UP(period_len, num_segments);
@@ -708,8 +707,8 @@ dw_axi_dma_chan_prep_cyclic(काष्ठा dma_chan *dchan, dma_addr_t dma_a
 	total_segments = num_periods * num_segments;
 
 	desc = axi_desc_alloc(total_segments);
-	अगर (unlikely(!desc))
-		जाओ err_desc_get;
+	if (unlikely(!desc))
+		goto err_desc_get;
 
 	chan->direction = direction;
 	desc->chan = chan;
@@ -717,134 +716,134 @@ dw_axi_dma_chan_prep_cyclic(काष्ठा dma_chan *dchan, dma_addr_t dma_a
 	desc->length = 0;
 	desc->period_len = period_len;
 
-	क्रम (i = 0; i < total_segments; i++) अणु
+	for (i = 0; i < total_segments; i++) {
 		hw_desc = &desc->hw_desc[i];
 
 		status = dw_axi_dma_set_hw_desc(chan, hw_desc, src_addr,
 						segment_len);
-		अगर (status < 0)
-			जाओ err_desc_get;
+		if (status < 0)
+			goto err_desc_get;
 
 		desc->length += hw_desc->len;
 		/* Set end-of-link to the linked descriptor, so that cyclic
-		 * callback function can be triggered during पूर्णांकerrupt.
+		 * callback function can be triggered during interrupt.
 		 */
 		set_desc_last(hw_desc);
 
 		src_addr += segment_len;
-	पूर्ण
+	}
 
 	llp = desc->hw_desc[0].llp;
 
 	/* Managed transfer list */
-	करो अणु
+	do {
 		hw_desc = &desc->hw_desc[--total_segments];
-		ग_लिखो_desc_llp(hw_desc, llp | lms);
+		write_desc_llp(hw_desc, llp | lms);
 		llp = hw_desc->llp;
-	पूर्ण जबतक (total_segments);
+	} while (total_segments);
 
 	dw_axi_dma_set_hw_channel(chan->chip, chan->hw_handshake_num, true);
 
-	वापस vchan_tx_prep(&chan->vc, &desc->vd, flags);
+	return vchan_tx_prep(&chan->vc, &desc->vd, flags);
 
 err_desc_get:
-	अगर (desc)
+	if (desc)
 		axi_desc_put(desc);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-dw_axi_dma_chan_prep_slave_sg(काष्ठा dma_chan *dchan, काष्ठा scatterlist *sgl,
-			      अचिन्हित पूर्णांक sg_len,
-			      क्रमागत dma_transfer_direction direction,
-			      अचिन्हित दीर्घ flags, व्योम *context)
-अणु
-	काष्ठा axi_dma_chan *chan = dchan_to_axi_dma_chan(dchan);
-	काष्ठा axi_dma_hw_desc *hw_desc = शून्य;
-	काष्ठा axi_dma_desc *desc = शून्य;
+static struct dma_async_tx_descriptor *
+dw_axi_dma_chan_prep_slave_sg(struct dma_chan *dchan, struct scatterlist *sgl,
+			      unsigned int sg_len,
+			      enum dma_transfer_direction direction,
+			      unsigned long flags, void *context)
+{
+	struct axi_dma_chan *chan = dchan_to_axi_dma_chan(dchan);
+	struct axi_dma_hw_desc *hw_desc = NULL;
+	struct axi_dma_desc *desc = NULL;
 	u32 num_segments, segment_len;
-	अचिन्हित पूर्णांक loop = 0;
-	काष्ठा scatterlist *sg;
-	माप_प्रकार axi_block_len;
+	unsigned int loop = 0;
+	struct scatterlist *sg;
+	size_t axi_block_len;
 	u32 len, num_sgs = 0;
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 	dma_addr_t mem;
-	पूर्णांक status;
+	int status;
 	u64 llp = 0;
-	u8 lms = 0; /* Select AXI0 master क्रम LLI fetching */
+	u8 lms = 0; /* Select AXI0 master for LLI fetching */
 
-	अगर (unlikely(!is_slave_direction(direction) || !sg_len))
-		वापस शून्य;
+	if (unlikely(!is_slave_direction(direction) || !sg_len))
+		return NULL;
 
 	mem = sg_dma_address(sgl);
 	len = sg_dma_len(sgl);
 
 	axi_block_len = calculate_block_len(chan, mem, len, direction);
-	अगर (axi_block_len == 0)
-		वापस शून्य;
+	if (axi_block_len == 0)
+		return NULL;
 
-	क्रम_each_sg(sgl, sg, sg_len, i)
+	for_each_sg(sgl, sg, sg_len, i)
 		num_sgs += DIV_ROUND_UP(sg_dma_len(sg), axi_block_len);
 
 	desc = axi_desc_alloc(num_sgs);
-	अगर (unlikely(!desc))
-		जाओ err_desc_get;
+	if (unlikely(!desc))
+		goto err_desc_get;
 
 	desc->chan = chan;
 	desc->length = 0;
 	chan->direction = direction;
 
-	क्रम_each_sg(sgl, sg, sg_len, i) अणु
+	for_each_sg(sgl, sg, sg_len, i) {
 		mem = sg_dma_address(sg);
 		len = sg_dma_len(sg);
 		num_segments = DIV_ROUND_UP(sg_dma_len(sg), axi_block_len);
 		segment_len = DIV_ROUND_UP(sg_dma_len(sg), num_segments);
 
-		करो अणु
+		do {
 			hw_desc = &desc->hw_desc[loop++];
 			status = dw_axi_dma_set_hw_desc(chan, hw_desc, mem, segment_len);
-			अगर (status < 0)
-				जाओ err_desc_get;
+			if (status < 0)
+				goto err_desc_get;
 
 			desc->length += hw_desc->len;
 			len -= segment_len;
 			mem += segment_len;
-		पूर्ण जबतक (len >= segment_len);
-	पूर्ण
+		} while (len >= segment_len);
+	}
 
 	/* Set end-of-link to the last link descriptor of list */
 	set_desc_last(&desc->hw_desc[num_sgs - 1]);
 
 	/* Managed transfer list */
-	करो अणु
+	do {
 		hw_desc = &desc->hw_desc[--num_sgs];
-		ग_लिखो_desc_llp(hw_desc, llp | lms);
+		write_desc_llp(hw_desc, llp | lms);
 		llp = hw_desc->llp;
-	पूर्ण जबतक (num_sgs);
+	} while (num_sgs);
 
 	dw_axi_dma_set_hw_channel(chan->chip, chan->hw_handshake_num, true);
 
-	वापस vchan_tx_prep(&chan->vc, &desc->vd, flags);
+	return vchan_tx_prep(&chan->vc, &desc->vd, flags);
 
 err_desc_get:
-	अगर (desc)
+	if (desc)
 		axi_desc_put(desc);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-dma_chan_prep_dma_स_नकल(काष्ठा dma_chan *dchan, dma_addr_t dst_adr,
-			 dma_addr_t src_adr, माप_प्रकार len, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा axi_dma_chan *chan = dchan_to_axi_dma_chan(dchan);
-	माप_प्रकार block_ts, max_block_ts, xfer_len;
-	काष्ठा axi_dma_hw_desc *hw_desc = शून्य;
-	काष्ठा axi_dma_desc *desc = शून्य;
+static struct dma_async_tx_descriptor *
+dma_chan_prep_dma_memcpy(struct dma_chan *dchan, dma_addr_t dst_adr,
+			 dma_addr_t src_adr, size_t len, unsigned long flags)
+{
+	struct axi_dma_chan *chan = dchan_to_axi_dma_chan(dchan);
+	size_t block_ts, max_block_ts, xfer_len;
+	struct axi_dma_hw_desc *hw_desc = NULL;
+	struct axi_dma_desc *desc = NULL;
 	u32 xfer_width, reg, num;
 	u64 llp = 0;
-	u8 lms = 0; /* Select AXI0 master क्रम LLI fetching */
+	u8 lms = 0; /* Select AXI0 master for LLI fetching */
 
 	dev_dbg(chan2dev(chan), "%s: memcpy: src: %pad dst: %pad length: %zd flags: %#lx",
 		axi_chan_name(chan), &src_adr, &dst_adr, len, flags);
@@ -853,19 +852,19 @@ dma_chan_prep_dma_स_नकल(काष्ठा dma_chan *dchan, dma_addr_t d
 	xfer_width = axi_chan_get_xfer_width(chan, src_adr, dst_adr, len);
 	num = DIV_ROUND_UP(len, max_block_ts << xfer_width);
 	desc = axi_desc_alloc(num);
-	अगर (unlikely(!desc))
-		जाओ err_desc_get;
+	if (unlikely(!desc))
+		goto err_desc_get;
 
 	desc->chan = chan;
 	num = 0;
 	desc->length = 0;
-	जबतक (len) अणु
+	while (len) {
 		xfer_len = len;
 
 		hw_desc = &desc->hw_desc[num];
 		/*
-		 * Take care क्रम the alignment.
-		 * Actually source and destination widths can be dअगरferent, but
+		 * Take care for the alignment.
+		 * Actually source and destination widths can be different, but
 		 * make them same to be simpler.
 		 */
 		xfer_width = axi_chan_get_xfer_width(chan, src_adr, dst_adr, xfer_len);
@@ -873,31 +872,31 @@ dma_chan_prep_dma_स_नकल(काष्ठा dma_chan *dchan, dma_addr_t d
 		/*
 		 * block_ts indicates the total number of data of width
 		 * to be transferred in a DMA block transfer.
-		 * BLOCK_TS रेजिस्टर should be set to block_ts - 1
+		 * BLOCK_TS register should be set to block_ts - 1
 		 */
 		block_ts = xfer_len >> xfer_width;
-		अगर (block_ts > max_block_ts) अणु
+		if (block_ts > max_block_ts) {
 			block_ts = max_block_ts;
 			xfer_len = max_block_ts << xfer_width;
-		पूर्ण
+		}
 
 		hw_desc->lli = axi_desc_get(chan, &hw_desc->llp);
-		अगर (unlikely(!hw_desc->lli))
-			जाओ err_desc_get;
+		if (unlikely(!hw_desc->lli))
+			goto err_desc_get;
 
-		ग_लिखो_desc_sar(hw_desc, src_adr);
-		ग_लिखो_desc_dar(hw_desc, dst_adr);
+		write_desc_sar(hw_desc, src_adr);
+		write_desc_dar(hw_desc, dst_adr);
 		hw_desc->lli->block_ts_lo = cpu_to_le32(block_ts - 1);
 
 		reg = CH_CTL_H_LLI_VALID;
-		अगर (chan->chip->dw->hdata->restrict_axi_burst_len) अणु
+		if (chan->chip->dw->hdata->restrict_axi_burst_len) {
 			u32 burst_len = chan->chip->dw->hdata->axi_rw_burst_len;
 
 			reg |= (CH_CTL_H_ARLEN_EN |
 				burst_len << CH_CTL_H_ARLEN_POS |
 				CH_CTL_H_AWLEN_EN |
 				burst_len << CH_CTL_H_AWLEN_POS);
-		पूर्ण
+		}
 		hw_desc->lli->ctl_hi = cpu_to_le32(reg);
 
 		reg = (DWAXIDMAC_BURST_TRANS_LEN_4 << CH_CTL_L_DST_MSIZE_POS |
@@ -913,43 +912,43 @@ dma_chan_prep_dma_स_नकल(काष्ठा dma_chan *dchan, dma_addr_t d
 
 		hw_desc->len = xfer_len;
 		desc->length += hw_desc->len;
-		/* update the length and addresses क्रम the next loop cycle */
+		/* update the length and addresses for the next loop cycle */
 		len -= xfer_len;
 		dst_adr += xfer_len;
 		src_adr += xfer_len;
 		num++;
-	पूर्ण
+	}
 
 	/* Set end-of-link to the last link descriptor of list */
 	set_desc_last(&desc->hw_desc[num - 1]);
 	/* Managed transfer list */
-	करो अणु
+	do {
 		hw_desc = &desc->hw_desc[--num];
-		ग_लिखो_desc_llp(hw_desc, llp | lms);
+		write_desc_llp(hw_desc, llp | lms);
 		llp = hw_desc->llp;
-	पूर्ण जबतक (num);
+	} while (num);
 
-	वापस vchan_tx_prep(&chan->vc, &desc->vd, flags);
+	return vchan_tx_prep(&chan->vc, &desc->vd, flags);
 
 err_desc_get:
-	अगर (desc)
+	if (desc)
 		axi_desc_put(desc);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक dw_axi_dma_chan_slave_config(काष्ठा dma_chan *dchan,
-					काष्ठा dma_slave_config *config)
-अणु
-	काष्ठा axi_dma_chan *chan = dchan_to_axi_dma_chan(dchan);
+static int dw_axi_dma_chan_slave_config(struct dma_chan *dchan,
+					struct dma_slave_config *config)
+{
+	struct axi_dma_chan *chan = dchan_to_axi_dma_chan(dchan);
 
-	स_नकल(&chan->config, config, माप(*config));
+	memcpy(&chan->config, config, sizeof(*config));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम axi_chan_dump_lli(काष्ठा axi_dma_chan *chan,
-			      काष्ठा axi_dma_hw_desc *desc)
-अणु
+static void axi_chan_dump_lli(struct axi_dma_chan *chan,
+			      struct axi_dma_hw_desc *desc)
+{
 	dev_err(dchan2dev(&chan->vc.chan),
 		"SAR: 0x%llx DAR: 0x%llx LLP: 0x%llx BTS 0x%x CTL: 0x%x:%08x",
 		le64_to_cpu(desc->lli->sar),
@@ -958,22 +957,22 @@ err_desc_get:
 		le32_to_cpu(desc->lli->block_ts_lo),
 		le32_to_cpu(desc->lli->ctl_hi),
 		le32_to_cpu(desc->lli->ctl_lo));
-पूर्ण
+}
 
-अटल व्योम axi_chan_list_dump_lli(काष्ठा axi_dma_chan *chan,
-				   काष्ठा axi_dma_desc *desc_head)
-अणु
-	पूर्णांक count = atomic_पढ़ो(&chan->descs_allocated);
-	पूर्णांक i;
+static void axi_chan_list_dump_lli(struct axi_dma_chan *chan,
+				   struct axi_dma_desc *desc_head)
+{
+	int count = atomic_read(&chan->descs_allocated);
+	int i;
 
-	क्रम (i = 0; i < count; i++)
+	for (i = 0; i < count; i++)
 		axi_chan_dump_lli(chan, &desc_head->hw_desc[i]);
-पूर्ण
+}
 
-अटल noअंतरभूत व्योम axi_chan_handle_err(काष्ठा axi_dma_chan *chan, u32 status)
-अणु
-	काष्ठा virt_dma_desc *vd;
-	अचिन्हित दीर्घ flags;
+static noinline void axi_chan_handle_err(struct axi_dma_chan *chan, u32 status)
+{
+	struct virt_dma_desc *vd;
+	unsigned long flags;
 
 	spin_lock_irqsave(&chan->vc.lock, flags);
 
@@ -996,112 +995,112 @@ err_desc_get:
 	axi_chan_start_first_queued(chan);
 
 	spin_unlock_irqrestore(&chan->vc.lock, flags);
-पूर्ण
+}
 
-अटल व्योम axi_chan_block_xfer_complete(काष्ठा axi_dma_chan *chan)
-अणु
-	पूर्णांक count = atomic_पढ़ो(&chan->descs_allocated);
-	काष्ठा axi_dma_hw_desc *hw_desc;
-	काष्ठा axi_dma_desc *desc;
-	काष्ठा virt_dma_desc *vd;
-	अचिन्हित दीर्घ flags;
+static void axi_chan_block_xfer_complete(struct axi_dma_chan *chan)
+{
+	int count = atomic_read(&chan->descs_allocated);
+	struct axi_dma_hw_desc *hw_desc;
+	struct axi_dma_desc *desc;
+	struct virt_dma_desc *vd;
+	unsigned long flags;
 	u64 llp;
-	पूर्णांक i;
+	int i;
 
 	spin_lock_irqsave(&chan->vc.lock, flags);
-	अगर (unlikely(axi_chan_is_hw_enable(chan))) अणु
+	if (unlikely(axi_chan_is_hw_enable(chan))) {
 		dev_err(chan2dev(chan), "BUG: %s caught DWAXIDMAC_IRQ_DMA_TRF, but channel not idle!\n",
 			axi_chan_name(chan));
 		axi_chan_disable(chan);
-	पूर्ण
+	}
 
 	/* The completed descriptor currently is in the head of vc list */
 	vd = vchan_next_desc(&chan->vc);
 
-	अगर (chan->cyclic) अणु
+	if (chan->cyclic) {
 		desc = vd_to_axi_desc(vd);
-		अगर (desc) अणु
-			llp = lo_hi_पढ़ोq(chan->chan_regs + CH_LLP);
-			क्रम (i = 0; i < count; i++) अणु
+		if (desc) {
+			llp = lo_hi_readq(chan->chan_regs + CH_LLP);
+			for (i = 0; i < count; i++) {
 				hw_desc = &desc->hw_desc[i];
-				अगर (hw_desc->llp == llp) अणु
+				if (hw_desc->llp == llp) {
 					axi_chan_irq_clear(chan, hw_desc->lli->status_lo);
 					hw_desc->lli->ctl_hi |= CH_CTL_H_LLI_VALID;
 					desc->completed_blocks = i;
 
-					अगर (((hw_desc->len * (i + 1)) % desc->period_len) == 0)
+					if (((hw_desc->len * (i + 1)) % desc->period_len) == 0)
 						vchan_cyclic_callback(vd);
-					अवरोध;
-				पूर्ण
-			पूर्ण
+					break;
+				}
+			}
 
 			axi_chan_enable(chan);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* Remove the completed descriptor from issued list beक्रमe completing */
+		}
+	} else {
+		/* Remove the completed descriptor from issued list before completing */
 		list_del(&vd->node);
 		vchan_cookie_complete(vd);
 
 		/* Submit queued descriptors after processing the completed ones */
 		axi_chan_start_first_queued(chan);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&chan->vc.lock, flags);
-पूर्ण
+}
 
-अटल irqवापस_t dw_axi_dma_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा axi_dma_chip *chip = dev_id;
-	काष्ठा dw_axi_dma *dw = chip->dw;
-	काष्ठा axi_dma_chan *chan;
+static irqreturn_t dw_axi_dma_interrupt(int irq, void *dev_id)
+{
+	struct axi_dma_chip *chip = dev_id;
+	struct dw_axi_dma *dw = chip->dw;
+	struct axi_dma_chan *chan;
 
 	u32 status, i;
 
 	/* Disable DMAC inerrupts. We'll enable them after processing chanels */
 	axi_dma_irq_disable(chip);
 
-	/* Poll, clear and process every chanel पूर्णांकerrupt status */
-	क्रम (i = 0; i < dw->hdata->nr_channels; i++) अणु
+	/* Poll, clear and process every chanel interrupt status */
+	for (i = 0; i < dw->hdata->nr_channels; i++) {
 		chan = &dw->chan[i];
-		status = axi_chan_irq_पढ़ो(chan);
+		status = axi_chan_irq_read(chan);
 		axi_chan_irq_clear(chan, status);
 
 		dev_vdbg(chip->dev, "%s %u IRQ status: 0x%08x\n",
 			axi_chan_name(chan), i, status);
 
-		अगर (status & DWAXIDMAC_IRQ_ALL_ERR)
+		if (status & DWAXIDMAC_IRQ_ALL_ERR)
 			axi_chan_handle_err(chan, status);
-		अन्यथा अगर (status & DWAXIDMAC_IRQ_DMA_TRF)
+		else if (status & DWAXIDMAC_IRQ_DMA_TRF)
 			axi_chan_block_xfer_complete(chan);
-	पूर्ण
+	}
 
-	/* Re-enable पूर्णांकerrupts */
+	/* Re-enable interrupts */
 	axi_dma_irq_enable(chip);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक dma_chan_terminate_all(काष्ठा dma_chan *dchan)
-अणु
-	काष्ठा axi_dma_chan *chan = dchan_to_axi_dma_chan(dchan);
+static int dma_chan_terminate_all(struct dma_chan *dchan)
+{
+	struct axi_dma_chan *chan = dchan_to_axi_dma_chan(dchan);
 	u32 chan_active = BIT(chan->id) << DMAC_CHAN_EN_SHIFT;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 	LIST_HEAD(head);
 
 	axi_chan_disable(chan);
 
-	ret = पढ़ोl_poll_समयout_atomic(chan->chip->regs + DMAC_CHEN, val,
+	ret = readl_poll_timeout_atomic(chan->chip->regs + DMAC_CHEN, val,
 					!(val & chan_active), 1000, 10000);
-	अगर (ret == -ETIMEDOUT)
+	if (ret == -ETIMEDOUT)
 		dev_warn(dchan2dev(dchan),
 			 "%s failed to stop\n", axi_chan_name(chan));
 
-	अगर (chan->direction != DMA_MEM_TO_MEM)
+	if (chan->direction != DMA_MEM_TO_MEM)
 		dw_axi_dma_set_hw_channel(chan->chip,
 					  chan->hw_handshake_num, false);
-	अगर (chan->direction == DMA_MEM_TO_DEV)
+	if (chan->direction == DMA_MEM_TO_DEV)
 		dw_axi_dma_set_byte_halfword(chan, false);
 
 	spin_lock_irqsave(&chan->vc.lock, flags);
@@ -1111,274 +1110,274 @@ err_desc_get:
 	chan->cyclic = false;
 	spin_unlock_irqrestore(&chan->vc.lock, flags);
 
-	vchan_dma_desc_मुक्त_list(&chan->vc, &head);
+	vchan_dma_desc_free_list(&chan->vc, &head);
 
 	dev_vdbg(dchan2dev(dchan), "terminated: %s\n", axi_chan_name(chan));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dma_chan_छोड़ो(काष्ठा dma_chan *dchan)
-अणु
-	काष्ठा axi_dma_chan *chan = dchan_to_axi_dma_chan(dchan);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक समयout = 20; /* समयout iterations */
+static int dma_chan_pause(struct dma_chan *dchan)
+{
+	struct axi_dma_chan *chan = dchan_to_axi_dma_chan(dchan);
+	unsigned long flags;
+	unsigned int timeout = 20; /* timeout iterations */
 	u32 val;
 
 	spin_lock_irqsave(&chan->vc.lock, flags);
 
-	val = axi_dma_ioपढ़ो32(chan->chip, DMAC_CHEN);
+	val = axi_dma_ioread32(chan->chip, DMAC_CHEN);
 	val |= BIT(chan->id) << DMAC_CHAN_SUSP_SHIFT |
 	       BIT(chan->id) << DMAC_CHAN_SUSP_WE_SHIFT;
-	axi_dma_ioग_लिखो32(chan->chip, DMAC_CHEN, val);
+	axi_dma_iowrite32(chan->chip, DMAC_CHEN, val);
 
-	करो  अणु
-		अगर (axi_chan_irq_पढ़ो(chan) & DWAXIDMAC_IRQ_SUSPENDED)
-			अवरोध;
+	do  {
+		if (axi_chan_irq_read(chan) & DWAXIDMAC_IRQ_SUSPENDED)
+			break;
 
 		udelay(2);
-	पूर्ण जबतक (--समयout);
+	} while (--timeout);
 
 	axi_chan_irq_clear(chan, DWAXIDMAC_IRQ_SUSPENDED);
 
-	chan->is_छोड़ोd = true;
+	chan->is_paused = true;
 
 	spin_unlock_irqrestore(&chan->vc.lock, flags);
 
-	वापस समयout ? 0 : -EAGAIN;
-पूर्ण
+	return timeout ? 0 : -EAGAIN;
+}
 
 /* Called in chan locked context */
-अटल अंतरभूत व्योम axi_chan_resume(काष्ठा axi_dma_chan *chan)
-अणु
+static inline void axi_chan_resume(struct axi_dma_chan *chan)
+{
 	u32 val;
 
-	val = axi_dma_ioपढ़ो32(chan->chip, DMAC_CHEN);
+	val = axi_dma_ioread32(chan->chip, DMAC_CHEN);
 	val &= ~(BIT(chan->id) << DMAC_CHAN_SUSP_SHIFT);
 	val |=  (BIT(chan->id) << DMAC_CHAN_SUSP_WE_SHIFT);
-	axi_dma_ioग_लिखो32(chan->chip, DMAC_CHEN, val);
+	axi_dma_iowrite32(chan->chip, DMAC_CHEN, val);
 
-	chan->is_छोड़ोd = false;
-पूर्ण
+	chan->is_paused = false;
+}
 
-अटल पूर्णांक dma_chan_resume(काष्ठा dma_chan *dchan)
-अणु
-	काष्ठा axi_dma_chan *chan = dchan_to_axi_dma_chan(dchan);
-	अचिन्हित दीर्घ flags;
+static int dma_chan_resume(struct dma_chan *dchan)
+{
+	struct axi_dma_chan *chan = dchan_to_axi_dma_chan(dchan);
+	unsigned long flags;
 
 	spin_lock_irqsave(&chan->vc.lock, flags);
 
-	अगर (chan->is_छोड़ोd)
+	if (chan->is_paused)
 		axi_chan_resume(chan);
 
 	spin_unlock_irqrestore(&chan->vc.lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक axi_dma_suspend(काष्ठा axi_dma_chip *chip)
-अणु
+static int axi_dma_suspend(struct axi_dma_chip *chip)
+{
 	axi_dma_irq_disable(chip);
 	axi_dma_disable(chip);
 
 	clk_disable_unprepare(chip->core_clk);
 	clk_disable_unprepare(chip->cfgr_clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक axi_dma_resume(काष्ठा axi_dma_chip *chip)
-अणु
-	पूर्णांक ret;
+static int axi_dma_resume(struct axi_dma_chip *chip)
+{
+	int ret;
 
 	ret = clk_prepare_enable(chip->cfgr_clk);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = clk_prepare_enable(chip->core_clk);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	axi_dma_enable(chip);
 	axi_dma_irq_enable(chip);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused axi_dma_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा axi_dma_chip *chip = dev_get_drvdata(dev);
+static int __maybe_unused axi_dma_runtime_suspend(struct device *dev)
+{
+	struct axi_dma_chip *chip = dev_get_drvdata(dev);
 
-	वापस axi_dma_suspend(chip);
-पूर्ण
+	return axi_dma_suspend(chip);
+}
 
-अटल पूर्णांक __maybe_unused axi_dma_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा axi_dma_chip *chip = dev_get_drvdata(dev);
+static int __maybe_unused axi_dma_runtime_resume(struct device *dev)
+{
+	struct axi_dma_chip *chip = dev_get_drvdata(dev);
 
-	वापस axi_dma_resume(chip);
-पूर्ण
+	return axi_dma_resume(chip);
+}
 
-अटल काष्ठा dma_chan *dw_axi_dma_of_xlate(काष्ठा of_phandle_args *dma_spec,
-					    काष्ठा of_dma *ofdma)
-अणु
-	काष्ठा dw_axi_dma *dw = ofdma->of_dma_data;
-	काष्ठा axi_dma_chan *chan;
-	काष्ठा dma_chan *dchan;
+static struct dma_chan *dw_axi_dma_of_xlate(struct of_phandle_args *dma_spec,
+					    struct of_dma *ofdma)
+{
+	struct dw_axi_dma *dw = ofdma->of_dma_data;
+	struct axi_dma_chan *chan;
+	struct dma_chan *dchan;
 
 	dchan = dma_get_any_slave_channel(&dw->dma);
-	अगर (!dchan)
-		वापस शून्य;
+	if (!dchan)
+		return NULL;
 
 	chan = dchan_to_axi_dma_chan(dchan);
 	chan->hw_handshake_num = dma_spec->args[0];
-	वापस dchan;
-पूर्ण
+	return dchan;
+}
 
-अटल पूर्णांक parse_device_properties(काष्ठा axi_dma_chip *chip)
-अणु
-	काष्ठा device *dev = chip->dev;
-	u32 पंचांगp, carr[DMAC_MAX_CHANNELS];
-	पूर्णांक ret;
+static int parse_device_properties(struct axi_dma_chip *chip)
+{
+	struct device *dev = chip->dev;
+	u32 tmp, carr[DMAC_MAX_CHANNELS];
+	int ret;
 
-	ret = device_property_पढ़ो_u32(dev, "dma-channels", &पंचांगp);
-	अगर (ret)
-		वापस ret;
-	अगर (पंचांगp == 0 || पंचांगp > DMAC_MAX_CHANNELS)
-		वापस -EINVAL;
+	ret = device_property_read_u32(dev, "dma-channels", &tmp);
+	if (ret)
+		return ret;
+	if (tmp == 0 || tmp > DMAC_MAX_CHANNELS)
+		return -EINVAL;
 
-	chip->dw->hdata->nr_channels = पंचांगp;
+	chip->dw->hdata->nr_channels = tmp;
 
-	ret = device_property_पढ़ो_u32(dev, "snps,dma-masters", &पंचांगp);
-	अगर (ret)
-		वापस ret;
-	अगर (पंचांगp == 0 || पंचांगp > DMAC_MAX_MASTERS)
-		वापस -EINVAL;
+	ret = device_property_read_u32(dev, "snps,dma-masters", &tmp);
+	if (ret)
+		return ret;
+	if (tmp == 0 || tmp > DMAC_MAX_MASTERS)
+		return -EINVAL;
 
-	chip->dw->hdata->nr_masters = पंचांगp;
+	chip->dw->hdata->nr_masters = tmp;
 
-	ret = device_property_पढ़ो_u32(dev, "snps,data-width", &पंचांगp);
-	अगर (ret)
-		वापस ret;
-	अगर (पंचांगp > DWAXIDMAC_TRANS_WIDTH_MAX)
-		वापस -EINVAL;
+	ret = device_property_read_u32(dev, "snps,data-width", &tmp);
+	if (ret)
+		return ret;
+	if (tmp > DWAXIDMAC_TRANS_WIDTH_MAX)
+		return -EINVAL;
 
-	chip->dw->hdata->m_data_width = पंचांगp;
+	chip->dw->hdata->m_data_width = tmp;
 
-	ret = device_property_पढ़ो_u32_array(dev, "snps,block-size", carr,
+	ret = device_property_read_u32_array(dev, "snps,block-size", carr,
 					     chip->dw->hdata->nr_channels);
-	अगर (ret)
-		वापस ret;
-	क्रम (पंचांगp = 0; पंचांगp < chip->dw->hdata->nr_channels; पंचांगp++) अणु
-		अगर (carr[पंचांगp] == 0 || carr[पंचांगp] > DMAC_MAX_BLK_SIZE)
-			वापस -EINVAL;
+	if (ret)
+		return ret;
+	for (tmp = 0; tmp < chip->dw->hdata->nr_channels; tmp++) {
+		if (carr[tmp] == 0 || carr[tmp] > DMAC_MAX_BLK_SIZE)
+			return -EINVAL;
 
-		chip->dw->hdata->block_size[पंचांगp] = carr[पंचांगp];
-	पूर्ण
+		chip->dw->hdata->block_size[tmp] = carr[tmp];
+	}
 
-	ret = device_property_पढ़ो_u32_array(dev, "snps,priority", carr,
+	ret = device_property_read_u32_array(dev, "snps,priority", carr,
 					     chip->dw->hdata->nr_channels);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	/* Priority value must be programmed within [0:nr_channels-1] range */
-	क्रम (पंचांगp = 0; पंचांगp < chip->dw->hdata->nr_channels; पंचांगp++) अणु
-		अगर (carr[पंचांगp] >= chip->dw->hdata->nr_channels)
-			वापस -EINVAL;
+	for (tmp = 0; tmp < chip->dw->hdata->nr_channels; tmp++) {
+		if (carr[tmp] >= chip->dw->hdata->nr_channels)
+			return -EINVAL;
 
-		chip->dw->hdata->priority[पंचांगp] = carr[पंचांगp];
-	पूर्ण
+		chip->dw->hdata->priority[tmp] = carr[tmp];
+	}
 
 	/* axi-max-burst-len is optional property */
-	ret = device_property_पढ़ो_u32(dev, "snps,axi-max-burst-len", &पंचांगp);
-	अगर (!ret) अणु
-		अगर (पंचांगp > DWAXIDMAC_ARWLEN_MAX + 1)
-			वापस -EINVAL;
-		अगर (पंचांगp < DWAXIDMAC_ARWLEN_MIN + 1)
-			वापस -EINVAL;
+	ret = device_property_read_u32(dev, "snps,axi-max-burst-len", &tmp);
+	if (!ret) {
+		if (tmp > DWAXIDMAC_ARWLEN_MAX + 1)
+			return -EINVAL;
+		if (tmp < DWAXIDMAC_ARWLEN_MIN + 1)
+			return -EINVAL;
 
 		chip->dw->hdata->restrict_axi_burst_len = true;
-		chip->dw->hdata->axi_rw_burst_len = पंचांगp - 1;
-	पूर्ण
+		chip->dw->hdata->axi_rw_burst_len = tmp - 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dw_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *node = pdev->dev.of_node;
-	काष्ठा axi_dma_chip *chip;
-	काष्ठा resource *mem;
-	काष्ठा dw_axi_dma *dw;
-	काष्ठा dw_axi_dma_hcfg *hdata;
+static int dw_probe(struct platform_device *pdev)
+{
+	struct device_node *node = pdev->dev.of_node;
+	struct axi_dma_chip *chip;
+	struct resource *mem;
+	struct dw_axi_dma *dw;
+	struct dw_axi_dma_hcfg *hdata;
 	u32 i;
-	पूर्णांक ret;
+	int ret;
 
-	chip = devm_kzalloc(&pdev->dev, माप(*chip), GFP_KERNEL);
-	अगर (!chip)
-		वापस -ENOMEM;
+	chip = devm_kzalloc(&pdev->dev, sizeof(*chip), GFP_KERNEL);
+	if (!chip)
+		return -ENOMEM;
 
-	dw = devm_kzalloc(&pdev->dev, माप(*dw), GFP_KERNEL);
-	अगर (!dw)
-		वापस -ENOMEM;
+	dw = devm_kzalloc(&pdev->dev, sizeof(*dw), GFP_KERNEL);
+	if (!dw)
+		return -ENOMEM;
 
-	hdata = devm_kzalloc(&pdev->dev, माप(*hdata), GFP_KERNEL);
-	अगर (!hdata)
-		वापस -ENOMEM;
+	hdata = devm_kzalloc(&pdev->dev, sizeof(*hdata), GFP_KERNEL);
+	if (!hdata)
+		return -ENOMEM;
 
 	chip->dw = dw;
 	chip->dev = &pdev->dev;
 	chip->dw->hdata = hdata;
 
-	chip->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (chip->irq < 0)
-		वापस chip->irq;
+	chip->irq = platform_get_irq(pdev, 0);
+	if (chip->irq < 0)
+		return chip->irq;
 
-	mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	chip->regs = devm_ioremap_resource(chip->dev, mem);
-	अगर (IS_ERR(chip->regs))
-		वापस PTR_ERR(chip->regs);
+	if (IS_ERR(chip->regs))
+		return PTR_ERR(chip->regs);
 
-	अगर (of_device_is_compatible(node, "intel,kmb-axi-dma")) अणु
-		chip->apb_regs = devm_platक्रमm_ioremap_resource(pdev, 1);
-		अगर (IS_ERR(chip->apb_regs))
-			वापस PTR_ERR(chip->apb_regs);
-	पूर्ण
+	if (of_device_is_compatible(node, "intel,kmb-axi-dma")) {
+		chip->apb_regs = devm_platform_ioremap_resource(pdev, 1);
+		if (IS_ERR(chip->apb_regs))
+			return PTR_ERR(chip->apb_regs);
+	}
 
 	chip->core_clk = devm_clk_get(chip->dev, "core-clk");
-	अगर (IS_ERR(chip->core_clk))
-		वापस PTR_ERR(chip->core_clk);
+	if (IS_ERR(chip->core_clk))
+		return PTR_ERR(chip->core_clk);
 
 	chip->cfgr_clk = devm_clk_get(chip->dev, "cfgr-clk");
-	अगर (IS_ERR(chip->cfgr_clk))
-		वापस PTR_ERR(chip->cfgr_clk);
+	if (IS_ERR(chip->cfgr_clk))
+		return PTR_ERR(chip->cfgr_clk);
 
 	ret = parse_device_properties(chip);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	dw->chan = devm_kसुस्मृति(chip->dev, hdata->nr_channels,
-				माप(*dw->chan), GFP_KERNEL);
-	अगर (!dw->chan)
-		वापस -ENOMEM;
+	dw->chan = devm_kcalloc(chip->dev, hdata->nr_channels,
+				sizeof(*dw->chan), GFP_KERNEL);
+	if (!dw->chan)
+		return -ENOMEM;
 
-	ret = devm_request_irq(chip->dev, chip->irq, dw_axi_dma_पूर्णांकerrupt,
+	ret = devm_request_irq(chip->dev, chip->irq, dw_axi_dma_interrupt,
 			       IRQF_SHARED, KBUILD_MODNAME, chip);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 
 	INIT_LIST_HEAD(&dw->dma.channels);
-	क्रम (i = 0; i < hdata->nr_channels; i++) अणु
-		काष्ठा axi_dma_chan *chan = &dw->chan[i];
+	for (i = 0; i < hdata->nr_channels; i++) {
+		struct axi_dma_chan *chan = &dw->chan[i];
 
 		chan->chip = chip;
 		chan->id = i;
 		chan->chan_regs = chip->regs + COMMON_REG_LEN + i * CHAN_REG_LEN;
 		atomic_set(&chan->descs_allocated, 0);
 
-		chan->vc.desc_मुक्त = vchan_desc_put;
+		chan->vc.desc_free = vchan_desc_put;
 		vchan_init(&chan->vc, &dw->dma);
-	पूर्ण
+	}
 
 	/* Set capabilities */
 	dma_cap_set(DMA_MEMCPY, dw->dma.cap_mask);
@@ -1397,13 +1396,13 @@ err_desc_get:
 	dw->dma.device_tx_status = dma_chan_tx_status;
 	dw->dma.device_issue_pending = dma_chan_issue_pending;
 	dw->dma.device_terminate_all = dma_chan_terminate_all;
-	dw->dma.device_छोड़ो = dma_chan_छोड़ो;
+	dw->dma.device_pause = dma_chan_pause;
 	dw->dma.device_resume = dma_chan_resume;
 
 	dw->dma.device_alloc_chan_resources = dma_chan_alloc_chan_resources;
-	dw->dma.device_मुक्त_chan_resources = dma_chan_मुक्त_chan_resources;
+	dw->dma.device_free_chan_resources = dma_chan_free_chan_resources;
 
-	dw->dma.device_prep_dma_स_नकल = dma_chan_prep_dma_स_नकल;
+	dw->dma.device_prep_dma_memcpy = dma_chan_prep_dma_memcpy;
 	dw->dma.device_synchronize = dw_axi_dma_synchronize;
 	dw->dma.device_config = dw_axi_dma_chan_slave_config;
 	dw->dma.device_prep_slave_sg = dw_axi_dma_chan_prep_slave_sg;
@@ -1411,105 +1410,105 @@ err_desc_get:
 
 	/*
 	 * Synopsis DesignWare AxiDMA datasheet mentioned Maximum
-	 * supported blocks is 1024. Device रेजिस्टर width is 4 bytes.
-	 * Thereक्रमe, set स्थिरraपूर्णांक to 1024 * 4.
+	 * supported blocks is 1024. Device register width is 4 bytes.
+	 * Therefore, set constraint to 1024 * 4.
 	 */
 	dw->dma.dev->dma_parms = &dw->dma_parms;
 	dma_set_max_seg_size(&pdev->dev, MAX_BLOCK_SIZE);
-	platक्रमm_set_drvdata(pdev, chip);
+	platform_set_drvdata(pdev, chip);
 
-	pm_runसमय_enable(chip->dev);
+	pm_runtime_enable(chip->dev);
 
 	/*
-	 * We can't just call pm_runसमय_get here instead of
-	 * pm_runसमय_get_noresume + axi_dma_resume because we need
-	 * driver to work also without Runसमय PM.
+	 * We can't just call pm_runtime_get here instead of
+	 * pm_runtime_get_noresume + axi_dma_resume because we need
+	 * driver to work also without Runtime PM.
 	 */
-	pm_runसमय_get_noresume(chip->dev);
+	pm_runtime_get_noresume(chip->dev);
 	ret = axi_dma_resume(chip);
-	अगर (ret < 0)
-		जाओ err_pm_disable;
+	if (ret < 0)
+		goto err_pm_disable;
 
 	axi_dma_hw_init(chip);
 
-	pm_runसमय_put(chip->dev);
+	pm_runtime_put(chip->dev);
 
-	ret = dmaenginem_async_device_रेजिस्टर(&dw->dma);
-	अगर (ret)
-		जाओ err_pm_disable;
+	ret = dmaenginem_async_device_register(&dw->dma);
+	if (ret)
+		goto err_pm_disable;
 
-	/* Register with OF helpers क्रम DMA lookups */
-	ret = of_dma_controller_रेजिस्टर(pdev->dev.of_node,
+	/* Register with OF helpers for DMA lookups */
+	ret = of_dma_controller_register(pdev->dev.of_node,
 					 dw_axi_dma_of_xlate, dw);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_warn(&pdev->dev,
 			 "Failed to register OF DMA controller, fallback to MEM_TO_MEM mode\n");
 
 	dev_info(chip->dev, "DesignWare AXI DMA Controller, %d channels\n",
 		 dw->hdata->nr_channels);
 
-	वापस 0;
+	return 0;
 
 err_pm_disable:
-	pm_runसमय_disable(chip->dev);
+	pm_runtime_disable(chip->dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dw_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा axi_dma_chip *chip = platक्रमm_get_drvdata(pdev);
-	काष्ठा dw_axi_dma *dw = chip->dw;
-	काष्ठा axi_dma_chan *chan, *_chan;
+static int dw_remove(struct platform_device *pdev)
+{
+	struct axi_dma_chip *chip = platform_get_drvdata(pdev);
+	struct dw_axi_dma *dw = chip->dw;
+	struct axi_dma_chan *chan, *_chan;
 	u32 i;
 
-	/* Enable clk beक्रमe accessing to रेजिस्टरs */
+	/* Enable clk before accessing to registers */
 	clk_prepare_enable(chip->cfgr_clk);
 	clk_prepare_enable(chip->core_clk);
 	axi_dma_irq_disable(chip);
-	क्रम (i = 0; i < dw->hdata->nr_channels; i++) अणु
+	for (i = 0; i < dw->hdata->nr_channels; i++) {
 		axi_chan_disable(&chip->dw->chan[i]);
 		axi_chan_irq_disable(&chip->dw->chan[i], DWAXIDMAC_IRQ_ALL);
-	पूर्ण
+	}
 	axi_dma_disable(chip);
 
-	pm_runसमय_disable(chip->dev);
+	pm_runtime_disable(chip->dev);
 	axi_dma_suspend(chip);
 
-	devm_मुक्त_irq(chip->dev, chip->irq, chip);
+	devm_free_irq(chip->dev, chip->irq, chip);
 
-	of_dma_controller_मुक्त(chip->dev->of_node);
+	of_dma_controller_free(chip->dev->of_node);
 
-	list_क्रम_each_entry_safe(chan, _chan, &dw->dma.channels,
-			vc.chan.device_node) अणु
+	list_for_each_entry_safe(chan, _chan, &dw->dma.channels,
+			vc.chan.device_node) {
 		list_del(&chan->vc.chan.device_node);
-		tasklet_समाप्त(&chan->vc.task);
-	पूर्ण
+		tasklet_kill(&chan->vc.task);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops dw_axi_dma_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(axi_dma_runसमय_suspend, axi_dma_runसमय_resume, शून्य)
-पूर्ण;
+static const struct dev_pm_ops dw_axi_dma_pm_ops = {
+	SET_RUNTIME_PM_OPS(axi_dma_runtime_suspend, axi_dma_runtime_resume, NULL)
+};
 
-अटल स्थिर काष्ठा of_device_id dw_dma_of_id_table[] = अणु
-	अणु .compatible = "snps,axi-dma-1.01a" पूर्ण,
-	अणु .compatible = "intel,kmb-axi-dma" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id dw_dma_of_id_table[] = {
+	{ .compatible = "snps,axi-dma-1.01a" },
+	{ .compatible = "intel,kmb-axi-dma" },
+	{}
+};
 MODULE_DEVICE_TABLE(of, dw_dma_of_id_table);
 
-अटल काष्ठा platक्रमm_driver dw_driver = अणु
+static struct platform_driver dw_driver = {
 	.probe		= dw_probe,
-	.हटाओ		= dw_हटाओ,
-	.driver = अणु
+	.remove		= dw_remove,
+	.driver = {
 		.name	= KBUILD_MODNAME,
 		.of_match_table = dw_dma_of_id_table,
 		.pm = &dw_axi_dma_pm_ops,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(dw_driver);
+	},
+};
+module_platform_driver(dw_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Synopsys DesignWare AXI DMA Controller platform driver");

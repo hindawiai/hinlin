@@ -1,8 +1,7 @@
-<शैली गुरु>
-#अगर_अघोषित _TOOLS_ASM_EXPORT_H
-#घोषणा _TOOLS_ASM_EXPORT_H
+#ifndef _TOOLS_ASM_EXPORT_H
+#define _TOOLS_ASM_EXPORT_H
 
-#घोषणा EXPORT_SYMBOL(x)
-#घोषणा EXPORT_SYMBOL_GPL(x)
+#define EXPORT_SYMBOL(x)
+#define EXPORT_SYMBOL_GPL(x)
 
-#पूर्ण_अगर /* _TOOLS_ASM_EXPORT_H */
+#endif /* _TOOLS_ASM_EXPORT_H */

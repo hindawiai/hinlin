@@ -1,230 +1,229 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2003-2008 Takahiro Hirofuchi
  */
 
-#समावेश <यंत्र/byteorder.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/hcd.h>
-#समावेश <linux/scatterlist.h>
+#include <asm/byteorder.h>
+#include <linux/kthread.h>
+#include <linux/usb.h>
+#include <linux/usb/hcd.h>
+#include <linux/scatterlist.h>
 
-#समावेश "usbip_common.h"
-#समावेश "stub.h"
+#include "usbip_common.h"
+#include "stub.h"
 
-अटल पूर्णांक is_clear_halt_cmd(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_ctrlrequest *req;
+static int is_clear_halt_cmd(struct urb *urb)
+{
+	struct usb_ctrlrequest *req;
 
-	req = (काष्ठा usb_ctrlrequest *) urb->setup_packet;
+	req = (struct usb_ctrlrequest *) urb->setup_packet;
 
-	वापस (req->bRequest == USB_REQ_CLEAR_FEATURE) &&
+	return (req->bRequest == USB_REQ_CLEAR_FEATURE) &&
 	       (req->bRequestType == USB_RECIP_ENDPOINT) &&
 	       (req->wValue == USB_ENDPOINT_HALT);
-पूर्ण
+}
 
-अटल पूर्णांक is_set_पूर्णांकerface_cmd(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_ctrlrequest *req;
+static int is_set_interface_cmd(struct urb *urb)
+{
+	struct usb_ctrlrequest *req;
 
-	req = (काष्ठा usb_ctrlrequest *) urb->setup_packet;
+	req = (struct usb_ctrlrequest *) urb->setup_packet;
 
-	वापस (req->bRequest == USB_REQ_SET_INTERFACE) &&
+	return (req->bRequest == USB_REQ_SET_INTERFACE) &&
 		(req->bRequestType == USB_RECIP_INTERFACE);
-पूर्ण
+}
 
-अटल पूर्णांक is_set_configuration_cmd(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_ctrlrequest *req;
+static int is_set_configuration_cmd(struct urb *urb)
+{
+	struct usb_ctrlrequest *req;
 
-	req = (काष्ठा usb_ctrlrequest *) urb->setup_packet;
+	req = (struct usb_ctrlrequest *) urb->setup_packet;
 
-	वापस (req->bRequest == USB_REQ_SET_CONFIGURATION) &&
+	return (req->bRequest == USB_REQ_SET_CONFIGURATION) &&
 		(req->bRequestType == USB_RECIP_DEVICE);
-पूर्ण
+}
 
-अटल पूर्णांक is_reset_device_cmd(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_ctrlrequest *req;
+static int is_reset_device_cmd(struct urb *urb)
+{
+	struct usb_ctrlrequest *req;
 	__u16 value;
 	__u16 index;
 
-	req = (काष्ठा usb_ctrlrequest *) urb->setup_packet;
+	req = (struct usb_ctrlrequest *) urb->setup_packet;
 	value = le16_to_cpu(req->wValue);
 	index = le16_to_cpu(req->wIndex);
 
-	अगर ((req->bRequest == USB_REQ_SET_FEATURE) &&
+	if ((req->bRequest == USB_REQ_SET_FEATURE) &&
 	    (req->bRequestType == USB_RT_PORT) &&
-	    (value == USB_PORT_FEAT_RESET)) अणु
+	    (value == USB_PORT_FEAT_RESET)) {
 		usbip_dbg_stub_rx("reset_device_cmd, port %u\n", index);
-		वापस 1;
-	पूर्ण अन्यथा
-		वापस 0;
-पूर्ण
+		return 1;
+	} else
+		return 0;
+}
 
-अटल पूर्णांक tweak_clear_halt_cmd(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_ctrlrequest *req;
-	पूर्णांक target_endp;
-	पूर्णांक target_dir;
-	पूर्णांक target_pipe;
-	पूर्णांक ret;
+static int tweak_clear_halt_cmd(struct urb *urb)
+{
+	struct usb_ctrlrequest *req;
+	int target_endp;
+	int target_dir;
+	int target_pipe;
+	int ret;
 
-	req = (काष्ठा usb_ctrlrequest *) urb->setup_packet;
+	req = (struct usb_ctrlrequest *) urb->setup_packet;
 
 	/*
-	 * The stalled endpoपूर्णांक is specअगरied in the wIndex value. The endpoपूर्णांक
+	 * The stalled endpoint is specified in the wIndex value. The endpoint
 	 * of the urb is the target of this clear_halt request (i.e., control
-	 * endpoपूर्णांक).
+	 * endpoint).
 	 */
 	target_endp = le16_to_cpu(req->wIndex) & 0x000f;
 
-	/* the stalled endpoपूर्णांक direction is IN or OUT?. USB_सूची_IN is 0x80.  */
+	/* the stalled endpoint direction is IN or OUT?. USB_DIR_IN is 0x80.  */
 	target_dir = le16_to_cpu(req->wIndex) & 0x0080;
 
-	अगर (target_dir)
+	if (target_dir)
 		target_pipe = usb_rcvctrlpipe(urb->dev, target_endp);
-	अन्यथा
+	else
 		target_pipe = usb_sndctrlpipe(urb->dev, target_endp);
 
 	ret = usb_clear_halt(urb->dev, target_pipe);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(&urb->dev->dev,
 			"usb_clear_halt error: devnum %d endp %d ret %d\n",
 			urb->dev->devnum, target_endp, ret);
-	अन्यथा
+	else
 		dev_info(&urb->dev->dev,
 			 "usb_clear_halt done: devnum %d endp %d\n",
 			 urb->dev->devnum, target_endp);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tweak_set_पूर्णांकerface_cmd(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_ctrlrequest *req;
+static int tweak_set_interface_cmd(struct urb *urb)
+{
+	struct usb_ctrlrequest *req;
 	__u16 alternate;
-	__u16 पूर्णांकerface;
-	पूर्णांक ret;
+	__u16 interface;
+	int ret;
 
-	req = (काष्ठा usb_ctrlrequest *) urb->setup_packet;
+	req = (struct usb_ctrlrequest *) urb->setup_packet;
 	alternate = le16_to_cpu(req->wValue);
-	पूर्णांकerface = le16_to_cpu(req->wIndex);
+	interface = le16_to_cpu(req->wIndex);
 
 	usbip_dbg_stub_rx("set_interface: inf %u alt %u\n",
-			  पूर्णांकerface, alternate);
+			  interface, alternate);
 
-	ret = usb_set_पूर्णांकerface(urb->dev, पूर्णांकerface, alternate);
-	अगर (ret < 0)
+	ret = usb_set_interface(urb->dev, interface, alternate);
+	if (ret < 0)
 		dev_err(&urb->dev->dev,
 			"usb_set_interface error: inf %u alt %u ret %d\n",
-			पूर्णांकerface, alternate, ret);
-	अन्यथा
+			interface, alternate, ret);
+	else
 		dev_info(&urb->dev->dev,
 			"usb_set_interface done: inf %u alt %u\n",
-			पूर्णांकerface, alternate);
+			interface, alternate);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tweak_set_configuration_cmd(काष्ठा urb *urb)
-अणु
-	काष्ठा stub_priv *priv = (काष्ठा stub_priv *) urb->context;
-	काष्ठा stub_device *sdev = priv->sdev;
-	काष्ठा usb_ctrlrequest *req;
+static int tweak_set_configuration_cmd(struct urb *urb)
+{
+	struct stub_priv *priv = (struct stub_priv *) urb->context;
+	struct stub_device *sdev = priv->sdev;
+	struct usb_ctrlrequest *req;
 	__u16 config;
-	पूर्णांक err;
+	int err;
 
-	req = (काष्ठा usb_ctrlrequest *) urb->setup_packet;
+	req = (struct usb_ctrlrequest *) urb->setup_packet;
 	config = le16_to_cpu(req->wValue);
 
 	err = usb_set_configuration(sdev->udev, config);
-	अगर (err && err != -ENODEV)
+	if (err && err != -ENODEV)
 		dev_err(&sdev->udev->dev, "can't set config #%d, error %d\n",
 			config, err);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tweak_reset_device_cmd(काष्ठा urb *urb)
-अणु
-	काष्ठा stub_priv *priv = (काष्ठा stub_priv *) urb->context;
-	काष्ठा stub_device *sdev = priv->sdev;
+static int tweak_reset_device_cmd(struct urb *urb)
+{
+	struct stub_priv *priv = (struct stub_priv *) urb->context;
+	struct stub_device *sdev = priv->sdev;
 
 	dev_info(&urb->dev->dev, "usb_queue_reset_device\n");
 
-	अगर (usb_lock_device_क्रम_reset(sdev->udev, शून्य) < 0) अणु
+	if (usb_lock_device_for_reset(sdev->udev, NULL) < 0) {
 		dev_err(&urb->dev->dev, "could not obtain lock to reset device\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	usb_reset_device(sdev->udev);
 	usb_unlock_device(sdev->udev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * clear_halt, set_पूर्णांकerface, and set_configuration require special tricks.
+ * clear_halt, set_interface, and set_configuration require special tricks.
  */
-अटल व्योम tweak_special_requests(काष्ठा urb *urb)
-अणु
-	अगर (!urb || !urb->setup_packet)
-		वापस;
+static void tweak_special_requests(struct urb *urb)
+{
+	if (!urb || !urb->setup_packet)
+		return;
 
-	अगर (usb_pipetype(urb->pipe) != PIPE_CONTROL)
-		वापस;
+	if (usb_pipetype(urb->pipe) != PIPE_CONTROL)
+		return;
 
-	अगर (is_clear_halt_cmd(urb))
+	if (is_clear_halt_cmd(urb))
 		/* tweak clear_halt */
 		 tweak_clear_halt_cmd(urb);
 
-	अन्यथा अगर (is_set_पूर्णांकerface_cmd(urb))
-		/* tweak set_पूर्णांकerface */
-		tweak_set_पूर्णांकerface_cmd(urb);
+	else if (is_set_interface_cmd(urb))
+		/* tweak set_interface */
+		tweak_set_interface_cmd(urb);
 
-	अन्यथा अगर (is_set_configuration_cmd(urb))
+	else if (is_set_configuration_cmd(urb))
 		/* tweak set_configuration */
 		tweak_set_configuration_cmd(urb);
 
-	अन्यथा अगर (is_reset_device_cmd(urb))
+	else if (is_reset_device_cmd(urb))
 		tweak_reset_device_cmd(urb);
-	अन्यथा
+	else
 		usbip_dbg_stub_rx("no need to tweak\n");
-पूर्ण
+}
 
 /*
  * stub_recv_unlink() unlinks the URB by a call to usb_unlink_urb().
  * By unlinking the urb asynchronously, stub_rx can continuously
- * process coming urbs.  Even अगर the urb is unlinked, its completion
- * handler will be called and stub_tx will send a वापस pdu.
+ * process coming urbs.  Even if the urb is unlinked, its completion
+ * handler will be called and stub_tx will send a return pdu.
  *
  * See also comments about unlinking strategy in vhci_hcd.c.
  */
-अटल पूर्णांक stub_recv_cmd_unlink(काष्ठा stub_device *sdev,
-				काष्ठा usbip_header *pdu)
-अणु
-	पूर्णांक ret, i;
-	अचिन्हित दीर्घ flags;
-	काष्ठा stub_priv *priv;
+static int stub_recv_cmd_unlink(struct stub_device *sdev,
+				struct usbip_header *pdu)
+{
+	int ret, i;
+	unsigned long flags;
+	struct stub_priv *priv;
 
 	spin_lock_irqsave(&sdev->priv_lock, flags);
 
-	list_क्रम_each_entry(priv, &sdev->priv_init, list) अणु
-		अगर (priv->seqnum != pdu->u.cmd_unlink.seqnum)
-			जारी;
+	list_for_each_entry(priv, &sdev->priv_init, list) {
+		if (priv->seqnum != pdu->u.cmd_unlink.seqnum)
+			continue;
 
 		/*
 		 * This matched urb is not completed yet (i.e., be in
 		 * flight in usb hcd hardware/driver). Now we are
 		 * cancelling it. The unlinking flag means that we are
-		 * now not going to वापस the normal result pdu of a
-		 * submission request, but going to वापस a result pdu
+		 * now not going to return the normal result pdu of a
+		 * submission request, but going to return a result pdu
 		 * of the unlink request.
 		 */
 		priv->unlinking = 1;
 
 		/*
-		 * In the हाल that unlinking flag is on, prev->seqnum
+		 * In the case that unlinking flag is on, prev->seqnum
 		 * is changed from the seqnum of the cancelling urb to
 		 * the seqnum of the unlink request. This will be used
 		 * to make the result pdu of the unlink request.
@@ -234,371 +233,371 @@
 		spin_unlock_irqrestore(&sdev->priv_lock, flags);
 
 		/*
-		 * usb_unlink_urb() is now out of spinlocking to aव्योम
+		 * usb_unlink_urb() is now out of spinlocking to avoid
 		 * spinlock recursion since stub_complete() is
-		 * someबार called in this context but not in the
-		 * पूर्णांकerrupt context.  If stub_complete() is executed
-		 * beक्रमe we call usb_unlink_urb(), usb_unlink_urb()
-		 * will वापस an error value. In this हाल, stub_tx
-		 * will वापस the result pdu of this unlink request
+		 * sometimes called in this context but not in the
+		 * interrupt context.  If stub_complete() is executed
+		 * before we call usb_unlink_urb(), usb_unlink_urb()
+		 * will return an error value. In this case, stub_tx
+		 * will return the result pdu of this unlink request
 		 * though submission is completed and actual unlinking
 		 * is not executed. OK?
 		 */
-		/* In the above हाल, urb->status is not -ECONNRESET,
+		/* In the above case, urb->status is not -ECONNRESET,
 		 * so a driver in a client host will know the failure
 		 * of the unlink request ?
 		 */
-		क्रम (i = priv->completed_urbs; i < priv->num_urbs; i++) अणु
+		for (i = priv->completed_urbs; i < priv->num_urbs; i++) {
 			ret = usb_unlink_urb(priv->urbs[i]);
-			अगर (ret != -EINPROGRESS)
+			if (ret != -EINPROGRESS)
 				dev_err(&priv->urbs[i]->dev->dev,
 					"failed to unlink %d/%d urb of seqnum %lu, ret %d\n",
 					i + 1, priv->num_urbs,
 					priv->seqnum, ret);
-		पूर्ण
-		वापस 0;
-	पूर्ण
+		}
+		return 0;
+	}
 
 	usbip_dbg_stub_rx("seqnum %d is not pending\n",
 			  pdu->u.cmd_unlink.seqnum);
 
 	/*
 	 * The urb of the unlink target is not found in priv_init queue. It was
-	 * alपढ़ोy completed and its results is/was going to be sent by a
-	 * CMD_RET pdu. In this हाल, usb_unlink_urb() is not needed. We only
-	 * वापस the completeness of this unlink request to vhci_hcd.
+	 * already completed and its results is/was going to be sent by a
+	 * CMD_RET pdu. In this case, usb_unlink_urb() is not needed. We only
+	 * return the completeness of this unlink request to vhci_hcd.
 	 */
 	stub_enqueue_ret_unlink(sdev, pdu->base.seqnum, 0);
 
 	spin_unlock_irqrestore(&sdev->priv_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक valid_request(काष्ठा stub_device *sdev, काष्ठा usbip_header *pdu)
-अणु
-	काष्ठा usbip_device *ud = &sdev->ud;
-	पूर्णांक valid = 0;
+static int valid_request(struct stub_device *sdev, struct usbip_header *pdu)
+{
+	struct usbip_device *ud = &sdev->ud;
+	int valid = 0;
 
-	अगर (pdu->base.devid == sdev->devid) अणु
+	if (pdu->base.devid == sdev->devid) {
 		spin_lock_irq(&ud->lock);
-		अगर (ud->status == SDEV_ST_USED) अणु
+		if (ud->status == SDEV_ST_USED) {
 			/* A request is valid. */
 			valid = 1;
-		पूर्ण
+		}
 		spin_unlock_irq(&ud->lock);
-	पूर्ण
+	}
 
-	वापस valid;
-पूर्ण
+	return valid;
+}
 
-अटल काष्ठा stub_priv *stub_priv_alloc(काष्ठा stub_device *sdev,
-					 काष्ठा usbip_header *pdu)
-अणु
-	काष्ठा stub_priv *priv;
-	काष्ठा usbip_device *ud = &sdev->ud;
-	अचिन्हित दीर्घ flags;
+static struct stub_priv *stub_priv_alloc(struct stub_device *sdev,
+					 struct usbip_header *pdu)
+{
+	struct stub_priv *priv;
+	struct usbip_device *ud = &sdev->ud;
+	unsigned long flags;
 
 	spin_lock_irqsave(&sdev->priv_lock, flags);
 
 	priv = kmem_cache_zalloc(stub_priv_cache, GFP_ATOMIC);
-	अगर (!priv) अणु
+	if (!priv) {
 		dev_err(&sdev->udev->dev, "alloc stub_priv\n");
 		spin_unlock_irqrestore(&sdev->priv_lock, flags);
 		usbip_event_add(ud, SDEV_EVENT_ERROR_MALLOC);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	priv->seqnum = pdu->base.seqnum;
 	priv->sdev = sdev;
 
 	/*
 	 * After a stub_priv is linked to a list_head,
-	 * our error handler can मुक्त allocated data.
+	 * our error handler can free allocated data.
 	 */
 	list_add_tail(&priv->list, &sdev->priv_init);
 
 	spin_unlock_irqrestore(&sdev->priv_lock, flags);
 
-	वापस priv;
-पूर्ण
+	return priv;
+}
 
-अटल पूर्णांक get_pipe(काष्ठा stub_device *sdev, काष्ठा usbip_header *pdu)
-अणु
-	काष्ठा usb_device *udev = sdev->udev;
-	काष्ठा usb_host_endpoपूर्णांक *ep;
-	काष्ठा usb_endpoपूर्णांक_descriptor *epd = शून्य;
-	पूर्णांक epnum = pdu->base.ep;
-	पूर्णांक dir = pdu->base.direction;
+static int get_pipe(struct stub_device *sdev, struct usbip_header *pdu)
+{
+	struct usb_device *udev = sdev->udev;
+	struct usb_host_endpoint *ep;
+	struct usb_endpoint_descriptor *epd = NULL;
+	int epnum = pdu->base.ep;
+	int dir = pdu->base.direction;
 
-	अगर (epnum < 0 || epnum > 15)
-		जाओ err_ret;
+	if (epnum < 0 || epnum > 15)
+		goto err_ret;
 
-	अगर (dir == USBIP_सूची_IN)
+	if (dir == USBIP_DIR_IN)
 		ep = udev->ep_in[epnum & 0x7f];
-	अन्यथा
+	else
 		ep = udev->ep_out[epnum & 0x7f];
-	अगर (!ep)
-		जाओ err_ret;
+	if (!ep)
+		goto err_ret;
 
 	epd = &ep->desc;
 
-	अगर (usb_endpoपूर्णांक_xfer_control(epd)) अणु
-		अगर (dir == USBIP_सूची_OUT)
-			वापस usb_sndctrlpipe(udev, epnum);
-		अन्यथा
-			वापस usb_rcvctrlpipe(udev, epnum);
-	पूर्ण
+	if (usb_endpoint_xfer_control(epd)) {
+		if (dir == USBIP_DIR_OUT)
+			return usb_sndctrlpipe(udev, epnum);
+		else
+			return usb_rcvctrlpipe(udev, epnum);
+	}
 
-	अगर (usb_endpoपूर्णांक_xfer_bulk(epd)) अणु
-		अगर (dir == USBIP_सूची_OUT)
-			वापस usb_sndbulkpipe(udev, epnum);
-		अन्यथा
-			वापस usb_rcvbulkpipe(udev, epnum);
-	पूर्ण
+	if (usb_endpoint_xfer_bulk(epd)) {
+		if (dir == USBIP_DIR_OUT)
+			return usb_sndbulkpipe(udev, epnum);
+		else
+			return usb_rcvbulkpipe(udev, epnum);
+	}
 
-	अगर (usb_endpoपूर्णांक_xfer_पूर्णांक(epd)) अणु
-		अगर (dir == USBIP_सूची_OUT)
-			वापस usb_sndपूर्णांकpipe(udev, epnum);
-		अन्यथा
-			वापस usb_rcvपूर्णांकpipe(udev, epnum);
-	पूर्ण
+	if (usb_endpoint_xfer_int(epd)) {
+		if (dir == USBIP_DIR_OUT)
+			return usb_sndintpipe(udev, epnum);
+		else
+			return usb_rcvintpipe(udev, epnum);
+	}
 
-	अगर (usb_endpoपूर्णांक_xfer_isoc(epd)) अणु
+	if (usb_endpoint_xfer_isoc(epd)) {
 		/* validate number of packets */
-		अगर (pdu->u.cmd_submit.number_of_packets < 0 ||
+		if (pdu->u.cmd_submit.number_of_packets < 0 ||
 		    pdu->u.cmd_submit.number_of_packets >
-		    USBIP_MAX_ISO_PACKETS) अणु
+		    USBIP_MAX_ISO_PACKETS) {
 			dev_err(&sdev->udev->dev,
 				"CMD_SUBMIT: isoc invalid num packets %d\n",
 				pdu->u.cmd_submit.number_of_packets);
-			वापस -1;
-		पूर्ण
-		अगर (dir == USBIP_सूची_OUT)
-			वापस usb_sndisocpipe(udev, epnum);
-		अन्यथा
-			वापस usb_rcvisocpipe(udev, epnum);
-	पूर्ण
+			return -1;
+		}
+		if (dir == USBIP_DIR_OUT)
+			return usb_sndisocpipe(udev, epnum);
+		else
+			return usb_rcvisocpipe(udev, epnum);
+	}
 
 err_ret:
 	/* NOT REACHED */
 	dev_err(&sdev->udev->dev, "CMD_SUBMIT: invalid epnum %d\n", epnum);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल व्योम masking_bogus_flags(काष्ठा urb *urb)
-अणु
-	पूर्णांक				xfertype;
-	काष्ठा usb_device		*dev;
-	काष्ठा usb_host_endpoपूर्णांक	*ep;
-	पूर्णांक				is_out;
-	अचिन्हित पूर्णांक	allowed;
+static void masking_bogus_flags(struct urb *urb)
+{
+	int				xfertype;
+	struct usb_device		*dev;
+	struct usb_host_endpoint	*ep;
+	int				is_out;
+	unsigned int	allowed;
 
-	अगर (!urb || urb->hcpriv || !urb->complete)
-		वापस;
+	if (!urb || urb->hcpriv || !urb->complete)
+		return;
 	dev = urb->dev;
-	अगर ((!dev) || (dev->state < USB_STATE_UNAUTHENTICATED))
-		वापस;
+	if ((!dev) || (dev->state < USB_STATE_UNAUTHENTICATED))
+		return;
 
 	ep = (usb_pipein(urb->pipe) ? dev->ep_in : dev->ep_out)
-		[usb_pipeendpoपूर्णांक(urb->pipe)];
-	अगर (!ep)
-		वापस;
+		[usb_pipeendpoint(urb->pipe)];
+	if (!ep)
+		return;
 
-	xfertype = usb_endpoपूर्णांक_type(&ep->desc);
-	अगर (xfertype == USB_ENDPOINT_XFER_CONTROL) अणु
-		काष्ठा usb_ctrlrequest *setup =
-			(काष्ठा usb_ctrlrequest *) urb->setup_packet;
+	xfertype = usb_endpoint_type(&ep->desc);
+	if (xfertype == USB_ENDPOINT_XFER_CONTROL) {
+		struct usb_ctrlrequest *setup =
+			(struct usb_ctrlrequest *) urb->setup_packet;
 
-		अगर (!setup)
-			वापस;
-		is_out = !(setup->bRequestType & USB_सूची_IN) ||
+		if (!setup)
+			return;
+		is_out = !(setup->bRequestType & USB_DIR_IN) ||
 			!setup->wLength;
-	पूर्ण अन्यथा अणु
-		is_out = usb_endpoपूर्णांक_dir_out(&ep->desc);
-	पूर्ण
+	} else {
+		is_out = usb_endpoint_dir_out(&ep->desc);
+	}
 
-	/* enक्रमce simple/standard policy */
+	/* enforce simple/standard policy */
 	allowed = (URB_NO_TRANSFER_DMA_MAP | URB_NO_INTERRUPT |
-		   URB_सूची_MASK | URB_FREE_BUFFER);
-	चयन (xfertype) अणु
-	हाल USB_ENDPOINT_XFER_BULK:
-		अगर (is_out)
+		   URB_DIR_MASK | URB_FREE_BUFFER);
+	switch (xfertype) {
+	case USB_ENDPOINT_XFER_BULK:
+		if (is_out)
 			allowed |= URB_ZERO_PACKET;
 		fallthrough;
-	शेष:			/* all non-iso endpoपूर्णांकs */
-		अगर (!is_out)
+	default:			/* all non-iso endpoints */
+		if (!is_out)
 			allowed |= URB_SHORT_NOT_OK;
-		अवरोध;
-	हाल USB_ENDPOINT_XFER_ISOC:
+		break;
+	case USB_ENDPOINT_XFER_ISOC:
 		allowed |= URB_ISO_ASAP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	urb->transfer_flags &= allowed;
-पूर्ण
+}
 
-अटल पूर्णांक stub_recv_xbuff(काष्ठा usbip_device *ud, काष्ठा stub_priv *priv)
-अणु
-	पूर्णांक ret;
-	पूर्णांक i;
+static int stub_recv_xbuff(struct usbip_device *ud, struct stub_priv *priv)
+{
+	int ret;
+	int i;
 
-	क्रम (i = 0; i < priv->num_urbs; i++) अणु
+	for (i = 0; i < priv->num_urbs; i++) {
 		ret = usbip_recv_xbuff(ud, priv->urbs[i]);
-		अगर (ret < 0)
-			अवरोध;
-	पूर्ण
+		if (ret < 0)
+			break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम stub_recv_cmd_submit(काष्ठा stub_device *sdev,
-				 काष्ठा usbip_header *pdu)
-अणु
-	काष्ठा stub_priv *priv;
-	काष्ठा usbip_device *ud = &sdev->ud;
-	काष्ठा usb_device *udev = sdev->udev;
-	काष्ठा scatterlist *sgl = शून्य, *sg;
-	व्योम *buffer = शून्य;
-	अचिन्हित दीर्घ दीर्घ buf_len;
-	पूर्णांक nents;
-	पूर्णांक num_urbs = 1;
-	पूर्णांक pipe = get_pipe(sdev, pdu);
-	पूर्णांक use_sg = pdu->u.cmd_submit.transfer_flags & URB_DMA_MAP_SG;
-	पूर्णांक support_sg = 1;
-	पूर्णांक np = 0;
-	पूर्णांक ret, i;
+static void stub_recv_cmd_submit(struct stub_device *sdev,
+				 struct usbip_header *pdu)
+{
+	struct stub_priv *priv;
+	struct usbip_device *ud = &sdev->ud;
+	struct usb_device *udev = sdev->udev;
+	struct scatterlist *sgl = NULL, *sg;
+	void *buffer = NULL;
+	unsigned long long buf_len;
+	int nents;
+	int num_urbs = 1;
+	int pipe = get_pipe(sdev, pdu);
+	int use_sg = pdu->u.cmd_submit.transfer_flags & URB_DMA_MAP_SG;
+	int support_sg = 1;
+	int np = 0;
+	int ret, i;
 
-	अगर (pipe == -1)
-		वापस;
+	if (pipe == -1)
+		return;
 
 	/*
-	 * Smatch reported the error हाल where use_sg is true and buf_len is 0.
-	 * In this हाल, It adds SDEV_EVENT_ERROR_MALLOC and stub_priv will be
-	 * released by stub event handler and connection will be shut करोwn.
+	 * Smatch reported the error case where use_sg is true and buf_len is 0.
+	 * In this case, It adds SDEV_EVENT_ERROR_MALLOC and stub_priv will be
+	 * released by stub event handler and connection will be shut down.
 	 */
 	priv = stub_priv_alloc(sdev, pdu);
-	अगर (!priv)
-		वापस;
+	if (!priv)
+		return;
 
-	buf_len = (अचिन्हित दीर्घ दीर्घ)pdu->u.cmd_submit.transfer_buffer_length;
+	buf_len = (unsigned long long)pdu->u.cmd_submit.transfer_buffer_length;
 
-	अगर (use_sg && !buf_len) अणु
+	if (use_sg && !buf_len) {
 		dev_err(&udev->dev, "sg buffer with zero length\n");
-		जाओ err_दो_स्मृति;
-	पूर्ण
+		goto err_malloc;
+	}
 
-	/* allocate urb transfer buffer, अगर needed */
-	अगर (buf_len) अणु
-		अगर (use_sg) अणु
+	/* allocate urb transfer buffer, if needed */
+	if (buf_len) {
+		if (use_sg) {
 			sgl = sgl_alloc(buf_len, GFP_KERNEL, &nents);
-			अगर (!sgl)
-				जाओ err_दो_स्मृति;
+			if (!sgl)
+				goto err_malloc;
 
-			/* Check अगर the server's HCD supports SG */
-			अगर (!udev->bus->sg_tablesize) अणु
+			/* Check if the server's HCD supports SG */
+			if (!udev->bus->sg_tablesize) {
 				/*
-				 * If the server's HCD doesn't support SG, अवरोध
-				 * a single SG request पूर्णांकo several URBs and map
+				 * If the server's HCD doesn't support SG, break
+				 * a single SG request into several URBs and map
 				 * each SG list entry to corresponding URB
 				 * buffer. The previously allocated SG list is
 				 * stored in priv->sgl (If the server's HCD
 				 * support SG, SG list is stored only in
 				 * urb->sg) and it is used as an indicator that
-				 * the server split single SG request पूर्णांकo
+				 * the server split single SG request into
 				 * several URBs. Later, priv->sgl is used by
 				 * stub_complete() and stub_send_ret_submit() to
-				 * reassemble the भागied URBs.
+				 * reassemble the divied URBs.
 				 */
 				support_sg = 0;
 				num_urbs = nents;
 				priv->completed_urbs = 0;
 				pdu->u.cmd_submit.transfer_flags &=
 								~URB_DMA_MAP_SG;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			buffer = kzalloc(buf_len, GFP_KERNEL);
-			अगर (!buffer)
-				जाओ err_दो_स्मृति;
-		पूर्ण
-	पूर्ण
+			if (!buffer)
+				goto err_malloc;
+		}
+	}
 
 	/* allocate urb array */
 	priv->num_urbs = num_urbs;
-	priv->urbs = kदो_स्मृति_array(num_urbs, माप(*priv->urbs), GFP_KERNEL);
-	अगर (!priv->urbs)
-		जाओ err_urbs;
+	priv->urbs = kmalloc_array(num_urbs, sizeof(*priv->urbs), GFP_KERNEL);
+	if (!priv->urbs)
+		goto err_urbs;
 
 	/* setup a urb */
-	अगर (support_sg) अणु
-		अगर (usb_pipeisoc(pipe))
+	if (support_sg) {
+		if (usb_pipeisoc(pipe))
 			np = pdu->u.cmd_submit.number_of_packets;
 
 		priv->urbs[0] = usb_alloc_urb(np, GFP_KERNEL);
-		अगर (!priv->urbs[0])
-			जाओ err_urb;
+		if (!priv->urbs[0])
+			goto err_urb;
 
-		अगर (buf_len) अणु
-			अगर (use_sg) अणु
+		if (buf_len) {
+			if (use_sg) {
 				priv->urbs[0]->sg = sgl;
 				priv->urbs[0]->num_sgs = nents;
-				priv->urbs[0]->transfer_buffer = शून्य;
-			पूर्ण अन्यथा अणु
+				priv->urbs[0]->transfer_buffer = NULL;
+			} else {
 				priv->urbs[0]->transfer_buffer = buffer;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/* copy urb setup packet */
 		priv->urbs[0]->setup_packet = kmemdup(&pdu->u.cmd_submit.setup,
 					8, GFP_KERNEL);
-		अगर (!priv->urbs[0]->setup_packet) अणु
+		if (!priv->urbs[0]->setup_packet) {
 			usbip_event_add(ud, SDEV_EVENT_ERROR_MALLOC);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		usbip_pack_pdu(pdu, priv->urbs[0], USBIP_CMD_SUBMIT, 0);
-	पूर्ण अन्यथा अणु
-		क्रम_each_sg(sgl, sg, nents, i) अणु
+	} else {
+		for_each_sg(sgl, sg, nents, i) {
 			priv->urbs[i] = usb_alloc_urb(0, GFP_KERNEL);
-			/* The URBs which is previously allocated will be मुक्तd
-			 * in stub_device_cleanup_urbs() अगर error occurs.
+			/* The URBs which is previously allocated will be freed
+			 * in stub_device_cleanup_urbs() if error occurs.
 			 */
-			अगर (!priv->urbs[i])
-				जाओ err_urb;
+			if (!priv->urbs[i])
+				goto err_urb;
 
 			usbip_pack_pdu(pdu, priv->urbs[i], USBIP_CMD_SUBMIT, 0);
 			priv->urbs[i]->transfer_buffer = sg_virt(sg);
 			priv->urbs[i]->transfer_buffer_length = sg->length;
-		पूर्ण
+		}
 		priv->sgl = sgl;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < num_urbs; i++) अणु
+	for (i = 0; i < num_urbs; i++) {
 		/* set other members from the base header of pdu */
-		priv->urbs[i]->context = (व्योम *) priv;
+		priv->urbs[i]->context = (void *) priv;
 		priv->urbs[i]->dev = udev;
 		priv->urbs[i]->pipe = pipe;
 		priv->urbs[i]->complete = stub_complete;
 
-		/* no need to submit an पूर्णांकercepted request, but harmless? */
+		/* no need to submit an intercepted request, but harmless? */
 		tweak_special_requests(priv->urbs[i]);
 
 		masking_bogus_flags(priv->urbs[i]);
-	पूर्ण
+	}
 
-	अगर (stub_recv_xbuff(ud, priv) < 0)
-		वापस;
+	if (stub_recv_xbuff(ud, priv) < 0)
+		return;
 
-	अगर (usbip_recv_iso(ud, priv->urbs[0]) < 0)
-		वापस;
+	if (usbip_recv_iso(ud, priv->urbs[0]) < 0)
+		return;
 
-	/* urb is now पढ़ोy to submit */
-	क्रम (i = 0; i < priv->num_urbs; i++) अणु
+	/* urb is now ready to submit */
+	for (i = 0; i < priv->num_urbs; i++) {
 		ret = usb_submit_urb(priv->urbs[i], GFP_KERNEL);
 
-		अगर (ret == 0)
+		if (ret == 0)
 			usbip_dbg_stub_rx("submit urb ok, seqnum %u\n",
 					pdu->base.seqnum);
-		अन्यथा अणु
+		else {
 			dev_err(&udev->dev, "submit_urb error, %d\n", ret);
 			usbip_dump_header(pdu);
 			usbip_dump_urb(priv->urbs[i]);
@@ -608,80 +607,80 @@ err_ret:
 			 * This connection will be discarded.
 			 */
 			usbip_event_add(ud, SDEV_EVENT_ERROR_SUBMIT);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	usbip_dbg_stub_rx("Leave\n");
-	वापस;
+	return;
 
 err_urb:
-	kमुक्त(priv->urbs);
+	kfree(priv->urbs);
 err_urbs:
-	kमुक्त(buffer);
-	sgl_मुक्त(sgl);
-err_दो_स्मृति:
+	kfree(buffer);
+	sgl_free(sgl);
+err_malloc:
 	usbip_event_add(ud, SDEV_EVENT_ERROR_MALLOC);
-पूर्ण
+}
 
 /* recv a pdu */
-अटल व्योम stub_rx_pdu(काष्ठा usbip_device *ud)
-अणु
-	पूर्णांक ret;
-	काष्ठा usbip_header pdu;
-	काष्ठा stub_device *sdev = container_of(ud, काष्ठा stub_device, ud);
-	काष्ठा device *dev = &sdev->udev->dev;
+static void stub_rx_pdu(struct usbip_device *ud)
+{
+	int ret;
+	struct usbip_header pdu;
+	struct stub_device *sdev = container_of(ud, struct stub_device, ud);
+	struct device *dev = &sdev->udev->dev;
 
 	usbip_dbg_stub_rx("Enter\n");
 
-	स_रखो(&pdu, 0, माप(pdu));
+	memset(&pdu, 0, sizeof(pdu));
 
 	/* receive a pdu header */
-	ret = usbip_recv(ud->tcp_socket, &pdu, माप(pdu));
-	अगर (ret != माप(pdu)) अणु
+	ret = usbip_recv(ud->tcp_socket, &pdu, sizeof(pdu));
+	if (ret != sizeof(pdu)) {
 		dev_err(dev, "recv a header, %d\n", ret);
 		usbip_event_add(ud, SDEV_EVENT_ERROR_TCP);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	usbip_header_correct_endian(&pdu, 0);
 
-	अगर (usbip_dbg_flag_stub_rx)
+	if (usbip_dbg_flag_stub_rx)
 		usbip_dump_header(&pdu);
 
-	अगर (!valid_request(sdev, &pdu)) अणु
+	if (!valid_request(sdev, &pdu)) {
 		dev_err(dev, "recv invalid request\n");
 		usbip_event_add(ud, SDEV_EVENT_ERROR_TCP);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	चयन (pdu.base.command) अणु
-	हाल USBIP_CMD_UNLINK:
+	switch (pdu.base.command) {
+	case USBIP_CMD_UNLINK:
 		stub_recv_cmd_unlink(sdev, &pdu);
-		अवरोध;
+		break;
 
-	हाल USBIP_CMD_SUBMIT:
+	case USBIP_CMD_SUBMIT:
 		stub_recv_cmd_submit(sdev, &pdu);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		/* NOTREACHED */
 		dev_err(dev, "unknown pdu\n");
 		usbip_event_add(ud, SDEV_EVENT_ERROR_TCP);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-पूर्णांक stub_rx_loop(व्योम *data)
-अणु
-	काष्ठा usbip_device *ud = data;
+int stub_rx_loop(void *data)
+{
+	struct usbip_device *ud = data;
 
-	जबतक (!kthपढ़ो_should_stop()) अणु
-		अगर (usbip_event_happened(ud))
-			अवरोध;
+	while (!kthread_should_stop()) {
+		if (usbip_event_happened(ud))
+			break;
 
 		stub_rx_pdu(ud);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

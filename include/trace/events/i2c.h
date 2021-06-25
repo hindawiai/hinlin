@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-/* I2C message transfer tracepoपूर्णांकs
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+/* I2C message transfer tracepoints
  *
  * Copyright (C) 2013 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM i2c
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM i2c
 
-#अगर !defined(_TRACE_I2C_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_I2C_H
+#if !defined(_TRACE_I2C_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_I2C_H
 
-#समावेश <linux/i2c.h>
-#समावेश <linux/tracepoपूर्णांक.h>
+#include <linux/i2c.h>
+#include <linux/tracepoint.h>
 
 /*
  * drivers/i2c/i2c-core-base.c
  */
-बाह्य पूर्णांक i2c_transfer_trace_reg(व्योम);
-बाह्य व्योम i2c_transfer_trace_unreg(व्योम);
+extern int i2c_transfer_trace_reg(void);
+extern void i2c_transfer_trace_unreg(void);
 
 /*
- * __i2c_transfer() ग_लिखो request
+ * __i2c_transfer() write request
  */
-TRACE_EVENT_FN(i2c_ग_लिखो,
-	       TP_PROTO(स्थिर काष्ठा i2c_adapter *adap, स्थिर काष्ठा i2c_msg *msg,
-			पूर्णांक num),
+TRACE_EVENT_FN(i2c_write,
+	       TP_PROTO(const struct i2c_adapter *adap, const struct i2c_msg *msg,
+			int num),
 	       TP_ARGS(adap, msg, num),
 	       TP_STRUCT__entry(
-		       __field(पूर्णांक,	adapter_nr		)
+		       __field(int,	adapter_nr		)
 		       __field(__u16,	msg_nr			)
 		       __field(__u16,	addr			)
 		       __field(__u16,	flags			)
@@ -40,9 +39,9 @@ TRACE_EVENT_FN(i2c_ग_लिखो,
 		       __entry->addr = msg->addr;
 		       __entry->flags = msg->flags;
 		       __entry->len = msg->len;
-		       स_नकल(__get_dynamic_array(buf), msg->buf, msg->len);
+		       memcpy(__get_dynamic_array(buf), msg->buf, msg->len);
 			      ),
-	       TP_prपूर्णांकk("i2c-%d #%u a=%03x f=%04x l=%u [%*phD]",
+	       TP_printk("i2c-%d #%u a=%03x f=%04x l=%u [%*phD]",
 			 __entry->adapter_nr,
 			 __entry->msg_nr,
 			 __entry->addr,
@@ -54,14 +53,14 @@ TRACE_EVENT_FN(i2c_ग_लिखो,
 	       i2c_transfer_trace_unreg);
 
 /*
- * __i2c_transfer() पढ़ो request
+ * __i2c_transfer() read request
  */
-TRACE_EVENT_FN(i2c_पढ़ो,
-	       TP_PROTO(स्थिर काष्ठा i2c_adapter *adap, स्थिर काष्ठा i2c_msg *msg,
-			पूर्णांक num),
+TRACE_EVENT_FN(i2c_read,
+	       TP_PROTO(const struct i2c_adapter *adap, const struct i2c_msg *msg,
+			int num),
 	       TP_ARGS(adap, msg, num),
 	       TP_STRUCT__entry(
-		       __field(पूर्णांक,	adapter_nr		)
+		       __field(int,	adapter_nr		)
 		       __field(__u16,	msg_nr			)
 		       __field(__u16,	addr			)
 		       __field(__u16,	flags			)
@@ -74,7 +73,7 @@ TRACE_EVENT_FN(i2c_पढ़ो,
 		       __entry->flags = msg->flags;
 		       __entry->len = msg->len;
 			      ),
-	       TP_prपूर्णांकk("i2c-%d #%u a=%03x f=%04x l=%u",
+	       TP_printk("i2c-%d #%u a=%03x f=%04x l=%u",
 			 __entry->adapter_nr,
 			 __entry->msg_nr,
 			 __entry->addr,
@@ -85,14 +84,14 @@ TRACE_EVENT_FN(i2c_पढ़ो,
 		       i2c_transfer_trace_unreg);
 
 /*
- * __i2c_transfer() पढ़ो reply
+ * __i2c_transfer() read reply
  */
 TRACE_EVENT_FN(i2c_reply,
-	       TP_PROTO(स्थिर काष्ठा i2c_adapter *adap, स्थिर काष्ठा i2c_msg *msg,
-			पूर्णांक num),
+	       TP_PROTO(const struct i2c_adapter *adap, const struct i2c_msg *msg,
+			int num),
 	       TP_ARGS(adap, msg, num),
 	       TP_STRUCT__entry(
-		       __field(पूर्णांक,	adapter_nr		)
+		       __field(int,	adapter_nr		)
 		       __field(__u16,	msg_nr			)
 		       __field(__u16,	addr			)
 		       __field(__u16,	flags			)
@@ -104,9 +103,9 @@ TRACE_EVENT_FN(i2c_reply,
 		       __entry->addr = msg->addr;
 		       __entry->flags = msg->flags;
 		       __entry->len = msg->len;
-		       स_नकल(__get_dynamic_array(buf), msg->buf, msg->len);
+		       memcpy(__get_dynamic_array(buf), msg->buf, msg->len);
 			      ),
-	       TP_prपूर्णांकk("i2c-%d #%u a=%03x f=%04x l=%u [%*phD]",
+	       TP_printk("i2c-%d #%u a=%03x f=%04x l=%u [%*phD]",
 			 __entry->adapter_nr,
 			 __entry->msg_nr,
 			 __entry->addr,
@@ -121,10 +120,10 @@ TRACE_EVENT_FN(i2c_reply,
  * __i2c_transfer() result
  */
 TRACE_EVENT_FN(i2c_result,
-	       TP_PROTO(स्थिर काष्ठा i2c_adapter *adap, पूर्णांक num, पूर्णांक ret),
+	       TP_PROTO(const struct i2c_adapter *adap, int num, int ret),
 	       TP_ARGS(adap, num, ret),
 	       TP_STRUCT__entry(
-		       __field(पूर्णांक,	adapter_nr		)
+		       __field(int,	adapter_nr		)
 		       __field(__u16,	nr_msgs			)
 		       __field(__s16,	ret			)
 				),
@@ -133,7 +132,7 @@ TRACE_EVENT_FN(i2c_result,
 		       __entry->nr_msgs = num;
 		       __entry->ret = ret;
 			      ),
-	       TP_prपूर्णांकk("i2c-%d n=%u ret=%d",
+	       TP_printk("i2c-%d n=%u ret=%d",
 			 __entry->adapter_nr,
 			 __entry->nr_msgs,
 			 __entry->ret
@@ -141,7 +140,7 @@ TRACE_EVENT_FN(i2c_result,
 	       i2c_transfer_trace_reg,
 	       i2c_transfer_trace_unreg);
 
-#पूर्ण_अगर /* _TRACE_I2C_H */
+#endif /* _TRACE_I2C_H */
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

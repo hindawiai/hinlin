@@ -1,214 +1,213 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * fill_buf benchmark
  *
  * Copyright (C) 2018 Intel Corporation
  *
  * Authors:
- *    Sai Praneeth Prakhya <sai.praneeth.prakhya@पूर्णांकel.com>,
- *    Fenghua Yu <fenghua.yu@पूर्णांकel.com>
+ *    Sai Praneeth Prakhya <sai.praneeth.prakhya@intel.com>,
+ *    Fenghua Yu <fenghua.yu@intel.com>
  */
-#समावेश <मानकपन.स>
-#समावेश <unistd.h>
-#समावेश <मानककोष.स>
-#समावेश <sys/types.h>
-#समावेश <sys/रुको.h>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <दो_स्मृति.h>
-#समावेश <माला.स>
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <inttypes.h>
+#include <malloc.h>
+#include <string.h>
 
-#समावेश "resctrl.h"
+#include "resctrl.h"
 
-#घोषणा CL_SIZE			(64)
-#घोषणा PAGE_SIZE		(4 * 1024)
-#घोषणा MB			(1024 * 1024)
+#define CL_SIZE			(64)
+#define PAGE_SIZE		(4 * 1024)
+#define MB			(1024 * 1024)
 
-अटल अचिन्हित अक्षर *startptr;
+static unsigned char *startptr;
 
-अटल व्योम sb(व्योम)
-अणु
-#अगर defined(__i386) || defined(__x86_64)
-	यंत्र अस्थिर("sfence\n\t"
+static void sb(void)
+{
+#if defined(__i386) || defined(__x86_64)
+	asm volatile("sfence\n\t"
 		     : : : "memory");
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल व्योम ctrl_handler(पूर्णांक signo)
-अणु
-	मुक्त(startptr);
-	म_लिखो("\nEnding\n");
+static void ctrl_handler(int signo)
+{
+	free(startptr);
+	printf("\nEnding\n");
 	sb();
-	निकास(निकास_सफल);
-पूर्ण
+	exit(EXIT_SUCCESS);
+}
 
-अटल व्योम cl_flush(व्योम *p)
-अणु
-#अगर defined(__i386) || defined(__x86_64)
-	यंत्र अस्थिर("clflush (%0)\n\t"
+static void cl_flush(void *p)
+{
+#if defined(__i386) || defined(__x86_64)
+	asm volatile("clflush (%0)\n\t"
 		     : : "r"(p) : "memory");
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल व्योम mem_flush(व्योम *p, माप_प्रकार s)
-अणु
-	अक्षर *cp = (अक्षर *)p;
-	माप_प्रकार i = 0;
+static void mem_flush(void *p, size_t s)
+{
+	char *cp = (char *)p;
+	size_t i = 0;
 
 	s = s / CL_SIZE; /* mem size in cache llines */
 
-	क्रम (i = 0; i < s; i++)
+	for (i = 0; i < s; i++)
 		cl_flush(&cp[i * CL_SIZE]);
 
 	sb();
-पूर्ण
+}
 
-अटल व्योम *दो_स्मृति_and_init_memory(माप_प्रकार s)
-अणु
-	uपूर्णांक64_t *p64;
-	माप_प्रकार s64;
+static void *malloc_and_init_memory(size_t s)
+{
+	uint64_t *p64;
+	size_t s64;
 
-	व्योम *p = memalign(PAGE_SIZE, s);
+	void *p = memalign(PAGE_SIZE, s);
 
-	p64 = (uपूर्णांक64_t *)p;
-	s64 = s / माप(uपूर्णांक64_t);
+	p64 = (uint64_t *)p;
+	s64 = s / sizeof(uint64_t);
 
-	जबतक (s64 > 0) अणु
-		*p64 = (uपूर्णांक64_t)अक्रम();
-		p64 += (CL_SIZE / माप(uपूर्णांक64_t));
-		s64 -= (CL_SIZE / माप(uपूर्णांक64_t));
-	पूर्ण
+	while (s64 > 0) {
+		*p64 = (uint64_t)rand();
+		p64 += (CL_SIZE / sizeof(uint64_t));
+		s64 -= (CL_SIZE / sizeof(uint64_t));
+	}
 
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल पूर्णांक fill_one_span_पढ़ो(अचिन्हित अक्षर *start_ptr, अचिन्हित अक्षर *end_ptr)
-अणु
-	अचिन्हित अक्षर sum, *p;
+static int fill_one_span_read(unsigned char *start_ptr, unsigned char *end_ptr)
+{
+	unsigned char sum, *p;
 
 	sum = 0;
 	p = start_ptr;
-	जबतक (p < end_ptr) अणु
+	while (p < end_ptr) {
 		sum += *p;
 		p += (CL_SIZE / 2);
-	पूर्ण
+	}
 
-	वापस sum;
-पूर्ण
+	return sum;
+}
 
-अटल
-व्योम fill_one_span_ग_लिखो(अचिन्हित अक्षर *start_ptr, अचिन्हित अक्षर *end_ptr)
-अणु
-	अचिन्हित अक्षर *p;
+static
+void fill_one_span_write(unsigned char *start_ptr, unsigned char *end_ptr)
+{
+	unsigned char *p;
 
 	p = start_ptr;
-	जबतक (p < end_ptr) अणु
+	while (p < end_ptr) {
 		*p = '1';
 		p += (CL_SIZE / 2);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक fill_cache_पढ़ो(अचिन्हित अक्षर *start_ptr, अचिन्हित अक्षर *end_ptr,
-			   अक्षर *resctrl_val)
-अणु
-	पूर्णांक ret = 0;
-	खाता *fp;
+static int fill_cache_read(unsigned char *start_ptr, unsigned char *end_ptr,
+			   char *resctrl_val)
+{
+	int ret = 0;
+	FILE *fp;
 
-	जबतक (1) अणु
-		ret = fill_one_span_पढ़ो(start_ptr, end_ptr);
-		अगर (!म_भेदन(resctrl_val, CAT_STR, माप(CAT_STR)))
-			अवरोध;
-	पूर्ण
+	while (1) {
+		ret = fill_one_span_read(start_ptr, end_ptr);
+		if (!strncmp(resctrl_val, CAT_STR, sizeof(CAT_STR)))
+			break;
+	}
 
-	/* Consume पढ़ो result so that पढ़ोing memory is not optimized out. */
-	fp = ख_खोलो("/dev/null", "w");
-	अगर (!fp)
-		लिखो_त्रुटि("Unable to write to /dev/null");
-	ख_लिखो(fp, "Sum: %d ", ret);
-	ख_बंद(fp);
+	/* Consume read result so that reading memory is not optimized out. */
+	fp = fopen("/dev/null", "w");
+	if (!fp)
+		perror("Unable to write to /dev/null");
+	fprintf(fp, "Sum: %d ", ret);
+	fclose(fp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fill_cache_ग_लिखो(अचिन्हित अक्षर *start_ptr, अचिन्हित अक्षर *end_ptr,
-			    अक्षर *resctrl_val)
-अणु
-	जबतक (1) अणु
-		fill_one_span_ग_लिखो(start_ptr, end_ptr);
-		अगर (!म_भेदन(resctrl_val, CAT_STR, माप(CAT_STR)))
-			अवरोध;
-	पूर्ण
+static int fill_cache_write(unsigned char *start_ptr, unsigned char *end_ptr,
+			    char *resctrl_val)
+{
+	while (1) {
+		fill_one_span_write(start_ptr, end_ptr);
+		if (!strncmp(resctrl_val, CAT_STR, sizeof(CAT_STR)))
+			break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-fill_cache(अचिन्हित दीर्घ दीर्घ buf_size, पूर्णांक दो_स्मृति_and_init, पूर्णांक memflush,
-	   पूर्णांक op, अक्षर *resctrl_val)
-अणु
-	अचिन्हित अक्षर *start_ptr, *end_ptr;
-	अचिन्हित दीर्घ दीर्घ i;
-	पूर्णांक ret;
+static int
+fill_cache(unsigned long long buf_size, int malloc_and_init, int memflush,
+	   int op, char *resctrl_val)
+{
+	unsigned char *start_ptr, *end_ptr;
+	unsigned long long i;
+	int ret;
 
-	अगर (दो_स्मृति_and_init)
-		start_ptr = दो_स्मृति_and_init_memory(buf_size);
-	अन्यथा
-		start_ptr = दो_स्मृति(buf_size);
+	if (malloc_and_init)
+		start_ptr = malloc_and_init_memory(buf_size);
+	else
+		start_ptr = malloc(buf_size);
 
-	अगर (!start_ptr)
-		वापस -1;
+	if (!start_ptr)
+		return -1;
 
 	startptr = start_ptr;
 	end_ptr = start_ptr + buf_size;
 
 	/*
-	 * It's better to touch the memory once to aव्योम any compiler
+	 * It's better to touch the memory once to avoid any compiler
 	 * optimizations
 	 */
-	अगर (!दो_स्मृति_and_init) अणु
-		क्रम (i = 0; i < buf_size; i++)
-			*start_ptr++ = (अचिन्हित अक्षर)अक्रम();
-	पूर्ण
+	if (!malloc_and_init) {
+		for (i = 0; i < buf_size; i++)
+			*start_ptr++ = (unsigned char)rand();
+	}
 
 	start_ptr = startptr;
 
-	/* Flush the memory beक्रमe using to aव्योम "cache hot pages" effect */
-	अगर (memflush)
+	/* Flush the memory before using to avoid "cache hot pages" effect */
+	if (memflush)
 		mem_flush(start_ptr, buf_size);
 
-	अगर (op == 0)
-		ret = fill_cache_पढ़ो(start_ptr, end_ptr, resctrl_val);
-	अन्यथा
-		ret = fill_cache_ग_लिखो(start_ptr, end_ptr, resctrl_val);
+	if (op == 0)
+		ret = fill_cache_read(start_ptr, end_ptr, resctrl_val);
+	else
+		ret = fill_cache_write(start_ptr, end_ptr, resctrl_val);
 
-	अगर (ret) अणु
-		म_लिखो("\n Error in fill cache read/write...\n");
-		वापस -1;
-	पूर्ण
+	if (ret) {
+		printf("\n Error in fill cache read/write...\n");
+		return -1;
+	}
 
-	मुक्त(startptr);
+	free(startptr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक run_fill_buf(अचिन्हित दीर्घ span, पूर्णांक दो_स्मृति_and_init_memory,
-		 पूर्णांक memflush, पूर्णांक op, अक्षर *resctrl_val)
-अणु
-	अचिन्हित दीर्घ दीर्घ cache_size = span;
-	पूर्णांक ret;
+int run_fill_buf(unsigned long span, int malloc_and_init_memory,
+		 int memflush, int op, char *resctrl_val)
+{
+	unsigned long long cache_size = span;
+	int ret;
 
 	/* set up ctrl-c handler */
-	अगर (संकेत(संक_विघ्न, ctrl_handler) == संक_त्रुटि)
-		म_लिखो("Failed to catch SIGINT!\n");
-	अगर (संकेत(SIGHUP, ctrl_handler) == संक_त्रुटि)
-		म_लिखो("Failed to catch SIGHUP!\n");
+	if (signal(SIGINT, ctrl_handler) == SIG_ERR)
+		printf("Failed to catch SIGINT!\n");
+	if (signal(SIGHUP, ctrl_handler) == SIG_ERR)
+		printf("Failed to catch SIGHUP!\n");
 
-	ret = fill_cache(cache_size, दो_स्मृति_and_init_memory, memflush, op,
+	ret = fill_cache(cache_size, malloc_and_init_memory, memflush, op,
 			 resctrl_val);
-	अगर (ret) अणु
-		म_लिखो("\n Error in fill cache\n");
-		वापस -1;
-	पूर्ण
+	if (ret) {
+		printf("\n Error in fill cache\n");
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

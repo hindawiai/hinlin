@@ -1,100 +1,99 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * EHRPWM PWM driver
  *
  * Copyright (C) 2012 Texas Instruments, Inc. - https://www.ti.com/
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pwm.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/err.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/of_device.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/pwm.h>
+#include <linux/io.h>
+#include <linux/err.h>
+#include <linux/clk.h>
+#include <linux/pm_runtime.h>
+#include <linux/of_device.h>
 
-/* EHRPWM रेजिस्टरs and bits definitions */
+/* EHRPWM registers and bits definitions */
 
-/* Time base module रेजिस्टरs */
-#घोषणा TBCTL			0x00
-#घोषणा TBPRD			0x0A
+/* Time base module registers */
+#define TBCTL			0x00
+#define TBPRD			0x0A
 
-#घोषणा TBCTL_PRDLD_MASK	BIT(3)
-#घोषणा TBCTL_PRDLD_SHDW	0
-#घोषणा TBCTL_PRDLD_IMDT	BIT(3)
-#घोषणा TBCTL_CLKDIV_MASK	(BIT(12) | BIT(11) | BIT(10) | BIT(9) | \
+#define TBCTL_PRDLD_MASK	BIT(3)
+#define TBCTL_PRDLD_SHDW	0
+#define TBCTL_PRDLD_IMDT	BIT(3)
+#define TBCTL_CLKDIV_MASK	(BIT(12) | BIT(11) | BIT(10) | BIT(9) | \
 				BIT(8) | BIT(7))
-#घोषणा TBCTL_CTRMODE_MASK	(BIT(1) | BIT(0))
-#घोषणा TBCTL_CTRMODE_UP	0
-#घोषणा TBCTL_CTRMODE_DOWN	BIT(0)
-#घोषणा TBCTL_CTRMODE_UPDOWN	BIT(1)
-#घोषणा TBCTL_CTRMODE_FREEZE	(BIT(1) | BIT(0))
+#define TBCTL_CTRMODE_MASK	(BIT(1) | BIT(0))
+#define TBCTL_CTRMODE_UP	0
+#define TBCTL_CTRMODE_DOWN	BIT(0)
+#define TBCTL_CTRMODE_UPDOWN	BIT(1)
+#define TBCTL_CTRMODE_FREEZE	(BIT(1) | BIT(0))
 
-#घोषणा TBCTL_HSPCLKDIV_SHIFT	7
-#घोषणा TBCTL_CLKDIV_SHIFT	10
+#define TBCTL_HSPCLKDIV_SHIFT	7
+#define TBCTL_CLKDIV_SHIFT	10
 
-#घोषणा CLKDIV_MAX		7
-#घोषणा HSPCLKDIV_MAX		7
-#घोषणा PERIOD_MAX		0xFFFF
+#define CLKDIV_MAX		7
+#define HSPCLKDIV_MAX		7
+#define PERIOD_MAX		0xFFFF
 
-/* compare module रेजिस्टरs */
-#घोषणा CMPA			0x12
-#घोषणा CMPB			0x14
+/* compare module registers */
+#define CMPA			0x12
+#define CMPB			0x14
 
-/* Action qualअगरier module रेजिस्टरs */
-#घोषणा AQCTLA			0x16
-#घोषणा AQCTLB			0x18
-#घोषणा AQSFRC			0x1A
-#घोषणा AQCSFRC			0x1C
+/* Action qualifier module registers */
+#define AQCTLA			0x16
+#define AQCTLB			0x18
+#define AQSFRC			0x1A
+#define AQCSFRC			0x1C
 
-#घोषणा AQCTL_CBU_MASK		(BIT(9) | BIT(8))
-#घोषणा AQCTL_CBU_FRCLOW	BIT(8)
-#घोषणा AQCTL_CBU_FRCHIGH	BIT(9)
-#घोषणा AQCTL_CBU_FRCTOGGLE	(BIT(9) | BIT(8))
-#घोषणा AQCTL_CAU_MASK		(BIT(5) | BIT(4))
-#घोषणा AQCTL_CAU_FRCLOW	BIT(4)
-#घोषणा AQCTL_CAU_FRCHIGH	BIT(5)
-#घोषणा AQCTL_CAU_FRCTOGGLE	(BIT(5) | BIT(4))
-#घोषणा AQCTL_PRD_MASK		(BIT(3) | BIT(2))
-#घोषणा AQCTL_PRD_FRCLOW	BIT(2)
-#घोषणा AQCTL_PRD_FRCHIGH	BIT(3)
-#घोषणा AQCTL_PRD_FRCTOGGLE	(BIT(3) | BIT(2))
-#घोषणा AQCTL_ZRO_MASK		(BIT(1) | BIT(0))
-#घोषणा AQCTL_ZRO_FRCLOW	BIT(0)
-#घोषणा AQCTL_ZRO_FRCHIGH	BIT(1)
-#घोषणा AQCTL_ZRO_FRCTOGGLE	(BIT(1) | BIT(0))
+#define AQCTL_CBU_MASK		(BIT(9) | BIT(8))
+#define AQCTL_CBU_FRCLOW	BIT(8)
+#define AQCTL_CBU_FRCHIGH	BIT(9)
+#define AQCTL_CBU_FRCTOGGLE	(BIT(9) | BIT(8))
+#define AQCTL_CAU_MASK		(BIT(5) | BIT(4))
+#define AQCTL_CAU_FRCLOW	BIT(4)
+#define AQCTL_CAU_FRCHIGH	BIT(5)
+#define AQCTL_CAU_FRCTOGGLE	(BIT(5) | BIT(4))
+#define AQCTL_PRD_MASK		(BIT(3) | BIT(2))
+#define AQCTL_PRD_FRCLOW	BIT(2)
+#define AQCTL_PRD_FRCHIGH	BIT(3)
+#define AQCTL_PRD_FRCTOGGLE	(BIT(3) | BIT(2))
+#define AQCTL_ZRO_MASK		(BIT(1) | BIT(0))
+#define AQCTL_ZRO_FRCLOW	BIT(0)
+#define AQCTL_ZRO_FRCHIGH	BIT(1)
+#define AQCTL_ZRO_FRCTOGGLE	(BIT(1) | BIT(0))
 
-#घोषणा AQCTL_CHANA_POLNORMAL	(AQCTL_CAU_FRCLOW | AQCTL_PRD_FRCHIGH | \
+#define AQCTL_CHANA_POLNORMAL	(AQCTL_CAU_FRCLOW | AQCTL_PRD_FRCHIGH | \
 				AQCTL_ZRO_FRCHIGH)
-#घोषणा AQCTL_CHANA_POLINVERSED	(AQCTL_CAU_FRCHIGH | AQCTL_PRD_FRCLOW | \
+#define AQCTL_CHANA_POLINVERSED	(AQCTL_CAU_FRCHIGH | AQCTL_PRD_FRCLOW | \
 				AQCTL_ZRO_FRCLOW)
-#घोषणा AQCTL_CHANB_POLNORMAL	(AQCTL_CBU_FRCLOW | AQCTL_PRD_FRCHIGH | \
+#define AQCTL_CHANB_POLNORMAL	(AQCTL_CBU_FRCLOW | AQCTL_PRD_FRCHIGH | \
 				AQCTL_ZRO_FRCHIGH)
-#घोषणा AQCTL_CHANB_POLINVERSED	(AQCTL_CBU_FRCHIGH | AQCTL_PRD_FRCLOW | \
+#define AQCTL_CHANB_POLINVERSED	(AQCTL_CBU_FRCHIGH | AQCTL_PRD_FRCLOW | \
 				AQCTL_ZRO_FRCLOW)
 
-#घोषणा AQSFRC_RLDCSF_MASK	(BIT(7) | BIT(6))
-#घोषणा AQSFRC_RLDCSF_ZRO	0
-#घोषणा AQSFRC_RLDCSF_PRD	BIT(6)
-#घोषणा AQSFRC_RLDCSF_ZROPRD	BIT(7)
-#घोषणा AQSFRC_RLDCSF_IMDT	(BIT(7) | BIT(6))
+#define AQSFRC_RLDCSF_MASK	(BIT(7) | BIT(6))
+#define AQSFRC_RLDCSF_ZRO	0
+#define AQSFRC_RLDCSF_PRD	BIT(6)
+#define AQSFRC_RLDCSF_ZROPRD	BIT(7)
+#define AQSFRC_RLDCSF_IMDT	(BIT(7) | BIT(6))
 
-#घोषणा AQCSFRC_CSFB_MASK	(BIT(3) | BIT(2))
-#घोषणा AQCSFRC_CSFB_FRCDIS	0
-#घोषणा AQCSFRC_CSFB_FRCLOW	BIT(2)
-#घोषणा AQCSFRC_CSFB_FRCHIGH	BIT(3)
-#घोषणा AQCSFRC_CSFB_DISSWFRC	(BIT(3) | BIT(2))
-#घोषणा AQCSFRC_CSFA_MASK	(BIT(1) | BIT(0))
-#घोषणा AQCSFRC_CSFA_FRCDIS	0
-#घोषणा AQCSFRC_CSFA_FRCLOW	BIT(0)
-#घोषणा AQCSFRC_CSFA_FRCHIGH	BIT(1)
-#घोषणा AQCSFRC_CSFA_DISSWFRC	(BIT(1) | BIT(0))
+#define AQCSFRC_CSFB_MASK	(BIT(3) | BIT(2))
+#define AQCSFRC_CSFB_FRCDIS	0
+#define AQCSFRC_CSFB_FRCLOW	BIT(2)
+#define AQCSFRC_CSFB_FRCHIGH	BIT(3)
+#define AQCSFRC_CSFB_DISSWFRC	(BIT(3) | BIT(2))
+#define AQCSFRC_CSFA_MASK	(BIT(1) | BIT(0))
+#define AQCSFRC_CSFA_FRCDIS	0
+#define AQCSFRC_CSFA_FRCLOW	BIT(0)
+#define AQCSFRC_CSFA_FRCHIGH	BIT(1)
+#define AQCSFRC_CSFA_DISSWFRC	(BIT(1) | BIT(0))
 
-#घोषणा NUM_PWM_CHANNEL		2	/* EHRPWM channels */
+#define NUM_PWM_CHANNEL		2	/* EHRPWM channels */
 
-काष्ठा ehrpwm_context अणु
+struct ehrpwm_context {
 	u16 tbctl;
 	u16 tbprd;
 	u16 cmpa;
@@ -103,348 +102,348 @@
 	u16 aqctlb;
 	u16 aqsfrc;
 	u16 aqcsfrc;
-पूर्ण;
+};
 
-काष्ठा ehrpwm_pwm_chip अणु
-	काष्ठा pwm_chip chip;
-	अचिन्हित दीर्घ clk_rate;
-	व्योम __iomem *mmio_base;
-	अचिन्हित दीर्घ period_cycles[NUM_PWM_CHANNEL];
-	क्रमागत pwm_polarity polarity[NUM_PWM_CHANNEL];
-	काष्ठा clk *tbclk;
-	काष्ठा ehrpwm_context ctx;
-पूर्ण;
+struct ehrpwm_pwm_chip {
+	struct pwm_chip chip;
+	unsigned long clk_rate;
+	void __iomem *mmio_base;
+	unsigned long period_cycles[NUM_PWM_CHANNEL];
+	enum pwm_polarity polarity[NUM_PWM_CHANNEL];
+	struct clk *tbclk;
+	struct ehrpwm_context ctx;
+};
 
-अटल अंतरभूत काष्ठा ehrpwm_pwm_chip *to_ehrpwm_pwm_chip(काष्ठा pwm_chip *chip)
-अणु
-	वापस container_of(chip, काष्ठा ehrpwm_pwm_chip, chip);
-पूर्ण
+static inline struct ehrpwm_pwm_chip *to_ehrpwm_pwm_chip(struct pwm_chip *chip)
+{
+	return container_of(chip, struct ehrpwm_pwm_chip, chip);
+}
 
-अटल अंतरभूत u16 ehrpwm_पढ़ो(व्योम __iomem *base, अचिन्हित पूर्णांक offset)
-अणु
-	वापस पढ़ोw(base + offset);
-पूर्ण
+static inline u16 ehrpwm_read(void __iomem *base, unsigned int offset)
+{
+	return readw(base + offset);
+}
 
-अटल अंतरभूत व्योम ehrpwm_ग_लिखो(व्योम __iomem *base, अचिन्हित पूर्णांक offset,
+static inline void ehrpwm_write(void __iomem *base, unsigned int offset,
 				u16 value)
-अणु
-	ग_लिखोw(value, base + offset);
-पूर्ण
+{
+	writew(value, base + offset);
+}
 
-अटल व्योम ehrpwm_modअगरy(व्योम __iomem *base, अचिन्हित पूर्णांक offset, u16 mask,
+static void ehrpwm_modify(void __iomem *base, unsigned int offset, u16 mask,
 			  u16 value)
-अणु
-	अचिन्हित लघु val;
+{
+	unsigned short val;
 
-	val = पढ़ोw(base + offset);
+	val = readw(base + offset);
 	val &= ~mask;
 	val |= value & mask;
-	ग_लिखोw(val, base + offset);
-पूर्ण
+	writew(val, base + offset);
+}
 
 /**
- * set_prescale_भाग -	Set up the prescaler भागider function
+ * set_prescale_div -	Set up the prescaler divider function
  * @rqst_prescaler:	prescaler value min
- * @prescale_भाग:	prescaler value set
- * @tb_clk_भाग:		Time Base Control prescaler bits
+ * @prescale_div:	prescaler value set
+ * @tb_clk_div:		Time Base Control prescaler bits
  */
-अटल पूर्णांक set_prescale_भाग(अचिन्हित दीर्घ rqst_prescaler, u16 *prescale_भाग,
-			    u16 *tb_clk_भाग)
-अणु
-	अचिन्हित पूर्णांक clkभाग, hspclkभाग;
+static int set_prescale_div(unsigned long rqst_prescaler, u16 *prescale_div,
+			    u16 *tb_clk_div)
+{
+	unsigned int clkdiv, hspclkdiv;
 
-	क्रम (clkभाग = 0; clkभाग <= CLKDIV_MAX; clkभाग++) अणु
-		क्रम (hspclkभाग = 0; hspclkभाग <= HSPCLKDIV_MAX; hspclkभाग++) अणु
+	for (clkdiv = 0; clkdiv <= CLKDIV_MAX; clkdiv++) {
+		for (hspclkdiv = 0; hspclkdiv <= HSPCLKDIV_MAX; hspclkdiv++) {
 			/*
-			 * calculations क्रम prescaler value :
-			 * prescale_भाग = HSPCLKDIVIDER * CLKDIVIDER.
-			 * HSPCLKDIVIDER =  2 ** hspclkभाग
-			 * CLKDIVIDER = (1),		अगर clkभाग == 0 *OR*
-			 *		(2 * clkभाग),	अगर clkभाग != 0
+			 * calculations for prescaler value :
+			 * prescale_div = HSPCLKDIVIDER * CLKDIVIDER.
+			 * HSPCLKDIVIDER =  2 ** hspclkdiv
+			 * CLKDIVIDER = (1),		if clkdiv == 0 *OR*
+			 *		(2 * clkdiv),	if clkdiv != 0
 			 *
-			 * Configure prescale_भाग value such that period
-			 * रेजिस्टर value is less than 65535.
+			 * Configure prescale_div value such that period
+			 * register value is less than 65535.
 			 */
 
-			*prescale_भाग = (1 << clkभाग) *
-					(hspclkभाग ? (hspclkभाग * 2) : 1);
-			अगर (*prescale_भाग > rqst_prescaler) अणु
-				*tb_clk_भाग = (clkभाग << TBCTL_CLKDIV_SHIFT) |
-					(hspclkभाग << TBCTL_HSPCLKDIV_SHIFT);
-				वापस 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			*prescale_div = (1 << clkdiv) *
+					(hspclkdiv ? (hspclkdiv * 2) : 1);
+			if (*prescale_div > rqst_prescaler) {
+				*tb_clk_div = (clkdiv << TBCTL_CLKDIV_SHIFT) |
+					(hspclkdiv << TBCTL_HSPCLKDIV_SHIFT);
+				return 0;
+			}
+		}
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम configure_polarity(काष्ठा ehrpwm_pwm_chip *pc, पूर्णांक chan)
-अणु
+static void configure_polarity(struct ehrpwm_pwm_chip *pc, int chan)
+{
 	u16 aqctl_val, aqctl_mask;
-	अचिन्हित पूर्णांक aqctl_reg;
+	unsigned int aqctl_reg;
 
 	/*
 	 * Configure PWM output to HIGH/LOW level on counter
-	 * reaches compare रेजिस्टर value and LOW/HIGH level
-	 * on counter value reaches period रेजिस्टर value and
+	 * reaches compare register value and LOW/HIGH level
+	 * on counter value reaches period register value and
 	 * zero value on counter
 	 */
-	अगर (chan == 1) अणु
+	if (chan == 1) {
 		aqctl_reg = AQCTLB;
 		aqctl_mask = AQCTL_CBU_MASK;
 
-		अगर (pc->polarity[chan] == PWM_POLARITY_INVERSED)
+		if (pc->polarity[chan] == PWM_POLARITY_INVERSED)
 			aqctl_val = AQCTL_CHANB_POLINVERSED;
-		अन्यथा
+		else
 			aqctl_val = AQCTL_CHANB_POLNORMAL;
-	पूर्ण अन्यथा अणु
+	} else {
 		aqctl_reg = AQCTLA;
 		aqctl_mask = AQCTL_CAU_MASK;
 
-		अगर (pc->polarity[chan] == PWM_POLARITY_INVERSED)
+		if (pc->polarity[chan] == PWM_POLARITY_INVERSED)
 			aqctl_val = AQCTL_CHANA_POLINVERSED;
-		अन्यथा
+		else
 			aqctl_val = AQCTL_CHANA_POLNORMAL;
-	पूर्ण
+	}
 
 	aqctl_mask |= AQCTL_PRD_MASK | AQCTL_ZRO_MASK;
-	ehrpwm_modअगरy(pc->mmio_base, aqctl_reg, aqctl_mask, aqctl_val);
-पूर्ण
+	ehrpwm_modify(pc->mmio_base, aqctl_reg, aqctl_mask, aqctl_val);
+}
 
 /*
- * period_ns = 10^9 * (ps_भागval * period_cycles) / PWM_CLK_RATE
- * duty_ns   = 10^9 * (ps_भागval * duty_cycles) / PWM_CLK_RATE
+ * period_ns = 10^9 * (ps_divval * period_cycles) / PWM_CLK_RATE
+ * duty_ns   = 10^9 * (ps_divval * duty_cycles) / PWM_CLK_RATE
  */
-अटल पूर्णांक ehrpwm_pwm_config(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm,
-			     पूर्णांक duty_ns, पूर्णांक period_ns)
-अणु
-	काष्ठा ehrpwm_pwm_chip *pc = to_ehrpwm_pwm_chip(chip);
+static int ehrpwm_pwm_config(struct pwm_chip *chip, struct pwm_device *pwm,
+			     int duty_ns, int period_ns)
+{
+	struct ehrpwm_pwm_chip *pc = to_ehrpwm_pwm_chip(chip);
 	u32 period_cycles, duty_cycles;
-	u16 ps_भागval, tb_भागval;
-	अचिन्हित पूर्णांक i, cmp_reg;
-	अचिन्हित दीर्घ दीर्घ c;
+	u16 ps_divval, tb_divval;
+	unsigned int i, cmp_reg;
+	unsigned long long c;
 
-	अगर (period_ns > NSEC_PER_SEC)
-		वापस -दुस्फल;
+	if (period_ns > NSEC_PER_SEC)
+		return -ERANGE;
 
 	c = pc->clk_rate;
 	c = c * period_ns;
-	करो_भाग(c, NSEC_PER_SEC);
-	period_cycles = (अचिन्हित दीर्घ)c;
+	do_div(c, NSEC_PER_SEC);
+	period_cycles = (unsigned long)c;
 
-	अगर (period_cycles < 1) अणु
+	if (period_cycles < 1) {
 		period_cycles = 1;
 		duty_cycles = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		c = pc->clk_rate;
 		c = c * duty_ns;
-		करो_भाग(c, NSEC_PER_SEC);
-		duty_cycles = (अचिन्हित दीर्घ)c;
-	पूर्ण
+		do_div(c, NSEC_PER_SEC);
+		duty_cycles = (unsigned long)c;
+	}
 
 	/*
-	 * Period values should be same क्रम multiple PWM channels as IP uses
-	 * same period रेजिस्टर क्रम multiple channels.
+	 * Period values should be same for multiple PWM channels as IP uses
+	 * same period register for multiple channels.
 	 */
-	क्रम (i = 0; i < NUM_PWM_CHANNEL; i++) अणु
-		अगर (pc->period_cycles[i] &&
-				(pc->period_cycles[i] != period_cycles)) अणु
+	for (i = 0; i < NUM_PWM_CHANNEL; i++) {
+		if (pc->period_cycles[i] &&
+				(pc->period_cycles[i] != period_cycles)) {
 			/*
-			 * Allow channel to reconfigure period अगर no other
+			 * Allow channel to reconfigure period if no other
 			 * channels being configured.
 			 */
-			अगर (i == pwm->hwpwm)
-				जारी;
+			if (i == pwm->hwpwm)
+				continue;
 
 			dev_err(chip->dev,
 				"period value conflicts with channel %u\n",
 				i);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 	pc->period_cycles[pwm->hwpwm] = period_cycles;
 
-	/* Configure घड़ी prescaler to support Low frequency PWM wave */
-	अगर (set_prescale_भाग(period_cycles/PERIOD_MAX, &ps_भागval,
-			     &tb_भागval)) अणु
+	/* Configure clock prescaler to support Low frequency PWM wave */
+	if (set_prescale_div(period_cycles/PERIOD_MAX, &ps_divval,
+			     &tb_divval)) {
 		dev_err(chip->dev, "Unsupported values\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	pm_runसमय_get_sync(chip->dev);
+	pm_runtime_get_sync(chip->dev);
 
-	/* Update घड़ी prescaler values */
-	ehrpwm_modअगरy(pc->mmio_base, TBCTL, TBCTL_CLKDIV_MASK, tb_भागval);
+	/* Update clock prescaler values */
+	ehrpwm_modify(pc->mmio_base, TBCTL, TBCTL_CLKDIV_MASK, tb_divval);
 
-	/* Update period & duty cycle with presacler भागision */
-	period_cycles = period_cycles / ps_भागval;
-	duty_cycles = duty_cycles / ps_भागval;
+	/* Update period & duty cycle with presacler division */
+	period_cycles = period_cycles / ps_divval;
+	duty_cycles = duty_cycles / ps_divval;
 
-	/* Configure shaकरोw loading on Period रेजिस्टर */
-	ehrpwm_modअगरy(pc->mmio_base, TBCTL, TBCTL_PRDLD_MASK, TBCTL_PRDLD_SHDW);
+	/* Configure shadow loading on Period register */
+	ehrpwm_modify(pc->mmio_base, TBCTL, TBCTL_PRDLD_MASK, TBCTL_PRDLD_SHDW);
 
-	ehrpwm_ग_लिखो(pc->mmio_base, TBPRD, period_cycles);
+	ehrpwm_write(pc->mmio_base, TBPRD, period_cycles);
 
-	/* Configure ehrpwm counter क्रम up-count mode */
-	ehrpwm_modअगरy(pc->mmio_base, TBCTL, TBCTL_CTRMODE_MASK,
+	/* Configure ehrpwm counter for up-count mode */
+	ehrpwm_modify(pc->mmio_base, TBCTL, TBCTL_CTRMODE_MASK,
 		      TBCTL_CTRMODE_UP);
 
-	अगर (pwm->hwpwm == 1)
-		/* Channel 1 configured with compare B रेजिस्टर */
+	if (pwm->hwpwm == 1)
+		/* Channel 1 configured with compare B register */
 		cmp_reg = CMPB;
-	अन्यथा
-		/* Channel 0 configured with compare A रेजिस्टर */
+	else
+		/* Channel 0 configured with compare A register */
 		cmp_reg = CMPA;
 
-	ehrpwm_ग_लिखो(pc->mmio_base, cmp_reg, duty_cycles);
+	ehrpwm_write(pc->mmio_base, cmp_reg, duty_cycles);
 
-	pm_runसमय_put_sync(chip->dev);
+	pm_runtime_put_sync(chip->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ehrpwm_pwm_set_polarity(काष्ठा pwm_chip *chip,
-				   काष्ठा pwm_device *pwm,
-				   क्रमागत pwm_polarity polarity)
-अणु
-	काष्ठा ehrpwm_pwm_chip *pc = to_ehrpwm_pwm_chip(chip);
+static int ehrpwm_pwm_set_polarity(struct pwm_chip *chip,
+				   struct pwm_device *pwm,
+				   enum pwm_polarity polarity)
+{
+	struct ehrpwm_pwm_chip *pc = to_ehrpwm_pwm_chip(chip);
 
-	/* Configuration of polarity in hardware delayed, करो at enable */
+	/* Configuration of polarity in hardware delayed, do at enable */
 	pc->polarity[pwm->hwpwm] = polarity;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ehrpwm_pwm_enable(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
-अणु
-	काष्ठा ehrpwm_pwm_chip *pc = to_ehrpwm_pwm_chip(chip);
+static int ehrpwm_pwm_enable(struct pwm_chip *chip, struct pwm_device *pwm)
+{
+	struct ehrpwm_pwm_chip *pc = to_ehrpwm_pwm_chip(chip);
 	u16 aqcsfrc_val, aqcsfrc_mask;
-	पूर्णांक ret;
+	int ret;
 
-	/* Leave घड़ी enabled on enabling PWM */
-	pm_runसमय_get_sync(chip->dev);
+	/* Leave clock enabled on enabling PWM */
+	pm_runtime_get_sync(chip->dev);
 
-	/* Disabling Action Qualअगरier on PWM output */
-	अगर (pwm->hwpwm) अणु
+	/* Disabling Action Qualifier on PWM output */
+	if (pwm->hwpwm) {
 		aqcsfrc_val = AQCSFRC_CSFB_FRCDIS;
 		aqcsfrc_mask = AQCSFRC_CSFB_MASK;
-	पूर्ण अन्यथा अणु
+	} else {
 		aqcsfrc_val = AQCSFRC_CSFA_FRCDIS;
 		aqcsfrc_mask = AQCSFRC_CSFA_MASK;
-	पूर्ण
+	}
 
-	/* Changes to shaकरोw mode */
-	ehrpwm_modअगरy(pc->mmio_base, AQSFRC, AQSFRC_RLDCSF_MASK,
+	/* Changes to shadow mode */
+	ehrpwm_modify(pc->mmio_base, AQSFRC, AQSFRC_RLDCSF_MASK,
 		      AQSFRC_RLDCSF_ZRO);
 
-	ehrpwm_modअगरy(pc->mmio_base, AQCSFRC, aqcsfrc_mask, aqcsfrc_val);
+	ehrpwm_modify(pc->mmio_base, AQCSFRC, aqcsfrc_mask, aqcsfrc_val);
 
-	/* Channels polarity can be configured from action qualअगरier module */
+	/* Channels polarity can be configured from action qualifier module */
 	configure_polarity(pc, pwm->hwpwm);
 
 	/* Enable TBCLK */
 	ret = clk_enable(pc->tbclk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(chip->dev, "Failed to enable TBCLK for %s: %d\n",
 			dev_name(pc->chip.dev), ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ehrpwm_pwm_disable(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
-अणु
-	काष्ठा ehrpwm_pwm_chip *pc = to_ehrpwm_pwm_chip(chip);
+static void ehrpwm_pwm_disable(struct pwm_chip *chip, struct pwm_device *pwm)
+{
+	struct ehrpwm_pwm_chip *pc = to_ehrpwm_pwm_chip(chip);
 	u16 aqcsfrc_val, aqcsfrc_mask;
 
-	/* Action Qualअगरier माला_दो PWM output low क्रमcefully */
-	अगर (pwm->hwpwm) अणु
+	/* Action Qualifier puts PWM output low forcefully */
+	if (pwm->hwpwm) {
 		aqcsfrc_val = AQCSFRC_CSFB_FRCLOW;
 		aqcsfrc_mask = AQCSFRC_CSFB_MASK;
-	पूर्ण अन्यथा अणु
+	} else {
 		aqcsfrc_val = AQCSFRC_CSFA_FRCLOW;
 		aqcsfrc_mask = AQCSFRC_CSFA_MASK;
-	पूर्ण
+	}
 
-	/* Update shaकरोw रेजिस्टर first beक्रमe modअगरying active रेजिस्टर */
-	ehrpwm_modअगरy(pc->mmio_base, AQSFRC, AQSFRC_RLDCSF_MASK,
+	/* Update shadow register first before modifying active register */
+	ehrpwm_modify(pc->mmio_base, AQSFRC, AQSFRC_RLDCSF_MASK,
 		      AQSFRC_RLDCSF_ZRO);
-	ehrpwm_modअगरy(pc->mmio_base, AQCSFRC, aqcsfrc_mask, aqcsfrc_val);
+	ehrpwm_modify(pc->mmio_base, AQCSFRC, aqcsfrc_mask, aqcsfrc_val);
 	/*
-	 * Changes to immediate action on Action Qualअगरier. This माला_दो
-	 * Action Qualअगरier control on PWM output from next TBCLK
+	 * Changes to immediate action on Action Qualifier. This puts
+	 * Action Qualifier control on PWM output from next TBCLK
 	 */
-	ehrpwm_modअगरy(pc->mmio_base, AQSFRC, AQSFRC_RLDCSF_MASK,
+	ehrpwm_modify(pc->mmio_base, AQSFRC, AQSFRC_RLDCSF_MASK,
 		      AQSFRC_RLDCSF_IMDT);
 
-	ehrpwm_modअगरy(pc->mmio_base, AQCSFRC, aqcsfrc_mask, aqcsfrc_val);
+	ehrpwm_modify(pc->mmio_base, AQCSFRC, aqcsfrc_mask, aqcsfrc_val);
 
 	/* Disabling TBCLK on PWM disable */
 	clk_disable(pc->tbclk);
 
-	/* Disable घड़ी on PWM disable */
-	pm_runसमय_put_sync(chip->dev);
-पूर्ण
+	/* Disable clock on PWM disable */
+	pm_runtime_put_sync(chip->dev);
+}
 
-अटल व्योम ehrpwm_pwm_मुक्त(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
-अणु
-	काष्ठा ehrpwm_pwm_chip *pc = to_ehrpwm_pwm_chip(chip);
+static void ehrpwm_pwm_free(struct pwm_chip *chip, struct pwm_device *pwm)
+{
+	struct ehrpwm_pwm_chip *pc = to_ehrpwm_pwm_chip(chip);
 
-	अगर (pwm_is_enabled(pwm)) अणु
+	if (pwm_is_enabled(pwm)) {
 		dev_warn(chip->dev, "Removing PWM device without disabling\n");
-		pm_runसमय_put_sync(chip->dev);
-	पूर्ण
+		pm_runtime_put_sync(chip->dev);
+	}
 
-	/* set period value to zero on मुक्त */
+	/* set period value to zero on free */
 	pc->period_cycles[pwm->hwpwm] = 0;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा pwm_ops ehrpwm_pwm_ops = अणु
-	.मुक्त = ehrpwm_pwm_मुक्त,
+static const struct pwm_ops ehrpwm_pwm_ops = {
+	.free = ehrpwm_pwm_free,
 	.config = ehrpwm_pwm_config,
 	.set_polarity = ehrpwm_pwm_set_polarity,
 	.enable = ehrpwm_pwm_enable,
 	.disable = ehrpwm_pwm_disable,
 	.owner = THIS_MODULE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id ehrpwm_of_match[] = अणु
-	अणु .compatible = "ti,am3352-ehrpwm" पूर्ण,
-	अणु .compatible = "ti,am33xx-ehrpwm" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id ehrpwm_of_match[] = {
+	{ .compatible = "ti,am3352-ehrpwm" },
+	{ .compatible = "ti,am33xx-ehrpwm" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, ehrpwm_of_match);
 
-अटल पूर्णांक ehrpwm_pwm_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा ehrpwm_pwm_chip *pc;
-	काष्ठा clk *clk;
-	पूर्णांक ret;
+static int ehrpwm_pwm_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct ehrpwm_pwm_chip *pc;
+	struct clk *clk;
+	int ret;
 
-	pc = devm_kzalloc(&pdev->dev, माप(*pc), GFP_KERNEL);
-	अगर (!pc)
-		वापस -ENOMEM;
+	pc = devm_kzalloc(&pdev->dev, sizeof(*pc), GFP_KERNEL);
+	if (!pc)
+		return -ENOMEM;
 
 	clk = devm_clk_get(&pdev->dev, "fck");
-	अगर (IS_ERR(clk)) अणु
-		अगर (of_device_is_compatible(np, "ti,am33xx-ecap")) अणु
+	if (IS_ERR(clk)) {
+		if (of_device_is_compatible(np, "ti,am33xx-ecap")) {
 			dev_warn(&pdev->dev, "Binding is obsolete.\n");
 			clk = devm_clk_get(pdev->dev.parent, "fck");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (IS_ERR(clk))
-		वापस dev_err_probe(&pdev->dev, PTR_ERR(clk), "Failed to get fck\n");
+	if (IS_ERR(clk))
+		return dev_err_probe(&pdev->dev, PTR_ERR(clk), "Failed to get fck\n");
 
 	pc->clk_rate = clk_get_rate(clk);
-	अगर (!pc->clk_rate) अणु
+	if (!pc->clk_rate) {
 		dev_err(&pdev->dev, "failed to get clock rate\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	pc->chip.dev = &pdev->dev;
 	pc->chip.ops = &ehrpwm_pwm_ops;
@@ -452,132 +451,132 @@ MODULE_DEVICE_TABLE(of, ehrpwm_of_match);
 	pc->chip.of_pwm_n_cells = 3;
 	pc->chip.npwm = NUM_PWM_CHANNEL;
 
-	pc->mmio_base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(pc->mmio_base))
-		वापस PTR_ERR(pc->mmio_base);
+	pc->mmio_base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(pc->mmio_base))
+		return PTR_ERR(pc->mmio_base);
 
-	/* Acquire tbclk क्रम Time Base EHRPWM submodule */
+	/* Acquire tbclk for Time Base EHRPWM submodule */
 	pc->tbclk = devm_clk_get(&pdev->dev, "tbclk");
-	अगर (IS_ERR(pc->tbclk))
-		वापस dev_err_probe(&pdev->dev, PTR_ERR(pc->tbclk), "Failed to get tbclk\n");
+	if (IS_ERR(pc->tbclk))
+		return dev_err_probe(&pdev->dev, PTR_ERR(pc->tbclk), "Failed to get tbclk\n");
 
 	ret = clk_prepare(pc->tbclk);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "clk_prepare() failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = pwmchip_add(&pc->chip);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "pwmchip_add() failed: %d\n", ret);
-		जाओ err_clk_unprepare;
-	पूर्ण
+		goto err_clk_unprepare;
+	}
 
-	platक्रमm_set_drvdata(pdev, pc);
-	pm_runसमय_enable(&pdev->dev);
+	platform_set_drvdata(pdev, pc);
+	pm_runtime_enable(&pdev->dev);
 
-	वापस 0;
+	return 0;
 
 err_clk_unprepare:
 	clk_unprepare(pc->tbclk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ehrpwm_pwm_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ehrpwm_pwm_chip *pc = platक्रमm_get_drvdata(pdev);
+static int ehrpwm_pwm_remove(struct platform_device *pdev)
+{
+	struct ehrpwm_pwm_chip *pc = platform_get_drvdata(pdev);
 
 	clk_unprepare(pc->tbclk);
 
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	वापस pwmchip_हटाओ(&pc->chip);
-पूर्ण
+	return pwmchip_remove(&pc->chip);
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल व्योम ehrpwm_pwm_save_context(काष्ठा ehrpwm_pwm_chip *pc)
-अणु
-	pm_runसमय_get_sync(pc->chip.dev);
+#ifdef CONFIG_PM_SLEEP
+static void ehrpwm_pwm_save_context(struct ehrpwm_pwm_chip *pc)
+{
+	pm_runtime_get_sync(pc->chip.dev);
 
-	pc->ctx.tbctl = ehrpwm_पढ़ो(pc->mmio_base, TBCTL);
-	pc->ctx.tbprd = ehrpwm_पढ़ो(pc->mmio_base, TBPRD);
-	pc->ctx.cmpa = ehrpwm_पढ़ो(pc->mmio_base, CMPA);
-	pc->ctx.cmpb = ehrpwm_पढ़ो(pc->mmio_base, CMPB);
-	pc->ctx.aqctla = ehrpwm_पढ़ो(pc->mmio_base, AQCTLA);
-	pc->ctx.aqctlb = ehrpwm_पढ़ो(pc->mmio_base, AQCTLB);
-	pc->ctx.aqsfrc = ehrpwm_पढ़ो(pc->mmio_base, AQSFRC);
-	pc->ctx.aqcsfrc = ehrpwm_पढ़ो(pc->mmio_base, AQCSFRC);
+	pc->ctx.tbctl = ehrpwm_read(pc->mmio_base, TBCTL);
+	pc->ctx.tbprd = ehrpwm_read(pc->mmio_base, TBPRD);
+	pc->ctx.cmpa = ehrpwm_read(pc->mmio_base, CMPA);
+	pc->ctx.cmpb = ehrpwm_read(pc->mmio_base, CMPB);
+	pc->ctx.aqctla = ehrpwm_read(pc->mmio_base, AQCTLA);
+	pc->ctx.aqctlb = ehrpwm_read(pc->mmio_base, AQCTLB);
+	pc->ctx.aqsfrc = ehrpwm_read(pc->mmio_base, AQSFRC);
+	pc->ctx.aqcsfrc = ehrpwm_read(pc->mmio_base, AQCSFRC);
 
-	pm_runसमय_put_sync(pc->chip.dev);
-पूर्ण
+	pm_runtime_put_sync(pc->chip.dev);
+}
 
-अटल व्योम ehrpwm_pwm_restore_context(काष्ठा ehrpwm_pwm_chip *pc)
-अणु
-	ehrpwm_ग_लिखो(pc->mmio_base, TBPRD, pc->ctx.tbprd);
-	ehrpwm_ग_लिखो(pc->mmio_base, CMPA, pc->ctx.cmpa);
-	ehrpwm_ग_लिखो(pc->mmio_base, CMPB, pc->ctx.cmpb);
-	ehrpwm_ग_लिखो(pc->mmio_base, AQCTLA, pc->ctx.aqctla);
-	ehrpwm_ग_लिखो(pc->mmio_base, AQCTLB, pc->ctx.aqctlb);
-	ehrpwm_ग_लिखो(pc->mmio_base, AQSFRC, pc->ctx.aqsfrc);
-	ehrpwm_ग_लिखो(pc->mmio_base, AQCSFRC, pc->ctx.aqcsfrc);
-	ehrpwm_ग_लिखो(pc->mmio_base, TBCTL, pc->ctx.tbctl);
-पूर्ण
+static void ehrpwm_pwm_restore_context(struct ehrpwm_pwm_chip *pc)
+{
+	ehrpwm_write(pc->mmio_base, TBPRD, pc->ctx.tbprd);
+	ehrpwm_write(pc->mmio_base, CMPA, pc->ctx.cmpa);
+	ehrpwm_write(pc->mmio_base, CMPB, pc->ctx.cmpb);
+	ehrpwm_write(pc->mmio_base, AQCTLA, pc->ctx.aqctla);
+	ehrpwm_write(pc->mmio_base, AQCTLB, pc->ctx.aqctlb);
+	ehrpwm_write(pc->mmio_base, AQSFRC, pc->ctx.aqsfrc);
+	ehrpwm_write(pc->mmio_base, AQCSFRC, pc->ctx.aqcsfrc);
+	ehrpwm_write(pc->mmio_base, TBCTL, pc->ctx.tbctl);
+}
 
-अटल पूर्णांक ehrpwm_pwm_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा ehrpwm_pwm_chip *pc = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक i;
+static int ehrpwm_pwm_suspend(struct device *dev)
+{
+	struct ehrpwm_pwm_chip *pc = dev_get_drvdata(dev);
+	unsigned int i;
 
 	ehrpwm_pwm_save_context(pc);
 
-	क्रम (i = 0; i < pc->chip.npwm; i++) अणु
-		काष्ठा pwm_device *pwm = &pc->chip.pwms[i];
+	for (i = 0; i < pc->chip.npwm; i++) {
+		struct pwm_device *pwm = &pc->chip.pwms[i];
 
-		अगर (!pwm_is_enabled(pwm))
-			जारी;
+		if (!pwm_is_enabled(pwm))
+			continue;
 
-		/* Disable explicitly अगर PWM is running */
-		pm_runसमय_put_sync(dev);
-	पूर्ण
+		/* Disable explicitly if PWM is running */
+		pm_runtime_put_sync(dev);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ehrpwm_pwm_resume(काष्ठा device *dev)
-अणु
-	काष्ठा ehrpwm_pwm_chip *pc = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक i;
+static int ehrpwm_pwm_resume(struct device *dev)
+{
+	struct ehrpwm_pwm_chip *pc = dev_get_drvdata(dev);
+	unsigned int i;
 
-	क्रम (i = 0; i < pc->chip.npwm; i++) अणु
-		काष्ठा pwm_device *pwm = &pc->chip.pwms[i];
+	for (i = 0; i < pc->chip.npwm; i++) {
+		struct pwm_device *pwm = &pc->chip.pwms[i];
 
-		अगर (!pwm_is_enabled(pwm))
-			जारी;
+		if (!pwm_is_enabled(pwm))
+			continue;
 
-		/* Enable explicitly अगर PWM was running */
-		pm_runसमय_get_sync(dev);
-	पूर्ण
+		/* Enable explicitly if PWM was running */
+		pm_runtime_get_sync(dev);
+	}
 
 	ehrpwm_pwm_restore_context(pc);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(ehrpwm_pwm_pm_ops, ehrpwm_pwm_suspend,
+static SIMPLE_DEV_PM_OPS(ehrpwm_pwm_pm_ops, ehrpwm_pwm_suspend,
 			 ehrpwm_pwm_resume);
 
-अटल काष्ठा platक्रमm_driver ehrpwm_pwm_driver = अणु
-	.driver = अणु
+static struct platform_driver ehrpwm_pwm_driver = {
+	.driver = {
 		.name = "ehrpwm",
 		.of_match_table = ehrpwm_of_match,
 		.pm = &ehrpwm_pwm_pm_ops,
-	पूर्ण,
+	},
 	.probe = ehrpwm_pwm_probe,
-	.हटाओ = ehrpwm_pwm_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(ehrpwm_pwm_driver);
+	.remove = ehrpwm_pwm_remove,
+};
+module_platform_driver(ehrpwm_pwm_driver);
 
 MODULE_DESCRIPTION("EHRPWM PWM driver");
 MODULE_AUTHOR("Texas Instruments");

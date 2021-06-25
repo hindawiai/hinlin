@@ -1,246 +1,245 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#समावेश <linux/kernel.h>
+#include <linux/kernel.h>
 
-#समावेश "i915_debugfs_params.h"
-#समावेश "i915_drv.h"
-#समावेश "i915_params.h"
+#include "i915_debugfs_params.h"
+#include "i915_drv.h"
+#include "i915_params.h"
 
-/* पूर्णांक param */
-अटल पूर्णांक i915_param_पूर्णांक_show(काष्ठा seq_file *m, व्योम *data)
-अणु
-	पूर्णांक *value = m->निजी;
+/* int param */
+static int i915_param_int_show(struct seq_file *m, void *data)
+{
+	int *value = m->private;
 
-	seq_म_लिखो(m, "%d\n", *value);
+	seq_printf(m, "%d\n", *value);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक i915_param_पूर्णांक_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, i915_param_पूर्णांक_show, inode->i_निजी);
-पूर्ण
+static int i915_param_int_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, i915_param_int_show, inode->i_private);
+}
 
-अटल sमाप_प्रकार i915_param_पूर्णांक_ग_लिखो(काष्ठा file *file,
-				    स्थिर अक्षर __user *ubuf, माप_प्रकार len,
+static ssize_t i915_param_int_write(struct file *file,
+				    const char __user *ubuf, size_t len,
 				    loff_t *offp)
-अणु
-	काष्ठा seq_file *m = file->निजी_data;
-	पूर्णांक *value = m->निजी;
-	पूर्णांक ret;
+{
+	struct seq_file *m = file->private_data;
+	int *value = m->private;
+	int ret;
 
-	ret = kstrtoपूर्णांक_from_user(ubuf, len, 0, value);
-	अगर (ret) अणु
+	ret = kstrtoint_from_user(ubuf, len, 0, value);
+	if (ret) {
 		/* support boolean values too */
 		bool b;
 
 		ret = kstrtobool_from_user(ubuf, len, &b);
-		अगर (!ret)
+		if (!ret)
 			*value = b;
-	पूर्ण
+	}
 
-	वापस ret ?: len;
-पूर्ण
+	return ret ?: len;
+}
 
-अटल स्थिर काष्ठा file_operations i915_param_पूर्णांक_fops = अणु
+static const struct file_operations i915_param_int_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = i915_param_पूर्णांक_खोलो,
-	.पढ़ो = seq_पढ़ो,
-	.ग_लिखो = i915_param_पूर्णांक_ग_लिखो,
-	.llseek = शेष_llseek,
+	.open = i915_param_int_open,
+	.read = seq_read,
+	.write = i915_param_int_write,
+	.llseek = default_llseek,
 	.release = single_release,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा file_operations i915_param_पूर्णांक_fops_ro = अणु
+static const struct file_operations i915_param_int_fops_ro = {
 	.owner = THIS_MODULE,
-	.खोलो = i915_param_पूर्णांक_खोलो,
-	.पढ़ो = seq_पढ़ो,
-	.llseek = शेष_llseek,
+	.open = i915_param_int_open,
+	.read = seq_read,
+	.llseek = default_llseek,
 	.release = single_release,
-पूर्ण;
+};
 
-/* अचिन्हित पूर्णांक param */
-अटल पूर्णांक i915_param_uपूर्णांक_show(काष्ठा seq_file *m, व्योम *data)
-अणु
-	अचिन्हित पूर्णांक *value = m->निजी;
+/* unsigned int param */
+static int i915_param_uint_show(struct seq_file *m, void *data)
+{
+	unsigned int *value = m->private;
 
-	seq_म_लिखो(m, "%u\n", *value);
+	seq_printf(m, "%u\n", *value);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक i915_param_uपूर्णांक_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, i915_param_uपूर्णांक_show, inode->i_निजी);
-पूर्ण
+static int i915_param_uint_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, i915_param_uint_show, inode->i_private);
+}
 
-अटल sमाप_प्रकार i915_param_uपूर्णांक_ग_लिखो(काष्ठा file *file,
-				     स्थिर अक्षर __user *ubuf, माप_प्रकार len,
+static ssize_t i915_param_uint_write(struct file *file,
+				     const char __user *ubuf, size_t len,
 				     loff_t *offp)
-अणु
-	काष्ठा seq_file *m = file->निजी_data;
-	अचिन्हित पूर्णांक *value = m->निजी;
-	पूर्णांक ret;
+{
+	struct seq_file *m = file->private_data;
+	unsigned int *value = m->private;
+	int ret;
 
-	ret = kstrtouपूर्णांक_from_user(ubuf, len, 0, value);
-	अगर (ret) अणु
+	ret = kstrtouint_from_user(ubuf, len, 0, value);
+	if (ret) {
 		/* support boolean values too */
 		bool b;
 
 		ret = kstrtobool_from_user(ubuf, len, &b);
-		अगर (!ret)
+		if (!ret)
 			*value = b;
-	पूर्ण
+	}
 
-	वापस ret ?: len;
-पूर्ण
+	return ret ?: len;
+}
 
-अटल स्थिर काष्ठा file_operations i915_param_uपूर्णांक_fops = अणु
+static const struct file_operations i915_param_uint_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = i915_param_uपूर्णांक_खोलो,
-	.पढ़ो = seq_पढ़ो,
-	.ग_लिखो = i915_param_uपूर्णांक_ग_लिखो,
-	.llseek = शेष_llseek,
+	.open = i915_param_uint_open,
+	.read = seq_read,
+	.write = i915_param_uint_write,
+	.llseek = default_llseek,
 	.release = single_release,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा file_operations i915_param_uपूर्णांक_fops_ro = अणु
+static const struct file_operations i915_param_uint_fops_ro = {
 	.owner = THIS_MODULE,
-	.खोलो = i915_param_uपूर्णांक_खोलो,
-	.पढ़ो = seq_पढ़ो,
-	.llseek = शेष_llseek,
+	.open = i915_param_uint_open,
+	.read = seq_read,
+	.llseek = default_llseek,
 	.release = single_release,
-पूर्ण;
+};
 
-/* अक्षर * param */
-अटल पूर्णांक i915_param_अक्षरp_show(काष्ठा seq_file *m, व्योम *data)
-अणु
-	स्थिर अक्षर **s = m->निजी;
+/* char * param */
+static int i915_param_charp_show(struct seq_file *m, void *data)
+{
+	const char **s = m->private;
 
-	seq_म_लिखो(m, "%s\n", *s);
+	seq_printf(m, "%s\n", *s);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक i915_param_अक्षरp_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, i915_param_अक्षरp_show, inode->i_निजी);
-पूर्ण
+static int i915_param_charp_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, i915_param_charp_show, inode->i_private);
+}
 
-अटल sमाप_प्रकार i915_param_अक्षरp_ग_लिखो(काष्ठा file *file,
-				      स्थिर अक्षर __user *ubuf, माप_प्रकार len,
+static ssize_t i915_param_charp_write(struct file *file,
+				      const char __user *ubuf, size_t len,
 				      loff_t *offp)
-अणु
-	काष्ठा seq_file *m = file->निजी_data;
-	अक्षर **s = m->निजी;
-	अक्षर *new, *old;
+{
+	struct seq_file *m = file->private_data;
+	char **s = m->private;
+	char *new, *old;
 
 	old = *s;
 	new = strndup_user(ubuf, PAGE_SIZE);
-	अगर (IS_ERR(new)) अणु
+	if (IS_ERR(new)) {
 		len = PTR_ERR(new);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	*s = new;
 
-	kमुक्त(old);
+	kfree(old);
 out:
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल स्थिर काष्ठा file_operations i915_param_अक्षरp_fops = अणु
+static const struct file_operations i915_param_charp_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = i915_param_अक्षरp_खोलो,
-	.पढ़ो = seq_पढ़ो,
-	.ग_लिखो = i915_param_अक्षरp_ग_लिखो,
-	.llseek = शेष_llseek,
+	.open = i915_param_charp_open,
+	.read = seq_read,
+	.write = i915_param_charp_write,
+	.llseek = default_llseek,
 	.release = single_release,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा file_operations i915_param_अक्षरp_fops_ro = अणु
+static const struct file_operations i915_param_charp_fops_ro = {
 	.owner = THIS_MODULE,
-	.खोलो = i915_param_अक्षरp_खोलो,
-	.पढ़ो = seq_पढ़ो,
-	.llseek = शेष_llseek,
+	.open = i915_param_charp_open,
+	.read = seq_read,
+	.llseek = default_llseek,
 	.release = single_release,
-पूर्ण;
+};
 
-#घोषणा RO(mode) (((mode) & 0222) == 0)
+#define RO(mode) (((mode) & 0222) == 0)
 
-अटल काष्ठा dentry *
-i915_debugfs_create_पूर्णांक(स्थिर अक्षर *name, umode_t mode,
-			काष्ठा dentry *parent, पूर्णांक *value)
-अणु
-	वापस debugfs_create_file_unsafe(name, mode, parent, value,
-					  RO(mode) ? &i915_param_पूर्णांक_fops_ro :
-					  &i915_param_पूर्णांक_fops);
-पूर्ण
+static struct dentry *
+i915_debugfs_create_int(const char *name, umode_t mode,
+			struct dentry *parent, int *value)
+{
+	return debugfs_create_file_unsafe(name, mode, parent, value,
+					  RO(mode) ? &i915_param_int_fops_ro :
+					  &i915_param_int_fops);
+}
 
-अटल काष्ठा dentry *
-i915_debugfs_create_uपूर्णांक(स्थिर अक्षर *name, umode_t mode,
-			 काष्ठा dentry *parent, अचिन्हित पूर्णांक *value)
-अणु
-	वापस debugfs_create_file_unsafe(name, mode, parent, value,
-					  RO(mode) ? &i915_param_uपूर्णांक_fops_ro :
-					  &i915_param_uपूर्णांक_fops);
-पूर्ण
+static struct dentry *
+i915_debugfs_create_uint(const char *name, umode_t mode,
+			 struct dentry *parent, unsigned int *value)
+{
+	return debugfs_create_file_unsafe(name, mode, parent, value,
+					  RO(mode) ? &i915_param_uint_fops_ro :
+					  &i915_param_uint_fops);
+}
 
-अटल काष्ठा dentry *
-i915_debugfs_create_अक्षरp(स्थिर अक्षर *name, umode_t mode,
-			  काष्ठा dentry *parent, अक्षर **value)
-अणु
-	वापस debugfs_create_file(name, mode, parent, value,
-				   RO(mode) ? &i915_param_अक्षरp_fops_ro :
-				   &i915_param_अक्षरp_fops);
-पूर्ण
+static struct dentry *
+i915_debugfs_create_charp(const char *name, umode_t mode,
+			  struct dentry *parent, char **value)
+{
+	return debugfs_create_file(name, mode, parent, value,
+				   RO(mode) ? &i915_param_charp_fops_ro :
+				   &i915_param_charp_fops);
+}
 
-अटल __always_अंतरभूत व्योम
-_i915_param_create_file(काष्ठा dentry *parent, स्थिर अक्षर *name,
-			स्थिर अक्षर *type, पूर्णांक mode, व्योम *value)
-अणु
-	अगर (!mode)
-		वापस;
+static __always_inline void
+_i915_param_create_file(struct dentry *parent, const char *name,
+			const char *type, int mode, void *value)
+{
+	if (!mode)
+		return;
 
-	अगर (!__builtin_म_भेद(type, "bool"))
+	if (!__builtin_strcmp(type, "bool"))
 		debugfs_create_bool(name, mode, parent, value);
-	अन्यथा अगर (!__builtin_म_भेद(type, "int"))
-		i915_debugfs_create_पूर्णांक(name, mode, parent, value);
-	अन्यथा अगर (!__builtin_म_भेद(type, "unsigned int"))
-		i915_debugfs_create_uपूर्णांक(name, mode, parent, value);
-	अन्यथा अगर (!__builtin_म_भेद(type, "unsigned long"))
-		debugfs_create_uदीर्घ(name, mode, parent, value);
-	अन्यथा अगर (!__builtin_म_भेद(type, "char *"))
-		i915_debugfs_create_अक्षरp(name, mode, parent, value);
-	अन्यथा
+	else if (!__builtin_strcmp(type, "int"))
+		i915_debugfs_create_int(name, mode, parent, value);
+	else if (!__builtin_strcmp(type, "unsigned int"))
+		i915_debugfs_create_uint(name, mode, parent, value);
+	else if (!__builtin_strcmp(type, "unsigned long"))
+		debugfs_create_ulong(name, mode, parent, value);
+	else if (!__builtin_strcmp(type, "char *"))
+		i915_debugfs_create_charp(name, mode, parent, value);
+	else
 		WARN(1, "no debugfs fops defined for param type %s (i915.%s)\n",
 		     type, name);
-पूर्ण
+}
 
-/* add a subdirectory with files क्रम each i915 param */
-काष्ठा dentry *i915_debugfs_params(काष्ठा drm_i915_निजी *i915)
-अणु
-	काष्ठा drm_minor *minor = i915->drm.primary;
-	काष्ठा i915_params *params = &i915->params;
-	काष्ठा dentry *dir;
+/* add a subdirectory with files for each i915 param */
+struct dentry *i915_debugfs_params(struct drm_i915_private *i915)
+{
+	struct drm_minor *minor = i915->drm.primary;
+	struct i915_params *params = &i915->params;
+	struct dentry *dir;
 
 	dir = debugfs_create_dir("i915_params", minor->debugfs_root);
-	अगर (IS_ERR(dir))
-		वापस dir;
+	if (IS_ERR(dir))
+		return dir;
 
 	/*
-	 * Note: We could create files क्रम params needing special handling
+	 * Note: We could create files for params needing special handling
 	 * here. Set mode in params to 0 to skip the generic create file, or
 	 * just let the generic create file fail silently with -EEXIST.
 	 */
 
-#घोषणा REGISTER(T, x, unused, mode, ...) _i915_param_create_file(dir, #x, #T, mode, &params->x);
+#define REGISTER(T, x, unused, mode, ...) _i915_param_create_file(dir, #x, #T, mode, &params->x);
 	I915_PARAMS_FOR_EACH(REGISTER);
-#अघोषित REGISTER
+#undef REGISTER
 
-	वापस dir;
-पूर्ण
+	return dir;
+}

@@ -1,2 +1,1 @@
-<शैली गुरु>
-#समावेश <linux/byteorder/big_endian.h>
+#include <linux/byteorder/big_endian.h>

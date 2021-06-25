@@ -1,293 +1,292 @@
-<शैली गुरु>
 /*
- * SPDX-License-Identअगरier: MIT
+ * SPDX-License-Identifier: MIT
  *
- * Copyright तऊ 2016 Intel Corporation
+ * Copyright © 2016 Intel Corporation
  */
 
-#समावेश <linux/dma-fence-array.h>
-#समावेश <linux/dma-fence-chain.h>
-#समावेश <linux/jअगरfies.h>
+#include <linux/dma-fence-array.h>
+#include <linux/dma-fence-chain.h>
+#include <linux/jiffies.h>
 
-#समावेश "gt/intel_engine.h"
+#include "gt/intel_engine.h"
 
-#समावेश "dma_resv_utils.h"
-#समावेश "i915_gem_ioctls.h"
-#समावेश "i915_gem_object.h"
+#include "dma_resv_utils.h"
+#include "i915_gem_ioctls.h"
+#include "i915_gem_object.h"
 
-अटल दीर्घ
-i915_gem_object_रुको_fence(काष्ठा dma_fence *fence,
-			   अचिन्हित पूर्णांक flags,
-			   दीर्घ समयout)
-अणु
+static long
+i915_gem_object_wait_fence(struct dma_fence *fence,
+			   unsigned int flags,
+			   long timeout)
+{
 	BUILD_BUG_ON(I915_WAIT_INTERRUPTIBLE != 0x1);
 
-	अगर (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
-		वापस समयout;
+	if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
+		return timeout;
 
-	अगर (dma_fence_is_i915(fence))
-		वापस i915_request_रुको(to_request(fence), flags, समयout);
+	if (dma_fence_is_i915(fence))
+		return i915_request_wait(to_request(fence), flags, timeout);
 
-	वापस dma_fence_रुको_समयout(fence,
+	return dma_fence_wait_timeout(fence,
 				      flags & I915_WAIT_INTERRUPTIBLE,
-				      समयout);
-पूर्ण
+				      timeout);
+}
 
-अटल दीर्घ
-i915_gem_object_रुको_reservation(काष्ठा dma_resv *resv,
-				 अचिन्हित पूर्णांक flags,
-				 दीर्घ समयout)
-अणु
-	काष्ठा dma_fence *excl;
+static long
+i915_gem_object_wait_reservation(struct dma_resv *resv,
+				 unsigned int flags,
+				 long timeout)
+{
+	struct dma_fence *excl;
 	bool prune_fences = false;
 
-	अगर (flags & I915_WAIT_ALL) अणु
-		काष्ठा dma_fence **shared;
-		अचिन्हित पूर्णांक count, i;
-		पूर्णांक ret;
+	if (flags & I915_WAIT_ALL) {
+		struct dma_fence **shared;
+		unsigned int count, i;
+		int ret;
 
 		ret = dma_resv_get_fences_rcu(resv, &excl, &count, &shared);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		क्रम (i = 0; i < count; i++) अणु
-			समयout = i915_gem_object_रुको_fence(shared[i],
-							     flags, समयout);
-			अगर (समयout < 0)
-				अवरोध;
+		for (i = 0; i < count; i++) {
+			timeout = i915_gem_object_wait_fence(shared[i],
+							     flags, timeout);
+			if (timeout < 0)
+				break;
 
 			dma_fence_put(shared[i]);
-		पूर्ण
+		}
 
-		क्रम (; i < count; i++)
+		for (; i < count; i++)
 			dma_fence_put(shared[i]);
-		kमुक्त(shared);
+		kfree(shared);
 
 		/*
 		 * If both shared fences and an exclusive fence exist,
-		 * then by स्थिरruction the shared fences must be later
-		 * than the exclusive fence. If we successfully रुको क्रम
+		 * then by construction the shared fences must be later
+		 * than the exclusive fence. If we successfully wait for
 		 * all the shared fences, we know that the exclusive fence
-		 * must all be संकेतed. If all the shared fences are
-		 * संकेतed, we can prune the array and recover the
-		 * भग्नing references on the fences/requests.
+		 * must all be signaled. If all the shared fences are
+		 * signaled, we can prune the array and recover the
+		 * floating references on the fences/requests.
 		 */
-		prune_fences = count && समयout >= 0;
-	पूर्ण अन्यथा अणु
+		prune_fences = count && timeout >= 0;
+	} else {
 		excl = dma_resv_get_excl_rcu(resv);
-	पूर्ण
+	}
 
-	अगर (excl && समयout >= 0)
-		समयout = i915_gem_object_रुको_fence(excl, flags, समयout);
+	if (excl && timeout >= 0)
+		timeout = i915_gem_object_wait_fence(excl, flags, timeout);
 
 	dma_fence_put(excl);
 
 	/*
-	 * Opportunistically prune the fences अगरf we know they have *all* been
-	 * संकेतed.
+	 * Opportunistically prune the fences iff we know they have *all* been
+	 * signaled.
 	 */
-	अगर (prune_fences)
+	if (prune_fences)
 		dma_resv_prune(resv);
 
-	वापस समयout;
-पूर्ण
+	return timeout;
+}
 
-अटल व्योम fence_set_priority(काष्ठा dma_fence *fence,
-			       स्थिर काष्ठा i915_sched_attr *attr)
-अणु
-	काष्ठा i915_request *rq;
-	काष्ठा पूर्णांकel_engine_cs *engine;
+static void fence_set_priority(struct dma_fence *fence,
+			       const struct i915_sched_attr *attr)
+{
+	struct i915_request *rq;
+	struct intel_engine_cs *engine;
 
-	अगर (dma_fence_is_संकेतed(fence) || !dma_fence_is_i915(fence))
-		वापस;
+	if (dma_fence_is_signaled(fence) || !dma_fence_is_i915(fence))
+		return;
 
 	rq = to_request(fence);
 	engine = rq->engine;
 
-	rcu_पढ़ो_lock(); /* RCU serialisation क्रम set-wedged protection */
-	अगर (engine->schedule)
+	rcu_read_lock(); /* RCU serialisation for set-wedged protection */
+	if (engine->schedule)
 		engine->schedule(rq, attr);
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
-अटल अंतरभूत bool __dma_fence_is_chain(स्थिर काष्ठा dma_fence *fence)
-अणु
-	वापस fence->ops == &dma_fence_chain_ops;
-पूर्ण
+static inline bool __dma_fence_is_chain(const struct dma_fence *fence)
+{
+	return fence->ops == &dma_fence_chain_ops;
+}
 
-व्योम i915_gem_fence_रुको_priority(काष्ठा dma_fence *fence,
-				  स्थिर काष्ठा i915_sched_attr *attr)
-अणु
-	अगर (dma_fence_is_संकेतed(fence))
-		वापस;
+void i915_gem_fence_wait_priority(struct dma_fence *fence,
+				  const struct i915_sched_attr *attr)
+{
+	if (dma_fence_is_signaled(fence))
+		return;
 
 	local_bh_disable();
 
-	/* Recurse once पूर्णांकo a fence-array */
-	अगर (dma_fence_is_array(fence)) अणु
-		काष्ठा dma_fence_array *array = to_dma_fence_array(fence);
-		पूर्णांक i;
+	/* Recurse once into a fence-array */
+	if (dma_fence_is_array(fence)) {
+		struct dma_fence_array *array = to_dma_fence_array(fence);
+		int i;
 
-		क्रम (i = 0; i < array->num_fences; i++)
+		for (i = 0; i < array->num_fences; i++)
 			fence_set_priority(array->fences[i], attr);
-	पूर्ण अन्यथा अगर (__dma_fence_is_chain(fence)) अणु
-		काष्ठा dma_fence *iter;
+	} else if (__dma_fence_is_chain(fence)) {
+		struct dma_fence *iter;
 
-		/* The chain is ordered; अगर we boost the last, we boost all */
-		dma_fence_chain_क्रम_each(iter, fence) अणु
+		/* The chain is ordered; if we boost the last, we boost all */
+		dma_fence_chain_for_each(iter, fence) {
 			fence_set_priority(to_dma_fence_chain(iter)->fence,
 					   attr);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		dma_fence_put(iter);
-	पूर्ण अन्यथा अणु
+	} else {
 		fence_set_priority(fence, attr);
-	पूर्ण
+	}
 
-	local_bh_enable(); /* kick the tasklets अगर queues were reprioritised */
-पूर्ण
+	local_bh_enable(); /* kick the tasklets if queues were reprioritised */
+}
 
-पूर्णांक
-i915_gem_object_रुको_priority(काष्ठा drm_i915_gem_object *obj,
-			      अचिन्हित पूर्णांक flags,
-			      स्थिर काष्ठा i915_sched_attr *attr)
-अणु
-	काष्ठा dma_fence *excl;
+int
+i915_gem_object_wait_priority(struct drm_i915_gem_object *obj,
+			      unsigned int flags,
+			      const struct i915_sched_attr *attr)
+{
+	struct dma_fence *excl;
 
-	अगर (flags & I915_WAIT_ALL) अणु
-		काष्ठा dma_fence **shared;
-		अचिन्हित पूर्णांक count, i;
-		पूर्णांक ret;
+	if (flags & I915_WAIT_ALL) {
+		struct dma_fence **shared;
+		unsigned int count, i;
+		int ret;
 
 		ret = dma_resv_get_fences_rcu(obj->base.resv,
 					      &excl, &count, &shared);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		क्रम (i = 0; i < count; i++) अणु
-			i915_gem_fence_रुको_priority(shared[i], attr);
+		for (i = 0; i < count; i++) {
+			i915_gem_fence_wait_priority(shared[i], attr);
 			dma_fence_put(shared[i]);
-		पूर्ण
+		}
 
-		kमुक्त(shared);
-	पूर्ण अन्यथा अणु
+		kfree(shared);
+	} else {
 		excl = dma_resv_get_excl_rcu(obj->base.resv);
-	पूर्ण
+	}
 
-	अगर (excl) अणु
-		i915_gem_fence_रुको_priority(excl, attr);
+	if (excl) {
+		i915_gem_fence_wait_priority(excl, attr);
 		dma_fence_put(excl);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /**
- * Waits क्रम rendering to the object to be completed
+ * Waits for rendering to the object to be completed
  * @obj: i915 gem object
- * @flags: how to रुको (under a lock, क्रम all rendering or just क्रम ग_लिखोs etc)
- * @समयout: how दीर्घ to रुको
+ * @flags: how to wait (under a lock, for all rendering or just for writes etc)
+ * @timeout: how long to wait
  */
-पूर्णांक
-i915_gem_object_रुको(काष्ठा drm_i915_gem_object *obj,
-		     अचिन्हित पूर्णांक flags,
-		     दीर्घ समयout)
-अणु
+int
+i915_gem_object_wait(struct drm_i915_gem_object *obj,
+		     unsigned int flags,
+		     long timeout)
+{
 	might_sleep();
-	GEM_BUG_ON(समयout < 0);
+	GEM_BUG_ON(timeout < 0);
 
-	समयout = i915_gem_object_रुको_reservation(obj->base.resv,
-						   flags, समयout);
-	वापस समयout < 0 ? समयout : 0;
-पूर्ण
+	timeout = i915_gem_object_wait_reservation(obj->base.resv,
+						   flags, timeout);
+	return timeout < 0 ? timeout : 0;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ nsecs_to_jअगरfies_समयout(स्थिर u64 n)
-अणु
-	/* nsecs_to_jअगरfies64() करोes not guard against overflow */
-	अगर (NSEC_PER_SEC % HZ &&
-	    भाग_u64(n, NSEC_PER_SEC) >= MAX_JIFFY_OFFSET / HZ)
-		वापस MAX_JIFFY_OFFSET;
+static inline unsigned long nsecs_to_jiffies_timeout(const u64 n)
+{
+	/* nsecs_to_jiffies64() does not guard against overflow */
+	if (NSEC_PER_SEC % HZ &&
+	    div_u64(n, NSEC_PER_SEC) >= MAX_JIFFY_OFFSET / HZ)
+		return MAX_JIFFY_OFFSET;
 
-	वापस min_t(u64, MAX_JIFFY_OFFSET, nsecs_to_jअगरfies64(n) + 1);
-पूर्ण
+	return min_t(u64, MAX_JIFFY_OFFSET, nsecs_to_jiffies64(n) + 1);
+}
 
-अटल अचिन्हित दीर्घ to_रुको_समयout(s64 समयout_ns)
-अणु
-	अगर (समयout_ns < 0)
-		वापस MAX_SCHEDULE_TIMEOUT;
+static unsigned long to_wait_timeout(s64 timeout_ns)
+{
+	if (timeout_ns < 0)
+		return MAX_SCHEDULE_TIMEOUT;
 
-	अगर (समयout_ns == 0)
-		वापस 0;
+	if (timeout_ns == 0)
+		return 0;
 
-	वापस nsecs_to_jअगरfies_समयout(समयout_ns);
-पूर्ण
+	return nsecs_to_jiffies_timeout(timeout_ns);
+}
 
 /**
- * i915_gem_रुको_ioctl - implements DRM_IOCTL_I915_GEM_WAIT
- * @dev: drm device poपूर्णांकer
+ * i915_gem_wait_ioctl - implements DRM_IOCTL_I915_GEM_WAIT
+ * @dev: drm device pointer
  * @data: ioctl data blob
- * @file: drm file poपूर्णांकer
+ * @file: drm file pointer
  *
- * Returns 0 अगर successful, अन्यथा an error is वापसed with the reमुख्यing समय in
- * the समयout parameter.
- *  -ETIME: object is still busy after समयout
- *  -ERESTARTSYS: संकेत पूर्णांकerrupted the रुको
- *  -ENONENT: object करोesn't exist
+ * Returns 0 if successful, else an error is returned with the remaining time in
+ * the timeout parameter.
+ *  -ETIME: object is still busy after timeout
+ *  -ERESTARTSYS: signal interrupted the wait
+ *  -ENONENT: object doesn't exist
  * Also possible, but rare:
  *  -EAGAIN: incomplete, restart syscall
  *  -ENOMEM: damn
  *  -ENODEV: Internal IRQ fail
  *  -E?: The add request failed
  *
- * The रुको ioctl with a समयout of 0 reimplements the busy ioctl. With any
- * non-zero समयout parameter the रुको ioctl will रुको क्रम the given number of
- * nanoseconds on an object becoming unbusy. Since the रुको itself करोes so
- * without holding काष्ठा_mutex the object may become re-busied beक्रमe this
- * function completes. A similar but लघुer * race condition exists in the busy
+ * The wait ioctl with a timeout of 0 reimplements the busy ioctl. With any
+ * non-zero timeout parameter the wait ioctl will wait for the given number of
+ * nanoseconds on an object becoming unbusy. Since the wait itself does so
+ * without holding struct_mutex the object may become re-busied before this
+ * function completes. A similar but shorter * race condition exists in the busy
  * ioctl
  */
-पूर्णांक
-i915_gem_रुको_ioctl(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file)
-अणु
-	काष्ठा drm_i915_gem_रुको *args = data;
-	काष्ठा drm_i915_gem_object *obj;
-	kसमय_प्रकार start;
-	दीर्घ ret;
+int
+i915_gem_wait_ioctl(struct drm_device *dev, void *data, struct drm_file *file)
+{
+	struct drm_i915_gem_wait *args = data;
+	struct drm_i915_gem_object *obj;
+	ktime_t start;
+	long ret;
 
-	अगर (args->flags != 0)
-		वापस -EINVAL;
+	if (args->flags != 0)
+		return -EINVAL;
 
 	obj = i915_gem_object_lookup(file, args->bo_handle);
-	अगर (!obj)
-		वापस -ENOENT;
+	if (!obj)
+		return -ENOENT;
 
-	start = kसमय_get();
+	start = ktime_get();
 
-	ret = i915_gem_object_रुको(obj,
+	ret = i915_gem_object_wait(obj,
 				   I915_WAIT_INTERRUPTIBLE |
 				   I915_WAIT_PRIORITY |
 				   I915_WAIT_ALL,
-				   to_रुको_समयout(args->समयout_ns));
+				   to_wait_timeout(args->timeout_ns));
 
-	अगर (args->समयout_ns > 0) अणु
-		args->समयout_ns -= kसमय_प्रकारo_ns(kसमय_sub(kसमय_get(), start));
-		अगर (args->समयout_ns < 0)
-			args->समयout_ns = 0;
+	if (args->timeout_ns > 0) {
+		args->timeout_ns -= ktime_to_ns(ktime_sub(ktime_get(), start));
+		if (args->timeout_ns < 0)
+			args->timeout_ns = 0;
 
 		/*
-		 * Apparently kसमय isn't accurate enough and occasionally has a
-		 * bit of mismatch in the jअगरfies<->nsecs<->kसमय loop. So patch
-		 * things up to make the test happy. We allow up to 1 jअगरfy.
+		 * Apparently ktime isn't accurate enough and occasionally has a
+		 * bit of mismatch in the jiffies<->nsecs<->ktime loop. So patch
+		 * things up to make the test happy. We allow up to 1 jiffy.
 		 *
-		 * This is a regression from the बारpec->kसमय conversion.
+		 * This is a regression from the timespec->ktime conversion.
 		 */
-		अगर (ret == -ETIME && !nsecs_to_jअगरfies(args->समयout_ns))
-			args->समयout_ns = 0;
+		if (ret == -ETIME && !nsecs_to_jiffies(args->timeout_ns))
+			args->timeout_ns = 0;
 
-		/* Asked to रुको beyond the jअगरfie/scheduler precision? */
-		अगर (ret == -ETIME && args->समयout_ns)
+		/* Asked to wait beyond the jiffie/scheduler precision? */
+		if (ret == -ETIME && args->timeout_ns)
 			ret = -EAGAIN;
-	पूर्ण
+	}
 
 	i915_gem_object_put(obj);
-	वापस ret;
-पूर्ण
+	return ret;
+}

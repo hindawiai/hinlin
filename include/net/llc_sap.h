@@ -1,33 +1,32 @@
-<शैली गुरु>
-#अगर_अघोषित LLC_SAP_H
-#घोषणा LLC_SAP_H
+#ifndef LLC_SAP_H
+#define LLC_SAP_H
 
-#समावेश <यंत्र/types.h>
+#include <asm/types.h>
 
 /*
  * Copyright (c) 1997 by Procom Technology,Inc.
- * 		 2001-2003 by Arnalकरो Carvalho de Melo <acme@conectiva.com.br>
+ * 		 2001-2003 by Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  *
- * This program can be redistributed or modअगरied under the terms of the
+ * This program can be redistributed or modified under the terms of the
  * GNU General Public License as published by the Free Software Foundation.
  * This program is distributed without any warranty or implied warranty
- * of merchantability or fitness क्रम a particular purpose.
+ * of merchantability or fitness for a particular purpose.
  *
- * See the GNU General Public License क्रम more details.
+ * See the GNU General Public License for more details.
  */
-काष्ठा llc_sap;
-काष्ठा net_device;
-काष्ठा sk_buff;
-काष्ठा sock;
+struct llc_sap;
+struct net_device;
+struct sk_buff;
+struct sock;
 
-व्योम llc_sap_rtn_pdu(काष्ठा llc_sap *sap, काष्ठा sk_buff *skb);
-व्योम llc_save_primitive(काष्ठा sock *sk, काष्ठा sk_buff *skb,
-			अचिन्हित अक्षर prim);
-काष्ठा sk_buff *llc_alloc_frame(काष्ठा sock *sk, काष्ठा net_device *dev,
+void llc_sap_rtn_pdu(struct llc_sap *sap, struct sk_buff *skb);
+void llc_save_primitive(struct sock *sk, struct sk_buff *skb,
+			unsigned char prim);
+struct sk_buff *llc_alloc_frame(struct sock *sk, struct net_device *dev,
 				u8 type, u32 data_size);
 
-व्योम llc_build_and_send_test_pkt(काष्ठा llc_sap *sap, काष्ठा sk_buff *skb,
-				 अचिन्हित अक्षर *dmac, अचिन्हित अक्षर dsap);
-व्योम llc_build_and_send_xid_pkt(काष्ठा llc_sap *sap, काष्ठा sk_buff *skb,
-				अचिन्हित अक्षर *dmac, अचिन्हित अक्षर dsap);
-#पूर्ण_अगर /* LLC_SAP_H */
+void llc_build_and_send_test_pkt(struct llc_sap *sap, struct sk_buff *skb,
+				 unsigned char *dmac, unsigned char dsap);
+void llc_build_and_send_xid_pkt(struct llc_sap *sap, struct sk_buff *skb,
+				unsigned char *dmac, unsigned char dsap);
+#endif /* LLC_SAP_H */

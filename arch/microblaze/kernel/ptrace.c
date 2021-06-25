@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * `ptrace' प्रणाली call
+ * `ptrace' system call
  *
  * Copyright (C) 2008-2009 Michal Simek <monstr@monstr.eu>
  * Copyright (C) 2007-2009 PetaLogix
@@ -21,98 +20,98 @@
  * Copyright (C) 1999 MIPS Technologies, Inc.
  *
  * This file is subject to the terms and conditions of the GNU General
- * Public License. See the file COPYING in the मुख्य directory of this
- * archive क्रम more details.
+ * Public License. See the file COPYING in the main directory of this
+ * archive for more details.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/task_stack.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/elf.h>
-#समावेश <linux/audit.h>
-#समावेश <linux/seccomp.h>
-#समावेश <linux/tracehook.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/sched.h>
+#include <linux/sched/task_stack.h>
+#include <linux/ptrace.h>
+#include <linux/signal.h>
+#include <linux/elf.h>
+#include <linux/audit.h>
+#include <linux/seccomp.h>
+#include <linux/tracehook.h>
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <यंत्र/processor.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/यंत्र-offsets.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/syscall.h>
-#समावेश <linux/पन.स>
+#include <linux/errno.h>
+#include <asm/processor.h>
+#include <linux/uaccess.h>
+#include <asm/asm-offsets.h>
+#include <asm/cacheflush.h>
+#include <asm/syscall.h>
+#include <linux/io.h>
 
-/* Returns the address where the रेजिस्टर at REG_OFFS in P is stashed away. */
-अटल microblaze_reg_t *reg_save_addr(अचिन्हित reg_offs,
-					काष्ठा task_काष्ठा *t)
-अणु
-	काष्ठा pt_regs *regs;
+/* Returns the address where the register at REG_OFFS in P is stashed away. */
+static microblaze_reg_t *reg_save_addr(unsigned reg_offs,
+					struct task_struct *t)
+{
+	struct pt_regs *regs;
 
 	/*
-	 * Three basic हालs:
+	 * Three basic cases:
 	 *
-	 * (1)	A रेजिस्टर normally saved beक्रमe calling the scheduler, is
-	 *	available in the kernel entry pt_regs काष्ठाure at the top
-	 *	of the kernel stack. The kernel trap/irq निकास path takes
-	 *	care to save/restore almost all रेजिस्टरs क्रम ptrace'd
+	 * (1)	A register normally saved before calling the scheduler, is
+	 *	available in the kernel entry pt_regs structure at the top
+	 *	of the kernel stack. The kernel trap/irq exit path takes
+	 *	care to save/restore almost all registers for ptrace'd
 	 *	processes.
 	 *
-	 * (2)	A call-clobbered रेजिस्टर, where the process P entered the
+	 * (2)	A call-clobbered register, where the process P entered the
 	 *	kernel via [syscall] trap, is not stored anywhere; that's
-	 *	OK, because such रेजिस्टरs are not expected to be preserved
-	 *	when the trap वापसs anyway (so we करोn't actually bother to
-	 *	test क्रम this हाल).
+	 *	OK, because such registers are not expected to be preserved
+	 *	when the trap returns anyway (so we don't actually bother to
+	 *	test for this case).
 	 *
-	 * (3)	A few रेजिस्टरs not used at all by the kernel, and so
-	 *	normally never saved except by context-चयनes, are in the
-	 *	context चयन state.
+	 * (3)	A few registers not used at all by the kernel, and so
+	 *	normally never saved except by context-switches, are in the
+	 *	context switch state.
 	 */
 
 	/* Register saved during kernel entry (or not available). */
 	regs = task_pt_regs(t);
 
-	वापस (microblaze_reg_t *)((अक्षर *)regs + reg_offs);
-पूर्ण
+	return (microblaze_reg_t *)((char *)regs + reg_offs);
+}
 
-दीर्घ arch_ptrace(काष्ठा task_काष्ठा *child, दीर्घ request,
-		 अचिन्हित दीर्घ addr, अचिन्हित दीर्घ data)
-अणु
-	पूर्णांक rval;
-	अचिन्हित दीर्घ val = 0;
+long arch_ptrace(struct task_struct *child, long request,
+		 unsigned long addr, unsigned long data)
+{
+	int rval;
+	unsigned long val = 0;
 
-	चयन (request) अणु
-	/* Read/ग_लिखो the word at location ADDR in the रेजिस्टरs. */
-	हाल PTRACE_PEEKUSR:
-	हाल PTRACE_POKEUSR:
+	switch (request) {
+	/* Read/write the word at location ADDR in the registers. */
+	case PTRACE_PEEKUSR:
+	case PTRACE_POKEUSR:
 		pr_debug("PEEKUSR/POKEUSR : 0x%08lx\n", addr);
 		rval = 0;
-		अगर (addr >= PT_SIZE && request == PTRACE_PEEKUSR) अणु
+		if (addr >= PT_SIZE && request == PTRACE_PEEKUSR) {
 			/*
-			 * Special requests that करोn't actually correspond
-			 * to offsets in काष्ठा pt_regs.
+			 * Special requests that don't actually correspond
+			 * to offsets in struct pt_regs.
 			 */
-			अगर (addr == PT_TEXT_ADDR) अणु
+			if (addr == PT_TEXT_ADDR) {
 				val = child->mm->start_code;
-			पूर्ण अन्यथा अगर (addr == PT_DATA_ADDR) अणु
+			} else if (addr == PT_DATA_ADDR) {
 				val = child->mm->start_data;
-			पूर्ण अन्यथा अगर (addr == PT_TEXT_LEN) अणु
+			} else if (addr == PT_TEXT_LEN) {
 				val = child->mm->end_code
 					- child->mm->start_code;
-			पूर्ण अन्यथा अणु
+			} else {
 				rval = -EIO;
-			पूर्ण
-		पूर्ण अन्यथा अगर (addr < PT_SIZE && (addr & 0x3) == 0) अणु
+			}
+		} else if (addr < PT_SIZE && (addr & 0x3) == 0) {
 			microblaze_reg_t *reg_addr = reg_save_addr(addr, child);
-			अगर (request == PTRACE_PEEKUSR)
+			if (request == PTRACE_PEEKUSR)
 				val = *reg_addr;
-			अन्यथा अणु
-#अगर 1
+			else {
+#if 1
 				*reg_addr = data;
-#अन्यथा
-				/* MS potential problem on WB प्रणाली
-				 * Be aware that reg_addr is भव address
+#else
+				/* MS potential problem on WB system
+				 * Be aware that reg_addr is virtual address
 				 * virt_to_phys conversion is necessary.
 				 * This could be sensible solution.
 				 */
@@ -120,52 +119,52 @@
 				invalidate_icache_range(paddr, paddr + 4);
 				*reg_addr = data;
 				flush_dcache_range(paddr, paddr + 4);
-#पूर्ण_अगर
-			पूर्ण
-		पूर्ण अन्यथा
+#endif
+			}
+		} else
 			rval = -EIO;
 
-		अगर (rval == 0 && request == PTRACE_PEEKUSR)
-			rval = put_user(val, (अचिन्हित दीर्घ __user *)data);
-		अवरोध;
-	शेष:
+		if (rval == 0 && request == PTRACE_PEEKUSR)
+			rval = put_user(val, (unsigned long __user *)data);
+		break;
+	default:
 		rval = ptrace_request(child, request, addr, data);
-	पूर्ण
-	वापस rval;
-पूर्ण
+	}
+	return rval;
+}
 
-यंत्रlinkage अचिन्हित दीर्घ करो_syscall_trace_enter(काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ ret = 0;
+asmlinkage unsigned long do_syscall_trace_enter(struct pt_regs *regs)
+{
+	unsigned long ret = 0;
 
 	secure_computing_strict(regs->r12);
 
-	अगर (test_thपढ़ो_flag(TIF_SYSCALL_TRACE) &&
+	if (test_thread_flag(TIF_SYSCALL_TRACE) &&
 	    tracehook_report_syscall_entry(regs))
 		/*
 		 * Tracing decided this syscall should not happen.
-		 * We'll वापस a bogus call number to get an ENOSYS
+		 * We'll return a bogus call number to get an ENOSYS
 		 * error, but leave the original number in regs->regs[0].
 		 */
 		ret = -1L;
 
 	audit_syscall_entry(regs->r12, regs->r5, regs->r6, regs->r7, regs->r8);
 
-	वापस ret ?: regs->r12;
-पूर्ण
+	return ret ?: regs->r12;
+}
 
-यंत्रlinkage व्योम करो_syscall_trace_leave(काष्ठा pt_regs *regs)
-अणु
-	पूर्णांक step;
+asmlinkage void do_syscall_trace_leave(struct pt_regs *regs)
+{
+	int step;
 
-	audit_syscall_निकास(regs);
+	audit_syscall_exit(regs);
 
-	step = test_thपढ़ो_flag(TIF_SINGLESTEP);
-	अगर (step || test_thपढ़ो_flag(TIF_SYSCALL_TRACE))
-		tracehook_report_syscall_निकास(regs, step);
-पूर्ण
+	step = test_thread_flag(TIF_SINGLESTEP);
+	if (step || test_thread_flag(TIF_SYSCALL_TRACE))
+		tracehook_report_syscall_exit(regs, step);
+}
 
-व्योम ptrace_disable(काष्ठा task_काष्ठा *child)
-अणु
-	/* nothing to करो */
-पूर्ण
+void ptrace_disable(struct task_struct *child)
+{
+	/* nothing to do */
+}

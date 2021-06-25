@@ -1,36 +1,35 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM wbt
+/* SPDX-License-Identifier: GPL-2.0 */
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM wbt
 
-#अगर !defined(_TRACE_WBT_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_WBT_H
+#if !defined(_TRACE_WBT_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_WBT_H
 
-#समावेश <linux/tracepoपूर्णांक.h>
-#समावेश "../../../block/blk-wbt.h"
+#include <linux/tracepoint.h>
+#include "../../../block/blk-wbt.h"
 
 /**
- * wbt_stat - trace stats क्रम blk_wb
- * @stat: array of पढ़ो/ग_लिखो stats
+ * wbt_stat - trace stats for blk_wb
+ * @stat: array of read/write stats
  */
 TRACE_EVENT(wbt_stat,
 
-	TP_PROTO(काष्ठा backing_dev_info *bdi, काष्ठा blk_rq_stat *stat),
+	TP_PROTO(struct backing_dev_info *bdi, struct blk_rq_stat *stat),
 
 	TP_ARGS(bdi, stat),
 
 	TP_STRUCT__entry(
-		__array(अक्षर, name, 32)
+		__array(char, name, 32)
 		__field(s64, rmean)
 		__field(u64, rmin)
 		__field(u64, rmax)
 		__field(s64, rnr_samples)
-		__field(s64, rसमय)
+		__field(s64, rtime)
 		__field(s64, wmean)
 		__field(u64, wmin)
 		__field(u64, wmax)
 		__field(s64, wnr_samples)
-		__field(s64, wसमय)
+		__field(s64, wtime)
 	),
 
 	TP_fast_assign(
@@ -46,7 +45,7 @@ TRACE_EVENT(wbt_stat,
 		__entry->wnr_samples	= stat[1].nr_samples;
 	),
 
-	TP_prपूर्णांकk("%s: rmean=%llu, rmin=%llu, rmax=%llu, rsamples=%llu, "
+	TP_printk("%s: rmean=%llu, rmin=%llu, rmax=%llu, rsamples=%llu, "
 		  "wmean=%llu, wmin=%llu, wmax=%llu, wsamples=%llu",
 		  __entry->name, __entry->rmean, __entry->rmin, __entry->rmax,
 		  __entry->rnr_samples, __entry->wmean, __entry->wmin,
@@ -59,50 +58,50 @@ TRACE_EVENT(wbt_stat,
  */
 TRACE_EVENT(wbt_lat,
 
-	TP_PROTO(काष्ठा backing_dev_info *bdi, अचिन्हित दीर्घ lat),
+	TP_PROTO(struct backing_dev_info *bdi, unsigned long lat),
 
 	TP_ARGS(bdi, lat),
 
 	TP_STRUCT__entry(
-		__array(अक्षर, name, 32)
-		__field(अचिन्हित दीर्घ, lat)
+		__array(char, name, 32)
+		__field(unsigned long, lat)
 	),
 
 	TP_fast_assign(
 		strlcpy(__entry->name, bdi_dev_name(bdi),
 			ARRAY_SIZE(__entry->name));
-		__entry->lat = भाग_u64(lat, 1000);
+		__entry->lat = div_u64(lat, 1000);
 	),
 
-	TP_prपूर्णांकk("%s: latency %lluus", __entry->name,
-			(अचिन्हित दीर्घ दीर्घ) __entry->lat)
+	TP_printk("%s: latency %lluus", __entry->name,
+			(unsigned long long) __entry->lat)
 );
 
 /**
  * wbt_step - trace wb event step
  * @msg: context message
  * @step: the current scale step count
- * @winकरोw: the current monitoring winकरोw
+ * @window: the current monitoring window
  * @bg: the current background queue limit
- * @normal: the current normal ग_लिखोback limit
- * @max: the current max throughput ग_लिखोback limit
+ * @normal: the current normal writeback limit
+ * @max: the current max throughput writeback limit
  */
 TRACE_EVENT(wbt_step,
 
-	TP_PROTO(काष्ठा backing_dev_info *bdi, स्थिर अक्षर *msg,
-		 पूर्णांक step, अचिन्हित दीर्घ winकरोw, अचिन्हित पूर्णांक bg,
-		 अचिन्हित पूर्णांक normal, अचिन्हित पूर्णांक max),
+	TP_PROTO(struct backing_dev_info *bdi, const char *msg,
+		 int step, unsigned long window, unsigned int bg,
+		 unsigned int normal, unsigned int max),
 
-	TP_ARGS(bdi, msg, step, winकरोw, bg, normal, max),
+	TP_ARGS(bdi, msg, step, window, bg, normal, max),
 
 	TP_STRUCT__entry(
-		__array(अक्षर, name, 32)
-		__field(स्थिर अक्षर *, msg)
-		__field(पूर्णांक, step)
-		__field(अचिन्हित दीर्घ, winकरोw)
-		__field(अचिन्हित पूर्णांक, bg)
-		__field(अचिन्हित पूर्णांक, normal)
-		__field(अचिन्हित पूर्णांक, max)
+		__array(char, name, 32)
+		__field(const char *, msg)
+		__field(int, step)
+		__field(unsigned long, window)
+		__field(unsigned int, bg)
+		__field(unsigned int, normal)
+		__field(unsigned int, max)
 	),
 
 	TP_fast_assign(
@@ -110,35 +109,35 @@ TRACE_EVENT(wbt_step,
 			ARRAY_SIZE(__entry->name));
 		__entry->msg	= msg;
 		__entry->step	= step;
-		__entry->winकरोw	= भाग_u64(winकरोw, 1000);
+		__entry->window	= div_u64(window, 1000);
 		__entry->bg	= bg;
 		__entry->normal	= normal;
 		__entry->max	= max;
 	),
 
-	TP_prपूर्णांकk("%s: %s: step=%d, window=%luus, background=%u, normal=%u, max=%u",
-		  __entry->name, __entry->msg, __entry->step, __entry->winकरोw,
+	TP_printk("%s: %s: step=%d, window=%luus, background=%u, normal=%u, max=%u",
+		  __entry->name, __entry->msg, __entry->step, __entry->window,
 		  __entry->bg, __entry->normal, __entry->max)
 );
 
 /**
- * wbt_समयr - trace wb समयr event
- * @status: समयr state status
+ * wbt_timer - trace wb timer event
+ * @status: timer state status
  * @step: the current scale step count
- * @inflight: tracked ग_लिखोs inflight
+ * @inflight: tracked writes inflight
  */
-TRACE_EVENT(wbt_समयr,
+TRACE_EVENT(wbt_timer,
 
-	TP_PROTO(काष्ठा backing_dev_info *bdi, अचिन्हित पूर्णांक status,
-		 पूर्णांक step, अचिन्हित पूर्णांक inflight),
+	TP_PROTO(struct backing_dev_info *bdi, unsigned int status,
+		 int step, unsigned int inflight),
 
 	TP_ARGS(bdi, status, step, inflight),
 
 	TP_STRUCT__entry(
-		__array(अक्षर, name, 32)
-		__field(अचिन्हित पूर्णांक, status)
-		__field(पूर्णांक, step)
-		__field(अचिन्हित पूर्णांक, inflight)
+		__array(char, name, 32)
+		__field(unsigned int, status)
+		__field(int, step)
+		__field(unsigned int, inflight)
 	),
 
 	TP_fast_assign(
@@ -149,11 +148,11 @@ TRACE_EVENT(wbt_समयr,
 		__entry->inflight	= inflight;
 	),
 
-	TP_prपूर्णांकk("%s: status=%u, step=%d, inflight=%u", __entry->name,
+	TP_printk("%s: status=%u, step=%d, inflight=%u", __entry->name,
 		  __entry->status, __entry->step, __entry->inflight)
 );
 
-#पूर्ण_अगर /* _TRACE_WBT_H */
+#endif /* _TRACE_WBT_H */
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

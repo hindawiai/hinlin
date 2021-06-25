@@ -1,39 +1,38 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित __LINUX_TC_EM_META_H
-#घोषणा __LINUX_TC_EM_META_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef __LINUX_TC_EM_META_H
+#define __LINUX_TC_EM_META_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/pkt_cls.h>
+#include <linux/types.h>
+#include <linux/pkt_cls.h>
 
-क्रमागत अणु
+enum {
 	TCA_EM_META_UNSPEC,
 	TCA_EM_META_HDR,
 	TCA_EM_META_LVALUE,
 	TCA_EM_META_RVALUE,
 	__TCA_EM_META_MAX
-पूर्ण;
-#घोषणा TCA_EM_META_MAX (__TCA_EM_META_MAX - 1)
+};
+#define TCA_EM_META_MAX (__TCA_EM_META_MAX - 1)
 
-काष्ठा tcf_meta_val अणु
+struct tcf_meta_val {
 	__u16			kind;
-	__u8			shअगरt;
+	__u8			shift;
 	__u8			op;
-पूर्ण;
+};
 
-#घोषणा TCF_META_TYPE_MASK	(0xf << 12)
-#घोषणा TCF_META_TYPE(kind)	(((kind) & TCF_META_TYPE_MASK) >> 12)
-#घोषणा TCF_META_ID_MASK	0x7ff
-#घोषणा TCF_META_ID(kind)	((kind) & TCF_META_ID_MASK)
+#define TCF_META_TYPE_MASK	(0xf << 12)
+#define TCF_META_TYPE(kind)	(((kind) & TCF_META_TYPE_MASK) >> 12)
+#define TCF_META_ID_MASK	0x7ff
+#define TCF_META_ID(kind)	((kind) & TCF_META_ID_MASK)
 
-क्रमागत अणु
+enum {
 	TCF_META_TYPE_VAR,
 	TCF_META_TYPE_INT,
 	__TCF_META_TYPE_MAX
-पूर्ण;
-#घोषणा TCF_META_TYPE_MAX (__TCF_META_TYPE_MAX - 1)
+};
+#define TCF_META_TYPE_MAX (__TCF_META_TYPE_MAX - 1)
 
-क्रमागत अणु
+enum {
 	TCF_META_ID_VALUE,
 	TCF_META_ID_RANDOM,
 	TCF_META_ID_LOADAVG_0,
@@ -69,7 +68,7 @@
 	TCF_META_ID_SK_FORWARD_ALLOCS,
 	TCF_META_ID_SK_SNDBUF,
  	TCF_META_ID_SK_ALLOCS,
-	__TCF_META_ID_SK_ROUTE_CAPS,	/* unimplemented but in ABI alपढ़ोy */
+	__TCF_META_ID_SK_ROUTE_CAPS,	/* unimplemented but in ABI already */
  	TCF_META_ID_SK_HASH,
  	TCF_META_ID_SK_LINGERTIME,
  	TCF_META_ID_SK_ACK_BACKLOG,
@@ -83,12 +82,12 @@
 	TCF_META_ID_VLAN_TAG,
 	TCF_META_ID_RXHASH,
 	__TCF_META_ID_MAX
-पूर्ण;
-#घोषणा TCF_META_ID_MAX (__TCF_META_ID_MAX - 1)
+};
+#define TCF_META_ID_MAX (__TCF_META_ID_MAX - 1)
 
-काष्ठा tcf_meta_hdr अणु
-	काष्ठा tcf_meta_val	left;
-	काष्ठा tcf_meta_val	right;
-पूर्ण;
+struct tcf_meta_hdr {
+	struct tcf_meta_val	left;
+	struct tcf_meta_val	right;
+};
 
-#पूर्ण_अगर
+#endif

@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * SPDX-License-Identअगरier: GPL-2.0
+ * SPDX-License-Identifier: GPL-2.0
  *
  * Copyright(C) 2015-2018 Linaro Limited.
  *
@@ -8,90 +7,90 @@
  * Author: Mathieu Poirier <mathieu.poirier@linaro.org>
  */
 
-#अगर_अघोषित INCLUDE__CS_ETM_DECODER_H__
-#घोषणा INCLUDE__CS_ETM_DECODER_H__
+#ifndef INCLUDE__CS_ETM_DECODER_H__
+#define INCLUDE__CS_ETM_DECODER_H__
 
-#समावेश <linux/types.h>
-#समावेश <मानकपन.स>
+#include <linux/types.h>
+#include <stdio.h>
 
-काष्ठा cs_eपंचांग_decoder;
-काष्ठा cs_eपंचांग_packet;
-काष्ठा cs_eपंचांग_packet_queue;
+struct cs_etm_decoder;
+struct cs_etm_packet;
+struct cs_etm_packet_queue;
 
-काष्ठा cs_eपंचांग_queue;
+struct cs_etm_queue;
 
-प्रकार u32 (*cs_eपंचांग_mem_cb_type)(काष्ठा cs_eपंचांग_queue *, u8, u64, माप_प्रकार, u8 *);
+typedef u32 (*cs_etm_mem_cb_type)(struct cs_etm_queue *, u8, u64, size_t, u8 *);
 
-काष्ठा cs_eपंचांगv3_trace_params अणु
+struct cs_etmv3_trace_params {
 	u32 reg_ctrl;
 	u32 reg_trc_id;
 	u32 reg_ccer;
 	u32 reg_idr;
-पूर्ण;
+};
 
-काष्ठा cs_eपंचांगv4_trace_params अणु
+struct cs_etmv4_trace_params {
 	u32 reg_idr0;
 	u32 reg_idr1;
 	u32 reg_idr2;
 	u32 reg_idr8;
 	u32 reg_configr;
 	u32 reg_traceidr;
-पूर्ण;
+};
 
-काष्ठा cs_eपंचांग_trace_params अणु
-	पूर्णांक protocol;
-	जोड़ अणु
-		काष्ठा cs_eपंचांगv3_trace_params eपंचांगv3;
-		काष्ठा cs_eपंचांगv4_trace_params eपंचांगv4;
-	पूर्ण;
-पूर्ण;
+struct cs_etm_trace_params {
+	int protocol;
+	union {
+		struct cs_etmv3_trace_params etmv3;
+		struct cs_etmv4_trace_params etmv4;
+	};
+};
 
-काष्ठा cs_eपंचांग_decoder_params अणु
-	पूर्णांक operation;
-	व्योम (*packet_prपूर्णांकer)(स्थिर अक्षर *msg);
-	cs_eपंचांग_mem_cb_type mem_acc_cb;
-	u8 क्रमmatted;
+struct cs_etm_decoder_params {
+	int operation;
+	void (*packet_printer)(const char *msg);
+	cs_etm_mem_cb_type mem_acc_cb;
+	u8 formatted;
 	u8 fsyncs;
 	u8 hsyncs;
 	u8 frame_aligned;
-	व्योम *data;
-पूर्ण;
+	void *data;
+};
 
 /*
- * The following क्रमागतs are indexed starting with 1 to align with the
- * खोलो source coresight trace decoder library.
+ * The following enums are indexed starting with 1 to align with the
+ * open source coresight trace decoder library.
  */
-क्रमागत अणु
+enum {
 	CS_ETM_PROTO_ETMV3 = 1,
 	CS_ETM_PROTO_ETMV4i,
 	CS_ETM_PROTO_ETMV4d,
 	CS_ETM_PROTO_PTM,
-पूर्ण;
+};
 
-क्रमागत cs_eपंचांग_decoder_operation अणु
+enum cs_etm_decoder_operation {
 	CS_ETM_OPERATION_PRINT = 1,
 	CS_ETM_OPERATION_DECODE,
 	CS_ETM_OPERATION_MAX,
-पूर्ण;
+};
 
-पूर्णांक cs_eपंचांग_decoder__process_data_block(काष्ठा cs_eपंचांग_decoder *decoder,
-				       u64 indx, स्थिर u8 *buf,
-				       माप_प्रकार len, माप_प्रकार *consumed);
+int cs_etm_decoder__process_data_block(struct cs_etm_decoder *decoder,
+				       u64 indx, const u8 *buf,
+				       size_t len, size_t *consumed);
 
-काष्ठा cs_eपंचांग_decoder *
-cs_eपंचांग_decoder__new(पूर्णांक num_cpu,
-		    काष्ठा cs_eपंचांग_decoder_params *d_params,
-		    काष्ठा cs_eपंचांग_trace_params t_params[]);
+struct cs_etm_decoder *
+cs_etm_decoder__new(int num_cpu,
+		    struct cs_etm_decoder_params *d_params,
+		    struct cs_etm_trace_params t_params[]);
 
-व्योम cs_eपंचांग_decoder__मुक्त(काष्ठा cs_eपंचांग_decoder *decoder);
+void cs_etm_decoder__free(struct cs_etm_decoder *decoder);
 
-पूर्णांक cs_eपंचांग_decoder__add_mem_access_cb(काष्ठा cs_eपंचांग_decoder *decoder,
+int cs_etm_decoder__add_mem_access_cb(struct cs_etm_decoder *decoder,
 				      u64 start, u64 end,
-				      cs_eपंचांग_mem_cb_type cb_func);
+				      cs_etm_mem_cb_type cb_func);
 
-पूर्णांक cs_eपंचांग_decoder__get_packet(काष्ठा cs_eपंचांग_packet_queue *packet_queue,
-			       काष्ठा cs_eपंचांग_packet *packet);
+int cs_etm_decoder__get_packet(struct cs_etm_packet_queue *packet_queue,
+			       struct cs_etm_packet *packet);
 
-पूर्णांक cs_eपंचांग_decoder__reset(काष्ठा cs_eपंचांग_decoder *decoder);
+int cs_etm_decoder__reset(struct cs_etm_decoder *decoder);
 
-#पूर्ण_अगर /* INCLUDE__CS_ETM_DECODER_H__ */
+#endif /* INCLUDE__CS_ETM_DECODER_H__ */

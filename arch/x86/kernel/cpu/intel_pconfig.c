@@ -1,49 +1,48 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Intel PCONFIG inकाष्ठाion support.
+ * Intel PCONFIG instruction support.
  *
  * Copyright (C) 2017 Intel Corporation
  *
  * Author:
- *	Kirill A. Shutemov <kirill.shutemov@linux.पूर्णांकel.com>
+ *	Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
  */
 
-#समावेश <यंत्र/cpufeature.h>
-#समावेश <यंत्र/पूर्णांकel_pconfig.h>
+#include <asm/cpufeature.h>
+#include <asm/intel_pconfig.h>
 
-#घोषणा	PCONFIG_CPUID			0x1b
+#define	PCONFIG_CPUID			0x1b
 
-#घोषणा PCONFIG_CPUID_SUBLEAF_MASK	((1 << 12) - 1)
+#define PCONFIG_CPUID_SUBLEAF_MASK	((1 << 12) - 1)
 
-/* Subleaf type (EAX) क्रम PCONFIG CPUID leaf (0x1B) */
-क्रमागत अणु
+/* Subleaf type (EAX) for PCONFIG CPUID leaf (0x1B) */
+enum {
 	PCONFIG_CPUID_SUBLEAF_INVALID	= 0,
 	PCONFIG_CPUID_SUBLEAF_TARGETID	= 1,
-पूर्ण;
+};
 
-/* Biपंचांगask of supported tarमाला_लो */
-अटल u64 tarमाला_लो_supported __पढ़ो_mostly;
+/* Bitmask of supported targets */
+static u64 targets_supported __read_mostly;
 
-पूर्णांक pconfig_target_supported(क्रमागत pconfig_target target)
-अणु
+int pconfig_target_supported(enum pconfig_target target)
+{
 	/*
 	 * We would need to re-think the implementation once we get > 64
-	 * PCONFIG tarमाला_लो. Spec allows up to 2^32 tarमाला_लो.
+	 * PCONFIG targets. Spec allows up to 2^32 targets.
 	 */
 	BUILD_BUG_ON(PCONFIG_TARGET_NR >= 64);
 
-	अगर (WARN_ON_ONCE(target >= 64))
-		वापस 0;
-	वापस tarमाला_लो_supported & (1ULL << target);
-पूर्ण
+	if (WARN_ON_ONCE(target >= 64))
+		return 0;
+	return targets_supported & (1ULL << target);
+}
 
-अटल पूर्णांक __init पूर्णांकel_pconfig_init(व्योम)
-अणु
-	पूर्णांक subleaf;
+static int __init intel_pconfig_init(void)
+{
+	int subleaf;
 
-	अगर (!boot_cpu_has(X86_FEATURE_PCONFIG))
-		वापस 0;
+	if (!boot_cpu_has(X86_FEATURE_PCONFIG))
+		return 0;
 
 	/*
 	 * Scan subleafs of PCONFIG CPUID leaf.
@@ -53,31 +52,31 @@
 	 * Stop on the first invalid subleaf type. All subleafs after the first
 	 * invalid are invalid too.
 	 */
-	क्रम (subleaf = 0; subleaf < पूर्णांक_उच्च; subleaf++) अणु
-		काष्ठा cpuid_regs regs;
+	for (subleaf = 0; subleaf < INT_MAX; subleaf++) {
+		struct cpuid_regs regs;
 
 		cpuid_count(PCONFIG_CPUID, subleaf,
 				&regs.eax, &regs.ebx, &regs.ecx, &regs.edx);
 
-		चयन (regs.eax & PCONFIG_CPUID_SUBLEAF_MASK) अणु
-		हाल PCONFIG_CPUID_SUBLEAF_INVALID:
+		switch (regs.eax & PCONFIG_CPUID_SUBLEAF_MASK) {
+		case PCONFIG_CPUID_SUBLEAF_INVALID:
 			/* Stop on the first invalid subleaf */
-			जाओ out;
-		हाल PCONFIG_CPUID_SUBLEAF_TARGETID:
-			/* Mark supported PCONFIG tarमाला_लो */
-			अगर (regs.ebx < 64)
-				tarमाला_लो_supported |= (1ULL << regs.ebx);
-			अगर (regs.ecx < 64)
-				tarमाला_लो_supported |= (1ULL << regs.ecx);
-			अगर (regs.edx < 64)
-				tarमाला_लो_supported |= (1ULL << regs.edx);
-			अवरोध;
-		शेष:
+			goto out;
+		case PCONFIG_CPUID_SUBLEAF_TARGETID:
+			/* Mark supported PCONFIG targets */
+			if (regs.ebx < 64)
+				targets_supported |= (1ULL << regs.ebx);
+			if (regs.ecx < 64)
+				targets_supported |= (1ULL << regs.ecx);
+			if (regs.edx < 64)
+				targets_supported |= (1ULL << regs.edx);
+			break;
+		default:
 			/* Unknown CPUID.PCONFIG subleaf: ignore */
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 out:
-	वापस 0;
-पूर्ण
-arch_initcall(पूर्णांकel_pconfig_init);
+	return 0;
+}
+arch_initcall(intel_pconfig_init);

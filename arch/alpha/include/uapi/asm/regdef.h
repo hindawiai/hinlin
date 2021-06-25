@@ -1,46 +1,45 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित __alpha_regdef_h__
-#घोषणा __alpha_regdef_h__
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef __alpha_regdef_h__
+#define __alpha_regdef_h__
 
-#घोषणा v0	$0	/* function वापस value */
+#define v0	$0	/* function return value */
 
-#घोषणा t0	$1	/* temporary रेजिस्टरs (caller-saved) */
-#घोषणा t1	$2
-#घोषणा t2	$3
-#घोषणा t3	$4
-#घोषणा t4	$5
-#घोषणा t5	$6
-#घोषणा t6	$7
-#घोषणा t7	$8
+#define t0	$1	/* temporary registers (caller-saved) */
+#define t1	$2
+#define t2	$3
+#define t3	$4
+#define t4	$5
+#define t5	$6
+#define t6	$7
+#define t7	$8
 
-#घोषणा	s0	$9	/* saved-रेजिस्टरs (callee-saved रेजिस्टरs) */
-#घोषणा	s1	$10
-#घोषणा	s2	$11
-#घोषणा	s3	$12
-#घोषणा	s4	$13
-#घोषणा	s5	$14
-#घोषणा	s6	$15
-#घोषणा	fp	s6	/* frame-poपूर्णांकer (s6 in frame-less procedures) */
+#define	s0	$9	/* saved-registers (callee-saved registers) */
+#define	s1	$10
+#define	s2	$11
+#define	s3	$12
+#define	s4	$13
+#define	s5	$14
+#define	s6	$15
+#define	fp	s6	/* frame-pointer (s6 in frame-less procedures) */
 
-#घोषणा a0	$16	/* argument रेजिस्टरs (caller-saved) */
-#घोषणा a1	$17
-#घोषणा a2	$18
-#घोषणा a3	$19
-#घोषणा a4	$20
-#घोषणा a5	$21
+#define a0	$16	/* argument registers (caller-saved) */
+#define a1	$17
+#define a2	$18
+#define a3	$19
+#define a4	$20
+#define a5	$21
 
-#घोषणा t8	$22	/* more temps (caller-saved) */
-#घोषणा t9	$23
-#घोषणा t10	$24
-#घोषणा t11	$25
-#घोषणा ra	$26	/* वापस address रेजिस्टर */
-#घोषणा t12	$27
+#define t8	$22	/* more temps (caller-saved) */
+#define t9	$23
+#define t10	$24
+#define t11	$25
+#define ra	$26	/* return address register */
+#define t12	$27
 
-#घोषणा pv	t12	/* procedure-variable रेजिस्टर */
-#घोषणा AT	$at	/* assembler temporary */
-#घोषणा gp	$29	/* global poपूर्णांकer */
-#घोषणा sp	$30	/* stack poपूर्णांकer */
-#घोषणा zero	$31	/* पढ़ोs as zero, ग_लिखोs are noops */
+#define pv	t12	/* procedure-variable register */
+#define AT	$at	/* assembler temporary */
+#define gp	$29	/* global pointer */
+#define sp	$30	/* stack pointer */
+#define zero	$31	/* reads as zero, writes are noops */
 
-#पूर्ण_अगर /* __alpha_regdef_h__ */
+#endif /* __alpha_regdef_h__ */

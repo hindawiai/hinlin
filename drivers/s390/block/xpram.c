@@ -1,74 +1,73 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Xpram.c -- the S/390 expanded memory RAM-disk
  *           
- * signअगरicant parts of this code are based on
+ * significant parts of this code are based on
  * the sbull device driver presented in
  * A. Rubini: Linux Device Drivers
  *
- * Author of XPRAM specअगरic coding: Reinhard Buendgen
+ * Author of XPRAM specific coding: Reinhard Buendgen
  *                                  buendgen@de.ibm.com
- * Reग_लिखो क्रम 2.5: Martin Schwidefsky <schwidefsky@de.ibm.com>
+ * Rewrite for 2.5: Martin Schwidefsky <schwidefsky@de.ibm.com>
  *
- * External पूर्णांकerfaces:
+ * External interfaces:
  *   Interfaces to linux kernel
- *        xpram_setup: पढ़ो kernel parameters
- *   Device specअगरic file operations
+ *        xpram_setup: read kernel parameters
+ *   Device specific file operations
  *        xpram_iotcl
- *        xpram_खोलो
+ *        xpram_open
  *
  * "ad-hoc" partitioning:
  *    the expanded memory can be partitioned among several devices 
- *    (with dअगरferent minors). The partitioning set up can be
- *    set by kernel or module parameters (पूर्णांक devs & पूर्णांक sizes[])
+ *    (with different minors). The partitioning set up can be
+ *    set by kernel or module parameters (int devs & int sizes[])
  *
  * Potential future improvements:
  *   generic hard disk support to replace ad-hoc partitioning
  */
 
-#घोषणा KMSG_COMPONENT "xpram"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "xpram"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/प्रकार.स>  /* है_अंक, है_षष्ठादशक */
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/blkpg.h>
-#समावेश <linux/hdreg.h>  /* HDIO_GETGEO */
-#समावेश <linux/device.h>
-#समावेश <linux/bपन.स>
-#समावेश <linux/suspend.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/uaccess.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/ctype.h>  /* isdigit, isxdigit */
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/blkdev.h>
+#include <linux/blkpg.h>
+#include <linux/hdreg.h>  /* HDIO_GETGEO */
+#include <linux/device.h>
+#include <linux/bio.h>
+#include <linux/suspend.h>
+#include <linux/platform_device.h>
+#include <linux/gfp.h>
+#include <linux/uaccess.h>
 
-#घोषणा XPRAM_NAME	"xpram"
-#घोषणा XPRAM_DEVS	1	/* one partition */
-#घोषणा XPRAM_MAX_DEVS	32	/* maximal number of devices (partitions) */
+#define XPRAM_NAME	"xpram"
+#define XPRAM_DEVS	1	/* one partition */
+#define XPRAM_MAX_DEVS	32	/* maximal number of devices (partitions) */
 
-प्रकार काष्ठा अणु
-	अचिन्हित पूर्णांक	size;		/* size of xpram segment in pages */
-	अचिन्हित पूर्णांक	offset;		/* start page of xpram segment */
-पूर्ण xpram_device_t;
+typedef struct {
+	unsigned int	size;		/* size of xpram segment in pages */
+	unsigned int	offset;		/* start page of xpram segment */
+} xpram_device_t;
 
-अटल xpram_device_t xpram_devices[XPRAM_MAX_DEVS];
-अटल अचिन्हित पूर्णांक xpram_sizes[XPRAM_MAX_DEVS];
-अटल काष्ठा gendisk *xpram_disks[XPRAM_MAX_DEVS];
-अटल काष्ठा request_queue *xpram_queues[XPRAM_MAX_DEVS];
-अटल अचिन्हित पूर्णांक xpram_pages;
-अटल पूर्णांक xpram_devs;
+static xpram_device_t xpram_devices[XPRAM_MAX_DEVS];
+static unsigned int xpram_sizes[XPRAM_MAX_DEVS];
+static struct gendisk *xpram_disks[XPRAM_MAX_DEVS];
+static struct request_queue *xpram_queues[XPRAM_MAX_DEVS];
+static unsigned int xpram_pages;
+static int xpram_devs;
 
 /*
  * Parameter parsing functions.
  */
-अटल पूर्णांक devs = XPRAM_DEVS;
-अटल अक्षर *sizes[XPRAM_MAX_DEVS];
+static int devs = XPRAM_DEVS;
+static char *sizes[XPRAM_MAX_DEVS];
 
-module_param(devs, पूर्णांक, 0);
-module_param_array(sizes, अक्षरp, शून्य, 0);
+module_param(devs, int, 0);
+module_param_array(sizes, charp, NULL, 0);
 
 MODULE_PARM_DESC(devs, "number of devices (\"partitions\"), " \
 		 "the default is " __MODULE_STRING(XPRAM_DEVS) "\n");
@@ -80,160 +79,160 @@ MODULE_PARM_DESC(sizes, "list of device (partition) sizes " \
 MODULE_LICENSE("GPL");
 
 /*
- * Copy expanded memory page (4kB) पूर्णांकo मुख्य memory                  
+ * Copy expanded memory page (4kB) into main memory                  
  * Arguments                                                         
  *           page_addr:    address of target page                    
  *           xpage_index:  index of expandeded memory page           
  * Return value                                                      
- *           0:            अगर operation succeeds
- *           -EIO:         अगर pgin failed
- *           -ENXIO:       अगर xpram has vanished
+ *           0:            if operation succeeds
+ *           -EIO:         if pgin failed
+ *           -ENXIO:       if xpram has vanished
  */
-अटल पूर्णांक xpram_page_in (अचिन्हित दीर्घ page_addr, अचिन्हित पूर्णांक xpage_index)
-अणु
-	पूर्णांक cc = 2;	/* वापस unused cc 2 अगर pgin traps */
+static int xpram_page_in (unsigned long page_addr, unsigned int xpage_index)
+{
+	int cc = 2;	/* return unused cc 2 if pgin traps */
 
-	यंत्र अस्थिर(
+	asm volatile(
 		"	.insn	rre,0xb22e0000,%1,%2\n"  /* pgin %1,%2 */
 		"0:	ipm	%0\n"
 		"	srl	%0,28\n"
 		"1:\n"
 		EX_TABLE(0b,1b)
 		: "+d" (cc) : "a" (__pa(page_addr)), "d" (xpage_index) : "cc");
-	अगर (cc == 3)
-		वापस -ENXIO;
-	अगर (cc == 2)
-		वापस -ENXIO;
-	अगर (cc == 1)
-		वापस -EIO;
-	वापस 0;
-पूर्ण
+	if (cc == 3)
+		return -ENXIO;
+	if (cc == 2)
+		return -ENXIO;
+	if (cc == 1)
+		return -EIO;
+	return 0;
+}
 
 /*
- * Copy a 4kB page of मुख्य memory to an expanded memory page          
+ * Copy a 4kB page of main memory to an expanded memory page          
  * Arguments                                                          
  *           page_addr:    address of source page                     
  *           xpage_index:  index of expandeded memory page            
  * Return value                                                       
- *           0:            अगर operation succeeds
- *           -EIO:         अगर pgout failed
- *           -ENXIO:       अगर xpram has vanished
+ *           0:            if operation succeeds
+ *           -EIO:         if pgout failed
+ *           -ENXIO:       if xpram has vanished
  */
-अटल दीर्घ xpram_page_out (अचिन्हित दीर्घ page_addr, अचिन्हित पूर्णांक xpage_index)
-अणु
-	पूर्णांक cc = 2;	/* वापस unused cc 2 अगर pgin traps */
+static long xpram_page_out (unsigned long page_addr, unsigned int xpage_index)
+{
+	int cc = 2;	/* return unused cc 2 if pgin traps */
 
-	यंत्र अस्थिर(
+	asm volatile(
 		"	.insn	rre,0xb22f0000,%1,%2\n"  /* pgout %1,%2 */
 		"0:	ipm	%0\n"
 		"	srl	%0,28\n"
 		"1:\n"
 		EX_TABLE(0b,1b)
 		: "+d" (cc) : "a" (__pa(page_addr)), "d" (xpage_index) : "cc");
-	अगर (cc == 3)
-		वापस -ENXIO;
-	अगर (cc == 2)
-		वापस -ENXIO;
-	अगर (cc == 1)
-		वापस -EIO;
-	वापस 0;
-पूर्ण
+	if (cc == 3)
+		return -ENXIO;
+	if (cc == 2)
+		return -ENXIO;
+	if (cc == 1)
+		return -EIO;
+	return 0;
+}
 
 /*
- * Check अगर xpram is available.
+ * Check if xpram is available.
  */
-अटल पूर्णांक xpram_present(व्योम)
-अणु
-	अचिन्हित दीर्घ mem_page;
-	पूर्णांक rc;
+static int xpram_present(void)
+{
+	unsigned long mem_page;
+	int rc;
 
-	mem_page = (अचिन्हित दीर्घ) __get_मुक्त_page(GFP_KERNEL);
-	अगर (!mem_page)
-		वापस -ENOMEM;
+	mem_page = (unsigned long) __get_free_page(GFP_KERNEL);
+	if (!mem_page)
+		return -ENOMEM;
 	rc = xpram_page_in(mem_page, 0);
-	मुक्त_page(mem_page);
-	वापस rc ? -ENXIO : 0;
-पूर्ण
+	free_page(mem_page);
+	return rc ? -ENXIO : 0;
+}
 
 /*
  * Return index of the last available xpram page.
  */
-अटल अचिन्हित दीर्घ xpram_highest_page_index(व्योम)
-अणु
-	अचिन्हित पूर्णांक page_index, add_bit;
-	अचिन्हित दीर्घ mem_page;
+static unsigned long xpram_highest_page_index(void)
+{
+	unsigned int page_index, add_bit;
+	unsigned long mem_page;
 
-	mem_page = (अचिन्हित दीर्घ) __get_मुक्त_page(GFP_KERNEL);
-	अगर (!mem_page)
-		वापस 0;
+	mem_page = (unsigned long) __get_free_page(GFP_KERNEL);
+	if (!mem_page)
+		return 0;
 
 	page_index = 0;
-	add_bit = 1ULL << (माप(अचिन्हित पूर्णांक)*8 - 1);
-	जबतक (add_bit > 0) अणु
-		अगर (xpram_page_in(mem_page, page_index | add_bit) == 0)
+	add_bit = 1ULL << (sizeof(unsigned int)*8 - 1);
+	while (add_bit > 0) {
+		if (xpram_page_in(mem_page, page_index | add_bit) == 0)
 			page_index |= add_bit;
 		add_bit >>= 1;
-	पूर्ण
+	}
 
-	मुक्त_page (mem_page);
+	free_page (mem_page);
 
-	वापस page_index;
-पूर्ण
+	return page_index;
+}
 
 /*
  * Block device make request function.
  */
-अटल blk_qc_t xpram_submit_bio(काष्ठा bio *bio)
-अणु
-	xpram_device_t *xdev = bio->bi_bdev->bd_disk->निजी_data;
-	काष्ठा bio_vec bvec;
-	काष्ठा bvec_iter iter;
-	अचिन्हित पूर्णांक index;
-	अचिन्हित दीर्घ page_addr;
-	अचिन्हित दीर्घ bytes;
+static blk_qc_t xpram_submit_bio(struct bio *bio)
+{
+	xpram_device_t *xdev = bio->bi_bdev->bd_disk->private_data;
+	struct bio_vec bvec;
+	struct bvec_iter iter;
+	unsigned int index;
+	unsigned long page_addr;
+	unsigned long bytes;
 
 	blk_queue_split(&bio);
 
-	अगर ((bio->bi_iter.bi_sector & 7) != 0 ||
+	if ((bio->bi_iter.bi_sector & 7) != 0 ||
 	    (bio->bi_iter.bi_size & 4095) != 0)
 		/* Request is not page-aligned. */
-		जाओ fail;
-	अगर ((bio->bi_iter.bi_size >> 12) > xdev->size)
+		goto fail;
+	if ((bio->bi_iter.bi_size >> 12) > xdev->size)
 		/* Request size is no page-aligned. */
-		जाओ fail;
-	अगर ((bio->bi_iter.bi_sector >> 3) > 0xffffffffU - xdev->offset)
-		जाओ fail;
+		goto fail;
+	if ((bio->bi_iter.bi_sector >> 3) > 0xffffffffU - xdev->offset)
+		goto fail;
 	index = (bio->bi_iter.bi_sector >> 3) + xdev->offset;
-	bio_क्रम_each_segment(bvec, bio, iter) अणु
-		page_addr = (अचिन्हित दीर्घ)
+	bio_for_each_segment(bvec, bio, iter) {
+		page_addr = (unsigned long)
 			kmap(bvec.bv_page) + bvec.bv_offset;
 		bytes = bvec.bv_len;
-		अगर ((page_addr & 4095) != 0 || (bytes & 4095) != 0)
+		if ((page_addr & 4095) != 0 || (bytes & 4095) != 0)
 			/* More paranoia. */
-			जाओ fail;
-		जबतक (bytes > 0) अणु
-			अगर (bio_data_dir(bio) == READ) अणु
-				अगर (xpram_page_in(page_addr, index) != 0)
-					जाओ fail;
-			पूर्ण अन्यथा अणु
-				अगर (xpram_page_out(page_addr, index) != 0)
-					जाओ fail;
-			पूर्ण
+			goto fail;
+		while (bytes > 0) {
+			if (bio_data_dir(bio) == READ) {
+				if (xpram_page_in(page_addr, index) != 0)
+					goto fail;
+			} else {
+				if (xpram_page_out(page_addr, index) != 0)
+					goto fail;
+			}
 			page_addr += 4096;
 			bytes -= 4096;
 			index++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	bio_endio(bio);
-	वापस BLK_QC_T_NONE;
+	return BLK_QC_T_NONE;
 fail:
 	bio_io_error(bio);
-	वापस BLK_QC_T_NONE;
-पूर्ण
+	return BLK_QC_T_NONE;
+}
 
-अटल पूर्णांक xpram_getgeo(काष्ठा block_device *bdev, काष्ठा hd_geometry *geo)
-अणु
-	अचिन्हित दीर्घ size;
+static int xpram_getgeo(struct block_device *bdev, struct hd_geometry *geo)
+{
+	unsigned long size;
 
 	/*
 	 * get geometry: we have to fake one...  trim the size to a
@@ -245,33 +244,33 @@ fail:
 	geo->heads = 4;
 	geo->sectors = 16;
 	geo->start = 4;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा block_device_operations xpram_devops =
-अणु
+static const struct block_device_operations xpram_devops =
+{
 	.owner	= THIS_MODULE,
 	.submit_bio = xpram_submit_bio,
 	.getgeo	= xpram_getgeo,
-पूर्ण;
+};
 
 /*
  * Setup xpram_sizes array.
  */
-अटल पूर्णांक __init xpram_setup_sizes(अचिन्हित दीर्घ pages)
-अणु
-	अचिन्हित दीर्घ mem_needed;
-	अचिन्हित दीर्घ mem_स्वतः;
-	अचिन्हित दीर्घ दीर्घ size;
-	अक्षर *sizes_end;
-	पूर्णांक mem_स्वतः_no;
-	पूर्णांक i;
+static int __init xpram_setup_sizes(unsigned long pages)
+{
+	unsigned long mem_needed;
+	unsigned long mem_auto;
+	unsigned long long size;
+	char *sizes_end;
+	int mem_auto_no;
+	int i;
 
 	/* Check number of devices. */
-	अगर (devs <= 0 || devs > XPRAM_MAX_DEVS) अणु
+	if (devs <= 0 || devs > XPRAM_MAX_DEVS) {
 		pr_err("%d is not a valid number of XPRAM devices\n",devs);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	xpram_devs = devs;
 
 	/*
@@ -279,95 +278,95 @@ fail:
 	 * sizes to page boundary.
 	 */
 	mem_needed = 0;
-	mem_स्वतः_no = 0;
-	क्रम (i = 0; i < xpram_devs; i++) अणु
-		अगर (sizes[i]) अणु
-			size = simple_म_से_अदीर्घl(sizes[i], &sizes_end, 0);
-			चयन (*sizes_end) अणु
-			हाल 'g':
-			हाल 'G':
+	mem_auto_no = 0;
+	for (i = 0; i < xpram_devs; i++) {
+		if (sizes[i]) {
+			size = simple_strtoull(sizes[i], &sizes_end, 0);
+			switch (*sizes_end) {
+			case 'g':
+			case 'G':
 				size <<= 20;
-				अवरोध;
-			हाल 'm':
-			हाल 'M':
+				break;
+			case 'm':
+			case 'M':
 				size <<= 10;
-			पूर्ण
+			}
 			xpram_sizes[i] = (size + 3) & -4UL;
-		पूर्ण
-		अगर (xpram_sizes[i])
+		}
+		if (xpram_sizes[i])
 			mem_needed += xpram_sizes[i];
-		अन्यथा
-			mem_स्वतः_no++;
-	पूर्ण
+		else
+			mem_auto_no++;
+	}
 	
 	pr_info("  number of devices (partitions): %d \n", xpram_devs);
-	क्रम (i = 0; i < xpram_devs; i++) अणु
-		अगर (xpram_sizes[i])
+	for (i = 0; i < xpram_devs; i++) {
+		if (xpram_sizes[i])
 			pr_info("  size of partition %d: %u kB\n",
 				i, xpram_sizes[i]);
-		अन्यथा
+		else
 			pr_info("  size of partition %d to be set "
 				"automatically\n",i);
-	पूर्ण
+	}
 	pr_info("  memory needed (for sized partitions): %lu kB\n",
 		mem_needed);
 	pr_info("  partitions to be sized automatically: %d\n",
-		mem_स्वतः_no);
+		mem_auto_no);
 
-	अगर (mem_needed > pages * 4) अणु
+	if (mem_needed > pages * 4) {
 		pr_err("Not enough expanded memory available\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
 	 * partitioning:
 	 * xpram_sizes[i] != 0; partition i has size xpram_sizes[i] kB
-	 * अन्यथा:             ; all partitions with zero xpram_sizes[i]
-	 *                     partition equally the reमुख्यing space
+	 * else:             ; all partitions with zero xpram_sizes[i]
+	 *                     partition equally the remaining space
 	 */
-	अगर (mem_स्वतः_no) अणु
-		mem_स्वतः = ((pages - mem_needed / 4) / mem_स्वतः_no) * 4;
+	if (mem_auto_no) {
+		mem_auto = ((pages - mem_needed / 4) / mem_auto_no) * 4;
 		pr_info("  automatically determined "
-			"partition size: %lu kB\n", mem_स्वतः);
-		क्रम (i = 0; i < xpram_devs; i++)
-			अगर (xpram_sizes[i] == 0)
-				xpram_sizes[i] = mem_स्वतः;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			"partition size: %lu kB\n", mem_auto);
+		for (i = 0; i < xpram_devs; i++)
+			if (xpram_sizes[i] == 0)
+				xpram_sizes[i] = mem_auto;
+	}
+	return 0;
+}
 
-अटल पूर्णांक __init xpram_setup_blkdev(व्योम)
-अणु
-	अचिन्हित दीर्घ offset;
-	पूर्णांक i, rc = -ENOMEM;
+static int __init xpram_setup_blkdev(void)
+{
+	unsigned long offset;
+	int i, rc = -ENOMEM;
 
-	क्रम (i = 0; i < xpram_devs; i++) अणु
+	for (i = 0; i < xpram_devs; i++) {
 		xpram_disks[i] = alloc_disk(1);
-		अगर (!xpram_disks[i])
-			जाओ out;
+		if (!xpram_disks[i])
+			goto out;
 		xpram_queues[i] = blk_alloc_queue(NUMA_NO_NODE);
-		अगर (!xpram_queues[i]) अणु
+		if (!xpram_queues[i]) {
 			put_disk(xpram_disks[i]);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		blk_queue_flag_set(QUEUE_FLAG_NONROT, xpram_queues[i]);
 		blk_queue_flag_clear(QUEUE_FLAG_ADD_RANDOM, xpram_queues[i]);
 		blk_queue_logical_block_size(xpram_queues[i], 4096);
-	पूर्ण
+	}
 
 	/*
 	 * Register xpram major.
 	 */
-	rc = रेजिस्टर_blkdev(XPRAM_MAJOR, XPRAM_NAME);
-	अगर (rc < 0)
-		जाओ out;
+	rc = register_blkdev(XPRAM_MAJOR, XPRAM_NAME);
+	if (rc < 0)
+		goto out;
 
 	/*
-	 * Setup device काष्ठाures.
+	 * Setup device structures.
 	 */
 	offset = 0;
-	क्रम (i = 0; i < xpram_devs; i++) अणु
-		काष्ठा gendisk *disk = xpram_disks[i];
+	for (i = 0; i < xpram_devs; i++) {
+		struct gendisk *disk = xpram_disks[i];
 
 		xpram_devices[i].size = xpram_sizes[i] / 4;
 		xpram_devices[i].offset = offset;
@@ -375,108 +374,108 @@ fail:
 		disk->major = XPRAM_MAJOR;
 		disk->first_minor = i;
 		disk->fops = &xpram_devops;
-		disk->निजी_data = &xpram_devices[i];
+		disk->private_data = &xpram_devices[i];
 		disk->queue = xpram_queues[i];
-		प्र_लिखो(disk->disk_name, "slram%d", i);
+		sprintf(disk->disk_name, "slram%d", i);
 		set_capacity(disk, xpram_sizes[i] << 1);
 		add_disk(disk);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 out:
-	जबतक (i--) अणु
+	while (i--) {
 		blk_cleanup_queue(xpram_queues[i]);
 		put_disk(xpram_disks[i]);
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
 /*
- * Resume failed: Prपूर्णांक error message and call panic.
+ * Resume failed: Print error message and call panic.
  */
-अटल व्योम xpram_resume_error(स्थिर अक्षर *message)
-अणु
+static void xpram_resume_error(const char *message)
+{
 	pr_err("Resuming the system failed: %s\n", message);
 	panic("xpram resume error\n");
-पूर्ण
+}
 
 /*
- * Check अगर xpram setup changed between suspend and resume.
+ * Check if xpram setup changed between suspend and resume.
  */
-अटल पूर्णांक xpram_restore(काष्ठा device *dev)
-अणु
-	अगर (!xpram_pages)
-		वापस 0;
-	अगर (xpram_present() != 0)
+static int xpram_restore(struct device *dev)
+{
+	if (!xpram_pages)
+		return 0;
+	if (xpram_present() != 0)
 		xpram_resume_error("xpram disappeared");
-	अगर (xpram_pages != xpram_highest_page_index() + 1)
+	if (xpram_pages != xpram_highest_page_index() + 1)
 		xpram_resume_error("Size of xpram changed");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops xpram_pm_ops = अणु
+static const struct dev_pm_ops xpram_pm_ops = {
 	.restore	= xpram_restore,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_driver xpram_pdrv = अणु
-	.driver = अणु
+static struct platform_driver xpram_pdrv = {
+	.driver = {
 		.name	= XPRAM_NAME,
 		.pm	= &xpram_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device *xpram_pdev;
+static struct platform_device *xpram_pdev;
 
 /*
- * Finally, the init/निकास functions.
+ * Finally, the init/exit functions.
  */
-अटल व्योम __निकास xpram_निकास(व्योम)
-अणु
-	पूर्णांक i;
-	क्रम (i = 0; i < xpram_devs; i++) अणु
+static void __exit xpram_exit(void)
+{
+	int i;
+	for (i = 0; i < xpram_devs; i++) {
 		del_gendisk(xpram_disks[i]);
 		blk_cleanup_queue(xpram_queues[i]);
 		put_disk(xpram_disks[i]);
-	पूर्ण
-	unरेजिस्टर_blkdev(XPRAM_MAJOR, XPRAM_NAME);
-	platक्रमm_device_unरेजिस्टर(xpram_pdev);
-	platक्रमm_driver_unरेजिस्टर(&xpram_pdrv);
-पूर्ण
+	}
+	unregister_blkdev(XPRAM_MAJOR, XPRAM_NAME);
+	platform_device_unregister(xpram_pdev);
+	platform_driver_unregister(&xpram_pdrv);
+}
 
-अटल पूर्णांक __init xpram_init(व्योम)
-अणु
-	पूर्णांक rc;
+static int __init xpram_init(void)
+{
+	int rc;
 
 	/* Find out size of expanded memory. */
-	अगर (xpram_present() != 0) अणु
+	if (xpram_present() != 0) {
 		pr_err("No expanded memory available\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	xpram_pages = xpram_highest_page_index() + 1;
 	pr_info("  %u pages expanded memory found (%lu KB).\n",
-		xpram_pages, (अचिन्हित दीर्घ) xpram_pages*4);
+		xpram_pages, (unsigned long) xpram_pages*4);
 	rc = xpram_setup_sizes(xpram_pages);
-	अगर (rc)
-		वापस rc;
-	rc = platक्रमm_driver_रेजिस्टर(&xpram_pdrv);
-	अगर (rc)
-		वापस rc;
-	xpram_pdev = platक्रमm_device_रेजिस्टर_simple(XPRAM_NAME, -1, शून्य, 0);
-	अगर (IS_ERR(xpram_pdev)) अणु
+	if (rc)
+		return rc;
+	rc = platform_driver_register(&xpram_pdrv);
+	if (rc)
+		return rc;
+	xpram_pdev = platform_device_register_simple(XPRAM_NAME, -1, NULL, 0);
+	if (IS_ERR(xpram_pdev)) {
 		rc = PTR_ERR(xpram_pdev);
-		जाओ fail_platक्रमm_driver_unरेजिस्टर;
-	पूर्ण
+		goto fail_platform_driver_unregister;
+	}
 	rc = xpram_setup_blkdev();
-	अगर (rc)
-		जाओ fail_platक्रमm_device_unरेजिस्टर;
-	वापस 0;
+	if (rc)
+		goto fail_platform_device_unregister;
+	return 0;
 
-fail_platक्रमm_device_unरेजिस्टर:
-	platक्रमm_device_unरेजिस्टर(xpram_pdev);
-fail_platक्रमm_driver_unरेजिस्टर:
-	platक्रमm_driver_unरेजिस्टर(&xpram_pdrv);
-	वापस rc;
-पूर्ण
+fail_platform_device_unregister:
+	platform_device_unregister(xpram_pdev);
+fail_platform_driver_unregister:
+	platform_driver_unregister(&xpram_pdrv);
+	return rc;
+}
 
 module_init(xpram_init);
-module_निकास(xpram_निकास);
+module_exit(xpram_exit);

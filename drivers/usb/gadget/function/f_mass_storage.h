@@ -1,37 +1,36 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित USB_F_MASS_STORAGE_H
-#घोषणा USB_F_MASS_STORAGE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef USB_F_MASS_STORAGE_H
+#define USB_F_MASS_STORAGE_H
 
-#समावेश <linux/usb/composite.h>
-#समावेश "storage_common.h"
+#include <linux/usb/composite.h>
+#include "storage_common.h"
 
-काष्ठा fsg_module_parameters अणु
-	अक्षर		*file[FSG_MAX_LUNS];
+struct fsg_module_parameters {
+	char		*file[FSG_MAX_LUNS];
 	bool		ro[FSG_MAX_LUNS];
 	bool		removable[FSG_MAX_LUNS];
 	bool		cdrom[FSG_MAX_LUNS];
 	bool		nofua[FSG_MAX_LUNS];
 
-	अचिन्हित पूर्णांक	file_count, ro_count, removable_count, cdrom_count;
-	अचिन्हित पूर्णांक	nofua_count;
-	अचिन्हित पूर्णांक	luns;	/* nluns */
+	unsigned int	file_count, ro_count, removable_count, cdrom_count;
+	unsigned int	nofua_count;
+	unsigned int	luns;	/* nluns */
 	bool		stall;	/* can_stall */
-पूर्ण;
+};
 
-#घोषणा _FSG_MODULE_PARAM_ARRAY(prefix, params, name, type, desc)	\
+#define _FSG_MODULE_PARAM_ARRAY(prefix, params, name, type, desc)	\
 	module_param_array_named(prefix ## name, params.name, type,	\
 				 &prefix ## params.name ## _count,	\
 				 S_IRUGO);				\
 	MODULE_PARM_DESC(prefix ## name, desc)
 
-#घोषणा _FSG_MODULE_PARAM(prefix, params, name, type, desc)		\
+#define _FSG_MODULE_PARAM(prefix, params, name, type, desc)		\
 	module_param_named(prefix ## name, params.name, type,		\
 			   S_IRUGO);					\
 	MODULE_PARM_DESC(prefix ## name, desc)
 
-#घोषणा __FSG_MODULE_PARAMETERS(prefix, params)				\
-	_FSG_MODULE_PARAM_ARRAY(prefix, params, file, अक्षरp,		\
+#define __FSG_MODULE_PARAMETERS(prefix, params)				\
+	_FSG_MODULE_PARAM_ARRAY(prefix, params, file, charp,		\
 				"names of backing files or devices");	\
 	_FSG_MODULE_PARAM_ARRAY(prefix, params, ro, bool,		\
 				"true to force read-only");		\
@@ -41,105 +40,105 @@
 				"true to simulate CD-ROM instead of disk"); \
 	_FSG_MODULE_PARAM_ARRAY(prefix, params, nofua, bool,		\
 				"true to ignore SCSI WRITE(10,12) FUA bit"); \
-	_FSG_MODULE_PARAM(prefix, params, luns, uपूर्णांक,			\
+	_FSG_MODULE_PARAM(prefix, params, luns, uint,			\
 			  "number of LUNs");				\
 	_FSG_MODULE_PARAM(prefix, params, stall, bool,			\
 			  "false to prevent bulk stalls")
 
-#अगर_घोषित CONFIG_USB_GADGET_DEBUG_खाताS
+#ifdef CONFIG_USB_GADGET_DEBUG_FILES
 
-#घोषणा FSG_MODULE_PARAMETERS(prefix, params)				\
+#define FSG_MODULE_PARAMETERS(prefix, params)				\
 	__FSG_MODULE_PARAMETERS(prefix, params);			\
-	module_param_named(num_buffers, fsg_num_buffers, uपूर्णांक, S_IRUGO);\
+	module_param_named(num_buffers, fsg_num_buffers, uint, S_IRUGO);\
 	MODULE_PARM_DESC(num_buffers, "Number of pipeline buffers")
-#अन्यथा
+#else
 
-#घोषणा FSG_MODULE_PARAMETERS(prefix, params)				\
+#define FSG_MODULE_PARAMETERS(prefix, params)				\
 	__FSG_MODULE_PARAMETERS(prefix, params)
 
-#पूर्ण_अगर
+#endif
 
-काष्ठा fsg_common;
+struct fsg_common;
 
 /* FSF callback functions */
-काष्ठा fsg_lun_opts अणु
-	काष्ठा config_group group;
-	काष्ठा fsg_lun *lun;
-	पूर्णांक lun_id;
-पूर्ण;
+struct fsg_lun_opts {
+	struct config_group group;
+	struct fsg_lun *lun;
+	int lun_id;
+};
 
-काष्ठा fsg_opts अणु
-	काष्ठा fsg_common *common;
-	काष्ठा usb_function_instance func_inst;
-	काष्ठा fsg_lun_opts lun0;
-	काष्ठा config_group *शेष_groups[2];
-	bool no_configfs; /* क्रम legacy gadमाला_लो */
+struct fsg_opts {
+	struct fsg_common *common;
+	struct usb_function_instance func_inst;
+	struct fsg_lun_opts lun0;
+	struct config_group *default_groups[2];
+	bool no_configfs; /* for legacy gadgets */
 
 	/*
-	 * Read/ग_लिखो access to configfs attributes is handled by configfs.
+	 * Read/write access to configfs attributes is handled by configfs.
 	 *
-	 * This is to protect the data from concurrent access by पढ़ो/ग_लिखो
-	 * and create symlink/हटाओ symlink.
+	 * This is to protect the data from concurrent access by read/write
+	 * and create symlink/remove symlink.
 	 */
-	काष्ठा mutex			lock;
-	पूर्णांक				refcnt;
-पूर्ण;
+	struct mutex			lock;
+	int				refcnt;
+};
 
-काष्ठा fsg_lun_config अणु
-	स्थिर अक्षर *filename;
-	अक्षर ro;
-	अक्षर removable;
-	अक्षर cdrom;
-	अक्षर nofua;
-	अक्षर inquiry_string[INQUIRY_STRING_LEN];
-पूर्ण;
+struct fsg_lun_config {
+	const char *filename;
+	char ro;
+	char removable;
+	char cdrom;
+	char nofua;
+	char inquiry_string[INQUIRY_STRING_LEN];
+};
 
-काष्ठा fsg_config अणु
-	अचिन्हित nluns;
-	काष्ठा fsg_lun_config luns[FSG_MAX_LUNS];
+struct fsg_config {
+	unsigned nluns;
+	struct fsg_lun_config luns[FSG_MAX_LUNS];
 
 	/* Callback functions. */
-	स्थिर काष्ठा fsg_operations	*ops;
-	/* Gadget's निजी data. */
-	व्योम			*निजी_data;
+	const struct fsg_operations	*ops;
+	/* Gadget's private data. */
+	void			*private_data;
 
-	स्थिर अक्षर *venकरोr_name;		/*  8 अक्षरacters or less */
-	स्थिर अक्षर *product_name;		/* 16 अक्षरacters or less */
+	const char *vendor_name;		/*  8 characters or less */
+	const char *product_name;		/* 16 characters or less */
 
-	अक्षर			can_stall;
-	अचिन्हित पूर्णांक		fsg_num_buffers;
-पूर्ण;
+	char			can_stall;
+	unsigned int		fsg_num_buffers;
+};
 
-अटल अंतरभूत काष्ठा fsg_opts *
-fsg_opts_from_func_inst(स्थिर काष्ठा usb_function_instance *fi)
-अणु
-	वापस container_of(fi, काष्ठा fsg_opts, func_inst);
-पूर्ण
+static inline struct fsg_opts *
+fsg_opts_from_func_inst(const struct usb_function_instance *fi)
+{
+	return container_of(fi, struct fsg_opts, func_inst);
+}
 
-व्योम fsg_common_set_sysfs(काष्ठा fsg_common *common, bool sysfs);
+void fsg_common_set_sysfs(struct fsg_common *common, bool sysfs);
 
-पूर्णांक fsg_common_set_num_buffers(काष्ठा fsg_common *common, अचिन्हित पूर्णांक n);
+int fsg_common_set_num_buffers(struct fsg_common *common, unsigned int n);
 
-व्योम fsg_common_मुक्त_buffers(काष्ठा fsg_common *common);
+void fsg_common_free_buffers(struct fsg_common *common);
 
-पूर्णांक fsg_common_set_cdev(काष्ठा fsg_common *common,
-			काष्ठा usb_composite_dev *cdev, bool can_stall);
+int fsg_common_set_cdev(struct fsg_common *common,
+			struct usb_composite_dev *cdev, bool can_stall);
 
-व्योम fsg_common_हटाओ_lun(काष्ठा fsg_lun *lun);
+void fsg_common_remove_lun(struct fsg_lun *lun);
 
-व्योम fsg_common_हटाओ_luns(काष्ठा fsg_common *common);
+void fsg_common_remove_luns(struct fsg_common *common);
 
-पूर्णांक fsg_common_create_lun(काष्ठा fsg_common *common, काष्ठा fsg_lun_config *cfg,
-			  अचिन्हित पूर्णांक id, स्थिर अक्षर *name,
-			  स्थिर अक्षर **name_pfx);
+int fsg_common_create_lun(struct fsg_common *common, struct fsg_lun_config *cfg,
+			  unsigned int id, const char *name,
+			  const char **name_pfx);
 
-पूर्णांक fsg_common_create_luns(काष्ठा fsg_common *common, काष्ठा fsg_config *cfg);
+int fsg_common_create_luns(struct fsg_common *common, struct fsg_config *cfg);
 
-व्योम fsg_common_set_inquiry_string(काष्ठा fsg_common *common, स्थिर अक्षर *vn,
-				   स्थिर अक्षर *pn);
+void fsg_common_set_inquiry_string(struct fsg_common *common, const char *vn,
+				   const char *pn);
 
-व्योम fsg_config_from_params(काष्ठा fsg_config *cfg,
-			    स्थिर काष्ठा fsg_module_parameters *params,
-			    अचिन्हित पूर्णांक fsg_num_buffers);
+void fsg_config_from_params(struct fsg_config *cfg,
+			    const struct fsg_module_parameters *params,
+			    unsigned int fsg_num_buffers);
 
-#पूर्ण_अगर /* USB_F_MASS_STORAGE_H */
+#endif /* USB_F_MASS_STORAGE_H */

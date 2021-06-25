@@ -1,193 +1,192 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * TI CDCE706 programmable 3-PLL घड़ी synthesizer driver
+ * TI CDCE706 programmable 3-PLL clock synthesizer driver
  *
  * Copyright (c) 2014 Cadence Design Systems Inc.
  *
  * Reference: https://www.ti.com/lit/ds/symlink/cdce706.pdf
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/rational.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include <linux/delay.h>
+#include <linux/i2c.h>
+#include <linux/interrupt.h>
+#include <linux/mod_devicetable.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/rational.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
 
-#घोषणा CDCE706_CLKIN_CLOCK		10
-#घोषणा CDCE706_CLKIN_SOURCE		11
-#घोषणा CDCE706_PLL_M_LOW(pll)		(1 + 3 * (pll))
-#घोषणा CDCE706_PLL_N_LOW(pll)		(2 + 3 * (pll))
-#घोषणा CDCE706_PLL_HI(pll)		(3 + 3 * (pll))
-#घोषणा CDCE706_PLL_MUX			3
-#घोषणा CDCE706_PLL_FVCO		6
-#घोषणा CDCE706_DIVIDER(भाग)		(13 + (भाग))
-#घोषणा CDCE706_CLKOUT(out)		(19 + (out))
+#define CDCE706_CLKIN_CLOCK		10
+#define CDCE706_CLKIN_SOURCE		11
+#define CDCE706_PLL_M_LOW(pll)		(1 + 3 * (pll))
+#define CDCE706_PLL_N_LOW(pll)		(2 + 3 * (pll))
+#define CDCE706_PLL_HI(pll)		(3 + 3 * (pll))
+#define CDCE706_PLL_MUX			3
+#define CDCE706_PLL_FVCO		6
+#define CDCE706_DIVIDER(div)		(13 + (div))
+#define CDCE706_CLKOUT(out)		(19 + (out))
 
-#घोषणा CDCE706_CLKIN_CLOCK_MASK	0x10
-#घोषणा CDCE706_CLKIN_SOURCE_SHIFT	6
-#घोषणा CDCE706_CLKIN_SOURCE_MASK	0xc0
-#घोषणा CDCE706_CLKIN_SOURCE_LVCMOS	0x40
+#define CDCE706_CLKIN_CLOCK_MASK	0x10
+#define CDCE706_CLKIN_SOURCE_SHIFT	6
+#define CDCE706_CLKIN_SOURCE_MASK	0xc0
+#define CDCE706_CLKIN_SOURCE_LVCMOS	0x40
 
-#घोषणा CDCE706_PLL_MUX_MASK(pll)	(0x80 >> (pll))
-#घोषणा CDCE706_PLL_LOW_M_MASK		0xff
-#घोषणा CDCE706_PLL_LOW_N_MASK		0xff
-#घोषणा CDCE706_PLL_HI_M_MASK		0x1
-#घोषणा CDCE706_PLL_HI_N_MASK		0x1e
-#घोषणा CDCE706_PLL_HI_N_SHIFT		1
-#घोषणा CDCE706_PLL_M_MAX		0x1ff
-#घोषणा CDCE706_PLL_N_MAX		0xfff
-#घोषणा CDCE706_PLL_FVCO_MASK(pll)	(0x80 >> (pll))
-#घोषणा CDCE706_PLL_FREQ_MIN		 80000000
-#घोषणा CDCE706_PLL_FREQ_MAX		300000000
-#घोषणा CDCE706_PLL_FREQ_HI		180000000
+#define CDCE706_PLL_MUX_MASK(pll)	(0x80 >> (pll))
+#define CDCE706_PLL_LOW_M_MASK		0xff
+#define CDCE706_PLL_LOW_N_MASK		0xff
+#define CDCE706_PLL_HI_M_MASK		0x1
+#define CDCE706_PLL_HI_N_MASK		0x1e
+#define CDCE706_PLL_HI_N_SHIFT		1
+#define CDCE706_PLL_M_MAX		0x1ff
+#define CDCE706_PLL_N_MAX		0xfff
+#define CDCE706_PLL_FVCO_MASK(pll)	(0x80 >> (pll))
+#define CDCE706_PLL_FREQ_MIN		 80000000
+#define CDCE706_PLL_FREQ_MAX		300000000
+#define CDCE706_PLL_FREQ_HI		180000000
 
-#घोषणा CDCE706_DIVIDER_PLL(भाग)	(9 + (भाग) - ((भाग) > 2) - ((भाग) > 4))
-#घोषणा CDCE706_DIVIDER_PLL_SHIFT(भाग)	((भाग) < 2 ? 5 : 3 * ((भाग) & 1))
-#घोषणा CDCE706_DIVIDER_PLL_MASK(भाग)	(0x7 << CDCE706_DIVIDER_PLL_SHIFT(भाग))
-#घोषणा CDCE706_DIVIDER_DIVIDER_MASK	0x7f
-#घोषणा CDCE706_DIVIDER_DIVIDER_MAX	0x7f
+#define CDCE706_DIVIDER_PLL(div)	(9 + (div) - ((div) > 2) - ((div) > 4))
+#define CDCE706_DIVIDER_PLL_SHIFT(div)	((div) < 2 ? 5 : 3 * ((div) & 1))
+#define CDCE706_DIVIDER_PLL_MASK(div)	(0x7 << CDCE706_DIVIDER_PLL_SHIFT(div))
+#define CDCE706_DIVIDER_DIVIDER_MASK	0x7f
+#define CDCE706_DIVIDER_DIVIDER_MAX	0x7f
 
-#घोषणा CDCE706_CLKOUT_DIVIDER_MASK	0x7
-#घोषणा CDCE706_CLKOUT_ENABLE_MASK	0x8
+#define CDCE706_CLKOUT_DIVIDER_MASK	0x7
+#define CDCE706_CLKOUT_ENABLE_MASK	0x8
 
-अटल स्थिर काष्ठा regmap_config cdce706_regmap_config = अणु
+static const struct regmap_config cdce706_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
-	.val_क्रमmat_endian = REGMAP_ENDIAN_NATIVE,
-पूर्ण;
+	.val_format_endian = REGMAP_ENDIAN_NATIVE,
+};
 
-#घोषणा to_hw_data(phw) (container_of((phw), काष्ठा cdce706_hw_data, hw))
+#define to_hw_data(phw) (container_of((phw), struct cdce706_hw_data, hw))
 
-काष्ठा cdce706_hw_data अणु
-	काष्ठा cdce706_dev_data *dev_data;
-	अचिन्हित idx;
-	अचिन्हित parent;
-	काष्ठा clk_hw hw;
-	अचिन्हित भाग;
-	अचिन्हित mul;
-	अचिन्हित mux;
-पूर्ण;
+struct cdce706_hw_data {
+	struct cdce706_dev_data *dev_data;
+	unsigned idx;
+	unsigned parent;
+	struct clk_hw hw;
+	unsigned div;
+	unsigned mul;
+	unsigned mux;
+};
 
-काष्ठा cdce706_dev_data अणु
-	काष्ठा i2c_client *client;
-	काष्ठा regmap *regmap;
-	काष्ठा clk *clkin_clk[2];
-	स्थिर अक्षर *clkin_name[2];
-	काष्ठा cdce706_hw_data clkin[1];
-	काष्ठा cdce706_hw_data pll[3];
-	काष्ठा cdce706_hw_data भागider[6];
-	काष्ठा cdce706_hw_data clkout[6];
-पूर्ण;
+struct cdce706_dev_data {
+	struct i2c_client *client;
+	struct regmap *regmap;
+	struct clk *clkin_clk[2];
+	const char *clkin_name[2];
+	struct cdce706_hw_data clkin[1];
+	struct cdce706_hw_data pll[3];
+	struct cdce706_hw_data divider[6];
+	struct cdce706_hw_data clkout[6];
+};
 
-अटल स्थिर अक्षर * स्थिर cdce706_source_name[] = अणु
+static const char * const cdce706_source_name[] = {
 	"clk_in0", "clk_in1",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cdce706_clkin_name[] = अणु
+static const char * const cdce706_clkin_name[] = {
 	"clk_in",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cdce706_pll_name[] = अणु
+static const char * const cdce706_pll_name[] = {
 	"pll1", "pll2", "pll3",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cdce706_भागider_parent_name[] = अणु
+static const char * const cdce706_divider_parent_name[] = {
 	"clk_in", "pll1", "pll2", "pll2", "pll3",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *cdce706_भागider_name[] = अणु
+static const char *cdce706_divider_name[] = {
 	"p0", "p1", "p2", "p3", "p4", "p5",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cdce706_clkout_name[] = अणु
+static const char * const cdce706_clkout_name[] = {
 	"clk_out0", "clk_out1", "clk_out2", "clk_out3", "clk_out4", "clk_out5",
-पूर्ण;
+};
 
-अटल पूर्णांक cdce706_reg_पढ़ो(काष्ठा cdce706_dev_data *dev_data, अचिन्हित reg,
-			    अचिन्हित *val)
-अणु
-	पूर्णांक rc = regmap_पढ़ो(dev_data->regmap, reg | 0x80, val);
+static int cdce706_reg_read(struct cdce706_dev_data *dev_data, unsigned reg,
+			    unsigned *val)
+{
+	int rc = regmap_read(dev_data->regmap, reg | 0x80, val);
 
-	अगर (rc < 0)
+	if (rc < 0)
 		dev_err(&dev_data->client->dev, "error reading reg %u", reg);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक cdce706_reg_ग_लिखो(काष्ठा cdce706_dev_data *dev_data, अचिन्हित reg,
-			     अचिन्हित val)
-अणु
-	पूर्णांक rc = regmap_ग_लिखो(dev_data->regmap, reg | 0x80, val);
+static int cdce706_reg_write(struct cdce706_dev_data *dev_data, unsigned reg,
+			     unsigned val)
+{
+	int rc = regmap_write(dev_data->regmap, reg | 0x80, val);
 
-	अगर (rc < 0)
+	if (rc < 0)
 		dev_err(&dev_data->client->dev, "error writing reg %u", reg);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक cdce706_reg_update(काष्ठा cdce706_dev_data *dev_data, अचिन्हित reg,
-			      अचिन्हित mask, अचिन्हित val)
-अणु
-	पूर्णांक rc = regmap_update_bits(dev_data->regmap, reg | 0x80, mask, val);
+static int cdce706_reg_update(struct cdce706_dev_data *dev_data, unsigned reg,
+			      unsigned mask, unsigned val)
+{
+	int rc = regmap_update_bits(dev_data->regmap, reg | 0x80, mask, val);
 
-	अगर (rc < 0)
+	if (rc < 0)
 		dev_err(&dev_data->client->dev, "error updating reg %u", reg);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक cdce706_clkin_set_parent(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा cdce706_hw_data *hwd = to_hw_data(hw);
+static int cdce706_clkin_set_parent(struct clk_hw *hw, u8 index)
+{
+	struct cdce706_hw_data *hwd = to_hw_data(hw);
 
 	hwd->parent = index;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u8 cdce706_clkin_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा cdce706_hw_data *hwd = to_hw_data(hw);
+static u8 cdce706_clkin_get_parent(struct clk_hw *hw)
+{
+	struct cdce706_hw_data *hwd = to_hw_data(hw);
 
-	वापस hwd->parent;
-पूर्ण
+	return hwd->parent;
+}
 
-अटल स्थिर काष्ठा clk_ops cdce706_clkin_ops = अणु
+static const struct clk_ops cdce706_clkin_ops = {
 	.set_parent = cdce706_clkin_set_parent,
 	.get_parent = cdce706_clkin_get_parent,
-पूर्ण;
+};
 
-अटल अचिन्हित दीर्घ cdce706_pll_recalc_rate(काष्ठा clk_hw *hw,
-					     अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा cdce706_hw_data *hwd = to_hw_data(hw);
+static unsigned long cdce706_pll_recalc_rate(struct clk_hw *hw,
+					     unsigned long parent_rate)
+{
+	struct cdce706_hw_data *hwd = to_hw_data(hw);
 
 	dev_dbg(&hwd->dev_data->client->dev,
 		"%s, pll: %d, mux: %d, mul: %u, div: %u\n",
-		__func__, hwd->idx, hwd->mux, hwd->mul, hwd->भाग);
+		__func__, hwd->idx, hwd->mux, hwd->mul, hwd->div);
 
-	अगर (!hwd->mux) अणु
-		अगर (hwd->भाग && hwd->mul) अणु
+	if (!hwd->mux) {
+		if (hwd->div && hwd->mul) {
 			u64 res = (u64)parent_rate * hwd->mul;
 
-			करो_भाग(res, hwd->भाग);
-			वापस res;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (hwd->भाग)
-			वापस parent_rate / hwd->भाग;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			do_div(res, hwd->div);
+			return res;
+		}
+	} else {
+		if (hwd->div)
+			return parent_rate / hwd->div;
+	}
+	return 0;
+}
 
-अटल दीर्घ cdce706_pll_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				   अचिन्हित दीर्घ *parent_rate)
-अणु
-	काष्ठा cdce706_hw_data *hwd = to_hw_data(hw);
-	अचिन्हित दीर्घ mul, भाग;
+static long cdce706_pll_round_rate(struct clk_hw *hw, unsigned long rate,
+				   unsigned long *parent_rate)
+{
+	struct cdce706_hw_data *hwd = to_hw_data(hw);
+	unsigned long mul, div;
 	u64 res;
 
 	dev_dbg(&hwd->dev_data->client->dev,
@@ -196,104 +195,104 @@
 
 	rational_best_approximation(rate, *parent_rate,
 				    CDCE706_PLL_N_MAX, CDCE706_PLL_M_MAX,
-				    &mul, &भाग);
+				    &mul, &div);
 	hwd->mul = mul;
-	hwd->भाग = भाग;
+	hwd->div = div;
 
 	dev_dbg(&hwd->dev_data->client->dev,
 		"%s, pll: %d, mul: %lu, div: %lu\n",
-		__func__, hwd->idx, mul, भाग);
+		__func__, hwd->idx, mul, div);
 
 	res = (u64)*parent_rate * hwd->mul;
-	करो_भाग(res, hwd->भाग);
-	वापस res;
-पूर्ण
+	do_div(res, hwd->div);
+	return res;
+}
 
-अटल पूर्णांक cdce706_pll_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा cdce706_hw_data *hwd = to_hw_data(hw);
-	अचिन्हित दीर्घ mul = hwd->mul, भाग = hwd->भाग;
-	पूर्णांक err;
+static int cdce706_pll_set_rate(struct clk_hw *hw, unsigned long rate,
+				unsigned long parent_rate)
+{
+	struct cdce706_hw_data *hwd = to_hw_data(hw);
+	unsigned long mul = hwd->mul, div = hwd->div;
+	int err;
 
 	dev_dbg(&hwd->dev_data->client->dev,
 		"%s, pll: %d, mul: %lu, div: %lu\n",
-		__func__, hwd->idx, mul, भाग);
+		__func__, hwd->idx, mul, div);
 
 	err = cdce706_reg_update(hwd->dev_data,
 				 CDCE706_PLL_HI(hwd->idx),
 				 CDCE706_PLL_HI_M_MASK | CDCE706_PLL_HI_N_MASK,
-				 ((भाग >> 8) & CDCE706_PLL_HI_M_MASK) |
+				 ((div >> 8) & CDCE706_PLL_HI_M_MASK) |
 				 ((mul >> (8 - CDCE706_PLL_HI_N_SHIFT)) &
 				  CDCE706_PLL_HI_N_MASK));
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	err = cdce706_reg_ग_लिखो(hwd->dev_data,
+	err = cdce706_reg_write(hwd->dev_data,
 				CDCE706_PLL_M_LOW(hwd->idx),
-				भाग & CDCE706_PLL_LOW_M_MASK);
-	अगर (err < 0)
-		वापस err;
+				div & CDCE706_PLL_LOW_M_MASK);
+	if (err < 0)
+		return err;
 
-	err = cdce706_reg_ग_लिखो(hwd->dev_data,
+	err = cdce706_reg_write(hwd->dev_data,
 				CDCE706_PLL_N_LOW(hwd->idx),
 				mul & CDCE706_PLL_LOW_N_MASK);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = cdce706_reg_update(hwd->dev_data,
 				 CDCE706_PLL_FVCO,
 				 CDCE706_PLL_FVCO_MASK(hwd->idx),
 				 rate > CDCE706_PLL_FREQ_HI ?
 				 CDCE706_PLL_FVCO_MASK(hwd->idx) : 0);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा clk_ops cdce706_pll_ops = अणु
+static const struct clk_ops cdce706_pll_ops = {
 	.recalc_rate = cdce706_pll_recalc_rate,
 	.round_rate = cdce706_pll_round_rate,
 	.set_rate = cdce706_pll_set_rate,
-पूर्ण;
+};
 
-अटल पूर्णांक cdce706_भागider_set_parent(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा cdce706_hw_data *hwd = to_hw_data(hw);
+static int cdce706_divider_set_parent(struct clk_hw *hw, u8 index)
+{
+	struct cdce706_hw_data *hwd = to_hw_data(hw);
 
-	अगर (hwd->parent == index)
-		वापस 0;
+	if (hwd->parent == index)
+		return 0;
 	hwd->parent = index;
-	वापस cdce706_reg_update(hwd->dev_data,
+	return cdce706_reg_update(hwd->dev_data,
 				  CDCE706_DIVIDER_PLL(hwd->idx),
 				  CDCE706_DIVIDER_PLL_MASK(hwd->idx),
 				  index << CDCE706_DIVIDER_PLL_SHIFT(hwd->idx));
-पूर्ण
+}
 
-अटल u8 cdce706_भागider_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा cdce706_hw_data *hwd = to_hw_data(hw);
+static u8 cdce706_divider_get_parent(struct clk_hw *hw)
+{
+	struct cdce706_hw_data *hwd = to_hw_data(hw);
 
-	वापस hwd->parent;
-पूर्ण
+	return hwd->parent;
+}
 
-अटल अचिन्हित दीर्घ cdce706_भागider_recalc_rate(काष्ठा clk_hw *hw,
-						 अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा cdce706_hw_data *hwd = to_hw_data(hw);
+static unsigned long cdce706_divider_recalc_rate(struct clk_hw *hw,
+						 unsigned long parent_rate)
+{
+	struct cdce706_hw_data *hwd = to_hw_data(hw);
 
 	dev_dbg(&hwd->dev_data->client->dev,
 		"%s, divider: %d, div: %u\n",
-		__func__, hwd->idx, hwd->भाग);
-	अगर (hwd->भाग)
-		वापस parent_rate / hwd->भाग;
-	वापस 0;
-पूर्ण
+		__func__, hwd->idx, hwd->div);
+	if (hwd->div)
+		return parent_rate / hwd->div;
+	return 0;
+}
 
-अटल दीर्घ cdce706_भागider_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				       अचिन्हित दीर्घ *parent_rate)
-अणु
-	काष्ठा cdce706_hw_data *hwd = to_hw_data(hw);
-	काष्ठा cdce706_dev_data *cdce = hwd->dev_data;
-	अचिन्हित दीर्घ mul, भाग;
+static long cdce706_divider_round_rate(struct clk_hw *hw, unsigned long rate,
+				       unsigned long *parent_rate)
+{
+	struct cdce706_hw_data *hwd = to_hw_data(hw);
+	struct cdce706_dev_data *cdce = hwd->dev_data;
+	unsigned long mul, div;
 
 	dev_dbg(&hwd->dev_data->client->dev,
 		"%s, rate: %lu, parent_rate: %lu\n",
@@ -301,140 +300,140 @@
 
 	rational_best_approximation(rate, *parent_rate,
 				    1, CDCE706_DIVIDER_DIVIDER_MAX,
-				    &mul, &भाग);
-	अगर (!mul)
-		भाग = CDCE706_DIVIDER_DIVIDER_MAX;
+				    &mul, &div);
+	if (!mul)
+		div = CDCE706_DIVIDER_DIVIDER_MAX;
 
-	अगर (clk_hw_get_flags(hw) & CLK_SET_RATE_PARENT) अणु
-		अचिन्हित दीर्घ best_dअगरf = rate;
-		अचिन्हित दीर्घ best_भाग = 0;
-		काष्ठा clk *gp_clk = cdce->clkin_clk[cdce->clkin[0].parent];
-		अचिन्हित दीर्घ gp_rate = gp_clk ? clk_get_rate(gp_clk) : 0;
+	if (clk_hw_get_flags(hw) & CLK_SET_RATE_PARENT) {
+		unsigned long best_diff = rate;
+		unsigned long best_div = 0;
+		struct clk *gp_clk = cdce->clkin_clk[cdce->clkin[0].parent];
+		unsigned long gp_rate = gp_clk ? clk_get_rate(gp_clk) : 0;
 
-		क्रम (भाग = CDCE706_PLL_FREQ_MIN / rate; best_dअगरf &&
-		     भाग <= CDCE706_PLL_FREQ_MAX / rate; ++भाग) अणु
-			अचिन्हित दीर्घ n, m;
-			अचिन्हित दीर्घ dअगरf;
-			अचिन्हित दीर्घ भाग_rate;
-			u64 भाग_rate64;
+		for (div = CDCE706_PLL_FREQ_MIN / rate; best_diff &&
+		     div <= CDCE706_PLL_FREQ_MAX / rate; ++div) {
+			unsigned long n, m;
+			unsigned long diff;
+			unsigned long div_rate;
+			u64 div_rate64;
 
-			अगर (rate * भाग < CDCE706_PLL_FREQ_MIN)
-				जारी;
+			if (rate * div < CDCE706_PLL_FREQ_MIN)
+				continue;
 
-			rational_best_approximation(rate * भाग, gp_rate,
+			rational_best_approximation(rate * div, gp_rate,
 						    CDCE706_PLL_N_MAX,
 						    CDCE706_PLL_M_MAX,
 						    &n, &m);
-			भाग_rate64 = (u64)gp_rate * n;
-			करो_भाग(भाग_rate64, m);
-			करो_भाग(भाग_rate64, भाग);
-			भाग_rate = भाग_rate64;
-			dअगरf = max(भाग_rate, rate) - min(भाग_rate, rate);
+			div_rate64 = (u64)gp_rate * n;
+			do_div(div_rate64, m);
+			do_div(div_rate64, div);
+			div_rate = div_rate64;
+			diff = max(div_rate, rate) - min(div_rate, rate);
 
-			अगर (dअगरf < best_dअगरf) अणु
-				best_dअगरf = dअगरf;
-				best_भाग = भाग;
+			if (diff < best_diff) {
+				best_diff = diff;
+				best_div = div;
 				dev_dbg(&hwd->dev_data->client->dev,
 					"%s, %lu * %lu / %lu / %lu = %lu\n",
-					__func__, gp_rate, n, m, भाग, भाग_rate);
-			पूर्ण
-		पूर्ण
+					__func__, gp_rate, n, m, div, div_rate);
+			}
+		}
 
-		भाग = best_भाग;
+		div = best_div;
 
 		dev_dbg(&hwd->dev_data->client->dev,
 			"%s, altering parent rate: %lu -> %lu\n",
-			__func__, *parent_rate, rate * भाग);
-		*parent_rate = rate * भाग;
-	पूर्ण
-	hwd->भाग = भाग;
+			__func__, *parent_rate, rate * div);
+		*parent_rate = rate * div;
+	}
+	hwd->div = div;
 
 	dev_dbg(&hwd->dev_data->client->dev,
 		"%s, divider: %d, div: %lu\n",
-		__func__, hwd->idx, भाग);
+		__func__, hwd->idx, div);
 
-	वापस *parent_rate / भाग;
-पूर्ण
+	return *parent_rate / div;
+}
 
-अटल पूर्णांक cdce706_भागider_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				    अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा cdce706_hw_data *hwd = to_hw_data(hw);
+static int cdce706_divider_set_rate(struct clk_hw *hw, unsigned long rate,
+				    unsigned long parent_rate)
+{
+	struct cdce706_hw_data *hwd = to_hw_data(hw);
 
 	dev_dbg(&hwd->dev_data->client->dev,
 		"%s, divider: %d, div: %u\n",
-		__func__, hwd->idx, hwd->भाग);
+		__func__, hwd->idx, hwd->div);
 
-	वापस cdce706_reg_update(hwd->dev_data,
+	return cdce706_reg_update(hwd->dev_data,
 				  CDCE706_DIVIDER(hwd->idx),
 				  CDCE706_DIVIDER_DIVIDER_MASK,
-				  hwd->भाग);
-पूर्ण
+				  hwd->div);
+}
 
-अटल स्थिर काष्ठा clk_ops cdce706_भागider_ops = अणु
-	.set_parent = cdce706_भागider_set_parent,
-	.get_parent = cdce706_भागider_get_parent,
-	.recalc_rate = cdce706_भागider_recalc_rate,
-	.round_rate = cdce706_भागider_round_rate,
-	.set_rate = cdce706_भागider_set_rate,
-पूर्ण;
+static const struct clk_ops cdce706_divider_ops = {
+	.set_parent = cdce706_divider_set_parent,
+	.get_parent = cdce706_divider_get_parent,
+	.recalc_rate = cdce706_divider_recalc_rate,
+	.round_rate = cdce706_divider_round_rate,
+	.set_rate = cdce706_divider_set_rate,
+};
 
-अटल पूर्णांक cdce706_clkout_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा cdce706_hw_data *hwd = to_hw_data(hw);
+static int cdce706_clkout_prepare(struct clk_hw *hw)
+{
+	struct cdce706_hw_data *hwd = to_hw_data(hw);
 
-	वापस cdce706_reg_update(hwd->dev_data, CDCE706_CLKOUT(hwd->idx),
+	return cdce706_reg_update(hwd->dev_data, CDCE706_CLKOUT(hwd->idx),
 				  CDCE706_CLKOUT_ENABLE_MASK,
 				  CDCE706_CLKOUT_ENABLE_MASK);
-पूर्ण
+}
 
-अटल व्योम cdce706_clkout_unprepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा cdce706_hw_data *hwd = to_hw_data(hw);
+static void cdce706_clkout_unprepare(struct clk_hw *hw)
+{
+	struct cdce706_hw_data *hwd = to_hw_data(hw);
 
 	cdce706_reg_update(hwd->dev_data, CDCE706_CLKOUT(hwd->idx),
 			   CDCE706_CLKOUT_ENABLE_MASK, 0);
-पूर्ण
+}
 
-अटल पूर्णांक cdce706_clkout_set_parent(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा cdce706_hw_data *hwd = to_hw_data(hw);
+static int cdce706_clkout_set_parent(struct clk_hw *hw, u8 index)
+{
+	struct cdce706_hw_data *hwd = to_hw_data(hw);
 
-	अगर (hwd->parent == index)
-		वापस 0;
+	if (hwd->parent == index)
+		return 0;
 	hwd->parent = index;
-	वापस cdce706_reg_update(hwd->dev_data,
+	return cdce706_reg_update(hwd->dev_data,
 				  CDCE706_CLKOUT(hwd->idx),
 				  CDCE706_CLKOUT_ENABLE_MASK, index);
-पूर्ण
+}
 
-अटल u8 cdce706_clkout_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा cdce706_hw_data *hwd = to_hw_data(hw);
+static u8 cdce706_clkout_get_parent(struct clk_hw *hw)
+{
+	struct cdce706_hw_data *hwd = to_hw_data(hw);
 
-	वापस hwd->parent;
-पूर्ण
+	return hwd->parent;
+}
 
-अटल अचिन्हित दीर्घ cdce706_clkout_recalc_rate(काष्ठा clk_hw *hw,
-						अचिन्हित दीर्घ parent_rate)
-अणु
-	वापस parent_rate;
-पूर्ण
+static unsigned long cdce706_clkout_recalc_rate(struct clk_hw *hw,
+						unsigned long parent_rate)
+{
+	return parent_rate;
+}
 
-अटल दीर्घ cdce706_clkout_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				      अचिन्हित दीर्घ *parent_rate)
-अणु
+static long cdce706_clkout_round_rate(struct clk_hw *hw, unsigned long rate,
+				      unsigned long *parent_rate)
+{
 	*parent_rate = rate;
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
-अटल पूर्णांक cdce706_clkout_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				   अचिन्हित दीर्घ parent_rate)
-अणु
-	वापस 0;
-पूर्ण
+static int cdce706_clkout_set_rate(struct clk_hw *hw, unsigned long rate,
+				   unsigned long parent_rate)
+{
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops cdce706_clkout_ops = अणु
+static const struct clk_ops cdce706_clkout_ops = {
 	.prepare = cdce706_clkout_prepare,
 	.unprepare = cdce706_clkout_unprepare,
 	.set_parent = cdce706_clkout_set_parent,
@@ -442,261 +441,261 @@
 	.recalc_rate = cdce706_clkout_recalc_rate,
 	.round_rate = cdce706_clkout_round_rate,
 	.set_rate = cdce706_clkout_set_rate,
-पूर्ण;
+};
 
-अटल पूर्णांक cdce706_रेजिस्टर_hw(काष्ठा cdce706_dev_data *cdce,
-			       काष्ठा cdce706_hw_data *hw, अचिन्हित num_hw,
-			       स्थिर अक्षर * स्थिर *clk_names,
-			       काष्ठा clk_init_data *init)
-अणु
-	अचिन्हित i;
-	पूर्णांक ret;
+static int cdce706_register_hw(struct cdce706_dev_data *cdce,
+			       struct cdce706_hw_data *hw, unsigned num_hw,
+			       const char * const *clk_names,
+			       struct clk_init_data *init)
+{
+	unsigned i;
+	int ret;
 
-	क्रम (i = 0; i < num_hw; ++i, ++hw) अणु
+	for (i = 0; i < num_hw; ++i, ++hw) {
 		init->name = clk_names[i];
 		hw->dev_data = cdce;
 		hw->idx = i;
 		hw->hw.init = init;
-		ret = devm_clk_hw_रेजिस्टर(&cdce->client->dev,
+		ret = devm_clk_hw_register(&cdce->client->dev,
 					    &hw->hw);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&cdce->client->dev, "Failed to register %s\n",
 				clk_names[i]);
-			वापस ret;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return ret;
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक cdce706_रेजिस्टर_clkin(काष्ठा cdce706_dev_data *cdce)
-अणु
-	काष्ठा clk_init_data init = अणु
+static int cdce706_register_clkin(struct cdce706_dev_data *cdce)
+{
+	struct clk_init_data init = {
 		.ops = &cdce706_clkin_ops,
 		.parent_names = cdce->clkin_name,
 		.num_parents = ARRAY_SIZE(cdce->clkin_name),
-	पूर्ण;
-	अचिन्हित i;
-	पूर्णांक ret;
-	अचिन्हित घड़ी, source;
+	};
+	unsigned i;
+	int ret;
+	unsigned clock, source;
 
-	क्रम (i = 0; i < ARRAY_SIZE(cdce->clkin_name); ++i) अणु
-		काष्ठा clk *parent = devm_clk_get(&cdce->client->dev,
+	for (i = 0; i < ARRAY_SIZE(cdce->clkin_name); ++i) {
+		struct clk *parent = devm_clk_get(&cdce->client->dev,
 						  cdce706_source_name[i]);
 
-		अगर (IS_ERR(parent)) अणु
+		if (IS_ERR(parent)) {
 			cdce->clkin_name[i] = cdce706_source_name[i];
-		पूर्ण अन्यथा अणु
+		} else {
 			cdce->clkin_name[i] = __clk_get_name(parent);
 			cdce->clkin_clk[i] = parent;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	ret = cdce706_reg_पढ़ो(cdce, CDCE706_CLKIN_SOURCE, &source);
-	अगर (ret < 0)
-		वापस ret;
-	अगर ((source & CDCE706_CLKIN_SOURCE_MASK) ==
-	    CDCE706_CLKIN_SOURCE_LVCMOS) अणु
-		ret = cdce706_reg_पढ़ो(cdce, CDCE706_CLKIN_CLOCK, &घड़ी);
-		अगर (ret < 0)
-			वापस ret;
-		cdce->clkin[0].parent = !!(घड़ी & CDCE706_CLKIN_CLOCK_MASK);
-	पूर्ण
+	ret = cdce706_reg_read(cdce, CDCE706_CLKIN_SOURCE, &source);
+	if (ret < 0)
+		return ret;
+	if ((source & CDCE706_CLKIN_SOURCE_MASK) ==
+	    CDCE706_CLKIN_SOURCE_LVCMOS) {
+		ret = cdce706_reg_read(cdce, CDCE706_CLKIN_CLOCK, &clock);
+		if (ret < 0)
+			return ret;
+		cdce->clkin[0].parent = !!(clock & CDCE706_CLKIN_CLOCK_MASK);
+	}
 
-	ret = cdce706_रेजिस्टर_hw(cdce, cdce->clkin,
+	ret = cdce706_register_hw(cdce, cdce->clkin,
 				  ARRAY_SIZE(cdce->clkin),
 				  cdce706_clkin_name, &init);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cdce706_रेजिस्टर_plls(काष्ठा cdce706_dev_data *cdce)
-अणु
-	काष्ठा clk_init_data init = अणु
+static int cdce706_register_plls(struct cdce706_dev_data *cdce)
+{
+	struct clk_init_data init = {
 		.ops = &cdce706_pll_ops,
 		.parent_names = cdce706_clkin_name,
 		.num_parents = ARRAY_SIZE(cdce706_clkin_name),
-	पूर्ण;
-	अचिन्हित i;
-	पूर्णांक ret;
-	अचिन्हित mux;
+	};
+	unsigned i;
+	int ret;
+	unsigned mux;
 
-	ret = cdce706_reg_पढ़ो(cdce, CDCE706_PLL_MUX, &mux);
-	अगर (ret < 0)
-		वापस ret;
+	ret = cdce706_reg_read(cdce, CDCE706_PLL_MUX, &mux);
+	if (ret < 0)
+		return ret;
 
-	क्रम (i = 0; i < ARRAY_SIZE(cdce->pll); ++i) अणु
-		अचिन्हित m, n, v;
+	for (i = 0; i < ARRAY_SIZE(cdce->pll); ++i) {
+		unsigned m, n, v;
 
-		ret = cdce706_reg_पढ़ो(cdce, CDCE706_PLL_M_LOW(i), &m);
-		अगर (ret < 0)
-			वापस ret;
-		ret = cdce706_reg_पढ़ो(cdce, CDCE706_PLL_N_LOW(i), &n);
-		अगर (ret < 0)
-			वापस ret;
-		ret = cdce706_reg_पढ़ो(cdce, CDCE706_PLL_HI(i), &v);
-		अगर (ret < 0)
-			वापस ret;
-		cdce->pll[i].भाग = m | ((v & CDCE706_PLL_HI_M_MASK) << 8);
+		ret = cdce706_reg_read(cdce, CDCE706_PLL_M_LOW(i), &m);
+		if (ret < 0)
+			return ret;
+		ret = cdce706_reg_read(cdce, CDCE706_PLL_N_LOW(i), &n);
+		if (ret < 0)
+			return ret;
+		ret = cdce706_reg_read(cdce, CDCE706_PLL_HI(i), &v);
+		if (ret < 0)
+			return ret;
+		cdce->pll[i].div = m | ((v & CDCE706_PLL_HI_M_MASK) << 8);
 		cdce->pll[i].mul = n | ((v & CDCE706_PLL_HI_N_MASK) <<
 					(8 - CDCE706_PLL_HI_N_SHIFT));
 		cdce->pll[i].mux = mux & CDCE706_PLL_MUX_MASK(i);
 		dev_dbg(&cdce->client->dev,
 			"%s: i: %u, div: %u, mul: %u, mux: %d\n", __func__, i,
-			cdce->pll[i].भाग, cdce->pll[i].mul, cdce->pll[i].mux);
-	पूर्ण
+			cdce->pll[i].div, cdce->pll[i].mul, cdce->pll[i].mux);
+	}
 
-	ret = cdce706_रेजिस्टर_hw(cdce, cdce->pll,
+	ret = cdce706_register_hw(cdce, cdce->pll,
 				  ARRAY_SIZE(cdce->pll),
 				  cdce706_pll_name, &init);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cdce706_रेजिस्टर_भागiders(काष्ठा cdce706_dev_data *cdce)
-अणु
-	काष्ठा clk_init_data init = अणु
-		.ops = &cdce706_भागider_ops,
-		.parent_names = cdce706_भागider_parent_name,
-		.num_parents = ARRAY_SIZE(cdce706_भागider_parent_name),
+static int cdce706_register_dividers(struct cdce706_dev_data *cdce)
+{
+	struct clk_init_data init = {
+		.ops = &cdce706_divider_ops,
+		.parent_names = cdce706_divider_parent_name,
+		.num_parents = ARRAY_SIZE(cdce706_divider_parent_name),
 		.flags = CLK_SET_RATE_PARENT,
-	पूर्ण;
-	अचिन्हित i;
-	पूर्णांक ret;
+	};
+	unsigned i;
+	int ret;
 
-	क्रम (i = 0; i < ARRAY_SIZE(cdce->भागider); ++i) अणु
-		अचिन्हित val;
+	for (i = 0; i < ARRAY_SIZE(cdce->divider); ++i) {
+		unsigned val;
 
-		ret = cdce706_reg_पढ़ो(cdce, CDCE706_DIVIDER_PLL(i), &val);
-		अगर (ret < 0)
-			वापस ret;
-		cdce->भागider[i].parent =
+		ret = cdce706_reg_read(cdce, CDCE706_DIVIDER_PLL(i), &val);
+		if (ret < 0)
+			return ret;
+		cdce->divider[i].parent =
 			(val & CDCE706_DIVIDER_PLL_MASK(i)) >>
 			CDCE706_DIVIDER_PLL_SHIFT(i);
 
-		ret = cdce706_reg_पढ़ो(cdce, CDCE706_DIVIDER(i), &val);
-		अगर (ret < 0)
-			वापस ret;
-		cdce->भागider[i].भाग = val & CDCE706_DIVIDER_DIVIDER_MASK;
+		ret = cdce706_reg_read(cdce, CDCE706_DIVIDER(i), &val);
+		if (ret < 0)
+			return ret;
+		cdce->divider[i].div = val & CDCE706_DIVIDER_DIVIDER_MASK;
 		dev_dbg(&cdce->client->dev,
 			"%s: i: %u, parent: %u, div: %u\n", __func__, i,
-			cdce->भागider[i].parent, cdce->भागider[i].भाग);
-	पूर्ण
+			cdce->divider[i].parent, cdce->divider[i].div);
+	}
 
-	ret = cdce706_रेजिस्टर_hw(cdce, cdce->भागider,
-				  ARRAY_SIZE(cdce->भागider),
-				  cdce706_भागider_name, &init);
-	वापस ret;
-पूर्ण
+	ret = cdce706_register_hw(cdce, cdce->divider,
+				  ARRAY_SIZE(cdce->divider),
+				  cdce706_divider_name, &init);
+	return ret;
+}
 
-अटल पूर्णांक cdce706_रेजिस्टर_clkouts(काष्ठा cdce706_dev_data *cdce)
-अणु
-	काष्ठा clk_init_data init = अणु
+static int cdce706_register_clkouts(struct cdce706_dev_data *cdce)
+{
+	struct clk_init_data init = {
 		.ops = &cdce706_clkout_ops,
-		.parent_names = cdce706_भागider_name,
-		.num_parents = ARRAY_SIZE(cdce706_भागider_name),
+		.parent_names = cdce706_divider_name,
+		.num_parents = ARRAY_SIZE(cdce706_divider_name),
 		.flags = CLK_SET_RATE_PARENT,
-	पूर्ण;
-	अचिन्हित i;
-	पूर्णांक ret;
+	};
+	unsigned i;
+	int ret;
 
-	क्रम (i = 0; i < ARRAY_SIZE(cdce->clkout); ++i) अणु
-		अचिन्हित val;
+	for (i = 0; i < ARRAY_SIZE(cdce->clkout); ++i) {
+		unsigned val;
 
-		ret = cdce706_reg_पढ़ो(cdce, CDCE706_CLKOUT(i), &val);
-		अगर (ret < 0)
-			वापस ret;
+		ret = cdce706_reg_read(cdce, CDCE706_CLKOUT(i), &val);
+		if (ret < 0)
+			return ret;
 		cdce->clkout[i].parent = val & CDCE706_CLKOUT_DIVIDER_MASK;
 		dev_dbg(&cdce->client->dev,
 			"%s: i: %u, parent: %u\n", __func__, i,
 			cdce->clkout[i].parent);
-	पूर्ण
+	}
 
-	वापस cdce706_रेजिस्टर_hw(cdce, cdce->clkout,
+	return cdce706_register_hw(cdce, cdce->clkout,
 				   ARRAY_SIZE(cdce->clkout),
 				   cdce706_clkout_name, &init);
-पूर्ण
+}
 
-अटल काष्ठा clk_hw *
-of_clk_cdce_get(काष्ठा of_phandle_args *clkspec, व्योम *data)
-अणु
-	काष्ठा cdce706_dev_data *cdce = data;
-	अचिन्हित पूर्णांक idx = clkspec->args[0];
+static struct clk_hw *
+of_clk_cdce_get(struct of_phandle_args *clkspec, void *data)
+{
+	struct cdce706_dev_data *cdce = data;
+	unsigned int idx = clkspec->args[0];
 
-	अगर (idx >= ARRAY_SIZE(cdce->clkout)) अणु
+	if (idx >= ARRAY_SIZE(cdce->clkout)) {
 		pr_err("%s: invalid index %u\n", __func__, idx);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	वापस &cdce->clkout[idx].hw;
-पूर्ण
+	return &cdce->clkout[idx].hw;
+}
 
-अटल पूर्णांक cdce706_probe(काष्ठा i2c_client *client,
-			 स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा i2c_adapter *adapter = client->adapter;
-	काष्ठा cdce706_dev_data *cdce;
-	पूर्णांक ret;
+static int cdce706_probe(struct i2c_client *client,
+			 const struct i2c_device_id *id)
+{
+	struct i2c_adapter *adapter = client->adapter;
+	struct cdce706_dev_data *cdce;
+	int ret;
 
-	अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		वापस -EIO;
+	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
+		return -EIO;
 
-	cdce = devm_kzalloc(&client->dev, माप(*cdce), GFP_KERNEL);
-	अगर (!cdce)
-		वापस -ENOMEM;
+	cdce = devm_kzalloc(&client->dev, sizeof(*cdce), GFP_KERNEL);
+	if (!cdce)
+		return -ENOMEM;
 
 	cdce->client = client;
 	cdce->regmap = devm_regmap_init_i2c(client, &cdce706_regmap_config);
-	अगर (IS_ERR(cdce->regmap)) अणु
+	if (IS_ERR(cdce->regmap)) {
 		dev_err(&client->dev, "Failed to initialize regmap\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	i2c_set_clientdata(client, cdce);
 
-	ret = cdce706_रेजिस्टर_clkin(cdce);
-	अगर (ret < 0)
-		वापस ret;
-	ret = cdce706_रेजिस्टर_plls(cdce);
-	अगर (ret < 0)
-		वापस ret;
-	ret = cdce706_रेजिस्टर_भागiders(cdce);
-	अगर (ret < 0)
-		वापस ret;
-	ret = cdce706_रेजिस्टर_clkouts(cdce);
-	अगर (ret < 0)
-		वापस ret;
-	वापस of_clk_add_hw_provider(client->dev.of_node, of_clk_cdce_get,
+	ret = cdce706_register_clkin(cdce);
+	if (ret < 0)
+		return ret;
+	ret = cdce706_register_plls(cdce);
+	if (ret < 0)
+		return ret;
+	ret = cdce706_register_dividers(cdce);
+	if (ret < 0)
+		return ret;
+	ret = cdce706_register_clkouts(cdce);
+	if (ret < 0)
+		return ret;
+	return of_clk_add_hw_provider(client->dev.of_node, of_clk_cdce_get,
 				      cdce);
-पूर्ण
+}
 
-अटल पूर्णांक cdce706_हटाओ(काष्ठा i2c_client *client)
-अणु
+static int cdce706_remove(struct i2c_client *client)
+{
 	of_clk_del_provider(client->dev.of_node);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id cdce706_dt_match[] = अणु
-	अणु .compatible = "ti,cdce706" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id cdce706_dt_match[] = {
+	{ .compatible = "ti,cdce706" },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, cdce706_dt_match);
-#पूर्ण_अगर
+#endif
 
-अटल स्थिर काष्ठा i2c_device_id cdce706_id[] = अणु
-	अणु "cdce706", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id cdce706_id[] = {
+	{ "cdce706", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, cdce706_id);
 
-अटल काष्ठा i2c_driver cdce706_i2c_driver = अणु
-	.driver	= अणु
+static struct i2c_driver cdce706_i2c_driver = {
+	.driver	= {
 		.name	= "cdce706",
 		.of_match_table = of_match_ptr(cdce706_dt_match),
-	पूर्ण,
+	},
 	.probe		= cdce706_probe,
-	.हटाओ		= cdce706_हटाओ,
+	.remove		= cdce706_remove,
 	.id_table	= cdce706_id,
-पूर्ण;
+};
 module_i2c_driver(cdce706_i2c_driver);
 
 MODULE_AUTHOR("Max Filippov <jcmvbkbc@gmail.com>");

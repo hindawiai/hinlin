@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * TI LP8788 MFD - buck regulator driver
  *
@@ -8,338 +7,338 @@
  * Author: Milo(Woogyom) Kim <milo.kim@ti.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/err.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regulator/driver.h>
-#समावेश <linux/mfd/lp8788.h>
-#समावेश <linux/gpपन.स>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/err.h>
+#include <linux/platform_device.h>
+#include <linux/regulator/driver.h>
+#include <linux/mfd/lp8788.h>
+#include <linux/gpio.h>
 
-/* रेजिस्टर address */
-#घोषणा LP8788_EN_BUCK			0x0C
-#घोषणा LP8788_BUCK_DVS_SEL		0x1D
-#घोषणा LP8788_BUCK1_VOUT0		0x1E
-#घोषणा LP8788_BUCK1_VOUT1		0x1F
-#घोषणा LP8788_BUCK1_VOUT2		0x20
-#घोषणा LP8788_BUCK1_VOUT3		0x21
-#घोषणा LP8788_BUCK2_VOUT0		0x22
-#घोषणा LP8788_BUCK2_VOUT1		0x23
-#घोषणा LP8788_BUCK2_VOUT2		0x24
-#घोषणा LP8788_BUCK2_VOUT3		0x25
-#घोषणा LP8788_BUCK3_VOUT		0x26
-#घोषणा LP8788_BUCK4_VOUT		0x27
-#घोषणा LP8788_BUCK1_TIMESTEP		0x28
-#घोषणा LP8788_BUCK_PWM			0x2D
+/* register address */
+#define LP8788_EN_BUCK			0x0C
+#define LP8788_BUCK_DVS_SEL		0x1D
+#define LP8788_BUCK1_VOUT0		0x1E
+#define LP8788_BUCK1_VOUT1		0x1F
+#define LP8788_BUCK1_VOUT2		0x20
+#define LP8788_BUCK1_VOUT3		0x21
+#define LP8788_BUCK2_VOUT0		0x22
+#define LP8788_BUCK2_VOUT1		0x23
+#define LP8788_BUCK2_VOUT2		0x24
+#define LP8788_BUCK2_VOUT3		0x25
+#define LP8788_BUCK3_VOUT		0x26
+#define LP8788_BUCK4_VOUT		0x27
+#define LP8788_BUCK1_TIMESTEP		0x28
+#define LP8788_BUCK_PWM			0x2D
 
-/* mask/shअगरt bits */
-#घोषणा LP8788_EN_BUCK1_M		BIT(0)	/* Addr 0Ch */
-#घोषणा LP8788_EN_BUCK2_M		BIT(1)
-#घोषणा LP8788_EN_BUCK3_M		BIT(2)
-#घोषणा LP8788_EN_BUCK4_M		BIT(3)
-#घोषणा LP8788_BUCK1_DVS_SEL_M		0x04	/* Addr 1Dh */
-#घोषणा LP8788_BUCK1_DVS_M		0x03
-#घोषणा LP8788_BUCK1_DVS_S		0
-#घोषणा LP8788_BUCK2_DVS_SEL_M		0x40
-#घोषणा LP8788_BUCK2_DVS_M		0x30
-#घोषणा LP8788_BUCK2_DVS_S		4
-#घोषणा LP8788_BUCK1_DVS_I2C		BIT(2)
-#घोषणा LP8788_BUCK2_DVS_I2C		BIT(6)
-#घोषणा LP8788_BUCK1_DVS_PIN		(0 << 2)
-#घोषणा LP8788_BUCK2_DVS_PIN		(0 << 6)
-#घोषणा LP8788_VOUT_M			0x1F	/* Addr 1Eh ~ 27h */
-#घोषणा LP8788_STARTUP_TIME_M		0xF8	/* Addr 28h ~ 2Bh */
-#घोषणा LP8788_STARTUP_TIME_S		3
-#घोषणा LP8788_FPWM_BUCK1_M		BIT(0)	/* Addr 2Dh */
-#घोषणा LP8788_FPWM_BUCK1_S		0
-#घोषणा LP8788_FPWM_BUCK2_M		BIT(1)
-#घोषणा LP8788_FPWM_BUCK2_S		1
-#घोषणा LP8788_FPWM_BUCK3_M		BIT(2)
-#घोषणा LP8788_FPWM_BUCK3_S		2
-#घोषणा LP8788_FPWM_BUCK4_M		BIT(3)
-#घोषणा LP8788_FPWM_BUCK4_S		3
+/* mask/shift bits */
+#define LP8788_EN_BUCK1_M		BIT(0)	/* Addr 0Ch */
+#define LP8788_EN_BUCK2_M		BIT(1)
+#define LP8788_EN_BUCK3_M		BIT(2)
+#define LP8788_EN_BUCK4_M		BIT(3)
+#define LP8788_BUCK1_DVS_SEL_M		0x04	/* Addr 1Dh */
+#define LP8788_BUCK1_DVS_M		0x03
+#define LP8788_BUCK1_DVS_S		0
+#define LP8788_BUCK2_DVS_SEL_M		0x40
+#define LP8788_BUCK2_DVS_M		0x30
+#define LP8788_BUCK2_DVS_S		4
+#define LP8788_BUCK1_DVS_I2C		BIT(2)
+#define LP8788_BUCK2_DVS_I2C		BIT(6)
+#define LP8788_BUCK1_DVS_PIN		(0 << 2)
+#define LP8788_BUCK2_DVS_PIN		(0 << 6)
+#define LP8788_VOUT_M			0x1F	/* Addr 1Eh ~ 27h */
+#define LP8788_STARTUP_TIME_M		0xF8	/* Addr 28h ~ 2Bh */
+#define LP8788_STARTUP_TIME_S		3
+#define LP8788_FPWM_BUCK1_M		BIT(0)	/* Addr 2Dh */
+#define LP8788_FPWM_BUCK1_S		0
+#define LP8788_FPWM_BUCK2_M		BIT(1)
+#define LP8788_FPWM_BUCK2_S		1
+#define LP8788_FPWM_BUCK3_M		BIT(2)
+#define LP8788_FPWM_BUCK3_S		2
+#define LP8788_FPWM_BUCK4_M		BIT(3)
+#define LP8788_FPWM_BUCK4_S		3
 
-#घोषणा INVALID_ADDR			0xFF
-#घोषणा LP8788_FORCE_PWM		1
-#घोषणा LP8788_AUTO_PWM			0
-#घोषणा PIN_LOW				0
-#घोषणा PIN_HIGH			1
-#घोषणा ENABLE_TIME_USEC		32
+#define INVALID_ADDR			0xFF
+#define LP8788_FORCE_PWM		1
+#define LP8788_AUTO_PWM			0
+#define PIN_LOW				0
+#define PIN_HIGH			1
+#define ENABLE_TIME_USEC		32
 
-#घोषणा BUCK_FPWM_MASK(x)		(1 << (x))
-#घोषणा BUCK_FPWM_SHIFT(x)		(x)
+#define BUCK_FPWM_MASK(x)		(1 << (x))
+#define BUCK_FPWM_SHIFT(x)		(x)
 
-क्रमागत lp8788_dvs_state अणु
+enum lp8788_dvs_state {
 	DVS_LOW  = GPIOF_OUT_INIT_LOW,
 	DVS_HIGH = GPIOF_OUT_INIT_HIGH,
-पूर्ण;
+};
 
-क्रमागत lp8788_dvs_mode अणु
+enum lp8788_dvs_mode {
 	REGISTER,
 	EXTPIN,
-पूर्ण;
+};
 
-क्रमागत lp8788_buck_id अणु
+enum lp8788_buck_id {
 	BUCK1,
 	BUCK2,
 	BUCK3,
 	BUCK4,
-पूर्ण;
+};
 
-काष्ठा lp8788_buck अणु
-	काष्ठा lp8788 *lp;
-	काष्ठा regulator_dev *regulator;
-	व्योम *dvs;
-पूर्ण;
+struct lp8788_buck {
+	struct lp8788 *lp;
+	struct regulator_dev *regulator;
+	void *dvs;
+};
 
 /* BUCK 1 ~ 4 voltage ranges */
-अटल स्थिर काष्ठा linear_range buck_volt_ranges[] = अणु
+static const struct linear_range buck_volt_ranges[] = {
 	REGULATOR_LINEAR_RANGE(500000, 0, 0, 0),
 	REGULATOR_LINEAR_RANGE(800000, 1, 25, 50000),
-पूर्ण;
+};
 
-अटल व्योम lp8788_buck1_set_dvs(काष्ठा lp8788_buck *buck)
-अणु
-	काष्ठा lp8788_buck1_dvs *dvs = (काष्ठा lp8788_buck1_dvs *)buck->dvs;
-	क्रमागत lp8788_dvs_state pinstate;
+static void lp8788_buck1_set_dvs(struct lp8788_buck *buck)
+{
+	struct lp8788_buck1_dvs *dvs = (struct lp8788_buck1_dvs *)buck->dvs;
+	enum lp8788_dvs_state pinstate;
 
-	अगर (!dvs)
-		वापस;
+	if (!dvs)
+		return;
 
 	pinstate = dvs->vsel == DVS_SEL_V0 ? DVS_LOW : DVS_HIGH;
-	अगर (gpio_is_valid(dvs->gpio))
+	if (gpio_is_valid(dvs->gpio))
 		gpio_set_value(dvs->gpio, pinstate);
-पूर्ण
+}
 
-अटल व्योम lp8788_buck2_set_dvs(काष्ठा lp8788_buck *buck)
-अणु
-	काष्ठा lp8788_buck2_dvs *dvs = (काष्ठा lp8788_buck2_dvs *)buck->dvs;
-	क्रमागत lp8788_dvs_state pin1, pin2;
+static void lp8788_buck2_set_dvs(struct lp8788_buck *buck)
+{
+	struct lp8788_buck2_dvs *dvs = (struct lp8788_buck2_dvs *)buck->dvs;
+	enum lp8788_dvs_state pin1, pin2;
 
-	अगर (!dvs)
-		वापस;
+	if (!dvs)
+		return;
 
-	चयन (dvs->vsel) अणु
-	हाल DVS_SEL_V0:
+	switch (dvs->vsel) {
+	case DVS_SEL_V0:
 		pin1 = DVS_LOW;
 		pin2 = DVS_LOW;
-		अवरोध;
-	हाल DVS_SEL_V1:
+		break;
+	case DVS_SEL_V1:
 		pin1 = DVS_HIGH;
 		pin2 = DVS_LOW;
-		अवरोध;
-	हाल DVS_SEL_V2:
+		break;
+	case DVS_SEL_V2:
 		pin1 = DVS_LOW;
 		pin2 = DVS_HIGH;
-		अवरोध;
-	हाल DVS_SEL_V3:
+		break;
+	case DVS_SEL_V3:
 		pin1 = DVS_HIGH;
 		pin2 = DVS_HIGH;
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 
-	अगर (gpio_is_valid(dvs->gpio[0]))
+	if (gpio_is_valid(dvs->gpio[0]))
 		gpio_set_value(dvs->gpio[0], pin1);
 
-	अगर (gpio_is_valid(dvs->gpio[1]))
+	if (gpio_is_valid(dvs->gpio[1]))
 		gpio_set_value(dvs->gpio[1], pin2);
-पूर्ण
+}
 
-अटल व्योम lp8788_set_dvs(काष्ठा lp8788_buck *buck, क्रमागत lp8788_buck_id id)
-अणु
-	चयन (id) अणु
-	हाल BUCK1:
+static void lp8788_set_dvs(struct lp8788_buck *buck, enum lp8788_buck_id id)
+{
+	switch (id) {
+	case BUCK1:
 		lp8788_buck1_set_dvs(buck);
-		अवरोध;
-	हाल BUCK2:
+		break;
+	case BUCK2:
 		lp8788_buck2_set_dvs(buck);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल क्रमागत lp8788_dvs_mode
-lp8788_get_buck_dvs_ctrl_mode(काष्ठा lp8788_buck *buck, क्रमागत lp8788_buck_id id)
-अणु
+static enum lp8788_dvs_mode
+lp8788_get_buck_dvs_ctrl_mode(struct lp8788_buck *buck, enum lp8788_buck_id id)
+{
 	u8 val, mask;
 
-	चयन (id) अणु
-	हाल BUCK1:
+	switch (id) {
+	case BUCK1:
 		mask = LP8788_BUCK1_DVS_SEL_M;
-		अवरोध;
-	हाल BUCK2:
+		break;
+	case BUCK2:
 		mask = LP8788_BUCK2_DVS_SEL_M;
-		अवरोध;
-	शेष:
-		वापस REGISTER;
-	पूर्ण
+		break;
+	default:
+		return REGISTER;
+	}
 
-	lp8788_पढ़ो_byte(buck->lp, LP8788_BUCK_DVS_SEL, &val);
+	lp8788_read_byte(buck->lp, LP8788_BUCK_DVS_SEL, &val);
 
-	वापस val & mask ? REGISTER : EXTPIN;
-पूर्ण
+	return val & mask ? REGISTER : EXTPIN;
+}
 
-अटल bool lp8788_is_valid_buck_addr(u8 addr)
-अणु
-	चयन (addr) अणु
-	हाल LP8788_BUCK1_VOUT0:
-	हाल LP8788_BUCK1_VOUT1:
-	हाल LP8788_BUCK1_VOUT2:
-	हाल LP8788_BUCK1_VOUT3:
-	हाल LP8788_BUCK2_VOUT0:
-	हाल LP8788_BUCK2_VOUT1:
-	हाल LP8788_BUCK2_VOUT2:
-	हाल LP8788_BUCK2_VOUT3:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool lp8788_is_valid_buck_addr(u8 addr)
+{
+	switch (addr) {
+	case LP8788_BUCK1_VOUT0:
+	case LP8788_BUCK1_VOUT1:
+	case LP8788_BUCK1_VOUT2:
+	case LP8788_BUCK1_VOUT3:
+	case LP8788_BUCK2_VOUT0:
+	case LP8788_BUCK2_VOUT1:
+	case LP8788_BUCK2_VOUT2:
+	case LP8788_BUCK2_VOUT3:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल u8 lp8788_select_buck_vout_addr(काष्ठा lp8788_buck *buck,
-					क्रमागत lp8788_buck_id id)
-अणु
-	क्रमागत lp8788_dvs_mode mode = lp8788_get_buck_dvs_ctrl_mode(buck, id);
-	काष्ठा lp8788_buck1_dvs *b1_dvs;
-	काष्ठा lp8788_buck2_dvs *b2_dvs;
+static u8 lp8788_select_buck_vout_addr(struct lp8788_buck *buck,
+					enum lp8788_buck_id id)
+{
+	enum lp8788_dvs_mode mode = lp8788_get_buck_dvs_ctrl_mode(buck, id);
+	struct lp8788_buck1_dvs *b1_dvs;
+	struct lp8788_buck2_dvs *b2_dvs;
 	u8 val, idx, addr;
-	पूर्णांक pin1, pin2;
+	int pin1, pin2;
 
-	चयन (id) अणु
-	हाल BUCK1:
-		अगर (mode == EXTPIN) अणु
-			b1_dvs = (काष्ठा lp8788_buck1_dvs *)buck->dvs;
-			अगर (!b1_dvs)
-				जाओ err;
+	switch (id) {
+	case BUCK1:
+		if (mode == EXTPIN) {
+			b1_dvs = (struct lp8788_buck1_dvs *)buck->dvs;
+			if (!b1_dvs)
+				goto err;
 
 			idx = gpio_get_value(b1_dvs->gpio) ? 1 : 0;
-		पूर्ण अन्यथा अणु
-			lp8788_पढ़ो_byte(buck->lp, LP8788_BUCK_DVS_SEL, &val);
+		} else {
+			lp8788_read_byte(buck->lp, LP8788_BUCK_DVS_SEL, &val);
 			idx = (val & LP8788_BUCK1_DVS_M) >> LP8788_BUCK1_DVS_S;
-		पूर्ण
+		}
 		addr = LP8788_BUCK1_VOUT0 + idx;
-		अवरोध;
-	हाल BUCK2:
-		अगर (mode == EXTPIN) अणु
-			b2_dvs = (काष्ठा lp8788_buck2_dvs *)buck->dvs;
-			अगर (!b2_dvs)
-				जाओ err;
+		break;
+	case BUCK2:
+		if (mode == EXTPIN) {
+			b2_dvs = (struct lp8788_buck2_dvs *)buck->dvs;
+			if (!b2_dvs)
+				goto err;
 
 			pin1 = gpio_get_value(b2_dvs->gpio[0]);
 			pin2 = gpio_get_value(b2_dvs->gpio[1]);
 
-			अगर (pin1 == PIN_LOW && pin2 == PIN_LOW)
+			if (pin1 == PIN_LOW && pin2 == PIN_LOW)
 				idx = 0;
-			अन्यथा अगर (pin1 == PIN_LOW && pin2 == PIN_HIGH)
+			else if (pin1 == PIN_LOW && pin2 == PIN_HIGH)
 				idx = 2;
-			अन्यथा अगर (pin1 == PIN_HIGH && pin2 == PIN_LOW)
+			else if (pin1 == PIN_HIGH && pin2 == PIN_LOW)
 				idx = 1;
-			अन्यथा
+			else
 				idx = 3;
-		पूर्ण अन्यथा अणु
-			lp8788_पढ़ो_byte(buck->lp, LP8788_BUCK_DVS_SEL, &val);
+		} else {
+			lp8788_read_byte(buck->lp, LP8788_BUCK_DVS_SEL, &val);
 			idx = (val & LP8788_BUCK2_DVS_M) >> LP8788_BUCK2_DVS_S;
-		पूर्ण
+		}
 		addr = LP8788_BUCK2_VOUT0 + idx;
-		अवरोध;
-	शेष:
-		जाओ err;
-	पूर्ण
+		break;
+	default:
+		goto err;
+	}
 
-	वापस addr;
+	return addr;
 err:
-	वापस INVALID_ADDR;
-पूर्ण
+	return INVALID_ADDR;
+}
 
-अटल पूर्णांक lp8788_buck12_set_voltage_sel(काष्ठा regulator_dev *rdev,
-					अचिन्हित selector)
-अणु
-	काष्ठा lp8788_buck *buck = rdev_get_drvdata(rdev);
-	क्रमागत lp8788_buck_id id = rdev_get_id(rdev);
+static int lp8788_buck12_set_voltage_sel(struct regulator_dev *rdev,
+					unsigned selector)
+{
+	struct lp8788_buck *buck = rdev_get_drvdata(rdev);
+	enum lp8788_buck_id id = rdev_get_id(rdev);
 	u8 addr;
 
-	अगर (buck->dvs)
+	if (buck->dvs)
 		lp8788_set_dvs(buck, id);
 
 	addr = lp8788_select_buck_vout_addr(buck, id);
-	अगर (!lp8788_is_valid_buck_addr(addr))
-		वापस -EINVAL;
+	if (!lp8788_is_valid_buck_addr(addr))
+		return -EINVAL;
 
-	वापस lp8788_update_bits(buck->lp, addr, LP8788_VOUT_M, selector);
-पूर्ण
+	return lp8788_update_bits(buck->lp, addr, LP8788_VOUT_M, selector);
+}
 
-अटल पूर्णांक lp8788_buck12_get_voltage_sel(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा lp8788_buck *buck = rdev_get_drvdata(rdev);
-	क्रमागत lp8788_buck_id id = rdev_get_id(rdev);
-	पूर्णांक ret;
+static int lp8788_buck12_get_voltage_sel(struct regulator_dev *rdev)
+{
+	struct lp8788_buck *buck = rdev_get_drvdata(rdev);
+	enum lp8788_buck_id id = rdev_get_id(rdev);
+	int ret;
 	u8 val, addr;
 
 	addr = lp8788_select_buck_vout_addr(buck, id);
-	अगर (!lp8788_is_valid_buck_addr(addr))
-		वापस -EINVAL;
+	if (!lp8788_is_valid_buck_addr(addr))
+		return -EINVAL;
 
-	ret = lp8788_पढ़ो_byte(buck->lp, addr, &val);
-	अगर (ret)
-		वापस ret;
+	ret = lp8788_read_byte(buck->lp, addr, &val);
+	if (ret)
+		return ret;
 
-	वापस val & LP8788_VOUT_M;
-पूर्ण
+	return val & LP8788_VOUT_M;
+}
 
-अटल पूर्णांक lp8788_buck_enable_समय(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा lp8788_buck *buck = rdev_get_drvdata(rdev);
-	क्रमागत lp8788_buck_id id = rdev_get_id(rdev);
+static int lp8788_buck_enable_time(struct regulator_dev *rdev)
+{
+	struct lp8788_buck *buck = rdev_get_drvdata(rdev);
+	enum lp8788_buck_id id = rdev_get_id(rdev);
 	u8 val, addr = LP8788_BUCK1_TIMESTEP + id;
 
-	अगर (lp8788_पढ़ो_byte(buck->lp, addr, &val))
-		वापस -EINVAL;
+	if (lp8788_read_byte(buck->lp, addr, &val))
+		return -EINVAL;
 
 	val = (val & LP8788_STARTUP_TIME_M) >> LP8788_STARTUP_TIME_S;
 
-	वापस ENABLE_TIME_USEC * val;
-पूर्ण
+	return ENABLE_TIME_USEC * val;
+}
 
-अटल पूर्णांक lp8788_buck_set_mode(काष्ठा regulator_dev *rdev, अचिन्हित पूर्णांक mode)
-अणु
-	काष्ठा lp8788_buck *buck = rdev_get_drvdata(rdev);
-	क्रमागत lp8788_buck_id id = rdev_get_id(rdev);
+static int lp8788_buck_set_mode(struct regulator_dev *rdev, unsigned int mode)
+{
+	struct lp8788_buck *buck = rdev_get_drvdata(rdev);
+	enum lp8788_buck_id id = rdev_get_id(rdev);
 	u8 mask, val;
 
 	mask = BUCK_FPWM_MASK(id);
-	चयन (mode) अणु
-	हाल REGULATOR_MODE_FAST:
+	switch (mode) {
+	case REGULATOR_MODE_FAST:
 		val = LP8788_FORCE_PWM << BUCK_FPWM_SHIFT(id);
-		अवरोध;
-	हाल REGULATOR_MODE_NORMAL:
+		break;
+	case REGULATOR_MODE_NORMAL:
 		val = LP8788_AUTO_PWM << BUCK_FPWM_SHIFT(id);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस lp8788_update_bits(buck->lp, LP8788_BUCK_PWM, mask, val);
-पूर्ण
+	return lp8788_update_bits(buck->lp, LP8788_BUCK_PWM, mask, val);
+}
 
-अटल अचिन्हित पूर्णांक lp8788_buck_get_mode(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा lp8788_buck *buck = rdev_get_drvdata(rdev);
-	क्रमागत lp8788_buck_id id = rdev_get_id(rdev);
+static unsigned int lp8788_buck_get_mode(struct regulator_dev *rdev)
+{
+	struct lp8788_buck *buck = rdev_get_drvdata(rdev);
+	enum lp8788_buck_id id = rdev_get_id(rdev);
 	u8 val;
-	पूर्णांक ret;
+	int ret;
 
-	ret = lp8788_पढ़ो_byte(buck->lp, LP8788_BUCK_PWM, &val);
-	अगर (ret)
-		वापस ret;
+	ret = lp8788_read_byte(buck->lp, LP8788_BUCK_PWM, &val);
+	if (ret)
+		return ret;
 
-	वापस val & BUCK_FPWM_MASK(id) ?
+	return val & BUCK_FPWM_MASK(id) ?
 				REGULATOR_MODE_FAST : REGULATOR_MODE_NORMAL;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा regulator_ops lp8788_buck12_ops = अणु
+static const struct regulator_ops lp8788_buck12_ops = {
 	.list_voltage = regulator_list_voltage_linear_range,
 	.map_voltage = regulator_map_voltage_linear_range,
 	.set_voltage_sel = lp8788_buck12_set_voltage_sel,
@@ -347,12 +346,12 @@ err:
 	.enable = regulator_enable_regmap,
 	.disable = regulator_disable_regmap,
 	.is_enabled = regulator_is_enabled_regmap,
-	.enable_समय = lp8788_buck_enable_समय,
+	.enable_time = lp8788_buck_enable_time,
 	.set_mode = lp8788_buck_set_mode,
 	.get_mode = lp8788_buck_get_mode,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regulator_ops lp8788_buck34_ops = अणु
+static const struct regulator_ops lp8788_buck34_ops = {
 	.list_voltage = regulator_list_voltage_linear_range,
 	.map_voltage = regulator_map_voltage_linear_range,
 	.set_voltage_sel = regulator_set_voltage_sel_regmap,
@@ -360,13 +359,13 @@ err:
 	.enable = regulator_enable_regmap,
 	.disable = regulator_disable_regmap,
 	.is_enabled = regulator_is_enabled_regmap,
-	.enable_समय = lp8788_buck_enable_समय,
+	.enable_time = lp8788_buck_enable_time,
 	.set_mode = lp8788_buck_set_mode,
 	.get_mode = lp8788_buck_get_mode,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regulator_desc lp8788_buck_desc[] = अणु
-	अणु
+static const struct regulator_desc lp8788_buck_desc[] = {
+	{
 		.name = "buck1",
 		.id = BUCK1,
 		.ops = &lp8788_buck12_ops,
@@ -377,8 +376,8 @@ err:
 		.owner = THIS_MODULE,
 		.enable_reg = LP8788_EN_BUCK,
 		.enable_mask = LP8788_EN_BUCK1_M,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "buck2",
 		.id = BUCK2,
 		.ops = &lp8788_buck12_ops,
@@ -389,8 +388,8 @@ err:
 		.owner = THIS_MODULE,
 		.enable_reg = LP8788_EN_BUCK,
 		.enable_mask = LP8788_EN_BUCK2_M,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "buck3",
 		.id = BUCK3,
 		.ops = &lp8788_buck34_ops,
@@ -403,8 +402,8 @@ err:
 		.vsel_mask = LP8788_VOUT_M,
 		.enable_reg = LP8788_EN_BUCK,
 		.enable_mask = LP8788_EN_BUCK3_M,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "buck4",
 		.id = BUCK4,
 		.ops = &lp8788_buck34_ops,
@@ -417,135 +416,135 @@ err:
 		.vsel_mask = LP8788_VOUT_M,
 		.enable_reg = LP8788_EN_BUCK,
 		.enable_mask = LP8788_EN_BUCK4_M,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक lp8788_dvs_gpio_request(काष्ठा platक्रमm_device *pdev,
-				काष्ठा lp8788_buck *buck,
-				क्रमागत lp8788_buck_id id)
-अणु
-	काष्ठा lp8788_platक्रमm_data *pdata = buck->lp->pdata;
-	अक्षर *b1_name = "LP8788_B1_DVS";
-	अक्षर *b2_name[] = अणु "LP8788_B2_DVS1", "LP8788_B2_DVS2" पूर्ण;
-	पूर्णांक i, gpio, ret;
+static int lp8788_dvs_gpio_request(struct platform_device *pdev,
+				struct lp8788_buck *buck,
+				enum lp8788_buck_id id)
+{
+	struct lp8788_platform_data *pdata = buck->lp->pdata;
+	char *b1_name = "LP8788_B1_DVS";
+	char *b2_name[] = { "LP8788_B2_DVS1", "LP8788_B2_DVS2" };
+	int i, gpio, ret;
 
-	चयन (id) अणु
-	हाल BUCK1:
+	switch (id) {
+	case BUCK1:
 		gpio = pdata->buck1_dvs->gpio;
 		ret = devm_gpio_request_one(&pdev->dev, gpio, DVS_LOW,
 					    b1_name);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		buck->dvs = pdata->buck1_dvs;
-		अवरोध;
-	हाल BUCK2:
-		क्रम (i = 0; i < LP8788_NUM_BUCK2_DVS; i++) अणु
+		break;
+	case BUCK2:
+		for (i = 0; i < LP8788_NUM_BUCK2_DVS; i++) {
 			gpio = pdata->buck2_dvs->gpio[i];
 			ret = devm_gpio_request_one(&pdev->dev, gpio,
 						    DVS_LOW, b2_name[i]);
-			अगर (ret)
-				वापस ret;
-		पूर्ण
+			if (ret)
+				return ret;
+		}
 		buck->dvs = pdata->buck2_dvs;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lp8788_init_dvs(काष्ठा platक्रमm_device *pdev,
-			काष्ठा lp8788_buck *buck, क्रमागत lp8788_buck_id id)
-अणु
-	काष्ठा lp8788_platक्रमm_data *pdata = buck->lp->pdata;
-	u8 mask[] = अणु LP8788_BUCK1_DVS_SEL_M, LP8788_BUCK2_DVS_SEL_M पूर्ण;
-	u8 val[]  = अणु LP8788_BUCK1_DVS_PIN, LP8788_BUCK2_DVS_PIN पूर्ण;
-	u8 शेष_dvs_mode[] = अणु LP8788_BUCK1_DVS_I2C, LP8788_BUCK2_DVS_I2C पूर्ण;
+static int lp8788_init_dvs(struct platform_device *pdev,
+			struct lp8788_buck *buck, enum lp8788_buck_id id)
+{
+	struct lp8788_platform_data *pdata = buck->lp->pdata;
+	u8 mask[] = { LP8788_BUCK1_DVS_SEL_M, LP8788_BUCK2_DVS_SEL_M };
+	u8 val[]  = { LP8788_BUCK1_DVS_PIN, LP8788_BUCK2_DVS_PIN };
+	u8 default_dvs_mode[] = { LP8788_BUCK1_DVS_I2C, LP8788_BUCK2_DVS_I2C };
 
-	/* no dvs क्रम buck3, 4 */
-	अगर (id > BUCK2)
-		वापस 0;
+	/* no dvs for buck3, 4 */
+	if (id > BUCK2)
+		return 0;
 
-	/* no dvs platक्रमm data, then dvs will be selected by I2C रेजिस्टरs */
-	अगर (!pdata)
-		जाओ set_शेष_dvs_mode;
+	/* no dvs platform data, then dvs will be selected by I2C registers */
+	if (!pdata)
+		goto set_default_dvs_mode;
 
-	अगर ((id == BUCK1 && !pdata->buck1_dvs) ||
+	if ((id == BUCK1 && !pdata->buck1_dvs) ||
 		(id == BUCK2 && !pdata->buck2_dvs))
-		जाओ set_शेष_dvs_mode;
+		goto set_default_dvs_mode;
 
-	अगर (lp8788_dvs_gpio_request(pdev, buck, id))
-		जाओ set_शेष_dvs_mode;
+	if (lp8788_dvs_gpio_request(pdev, buck, id))
+		goto set_default_dvs_mode;
 
-	वापस lp8788_update_bits(buck->lp, LP8788_BUCK_DVS_SEL, mask[id],
+	return lp8788_update_bits(buck->lp, LP8788_BUCK_DVS_SEL, mask[id],
 				val[id]);
 
-set_शेष_dvs_mode:
-	वापस lp8788_update_bits(buck->lp, LP8788_BUCK_DVS_SEL, mask[id],
-				  शेष_dvs_mode[id]);
-पूर्ण
+set_default_dvs_mode:
+	return lp8788_update_bits(buck->lp, LP8788_BUCK_DVS_SEL, mask[id],
+				  default_dvs_mode[id]);
+}
 
-अटल पूर्णांक lp8788_buck_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा lp8788 *lp = dev_get_drvdata(pdev->dev.parent);
-	पूर्णांक id = pdev->id;
-	काष्ठा lp8788_buck *buck;
-	काष्ठा regulator_config cfg = अणु पूर्ण;
-	काष्ठा regulator_dev *rdev;
-	पूर्णांक ret;
+static int lp8788_buck_probe(struct platform_device *pdev)
+{
+	struct lp8788 *lp = dev_get_drvdata(pdev->dev.parent);
+	int id = pdev->id;
+	struct lp8788_buck *buck;
+	struct regulator_config cfg = { };
+	struct regulator_dev *rdev;
+	int ret;
 
-	अगर (id >= LP8788_NUM_BUCKS)
-		वापस -EINVAL;
+	if (id >= LP8788_NUM_BUCKS)
+		return -EINVAL;
 
-	buck = devm_kzalloc(&pdev->dev, माप(काष्ठा lp8788_buck), GFP_KERNEL);
-	अगर (!buck)
-		वापस -ENOMEM;
+	buck = devm_kzalloc(&pdev->dev, sizeof(struct lp8788_buck), GFP_KERNEL);
+	if (!buck)
+		return -ENOMEM;
 
 	buck->lp = lp;
 
 	ret = lp8788_init_dvs(pdev, buck, id);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	cfg.dev = pdev->dev.parent;
-	cfg.init_data = lp->pdata ? lp->pdata->buck_data[id] : शून्य;
+	cfg.init_data = lp->pdata ? lp->pdata->buck_data[id] : NULL;
 	cfg.driver_data = buck;
 	cfg.regmap = lp->regmap;
 
-	rdev = devm_regulator_रेजिस्टर(&pdev->dev, &lp8788_buck_desc[id], &cfg);
-	अगर (IS_ERR(rdev)) अणु
+	rdev = devm_regulator_register(&pdev->dev, &lp8788_buck_desc[id], &cfg);
+	if (IS_ERR(rdev)) {
 		ret = PTR_ERR(rdev);
 		dev_err(&pdev->dev, "BUCK%d regulator register err = %d\n",
 				id + 1, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	buck->regulator = rdev;
-	platक्रमm_set_drvdata(pdev, buck);
+	platform_set_drvdata(pdev, buck);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver lp8788_buck_driver = अणु
+static struct platform_driver lp8788_buck_driver = {
 	.probe = lp8788_buck_probe,
-	.driver = अणु
+	.driver = {
 		.name = LP8788_DEV_BUCK,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init lp8788_buck_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&lp8788_buck_driver);
-पूर्ण
+static int __init lp8788_buck_init(void)
+{
+	return platform_driver_register(&lp8788_buck_driver);
+}
 subsys_initcall(lp8788_buck_init);
 
-अटल व्योम __निकास lp8788_buck_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&lp8788_buck_driver);
-पूर्ण
-module_निकास(lp8788_buck_निकास);
+static void __exit lp8788_buck_exit(void)
+{
+	platform_driver_unregister(&lp8788_buck_driver);
+}
+module_exit(lp8788_buck_exit);
 
 MODULE_DESCRIPTION("TI LP8788 BUCK Driver");
 MODULE_AUTHOR("Milo Kim");

@@ -1,255 +1,254 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PMAC_PFUNC_H__
-#घोषणा __PMAC_PFUNC_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PMAC_PFUNC_H__
+#define __PMAC_PFUNC_H__
 
-#समावेश <linux/types.h>
-#समावेश <linux/list.h>
+#include <linux/types.h>
+#include <linux/list.h>
 
 /* Flags in command lists */
-#घोषणा PMF_FLAGS_ON_INIT		0x80000000u
-#घोषणा PMF_FLGAS_ON_TERM		0x40000000u
-#घोषणा PMF_FLAGS_ON_SLEEP		0x20000000u
-#घोषणा PMF_FLAGS_ON_WAKE		0x10000000u
-#घोषणा PMF_FLAGS_ON_DEMAND		0x08000000u
-#घोषणा PMF_FLAGS_INT_GEN		0x04000000u
-#घोषणा PMF_FLAGS_HIGH_SPEED		0x02000000u
-#घोषणा PMF_FLAGS_LOW_SPEED		0x01000000u
-#घोषणा PMF_FLAGS_SIDE_EFFECTS		0x00800000u
+#define PMF_FLAGS_ON_INIT		0x80000000u
+#define PMF_FLGAS_ON_TERM		0x40000000u
+#define PMF_FLAGS_ON_SLEEP		0x20000000u
+#define PMF_FLAGS_ON_WAKE		0x10000000u
+#define PMF_FLAGS_ON_DEMAND		0x08000000u
+#define PMF_FLAGS_INT_GEN		0x04000000u
+#define PMF_FLAGS_HIGH_SPEED		0x02000000u
+#define PMF_FLAGS_LOW_SPEED		0x01000000u
+#define PMF_FLAGS_SIDE_EFFECTS		0x00800000u
 
 /*
- * Arguments to a platक्रमm function call.
+ * Arguments to a platform function call.
  *
- * NOTE: By convention, poपूर्णांकer arguments poपूर्णांक to an u32
+ * NOTE: By convention, pointer arguments point to an u32
  */
-काष्ठा pmf_args अणु
-	जोड़ अणु
+struct pmf_args {
+	union {
 		u32 v;
 		u32 *p;
-	पूर्ण u[4];
-	अचिन्हित पूर्णांक count;
-पूर्ण;
+	} u[4];
+	unsigned int count;
+};
 
 /*
- * A driver capable of पूर्णांकerpreting commands provides a handlers
- * काष्ठाure filled with whatever handlers are implemented by this
- * driver. Non implemented handlers are left शून्य.
+ * A driver capable of interpreting commands provides a handlers
+ * structure filled with whatever handlers are implemented by this
+ * driver. Non implemented handlers are left NULL.
  *
  * PMF_STD_ARGS are the same arguments that are passed to the parser
- * and that माला_लो passed back to the various handlers.
+ * and that gets passed back to the various handlers.
  *
  * Interpreting a given function always start with a begin() call which
- * वापसs an instance data to be passed around subsequent calls, and
+ * returns an instance data to be passed around subsequent calls, and
  * ends with an end() call. This allows the low level driver to implement
  * locking policy or per-function instance data.
  *
- * For पूर्णांकerrupt capable functions, irq_enable() is called when a client
- * रेजिस्टरs, and irq_disable() is called when the last client unरेजिस्टरs
+ * For interrupt capable functions, irq_enable() is called when a client
+ * registers, and irq_disable() is called when the last client unregisters
  * Note that irq_enable & irq_disable are called within a semaphore held
- * by the core, thus you should not try to रेजिस्टर yourself to some other
- * pmf पूर्णांकerrupt during those calls.
+ * by the core, thus you should not try to register yourself to some other
+ * pmf interrupt during those calls.
  */
 
-#घोषणा PMF_STD_ARGS	काष्ठा pmf_function *func, व्योम *instdata, \
-		        काष्ठा pmf_args *args
+#define PMF_STD_ARGS	struct pmf_function *func, void *instdata, \
+		        struct pmf_args *args
 
-काष्ठा pmf_function;
+struct pmf_function;
 
-काष्ठा pmf_handlers अणु
-	व्योम * (*begin)(काष्ठा pmf_function *func, काष्ठा pmf_args *args);
-	व्योम (*end)(काष्ठा pmf_function *func, व्योम *instdata);
+struct pmf_handlers {
+	void * (*begin)(struct pmf_function *func, struct pmf_args *args);
+	void (*end)(struct pmf_function *func, void *instdata);
 
-	पूर्णांक (*irq_enable)(काष्ठा pmf_function *func);
-	पूर्णांक (*irq_disable)(काष्ठा pmf_function *func);
+	int (*irq_enable)(struct pmf_function *func);
+	int (*irq_disable)(struct pmf_function *func);
 
-	पूर्णांक (*ग_लिखो_gpio)(PMF_STD_ARGS, u8 value, u8 mask);
-	पूर्णांक (*पढ़ो_gpio)(PMF_STD_ARGS, u8 mask, पूर्णांक rshअगरt, u8 xor);
+	int (*write_gpio)(PMF_STD_ARGS, u8 value, u8 mask);
+	int (*read_gpio)(PMF_STD_ARGS, u8 mask, int rshift, u8 xor);
 
-	पूर्णांक (*ग_लिखो_reg32)(PMF_STD_ARGS, u32 offset, u32 value, u32 mask);
-	पूर्णांक (*पढ़ो_reg32)(PMF_STD_ARGS, u32 offset);
-	पूर्णांक (*ग_लिखो_reg16)(PMF_STD_ARGS, u32 offset, u16 value, u16 mask);
-	पूर्णांक (*पढ़ो_reg16)(PMF_STD_ARGS, u32 offset);
-	पूर्णांक (*ग_लिखो_reg8)(PMF_STD_ARGS, u32 offset, u8 value, u8 mask);
-	पूर्णांक (*पढ़ो_reg8)(PMF_STD_ARGS, u32 offset);
+	int (*write_reg32)(PMF_STD_ARGS, u32 offset, u32 value, u32 mask);
+	int (*read_reg32)(PMF_STD_ARGS, u32 offset);
+	int (*write_reg16)(PMF_STD_ARGS, u32 offset, u16 value, u16 mask);
+	int (*read_reg16)(PMF_STD_ARGS, u32 offset);
+	int (*write_reg8)(PMF_STD_ARGS, u32 offset, u8 value, u8 mask);
+	int (*read_reg8)(PMF_STD_ARGS, u32 offset);
 
-	पूर्णांक (*delay)(PMF_STD_ARGS, u32 duration);
+	int (*delay)(PMF_STD_ARGS, u32 duration);
 
-	पूर्णांक (*रुको_reg32)(PMF_STD_ARGS, u32 offset, u32 value, u32 mask);
-	पूर्णांक (*रुको_reg16)(PMF_STD_ARGS, u32 offset, u16 value, u16 mask);
-	पूर्णांक (*रुको_reg8)(PMF_STD_ARGS, u32 offset, u8 value, u8 mask);
+	int (*wait_reg32)(PMF_STD_ARGS, u32 offset, u32 value, u32 mask);
+	int (*wait_reg16)(PMF_STD_ARGS, u32 offset, u16 value, u16 mask);
+	int (*wait_reg8)(PMF_STD_ARGS, u32 offset, u8 value, u8 mask);
 
-	पूर्णांक (*पढ़ो_i2c)(PMF_STD_ARGS, u32 len);
-	पूर्णांक (*ग_लिखो_i2c)(PMF_STD_ARGS, u32 len, स्थिर u8 *data);
-	पूर्णांक (*rmw_i2c)(PMF_STD_ARGS, u32 masklen, u32 valuelen, u32 totallen,
-		       स्थिर u8 *maskdata, स्थिर u8 *valuedata);
+	int (*read_i2c)(PMF_STD_ARGS, u32 len);
+	int (*write_i2c)(PMF_STD_ARGS, u32 len, const u8 *data);
+	int (*rmw_i2c)(PMF_STD_ARGS, u32 masklen, u32 valuelen, u32 totallen,
+		       const u8 *maskdata, const u8 *valuedata);
 
-	पूर्णांक (*पढ़ो_cfg)(PMF_STD_ARGS, u32 offset, u32 len);
-	पूर्णांक (*ग_लिखो_cfg)(PMF_STD_ARGS, u32 offset, u32 len, स्थिर u8 *data);
-	पूर्णांक (*rmw_cfg)(PMF_STD_ARGS, u32 offset, u32 masklen, u32 valuelen,
-		       u32 totallen, स्थिर u8 *maskdata, स्थिर u8 *valuedata);
+	int (*read_cfg)(PMF_STD_ARGS, u32 offset, u32 len);
+	int (*write_cfg)(PMF_STD_ARGS, u32 offset, u32 len, const u8 *data);
+	int (*rmw_cfg)(PMF_STD_ARGS, u32 offset, u32 masklen, u32 valuelen,
+		       u32 totallen, const u8 *maskdata, const u8 *valuedata);
 
-	पूर्णांक (*पढ़ो_i2c_sub)(PMF_STD_ARGS, u8 subaddr, u32 len);
-	पूर्णांक (*ग_लिखो_i2c_sub)(PMF_STD_ARGS, u8 subaddr, u32 len, स्थिर u8 *data);
-	पूर्णांक (*set_i2c_mode)(PMF_STD_ARGS, पूर्णांक mode);
-	पूर्णांक (*rmw_i2c_sub)(PMF_STD_ARGS, u8 subaddr, u32 masklen, u32 valuelen,
-			   u32 totallen, स्थिर u8 *maskdata,
-			   स्थिर u8 *valuedata);
+	int (*read_i2c_sub)(PMF_STD_ARGS, u8 subaddr, u32 len);
+	int (*write_i2c_sub)(PMF_STD_ARGS, u8 subaddr, u32 len, const u8 *data);
+	int (*set_i2c_mode)(PMF_STD_ARGS, int mode);
+	int (*rmw_i2c_sub)(PMF_STD_ARGS, u8 subaddr, u32 masklen, u32 valuelen,
+			   u32 totallen, const u8 *maskdata,
+			   const u8 *valuedata);
 
-	पूर्णांक (*पढ़ो_reg32_msrx)(PMF_STD_ARGS, u32 offset, u32 mask, u32 shअगरt,
+	int (*read_reg32_msrx)(PMF_STD_ARGS, u32 offset, u32 mask, u32 shift,
 			       u32 xor);
-	पूर्णांक (*पढ़ो_reg16_msrx)(PMF_STD_ARGS, u32 offset, u32 mask, u32 shअगरt,
+	int (*read_reg16_msrx)(PMF_STD_ARGS, u32 offset, u32 mask, u32 shift,
 			       u32 xor);
-	पूर्णांक (*पढ़ो_reg8_msrx)(PMF_STD_ARGS, u32 offset, u32 mask, u32 shअगरt,
+	int (*read_reg8_msrx)(PMF_STD_ARGS, u32 offset, u32 mask, u32 shift,
 			      u32 xor);
 
-	पूर्णांक (*ग_लिखो_reg32_slm)(PMF_STD_ARGS, u32 offset, u32 shअगरt, u32 mask);
-	पूर्णांक (*ग_लिखो_reg16_slm)(PMF_STD_ARGS, u32 offset, u32 shअगरt, u32 mask);
-	पूर्णांक (*ग_लिखो_reg8_slm)(PMF_STD_ARGS, u32 offset, u32 shअगरt, u32 mask);
+	int (*write_reg32_slm)(PMF_STD_ARGS, u32 offset, u32 shift, u32 mask);
+	int (*write_reg16_slm)(PMF_STD_ARGS, u32 offset, u32 shift, u32 mask);
+	int (*write_reg8_slm)(PMF_STD_ARGS, u32 offset, u32 shift, u32 mask);
 
-	पूर्णांक (*mask_and_compare)(PMF_STD_ARGS, u32 len, स्थिर u8 *maskdata,
-				स्थिर u8 *valuedata);
+	int (*mask_and_compare)(PMF_STD_ARGS, u32 len, const u8 *maskdata,
+				const u8 *valuedata);
 
-	काष्ठा module *owner;
-पूर्ण;
+	struct module *owner;
+};
 
 
 /*
- * Drivers who expose platक्रमm functions रेजिस्टर at init समय, this
- * causes the platक्रमm functions क्रम that device node to be parsed in
- * advance and associated with the device. The data काष्ठाures are
- * partially खुला so a driver can walk the list of platक्रमm functions
+ * Drivers who expose platform functions register at init time, this
+ * causes the platform functions for that device node to be parsed in
+ * advance and associated with the device. The data structures are
+ * partially public so a driver can walk the list of platform functions
  * and eventually inspect the flags
  */
-काष्ठा pmf_device;
+struct pmf_device;
 
-काष्ठा pmf_function अणु
-	/* All functions क्रम a given driver are linked */
-	काष्ठा list_head	link;
+struct pmf_function {
+	/* All functions for a given driver are linked */
+	struct list_head	link;
 
 	/* Function node & driver data */
-	काष्ठा device_node	*node;
-	व्योम			*driver_data;
+	struct device_node	*node;
+	void			*driver_data;
 
-	/* For पूर्णांकernal use by core */
-	काष्ठा pmf_device	*dev;
+	/* For internal use by core */
+	struct pmf_device	*dev;
 
 	/* The name is the "xxx" in "platform-do-xxx", this is how
-	 * platक्रमm functions are identअगरied by this code. Some functions
-	 * only operate क्रम a given target, in which हाल the phandle is
-	 * here (or 0 अगर the filter करोesn't apply)
+	 * platform functions are identified by this code. Some functions
+	 * only operate for a given target, in which case the phandle is
+	 * here (or 0 if the filter doesn't apply)
 	 */
-	स्थिर अक्षर		*name;
+	const char		*name;
 	u32			phandle;
 
-	/* The flags क्रम that function. You can have several functions
-	 * with the same name and dअगरferent flag
+	/* The flags for that function. You can have several functions
+	 * with the same name and different flag
 	 */
 	u32			flags;
 
 	/* The actual tokenized function blob */
-	स्थिर व्योम		*data;
-	अचिन्हित पूर्णांक		length;
+	const void		*data;
+	unsigned int		length;
 
 	/* Interrupt clients */
-	काष्ठा list_head	irq_clients;
+	struct list_head	irq_clients;
 
 	/* Refcounting */
-	काष्ठा kref		ref;
-पूर्ण;
+	struct kref		ref;
+};
 
 /*
- * For platक्रमm functions that are पूर्णांकerrupts, one can रेजिस्टर
- * irq_client काष्ठाures. You canNOT use the same काष्ठाure twice
+ * For platform functions that are interrupts, one can register
+ * irq_client structures. You canNOT use the same structure twice
  * as it contains a link member. Also, the callback is called with
- * a spinlock held, you must not call back पूर्णांकo any of the pmf_* functions
+ * a spinlock held, you must not call back into any of the pmf_* functions
  * from within that callback
  */
-काष्ठा pmf_irq_client अणु
-	व्योम			(*handler)(व्योम *data);
-	व्योम			*data;
-	काष्ठा module		*owner;
-	काष्ठा list_head	link;
-	काष्ठा pmf_function	*func;
-पूर्ण;
+struct pmf_irq_client {
+	void			(*handler)(void *data);
+	void			*data;
+	struct module		*owner;
+	struct list_head	link;
+	struct pmf_function	*func;
+};
 
 
 /*
- * Register/Unरेजिस्टर a function-capable driver and its handlers
+ * Register/Unregister a function-capable driver and its handlers
  */
-बाह्य पूर्णांक pmf_रेजिस्टर_driver(काष्ठा device_node *np,
-			      काष्ठा pmf_handlers *handlers,
-			      व्योम *driverdata);
+extern int pmf_register_driver(struct device_node *np,
+			      struct pmf_handlers *handlers,
+			      void *driverdata);
 
-बाह्य व्योम pmf_unरेजिस्टर_driver(काष्ठा device_node *np);
+extern void pmf_unregister_driver(struct device_node *np);
 
 
 /*
- * Register/Unरेजिस्टर पूर्णांकerrupt clients
+ * Register/Unregister interrupt clients
  */
-बाह्य पूर्णांक pmf_रेजिस्टर_irq_client(काष्ठा device_node *np,
-				   स्थिर अक्षर *name,
-				   काष्ठा pmf_irq_client *client);
+extern int pmf_register_irq_client(struct device_node *np,
+				   const char *name,
+				   struct pmf_irq_client *client);
 
-बाह्य व्योम pmf_unरेजिस्टर_irq_client(काष्ठा pmf_irq_client *client);
+extern void pmf_unregister_irq_client(struct pmf_irq_client *client);
 
 /*
  * Called by the handlers when an irq happens
  */
-बाह्य व्योम pmf_करो_irq(काष्ठा pmf_function *func);
+extern void pmf_do_irq(struct pmf_function *func);
 
 
 /*
- * Low level call to platक्रमm functions.
+ * Low level call to platform functions.
  *
- * The phandle can filter on the target object क्रम functions that have
- * multiple tarमाला_लो, the flags allow you to restrict the call to a given
+ * The phandle can filter on the target object for functions that have
+ * multiple targets, the flags allow you to restrict the call to a given
  * combination of flags.
  *
  * The args array contains as many arguments as is required by the function,
- * this is dependent on the function you are calling, unक्रमtunately Apple
+ * this is dependent on the function you are calling, unfortunately Apple
  * mechanism provides no way to encode that so you have to get it right at
- * the call site. Some functions require no args, in which हाल, you can
- * pass शून्य.
+ * the call site. Some functions require no args, in which case, you can
+ * pass NULL.
  *
- * You can also pass शून्य to the name. This will match any function that has
+ * You can also pass NULL to the name. This will match any function that has
  * the appropriate combination of flags & phandle or you can pass 0 to the
  * phandle to match any
  */
-बाह्य पूर्णांक pmf_करो_functions(काष्ठा device_node *np, स्थिर अक्षर *name,
-			    u32 phandle, u32 flags, काष्ठा pmf_args *args);
+extern int pmf_do_functions(struct device_node *np, const char *name,
+			    u32 phandle, u32 flags, struct pmf_args *args);
 
 
 
 /*
- * High level call to a platक्रमm function.
+ * High level call to a platform function.
  *
- * This one looks क्रम the platक्रमm-xxx first so you should call it to the
- * actual target अगर any. It will fallback to platक्रमm-करो-xxx अगर it can't
+ * This one looks for the platform-xxx first so you should call it to the
+ * actual target if any. It will fallback to platform-do-xxx if it can't
  * find one. It will also exclusively target functions that have
  * the "OnDemand" flag.
  */
 
-बाह्य पूर्णांक pmf_call_function(काष्ठा device_node *target, स्थिर अक्षर *name,
-			     काष्ठा pmf_args *args);
+extern int pmf_call_function(struct device_node *target, const char *name,
+			     struct pmf_args *args);
 
 
 /*
- * For low latency पूर्णांकerrupt usage, you can lookup क्रम on-demand functions
+ * For low latency interrupt usage, you can lookup for on-demand functions
  * using the functions below
  */
 
-बाह्य काष्ठा pmf_function *pmf_find_function(काष्ठा device_node *target,
-					      स्थिर अक्षर *name);
+extern struct pmf_function *pmf_find_function(struct device_node *target,
+					      const char *name);
 
-बाह्य काष्ठा pmf_function * pmf_get_function(काष्ठा pmf_function *func);
-बाह्य व्योम pmf_put_function(काष्ठा pmf_function *func);
+extern struct pmf_function * pmf_get_function(struct pmf_function *func);
+extern void pmf_put_function(struct pmf_function *func);
 
-बाह्य पूर्णांक pmf_call_one(काष्ठा pmf_function *func, काष्ठा pmf_args *args);
+extern int pmf_call_one(struct pmf_function *func, struct pmf_args *args);
 
-पूर्णांक pmac_pfunc_base_install(व्योम);
+int pmac_pfunc_base_install(void);
 
-/* Suspend/resume code called by via-pmu directly क्रम now */
-बाह्य व्योम pmac_pfunc_base_suspend(व्योम);
-बाह्य व्योम pmac_pfunc_base_resume(व्योम);
+/* Suspend/resume code called by via-pmu directly for now */
+extern void pmac_pfunc_base_suspend(void);
+extern void pmac_pfunc_base_resume(void);
 
-#पूर्ण_अगर /* __PMAC_PFUNC_H__ */
+#endif /* __PMAC_PFUNC_H__ */

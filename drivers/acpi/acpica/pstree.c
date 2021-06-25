@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: pstree - Parser op tree manipulation/traversal/search
@@ -8,75 +7,75 @@
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acparser.h"
-#समावेश "amlcode.h"
-#समावेश "acconvert.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acparser.h"
+#include "amlcode.h"
+#include "acconvert.h"
 
-#घोषणा _COMPONENT          ACPI_PARSER
+#define _COMPONENT          ACPI_PARSER
 ACPI_MODULE_NAME("pstree")
 
 /* Local prototypes */
-#अगर_घोषित ACPI_OBSOLETE_FUNCTIONS
-जोड़ acpi_parse_object *acpi_ps_get_child(जोड़ acpi_parse_object *op);
-#पूर्ण_अगर
+#ifdef ACPI_OBSOLETE_FUNCTIONS
+union acpi_parse_object *acpi_ps_get_child(union acpi_parse_object *op);
+#endif
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ps_get_arg
  *
- * PARAMETERS:  op              - Get an argument क्रम this op
+ * PARAMETERS:  op              - Get an argument for this op
  *              argn            - Nth argument to get
  *
- * RETURN:      The argument (as an Op object). शून्य अगर argument करोes not exist
+ * RETURN:      The argument (as an Op object). NULL if argument does not exist
  *
- * DESCRIPTION: Get the specअगरied op's argument.
+ * DESCRIPTION: Get the specified op's argument.
  *
  ******************************************************************************/
 
-जोड़ acpi_parse_object *acpi_ps_get_arg(जोड़ acpi_parse_object *op, u32 argn)
-अणु
-	जोड़ acpi_parse_object *arg = शून्य;
-	स्थिर काष्ठा acpi_opcode_info *op_info;
+union acpi_parse_object *acpi_ps_get_arg(union acpi_parse_object *op, u32 argn)
+{
+	union acpi_parse_object *arg = NULL;
+	const struct acpi_opcode_info *op_info;
 
 	ACPI_FUNCTION_ENTRY();
 
 /*
-	अगर (Op->Common.aml_opcode == AML_INT_CONNECTION_OP)
-	अणु
-		वापस (Op->Common.Value.Arg);
-	पूर्ण
+	if (Op->Common.aml_opcode == AML_INT_CONNECTION_OP)
+	{
+		return (Op->Common.Value.Arg);
+	}
 */
-	/* Get the info काष्ठाure क्रम this opcode */
+	/* Get the info structure for this opcode */
 
 	op_info = acpi_ps_get_opcode_info(op->common.aml_opcode);
-	अगर (op_info->class == AML_CLASS_UNKNOWN) अणु
+	if (op_info->class == AML_CLASS_UNKNOWN) {
 
-		/* Invalid opcode or ASCII अक्षरacter */
+		/* Invalid opcode or ASCII character */
 
-		वापस (शून्य);
-	पूर्ण
+		return (NULL);
+	}
 
-	/* Check अगर this opcode requires argument sub-objects */
+	/* Check if this opcode requires argument sub-objects */
 
-	अगर (!(op_info->flags & AML_HAS_ARGS)) अणु
+	if (!(op_info->flags & AML_HAS_ARGS)) {
 
 		/* Has no linked argument objects */
 
-		वापस (शून्य);
-	पूर्ण
+		return (NULL);
+	}
 
 	/* Get the requested argument object */
 
 	arg = op->common.value.arg;
-	जबतक (arg && argn) अणु
+	while (arg && argn) {
 		argn--;
 		arg = arg->common.next;
-	पूर्ण
+	}
 
-	वापस (arg);
-पूर्ण
+	return (arg);
+}
 
 /*******************************************************************************
  *
@@ -87,71 +86,71 @@ ACPI_MODULE_NAME("pstree")
  *
  * RETURN:      None.
  *
- * DESCRIPTION: Append an argument to an op's argument list (a शून्य arg is OK)
+ * DESCRIPTION: Append an argument to an op's argument list (a NULL arg is OK)
  *
  ******************************************************************************/
 
-व्योम
-acpi_ps_append_arg(जोड़ acpi_parse_object *op, जोड़ acpi_parse_object *arg)
-अणु
-	जोड़ acpi_parse_object *prev_arg;
-	स्थिर काष्ठा acpi_opcode_info *op_info;
+void
+acpi_ps_append_arg(union acpi_parse_object *op, union acpi_parse_object *arg)
+{
+	union acpi_parse_object *prev_arg;
+	const struct acpi_opcode_info *op_info;
 
 	ACPI_FUNCTION_TRACE(ps_append_arg);
 
-	अगर (!op) अणु
-		वापस_VOID;
-	पूर्ण
+	if (!op) {
+		return_VOID;
+	}
 
-	/* Get the info काष्ठाure क्रम this opcode */
+	/* Get the info structure for this opcode */
 
 	op_info = acpi_ps_get_opcode_info(op->common.aml_opcode);
-	अगर (op_info->class == AML_CLASS_UNKNOWN) अणु
+	if (op_info->class == AML_CLASS_UNKNOWN) {
 
 		/* Invalid opcode */
 
 		ACPI_ERROR((AE_INFO, "Invalid AML Opcode: 0x%2.2X",
 			    op->common.aml_opcode));
-		वापस_VOID;
-	पूर्ण
+		return_VOID;
+	}
 
-	/* Check अगर this opcode requires argument sub-objects */
+	/* Check if this opcode requires argument sub-objects */
 
-	अगर (!(op_info->flags & AML_HAS_ARGS)) अणु
+	if (!(op_info->flags & AML_HAS_ARGS)) {
 
 		/* Has no linked argument objects */
 
-		वापस_VOID;
-	पूर्ण
+		return_VOID;
+	}
 
 	/* Append the argument to the linked argument list */
 
-	अगर (op->common.value.arg) अणु
+	if (op->common.value.arg) {
 
 		/* Append to existing argument list */
 
 		prev_arg = op->common.value.arg;
-		जबतक (prev_arg->common.next) अणु
+		while (prev_arg->common.next) {
 			prev_arg = prev_arg->common.next;
-		पूर्ण
+		}
 		prev_arg->common.next = arg;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* No argument list, this will be the first argument */
 
 		op->common.value.arg = arg;
-	पूर्ण
+	}
 
 	/* Set the parent in this arg and any args linked after it */
 
-	जबतक (arg) अणु
+	while (arg) {
 		arg->common.parent = op;
 		arg = arg->common.next;
 
 		op->common.arg_list_length++;
-	पूर्ण
+	}
 
-	वापस_VOID;
-पूर्ण
+	return_VOID;
+}
 
 /*******************************************************************************
  *
@@ -163,133 +162,133 @@ acpi_ps_append_arg(जोड़ acpi_parse_object *op, जोड़ acpi_parse_o
  * RETURN:      Next Op found in the search.
  *
  * DESCRIPTION: Get next op in tree (walking the tree in depth-first order)
- *              Return शून्य when reaching "origin" or when walking up from root
+ *              Return NULL when reaching "origin" or when walking up from root
  *
  ******************************************************************************/
 
-जोड़ acpi_parse_object *acpi_ps_get_depth_next(जोड़ acpi_parse_object *origin,
-						जोड़ acpi_parse_object *op)
-अणु
-	जोड़ acpi_parse_object *next = शून्य;
-	जोड़ acpi_parse_object *parent;
-	जोड़ acpi_parse_object *arg;
+union acpi_parse_object *acpi_ps_get_depth_next(union acpi_parse_object *origin,
+						union acpi_parse_object *op)
+{
+	union acpi_parse_object *next = NULL;
+	union acpi_parse_object *parent;
+	union acpi_parse_object *arg;
 
 	ACPI_FUNCTION_ENTRY();
 
-	अगर (!op) अणु
-		वापस (शून्य);
-	पूर्ण
+	if (!op) {
+		return (NULL);
+	}
 
-	/* Look क्रम an argument or child */
+	/* Look for an argument or child */
 
 	next = acpi_ps_get_arg(op, 0);
-	अगर (next) अणु
-		ASL_CV_LABEL_खाताNODE(next);
-		वापस (next);
-	पूर्ण
+	if (next) {
+		ASL_CV_LABEL_FILENODE(next);
+		return (next);
+	}
 
-	/* Look क्रम a sibling */
+	/* Look for a sibling */
 
 	next = op->common.next;
-	अगर (next) अणु
-		ASL_CV_LABEL_खाताNODE(next);
-		वापस (next);
-	पूर्ण
+	if (next) {
+		ASL_CV_LABEL_FILENODE(next);
+		return (next);
+	}
 
-	/* Look क्रम a sibling of parent */
+	/* Look for a sibling of parent */
 
 	parent = op->common.parent;
 
-	जबतक (parent) अणु
+	while (parent) {
 		arg = acpi_ps_get_arg(parent, 0);
-		जबतक (arg && (arg != origin) && (arg != op)) अणु
+		while (arg && (arg != origin) && (arg != op)) {
 
-			ASL_CV_LABEL_खाताNODE(arg);
+			ASL_CV_LABEL_FILENODE(arg);
 			arg = arg->common.next;
-		पूर्ण
+		}
 
-		अगर (arg == origin) अणु
+		if (arg == origin) {
 
 			/* Reached parent of origin, end search */
 
-			वापस (शून्य);
-		पूर्ण
+			return (NULL);
+		}
 
-		अगर (parent->common.next) अणु
+		if (parent->common.next) {
 
 			/* Found sibling of parent */
 
-			ASL_CV_LABEL_खाताNODE(parent->common.next);
-			वापस (parent->common.next);
-		पूर्ण
+			ASL_CV_LABEL_FILENODE(parent->common.next);
+			return (parent->common.next);
+		}
 
 		op = parent;
 		parent = parent->common.parent;
-	पूर्ण
+	}
 
-	ASL_CV_LABEL_खाताNODE(next);
-	वापस (next);
-पूर्ण
+	ASL_CV_LABEL_FILENODE(next);
+	return (next);
+}
 
-#अगर_घोषित ACPI_OBSOLETE_FUNCTIONS
+#ifdef ACPI_OBSOLETE_FUNCTIONS
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ps_get_child
  *
  * PARAMETERS:  op              - Get the child of this Op
  *
- * RETURN:      Child Op, Null अगर none is found.
+ * RETURN:      Child Op, Null if none is found.
  *
- * DESCRIPTION: Get op's children or शून्य अगर none
+ * DESCRIPTION: Get op's children or NULL if none
  *
  ******************************************************************************/
 
-जोड़ acpi_parse_object *acpi_ps_get_child(जोड़ acpi_parse_object *op)
-अणु
-	जोड़ acpi_parse_object *child = शून्य;
+union acpi_parse_object *acpi_ps_get_child(union acpi_parse_object *op)
+{
+	union acpi_parse_object *child = NULL;
 
 	ACPI_FUNCTION_ENTRY();
 
-	चयन (op->common.aml_opcode) अणु
-	हाल AML_SCOPE_OP:
-	हाल AML_ELSE_OP:
-	हाल AML_DEVICE_OP:
-	हाल AML_THERMAL_ZONE_OP:
-	हाल AML_INT_METHODCALL_OP:
+	switch (op->common.aml_opcode) {
+	case AML_SCOPE_OP:
+	case AML_ELSE_OP:
+	case AML_DEVICE_OP:
+	case AML_THERMAL_ZONE_OP:
+	case AML_INT_METHODCALL_OP:
 
 		child = acpi_ps_get_arg(op, 0);
-		अवरोध;
+		break;
 
-	हाल AML_BUFFER_OP:
-	हाल AML_PACKAGE_OP:
-	हाल AML_VARIABLE_PACKAGE_OP:
-	हाल AML_METHOD_OP:
-	हाल AML_IF_OP:
-	हाल AML_WHILE_OP:
-	हाल AML_FIELD_OP:
+	case AML_BUFFER_OP:
+	case AML_PACKAGE_OP:
+	case AML_VARIABLE_PACKAGE_OP:
+	case AML_METHOD_OP:
+	case AML_IF_OP:
+	case AML_WHILE_OP:
+	case AML_FIELD_OP:
 
 		child = acpi_ps_get_arg(op, 1);
-		अवरोध;
+		break;
 
-	हाल AML_POWER_RESOURCE_OP:
-	हाल AML_INDEX_FIELD_OP:
+	case AML_POWER_RESOURCE_OP:
+	case AML_INDEX_FIELD_OP:
 
 		child = acpi_ps_get_arg(op, 2);
-		अवरोध;
+		break;
 
-	हाल AML_PROCESSOR_OP:
-	हाल AML_BANK_FIELD_OP:
+	case AML_PROCESSOR_OP:
+	case AML_BANK_FIELD_OP:
 
 		child = acpi_ps_get_arg(op, 3);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 
 		/* All others have no children */
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस (child);
-पूर्ण
-#पूर्ण_अगर
+	return (child);
+}
+#endif

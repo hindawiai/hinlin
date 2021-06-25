@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
+/* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -27,32 +26,32 @@
  *
  **************************************************************************/
 /*
- * Authors: Thomas Hellstrom <thellstrom-at-vmware-करोt-com>
+ * Authors: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
  * 	    Jerome Glisse
  */
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/debugfs.h>
-#समावेश <drm/drm_sysfs.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/sched.h>
+#include <linux/debugfs.h>
+#include <drm/drm_sysfs.h>
 
-#समावेश "ttm_module.h"
+#include "ttm_module.h"
 
-काष्ठा dentry *tपंचांग_debugfs_root;
+struct dentry *ttm_debugfs_root;
 
-अटल पूर्णांक __init tपंचांग_init(व्योम)
-अणु
-	tपंचांग_debugfs_root = debugfs_create_dir("ttm", शून्य);
-	वापस 0;
-पूर्ण
+static int __init ttm_init(void)
+{
+	ttm_debugfs_root = debugfs_create_dir("ttm", NULL);
+	return 0;
+}
 
-अटल व्योम __निकास tपंचांग_निकास(व्योम)
-अणु
-	debugfs_हटाओ(tपंचांग_debugfs_root);
-पूर्ण
+static void __exit ttm_exit(void)
+{
+	debugfs_remove(ttm_debugfs_root);
+}
 
-module_init(tपंचांग_init);
-module_निकास(tपंचांग_निकास);
+module_init(ttm_init);
+module_exit(ttm_exit);
 
 MODULE_AUTHOR("Thomas Hellstrom, Jerome Glisse");
 MODULE_DESCRIPTION("TTM memory manager subsystem (for DRM device)");

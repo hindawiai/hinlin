@@ -1,42 +1,41 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/types.h>
-#समावेश <linux/माला.स>
-#समावेश <सीमा.स>
-#समावेश <मानककोष.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/types.h>
+#include <linux/string.h>
+#include <limits.h>
+#include <stdlib.h>
 
-#समावेश <पूर्णांकernal/lib.h> // page_size
-#समावेश "../../../util/machine.h"
-#समावेश "../../../util/map.h"
-#समावेश "../../../util/symbol.h"
-#समावेश <linux/प्रकार.स>
+#include <internal/lib.h> // page_size
+#include "../../../util/machine.h"
+#include "../../../util/map.h"
+#include "../../../util/symbol.h"
+#include <linux/ctype.h>
 
-#समावेश <symbol/kallsyms.h>
+#include <symbol/kallsyms.h>
 
-#अगर defined(__x86_64__)
+#if defined(__x86_64__)
 
-काष्ठा extra_kernel_map_info अणु
-	पूर्णांक cnt;
-	पूर्णांक max_cnt;
-	काष्ठा extra_kernel_map *maps;
+struct extra_kernel_map_info {
+	int cnt;
+	int max_cnt;
+	struct extra_kernel_map *maps;
 	bool get_entry_trampolines;
 	u64 entry_trampoline;
-पूर्ण;
+};
 
-अटल पूर्णांक add_extra_kernel_map(काष्ठा extra_kernel_map_info *mi, u64 start,
-				u64 end, u64 pgoff, स्थिर अक्षर *name)
-अणु
-	अगर (mi->cnt >= mi->max_cnt) अणु
-		व्योम *buf;
-		माप_प्रकार sz;
+static int add_extra_kernel_map(struct extra_kernel_map_info *mi, u64 start,
+				u64 end, u64 pgoff, const char *name)
+{
+	if (mi->cnt >= mi->max_cnt) {
+		void *buf;
+		size_t sz;
 
 		mi->max_cnt = mi->max_cnt ? mi->max_cnt * 2 : 32;
-		sz = माप(काष्ठा extra_kernel_map) * mi->max_cnt;
-		buf = पुनः_स्मृति(mi->maps, sz);
-		अगर (!buf)
-			वापस -1;
+		sz = sizeof(struct extra_kernel_map) * mi->max_cnt;
+		buf = realloc(mi->maps, sz);
+		if (!buf)
+			return -1;
 		mi->maps = buf;
-	पूर्ण
+	}
 
 	mi->maps[mi->cnt].start = start;
 	mi->maps[mi->cnt].end   = end;
@@ -45,62 +44,62 @@
 
 	mi->cnt += 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक find_extra_kernel_maps(व्योम *arg, स्थिर अक्षर *name, अक्षर type,
+static int find_extra_kernel_maps(void *arg, const char *name, char type,
 				  u64 start)
-अणु
-	काष्ठा extra_kernel_map_info *mi = arg;
+{
+	struct extra_kernel_map_info *mi = arg;
 
-	अगर (!mi->entry_trampoline && kallsyms2elf_binding(type) == STB_GLOBAL &&
-	    !म_भेद(name, "_entry_trampoline")) अणु
+	if (!mi->entry_trampoline && kallsyms2elf_binding(type) == STB_GLOBAL &&
+	    !strcmp(name, "_entry_trampoline")) {
 		mi->entry_trampoline = start;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (is_entry_trampoline(name)) अणु
+	if (is_entry_trampoline(name)) {
 		u64 end = start + page_size;
 
-		वापस add_extra_kernel_map(mi, start, end, 0, name);
-	पूर्ण
+		return add_extra_kernel_map(mi, start, end, 0, name);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक machine__create_extra_kernel_maps(काष्ठा machine *machine,
-				      काष्ठा dso *kernel)
-अणु
-	काष्ठा extra_kernel_map_info mi = अणु .cnt = 0, पूर्ण;
-	अक्षर filename[PATH_MAX];
-	पूर्णांक ret;
-	पूर्णांक i;
+int machine__create_extra_kernel_maps(struct machine *machine,
+				      struct dso *kernel)
+{
+	struct extra_kernel_map_info mi = { .cnt = 0, };
+	char filename[PATH_MAX];
+	int ret;
+	int i;
 
 	machine__get_kallsyms_filename(machine, filename, PATH_MAX);
 
-	अगर (symbol__restricted_filename(filename, "/proc/kallsyms"))
-		वापस 0;
+	if (symbol__restricted_filename(filename, "/proc/kallsyms"))
+		return 0;
 
 	ret = kallsyms__parse(filename, &mi, find_extra_kernel_maps);
-	अगर (ret)
-		जाओ out_मुक्त;
+	if (ret)
+		goto out_free;
 
-	अगर (!mi.entry_trampoline)
-		जाओ out_मुक्त;
+	if (!mi.entry_trampoline)
+		goto out_free;
 
-	क्रम (i = 0; i < mi.cnt; i++) अणु
-		काष्ठा extra_kernel_map *xm = &mi.maps[i];
+	for (i = 0; i < mi.cnt; i++) {
+		struct extra_kernel_map *xm = &mi.maps[i];
 
 		xm->pgoff = mi.entry_trampoline;
 		ret = machine__create_extra_kernel_map(machine, kernel, xm);
-		अगर (ret)
-			जाओ out_मुक्त;
-	पूर्ण
+		if (ret)
+			goto out_free;
+	}
 
 	machine->trampolines_mapped = mi.cnt;
-out_मुक्त:
-	मुक्त(mi.maps);
-	वापस ret;
-पूर्ण
+out_free:
+	free(mi.maps);
+	return ret;
+}
 
-#पूर्ण_अगर
+#endif

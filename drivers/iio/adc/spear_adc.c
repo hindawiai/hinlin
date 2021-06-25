@@ -1,109 +1,108 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * ST SPEAr ADC driver
  *
  * Copyright 2012 Stefan Roese <sr@denx.de>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/device.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/clk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/interrupt.h>
+#include <linux/device.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/io.h>
+#include <linux/clk.h>
+#include <linux/err.h>
+#include <linux/completion.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
 
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
 
-/* SPEAR रेजिस्टरs definitions */
-#घोषणा SPEAR600_ADC_SCAN_RATE_LO(x)	((x) & 0xFFFF)
-#घोषणा SPEAR600_ADC_SCAN_RATE_HI(x)	(((x) >> 0x10) & 0xFFFF)
-#घोषणा SPEAR_ADC_CLK_LOW(x)		(((x) & 0xf) << 0)
-#घोषणा SPEAR_ADC_CLK_HIGH(x)		(((x) & 0xf) << 4)
+/* SPEAR registers definitions */
+#define SPEAR600_ADC_SCAN_RATE_LO(x)	((x) & 0xFFFF)
+#define SPEAR600_ADC_SCAN_RATE_HI(x)	(((x) >> 0x10) & 0xFFFF)
+#define SPEAR_ADC_CLK_LOW(x)		(((x) & 0xf) << 0)
+#define SPEAR_ADC_CLK_HIGH(x)		(((x) & 0xf) << 4)
 
-/* Bit definitions क्रम SPEAR_ADC_STATUS */
-#घोषणा SPEAR_ADC_STATUS_START_CONVERSION	BIT(0)
-#घोषणा SPEAR_ADC_STATUS_CHANNEL_NUM(x)		((x) << 1)
-#घोषणा SPEAR_ADC_STATUS_ADC_ENABLE		BIT(4)
-#घोषणा SPEAR_ADC_STATUS_AVG_SAMPLE(x)		((x) << 5)
-#घोषणा SPEAR_ADC_STATUS_VREF_INTERNAL		BIT(9)
+/* Bit definitions for SPEAR_ADC_STATUS */
+#define SPEAR_ADC_STATUS_START_CONVERSION	BIT(0)
+#define SPEAR_ADC_STATUS_CHANNEL_NUM(x)		((x) << 1)
+#define SPEAR_ADC_STATUS_ADC_ENABLE		BIT(4)
+#define SPEAR_ADC_STATUS_AVG_SAMPLE(x)		((x) << 5)
+#define SPEAR_ADC_STATUS_VREF_INTERNAL		BIT(9)
 
-#घोषणा SPEAR_ADC_DATA_MASK		0x03ff
-#घोषणा SPEAR_ADC_DATA_BITS		10
+#define SPEAR_ADC_DATA_MASK		0x03ff
+#define SPEAR_ADC_DATA_BITS		10
 
-#घोषणा SPEAR_ADC_MOD_NAME "spear-adc"
+#define SPEAR_ADC_MOD_NAME "spear-adc"
 
-#घोषणा SPEAR_ADC_CHANNEL_NUM		8
+#define SPEAR_ADC_CHANNEL_NUM		8
 
-#घोषणा SPEAR_ADC_CLK_MIN			2500000
-#घोषणा SPEAR_ADC_CLK_MAX			20000000
+#define SPEAR_ADC_CLK_MIN			2500000
+#define SPEAR_ADC_CLK_MAX			20000000
 
-काष्ठा adc_regs_spear3xx अणु
+struct adc_regs_spear3xx {
 	u32 status;
 	u32 average;
 	u32 scan_rate;
-	u32 clk;	/* Not avail क्रम 1340 & 1310 */
+	u32 clk;	/* Not avail for 1340 & 1310 */
 	u32 ch_ctrl[SPEAR_ADC_CHANNEL_NUM];
 	u32 ch_data[SPEAR_ADC_CHANNEL_NUM];
-पूर्ण;
+};
 
-काष्ठा chan_data अणु
+struct chan_data {
 	u32 lsb;
 	u32 msb;
-पूर्ण;
+};
 
-काष्ठा adc_regs_spear6xx अणु
+struct adc_regs_spear6xx {
 	u32 status;
 	u32 pad[2];
 	u32 clk;
 	u32 ch_ctrl[SPEAR_ADC_CHANNEL_NUM];
-	काष्ठा chan_data ch_data[SPEAR_ADC_CHANNEL_NUM];
+	struct chan_data ch_data[SPEAR_ADC_CHANNEL_NUM];
 	u32 scan_rate_lo;
 	u32 scan_rate_hi;
-	काष्ठा chan_data average;
-पूर्ण;
+	struct chan_data average;
+};
 
-काष्ठा spear_adc_state अणु
-	काष्ठा device_node *np;
-	काष्ठा adc_regs_spear3xx __iomem *adc_base_spear3xx;
-	काष्ठा adc_regs_spear6xx __iomem *adc_base_spear6xx;
-	काष्ठा clk *clk;
-	काष्ठा completion completion;
+struct spear_adc_state {
+	struct device_node *np;
+	struct adc_regs_spear3xx __iomem *adc_base_spear3xx;
+	struct adc_regs_spear6xx __iomem *adc_base_spear6xx;
+	struct clk *clk;
+	struct completion completion;
 	/*
 	 * Lock to protect the device state during a potential concurrent
-	 * पढ़ो access from userspace. Reading a raw value requires a sequence
-	 * of रेजिस्टर ग_लिखोs, then a रुको क्रम a completion callback,
-	 * and finally a रेजिस्टर पढ़ो, during which userspace could issue
-	 * another पढ़ो request. This lock protects a पढ़ो access from
-	 * ocurring beक्रमe another one has finished.
+	 * read access from userspace. Reading a raw value requires a sequence
+	 * of register writes, then a wait for a completion callback,
+	 * and finally a register read, during which userspace could issue
+	 * another read request. This lock protects a read access from
+	 * ocurring before another one has finished.
 	 */
-	काष्ठा mutex lock;
+	struct mutex lock;
 	u32 current_clk;
 	u32 sampling_freq;
 	u32 avg_samples;
-	u32 vref_बाह्यal;
+	u32 vref_external;
 	u32 value;
-पूर्ण;
+};
 
 /*
- * Functions to access some SPEAr ADC रेजिस्टर. Abstracted पूर्णांकo
- * अटल अंतरभूत functions, because of dअगरferent रेजिस्टर offsets
- * on dअगरferent SoC variants (SPEAr300 vs SPEAr600 etc).
+ * Functions to access some SPEAr ADC register. Abstracted into
+ * static inline functions, because of different register offsets
+ * on different SoC variants (SPEAr300 vs SPEAr600 etc).
  */
-अटल व्योम spear_adc_set_status(काष्ठा spear_adc_state *st, u32 val)
-अणु
-	__raw_ग_लिखोl(val, &st->adc_base_spear6xx->status);
-पूर्ण
+static void spear_adc_set_status(struct spear_adc_state *st, u32 val)
+{
+	__raw_writel(val, &st->adc_base_spear6xx->status);
+}
 
-अटल व्योम spear_adc_set_clk(काष्ठा spear_adc_state *st, u32 val)
-अणु
+static void spear_adc_set_clk(struct spear_adc_state *st, u32 val)
+{
 	u32 clk_high, clk_low, count;
 	u32 apb_clk = clk_get_rate(st->clk);
 
@@ -112,117 +111,117 @@
 	clk_high = count - clk_low;
 	st->current_clk = apb_clk / count;
 
-	__raw_ग_लिखोl(SPEAR_ADC_CLK_LOW(clk_low) | SPEAR_ADC_CLK_HIGH(clk_high),
+	__raw_writel(SPEAR_ADC_CLK_LOW(clk_low) | SPEAR_ADC_CLK_HIGH(clk_high),
 		     &st->adc_base_spear6xx->clk);
-पूर्ण
+}
 
-अटल व्योम spear_adc_set_ctrl(काष्ठा spear_adc_state *st, पूर्णांक n,
+static void spear_adc_set_ctrl(struct spear_adc_state *st, int n,
 			       u32 val)
-अणु
-	__raw_ग_लिखोl(val, &st->adc_base_spear6xx->ch_ctrl[n]);
-पूर्ण
+{
+	__raw_writel(val, &st->adc_base_spear6xx->ch_ctrl[n]);
+}
 
-अटल u32 spear_adc_get_average(काष्ठा spear_adc_state *st)
-अणु
-	अगर (of_device_is_compatible(st->np, "st,spear600-adc")) अणु
-		वापस __raw_पढ़ोl(&st->adc_base_spear6xx->average.msb) &
+static u32 spear_adc_get_average(struct spear_adc_state *st)
+{
+	if (of_device_is_compatible(st->np, "st,spear600-adc")) {
+		return __raw_readl(&st->adc_base_spear6xx->average.msb) &
 			SPEAR_ADC_DATA_MASK;
-	पूर्ण अन्यथा अणु
-		वापस __raw_पढ़ोl(&st->adc_base_spear3xx->average) &
+	} else {
+		return __raw_readl(&st->adc_base_spear3xx->average) &
 			SPEAR_ADC_DATA_MASK;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम spear_adc_set_scanrate(काष्ठा spear_adc_state *st, u32 rate)
-अणु
-	अगर (of_device_is_compatible(st->np, "st,spear600-adc")) अणु
-		__raw_ग_लिखोl(SPEAR600_ADC_SCAN_RATE_LO(rate),
+static void spear_adc_set_scanrate(struct spear_adc_state *st, u32 rate)
+{
+	if (of_device_is_compatible(st->np, "st,spear600-adc")) {
+		__raw_writel(SPEAR600_ADC_SCAN_RATE_LO(rate),
 			     &st->adc_base_spear6xx->scan_rate_lo);
-		__raw_ग_लिखोl(SPEAR600_ADC_SCAN_RATE_HI(rate),
+		__raw_writel(SPEAR600_ADC_SCAN_RATE_HI(rate),
 			     &st->adc_base_spear6xx->scan_rate_hi);
-	पूर्ण अन्यथा अणु
-		__raw_ग_लिखोl(rate, &st->adc_base_spear3xx->scan_rate);
-	पूर्ण
-पूर्ण
+	} else {
+		__raw_writel(rate, &st->adc_base_spear3xx->scan_rate);
+	}
+}
 
-अटल पूर्णांक spear_adc_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			      काष्ठा iio_chan_spec स्थिर *chan,
-			      पूर्णांक *val,
-			      पूर्णांक *val2,
-			      दीर्घ mask)
-अणु
-	काष्ठा spear_adc_state *st = iio_priv(indio_dev);
+static int spear_adc_read_raw(struct iio_dev *indio_dev,
+			      struct iio_chan_spec const *chan,
+			      int *val,
+			      int *val2,
+			      long mask)
+{
+	struct spear_adc_state *st = iio_priv(indio_dev);
 	u32 status;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
 		mutex_lock(&st->lock);
 
 		status = SPEAR_ADC_STATUS_CHANNEL_NUM(chan->channel) |
 			SPEAR_ADC_STATUS_AVG_SAMPLE(st->avg_samples) |
 			SPEAR_ADC_STATUS_START_CONVERSION |
 			SPEAR_ADC_STATUS_ADC_ENABLE;
-		अगर (st->vref_बाह्यal == 0)
+		if (st->vref_external == 0)
 			status |= SPEAR_ADC_STATUS_VREF_INTERNAL;
 
 		spear_adc_set_status(st, status);
-		रुको_क्रम_completion(&st->completion); /* set by ISR */
+		wait_for_completion(&st->completion); /* set by ISR */
 		*val = st->value;
 
 		mutex_unlock(&st->lock);
 
-		वापस IIO_VAL_INT;
+		return IIO_VAL_INT;
 
-	हाल IIO_CHAN_INFO_SCALE:
-		*val = st->vref_बाह्यal;
+	case IIO_CHAN_INFO_SCALE:
+		*val = st->vref_external;
 		*val2 = SPEAR_ADC_DATA_BITS;
-		वापस IIO_VAL_FRACTIONAL_LOG2;
-	हाल IIO_CHAN_INFO_SAMP_FREQ:
+		return IIO_VAL_FRACTIONAL_LOG2;
+	case IIO_CHAN_INFO_SAMP_FREQ:
 		*val = st->current_clk;
-		वापस IIO_VAL_INT;
-	पूर्ण
+		return IIO_VAL_INT;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक spear_adc_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
-			       काष्ठा iio_chan_spec स्थिर *chan,
-			       पूर्णांक val,
-			       पूर्णांक val2,
-			       दीर्घ mask)
-अणु
-	काष्ठा spear_adc_state *st = iio_priv(indio_dev);
-	पूर्णांक ret = 0;
+static int spear_adc_write_raw(struct iio_dev *indio_dev,
+			       struct iio_chan_spec const *chan,
+			       int val,
+			       int val2,
+			       long mask)
+{
+	struct spear_adc_state *st = iio_priv(indio_dev);
+	int ret = 0;
 
-	अगर (mask != IIO_CHAN_INFO_SAMP_FREQ)
-		वापस -EINVAL;
+	if (mask != IIO_CHAN_INFO_SAMP_FREQ)
+		return -EINVAL;
 
 	mutex_lock(&st->lock);
 
-	अगर ((val < SPEAR_ADC_CLK_MIN) ||
+	if ((val < SPEAR_ADC_CLK_MIN) ||
 	    (val > SPEAR_ADC_CLK_MAX) ||
-	    (val2 != 0)) अणु
+	    (val2 != 0)) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	spear_adc_set_clk(st, val);
 
 out:
 	mutex_unlock(&st->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा SPEAR_ADC_CHAN(idx) अणु				\
+#define SPEAR_ADC_CHAN(idx) {				\
 	.type = IIO_VOLTAGE,				\
 	.indexed = 1,					\
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),	\
 	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE),	\
 	.info_mask_shared_by_all = BIT(IIO_CHAN_INFO_SAMP_FREQ),\
 	.channel = idx,					\
-पूर्ण
+}
 
-अटल स्थिर काष्ठा iio_chan_spec spear_adc_iio_channels[] = अणु
+static const struct iio_chan_spec spear_adc_iio_channels[] = {
 	SPEAR_ADC_CHAN(0),
 	SPEAR_ADC_CHAN(1),
 	SPEAR_ADC_CHAN(2),
@@ -231,54 +230,54 @@ out:
 	SPEAR_ADC_CHAN(5),
 	SPEAR_ADC_CHAN(6),
 	SPEAR_ADC_CHAN(7),
-पूर्ण;
+};
 
-अटल irqवापस_t spear_adc_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा spear_adc_state *st = dev_id;
+static irqreturn_t spear_adc_isr(int irq, void *dev_id)
+{
+	struct spear_adc_state *st = dev_id;
 
 	/* Read value to clear IRQ */
 	st->value = spear_adc_get_average(st);
 	complete(&st->completion);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक spear_adc_configure(काष्ठा spear_adc_state *st)
-अणु
-	पूर्णांक i;
+static int spear_adc_configure(struct spear_adc_state *st)
+{
+	int i;
 
 	/* Reset ADC core */
 	spear_adc_set_status(st, 0);
-	__raw_ग_लिखोl(0, &st->adc_base_spear6xx->clk);
-	क्रम (i = 0; i < 8; i++)
+	__raw_writel(0, &st->adc_base_spear6xx->clk);
+	for (i = 0; i < 8; i++)
 		spear_adc_set_ctrl(st, i, 0);
 	spear_adc_set_scanrate(st, 0);
 
 	spear_adc_set_clk(st, st->sampling_freq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा iio_info spear_adc_info = अणु
-	.पढ़ो_raw = &spear_adc_पढ़ो_raw,
-	.ग_लिखो_raw = &spear_adc_ग_लिखो_raw,
-पूर्ण;
+static const struct iio_info spear_adc_info = {
+	.read_raw = &spear_adc_read_raw,
+	.write_raw = &spear_adc_write_raw,
+};
 
-अटल पूर्णांक spear_adc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा spear_adc_state *st;
-	काष्ठा iio_dev *indio_dev = शून्य;
-	पूर्णांक ret = -ENODEV;
-	पूर्णांक irq;
+static int spear_adc_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct device *dev = &pdev->dev;
+	struct spear_adc_state *st;
+	struct iio_dev *indio_dev = NULL;
+	int ret = -ENODEV;
+	int irq;
 
-	indio_dev = devm_iio_device_alloc(dev, माप(काष्ठा spear_adc_state));
-	अगर (!indio_dev) अणु
+	indio_dev = devm_iio_device_alloc(dev, sizeof(struct spear_adc_state));
+	if (!indio_dev) {
 		dev_err(dev, "failed allocating iio device\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	st = iio_priv(indio_dev);
 
@@ -287,115 +286,115 @@ out:
 	st->np = np;
 
 	/*
-	 * SPEAr600 has a dअगरferent रेजिस्टर layout than other SPEAr SoC's
-	 * (e.g. SPEAr3xx). Let's provide two रेजिस्टर base addresses
+	 * SPEAr600 has a different register layout than other SPEAr SoC's
+	 * (e.g. SPEAr3xx). Let's provide two register base addresses
 	 * to support multi-arch kernels.
 	 */
-	st->adc_base_spear6xx = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(st->adc_base_spear6xx))
-		वापस PTR_ERR(st->adc_base_spear6xx);
+	st->adc_base_spear6xx = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(st->adc_base_spear6xx))
+		return PTR_ERR(st->adc_base_spear6xx);
 
 	st->adc_base_spear3xx =
-		(काष्ठा adc_regs_spear3xx __iomem *)st->adc_base_spear6xx;
+		(struct adc_regs_spear3xx __iomem *)st->adc_base_spear6xx;
 
-	st->clk = devm_clk_get(dev, शून्य);
-	अगर (IS_ERR(st->clk)) अणु
+	st->clk = devm_clk_get(dev, NULL);
+	if (IS_ERR(st->clk)) {
 		dev_err(dev, "failed getting clock\n");
-		वापस PTR_ERR(st->clk);
-	पूर्ण
+		return PTR_ERR(st->clk);
+	}
 
 	ret = clk_prepare_enable(st->clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed enabling clock\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq <= 0) अणु
+	irq = platform_get_irq(pdev, 0);
+	if (irq <= 0) {
 		ret = -EINVAL;
-		जाओ errout2;
-	पूर्ण
+		goto errout2;
+	}
 
 	ret = devm_request_irq(dev, irq, spear_adc_isr, 0, SPEAR_ADC_MOD_NAME,
 			       st);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "failed requesting interrupt\n");
-		जाओ errout2;
-	पूर्ण
+		goto errout2;
+	}
 
-	अगर (of_property_पढ़ो_u32(np, "sampling-frequency",
-				 &st->sampling_freq)) अणु
+	if (of_property_read_u32(np, "sampling-frequency",
+				 &st->sampling_freq)) {
 		dev_err(dev, "sampling-frequency missing in DT\n");
 		ret = -EINVAL;
-		जाओ errout2;
-	पूर्ण
+		goto errout2;
+	}
 
 	/*
-	 * Optional avg_samples शेषs to 0, resulting in single data
+	 * Optional avg_samples defaults to 0, resulting in single data
 	 * conversion
 	 */
-	of_property_पढ़ो_u32(np, "average-samples", &st->avg_samples);
+	of_property_read_u32(np, "average-samples", &st->avg_samples);
 
 	/*
-	 * Optional vref_बाह्यal शेषs to 0, resulting in पूर्णांकernal vref
+	 * Optional vref_external defaults to 0, resulting in internal vref
 	 * selection
 	 */
-	of_property_पढ़ो_u32(np, "vref-external", &st->vref_बाह्यal);
+	of_property_read_u32(np, "vref-external", &st->vref_external);
 
 	spear_adc_configure(st);
 
-	platक्रमm_set_drvdata(pdev, indio_dev);
+	platform_set_drvdata(pdev, indio_dev);
 
 	init_completion(&st->completion);
 
 	indio_dev->name = SPEAR_ADC_MOD_NAME;
 	indio_dev->info = &spear_adc_info;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 	indio_dev->channels = spear_adc_iio_channels;
 	indio_dev->num_channels = ARRAY_SIZE(spear_adc_iio_channels);
 
-	ret = iio_device_रेजिस्टर(indio_dev);
-	अगर (ret)
-		जाओ errout2;
+	ret = iio_device_register(indio_dev);
+	if (ret)
+		goto errout2;
 
 	dev_info(dev, "SPEAR ADC driver loaded, IRQ %d\n", irq);
 
-	वापस 0;
+	return 0;
 
 errout2:
 	clk_disable_unprepare(st->clk);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक spear_adc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा iio_dev *indio_dev = platक्रमm_get_drvdata(pdev);
-	काष्ठा spear_adc_state *st = iio_priv(indio_dev);
+static int spear_adc_remove(struct platform_device *pdev)
+{
+	struct iio_dev *indio_dev = platform_get_drvdata(pdev);
+	struct spear_adc_state *st = iio_priv(indio_dev);
 
-	iio_device_unरेजिस्टर(indio_dev);
+	iio_device_unregister(indio_dev);
 	clk_disable_unprepare(st->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id spear_adc_dt_ids[] = अणु
-	अणु .compatible = "st,spear600-adc", पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id spear_adc_dt_ids[] = {
+	{ .compatible = "st,spear600-adc", },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, spear_adc_dt_ids);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver spear_adc_driver = अणु
+static struct platform_driver spear_adc_driver = {
 	.probe		= spear_adc_probe,
-	.हटाओ		= spear_adc_हटाओ,
-	.driver		= अणु
+	.remove		= spear_adc_remove,
+	.driver		= {
 		.name	= SPEAR_ADC_MOD_NAME,
 		.of_match_table = of_match_ptr(spear_adc_dt_ids),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(spear_adc_driver);
+module_platform_driver(spear_adc_driver);
 
 MODULE_AUTHOR("Stefan Roese <sr@denx.de>");
 MODULE_DESCRIPTION("SPEAr ADC driver");

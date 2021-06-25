@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  *	linux/drivers/video/pmag-aa-fb.c
  *	Copyright 2002 Karsten Merker <merker@debian.org>
@@ -12,8 +11,8 @@
  *	Copyright (c) 2016  Maciej W. Rozycki
  *
  *	This file is subject to the terms and conditions of the GNU General
- *	Public License.  See the file COPYING in the मुख्य directory of this
- *	archive क्रम more details.
+ *	Public License.  See the file COPYING in the main directory of this
+ *	archive for more details.
  *
  *	2002-09-28  Karsten Merker <merker@linuxtag.org>
  *		Version 0.01: First try to get a PMAG-AA running.
@@ -25,54 +24,54 @@
  *		Hardware cursor support.
  *
  *	2016-02-21  Maciej W. Rozycki  <macro@linux-mips.org>
- *		Version 0.03: Rewritten क्रम the new FB and TC APIs.
+ *		Version 0.03: Rewritten for the new FB and TC APIs.
  */
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/fb.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/tc.h>
-#समावेश <linux/समयr.h>
+#include <linux/compiler.h>
+#include <linux/errno.h>
+#include <linux/fb.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/tc.h>
+#include <linux/timer.h>
 
-#समावेश "bt455.h"
-#समावेश "bt431.h"
+#include "bt455.h"
+#include "bt431.h"
 
-/* Version inक्रमmation */
-#घोषणा DRIVER_VERSION "0.03"
-#घोषणा DRIVER_AUTHOR "Karsten Merker <merker@linuxtag.org>"
-#घोषणा DRIVER_DESCRIPTION "PMAG-AA Framebuffer Driver"
+/* Version information */
+#define DRIVER_VERSION "0.03"
+#define DRIVER_AUTHOR "Karsten Merker <merker@linuxtag.org>"
+#define DRIVER_DESCRIPTION "PMAG-AA Framebuffer Driver"
 
 /*
- * Bt455 RAM DAC रेजिस्टर base offset (rel. to TC slot base address).
+ * Bt455 RAM DAC register base offset (rel. to TC slot base address).
  */
-#घोषणा PMAG_AA_BT455_OFFSET		0x100000
+#define PMAG_AA_BT455_OFFSET		0x100000
 
 /*
  * Bt431 cursor generator offset (rel. to TC slot base address).
  */
-#घोषणा PMAG_AA_BT431_OFFSET		0x180000
+#define PMAG_AA_BT431_OFFSET		0x180000
 
 /*
  * Begin of PMAG-AA framebuffer memory relative to TC slot address,
  * resolution is 1280x1024x1 (8 bits deep, but only LSB is used).
  */
-#घोषणा PMAG_AA_ONBOARD_FBMEM_OFFSET	0x200000
+#define PMAG_AA_ONBOARD_FBMEM_OFFSET	0x200000
 
-काष्ठा aafb_par अणु
-	व्योम __iomem *mmio;
-	काष्ठा bt455_regs __iomem *bt455;
-	काष्ठा bt431_regs __iomem *bt431;
-पूर्ण;
+struct aafb_par {
+	void __iomem *mmio;
+	struct bt455_regs __iomem *bt455;
+	struct bt431_regs __iomem *bt431;
+};
 
-अटल स्थिर काष्ठा fb_var_screeninfo aafb_defined = अणु
+static const struct fb_var_screeninfo aafb_defined = {
 	.xres		= 1280,
 	.yres		= 1024,
-	.xres_भव	= 2048,
-	.yres_भव	= 1024,
+	.xres_virtual	= 2048,
+	.yres_virtual	= 1024,
 	.bits_per_pixel	= 8,
 	.grayscale	= 1,
 	.red.length	= 0,
@@ -80,7 +79,7 @@
 	.blue.length	= 0,
 	.activate	= FB_ACTIVATE_NOW,
 	.accel_flags	= FB_ACCEL_NONE,
-	.pixघड़ी	= 7645,
+	.pixclock	= 7645,
 	.left_margin	= 224,
 	.right_margin	= 32,
 	.upper_margin	= 33,
@@ -89,9 +88,9 @@
 	.vsync_len	= 3,
 	.sync		= FB_SYNC_ON_GREEN,
 	.vmode		= FB_VMODE_NONINTERLACED,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा fb_fix_screeninfo aafb_fix = अणु
+static const struct fb_fix_screeninfo aafb_fix = {
 	.id		= "PMAG-AA",
 	.smem_len	= (2048 * 1024),
 	.type		= FB_TYPE_PACKED_PIXELS,
@@ -100,74 +99,74 @@
 	.ywrapstep	= 1,
 	.line_length	= 2048,
 	.mmio_len	= PMAG_AA_ONBOARD_FBMEM_OFFSET - PMAG_AA_BT455_OFFSET,
-पूर्ण;
+};
 
-अटल पूर्णांक aafb_cursor(काष्ठा fb_info *info, काष्ठा fb_cursor *cursor)
-अणु
-	काष्ठा aafb_par *par = info->par;
+static int aafb_cursor(struct fb_info *info, struct fb_cursor *cursor)
+{
+	struct aafb_par *par = info->par;
 
-	अगर (cursor->image.height > BT431_CURSOR_SIZE ||
-	    cursor->image.width > BT431_CURSOR_SIZE) अणु
+	if (cursor->image.height > BT431_CURSOR_SIZE ||
+	    cursor->image.width > BT431_CURSOR_SIZE) {
 		bt431_erase_cursor(par->bt431);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!cursor->enable)
+	if (!cursor->enable)
 		bt431_erase_cursor(par->bt431);
 
-	अगर (cursor->set & FB_CUR_SETPOS)
+	if (cursor->set & FB_CUR_SETPOS)
 		bt431_position_cursor(par->bt431,
 				      cursor->image.dx, cursor->image.dy);
-	अगर (cursor->set & FB_CUR_SETCMAP) अणु
+	if (cursor->set & FB_CUR_SETCMAP) {
 		u8 fg = cursor->image.fg_color ? 0xf : 0x0;
 		u8 bg = cursor->image.bg_color ? 0xf : 0x0;
 
-		bt455_ग_लिखो_cmap_entry(par->bt455, 8, bg);
-		bt455_ग_लिखो_cmap_next(par->bt455, bg);
-		bt455_ग_लिखो_ovly_next(par->bt455, fg);
-	पूर्ण
-	अगर (cursor->set & (FB_CUR_SETSIZE | FB_CUR_SETSHAPE | FB_CUR_SETIMAGE))
+		bt455_write_cmap_entry(par->bt455, 8, bg);
+		bt455_write_cmap_next(par->bt455, bg);
+		bt455_write_ovly_next(par->bt455, fg);
+	}
+	if (cursor->set & (FB_CUR_SETSIZE | FB_CUR_SETSHAPE | FB_CUR_SETIMAGE))
 		bt431_set_cursor(par->bt431,
 				 cursor->image.data, cursor->mask, cursor->rop,
 				 cursor->image.width, cursor->image.height);
 
-	अगर (cursor->enable)
+	if (cursor->enable)
 		bt431_enable_cursor(par->bt431);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* 0 unblanks, any other blanks. */
 
-अटल पूर्णांक aafb_blank(पूर्णांक blank, काष्ठा fb_info *info)
-अणु
-	काष्ठा aafb_par *par = info->par;
+static int aafb_blank(int blank, struct fb_info *info)
+{
+	struct aafb_par *par = info->par;
 	u8 val = blank ? 0x00 : 0x0f;
 
-	bt455_ग_लिखो_cmap_entry(par->bt455, 1, val);
-	वापस 0;
-पूर्ण
+	bt455_write_cmap_entry(par->bt455, 1, val);
+	return 0;
+}
 
-अटल स्थिर काष्ठा fb_ops aafb_ops = अणु
+static const struct fb_ops aafb_ops = {
 	.owner		= THIS_MODULE,
 	.fb_blank	= aafb_blank,
 	.fb_fillrect	= cfb_fillrect,
 	.fb_copyarea	= cfb_copyarea,
 	.fb_imageblit	= cfb_imageblit,
 	.fb_cursor	= aafb_cursor,
-पूर्ण;
+};
 
-अटल पूर्णांक pmagaafb_probe(काष्ठा device *dev)
-अणु
-	काष्ठा tc_dev *tdev = to_tc_dev(dev);
-	resource_माप_प्रकार start, len;
-	काष्ठा fb_info *info;
-	काष्ठा aafb_par *par;
-	पूर्णांक err;
+static int pmagaafb_probe(struct device *dev)
+{
+	struct tc_dev *tdev = to_tc_dev(dev);
+	resource_size_t start, len;
+	struct fb_info *info;
+	struct aafb_par *par;
+	int err;
 
-	info = framebuffer_alloc(माप(काष्ठा aafb_par), dev);
-	अगर (!info)
-		वापस -ENOMEM;
+	info = framebuffer_alloc(sizeof(struct aafb_par), dev);
+	if (!info)
+		return -ENOMEM;
 
 	par = info->par;
 	dev_set_drvdata(dev, info);
@@ -180,21 +179,21 @@
 	/* Request the I/O MEM resource. */
 	start = tdev->resource.start;
 	len = tdev->resource.end - start + 1;
-	अगर (!request_mem_region(start, len, dev_name(dev))) अणु
-		prपूर्णांकk(KERN_ERR "%s: Cannot reserve FB region\n",
+	if (!request_mem_region(start, len, dev_name(dev))) {
+		printk(KERN_ERR "%s: Cannot reserve FB region\n",
 		       dev_name(dev));
 		err = -EBUSY;
-		जाओ err_alloc;
-	पूर्ण
+		goto err_alloc;
+	}
 
 	/* MMIO mapping setup. */
 	info->fix.mmio_start = start + PMAG_AA_BT455_OFFSET;
 	par->mmio = ioremap(info->fix.mmio_start, info->fix.mmio_len);
-	अगर (!par->mmio) अणु
-		prपूर्णांकk(KERN_ERR "%s: Cannot map MMIO\n", dev_name(dev));
+	if (!par->mmio) {
+		printk(KERN_ERR "%s: Cannot map MMIO\n", dev_name(dev));
 		err = -ENOMEM;
-		जाओ err_resource;
-	पूर्ण
+		goto err_resource;
+	}
 	par->bt455 = par->mmio - PMAG_AA_BT455_OFFSET + PMAG_AA_BT455_OFFSET;
 	par->bt431 = par->mmio - PMAG_AA_BT455_OFFSET + PMAG_AA_BT431_OFFSET;
 
@@ -202,34 +201,34 @@
 	info->fix.smem_start = start + PMAG_AA_ONBOARD_FBMEM_OFFSET;
 	info->screen_base = ioremap(info->fix.smem_start,
 					    info->fix.smem_len);
-	अगर (!info->screen_base) अणु
-		prपूर्णांकk(KERN_ERR "%s: Cannot map FB\n", dev_name(dev));
+	if (!info->screen_base) {
+		printk(KERN_ERR "%s: Cannot map FB\n", dev_name(dev));
 		err = -ENOMEM;
-		जाओ err_mmio_map;
-	पूर्ण
+		goto err_mmio_map;
+	}
 	info->screen_size = info->fix.smem_len;
 
 	/* Init colormap. */
-	bt455_ग_लिखो_cmap_entry(par->bt455, 0, 0x0);
-	bt455_ग_लिखो_cmap_next(par->bt455, 0xf);
+	bt455_write_cmap_entry(par->bt455, 0, 0x0);
+	bt455_write_cmap_next(par->bt455, 0xf);
 
 	/* Init hardware cursor. */
 	bt431_erase_cursor(par->bt431);
 	bt431_init_cursor(par->bt431);
 
-	err = रेजिस्टर_framebuffer(info);
-	अगर (err < 0) अणु
-		prपूर्णांकk(KERN_ERR "%s: Cannot register framebuffer\n",
+	err = register_framebuffer(info);
+	if (err < 0) {
+		printk(KERN_ERR "%s: Cannot register framebuffer\n",
 		       dev_name(dev));
-		जाओ err_smem_map;
-	पूर्ण
+		goto err_smem_map;
+	}
 
 	get_device(dev);
 
 	pr_info("fb%d: %s frame buffer device at %s\n",
 		info->node, info->fix.id, dev_name(dev));
 
-	वापस 0;
+	return 0;
 
 
 err_smem_map:
@@ -243,62 +242,62 @@ err_resource:
 
 err_alloc:
 	framebuffer_release(info);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक pmagaafb_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा tc_dev *tdev = to_tc_dev(dev);
-	काष्ठा fb_info *info = dev_get_drvdata(dev);
-	काष्ठा aafb_par *par = info->par;
-	resource_माप_प्रकार start, len;
+static int pmagaafb_remove(struct device *dev)
+{
+	struct tc_dev *tdev = to_tc_dev(dev);
+	struct fb_info *info = dev_get_drvdata(dev);
+	struct aafb_par *par = info->par;
+	resource_size_t start, len;
 
 	put_device(dev);
-	unरेजिस्टर_framebuffer(info);
+	unregister_framebuffer(info);
 	iounmap(info->screen_base);
 	iounmap(par->mmio);
 	start = tdev->resource.start;
 	len = tdev->resource.end - start + 1;
 	release_mem_region(start, len);
 	framebuffer_release(info);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Initialise the framebuffer.
  */
-अटल स्थिर काष्ठा tc_device_id pmagaafb_tc_table[] = अणु
-	अणु "DEC     ", "PMAG-AA " पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct tc_device_id pmagaafb_tc_table[] = {
+	{ "DEC     ", "PMAG-AA " },
+	{ }
+};
 MODULE_DEVICE_TABLE(tc, pmagaafb_tc_table);
 
-अटल काष्ठा tc_driver pmagaafb_driver = अणु
+static struct tc_driver pmagaafb_driver = {
 	.id_table	= pmagaafb_tc_table,
-	.driver		= अणु
+	.driver		= {
 		.name	= "pmagaafb",
 		.bus	= &tc_bus_type,
 		.probe	= pmagaafb_probe,
-		.हटाओ	= pmagaafb_हटाओ,
-	पूर्ण,
-पूर्ण;
+		.remove	= pmagaafb_remove,
+	},
+};
 
-अटल पूर्णांक __init pmagaafb_init(व्योम)
-अणु
-#अगर_अघोषित MODULE
-	अगर (fb_get_options("pmagaafb", शून्य))
-		वापस -ENXIO;
-#पूर्ण_अगर
-	वापस tc_रेजिस्टर_driver(&pmagaafb_driver);
-पूर्ण
+static int __init pmagaafb_init(void)
+{
+#ifndef MODULE
+	if (fb_get_options("pmagaafb", NULL))
+		return -ENXIO;
+#endif
+	return tc_register_driver(&pmagaafb_driver);
+}
 
-अटल व्योम __निकास pmagaafb_निकास(व्योम)
-अणु
-	tc_unरेजिस्टर_driver(&pmagaafb_driver);
-पूर्ण
+static void __exit pmagaafb_exit(void)
+{
+	tc_unregister_driver(&pmagaafb_driver);
+}
 
 module_init(pmagaafb_init);
-module_निकास(pmagaafb_निकास);
+module_exit(pmagaafb_exit);
 
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESCRIPTION);

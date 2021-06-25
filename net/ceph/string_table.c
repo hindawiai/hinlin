@@ -1,107 +1,106 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/slab.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/ceph/string_table.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/slab.h>
+#include <linux/gfp.h>
+#include <linux/string.h>
+#include <linux/spinlock.h>
+#include <linux/ceph/string_table.h>
 
-अटल DEFINE_SPINLOCK(string_tree_lock);
-अटल काष्ठा rb_root string_tree = RB_ROOT;
+static DEFINE_SPINLOCK(string_tree_lock);
+static struct rb_root string_tree = RB_ROOT;
 
-काष्ठा ceph_string *ceph_find_or_create_string(स्थिर अक्षर* str, माप_प्रकार len)
-अणु
-	काष्ठा ceph_string *cs, *exist;
-	काष्ठा rb_node **p, *parent;
-	पूर्णांक ret;
+struct ceph_string *ceph_find_or_create_string(const char* str, size_t len)
+{
+	struct ceph_string *cs, *exist;
+	struct rb_node **p, *parent;
+	int ret;
 
-	exist = शून्य;
+	exist = NULL;
 	spin_lock(&string_tree_lock);
 	p = &string_tree.rb_node;
-	जबतक (*p) अणु
-		exist = rb_entry(*p, काष्ठा ceph_string, node);
+	while (*p) {
+		exist = rb_entry(*p, struct ceph_string, node);
 		ret = ceph_compare_string(exist, str, len);
-		अगर (ret > 0)
+		if (ret > 0)
 			p = &(*p)->rb_left;
-		अन्यथा अगर (ret < 0)
+		else if (ret < 0)
 			p = &(*p)->rb_right;
-		अन्यथा
-			अवरोध;
-		exist = शून्य;
-	पूर्ण
-	अगर (exist && !kref_get_unless_zero(&exist->kref)) अणु
+		else
+			break;
+		exist = NULL;
+	}
+	if (exist && !kref_get_unless_zero(&exist->kref)) {
 		rb_erase(&exist->node, &string_tree);
 		RB_CLEAR_NODE(&exist->node);
-		exist = शून्य;
-	पूर्ण
+		exist = NULL;
+	}
 	spin_unlock(&string_tree_lock);
-	अगर (exist)
-		वापस exist;
+	if (exist)
+		return exist;
 
-	cs = kदो_स्मृति(माप(*cs) + len + 1, GFP_NOFS);
-	अगर (!cs)
-		वापस शून्य;
+	cs = kmalloc(sizeof(*cs) + len + 1, GFP_NOFS);
+	if (!cs)
+		return NULL;
 
 	kref_init(&cs->kref);
 	cs->len = len;
-	स_नकल(cs->str, str, len);
+	memcpy(cs->str, str, len);
 	cs->str[len] = 0;
 
 retry:
-	exist = शून्य;
-	parent = शून्य;
+	exist = NULL;
+	parent = NULL;
 	p = &string_tree.rb_node;
 	spin_lock(&string_tree_lock);
-	जबतक (*p) अणु
+	while (*p) {
 		parent = *p;
-		exist = rb_entry(*p, काष्ठा ceph_string, node);
+		exist = rb_entry(*p, struct ceph_string, node);
 		ret = ceph_compare_string(exist, str, len);
-		अगर (ret > 0)
+		if (ret > 0)
 			p = &(*p)->rb_left;
-		अन्यथा अगर (ret < 0)
+		else if (ret < 0)
 			p = &(*p)->rb_right;
-		अन्यथा
-			अवरोध;
-		exist = शून्य;
-	पूर्ण
+		else
+			break;
+		exist = NULL;
+	}
 	ret = 0;
-	अगर (!exist) अणु
+	if (!exist) {
 		rb_link_node(&cs->node, parent, p);
 		rb_insert_color(&cs->node, &string_tree);
-	पूर्ण अन्यथा अगर (!kref_get_unless_zero(&exist->kref)) अणु
+	} else if (!kref_get_unless_zero(&exist->kref)) {
 		rb_erase(&exist->node, &string_tree);
 		RB_CLEAR_NODE(&exist->node);
 		ret = -EAGAIN;
-	पूर्ण
+	}
 	spin_unlock(&string_tree_lock);
-	अगर (ret == -EAGAIN)
-		जाओ retry;
+	if (ret == -EAGAIN)
+		goto retry;
 
-	अगर (exist) अणु
-		kमुक्त(cs);
+	if (exist) {
+		kfree(cs);
 		cs = exist;
-	पूर्ण
+	}
 
-	वापस cs;
-पूर्ण
+	return cs;
+}
 EXPORT_SYMBOL(ceph_find_or_create_string);
 
-व्योम ceph_release_string(काष्ठा kref *ref)
-अणु
-	काष्ठा ceph_string *cs = container_of(ref, काष्ठा ceph_string, kref);
+void ceph_release_string(struct kref *ref)
+{
+	struct ceph_string *cs = container_of(ref, struct ceph_string, kref);
 
 	spin_lock(&string_tree_lock);
-	अगर (!RB_EMPTY_NODE(&cs->node)) अणु
+	if (!RB_EMPTY_NODE(&cs->node)) {
 		rb_erase(&cs->node, &string_tree);
 		RB_CLEAR_NODE(&cs->node);
-	पूर्ण
+	}
 	spin_unlock(&string_tree_lock);
 
-	kमुक्त_rcu(cs, rcu);
-पूर्ण
+	kfree_rcu(cs, rcu);
+}
 EXPORT_SYMBOL(ceph_release_string);
 
-bool ceph_strings_empty(व्योम)
-अणु
-	वापस RB_EMPTY_ROOT(&string_tree);
-पूर्ण
+bool ceph_strings_empty(void)
+{
+	return RB_EMPTY_ROOT(&string_tree);
+}

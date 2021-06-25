@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/fs/nfs/dir.c
  *
@@ -7,150 +6,150 @@
  *
  *  nfs directory handling functions
  *
- * 10 Apr 1996	Added silly नाम क्रम unlink	--okir
+ * 10 Apr 1996	Added silly rename for unlink	--okir
  * 28 Sep 1996	Improved directory cache --okir
  * 23 Aug 1997  Claus Heine claus@momo.math.rwth-aachen.de 
- *              Re-implemented silly नाम क्रम unlink, newly implemented
- *              silly नाम क्रम nfs_नाम() following the suggestions
+ *              Re-implemented silly rename for unlink, newly implemented
+ *              silly rename for nfs_rename() following the suggestions
  *              of Olaf Kirch (okir) found in this file.
  *              Following Linus comments on my original hack, this version
- *              depends only on the dcache stuff and करोesn't touch the inode
- *              layer (iput() and मित्रs).
- *  6 Jun 1999	Cache सूची_पढ़ो lookups in the page cache. -DaveM
+ *              depends only on the dcache stuff and doesn't touch the inode
+ *              layer (iput() and friends).
+ *  6 Jun 1999	Cache readdir lookups in the page cache. -DaveM
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/sunrpc/clnt.h>
-#समावेश <linux/nfs_fs.h>
-#समावेश <linux/nfs_mount.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/pagevec.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/kmemleak.h>
-#समावेश <linux/xattr.h>
+#include <linux/module.h>
+#include <linux/time.h>
+#include <linux/errno.h>
+#include <linux/stat.h>
+#include <linux/fcntl.h>
+#include <linux/string.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/mm.h>
+#include <linux/sunrpc/clnt.h>
+#include <linux/nfs_fs.h>
+#include <linux/nfs_mount.h>
+#include <linux/pagemap.h>
+#include <linux/pagevec.h>
+#include <linux/namei.h>
+#include <linux/mount.h>
+#include <linux/swap.h>
+#include <linux/sched.h>
+#include <linux/kmemleak.h>
+#include <linux/xattr.h>
 
-#समावेश "delegation.h"
-#समावेश "iostat.h"
-#समावेश "internal.h"
-#समावेश "fscache.h"
+#include "delegation.h"
+#include "iostat.h"
+#include "internal.h"
+#include "fscache.h"
 
-#समावेश "nfstrace.h"
+#include "nfstrace.h"
 
-/* #घोषणा NFS_DEBUG_VERBOSE 1 */
+/* #define NFS_DEBUG_VERBOSE 1 */
 
-अटल पूर्णांक nfs_सूची_खोलो(काष्ठा inode *, काष्ठा file *);
-अटल पूर्णांक nfs_बंद_सूची(काष्ठा inode *, काष्ठा file *);
-अटल पूर्णांक nfs_सूची_पढ़ो(काष्ठा file *, काष्ठा dir_context *);
-अटल पूर्णांक nfs_fsync_dir(काष्ठा file *, loff_t, loff_t, पूर्णांक);
-अटल loff_t nfs_llseek_dir(काष्ठा file *, loff_t, पूर्णांक);
-अटल व्योम nfs_सूची_पढ़ो_clear_array(काष्ठा page*);
+static int nfs_opendir(struct inode *, struct file *);
+static int nfs_closedir(struct inode *, struct file *);
+static int nfs_readdir(struct file *, struct dir_context *);
+static int nfs_fsync_dir(struct file *, loff_t, loff_t, int);
+static loff_t nfs_llseek_dir(struct file *, loff_t, int);
+static void nfs_readdir_clear_array(struct page*);
 
-स्थिर काष्ठा file_operations nfs_dir_operations = अणु
+const struct file_operations nfs_dir_operations = {
 	.llseek		= nfs_llseek_dir,
-	.पढ़ो		= generic_पढ़ो_dir,
-	.iterate_shared	= nfs_सूची_पढ़ो,
-	.खोलो		= nfs_सूची_खोलो,
-	.release	= nfs_बंद_सूची,
+	.read		= generic_read_dir,
+	.iterate_shared	= nfs_readdir,
+	.open		= nfs_opendir,
+	.release	= nfs_closedir,
 	.fsync		= nfs_fsync_dir,
-पूर्ण;
+};
 
-स्थिर काष्ठा address_space_operations nfs_dir_aops = अणु
-	.मुक्तpage = nfs_सूची_पढ़ो_clear_array,
-पूर्ण;
+const struct address_space_operations nfs_dir_aops = {
+	.freepage = nfs_readdir_clear_array,
+};
 
-अटल काष्ठा nfs_खोलो_dir_context *alloc_nfs_खोलो_dir_context(काष्ठा inode *dir)
-अणु
-	काष्ठा nfs_inode *nfsi = NFS_I(dir);
-	काष्ठा nfs_खोलो_dir_context *ctx;
-	ctx = kदो_स्मृति(माप(*ctx), GFP_KERNEL);
-	अगर (ctx != शून्य) अणु
+static struct nfs_open_dir_context *alloc_nfs_open_dir_context(struct inode *dir)
+{
+	struct nfs_inode *nfsi = NFS_I(dir);
+	struct nfs_open_dir_context *ctx;
+	ctx = kmalloc(sizeof(*ctx), GFP_KERNEL);
+	if (ctx != NULL) {
 		ctx->duped = 0;
 		ctx->attr_gencount = nfsi->attr_gencount;
 		ctx->dir_cookie = 0;
 		ctx->dup_cookie = 0;
 		spin_lock(&dir->i_lock);
-		अगर (list_empty(&nfsi->खोलो_files) &&
+		if (list_empty(&nfsi->open_files) &&
 		    (nfsi->cache_validity & NFS_INO_DATA_INVAL_DEFER))
 			nfs_set_cache_invalid(dir,
 					      NFS_INO_INVALID_DATA |
 						      NFS_INO_REVAL_FORCED);
-		list_add(&ctx->list, &nfsi->खोलो_files);
+		list_add(&ctx->list, &nfsi->open_files);
 		spin_unlock(&dir->i_lock);
-		वापस ctx;
-	पूर्ण
-	वापस  ERR_PTR(-ENOMEM);
-पूर्ण
+		return ctx;
+	}
+	return  ERR_PTR(-ENOMEM);
+}
 
-अटल व्योम put_nfs_खोलो_dir_context(काष्ठा inode *dir, काष्ठा nfs_खोलो_dir_context *ctx)
-अणु
+static void put_nfs_open_dir_context(struct inode *dir, struct nfs_open_dir_context *ctx)
+{
 	spin_lock(&dir->i_lock);
 	list_del(&ctx->list);
 	spin_unlock(&dir->i_lock);
-	kमुक्त(ctx);
-पूर्ण
+	kfree(ctx);
+}
 
 /*
  * Open file
  */
-अटल पूर्णांक
-nfs_सूची_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	पूर्णांक res = 0;
-	काष्ठा nfs_खोलो_dir_context *ctx;
+static int
+nfs_opendir(struct inode *inode, struct file *filp)
+{
+	int res = 0;
+	struct nfs_open_dir_context *ctx;
 
-	dfprपूर्णांकk(खाता, "NFS: open dir(%pD2)\n", filp);
+	dfprintk(FILE, "NFS: open dir(%pD2)\n", filp);
 
 	nfs_inc_stats(inode, NFSIOS_VFSOPEN);
 
-	ctx = alloc_nfs_खोलो_dir_context(inode);
-	अगर (IS_ERR(ctx)) अणु
+	ctx = alloc_nfs_open_dir_context(inode);
+	if (IS_ERR(ctx)) {
 		res = PTR_ERR(ctx);
-		जाओ out;
-	पूर्ण
-	filp->निजी_data = ctx;
+		goto out;
+	}
+	filp->private_data = ctx;
 out:
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल पूर्णांक
-nfs_बंद_सूची(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	put_nfs_खोलो_dir_context(file_inode(filp), filp->निजी_data);
-	वापस 0;
-पूर्ण
+static int
+nfs_closedir(struct inode *inode, struct file *filp)
+{
+	put_nfs_open_dir_context(file_inode(filp), filp->private_data);
+	return 0;
+}
 
-काष्ठा nfs_cache_array_entry अणु
+struct nfs_cache_array_entry {
 	u64 cookie;
 	u64 ino;
-	स्थिर अक्षर *name;
-	अचिन्हित पूर्णांक name_len;
-	अचिन्हित अक्षर d_type;
-पूर्ण;
+	const char *name;
+	unsigned int name_len;
+	unsigned char d_type;
+};
 
-काष्ठा nfs_cache_array अणु
+struct nfs_cache_array {
 	u64 last_cookie;
-	अचिन्हित पूर्णांक size;
-	अचिन्हित अक्षर page_full : 1,
+	unsigned int size;
+	unsigned char page_full : 1,
 		      page_is_eof : 1,
 		      cookies_are_ordered : 1;
-	काष्ठा nfs_cache_array_entry array[];
-पूर्ण;
+	struct nfs_cache_array_entry array[];
+};
 
-काष्ठा nfs_सूची_पढ़ो_descriptor अणु
-	काष्ठा file	*file;
-	काष्ठा page	*page;
-	काष्ठा dir_context *ctx;
+struct nfs_readdir_descriptor {
+	struct file	*file;
+	struct page	*page;
+	struct dir_context *ctx;
 	pgoff_t		page_index;
 	u64		dir_cookie;
 	u64		last_cookie;
@@ -158,130 +157,130 @@ nfs_बंद_सूची(काष्ठा inode *inode, काष्ठा f
 	loff_t		current_index;
 	loff_t		prev_index;
 
-	__be32		verf[NFS_सूची_VERIFIER_SIZE];
-	अचिन्हित दीर्घ	dir_verअगरier;
-	अचिन्हित दीर्घ	बारtamp;
-	अचिन्हित दीर्घ	gencount;
-	अचिन्हित दीर्घ	attr_gencount;
-	अचिन्हित पूर्णांक	cache_entry_index;
-	चिन्हित अक्षर duped;
+	__be32		verf[NFS_DIR_VERIFIER_SIZE];
+	unsigned long	dir_verifier;
+	unsigned long	timestamp;
+	unsigned long	gencount;
+	unsigned long	attr_gencount;
+	unsigned int	cache_entry_index;
+	signed char duped;
 	bool plus;
 	bool eof;
-पूर्ण;
+};
 
-अटल व्योम nfs_सूची_पढ़ो_array_init(काष्ठा nfs_cache_array *array)
-अणु
-	स_रखो(array, 0, माप(काष्ठा nfs_cache_array));
-पूर्ण
+static void nfs_readdir_array_init(struct nfs_cache_array *array)
+{
+	memset(array, 0, sizeof(struct nfs_cache_array));
+}
 
-अटल व्योम nfs_सूची_पढ़ो_page_init_array(काष्ठा page *page, u64 last_cookie)
-अणु
-	काष्ठा nfs_cache_array *array;
+static void nfs_readdir_page_init_array(struct page *page, u64 last_cookie)
+{
+	struct nfs_cache_array *array;
 
 	array = kmap_atomic(page);
-	nfs_सूची_पढ़ो_array_init(array);
+	nfs_readdir_array_init(array);
 	array->last_cookie = last_cookie;
 	array->cookies_are_ordered = 1;
 	kunmap_atomic(array);
-पूर्ण
+}
 
 /*
- * we are मुक्तing strings created by nfs_add_to_सूची_पढ़ो_array()
+ * we are freeing strings created by nfs_add_to_readdir_array()
  */
-अटल
-व्योम nfs_सूची_पढ़ो_clear_array(काष्ठा page *page)
-अणु
-	काष्ठा nfs_cache_array *array;
-	पूर्णांक i;
+static
+void nfs_readdir_clear_array(struct page *page)
+{
+	struct nfs_cache_array *array;
+	int i;
 
 	array = kmap_atomic(page);
-	क्रम (i = 0; i < array->size; i++)
-		kमुक्त(array->array[i].name);
-	nfs_सूची_पढ़ो_array_init(array);
+	for (i = 0; i < array->size; i++)
+		kfree(array->array[i].name);
+	nfs_readdir_array_init(array);
 	kunmap_atomic(array);
-पूर्ण
+}
 
-अटल काष्ठा page *
-nfs_सूची_पढ़ो_page_array_alloc(u64 last_cookie, gfp_t gfp_flags)
-अणु
-	काष्ठा page *page = alloc_page(gfp_flags);
-	अगर (page)
-		nfs_सूची_पढ़ो_page_init_array(page, last_cookie);
-	वापस page;
-पूर्ण
+static struct page *
+nfs_readdir_page_array_alloc(u64 last_cookie, gfp_t gfp_flags)
+{
+	struct page *page = alloc_page(gfp_flags);
+	if (page)
+		nfs_readdir_page_init_array(page, last_cookie);
+	return page;
+}
 
-अटल व्योम nfs_सूची_पढ़ो_page_array_मुक्त(काष्ठा page *page)
-अणु
-	अगर (page) अणु
-		nfs_सूची_पढ़ो_clear_array(page);
+static void nfs_readdir_page_array_free(struct page *page)
+{
+	if (page) {
+		nfs_readdir_clear_array(page);
 		put_page(page);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम nfs_सूची_पढ़ो_array_set_eof(काष्ठा nfs_cache_array *array)
-अणु
+static void nfs_readdir_array_set_eof(struct nfs_cache_array *array)
+{
 	array->page_is_eof = 1;
 	array->page_full = 1;
-पूर्ण
+}
 
-अटल bool nfs_सूची_पढ़ो_array_is_full(काष्ठा nfs_cache_array *array)
-अणु
-	वापस array->page_full;
-पूर्ण
+static bool nfs_readdir_array_is_full(struct nfs_cache_array *array)
+{
+	return array->page_full;
+}
 
 /*
- * the caller is responsible क्रम मुक्तing qstr.name
- * when called by nfs_सूची_पढ़ो_add_to_array, the strings will be मुक्तd in
- * nfs_clear_सूची_पढ़ो_array()
+ * the caller is responsible for freeing qstr.name
+ * when called by nfs_readdir_add_to_array, the strings will be freed in
+ * nfs_clear_readdir_array()
  */
-अटल स्थिर अक्षर *nfs_सूची_पढ़ो_copy_name(स्थिर अक्षर *name, अचिन्हित पूर्णांक len)
-अणु
-	स्थिर अक्षर *ret = kmemdup_nul(name, len, GFP_KERNEL);
+static const char *nfs_readdir_copy_name(const char *name, unsigned int len)
+{
+	const char *ret = kmemdup_nul(name, len, GFP_KERNEL);
 
 	/*
-	 * Aव्योम a kmemleak false positive. The poपूर्णांकer to the name is stored
-	 * in a page cache page which kmemleak करोes not scan.
+	 * Avoid a kmemleak false positive. The pointer to the name is stored
+	 * in a page cache page which kmemleak does not scan.
 	 */
-	अगर (ret != शून्य)
+	if (ret != NULL)
 		kmemleak_not_leak(ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Check that the next array entry lies entirely within the page bounds
  */
-अटल पूर्णांक nfs_सूची_पढ़ो_array_can_expand(काष्ठा nfs_cache_array *array)
-अणु
-	काष्ठा nfs_cache_array_entry *cache_entry;
+static int nfs_readdir_array_can_expand(struct nfs_cache_array *array)
+{
+	struct nfs_cache_array_entry *cache_entry;
 
-	अगर (array->page_full)
-		वापस -ENOSPC;
+	if (array->page_full)
+		return -ENOSPC;
 	cache_entry = &array->array[array->size + 1];
-	अगर ((अक्षर *)cache_entry - (अक्षर *)array > PAGE_SIZE) अणु
+	if ((char *)cache_entry - (char *)array > PAGE_SIZE) {
 		array->page_full = 1;
-		वापस -ENOSPC;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ENOSPC;
+	}
+	return 0;
+}
 
-अटल
-पूर्णांक nfs_सूची_पढ़ो_add_to_array(काष्ठा nfs_entry *entry, काष्ठा page *page)
-अणु
-	काष्ठा nfs_cache_array *array;
-	काष्ठा nfs_cache_array_entry *cache_entry;
-	स्थिर अक्षर *name;
-	पूर्णांक ret;
+static
+int nfs_readdir_add_to_array(struct nfs_entry *entry, struct page *page)
+{
+	struct nfs_cache_array *array;
+	struct nfs_cache_array_entry *cache_entry;
+	const char *name;
+	int ret;
 
-	name = nfs_सूची_पढ़ो_copy_name(entry->name, entry->len);
-	अगर (!name)
-		वापस -ENOMEM;
+	name = nfs_readdir_copy_name(entry->name, entry->len);
+	if (!name)
+		return -ENOMEM;
 
 	array = kmap_atomic(page);
-	ret = nfs_सूची_पढ़ो_array_can_expand(array);
-	अगर (ret) अणु
-		kमुक्त(name);
-		जाओ out;
-	पूर्ण
+	ret = nfs_readdir_array_can_expand(array);
+	if (ret) {
+		kfree(name);
+		goto out;
+	}
 
 	cache_entry = &array->array[array->size];
 	cache_entry->cookie = entry->prev_cookie;
@@ -290,229 +289,229 @@ nfs_सूची_पढ़ो_page_array_alloc(u64 last_cookie, gfp_t gfp_flags)
 	cache_entry->name_len = entry->len;
 	cache_entry->name = name;
 	array->last_cookie = entry->cookie;
-	अगर (array->last_cookie <= cache_entry->cookie)
+	if (array->last_cookie <= cache_entry->cookie)
 		array->cookies_are_ordered = 0;
 	array->size++;
-	अगर (entry->eof != 0)
-		nfs_सूची_पढ़ो_array_set_eof(array);
+	if (entry->eof != 0)
+		nfs_readdir_array_set_eof(array);
 out:
 	kunmap_atomic(array);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा page *nfs_सूची_पढ़ो_page_get_locked(काष्ठा address_space *mapping,
+static struct page *nfs_readdir_page_get_locked(struct address_space *mapping,
 						pgoff_t index, u64 last_cookie)
-अणु
-	काष्ठा page *page;
+{
+	struct page *page;
 
 	page = grab_cache_page(mapping, index);
-	अगर (page && !PageUptodate(page)) अणु
-		nfs_सूची_पढ़ो_page_init_array(page, last_cookie);
-		अगर (invalidate_inode_pages2_range(mapping, index + 1, -1) < 0)
+	if (page && !PageUptodate(page)) {
+		nfs_readdir_page_init_array(page, last_cookie);
+		if (invalidate_inode_pages2_range(mapping, index + 1, -1) < 0)
 			nfs_zap_mapping(mapping->host, mapping);
 		SetPageUptodate(page);
-	पूर्ण
+	}
 
-	वापस page;
-पूर्ण
+	return page;
+}
 
-अटल u64 nfs_सूची_पढ़ो_page_last_cookie(काष्ठा page *page)
-अणु
-	काष्ठा nfs_cache_array *array;
+static u64 nfs_readdir_page_last_cookie(struct page *page)
+{
+	struct nfs_cache_array *array;
 	u64 ret;
 
 	array = kmap_atomic(page);
 	ret = array->last_cookie;
 	kunmap_atomic(array);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool nfs_सूची_पढ़ो_page_needs_filling(काष्ठा page *page)
-अणु
-	काष्ठा nfs_cache_array *array;
+static bool nfs_readdir_page_needs_filling(struct page *page)
+{
+	struct nfs_cache_array *array;
 	bool ret;
 
 	array = kmap_atomic(page);
-	ret = !nfs_सूची_पढ़ो_array_is_full(array);
+	ret = !nfs_readdir_array_is_full(array);
 	kunmap_atomic(array);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम nfs_सूची_पढ़ो_page_set_eof(काष्ठा page *page)
-अणु
-	काष्ठा nfs_cache_array *array;
+static void nfs_readdir_page_set_eof(struct page *page)
+{
+	struct nfs_cache_array *array;
 
 	array = kmap_atomic(page);
-	nfs_सूची_पढ़ो_array_set_eof(array);
+	nfs_readdir_array_set_eof(array);
 	kunmap_atomic(array);
-पूर्ण
+}
 
-अटल व्योम nfs_सूची_पढ़ो_page_unlock_and_put(काष्ठा page *page)
-अणु
+static void nfs_readdir_page_unlock_and_put(struct page *page)
+{
 	unlock_page(page);
 	put_page(page);
-पूर्ण
+}
 
-अटल काष्ठा page *nfs_सूची_पढ़ो_page_get_next(काष्ठा address_space *mapping,
+static struct page *nfs_readdir_page_get_next(struct address_space *mapping,
 					      pgoff_t index, u64 cookie)
-अणु
-	काष्ठा page *page;
+{
+	struct page *page;
 
-	page = nfs_सूची_पढ़ो_page_get_locked(mapping, index, cookie);
-	अगर (page) अणु
-		अगर (nfs_सूची_पढ़ो_page_last_cookie(page) == cookie)
-			वापस page;
-		nfs_सूची_पढ़ो_page_unlock_and_put(page);
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	page = nfs_readdir_page_get_locked(mapping, index, cookie);
+	if (page) {
+		if (nfs_readdir_page_last_cookie(page) == cookie)
+			return page;
+		nfs_readdir_page_unlock_and_put(page);
+	}
+	return NULL;
+}
 
-अटल अंतरभूत
-पूर्णांक is_32bit_api(व्योम)
-अणु
-#अगर_घोषित CONFIG_COMPAT
-	वापस in_compat_syscall();
-#अन्यथा
-	वापस (BITS_PER_LONG == 32);
-#पूर्ण_अगर
-पूर्ण
+static inline
+int is_32bit_api(void)
+{
+#ifdef CONFIG_COMPAT
+	return in_compat_syscall();
+#else
+	return (BITS_PER_LONG == 32);
+#endif
+}
 
-अटल
-bool nfs_सूची_पढ़ो_use_cookie(स्थिर काष्ठा file *filp)
-अणु
-	अगर ((filp->f_mode & FMODE_32BITHASH) ||
+static
+bool nfs_readdir_use_cookie(const struct file *filp)
+{
+	if ((filp->f_mode & FMODE_32BITHASH) ||
 	    (!(filp->f_mode & FMODE_64BITHASH) && is_32bit_api()))
-		वापस false;
-	वापस true;
-पूर्ण
+		return false;
+	return true;
+}
 
-अटल पूर्णांक nfs_सूची_पढ़ो_search_क्रम_pos(काष्ठा nfs_cache_array *array,
-				      काष्ठा nfs_सूची_पढ़ो_descriptor *desc)
-अणु
-	loff_t dअगरf = desc->ctx->pos - desc->current_index;
-	अचिन्हित पूर्णांक index;
+static int nfs_readdir_search_for_pos(struct nfs_cache_array *array,
+				      struct nfs_readdir_descriptor *desc)
+{
+	loff_t diff = desc->ctx->pos - desc->current_index;
+	unsigned int index;
 
-	अगर (dअगरf < 0)
-		जाओ out_eof;
-	अगर (dअगरf >= array->size) अणु
-		अगर (array->page_is_eof)
-			जाओ out_eof;
-		वापस -EAGAIN;
-	पूर्ण
+	if (diff < 0)
+		goto out_eof;
+	if (diff >= array->size) {
+		if (array->page_is_eof)
+			goto out_eof;
+		return -EAGAIN;
+	}
 
-	index = (अचिन्हित पूर्णांक)dअगरf;
+	index = (unsigned int)diff;
 	desc->dir_cookie = array->array[index].cookie;
 	desc->cache_entry_index = index;
-	वापस 0;
+	return 0;
 out_eof:
 	desc->eof = true;
-	वापस -EBADCOOKIE;
-पूर्ण
+	return -EBADCOOKIE;
+}
 
-अटल bool
-nfs_सूची_पढ़ो_inode_mapping_valid(काष्ठा nfs_inode *nfsi)
-अणु
-	अगर (nfsi->cache_validity & (NFS_INO_INVALID_ATTR|NFS_INO_INVALID_DATA))
-		वापस false;
+static bool
+nfs_readdir_inode_mapping_valid(struct nfs_inode *nfsi)
+{
+	if (nfsi->cache_validity & (NFS_INO_INVALID_ATTR|NFS_INO_INVALID_DATA))
+		return false;
 	smp_rmb();
-	वापस !test_bit(NFS_INO_INVALIDATING, &nfsi->flags);
-पूर्ण
+	return !test_bit(NFS_INO_INVALIDATING, &nfsi->flags);
+}
 
-अटल bool nfs_सूची_पढ़ो_array_cookie_in_range(काष्ठा nfs_cache_array *array,
+static bool nfs_readdir_array_cookie_in_range(struct nfs_cache_array *array,
 					      u64 cookie)
-अणु
-	अगर (!array->cookies_are_ordered)
-		वापस true;
-	/* Optimisation क्रम monotonically increasing cookies */
-	अगर (cookie >= array->last_cookie)
-		वापस false;
-	अगर (array->size && cookie < array->array[0].cookie)
-		वापस false;
-	वापस true;
-पूर्ण
+{
+	if (!array->cookies_are_ordered)
+		return true;
+	/* Optimisation for monotonically increasing cookies */
+	if (cookie >= array->last_cookie)
+		return false;
+	if (array->size && cookie < array->array[0].cookie)
+		return false;
+	return true;
+}
 
-अटल पूर्णांक nfs_सूची_पढ़ो_search_क्रम_cookie(काष्ठा nfs_cache_array *array,
-					 काष्ठा nfs_सूची_पढ़ो_descriptor *desc)
-अणु
-	पूर्णांक i;
+static int nfs_readdir_search_for_cookie(struct nfs_cache_array *array,
+					 struct nfs_readdir_descriptor *desc)
+{
+	int i;
 	loff_t new_pos;
-	पूर्णांक status = -EAGAIN;
+	int status = -EAGAIN;
 
-	अगर (!nfs_सूची_पढ़ो_array_cookie_in_range(array, desc->dir_cookie))
-		जाओ check_eof;
+	if (!nfs_readdir_array_cookie_in_range(array, desc->dir_cookie))
+		goto check_eof;
 
-	क्रम (i = 0; i < array->size; i++) अणु
-		अगर (array->array[i].cookie == desc->dir_cookie) अणु
-			काष्ठा nfs_inode *nfsi = NFS_I(file_inode(desc->file));
+	for (i = 0; i < array->size; i++) {
+		if (array->array[i].cookie == desc->dir_cookie) {
+			struct nfs_inode *nfsi = NFS_I(file_inode(desc->file));
 
 			new_pos = desc->current_index + i;
-			अगर (desc->attr_gencount != nfsi->attr_gencount ||
-			    !nfs_सूची_पढ़ो_inode_mapping_valid(nfsi)) अणु
+			if (desc->attr_gencount != nfsi->attr_gencount ||
+			    !nfs_readdir_inode_mapping_valid(nfsi)) {
 				desc->duped = 0;
 				desc->attr_gencount = nfsi->attr_gencount;
-			पूर्ण अन्यथा अगर (new_pos < desc->prev_index) अणु
-				अगर (desc->duped > 0
-				    && desc->dup_cookie == desc->dir_cookie) अणु
-					अगर (prपूर्णांकk_ratelimit()) अणु
+			} else if (new_pos < desc->prev_index) {
+				if (desc->duped > 0
+				    && desc->dup_cookie == desc->dir_cookie) {
+					if (printk_ratelimit()) {
 						pr_notice("NFS: directory %pD2 contains a readdir loop."
 								"Please contact your server vendor.  "
 								"The file: %s has duplicate cookie %llu\n",
 								desc->file, array->array[i].name, desc->dir_cookie);
-					पूर्ण
+					}
 					status = -ELOOP;
-					जाओ out;
-				पूर्ण
+					goto out;
+				}
 				desc->dup_cookie = desc->dir_cookie;
 				desc->duped = -1;
-			पूर्ण
-			अगर (nfs_सूची_पढ़ो_use_cookie(desc->file))
+			}
+			if (nfs_readdir_use_cookie(desc->file))
 				desc->ctx->pos = desc->dir_cookie;
-			अन्यथा
+			else
 				desc->ctx->pos = new_pos;
 			desc->prev_index = new_pos;
 			desc->cache_entry_index = i;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 check_eof:
-	अगर (array->page_is_eof) अणु
+	if (array->page_is_eof) {
 		status = -EBADCOOKIE;
-		अगर (desc->dir_cookie == array->last_cookie)
+		if (desc->dir_cookie == array->last_cookie)
 			desc->eof = true;
-	पूर्ण
+	}
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक nfs_सूची_पढ़ो_search_array(काष्ठा nfs_सूची_पढ़ो_descriptor *desc)
-अणु
-	काष्ठा nfs_cache_array *array;
-	पूर्णांक status;
+static int nfs_readdir_search_array(struct nfs_readdir_descriptor *desc)
+{
+	struct nfs_cache_array *array;
+	int status;
 
 	array = kmap_atomic(desc->page);
 
-	अगर (desc->dir_cookie == 0)
-		status = nfs_सूची_पढ़ो_search_क्रम_pos(array, desc);
-	अन्यथा
-		status = nfs_सूची_पढ़ो_search_क्रम_cookie(array, desc);
+	if (desc->dir_cookie == 0)
+		status = nfs_readdir_search_for_pos(array, desc);
+	else
+		status = nfs_readdir_search_for_cookie(array, desc);
 
-	अगर (status == -EAGAIN) अणु
+	if (status == -EAGAIN) {
 		desc->last_cookie = array->last_cookie;
 		desc->current_index += array->size;
 		desc->page_index++;
-	पूर्ण
+	}
 	kunmap_atomic(array);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-/* Fill a page with xdr inक्रमmation beक्रमe transferring to the cache page */
-अटल पूर्णांक nfs_सूची_पढ़ो_xdr_filler(काष्ठा nfs_सूची_पढ़ो_descriptor *desc,
+/* Fill a page with xdr information before transferring to the cache page */
+static int nfs_readdir_xdr_filler(struct nfs_readdir_descriptor *desc,
 				  __be32 *verf, u64 cookie,
-				  काष्ठा page **pages, माप_प्रकार bufsize,
+				  struct page **pages, size_t bufsize,
 				  __be32 *verf_res)
-अणु
-	काष्ठा inode *inode = file_inode(desc->file);
-	काष्ठा nfs_सूची_पढ़ो_arg arg = अणु
+{
+	struct inode *inode = file_inode(desc->file);
+	struct nfs_readdir_arg arg = {
 		.dentry = file_dentry(desc->file),
 		.cred = desc->file->f_cred,
 		.verf = verf,
@@ -520,1634 +519,1634 @@ out:
 		.pages = pages,
 		.page_len = bufsize,
 		.plus = desc->plus,
-	पूर्ण;
-	काष्ठा nfs_सूची_पढ़ो_res res = अणु
+	};
+	struct nfs_readdir_res res = {
 		.verf = verf_res,
-	पूर्ण;
-	अचिन्हित दीर्घ	बारtamp, gencount;
-	पूर्णांक		error;
+	};
+	unsigned long	timestamp, gencount;
+	int		error;
 
  again:
-	बारtamp = jअगरfies;
+	timestamp = jiffies;
 	gencount = nfs_inc_attr_generation_counter();
-	desc->dir_verअगरier = nfs_save_change_attribute(inode);
-	error = NFS_PROTO(inode)->सूची_पढ़ो(&arg, &res);
-	अगर (error < 0) अणु
-		/* We requested READसूचीPLUS, but the server करोesn't grok it */
-		अगर (error == -ENOTSUPP && desc->plus) अणु
-			NFS_SERVER(inode)->caps &= ~NFS_CAP_READसूचीPLUS;
+	desc->dir_verifier = nfs_save_change_attribute(inode);
+	error = NFS_PROTO(inode)->readdir(&arg, &res);
+	if (error < 0) {
+		/* We requested READDIRPLUS, but the server doesn't grok it */
+		if (error == -ENOTSUPP && desc->plus) {
+			NFS_SERVER(inode)->caps &= ~NFS_CAP_READDIRPLUS;
 			clear_bit(NFS_INO_ADVISE_RDPLUS, &NFS_I(inode)->flags);
 			desc->plus = arg.plus = false;
-			जाओ again;
-		पूर्ण
-		जाओ error;
-	पूर्ण
-	desc->बारtamp = बारtamp;
+			goto again;
+		}
+		goto error;
+	}
+	desc->timestamp = timestamp;
 	desc->gencount = gencount;
 error:
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक xdr_decode(काष्ठा nfs_सूची_पढ़ो_descriptor *desc,
-		      काष्ठा nfs_entry *entry, काष्ठा xdr_stream *xdr)
-अणु
-	काष्ठा inode *inode = file_inode(desc->file);
-	पूर्णांक error;
+static int xdr_decode(struct nfs_readdir_descriptor *desc,
+		      struct nfs_entry *entry, struct xdr_stream *xdr)
+{
+	struct inode *inode = file_inode(desc->file);
+	int error;
 
 	error = NFS_PROTO(inode)->decode_dirent(xdr, entry, desc->plus);
-	अगर (error)
-		वापस error;
-	entry->fattr->समय_start = desc->बारtamp;
+	if (error)
+		return error;
+	entry->fattr->time_start = desc->timestamp;
 	entry->fattr->gencount = desc->gencount;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Match file and dirent using either filehandle or fileid
- * Note: caller is responsible क्रम checking the fsid
+ * Note: caller is responsible for checking the fsid
  */
-अटल
-पूर्णांक nfs_same_file(काष्ठा dentry *dentry, काष्ठा nfs_entry *entry)
-अणु
-	काष्ठा inode *inode;
-	काष्ठा nfs_inode *nfsi;
+static
+int nfs_same_file(struct dentry *dentry, struct nfs_entry *entry)
+{
+	struct inode *inode;
+	struct nfs_inode *nfsi;
 
-	अगर (d_really_is_negative(dentry))
-		वापस 0;
+	if (d_really_is_negative(dentry))
+		return 0;
 
 	inode = d_inode(dentry);
-	अगर (is_bad_inode(inode) || NFS_STALE(inode))
-		वापस 0;
+	if (is_bad_inode(inode) || NFS_STALE(inode))
+		return 0;
 
 	nfsi = NFS_I(inode);
-	अगर (entry->fattr->fileid != nfsi->fileid)
-		वापस 0;
-	अगर (entry->fh->size && nfs_compare_fh(entry->fh, &nfsi->fh) != 0)
-		वापस 0;
-	वापस 1;
-पूर्ण
+	if (entry->fattr->fileid != nfsi->fileid)
+		return 0;
+	if (entry->fh->size && nfs_compare_fh(entry->fh, &nfsi->fh) != 0)
+		return 0;
+	return 1;
+}
 
-अटल
-bool nfs_use_सूची_पढ़ोplus(काष्ठा inode *dir, काष्ठा dir_context *ctx)
-अणु
-	अगर (!nfs_server_capable(dir, NFS_CAP_READसूचीPLUS))
-		वापस false;
-	अगर (test_and_clear_bit(NFS_INO_ADVISE_RDPLUS, &NFS_I(dir)->flags))
-		वापस true;
-	अगर (ctx->pos == 0)
-		वापस true;
-	वापस false;
-पूर्ण
+static
+bool nfs_use_readdirplus(struct inode *dir, struct dir_context *ctx)
+{
+	if (!nfs_server_capable(dir, NFS_CAP_READDIRPLUS))
+		return false;
+	if (test_and_clear_bit(NFS_INO_ADVISE_RDPLUS, &NFS_I(dir)->flags))
+		return true;
+	if (ctx->pos == 0)
+		return true;
+	return false;
+}
 
 /*
  * This function is called by the lookup and getattr code to request the
- * use of सूची_पढ़ोplus to accelerate any future lookups in the same
+ * use of readdirplus to accelerate any future lookups in the same
  * directory.
  */
-व्योम nfs_advise_use_सूची_पढ़ोplus(काष्ठा inode *dir)
-अणु
-	काष्ठा nfs_inode *nfsi = NFS_I(dir);
+void nfs_advise_use_readdirplus(struct inode *dir)
+{
+	struct nfs_inode *nfsi = NFS_I(dir);
 
-	अगर (nfs_server_capable(dir, NFS_CAP_READसूचीPLUS) &&
-	    !list_empty(&nfsi->खोलो_files))
+	if (nfs_server_capable(dir, NFS_CAP_READDIRPLUS) &&
+	    !list_empty(&nfsi->open_files))
 		set_bit(NFS_INO_ADVISE_RDPLUS, &nfsi->flags);
-पूर्ण
+}
 
 /*
- * This function is मुख्यly क्रम use by nfs_getattr().
+ * This function is mainly for use by nfs_getattr().
  *
- * If this is an 'ls -l', we want to क्रमce use of सूची_पढ़ोplus.
- * Do this by checking अगर there is an active file descriptor
- * and calling nfs_advise_use_सूची_पढ़ोplus, then क्रमcing a
+ * If this is an 'ls -l', we want to force use of readdirplus.
+ * Do this by checking if there is an active file descriptor
+ * and calling nfs_advise_use_readdirplus, then forcing a
  * cache flush.
  */
-व्योम nfs_क्रमce_use_सूची_पढ़ोplus(काष्ठा inode *dir)
-अणु
-	काष्ठा nfs_inode *nfsi = NFS_I(dir);
+void nfs_force_use_readdirplus(struct inode *dir)
+{
+	struct nfs_inode *nfsi = NFS_I(dir);
 
-	अगर (nfs_server_capable(dir, NFS_CAP_READसूचीPLUS) &&
-	    !list_empty(&nfsi->खोलो_files)) अणु
+	if (nfs_server_capable(dir, NFS_CAP_READDIRPLUS) &&
+	    !list_empty(&nfsi->open_files)) {
 		set_bit(NFS_INO_ADVISE_RDPLUS, &nfsi->flags);
 		invalidate_mapping_pages(dir->i_mapping,
 			nfsi->page_index + 1, -1);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल
-व्योम nfs_prime_dcache(काष्ठा dentry *parent, काष्ठा nfs_entry *entry,
-		अचिन्हित दीर्घ dir_verअगरier)
-अणु
-	काष्ठा qstr filename = QSTR_INIT(entry->name, entry->len);
+static
+void nfs_prime_dcache(struct dentry *parent, struct nfs_entry *entry,
+		unsigned long dir_verifier)
+{
+	struct qstr filename = QSTR_INIT(entry->name, entry->len);
 	DECLARE_WAIT_QUEUE_HEAD_ONSTACK(wq);
-	काष्ठा dentry *dentry;
-	काष्ठा dentry *alias;
-	काष्ठा inode *inode;
-	पूर्णांक status;
+	struct dentry *dentry;
+	struct dentry *alias;
+	struct inode *inode;
+	int status;
 
-	अगर (!(entry->fattr->valid & NFS_ATTR_FATTR_खाताID))
-		वापस;
-	अगर (!(entry->fattr->valid & NFS_ATTR_FATTR_FSID))
-		वापस;
-	अगर (filename.len == 0)
-		वापस;
-	/* Validate that the name करोesn't contain any illegal '\0' */
-	अगर (strnlen(filename.name, filename.len) != filename.len)
-		वापस;
+	if (!(entry->fattr->valid & NFS_ATTR_FATTR_FILEID))
+		return;
+	if (!(entry->fattr->valid & NFS_ATTR_FATTR_FSID))
+		return;
+	if (filename.len == 0)
+		return;
+	/* Validate that the name doesn't contain any illegal '\0' */
+	if (strnlen(filename.name, filename.len) != filename.len)
+		return;
 	/* ...or '/' */
-	अगर (strnchr(filename.name, filename.len, '/'))
-		वापस;
-	अगर (filename.name[0] == '.') अणु
-		अगर (filename.len == 1)
-			वापस;
-		अगर (filename.len == 2 && filename.name[1] == '.')
-			वापस;
-	पूर्ण
+	if (strnchr(filename.name, filename.len, '/'))
+		return;
+	if (filename.name[0] == '.') {
+		if (filename.len == 1)
+			return;
+		if (filename.len == 2 && filename.name[1] == '.')
+			return;
+	}
 	filename.hash = full_name_hash(parent, filename.name, filename.len);
 
 	dentry = d_lookup(parent, &filename);
 again:
-	अगर (!dentry) अणु
+	if (!dentry) {
 		dentry = d_alloc_parallel(parent, &filename, &wq);
-		अगर (IS_ERR(dentry))
-			वापस;
-	पूर्ण
-	अगर (!d_in_lookup(dentry)) अणु
-		/* Is there a mountpoपूर्णांक here? If so, just निकास */
-		अगर (!nfs_fsid_equal(&NFS_SB(dentry->d_sb)->fsid,
+		if (IS_ERR(dentry))
+			return;
+	}
+	if (!d_in_lookup(dentry)) {
+		/* Is there a mountpoint here? If so, just exit */
+		if (!nfs_fsid_equal(&NFS_SB(dentry->d_sb)->fsid,
 					&entry->fattr->fsid))
-			जाओ out;
-		अगर (nfs_same_file(dentry, entry)) अणु
-			अगर (!entry->fh->size)
-				जाओ out;
-			nfs_set_verअगरier(dentry, dir_verअगरier);
+			goto out;
+		if (nfs_same_file(dentry, entry)) {
+			if (!entry->fh->size)
+				goto out;
+			nfs_set_verifier(dentry, dir_verifier);
 			status = nfs_refresh_inode(d_inode(dentry), entry->fattr);
-			अगर (!status)
+			if (!status)
 				nfs_setsecurity(d_inode(dentry), entry->fattr, entry->label);
-			जाओ out;
-		पूर्ण अन्यथा अणु
+			goto out;
+		} else {
 			d_invalidate(dentry);
 			dput(dentry);
-			dentry = शून्य;
-			जाओ again;
-		पूर्ण
-	पूर्ण
-	अगर (!entry->fh->size) अणु
-		d_lookup_करोne(dentry);
-		जाओ out;
-	पूर्ण
+			dentry = NULL;
+			goto again;
+		}
+	}
+	if (!entry->fh->size) {
+		d_lookup_done(dentry);
+		goto out;
+	}
 
 	inode = nfs_fhget(dentry->d_sb, entry->fh, entry->fattr, entry->label);
 	alias = d_splice_alias(inode, dentry);
-	d_lookup_करोne(dentry);
-	अगर (alias) अणु
-		अगर (IS_ERR(alias))
-			जाओ out;
+	d_lookup_done(dentry);
+	if (alias) {
+		if (IS_ERR(alias))
+			goto out;
 		dput(dentry);
 		dentry = alias;
-	पूर्ण
-	nfs_set_verअगरier(dentry, dir_verअगरier);
+	}
+	nfs_set_verifier(dentry, dir_verifier);
 out:
 	dput(dentry);
-पूर्ण
+}
 
-/* Perक्रमm conversion from xdr to cache array */
-अटल पूर्णांक nfs_सूची_पढ़ो_page_filler(काष्ठा nfs_सूची_पढ़ो_descriptor *desc,
-				   काष्ठा nfs_entry *entry,
-				   काष्ठा page **xdr_pages,
-				   अचिन्हित पूर्णांक buflen,
-				   काष्ठा page **arrays,
-				   माप_प्रकार narrays)
-अणु
-	काष्ठा address_space *mapping = desc->file->f_mapping;
-	काष्ठा xdr_stream stream;
-	काष्ठा xdr_buf buf;
-	काष्ठा page *scratch, *new, *page = *arrays;
-	पूर्णांक status;
+/* Perform conversion from xdr to cache array */
+static int nfs_readdir_page_filler(struct nfs_readdir_descriptor *desc,
+				   struct nfs_entry *entry,
+				   struct page **xdr_pages,
+				   unsigned int buflen,
+				   struct page **arrays,
+				   size_t narrays)
+{
+	struct address_space *mapping = desc->file->f_mapping;
+	struct xdr_stream stream;
+	struct xdr_buf buf;
+	struct page *scratch, *new, *page = *arrays;
+	int status;
 
 	scratch = alloc_page(GFP_KERNEL);
-	अगर (scratch == शून्य)
-		वापस -ENOMEM;
+	if (scratch == NULL)
+		return -ENOMEM;
 
 	xdr_init_decode_pages(&stream, &buf, xdr_pages, buflen);
 	xdr_set_scratch_page(&stream, scratch);
 
-	करो अणु
-		अगर (entry->label)
+	do {
+		if (entry->label)
 			entry->label->len = NFS4_MAXLABELLEN;
 
 		status = xdr_decode(desc, entry, &stream);
-		अगर (status != 0)
-			अवरोध;
+		if (status != 0)
+			break;
 
-		अगर (desc->plus)
+		if (desc->plus)
 			nfs_prime_dcache(file_dentry(desc->file), entry,
-					desc->dir_verअगरier);
+					desc->dir_verifier);
 
-		status = nfs_सूची_पढ़ो_add_to_array(entry, page);
-		अगर (status != -ENOSPC)
-			जारी;
+		status = nfs_readdir_add_to_array(entry, page);
+		if (status != -ENOSPC)
+			continue;
 
-		अगर (page->mapping != mapping) अणु
-			अगर (!--narrays)
-				अवरोध;
-			new = nfs_सूची_पढ़ो_page_array_alloc(entry->prev_cookie,
+		if (page->mapping != mapping) {
+			if (!--narrays)
+				break;
+			new = nfs_readdir_page_array_alloc(entry->prev_cookie,
 							   GFP_KERNEL);
-			अगर (!new)
-				अवरोध;
+			if (!new)
+				break;
 			arrays++;
 			*arrays = page = new;
-		पूर्ण अन्यथा अणु
-			new = nfs_सूची_पढ़ो_page_get_next(mapping,
+		} else {
+			new = nfs_readdir_page_get_next(mapping,
 							page->index + 1,
 							entry->prev_cookie);
-			अगर (!new)
-				अवरोध;
-			अगर (page != *arrays)
-				nfs_सूची_पढ़ो_page_unlock_and_put(page);
+			if (!new)
+				break;
+			if (page != *arrays)
+				nfs_readdir_page_unlock_and_put(page);
 			page = new;
-		पूर्ण
-		status = nfs_सूची_पढ़ो_add_to_array(entry, page);
-	पूर्ण जबतक (!status && !entry->eof);
+		}
+		status = nfs_readdir_add_to_array(entry, page);
+	} while (!status && !entry->eof);
 
-	चयन (status) अणु
-	हाल -EBADCOOKIE:
-		अगर (entry->eof) अणु
-			nfs_सूची_पढ़ो_page_set_eof(page);
+	switch (status) {
+	case -EBADCOOKIE:
+		if (entry->eof) {
+			nfs_readdir_page_set_eof(page);
 			status = 0;
-		पूर्ण
-		अवरोध;
-	हाल -ENOSPC:
-	हाल -EAGAIN:
+		}
+		break;
+	case -ENOSPC:
+	case -EAGAIN:
 		status = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (page != *arrays)
-		nfs_सूची_पढ़ो_page_unlock_and_put(page);
+	if (page != *arrays)
+		nfs_readdir_page_unlock_and_put(page);
 
 	put_page(scratch);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम nfs_सूची_पढ़ो_मुक्त_pages(काष्ठा page **pages, माप_प्रकार npages)
-अणु
-	जबतक (npages--)
+static void nfs_readdir_free_pages(struct page **pages, size_t npages)
+{
+	while (npages--)
 		put_page(pages[npages]);
-	kमुक्त(pages);
-पूर्ण
+	kfree(pages);
+}
 
 /*
- * nfs_सूची_पढ़ो_alloc_pages() will allocate pages that must be मुक्तd with a call
- * to nfs_सूची_पढ़ो_मुक्त_pages()
+ * nfs_readdir_alloc_pages() will allocate pages that must be freed with a call
+ * to nfs_readdir_free_pages()
  */
-अटल काष्ठा page **nfs_सूची_पढ़ो_alloc_pages(माप_प्रकार npages)
-अणु
-	काष्ठा page **pages;
-	माप_प्रकार i;
+static struct page **nfs_readdir_alloc_pages(size_t npages)
+{
+	struct page **pages;
+	size_t i;
 
-	pages = kदो_स्मृति_array(npages, माप(*pages), GFP_KERNEL);
-	अगर (!pages)
-		वापस शून्य;
-	क्रम (i = 0; i < npages; i++) अणु
-		काष्ठा page *page = alloc_page(GFP_KERNEL);
-		अगर (page == शून्य)
-			जाओ out_मुक्तpages;
+	pages = kmalloc_array(npages, sizeof(*pages), GFP_KERNEL);
+	if (!pages)
+		return NULL;
+	for (i = 0; i < npages; i++) {
+		struct page *page = alloc_page(GFP_KERNEL);
+		if (page == NULL)
+			goto out_freepages;
 		pages[i] = page;
-	पूर्ण
-	वापस pages;
+	}
+	return pages;
 
-out_मुक्तpages:
-	nfs_सूची_पढ़ो_मुक्त_pages(pages, i);
-	वापस शून्य;
-पूर्ण
+out_freepages:
+	nfs_readdir_free_pages(pages, i);
+	return NULL;
+}
 
-अटल पूर्णांक nfs_सूची_पढ़ो_xdr_to_array(काष्ठा nfs_सूची_पढ़ो_descriptor *desc,
+static int nfs_readdir_xdr_to_array(struct nfs_readdir_descriptor *desc,
 				    __be32 *verf_arg, __be32 *verf_res,
-				    काष्ठा page **arrays, माप_प्रकार narrays)
-अणु
-	काष्ठा page **pages;
-	काष्ठा page *page = *arrays;
-	काष्ठा nfs_entry *entry;
-	माप_प्रकार array_size;
-	काष्ठा inode *inode = file_inode(desc->file);
-	माप_प्रकार dtsize = NFS_SERVER(inode)->dtsize;
-	पूर्णांक status = -ENOMEM;
+				    struct page **arrays, size_t narrays)
+{
+	struct page **pages;
+	struct page *page = *arrays;
+	struct nfs_entry *entry;
+	size_t array_size;
+	struct inode *inode = file_inode(desc->file);
+	size_t dtsize = NFS_SERVER(inode)->dtsize;
+	int status = -ENOMEM;
 
-	entry = kzalloc(माप(*entry), GFP_KERNEL);
-	अगर (!entry)
-		वापस -ENOMEM;
-	entry->cookie = nfs_सूची_पढ़ो_page_last_cookie(page);
+	entry = kzalloc(sizeof(*entry), GFP_KERNEL);
+	if (!entry)
+		return -ENOMEM;
+	entry->cookie = nfs_readdir_page_last_cookie(page);
 	entry->fh = nfs_alloc_fhandle();
 	entry->fattr = nfs_alloc_fattr();
 	entry->server = NFS_SERVER(inode);
-	अगर (entry->fh == शून्य || entry->fattr == शून्य)
-		जाओ out;
+	if (entry->fh == NULL || entry->fattr == NULL)
+		goto out;
 
 	entry->label = nfs4_label_alloc(NFS_SERVER(inode), GFP_NOWAIT);
-	अगर (IS_ERR(entry->label)) अणु
+	if (IS_ERR(entry->label)) {
 		status = PTR_ERR(entry->label);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	array_size = (dtsize + PAGE_SIZE - 1) >> PAGE_SHIFT;
-	pages = nfs_सूची_पढ़ो_alloc_pages(array_size);
-	अगर (!pages)
-		जाओ out_release_label;
+	pages = nfs_readdir_alloc_pages(array_size);
+	if (!pages)
+		goto out_release_label;
 
-	करो अणु
-		अचिन्हित पूर्णांक pglen;
-		status = nfs_सूची_पढ़ो_xdr_filler(desc, verf_arg, entry->cookie,
+	do {
+		unsigned int pglen;
+		status = nfs_readdir_xdr_filler(desc, verf_arg, entry->cookie,
 						pages, dtsize,
 						verf_res);
-		अगर (status < 0)
-			अवरोध;
+		if (status < 0)
+			break;
 
 		pglen = status;
-		अगर (pglen == 0) अणु
-			nfs_सूची_पढ़ो_page_set_eof(page);
-			अवरोध;
-		पूर्ण
+		if (pglen == 0) {
+			nfs_readdir_page_set_eof(page);
+			break;
+		}
 
 		verf_arg = verf_res;
 
-		status = nfs_सूची_पढ़ो_page_filler(desc, entry, pages, pglen,
+		status = nfs_readdir_page_filler(desc, entry, pages, pglen,
 						 arrays, narrays);
-	पूर्ण जबतक (!status && nfs_सूची_पढ़ो_page_needs_filling(page));
+	} while (!status && nfs_readdir_page_needs_filling(page));
 
-	nfs_सूची_पढ़ो_मुक्त_pages(pages, array_size);
+	nfs_readdir_free_pages(pages, array_size);
 out_release_label:
-	nfs4_label_मुक्त(entry->label);
+	nfs4_label_free(entry->label);
 out:
-	nfs_मुक्त_fattr(entry->fattr);
-	nfs_मुक्त_fhandle(entry->fh);
-	kमुक्त(entry);
-	वापस status;
-पूर्ण
+	nfs_free_fattr(entry->fattr);
+	nfs_free_fhandle(entry->fh);
+	kfree(entry);
+	return status;
+}
 
-अटल व्योम nfs_सूची_पढ़ो_page_put(काष्ठा nfs_सूची_पढ़ो_descriptor *desc)
-अणु
+static void nfs_readdir_page_put(struct nfs_readdir_descriptor *desc)
+{
 	put_page(desc->page);
-	desc->page = शून्य;
-पूर्ण
+	desc->page = NULL;
+}
 
-अटल व्योम
-nfs_सूची_पढ़ो_page_unlock_and_put_cached(काष्ठा nfs_सूची_पढ़ो_descriptor *desc)
-अणु
+static void
+nfs_readdir_page_unlock_and_put_cached(struct nfs_readdir_descriptor *desc)
+{
 	unlock_page(desc->page);
-	nfs_सूची_पढ़ो_page_put(desc);
-पूर्ण
+	nfs_readdir_page_put(desc);
+}
 
-अटल काष्ठा page *
-nfs_सूची_पढ़ो_page_get_cached(काष्ठा nfs_सूची_पढ़ो_descriptor *desc)
-अणु
-	वापस nfs_सूची_पढ़ो_page_get_locked(desc->file->f_mapping,
+static struct page *
+nfs_readdir_page_get_cached(struct nfs_readdir_descriptor *desc)
+{
+	return nfs_readdir_page_get_locked(desc->file->f_mapping,
 					   desc->page_index,
 					   desc->last_cookie);
-पूर्ण
+}
 
 /*
- * Returns 0 अगर desc->dir_cookie was found on page desc->page_index
+ * Returns 0 if desc->dir_cookie was found on page desc->page_index
  * and locks the page to prevent removal from the page cache.
  */
-अटल पूर्णांक find_and_lock_cache_page(काष्ठा nfs_सूची_पढ़ो_descriptor *desc)
-अणु
-	काष्ठा inode *inode = file_inode(desc->file);
-	काष्ठा nfs_inode *nfsi = NFS_I(inode);
-	__be32 verf[NFS_सूची_VERIFIER_SIZE];
-	पूर्णांक res;
+static int find_and_lock_cache_page(struct nfs_readdir_descriptor *desc)
+{
+	struct inode *inode = file_inode(desc->file);
+	struct nfs_inode *nfsi = NFS_I(inode);
+	__be32 verf[NFS_DIR_VERIFIER_SIZE];
+	int res;
 
-	desc->page = nfs_सूची_पढ़ो_page_get_cached(desc);
-	अगर (!desc->page)
-		वापस -ENOMEM;
-	अगर (nfs_सूची_पढ़ो_page_needs_filling(desc->page)) अणु
-		res = nfs_सूची_पढ़ो_xdr_to_array(desc, nfsi->cookieverf, verf,
+	desc->page = nfs_readdir_page_get_cached(desc);
+	if (!desc->page)
+		return -ENOMEM;
+	if (nfs_readdir_page_needs_filling(desc->page)) {
+		res = nfs_readdir_xdr_to_array(desc, nfsi->cookieverf, verf,
 					       &desc->page, 1);
-		अगर (res < 0) अणु
-			nfs_सूची_पढ़ो_page_unlock_and_put_cached(desc);
-			अगर (res == -EBADCOOKIE || res == -ENOTSYNC) अणु
+		if (res < 0) {
+			nfs_readdir_page_unlock_and_put_cached(desc);
+			if (res == -EBADCOOKIE || res == -ENOTSYNC) {
 				invalidate_inode_pages2(desc->file->f_mapping);
 				desc->page_index = 0;
-				वापस -EAGAIN;
-			पूर्ण
-			वापस res;
-		पूर्ण
+				return -EAGAIN;
+			}
+			return res;
+		}
 		/*
-		 * Set the cookie verअगरier अगर the page cache was empty
+		 * Set the cookie verifier if the page cache was empty
 		 */
-		अगर (desc->page_index == 0)
-			स_नकल(nfsi->cookieverf, verf,
-			       माप(nfsi->cookieverf));
-	पूर्ण
-	res = nfs_सूची_पढ़ो_search_array(desc);
-	अगर (res == 0) अणु
+		if (desc->page_index == 0)
+			memcpy(nfsi->cookieverf, verf,
+			       sizeof(nfsi->cookieverf));
+	}
+	res = nfs_readdir_search_array(desc);
+	if (res == 0) {
 		nfsi->page_index = desc->page_index;
-		वापस 0;
-	पूर्ण
-	nfs_सूची_पढ़ो_page_unlock_and_put_cached(desc);
-	वापस res;
-पूर्ण
+		return 0;
+	}
+	nfs_readdir_page_unlock_and_put_cached(desc);
+	return res;
+}
 
-अटल bool nfs_सूची_पढ़ो_करोnt_search_cache(काष्ठा nfs_सूची_पढ़ो_descriptor *desc)
-अणु
-	काष्ठा address_space *mapping = desc->file->f_mapping;
-	काष्ठा inode *dir = file_inode(desc->file);
-	अचिन्हित पूर्णांक dtsize = NFS_SERVER(dir)->dtsize;
-	loff_t size = i_size_पढ़ो(dir);
+static bool nfs_readdir_dont_search_cache(struct nfs_readdir_descriptor *desc)
+{
+	struct address_space *mapping = desc->file->f_mapping;
+	struct inode *dir = file_inode(desc->file);
+	unsigned int dtsize = NFS_SERVER(dir)->dtsize;
+	loff_t size = i_size_read(dir);
 
 	/*
-	 * Default to uncached सूची_पढ़ो अगर the page cache is empty, and
-	 * we're looking क्रम a non-zero cookie in a large directory.
+	 * Default to uncached readdir if the page cache is empty, and
+	 * we're looking for a non-zero cookie in a large directory.
 	 */
-	वापस desc->dir_cookie != 0 && mapping->nrpages == 0 && size > dtsize;
-पूर्ण
+	return desc->dir_cookie != 0 && mapping->nrpages == 0 && size > dtsize;
+}
 
-/* Search क्रम desc->dir_cookie from the beginning of the page cache */
-अटल पूर्णांक सूची_पढ़ो_search_pagecache(काष्ठा nfs_सूची_पढ़ो_descriptor *desc)
-अणु
-	पूर्णांक res;
+/* Search for desc->dir_cookie from the beginning of the page cache */
+static int readdir_search_pagecache(struct nfs_readdir_descriptor *desc)
+{
+	int res;
 
-	अगर (nfs_सूची_पढ़ो_करोnt_search_cache(desc))
-		वापस -EBADCOOKIE;
+	if (nfs_readdir_dont_search_cache(desc))
+		return -EBADCOOKIE;
 
-	करो अणु
-		अगर (desc->page_index == 0) अणु
+	do {
+		if (desc->page_index == 0) {
 			desc->current_index = 0;
 			desc->prev_index = 0;
 			desc->last_cookie = 0;
-		पूर्ण
+		}
 		res = find_and_lock_cache_page(desc);
-	पूर्ण जबतक (res == -EAGAIN);
-	वापस res;
-पूर्ण
+	} while (res == -EAGAIN);
+	return res;
+}
 
 /*
  * Once we've found the start of the dirent within a page: fill 'er up...
  */
-अटल व्योम nfs_करो_filldir(काष्ठा nfs_सूची_पढ़ो_descriptor *desc,
-			   स्थिर __be32 *verf)
-अणु
-	काष्ठा file	*file = desc->file;
-	काष्ठा nfs_cache_array *array;
-	अचिन्हित पूर्णांक i = 0;
+static void nfs_do_filldir(struct nfs_readdir_descriptor *desc,
+			   const __be32 *verf)
+{
+	struct file	*file = desc->file;
+	struct nfs_cache_array *array;
+	unsigned int i = 0;
 
 	array = kmap(desc->page);
-	क्रम (i = desc->cache_entry_index; i < array->size; i++) अणु
-		काष्ठा nfs_cache_array_entry *ent;
+	for (i = desc->cache_entry_index; i < array->size; i++) {
+		struct nfs_cache_array_entry *ent;
 
 		ent = &array->array[i];
-		अगर (!dir_emit(desc->ctx, ent->name, ent->name_len,
-		    nfs_compat_user_ino64(ent->ino), ent->d_type)) अणु
+		if (!dir_emit(desc->ctx, ent->name, ent->name_len,
+		    nfs_compat_user_ino64(ent->ino), ent->d_type)) {
 			desc->eof = true;
-			अवरोध;
-		पूर्ण
-		स_नकल(desc->verf, verf, माप(desc->verf));
-		अगर (i < (array->size-1))
+			break;
+		}
+		memcpy(desc->verf, verf, sizeof(desc->verf));
+		if (i < (array->size-1))
 			desc->dir_cookie = array->array[i+1].cookie;
-		अन्यथा
+		else
 			desc->dir_cookie = array->last_cookie;
-		अगर (nfs_सूची_पढ़ो_use_cookie(file))
+		if (nfs_readdir_use_cookie(file))
 			desc->ctx->pos = desc->dir_cookie;
-		अन्यथा
+		else
 			desc->ctx->pos++;
-		अगर (desc->duped != 0)
+		if (desc->duped != 0)
 			desc->duped = 1;
-	पूर्ण
-	अगर (array->page_is_eof)
+	}
+	if (array->page_is_eof)
 		desc->eof = true;
 
 	kunmap(desc->page);
-	dfprपूर्णांकk(सूचीCACHE, "NFS: nfs_do_filldir() filling ended @ cookie %llu\n",
-			(अचिन्हित दीर्घ दीर्घ)desc->dir_cookie);
-पूर्ण
+	dfprintk(DIRCACHE, "NFS: nfs_do_filldir() filling ended @ cookie %llu\n",
+			(unsigned long long)desc->dir_cookie);
+}
 
 /*
  * If we cannot find a cookie in our cache, we suspect that this is
- * because it poपूर्णांकs to a deleted file, so we ask the server to वापस
+ * because it points to a deleted file, so we ask the server to return
  * whatever it thinks is the next entry. We then feed this to filldir.
  * If all goes well, we should then be able to find our way round the
- * cache on the next call to सूची_पढ़ो_search_pagecache();
+ * cache on the next call to readdir_search_pagecache();
  *
  * NOTE: we cannot add the anonymous page to the pagecache because
  *	 the data it contains might not be page aligned. Besides,
- *	 we should alपढ़ोy have a complete representation of the
- *	 directory in the page cache by the समय we get here.
+ *	 we should already have a complete representation of the
+ *	 directory in the page cache by the time we get here.
  */
-अटल पूर्णांक uncached_सूची_पढ़ो(काष्ठा nfs_सूची_पढ़ो_descriptor *desc)
-अणु
-	काष्ठा page	**arrays;
-	माप_प्रकार		i, sz = 512;
-	__be32		verf[NFS_सूची_VERIFIER_SIZE];
-	पूर्णांक		status = -ENOMEM;
+static int uncached_readdir(struct nfs_readdir_descriptor *desc)
+{
+	struct page	**arrays;
+	size_t		i, sz = 512;
+	__be32		verf[NFS_DIR_VERIFIER_SIZE];
+	int		status = -ENOMEM;
 
-	dfprपूर्णांकk(सूचीCACHE, "NFS: uncached_readdir() searching for cookie %llu\n",
-			(अचिन्हित दीर्घ दीर्घ)desc->dir_cookie);
+	dfprintk(DIRCACHE, "NFS: uncached_readdir() searching for cookie %llu\n",
+			(unsigned long long)desc->dir_cookie);
 
-	arrays = kसुस्मृति(sz, माप(*arrays), GFP_KERNEL);
-	अगर (!arrays)
-		जाओ out;
-	arrays[0] = nfs_सूची_पढ़ो_page_array_alloc(desc->dir_cookie, GFP_KERNEL);
-	अगर (!arrays[0])
-		जाओ out;
+	arrays = kcalloc(sz, sizeof(*arrays), GFP_KERNEL);
+	if (!arrays)
+		goto out;
+	arrays[0] = nfs_readdir_page_array_alloc(desc->dir_cookie, GFP_KERNEL);
+	if (!arrays[0])
+		goto out;
 
 	desc->page_index = 0;
 	desc->last_cookie = desc->dir_cookie;
 	desc->duped = 0;
 
-	status = nfs_सूची_पढ़ो_xdr_to_array(desc, desc->verf, verf, arrays, sz);
+	status = nfs_readdir_xdr_to_array(desc, desc->verf, verf, arrays, sz);
 
-	क्रम (i = 0; !desc->eof && i < sz && arrays[i]; i++) अणु
+	for (i = 0; !desc->eof && i < sz && arrays[i]; i++) {
 		desc->page = arrays[i];
-		nfs_करो_filldir(desc, verf);
-	पूर्ण
-	desc->page = शून्य;
+		nfs_do_filldir(desc, verf);
+	}
+	desc->page = NULL;
 
 
-	क्रम (i = 0; i < sz && arrays[i]; i++)
-		nfs_सूची_पढ़ो_page_array_मुक्त(arrays[i]);
+	for (i = 0; i < sz && arrays[i]; i++)
+		nfs_readdir_page_array_free(arrays[i]);
 out:
-	kमुक्त(arrays);
-	dfprपूर्णांकk(सूचीCACHE, "NFS: %s: returns %d\n", __func__, status);
-	वापस status;
-पूर्ण
+	kfree(arrays);
+	dfprintk(DIRCACHE, "NFS: %s: returns %d\n", __func__, status);
+	return status;
+}
 
 /* The file offset position represents the dirent entry number.  A
-   last cookie cache takes care of the common हाल of पढ़ोing the
+   last cookie cache takes care of the common case of reading the
    whole directory.
  */
-अटल पूर्णांक nfs_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
-अणु
-	काष्ठा dentry	*dentry = file_dentry(file);
-	काष्ठा inode	*inode = d_inode(dentry);
-	काष्ठा nfs_inode *nfsi = NFS_I(inode);
-	काष्ठा nfs_खोलो_dir_context *dir_ctx = file->निजी_data;
-	काष्ठा nfs_सूची_पढ़ो_descriptor *desc;
-	पूर्णांक res;
+static int nfs_readdir(struct file *file, struct dir_context *ctx)
+{
+	struct dentry	*dentry = file_dentry(file);
+	struct inode	*inode = d_inode(dentry);
+	struct nfs_inode *nfsi = NFS_I(inode);
+	struct nfs_open_dir_context *dir_ctx = file->private_data;
+	struct nfs_readdir_descriptor *desc;
+	int res;
 
-	dfprपूर्णांकk(खाता, "NFS: readdir(%pD2) starting at cookie %llu\n",
-			file, (दीर्घ दीर्घ)ctx->pos);
+	dfprintk(FILE, "NFS: readdir(%pD2) starting at cookie %llu\n",
+			file, (long long)ctx->pos);
 	nfs_inc_stats(inode, NFSIOS_VFSGETDENTS);
 
 	/*
-	 * ctx->pos poपूर्णांकs to the dirent entry number.
-	 * *desc->dir_cookie has the cookie क्रम the next entry. We have
+	 * ctx->pos points to the dirent entry number.
+	 * *desc->dir_cookie has the cookie for the next entry. We have
 	 * to either find the entry with the appropriate number or
 	 * revalidate the cookie.
 	 */
-	अगर (ctx->pos == 0 || nfs_attribute_cache_expired(inode)) अणु
+	if (ctx->pos == 0 || nfs_attribute_cache_expired(inode)) {
 		res = nfs_revalidate_mapping(inode, file->f_mapping);
-		अगर (res < 0)
-			जाओ out;
-	पूर्ण
+		if (res < 0)
+			goto out;
+	}
 
 	res = -ENOMEM;
-	desc = kzalloc(माप(*desc), GFP_KERNEL);
-	अगर (!desc)
-		जाओ out;
+	desc = kzalloc(sizeof(*desc), GFP_KERNEL);
+	if (!desc)
+		goto out;
 	desc->file = file;
 	desc->ctx = ctx;
-	desc->plus = nfs_use_सूची_पढ़ोplus(inode, ctx);
+	desc->plus = nfs_use_readdirplus(inode, ctx);
 
 	spin_lock(&file->f_lock);
 	desc->dir_cookie = dir_ctx->dir_cookie;
 	desc->dup_cookie = dir_ctx->dup_cookie;
 	desc->duped = dir_ctx->duped;
 	desc->attr_gencount = dir_ctx->attr_gencount;
-	स_नकल(desc->verf, dir_ctx->verf, माप(desc->verf));
+	memcpy(desc->verf, dir_ctx->verf, sizeof(desc->verf));
 	spin_unlock(&file->f_lock);
 
-	करो अणु
-		res = सूची_पढ़ो_search_pagecache(desc);
+	do {
+		res = readdir_search_pagecache(desc);
 
-		अगर (res == -EBADCOOKIE) अणु
+		if (res == -EBADCOOKIE) {
 			res = 0;
 			/* This means either end of directory */
-			अगर (desc->dir_cookie && !desc->eof) अणु
+			if (desc->dir_cookie && !desc->eof) {
 				/* Or that the server has 'lost' a cookie */
-				res = uncached_सूची_पढ़ो(desc);
-				अगर (res == 0)
-					जारी;
-				अगर (res == -EBADCOOKIE || res == -ENOTSYNC)
+				res = uncached_readdir(desc);
+				if (res == 0)
+					continue;
+				if (res == -EBADCOOKIE || res == -ENOTSYNC)
 					res = 0;
-			पूर्ण
-			अवरोध;
-		पूर्ण
-		अगर (res == -ETOOSMALL && desc->plus) अणु
+			}
+			break;
+		}
+		if (res == -ETOOSMALL && desc->plus) {
 			clear_bit(NFS_INO_ADVISE_RDPLUS, &nfsi->flags);
 			nfs_zap_caches(inode);
 			desc->page_index = 0;
 			desc->plus = false;
 			desc->eof = false;
-			जारी;
-		पूर्ण
-		अगर (res < 0)
-			अवरोध;
+			continue;
+		}
+		if (res < 0)
+			break;
 
-		nfs_करो_filldir(desc, nfsi->cookieverf);
-		nfs_सूची_पढ़ो_page_unlock_and_put_cached(desc);
-	पूर्ण जबतक (!desc->eof);
+		nfs_do_filldir(desc, nfsi->cookieverf);
+		nfs_readdir_page_unlock_and_put_cached(desc);
+	} while (!desc->eof);
 
 	spin_lock(&file->f_lock);
 	dir_ctx->dir_cookie = desc->dir_cookie;
 	dir_ctx->dup_cookie = desc->dup_cookie;
 	dir_ctx->duped = desc->duped;
 	dir_ctx->attr_gencount = desc->attr_gencount;
-	स_नकल(dir_ctx->verf, desc->verf, माप(dir_ctx->verf));
+	memcpy(dir_ctx->verf, desc->verf, sizeof(dir_ctx->verf));
 	spin_unlock(&file->f_lock);
 
-	kमुक्त(desc);
+	kfree(desc);
 
 out:
-	dfprपूर्णांकk(खाता, "NFS: readdir(%pD2) returns %d\n", file, res);
-	वापस res;
-पूर्ण
+	dfprintk(FILE, "NFS: readdir(%pD2) returns %d\n", file, res);
+	return res;
+}
 
-अटल loff_t nfs_llseek_dir(काष्ठा file *filp, loff_t offset, पूर्णांक whence)
-अणु
-	काष्ठा nfs_खोलो_dir_context *dir_ctx = filp->निजी_data;
+static loff_t nfs_llseek_dir(struct file *filp, loff_t offset, int whence)
+{
+	struct nfs_open_dir_context *dir_ctx = filp->private_data;
 
-	dfprपूर्णांकk(खाता, "NFS: llseek dir(%pD2, %lld, %d)\n",
+	dfprintk(FILE, "NFS: llseek dir(%pD2, %lld, %d)\n",
 			filp, offset, whence);
 
-	चयन (whence) अणु
-	शेष:
-		वापस -EINVAL;
-	हाल शुरू_से:
-		अगर (offset < 0)
-			वापस -EINVAL;
+	switch (whence) {
+	default:
+		return -EINVAL;
+	case SEEK_SET:
+		if (offset < 0)
+			return -EINVAL;
 		spin_lock(&filp->f_lock);
-		अवरोध;
-	हाल प्रस्तुत_से:
-		अगर (offset == 0)
-			वापस filp->f_pos;
+		break;
+	case SEEK_CUR:
+		if (offset == 0)
+			return filp->f_pos;
 		spin_lock(&filp->f_lock);
 		offset += filp->f_pos;
-		अगर (offset < 0) अणु
+		if (offset < 0) {
 			spin_unlock(&filp->f_lock);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
-	अगर (offset != filp->f_pos) अणु
+			return -EINVAL;
+		}
+	}
+	if (offset != filp->f_pos) {
 		filp->f_pos = offset;
-		अगर (nfs_सूची_पढ़ो_use_cookie(filp))
+		if (nfs_readdir_use_cookie(filp))
 			dir_ctx->dir_cookie = offset;
-		अन्यथा
+		else
 			dir_ctx->dir_cookie = 0;
-		अगर (offset == 0)
-			स_रखो(dir_ctx->verf, 0, माप(dir_ctx->verf));
+		if (offset == 0)
+			memset(dir_ctx->verf, 0, sizeof(dir_ctx->verf));
 		dir_ctx->duped = 0;
-	पूर्ण
+	}
 	spin_unlock(&filp->f_lock);
-	वापस offset;
-पूर्ण
+	return offset;
+}
 
 /*
  * All directory operations under NFS are synchronous, so fsync()
  * is a dummy operation.
  */
-अटल पूर्णांक nfs_fsync_dir(काष्ठा file *filp, loff_t start, loff_t end,
-			 पूर्णांक datasync)
-अणु
-	dfprपूर्णांकk(खाता, "NFS: fsync dir(%pD2) datasync %d\n", filp, datasync);
+static int nfs_fsync_dir(struct file *filp, loff_t start, loff_t end,
+			 int datasync)
+{
+	dfprintk(FILE, "NFS: fsync dir(%pD2) datasync %d\n", filp, datasync);
 
 	nfs_inc_stats(file_inode(filp), NFSIOS_VFSFSYNC);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * nfs_क्रमce_lookup_revalidate - Mark the directory as having changed
- * @dir: poपूर्णांकer to directory inode
+ * nfs_force_lookup_revalidate - Mark the directory as having changed
+ * @dir: pointer to directory inode
  *
- * This क्रमces the revalidation code in nfs_lookup_revalidate() to करो a
+ * This forces the revalidation code in nfs_lookup_revalidate() to do a
  * full lookup on all child dentries of 'dir' whenever a change occurs
  * on the server that might have invalidated our dcache.
  *
  * Note that we reserve bit '0' as a tag to let us know when a dentry
- * was revalidated जबतक holding a delegation on its inode.
+ * was revalidated while holding a delegation on its inode.
  *
  * The caller should be holding dir->i_lock
  */
-व्योम nfs_क्रमce_lookup_revalidate(काष्ठा inode *dir)
-अणु
+void nfs_force_lookup_revalidate(struct inode *dir)
+{
 	NFS_I(dir)->cache_change_attribute += 2;
-पूर्ण
-EXPORT_SYMBOL_GPL(nfs_क्रमce_lookup_revalidate);
+}
+EXPORT_SYMBOL_GPL(nfs_force_lookup_revalidate);
 
 /**
- * nfs_verअगरy_change_attribute - Detects NFS remote directory changes
- * @dir: poपूर्णांकer to parent directory inode
+ * nfs_verify_change_attribute - Detects NFS remote directory changes
+ * @dir: pointer to parent directory inode
  * @verf: previously saved change attribute
  *
- * Return "false" अगर the verअगरiers करोesn't match the change attribute.
+ * Return "false" if the verifiers doesn't match the change attribute.
  * This would usually indicate that the directory contents have changed on
  * the server, and that any dentries need revalidating.
  */
-अटल bool nfs_verअगरy_change_attribute(काष्ठा inode *dir, अचिन्हित दीर्घ verf)
-अणु
-	वापस (verf & ~1UL) == nfs_save_change_attribute(dir);
-पूर्ण
+static bool nfs_verify_change_attribute(struct inode *dir, unsigned long verf)
+{
+	return (verf & ~1UL) == nfs_save_change_attribute(dir);
+}
 
-अटल व्योम nfs_set_verअगरier_delegated(अचिन्हित दीर्घ *verf)
-अणु
+static void nfs_set_verifier_delegated(unsigned long *verf)
+{
 	*verf |= 1UL;
-पूर्ण
+}
 
-#अगर IS_ENABLED(CONFIG_NFS_V4)
-अटल व्योम nfs_unset_verअगरier_delegated(अचिन्हित दीर्घ *verf)
-अणु
+#if IS_ENABLED(CONFIG_NFS_V4)
+static void nfs_unset_verifier_delegated(unsigned long *verf)
+{
 	*verf &= ~1UL;
-पूर्ण
-#पूर्ण_अगर /* IS_ENABLED(CONFIG_NFS_V4) */
+}
+#endif /* IS_ENABLED(CONFIG_NFS_V4) */
 
-अटल bool nfs_test_verअगरier_delegated(अचिन्हित दीर्घ verf)
-अणु
-	वापस verf & 1;
-पूर्ण
+static bool nfs_test_verifier_delegated(unsigned long verf)
+{
+	return verf & 1;
+}
 
-अटल bool nfs_verअगरier_is_delegated(काष्ठा dentry *dentry)
-अणु
-	वापस nfs_test_verअगरier_delegated(dentry->d_समय);
-पूर्ण
+static bool nfs_verifier_is_delegated(struct dentry *dentry)
+{
+	return nfs_test_verifier_delegated(dentry->d_time);
+}
 
-अटल व्योम nfs_set_verअगरier_locked(काष्ठा dentry *dentry, अचिन्हित दीर्घ verf)
-अणु
-	काष्ठा inode *inode = d_inode(dentry);
+static void nfs_set_verifier_locked(struct dentry *dentry, unsigned long verf)
+{
+	struct inode *inode = d_inode(dentry);
 
-	अगर (!nfs_verअगरier_is_delegated(dentry) &&
-	    !nfs_verअगरy_change_attribute(d_inode(dentry->d_parent), verf))
-		जाओ out;
-	अगर (inode && NFS_PROTO(inode)->have_delegation(inode, FMODE_READ))
-		nfs_set_verअगरier_delegated(&verf);
+	if (!nfs_verifier_is_delegated(dentry) &&
+	    !nfs_verify_change_attribute(d_inode(dentry->d_parent), verf))
+		goto out;
+	if (inode && NFS_PROTO(inode)->have_delegation(inode, FMODE_READ))
+		nfs_set_verifier_delegated(&verf);
 out:
-	dentry->d_समय = verf;
-पूर्ण
+	dentry->d_time = verf;
+}
 
 /**
- * nfs_set_verअगरier - save a parent directory verअगरier in the dentry
- * @dentry: poपूर्णांकer to dentry
- * @verf: verअगरier to save
+ * nfs_set_verifier - save a parent directory verifier in the dentry
+ * @dentry: pointer to dentry
+ * @verf: verifier to save
  *
- * Saves the parent directory verअगरier in @dentry. If the inode has
+ * Saves the parent directory verifier in @dentry. If the inode has
  * a delegation, we also tag the dentry as having been revalidated
- * जबतक holding a delegation so that we know we करोn't have to
+ * while holding a delegation so that we know we don't have to
  * look it up again after a directory change.
  */
-व्योम nfs_set_verअगरier(काष्ठा dentry *dentry, अचिन्हित दीर्घ verf)
-अणु
+void nfs_set_verifier(struct dentry *dentry, unsigned long verf)
+{
 
 	spin_lock(&dentry->d_lock);
-	nfs_set_verअगरier_locked(dentry, verf);
+	nfs_set_verifier_locked(dentry, verf);
 	spin_unlock(&dentry->d_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(nfs_set_verअगरier);
+}
+EXPORT_SYMBOL_GPL(nfs_set_verifier);
 
-#अगर IS_ENABLED(CONFIG_NFS_V4)
+#if IS_ENABLED(CONFIG_NFS_V4)
 /**
- * nfs_clear_verअगरier_delegated - clear the dir verअगरier delegation tag
- * @inode: poपूर्णांकer to inode
+ * nfs_clear_verifier_delegated - clear the dir verifier delegation tag
+ * @inode: pointer to inode
  *
  * Iterates through the dentries in the inode alias list and clears
  * the tag used to indicate that the dentry has been revalidated
- * जबतक holding a delegation.
- * This function is पूर्णांकended क्रम use when the delegation is being
- * वापसed or revoked.
+ * while holding a delegation.
+ * This function is intended for use when the delegation is being
+ * returned or revoked.
  */
-व्योम nfs_clear_verअगरier_delegated(काष्ठा inode *inode)
-अणु
-	काष्ठा dentry *alias;
+void nfs_clear_verifier_delegated(struct inode *inode)
+{
+	struct dentry *alias;
 
-	अगर (!inode)
-		वापस;
+	if (!inode)
+		return;
 	spin_lock(&inode->i_lock);
-	hlist_क्रम_each_entry(alias, &inode->i_dentry, d_u.d_alias) अणु
+	hlist_for_each_entry(alias, &inode->i_dentry, d_u.d_alias) {
 		spin_lock(&alias->d_lock);
-		nfs_unset_verअगरier_delegated(&alias->d_समय);
+		nfs_unset_verifier_delegated(&alias->d_time);
 		spin_unlock(&alias->d_lock);
-	पूर्ण
+	}
 	spin_unlock(&inode->i_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(nfs_clear_verअगरier_delegated);
-#पूर्ण_अगर /* IS_ENABLED(CONFIG_NFS_V4) */
+}
+EXPORT_SYMBOL_GPL(nfs_clear_verifier_delegated);
+#endif /* IS_ENABLED(CONFIG_NFS_V4) */
 
 /*
- * A check क्रम whether or not the parent directory has changed.
- * In the हाल it has, we assume that the dentries are untrustworthy
+ * A check for whether or not the parent directory has changed.
+ * In the case it has, we assume that the dentries are untrustworthy
  * and may need to be looked up again.
- * If rcu_walk prevents us from perक्रमming a full check, वापस 0.
+ * If rcu_walk prevents us from performing a full check, return 0.
  */
-अटल पूर्णांक nfs_check_verअगरier(काष्ठा inode *dir, काष्ठा dentry *dentry,
-			      पूर्णांक rcu_walk)
-अणु
-	अगर (IS_ROOT(dentry))
-		वापस 1;
-	अगर (NFS_SERVER(dir)->flags & NFS_MOUNT_LOOKUP_CACHE_NONE)
-		वापस 0;
-	अगर (!nfs_verअगरy_change_attribute(dir, dentry->d_समय))
-		वापस 0;
-	/* Revalidate nfsi->cache_change_attribute beक्रमe we declare a match */
-	अगर (nfs_mapping_need_revalidate_inode(dir)) अणु
-		अगर (rcu_walk)
-			वापस 0;
-		अगर (__nfs_revalidate_inode(NFS_SERVER(dir), dir) < 0)
-			वापस 0;
-	पूर्ण
-	अगर (!nfs_verअगरy_change_attribute(dir, dentry->d_समय))
-		वापस 0;
-	वापस 1;
-पूर्ण
+static int nfs_check_verifier(struct inode *dir, struct dentry *dentry,
+			      int rcu_walk)
+{
+	if (IS_ROOT(dentry))
+		return 1;
+	if (NFS_SERVER(dir)->flags & NFS_MOUNT_LOOKUP_CACHE_NONE)
+		return 0;
+	if (!nfs_verify_change_attribute(dir, dentry->d_time))
+		return 0;
+	/* Revalidate nfsi->cache_change_attribute before we declare a match */
+	if (nfs_mapping_need_revalidate_inode(dir)) {
+		if (rcu_walk)
+			return 0;
+		if (__nfs_revalidate_inode(NFS_SERVER(dir), dir) < 0)
+			return 0;
+	}
+	if (!nfs_verify_change_attribute(dir, dentry->d_time))
+		return 0;
+	return 1;
+}
 
 /*
- * Use पूर्णांकent inक्रमmation to check whether or not we're going to करो
+ * Use intent information to check whether or not we're going to do
  * an O_EXCL create using this path component.
  */
-अटल पूर्णांक nfs_is_exclusive_create(काष्ठा inode *dir, अचिन्हित पूर्णांक flags)
-अणु
-	अगर (NFS_PROTO(dir)->version == 2)
-		वापस 0;
-	वापस flags & LOOKUP_EXCL;
-पूर्ण
+static int nfs_is_exclusive_create(struct inode *dir, unsigned int flags)
+{
+	if (NFS_PROTO(dir)->version == 2)
+		return 0;
+	return flags & LOOKUP_EXCL;
+}
 
 /*
- * Inode and filehandle revalidation क्रम lookups.
+ * Inode and filehandle revalidation for lookups.
  *
- * We क्रमce revalidation in the हालs where the VFS sets LOOKUP_REVAL,
- * or अगर the पूर्णांकent inक्रमmation indicates that we're about to खोलो this
+ * We force revalidation in the cases where the VFS sets LOOKUP_REVAL,
+ * or if the intent information indicates that we're about to open this
  * particular file and the "nocto" mount flag is not set.
  *
  */
-अटल
-पूर्णांक nfs_lookup_verअगरy_inode(काष्ठा inode *inode, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा nfs_server *server = NFS_SERVER(inode);
-	पूर्णांक ret;
+static
+int nfs_lookup_verify_inode(struct inode *inode, unsigned int flags)
+{
+	struct nfs_server *server = NFS_SERVER(inode);
+	int ret;
 
-	अगर (IS_AUTOMOUNT(inode))
-		वापस 0;
+	if (IS_AUTOMOUNT(inode))
+		return 0;
 
-	अगर (flags & LOOKUP_OPEN) अणु
-		चयन (inode->i_mode & S_IFMT) अणु
-		हाल S_IFREG:
+	if (flags & LOOKUP_OPEN) {
+		switch (inode->i_mode & S_IFMT) {
+		case S_IFREG:
 			/* A NFSv4 OPEN will revalidate later */
-			अगर (server->caps & NFS_CAP_ATOMIC_OPEN)
-				जाओ out;
+			if (server->caps & NFS_CAP_ATOMIC_OPEN)
+				goto out;
 			fallthrough;
-		हाल S_IFसूची:
-			अगर (server->flags & NFS_MOUNT_NOCTO)
-				अवरोध;
-			/* NFS बंद-to-खोलो cache consistency validation */
-			जाओ out_क्रमce;
-		पूर्ण
-	पूर्ण
+		case S_IFDIR:
+			if (server->flags & NFS_MOUNT_NOCTO)
+				break;
+			/* NFS close-to-open cache consistency validation */
+			goto out_force;
+		}
+	}
 
 	/* VFS wants an on-the-wire revalidation */
-	अगर (flags & LOOKUP_REVAL)
-		जाओ out_क्रमce;
+	if (flags & LOOKUP_REVAL)
+		goto out_force;
 out:
-	वापस (inode->i_nlink == 0) ? -ESTALE : 0;
-out_क्रमce:
-	अगर (flags & LOOKUP_RCU)
-		वापस -ECHILD;
+	return (inode->i_nlink == 0) ? -ESTALE : 0;
+out_force:
+	if (flags & LOOKUP_RCU)
+		return -ECHILD;
 	ret = __nfs_revalidate_inode(server, inode);
-	अगर (ret != 0)
-		वापस ret;
-	जाओ out;
-पूर्ण
+	if (ret != 0)
+		return ret;
+	goto out;
+}
 
-अटल व्योम nfs_mark_dir_क्रम_revalidate(काष्ठा inode *inode)
-अणु
+static void nfs_mark_dir_for_revalidate(struct inode *inode)
+{
 	spin_lock(&inode->i_lock);
 	nfs_set_cache_invalid(inode, NFS_INO_REVAL_PAGECACHE);
 	spin_unlock(&inode->i_lock);
-पूर्ण
+}
 
 /*
- * We judge how दीर्घ we want to trust negative
- * dentries by looking at the parent inode mसमय.
+ * We judge how long we want to trust negative
+ * dentries by looking at the parent inode mtime.
  *
- * If parent mसमय has changed, we revalidate, अन्यथा we रुको क्रम a
- * period corresponding to the parent's attribute cache समयout value.
+ * If parent mtime has changed, we revalidate, else we wait for a
+ * period corresponding to the parent's attribute cache timeout value.
  *
- * If LOOKUP_RCU prevents us from perक्रमming a full check, वापस 1
+ * If LOOKUP_RCU prevents us from performing a full check, return 1
  * suggesting a reval is needed.
  *
- * Note that when creating a new file, or looking up a नाम target,
+ * Note that when creating a new file, or looking up a rename target,
  * then it shouldn't be necessary to revalidate a negative dentry.
  */
-अटल अंतरभूत
-पूर्णांक nfs_neg_need_reval(काष्ठा inode *dir, काष्ठा dentry *dentry,
-		       अचिन्हित पूर्णांक flags)
-अणु
-	अगर (flags & (LOOKUP_CREATE | LOOKUP_RENAME_TARGET))
-		वापस 0;
-	अगर (NFS_SERVER(dir)->flags & NFS_MOUNT_LOOKUP_CACHE_NONEG)
-		वापस 1;
-	वापस !nfs_check_verअगरier(dir, dentry, flags & LOOKUP_RCU);
-पूर्ण
+static inline
+int nfs_neg_need_reval(struct inode *dir, struct dentry *dentry,
+		       unsigned int flags)
+{
+	if (flags & (LOOKUP_CREATE | LOOKUP_RENAME_TARGET))
+		return 0;
+	if (NFS_SERVER(dir)->flags & NFS_MOUNT_LOOKUP_CACHE_NONEG)
+		return 1;
+	return !nfs_check_verifier(dir, dentry, flags & LOOKUP_RCU);
+}
 
-अटल पूर्णांक
-nfs_lookup_revalidate_करोne(काष्ठा inode *dir, काष्ठा dentry *dentry,
-			   काष्ठा inode *inode, पूर्णांक error)
-अणु
-	चयन (error) अणु
-	हाल 1:
-		dfprपूर्णांकk(LOOKUPCACHE, "NFS: %s(%pd2) is valid\n",
+static int
+nfs_lookup_revalidate_done(struct inode *dir, struct dentry *dentry,
+			   struct inode *inode, int error)
+{
+	switch (error) {
+	case 1:
+		dfprintk(LOOKUPCACHE, "NFS: %s(%pd2) is valid\n",
 			__func__, dentry);
-		वापस 1;
-	हाल 0:
+		return 1;
+	case 0:
 		/*
 		 * We can't d_drop the root of a disconnected tree:
 		 * its d_hash is on the s_anon list and d_drop() would hide
-		 * it from shrink_dcache_क्रम_unmount(), leading to busy
+		 * it from shrink_dcache_for_unmount(), leading to busy
 		 * inodes on unmount and further oopses.
 		 */
-		अगर (inode && IS_ROOT(dentry))
-			वापस 1;
-		dfprपूर्णांकk(LOOKUPCACHE, "NFS: %s(%pd2) is invalid\n",
+		if (inode && IS_ROOT(dentry))
+			return 1;
+		dfprintk(LOOKUPCACHE, "NFS: %s(%pd2) is invalid\n",
 				__func__, dentry);
-		वापस 0;
-	पूर्ण
-	dfprपूर्णांकk(LOOKUPCACHE, "NFS: %s(%pd2) lookup returned error %d\n",
+		return 0;
+	}
+	dfprintk(LOOKUPCACHE, "NFS: %s(%pd2) lookup returned error %d\n",
 				__func__, dentry, error);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक
-nfs_lookup_revalidate_negative(काष्ठा inode *dir, काष्ठा dentry *dentry,
-			       अचिन्हित पूर्णांक flags)
-अणु
-	पूर्णांक ret = 1;
-	अगर (nfs_neg_need_reval(dir, dentry, flags)) अणु
-		अगर (flags & LOOKUP_RCU)
-			वापस -ECHILD;
+static int
+nfs_lookup_revalidate_negative(struct inode *dir, struct dentry *dentry,
+			       unsigned int flags)
+{
+	int ret = 1;
+	if (nfs_neg_need_reval(dir, dentry, flags)) {
+		if (flags & LOOKUP_RCU)
+			return -ECHILD;
 		ret = 0;
-	पूर्ण
-	वापस nfs_lookup_revalidate_करोne(dir, dentry, शून्य, ret);
-पूर्ण
+	}
+	return nfs_lookup_revalidate_done(dir, dentry, NULL, ret);
+}
 
-अटल पूर्णांक
-nfs_lookup_revalidate_delegated(काष्ठा inode *dir, काष्ठा dentry *dentry,
-				काष्ठा inode *inode)
-अणु
-	nfs_set_verअगरier(dentry, nfs_save_change_attribute(dir));
-	वापस nfs_lookup_revalidate_करोne(dir, dentry, inode, 1);
-पूर्ण
+static int
+nfs_lookup_revalidate_delegated(struct inode *dir, struct dentry *dentry,
+				struct inode *inode)
+{
+	nfs_set_verifier(dentry, nfs_save_change_attribute(dir));
+	return nfs_lookup_revalidate_done(dir, dentry, inode, 1);
+}
 
-अटल पूर्णांक
-nfs_lookup_revalidate_dentry(काष्ठा inode *dir, काष्ठा dentry *dentry,
-			     काष्ठा inode *inode)
-अणु
-	काष्ठा nfs_fh *fhandle;
-	काष्ठा nfs_fattr *fattr;
-	काष्ठा nfs4_label *label;
-	अचिन्हित दीर्घ dir_verअगरier;
-	पूर्णांक ret;
+static int
+nfs_lookup_revalidate_dentry(struct inode *dir, struct dentry *dentry,
+			     struct inode *inode)
+{
+	struct nfs_fh *fhandle;
+	struct nfs_fattr *fattr;
+	struct nfs4_label *label;
+	unsigned long dir_verifier;
+	int ret;
 
 	ret = -ENOMEM;
 	fhandle = nfs_alloc_fhandle();
 	fattr = nfs_alloc_fattr();
 	label = nfs4_label_alloc(NFS_SERVER(inode), GFP_KERNEL);
-	अगर (fhandle == शून्य || fattr == शून्य || IS_ERR(label))
-		जाओ out;
+	if (fhandle == NULL || fattr == NULL || IS_ERR(label))
+		goto out;
 
-	dir_verअगरier = nfs_save_change_attribute(dir);
+	dir_verifier = nfs_save_change_attribute(dir);
 	ret = NFS_PROTO(dir)->lookup(dir, dentry, fhandle, fattr, label);
-	अगर (ret < 0) अणु
-		चयन (ret) अणु
-		हाल -ESTALE:
-		हाल -ENOENT:
+	if (ret < 0) {
+		switch (ret) {
+		case -ESTALE:
+		case -ENOENT:
 			ret = 0;
-			अवरोध;
-		हाल -ETIMEDOUT:
-			अगर (NFS_SERVER(inode)->flags & NFS_MOUNT_SOFTREVAL)
+			break;
+		case -ETIMEDOUT:
+			if (NFS_SERVER(inode)->flags & NFS_MOUNT_SOFTREVAL)
 				ret = 1;
-		पूर्ण
-		जाओ out;
-	पूर्ण
+		}
+		goto out;
+	}
 	ret = 0;
-	अगर (nfs_compare_fh(NFS_FH(inode), fhandle))
-		जाओ out;
-	अगर (nfs_refresh_inode(inode, fattr) < 0)
-		जाओ out;
+	if (nfs_compare_fh(NFS_FH(inode), fhandle))
+		goto out;
+	if (nfs_refresh_inode(inode, fattr) < 0)
+		goto out;
 
 	nfs_setsecurity(inode, fattr, label);
-	nfs_set_verअगरier(dentry, dir_verअगरier);
+	nfs_set_verifier(dentry, dir_verifier);
 
-	/* set a सूची_पढ़ोplus hपूर्णांक that we had a cache miss */
-	nfs_क्रमce_use_सूची_पढ़ोplus(dir);
+	/* set a readdirplus hint that we had a cache miss */
+	nfs_force_use_readdirplus(dir);
 	ret = 1;
 out:
-	nfs_मुक्त_fattr(fattr);
-	nfs_मुक्त_fhandle(fhandle);
-	nfs4_label_मुक्त(label);
+	nfs_free_fattr(fattr);
+	nfs_free_fhandle(fhandle);
+	nfs4_label_free(label);
 
 	/*
 	 * If the lookup failed despite the dentry change attribute being
 	 * a match, then we should revalidate the directory cache.
 	 */
-	अगर (!ret && nfs_verअगरy_change_attribute(dir, dentry->d_समय))
-		nfs_mark_dir_क्रम_revalidate(dir);
-	वापस nfs_lookup_revalidate_करोne(dir, dentry, inode, ret);
-पूर्ण
+	if (!ret && nfs_verify_change_attribute(dir, dentry->d_time))
+		nfs_mark_dir_for_revalidate(dir);
+	return nfs_lookup_revalidate_done(dir, dentry, inode, ret);
+}
 
 /*
- * This is called every समय the dcache has a lookup hit,
+ * This is called every time the dcache has a lookup hit,
  * and we should check whether we can really trust that
  * lookup.
  *
- * NOTE! The hit can be a negative hit too, करोn't assume
+ * NOTE! The hit can be a negative hit too, don't assume
  * we have an inode!
  *
  * If the parent directory is seen to have changed, we throw out the
- * cached dentry and करो a new lookup.
+ * cached dentry and do a new lookup.
  */
-अटल पूर्णांक
-nfs_करो_lookup_revalidate(काष्ठा inode *dir, काष्ठा dentry *dentry,
-			 अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा inode *inode;
-	पूर्णांक error;
+static int
+nfs_do_lookup_revalidate(struct inode *dir, struct dentry *dentry,
+			 unsigned int flags)
+{
+	struct inode *inode;
+	int error;
 
 	nfs_inc_stats(dir, NFSIOS_DENTRYREVALIDATE);
 	inode = d_inode(dentry);
 
-	अगर (!inode)
-		वापस nfs_lookup_revalidate_negative(dir, dentry, flags);
+	if (!inode)
+		return nfs_lookup_revalidate_negative(dir, dentry, flags);
 
-	अगर (is_bad_inode(inode)) अणु
-		dfprपूर्णांकk(LOOKUPCACHE, "%s: %pd2 has dud inode\n",
+	if (is_bad_inode(inode)) {
+		dfprintk(LOOKUPCACHE, "%s: %pd2 has dud inode\n",
 				__func__, dentry);
-		जाओ out_bad;
-	पूर्ण
+		goto out_bad;
+	}
 
-	अगर (nfs_verअगरier_is_delegated(dentry))
-		वापस nfs_lookup_revalidate_delegated(dir, dentry, inode);
+	if (nfs_verifier_is_delegated(dentry))
+		return nfs_lookup_revalidate_delegated(dir, dentry, inode);
 
-	/* Force a full look up अगरf the parent directory has changed */
-	अगर (!(flags & (LOOKUP_EXCL | LOOKUP_REVAL)) &&
-	    nfs_check_verअगरier(dir, dentry, flags & LOOKUP_RCU)) अणु
-		error = nfs_lookup_verअगरy_inode(inode, flags);
-		अगर (error) अणु
-			अगर (error == -ESTALE)
-				nfs_mark_dir_क्रम_revalidate(dir);
-			जाओ out_bad;
-		पूर्ण
-		nfs_advise_use_सूची_पढ़ोplus(dir);
-		जाओ out_valid;
-	पूर्ण
+	/* Force a full look up iff the parent directory has changed */
+	if (!(flags & (LOOKUP_EXCL | LOOKUP_REVAL)) &&
+	    nfs_check_verifier(dir, dentry, flags & LOOKUP_RCU)) {
+		error = nfs_lookup_verify_inode(inode, flags);
+		if (error) {
+			if (error == -ESTALE)
+				nfs_mark_dir_for_revalidate(dir);
+			goto out_bad;
+		}
+		nfs_advise_use_readdirplus(dir);
+		goto out_valid;
+	}
 
-	अगर (flags & LOOKUP_RCU)
-		वापस -ECHILD;
+	if (flags & LOOKUP_RCU)
+		return -ECHILD;
 
-	अगर (NFS_STALE(inode))
-		जाओ out_bad;
+	if (NFS_STALE(inode))
+		goto out_bad;
 
 	trace_nfs_lookup_revalidate_enter(dir, dentry, flags);
 	error = nfs_lookup_revalidate_dentry(dir, dentry, inode);
-	trace_nfs_lookup_revalidate_निकास(dir, dentry, flags, error);
-	वापस error;
+	trace_nfs_lookup_revalidate_exit(dir, dentry, flags, error);
+	return error;
 out_valid:
-	वापस nfs_lookup_revalidate_करोne(dir, dentry, inode, 1);
+	return nfs_lookup_revalidate_done(dir, dentry, inode, 1);
 out_bad:
-	अगर (flags & LOOKUP_RCU)
-		वापस -ECHILD;
-	वापस nfs_lookup_revalidate_करोne(dir, dentry, inode, 0);
-पूर्ण
+	if (flags & LOOKUP_RCU)
+		return -ECHILD;
+	return nfs_lookup_revalidate_done(dir, dentry, inode, 0);
+}
 
-अटल पूर्णांक
-__nfs_lookup_revalidate(काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags,
-			पूर्णांक (*reval)(काष्ठा inode *, काष्ठा dentry *, अचिन्हित पूर्णांक))
-अणु
-	काष्ठा dentry *parent;
-	काष्ठा inode *dir;
-	पूर्णांक ret;
+static int
+__nfs_lookup_revalidate(struct dentry *dentry, unsigned int flags,
+			int (*reval)(struct inode *, struct dentry *, unsigned int))
+{
+	struct dentry *parent;
+	struct inode *dir;
+	int ret;
 
-	अगर (flags & LOOKUP_RCU) अणु
+	if (flags & LOOKUP_RCU) {
 		parent = READ_ONCE(dentry->d_parent);
 		dir = d_inode_rcu(parent);
-		अगर (!dir)
-			वापस -ECHILD;
+		if (!dir)
+			return -ECHILD;
 		ret = reval(dir, dentry, flags);
-		अगर (parent != READ_ONCE(dentry->d_parent))
-			वापस -ECHILD;
-	पूर्ण अन्यथा अणु
+		if (parent != READ_ONCE(dentry->d_parent))
+			return -ECHILD;
+	} else {
 		parent = dget_parent(dentry);
 		ret = reval(d_inode(parent), dentry, flags);
 		dput(parent);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक nfs_lookup_revalidate(काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags)
-अणु
-	वापस __nfs_lookup_revalidate(dentry, flags, nfs_करो_lookup_revalidate);
-पूर्ण
+static int nfs_lookup_revalidate(struct dentry *dentry, unsigned int flags)
+{
+	return __nfs_lookup_revalidate(dentry, flags, nfs_do_lookup_revalidate);
+}
 
 /*
- * A weaker क्रमm of d_revalidate क्रम revalidating just the d_inode(dentry)
- * when we करोn't really care about the dentry name. This is called when a
+ * A weaker form of d_revalidate for revalidating just the d_inode(dentry)
+ * when we don't really care about the dentry name. This is called when a
  * pathwalk ends on a dentry that was not found via a normal lookup in the
- * parent dir (e.g.: ".", "..", procfs symlinks or mountpoपूर्णांक traversals).
+ * parent dir (e.g.: ".", "..", procfs symlinks or mountpoint traversals).
  *
- * In this situation, we just want to verअगरy that the inode itself is OK
+ * In this situation, we just want to verify that the inode itself is OK
  * since the dentry might have changed on the server.
  */
-अटल पूर्णांक nfs_weak_revalidate(काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा inode *inode = d_inode(dentry);
-	पूर्णांक error = 0;
+static int nfs_weak_revalidate(struct dentry *dentry, unsigned int flags)
+{
+	struct inode *inode = d_inode(dentry);
+	int error = 0;
 
 	/*
-	 * I believe we can only get a negative dentry here in the हाल of a
-	 * procfs-style symlink. Just assume it's correct क्रम now, but we may
-	 * eventually need to करो something more here.
+	 * I believe we can only get a negative dentry here in the case of a
+	 * procfs-style symlink. Just assume it's correct for now, but we may
+	 * eventually need to do something more here.
 	 */
-	अगर (!inode) अणु
-		dfprपूर्णांकk(LOOKUPCACHE, "%s: %pd2 has negative inode\n",
+	if (!inode) {
+		dfprintk(LOOKUPCACHE, "%s: %pd2 has negative inode\n",
 				__func__, dentry);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (is_bad_inode(inode)) अणु
-		dfprपूर्णांकk(LOOKUPCACHE, "%s: %pd2 has dud inode\n",
+	if (is_bad_inode(inode)) {
+		dfprintk(LOOKUPCACHE, "%s: %pd2 has dud inode\n",
 				__func__, dentry);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	error = nfs_lookup_verअगरy_inode(inode, flags);
-	dfprपूर्णांकk(LOOKUPCACHE, "NFS: %s: inode %lu is %s\n",
+	error = nfs_lookup_verify_inode(inode, flags);
+	dfprintk(LOOKUPCACHE, "NFS: %s: inode %lu is %s\n",
 			__func__, inode->i_ino, error ? "invalid" : "valid");
-	वापस !error;
-पूर्ण
+	return !error;
+}
 
 /*
  * This is called from dput() when d_count is going to 0.
  */
-अटल पूर्णांक nfs_dentry_delete(स्थिर काष्ठा dentry *dentry)
-अणु
-	dfprपूर्णांकk(VFS, "NFS: dentry_delete(%pd2, %x)\n",
+static int nfs_dentry_delete(const struct dentry *dentry)
+{
+	dfprintk(VFS, "NFS: dentry_delete(%pd2, %x)\n",
 		dentry, dentry->d_flags);
 
 	/* Unhash any dentry with a stale inode */
-	अगर (d_really_is_positive(dentry) && NFS_STALE(d_inode(dentry)))
-		वापस 1;
+	if (d_really_is_positive(dentry) && NFS_STALE(d_inode(dentry)))
+		return 1;
 
-	अगर (dentry->d_flags & DCACHE_NFSFS_RENAMED) अणु
+	if (dentry->d_flags & DCACHE_NFSFS_RENAMED) {
 		/* Unhash it, so that ->d_iput() would be called */
-		वापस 1;
-	पूर्ण
-	अगर (!(dentry->d_sb->s_flags & SB_ACTIVE)) अणु
-		/* Unhash it, so that ancestors of समाप्तed async unlink
+		return 1;
+	}
+	if (!(dentry->d_sb->s_flags & SB_ACTIVE)) {
+		/* Unhash it, so that ancestors of killed async unlink
 		 * files will be cleaned up during umount */
-		वापस 1;
-	पूर्ण
-	वापस 0;
+		return 1;
+	}
+	return 0;
 
-पूर्ण
+}
 
 /* Ensure that we revalidate inode->i_nlink */
-अटल व्योम nfs_drop_nlink(काष्ठा inode *inode)
-अणु
+static void nfs_drop_nlink(struct inode *inode)
+{
 	spin_lock(&inode->i_lock);
-	/* drop the inode अगर we're reasonably sure this is the last link */
-	अगर (inode->i_nlink > 0)
+	/* drop the inode if we're reasonably sure this is the last link */
+	if (inode->i_nlink > 0)
 		drop_nlink(inode);
 	NFS_I(inode)->attr_gencount = nfs_inc_attr_generation_counter();
 	nfs_set_cache_invalid(
 		inode, NFS_INO_INVALID_CHANGE | NFS_INO_INVALID_CTIME |
 			       NFS_INO_INVALID_NLINK);
 	spin_unlock(&inode->i_lock);
-पूर्ण
+}
 
 /*
  * Called when the dentry loses inode.
- * We use it to clean up silly-नामd files.
+ * We use it to clean up silly-renamed files.
  */
-अटल व्योम nfs_dentry_iput(काष्ठा dentry *dentry, काष्ठा inode *inode)
-अणु
-	अगर (S_ISसूची(inode->i_mode))
-		/* drop any सूची_पढ़ो cache as it could easily be old */
+static void nfs_dentry_iput(struct dentry *dentry, struct inode *inode)
+{
+	if (S_ISDIR(inode->i_mode))
+		/* drop any readdir cache as it could easily be old */
 		nfs_set_cache_invalid(inode, NFS_INO_INVALID_DATA);
 
-	अगर (dentry->d_flags & DCACHE_NFSFS_RENAMED) अणु
+	if (dentry->d_flags & DCACHE_NFSFS_RENAMED) {
 		nfs_complete_unlink(dentry, inode);
 		nfs_drop_nlink(inode);
-	पूर्ण
+	}
 	iput(inode);
-पूर्ण
+}
 
-अटल व्योम nfs_d_release(काष्ठा dentry *dentry)
-अणु
-	/* मुक्त cached devname value, अगर it survived that far */
-	अगर (unlikely(dentry->d_fsdata)) अणु
-		अगर (dentry->d_flags & DCACHE_NFSFS_RENAMED)
+static void nfs_d_release(struct dentry *dentry)
+{
+	/* free cached devname value, if it survived that far */
+	if (unlikely(dentry->d_fsdata)) {
+		if (dentry->d_flags & DCACHE_NFSFS_RENAMED)
 			WARN_ON(1);
-		अन्यथा
-			kमुक्त(dentry->d_fsdata);
-	पूर्ण
-पूर्ण
+		else
+			kfree(dentry->d_fsdata);
+	}
+}
 
-स्थिर काष्ठा dentry_operations nfs_dentry_operations = अणु
+const struct dentry_operations nfs_dentry_operations = {
 	.d_revalidate	= nfs_lookup_revalidate,
 	.d_weak_revalidate	= nfs_weak_revalidate,
 	.d_delete	= nfs_dentry_delete,
 	.d_iput		= nfs_dentry_iput,
-	.d_स्वतःmount	= nfs_d_स्वतःmount,
+	.d_automount	= nfs_d_automount,
 	.d_release	= nfs_d_release,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(nfs_dentry_operations);
 
-काष्ठा dentry *nfs_lookup(काष्ठा inode *dir, काष्ठा dentry * dentry, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा dentry *res;
-	काष्ठा inode *inode = शून्य;
-	काष्ठा nfs_fh *fhandle = शून्य;
-	काष्ठा nfs_fattr *fattr = शून्य;
-	काष्ठा nfs4_label *label = शून्य;
-	अचिन्हित दीर्घ dir_verअगरier;
-	पूर्णांक error;
+struct dentry *nfs_lookup(struct inode *dir, struct dentry * dentry, unsigned int flags)
+{
+	struct dentry *res;
+	struct inode *inode = NULL;
+	struct nfs_fh *fhandle = NULL;
+	struct nfs_fattr *fattr = NULL;
+	struct nfs4_label *label = NULL;
+	unsigned long dir_verifier;
+	int error;
 
-	dfprपूर्णांकk(VFS, "NFS: lookup(%pd2)\n", dentry);
+	dfprintk(VFS, "NFS: lookup(%pd2)\n", dentry);
 	nfs_inc_stats(dir, NFSIOS_VFSLOOKUP);
 
-	अगर (unlikely(dentry->d_name.len > NFS_SERVER(dir)->namelen))
-		वापस ERR_PTR(-ENAMETOOLONG);
+	if (unlikely(dentry->d_name.len > NFS_SERVER(dir)->namelen))
+		return ERR_PTR(-ENAMETOOLONG);
 
 	/*
-	 * If we're करोing an exclusive create, optimize away the lookup
-	 * but करोn't hash the dentry.
+	 * If we're doing an exclusive create, optimize away the lookup
+	 * but don't hash the dentry.
 	 */
-	अगर (nfs_is_exclusive_create(dir, flags) || flags & LOOKUP_RENAME_TARGET)
-		वापस शून्य;
+	if (nfs_is_exclusive_create(dir, flags) || flags & LOOKUP_RENAME_TARGET)
+		return NULL;
 
 	res = ERR_PTR(-ENOMEM);
 	fhandle = nfs_alloc_fhandle();
 	fattr = nfs_alloc_fattr();
-	अगर (fhandle == शून्य || fattr == शून्य)
-		जाओ out;
+	if (fhandle == NULL || fattr == NULL)
+		goto out;
 
 	label = nfs4_label_alloc(NFS_SERVER(dir), GFP_NOWAIT);
-	अगर (IS_ERR(label))
-		जाओ out;
+	if (IS_ERR(label))
+		goto out;
 
-	dir_verअगरier = nfs_save_change_attribute(dir);
+	dir_verifier = nfs_save_change_attribute(dir);
 	trace_nfs_lookup_enter(dir, dentry, flags);
 	error = NFS_PROTO(dir)->lookup(dir, dentry, fhandle, fattr, label);
-	अगर (error == -ENOENT)
-		जाओ no_entry;
-	अगर (error < 0) अणु
+	if (error == -ENOENT)
+		goto no_entry;
+	if (error < 0) {
 		res = ERR_PTR(error);
-		जाओ out_label;
-	पूर्ण
+		goto out_label;
+	}
 	inode = nfs_fhget(dentry->d_sb, fhandle, fattr, label);
 	res = ERR_CAST(inode);
-	अगर (IS_ERR(res))
-		जाओ out_label;
+	if (IS_ERR(res))
+		goto out_label;
 
-	/* Notअगरy सूची_पढ़ो to use READसूचीPLUS */
-	nfs_क्रमce_use_सूची_पढ़ोplus(dir);
+	/* Notify readdir to use READDIRPLUS */
+	nfs_force_use_readdirplus(dir);
 
 no_entry:
 	res = d_splice_alias(inode, dentry);
-	अगर (res != शून्य) अणु
-		अगर (IS_ERR(res))
-			जाओ out_label;
+	if (res != NULL) {
+		if (IS_ERR(res))
+			goto out_label;
 		dentry = res;
-	पूर्ण
-	nfs_set_verअगरier(dentry, dir_verअगरier);
+	}
+	nfs_set_verifier(dentry, dir_verifier);
 out_label:
-	trace_nfs_lookup_निकास(dir, dentry, flags, error);
-	nfs4_label_मुक्त(label);
+	trace_nfs_lookup_exit(dir, dentry, flags, error);
+	nfs4_label_free(label);
 out:
-	nfs_मुक्त_fattr(fattr);
-	nfs_मुक्त_fhandle(fhandle);
-	वापस res;
-पूर्ण
+	nfs_free_fattr(fattr);
+	nfs_free_fhandle(fhandle);
+	return res;
+}
 EXPORT_SYMBOL_GPL(nfs_lookup);
 
-#अगर IS_ENABLED(CONFIG_NFS_V4)
-अटल पूर्णांक nfs4_lookup_revalidate(काष्ठा dentry *, अचिन्हित पूर्णांक);
+#if IS_ENABLED(CONFIG_NFS_V4)
+static int nfs4_lookup_revalidate(struct dentry *, unsigned int);
 
-स्थिर काष्ठा dentry_operations nfs4_dentry_operations = अणु
+const struct dentry_operations nfs4_dentry_operations = {
 	.d_revalidate	= nfs4_lookup_revalidate,
 	.d_weak_revalidate	= nfs_weak_revalidate,
 	.d_delete	= nfs_dentry_delete,
 	.d_iput		= nfs_dentry_iput,
-	.d_स्वतःmount	= nfs_d_स्वतःmount,
+	.d_automount	= nfs_d_automount,
 	.d_release	= nfs_d_release,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(nfs4_dentry_operations);
 
-अटल भ_शेषe_t flags_to_mode(पूर्णांक flags)
-अणु
-	भ_शेषe_t res = (__क्रमce भ_शेषe_t)flags & FMODE_EXEC;
-	अगर ((flags & O_ACCMODE) != O_WRONLY)
+static fmode_t flags_to_mode(int flags)
+{
+	fmode_t res = (__force fmode_t)flags & FMODE_EXEC;
+	if ((flags & O_ACCMODE) != O_WRONLY)
 		res |= FMODE_READ;
-	अगर ((flags & O_ACCMODE) != O_RDONLY)
+	if ((flags & O_ACCMODE) != O_RDONLY)
 		res |= FMODE_WRITE;
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल काष्ठा nfs_खोलो_context *create_nfs_खोलो_context(काष्ठा dentry *dentry, पूर्णांक खोलो_flags, काष्ठा file *filp)
-अणु
-	वापस alloc_nfs_खोलो_context(dentry, flags_to_mode(खोलो_flags), filp);
-पूर्ण
+static struct nfs_open_context *create_nfs_open_context(struct dentry *dentry, int open_flags, struct file *filp)
+{
+	return alloc_nfs_open_context(dentry, flags_to_mode(open_flags), filp);
+}
 
-अटल पूर्णांक करो_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	nfs_fscache_खोलो_file(inode, filp);
-	वापस 0;
-पूर्ण
+static int do_open(struct inode *inode, struct file *filp)
+{
+	nfs_fscache_open_file(inode, filp);
+	return 0;
+}
 
-अटल पूर्णांक nfs_finish_खोलो(काष्ठा nfs_खोलो_context *ctx,
-			   काष्ठा dentry *dentry,
-			   काष्ठा file *file, अचिन्हित खोलो_flags)
-अणु
-	पूर्णांक err;
+static int nfs_finish_open(struct nfs_open_context *ctx,
+			   struct dentry *dentry,
+			   struct file *file, unsigned open_flags)
+{
+	int err;
 
-	err = finish_खोलो(file, dentry, करो_खोलो);
-	अगर (err)
-		जाओ out;
-	अगर (S_ISREG(file->f_path.dentry->d_inode->i_mode))
-		nfs_file_set_खोलो_context(file, ctx);
-	अन्यथा
+	err = finish_open(file, dentry, do_open);
+	if (err)
+		goto out;
+	if (S_ISREG(file->f_path.dentry->d_inode->i_mode))
+		nfs_file_set_open_context(file, ctx);
+	else
 		err = -EOPENSTALE;
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक nfs_atomic_खोलो(काष्ठा inode *dir, काष्ठा dentry *dentry,
-		    काष्ठा file *file, अचिन्हित खोलो_flags,
+int nfs_atomic_open(struct inode *dir, struct dentry *dentry,
+		    struct file *file, unsigned open_flags,
 		    umode_t mode)
-अणु
+{
 	DECLARE_WAIT_QUEUE_HEAD_ONSTACK(wq);
-	काष्ठा nfs_खोलो_context *ctx;
-	काष्ठा dentry *res;
-	काष्ठा iattr attr = अणु .ia_valid = ATTR_OPEN पूर्ण;
-	काष्ठा inode *inode;
-	अचिन्हित पूर्णांक lookup_flags = 0;
-	bool चयनed = false;
-	पूर्णांक created = 0;
-	पूर्णांक err;
+	struct nfs_open_context *ctx;
+	struct dentry *res;
+	struct iattr attr = { .ia_valid = ATTR_OPEN };
+	struct inode *inode;
+	unsigned int lookup_flags = 0;
+	bool switched = false;
+	int created = 0;
+	int err;
 
 	/* Expect a negative dentry */
 	BUG_ON(d_inode(dentry));
 
-	dfprपूर्णांकk(VFS, "NFS: atomic_open(%s/%lu), %pd\n",
+	dfprintk(VFS, "NFS: atomic_open(%s/%lu), %pd\n",
 			dir->i_sb->s_id, dir->i_ino, dentry);
 
-	err = nfs_check_flags(खोलो_flags);
-	अगर (err)
-		वापस err;
+	err = nfs_check_flags(open_flags);
+	if (err)
+		return err;
 
 	/* NFS only supports OPEN on regular files */
-	अगर ((खोलो_flags & O_सूचीECTORY)) अणु
-		अगर (!d_in_lookup(dentry)) अणु
+	if ((open_flags & O_DIRECTORY)) {
+		if (!d_in_lookup(dentry)) {
 			/*
-			 * Hashed negative dentry with O_सूचीECTORY: dentry was
-			 * revalidated and is fine, no need to perक्रमm lookup
+			 * Hashed negative dentry with O_DIRECTORY: dentry was
+			 * revalidated and is fine, no need to perform lookup
 			 * again
 			 */
-			वापस -ENOENT;
-		पूर्ण
-		lookup_flags = LOOKUP_OPEN|LOOKUP_सूचीECTORY;
-		जाओ no_खोलो;
-	पूर्ण
+			return -ENOENT;
+		}
+		lookup_flags = LOOKUP_OPEN|LOOKUP_DIRECTORY;
+		goto no_open;
+	}
 
-	अगर (dentry->d_name.len > NFS_SERVER(dir)->namelen)
-		वापस -ENAMETOOLONG;
+	if (dentry->d_name.len > NFS_SERVER(dir)->namelen)
+		return -ENAMETOOLONG;
 
-	अगर (खोलो_flags & O_CREAT) अणु
-		काष्ठा nfs_server *server = NFS_SERVER(dir);
+	if (open_flags & O_CREAT) {
+		struct nfs_server *server = NFS_SERVER(dir);
 
-		अगर (!(server->attr_biपंचांगask[2] & FATTR4_WORD2_MODE_UMASK))
+		if (!(server->attr_bitmask[2] & FATTR4_WORD2_MODE_UMASK))
 			mode &= ~current_umask();
 
 		attr.ia_valid |= ATTR_MODE;
 		attr.ia_mode = mode;
-	पूर्ण
-	अगर (खोलो_flags & O_TRUNC) अणु
+	}
+	if (open_flags & O_TRUNC) {
 		attr.ia_valid |= ATTR_SIZE;
 		attr.ia_size = 0;
-	पूर्ण
+	}
 
-	अगर (!(खोलो_flags & O_CREAT) && !d_in_lookup(dentry)) अणु
+	if (!(open_flags & O_CREAT) && !d_in_lookup(dentry)) {
 		d_drop(dentry);
-		चयनed = true;
+		switched = true;
 		dentry = d_alloc_parallel(dentry->d_parent,
 					  &dentry->d_name, &wq);
-		अगर (IS_ERR(dentry))
-			वापस PTR_ERR(dentry);
-		अगर (unlikely(!d_in_lookup(dentry)))
-			वापस finish_no_खोलो(file, dentry);
-	पूर्ण
+		if (IS_ERR(dentry))
+			return PTR_ERR(dentry);
+		if (unlikely(!d_in_lookup(dentry)))
+			return finish_no_open(file, dentry);
+	}
 
-	ctx = create_nfs_खोलो_context(dentry, खोलो_flags, file);
+	ctx = create_nfs_open_context(dentry, open_flags, file);
 	err = PTR_ERR(ctx);
-	अगर (IS_ERR(ctx))
-		जाओ out;
+	if (IS_ERR(ctx))
+		goto out;
 
-	trace_nfs_atomic_खोलो_enter(dir, ctx, खोलो_flags);
-	inode = NFS_PROTO(dir)->खोलो_context(dir, ctx, खोलो_flags, &attr, &created);
-	अगर (created)
+	trace_nfs_atomic_open_enter(dir, ctx, open_flags);
+	inode = NFS_PROTO(dir)->open_context(dir, ctx, open_flags, &attr, &created);
+	if (created)
 		file->f_mode |= FMODE_CREATED;
-	अगर (IS_ERR(inode)) अणु
+	if (IS_ERR(inode)) {
 		err = PTR_ERR(inode);
-		trace_nfs_atomic_खोलो_निकास(dir, ctx, खोलो_flags, err);
-		put_nfs_खोलो_context(ctx);
+		trace_nfs_atomic_open_exit(dir, ctx, open_flags, err);
+		put_nfs_open_context(ctx);
 		d_drop(dentry);
-		चयन (err) अणु
-		हाल -ENOENT:
-			d_splice_alias(शून्य, dentry);
-			nfs_set_verअगरier(dentry, nfs_save_change_attribute(dir));
-			अवरोध;
-		हाल -EISसूची:
-		हाल -ENOTसूची:
-			जाओ no_खोलो;
-		हाल -ELOOP:
-			अगर (!(खोलो_flags & O_NOFOLLOW))
-				जाओ no_खोलो;
-			अवरोध;
-			/* हाल -EINVAL: */
-		शेष:
-			अवरोध;
-		पूर्ण
-		जाओ out;
-	पूर्ण
+		switch (err) {
+		case -ENOENT:
+			d_splice_alias(NULL, dentry);
+			nfs_set_verifier(dentry, nfs_save_change_attribute(dir));
+			break;
+		case -EISDIR:
+		case -ENOTDIR:
+			goto no_open;
+		case -ELOOP:
+			if (!(open_flags & O_NOFOLLOW))
+				goto no_open;
+			break;
+			/* case -EINVAL: */
+		default:
+			break;
+		}
+		goto out;
+	}
 
-	err = nfs_finish_खोलो(ctx, ctx->dentry, file, खोलो_flags);
-	trace_nfs_atomic_खोलो_निकास(dir, ctx, खोलो_flags, err);
-	put_nfs_खोलो_context(ctx);
+	err = nfs_finish_open(ctx, ctx->dentry, file, open_flags);
+	trace_nfs_atomic_open_exit(dir, ctx, open_flags, err);
+	put_nfs_open_context(ctx);
 out:
-	अगर (unlikely(चयनed)) अणु
-		d_lookup_करोne(dentry);
+	if (unlikely(switched)) {
+		d_lookup_done(dentry);
 		dput(dentry);
-	पूर्ण
-	वापस err;
+	}
+	return err;
 
-no_खोलो:
+no_open:
 	res = nfs_lookup(dir, dentry, lookup_flags);
-	अगर (चयनed) अणु
-		d_lookup_करोne(dentry);
-		अगर (!res)
+	if (switched) {
+		d_lookup_done(dentry);
+		if (!res)
 			res = dentry;
-		अन्यथा
+		else
 			dput(dentry);
-	पूर्ण
-	अगर (IS_ERR(res))
-		वापस PTR_ERR(res);
-	वापस finish_no_खोलो(file, res);
-पूर्ण
-EXPORT_SYMBOL_GPL(nfs_atomic_खोलो);
+	}
+	if (IS_ERR(res))
+		return PTR_ERR(res);
+	return finish_no_open(file, res);
+}
+EXPORT_SYMBOL_GPL(nfs_atomic_open);
 
-अटल पूर्णांक
-nfs4_करो_lookup_revalidate(काष्ठा inode *dir, काष्ठा dentry *dentry,
-			  अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा inode *inode;
+static int
+nfs4_do_lookup_revalidate(struct inode *dir, struct dentry *dentry,
+			  unsigned int flags)
+{
+	struct inode *inode;
 
-	अगर (!(flags & LOOKUP_OPEN) || (flags & LOOKUP_सूचीECTORY))
-		जाओ full_reval;
-	अगर (d_mountpoपूर्णांक(dentry))
-		जाओ full_reval;
+	if (!(flags & LOOKUP_OPEN) || (flags & LOOKUP_DIRECTORY))
+		goto full_reval;
+	if (d_mountpoint(dentry))
+		goto full_reval;
 
 	inode = d_inode(dentry);
 
-	/* We can't create new files in nfs_खोलो_revalidate(), so we
+	/* We can't create new files in nfs_open_revalidate(), so we
 	 * optimize away revalidation of negative dentries.
 	 */
-	अगर (inode == शून्य)
-		जाओ full_reval;
+	if (inode == NULL)
+		goto full_reval;
 
-	अगर (nfs_verअगरier_is_delegated(dentry))
-		वापस nfs_lookup_revalidate_delegated(dir, dentry, inode);
+	if (nfs_verifier_is_delegated(dentry))
+		return nfs_lookup_revalidate_delegated(dir, dentry, inode);
 
 	/* NFS only supports OPEN on regular files */
-	अगर (!S_ISREG(inode->i_mode))
-		जाओ full_reval;
+	if (!S_ISREG(inode->i_mode))
+		goto full_reval;
 
-	/* We cannot करो exclusive creation on a positive dentry */
-	अगर (flags & (LOOKUP_EXCL | LOOKUP_REVAL))
-		जाओ reval_dentry;
+	/* We cannot do exclusive creation on a positive dentry */
+	if (flags & (LOOKUP_EXCL | LOOKUP_REVAL))
+		goto reval_dentry;
 
-	/* Check अगर the directory changed */
-	अगर (!nfs_check_verअगरier(dir, dentry, flags & LOOKUP_RCU))
-		जाओ reval_dentry;
+	/* Check if the directory changed */
+	if (!nfs_check_verifier(dir, dentry, flags & LOOKUP_RCU))
+		goto reval_dentry;
 
-	/* Let f_op->खोलो() actually खोलो (and revalidate) the file */
-	वापस 1;
+	/* Let f_op->open() actually open (and revalidate) the file */
+	return 1;
 reval_dentry:
-	अगर (flags & LOOKUP_RCU)
-		वापस -ECHILD;
-	वापस nfs_lookup_revalidate_dentry(dir, dentry, inode);
+	if (flags & LOOKUP_RCU)
+		return -ECHILD;
+	return nfs_lookup_revalidate_dentry(dir, dentry, inode);
 
 full_reval:
-	वापस nfs_करो_lookup_revalidate(dir, dentry, flags);
-पूर्ण
+	return nfs_do_lookup_revalidate(dir, dentry, flags);
+}
 
-अटल पूर्णांक nfs4_lookup_revalidate(काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags)
-अणु
-	वापस __nfs_lookup_revalidate(dentry, flags,
-			nfs4_करो_lookup_revalidate);
-पूर्ण
+static int nfs4_lookup_revalidate(struct dentry *dentry, unsigned int flags)
+{
+	return __nfs_lookup_revalidate(dentry, flags,
+			nfs4_do_lookup_revalidate);
+}
 
-#पूर्ण_अगर /* CONFIG_NFSV4 */
+#endif /* CONFIG_NFSV4 */
 
-काष्ठा dentry *
-nfs_add_or_obtain(काष्ठा dentry *dentry, काष्ठा nfs_fh *fhandle,
-				काष्ठा nfs_fattr *fattr,
-				काष्ठा nfs4_label *label)
-अणु
-	काष्ठा dentry *parent = dget_parent(dentry);
-	काष्ठा inode *dir = d_inode(parent);
-	काष्ठा inode *inode;
-	काष्ठा dentry *d;
-	पूर्णांक error;
+struct dentry *
+nfs_add_or_obtain(struct dentry *dentry, struct nfs_fh *fhandle,
+				struct nfs_fattr *fattr,
+				struct nfs4_label *label)
+{
+	struct dentry *parent = dget_parent(dentry);
+	struct inode *dir = d_inode(parent);
+	struct inode *inode;
+	struct dentry *d;
+	int error;
 
 	d_drop(dentry);
 
-	अगर (fhandle->size == 0) अणु
-		error = NFS_PROTO(dir)->lookup(dir, dentry, fhandle, fattr, शून्य);
-		अगर (error)
-			जाओ out_error;
-	पूर्ण
-	nfs_set_verअगरier(dentry, nfs_save_change_attribute(dir));
-	अगर (!(fattr->valid & NFS_ATTR_FATTR)) अणु
-		काष्ठा nfs_server *server = NFS_SB(dentry->d_sb);
+	if (fhandle->size == 0) {
+		error = NFS_PROTO(dir)->lookup(dir, dentry, fhandle, fattr, NULL);
+		if (error)
+			goto out_error;
+	}
+	nfs_set_verifier(dentry, nfs_save_change_attribute(dir));
+	if (!(fattr->valid & NFS_ATTR_FATTR)) {
+		struct nfs_server *server = NFS_SB(dentry->d_sb);
 		error = server->nfs_client->rpc_ops->getattr(server, fhandle,
-				fattr, शून्य, शून्य);
-		अगर (error < 0)
-			जाओ out_error;
-	पूर्ण
+				fattr, NULL, NULL);
+		if (error < 0)
+			goto out_error;
+	}
 	inode = nfs_fhget(dentry->d_sb, fhandle, fattr, label);
 	d = d_splice_alias(inode, dentry);
 out:
 	dput(parent);
-	वापस d;
+	return d;
 out_error:
 	d = ERR_PTR(error);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 EXPORT_SYMBOL_GPL(nfs_add_or_obtain);
 
 /*
- * Code common to create, सूची_गढ़ो, and mknod.
+ * Code common to create, mkdir, and mknod.
  */
-पूर्णांक nfs_instantiate(काष्ठा dentry *dentry, काष्ठा nfs_fh *fhandle,
-				काष्ठा nfs_fattr *fattr,
-				काष्ठा nfs4_label *label)
-अणु
-	काष्ठा dentry *d;
+int nfs_instantiate(struct dentry *dentry, struct nfs_fh *fhandle,
+				struct nfs_fattr *fattr,
+				struct nfs4_label *label)
+{
+	struct dentry *d;
 
 	d = nfs_add_or_obtain(dentry, fhandle, fattr, label);
-	अगर (IS_ERR(d))
-		वापस PTR_ERR(d);
+	if (IS_ERR(d))
+		return PTR_ERR(d);
 
-	/* Callers करोn't care */
+	/* Callers don't care */
 	dput(d);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(nfs_instantiate);
 
 /*
  * Following a failed create operation, we drop the dentry rather
- * than retain a negative dentry. This aव्योमs a problem in the event
+ * than retain a negative dentry. This avoids a problem in the event
  * that the operation succeeded on the server, but an error in the
  * reply path made it appear to have failed.
  */
-पूर्णांक nfs_create(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
-	       काष्ठा dentry *dentry, umode_t mode, bool excl)
-अणु
-	काष्ठा iattr attr;
-	पूर्णांक खोलो_flags = excl ? O_CREAT | O_EXCL : O_CREAT;
-	पूर्णांक error;
+int nfs_create(struct user_namespace *mnt_userns, struct inode *dir,
+	       struct dentry *dentry, umode_t mode, bool excl)
+{
+	struct iattr attr;
+	int open_flags = excl ? O_CREAT | O_EXCL : O_CREAT;
+	int error;
 
-	dfprपूर्णांकk(VFS, "NFS: create(%s/%lu), %pd\n",
+	dfprintk(VFS, "NFS: create(%s/%lu), %pd\n",
 			dir->i_sb->s_id, dir->i_ino, dentry);
 
 	attr.ia_mode = mode;
 	attr.ia_valid = ATTR_MODE;
 
-	trace_nfs_create_enter(dir, dentry, खोलो_flags);
-	error = NFS_PROTO(dir)->create(dir, dentry, &attr, खोलो_flags);
-	trace_nfs_create_निकास(dir, dentry, खोलो_flags, error);
-	अगर (error != 0)
-		जाओ out_err;
-	वापस 0;
+	trace_nfs_create_enter(dir, dentry, open_flags);
+	error = NFS_PROTO(dir)->create(dir, dentry, &attr, open_flags);
+	trace_nfs_create_exit(dir, dentry, open_flags, error);
+	if (error != 0)
+		goto out_err;
+	return 0;
 out_err:
 	d_drop(dentry);
-	वापस error;
-पूर्ण
+	return error;
+}
 EXPORT_SYMBOL_GPL(nfs_create);
 
 /*
- * See comments क्रम nfs_proc_create regarding failed operations.
+ * See comments for nfs_proc_create regarding failed operations.
  */
-पूर्णांक
-nfs_mknod(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
-	  काष्ठा dentry *dentry, umode_t mode, dev_t rdev)
-अणु
-	काष्ठा iattr attr;
-	पूर्णांक status;
+int
+nfs_mknod(struct user_namespace *mnt_userns, struct inode *dir,
+	  struct dentry *dentry, umode_t mode, dev_t rdev)
+{
+	struct iattr attr;
+	int status;
 
-	dfprपूर्णांकk(VFS, "NFS: mknod(%s/%lu), %pd\n",
+	dfprintk(VFS, "NFS: mknod(%s/%lu), %pd\n",
 			dir->i_sb->s_id, dir->i_ino, dentry);
 
 	attr.ia_mode = mode;
@@ -2155,862 +2154,862 @@ nfs_mknod(काष्ठा user_namespace *mnt_userns, काष्ठा inod
 
 	trace_nfs_mknod_enter(dir, dentry);
 	status = NFS_PROTO(dir)->mknod(dir, dentry, &attr, rdev);
-	trace_nfs_mknod_निकास(dir, dentry, status);
-	अगर (status != 0)
-		जाओ out_err;
-	वापस 0;
+	trace_nfs_mknod_exit(dir, dentry, status);
+	if (status != 0)
+		goto out_err;
+	return 0;
 out_err:
 	d_drop(dentry);
-	वापस status;
-पूर्ण
+	return status;
+}
 EXPORT_SYMBOL_GPL(nfs_mknod);
 
 /*
- * See comments क्रम nfs_proc_create regarding failed operations.
+ * See comments for nfs_proc_create regarding failed operations.
  */
-पूर्णांक nfs_सूची_गढ़ो(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
-	      काष्ठा dentry *dentry, umode_t mode)
-अणु
-	काष्ठा iattr attr;
-	पूर्णांक error;
+int nfs_mkdir(struct user_namespace *mnt_userns, struct inode *dir,
+	      struct dentry *dentry, umode_t mode)
+{
+	struct iattr attr;
+	int error;
 
-	dfprपूर्णांकk(VFS, "NFS: mkdir(%s/%lu), %pd\n",
+	dfprintk(VFS, "NFS: mkdir(%s/%lu), %pd\n",
 			dir->i_sb->s_id, dir->i_ino, dentry);
 
 	attr.ia_valid = ATTR_MODE;
-	attr.ia_mode = mode | S_IFसूची;
+	attr.ia_mode = mode | S_IFDIR;
 
-	trace_nfs_सूची_गढ़ो_enter(dir, dentry);
-	error = NFS_PROTO(dir)->सूची_गढ़ो(dir, dentry, &attr);
-	trace_nfs_सूची_गढ़ो_निकास(dir, dentry, error);
-	अगर (error != 0)
-		जाओ out_err;
-	वापस 0;
+	trace_nfs_mkdir_enter(dir, dentry);
+	error = NFS_PROTO(dir)->mkdir(dir, dentry, &attr);
+	trace_nfs_mkdir_exit(dir, dentry, error);
+	if (error != 0)
+		goto out_err;
+	return 0;
 out_err:
 	d_drop(dentry);
-	वापस error;
-पूर्ण
-EXPORT_SYMBOL_GPL(nfs_सूची_गढ़ो);
+	return error;
+}
+EXPORT_SYMBOL_GPL(nfs_mkdir);
 
-अटल व्योम nfs_dentry_handle_enoent(काष्ठा dentry *dentry)
-अणु
-	अगर (simple_positive(dentry))
+static void nfs_dentry_handle_enoent(struct dentry *dentry)
+{
+	if (simple_positive(dentry))
 		d_delete(dentry);
-पूर्ण
+}
 
-पूर्णांक nfs_सूची_हटाओ(काष्ठा inode *dir, काष्ठा dentry *dentry)
-अणु
-	पूर्णांक error;
+int nfs_rmdir(struct inode *dir, struct dentry *dentry)
+{
+	int error;
 
-	dfprपूर्णांकk(VFS, "NFS: rmdir(%s/%lu), %pd\n",
+	dfprintk(VFS, "NFS: rmdir(%s/%lu), %pd\n",
 			dir->i_sb->s_id, dir->i_ino, dentry);
 
-	trace_nfs_सूची_हटाओ_enter(dir, dentry);
-	अगर (d_really_is_positive(dentry)) अणु
-		करोwn_ग_लिखो(&NFS_I(d_inode(dentry))->सूची_हटाओ_sem);
-		error = NFS_PROTO(dir)->सूची_हटाओ(dir, &dentry->d_name);
+	trace_nfs_rmdir_enter(dir, dentry);
+	if (d_really_is_positive(dentry)) {
+		down_write(&NFS_I(d_inode(dentry))->rmdir_sem);
+		error = NFS_PROTO(dir)->rmdir(dir, &dentry->d_name);
 		/* Ensure the VFS deletes this inode */
-		चयन (error) अणु
-		हाल 0:
+		switch (error) {
+		case 0:
 			clear_nlink(d_inode(dentry));
-			अवरोध;
-		हाल -ENOENT:
+			break;
+		case -ENOENT:
 			nfs_dentry_handle_enoent(dentry);
-		पूर्ण
-		up_ग_लिखो(&NFS_I(d_inode(dentry))->सूची_हटाओ_sem);
-	पूर्ण अन्यथा
-		error = NFS_PROTO(dir)->सूची_हटाओ(dir, &dentry->d_name);
-	trace_nfs_सूची_हटाओ_निकास(dir, dentry, error);
+		}
+		up_write(&NFS_I(d_inode(dentry))->rmdir_sem);
+	} else
+		error = NFS_PROTO(dir)->rmdir(dir, &dentry->d_name);
+	trace_nfs_rmdir_exit(dir, dentry, error);
 
-	वापस error;
-पूर्ण
-EXPORT_SYMBOL_GPL(nfs_सूची_हटाओ);
+	return error;
+}
+EXPORT_SYMBOL_GPL(nfs_rmdir);
 
 /*
- * Remove a file after making sure there are no pending ग_लिखोs,
+ * Remove a file after making sure there are no pending writes,
  * and after checking that the file has only one user. 
  *
- * We invalidate the attribute cache and मुक्त the inode prior to the operation
- * to aव्योम possible races अगर the server reuses the inode.
+ * We invalidate the attribute cache and free the inode prior to the operation
+ * to avoid possible races if the server reuses the inode.
  */
-अटल पूर्णांक nfs_safe_हटाओ(काष्ठा dentry *dentry)
-अणु
-	काष्ठा inode *dir = d_inode(dentry->d_parent);
-	काष्ठा inode *inode = d_inode(dentry);
-	पूर्णांक error = -EBUSY;
+static int nfs_safe_remove(struct dentry *dentry)
+{
+	struct inode *dir = d_inode(dentry->d_parent);
+	struct inode *inode = d_inode(dentry);
+	int error = -EBUSY;
 		
-	dfprपूर्णांकk(VFS, "NFS: safe_remove(%pd2)\n", dentry);
+	dfprintk(VFS, "NFS: safe_remove(%pd2)\n", dentry);
 
-	/* If the dentry was sillyनामd, we simply call d_delete() */
-	अगर (dentry->d_flags & DCACHE_NFSFS_RENAMED) अणु
+	/* If the dentry was sillyrenamed, we simply call d_delete() */
+	if (dentry->d_flags & DCACHE_NFSFS_RENAMED) {
 		error = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	trace_nfs_हटाओ_enter(dir, dentry);
-	अगर (inode != शून्य) अणु
-		error = NFS_PROTO(dir)->हटाओ(dir, dentry);
-		अगर (error == 0)
+	trace_nfs_remove_enter(dir, dentry);
+	if (inode != NULL) {
+		error = NFS_PROTO(dir)->remove(dir, dentry);
+		if (error == 0)
 			nfs_drop_nlink(inode);
-	पूर्ण अन्यथा
-		error = NFS_PROTO(dir)->हटाओ(dir, dentry);
-	अगर (error == -ENOENT)
+	} else
+		error = NFS_PROTO(dir)->remove(dir, dentry);
+	if (error == -ENOENT)
 		nfs_dentry_handle_enoent(dentry);
-	trace_nfs_हटाओ_निकास(dir, dentry, error);
+	trace_nfs_remove_exit(dir, dentry, error);
 out:
-	वापस error;
-पूर्ण
+	return error;
+}
 
-/*  We करो silly नाम. In हाल sillyनाम() वापसs -EBUSY, the inode
- *  beदीर्घs to an active ".nfs..." file and we वापस -EBUSY.
+/*  We do silly rename. In case sillyrename() returns -EBUSY, the inode
+ *  belongs to an active ".nfs..." file and we return -EBUSY.
  *
- *  If sillyनाम() वापसs 0, we करो nothing, otherwise we unlink.
+ *  If sillyrename() returns 0, we do nothing, otherwise we unlink.
  */
-पूर्णांक nfs_unlink(काष्ठा inode *dir, काष्ठा dentry *dentry)
-अणु
-	पूर्णांक error;
-	पूर्णांक need_rehash = 0;
+int nfs_unlink(struct inode *dir, struct dentry *dentry)
+{
+	int error;
+	int need_rehash = 0;
 
-	dfprपूर्णांकk(VFS, "NFS: unlink(%s/%lu, %pd)\n", dir->i_sb->s_id,
+	dfprintk(VFS, "NFS: unlink(%s/%lu, %pd)\n", dir->i_sb->s_id,
 		dir->i_ino, dentry);
 
 	trace_nfs_unlink_enter(dir, dentry);
 	spin_lock(&dentry->d_lock);
-	अगर (d_count(dentry) > 1) अणु
+	if (d_count(dentry) > 1) {
 		spin_unlock(&dentry->d_lock);
-		/* Start asynchronous ग_लिखोout of the inode */
-		ग_लिखो_inode_now(d_inode(dentry), 0);
-		error = nfs_sillyनाम(dir, dentry);
-		जाओ out;
-	पूर्ण
-	अगर (!d_unhashed(dentry)) अणु
+		/* Start asynchronous writeout of the inode */
+		write_inode_now(d_inode(dentry), 0);
+		error = nfs_sillyrename(dir, dentry);
+		goto out;
+	}
+	if (!d_unhashed(dentry)) {
 		__d_drop(dentry);
 		need_rehash = 1;
-	पूर्ण
+	}
 	spin_unlock(&dentry->d_lock);
-	error = nfs_safe_हटाओ(dentry);
-	अगर (!error || error == -ENOENT) अणु
-		nfs_set_verअगरier(dentry, nfs_save_change_attribute(dir));
-	पूर्ण अन्यथा अगर (need_rehash)
+	error = nfs_safe_remove(dentry);
+	if (!error || error == -ENOENT) {
+		nfs_set_verifier(dentry, nfs_save_change_attribute(dir));
+	} else if (need_rehash)
 		d_rehash(dentry);
 out:
-	trace_nfs_unlink_निकास(dir, dentry, error);
-	वापस error;
-पूर्ण
+	trace_nfs_unlink_exit(dir, dentry, error);
+	return error;
+}
 EXPORT_SYMBOL_GPL(nfs_unlink);
 
 /*
- * To create a symbolic link, most file प्रणालीs instantiate a new inode,
- * add a page to it containing the path, then ग_लिखो it out to the disk
- * using prepare_ग_लिखो/commit_ग_लिखो.
+ * To create a symbolic link, most file systems instantiate a new inode,
+ * add a page to it containing the path, then write it out to the disk
+ * using prepare_write/commit_write.
  *
- * Unक्रमtunately the NFS client can't create the in-core inode first
+ * Unfortunately the NFS client can't create the in-core inode first
  * because it needs a file handle to create an in-core inode (see
  * fs/nfs/inode.c:nfs_fhget).  We only have a file handle *after* the
  * symlink request has completed on the server.
  *
- * So instead we allocate a raw page, copy the symname पूर्णांकo it, then करो
+ * So instead we allocate a raw page, copy the symname into it, then do
  * the SYMLINK request with the page as the buffer.  If it succeeds, we
  * now have a new file handle and can instantiate an in-core NFS inode
- * and move the raw page पूर्णांकo its mapping.
+ * and move the raw page into its mapping.
  */
-पूर्णांक nfs_symlink(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
-		काष्ठा dentry *dentry, स्थिर अक्षर *symname)
-अणु
-	काष्ठा page *page;
-	अक्षर *kaddr;
-	काष्ठा iattr attr;
-	अचिन्हित पूर्णांक pathlen = म_माप(symname);
-	पूर्णांक error;
+int nfs_symlink(struct user_namespace *mnt_userns, struct inode *dir,
+		struct dentry *dentry, const char *symname)
+{
+	struct page *page;
+	char *kaddr;
+	struct iattr attr;
+	unsigned int pathlen = strlen(symname);
+	int error;
 
-	dfprपूर्णांकk(VFS, "NFS: symlink(%s/%lu, %pd, %s)\n", dir->i_sb->s_id,
+	dfprintk(VFS, "NFS: symlink(%s/%lu, %pd, %s)\n", dir->i_sb->s_id,
 		dir->i_ino, dentry, symname);
 
-	अगर (pathlen > PAGE_SIZE)
-		वापस -ENAMETOOLONG;
+	if (pathlen > PAGE_SIZE)
+		return -ENAMETOOLONG;
 
 	attr.ia_mode = S_IFLNK | S_IRWXUGO;
 	attr.ia_valid = ATTR_MODE;
 
 	page = alloc_page(GFP_USER);
-	अगर (!page)
-		वापस -ENOMEM;
+	if (!page)
+		return -ENOMEM;
 
 	kaddr = page_address(page);
-	स_नकल(kaddr, symname, pathlen);
-	अगर (pathlen < PAGE_SIZE)
-		स_रखो(kaddr + pathlen, 0, PAGE_SIZE - pathlen);
+	memcpy(kaddr, symname, pathlen);
+	if (pathlen < PAGE_SIZE)
+		memset(kaddr + pathlen, 0, PAGE_SIZE - pathlen);
 
 	trace_nfs_symlink_enter(dir, dentry);
 	error = NFS_PROTO(dir)->symlink(dir, dentry, page, pathlen, &attr);
-	trace_nfs_symlink_निकास(dir, dentry, error);
-	अगर (error != 0) अणु
-		dfprपूर्णांकk(VFS, "NFS: symlink(%s/%lu, %pd, %s) error %d\n",
+	trace_nfs_symlink_exit(dir, dentry, error);
+	if (error != 0) {
+		dfprintk(VFS, "NFS: symlink(%s/%lu, %pd, %s) error %d\n",
 			dir->i_sb->s_id, dir->i_ino,
 			dentry, symname, error);
 		d_drop(dentry);
-		__मुक्त_page(page);
-		वापस error;
-	पूर्ण
+		__free_page(page);
+		return error;
+	}
 
 	/*
-	 * No big deal अगर we can't add this page to the page cache here.
-	 * READLINK will get the missing page from the server अगर needed.
+	 * No big deal if we can't add this page to the page cache here.
+	 * READLINK will get the missing page from the server if needed.
 	 */
-	अगर (!add_to_page_cache_lru(page, d_inode(dentry)->i_mapping, 0,
-							GFP_KERNEL)) अणु
+	if (!add_to_page_cache_lru(page, d_inode(dentry)->i_mapping, 0,
+							GFP_KERNEL)) {
 		SetPageUptodate(page);
 		unlock_page(page);
 		/*
-		 * add_to_page_cache_lru() grअसल an extra page refcount.
-		 * Drop it here to aव्योम leaking this page later.
+		 * add_to_page_cache_lru() grabs an extra page refcount.
+		 * Drop it here to avoid leaking this page later.
 		 */
 		put_page(page);
-	पूर्ण अन्यथा
-		__मुक्त_page(page);
+	} else
+		__free_page(page);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(nfs_symlink);
 
-पूर्णांक
-nfs_link(काष्ठा dentry *old_dentry, काष्ठा inode *dir, काष्ठा dentry *dentry)
-अणु
-	काष्ठा inode *inode = d_inode(old_dentry);
-	पूर्णांक error;
+int
+nfs_link(struct dentry *old_dentry, struct inode *dir, struct dentry *dentry)
+{
+	struct inode *inode = d_inode(old_dentry);
+	int error;
 
-	dfprपूर्णांकk(VFS, "NFS: link(%pd2 -> %pd2)\n",
+	dfprintk(VFS, "NFS: link(%pd2 -> %pd2)\n",
 		old_dentry, dentry);
 
 	trace_nfs_link_enter(inode, dir, dentry);
 	d_drop(dentry);
 	error = NFS_PROTO(dir)->link(inode, dir, &dentry->d_name);
-	अगर (error == 0) अणु
+	if (error == 0) {
 		ihold(inode);
 		d_add(dentry, inode);
-	पूर्ण
-	trace_nfs_link_निकास(inode, dir, dentry, error);
-	वापस error;
-पूर्ण
+	}
+	trace_nfs_link_exit(inode, dir, dentry, error);
+	return error;
+}
 EXPORT_SYMBOL_GPL(nfs_link);
 
 /*
  * RENAME
  * FIXME: Some nfsds, like the Linux user space nfsd, may generate a
- * dअगरferent file handle क्रम the same inode after a नाम (e.g. when
- * moving to a dअगरferent directory). A fail-safe method to करो so would
+ * different file handle for the same inode after a rename (e.g. when
+ * moving to a different directory). A fail-safe method to do so would
  * be to look up old_dir/old_name, create a link to new_dir/new_name and
- * नाम the old file using the sillyनाम stuff. This way, the original
+ * rename the old file using the sillyrename stuff. This way, the original
  * file in old_dir will go away when the last process iput()s the inode.
  *
  * FIXED.
  * 
- * It actually works quite well. One needs to have the possibility क्रम
- * at least one ".nfs..." file in each directory the file ever माला_लो
- * moved or linked to which happens स्वतःmagically with the new
+ * It actually works quite well. One needs to have the possibility for
+ * at least one ".nfs..." file in each directory the file ever gets
+ * moved or linked to which happens automagically with the new
  * implementation that only depends on the dcache stuff instead of
  * using the inode layer
  *
- * Unक्रमtunately, things are a little more complicated than indicated
+ * Unfortunately, things are a little more complicated than indicated
  * above. For a cross-directory move, we want to make sure we can get
  * rid of the old inode after the operation.  This means there must be
- * no pending ग_लिखोs (अगर it's a file), and the use count must be 1.
- * If these conditions are met, we can drop the dentries beक्रमe करोing
- * the नाम.
+ * no pending writes (if it's a file), and the use count must be 1.
+ * If these conditions are met, we can drop the dentries before doing
+ * the rename.
  */
-पूर्णांक nfs_नाम(काष्ठा user_namespace *mnt_userns, काष्ठा inode *old_dir,
-	       काष्ठा dentry *old_dentry, काष्ठा inode *new_dir,
-	       काष्ठा dentry *new_dentry, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा inode *old_inode = d_inode(old_dentry);
-	काष्ठा inode *new_inode = d_inode(new_dentry);
-	काष्ठा dentry *dentry = शून्य, *rehash = शून्य;
-	काष्ठा rpc_task *task;
-	पूर्णांक error = -EBUSY;
+int nfs_rename(struct user_namespace *mnt_userns, struct inode *old_dir,
+	       struct dentry *old_dentry, struct inode *new_dir,
+	       struct dentry *new_dentry, unsigned int flags)
+{
+	struct inode *old_inode = d_inode(old_dentry);
+	struct inode *new_inode = d_inode(new_dentry);
+	struct dentry *dentry = NULL, *rehash = NULL;
+	struct rpc_task *task;
+	int error = -EBUSY;
 
-	अगर (flags)
-		वापस -EINVAL;
+	if (flags)
+		return -EINVAL;
 
-	dfprपूर्णांकk(VFS, "NFS: rename(%pd2 -> %pd2, ct=%d)\n",
+	dfprintk(VFS, "NFS: rename(%pd2 -> %pd2, ct=%d)\n",
 		 old_dentry, new_dentry,
 		 d_count(new_dentry));
 
-	trace_nfs_नाम_enter(old_dir, old_dentry, new_dir, new_dentry);
+	trace_nfs_rename_enter(old_dir, old_dentry, new_dir, new_dentry);
 	/*
-	 * For non-directories, check whether the target is busy and अगर so,
-	 * make a copy of the dentry and then करो a silly-नाम. If the
-	 * silly-नाम succeeds, the copied dentry is hashed and becomes
+	 * For non-directories, check whether the target is busy and if so,
+	 * make a copy of the dentry and then do a silly-rename. If the
+	 * silly-rename succeeds, the copied dentry is hashed and becomes
 	 * the new target.
 	 */
-	अगर (new_inode && !S_ISसूची(new_inode->i_mode)) अणु
+	if (new_inode && !S_ISDIR(new_inode->i_mode)) {
 		/*
 		 * To prevent any new references to the target during the
-		 * नाम, we unhash the dentry in advance.
+		 * rename, we unhash the dentry in advance.
 		 */
-		अगर (!d_unhashed(new_dentry)) अणु
+		if (!d_unhashed(new_dentry)) {
 			d_drop(new_dentry);
 			rehash = new_dentry;
-		पूर्ण
+		}
 
-		अगर (d_count(new_dentry) > 2) अणु
-			पूर्णांक err;
+		if (d_count(new_dentry) > 2) {
+			int err;
 
 			/* copy the target dentry's name */
 			dentry = d_alloc(new_dentry->d_parent,
 					 &new_dentry->d_name);
-			अगर (!dentry)
-				जाओ out;
+			if (!dentry)
+				goto out;
 
-			/* silly-नाम the existing target ... */
-			err = nfs_sillyनाम(new_dir, new_dentry);
-			अगर (err)
-				जाओ out;
+			/* silly-rename the existing target ... */
+			err = nfs_sillyrename(new_dir, new_dentry);
+			if (err)
+				goto out;
 
 			new_dentry = dentry;
-			rehash = शून्य;
-			new_inode = शून्य;
-		पूर्ण
-	पूर्ण
+			rehash = NULL;
+			new_inode = NULL;
+		}
+	}
 
-	task = nfs_async_नाम(old_dir, new_dir, old_dentry, new_dentry, शून्य);
-	अगर (IS_ERR(task)) अणु
+	task = nfs_async_rename(old_dir, new_dir, old_dentry, new_dentry, NULL);
+	if (IS_ERR(task)) {
 		error = PTR_ERR(task);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	error = rpc_रुको_क्रम_completion_task(task);
-	अगर (error != 0) अणु
-		((काष्ठा nfs_नामdata *)task->tk_calldata)->cancelled = 1;
-		/* Paired with the atomic_dec_and_test() barrier in rpc_करो_put_task() */
+	error = rpc_wait_for_completion_task(task);
+	if (error != 0) {
+		((struct nfs_renamedata *)task->tk_calldata)->cancelled = 1;
+		/* Paired with the atomic_dec_and_test() barrier in rpc_do_put_task() */
 		smp_wmb();
-	पूर्ण अन्यथा
+	} else
 		error = task->tk_status;
 	rpc_put_task(task);
 	/* Ensure the inode attributes are revalidated */
-	अगर (error == 0) अणु
+	if (error == 0) {
 		spin_lock(&old_inode->i_lock);
 		NFS_I(old_inode)->attr_gencount = nfs_inc_attr_generation_counter();
 		nfs_set_cache_invalid(old_inode, NFS_INO_INVALID_CHANGE |
 							 NFS_INO_INVALID_CTIME |
 							 NFS_INO_REVAL_FORCED);
 		spin_unlock(&old_inode->i_lock);
-	पूर्ण
+	}
 out:
-	अगर (rehash)
+	if (rehash)
 		d_rehash(rehash);
-	trace_nfs_नाम_निकास(old_dir, old_dentry,
+	trace_nfs_rename_exit(old_dir, old_dentry,
 			new_dir, new_dentry, error);
-	अगर (!error) अणु
-		अगर (new_inode != शून्य)
+	if (!error) {
+		if (new_inode != NULL)
 			nfs_drop_nlink(new_inode);
 		/*
 		 * The d_move() should be here instead of in an async RPC completion
 		 * handler because we need the proper locks to move the dentry.  If
-		 * we're पूर्णांकerrupted by a संकेत, the async RPC completion handler
-		 * should mark the directories क्रम revalidation.
+		 * we're interrupted by a signal, the async RPC completion handler
+		 * should mark the directories for revalidation.
 		 */
 		d_move(old_dentry, new_dentry);
-		nfs_set_verअगरier(old_dentry,
+		nfs_set_verifier(old_dentry,
 					nfs_save_change_attribute(new_dir));
-	पूर्ण अन्यथा अगर (error == -ENOENT)
+	} else if (error == -ENOENT)
 		nfs_dentry_handle_enoent(old_dentry);
 
 	/* new dentry created? */
-	अगर (dentry)
+	if (dentry)
 		dput(dentry);
-	वापस error;
-पूर्ण
-EXPORT_SYMBOL_GPL(nfs_नाम);
+	return error;
+}
+EXPORT_SYMBOL_GPL(nfs_rename);
 
-अटल DEFINE_SPINLOCK(nfs_access_lru_lock);
-अटल LIST_HEAD(nfs_access_lru_list);
-अटल atomic_दीर्घ_t nfs_access_nr_entries;
+static DEFINE_SPINLOCK(nfs_access_lru_lock);
+static LIST_HEAD(nfs_access_lru_list);
+static atomic_long_t nfs_access_nr_entries;
 
-अटल अचिन्हित दीर्घ nfs_access_max_cachesize = 4*1024*1024;
-module_param(nfs_access_max_cachesize, uदीर्घ, 0644);
+static unsigned long nfs_access_max_cachesize = 4*1024*1024;
+module_param(nfs_access_max_cachesize, ulong, 0644);
 MODULE_PARM_DESC(nfs_access_max_cachesize, "NFS access maximum total cache length");
 
-अटल व्योम nfs_access_मुक्त_entry(काष्ठा nfs_access_entry *entry)
-अणु
+static void nfs_access_free_entry(struct nfs_access_entry *entry)
+{
 	put_cred(entry->cred);
-	kमुक्त_rcu(entry, rcu_head);
-	smp_mb__beक्रमe_atomic();
-	atomic_दीर्घ_dec(&nfs_access_nr_entries);
+	kfree_rcu(entry, rcu_head);
+	smp_mb__before_atomic();
+	atomic_long_dec(&nfs_access_nr_entries);
 	smp_mb__after_atomic();
-पूर्ण
+}
 
-अटल व्योम nfs_access_मुक्त_list(काष्ठा list_head *head)
-अणु
-	काष्ठा nfs_access_entry *cache;
+static void nfs_access_free_list(struct list_head *head)
+{
+	struct nfs_access_entry *cache;
 
-	जबतक (!list_empty(head)) अणु
-		cache = list_entry(head->next, काष्ठा nfs_access_entry, lru);
+	while (!list_empty(head)) {
+		cache = list_entry(head->next, struct nfs_access_entry, lru);
 		list_del(&cache->lru);
-		nfs_access_मुक्त_entry(cache);
-	पूर्ण
-पूर्ण
+		nfs_access_free_entry(cache);
+	}
+}
 
-अटल अचिन्हित दीर्घ
-nfs_करो_access_cache_scan(अचिन्हित पूर्णांक nr_to_scan)
-अणु
+static unsigned long
+nfs_do_access_cache_scan(unsigned int nr_to_scan)
+{
 	LIST_HEAD(head);
-	काष्ठा nfs_inode *nfsi, *next;
-	काष्ठा nfs_access_entry *cache;
-	दीर्घ मुक्तd = 0;
+	struct nfs_inode *nfsi, *next;
+	struct nfs_access_entry *cache;
+	long freed = 0;
 
 	spin_lock(&nfs_access_lru_lock);
-	list_क्रम_each_entry_safe(nfsi, next, &nfs_access_lru_list, access_cache_inode_lru) अणु
-		काष्ठा inode *inode;
+	list_for_each_entry_safe(nfsi, next, &nfs_access_lru_list, access_cache_inode_lru) {
+		struct inode *inode;
 
-		अगर (nr_to_scan-- == 0)
-			अवरोध;
+		if (nr_to_scan-- == 0)
+			break;
 		inode = &nfsi->vfs_inode;
 		spin_lock(&inode->i_lock);
-		अगर (list_empty(&nfsi->access_cache_entry_lru))
-			जाओ हटाओ_lru_entry;
+		if (list_empty(&nfsi->access_cache_entry_lru))
+			goto remove_lru_entry;
 		cache = list_entry(nfsi->access_cache_entry_lru.next,
-				काष्ठा nfs_access_entry, lru);
+				struct nfs_access_entry, lru);
 		list_move(&cache->lru, &head);
 		rb_erase(&cache->rb_node, &nfsi->access_cache);
-		मुक्तd++;
-		अगर (!list_empty(&nfsi->access_cache_entry_lru))
+		freed++;
+		if (!list_empty(&nfsi->access_cache_entry_lru))
 			list_move_tail(&nfsi->access_cache_inode_lru,
 					&nfs_access_lru_list);
-		अन्यथा अणु
-हटाओ_lru_entry:
+		else {
+remove_lru_entry:
 			list_del_init(&nfsi->access_cache_inode_lru);
-			smp_mb__beक्रमe_atomic();
+			smp_mb__before_atomic();
 			clear_bit(NFS_INO_ACL_LRU_SET, &nfsi->flags);
 			smp_mb__after_atomic();
-		पूर्ण
+		}
 		spin_unlock(&inode->i_lock);
-	पूर्ण
+	}
 	spin_unlock(&nfs_access_lru_lock);
-	nfs_access_मुक्त_list(&head);
-	वापस मुक्तd;
-पूर्ण
+	nfs_access_free_list(&head);
+	return freed;
+}
 
-अचिन्हित दीर्घ
-nfs_access_cache_scan(काष्ठा shrinker *shrink, काष्ठा shrink_control *sc)
-अणु
-	पूर्णांक nr_to_scan = sc->nr_to_scan;
+unsigned long
+nfs_access_cache_scan(struct shrinker *shrink, struct shrink_control *sc)
+{
+	int nr_to_scan = sc->nr_to_scan;
 	gfp_t gfp_mask = sc->gfp_mask;
 
-	अगर ((gfp_mask & GFP_KERNEL) != GFP_KERNEL)
-		वापस SHRINK_STOP;
-	वापस nfs_करो_access_cache_scan(nr_to_scan);
-पूर्ण
+	if ((gfp_mask & GFP_KERNEL) != GFP_KERNEL)
+		return SHRINK_STOP;
+	return nfs_do_access_cache_scan(nr_to_scan);
+}
 
 
-अचिन्हित दीर्घ
-nfs_access_cache_count(काष्ठा shrinker *shrink, काष्ठा shrink_control *sc)
-अणु
-	वापस vfs_pressure_ratio(atomic_दीर्घ_पढ़ो(&nfs_access_nr_entries));
-पूर्ण
+unsigned long
+nfs_access_cache_count(struct shrinker *shrink, struct shrink_control *sc)
+{
+	return vfs_pressure_ratio(atomic_long_read(&nfs_access_nr_entries));
+}
 
-अटल व्योम
-nfs_access_cache_enक्रमce_limit(व्योम)
-अणु
-	दीर्घ nr_entries = atomic_दीर्घ_पढ़ो(&nfs_access_nr_entries);
-	अचिन्हित दीर्घ dअगरf;
-	अचिन्हित पूर्णांक nr_to_scan;
+static void
+nfs_access_cache_enforce_limit(void)
+{
+	long nr_entries = atomic_long_read(&nfs_access_nr_entries);
+	unsigned long diff;
+	unsigned int nr_to_scan;
 
-	अगर (nr_entries < 0 || nr_entries <= nfs_access_max_cachesize)
-		वापस;
+	if (nr_entries < 0 || nr_entries <= nfs_access_max_cachesize)
+		return;
 	nr_to_scan = 100;
-	dअगरf = nr_entries - nfs_access_max_cachesize;
-	अगर (dअगरf < nr_to_scan)
-		nr_to_scan = dअगरf;
-	nfs_करो_access_cache_scan(nr_to_scan);
-पूर्ण
+	diff = nr_entries - nfs_access_max_cachesize;
+	if (diff < nr_to_scan)
+		nr_to_scan = diff;
+	nfs_do_access_cache_scan(nr_to_scan);
+}
 
-अटल व्योम __nfs_access_zap_cache(काष्ठा nfs_inode *nfsi, काष्ठा list_head *head)
-अणु
-	काष्ठा rb_root *root_node = &nfsi->access_cache;
-	काष्ठा rb_node *n;
-	काष्ठा nfs_access_entry *entry;
+static void __nfs_access_zap_cache(struct nfs_inode *nfsi, struct list_head *head)
+{
+	struct rb_root *root_node = &nfsi->access_cache;
+	struct rb_node *n;
+	struct nfs_access_entry *entry;
 
 	/* Unhook entries from the cache */
-	जबतक ((n = rb_first(root_node)) != शून्य) अणु
-		entry = rb_entry(n, काष्ठा nfs_access_entry, rb_node);
+	while ((n = rb_first(root_node)) != NULL) {
+		entry = rb_entry(n, struct nfs_access_entry, rb_node);
 		rb_erase(n, root_node);
 		list_move(&entry->lru, head);
-	पूर्ण
+	}
 	nfsi->cache_validity &= ~NFS_INO_INVALID_ACCESS;
-पूर्ण
+}
 
-व्योम nfs_access_zap_cache(काष्ठा inode *inode)
-अणु
+void nfs_access_zap_cache(struct inode *inode)
+{
 	LIST_HEAD(head);
 
-	अगर (test_bit(NFS_INO_ACL_LRU_SET, &NFS_I(inode)->flags) == 0)
-		वापस;
+	if (test_bit(NFS_INO_ACL_LRU_SET, &NFS_I(inode)->flags) == 0)
+		return;
 	/* Remove from global LRU init */
 	spin_lock(&nfs_access_lru_lock);
-	अगर (test_and_clear_bit(NFS_INO_ACL_LRU_SET, &NFS_I(inode)->flags))
+	if (test_and_clear_bit(NFS_INO_ACL_LRU_SET, &NFS_I(inode)->flags))
 		list_del_init(&NFS_I(inode)->access_cache_inode_lru);
 
 	spin_lock(&inode->i_lock);
 	__nfs_access_zap_cache(NFS_I(inode), &head);
 	spin_unlock(&inode->i_lock);
 	spin_unlock(&nfs_access_lru_lock);
-	nfs_access_मुक्त_list(&head);
-पूर्ण
+	nfs_access_free_list(&head);
+}
 EXPORT_SYMBOL_GPL(nfs_access_zap_cache);
 
-अटल काष्ठा nfs_access_entry *nfs_access_search_rbtree(काष्ठा inode *inode, स्थिर काष्ठा cred *cred)
-अणु
-	काष्ठा rb_node *n = NFS_I(inode)->access_cache.rb_node;
+static struct nfs_access_entry *nfs_access_search_rbtree(struct inode *inode, const struct cred *cred)
+{
+	struct rb_node *n = NFS_I(inode)->access_cache.rb_node;
 
-	जबतक (n != शून्य) अणु
-		काष्ठा nfs_access_entry *entry =
-			rb_entry(n, काष्ठा nfs_access_entry, rb_node);
-		पूर्णांक cmp = cred_fscmp(cred, entry->cred);
+	while (n != NULL) {
+		struct nfs_access_entry *entry =
+			rb_entry(n, struct nfs_access_entry, rb_node);
+		int cmp = cred_fscmp(cred, entry->cred);
 
-		अगर (cmp < 0)
+		if (cmp < 0)
 			n = n->rb_left;
-		अन्यथा अगर (cmp > 0)
+		else if (cmp > 0)
 			n = n->rb_right;
-		अन्यथा
-			वापस entry;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		else
+			return entry;
+	}
+	return NULL;
+}
 
-अटल पूर्णांक nfs_access_get_cached_locked(काष्ठा inode *inode, स्थिर काष्ठा cred *cred, काष्ठा nfs_access_entry *res, bool may_block)
-अणु
-	काष्ठा nfs_inode *nfsi = NFS_I(inode);
-	काष्ठा nfs_access_entry *cache;
+static int nfs_access_get_cached_locked(struct inode *inode, const struct cred *cred, struct nfs_access_entry *res, bool may_block)
+{
+	struct nfs_inode *nfsi = NFS_I(inode);
+	struct nfs_access_entry *cache;
 	bool retry = true;
-	पूर्णांक err;
+	int err;
 
 	spin_lock(&inode->i_lock);
-	क्रम(;;) अणु
-		अगर (nfsi->cache_validity & NFS_INO_INVALID_ACCESS)
-			जाओ out_zap;
+	for(;;) {
+		if (nfsi->cache_validity & NFS_INO_INVALID_ACCESS)
+			goto out_zap;
 		cache = nfs_access_search_rbtree(inode, cred);
 		err = -ENOENT;
-		अगर (cache == शून्य)
-			जाओ out;
+		if (cache == NULL)
+			goto out;
 		/* Found an entry, is our attribute cache valid? */
-		अगर (!nfs_check_cache_invalid(inode, NFS_INO_INVALID_ACCESS))
-			अवरोध;
-		अगर (!retry)
-			अवरोध;
+		if (!nfs_check_cache_invalid(inode, NFS_INO_INVALID_ACCESS))
+			break;
+		if (!retry)
+			break;
 		err = -ECHILD;
-		अगर (!may_block)
-			जाओ out;
+		if (!may_block)
+			goto out;
 		spin_unlock(&inode->i_lock);
 		err = __nfs_revalidate_inode(NFS_SERVER(inode), inode);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		spin_lock(&inode->i_lock);
 		retry = false;
-	पूर्ण
+	}
 	res->cred = cache->cred;
 	res->mask = cache->mask;
 	list_move_tail(&cache->lru, &nfsi->access_cache_entry_lru);
 	err = 0;
 out:
 	spin_unlock(&inode->i_lock);
-	वापस err;
+	return err;
 out_zap:
 	spin_unlock(&inode->i_lock);
 	nfs_access_zap_cache(inode);
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-अटल पूर्णांक nfs_access_get_cached_rcu(काष्ठा inode *inode, स्थिर काष्ठा cred *cred, काष्ठा nfs_access_entry *res)
-अणु
-	/* Only check the most recently वापसed cache entry,
-	 * but करो it without locking.
+static int nfs_access_get_cached_rcu(struct inode *inode, const struct cred *cred, struct nfs_access_entry *res)
+{
+	/* Only check the most recently returned cache entry,
+	 * but do it without locking.
 	 */
-	काष्ठा nfs_inode *nfsi = NFS_I(inode);
-	काष्ठा nfs_access_entry *cache;
-	पूर्णांक err = -ECHILD;
-	काष्ठा list_head *lh;
+	struct nfs_inode *nfsi = NFS_I(inode);
+	struct nfs_access_entry *cache;
+	int err = -ECHILD;
+	struct list_head *lh;
 
-	rcu_पढ़ो_lock();
-	अगर (nfsi->cache_validity & NFS_INO_INVALID_ACCESS)
-		जाओ out;
+	rcu_read_lock();
+	if (nfsi->cache_validity & NFS_INO_INVALID_ACCESS)
+		goto out;
 	lh = rcu_dereference(list_tail_rcu(&nfsi->access_cache_entry_lru));
-	cache = list_entry(lh, काष्ठा nfs_access_entry, lru);
-	अगर (lh == &nfsi->access_cache_entry_lru ||
+	cache = list_entry(lh, struct nfs_access_entry, lru);
+	if (lh == &nfsi->access_cache_entry_lru ||
 	    cred_fscmp(cred, cache->cred) != 0)
-		cache = शून्य;
-	अगर (cache == शून्य)
-		जाओ out;
-	अगर (nfs_check_cache_invalid(inode, NFS_INO_INVALID_ACCESS))
-		जाओ out;
+		cache = NULL;
+	if (cache == NULL)
+		goto out;
+	if (nfs_check_cache_invalid(inode, NFS_INO_INVALID_ACCESS))
+		goto out;
 	res->cred = cache->cred;
 	res->mask = cache->mask;
 	err = 0;
 out:
-	rcu_पढ़ो_unlock();
-	वापस err;
-पूर्ण
+	rcu_read_unlock();
+	return err;
+}
 
-पूर्णांक nfs_access_get_cached(काष्ठा inode *inode, स्थिर काष्ठा cred *cred, काष्ठा
+int nfs_access_get_cached(struct inode *inode, const struct cred *cred, struct
 nfs_access_entry *res, bool may_block)
-अणु
-	पूर्णांक status;
+{
+	int status;
 
 	status = nfs_access_get_cached_rcu(inode, cred, res);
-	अगर (status != 0)
+	if (status != 0)
 		status = nfs_access_get_cached_locked(inode, cred, res,
 		    may_block);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 EXPORT_SYMBOL_GPL(nfs_access_get_cached);
 
-अटल व्योम nfs_access_add_rbtree(काष्ठा inode *inode, काष्ठा nfs_access_entry *set)
-अणु
-	काष्ठा nfs_inode *nfsi = NFS_I(inode);
-	काष्ठा rb_root *root_node = &nfsi->access_cache;
-	काष्ठा rb_node **p = &root_node->rb_node;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा nfs_access_entry *entry;
-	पूर्णांक cmp;
+static void nfs_access_add_rbtree(struct inode *inode, struct nfs_access_entry *set)
+{
+	struct nfs_inode *nfsi = NFS_I(inode);
+	struct rb_root *root_node = &nfsi->access_cache;
+	struct rb_node **p = &root_node->rb_node;
+	struct rb_node *parent = NULL;
+	struct nfs_access_entry *entry;
+	int cmp;
 
 	spin_lock(&inode->i_lock);
-	जबतक (*p != शून्य) अणु
+	while (*p != NULL) {
 		parent = *p;
-		entry = rb_entry(parent, काष्ठा nfs_access_entry, rb_node);
+		entry = rb_entry(parent, struct nfs_access_entry, rb_node);
 		cmp = cred_fscmp(set->cred, entry->cred);
 
-		अगर (cmp < 0)
+		if (cmp < 0)
 			p = &parent->rb_left;
-		अन्यथा अगर (cmp > 0)
+		else if (cmp > 0)
 			p = &parent->rb_right;
-		अन्यथा
-			जाओ found;
-	पूर्ण
+		else
+			goto found;
+	}
 	rb_link_node(&set->rb_node, parent, p);
 	rb_insert_color(&set->rb_node, root_node);
 	list_add_tail(&set->lru, &nfsi->access_cache_entry_lru);
 	spin_unlock(&inode->i_lock);
-	वापस;
+	return;
 found:
 	rb_replace_node(parent, &set->rb_node, root_node);
 	list_add_tail(&set->lru, &nfsi->access_cache_entry_lru);
 	list_del(&entry->lru);
 	spin_unlock(&inode->i_lock);
-	nfs_access_मुक्त_entry(entry);
-पूर्ण
+	nfs_access_free_entry(entry);
+}
 
-व्योम nfs_access_add_cache(काष्ठा inode *inode, काष्ठा nfs_access_entry *set)
-अणु
-	काष्ठा nfs_access_entry *cache = kदो_स्मृति(माप(*cache), GFP_KERNEL);
-	अगर (cache == शून्य)
-		वापस;
+void nfs_access_add_cache(struct inode *inode, struct nfs_access_entry *set)
+{
+	struct nfs_access_entry *cache = kmalloc(sizeof(*cache), GFP_KERNEL);
+	if (cache == NULL)
+		return;
 	RB_CLEAR_NODE(&cache->rb_node);
 	cache->cred = get_cred(set->cred);
 	cache->mask = set->mask;
 
 	/* The above field assignments must be visible
-	 * beक्रमe this item appears on the lru.  We cannot easily
-	 * use rcu_assign_poपूर्णांकer, so just क्रमce the memory barrier.
+	 * before this item appears on the lru.  We cannot easily
+	 * use rcu_assign_pointer, so just force the memory barrier.
 	 */
 	smp_wmb();
 	nfs_access_add_rbtree(inode, cache);
 
 	/* Update accounting */
-	smp_mb__beक्रमe_atomic();
-	atomic_दीर्घ_inc(&nfs_access_nr_entries);
+	smp_mb__before_atomic();
+	atomic_long_inc(&nfs_access_nr_entries);
 	smp_mb__after_atomic();
 
 	/* Add inode to global LRU list */
-	अगर (!test_bit(NFS_INO_ACL_LRU_SET, &NFS_I(inode)->flags)) अणु
+	if (!test_bit(NFS_INO_ACL_LRU_SET, &NFS_I(inode)->flags)) {
 		spin_lock(&nfs_access_lru_lock);
-		अगर (!test_and_set_bit(NFS_INO_ACL_LRU_SET, &NFS_I(inode)->flags))
+		if (!test_and_set_bit(NFS_INO_ACL_LRU_SET, &NFS_I(inode)->flags))
 			list_add_tail(&NFS_I(inode)->access_cache_inode_lru,
 					&nfs_access_lru_list);
 		spin_unlock(&nfs_access_lru_lock);
-	पूर्ण
-	nfs_access_cache_enक्रमce_limit();
-पूर्ण
+	}
+	nfs_access_cache_enforce_limit();
+}
 EXPORT_SYMBOL_GPL(nfs_access_add_cache);
 
-#घोषणा NFS_MAY_READ (NFS_ACCESS_READ)
-#घोषणा NFS_MAY_WRITE (NFS_ACCESS_MODIFY | \
+#define NFS_MAY_READ (NFS_ACCESS_READ)
+#define NFS_MAY_WRITE (NFS_ACCESS_MODIFY | \
 		NFS_ACCESS_EXTEND | \
 		NFS_ACCESS_DELETE)
-#घोषणा NFS_खाता_MAY_WRITE (NFS_ACCESS_MODIFY | \
+#define NFS_FILE_MAY_WRITE (NFS_ACCESS_MODIFY | \
 		NFS_ACCESS_EXTEND)
-#घोषणा NFS_सूची_MAY_WRITE NFS_MAY_WRITE
-#घोषणा NFS_MAY_LOOKUP (NFS_ACCESS_LOOKUP)
-#घोषणा NFS_MAY_EXECUTE (NFS_ACCESS_EXECUTE)
-अटल पूर्णांक
+#define NFS_DIR_MAY_WRITE NFS_MAY_WRITE
+#define NFS_MAY_LOOKUP (NFS_ACCESS_LOOKUP)
+#define NFS_MAY_EXECUTE (NFS_ACCESS_EXECUTE)
+static int
 nfs_access_calc_mask(u32 access_result, umode_t umode)
-अणु
-	पूर्णांक mask = 0;
+{
+	int mask = 0;
 
-	अगर (access_result & NFS_MAY_READ)
+	if (access_result & NFS_MAY_READ)
 		mask |= MAY_READ;
-	अगर (S_ISसूची(umode)) अणु
-		अगर ((access_result & NFS_सूची_MAY_WRITE) == NFS_सूची_MAY_WRITE)
+	if (S_ISDIR(umode)) {
+		if ((access_result & NFS_DIR_MAY_WRITE) == NFS_DIR_MAY_WRITE)
 			mask |= MAY_WRITE;
-		अगर ((access_result & NFS_MAY_LOOKUP) == NFS_MAY_LOOKUP)
+		if ((access_result & NFS_MAY_LOOKUP) == NFS_MAY_LOOKUP)
 			mask |= MAY_EXEC;
-	पूर्ण अन्यथा अगर (S_ISREG(umode)) अणु
-		अगर ((access_result & NFS_खाता_MAY_WRITE) == NFS_खाता_MAY_WRITE)
+	} else if (S_ISREG(umode)) {
+		if ((access_result & NFS_FILE_MAY_WRITE) == NFS_FILE_MAY_WRITE)
 			mask |= MAY_WRITE;
-		अगर ((access_result & NFS_MAY_EXECUTE) == NFS_MAY_EXECUTE)
+		if ((access_result & NFS_MAY_EXECUTE) == NFS_MAY_EXECUTE)
 			mask |= MAY_EXEC;
-	पूर्ण अन्यथा अगर (access_result & NFS_MAY_WRITE)
+	} else if (access_result & NFS_MAY_WRITE)
 			mask |= MAY_WRITE;
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-व्योम nfs_access_set_mask(काष्ठा nfs_access_entry *entry, u32 access_result)
-अणु
+void nfs_access_set_mask(struct nfs_access_entry *entry, u32 access_result)
+{
 	entry->mask = access_result;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(nfs_access_set_mask);
 
-अटल पूर्णांक nfs_करो_access(काष्ठा inode *inode, स्थिर काष्ठा cred *cred, पूर्णांक mask)
-अणु
-	काष्ठा nfs_access_entry cache;
+static int nfs_do_access(struct inode *inode, const struct cred *cred, int mask)
+{
+	struct nfs_access_entry cache;
 	bool may_block = (mask & MAY_NOT_BLOCK) == 0;
-	पूर्णांक cache_mask = -1;
-	पूर्णांक status;
+	int cache_mask = -1;
+	int status;
 
 	trace_nfs_access_enter(inode);
 
 	status = nfs_access_get_cached(inode, cred, &cache, may_block);
-	अगर (status == 0)
-		जाओ out_cached;
+	if (status == 0)
+		goto out_cached;
 
 	status = -ECHILD;
-	अगर (!may_block)
-		जाओ out;
+	if (!may_block)
+		goto out;
 
 	/*
-	 * Determine which access bits we want to ask क्रम...
+	 * Determine which access bits we want to ask for...
 	 */
 	cache.mask = NFS_ACCESS_READ | NFS_ACCESS_MODIFY | NFS_ACCESS_EXTEND;
-	अगर (nfs_server_capable(inode, NFS_CAP_XATTR)) अणु
+	if (nfs_server_capable(inode, NFS_CAP_XATTR)) {
 		cache.mask |= NFS_ACCESS_XAREAD | NFS_ACCESS_XAWRITE |
 		    NFS_ACCESS_XALIST;
-	पूर्ण
-	अगर (S_ISसूची(inode->i_mode))
+	}
+	if (S_ISDIR(inode->i_mode))
 		cache.mask |= NFS_ACCESS_DELETE | NFS_ACCESS_LOOKUP;
-	अन्यथा
+	else
 		cache.mask |= NFS_ACCESS_EXECUTE;
 	cache.cred = cred;
 	status = NFS_PROTO(inode)->access(inode, &cache);
-	अगर (status != 0) अणु
-		अगर (status == -ESTALE) अणु
-			अगर (!S_ISसूची(inode->i_mode))
+	if (status != 0) {
+		if (status == -ESTALE) {
+			if (!S_ISDIR(inode->i_mode))
 				nfs_set_inode_stale(inode);
-			अन्यथा
+			else
 				nfs_zap_caches(inode);
-		पूर्ण
-		जाओ out;
-	पूर्ण
+		}
+		goto out;
+	}
 	nfs_access_add_cache(inode, &cache);
 out_cached:
 	cache_mask = nfs_access_calc_mask(cache.mask, inode->i_mode);
-	अगर ((mask & ~cache_mask & (MAY_READ | MAY_WRITE | MAY_EXEC)) != 0)
+	if ((mask & ~cache_mask & (MAY_READ | MAY_WRITE | MAY_EXEC)) != 0)
 		status = -EACCES;
 out:
-	trace_nfs_access_निकास(inode, mask, cache_mask, status);
-	वापस status;
-पूर्ण
+	trace_nfs_access_exit(inode, mask, cache_mask, status);
+	return status;
+}
 
-अटल पूर्णांक nfs_खोलो_permission_mask(पूर्णांक खोलोflags)
-अणु
-	पूर्णांक mask = 0;
+static int nfs_open_permission_mask(int openflags)
+{
+	int mask = 0;
 
-	अगर (खोलोflags & __FMODE_EXEC) अणु
+	if (openflags & __FMODE_EXEC) {
 		/* ONLY check exec rights */
 		mask = MAY_EXEC;
-	पूर्ण अन्यथा अणु
-		अगर ((खोलोflags & O_ACCMODE) != O_WRONLY)
+	} else {
+		if ((openflags & O_ACCMODE) != O_WRONLY)
 			mask |= MAY_READ;
-		अगर ((खोलोflags & O_ACCMODE) != O_RDONLY)
+		if ((openflags & O_ACCMODE) != O_RDONLY)
 			mask |= MAY_WRITE;
-	पूर्ण
+	}
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-पूर्णांक nfs_may_खोलो(काष्ठा inode *inode, स्थिर काष्ठा cred *cred, पूर्णांक खोलोflags)
-अणु
-	वापस nfs_करो_access(inode, cred, nfs_खोलो_permission_mask(खोलोflags));
-पूर्ण
-EXPORT_SYMBOL_GPL(nfs_may_खोलो);
+int nfs_may_open(struct inode *inode, const struct cred *cred, int openflags)
+{
+	return nfs_do_access(inode, cred, nfs_open_permission_mask(openflags));
+}
+EXPORT_SYMBOL_GPL(nfs_may_open);
 
-अटल पूर्णांक nfs_execute_ok(काष्ठा inode *inode, पूर्णांक mask)
-अणु
-	काष्ठा nfs_server *server = NFS_SERVER(inode);
-	पूर्णांक ret = 0;
+static int nfs_execute_ok(struct inode *inode, int mask)
+{
+	struct nfs_server *server = NFS_SERVER(inode);
+	int ret = 0;
 
-	अगर (S_ISसूची(inode->i_mode))
-		वापस 0;
-	अगर (nfs_check_cache_invalid(inode, NFS_INO_INVALID_MODE)) अणु
-		अगर (mask & MAY_NOT_BLOCK)
-			वापस -ECHILD;
+	if (S_ISDIR(inode->i_mode))
+		return 0;
+	if (nfs_check_cache_invalid(inode, NFS_INO_INVALID_MODE)) {
+		if (mask & MAY_NOT_BLOCK)
+			return -ECHILD;
 		ret = __nfs_revalidate_inode(server, inode);
-	पूर्ण
-	अगर (ret == 0 && !execute_ok(inode))
+	}
+	if (ret == 0 && !execute_ok(inode))
 		ret = -EACCES;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक nfs_permission(काष्ठा user_namespace *mnt_userns,
-		   काष्ठा inode *inode,
-		   पूर्णांक mask)
-अणु
-	स्थिर काष्ठा cred *cred = current_cred();
-	पूर्णांक res = 0;
+int nfs_permission(struct user_namespace *mnt_userns,
+		   struct inode *inode,
+		   int mask)
+{
+	const struct cred *cred = current_cred();
+	int res = 0;
 
 	nfs_inc_stats(inode, NFSIOS_VFSACCESS);
 
-	अगर ((mask & (MAY_READ | MAY_WRITE | MAY_EXEC)) == 0)
-		जाओ out;
+	if ((mask & (MAY_READ | MAY_WRITE | MAY_EXEC)) == 0)
+		goto out;
 	/* Is this sys_access() ? */
-	अगर (mask & (MAY_ACCESS | MAY_CHसूची))
-		जाओ क्रमce_lookup;
+	if (mask & (MAY_ACCESS | MAY_CHDIR))
+		goto force_lookup;
 
-	चयन (inode->i_mode & S_IFMT) अणु
-		हाल S_IFLNK:
-			जाओ out;
-		हाल S_IFREG:
-			अगर ((mask & MAY_OPEN) &&
+	switch (inode->i_mode & S_IFMT) {
+		case S_IFLNK:
+			goto out;
+		case S_IFREG:
+			if ((mask & MAY_OPEN) &&
 			   nfs_server_capable(inode, NFS_CAP_ATOMIC_OPEN))
-				वापस 0;
-			अवरोध;
-		हाल S_IFसूची:
+				return 0;
+			break;
+		case S_IFDIR:
 			/*
-			 * Optimize away all ग_लिखो operations, since the server
-			 * will check permissions when we perक्रमm the op.
+			 * Optimize away all write operations, since the server
+			 * will check permissions when we perform the op.
 			 */
-			अगर ((mask & MAY_WRITE) && !(mask & MAY_READ))
-				जाओ out;
-	पूर्ण
+			if ((mask & MAY_WRITE) && !(mask & MAY_READ))
+				goto out;
+	}
 
-क्रमce_lookup:
-	अगर (!NFS_PROTO(inode)->access)
-		जाओ out_notsup;
+force_lookup:
+	if (!NFS_PROTO(inode)->access)
+		goto out_notsup;
 
-	res = nfs_करो_access(inode, cred, mask);
+	res = nfs_do_access(inode, cred, mask);
 out:
-	अगर (!res && (mask & MAY_EXEC))
+	if (!res && (mask & MAY_EXEC))
 		res = nfs_execute_ok(inode, mask);
 
-	dfprपूर्णांकk(VFS, "NFS: permission(%s/%lu), mask=0x%x, res=%d\n",
+	dfprintk(VFS, "NFS: permission(%s/%lu), mask=0x%x, res=%d\n",
 		inode->i_sb->s_id, inode->i_ino, mask, res);
-	वापस res;
+	return res;
 out_notsup:
-	अगर (mask & MAY_NOT_BLOCK)
-		वापस -ECHILD;
+	if (mask & MAY_NOT_BLOCK)
+		return -ECHILD;
 
 	res = nfs_revalidate_inode(inode, NFS_INO_INVALID_MODE |
 						  NFS_INO_INVALID_OTHER);
-	अगर (res == 0)
+	if (res == 0)
 		res = generic_permission(&init_user_ns, inode, mask);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 EXPORT_SYMBOL_GPL(nfs_permission);

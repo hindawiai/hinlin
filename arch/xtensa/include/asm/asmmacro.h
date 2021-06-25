@@ -1,99 +1,98 @@
-<शैली गुरु>
 /*
- * include/यंत्र-xtensa/यंत्रmacro.h
+ * include/asm-xtensa/asmmacro.h
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2005 Tensilica Inc.
  */
 
-#अगर_अघोषित _XTENSA_ASMMACRO_H
-#घोषणा _XTENSA_ASMMACRO_H
+#ifndef _XTENSA_ASMMACRO_H
+#define _XTENSA_ASMMACRO_H
 
-#समावेश <यंत्र/core.h>
+#include <asm/core.h>
 
 /*
- * Some little helpers क्रम loops. Use zero-overhead-loops
- * where applicable and अगर supported by the processor.
+ * Some little helpers for loops. Use zero-overhead-loops
+ * where applicable and if supported by the processor.
  *
  * __loopi ar, at, size, inc
- *         ar	रेजिस्टर initialized with the start address
- *	   at	scratch रेजिस्टर used by macro
+ *         ar	register initialized with the start address
+ *	   at	scratch register used by macro
  *	   size	size immediate value
  *	   inc	increment
  *
  * __loops ar, as, at, inc_log2[, mask_log2][, cond][, ncond]
- *	   ar	रेजिस्टर initialized with the start address
- *	   as	रेजिस्टर initialized with the size
- *	   at	scratch रेजिस्टर use by macro
+ *	   ar	register initialized with the start address
+ *	   as	register initialized with the size
+ *	   at	scratch register use by macro
  *	   inc_log2	increment [in log2]
  *	   mask_log2	mask [in log2]
  *	   cond		true condition (used in loop'cond')
  *	   ncond	false condition (used in b'ncond')
  *
  * __loop  as
- *	   restart loop. 'as' रेजिस्टर must not have been modअगरied!
+ *	   restart loop. 'as' register must not have been modified!
  *
  * __endla ar, as, incr
- *	   ar	start address (modअगरied)
- *	   as	scratch रेजिस्टर used by __loops/__loopi macros or
+ *	   ar	start address (modified)
+ *	   as	scratch register used by __loops/__loopi macros or
  *		end address used by __loopt macro
  *	   inc	increment
  */
 
 /*
- * loop क्रम given size as immediate
+ * loop for given size as immediate
  */
 
 	.macro	__loopi ar, at, size, incr
 
-#अगर XCHAL_HAVE_LOOPS
-		movi	\चt, ((\size + \incr - 1) / (\incr))
-		loop	\चt, 99f
-#अन्यथा
-		addi	\चt, \चr, \size
+#if XCHAL_HAVE_LOOPS
+		movi	\at, ((\size + \incr - 1) / (\incr))
+		loop	\at, 99f
+#else
+		addi	\at, \ar, \size
 		98:
-#पूर्ण_अगर
+#endif
 
 	.endm
 
 /*
- * loop क्रम given size in रेजिस्टर
+ * loop for given size in register
  */
 
 	.macro	__loops	ar, as, at, incr_log2, mask_log2, cond, ncond
 
-#अगर XCHAL_HAVE_LOOPS
-		.अगरgt \incr_log2 - 1
-			addi	\चt, \चs, (1 << \incr_log2) - 1
-			.अगरnc \mask_log2,
-				extui	\चt, \चt, \incr_log2, \mask_log2
-			.अन्यथा
-				srli	\चt, \चt, \incr_log2
-			.endअगर
-		.endअगर
-		loop\cond	\चt, 99f
-#अन्यथा
-		.अगरnc \mask_log2,
-			extui	\चt, \चs, \incr_log2, \mask_log2
-		.अन्यथा
-			.अगरnc \नcond,
-				srli	\चt, \चs, \incr_log2
-			.endअगर
-		.endअगर
-		.अगरnc \नcond,
-			b\नcond	\चt, 99f
+#if XCHAL_HAVE_LOOPS
+		.ifgt \incr_log2 - 1
+			addi	\at, \as, (1 << \incr_log2) - 1
+			.ifnc \mask_log2,
+				extui	\at, \at, \incr_log2, \mask_log2
+			.else
+				srli	\at, \at, \incr_log2
+			.endif
+		.endif
+		loop\cond	\at, 99f
+#else
+		.ifnc \mask_log2,
+			extui	\at, \as, \incr_log2, \mask_log2
+		.else
+			.ifnc \ncond,
+				srli	\at, \as, \incr_log2
+			.endif
+		.endif
+		.ifnc \ncond,
+			b\ncond	\at, 99f
 
-		.endअगर
-		.अगरnc \mask_log2,
-			slli	\चt, \चt, \incr_log2
-			add	\चt, \चr, \चt
-		.अन्यथा
-			add	\चt, \चr, \चs
-		.endअगर
-#पूर्ण_अगर
+		.endif
+		.ifnc \mask_log2,
+			slli	\at, \at, \incr_log2
+			add	\at, \ar, \at
+		.else
+			add	\at, \ar, \as
+		.endif
+#endif
 		98:
 
 	.endm
@@ -104,30 +103,30 @@
 
 	.macro	__loopt	ar, as, at, incr_log2
 
-#अगर XCHAL_HAVE_LOOPS
-		sub	\चt, \चs, \चr
-		.अगरgt	\incr_log2 - 1
-			addi	\चt, \चt, (1 << \incr_log2) - 1
-			srli	\चt, \चt, \incr_log2
-		.endअगर
-		loop	\चt, 99f
-#अन्यथा
+#if XCHAL_HAVE_LOOPS
+		sub	\at, \as, \ar
+		.ifgt	\incr_log2 - 1
+			addi	\at, \at, (1 << \incr_log2) - 1
+			srli	\at, \at, \incr_log2
+		.endif
+		loop	\at, 99f
+#else
 		98:
-#पूर्ण_अगर
+#endif
 
 	.endm
 
 /*
- * restart loop. रेजिस्टरs must be unchanged
+ * restart loop. registers must be unchanged
  */
 
 	.macro	__loop	as
 
-#अगर XCHAL_HAVE_LOOPS
-		loop	\चs, 99f
-#अन्यथा
+#if XCHAL_HAVE_LOOPS
+		loop	\as, 99f
+#else
 		98:
-#पूर्ण_अगर
+#endif
 
 	.endm
 
@@ -136,9 +135,9 @@
  */
 
 	.macro	__endl	ar, as
-#अगर !XCHAL_HAVE_LOOPS
-		bltu	\चr, \चs, 98b
-#पूर्ण_अगर
+#if !XCHAL_HAVE_LOOPS
+		bltu	\ar, \as, 98b
+#endif
 		99:
 	.endm
 
@@ -147,13 +146,13 @@
  */
 
 	.macro	__endla	ar, as, incr
-		addi	\चr, \चr, \incr
-		__endl	\चr \चs
+		addi	\ar, \ar, \incr
+		__endl	\ar \as
 	.endm
 
-/* Load or store inकाष्ठाions that may cause exceptions use the EX macro. */
+/* Load or store instructions that may cause exceptions use the EX macro. */
 
-#घोषणा EX(handler)				\
+#define EX(handler)				\
 	.section __ex_table, "a";		\
 	.word	97f, handler;			\
 	.previous				\
@@ -161,22 +160,22 @@
 
 
 /*
- * Extract unaligned word that is split between two रेजिस्टरs w0 and w1
- * पूर्णांकo r regardless of machine endianness. SAR must be loaded with the
+ * Extract unaligned word that is split between two registers w0 and w1
+ * into r regardless of machine endianness. SAR must be loaded with the
  * starting bit of the word (see __ssa8).
  */
 
 	.macro __src_b	r, w0, w1
-#अगर_घोषित __XTENSA_EB__
-		src	\ल, \w0, \w1
-#अन्यथा
-		src	\ल, \w1, \w0
-#पूर्ण_अगर
+#ifdef __XTENSA_EB__
+		src	\r, \w0, \w1
+#else
+		src	\r, \w1, \w0
+#endif
 	.endm
 
 /*
- * Load 2 lowest address bits of r पूर्णांकo SAR क्रम __src_b to extract unaligned
- * word starting at r from two रेजिस्टरs loaded from consecutive aligned
+ * Load 2 lowest address bits of r into SAR for __src_b to extract unaligned
+ * word starting at r from two registers loaded from consecutive aligned
  * addresses covering r regardless of machine endianness.
  *
  *      r   0   1   2   3
@@ -185,59 +184,59 @@
  */
 
 	.macro __ssa8	r
-#अगर_घोषित __XTENSA_EB__
-		ssa8b	\ल
-#अन्यथा
-		ssa8l	\ल
-#पूर्ण_अगर
+#ifdef __XTENSA_EB__
+		ssa8b	\r
+#else
+		ssa8l	\r
+#endif
 	.endm
 
-#घोषणा XTENSA_STACK_ALIGNMENT		16
+#define XTENSA_STACK_ALIGNMENT		16
 
-#अगर defined(__XTENSA_WINDOWED_ABI__)
-#घोषणा XTENSA_FRAME_SIZE_RESERVE	16
-#घोषणा XTENSA_SPILL_STACK_RESERVE	32
+#if defined(__XTENSA_WINDOWED_ABI__)
+#define XTENSA_FRAME_SIZE_RESERVE	16
+#define XTENSA_SPILL_STACK_RESERVE	32
 
-#घोषणा abi_entry(frame_size) \
+#define abi_entry(frame_size) \
 	entry sp, (XTENSA_FRAME_SIZE_RESERVE + \
 		   (((frame_size) + XTENSA_STACK_ALIGNMENT - 1) & \
 		    -XTENSA_STACK_ALIGNMENT))
-#घोषणा abi_entry_शेष abi_entry(0)
+#define abi_entry_default abi_entry(0)
 
-#घोषणा abi_ret(frame_size) retw
-#घोषणा abi_ret_शेष retw
+#define abi_ret(frame_size) retw
+#define abi_ret_default retw
 
-#या_अगर defined(__XTENSA_CALL0_ABI__)
+#elif defined(__XTENSA_CALL0_ABI__)
 
-#घोषणा XTENSA_SPILL_STACK_RESERVE	0
+#define XTENSA_SPILL_STACK_RESERVE	0
 
-#घोषणा abi_entry(frame_size) __abi_entry (frame_size)
+#define abi_entry(frame_size) __abi_entry (frame_size)
 
 	.macro	__abi_entry frame_size
-	.अगरgt \पrame_size
-	addi sp, sp, -(((\पrame_size) + XTENSA_STACK_ALIGNMENT - 1) & \
+	.ifgt \frame_size
+	addi sp, sp, -(((\frame_size) + XTENSA_STACK_ALIGNMENT - 1) & \
 		       -XTENSA_STACK_ALIGNMENT)
-	.endअगर
+	.endif
 	.endm
 
-#घोषणा abi_entry_शेष
+#define abi_entry_default
 
-#घोषणा abi_ret(frame_size) __abi_ret (frame_size)
+#define abi_ret(frame_size) __abi_ret (frame_size)
 
 	.macro	__abi_ret frame_size
-	.अगरgt \पrame_size
-	addi sp, sp, (((\पrame_size) + XTENSA_STACK_ALIGNMENT - 1) & \
+	.ifgt \frame_size
+	addi sp, sp, (((\frame_size) + XTENSA_STACK_ALIGNMENT - 1) & \
 		      -XTENSA_STACK_ALIGNMENT)
-	.endअगर
+	.endif
 	ret
 	.endm
 
-#घोषणा abi_ret_शेष ret
+#define abi_ret_default ret
 
-#अन्यथा
-#त्रुटि Unsupported Xtensa ABI
-#पूर्ण_अगर
+#else
+#error Unsupported Xtensa ABI
+#endif
 
-#घोषणा __XTENSA_HANDLER	.section ".exception.text", "ax"
+#define __XTENSA_HANDLER	.section ".exception.text", "ax"
 
-#पूर्ण_अगर /* _XTENSA_ASMMACRO_H */
+#endif /* _XTENSA_ASMMACRO_H */

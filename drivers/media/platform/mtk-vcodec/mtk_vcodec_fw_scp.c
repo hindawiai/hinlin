@@ -1,74 +1,73 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश "mtk_vcodec_fw_priv.h"
-#समावेश "mtk_vcodec_util.h"
-#समावेश "mtk_vcodec_drv.h"
+#include "mtk_vcodec_fw_priv.h"
+#include "mtk_vcodec_util.h"
+#include "mtk_vcodec_drv.h"
 
-अटल पूर्णांक mtk_vcodec_scp_load_firmware(काष्ठा mtk_vcodec_fw *fw)
-अणु
-	वापस rproc_boot(scp_get_rproc(fw->scp));
-पूर्ण
+static int mtk_vcodec_scp_load_firmware(struct mtk_vcodec_fw *fw)
+{
+	return rproc_boot(scp_get_rproc(fw->scp));
+}
 
-अटल अचिन्हित पूर्णांक mtk_vcodec_scp_get_vdec_capa(काष्ठा mtk_vcodec_fw *fw)
-अणु
-	वापस scp_get_vdec_hw_capa(fw->scp);
-पूर्ण
+static unsigned int mtk_vcodec_scp_get_vdec_capa(struct mtk_vcodec_fw *fw)
+{
+	return scp_get_vdec_hw_capa(fw->scp);
+}
 
-अटल अचिन्हित पूर्णांक mtk_vcodec_scp_get_venc_capa(काष्ठा mtk_vcodec_fw *fw)
-अणु
-	वापस scp_get_venc_hw_capa(fw->scp);
-पूर्ण
+static unsigned int mtk_vcodec_scp_get_venc_capa(struct mtk_vcodec_fw *fw)
+{
+	return scp_get_venc_hw_capa(fw->scp);
+}
 
-अटल व्योम *mtk_vcodec_vpu_scp_dm_addr(काष्ठा mtk_vcodec_fw *fw,
+static void *mtk_vcodec_vpu_scp_dm_addr(struct mtk_vcodec_fw *fw,
 					u32 dtcm_dmem_addr)
-अणु
-	वापस scp_mapping_dm_addr(fw->scp, dtcm_dmem_addr);
-पूर्ण
+{
+	return scp_mapping_dm_addr(fw->scp, dtcm_dmem_addr);
+}
 
-अटल पूर्णांक mtk_vcodec_scp_set_ipi_रेजिस्टर(काष्ठा mtk_vcodec_fw *fw, पूर्णांक id,
+static int mtk_vcodec_scp_set_ipi_register(struct mtk_vcodec_fw *fw, int id,
 					   mtk_vcodec_ipi_handler handler,
-					   स्थिर अक्षर *name, व्योम *priv)
-अणु
-	वापस scp_ipi_रेजिस्टर(fw->scp, id, handler, priv);
-पूर्ण
+					   const char *name, void *priv)
+{
+	return scp_ipi_register(fw->scp, id, handler, priv);
+}
 
-अटल पूर्णांक mtk_vcodec_scp_ipi_send(काष्ठा mtk_vcodec_fw *fw, पूर्णांक id, व्योम *buf,
-				   अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक रुको)
-अणु
-	वापस scp_ipi_send(fw->scp, id, buf, len, रुको);
-पूर्ण
+static int mtk_vcodec_scp_ipi_send(struct mtk_vcodec_fw *fw, int id, void *buf,
+				   unsigned int len, unsigned int wait)
+{
+	return scp_ipi_send(fw->scp, id, buf, len, wait);
+}
 
-अटल व्योम mtk_vcodec_scp_release(काष्ठा mtk_vcodec_fw *fw)
-अणु
+static void mtk_vcodec_scp_release(struct mtk_vcodec_fw *fw)
+{
 	scp_put(fw->scp);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा mtk_vcodec_fw_ops mtk_vcodec_rproc_msg = अणु
+static const struct mtk_vcodec_fw_ops mtk_vcodec_rproc_msg = {
 	.load_firmware = mtk_vcodec_scp_load_firmware,
 	.get_vdec_capa = mtk_vcodec_scp_get_vdec_capa,
 	.get_venc_capa = mtk_vcodec_scp_get_venc_capa,
 	.map_dm_addr = mtk_vcodec_vpu_scp_dm_addr,
-	.ipi_रेजिस्टर = mtk_vcodec_scp_set_ipi_रेजिस्टर,
+	.ipi_register = mtk_vcodec_scp_set_ipi_register,
 	.ipi_send = mtk_vcodec_scp_ipi_send,
 	.release = mtk_vcodec_scp_release,
-पूर्ण;
+};
 
-काष्ठा mtk_vcodec_fw *mtk_vcodec_fw_scp_init(काष्ठा mtk_vcodec_dev *dev)
-अणु
-	काष्ठा mtk_vcodec_fw *fw;
-	काष्ठा mtk_scp *scp;
+struct mtk_vcodec_fw *mtk_vcodec_fw_scp_init(struct mtk_vcodec_dev *dev)
+{
+	struct mtk_vcodec_fw *fw;
+	struct mtk_scp *scp;
 
 	scp = scp_get(dev->plat_dev);
-	अगर (!scp) अणु
+	if (!scp) {
 		mtk_v4l2_err("could not get vdec scp handle");
-		वापस ERR_PTR(-EPROBE_DEFER);
-	पूर्ण
+		return ERR_PTR(-EPROBE_DEFER);
+	}
 
-	fw = devm_kzalloc(&dev->plat_dev->dev, माप(*fw), GFP_KERNEL);
+	fw = devm_kzalloc(&dev->plat_dev->dev, sizeof(*fw), GFP_KERNEL);
 	fw->type = SCP;
 	fw->ops = &mtk_vcodec_rproc_msg;
 	fw->scp = scp;
 
-	वापस fw;
-पूर्ण
+	return fw;
+}

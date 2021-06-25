@@ -1,257 +1,256 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *   ALSA driver क्रम ATI IXP 150/200/250 AC97 modem controllers
+ *   ALSA driver for ATI IXP 150/200/250 AC97 modem controllers
  *
  *	Copyright (c) 2004 Takashi Iwai <tiwai@suse.de>
  */
 
-#समावेश <linux/पन.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/init.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/info.h>
-#समावेश <sound/ac97_codec.h>
-#समावेश <sound/initval.h>
+#include <linux/io.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/init.h>
+#include <linux/pci.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/info.h>
+#include <sound/ac97_codec.h>
+#include <sound/initval.h>
 
 MODULE_AUTHOR("Takashi Iwai <tiwai@suse.de>");
 MODULE_DESCRIPTION("ATI IXP MC97 controller");
 MODULE_LICENSE("GPL");
 
-अटल पूर्णांक index = -2; /* Exclude the first card */
-अटल अक्षर *id = SNDRV_DEFAULT_STR1;	/* ID क्रम this card */
-अटल पूर्णांक ac97_घड़ी = 48000;
+static int index = -2; /* Exclude the first card */
+static char *id = SNDRV_DEFAULT_STR1;	/* ID for this card */
+static int ac97_clock = 48000;
 
-module_param(index, पूर्णांक, 0444);
+module_param(index, int, 0444);
 MODULE_PARM_DESC(index, "Index value for ATI IXP controller.");
-module_param(id, अक्षरp, 0444);
+module_param(id, charp, 0444);
 MODULE_PARM_DESC(id, "ID string for ATI IXP controller.");
-module_param(ac97_घड़ी, पूर्णांक, 0444);
-MODULE_PARM_DESC(ac97_घड़ी, "AC'97 codec clock (default 48000Hz).");
+module_param(ac97_clock, int, 0444);
+MODULE_PARM_DESC(ac97_clock, "AC'97 codec clock (default 48000Hz).");
 
-/* just क्रम backward compatibility */
-अटल bool enable;
+/* just for backward compatibility */
+static bool enable;
 module_param(enable, bool, 0444);
 
 
 /*
  */
 
-#घोषणा ATI_REG_ISR			0x00	/* पूर्णांकerrupt source */
-#घोषणा  ATI_REG_ISR_MODEM_IN_XRUN	(1U<<0)
-#घोषणा  ATI_REG_ISR_MODEM_IN_STATUS	(1U<<1)
-#घोषणा  ATI_REG_ISR_MODEM_OUT1_XRUN	(1U<<2)
-#घोषणा  ATI_REG_ISR_MODEM_OUT1_STATUS	(1U<<3)
-#घोषणा  ATI_REG_ISR_MODEM_OUT2_XRUN	(1U<<4)
-#घोषणा  ATI_REG_ISR_MODEM_OUT2_STATUS	(1U<<5)
-#घोषणा  ATI_REG_ISR_MODEM_OUT3_XRUN	(1U<<6)
-#घोषणा  ATI_REG_ISR_MODEM_OUT3_STATUS	(1U<<7)
-#घोषणा  ATI_REG_ISR_PHYS_INTR		(1U<<8)
-#घोषणा  ATI_REG_ISR_PHYS_MISMATCH	(1U<<9)
-#घोषणा  ATI_REG_ISR_CODEC0_NOT_READY	(1U<<10)
-#घोषणा  ATI_REG_ISR_CODEC1_NOT_READY	(1U<<11)
-#घोषणा  ATI_REG_ISR_CODEC2_NOT_READY	(1U<<12)
-#घोषणा  ATI_REG_ISR_NEW_FRAME		(1U<<13)
-#घोषणा  ATI_REG_ISR_MODEM_GPIO_DATA	(1U<<14)
+#define ATI_REG_ISR			0x00	/* interrupt source */
+#define  ATI_REG_ISR_MODEM_IN_XRUN	(1U<<0)
+#define  ATI_REG_ISR_MODEM_IN_STATUS	(1U<<1)
+#define  ATI_REG_ISR_MODEM_OUT1_XRUN	(1U<<2)
+#define  ATI_REG_ISR_MODEM_OUT1_STATUS	(1U<<3)
+#define  ATI_REG_ISR_MODEM_OUT2_XRUN	(1U<<4)
+#define  ATI_REG_ISR_MODEM_OUT2_STATUS	(1U<<5)
+#define  ATI_REG_ISR_MODEM_OUT3_XRUN	(1U<<6)
+#define  ATI_REG_ISR_MODEM_OUT3_STATUS	(1U<<7)
+#define  ATI_REG_ISR_PHYS_INTR		(1U<<8)
+#define  ATI_REG_ISR_PHYS_MISMATCH	(1U<<9)
+#define  ATI_REG_ISR_CODEC0_NOT_READY	(1U<<10)
+#define  ATI_REG_ISR_CODEC1_NOT_READY	(1U<<11)
+#define  ATI_REG_ISR_CODEC2_NOT_READY	(1U<<12)
+#define  ATI_REG_ISR_NEW_FRAME		(1U<<13)
+#define  ATI_REG_ISR_MODEM_GPIO_DATA	(1U<<14)
 
-#घोषणा ATI_REG_IER			0x04	/* पूर्णांकerrupt enable */
-#घोषणा  ATI_REG_IER_MODEM_IN_XRUN_EN	(1U<<0)
-#घोषणा  ATI_REG_IER_MODEM_STATUS_EN	(1U<<1)
-#घोषणा  ATI_REG_IER_MODEM_OUT1_XRUN_EN	(1U<<2)
-#घोषणा  ATI_REG_IER_MODEM_OUT2_XRUN_EN	(1U<<4)
-#घोषणा  ATI_REG_IER_MODEM_OUT3_XRUN_EN	(1U<<6)
-#घोषणा  ATI_REG_IER_PHYS_INTR_EN	(1U<<8)
-#घोषणा  ATI_REG_IER_PHYS_MISMATCH_EN	(1U<<9)
-#घोषणा  ATI_REG_IER_CODEC0_INTR_EN	(1U<<10)
-#घोषणा  ATI_REG_IER_CODEC1_INTR_EN	(1U<<11)
-#घोषणा  ATI_REG_IER_CODEC2_INTR_EN	(1U<<12)
-#घोषणा  ATI_REG_IER_NEW_FRAME_EN	(1U<<13)	/* (RO */
-#घोषणा  ATI_REG_IER_MODEM_GPIO_DATA_EN	(1U<<14)	/* (WO) modem is running */
-#घोषणा  ATI_REG_IER_MODEM_SET_BUS_BUSY	(1U<<15)
+#define ATI_REG_IER			0x04	/* interrupt enable */
+#define  ATI_REG_IER_MODEM_IN_XRUN_EN	(1U<<0)
+#define  ATI_REG_IER_MODEM_STATUS_EN	(1U<<1)
+#define  ATI_REG_IER_MODEM_OUT1_XRUN_EN	(1U<<2)
+#define  ATI_REG_IER_MODEM_OUT2_XRUN_EN	(1U<<4)
+#define  ATI_REG_IER_MODEM_OUT3_XRUN_EN	(1U<<6)
+#define  ATI_REG_IER_PHYS_INTR_EN	(1U<<8)
+#define  ATI_REG_IER_PHYS_MISMATCH_EN	(1U<<9)
+#define  ATI_REG_IER_CODEC0_INTR_EN	(1U<<10)
+#define  ATI_REG_IER_CODEC1_INTR_EN	(1U<<11)
+#define  ATI_REG_IER_CODEC2_INTR_EN	(1U<<12)
+#define  ATI_REG_IER_NEW_FRAME_EN	(1U<<13)	/* (RO */
+#define  ATI_REG_IER_MODEM_GPIO_DATA_EN	(1U<<14)	/* (WO) modem is running */
+#define  ATI_REG_IER_MODEM_SET_BUS_BUSY	(1U<<15)
 
-#घोषणा ATI_REG_CMD			0x08	/* command */
-#घोषणा  ATI_REG_CMD_POWERDOWN	(1U<<0)
-#घोषणा  ATI_REG_CMD_MODEM_RECEIVE_EN	(1U<<1)	/* modem only */
-#घोषणा  ATI_REG_CMD_MODEM_SEND1_EN	(1U<<2)	/* modem only */
-#घोषणा  ATI_REG_CMD_MODEM_SEND2_EN	(1U<<3)	/* modem only */
-#घोषणा  ATI_REG_CMD_MODEM_SEND3_EN	(1U<<4)	/* modem only */
-#घोषणा  ATI_REG_CMD_MODEM_STATUS_MEM	(1U<<5)	/* modem only */
-#घोषणा  ATI_REG_CMD_MODEM_IN_DMA_EN	(1U<<8)	/* modem only */
-#घोषणा  ATI_REG_CMD_MODEM_OUT_DMA1_EN	(1U<<9)	/* modem only */
-#घोषणा  ATI_REG_CMD_MODEM_OUT_DMA2_EN	(1U<<10)	/* modem only */
-#घोषणा  ATI_REG_CMD_MODEM_OUT_DMA3_EN	(1U<<11)	/* modem only */
-#घोषणा  ATI_REG_CMD_AUDIO_PRESENT	(1U<<20)
-#घोषणा  ATI_REG_CMD_MODEM_GPIO_THRU_DMA	(1U<<22)	/* modem only */
-#घोषणा  ATI_REG_CMD_LOOPBACK_EN	(1U<<23)
-#घोषणा  ATI_REG_CMD_PACKED_DIS		(1U<<24)
-#घोषणा  ATI_REG_CMD_BURST_EN		(1U<<25)
-#घोषणा  ATI_REG_CMD_PANIC_EN		(1U<<26)
-#घोषणा  ATI_REG_CMD_MODEM_PRESENT	(1U<<27)
-#घोषणा  ATI_REG_CMD_ACLINK_ACTIVE	(1U<<28)
-#घोषणा  ATI_REG_CMD_AC_SOFT_RESET	(1U<<29)
-#घोषणा  ATI_REG_CMD_AC_SYNC		(1U<<30)
-#घोषणा  ATI_REG_CMD_AC_RESET		(1U<<31)
+#define ATI_REG_CMD			0x08	/* command */
+#define  ATI_REG_CMD_POWERDOWN	(1U<<0)
+#define  ATI_REG_CMD_MODEM_RECEIVE_EN	(1U<<1)	/* modem only */
+#define  ATI_REG_CMD_MODEM_SEND1_EN	(1U<<2)	/* modem only */
+#define  ATI_REG_CMD_MODEM_SEND2_EN	(1U<<3)	/* modem only */
+#define  ATI_REG_CMD_MODEM_SEND3_EN	(1U<<4)	/* modem only */
+#define  ATI_REG_CMD_MODEM_STATUS_MEM	(1U<<5)	/* modem only */
+#define  ATI_REG_CMD_MODEM_IN_DMA_EN	(1U<<8)	/* modem only */
+#define  ATI_REG_CMD_MODEM_OUT_DMA1_EN	(1U<<9)	/* modem only */
+#define  ATI_REG_CMD_MODEM_OUT_DMA2_EN	(1U<<10)	/* modem only */
+#define  ATI_REG_CMD_MODEM_OUT_DMA3_EN	(1U<<11)	/* modem only */
+#define  ATI_REG_CMD_AUDIO_PRESENT	(1U<<20)
+#define  ATI_REG_CMD_MODEM_GPIO_THRU_DMA	(1U<<22)	/* modem only */
+#define  ATI_REG_CMD_LOOPBACK_EN	(1U<<23)
+#define  ATI_REG_CMD_PACKED_DIS		(1U<<24)
+#define  ATI_REG_CMD_BURST_EN		(1U<<25)
+#define  ATI_REG_CMD_PANIC_EN		(1U<<26)
+#define  ATI_REG_CMD_MODEM_PRESENT	(1U<<27)
+#define  ATI_REG_CMD_ACLINK_ACTIVE	(1U<<28)
+#define  ATI_REG_CMD_AC_SOFT_RESET	(1U<<29)
+#define  ATI_REG_CMD_AC_SYNC		(1U<<30)
+#define  ATI_REG_CMD_AC_RESET		(1U<<31)
 
-#घोषणा ATI_REG_PHYS_OUT_ADDR		0x0c
-#घोषणा  ATI_REG_PHYS_OUT_CODEC_MASK	(3U<<0)
-#घोषणा  ATI_REG_PHYS_OUT_RW		(1U<<2)
-#घोषणा  ATI_REG_PHYS_OUT_ADDR_EN	(1U<<8)
-#घोषणा  ATI_REG_PHYS_OUT_ADDR_SHIFT	9
-#घोषणा  ATI_REG_PHYS_OUT_DATA_SHIFT	16
+#define ATI_REG_PHYS_OUT_ADDR		0x0c
+#define  ATI_REG_PHYS_OUT_CODEC_MASK	(3U<<0)
+#define  ATI_REG_PHYS_OUT_RW		(1U<<2)
+#define  ATI_REG_PHYS_OUT_ADDR_EN	(1U<<8)
+#define  ATI_REG_PHYS_OUT_ADDR_SHIFT	9
+#define  ATI_REG_PHYS_OUT_DATA_SHIFT	16
 
-#घोषणा ATI_REG_PHYS_IN_ADDR		0x10
-#घोषणा  ATI_REG_PHYS_IN_READ_FLAG	(1U<<8)
-#घोषणा  ATI_REG_PHYS_IN_ADDR_SHIFT	9
-#घोषणा  ATI_REG_PHYS_IN_DATA_SHIFT	16
+#define ATI_REG_PHYS_IN_ADDR		0x10
+#define  ATI_REG_PHYS_IN_READ_FLAG	(1U<<8)
+#define  ATI_REG_PHYS_IN_ADDR_SHIFT	9
+#define  ATI_REG_PHYS_IN_DATA_SHIFT	16
 
-#घोषणा ATI_REG_SLOTREQ			0x14
+#define ATI_REG_SLOTREQ			0x14
 
-#घोषणा ATI_REG_COUNTER			0x18
-#घोषणा  ATI_REG_COUNTER_SLOT		(3U<<0)	/* slot # */
-#घोषणा  ATI_REG_COUNTER_BITCLOCK	(31U<<8)
+#define ATI_REG_COUNTER			0x18
+#define  ATI_REG_COUNTER_SLOT		(3U<<0)	/* slot # */
+#define  ATI_REG_COUNTER_BITCLOCK	(31U<<8)
 
-#घोषणा ATI_REG_IN_FIFO_THRESHOLD	0x1c
+#define ATI_REG_IN_FIFO_THRESHOLD	0x1c
 
-#घोषणा ATI_REG_MODEM_IN_DMA_LINKPTR	0x20
-#घोषणा ATI_REG_MODEM_IN_DMA_DT_START	0x24	/* RO */
-#घोषणा ATI_REG_MODEM_IN_DMA_DT_NEXT	0x28	/* RO */
-#घोषणा ATI_REG_MODEM_IN_DMA_DT_CUR	0x2c	/* RO */
-#घोषणा ATI_REG_MODEM_IN_DMA_DT_SIZE	0x30
-#घोषणा ATI_REG_MODEM_OUT_FIFO		0x34	/* output threshold */
-#घोषणा  ATI_REG_MODEM_OUT1_DMA_THRESHOLD_MASK	(0xf<<16)
-#घोषणा  ATI_REG_MODEM_OUT1_DMA_THRESHOLD_SHIFT	16
-#घोषणा ATI_REG_MODEM_OUT_DMA1_LINKPTR	0x38
-#घोषणा ATI_REG_MODEM_OUT_DMA2_LINKPTR	0x3c
-#घोषणा ATI_REG_MODEM_OUT_DMA3_LINKPTR	0x40
-#घोषणा ATI_REG_MODEM_OUT_DMA1_DT_START	0x44
-#घोषणा ATI_REG_MODEM_OUT_DMA1_DT_NEXT	0x48
-#घोषणा ATI_REG_MODEM_OUT_DMA1_DT_CUR	0x4c
-#घोषणा ATI_REG_MODEM_OUT_DMA2_DT_START	0x50
-#घोषणा ATI_REG_MODEM_OUT_DMA2_DT_NEXT	0x54
-#घोषणा ATI_REG_MODEM_OUT_DMA2_DT_CUR	0x58
-#घोषणा ATI_REG_MODEM_OUT_DMA3_DT_START	0x5c
-#घोषणा ATI_REG_MODEM_OUT_DMA3_DT_NEXT	0x60
-#घोषणा ATI_REG_MODEM_OUT_DMA3_DT_CUR	0x64
-#घोषणा ATI_REG_MODEM_OUT_DMA12_DT_SIZE	0x68
-#घोषणा ATI_REG_MODEM_OUT_DMA3_DT_SIZE	0x6c
-#घोषणा ATI_REG_MODEM_OUT_FIFO_USED     0x70
-#घोषणा ATI_REG_MODEM_OUT_GPIO		0x74
-#घोषणा  ATI_REG_MODEM_OUT_GPIO_EN	   1
-#घोषणा  ATI_REG_MODEM_OUT_GPIO_DATA_SHIFT 5
-#घोषणा ATI_REG_MODEM_IN_GPIO		0x78
+#define ATI_REG_MODEM_IN_DMA_LINKPTR	0x20
+#define ATI_REG_MODEM_IN_DMA_DT_START	0x24	/* RO */
+#define ATI_REG_MODEM_IN_DMA_DT_NEXT	0x28	/* RO */
+#define ATI_REG_MODEM_IN_DMA_DT_CUR	0x2c	/* RO */
+#define ATI_REG_MODEM_IN_DMA_DT_SIZE	0x30
+#define ATI_REG_MODEM_OUT_FIFO		0x34	/* output threshold */
+#define  ATI_REG_MODEM_OUT1_DMA_THRESHOLD_MASK	(0xf<<16)
+#define  ATI_REG_MODEM_OUT1_DMA_THRESHOLD_SHIFT	16
+#define ATI_REG_MODEM_OUT_DMA1_LINKPTR	0x38
+#define ATI_REG_MODEM_OUT_DMA2_LINKPTR	0x3c
+#define ATI_REG_MODEM_OUT_DMA3_LINKPTR	0x40
+#define ATI_REG_MODEM_OUT_DMA1_DT_START	0x44
+#define ATI_REG_MODEM_OUT_DMA1_DT_NEXT	0x48
+#define ATI_REG_MODEM_OUT_DMA1_DT_CUR	0x4c
+#define ATI_REG_MODEM_OUT_DMA2_DT_START	0x50
+#define ATI_REG_MODEM_OUT_DMA2_DT_NEXT	0x54
+#define ATI_REG_MODEM_OUT_DMA2_DT_CUR	0x58
+#define ATI_REG_MODEM_OUT_DMA3_DT_START	0x5c
+#define ATI_REG_MODEM_OUT_DMA3_DT_NEXT	0x60
+#define ATI_REG_MODEM_OUT_DMA3_DT_CUR	0x64
+#define ATI_REG_MODEM_OUT_DMA12_DT_SIZE	0x68
+#define ATI_REG_MODEM_OUT_DMA3_DT_SIZE	0x6c
+#define ATI_REG_MODEM_OUT_FIFO_USED     0x70
+#define ATI_REG_MODEM_OUT_GPIO		0x74
+#define  ATI_REG_MODEM_OUT_GPIO_EN	   1
+#define  ATI_REG_MODEM_OUT_GPIO_DATA_SHIFT 5
+#define ATI_REG_MODEM_IN_GPIO		0x78
 
-#घोषणा ATI_REG_MODEM_MIRROR		0x7c
-#घोषणा ATI_REG_AUDIO_MIRROR		0x80
+#define ATI_REG_MODEM_MIRROR		0x7c
+#define ATI_REG_AUDIO_MIRROR		0x80
 
-#घोषणा ATI_REG_MODEM_FIFO_FLUSH	0x88
-#घोषणा  ATI_REG_MODEM_FIFO_OUT1_FLUSH	(1U<<0)
-#घोषणा  ATI_REG_MODEM_FIFO_OUT2_FLUSH	(1U<<1)
-#घोषणा  ATI_REG_MODEM_FIFO_OUT3_FLUSH	(1U<<2)
-#घोषणा  ATI_REG_MODEM_FIFO_IN_FLUSH	(1U<<3)
+#define ATI_REG_MODEM_FIFO_FLUSH	0x88
+#define  ATI_REG_MODEM_FIFO_OUT1_FLUSH	(1U<<0)
+#define  ATI_REG_MODEM_FIFO_OUT2_FLUSH	(1U<<1)
+#define  ATI_REG_MODEM_FIFO_OUT3_FLUSH	(1U<<2)
+#define  ATI_REG_MODEM_FIFO_IN_FLUSH	(1U<<3)
 
 /* LINKPTR */
-#घोषणा  ATI_REG_LINKPTR_EN		(1U<<0)
+#define  ATI_REG_LINKPTR_EN		(1U<<0)
 
-#घोषणा ATI_MAX_DESCRIPTORS	256	/* max number of descriptor packets */
+#define ATI_MAX_DESCRIPTORS	256	/* max number of descriptor packets */
 
 
-काष्ठा atiixp_modem;
+struct atiixp_modem;
 
 /*
  * DMA packate descriptor
  */
 
-काष्ठा atiixp_dma_desc अणु
+struct atiixp_dma_desc {
 	__le32 addr;	/* DMA buffer address */
 	u16 status;	/* status bits */
 	u16 size;	/* size of the packet in dwords */
 	__le32 next;	/* address of the next packet descriptor */
-पूर्ण;
+};
 
 /*
- * stream क्रमागत
+ * stream enum
  */
-क्रमागत अणु ATI_DMA_PLAYBACK, ATI_DMA_CAPTURE, NUM_ATI_DMAS पूर्ण; /* DMAs */
-क्रमागत अणु ATI_PCM_OUT, ATI_PCM_IN, NUM_ATI_PCMS पूर्ण; /* AC97 pcm slots */
-क्रमागत अणु ATI_PCMDEV_ANALOG, NUM_ATI_PCMDEVS पूर्ण; /* pcm devices */
+enum { ATI_DMA_PLAYBACK, ATI_DMA_CAPTURE, NUM_ATI_DMAS }; /* DMAs */
+enum { ATI_PCM_OUT, ATI_PCM_IN, NUM_ATI_PCMS }; /* AC97 pcm slots */
+enum { ATI_PCMDEV_ANALOG, NUM_ATI_PCMDEVS }; /* pcm devices */
 
-#घोषणा NUM_ATI_CODECS	3
+#define NUM_ATI_CODECS	3
 
 
 /*
- * स्थिरants and callbacks क्रम each DMA type
+ * constants and callbacks for each DMA type
  */
-काष्ठा atiixp_dma_ops अणु
-	पूर्णांक type;			/* ATI_DMA_XXX */
-	अचिन्हित पूर्णांक llp_offset;	/* LINKPTR offset */
-	अचिन्हित पूर्णांक dt_cur;		/* DT_CUR offset */
-	/* called from खोलो callback */
-	व्योम (*enable_dma)(काष्ठा atiixp_modem *chip, पूर्णांक on);
+struct atiixp_dma_ops {
+	int type;			/* ATI_DMA_XXX */
+	unsigned int llp_offset;	/* LINKPTR offset */
+	unsigned int dt_cur;		/* DT_CUR offset */
+	/* called from open callback */
+	void (*enable_dma)(struct atiixp_modem *chip, int on);
 	/* called from trigger (START/STOP) */
-	व्योम (*enable_transfer)(काष्ठा atiixp_modem *chip, पूर्णांक on);
+	void (*enable_transfer)(struct atiixp_modem *chip, int on);
  	/* called from trigger (STOP only) */
-	व्योम (*flush_dma)(काष्ठा atiixp_modem *chip);
-पूर्ण;
+	void (*flush_dma)(struct atiixp_modem *chip);
+};
 
 /*
  * DMA stream
  */
-काष्ठा atiixp_dma अणु
-	स्थिर काष्ठा atiixp_dma_ops *ops;
-	काष्ठा snd_dma_buffer desc_buf;
-	काष्ठा snd_pcm_substream *substream;	/* asचिन्हित PCM substream */
-	अचिन्हित पूर्णांक buf_addr, buf_bytes;	/* DMA buffer address, bytes */
-	अचिन्हित पूर्णांक period_bytes, periods;
-	पूर्णांक खोलोed;
-	पूर्णांक running;
-	पूर्णांक pcm_खोलो_flag;
-	पूर्णांक ac97_pcm_type;	/* index # of ac97_pcm to access, -1 = not used */
-पूर्ण;
+struct atiixp_dma {
+	const struct atiixp_dma_ops *ops;
+	struct snd_dma_buffer desc_buf;
+	struct snd_pcm_substream *substream;	/* assigned PCM substream */
+	unsigned int buf_addr, buf_bytes;	/* DMA buffer address, bytes */
+	unsigned int period_bytes, periods;
+	int opened;
+	int running;
+	int pcm_open_flag;
+	int ac97_pcm_type;	/* index # of ac97_pcm to access, -1 = not used */
+};
 
 /*
  * ATI IXP chip
  */
-काष्ठा atiixp_modem अणु
-	काष्ठा snd_card *card;
-	काष्ठा pci_dev *pci;
+struct atiixp_modem {
+	struct snd_card *card;
+	struct pci_dev *pci;
 
-	काष्ठा resource *res;		/* memory i/o */
-	अचिन्हित दीर्घ addr;
-	व्योम __iomem *remap_addr;
-	पूर्णांक irq;
+	struct resource *res;		/* memory i/o */
+	unsigned long addr;
+	void __iomem *remap_addr;
+	int irq;
 	
-	काष्ठा snd_ac97_bus *ac97_bus;
-	काष्ठा snd_ac97 *ac97[NUM_ATI_CODECS];
+	struct snd_ac97_bus *ac97_bus;
+	struct snd_ac97 *ac97[NUM_ATI_CODECS];
 
 	spinlock_t reg_lock;
 
-	काष्ठा atiixp_dma dmas[NUM_ATI_DMAS];
-	काष्ठा ac97_pcm *pcms[NUM_ATI_PCMS];
-	काष्ठा snd_pcm *pcmdevs[NUM_ATI_PCMDEVS];
+	struct atiixp_dma dmas[NUM_ATI_DMAS];
+	struct ac97_pcm *pcms[NUM_ATI_PCMS];
+	struct snd_pcm *pcmdevs[NUM_ATI_PCMDEVS];
 
-	पूर्णांक max_channels;		/* max. channels क्रम PCM out */
+	int max_channels;		/* max. channels for PCM out */
 
-	अचिन्हित पूर्णांक codec_not_पढ़ोy_bits;	/* क्रम codec detection */
+	unsigned int codec_not_ready_bits;	/* for codec detection */
 
-	पूर्णांक spdअगर_over_aclink;		/* passed from the module option */
-	काष्ठा mutex खोलो_mutex;	/* playback खोलो mutex */
-पूर्ण;
+	int spdif_over_aclink;		/* passed from the module option */
+	struct mutex open_mutex;	/* playback open mutex */
+};
 
 
 /*
  */
-अटल स्थिर काष्ठा pci_device_id snd_atiixp_ids[] = अणु
-	अणु PCI_VDEVICE(ATI, 0x434d), 0 पूर्ण, /* SB200 */
-	अणु PCI_VDEVICE(ATI, 0x4378), 0 पूर्ण, /* SB400 */
-	अणु 0, पूर्ण
-पूर्ण;
+static const struct pci_device_id snd_atiixp_ids[] = {
+	{ PCI_VDEVICE(ATI, 0x434d), 0 }, /* SB200 */
+	{ PCI_VDEVICE(ATI, 0x4378), 0 }, /* SB400 */
+	{ 0, }
+};
 
 MODULE_DEVICE_TABLE(pci, snd_atiixp_ids);
 
@@ -261,327 +260,327 @@ MODULE_DEVICE_TABLE(pci, snd_atiixp_ids);
  */
 
 /*
- * update the bits of the given रेजिस्टर.
- * वापस 1 अगर the bits changed.
+ * update the bits of the given register.
+ * return 1 if the bits changed.
  */
-अटल पूर्णांक snd_atiixp_update_bits(काष्ठा atiixp_modem *chip, अचिन्हित पूर्णांक reg,
-				  अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक value)
-अणु
-	व्योम __iomem *addr = chip->remap_addr + reg;
-	अचिन्हित पूर्णांक data, old_data;
-	old_data = data = पढ़ोl(addr);
+static int snd_atiixp_update_bits(struct atiixp_modem *chip, unsigned int reg,
+				  unsigned int mask, unsigned int value)
+{
+	void __iomem *addr = chip->remap_addr + reg;
+	unsigned int data, old_data;
+	old_data = data = readl(addr);
 	data &= ~mask;
 	data |= value;
-	अगर (old_data == data)
-		वापस 0;
-	ग_लिखोl(data, addr);
-	वापस 1;
-पूर्ण
+	if (old_data == data)
+		return 0;
+	writel(data, addr);
+	return 1;
+}
 
 /*
- * macros क्रम easy use
+ * macros for easy use
  */
-#घोषणा atiixp_ग_लिखो(chip,reg,value) \
-	ग_लिखोl(value, chip->remap_addr + ATI_REG_##reg)
-#घोषणा atiixp_पढ़ो(chip,reg) \
-	पढ़ोl(chip->remap_addr + ATI_REG_##reg)
-#घोषणा atiixp_update(chip,reg,mask,val) \
+#define atiixp_write(chip,reg,value) \
+	writel(value, chip->remap_addr + ATI_REG_##reg)
+#define atiixp_read(chip,reg) \
+	readl(chip->remap_addr + ATI_REG_##reg)
+#define atiixp_update(chip,reg,mask,val) \
 	snd_atiixp_update_bits(chip, ATI_REG_##reg, mask, val)
 
 /*
  * handling DMA packets
  *
- * we allocate a linear buffer क्रम the DMA, and split it to  each packet.
+ * we allocate a linear buffer for the DMA, and split it to  each packet.
  * in a future version, a scatter-gather buffer should be implemented.
  */
 
-#घोषणा ATI_DESC_LIST_SIZE \
-	PAGE_ALIGN(ATI_MAX_DESCRIPTORS * माप(काष्ठा atiixp_dma_desc))
+#define ATI_DESC_LIST_SIZE \
+	PAGE_ALIGN(ATI_MAX_DESCRIPTORS * sizeof(struct atiixp_dma_desc))
 
 /*
- * build packets ring क्रम the given buffer size.
+ * build packets ring for the given buffer size.
  *
  * IXP handles the buffer descriptors, which are connected as a linked
  * list.  although we can change the list dynamically, in this version,
- * a अटल RING of buffer descriptors is used.
+ * a static RING of buffer descriptors is used.
  *
  * the ring is built in this function, and is set up to the hardware. 
  */
-अटल पूर्णांक atiixp_build_dma_packets(काष्ठा atiixp_modem *chip,
-				    काष्ठा atiixp_dma *dma,
-				    काष्ठा snd_pcm_substream *substream,
-				    अचिन्हित पूर्णांक periods,
-				    अचिन्हित पूर्णांक period_bytes)
-अणु
-	अचिन्हित पूर्णांक i;
+static int atiixp_build_dma_packets(struct atiixp_modem *chip,
+				    struct atiixp_dma *dma,
+				    struct snd_pcm_substream *substream,
+				    unsigned int periods,
+				    unsigned int period_bytes)
+{
+	unsigned int i;
 	u32 addr, desc_addr;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	अगर (periods > ATI_MAX_DESCRIPTORS)
-		वापस -ENOMEM;
+	if (periods > ATI_MAX_DESCRIPTORS)
+		return -ENOMEM;
 
-	अगर (dma->desc_buf.area == शून्य) अणु
-		अगर (snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV, &chip->pci->dev,
+	if (dma->desc_buf.area == NULL) {
+		if (snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV, &chip->pci->dev,
 					ATI_DESC_LIST_SIZE, &dma->desc_buf) < 0)
-			वापस -ENOMEM;
+			return -ENOMEM;
 		dma->period_bytes = dma->periods = 0; /* clear */
-	पूर्ण
+	}
 
-	अगर (dma->periods == periods && dma->period_bytes == period_bytes)
-		वापस 0;
+	if (dma->periods == periods && dma->period_bytes == period_bytes)
+		return 0;
 
-	/* reset DMA beक्रमe changing the descriptor table */
+	/* reset DMA before changing the descriptor table */
 	spin_lock_irqsave(&chip->reg_lock, flags);
-	ग_लिखोl(0, chip->remap_addr + dma->ops->llp_offset);
+	writel(0, chip->remap_addr + dma->ops->llp_offset);
 	dma->ops->enable_dma(chip, 0);
 	dma->ops->enable_dma(chip, 1);
 	spin_unlock_irqrestore(&chip->reg_lock, flags);
 
 	/* fill the entries */
-	addr = (u32)substream->runसमय->dma_addr;
+	addr = (u32)substream->runtime->dma_addr;
 	desc_addr = (u32)dma->desc_buf.addr;
-	क्रम (i = 0; i < periods; i++) अणु
-		काष्ठा atiixp_dma_desc *desc;
-		desc = &((काष्ठा atiixp_dma_desc *)dma->desc_buf.area)[i];
+	for (i = 0; i < periods; i++) {
+		struct atiixp_dma_desc *desc;
+		desc = &((struct atiixp_dma_desc *)dma->desc_buf.area)[i];
 		desc->addr = cpu_to_le32(addr);
 		desc->status = 0;
 		desc->size = period_bytes >> 2; /* in dwords */
-		desc_addr += माप(काष्ठा atiixp_dma_desc);
-		अगर (i == periods - 1)
+		desc_addr += sizeof(struct atiixp_dma_desc);
+		if (i == periods - 1)
 			desc->next = cpu_to_le32((u32)dma->desc_buf.addr);
-		अन्यथा
+		else
 			desc->next = cpu_to_le32(desc_addr);
 		addr += period_bytes;
-	पूर्ण
+	}
 
-	ग_लिखोl((u32)dma->desc_buf.addr | ATI_REG_LINKPTR_EN,
+	writel((u32)dma->desc_buf.addr | ATI_REG_LINKPTR_EN,
 	       chip->remap_addr + dma->ops->llp_offset);
 
 	dma->period_bytes = period_bytes;
 	dma->periods = periods;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * हटाओ the ring buffer and release it अगर asचिन्हित
+ * remove the ring buffer and release it if assigned
  */
-अटल व्योम atiixp_clear_dma_packets(काष्ठा atiixp_modem *chip,
-				     काष्ठा atiixp_dma *dma,
-				     काष्ठा snd_pcm_substream *substream)
-अणु
-	अगर (dma->desc_buf.area) अणु
-		ग_लिखोl(0, chip->remap_addr + dma->ops->llp_offset);
-		snd_dma_मुक्त_pages(&dma->desc_buf);
-		dma->desc_buf.area = शून्य;
-	पूर्ण
-पूर्ण
+static void atiixp_clear_dma_packets(struct atiixp_modem *chip,
+				     struct atiixp_dma *dma,
+				     struct snd_pcm_substream *substream)
+{
+	if (dma->desc_buf.area) {
+		writel(0, chip->remap_addr + dma->ops->llp_offset);
+		snd_dma_free_pages(&dma->desc_buf);
+		dma->desc_buf.area = NULL;
+	}
+}
 
 /*
- * AC97 पूर्णांकerface
+ * AC97 interface
  */
-अटल पूर्णांक snd_atiixp_acquire_codec(काष्ठा atiixp_modem *chip)
-अणु
-	पूर्णांक समयout = 1000;
+static int snd_atiixp_acquire_codec(struct atiixp_modem *chip)
+{
+	int timeout = 1000;
 
-	जबतक (atiixp_पढ़ो(chip, PHYS_OUT_ADDR) & ATI_REG_PHYS_OUT_ADDR_EN) अणु
-		अगर (! समयout--) अणु
+	while (atiixp_read(chip, PHYS_OUT_ADDR) & ATI_REG_PHYS_OUT_ADDR_EN) {
+		if (! timeout--) {
 			dev_warn(chip->card->dev, "codec acquire timeout\n");
-			वापस -EBUSY;
-		पूर्ण
+			return -EBUSY;
+		}
 		udelay(1);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल अचिन्हित लघु snd_atiixp_codec_पढ़ो(काष्ठा atiixp_modem *chip,
-					    अचिन्हित लघु codec,
-					    अचिन्हित लघु reg)
-अणु
-	अचिन्हित पूर्णांक data;
-	पूर्णांक समयout;
+static unsigned short snd_atiixp_codec_read(struct atiixp_modem *chip,
+					    unsigned short codec,
+					    unsigned short reg)
+{
+	unsigned int data;
+	int timeout;
 
-	अगर (snd_atiixp_acquire_codec(chip) < 0)
-		वापस 0xffff;
+	if (snd_atiixp_acquire_codec(chip) < 0)
+		return 0xffff;
 	data = (reg << ATI_REG_PHYS_OUT_ADDR_SHIFT) |
 		ATI_REG_PHYS_OUT_ADDR_EN |
 		ATI_REG_PHYS_OUT_RW |
 		codec;
-	atiixp_ग_लिखो(chip, PHYS_OUT_ADDR, data);
-	अगर (snd_atiixp_acquire_codec(chip) < 0)
-		वापस 0xffff;
-	समयout = 1000;
-	करो अणु
-		data = atiixp_पढ़ो(chip, PHYS_IN_ADDR);
-		अगर (data & ATI_REG_PHYS_IN_READ_FLAG)
-			वापस data >> ATI_REG_PHYS_IN_DATA_SHIFT;
+	atiixp_write(chip, PHYS_OUT_ADDR, data);
+	if (snd_atiixp_acquire_codec(chip) < 0)
+		return 0xffff;
+	timeout = 1000;
+	do {
+		data = atiixp_read(chip, PHYS_IN_ADDR);
+		if (data & ATI_REG_PHYS_IN_READ_FLAG)
+			return data >> ATI_REG_PHYS_IN_DATA_SHIFT;
 		udelay(1);
-	पूर्ण जबतक (--समयout);
-	/* समय out may happen during reset */
-	अगर (reg < 0x7c)
+	} while (--timeout);
+	/* time out may happen during reset */
+	if (reg < 0x7c)
 		dev_warn(chip->card->dev, "codec read timeout (reg %x)\n", reg);
-	वापस 0xffff;
-पूर्ण
+	return 0xffff;
+}
 
 
-अटल व्योम snd_atiixp_codec_ग_लिखो(काष्ठा atiixp_modem *chip,
-				   अचिन्हित लघु codec,
-				   अचिन्हित लघु reg, अचिन्हित लघु val)
-अणु
-	अचिन्हित पूर्णांक data;
+static void snd_atiixp_codec_write(struct atiixp_modem *chip,
+				   unsigned short codec,
+				   unsigned short reg, unsigned short val)
+{
+	unsigned int data;
     
-	अगर (snd_atiixp_acquire_codec(chip) < 0)
-		वापस;
-	data = ((अचिन्हित पूर्णांक)val << ATI_REG_PHYS_OUT_DATA_SHIFT) |
-		((अचिन्हित पूर्णांक)reg << ATI_REG_PHYS_OUT_ADDR_SHIFT) |
+	if (snd_atiixp_acquire_codec(chip) < 0)
+		return;
+	data = ((unsigned int)val << ATI_REG_PHYS_OUT_DATA_SHIFT) |
+		((unsigned int)reg << ATI_REG_PHYS_OUT_ADDR_SHIFT) |
 		ATI_REG_PHYS_OUT_ADDR_EN | codec;
-	atiixp_ग_लिखो(chip, PHYS_OUT_ADDR, data);
-पूर्ण
+	atiixp_write(chip, PHYS_OUT_ADDR, data);
+}
 
 
-अटल अचिन्हित लघु snd_atiixp_ac97_पढ़ो(काष्ठा snd_ac97 *ac97,
-					   अचिन्हित लघु reg)
-अणु
-	काष्ठा atiixp_modem *chip = ac97->निजी_data;
-	वापस snd_atiixp_codec_पढ़ो(chip, ac97->num, reg);
+static unsigned short snd_atiixp_ac97_read(struct snd_ac97 *ac97,
+					   unsigned short reg)
+{
+	struct atiixp_modem *chip = ac97->private_data;
+	return snd_atiixp_codec_read(chip, ac97->num, reg);
     
-पूर्ण
+}
 
-अटल व्योम snd_atiixp_ac97_ग_लिखो(काष्ठा snd_ac97 *ac97, अचिन्हित लघु reg,
-				  अचिन्हित लघु val)
-अणु
-	काष्ठा atiixp_modem *chip = ac97->निजी_data;
-	अगर (reg == AC97_GPIO_STATUS) अणु
-		atiixp_ग_लिखो(chip, MODEM_OUT_GPIO,
+static void snd_atiixp_ac97_write(struct snd_ac97 *ac97, unsigned short reg,
+				  unsigned short val)
+{
+	struct atiixp_modem *chip = ac97->private_data;
+	if (reg == AC97_GPIO_STATUS) {
+		atiixp_write(chip, MODEM_OUT_GPIO,
 			(val << ATI_REG_MODEM_OUT_GPIO_DATA_SHIFT) | ATI_REG_MODEM_OUT_GPIO_EN);
-		वापस;
-	पूर्ण
-	snd_atiixp_codec_ग_लिखो(chip, ac97->num, reg, val);
-पूर्ण
+		return;
+	}
+	snd_atiixp_codec_write(chip, ac97->num, reg, val);
+}
 
 /*
  * reset AC link
  */
-अटल पूर्णांक snd_atiixp_aclink_reset(काष्ठा atiixp_modem *chip)
-अणु
-	पूर्णांक समयout;
+static int snd_atiixp_aclink_reset(struct atiixp_modem *chip)
+{
+	int timeout;
 
-	/* reset घातerकरोewn */
-	अगर (atiixp_update(chip, CMD, ATI_REG_CMD_POWERDOWN, 0))
+	/* reset powerdoewn */
+	if (atiixp_update(chip, CMD, ATI_REG_CMD_POWERDOWN, 0))
 		udelay(10);
 
-	/* perक्रमm a software reset */
+	/* perform a software reset */
 	atiixp_update(chip, CMD, ATI_REG_CMD_AC_SOFT_RESET, ATI_REG_CMD_AC_SOFT_RESET);
-	atiixp_पढ़ो(chip, CMD);
+	atiixp_read(chip, CMD);
 	udelay(10);
 	atiixp_update(chip, CMD, ATI_REG_CMD_AC_SOFT_RESET, 0);
     
-	समयout = 10;
-	जबतक (! (atiixp_पढ़ो(chip, CMD) & ATI_REG_CMD_ACLINK_ACTIVE)) अणु
-		/* करो a hard reset */
+	timeout = 10;
+	while (! (atiixp_read(chip, CMD) & ATI_REG_CMD_ACLINK_ACTIVE)) {
+		/* do a hard reset */
 		atiixp_update(chip, CMD, ATI_REG_CMD_AC_SYNC|ATI_REG_CMD_AC_RESET,
 			      ATI_REG_CMD_AC_SYNC);
-		atiixp_पढ़ो(chip, CMD);
+		atiixp_read(chip, CMD);
 		msleep(1);
 		atiixp_update(chip, CMD, ATI_REG_CMD_AC_RESET, ATI_REG_CMD_AC_RESET);
-		अगर (!--समयout) अणु
+		if (!--timeout) {
 			dev_err(chip->card->dev, "codec reset timeout\n");
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	/* deनिश्चित RESET and निश्चित SYNC to make sure */
+	/* deassert RESET and assert SYNC to make sure */
 	atiixp_update(chip, CMD, ATI_REG_CMD_AC_SYNC|ATI_REG_CMD_AC_RESET,
 		      ATI_REG_CMD_AC_SYNC|ATI_REG_CMD_AC_RESET);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक snd_atiixp_aclink_करोwn(काष्ठा atiixp_modem *chip)
-अणु
-	// अगर (atiixp_पढ़ो(chip, MODEM_MIRROR) & 0x1) /* modem running, too? */
-	//	वापस -EBUSY;
+#ifdef CONFIG_PM_SLEEP
+static int snd_atiixp_aclink_down(struct atiixp_modem *chip)
+{
+	// if (atiixp_read(chip, MODEM_MIRROR) & 0x1) /* modem running, too? */
+	//	return -EBUSY;
 	atiixp_update(chip, CMD,
 		     ATI_REG_CMD_POWERDOWN | ATI_REG_CMD_AC_RESET,
 		     ATI_REG_CMD_POWERDOWN);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
 /*
- * स्वतः-detection of codecs
+ * auto-detection of codecs
  *
- * the IXP chip can generate पूर्णांकerrupts क्रम the non-existing codecs.
- * NEW_FRAME पूर्णांकerrupt is used to make sure that the पूर्णांकerrupt is generated
- * even अगर all three codecs are connected.
+ * the IXP chip can generate interrupts for the non-existing codecs.
+ * NEW_FRAME interrupt is used to make sure that the interrupt is generated
+ * even if all three codecs are connected.
  */
 
-#घोषणा ALL_CODEC_NOT_READY \
+#define ALL_CODEC_NOT_READY \
 	    (ATI_REG_ISR_CODEC0_NOT_READY |\
 	     ATI_REG_ISR_CODEC1_NOT_READY |\
 	     ATI_REG_ISR_CODEC2_NOT_READY)
-#घोषणा CODEC_CHECK_BITS (ALL_CODEC_NOT_READY|ATI_REG_ISR_NEW_FRAME)
+#define CODEC_CHECK_BITS (ALL_CODEC_NOT_READY|ATI_REG_ISR_NEW_FRAME)
 
-अटल पूर्णांक snd_atiixp_codec_detect(काष्ठा atiixp_modem *chip)
-अणु
-	पूर्णांक समयout;
+static int snd_atiixp_codec_detect(struct atiixp_modem *chip)
+{
+	int timeout;
 
-	chip->codec_not_पढ़ोy_bits = 0;
-	atiixp_ग_लिखो(chip, IER, CODEC_CHECK_BITS);
-	/* रुको क्रम the पूर्णांकerrupts */
-	समयout = 50;
-	जबतक (समयout-- > 0) अणु
+	chip->codec_not_ready_bits = 0;
+	atiixp_write(chip, IER, CODEC_CHECK_BITS);
+	/* wait for the interrupts */
+	timeout = 50;
+	while (timeout-- > 0) {
 		msleep(1);
-		अगर (chip->codec_not_पढ़ोy_bits)
-			अवरोध;
-	पूर्ण
-	atiixp_ग_लिखो(chip, IER, 0); /* disable irqs */
+		if (chip->codec_not_ready_bits)
+			break;
+	}
+	atiixp_write(chip, IER, 0); /* disable irqs */
 
-	अगर ((chip->codec_not_पढ़ोy_bits & ALL_CODEC_NOT_READY) == ALL_CODEC_NOT_READY) अणु
+	if ((chip->codec_not_ready_bits & ALL_CODEC_NOT_READY) == ALL_CODEC_NOT_READY) {
 		dev_err(chip->card->dev, "no codec detected!\n");
-		वापस -ENXIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ENXIO;
+	}
+	return 0;
+}
 
 
 /*
  * enable DMA and irqs
  */
-अटल पूर्णांक snd_atiixp_chip_start(काष्ठा atiixp_modem *chip)
-अणु
-	अचिन्हित पूर्णांक reg;
+static int snd_atiixp_chip_start(struct atiixp_modem *chip)
+{
+	unsigned int reg;
 
-	/* set up spdअगर, enable burst mode */
-	reg = atiixp_पढ़ो(chip, CMD);
+	/* set up spdif, enable burst mode */
+	reg = atiixp_read(chip, CMD);
 	reg |= ATI_REG_CMD_BURST_EN;
-	अगर(!(reg & ATI_REG_CMD_MODEM_PRESENT))
+	if(!(reg & ATI_REG_CMD_MODEM_PRESENT))
 		reg |= ATI_REG_CMD_MODEM_PRESENT;
-	atiixp_ग_लिखो(chip, CMD, reg);
+	atiixp_write(chip, CMD, reg);
 
-	/* clear all पूर्णांकerrupt source */
-	atiixp_ग_लिखो(chip, ISR, 0xffffffff);
+	/* clear all interrupt source */
+	atiixp_write(chip, ISR, 0xffffffff);
 	/* enable irqs */
-	atiixp_ग_लिखो(chip, IER,
+	atiixp_write(chip, IER,
 		     ATI_REG_IER_MODEM_STATUS_EN |
 		     ATI_REG_IER_MODEM_IN_XRUN_EN |
 		     ATI_REG_IER_MODEM_OUT1_XRUN_EN);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  * disable DMA and IRQs
  */
-अटल पूर्णांक snd_atiixp_chip_stop(काष्ठा atiixp_modem *chip)
-अणु
-	/* clear पूर्णांकerrupt source */
-	atiixp_ग_लिखो(chip, ISR, atiixp_पढ़ो(chip, ISR));
+static int snd_atiixp_chip_stop(struct atiixp_modem *chip)
+{
+	/* clear interrupt source */
+	atiixp_write(chip, ISR, atiixp_read(chip, ISR));
 	/* disable irqs */
-	atiixp_ग_लिखो(chip, IER, 0);
-	वापस 0;
-पूर्ण
+	atiixp_write(chip, IER, 0);
+	return 0;
+}
 
 
 /*
@@ -589,239 +588,239 @@ MODULE_DEVICE_TABLE(pci, snd_atiixp_ids);
  */
 
 /*
- * poपूर्णांकer callback simplly पढ़ोs XXX_DMA_DT_CUR रेजिस्टर as the current
+ * pointer callback simplly reads XXX_DMA_DT_CUR register as the current
  * position.  when SG-buffer is implemented, the offset must be calculated
  * correctly...
  */
-अटल snd_pcm_uframes_t snd_atiixp_pcm_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा atiixp_modem *chip = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा atiixp_dma *dma = runसमय->निजी_data;
-	अचिन्हित पूर्णांक curptr;
-	पूर्णांक समयout = 1000;
+static snd_pcm_uframes_t snd_atiixp_pcm_pointer(struct snd_pcm_substream *substream)
+{
+	struct atiixp_modem *chip = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct atiixp_dma *dma = runtime->private_data;
+	unsigned int curptr;
+	int timeout = 1000;
 
-	जबतक (समयout--) अणु
-		curptr = पढ़ोl(chip->remap_addr + dma->ops->dt_cur);
-		अगर (curptr < dma->buf_addr)
-			जारी;
+	while (timeout--) {
+		curptr = readl(chip->remap_addr + dma->ops->dt_cur);
+		if (curptr < dma->buf_addr)
+			continue;
 		curptr -= dma->buf_addr;
-		अगर (curptr >= dma->buf_bytes)
-			जारी;
-		वापस bytes_to_frames(runसमय, curptr);
-	पूर्ण
+		if (curptr >= dma->buf_bytes)
+			continue;
+		return bytes_to_frames(runtime, curptr);
+	}
 	dev_dbg(chip->card->dev, "invalid DMA pointer read 0x%x (buf=%x)\n",
-		   पढ़ोl(chip->remap_addr + dma->ops->dt_cur), dma->buf_addr);
-	वापस 0;
-पूर्ण
+		   readl(chip->remap_addr + dma->ops->dt_cur), dma->buf_addr);
+	return 0;
+}
 
 /*
  * XRUN detected, and stop the PCM substream
  */
-अटल व्योम snd_atiixp_xrun_dma(काष्ठा atiixp_modem *chip,
-				काष्ठा atiixp_dma *dma)
-अणु
-	अगर (! dma->substream || ! dma->running)
-		वापस;
+static void snd_atiixp_xrun_dma(struct atiixp_modem *chip,
+				struct atiixp_dma *dma)
+{
+	if (! dma->substream || ! dma->running)
+		return;
 	dev_dbg(chip->card->dev, "XRUN detected (DMA %d)\n", dma->ops->type);
 	snd_pcm_stop_xrun(dma->substream);
-पूर्ण
+}
 
 /*
  * the period ack.  update the substream.
  */
-अटल व्योम snd_atiixp_update_dma(काष्ठा atiixp_modem *chip,
-				  काष्ठा atiixp_dma *dma)
-अणु
-	अगर (! dma->substream || ! dma->running)
-		वापस;
+static void snd_atiixp_update_dma(struct atiixp_modem *chip,
+				  struct atiixp_dma *dma)
+{
+	if (! dma->substream || ! dma->running)
+		return;
 	snd_pcm_period_elapsed(dma->substream);
-पूर्ण
+}
 
-/* set BUS_BUSY पूर्णांकerrupt bit अगर any DMA is running */
+/* set BUS_BUSY interrupt bit if any DMA is running */
 /* call with spinlock held */
-अटल व्योम snd_atiixp_check_bus_busy(काष्ठा atiixp_modem *chip)
-अणु
-	अचिन्हित पूर्णांक bus_busy;
-	अगर (atiixp_पढ़ो(chip, CMD) & (ATI_REG_CMD_MODEM_SEND1_EN |
+static void snd_atiixp_check_bus_busy(struct atiixp_modem *chip)
+{
+	unsigned int bus_busy;
+	if (atiixp_read(chip, CMD) & (ATI_REG_CMD_MODEM_SEND1_EN |
 				      ATI_REG_CMD_MODEM_RECEIVE_EN))
 		bus_busy = ATI_REG_IER_MODEM_SET_BUS_BUSY;
-	अन्यथा
+	else
 		bus_busy = 0;
 	atiixp_update(chip, IER, ATI_REG_IER_MODEM_SET_BUS_BUSY, bus_busy);
-पूर्ण
+}
 
 /* common trigger callback
  * calling the lowlevel callbacks in it
  */
-अटल पूर्णांक snd_atiixp_pcm_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
-अणु
-	काष्ठा atiixp_modem *chip = snd_pcm_substream_chip(substream);
-	काष्ठा atiixp_dma *dma = substream->runसमय->निजी_data;
-	पूर्णांक err = 0;
+static int snd_atiixp_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
+{
+	struct atiixp_modem *chip = snd_pcm_substream_chip(substream);
+	struct atiixp_dma *dma = substream->runtime->private_data;
+	int err = 0;
 
-	अगर (snd_BUG_ON(!dma->ops->enable_transfer ||
+	if (snd_BUG_ON(!dma->ops->enable_transfer ||
 		       !dma->ops->flush_dma))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	spin_lock(&chip->reg_lock);
-	चयन(cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
+	switch(cmd) {
+	case SNDRV_PCM_TRIGGER_START:
 		dma->ops->enable_transfer(chip, 1);
 		dma->running = 1;
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
 		dma->ops->enable_transfer(chip, 0);
 		dma->running = 0;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = -EINVAL;
-		अवरोध;
-	पूर्ण
-	अगर (! err) अणु
+		break;
+	}
+	if (! err) {
 	snd_atiixp_check_bus_busy(chip);
-	अगर (cmd == SNDRV_PCM_TRIGGER_STOP) अणु
+	if (cmd == SNDRV_PCM_TRIGGER_STOP) {
 		dma->ops->flush_dma(chip);
 		snd_atiixp_check_bus_busy(chip);
-	पूर्ण
-	पूर्ण
+	}
+	}
 	spin_unlock(&chip->reg_lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
 /*
- * lowlevel callbacks क्रम each DMA type
+ * lowlevel callbacks for each DMA type
  *
  * every callback is supposed to be called in chip->reg_lock spinlock
  */
 
 /* flush FIFO of analog OUT DMA */
-अटल व्योम atiixp_out_flush_dma(काष्ठा atiixp_modem *chip)
-अणु
-	atiixp_ग_लिखो(chip, MODEM_FIFO_FLUSH, ATI_REG_MODEM_FIFO_OUT1_FLUSH);
-पूर्ण
+static void atiixp_out_flush_dma(struct atiixp_modem *chip)
+{
+	atiixp_write(chip, MODEM_FIFO_FLUSH, ATI_REG_MODEM_FIFO_OUT1_FLUSH);
+}
 
 /* enable/disable analog OUT DMA */
-अटल व्योम atiixp_out_enable_dma(काष्ठा atiixp_modem *chip, पूर्णांक on)
-अणु
-	अचिन्हित पूर्णांक data;
-	data = atiixp_पढ़ो(chip, CMD);
-	अगर (on) अणु
-		अगर (data & ATI_REG_CMD_MODEM_OUT_DMA1_EN)
-			वापस;
+static void atiixp_out_enable_dma(struct atiixp_modem *chip, int on)
+{
+	unsigned int data;
+	data = atiixp_read(chip, CMD);
+	if (on) {
+		if (data & ATI_REG_CMD_MODEM_OUT_DMA1_EN)
+			return;
 		atiixp_out_flush_dma(chip);
 		data |= ATI_REG_CMD_MODEM_OUT_DMA1_EN;
-	पूर्ण अन्यथा
+	} else
 		data &= ~ATI_REG_CMD_MODEM_OUT_DMA1_EN;
-	atiixp_ग_लिखो(chip, CMD, data);
-पूर्ण
+	atiixp_write(chip, CMD, data);
+}
 
 /* start/stop transfer over OUT DMA */
-अटल व्योम atiixp_out_enable_transfer(काष्ठा atiixp_modem *chip, पूर्णांक on)
-अणु
+static void atiixp_out_enable_transfer(struct atiixp_modem *chip, int on)
+{
 	atiixp_update(chip, CMD, ATI_REG_CMD_MODEM_SEND1_EN,
 		      on ? ATI_REG_CMD_MODEM_SEND1_EN : 0);
-पूर्ण
+}
 
 /* enable/disable analog IN DMA */
-अटल व्योम atiixp_in_enable_dma(काष्ठा atiixp_modem *chip, पूर्णांक on)
-अणु
+static void atiixp_in_enable_dma(struct atiixp_modem *chip, int on)
+{
 	atiixp_update(chip, CMD, ATI_REG_CMD_MODEM_IN_DMA_EN,
 		      on ? ATI_REG_CMD_MODEM_IN_DMA_EN : 0);
-पूर्ण
+}
 
 /* start/stop analog IN DMA */
-अटल व्योम atiixp_in_enable_transfer(काष्ठा atiixp_modem *chip, पूर्णांक on)
-अणु
-	अगर (on) अणु
-		अचिन्हित पूर्णांक data = atiixp_पढ़ो(chip, CMD);
-		अगर (! (data & ATI_REG_CMD_MODEM_RECEIVE_EN)) अणु
+static void atiixp_in_enable_transfer(struct atiixp_modem *chip, int on)
+{
+	if (on) {
+		unsigned int data = atiixp_read(chip, CMD);
+		if (! (data & ATI_REG_CMD_MODEM_RECEIVE_EN)) {
 			data |= ATI_REG_CMD_MODEM_RECEIVE_EN;
-			atiixp_ग_लिखो(chip, CMD, data);
-		पूर्ण
-	पूर्ण अन्यथा
+			atiixp_write(chip, CMD, data);
+		}
+	} else
 		atiixp_update(chip, CMD, ATI_REG_CMD_MODEM_RECEIVE_EN, 0);
-पूर्ण
+}
 
 /* flush FIFO of analog IN DMA */
-अटल व्योम atiixp_in_flush_dma(काष्ठा atiixp_modem *chip)
-अणु
-	atiixp_ग_लिखो(chip, MODEM_FIFO_FLUSH, ATI_REG_MODEM_FIFO_IN_FLUSH);
-पूर्ण
+static void atiixp_in_flush_dma(struct atiixp_modem *chip)
+{
+	atiixp_write(chip, MODEM_FIFO_FLUSH, ATI_REG_MODEM_FIFO_IN_FLUSH);
+}
 
-/* set up slots and क्रमmats क्रम analog OUT */
-अटल पूर्णांक snd_atiixp_playback_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा atiixp_modem *chip = snd_pcm_substream_chip(substream);
-	अचिन्हित पूर्णांक data;
+/* set up slots and formats for analog OUT */
+static int snd_atiixp_playback_prepare(struct snd_pcm_substream *substream)
+{
+	struct atiixp_modem *chip = snd_pcm_substream_chip(substream);
+	unsigned int data;
 
 	spin_lock_irq(&chip->reg_lock);
 	/* set output threshold */
-	data = atiixp_पढ़ो(chip, MODEM_OUT_FIFO);
+	data = atiixp_read(chip, MODEM_OUT_FIFO);
 	data &= ~ATI_REG_MODEM_OUT1_DMA_THRESHOLD_MASK;
 	data |= 0x04 << ATI_REG_MODEM_OUT1_DMA_THRESHOLD_SHIFT;
-	atiixp_ग_लिखो(chip, MODEM_OUT_FIFO, data);
+	atiixp_write(chip, MODEM_OUT_FIFO, data);
 	spin_unlock_irq(&chip->reg_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* set up slots and क्रमmats क्रम analog IN */
-अटल पूर्णांक snd_atiixp_capture_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	वापस 0;
-पूर्ण
+/* set up slots and formats for analog IN */
+static int snd_atiixp_capture_prepare(struct snd_pcm_substream *substream)
+{
+	return 0;
+}
 
 /*
  * hw_params - allocate the buffer and set up buffer descriptors
  */
-अटल पूर्णांक snd_atiixp_pcm_hw_params(काष्ठा snd_pcm_substream *substream,
-				   काष्ठा snd_pcm_hw_params *hw_params)
-अणु
-	काष्ठा atiixp_modem *chip = snd_pcm_substream_chip(substream);
-	काष्ठा atiixp_dma *dma = substream->runसमय->निजी_data;
-	पूर्णांक err;
-	पूर्णांक i;
+static int snd_atiixp_pcm_hw_params(struct snd_pcm_substream *substream,
+				   struct snd_pcm_hw_params *hw_params)
+{
+	struct atiixp_modem *chip = snd_pcm_substream_chip(substream);
+	struct atiixp_dma *dma = substream->runtime->private_data;
+	int err;
+	int i;
 
-	dma->buf_addr = substream->runसमय->dma_addr;
+	dma->buf_addr = substream->runtime->dma_addr;
 	dma->buf_bytes = params_buffer_bytes(hw_params);
 
 	err = atiixp_build_dma_packets(chip, dma, substream,
 				       params_periods(hw_params),
 				       params_period_bytes(hw_params));
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	/* set up modem rate */
-	क्रम (i = 0; i < NUM_ATI_CODECS; i++) अणु
-		अगर (! chip->ac97[i])
-			जारी;
-		snd_ac97_ग_लिखो(chip->ac97[i], AC97_LINE1_RATE, params_rate(hw_params));
-		snd_ac97_ग_लिखो(chip->ac97[i], AC97_LINE1_LEVEL, 0);
-	पूर्ण
+	for (i = 0; i < NUM_ATI_CODECS; i++) {
+		if (! chip->ac97[i])
+			continue;
+		snd_ac97_write(chip->ac97[i], AC97_LINE1_RATE, params_rate(hw_params));
+		snd_ac97_write(chip->ac97[i], AC97_LINE1_LEVEL, 0);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक snd_atiixp_pcm_hw_मुक्त(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा atiixp_modem *chip = snd_pcm_substream_chip(substream);
-	काष्ठा atiixp_dma *dma = substream->runसमय->निजी_data;
+static int snd_atiixp_pcm_hw_free(struct snd_pcm_substream *substream)
+{
+	struct atiixp_modem *chip = snd_pcm_substream_chip(substream);
+	struct atiixp_dma *dma = substream->runtime->private_data;
 
 	atiixp_clear_dma_packets(chip, dma, substream);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
- * pcm hardware definition, identical क्रम all DMA types
+ * pcm hardware definition, identical for all DMA types
  */
-अटल स्थिर काष्ठा snd_pcm_hardware snd_atiixp_pcm_hw =
-अणु
+static const struct snd_pcm_hardware snd_atiixp_pcm_hw =
+{
 	.info =			(SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_INTERLEAVED |
 				 SNDRV_PCM_INFO_BLOCK_TRANSFER |
 				 SNDRV_PCM_INFO_MMAP_VALID),
-	.क्रमmats =		SNDRV_PCM_FMTBIT_S16_LE,
+	.formats =		SNDRV_PCM_FMTBIT_S16_LE,
 	.rates =		(SNDRV_PCM_RATE_8000 |
 				 SNDRV_PCM_RATE_16000 |
 				 SNDRV_PCM_RATE_KNOT),
@@ -834,469 +833,469 @@ MODULE_DEVICE_TABLE(pci, snd_atiixp_ids);
 	.period_bytes_max =	128 * 1024,
 	.periods_min =		2,
 	.periods_max =		ATI_MAX_DESCRIPTORS,
-पूर्ण;
+};
 
-अटल पूर्णांक snd_atiixp_pcm_खोलो(काष्ठा snd_pcm_substream *substream,
-			       काष्ठा atiixp_dma *dma, पूर्णांक pcm_type)
-अणु
-	काष्ठा atiixp_modem *chip = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	पूर्णांक err;
-	अटल स्थिर अचिन्हित पूर्णांक rates[] = अणु 8000,  9600, 12000, 16000 पूर्ण;
-	अटल स्थिर काष्ठा snd_pcm_hw_स्थिरraपूर्णांक_list hw_स्थिरraपूर्णांकs_rates = अणु
+static int snd_atiixp_pcm_open(struct snd_pcm_substream *substream,
+			       struct atiixp_dma *dma, int pcm_type)
+{
+	struct atiixp_modem *chip = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	int err;
+	static const unsigned int rates[] = { 8000,  9600, 12000, 16000 };
+	static const struct snd_pcm_hw_constraint_list hw_constraints_rates = {
 		.count = ARRAY_SIZE(rates),
 		.list = rates,
 		.mask = 0,
-	पूर्ण;
+	};
 
-	अगर (snd_BUG_ON(!dma->ops || !dma->ops->enable_dma))
-		वापस -EINVAL;
+	if (snd_BUG_ON(!dma->ops || !dma->ops->enable_dma))
+		return -EINVAL;
 
-	अगर (dma->खोलोed)
-		वापस -EBUSY;
+	if (dma->opened)
+		return -EBUSY;
 	dma->substream = substream;
-	runसमय->hw = snd_atiixp_pcm_hw;
+	runtime->hw = snd_atiixp_pcm_hw;
 	dma->ac97_pcm_type = pcm_type;
-	अगर ((err = snd_pcm_hw_स्थिरraपूर्णांक_list(runसमय, 0,
+	if ((err = snd_pcm_hw_constraint_list(runtime, 0,
 					      SNDRV_PCM_HW_PARAM_RATE,
-					      &hw_स्थिरraपूर्णांकs_rates)) < 0)
-		वापस err;
-	अगर ((err = snd_pcm_hw_स्थिरraपूर्णांक_पूर्णांकeger(runसमय,
+					      &hw_constraints_rates)) < 0)
+		return err;
+	if ((err = snd_pcm_hw_constraint_integer(runtime,
 						 SNDRV_PCM_HW_PARAM_PERIODS)) < 0)
-		वापस err;
-	runसमय->निजी_data = dma;
+		return err;
+	runtime->private_data = dma;
 
 	/* enable DMA bits */
 	spin_lock_irq(&chip->reg_lock);
 	dma->ops->enable_dma(chip, 1);
 	spin_unlock_irq(&chip->reg_lock);
-	dma->खोलोed = 1;
+	dma->opened = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_atiixp_pcm_बंद(काष्ठा snd_pcm_substream *substream,
-				काष्ठा atiixp_dma *dma)
-अणु
-	काष्ठा atiixp_modem *chip = snd_pcm_substream_chip(substream);
+static int snd_atiixp_pcm_close(struct snd_pcm_substream *substream,
+				struct atiixp_dma *dma)
+{
+	struct atiixp_modem *chip = snd_pcm_substream_chip(substream);
 	/* disable DMA bits */
-	अगर (snd_BUG_ON(!dma->ops || !dma->ops->enable_dma))
-		वापस -EINVAL;
+	if (snd_BUG_ON(!dma->ops || !dma->ops->enable_dma))
+		return -EINVAL;
 	spin_lock_irq(&chip->reg_lock);
 	dma->ops->enable_dma(chip, 0);
 	spin_unlock_irq(&chip->reg_lock);
-	dma->substream = शून्य;
-	dma->खोलोed = 0;
-	वापस 0;
-पूर्ण
+	dma->substream = NULL;
+	dma->opened = 0;
+	return 0;
+}
 
 /*
  */
-अटल पूर्णांक snd_atiixp_playback_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा atiixp_modem *chip = snd_pcm_substream_chip(substream);
-	पूर्णांक err;
+static int snd_atiixp_playback_open(struct snd_pcm_substream *substream)
+{
+	struct atiixp_modem *chip = snd_pcm_substream_chip(substream);
+	int err;
 
-	mutex_lock(&chip->खोलो_mutex);
-	err = snd_atiixp_pcm_खोलो(substream, &chip->dmas[ATI_DMA_PLAYBACK], 0);
-	mutex_unlock(&chip->खोलो_mutex);
-	अगर (err < 0)
-		वापस err;
-	वापस 0;
-पूर्ण
+	mutex_lock(&chip->open_mutex);
+	err = snd_atiixp_pcm_open(substream, &chip->dmas[ATI_DMA_PLAYBACK], 0);
+	mutex_unlock(&chip->open_mutex);
+	if (err < 0)
+		return err;
+	return 0;
+}
 
-अटल पूर्णांक snd_atiixp_playback_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा atiixp_modem *chip = snd_pcm_substream_chip(substream);
-	पूर्णांक err;
-	mutex_lock(&chip->खोलो_mutex);
-	err = snd_atiixp_pcm_बंद(substream, &chip->dmas[ATI_DMA_PLAYBACK]);
-	mutex_unlock(&chip->खोलो_mutex);
-	वापस err;
-पूर्ण
+static int snd_atiixp_playback_close(struct snd_pcm_substream *substream)
+{
+	struct atiixp_modem *chip = snd_pcm_substream_chip(substream);
+	int err;
+	mutex_lock(&chip->open_mutex);
+	err = snd_atiixp_pcm_close(substream, &chip->dmas[ATI_DMA_PLAYBACK]);
+	mutex_unlock(&chip->open_mutex);
+	return err;
+}
 
-अटल पूर्णांक snd_atiixp_capture_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा atiixp_modem *chip = snd_pcm_substream_chip(substream);
-	वापस snd_atiixp_pcm_खोलो(substream, &chip->dmas[ATI_DMA_CAPTURE], 1);
-पूर्ण
+static int snd_atiixp_capture_open(struct snd_pcm_substream *substream)
+{
+	struct atiixp_modem *chip = snd_pcm_substream_chip(substream);
+	return snd_atiixp_pcm_open(substream, &chip->dmas[ATI_DMA_CAPTURE], 1);
+}
 
-अटल पूर्णांक snd_atiixp_capture_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा atiixp_modem *chip = snd_pcm_substream_chip(substream);
-	वापस snd_atiixp_pcm_बंद(substream, &chip->dmas[ATI_DMA_CAPTURE]);
-पूर्ण
+static int snd_atiixp_capture_close(struct snd_pcm_substream *substream)
+{
+	struct atiixp_modem *chip = snd_pcm_substream_chip(substream);
+	return snd_atiixp_pcm_close(substream, &chip->dmas[ATI_DMA_CAPTURE]);
+}
 
 
 /* AC97 playback */
-अटल स्थिर काष्ठा snd_pcm_ops snd_atiixp_playback_ops = अणु
-	.खोलो =		snd_atiixp_playback_खोलो,
-	.बंद =	snd_atiixp_playback_बंद,
+static const struct snd_pcm_ops snd_atiixp_playback_ops = {
+	.open =		snd_atiixp_playback_open,
+	.close =	snd_atiixp_playback_close,
 	.hw_params =	snd_atiixp_pcm_hw_params,
-	.hw_मुक्त =	snd_atiixp_pcm_hw_मुक्त,
+	.hw_free =	snd_atiixp_pcm_hw_free,
 	.prepare =	snd_atiixp_playback_prepare,
 	.trigger =	snd_atiixp_pcm_trigger,
-	.poपूर्णांकer =	snd_atiixp_pcm_poपूर्णांकer,
-पूर्ण;
+	.pointer =	snd_atiixp_pcm_pointer,
+};
 
 /* AC97 capture */
-अटल स्थिर काष्ठा snd_pcm_ops snd_atiixp_capture_ops = अणु
-	.खोलो =		snd_atiixp_capture_खोलो,
-	.बंद =	snd_atiixp_capture_बंद,
+static const struct snd_pcm_ops snd_atiixp_capture_ops = {
+	.open =		snd_atiixp_capture_open,
+	.close =	snd_atiixp_capture_close,
 	.hw_params =	snd_atiixp_pcm_hw_params,
-	.hw_मुक्त =	snd_atiixp_pcm_hw_मुक्त,
+	.hw_free =	snd_atiixp_pcm_hw_free,
 	.prepare =	snd_atiixp_capture_prepare,
 	.trigger =	snd_atiixp_pcm_trigger,
-	.poपूर्णांकer =	snd_atiixp_pcm_poपूर्णांकer,
-पूर्ण;
+	.pointer =	snd_atiixp_pcm_pointer,
+};
 
-अटल स्थिर काष्ठा atiixp_dma_ops snd_atiixp_playback_dma_ops = अणु
+static const struct atiixp_dma_ops snd_atiixp_playback_dma_ops = {
 	.type = ATI_DMA_PLAYBACK,
 	.llp_offset = ATI_REG_MODEM_OUT_DMA1_LINKPTR,
 	.dt_cur = ATI_REG_MODEM_OUT_DMA1_DT_CUR,
 	.enable_dma = atiixp_out_enable_dma,
 	.enable_transfer = atiixp_out_enable_transfer,
 	.flush_dma = atiixp_out_flush_dma,
-पूर्ण;
+};
 	
-अटल स्थिर काष्ठा atiixp_dma_ops snd_atiixp_capture_dma_ops = अणु
+static const struct atiixp_dma_ops snd_atiixp_capture_dma_ops = {
 	.type = ATI_DMA_CAPTURE,
 	.llp_offset = ATI_REG_MODEM_IN_DMA_LINKPTR,
 	.dt_cur = ATI_REG_MODEM_IN_DMA_DT_CUR,
 	.enable_dma = atiixp_in_enable_dma,
 	.enable_transfer = atiixp_in_enable_transfer,
 	.flush_dma = atiixp_in_flush_dma,
-पूर्ण;
+};
 
-अटल पूर्णांक snd_atiixp_pcm_new(काष्ठा atiixp_modem *chip)
-अणु
-	काष्ठा snd_pcm *pcm;
-	पूर्णांक err;
+static int snd_atiixp_pcm_new(struct atiixp_modem *chip)
+{
+	struct snd_pcm *pcm;
+	int err;
 
-	/* initialize स्थिरants */
+	/* initialize constants */
 	chip->dmas[ATI_DMA_PLAYBACK].ops = &snd_atiixp_playback_dma_ops;
 	chip->dmas[ATI_DMA_CAPTURE].ops = &snd_atiixp_capture_dma_ops;
 
 	/* PCM #0: analog I/O */
 	err = snd_pcm_new(chip->card, "ATI IXP MC97", ATI_PCMDEV_ANALOG, 1, 1, &pcm);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &snd_atiixp_playback_ops);
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &snd_atiixp_capture_ops);
 	pcm->dev_class = SNDRV_PCM_CLASS_MODEM;
-	pcm->निजी_data = chip;
-	म_नकल(pcm->name, "ATI IXP MC97");
+	pcm->private_data = chip;
+	strcpy(pcm->name, "ATI IXP MC97");
 	chip->pcmdevs[ATI_PCMDEV_ANALOG] = pcm;
 
 	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_DEV,
 				       &chip->pci->dev, 64*1024, 128*1024);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 
 /*
- * पूर्णांकerrupt handler
+ * interrupt handler
  */
-अटल irqवापस_t snd_atiixp_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा atiixp_modem *chip = dev_id;
-	अचिन्हित पूर्णांक status;
+static irqreturn_t snd_atiixp_interrupt(int irq, void *dev_id)
+{
+	struct atiixp_modem *chip = dev_id;
+	unsigned int status;
 
-	status = atiixp_पढ़ो(chip, ISR);
+	status = atiixp_read(chip, ISR);
 
-	अगर (! status)
-		वापस IRQ_NONE;
+	if (! status)
+		return IRQ_NONE;
 
 	/* process audio DMA */
-	अगर (status & ATI_REG_ISR_MODEM_OUT1_XRUN)
+	if (status & ATI_REG_ISR_MODEM_OUT1_XRUN)
 		snd_atiixp_xrun_dma(chip,  &chip->dmas[ATI_DMA_PLAYBACK]);
-	अन्यथा अगर (status & ATI_REG_ISR_MODEM_OUT1_STATUS)
+	else if (status & ATI_REG_ISR_MODEM_OUT1_STATUS)
 		snd_atiixp_update_dma(chip, &chip->dmas[ATI_DMA_PLAYBACK]);
-	अगर (status & ATI_REG_ISR_MODEM_IN_XRUN)
+	if (status & ATI_REG_ISR_MODEM_IN_XRUN)
 		snd_atiixp_xrun_dma(chip,  &chip->dmas[ATI_DMA_CAPTURE]);
-	अन्यथा अगर (status & ATI_REG_ISR_MODEM_IN_STATUS)
+	else if (status & ATI_REG_ISR_MODEM_IN_STATUS)
 		snd_atiixp_update_dma(chip, &chip->dmas[ATI_DMA_CAPTURE]);
 
-	/* क्रम codec detection */
-	अगर (status & CODEC_CHECK_BITS) अणु
-		अचिन्हित पूर्णांक detected;
+	/* for codec detection */
+	if (status & CODEC_CHECK_BITS) {
+		unsigned int detected;
 		detected = status & CODEC_CHECK_BITS;
 		spin_lock(&chip->reg_lock);
-		chip->codec_not_पढ़ोy_bits |= detected;
+		chip->codec_not_ready_bits |= detected;
 		atiixp_update(chip, IER, detected, 0); /* disable the detected irqs */
 		spin_unlock(&chip->reg_lock);
-	पूर्ण
+	}
 
 	/* ack */
-	atiixp_ग_लिखो(chip, ISR, status);
+	atiixp_write(chip, ISR, status);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 
 /*
  * ac97 mixer section
  */
 
-अटल पूर्णांक snd_atiixp_mixer_new(काष्ठा atiixp_modem *chip, पूर्णांक घड़ी)
-अणु
-	काष्ठा snd_ac97_bus *pbus;
-	काष्ठा snd_ac97_ढाँचा ac97;
-	पूर्णांक i, err;
-	पूर्णांक codec_count;
-	अटल स्थिर काष्ठा snd_ac97_bus_ops ops = अणु
-		.ग_लिखो = snd_atiixp_ac97_ग_लिखो,
-		.पढ़ो = snd_atiixp_ac97_पढ़ो,
-	पूर्ण;
-	अटल स्थिर अचिन्हित पूर्णांक codec_skip[NUM_ATI_CODECS] = अणु
+static int snd_atiixp_mixer_new(struct atiixp_modem *chip, int clock)
+{
+	struct snd_ac97_bus *pbus;
+	struct snd_ac97_template ac97;
+	int i, err;
+	int codec_count;
+	static const struct snd_ac97_bus_ops ops = {
+		.write = snd_atiixp_ac97_write,
+		.read = snd_atiixp_ac97_read,
+	};
+	static const unsigned int codec_skip[NUM_ATI_CODECS] = {
 		ATI_REG_ISR_CODEC0_NOT_READY,
 		ATI_REG_ISR_CODEC1_NOT_READY,
 		ATI_REG_ISR_CODEC2_NOT_READY,
-	पूर्ण;
+	};
 
-	अगर (snd_atiixp_codec_detect(chip) < 0)
-		वापस -ENXIO;
+	if (snd_atiixp_codec_detect(chip) < 0)
+		return -ENXIO;
 
-	अगर ((err = snd_ac97_bus(chip->card, 0, &ops, chip, &pbus)) < 0)
-		वापस err;
-	pbus->घड़ी = घड़ी;
+	if ((err = snd_ac97_bus(chip->card, 0, &ops, chip, &pbus)) < 0)
+		return err;
+	pbus->clock = clock;
 	chip->ac97_bus = pbus;
 
 	codec_count = 0;
-	क्रम (i = 0; i < NUM_ATI_CODECS; i++) अणु
-		अगर (chip->codec_not_पढ़ोy_bits & codec_skip[i])
-			जारी;
-		स_रखो(&ac97, 0, माप(ac97));
-		ac97.निजी_data = chip;
+	for (i = 0; i < NUM_ATI_CODECS; i++) {
+		if (chip->codec_not_ready_bits & codec_skip[i])
+			continue;
+		memset(&ac97, 0, sizeof(ac97));
+		ac97.private_data = chip;
 		ac97.pci = chip->pci;
 		ac97.num = i;
 		ac97.scaps = AC97_SCAP_SKIP_AUDIO | AC97_SCAP_POWER_SAVE;
-		अगर ((err = snd_ac97_mixer(pbus, &ac97, &chip->ac97[i])) < 0) अणु
-			chip->ac97[i] = शून्य; /* to be sure */
+		if ((err = snd_ac97_mixer(pbus, &ac97, &chip->ac97[i])) < 0) {
+			chip->ac97[i] = NULL; /* to be sure */
 			dev_dbg(chip->card->dev,
 				"codec %d not available for modem\n", i);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		codec_count++;
-	पूर्ण
+	}
 
-	अगर (! codec_count) अणु
+	if (! codec_count) {
 		dev_err(chip->card->dev, "no codec available\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* snd_ac97_tune_hardware(chip->ac97, ac97_quirks); */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 /*
- * घातer management
+ * power management
  */
-अटल पूर्णांक snd_atiixp_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा snd_card *card = dev_get_drvdata(dev);
-	काष्ठा atiixp_modem *chip = card->निजी_data;
-	पूर्णांक i;
+static int snd_atiixp_suspend(struct device *dev)
+{
+	struct snd_card *card = dev_get_drvdata(dev);
+	struct atiixp_modem *chip = card->private_data;
+	int i;
 
-	snd_घातer_change_state(card, SNDRV_CTL_POWER_D3hot);
-	क्रम (i = 0; i < NUM_ATI_CODECS; i++)
+	snd_power_change_state(card, SNDRV_CTL_POWER_D3hot);
+	for (i = 0; i < NUM_ATI_CODECS; i++)
 		snd_ac97_suspend(chip->ac97[i]);
-	snd_atiixp_aclink_करोwn(chip);
+	snd_atiixp_aclink_down(chip);
 	snd_atiixp_chip_stop(chip);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_atiixp_resume(काष्ठा device *dev)
-अणु
-	काष्ठा snd_card *card = dev_get_drvdata(dev);
-	काष्ठा atiixp_modem *chip = card->निजी_data;
-	पूर्णांक i;
+static int snd_atiixp_resume(struct device *dev)
+{
+	struct snd_card *card = dev_get_drvdata(dev);
+	struct atiixp_modem *chip = card->private_data;
+	int i;
 
 	snd_atiixp_aclink_reset(chip);
 	snd_atiixp_chip_start(chip);
 
-	क्रम (i = 0; i < NUM_ATI_CODECS; i++)
+	for (i = 0; i < NUM_ATI_CODECS; i++)
 		snd_ac97_resume(chip->ac97[i]);
 
-	snd_घातer_change_state(card, SNDRV_CTL_POWER_D0);
-	वापस 0;
-पूर्ण
+	snd_power_change_state(card, SNDRV_CTL_POWER_D0);
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(snd_atiixp_pm, snd_atiixp_suspend, snd_atiixp_resume);
-#घोषणा SND_ATIIXP_PM_OPS	&snd_atiixp_pm
-#अन्यथा
-#घोषणा SND_ATIIXP_PM_OPS	शून्य
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+static SIMPLE_DEV_PM_OPS(snd_atiixp_pm, snd_atiixp_suspend, snd_atiixp_resume);
+#define SND_ATIIXP_PM_OPS	&snd_atiixp_pm
+#else
+#define SND_ATIIXP_PM_OPS	NULL
+#endif /* CONFIG_PM_SLEEP */
 
 /*
- * proc पूर्णांकerface क्रम रेजिस्टर dump
+ * proc interface for register dump
  */
 
-अटल व्योम snd_atiixp_proc_पढ़ो(काष्ठा snd_info_entry *entry,
-				 काष्ठा snd_info_buffer *buffer)
-अणु
-	काष्ठा atiixp_modem *chip = entry->निजी_data;
-	पूर्णांक i;
+static void snd_atiixp_proc_read(struct snd_info_entry *entry,
+				 struct snd_info_buffer *buffer)
+{
+	struct atiixp_modem *chip = entry->private_data;
+	int i;
 
-	क्रम (i = 0; i < 256; i += 4)
-		snd_iम_लिखो(buffer, "%02x: %08x\n", i, पढ़ोl(chip->remap_addr + i));
-पूर्ण
+	for (i = 0; i < 256; i += 4)
+		snd_iprintf(buffer, "%02x: %08x\n", i, readl(chip->remap_addr + i));
+}
 
-अटल व्योम snd_atiixp_proc_init(काष्ठा atiixp_modem *chip)
-अणु
+static void snd_atiixp_proc_init(struct atiixp_modem *chip)
+{
 	snd_card_ro_proc_new(chip->card, "atiixp-modem", chip,
-			     snd_atiixp_proc_पढ़ो);
-पूर्ण
+			     snd_atiixp_proc_read);
+}
 
 
 /*
- * deकाष्ठाor
+ * destructor
  */
 
-अटल पूर्णांक snd_atiixp_मुक्त(काष्ठा atiixp_modem *chip)
-अणु
-	अगर (chip->irq < 0)
-		जाओ __hw_end;
+static int snd_atiixp_free(struct atiixp_modem *chip)
+{
+	if (chip->irq < 0)
+		goto __hw_end;
 	snd_atiixp_chip_stop(chip);
 
       __hw_end:
-	अगर (chip->irq >= 0)
-		मुक्त_irq(chip->irq, chip);
+	if (chip->irq >= 0)
+		free_irq(chip->irq, chip);
 	iounmap(chip->remap_addr);
 	pci_release_regions(chip->pci);
 	pci_disable_device(chip->pci);
-	kमुक्त(chip);
-	वापस 0;
-पूर्ण
+	kfree(chip);
+	return 0;
+}
 
-अटल पूर्णांक snd_atiixp_dev_मुक्त(काष्ठा snd_device *device)
-अणु
-	काष्ठा atiixp_modem *chip = device->device_data;
-	वापस snd_atiixp_मुक्त(chip);
-पूर्ण
+static int snd_atiixp_dev_free(struct snd_device *device)
+{
+	struct atiixp_modem *chip = device->device_data;
+	return snd_atiixp_free(chip);
+}
 
 /*
- * स्थिरructor क्रम chip instance
+ * constructor for chip instance
  */
-अटल पूर्णांक snd_atiixp_create(काष्ठा snd_card *card,
-			     काष्ठा pci_dev *pci,
-			     काष्ठा atiixp_modem **r_chip)
-अणु
-	अटल स्थिर काष्ठा snd_device_ops ops = अणु
-		.dev_मुक्त =	snd_atiixp_dev_मुक्त,
-	पूर्ण;
-	काष्ठा atiixp_modem *chip;
-	पूर्णांक err;
+static int snd_atiixp_create(struct snd_card *card,
+			     struct pci_dev *pci,
+			     struct atiixp_modem **r_chip)
+{
+	static const struct snd_device_ops ops = {
+		.dev_free =	snd_atiixp_dev_free,
+	};
+	struct atiixp_modem *chip;
+	int err;
 
-	अगर ((err = pci_enable_device(pci)) < 0)
-		वापस err;
+	if ((err = pci_enable_device(pci)) < 0)
+		return err;
 
-	chip = kzalloc(माप(*chip), GFP_KERNEL);
-	अगर (chip == शून्य) अणु
+	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
+	if (chip == NULL) {
 		pci_disable_device(pci);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	spin_lock_init(&chip->reg_lock);
-	mutex_init(&chip->खोलो_mutex);
+	mutex_init(&chip->open_mutex);
 	chip->card = card;
 	chip->pci = pci;
 	chip->irq = -1;
-	अगर ((err = pci_request_regions(pci, "ATI IXP MC97")) < 0) अणु
-		kमुक्त(chip);
+	if ((err = pci_request_regions(pci, "ATI IXP MC97")) < 0) {
+		kfree(chip);
 		pci_disable_device(pci);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	chip->addr = pci_resource_start(pci, 0);
 	chip->remap_addr = pci_ioremap_bar(pci, 0);
-	अगर (chip->remap_addr == शून्य) अणु
+	if (chip->remap_addr == NULL) {
 		dev_err(card->dev, "AC'97 space ioremap problem\n");
-		snd_atiixp_मुक्त(chip);
-		वापस -EIO;
-	पूर्ण
+		snd_atiixp_free(chip);
+		return -EIO;
+	}
 
-	अगर (request_irq(pci->irq, snd_atiixp_पूर्णांकerrupt, IRQF_SHARED,
-			KBUILD_MODNAME, chip)) अणु
+	if (request_irq(pci->irq, snd_atiixp_interrupt, IRQF_SHARED,
+			KBUILD_MODNAME, chip)) {
 		dev_err(card->dev, "unable to grab IRQ %d\n", pci->irq);
-		snd_atiixp_मुक्त(chip);
-		वापस -EBUSY;
-	पूर्ण
+		snd_atiixp_free(chip);
+		return -EBUSY;
+	}
 	chip->irq = pci->irq;
 	card->sync_irq = chip->irq;
 	pci_set_master(pci);
 
-	अगर ((err = snd_device_new(card, SNDRV_DEV_LOWLEVEL, chip, &ops)) < 0) अणु
-		snd_atiixp_मुक्त(chip);
-		वापस err;
-	पूर्ण
+	if ((err = snd_device_new(card, SNDRV_DEV_LOWLEVEL, chip, &ops)) < 0) {
+		snd_atiixp_free(chip);
+		return err;
+	}
 
 	*r_chip = chip;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक snd_atiixp_probe(काष्ठा pci_dev *pci,
-			    स्थिर काष्ठा pci_device_id *pci_id)
-अणु
-	काष्ठा snd_card *card;
-	काष्ठा atiixp_modem *chip;
-	पूर्णांक err;
+static int snd_atiixp_probe(struct pci_dev *pci,
+			    const struct pci_device_id *pci_id)
+{
+	struct snd_card *card;
+	struct atiixp_modem *chip;
+	int err;
 
 	err = snd_card_new(&pci->dev, index, id, THIS_MODULE, 0, &card);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	म_नकल(card->driver, "ATIIXP-MODEM");
-	म_नकल(card->लघुname, "ATI IXP Modem");
-	अगर ((err = snd_atiixp_create(card, pci, &chip)) < 0)
-		जाओ __error;
-	card->निजी_data = chip;
+	strcpy(card->driver, "ATIIXP-MODEM");
+	strcpy(card->shortname, "ATI IXP Modem");
+	if ((err = snd_atiixp_create(card, pci, &chip)) < 0)
+		goto __error;
+	card->private_data = chip;
 
-	अगर ((err = snd_atiixp_aclink_reset(chip)) < 0)
-		जाओ __error;
+	if ((err = snd_atiixp_aclink_reset(chip)) < 0)
+		goto __error;
 
-	अगर ((err = snd_atiixp_mixer_new(chip, ac97_घड़ी)) < 0)
-		जाओ __error;
+	if ((err = snd_atiixp_mixer_new(chip, ac97_clock)) < 0)
+		goto __error;
 
-	अगर ((err = snd_atiixp_pcm_new(chip)) < 0)
-		जाओ __error;
+	if ((err = snd_atiixp_pcm_new(chip)) < 0)
+		goto __error;
 	
 	snd_atiixp_proc_init(chip);
 
 	snd_atiixp_chip_start(chip);
 
-	प्र_लिखो(card->दीर्घname, "%s rev %x at 0x%lx, irq %i",
-		card->लघुname, pci->revision, chip->addr, chip->irq);
+	sprintf(card->longname, "%s rev %x at 0x%lx, irq %i",
+		card->shortname, pci->revision, chip->addr, chip->irq);
 
-	अगर ((err = snd_card_रेजिस्टर(card)) < 0)
-		जाओ __error;
+	if ((err = snd_card_register(card)) < 0)
+		goto __error;
 
 	pci_set_drvdata(pci, card);
-	वापस 0;
+	return 0;
 
  __error:
-	snd_card_मुक्त(card);
-	वापस err;
-पूर्ण
+	snd_card_free(card);
+	return err;
+}
 
-अटल व्योम snd_atiixp_हटाओ(काष्ठा pci_dev *pci)
-अणु
-	snd_card_मुक्त(pci_get_drvdata(pci));
-पूर्ण
+static void snd_atiixp_remove(struct pci_dev *pci)
+{
+	snd_card_free(pci_get_drvdata(pci));
+}
 
-अटल काष्ठा pci_driver atiixp_modem_driver = अणु
+static struct pci_driver atiixp_modem_driver = {
 	.name = KBUILD_MODNAME,
 	.id_table = snd_atiixp_ids,
 	.probe = snd_atiixp_probe,
-	.हटाओ = snd_atiixp_हटाओ,
-	.driver = अणु
+	.remove = snd_atiixp_remove,
+	.driver = {
 		.pm = SND_ATIIXP_PM_OPS,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 module_pci_driver(atiixp_modem_driver);

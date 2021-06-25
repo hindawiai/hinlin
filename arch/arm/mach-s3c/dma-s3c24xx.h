@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2003-2006 Simtec Electronics
  *	Ben Dooks <ben@simtec.co.uk>
@@ -7,18 +6,18 @@
  * Samsung S3C24XX DMA support
  */
 
-#अगर_अघोषित __ASM_ARCH_DMA_H
-#घोषणा __ASM_ARCH_DMA_H __खाता__
+#ifndef __ASM_ARCH_DMA_H
+#define __ASM_ARCH_DMA_H __FILE__
 
-#समावेश <linux/device.h>
+#include <linux/device.h>
 
-/* We use `भव` dma channels to hide the fact we have only a limited
+/* We use `virtual` dma channels to hide the fact we have only a limited
  * number of DMA channels, and not of all of them (dependent on the device)
- * can be attached to any DMA source. We thereक्रमe let the DMA core handle
+ * can be attached to any DMA source. We therefore let the DMA core handle
  * the allocation of hardware channels to clients.
 */
 
-क्रमागत dma_ch अणु
+enum dma_ch {
 	DMACH_XD0 = 0,
 	DMACH_XD1,
 	DMACH_SDI,
@@ -47,6 +46,6 @@
 	DMACH_SPI1_TX,		/* s3c2443/2450 hsspi1 */
 	DMACH_SPI1_RX,		/* s3c2443/2450 hsspi1 */
 	DMACH_MAX,		/* the end entry */
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __ASM_ARCH_DMA_H */
+#endif /* __ASM_ARCH_DMA_H */

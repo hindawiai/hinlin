@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * VFIO PCI mmap/mmap_fault tracepoपूर्णांकs
+ * VFIO PCI mmap/mmap_fault tracepoints
  *
  * Copyright (C) 2018 IBM Corp.  All rights reserved.
- *     Author: Alexey Kardashevskiy <aik@ozद_असल.ru>
+ *     Author: Alexey Kardashevskiy <aik@ozlabs.ru>
  */
 
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM vfio_pci
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM vfio_pci
 
-#अगर !defined(_TRACE_VFIO_PCI_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_VFIO_PCI_H
+#if !defined(_TRACE_VFIO_PCI_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_VFIO_PCI_H
 
-#समावेश <linux/tracepoपूर्णांक.h>
+#include <linux/tracepoint.h>
 
 TRACE_EVENT(vfio_pci_nvgpu_mmap_fault,
-	TP_PROTO(काष्ठा pci_dev *pdev, अचिन्हित दीर्घ hpa, अचिन्हित दीर्घ ua,
+	TP_PROTO(struct pci_dev *pdev, unsigned long hpa, unsigned long ua,
 			vm_fault_t ret),
 	TP_ARGS(pdev, hpa, ua, ret),
 
 	TP_STRUCT__entry(
-		__field(स्थिर अक्षर *, name)
-		__field(अचिन्हित दीर्घ, hpa)
-		__field(अचिन्हित दीर्घ, ua)
-		__field(पूर्णांक, ret)
+		__field(const char *, name)
+		__field(unsigned long, hpa)
+		__field(unsigned long, ua)
+		__field(int, ret)
 	),
 
 	TP_fast_assign(
@@ -34,21 +33,21 @@ TRACE_EVENT(vfio_pci_nvgpu_mmap_fault,
 		__entry->ret = ret;
 	),
 
-	TP_prपूर्णांकk("%s: %lx -> %lx ret=%d", __entry->name, __entry->hpa,
+	TP_printk("%s: %lx -> %lx ret=%d", __entry->name, __entry->hpa,
 			__entry->ua, __entry->ret)
 );
 
 TRACE_EVENT(vfio_pci_nvgpu_mmap,
-	TP_PROTO(काष्ठा pci_dev *pdev, अचिन्हित दीर्घ hpa, अचिन्हित दीर्घ ua,
-			अचिन्हित दीर्घ size, पूर्णांक ret),
+	TP_PROTO(struct pci_dev *pdev, unsigned long hpa, unsigned long ua,
+			unsigned long size, int ret),
 	TP_ARGS(pdev, hpa, ua, size, ret),
 
 	TP_STRUCT__entry(
-		__field(स्थिर अक्षर *, name)
-		__field(अचिन्हित दीर्घ, hpa)
-		__field(अचिन्हित दीर्घ, ua)
-		__field(अचिन्हित दीर्घ, size)
-		__field(पूर्णांक, ret)
+		__field(const char *, name)
+		__field(unsigned long, hpa)
+		__field(unsigned long, ua)
+		__field(unsigned long, size)
+		__field(int, ret)
 	),
 
 	TP_fast_assign(
@@ -59,21 +58,21 @@ TRACE_EVENT(vfio_pci_nvgpu_mmap,
 		__entry->ret = ret;
 	),
 
-	TP_prपूर्णांकk("%s: %lx -> %lx size=%lx ret=%d", __entry->name, __entry->hpa,
+	TP_printk("%s: %lx -> %lx size=%lx ret=%d", __entry->name, __entry->hpa,
 			__entry->ua, __entry->size, __entry->ret)
 );
 
 TRACE_EVENT(vfio_pci_npu2_mmap,
-	TP_PROTO(काष्ठा pci_dev *pdev, अचिन्हित दीर्घ hpa, अचिन्हित दीर्घ ua,
-			अचिन्हित दीर्घ size, पूर्णांक ret),
+	TP_PROTO(struct pci_dev *pdev, unsigned long hpa, unsigned long ua,
+			unsigned long size, int ret),
 	TP_ARGS(pdev, hpa, ua, size, ret),
 
 	TP_STRUCT__entry(
-		__field(स्थिर अक्षर *, name)
-		__field(अचिन्हित दीर्घ, hpa)
-		__field(अचिन्हित दीर्घ, ua)
-		__field(अचिन्हित दीर्घ, size)
-		__field(पूर्णांक, ret)
+		__field(const char *, name)
+		__field(unsigned long, hpa)
+		__field(unsigned long, ua)
+		__field(unsigned long, size)
+		__field(int, ret)
 	),
 
 	TP_fast_assign(
@@ -84,16 +83,16 @@ TRACE_EVENT(vfio_pci_npu2_mmap,
 		__entry->ret = ret;
 	),
 
-	TP_prपूर्णांकk("%s: %lx -> %lx size=%lx ret=%d", __entry->name, __entry->hpa,
+	TP_printk("%s: %lx -> %lx size=%lx ret=%d", __entry->name, __entry->hpa,
 			__entry->ua, __entry->size, __entry->ret)
 );
 
-#पूर्ण_अगर /* _TRACE_VFIO_PCI_H */
+#endif /* _TRACE_VFIO_PCI_H */
 
-#अघोषित TRACE_INCLUDE_PATH
-#घोषणा TRACE_INCLUDE_PATH ../../drivers/vfio/pci
-#अघोषित TRACE_INCLUDE_खाता
-#घोषणा TRACE_INCLUDE_खाता trace
+#undef TRACE_INCLUDE_PATH
+#define TRACE_INCLUDE_PATH ../../drivers/vfio/pci
+#undef TRACE_INCLUDE_FILE
+#define TRACE_INCLUDE_FILE trace
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

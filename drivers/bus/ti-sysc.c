@@ -1,38 +1,37 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * ti-sysc.c - Texas Instruments sysc पूर्णांकerconnect target driver
+ * ti-sysc.c - Texas Instruments sysc interconnect target driver
  */
 
-#समावेश <linux/पन.स>
-#समावेश <linux/clk.h>
-#समावेश <linux/clkdev.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_करोमुख्य.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/reset.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sys_soc.h>
-#समावेश <linux/iopoll.h>
+#include <linux/io.h>
+#include <linux/clk.h>
+#include <linux/clkdev.h>
+#include <linux/delay.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/pm_domain.h>
+#include <linux/pm_runtime.h>
+#include <linux/reset.h>
+#include <linux/of_address.h>
+#include <linux/of_platform.h>
+#include <linux/slab.h>
+#include <linux/sys_soc.h>
+#include <linux/iopoll.h>
 
-#समावेश <linux/platक्रमm_data/ti-sysc.h>
+#include <linux/platform_data/ti-sysc.h>
 
-#समावेश <dt-bindings/bus/ti-sysc.h>
+#include <dt-bindings/bus/ti-sysc.h>
 
-#घोषणा DIS_ISP		BIT(2)
-#घोषणा DIS_IVA		BIT(1)
-#घोषणा DIS_SGX		BIT(0)
+#define DIS_ISP		BIT(2)
+#define DIS_IVA		BIT(1)
+#define DIS_SGX		BIT(0)
 
-#घोषणा SOC_FLAG(match, flag)	अणु .machine = match, .data = (व्योम *)(flag), पूर्ण
+#define SOC_FLAG(match, flag)	{ .machine = match, .data = (void *)(flag), }
 
-#घोषणा MAX_MODULE_SOFTRESET_WAIT		10000
+#define MAX_MODULE_SOFTRESET_WAIT		10000
 
-क्रमागत sysc_soc अणु
+enum sysc_soc {
 	SOC_UNKNOWN,
 	SOC_2420,
 	SOC_2430,
@@ -45,21 +44,21 @@
 	SOC_AM3,
 	SOC_AM4,
 	SOC_DRA7,
-पूर्ण;
+};
 
-काष्ठा sysc_address अणु
-	अचिन्हित दीर्घ base;
-	काष्ठा list_head node;
-पूर्ण;
+struct sysc_address {
+	unsigned long base;
+	struct list_head node;
+};
 
-काष्ठा sysc_soc_info अणु
-	अचिन्हित दीर्घ general_purpose:1;
-	क्रमागत sysc_soc soc;
-	काष्ठा mutex list_lock;			/* disabled modules list lock */
-	काष्ठा list_head disabled_modules;
-पूर्ण;
+struct sysc_soc_info {
+	unsigned long general_purpose:1;
+	enum sysc_soc soc;
+	struct mutex list_lock;			/* disabled modules list lock */
+	struct list_head disabled_modules;
+};
 
-क्रमागत sysc_घड़ीs अणु
+enum sysc_clocks {
 	SYSC_FCK,
 	SYSC_ICK,
 	SYSC_OPTFCK0,
@@ -71,910 +70,910 @@
 	SYSC_OPTFCK6,
 	SYSC_OPTFCK7,
 	SYSC_MAX_CLOCKS,
-पूर्ण;
+};
 
-अटल काष्ठा sysc_soc_info *sysc_soc;
-अटल स्थिर अक्षर * स्थिर reg_names[] = अणु "rev", "sysc", "syss", पूर्ण;
-अटल स्थिर अक्षर * स्थिर घड़ी_names[SYSC_MAX_CLOCKS] = अणु
+static struct sysc_soc_info *sysc_soc;
+static const char * const reg_names[] = { "rev", "sysc", "syss", };
+static const char * const clock_names[SYSC_MAX_CLOCKS] = {
 	"fck", "ick", "opt0", "opt1", "opt2", "opt3", "opt4",
 	"opt5", "opt6", "opt7",
-पूर्ण;
+};
 
-#घोषणा SYSC_IDLEMODE_MASK		3
-#घोषणा SYSC_CLOCKACTIVITY_MASK		3
+#define SYSC_IDLEMODE_MASK		3
+#define SYSC_CLOCKACTIVITY_MASK		3
 
 /**
- * काष्ठा sysc - TI sysc पूर्णांकerconnect target module रेजिस्टरs and capabilities
- * @dev: काष्ठा device poपूर्णांकer
- * @module_pa: physical address of the पूर्णांकerconnect target module
- * @module_size: size of the पूर्णांकerconnect target module
- * @module_va: भव address of the पूर्णांकerconnect target module
- * @offsets: रेजिस्टर offsets from module base
- * @mdata: ti-sysc to hwmod translation data क्रम a module
- * @घड़ीs: घड़ीs used by the पूर्णांकerconnect target module
- * @घड़ी_roles: घड़ी role names क्रम the found घड़ीs
- * @nr_घड़ीs: number of घड़ीs used by the पूर्णांकerconnect target module
- * @rsts: resets used by the पूर्णांकerconnect target module
- * @legacy_mode: configured क्रम legacy mode अगर set
- * @cap: पूर्णांकerconnect target module capabilities
- * @cfg: पूर्णांकerconnect target module configuration
- * @cookie: data used by legacy platक्रमm callbacks
- * @name: name अगर available
- * @revision: पूर्णांकerconnect target module revision
- * @enabled: sysc runसमय enabled status
- * @needs_resume: runसमय resume needed on resume from suspend
- * @child_needs_resume: runसमय resume needed क्रम child on resume from suspend
- * @disable_on_idle: status flag used क्रम disabling modules with resets
- * @idle_work: work काष्ठाure used to perक्रमm delayed idle on a module
- * @pre_reset_quirk: module specअगरic pre-reset quirk
- * @post_reset_quirk: module specअगरic post-reset quirk
- * @reset_करोne_quirk: module specअगरic reset करोne quirk
- * @module_enable_quirk: module specअगरic enable quirk
- * @module_disable_quirk: module specअगरic disable quirk
- * @module_unlock_quirk: module specअगरic sysconfig unlock quirk
- * @module_lock_quirk: module specअगरic sysconfig lock quirk
+ * struct sysc - TI sysc interconnect target module registers and capabilities
+ * @dev: struct device pointer
+ * @module_pa: physical address of the interconnect target module
+ * @module_size: size of the interconnect target module
+ * @module_va: virtual address of the interconnect target module
+ * @offsets: register offsets from module base
+ * @mdata: ti-sysc to hwmod translation data for a module
+ * @clocks: clocks used by the interconnect target module
+ * @clock_roles: clock role names for the found clocks
+ * @nr_clocks: number of clocks used by the interconnect target module
+ * @rsts: resets used by the interconnect target module
+ * @legacy_mode: configured for legacy mode if set
+ * @cap: interconnect target module capabilities
+ * @cfg: interconnect target module configuration
+ * @cookie: data used by legacy platform callbacks
+ * @name: name if available
+ * @revision: interconnect target module revision
+ * @enabled: sysc runtime enabled status
+ * @needs_resume: runtime resume needed on resume from suspend
+ * @child_needs_resume: runtime resume needed for child on resume from suspend
+ * @disable_on_idle: status flag used for disabling modules with resets
+ * @idle_work: work structure used to perform delayed idle on a module
+ * @pre_reset_quirk: module specific pre-reset quirk
+ * @post_reset_quirk: module specific post-reset quirk
+ * @reset_done_quirk: module specific reset done quirk
+ * @module_enable_quirk: module specific enable quirk
+ * @module_disable_quirk: module specific disable quirk
+ * @module_unlock_quirk: module specific sysconfig unlock quirk
+ * @module_lock_quirk: module specific sysconfig lock quirk
  */
-काष्ठा sysc अणु
-	काष्ठा device *dev;
+struct sysc {
+	struct device *dev;
 	u64 module_pa;
 	u32 module_size;
-	व्योम __iomem *module_va;
-	पूर्णांक offsets[SYSC_MAX_REGS];
-	काष्ठा ti_sysc_module_data *mdata;
-	काष्ठा clk **घड़ीs;
-	स्थिर अक्षर **घड़ी_roles;
-	पूर्णांक nr_घड़ीs;
-	काष्ठा reset_control *rsts;
-	स्थिर अक्षर *legacy_mode;
-	स्थिर काष्ठा sysc_capabilities *cap;
-	काष्ठा sysc_config cfg;
-	काष्ठा ti_sysc_cookie cookie;
-	स्थिर अक्षर *name;
+	void __iomem *module_va;
+	int offsets[SYSC_MAX_REGS];
+	struct ti_sysc_module_data *mdata;
+	struct clk **clocks;
+	const char **clock_roles;
+	int nr_clocks;
+	struct reset_control *rsts;
+	const char *legacy_mode;
+	const struct sysc_capabilities *cap;
+	struct sysc_config cfg;
+	struct ti_sysc_cookie cookie;
+	const char *name;
 	u32 revision;
-	अचिन्हित पूर्णांक enabled:1;
-	अचिन्हित पूर्णांक needs_resume:1;
-	अचिन्हित पूर्णांक child_needs_resume:1;
-	काष्ठा delayed_work idle_work;
-	व्योम (*pre_reset_quirk)(काष्ठा sysc *sysc);
-	व्योम (*post_reset_quirk)(काष्ठा sysc *sysc);
-	व्योम (*reset_करोne_quirk)(काष्ठा sysc *sysc);
-	व्योम (*module_enable_quirk)(काष्ठा sysc *sysc);
-	व्योम (*module_disable_quirk)(काष्ठा sysc *sysc);
-	व्योम (*module_unlock_quirk)(काष्ठा sysc *sysc);
-	व्योम (*module_lock_quirk)(काष्ठा sysc *sysc);
-पूर्ण;
+	unsigned int enabled:1;
+	unsigned int needs_resume:1;
+	unsigned int child_needs_resume:1;
+	struct delayed_work idle_work;
+	void (*pre_reset_quirk)(struct sysc *sysc);
+	void (*post_reset_quirk)(struct sysc *sysc);
+	void (*reset_done_quirk)(struct sysc *sysc);
+	void (*module_enable_quirk)(struct sysc *sysc);
+	void (*module_disable_quirk)(struct sysc *sysc);
+	void (*module_unlock_quirk)(struct sysc *sysc);
+	void (*module_lock_quirk)(struct sysc *sysc);
+};
 
-अटल व्योम sysc_parse_dts_quirks(काष्ठा sysc *ddata, काष्ठा device_node *np,
+static void sysc_parse_dts_quirks(struct sysc *ddata, struct device_node *np,
 				  bool is_child);
 
-अटल व्योम sysc_ग_लिखो(काष्ठा sysc *ddata, पूर्णांक offset, u32 value)
-अणु
-	अगर (ddata->cfg.quirks & SYSC_QUIRK_16BIT) अणु
-		ग_लिखोw_relaxed(value & 0xffff, ddata->module_va + offset);
+static void sysc_write(struct sysc *ddata, int offset, u32 value)
+{
+	if (ddata->cfg.quirks & SYSC_QUIRK_16BIT) {
+		writew_relaxed(value & 0xffff, ddata->module_va + offset);
 
-		/* Only i2c revision has LO and HI रेजिस्टर with stride of 4 */
-		अगर (ddata->offsets[SYSC_REVISION] >= 0 &&
-		    offset == ddata->offsets[SYSC_REVISION]) अणु
+		/* Only i2c revision has LO and HI register with stride of 4 */
+		if (ddata->offsets[SYSC_REVISION] >= 0 &&
+		    offset == ddata->offsets[SYSC_REVISION]) {
 			u16 hi = value >> 16;
 
-			ग_लिखोw_relaxed(hi, ddata->module_va + offset + 4);
-		पूर्ण
+			writew_relaxed(hi, ddata->module_va + offset + 4);
+		}
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	ग_लिखोl_relaxed(value, ddata->module_va + offset);
-पूर्ण
+	writel_relaxed(value, ddata->module_va + offset);
+}
 
-अटल u32 sysc_पढ़ो(काष्ठा sysc *ddata, पूर्णांक offset)
-अणु
-	अगर (ddata->cfg.quirks & SYSC_QUIRK_16BIT) अणु
+static u32 sysc_read(struct sysc *ddata, int offset)
+{
+	if (ddata->cfg.quirks & SYSC_QUIRK_16BIT) {
 		u32 val;
 
-		val = पढ़ोw_relaxed(ddata->module_va + offset);
+		val = readw_relaxed(ddata->module_va + offset);
 
-		/* Only i2c revision has LO and HI रेजिस्टर with stride of 4 */
-		अगर (ddata->offsets[SYSC_REVISION] >= 0 &&
-		    offset == ddata->offsets[SYSC_REVISION]) अणु
-			u16 पंचांगp = पढ़ोw_relaxed(ddata->module_va + offset + 4);
+		/* Only i2c revision has LO and HI register with stride of 4 */
+		if (ddata->offsets[SYSC_REVISION] >= 0 &&
+		    offset == ddata->offsets[SYSC_REVISION]) {
+			u16 tmp = readw_relaxed(ddata->module_va + offset + 4);
 
-			val |= पंचांगp << 16;
-		पूर्ण
+			val |= tmp << 16;
+		}
 
-		वापस val;
-	पूर्ण
+		return val;
+	}
 
-	वापस पढ़ोl_relaxed(ddata->module_va + offset);
-पूर्ण
+	return readl_relaxed(ddata->module_va + offset);
+}
 
-अटल bool sysc_opt_clks_needed(काष्ठा sysc *ddata)
-अणु
-	वापस !!(ddata->cfg.quirks & SYSC_QUIRK_OPT_CLKS_NEEDED);
-पूर्ण
+static bool sysc_opt_clks_needed(struct sysc *ddata)
+{
+	return !!(ddata->cfg.quirks & SYSC_QUIRK_OPT_CLKS_NEEDED);
+}
 
-अटल u32 sysc_पढ़ो_revision(काष्ठा sysc *ddata)
-अणु
-	पूर्णांक offset = ddata->offsets[SYSC_REVISION];
+static u32 sysc_read_revision(struct sysc *ddata)
+{
+	int offset = ddata->offsets[SYSC_REVISION];
 
-	अगर (offset < 0)
-		वापस 0;
+	if (offset < 0)
+		return 0;
 
-	वापस sysc_पढ़ो(ddata, offset);
-पूर्ण
+	return sysc_read(ddata, offset);
+}
 
-अटल u32 sysc_पढ़ो_sysconfig(काष्ठा sysc *ddata)
-अणु
-	पूर्णांक offset = ddata->offsets[SYSC_SYSCONFIG];
+static u32 sysc_read_sysconfig(struct sysc *ddata)
+{
+	int offset = ddata->offsets[SYSC_SYSCONFIG];
 
-	अगर (offset < 0)
-		वापस 0;
+	if (offset < 0)
+		return 0;
 
-	वापस sysc_पढ़ो(ddata, offset);
-पूर्ण
+	return sysc_read(ddata, offset);
+}
 
-अटल u32 sysc_पढ़ो_sysstatus(काष्ठा sysc *ddata)
-अणु
-	पूर्णांक offset = ddata->offsets[SYSC_SYSSTATUS];
+static u32 sysc_read_sysstatus(struct sysc *ddata)
+{
+	int offset = ddata->offsets[SYSC_SYSSTATUS];
 
-	अगर (offset < 0)
-		वापस 0;
+	if (offset < 0)
+		return 0;
 
-	वापस sysc_पढ़ो(ddata, offset);
-पूर्ण
+	return sysc_read(ddata, offset);
+}
 
 /* Poll on reset status */
-अटल पूर्णांक sysc_रुको_softreset(काष्ठा sysc *ddata)
-अणु
-	u32 sysc_mask, syss_करोne, rstval;
-	पूर्णांक syss_offset, error = 0;
+static int sysc_wait_softreset(struct sysc *ddata)
+{
+	u32 sysc_mask, syss_done, rstval;
+	int syss_offset, error = 0;
 
-	अगर (ddata->cap->regbits->srst_shअगरt < 0)
-		वापस 0;
+	if (ddata->cap->regbits->srst_shift < 0)
+		return 0;
 
 	syss_offset = ddata->offsets[SYSC_SYSSTATUS];
-	sysc_mask = BIT(ddata->cap->regbits->srst_shअगरt);
+	sysc_mask = BIT(ddata->cap->regbits->srst_shift);
 
-	अगर (ddata->cfg.quirks & SYSS_QUIRK_RESETDONE_INVERTED)
-		syss_करोne = 0;
-	अन्यथा
-		syss_करोne = ddata->cfg.syss_mask;
+	if (ddata->cfg.quirks & SYSS_QUIRK_RESETDONE_INVERTED)
+		syss_done = 0;
+	else
+		syss_done = ddata->cfg.syss_mask;
 
-	अगर (syss_offset >= 0) अणु
-		error = पढ़ोx_poll_समयout_atomic(sysc_पढ़ो_sysstatus, ddata,
+	if (syss_offset >= 0) {
+		error = readx_poll_timeout_atomic(sysc_read_sysstatus, ddata,
 				rstval, (rstval & ddata->cfg.syss_mask) ==
-				syss_करोne, 100, MAX_MODULE_SOFTRESET_WAIT);
+				syss_done, 100, MAX_MODULE_SOFTRESET_WAIT);
 
-	पूर्ण अन्यथा अगर (ddata->cfg.quirks & SYSC_QUIRK_RESET_STATUS) अणु
-		error = पढ़ोx_poll_समयout_atomic(sysc_पढ़ो_sysconfig, ddata,
+	} else if (ddata->cfg.quirks & SYSC_QUIRK_RESET_STATUS) {
+		error = readx_poll_timeout_atomic(sysc_read_sysconfig, ddata,
 				rstval, !(rstval & sysc_mask),
 				100, MAX_MODULE_SOFTRESET_WAIT);
-	पूर्ण
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक sysc_add_named_घड़ी_from_child(काष्ठा sysc *ddata,
-					   स्थिर अक्षर *name,
-					   स्थिर अक्षर *optfck_name)
-अणु
-	काष्ठा device_node *np = ddata->dev->of_node;
-	काष्ठा device_node *child;
-	काष्ठा clk_lookup *cl;
-	काष्ठा clk *घड़ी;
-	स्थिर अक्षर *n;
+static int sysc_add_named_clock_from_child(struct sysc *ddata,
+					   const char *name,
+					   const char *optfck_name)
+{
+	struct device_node *np = ddata->dev->of_node;
+	struct device_node *child;
+	struct clk_lookup *cl;
+	struct clk *clock;
+	const char *n;
 
-	अगर (name)
+	if (name)
 		n = name;
-	अन्यथा
+	else
 		n = optfck_name;
 
-	/* Does the घड़ी alias alपढ़ोy exist? */
-	घड़ी = of_clk_get_by_name(np, n);
-	अगर (!IS_ERR(घड़ी)) अणु
-		clk_put(घड़ी);
+	/* Does the clock alias already exist? */
+	clock = of_clk_get_by_name(np, n);
+	if (!IS_ERR(clock)) {
+		clk_put(clock);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	child = of_get_next_available_child(np, शून्य);
-	अगर (!child)
-		वापस -ENODEV;
+	child = of_get_next_available_child(np, NULL);
+	if (!child)
+		return -ENODEV;
 
-	घड़ी = devm_get_clk_from_child(ddata->dev, child, name);
-	अगर (IS_ERR(घड़ी))
-		वापस PTR_ERR(घड़ी);
+	clock = devm_get_clk_from_child(ddata->dev, child, name);
+	if (IS_ERR(clock))
+		return PTR_ERR(clock);
 
 	/*
-	 * Use clkdev_add() instead of clkdev_alloc() to aव्योम the MAX_DEV_ID
-	 * limit क्रम clk_get(). If cl ever needs to be मुक्तd, it should be करोne
+	 * Use clkdev_add() instead of clkdev_alloc() to avoid the MAX_DEV_ID
+	 * limit for clk_get(). If cl ever needs to be freed, it should be done
 	 * with clkdev_drop().
 	 */
-	cl = kzalloc(माप(*cl), GFP_KERNEL);
-	अगर (!cl)
-		वापस -ENOMEM;
+	cl = kzalloc(sizeof(*cl), GFP_KERNEL);
+	if (!cl)
+		return -ENOMEM;
 
 	cl->con_id = n;
 	cl->dev_id = dev_name(ddata->dev);
-	cl->clk = घड़ी;
+	cl->clk = clock;
 	clkdev_add(cl);
 
-	clk_put(घड़ी);
+	clk_put(clock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sysc_init_ext_opt_घड़ी(काष्ठा sysc *ddata, स्थिर अक्षर *name)
-अणु
-	स्थिर अक्षर *optfck_name;
-	पूर्णांक error, index;
+static int sysc_init_ext_opt_clock(struct sysc *ddata, const char *name)
+{
+	const char *optfck_name;
+	int error, index;
 
-	अगर (ddata->nr_घड़ीs < SYSC_OPTFCK0)
+	if (ddata->nr_clocks < SYSC_OPTFCK0)
 		index = SYSC_OPTFCK0;
-	अन्यथा
-		index = ddata->nr_घड़ीs;
+	else
+		index = ddata->nr_clocks;
 
-	अगर (name)
+	if (name)
 		optfck_name = name;
-	अन्यथा
-		optfck_name = घड़ी_names[index];
+	else
+		optfck_name = clock_names[index];
 
-	error = sysc_add_named_घड़ी_from_child(ddata, name, optfck_name);
-	अगर (error)
-		वापस error;
+	error = sysc_add_named_clock_from_child(ddata, name, optfck_name);
+	if (error)
+		return error;
 
-	ddata->घड़ी_roles[index] = optfck_name;
-	ddata->nr_घड़ीs++;
+	ddata->clock_roles[index] = optfck_name;
+	ddata->nr_clocks++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sysc_get_one_घड़ी(काष्ठा sysc *ddata, स्थिर अक्षर *name)
-अणु
-	पूर्णांक error, i, index = -ENODEV;
+static int sysc_get_one_clock(struct sysc *ddata, const char *name)
+{
+	int error, i, index = -ENODEV;
 
-	अगर (!म_भेदन(घड़ी_names[SYSC_FCK], name, 3))
+	if (!strncmp(clock_names[SYSC_FCK], name, 3))
 		index = SYSC_FCK;
-	अन्यथा अगर (!म_भेदन(घड़ी_names[SYSC_ICK], name, 3))
+	else if (!strncmp(clock_names[SYSC_ICK], name, 3))
 		index = SYSC_ICK;
 
-	अगर (index < 0) अणु
-		क्रम (i = SYSC_OPTFCK0; i < SYSC_MAX_CLOCKS; i++) अणु
-			अगर (!ddata->घड़ीs[i]) अणु
+	if (index < 0) {
+		for (i = SYSC_OPTFCK0; i < SYSC_MAX_CLOCKS; i++) {
+			if (!ddata->clocks[i]) {
 				index = i;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	अगर (index < 0) अणु
+	if (index < 0) {
 		dev_err(ddata->dev, "clock %s not added\n", name);
-		वापस index;
-	पूर्ण
+		return index;
+	}
 
-	ddata->घड़ीs[index] = devm_clk_get(ddata->dev, name);
-	अगर (IS_ERR(ddata->घड़ीs[index])) अणु
+	ddata->clocks[index] = devm_clk_get(ddata->dev, name);
+	if (IS_ERR(ddata->clocks[index])) {
 		dev_err(ddata->dev, "clock get error for %s: %li\n",
-			name, PTR_ERR(ddata->घड़ीs[index]));
+			name, PTR_ERR(ddata->clocks[index]));
 
-		वापस PTR_ERR(ddata->घड़ीs[index]);
-	पूर्ण
+		return PTR_ERR(ddata->clocks[index]);
+	}
 
-	error = clk_prepare(ddata->घड़ीs[index]);
-	अगर (error) अणु
+	error = clk_prepare(ddata->clocks[index]);
+	if (error) {
 		dev_err(ddata->dev, "clock prepare error for %s: %i\n",
 			name, error);
 
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sysc_get_घड़ीs(काष्ठा sysc *ddata)
-अणु
-	काष्ठा device_node *np = ddata->dev->of_node;
-	काष्ठा property *prop;
-	स्थिर अक्षर *name;
-	पूर्णांक nr_fck = 0, nr_ick = 0, i, error = 0;
+static int sysc_get_clocks(struct sysc *ddata)
+{
+	struct device_node *np = ddata->dev->of_node;
+	struct property *prop;
+	const char *name;
+	int nr_fck = 0, nr_ick = 0, i, error = 0;
 
-	ddata->घड़ी_roles = devm_kसुस्मृति(ddata->dev,
+	ddata->clock_roles = devm_kcalloc(ddata->dev,
 					  SYSC_MAX_CLOCKS,
-					  माप(*ddata->घड़ी_roles),
+					  sizeof(*ddata->clock_roles),
 					  GFP_KERNEL);
-	अगर (!ddata->घड़ी_roles)
-		वापस -ENOMEM;
+	if (!ddata->clock_roles)
+		return -ENOMEM;
 
-	of_property_क्रम_each_string(np, "clock-names", prop, name) अणु
-		अगर (!म_भेदन(घड़ी_names[SYSC_FCK], name, 3))
+	of_property_for_each_string(np, "clock-names", prop, name) {
+		if (!strncmp(clock_names[SYSC_FCK], name, 3))
 			nr_fck++;
-		अगर (!म_भेदन(घड़ी_names[SYSC_ICK], name, 3))
+		if (!strncmp(clock_names[SYSC_ICK], name, 3))
 			nr_ick++;
-		ddata->घड़ी_roles[ddata->nr_घड़ीs] = name;
-		ddata->nr_घड़ीs++;
-	पूर्ण
+		ddata->clock_roles[ddata->nr_clocks] = name;
+		ddata->nr_clocks++;
+	}
 
-	अगर (ddata->nr_घड़ीs < 1)
-		वापस 0;
+	if (ddata->nr_clocks < 1)
+		return 0;
 
-	अगर ((ddata->cfg.quirks & SYSC_QUIRK_EXT_OPT_CLOCK)) अणु
-		error = sysc_init_ext_opt_घड़ी(ddata, शून्य);
-		अगर (error)
-			वापस error;
-	पूर्ण
+	if ((ddata->cfg.quirks & SYSC_QUIRK_EXT_OPT_CLOCK)) {
+		error = sysc_init_ext_opt_clock(ddata, NULL);
+		if (error)
+			return error;
+	}
 
-	अगर (ddata->nr_घड़ीs > SYSC_MAX_CLOCKS) अणु
+	if (ddata->nr_clocks > SYSC_MAX_CLOCKS) {
 		dev_err(ddata->dev, "too many clocks for %pOF\n", np);
 
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (nr_fck > 1 || nr_ick > 1) अणु
+	if (nr_fck > 1 || nr_ick > 1) {
 		dev_err(ddata->dev, "max one fck and ick for %pOF\n", np);
 
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Always add a slot क्रम मुख्य घड़ीs fck and ick even अगर unused */
-	अगर (!nr_fck)
-		ddata->nr_घड़ीs++;
-	अगर (!nr_ick)
-		ddata->nr_घड़ीs++;
+	/* Always add a slot for main clocks fck and ick even if unused */
+	if (!nr_fck)
+		ddata->nr_clocks++;
+	if (!nr_ick)
+		ddata->nr_clocks++;
 
-	ddata->घड़ीs = devm_kसुस्मृति(ddata->dev,
-				     ddata->nr_घड़ीs, माप(*ddata->घड़ीs),
+	ddata->clocks = devm_kcalloc(ddata->dev,
+				     ddata->nr_clocks, sizeof(*ddata->clocks),
 				     GFP_KERNEL);
-	अगर (!ddata->घड़ीs)
-		वापस -ENOMEM;
+	if (!ddata->clocks)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < SYSC_MAX_CLOCKS; i++) अणु
-		स्थिर अक्षर *name = ddata->घड़ी_roles[i];
+	for (i = 0; i < SYSC_MAX_CLOCKS; i++) {
+		const char *name = ddata->clock_roles[i];
 
-		अगर (!name)
-			जारी;
+		if (!name)
+			continue;
 
-		error = sysc_get_one_घड़ी(ddata, name);
-		अगर (error)
-			वापस error;
-	पूर्ण
+		error = sysc_get_one_clock(ddata, name);
+		if (error)
+			return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sysc_enable_मुख्य_घड़ीs(काष्ठा sysc *ddata)
-अणु
-	काष्ठा clk *घड़ी;
-	पूर्णांक i, error;
+static int sysc_enable_main_clocks(struct sysc *ddata)
+{
+	struct clk *clock;
+	int i, error;
 
-	अगर (!ddata->घड़ीs)
-		वापस 0;
+	if (!ddata->clocks)
+		return 0;
 
-	क्रम (i = 0; i < SYSC_OPTFCK0; i++) अणु
-		घड़ी = ddata->घड़ीs[i];
+	for (i = 0; i < SYSC_OPTFCK0; i++) {
+		clock = ddata->clocks[i];
 
-		/* Main घड़ीs may not have ick */
-		अगर (IS_ERR_OR_शून्य(घड़ी))
-			जारी;
+		/* Main clocks may not have ick */
+		if (IS_ERR_OR_NULL(clock))
+			continue;
 
-		error = clk_enable(घड़ी);
-		अगर (error)
-			जाओ err_disable;
-	पूर्ण
+		error = clk_enable(clock);
+		if (error)
+			goto err_disable;
+	}
 
-	वापस 0;
-
-err_disable:
-	क्रम (i--; i >= 0; i--) अणु
-		घड़ी = ddata->घड़ीs[i];
-
-		/* Main घड़ीs may not have ick */
-		अगर (IS_ERR_OR_शून्य(घड़ी))
-			जारी;
-
-		clk_disable(घड़ी);
-	पूर्ण
-
-	वापस error;
-पूर्ण
-
-अटल व्योम sysc_disable_मुख्य_घड़ीs(काष्ठा sysc *ddata)
-अणु
-	काष्ठा clk *घड़ी;
-	पूर्णांक i;
-
-	अगर (!ddata->घड़ीs)
-		वापस;
-
-	क्रम (i = 0; i < SYSC_OPTFCK0; i++) अणु
-		घड़ी = ddata->घड़ीs[i];
-		अगर (IS_ERR_OR_शून्य(घड़ी))
-			जारी;
-
-		clk_disable(घड़ी);
-	पूर्ण
-पूर्ण
-
-अटल पूर्णांक sysc_enable_opt_घड़ीs(काष्ठा sysc *ddata)
-अणु
-	काष्ठा clk *घड़ी;
-	पूर्णांक i, error;
-
-	अगर (!ddata->घड़ीs || ddata->nr_घड़ीs < SYSC_OPTFCK0 + 1)
-		वापस 0;
-
-	क्रम (i = SYSC_OPTFCK0; i < SYSC_MAX_CLOCKS; i++) अणु
-		घड़ी = ddata->घड़ीs[i];
-
-		/* Assume no holes क्रम opt घड़ीs */
-		अगर (IS_ERR_OR_शून्य(घड़ी))
-			वापस 0;
-
-		error = clk_enable(घड़ी);
-		अगर (error)
-			जाओ err_disable;
-	पूर्ण
-
-	वापस 0;
+	return 0;
 
 err_disable:
-	क्रम (i--; i >= 0; i--) अणु
-		घड़ी = ddata->घड़ीs[i];
-		अगर (IS_ERR_OR_शून्य(घड़ी))
-			जारी;
+	for (i--; i >= 0; i--) {
+		clock = ddata->clocks[i];
 
-		clk_disable(घड़ी);
-	पूर्ण
+		/* Main clocks may not have ick */
+		if (IS_ERR_OR_NULL(clock))
+			continue;
 
-	वापस error;
-पूर्ण
+		clk_disable(clock);
+	}
 
-अटल व्योम sysc_disable_opt_घड़ीs(काष्ठा sysc *ddata)
-अणु
-	काष्ठा clk *घड़ी;
-	पूर्णांक i;
+	return error;
+}
 
-	अगर (!ddata->घड़ीs || ddata->nr_घड़ीs < SYSC_OPTFCK0 + 1)
-		वापस;
+static void sysc_disable_main_clocks(struct sysc *ddata)
+{
+	struct clk *clock;
+	int i;
 
-	क्रम (i = SYSC_OPTFCK0; i < SYSC_MAX_CLOCKS; i++) अणु
-		घड़ी = ddata->घड़ीs[i];
+	if (!ddata->clocks)
+		return;
 
-		/* Assume no holes क्रम opt घड़ीs */
-		अगर (IS_ERR_OR_शून्य(घड़ी))
-			वापस;
+	for (i = 0; i < SYSC_OPTFCK0; i++) {
+		clock = ddata->clocks[i];
+		if (IS_ERR_OR_NULL(clock))
+			continue;
 
-		clk_disable(घड़ी);
-	पूर्ण
-पूर्ण
+		clk_disable(clock);
+	}
+}
 
-अटल व्योम sysc_clkdm_deny_idle(काष्ठा sysc *ddata)
-अणु
-	काष्ठा ti_sysc_platक्रमm_data *pdata;
+static int sysc_enable_opt_clocks(struct sysc *ddata)
+{
+	struct clk *clock;
+	int i, error;
 
-	अगर (ddata->legacy_mode || (ddata->cfg.quirks & SYSC_QUIRK_CLKDM_NOAUTO))
-		वापस;
+	if (!ddata->clocks || ddata->nr_clocks < SYSC_OPTFCK0 + 1)
+		return 0;
+
+	for (i = SYSC_OPTFCK0; i < SYSC_MAX_CLOCKS; i++) {
+		clock = ddata->clocks[i];
+
+		/* Assume no holes for opt clocks */
+		if (IS_ERR_OR_NULL(clock))
+			return 0;
+
+		error = clk_enable(clock);
+		if (error)
+			goto err_disable;
+	}
+
+	return 0;
+
+err_disable:
+	for (i--; i >= 0; i--) {
+		clock = ddata->clocks[i];
+		if (IS_ERR_OR_NULL(clock))
+			continue;
+
+		clk_disable(clock);
+	}
+
+	return error;
+}
+
+static void sysc_disable_opt_clocks(struct sysc *ddata)
+{
+	struct clk *clock;
+	int i;
+
+	if (!ddata->clocks || ddata->nr_clocks < SYSC_OPTFCK0 + 1)
+		return;
+
+	for (i = SYSC_OPTFCK0; i < SYSC_MAX_CLOCKS; i++) {
+		clock = ddata->clocks[i];
+
+		/* Assume no holes for opt clocks */
+		if (IS_ERR_OR_NULL(clock))
+			return;
+
+		clk_disable(clock);
+	}
+}
+
+static void sysc_clkdm_deny_idle(struct sysc *ddata)
+{
+	struct ti_sysc_platform_data *pdata;
+
+	if (ddata->legacy_mode || (ddata->cfg.quirks & SYSC_QUIRK_CLKDM_NOAUTO))
+		return;
 
 	pdata = dev_get_platdata(ddata->dev);
-	अगर (pdata && pdata->clkdm_deny_idle)
+	if (pdata && pdata->clkdm_deny_idle)
 		pdata->clkdm_deny_idle(ddata->dev, &ddata->cookie);
-पूर्ण
+}
 
-अटल व्योम sysc_clkdm_allow_idle(काष्ठा sysc *ddata)
-अणु
-	काष्ठा ti_sysc_platक्रमm_data *pdata;
+static void sysc_clkdm_allow_idle(struct sysc *ddata)
+{
+	struct ti_sysc_platform_data *pdata;
 
-	अगर (ddata->legacy_mode || (ddata->cfg.quirks & SYSC_QUIRK_CLKDM_NOAUTO))
-		वापस;
+	if (ddata->legacy_mode || (ddata->cfg.quirks & SYSC_QUIRK_CLKDM_NOAUTO))
+		return;
 
 	pdata = dev_get_platdata(ddata->dev);
-	अगर (pdata && pdata->clkdm_allow_idle)
+	if (pdata && pdata->clkdm_allow_idle)
 		pdata->clkdm_allow_idle(ddata->dev, &ddata->cookie);
-पूर्ण
+}
 
 /**
- * sysc_init_resets - init rstctrl reset line अगर configured
+ * sysc_init_resets - init rstctrl reset line if configured
  * @ddata: device driver data
  *
- * See sysc_rstctrl_reset_deनिश्चित().
+ * See sysc_rstctrl_reset_deassert().
  */
-अटल पूर्णांक sysc_init_resets(काष्ठा sysc *ddata)
-अणु
+static int sysc_init_resets(struct sysc *ddata)
+{
 	ddata->rsts =
 		devm_reset_control_get_optional_shared(ddata->dev, "rstctrl");
 
-	वापस PTR_ERR_OR_ZERO(ddata->rsts);
-पूर्ण
+	return PTR_ERR_OR_ZERO(ddata->rsts);
+}
 
 /**
  * sysc_parse_and_check_child_range - parses module IO region from ranges
  * @ddata: device driver data
  *
- * In general we only need rev, syss, and sysc रेजिस्टरs and not the whole
- * module range. But we करो want the offsets क्रम these रेजिस्टरs from the
+ * In general we only need rev, syss, and sysc registers and not the whole
+ * module range. But we do want the offsets for these registers from the
  * module base. This allows us to check them against the legacy hwmod
- * platक्रमm data. Let's also check the ranges are configured properly.
+ * platform data. Let's also check the ranges are configured properly.
  */
-अटल पूर्णांक sysc_parse_and_check_child_range(काष्ठा sysc *ddata)
-अणु
-	काष्ठा device_node *np = ddata->dev->of_node;
-	स्थिर __be32 *ranges;
+static int sysc_parse_and_check_child_range(struct sysc *ddata)
+{
+	struct device_node *np = ddata->dev->of_node;
+	const __be32 *ranges;
 	u32 nr_addr, nr_size;
-	पूर्णांक len, error;
+	int len, error;
 
 	ranges = of_get_property(np, "ranges", &len);
-	अगर (!ranges) अणु
+	if (!ranges) {
 		dev_err(ddata->dev, "missing ranges for %pOF\n", np);
 
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	len /= माप(*ranges);
+	len /= sizeof(*ranges);
 
-	अगर (len < 3) अणु
+	if (len < 3) {
 		dev_err(ddata->dev, "incomplete ranges for %pOF\n", np);
 
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	error = of_property_पढ़ो_u32(np, "#address-cells", &nr_addr);
-	अगर (error)
-		वापस -ENOENT;
+	error = of_property_read_u32(np, "#address-cells", &nr_addr);
+	if (error)
+		return -ENOENT;
 
-	error = of_property_पढ़ो_u32(np, "#size-cells", &nr_size);
-	अगर (error)
-		वापस -ENOENT;
+	error = of_property_read_u32(np, "#size-cells", &nr_size);
+	if (error)
+		return -ENOENT;
 
-	अगर (nr_addr != 1 || nr_size != 1) अणु
+	if (nr_addr != 1 || nr_size != 1) {
 		dev_err(ddata->dev, "invalid ranges for %pOF\n", np);
 
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ranges++;
 	ddata->module_pa = of_translate_address(np, ranges++);
 	ddata->module_size = be32_to_cpup(ranges);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Interconnect instances to probe beक्रमe l4_per instances */
-अटल काष्ठा resource early_bus_ranges[] = अणु
+/* Interconnect instances to probe before l4_per instances */
+static struct resource early_bus_ranges[] = {
 	/* am3/4 l4_wkup */
-	अणु .start = 0x44c00000, .end = 0x44c00000 + 0x300000, पूर्ण,
+	{ .start = 0x44c00000, .end = 0x44c00000 + 0x300000, },
 	/* omap4/5 and dra7 l4_cfg */
-	अणु .start = 0x4a000000, .end = 0x4a000000 + 0x300000, पूर्ण,
+	{ .start = 0x4a000000, .end = 0x4a000000 + 0x300000, },
 	/* omap4 l4_wkup */
-	अणु .start = 0x4a300000, .end = 0x4a300000 + 0x30000,  पूर्ण,
+	{ .start = 0x4a300000, .end = 0x4a300000 + 0x30000,  },
 	/* omap5 and dra7 l4_wkup without dra7 dcan segment */
-	अणु .start = 0x4ae00000, .end = 0x4ae00000 + 0x30000,  पूर्ण,
-पूर्ण;
+	{ .start = 0x4ae00000, .end = 0x4ae00000 + 0x30000,  },
+};
 
-अटल atomic_t sysc_defer = ATOMIC_INIT(10);
+static atomic_t sysc_defer = ATOMIC_INIT(10);
 
 /**
- * sysc_defer_non_critical - defer non_critical पूर्णांकerconnect probing
+ * sysc_defer_non_critical - defer non_critical interconnect probing
  * @ddata: device driver data
  *
- * We want to probe l4_cfg and l4_wkup पूर्णांकerconnect instances beक्रमe any
+ * We want to probe l4_cfg and l4_wkup interconnect instances before any
  * l4_per instances as l4_per instances depend on resources on l4_cfg and
- * l4_wkup पूर्णांकerconnects.
+ * l4_wkup interconnects.
  */
-अटल पूर्णांक sysc_defer_non_critical(काष्ठा sysc *ddata)
-अणु
-	काष्ठा resource *res;
-	पूर्णांक i;
+static int sysc_defer_non_critical(struct sysc *ddata)
+{
+	struct resource *res;
+	int i;
 
-	अगर (!atomic_पढ़ो(&sysc_defer))
-		वापस 0;
+	if (!atomic_read(&sysc_defer))
+		return 0;
 
-	क्रम (i = 0; i < ARRAY_SIZE(early_bus_ranges); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(early_bus_ranges); i++) {
 		res = &early_bus_ranges[i];
-		अगर (ddata->module_pa >= res->start &&
-		    ddata->module_pa <= res->end) अणु
+		if (ddata->module_pa >= res->start &&
+		    ddata->module_pa <= res->end) {
 			atomic_set(&sysc_defer, 0);
 
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	atomic_dec_अगर_positive(&sysc_defer);
+	atomic_dec_if_positive(&sysc_defer);
 
-	वापस -EPROBE_DEFER;
-पूर्ण
+	return -EPROBE_DEFER;
+}
 
-अटल काष्ठा device_node *मानक_निकास_path;
+static struct device_node *stdout_path;
 
-अटल व्योम sysc_init_मानक_निकास_path(काष्ठा sysc *ddata)
-अणु
-	काष्ठा device_node *np = शून्य;
-	स्थिर अक्षर *uart;
+static void sysc_init_stdout_path(struct sysc *ddata)
+{
+	struct device_node *np = NULL;
+	const char *uart;
 
-	अगर (IS_ERR(मानक_निकास_path))
-		वापस;
+	if (IS_ERR(stdout_path))
+		return;
 
-	अगर (मानक_निकास_path)
-		वापस;
+	if (stdout_path)
+		return;
 
 	np = of_find_node_by_path("/chosen");
-	अगर (!np)
-		जाओ err;
+	if (!np)
+		goto err;
 
-	uart = of_get_property(np, "stdout-path", शून्य);
-	अगर (!uart)
-		जाओ err;
+	uart = of_get_property(np, "stdout-path", NULL);
+	if (!uart)
+		goto err;
 
 	np = of_find_node_by_path(uart);
-	अगर (!np)
-		जाओ err;
+	if (!np)
+		goto err;
 
-	मानक_निकास_path = np;
+	stdout_path = np;
 
-	वापस;
+	return;
 
 err:
-	मानक_निकास_path = ERR_PTR(-ENODEV);
-पूर्ण
+	stdout_path = ERR_PTR(-ENODEV);
+}
 
-अटल व्योम sysc_check_quirk_मानक_निकास(काष्ठा sysc *ddata,
-				    काष्ठा device_node *np)
-अणु
-	sysc_init_मानक_निकास_path(ddata);
-	अगर (np != मानक_निकास_path)
-		वापस;
+static void sysc_check_quirk_stdout(struct sysc *ddata,
+				    struct device_node *np)
+{
+	sysc_init_stdout_path(ddata);
+	if (np != stdout_path)
+		return;
 
 	ddata->cfg.quirks |= SYSC_QUIRK_NO_IDLE_ON_INIT |
 				SYSC_QUIRK_NO_RESET_ON_INIT;
-पूर्ण
+}
 
 /**
  * sysc_check_one_child - check child configuration
  * @ddata: device driver data
  * @np: child device node
  *
- * Let's aव्योम messy situations where we have new पूर्णांकerconnect target
- * node but children have "ti,hwmods". These beदीर्घ to the पूर्णांकerconnect
+ * Let's avoid messy situations where we have new interconnect target
+ * node but children have "ti,hwmods". These belong to the interconnect
  * target node and are managed by this driver.
  */
-अटल व्योम sysc_check_one_child(काष्ठा sysc *ddata,
-				 काष्ठा device_node *np)
-अणु
-	स्थिर अक्षर *name;
+static void sysc_check_one_child(struct sysc *ddata,
+				 struct device_node *np)
+{
+	const char *name;
 
-	name = of_get_property(np, "ti,hwmods", शून्य);
-	अगर (name && !of_device_is_compatible(np, "ti,sysc"))
+	name = of_get_property(np, "ti,hwmods", NULL);
+	if (name && !of_device_is_compatible(np, "ti,sysc"))
 		dev_warn(ddata->dev, "really a child ti,hwmods property?");
 
-	sysc_check_quirk_मानक_निकास(ddata, np);
+	sysc_check_quirk_stdout(ddata, np);
 	sysc_parse_dts_quirks(ddata, np, true);
-पूर्ण
+}
 
-अटल व्योम sysc_check_children(काष्ठा sysc *ddata)
-अणु
-	काष्ठा device_node *child;
+static void sysc_check_children(struct sysc *ddata)
+{
+	struct device_node *child;
 
-	क्रम_each_child_of_node(ddata->dev->of_node, child)
+	for_each_child_of_node(ddata->dev->of_node, child)
 		sysc_check_one_child(ddata, child);
-पूर्ण
+}
 
 /*
- * So far only I2C uses 16-bit पढ़ो access with घड़ीactivity with revision
- * in two रेजिस्टरs with stride of 4. We can detect this based on the rev
- * रेजिस्टर size to configure things far enough to be able to properly पढ़ो
- * the revision रेजिस्टर.
+ * So far only I2C uses 16-bit read access with clockactivity with revision
+ * in two registers with stride of 4. We can detect this based on the rev
+ * register size to configure things far enough to be able to properly read
+ * the revision register.
  */
-अटल व्योम sysc_check_quirk_16bit(काष्ठा sysc *ddata, काष्ठा resource *res)
-अणु
-	अगर (resource_size(res) == 8)
+static void sysc_check_quirk_16bit(struct sysc *ddata, struct resource *res)
+{
+	if (resource_size(res) == 8)
 		ddata->cfg.quirks |= SYSC_QUIRK_16BIT | SYSC_QUIRK_USE_CLOCKACT;
-पूर्ण
+}
 
 /**
- * sysc_parse_one - parses the पूर्णांकerconnect target module रेजिस्टरs
+ * sysc_parse_one - parses the interconnect target module registers
  * @ddata: device driver data
- * @reg: रेजिस्टर to parse
+ * @reg: register to parse
  */
-अटल पूर्णांक sysc_parse_one(काष्ठा sysc *ddata, क्रमागत sysc_रेजिस्टरs reg)
-अणु
-	काष्ठा resource *res;
-	स्थिर अक्षर *name;
+static int sysc_parse_one(struct sysc *ddata, enum sysc_registers reg)
+{
+	struct resource *res;
+	const char *name;
 
-	चयन (reg) अणु
-	हाल SYSC_REVISION:
-	हाल SYSC_SYSCONFIG:
-	हाल SYSC_SYSSTATUS:
+	switch (reg) {
+	case SYSC_REVISION:
+	case SYSC_SYSCONFIG:
+	case SYSC_SYSSTATUS:
 		name = reg_names[reg];
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	res = platक्रमm_get_resource_byname(to_platक्रमm_device(ddata->dev),
+	res = platform_get_resource_byname(to_platform_device(ddata->dev),
 					   IORESOURCE_MEM, name);
-	अगर (!res) अणु
+	if (!res) {
 		ddata->offsets[reg] = -ENODEV;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	ddata->offsets[reg] = res->start - ddata->module_pa;
-	अगर (reg == SYSC_REVISION)
+	if (reg == SYSC_REVISION)
 		sysc_check_quirk_16bit(ddata, res);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sysc_parse_रेजिस्टरs(काष्ठा sysc *ddata)
-अणु
-	पूर्णांक i, error;
+static int sysc_parse_registers(struct sysc *ddata)
+{
+	int i, error;
 
-	क्रम (i = 0; i < SYSC_MAX_REGS; i++) अणु
+	for (i = 0; i < SYSC_MAX_REGS; i++) {
 		error = sysc_parse_one(ddata, i);
-		अगर (error)
-			वापस error;
-	पूर्ण
+		if (error)
+			return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * sysc_check_रेजिस्टरs - check क्रम misconfigured रेजिस्टर overlaps
+ * sysc_check_registers - check for misconfigured register overlaps
  * @ddata: device driver data
  */
-अटल पूर्णांक sysc_check_रेजिस्टरs(काष्ठा sysc *ddata)
-अणु
-	पूर्णांक i, j, nr_regs = 0, nr_matches = 0;
+static int sysc_check_registers(struct sysc *ddata)
+{
+	int i, j, nr_regs = 0, nr_matches = 0;
 
-	क्रम (i = 0; i < SYSC_MAX_REGS; i++) अणु
-		अगर (ddata->offsets[i] < 0)
-			जारी;
+	for (i = 0; i < SYSC_MAX_REGS; i++) {
+		if (ddata->offsets[i] < 0)
+			continue;
 
-		अगर (ddata->offsets[i] > (ddata->module_size - 4)) अणु
+		if (ddata->offsets[i] > (ddata->module_size - 4)) {
 			dev_err(ddata->dev, "register outside module range");
 
-				वापस -EINVAL;
-		पूर्ण
+				return -EINVAL;
+		}
 
-		क्रम (j = 0; j < SYSC_MAX_REGS; j++) अणु
-			अगर (ddata->offsets[j] < 0)
-				जारी;
+		for (j = 0; j < SYSC_MAX_REGS; j++) {
+			if (ddata->offsets[j] < 0)
+				continue;
 
-			अगर (ddata->offsets[i] == ddata->offsets[j])
+			if (ddata->offsets[i] == ddata->offsets[j])
 				nr_matches++;
-		पूर्ण
+		}
 		nr_regs++;
-	पूर्ण
+	}
 
-	अगर (nr_matches > nr_regs) अणु
+	if (nr_matches > nr_regs) {
 		dev_err(ddata->dev, "overlapping registers: (%i/%i)",
 			nr_regs, nr_matches);
 
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * syc_ioremap - ioremap रेजिस्टर space क्रम the पूर्णांकerconnect target module
+ * syc_ioremap - ioremap register space for the interconnect target module
  * @ddata: device driver data
  *
- * Note that the पूर्णांकerconnect target module रेजिस्टरs can be anywhere
- * within the पूर्णांकerconnect target module range. For example, SGX has
+ * Note that the interconnect target module registers can be anywhere
+ * within the interconnect target module range. For example, SGX has
  * them at offset 0x1fc00 in the 32MB module address space. And cpsw
  * has them at offset 0x1200 in the CPSW_WR child. Usually the
- * the पूर्णांकerconnect target module रेजिस्टरs are at the beginning of
+ * the interconnect target module registers are at the beginning of
  * the module range though.
  */
-अटल पूर्णांक sysc_ioremap(काष्ठा sysc *ddata)
-अणु
-	पूर्णांक size;
+static int sysc_ioremap(struct sysc *ddata)
+{
+	int size;
 
-	अगर (ddata->offsets[SYSC_REVISION] < 0 &&
+	if (ddata->offsets[SYSC_REVISION] < 0 &&
 	    ddata->offsets[SYSC_SYSCONFIG] < 0 &&
-	    ddata->offsets[SYSC_SYSSTATUS] < 0) अणु
+	    ddata->offsets[SYSC_SYSSTATUS] < 0) {
 		size = ddata->module_size;
-	पूर्ण अन्यथा अणु
+	} else {
 		size = max3(ddata->offsets[SYSC_REVISION],
 			    ddata->offsets[SYSC_SYSCONFIG],
 			    ddata->offsets[SYSC_SYSSTATUS]);
 
-		अगर (size < SZ_1K)
+		if (size < SZ_1K)
 			size = SZ_1K;
 
-		अगर ((size + माप(u32)) > ddata->module_size)
+		if ((size + sizeof(u32)) > ddata->module_size)
 			size = ddata->module_size;
-	पूर्ण
+	}
 
 	ddata->module_va = devm_ioremap(ddata->dev,
 					ddata->module_pa,
-					size + माप(u32));
-	अगर (!ddata->module_va)
-		वापस -EIO;
+					size + sizeof(u32));
+	if (!ddata->module_va)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * sysc_map_and_check_रेजिस्टरs - ioremap and check device रेजिस्टरs
+ * sysc_map_and_check_registers - ioremap and check device registers
  * @ddata: device driver data
  */
-अटल पूर्णांक sysc_map_and_check_रेजिस्टरs(काष्ठा sysc *ddata)
-अणु
-	काष्ठा device_node *np = ddata->dev->of_node;
-	पूर्णांक error;
+static int sysc_map_and_check_registers(struct sysc *ddata)
+{
+	struct device_node *np = ddata->dev->of_node;
+	int error;
 
 	error = sysc_parse_and_check_child_range(ddata);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	error = sysc_defer_non_critical(ddata);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	sysc_check_children(ddata);
 
-	अगर (!of_get_property(np, "reg", शून्य))
-		वापस 0;
+	if (!of_get_property(np, "reg", NULL))
+		return 0;
 
-	error = sysc_parse_रेजिस्टरs(ddata);
-	अगर (error)
-		वापस error;
+	error = sysc_parse_registers(ddata);
+	if (error)
+		return error;
 
 	error = sysc_ioremap(ddata);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	error = sysc_check_रेजिस्टरs(ddata);
-	अगर (error)
-		वापस error;
+	error = sysc_check_registers(ddata);
+	if (error)
+		return error;
 
-	वापस 0;
-पूर्ण
-
-/**
- * sysc_show_rev - पढ़ो and show पूर्णांकerconnect target module revision
- * @bufp: buffer to prपूर्णांक the inक्रमmation to
- * @ddata: device driver data
- */
-अटल पूर्णांक sysc_show_rev(अक्षर *bufp, काष्ठा sysc *ddata)
-अणु
-	पूर्णांक len;
-
-	अगर (ddata->offsets[SYSC_REVISION] < 0)
-		वापस प्र_लिखो(bufp, ":NA");
-
-	len = प्र_लिखो(bufp, ":%08x", ddata->revision);
-
-	वापस len;
-पूर्ण
-
-अटल पूर्णांक sysc_show_reg(काष्ठा sysc *ddata,
-			 अक्षर *bufp, क्रमागत sysc_रेजिस्टरs reg)
-अणु
-	अगर (ddata->offsets[reg] < 0)
-		वापस प्र_लिखो(bufp, ":NA");
-
-	वापस प्र_लिखो(bufp, ":%x", ddata->offsets[reg]);
-पूर्ण
-
-अटल पूर्णांक sysc_show_name(अक्षर *bufp, काष्ठा sysc *ddata)
-अणु
-	अगर (!ddata->name)
-		वापस 0;
-
-	वापस प्र_लिखो(bufp, ":%s", ddata->name);
-पूर्ण
+	return 0;
+}
 
 /**
- * sysc_show_रेजिस्टरs - show inक्रमmation about पूर्णांकerconnect target module
+ * sysc_show_rev - read and show interconnect target module revision
+ * @bufp: buffer to print the information to
  * @ddata: device driver data
  */
-अटल व्योम sysc_show_रेजिस्टरs(काष्ठा sysc *ddata)
-अणु
-	अक्षर buf[128];
-	अक्षर *bufp = buf;
-	पूर्णांक i;
+static int sysc_show_rev(char *bufp, struct sysc *ddata)
+{
+	int len;
 
-	क्रम (i = 0; i < SYSC_MAX_REGS; i++)
+	if (ddata->offsets[SYSC_REVISION] < 0)
+		return sprintf(bufp, ":NA");
+
+	len = sprintf(bufp, ":%08x", ddata->revision);
+
+	return len;
+}
+
+static int sysc_show_reg(struct sysc *ddata,
+			 char *bufp, enum sysc_registers reg)
+{
+	if (ddata->offsets[reg] < 0)
+		return sprintf(bufp, ":NA");
+
+	return sprintf(bufp, ":%x", ddata->offsets[reg]);
+}
+
+static int sysc_show_name(char *bufp, struct sysc *ddata)
+{
+	if (!ddata->name)
+		return 0;
+
+	return sprintf(bufp, ":%s", ddata->name);
+}
+
+/**
+ * sysc_show_registers - show information about interconnect target module
+ * @ddata: device driver data
+ */
+static void sysc_show_registers(struct sysc *ddata)
+{
+	char buf[128];
+	char *bufp = buf;
+	int i;
+
+	for (i = 0; i < SYSC_MAX_REGS; i++)
 		bufp += sysc_show_reg(ddata, bufp, i);
 
 	bufp += sysc_show_rev(bufp, ddata);
@@ -983,452 +982,452 @@ err:
 	dev_dbg(ddata->dev, "%llx:%x%s\n",
 		ddata->module_pa, ddata->module_size,
 		buf);
-पूर्ण
+}
 
 /**
- * sysc_ग_लिखो_sysconfig - handle sysconfig quirks क्रम रेजिस्टर ग_लिखो
+ * sysc_write_sysconfig - handle sysconfig quirks for register write
  * @ddata: device driver data
- * @value: रेजिस्टर value
+ * @value: register value
  */
-अटल व्योम sysc_ग_लिखो_sysconfig(काष्ठा sysc *ddata, u32 value)
-अणु
-	अगर (ddata->module_unlock_quirk)
+static void sysc_write_sysconfig(struct sysc *ddata, u32 value)
+{
+	if (ddata->module_unlock_quirk)
 		ddata->module_unlock_quirk(ddata);
 
-	sysc_ग_लिखो(ddata, ddata->offsets[SYSC_SYSCONFIG], value);
+	sysc_write(ddata, ddata->offsets[SYSC_SYSCONFIG], value);
 
-	अगर (ddata->module_lock_quirk)
+	if (ddata->module_lock_quirk)
 		ddata->module_lock_quirk(ddata);
-पूर्ण
+}
 
-#घोषणा SYSC_IDLE_MASK	(SYSC_NR_IDLEMODES - 1)
-#घोषणा SYSC_CLOCACT_ICK	2
+#define SYSC_IDLE_MASK	(SYSC_NR_IDLEMODES - 1)
+#define SYSC_CLOCACT_ICK	2
 
 /* Caller needs to manage sysc_clkdm_deny_idle() and sysc_clkdm_allow_idle() */
-अटल पूर्णांक sysc_enable_module(काष्ठा device *dev)
-अणु
-	काष्ठा sysc *ddata;
-	स्थिर काष्ठा sysc_regbits *regbits;
+static int sysc_enable_module(struct device *dev)
+{
+	struct sysc *ddata;
+	const struct sysc_regbits *regbits;
 	u32 reg, idlemodes, best_mode;
-	पूर्णांक error;
+	int error;
 
 	ddata = dev_get_drvdata(dev);
 
 	/*
-	 * Some modules like DSS reset स्वतःmatically on idle. Enable optional
-	 * reset घड़ीs and रुको क्रम OCP softreset to complete.
+	 * Some modules like DSS reset automatically on idle. Enable optional
+	 * reset clocks and wait for OCP softreset to complete.
 	 */
-	अगर (ddata->cfg.quirks & SYSC_QUIRK_OPT_CLKS_IN_RESET) अणु
-		error = sysc_enable_opt_घड़ीs(ddata);
-		अगर (error) अणु
+	if (ddata->cfg.quirks & SYSC_QUIRK_OPT_CLKS_IN_RESET) {
+		error = sysc_enable_opt_clocks(ddata);
+		if (error) {
 			dev_err(ddata->dev,
 				"Optional clocks failed for enable: %i\n",
 				error);
-			वापस error;
-		पूर्ण
-	पूर्ण
+			return error;
+		}
+	}
 	/*
 	 * Some modules like i2c and hdq1w have unusable reset status unless
 	 * the module reset quirk is enabled. Skip status check on enable.
 	 */
-	अगर (!(ddata->cfg.quirks & SYSC_MODULE_QUIRK_ENA_RESETDONE)) अणु
-		error = sysc_रुको_softreset(ddata);
-		अगर (error)
+	if (!(ddata->cfg.quirks & SYSC_MODULE_QUIRK_ENA_RESETDONE)) {
+		error = sysc_wait_softreset(ddata);
+		if (error)
 			dev_warn(ddata->dev, "OCP softreset timed out\n");
-	पूर्ण
-	अगर (ddata->cfg.quirks & SYSC_QUIRK_OPT_CLKS_IN_RESET)
-		sysc_disable_opt_घड़ीs(ddata);
+	}
+	if (ddata->cfg.quirks & SYSC_QUIRK_OPT_CLKS_IN_RESET)
+		sysc_disable_opt_clocks(ddata);
 
 	/*
-	 * Some subप्रणाली निजी पूर्णांकerconnects, like DSS top level module,
-	 * need only the स्वतःmatic OCP softreset handling with no sysconfig
-	 * रेजिस्टर bits to configure.
+	 * Some subsystem private interconnects, like DSS top level module,
+	 * need only the automatic OCP softreset handling with no sysconfig
+	 * register bits to configure.
 	 */
-	अगर (ddata->offsets[SYSC_SYSCONFIG] == -ENODEV)
-		वापस 0;
+	if (ddata->offsets[SYSC_SYSCONFIG] == -ENODEV)
+		return 0;
 
 	regbits = ddata->cap->regbits;
-	reg = sysc_पढ़ो(ddata, ddata->offsets[SYSC_SYSCONFIG]);
+	reg = sysc_read(ddata, ddata->offsets[SYSC_SYSCONFIG]);
 
 	/*
-	 * Set CLOCKACTIVITY, we only use it क्रम ick. And we only configure it
+	 * Set CLOCKACTIVITY, we only use it for ick. And we only configure it
 	 * based on the SYSC_QUIRK_USE_CLOCKACT flag, not based on the hardware
 	 * capabilities. See the old HWMOD_SET_DEFAULT_CLOCKACT flag.
 	 */
-	अगर (regbits->clkact_shअगरt >= 0 &&
+	if (regbits->clkact_shift >= 0 &&
 	    (ddata->cfg.quirks & SYSC_QUIRK_USE_CLOCKACT))
-		reg |= SYSC_CLOCACT_ICK << regbits->clkact_shअगरt;
+		reg |= SYSC_CLOCACT_ICK << regbits->clkact_shift;
 
 	/* Set SIDLE mode */
 	idlemodes = ddata->cfg.sidlemodes;
-	अगर (!idlemodes || regbits->sidle_shअगरt < 0)
-		जाओ set_midle;
+	if (!idlemodes || regbits->sidle_shift < 0)
+		goto set_midle;
 
-	अगर (ddata->cfg.quirks & (SYSC_QUIRK_SWSUP_SIDLE |
-				 SYSC_QUIRK_SWSUP_SIDLE_ACT)) अणु
+	if (ddata->cfg.quirks & (SYSC_QUIRK_SWSUP_SIDLE |
+				 SYSC_QUIRK_SWSUP_SIDLE_ACT)) {
 		best_mode = SYSC_IDLE_NO;
-	पूर्ण अन्यथा अणु
+	} else {
 		best_mode = fls(ddata->cfg.sidlemodes) - 1;
-		अगर (best_mode > SYSC_IDLE_MASK) अणु
+		if (best_mode > SYSC_IDLE_MASK) {
 			dev_err(dev, "%s: invalid sidlemode\n", __func__);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		/* Set WAKEUP */
-		अगर (regbits->enwkup_shअगरt >= 0 &&
-		    ddata->cfg.sysc_val & BIT(regbits->enwkup_shअगरt))
-			reg |= BIT(regbits->enwkup_shअगरt);
-	पूर्ण
+		if (regbits->enwkup_shift >= 0 &&
+		    ddata->cfg.sysc_val & BIT(regbits->enwkup_shift))
+			reg |= BIT(regbits->enwkup_shift);
+	}
 
-	reg &= ~(SYSC_IDLE_MASK << regbits->sidle_shअगरt);
-	reg |= best_mode << regbits->sidle_shअगरt;
-	sysc_ग_लिखो_sysconfig(ddata, reg);
+	reg &= ~(SYSC_IDLE_MASK << regbits->sidle_shift);
+	reg |= best_mode << regbits->sidle_shift;
+	sysc_write_sysconfig(ddata, reg);
 
 set_midle:
 	/* Set MIDLE mode */
 	idlemodes = ddata->cfg.midlemodes;
-	अगर (!idlemodes || regbits->midle_shअगरt < 0)
-		जाओ set_स्वतःidle;
+	if (!idlemodes || regbits->midle_shift < 0)
+		goto set_autoidle;
 
 	best_mode = fls(ddata->cfg.midlemodes) - 1;
-	अगर (best_mode > SYSC_IDLE_MASK) अणु
+	if (best_mode > SYSC_IDLE_MASK) {
 		dev_err(dev, "%s: invalid midlemode\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ddata->cfg.quirks & SYSC_QUIRK_SWSUP_MSTANDBY)
+	if (ddata->cfg.quirks & SYSC_QUIRK_SWSUP_MSTANDBY)
 		best_mode = SYSC_IDLE_NO;
 
-	reg &= ~(SYSC_IDLE_MASK << regbits->midle_shअगरt);
-	reg |= best_mode << regbits->midle_shअगरt;
-	sysc_ग_लिखो_sysconfig(ddata, reg);
+	reg &= ~(SYSC_IDLE_MASK << regbits->midle_shift);
+	reg |= best_mode << regbits->midle_shift;
+	sysc_write_sysconfig(ddata, reg);
 
-set_स्वतःidle:
-	/* Autoidle bit must enabled separately अगर available */
-	अगर (regbits->स्वतःidle_shअगरt >= 0 &&
-	    ddata->cfg.sysc_val & BIT(regbits->स्वतःidle_shअगरt)) अणु
-		reg |= 1 << regbits->स्वतःidle_shअगरt;
-		sysc_ग_लिखो_sysconfig(ddata, reg);
-	पूर्ण
+set_autoidle:
+	/* Autoidle bit must enabled separately if available */
+	if (regbits->autoidle_shift >= 0 &&
+	    ddata->cfg.sysc_val & BIT(regbits->autoidle_shift)) {
+		reg |= 1 << regbits->autoidle_shift;
+		sysc_write_sysconfig(ddata, reg);
+	}
 
-	/* Flush posted ग_लिखो */
-	sysc_पढ़ो(ddata, ddata->offsets[SYSC_SYSCONFIG]);
+	/* Flush posted write */
+	sysc_read(ddata, ddata->offsets[SYSC_SYSCONFIG]);
 
-	अगर (ddata->module_enable_quirk)
+	if (ddata->module_enable_quirk)
 		ddata->module_enable_quirk(ddata);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sysc_best_idle_mode(u32 idlemodes, u32 *best_mode)
-अणु
-	अगर (idlemodes & BIT(SYSC_IDLE_SMART_WKUP))
+static int sysc_best_idle_mode(u32 idlemodes, u32 *best_mode)
+{
+	if (idlemodes & BIT(SYSC_IDLE_SMART_WKUP))
 		*best_mode = SYSC_IDLE_SMART_WKUP;
-	अन्यथा अगर (idlemodes & BIT(SYSC_IDLE_SMART))
+	else if (idlemodes & BIT(SYSC_IDLE_SMART))
 		*best_mode = SYSC_IDLE_SMART;
-	अन्यथा अगर (idlemodes & BIT(SYSC_IDLE_FORCE))
+	else if (idlemodes & BIT(SYSC_IDLE_FORCE))
 		*best_mode = SYSC_IDLE_FORCE;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Caller needs to manage sysc_clkdm_deny_idle() and sysc_clkdm_allow_idle() */
-अटल पूर्णांक sysc_disable_module(काष्ठा device *dev)
-अणु
-	काष्ठा sysc *ddata;
-	स्थिर काष्ठा sysc_regbits *regbits;
+static int sysc_disable_module(struct device *dev)
+{
+	struct sysc *ddata;
+	const struct sysc_regbits *regbits;
 	u32 reg, idlemodes, best_mode;
-	पूर्णांक ret;
+	int ret;
 
 	ddata = dev_get_drvdata(dev);
-	अगर (ddata->offsets[SYSC_SYSCONFIG] == -ENODEV)
-		वापस 0;
+	if (ddata->offsets[SYSC_SYSCONFIG] == -ENODEV)
+		return 0;
 
-	अगर (ddata->module_disable_quirk)
+	if (ddata->module_disable_quirk)
 		ddata->module_disable_quirk(ddata);
 
 	regbits = ddata->cap->regbits;
-	reg = sysc_पढ़ो(ddata, ddata->offsets[SYSC_SYSCONFIG]);
+	reg = sysc_read(ddata, ddata->offsets[SYSC_SYSCONFIG]);
 
 	/* Set MIDLE mode */
 	idlemodes = ddata->cfg.midlemodes;
-	अगर (!idlemodes || regbits->midle_shअगरt < 0)
-		जाओ set_sidle;
+	if (!idlemodes || regbits->midle_shift < 0)
+		goto set_sidle;
 
 	ret = sysc_best_idle_mode(idlemodes, &best_mode);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "%s: invalid midlemode\n", __func__);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (ddata->cfg.quirks & (SYSC_QUIRK_SWSUP_MSTANDBY) ||
+	if (ddata->cfg.quirks & (SYSC_QUIRK_SWSUP_MSTANDBY) ||
 	    ddata->cfg.quirks & (SYSC_QUIRK_FORCE_MSTANDBY))
 		best_mode = SYSC_IDLE_FORCE;
 
-	reg &= ~(SYSC_IDLE_MASK << regbits->midle_shअगरt);
-	reg |= best_mode << regbits->midle_shअगरt;
-	sysc_ग_लिखो_sysconfig(ddata, reg);
+	reg &= ~(SYSC_IDLE_MASK << regbits->midle_shift);
+	reg |= best_mode << regbits->midle_shift;
+	sysc_write_sysconfig(ddata, reg);
 
 set_sidle:
 	/* Set SIDLE mode */
 	idlemodes = ddata->cfg.sidlemodes;
-	अगर (!idlemodes || regbits->sidle_shअगरt < 0)
-		वापस 0;
+	if (!idlemodes || regbits->sidle_shift < 0)
+		return 0;
 
-	अगर (ddata->cfg.quirks & SYSC_QUIRK_SWSUP_SIDLE) अणु
+	if (ddata->cfg.quirks & SYSC_QUIRK_SWSUP_SIDLE) {
 		best_mode = SYSC_IDLE_FORCE;
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = sysc_best_idle_mode(idlemodes, &best_mode);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "%s: invalid sidlemode\n", __func__);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	reg &= ~(SYSC_IDLE_MASK << regbits->sidle_shअगरt);
-	reg |= best_mode << regbits->sidle_shअगरt;
-	अगर (regbits->स्वतःidle_shअगरt >= 0 &&
-	    ddata->cfg.sysc_val & BIT(regbits->स्वतःidle_shअगरt))
-		reg |= 1 << regbits->स्वतःidle_shअगरt;
-	sysc_ग_लिखो_sysconfig(ddata, reg);
+	reg &= ~(SYSC_IDLE_MASK << regbits->sidle_shift);
+	reg |= best_mode << regbits->sidle_shift;
+	if (regbits->autoidle_shift >= 0 &&
+	    ddata->cfg.sysc_val & BIT(regbits->autoidle_shift))
+		reg |= 1 << regbits->autoidle_shift;
+	sysc_write_sysconfig(ddata, reg);
 
-	/* Flush posted ग_लिखो */
-	sysc_पढ़ो(ddata, ddata->offsets[SYSC_SYSCONFIG]);
+	/* Flush posted write */
+	sysc_read(ddata, ddata->offsets[SYSC_SYSCONFIG]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused sysc_runसमय_suspend_legacy(काष्ठा device *dev,
-						      काष्ठा sysc *ddata)
-अणु
-	काष्ठा ti_sysc_platक्रमm_data *pdata;
-	पूर्णांक error;
+static int __maybe_unused sysc_runtime_suspend_legacy(struct device *dev,
+						      struct sysc *ddata)
+{
+	struct ti_sysc_platform_data *pdata;
+	int error;
 
 	pdata = dev_get_platdata(ddata->dev);
-	अगर (!pdata)
-		वापस 0;
+	if (!pdata)
+		return 0;
 
-	अगर (!pdata->idle_module)
-		वापस -ENODEV;
+	if (!pdata->idle_module)
+		return -ENODEV;
 
 	error = pdata->idle_module(dev, &ddata->cookie);
-	अगर (error)
+	if (error)
 		dev_err(dev, "%s: could not idle: %i\n",
 			__func__, error);
 
-	reset_control_निश्चित(ddata->rsts);
+	reset_control_assert(ddata->rsts);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused sysc_runसमय_resume_legacy(काष्ठा device *dev,
-						     काष्ठा sysc *ddata)
-अणु
-	काष्ठा ti_sysc_platक्रमm_data *pdata;
-	पूर्णांक error;
+static int __maybe_unused sysc_runtime_resume_legacy(struct device *dev,
+						     struct sysc *ddata)
+{
+	struct ti_sysc_platform_data *pdata;
+	int error;
 
 	pdata = dev_get_platdata(ddata->dev);
-	अगर (!pdata)
-		वापस 0;
+	if (!pdata)
+		return 0;
 
-	अगर (!pdata->enable_module)
-		वापस -ENODEV;
+	if (!pdata->enable_module)
+		return -ENODEV;
 
 	error = pdata->enable_module(dev, &ddata->cookie);
-	अगर (error)
+	if (error)
 		dev_err(dev, "%s: could not enable: %i\n",
 			__func__, error);
 
-	reset_control_deनिश्चित(ddata->rsts);
+	reset_control_deassert(ddata->rsts);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused sysc_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा sysc *ddata;
-	पूर्णांक error = 0;
+static int __maybe_unused sysc_runtime_suspend(struct device *dev)
+{
+	struct sysc *ddata;
+	int error = 0;
 
 	ddata = dev_get_drvdata(dev);
 
-	अगर (!ddata->enabled)
-		वापस 0;
+	if (!ddata->enabled)
+		return 0;
 
 	sysc_clkdm_deny_idle(ddata);
 
-	अगर (ddata->legacy_mode) अणु
-		error = sysc_runसमय_suspend_legacy(dev, ddata);
-		अगर (error)
-			जाओ err_allow_idle;
-	पूर्ण अन्यथा अणु
+	if (ddata->legacy_mode) {
+		error = sysc_runtime_suspend_legacy(dev, ddata);
+		if (error)
+			goto err_allow_idle;
+	} else {
 		error = sysc_disable_module(dev);
-		अगर (error)
-			जाओ err_allow_idle;
-	पूर्ण
+		if (error)
+			goto err_allow_idle;
+	}
 
-	sysc_disable_मुख्य_घड़ीs(ddata);
+	sysc_disable_main_clocks(ddata);
 
-	अगर (sysc_opt_clks_needed(ddata))
-		sysc_disable_opt_घड़ीs(ddata);
+	if (sysc_opt_clks_needed(ddata))
+		sysc_disable_opt_clocks(ddata);
 
 	ddata->enabled = false;
 
 err_allow_idle:
 	sysc_clkdm_allow_idle(ddata);
 
-	reset_control_निश्चित(ddata->rsts);
+	reset_control_assert(ddata->rsts);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक __maybe_unused sysc_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा sysc *ddata;
-	पूर्णांक error = 0;
+static int __maybe_unused sysc_runtime_resume(struct device *dev)
+{
+	struct sysc *ddata;
+	int error = 0;
 
 	ddata = dev_get_drvdata(dev);
 
-	अगर (ddata->enabled)
-		वापस 0;
+	if (ddata->enabled)
+		return 0;
 
 
 	sysc_clkdm_deny_idle(ddata);
 
-	अगर (sysc_opt_clks_needed(ddata)) अणु
-		error = sysc_enable_opt_घड़ीs(ddata);
-		अगर (error)
-			जाओ err_allow_idle;
-	पूर्ण
+	if (sysc_opt_clks_needed(ddata)) {
+		error = sysc_enable_opt_clocks(ddata);
+		if (error)
+			goto err_allow_idle;
+	}
 
-	error = sysc_enable_मुख्य_घड़ीs(ddata);
-	अगर (error)
-		जाओ err_opt_घड़ीs;
+	error = sysc_enable_main_clocks(ddata);
+	if (error)
+		goto err_opt_clocks;
 
-	reset_control_deनिश्चित(ddata->rsts);
+	reset_control_deassert(ddata->rsts);
 
-	अगर (ddata->legacy_mode) अणु
-		error = sysc_runसमय_resume_legacy(dev, ddata);
-		अगर (error)
-			जाओ err_मुख्य_घड़ीs;
-	पूर्ण अन्यथा अणु
+	if (ddata->legacy_mode) {
+		error = sysc_runtime_resume_legacy(dev, ddata);
+		if (error)
+			goto err_main_clocks;
+	} else {
 		error = sysc_enable_module(dev);
-		अगर (error)
-			जाओ err_मुख्य_घड़ीs;
-	पूर्ण
+		if (error)
+			goto err_main_clocks;
+	}
 
 	ddata->enabled = true;
 
 	sysc_clkdm_allow_idle(ddata);
 
-	वापस 0;
+	return 0;
 
-err_मुख्य_घड़ीs:
-	sysc_disable_मुख्य_घड़ीs(ddata);
-err_opt_घड़ीs:
-	अगर (sysc_opt_clks_needed(ddata))
-		sysc_disable_opt_घड़ीs(ddata);
+err_main_clocks:
+	sysc_disable_main_clocks(ddata);
+err_opt_clocks:
+	if (sysc_opt_clks_needed(ddata))
+		sysc_disable_opt_clocks(ddata);
 err_allow_idle:
 	sysc_clkdm_allow_idle(ddata);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक sysc_reinit_module(काष्ठा sysc *ddata, bool leave_enabled)
-अणु
-	काष्ठा device *dev = ddata->dev;
-	पूर्णांक error;
+static int sysc_reinit_module(struct sysc *ddata, bool leave_enabled)
+{
+	struct device *dev = ddata->dev;
+	int error;
 
-	/* Disable target module अगर it is enabled */
-	अगर (ddata->enabled) अणु
-		error = sysc_runसमय_suspend(dev);
-		अगर (error)
+	/* Disable target module if it is enabled */
+	if (ddata->enabled) {
+		error = sysc_runtime_suspend(dev);
+		if (error)
 			dev_warn(dev, "reinit suspend failed: %i\n", error);
-	पूर्ण
+	}
 
 	/* Enable target module */
-	error = sysc_runसमय_resume(dev);
-	अगर (error)
+	error = sysc_runtime_resume(dev);
+	if (error)
 		dev_warn(dev, "reinit resume failed: %i\n", error);
 
-	अगर (leave_enabled)
-		वापस error;
+	if (leave_enabled)
+		return error;
 
-	/* Disable target module अगर no leave_enabled was set */
-	error = sysc_runसमय_suspend(dev);
-	अगर (error)
+	/* Disable target module if no leave_enabled was set */
+	error = sysc_runtime_suspend(dev);
+	if (error)
 		dev_warn(dev, "reinit suspend failed: %i\n", error);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक __maybe_unused sysc_noirq_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा sysc *ddata;
+static int __maybe_unused sysc_noirq_suspend(struct device *dev)
+{
+	struct sysc *ddata;
 
 	ddata = dev_get_drvdata(dev);
 
-	अगर (ddata->cfg.quirks &
+	if (ddata->cfg.quirks &
 	    (SYSC_QUIRK_LEGACY_IDLE | SYSC_QUIRK_NO_IDLE))
-		वापस 0;
+		return 0;
 
-	अगर (!ddata->enabled)
-		वापस 0;
+	if (!ddata->enabled)
+		return 0;
 
 	ddata->needs_resume = 1;
 
-	वापस sysc_runसमय_suspend(dev);
-पूर्ण
+	return sysc_runtime_suspend(dev);
+}
 
-अटल पूर्णांक __maybe_unused sysc_noirq_resume(काष्ठा device *dev)
-अणु
-	काष्ठा sysc *ddata;
-	पूर्णांक error = 0;
+static int __maybe_unused sysc_noirq_resume(struct device *dev)
+{
+	struct sysc *ddata;
+	int error = 0;
 
 	ddata = dev_get_drvdata(dev);
 
-	अगर (ddata->cfg.quirks &
+	if (ddata->cfg.quirks &
 	    (SYSC_QUIRK_LEGACY_IDLE | SYSC_QUIRK_NO_IDLE))
-		वापस 0;
+		return 0;
 
-	अगर (ddata->cfg.quirks & SYSC_QUIRK_REINIT_ON_RESUME) अणु
+	if (ddata->cfg.quirks & SYSC_QUIRK_REINIT_ON_RESUME) {
 		error = sysc_reinit_module(ddata, ddata->needs_resume);
-		अगर (error)
+		if (error)
 			dev_warn(dev, "noirq_resume failed: %i\n", error);
-	पूर्ण अन्यथा अगर (ddata->needs_resume) अणु
-		error = sysc_runसमय_resume(dev);
-		अगर (error)
+	} else if (ddata->needs_resume) {
+		error = sysc_runtime_resume(dev);
+		if (error)
 			dev_warn(dev, "noirq_resume failed: %i\n", error);
-	पूर्ण
+	}
 
 	ddata->needs_resume = 0;
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops sysc_pm_ops = अणु
+static const struct dev_pm_ops sysc_pm_ops = {
 	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(sysc_noirq_suspend, sysc_noirq_resume)
-	SET_RUNTIME_PM_OPS(sysc_runसमय_suspend,
-			   sysc_runसमय_resume,
-			   शून्य)
-पूर्ण;
+	SET_RUNTIME_PM_OPS(sysc_runtime_suspend,
+			   sysc_runtime_resume,
+			   NULL)
+};
 
-/* Module revision रेजिस्टर based quirks */
-काष्ठा sysc_revision_quirk अणु
-	स्थिर अक्षर *name;
+/* Module revision register based quirks */
+struct sysc_revision_quirk {
+	const char *name;
 	u32 base;
-	पूर्णांक rev_offset;
-	पूर्णांक sysc_offset;
-	पूर्णांक syss_offset;
+	int rev_offset;
+	int sysc_offset;
+	int syss_offset;
 	u32 revision;
 	u32 revision_mask;
 	u32 quirks;
-पूर्ण;
+};
 
-#घोषणा SYSC_QUIRK(optname, optbase, optrev, optsysc, optsyss,		\
+#define SYSC_QUIRK(optname, optbase, optrev, optsysc, optsyss,		\
 		   optrev_val, optrevmask, optquirkmask)		\
-	अणु								\
+	{								\
 		.name = (optname),					\
 		.base = (optbase),					\
 		.rev_offset = (optrev),					\
@@ -1437,10 +1436,10 @@ err_allow_idle:
 		.revision = (optrev_val),				\
 		.revision_mask = (optrevmask),				\
 		.quirks = (optquirkmask),				\
-	पूर्ण
+	}
 
-अटल स्थिर काष्ठा sysc_revision_quirk sysc_revision_quirks[] = अणु
-	/* These drivers need to be fixed to not use pm_runसमय_irq_safe() */
+static const struct sysc_revision_quirk sysc_revision_quirks[] = {
+	/* These drivers need to be fixed to not use pm_runtime_irq_safe() */
 	SYSC_QUIRK("gpio", 0, 0, 0x10, 0x114, 0x50600801, 0xffff00ff,
 		   SYSC_QUIRK_LEGACY_IDLE | SYSC_QUIRK_OPT_CLKS_IN_RESET),
 	SYSC_QUIRK("sham", 0, 0x100, 0x110, 0x114, 0x40000c03, 0xffffffff,
@@ -1522,11 +1521,11 @@ err_allow_idle:
 	/* PRUSS on am3, am4 and am5 */
 	SYSC_QUIRK("pruss", 0, 0x26000, 0x26004, -ENODEV, 0x47000000, 0xff000000,
 		   SYSC_MODULE_QUIRK_PRUSS),
-	/* Watchकरोg on am3 and am4 */
+	/* Watchdog on am3 and am4 */
 	SYSC_QUIRK("wdt", 0x44e35000, 0, 0x10, 0x14, 0x502a0500, 0xfffff0f0,
 		   SYSC_MODULE_QUIRK_WDT | SYSC_QUIRK_SWSUP_SIDLE),
 
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 	SYSC_QUIRK("adc", 0, 0, 0x10, -ENODEV, 0x47300001, 0xffffffff, 0),
 	SYSC_QUIRK("atl", 0, 0, -ENODEV, -ENODEV, 0x0a070100, 0xffffffff, 0),
 	SYSC_QUIRK("cm", 0, 0, -ENODEV, -ENODEV, 0x40000301, 0xffffffff, 0),
@@ -1588,7 +1587,7 @@ err_allow_idle:
 	SYSC_QUIRK("rng", 0, 0x1fe0, 0x1fe4, -ENODEV, 0x00000020, 0xffffffff, 0),
 	SYSC_QUIRK("timer", 0, 0, 0x10, 0x14, 0x00000013, 0xffffffff, 0),
 	SYSC_QUIRK("timer", 0, 0, 0x10, 0x14, 0x00000015, 0xffffffff, 0),
-	/* Some समयrs on omap4 and later */
+	/* Some timers on omap4 and later */
 	SYSC_QUIRK("timer", 0, 0, 0x10, -ENODEV, 0x50002100, 0xffffffff, 0),
 	SYSC_QUIRK("timer", 0, 0, 0x10, -ENODEV, 0x4fff1301, 0xffff00ff, 0),
 	SYSC_QUIRK("timer32k", 0, 0, 0x4, -ENODEV, 0x00000040, 0xffffffff, 0),
@@ -1599,727 +1598,727 @@ err_allow_idle:
 	SYSC_QUIRK("usbhstll", 0, 0, 0x10, 0x14, 0x00000008, 0xffffffff, 0),
 	SYSC_QUIRK("venc", 0x58003000, 0, -ENODEV, -ENODEV, 0x00000002, 0xffffffff, 0),
 	SYSC_QUIRK("vfpe", 0, 0, 0x104, -ENODEV, 0x4d001200, 0xffffffff, 0),
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
 /*
- * Early quirks based on module base and रेजिस्टर offsets only that are
- * needed beक्रमe the module revision can be पढ़ो
+ * Early quirks based on module base and register offsets only that are
+ * needed before the module revision can be read
  */
-अटल व्योम sysc_init_early_quirks(काष्ठा sysc *ddata)
-अणु
-	स्थिर काष्ठा sysc_revision_quirk *q;
-	पूर्णांक i;
+static void sysc_init_early_quirks(struct sysc *ddata)
+{
+	const struct sysc_revision_quirk *q;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(sysc_revision_quirks); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(sysc_revision_quirks); i++) {
 		q = &sysc_revision_quirks[i];
 
-		अगर (!q->base)
-			जारी;
+		if (!q->base)
+			continue;
 
-		अगर (q->base != ddata->module_pa)
-			जारी;
+		if (q->base != ddata->module_pa)
+			continue;
 
-		अगर (q->rev_offset != ddata->offsets[SYSC_REVISION])
-			जारी;
+		if (q->rev_offset != ddata->offsets[SYSC_REVISION])
+			continue;
 
-		अगर (q->sysc_offset != ddata->offsets[SYSC_SYSCONFIG])
-			जारी;
+		if (q->sysc_offset != ddata->offsets[SYSC_SYSCONFIG])
+			continue;
 
-		अगर (q->syss_offset != ddata->offsets[SYSC_SYSSTATUS])
-			जारी;
+		if (q->syss_offset != ddata->offsets[SYSC_SYSSTATUS])
+			continue;
 
 		ddata->name = q->name;
 		ddata->cfg.quirks |= q->quirks;
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Quirks that also consider the revision रेजिस्टर value */
-अटल व्योम sysc_init_revision_quirks(काष्ठा sysc *ddata)
-अणु
-	स्थिर काष्ठा sysc_revision_quirk *q;
-	पूर्णांक i;
+/* Quirks that also consider the revision register value */
+static void sysc_init_revision_quirks(struct sysc *ddata)
+{
+	const struct sysc_revision_quirk *q;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(sysc_revision_quirks); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(sysc_revision_quirks); i++) {
 		q = &sysc_revision_quirks[i];
 
-		अगर (q->base && q->base != ddata->module_pa)
-			जारी;
+		if (q->base && q->base != ddata->module_pa)
+			continue;
 
-		अगर (q->rev_offset != ddata->offsets[SYSC_REVISION])
-			जारी;
+		if (q->rev_offset != ddata->offsets[SYSC_REVISION])
+			continue;
 
-		अगर (q->sysc_offset != ddata->offsets[SYSC_SYSCONFIG])
-			जारी;
+		if (q->sysc_offset != ddata->offsets[SYSC_SYSCONFIG])
+			continue;
 
-		अगर (q->syss_offset != ddata->offsets[SYSC_SYSSTATUS])
-			जारी;
+		if (q->syss_offset != ddata->offsets[SYSC_SYSSTATUS])
+			continue;
 
-		अगर (q->revision == ddata->revision ||
+		if (q->revision == ddata->revision ||
 		    (q->revision & q->revision_mask) ==
-		    (ddata->revision & q->revision_mask)) अणु
+		    (ddata->revision & q->revision_mask)) {
 			ddata->name = q->name;
 			ddata->cfg.quirks |= q->quirks;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
- * DSS needs dispc outमाला_दो disabled to reset modules. Returns mask of
- * enabled DSS पूर्णांकerrupts. Eventually we may be able to करो this on
+ * DSS needs dispc outputs disabled to reset modules. Returns mask of
+ * enabled DSS interrupts. Eventually we may be able to do this on
  * dispc init rather than top-level DSS init.
  */
-अटल u32 sysc_quirk_dispc(काष्ठा sysc *ddata, पूर्णांक dispc_offset,
+static u32 sysc_quirk_dispc(struct sysc *ddata, int dispc_offset,
 			    bool disable)
-अणु
+{
 	bool lcd_en, digit_en, lcd2_en = false, lcd3_en = false;
-	स्थिर पूर्णांक lcd_en_mask = BIT(0), digit_en_mask = BIT(1);
-	पूर्णांक manager_count;
-	bool frameकरोnetv_irq = true;
+	const int lcd_en_mask = BIT(0), digit_en_mask = BIT(1);
+	int manager_count;
+	bool framedonetv_irq = true;
 	u32 val, irq_mask = 0;
 
-	चयन (sysc_soc->soc) अणु
-	हाल SOC_2420 ... SOC_3630:
+	switch (sysc_soc->soc) {
+	case SOC_2420 ... SOC_3630:
 		manager_count = 2;
-		frameकरोnetv_irq = false;
-		अवरोध;
-	हाल SOC_4430 ... SOC_4470:
+		framedonetv_irq = false;
+		break;
+	case SOC_4430 ... SOC_4470:
 		manager_count = 3;
-		अवरोध;
-	हाल SOC_5430:
-	हाल SOC_DRA7:
+		break;
+	case SOC_5430:
+	case SOC_DRA7:
 		manager_count = 4;
-		अवरोध;
-	हाल SOC_AM4:
+		break;
+	case SOC_AM4:
 		manager_count = 1;
-		frameकरोnetv_irq = false;
-		अवरोध;
-	हाल SOC_UNKNOWN:
-	शेष:
-		वापस 0;
-	पूर्ण
+		framedonetv_irq = false;
+		break;
+	case SOC_UNKNOWN:
+	default:
+		return 0;
+	}
 
-	/* Remap the whole module range to be able to reset dispc outमाला_दो */
+	/* Remap the whole module range to be able to reset dispc outputs */
 	devm_iounmap(ddata->dev, ddata->module_va);
 	ddata->module_va = devm_ioremap(ddata->dev,
 					ddata->module_pa,
 					ddata->module_size);
-	अगर (!ddata->module_va)
-		वापस -EIO;
+	if (!ddata->module_va)
+		return -EIO;
 
 	/* DISP_CONTROL */
-	val = sysc_पढ़ो(ddata, dispc_offset + 0x40);
+	val = sysc_read(ddata, dispc_offset + 0x40);
 	lcd_en = val & lcd_en_mask;
 	digit_en = val & digit_en_mask;
-	अगर (lcd_en)
+	if (lcd_en)
 		irq_mask |= BIT(0);			/* FRAMEDONE */
-	अगर (digit_en) अणु
-		अगर (frameकरोnetv_irq)
+	if (digit_en) {
+		if (framedonetv_irq)
 			irq_mask |= BIT(24);		/* FRAMEDONETV */
-		अन्यथा
+		else
 			irq_mask |= BIT(2) | BIT(3);	/* EVSYNC bits */
-	पूर्ण
-	अगर (disable & (lcd_en | digit_en))
-		sysc_ग_लिखो(ddata, dispc_offset + 0x40,
+	}
+	if (disable & (lcd_en | digit_en))
+		sysc_write(ddata, dispc_offset + 0x40,
 			   val & ~(lcd_en_mask | digit_en_mask));
 
-	अगर (manager_count <= 2)
-		वापस irq_mask;
+	if (manager_count <= 2)
+		return irq_mask;
 
 	/* DISPC_CONTROL2 */
-	val = sysc_पढ़ो(ddata, dispc_offset + 0x238);
+	val = sysc_read(ddata, dispc_offset + 0x238);
 	lcd2_en = val & lcd_en_mask;
-	अगर (lcd2_en)
+	if (lcd2_en)
 		irq_mask |= BIT(22);			/* FRAMEDONE2 */
-	अगर (disable && lcd2_en)
-		sysc_ग_लिखो(ddata, dispc_offset + 0x238,
+	if (disable && lcd2_en)
+		sysc_write(ddata, dispc_offset + 0x238,
 			   val & ~lcd_en_mask);
 
-	अगर (manager_count <= 3)
-		वापस irq_mask;
+	if (manager_count <= 3)
+		return irq_mask;
 
 	/* DISPC_CONTROL3 */
-	val = sysc_पढ़ो(ddata, dispc_offset + 0x848);
+	val = sysc_read(ddata, dispc_offset + 0x848);
 	lcd3_en = val & lcd_en_mask;
-	अगर (lcd3_en)
+	if (lcd3_en)
 		irq_mask |= BIT(30);			/* FRAMEDONE3 */
-	अगर (disable && lcd3_en)
-		sysc_ग_लिखो(ddata, dispc_offset + 0x848,
+	if (disable && lcd3_en)
+		sysc_write(ddata, dispc_offset + 0x848,
 			   val & ~lcd_en_mask);
 
-	वापस irq_mask;
-पूर्ण
+	return irq_mask;
+}
 
-/* DSS needs child outमाला_दो disabled and SDI रेजिस्टरs cleared क्रम reset */
-अटल व्योम sysc_pre_reset_quirk_dss(काष्ठा sysc *ddata)
-अणु
-	स्थिर पूर्णांक dispc_offset = 0x1000;
-	पूर्णांक error;
+/* DSS needs child outputs disabled and SDI registers cleared for reset */
+static void sysc_pre_reset_quirk_dss(struct sysc *ddata)
+{
+	const int dispc_offset = 0x1000;
+	int error;
 	u32 irq_mask, val;
 
-	/* Get enabled outमाला_दो */
+	/* Get enabled outputs */
 	irq_mask = sysc_quirk_dispc(ddata, dispc_offset, false);
-	अगर (!irq_mask)
-		वापस;
+	if (!irq_mask)
+		return;
 
 	/* Clear IRQSTATUS */
-	sysc_ग_लिखो(ddata, dispc_offset + 0x18, irq_mask);
+	sysc_write(ddata, dispc_offset + 0x18, irq_mask);
 
-	/* Disable outमाला_दो */
+	/* Disable outputs */
 	val = sysc_quirk_dispc(ddata, dispc_offset, true);
 
 	/* Poll IRQSTATUS */
-	error = पढ़ोl_poll_समयout(ddata->module_va + dispc_offset + 0x18,
+	error = readl_poll_timeout(ddata->module_va + dispc_offset + 0x18,
 				   val, val != irq_mask, 100, 50);
-	अगर (error)
+	if (error)
 		dev_warn(ddata->dev, "%s: timed out %08x !+ %08x\n",
 			 __func__, val, irq_mask);
 
-	अगर (sysc_soc->soc == SOC_3430) अणु
+	if (sysc_soc->soc == SOC_3430) {
 		/* Clear DSS_SDI_CONTROL */
-		sysc_ग_लिखो(ddata, 0x44, 0);
+		sysc_write(ddata, 0x44, 0);
 
 		/* Clear DSS_PLL_CONTROL */
-		sysc_ग_लिखो(ddata, 0x48, 0);
-	पूर्ण
+		sysc_write(ddata, 0x48, 0);
+	}
 
-	/* Clear DSS_CONTROL to चयन DSS घड़ी sources to PRCM अगर not */
-	sysc_ग_लिखो(ddata, 0x40, 0);
-पूर्ण
+	/* Clear DSS_CONTROL to switch DSS clock sources to PRCM if not */
+	sysc_write(ddata, 0x40, 0);
+}
 
-/* 1-wire needs module's पूर्णांकernal घड़ीs enabled क्रम reset */
-अटल व्योम sysc_pre_reset_quirk_hdq1w(काष्ठा sysc *ddata)
-अणु
-	पूर्णांक offset = 0x0c;	/* HDQ_CTRL_STATUS */
+/* 1-wire needs module's internal clocks enabled for reset */
+static void sysc_pre_reset_quirk_hdq1w(struct sysc *ddata)
+{
+	int offset = 0x0c;	/* HDQ_CTRL_STATUS */
 	u16 val;
 
-	val = sysc_पढ़ो(ddata, offset);
+	val = sysc_read(ddata, offset);
 	val |= BIT(5);
-	sysc_ग_लिखो(ddata, offset, val);
-पूर्ण
+	sysc_write(ddata, offset, val);
+}
 
-/* AESS (Audio Engine SubSystem) needs स्वतःgating set after enable */
-अटल व्योम sysc_module_enable_quirk_aess(काष्ठा sysc *ddata)
-अणु
-	पूर्णांक offset = 0x7c;	/* AESS_AUTO_GATING_ENABLE */
+/* AESS (Audio Engine SubSystem) needs autogating set after enable */
+static void sysc_module_enable_quirk_aess(struct sysc *ddata)
+{
+	int offset = 0x7c;	/* AESS_AUTO_GATING_ENABLE */
 
-	sysc_ग_लिखो(ddata, offset, 1);
-पूर्ण
+	sysc_write(ddata, offset, 1);
+}
 
-/* I2C needs to be disabled क्रम reset */
-अटल व्योम sysc_clk_quirk_i2c(काष्ठा sysc *ddata, bool enable)
-अणु
-	पूर्णांक offset;
+/* I2C needs to be disabled for reset */
+static void sysc_clk_quirk_i2c(struct sysc *ddata, bool enable)
+{
+	int offset;
 	u16 val;
 
-	/* I2C_CON, omap2/3 is dअगरferent from omap4 and later */
-	अगर ((ddata->revision & 0xffffff00) == 0x001f0000)
+	/* I2C_CON, omap2/3 is different from omap4 and later */
+	if ((ddata->revision & 0xffffff00) == 0x001f0000)
 		offset = 0x24;
-	अन्यथा
+	else
 		offset = 0xa4;
 
 	/* I2C_EN */
-	val = sysc_पढ़ो(ddata, offset);
-	अगर (enable)
+	val = sysc_read(ddata, offset);
+	if (enable)
 		val |= BIT(15);
-	अन्यथा
+	else
 		val &= ~BIT(15);
-	sysc_ग_लिखो(ddata, offset, val);
-पूर्ण
+	sysc_write(ddata, offset, val);
+}
 
-अटल व्योम sysc_pre_reset_quirk_i2c(काष्ठा sysc *ddata)
-अणु
+static void sysc_pre_reset_quirk_i2c(struct sysc *ddata)
+{
 	sysc_clk_quirk_i2c(ddata, false);
-पूर्ण
+}
 
-अटल व्योम sysc_post_reset_quirk_i2c(काष्ठा sysc *ddata)
-अणु
+static void sysc_post_reset_quirk_i2c(struct sysc *ddata)
+{
 	sysc_clk_quirk_i2c(ddata, true);
-पूर्ण
+}
 
-/* RTC on am3 and 4 needs to be unlocked and locked क्रम sysconfig */
-अटल व्योम sysc_quirk_rtc(काष्ठा sysc *ddata, bool lock)
-अणु
+/* RTC on am3 and 4 needs to be unlocked and locked for sysconfig */
+static void sysc_quirk_rtc(struct sysc *ddata, bool lock)
+{
 	u32 val, kick0_val = 0, kick1_val = 0;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक error;
+	unsigned long flags;
+	int error;
 
-	अगर (!lock) अणु
+	if (!lock) {
 		kick0_val = 0x83e70b13;
 		kick1_val = 0x95a4f1e0;
-	पूर्ण
+	}
 
 	local_irq_save(flags);
-	/* RTC_STATUS BUSY bit may stay active क्रम 1/32768 seconds (~30 usec) */
-	error = पढ़ोl_poll_समयout_atomic(ddata->module_va + 0x44, val,
+	/* RTC_STATUS BUSY bit may stay active for 1/32768 seconds (~30 usec) */
+	error = readl_poll_timeout_atomic(ddata->module_va + 0x44, val,
 					  !(val & BIT(0)), 100, 50);
-	अगर (error)
+	if (error)
 		dev_warn(ddata->dev, "rtc busy timeout\n");
-	/* Now we have ~15 microseconds to पढ़ो/ग_लिखो various रेजिस्टरs */
-	sysc_ग_लिखो(ddata, 0x6c, kick0_val);
-	sysc_ग_लिखो(ddata, 0x70, kick1_val);
+	/* Now we have ~15 microseconds to read/write various registers */
+	sysc_write(ddata, 0x6c, kick0_val);
+	sysc_write(ddata, 0x70, kick1_val);
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल व्योम sysc_module_unlock_quirk_rtc(काष्ठा sysc *ddata)
-अणु
+static void sysc_module_unlock_quirk_rtc(struct sysc *ddata)
+{
 	sysc_quirk_rtc(ddata, false);
-पूर्ण
+}
 
-अटल व्योम sysc_module_lock_quirk_rtc(काष्ठा sysc *ddata)
-अणु
+static void sysc_module_lock_quirk_rtc(struct sysc *ddata)
+{
 	sysc_quirk_rtc(ddata, true);
-पूर्ण
+}
 
-/* 36xx SGX needs a quirk क्रम to bypass OCP IPG पूर्णांकerrupt logic */
-अटल व्योम sysc_module_enable_quirk_sgx(काष्ठा sysc *ddata)
-अणु
-	पूर्णांक offset = 0xff08;	/* OCP_DEBUG_CONFIG */
+/* 36xx SGX needs a quirk for to bypass OCP IPG interrupt logic */
+static void sysc_module_enable_quirk_sgx(struct sysc *ddata)
+{
+	int offset = 0xff08;	/* OCP_DEBUG_CONFIG */
 	u32 val = BIT(31);	/* THALIA_INT_BYPASS */
 
-	sysc_ग_लिखो(ddata, offset, val);
-पूर्ण
+	sysc_write(ddata, offset, val);
+}
 
-/* Watchकरोg समयr needs a disable sequence after reset */
-अटल व्योम sysc_reset_करोne_quirk_wdt(काष्ठा sysc *ddata)
-अणु
-	पूर्णांक wps, spr, error;
+/* Watchdog timer needs a disable sequence after reset */
+static void sysc_reset_done_quirk_wdt(struct sysc *ddata)
+{
+	int wps, spr, error;
 	u32 val;
 
 	wps = 0x34;
 	spr = 0x48;
 
-	sysc_ग_लिखो(ddata, spr, 0xaaaa);
-	error = पढ़ोl_poll_समयout(ddata->module_va + wps, val,
+	sysc_write(ddata, spr, 0xaaaa);
+	error = readl_poll_timeout(ddata->module_va + wps, val,
 				   !(val & 0x10), 100,
 				   MAX_MODULE_SOFTRESET_WAIT);
-	अगर (error)
+	if (error)
 		dev_warn(ddata->dev, "wdt disable step1 failed\n");
 
-	sysc_ग_लिखो(ddata, spr, 0x5555);
-	error = पढ़ोl_poll_समयout(ddata->module_va + wps, val,
+	sysc_write(ddata, spr, 0x5555);
+	error = readl_poll_timeout(ddata->module_va + wps, val,
 				   !(val & 0x10), 100,
 				   MAX_MODULE_SOFTRESET_WAIT);
-	अगर (error)
+	if (error)
 		dev_warn(ddata->dev, "wdt disable step2 failed\n");
-पूर्ण
+}
 
 /* PRUSS needs to set MSTANDBY_INIT inorder to idle properly */
-अटल व्योम sysc_module_disable_quirk_pruss(काष्ठा sysc *ddata)
-अणु
+static void sysc_module_disable_quirk_pruss(struct sysc *ddata)
+{
 	u32 reg;
 
-	reg = sysc_पढ़ो(ddata, ddata->offsets[SYSC_SYSCONFIG]);
+	reg = sysc_read(ddata, ddata->offsets[SYSC_SYSCONFIG]);
 	reg |= SYSC_PRUSS_STANDBY_INIT;
-	sysc_ग_लिखो(ddata, ddata->offsets[SYSC_SYSCONFIG], reg);
-पूर्ण
+	sysc_write(ddata, ddata->offsets[SYSC_SYSCONFIG], reg);
+}
 
-अटल व्योम sysc_init_module_quirks(काष्ठा sysc *ddata)
-अणु
-	अगर (ddata->legacy_mode || !ddata->name)
-		वापस;
+static void sysc_init_module_quirks(struct sysc *ddata)
+{
+	if (ddata->legacy_mode || !ddata->name)
+		return;
 
-	अगर (ddata->cfg.quirks & SYSC_MODULE_QUIRK_HDQ1W) अणु
+	if (ddata->cfg.quirks & SYSC_MODULE_QUIRK_HDQ1W) {
 		ddata->pre_reset_quirk = sysc_pre_reset_quirk_hdq1w;
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
-#अगर_घोषित CONFIG_OMAP_GPMC_DEBUG
-	अगर (ddata->cfg.quirks & SYSC_QUIRK_GPMC_DEBUG) अणु
+#ifdef CONFIG_OMAP_GPMC_DEBUG
+	if (ddata->cfg.quirks & SYSC_QUIRK_GPMC_DEBUG) {
 		ddata->cfg.quirks |= SYSC_QUIRK_NO_RESET_ON_INIT;
 
-		वापस;
-	पूर्ण
-#पूर्ण_अगर
+		return;
+	}
+#endif
 
-	अगर (ddata->cfg.quirks & SYSC_MODULE_QUIRK_I2C) अणु
+	if (ddata->cfg.quirks & SYSC_MODULE_QUIRK_I2C) {
 		ddata->pre_reset_quirk = sysc_pre_reset_quirk_i2c;
 		ddata->post_reset_quirk = sysc_post_reset_quirk_i2c;
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (ddata->cfg.quirks & SYSC_MODULE_QUIRK_AESS)
+	if (ddata->cfg.quirks & SYSC_MODULE_QUIRK_AESS)
 		ddata->module_enable_quirk = sysc_module_enable_quirk_aess;
 
-	अगर (ddata->cfg.quirks & SYSC_MODULE_QUIRK_DSS_RESET)
+	if (ddata->cfg.quirks & SYSC_MODULE_QUIRK_DSS_RESET)
 		ddata->pre_reset_quirk = sysc_pre_reset_quirk_dss;
 
-	अगर (ddata->cfg.quirks & SYSC_MODULE_QUIRK_RTC_UNLOCK) अणु
+	if (ddata->cfg.quirks & SYSC_MODULE_QUIRK_RTC_UNLOCK) {
 		ddata->module_unlock_quirk = sysc_module_unlock_quirk_rtc;
 		ddata->module_lock_quirk = sysc_module_lock_quirk_rtc;
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (ddata->cfg.quirks & SYSC_MODULE_QUIRK_SGX)
+	if (ddata->cfg.quirks & SYSC_MODULE_QUIRK_SGX)
 		ddata->module_enable_quirk = sysc_module_enable_quirk_sgx;
 
-	अगर (ddata->cfg.quirks & SYSC_MODULE_QUIRK_WDT) अणु
-		ddata->reset_करोne_quirk = sysc_reset_करोne_quirk_wdt;
-		ddata->module_disable_quirk = sysc_reset_करोne_quirk_wdt;
-	पूर्ण
+	if (ddata->cfg.quirks & SYSC_MODULE_QUIRK_WDT) {
+		ddata->reset_done_quirk = sysc_reset_done_quirk_wdt;
+		ddata->module_disable_quirk = sysc_reset_done_quirk_wdt;
+	}
 
-	अगर (ddata->cfg.quirks & SYSC_MODULE_QUIRK_PRUSS)
+	if (ddata->cfg.quirks & SYSC_MODULE_QUIRK_PRUSS)
 		ddata->module_disable_quirk = sysc_module_disable_quirk_pruss;
-पूर्ण
+}
 
-अटल पूर्णांक sysc_घड़ीकरोमुख्य_init(काष्ठा sysc *ddata)
-अणु
-	काष्ठा ti_sysc_platक्रमm_data *pdata = dev_get_platdata(ddata->dev);
-	काष्ठा clk *fck = शून्य, *ick = शून्य;
-	पूर्णांक error;
+static int sysc_clockdomain_init(struct sysc *ddata)
+{
+	struct ti_sysc_platform_data *pdata = dev_get_platdata(ddata->dev);
+	struct clk *fck = NULL, *ick = NULL;
+	int error;
 
-	अगर (!pdata || !pdata->init_घड़ीकरोमुख्य)
-		वापस 0;
+	if (!pdata || !pdata->init_clockdomain)
+		return 0;
 
-	चयन (ddata->nr_घड़ीs) अणु
-	हाल 2:
-		ick = ddata->घड़ीs[SYSC_ICK];
+	switch (ddata->nr_clocks) {
+	case 2:
+		ick = ddata->clocks[SYSC_ICK];
 		fallthrough;
-	हाल 1:
-		fck = ddata->घड़ीs[SYSC_FCK];
-		अवरोध;
-	हाल 0:
-		वापस 0;
-	पूर्ण
+	case 1:
+		fck = ddata->clocks[SYSC_FCK];
+		break;
+	case 0:
+		return 0;
+	}
 
-	error = pdata->init_घड़ीकरोमुख्य(ddata->dev, fck, ick, &ddata->cookie);
-	अगर (!error || error == -ENODEV)
-		वापस 0;
+	error = pdata->init_clockdomain(ddata->dev, fck, ick, &ddata->cookie);
+	if (!error || error == -ENODEV)
+		return 0;
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * Note that pdata->init_module() typically करोes a reset first. After
- * pdata->init_module() is करोne, PM runसमय can be used क्रम the पूर्णांकerconnect
+ * Note that pdata->init_module() typically does a reset first. After
+ * pdata->init_module() is done, PM runtime can be used for the interconnect
  * target module.
  */
-अटल पूर्णांक sysc_legacy_init(काष्ठा sysc *ddata)
-अणु
-	काष्ठा ti_sysc_platक्रमm_data *pdata = dev_get_platdata(ddata->dev);
-	पूर्णांक error;
+static int sysc_legacy_init(struct sysc *ddata)
+{
+	struct ti_sysc_platform_data *pdata = dev_get_platdata(ddata->dev);
+	int error;
 
-	अगर (!pdata || !pdata->init_module)
-		वापस 0;
+	if (!pdata || !pdata->init_module)
+		return 0;
 
 	error = pdata->init_module(ddata->dev, ddata->mdata, &ddata->cookie);
-	अगर (error == -EEXIST)
+	if (error == -EEXIST)
 		error = 0;
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * Note that the caller must ensure the पूर्णांकerconnect target module is enabled
- * beक्रमe calling reset. Otherwise reset will not complete.
+ * Note that the caller must ensure the interconnect target module is enabled
+ * before calling reset. Otherwise reset will not complete.
  */
-अटल पूर्णांक sysc_reset(काष्ठा sysc *ddata)
-अणु
-	पूर्णांक sysc_offset, sysc_val, error;
+static int sysc_reset(struct sysc *ddata)
+{
+	int sysc_offset, sysc_val, error;
 	u32 sysc_mask;
 
 	sysc_offset = ddata->offsets[SYSC_SYSCONFIG];
 
-	अगर (ddata->legacy_mode ||
-	    ddata->cap->regbits->srst_shअगरt < 0 ||
+	if (ddata->legacy_mode ||
+	    ddata->cap->regbits->srst_shift < 0 ||
 	    ddata->cfg.quirks & SYSC_QUIRK_NO_RESET_ON_INIT)
-		वापस 0;
+		return 0;
 
-	sysc_mask = BIT(ddata->cap->regbits->srst_shअगरt);
+	sysc_mask = BIT(ddata->cap->regbits->srst_shift);
 
-	अगर (ddata->pre_reset_quirk)
+	if (ddata->pre_reset_quirk)
 		ddata->pre_reset_quirk(ddata);
 
-	अगर (sysc_offset >= 0) अणु
-		sysc_val = sysc_पढ़ो_sysconfig(ddata);
+	if (sysc_offset >= 0) {
+		sysc_val = sysc_read_sysconfig(ddata);
 		sysc_val |= sysc_mask;
-		sysc_ग_लिखो(ddata, sysc_offset, sysc_val);
-	पूर्ण
+		sysc_write(ddata, sysc_offset, sysc_val);
+	}
 
-	अगर (ddata->cfg.srst_udelay)
+	if (ddata->cfg.srst_udelay)
 		usleep_range(ddata->cfg.srst_udelay,
 			     ddata->cfg.srst_udelay * 2);
 
-	अगर (ddata->post_reset_quirk)
+	if (ddata->post_reset_quirk)
 		ddata->post_reset_quirk(ddata);
 
-	error = sysc_रुको_softreset(ddata);
-	अगर (error)
+	error = sysc_wait_softreset(ddata);
+	if (error)
 		dev_warn(ddata->dev, "OCP softreset timed out\n");
 
-	अगर (ddata->reset_करोne_quirk)
-		ddata->reset_करोne_quirk(ddata);
+	if (ddata->reset_done_quirk)
+		ddata->reset_done_quirk(ddata);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * At this poपूर्णांक the module is configured enough to पढ़ो the revision but
- * module may not be completely configured yet to use PM runसमय. Enable
- * all घड़ीs directly during init to configure the quirks needed क्रम PM
- * runसमय based on the revision रेजिस्टर.
+ * At this point the module is configured enough to read the revision but
+ * module may not be completely configured yet to use PM runtime. Enable
+ * all clocks directly during init to configure the quirks needed for PM
+ * runtime based on the revision register.
  */
-अटल पूर्णांक sysc_init_module(काष्ठा sysc *ddata)
-अणु
-	bool rstctrl_deनिश्चितed = false;
-	पूर्णांक error = 0;
+static int sysc_init_module(struct sysc *ddata)
+{
+	bool rstctrl_deasserted = false;
+	int error = 0;
 
-	error = sysc_घड़ीकरोमुख्य_init(ddata);
-	अगर (error)
-		वापस error;
+	error = sysc_clockdomain_init(ddata);
+	if (error)
+		return error;
 
 	sysc_clkdm_deny_idle(ddata);
 
 	/*
-	 * Always enable घड़ीs. The bootloader may or may not have enabled
-	 * the related घड़ीs.
+	 * Always enable clocks. The bootloader may or may not have enabled
+	 * the related clocks.
 	 */
-	error = sysc_enable_opt_घड़ीs(ddata);
-	अगर (error)
-		वापस error;
+	error = sysc_enable_opt_clocks(ddata);
+	if (error)
+		return error;
 
-	error = sysc_enable_मुख्य_घड़ीs(ddata);
-	अगर (error)
-		जाओ err_opt_घड़ीs;
+	error = sysc_enable_main_clocks(ddata);
+	if (error)
+		goto err_opt_clocks;
 
-	अगर (!(ddata->cfg.quirks & SYSC_QUIRK_NO_RESET_ON_INIT)) अणु
-		error = reset_control_deनिश्चित(ddata->rsts);
-		अगर (error)
-			जाओ err_मुख्य_घड़ीs;
-		rstctrl_deनिश्चितed = true;
-	पूर्ण
+	if (!(ddata->cfg.quirks & SYSC_QUIRK_NO_RESET_ON_INIT)) {
+		error = reset_control_deassert(ddata->rsts);
+		if (error)
+			goto err_main_clocks;
+		rstctrl_deasserted = true;
+	}
 
-	ddata->revision = sysc_पढ़ो_revision(ddata);
+	ddata->revision = sysc_read_revision(ddata);
 	sysc_init_revision_quirks(ddata);
 	sysc_init_module_quirks(ddata);
 
-	अगर (ddata->legacy_mode) अणु
+	if (ddata->legacy_mode) {
 		error = sysc_legacy_init(ddata);
-		अगर (error)
-			जाओ err_मुख्य_घड़ीs;
-	पूर्ण
+		if (error)
+			goto err_main_clocks;
+	}
 
-	अगर (!ddata->legacy_mode) अणु
+	if (!ddata->legacy_mode) {
 		error = sysc_enable_module(ddata->dev);
-		अगर (error)
-			जाओ err_मुख्य_घड़ीs;
-	पूर्ण
+		if (error)
+			goto err_main_clocks;
+	}
 
 	error = sysc_reset(ddata);
-	अगर (error)
+	if (error)
 		dev_err(ddata->dev, "Reset failed with %d\n", error);
 
-	अगर (error && !ddata->legacy_mode)
+	if (error && !ddata->legacy_mode)
 		sysc_disable_module(ddata->dev);
 
-err_मुख्य_घड़ीs:
-	अगर (error)
-		sysc_disable_मुख्य_घड़ीs(ddata);
-err_opt_घड़ीs:
-	/* No re-enable of घड़ीकरोमुख्य स्वतःidle to prevent module स्वतःidle */
-	अगर (error) अणु
-		sysc_disable_opt_घड़ीs(ddata);
+err_main_clocks:
+	if (error)
+		sysc_disable_main_clocks(ddata);
+err_opt_clocks:
+	/* No re-enable of clockdomain autoidle to prevent module autoidle */
+	if (error) {
+		sysc_disable_opt_clocks(ddata);
 		sysc_clkdm_allow_idle(ddata);
-	पूर्ण
+	}
 
-	अगर (error && rstctrl_deनिश्चितed &&
+	if (error && rstctrl_deasserted &&
 	    !(ddata->cfg.quirks & SYSC_QUIRK_NO_RESET_ON_INIT))
-		reset_control_निश्चित(ddata->rsts);
+		reset_control_assert(ddata->rsts);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक sysc_init_sysc_mask(काष्ठा sysc *ddata)
-अणु
-	काष्ठा device_node *np = ddata->dev->of_node;
-	पूर्णांक error;
+static int sysc_init_sysc_mask(struct sysc *ddata)
+{
+	struct device_node *np = ddata->dev->of_node;
+	int error;
 	u32 val;
 
-	error = of_property_पढ़ो_u32(np, "ti,sysc-mask", &val);
-	अगर (error)
-		वापस 0;
+	error = of_property_read_u32(np, "ti,sysc-mask", &val);
+	if (error)
+		return 0;
 
 	ddata->cfg.sysc_val = val & ddata->cap->sysc_mask;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sysc_init_idlemode(काष्ठा sysc *ddata, u8 *idlemodes,
-			      स्थिर अक्षर *name)
-अणु
-	काष्ठा device_node *np = ddata->dev->of_node;
-	काष्ठा property *prop;
-	स्थिर __be32 *p;
+static int sysc_init_idlemode(struct sysc *ddata, u8 *idlemodes,
+			      const char *name)
+{
+	struct device_node *np = ddata->dev->of_node;
+	struct property *prop;
+	const __be32 *p;
 	u32 val;
 
-	of_property_क्रम_each_u32(np, name, prop, p, val) अणु
-		अगर (val >= SYSC_NR_IDLEMODES) अणु
+	of_property_for_each_u32(np, name, prop, p, val) {
+		if (val >= SYSC_NR_IDLEMODES) {
 			dev_err(ddata->dev, "invalid idlemode: %i\n", val);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		*idlemodes |=  (1 << val);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sysc_init_idlemodes(काष्ठा sysc *ddata)
-अणु
-	पूर्णांक error;
+static int sysc_init_idlemodes(struct sysc *ddata)
+{
+	int error;
 
 	error = sysc_init_idlemode(ddata, &ddata->cfg.midlemodes,
 				   "ti,sysc-midle");
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	error = sysc_init_idlemode(ddata, &ddata->cfg.sidlemodes,
 				   "ti,sysc-sidle");
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Only some devices on omap4 and later have SYSCONFIG reset करोne
- * bit. We can detect this अगर there is no SYSSTATUS at all, or the
- * SYSTATUS bit 0 is not used. Note that some SYSSTATUS रेजिस्टरs
- * have multiple bits क्रम the child devices like OHCI and EHCI.
+ * Only some devices on omap4 and later have SYSCONFIG reset done
+ * bit. We can detect this if there is no SYSSTATUS at all, or the
+ * SYSTATUS bit 0 is not used. Note that some SYSSTATUS registers
+ * have multiple bits for the child devices like OHCI and EHCI.
  * Depends on SYSC being parsed first.
  */
-अटल पूर्णांक sysc_init_syss_mask(काष्ठा sysc *ddata)
-अणु
-	काष्ठा device_node *np = ddata->dev->of_node;
-	पूर्णांक error;
+static int sysc_init_syss_mask(struct sysc *ddata)
+{
+	struct device_node *np = ddata->dev->of_node;
+	int error;
 	u32 val;
 
-	error = of_property_पढ़ो_u32(np, "ti,syss-mask", &val);
-	अगर (error) अणु
-		अगर ((ddata->cap->type == TI_SYSC_OMAP4 ||
+	error = of_property_read_u32(np, "ti,syss-mask", &val);
+	if (error) {
+		if ((ddata->cap->type == TI_SYSC_OMAP4 ||
 		     ddata->cap->type == TI_SYSC_OMAP4_TIMER) &&
 		    (ddata->cfg.sysc_val & SYSC_OMAP4_SOFTRESET))
 			ddata->cfg.quirks |= SYSC_QUIRK_RESET_STATUS;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!(val & 1) && (ddata->cfg.sysc_val & SYSC_OMAP4_SOFTRESET))
+	if (!(val & 1) && (ddata->cfg.sysc_val & SYSC_OMAP4_SOFTRESET))
 		ddata->cfg.quirks |= SYSC_QUIRK_RESET_STATUS;
 
 	ddata->cfg.syss_mask = val;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Many child device drivers need to have fck and opt घड़ीs available
- * to get the घड़ी rate क्रम device पूर्णांकernal configuration etc.
+ * Many child device drivers need to have fck and opt clocks available
+ * to get the clock rate for device internal configuration etc.
  */
-अटल पूर्णांक sysc_child_add_named_घड़ी(काष्ठा sysc *ddata,
-				      काष्ठा device *child,
-				      स्थिर अक्षर *name)
-अणु
-	काष्ठा clk *clk;
-	काष्ठा clk_lookup *l;
-	पूर्णांक error = 0;
+static int sysc_child_add_named_clock(struct sysc *ddata,
+				      struct device *child,
+				      const char *name)
+{
+	struct clk *clk;
+	struct clk_lookup *l;
+	int error = 0;
 
-	अगर (!name)
-		वापस 0;
+	if (!name)
+		return 0;
 
 	clk = clk_get(child, name);
-	अगर (!IS_ERR(clk)) अणु
+	if (!IS_ERR(clk)) {
 		error = -EEXIST;
-		जाओ put_clk;
-	पूर्ण
+		goto put_clk;
+	}
 
 	clk = clk_get(ddata->dev, name);
-	अगर (IS_ERR(clk))
-		वापस -ENODEV;
+	if (IS_ERR(clk))
+		return -ENODEV;
 
 	l = clkdev_create(clk, name, dev_name(child));
-	अगर (!l)
+	if (!l)
 		error = -ENOMEM;
 put_clk:
 	clk_put(clk);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक sysc_child_add_घड़ीs(काष्ठा sysc *ddata,
-				 काष्ठा device *child)
-अणु
-	पूर्णांक i, error;
+static int sysc_child_add_clocks(struct sysc *ddata,
+				 struct device *child)
+{
+	int i, error;
 
-	क्रम (i = 0; i < ddata->nr_घड़ीs; i++) अणु
-		error = sysc_child_add_named_घड़ी(ddata,
+	for (i = 0; i < ddata->nr_clocks; i++) {
+		error = sysc_child_add_named_clock(ddata,
 						   child,
-						   ddata->घड़ी_roles[i]);
-		अगर (error && error != -EEXIST) अणु
+						   ddata->clock_roles[i]);
+		if (error && error != -EEXIST) {
 			dev_err(ddata->dev, "could not add child clock %s: %i\n",
-				ddata->घड़ी_roles[i], error);
+				ddata->clock_roles[i], error);
 
-			वापस error;
-		पूर्ण
-	पूर्ण
+			return error;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा device_type sysc_device_type = अणु
-पूर्ण;
+static struct device_type sysc_device_type = {
+};
 
-अटल काष्ठा sysc *sysc_child_to_parent(काष्ठा device *dev)
-अणु
-	काष्ठा device *parent = dev->parent;
+static struct sysc *sysc_child_to_parent(struct device *dev)
+{
+	struct device *parent = dev->parent;
 
-	अगर (!parent || parent->type != &sysc_device_type)
-		वापस शून्य;
+	if (!parent || parent->type != &sysc_device_type)
+		return NULL;
 
-	वापस dev_get_drvdata(parent);
-पूर्ण
+	return dev_get_drvdata(parent);
+}
 
-अटल पूर्णांक __maybe_unused sysc_child_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा sysc *ddata;
-	पूर्णांक error;
-
-	ddata = sysc_child_to_parent(dev);
-
-	error = pm_generic_runसमय_suspend(dev);
-	अगर (error)
-		वापस error;
-
-	अगर (!ddata->enabled)
-		वापस 0;
-
-	वापस sysc_runसमय_suspend(ddata->dev);
-पूर्ण
-
-अटल पूर्णांक __maybe_unused sysc_child_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा sysc *ddata;
-	पूर्णांक error;
+static int __maybe_unused sysc_child_runtime_suspend(struct device *dev)
+{
+	struct sysc *ddata;
+	int error;
 
 	ddata = sysc_child_to_parent(dev);
 
-	अगर (!ddata->enabled) अणु
-		error = sysc_runसमय_resume(ddata->dev);
-		अगर (error < 0)
+	error = pm_generic_runtime_suspend(dev);
+	if (error)
+		return error;
+
+	if (!ddata->enabled)
+		return 0;
+
+	return sysc_runtime_suspend(ddata->dev);
+}
+
+static int __maybe_unused sysc_child_runtime_resume(struct device *dev)
+{
+	struct sysc *ddata;
+	int error;
+
+	ddata = sysc_child_to_parent(dev);
+
+	if (!ddata->enabled) {
+		error = sysc_runtime_resume(ddata->dev);
+		if (error < 0)
 			dev_err(ddata->dev,
 				"%s error: %i\n", __func__, error);
-	पूर्ण
+	}
 
-	वापस pm_generic_runसमय_resume(dev);
-पूर्ण
+	return pm_generic_runtime_resume(dev);
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक sysc_child_suspend_noirq(काष्ठा device *dev)
-अणु
-	काष्ठा sysc *ddata;
-	पूर्णांक error;
+#ifdef CONFIG_PM_SLEEP
+static int sysc_child_suspend_noirq(struct device *dev)
+{
+	struct sysc *ddata;
+	int error;
 
 	ddata = sysc_child_to_parent(dev);
 
@@ -2327,457 +2326,457 @@ put_clk:
 		ddata->name ? ddata->name : "");
 
 	error = pm_generic_suspend_noirq(dev);
-	अगर (error) अणु
+	if (error) {
 		dev_err(dev, "%s error at %i: %i\n",
 			__func__, __LINE__, error);
 
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	अगर (!pm_runसमय_status_suspended(dev)) अणु
-		error = pm_generic_runसमय_suspend(dev);
-		अगर (error) अणु
+	if (!pm_runtime_status_suspended(dev)) {
+		error = pm_generic_runtime_suspend(dev);
+		if (error) {
 			dev_dbg(dev, "%s busy at %i: %i\n",
 				__func__, __LINE__, error);
 
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		error = sysc_runसमय_suspend(ddata->dev);
-		अगर (error) अणु
+		error = sysc_runtime_suspend(ddata->dev);
+		if (error) {
 			dev_err(dev, "%s error at %i: %i\n",
 				__func__, __LINE__, error);
 
-			वापस error;
-		पूर्ण
+			return error;
+		}
 
 		ddata->child_needs_resume = true;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sysc_child_resume_noirq(काष्ठा device *dev)
-अणु
-	काष्ठा sysc *ddata;
-	पूर्णांक error;
+static int sysc_child_resume_noirq(struct device *dev)
+{
+	struct sysc *ddata;
+	int error;
 
 	ddata = sysc_child_to_parent(dev);
 
 	dev_dbg(ddata->dev, "%s %s\n", __func__,
 		ddata->name ? ddata->name : "");
 
-	अगर (ddata->child_needs_resume) अणु
+	if (ddata->child_needs_resume) {
 		ddata->child_needs_resume = false;
 
-		error = sysc_runसमय_resume(ddata->dev);
-		अगर (error)
+		error = sysc_runtime_resume(ddata->dev);
+		if (error)
 			dev_err(ddata->dev,
 				"%s runtime resume error: %i\n",
 				__func__, error);
 
-		error = pm_generic_runसमय_resume(dev);
-		अगर (error)
+		error = pm_generic_runtime_resume(dev);
+		if (error)
 			dev_err(ddata->dev,
 				"%s generic runtime resume: %i\n",
 				__func__, error);
-	पूर्ण
+	}
 
-	वापस pm_generic_resume_noirq(dev);
-पूर्ण
-#पूर्ण_अगर
+	return pm_generic_resume_noirq(dev);
+}
+#endif
 
-अटल काष्ठा dev_pm_करोमुख्य sysc_child_pm_करोमुख्य = अणु
-	.ops = अणु
-		SET_RUNTIME_PM_OPS(sysc_child_runसमय_suspend,
-				   sysc_child_runसमय_resume,
-				   शून्य)
+static struct dev_pm_domain sysc_child_pm_domain = {
+	.ops = {
+		SET_RUNTIME_PM_OPS(sysc_child_runtime_suspend,
+				   sysc_child_runtime_resume,
+				   NULL)
 		USE_PLATFORM_PM_SLEEP_OPS
 		SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(sysc_child_suspend_noirq,
 					      sysc_child_resume_noirq)
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /**
  * sysc_legacy_idle_quirk - handle children in omap_device compatible way
  * @ddata: device driver data
  * @child: child device driver
  *
- * Allow idle क्रम child devices as करोne with _od_runसमय_suspend().
+ * Allow idle for child devices as done with _od_runtime_suspend().
  * Otherwise many child devices will not idle because of the permanent
- * parent usecount set in pm_runसमय_irq_safe().
+ * parent usecount set in pm_runtime_irq_safe().
  *
- * Note that the दीर्घ term solution is to just modअगरy the child device
- * drivers to not set pm_runसमय_irq_safe() and then this can be just
+ * Note that the long term solution is to just modify the child device
+ * drivers to not set pm_runtime_irq_safe() and then this can be just
  * dropped.
  */
-अटल व्योम sysc_legacy_idle_quirk(काष्ठा sysc *ddata, काष्ठा device *child)
-अणु
-	अगर (ddata->cfg.quirks & SYSC_QUIRK_LEGACY_IDLE)
-		dev_pm_करोमुख्य_set(child, &sysc_child_pm_करोमुख्य);
-पूर्ण
+static void sysc_legacy_idle_quirk(struct sysc *ddata, struct device *child)
+{
+	if (ddata->cfg.quirks & SYSC_QUIRK_LEGACY_IDLE)
+		dev_pm_domain_set(child, &sysc_child_pm_domain);
+}
 
-अटल पूर्णांक sysc_notअगरier_call(काष्ठा notअगरier_block *nb,
-			      अचिन्हित दीर्घ event, व्योम *device)
-अणु
-	काष्ठा device *dev = device;
-	काष्ठा sysc *ddata;
-	पूर्णांक error;
+static int sysc_notifier_call(struct notifier_block *nb,
+			      unsigned long event, void *device)
+{
+	struct device *dev = device;
+	struct sysc *ddata;
+	int error;
 
 	ddata = sysc_child_to_parent(dev);
-	अगर (!ddata)
-		वापस NOTIFY_DONE;
+	if (!ddata)
+		return NOTIFY_DONE;
 
-	चयन (event) अणु
-	हाल BUS_NOTIFY_ADD_DEVICE:
-		error = sysc_child_add_घड़ीs(ddata, dev);
-		अगर (error)
-			वापस error;
+	switch (event) {
+	case BUS_NOTIFY_ADD_DEVICE:
+		error = sysc_child_add_clocks(ddata, dev);
+		if (error)
+			return error;
 		sysc_legacy_idle_quirk(ddata, dev);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block sysc_nb = अणु
-	.notअगरier_call = sysc_notअगरier_call,
-पूर्ण;
+static struct notifier_block sysc_nb = {
+	.notifier_call = sysc_notifier_call,
+};
 
 /* Device tree configured quirks */
-काष्ठा sysc_dts_quirk अणु
-	स्थिर अक्षर *name;
+struct sysc_dts_quirk {
+	const char *name;
 	u32 mask;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sysc_dts_quirk sysc_dts_quirks[] = अणु
-	अणु .name = "ti,no-idle-on-init",
-	  .mask = SYSC_QUIRK_NO_IDLE_ON_INIT, पूर्ण,
-	अणु .name = "ti,no-reset-on-init",
-	  .mask = SYSC_QUIRK_NO_RESET_ON_INIT, पूर्ण,
-	अणु .name = "ti,no-idle",
-	  .mask = SYSC_QUIRK_NO_IDLE, पूर्ण,
-पूर्ण;
+static const struct sysc_dts_quirk sysc_dts_quirks[] = {
+	{ .name = "ti,no-idle-on-init",
+	  .mask = SYSC_QUIRK_NO_IDLE_ON_INIT, },
+	{ .name = "ti,no-reset-on-init",
+	  .mask = SYSC_QUIRK_NO_RESET_ON_INIT, },
+	{ .name = "ti,no-idle",
+	  .mask = SYSC_QUIRK_NO_IDLE, },
+};
 
-अटल व्योम sysc_parse_dts_quirks(काष्ठा sysc *ddata, काष्ठा device_node *np,
+static void sysc_parse_dts_quirks(struct sysc *ddata, struct device_node *np,
 				  bool is_child)
-अणु
-	स्थिर काष्ठा property *prop;
-	पूर्णांक i, len;
+{
+	const struct property *prop;
+	int i, len;
 
-	क्रम (i = 0; i < ARRAY_SIZE(sysc_dts_quirks); i++) अणु
-		स्थिर अक्षर *name = sysc_dts_quirks[i].name;
+	for (i = 0; i < ARRAY_SIZE(sysc_dts_quirks); i++) {
+		const char *name = sysc_dts_quirks[i].name;
 
 		prop = of_get_property(np, name, &len);
-		अगर (!prop)
-			जारी;
+		if (!prop)
+			continue;
 
 		ddata->cfg.quirks |= sysc_dts_quirks[i].mask;
-		अगर (is_child) अणु
+		if (is_child) {
 			dev_warn(ddata->dev,
 				 "dts flag should be at module level for %s\n",
 				 name);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक sysc_init_dts_quirks(काष्ठा sysc *ddata)
-अणु
-	काष्ठा device_node *np = ddata->dev->of_node;
-	पूर्णांक error;
+static int sysc_init_dts_quirks(struct sysc *ddata)
+{
+	struct device_node *np = ddata->dev->of_node;
+	int error;
 	u32 val;
 
-	ddata->legacy_mode = of_get_property(np, "ti,hwmods", शून्य);
+	ddata->legacy_mode = of_get_property(np, "ti,hwmods", NULL);
 
 	sysc_parse_dts_quirks(ddata, np, false);
-	error = of_property_पढ़ो_u32(np, "ti,sysc-delay-us", &val);
-	अगर (!error) अणु
-		अगर (val > 255) अणु
+	error = of_property_read_u32(np, "ti,sysc-delay-us", &val);
+	if (!error) {
+		if (val > 255) {
 			dev_warn(ddata->dev, "bad ti,sysc-delay-us: %i\n",
 				 val);
-		पूर्ण
+		}
 
 		ddata->cfg.srst_udelay = (u8)val;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sysc_unprepare(काष्ठा sysc *ddata)
-अणु
-	पूर्णांक i;
+static void sysc_unprepare(struct sysc *ddata)
+{
+	int i;
 
-	अगर (!ddata->घड़ीs)
-		वापस;
+	if (!ddata->clocks)
+		return;
 
-	क्रम (i = 0; i < SYSC_MAX_CLOCKS; i++) अणु
-		अगर (!IS_ERR_OR_शून्य(ddata->घड़ीs[i]))
-			clk_unprepare(ddata->घड़ीs[i]);
-	पूर्ण
-पूर्ण
+	for (i = 0; i < SYSC_MAX_CLOCKS; i++) {
+		if (!IS_ERR_OR_NULL(ddata->clocks[i]))
+			clk_unprepare(ddata->clocks[i]);
+	}
+}
 
 /*
- * Common sysc रेजिस्टर bits found on omap2, also known as type1
+ * Common sysc register bits found on omap2, also known as type1
  */
-अटल स्थिर काष्ठा sysc_regbits sysc_regbits_omap2 = अणु
-	.dmadisable_shअगरt = -ENODEV,
-	.midle_shअगरt = 12,
-	.sidle_shअगरt = 3,
-	.clkact_shअगरt = 8,
-	.emuमुक्त_shअगरt = 5,
-	.enwkup_shअगरt = 2,
-	.srst_shअगरt = 1,
-	.स्वतःidle_shअगरt = 0,
-पूर्ण;
+static const struct sysc_regbits sysc_regbits_omap2 = {
+	.dmadisable_shift = -ENODEV,
+	.midle_shift = 12,
+	.sidle_shift = 3,
+	.clkact_shift = 8,
+	.emufree_shift = 5,
+	.enwkup_shift = 2,
+	.srst_shift = 1,
+	.autoidle_shift = 0,
+};
 
-अटल स्थिर काष्ठा sysc_capabilities sysc_omap2 = अणु
+static const struct sysc_capabilities sysc_omap2 = {
 	.type = TI_SYSC_OMAP2,
 	.sysc_mask = SYSC_OMAP2_CLOCKACTIVITY | SYSC_OMAP2_EMUFREE |
 		     SYSC_OMAP2_ENAWAKEUP | SYSC_OMAP2_SOFTRESET |
 		     SYSC_OMAP2_AUTOIDLE,
 	.regbits = &sysc_regbits_omap2,
-पूर्ण;
+};
 
-/* All omap2 and 3 समयrs, and समयrs 1, 2 & 10 on omap 4 and 5 */
-अटल स्थिर काष्ठा sysc_capabilities sysc_omap2_समयr = अणु
+/* All omap2 and 3 timers, and timers 1, 2 & 10 on omap 4 and 5 */
+static const struct sysc_capabilities sysc_omap2_timer = {
 	.type = TI_SYSC_OMAP2_TIMER,
 	.sysc_mask = SYSC_OMAP2_CLOCKACTIVITY | SYSC_OMAP2_EMUFREE |
 		     SYSC_OMAP2_ENAWAKEUP | SYSC_OMAP2_SOFTRESET |
 		     SYSC_OMAP2_AUTOIDLE,
 	.regbits = &sysc_regbits_omap2,
 	.mod_quirks = SYSC_QUIRK_USE_CLOCKACT,
-पूर्ण;
+};
 
 /*
  * SHAM2 (SHA1/MD5) sysc found on omap3, a variant of sysc_regbits_omap2
- * with dअगरferent sidle position
+ * with different sidle position
  */
-अटल स्थिर काष्ठा sysc_regbits sysc_regbits_omap3_sham = अणु
-	.dmadisable_shअगरt = -ENODEV,
-	.midle_shअगरt = -ENODEV,
-	.sidle_shअगरt = 4,
-	.clkact_shअगरt = -ENODEV,
-	.enwkup_shअगरt = -ENODEV,
-	.srst_shअगरt = 1,
-	.स्वतःidle_shअगरt = 0,
-	.emuमुक्त_shअगरt = -ENODEV,
-पूर्ण;
+static const struct sysc_regbits sysc_regbits_omap3_sham = {
+	.dmadisable_shift = -ENODEV,
+	.midle_shift = -ENODEV,
+	.sidle_shift = 4,
+	.clkact_shift = -ENODEV,
+	.enwkup_shift = -ENODEV,
+	.srst_shift = 1,
+	.autoidle_shift = 0,
+	.emufree_shift = -ENODEV,
+};
 
-अटल स्थिर काष्ठा sysc_capabilities sysc_omap3_sham = अणु
+static const struct sysc_capabilities sysc_omap3_sham = {
 	.type = TI_SYSC_OMAP3_SHAM,
 	.sysc_mask = SYSC_OMAP2_SOFTRESET | SYSC_OMAP2_AUTOIDLE,
 	.regbits = &sysc_regbits_omap3_sham,
-पूर्ण;
+};
 
 /*
- * AES रेजिस्टर bits found on omap3 and later, a variant of
- * sysc_regbits_omap2 with dअगरferent sidle position
+ * AES register bits found on omap3 and later, a variant of
+ * sysc_regbits_omap2 with different sidle position
  */
-अटल स्थिर काष्ठा sysc_regbits sysc_regbits_omap3_aes = अणु
-	.dmadisable_shअगरt = -ENODEV,
-	.midle_shअगरt = -ENODEV,
-	.sidle_shअगरt = 6,
-	.clkact_shअगरt = -ENODEV,
-	.enwkup_shअगरt = -ENODEV,
-	.srst_shअगरt = 1,
-	.स्वतःidle_shअगरt = 0,
-	.emuमुक्त_shअगरt = -ENODEV,
-पूर्ण;
+static const struct sysc_regbits sysc_regbits_omap3_aes = {
+	.dmadisable_shift = -ENODEV,
+	.midle_shift = -ENODEV,
+	.sidle_shift = 6,
+	.clkact_shift = -ENODEV,
+	.enwkup_shift = -ENODEV,
+	.srst_shift = 1,
+	.autoidle_shift = 0,
+	.emufree_shift = -ENODEV,
+};
 
-अटल स्थिर काष्ठा sysc_capabilities sysc_omap3_aes = अणु
+static const struct sysc_capabilities sysc_omap3_aes = {
 	.type = TI_SYSC_OMAP3_AES,
 	.sysc_mask = SYSC_OMAP2_SOFTRESET | SYSC_OMAP2_AUTOIDLE,
 	.regbits = &sysc_regbits_omap3_aes,
-पूर्ण;
+};
 
 /*
- * Common sysc रेजिस्टर bits found on omap4, also known as type2
+ * Common sysc register bits found on omap4, also known as type2
  */
-अटल स्थिर काष्ठा sysc_regbits sysc_regbits_omap4 = अणु
-	.dmadisable_shअगरt = 16,
-	.midle_shअगरt = 4,
-	.sidle_shअगरt = 2,
-	.clkact_shअगरt = -ENODEV,
-	.enwkup_shअगरt = -ENODEV,
-	.emuमुक्त_shअगरt = 1,
-	.srst_shअगरt = 0,
-	.स्वतःidle_shअगरt = -ENODEV,
-पूर्ण;
+static const struct sysc_regbits sysc_regbits_omap4 = {
+	.dmadisable_shift = 16,
+	.midle_shift = 4,
+	.sidle_shift = 2,
+	.clkact_shift = -ENODEV,
+	.enwkup_shift = -ENODEV,
+	.emufree_shift = 1,
+	.srst_shift = 0,
+	.autoidle_shift = -ENODEV,
+};
 
-अटल स्थिर काष्ठा sysc_capabilities sysc_omap4 = अणु
+static const struct sysc_capabilities sysc_omap4 = {
 	.type = TI_SYSC_OMAP4,
 	.sysc_mask = SYSC_OMAP4_DMADISABLE | SYSC_OMAP4_FREEEMU |
 		     SYSC_OMAP4_SOFTRESET,
 	.regbits = &sysc_regbits_omap4,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sysc_capabilities sysc_omap4_समयr = अणु
+static const struct sysc_capabilities sysc_omap4_timer = {
 	.type = TI_SYSC_OMAP4_TIMER,
 	.sysc_mask = SYSC_OMAP4_DMADISABLE | SYSC_OMAP4_FREEEMU |
 		     SYSC_OMAP4_SOFTRESET,
 	.regbits = &sysc_regbits_omap4,
-पूर्ण;
+};
 
 /*
- * Common sysc रेजिस्टर bits found on omap4, also known as type3
+ * Common sysc register bits found on omap4, also known as type3
  */
-अटल स्थिर काष्ठा sysc_regbits sysc_regbits_omap4_simple = अणु
-	.dmadisable_shअगरt = -ENODEV,
-	.midle_shअगरt = 2,
-	.sidle_shअगरt = 0,
-	.clkact_shअगरt = -ENODEV,
-	.enwkup_shअगरt = -ENODEV,
-	.srst_shअगरt = -ENODEV,
-	.emuमुक्त_shअगरt = -ENODEV,
-	.स्वतःidle_shअगरt = -ENODEV,
-पूर्ण;
+static const struct sysc_regbits sysc_regbits_omap4_simple = {
+	.dmadisable_shift = -ENODEV,
+	.midle_shift = 2,
+	.sidle_shift = 0,
+	.clkact_shift = -ENODEV,
+	.enwkup_shift = -ENODEV,
+	.srst_shift = -ENODEV,
+	.emufree_shift = -ENODEV,
+	.autoidle_shift = -ENODEV,
+};
 
-अटल स्थिर काष्ठा sysc_capabilities sysc_omap4_simple = अणु
+static const struct sysc_capabilities sysc_omap4_simple = {
 	.type = TI_SYSC_OMAP4_SIMPLE,
 	.regbits = &sysc_regbits_omap4_simple,
-पूर्ण;
+};
 
 /*
  * SmartReflex sysc found on omap34xx
  */
-अटल स्थिर काष्ठा sysc_regbits sysc_regbits_omap34xx_sr = अणु
-	.dmadisable_shअगरt = -ENODEV,
-	.midle_shअगरt = -ENODEV,
-	.sidle_shअगरt = -ENODEV,
-	.clkact_shअगरt = 20,
-	.enwkup_shअगरt = -ENODEV,
-	.srst_shअगरt = -ENODEV,
-	.emuमुक्त_shअगरt = -ENODEV,
-	.स्वतःidle_shअगरt = -ENODEV,
-पूर्ण;
+static const struct sysc_regbits sysc_regbits_omap34xx_sr = {
+	.dmadisable_shift = -ENODEV,
+	.midle_shift = -ENODEV,
+	.sidle_shift = -ENODEV,
+	.clkact_shift = 20,
+	.enwkup_shift = -ENODEV,
+	.srst_shift = -ENODEV,
+	.emufree_shift = -ENODEV,
+	.autoidle_shift = -ENODEV,
+};
 
-अटल स्थिर काष्ठा sysc_capabilities sysc_34xx_sr = अणु
+static const struct sysc_capabilities sysc_34xx_sr = {
 	.type = TI_SYSC_OMAP34XX_SR,
 	.sysc_mask = SYSC_OMAP2_CLOCKACTIVITY,
 	.regbits = &sysc_regbits_omap34xx_sr,
 	.mod_quirks = SYSC_QUIRK_USE_CLOCKACT | SYSC_QUIRK_UNCACHED |
 		      SYSC_QUIRK_LEGACY_IDLE,
-पूर्ण;
+};
 
 /*
  * SmartReflex sysc found on omap36xx and later
  */
-अटल स्थिर काष्ठा sysc_regbits sysc_regbits_omap36xx_sr = अणु
-	.dmadisable_shअगरt = -ENODEV,
-	.midle_shअगरt = -ENODEV,
-	.sidle_shअगरt = 24,
-	.clkact_shअगरt = -ENODEV,
-	.enwkup_shअगरt = 26,
-	.srst_shअगरt = -ENODEV,
-	.emuमुक्त_shअगरt = -ENODEV,
-	.स्वतःidle_shअगरt = -ENODEV,
-पूर्ण;
+static const struct sysc_regbits sysc_regbits_omap36xx_sr = {
+	.dmadisable_shift = -ENODEV,
+	.midle_shift = -ENODEV,
+	.sidle_shift = 24,
+	.clkact_shift = -ENODEV,
+	.enwkup_shift = 26,
+	.srst_shift = -ENODEV,
+	.emufree_shift = -ENODEV,
+	.autoidle_shift = -ENODEV,
+};
 
-अटल स्थिर काष्ठा sysc_capabilities sysc_36xx_sr = अणु
+static const struct sysc_capabilities sysc_36xx_sr = {
 	.type = TI_SYSC_OMAP36XX_SR,
 	.sysc_mask = SYSC_OMAP3_SR_ENAWAKEUP,
 	.regbits = &sysc_regbits_omap36xx_sr,
 	.mod_quirks = SYSC_QUIRK_UNCACHED | SYSC_QUIRK_LEGACY_IDLE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sysc_capabilities sysc_omap4_sr = अणु
+static const struct sysc_capabilities sysc_omap4_sr = {
 	.type = TI_SYSC_OMAP4_SR,
 	.regbits = &sysc_regbits_omap36xx_sr,
 	.mod_quirks = SYSC_QUIRK_LEGACY_IDLE,
-पूर्ण;
+};
 
 /*
- * McASP रेजिस्टर bits found on omap4 and later
+ * McASP register bits found on omap4 and later
  */
-अटल स्थिर काष्ठा sysc_regbits sysc_regbits_omap4_mcasp = अणु
-	.dmadisable_shअगरt = -ENODEV,
-	.midle_shअगरt = -ENODEV,
-	.sidle_shअगरt = 0,
-	.clkact_shअगरt = -ENODEV,
-	.enwkup_shअगरt = -ENODEV,
-	.srst_shअगरt = -ENODEV,
-	.emuमुक्त_shअगरt = -ENODEV,
-	.स्वतःidle_shअगरt = -ENODEV,
-पूर्ण;
+static const struct sysc_regbits sysc_regbits_omap4_mcasp = {
+	.dmadisable_shift = -ENODEV,
+	.midle_shift = -ENODEV,
+	.sidle_shift = 0,
+	.clkact_shift = -ENODEV,
+	.enwkup_shift = -ENODEV,
+	.srst_shift = -ENODEV,
+	.emufree_shift = -ENODEV,
+	.autoidle_shift = -ENODEV,
+};
 
-अटल स्थिर काष्ठा sysc_capabilities sysc_omap4_mcasp = अणु
+static const struct sysc_capabilities sysc_omap4_mcasp = {
 	.type = TI_SYSC_OMAP4_MCASP,
 	.regbits = &sysc_regbits_omap4_mcasp,
 	.mod_quirks = SYSC_QUIRK_OPT_CLKS_NEEDED,
-पूर्ण;
+};
 
 /*
  * McASP found on dra7 and later
  */
-अटल स्थिर काष्ठा sysc_capabilities sysc_dra7_mcasp = अणु
+static const struct sysc_capabilities sysc_dra7_mcasp = {
 	.type = TI_SYSC_OMAP4_SIMPLE,
 	.regbits = &sysc_regbits_omap4_simple,
 	.mod_quirks = SYSC_QUIRK_OPT_CLKS_NEEDED,
-पूर्ण;
+};
 
 /*
  * FS USB host found on omap4 and later
  */
-अटल स्थिर काष्ठा sysc_regbits sysc_regbits_omap4_usb_host_fs = अणु
-	.dmadisable_shअगरt = -ENODEV,
-	.midle_shअगरt = -ENODEV,
-	.sidle_shअगरt = 24,
-	.clkact_shअगरt = -ENODEV,
-	.enwkup_shअगरt = 26,
-	.srst_shअगरt = -ENODEV,
-	.emuमुक्त_shअगरt = -ENODEV,
-	.स्वतःidle_shअगरt = -ENODEV,
-पूर्ण;
+static const struct sysc_regbits sysc_regbits_omap4_usb_host_fs = {
+	.dmadisable_shift = -ENODEV,
+	.midle_shift = -ENODEV,
+	.sidle_shift = 24,
+	.clkact_shift = -ENODEV,
+	.enwkup_shift = 26,
+	.srst_shift = -ENODEV,
+	.emufree_shift = -ENODEV,
+	.autoidle_shift = -ENODEV,
+};
 
-अटल स्थिर काष्ठा sysc_capabilities sysc_omap4_usb_host_fs = अणु
+static const struct sysc_capabilities sysc_omap4_usb_host_fs = {
 	.type = TI_SYSC_OMAP4_USB_HOST_FS,
 	.sysc_mask = SYSC_OMAP2_ENAWAKEUP,
 	.regbits = &sysc_regbits_omap4_usb_host_fs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sysc_regbits sysc_regbits_dra7_mcan = अणु
-	.dmadisable_shअगरt = -ENODEV,
-	.midle_shअगरt = -ENODEV,
-	.sidle_shअगरt = -ENODEV,
-	.clkact_shअगरt = -ENODEV,
-	.enwkup_shअगरt = 4,
-	.srst_shअगरt = 0,
-	.emuमुक्त_shअगरt = -ENODEV,
-	.स्वतःidle_shअगरt = -ENODEV,
-पूर्ण;
+static const struct sysc_regbits sysc_regbits_dra7_mcan = {
+	.dmadisable_shift = -ENODEV,
+	.midle_shift = -ENODEV,
+	.sidle_shift = -ENODEV,
+	.clkact_shift = -ENODEV,
+	.enwkup_shift = 4,
+	.srst_shift = 0,
+	.emufree_shift = -ENODEV,
+	.autoidle_shift = -ENODEV,
+};
 
-अटल स्थिर काष्ठा sysc_capabilities sysc_dra7_mcan = अणु
+static const struct sysc_capabilities sysc_dra7_mcan = {
 	.type = TI_SYSC_DRA7_MCAN,
 	.sysc_mask = SYSC_DRA7_MCAN_ENAWAKEUP | SYSC_OMAP4_SOFTRESET,
 	.regbits = &sysc_regbits_dra7_mcan,
 	.mod_quirks = SYSS_QUIRK_RESETDONE_INVERTED,
-पूर्ण;
+};
 
 /*
  * PRUSS found on some AM33xx, AM437x and AM57xx SoCs
  */
-अटल स्थिर काष्ठा sysc_capabilities sysc_pruss = अणु
+static const struct sysc_capabilities sysc_pruss = {
 	.type = TI_SYSC_PRUSS,
 	.sysc_mask = SYSC_PRUSS_STANDBY_INIT | SYSC_PRUSS_SUB_MWAIT,
 	.regbits = &sysc_regbits_omap4_simple,
 	.mod_quirks = SYSC_MODULE_QUIRK_PRUSS,
-पूर्ण;
+};
 
-अटल पूर्णांक sysc_init_pdata(काष्ठा sysc *ddata)
-अणु
-	काष्ठा ti_sysc_platक्रमm_data *pdata = dev_get_platdata(ddata->dev);
-	काष्ठा ti_sysc_module_data *mdata;
+static int sysc_init_pdata(struct sysc *ddata)
+{
+	struct ti_sysc_platform_data *pdata = dev_get_platdata(ddata->dev);
+	struct ti_sysc_module_data *mdata;
 
-	अगर (!pdata)
-		वापस 0;
+	if (!pdata)
+		return 0;
 
-	mdata = devm_kzalloc(ddata->dev, माप(*mdata), GFP_KERNEL);
-	अगर (!mdata)
-		वापस -ENOMEM;
+	mdata = devm_kzalloc(ddata->dev, sizeof(*mdata), GFP_KERNEL);
+	if (!mdata)
+		return -ENOMEM;
 
-	अगर (ddata->legacy_mode) अणु
+	if (ddata->legacy_mode) {
 		mdata->name = ddata->legacy_mode;
 		mdata->module_pa = ddata->module_pa;
 		mdata->module_size = ddata->module_size;
@@ -2785,64 +2784,64 @@ put_clk:
 		mdata->nr_offsets = SYSC_MAX_REGS;
 		mdata->cap = ddata->cap;
 		mdata->cfg = &ddata->cfg;
-	पूर्ण
+	}
 
 	ddata->mdata = mdata;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sysc_init_match(काष्ठा sysc *ddata)
-अणु
-	स्थिर काष्ठा sysc_capabilities *cap;
+static int sysc_init_match(struct sysc *ddata)
+{
+	const struct sysc_capabilities *cap;
 
 	cap = of_device_get_match_data(ddata->dev);
-	अगर (!cap)
-		वापस -EINVAL;
+	if (!cap)
+		return -EINVAL;
 
 	ddata->cap = cap;
-	अगर (ddata->cap)
+	if (ddata->cap)
 		ddata->cfg.quirks |= ddata->cap->mod_quirks;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ti_sysc_idle(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा sysc *ddata;
+static void ti_sysc_idle(struct work_struct *work)
+{
+	struct sysc *ddata;
 
-	ddata = container_of(work, काष्ठा sysc, idle_work.work);
+	ddata = container_of(work, struct sysc, idle_work.work);
 
 	/*
-	 * One समय decrement of घड़ी usage counts अगर left on from init.
-	 * Note that we disable opt घड़ीs unconditionally in this हाल
+	 * One time decrement of clock usage counts if left on from init.
+	 * Note that we disable opt clocks unconditionally in this case
 	 * as they are enabled unconditionally during init without
-	 * considering sysc_opt_clks_needed() at that poपूर्णांक.
+	 * considering sysc_opt_clks_needed() at that point.
 	 */
-	अगर (ddata->cfg.quirks & (SYSC_QUIRK_NO_IDLE |
-				 SYSC_QUIRK_NO_IDLE_ON_INIT)) अणु
-		sysc_disable_मुख्य_घड़ीs(ddata);
-		sysc_disable_opt_घड़ीs(ddata);
+	if (ddata->cfg.quirks & (SYSC_QUIRK_NO_IDLE |
+				 SYSC_QUIRK_NO_IDLE_ON_INIT)) {
+		sysc_disable_main_clocks(ddata);
+		sysc_disable_opt_clocks(ddata);
 		sysc_clkdm_allow_idle(ddata);
-	पूर्ण
+	}
 
-	/* Keep permanent PM runसमय usage count क्रम SYSC_QUIRK_NO_IDLE */
-	अगर (ddata->cfg.quirks & SYSC_QUIRK_NO_IDLE)
-		वापस;
+	/* Keep permanent PM runtime usage count for SYSC_QUIRK_NO_IDLE */
+	if (ddata->cfg.quirks & SYSC_QUIRK_NO_IDLE)
+		return;
 
 	/*
-	 * Decrement PM runसमय usage count क्रम SYSC_QUIRK_NO_IDLE_ON_INIT
+	 * Decrement PM runtime usage count for SYSC_QUIRK_NO_IDLE_ON_INIT
 	 * and SYSC_QUIRK_NO_RESET_ON_INIT
 	 */
-	अगर (pm_runसमय_active(ddata->dev))
-		pm_runसमय_put_sync(ddata->dev);
-पूर्ण
+	if (pm_runtime_active(ddata->dev))
+		pm_runtime_put_sync(ddata->dev);
+}
 
 /*
- * SoC model and features detection. Only needed क्रम SoCs that need
- * special handling क्रम quirks, no need to list others.
+ * SoC model and features detection. Only needed for SoCs that need
+ * special handling for quirks, no need to list others.
  */
-अटल स्थिर काष्ठा soc_device_attribute sysc_soc_match[] = अणु
+static const struct soc_device_attribute sysc_soc_match[] = {
 	SOC_FLAG("OMAP242*", SOC_2420),
 	SOC_FLAG("OMAP243*", SOC_2430),
 	SOC_FLAG("OMAP3[45]*", SOC_3430),
@@ -2855,14 +2854,14 @@ put_clk:
 	SOC_FLAG("AM43*", SOC_AM4),
 	SOC_FLAG("DRA7*", SOC_DRA7),
 
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+	{ /* sentinel */ },
+};
 
 /*
- * List of SoCs variants with disabled features. By शेष we assume all
+ * List of SoCs variants with disabled features. By default we assume all
  * devices in the device tree are available so no need to list those SoCs.
  */
-अटल स्थिर काष्ठा soc_device_attribute sysc_soc_feat_match[] = अणु
+static const struct soc_device_attribute sysc_soc_feat_match[] = {
 	/* OMAP3430/3530 and AM3517 variants with some accelerators disabled */
 	SOC_FLAG("AM3505", DIS_SGX),
 	SOC_FLAG("OMAP3525", DIS_SGX),
@@ -2876,16 +2875,16 @@ put_clk:
 	SOC_FLAG("OMAP3615/AM3715", DIS_IVA),
 	SOC_FLAG("OMAP3621", DIS_ISP),
 
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+	{ /* sentinel */ },
+};
 
-अटल पूर्णांक sysc_add_disabled(अचिन्हित दीर्घ base)
-अणु
-	काष्ठा sysc_address *disabled_module;
+static int sysc_add_disabled(unsigned long base)
+{
+	struct sysc_address *disabled_module;
 
-	disabled_module = kzalloc(माप(*disabled_module), GFP_KERNEL);
-	अगर (!disabled_module)
-		वापस -ENOMEM;
+	disabled_module = kzalloc(sizeof(*disabled_module), GFP_KERNEL);
+	if (!disabled_module)
+		return -ENOMEM;
 
 	disabled_module->base = base;
 
@@ -2893,346 +2892,346 @@ put_clk:
 	list_add(&disabled_module->node, &sysc_soc->disabled_modules);
 	mutex_unlock(&sysc_soc->list_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * One समय init to detect the booted SoC and disable unavailable features.
- * Note that we initialize अटल data shared across all ti-sysc instances
- * so ddata is only used क्रम SoC type. This can be called from module_init
- * once we no दीर्घer need to rely on platक्रमm data.
+ * One time init to detect the booted SoC and disable unavailable features.
+ * Note that we initialize static data shared across all ti-sysc instances
+ * so ddata is only used for SoC type. This can be called from module_init
+ * once we no longer need to rely on platform data.
  */
-अटल पूर्णांक sysc_init_soc(काष्ठा sysc *ddata)
-अणु
-	स्थिर काष्ठा soc_device_attribute *match;
-	काष्ठा ti_sysc_platक्रमm_data *pdata;
-	अचिन्हित दीर्घ features = 0;
-	काष्ठा device_node *np;
+static int sysc_init_soc(struct sysc *ddata)
+{
+	const struct soc_device_attribute *match;
+	struct ti_sysc_platform_data *pdata;
+	unsigned long features = 0;
+	struct device_node *np;
 
-	अगर (sysc_soc)
-		वापस 0;
+	if (sysc_soc)
+		return 0;
 
-	sysc_soc = kzalloc(माप(*sysc_soc), GFP_KERNEL);
-	अगर (!sysc_soc)
-		वापस -ENOMEM;
+	sysc_soc = kzalloc(sizeof(*sysc_soc), GFP_KERNEL);
+	if (!sysc_soc)
+		return -ENOMEM;
 
 	mutex_init(&sysc_soc->list_lock);
 	INIT_LIST_HEAD(&sysc_soc->disabled_modules);
 	sysc_soc->general_purpose = true;
 
 	pdata = dev_get_platdata(ddata->dev);
-	अगर (pdata && pdata->soc_type_gp)
+	if (pdata && pdata->soc_type_gp)
 		sysc_soc->general_purpose = pdata->soc_type_gp();
 
 	match = soc_device_match(sysc_soc_match);
-	अगर (match && match->data)
-		sysc_soc->soc = (पूर्णांक)match->data;
+	if (match && match->data)
+		sysc_soc->soc = (int)match->data;
 
 	/*
 	 * Check and warn about possible old incomplete dtb. We now want to see
-	 * simple-pm-bus instead of simple-bus in the dtb क्रम genpd using SoCs.
+	 * simple-pm-bus instead of simple-bus in the dtb for genpd using SoCs.
 	 */
-	चयन (sysc_soc->soc) अणु
-	हाल SOC_AM3:
-	हाल SOC_AM4:
-	हाल SOC_4430 ... SOC_4470:
-	हाल SOC_5430:
-	हाल SOC_DRA7:
+	switch (sysc_soc->soc) {
+	case SOC_AM3:
+	case SOC_AM4:
+	case SOC_4430 ... SOC_4470:
+	case SOC_5430:
+	case SOC_DRA7:
 		np = of_find_node_by_path("/ocp");
 		WARN_ONCE(np && of_device_is_compatible(np, "simple-bus"),
 			  "ti-sysc: Incomplete old dtb, please update\n");
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
 	/* Ignore devices that are not available on HS and EMU SoCs */
-	अगर (!sysc_soc->general_purpose) अणु
-		चयन (sysc_soc->soc) अणु
-		हाल SOC_3430 ... SOC_3630:
-			sysc_add_disabled(0x48304000);	/* समयr12 */
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	if (!sysc_soc->general_purpose) {
+		switch (sysc_soc->soc) {
+		case SOC_3430 ... SOC_3630:
+			sysc_add_disabled(0x48304000);	/* timer12 */
+			break;
+		default:
+			break;
+		}
+	}
 
 	match = soc_device_match(sysc_soc_feat_match);
-	अगर (!match)
-		वापस 0;
+	if (!match)
+		return 0;
 
-	अगर (match->data)
-		features = (अचिन्हित दीर्घ)match->data;
+	if (match->data)
+		features = (unsigned long)match->data;
 
 	/*
 	 * Add disabled devices to the list based on the module base.
-	 * Note that this must be करोne beक्रमe we attempt to access the
+	 * Note that this must be done before we attempt to access the
 	 * device and have module revision checks working.
 	 */
-	अगर (features & DIS_ISP)
+	if (features & DIS_ISP)
 		sysc_add_disabled(0x480bd400);
-	अगर (features & DIS_IVA)
+	if (features & DIS_IVA)
 		sysc_add_disabled(0x5d000000);
-	अगर (features & DIS_SGX)
+	if (features & DIS_SGX)
 		sysc_add_disabled(0x50000000);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sysc_cleanup_soc(व्योम)
-अणु
-	काष्ठा sysc_address *disabled_module;
-	काष्ठा list_head *pos, *पंचांगp;
+static void sysc_cleanup_soc(void)
+{
+	struct sysc_address *disabled_module;
+	struct list_head *pos, *tmp;
 
-	अगर (!sysc_soc)
-		वापस;
+	if (!sysc_soc)
+		return;
 
 	mutex_lock(&sysc_soc->list_lock);
-	list_क्रम_each_safe(pos, पंचांगp, &sysc_soc->disabled_modules) अणु
-		disabled_module = list_entry(pos, काष्ठा sysc_address, node);
+	list_for_each_safe(pos, tmp, &sysc_soc->disabled_modules) {
+		disabled_module = list_entry(pos, struct sysc_address, node);
 		list_del(pos);
-		kमुक्त(disabled_module);
-	पूर्ण
+		kfree(disabled_module);
+	}
 	mutex_unlock(&sysc_soc->list_lock);
-पूर्ण
+}
 
-अटल पूर्णांक sysc_check_disabled_devices(काष्ठा sysc *ddata)
-अणु
-	काष्ठा sysc_address *disabled_module;
-	काष्ठा list_head *pos;
-	पूर्णांक error = 0;
+static int sysc_check_disabled_devices(struct sysc *ddata)
+{
+	struct sysc_address *disabled_module;
+	struct list_head *pos;
+	int error = 0;
 
 	mutex_lock(&sysc_soc->list_lock);
-	list_क्रम_each(pos, &sysc_soc->disabled_modules) अणु
-		disabled_module = list_entry(pos, काष्ठा sysc_address, node);
-		अगर (ddata->module_pa == disabled_module->base) अणु
+	list_for_each(pos, &sysc_soc->disabled_modules) {
+		disabled_module = list_entry(pos, struct sysc_address, node);
+		if (ddata->module_pa == disabled_module->base) {
 			dev_dbg(ddata->dev, "module disabled for this SoC\n");
 			error = -ENODEV;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	mutex_unlock(&sysc_soc->list_lock);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * Ignore समयrs tagged with no-reset and no-idle. These are likely in use,
- * क्रम example by drivers/घड़ीsource/समयr-ti-dm-sysसमयr.c. If more checks
- * are needed, we could also look at the समयr रेजिस्टर configuration.
+ * Ignore timers tagged with no-reset and no-idle. These are likely in use,
+ * for example by drivers/clocksource/timer-ti-dm-systimer.c. If more checks
+ * are needed, we could also look at the timer register configuration.
  */
-अटल पूर्णांक sysc_check_active_समयr(काष्ठा sysc *ddata)
-अणु
-	अगर (ddata->cap->type != TI_SYSC_OMAP2_TIMER &&
+static int sysc_check_active_timer(struct sysc *ddata)
+{
+	if (ddata->cap->type != TI_SYSC_OMAP2_TIMER &&
 	    ddata->cap->type != TI_SYSC_OMAP4_TIMER)
-		वापस 0;
+		return 0;
 
-	अगर ((ddata->cfg.quirks & SYSC_QUIRK_NO_RESET_ON_INIT) &&
+	if ((ddata->cfg.quirks & SYSC_QUIRK_NO_RESET_ON_INIT) &&
 	    (ddata->cfg.quirks & SYSC_QUIRK_NO_IDLE))
-		वापस -ENXIO;
+		return -ENXIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id sysc_match_table[] = अणु
-	अणु .compatible = "simple-bus", पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+static const struct of_device_id sysc_match_table[] = {
+	{ .compatible = "simple-bus", },
+	{ /* sentinel */ },
+};
 
-अटल पूर्णांक sysc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ti_sysc_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
-	काष्ठा sysc *ddata;
-	पूर्णांक error;
+static int sysc_probe(struct platform_device *pdev)
+{
+	struct ti_sysc_platform_data *pdata = dev_get_platdata(&pdev->dev);
+	struct sysc *ddata;
+	int error;
 
-	ddata = devm_kzalloc(&pdev->dev, माप(*ddata), GFP_KERNEL);
-	अगर (!ddata)
-		वापस -ENOMEM;
+	ddata = devm_kzalloc(&pdev->dev, sizeof(*ddata), GFP_KERNEL);
+	if (!ddata)
+		return -ENOMEM;
 
 	ddata->offsets[SYSC_REVISION] = -ENODEV;
 	ddata->offsets[SYSC_SYSCONFIG] = -ENODEV;
 	ddata->offsets[SYSC_SYSSTATUS] = -ENODEV;
 	ddata->dev = &pdev->dev;
-	platक्रमm_set_drvdata(pdev, ddata);
+	platform_set_drvdata(pdev, ddata);
 
 	error = sysc_init_soc(ddata);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	error = sysc_init_match(ddata);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	error = sysc_init_dts_quirks(ddata);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	error = sysc_map_and_check_रेजिस्टरs(ddata);
-	अगर (error)
-		वापस error;
+	error = sysc_map_and_check_registers(ddata);
+	if (error)
+		return error;
 
 	error = sysc_init_sysc_mask(ddata);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	error = sysc_init_idlemodes(ddata);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	error = sysc_init_syss_mask(ddata);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	error = sysc_init_pdata(ddata);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	sysc_init_early_quirks(ddata);
 
 	error = sysc_check_disabled_devices(ddata);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	error = sysc_check_active_समयr(ddata);
-	अगर (error)
-		वापस error;
+	error = sysc_check_active_timer(ddata);
+	if (error)
+		return error;
 
-	error = sysc_get_घड़ीs(ddata);
-	अगर (error)
-		वापस error;
+	error = sysc_get_clocks(ddata);
+	if (error)
+		return error;
 
 	error = sysc_init_resets(ddata);
-	अगर (error)
-		जाओ unprepare;
+	if (error)
+		goto unprepare;
 
 	error = sysc_init_module(ddata);
-	अगर (error)
-		जाओ unprepare;
+	if (error)
+		goto unprepare;
 
-	pm_runसमय_enable(ddata->dev);
-	error = pm_runसमय_get_sync(ddata->dev);
-	अगर (error < 0) अणु
-		pm_runसमय_put_noidle(ddata->dev);
-		pm_runसमय_disable(ddata->dev);
-		जाओ unprepare;
-	पूर्ण
+	pm_runtime_enable(ddata->dev);
+	error = pm_runtime_get_sync(ddata->dev);
+	if (error < 0) {
+		pm_runtime_put_noidle(ddata->dev);
+		pm_runtime_disable(ddata->dev);
+		goto unprepare;
+	}
 
-	/* Balance use counts as PM runसमय should have enabled these all */
-	अगर (!(ddata->cfg.quirks &
-	      (SYSC_QUIRK_NO_IDLE | SYSC_QUIRK_NO_IDLE_ON_INIT))) अणु
-		sysc_disable_मुख्य_घड़ीs(ddata);
-		sysc_disable_opt_घड़ीs(ddata);
+	/* Balance use counts as PM runtime should have enabled these all */
+	if (!(ddata->cfg.quirks &
+	      (SYSC_QUIRK_NO_IDLE | SYSC_QUIRK_NO_IDLE_ON_INIT))) {
+		sysc_disable_main_clocks(ddata);
+		sysc_disable_opt_clocks(ddata);
 		sysc_clkdm_allow_idle(ddata);
-	पूर्ण
+	}
 
-	अगर (!(ddata->cfg.quirks & SYSC_QUIRK_NO_RESET_ON_INIT))
-		reset_control_निश्चित(ddata->rsts);
+	if (!(ddata->cfg.quirks & SYSC_QUIRK_NO_RESET_ON_INIT))
+		reset_control_assert(ddata->rsts);
 
-	sysc_show_रेजिस्टरs(ddata);
+	sysc_show_registers(ddata);
 
 	ddata->dev->type = &sysc_device_type;
-	error = of_platक्रमm_populate(ddata->dev->of_node, sysc_match_table,
-				     pdata ? pdata->auxdata : शून्य,
+	error = of_platform_populate(ddata->dev->of_node, sysc_match_table,
+				     pdata ? pdata->auxdata : NULL,
 				     ddata->dev);
-	अगर (error)
-		जाओ err;
+	if (error)
+		goto err;
 
 	INIT_DELAYED_WORK(&ddata->idle_work, ti_sysc_idle);
 
 	/* At least earlycon won't survive without deferred idle */
-	अगर (ddata->cfg.quirks & (SYSC_QUIRK_NO_IDLE |
+	if (ddata->cfg.quirks & (SYSC_QUIRK_NO_IDLE |
 				 SYSC_QUIRK_NO_IDLE_ON_INIT |
-				 SYSC_QUIRK_NO_RESET_ON_INIT)) अणु
+				 SYSC_QUIRK_NO_RESET_ON_INIT)) {
 		schedule_delayed_work(&ddata->idle_work, 3000);
-	पूर्ण अन्यथा अणु
-		pm_runसमय_put(&pdev->dev);
-	पूर्ण
+	} else {
+		pm_runtime_put(&pdev->dev);
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	pm_runसमय_put_sync(&pdev->dev);
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_put_sync(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 unprepare:
 	sysc_unprepare(ddata);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक sysc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sysc *ddata = platक्रमm_get_drvdata(pdev);
-	पूर्णांक error;
+static int sysc_remove(struct platform_device *pdev)
+{
+	struct sysc *ddata = platform_get_drvdata(pdev);
+	int error;
 
 	cancel_delayed_work_sync(&ddata->idle_work);
 
-	error = pm_runसमय_get_sync(ddata->dev);
-	अगर (error < 0) अणु
-		pm_runसमय_put_noidle(ddata->dev);
-		pm_runसमय_disable(ddata->dev);
-		जाओ unprepare;
-	पूर्ण
+	error = pm_runtime_get_sync(ddata->dev);
+	if (error < 0) {
+		pm_runtime_put_noidle(ddata->dev);
+		pm_runtime_disable(ddata->dev);
+		goto unprepare;
+	}
 
-	of_platक्रमm_depopulate(&pdev->dev);
+	of_platform_depopulate(&pdev->dev);
 
-	pm_runसमय_put_sync(&pdev->dev);
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_put_sync(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	अगर (!reset_control_status(ddata->rsts))
-		reset_control_निश्चित(ddata->rsts);
+	if (!reset_control_status(ddata->rsts))
+		reset_control_assert(ddata->rsts);
 
 unprepare:
 	sysc_unprepare(ddata);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id sysc_match[] = अणु
-	अणु .compatible = "ti,sysc-omap2", .data = &sysc_omap2, पूर्ण,
-	अणु .compatible = "ti,sysc-omap2-timer", .data = &sysc_omap2_समयr, पूर्ण,
-	अणु .compatible = "ti,sysc-omap4", .data = &sysc_omap4, पूर्ण,
-	अणु .compatible = "ti,sysc-omap4-timer", .data = &sysc_omap4_समयr, पूर्ण,
-	अणु .compatible = "ti,sysc-omap4-simple", .data = &sysc_omap4_simple, पूर्ण,
-	अणु .compatible = "ti,sysc-omap3430-sr", .data = &sysc_34xx_sr, पूर्ण,
-	अणु .compatible = "ti,sysc-omap3630-sr", .data = &sysc_36xx_sr, पूर्ण,
-	अणु .compatible = "ti,sysc-omap4-sr", .data = &sysc_omap4_sr, पूर्ण,
-	अणु .compatible = "ti,sysc-omap3-sham", .data = &sysc_omap3_sham, पूर्ण,
-	अणु .compatible = "ti,sysc-omap-aes", .data = &sysc_omap3_aes, पूर्ण,
-	अणु .compatible = "ti,sysc-mcasp", .data = &sysc_omap4_mcasp, पूर्ण,
-	अणु .compatible = "ti,sysc-dra7-mcasp", .data = &sysc_dra7_mcasp, पूर्ण,
-	अणु .compatible = "ti,sysc-usb-host-fs",
-	  .data = &sysc_omap4_usb_host_fs, पूर्ण,
-	अणु .compatible = "ti,sysc-dra7-mcan", .data = &sysc_dra7_mcan, पूर्ण,
-	अणु .compatible = "ti,sysc-pruss", .data = &sysc_pruss, पूर्ण,
-	अणु  पूर्ण,
-पूर्ण;
+static const struct of_device_id sysc_match[] = {
+	{ .compatible = "ti,sysc-omap2", .data = &sysc_omap2, },
+	{ .compatible = "ti,sysc-omap2-timer", .data = &sysc_omap2_timer, },
+	{ .compatible = "ti,sysc-omap4", .data = &sysc_omap4, },
+	{ .compatible = "ti,sysc-omap4-timer", .data = &sysc_omap4_timer, },
+	{ .compatible = "ti,sysc-omap4-simple", .data = &sysc_omap4_simple, },
+	{ .compatible = "ti,sysc-omap3430-sr", .data = &sysc_34xx_sr, },
+	{ .compatible = "ti,sysc-omap3630-sr", .data = &sysc_36xx_sr, },
+	{ .compatible = "ti,sysc-omap4-sr", .data = &sysc_omap4_sr, },
+	{ .compatible = "ti,sysc-omap3-sham", .data = &sysc_omap3_sham, },
+	{ .compatible = "ti,sysc-omap-aes", .data = &sysc_omap3_aes, },
+	{ .compatible = "ti,sysc-mcasp", .data = &sysc_omap4_mcasp, },
+	{ .compatible = "ti,sysc-dra7-mcasp", .data = &sysc_dra7_mcasp, },
+	{ .compatible = "ti,sysc-usb-host-fs",
+	  .data = &sysc_omap4_usb_host_fs, },
+	{ .compatible = "ti,sysc-dra7-mcan", .data = &sysc_dra7_mcan, },
+	{ .compatible = "ti,sysc-pruss", .data = &sysc_pruss, },
+	{  },
+};
 MODULE_DEVICE_TABLE(of, sysc_match);
 
-अटल काष्ठा platक्रमm_driver sysc_driver = अणु
+static struct platform_driver sysc_driver = {
 	.probe		= sysc_probe,
-	.हटाओ		= sysc_हटाओ,
-	.driver         = अणु
+	.remove		= sysc_remove,
+	.driver         = {
 		.name   = "ti-sysc",
 		.of_match_table	= sysc_match,
 		.pm = &sysc_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init sysc_init(व्योम)
-अणु
-	bus_रेजिस्टर_notअगरier(&platक्रमm_bus_type, &sysc_nb);
+static int __init sysc_init(void)
+{
+	bus_register_notifier(&platform_bus_type, &sysc_nb);
 
-	वापस platक्रमm_driver_रेजिस्टर(&sysc_driver);
-पूर्ण
+	return platform_driver_register(&sysc_driver);
+}
 module_init(sysc_init);
 
-अटल व्योम __निकास sysc_निकास(व्योम)
-अणु
-	bus_unरेजिस्टर_notअगरier(&platक्रमm_bus_type, &sysc_nb);
-	platक्रमm_driver_unरेजिस्टर(&sysc_driver);
+static void __exit sysc_exit(void)
+{
+	bus_unregister_notifier(&platform_bus_type, &sysc_nb);
+	platform_driver_unregister(&sysc_driver);
 	sysc_cleanup_soc();
-पूर्ण
-module_निकास(sysc_निकास);
+}
+module_exit(sysc_exit);
 
 MODULE_DESCRIPTION("TI sysc interconnect target driver");
 MODULE_LICENSE("GPL v2");

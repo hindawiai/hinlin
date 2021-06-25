@@ -1,251 +1,250 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Driver क्रम Tascam US-X2Y USB soundcards
+ * Driver for Tascam US-X2Y USB soundcards
  *
  * FPGA Loader + ALSA Startup
  *
  * Copyright (c) 2003 by Karsten Wiese <annabellesgarden@yahoo.de>
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/usb.h>
-#समावेश <sound/core.h>
-#समावेश <sound/meदो_स्मृति.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/hwdep.h>
-#समावेश "usx2y.h"
-#समावेश "usbusx2y.h"
-#समावेश "usX2Yhwdep.h"
+#include <linux/interrupt.h>
+#include <linux/slab.h>
+#include <linux/usb.h>
+#include <sound/core.h>
+#include <sound/memalloc.h>
+#include <sound/pcm.h>
+#include <sound/hwdep.h>
+#include "usx2y.h"
+#include "usbusx2y.h"
+#include "usX2Yhwdep.h"
 
-अटल vm_fault_t snd_us428ctls_vm_fault(काष्ठा vm_fault *vmf)
-अणु
-	अचिन्हित दीर्घ offset;
-	काष्ठा page * page;
-	व्योम *vaddr;
+static vm_fault_t snd_us428ctls_vm_fault(struct vm_fault *vmf)
+{
+	unsigned long offset;
+	struct page * page;
+	void *vaddr;
 
-	snd_prपूर्णांकdd("ENTER, start %lXh, pgoff %ld\n",
+	snd_printdd("ENTER, start %lXh, pgoff %ld\n",
 		   vmf->vma->vm_start,
 		   vmf->pgoff);
 	
 	offset = vmf->pgoff << PAGE_SHIFT;
-	vaddr = (अक्षर *)((काष्ठा usX2Ydev *)vmf->vma->vm_निजी_data)->us428ctls_sharedmem + offset;
+	vaddr = (char *)((struct usX2Ydev *)vmf->vma->vm_private_data)->us428ctls_sharedmem + offset;
 	page = virt_to_page(vaddr);
 	get_page(page);
 	vmf->page = page;
 
-	snd_prपूर्णांकdd("vaddr=%p made us428ctls_vm_fault() page %p\n",
+	snd_printdd("vaddr=%p made us428ctls_vm_fault() page %p\n",
 		    vaddr, page);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा us428ctls_vm_ops = अणु
+static const struct vm_operations_struct us428ctls_vm_ops = {
 	.fault = snd_us428ctls_vm_fault,
-पूर्ण;
+};
 
-अटल पूर्णांक snd_us428ctls_mmap(काष्ठा snd_hwdep * hw, काष्ठा file *filp, काष्ठा vm_area_काष्ठा *area)
-अणु
-	अचिन्हित दीर्घ	size = (अचिन्हित दीर्घ)(area->vm_end - area->vm_start);
-	काष्ठा usX2Ydev	*us428 = hw->निजी_data;
+static int snd_us428ctls_mmap(struct snd_hwdep * hw, struct file *filp, struct vm_area_struct *area)
+{
+	unsigned long	size = (unsigned long)(area->vm_end - area->vm_start);
+	struct usX2Ydev	*us428 = hw->private_data;
 
-	// FIXME this hwdep पूर्णांकerface is used twice: fpga करोwnload and mmap क्रम controlling Lights etc. Maybe better using 2 hwdep devs?
-	// so as दीर्घ as the device isn't fully initialised yet we वापस -EBUSY here.
- 	अगर (!(us428->chip_status & USX2Y_STAT_CHIP_INIT))
-		वापस -EBUSY;
+	// FIXME this hwdep interface is used twice: fpga download and mmap for controlling Lights etc. Maybe better using 2 hwdep devs?
+	// so as long as the device isn't fully initialised yet we return -EBUSY here.
+ 	if (!(us428->chip_status & USX2Y_STAT_CHIP_INIT))
+		return -EBUSY;
 
-	/* अगर userspace tries to mmap beyond end of our buffer, fail */ 
-        अगर (size > PAGE_ALIGN(माप(काष्ठा us428ctls_sharedmem))) अणु
-		snd_prपूर्णांकd( "%lu > %lu\n", size, (अचिन्हित दीर्घ)माप(काष्ठा us428ctls_sharedmem)); 
-                वापस -EINVAL;
-	पूर्ण
+	/* if userspace tries to mmap beyond end of our buffer, fail */ 
+        if (size > PAGE_ALIGN(sizeof(struct us428ctls_sharedmem))) {
+		snd_printd( "%lu > %lu\n", size, (unsigned long)sizeof(struct us428ctls_sharedmem)); 
+                return -EINVAL;
+	}
 
-	अगर (!us428->us428ctls_sharedmem) अणु
-		init_रुकोqueue_head(&us428->us428ctls_रुको_queue_head);
-		us428->us428ctls_sharedmem = alloc_pages_exact(माप(काष्ठा us428ctls_sharedmem), GFP_KERNEL);
-		अगर (!us428->us428ctls_sharedmem)
-			वापस -ENOMEM;
-		स_रखो(us428->us428ctls_sharedmem, -1, माप(काष्ठा us428ctls_sharedmem));
+	if (!us428->us428ctls_sharedmem) {
+		init_waitqueue_head(&us428->us428ctls_wait_queue_head);
+		us428->us428ctls_sharedmem = alloc_pages_exact(sizeof(struct us428ctls_sharedmem), GFP_KERNEL);
+		if (!us428->us428ctls_sharedmem)
+			return -ENOMEM;
+		memset(us428->us428ctls_sharedmem, -1, sizeof(struct us428ctls_sharedmem));
 		us428->us428ctls_sharedmem->CtlSnapShotLast = -2;
-	पूर्ण
+	}
 	area->vm_ops = &us428ctls_vm_ops;
 	area->vm_flags |= VM_DONTEXPAND | VM_DONTDUMP;
-	area->vm_निजी_data = hw->निजी_data;
-	वापस 0;
-पूर्ण
+	area->vm_private_data = hw->private_data;
+	return 0;
+}
 
-अटल __poll_t snd_us428ctls_poll(काष्ठा snd_hwdep *hw, काष्ठा file *file, poll_table *रुको)
-अणु
+static __poll_t snd_us428ctls_poll(struct snd_hwdep *hw, struct file *file, poll_table *wait)
+{
 	__poll_t	mask = 0;
-	काष्ठा usX2Ydev	*us428 = hw->निजी_data;
-	काष्ठा us428ctls_sharedmem *shm = us428->us428ctls_sharedmem;
-	अगर (us428->chip_status & USX2Y_STAT_CHIP_HUP)
-		वापस EPOLLHUP;
+	struct usX2Ydev	*us428 = hw->private_data;
+	struct us428ctls_sharedmem *shm = us428->us428ctls_sharedmem;
+	if (us428->chip_status & USX2Y_STAT_CHIP_HUP)
+		return EPOLLHUP;
 
-	poll_रुको(file, &us428->us428ctls_रुको_queue_head, रुको);
+	poll_wait(file, &us428->us428ctls_wait_queue_head, wait);
 
-	अगर (shm != शून्य && shm->CtlSnapShotLast != shm->CtlSnapShotRed)
+	if (shm != NULL && shm->CtlSnapShotLast != shm->CtlSnapShotRed)
 		mask |= EPOLLIN;
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
 
-अटल पूर्णांक snd_usX2Y_hwdep_dsp_status(काष्ठा snd_hwdep *hw,
-				      काष्ठा snd_hwdep_dsp_status *info)
-अणु
-	अटल स्थिर अक्षर * स्थिर type_ids[USX2Y_TYPE_NUMS] = अणु
+static int snd_usX2Y_hwdep_dsp_status(struct snd_hwdep *hw,
+				      struct snd_hwdep_dsp_status *info)
+{
+	static const char * const type_ids[USX2Y_TYPE_NUMS] = {
 		[USX2Y_TYPE_122] = "us122",
 		[USX2Y_TYPE_224] = "us224",
 		[USX2Y_TYPE_428] = "us428",
-	पूर्ण;
-	काष्ठा usX2Ydev	*us428 = hw->निजी_data;
-	पूर्णांक id = -1;
+	};
+	struct usX2Ydev	*us428 = hw->private_data;
+	int id = -1;
 
-	चयन (le16_to_cpu(us428->dev->descriptor.idProduct)) अणु
-	हाल USB_ID_US122:
+	switch (le16_to_cpu(us428->dev->descriptor.idProduct)) {
+	case USB_ID_US122:
 		id = USX2Y_TYPE_122;
-		अवरोध;
-	हाल USB_ID_US224:
+		break;
+	case USB_ID_US224:
 		id = USX2Y_TYPE_224;
-		अवरोध;
-	हाल USB_ID_US428:
+		break;
+	case USB_ID_US428:
 		id = USX2Y_TYPE_428;
-		अवरोध;
-	पूर्ण
-	अगर (0 > id)
-		वापस -ENODEV;
-	म_नकल(info->id, type_ids[id]);
+		break;
+	}
+	if (0 > id)
+		return -ENODEV;
+	strcpy(info->id, type_ids[id]);
 	info->num_dsps = 2;		// 0: Prepad Data, 1: FPGA Code
-	अगर (us428->chip_status & USX2Y_STAT_CHIP_INIT)
-		info->chip_पढ़ोy = 1;
+	if (us428->chip_status & USX2Y_STAT_CHIP_INIT)
+		info->chip_ready = 1;
 	info->version = USX2Y_DRIVER_VERSION;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक usX2Y_create_usbmidi(काष्ठा snd_card *card)
-अणु
-	अटल स्थिर काष्ठा snd_usb_midi_endpoपूर्णांक_info quirk_data_1 = अणु
+static int usX2Y_create_usbmidi(struct snd_card *card)
+{
+	static const struct snd_usb_midi_endpoint_info quirk_data_1 = {
 		.out_ep = 0x06,
 		.in_ep = 0x06,
 		.out_cables =	0x001,
 		.in_cables =	0x001
-	पूर्ण;
-	अटल स्थिर काष्ठा snd_usb_audio_quirk quirk_1 = अणु
-		.venकरोr_name =	"TASCAM",
+	};
+	static const struct snd_usb_audio_quirk quirk_1 = {
+		.vendor_name =	"TASCAM",
 		.product_name =	NAME_ALLCAPS,
-		.अगरnum = 	0,
+		.ifnum = 	0,
        		.type = QUIRK_MIDI_FIXED_ENDPOINT,
 		.data = &quirk_data_1
-	पूर्ण;
-	अटल स्थिर काष्ठा snd_usb_midi_endpoपूर्णांक_info quirk_data_2 = अणु
+	};
+	static const struct snd_usb_midi_endpoint_info quirk_data_2 = {
 		.out_ep = 0x06,
 		.in_ep = 0x06,
 		.out_cables =	0x003,
 		.in_cables =	0x003
-	पूर्ण;
-	अटल स्थिर काष्ठा snd_usb_audio_quirk quirk_2 = अणु
-		.venकरोr_name =	"TASCAM",
+	};
+	static const struct snd_usb_audio_quirk quirk_2 = {
+		.vendor_name =	"TASCAM",
 		.product_name =	"US428",
-		.अगरnum = 	0,
+		.ifnum = 	0,
        		.type = QUIRK_MIDI_FIXED_ENDPOINT,
 		.data = &quirk_data_2
-	पूर्ण;
-	काष्ठा usb_device *dev = usX2Y(card)->dev;
-	काष्ठा usb_पूर्णांकerface *अगरace = usb_अगरnum_to_अगर(dev, 0);
-	स्थिर काष्ठा snd_usb_audio_quirk *quirk =
+	};
+	struct usb_device *dev = usX2Y(card)->dev;
+	struct usb_interface *iface = usb_ifnum_to_if(dev, 0);
+	const struct snd_usb_audio_quirk *quirk =
 		le16_to_cpu(dev->descriptor.idProduct) == USB_ID_US428 ?
 		&quirk_2 : &quirk_1;
 
-	snd_prपूर्णांकdd("usX2Y_create_usbmidi \n");
-	वापस snd_usbmidi_create(card, अगरace, &usX2Y(card)->midi_list, quirk);
-पूर्ण
+	snd_printdd("usX2Y_create_usbmidi \n");
+	return snd_usbmidi_create(card, iface, &usX2Y(card)->midi_list, quirk);
+}
 
-अटल पूर्णांक usX2Y_create_alsa_devices(काष्ठा snd_card *card)
-अणु
-	पूर्णांक err;
+static int usX2Y_create_alsa_devices(struct snd_card *card)
+{
+	int err;
 
-	करो अणु
-		अगर ((err = usX2Y_create_usbmidi(card)) < 0) अणु
-			snd_prपूर्णांकk(KERN_ERR "usX2Y_create_alsa_devices: usX2Y_create_usbmidi error %i \n", err);
-			अवरोध;
-		पूर्ण
-		अगर ((err = usX2Y_audio_create(card)) < 0) 
-			अवरोध;
-		अगर ((err = usX2Y_hwdep_pcm_new(card)) < 0)
-			अवरोध;
-		अगर ((err = snd_card_रेजिस्टर(card)) < 0)
-			अवरोध;
-	पूर्ण जबतक (0);
+	do {
+		if ((err = usX2Y_create_usbmidi(card)) < 0) {
+			snd_printk(KERN_ERR "usX2Y_create_alsa_devices: usX2Y_create_usbmidi error %i \n", err);
+			break;
+		}
+		if ((err = usX2Y_audio_create(card)) < 0) 
+			break;
+		if ((err = usX2Y_hwdep_pcm_new(card)) < 0)
+			break;
+		if ((err = snd_card_register(card)) < 0)
+			break;
+	} while (0);
 
-	वापस err;
-पूर्ण 
+	return err;
+} 
 
-अटल पूर्णांक snd_usX2Y_hwdep_dsp_load(काष्ठा snd_hwdep *hw,
-				    काष्ठा snd_hwdep_dsp_image *dsp)
-अणु
-	काष्ठा usX2Ydev *priv = hw->निजी_data;
-	काष्ठा usb_device* dev = priv->dev;
-	पूर्णांक lret, err;
-	अक्षर *buf;
+static int snd_usX2Y_hwdep_dsp_load(struct snd_hwdep *hw,
+				    struct snd_hwdep_dsp_image *dsp)
+{
+	struct usX2Ydev *priv = hw->private_data;
+	struct usb_device* dev = priv->dev;
+	int lret, err;
+	char *buf;
 
-	snd_prपूर्णांकdd( "dsp_load %s\n", dsp->name);
+	snd_printdd( "dsp_load %s\n", dsp->name);
 
 	buf = memdup_user(dsp->image, dsp->length);
-	अगर (IS_ERR(buf))
-		वापस PTR_ERR(buf);
+	if (IS_ERR(buf))
+		return PTR_ERR(buf);
 
-	err = usb_set_पूर्णांकerface(dev, 0, 1);
-	अगर (err)
-		snd_prपूर्णांकk(KERN_ERR "usb_set_interface error \n");
-	अन्यथा
+	err = usb_set_interface(dev, 0, 1);
+	if (err)
+		snd_printk(KERN_ERR "usb_set_interface error \n");
+	else
 		err = usb_bulk_msg(dev, usb_sndbulkpipe(dev, 2), buf, dsp->length, &lret, 6000);
-	kमुक्त(buf);
-	अगर (err)
-		वापस err;
-	अगर (dsp->index == 1) अणु
-		msleep(250);				// give the device some समय
+	kfree(buf);
+	if (err)
+		return err;
+	if (dsp->index == 1) {
+		msleep(250);				// give the device some time
 		err = usX2Y_AsyncSeq04_init(priv);
-		अगर (err) अणु
-			snd_prपूर्णांकk(KERN_ERR "usX2Y_AsyncSeq04_init error \n");
-			वापस err;
-		पूर्ण
+		if (err) {
+			snd_printk(KERN_ERR "usX2Y_AsyncSeq04_init error \n");
+			return err;
+		}
 		err = usX2Y_In04_init(priv);
-		अगर (err) अणु
-			snd_prपूर्णांकk(KERN_ERR "usX2Y_In04_init error \n");
-			वापस err;
-		पूर्ण
+		if (err) {
+			snd_printk(KERN_ERR "usX2Y_In04_init error \n");
+			return err;
+		}
 		err = usX2Y_create_alsa_devices(hw->card);
-		अगर (err) अणु
-			snd_prपूर्णांकk(KERN_ERR "usX2Y_create_alsa_devices error %i \n", err);
-			snd_card_मुक्त(hw->card);
-			वापस err;
-		पूर्ण
+		if (err) {
+			snd_printk(KERN_ERR "usX2Y_create_alsa_devices error %i \n", err);
+			snd_card_free(hw->card);
+			return err;
+		}
 		priv->chip_status |= USX2Y_STAT_CHIP_INIT; 
-		snd_prपूर्णांकdd("%s: alsa all started\n", hw->name);
-	पूर्ण
-	वापस err;
-पूर्ण
+		snd_printdd("%s: alsa all started\n", hw->name);
+	}
+	return err;
+}
 
 
-पूर्णांक usX2Y_hwdep_new(काष्ठा snd_card *card, काष्ठा usb_device* device)
-अणु
-	पूर्णांक err;
-	काष्ठा snd_hwdep *hw;
+int usX2Y_hwdep_new(struct snd_card *card, struct usb_device* device)
+{
+	int err;
+	struct snd_hwdep *hw;
 
-	अगर ((err = snd_hwdep_new(card, SND_USX2Y_LOADER_ID, 0, &hw)) < 0)
-		वापस err;
+	if ((err = snd_hwdep_new(card, SND_USX2Y_LOADER_ID, 0, &hw)) < 0)
+		return err;
 
-	hw->अगरace = SNDRV_HWDEP_IFACE_USX2Y;
-	hw->निजी_data = usX2Y(card);
+	hw->iface = SNDRV_HWDEP_IFACE_USX2Y;
+	hw->private_data = usX2Y(card);
 	hw->ops.dsp_status = snd_usX2Y_hwdep_dsp_status;
 	hw->ops.dsp_load = snd_usX2Y_hwdep_dsp_load;
 	hw->ops.mmap = snd_us428ctls_mmap;
 	hw->ops.poll = snd_us428ctls_poll;
 	hw->exclusive = 1;
-	प्र_लिखो(hw->name, "/dev/bus/usb/%03d/%03d", device->bus->busnum, device->devnum);
-	वापस 0;
-पूर्ण
+	sprintf(hw->name, "/dev/bus/usb/%03d/%03d", device->bus->busnum, device->devnum);
+	return 0;
+}
 

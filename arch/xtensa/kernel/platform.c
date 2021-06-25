@@ -1,44 +1,43 @@
-<शैली गुरु>
 /*
- * arch/xtensa/kernel/platक्रमm.c
+ * arch/xtensa/kernel/platform.c
  *
- * Default platक्रमm functions.
+ * Default platform functions.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2005 Tensilica Inc.
  *
  * Chris Zankel <chris@zankel.net>
  */
 
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/types.h>
-#समावेश <यंत्र/platक्रमm.h>
-#समावेश <यंत्र/समयx.h>
+#include <linux/printk.h>
+#include <linux/types.h>
+#include <asm/platform.h>
+#include <asm/timex.h>
 
-#घोषणा _F(r,f,a,b)							\
-	r __platक्रमm_##f a b;                                   	\
-	r platक्रमm_##f a __attribute__((weak, alias("__platform_"#f)))
+#define _F(r,f,a,b)							\
+	r __platform_##f a b;                                   	\
+	r platform_##f a __attribute__((weak, alias("__platform_"#f)))
 
 /*
- * Default functions that are used अगर no platक्रमm specअगरic function is defined.
- * (Please, refer to include/यंत्र-xtensa/platक्रमm.h क्रम more inक्रमmation)
+ * Default functions that are used if no platform specific function is defined.
+ * (Please, refer to include/asm-xtensa/platform.h for more information)
  */
 
-_F(व्योम, init, (bp_tag_t *first), अणु पूर्ण);
-_F(व्योम, setup, (अक्षर** cmd), अणु पूर्ण);
-_F(व्योम, restart, (व्योम), अणु जबतक(1); पूर्ण);
-_F(व्योम, halt, (व्योम), अणु जबतक(1); पूर्ण);
-_F(व्योम, घातer_off, (व्योम), अणु जबतक(1); पूर्ण);
-_F(व्योम, idle, (व्योम), अणु __यंत्र__ __अस्थिर__ ("waiti 0" ::: "memory"); पूर्ण);
-_F(व्योम, heartbeat, (व्योम), अणु पूर्ण);
+_F(void, init, (bp_tag_t *first), { });
+_F(void, setup, (char** cmd), { });
+_F(void, restart, (void), { while(1); });
+_F(void, halt, (void), { while(1); });
+_F(void, power_off, (void), { while(1); });
+_F(void, idle, (void), { __asm__ __volatile__ ("waiti 0" ::: "memory"); });
+_F(void, heartbeat, (void), { });
 
-#अगर_घोषित CONFIG_XTENSA_CALIBRATE_CCOUNT
-_F(व्योम, calibrate_ccount, (व्योम),
-अणु
+#ifdef CONFIG_XTENSA_CALIBRATE_CCOUNT
+_F(void, calibrate_ccount, (void),
+{
 	pr_err("ERROR: Cannot calibrate cpu frequency! Assuming 10MHz.\n");
 	ccount_freq = 10 * 1000000UL;
-पूर्ण);
-#पूर्ण_अगर
+});
+#endif

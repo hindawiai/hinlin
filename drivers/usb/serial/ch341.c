@@ -1,261 +1,260 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright 2007, Frank A Kingswood <frank@kingswood-consulting.co.uk>
  * Copyright 2007, Werner Cornelius <werner@cornelius-consult.de>
  * Copyright 2009, Boris Hajduk <boris@hajduk.org>
  *
- * ch341.c implements a serial port driver क्रम the Winchiphead CH341.
+ * ch341.c implements a serial port driver for the Winchiphead CH341.
  *
  * The CH341 device can be used to implement an RS232 asynchronous
- * serial port, an IEEE-1284 parallel prपूर्णांकer port or a memory-like
- * पूर्णांकerface. In all हालs the CH341 supports an I2C पूर्णांकerface as well.
- * This driver only supports the asynchronous serial पूर्णांकerface.
+ * serial port, an IEEE-1284 parallel printer port or a memory-like
+ * interface. In all cases the CH341 supports an I2C interface as well.
+ * This driver only supports the asynchronous serial interface.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/serial.h>
-#समावेश <linux/serial.h>
-#समावेश <यंत्र/unaligned.h>
+#include <linux/kernel.h>
+#include <linux/tty.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/usb.h>
+#include <linux/usb/serial.h>
+#include <linux/serial.h>
+#include <asm/unaligned.h>
 
-#घोषणा DEFAULT_BAUD_RATE 9600
-#घोषणा DEFAULT_TIMEOUT   1000
+#define DEFAULT_BAUD_RATE 9600
+#define DEFAULT_TIMEOUT   1000
 
-/* flags क्रम IO-Bits */
-#घोषणा CH341_BIT_RTS (1 << 6)
-#घोषणा CH341_BIT_DTR (1 << 5)
+/* flags for IO-Bits */
+#define CH341_BIT_RTS (1 << 6)
+#define CH341_BIT_DTR (1 << 5)
 
 /******************************/
-/* पूर्णांकerrupt pipe definitions */
+/* interrupt pipe definitions */
 /******************************/
-/* always 4 पूर्णांकerrupt bytes */
+/* always 4 interrupt bytes */
 /* first irq byte normally 0x08 */
 /* second irq byte base 0x7d + below */
 /* third irq byte base 0x94 + below */
 /* fourth irq byte normally 0xee */
 
-/* second पूर्णांकerrupt byte */
-#घोषणा CH341_MULT_STAT 0x04 /* multiple status since last पूर्णांकerrupt event */
+/* second interrupt byte */
+#define CH341_MULT_STAT 0x04 /* multiple status since last interrupt event */
 
-/* status वापसed in third पूर्णांकerrupt answer byte, inverted in data
+/* status returned in third interrupt answer byte, inverted in data
    from irq */
-#घोषणा CH341_BIT_CTS 0x01
-#घोषणा CH341_BIT_DSR 0x02
-#घोषणा CH341_BIT_RI  0x04
-#घोषणा CH341_BIT_DCD 0x08
-#घोषणा CH341_BITS_MODEM_STAT 0x0f /* all bits */
+#define CH341_BIT_CTS 0x01
+#define CH341_BIT_DSR 0x02
+#define CH341_BIT_RI  0x04
+#define CH341_BIT_DCD 0x08
+#define CH341_BITS_MODEM_STAT 0x0f /* all bits */
 
-/* Break support - the inक्रमmation used to implement this was gleaned from
+/* Break support - the information used to implement this was gleaned from
  * the Net/FreeBSD uchcom.c driver by Takanori Watanabe.  Domo arigato.
  */
 
-#घोषणा CH341_REQ_READ_VERSION 0x5F
-#घोषणा CH341_REQ_WRITE_REG    0x9A
-#घोषणा CH341_REQ_READ_REG     0x95
-#घोषणा CH341_REQ_SERIAL_INIT  0xA1
-#घोषणा CH341_REQ_MODEM_CTRL   0xA4
+#define CH341_REQ_READ_VERSION 0x5F
+#define CH341_REQ_WRITE_REG    0x9A
+#define CH341_REQ_READ_REG     0x95
+#define CH341_REQ_SERIAL_INIT  0xA1
+#define CH341_REQ_MODEM_CTRL   0xA4
 
-#घोषणा CH341_REG_BREAK        0x05
-#घोषणा CH341_REG_PRESCALER    0x12
-#घोषणा CH341_REG_DIVISOR      0x13
-#घोषणा CH341_REG_LCR          0x18
-#घोषणा CH341_REG_LCR2         0x25
+#define CH341_REG_BREAK        0x05
+#define CH341_REG_PRESCALER    0x12
+#define CH341_REG_DIVISOR      0x13
+#define CH341_REG_LCR          0x18
+#define CH341_REG_LCR2         0x25
 
-#घोषणा CH341_NBREAK_BITS      0x01
+#define CH341_NBREAK_BITS      0x01
 
-#घोषणा CH341_LCR_ENABLE_RX    0x80
-#घोषणा CH341_LCR_ENABLE_TX    0x40
-#घोषणा CH341_LCR_MARK_SPACE   0x20
-#घोषणा CH341_LCR_PAR_EVEN     0x10
-#घोषणा CH341_LCR_ENABLE_PAR   0x08
-#घोषणा CH341_LCR_STOP_BITS_2  0x04
-#घोषणा CH341_LCR_CS8          0x03
-#घोषणा CH341_LCR_CS7          0x02
-#घोषणा CH341_LCR_CS6          0x01
-#घोषणा CH341_LCR_CS5          0x00
+#define CH341_LCR_ENABLE_RX    0x80
+#define CH341_LCR_ENABLE_TX    0x40
+#define CH341_LCR_MARK_SPACE   0x20
+#define CH341_LCR_PAR_EVEN     0x10
+#define CH341_LCR_ENABLE_PAR   0x08
+#define CH341_LCR_STOP_BITS_2  0x04
+#define CH341_LCR_CS8          0x03
+#define CH341_LCR_CS7          0x02
+#define CH341_LCR_CS6          0x01
+#define CH341_LCR_CS5          0x00
 
-#घोषणा CH341_QUIRK_LIMITED_PRESCALER	BIT(0)
-#घोषणा CH341_QUIRK_SIMULATE_BREAK	BIT(1)
+#define CH341_QUIRK_LIMITED_PRESCALER	BIT(0)
+#define CH341_QUIRK_SIMULATE_BREAK	BIT(1)
 
-अटल स्थिर काष्ठा usb_device_id id_table[] = अणु
-	अणु USB_DEVICE(0x1a86, 0x5512) पूर्ण,
-	अणु USB_DEVICE(0x1a86, 0x5523) पूर्ण,
-	अणु USB_DEVICE(0x1a86, 0x7522) पूर्ण,
-	अणु USB_DEVICE(0x1a86, 0x7523) पूर्ण,
-	अणु USB_DEVICE(0x4348, 0x5523) पूर्ण,
-	अणु USB_DEVICE(0x9986, 0x7523) पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct usb_device_id id_table[] = {
+	{ USB_DEVICE(0x1a86, 0x5512) },
+	{ USB_DEVICE(0x1a86, 0x5523) },
+	{ USB_DEVICE(0x1a86, 0x7522) },
+	{ USB_DEVICE(0x1a86, 0x7523) },
+	{ USB_DEVICE(0x4348, 0x5523) },
+	{ USB_DEVICE(0x9986, 0x7523) },
+	{ },
+};
 MODULE_DEVICE_TABLE(usb, id_table);
 
-काष्ठा ch341_निजी अणु
+struct ch341_private {
 	spinlock_t lock; /* access lock */
-	अचिन्हित baud_rate; /* set baud rate */
+	unsigned baud_rate; /* set baud rate */
 	u8 mcr;
 	u8 msr;
 	u8 lcr;
-	अचिन्हित दीर्घ quirks;
-	अचिन्हित दीर्घ अवरोध_end;
-पूर्ण;
+	unsigned long quirks;
+	unsigned long break_end;
+};
 
-अटल व्योम ch341_set_termios(काष्ठा tty_काष्ठा *tty,
-			      काष्ठा usb_serial_port *port,
-			      काष्ठा ktermios *old_termios);
+static void ch341_set_termios(struct tty_struct *tty,
+			      struct usb_serial_port *port,
+			      struct ktermios *old_termios);
 
-अटल पूर्णांक ch341_control_out(काष्ठा usb_device *dev, u8 request,
+static int ch341_control_out(struct usb_device *dev, u8 request,
 			     u16 value, u16 index)
-अणु
-	पूर्णांक r;
+{
+	int r;
 
 	dev_dbg(&dev->dev, "%s - (%02x,%04x,%04x)\n", __func__,
 		request, value, index);
 
 	r = usb_control_msg(dev, usb_sndctrlpipe(dev, 0), request,
-			    USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_सूची_OUT,
-			    value, index, शून्य, 0, DEFAULT_TIMEOUT);
-	अगर (r < 0)
+			    USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_DIR_OUT,
+			    value, index, NULL, 0, DEFAULT_TIMEOUT);
+	if (r < 0)
 		dev_err(&dev->dev, "failed to send control message: %d\n", r);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक ch341_control_in(काष्ठा usb_device *dev,
+static int ch341_control_in(struct usb_device *dev,
 			    u8 request, u16 value, u16 index,
-			    अक्षर *buf, अचिन्हित bufsize)
-अणु
-	पूर्णांक r;
+			    char *buf, unsigned bufsize)
+{
+	int r;
 
 	dev_dbg(&dev->dev, "%s - (%02x,%04x,%04x,%u)\n", __func__,
 		request, value, index, bufsize);
 
 	r = usb_control_msg(dev, usb_rcvctrlpipe(dev, 0), request,
-			    USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_सूची_IN,
+			    USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_DIR_IN,
 			    value, index, buf, bufsize, DEFAULT_TIMEOUT);
-	अगर (r < (पूर्णांक)bufsize) अणु
-		अगर (r >= 0) अणु
+	if (r < (int)bufsize) {
+		if (r >= 0) {
 			dev_err(&dev->dev,
 				"short control message received (%d < %u)\n",
 				r, bufsize);
 			r = -EIO;
-		पूर्ण
+		}
 
 		dev_err(&dev->dev, "failed to receive control message: %d\n",
 			r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा CH341_CLKRATE		48000000
-#घोषणा CH341_CLK_DIV(ps, fact)	(1 << (12 - 3 * (ps) - (fact)))
-#घोषणा CH341_MIN_RATE(ps)	(CH341_CLKRATE / (CH341_CLK_DIV((ps), 1) * 512))
+#define CH341_CLKRATE		48000000
+#define CH341_CLK_DIV(ps, fact)	(1 << (12 - 3 * (ps) - (fact)))
+#define CH341_MIN_RATE(ps)	(CH341_CLKRATE / (CH341_CLK_DIV((ps), 1) * 512))
 
-अटल स्थिर speed_t ch341_min_rates[] = अणु
+static const speed_t ch341_min_rates[] = {
 	CH341_MIN_RATE(0),
 	CH341_MIN_RATE(1),
 	CH341_MIN_RATE(2),
 	CH341_MIN_RATE(3),
-पूर्ण;
+};
 
 /* Supported range is 46 to 3000000 bps. */
-#घोषणा CH341_MIN_BPS	DIV_ROUND_UP(CH341_CLKRATE, CH341_CLK_DIV(0, 0) * 256)
-#घोषणा CH341_MAX_BPS	(CH341_CLKRATE / (CH341_CLK_DIV(3, 0) * 2))
+#define CH341_MIN_BPS	DIV_ROUND_UP(CH341_CLKRATE, CH341_CLK_DIV(0, 0) * 256)
+#define CH341_MAX_BPS	(CH341_CLKRATE / (CH341_CLK_DIV(3, 0) * 2))
 
 /*
  * The device line speed is given by the following equation:
  *
- *	baudrate = 48000000 / (2^(12 - 3 * ps - fact) * भाग), where
+ *	baudrate = 48000000 / (2^(12 - 3 * ps - fact) * div), where
  *
  *		0 <= ps <= 3,
  *		0 <= fact <= 1,
- *		2 <= भाग <= 256 अगर fact = 0, or
- *		9 <= भाग <= 256 अगर fact = 1
+ *		2 <= div <= 256 if fact = 0, or
+ *		9 <= div <= 256 if fact = 1
  */
-अटल पूर्णांक ch341_get_भागisor(काष्ठा ch341_निजी *priv, speed_t speed)
-अणु
-	अचिन्हित पूर्णांक fact, भाग, clk_भाग;
-	bool क्रमce_fact0 = false;
-	पूर्णांक ps;
+static int ch341_get_divisor(struct ch341_private *priv, speed_t speed)
+{
+	unsigned int fact, div, clk_div;
+	bool force_fact0 = false;
+	int ps;
 
 	/*
-	 * Clamp to supported range, this makes the (ps < 0) and (भाग < 2)
+	 * Clamp to supported range, this makes the (ps < 0) and (div < 2)
 	 * sanity checks below redundant.
 	 */
 	speed = clamp_val(speed, CH341_MIN_BPS, CH341_MAX_BPS);
 
 	/*
-	 * Start with highest possible base घड़ी (fact = 1) that will give a
-	 * भागisor strictly less than 512.
+	 * Start with highest possible base clock (fact = 1) that will give a
+	 * divisor strictly less than 512.
 	 */
 	fact = 1;
-	क्रम (ps = 3; ps >= 0; ps--) अणु
-		अगर (speed > ch341_min_rates[ps])
-			अवरोध;
-	पूर्ण
+	for (ps = 3; ps >= 0; ps--) {
+		if (speed > ch341_min_rates[ps])
+			break;
+	}
 
-	अगर (ps < 0)
-		वापस -EINVAL;
+	if (ps < 0)
+		return -EINVAL;
 
-	/* Determine corresponding भागisor, rounding करोwn. */
-	clk_भाग = CH341_CLK_DIV(ps, fact);
-	भाग = CH341_CLKRATE / (clk_भाग * speed);
+	/* Determine corresponding divisor, rounding down. */
+	clk_div = CH341_CLK_DIV(ps, fact);
+	div = CH341_CLKRATE / (clk_div * speed);
 
-	/* Some devices require a lower base घड़ी अगर ps < 3. */
-	अगर (ps < 3 && (priv->quirks & CH341_QUIRK_LIMITED_PRESCALER))
-		क्रमce_fact0 = true;
+	/* Some devices require a lower base clock if ps < 3. */
+	if (ps < 3 && (priv->quirks & CH341_QUIRK_LIMITED_PRESCALER))
+		force_fact0 = true;
 
-	/* Halve base घड़ी (fact = 0) अगर required. */
-	अगर (भाग < 9 || भाग > 255 || क्रमce_fact0) अणु
-		भाग /= 2;
-		clk_भाग *= 2;
+	/* Halve base clock (fact = 0) if required. */
+	if (div < 9 || div > 255 || force_fact0) {
+		div /= 2;
+		clk_div *= 2;
 		fact = 0;
-	पूर्ण
+	}
 
-	अगर (भाग < 2)
-		वापस -EINVAL;
+	if (div < 2)
+		return -EINVAL;
 
 	/*
-	 * Pick next भागisor अगर resulting rate is बंदr to the requested one,
-	 * scale up to aव्योम rounding errors on low rates.
+	 * Pick next divisor if resulting rate is closer to the requested one,
+	 * scale up to avoid rounding errors on low rates.
 	 */
-	अगर (16 * CH341_CLKRATE / (clk_भाग * भाग) - 16 * speed >=
-			16 * speed - 16 * CH341_CLKRATE / (clk_भाग * (भाग + 1)))
-		भाग++;
+	if (16 * CH341_CLKRATE / (clk_div * div) - 16 * speed >=
+			16 * speed - 16 * CH341_CLKRATE / (clk_div * (div + 1)))
+		div++;
 
 	/*
-	 * Prefer lower base घड़ी (fact = 0) अगर even भागisor.
+	 * Prefer lower base clock (fact = 0) if even divisor.
 	 *
 	 * Note that this makes the receiver more tolerant to errors.
 	 */
-	अगर (fact == 1 && भाग % 2 == 0) अणु
-		भाग /= 2;
+	if (fact == 1 && div % 2 == 0) {
+		div /= 2;
 		fact = 0;
-	पूर्ण
+	}
 
-	वापस (0x100 - भाग) << 8 | fact << 2 | ps;
-पूर्ण
+	return (0x100 - div) << 8 | fact << 2 | ps;
+}
 
-अटल पूर्णांक ch341_set_baudrate_lcr(काष्ठा usb_device *dev,
-				  काष्ठा ch341_निजी *priv,
+static int ch341_set_baudrate_lcr(struct usb_device *dev,
+				  struct ch341_private *priv,
 				  speed_t baud_rate, u8 lcr)
-अणु
-	पूर्णांक val;
-	पूर्णांक r;
+{
+	int val;
+	int r;
 
-	अगर (!baud_rate)
-		वापस -EINVAL;
+	if (!baud_rate)
+		return -EINVAL;
 
-	val = ch341_get_भागisor(priv, baud_rate);
-	अगर (val < 0)
-		वापस -EINVAL;
+	val = ch341_get_divisor(priv, baud_rate);
+	if (val < 0)
+		return -EINVAL;
 
 	/*
-	 * CH341A buffers data until a full endpoपूर्णांक-size packet (32 bytes)
+	 * CH341A buffers data until a full endpoint-size packet (32 bytes)
 	 * has been received unless bit 7 is set.
 	 */
 	val |= BIT(7);
@@ -263,466 +262,466 @@ MODULE_DEVICE_TABLE(usb, id_table);
 	r = ch341_control_out(dev, CH341_REQ_WRITE_REG,
 			      CH341_REG_DIVISOR << 8 | CH341_REG_PRESCALER,
 			      val);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	/*
-	 * Chip versions beक्रमe version 0x30 as पढ़ो using
-	 * CH341_REQ_READ_VERSION used separate रेजिस्टरs क्रम line control
+	 * Chip versions before version 0x30 as read using
+	 * CH341_REQ_READ_VERSION used separate registers for line control
 	 * (stop bits, parity and word length). Version 0x30 and above use
 	 * CH341_REG_LCR only and CH341_REG_LCR2 is always set to zero.
 	 */
 	r = ch341_control_out(dev, CH341_REQ_WRITE_REG,
 			      CH341_REG_LCR2 << 8 | CH341_REG_LCR, lcr);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक ch341_set_handshake(काष्ठा usb_device *dev, u8 control)
-अणु
-	वापस ch341_control_out(dev, CH341_REQ_MODEM_CTRL, ~control, 0);
-पूर्ण
+static int ch341_set_handshake(struct usb_device *dev, u8 control)
+{
+	return ch341_control_out(dev, CH341_REQ_MODEM_CTRL, ~control, 0);
+}
 
-अटल पूर्णांक ch341_get_status(काष्ठा usb_device *dev, काष्ठा ch341_निजी *priv)
-अणु
-	स्थिर अचिन्हित पूर्णांक size = 2;
-	अक्षर *buffer;
-	पूर्णांक r;
-	अचिन्हित दीर्घ flags;
+static int ch341_get_status(struct usb_device *dev, struct ch341_private *priv)
+{
+	const unsigned int size = 2;
+	char *buffer;
+	int r;
+	unsigned long flags;
 
-	buffer = kदो_स्मृति(size, GFP_KERNEL);
-	अगर (!buffer)
-		वापस -ENOMEM;
+	buffer = kmalloc(size, GFP_KERNEL);
+	if (!buffer)
+		return -ENOMEM;
 
 	r = ch341_control_in(dev, CH341_REQ_READ_REG, 0x0706, 0, buffer, size);
-	अगर (r < 0)
-		जाओ out;
+	if (r < 0)
+		goto out;
 
 	spin_lock_irqsave(&priv->lock, flags);
 	priv->msr = (~(*buffer)) & CH341_BITS_MODEM_STAT;
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-out:	kमुक्त(buffer);
-	वापस r;
-पूर्ण
+out:	kfree(buffer);
+	return r;
+}
 
 /* -------------------------------------------------------------------------- */
 
-अटल पूर्णांक ch341_configure(काष्ठा usb_device *dev, काष्ठा ch341_निजी *priv)
-अणु
-	स्थिर अचिन्हित पूर्णांक size = 2;
-	अक्षर *buffer;
-	पूर्णांक r;
+static int ch341_configure(struct usb_device *dev, struct ch341_private *priv)
+{
+	const unsigned int size = 2;
+	char *buffer;
+	int r;
 
-	buffer = kदो_स्मृति(size, GFP_KERNEL);
-	अगर (!buffer)
-		वापस -ENOMEM;
+	buffer = kmalloc(size, GFP_KERNEL);
+	if (!buffer)
+		return -ENOMEM;
 
 	/* expect two bytes 0x27 0x00 */
 	r = ch341_control_in(dev, CH341_REQ_READ_VERSION, 0, 0, buffer, size);
-	अगर (r < 0)
-		जाओ out;
+	if (r < 0)
+		goto out;
 	dev_dbg(&dev->dev, "Chip version: 0x%02x\n", buffer[0]);
 
 	r = ch341_control_out(dev, CH341_REQ_SERIAL_INIT, 0, 0);
-	अगर (r < 0)
-		जाओ out;
+	if (r < 0)
+		goto out;
 
 	r = ch341_set_baudrate_lcr(dev, priv, priv->baud_rate, priv->lcr);
-	अगर (r < 0)
-		जाओ out;
+	if (r < 0)
+		goto out;
 
 	r = ch341_set_handshake(dev, priv->mcr);
 
-out:	kमुक्त(buffer);
-	वापस r;
-पूर्ण
+out:	kfree(buffer);
+	return r;
+}
 
-अटल पूर्णांक ch341_detect_quirks(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा ch341_निजी *priv = usb_get_serial_port_data(port);
-	काष्ठा usb_device *udev = port->serial->dev;
-	स्थिर अचिन्हित पूर्णांक size = 2;
-	अचिन्हित दीर्घ quirks = 0;
-	अक्षर *buffer;
-	पूर्णांक r;
+static int ch341_detect_quirks(struct usb_serial_port *port)
+{
+	struct ch341_private *priv = usb_get_serial_port_data(port);
+	struct usb_device *udev = port->serial->dev;
+	const unsigned int size = 2;
+	unsigned long quirks = 0;
+	char *buffer;
+	int r;
 
-	buffer = kदो_स्मृति(size, GFP_KERNEL);
-	अगर (!buffer)
-		वापस -ENOMEM;
+	buffer = kmalloc(size, GFP_KERNEL);
+	if (!buffer)
+		return -ENOMEM;
 
 	/*
-	 * A subset of CH34x devices करोes not support all features. The
-	 * prescaler is limited and there is no support क्रम sending a RS232
-	 * अवरोध condition. A पढ़ो failure when trying to set up the latter is
+	 * A subset of CH34x devices does not support all features. The
+	 * prescaler is limited and there is no support for sending a RS232
+	 * break condition. A read failure when trying to set up the latter is
 	 * used to detect these devices.
 	 */
 	r = usb_control_msg(udev, usb_rcvctrlpipe(udev, 0), CH341_REQ_READ_REG,
-			    USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_सूची_IN,
+			    USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_DIR_IN,
 			    CH341_REG_BREAK, 0, buffer, size, DEFAULT_TIMEOUT);
-	अगर (r == -EPIPE) अणु
+	if (r == -EPIPE) {
 		dev_info(&port->dev, "break control not supported, using simulated break\n");
 		quirks = CH341_QUIRK_LIMITED_PRESCALER | CH341_QUIRK_SIMULATE_BREAK;
 		r = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (r != size) अणु
-		अगर (r >= 0)
+	if (r != size) {
+		if (r >= 0)
 			r = -EIO;
 		dev_err(&port->dev, "failed to read break control: %d\n", r);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	r = 0;
 out:
-	kमुक्त(buffer);
+	kfree(buffer);
 
-	अगर (quirks) अणु
+	if (quirks) {
 		dev_dbg(&port->dev, "enabling quirk flags: 0x%02lx\n", quirks);
 		priv->quirks |= quirks;
-	पूर्ण
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक ch341_port_probe(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा ch341_निजी *priv;
-	पूर्णांक r;
+static int ch341_port_probe(struct usb_serial_port *port)
+{
+	struct ch341_private *priv;
+	int r;
 
-	priv = kzalloc(माप(काष्ठा ch341_निजी), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = kzalloc(sizeof(struct ch341_private), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	spin_lock_init(&priv->lock);
 	priv->baud_rate = DEFAULT_BAUD_RATE;
 	/*
 	 * Some CH340 devices appear unable to change the initial LCR
-	 * settings, so set a sane 8N1 शेष.
+	 * settings, so set a sane 8N1 default.
 	 */
 	priv->lcr = CH341_LCR_ENABLE_RX | CH341_LCR_ENABLE_TX | CH341_LCR_CS8;
 
 	r = ch341_configure(port->serial->dev, priv);
-	अगर (r < 0)
-		जाओ error;
+	if (r < 0)
+		goto error;
 
 	usb_set_serial_port_data(port, priv);
 
 	r = ch341_detect_quirks(port);
-	अगर (r < 0)
-		जाओ error;
+	if (r < 0)
+		goto error;
 
-	वापस 0;
+	return 0;
 
-error:	kमुक्त(priv);
-	वापस r;
-पूर्ण
+error:	kfree(priv);
+	return r;
+}
 
-अटल व्योम ch341_port_हटाओ(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा ch341_निजी *priv;
+static void ch341_port_remove(struct usb_serial_port *port)
+{
+	struct ch341_private *priv;
 
 	priv = usb_get_serial_port_data(port);
-	kमुक्त(priv);
-पूर्ण
+	kfree(priv);
+}
 
-अटल पूर्णांक ch341_carrier_उठाओd(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा ch341_निजी *priv = usb_get_serial_port_data(port);
-	अगर (priv->msr & CH341_BIT_DCD)
-		वापस 1;
-	वापस 0;
-पूर्ण
+static int ch341_carrier_raised(struct usb_serial_port *port)
+{
+	struct ch341_private *priv = usb_get_serial_port_data(port);
+	if (priv->msr & CH341_BIT_DCD)
+		return 1;
+	return 0;
+}
 
-अटल व्योम ch341_dtr_rts(काष्ठा usb_serial_port *port, पूर्णांक on)
-अणु
-	काष्ठा ch341_निजी *priv = usb_get_serial_port_data(port);
-	अचिन्हित दीर्घ flags;
+static void ch341_dtr_rts(struct usb_serial_port *port, int on)
+{
+	struct ch341_private *priv = usb_get_serial_port_data(port);
+	unsigned long flags;
 
 	/* drop DTR and RTS */
 	spin_lock_irqsave(&priv->lock, flags);
-	अगर (on)
+	if (on)
 		priv->mcr |= CH341_BIT_RTS | CH341_BIT_DTR;
-	अन्यथा
+	else
 		priv->mcr &= ~(CH341_BIT_RTS | CH341_BIT_DTR);
 	spin_unlock_irqrestore(&priv->lock, flags);
 	ch341_set_handshake(port->serial->dev, priv->mcr);
-पूर्ण
+}
 
-अटल व्योम ch341_बंद(काष्ठा usb_serial_port *port)
-अणु
-	usb_serial_generic_बंद(port);
-	usb_समाप्त_urb(port->पूर्णांकerrupt_in_urb);
-पूर्ण
+static void ch341_close(struct usb_serial_port *port)
+{
+	usb_serial_generic_close(port);
+	usb_kill_urb(port->interrupt_in_urb);
+}
 
 
-/* खोलो this device, set शेष parameters */
-अटल पूर्णांक ch341_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा ch341_निजी *priv = usb_get_serial_port_data(port);
-	पूर्णांक r;
+/* open this device, set default parameters */
+static int ch341_open(struct tty_struct *tty, struct usb_serial_port *port)
+{
+	struct ch341_private *priv = usb_get_serial_port_data(port);
+	int r;
 
-	अगर (tty)
-		ch341_set_termios(tty, port, शून्य);
+	if (tty)
+		ch341_set_termios(tty, port, NULL);
 
 	dev_dbg(&port->dev, "%s - submitting interrupt urb\n", __func__);
-	r = usb_submit_urb(port->पूर्णांकerrupt_in_urb, GFP_KERNEL);
-	अगर (r) अणु
+	r = usb_submit_urb(port->interrupt_in_urb, GFP_KERNEL);
+	if (r) {
 		dev_err(&port->dev, "%s - failed to submit interrupt urb: %d\n",
 			__func__, r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	r = ch341_get_status(port->serial->dev, priv);
-	अगर (r < 0) अणु
+	if (r < 0) {
 		dev_err(&port->dev, "failed to read modem status: %d\n", r);
-		जाओ err_समाप्त_पूर्णांकerrupt_urb;
-	पूर्ण
+		goto err_kill_interrupt_urb;
+	}
 
-	r = usb_serial_generic_खोलो(tty, port);
-	अगर (r)
-		जाओ err_समाप्त_पूर्णांकerrupt_urb;
+	r = usb_serial_generic_open(tty, port);
+	if (r)
+		goto err_kill_interrupt_urb;
 
-	वापस 0;
+	return 0;
 
-err_समाप्त_पूर्णांकerrupt_urb:
-	usb_समाप्त_urb(port->पूर्णांकerrupt_in_urb);
+err_kill_interrupt_urb:
+	usb_kill_urb(port->interrupt_in_urb);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /* Old_termios contains the original termios settings and
  * tty->termios contains the new setting to be used.
  */
-अटल व्योम ch341_set_termios(काष्ठा tty_काष्ठा *tty,
-		काष्ठा usb_serial_port *port, काष्ठा ktermios *old_termios)
-अणु
-	काष्ठा ch341_निजी *priv = usb_get_serial_port_data(port);
-	अचिन्हित baud_rate;
-	अचिन्हित दीर्घ flags;
+static void ch341_set_termios(struct tty_struct *tty,
+		struct usb_serial_port *port, struct ktermios *old_termios)
+{
+	struct ch341_private *priv = usb_get_serial_port_data(port);
+	unsigned baud_rate;
+	unsigned long flags;
 	u8 lcr;
-	पूर्णांक r;
+	int r;
 
 	/* redundant changes may cause the chip to lose bytes */
-	अगर (old_termios && !tty_termios_hw_change(&tty->termios, old_termios))
-		वापस;
+	if (old_termios && !tty_termios_hw_change(&tty->termios, old_termios))
+		return;
 
 	baud_rate = tty_get_baud_rate(tty);
 
 	lcr = CH341_LCR_ENABLE_RX | CH341_LCR_ENABLE_TX;
 
-	चयन (C_CSIZE(tty)) अणु
-	हाल CS5:
+	switch (C_CSIZE(tty)) {
+	case CS5:
 		lcr |= CH341_LCR_CS5;
-		अवरोध;
-	हाल CS6:
+		break;
+	case CS6:
 		lcr |= CH341_LCR_CS6;
-		अवरोध;
-	हाल CS7:
+		break;
+	case CS7:
 		lcr |= CH341_LCR_CS7;
-		अवरोध;
-	हाल CS8:
+		break;
+	case CS8:
 		lcr |= CH341_LCR_CS8;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (C_PARENB(tty)) अणु
+	if (C_PARENB(tty)) {
 		lcr |= CH341_LCR_ENABLE_PAR;
-		अगर (C_PARODD(tty) == 0)
+		if (C_PARODD(tty) == 0)
 			lcr |= CH341_LCR_PAR_EVEN;
-		अगर (C_CMSPAR(tty))
+		if (C_CMSPAR(tty))
 			lcr |= CH341_LCR_MARK_SPACE;
-	पूर्ण
+	}
 
-	अगर (C_CSTOPB(tty))
+	if (C_CSTOPB(tty))
 		lcr |= CH341_LCR_STOP_BITS_2;
 
-	अगर (baud_rate) अणु
+	if (baud_rate) {
 		priv->baud_rate = baud_rate;
 
 		r = ch341_set_baudrate_lcr(port->serial->dev, priv,
 					   priv->baud_rate, lcr);
-		अगर (r < 0 && old_termios) अणु
+		if (r < 0 && old_termios) {
 			priv->baud_rate = tty_termios_baud_rate(old_termios);
 			tty_termios_copy_hw(&tty->termios, old_termios);
-		पूर्ण अन्यथा अगर (r == 0) अणु
+		} else if (r == 0) {
 			priv->lcr = lcr;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	spin_lock_irqsave(&priv->lock, flags);
-	अगर (C_BAUD(tty) == B0)
+	if (C_BAUD(tty) == B0)
 		priv->mcr &= ~(CH341_BIT_DTR | CH341_BIT_RTS);
-	अन्यथा अगर (old_termios && (old_termios->c_cflag & CBAUD) == B0)
+	else if (old_termios && (old_termios->c_cflag & CBAUD) == B0)
 		priv->mcr |= (CH341_BIT_DTR | CH341_BIT_RTS);
 	spin_unlock_irqrestore(&priv->lock, flags);
 
 	ch341_set_handshake(port->serial->dev, priv->mcr);
-पूर्ण
+}
 
 /*
- * A subset of all CH34x devices करोn't support a real अवरोध condition and
- * पढ़ोing CH341_REG_BREAK fails (see also ch341_detect_quirks). This function
- * simulates a अवरोध condition by lowering the baud rate to the minimum
- * supported by the hardware upon enabling the अवरोध condition and sending
+ * A subset of all CH34x devices don't support a real break condition and
+ * reading CH341_REG_BREAK fails (see also ch341_detect_quirks). This function
+ * simulates a break condition by lowering the baud rate to the minimum
+ * supported by the hardware upon enabling the break condition and sending
  * a NUL byte.
  *
- * Incoming data is corrupted जबतक the अवरोध condition is being simulated.
+ * Incoming data is corrupted while the break condition is being simulated.
  *
- * Normally the duration of the अवरोध condition can be controlled inभागidually
+ * Normally the duration of the break condition can be controlled individually
  * by userspace using TIOCSBRK and TIOCCBRK or by passing an argument to
  * TCSBRKP. Due to how the simulation is implemented the duration can't be
  * controlled. The duration is always about (1s / 46bd * 9bit) = 196ms.
  */
-अटल व्योम ch341_simulate_अवरोध(काष्ठा tty_काष्ठा *tty, पूर्णांक अवरोध_state)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा ch341_निजी *priv = usb_get_serial_port_data(port);
-	अचिन्हित दीर्घ now, delay;
-	पूर्णांक r;
+static void ch341_simulate_break(struct tty_struct *tty, int break_state)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	struct ch341_private *priv = usb_get_serial_port_data(port);
+	unsigned long now, delay;
+	int r;
 
-	अगर (अवरोध_state != 0) अणु
+	if (break_state != 0) {
 		dev_dbg(&port->dev, "enter break state requested\n");
 
 		r = ch341_set_baudrate_lcr(port->serial->dev, priv,
 				CH341_MIN_BPS,
 				CH341_LCR_ENABLE_RX | CH341_LCR_ENABLE_TX | CH341_LCR_CS8);
-		अगर (r < 0) अणु
+		if (r < 0) {
 			dev_err(&port->dev,
 				"failed to change baud rate to %u: %d\n",
 				CH341_MIN_BPS, r);
-			जाओ restore;
-		पूर्ण
+			goto restore;
+		}
 
-		r = tty_put_अक्षर(tty, '\0');
-		अगर (r < 0) अणु
+		r = tty_put_char(tty, '\0');
+		if (r < 0) {
 			dev_err(&port->dev,
 				"failed to write NUL byte for simulated break condition: %d\n",
 				r);
-			जाओ restore;
-		पूर्ण
+			goto restore;
+		}
 
 		/*
 		 * Compute expected transmission duration including safety
 		 * margin. The original baud rate is only restored after the
-		 * computed poपूर्णांक in समय.
+		 * computed point in time.
 		 *
 		 * 11 bits = 1 start, 8 data, 1 stop, 1 margin
 		 */
-		priv->अवरोध_end = jअगरfies + (11 * HZ / CH341_MIN_BPS);
+		priv->break_end = jiffies + (11 * HZ / CH341_MIN_BPS);
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	dev_dbg(&port->dev, "leave break state requested\n");
 
-	now = jअगरfies;
+	now = jiffies;
 
-	अगर (समय_beक्रमe(now, priv->अवरोध_end)) अणु
+	if (time_before(now, priv->break_end)) {
 		/* Wait until NUL byte is written */
-		delay = priv->अवरोध_end - now;
+		delay = priv->break_end - now;
 		dev_dbg(&port->dev,
 			"wait %d ms while transmitting NUL byte at %u baud\n",
-			jअगरfies_to_msecs(delay), CH341_MIN_BPS);
-		schedule_समयout_पूर्णांकerruptible(delay);
-	पूर्ण
+			jiffies_to_msecs(delay), CH341_MIN_BPS);
+		schedule_timeout_interruptible(delay);
+	}
 
 restore:
 	/* Restore original baud rate */
 	r = ch341_set_baudrate_lcr(port->serial->dev, priv, priv->baud_rate,
 				   priv->lcr);
-	अगर (r < 0)
+	if (r < 0)
 		dev_err(&port->dev,
 			"restoring original baud rate of %u failed: %d\n",
 			priv->baud_rate, r);
-पूर्ण
+}
 
-अटल व्योम ch341_अवरोध_ctl(काष्ठा tty_काष्ठा *tty, पूर्णांक अवरोध_state)
-अणु
-	स्थिर uपूर्णांक16_t ch341_अवरोध_reg =
-			((uपूर्णांक16_t) CH341_REG_LCR << 8) | CH341_REG_BREAK;
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा ch341_निजी *priv = usb_get_serial_port_data(port);
-	पूर्णांक r;
-	uपूर्णांक16_t reg_contents;
-	uपूर्णांक8_t *अवरोध_reg;
+static void ch341_break_ctl(struct tty_struct *tty, int break_state)
+{
+	const uint16_t ch341_break_reg =
+			((uint16_t) CH341_REG_LCR << 8) | CH341_REG_BREAK;
+	struct usb_serial_port *port = tty->driver_data;
+	struct ch341_private *priv = usb_get_serial_port_data(port);
+	int r;
+	uint16_t reg_contents;
+	uint8_t *break_reg;
 
-	अगर (priv->quirks & CH341_QUIRK_SIMULATE_BREAK) अणु
-		ch341_simulate_अवरोध(tty, अवरोध_state);
-		वापस;
-	पूर्ण
+	if (priv->quirks & CH341_QUIRK_SIMULATE_BREAK) {
+		ch341_simulate_break(tty, break_state);
+		return;
+	}
 
-	अवरोध_reg = kदो_स्मृति(2, GFP_KERNEL);
-	अगर (!अवरोध_reg)
-		वापस;
+	break_reg = kmalloc(2, GFP_KERNEL);
+	if (!break_reg)
+		return;
 
 	r = ch341_control_in(port->serial->dev, CH341_REQ_READ_REG,
-			ch341_अवरोध_reg, 0, अवरोध_reg, 2);
-	अगर (r < 0) अणु
+			ch341_break_reg, 0, break_reg, 2);
+	if (r < 0) {
 		dev_err(&port->dev, "%s - USB control read error (%d)\n",
 				__func__, r);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	dev_dbg(&port->dev, "%s - initial ch341 break register contents - reg1: %x, reg2: %x\n",
-		__func__, अवरोध_reg[0], अवरोध_reg[1]);
-	अगर (अवरोध_state != 0) अणु
+		__func__, break_reg[0], break_reg[1]);
+	if (break_state != 0) {
 		dev_dbg(&port->dev, "%s - Enter break state requested\n", __func__);
-		अवरोध_reg[0] &= ~CH341_NBREAK_BITS;
-		अवरोध_reg[1] &= ~CH341_LCR_ENABLE_TX;
-	पूर्ण अन्यथा अणु
+		break_reg[0] &= ~CH341_NBREAK_BITS;
+		break_reg[1] &= ~CH341_LCR_ENABLE_TX;
+	} else {
 		dev_dbg(&port->dev, "%s - Leave break state requested\n", __func__);
-		अवरोध_reg[0] |= CH341_NBREAK_BITS;
-		अवरोध_reg[1] |= CH341_LCR_ENABLE_TX;
-	पूर्ण
+		break_reg[0] |= CH341_NBREAK_BITS;
+		break_reg[1] |= CH341_LCR_ENABLE_TX;
+	}
 	dev_dbg(&port->dev, "%s - New ch341 break register contents - reg1: %x, reg2: %x\n",
-		__func__, अवरोध_reg[0], अवरोध_reg[1]);
-	reg_contents = get_unaligned_le16(अवरोध_reg);
+		__func__, break_reg[0], break_reg[1]);
+	reg_contents = get_unaligned_le16(break_reg);
 	r = ch341_control_out(port->serial->dev, CH341_REQ_WRITE_REG,
-			ch341_अवरोध_reg, reg_contents);
-	अगर (r < 0)
+			ch341_break_reg, reg_contents);
+	if (r < 0)
 		dev_err(&port->dev, "%s - USB control write error (%d)\n",
 				__func__, r);
 out:
-	kमुक्त(अवरोध_reg);
-पूर्ण
+	kfree(break_reg);
+}
 
-अटल पूर्णांक ch341_tiocmset(काष्ठा tty_काष्ठा *tty,
-			  अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा ch341_निजी *priv = usb_get_serial_port_data(port);
-	अचिन्हित दीर्घ flags;
+static int ch341_tiocmset(struct tty_struct *tty,
+			  unsigned int set, unsigned int clear)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	struct ch341_private *priv = usb_get_serial_port_data(port);
+	unsigned long flags;
 	u8 control;
 
 	spin_lock_irqsave(&priv->lock, flags);
-	अगर (set & TIOCM_RTS)
+	if (set & TIOCM_RTS)
 		priv->mcr |= CH341_BIT_RTS;
-	अगर (set & TIOCM_DTR)
+	if (set & TIOCM_DTR)
 		priv->mcr |= CH341_BIT_DTR;
-	अगर (clear & TIOCM_RTS)
+	if (clear & TIOCM_RTS)
 		priv->mcr &= ~CH341_BIT_RTS;
-	अगर (clear & TIOCM_DTR)
+	if (clear & TIOCM_DTR)
 		priv->mcr &= ~CH341_BIT_DTR;
 	control = priv->mcr;
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	वापस ch341_set_handshake(port->serial->dev, control);
-पूर्ण
+	return ch341_set_handshake(port->serial->dev, control);
+}
 
-अटल व्योम ch341_update_status(काष्ठा usb_serial_port *port,
-					अचिन्हित अक्षर *data, माप_प्रकार len)
-अणु
-	काष्ठा ch341_निजी *priv = usb_get_serial_port_data(port);
-	काष्ठा tty_काष्ठा *tty;
-	अचिन्हित दीर्घ flags;
+static void ch341_update_status(struct usb_serial_port *port,
+					unsigned char *data, size_t len)
+{
+	struct ch341_private *priv = usb_get_serial_port_data(port);
+	struct tty_struct *tty;
+	unsigned long flags;
 	u8 status;
 	u8 delta;
 
-	अगर (len < 4)
-		वापस;
+	if (len < 4)
+		return;
 
 	status = ~data[2] & CH341_BITS_MODEM_STAT;
 
@@ -731,73 +730,73 @@ out:
 	priv->msr = status;
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	अगर (data[1] & CH341_MULT_STAT)
+	if (data[1] & CH341_MULT_STAT)
 		dev_dbg(&port->dev, "%s - multiple status change\n", __func__);
 
-	अगर (!delta)
-		वापस;
+	if (!delta)
+		return;
 
-	अगर (delta & CH341_BIT_CTS)
+	if (delta & CH341_BIT_CTS)
 		port->icount.cts++;
-	अगर (delta & CH341_BIT_DSR)
+	if (delta & CH341_BIT_DSR)
 		port->icount.dsr++;
-	अगर (delta & CH341_BIT_RI)
+	if (delta & CH341_BIT_RI)
 		port->icount.rng++;
-	अगर (delta & CH341_BIT_DCD) अणु
+	if (delta & CH341_BIT_DCD) {
 		port->icount.dcd++;
 		tty = tty_port_tty_get(&port->port);
-		अगर (tty) अणु
+		if (tty) {
 			usb_serial_handle_dcd_change(port, tty,
 						status & CH341_BIT_DCD);
 			tty_kref_put(tty);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	wake_up_पूर्णांकerruptible(&port->port.delta_msr_रुको);
-पूर्ण
+	wake_up_interruptible(&port->port.delta_msr_wait);
+}
 
-अटल व्योम ch341_पढ़ो_पूर्णांक_callback(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_serial_port *port = urb->context;
-	अचिन्हित अक्षर *data = urb->transfer_buffer;
-	अचिन्हित पूर्णांक len = urb->actual_length;
-	पूर्णांक status;
+static void ch341_read_int_callback(struct urb *urb)
+{
+	struct usb_serial_port *port = urb->context;
+	unsigned char *data = urb->transfer_buffer;
+	unsigned int len = urb->actual_length;
+	int status;
 
-	चयन (urb->status) अणु
-	हाल 0:
+	switch (urb->status) {
+	case 0:
 		/* success */
-		अवरोध;
-	हाल -ECONNRESET:
-	हाल -ENOENT:
-	हाल -ESHUTDOWN:
+		break;
+	case -ECONNRESET:
+	case -ENOENT:
+	case -ESHUTDOWN:
 		/* this urb is terminated, clean up */
 		dev_dbg(&urb->dev->dev, "%s - urb shutting down: %d\n",
 			__func__, urb->status);
-		वापस;
-	शेष:
+		return;
+	default:
 		dev_dbg(&urb->dev->dev, "%s - nonzero urb status: %d\n",
 			__func__, urb->status);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	usb_serial_debug_data(&port->dev, __func__, len, data);
 	ch341_update_status(port, data, len);
-निकास:
+exit:
 	status = usb_submit_urb(urb, GFP_ATOMIC);
-	अगर (status) अणु
+	if (status) {
 		dev_err(&urb->dev->dev, "%s - usb_submit_urb failed: %d\n",
 			__func__, status);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ch341_tiocmget(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा ch341_निजी *priv = usb_get_serial_port_data(port);
-	अचिन्हित दीर्घ flags;
+static int ch341_tiocmget(struct tty_struct *tty)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	struct ch341_private *priv = usb_get_serial_port_data(port);
+	unsigned long flags;
 	u8 mcr;
 	u8 status;
-	अचिन्हित पूर्णांक result;
+	unsigned int result;
 
 	spin_lock_irqsave(&priv->lock, flags);
 	mcr = priv->mcr;
@@ -813,65 +812,65 @@ out:
 
 	dev_dbg(&port->dev, "%s - result = %x\n", __func__, result);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक ch341_reset_resume(काष्ठा usb_serial *serial)
-अणु
-	काष्ठा usb_serial_port *port = serial->port[0];
-	काष्ठा ch341_निजी *priv;
-	पूर्णांक ret;
+static int ch341_reset_resume(struct usb_serial *serial)
+{
+	struct usb_serial_port *port = serial->port[0];
+	struct ch341_private *priv;
+	int ret;
 
 	priv = usb_get_serial_port_data(port);
-	अगर (!priv)
-		वापस 0;
+	if (!priv)
+		return 0;
 
 	/* reconfigure ch341 serial port after bus-reset */
 	ch341_configure(serial->dev, priv);
 
-	अगर (tty_port_initialized(&port->port)) अणु
-		ret = usb_submit_urb(port->पूर्णांकerrupt_in_urb, GFP_NOIO);
-		अगर (ret) अणु
+	if (tty_port_initialized(&port->port)) {
+		ret = usb_submit_urb(port->interrupt_in_urb, GFP_NOIO);
+		if (ret) {
 			dev_err(&port->dev, "failed to submit interrupt urb: %d\n",
 				ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		ret = ch341_get_status(port->serial->dev, priv);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(&port->dev, "failed to read modem status: %d\n",
 				ret);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस usb_serial_generic_resume(serial);
-पूर्ण
+	return usb_serial_generic_resume(serial);
+}
 
-अटल काष्ठा usb_serial_driver ch341_device = अणु
-	.driver = अणु
+static struct usb_serial_driver ch341_device = {
+	.driver = {
 		.owner	= THIS_MODULE,
 		.name	= "ch341-uart",
-	पूर्ण,
+	},
 	.id_table          = id_table,
 	.num_ports         = 1,
-	.खोलो              = ch341_खोलो,
+	.open              = ch341_open,
 	.dtr_rts	   = ch341_dtr_rts,
-	.carrier_उठाओd	   = ch341_carrier_उठाओd,
-	.बंद             = ch341_बंद,
+	.carrier_raised	   = ch341_carrier_raised,
+	.close             = ch341_close,
 	.set_termios       = ch341_set_termios,
-	.अवरोध_ctl         = ch341_अवरोध_ctl,
+	.break_ctl         = ch341_break_ctl,
 	.tiocmget          = ch341_tiocmget,
 	.tiocmset          = ch341_tiocmset,
-	.tiocmiरुको        = usb_serial_generic_tiocmiरुको,
-	.पढ़ो_पूर्णांक_callback = ch341_पढ़ो_पूर्णांक_callback,
+	.tiocmiwait        = usb_serial_generic_tiocmiwait,
+	.read_int_callback = ch341_read_int_callback,
 	.port_probe        = ch341_port_probe,
-	.port_हटाओ       = ch341_port_हटाओ,
+	.port_remove       = ch341_port_remove,
 	.reset_resume      = ch341_reset_resume,
-पूर्ण;
+};
 
-अटल काष्ठा usb_serial_driver * स्थिर serial_drivers[] = अणु
-	&ch341_device, शून्य
-पूर्ण;
+static struct usb_serial_driver * const serial_drivers[] = {
+	&ch341_device, NULL
+};
 
 module_usb_serial_driver(serial_drivers, id_table);
 

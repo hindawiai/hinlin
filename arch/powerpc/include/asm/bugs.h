@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-#अगर_अघोषित _ASM_POWERPC_BUGS_H
-#घोषणा _ASM_POWERPC_BUGS_H
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#ifndef _ASM_POWERPC_BUGS_H
+#define _ASM_POWERPC_BUGS_H
 
 /*
  */
 
 /*
- * This file is included by 'init/main.c' to check क्रम
+ * This file is included by 'init/main.c' to check for
  * architecture-dependent bugs.
  */
 
-अटल अंतरभूत व्योम check_bugs(व्योम) अणु पूर्ण
+static inline void check_bugs(void) { }
 
-#पूर्ण_अगर	/* _ASM_POWERPC_BUGS_H */
+#endif	/* _ASM_POWERPC_BUGS_H */

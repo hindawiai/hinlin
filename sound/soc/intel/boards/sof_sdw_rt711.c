@@ -1,111 +1,110 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2020 Intel Corporation
 
 /*
  *  sof_sdw_rt711 - Helpers to handle RT711 from generic machine driver
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/input.h>
-#समावेश <linux/soundwire/sdw.h>
-#समावेश <linux/soundwire/sdw_type.h>
-#समावेश <sound/control.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/soc-acpi.h>
-#समावेश <sound/soc-dapm.h>
-#समावेश <sound/jack.h>
-#समावेश "sof_sdw_common.h"
+#include <linux/device.h>
+#include <linux/errno.h>
+#include <linux/input.h>
+#include <linux/soundwire/sdw.h>
+#include <linux/soundwire/sdw_type.h>
+#include <sound/control.h>
+#include <sound/soc.h>
+#include <sound/soc-acpi.h>
+#include <sound/soc-dapm.h>
+#include <sound/jack.h>
+#include "sof_sdw_common.h"
 
 /*
- * Note this MUST be called beक्रमe snd_soc_रेजिस्टर_card(), so that the props
- * are in place beक्रमe the codec component driver's probe function parses them.
+ * Note this MUST be called before snd_soc_register_card(), so that the props
+ * are in place before the codec component driver's probe function parses them.
  */
-अटल पूर्णांक rt711_add_codec_device_props(स्थिर अक्षर *sdw_dev_name)
-अणु
-	काष्ठा property_entry props[MAX_NO_PROPS] = अणुपूर्ण;
-	काष्ठा device *sdw_dev;
-	पूर्णांक ret;
+static int rt711_add_codec_device_props(const char *sdw_dev_name)
+{
+	struct property_entry props[MAX_NO_PROPS] = {};
+	struct device *sdw_dev;
+	int ret;
 
-	sdw_dev = bus_find_device_by_name(&sdw_bus_type, शून्य, sdw_dev_name);
-	अगर (!sdw_dev)
-		वापस -EPROBE_DEFER;
+	sdw_dev = bus_find_device_by_name(&sdw_bus_type, NULL, sdw_dev_name);
+	if (!sdw_dev)
+		return -EPROBE_DEFER;
 
-	अगर (SOF_RT711_JDSRC(sof_sdw_quirk)) अणु
+	if (SOF_RT711_JDSRC(sof_sdw_quirk)) {
 		props[0] = PROPERTY_ENTRY_U32("realtek,jd-src",
 					      SOF_RT711_JDSRC(sof_sdw_quirk));
-	पूर्ण
+	}
 
 	ret = device_add_properties(sdw_dev, props);
 	put_device(sdw_dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget rt711_widमाला_लो[] = अणु
-	SND_SOC_DAPM_HP("Headphone", शून्य),
-	SND_SOC_DAPM_MIC("Headset Mic", शून्य),
-पूर्ण;
+static const struct snd_soc_dapm_widget rt711_widgets[] = {
+	SND_SOC_DAPM_HP("Headphone", NULL),
+	SND_SOC_DAPM_MIC("Headset Mic", NULL),
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route rt711_map[] = अणु
+static const struct snd_soc_dapm_route rt711_map[] = {
 	/* Headphones */
-	अणु "Headphone", शून्य, "rt711 HP" पूर्ण,
-	अणु "rt711 MIC2", शून्य, "Headset Mic" पूर्ण,
-पूर्ण;
+	{ "Headphone", NULL, "rt711 HP" },
+	{ "rt711 MIC2", NULL, "Headset Mic" },
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new rt711_controls[] = अणु
+static const struct snd_kcontrol_new rt711_controls[] = {
 	SOC_DAPM_PIN_SWITCH("Headphone"),
 	SOC_DAPM_PIN_SWITCH("Headset Mic"),
-पूर्ण;
+};
 
-अटल काष्ठा snd_soc_jack_pin rt711_jack_pins[] = अणु
-	अणु
+static struct snd_soc_jack_pin rt711_jack_pins[] = {
+	{
 		.pin    = "Headphone",
 		.mask   = SND_JACK_HEADPHONE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.pin    = "Headset Mic",
 		.mask   = SND_JACK_MICROPHONE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक rt711_rtd_init(काष्ठा snd_soc_pcm_runसमय *rtd)
-अणु
-	काष्ठा snd_soc_card *card = rtd->card;
-	काष्ठा mc_निजी *ctx = snd_soc_card_get_drvdata(card);
-	काष्ठा snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
-	काष्ठा snd_soc_component *component = codec_dai->component;
-	काष्ठा snd_soc_jack *jack;
-	पूर्णांक ret;
+static int rt711_rtd_init(struct snd_soc_pcm_runtime *rtd)
+{
+	struct snd_soc_card *card = rtd->card;
+	struct mc_private *ctx = snd_soc_card_get_drvdata(card);
+	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
+	struct snd_soc_component *component = codec_dai->component;
+	struct snd_soc_jack *jack;
+	int ret;
 
-	card->components = devm_kaप्र_लिखो(card->dev, GFP_KERNEL,
+	card->components = devm_kasprintf(card->dev, GFP_KERNEL,
 					  "%s hs:rt711",
 					  card->components);
-	अगर (!card->components)
-		वापस -ENOMEM;
+	if (!card->components)
+		return -ENOMEM;
 
 	ret = snd_soc_add_card_controls(card, rt711_controls,
 					ARRAY_SIZE(rt711_controls));
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(card->dev, "rt711 controls addition failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = snd_soc_dapm_new_controls(&card->dapm, rt711_widमाला_लो,
-					ARRAY_SIZE(rt711_widमाला_लो));
-	अगर (ret) अणु
+	ret = snd_soc_dapm_new_controls(&card->dapm, rt711_widgets,
+					ARRAY_SIZE(rt711_widgets));
+	if (ret) {
 		dev_err(card->dev, "rt711 widgets addition failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = snd_soc_dapm_add_routes(&card->dapm, rt711_map,
 				      ARRAY_SIZE(rt711_map));
 
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(card->dev, "rt711 map addition failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = snd_soc_card_jack_new(rtd->card, "Headset Jack",
 				    SND_JACK_HEADSET | SND_JACK_BTN_0 |
@@ -114,11 +113,11 @@
 				    &ctx->sdw_headset,
 				    rt711_jack_pins,
 				    ARRAY_SIZE(rt711_jack_pins));
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(rtd->card->dev, "Headset Jack creation failed: %d\n",
 			ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	jack = &ctx->sdw_headset;
 
@@ -127,49 +126,49 @@
 	snd_jack_set_key(jack->jack, SND_JACK_BTN_2, KEY_VOLUMEUP);
 	snd_jack_set_key(jack->jack, SND_JACK_BTN_3, KEY_VOLUMEDOWN);
 
-	ret = snd_soc_component_set_jack(component, jack, शून्य);
+	ret = snd_soc_component_set_jack(component, jack, NULL);
 
-	अगर (ret)
+	if (ret)
 		dev_err(rtd->card->dev, "Headset Jack call-back failed: %d\n",
 			ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक sof_sdw_rt711_निकास(काष्ठा device *dev, काष्ठा snd_soc_dai_link *dai_link)
-अणु
-	काष्ठा device *sdw_dev;
+int sof_sdw_rt711_exit(struct device *dev, struct snd_soc_dai_link *dai_link)
+{
+	struct device *sdw_dev;
 
-	sdw_dev = bus_find_device_by_name(&sdw_bus_type, शून्य,
+	sdw_dev = bus_find_device_by_name(&sdw_bus_type, NULL,
 					  dai_link->codecs[0].name);
-	अगर (!sdw_dev)
-		वापस -EINVAL;
+	if (!sdw_dev)
+		return -EINVAL;
 
-	device_हटाओ_properties(sdw_dev);
+	device_remove_properties(sdw_dev);
 	put_device(sdw_dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक sof_sdw_rt711_init(स्थिर काष्ठा snd_soc_acpi_link_adr *link,
-		       काष्ठा snd_soc_dai_link *dai_links,
-		       काष्ठा sof_sdw_codec_info *info,
+int sof_sdw_rt711_init(const struct snd_soc_acpi_link_adr *link,
+		       struct snd_soc_dai_link *dai_links,
+		       struct sof_sdw_codec_info *info,
 		       bool playback)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
 	/*
 	 * headset should be initialized once.
-	 * Do it with dai link क्रम playback.
+	 * Do it with dai link for playback.
 	 */
-	अगर (!playback)
-		वापस 0;
+	if (!playback)
+		return 0;
 
 	ret = rt711_add_codec_device_props(dai_links->codecs[0].name);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	dai_links->init = rt711_rtd_init;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

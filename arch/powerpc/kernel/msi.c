@@ -1,40 +1,39 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2006-2007, Michael Ellerman, IBM Corporation.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/msi.h>
-#समावेश <linux/pci.h>
+#include <linux/kernel.h>
+#include <linux/msi.h>
+#include <linux/pci.h>
 
-#समावेश <यंत्र/machdep.h>
+#include <asm/machdep.h>
 
-पूर्णांक arch_setup_msi_irqs(काष्ठा pci_dev *dev, पूर्णांक nvec, पूर्णांक type)
-अणु
-	काष्ठा pci_controller *phb = pci_bus_to_host(dev->bus);
+int arch_setup_msi_irqs(struct pci_dev *dev, int nvec, int type)
+{
+	struct pci_controller *phb = pci_bus_to_host(dev->bus);
 
-	अगर (!phb->controller_ops.setup_msi_irqs ||
-	    !phb->controller_ops.tearकरोwn_msi_irqs) अणु
+	if (!phb->controller_ops.setup_msi_irqs ||
+	    !phb->controller_ops.teardown_msi_irqs) {
 		pr_debug("msi: Platform doesn't provide MSI callbacks.\n");
-		वापस -ENOSYS;
-	पूर्ण
+		return -ENOSYS;
+	}
 
-	/* PowerPC करोesn't support multiple MSI yet */
-	अगर (type == PCI_CAP_ID_MSI && nvec > 1)
-		वापस 1;
+	/* PowerPC doesn't support multiple MSI yet */
+	if (type == PCI_CAP_ID_MSI && nvec > 1)
+		return 1;
 
-	वापस phb->controller_ops.setup_msi_irqs(dev, nvec, type);
-पूर्ण
+	return phb->controller_ops.setup_msi_irqs(dev, nvec, type);
+}
 
-व्योम arch_tearकरोwn_msi_irqs(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा pci_controller *phb = pci_bus_to_host(dev->bus);
+void arch_teardown_msi_irqs(struct pci_dev *dev)
+{
+	struct pci_controller *phb = pci_bus_to_host(dev->bus);
 
 	/*
-	 * We can be called even when arch_setup_msi_irqs() वापसs -ENOSYS,
-	 * so check the poपूर्णांकer again.
+	 * We can be called even when arch_setup_msi_irqs() returns -ENOSYS,
+	 * so check the pointer again.
 	 */
-	अगर (phb->controller_ops.tearकरोwn_msi_irqs)
-		phb->controller_ops.tearकरोwn_msi_irqs(dev);
-पूर्ण
+	if (phb->controller_ops.teardown_msi_irqs)
+		phb->controller_ops.teardown_msi_irqs(dev);
+}

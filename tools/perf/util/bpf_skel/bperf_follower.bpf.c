@@ -1,70 +1,69 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 // Copyright (c) 2021 Facebook
-#समावेश <linux/bpf.h>
-#समावेश <linux/perf_event.h>
-#समावेश <bpf/bpf_helpers.h>
-#समावेश <bpf/bpf_tracing.h>
-#समावेश "bperf.h"
-#समावेश "bperf_u.h"
+#include <linux/bpf.h>
+#include <linux/perf_event.h>
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_tracing.h>
+#include "bperf.h"
+#include "bperf_u.h"
 
-पढ़ोing_map dअगरf_पढ़ोings SEC(".maps");
-पढ़ोing_map accum_पढ़ोings SEC(".maps");
+reading_map diff_readings SEC(".maps");
+reading_map accum_readings SEC(".maps");
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_HASH);
-	__uपूर्णांक(key_size, माप(__u32));
-	__uपूर्णांक(value_size, माप(__u32));
-पूर्ण filter SEC(".maps");
+struct {
+	__uint(type, BPF_MAP_TYPE_HASH);
+	__uint(key_size, sizeof(__u32));
+	__uint(value_size, sizeof(__u32));
+} filter SEC(".maps");
 
-क्रमागत bperf_filter_type type = 0;
-पूर्णांक enabled = 0;
+enum bperf_filter_type type = 0;
+int enabled = 0;
 
 SEC("fexit/XXX")
-पूर्णांक BPF_PROG(fनिकास_XXX)
-अणु
-	काष्ठा bpf_perf_event_value *dअगरf_val, *accum_val;
+int BPF_PROG(fexit_XXX)
+{
+	struct bpf_perf_event_value *diff_val, *accum_val;
 	__u32 filter_key, zero = 0;
 	__u32 *accum_key;
 
-	अगर (!enabled)
-		वापस 0;
+	if (!enabled)
+		return 0;
 
-	चयन (type) अणु
-	हाल BPERF_FILTER_GLOBAL:
+	switch (type) {
+	case BPERF_FILTER_GLOBAL:
 		accum_key = &zero;
-		जाओ करो_add;
-	हाल BPERF_FILTER_CPU:
+		goto do_add;
+	case BPERF_FILTER_CPU:
 		filter_key = bpf_get_smp_processor_id();
-		अवरोध;
-	हाल BPERF_FILTER_PID:
+		break;
+	case BPERF_FILTER_PID:
 		filter_key = bpf_get_current_pid_tgid() & 0xffffffff;
-		अवरोध;
-	हाल BPERF_FILTER_TGID:
+		break;
+	case BPERF_FILTER_TGID:
 		filter_key = bpf_get_current_pid_tgid() >> 32;
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+		break;
+	default:
+		return 0;
+	}
 
 	accum_key = bpf_map_lookup_elem(&filter, &filter_key);
-	अगर (!accum_key)
-		वापस 0;
+	if (!accum_key)
+		return 0;
 
-करो_add:
-	dअगरf_val = bpf_map_lookup_elem(&dअगरf_पढ़ोings, &zero);
-	अगर (!dअगरf_val)
-		वापस 0;
+do_add:
+	diff_val = bpf_map_lookup_elem(&diff_readings, &zero);
+	if (!diff_val)
+		return 0;
 
-	accum_val = bpf_map_lookup_elem(&accum_पढ़ोings, accum_key);
-	अगर (!accum_val)
-		वापस 0;
+	accum_val = bpf_map_lookup_elem(&accum_readings, accum_key);
+	if (!accum_val)
+		return 0;
 
-	accum_val->counter += dअगरf_val->counter;
-	accum_val->enabled += dअगरf_val->enabled;
-	accum_val->running += dअगरf_val->running;
+	accum_val->counter += diff_val->counter;
+	accum_val->enabled += diff_val->enabled;
+	accum_val->running += diff_val->running;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अक्षर LICENSE[] SEC("license") = "Dual BSD/GPL";
+char LICENSE[] SEC("license") = "Dual BSD/GPL";

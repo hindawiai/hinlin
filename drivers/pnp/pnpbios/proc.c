@@ -1,258 +1,257 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * /proc/bus/pnp पूर्णांकerface क्रम Plug and Play devices
+ * /proc/bus/pnp interface for Plug and Play devices
  *
- * Written by David Hinds, dahinds@users.sourceक्रमge.net
- * Modअगरied by Thomas Hood
+ * Written by David Hinds, dahinds@users.sourceforge.net
+ * Modified by Thomas Hood
  *
  * The .../devices and .../<node> and .../boot/<node> files are
  * utilized by the lspnp and setpnp utilities, supplied with the
  * pcmcia-cs package.
- *     http://pcmcia-cs.sourceक्रमge.net
+ *     http://pcmcia-cs.sourceforge.net
  *
  * The .../escd file is utilized by the lsescd utility written by
  * Gunther Mayer.
  *
  * The .../legacy_device_resources file is not used yet.
  *
- * The other files are human-पढ़ोable.
+ * The other files are human-readable.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/pnp.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/init.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/proc_fs.h>
+#include <linux/pnp.h>
+#include <linux/seq_file.h>
+#include <linux/init.h>
 
-#समावेश <linux/uaccess.h>
+#include <linux/uaccess.h>
 
-#समावेश "pnpbios.h"
+#include "pnpbios.h"
 
-अटल काष्ठा proc_dir_entry *proc_pnp = शून्य;
-अटल काष्ठा proc_dir_entry *proc_pnp_boot = शून्य;
+static struct proc_dir_entry *proc_pnp = NULL;
+static struct proc_dir_entry *proc_pnp_boot = NULL;
 
-अटल पूर्णांक pnpconfig_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा pnp_isa_config_struc pnps;
+static int pnpconfig_proc_show(struct seq_file *m, void *v)
+{
+	struct pnp_isa_config_struc pnps;
 
-	अगर (pnp_bios_isapnp_config(&pnps))
-		वापस -EIO;
-	seq_म_लिखो(m, "structure_revision %d\n"
+	if (pnp_bios_isapnp_config(&pnps))
+		return -EIO;
+	seq_printf(m, "structure_revision %d\n"
 		      "number_of_CSNs %d\n"
 		      "ISA_read_data_port 0x%x\n",
 		   pnps.revision, pnps.no_csns, pnps.isa_rd_data_port);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक escd_info_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा escd_info_struc escd;
+static int escd_info_proc_show(struct seq_file *m, void *v)
+{
+	struct escd_info_struc escd;
 
-	अगर (pnp_bios_escd_info(&escd))
-		वापस -EIO;
-	seq_म_लिखो(m, "min_ESCD_write_size %d\n"
+	if (pnp_bios_escd_info(&escd))
+		return -EIO;
+	seq_printf(m, "min_ESCD_write_size %d\n"
 			"ESCD_size %d\n"
 			"NVRAM_base 0x%x\n",
-			escd.min_escd_ग_लिखो_size,
+			escd.min_escd_write_size,
 			escd.escd_size, escd.nv_storage_base);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा MAX_SANE_ESCD_SIZE (32*1024)
-अटल पूर्णांक escd_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा escd_info_struc escd;
-	अक्षर *पंचांगpbuf;
-	पूर्णांक escd_size;
+#define MAX_SANE_ESCD_SIZE (32*1024)
+static int escd_proc_show(struct seq_file *m, void *v)
+{
+	struct escd_info_struc escd;
+	char *tmpbuf;
+	int escd_size;
 
-	अगर (pnp_bios_escd_info(&escd))
-		वापस -EIO;
+	if (pnp_bios_escd_info(&escd))
+		return -EIO;
 
 	/* sanity check */
-	अगर (escd.escd_size > MAX_SANE_ESCD_SIZE) अणु
-		prपूर्णांकk(KERN_ERR
+	if (escd.escd_size > MAX_SANE_ESCD_SIZE) {
+		printk(KERN_ERR
 		       "PnPBIOS: %s: ESCD size reported by BIOS escd_info call is too great\n", __func__);
-		वापस -EFBIG;
-	पूर्ण
+		return -EFBIG;
+	}
 
-	पंचांगpbuf = kzalloc(escd.escd_size, GFP_KERNEL);
-	अगर (!पंचांगpbuf)
-		वापस -ENOMEM;
+	tmpbuf = kzalloc(escd.escd_size, GFP_KERNEL);
+	if (!tmpbuf)
+		return -ENOMEM;
 
-	अगर (pnp_bios_पढ़ो_escd(पंचांगpbuf, escd.nv_storage_base)) अणु
-		kमुक्त(पंचांगpbuf);
-		वापस -EIO;
-	पूर्ण
+	if (pnp_bios_read_escd(tmpbuf, escd.nv_storage_base)) {
+		kfree(tmpbuf);
+		return -EIO;
+	}
 
 	escd_size =
-	    (अचिन्हित अक्षर)(पंचांगpbuf[0]) + (अचिन्हित अक्षर)(पंचांगpbuf[1]) * 256;
+	    (unsigned char)(tmpbuf[0]) + (unsigned char)(tmpbuf[1]) * 256;
 
 	/* sanity check */
-	अगर (escd_size > MAX_SANE_ESCD_SIZE) अणु
-		prपूर्णांकk(KERN_ERR "PnPBIOS: %s: ESCD size reported by"
+	if (escd_size > MAX_SANE_ESCD_SIZE) {
+		printk(KERN_ERR "PnPBIOS: %s: ESCD size reported by"
 				" BIOS read_escd call is too great\n", __func__);
-		kमुक्त(पंचांगpbuf);
-		वापस -EFBIG;
-	पूर्ण
+		kfree(tmpbuf);
+		return -EFBIG;
+	}
 
-	seq_ग_लिखो(m, पंचांगpbuf, escd_size);
-	kमुक्त(पंचांगpbuf);
-	वापस 0;
-पूर्ण
+	seq_write(m, tmpbuf, escd_size);
+	kfree(tmpbuf);
+	return 0;
+}
 
-अटल पूर्णांक pnp_legacyres_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	व्योम *buf;
+static int pnp_legacyres_proc_show(struct seq_file *m, void *v)
+{
+	void *buf;
 
-	buf = kदो_स्मृति(65536, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
-	अगर (pnp_bios_get_stat_res(buf)) अणु
-		kमुक्त(buf);
-		वापस -EIO;
-	पूर्ण
+	buf = kmalloc(65536, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
+	if (pnp_bios_get_stat_res(buf)) {
+		kfree(buf);
+		return -EIO;
+	}
 
-	seq_ग_लिखो(m, buf, 65536);
-	kमुक्त(buf);
-	वापस 0;
-पूर्ण
+	seq_write(m, buf, 65536);
+	kfree(buf);
+	return 0;
+}
 
-अटल पूर्णांक pnp_devices_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा pnp_bios_node *node;
-	u8 nodक्रमागत;
+static int pnp_devices_proc_show(struct seq_file *m, void *v)
+{
+	struct pnp_bios_node *node;
+	u8 nodenum;
 
 	node = kzalloc(node_info.max_node_size, GFP_KERNEL);
-	अगर (!node)
-		वापस -ENOMEM;
+	if (!node)
+		return -ENOMEM;
 
-	क्रम (nodक्रमागत = 0; nodक्रमागत < 0xff;) अणु
-		u8 thisnodक्रमागत = nodक्रमागत;
+	for (nodenum = 0; nodenum < 0xff;) {
+		u8 thisnodenum = nodenum;
 
-		अगर (pnp_bios_get_dev_node(&nodक्रमागत, PNPMODE_DYNAMIC, node))
-			अवरोध;
-		seq_म_लिखो(m, "%02x\t%08x\t%3phC\t%04x\n",
+		if (pnp_bios_get_dev_node(&nodenum, PNPMODE_DYNAMIC, node))
+			break;
+		seq_printf(m, "%02x\t%08x\t%3phC\t%04x\n",
 			     node->handle, node->eisa_id,
 			     node->type_code, node->flags);
-		अगर (nodक्रमागत <= thisnodक्रमागत) अणु
-			prपूर्णांकk(KERN_ERR
+		if (nodenum <= thisnodenum) {
+			printk(KERN_ERR
 			       "%s Node number 0x%x is out of sequence following node 0x%x. Aborting.\n",
 			       "PnPBIOS: proc_read_devices:",
-			       (अचिन्हित पूर्णांक)nodक्रमागत,
-			       (अचिन्हित पूर्णांक)thisnodक्रमागत);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	kमुक्त(node);
-	वापस 0;
-पूर्ण
+			       (unsigned int)nodenum,
+			       (unsigned int)thisnodenum);
+			break;
+		}
+	}
+	kfree(node);
+	return 0;
+}
 
-अटल पूर्णांक pnpbios_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	व्योम *data = m->निजी;
-	काष्ठा pnp_bios_node *node;
-	पूर्णांक boot = (दीर्घ)data >> 8;
-	u8 nodक्रमागत = (दीर्घ)data;
-	पूर्णांक len;
-
-	node = kzalloc(node_info.max_node_size, GFP_KERNEL);
-	अगर (!node)
-		वापस -ENOMEM;
-	अगर (pnp_bios_get_dev_node(&nodक्रमागत, boot, node)) अणु
-		kमुक्त(node);
-		वापस -EIO;
-	पूर्ण
-	len = node->size - माप(काष्ठा pnp_bios_node);
-	seq_ग_लिखो(m, node->data, len);
-	kमुक्त(node);
-	वापस 0;
-पूर्ण
-
-अटल पूर्णांक pnpbios_proc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, pnpbios_proc_show, PDE_DATA(inode));
-पूर्ण
-
-अटल sमाप_प्रकार pnpbios_proc_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-				  माप_प्रकार count, loff_t *pos)
-अणु
-	व्योम *data = PDE_DATA(file_inode(file));
-	काष्ठा pnp_bios_node *node;
-	पूर्णांक boot = (दीर्घ)data >> 8;
-	u8 nodक्रमागत = (दीर्घ)data;
-	पूर्णांक ret = count;
+static int pnpbios_proc_show(struct seq_file *m, void *v)
+{
+	void *data = m->private;
+	struct pnp_bios_node *node;
+	int boot = (long)data >> 8;
+	u8 nodenum = (long)data;
+	int len;
 
 	node = kzalloc(node_info.max_node_size, GFP_KERNEL);
-	अगर (!node)
-		वापस -ENOMEM;
-	अगर (pnp_bios_get_dev_node(&nodक्रमागत, boot, node)) अणु
+	if (!node)
+		return -ENOMEM;
+	if (pnp_bios_get_dev_node(&nodenum, boot, node)) {
+		kfree(node);
+		return -EIO;
+	}
+	len = node->size - sizeof(struct pnp_bios_node);
+	seq_write(m, node->data, len);
+	kfree(node);
+	return 0;
+}
+
+static int pnpbios_proc_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, pnpbios_proc_show, PDE_DATA(inode));
+}
+
+static ssize_t pnpbios_proc_write(struct file *file, const char __user *buf,
+				  size_t count, loff_t *pos)
+{
+	void *data = PDE_DATA(file_inode(file));
+	struct pnp_bios_node *node;
+	int boot = (long)data >> 8;
+	u8 nodenum = (long)data;
+	int ret = count;
+
+	node = kzalloc(node_info.max_node_size, GFP_KERNEL);
+	if (!node)
+		return -ENOMEM;
+	if (pnp_bios_get_dev_node(&nodenum, boot, node)) {
 		ret = -EIO;
-		जाओ out;
-	पूर्ण
-	अगर (count != node->size - माप(काष्ठा pnp_bios_node)) अणु
+		goto out;
+	}
+	if (count != node->size - sizeof(struct pnp_bios_node)) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
-	अगर (copy_from_user(node->data, buf, count)) अणु
+		goto out;
+	}
+	if (copy_from_user(node->data, buf, count)) {
 		ret = -EFAULT;
-		जाओ out;
-	पूर्ण
-	अगर (pnp_bios_set_dev_node(node->handle, boot, node) != 0) अणु
+		goto out;
+	}
+	if (pnp_bios_set_dev_node(node->handle, boot, node) != 0) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	ret = count;
 out:
-	kमुक्त(node);
-	वापस ret;
-पूर्ण
+	kfree(node);
+	return ret;
+}
 
-अटल स्थिर काष्ठा proc_ops pnpbios_proc_ops = अणु
-	.proc_खोलो	= pnpbios_proc_खोलो,
-	.proc_पढ़ो	= seq_पढ़ो,
+static const struct proc_ops pnpbios_proc_ops = {
+	.proc_open	= pnpbios_proc_open,
+	.proc_read	= seq_read,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= single_release,
-	.proc_ग_लिखो	= pnpbios_proc_ग_लिखो,
-पूर्ण;
+	.proc_write	= pnpbios_proc_write,
+};
 
-पूर्णांक pnpbios_पूर्णांकerface_attach_device(काष्ठा pnp_bios_node *node)
-अणु
-	अक्षर name[3];
+int pnpbios_interface_attach_device(struct pnp_bios_node *node)
+{
+	char name[3];
 
-	प्र_लिखो(name, "%02x", node->handle);
+	sprintf(name, "%02x", node->handle);
 
-	अगर (!proc_pnp)
-		वापस -EIO;
-	अगर (!pnpbios_करोnt_use_current_config) अणु
+	if (!proc_pnp)
+		return -EIO;
+	if (!pnpbios_dont_use_current_config) {
 		proc_create_data(name, 0644, proc_pnp, &pnpbios_proc_ops,
-				 (व्योम *)(दीर्घ)(node->handle));
-	पूर्ण
+				 (void *)(long)(node->handle));
+	}
 
-	अगर (!proc_pnp_boot)
-		वापस -EIO;
-	अगर (proc_create_data(name, 0644, proc_pnp_boot, &pnpbios_proc_ops,
-			     (व्योम *)(दीर्घ)(node->handle + 0x100)))
-		वापस 0;
-	वापस -EIO;
-पूर्ण
+	if (!proc_pnp_boot)
+		return -EIO;
+	if (proc_create_data(name, 0644, proc_pnp_boot, &pnpbios_proc_ops,
+			     (void *)(long)(node->handle + 0x100)))
+		return 0;
+	return -EIO;
+}
 
 /*
  * When this is called, pnpbios functions are assumed to
- * work and the pnpbios_करोnt_use_current_config flag
- * should alपढ़ोy have been set to the appropriate value
+ * work and the pnpbios_dont_use_current_config flag
+ * should already have been set to the appropriate value
  */
-पूर्णांक __init pnpbios_proc_init(व्योम)
-अणु
-	proc_pnp = proc_सूची_गढ़ो("bus/pnp", शून्य);
-	अगर (!proc_pnp)
-		वापस -EIO;
-	proc_pnp_boot = proc_सूची_गढ़ो("boot", proc_pnp);
-	अगर (!proc_pnp_boot)
-		वापस -EIO;
+int __init pnpbios_proc_init(void)
+{
+	proc_pnp = proc_mkdir("bus/pnp", NULL);
+	if (!proc_pnp)
+		return -EIO;
+	proc_pnp_boot = proc_mkdir("boot", proc_pnp);
+	if (!proc_pnp_boot)
+		return -EIO;
 	proc_create_single("devices", 0, proc_pnp, pnp_devices_proc_show);
 	proc_create_single("configuration_info", 0, proc_pnp,
 			pnpconfig_proc_show);
@@ -260,28 +259,28 @@ out:
 	proc_create_single("escd", S_IRUSR, proc_pnp, escd_proc_show);
 	proc_create_single("legacy_device_resources", 0, proc_pnp,
 			pnp_legacyres_proc_show);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम __निकास pnpbios_proc_निकास(व्योम)
-अणु
-	पूर्णांक i;
-	अक्षर name[3];
+void __exit pnpbios_proc_exit(void)
+{
+	int i;
+	char name[3];
 
-	अगर (!proc_pnp)
-		वापस;
+	if (!proc_pnp)
+		return;
 
-	क्रम (i = 0; i < 0xff; i++) अणु
-		प्र_लिखो(name, "%02x", i);
-		अगर (!pnpbios_करोnt_use_current_config)
-			हटाओ_proc_entry(name, proc_pnp);
-		हटाओ_proc_entry(name, proc_pnp_boot);
-	पूर्ण
-	हटाओ_proc_entry("legacy_device_resources", proc_pnp);
-	हटाओ_proc_entry("escd", proc_pnp);
-	हटाओ_proc_entry("escd_info", proc_pnp);
-	हटाओ_proc_entry("configuration_info", proc_pnp);
-	हटाओ_proc_entry("devices", proc_pnp);
-	हटाओ_proc_entry("boot", proc_pnp);
-	हटाओ_proc_entry("bus/pnp", शून्य);
-पूर्ण
+	for (i = 0; i < 0xff; i++) {
+		sprintf(name, "%02x", i);
+		if (!pnpbios_dont_use_current_config)
+			remove_proc_entry(name, proc_pnp);
+		remove_proc_entry(name, proc_pnp_boot);
+	}
+	remove_proc_entry("legacy_device_resources", proc_pnp);
+	remove_proc_entry("escd", proc_pnp);
+	remove_proc_entry("escd_info", proc_pnp);
+	remove_proc_entry("configuration_info", proc_pnp);
+	remove_proc_entry("devices", proc_pnp);
+	remove_proc_entry("boot", proc_pnp);
+	remove_proc_entry("bus/pnp", NULL);
+}

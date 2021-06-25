@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित __QCOM_CLK_HFPLL_H__
-#घोषणा __QCOM_CLK_HFPLL_H__
+#ifndef __QCOM_CLK_HFPLL_H__
+#define __QCOM_CLK_HFPLL_H__
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/spinlock.h>
-#समावेश "clk-regmap.h"
+#include <linux/clk-provider.h>
+#include <linux/spinlock.h>
+#include "clk-regmap.h"
 
-काष्ठा hfpll_data अणु
+struct hfpll_data {
 	u32 mode_reg;
 	u32 l_reg;
 	u32 m_reg;
@@ -23,23 +22,23 @@
 	u32 config_val;
 	u32 user_val;
 	u32 user_vco_mask;
-	अचिन्हित दीर्घ low_vco_max_rate;
+	unsigned long low_vco_max_rate;
 
-	अचिन्हित दीर्घ min_rate;
-	अचिन्हित दीर्घ max_rate;
-पूर्ण;
+	unsigned long min_rate;
+	unsigned long max_rate;
+};
 
-काष्ठा clk_hfpll अणु
-	काष्ठा hfpll_data स्थिर *d;
-	पूर्णांक init_करोne;
+struct clk_hfpll {
+	struct hfpll_data const *d;
+	int init_done;
 
-	काष्ठा clk_regmap clkr;
+	struct clk_regmap clkr;
 	spinlock_t lock;
-पूर्ण;
+};
 
-#घोषणा to_clk_hfpll(_hw) \
-	container_of(to_clk_regmap(_hw), काष्ठा clk_hfpll, clkr)
+#define to_clk_hfpll(_hw) \
+	container_of(to_clk_regmap(_hw), struct clk_hfpll, clkr)
 
-बाह्य स्थिर काष्ठा clk_ops clk_ops_hfpll;
+extern const struct clk_ops clk_ops_hfpll;
 
-#पूर्ण_अगर
+#endif

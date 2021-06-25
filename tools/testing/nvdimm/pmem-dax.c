@@ -1,50 +1,49 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2014-2016, Intel Corporation.
  */
-#समावेश "test/nfit_test.h"
-#समावेश <linux/blkdev.h>
-#समावेश <pस्मृति.स>
-#समावेश <nd.h>
+#include "test/nfit_test.h"
+#include <linux/blkdev.h>
+#include <pmem.h>
+#include <nd.h>
 
-दीर्घ __pmem_direct_access(काष्ठा pmem_device *pmem, pgoff_t pgoff,
-		दीर्घ nr_pages, व्योम **kaddr, pfn_t *pfn)
-अणु
-	resource_माप_प्रकार offset = PFN_PHYS(pgoff) + pmem->data_offset;
+long __pmem_direct_access(struct pmem_device *pmem, pgoff_t pgoff,
+		long nr_pages, void **kaddr, pfn_t *pfn)
+{
+	resource_size_t offset = PFN_PHYS(pgoff) + pmem->data_offset;
 
-	अगर (unlikely(is_bad_pmem(&pmem->bb, PFN_PHYS(pgoff) / 512,
+	if (unlikely(is_bad_pmem(&pmem->bb, PFN_PHYS(pgoff) / 512,
 					PFN_PHYS(nr_pages))))
-		वापस -EIO;
+		return -EIO;
 
 	/*
-	 * Limit dax to a single page at a समय given vदो_स्मृति()-backed
-	 * in the nfit_test हाल.
+	 * Limit dax to a single page at a time given vmalloc()-backed
+	 * in the nfit_test case.
 	 */
-	अगर (get_nfit_res(pmem->phys_addr + offset)) अणु
-		काष्ठा page *page;
+	if (get_nfit_res(pmem->phys_addr + offset)) {
+		struct page *page;
 
-		अगर (kaddr)
+		if (kaddr)
 			*kaddr = pmem->virt_addr + offset;
-		page = vदो_स्मृति_to_page(pmem->virt_addr + offset);
-		अगर (pfn)
+		page = vmalloc_to_page(pmem->virt_addr + offset);
+		if (pfn)
 			*pfn = page_to_pfn_t(page);
 		pr_debug_ratelimited("%s: pmem: %p pgoff: %#lx pfn: %#lx\n",
 				__func__, pmem, pgoff, page_to_pfn(page));
 
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (kaddr)
+	if (kaddr)
 		*kaddr = pmem->virt_addr + offset;
-	अगर (pfn)
+	if (pfn)
 		*pfn = phys_to_pfn_t(pmem->phys_addr + offset, pmem->pfn_flags);
 
 	/*
 	 * If badblocks are present, limit known good range to the
 	 * requested range.
 	 */
-	अगर (unlikely(pmem->bb.count))
-		वापस nr_pages;
-	वापस PHYS_PFN(pmem->size - pmem->pfn_pad - offset);
-पूर्ण
+	if (unlikely(pmem->bb.count))
+		return nr_pages;
+	return PHYS_PFN(pmem->size - pmem->pfn_pad - offset);
+}

@@ -1,2 +1,1 @@
-<शैली गुरु>
-#समावेश <यंत्र-generic/local.h>
+#include <asm-generic/local.h>

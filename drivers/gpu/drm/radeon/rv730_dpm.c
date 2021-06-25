@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,102 +22,102 @@
  * Authors: Alex Deucher
  */
 
-#समावेश "radeon.h"
-#समावेश "rv730d.h"
-#समावेश "r600_dpm.h"
-#समावेश "rv770.h"
-#समावेश "rv770_dpm.h"
-#समावेश "atom.h"
+#include "radeon.h"
+#include "rv730d.h"
+#include "r600_dpm.h"
+#include "rv770.h"
+#include "rv770_dpm.h"
+#include "atom.h"
 
-#घोषणा MC_CG_ARB_FREQ_F0           0x0a
-#घोषणा MC_CG_ARB_FREQ_F1           0x0b
-#घोषणा MC_CG_ARB_FREQ_F2           0x0c
-#घोषणा MC_CG_ARB_FREQ_F3           0x0d
+#define MC_CG_ARB_FREQ_F0           0x0a
+#define MC_CG_ARB_FREQ_F1           0x0b
+#define MC_CG_ARB_FREQ_F2           0x0c
+#define MC_CG_ARB_FREQ_F3           0x0d
 
-पूर्णांक rv730_populate_sclk_value(काष्ठा radeon_device *rdev,
-			      u32 engine_घड़ी,
+int rv730_populate_sclk_value(struct radeon_device *rdev,
+			      u32 engine_clock,
 			      RV770_SMC_SCLK_VALUE *sclk)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
-	काष्ठा atom_घड़ी_भागiders भागiders;
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
+	struct atom_clock_dividers dividers;
 	u32 spll_func_cntl = pi->clk_regs.rv730.cg_spll_func_cntl;
 	u32 spll_func_cntl_2 = pi->clk_regs.rv730.cg_spll_func_cntl_2;
 	u32 spll_func_cntl_3 = pi->clk_regs.rv730.cg_spll_func_cntl_3;
-	u32 cg_spll_spपढ़ो_spectrum = pi->clk_regs.rv730.cg_spll_spपढ़ो_spectrum;
-	u32 cg_spll_spपढ़ो_spectrum_2 = pi->clk_regs.rv730.cg_spll_spपढ़ो_spectrum_2;
-	u64 पंचांगp;
-	u32 reference_घड़ी = rdev->घड़ी.spll.reference_freq;
-	u32 reference_भागider, post_भागider;
-	u32 fbभाग;
-	पूर्णांक ret;
+	u32 cg_spll_spread_spectrum = pi->clk_regs.rv730.cg_spll_spread_spectrum;
+	u32 cg_spll_spread_spectrum_2 = pi->clk_regs.rv730.cg_spll_spread_spectrum_2;
+	u64 tmp;
+	u32 reference_clock = rdev->clock.spll.reference_freq;
+	u32 reference_divider, post_divider;
+	u32 fbdiv;
+	int ret;
 
-	ret = radeon_atom_get_घड़ी_भागiders(rdev, COMPUTE_ENGINE_PLL_PARAM,
-					     engine_घड़ी, false, &भागiders);
-	अगर (ret)
-		वापस ret;
+	ret = radeon_atom_get_clock_dividers(rdev, COMPUTE_ENGINE_PLL_PARAM,
+					     engine_clock, false, &dividers);
+	if (ret)
+		return ret;
 
-	reference_भागider = 1 + भागiders.ref_भाग;
+	reference_divider = 1 + dividers.ref_div;
 
-	अगर (भागiders.enable_post_भाग)
-		post_भागider = ((भागiders.post_भाग >> 4) & 0xf) +
-			(भागiders.post_भाग & 0xf) + 2;
-	अन्यथा
-		post_भागider = 1;
+	if (dividers.enable_post_div)
+		post_divider = ((dividers.post_div >> 4) & 0xf) +
+			(dividers.post_div & 0xf) + 2;
+	else
+		post_divider = 1;
 
-	पंचांगp = (u64) engine_घड़ी * reference_भागider * post_भागider * 16384;
-	करो_भाग(पंचांगp, reference_घड़ी);
-	fbभाग = (u32) पंचांगp;
+	tmp = (u64) engine_clock * reference_divider * post_divider * 16384;
+	do_div(tmp, reference_clock);
+	fbdiv = (u32) tmp;
 
-	/* set up रेजिस्टरs */
-	अगर (भागiders.enable_post_भाग)
+	/* set up registers */
+	if (dividers.enable_post_div)
 		spll_func_cntl |= SPLL_DIVEN;
-	अन्यथा
+	else
 		spll_func_cntl &= ~SPLL_DIVEN;
 	spll_func_cntl &= ~(SPLL_HILEN_MASK | SPLL_LOLEN_MASK | SPLL_REF_DIV_MASK);
-	spll_func_cntl |= SPLL_REF_DIV(भागiders.ref_भाग);
-	spll_func_cntl |= SPLL_HILEN((भागiders.post_भाग >> 4) & 0xf);
-	spll_func_cntl |= SPLL_LOLEN(भागiders.post_भाग & 0xf);
+	spll_func_cntl |= SPLL_REF_DIV(dividers.ref_div);
+	spll_func_cntl |= SPLL_HILEN((dividers.post_div >> 4) & 0xf);
+	spll_func_cntl |= SPLL_LOLEN(dividers.post_div & 0xf);
 
 	spll_func_cntl_2 &= ~SCLK_MUX_SEL_MASK;
 	spll_func_cntl_2 |= SCLK_MUX_SEL(2);
 
 	spll_func_cntl_3 &= ~SPLL_FB_DIV_MASK;
-	spll_func_cntl_3 |= SPLL_FB_DIV(fbभाग);
+	spll_func_cntl_3 |= SPLL_FB_DIV(fbdiv);
 	spll_func_cntl_3 |= SPLL_DITHEN;
 
-	अगर (pi->sclk_ss) अणु
-		काष्ठा radeon_atom_ss ss;
-		u32 vco_freq = engine_घड़ी * post_भागider;
+	if (pi->sclk_ss) {
+		struct radeon_atom_ss ss;
+		u32 vco_freq = engine_clock * post_divider;
 
-		अगर (radeon_atombios_get_asic_ss_info(rdev, &ss,
-						     ASIC_INTERNAL_ENGINE_SS, vco_freq)) अणु
-			u32 clk_s = reference_घड़ी * 5 / (reference_भागider * ss.rate);
-			u32 clk_v = ss.percentage * fbभाग / (clk_s * 10000);
+		if (radeon_atombios_get_asic_ss_info(rdev, &ss,
+						     ASIC_INTERNAL_ENGINE_SS, vco_freq)) {
+			u32 clk_s = reference_clock * 5 / (reference_divider * ss.rate);
+			u32 clk_v = ss.percentage * fbdiv / (clk_s * 10000);
 
-			cg_spll_spपढ़ो_spectrum &= ~CLK_S_MASK;
-			cg_spll_spपढ़ो_spectrum |= CLK_S(clk_s);
-			cg_spll_spपढ़ो_spectrum |= SSEN;
+			cg_spll_spread_spectrum &= ~CLK_S_MASK;
+			cg_spll_spread_spectrum |= CLK_S(clk_s);
+			cg_spll_spread_spectrum |= SSEN;
 
-			cg_spll_spपढ़ो_spectrum_2 &= ~CLK_V_MASK;
-			cg_spll_spपढ़ो_spectrum_2 |= CLK_V(clk_v);
-		पूर्ण
-	पूर्ण
+			cg_spll_spread_spectrum_2 &= ~CLK_V_MASK;
+			cg_spll_spread_spectrum_2 |= CLK_V(clk_v);
+		}
+	}
 
-	sclk->sclk_value = cpu_to_be32(engine_घड़ी);
+	sclk->sclk_value = cpu_to_be32(engine_clock);
 	sclk->vCG_SPLL_FUNC_CNTL = cpu_to_be32(spll_func_cntl);
 	sclk->vCG_SPLL_FUNC_CNTL_2 = cpu_to_be32(spll_func_cntl_2);
 	sclk->vCG_SPLL_FUNC_CNTL_3 = cpu_to_be32(spll_func_cntl_3);
-	sclk->vCG_SPLL_SPREAD_SPECTRUM = cpu_to_be32(cg_spll_spपढ़ो_spectrum);
-	sclk->vCG_SPLL_SPREAD_SPECTRUM_2 = cpu_to_be32(cg_spll_spपढ़ो_spectrum_2);
+	sclk->vCG_SPLL_SPREAD_SPECTRUM = cpu_to_be32(cg_spll_spread_spectrum);
+	sclk->vCG_SPLL_SPREAD_SPECTRUM_2 = cpu_to_be32(cg_spll_spread_spectrum_2);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक rv730_populate_mclk_value(काष्ठा radeon_device *rdev,
-			      u32 engine_घड़ी, u32 memory_घड़ी,
+int rv730_populate_mclk_value(struct radeon_device *rdev,
+			      u32 engine_clock, u32 memory_clock,
 			      LPRV7XX_SMC_MCLK_VALUE mclk)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
 	u32 mclk_pwrmgt_cntl = pi->clk_regs.rv730.mclk_pwrmgt_cntl;
 	u32 dll_cntl = pi->clk_regs.rv730.dll_cntl;
 	u32 mpll_func_cntl = pi->clk_regs.rv730.mpll_func_cntl;
@@ -126,50 +125,50 @@
 	u32 mpll_func_cntl_3 = pi->clk_regs.rv730.mpll_func_cntl3;
 	u32 mpll_ss = pi->clk_regs.rv730.mpll_ss;
 	u32 mpll_ss2 = pi->clk_regs.rv730.mpll_ss2;
-	काष्ठा atom_घड़ी_भागiders भागiders;
-	u32 post_भागider, reference_भागider;
-	पूर्णांक ret;
+	struct atom_clock_dividers dividers;
+	u32 post_divider, reference_divider;
+	int ret;
 
-	ret = radeon_atom_get_घड़ी_भागiders(rdev, COMPUTE_MEMORY_PLL_PARAM,
-					     memory_घड़ी, false, &भागiders);
-	अगर (ret)
-		वापस ret;
+	ret = radeon_atom_get_clock_dividers(rdev, COMPUTE_MEMORY_PLL_PARAM,
+					     memory_clock, false, &dividers);
+	if (ret)
+		return ret;
 
-	reference_भागider = भागiders.ref_भाग + 1;
+	reference_divider = dividers.ref_div + 1;
 
-	अगर (भागiders.enable_post_भाग)
-		post_भागider = ((भागiders.post_भाग >> 4) & 0xf) +
-			(भागiders.post_भाग & 0xf) + 2;
-	अन्यथा
-		post_भागider = 1;
+	if (dividers.enable_post_div)
+		post_divider = ((dividers.post_div >> 4) & 0xf) +
+			(dividers.post_div & 0xf) + 2;
+	else
+		post_divider = 1;
 
-	/* setup the रेजिस्टरs */
-	अगर (भागiders.enable_post_भाग)
+	/* setup the registers */
+	if (dividers.enable_post_div)
 		mpll_func_cntl |= MPLL_DIVEN;
-	अन्यथा
+	else
 		mpll_func_cntl &= ~MPLL_DIVEN;
 
 	mpll_func_cntl &= ~(MPLL_REF_DIV_MASK | MPLL_HILEN_MASK | MPLL_LOLEN_MASK);
-	mpll_func_cntl |= MPLL_REF_DIV(भागiders.ref_भाग);
-	mpll_func_cntl |= MPLL_HILEN((भागiders.post_भाग >> 4) & 0xf);
-	mpll_func_cntl |= MPLL_LOLEN(भागiders.post_भाग & 0xf);
+	mpll_func_cntl |= MPLL_REF_DIV(dividers.ref_div);
+	mpll_func_cntl |= MPLL_HILEN((dividers.post_div >> 4) & 0xf);
+	mpll_func_cntl |= MPLL_LOLEN(dividers.post_div & 0xf);
 
 	mpll_func_cntl_3 &= ~MPLL_FB_DIV_MASK;
-	mpll_func_cntl_3 |= MPLL_FB_DIV(भागiders.fb_भाग);
-	अगर (भागiders.enable_dithen)
+	mpll_func_cntl_3 |= MPLL_FB_DIV(dividers.fb_div);
+	if (dividers.enable_dithen)
 		mpll_func_cntl_3 |= MPLL_DITHEN;
-	अन्यथा
+	else
 		mpll_func_cntl_3 &= ~MPLL_DITHEN;
 
-	अगर (pi->mclk_ss) अणु
-		काष्ठा radeon_atom_ss ss;
-		u32 vco_freq = memory_घड़ी * post_भागider;
+	if (pi->mclk_ss) {
+		struct radeon_atom_ss ss;
+		u32 vco_freq = memory_clock * post_divider;
 
-		अगर (radeon_atombios_get_asic_ss_info(rdev, &ss,
-						     ASIC_INTERNAL_MEMORY_SS, vco_freq)) अणु
-			u32 reference_घड़ी = rdev->घड़ी.mpll.reference_freq;
-			u32 clk_s = reference_घड़ी * 5 / (reference_भागider * ss.rate);
-			u32 clk_v = ss.percentage * भागiders.fb_भाग / (clk_s * 10000);
+		if (radeon_atombios_get_asic_ss_info(rdev, &ss,
+						     ASIC_INTERNAL_MEMORY_SS, vco_freq)) {
+			u32 reference_clock = rdev->clock.mpll.reference_freq;
+			u32 clk_s = reference_clock * 5 / (reference_divider * ss.rate);
+			u32 clk_v = ss.percentage * dividers.fb_div / (clk_s * 10000);
 
 			mpll_ss &= ~CLK_S_MASK;
 			mpll_ss |= CLK_S(clk_s);
@@ -177,25 +176,25 @@
 
 			mpll_ss2 &= ~CLK_V_MASK;
 			mpll_ss |= CLK_V(clk_v);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 
 	mclk->mclk730.vMCLK_PWRMGT_CNTL = cpu_to_be32(mclk_pwrmgt_cntl);
 	mclk->mclk730.vDLL_CNTL = cpu_to_be32(dll_cntl);
-	mclk->mclk730.mclk_value = cpu_to_be32(memory_घड़ी);
+	mclk->mclk730.mclk_value = cpu_to_be32(memory_clock);
 	mclk->mclk730.vMPLL_FUNC_CNTL = cpu_to_be32(mpll_func_cntl);
 	mclk->mclk730.vMPLL_FUNC_CNTL2 = cpu_to_be32(mpll_func_cntl_2);
 	mclk->mclk730.vMPLL_FUNC_CNTL3 = cpu_to_be32(mpll_func_cntl_3);
 	mclk->mclk730.vMPLL_SS = cpu_to_be32(mpll_ss);
 	mclk->mclk730.vMPLL_SS2 = cpu_to_be32(mpll_ss2);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम rv730_पढ़ो_घड़ी_रेजिस्टरs(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
+void rv730_read_clock_registers(struct radeon_device *rdev)
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
 
 	pi->clk_regs.rv730.cg_spll_func_cntl =
 		RREG32(CG_SPLL_FUNC_CNTL);
@@ -203,9 +202,9 @@
 		RREG32(CG_SPLL_FUNC_CNTL_2);
 	pi->clk_regs.rv730.cg_spll_func_cntl_3 =
 		RREG32(CG_SPLL_FUNC_CNTL_3);
-	pi->clk_regs.rv730.cg_spll_spपढ़ो_spectrum =
+	pi->clk_regs.rv730.cg_spll_spread_spectrum =
 		RREG32(CG_SPLL_SPREAD_SPECTRUM);
-	pi->clk_regs.rv730.cg_spll_spपढ़ो_spectrum_2 =
+	pi->clk_regs.rv730.cg_spll_spread_spectrum_2 =
 		RREG32(CG_SPLL_SPREAD_SPECTRUM_2);
 
 	pi->clk_regs.rv730.mclk_pwrmgt_cntl =
@@ -222,12 +221,12 @@
 		RREG32(CG_TCI_MPLL_SPREAD_SPECTRUM);
 	pi->clk_regs.rv730.mpll_ss2 =
 		RREG32(CG_TCI_MPLL_SPREAD_SPECTRUM_2);
-पूर्ण
+}
 
-पूर्णांक rv730_populate_smc_acpi_state(काष्ठा radeon_device *rdev,
+int rv730_populate_smc_acpi_state(struct radeon_device *rdev,
 				  RV770_SMC_STATETABLE *table)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
 	u32 mpll_func_cntl = 0;
 	u32 mpll_func_cntl_2 = 0 ;
 	u32 mpll_func_cntl_3 = 0;
@@ -240,18 +239,18 @@
 	table->ACPIState = table->initialState;
 	table->ACPIState.flags &= ~PPSMC_SWSTATE_FLAG_DC;
 
-	अगर (pi->acpi_vddc) अणु
+	if (pi->acpi_vddc) {
 		rv770_populate_vddc_value(rdev, pi->acpi_vddc,
 					  &table->ACPIState.levels[0].vddc);
 		table->ACPIState.levels[0].gen2PCIE = pi->pcie_gen2 ?
 			pi->acpi_pcie_gen2 : 0;
 		table->ACPIState.levels[0].gen2XSP =
 			pi->acpi_pcie_gen2;
-	पूर्ण अन्यथा अणु
+	} else {
 		rv770_populate_vddc_value(rdev, pi->min_vddc_in_table,
 					  &table->ACPIState.levels[0].vddc);
 		table->ACPIState.levels[0].gen2PCIE = 0;
-	पूर्ण
+	}
 
 	mpll_func_cntl = pi->clk_regs.rv730.mpll_func_cntl;
 	mpll_func_cntl_2 = pi->clk_regs.rv730.mpll_func_cntl2;
@@ -311,15 +310,15 @@
 	table->ACPIState.levels[1] = table->ACPIState.levels[0];
 	table->ACPIState.levels[2] = table->ACPIState.levels[0];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक rv730_populate_smc_initial_state(काष्ठा radeon_device *rdev,
-				     काष्ठा radeon_ps *radeon_state,
+int rv730_populate_smc_initial_state(struct radeon_device *rdev,
+				     struct radeon_ps *radeon_state,
 				     RV770_SMC_STATETABLE *table)
-अणु
-	काष्ठा rv7xx_ps *initial_state = rv770_get_ps(radeon_state);
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
+{
+	struct rv7xx_ps *initial_state = rv770_get_ps(radeon_state);
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
 	u32 a_t;
 
 	table->initialState.levels[0].mclk.mclk730.vMPLL_FUNC_CNTL =
@@ -347,9 +346,9 @@
 	table->initialState.levels[0].sclk.vCG_SPLL_FUNC_CNTL_3 =
 		cpu_to_be32(pi->clk_regs.rv730.cg_spll_func_cntl_3);
 	table->initialState.levels[0].sclk.vCG_SPLL_SPREAD_SPECTRUM =
-		cpu_to_be32(pi->clk_regs.rv730.cg_spll_spपढ़ो_spectrum);
+		cpu_to_be32(pi->clk_regs.rv730.cg_spll_spread_spectrum);
 	table->initialState.levels[0].sclk.vCG_SPLL_SPREAD_SPECTRUM_2 =
-		cpu_to_be32(pi->clk_regs.rv730.cg_spll_spपढ़ो_spectrum_2);
+		cpu_to_be32(pi->clk_regs.rv730.cg_spll_spread_spectrum_2);
 
 	table->initialState.levels[0].sclk.sclk_value =
 		cpu_to_be32(initial_state->low.sclk);
@@ -371,13 +370,13 @@
 
 	table->initialState.levels[0].bSP = cpu_to_be32(pi->dsp);
 
-	अगर (pi->boot_in_gen2)
+	if (pi->boot_in_gen2)
 		table->initialState.levels[0].gen2PCIE = 1;
-	अन्यथा
+	else
 		table->initialState.levels[0].gen2PCIE = 0;
-	अगर (initial_state->low.flags & ATOM_PPLIB_R600_FLAGS_PCIEGEN2)
+	if (initial_state->low.flags & ATOM_PPLIB_R600_FLAGS_PCIEGEN2)
 		table->initialState.levels[0].gen2XSP = 1;
-	अन्यथा
+	else
 		table->initialState.levels[0].gen2XSP = 0;
 
 	table->initialState.levels[1] = table->initialState.levels[0];
@@ -385,13 +384,13 @@
 
 	table->initialState.flags |= PPSMC_SWSTATE_FLAG_DC;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम rv730_program_memory_timing_parameters(काष्ठा radeon_device *rdev,
-					    काष्ठा radeon_ps *radeon_state)
-अणु
-	काष्ठा rv7xx_ps *state = rv770_get_ps(radeon_state);
+void rv730_program_memory_timing_parameters(struct radeon_device *rdev,
+					    struct radeon_ps *radeon_state)
+{
+	struct rv7xx_ps *state = rv770_get_ps(radeon_state);
 	u32 arb_refresh_rate = 0;
 	u32 dram_timing = 0;
 	u32 dram_timing2 = 0;
@@ -444,24 +443,24 @@
 	WREG32(MC_ARB_DRAM_TIMING, old_dram_timing);
 	WREG32(MC_ARB_DRAM_TIMING2, old_dram_timing2);
 
-पूर्ण
+}
 
-व्योम rv730_start_dpm(काष्ठा radeon_device *rdev)
-अणु
+void rv730_start_dpm(struct radeon_device *rdev)
+{
 	WREG32_P(SCLK_PWRMGT_CNTL, 0, ~SCLK_PWRMGT_OFF);
 
 	WREG32_P(TCI_MCLK_PWRMGT_CNTL, 0, ~MPLL_PWRMGT_OFF);
 
 	WREG32_P(GENERAL_PWRMGT, GLOBAL_PWRMGT_EN, ~GLOBAL_PWRMGT_EN);
-पूर्ण
+}
 
-व्योम rv730_stop_dpm(काष्ठा radeon_device *rdev)
-अणु
+void rv730_stop_dpm(struct radeon_device *rdev)
+{
 	PPSMC_Result result;
 
 	result = rv770_send_msg_to_smc(rdev, PPSMC_MSG_TwoLevelsDisabled);
 
-	अगर (result != PPSMC_Result_OK)
+	if (result != PPSMC_Result_OK)
 		DRM_DEBUG("Could not force DPM to low\n");
 
 	WREG32_P(GENERAL_PWRMGT, 0, ~GLOBAL_PWRMGT_EN);
@@ -469,11 +468,11 @@
 	WREG32_P(SCLK_PWRMGT_CNTL, SCLK_PWRMGT_OFF, ~SCLK_PWRMGT_OFF);
 
 	WREG32_P(TCI_MCLK_PWRMGT_CNTL, MPLL_PWRMGT_OFF, ~MPLL_PWRMGT_OFF);
-पूर्ण
+}
 
-व्योम rv730_program_dcodt(काष्ठा radeon_device *rdev, bool use_dcodt)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
+void rv730_program_dcodt(struct radeon_device *rdev, bool use_dcodt)
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
 	u32 i = use_dcodt ? 0 : 1;
 	u32 mc4_io_pad_cntl;
 
@@ -488,11 +487,11 @@
 	mc4_io_pad_cntl |= pi->odt_value_1[i];
 	WREG32(MC4_IO_QS_PAD_CNTL_D0_I0, mc4_io_pad_cntl);
 	WREG32(MC4_IO_QS_PAD_CNTL_D0_I1, mc4_io_pad_cntl);
-पूर्ण
+}
 
-व्योम rv730_get_odt_values(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा rv7xx_घातer_info *pi = rv770_get_pi(rdev);
+void rv730_get_odt_values(struct radeon_device *rdev)
+{
+	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
 	u32 mc4_io_pad_cntl;
 
 	pi->odt_value_0[0] = (u8)0;
@@ -503,4 +502,4 @@
 
 	mc4_io_pad_cntl = RREG32(MC4_IO_QS_PAD_CNTL_D0_I0);
 	pi->odt_value_1[1] = (u8)(mc4_io_pad_cntl & 0xff);
-पूर्ण
+}

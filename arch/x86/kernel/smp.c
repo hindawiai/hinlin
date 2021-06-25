@@ -1,45 +1,44 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *	Intel SMP support routines.
  *
  *	(c) 1995 Alan Cox, Building #3 <alan@lxorguk.ukuu.org.uk>
  *	(c) 1998-99, 2000, 2009 Ingo Molnar <mingo@redhat.com>
- *      (c) 2002,2003 Andi Kleen, SuSE Lअसल.
+ *      (c) 2002,2003 Andi Kleen, SuSE Labs.
  *
- *	i386 and x86_64 पूर्णांकegration by Glauber Costa <gcosta@redhat.com>
+ *	i386 and x86_64 integration by Glauber Costa <gcosta@redhat.com>
  */
 
-#समावेश <linux/init.h>
+#include <linux/init.h>
 
-#समावेश <linux/mm.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/export.h>
-#समावेश <linux/kernel_स्थिति.स>
-#समावेश <linux/mc146818rtc.h>
-#समावेश <linux/cache.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/gfp.h>
+#include <linux/mm.h>
+#include <linux/delay.h>
+#include <linux/spinlock.h>
+#include <linux/export.h>
+#include <linux/kernel_stat.h>
+#include <linux/mc146818rtc.h>
+#include <linux/cache.h>
+#include <linux/interrupt.h>
+#include <linux/cpu.h>
+#include <linux/gfp.h>
 
-#समावेश <यंत्र/mtrr.h>
-#समावेश <यंत्र/tlbflush.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/proto.h>
-#समावेश <यंत्र/apic.h>
-#समावेश <यंत्र/idtentry.h>
-#समावेश <यंत्र/nmi.h>
-#समावेश <यंत्र/mce.h>
-#समावेश <यंत्र/trace/irq_vectors.h>
-#समावेश <यंत्र/kexec.h>
-#समावेश <यंत्र/virtext.h>
+#include <asm/mtrr.h>
+#include <asm/tlbflush.h>
+#include <asm/mmu_context.h>
+#include <asm/proto.h>
+#include <asm/apic.h>
+#include <asm/idtentry.h>
+#include <asm/nmi.h>
+#include <asm/mce.h>
+#include <asm/trace/irq_vectors.h>
+#include <asm/kexec.h>
+#include <asm/virtext.h>
 
 /*
  *	Some notes on x86 processor bugs affecting SMP operation:
  *
  *	Pentium, Pentium Pro, II, III (and all CPUs) have bugs.
- *	The Linux implications क्रम SMP are handled as follows:
+ *	The Linux implications for SMP are handled as follows:
  *
  *	Pentium III / [Xeon]
  *		None of the E1AP-E3AP errata are visible to the user.
@@ -63,46 +62,46 @@
  *	1AP.	Linux maps APIC as non-cacheable
  *	2AP.	worked around in hardware
  *	3AP.	fixed in C0 and above steppings microcode update.
- *		Linux करोes not use excessive STARTUP_IPIs.
+ *		Linux does not use excessive STARTUP_IPIs.
  *	4AP.	worked around in hardware
  *	5AP.	symmetric IO mode (normal Linux operation) not affected.
  *		'noapic' mode has vector 0xf filled out properly.
  *	6AP.	'noapic' mode might be affected - fixed in later steppings
- *	7AP.	We करो not assume ग_लिखोs to the LVT deनिश्चितing IRQs
- *	8AP.	We करो not enable low घातer mode (deep sleep) during MP bootup
- *	9AP.	We करो not use mixed mode
+ *	7AP.	We do not assume writes to the LVT deasserting IRQs
+ *	8AP.	We do not enable low power mode (deep sleep) during MP bootup
+ *	9AP.	We do not use mixed mode
  *
  *	Pentium
- *		There is a marginal हाल where REP MOVS on 100MHz SMP
+ *		There is a marginal case where REP MOVS on 100MHz SMP
  *	machines with B stepping processors can fail. XXX should provide
  *	an L1cache=Writethrough or L1cache=off option.
  *
  *		B stepping CPUs may hang. There are hardware work arounds
- *	क्रम this. We warn about it in हाल your board करोesn't have the work
+ *	for this. We warn about it in case your board doesn't have the work
  *	arounds. Basically that's so I can tell anyone with a B stepping
  *	CPU and SMP problems "tough".
  *
- *	Specअगरic items [From Pentium Processor Specअगरication Update]
+ *	Specific items [From Pentium Processor Specification Update]
  *
- *	1AP.	Linux करोesn't use remote पढ़ो
- *	2AP.	Linux करोesn't trust APIC errors
+ *	1AP.	Linux doesn't use remote read
+ *	2AP.	Linux doesn't trust APIC errors
  *	3AP.	We work around this
- *	4AP.	Linux never generated 3 पूर्णांकerrupts of the same priority
- *		to cause a lost local पूर्णांकerrupt.
- *	5AP.	Remote पढ़ो is never used
+ *	4AP.	Linux never generated 3 interrupts of the same priority
+ *		to cause a lost local interrupt.
+ *	5AP.	Remote read is never used
  *	6AP.	not affected - worked around in hardware
  *	7AP.	not affected - worked around in hardware
- *	8AP.	worked around in hardware - we get explicit CS errors अगर not
+ *	8AP.	worked around in hardware - we get explicit CS errors if not
  *	9AP.	only 'noapic' mode affected. Might generate spurious
- *		पूर्णांकerrupts, we log only the first one and count the
+ *		interrupts, we log only the first one and count the
  *		rest silently.
  *	10AP.	not affected - worked around in hardware
- *	11AP.	Linux पढ़ोs the APIC between ग_लिखोs to aव्योम this, as per
- *		the करोcumentation. Make sure you preserve this as it affects
+ *	11AP.	Linux reads the APIC between writes to avoid this, as per
+ *		the documentation. Make sure you preserve this as it affects
  *		the C stepping chips too.
  *	12AP.	not affected - worked around in hardware
  *	13AP.	not affected - worked around in hardware
- *	14AP.	we always deनिश्चित INIT during bootup
+ *	14AP.	we always deassert INIT during bootup
  *	15AP.	not affected - worked around in hardware
  *	16AP.	not affected - worked around in hardware
  *	17AP.	not affected - worked around in hardware
@@ -110,163 +109,163 @@
  *	19AP.	not affected - worked around in BIOS
  *
  *	If this sounds worrying believe me these bugs are either ___RARE___,
- *	or are संकेत timing bugs worked around in hardware and there's
+ *	or are signal timing bugs worked around in hardware and there's
  *	about nothing of note with C stepping upwards.
  */
 
-अटल atomic_t stopping_cpu = ATOMIC_INIT(-1);
-अटल bool smp_no_nmi_ipi = false;
+static atomic_t stopping_cpu = ATOMIC_INIT(-1);
+static bool smp_no_nmi_ipi = false;
 
-अटल पूर्णांक smp_stop_nmi_callback(अचिन्हित पूर्णांक val, काष्ठा pt_regs *regs)
-अणु
-	/* We are रेजिस्टरed on stopping cpu too, aव्योम spurious NMI */
-	अगर (raw_smp_processor_id() == atomic_पढ़ो(&stopping_cpu))
-		वापस NMI_HANDLED;
+static int smp_stop_nmi_callback(unsigned int val, struct pt_regs *regs)
+{
+	/* We are registered on stopping cpu too, avoid spurious NMI */
+	if (raw_smp_processor_id() == atomic_read(&stopping_cpu))
+		return NMI_HANDLED;
 
 	cpu_emergency_vmxoff();
-	stop_this_cpu(शून्य);
+	stop_this_cpu(NULL);
 
-	वापस NMI_HANDLED;
-पूर्ण
+	return NMI_HANDLED;
+}
 
 /*
- * this function calls the 'stop' function on all other CPUs in the प्रणाली.
+ * this function calls the 'stop' function on all other CPUs in the system.
  */
 DEFINE_IDTENTRY_SYSVEC(sysvec_reboot)
-अणु
+{
 	ack_APIC_irq();
 	cpu_emergency_vmxoff();
-	stop_this_cpu(शून्य);
-पूर्ण
+	stop_this_cpu(NULL);
+}
 
-अटल पूर्णांक रेजिस्टर_stop_handler(व्योम)
-अणु
-	वापस रेजिस्टर_nmi_handler(NMI_LOCAL, smp_stop_nmi_callback,
+static int register_stop_handler(void)
+{
+	return register_nmi_handler(NMI_LOCAL, smp_stop_nmi_callback,
 				    NMI_FLAG_FIRST, "smp_stop");
-पूर्ण
+}
 
-अटल व्योम native_stop_other_cpus(पूर्णांक रुको)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ समयout;
+static void native_stop_other_cpus(int wait)
+{
+	unsigned long flags;
+	unsigned long timeout;
 
-	अगर (reboot_क्रमce)
-		वापस;
+	if (reboot_force)
+		return;
 
 	/*
 	 * Use an own vector here because smp_call_function
-	 * करोes lots of things not suitable in a panic situation.
+	 * does lots of things not suitable in a panic situation.
 	 */
 
 	/*
 	 * We start by using the REBOOT_VECTOR irq.
-	 * The irq is treated as a sync poपूर्णांक to allow critical
+	 * The irq is treated as a sync point to allow critical
 	 * regions of code on other cpus to release their spin locks
 	 * and re-enable irqs.  Jumping straight to an NMI might
-	 * accidentally cause deadlocks with further shutकरोwn/panic
+	 * accidentally cause deadlocks with further shutdown/panic
 	 * code.  By syncing, we give the cpus up to one second to
-	 * finish their work beक्रमe we क्रमce them off with the NMI.
+	 * finish their work before we force them off with the NMI.
 	 */
-	अगर (num_online_cpus() > 1) अणु
+	if (num_online_cpus() > 1) {
 		/* did someone beat us here? */
-		अगर (atomic_cmpxchg(&stopping_cpu, -1, safe_smp_processor_id()) != -1)
-			वापस;
+		if (atomic_cmpxchg(&stopping_cpu, -1, safe_smp_processor_id()) != -1)
+			return;
 
-		/* sync above data beक्रमe sending IRQ */
+		/* sync above data before sending IRQ */
 		wmb();
 
 		apic_send_IPI_allbutself(REBOOT_VECTOR);
 
 		/*
-		 * Don't रुको दीर्घer than a second क्रम IPI completion. The
-		 * रुको request is not checked here because that would
-		 * prevent an NMI shutकरोwn attempt in हाल that not all
-		 * CPUs reach shutकरोwn state.
+		 * Don't wait longer than a second for IPI completion. The
+		 * wait request is not checked here because that would
+		 * prevent an NMI shutdown attempt in case that not all
+		 * CPUs reach shutdown state.
 		 */
-		समयout = USEC_PER_SEC;
-		जबतक (num_online_cpus() > 1 && समयout--)
+		timeout = USEC_PER_SEC;
+		while (num_online_cpus() > 1 && timeout--)
 			udelay(1);
-	पूर्ण
+	}
 
-	/* अगर the REBOOT_VECTOR didn't work, try with the NMI */
-	अगर (num_online_cpus() > 1) अणु
+	/* if the REBOOT_VECTOR didn't work, try with the NMI */
+	if (num_online_cpus() > 1) {
 		/*
-		 * If NMI IPI is enabled, try to रेजिस्टर the stop handler
-		 * and send the IPI. In any हाल try to रुको क्रम the other
+		 * If NMI IPI is enabled, try to register the stop handler
+		 * and send the IPI. In any case try to wait for the other
 		 * CPUs to stop.
 		 */
-		अगर (!smp_no_nmi_ipi && !रेजिस्टर_stop_handler()) अणु
-			/* Sync above data beक्रमe sending IRQ */
+		if (!smp_no_nmi_ipi && !register_stop_handler()) {
+			/* Sync above data before sending IRQ */
 			wmb();
 
 			pr_emerg("Shutting down cpus with NMI\n");
 
 			apic_send_IPI_allbutself(NMI_VECTOR);
-		पूर्ण
+		}
 		/*
 		 * Don't wait longer than 10 ms if the caller didn't
-		 * request it. If रुको is true, the machine hangs here अगर
-		 * one or more CPUs करो not reach shutकरोwn state.
+		 * request it. If wait is true, the machine hangs here if
+		 * one or more CPUs do not reach shutdown state.
 		 */
-		समयout = USEC_PER_MSEC * 10;
-		जबतक (num_online_cpus() > 1 && (रुको || समयout--))
+		timeout = USEC_PER_MSEC * 10;
+		while (num_online_cpus() > 1 && (wait || timeout--))
 			udelay(1);
-	पूर्ण
+	}
 
 	local_irq_save(flags);
 	disable_local_APIC();
 	mcheck_cpu_clear(this_cpu_ptr(&cpu_info));
 	local_irq_restore(flags);
-पूर्ण
+}
 
 /*
- * Reschedule call back. KVM uses this पूर्णांकerrupt to क्रमce a cpu out of
+ * Reschedule call back. KVM uses this interrupt to force a cpu out of
  * guest mode.
  */
 DEFINE_IDTENTRY_SYSVEC_SIMPLE(sysvec_reschedule_ipi)
-अणु
+{
 	ack_APIC_irq();
 	trace_reschedule_entry(RESCHEDULE_VECTOR);
 	inc_irq_stat(irq_resched_count);
 	scheduler_ipi();
-	trace_reschedule_निकास(RESCHEDULE_VECTOR);
-पूर्ण
+	trace_reschedule_exit(RESCHEDULE_VECTOR);
+}
 
 DEFINE_IDTENTRY_SYSVEC(sysvec_call_function)
-अणु
+{
 	ack_APIC_irq();
 	trace_call_function_entry(CALL_FUNCTION_VECTOR);
 	inc_irq_stat(irq_call_count);
-	generic_smp_call_function_पूर्णांकerrupt();
-	trace_call_function_निकास(CALL_FUNCTION_VECTOR);
-पूर्ण
+	generic_smp_call_function_interrupt();
+	trace_call_function_exit(CALL_FUNCTION_VECTOR);
+}
 
 DEFINE_IDTENTRY_SYSVEC(sysvec_call_function_single)
-अणु
+{
 	ack_APIC_irq();
 	trace_call_function_single_entry(CALL_FUNCTION_SINGLE_VECTOR);
 	inc_irq_stat(irq_call_count);
-	generic_smp_call_function_single_पूर्णांकerrupt();
-	trace_call_function_single_निकास(CALL_FUNCTION_SINGLE_VECTOR);
-पूर्ण
+	generic_smp_call_function_single_interrupt();
+	trace_call_function_single_exit(CALL_FUNCTION_SINGLE_VECTOR);
+}
 
-अटल पूर्णांक __init nonmi_ipi_setup(अक्षर *str)
-अणु
+static int __init nonmi_ipi_setup(char *str)
+{
 	smp_no_nmi_ipi = true;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 __setup("nonmi_ipi", nonmi_ipi_setup);
 
-काष्ठा smp_ops smp_ops = अणु
+struct smp_ops smp_ops = {
 	.smp_prepare_boot_cpu	= native_smp_prepare_boot_cpu,
 	.smp_prepare_cpus	= native_smp_prepare_cpus,
-	.smp_cpus_करोne		= native_smp_cpus_करोne,
+	.smp_cpus_done		= native_smp_cpus_done,
 
 	.stop_other_cpus	= native_stop_other_cpus,
-#अगर defined(CONFIG_KEXEC_CORE)
-	.crash_stop_other_cpus	= kdump_nmi_shootकरोwn_cpus,
-#पूर्ण_अगर
+#if defined(CONFIG_KEXEC_CORE)
+	.crash_stop_other_cpus	= kdump_nmi_shootdown_cpus,
+#endif
 	.smp_send_reschedule	= native_smp_send_reschedule,
 
 	.cpu_up			= native_cpu_up,
@@ -276,5 +275,5 @@ __setup("nonmi_ipi", nonmi_ipi_setup);
 
 	.send_call_func_ipi	= native_send_call_func_ipi,
 	.send_call_func_single_ipi = native_send_call_func_single_ipi,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(smp_ops);

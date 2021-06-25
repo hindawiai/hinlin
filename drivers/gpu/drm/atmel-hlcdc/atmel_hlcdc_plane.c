@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2014 Free Electrons
- * Copyright (C) 2014 Aपंचांगel
+ * Copyright (C) 2014 Atmel
  *
- * Author: Boris BREZILLON <boris.brezillon@मुक्त-electrons.com>
+ * Author: Boris BREZILLON <boris.brezillon@free-electrons.com>
  */
 
-#समावेश <linux/dmapool.h>
-#समावेश <linux/mfd/aपंचांगel-hlcdc.h>
+#include <linux/dmapool.h>
+#include <linux/mfd/atmel-hlcdc.h>
 
-#समावेश <drm/drm_atomic.h>
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_fb_cma_helper.h>
-#समावेश <drm/drm_fourcc.h>
-#समावेश <drm/drm_gem_cma_helper.h>
-#समावेश <drm/drm_plane_helper.h>
+#include <drm/drm_atomic.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_fb_cma_helper.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_gem_cma_helper.h>
+#include <drm/drm_plane_helper.h>
 
-#समावेश "atmel_hlcdc_dc.h"
+#include "atmel_hlcdc_dc.h"
 
 /**
- * काष्ठा aपंचांगel_hlcdc_plane_state - Aपंचांगel HLCDC Plane state काष्ठाure.
+ * struct atmel_hlcdc_plane_state - Atmel HLCDC Plane state structure.
  *
  * @base: DRM plane state
  * @crtc_x: x position of the plane relative to the CRTC
@@ -35,52 +34,52 @@
  * @disc_y: y discard position
  * @disc_w: discard width
  * @disc_h: discard height
- * @ahb_id: AHB identअगरication number
- * @bpp: bytes per pixel deduced from pixel_क्रमmat
+ * @ahb_id: AHB identification number
+ * @bpp: bytes per pixel deduced from pixel_format
  * @offsets: offsets to apply to the GEM buffers
- * @xstride: value to add to the pixel poपूर्णांकer between each line
- * @pstride: value to add to the pixel poपूर्णांकer between each pixel
- * @nplanes: number of planes (deduced from pixel_क्रमmat)
+ * @xstride: value to add to the pixel pointer between each line
+ * @pstride: value to add to the pixel pointer between each pixel
+ * @nplanes: number of planes (deduced from pixel_format)
  * @dscrs: DMA descriptors
  */
-काष्ठा aपंचांगel_hlcdc_plane_state अणु
-	काष्ठा drm_plane_state base;
-	पूर्णांक crtc_x;
-	पूर्णांक crtc_y;
-	अचिन्हित पूर्णांक crtc_w;
-	अचिन्हित पूर्णांक crtc_h;
-	uपूर्णांक32_t src_x;
-	uपूर्णांक32_t src_y;
-	uपूर्णांक32_t src_w;
-	uपूर्णांक32_t src_h;
+struct atmel_hlcdc_plane_state {
+	struct drm_plane_state base;
+	int crtc_x;
+	int crtc_y;
+	unsigned int crtc_w;
+	unsigned int crtc_h;
+	uint32_t src_x;
+	uint32_t src_y;
+	uint32_t src_w;
+	uint32_t src_h;
 
-	पूर्णांक disc_x;
-	पूर्णांक disc_y;
-	पूर्णांक disc_w;
-	पूर्णांक disc_h;
+	int disc_x;
+	int disc_y;
+	int disc_w;
+	int disc_h;
 
-	पूर्णांक ahb_id;
+	int ahb_id;
 
-	/* These fields are निजी and should not be touched */
-	पूर्णांक bpp[ATMEL_HLCDC_LAYER_MAX_PLANES];
-	अचिन्हित पूर्णांक offsets[ATMEL_HLCDC_LAYER_MAX_PLANES];
-	पूर्णांक xstride[ATMEL_HLCDC_LAYER_MAX_PLANES];
-	पूर्णांक pstride[ATMEL_HLCDC_LAYER_MAX_PLANES];
-	पूर्णांक nplanes;
+	/* These fields are private and should not be touched */
+	int bpp[ATMEL_HLCDC_LAYER_MAX_PLANES];
+	unsigned int offsets[ATMEL_HLCDC_LAYER_MAX_PLANES];
+	int xstride[ATMEL_HLCDC_LAYER_MAX_PLANES];
+	int pstride[ATMEL_HLCDC_LAYER_MAX_PLANES];
+	int nplanes;
 
 	/* DMA descriptors. */
-	काष्ठा aपंचांगel_hlcdc_dma_channel_dscr *dscrs[ATMEL_HLCDC_LAYER_MAX_PLANES];
-पूर्ण;
+	struct atmel_hlcdc_dma_channel_dscr *dscrs[ATMEL_HLCDC_LAYER_MAX_PLANES];
+};
 
-अटल अंतरभूत काष्ठा aपंचांगel_hlcdc_plane_state *
-drm_plane_state_to_aपंचांगel_hlcdc_plane_state(काष्ठा drm_plane_state *s)
-अणु
-	वापस container_of(s, काष्ठा aपंचांगel_hlcdc_plane_state, base);
-पूर्ण
+static inline struct atmel_hlcdc_plane_state *
+drm_plane_state_to_atmel_hlcdc_plane_state(struct drm_plane_state *s)
+{
+	return container_of(s, struct atmel_hlcdc_plane_state, base);
+}
 
-#घोषणा SUBPIXEL_MASK			0xffff
+#define SUBPIXEL_MASK			0xffff
 
-अटल uपूर्णांक32_t rgb_क्रमmats[] = अणु
+static uint32_t rgb_formats[] = {
 	DRM_FORMAT_C8,
 	DRM_FORMAT_XRGB4444,
 	DRM_FORMAT_ARGB4444,
@@ -91,14 +90,14 @@ drm_plane_state_to_aपंचांगel_hlcdc_plane_state(काष्ठा dr
 	DRM_FORMAT_XRGB8888,
 	DRM_FORMAT_ARGB8888,
 	DRM_FORMAT_RGBA8888,
-पूर्ण;
+};
 
-काष्ठा aपंचांगel_hlcdc_क्रमmats aपंचांगel_hlcdc_plane_rgb_क्रमmats = अणु
-	.क्रमmats = rgb_क्रमmats,
-	.nक्रमmats = ARRAY_SIZE(rgb_क्रमmats),
-पूर्ण;
+struct atmel_hlcdc_formats atmel_hlcdc_plane_rgb_formats = {
+	.formats = rgb_formats,
+	.nformats = ARRAY_SIZE(rgb_formats),
+};
 
-अटल uपूर्णांक32_t rgb_and_yuv_क्रमmats[] = अणु
+static uint32_t rgb_and_yuv_formats[] = {
 	DRM_FORMAT_C8,
 	DRM_FORMAT_XRGB4444,
 	DRM_FORMAT_ARGB4444,
@@ -118,81 +117,81 @@ drm_plane_state_to_aपंचांगel_hlcdc_plane_state(काष्ठा dr
 	DRM_FORMAT_NV61,
 	DRM_FORMAT_YUV422,
 	DRM_FORMAT_YUV420,
-पूर्ण;
+};
 
-काष्ठा aपंचांगel_hlcdc_क्रमmats aपंचांगel_hlcdc_plane_rgb_and_yuv_क्रमmats = अणु
-	.क्रमmats = rgb_and_yuv_क्रमmats,
-	.nक्रमmats = ARRAY_SIZE(rgb_and_yuv_क्रमmats),
-पूर्ण;
+struct atmel_hlcdc_formats atmel_hlcdc_plane_rgb_and_yuv_formats = {
+	.formats = rgb_and_yuv_formats,
+	.nformats = ARRAY_SIZE(rgb_and_yuv_formats),
+};
 
-अटल पूर्णांक aपंचांगel_hlcdc_क्रमmat_to_plane_mode(u32 क्रमmat, u32 *mode)
-अणु
-	चयन (क्रमmat) अणु
-	हाल DRM_FORMAT_C8:
+static int atmel_hlcdc_format_to_plane_mode(u32 format, u32 *mode)
+{
+	switch (format) {
+	case DRM_FORMAT_C8:
 		*mode = ATMEL_HLCDC_C8_MODE;
-		अवरोध;
-	हाल DRM_FORMAT_XRGB4444:
+		break;
+	case DRM_FORMAT_XRGB4444:
 		*mode = ATMEL_HLCDC_XRGB4444_MODE;
-		अवरोध;
-	हाल DRM_FORMAT_ARGB4444:
+		break;
+	case DRM_FORMAT_ARGB4444:
 		*mode = ATMEL_HLCDC_ARGB4444_MODE;
-		अवरोध;
-	हाल DRM_FORMAT_RGBA4444:
+		break;
+	case DRM_FORMAT_RGBA4444:
 		*mode = ATMEL_HLCDC_RGBA4444_MODE;
-		अवरोध;
-	हाल DRM_FORMAT_RGB565:
+		break;
+	case DRM_FORMAT_RGB565:
 		*mode = ATMEL_HLCDC_RGB565_MODE;
-		अवरोध;
-	हाल DRM_FORMAT_RGB888:
+		break;
+	case DRM_FORMAT_RGB888:
 		*mode = ATMEL_HLCDC_RGB888_MODE;
-		अवरोध;
-	हाल DRM_FORMAT_ARGB1555:
+		break;
+	case DRM_FORMAT_ARGB1555:
 		*mode = ATMEL_HLCDC_ARGB1555_MODE;
-		अवरोध;
-	हाल DRM_FORMAT_XRGB8888:
+		break;
+	case DRM_FORMAT_XRGB8888:
 		*mode = ATMEL_HLCDC_XRGB8888_MODE;
-		अवरोध;
-	हाल DRM_FORMAT_ARGB8888:
+		break;
+	case DRM_FORMAT_ARGB8888:
 		*mode = ATMEL_HLCDC_ARGB8888_MODE;
-		अवरोध;
-	हाल DRM_FORMAT_RGBA8888:
+		break;
+	case DRM_FORMAT_RGBA8888:
 		*mode = ATMEL_HLCDC_RGBA8888_MODE;
-		अवरोध;
-	हाल DRM_FORMAT_AYUV:
+		break;
+	case DRM_FORMAT_AYUV:
 		*mode = ATMEL_HLCDC_AYUV_MODE;
-		अवरोध;
-	हाल DRM_FORMAT_YUYV:
+		break;
+	case DRM_FORMAT_YUYV:
 		*mode = ATMEL_HLCDC_YUYV_MODE;
-		अवरोध;
-	हाल DRM_FORMAT_UYVY:
+		break;
+	case DRM_FORMAT_UYVY:
 		*mode = ATMEL_HLCDC_UYVY_MODE;
-		अवरोध;
-	हाल DRM_FORMAT_YVYU:
+		break;
+	case DRM_FORMAT_YVYU:
 		*mode = ATMEL_HLCDC_YVYU_MODE;
-		अवरोध;
-	हाल DRM_FORMAT_VYUY:
+		break;
+	case DRM_FORMAT_VYUY:
 		*mode = ATMEL_HLCDC_VYUY_MODE;
-		अवरोध;
-	हाल DRM_FORMAT_NV21:
+		break;
+	case DRM_FORMAT_NV21:
 		*mode = ATMEL_HLCDC_NV21_MODE;
-		अवरोध;
-	हाल DRM_FORMAT_NV61:
+		break;
+	case DRM_FORMAT_NV61:
 		*mode = ATMEL_HLCDC_NV61_MODE;
-		अवरोध;
-	हाल DRM_FORMAT_YUV420:
+		break;
+	case DRM_FORMAT_YUV420:
 		*mode = ATMEL_HLCDC_YUV420_MODE;
-		अवरोध;
-	हाल DRM_FORMAT_YUV422:
+		break;
+	case DRM_FORMAT_YUV422:
 		*mode = ATMEL_HLCDC_YUV422_MODE;
-		अवरोध;
-	शेष:
-		वापस -ENOTSUPP;
-	पूर्ण
+		break;
+	default:
+		return -ENOTSUPP;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 heo_करोwnscaling_xcoef[] = अणु
+static u32 heo_downscaling_xcoef[] = {
 	0x11343311,
 	0x000000f7,
 	0x1635300c,
@@ -209,9 +208,9 @@ drm_plane_state_to_aपंचांगel_hlcdc_plane_state(काष्ठा dr
 	0x00000008,
 	0x303516f9,
 	0x0000000c,
-पूर्ण;
+};
 
-अटल u32 heo_करोwnscaling_ycoef[] = अणु
+static u32 heo_downscaling_ycoef[] = {
 	0x00123737,
 	0x00173732,
 	0x001b382d,
@@ -220,9 +219,9 @@ drm_plane_state_to_aपंचांगel_hlcdc_plane_state(काष्ठा dr
 	0x0028391f,
 	0x002d381b,
 	0x00323717,
-पूर्ण;
+};
 
-अटल u32 heo_upscaling_xcoef[] = अणु
+static u32 heo_upscaling_xcoef[] = {
 	0xf74949f7,
 	0x00000000,
 	0xf55f33fb,
@@ -239,9 +238,9 @@ drm_plane_state_to_aपंचांगel_hlcdc_plane_state(काष्ठा dr
 	0x000000fe,
 	0x335ff5fe,
 	0x000000fb,
-पूर्ण;
+};
 
-अटल u32 heo_upscaling_ycoef[] = अणु
+static u32 heo_upscaling_ycoef[] = {
 	0x00004040,
 	0x00075920,
 	0x00056f0c,
@@ -250,374 +249,374 @@ drm_plane_state_to_aपंचांगel_hlcdc_plane_state(काष्ठा dr
 	0x00037b02,
 	0x000c6f05,
 	0x00205907,
-पूर्ण;
+};
 
-#घोषणा ATMEL_HLCDC_XPHIDEF	4
-#घोषणा ATMEL_HLCDC_YPHIDEF	4
+#define ATMEL_HLCDC_XPHIDEF	4
+#define ATMEL_HLCDC_YPHIDEF	4
 
-अटल u32 aपंचांगel_hlcdc_plane_phiscaler_get_factor(u32 srcsize,
+static u32 atmel_hlcdc_plane_phiscaler_get_factor(u32 srcsize,
 						  u32 dstsize,
 						  u32 phidef)
-अणु
+{
 	u32 factor, max_memsize;
 
 	factor = (256 * ((8 * (srcsize - 1)) - phidef)) / (dstsize - 1);
 	max_memsize = ((factor * (dstsize - 1)) + (256 * phidef)) / 2048;
 
-	अगर (max_memsize > srcsize - 1)
+	if (max_memsize > srcsize - 1)
 		factor--;
 
-	वापस factor;
-पूर्ण
+	return factor;
+}
 
-अटल व्योम
-aपंचांगel_hlcdc_plane_scaler_set_phicoeff(काष्ठा aपंचांगel_hlcdc_plane *plane,
-				      स्थिर u32 *coeff_tab, पूर्णांक size,
-				      अचिन्हित पूर्णांक cfg_offs)
-अणु
-	पूर्णांक i;
+static void
+atmel_hlcdc_plane_scaler_set_phicoeff(struct atmel_hlcdc_plane *plane,
+				      const u32 *coeff_tab, int size,
+				      unsigned int cfg_offs)
+{
+	int i;
 
-	क्रम (i = 0; i < size; i++)
-		aपंचांगel_hlcdc_layer_ग_लिखो_cfg(&plane->layer, cfg_offs + i,
+	for (i = 0; i < size; i++)
+		atmel_hlcdc_layer_write_cfg(&plane->layer, cfg_offs + i,
 					    coeff_tab[i]);
-पूर्ण
+}
 
-अटल व्योम aपंचांगel_hlcdc_plane_setup_scaler(काष्ठा aपंचांगel_hlcdc_plane *plane,
-					   काष्ठा aपंचांगel_hlcdc_plane_state *state)
-अणु
-	स्थिर काष्ठा aपंचांगel_hlcdc_layer_desc *desc = plane->layer.desc;
+static void atmel_hlcdc_plane_setup_scaler(struct atmel_hlcdc_plane *plane,
+					   struct atmel_hlcdc_plane_state *state)
+{
+	const struct atmel_hlcdc_layer_desc *desc = plane->layer.desc;
 	u32 xfactor, yfactor;
 
-	अगर (!desc->layout.scaler_config)
-		वापस;
+	if (!desc->layout.scaler_config)
+		return;
 
-	अगर (state->crtc_w == state->src_w && state->crtc_h == state->src_h) अणु
-		aपंचांगel_hlcdc_layer_ग_लिखो_cfg(&plane->layer,
+	if (state->crtc_w == state->src_w && state->crtc_h == state->src_h) {
+		atmel_hlcdc_layer_write_cfg(&plane->layer,
 					    desc->layout.scaler_config, 0);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (desc->layout.phicoeffs.x) अणु
-		xfactor = aपंचांगel_hlcdc_plane_phiscaler_get_factor(state->src_w,
+	if (desc->layout.phicoeffs.x) {
+		xfactor = atmel_hlcdc_plane_phiscaler_get_factor(state->src_w,
 							state->crtc_w,
 							ATMEL_HLCDC_XPHIDEF);
 
-		yfactor = aपंचांगel_hlcdc_plane_phiscaler_get_factor(state->src_h,
+		yfactor = atmel_hlcdc_plane_phiscaler_get_factor(state->src_h,
 							state->crtc_h,
 							ATMEL_HLCDC_YPHIDEF);
 
-		aपंचांगel_hlcdc_plane_scaler_set_phicoeff(plane,
+		atmel_hlcdc_plane_scaler_set_phicoeff(plane,
 				state->crtc_w < state->src_w ?
-				heo_करोwnscaling_xcoef :
+				heo_downscaling_xcoef :
 				heo_upscaling_xcoef,
 				ARRAY_SIZE(heo_upscaling_xcoef),
 				desc->layout.phicoeffs.x);
 
-		aपंचांगel_hlcdc_plane_scaler_set_phicoeff(plane,
+		atmel_hlcdc_plane_scaler_set_phicoeff(plane,
 				state->crtc_h < state->src_h ?
-				heo_करोwnscaling_ycoef :
+				heo_downscaling_ycoef :
 				heo_upscaling_ycoef,
 				ARRAY_SIZE(heo_upscaling_ycoef),
 				desc->layout.phicoeffs.y);
-	पूर्ण अन्यथा अणु
+	} else {
 		xfactor = (1024 * state->src_w) / state->crtc_w;
 		yfactor = (1024 * state->src_h) / state->crtc_h;
-	पूर्ण
+	}
 
-	aपंचांगel_hlcdc_layer_ग_लिखो_cfg(&plane->layer, desc->layout.scaler_config,
+	atmel_hlcdc_layer_write_cfg(&plane->layer, desc->layout.scaler_config,
 				    ATMEL_HLCDC_LAYER_SCALER_ENABLE |
 				    ATMEL_HLCDC_LAYER_SCALER_FACTORS(xfactor,
 								     yfactor));
-पूर्ण
+}
 
-अटल व्योम
-aपंचांगel_hlcdc_plane_update_pos_and_size(काष्ठा aपंचांगel_hlcdc_plane *plane,
-				      काष्ठा aपंचांगel_hlcdc_plane_state *state)
-अणु
-	स्थिर काष्ठा aपंचांगel_hlcdc_layer_desc *desc = plane->layer.desc;
+static void
+atmel_hlcdc_plane_update_pos_and_size(struct atmel_hlcdc_plane *plane,
+				      struct atmel_hlcdc_plane_state *state)
+{
+	const struct atmel_hlcdc_layer_desc *desc = plane->layer.desc;
 
-	अगर (desc->layout.size)
-		aपंचांगel_hlcdc_layer_ग_लिखो_cfg(&plane->layer, desc->layout.size,
+	if (desc->layout.size)
+		atmel_hlcdc_layer_write_cfg(&plane->layer, desc->layout.size,
 					ATMEL_HLCDC_LAYER_SIZE(state->crtc_w,
 							       state->crtc_h));
 
-	अगर (desc->layout.memsize)
-		aपंचांगel_hlcdc_layer_ग_लिखो_cfg(&plane->layer,
+	if (desc->layout.memsize)
+		atmel_hlcdc_layer_write_cfg(&plane->layer,
 					desc->layout.memsize,
 					ATMEL_HLCDC_LAYER_SIZE(state->src_w,
 							       state->src_h));
 
-	अगर (desc->layout.pos)
-		aपंचांगel_hlcdc_layer_ग_लिखो_cfg(&plane->layer, desc->layout.pos,
+	if (desc->layout.pos)
+		atmel_hlcdc_layer_write_cfg(&plane->layer, desc->layout.pos,
 					ATMEL_HLCDC_LAYER_POS(state->crtc_x,
 							      state->crtc_y));
 
-	aपंचांगel_hlcdc_plane_setup_scaler(plane, state);
-पूर्ण
+	atmel_hlcdc_plane_setup_scaler(plane, state);
+}
 
-अटल व्योम
-aपंचांगel_hlcdc_plane_update_general_settings(काष्ठा aपंचांगel_hlcdc_plane *plane,
-					काष्ठा aपंचांगel_hlcdc_plane_state *state)
-अणु
-	अचिन्हित पूर्णांक cfg = ATMEL_HLCDC_LAYER_DMA_BLEN_INCR16 | state->ahb_id;
-	स्थिर काष्ठा aपंचांगel_hlcdc_layer_desc *desc = plane->layer.desc;
-	स्थिर काष्ठा drm_क्रमmat_info *क्रमmat = state->base.fb->क्रमmat;
+static void
+atmel_hlcdc_plane_update_general_settings(struct atmel_hlcdc_plane *plane,
+					struct atmel_hlcdc_plane_state *state)
+{
+	unsigned int cfg = ATMEL_HLCDC_LAYER_DMA_BLEN_INCR16 | state->ahb_id;
+	const struct atmel_hlcdc_layer_desc *desc = plane->layer.desc;
+	const struct drm_format_info *format = state->base.fb->format;
 
 	/*
 	 * Rotation optimization is not working on RGB888 (rotation is still
 	 * working but without any optimization).
 	 */
-	अगर (क्रमmat->क्रमmat == DRM_FORMAT_RGB888)
+	if (format->format == DRM_FORMAT_RGB888)
 		cfg |= ATMEL_HLCDC_LAYER_DMA_ROTDIS;
 
-	aपंचांगel_hlcdc_layer_ग_लिखो_cfg(&plane->layer, ATMEL_HLCDC_LAYER_DMA_CFG,
+	atmel_hlcdc_layer_write_cfg(&plane->layer, ATMEL_HLCDC_LAYER_DMA_CFG,
 				    cfg);
 
 	cfg = ATMEL_HLCDC_LAYER_DMA | ATMEL_HLCDC_LAYER_REP;
 
-	अगर (plane->base.type != DRM_PLANE_TYPE_PRIMARY) अणु
+	if (plane->base.type != DRM_PLANE_TYPE_PRIMARY) {
 		cfg |= ATMEL_HLCDC_LAYER_OVR | ATMEL_HLCDC_LAYER_ITER2BL |
 		       ATMEL_HLCDC_LAYER_ITER;
 
-		अगर (क्रमmat->has_alpha)
+		if (format->has_alpha)
 			cfg |= ATMEL_HLCDC_LAYER_LAEN;
-		अन्यथा
+		else
 			cfg |= ATMEL_HLCDC_LAYER_GAEN |
 			       ATMEL_HLCDC_LAYER_GA(state->base.alpha);
-	पूर्ण
+	}
 
-	अगर (state->disc_h && state->disc_w)
+	if (state->disc_h && state->disc_w)
 		cfg |= ATMEL_HLCDC_LAYER_DISCEN;
 
-	aपंचांगel_hlcdc_layer_ग_लिखो_cfg(&plane->layer, desc->layout.general_config,
+	atmel_hlcdc_layer_write_cfg(&plane->layer, desc->layout.general_config,
 				    cfg);
-पूर्ण
+}
 
-अटल व्योम aपंचांगel_hlcdc_plane_update_क्रमmat(काष्ठा aपंचांगel_hlcdc_plane *plane,
-					काष्ठा aपंचांगel_hlcdc_plane_state *state)
-अणु
+static void atmel_hlcdc_plane_update_format(struct atmel_hlcdc_plane *plane,
+					struct atmel_hlcdc_plane_state *state)
+{
 	u32 cfg;
-	पूर्णांक ret;
+	int ret;
 
-	ret = aपंचांगel_hlcdc_क्रमmat_to_plane_mode(state->base.fb->क्रमmat->क्रमmat,
+	ret = atmel_hlcdc_format_to_plane_mode(state->base.fb->format->format,
 					       &cfg);
-	अगर (ret)
-		वापस;
+	if (ret)
+		return;
 
-	अगर ((state->base.fb->क्रमmat->क्रमmat == DRM_FORMAT_YUV422 ||
-	     state->base.fb->क्रमmat->क्रमmat == DRM_FORMAT_NV61) &&
+	if ((state->base.fb->format->format == DRM_FORMAT_YUV422 ||
+	     state->base.fb->format->format == DRM_FORMAT_NV61) &&
 	    drm_rotation_90_or_270(state->base.rotation))
 		cfg |= ATMEL_HLCDC_YUV422ROT;
 
-	aपंचांगel_hlcdc_layer_ग_लिखो_cfg(&plane->layer,
+	atmel_hlcdc_layer_write_cfg(&plane->layer,
 				    ATMEL_HLCDC_LAYER_FORMAT_CFG, cfg);
-पूर्ण
+}
 
-अटल व्योम aपंचांगel_hlcdc_plane_update_clut(काष्ठा aपंचांगel_hlcdc_plane *plane,
-					  काष्ठा aपंचांगel_hlcdc_plane_state *state)
-अणु
-	काष्ठा drm_crtc *crtc = state->base.crtc;
-	काष्ठा drm_color_lut *lut;
-	पूर्णांक idx;
+static void atmel_hlcdc_plane_update_clut(struct atmel_hlcdc_plane *plane,
+					  struct atmel_hlcdc_plane_state *state)
+{
+	struct drm_crtc *crtc = state->base.crtc;
+	struct drm_color_lut *lut;
+	int idx;
 
-	अगर (!crtc || !crtc->state)
-		वापस;
+	if (!crtc || !crtc->state)
+		return;
 
-	अगर (!crtc->state->color_mgmt_changed || !crtc->state->gamma_lut)
-		वापस;
+	if (!crtc->state->color_mgmt_changed || !crtc->state->gamma_lut)
+		return;
 
-	lut = (काष्ठा drm_color_lut *)crtc->state->gamma_lut->data;
+	lut = (struct drm_color_lut *)crtc->state->gamma_lut->data;
 
-	क्रम (idx = 0; idx < ATMEL_HLCDC_CLUT_SIZE; idx++, lut++) अणु
+	for (idx = 0; idx < ATMEL_HLCDC_CLUT_SIZE; idx++, lut++) {
 		u32 val = ((lut->red << 8) & 0xff0000) |
 			(lut->green & 0xff00) |
 			(lut->blue >> 8);
 
-		aपंचांगel_hlcdc_layer_ग_लिखो_clut(&plane->layer, idx, val);
-	पूर्ण
-पूर्ण
+		atmel_hlcdc_layer_write_clut(&plane->layer, idx, val);
+	}
+}
 
-अटल व्योम aपंचांगel_hlcdc_plane_update_buffers(काष्ठा aपंचांगel_hlcdc_plane *plane,
-					काष्ठा aपंचांगel_hlcdc_plane_state *state)
-अणु
-	स्थिर काष्ठा aपंचांगel_hlcdc_layer_desc *desc = plane->layer.desc;
-	काष्ठा drm_framebuffer *fb = state->base.fb;
+static void atmel_hlcdc_plane_update_buffers(struct atmel_hlcdc_plane *plane,
+					struct atmel_hlcdc_plane_state *state)
+{
+	const struct atmel_hlcdc_layer_desc *desc = plane->layer.desc;
+	struct drm_framebuffer *fb = state->base.fb;
 	u32 sr;
-	पूर्णांक i;
+	int i;
 
-	sr = aपंचांगel_hlcdc_layer_पढ़ो_reg(&plane->layer, ATMEL_HLCDC_LAYER_CHSR);
+	sr = atmel_hlcdc_layer_read_reg(&plane->layer, ATMEL_HLCDC_LAYER_CHSR);
 
-	क्रम (i = 0; i < state->nplanes; i++) अणु
-		काष्ठा drm_gem_cma_object *gem = drm_fb_cma_get_gem_obj(fb, i);
+	for (i = 0; i < state->nplanes; i++) {
+		struct drm_gem_cma_object *gem = drm_fb_cma_get_gem_obj(fb, i);
 
 		state->dscrs[i]->addr = gem->paddr + state->offsets[i];
 
-		aपंचांगel_hlcdc_layer_ग_लिखो_reg(&plane->layer,
+		atmel_hlcdc_layer_write_reg(&plane->layer,
 					    ATMEL_HLCDC_LAYER_PLANE_HEAD(i),
 					    state->dscrs[i]->self);
 
-		अगर (!(sr & ATMEL_HLCDC_LAYER_EN)) अणु
-			aपंचांगel_hlcdc_layer_ग_लिखो_reg(&plane->layer,
+		if (!(sr & ATMEL_HLCDC_LAYER_EN)) {
+			atmel_hlcdc_layer_write_reg(&plane->layer,
 					ATMEL_HLCDC_LAYER_PLANE_ADDR(i),
 					state->dscrs[i]->addr);
-			aपंचांगel_hlcdc_layer_ग_लिखो_reg(&plane->layer,
+			atmel_hlcdc_layer_write_reg(&plane->layer,
 					ATMEL_HLCDC_LAYER_PLANE_CTRL(i),
 					state->dscrs[i]->ctrl);
-			aपंचांगel_hlcdc_layer_ग_लिखो_reg(&plane->layer,
+			atmel_hlcdc_layer_write_reg(&plane->layer,
 					ATMEL_HLCDC_LAYER_PLANE_NEXT(i),
 					state->dscrs[i]->self);
-		पूर्ण
+		}
 
-		अगर (desc->layout.xstride[i])
-			aपंचांगel_hlcdc_layer_ग_लिखो_cfg(&plane->layer,
+		if (desc->layout.xstride[i])
+			atmel_hlcdc_layer_write_cfg(&plane->layer,
 						    desc->layout.xstride[i],
 						    state->xstride[i]);
 
-		अगर (desc->layout.pstride[i])
-			aपंचांगel_hlcdc_layer_ग_लिखो_cfg(&plane->layer,
+		if (desc->layout.pstride[i])
+			atmel_hlcdc_layer_write_cfg(&plane->layer,
 						    desc->layout.pstride[i],
 						    state->pstride[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक aपंचांगel_hlcdc_plane_prepare_ahb_routing(काष्ठा drm_crtc_state *c_state)
-अणु
-	अचिन्हित पूर्णांक ahb_load[2] = अणु पूर्ण;
-	काष्ठा drm_plane *plane;
+int atmel_hlcdc_plane_prepare_ahb_routing(struct drm_crtc_state *c_state)
+{
+	unsigned int ahb_load[2] = { };
+	struct drm_plane *plane;
 
-	drm_atomic_crtc_state_क्रम_each_plane(plane, c_state) अणु
-		काष्ठा aपंचांगel_hlcdc_plane_state *plane_state;
-		काष्ठा drm_plane_state *plane_s;
-		अचिन्हित पूर्णांक pixels, load = 0;
-		पूर्णांक i;
+	drm_atomic_crtc_state_for_each_plane(plane, c_state) {
+		struct atmel_hlcdc_plane_state *plane_state;
+		struct drm_plane_state *plane_s;
+		unsigned int pixels, load = 0;
+		int i;
 
 		plane_s = drm_atomic_get_plane_state(c_state->state, plane);
-		अगर (IS_ERR(plane_s))
-			वापस PTR_ERR(plane_s);
+		if (IS_ERR(plane_s))
+			return PTR_ERR(plane_s);
 
 		plane_state =
-			drm_plane_state_to_aपंचांगel_hlcdc_plane_state(plane_s);
+			drm_plane_state_to_atmel_hlcdc_plane_state(plane_s);
 
 		pixels = (plane_state->src_w * plane_state->src_h) -
 			 (plane_state->disc_w * plane_state->disc_h);
 
-		क्रम (i = 0; i < plane_state->nplanes; i++)
+		for (i = 0; i < plane_state->nplanes; i++)
 			load += pixels * plane_state->bpp[i];
 
-		अगर (ahb_load[0] <= ahb_load[1])
+		if (ahb_load[0] <= ahb_load[1])
 			plane_state->ahb_id = 0;
-		अन्यथा
+		else
 			plane_state->ahb_id = 1;
 
 		ahb_load[plane_state->ahb_id] += load;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-aपंचांगel_hlcdc_plane_prepare_disc_area(काष्ठा drm_crtc_state *c_state)
-अणु
-	पूर्णांक disc_x = 0, disc_y = 0, disc_w = 0, disc_h = 0;
-	स्थिर काष्ठा aपंचांगel_hlcdc_layer_cfg_layout *layout;
-	काष्ठा aपंचांगel_hlcdc_plane_state *primary_state;
-	काष्ठा drm_plane_state *primary_s;
-	काष्ठा aपंचांगel_hlcdc_plane *primary;
-	काष्ठा drm_plane *ovl;
+int
+atmel_hlcdc_plane_prepare_disc_area(struct drm_crtc_state *c_state)
+{
+	int disc_x = 0, disc_y = 0, disc_w = 0, disc_h = 0;
+	const struct atmel_hlcdc_layer_cfg_layout *layout;
+	struct atmel_hlcdc_plane_state *primary_state;
+	struct drm_plane_state *primary_s;
+	struct atmel_hlcdc_plane *primary;
+	struct drm_plane *ovl;
 
-	primary = drm_plane_to_aपंचांगel_hlcdc_plane(c_state->crtc->primary);
+	primary = drm_plane_to_atmel_hlcdc_plane(c_state->crtc->primary);
 	layout = &primary->layer.desc->layout;
-	अगर (!layout->disc_pos || !layout->disc_size)
-		वापस 0;
+	if (!layout->disc_pos || !layout->disc_size)
+		return 0;
 
 	primary_s = drm_atomic_get_plane_state(c_state->state,
 					       &primary->base);
-	अगर (IS_ERR(primary_s))
-		वापस PTR_ERR(primary_s);
+	if (IS_ERR(primary_s))
+		return PTR_ERR(primary_s);
 
-	primary_state = drm_plane_state_to_aपंचांगel_hlcdc_plane_state(primary_s);
+	primary_state = drm_plane_state_to_atmel_hlcdc_plane_state(primary_s);
 
-	drm_atomic_crtc_state_क्रम_each_plane(ovl, c_state) अणु
-		काष्ठा aपंचांगel_hlcdc_plane_state *ovl_state;
-		काष्ठा drm_plane_state *ovl_s;
+	drm_atomic_crtc_state_for_each_plane(ovl, c_state) {
+		struct atmel_hlcdc_plane_state *ovl_state;
+		struct drm_plane_state *ovl_s;
 
-		अगर (ovl == c_state->crtc->primary)
-			जारी;
+		if (ovl == c_state->crtc->primary)
+			continue;
 
 		ovl_s = drm_atomic_get_plane_state(c_state->state, ovl);
-		अगर (IS_ERR(ovl_s))
-			वापस PTR_ERR(ovl_s);
+		if (IS_ERR(ovl_s))
+			return PTR_ERR(ovl_s);
 
-		ovl_state = drm_plane_state_to_aपंचांगel_hlcdc_plane_state(ovl_s);
+		ovl_state = drm_plane_state_to_atmel_hlcdc_plane_state(ovl_s);
 
-		अगर (!ovl_s->visible ||
+		if (!ovl_s->visible ||
 		    !ovl_s->fb ||
-		    ovl_s->fb->क्रमmat->has_alpha ||
+		    ovl_s->fb->format->has_alpha ||
 		    ovl_s->alpha != DRM_BLEND_ALPHA_OPAQUE)
-			जारी;
+			continue;
 
 		/* TODO: implement a smarter hidden area detection */
-		अगर (ovl_state->crtc_h * ovl_state->crtc_w < disc_h * disc_w)
-			जारी;
+		if (ovl_state->crtc_h * ovl_state->crtc_w < disc_h * disc_w)
+			continue;
 
 		disc_x = ovl_state->crtc_x;
 		disc_y = ovl_state->crtc_y;
 		disc_h = ovl_state->crtc_h;
 		disc_w = ovl_state->crtc_w;
-	पूर्ण
+	}
 
 	primary_state->disc_x = disc_x;
 	primary_state->disc_y = disc_y;
 	primary_state->disc_w = disc_w;
 	primary_state->disc_h = disc_h;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-aपंचांगel_hlcdc_plane_update_disc_area(काष्ठा aपंचांगel_hlcdc_plane *plane,
-				   काष्ठा aपंचांगel_hlcdc_plane_state *state)
-अणु
-	स्थिर काष्ठा aपंचांगel_hlcdc_layer_cfg_layout *layout;
+static void
+atmel_hlcdc_plane_update_disc_area(struct atmel_hlcdc_plane *plane,
+				   struct atmel_hlcdc_plane_state *state)
+{
+	const struct atmel_hlcdc_layer_cfg_layout *layout;
 
 	layout = &plane->layer.desc->layout;
-	अगर (!layout->disc_pos || !layout->disc_size)
-		वापस;
+	if (!layout->disc_pos || !layout->disc_size)
+		return;
 
-	aपंचांगel_hlcdc_layer_ग_लिखो_cfg(&plane->layer, layout->disc_pos,
+	atmel_hlcdc_layer_write_cfg(&plane->layer, layout->disc_pos,
 				ATMEL_HLCDC_LAYER_DISC_POS(state->disc_x,
 							   state->disc_y));
 
-	aपंचांगel_hlcdc_layer_ग_लिखो_cfg(&plane->layer, layout->disc_size,
+	atmel_hlcdc_layer_write_cfg(&plane->layer, layout->disc_size,
 				ATMEL_HLCDC_LAYER_DISC_SIZE(state->disc_w,
 							    state->disc_h));
-पूर्ण
+}
 
-अटल पूर्णांक aपंचांगel_hlcdc_plane_atomic_check(काष्ठा drm_plane *p,
-					  काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *s = drm_atomic_get_new_plane_state(state, p);
-	काष्ठा aपंचांगel_hlcdc_plane *plane = drm_plane_to_aपंचांगel_hlcdc_plane(p);
-	काष्ठा aपंचांगel_hlcdc_plane_state *hstate =
-				drm_plane_state_to_aपंचांगel_hlcdc_plane_state(s);
-	स्थिर काष्ठा aपंचांगel_hlcdc_layer_desc *desc = plane->layer.desc;
-	काष्ठा drm_framebuffer *fb = hstate->base.fb;
-	स्थिर काष्ठा drm_display_mode *mode;
-	काष्ठा drm_crtc_state *crtc_state;
-	पूर्णांक ret;
-	पूर्णांक i;
+static int atmel_hlcdc_plane_atomic_check(struct drm_plane *p,
+					  struct drm_atomic_state *state)
+{
+	struct drm_plane_state *s = drm_atomic_get_new_plane_state(state, p);
+	struct atmel_hlcdc_plane *plane = drm_plane_to_atmel_hlcdc_plane(p);
+	struct atmel_hlcdc_plane_state *hstate =
+				drm_plane_state_to_atmel_hlcdc_plane_state(s);
+	const struct atmel_hlcdc_layer_desc *desc = plane->layer.desc;
+	struct drm_framebuffer *fb = hstate->base.fb;
+	const struct drm_display_mode *mode;
+	struct drm_crtc_state *crtc_state;
+	int ret;
+	int i;
 
-	अगर (!hstate->base.crtc || WARN_ON(!fb))
-		वापस 0;
+	if (!hstate->base.crtc || WARN_ON(!fb))
+		return 0;
 
 	crtc_state = drm_atomic_get_existing_crtc_state(state, s->crtc);
 	mode = &crtc_state->adjusted_mode;
 
 	ret = drm_atomic_helper_check_plane_state(s, crtc_state,
 						  (1 << 16) / 2048,
-						  पूर्णांक_उच्च, true, true);
-	अगर (ret || !s->visible)
-		वापस ret;
+						  INT_MAX, true, true);
+	if (ret || !s->visible)
+		return ret;
 
 	hstate->src_x = s->src.x1;
 	hstate->src_y = s->src.y1;
@@ -628,163 +627,163 @@ aपंचांगel_hlcdc_plane_update_disc_area(काष्ठा aपंच
 	hstate->crtc_w = drm_rect_width(&s->dst);
 	hstate->crtc_h = drm_rect_height(&s->dst);
 
-	अगर ((hstate->src_x | hstate->src_y | hstate->src_w | hstate->src_h) &
+	if ((hstate->src_x | hstate->src_y | hstate->src_w | hstate->src_h) &
 	    SUBPIXEL_MASK)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	hstate->src_x >>= 16;
 	hstate->src_y >>= 16;
 	hstate->src_w >>= 16;
 	hstate->src_h >>= 16;
 
-	hstate->nplanes = fb->क्रमmat->num_planes;
-	अगर (hstate->nplanes > ATMEL_HLCDC_LAYER_MAX_PLANES)
-		वापस -EINVAL;
+	hstate->nplanes = fb->format->num_planes;
+	if (hstate->nplanes > ATMEL_HLCDC_LAYER_MAX_PLANES)
+		return -EINVAL;
 
-	क्रम (i = 0; i < hstate->nplanes; i++) अणु
-		अचिन्हित पूर्णांक offset = 0;
-		पूर्णांक xभाग = i ? fb->क्रमmat->hsub : 1;
-		पूर्णांक yभाग = i ? fb->क्रमmat->vsub : 1;
+	for (i = 0; i < hstate->nplanes; i++) {
+		unsigned int offset = 0;
+		int xdiv = i ? fb->format->hsub : 1;
+		int ydiv = i ? fb->format->vsub : 1;
 
-		hstate->bpp[i] = fb->क्रमmat->cpp[i];
-		अगर (!hstate->bpp[i])
-			वापस -EINVAL;
+		hstate->bpp[i] = fb->format->cpp[i];
+		if (!hstate->bpp[i])
+			return -EINVAL;
 
-		चयन (hstate->base.rotation & DRM_MODE_ROTATE_MASK) अणु
-		हाल DRM_MODE_ROTATE_90:
-			offset = (hstate->src_y / yभाग) *
+		switch (hstate->base.rotation & DRM_MODE_ROTATE_MASK) {
+		case DRM_MODE_ROTATE_90:
+			offset = (hstate->src_y / ydiv) *
 				 fb->pitches[i];
 			offset += ((hstate->src_x + hstate->src_w - 1) /
-				   xभाग) * hstate->bpp[i];
-			hstate->xstride[i] = -(((hstate->src_h - 1) / yभाग) *
+				   xdiv) * hstate->bpp[i];
+			hstate->xstride[i] = -(((hstate->src_h - 1) / ydiv) *
 					    fb->pitches[i]) -
 					  (2 * hstate->bpp[i]);
 			hstate->pstride[i] = fb->pitches[i] - hstate->bpp[i];
-			अवरोध;
-		हाल DRM_MODE_ROTATE_180:
+			break;
+		case DRM_MODE_ROTATE_180:
 			offset = ((hstate->src_y + hstate->src_h - 1) /
-				  yभाग) * fb->pitches[i];
+				  ydiv) * fb->pitches[i];
 			offset += ((hstate->src_x + hstate->src_w - 1) /
-				   xभाग) * hstate->bpp[i];
-			hstate->xstride[i] = ((((hstate->src_w - 1) / xभाग) - 1) *
+				   xdiv) * hstate->bpp[i];
+			hstate->xstride[i] = ((((hstate->src_w - 1) / xdiv) - 1) *
 					   hstate->bpp[i]) - fb->pitches[i];
 			hstate->pstride[i] = -2 * hstate->bpp[i];
-			अवरोध;
-		हाल DRM_MODE_ROTATE_270:
+			break;
+		case DRM_MODE_ROTATE_270:
 			offset = ((hstate->src_y + hstate->src_h - 1) /
-				  yभाग) * fb->pitches[i];
-			offset += (hstate->src_x / xभाग) * hstate->bpp[i];
-			hstate->xstride[i] = ((hstate->src_h - 1) / yभाग) *
+				  ydiv) * fb->pitches[i];
+			offset += (hstate->src_x / xdiv) * hstate->bpp[i];
+			hstate->xstride[i] = ((hstate->src_h - 1) / ydiv) *
 					  fb->pitches[i];
 			hstate->pstride[i] = -fb->pitches[i] - hstate->bpp[i];
-			अवरोध;
-		हाल DRM_MODE_ROTATE_0:
-		शेष:
-			offset = (hstate->src_y / yभाग) * fb->pitches[i];
-			offset += (hstate->src_x / xभाग) * hstate->bpp[i];
+			break;
+		case DRM_MODE_ROTATE_0:
+		default:
+			offset = (hstate->src_y / ydiv) * fb->pitches[i];
+			offset += (hstate->src_x / xdiv) * hstate->bpp[i];
 			hstate->xstride[i] = fb->pitches[i] -
-					  ((hstate->src_w / xभाग) *
+					  ((hstate->src_w / xdiv) *
 					   hstate->bpp[i]);
 			hstate->pstride[i] = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		hstate->offsets[i] = offset + fb->offsets[i];
-	पूर्ण
+	}
 
 	/*
-	 * Swap width and size in हाल of 90 or 270 degrees rotation
+	 * Swap width and size in case of 90 or 270 degrees rotation
 	 */
-	अगर (drm_rotation_90_or_270(hstate->base.rotation)) अणु
+	if (drm_rotation_90_or_270(hstate->base.rotation)) {
 		swap(hstate->src_w, hstate->src_h);
-	पूर्ण
+	}
 
-	अगर (!desc->layout.size &&
+	if (!desc->layout.size &&
 	    (mode->hdisplay != hstate->crtc_w ||
 	     mode->vdisplay != hstate->crtc_h))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर ((hstate->crtc_h != hstate->src_h || hstate->crtc_w != hstate->src_w) &&
+	if ((hstate->crtc_h != hstate->src_h || hstate->crtc_w != hstate->src_w) &&
 	    (!desc->layout.memsize ||
-	     hstate->base.fb->क्रमmat->has_alpha))
-		वापस -EINVAL;
+	     hstate->base.fb->format->has_alpha))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम aपंचांगel_hlcdc_plane_atomic_disable(काष्ठा drm_plane *p,
-					     काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा aपंचांगel_hlcdc_plane *plane = drm_plane_to_aपंचांगel_hlcdc_plane(p);
+static void atmel_hlcdc_plane_atomic_disable(struct drm_plane *p,
+					     struct drm_atomic_state *state)
+{
+	struct atmel_hlcdc_plane *plane = drm_plane_to_atmel_hlcdc_plane(p);
 
-	/* Disable पूर्णांकerrupts */
-	aपंचांगel_hlcdc_layer_ग_लिखो_reg(&plane->layer, ATMEL_HLCDC_LAYER_IDR,
+	/* Disable interrupts */
+	atmel_hlcdc_layer_write_reg(&plane->layer, ATMEL_HLCDC_LAYER_IDR,
 				    0xffffffff);
 
 	/* Disable the layer */
-	aपंचांगel_hlcdc_layer_ग_लिखो_reg(&plane->layer, ATMEL_HLCDC_LAYER_CHDR,
+	atmel_hlcdc_layer_write_reg(&plane->layer, ATMEL_HLCDC_LAYER_CHDR,
 				    ATMEL_HLCDC_LAYER_RST |
 				    ATMEL_HLCDC_LAYER_A2Q |
 				    ATMEL_HLCDC_LAYER_UPDATE);
 
-	/* Clear all pending पूर्णांकerrupts */
-	aपंचांगel_hlcdc_layer_पढ़ो_reg(&plane->layer, ATMEL_HLCDC_LAYER_ISR);
-पूर्ण
+	/* Clear all pending interrupts */
+	atmel_hlcdc_layer_read_reg(&plane->layer, ATMEL_HLCDC_LAYER_ISR);
+}
 
-अटल व्योम aपंचांगel_hlcdc_plane_atomic_update(काष्ठा drm_plane *p,
-					    काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *new_s = drm_atomic_get_new_plane_state(state,
+static void atmel_hlcdc_plane_atomic_update(struct drm_plane *p,
+					    struct drm_atomic_state *state)
+{
+	struct drm_plane_state *new_s = drm_atomic_get_new_plane_state(state,
 								       p);
-	काष्ठा aपंचांगel_hlcdc_plane *plane = drm_plane_to_aपंचांगel_hlcdc_plane(p);
-	काष्ठा aपंचांगel_hlcdc_plane_state *hstate =
-			drm_plane_state_to_aपंचांगel_hlcdc_plane_state(new_s);
+	struct atmel_hlcdc_plane *plane = drm_plane_to_atmel_hlcdc_plane(p);
+	struct atmel_hlcdc_plane_state *hstate =
+			drm_plane_state_to_atmel_hlcdc_plane_state(new_s);
 	u32 sr;
 
-	अगर (!new_s->crtc || !new_s->fb)
-		वापस;
+	if (!new_s->crtc || !new_s->fb)
+		return;
 
-	अगर (!hstate->base.visible) अणु
-		aपंचांगel_hlcdc_plane_atomic_disable(p, state);
-		वापस;
-	पूर्ण
+	if (!hstate->base.visible) {
+		atmel_hlcdc_plane_atomic_disable(p, state);
+		return;
+	}
 
-	aपंचांगel_hlcdc_plane_update_pos_and_size(plane, hstate);
-	aपंचांगel_hlcdc_plane_update_general_settings(plane, hstate);
-	aपंचांगel_hlcdc_plane_update_क्रमmat(plane, hstate);
-	aपंचांगel_hlcdc_plane_update_clut(plane, hstate);
-	aपंचांगel_hlcdc_plane_update_buffers(plane, hstate);
-	aपंचांगel_hlcdc_plane_update_disc_area(plane, hstate);
+	atmel_hlcdc_plane_update_pos_and_size(plane, hstate);
+	atmel_hlcdc_plane_update_general_settings(plane, hstate);
+	atmel_hlcdc_plane_update_format(plane, hstate);
+	atmel_hlcdc_plane_update_clut(plane, hstate);
+	atmel_hlcdc_plane_update_buffers(plane, hstate);
+	atmel_hlcdc_plane_update_disc_area(plane, hstate);
 
-	/* Enable the overrun पूर्णांकerrupts. */
-	aपंचांगel_hlcdc_layer_ग_लिखो_reg(&plane->layer, ATMEL_HLCDC_LAYER_IER,
+	/* Enable the overrun interrupts. */
+	atmel_hlcdc_layer_write_reg(&plane->layer, ATMEL_HLCDC_LAYER_IER,
 				    ATMEL_HLCDC_LAYER_OVR_IRQ(0) |
 				    ATMEL_HLCDC_LAYER_OVR_IRQ(1) |
 				    ATMEL_HLCDC_LAYER_OVR_IRQ(2));
 
 	/* Apply the new config at the next SOF event. */
-	sr = aपंचांगel_hlcdc_layer_पढ़ो_reg(&plane->layer, ATMEL_HLCDC_LAYER_CHSR);
-	aपंचांगel_hlcdc_layer_ग_लिखो_reg(&plane->layer, ATMEL_HLCDC_LAYER_CHER,
+	sr = atmel_hlcdc_layer_read_reg(&plane->layer, ATMEL_HLCDC_LAYER_CHSR);
+	atmel_hlcdc_layer_write_reg(&plane->layer, ATMEL_HLCDC_LAYER_CHER,
 			ATMEL_HLCDC_LAYER_UPDATE |
 			(sr & ATMEL_HLCDC_LAYER_EN ?
 			 ATMEL_HLCDC_LAYER_A2Q : ATMEL_HLCDC_LAYER_EN));
-पूर्ण
+}
 
-अटल पूर्णांक aपंचांगel_hlcdc_plane_init_properties(काष्ठा aपंचांगel_hlcdc_plane *plane)
-अणु
-	स्थिर काष्ठा aपंचांगel_hlcdc_layer_desc *desc = plane->layer.desc;
+static int atmel_hlcdc_plane_init_properties(struct atmel_hlcdc_plane *plane)
+{
+	const struct atmel_hlcdc_layer_desc *desc = plane->layer.desc;
 
-	अगर (desc->type == ATMEL_HLCDC_OVERLAY_LAYER ||
-	    desc->type == ATMEL_HLCDC_CURSOR_LAYER) अणु
-		पूर्णांक ret;
+	if (desc->type == ATMEL_HLCDC_OVERLAY_LAYER ||
+	    desc->type == ATMEL_HLCDC_CURSOR_LAYER) {
+		int ret;
 
 		ret = drm_plane_create_alpha_property(&plane->base);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (desc->layout.xstride[0] && desc->layout.pstride[0]) अणु
-		पूर्णांक ret;
+	if (desc->layout.xstride[0] && desc->layout.pstride[0]) {
+		int ret;
 
 		ret = drm_plane_create_rotation_property(&plane->base,
 							 DRM_MODE_ROTATE_0,
@@ -792,67 +791,67 @@ aपंचांगel_hlcdc_plane_update_disc_area(काष्ठा aपंच
 							 DRM_MODE_ROTATE_90 |
 							 DRM_MODE_ROTATE_180 |
 							 DRM_MODE_ROTATE_270);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (desc->layout.csc) अणु
+	if (desc->layout.csc) {
 		/*
 		 * TODO: decare a "yuv-to-rgb-conv-factors" property to let
-		 * userspace modअगरy these factors (using a BLOB property ?).
+		 * userspace modify these factors (using a BLOB property ?).
 		 */
-		aपंचांगel_hlcdc_layer_ग_लिखो_cfg(&plane->layer,
+		atmel_hlcdc_layer_write_cfg(&plane->layer,
 					    desc->layout.csc,
 					    0x4c900091);
-		aपंचांगel_hlcdc_layer_ग_लिखो_cfg(&plane->layer,
+		atmel_hlcdc_layer_write_cfg(&plane->layer,
 					    desc->layout.csc + 1,
 					    0x7a5f5090);
-		aपंचांगel_hlcdc_layer_ग_लिखो_cfg(&plane->layer,
+		atmel_hlcdc_layer_write_cfg(&plane->layer,
 					    desc->layout.csc + 2,
 					    0x40040890);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम aपंचांगel_hlcdc_plane_irq(काष्ठा aपंचांगel_hlcdc_plane *plane)
-अणु
-	स्थिर काष्ठा aपंचांगel_hlcdc_layer_desc *desc = plane->layer.desc;
+void atmel_hlcdc_plane_irq(struct atmel_hlcdc_plane *plane)
+{
+	const struct atmel_hlcdc_layer_desc *desc = plane->layer.desc;
 	u32 isr;
 
-	isr = aपंचांगel_hlcdc_layer_पढ़ो_reg(&plane->layer, ATMEL_HLCDC_LAYER_ISR);
+	isr = atmel_hlcdc_layer_read_reg(&plane->layer, ATMEL_HLCDC_LAYER_ISR);
 
 	/*
-	 * There's not much we can करो in हाल of overrun except inक्रमming
-	 * the user. However, we are in पूर्णांकerrupt context here, hence the
+	 * There's not much we can do in case of overrun except informing
+	 * the user. However, we are in interrupt context here, hence the
 	 * use of dev_dbg().
 	 */
-	अगर (isr &
+	if (isr &
 	    (ATMEL_HLCDC_LAYER_OVR_IRQ(0) | ATMEL_HLCDC_LAYER_OVR_IRQ(1) |
 	     ATMEL_HLCDC_LAYER_OVR_IRQ(2)))
 		dev_dbg(plane->base.dev->dev, "overrun on plane %s\n",
 			desc->name);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा drm_plane_helper_funcs aपंचांगel_hlcdc_layer_plane_helper_funcs = अणु
-	.atomic_check = aपंचांगel_hlcdc_plane_atomic_check,
-	.atomic_update = aपंचांगel_hlcdc_plane_atomic_update,
-	.atomic_disable = aपंचांगel_hlcdc_plane_atomic_disable,
-पूर्ण;
+static const struct drm_plane_helper_funcs atmel_hlcdc_layer_plane_helper_funcs = {
+	.atomic_check = atmel_hlcdc_plane_atomic_check,
+	.atomic_update = atmel_hlcdc_plane_atomic_update,
+	.atomic_disable = atmel_hlcdc_plane_atomic_disable,
+};
 
-अटल पूर्णांक aपंचांगel_hlcdc_plane_alloc_dscrs(काष्ठा drm_plane *p,
-					 काष्ठा aपंचांगel_hlcdc_plane_state *state)
-अणु
-	काष्ठा aपंचांगel_hlcdc_dc *dc = p->dev->dev_निजी;
-	पूर्णांक i;
+static int atmel_hlcdc_plane_alloc_dscrs(struct drm_plane *p,
+					 struct atmel_hlcdc_plane_state *state)
+{
+	struct atmel_hlcdc_dc *dc = p->dev->dev_private;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(state->dscrs); i++) अणु
-		काष्ठा aपंचांगel_hlcdc_dma_channel_dscr *dscr;
+	for (i = 0; i < ARRAY_SIZE(state->dscrs); i++) {
+		struct atmel_hlcdc_dma_channel_dscr *dscr;
 		dma_addr_t dscr_dma;
 
 		dscr = dma_pool_alloc(dc->dscrpool, GFP_KERNEL, &dscr_dma);
-		अगर (!dscr)
-			जाओ err;
+		if (!dscr)
+			goto err;
 
 		dscr->addr = 0;
 		dscr->next = dscr_dma;
@@ -860,160 +859,160 @@ aपंचांगel_hlcdc_plane_update_disc_area(काष्ठा aपंच
 		dscr->ctrl = ATMEL_HLCDC_LAYER_DFETCH;
 
 		state->dscrs[i] = dscr;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	क्रम (i--; i >= 0; i--) अणु
-		dma_pool_मुक्त(dc->dscrpool, state->dscrs[i],
+	for (i--; i >= 0; i--) {
+		dma_pool_free(dc->dscrpool, state->dscrs[i],
 			      state->dscrs[i]->self);
-	पूर्ण
+	}
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल व्योम aपंचांगel_hlcdc_plane_reset(काष्ठा drm_plane *p)
-अणु
-	काष्ठा aपंचांगel_hlcdc_plane_state *state;
+static void atmel_hlcdc_plane_reset(struct drm_plane *p)
+{
+	struct atmel_hlcdc_plane_state *state;
 
-	अगर (p->state) अणु
-		state = drm_plane_state_to_aपंचांगel_hlcdc_plane_state(p->state);
+	if (p->state) {
+		state = drm_plane_state_to_atmel_hlcdc_plane_state(p->state);
 
-		अगर (state->base.fb)
+		if (state->base.fb)
 			drm_framebuffer_put(state->base.fb);
 
-		kमुक्त(state);
-		p->state = शून्य;
-	पूर्ण
+		kfree(state);
+		p->state = NULL;
+	}
 
-	state = kzalloc(माप(*state), GFP_KERNEL);
-	अगर (state) अणु
-		अगर (aपंचांगel_hlcdc_plane_alloc_dscrs(p, state)) अणु
-			kमुक्त(state);
+	state = kzalloc(sizeof(*state), GFP_KERNEL);
+	if (state) {
+		if (atmel_hlcdc_plane_alloc_dscrs(p, state)) {
+			kfree(state);
 			dev_err(p->dev->dev,
 				"Failed to allocate initial plane state\n");
-			वापस;
-		पूर्ण
+			return;
+		}
 		__drm_atomic_helper_plane_reset(p, &state->base);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा drm_plane_state *
-aपंचांगel_hlcdc_plane_atomic_duplicate_state(काष्ठा drm_plane *p)
-अणु
-	काष्ठा aपंचांगel_hlcdc_plane_state *state =
-			drm_plane_state_to_aपंचांगel_hlcdc_plane_state(p->state);
-	काष्ठा aपंचांगel_hlcdc_plane_state *copy;
+static struct drm_plane_state *
+atmel_hlcdc_plane_atomic_duplicate_state(struct drm_plane *p)
+{
+	struct atmel_hlcdc_plane_state *state =
+			drm_plane_state_to_atmel_hlcdc_plane_state(p->state);
+	struct atmel_hlcdc_plane_state *copy;
 
-	copy = kmemdup(state, माप(*state), GFP_KERNEL);
-	अगर (!copy)
-		वापस शून्य;
+	copy = kmemdup(state, sizeof(*state), GFP_KERNEL);
+	if (!copy)
+		return NULL;
 
-	अगर (aपंचांगel_hlcdc_plane_alloc_dscrs(p, copy)) अणु
-		kमुक्त(copy);
-		वापस शून्य;
-	पूर्ण
+	if (atmel_hlcdc_plane_alloc_dscrs(p, copy)) {
+		kfree(copy);
+		return NULL;
+	}
 
-	अगर (copy->base.fb)
+	if (copy->base.fb)
 		drm_framebuffer_get(copy->base.fb);
 
-	वापस &copy->base;
-पूर्ण
+	return &copy->base;
+}
 
-अटल व्योम aपंचांगel_hlcdc_plane_atomic_destroy_state(काष्ठा drm_plane *p,
-						   काष्ठा drm_plane_state *s)
-अणु
-	काष्ठा aपंचांगel_hlcdc_plane_state *state =
-			drm_plane_state_to_aपंचांगel_hlcdc_plane_state(s);
-	काष्ठा aपंचांगel_hlcdc_dc *dc = p->dev->dev_निजी;
-	पूर्णांक i;
+static void atmel_hlcdc_plane_atomic_destroy_state(struct drm_plane *p,
+						   struct drm_plane_state *s)
+{
+	struct atmel_hlcdc_plane_state *state =
+			drm_plane_state_to_atmel_hlcdc_plane_state(s);
+	struct atmel_hlcdc_dc *dc = p->dev->dev_private;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(state->dscrs); i++) अणु
-		dma_pool_मुक्त(dc->dscrpool, state->dscrs[i],
+	for (i = 0; i < ARRAY_SIZE(state->dscrs); i++) {
+		dma_pool_free(dc->dscrpool, state->dscrs[i],
 			      state->dscrs[i]->self);
-	पूर्ण
+	}
 
-	अगर (s->fb)
+	if (s->fb)
 		drm_framebuffer_put(s->fb);
 
-	kमुक्त(state);
-पूर्ण
+	kfree(state);
+}
 
-अटल स्थिर काष्ठा drm_plane_funcs layer_plane_funcs = अणु
+static const struct drm_plane_funcs layer_plane_funcs = {
 	.update_plane = drm_atomic_helper_update_plane,
 	.disable_plane = drm_atomic_helper_disable_plane,
 	.destroy = drm_plane_cleanup,
-	.reset = aपंचांगel_hlcdc_plane_reset,
-	.atomic_duplicate_state = aपंचांगel_hlcdc_plane_atomic_duplicate_state,
-	.atomic_destroy_state = aपंचांगel_hlcdc_plane_atomic_destroy_state,
-पूर्ण;
+	.reset = atmel_hlcdc_plane_reset,
+	.atomic_duplicate_state = atmel_hlcdc_plane_atomic_duplicate_state,
+	.atomic_destroy_state = atmel_hlcdc_plane_atomic_destroy_state,
+};
 
-अटल पूर्णांक aपंचांगel_hlcdc_plane_create(काष्ठा drm_device *dev,
-				    स्थिर काष्ठा aपंचांगel_hlcdc_layer_desc *desc)
-अणु
-	काष्ठा aपंचांगel_hlcdc_dc *dc = dev->dev_निजी;
-	काष्ठा aपंचांगel_hlcdc_plane *plane;
-	क्रमागत drm_plane_type type;
-	पूर्णांक ret;
+static int atmel_hlcdc_plane_create(struct drm_device *dev,
+				    const struct atmel_hlcdc_layer_desc *desc)
+{
+	struct atmel_hlcdc_dc *dc = dev->dev_private;
+	struct atmel_hlcdc_plane *plane;
+	enum drm_plane_type type;
+	int ret;
 
-	plane = devm_kzalloc(dev->dev, माप(*plane), GFP_KERNEL);
-	अगर (!plane)
-		वापस -ENOMEM;
+	plane = devm_kzalloc(dev->dev, sizeof(*plane), GFP_KERNEL);
+	if (!plane)
+		return -ENOMEM;
 
-	aपंचांगel_hlcdc_layer_init(&plane->layer, desc, dc->hlcdc->regmap);
+	atmel_hlcdc_layer_init(&plane->layer, desc, dc->hlcdc->regmap);
 
-	अगर (desc->type == ATMEL_HLCDC_BASE_LAYER)
+	if (desc->type == ATMEL_HLCDC_BASE_LAYER)
 		type = DRM_PLANE_TYPE_PRIMARY;
-	अन्यथा अगर (desc->type == ATMEL_HLCDC_CURSOR_LAYER)
+	else if (desc->type == ATMEL_HLCDC_CURSOR_LAYER)
 		type = DRM_PLANE_TYPE_CURSOR;
-	अन्यथा
+	else
 		type = DRM_PLANE_TYPE_OVERLAY;
 
 	ret = drm_universal_plane_init(dev, &plane->base, 0,
 				       &layer_plane_funcs,
-				       desc->क्रमmats->क्रमmats,
-				       desc->क्रमmats->nक्रमmats,
-				       शून्य, type, शून्य);
-	अगर (ret)
-		वापस ret;
+				       desc->formats->formats,
+				       desc->formats->nformats,
+				       NULL, type, NULL);
+	if (ret)
+		return ret;
 
 	drm_plane_helper_add(&plane->base,
-			     &aपंचांगel_hlcdc_layer_plane_helper_funcs);
+			     &atmel_hlcdc_layer_plane_helper_funcs);
 
-	/* Set शेष property values*/
-	ret = aपंचांगel_hlcdc_plane_init_properties(plane);
-	अगर (ret)
-		वापस ret;
+	/* Set default property values*/
+	ret = atmel_hlcdc_plane_init_properties(plane);
+	if (ret)
+		return ret;
 
 	dc->layers[desc->id] = &plane->layer;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक aपंचांगel_hlcdc_create_planes(काष्ठा drm_device *dev)
-अणु
-	काष्ठा aपंचांगel_hlcdc_dc *dc = dev->dev_निजी;
-	स्थिर काष्ठा aपंचांगel_hlcdc_layer_desc *descs = dc->desc->layers;
-	पूर्णांक nlayers = dc->desc->nlayers;
-	पूर्णांक i, ret;
+int atmel_hlcdc_create_planes(struct drm_device *dev)
+{
+	struct atmel_hlcdc_dc *dc = dev->dev_private;
+	const struct atmel_hlcdc_layer_desc *descs = dc->desc->layers;
+	int nlayers = dc->desc->nlayers;
+	int i, ret;
 
 	dc->dscrpool = dmam_pool_create("atmel-hlcdc-dscr", dev->dev,
-				माप(काष्ठा aपंचांगel_hlcdc_dma_channel_dscr),
-				माप(u64), 0);
-	अगर (!dc->dscrpool)
-		वापस -ENOMEM;
+				sizeof(struct atmel_hlcdc_dma_channel_dscr),
+				sizeof(u64), 0);
+	if (!dc->dscrpool)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < nlayers; i++) अणु
-		अगर (descs[i].type != ATMEL_HLCDC_BASE_LAYER &&
+	for (i = 0; i < nlayers; i++) {
+		if (descs[i].type != ATMEL_HLCDC_BASE_LAYER &&
 		    descs[i].type != ATMEL_HLCDC_OVERLAY_LAYER &&
 		    descs[i].type != ATMEL_HLCDC_CURSOR_LAYER)
-			जारी;
+			continue;
 
-		ret = aपंचांगel_hlcdc_plane_create(dev, &descs[i]);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		ret = atmel_hlcdc_plane_create(dev, &descs[i]);
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

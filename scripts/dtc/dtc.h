@@ -1,97 +1,96 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-#अगर_अघोषित DTC_H
-#घोषणा DTC_H
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#ifndef DTC_H
+#define DTC_H
 
 /*
  * (C) Copyright David Gibson <dwg@au1.ibm.com>, IBM Corporation.  2005.
  */
 
-#समावेश <मानकपन.स>
-#समावेश <माला.स>
-#समावेश <मानककोष.स>
-#समावेश <मानक_निवेशt.h>
-#समावेश <stdbool.h>
-#समावेश <मानकतर्क.स>
-#समावेश <निश्चित.स>
-#समावेश <प्रकार.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <unistd.h>
-#समावेश <पूर्णांकtypes.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdarg.h>
+#include <assert.h>
+#include <ctype.h>
+#include <errno.h>
+#include <unistd.h>
+#include <inttypes.h>
 
-#समावेश <libfdt_env.h>
-#समावेश <fdt.h>
+#include <libfdt_env.h>
+#include <fdt.h>
 
-#समावेश "util.h"
+#include "util.h"
 
-#अगर_घोषित DEBUG
-#घोषणा debug(...)	म_लिखो(__VA_ARGS__)
-#अन्यथा
-#घोषणा debug(...)
-#पूर्ण_अगर
+#ifdef DEBUG
+#define debug(...)	printf(__VA_ARGS__)
+#else
+#define debug(...)
+#endif
 
-#घोषणा DEFAULT_FDT_VERSION	17
+#define DEFAULT_FDT_VERSION	17
 
 /*
  * Command line options
  */
-बाह्य पूर्णांक quiet;		/* Level of quietness */
-बाह्य पूर्णांक reservक्रमागत;		/* Number of memory reservation slots */
-बाह्य पूर्णांक minsize;		/* Minimum blob size */
-बाह्य पूर्णांक padsize;		/* Additional padding to blob */
-बाह्य पूर्णांक alignsize;		/* Additional padding to blob accroding to the alignsize */
-बाह्य पूर्णांक phandle_क्रमmat;	/* Use linux,phandle or phandle properties */
-बाह्य पूर्णांक generate_symbols;	/* generate symbols क्रम nodes with labels */
-बाह्य पूर्णांक generate_fixups;	/* generate fixups */
-बाह्य पूर्णांक स्वतः_label_aliases;	/* स्वतः generate labels -> aliases */
-बाह्य पूर्णांक annotate;		/* annotate .dts with input source location */
+extern int quiet;		/* Level of quietness */
+extern int reservenum;		/* Number of memory reservation slots */
+extern int minsize;		/* Minimum blob size */
+extern int padsize;		/* Additional padding to blob */
+extern int alignsize;		/* Additional padding to blob accroding to the alignsize */
+extern int phandle_format;	/* Use linux,phandle or phandle properties */
+extern int generate_symbols;	/* generate symbols for nodes with labels */
+extern int generate_fixups;	/* generate fixups */
+extern int auto_label_aliases;	/* auto generate labels -> aliases */
+extern int annotate;		/* annotate .dts with input source location */
 
-#घोषणा PHANDLE_LEGACY	0x1
-#घोषणा PHANDLE_EPAPR	0x2
-#घोषणा PHANDLE_BOTH	0x3
+#define PHANDLE_LEGACY	0x1
+#define PHANDLE_EPAPR	0x2
+#define PHANDLE_BOTH	0x3
 
-प्रकार uपूर्णांक32_t cell_t;
+typedef uint32_t cell_t;
 
-अटल अंतरभूत uपूर्णांक16_t dtb_ld16(स्थिर व्योम *p)
-अणु
-	स्थिर uपूर्णांक8_t *bp = (स्थिर uपूर्णांक8_t *)p;
+static inline uint16_t dtb_ld16(const void *p)
+{
+	const uint8_t *bp = (const uint8_t *)p;
 
-	वापस ((uपूर्णांक16_t)bp[0] << 8)
+	return ((uint16_t)bp[0] << 8)
 		| bp[1];
-पूर्ण
+}
 
-अटल अंतरभूत uपूर्णांक32_t dtb_ld32(स्थिर व्योम *p)
-अणु
-	स्थिर uपूर्णांक8_t *bp = (स्थिर uपूर्णांक8_t *)p;
+static inline uint32_t dtb_ld32(const void *p)
+{
+	const uint8_t *bp = (const uint8_t *)p;
 
-	वापस ((uपूर्णांक32_t)bp[0] << 24)
-		| ((uपूर्णांक32_t)bp[1] << 16)
-		| ((uपूर्णांक32_t)bp[2] << 8)
+	return ((uint32_t)bp[0] << 24)
+		| ((uint32_t)bp[1] << 16)
+		| ((uint32_t)bp[2] << 8)
 		| bp[3];
-पूर्ण
+}
 
-अटल अंतरभूत uपूर्णांक64_t dtb_ld64(स्थिर व्योम *p)
-अणु
-	स्थिर uपूर्णांक8_t *bp = (स्थिर uपूर्णांक8_t *)p;
+static inline uint64_t dtb_ld64(const void *p)
+{
+	const uint8_t *bp = (const uint8_t *)p;
 
-	वापस ((uपूर्णांक64_t)bp[0] << 56)
-		| ((uपूर्णांक64_t)bp[1] << 48)
-		| ((uपूर्णांक64_t)bp[2] << 40)
-		| ((uपूर्णांक64_t)bp[3] << 32)
-		| ((uपूर्णांक64_t)bp[4] << 24)
-		| ((uपूर्णांक64_t)bp[5] << 16)
-		| ((uपूर्णांक64_t)bp[6] << 8)
+	return ((uint64_t)bp[0] << 56)
+		| ((uint64_t)bp[1] << 48)
+		| ((uint64_t)bp[2] << 40)
+		| ((uint64_t)bp[3] << 32)
+		| ((uint64_t)bp[4] << 24)
+		| ((uint64_t)bp[5] << 16)
+		| ((uint64_t)bp[6] << 8)
 		| bp[7];
-पूर्ण
+}
 
-#घोषणा streq(a, b)	(म_भेद((a), (b)) == 0)
-#घोषणा strstarts(s, prefix)	(म_भेदन((s), (prefix), म_माप(prefix)) == 0)
-#घोषणा strprefixeq(a, n, b)	(म_माप(b) == (n) && (स_भेद(a, b, n) == 0))
+#define streq(a, b)	(strcmp((a), (b)) == 0)
+#define strstarts(s, prefix)	(strncmp((s), (prefix), strlen(prefix)) == 0)
+#define strprefixeq(a, n, b)	(strlen(b) == (n) && (memcmp(a, b, n) == 0))
 
-#घोषणा ALIGN(x, a)	(((x) + (a) - 1) & ~((a) - 1))
+#define ALIGN(x, a)	(((x) + (a) - 1) & ~((a) - 1))
 
 /* Data blobs */
-क्रमागत markertype अणु
+enum markertype {
 	TYPE_NONE,
 	REF_PHANDLE,
 	REF_PATH,
@@ -101,233 +100,233 @@
 	TYPE_UINT32,
 	TYPE_UINT64,
 	TYPE_STRING,
-पूर्ण;
-बाह्य स्थिर अक्षर *markername(क्रमागत markertype markertype);
+};
+extern const char *markername(enum markertype markertype);
 
-काष्ठा  marker अणु
-	क्रमागत markertype type;
-	अचिन्हित पूर्णांक offset;
-	अक्षर *ref;
-	काष्ठा marker *next;
-पूर्ण;
+struct  marker {
+	enum markertype type;
+	unsigned int offset;
+	char *ref;
+	struct marker *next;
+};
 
-काष्ठा data अणु
-	अचिन्हित पूर्णांक len;
-	अक्षर *val;
-	काष्ठा marker *markers;
-पूर्ण;
+struct data {
+	unsigned int len;
+	char *val;
+	struct marker *markers;
+};
 
 
-#घोषणा empty_data ((काष्ठा data)अणु 0 /* all .members = 0 or शून्य */ पूर्ण)
+#define empty_data ((struct data){ 0 /* all .members = 0 or NULL */ })
 
-#घोषणा क्रम_each_marker(m) \
-	क्रम (; (m); (m) = (m)->next)
-#घोषणा क्रम_each_marker_of_type(m, t) \
-	क्रम_each_marker(m) \
-		अगर ((m)->type == (t))
+#define for_each_marker(m) \
+	for (; (m); (m) = (m)->next)
+#define for_each_marker_of_type(m, t) \
+	for_each_marker(m) \
+		if ((m)->type == (t))
 
-माप_प्रकार type_marker_length(काष्ठा marker *m);
+size_t type_marker_length(struct marker *m);
 
-व्योम data_मुक्त(काष्ठा data d);
+void data_free(struct data d);
 
-काष्ठा data data_grow_क्रम(काष्ठा data d, अचिन्हित पूर्णांक xlen);
+struct data data_grow_for(struct data d, unsigned int xlen);
 
-काष्ठा data data_copy_mem(स्थिर अक्षर *mem, पूर्णांक len);
-काष्ठा data data_copy_escape_string(स्थिर अक्षर *s, पूर्णांक len);
-काष्ठा data data_copy_file(खाता *f, माप_प्रकार len);
+struct data data_copy_mem(const char *mem, int len);
+struct data data_copy_escape_string(const char *s, int len);
+struct data data_copy_file(FILE *f, size_t len);
 
-काष्ठा data data_append_data(काष्ठा data d, स्थिर व्योम *p, पूर्णांक len);
-काष्ठा data data_insert_at_marker(काष्ठा data d, काष्ठा marker *m,
-				  स्थिर व्योम *p, पूर्णांक len);
-काष्ठा data data_merge(काष्ठा data d1, काष्ठा data d2);
-काष्ठा data data_append_cell(काष्ठा data d, cell_t word);
-काष्ठा data data_append_पूर्णांकeger(काष्ठा data d, uपूर्णांक64_t word, पूर्णांक bits);
-काष्ठा data data_append_re(काष्ठा data d, uपूर्णांक64_t address, uपूर्णांक64_t size);
-काष्ठा data data_append_addr(काष्ठा data d, uपूर्णांक64_t addr);
-काष्ठा data data_append_byte(काष्ठा data d, uपूर्णांक8_t byte);
-काष्ठा data data_append_zeroes(काष्ठा data d, पूर्णांक len);
-काष्ठा data data_append_align(काष्ठा data d, पूर्णांक align);
+struct data data_append_data(struct data d, const void *p, int len);
+struct data data_insert_at_marker(struct data d, struct marker *m,
+				  const void *p, int len);
+struct data data_merge(struct data d1, struct data d2);
+struct data data_append_cell(struct data d, cell_t word);
+struct data data_append_integer(struct data d, uint64_t word, int bits);
+struct data data_append_re(struct data d, uint64_t address, uint64_t size);
+struct data data_append_addr(struct data d, uint64_t addr);
+struct data data_append_byte(struct data d, uint8_t byte);
+struct data data_append_zeroes(struct data d, int len);
+struct data data_append_align(struct data d, int align);
 
-काष्ठा data data_add_marker(काष्ठा data d, क्रमागत markertype type, अक्षर *ref);
+struct data data_add_marker(struct data d, enum markertype type, char *ref);
 
-bool data_is_one_string(काष्ठा data d);
+bool data_is_one_string(struct data d);
 
-/* DT स्थिरraपूर्णांकs */
+/* DT constraints */
 
-#घोषणा MAX_PROPNAME_LEN	31
-#घोषणा MAX_NODENAME_LEN	31
+#define MAX_PROPNAME_LEN	31
+#define MAX_NODENAME_LEN	31
 
 /* Live trees */
-काष्ठा label अणु
+struct label {
 	bool deleted;
-	अक्षर *label;
-	काष्ठा label *next;
-पूर्ण;
+	char *label;
+	struct label *next;
+};
 
-काष्ठा bus_type अणु
-	स्थिर अक्षर *name;
-पूर्ण;
+struct bus_type {
+	const char *name;
+};
 
-काष्ठा property अणु
+struct property {
 	bool deleted;
-	अक्षर *name;
-	काष्ठा data val;
+	char *name;
+	struct data val;
 
-	काष्ठा property *next;
+	struct property *next;
 
-	काष्ठा label *labels;
-	काष्ठा srcpos *srcpos;
-पूर्ण;
+	struct label *labels;
+	struct srcpos *srcpos;
+};
 
-काष्ठा node अणु
+struct node {
 	bool deleted;
-	अक्षर *name;
-	काष्ठा property *proplist;
-	काष्ठा node *children;
+	char *name;
+	struct property *proplist;
+	struct node *children;
 
-	काष्ठा node *parent;
-	काष्ठा node *next_sibling;
+	struct node *parent;
+	struct node *next_sibling;
 
-	अक्षर *fullpath;
-	पूर्णांक basenamelen;
+	char *fullpath;
+	int basenamelen;
 
 	cell_t phandle;
-	पूर्णांक addr_cells, size_cells;
+	int addr_cells, size_cells;
 
-	काष्ठा label *labels;
-	स्थिर काष्ठा bus_type *bus;
-	काष्ठा srcpos *srcpos;
+	struct label *labels;
+	const struct bus_type *bus;
+	struct srcpos *srcpos;
 
-	bool omit_अगर_unused, is_referenced;
-पूर्ण;
+	bool omit_if_unused, is_referenced;
+};
 
-#घोषणा क्रम_each_label_withdel(l0, l) \
-	क्रम ((l) = (l0); (l); (l) = (l)->next)
+#define for_each_label_withdel(l0, l) \
+	for ((l) = (l0); (l); (l) = (l)->next)
 
-#घोषणा क्रम_each_label(l0, l) \
-	क्रम_each_label_withdel(l0, l) \
-		अगर (!(l)->deleted)
+#define for_each_label(l0, l) \
+	for_each_label_withdel(l0, l) \
+		if (!(l)->deleted)
 
-#घोषणा क्रम_each_property_withdel(n, p) \
-	क्रम ((p) = (n)->proplist; (p); (p) = (p)->next)
+#define for_each_property_withdel(n, p) \
+	for ((p) = (n)->proplist; (p); (p) = (p)->next)
 
-#घोषणा क्रम_each_property(n, p) \
-	क्रम_each_property_withdel(n, p) \
-		अगर (!(p)->deleted)
+#define for_each_property(n, p) \
+	for_each_property_withdel(n, p) \
+		if (!(p)->deleted)
 
-#घोषणा क्रम_each_child_withdel(n, c) \
-	क्रम ((c) = (n)->children; (c); (c) = (c)->next_sibling)
+#define for_each_child_withdel(n, c) \
+	for ((c) = (n)->children; (c); (c) = (c)->next_sibling)
 
-#घोषणा क्रम_each_child(n, c) \
-	क्रम_each_child_withdel(n, c) \
-		अगर (!(c)->deleted)
+#define for_each_child(n, c) \
+	for_each_child_withdel(n, c) \
+		if (!(c)->deleted)
 
-व्योम add_label(काष्ठा label **labels, अक्षर *label);
-व्योम delete_labels(काष्ठा label **labels);
+void add_label(struct label **labels, char *label);
+void delete_labels(struct label **labels);
 
-काष्ठा property *build_property(अक्षर *name, काष्ठा data val,
-				काष्ठा srcpos *srcpos);
-काष्ठा property *build_property_delete(अक्षर *name);
-काष्ठा property *chain_property(काष्ठा property *first, काष्ठा property *list);
-काष्ठा property *reverse_properties(काष्ठा property *first);
+struct property *build_property(char *name, struct data val,
+				struct srcpos *srcpos);
+struct property *build_property_delete(char *name);
+struct property *chain_property(struct property *first, struct property *list);
+struct property *reverse_properties(struct property *first);
 
-काष्ठा node *build_node(काष्ठा property *proplist, काष्ठा node *children,
-			काष्ठा srcpos *srcpos);
-काष्ठा node *build_node_delete(काष्ठा srcpos *srcpos);
-काष्ठा node *name_node(काष्ठा node *node, अक्षर *name);
-काष्ठा node *omit_node_अगर_unused(काष्ठा node *node);
-काष्ठा node *reference_node(काष्ठा node *node);
-काष्ठा node *chain_node(काष्ठा node *first, काष्ठा node *list);
-काष्ठा node *merge_nodes(काष्ठा node *old_node, काष्ठा node *new_node);
-काष्ठा node *add_orphan_node(काष्ठा node *old_node, काष्ठा node *new_node, अक्षर *ref);
+struct node *build_node(struct property *proplist, struct node *children,
+			struct srcpos *srcpos);
+struct node *build_node_delete(struct srcpos *srcpos);
+struct node *name_node(struct node *node, char *name);
+struct node *omit_node_if_unused(struct node *node);
+struct node *reference_node(struct node *node);
+struct node *chain_node(struct node *first, struct node *list);
+struct node *merge_nodes(struct node *old_node, struct node *new_node);
+struct node *add_orphan_node(struct node *old_node, struct node *new_node, char *ref);
 
-व्योम add_property(काष्ठा node *node, काष्ठा property *prop);
-व्योम delete_property_by_name(काष्ठा node *node, अक्षर *name);
-व्योम delete_property(काष्ठा property *prop);
-व्योम add_child(काष्ठा node *parent, काष्ठा node *child);
-व्योम delete_node_by_name(काष्ठा node *parent, अक्षर *name);
-व्योम delete_node(काष्ठा node *node);
-व्योम append_to_property(काष्ठा node *node,
-			अक्षर *name, स्थिर व्योम *data, पूर्णांक len,
-			क्रमागत markertype type);
+void add_property(struct node *node, struct property *prop);
+void delete_property_by_name(struct node *node, char *name);
+void delete_property(struct property *prop);
+void add_child(struct node *parent, struct node *child);
+void delete_node_by_name(struct node *parent, char *name);
+void delete_node(struct node *node);
+void append_to_property(struct node *node,
+			char *name, const void *data, int len,
+			enum markertype type);
 
-स्थिर अक्षर *get_unitname(काष्ठा node *node);
-काष्ठा property *get_property(काष्ठा node *node, स्थिर अक्षर *propname);
-cell_t propval_cell(काष्ठा property *prop);
-cell_t propval_cell_n(काष्ठा property *prop, अचिन्हित पूर्णांक n);
-काष्ठा property *get_property_by_label(काष्ठा node *tree, स्थिर अक्षर *label,
-				       काष्ठा node **node);
-काष्ठा marker *get_marker_label(काष्ठा node *tree, स्थिर अक्षर *label,
-				काष्ठा node **node, काष्ठा property **prop);
-काष्ठा node *get_subnode(काष्ठा node *node, स्थिर अक्षर *nodename);
-काष्ठा node *get_node_by_path(काष्ठा node *tree, स्थिर अक्षर *path);
-काष्ठा node *get_node_by_label(काष्ठा node *tree, स्थिर अक्षर *label);
-काष्ठा node *get_node_by_phandle(काष्ठा node *tree, cell_t phandle);
-काष्ठा node *get_node_by_ref(काष्ठा node *tree, स्थिर अक्षर *ref);
-cell_t get_node_phandle(काष्ठा node *root, काष्ठा node *node);
+const char *get_unitname(struct node *node);
+struct property *get_property(struct node *node, const char *propname);
+cell_t propval_cell(struct property *prop);
+cell_t propval_cell_n(struct property *prop, unsigned int n);
+struct property *get_property_by_label(struct node *tree, const char *label,
+				       struct node **node);
+struct marker *get_marker_label(struct node *tree, const char *label,
+				struct node **node, struct property **prop);
+struct node *get_subnode(struct node *node, const char *nodename);
+struct node *get_node_by_path(struct node *tree, const char *path);
+struct node *get_node_by_label(struct node *tree, const char *label);
+struct node *get_node_by_phandle(struct node *tree, cell_t phandle);
+struct node *get_node_by_ref(struct node *tree, const char *ref);
+cell_t get_node_phandle(struct node *root, struct node *node);
 
-uपूर्णांक32_t guess_boot_cpuid(काष्ठा node *tree);
+uint32_t guess_boot_cpuid(struct node *tree);
 
-/* Boot info (tree plus memreserve inक्रमmation */
+/* Boot info (tree plus memreserve information */
 
-काष्ठा reserve_info अणु
-	uपूर्णांक64_t address, size;
+struct reserve_info {
+	uint64_t address, size;
 
-	काष्ठा reserve_info *next;
+	struct reserve_info *next;
 
-	काष्ठा label *labels;
-पूर्ण;
+	struct label *labels;
+};
 
-काष्ठा reserve_info *build_reserve_entry(uपूर्णांक64_t start, uपूर्णांक64_t len);
-काष्ठा reserve_info *chain_reserve_entry(काष्ठा reserve_info *first,
-					 काष्ठा reserve_info *list);
-काष्ठा reserve_info *add_reserve_entry(काष्ठा reserve_info *list,
-				       काष्ठा reserve_info *new);
+struct reserve_info *build_reserve_entry(uint64_t start, uint64_t len);
+struct reserve_info *chain_reserve_entry(struct reserve_info *first,
+					 struct reserve_info *list);
+struct reserve_info *add_reserve_entry(struct reserve_info *list,
+				       struct reserve_info *new);
 
 
-काष्ठा dt_info अणु
-	अचिन्हित पूर्णांक dtsflags;
-	काष्ठा reserve_info *reservelist;
-	uपूर्णांक32_t boot_cpuid_phys;
-	काष्ठा node *dt;		/* the device tree */
-	स्थिर अक्षर *outname;		/* filename being written to, "-" क्रम मानक_निकास */
-पूर्ण;
+struct dt_info {
+	unsigned int dtsflags;
+	struct reserve_info *reservelist;
+	uint32_t boot_cpuid_phys;
+	struct node *dt;		/* the device tree */
+	const char *outname;		/* filename being written to, "-" for stdout */
+};
 
 /* DTS version flags definitions */
-#घोषणा DTSF_V1		0x0001	/* /dts-v1/ */
-#घोषणा DTSF_PLUGIN	0x0002	/* /plugin/ */
+#define DTSF_V1		0x0001	/* /dts-v1/ */
+#define DTSF_PLUGIN	0x0002	/* /plugin/ */
 
-काष्ठा dt_info *build_dt_info(अचिन्हित पूर्णांक dtsflags,
-			      काष्ठा reserve_info *reservelist,
-			      काष्ठा node *tree, uपूर्णांक32_t boot_cpuid_phys);
-व्योम sort_tree(काष्ठा dt_info *dti);
-व्योम generate_label_tree(काष्ठा dt_info *dti, अक्षर *name, bool allocph);
-व्योम generate_fixups_tree(काष्ठा dt_info *dti, अक्षर *name);
-व्योम generate_local_fixups_tree(काष्ठा dt_info *dti, अक्षर *name);
+struct dt_info *build_dt_info(unsigned int dtsflags,
+			      struct reserve_info *reservelist,
+			      struct node *tree, uint32_t boot_cpuid_phys);
+void sort_tree(struct dt_info *dti);
+void generate_label_tree(struct dt_info *dti, char *name, bool allocph);
+void generate_fixups_tree(struct dt_info *dti, char *name);
+void generate_local_fixups_tree(struct dt_info *dti, char *name);
 
 /* Checks */
 
-व्योम parse_checks_option(bool warn, bool error, स्थिर अक्षर *arg);
-व्योम process_checks(bool क्रमce, काष्ठा dt_info *dti);
+void parse_checks_option(bool warn, bool error, const char *arg);
+void process_checks(bool force, struct dt_info *dti);
 
 /* Flattened trees */
 
-व्योम dt_to_blob(खाता *f, काष्ठा dt_info *dti, पूर्णांक version);
-व्योम dt_to_यंत्र(खाता *f, काष्ठा dt_info *dti, पूर्णांक version);
+void dt_to_blob(FILE *f, struct dt_info *dti, int version);
+void dt_to_asm(FILE *f, struct dt_info *dti, int version);
 
-काष्ठा dt_info *dt_from_blob(स्थिर अक्षर *fname);
+struct dt_info *dt_from_blob(const char *fname);
 
 /* Tree source */
 
-व्योम dt_to_source(खाता *f, काष्ठा dt_info *dti);
-काष्ठा dt_info *dt_from_source(स्थिर अक्षर *f);
+void dt_to_source(FILE *f, struct dt_info *dti);
+struct dt_info *dt_from_source(const char *f);
 
 /* YAML source */
 
-व्योम dt_to_yaml(खाता *f, काष्ठा dt_info *dti);
+void dt_to_yaml(FILE *f, struct dt_info *dti);
 
 /* FS trees */
 
-काष्ठा dt_info *dt_from_fs(स्थिर अक्षर *स_नाम);
+struct dt_info *dt_from_fs(const char *dirname);
 
-#पूर्ण_अगर /* DTC_H */
+#endif /* DTC_H */

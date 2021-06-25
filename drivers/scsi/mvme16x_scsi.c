@@ -1,161 +1,160 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Detection routine क्रम the NCR53c710 based MVME16x SCSI Controllers क्रम Linux.
+ * Detection routine for the NCR53c710 based MVME16x SCSI Controllers for Linux.
  *
  * Based on work by Alan Hourihane
  *
  * Rewritten to use 53c700.c by Kars de Jong <jongk@linux-m68k.org>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/mvme16xhw.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <scsi/scsi_device.h>
-#समावेश <scsi/scsi_transport.h>
-#समावेश <scsi/scsi_transport_spi.h>
+#include <linux/module.h>
+#include <linux/blkdev.h>
+#include <linux/device.h>
+#include <linux/platform_device.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/slab.h>
+#include <asm/mvme16xhw.h>
+#include <scsi/scsi_host.h>
+#include <scsi/scsi_device.h>
+#include <scsi/scsi_transport.h>
+#include <scsi/scsi_transport_spi.h>
 
-#समावेश "53c700.h"
+#include "53c700.h"
 
 MODULE_AUTHOR("Kars de Jong <jongk@linux-m68k.org>");
 MODULE_DESCRIPTION("MVME16x NCR53C710 driver");
 MODULE_LICENSE("GPL");
 
-अटल काष्ठा scsi_host_ढाँचा mvme16x_scsi_driver_ढाँचा = अणु
+static struct scsi_host_template mvme16x_scsi_driver_template = {
 	.name			= "MVME16x NCR53c710 SCSI",
 	.proc_name		= "MVME16x",
 	.this_id		= 7,
 	.module			= THIS_MODULE,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device *mvme16x_scsi_device;
+static struct platform_device *mvme16x_scsi_device;
 
-अटल पूर्णांक mvme16x_probe(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा Scsi_Host * host = शून्य;
-	काष्ठा NCR_700_Host_Parameters *hostdata;
+static int mvme16x_probe(struct platform_device *dev)
+{
+	struct Scsi_Host * host = NULL;
+	struct NCR_700_Host_Parameters *hostdata;
 
-	अगर (!MACH_IS_MVME16x)
-		जाओ out;
+	if (!MACH_IS_MVME16x)
+		goto out;
 
-	अगर (mvme16x_config & MVME16x_CONFIG_NO_SCSICHIP) अणु
-		prपूर्णांकk(KERN_INFO "mvme16x-scsi: detection disabled, "
+	if (mvme16x_config & MVME16x_CONFIG_NO_SCSICHIP) {
+		printk(KERN_INFO "mvme16x-scsi: detection disabled, "
 				 "SCSI chip not present\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	hostdata = kzalloc(माप(काष्ठा NCR_700_Host_Parameters), GFP_KERNEL);
-	अगर (hostdata == शून्य) अणु
-		prपूर्णांकk(KERN_ERR "mvme16x-scsi: "
+	hostdata = kzalloc(sizeof(struct NCR_700_Host_Parameters), GFP_KERNEL);
+	if (hostdata == NULL) {
+		printk(KERN_ERR "mvme16x-scsi: "
 				"Failed to allocate host data\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Fill in the required pieces of hostdata */
-	hostdata->base = (व्योम __iomem *)0xfff47000UL;
-	hostdata->घड़ी = 50;	/* XXX - depends on the CPU घड़ी! */
+	hostdata->base = (void __iomem *)0xfff47000UL;
+	hostdata->clock = 50;	/* XXX - depends on the CPU clock! */
 	hostdata->chip710 = 1;
 	hostdata->dmode_extra = DMODE_FC2;
 	hostdata->dcntl_extra = EA_710;
 	hostdata->ctest7_extra = CTEST7_TT1;
 
-	/* and रेजिस्टर the chip */
-	host = NCR_700_detect(&mvme16x_scsi_driver_ढाँचा, hostdata,
+	/* and register the chip */
+	host = NCR_700_detect(&mvme16x_scsi_driver_template, hostdata,
 			      &dev->dev);
-	अगर (!host) अणु
-		prपूर्णांकk(KERN_ERR "mvme16x-scsi: No host detected; "
+	if (!host) {
+		printk(KERN_ERR "mvme16x-scsi: No host detected; "
 				"board configuration problem?\n");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 	host->this_id = 7;
 	host->base = 0xfff47000UL;
 	host->irq = MVME16x_IRQ_SCSI;
-	अगर (request_irq(host->irq, NCR_700_पूर्णांकr, 0, "mvme16x-scsi", host)) अणु
-		prपूर्णांकk(KERN_ERR "mvme16x-scsi: request_irq failed\n");
-		जाओ out_put_host;
-	पूर्ण
+	if (request_irq(host->irq, NCR_700_intr, 0, "mvme16x-scsi", host)) {
+		printk(KERN_ERR "mvme16x-scsi: request_irq failed\n");
+		goto out_put_host;
+	}
 
-	/* Enable scsi chip पूर्णांकs */
-	अणु
-		अस्थिर अचिन्हित दीर्घ v;
+	/* Enable scsi chip ints */
+	{
+		volatile unsigned long v;
 
-		/* Enable scsi पूर्णांकerrupts at level 4 in PCCchip2 */
+		/* Enable scsi interrupts at level 4 in PCCchip2 */
 		v = in_be32(0xfff4202c);
 		v = (v & ~0xff) | 0x10 | 4;
 		out_be32(0xfff4202c, v);
-	पूर्ण
+	}
 
-	platक्रमm_set_drvdata(dev, host);
+	platform_set_drvdata(dev, host);
 	scsi_scan_host(host);
 
-	वापस 0;
+	return 0;
 
  out_put_host:
 	scsi_host_put(host);
- out_मुक्त:
-	kमुक्त(hostdata);
+ out_free:
+	kfree(hostdata);
  out:
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल पूर्णांक mvme16x_device_हटाओ(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा Scsi_Host *host = platक्रमm_get_drvdata(dev);
-	काष्ठा NCR_700_Host_Parameters *hostdata = shost_priv(host);
+static int mvme16x_device_remove(struct platform_device *dev)
+{
+	struct Scsi_Host *host = platform_get_drvdata(dev);
+	struct NCR_700_Host_Parameters *hostdata = shost_priv(host);
 
-	/* Disable scsi chip पूर्णांकs */
-	अणु
-		अस्थिर अचिन्हित दीर्घ v;
+	/* Disable scsi chip ints */
+	{
+		volatile unsigned long v;
 
 		v = in_be32(0xfff4202c);
 		v &= ~0x10;
 		out_be32(0xfff4202c, v);
-	पूर्ण
-	scsi_हटाओ_host(host);
+	}
+	scsi_remove_host(host);
 	NCR_700_release(host);
-	kमुक्त(hostdata);
-	मुक्त_irq(host->irq, host);
+	kfree(hostdata);
+	free_irq(host->irq, host);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver mvme16x_scsi_driver = अणु
-	.driver = अणु
+static struct platform_driver mvme16x_scsi_driver = {
+	.driver = {
 		.name           = "mvme16x-scsi",
-	पूर्ण,
+	},
 	.probe          = mvme16x_probe,
-	.हटाओ         = mvme16x_device_हटाओ,
-पूर्ण;
+	.remove         = mvme16x_device_remove,
+};
 
-अटल पूर्णांक __init mvme16x_scsi_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init mvme16x_scsi_init(void)
+{
+	int err;
 
-	err = platक्रमm_driver_रेजिस्टर(&mvme16x_scsi_driver);
-	अगर (err)
-		वापस err;
+	err = platform_driver_register(&mvme16x_scsi_driver);
+	if (err)
+		return err;
 
-	mvme16x_scsi_device = platक्रमm_device_रेजिस्टर_simple("mvme16x-scsi",
-							      -1, शून्य, 0);
-	अगर (IS_ERR(mvme16x_scsi_device)) अणु
-		platक्रमm_driver_unरेजिस्टर(&mvme16x_scsi_driver);
-		वापस PTR_ERR(mvme16x_scsi_device);
-	पूर्ण
+	mvme16x_scsi_device = platform_device_register_simple("mvme16x-scsi",
+							      -1, NULL, 0);
+	if (IS_ERR(mvme16x_scsi_device)) {
+		platform_driver_unregister(&mvme16x_scsi_driver);
+		return PTR_ERR(mvme16x_scsi_device);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास mvme16x_scsi_निकास(व्योम)
-अणु
-	platक्रमm_device_unरेजिस्टर(mvme16x_scsi_device);
-	platक्रमm_driver_unरेजिस्टर(&mvme16x_scsi_driver);
-पूर्ण
+static void __exit mvme16x_scsi_exit(void)
+{
+	platform_device_unregister(mvme16x_scsi_device);
+	platform_driver_unregister(&mvme16x_scsi_driver);
+}
 
 module_init(mvme16x_scsi_init);
-module_निकास(mvme16x_scsi_निकास);
+module_exit(mvme16x_scsi_exit);

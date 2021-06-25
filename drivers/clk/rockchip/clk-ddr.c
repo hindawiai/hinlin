@@ -1,38 +1,37 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2016 Rockchip Electronics Co. Ltd.
  * Author: Lin Huang <hl@rock-chips.com>
  */
 
-#समावेश <linux/arm-smccc.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
-#समावेश <soc/rockchip/rockchip_sip.h>
-#समावेश "clk.h"
+#include <linux/arm-smccc.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include <linux/io.h>
+#include <linux/slab.h>
+#include <soc/rockchip/rockchip_sip.h>
+#include "clk.h"
 
-काष्ठा rockchip_ddrclk अणु
-	काष्ठा clk_hw	hw;
-	व्योम __iomem	*reg_base;
-	पूर्णांक		mux_offset;
-	पूर्णांक		mux_shअगरt;
-	पूर्णांक		mux_width;
-	पूर्णांक		भाग_shअगरt;
-	पूर्णांक		भाग_width;
-	पूर्णांक		ddr_flag;
+struct rockchip_ddrclk {
+	struct clk_hw	hw;
+	void __iomem	*reg_base;
+	int		mux_offset;
+	int		mux_shift;
+	int		mux_width;
+	int		div_shift;
+	int		div_width;
+	int		ddr_flag;
 	spinlock_t	*lock;
-पूर्ण;
+};
 
-#घोषणा to_rockchip_ddrclk_hw(hw) container_of(hw, काष्ठा rockchip_ddrclk, hw)
+#define to_rockchip_ddrclk_hw(hw) container_of(hw, struct rockchip_ddrclk, hw)
 
-अटल पूर्णांक rockchip_ddrclk_sip_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ drate,
-					अचिन्हित दीर्घ prate)
-अणु
-	काष्ठा rockchip_ddrclk *ddrclk = to_rockchip_ddrclk_hw(hw);
-	अचिन्हित दीर्घ flags;
-	काष्ठा arm_smccc_res res;
+static int rockchip_ddrclk_sip_set_rate(struct clk_hw *hw, unsigned long drate,
+					unsigned long prate)
+{
+	struct rockchip_ddrclk *ddrclk = to_rockchip_ddrclk_hw(hw);
+	unsigned long flags;
+	struct arm_smccc_res res;
 
 	spin_lock_irqsave(ddrclk->lock, flags);
 	arm_smccc_smc(ROCKCHIP_SIP_DRAM_FREQ, drate, 0,
@@ -40,69 +39,69 @@
 		      0, 0, 0, 0, &res);
 	spin_unlock_irqrestore(ddrclk->lock, flags);
 
-	वापस res.a0;
-पूर्ण
+	return res.a0;
+}
 
-अटल अचिन्हित दीर्घ
-rockchip_ddrclk_sip_recalc_rate(काष्ठा clk_hw *hw,
-				अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा arm_smccc_res res;
+static unsigned long
+rockchip_ddrclk_sip_recalc_rate(struct clk_hw *hw,
+				unsigned long parent_rate)
+{
+	struct arm_smccc_res res;
 
 	arm_smccc_smc(ROCKCHIP_SIP_DRAM_FREQ, 0, 0,
 		      ROCKCHIP_SIP_CONFIG_DRAM_GET_RATE,
 		      0, 0, 0, 0, &res);
 
-	वापस res.a0;
-पूर्ण
+	return res.a0;
+}
 
-अटल दीर्घ rockchip_ddrclk_sip_round_rate(काष्ठा clk_hw *hw,
-					   अचिन्हित दीर्घ rate,
-					   अचिन्हित दीर्घ *prate)
-अणु
-	काष्ठा arm_smccc_res res;
+static long rockchip_ddrclk_sip_round_rate(struct clk_hw *hw,
+					   unsigned long rate,
+					   unsigned long *prate)
+{
+	struct arm_smccc_res res;
 
 	arm_smccc_smc(ROCKCHIP_SIP_DRAM_FREQ, rate, 0,
 		      ROCKCHIP_SIP_CONFIG_DRAM_ROUND_RATE,
 		      0, 0, 0, 0, &res);
 
-	वापस res.a0;
-पूर्ण
+	return res.a0;
+}
 
-अटल u8 rockchip_ddrclk_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा rockchip_ddrclk *ddrclk = to_rockchip_ddrclk_hw(hw);
+static u8 rockchip_ddrclk_get_parent(struct clk_hw *hw)
+{
+	struct rockchip_ddrclk *ddrclk = to_rockchip_ddrclk_hw(hw);
 	u32 val;
 
-	val = पढ़ोl(ddrclk->reg_base +
-			ddrclk->mux_offset) >> ddrclk->mux_shअगरt;
+	val = readl(ddrclk->reg_base +
+			ddrclk->mux_offset) >> ddrclk->mux_shift;
 	val &= GENMASK(ddrclk->mux_width - 1, 0);
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल स्थिर काष्ठा clk_ops rockchip_ddrclk_sip_ops = अणु
+static const struct clk_ops rockchip_ddrclk_sip_ops = {
 	.recalc_rate = rockchip_ddrclk_sip_recalc_rate,
 	.set_rate = rockchip_ddrclk_sip_set_rate,
 	.round_rate = rockchip_ddrclk_sip_round_rate,
 	.get_parent = rockchip_ddrclk_get_parent,
-पूर्ण;
+};
 
-काष्ठा clk *rockchip_clk_रेजिस्टर_ddrclk(स्थिर अक्षर *name, पूर्णांक flags,
-					 स्थिर अक्षर *स्थिर *parent_names,
-					 u8 num_parents, पूर्णांक mux_offset,
-					 पूर्णांक mux_shअगरt, पूर्णांक mux_width,
-					 पूर्णांक भाग_shअगरt, पूर्णांक भाग_width,
-					 पूर्णांक ddr_flag, व्योम __iomem *reg_base,
+struct clk *rockchip_clk_register_ddrclk(const char *name, int flags,
+					 const char *const *parent_names,
+					 u8 num_parents, int mux_offset,
+					 int mux_shift, int mux_width,
+					 int div_shift, int div_width,
+					 int ddr_flag, void __iomem *reg_base,
 					 spinlock_t *lock)
-अणु
-	काष्ठा rockchip_ddrclk *ddrclk;
-	काष्ठा clk_init_data init;
-	काष्ठा clk *clk;
+{
+	struct rockchip_ddrclk *ddrclk;
+	struct clk_init_data init;
+	struct clk *clk;
 
-	ddrclk = kzalloc(माप(*ddrclk), GFP_KERNEL);
-	अगर (!ddrclk)
-		वापस ERR_PTR(-ENOMEM);
+	ddrclk = kzalloc(sizeof(*ddrclk), GFP_KERNEL);
+	if (!ddrclk)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.parent_names = parent_names;
@@ -111,30 +110,30 @@ rockchip_ddrclk_sip_recalc_rate(काष्ठा clk_hw *hw,
 	init.flags = flags;
 	init.flags |= CLK_SET_RATE_NO_REPARENT;
 
-	चयन (ddr_flag) अणु
-	हाल ROCKCHIP_DDRCLK_SIP:
+	switch (ddr_flag) {
+	case ROCKCHIP_DDRCLK_SIP:
 		init.ops = &rockchip_ddrclk_sip_ops;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_err("%s: unsupported ddrclk type %d\n", __func__, ddr_flag);
-		kमुक्त(ddrclk);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		kfree(ddrclk);
+		return ERR_PTR(-EINVAL);
+	}
 
 	ddrclk->reg_base = reg_base;
 	ddrclk->lock = lock;
 	ddrclk->hw.init = &init;
 	ddrclk->mux_offset = mux_offset;
-	ddrclk->mux_shअगरt = mux_shअगरt;
+	ddrclk->mux_shift = mux_shift;
 	ddrclk->mux_width = mux_width;
-	ddrclk->भाग_shअगरt = भाग_shअगरt;
-	ddrclk->भाग_width = भाग_width;
+	ddrclk->div_shift = div_shift;
+	ddrclk->div_width = div_width;
 	ddrclk->ddr_flag = ddr_flag;
 
-	clk = clk_रेजिस्टर(शून्य, &ddrclk->hw);
-	अगर (IS_ERR(clk))
-		kमुक्त(ddrclk);
+	clk = clk_register(NULL, &ddrclk->hw);
+	if (IS_ERR(clk))
+		kfree(ddrclk);
 
-	वापस clk;
-पूर्ण
-EXPORT_SYMBOL_GPL(rockchip_clk_रेजिस्टर_ddrclk);
+	return clk;
+}
+EXPORT_SYMBOL_GPL(rockchip_clk_register_ddrclk);

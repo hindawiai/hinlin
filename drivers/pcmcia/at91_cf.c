@@ -1,241 +1,240 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * at91_cf.c -- AT91 CompactFlash controller driver
  *
  * Copyright (C) 2005 David Brownell
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/पन.स>
-#समावेश <linux/sizes.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/mfd/syscon/aपंचांगel-mc.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/regmap.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/slab.h>
+#include <linux/gpio.h>
+#include <linux/io.h>
+#include <linux/sizes.h>
+#include <linux/mfd/syscon.h>
+#include <linux/mfd/syscon/atmel-mc.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_gpio.h>
+#include <linux/regmap.h>
 
-#समावेश <pcmcia/ss.h>
+#include <pcmcia/ss.h>
 
 /*
  * A0..A10 work in each range; A23 indicates I/O space;  A25 is CFRNW;
- * some other bit in अणुA24,A22..A11पूर्ण is nREG to flag memory access
+ * some other bit in {A24,A22..A11} is nREG to flag memory access
  * (vs attributes).  So more than 2KB/region would just be waste.
  * Note: These are offsets from the physical base address.
  */
-#घोषणा	CF_ATTR_PHYS	(0)
-#घोषणा	CF_IO_PHYS	(1 << 23)
-#घोषणा	CF_MEM_PHYS	(0x017ff800)
+#define	CF_ATTR_PHYS	(0)
+#define	CF_IO_PHYS	(1 << 23)
+#define	CF_MEM_PHYS	(0x017ff800)
 
-काष्ठा at91_cf_data अणु
-	पूर्णांक	irq_pin;		/* I/O IRQ */
-	पूर्णांक	det_pin;		/* Card detect */
-	पूर्णांक	vcc_pin;		/* घातer चयनing */
-	पूर्णांक	rst_pin;		/* card reset */
+struct at91_cf_data {
+	int	irq_pin;		/* I/O IRQ */
+	int	det_pin;		/* Card detect */
+	int	vcc_pin;		/* power switching */
+	int	rst_pin;		/* card reset */
 	u8	chipselect;		/* EBI Chip Select number */
 	u8	flags;
-#घोषणा AT91_CF_TRUE_IDE	0x01
-#घोषणा AT91_IDE_SWAP_A0_A2	0x02
-पूर्ण;
+#define AT91_CF_TRUE_IDE	0x01
+#define AT91_IDE_SWAP_A0_A2	0x02
+};
 
-काष्ठा regmap *mc;
-
-/*--------------------------------------------------------------------------*/
-
-काष्ठा at91_cf_socket अणु
-	काष्ठा pcmcia_socket	socket;
-
-	अचिन्हित		present:1;
-
-	काष्ठा platक्रमm_device	*pdev;
-	काष्ठा at91_cf_data	*board;
-
-	अचिन्हित दीर्घ		phys_baseaddr;
-पूर्ण;
-
-अटल अंतरभूत पूर्णांक at91_cf_present(काष्ठा at91_cf_socket *cf)
-अणु
-	वापस !gpio_get_value(cf->board->det_pin);
-पूर्ण
+struct regmap *mc;
 
 /*--------------------------------------------------------------------------*/
 
-अटल पूर्णांक at91_cf_ss_init(काष्ठा pcmcia_socket *s)
-अणु
-	वापस 0;
-पूर्ण
+struct at91_cf_socket {
+	struct pcmcia_socket	socket;
 
-अटल irqवापस_t at91_cf_irq(पूर्णांक irq, व्योम *_cf)
-अणु
-	काष्ठा at91_cf_socket *cf = _cf;
+	unsigned		present:1;
 
-	अगर (irq == gpio_to_irq(cf->board->det_pin)) अणु
-		अचिन्हित present = at91_cf_present(cf);
+	struct platform_device	*pdev;
+	struct at91_cf_data	*board;
+
+	unsigned long		phys_baseaddr;
+};
+
+static inline int at91_cf_present(struct at91_cf_socket *cf)
+{
+	return !gpio_get_value(cf->board->det_pin);
+}
+
+/*--------------------------------------------------------------------------*/
+
+static int at91_cf_ss_init(struct pcmcia_socket *s)
+{
+	return 0;
+}
+
+static irqreturn_t at91_cf_irq(int irq, void *_cf)
+{
+	struct at91_cf_socket *cf = _cf;
+
+	if (irq == gpio_to_irq(cf->board->det_pin)) {
+		unsigned present = at91_cf_present(cf);
 
 		/* kick pccard as needed */
-		अगर (present != cf->present) अणु
+		if (present != cf->present) {
 			cf->present = present;
 			dev_dbg(&cf->pdev->dev, "card %s\n",
 					present ? "present" : "gone");
 			pcmcia_parse_events(&cf->socket, SS_DETECT);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक at91_cf_get_status(काष्ठा pcmcia_socket *s, u_पूर्णांक *sp)
-अणु
-	काष्ठा at91_cf_socket	*cf;
+static int at91_cf_get_status(struct pcmcia_socket *s, u_int *sp)
+{
+	struct at91_cf_socket	*cf;
 
-	अगर (!sp)
-		वापस -EINVAL;
+	if (!sp)
+		return -EINVAL;
 
-	cf = container_of(s, काष्ठा at91_cf_socket, socket);
+	cf = container_of(s, struct at91_cf_socket, socket);
 
 	/* NOTE: CF is always 3VCARD */
-	अगर (at91_cf_present(cf)) अणु
-		पूर्णांक rdy	= gpio_is_valid(cf->board->irq_pin);	/* RDY/nIRQ */
-		पूर्णांक vcc	= gpio_is_valid(cf->board->vcc_pin);
+	if (at91_cf_present(cf)) {
+		int rdy	= gpio_is_valid(cf->board->irq_pin);	/* RDY/nIRQ */
+		int vcc	= gpio_is_valid(cf->board->vcc_pin);
 
 		*sp = SS_DETECT | SS_3VCARD;
-		अगर (!rdy || gpio_get_value(cf->board->irq_pin))
+		if (!rdy || gpio_get_value(cf->board->irq_pin))
 			*sp |= SS_READY;
-		अगर (!vcc || gpio_get_value(cf->board->vcc_pin))
+		if (!vcc || gpio_get_value(cf->board->vcc_pin))
 			*sp |= SS_POWERON;
-	पूर्ण अन्यथा
+	} else
 		*sp = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-at91_cf_set_socket(काष्ठा pcmcia_socket *sock, काष्ठा socket_state_t *s)
-अणु
-	काष्ठा at91_cf_socket	*cf;
+static int
+at91_cf_set_socket(struct pcmcia_socket *sock, struct socket_state_t *s)
+{
+	struct at91_cf_socket	*cf;
 
-	cf = container_of(sock, काष्ठा at91_cf_socket, socket);
+	cf = container_of(sock, struct at91_cf_socket, socket);
 
-	/* चयन Vcc अगर needed and possible */
-	अगर (gpio_is_valid(cf->board->vcc_pin)) अणु
-		चयन (s->Vcc) अणु
-		हाल 0:
+	/* switch Vcc if needed and possible */
+	if (gpio_is_valid(cf->board->vcc_pin)) {
+		switch (s->Vcc) {
+		case 0:
 			gpio_set_value(cf->board->vcc_pin, 0);
-			अवरोध;
-		हाल 33:
+			break;
+		case 33:
 			gpio_set_value(cf->board->vcc_pin, 1);
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
+	}
 
-	/* toggle reset अगर needed */
+	/* toggle reset if needed */
 	gpio_set_value(cf->board->rst_pin, s->flags & SS_RESET);
 
 	dev_dbg(&cf->pdev->dev, "Vcc %d, io_irq %d, flags %04x csc %04x\n",
 				s->Vcc, s->io_irq, s->flags, s->csc_mask);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक at91_cf_ss_suspend(काष्ठा pcmcia_socket *s)
-अणु
-	वापस at91_cf_set_socket(s, &dead_socket);
-पूर्ण
+static int at91_cf_ss_suspend(struct pcmcia_socket *s)
+{
+	return at91_cf_set_socket(s, &dead_socket);
+}
 
-/* we alपढ़ोy mapped the I/O region */
-अटल पूर्णांक at91_cf_set_io_map(काष्ठा pcmcia_socket *s, काष्ठा pccard_io_map *io)
-अणु
-	काष्ठा at91_cf_socket	*cf;
+/* we already mapped the I/O region */
+static int at91_cf_set_io_map(struct pcmcia_socket *s, struct pccard_io_map *io)
+{
+	struct at91_cf_socket	*cf;
 	u32			csr;
 
-	cf = container_of(s, काष्ठा at91_cf_socket, socket);
+	cf = container_of(s, struct at91_cf_socket, socket);
 	io->flags &= (MAP_ACTIVE | MAP_16BIT | MAP_AUTOSZ);
 
 	/*
 	 * Use 16 bit accesses unless/until we need 8-bit i/o space.
 	 *
-	 * NOTE: this CF controller ignores IOIS16, so we can't really करो
+	 * NOTE: this CF controller ignores IOIS16, so we can't really do
 	 * MAP_AUTOSZ.  The 16bit mode allows single byte access on either
-	 * D0-D7 (even addr) or D8-D15 (odd), so it's बंद enough क्रम many
+	 * D0-D7 (even addr) or D8-D15 (odd), so it's close enough for many
 	 * purposes (and handles ide-cs).
 	 *
-	 * The 8bit mode is needed क्रम odd byte access on D0-D7.  It seems
+	 * The 8bit mode is needed for odd byte access on D0-D7.  It seems
 	 * some cards only like that way to get at the odd byte, despite
 	 * CF 3.0 spec table 35 also giving the D8-D15 option.
 	 */
-	अगर (!(io->flags & (MAP_16BIT | MAP_AUTOSZ))) अणु
+	if (!(io->flags & (MAP_16BIT | MAP_AUTOSZ))) {
 		csr = AT91_MC_SMC_DBW_8;
 		dev_dbg(&cf->pdev->dev, "8bit i/o bus\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		csr = AT91_MC_SMC_DBW_16;
 		dev_dbg(&cf->pdev->dev, "16bit i/o bus\n");
-	पूर्ण
+	}
 	regmap_update_bits(mc, AT91_MC_SMC_CSR(cf->board->chipselect),
 			   AT91_MC_SMC_DBW, csr);
 
 	io->start = cf->socket.io_offset;
 	io->stop = io->start + SZ_2K - 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* pcmcia layer maps/unmaps mem regions */
-अटल पूर्णांक
-at91_cf_set_mem_map(काष्ठा pcmcia_socket *s, काष्ठा pccard_mem_map *map)
-अणु
-	काष्ठा at91_cf_socket	*cf;
+static int
+at91_cf_set_mem_map(struct pcmcia_socket *s, struct pccard_mem_map *map)
+{
+	struct at91_cf_socket	*cf;
 
-	अगर (map->card_start)
-		वापस -EINVAL;
+	if (map->card_start)
+		return -EINVAL;
 
-	cf = container_of(s, काष्ठा at91_cf_socket, socket);
+	cf = container_of(s, struct at91_cf_socket, socket);
 
 	map->flags &= (MAP_ACTIVE | MAP_ATTRIB | MAP_16BIT);
-	अगर (map->flags & MAP_ATTRIB)
-		map->अटल_start = cf->phys_baseaddr + CF_ATTR_PHYS;
-	अन्यथा
-		map->अटल_start = cf->phys_baseaddr + CF_MEM_PHYS;
+	if (map->flags & MAP_ATTRIB)
+		map->static_start = cf->phys_baseaddr + CF_ATTR_PHYS;
+	else
+		map->static_start = cf->phys_baseaddr + CF_MEM_PHYS;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा pccard_operations at91_cf_ops = अणु
+static struct pccard_operations at91_cf_ops = {
 	.init			= at91_cf_ss_init,
 	.suspend		= at91_cf_ss_suspend,
 	.get_status		= at91_cf_get_status,
 	.set_socket		= at91_cf_set_socket,
 	.set_io_map		= at91_cf_set_io_map,
 	.set_mem_map		= at91_cf_set_mem_map,
-पूर्ण;
+};
 
 /*--------------------------------------------------------------------------*/
 
-अटल स्थिर काष्ठा of_device_id at91_cf_dt_ids[] = अणु
-	अणु .compatible = "atmel,at91rm9200-cf" पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id at91_cf_dt_ids[] = {
+	{ .compatible = "atmel,at91rm9200-cf" },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, at91_cf_dt_ids);
 
-अटल पूर्णांक at91_cf_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा at91_cf_socket	*cf;
-	काष्ठा at91_cf_data	*board;
-	काष्ठा resource		*io;
-	पूर्णांक			status;
+static int at91_cf_probe(struct platform_device *pdev)
+{
+	struct at91_cf_socket	*cf;
+	struct at91_cf_data	*board;
+	struct resource		*io;
+	int			status;
 
-	board = devm_kzalloc(&pdev->dev, माप(*board), GFP_KERNEL);
-	अगर (!board)
-		वापस -ENOMEM;
+	board = devm_kzalloc(&pdev->dev, sizeof(*board), GFP_KERNEL);
+	if (!board)
+		return -ENOMEM;
 
 	board->irq_pin = of_get_gpio(pdev->dev.of_node, 0);
 	board->det_pin = of_get_gpio(pdev->dev.of_node, 1);
@@ -243,80 +242,80 @@ MODULE_DEVICE_TABLE(of, at91_cf_dt_ids);
 	board->rst_pin = of_get_gpio(pdev->dev.of_node, 3);
 
 	mc = syscon_regmap_lookup_by_compatible("atmel,at91rm9200-sdramc");
-	अगर (IS_ERR(mc))
-		वापस PTR_ERR(mc);
+	if (IS_ERR(mc))
+		return PTR_ERR(mc);
 
-	अगर (!gpio_is_valid(board->det_pin) || !gpio_is_valid(board->rst_pin))
-		वापस -ENODEV;
+	if (!gpio_is_valid(board->det_pin) || !gpio_is_valid(board->rst_pin))
+		return -ENODEV;
 
-	io = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!io)
-		वापस -ENODEV;
+	io = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!io)
+		return -ENODEV;
 
-	cf = devm_kzalloc(&pdev->dev, माप(*cf), GFP_KERNEL);
-	अगर (!cf)
-		वापस -ENOMEM;
+	cf = devm_kzalloc(&pdev->dev, sizeof(*cf), GFP_KERNEL);
+	if (!cf)
+		return -ENOMEM;
 
 	cf->board = board;
 	cf->pdev = pdev;
 	cf->phys_baseaddr = io->start;
-	platक्रमm_set_drvdata(pdev, cf);
+	platform_set_drvdata(pdev, cf);
 
 	/* must be a GPIO; ergo must trigger on both edges */
 	status = devm_gpio_request(&pdev->dev, board->det_pin, "cf_det");
-	अगर (status < 0)
-		वापस status;
+	if (status < 0)
+		return status;
 
 	status = devm_request_irq(&pdev->dev, gpio_to_irq(board->det_pin),
 					at91_cf_irq, 0, "at91_cf detect", cf);
-	अगर (status < 0)
-		वापस status;
+	if (status < 0)
+		return status;
 
 	device_init_wakeup(&pdev->dev, 1);
 
 	status = devm_gpio_request(&pdev->dev, board->rst_pin, "cf_rst");
-	अगर (status < 0)
-		जाओ fail0a;
+	if (status < 0)
+		goto fail0a;
 
-	अगर (gpio_is_valid(board->vcc_pin)) अणु
+	if (gpio_is_valid(board->vcc_pin)) {
 		status = devm_gpio_request(&pdev->dev, board->vcc_pin, "cf_vcc");
-		अगर (status < 0)
-			जाओ fail0a;
-	पूर्ण
+		if (status < 0)
+			goto fail0a;
+	}
 
 	/*
 	 * The card driver will request this irq later as needed.
 	 * but it causes lots of "irqNN: nobody cared" messages
 	 * unless we report that we handle everything (sigh).
-	 * (Note:  DK board करोesn't wire the IRQ pin...)
+	 * (Note:  DK board doesn't wire the IRQ pin...)
 	 */
-	अगर (gpio_is_valid(board->irq_pin)) अणु
+	if (gpio_is_valid(board->irq_pin)) {
 		status = devm_gpio_request(&pdev->dev, board->irq_pin, "cf_irq");
-		अगर (status < 0)
-			जाओ fail0a;
+		if (status < 0)
+			goto fail0a;
 
 		status = devm_request_irq(&pdev->dev, gpio_to_irq(board->irq_pin),
 					at91_cf_irq, IRQF_SHARED, "at91_cf", cf);
-		अगर (status < 0)
-			जाओ fail0a;
+		if (status < 0)
+			goto fail0a;
 		cf->socket.pci_irq = gpio_to_irq(board->irq_pin);
-	पूर्ण अन्यथा
+	} else
 		cf->socket.pci_irq = nr_irqs + 1;
 
 	/*
 	 * pcmcia layer only remaps "real" memory not iospace
-	 * io_offset is set to 0x10000 to aव्योम the check in अटल_find_io().
+	 * io_offset is set to 0x10000 to avoid the check in static_find_io().
 	 * */
 	cf->socket.io_offset = 0x10000;
 	status = pci_ioremap_io(0x10000, cf->phys_baseaddr + CF_IO_PHYS);
-	अगर (status)
-		जाओ fail0a;
+	if (status)
+		goto fail0a;
 
 	/* reserve chip-select regions */
-	अगर (!devm_request_mem_region(&pdev->dev, io->start, resource_size(io), "at91_cf")) अणु
+	if (!devm_request_mem_region(&pdev->dev, io->start, resource_size(io), "at91_cf")) {
 		status = -ENXIO;
-		जाओ fail0a;
-	पूर्ण
+		goto fail0a;
+	}
 
 	dev_info(&pdev->dev, "irqs det #%d, io #%d\n",
 		gpio_to_irq(board->det_pin), gpio_to_irq(board->irq_pin));
@@ -324,79 +323,79 @@ MODULE_DEVICE_TABLE(of, at91_cf_dt_ids);
 	cf->socket.owner = THIS_MODULE;
 	cf->socket.dev.parent = &pdev->dev;
 	cf->socket.ops = &at91_cf_ops;
-	cf->socket.resource_ops = &pccard_अटल_ops;
+	cf->socket.resource_ops = &pccard_static_ops;
 	cf->socket.features = SS_CAP_PCCARD | SS_CAP_STATIC_MAP
 				| SS_CAP_MEM_ALIGN;
 	cf->socket.map_size = SZ_2K;
 	cf->socket.io[0].res = io;
 
-	status = pcmcia_रेजिस्टर_socket(&cf->socket);
-	अगर (status < 0)
-		जाओ fail0a;
+	status = pcmcia_register_socket(&cf->socket);
+	if (status < 0)
+		goto fail0a;
 
-	वापस 0;
+	return 0;
 
 fail0a:
 	device_init_wakeup(&pdev->dev, 0);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक at91_cf_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा at91_cf_socket	*cf = platक्रमm_get_drvdata(pdev);
+static int at91_cf_remove(struct platform_device *pdev)
+{
+	struct at91_cf_socket	*cf = platform_get_drvdata(pdev);
 
-	pcmcia_unरेजिस्टर_socket(&cf->socket);
+	pcmcia_unregister_socket(&cf->socket);
 	device_init_wakeup(&pdev->dev, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित	CONFIG_PM
+#ifdef	CONFIG_PM
 
-अटल पूर्णांक at91_cf_suspend(काष्ठा platक्रमm_device *pdev, pm_message_t mesg)
-अणु
-	काष्ठा at91_cf_socket	*cf = platक्रमm_get_drvdata(pdev);
-	काष्ठा at91_cf_data	*board = cf->board;
+static int at91_cf_suspend(struct platform_device *pdev, pm_message_t mesg)
+{
+	struct at91_cf_socket	*cf = platform_get_drvdata(pdev);
+	struct at91_cf_data	*board = cf->board;
 
-	अगर (device_may_wakeup(&pdev->dev)) अणु
+	if (device_may_wakeup(&pdev->dev)) {
 		enable_irq_wake(gpio_to_irq(board->det_pin));
-		अगर (gpio_is_valid(board->irq_pin))
+		if (gpio_is_valid(board->irq_pin))
 			enable_irq_wake(gpio_to_irq(board->irq_pin));
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक at91_cf_resume(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा at91_cf_socket	*cf = platक्रमm_get_drvdata(pdev);
-	काष्ठा at91_cf_data	*board = cf->board;
+static int at91_cf_resume(struct platform_device *pdev)
+{
+	struct at91_cf_socket	*cf = platform_get_drvdata(pdev);
+	struct at91_cf_data	*board = cf->board;
 
-	अगर (device_may_wakeup(&pdev->dev)) अणु
+	if (device_may_wakeup(&pdev->dev)) {
 		disable_irq_wake(gpio_to_irq(board->det_pin));
-		अगर (gpio_is_valid(board->irq_pin))
+		if (gpio_is_valid(board->irq_pin))
 			disable_irq_wake(gpio_to_irq(board->irq_pin));
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अन्यथा
-#घोषणा	at91_cf_suspend		शून्य
-#घोषणा	at91_cf_resume		शून्य
-#पूर्ण_अगर
+#else
+#define	at91_cf_suspend		NULL
+#define	at91_cf_resume		NULL
+#endif
 
-अटल काष्ठा platक्रमm_driver at91_cf_driver = अणु
-	.driver = अणु
+static struct platform_driver at91_cf_driver = {
+	.driver = {
 		.name		= "at91_cf",
 		.of_match_table = at91_cf_dt_ids,
-	पूर्ण,
+	},
 	.probe		= at91_cf_probe,
-	.हटाओ		= at91_cf_हटाओ,
+	.remove		= at91_cf_remove,
 	.suspend	= at91_cf_suspend,
 	.resume		= at91_cf_resume,
-पूर्ण;
+};
 
-module_platक्रमm_driver(at91_cf_driver);
+module_platform_driver(at91_cf_driver);
 
 MODULE_DESCRIPTION("AT91 Compact Flash Driver");
 MODULE_AUTHOR("David Brownell");

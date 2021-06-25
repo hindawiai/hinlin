@@ -1,256 +1,255 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/bcma/bcma.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/ioport.h>
+#include <linux/mtd/mtd.h>
+#include <linux/platform_device.h>
+#include <linux/bcma/bcma.h>
 
-#समावेश "bcm47xxsflash.h"
+#include "bcm47xxsflash.h"
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Serial flash driver for BCMA bus");
 
-अटल स्थिर अक्षर * स्थिर probes[] = अणु "bcm47xxpart", शून्य पूर्ण;
+static const char * const probes[] = { "bcm47xxpart", NULL };
 
 /**************************************************
  * Various helpers
  **************************************************/
 
-अटल व्योम bcm47xxsflash_cmd(काष्ठा bcm47xxsflash *b47s, u32 opcode)
-अणु
-	पूर्णांक i;
+static void bcm47xxsflash_cmd(struct bcm47xxsflash *b47s, u32 opcode)
+{
+	int i;
 
-	b47s->cc_ग_लिखो(b47s, BCMA_CC_FLASHCTL, BCMA_CC_FLASHCTL_START | opcode);
-	क्रम (i = 0; i < 1000; i++) अणु
-		अगर (!(b47s->cc_पढ़ो(b47s, BCMA_CC_FLASHCTL) &
+	b47s->cc_write(b47s, BCMA_CC_FLASHCTL, BCMA_CC_FLASHCTL_START | opcode);
+	for (i = 0; i < 1000; i++) {
+		if (!(b47s->cc_read(b47s, BCMA_CC_FLASHCTL) &
 		      BCMA_CC_FLASHCTL_BUSY))
-			वापस;
+			return;
 		cpu_relax();
-	पूर्ण
+	}
 	pr_err("Control command failed (timeout)!\n");
-पूर्ण
+}
 
-अटल पूर्णांक bcm47xxsflash_poll(काष्ठा bcm47xxsflash *b47s, पूर्णांक समयout)
-अणु
-	अचिन्हित दीर्घ deadline = jअगरfies + समयout;
+static int bcm47xxsflash_poll(struct bcm47xxsflash *b47s, int timeout)
+{
+	unsigned long deadline = jiffies + timeout;
 
-	करो अणु
-		चयन (b47s->type) अणु
-		हाल BCM47XXSFLASH_TYPE_ST:
+	do {
+		switch (b47s->type) {
+		case BCM47XXSFLASH_TYPE_ST:
 			bcm47xxsflash_cmd(b47s, OPCODE_ST_RDSR);
-			अगर (!(b47s->cc_पढ़ो(b47s, BCMA_CC_FLASHDATA) &
+			if (!(b47s->cc_read(b47s, BCMA_CC_FLASHDATA) &
 			      SR_ST_WIP))
-				वापस 0;
-			अवरोध;
-		हाल BCM47XXSFLASH_TYPE_ATMEL:
+				return 0;
+			break;
+		case BCM47XXSFLASH_TYPE_ATMEL:
 			bcm47xxsflash_cmd(b47s, OPCODE_AT_STATUS);
-			अगर (b47s->cc_पढ़ो(b47s, BCMA_CC_FLASHDATA) &
+			if (b47s->cc_read(b47s, BCMA_CC_FLASHDATA) &
 			    SR_AT_READY)
-				वापस 0;
-			अवरोध;
-		पूर्ण
+				return 0;
+			break;
+		}
 
 		cpu_relax();
 		udelay(1);
-	पूर्ण जबतक (!समय_after_eq(jअगरfies, deadline));
+	} while (!time_after_eq(jiffies, deadline));
 
 	pr_err("Timeout waiting for flash to be ready!\n");
 
-	वापस -EBUSY;
-पूर्ण
+	return -EBUSY;
+}
 
 /**************************************************
  * MTD ops
  **************************************************/
 
-अटल पूर्णांक bcm47xxsflash_erase(काष्ठा mtd_info *mtd, काष्ठा erase_info *erase)
-अणु
-	काष्ठा bcm47xxsflash *b47s = mtd->priv;
+static int bcm47xxsflash_erase(struct mtd_info *mtd, struct erase_info *erase)
+{
+	struct bcm47xxsflash *b47s = mtd->priv;
 
-	चयन (b47s->type) अणु
-	हाल BCM47XXSFLASH_TYPE_ST:
+	switch (b47s->type) {
+	case BCM47XXSFLASH_TYPE_ST:
 		bcm47xxsflash_cmd(b47s, OPCODE_ST_WREN);
-		b47s->cc_ग_लिखो(b47s, BCMA_CC_FLASHADDR, erase->addr);
+		b47s->cc_write(b47s, BCMA_CC_FLASHADDR, erase->addr);
 		/* Newer flashes have "sub-sectors" which can be erased
 		 * independently with a new command: ST_SSE. The ST_SE command
-		 * erases 64KB just as beक्रमe.
+		 * erases 64KB just as before.
 		 */
-		अगर (b47s->blocksize < (64 * 1024))
+		if (b47s->blocksize < (64 * 1024))
 			bcm47xxsflash_cmd(b47s, OPCODE_ST_SSE);
-		अन्यथा
+		else
 			bcm47xxsflash_cmd(b47s, OPCODE_ST_SE);
-		अवरोध;
-	हाल BCM47XXSFLASH_TYPE_ATMEL:
-		b47s->cc_ग_लिखो(b47s, BCMA_CC_FLASHADDR, erase->addr << 1);
+		break;
+	case BCM47XXSFLASH_TYPE_ATMEL:
+		b47s->cc_write(b47s, BCMA_CC_FLASHADDR, erase->addr << 1);
 		bcm47xxsflash_cmd(b47s, OPCODE_AT_PAGE_ERASE);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस bcm47xxsflash_poll(b47s, HZ);
-पूर्ण
+	return bcm47xxsflash_poll(b47s, HZ);
+}
 
-अटल पूर्णांक bcm47xxsflash_पढ़ो(काष्ठा mtd_info *mtd, loff_t from, माप_प्रकार len,
-			      माप_प्रकार *retlen, u_अक्षर *buf)
-अणु
-	काष्ठा bcm47xxsflash *b47s = mtd->priv;
-	माप_प्रकार orig_len = len;
+static int bcm47xxsflash_read(struct mtd_info *mtd, loff_t from, size_t len,
+			      size_t *retlen, u_char *buf)
+{
+	struct bcm47xxsflash *b47s = mtd->priv;
+	size_t orig_len = len;
 
 	/* Check address range */
-	अगर ((from + len) > mtd->size)
-		वापस -EINVAL;
+	if ((from + len) > mtd->size)
+		return -EINVAL;
 
-	/* Read as much as possible using fast MMIO winकरोw */
-	अगर (from < BCM47XXSFLASH_WINDOW_SZ) अणु
-		माप_प्रकार स_नकल_len;
+	/* Read as much as possible using fast MMIO window */
+	if (from < BCM47XXSFLASH_WINDOW_SZ) {
+		size_t memcpy_len;
 
-		स_नकल_len = min(len, (माप_प्रकार)(BCM47XXSFLASH_WINDOW_SZ - from));
-		स_नकल_fromio(buf, b47s->winकरोw + from, स_नकल_len);
-		from += स_नकल_len;
-		len -= स_नकल_len;
-		buf += स_नकल_len;
-	पूर्ण
+		memcpy_len = min(len, (size_t)(BCM47XXSFLASH_WINDOW_SZ - from));
+		memcpy_fromio(buf, b47s->window + from, memcpy_len);
+		from += memcpy_len;
+		len -= memcpy_len;
+		buf += memcpy_len;
+	}
 
-	/* Use indirect access क्रम content out of the winकरोw */
-	क्रम (; len; len--) अणु
-		b47s->cc_ग_लिखो(b47s, BCMA_CC_FLASHADDR, from++);
+	/* Use indirect access for content out of the window */
+	for (; len; len--) {
+		b47s->cc_write(b47s, BCMA_CC_FLASHADDR, from++);
 		bcm47xxsflash_cmd(b47s, OPCODE_ST_READ4B);
-		*buf++ = b47s->cc_पढ़ो(b47s, BCMA_CC_FLASHDATA);
-	पूर्ण
+		*buf++ = b47s->cc_read(b47s, BCMA_CC_FLASHDATA);
+	}
 
 	*retlen = orig_len;
 
-	वापस orig_len;
-पूर्ण
+	return orig_len;
+}
 
-अटल पूर्णांक bcm47xxsflash_ग_लिखो_st(काष्ठा mtd_info *mtd, u32 offset, माप_प्रकार len,
-				  स्थिर u_अक्षर *buf)
-अणु
-	काष्ठा bcm47xxsflash *b47s = mtd->priv;
-	पूर्णांक written = 0;
+static int bcm47xxsflash_write_st(struct mtd_info *mtd, u32 offset, size_t len,
+				  const u_char *buf)
+{
+	struct bcm47xxsflash *b47s = mtd->priv;
+	int written = 0;
 
-	/* Enable ग_लिखोs */
+	/* Enable writes */
 	bcm47xxsflash_cmd(b47s, OPCODE_ST_WREN);
 
 	/* Write first byte */
-	b47s->cc_ग_लिखो(b47s, BCMA_CC_FLASHADDR, offset);
-	b47s->cc_ग_लिखो(b47s, BCMA_CC_FLASHDATA, *buf++);
+	b47s->cc_write(b47s, BCMA_CC_FLASHADDR, offset);
+	b47s->cc_write(b47s, BCMA_CC_FLASHDATA, *buf++);
 
 	/* Program page */
-	अगर (b47s->bcma_cc->core->id.rev < 20) अणु
+	if (b47s->bcma_cc->core->id.rev < 20) {
 		bcm47xxsflash_cmd(b47s, OPCODE_ST_PP);
-		वापस 1; /* 1B written */
-	पूर्ण
+		return 1; /* 1B written */
+	}
 
-	/* Program page and set CSA (on newer chips we can जारी writing) */
+	/* Program page and set CSA (on newer chips we can continue writing) */
 	bcm47xxsflash_cmd(b47s, OPCODE_ST_CSA | OPCODE_ST_PP);
 	offset++;
 	len--;
 	written++;
 
-	जबतक (len > 0) अणु
+	while (len > 0) {
 		/* Page boundary, another function call is needed */
-		अगर ((offset & 0xFF) == 0)
-			अवरोध;
+		if ((offset & 0xFF) == 0)
+			break;
 
 		bcm47xxsflash_cmd(b47s, OPCODE_ST_CSA | *buf++);
 		offset++;
 		len--;
 		written++;
-	पूर्ण
+	}
 
-	/* All करोne, drop CSA & poll */
-	b47s->cc_ग_लिखो(b47s, BCMA_CC_FLASHCTL, 0);
+	/* All done, drop CSA & poll */
+	b47s->cc_write(b47s, BCMA_CC_FLASHCTL, 0);
 	udelay(1);
-	अगर (bcm47xxsflash_poll(b47s, HZ / 10))
+	if (bcm47xxsflash_poll(b47s, HZ / 10))
 		pr_err("Flash rejected dropping CSA\n");
 
-	वापस written;
-पूर्ण
+	return written;
+}
 
-अटल पूर्णांक bcm47xxsflash_ग_लिखो_at(काष्ठा mtd_info *mtd, u32 offset, माप_प्रकार len,
-				  स्थिर u_अक्षर *buf)
-अणु
-	काष्ठा bcm47xxsflash *b47s = mtd->priv;
+static int bcm47xxsflash_write_at(struct mtd_info *mtd, u32 offset, size_t len,
+				  const u_char *buf)
+{
+	struct bcm47xxsflash *b47s = mtd->priv;
 	u32 mask = b47s->blocksize - 1;
 	u32 page = (offset & ~mask) << 1;
 	u32 byte = offset & mask;
-	पूर्णांक written = 0;
+	int written = 0;
 
-	/* If we करोn't overग_लिखो whole page, पढ़ो it to the buffer first */
-	अगर (byte || (len < b47s->blocksize)) अणु
-		पूर्णांक err;
+	/* If we don't overwrite whole page, read it to the buffer first */
+	if (byte || (len < b47s->blocksize)) {
+		int err;
 
-		b47s->cc_ग_लिखो(b47s, BCMA_CC_FLASHADDR, page);
+		b47s->cc_write(b47s, BCMA_CC_FLASHADDR, page);
 		bcm47xxsflash_cmd(b47s, OPCODE_AT_BUF1_LOAD);
-		/* 250 us क्रम AT45DB321B */
+		/* 250 us for AT45DB321B */
 		err = bcm47xxsflash_poll(b47s, HZ / 1000);
-		अगर (err) अणु
+		if (err) {
 			pr_err("Timeout reading page 0x%X info buffer\n", page);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
 	/* Change buffer content with our data */
-	जबतक (len > 0) अणु
+	while (len > 0) {
 		/* Page boundary, another function call is needed */
-		अगर (byte == b47s->blocksize)
-			अवरोध;
+		if (byte == b47s->blocksize)
+			break;
 
-		b47s->cc_ग_लिखो(b47s, BCMA_CC_FLASHADDR, byte++);
-		b47s->cc_ग_लिखो(b47s, BCMA_CC_FLASHDATA, *buf++);
+		b47s->cc_write(b47s, BCMA_CC_FLASHADDR, byte++);
+		b47s->cc_write(b47s, BCMA_CC_FLASHDATA, *buf++);
 		bcm47xxsflash_cmd(b47s, OPCODE_AT_BUF1_WRITE);
 		len--;
 		written++;
-	पूर्ण
+	}
 
 	/* Program page with the buffer content */
-	b47s->cc_ग_लिखो(b47s, BCMA_CC_FLASHADDR, page);
+	b47s->cc_write(b47s, BCMA_CC_FLASHADDR, page);
 	bcm47xxsflash_cmd(b47s, OPCODE_AT_BUF1_PROGRAM);
 
-	वापस written;
-पूर्ण
+	return written;
+}
 
-अटल पूर्णांक bcm47xxsflash_ग_लिखो(काष्ठा mtd_info *mtd, loff_t to, माप_प्रकार len,
-			       माप_प्रकार *retlen, स्थिर u_अक्षर *buf)
-अणु
-	काष्ठा bcm47xxsflash *b47s = mtd->priv;
-	पूर्णांक written;
+static int bcm47xxsflash_write(struct mtd_info *mtd, loff_t to, size_t len,
+			       size_t *retlen, const u_char *buf)
+{
+	struct bcm47xxsflash *b47s = mtd->priv;
+	int written;
 
-	/* Writing functions can वापस without writing all passed data, क्रम
+	/* Writing functions can return without writing all passed data, for
 	 * example when the hardware is too old or when we git page boundary.
 	 */
-	जबतक (len > 0) अणु
-		चयन (b47s->type) अणु
-		हाल BCM47XXSFLASH_TYPE_ST:
-			written = bcm47xxsflash_ग_लिखो_st(mtd, to, len, buf);
-			अवरोध;
-		हाल BCM47XXSFLASH_TYPE_ATMEL:
-			written = bcm47xxsflash_ग_लिखो_at(mtd, to, len, buf);
-			अवरोध;
-		शेष:
+	while (len > 0) {
+		switch (b47s->type) {
+		case BCM47XXSFLASH_TYPE_ST:
+			written = bcm47xxsflash_write_st(mtd, to, len, buf);
+			break;
+		case BCM47XXSFLASH_TYPE_ATMEL:
+			written = bcm47xxsflash_write_at(mtd, to, len, buf);
+			break;
+		default:
 			BUG_ON(1);
-		पूर्ण
-		अगर (written < 0) अणु
+		}
+		if (written < 0) {
 			pr_err("Error writing at offset 0x%llX\n", to);
-			वापस written;
-		पूर्ण
+			return written;
+		}
 		to += (loff_t)written;
 		len -= written;
 		*retlen += written;
 		buf += written;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम bcm47xxsflash_fill_mtd(काष्ठा bcm47xxsflash *b47s,
-				   काष्ठा device *dev)
-अणु
-	काष्ठा mtd_info *mtd = &b47s->mtd;
+static void bcm47xxsflash_fill_mtd(struct bcm47xxsflash *b47s,
+				   struct device *dev)
+{
+	struct mtd_info *mtd = &b47s->mtd;
 
 	mtd->priv = b47s;
 	mtd->dev.parent = dev;
@@ -260,124 +259,124 @@ MODULE_DESCRIPTION("Serial flash driver for BCMA bus");
 	mtd->flags = MTD_CAP_NORFLASH;
 	mtd->size = b47s->size;
 	mtd->erasesize = b47s->blocksize;
-	mtd->ग_लिखोsize = 1;
-	mtd->ग_लिखोbufsize = 1;
+	mtd->writesize = 1;
+	mtd->writebufsize = 1;
 
 	mtd->_erase = bcm47xxsflash_erase;
-	mtd->_पढ़ो = bcm47xxsflash_पढ़ो;
-	mtd->_ग_लिखो = bcm47xxsflash_ग_लिखो;
-पूर्ण
+	mtd->_read = bcm47xxsflash_read;
+	mtd->_write = bcm47xxsflash_write;
+}
 
 /**************************************************
  * BCMA
  **************************************************/
 
-अटल पूर्णांक bcm47xxsflash_bcma_cc_पढ़ो(काष्ठा bcm47xxsflash *b47s, u16 offset)
-अणु
-	वापस bcma_cc_पढ़ो32(b47s->bcma_cc, offset);
-पूर्ण
+static int bcm47xxsflash_bcma_cc_read(struct bcm47xxsflash *b47s, u16 offset)
+{
+	return bcma_cc_read32(b47s->bcma_cc, offset);
+}
 
-अटल व्योम bcm47xxsflash_bcma_cc_ग_लिखो(काष्ठा bcm47xxsflash *b47s, u16 offset,
+static void bcm47xxsflash_bcma_cc_write(struct bcm47xxsflash *b47s, u16 offset,
 					u32 value)
-अणु
-	bcma_cc_ग_लिखो32(b47s->bcma_cc, offset, value);
-पूर्ण
+{
+	bcma_cc_write32(b47s->bcma_cc, offset, value);
+}
 
-अटल पूर्णांक bcm47xxsflash_bcma_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा bcma_sflash *sflash = dev_get_platdata(dev);
-	काष्ठा bcm47xxsflash *b47s;
-	काष्ठा resource *res;
-	पूर्णांक err;
+static int bcm47xxsflash_bcma_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct bcma_sflash *sflash = dev_get_platdata(dev);
+	struct bcm47xxsflash *b47s;
+	struct resource *res;
+	int err;
 
-	b47s = devm_kzalloc(dev, माप(*b47s), GFP_KERNEL);
-	अगर (!b47s)
-		वापस -ENOMEM;
+	b47s = devm_kzalloc(dev, sizeof(*b47s), GFP_KERNEL);
+	if (!b47s)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res) अणु
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res) {
 		dev_err(dev, "invalid resource\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (!devm_request_mem_region(dev, res->start, resource_size(res),
-				     res->name)) अणु
+		return -EINVAL;
+	}
+	if (!devm_request_mem_region(dev, res->start, resource_size(res),
+				     res->name)) {
 		dev_err(dev, "can't request region for resource %pR\n", res);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	b47s->bcma_cc = container_of(sflash, काष्ठा bcma_drv_cc, sflash);
-	b47s->cc_पढ़ो = bcm47xxsflash_bcma_cc_पढ़ो;
-	b47s->cc_ग_लिखो = bcm47xxsflash_bcma_cc_ग_लिखो;
+	b47s->bcma_cc = container_of(sflash, struct bcma_drv_cc, sflash);
+	b47s->cc_read = bcm47xxsflash_bcma_cc_read;
+	b47s->cc_write = bcm47xxsflash_bcma_cc_write;
 
 	/*
 	 * On old MIPS devices cache was magically invalidated when needed,
-	 * allowing us to use cached access and gain some perक्रमmance. Trying
+	 * allowing us to use cached access and gain some performance. Trying
 	 * the same on ARM based BCM53573 results in flash corruptions, we need
-	 * to use uncached access क्रम it.
+	 * to use uncached access for it.
 	 *
-	 * It may be arch specअगरic, but right now there is only 1 ARM SoC using
+	 * It may be arch specific, but right now there is only 1 ARM SoC using
 	 * this driver, so let's follow Broadcom's reference code and check
 	 * ChipCommon revision.
 	 */
-	अगर (b47s->bcma_cc->core->id.rev == 54)
-		b47s->winकरोw = ioremap(res->start, resource_size(res));
-	अन्यथा
-		b47s->winकरोw = ioremap_cache(res->start, resource_size(res));
-	अगर (!b47s->winकरोw) अणु
+	if (b47s->bcma_cc->core->id.rev == 54)
+		b47s->window = ioremap(res->start, resource_size(res));
+	else
+		b47s->window = ioremap_cache(res->start, resource_size(res));
+	if (!b47s->window) {
 		dev_err(dev, "ioremap failed for resource %pR\n", res);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	चयन (b47s->bcma_cc->capabilities & BCMA_CC_CAP_FLASHT) अणु
-	हाल BCMA_CC_FLASHT_STSER:
+	switch (b47s->bcma_cc->capabilities & BCMA_CC_CAP_FLASHT) {
+	case BCMA_CC_FLASHT_STSER:
 		b47s->type = BCM47XXSFLASH_TYPE_ST;
-		अवरोध;
-	हाल BCMA_CC_FLASHT_ATSER:
+		break;
+	case BCMA_CC_FLASHT_ATSER:
 		b47s->type = BCM47XXSFLASH_TYPE_ATMEL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	b47s->blocksize = sflash->blocksize;
 	b47s->numblocks = sflash->numblocks;
 	b47s->size = sflash->size;
 	bcm47xxsflash_fill_mtd(b47s, &pdev->dev);
 
-	platक्रमm_set_drvdata(pdev, b47s);
+	platform_set_drvdata(pdev, b47s);
 
-	err = mtd_device_parse_रेजिस्टर(&b47s->mtd, probes, शून्य, शून्य, 0);
-	अगर (err) अणु
+	err = mtd_device_parse_register(&b47s->mtd, probes, NULL, NULL, 0);
+	if (err) {
 		pr_err("Failed to register MTD device: %d\n", err);
-		iounmap(b47s->winकरोw);
-		वापस err;
-	पूर्ण
+		iounmap(b47s->window);
+		return err;
+	}
 
-	अगर (bcm47xxsflash_poll(b47s, HZ / 10))
+	if (bcm47xxsflash_poll(b47s, HZ / 10))
 		pr_warn("Serial flash busy\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bcm47xxsflash_bcma_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा bcm47xxsflash *b47s = platक्रमm_get_drvdata(pdev);
+static int bcm47xxsflash_bcma_remove(struct platform_device *pdev)
+{
+	struct bcm47xxsflash *b47s = platform_get_drvdata(pdev);
 
-	mtd_device_unरेजिस्टर(&b47s->mtd);
-	iounmap(b47s->winकरोw);
+	mtd_device_unregister(&b47s->mtd);
+	iounmap(b47s->window);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver bcma_sflash_driver = अणु
+static struct platform_driver bcma_sflash_driver = {
 	.probe	= bcm47xxsflash_bcma_probe,
-	.हटाओ = bcm47xxsflash_bcma_हटाओ,
-	.driver = अणु
+	.remove = bcm47xxsflash_bcma_remove,
+	.driver = {
 		.name = "bcma_sflash",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /**************************************************
  * Init
  **************************************************/
 
-module_platक्रमm_driver(bcma_sflash_driver);
+module_platform_driver(bcma_sflash_driver);

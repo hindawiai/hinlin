@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,130 +21,130 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश <subdev/मूलप्रण.स>
-#समावेश <subdev/bios/dcb.h>
-#समावेश <subdev/bios/gpपन.स>
-#समावेश <subdev/bios/xpपन.स>
+#include <subdev/bios.h>
+#include <subdev/bios/dcb.h>
+#include <subdev/bios/gpio.h>
+#include <subdev/bios/xpio.h>
 
 u16
-dcb_gpio_table(काष्ठा nvkm_bios *bios, u8 *ver, u8 *hdr, u8 *cnt, u8 *len)
-अणु
+dcb_gpio_table(struct nvkm_bios *bios, u8 *ver, u8 *hdr, u8 *cnt, u8 *len)
+{
 	u16 data = 0x0000;
 	u16 dcb = dcb_table(bios, ver, hdr, cnt, len);
-	अगर (dcb) अणु
-		अगर (*ver >= 0x30 && *hdr >= 0x0c)
+	if (dcb) {
+		if (*ver >= 0x30 && *hdr >= 0x0c)
 			data = nvbios_rd16(bios, dcb + 0x0a);
-		अन्यथा
-		अगर (*ver >= 0x22 && nvbios_rd08(bios, dcb - 1) >= 0x13)
+		else
+		if (*ver >= 0x22 && nvbios_rd08(bios, dcb - 1) >= 0x13)
 			data = nvbios_rd16(bios, dcb - 0x0f);
 
-		अगर (data) अणु
+		if (data) {
 			*ver = nvbios_rd08(bios, data + 0x00);
-			अगर (*ver < 0x30) अणु
+			if (*ver < 0x30) {
 				*hdr = 3;
 				*cnt = nvbios_rd08(bios, data + 0x02);
 				*len = nvbios_rd08(bios, data + 0x01);
-			पूर्ण अन्यथा
-			अगर (*ver <= 0x41) अणु
+			} else
+			if (*ver <= 0x41) {
 				*hdr = nvbios_rd08(bios, data + 0x01);
 				*cnt = nvbios_rd08(bios, data + 0x02);
 				*len = nvbios_rd08(bios, data + 0x03);
-			पूर्ण अन्यथा अणु
+			} else {
 				data = 0x0000;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस data;
-पूर्ण
+			}
+		}
+	}
+	return data;
+}
 
 u16
-dcb_gpio_entry(काष्ठा nvkm_bios *bios, पूर्णांक idx, पूर्णांक ent, u8 *ver, u8 *len)
-अणु
-	u8  hdr, cnt, xver; /* use gpio version क्रम xpio entry parsing */
+dcb_gpio_entry(struct nvkm_bios *bios, int idx, int ent, u8 *ver, u8 *len)
+{
+	u8  hdr, cnt, xver; /* use gpio version for xpio entry parsing */
 	u16 gpio;
 
-	अगर (!idx--)
+	if (!idx--)
 		gpio = dcb_gpio_table(bios, ver, &hdr, &cnt, len);
-	अन्यथा
+	else
 		gpio = dcb_xpio_table(bios, idx, &xver, &hdr, &cnt, len);
 
-	अगर (gpio && ent < cnt)
-		वापस gpio + hdr + (ent * *len);
+	if (gpio && ent < cnt)
+		return gpio + hdr + (ent * *len);
 
-	वापस 0x0000;
-पूर्ण
+	return 0x0000;
+}
 
 u16
-dcb_gpio_parse(काष्ठा nvkm_bios *bios, पूर्णांक idx, पूर्णांक ent, u8 *ver, u8 *len,
-	       काष्ठा dcb_gpio_func *gpio)
-अणु
+dcb_gpio_parse(struct nvkm_bios *bios, int idx, int ent, u8 *ver, u8 *len,
+	       struct dcb_gpio_func *gpio)
+{
 	u16 data = dcb_gpio_entry(bios, idx, ent, ver, len);
-	अगर (data) अणु
-		अगर (*ver < 0x40) अणु
+	if (data) {
+		if (*ver < 0x40) {
 			u16 info = nvbios_rd16(bios, data);
-			*gpio = (काष्ठा dcb_gpio_func) अणु
+			*gpio = (struct dcb_gpio_func) {
 				.line = (info & 0x001f) >> 0,
 				.func = (info & 0x07e0) >> 5,
 				.log[0] = (info & 0x1800) >> 11,
 				.log[1] = (info & 0x6000) >> 13,
 				.param = !!(info & 0x8000),
-			पूर्ण;
-		पूर्ण अन्यथा
-		अगर (*ver < 0x41) अणु
+			};
+		} else
+		if (*ver < 0x41) {
 			u32 info = nvbios_rd32(bios, data);
-			*gpio = (काष्ठा dcb_gpio_func) अणु
+			*gpio = (struct dcb_gpio_func) {
 				.line = (info & 0x0000001f) >> 0,
 				.func = (info & 0x0000ff00) >> 8,
 				.log[0] = (info & 0x18000000) >> 27,
 				.log[1] = (info & 0x60000000) >> 29,
 				.param = !!(info & 0x80000000),
-			पूर्ण;
-		पूर्ण अन्यथा अणु
+			};
+		} else {
 			u32 info = nvbios_rd32(bios, data + 0);
 			u8 info1 = nvbios_rd32(bios, data + 4);
-			*gpio = (काष्ठा dcb_gpio_func) अणु
+			*gpio = (struct dcb_gpio_func) {
 				.line = (info & 0x0000003f) >> 0,
 				.func = (info & 0x0000ff00) >> 8,
 				.log[0] = (info1 & 0x30) >> 4,
 				.log[1] = (info1 & 0xc0) >> 6,
 				.param = !!(info & 0x80000000),
-			पूर्ण;
-		पूर्ण
-	पूर्ण
+			};
+		}
+	}
 
-	वापस data;
-पूर्ण
+	return data;
+}
 
 u16
-dcb_gpio_match(काष्ठा nvkm_bios *bios, पूर्णांक idx, u8 func, u8 line,
-	       u8 *ver, u8 *len, काष्ठा dcb_gpio_func *gpio)
-अणु
+dcb_gpio_match(struct nvkm_bios *bios, int idx, u8 func, u8 line,
+	       u8 *ver, u8 *len, struct dcb_gpio_func *gpio)
+{
 	u8  hdr, cnt, i = 0;
 	u16 data;
 
-	जबतक ((data = dcb_gpio_parse(bios, idx, i++, ver, len, gpio))) अणु
-		अगर ((line == 0xff || line == gpio->line) &&
+	while ((data = dcb_gpio_parse(bios, idx, i++, ver, len, gpio))) {
+		if ((line == 0xff || line == gpio->line) &&
 		    (func == 0xff || func == gpio->func))
-			वापस data;
-	पूर्ण
+			return data;
+	}
 
 	/* DCB 2.2, fixed TVDAC GPIO data */
-	अगर ((data = dcb_table(bios, ver, &hdr, &cnt, len))) अणु
-		अगर (*ver >= 0x22 && *ver < 0x30 && func == DCB_GPIO_TVDAC0) अणु
+	if ((data = dcb_table(bios, ver, &hdr, &cnt, len))) {
+		if (*ver >= 0x22 && *ver < 0x30 && func == DCB_GPIO_TVDAC0) {
 			u8 conf = nvbios_rd08(bios, data - 5);
 			u8 addr = nvbios_rd08(bios, data - 4);
-			अगर (conf & 0x01) अणु
-				*gpio = (काष्ठा dcb_gpio_func) अणु
+			if (conf & 0x01) {
+				*gpio = (struct dcb_gpio_func) {
 					.func = DCB_GPIO_TVDAC0,
 					.line = addr >> 4,
 					.log[0] = !!(conf & 0x02),
 					.log[1] =  !(conf & 0x02),
-				पूर्ण;
+				};
 				*ver = 0x00;
-				वापस data;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return data;
+			}
+		}
+	}
 
-	वापस 0x0000;
-पूर्ण
+	return 0x0000;
+}

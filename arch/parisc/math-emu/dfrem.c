@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Linux/PA-RISC Project (http://www.parisc-linux.org/)
  *
- * Floating-poपूर्णांक emulation code
+ * Floating-point emulation code
  *  Copyright (C) 2001 Hewlett-Packard (Paul Bame) <bame@debian.org>
  */
 /*
@@ -13,7 +12,7 @@
  *	@(#)	pa/spmath/dfrem.c		$Revision: 1.1 $
  *
  *  Purpose:
- *	Double Precision Floating-poपूर्णांक Reमुख्यder
+ *	Double Precision Floating-point Remainder
  *
  *  External Interfaces:
  *	dbl_frem(srcptr1,srcptr2,dstptr,status)
@@ -28,109 +27,109 @@
 
 
 
-#समावेश "float.h"
-#समावेश "dbl_float.h"
+#include "float.h"
+#include "dbl_float.h"
 
 /*
- *  Double Precision Floating-poपूर्णांक Reमुख्यder
+ *  Double Precision Floating-point Remainder
  */
 
-पूर्णांक
-dbl_frem (dbl_भग्नing_poपूर्णांक * srcptr1, dbl_भग्नing_poपूर्णांक * srcptr2,
-	  dbl_भग्नing_poपूर्णांक * dstptr, अचिन्हित पूर्णांक *status)
-अणु
-	रेजिस्टर अचिन्हित पूर्णांक opnd1p1, opnd1p2, opnd2p1, opnd2p2;
-	रेजिस्टर अचिन्हित पूर्णांक resultp1, resultp2;
-	रेजिस्टर पूर्णांक opnd1_exponent, opnd2_exponent, dest_exponent, stepcount;
-	रेजिस्टर boolean roundup = FALSE;
+int
+dbl_frem (dbl_floating_point * srcptr1, dbl_floating_point * srcptr2,
+	  dbl_floating_point * dstptr, unsigned int *status)
+{
+	register unsigned int opnd1p1, opnd1p2, opnd2p1, opnd2p2;
+	register unsigned int resultp1, resultp2;
+	register int opnd1_exponent, opnd2_exponent, dest_exponent, stepcount;
+	register boolean roundup = FALSE;
 
 	Dbl_copyfromptr(srcptr1,opnd1p1,opnd1p2);
 	Dbl_copyfromptr(srcptr2,opnd2p1,opnd2p2);
 	/*
-	 * check first opeअक्रम क्रम NaN's or infinity
+	 * check first operand for NaN's or infinity
 	 */
-	अगर ((opnd1_exponent = Dbl_exponent(opnd1p1)) == DBL_अनन्त_EXPONENT) अणु
-		अगर (Dbl_iszero_mantissa(opnd1p1,opnd1p2)) अणु
-			अगर (Dbl_isnotnan(opnd2p1,opnd2p2)) अणु
-				/* invalid since first opeअक्रम is infinity */
-				अगर (Is_invalidtrap_enabled()) 
-                                	वापस(INVALIDEXCEPTION);
+	if ((opnd1_exponent = Dbl_exponent(opnd1p1)) == DBL_INFINITY_EXPONENT) {
+		if (Dbl_iszero_mantissa(opnd1p1,opnd1p2)) {
+			if (Dbl_isnotnan(opnd2p1,opnd2p2)) {
+				/* invalid since first operand is infinity */
+				if (Is_invalidtrap_enabled()) 
+                                	return(INVALIDEXCEPTION);
                                 Set_invalidflag();
                                 Dbl_makequietnan(resultp1,resultp2);
 				Dbl_copytoptr(resultp1,resultp2,dstptr);
-				वापस(NOEXCEPTION);
-			पूर्ण
-		पूर्ण
-		अन्यथा अणु
+				return(NOEXCEPTION);
+			}
+		}
+		else {
                 	/*
-                 	 * is NaN; संकेतing or quiet?
+                 	 * is NaN; signaling or quiet?
                  	 */
-                	अगर (Dbl_isone_संकेतing(opnd1p1)) अणु
-                        	/* trap अगर INVALIDTRAP enabled */
-                        	अगर (Is_invalidtrap_enabled()) 
-                            		वापस(INVALIDEXCEPTION);
+                	if (Dbl_isone_signaling(opnd1p1)) {
+                        	/* trap if INVALIDTRAP enabled */
+                        	if (Is_invalidtrap_enabled()) 
+                            		return(INVALIDEXCEPTION);
                         	/* make NaN quiet */
                         	Set_invalidflag();
                         	Dbl_set_quiet(opnd1p1);
-                	पूर्ण
+                	}
 			/* 
-			 * is second opeअक्रम a संकेतing NaN? 
+			 * is second operand a signaling NaN? 
 			 */
-			अन्यथा अगर (Dbl_is_संकेतingnan(opnd2p1)) अणु
-                        	/* trap अगर INVALIDTRAP enabled */
-                        	अगर (Is_invalidtrap_enabled()) 
-                            		वापस(INVALIDEXCEPTION);
+			else if (Dbl_is_signalingnan(opnd2p1)) {
+                        	/* trap if INVALIDTRAP enabled */
+                        	if (Is_invalidtrap_enabled()) 
+                            		return(INVALIDEXCEPTION);
                         	/* make NaN quiet */
                         	Set_invalidflag();
                         	Dbl_set_quiet(opnd2p1);
 				Dbl_copytoptr(opnd2p1,opnd2p2,dstptr);
-                		वापस(NOEXCEPTION);
-			पूर्ण
+                		return(NOEXCEPTION);
+			}
                 	/*
-                 	 * वापस quiet NaN
+                 	 * return quiet NaN
                  	 */
 			Dbl_copytoptr(opnd1p1,opnd1p2,dstptr);
-                	वापस(NOEXCEPTION);
-		पूर्ण
-	पूर्ण 
+                	return(NOEXCEPTION);
+		}
+	} 
 	/*
-	 * check second opeअक्रम क्रम NaN's or infinity
+	 * check second operand for NaN's or infinity
 	 */
-	अगर ((opnd2_exponent = Dbl_exponent(opnd2p1)) == DBL_अनन्त_EXPONENT) अणु
-		अगर (Dbl_iszero_mantissa(opnd2p1,opnd2p2)) अणु
+	if ((opnd2_exponent = Dbl_exponent(opnd2p1)) == DBL_INFINITY_EXPONENT) {
+		if (Dbl_iszero_mantissa(opnd2p1,opnd2p2)) {
 			/*
-			 * वापस first opeअक्रम
+			 * return first operand
 			 */
 			Dbl_copytoptr(opnd1p1,opnd1p2,dstptr);
-			वापस(NOEXCEPTION);
-		पूर्ण
+			return(NOEXCEPTION);
+		}
                 /*
-                 * is NaN; संकेतing or quiet?
+                 * is NaN; signaling or quiet?
                  */
-                अगर (Dbl_isone_संकेतing(opnd2p1)) अणु
-                        /* trap अगर INVALIDTRAP enabled */
-                        अगर (Is_invalidtrap_enabled()) वापस(INVALIDEXCEPTION);
+                if (Dbl_isone_signaling(opnd2p1)) {
+                        /* trap if INVALIDTRAP enabled */
+                        if (Is_invalidtrap_enabled()) return(INVALIDEXCEPTION);
                         /* make NaN quiet */
                         Set_invalidflag();
                         Dbl_set_quiet(opnd2p1);
-                पूर्ण
+                }
                 /*
-                 * वापस quiet NaN
+                 * return quiet NaN
                  */
 		Dbl_copytoptr(opnd2p1,opnd2p2,dstptr);
-                वापस(NOEXCEPTION);
-	पूर्ण
+                return(NOEXCEPTION);
+	}
 	/*
-	 * check second opeअक्रम क्रम zero
+	 * check second operand for zero
 	 */
-	अगर (Dbl_iszero_exponenपंचांगantissa(opnd2p1,opnd2p2)) अणु
-		/* invalid since second opeअक्रम is zero */
-		अगर (Is_invalidtrap_enabled()) वापस(INVALIDEXCEPTION);
+	if (Dbl_iszero_exponentmantissa(opnd2p1,opnd2p2)) {
+		/* invalid since second operand is zero */
+		if (Is_invalidtrap_enabled()) return(INVALIDEXCEPTION);
                 Set_invalidflag();
                 Dbl_makequietnan(resultp1,resultp2);
 		Dbl_copytoptr(resultp1,resultp2,dstptr);
-		वापस(NOEXCEPTION);
-	पूर्ण
+		return(NOEXCEPTION);
+	}
 
 	/* 
 	 * get sign of result
@@ -138,148 +137,148 @@ dbl_frem (dbl_भग्नing_poपूर्णांक * srcptr1, dbl_भग�
 	resultp1 = opnd1p1;  
 
 	/* 
-	 * check क्रम denormalized opeअक्रमs
+	 * check for denormalized operands
 	 */
-	अगर (opnd1_exponent == 0) अणु
-		/* check क्रम zero */
-		अगर (Dbl_iszero_mantissa(opnd1p1,opnd1p2)) अणु
+	if (opnd1_exponent == 0) {
+		/* check for zero */
+		if (Dbl_iszero_mantissa(opnd1p1,opnd1p2)) {
 			Dbl_copytoptr(opnd1p1,opnd1p2,dstptr);
-			वापस(NOEXCEPTION);
-		पूर्ण
-		/* normalize, then जारी */
+			return(NOEXCEPTION);
+		}
+		/* normalize, then continue */
 		opnd1_exponent = 1;
 		Dbl_normalize(opnd1p1,opnd1p2,opnd1_exponent);
-	पूर्ण
-	अन्यथा अणु
+	}
+	else {
 		Dbl_clear_signexponent_set_hidden(opnd1p1);
-	पूर्ण
-	अगर (opnd2_exponent == 0) अणु
-		/* normalize, then जारी */
+	}
+	if (opnd2_exponent == 0) {
+		/* normalize, then continue */
 		opnd2_exponent = 1;
 		Dbl_normalize(opnd2p1,opnd2p2,opnd2_exponent);
-	पूर्ण
-	अन्यथा अणु
+	}
+	else {
 		Dbl_clear_signexponent_set_hidden(opnd2p1);
-	पूर्ण
+	}
 
-	/* find result exponent and भागide step loop count */
+	/* find result exponent and divide step loop count */
 	dest_exponent = opnd2_exponent - 1;
 	stepcount = opnd1_exponent - opnd2_exponent;
 
 	/*
-	 * check क्रम opnd1/opnd2 < 1
+	 * check for opnd1/opnd2 < 1
 	 */
-	अगर (stepcount < 0) अणु
+	if (stepcount < 0) {
 		/*
-		 * check क्रम opnd1/opnd2 > 1/2
+		 * check for opnd1/opnd2 > 1/2
 		 *
-		 * In this हाल n will round to 1, so 
+		 * In this case n will round to 1, so 
 		 *    r = opnd1 - opnd2 
 		 */
-		अगर (stepcount == -1 && 
-		    Dbl_isgreaterthan(opnd1p1,opnd1p2,opnd2p1,opnd2p2)) अणु
+		if (stepcount == -1 && 
+		    Dbl_isgreaterthan(opnd1p1,opnd1p2,opnd2p1,opnd2p2)) {
 			/* set sign */
 			Dbl_allp1(resultp1) = ~Dbl_allp1(resultp1);
 			/* align opnd2 with opnd1 */
-			Dbl_leftshअगरtby1(opnd2p1,opnd2p2); 
+			Dbl_leftshiftby1(opnd2p1,opnd2p2); 
 			Dbl_subtract(opnd2p1,opnd2p2,opnd1p1,opnd1p2,
 			 opnd2p1,opnd2p2);
 			/* now normalize */
-                	जबतक (Dbl_iszero_hidden(opnd2p1)) अणु
-                        	Dbl_leftshअगरtby1(opnd2p1,opnd2p2);
+                	while (Dbl_iszero_hidden(opnd2p1)) {
+                        	Dbl_leftshiftby1(opnd2p1,opnd2p2);
                         	dest_exponent--;
-			पूर्ण
-			Dbl_set_exponenपंचांगantissa(resultp1,resultp2,opnd2p1,opnd2p2);
-			जाओ testक्रमunderflow;
-		पूर्ण
+			}
+			Dbl_set_exponentmantissa(resultp1,resultp2,opnd2p1,opnd2p2);
+			goto testforunderflow;
+		}
 		/*
 		 * opnd1/opnd2 <= 1/2
 		 *
-		 * In this हाल n will round to zero, so 
+		 * In this case n will round to zero, so 
 		 *    r = opnd1
 		 */
-		Dbl_set_exponenपंचांगantissa(resultp1,resultp2,opnd1p1,opnd1p2);
+		Dbl_set_exponentmantissa(resultp1,resultp2,opnd1p1,opnd1p2);
 		dest_exponent = opnd1_exponent;
-		जाओ testक्रमunderflow;
-	पूर्ण
+		goto testforunderflow;
+	}
 
 	/*
 	 * Generate result
 	 *
-	 * Do iterative subtract until reमुख्यder is less than opeअक्रम 2.
+	 * Do iterative subtract until remainder is less than operand 2.
 	 */
-	जबतक (stepcount-- > 0 && (Dbl_allp1(opnd1p1) || Dbl_allp2(opnd1p2))) अणु
-		अगर (Dbl_isnotlessthan(opnd1p1,opnd1p2,opnd2p1,opnd2p2)) अणु
+	while (stepcount-- > 0 && (Dbl_allp1(opnd1p1) || Dbl_allp2(opnd1p2))) {
+		if (Dbl_isnotlessthan(opnd1p1,opnd1p2,opnd2p1,opnd2p2)) {
 			Dbl_subtract(opnd1p1,opnd1p2,opnd2p1,opnd2p2,opnd1p1,opnd1p2);
-		पूर्ण
-		Dbl_leftshअगरtby1(opnd1p1,opnd1p2);
-	पूर्ण
+		}
+		Dbl_leftshiftby1(opnd1p1,opnd1p2);
+	}
 	/*
-	 * Do last subtract, then determine which way to round अगर reमुख्यder 
+	 * Do last subtract, then determine which way to round if remainder 
 	 * is exactly 1/2 of opnd2 
 	 */
-	अगर (Dbl_isnotlessthan(opnd1p1,opnd1p2,opnd2p1,opnd2p2)) अणु
+	if (Dbl_isnotlessthan(opnd1p1,opnd1p2,opnd2p1,opnd2p2)) {
 		Dbl_subtract(opnd1p1,opnd1p2,opnd2p1,opnd2p2,opnd1p1,opnd1p2);
 		roundup = TRUE;
-	पूर्ण
-	अगर (stepcount > 0 || Dbl_iszero(opnd1p1,opnd1p2)) अणु
-		/* भागision is exact, reमुख्यder is zero */
-		Dbl_setzero_exponenपंचांगantissa(resultp1,resultp2);
+	}
+	if (stepcount > 0 || Dbl_iszero(opnd1p1,opnd1p2)) {
+		/* division is exact, remainder is zero */
+		Dbl_setzero_exponentmantissa(resultp1,resultp2);
 		Dbl_copytoptr(resultp1,resultp2,dstptr);
-		वापस(NOEXCEPTION);
-	पूर्ण
+		return(NOEXCEPTION);
+	}
 
 	/* 
-	 * Check क्रम हालs where opnd1/opnd2 < n 
+	 * Check for cases where opnd1/opnd2 < n 
 	 *
-	 * In this हाल the result's sign will be opposite that of
+	 * In this case the result's sign will be opposite that of
 	 * opnd1.  The mantissa also needs some correction.
 	 */
-	Dbl_leftshअगरtby1(opnd1p1,opnd1p2);
-	अगर (Dbl_isgreaterthan(opnd1p1,opnd1p2,opnd2p1,opnd2p2)) अणु
+	Dbl_leftshiftby1(opnd1p1,opnd1p2);
+	if (Dbl_isgreaterthan(opnd1p1,opnd1p2,opnd2p1,opnd2p2)) {
 		Dbl_invert_sign(resultp1);
-		Dbl_leftshअगरtby1(opnd2p1,opnd2p2);
+		Dbl_leftshiftby1(opnd2p1,opnd2p2);
 		Dbl_subtract(opnd2p1,opnd2p2,opnd1p1,opnd1p2,opnd1p1,opnd1p2);
-	पूर्ण
-	/* check क्रम reमुख्यder being exactly 1/2 of opnd2 */
-	अन्यथा अगर (Dbl_isequal(opnd1p1,opnd1p2,opnd2p1,opnd2p2) && roundup) अणु 
+	}
+	/* check for remainder being exactly 1/2 of opnd2 */
+	else if (Dbl_isequal(opnd1p1,opnd1p2,opnd2p1,opnd2p2) && roundup) { 
 		Dbl_invert_sign(resultp1);
-	पूर्ण
+	}
 
 	/* normalize result's mantissa */
-        जबतक (Dbl_iszero_hidden(opnd1p1)) अणु
+        while (Dbl_iszero_hidden(opnd1p1)) {
                 dest_exponent--;
-                Dbl_leftshअगरtby1(opnd1p1,opnd1p2);
-        पूर्ण
-	Dbl_set_exponenपंचांगantissa(resultp1,resultp2,opnd1p1,opnd1p2);
+                Dbl_leftshiftby1(opnd1p1,opnd1p2);
+        }
+	Dbl_set_exponentmantissa(resultp1,resultp2,opnd1p1,opnd1p2);
 
         /* 
-         * Test क्रम underflow
+         * Test for underflow
          */
-    testक्रमunderflow:
-	अगर (dest_exponent <= 0) अणु
-                /* trap अगर UNDERFLOWTRAP enabled */
-                अगर (Is_underflowtrap_enabled()) अणु
+    testforunderflow:
+	if (dest_exponent <= 0) {
+                /* trap if UNDERFLOWTRAP enabled */
+                if (Is_underflowtrap_enabled()) {
                         /*
                          * Adjust bias of result
                          */
                         Dbl_setwrapped_exponent(resultp1,dest_exponent,unfl);
 			/* frem is always exact */
 			Dbl_copytoptr(resultp1,resultp2,dstptr);
-			वापस(UNDERFLOWEXCEPTION);
-                पूर्ण
+			return(UNDERFLOWEXCEPTION);
+                }
                 /*
-                 * denormalize result or set to चिन्हित zero
+                 * denormalize result or set to signed zero
                  */
-                अगर (dest_exponent >= (1 - DBL_P)) अणु
-			Dbl_rightshअगरt_exponenपंचांगantissa(resultp1,resultp2,
+                if (dest_exponent >= (1 - DBL_P)) {
+			Dbl_rightshift_exponentmantissa(resultp1,resultp2,
 			 1-dest_exponent);
-                पूर्ण
-                अन्यथा अणु
-			Dbl_setzero_exponenपंचांगantissa(resultp1,resultp2);
-		पूर्ण
-	पूर्ण
-	अन्यथा Dbl_set_exponent(resultp1,dest_exponent);
+                }
+                else {
+			Dbl_setzero_exponentmantissa(resultp1,resultp2);
+		}
+	}
+	else Dbl_set_exponent(resultp1,dest_exponent);
 	Dbl_copytoptr(resultp1,resultp2,dstptr);
-	वापस(NOEXCEPTION);
-पूर्ण
+	return(NOEXCEPTION);
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * ROHM BD9571MWV-M and BD9574MWF-M GPIO driver
  *
@@ -10,79 +9,79 @@
  * NOTE: Interrupts are not supported yet.
  */
 
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/mfd/rohm-generic.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/gpio/driver.h>
+#include <linux/mfd/rohm-generic.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
 
-#समावेश <linux/mfd/bd9571mwv.h>
+#include <linux/mfd/bd9571mwv.h>
 
-काष्ठा bd9571mwv_gpio अणु
-	काष्ठा regmap *regmap;
-	काष्ठा gpio_chip chip;
-पूर्ण;
+struct bd9571mwv_gpio {
+	struct regmap *regmap;
+	struct gpio_chip chip;
+};
 
-अटल पूर्णांक bd9571mwv_gpio_get_direction(काष्ठा gpio_chip *chip,
-				       अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा bd9571mwv_gpio *gpio = gpiochip_get_data(chip);
-	पूर्णांक ret, val;
+static int bd9571mwv_gpio_get_direction(struct gpio_chip *chip,
+				       unsigned int offset)
+{
+	struct bd9571mwv_gpio *gpio = gpiochip_get_data(chip);
+	int ret, val;
 
-	ret = regmap_पढ़ो(gpio->regmap, BD9571MWV_GPIO_सूची, &val);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (val & BIT(offset))
-		वापस GPIO_LINE_सूचीECTION_IN;
+	ret = regmap_read(gpio->regmap, BD9571MWV_GPIO_DIR, &val);
+	if (ret < 0)
+		return ret;
+	if (val & BIT(offset))
+		return GPIO_LINE_DIRECTION_IN;
 
-	वापस GPIO_LINE_सूचीECTION_OUT;
-पूर्ण
+	return GPIO_LINE_DIRECTION_OUT;
+}
 
-अटल पूर्णांक bd9571mwv_gpio_direction_input(काष्ठा gpio_chip *chip,
-					 अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा bd9571mwv_gpio *gpio = gpiochip_get_data(chip);
+static int bd9571mwv_gpio_direction_input(struct gpio_chip *chip,
+					 unsigned int offset)
+{
+	struct bd9571mwv_gpio *gpio = gpiochip_get_data(chip);
 
-	regmap_update_bits(gpio->regmap, BD9571MWV_GPIO_सूची, BIT(offset), 0);
+	regmap_update_bits(gpio->regmap, BD9571MWV_GPIO_DIR, BIT(offset), 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bd9571mwv_gpio_direction_output(काष्ठा gpio_chip *chip,
-					  अचिन्हित पूर्णांक offset, पूर्णांक value)
-अणु
-	काष्ठा bd9571mwv_gpio *gpio = gpiochip_get_data(chip);
+static int bd9571mwv_gpio_direction_output(struct gpio_chip *chip,
+					  unsigned int offset, int value)
+{
+	struct bd9571mwv_gpio *gpio = gpiochip_get_data(chip);
 
 	/* Set the initial value */
 	regmap_update_bits(gpio->regmap, BD9571MWV_GPIO_OUT,
 			   BIT(offset), value ? BIT(offset) : 0);
-	regmap_update_bits(gpio->regmap, BD9571MWV_GPIO_सूची,
+	regmap_update_bits(gpio->regmap, BD9571MWV_GPIO_DIR,
 			   BIT(offset), BIT(offset));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bd9571mwv_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा bd9571mwv_gpio *gpio = gpiochip_get_data(chip);
-	पूर्णांक ret, val;
+static int bd9571mwv_gpio_get(struct gpio_chip *chip, unsigned int offset)
+{
+	struct bd9571mwv_gpio *gpio = gpiochip_get_data(chip);
+	int ret, val;
 
-	ret = regmap_पढ़ो(gpio->regmap, BD9571MWV_GPIO_IN, &val);
-	अगर (ret < 0)
-		वापस ret;
+	ret = regmap_read(gpio->regmap, BD9571MWV_GPIO_IN, &val);
+	if (ret < 0)
+		return ret;
 
-	वापस val & BIT(offset);
-पूर्ण
+	return val & BIT(offset);
+}
 
-अटल व्योम bd9571mwv_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
-			      पूर्णांक value)
-अणु
-	काष्ठा bd9571mwv_gpio *gpio = gpiochip_get_data(chip);
+static void bd9571mwv_gpio_set(struct gpio_chip *chip, unsigned int offset,
+			      int value)
+{
+	struct bd9571mwv_gpio *gpio = gpiochip_get_data(chip);
 
 	regmap_update_bits(gpio->regmap, BD9571MWV_GPIO_OUT,
 			   BIT(offset), value ? BIT(offset) : 0);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा gpio_chip ढाँचा_chip = अणु
+static const struct gpio_chip template_chip = {
 	.label			= "bd9571mwv-gpio",
 	.owner			= THIS_MODULE,
 	.get_direction		= bd9571mwv_gpio_get_direction,
@@ -93,47 +92,47 @@
 	.base			= -1,
 	.ngpio			= 2,
 	.can_sleep		= true,
-पूर्ण;
+};
 
-अटल पूर्णांक bd9571mwv_gpio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा bd9571mwv_gpio *gpio;
-	पूर्णांक ret;
+static int bd9571mwv_gpio_probe(struct platform_device *pdev)
+{
+	struct bd9571mwv_gpio *gpio;
+	int ret;
 
-	gpio = devm_kzalloc(&pdev->dev, माप(*gpio), GFP_KERNEL);
-	अगर (!gpio)
-		वापस -ENOMEM;
+	gpio = devm_kzalloc(&pdev->dev, sizeof(*gpio), GFP_KERNEL);
+	if (!gpio)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, gpio);
+	platform_set_drvdata(pdev, gpio);
 
-	gpio->regmap = dev_get_regmap(pdev->dev.parent, शून्य);
-	gpio->chip = ढाँचा_chip;
+	gpio->regmap = dev_get_regmap(pdev->dev.parent, NULL);
+	gpio->chip = template_chip;
 	gpio->chip.parent = pdev->dev.parent;
 
 	ret = devm_gpiochip_add_data(&pdev->dev, &gpio->chip, gpio);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "Could not register gpiochip, %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा platक्रमm_device_id bd9571mwv_gpio_id_table[] = अणु
-	अणु "bd9571mwv-gpio", ROHM_CHIP_TYPE_BD9571 पूर्ण,
-	अणु "bd9574mwf-gpio", ROHM_CHIP_TYPE_BD9574 पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(platक्रमm, bd9571mwv_gpio_id_table);
+static const struct platform_device_id bd9571mwv_gpio_id_table[] = {
+	{ "bd9571mwv-gpio", ROHM_CHIP_TYPE_BD9571 },
+	{ "bd9574mwf-gpio", ROHM_CHIP_TYPE_BD9574 },
+	{ /* sentinel */ }
+};
+MODULE_DEVICE_TABLE(platform, bd9571mwv_gpio_id_table);
 
-अटल काष्ठा platक्रमm_driver bd9571mwv_gpio_driver = अणु
-	.driver = अणु
+static struct platform_driver bd9571mwv_gpio_driver = {
+	.driver = {
 		.name = "bd9571mwv-gpio",
-	पूर्ण,
+	},
 	.probe = bd9571mwv_gpio_probe,
 	.id_table = bd9571mwv_gpio_id_table,
-पूर्ण;
-module_platक्रमm_driver(bd9571mwv_gpio_driver);
+};
+module_platform_driver(bd9571mwv_gpio_driver);
 
 MODULE_AUTHOR("Marek Vasut <marek.vasut+renesas@gmail.com>");
 MODULE_DESCRIPTION("BD9571MWV GPIO driver");

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * QLogic iSCSI HBA Driver
  * Copyright (c)  2003-2012 QLogic Corporation
@@ -8,55 +7,55 @@
 /*
  * Driver debug definitions.
  */
-/* #घोषणा QL_DEBUG  */			/* DEBUG messages */
-/* #घोषणा QL_DEBUG_LEVEL_3  */		/* Output function tracing */
-/* #घोषणा QL_DEBUG_LEVEL_4  */
-/* #घोषणा QL_DEBUG_LEVEL_5  */
-/* #घोषणा QL_DEBUG_LEVEL_7  */
-/* #घोषणा QL_DEBUG_LEVEL_9  */
+/* #define QL_DEBUG  */			/* DEBUG messages */
+/* #define QL_DEBUG_LEVEL_3  */		/* Output function tracing */
+/* #define QL_DEBUG_LEVEL_4  */
+/* #define QL_DEBUG_LEVEL_5  */
+/* #define QL_DEBUG_LEVEL_7  */
+/* #define QL_DEBUG_LEVEL_9  */
 
-#घोषणा QL_DEBUG_LEVEL_2	/* ALways enable error messagess */
-#अगर defined(QL_DEBUG)
-#घोषणा DEBUG(x)   करो अणुx;पूर्ण जबतक (0);
-#अन्यथा
-#घोषणा DEBUG(x)	करो अणुपूर्ण जबतक (0);
-#पूर्ण_अगर
+#define QL_DEBUG_LEVEL_2	/* ALways enable error messagess */
+#if defined(QL_DEBUG)
+#define DEBUG(x)   do {x;} while (0);
+#else
+#define DEBUG(x)	do {} while (0);
+#endif
 
-#अगर defined(QL_DEBUG_LEVEL_2)
-#घोषणा DEBUG2(x)      करो अणुअगर(ql4xextended_error_logging == 2) x;पूर्ण जबतक (0);
-#घोषणा DEBUG2_3(x)   करो अणुx;पूर्ण जबतक (0);
-#अन्यथा				/*  */
-#घोषणा DEBUG2(x)	करो अणुपूर्ण जबतक (0);
-#पूर्ण_अगर				/*  */
+#if defined(QL_DEBUG_LEVEL_2)
+#define DEBUG2(x)      do {if(ql4xextended_error_logging == 2) x;} while (0);
+#define DEBUG2_3(x)   do {x;} while (0);
+#else				/*  */
+#define DEBUG2(x)	do {} while (0);
+#endif				/*  */
 
-#अगर defined(QL_DEBUG_LEVEL_3)
-#घोषणा DEBUG3(x)      करो अणुअगर(ql4xextended_error_logging == 3) x;पूर्ण जबतक (0);
-#अन्यथा				/*  */
-#घोषणा DEBUG3(x)	करो अणुपूर्ण जबतक (0);
-#अगर !defined(QL_DEBUG_LEVEL_2)
-#घोषणा DEBUG2_3(x)	करो अणुपूर्ण जबतक (0);
-#पूर्ण_अगर				/*  */
-#पूर्ण_अगर				/*  */
-#अगर defined(QL_DEBUG_LEVEL_4)
-#घोषणा DEBUG4(x)	करो अणुx;पूर्ण जबतक (0);
-#अन्यथा				/*  */
-#घोषणा DEBUG4(x)	करो अणुपूर्ण जबतक (0);
-#पूर्ण_अगर				/*  */
+#if defined(QL_DEBUG_LEVEL_3)
+#define DEBUG3(x)      do {if(ql4xextended_error_logging == 3) x;} while (0);
+#else				/*  */
+#define DEBUG3(x)	do {} while (0);
+#if !defined(QL_DEBUG_LEVEL_2)
+#define DEBUG2_3(x)	do {} while (0);
+#endif				/*  */
+#endif				/*  */
+#if defined(QL_DEBUG_LEVEL_4)
+#define DEBUG4(x)	do {x;} while (0);
+#else				/*  */
+#define DEBUG4(x)	do {} while (0);
+#endif				/*  */
 
-#अगर defined(QL_DEBUG_LEVEL_5)
-#घोषणा DEBUG5(x)	करो अणुx;पूर्ण जबतक (0);
-#अन्यथा				/*  */
-#घोषणा DEBUG5(x)	करो अणुपूर्ण जबतक (0);
-#पूर्ण_अगर				/*  */
+#if defined(QL_DEBUG_LEVEL_5)
+#define DEBUG5(x)	do {x;} while (0);
+#else				/*  */
+#define DEBUG5(x)	do {} while (0);
+#endif				/*  */
 
-#अगर defined(QL_DEBUG_LEVEL_7)
-#घोषणा DEBUG7(x)	करो अणुx; पूर्ण जबतक (0)
-#अन्यथा				/*  */
-#घोषणा DEBUG7(x)	करो अणुपूर्ण जबतक (0)
-#पूर्ण_अगर				/*  */
+#if defined(QL_DEBUG_LEVEL_7)
+#define DEBUG7(x)	do {x; } while (0)
+#else				/*  */
+#define DEBUG7(x)	do {} while (0)
+#endif				/*  */
 
-#अगर defined(QL_DEBUG_LEVEL_9)
-#घोषणा DEBUG9(x)	करो अणुx;पूर्ण जबतक (0);
-#अन्यथा				/*  */
-#घोषणा DEBUG9(x)	करो अणुपूर्ण जबतक (0);
-#पूर्ण_अगर				/*  */
+#if defined(QL_DEBUG_LEVEL_9)
+#define DEBUG9(x)	do {x;} while (0);
+#else				/*  */
+#define DEBUG9(x)	do {} while (0);
+#endif				/*  */

@@ -1,46 +1,45 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/drivers/video/console/sticore.c -
- *	core code क्रम console driver using HP's STI firmware
+ *	core code for console driver using HP's STI firmware
  *
  *	Copyright (C) 2000 Philipp Rumpf <prumpf@tux.org>
  *	Copyright (C) 2001-2020 Helge Deller <deller@gmx.de>
- *	Copyright (C) 2001-2002 Thomas Bogenकरोerfer <tsbogend@alpha.franken.de>
+ *	Copyright (C) 2001-2002 Thomas Bogendoerfer <tsbogend@alpha.franken.de>
  * 
  * TODO:
- * - call STI in भव mode rather than in real mode
+ * - call STI in virtual mode rather than in real mode
  * - screen blanking with state_mgmt() in text mode STI ? 
  * - try to make it work on m68k hp workstations ;)
  * 
  */
 
-#घोषणा pr_fmt(fmt) "%s: " fmt, KBUILD_MODNAME
+#define pr_fmt(fmt) "%s: " fmt, KBUILD_MODNAME
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/font.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/pci.h>
+#include <linux/font.h>
 
-#समावेश <यंत्र/hardware.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/parisc-device.h>
-#समावेश <यंत्र/pdc.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/grfioctl.h>
+#include <asm/hardware.h>
+#include <asm/page.h>
+#include <asm/parisc-device.h>
+#include <asm/pdc.h>
+#include <asm/cacheflush.h>
+#include <asm/grfioctl.h>
 
-#समावेश "../fbdev/sticore.h"
+#include "../fbdev/sticore.h"
 
-#घोषणा STI_DRIVERVERSION "Version 0.9b"
+#define STI_DRIVERVERSION "Version 0.9b"
 
-अटल काष्ठा sti_काष्ठा *शेष_sti __पढ़ो_mostly;
+static struct sti_struct *default_sti __read_mostly;
 
-/* number of STI ROMS found and their ptrs to each काष्ठा */
-अटल पूर्णांक num_sti_roms __पढ़ो_mostly;
-अटल काष्ठा sti_काष्ठा *sti_roms[MAX_STI_ROMS] __पढ़ो_mostly;
+/* number of STI ROMS found and their ptrs to each struct */
+static int num_sti_roms __read_mostly;
+static struct sti_struct *sti_roms[MAX_STI_ROMS] __read_mostly;
 
 
 /* The colour indices used by STI are
@@ -53,126 +52,126 @@
  *   6 - Blue
  *   7 - Magenta
  *
- * So we have the same colours as VGA (basically one bit each क्रम R, G, B),
+ * So we have the same colours as VGA (basically one bit each for R, G, B),
  * but have to translate them, anyway. */
 
-अटल स्थिर u8 col_trans[8] = अणु
+static const u8 col_trans[8] = {
         0, 6, 4, 5,
         2, 7, 3, 1
-पूर्ण;
+};
 
-#घोषणा c_fg(sti, c) col_trans[((c>> 8) & 7)]
-#घोषणा c_bg(sti, c) col_trans[((c>>11) & 7)]
-#घोषणा c_index(sti, c) ((c) & 0xff)
+#define c_fg(sti, c) col_trans[((c>> 8) & 7)]
+#define c_bg(sti, c) col_trans[((c>>11) & 7)]
+#define c_index(sti, c) ((c) & 0xff)
 
-अटल स्थिर काष्ठा sti_init_flags शेष_init_flags = अणु
-	.रुको	= STI_WAIT, 
+static const struct sti_init_flags default_init_flags = {
+	.wait	= STI_WAIT, 
 	.reset	= 1,
 	.text	= 1, 
 	.nontext = 1,
 	.no_chg_bet = 1, 
 	.no_chg_bei = 1, 
 	.init_cmap_tx = 1,
-पूर्ण;
+};
 
-अटल पूर्णांक sti_init_graph(काष्ठा sti_काष्ठा *sti)
-अणु
-	काष्ठा sti_init_inptr *inptr = &sti->sti_data->init_inptr;
-	काष्ठा sti_init_inptr_ext *inptr_ext = &sti->sti_data->init_inptr_ext;
-	काष्ठा sti_init_outptr *outptr = &sti->sti_data->init_outptr;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret, err;
+static int sti_init_graph(struct sti_struct *sti)
+{
+	struct sti_init_inptr *inptr = &sti->sti_data->init_inptr;
+	struct sti_init_inptr_ext *inptr_ext = &sti->sti_data->init_inptr_ext;
+	struct sti_init_outptr *outptr = &sti->sti_data->init_outptr;
+	unsigned long flags;
+	int ret, err;
 
 	spin_lock_irqsave(&sti->lock, flags);
 
-	स_रखो(inptr, 0, माप(*inptr));
-	inptr->text_planes = 3; /* # of text planes (max 3 क्रम STI) */
-	स_रखो(inptr_ext, 0, माप(*inptr_ext));
+	memset(inptr, 0, sizeof(*inptr));
+	inptr->text_planes = 3; /* # of text planes (max 3 for STI) */
+	memset(inptr_ext, 0, sizeof(*inptr_ext));
 	inptr->ext_ptr = STI_PTR(inptr_ext);
-	outptr->त्रुटि_सं = 0;
+	outptr->errno = 0;
 
-	ret = sti_call(sti, sti->init_graph, &शेष_init_flags, inptr,
+	ret = sti_call(sti, sti->init_graph, &default_init_flags, inptr,
 		outptr, sti->glob_cfg);
 
-	अगर (ret >= 0)
+	if (ret >= 0)
 		sti->text_planes = outptr->text_planes;
-	err = outptr->त्रुटि_सं;
+	err = outptr->errno;
 
 	spin_unlock_irqrestore(&sti->lock, flags);
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_err("STI init_graph failed (ret %d, errno %d)\n", ret, err);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा sti_conf_flags शेष_conf_flags = अणु
-	.रुको	= STI_WAIT,
-पूर्ण;
+static const struct sti_conf_flags default_conf_flags = {
+	.wait	= STI_WAIT,
+};
 
-अटल व्योम sti_inq_conf(काष्ठा sti_काष्ठा *sti)
-अणु
-	काष्ठा sti_conf_inptr *inptr = &sti->sti_data->inq_inptr;
-	काष्ठा sti_conf_outptr *outptr = &sti->sti_data->inq_outptr;
-	अचिन्हित दीर्घ flags;
+static void sti_inq_conf(struct sti_struct *sti)
+{
+	struct sti_conf_inptr *inptr = &sti->sti_data->inq_inptr;
+	struct sti_conf_outptr *outptr = &sti->sti_data->inq_outptr;
+	unsigned long flags;
 	s32 ret;
 
 	outptr->ext_ptr = STI_PTR(&sti->sti_data->inq_outptr_ext);
 	
-	करो अणु
+	do {
 		spin_lock_irqsave(&sti->lock, flags);
-		स_रखो(inptr, 0, माप(*inptr));
-		ret = sti_call(sti, sti->inq_conf, &शेष_conf_flags,
+		memset(inptr, 0, sizeof(*inptr));
+		ret = sti_call(sti, sti->inq_conf, &default_conf_flags,
 			inptr, outptr, sti->glob_cfg);
 		spin_unlock_irqrestore(&sti->lock, flags);
-	पूर्ण जबतक (ret == 1);
-पूर्ण
+	} while (ret == 1);
+}
 
-अटल स्थिर काष्ठा sti_font_flags शेष_font_flags = अणु
-	.रुको		= STI_WAIT,
+static const struct sti_font_flags default_font_flags = {
+	.wait		= STI_WAIT,
 	.non_text	= 0,
-पूर्ण;
+};
 
-व्योम
-sti_अ_दो(काष्ठा sti_काष्ठा *sti, पूर्णांक c, पूर्णांक y, पूर्णांक x,
-	 काष्ठा sti_cooked_font *font)
-अणु
-	काष्ठा sti_font_inptr *inptr = &sti->sti_data->font_inptr;
-	काष्ठा sti_font_inptr inptr_शेष = अणु
+void
+sti_putc(struct sti_struct *sti, int c, int y, int x,
+	 struct sti_cooked_font *font)
+{
+	struct sti_font_inptr *inptr = &sti->sti_data->font_inptr;
+	struct sti_font_inptr inptr_default = {
 		.font_start_addr = STI_PTR(font->raw),
 		.index		= c_index(sti, c),
 		.fg_color	= c_fg(sti, c),
 		.bg_color	= c_bg(sti, c),
 		.dest_x		= x * font->width,
 		.dest_y		= y * font->height,
-	पूर्ण;
-	काष्ठा sti_font_outptr *outptr = &sti->sti_data->font_outptr;
+	};
+	struct sti_font_outptr *outptr = &sti->sti_data->font_outptr;
 	s32 ret;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	करो अणु
+	do {
 		spin_lock_irqsave(&sti->lock, flags);
-		*inptr = inptr_शेष;
-		ret = sti_call(sti, sti->font_unpmv, &शेष_font_flags,
+		*inptr = inptr_default;
+		ret = sti_call(sti, sti->font_unpmv, &default_font_flags,
 			inptr, outptr, sti->glob_cfg);
 		spin_unlock_irqrestore(&sti->lock, flags);
-	पूर्ण जबतक (ret == 1);
-पूर्ण
+	} while (ret == 1);
+}
 
-अटल स्थिर काष्ठा sti_blkmv_flags clear_blkmv_flags = अणु
-	.रुको	= STI_WAIT, 
+static const struct sti_blkmv_flags clear_blkmv_flags = {
+	.wait	= STI_WAIT, 
 	.color	= 1, 
 	.clear	= 1, 
-पूर्ण;
+};
 
-व्योम
-sti_set(काष्ठा sti_काष्ठा *sti, पूर्णांक src_y, पूर्णांक src_x,
-	पूर्णांक height, पूर्णांक width, u8 color)
-अणु
-	काष्ठा sti_blkmv_inptr *inptr = &sti->sti_data->blkmv_inptr;
-	काष्ठा sti_blkmv_inptr inptr_शेष = अणु
+void
+sti_set(struct sti_struct *sti, int src_y, int src_x,
+	int height, int width, u8 color)
+{
+	struct sti_blkmv_inptr *inptr = &sti->sti_data->blkmv_inptr;
+	struct sti_blkmv_inptr inptr_default = {
 		.fg_color	= color,
 		.bg_color	= color,
 		.src_x		= src_x,
@@ -181,26 +180,26 @@ sti_set(काष्ठा sti_काष्ठा *sti, पूर्णांक
 		.dest_y		= src_y,
 		.width		= width,
 		.height		= height,
-	पूर्ण;
-	काष्ठा sti_blkmv_outptr *outptr = &sti->sti_data->blkmv_outptr;
+	};
+	struct sti_blkmv_outptr *outptr = &sti->sti_data->blkmv_outptr;
 	s32 ret;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 	
-	करो अणु
+	do {
 		spin_lock_irqsave(&sti->lock, flags);
-		*inptr = inptr_शेष;
+		*inptr = inptr_default;
 		ret = sti_call(sti, sti->block_move, &clear_blkmv_flags,
 			inptr, outptr, sti->glob_cfg);
 		spin_unlock_irqrestore(&sti->lock, flags);
-	पूर्ण जबतक (ret == 1);
-पूर्ण
+	} while (ret == 1);
+}
 
-व्योम
-sti_clear(काष्ठा sti_काष्ठा *sti, पूर्णांक src_y, पूर्णांक src_x,
-	  पूर्णांक height, पूर्णांक width, पूर्णांक c, काष्ठा sti_cooked_font *font)
-अणु
-	काष्ठा sti_blkmv_inptr *inptr = &sti->sti_data->blkmv_inptr;
-	काष्ठा sti_blkmv_inptr inptr_शेष = अणु
+void
+sti_clear(struct sti_struct *sti, int src_y, int src_x,
+	  int height, int width, int c, struct sti_cooked_font *font)
+{
+	struct sti_blkmv_inptr *inptr = &sti->sti_data->blkmv_inptr;
+	struct sti_blkmv_inptr inptr_default = {
 		.fg_color	= c_fg(sti, c),
 		.bg_color	= c_bg(sti, c),
 		.src_x		= src_x * font->width,
@@ -209,161 +208,161 @@ sti_clear(काष्ठा sti_काष्ठा *sti, पूर्णां�
 		.dest_y		= src_y * font->height,
 		.width		= width * font->width,
 		.height		= height * font->height,
-	पूर्ण;
-	काष्ठा sti_blkmv_outptr *outptr = &sti->sti_data->blkmv_outptr;
+	};
+	struct sti_blkmv_outptr *outptr = &sti->sti_data->blkmv_outptr;
 	s32 ret;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	करो अणु
+	do {
 		spin_lock_irqsave(&sti->lock, flags);
-		*inptr = inptr_शेष;
+		*inptr = inptr_default;
 		ret = sti_call(sti, sti->block_move, &clear_blkmv_flags,
 			inptr, outptr, sti->glob_cfg);
 		spin_unlock_irqrestore(&sti->lock, flags);
-	पूर्ण जबतक (ret == 1);
-पूर्ण
+	} while (ret == 1);
+}
 
-अटल स्थिर काष्ठा sti_blkmv_flags शेष_blkmv_flags = अणु
-	.रुको = STI_WAIT, 
-पूर्ण;
+static const struct sti_blkmv_flags default_blkmv_flags = {
+	.wait = STI_WAIT, 
+};
 
-व्योम
-sti_bmove(काष्ठा sti_काष्ठा *sti, पूर्णांक src_y, पूर्णांक src_x,
-	  पूर्णांक dst_y, पूर्णांक dst_x, पूर्णांक height, पूर्णांक width,
-	  काष्ठा sti_cooked_font *font)
-अणु
-	काष्ठा sti_blkmv_inptr *inptr = &sti->sti_data->blkmv_inptr;
-	काष्ठा sti_blkmv_inptr inptr_शेष = अणु
+void
+sti_bmove(struct sti_struct *sti, int src_y, int src_x,
+	  int dst_y, int dst_x, int height, int width,
+	  struct sti_cooked_font *font)
+{
+	struct sti_blkmv_inptr *inptr = &sti->sti_data->blkmv_inptr;
+	struct sti_blkmv_inptr inptr_default = {
 		.src_x		= src_x * font->width,
 		.src_y		= src_y * font->height,
 		.dest_x		= dst_x * font->width,
 		.dest_y		= dst_y * font->height,
 		.width		= width * font->width,
 		.height		= height * font->height,
-	पूर्ण;
-	काष्ठा sti_blkmv_outptr *outptr = &sti->sti_data->blkmv_outptr;
+	};
+	struct sti_blkmv_outptr *outptr = &sti->sti_data->blkmv_outptr;
 	s32 ret;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	करो अणु
+	do {
 		spin_lock_irqsave(&sti->lock, flags);
-		*inptr = inptr_शेष;
-		ret = sti_call(sti, sti->block_move, &शेष_blkmv_flags,
+		*inptr = inptr_default;
+		ret = sti_call(sti, sti->block_move, &default_blkmv_flags,
 			inptr, outptr, sti->glob_cfg);
 		spin_unlock_irqrestore(&sti->lock, flags);
-	पूर्ण जबतक (ret == 1);
-पूर्ण
+	} while (ret == 1);
+}
 
 
-अटल व्योम sti_flush(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
+static void sti_flush(unsigned long start, unsigned long end)
+{
 	flush_icache_range(start, end);
-पूर्ण
+}
 
-अटल व्योम sti_rom_copy(अचिन्हित दीर्घ base, अचिन्हित दीर्घ count, व्योम *dest)
-अणु
-	अचिन्हित दीर्घ dest_start = (अचिन्हित दीर्घ) dest;
+static void sti_rom_copy(unsigned long base, unsigned long count, void *dest)
+{
+	unsigned long dest_start = (unsigned long) dest;
 
 	/* this still needs to be revisited (see arch/parisc/mm/init.c:246) ! */
-	जबतक (count >= 4) अणु
+	while (count >= 4) {
 		count -= 4;
-		*(u32 *)dest = gsc_पढ़ोl(base);
+		*(u32 *)dest = gsc_readl(base);
 		base += 4;
 		dest += 4;
-	पूर्ण
-	जबतक (count) अणु
+	}
+	while (count) {
 		count--;
-		*(u8 *)dest = gsc_पढ़ोb(base);
+		*(u8 *)dest = gsc_readb(base);
 		base++;
 		dest++;
-	पूर्ण
+	}
 
-	sti_flush(dest_start, (अचिन्हित दीर्घ)dest);
-पूर्ण
-
-
+	sti_flush(dest_start, (unsigned long)dest);
+}
 
 
-अटल अक्षर शेष_sti_path[21] __पढ़ो_mostly;
 
-#अगर_अघोषित MODULE
-अटल पूर्णांक __init sti_setup(अक्षर *str)
-अणु
-	अगर (str)
-		strlcpy (शेष_sti_path, str, माप (शेष_sti_path));
+
+static char default_sti_path[21] __read_mostly;
+
+#ifndef MODULE
+static int __init sti_setup(char *str)
+{
+	if (str)
+		strlcpy (default_sti_path, str, sizeof (default_sti_path));
 	
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*	Assuming the machine has multiple STI consoles (=graphic cards) which
  *	all get detected by sticon, the user may define with the linux kernel
  *	parameter sti=<x> which of them will be the initial boot-console.
- *	<x> is a number between 0 and MAX_STI_ROMS, with 0 as the शेष 
+ *	<x> is a number between 0 and MAX_STI_ROMS, with 0 as the default 
  *	STI screen.
  */
 __setup("sti=", sti_setup);
-#पूर्ण_अगर
+#endif
 
 
 
-अटल अक्षर *font_name;
-अटल पूर्णांक font_index,
+static char *font_name;
+static int font_index,
 	   font_height,
 	   font_width;
-#अगर_अघोषित MODULE
-अटल पूर्णांक sti_font_setup(अक्षर *str)
-अणु
+#ifndef MODULE
+static int sti_font_setup(char *str)
+{
 	/*
-	 * The शेष font can be selected in various ways.
+	 * The default font can be selected in various ways.
 	 * a) sti_font=VGA8x16, sti_font=10x20, sti_font=10*20 selects
 	 *    an built-in Linux framebuffer font.
 	 * b) sti_font=<index>, where index is (1..x) with 1 selecting
 	 *    the first HP STI ROM built-in font..
 	 */
 
-	अगर (*str >= '0' && *str <= '9') अणु
-		अक्षर *x;
+	if (*str >= '0' && *str <= '9') {
+		char *x;
 
-		अगर ((x = म_अक्षर(str, 'x')) || (x = strchr(str, '*'))) अणु
-			font_height = simple_म_से_अदीर्घ(str, शून्य, 0);
-			font_width = simple_म_से_अदीर्घ(x+1, शून्य, 0);
-		पूर्ण अन्यथा अणु
-			font_index = simple_म_से_अदीर्घ(str, शून्य, 0);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		if ((x = strchr(str, 'x')) || (x = strchr(str, '*'))) {
+			font_height = simple_strtoul(str, NULL, 0);
+			font_width = simple_strtoul(x+1, NULL, 0);
+		} else {
+			font_index = simple_strtoul(str, NULL, 0);
+		}
+	} else {
 		font_name = str;	/* fb font name */
-	पूर्ण
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*	The optional linux kernel parameter "sti_font" defines which font
- *	should be used by the sticon driver to draw अक्षरacters to the screen.
+ *	should be used by the sticon driver to draw characters to the screen.
  *	Possible values are:
  *	- sti_font=<fb_fontname>:
  *		<fb_fontname> is the name of one of the linux-kernel built-in 
  *		framebuffer font names (e.g. VGA8x16, SUN22x18). 
- *		This is only available अगर the fonts have been अटलally compiled 
+ *		This is only available if the fonts have been statically compiled 
  *		in with e.g. the CONFIG_FONT_8x16 or CONFIG_FONT_SUN12x22 options.
  *	- sti_font=<number>	(<number> = 1,2,3,...)
- *		most STI ROMs have built-in HP specअगरic fonts, which can be selected
+ *		most STI ROMs have built-in HP specific fonts, which can be selected
  *		by giving the desired number to the sticon driver. 
  *		NOTE: This number is machine and STI ROM dependend.
  *	- sti_font=<height>x<width>  (e.g. sti_font=16x8)
- *		<height> and <width> gives hपूर्णांकs to the height and width of the
+ *		<height> and <width> gives hints to the height and width of the
  *		font which the user wants. The sticon driver will try to use
- *		a font with this height and width, but अगर no suitable font is
- *		found, sticon will use the शेष 8x8 font.
+ *		a font with this height and width, but if no suitable font is
+ *		found, sticon will use the default 8x8 font.
  */
 __setup("sti_font=", sti_font_setup);
-#पूर्ण_अगर
+#endif
 
 
 	
-अटल व्योम sti_dump_globcfg(काष्ठा sti_glob_cfg *glob_cfg,
-			     अचिन्हित पूर्णांक sti_mem_request)
-अणु
-	काष्ठा sti_glob_cfg_ext *cfg;
+static void sti_dump_globcfg(struct sti_glob_cfg *glob_cfg,
+			     unsigned int sti_mem_request)
+{
+	struct sti_glob_cfg_ext *cfg;
 	
 	pr_debug("%d text planes\n"
 		"%4d x %4d screen resolution\n"
@@ -385,21 +384,21 @@ __setup("sti_font=", sti_font_setup);
 		glob_cfg->save_addr);
 
 	/* dump extended cfg */ 
-	cfg = PTR_STI((अचिन्हित दीर्घ)glob_cfg->ext_ptr);
+	cfg = PTR_STI((unsigned long)glob_cfg->ext_ptr);
 	pr_debug("monitor %d\n"
 		"in friendly mode: %d\n"
 		"power consumption %d watts\n"
 		"freq ref %d\n"
 		"sti_mem_addr %08x (size=%d bytes)\n",
 		cfg->curr_mon,
-		cfg->मित्रly_boot,
-		cfg->घातer,
+		cfg->friendly_boot,
+		cfg->power,
 		cfg->freq_ref,
 		cfg->sti_mem_addr, sti_mem_request);
-पूर्ण
+}
 
-अटल व्योम sti_dump_outptr(काष्ठा sti_काष्ठा *sti)
-अणु
+static void sti_dump_outptr(struct sti_struct *sti)
+{
 	pr_debug("%d bits per pixel\n"
 		"%d used bits\n"
 		"%d planes\n"
@@ -408,25 +407,25 @@ __setup("sti_font=", sti_font_setup);
 		 sti->sti_data->inq_outptr.bits_used,
 		 sti->sti_data->inq_outptr.planes,
 		 sti->sti_data->inq_outptr.attributes);
-पूर्ण
+}
 
-अटल पूर्णांक sti_init_glob_cfg(काष्ठा sti_काष्ठा *sti, अचिन्हित दीर्घ rom_address,
-			     अचिन्हित दीर्घ hpa)
-अणु
-	काष्ठा sti_glob_cfg *glob_cfg;
-	काष्ठा sti_glob_cfg_ext *glob_cfg_ext;
-	व्योम *save_addr;
-	व्योम *sti_mem_addr;
-	पूर्णांक i, size;
+static int sti_init_glob_cfg(struct sti_struct *sti, unsigned long rom_address,
+			     unsigned long hpa)
+{
+	struct sti_glob_cfg *glob_cfg;
+	struct sti_glob_cfg_ext *glob_cfg_ext;
+	void *save_addr;
+	void *sti_mem_addr;
+	int i, size;
 
-	अगर (sti->sti_mem_request < 256)
-		sti->sti_mem_request = 256; /* STI शेष */
+	if (sti->sti_mem_request < 256)
+		sti->sti_mem_request = 256; /* STI default */
 
-	size = माप(काष्ठा sti_all_data) + sti->sti_mem_request - 256;
+	size = sizeof(struct sti_all_data) + sti->sti_mem_request - 256;
 
 	sti->sti_data = kzalloc(size, STI_LOWMEM);
-	अगर (!sti->sti_data)
-		वापस -ENOMEM;
+	if (!sti->sti_data)
+		return -ENOMEM;
 
 	glob_cfg	= &sti->sti_data->glob_cfg;
 	glob_cfg_ext	= &sti->sti_data->glob_cfg_ext;
@@ -435,30 +434,30 @@ __setup("sti_font=", sti_font_setup);
 
 	glob_cfg->ext_ptr = STI_PTR(glob_cfg_ext);
 	glob_cfg->save_addr = STI_PTR(save_addr);
-	क्रम (i=0; i<8; i++) अणु
-		अचिन्हित दीर्घ newhpa, len;
+	for (i=0; i<8; i++) {
+		unsigned long newhpa, len;
 	       
-		अगर (sti->pd) अणु
-			अचिन्हित अक्षर offs = sti->rm_entry[i];
+		if (sti->pd) {
+			unsigned char offs = sti->rm_entry[i];
 				
-			अगर (offs == 0)
-				जारी;
-			अगर (offs != PCI_ROM_ADDRESS &&
+			if (offs == 0)
+				continue;
+			if (offs != PCI_ROM_ADDRESS &&
 			    (offs < PCI_BASE_ADDRESS_0 ||
-			     offs > PCI_BASE_ADDRESS_5)) अणु
+			     offs > PCI_BASE_ADDRESS_5)) {
 				pr_warn("STI pci region mapping for region %d (%02x) can't be mapped\n",
 					i,sti->rm_entry[i]);
-				जारी;
-			पूर्ण
+				continue;
+			}
 			newhpa = pci_resource_start (sti->pd, (offs - PCI_BASE_ADDRESS_0) / 4);
-		पूर्ण अन्यथा
+		} else
 			newhpa = (i == 0) ? rom_address : hpa;
 
 		sti->regions_phys[i] =
 			REGION_OFFSET_TO_PHYS(sti->regions[i], newhpa);
 		
 		len = sti->regions[i].region_desc.length * 4096;
-		अगर (len)
+		if (len)
 			glob_cfg->region_ptrs[i] = sti->regions_phys[i];
 		
 		pr_debug("region #%d: phys %08lx, region_ptr %08x, len=%lukB, "
@@ -471,11 +470,11 @@ __setup("sti_font=", sti_font_setup);
 			sti->regions[i].region_desc.last);
 
 		/* last entry reached ? */
-		अगर (sti->regions[i].region_desc.last)
-			अवरोध;
-	पूर्ण
+		if (sti->regions[i].region_desc.last)
+			break;
+	}
 
-	अगर (++i<8 && sti->regions[i].region)
+	if (++i<8 && sti->regions[i].region)
 		pr_warn("future ptr (0x%8x) not yet supported !\n",
 			sti->regions[i].region);
 
@@ -483,118 +482,118 @@ __setup("sti_font=", sti_font_setup);
 
 	sti->glob_cfg = glob_cfg;
 	
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_FONT_SUPPORT
-अटल काष्ठा sti_cooked_font *
-sti_select_fbfont(काष्ठा sti_cooked_rom *cooked_rom, स्थिर अक्षर *fbfont_name)
-अणु
-	स्थिर काष्ठा font_desc *fbfont = शून्य;
-	अचिन्हित पूर्णांक size, bpc;
-	व्योम *dest;
-	काष्ठा sti_rom_font *nf;
-	काष्ठा sti_cooked_font *cooked_font;
+#ifdef CONFIG_FONT_SUPPORT
+static struct sti_cooked_font *
+sti_select_fbfont(struct sti_cooked_rom *cooked_rom, const char *fbfont_name)
+{
+	const struct font_desc *fbfont = NULL;
+	unsigned int size, bpc;
+	void *dest;
+	struct sti_rom_font *nf;
+	struct sti_cooked_font *cooked_font;
 	
-	अगर (fbfont_name && म_माप(fbfont_name))
+	if (fbfont_name && strlen(fbfont_name))
 		fbfont = find_font(fbfont_name);
-	अगर (!fbfont)
-		fbfont = get_शेष_font(1024,768, ~(u32)0, ~(u32)0);
-	अगर (!fbfont)
-		वापस शून्य;
+	if (!fbfont)
+		fbfont = get_default_font(1024,768, ~(u32)0, ~(u32)0);
+	if (!fbfont)
+		return NULL;
 
 	pr_info("STI selected %ux%u framebuffer font %s for sticon\n",
 			fbfont->width, fbfont->height, fbfont->name);
 			
 	bpc = ((fbfont->width+7)/8) * fbfont->height; 
-	size = bpc * fbfont->अक्षरcount;
-	size += माप(काष्ठा sti_rom_font);
+	size = bpc * fbfont->charcount;
+	size += sizeof(struct sti_rom_font);
 
 	nf = kzalloc(size, STI_LOWMEM);
-	अगर (!nf)
-		वापस शून्य;
+	if (!nf)
+		return NULL;
 
-	nf->first_अक्षर = 0;
-	nf->last_अक्षर = fbfont->अक्षरcount - 1;
+	nf->first_char = 0;
+	nf->last_char = fbfont->charcount - 1;
 	nf->width = fbfont->width;
 	nf->height = fbfont->height;
 	nf->font_type = STI_FONT_HPROMAN8;
-	nf->bytes_per_अक्षर = bpc;
+	nf->bytes_per_char = bpc;
 	nf->next_font = 0;
 	nf->underline_height = 1;
 	nf->underline_pos = fbfont->height - nf->underline_height;
 
 	dest = nf;
-	dest += माप(काष्ठा sti_rom_font);
-	स_नकल(dest, fbfont->data, bpc * fbfont->अक्षरcount);
+	dest += sizeof(struct sti_rom_font);
+	memcpy(dest, fbfont->data, bpc * fbfont->charcount);
 
-	cooked_font = kzalloc(माप(*cooked_font), GFP_KERNEL);
-	अगर (!cooked_font) अणु
-		kमुक्त(nf);
-		वापस शून्य;
-	पूर्ण
+	cooked_font = kzalloc(sizeof(*cooked_font), GFP_KERNEL);
+	if (!cooked_font) {
+		kfree(nf);
+		return NULL;
+	}
 	
 	cooked_font->raw = nf;
 	cooked_font->raw_ptr = nf;
-	cooked_font->next_font = शून्य;
+	cooked_font->next_font = NULL;
 
 	cooked_rom->font_start = cooked_font;
 
-	वापस cooked_font;
-पूर्ण
-#अन्यथा
-अटल काष्ठा sti_cooked_font *
-sti_select_fbfont(काष्ठा sti_cooked_rom *cooked_rom, स्थिर अक्षर *fbfont_name)
-अणु
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर
+	return cooked_font;
+}
+#else
+static struct sti_cooked_font *
+sti_select_fbfont(struct sti_cooked_rom *cooked_rom, const char *fbfont_name)
+{
+	return NULL;
+}
+#endif
 
-अटल पूर्णांक sti_search_font(काष्ठा sti_cooked_rom *rom, पूर्णांक height, पूर्णांक width)
-अणु
-	काष्ठा sti_cooked_font *font;
-	पूर्णांक i = 0;
+static int sti_search_font(struct sti_cooked_rom *rom, int height, int width)
+{
+	struct sti_cooked_font *font;
+	int i = 0;
 
-	क्रम (font = rom->font_start; font; font = font->next_font, i++) अणु
-		अगर ((font->raw->width == width) &&
+	for (font = rom->font_start; font; font = font->next_font, i++) {
+		if ((font->raw->width == width) &&
 		    (font->raw->height == height))
-			वापस i;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return i;
+	}
+	return 0;
+}
 
-अटल काष्ठा sti_cooked_font *sti_select_font(काष्ठा sti_cooked_rom *rom)
-अणु
-	काष्ठा sti_cooked_font *font;
-	पूर्णांक i;
+static struct sti_cooked_font *sti_select_font(struct sti_cooked_rom *rom)
+{
+	struct sti_cooked_font *font;
+	int i;
 
-	/* check क्रम framebuffer-font first */
-	अगर (!font_index) अणु
+	/* check for framebuffer-font first */
+	if (!font_index) {
 		font = sti_select_fbfont(rom, font_name);
-		अगर (font)
-			वापस font;
-	पूर्ण
+		if (font)
+			return font;
+	}
 
-	अगर (font_width && font_height)
+	if (font_width && font_height)
 		font_index = sti_search_font(rom,
 				font_height, font_width);
 
-	क्रम (font = rom->font_start, i = font_index - 1;
+	for (font = rom->font_start, i = font_index - 1;
 		font && (i > 0);
 		font = font->next_font, i--);
 
-	अगर (font)
-		वापस font;
-	अन्यथा
-		वापस rom->font_start;
-पूर्ण
+	if (font)
+		return font;
+	else
+		return rom->font_start;
+}
 
 
-अटल व्योम sti_dump_rom(काष्ठा sti_काष्ठा *sti)
-अणु
-	काष्ठा sti_rom *rom = sti->rom->raw;
-	काष्ठा sti_cooked_font *font_start;
-	पूर्णांक nr;
+static void sti_dump_rom(struct sti_struct *sti)
+{
+	struct sti_rom *rom = sti->rom->raw;
+	struct sti_cooked_font *font_start;
+	int nr;
 
 	pr_info("  id %04x-%04x, conforms to spec rev. %d.%02x\n",
 		rom->graphics_id[0], 
@@ -611,107 +610,107 @@ sti_select_fbfont(काष्ठा sti_cooked_rom *cooked_rom, स्थिर
 
 	font_start = sti->rom->font_start;
 	nr = 0;
-	जबतक (font_start) अणु
-		काष्ठा sti_rom_font *f = font_start->raw;
+	while (font_start) {
+		struct sti_rom_font *f = font_start->raw;
 
 		pr_info("    built-in font #%d: size %dx%d, chars %d-%d, bpc %d\n", ++nr,
 			f->width, f->height,
-			f->first_अक्षर, f->last_अक्षर, f->bytes_per_अक्षर);
+			f->first_char, f->last_char, f->bytes_per_char);
 		font_start = font_start->next_font;
-	पूर्ण
-पूर्ण
+	}
+}
 
 
-अटल पूर्णांक sti_cook_fonts(काष्ठा sti_cooked_rom *cooked_rom,
-			  काष्ठा sti_rom *raw_rom)
-अणु
-	काष्ठा sti_rom_font *raw_font, *font_start;
-	काष्ठा sti_cooked_font *cooked_font;
+static int sti_cook_fonts(struct sti_cooked_rom *cooked_rom,
+			  struct sti_rom *raw_rom)
+{
+	struct sti_rom_font *raw_font, *font_start;
+	struct sti_cooked_font *cooked_font;
 	
-	cooked_font = kzalloc(माप(*cooked_font), GFP_KERNEL);
-	अगर (!cooked_font)
-		वापस 0;
+	cooked_font = kzalloc(sizeof(*cooked_font), GFP_KERNEL);
+	if (!cooked_font)
+		return 0;
 
 	cooked_rom->font_start = cooked_font;
 
-	raw_font = ((व्योम *)raw_rom) + (raw_rom->font_start);
+	raw_font = ((void *)raw_rom) + (raw_rom->font_start);
 
 	font_start = raw_font;
 	cooked_font->raw = raw_font;
 
-	जबतक (raw_font->next_font) अणु
-		raw_font = ((व्योम *)font_start) + (raw_font->next_font);
+	while (raw_font->next_font) {
+		raw_font = ((void *)font_start) + (raw_font->next_font);
 
-		cooked_font->next_font = kzalloc(माप(*cooked_font), GFP_KERNEL);
-		अगर (!cooked_font->next_font)
-			वापस 1;
+		cooked_font->next_font = kzalloc(sizeof(*cooked_font), GFP_KERNEL);
+		if (!cooked_font->next_font)
+			return 1;
 
 		cooked_font = cooked_font->next_font;
 
 		cooked_font->raw = raw_font;
-	पूर्ण
+	}
 
-	cooked_font->next_font = शून्य;
-	वापस 1;
-पूर्ण
+	cooked_font->next_font = NULL;
+	return 1;
+}
 
-#घोषणा BMODE_RELOCATE(offset)		offset = (offset) / 4;
-#घोषणा BMODE_LAST_ADDR_OFFS		0x50
+#define BMODE_RELOCATE(offset)		offset = (offset) / 4;
+#define BMODE_LAST_ADDR_OFFS		0x50
 
-व्योम sti_font_convert_bytemode(काष्ठा sti_काष्ठा *sti, काष्ठा sti_cooked_font *f)
-अणु
-	अचिन्हित अक्षर *n, *p, *q;
-	पूर्णांक size = f->raw->bytes_per_अक्षर * (f->raw->last_अक्षर + 1) + माप(काष्ठा sti_rom_font);
-	काष्ठा sti_rom_font *old_font;
+void sti_font_convert_bytemode(struct sti_struct *sti, struct sti_cooked_font *f)
+{
+	unsigned char *n, *p, *q;
+	int size = f->raw->bytes_per_char * (f->raw->last_char + 1) + sizeof(struct sti_rom_font);
+	struct sti_rom_font *old_font;
 
-	अगर (sti->wordmode)
-		वापस;
+	if (sti->wordmode)
+		return;
 
 	old_font = f->raw_ptr;
-	n = kसुस्मृति(4, size, STI_LOWMEM);
+	n = kcalloc(4, size, STI_LOWMEM);
 	f->raw_ptr = n;
-	अगर (!n)
-		वापस;
+	if (!n)
+		return;
 	p = n + 3;
-	q = (अचिन्हित अक्षर *) f->raw;
-	जबतक (size--) अणु
+	q = (unsigned char *) f->raw;
+	while (size--) {
 		*p = *q++;
 		p += 4;
-	पूर्ण
+	}
 	/* store new ptr to byte-mode font and delete old font */
-	f->raw = (काष्ठा sti_rom_font *) (n + 3);
-	kमुक्त(old_font);
-पूर्ण
+	f->raw = (struct sti_rom_font *) (n + 3);
+	kfree(old_font);
+}
 EXPORT_SYMBOL(sti_font_convert_bytemode);
 
-अटल व्योम sti_bmode_rom_copy(अचिन्हित दीर्घ base, अचिन्हित दीर्घ count,
-			       व्योम *dest)
-अणु
-	अचिन्हित दीर्घ dest_start = (अचिन्हित दीर्घ) dest;
+static void sti_bmode_rom_copy(unsigned long base, unsigned long count,
+			       void *dest)
+{
+	unsigned long dest_start = (unsigned long) dest;
 
-	जबतक (count) अणु
+	while (count) {
 		count--;
-		*(u8 *)dest = gsc_पढ़ोl(base);
+		*(u8 *)dest = gsc_readl(base);
 		base += 4;
 		dest++;
-	पूर्ण
+	}
 
-	sti_flush(dest_start, (अचिन्हित दीर्घ)dest);
-पूर्ण
+	sti_flush(dest_start, (unsigned long)dest);
+}
 
-अटल काष्ठा sti_rom *sti_get_bmode_rom (अचिन्हित दीर्घ address)
-अणु
-	काष्ठा sti_rom *raw;
+static struct sti_rom *sti_get_bmode_rom (unsigned long address)
+{
+	struct sti_rom *raw;
 	u32 size;
-	काष्ठा sti_rom_font *raw_font, *font_start;
+	struct sti_rom_font *raw_font, *font_start;
 
-	sti_bmode_rom_copy(address + BMODE_LAST_ADDR_OFFS, माप(size), &size);
+	sti_bmode_rom_copy(address + BMODE_LAST_ADDR_OFFS, sizeof(size), &size);
 
 	size = (size+3) / 4;
-	raw = kदो_स्मृति(size, STI_LOWMEM);
-	अगर (raw) अणु
+	raw = kmalloc(size, STI_LOWMEM);
+	if (raw) {
 		sti_bmode_rom_copy(address, size, raw);
-		स_हटाओ (&raw->res004, &raw->type[0], 0x3c);
+		memmove (&raw->res004, &raw->type[0], 0x3c);
 		raw->type[3] = raw->res004;
 
 		BMODE_RELOCATE (raw->region_list);
@@ -723,60 +722,60 @@ EXPORT_SYMBOL(sti_font_convert_bytemode);
 		BMODE_RELOCATE (raw->block_move);
 		BMODE_RELOCATE (raw->inq_conf);
 
-		raw_font = ((व्योम *)raw) + raw->font_start;
+		raw_font = ((void *)raw) + raw->font_start;
 		font_start = raw_font;
 		
-		जबतक (raw_font->next_font) अणु
+		while (raw_font->next_font) {
 			BMODE_RELOCATE (raw_font->next_font);
-			raw_font = ((व्योम *)font_start) + raw_font->next_font;
-		पूर्ण
-	पूर्ण
-	वापस raw;
-पूर्ण
+			raw_font = ((void *)font_start) + raw_font->next_font;
+		}
+	}
+	return raw;
+}
 
-अटल काष्ठा sti_rom *sti_get_wmode_rom(अचिन्हित दीर्घ address)
-अणु
-	काष्ठा sti_rom *raw;
-	अचिन्हित दीर्घ size;
+static struct sti_rom *sti_get_wmode_rom(unsigned long address)
+{
+	struct sti_rom *raw;
+	unsigned long size;
 
-	/* पढ़ो the ROM size directly from the काष्ठा in ROM */ 
-	size = gsc_पढ़ोl(address + दुरत्व(काष्ठा sti_rom,last_addr));
+	/* read the ROM size directly from the struct in ROM */ 
+	size = gsc_readl(address + offsetof(struct sti_rom,last_addr));
 
-	raw = kदो_स्मृति(size, STI_LOWMEM);
-	अगर (raw)
+	raw = kmalloc(size, STI_LOWMEM);
+	if (raw)
 		sti_rom_copy(address, size, raw);
 
-	वापस raw;
-पूर्ण
+	return raw;
+}
 
-अटल पूर्णांक sti_पढ़ो_rom(पूर्णांक wordmode, काष्ठा sti_काष्ठा *sti,
-			अचिन्हित दीर्घ address)
-अणु
-	काष्ठा sti_cooked_rom *cooked;
-	काष्ठा sti_rom *raw = शून्य;
-	अचिन्हित दीर्घ revno;
+static int sti_read_rom(int wordmode, struct sti_struct *sti,
+			unsigned long address)
+{
+	struct sti_cooked_rom *cooked;
+	struct sti_rom *raw = NULL;
+	unsigned long revno;
 
-	cooked = kदो_स्मृति(माप *cooked, GFP_KERNEL);
-	अगर (!cooked)
-		जाओ out_err;
+	cooked = kmalloc(sizeof *cooked, GFP_KERNEL);
+	if (!cooked)
+		goto out_err;
 
-	अगर (wordmode)
+	if (wordmode)
 		raw = sti_get_wmode_rom (address);
-	अन्यथा
+	else
 		raw = sti_get_bmode_rom (address);
 
-	अगर (!raw)
-		जाओ out_err;
+	if (!raw)
+		goto out_err;
 
-	अगर (!sti_cook_fonts(cooked, raw)) अणु
+	if (!sti_cook_fonts(cooked, raw)) {
 		pr_warn("No font found for STI at %08lx\n", address);
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
-	अगर (raw->region_list)
-		स_नकल(sti->regions, ((व्योम *)raw)+raw->region_list, माप(sti->regions));
+	if (raw->region_list)
+		memcpy(sti->regions, ((void *)raw)+raw->region_list, sizeof(sti->regions));
 
-	address = (अचिन्हित दीर्घ) STI_PTR(raw);
+	address = (unsigned long) STI_PTR(raw);
 
 	pr_info("STI %s ROM supports 32 %sbit firmware functions.\n",
 		wordmode ? "word mode" : "byte mode",
@@ -802,28 +801,28 @@ EXPORT_SYMBOL(sti_font_convert_bytemode);
 	sti->graphics_id[0] = raw->graphics_id[0];
 	sti->graphics_id[1] = raw->graphics_id[1];
 
-	/* check अगर the ROM routines in this card are compatible */
-	अगर (wordmode || sti->graphics_id[1] != 0x09A02587)
-		जाओ ok;
+	/* check if the ROM routines in this card are compatible */
+	if (wordmode || sti->graphics_id[1] != 0x09A02587)
+		goto ok;
 
 	revno = (raw->revno[0] << 8) | raw->revno[1];
 
-	चयन (sti->graphics_id[0]) अणु
-	हाल S9000_ID_HCRX:
+	switch (sti->graphics_id[0]) {
+	case S9000_ID_HCRX:
 		/* HyperA or HyperB ? */
-		अगर (revno == 0x8408 || revno == 0x840b)
-			जाओ msg_not_supported;
-		अवरोध;
-	हाल CRT_ID_THUNDER:
-		अगर (revno == 0x8509)
-			जाओ msg_not_supported;
-		अवरोध;
-	हाल CRT_ID_THUNDER2:
-		अगर (revno == 0x850c)
-			जाओ msg_not_supported;
-	पूर्ण
+		if (revno == 0x8408 || revno == 0x840b)
+			goto msg_not_supported;
+		break;
+	case CRT_ID_THUNDER:
+		if (revno == 0x8509)
+			goto msg_not_supported;
+		break;
+	case CRT_ID_THUNDER2:
+		if (revno == 0x850c)
+			goto msg_not_supported;
+	}
 ok:
-	वापस 1;
+	return 1;
 
 msg_not_supported:
 	pr_warn("Sorry, this GSC/STI card is not yet supported.\n");
@@ -831,102 +830,102 @@ msg_not_supported:
 		"index.php/Graphics_howto for more info.\n");
 	/* fall through */
 out_err:
-	kमुक्त(raw);
-	kमुक्त(cooked);
-	वापस 0;
-पूर्ण
+	kfree(raw);
+	kfree(cooked);
+	return 0;
+}
 
-अटल काष्ठा sti_काष्ठा *sti_try_rom_generic(अचिन्हित दीर्घ address,
-					      अचिन्हित दीर्घ hpa,
-					      काष्ठा pci_dev *pd)
-अणु
-	काष्ठा sti_काष्ठा *sti;
-	पूर्णांक ok;
+static struct sti_struct *sti_try_rom_generic(unsigned long address,
+					      unsigned long hpa,
+					      struct pci_dev *pd)
+{
+	struct sti_struct *sti;
+	int ok;
 	u32 sig;
 
-	अगर (num_sti_roms >= MAX_STI_ROMS) अणु
+	if (num_sti_roms >= MAX_STI_ROMS) {
 		pr_warn("maximum number of STI ROMS reached !\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	
-	sti = kzalloc(माप(*sti), GFP_KERNEL);
-	अगर (!sti)
-		वापस शून्य;
+	sti = kzalloc(sizeof(*sti), GFP_KERNEL);
+	if (!sti)
+		return NULL;
 
 	spin_lock_init(&sti->lock);
 
 test_rom:
-	/* अगर we can't पढ़ो the ROM, bail out early.  Not being able
-	 * to पढ़ो the hpa is okay, क्रम romless sti */
-	अगर (pdc_add_valid(address))
-		जाओ out_err;
+	/* if we can't read the ROM, bail out early.  Not being able
+	 * to read the hpa is okay, for romless sti */
+	if (pdc_add_valid(address))
+		goto out_err;
 
-	sig = gsc_पढ़ोl(address);
+	sig = gsc_readl(address);
 
-	/* check क्रम a PCI ROM काष्ठाure */
-	अगर ((le32_to_cpu(sig)==0xaa55)) अणु
-		अचिन्हित पूर्णांक i, rm_offset;
+	/* check for a PCI ROM structure */
+	if ((le32_to_cpu(sig)==0xaa55)) {
+		unsigned int i, rm_offset;
 		u32 *rm;
-		i = gsc_पढ़ोl(address+0x04);
-		अगर (i != 1) अणु
+		i = gsc_readl(address+0x04);
+		if (i != 1) {
 			/* The ROM could have multiple architecture 
 			 * dependent images (e.g. i386, parisc,...) */
 			pr_warn("PCI ROM is not a STI ROM type image (0x%8x)\n", i);
-			जाओ out_err;
-		पूर्ण
+			goto out_err;
+		}
 		
 		sti->pd = pd;
 
-		i = gsc_पढ़ोl(address+0x0c);
+		i = gsc_readl(address+0x0c);
 		pr_debug("PCI ROM size (from header) = %d kB\n",
 			le16_to_cpu(i>>16)*512/1024);
 		rm_offset = le16_to_cpu(i & 0xffff);
-		अगर (rm_offset) अणु 
-			/* पढ़ो 16 bytes from the pci region mapper array */
+		if (rm_offset) { 
+			/* read 16 bytes from the pci region mapper array */
 			rm = (u32*) &sti->rm_entry;
-			*rm++ = gsc_पढ़ोl(address+rm_offset+0x00);
-			*rm++ = gsc_पढ़ोl(address+rm_offset+0x04);
-			*rm++ = gsc_पढ़ोl(address+rm_offset+0x08);
-			*rm++ = gsc_पढ़ोl(address+rm_offset+0x0c);
-		पूर्ण
+			*rm++ = gsc_readl(address+rm_offset+0x00);
+			*rm++ = gsc_readl(address+rm_offset+0x04);
+			*rm++ = gsc_readl(address+rm_offset+0x08);
+			*rm++ = gsc_readl(address+rm_offset+0x0c);
+		}
 
-		address += le32_to_cpu(gsc_पढ़ोl(address+8));
+		address += le32_to_cpu(gsc_readl(address+8));
 		pr_debug("sig %04x, PCI STI ROM at %08lx\n", sig, address);
-		जाओ test_rom;
-	पूर्ण
+		goto test_rom;
+	}
 	
 	ok = 0;
 	
-	अगर ((sig & 0xff) == 0x01) अणु
+	if ((sig & 0xff) == 0x01) {
 		pr_debug("    byte mode ROM at %08lx, hpa at %08lx\n",
 		       address, hpa);
-		ok = sti_पढ़ो_rom(0, sti, address);
-	पूर्ण
+		ok = sti_read_rom(0, sti, address);
+	}
 
-	अगर ((sig & 0xffff) == 0x0303) अणु
+	if ((sig & 0xffff) == 0x0303) {
 		pr_debug("    word mode ROM at %08lx, hpa at %08lx\n",
 		       address, hpa);
-		ok = sti_पढ़ो_rom(1, sti, address);
-	पूर्ण
+		ok = sti_read_rom(1, sti, address);
+	}
 
-	अगर (!ok)
-		जाओ out_err;
+	if (!ok)
+		goto out_err;
 
-	अगर (sti_init_glob_cfg(sti, address, hpa))
-		जाओ out_err; /* not enough memory */
+	if (sti_init_glob_cfg(sti, address, hpa))
+		goto out_err; /* not enough memory */
 
 	/* disable STI PCI ROM. ROM and card RAM overlap and
-	 * leaving it enabled would क्रमce HPMCs
+	 * leaving it enabled would force HPMCs
 	 */
-	अगर (sti->pd) अणु
-		अचिन्हित दीर्घ rom_base;
+	if (sti->pd) {
+		unsigned long rom_base;
 		rom_base = pci_resource_start(sti->pd, PCI_ROM_RESOURCE);	
-		pci_ग_लिखो_config_dword(sti->pd, PCI_ROM_ADDRESS, rom_base & ~PCI_ROM_ADDRESS_ENABLE);
+		pci_write_config_dword(sti->pd, PCI_ROM_ADDRESS, rom_base & ~PCI_ROM_ADDRESS_ENABLE);
 		pr_debug("STI PCI ROM disabled\n");
-	पूर्ण
+	}
 
-	अगर (sti_init_graph(sti))
-		जाओ out_err;
+	if (sti_init_graph(sti))
+		goto out_err;
 
 	sti_inq_conf(sti);
 	sti_dump_globcfg(sti->glob_cfg, sti->sti_mem_request);
@@ -938,67 +937,67 @@ test_rom:
 	sti_roms[num_sti_roms] = sti;
 	num_sti_roms++;
 	
-	वापस sti;
+	return sti;
 
 out_err:
-	kमुक्त(sti);
-	वापस शून्य;
-पूर्ण
+	kfree(sti);
+	return NULL;
+}
 
-अटल व्योम sticore_check_क्रम_शेष_sti(काष्ठा sti_काष्ठा *sti, अक्षर *path)
-अणु
-	अगर (म_भेद (path, शेष_sti_path) == 0)
-		शेष_sti = sti;
-पूर्ण
+static void sticore_check_for_default_sti(struct sti_struct *sti, char *path)
+{
+	if (strcmp (path, default_sti_path) == 0)
+		default_sti = sti;
+}
 
 /*
- * on newer प्रणालीs PDC gives the address of the ROM 
- * in the additional address field addr[1] जबतक on
+ * on newer systems PDC gives the address of the ROM 
+ * in the additional address field addr[1] while on
  * older Systems the PDC stores it in page0->proc_sti 
  */
-अटल पूर्णांक __init sticore_pa_init(काष्ठा parisc_device *dev)
-अणु
-	अक्षर pa_path[21];
-	काष्ठा sti_काष्ठा *sti = शून्य;
-	पूर्णांक hpa = dev->hpa.start;
+static int __init sticore_pa_init(struct parisc_device *dev)
+{
+	char pa_path[21];
+	struct sti_struct *sti = NULL;
+	int hpa = dev->hpa.start;
 
-	अगर (dev->num_addrs && dev->addr[0])
-		sti = sti_try_rom_generic(dev->addr[0], hpa, शून्य);
-	अगर (!sti)
-		sti = sti_try_rom_generic(hpa, hpa, शून्य);
-	अगर (!sti)
-		sti = sti_try_rom_generic(PAGE0->proc_sti, hpa, शून्य);
-	अगर (!sti)
-		वापस 1;
+	if (dev->num_addrs && dev->addr[0])
+		sti = sti_try_rom_generic(dev->addr[0], hpa, NULL);
+	if (!sti)
+		sti = sti_try_rom_generic(hpa, hpa, NULL);
+	if (!sti)
+		sti = sti_try_rom_generic(PAGE0->proc_sti, hpa, NULL);
+	if (!sti)
+		return 1;
 
-	prपूर्णांक_pa_hwpath(dev, pa_path);
-	sticore_check_क्रम_शेष_sti(sti, pa_path);
-	वापस 0;
-पूर्ण
+	print_pa_hwpath(dev, pa_path);
+	sticore_check_for_default_sti(sti, pa_path);
+	return 0;
+}
 
 
-अटल पूर्णांक sticore_pci_init(काष्ठा pci_dev *pd, स्थिर काष्ठा pci_device_id *ent)
-अणु
-#अगर_घोषित CONFIG_PCI
-	अचिन्हित दीर्घ fb_base, rom_base;
-	अचिन्हित पूर्णांक fb_len, rom_len;
-	पूर्णांक err;
-	काष्ठा sti_काष्ठा *sti;
+static int sticore_pci_init(struct pci_dev *pd, const struct pci_device_id *ent)
+{
+#ifdef CONFIG_PCI
+	unsigned long fb_base, rom_base;
+	unsigned int fb_len, rom_len;
+	int err;
+	struct sti_struct *sti;
 	
 	err = pci_enable_device(pd);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(&pd->dev, "Cannot enable PCI device\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	fb_base = pci_resource_start(pd, 0);
 	fb_len = pci_resource_len(pd, 0);
 	rom_base = pci_resource_start(pd, PCI_ROM_RESOURCE);
 	rom_len = pci_resource_len(pd, PCI_ROM_RESOURCE);
-	अगर (rom_base) अणु
-		pci_ग_लिखो_config_dword(pd, PCI_ROM_ADDRESS, rom_base | PCI_ROM_ADDRESS_ENABLE);
+	if (rom_base) {
+		pci_write_config_dword(pd, PCI_ROM_ADDRESS, rom_base | PCI_ROM_ADDRESS_ENABLE);
 		pr_debug("STI PCI ROM enabled at 0x%08lx\n", rom_base);
-	पूर्ण
+	}
 
 	pr_info("STI PCI graphic ROM found at %08lx (%u kB), fb at %08lx (%u MB)\n",
 		rom_base, rom_len/1024, fb_base, fb_len/1024/1024);
@@ -1007,126 +1006,126 @@ out_err:
 		    rom_base, fb_base);
 
 	sti = sti_try_rom_generic(rom_base, fb_base, pd);
-	अगर (sti) अणु
-		अक्षर pa_path[30];
-		prपूर्णांक_pci_hwpath(pd, pa_path);
-		sticore_check_क्रम_शेष_sti(sti, pa_path);
-	पूर्ण
+	if (sti) {
+		char pa_path[30];
+		print_pci_hwpath(pd, pa_path);
+		sticore_check_for_default_sti(sti, pa_path);
+	}
 	
-	अगर (!sti) अणु
+	if (!sti) {
 		pr_warn("Unable to handle STI device '%s'\n", pci_name(pd));
-		वापस -ENODEV;
-	पूर्ण
-#पूर्ण_अगर /* CONFIG_PCI */
+		return -ENODEV;
+	}
+#endif /* CONFIG_PCI */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल व्योम __निकास sticore_pci_हटाओ(काष्ठा pci_dev *pd)
-अणु
+static void __exit sticore_pci_remove(struct pci_dev *pd)
+{
 	BUG();
-पूर्ण
+}
 
 
-अटल काष्ठा pci_device_id sti_pci_tbl[] = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_HP, PCI_DEVICE_ID_HP_VISUALIZE_EG) पूर्ण,
-	अणु PCI_DEVICE(PCI_VENDOR_ID_HP, PCI_DEVICE_ID_HP_VISUALIZE_FX6) पूर्ण,
-	अणु PCI_DEVICE(PCI_VENDOR_ID_HP, PCI_DEVICE_ID_HP_VISUALIZE_FX4) पूर्ण,
-	अणु PCI_DEVICE(PCI_VENDOR_ID_HP, PCI_DEVICE_ID_HP_VISUALIZE_FX2) पूर्ण,
-	अणु PCI_DEVICE(PCI_VENDOR_ID_HP, PCI_DEVICE_ID_HP_VISUALIZE_FXE) पूर्ण,
-	अणु 0, पूर्ण /* terminate list */
-पूर्ण;
+static struct pci_device_id sti_pci_tbl[] = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_HP, PCI_DEVICE_ID_HP_VISUALIZE_EG) },
+	{ PCI_DEVICE(PCI_VENDOR_ID_HP, PCI_DEVICE_ID_HP_VISUALIZE_FX6) },
+	{ PCI_DEVICE(PCI_VENDOR_ID_HP, PCI_DEVICE_ID_HP_VISUALIZE_FX4) },
+	{ PCI_DEVICE(PCI_VENDOR_ID_HP, PCI_DEVICE_ID_HP_VISUALIZE_FX2) },
+	{ PCI_DEVICE(PCI_VENDOR_ID_HP, PCI_DEVICE_ID_HP_VISUALIZE_FXE) },
+	{ 0, } /* terminate list */
+};
 MODULE_DEVICE_TABLE(pci, sti_pci_tbl);
 
-अटल काष्ठा pci_driver pci_sti_driver = अणु
+static struct pci_driver pci_sti_driver = {
 	.name		= "sti",
 	.id_table	= sti_pci_tbl,
 	.probe		= sticore_pci_init,
-	.हटाओ		= __निकास_p(sticore_pci_हटाओ),
-पूर्ण;
+	.remove		= __exit_p(sticore_pci_remove),
+};
 
-अटल काष्ठा parisc_device_id sti_pa_tbl[] = अणु
-	अणु HPHW_FIO, HVERSION_REV_ANY_ID, HVERSION_ANY_ID, 0x00077 पूर्ण,
-	अणु HPHW_FIO, HVERSION_REV_ANY_ID, HVERSION_ANY_ID, 0x00085 पूर्ण,
-	अणु 0, पूर्ण
-पूर्ण;
+static struct parisc_device_id sti_pa_tbl[] = {
+	{ HPHW_FIO, HVERSION_REV_ANY_ID, HVERSION_ANY_ID, 0x00077 },
+	{ HPHW_FIO, HVERSION_REV_ANY_ID, HVERSION_ANY_ID, 0x00085 },
+	{ 0, }
+};
 MODULE_DEVICE_TABLE(parisc, sti_pa_tbl);
 
-अटल काष्ठा parisc_driver pa_sti_driver __refdata = अणु
+static struct parisc_driver pa_sti_driver __refdata = {
 	.name		= "sti",
 	.id_table	= sti_pa_tbl,
 	.probe		= sticore_pa_init,
-पूर्ण;
+};
 
 
 /*
  * sti_init_roms() - detects all STI ROMs and stores them in sti_roms[]
  */
 
-अटल पूर्णांक sticore_initialized __पढ़ो_mostly;
+static int sticore_initialized __read_mostly;
 
-अटल व्योम sti_init_roms(व्योम)
-अणु
-	अगर (sticore_initialized)
-		वापस;
+static void sti_init_roms(void)
+{
+	if (sticore_initialized)
+		return;
 
 	sticore_initialized = 1;
 
 	pr_info("STI GSC/PCI core graphics driver "
 			STI_DRIVERVERSION "\n");
 
-	/* Register drivers क्रम native & PCI cards */
-	रेजिस्टर_parisc_driver(&pa_sti_driver);
-	WARN_ON(pci_रेजिस्टर_driver(&pci_sti_driver));
+	/* Register drivers for native & PCI cards */
+	register_parisc_driver(&pa_sti_driver);
+	WARN_ON(pci_register_driver(&pci_sti_driver));
 
-	/* अगर we didn't find the given शेष sti, take the first one */
-	अगर (!शेष_sti)
-		शेष_sti = sti_roms[0];
+	/* if we didn't find the given default sti, take the first one */
+	if (!default_sti)
+		default_sti = sti_roms[0];
 
-पूर्ण
+}
 
 /*
- * index = 0 gives शेष sti
+ * index = 0 gives default sti
  * index > 0 gives other stis in detection order
  */
-काष्ठा sti_काष्ठा * sti_get_rom(अचिन्हित पूर्णांक index)
-अणु
-	अगर (!sticore_initialized)
+struct sti_struct * sti_get_rom(unsigned int index)
+{
+	if (!sticore_initialized)
 		sti_init_roms();
 
-	अगर (index == 0)
-		वापस शेष_sti;
+	if (index == 0)
+		return default_sti;
 
-	अगर (index > num_sti_roms)
-		वापस शून्य;
+	if (index > num_sti_roms)
+		return NULL;
 
-	वापस sti_roms[index-1];
-पूर्ण
+	return sti_roms[index-1];
+}
 EXPORT_SYMBOL(sti_get_rom);
 
 
-पूर्णांक sti_call(स्थिर काष्ठा sti_काष्ठा *sti, अचिन्हित दीर्घ func,
-		स्थिर व्योम *flags, व्योम *inptr, व्योम *outptr,
-		काष्ठा sti_glob_cfg *glob_cfg)
-अणु
-	अचिन्हित दीर्घ _flags = STI_PTR(flags);
-	अचिन्हित दीर्घ _inptr = STI_PTR(inptr);
-	अचिन्हित दीर्घ _outptr = STI_PTR(outptr);
-	अचिन्हित दीर्घ _glob_cfg = STI_PTR(glob_cfg);
-	पूर्णांक ret;
+int sti_call(const struct sti_struct *sti, unsigned long func,
+		const void *flags, void *inptr, void *outptr,
+		struct sti_glob_cfg *glob_cfg)
+{
+	unsigned long _flags = STI_PTR(flags);
+	unsigned long _inptr = STI_PTR(inptr);
+	unsigned long _outptr = STI_PTR(outptr);
+	unsigned long _glob_cfg = STI_PTR(glob_cfg);
+	int ret;
 
-#अगर_घोषित CONFIG_64BIT
-	/* Check क्रम overflow when using 32bit STI on 64bit kernel. */
-	अगर (WARN_ONCE(_flags>>32 || _inptr>>32 || _outptr>>32 || _glob_cfg>>32,
+#ifdef CONFIG_64BIT
+	/* Check for overflow when using 32bit STI on 64bit kernel. */
+	if (WARN_ONCE(_flags>>32 || _inptr>>32 || _outptr>>32 || _glob_cfg>>32,
 			"Out of 32bit-range pointers!"))
-		वापस -1;
-#पूर्ण_अगर
+		return -1;
+#endif
 
 	ret = pdc_sti_call(func, _flags, _inptr, _outptr, _glob_cfg);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 MODULE_AUTHOR("Philipp Rumpf, Helge Deller, Thomas Bogendoerfer");
 MODULE_DESCRIPTION("Core STI driver for HP's NGLE series graphics cards in HP PARISC machines");

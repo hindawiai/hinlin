@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  PowerPC version
  *    Copyright (C) 1995-1996 Gary Thomas (gdt@linuxppc.org)
  *
- *  Modअगरications by Paul Mackerras (PowerMac) (paulus@cs.anu.edu.au)
+ *  Modifications by Paul Mackerras (PowerMac) (paulus@cs.anu.edu.au)
  *  and Cort Dougan (PReP) (cort@cs.nmt.edu)
  *    Copyright (C) 1996 Paul Mackerras
  *  PPC44x/36-bit changes by Matt Porter (mporter@mvista.com)
@@ -13,359 +12,359 @@
  *    Copyright (C) 1991, 1992, 1993, 1994  Linus Torvalds
  */
 
-#समावेश <linux/memblock.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/suspend.h>
-#समावेश <linux/dma-direct.h>
+#include <linux/memblock.h>
+#include <linux/highmem.h>
+#include <linux/suspend.h>
+#include <linux/dma-direct.h>
 
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/rtas.h>
-#समावेश <यंत्र/kasan.h>
-#समावेश <यंत्र/sparseस्मृति.स>
-#समावेश <यंत्र/svm.h>
+#include <asm/machdep.h>
+#include <asm/rtas.h>
+#include <asm/kasan.h>
+#include <asm/sparsemem.h>
+#include <asm/svm.h>
 
-#समावेश <mm/mmu_decl.h>
+#include <mm/mmu_decl.h>
 
-अचिन्हित दीर्घ दीर्घ memory_limit;
-bool init_mem_is_मुक्त;
+unsigned long long memory_limit;
+bool init_mem_is_free;
 
-pgprot_t phys_mem_access_prot(काष्ठा file *file, अचिन्हित दीर्घ pfn,
-			      अचिन्हित दीर्घ size, pgprot_t vma_prot)
-अणु
-	अगर (ppc_md.phys_mem_access_prot)
-		वापस ppc_md.phys_mem_access_prot(file, pfn, size, vma_prot);
+pgprot_t phys_mem_access_prot(struct file *file, unsigned long pfn,
+			      unsigned long size, pgprot_t vma_prot)
+{
+	if (ppc_md.phys_mem_access_prot)
+		return ppc_md.phys_mem_access_prot(file, pfn, size, vma_prot);
 
-	अगर (!page_is_ram(pfn))
+	if (!page_is_ram(pfn))
 		vma_prot = pgprot_noncached(vma_prot);
 
-	वापस vma_prot;
-पूर्ण
+	return vma_prot;
+}
 EXPORT_SYMBOL(phys_mem_access_prot);
 
-#अगर_घोषित CONFIG_MEMORY_HOTPLUG
-अटल DEFINE_MUTEX(linear_mapping_mutex);
+#ifdef CONFIG_MEMORY_HOTPLUG
+static DEFINE_MUTEX(linear_mapping_mutex);
 
-#अगर_घोषित CONFIG_NUMA
-पूर्णांक memory_add_physaddr_to_nid(u64 start)
-अणु
-	वापस hot_add_scn_to_nid(start);
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_NUMA
+int memory_add_physaddr_to_nid(u64 start)
+{
+	return hot_add_scn_to_nid(start);
+}
+#endif
 
-पूर्णांक __weak create_section_mapping(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end,
-				  पूर्णांक nid, pgprot_t prot)
-अणु
-	वापस -ENODEV;
-पूर्ण
+int __weak create_section_mapping(unsigned long start, unsigned long end,
+				  int nid, pgprot_t prot)
+{
+	return -ENODEV;
+}
 
-पूर्णांक __weak हटाओ_section_mapping(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-	वापस -ENODEV;
-पूर्ण
+int __weak remove_section_mapping(unsigned long start, unsigned long end)
+{
+	return -ENODEV;
+}
 
-पूर्णांक __ref arch_create_linear_mapping(पूर्णांक nid, u64 start, u64 size,
-				     काष्ठा mhp_params *params)
-अणु
-	पूर्णांक rc;
+int __ref arch_create_linear_mapping(int nid, u64 start, u64 size,
+				     struct mhp_params *params)
+{
+	int rc;
 
-	start = (अचिन्हित दीर्घ)__va(start);
+	start = (unsigned long)__va(start);
 	mutex_lock(&linear_mapping_mutex);
 	rc = create_section_mapping(start, start + size, nid,
 				    params->pgprot);
 	mutex_unlock(&linear_mapping_mutex);
-	अगर (rc) अणु
+	if (rc) {
 		pr_warn("Unable to create linear mapping for 0x%llx..0x%llx: %d\n",
 			start, start + size, rc);
-		वापस -EFAULT;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EFAULT;
+	}
+	return 0;
+}
 
-व्योम __ref arch_हटाओ_linear_mapping(u64 start, u64 size)
-अणु
-	पूर्णांक ret;
+void __ref arch_remove_linear_mapping(u64 start, u64 size)
+{
+	int ret;
 
-	/* Remove htab bolted mappings क्रम this section of memory */
-	start = (अचिन्हित दीर्घ)__va(start);
+	/* Remove htab bolted mappings for this section of memory */
+	start = (unsigned long)__va(start);
 
 	mutex_lock(&linear_mapping_mutex);
-	ret = हटाओ_section_mapping(start, start + size);
+	ret = remove_section_mapping(start, start + size);
 	mutex_unlock(&linear_mapping_mutex);
-	अगर (ret)
+	if (ret)
 		pr_warn("Unable to remove linear mapping for 0x%llx..0x%llx: %d\n",
 			start, start + size, ret);
 
-	/* Ensure all vदो_स्मृति mappings are flushed in हाल they also
+	/* Ensure all vmalloc mappings are flushed in case they also
 	 * hit that section of memory
 	 */
 	vm_unmap_aliases();
-पूर्ण
+}
 
-पूर्णांक __ref arch_add_memory(पूर्णांक nid, u64 start, u64 size,
-			  काष्ठा mhp_params *params)
-अणु
-	अचिन्हित दीर्घ start_pfn = start >> PAGE_SHIFT;
-	अचिन्हित दीर्घ nr_pages = size >> PAGE_SHIFT;
-	पूर्णांक rc;
+int __ref arch_add_memory(int nid, u64 start, u64 size,
+			  struct mhp_params *params)
+{
+	unsigned long start_pfn = start >> PAGE_SHIFT;
+	unsigned long nr_pages = size >> PAGE_SHIFT;
+	int rc;
 
 	rc = arch_create_linear_mapping(nid, start, size, params);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 	rc = __add_pages(nid, start_pfn, nr_pages, params);
-	अगर (rc)
-		arch_हटाओ_linear_mapping(start, size);
-	वापस rc;
-पूर्ण
+	if (rc)
+		arch_remove_linear_mapping(start, size);
+	return rc;
+}
 
-व्योम __ref arch_हटाओ_memory(पूर्णांक nid, u64 start, u64 size,
-			      काष्ठा vmem_alपंचांगap *alपंचांगap)
-अणु
-	अचिन्हित दीर्घ start_pfn = start >> PAGE_SHIFT;
-	अचिन्हित दीर्घ nr_pages = size >> PAGE_SHIFT;
+void __ref arch_remove_memory(int nid, u64 start, u64 size,
+			      struct vmem_altmap *altmap)
+{
+	unsigned long start_pfn = start >> PAGE_SHIFT;
+	unsigned long nr_pages = size >> PAGE_SHIFT;
 
-	__हटाओ_pages(start_pfn, nr_pages, alपंचांगap);
-	arch_हटाओ_linear_mapping(start, size);
-पूर्ण
-#पूर्ण_अगर
+	__remove_pages(start_pfn, nr_pages, altmap);
+	arch_remove_linear_mapping(start, size);
+}
+#endif
 
-#अगर_अघोषित CONFIG_NEED_MULTIPLE_NODES
-व्योम __init mem_topology_setup(व्योम)
-अणु
+#ifndef CONFIG_NEED_MULTIPLE_NODES
+void __init mem_topology_setup(void)
+{
 	max_low_pfn = max_pfn = memblock_end_of_DRAM() >> PAGE_SHIFT;
 	min_low_pfn = MEMORY_START >> PAGE_SHIFT;
-#अगर_घोषित CONFIG_HIGHMEM
+#ifdef CONFIG_HIGHMEM
 	max_low_pfn = lowmem_end_addr >> PAGE_SHIFT;
-#पूर्ण_अगर
+#endif
 
 	/* Place all memblock_regions in the same node and merge contiguous
 	 * memblock_regions
 	 */
 	memblock_set_node(0, PHYS_ADDR_MAX, &memblock.memory, 0);
-पूर्ण
+}
 
-व्योम __init iniपंचांगem_init(व्योम)
-अणु
+void __init initmem_init(void)
+{
 	sparse_init();
-पूर्ण
+}
 
-/* mark pages that करोn't exist as nosave */
-अटल पूर्णांक __init mark_nonram_nosave(व्योम)
-अणु
-	अचिन्हित दीर्घ spfn, epfn, prev = 0;
-	पूर्णांक i;
+/* mark pages that don't exist as nosave */
+static int __init mark_nonram_nosave(void)
+{
+	unsigned long spfn, epfn, prev = 0;
+	int i;
 
-	क्रम_each_mem_pfn_range(i, MAX_NUMNODES, &spfn, &epfn, शून्य) अणु
-		अगर (prev && prev < spfn)
-			रेजिस्टर_nosave_region(prev, spfn);
+	for_each_mem_pfn_range(i, MAX_NUMNODES, &spfn, &epfn, NULL) {
+		if (prev && prev < spfn)
+			register_nosave_region(prev, spfn);
 
 		prev = epfn;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-#अन्यथा /* CONFIG_NEED_MULTIPLE_NODES */
-अटल पूर्णांक __init mark_nonram_nosave(व्योम)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#else /* CONFIG_NEED_MULTIPLE_NODES */
+static int __init mark_nonram_nosave(void)
+{
+	return 0;
+}
+#endif
 
 /*
  * Zones usage:
  *
- * We setup ZONE_DMA to be 31-bits on all platक्रमms and ZONE_NORMAL to be
- * everything अन्यथा. GFP_DMA32 page allocations स्वतःmatically fall back to
+ * We setup ZONE_DMA to be 31-bits on all platforms and ZONE_NORMAL to be
+ * everything else. GFP_DMA32 page allocations automatically fall back to
  * ZONE_DMA.
  *
- * By using 31-bit unconditionally, we can exploit zone_dma_bits to inक्रमm the
- * generic DMA mapping code.  32-bit only devices (अगर not handled by an IOMMU
- * anyway) will take a first dip पूर्णांकo ZONE_NORMAL and get otherwise served by
+ * By using 31-bit unconditionally, we can exploit zone_dma_bits to inform the
+ * generic DMA mapping code.  32-bit only devices (if not handled by an IOMMU
+ * anyway) will take a first dip into ZONE_NORMAL and get otherwise served by
  * ZONE_DMA.
  */
-अटल अचिन्हित दीर्घ max_zone_pfns[MAX_NR_ZONES];
+static unsigned long max_zone_pfns[MAX_NR_ZONES];
 
 /*
- * paging_init() sets up the page tables - in fact we've alपढ़ोy करोne this.
+ * paging_init() sets up the page tables - in fact we've already done this.
  */
-व्योम __init paging_init(व्योम)
-अणु
-	अचिन्हित दीर्घ दीर्घ total_ram = memblock_phys_mem_size();
+void __init paging_init(void)
+{
+	unsigned long long total_ram = memblock_phys_mem_size();
 	phys_addr_t top_of_ram = memblock_end_of_DRAM();
 
-#अगर_घोषित CONFIG_HIGHMEM
-	अचिन्हित दीर्घ v = __fix_to_virt(FIX_KMAP_END);
-	अचिन्हित दीर्घ end = __fix_to_virt(FIX_KMAP_BEGIN);
+#ifdef CONFIG_HIGHMEM
+	unsigned long v = __fix_to_virt(FIX_KMAP_END);
+	unsigned long end = __fix_to_virt(FIX_KMAP_BEGIN);
 
-	क्रम (; v < end; v += PAGE_SIZE)
+	for (; v < end; v += PAGE_SIZE)
 		map_kernel_page(v, 0, __pgprot(0)); /* XXX gross */
 
 	map_kernel_page(PKMAP_BASE, 0, __pgprot(0));	/* XXX gross */
 	pkmap_page_table = virt_to_kpte(PKMAP_BASE);
-#पूर्ण_अगर /* CONFIG_HIGHMEM */
+#endif /* CONFIG_HIGHMEM */
 
-	prपूर्णांकk(KERN_DEBUG "Top of RAM: 0x%llx, Total RAM: 0x%llx\n",
-	       (अचिन्हित दीर्घ दीर्घ)top_of_ram, total_ram);
-	prपूर्णांकk(KERN_DEBUG "Memory hole size: %ldMB\n",
-	       (दीर्घ पूर्णांक)((top_of_ram - total_ram) >> 20));
+	printk(KERN_DEBUG "Top of RAM: 0x%llx, Total RAM: 0x%llx\n",
+	       (unsigned long long)top_of_ram, total_ram);
+	printk(KERN_DEBUG "Memory hole size: %ldMB\n",
+	       (long int)((top_of_ram - total_ram) >> 20));
 
 	/*
-	 * Allow 30-bit DMA क्रम very limited Broadcom wअगरi chips on many
-	 * घातerbooks.
+	 * Allow 30-bit DMA for very limited Broadcom wifi chips on many
+	 * powerbooks.
 	 */
-	अगर (IS_ENABLED(CONFIG_PPC32))
+	if (IS_ENABLED(CONFIG_PPC32))
 		zone_dma_bits = 30;
-	अन्यथा
+	else
 		zone_dma_bits = 31;
 
-#अगर_घोषित CONFIG_ZONE_DMA
+#ifdef CONFIG_ZONE_DMA
 	max_zone_pfns[ZONE_DMA]	= min(max_low_pfn,
 				      1UL << (zone_dma_bits - PAGE_SHIFT));
-#पूर्ण_अगर
+#endif
 	max_zone_pfns[ZONE_NORMAL] = max_low_pfn;
-#अगर_घोषित CONFIG_HIGHMEM
+#ifdef CONFIG_HIGHMEM
 	max_zone_pfns[ZONE_HIGHMEM] = max_pfn;
-#पूर्ण_अगर
+#endif
 
-	मुक्त_area_init(max_zone_pfns);
+	free_area_init(max_zone_pfns);
 
 	mark_nonram_nosave();
-पूर्ण
+}
 
-व्योम __init mem_init(व्योम)
-अणु
+void __init mem_init(void)
+{
 	/*
 	 * book3s is limited to 16 page sizes due to encoding this in
-	 * a 4-bit field क्रम slices.
+	 * a 4-bit field for slices.
 	 */
 	BUILD_BUG_ON(MMU_PAGE_COUNT > 16);
 
-#अगर_घोषित CONFIG_SWIOTLB
+#ifdef CONFIG_SWIOTLB
 	/*
-	 * Some platक्रमms (e.g. 85xx) limit DMA-able memory way below
-	 * 4G. We क्रमce memblock to bottom-up mode to ensure that the
+	 * Some platforms (e.g. 85xx) limit DMA-able memory way below
+	 * 4G. We force memblock to bottom-up mode to ensure that the
 	 * memory allocated in swiotlb_init() is DMA-able.
 	 * As it's the last memblock allocation, no need to reset it
-	 * back to to-करोwn.
+	 * back to to-down.
 	 */
 	memblock_set_bottom_up(true);
-	अगर (is_secure_guest())
+	if (is_secure_guest())
 		svm_swiotlb_init();
-	अन्यथा
+	else
 		swiotlb_init(0);
-#पूर्ण_अगर
+#endif
 
-	high_memory = (व्योम *) __va(max_low_pfn * PAGE_SIZE);
+	high_memory = (void *) __va(max_low_pfn * PAGE_SIZE);
 	set_max_mapnr(max_pfn);
 
 	kasan_late_init();
 
-	memblock_मुक्त_all();
+	memblock_free_all();
 
-#अगर_घोषित CONFIG_HIGHMEM
-	अणु
-		अचिन्हित दीर्घ pfn, highmem_mapnr;
+#ifdef CONFIG_HIGHMEM
+	{
+		unsigned long pfn, highmem_mapnr;
 
 		highmem_mapnr = lowmem_end_addr >> PAGE_SHIFT;
-		क्रम (pfn = highmem_mapnr; pfn < max_mapnr; ++pfn) अणु
+		for (pfn = highmem_mapnr; pfn < max_mapnr; ++pfn) {
 			phys_addr_t paddr = (phys_addr_t)pfn << PAGE_SHIFT;
-			काष्ठा page *page = pfn_to_page(pfn);
-			अगर (!memblock_is_reserved(paddr))
-				मुक्त_highmem_page(page);
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर /* CONFIG_HIGHMEM */
+			struct page *page = pfn_to_page(pfn);
+			if (!memblock_is_reserved(paddr))
+				free_highmem_page(page);
+		}
+	}
+#endif /* CONFIG_HIGHMEM */
 
-#अगर defined(CONFIG_PPC_FSL_BOOK3E) && !defined(CONFIG_SMP)
+#if defined(CONFIG_PPC_FSL_BOOK3E) && !defined(CONFIG_SMP)
 	/*
 	 * If smp is enabled, next_tlbcam_idx is initialized in the cpu up
-	 * functions.... करो it here क्रम the non-smp हाल.
+	 * functions.... do it here for the non-smp case.
 	 */
 	per_cpu(next_tlbcam_idx, smp_processor_id()) =
 		(mfspr(SPRN_TLB1CFG) & TLBnCFG_N_ENTRY) - 1;
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_PPC32
+#ifdef CONFIG_PPC32
 	pr_info("Kernel virtual memory layout:\n");
-#अगर_घोषित CONFIG_KASAN
+#ifdef CONFIG_KASAN
 	pr_info("  * 0x%08lx..0x%08lx  : kasan shadow mem\n",
 		KASAN_SHADOW_START, KASAN_SHADOW_END);
-#पूर्ण_अगर
+#endif
 	pr_info("  * 0x%08lx..0x%08lx  : fixmap\n", FIXADDR_START, FIXADDR_TOP);
-#अगर_घोषित CONFIG_HIGHMEM
+#ifdef CONFIG_HIGHMEM
 	pr_info("  * 0x%08lx..0x%08lx  : highmem PTEs\n",
 		PKMAP_BASE, PKMAP_ADDR(LAST_PKMAP));
-#पूर्ण_अगर /* CONFIG_HIGHMEM */
-	अगर (ioremap_bot != IOREMAP_TOP)
+#endif /* CONFIG_HIGHMEM */
+	if (ioremap_bot != IOREMAP_TOP)
 		pr_info("  * 0x%08lx..0x%08lx  : early ioremap\n",
 			ioremap_bot, IOREMAP_TOP);
 	pr_info("  * 0x%08lx..0x%08lx  : vmalloc & ioremap\n",
 		VMALLOC_START, VMALLOC_END);
-#पूर्ण_अगर /* CONFIG_PPC32 */
-पूर्ण
+#endif /* CONFIG_PPC32 */
+}
 
-व्योम मुक्त_iniपंचांगem(व्योम)
-अणु
-	ppc_md.progress = ppc_prपूर्णांकk_progress;
-	mark_iniपंचांगem_nx();
-	init_mem_is_मुक्त = true;
-	मुक्त_iniपंचांगem_शेष(POISON_FREE_INITMEM);
-पूर्ण
+void free_initmem(void)
+{
+	ppc_md.progress = ppc_printk_progress;
+	mark_initmem_nx();
+	init_mem_is_free = true;
+	free_initmem_default(POISON_FREE_INITMEM);
+}
 
 /*
  * System memory should not be in /proc/iomem but various tools expect it
  * (eg kdump).
  */
-अटल पूर्णांक __init add_प्रणाली_ram_resources(व्योम)
-अणु
+static int __init add_system_ram_resources(void)
+{
 	phys_addr_t start, end;
 	u64 i;
 
-	क्रम_each_mem_range(i, &start, &end) अणु
-		काष्ठा resource *res;
+	for_each_mem_range(i, &start, &end) {
+		struct resource *res;
 
-		res = kzalloc(माप(काष्ठा resource), GFP_KERNEL);
+		res = kzalloc(sizeof(struct resource), GFP_KERNEL);
 		WARN_ON(!res);
 
-		अगर (res) अणु
+		if (res) {
 			res->name = "System RAM";
 			res->start = start;
 			/*
-			 * In memblock, end poपूर्णांकs to the first byte after
-			 * the range जबतक in resourses, end poपूर्णांकs to the
+			 * In memblock, end points to the first byte after
+			 * the range while in resourses, end points to the
 			 * last byte in the range.
 			 */
 			res->end = end - 1;
 			res->flags = IORESOURCE_SYSTEM_RAM | IORESOURCE_BUSY;
 			WARN_ON(request_resource(&iomem_resource, res) < 0);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
-subsys_initcall(add_प्रणाली_ram_resources);
+	return 0;
+}
+subsys_initcall(add_system_ram_resources);
 
-#अगर_घोषित CONFIG_STRICT_DEVMEM
+#ifdef CONFIG_STRICT_DEVMEM
 /*
- * devmem_is_allowed(): check to see अगर /dev/mem access to a certain address
+ * devmem_is_allowed(): check to see if /dev/mem access to a certain address
  * is valid. The argument is a physical page number.
  *
  * Access has to be given to non-kernel-ram areas as well, these contain the
  * PCI mmio resources as well as potential bios/acpi data regions.
  */
-पूर्णांक devmem_is_allowed(अचिन्हित दीर्घ pfn)
-अणु
-	अगर (page_is_rtas_user_buf(pfn))
-		वापस 1;
-	अगर (iomem_is_exclusive(PFN_PHYS(pfn)))
-		वापस 0;
-	अगर (!page_is_ram(pfn))
-		वापस 1;
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_STRICT_DEVMEM */
+int devmem_is_allowed(unsigned long pfn)
+{
+	if (page_is_rtas_user_buf(pfn))
+		return 1;
+	if (iomem_is_exclusive(PFN_PHYS(pfn)))
+		return 0;
+	if (!page_is_ram(pfn))
+		return 1;
+	return 0;
+}
+#endif /* CONFIG_STRICT_DEVMEM */
 
 /*
- * This is defined in kernel/resource.c but only घातerpc needs to export it, क्रम
- * the EHEA driver. Drop this when drivers/net/ethernet/ibm/ehea is हटाओd.
+ * This is defined in kernel/resource.c but only powerpc needs to export it, for
+ * the EHEA driver. Drop this when drivers/net/ethernet/ibm/ehea is removed.
  */
-EXPORT_SYMBOL_GPL(walk_प्रणाली_ram_range);
+EXPORT_SYMBOL_GPL(walk_system_ram_range);

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * AMD Cryptographic Coprocessor (CCP) crypto API support
  *
@@ -8,280 +7,280 @@
  * Author: Tom Lendacky <thomas.lendacky@amd.com>
  */
 
-#अगर_अघोषित __CCP_CRYPTO_H__
-#घोषणा __CCP_CRYPTO_H__
+#ifndef __CCP_CRYPTO_H__
+#define __CCP_CRYPTO_H__
 
-#समावेश <linux/list.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/ccp.h>
-#समावेश <crypto/algapi.h>
-#समावेश <crypto/aes.h>
-#समावेश <crypto/पूर्णांकernal/aead.h>
-#समावेश <crypto/aead.h>
-#समावेश <crypto/ctr.h>
-#समावेश <crypto/hash.h>
-#समावेश <crypto/sha1.h>
-#समावेश <crypto/sha2.h>
-#समावेश <crypto/akcipher.h>
-#समावेश <crypto/skcipher.h>
-#समावेश <crypto/पूर्णांकernal/rsa.h>
+#include <linux/list.h>
+#include <linux/wait.h>
+#include <linux/ccp.h>
+#include <crypto/algapi.h>
+#include <crypto/aes.h>
+#include <crypto/internal/aead.h>
+#include <crypto/aead.h>
+#include <crypto/ctr.h>
+#include <crypto/hash.h>
+#include <crypto/sha1.h>
+#include <crypto/sha2.h>
+#include <crypto/akcipher.h>
+#include <crypto/skcipher.h>
+#include <crypto/internal/rsa.h>
 
 /* We want the module name in front of our messages */
-#अघोषित pr_fmt
-#घोषणा	pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#undef pr_fmt
+#define	pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#घोषणा	CCP_LOG_LEVEL	KERN_INFO
+#define	CCP_LOG_LEVEL	KERN_INFO
 
-#घोषणा CCP_CRA_PRIORITY	300
+#define CCP_CRA_PRIORITY	300
 
-काष्ठा ccp_crypto_skcipher_alg अणु
-	काष्ठा list_head entry;
-
-	u32 mode;
-
-	काष्ठा skcipher_alg alg;
-पूर्ण;
-
-काष्ठा ccp_crypto_aead अणु
-	काष्ठा list_head entry;
+struct ccp_crypto_skcipher_alg {
+	struct list_head entry;
 
 	u32 mode;
 
-	काष्ठा aead_alg alg;
-पूर्ण;
+	struct skcipher_alg alg;
+};
 
-काष्ठा ccp_crypto_ahash_alg अणु
-	काष्ठा list_head entry;
+struct ccp_crypto_aead {
+	struct list_head entry;
 
-	स्थिर __be32 *init;
+	u32 mode;
+
+	struct aead_alg alg;
+};
+
+struct ccp_crypto_ahash_alg {
+	struct list_head entry;
+
+	const __be32 *init;
 	u32 type;
 	u32 mode;
 
-	/* Child algorithm used क्रम HMAC, CMAC, etc */
-	अक्षर child_alg[CRYPTO_MAX_ALG_NAME];
+	/* Child algorithm used for HMAC, CMAC, etc */
+	char child_alg[CRYPTO_MAX_ALG_NAME];
 
-	काष्ठा ahash_alg alg;
-पूर्ण;
+	struct ahash_alg alg;
+};
 
-काष्ठा ccp_crypto_akcipher_alg अणु
-	काष्ठा list_head entry;
+struct ccp_crypto_akcipher_alg {
+	struct list_head entry;
 
-	काष्ठा akcipher_alg alg;
-पूर्ण;
+	struct akcipher_alg alg;
+};
 
-अटल अंतरभूत काष्ठा ccp_crypto_skcipher_alg *
-	ccp_crypto_skcipher_alg(काष्ठा crypto_skcipher *tfm)
-अणु
-	काष्ठा skcipher_alg *alg = crypto_skcipher_alg(tfm);
+static inline struct ccp_crypto_skcipher_alg *
+	ccp_crypto_skcipher_alg(struct crypto_skcipher *tfm)
+{
+	struct skcipher_alg *alg = crypto_skcipher_alg(tfm);
 
-	वापस container_of(alg, काष्ठा ccp_crypto_skcipher_alg, alg);
-पूर्ण
+	return container_of(alg, struct ccp_crypto_skcipher_alg, alg);
+}
 
-अटल अंतरभूत काष्ठा ccp_crypto_ahash_alg *
-	ccp_crypto_ahash_alg(काष्ठा crypto_tfm *tfm)
-अणु
-	काष्ठा crypto_alg *alg = tfm->__crt_alg;
-	काष्ठा ahash_alg *ahash_alg;
+static inline struct ccp_crypto_ahash_alg *
+	ccp_crypto_ahash_alg(struct crypto_tfm *tfm)
+{
+	struct crypto_alg *alg = tfm->__crt_alg;
+	struct ahash_alg *ahash_alg;
 
-	ahash_alg = container_of(alg, काष्ठा ahash_alg, halg.base);
+	ahash_alg = container_of(alg, struct ahash_alg, halg.base);
 
-	वापस container_of(ahash_alg, काष्ठा ccp_crypto_ahash_alg, alg);
-पूर्ण
+	return container_of(ahash_alg, struct ccp_crypto_ahash_alg, alg);
+}
 
 /***** AES related defines *****/
-काष्ठा ccp_aes_ctx अणु
-	/* Fallback cipher क्रम XTS with unsupported unit sizes */
-	काष्ठा crypto_skcipher *tfm_skcipher;
+struct ccp_aes_ctx {
+	/* Fallback cipher for XTS with unsupported unit sizes */
+	struct crypto_skcipher *tfm_skcipher;
 
-	क्रमागत ccp_engine engine;
-	क्रमागत ccp_aes_type type;
-	क्रमागत ccp_aes_mode mode;
+	enum ccp_engine engine;
+	enum ccp_aes_type type;
+	enum ccp_aes_mode mode;
 
-	काष्ठा scatterlist key_sg;
-	अचिन्हित पूर्णांक key_len;
+	struct scatterlist key_sg;
+	unsigned int key_len;
 	u8 key[AES_MAX_KEY_SIZE * 2];
 
 	u8 nonce[CTR_RFC3686_NONCE_SIZE];
 
-	/* CMAC key काष्ठाures */
-	काष्ठा scatterlist k1_sg;
-	काष्ठा scatterlist k2_sg;
-	अचिन्हित पूर्णांक kn_len;
+	/* CMAC key structures */
+	struct scatterlist k1_sg;
+	struct scatterlist k2_sg;
+	unsigned int kn_len;
 	u8 k1[AES_BLOCK_SIZE];
 	u8 k2[AES_BLOCK_SIZE];
-पूर्ण;
+};
 
-काष्ठा ccp_aes_req_ctx अणु
-	काष्ठा scatterlist iv_sg;
+struct ccp_aes_req_ctx {
+	struct scatterlist iv_sg;
 	u8 iv[AES_BLOCK_SIZE];
 
-	काष्ठा scatterlist tag_sg;
+	struct scatterlist tag_sg;
 	u8 tag[AES_BLOCK_SIZE];
 
-	/* Fields used क्रम RFC3686 requests */
+	/* Fields used for RFC3686 requests */
 	u8 *rfc3686_info;
 	u8 rfc3686_iv[AES_BLOCK_SIZE];
 
-	काष्ठा ccp_cmd cmd;
+	struct ccp_cmd cmd;
 
-	काष्ठा skcipher_request fallback_req;	// keep at the end
-पूर्ण;
+	struct skcipher_request fallback_req;	// keep at the end
+};
 
-काष्ठा ccp_aes_cmac_req_ctx अणु
-	अचिन्हित पूर्णांक null_msg;
-	अचिन्हित पूर्णांक final;
+struct ccp_aes_cmac_req_ctx {
+	unsigned int null_msg;
+	unsigned int final;
 
-	काष्ठा scatterlist *src;
-	अचिन्हित पूर्णांक nbytes;
+	struct scatterlist *src;
+	unsigned int nbytes;
 
 	u64 hash_cnt;
-	अचिन्हित पूर्णांक hash_rem;
+	unsigned int hash_rem;
 
-	काष्ठा sg_table data_sg;
+	struct sg_table data_sg;
 
-	काष्ठा scatterlist iv_sg;
+	struct scatterlist iv_sg;
 	u8 iv[AES_BLOCK_SIZE];
 
-	काष्ठा scatterlist buf_sg;
-	अचिन्हित पूर्णांक buf_count;
+	struct scatterlist buf_sg;
+	unsigned int buf_count;
 	u8 buf[AES_BLOCK_SIZE];
 
-	काष्ठा scatterlist pad_sg;
-	अचिन्हित पूर्णांक pad_count;
+	struct scatterlist pad_sg;
+	unsigned int pad_count;
 	u8 pad[AES_BLOCK_SIZE];
 
-	काष्ठा ccp_cmd cmd;
-पूर्ण;
+	struct ccp_cmd cmd;
+};
 
-काष्ठा ccp_aes_cmac_exp_ctx अणु
-	अचिन्हित पूर्णांक null_msg;
+struct ccp_aes_cmac_exp_ctx {
+	unsigned int null_msg;
 
 	u8 iv[AES_BLOCK_SIZE];
 
-	अचिन्हित पूर्णांक buf_count;
+	unsigned int buf_count;
 	u8 buf[AES_BLOCK_SIZE];
-पूर्ण;
+};
 
 /***** 3DES related defines *****/
-काष्ठा ccp_des3_ctx अणु
-	क्रमागत ccp_engine engine;
-	क्रमागत ccp_des3_type type;
-	क्रमागत ccp_des3_mode mode;
+struct ccp_des3_ctx {
+	enum ccp_engine engine;
+	enum ccp_des3_type type;
+	enum ccp_des3_mode mode;
 
-	काष्ठा scatterlist key_sg;
-	अचिन्हित पूर्णांक key_len;
+	struct scatterlist key_sg;
+	unsigned int key_len;
 	u8 key[AES_MAX_KEY_SIZE];
-पूर्ण;
+};
 
-काष्ठा ccp_des3_req_ctx अणु
-	काष्ठा scatterlist iv_sg;
+struct ccp_des3_req_ctx {
+	struct scatterlist iv_sg;
 	u8 iv[AES_BLOCK_SIZE];
 
-	काष्ठा ccp_cmd cmd;
-पूर्ण;
+	struct ccp_cmd cmd;
+};
 
 /* SHA-related defines
  * These values must be large enough to accommodate any variant
  */
-#घोषणा MAX_SHA_CONTEXT_SIZE	SHA512_DIGEST_SIZE
-#घोषणा MAX_SHA_BLOCK_SIZE	SHA512_BLOCK_SIZE
+#define MAX_SHA_CONTEXT_SIZE	SHA512_DIGEST_SIZE
+#define MAX_SHA_BLOCK_SIZE	SHA512_BLOCK_SIZE
 
-काष्ठा ccp_sha_ctx अणु
-	काष्ठा scatterlist opad_sg;
-	अचिन्हित पूर्णांक opad_count;
+struct ccp_sha_ctx {
+	struct scatterlist opad_sg;
+	unsigned int opad_count;
 
-	अचिन्हित पूर्णांक key_len;
+	unsigned int key_len;
 	u8 key[MAX_SHA_BLOCK_SIZE];
 	u8 ipad[MAX_SHA_BLOCK_SIZE];
 	u8 opad[MAX_SHA_BLOCK_SIZE];
-	काष्ठा crypto_shash *hmac_tfm;
-पूर्ण;
+	struct crypto_shash *hmac_tfm;
+};
 
-काष्ठा ccp_sha_req_ctx अणु
-	क्रमागत ccp_sha_type type;
+struct ccp_sha_req_ctx {
+	enum ccp_sha_type type;
 
 	u64 msg_bits;
 
-	अचिन्हित पूर्णांक first;
-	अचिन्हित पूर्णांक final;
+	unsigned int first;
+	unsigned int final;
 
-	काष्ठा scatterlist *src;
-	अचिन्हित पूर्णांक nbytes;
+	struct scatterlist *src;
+	unsigned int nbytes;
 
 	u64 hash_cnt;
-	अचिन्हित पूर्णांक hash_rem;
+	unsigned int hash_rem;
 
-	काष्ठा sg_table data_sg;
+	struct sg_table data_sg;
 
-	काष्ठा scatterlist ctx_sg;
+	struct scatterlist ctx_sg;
 	u8 ctx[MAX_SHA_CONTEXT_SIZE];
 
-	काष्ठा scatterlist buf_sg;
-	अचिन्हित पूर्णांक buf_count;
+	struct scatterlist buf_sg;
+	unsigned int buf_count;
 	u8 buf[MAX_SHA_BLOCK_SIZE];
 
 	/* CCP driver command */
-	काष्ठा ccp_cmd cmd;
-पूर्ण;
+	struct ccp_cmd cmd;
+};
 
-काष्ठा ccp_sha_exp_ctx अणु
-	क्रमागत ccp_sha_type type;
+struct ccp_sha_exp_ctx {
+	enum ccp_sha_type type;
 
 	u64 msg_bits;
 
-	अचिन्हित पूर्णांक first;
+	unsigned int first;
 
 	u8 ctx[MAX_SHA_CONTEXT_SIZE];
 
-	अचिन्हित पूर्णांक buf_count;
+	unsigned int buf_count;
 	u8 buf[MAX_SHA_BLOCK_SIZE];
-पूर्ण;
+};
 
 /***** RSA related defines *****/
 
-काष्ठा ccp_rsa_ctx अणु
-	अचिन्हित पूर्णांक key_len; /* in bits */
-	काष्ठा scatterlist e_sg;
+struct ccp_rsa_ctx {
+	unsigned int key_len; /* in bits */
+	struct scatterlist e_sg;
 	u8 *e_buf;
-	अचिन्हित पूर्णांक e_len;
-	काष्ठा scatterlist n_sg;
+	unsigned int e_len;
+	struct scatterlist n_sg;
 	u8 *n_buf;
-	अचिन्हित पूर्णांक n_len;
-	काष्ठा scatterlist d_sg;
+	unsigned int n_len;
+	struct scatterlist d_sg;
 	u8 *d_buf;
-	अचिन्हित पूर्णांक d_len;
-पूर्ण;
+	unsigned int d_len;
+};
 
-काष्ठा ccp_rsa_req_ctx अणु
-	काष्ठा ccp_cmd cmd;
-पूर्ण;
+struct ccp_rsa_req_ctx {
+	struct ccp_cmd cmd;
+};
 
-#घोषणा	CCP_RSA_MAXMOD	(4 * 1024 / 8)
-#घोषणा	CCP5_RSA_MAXMOD	(16 * 1024 / 8)
+#define	CCP_RSA_MAXMOD	(4 * 1024 / 8)
+#define	CCP5_RSA_MAXMOD	(16 * 1024 / 8)
 
 /***** Common Context Structure *****/
-काष्ठा ccp_ctx अणु
-	पूर्णांक (*complete)(काष्ठा crypto_async_request *req, पूर्णांक ret);
+struct ccp_ctx {
+	int (*complete)(struct crypto_async_request *req, int ret);
 
-	जोड़ अणु
-		काष्ठा ccp_aes_ctx aes;
-		काष्ठा ccp_rsa_ctx rsa;
-		काष्ठा ccp_sha_ctx sha;
-		काष्ठा ccp_des3_ctx des3;
-	पूर्ण u;
-पूर्ण;
+	union {
+		struct ccp_aes_ctx aes;
+		struct ccp_rsa_ctx rsa;
+		struct ccp_sha_ctx sha;
+		struct ccp_des3_ctx des3;
+	} u;
+};
 
-पूर्णांक ccp_crypto_enqueue_request(काष्ठा crypto_async_request *req,
-			       काष्ठा ccp_cmd *cmd);
-काष्ठा scatterlist *ccp_crypto_sg_table_add(काष्ठा sg_table *table,
-					    काष्ठा scatterlist *sg_add);
+int ccp_crypto_enqueue_request(struct crypto_async_request *req,
+			       struct ccp_cmd *cmd);
+struct scatterlist *ccp_crypto_sg_table_add(struct sg_table *table,
+					    struct scatterlist *sg_add);
 
-पूर्णांक ccp_रेजिस्टर_aes_algs(काष्ठा list_head *head);
-पूर्णांक ccp_रेजिस्टर_aes_cmac_algs(काष्ठा list_head *head);
-पूर्णांक ccp_रेजिस्टर_aes_xts_algs(काष्ठा list_head *head);
-पूर्णांक ccp_रेजिस्टर_aes_aeads(काष्ठा list_head *head);
-पूर्णांक ccp_रेजिस्टर_sha_algs(काष्ठा list_head *head);
-पूर्णांक ccp_रेजिस्टर_des3_algs(काष्ठा list_head *head);
-पूर्णांक ccp_रेजिस्टर_rsa_algs(काष्ठा list_head *head);
+int ccp_register_aes_algs(struct list_head *head);
+int ccp_register_aes_cmac_algs(struct list_head *head);
+int ccp_register_aes_xts_algs(struct list_head *head);
+int ccp_register_aes_aeads(struct list_head *head);
+int ccp_register_sha_algs(struct list_head *head);
+int ccp_register_des3_algs(struct list_head *head);
+int ccp_register_rsa_algs(struct list_head *head);
 
-#पूर्ण_अगर
+#endif

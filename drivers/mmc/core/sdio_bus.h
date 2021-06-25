@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  *  linux/drivers/mmc/core/sdio_bus.h
  *
  *  Copyright 2007 Pierre Ossman
  */
-#अगर_अघोषित _MMC_CORE_SDIO_BUS_H
-#घोषणा _MMC_CORE_SDIO_BUS_H
+#ifndef _MMC_CORE_SDIO_BUS_H
+#define _MMC_CORE_SDIO_BUS_H
 
-काष्ठा mmc_card;
-काष्ठा sdio_func;
+struct mmc_card;
+struct sdio_func;
 
-काष्ठा sdio_func *sdio_alloc_func(काष्ठा mmc_card *card);
-पूर्णांक sdio_add_func(काष्ठा sdio_func *func);
-व्योम sdio_हटाओ_func(काष्ठा sdio_func *func);
+struct sdio_func *sdio_alloc_func(struct mmc_card *card);
+int sdio_add_func(struct sdio_func *func);
+void sdio_remove_func(struct sdio_func *func);
 
-पूर्णांक sdio_रेजिस्टर_bus(व्योम);
-व्योम sdio_unरेजिस्टर_bus(व्योम);
+int sdio_register_bus(void);
+void sdio_unregister_bus(void);
 
-#पूर्ण_अगर
+#endif
 

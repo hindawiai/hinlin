@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * f_audio.c -- USB Audio class function driver
   *
@@ -7,65 +6,65 @@
  * Copyright (C) 2008 Analog Devices, Inc
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/atomic.h>
+#include <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/atomic.h>
 
-#समावेश "u_uac1_legacy.h"
+#include "u_uac1_legacy.h"
 
-अटल पूर्णांक generic_set_cmd(काष्ठा usb_audio_control *con, u8 cmd, पूर्णांक value);
-अटल पूर्णांक generic_get_cmd(काष्ठा usb_audio_control *con, u8 cmd);
+static int generic_set_cmd(struct usb_audio_control *con, u8 cmd, int value);
+static int generic_get_cmd(struct usb_audio_control *con, u8 cmd);
 
 /*
- * DESCRIPTORS ... most are अटल, but strings and full
+ * DESCRIPTORS ... most are static, but strings and full
  * configuration descriptors are built on demand.
  */
 
 /*
- * We have two पूर्णांकerfaces- AudioControl and AudioStreaming
+ * We have two interfaces- AudioControl and AudioStreaming
  * TODO: only supcard playback currently
  */
-#घोषणा F_AUDIO_AC_INTERFACE	0
-#घोषणा F_AUDIO_AS_INTERFACE	1
-#घोषणा F_AUDIO_NUM_INTERFACES	1
+#define F_AUDIO_AC_INTERFACE	0
+#define F_AUDIO_AS_INTERFACE	1
+#define F_AUDIO_NUM_INTERFACES	1
 
 /* B.3.1  Standard AC Interface Descriptor */
-अटल काष्ठा usb_पूर्णांकerface_descriptor ac_पूर्णांकerface_desc = अणु
+static struct usb_interface_descriptor ac_interface_desc = {
 	.bLength =		USB_DT_INTERFACE_SIZE,
 	.bDescriptorType =	USB_DT_INTERFACE,
-	.bNumEndpoपूर्णांकs =	0,
+	.bNumEndpoints =	0,
 	.bInterfaceClass =	USB_CLASS_AUDIO,
 	.bInterfaceSubClass =	USB_SUBCLASS_AUDIOCONTROL,
-पूर्ण;
+};
 
 /*
- * The number of AudioStreaming and MIDIStreaming पूर्णांकerfaces
+ * The number of AudioStreaming and MIDIStreaming interfaces
  * in the Audio Interface Collection
  */
 DECLARE_UAC_AC_HEADER_DESCRIPTOR(1);
 
-#घोषणा UAC_DT_AC_HEADER_LENGTH	UAC_DT_AC_HEADER_SIZE(F_AUDIO_NUM_INTERFACES)
+#define UAC_DT_AC_HEADER_LENGTH	UAC_DT_AC_HEADER_SIZE(F_AUDIO_NUM_INTERFACES)
 /* 1 input terminal, 1 output terminal and 1 feature unit */
-#घोषणा UAC_DT_TOTAL_LENGTH (UAC_DT_AC_HEADER_LENGTH + UAC_DT_INPUT_TERMINAL_SIZE \
+#define UAC_DT_TOTAL_LENGTH (UAC_DT_AC_HEADER_LENGTH + UAC_DT_INPUT_TERMINAL_SIZE \
 	+ UAC_DT_OUTPUT_TERMINAL_SIZE + UAC_DT_FEATURE_UNIT_SIZE(0))
-/* B.3.2  Class-Specअगरic AC Interface Descriptor */
-अटल काष्ठा uac1_ac_header_descriptor_1 ac_header_desc = अणु
+/* B.3.2  Class-Specific AC Interface Descriptor */
+static struct uac1_ac_header_descriptor_1 ac_header_desc = {
 	.bLength =		UAC_DT_AC_HEADER_LENGTH,
 	.bDescriptorType =	USB_DT_CS_INTERFACE,
 	.bDescriptorSubtype =	UAC_HEADER,
 	.bcdADC =		cpu_to_le16(0x0100),
 	.wTotalLength =		cpu_to_le16(UAC_DT_TOTAL_LENGTH),
 	.bInCollection =	F_AUDIO_NUM_INTERFACES,
-	.baInterfaceNr = अणु
-	/* Interface number of the first AudioStream पूर्णांकerface */
+	.baInterfaceNr = {
+	/* Interface number of the first AudioStream interface */
 		[0] =		1,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-#घोषणा INPUT_TERMINAL_ID	1
-अटल काष्ठा uac_input_terminal_descriptor input_terminal_desc = अणु
+#define INPUT_TERMINAL_ID	1
+static struct uac_input_terminal_descriptor input_terminal_desc = {
 	.bLength =		UAC_DT_INPUT_TERMINAL_SIZE,
 	.bDescriptorType =	USB_DT_CS_INTERFACE,
 	.bDescriptorSubtype =	UAC_INPUT_TERMINAL,
@@ -73,12 +72,12 @@ DECLARE_UAC_AC_HEADER_DESCRIPTOR(1);
 	.wTerminalType =	UAC_TERMINAL_STREAMING,
 	.bAssocTerminal =	0,
 	.wChannelConfig =	0x3,
-पूर्ण;
+};
 
 DECLARE_UAC_FEATURE_UNIT_DESCRIPTOR(0);
 
-#घोषणा FEATURE_UNIT_ID		2
-अटल काष्ठा uac_feature_unit_descriptor_0 feature_unit_desc = अणु
+#define FEATURE_UNIT_ID		2
+static struct uac_feature_unit_descriptor_0 feature_unit_desc = {
 	.bLength		= UAC_DT_FEATURE_UNIT_SIZE(0),
 	.bDescriptorType	= USB_DT_CS_INTERFACE,
 	.bDescriptorSubtype	= UAC_FEATURE_UNIT,
@@ -86,36 +85,36 @@ DECLARE_UAC_FEATURE_UNIT_DESCRIPTOR(0);
 	.bSourceID		= INPUT_TERMINAL_ID,
 	.bControlSize		= 2,
 	.bmaControls[0]		= (UAC_FU_MUTE | UAC_FU_VOLUME),
-पूर्ण;
+};
 
-अटल काष्ठा usb_audio_control mute_control = अणु
+static struct usb_audio_control mute_control = {
 	.list = LIST_HEAD_INIT(mute_control.list),
 	.name = "Mute Control",
 	.type = UAC_FU_MUTE,
-	/* Toकरो: add real Mute control code */
+	/* Todo: add real Mute control code */
 	.set = generic_set_cmd,
 	.get = generic_get_cmd,
-पूर्ण;
+};
 
-अटल काष्ठा usb_audio_control volume_control = अणु
+static struct usb_audio_control volume_control = {
 	.list = LIST_HEAD_INIT(volume_control.list),
 	.name = "Volume Control",
 	.type = UAC_FU_VOLUME,
-	/* Toकरो: add real Volume control code */
+	/* Todo: add real Volume control code */
 	.set = generic_set_cmd,
 	.get = generic_get_cmd,
-पूर्ण;
+};
 
-अटल काष्ठा usb_audio_control_selector feature_unit = अणु
+static struct usb_audio_control_selector feature_unit = {
 	.list = LIST_HEAD_INIT(feature_unit.list),
 	.id = FEATURE_UNIT_ID,
 	.name = "Mute & Volume Control",
 	.type = UAC_FEATURE_UNIT,
-	.desc = (काष्ठा usb_descriptor_header *)&feature_unit_desc,
-पूर्ण;
+	.desc = (struct usb_descriptor_header *)&feature_unit_desc,
+};
 
-#घोषणा OUTPUT_TERMINAL_ID	3
-अटल काष्ठा uac1_output_terminal_descriptor output_terminal_desc = अणु
+#define OUTPUT_TERMINAL_ID	3
+static struct uac1_output_terminal_descriptor output_terminal_desc = {
 	.bLength		= UAC_DT_OUTPUT_TERMINAL_SIZE,
 	.bDescriptorType	= USB_DT_CS_INTERFACE,
 	.bDescriptorSubtype	= UAC_OUTPUT_TERMINAL,
@@ -123,40 +122,40 @@ DECLARE_UAC_FEATURE_UNIT_DESCRIPTOR(0);
 	.wTerminalType		= UAC_OUTPUT_TERMINAL_SPEAKER,
 	.bAssocTerminal		= FEATURE_UNIT_ID,
 	.bSourceID		= FEATURE_UNIT_ID,
-पूर्ण;
+};
 
 /* B.4.1  Standard AS Interface Descriptor */
-अटल काष्ठा usb_पूर्णांकerface_descriptor as_पूर्णांकerface_alt_0_desc = अणु
+static struct usb_interface_descriptor as_interface_alt_0_desc = {
 	.bLength =		USB_DT_INTERFACE_SIZE,
 	.bDescriptorType =	USB_DT_INTERFACE,
 	.bAlternateSetting =	0,
-	.bNumEndpoपूर्णांकs =	0,
+	.bNumEndpoints =	0,
 	.bInterfaceClass =	USB_CLASS_AUDIO,
 	.bInterfaceSubClass =	USB_SUBCLASS_AUDIOSTREAMING,
-पूर्ण;
+};
 
-अटल काष्ठा usb_पूर्णांकerface_descriptor as_पूर्णांकerface_alt_1_desc = अणु
+static struct usb_interface_descriptor as_interface_alt_1_desc = {
 	.bLength =		USB_DT_INTERFACE_SIZE,
 	.bDescriptorType =	USB_DT_INTERFACE,
 	.bAlternateSetting =	1,
-	.bNumEndpoपूर्णांकs =	1,
+	.bNumEndpoints =	1,
 	.bInterfaceClass =	USB_CLASS_AUDIO,
 	.bInterfaceSubClass =	USB_SUBCLASS_AUDIOSTREAMING,
-पूर्ण;
+};
 
-/* B.4.2  Class-Specअगरic AS Interface Descriptor */
-अटल काष्ठा uac1_as_header_descriptor as_header_desc = अणु
+/* B.4.2  Class-Specific AS Interface Descriptor */
+static struct uac1_as_header_descriptor as_header_desc = {
 	.bLength =		UAC_DT_AS_HEADER_SIZE,
 	.bDescriptorType =	USB_DT_CS_INTERFACE,
 	.bDescriptorSubtype =	UAC_AS_GENERAL,
 	.bTerminalLink =	INPUT_TERMINAL_ID,
 	.bDelay =		1,
 	.wFormatTag =		UAC_FORMAT_TYPE_I_PCM,
-पूर्ण;
+};
 
 DECLARE_UAC_FORMAT_TYPE_I_DISCRETE_DESC(1);
 
-अटल काष्ठा uac_क्रमmat_type_i_discrete_descriptor_1 as_type_i_desc = अणु
+static struct uac_format_type_i_discrete_descriptor_1 as_type_i_desc = {
 	.bLength =		UAC_FORMAT_TYPE_I_DISCRETE_DESC_SIZE(1),
 	.bDescriptorType =	USB_DT_CS_INTERFACE,
 	.bDescriptorSubtype =	UAC_FORMAT_TYPE,
@@ -164,49 +163,49 @@ DECLARE_UAC_FORMAT_TYPE_I_DISCRETE_DESC(1);
 	.bSubframeSize =	2,
 	.bBitResolution =	16,
 	.bSamFreqType =		1,
-पूर्ण;
+};
 
-/* Standard ISO OUT Endpoपूर्णांक Descriptor */
-अटल काष्ठा usb_endpoपूर्णांक_descriptor as_out_ep_desc  = अणु
+/* Standard ISO OUT Endpoint Descriptor */
+static struct usb_endpoint_descriptor as_out_ep_desc  = {
 	.bLength =		USB_DT_ENDPOINT_AUDIO_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
-	.bEndpoपूर्णांकAddress =	USB_सूची_OUT,
+	.bEndpointAddress =	USB_DIR_OUT,
 	.bmAttributes =		USB_ENDPOINT_SYNC_ADAPTIVE
 				| USB_ENDPOINT_XFER_ISOC,
 	.wMaxPacketSize	=	cpu_to_le16(UAC1_OUT_EP_MAX_PACKET_SIZE),
 	.bInterval =		4,
-पूर्ण;
+};
 
-/* Class-specअगरic AS ISO OUT Endpoपूर्णांक Descriptor */
-अटल काष्ठा uac_iso_endpoपूर्णांक_descriptor as_iso_out_desc = अणु
+/* Class-specific AS ISO OUT Endpoint Descriptor */
+static struct uac_iso_endpoint_descriptor as_iso_out_desc = {
 	.bLength =		UAC_ISO_ENDPOINT_DESC_SIZE,
 	.bDescriptorType =	USB_DT_CS_ENDPOINT,
 	.bDescriptorSubtype =	UAC_EP_GENERAL,
 	.bmAttributes = 	1,
 	.bLockDelayUnits =	1,
 	.wLockDelay =		cpu_to_le16(1),
-पूर्ण;
+};
 
-अटल काष्ठा usb_descriptor_header *f_audio_desc[] = अणु
-	(काष्ठा usb_descriptor_header *)&ac_पूर्णांकerface_desc,
-	(काष्ठा usb_descriptor_header *)&ac_header_desc,
+static struct usb_descriptor_header *f_audio_desc[] = {
+	(struct usb_descriptor_header *)&ac_interface_desc,
+	(struct usb_descriptor_header *)&ac_header_desc,
 
-	(काष्ठा usb_descriptor_header *)&input_terminal_desc,
-	(काष्ठा usb_descriptor_header *)&output_terminal_desc,
-	(काष्ठा usb_descriptor_header *)&feature_unit_desc,
+	(struct usb_descriptor_header *)&input_terminal_desc,
+	(struct usb_descriptor_header *)&output_terminal_desc,
+	(struct usb_descriptor_header *)&feature_unit_desc,
 
-	(काष्ठा usb_descriptor_header *)&as_पूर्णांकerface_alt_0_desc,
-	(काष्ठा usb_descriptor_header *)&as_पूर्णांकerface_alt_1_desc,
-	(काष्ठा usb_descriptor_header *)&as_header_desc,
+	(struct usb_descriptor_header *)&as_interface_alt_0_desc,
+	(struct usb_descriptor_header *)&as_interface_alt_1_desc,
+	(struct usb_descriptor_header *)&as_header_desc,
 
-	(काष्ठा usb_descriptor_header *)&as_type_i_desc,
+	(struct usb_descriptor_header *)&as_type_i_desc,
 
-	(काष्ठा usb_descriptor_header *)&as_out_ep_desc,
-	(काष्ठा usb_descriptor_header *)&as_iso_out_desc,
-	शून्य,
-पूर्ण;
+	(struct usb_descriptor_header *)&as_out_ep_desc,
+	(struct usb_descriptor_header *)&as_iso_out_desc,
+	NULL,
+};
 
-क्रमागत अणु
+enum {
 	STR_AC_IF,
 	STR_INPUT_TERMINAL,
 	STR_INPUT_TERMINAL_CH_NAMES,
@@ -214,9 +213,9 @@ DECLARE_UAC_FORMAT_TYPE_I_DISCRETE_DESC(1);
 	STR_OUTPUT_TERMINAL,
 	STR_AS_IF_ALT0,
 	STR_AS_IF_ALT1,
-पूर्ण;
+};
 
-अटल काष्ठा usb_string strings_uac1[] = अणु
+static struct usb_string strings_uac1[] = {
 	[STR_AC_IF].s = "AC Interface",
 	[STR_INPUT_TERMINAL].s = "Input terminal",
 	[STR_INPUT_TERMINAL_CH_NAMES].s = "Channels",
@@ -224,243 +223,243 @@ DECLARE_UAC_FORMAT_TYPE_I_DISCRETE_DESC(1);
 	[STR_OUTPUT_TERMINAL].s = "Output terminal",
 	[STR_AS_IF_ALT0].s = "AS Interface",
 	[STR_AS_IF_ALT1].s = "AS Interface",
-	अणु पूर्ण,
-पूर्ण;
+	{ },
+};
 
-अटल काष्ठा usb_gadget_strings str_uac1 = अणु
+static struct usb_gadget_strings str_uac1 = {
 	.language = 0x0409,	/* en-us */
 	.strings = strings_uac1,
-पूर्ण;
+};
 
-अटल काष्ठा usb_gadget_strings *uac1_strings[] = अणु
+static struct usb_gadget_strings *uac1_strings[] = {
 	&str_uac1,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
 /*
  * This function is an ALSA sound card following USB Audio Class Spec 1.0.
  */
 
 /*-------------------------------------------------------------------------*/
-काष्ठा f_audio_buf अणु
+struct f_audio_buf {
 	u8 *buf;
-	पूर्णांक actual;
-	काष्ठा list_head list;
-पूर्ण;
+	int actual;
+	struct list_head list;
+};
 
-अटल काष्ठा f_audio_buf *f_audio_buffer_alloc(पूर्णांक buf_size)
-अणु
-	काष्ठा f_audio_buf *copy_buf;
+static struct f_audio_buf *f_audio_buffer_alloc(int buf_size)
+{
+	struct f_audio_buf *copy_buf;
 
-	copy_buf = kzalloc(माप *copy_buf, GFP_ATOMIC);
-	अगर (!copy_buf)
-		वापस ERR_PTR(-ENOMEM);
+	copy_buf = kzalloc(sizeof *copy_buf, GFP_ATOMIC);
+	if (!copy_buf)
+		return ERR_PTR(-ENOMEM);
 
 	copy_buf->buf = kzalloc(buf_size, GFP_ATOMIC);
-	अगर (!copy_buf->buf) अणु
-		kमुक्त(copy_buf);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	if (!copy_buf->buf) {
+		kfree(copy_buf);
+		return ERR_PTR(-ENOMEM);
+	}
 
-	वापस copy_buf;
-पूर्ण
+	return copy_buf;
+}
 
-अटल व्योम f_audio_buffer_मुक्त(काष्ठा f_audio_buf *audio_buf)
-अणु
-	kमुक्त(audio_buf->buf);
-	kमुक्त(audio_buf);
-पूर्ण
+static void f_audio_buffer_free(struct f_audio_buf *audio_buf)
+{
+	kfree(audio_buf->buf);
+	kfree(audio_buf);
+}
 /*-------------------------------------------------------------------------*/
 
-काष्ठा f_audio अणु
-	काष्ठा gaudio			card;
+struct f_audio {
+	struct gaudio			card;
 
-	u8 ac_पूर्णांकf, ac_alt;
-	u8 as_पूर्णांकf, as_alt;
+	u8 ac_intf, ac_alt;
+	u8 as_intf, as_alt;
 
-	/* endpoपूर्णांकs handle full and/or high speeds */
-	काष्ठा usb_ep			*out_ep;
+	/* endpoints handle full and/or high speeds */
+	struct usb_ep			*out_ep;
 
 	spinlock_t			lock;
-	काष्ठा f_audio_buf *copy_buf;
-	काष्ठा work_काष्ठा playback_work;
-	काष्ठा list_head play_queue;
+	struct f_audio_buf *copy_buf;
+	struct work_struct playback_work;
+	struct list_head play_queue;
 
 	/* Control Set command */
-	काष्ठा list_head cs;
+	struct list_head cs;
 	u8 set_cmd;
-	काष्ठा usb_audio_control *set_con;
-पूर्ण;
+	struct usb_audio_control *set_con;
+};
 
-अटल अंतरभूत काष्ठा f_audio *func_to_audio(काष्ठा usb_function *f)
-अणु
-	वापस container_of(f, काष्ठा f_audio, card.func);
-पूर्ण
+static inline struct f_audio *func_to_audio(struct usb_function *f)
+{
+	return container_of(f, struct f_audio, card.func);
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल व्योम f_audio_playback_work(काष्ठा work_काष्ठा *data)
-अणु
-	काष्ठा f_audio *audio = container_of(data, काष्ठा f_audio,
+static void f_audio_playback_work(struct work_struct *data)
+{
+	struct f_audio *audio = container_of(data, struct f_audio,
 					playback_work);
-	काष्ठा f_audio_buf *play_buf;
+	struct f_audio_buf *play_buf;
 
 	spin_lock_irq(&audio->lock);
-	अगर (list_empty(&audio->play_queue)) अणु
+	if (list_empty(&audio->play_queue)) {
 		spin_unlock_irq(&audio->lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 	play_buf = list_first_entry(&audio->play_queue,
-			काष्ठा f_audio_buf, list);
+			struct f_audio_buf, list);
 	list_del(&play_buf->list);
 	spin_unlock_irq(&audio->lock);
 
 	u_audio_playback(&audio->card, play_buf->buf, play_buf->actual);
-	f_audio_buffer_मुक्त(play_buf);
-पूर्ण
+	f_audio_buffer_free(play_buf);
+}
 
-अटल पूर्णांक f_audio_out_ep_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
-अणु
-	काष्ठा f_audio *audio = req->context;
-	काष्ठा usb_composite_dev *cdev = audio->card.func.config->cdev;
-	काष्ठा f_audio_buf *copy_buf = audio->copy_buf;
-	काष्ठा f_uac1_legacy_opts *opts;
-	पूर्णांक audio_buf_size;
-	पूर्णांक err;
+static int f_audio_out_ep_complete(struct usb_ep *ep, struct usb_request *req)
+{
+	struct f_audio *audio = req->context;
+	struct usb_composite_dev *cdev = audio->card.func.config->cdev;
+	struct f_audio_buf *copy_buf = audio->copy_buf;
+	struct f_uac1_legacy_opts *opts;
+	int audio_buf_size;
+	int err;
 
-	opts = container_of(audio->card.func.fi, काष्ठा f_uac1_legacy_opts,
+	opts = container_of(audio->card.func.fi, struct f_uac1_legacy_opts,
 			    func_inst);
 	audio_buf_size = opts->audio_buf_size;
 
-	अगर (!copy_buf)
-		वापस -EINVAL;
+	if (!copy_buf)
+		return -EINVAL;
 
 	/* Copy buffer is full, add it to the play_queue */
-	अगर (audio_buf_size - copy_buf->actual < req->actual) अणु
+	if (audio_buf_size - copy_buf->actual < req->actual) {
 		spin_lock_irq(&audio->lock);
 		list_add_tail(&copy_buf->list, &audio->play_queue);
 		spin_unlock_irq(&audio->lock);
 		schedule_work(&audio->playback_work);
 		copy_buf = f_audio_buffer_alloc(audio_buf_size);
-		अगर (IS_ERR(copy_buf))
-			वापस -ENOMEM;
-	पूर्ण
+		if (IS_ERR(copy_buf))
+			return -ENOMEM;
+	}
 
-	स_नकल(copy_buf->buf + copy_buf->actual, req->buf, req->actual);
+	memcpy(copy_buf->buf + copy_buf->actual, req->buf, req->actual);
 	copy_buf->actual += req->actual;
 	audio->copy_buf = copy_buf;
 
 	err = usb_ep_queue(ep, req, GFP_ATOMIC);
-	अगर (err)
+	if (err)
 		ERROR(cdev, "%s queue req: %d\n", ep->name, err);
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
-अटल व्योम f_audio_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
-अणु
-	काष्ठा f_audio *audio = req->context;
-	पूर्णांक status = req->status;
+static void f_audio_complete(struct usb_ep *ep, struct usb_request *req)
+{
+	struct f_audio *audio = req->context;
+	int status = req->status;
 	u32 data = 0;
-	काष्ठा usb_ep *out_ep = audio->out_ep;
+	struct usb_ep *out_ep = audio->out_ep;
 
-	चयन (status) अणु
+	switch (status) {
 
-	हाल 0:				/* normal completion? */
-		अगर (ep == out_ep)
+	case 0:				/* normal completion? */
+		if (ep == out_ep)
 			f_audio_out_ep_complete(ep, req);
-		अन्यथा अगर (audio->set_con) अणु
-			स_नकल(&data, req->buf, req->length);
+		else if (audio->set_con) {
+			memcpy(&data, req->buf, req->length);
 			audio->set_con->set(audio->set_con, audio->set_cmd,
 					le16_to_cpu(data));
-			audio->set_con = शून्य;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+			audio->set_con = NULL;
+		}
+		break;
+	default:
+		break;
+	}
+}
 
-अटल पूर्णांक audio_set_पूर्णांकf_req(काष्ठा usb_function *f,
-		स्थिर काष्ठा usb_ctrlrequest *ctrl)
-अणु
-	काष्ठा f_audio		*audio = func_to_audio(f);
-	काष्ठा usb_composite_dev *cdev = f->config->cdev;
-	काष्ठा usb_request	*req = cdev->req;
+static int audio_set_intf_req(struct usb_function *f,
+		const struct usb_ctrlrequest *ctrl)
+{
+	struct f_audio		*audio = func_to_audio(f);
+	struct usb_composite_dev *cdev = f->config->cdev;
+	struct usb_request	*req = cdev->req;
 	u8			id = ((le16_to_cpu(ctrl->wIndex) >> 8) & 0xFF);
 	u16			len = le16_to_cpu(ctrl->wLength);
 	u16			w_value = le16_to_cpu(ctrl->wValue);
 	u8			con_sel = (w_value >> 8) & 0xFF;
 	u8			cmd = (ctrl->bRequest & 0x0F);
-	काष्ठा usb_audio_control_selector *cs;
-	काष्ठा usb_audio_control *con;
+	struct usb_audio_control_selector *cs;
+	struct usb_audio_control *con;
 
 	DBG(cdev, "bRequest 0x%x, w_value 0x%04x, len %d, entity %d\n",
 			ctrl->bRequest, w_value, len, id);
 
-	list_क्रम_each_entry(cs, &audio->cs, list) अणु
-		अगर (cs->id == id) अणु
-			list_क्रम_each_entry(con, &cs->control, list) अणु
-				अगर (con->type == con_sel) अणु
+	list_for_each_entry(cs, &audio->cs, list) {
+		if (cs->id == id) {
+			list_for_each_entry(con, &cs->control, list) {
+				if (con->type == con_sel) {
 					audio->set_con = con;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
+					break;
+				}
+			}
+			break;
+		}
+	}
 
 	audio->set_cmd = cmd;
 	req->context = audio;
 	req->complete = f_audio_complete;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल पूर्णांक audio_get_पूर्णांकf_req(काष्ठा usb_function *f,
-		स्थिर काष्ठा usb_ctrlrequest *ctrl)
-अणु
-	काष्ठा f_audio		*audio = func_to_audio(f);
-	काष्ठा usb_composite_dev *cdev = f->config->cdev;
-	काष्ठा usb_request	*req = cdev->req;
-	पूर्णांक			value = -EOPNOTSUPP;
+static int audio_get_intf_req(struct usb_function *f,
+		const struct usb_ctrlrequest *ctrl)
+{
+	struct f_audio		*audio = func_to_audio(f);
+	struct usb_composite_dev *cdev = f->config->cdev;
+	struct usb_request	*req = cdev->req;
+	int			value = -EOPNOTSUPP;
 	u8			id = ((le16_to_cpu(ctrl->wIndex) >> 8) & 0xFF);
 	u16			len = le16_to_cpu(ctrl->wLength);
 	u16			w_value = le16_to_cpu(ctrl->wValue);
 	u8			con_sel = (w_value >> 8) & 0xFF;
 	u8			cmd = (ctrl->bRequest & 0x0F);
-	काष्ठा usb_audio_control_selector *cs;
-	काष्ठा usb_audio_control *con;
+	struct usb_audio_control_selector *cs;
+	struct usb_audio_control *con;
 
 	DBG(cdev, "bRequest 0x%x, w_value 0x%04x, len %d, entity %d\n",
 			ctrl->bRequest, w_value, len, id);
 
-	list_क्रम_each_entry(cs, &audio->cs, list) अणु
-		अगर (cs->id == id) अणु
-			list_क्रम_each_entry(con, &cs->control, list) अणु
-				अगर (con->type == con_sel && con->get) अणु
+	list_for_each_entry(cs, &audio->cs, list) {
+		if (cs->id == id) {
+			list_for_each_entry(con, &cs->control, list) {
+				if (con->type == con_sel && con->get) {
 					value = con->get(con, cmd);
-					अवरोध;
-				पूर्ण
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
+					break;
+				}
+			}
+			break;
+		}
+	}
 
 	req->context = audio;
 	req->complete = f_audio_complete;
-	len = min_t(माप_प्रकार, माप(value), len);
-	स_नकल(req->buf, &value, len);
+	len = min_t(size_t, sizeof(value), len);
+	memcpy(req->buf, &value, len);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल पूर्णांक audio_set_endpoपूर्णांक_req(काष्ठा usb_function *f,
-		स्थिर काष्ठा usb_ctrlrequest *ctrl)
-अणु
-	काष्ठा usb_composite_dev *cdev = f->config->cdev;
-	पूर्णांक			value = -EOPNOTSUPP;
+static int audio_set_endpoint_req(struct usb_function *f,
+		const struct usb_ctrlrequest *ctrl)
+{
+	struct usb_composite_dev *cdev = f->config->cdev;
+	int			value = -EOPNOTSUPP;
 	u16			ep = le16_to_cpu(ctrl->wIndex);
 	u16			len = le16_to_cpu(ctrl->wLength);
 	u16			w_value = le16_to_cpu(ctrl->wValue);
@@ -468,35 +467,35 @@ DECLARE_UAC_FORMAT_TYPE_I_DISCRETE_DESC(1);
 	DBG(cdev, "bRequest 0x%x, w_value 0x%04x, len %d, endpoint %d\n",
 			ctrl->bRequest, w_value, len, ep);
 
-	चयन (ctrl->bRequest) अणु
-	हाल UAC_SET_CUR:
+	switch (ctrl->bRequest) {
+	case UAC_SET_CUR:
 		value = len;
-		अवरोध;
+		break;
 
-	हाल UAC_SET_MIN:
-		अवरोध;
+	case UAC_SET_MIN:
+		break;
 
-	हाल UAC_SET_MAX:
-		अवरोध;
+	case UAC_SET_MAX:
+		break;
 
-	हाल UAC_SET_RES:
-		अवरोध;
+	case UAC_SET_RES:
+		break;
 
-	हाल UAC_SET_MEM:
-		अवरोध;
+	case UAC_SET_MEM:
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल पूर्णांक audio_get_endpoपूर्णांक_req(काष्ठा usb_function *f,
-		स्थिर काष्ठा usb_ctrlrequest *ctrl)
-अणु
-	काष्ठा usb_composite_dev *cdev = f->config->cdev;
-	पूर्णांक value = -EOPNOTSUPP;
+static int audio_get_endpoint_req(struct usb_function *f,
+		const struct usb_ctrlrequest *ctrl)
+{
+	struct usb_composite_dev *cdev = f->config->cdev;
+	int value = -EOPNOTSUPP;
 	u8 ep = ((le16_to_cpu(ctrl->wIndex) >> 8) & 0xFF);
 	u16 len = le16_to_cpu(ctrl->wLength);
 	u16 w_value = le16_to_cpu(ctrl->wValue);
@@ -504,183 +503,183 @@ DECLARE_UAC_FORMAT_TYPE_I_DISCRETE_DESC(1);
 	DBG(cdev, "bRequest 0x%x, w_value 0x%04x, len %d, endpoint %d\n",
 			ctrl->bRequest, w_value, len, ep);
 
-	चयन (ctrl->bRequest) अणु
-	हाल UAC_GET_CUR:
-	हाल UAC_GET_MIN:
-	हाल UAC_GET_MAX:
-	हाल UAC_GET_RES:
+	switch (ctrl->bRequest) {
+	case UAC_GET_CUR:
+	case UAC_GET_MIN:
+	case UAC_GET_MAX:
+	case UAC_GET_RES:
 		value = len;
-		अवरोध;
-	हाल UAC_GET_MEM:
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	case UAC_GET_MEM:
+		break;
+	default:
+		break;
+	}
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल पूर्णांक
-f_audio_setup(काष्ठा usb_function *f, स्थिर काष्ठा usb_ctrlrequest *ctrl)
-अणु
-	काष्ठा usb_composite_dev *cdev = f->config->cdev;
-	काष्ठा usb_request	*req = cdev->req;
-	पूर्णांक			value = -EOPNOTSUPP;
+static int
+f_audio_setup(struct usb_function *f, const struct usb_ctrlrequest *ctrl)
+{
+	struct usb_composite_dev *cdev = f->config->cdev;
+	struct usb_request	*req = cdev->req;
+	int			value = -EOPNOTSUPP;
 	u16			w_index = le16_to_cpu(ctrl->wIndex);
 	u16			w_value = le16_to_cpu(ctrl->wValue);
 	u16			w_length = le16_to_cpu(ctrl->wLength);
 
-	/* composite driver infraकाष्ठाure handles everything; पूर्णांकerface
+	/* composite driver infrastructure handles everything; interface
 	 * activation uses set_alt().
 	 */
-	चयन (ctrl->bRequestType) अणु
-	हाल USB_सूची_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE:
-		value = audio_set_पूर्णांकf_req(f, ctrl);
-		अवरोध;
+	switch (ctrl->bRequestType) {
+	case USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE:
+		value = audio_set_intf_req(f, ctrl);
+		break;
 
-	हाल USB_सूची_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE:
-		value = audio_get_पूर्णांकf_req(f, ctrl);
-		अवरोध;
+	case USB_DIR_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE:
+		value = audio_get_intf_req(f, ctrl);
+		break;
 
-	हाल USB_सूची_OUT | USB_TYPE_CLASS | USB_RECIP_ENDPOINT:
-		value = audio_set_endpoपूर्णांक_req(f, ctrl);
-		अवरोध;
+	case USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_ENDPOINT:
+		value = audio_set_endpoint_req(f, ctrl);
+		break;
 
-	हाल USB_सूची_IN | USB_TYPE_CLASS | USB_RECIP_ENDPOINT:
-		value = audio_get_endpoपूर्णांक_req(f, ctrl);
-		अवरोध;
+	case USB_DIR_IN | USB_TYPE_CLASS | USB_RECIP_ENDPOINT:
+		value = audio_get_endpoint_req(f, ctrl);
+		break;
 
-	शेष:
+	default:
 		ERROR(cdev, "invalid control req%02x.%02x v%04x i%04x l%d\n",
 			ctrl->bRequestType, ctrl->bRequest,
 			w_value, w_index, w_length);
-	पूर्ण
+	}
 
 	/* respond with data transfer or status phase? */
-	अगर (value >= 0) अणु
+	if (value >= 0) {
 		DBG(cdev, "audio req%02x.%02x v%04x i%04x l%d\n",
 			ctrl->bRequestType, ctrl->bRequest,
 			w_value, w_index, w_length);
 		req->zero = 0;
 		req->length = value;
 		value = usb_ep_queue(cdev->gadget->ep0, req, GFP_ATOMIC);
-		अगर (value < 0)
+		if (value < 0)
 			ERROR(cdev, "audio response on err %d\n", value);
-	पूर्ण
+	}
 
 	/* device either stalls (value < 0) or reports success */
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल पूर्णांक f_audio_set_alt(काष्ठा usb_function *f, अचिन्हित पूर्णांकf, अचिन्हित alt)
-अणु
-	काष्ठा f_audio		*audio = func_to_audio(f);
-	काष्ठा usb_composite_dev *cdev = f->config->cdev;
-	काष्ठा usb_ep *out_ep = audio->out_ep;
-	काष्ठा usb_request *req;
-	काष्ठा f_uac1_legacy_opts *opts;
-	पूर्णांक req_buf_size, req_count, audio_buf_size;
-	पूर्णांक i = 0, err = 0;
+static int f_audio_set_alt(struct usb_function *f, unsigned intf, unsigned alt)
+{
+	struct f_audio		*audio = func_to_audio(f);
+	struct usb_composite_dev *cdev = f->config->cdev;
+	struct usb_ep *out_ep = audio->out_ep;
+	struct usb_request *req;
+	struct f_uac1_legacy_opts *opts;
+	int req_buf_size, req_count, audio_buf_size;
+	int i = 0, err = 0;
 
-	DBG(cdev, "intf %d, alt %d\n", पूर्णांकf, alt);
+	DBG(cdev, "intf %d, alt %d\n", intf, alt);
 
-	opts = container_of(f->fi, काष्ठा f_uac1_legacy_opts, func_inst);
+	opts = container_of(f->fi, struct f_uac1_legacy_opts, func_inst);
 	req_buf_size = opts->req_buf_size;
 	req_count = opts->req_count;
 	audio_buf_size = opts->audio_buf_size;
 
 	/* No i/f has more than 2 alt settings */
-	अगर (alt > 1) अणु
+	if (alt > 1) {
 		ERROR(cdev, "%s:%d Error!\n", __func__, __LINE__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (पूर्णांकf == audio->ac_पूर्णांकf) अणु
+	if (intf == audio->ac_intf) {
 		/* Control I/f has only 1 AltSetting - 0 */
-		अगर (alt) अणु
+		if (alt) {
 			ERROR(cdev, "%s:%d Error!\n", __func__, __LINE__);
-			वापस -EINVAL;
-		पूर्ण
-		वापस 0;
-	पूर्ण अन्यथा अगर (पूर्णांकf == audio->as_पूर्णांकf) अणु
-		अगर (alt == 1) अणु
+			return -EINVAL;
+		}
+		return 0;
+	} else if (intf == audio->as_intf) {
+		if (alt == 1) {
 			err = config_ep_by_speed(cdev->gadget, f, out_ep);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 
 			usb_ep_enable(out_ep);
 			audio->copy_buf = f_audio_buffer_alloc(audio_buf_size);
-			अगर (IS_ERR(audio->copy_buf))
-				वापस -ENOMEM;
+			if (IS_ERR(audio->copy_buf))
+				return -ENOMEM;
 
 			/*
-			 * allocate a bunch of पढ़ो buffers
+			 * allocate a bunch of read buffers
 			 * and queue them all at once.
 			 */
-			क्रम (i = 0; i < req_count && err == 0; i++) अणु
+			for (i = 0; i < req_count && err == 0; i++) {
 				req = usb_ep_alloc_request(out_ep, GFP_ATOMIC);
-				अगर (req) अणु
+				if (req) {
 					req->buf = kzalloc(req_buf_size,
 							GFP_ATOMIC);
-					अगर (req->buf) अणु
+					if (req->buf) {
 						req->length = req_buf_size;
 						req->context = audio;
 						req->complete =
 							f_audio_complete;
 						err = usb_ep_queue(out_ep,
 							req, GFP_ATOMIC);
-						अगर (err)
+						if (err)
 							ERROR(cdev,
 							"%s queue req: %d\n",
 							out_ep->name, err);
-					पूर्ण अन्यथा
+					} else
 						err = -ENOMEM;
-				पूर्ण अन्यथा
+				} else
 					err = -ENOMEM;
-			पूर्ण
+			}
 
-		पूर्ण अन्यथा अणु
-			काष्ठा f_audio_buf *copy_buf = audio->copy_buf;
-			अगर (copy_buf) अणु
+		} else {
+			struct f_audio_buf *copy_buf = audio->copy_buf;
+			if (copy_buf) {
 				list_add_tail(&copy_buf->list,
 						&audio->play_queue);
 				schedule_work(&audio->playback_work);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		audio->as_alt = alt;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक f_audio_get_alt(काष्ठा usb_function *f, अचिन्हित पूर्णांकf)
-अणु
-	काष्ठा f_audio		*audio = func_to_audio(f);
-	काष्ठा usb_composite_dev *cdev = f->config->cdev;
+static int f_audio_get_alt(struct usb_function *f, unsigned intf)
+{
+	struct f_audio		*audio = func_to_audio(f);
+	struct usb_composite_dev *cdev = f->config->cdev;
 
-	अगर (पूर्णांकf == audio->ac_पूर्णांकf)
-		वापस audio->ac_alt;
-	अन्यथा अगर (पूर्णांकf == audio->as_पूर्णांकf)
-		वापस audio->as_alt;
-	अन्यथा
+	if (intf == audio->ac_intf)
+		return audio->ac_alt;
+	else if (intf == audio->as_intf)
+		return audio->as_alt;
+	else
 		ERROR(cdev, "%s:%d Invalid Interface %d!\n",
-		      __func__, __LINE__, पूर्णांकf);
+		      __func__, __LINE__, intf);
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल व्योम f_audio_disable(काष्ठा usb_function *f)
-अणु
-	वापस;
-पूर्ण
+static void f_audio_disable(struct usb_function *f)
+{
+	return;
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल व्योम f_audio_build_desc(काष्ठा f_audio *audio)
-अणु
-	काष्ठा gaudio *card = &audio->card;
+static void f_audio_build_desc(struct f_audio *audio)
+{
+	struct gaudio *card = &audio->card;
 	u8 *sam_freq;
-	पूर्णांक rate;
+	int rate;
 
 	/* Set channel numbers */
 	input_terminal_desc.bNrChannels = u_audio_get_playback_channels(card);
@@ -689,101 +688,101 @@ f_audio_setup(काष्ठा usb_function *f, स्थिर काष्�
 	/* Set sample rates */
 	rate = u_audio_get_playback_rate(card);
 	sam_freq = as_type_i_desc.tSamFreq[0];
-	स_नकल(sam_freq, &rate, 3);
+	memcpy(sam_freq, &rate, 3);
 
-	/* Toकरो: Set Sample bits and other parameters */
+	/* Todo: Set Sample bits and other parameters */
 
-	वापस;
-पूर्ण
+	return;
+}
 
 /* audio function driver setup/binding */
-अटल पूर्णांक
-f_audio_bind(काष्ठा usb_configuration *c, काष्ठा usb_function *f)
-अणु
-	काष्ठा usb_composite_dev *cdev = c->cdev;
-	काष्ठा f_audio		*audio = func_to_audio(f);
-	काष्ठा usb_string	*us;
-	पूर्णांक			status;
-	काष्ठा usb_ep		*ep = शून्य;
-	काष्ठा f_uac1_legacy_opts	*audio_opts;
+static int
+f_audio_bind(struct usb_configuration *c, struct usb_function *f)
+{
+	struct usb_composite_dev *cdev = c->cdev;
+	struct f_audio		*audio = func_to_audio(f);
+	struct usb_string	*us;
+	int			status;
+	struct usb_ep		*ep = NULL;
+	struct f_uac1_legacy_opts	*audio_opts;
 
-	audio_opts = container_of(f->fi, काष्ठा f_uac1_legacy_opts, func_inst);
+	audio_opts = container_of(f->fi, struct f_uac1_legacy_opts, func_inst);
 	audio->card.gadget = c->cdev->gadget;
 	/* set up ASLA audio devices */
-	अगर (!audio_opts->bound) अणु
+	if (!audio_opts->bound) {
 		status = gaudio_setup(&audio->card);
-		अगर (status < 0)
-			वापस status;
+		if (status < 0)
+			return status;
 		audio_opts->bound = true;
-	पूर्ण
+	}
 	us = usb_gstrings_attach(cdev, uac1_strings, ARRAY_SIZE(strings_uac1));
-	अगर (IS_ERR(us))
-		वापस PTR_ERR(us);
-	ac_पूर्णांकerface_desc.iInterface = us[STR_AC_IF].id;
+	if (IS_ERR(us))
+		return PTR_ERR(us);
+	ac_interface_desc.iInterface = us[STR_AC_IF].id;
 	input_terminal_desc.iTerminal = us[STR_INPUT_TERMINAL].id;
 	input_terminal_desc.iChannelNames = us[STR_INPUT_TERMINAL_CH_NAMES].id;
 	feature_unit_desc.iFeature = us[STR_FEAT_DESC_0].id;
 	output_terminal_desc.iTerminal = us[STR_OUTPUT_TERMINAL].id;
-	as_पूर्णांकerface_alt_0_desc.iInterface = us[STR_AS_IF_ALT0].id;
-	as_पूर्णांकerface_alt_1_desc.iInterface = us[STR_AS_IF_ALT1].id;
+	as_interface_alt_0_desc.iInterface = us[STR_AS_IF_ALT0].id;
+	as_interface_alt_1_desc.iInterface = us[STR_AS_IF_ALT1].id;
 
 
 	f_audio_build_desc(audio);
 
-	/* allocate instance-specअगरic पूर्णांकerface IDs, and patch descriptors */
-	status = usb_पूर्णांकerface_id(c, f);
-	अगर (status < 0)
-		जाओ fail;
-	ac_पूर्णांकerface_desc.bInterfaceNumber = status;
-	audio->ac_पूर्णांकf = status;
+	/* allocate instance-specific interface IDs, and patch descriptors */
+	status = usb_interface_id(c, f);
+	if (status < 0)
+		goto fail;
+	ac_interface_desc.bInterfaceNumber = status;
+	audio->ac_intf = status;
 	audio->ac_alt = 0;
 
-	status = usb_पूर्णांकerface_id(c, f);
-	अगर (status < 0)
-		जाओ fail;
-	as_पूर्णांकerface_alt_0_desc.bInterfaceNumber = status;
-	as_पूर्णांकerface_alt_1_desc.bInterfaceNumber = status;
-	audio->as_पूर्णांकf = status;
+	status = usb_interface_id(c, f);
+	if (status < 0)
+		goto fail;
+	as_interface_alt_0_desc.bInterfaceNumber = status;
+	as_interface_alt_1_desc.bInterfaceNumber = status;
+	audio->as_intf = status;
 	audio->as_alt = 0;
 
 	status = -ENODEV;
 
-	/* allocate instance-specअगरic endpoपूर्णांकs */
-	ep = usb_ep_स्वतःconfig(cdev->gadget, &as_out_ep_desc);
-	अगर (!ep)
-		जाओ fail;
+	/* allocate instance-specific endpoints */
+	ep = usb_ep_autoconfig(cdev->gadget, &as_out_ep_desc);
+	if (!ep)
+		goto fail;
 	audio->out_ep = ep;
 	audio->out_ep->desc = &as_out_ep_desc;
 
-	/* copy descriptors, and track endpoपूर्णांक copies */
-	status = usb_assign_descriptors(f, f_audio_desc, f_audio_desc, शून्य,
-					शून्य);
-	अगर (status)
-		जाओ fail;
-	वापस 0;
+	/* copy descriptors, and track endpoint copies */
+	status = usb_assign_descriptors(f, f_audio_desc, f_audio_desc, NULL,
+					NULL);
+	if (status)
+		goto fail;
+	return 0;
 
 fail:
 	gaudio_cleanup(&audio->card);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल पूर्णांक generic_set_cmd(काष्ठा usb_audio_control *con, u8 cmd, पूर्णांक value)
-अणु
+static int generic_set_cmd(struct usb_audio_control *con, u8 cmd, int value)
+{
 	con->data[cmd] = value;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक generic_get_cmd(काष्ठा usb_audio_control *con, u8 cmd)
-अणु
-	वापस con->data[cmd];
-पूर्ण
+static int generic_get_cmd(struct usb_audio_control *con, u8 cmd)
+{
+	return con->data[cmd];
+}
 
-/* Toकरो: add more control selecotor dynamically */
-अटल पूर्णांक control_selector_init(काष्ठा f_audio *audio)
-अणु
+/* Todo: add more control selecotor dynamically */
+static int control_selector_init(struct f_audio *audio)
+{
 	INIT_LIST_HEAD(&audio->cs);
 	list_add(&feature_unit.list, &audio->cs);
 
@@ -796,65 +795,65 @@ fail:
 	volume_control.data[UAC__MAX] = 0xfff0;
 	volume_control.data[UAC__RES] = 0x0030;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत
-काष्ठा f_uac1_legacy_opts *to_f_uac1_opts(काष्ठा config_item *item)
-अणु
-	वापस container_of(to_config_group(item), काष्ठा f_uac1_legacy_opts,
+static inline
+struct f_uac1_legacy_opts *to_f_uac1_opts(struct config_item *item)
+{
+	return container_of(to_config_group(item), struct f_uac1_legacy_opts,
 			    func_inst.group);
-पूर्ण
+}
 
-अटल व्योम f_uac1_attr_release(काष्ठा config_item *item)
-अणु
-	काष्ठा f_uac1_legacy_opts *opts = to_f_uac1_opts(item);
+static void f_uac1_attr_release(struct config_item *item)
+{
+	struct f_uac1_legacy_opts *opts = to_f_uac1_opts(item);
 
 	usb_put_function_instance(&opts->func_inst);
-पूर्ण
+}
 
-अटल काष्ठा configfs_item_operations f_uac1_item_ops = अणु
+static struct configfs_item_operations f_uac1_item_ops = {
 	.release	= f_uac1_attr_release,
-पूर्ण;
+};
 
-#घोषणा UAC1_INT_ATTRIBUTE(name)					\
-अटल sमाप_प्रकार f_uac1_opts_##name##_show(काष्ठा config_item *item,	\
-					 अक्षर *page)			\
-अणु									\
-	काष्ठा f_uac1_legacy_opts *opts = to_f_uac1_opts(item);		\
-	पूर्णांक result;							\
+#define UAC1_INT_ATTRIBUTE(name)					\
+static ssize_t f_uac1_opts_##name##_show(struct config_item *item,	\
+					 char *page)			\
+{									\
+	struct f_uac1_legacy_opts *opts = to_f_uac1_opts(item);		\
+	int result;							\
 									\
 	mutex_lock(&opts->lock);					\
-	result = प्र_लिखो(page, "%u\n", opts->name);			\
+	result = sprintf(page, "%u\n", opts->name);			\
 	mutex_unlock(&opts->lock);					\
 									\
-	वापस result;							\
-पूर्ण									\
+	return result;							\
+}									\
 									\
-अटल sमाप_प्रकार f_uac1_opts_##name##_store(काष्ठा config_item *item,		\
-					  स्थिर अक्षर *page, माप_प्रकार len)	\
-अणु									\
-	काष्ठा f_uac1_legacy_opts *opts = to_f_uac1_opts(item);		\
-	पूर्णांक ret;							\
+static ssize_t f_uac1_opts_##name##_store(struct config_item *item,		\
+					  const char *page, size_t len)	\
+{									\
+	struct f_uac1_legacy_opts *opts = to_f_uac1_opts(item);		\
+	int ret;							\
 	u32 num;							\
 									\
 	mutex_lock(&opts->lock);					\
-	अगर (opts->refcnt) अणु						\
+	if (opts->refcnt) {						\
 		ret = -EBUSY;						\
-		जाओ end;						\
-	पूर्ण								\
+		goto end;						\
+	}								\
 									\
 	ret = kstrtou32(page, 0, &num);					\
-	अगर (ret)							\
-		जाओ end;						\
+	if (ret)							\
+		goto end;						\
 									\
 	opts->name = num;						\
 	ret = len;							\
 									\
 end:									\
 	mutex_unlock(&opts->lock);					\
-	वापस ret;							\
-पूर्ण									\
+	return ret;							\
+}									\
 									\
 CONFIGFS_ATTR(f_uac1_opts_, name)
 
@@ -862,46 +861,46 @@ UAC1_INT_ATTRIBUTE(req_buf_size);
 UAC1_INT_ATTRIBUTE(req_count);
 UAC1_INT_ATTRIBUTE(audio_buf_size);
 
-#घोषणा UAC1_STR_ATTRIBUTE(name)					\
-अटल sमाप_प्रकार f_uac1_opts_##name##_show(काष्ठा config_item *item,	\
-					 अक्षर *page)			\
-अणु									\
-	काष्ठा f_uac1_legacy_opts *opts = to_f_uac1_opts(item);		\
-	पूर्णांक result;							\
+#define UAC1_STR_ATTRIBUTE(name)					\
+static ssize_t f_uac1_opts_##name##_show(struct config_item *item,	\
+					 char *page)			\
+{									\
+	struct f_uac1_legacy_opts *opts = to_f_uac1_opts(item);		\
+	int result;							\
 									\
 	mutex_lock(&opts->lock);					\
-	result = प्र_लिखो(page, "%s\n", opts->name);			\
+	result = sprintf(page, "%s\n", opts->name);			\
 	mutex_unlock(&opts->lock);					\
 									\
-	वापस result;							\
-पूर्ण									\
+	return result;							\
+}									\
 									\
-अटल sमाप_प्रकार f_uac1_opts_##name##_store(काष्ठा config_item *item,	\
-					  स्थिर अक्षर *page, माप_प्रकार len)	\
-अणु									\
-	काष्ठा f_uac1_legacy_opts *opts = to_f_uac1_opts(item);		\
-	पूर्णांक ret = -EBUSY;						\
-	अक्षर *पंचांगp;							\
+static ssize_t f_uac1_opts_##name##_store(struct config_item *item,	\
+					  const char *page, size_t len)	\
+{									\
+	struct f_uac1_legacy_opts *opts = to_f_uac1_opts(item);		\
+	int ret = -EBUSY;						\
+	char *tmp;							\
 									\
 	mutex_lock(&opts->lock);					\
-	अगर (opts->refcnt)						\
-		जाओ end;						\
+	if (opts->refcnt)						\
+		goto end;						\
 									\
-	पंचांगp = kstrndup(page, len, GFP_KERNEL);				\
-	अगर (पंचांगp) अणु							\
+	tmp = kstrndup(page, len, GFP_KERNEL);				\
+	if (tmp) {							\
 		ret = -ENOMEM;						\
-		जाओ end;						\
-	पूर्ण								\
-	अगर (opts->name##_alloc)						\
-		kमुक्त(opts->name);					\
+		goto end;						\
+	}								\
+	if (opts->name##_alloc)						\
+		kfree(opts->name);					\
 	opts->name##_alloc = true;					\
-	opts->name = पंचांगp;						\
+	opts->name = tmp;						\
 	ret = len;							\
 									\
 end:									\
 	mutex_unlock(&opts->lock);					\
-	वापस ret;							\
-पूर्ण									\
+	return ret;							\
+}									\
 									\
 CONFIGFS_ATTR(f_uac1_opts_, name)
 
@@ -909,46 +908,46 @@ UAC1_STR_ATTRIBUTE(fn_play);
 UAC1_STR_ATTRIBUTE(fn_cap);
 UAC1_STR_ATTRIBUTE(fn_cntl);
 
-अटल काष्ठा configfs_attribute *f_uac1_attrs[] = अणु
+static struct configfs_attribute *f_uac1_attrs[] = {
 	&f_uac1_opts_attr_req_buf_size,
 	&f_uac1_opts_attr_req_count,
 	&f_uac1_opts_attr_audio_buf_size,
 	&f_uac1_opts_attr_fn_play,
 	&f_uac1_opts_attr_fn_cap,
 	&f_uac1_opts_attr_fn_cntl,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा config_item_type f_uac1_func_type = अणु
+static const struct config_item_type f_uac1_func_type = {
 	.ct_item_ops	= &f_uac1_item_ops,
 	.ct_attrs	= f_uac1_attrs,
 	.ct_owner	= THIS_MODULE,
-पूर्ण;
+};
 
-अटल व्योम f_audio_मुक्त_inst(काष्ठा usb_function_instance *f)
-अणु
-	काष्ठा f_uac1_legacy_opts *opts;
+static void f_audio_free_inst(struct usb_function_instance *f)
+{
+	struct f_uac1_legacy_opts *opts;
 
-	opts = container_of(f, काष्ठा f_uac1_legacy_opts, func_inst);
-	अगर (opts->fn_play_alloc)
-		kमुक्त(opts->fn_play);
-	अगर (opts->fn_cap_alloc)
-		kमुक्त(opts->fn_cap);
-	अगर (opts->fn_cntl_alloc)
-		kमुक्त(opts->fn_cntl);
-	kमुक्त(opts);
-पूर्ण
+	opts = container_of(f, struct f_uac1_legacy_opts, func_inst);
+	if (opts->fn_play_alloc)
+		kfree(opts->fn_play);
+	if (opts->fn_cap_alloc)
+		kfree(opts->fn_cap);
+	if (opts->fn_cntl_alloc)
+		kfree(opts->fn_cntl);
+	kfree(opts);
+}
 
-अटल काष्ठा usb_function_instance *f_audio_alloc_inst(व्योम)
-अणु
-	काष्ठा f_uac1_legacy_opts *opts;
+static struct usb_function_instance *f_audio_alloc_inst(void)
+{
+	struct f_uac1_legacy_opts *opts;
 
-	opts = kzalloc(माप(*opts), GFP_KERNEL);
-	अगर (!opts)
-		वापस ERR_PTR(-ENOMEM);
+	opts = kzalloc(sizeof(*opts), GFP_KERNEL);
+	if (!opts)
+		return ERR_PTR(-ENOMEM);
 
 	mutex_init(&opts->lock);
-	opts->func_inst.मुक्त_func_inst = f_audio_मुक्त_inst;
+	opts->func_inst.free_func_inst = f_audio_free_inst;
 
 	config_group_init_type_name(&opts->func_inst.group, "",
 				    &f_uac1_func_type);
@@ -956,43 +955,43 @@ UAC1_STR_ATTRIBUTE(fn_cntl);
 	opts->req_buf_size = UAC1_OUT_EP_MAX_PACKET_SIZE;
 	opts->req_count = UAC1_REQ_COUNT;
 	opts->audio_buf_size = UAC1_AUDIO_BUF_SIZE;
-	opts->fn_play = खाता_PCM_PLAYBACK;
-	opts->fn_cap = खाता_PCM_CAPTURE;
-	opts->fn_cntl = खाता_CONTROL;
-	वापस &opts->func_inst;
-पूर्ण
+	opts->fn_play = FILE_PCM_PLAYBACK;
+	opts->fn_cap = FILE_PCM_CAPTURE;
+	opts->fn_cntl = FILE_CONTROL;
+	return &opts->func_inst;
+}
 
-अटल व्योम f_audio_मुक्त(काष्ठा usb_function *f)
-अणु
-	काष्ठा f_audio *audio = func_to_audio(f);
-	काष्ठा f_uac1_legacy_opts *opts;
+static void f_audio_free(struct usb_function *f)
+{
+	struct f_audio *audio = func_to_audio(f);
+	struct f_uac1_legacy_opts *opts;
 
 	gaudio_cleanup(&audio->card);
-	opts = container_of(f->fi, काष्ठा f_uac1_legacy_opts, func_inst);
-	kमुक्त(audio);
+	opts = container_of(f->fi, struct f_uac1_legacy_opts, func_inst);
+	kfree(audio);
 	mutex_lock(&opts->lock);
 	--opts->refcnt;
 	mutex_unlock(&opts->lock);
-पूर्ण
+}
 
-अटल व्योम f_audio_unbind(काष्ठा usb_configuration *c, काष्ठा usb_function *f)
-अणु
-	usb_मुक्त_all_descriptors(f);
-पूर्ण
+static void f_audio_unbind(struct usb_configuration *c, struct usb_function *f)
+{
+	usb_free_all_descriptors(f);
+}
 
-अटल काष्ठा usb_function *f_audio_alloc(काष्ठा usb_function_instance *fi)
-अणु
-	काष्ठा f_audio *audio;
-	काष्ठा f_uac1_legacy_opts *opts;
+static struct usb_function *f_audio_alloc(struct usb_function_instance *fi)
+{
+	struct f_audio *audio;
+	struct f_uac1_legacy_opts *opts;
 
 	/* allocate and initialize one new instance */
-	audio = kzalloc(माप(*audio), GFP_KERNEL);
-	अगर (!audio)
-		वापस ERR_PTR(-ENOMEM);
+	audio = kzalloc(sizeof(*audio), GFP_KERNEL);
+	if (!audio)
+		return ERR_PTR(-ENOMEM);
 
 	audio->card.func.name = "g_audio";
 
-	opts = container_of(fi, काष्ठा f_uac1_legacy_opts, func_inst);
+	opts = container_of(fi, struct f_uac1_legacy_opts, func_inst);
 	mutex_lock(&opts->lock);
 	++opts->refcnt;
 	mutex_unlock(&opts->lock);
@@ -1005,14 +1004,14 @@ UAC1_STR_ATTRIBUTE(fn_cntl);
 	audio->card.func.get_alt = f_audio_get_alt;
 	audio->card.func.setup = f_audio_setup;
 	audio->card.func.disable = f_audio_disable;
-	audio->card.func.मुक्त_func = f_audio_मुक्त;
+	audio->card.func.free_func = f_audio_free;
 
 	control_selector_init(audio);
 
 	INIT_WORK(&audio->playback_work, f_audio_playback_work);
 
-	वापस &audio->card.func;
-पूर्ण
+	return &audio->card.func;
+}
 
 DECLARE_USB_FUNCTION_INIT(uac1_legacy, f_audio_alloc_inst, f_audio_alloc);
 MODULE_LICENSE("GPL");

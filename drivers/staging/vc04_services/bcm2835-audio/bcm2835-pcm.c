@@ -1,20 +1,19 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright 2011 Broadcom Corporation.  All rights reserved. */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/slab.h>
+#include <linux/interrupt.h>
+#include <linux/slab.h>
 
-#समावेश <sound/asoundef.h>
+#include <sound/asoundef.h>
 
-#समावेश "bcm2835.h"
+#include "bcm2835.h"
 
 /* hardware definition */
-अटल स्थिर काष्ठा snd_pcm_hardware snd_bcm2835_playback_hw = अणु
+static const struct snd_pcm_hardware snd_bcm2835_playback_hw = {
 	.info = (SNDRV_PCM_INFO_INTERLEAVED | SNDRV_PCM_INFO_BLOCK_TRANSFER |
 		 SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_MMAP_VALID |
 		 SNDRV_PCM_INFO_SYNC_APPLPTR | SNDRV_PCM_INFO_BATCH),
-	.क्रमmats = SNDRV_PCM_FMTBIT_U8 | SNDRV_PCM_FMTBIT_S16_LE,
+	.formats = SNDRV_PCM_FMTBIT_U8 | SNDRV_PCM_FMTBIT_S16_LE,
 	.rates = SNDRV_PCM_RATE_CONTINUOUS | SNDRV_PCM_RATE_8000_192000,
 	.rate_min = 8000,
 	.rate_max = 192000,
@@ -25,13 +24,13 @@
 	.period_bytes_max = 512 * 1024,
 	.periods_min = 1,
 	.periods_max = 128,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_pcm_hardware snd_bcm2835_playback_spdअगर_hw = अणु
+static const struct snd_pcm_hardware snd_bcm2835_playback_spdif_hw = {
 	.info = (SNDRV_PCM_INFO_INTERLEAVED | SNDRV_PCM_INFO_BLOCK_TRANSFER |
 		 SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_MMAP_VALID |
 		 SNDRV_PCM_INFO_SYNC_APPLPTR | SNDRV_PCM_INFO_BATCH),
-	.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE,
+	.formats = SNDRV_PCM_FMTBIT_S16_LE,
 	.rates = SNDRV_PCM_RATE_CONTINUOUS | SNDRV_PCM_RATE_44100 |
 	SNDRV_PCM_RATE_48000,
 	.rate_min = 44100,
@@ -43,181 +42,181 @@
 	.period_bytes_max = 128 * 1024,
 	.periods_min = 1,
 	.periods_max = 128,
-पूर्ण;
+};
 
-अटल व्योम snd_bcm2835_playback_मुक्त(काष्ठा snd_pcm_runसमय *runसमय)
-अणु
-	kमुक्त(runसमय->निजी_data);
-पूर्ण
+static void snd_bcm2835_playback_free(struct snd_pcm_runtime *runtime)
+{
+	kfree(runtime->private_data);
+}
 
-व्योम bcm2835_playback_fअगरo(काष्ठा bcm2835_alsa_stream *alsa_stream,
-			   अचिन्हित पूर्णांक bytes)
-अणु
-	काष्ठा snd_pcm_substream *substream = alsa_stream->substream;
-	अचिन्हित पूर्णांक pos;
+void bcm2835_playback_fifo(struct bcm2835_alsa_stream *alsa_stream,
+			   unsigned int bytes)
+{
+	struct snd_pcm_substream *substream = alsa_stream->substream;
+	unsigned int pos;
 
-	अगर (!alsa_stream->period_size)
-		वापस;
+	if (!alsa_stream->period_size)
+		return;
 
-	अगर (bytes >= alsa_stream->buffer_size) अणु
+	if (bytes >= alsa_stream->buffer_size) {
 		snd_pcm_stream_lock(substream);
 		snd_pcm_stop(substream,
 			     alsa_stream->draining ?
 			     SNDRV_PCM_STATE_SETUP :
 			     SNDRV_PCM_STATE_XRUN);
 		snd_pcm_stream_unlock(substream);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	pos = atomic_पढ़ो(&alsa_stream->pos);
+	pos = atomic_read(&alsa_stream->pos);
 	pos += bytes;
 	pos %= alsa_stream->buffer_size;
 	atomic_set(&alsa_stream->pos, pos);
 
 	alsa_stream->period_offset += bytes;
-	alsa_stream->पूर्णांकerpolate_start = kसमय_get();
-	अगर (alsa_stream->period_offset >= alsa_stream->period_size) अणु
+	alsa_stream->interpolate_start = ktime_get();
+	if (alsa_stream->period_offset >= alsa_stream->period_size) {
 		alsa_stream->period_offset %= alsa_stream->period_size;
 		snd_pcm_period_elapsed(substream);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* खोलो callback */
-अटल पूर्णांक snd_bcm2835_playback_खोलो_generic(
-	काष्ठा snd_pcm_substream *substream, पूर्णांक spdअगर)
-अणु
-	काष्ठा bcm2835_chip *chip = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा bcm2835_alsa_stream *alsa_stream;
-	पूर्णांक idx;
-	पूर्णांक err;
+/* open callback */
+static int snd_bcm2835_playback_open_generic(
+	struct snd_pcm_substream *substream, int spdif)
+{
+	struct bcm2835_chip *chip = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct bcm2835_alsa_stream *alsa_stream;
+	int idx;
+	int err;
 
 	mutex_lock(&chip->audio_mutex);
 	idx = substream->number;
 
-	अगर (spdअगर && chip->खोलोed) अणु
+	if (spdif && chip->opened) {
 		err = -EBUSY;
-		जाओ out;
-	पूर्ण अन्यथा अगर (!spdअगर && (chip->खोलोed & (1 << idx))) अणु
+		goto out;
+	} else if (!spdif && (chip->opened & (1 << idx))) {
 		err = -EBUSY;
-		जाओ out;
-	पूर्ण
-	अगर (idx >= MAX_SUBSTREAMS) अणु
+		goto out;
+	}
+	if (idx >= MAX_SUBSTREAMS) {
 		dev_err(chip->dev,
 			"substream(%d) device doesn't exist max(%d) substreams allowed\n",
 			idx, MAX_SUBSTREAMS);
 		err = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	alsa_stream = kzalloc(माप(*alsa_stream), GFP_KERNEL);
-	अगर (!alsa_stream) अणु
+	alsa_stream = kzalloc(sizeof(*alsa_stream), GFP_KERNEL);
+	if (!alsa_stream) {
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Initialise alsa_stream */
 	alsa_stream->chip = chip;
 	alsa_stream->substream = substream;
 	alsa_stream->idx = idx;
 
-	err = bcm2835_audio_खोलो(alsa_stream);
-	अगर (err) अणु
-		kमुक्त(alsa_stream);
-		जाओ out;
-	पूर्ण
-	runसमय->निजी_data = alsa_stream;
-	runसमय->निजी_मुक्त = snd_bcm2835_playback_मुक्त;
-	अगर (spdअगर) अणु
-		runसमय->hw = snd_bcm2835_playback_spdअगर_hw;
-	पूर्ण अन्यथा अणु
-		/* clear spdअगर status, as we are not in spdअगर mode */
-		chip->spdअगर_status = 0;
-		runसमय->hw = snd_bcm2835_playback_hw;
-	पूर्ण
-	/* minimum 16 bytes alignment (क्रम vchiq bulk transfers) */
-	snd_pcm_hw_स्थिरraपूर्णांक_step(runसमय,
+	err = bcm2835_audio_open(alsa_stream);
+	if (err) {
+		kfree(alsa_stream);
+		goto out;
+	}
+	runtime->private_data = alsa_stream;
+	runtime->private_free = snd_bcm2835_playback_free;
+	if (spdif) {
+		runtime->hw = snd_bcm2835_playback_spdif_hw;
+	} else {
+		/* clear spdif status, as we are not in spdif mode */
+		chip->spdif_status = 0;
+		runtime->hw = snd_bcm2835_playback_hw;
+	}
+	/* minimum 16 bytes alignment (for vchiq bulk transfers) */
+	snd_pcm_hw_constraint_step(runtime,
 				   0,
 				   SNDRV_PCM_HW_PARAM_PERIOD_BYTES,
 				   16);
 
 	/* position update is in 10ms order */
-	snd_pcm_hw_स्थिरraपूर्णांक_minmax(runसमय,
+	snd_pcm_hw_constraint_minmax(runtime,
 				     SNDRV_PCM_HW_PARAM_PERIOD_TIME,
-				     10 * 1000, अच_पूर्णांक_उच्च);
+				     10 * 1000, UINT_MAX);
 
 	chip->alsa_stream[idx] = alsa_stream;
 
-	chip->खोलोed |= (1 << idx);
+	chip->opened |= (1 << idx);
 
 out:
 	mutex_unlock(&chip->audio_mutex);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक snd_bcm2835_playback_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	वापस snd_bcm2835_playback_खोलो_generic(substream, 0);
-पूर्ण
+static int snd_bcm2835_playback_open(struct snd_pcm_substream *substream)
+{
+	return snd_bcm2835_playback_open_generic(substream, 0);
+}
 
-अटल पूर्णांक snd_bcm2835_playback_spdअगर_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	वापस snd_bcm2835_playback_खोलो_generic(substream, 1);
-पूर्ण
+static int snd_bcm2835_playback_spdif_open(struct snd_pcm_substream *substream)
+{
+	return snd_bcm2835_playback_open_generic(substream, 1);
+}
 
-अटल पूर्णांक snd_bcm2835_playback_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा bcm2835_alsa_stream *alsa_stream;
-	काष्ठा snd_pcm_runसमय *runसमय;
-	काष्ठा bcm2835_chip *chip;
+static int snd_bcm2835_playback_close(struct snd_pcm_substream *substream)
+{
+	struct bcm2835_alsa_stream *alsa_stream;
+	struct snd_pcm_runtime *runtime;
+	struct bcm2835_chip *chip;
 
 	chip = snd_pcm_substream_chip(substream);
 	mutex_lock(&chip->audio_mutex);
-	runसमय = substream->runसमय;
-	alsa_stream = runसमय->निजी_data;
+	runtime = substream->runtime;
+	alsa_stream = runtime->private_data;
 
 	alsa_stream->period_size = 0;
 	alsa_stream->buffer_size = 0;
 
-	bcm2835_audio_बंद(alsa_stream);
-	alsa_stream->chip->alsa_stream[alsa_stream->idx] = शून्य;
+	bcm2835_audio_close(alsa_stream);
+	alsa_stream->chip->alsa_stream[alsa_stream->idx] = NULL;
 	/*
-	 * Do not मुक्त up alsa_stream here, it will be मुक्तd up by
-	 * runसमय->निजी_मुक्त callback we रेजिस्टरed in *_खोलो above
+	 * Do not free up alsa_stream here, it will be freed up by
+	 * runtime->private_free callback we registered in *_open above
 	 */
 
-	chip->खोलोed &= ~(1 << substream->number);
+	chip->opened &= ~(1 << substream->number);
 
 	mutex_unlock(&chip->audio_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_bcm2835_pcm_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा bcm2835_chip *chip = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा bcm2835_alsa_stream *alsa_stream = runसमय->निजी_data;
-	पूर्णांक channels;
-	पूर्णांक err;
+static int snd_bcm2835_pcm_prepare(struct snd_pcm_substream *substream)
+{
+	struct bcm2835_chip *chip = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct bcm2835_alsa_stream *alsa_stream = runtime->private_data;
+	int channels;
+	int err;
 
-	/* notअगरy the vchiq that it should enter spdअगर passthrough mode by
+	/* notify the vchiq that it should enter spdif passthrough mode by
 	 * setting channels=0 (see
 	 * https://github.com/raspberrypi/linux/issues/528)
 	 */
-	अगर (chip->spdअगर_status & IEC958_AES0_NONAUDIO)
+	if (chip->spdif_status & IEC958_AES0_NONAUDIO)
 		channels = 0;
-	अन्यथा
-		channels = runसमय->channels;
+	else
+		channels = runtime->channels;
 
 	err = bcm2835_audio_set_params(alsa_stream, channels,
-				       runसमय->rate,
-				       snd_pcm_क्रमmat_width(runसमय->क्रमmat));
-	अगर (err < 0)
-		वापस err;
+				       runtime->rate,
+				       snd_pcm_format_width(runtime->format));
+	if (err < 0)
+		return err;
 
-	स_रखो(&alsa_stream->pcm_indirect, 0, माप(alsa_stream->pcm_indirect));
+	memset(&alsa_stream->pcm_indirect, 0, sizeof(alsa_stream->pcm_indirect));
 
 	alsa_stream->pcm_indirect.hw_buffer_size =
 		alsa_stream->pcm_indirect.sw_buffer_size =
@@ -228,130 +227,130 @@ out:
 	atomic_set(&alsa_stream->pos, 0);
 	alsa_stream->period_offset = 0;
 	alsa_stream->draining = false;
-	alsa_stream->पूर्णांकerpolate_start = kसमय_get();
+	alsa_stream->interpolate_start = ktime_get();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम snd_bcm2835_pcm_transfer(काष्ठा snd_pcm_substream *substream,
-				     काष्ठा snd_pcm_indirect *rec, माप_प्रकार bytes)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा bcm2835_alsa_stream *alsa_stream = runसमय->निजी_data;
-	व्योम *src = (व्योम *) (substream->runसमय->dma_area + rec->sw_data);
+static void snd_bcm2835_pcm_transfer(struct snd_pcm_substream *substream,
+				     struct snd_pcm_indirect *rec, size_t bytes)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct bcm2835_alsa_stream *alsa_stream = runtime->private_data;
+	void *src = (void *) (substream->runtime->dma_area + rec->sw_data);
 
-	bcm2835_audio_ग_लिखो(alsa_stream, bytes, src);
-पूर्ण
+	bcm2835_audio_write(alsa_stream, bytes, src);
+}
 
-अटल पूर्णांक snd_bcm2835_pcm_ack(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा bcm2835_alsa_stream *alsa_stream = runसमय->निजी_data;
-	काष्ठा snd_pcm_indirect *pcm_indirect = &alsa_stream->pcm_indirect;
+static int snd_bcm2835_pcm_ack(struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct bcm2835_alsa_stream *alsa_stream = runtime->private_data;
+	struct snd_pcm_indirect *pcm_indirect = &alsa_stream->pcm_indirect;
 
-	वापस snd_pcm_indirect_playback_transfer(substream, pcm_indirect,
+	return snd_pcm_indirect_playback_transfer(substream, pcm_indirect,
 						  snd_bcm2835_pcm_transfer);
-पूर्ण
+}
 
 /* trigger callback */
-अटल पूर्णांक snd_bcm2835_pcm_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा bcm2835_alsa_stream *alsa_stream = runसमय->निजी_data;
+static int snd_bcm2835_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct bcm2835_alsa_stream *alsa_stream = runtime->private_data;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-		वापस bcm2835_audio_start(alsa_stream);
-	हाल SNDRV_PCM_TRIGGER_DRAIN:
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+		return bcm2835_audio_start(alsa_stream);
+	case SNDRV_PCM_TRIGGER_DRAIN:
 		alsa_stream->draining = true;
-		वापस bcm2835_audio_drain(alsa_stream);
-	हाल SNDRV_PCM_TRIGGER_STOP:
-		वापस bcm2835_audio_stop(alsa_stream);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return bcm2835_audio_drain(alsa_stream);
+	case SNDRV_PCM_TRIGGER_STOP:
+		return bcm2835_audio_stop(alsa_stream);
+	default:
+		return -EINVAL;
+	}
+}
 
-/* poपूर्णांकer callback */
-अटल snd_pcm_uframes_t
-snd_bcm2835_pcm_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा bcm2835_alsa_stream *alsa_stream = runसमय->निजी_data;
-	kसमय_प्रकार now = kसमय_get();
+/* pointer callback */
+static snd_pcm_uframes_t
+snd_bcm2835_pcm_pointer(struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct bcm2835_alsa_stream *alsa_stream = runtime->private_data;
+	ktime_t now = ktime_get();
 
-	/* Give userspace better delay reporting by पूर्णांकerpolating between GPU
-	 * notअगरications, assuming audio speed is बंद enough to the घड़ी
-	 * used क्रम kसमय
+	/* Give userspace better delay reporting by interpolating between GPU
+	 * notifications, assuming audio speed is close enough to the clock
+	 * used for ktime
 	 */
 
-	अगर ((kसमय_प्रकारo_ns(alsa_stream->पूर्णांकerpolate_start)) &&
-	    (kसमय_compare(alsa_stream->पूर्णांकerpolate_start, now) < 0)) अणु
-		u64 पूर्णांकerval =
-			(kसमय_प्रकारo_ns(kसमय_sub(now,
-				alsa_stream->पूर्णांकerpolate_start)));
-		u64 frames_output_in_पूर्णांकerval =
-			भाग_u64((पूर्णांकerval * runसमय->rate), 1000000000);
-		snd_pcm_sframes_t frames_output_in_पूर्णांकerval_sized =
-			-frames_output_in_पूर्णांकerval;
-		runसमय->delay = frames_output_in_पूर्णांकerval_sized;
-	पूर्ण
+	if ((ktime_to_ns(alsa_stream->interpolate_start)) &&
+	    (ktime_compare(alsa_stream->interpolate_start, now) < 0)) {
+		u64 interval =
+			(ktime_to_ns(ktime_sub(now,
+				alsa_stream->interpolate_start)));
+		u64 frames_output_in_interval =
+			div_u64((interval * runtime->rate), 1000000000);
+		snd_pcm_sframes_t frames_output_in_interval_sized =
+			-frames_output_in_interval;
+		runtime->delay = frames_output_in_interval_sized;
+	}
 
-	वापस snd_pcm_indirect_playback_poपूर्णांकer(substream,
+	return snd_pcm_indirect_playback_pointer(substream,
 		&alsa_stream->pcm_indirect,
-		atomic_पढ़ो(&alsa_stream->pos));
-पूर्ण
+		atomic_read(&alsa_stream->pos));
+}
 
-/* चालकs */
-अटल स्थिर काष्ठा snd_pcm_ops snd_bcm2835_playback_ops = अणु
-	.खोलो = snd_bcm2835_playback_खोलो,
-	.बंद = snd_bcm2835_playback_बंद,
+/* operators */
+static const struct snd_pcm_ops snd_bcm2835_playback_ops = {
+	.open = snd_bcm2835_playback_open,
+	.close = snd_bcm2835_playback_close,
 	.prepare = snd_bcm2835_pcm_prepare,
 	.trigger = snd_bcm2835_pcm_trigger,
-	.poपूर्णांकer = snd_bcm2835_pcm_poपूर्णांकer,
+	.pointer = snd_bcm2835_pcm_pointer,
 	.ack = snd_bcm2835_pcm_ack,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_bcm2835_playback_spdअगर_ops = अणु
-	.खोलो = snd_bcm2835_playback_spdअगर_खोलो,
-	.बंद = snd_bcm2835_playback_बंद,
+static const struct snd_pcm_ops snd_bcm2835_playback_spdif_ops = {
+	.open = snd_bcm2835_playback_spdif_open,
+	.close = snd_bcm2835_playback_close,
 	.prepare = snd_bcm2835_pcm_prepare,
 	.trigger = snd_bcm2835_pcm_trigger,
-	.poपूर्णांकer = snd_bcm2835_pcm_poपूर्णांकer,
+	.pointer = snd_bcm2835_pcm_pointer,
 	.ack = snd_bcm2835_pcm_ack,
-पूर्ण;
+};
 
 /* create a pcm device */
-पूर्णांक snd_bcm2835_new_pcm(काष्ठा bcm2835_chip *chip, स्थिर अक्षर *name,
-			पूर्णांक idx, क्रमागत snd_bcm2835_route route,
-			u32 numchannels, bool spdअगर)
-अणु
-	काष्ठा snd_pcm *pcm;
-	पूर्णांक err;
+int snd_bcm2835_new_pcm(struct bcm2835_chip *chip, const char *name,
+			int idx, enum snd_bcm2835_route route,
+			u32 numchannels, bool spdif)
+{
+	struct snd_pcm *pcm;
+	int err;
 
 	err = snd_pcm_new(chip->card, name, idx, numchannels, 0, &pcm);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	pcm->निजी_data = chip;
+	pcm->private_data = chip;
 	pcm->nonatomic = true;
-	strscpy(pcm->name, name, माप(pcm->name));
-	अगर (!spdअगर) अणु
+	strscpy(pcm->name, name, sizeof(pcm->name));
+	if (!spdif) {
 		chip->dest = route;
 		chip->volume = 0;
 		chip->mute = CTRL_VOL_UNMUTE;
-	पूर्ण
+	}
 
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK,
-			spdअगर ? &snd_bcm2835_playback_spdअगर_ops :
+			spdif ? &snd_bcm2835_playback_spdif_ops :
 			&snd_bcm2835_playback_ops);
 
 	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_DEV,
 				       chip->card->dev, 128 * 1024, 128 * 1024);
 
-	अगर (spdअगर)
-		chip->pcm_spdअगर = pcm;
-	अन्यथा
+	if (spdif)
+		chip->pcm_spdif = pcm;
+	else
 		chip->pcm = pcm;
-	वापस 0;
-पूर्ण
+	return 0;
+}

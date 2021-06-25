@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Copyright (C) 2018 Maxime Jourdan <maxi.jourdan@wanaकरोo.fr>
+ * Copyright (C) 2018 Maxime Jourdan <maxi.jourdan@wanadoo.fr>
  */
 
-#अगर_अघोषित __MESON_VDEC_VDEC_HEVC_H_
-#घोषणा __MESON_VDEC_VDEC_HEVC_H_
+#ifndef __MESON_VDEC_VDEC_HEVC_H_
+#define __MESON_VDEC_VDEC_HEVC_H_
 
-#समावेश "vdec.h"
+#include "vdec.h"
 
-बाह्य काष्ठा amvdec_ops vdec_hevc_ops;
+extern struct amvdec_ops vdec_hevc_ops;
 
-#पूर्ण_अगर
+#endif

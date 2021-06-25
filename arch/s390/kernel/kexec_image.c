@@ -1,23 +1,22 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Image loader क्रम kexec_file_load प्रणाली call.
+ * Image loader for kexec_file_load system call.
  *
  * Copyright IBM Corp. 2018
  *
- * Author(s): Philipp Ruकरो <pruकरो@linux.vnet.ibm.com>
+ * Author(s): Philipp Rudo <prudo@linux.vnet.ibm.com>
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kexec.h>
-#समावेश <यंत्र/ipl.h>
-#समावेश <यंत्र/setup.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/kexec.h>
+#include <asm/ipl.h>
+#include <asm/setup.h>
 
-अटल पूर्णांक kexec_file_add_kernel_image(काष्ठा kimage *image,
-				       काष्ठा s390_load_data *data)
-अणु
-	काष्ठा kexec_buf buf;
+static int kexec_file_add_kernel_image(struct kimage *image,
+				       struct s390_load_data *data)
+{
+	struct kexec_buf buf;
 
 	buf.image = image;
 
@@ -25,7 +24,7 @@
 	buf.bufsz = image->kernel_buf_len;
 
 	buf.mem = 0;
-	अगर (image->type == KEXEC_TYPE_CRASH)
+	if (image->type == KEXEC_TYPE_CRASH)
 		buf.mem += crashk_res.start;
 	buf.memsz = buf.bufsz;
 
@@ -38,29 +37,29 @@
 				 IPL_RB_COMPONENT_FLAG_SIGNED |
 				 IPL_RB_COMPONENT_FLAG_VERIFIED,
 				 IPL_RB_CERT_UNKNOWN);
-	वापस kexec_add_buffer(&buf);
-पूर्ण
+	return kexec_add_buffer(&buf);
+}
 
-अटल व्योम *s390_image_load(काष्ठा kimage *image,
-			     अक्षर *kernel, अचिन्हित दीर्घ kernel_len,
-			     अक्षर *initrd, अचिन्हित दीर्घ initrd_len,
-			     अक्षर *cmdline, अचिन्हित दीर्घ cmdline_len)
-अणु
-	वापस kexec_file_add_components(image, kexec_file_add_kernel_image);
-पूर्ण
+static void *s390_image_load(struct kimage *image,
+			     char *kernel, unsigned long kernel_len,
+			     char *initrd, unsigned long initrd_len,
+			     char *cmdline, unsigned long cmdline_len)
+{
+	return kexec_file_add_components(image, kexec_file_add_kernel_image);
+}
 
-अटल पूर्णांक s390_image_probe(स्थिर अक्षर *buf, अचिन्हित दीर्घ len)
-अणु
-	/* Can't reliably tell अगर an image is valid.  Thereक्रमe give the
+static int s390_image_probe(const char *buf, unsigned long len)
+{
+	/* Can't reliably tell if an image is valid.  Therefore give the
 	 * user whatever he wants.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा kexec_file_ops s390_kexec_image_ops = अणु
+const struct kexec_file_ops s390_kexec_image_ops = {
 	.probe = s390_image_probe,
 	.load = s390_image_load,
-#अगर_घोषित CONFIG_KEXEC_SIG
-	.verअगरy_sig = s390_verअगरy_sig,
-#पूर्ण_अगर /* CONFIG_KEXEC_SIG */
-पूर्ण;
+#ifdef CONFIG_KEXEC_SIG
+	.verify_sig = s390_verify_sig,
+#endif /* CONFIG_KEXEC_SIG */
+};

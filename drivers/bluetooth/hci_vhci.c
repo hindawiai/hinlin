@@ -1,107 +1,106 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *
- *  Bluetooth भव HCI driver
+ *  Bluetooth virtual HCI driver
  *
  *  Copyright (C) 2000-2001  Qualcomm Incorporated
  *  Copyright (C) 2002-2003  Maxim Krasnyansky <maxk@qualcomm.com>
- *  Copyright (C) 2004-2006  Marcel Holपंचांगann <marcel@holपंचांगann.org>
+ *  Copyright (C) 2004-2006  Marcel Holtmann <marcel@holtmann.org>
  */
 
-#समावेश <linux/module.h>
-#समावेश <यंत्र/unaligned.h>
+#include <linux/module.h>
+#include <asm/unaligned.h>
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/poll.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/sched.h>
+#include <linux/poll.h>
 
-#समावेश <linux/skbuff.h>
-#समावेश <linux/miscdevice.h>
+#include <linux/skbuff.h>
+#include <linux/miscdevice.h>
 
-#समावेश <net/bluetooth/bluetooth.h>
-#समावेश <net/bluetooth/hci_core.h>
+#include <net/bluetooth/bluetooth.h>
+#include <net/bluetooth/hci_core.h>
 
-#घोषणा VERSION "1.5"
+#define VERSION "1.5"
 
-अटल bool amp;
+static bool amp;
 
-काष्ठा vhci_data अणु
-	काष्ठा hci_dev *hdev;
+struct vhci_data {
+	struct hci_dev *hdev;
 
-	रुको_queue_head_t पढ़ो_रुको;
-	काष्ठा sk_buff_head पढ़ोq;
+	wait_queue_head_t read_wait;
+	struct sk_buff_head readq;
 
-	काष्ठा mutex खोलो_mutex;
-	काष्ठा delayed_work खोलो_समयout;
-पूर्ण;
+	struct mutex open_mutex;
+	struct delayed_work open_timeout;
+};
 
-अटल पूर्णांक vhci_खोलो_dev(काष्ठा hci_dev *hdev)
-अणु
-	वापस 0;
-पूर्ण
+static int vhci_open_dev(struct hci_dev *hdev)
+{
+	return 0;
+}
 
-अटल पूर्णांक vhci_बंद_dev(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा vhci_data *data = hci_get_drvdata(hdev);
+static int vhci_close_dev(struct hci_dev *hdev)
+{
+	struct vhci_data *data = hci_get_drvdata(hdev);
 
-	skb_queue_purge(&data->पढ़ोq);
+	skb_queue_purge(&data->readq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vhci_flush(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा vhci_data *data = hci_get_drvdata(hdev);
+static int vhci_flush(struct hci_dev *hdev)
+{
+	struct vhci_data *data = hci_get_drvdata(hdev);
 
-	skb_queue_purge(&data->पढ़ोq);
+	skb_queue_purge(&data->readq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vhci_send_frame(काष्ठा hci_dev *hdev, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा vhci_data *data = hci_get_drvdata(hdev);
+static int vhci_send_frame(struct hci_dev *hdev, struct sk_buff *skb)
+{
+	struct vhci_data *data = hci_get_drvdata(hdev);
 
-	स_नकल(skb_push(skb, 1), &hci_skb_pkt_type(skb), 1);
-	skb_queue_tail(&data->पढ़ोq, skb);
+	memcpy(skb_push(skb, 1), &hci_skb_pkt_type(skb), 1);
+	skb_queue_tail(&data->readq, skb);
 
-	wake_up_पूर्णांकerruptible(&data->पढ़ो_रुको);
-	वापस 0;
-पूर्ण
+	wake_up_interruptible(&data->read_wait);
+	return 0;
+}
 
-अटल पूर्णांक __vhci_create_device(काष्ठा vhci_data *data, __u8 opcode)
-अणु
-	काष्ठा hci_dev *hdev;
-	काष्ठा sk_buff *skb;
+static int __vhci_create_device(struct vhci_data *data, __u8 opcode)
+{
+	struct hci_dev *hdev;
+	struct sk_buff *skb;
 	__u8 dev_type;
 
-	अगर (data->hdev)
-		वापस -EBADFD;
+	if (data->hdev)
+		return -EBADFD;
 
 	/* bits 0-1 are dev_type (Primary or AMP) */
 	dev_type = opcode & 0x03;
 
-	अगर (dev_type != HCI_PRIMARY && dev_type != HCI_AMP)
-		वापस -EINVAL;
+	if (dev_type != HCI_PRIMARY && dev_type != HCI_AMP)
+		return -EINVAL;
 
 	/* bits 2-5 are reserved (must be zero) */
-	अगर (opcode & 0x3c)
-		वापस -EINVAL;
+	if (opcode & 0x3c)
+		return -EINVAL;
 
 	skb = bt_skb_alloc(4, GFP_KERNEL);
-	अगर (!skb)
-		वापस -ENOMEM;
+	if (!skb)
+		return -ENOMEM;
 
 	hdev = hci_alloc_dev();
-	अगर (!hdev) अणु
-		kमुक्त_skb(skb);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!hdev) {
+		kfree_skb(skb);
+		return -ENOMEM;
+	}
 
 	data->hdev = hdev;
 
@@ -109,261 +108,261 @@
 	hdev->dev_type = dev_type;
 	hci_set_drvdata(hdev, data);
 
-	hdev->खोलो  = vhci_खोलो_dev;
-	hdev->बंद = vhci_बंद_dev;
+	hdev->open  = vhci_open_dev;
+	hdev->close = vhci_close_dev;
 	hdev->flush = vhci_flush;
 	hdev->send  = vhci_send_frame;
 
-	/* bit 6 is क्रम बाह्यal configuration */
-	अगर (opcode & 0x40)
+	/* bit 6 is for external configuration */
+	if (opcode & 0x40)
 		set_bit(HCI_QUIRK_EXTERNAL_CONFIG, &hdev->quirks);
 
-	/* bit 7 is क्रम raw device */
-	अगर (opcode & 0x80)
+	/* bit 7 is for raw device */
+	if (opcode & 0x80)
 		set_bit(HCI_QUIRK_RAW_DEVICE, &hdev->quirks);
 
-	अगर (hci_रेजिस्टर_dev(hdev) < 0) अणु
+	if (hci_register_dev(hdev) < 0) {
 		BT_ERR("Can't register HCI device");
-		hci_मुक्त_dev(hdev);
-		data->hdev = शून्य;
-		kमुक्त_skb(skb);
-		वापस -EBUSY;
-	पूर्ण
+		hci_free_dev(hdev);
+		data->hdev = NULL;
+		kfree_skb(skb);
+		return -EBUSY;
+	}
 
 	hci_skb_pkt_type(skb) = HCI_VENDOR_PKT;
 
 	skb_put_u8(skb, 0xff);
 	skb_put_u8(skb, opcode);
 	put_unaligned_le16(hdev->id, skb_put(skb, 2));
-	skb_queue_tail(&data->पढ़ोq, skb);
+	skb_queue_tail(&data->readq, skb);
 
-	wake_up_पूर्णांकerruptible(&data->पढ़ो_रुको);
-	वापस 0;
-पूर्ण
+	wake_up_interruptible(&data->read_wait);
+	return 0;
+}
 
-अटल पूर्णांक vhci_create_device(काष्ठा vhci_data *data, __u8 opcode)
-अणु
-	पूर्णांक err;
+static int vhci_create_device(struct vhci_data *data, __u8 opcode)
+{
+	int err;
 
-	mutex_lock(&data->खोलो_mutex);
+	mutex_lock(&data->open_mutex);
 	err = __vhci_create_device(data, opcode);
-	mutex_unlock(&data->खोलो_mutex);
+	mutex_unlock(&data->open_mutex);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत sमाप_प्रकार vhci_get_user(काष्ठा vhci_data *data,
-				    काष्ठा iov_iter *from)
-अणु
-	माप_प्रकार len = iov_iter_count(from);
-	काष्ठा sk_buff *skb;
+static inline ssize_t vhci_get_user(struct vhci_data *data,
+				    struct iov_iter *from)
+{
+	size_t len = iov_iter_count(from);
+	struct sk_buff *skb;
 	__u8 pkt_type, opcode;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (len < 2 || len > HCI_MAX_FRAME_SIZE)
-		वापस -EINVAL;
+	if (len < 2 || len > HCI_MAX_FRAME_SIZE)
+		return -EINVAL;
 
 	skb = bt_skb_alloc(len, GFP_KERNEL);
-	अगर (!skb)
-		वापस -ENOMEM;
+	if (!skb)
+		return -ENOMEM;
 
-	अगर (!copy_from_iter_full(skb_put(skb, len), len, from)) अणु
-		kमुक्त_skb(skb);
-		वापस -EFAULT;
-	पूर्ण
+	if (!copy_from_iter_full(skb_put(skb, len), len, from)) {
+		kfree_skb(skb);
+		return -EFAULT;
+	}
 
 	pkt_type = *((__u8 *) skb->data);
 	skb_pull(skb, 1);
 
-	चयन (pkt_type) अणु
-	हाल HCI_EVENT_PKT:
-	हाल HCI_ACLDATA_PKT:
-	हाल HCI_SCODATA_PKT:
-	हाल HCI_ISODATA_PKT:
-		अगर (!data->hdev) अणु
-			kमुक्त_skb(skb);
-			वापस -ENODEV;
-		पूर्ण
+	switch (pkt_type) {
+	case HCI_EVENT_PKT:
+	case HCI_ACLDATA_PKT:
+	case HCI_SCODATA_PKT:
+	case HCI_ISODATA_PKT:
+		if (!data->hdev) {
+			kfree_skb(skb);
+			return -ENODEV;
+		}
 
 		hci_skb_pkt_type(skb) = pkt_type;
 
 		ret = hci_recv_frame(data->hdev, skb);
-		अवरोध;
+		break;
 
-	हाल HCI_VENDOR_PKT:
-		cancel_delayed_work_sync(&data->खोलो_समयout);
+	case HCI_VENDOR_PKT:
+		cancel_delayed_work_sync(&data->open_timeout);
 
 		opcode = *((__u8 *) skb->data);
 		skb_pull(skb, 1);
 
-		अगर (skb->len > 0) अणु
-			kमुक्त_skb(skb);
-			वापस -EINVAL;
-		पूर्ण
+		if (skb->len > 0) {
+			kfree_skb(skb);
+			return -EINVAL;
+		}
 
-		kमुक्त_skb(skb);
+		kfree_skb(skb);
 
 		ret = vhci_create_device(data, opcode);
-		अवरोध;
+		break;
 
-	शेष:
-		kमुक्त_skb(skb);
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		kfree_skb(skb);
+		return -EINVAL;
+	}
 
-	वापस (ret < 0) ? ret : len;
-पूर्ण
+	return (ret < 0) ? ret : len;
+}
 
-अटल अंतरभूत sमाप_प्रकार vhci_put_user(काष्ठा vhci_data *data,
-				    काष्ठा sk_buff *skb,
-				    अक्षर __user *buf, पूर्णांक count)
-अणु
-	अक्षर __user *ptr = buf;
-	पूर्णांक len;
+static inline ssize_t vhci_put_user(struct vhci_data *data,
+				    struct sk_buff *skb,
+				    char __user *buf, int count)
+{
+	char __user *ptr = buf;
+	int len;
 
-	len = min_t(अचिन्हित पूर्णांक, skb->len, count);
+	len = min_t(unsigned int, skb->len, count);
 
-	अगर (copy_to_user(ptr, skb->data, len))
-		वापस -EFAULT;
+	if (copy_to_user(ptr, skb->data, len))
+		return -EFAULT;
 
-	अगर (!data->hdev)
-		वापस len;
+	if (!data->hdev)
+		return len;
 
 	data->hdev->stat.byte_tx += len;
 
-	चयन (hci_skb_pkt_type(skb)) अणु
-	हाल HCI_COMMAND_PKT:
+	switch (hci_skb_pkt_type(skb)) {
+	case HCI_COMMAND_PKT:
 		data->hdev->stat.cmd_tx++;
-		अवरोध;
-	हाल HCI_ACLDATA_PKT:
+		break;
+	case HCI_ACLDATA_PKT:
 		data->hdev->stat.acl_tx++;
-		अवरोध;
-	हाल HCI_SCODATA_PKT:
+		break;
+	case HCI_SCODATA_PKT:
 		data->hdev->stat.sco_tx++;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार vhci_पढ़ो(काष्ठा file *file,
-			 अक्षर __user *buf, माप_प्रकार count, loff_t *pos)
-अणु
-	काष्ठा vhci_data *data = file->निजी_data;
-	काष्ठा sk_buff *skb;
-	sमाप_प्रकार ret = 0;
+static ssize_t vhci_read(struct file *file,
+			 char __user *buf, size_t count, loff_t *pos)
+{
+	struct vhci_data *data = file->private_data;
+	struct sk_buff *skb;
+	ssize_t ret = 0;
 
-	जबतक (count) अणु
-		skb = skb_dequeue(&data->पढ़ोq);
-		अगर (skb) अणु
+	while (count) {
+		skb = skb_dequeue(&data->readq);
+		if (skb) {
 			ret = vhci_put_user(data, skb, buf, count);
-			अगर (ret < 0)
-				skb_queue_head(&data->पढ़ोq, skb);
-			अन्यथा
-				kमुक्त_skb(skb);
-			अवरोध;
-		पूर्ण
+			if (ret < 0)
+				skb_queue_head(&data->readq, skb);
+			else
+				kfree_skb(skb);
+			break;
+		}
 
-		अगर (file->f_flags & O_NONBLOCK) अणु
+		if (file->f_flags & O_NONBLOCK) {
 			ret = -EAGAIN;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		ret = रुको_event_पूर्णांकerruptible(data->पढ़ो_रुको,
-					       !skb_queue_empty(&data->पढ़ोq));
-		अगर (ret < 0)
-			अवरोध;
-	पूर्ण
+		ret = wait_event_interruptible(data->read_wait,
+					       !skb_queue_empty(&data->readq));
+		if (ret < 0)
+			break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार vhci_ग_लिखो(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
-अणु
-	काष्ठा file *file = iocb->ki_filp;
-	काष्ठा vhci_data *data = file->निजी_data;
+static ssize_t vhci_write(struct kiocb *iocb, struct iov_iter *from)
+{
+	struct file *file = iocb->ki_filp;
+	struct vhci_data *data = file->private_data;
 
-	वापस vhci_get_user(data, from);
-पूर्ण
+	return vhci_get_user(data, from);
+}
 
-अटल __poll_t vhci_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा vhci_data *data = file->निजी_data;
+static __poll_t vhci_poll(struct file *file, poll_table *wait)
+{
+	struct vhci_data *data = file->private_data;
 
-	poll_रुको(file, &data->पढ़ो_रुको, रुको);
+	poll_wait(file, &data->read_wait, wait);
 
-	अगर (!skb_queue_empty(&data->पढ़ोq))
-		वापस EPOLLIN | EPOLLRDNORM;
+	if (!skb_queue_empty(&data->readq))
+		return EPOLLIN | EPOLLRDNORM;
 
-	वापस EPOLLOUT | EPOLLWRNORM;
-पूर्ण
+	return EPOLLOUT | EPOLLWRNORM;
+}
 
-अटल व्योम vhci_खोलो_समयout(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा vhci_data *data = container_of(work, काष्ठा vhci_data,
-					      खोलो_समयout.work);
+static void vhci_open_timeout(struct work_struct *work)
+{
+	struct vhci_data *data = container_of(work, struct vhci_data,
+					      open_timeout.work);
 
 	vhci_create_device(data, amp ? HCI_AMP : HCI_PRIMARY);
-पूर्ण
+}
 
-अटल पूर्णांक vhci_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा vhci_data *data;
+static int vhci_open(struct inode *inode, struct file *file)
+{
+	struct vhci_data *data;
 
-	data = kzalloc(माप(काष्ठा vhci_data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = kzalloc(sizeof(struct vhci_data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
-	skb_queue_head_init(&data->पढ़ोq);
-	init_रुकोqueue_head(&data->पढ़ो_रुको);
+	skb_queue_head_init(&data->readq);
+	init_waitqueue_head(&data->read_wait);
 
-	mutex_init(&data->खोलो_mutex);
-	INIT_DELAYED_WORK(&data->खोलो_समयout, vhci_खोलो_समयout);
+	mutex_init(&data->open_mutex);
+	INIT_DELAYED_WORK(&data->open_timeout, vhci_open_timeout);
 
-	file->निजी_data = data;
-	nonseekable_खोलो(inode, file);
+	file->private_data = data;
+	nonseekable_open(inode, file);
 
-	schedule_delayed_work(&data->खोलो_समयout, msecs_to_jअगरfies(1000));
+	schedule_delayed_work(&data->open_timeout, msecs_to_jiffies(1000));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vhci_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा vhci_data *data = file->निजी_data;
-	काष्ठा hci_dev *hdev;
+static int vhci_release(struct inode *inode, struct file *file)
+{
+	struct vhci_data *data = file->private_data;
+	struct hci_dev *hdev;
 
-	cancel_delayed_work_sync(&data->खोलो_समयout);
+	cancel_delayed_work_sync(&data->open_timeout);
 
 	hdev = data->hdev;
 
-	अगर (hdev) अणु
-		hci_unरेजिस्टर_dev(hdev);
-		hci_मुक्त_dev(hdev);
-	पूर्ण
+	if (hdev) {
+		hci_unregister_dev(hdev);
+		hci_free_dev(hdev);
+	}
 
-	skb_queue_purge(&data->पढ़ोq);
-	file->निजी_data = शून्य;
-	kमुक्त(data);
+	skb_queue_purge(&data->readq);
+	file->private_data = NULL;
+	kfree(data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations vhci_fops = अणु
+static const struct file_operations vhci_fops = {
 	.owner		= THIS_MODULE,
-	.पढ़ो		= vhci_पढ़ो,
-	.ग_लिखो_iter	= vhci_ग_लिखो,
+	.read		= vhci_read,
+	.write_iter	= vhci_write,
 	.poll		= vhci_poll,
-	.खोलो		= vhci_खोलो,
+	.open		= vhci_open,
 	.release	= vhci_release,
 	.llseek		= no_llseek,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice vhci_miscdev = अणु
+static struct miscdevice vhci_miscdev = {
 	.name	= "vhci",
 	.fops	= &vhci_fops,
 	.minor	= VHCI_MINOR,
-पूर्ण;
+};
 module_misc_device(vhci_miscdev);
 
 module_param(amp, bool, 0644);

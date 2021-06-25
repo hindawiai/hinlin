@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,20 +20,20 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#अगर_अघोषित __AMDGPU_SMUIO_H__
-#घोषणा __AMDGPU_SMUIO_H__
+#ifndef __AMDGPU_SMUIO_H__
+#define __AMDGPU_SMUIO_H__
 
-काष्ठा amdgpu_smuio_funcs अणु
-	u32 (*get_rom_index_offset)(काष्ठा amdgpu_device *adev);
-	u32 (*get_rom_data_offset)(काष्ठा amdgpu_device *adev);
-	व्योम (*update_rom_घड़ी_gating)(काष्ठा amdgpu_device *adev, bool enable);
-	व्योम (*get_घड़ी_gating_state)(काष्ठा amdgpu_device *adev, u32 *flags);
-	u32 (*get_die_id)(काष्ठा amdgpu_device *adev);
-	bool (*is_host_gpu_xgmi_supported)(काष्ठा amdgpu_device *adev);
-पूर्ण;
+struct amdgpu_smuio_funcs {
+	u32 (*get_rom_index_offset)(struct amdgpu_device *adev);
+	u32 (*get_rom_data_offset)(struct amdgpu_device *adev);
+	void (*update_rom_clock_gating)(struct amdgpu_device *adev, bool enable);
+	void (*get_clock_gating_state)(struct amdgpu_device *adev, u32 *flags);
+	u32 (*get_die_id)(struct amdgpu_device *adev);
+	bool (*is_host_gpu_xgmi_supported)(struct amdgpu_device *adev);
+};
 
-काष्ठा amdgpu_smuio अणु
-	स्थिर काष्ठा amdgpu_smuio_funcs		*funcs;
-पूर्ण;
+struct amdgpu_smuio {
+	const struct amdgpu_smuio_funcs		*funcs;
+};
 
-#पूर्ण_अगर /* __AMDGPU_SMUIO_H__ */
+#endif /* __AMDGPU_SMUIO_H__ */

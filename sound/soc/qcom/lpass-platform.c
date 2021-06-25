@@ -1,39 +1,38 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2010-2011,2013-2015 The Linux Foundation. All rights reserved.
  *
- * lpass-platक्रमm.c -- ALSA SoC platक्रमm driver क्रम QTi LPASS
+ * lpass-platform.c -- ALSA SoC platform driver for QTi LPASS
  */
 
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/export.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <linux/regmap.h>
-#समावेश <sound/soc.h>
-#समावेश "lpass-lpaif-reg.h"
-#समावेश "lpass.h"
+#include <linux/dma-mapping.h>
+#include <linux/export.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <sound/pcm_params.h>
+#include <linux/regmap.h>
+#include <sound/soc.h>
+#include "lpass-lpaif-reg.h"
+#include "lpass.h"
 
-#घोषणा DRV_NAME "lpass-platform"
+#define DRV_NAME "lpass-platform"
 
-काष्ठा lpass_pcm_data अणु
-	पूर्णांक dma_ch;
-	पूर्णांक i2s_port;
-पूर्ण;
+struct lpass_pcm_data {
+	int dma_ch;
+	int i2s_port;
+};
 
-#घोषणा LPASS_PLATFORM_BUFFER_SIZE	(24 *  2 * 1024)
-#घोषणा LPASS_PLATFORM_PERIODS		2
+#define LPASS_PLATFORM_BUFFER_SIZE	(24 *  2 * 1024)
+#define LPASS_PLATFORM_PERIODS		2
 
-अटल स्थिर काष्ठा snd_pcm_hardware lpass_platक्रमm_pcm_hardware = अणु
+static const struct snd_pcm_hardware lpass_platform_pcm_hardware = {
 	.info			=	SNDRV_PCM_INFO_MMAP |
 					SNDRV_PCM_INFO_MMAP_VALID |
 					SNDRV_PCM_INFO_INTERLEAVED |
 					SNDRV_PCM_INFO_PAUSE |
 					SNDRV_PCM_INFO_RESUME,
-	.क्रमmats		=	SNDRV_PCM_FMTBIT_S16 |
+	.formats		=	SNDRV_PCM_FMTBIT_S16 |
 					SNDRV_PCM_FMTBIT_S24 |
 					SNDRV_PCM_FMTBIT_S32,
 	.rates			=	SNDRV_PCM_RATE_8000_192000,
@@ -48,451 +47,451 @@
 						LPASS_PLATFORM_PERIODS,
 	.periods_min		=	LPASS_PLATFORM_PERIODS,
 	.periods_max		=	LPASS_PLATFORM_PERIODS,
-	.fअगरo_size		=	0,
-पूर्ण;
+	.fifo_size		=	0,
+};
 
-अटल पूर्णांक lpass_platक्रमm_alloc_dmactl_fields(काष्ठा device *dev,
-					 काष्ठा regmap *map)
-अणु
-	काष्ठा lpass_data *drvdata = dev_get_drvdata(dev);
-	काष्ठा lpass_variant *v = drvdata->variant;
-	काष्ठा lpaअगर_dmactl *rd_dmactl, *wr_dmactl;
-	पूर्णांक rval;
+static int lpass_platform_alloc_dmactl_fields(struct device *dev,
+					 struct regmap *map)
+{
+	struct lpass_data *drvdata = dev_get_drvdata(dev);
+	struct lpass_variant *v = drvdata->variant;
+	struct lpaif_dmactl *rd_dmactl, *wr_dmactl;
+	int rval;
 
-	drvdata->rd_dmactl = devm_kzalloc(dev, माप(काष्ठा lpaअगर_dmactl),
+	drvdata->rd_dmactl = devm_kzalloc(dev, sizeof(struct lpaif_dmactl),
 					  GFP_KERNEL);
-	अगर (drvdata->rd_dmactl == शून्य)
-		वापस -ENOMEM;
+	if (drvdata->rd_dmactl == NULL)
+		return -ENOMEM;
 
-	drvdata->wr_dmactl = devm_kzalloc(dev, माप(काष्ठा lpaअगर_dmactl),
+	drvdata->wr_dmactl = devm_kzalloc(dev, sizeof(struct lpaif_dmactl),
 					  GFP_KERNEL);
-	अगर (drvdata->wr_dmactl == शून्य)
-		वापस -ENOMEM;
+	if (drvdata->wr_dmactl == NULL)
+		return -ENOMEM;
 
 	rd_dmactl = drvdata->rd_dmactl;
 	wr_dmactl = drvdata->wr_dmactl;
 
-	rval = devm_regmap_field_bulk_alloc(dev, map, &rd_dmactl->पूर्णांकf,
-					    &v->rdma_पूर्णांकf, 6);
-	अगर (rval)
-		वापस rval;
+	rval = devm_regmap_field_bulk_alloc(dev, map, &rd_dmactl->intf,
+					    &v->rdma_intf, 6);
+	if (rval)
+		return rval;
 
-	वापस devm_regmap_field_bulk_alloc(dev, map, &wr_dmactl->पूर्णांकf,
-					    &v->wrdma_पूर्णांकf, 6);
-पूर्ण
+	return devm_regmap_field_bulk_alloc(dev, map, &wr_dmactl->intf,
+					    &v->wrdma_intf, 6);
+}
 
-अटल पूर्णांक lpass_platक्रमm_alloc_hdmidmactl_fields(काष्ठा device *dev,
-					 काष्ठा regmap *map)
-अणु
-	काष्ठा lpass_data *drvdata = dev_get_drvdata(dev);
-	काष्ठा lpass_variant *v = drvdata->variant;
-	काष्ठा lpaअगर_dmactl *rd_dmactl;
+static int lpass_platform_alloc_hdmidmactl_fields(struct device *dev,
+					 struct regmap *map)
+{
+	struct lpass_data *drvdata = dev_get_drvdata(dev);
+	struct lpass_variant *v = drvdata->variant;
+	struct lpaif_dmactl *rd_dmactl;
 
-	rd_dmactl = devm_kzalloc(dev, माप(काष्ठा lpaअगर_dmactl), GFP_KERNEL);
-	अगर (rd_dmactl == शून्य)
-		वापस -ENOMEM;
+	rd_dmactl = devm_kzalloc(dev, sizeof(struct lpaif_dmactl), GFP_KERNEL);
+	if (rd_dmactl == NULL)
+		return -ENOMEM;
 
 	drvdata->hdmi_rd_dmactl = rd_dmactl;
 
-	वापस devm_regmap_field_bulk_alloc(dev, map, &rd_dmactl->bursten,
+	return devm_regmap_field_bulk_alloc(dev, map, &rd_dmactl->bursten,
 					    &v->hdmi_rdma_bursten, 8);
-पूर्ण
+}
 
-अटल पूर्णांक lpass_platक्रमm_pcmops_खोलो(काष्ठा snd_soc_component *component,
-				      काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_soc_pcm_runसमय *soc_runसमय = asoc_substream_to_rtd(substream);
-	काष्ठा snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(soc_runसमय, 0);
-	काष्ठा lpass_data *drvdata = snd_soc_component_get_drvdata(component);
-	काष्ठा lpass_variant *v = drvdata->variant;
-	पूर्णांक ret, dma_ch, dir = substream->stream;
-	काष्ठा lpass_pcm_data *data;
-	काष्ठा regmap *map;
-	अचिन्हित पूर्णांक dai_id = cpu_dai->driver->id;
+static int lpass_platform_pcmops_open(struct snd_soc_component *component,
+				      struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_soc_pcm_runtime *soc_runtime = asoc_substream_to_rtd(substream);
+	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(soc_runtime, 0);
+	struct lpass_data *drvdata = snd_soc_component_get_drvdata(component);
+	struct lpass_variant *v = drvdata->variant;
+	int ret, dma_ch, dir = substream->stream;
+	struct lpass_pcm_data *data;
+	struct regmap *map;
+	unsigned int dai_id = cpu_dai->driver->id;
 
 	component->id = dai_id;
-	data = kzalloc(माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = kzalloc(sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	data->i2s_port = cpu_dai->driver->id;
-	runसमय->निजी_data = data;
+	runtime->private_data = data;
 
-	अगर (v->alloc_dma_channel)
+	if (v->alloc_dma_channel)
 		dma_ch = v->alloc_dma_channel(drvdata, dir, dai_id);
-	अन्यथा
+	else
 		dma_ch = 0;
 
-	अगर (dma_ch < 0) अणु
-		kमुक्त(data);
-		वापस dma_ch;
-	पूर्ण
+	if (dma_ch < 0) {
+		kfree(data);
+		return dma_ch;
+	}
 
-	अगर (cpu_dai->driver->id == LPASS_DP_RX) अणु
-		map = drvdata->hdmiअगर_map;
+	if (cpu_dai->driver->id == LPASS_DP_RX) {
+		map = drvdata->hdmiif_map;
 		drvdata->hdmi_substream[dma_ch] = substream;
-	पूर्ण अन्यथा अणु
-		map = drvdata->lpaअगर_map;
+	} else {
+		map = drvdata->lpaif_map;
 		drvdata->substream[dma_ch] = substream;
-	पूर्ण
+	}
 	data->dma_ch = dma_ch;
-	ret = regmap_ग_लिखो(map,
+	ret = regmap_write(map,
 			LPAIF_DMACTL_REG(v, dma_ch, dir, data->i2s_port), 0);
-	अगर (ret) अणु
-		dev_err(soc_runसमय->dev,
+	if (ret) {
+		dev_err(soc_runtime->dev,
 			"error writing to rdmactl reg: %d\n", ret);
-		वापस ret;
-	पूर्ण
-	snd_soc_set_runसमय_hwparams(substream, &lpass_platक्रमm_pcm_hardware);
+		return ret;
+	}
+	snd_soc_set_runtime_hwparams(substream, &lpass_platform_pcm_hardware);
 
-	runसमय->dma_bytes = lpass_platक्रमm_pcm_hardware.buffer_bytes_max;
+	runtime->dma_bytes = lpass_platform_pcm_hardware.buffer_bytes_max;
 
-	ret = snd_pcm_hw_स्थिरraपूर्णांक_पूर्णांकeger(runसमय,
+	ret = snd_pcm_hw_constraint_integer(runtime,
 			SNDRV_PCM_HW_PARAM_PERIODS);
-	अगर (ret < 0) अणु
-		kमुक्त(data);
-		dev_err(soc_runसमय->dev, "setting constraints failed: %d\n",
+	if (ret < 0) {
+		kfree(data);
+		dev_err(soc_runtime->dev, "setting constraints failed: %d\n",
 			ret);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	snd_pcm_set_runसमय_buffer(substream, &substream->dma_buffer);
+	snd_pcm_set_runtime_buffer(substream, &substream->dma_buffer);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lpass_platक्रमm_pcmops_बंद(काष्ठा snd_soc_component *component,
-				       काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_soc_pcm_runसमय *soc_runसमय = asoc_substream_to_rtd(substream);
-	काष्ठा snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(soc_runसमय, 0);
-	काष्ठा lpass_data *drvdata = snd_soc_component_get_drvdata(component);
-	काष्ठा lpass_variant *v = drvdata->variant;
-	काष्ठा lpass_pcm_data *data;
-	अचिन्हित पूर्णांक dai_id = cpu_dai->driver->id;
+static int lpass_platform_pcmops_close(struct snd_soc_component *component,
+				       struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_soc_pcm_runtime *soc_runtime = asoc_substream_to_rtd(substream);
+	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(soc_runtime, 0);
+	struct lpass_data *drvdata = snd_soc_component_get_drvdata(component);
+	struct lpass_variant *v = drvdata->variant;
+	struct lpass_pcm_data *data;
+	unsigned int dai_id = cpu_dai->driver->id;
 
-	data = runसमय->निजी_data;
-	अगर (dai_id == LPASS_DP_RX)
-		drvdata->hdmi_substream[data->dma_ch] = शून्य;
-	अन्यथा
-		drvdata->substream[data->dma_ch] = शून्य;
-	अगर (v->मुक्त_dma_channel)
-		v->मुक्त_dma_channel(drvdata, data->dma_ch, dai_id);
+	data = runtime->private_data;
+	if (dai_id == LPASS_DP_RX)
+		drvdata->hdmi_substream[data->dma_ch] = NULL;
+	else
+		drvdata->substream[data->dma_ch] = NULL;
+	if (v->free_dma_channel)
+		v->free_dma_channel(drvdata, data->dma_ch, dai_id);
 
-	kमुक्त(data);
-	वापस 0;
-पूर्ण
+	kfree(data);
+	return 0;
+}
 
-अटल पूर्णांक lpass_platक्रमm_pcmops_hw_params(काष्ठा snd_soc_component *component,
-					   काष्ठा snd_pcm_substream *substream,
-					   काष्ठा snd_pcm_hw_params *params)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *soc_runसमय = asoc_substream_to_rtd(substream);
-	काष्ठा snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(soc_runसमय, 0);
-	काष्ठा lpass_data *drvdata = snd_soc_component_get_drvdata(component);
-	काष्ठा snd_pcm_runसमय *rt = substream->runसमय;
-	काष्ठा lpass_pcm_data *pcm_data = rt->निजी_data;
-	काष्ठा lpass_variant *v = drvdata->variant;
-	snd_pcm_क्रमmat_t क्रमmat = params_क्रमmat(params);
-	अचिन्हित पूर्णांक channels = params_channels(params);
-	अचिन्हित पूर्णांक regval;
-	काष्ठा lpaअगर_dmactl *dmactl;
-	पूर्णांक id, dir = substream->stream;
-	पूर्णांक bitwidth;
-	पूर्णांक ret, dma_port = pcm_data->i2s_port + v->dmactl_audअगर_start;
-	अचिन्हित पूर्णांक dai_id = cpu_dai->driver->id;
+static int lpass_platform_pcmops_hw_params(struct snd_soc_component *component,
+					   struct snd_pcm_substream *substream,
+					   struct snd_pcm_hw_params *params)
+{
+	struct snd_soc_pcm_runtime *soc_runtime = asoc_substream_to_rtd(substream);
+	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(soc_runtime, 0);
+	struct lpass_data *drvdata = snd_soc_component_get_drvdata(component);
+	struct snd_pcm_runtime *rt = substream->runtime;
+	struct lpass_pcm_data *pcm_data = rt->private_data;
+	struct lpass_variant *v = drvdata->variant;
+	snd_pcm_format_t format = params_format(params);
+	unsigned int channels = params_channels(params);
+	unsigned int regval;
+	struct lpaif_dmactl *dmactl;
+	int id, dir = substream->stream;
+	int bitwidth;
+	int ret, dma_port = pcm_data->i2s_port + v->dmactl_audif_start;
+	unsigned int dai_id = cpu_dai->driver->id;
 
-	अगर (dir ==  SNDRV_PCM_STREAM_PLAYBACK) अणु
+	if (dir ==  SNDRV_PCM_STREAM_PLAYBACK) {
 		id = pcm_data->dma_ch;
-		अगर (dai_id == LPASS_DP_RX)
+		if (dai_id == LPASS_DP_RX)
 			dmactl = drvdata->hdmi_rd_dmactl;
-		अन्यथा
+		else
 			dmactl = drvdata->rd_dmactl;
 
-	पूर्ण अन्यथा अणु
+	} else {
 		dmactl = drvdata->wr_dmactl;
 		id = pcm_data->dma_ch - v->wrdma_channel_start;
-	पूर्ण
+	}
 
-	bitwidth = snd_pcm_क्रमmat_width(क्रमmat);
-	अगर (bitwidth < 0) अणु
-		dev_err(soc_runसमय->dev, "invalid bit width given: %d\n",
+	bitwidth = snd_pcm_format_width(format);
+	if (bitwidth < 0) {
+		dev_err(soc_runtime->dev, "invalid bit width given: %d\n",
 				bitwidth);
-		वापस bitwidth;
-	पूर्ण
+		return bitwidth;
+	}
 
-	ret = regmap_fields_ग_लिखो(dmactl->bursten, id, LPAIF_DMACTL_BURSTEN_INCR4);
-	अगर (ret) अणु
-		dev_err(soc_runसमय->dev, "error updating bursten field: %d\n", ret);
-		वापस ret;
-	पूर्ण
+	ret = regmap_fields_write(dmactl->bursten, id, LPAIF_DMACTL_BURSTEN_INCR4);
+	if (ret) {
+		dev_err(soc_runtime->dev, "error updating bursten field: %d\n", ret);
+		return ret;
+	}
 
-	ret = regmap_fields_ग_लिखो(dmactl->fअगरowm, id, LPAIF_DMACTL_FIFOWM_8);
-	अगर (ret) अणु
-		dev_err(soc_runसमय->dev, "error updating fifowm field: %d\n", ret);
-		वापस ret;
-	पूर्ण
+	ret = regmap_fields_write(dmactl->fifowm, id, LPAIF_DMACTL_FIFOWM_8);
+	if (ret) {
+		dev_err(soc_runtime->dev, "error updating fifowm field: %d\n", ret);
+		return ret;
+	}
 
-	चयन (dai_id) अणु
-	हाल LPASS_DP_RX:
-		ret = regmap_fields_ग_लिखो(dmactl->burst8, id,
+	switch (dai_id) {
+	case LPASS_DP_RX:
+		ret = regmap_fields_write(dmactl->burst8, id,
 							LPAIF_DMACTL_BURSTEN_INCR4);
-		अगर (ret) अणु
-			dev_err(soc_runसमय->dev, "error updating burst8en field: %d\n", ret);
-			वापस ret;
-		पूर्ण
-		ret = regmap_fields_ग_लिखो(dmactl->burst16, id,
+		if (ret) {
+			dev_err(soc_runtime->dev, "error updating burst8en field: %d\n", ret);
+			return ret;
+		}
+		ret = regmap_fields_write(dmactl->burst16, id,
 							LPAIF_DMACTL_BURSTEN_INCR4);
-		अगर (ret) अणु
-			dev_err(soc_runसमय->dev, "error updating burst16en field: %d\n", ret);
-			वापस ret;
-		पूर्ण
-		ret = regmap_fields_ग_लिखो(dmactl->dynburst, id,
+		if (ret) {
+			dev_err(soc_runtime->dev, "error updating burst16en field: %d\n", ret);
+			return ret;
+		}
+		ret = regmap_fields_write(dmactl->dynburst, id,
 							LPAIF_DMACTL_BURSTEN_INCR4);
-		अगर (ret) अणु
-			dev_err(soc_runसमय->dev, "error updating dynbursten field: %d\n", ret);
-			वापस ret;
-		पूर्ण
-		अवरोध;
-	हाल MI2S_PRIMARY:
-	हाल MI2S_SECONDARY:
-	हाल MI2S_TERTIARY:
-	हाल MI2S_QUATERNARY:
-	हाल MI2S_QUINARY:
-		ret = regmap_fields_ग_लिखो(dmactl->पूर्णांकf, id,
+		if (ret) {
+			dev_err(soc_runtime->dev, "error updating dynbursten field: %d\n", ret);
+			return ret;
+		}
+		break;
+	case MI2S_PRIMARY:
+	case MI2S_SECONDARY:
+	case MI2S_TERTIARY:
+	case MI2S_QUATERNARY:
+	case MI2S_QUINARY:
+		ret = regmap_fields_write(dmactl->intf, id,
 						LPAIF_DMACTL_AUDINTF(dma_port));
-		अगर (ret) अणु
-			dev_err(soc_runसमय->dev, "error updating audio interface field: %d\n",
+		if (ret) {
+			dev_err(soc_runtime->dev, "error updating audio interface field: %d\n",
 					ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		अवरोध;
-	शेष:
-		dev_err(soc_runसमय->dev, "%s: invalid  interface: %d\n", __func__, dai_id);
-		अवरोध;
-	पूर्ण
-	चयन (bitwidth) अणु
-	हाल 16:
-		चयन (channels) अणु
-		हाल 1:
-		हाल 2:
+		break;
+	default:
+		dev_err(soc_runtime->dev, "%s: invalid  interface: %d\n", __func__, dai_id);
+		break;
+	}
+	switch (bitwidth) {
+	case 16:
+		switch (channels) {
+		case 1:
+		case 2:
 			regval = LPAIF_DMACTL_WPSCNT_ONE;
-			अवरोध;
-		हाल 4:
+			break;
+		case 4:
 			regval = LPAIF_DMACTL_WPSCNT_TWO;
-			अवरोध;
-		हाल 6:
+			break;
+		case 6:
 			regval = LPAIF_DMACTL_WPSCNT_THREE;
-			अवरोध;
-		हाल 8:
+			break;
+		case 8:
 			regval = LPAIF_DMACTL_WPSCNT_FOUR;
-			अवरोध;
-		शेष:
-			dev_err(soc_runसमय->dev, "invalid PCM config given: bw=%d, ch=%u\n",
+			break;
+		default:
+			dev_err(soc_runtime->dev, "invalid PCM config given: bw=%d, ch=%u\n",
 				bitwidth, channels);
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	हाल 24:
-	हाल 32:
-		चयन (channels) अणु
-		हाल 1:
+			return -EINVAL;
+		}
+		break;
+	case 24:
+	case 32:
+		switch (channels) {
+		case 1:
 			regval = LPAIF_DMACTL_WPSCNT_ONE;
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			regval = (dai_id == LPASS_DP_RX ?
 			LPAIF_DMACTL_WPSCNT_ONE :
 			LPAIF_DMACTL_WPSCNT_TWO);
-			अवरोध;
-		हाल 4:
+			break;
+		case 4:
 			regval = (dai_id == LPASS_DP_RX ?
 			LPAIF_DMACTL_WPSCNT_TWO :
 			LPAIF_DMACTL_WPSCNT_FOUR);
-			अवरोध;
-		हाल 6:
+			break;
+		case 6:
 			regval = (dai_id == LPASS_DP_RX ?
 			LPAIF_DMACTL_WPSCNT_THREE :
 			LPAIF_DMACTL_WPSCNT_SIX);
-			अवरोध;
-		हाल 8:
+			break;
+		case 8:
 			regval = (dai_id == LPASS_DP_RX ?
 			LPAIF_DMACTL_WPSCNT_FOUR :
 			LPAIF_DMACTL_WPSCNT_EIGHT);
-			अवरोध;
-		शेष:
-			dev_err(soc_runसमय->dev, "invalid PCM config given: bw=%d, ch=%u\n",
+			break;
+		default:
+			dev_err(soc_runtime->dev, "invalid PCM config given: bw=%d, ch=%u\n",
 				bitwidth, channels);
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	शेष:
-		dev_err(soc_runसमय->dev, "invalid PCM config given: bw=%d, ch=%u\n",
+			return -EINVAL;
+		}
+		break;
+	default:
+		dev_err(soc_runtime->dev, "invalid PCM config given: bw=%d, ch=%u\n",
 			bitwidth, channels);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = regmap_fields_ग_लिखो(dmactl->wpscnt, id, regval);
-	अगर (ret) अणु
-		dev_err(soc_runसमय->dev, "error writing to dmactl reg: %d\n",
+	ret = regmap_fields_write(dmactl->wpscnt, id, regval);
+	if (ret) {
+		dev_err(soc_runtime->dev, "error writing to dmactl reg: %d\n",
 			ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lpass_platक्रमm_pcmops_hw_मुक्त(काष्ठा snd_soc_component *component,
-					 काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *soc_runसमय = asoc_substream_to_rtd(substream);
-	काष्ठा snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(soc_runसमय, 0);
-	काष्ठा lpass_data *drvdata = snd_soc_component_get_drvdata(component);
-	काष्ठा snd_pcm_runसमय *rt = substream->runसमय;
-	काष्ठा lpass_pcm_data *pcm_data = rt->निजी_data;
-	काष्ठा lpass_variant *v = drvdata->variant;
-	अचिन्हित पूर्णांक reg;
-	पूर्णांक ret;
-	काष्ठा regmap *map;
-	अचिन्हित पूर्णांक dai_id = cpu_dai->driver->id;
+static int lpass_platform_pcmops_hw_free(struct snd_soc_component *component,
+					 struct snd_pcm_substream *substream)
+{
+	struct snd_soc_pcm_runtime *soc_runtime = asoc_substream_to_rtd(substream);
+	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(soc_runtime, 0);
+	struct lpass_data *drvdata = snd_soc_component_get_drvdata(component);
+	struct snd_pcm_runtime *rt = substream->runtime;
+	struct lpass_pcm_data *pcm_data = rt->private_data;
+	struct lpass_variant *v = drvdata->variant;
+	unsigned int reg;
+	int ret;
+	struct regmap *map;
+	unsigned int dai_id = cpu_dai->driver->id;
 
-	अगर (dai_id == LPASS_DP_RX)
-		map = drvdata->hdmiअगर_map;
-	अन्यथा
-		map = drvdata->lpaअगर_map;
+	if (dai_id == LPASS_DP_RX)
+		map = drvdata->hdmiif_map;
+	else
+		map = drvdata->lpaif_map;
 
 	reg = LPAIF_DMACTL_REG(v, pcm_data->dma_ch, substream->stream, dai_id);
-	ret = regmap_ग_लिखो(map, reg, 0);
-	अगर (ret)
-		dev_err(soc_runसमय->dev, "error writing to rdmactl reg: %d\n",
+	ret = regmap_write(map, reg, 0);
+	if (ret)
+		dev_err(soc_runtime->dev, "error writing to rdmactl reg: %d\n",
 			ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक lpass_platक्रमm_pcmops_prepare(काष्ठा snd_soc_component *component,
-					 काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_soc_pcm_runसमय *soc_runसमय = asoc_substream_to_rtd(substream);
-	काष्ठा snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(soc_runसमय, 0);
-	काष्ठा lpass_data *drvdata = snd_soc_component_get_drvdata(component);
-	काष्ठा snd_pcm_runसमय *rt = substream->runसमय;
-	काष्ठा lpass_pcm_data *pcm_data = rt->निजी_data;
-	काष्ठा lpass_variant *v = drvdata->variant;
-	काष्ठा lpaअगर_dmactl *dmactl;
-	काष्ठा regmap *map;
-	पूर्णांक ret, id, ch, dir = substream->stream;
-	अचिन्हित पूर्णांक dai_id = cpu_dai->driver->id;
+static int lpass_platform_pcmops_prepare(struct snd_soc_component *component,
+					 struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_soc_pcm_runtime *soc_runtime = asoc_substream_to_rtd(substream);
+	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(soc_runtime, 0);
+	struct lpass_data *drvdata = snd_soc_component_get_drvdata(component);
+	struct snd_pcm_runtime *rt = substream->runtime;
+	struct lpass_pcm_data *pcm_data = rt->private_data;
+	struct lpass_variant *v = drvdata->variant;
+	struct lpaif_dmactl *dmactl;
+	struct regmap *map;
+	int ret, id, ch, dir = substream->stream;
+	unsigned int dai_id = cpu_dai->driver->id;
 
 
 	ch = pcm_data->dma_ch;
-	अगर (dir ==  SNDRV_PCM_STREAM_PLAYBACK) अणु
-		अगर (dai_id == LPASS_DP_RX) अणु
+	if (dir ==  SNDRV_PCM_STREAM_PLAYBACK) {
+		if (dai_id == LPASS_DP_RX) {
 			dmactl = drvdata->hdmi_rd_dmactl;
-			map = drvdata->hdmiअगर_map;
-		पूर्ण अन्यथा अणु
+			map = drvdata->hdmiif_map;
+		} else {
 			dmactl = drvdata->rd_dmactl;
-			map = drvdata->lpaअगर_map;
-		पूर्ण
+			map = drvdata->lpaif_map;
+		}
 
 		id = pcm_data->dma_ch;
-	पूर्ण अन्यथा अणु
+	} else {
 		dmactl = drvdata->wr_dmactl;
 		id = pcm_data->dma_ch - v->wrdma_channel_start;
-		map = drvdata->lpaअगर_map;
-	पूर्ण
+		map = drvdata->lpaif_map;
+	}
 
-	ret = regmap_ग_लिखो(map, LPAIF_DMABASE_REG(v, ch, dir, dai_id),
-				runसमय->dma_addr);
-	अगर (ret) अणु
-		dev_err(soc_runसमय->dev, "error writing to rdmabase reg: %d\n",
+	ret = regmap_write(map, LPAIF_DMABASE_REG(v, ch, dir, dai_id),
+				runtime->dma_addr);
+	if (ret) {
+		dev_err(soc_runtime->dev, "error writing to rdmabase reg: %d\n",
 			ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = regmap_ग_लिखो(map, LPAIF_DMABUFF_REG(v, ch, dir, dai_id),
+	ret = regmap_write(map, LPAIF_DMABUFF_REG(v, ch, dir, dai_id),
 			(snd_pcm_lib_buffer_bytes(substream) >> 2) - 1);
-	अगर (ret) अणु
-		dev_err(soc_runसमय->dev, "error writing to rdmabuff reg: %d\n",
+	if (ret) {
+		dev_err(soc_runtime->dev, "error writing to rdmabuff reg: %d\n",
 			ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = regmap_ग_लिखो(map, LPAIF_DMAPER_REG(v, ch, dir, dai_id),
+	ret = regmap_write(map, LPAIF_DMAPER_REG(v, ch, dir, dai_id),
 			(snd_pcm_lib_period_bytes(substream) >> 2) - 1);
-	अगर (ret) अणु
-		dev_err(soc_runसमय->dev, "error writing to rdmaper reg: %d\n",
+	if (ret) {
+		dev_err(soc_runtime->dev, "error writing to rdmaper reg: %d\n",
 			ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = regmap_fields_ग_लिखो(dmactl->enable, id, LPAIF_DMACTL_ENABLE_ON);
-	अगर (ret) अणु
-		dev_err(soc_runसमय->dev, "error writing to rdmactl reg: %d\n",
+	ret = regmap_fields_write(dmactl->enable, id, LPAIF_DMACTL_ENABLE_ON);
+	if (ret) {
+		dev_err(soc_runtime->dev, "error writing to rdmactl reg: %d\n",
 			ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lpass_platक्रमm_pcmops_trigger(काष्ठा snd_soc_component *component,
-					 काष्ठा snd_pcm_substream *substream,
-					 पूर्णांक cmd)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *soc_runसमय = asoc_substream_to_rtd(substream);
-	काष्ठा snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(soc_runसमय, 0);
-	काष्ठा lpass_data *drvdata = snd_soc_component_get_drvdata(component);
-	काष्ठा snd_pcm_runसमय *rt = substream->runसमय;
-	काष्ठा lpass_pcm_data *pcm_data = rt->निजी_data;
-	काष्ठा lpass_variant *v = drvdata->variant;
-	काष्ठा lpaअगर_dmactl *dmactl;
-	काष्ठा regmap *map;
-	पूर्णांक ret, ch, id;
-	पूर्णांक dir = substream->stream;
-	अचिन्हित पूर्णांक reg_irqclr = 0, val_irqclr = 0;
-	अचिन्हित पूर्णांक  reg_irqen = 0, val_irqen = 0, val_mask = 0;
-	अचिन्हित पूर्णांक dai_id = cpu_dai->driver->id;
+static int lpass_platform_pcmops_trigger(struct snd_soc_component *component,
+					 struct snd_pcm_substream *substream,
+					 int cmd)
+{
+	struct snd_soc_pcm_runtime *soc_runtime = asoc_substream_to_rtd(substream);
+	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(soc_runtime, 0);
+	struct lpass_data *drvdata = snd_soc_component_get_drvdata(component);
+	struct snd_pcm_runtime *rt = substream->runtime;
+	struct lpass_pcm_data *pcm_data = rt->private_data;
+	struct lpass_variant *v = drvdata->variant;
+	struct lpaif_dmactl *dmactl;
+	struct regmap *map;
+	int ret, ch, id;
+	int dir = substream->stream;
+	unsigned int reg_irqclr = 0, val_irqclr = 0;
+	unsigned int  reg_irqen = 0, val_irqen = 0, val_mask = 0;
+	unsigned int dai_id = cpu_dai->driver->id;
 
 	ch = pcm_data->dma_ch;
-	अगर (dir ==  SNDRV_PCM_STREAM_PLAYBACK) अणु
+	if (dir ==  SNDRV_PCM_STREAM_PLAYBACK) {
 		id = pcm_data->dma_ch;
-		अगर (dai_id == LPASS_DP_RX) अणु
+		if (dai_id == LPASS_DP_RX) {
 			dmactl = drvdata->hdmi_rd_dmactl;
-			map = drvdata->hdmiअगर_map;
-		पूर्ण अन्यथा अणु
+			map = drvdata->hdmiif_map;
+		} else {
 			dmactl = drvdata->rd_dmactl;
-			map = drvdata->lpaअगर_map;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			map = drvdata->lpaif_map;
+		}
+	} else {
 		dmactl = drvdata->wr_dmactl;
 		id = pcm_data->dma_ch - v->wrdma_channel_start;
-		map = drvdata->lpaअगर_map;
-	पूर्ण
+		map = drvdata->lpaif_map;
+	}
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-	हाल SNDRV_PCM_TRIGGER_RESUME:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		ret = regmap_fields_ग_लिखो(dmactl->enable, id,
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+	case SNDRV_PCM_TRIGGER_RESUME:
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+		ret = regmap_fields_write(dmactl->enable, id,
 						 LPAIF_DMACTL_ENABLE_ON);
-		अगर (ret) अणु
-			dev_err(soc_runसमय->dev,
+		if (ret) {
+			dev_err(soc_runtime->dev,
 				"error writing to rdmactl reg: %d\n", ret);
-			वापस ret;
-		पूर्ण
-		चयन (dai_id) अणु
-		हाल LPASS_DP_RX:
-			ret = regmap_fields_ग_लिखो(dmactl->dyncclk, id,
+			return ret;
+		}
+		switch (dai_id) {
+		case LPASS_DP_RX:
+			ret = regmap_fields_write(dmactl->dyncclk, id,
 					 LPAIF_DMACTL_DYNCLK_ON);
-			अगर (ret) अणु
-				dev_err(soc_runसमय->dev,
+			if (ret) {
+				dev_err(soc_runtime->dev,
 					"error writing to rdmactl reg: %d\n", ret);
-				वापस ret;
-			पूर्ण
+				return ret;
+			}
 			reg_irqclr = LPASS_HDMITX_APP_IRQCLEAR_REG(v);
 			val_irqclr = (LPAIF_IRQ_ALL(ch) |
 					LPAIF_IRQ_HDMI_REQ_ON_PRELOAD(ch) |
@@ -508,12 +507,12 @@
 					LPAIF_IRQ_HDMI_REQ_ON_PRELOAD(ch) |
 					LPAIF_IRQ_HDMI_METADONE |
 					LPAIF_IRQ_HDMI_SDEEP_AUD_DIS(ch));
-			अवरोध;
-		हाल MI2S_PRIMARY:
-		हाल MI2S_SECONDARY:
-		हाल MI2S_TERTIARY:
-		हाल MI2S_QUATERNARY:
-		हाल MI2S_QUINARY:
+			break;
+		case MI2S_PRIMARY:
+		case MI2S_SECONDARY:
+		case MI2S_TERTIARY:
+		case MI2S_QUATERNARY:
+		case MI2S_QUINARY:
 			reg_irqclr = LPAIF_IRQCLEAR_REG(v, LPAIF_IRQ_PORT_HOST);
 			val_irqclr = LPAIF_IRQ_ALL(ch);
 
@@ -521,435 +520,435 @@
 			reg_irqen = LPAIF_IRQEN_REG(v, LPAIF_IRQ_PORT_HOST);
 			val_mask = LPAIF_IRQ_ALL(ch);
 			val_irqen = LPAIF_IRQ_ALL(ch);
-			अवरोध;
-		शेष:
-			dev_err(soc_runसमय->dev, "%s: invalid %d interface\n", __func__, dai_id);
-			वापस -EINVAL;
-		पूर्ण
+			break;
+		default:
+			dev_err(soc_runtime->dev, "%s: invalid %d interface\n", __func__, dai_id);
+			return -EINVAL;
+		}
 
-		ret = regmap_ग_लिखो(map, reg_irqclr, val_irqclr);
-		अगर (ret) अणु
-			dev_err(soc_runसमय->dev, "error writing to irqclear reg: %d\n", ret);
-			वापस ret;
-		पूर्ण
+		ret = regmap_write(map, reg_irqclr, val_irqclr);
+		if (ret) {
+			dev_err(soc_runtime->dev, "error writing to irqclear reg: %d\n", ret);
+			return ret;
+		}
 		ret = regmap_update_bits(map, reg_irqen, val_mask, val_irqen);
-		अगर (ret) अणु
-			dev_err(soc_runसमय->dev, "error writing to irqen reg: %d\n", ret);
-			वापस ret;
-		पूर्ण
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		ret = regmap_fields_ग_लिखो(dmactl->enable, id,
+		if (ret) {
+			dev_err(soc_runtime->dev, "error writing to irqen reg: %d\n", ret);
+			return ret;
+		}
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
+	case SNDRV_PCM_TRIGGER_SUSPEND:
+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		ret = regmap_fields_write(dmactl->enable, id,
 					 LPAIF_DMACTL_ENABLE_OFF);
-		अगर (ret) अणु
-			dev_err(soc_runसमय->dev,
+		if (ret) {
+			dev_err(soc_runtime->dev,
 				"error writing to rdmactl reg: %d\n", ret);
-			वापस ret;
-		पूर्ण
-		चयन (dai_id) अणु
-		हाल LPASS_DP_RX:
-			ret = regmap_fields_ग_लिखो(dmactl->dyncclk, id,
+			return ret;
+		}
+		switch (dai_id) {
+		case LPASS_DP_RX:
+			ret = regmap_fields_write(dmactl->dyncclk, id,
 					 LPAIF_DMACTL_DYNCLK_OFF);
-			अगर (ret) अणु
-				dev_err(soc_runसमय->dev,
+			if (ret) {
+				dev_err(soc_runtime->dev,
 					"error writing to rdmactl reg: %d\n", ret);
-				वापस ret;
-			पूर्ण
+				return ret;
+			}
 			reg_irqen = LPASS_HDMITX_APP_IRQEN_REG(v);
 			val_mask = (LPAIF_IRQ_ALL(ch) |
 					LPAIF_IRQ_HDMI_REQ_ON_PRELOAD(ch) |
 					LPAIF_IRQ_HDMI_METADONE |
 					LPAIF_IRQ_HDMI_SDEEP_AUD_DIS(ch));
 			val_irqen = 0;
-			अवरोध;
-		हाल MI2S_PRIMARY:
-		हाल MI2S_SECONDARY:
-		हाल MI2S_TERTIARY:
-		हाल MI2S_QUATERNARY:
-		हाल MI2S_QUINARY:
+			break;
+		case MI2S_PRIMARY:
+		case MI2S_SECONDARY:
+		case MI2S_TERTIARY:
+		case MI2S_QUATERNARY:
+		case MI2S_QUINARY:
 			reg_irqen = LPAIF_IRQEN_REG(v, LPAIF_IRQ_PORT_HOST);
 			val_mask = LPAIF_IRQ_ALL(ch);
 			val_irqen = 0;
-			अवरोध;
-		शेष:
-			dev_err(soc_runसमय->dev, "%s: invalid %d interface\n", __func__, dai_id);
-			वापस -EINVAL;
-		पूर्ण
+			break;
+		default:
+			dev_err(soc_runtime->dev, "%s: invalid %d interface\n", __func__, dai_id);
+			return -EINVAL;
+		}
 
 		ret = regmap_update_bits(map, reg_irqen, val_mask, val_irqen);
-		अगर (ret) अणु
-			dev_err(soc_runसमय->dev,
+		if (ret) {
+			dev_err(soc_runtime->dev,
 				"error writing to irqen reg: %d\n", ret);
-			वापस ret;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			return ret;
+		}
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल snd_pcm_uframes_t lpass_platक्रमm_pcmops_poपूर्णांकer(
-		काष्ठा snd_soc_component *component,
-		काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *soc_runसमय = asoc_substream_to_rtd(substream);
-	काष्ठा snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(soc_runसमय, 0);
-	काष्ठा lpass_data *drvdata = snd_soc_component_get_drvdata(component);
-	काष्ठा snd_pcm_runसमय *rt = substream->runसमय;
-	काष्ठा lpass_pcm_data *pcm_data = rt->निजी_data;
-	काष्ठा lpass_variant *v = drvdata->variant;
-	अचिन्हित पूर्णांक base_addr, curr_addr;
-	पूर्णांक ret, ch, dir = substream->stream;
-	काष्ठा regmap *map;
-	अचिन्हित पूर्णांक dai_id = cpu_dai->driver->id;
+static snd_pcm_uframes_t lpass_platform_pcmops_pointer(
+		struct snd_soc_component *component,
+		struct snd_pcm_substream *substream)
+{
+	struct snd_soc_pcm_runtime *soc_runtime = asoc_substream_to_rtd(substream);
+	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(soc_runtime, 0);
+	struct lpass_data *drvdata = snd_soc_component_get_drvdata(component);
+	struct snd_pcm_runtime *rt = substream->runtime;
+	struct lpass_pcm_data *pcm_data = rt->private_data;
+	struct lpass_variant *v = drvdata->variant;
+	unsigned int base_addr, curr_addr;
+	int ret, ch, dir = substream->stream;
+	struct regmap *map;
+	unsigned int dai_id = cpu_dai->driver->id;
 
-	अगर (dai_id == LPASS_DP_RX)
-		map = drvdata->hdmiअगर_map;
-	अन्यथा
-		map = drvdata->lpaअगर_map;
+	if (dai_id == LPASS_DP_RX)
+		map = drvdata->hdmiif_map;
+	else
+		map = drvdata->lpaif_map;
 
 	ch = pcm_data->dma_ch;
 
-	ret = regmap_पढ़ो(map,
+	ret = regmap_read(map,
 			LPAIF_DMABASE_REG(v, ch, dir, dai_id), &base_addr);
-	अगर (ret) अणु
-		dev_err(soc_runसमय->dev,
+	if (ret) {
+		dev_err(soc_runtime->dev,
 			"error reading from rdmabase reg: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = regmap_पढ़ो(map,
+	ret = regmap_read(map,
 			LPAIF_DMACURR_REG(v, ch, dir, dai_id), &curr_addr);
-	अगर (ret) अणु
-		dev_err(soc_runसमय->dev,
+	if (ret) {
+		dev_err(soc_runtime->dev,
 			"error reading from rdmacurr reg: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस bytes_to_frames(substream->runसमय, curr_addr - base_addr);
-पूर्ण
+	return bytes_to_frames(substream->runtime, curr_addr - base_addr);
+}
 
-अटल पूर्णांक lpass_platक्रमm_pcmops_mmap(काष्ठा snd_soc_component *component,
-				      काष्ठा snd_pcm_substream *substream,
-				      काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+static int lpass_platform_pcmops_mmap(struct snd_soc_component *component,
+				      struct snd_pcm_substream *substream,
+				      struct vm_area_struct *vma)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
 
-	वापस dma_mmap_coherent(component->dev, vma, runसमय->dma_area,
-				 runसमय->dma_addr, runसमय->dma_bytes);
-पूर्ण
+	return dma_mmap_coherent(component->dev, vma, runtime->dma_area,
+				 runtime->dma_addr, runtime->dma_bytes);
+}
 
-अटल irqवापस_t lpass_dma_पूर्णांकerrupt_handler(
-			काष्ठा snd_pcm_substream *substream,
-			काष्ठा lpass_data *drvdata,
-			पूर्णांक chan, u32 पूर्णांकerrupts)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *soc_runसमय = asoc_substream_to_rtd(substream);
-	काष्ठा snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(soc_runसमय, 0);
-	काष्ठा lpass_variant *v = drvdata->variant;
-	irqवापस_t ret = IRQ_NONE;
-	पूर्णांक rv;
-	अचिन्हित पूर्णांक reg = 0, val = 0;
-	काष्ठा regmap *map;
-	अचिन्हित पूर्णांक dai_id = cpu_dai->driver->id;
+static irqreturn_t lpass_dma_interrupt_handler(
+			struct snd_pcm_substream *substream,
+			struct lpass_data *drvdata,
+			int chan, u32 interrupts)
+{
+	struct snd_soc_pcm_runtime *soc_runtime = asoc_substream_to_rtd(substream);
+	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(soc_runtime, 0);
+	struct lpass_variant *v = drvdata->variant;
+	irqreturn_t ret = IRQ_NONE;
+	int rv;
+	unsigned int reg = 0, val = 0;
+	struct regmap *map;
+	unsigned int dai_id = cpu_dai->driver->id;
 
-	चयन (dai_id) अणु
-	हाल LPASS_DP_RX:
-		map = drvdata->hdmiअगर_map;
+	switch (dai_id) {
+	case LPASS_DP_RX:
+		map = drvdata->hdmiif_map;
 		reg = LPASS_HDMITX_APP_IRQCLEAR_REG(v);
 		val = (LPAIF_IRQ_HDMI_REQ_ON_PRELOAD(chan) |
 		LPAIF_IRQ_HDMI_METADONE |
 		LPAIF_IRQ_HDMI_SDEEP_AUD_DIS(chan));
-	अवरोध;
-	हाल MI2S_PRIMARY:
-	हाल MI2S_SECONDARY:
-	हाल MI2S_TERTIARY:
-	हाल MI2S_QUATERNARY:
-	हाल MI2S_QUINARY:
-		map = drvdata->lpaअगर_map;
+	break;
+	case MI2S_PRIMARY:
+	case MI2S_SECONDARY:
+	case MI2S_TERTIARY:
+	case MI2S_QUATERNARY:
+	case MI2S_QUINARY:
+		map = drvdata->lpaif_map;
 		reg = LPAIF_IRQCLEAR_REG(v, LPAIF_IRQ_PORT_HOST);
 		val = 0;
-	अवरोध;
-	शेष:
-	dev_err(soc_runसमय->dev, "%s: invalid  %d interface\n", __func__, dai_id);
-	वापस -EINVAL;
-	पूर्ण
-	अगर (पूर्णांकerrupts & LPAIF_IRQ_PER(chan)) अणु
+	break;
+	default:
+	dev_err(soc_runtime->dev, "%s: invalid  %d interface\n", __func__, dai_id);
+	return -EINVAL;
+	}
+	if (interrupts & LPAIF_IRQ_PER(chan)) {
 
-		rv = regmap_ग_लिखो(map, reg, LPAIF_IRQ_PER(chan) | val);
-		अगर (rv) अणु
-			dev_err(soc_runसमय->dev,
+		rv = regmap_write(map, reg, LPAIF_IRQ_PER(chan) | val);
+		if (rv) {
+			dev_err(soc_runtime->dev,
 				"error writing to irqclear reg: %d\n", rv);
-			वापस IRQ_NONE;
-		पूर्ण
+			return IRQ_NONE;
+		}
 		snd_pcm_period_elapsed(substream);
 		ret = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	अगर (पूर्णांकerrupts & LPAIF_IRQ_XRUN(chan)) अणु
-		rv = regmap_ग_लिखो(map, reg, LPAIF_IRQ_XRUN(chan) | val);
-		अगर (rv) अणु
-			dev_err(soc_runसमय->dev,
+	if (interrupts & LPAIF_IRQ_XRUN(chan)) {
+		rv = regmap_write(map, reg, LPAIF_IRQ_XRUN(chan) | val);
+		if (rv) {
+			dev_err(soc_runtime->dev,
 				"error writing to irqclear reg: %d\n", rv);
-			वापस IRQ_NONE;
-		पूर्ण
-		dev_warn(soc_runसमय->dev, "xrun warning\n");
+			return IRQ_NONE;
+		}
+		dev_warn(soc_runtime->dev, "xrun warning\n");
 		snd_pcm_stop_xrun(substream);
 		ret = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	अगर (पूर्णांकerrupts & LPAIF_IRQ_ERR(chan)) अणु
-		rv = regmap_ग_लिखो(map, reg, LPAIF_IRQ_ERR(chan) | val);
-		अगर (rv) अणु
-			dev_err(soc_runसमय->dev,
+	if (interrupts & LPAIF_IRQ_ERR(chan)) {
+		rv = regmap_write(map, reg, LPAIF_IRQ_ERR(chan) | val);
+		if (rv) {
+			dev_err(soc_runtime->dev,
 				"error writing to irqclear reg: %d\n", rv);
-			वापस IRQ_NONE;
-		पूर्ण
-		dev_err(soc_runसमय->dev, "bus access error\n");
+			return IRQ_NONE;
+		}
+		dev_err(soc_runtime->dev, "bus access error\n");
 		snd_pcm_stop(substream, SNDRV_PCM_STATE_DISCONNECTED);
 		ret = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	अगर (पूर्णांकerrupts & val) अणु
-		rv = regmap_ग_लिखो(map, reg, val);
-		अगर (rv) अणु
-			dev_err(soc_runसमय->dev,
+	if (interrupts & val) {
+		rv = regmap_write(map, reg, val);
+		if (rv) {
+			dev_err(soc_runtime->dev,
 			"error writing to irqclear reg: %d\n", rv);
-			वापस IRQ_NONE;
-		पूर्ण
+			return IRQ_NONE;
+		}
 		ret = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल irqवापस_t lpass_platक्रमm_lpaअगर_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा lpass_data *drvdata = data;
-	काष्ठा lpass_variant *v = drvdata->variant;
-	अचिन्हित पूर्णांक irqs;
-	पूर्णांक rv, chan;
+static irqreturn_t lpass_platform_lpaif_irq(int irq, void *data)
+{
+	struct lpass_data *drvdata = data;
+	struct lpass_variant *v = drvdata->variant;
+	unsigned int irqs;
+	int rv, chan;
 
-	rv = regmap_पढ़ो(drvdata->lpaअगर_map,
+	rv = regmap_read(drvdata->lpaif_map,
 			LPAIF_IRQSTAT_REG(v, LPAIF_IRQ_PORT_HOST), &irqs);
-	अगर (rv) अणु
+	if (rv) {
 		pr_err("error reading from irqstat reg: %d\n", rv);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	/* Handle per channel पूर्णांकerrupts */
-	क्रम (chan = 0; chan < LPASS_MAX_DMA_CHANNELS; chan++) अणु
-		अगर (irqs & LPAIF_IRQ_ALL(chan) && drvdata->substream[chan]) अणु
-			rv = lpass_dma_पूर्णांकerrupt_handler(
+	/* Handle per channel interrupts */
+	for (chan = 0; chan < LPASS_MAX_DMA_CHANNELS; chan++) {
+		if (irqs & LPAIF_IRQ_ALL(chan) && drvdata->substream[chan]) {
+			rv = lpass_dma_interrupt_handler(
 						drvdata->substream[chan],
 						drvdata, chan, irqs);
-			अगर (rv != IRQ_HANDLED)
-				वापस rv;
-		पूर्ण
-	पूर्ण
+			if (rv != IRQ_HANDLED)
+				return rv;
+		}
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t lpass_platक्रमm_hdmiअगर_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा lpass_data *drvdata = data;
-	काष्ठा lpass_variant *v = drvdata->variant;
-	अचिन्हित पूर्णांक irqs;
-	पूर्णांक rv, chan;
+static irqreturn_t lpass_platform_hdmiif_irq(int irq, void *data)
+{
+	struct lpass_data *drvdata = data;
+	struct lpass_variant *v = drvdata->variant;
+	unsigned int irqs;
+	int rv, chan;
 
-	rv = regmap_पढ़ो(drvdata->hdmiअगर_map,
+	rv = regmap_read(drvdata->hdmiif_map,
 			LPASS_HDMITX_APP_IRQSTAT_REG(v), &irqs);
-	अगर (rv) अणु
+	if (rv) {
 		pr_err("error reading from irqstat reg: %d\n", rv);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	/* Handle per channel पूर्णांकerrupts */
-	क्रम (chan = 0; chan < LPASS_MAX_HDMI_DMA_CHANNELS; chan++) अणु
-		अगर (irqs & (LPAIF_IRQ_ALL(chan) | LPAIF_IRQ_HDMI_REQ_ON_PRELOAD(chan) |
+	/* Handle per channel interrupts */
+	for (chan = 0; chan < LPASS_MAX_HDMI_DMA_CHANNELS; chan++) {
+		if (irqs & (LPAIF_IRQ_ALL(chan) | LPAIF_IRQ_HDMI_REQ_ON_PRELOAD(chan) |
 				LPAIF_IRQ_HDMI_METADONE |
 				LPAIF_IRQ_HDMI_SDEEP_AUD_DIS(chan))
-			&& drvdata->hdmi_substream[chan]) अणु
-			rv = lpass_dma_पूर्णांकerrupt_handler(
+			&& drvdata->hdmi_substream[chan]) {
+			rv = lpass_dma_interrupt_handler(
 						drvdata->hdmi_substream[chan],
 						drvdata, chan, irqs);
-			अगर (rv != IRQ_HANDLED)
-				वापस rv;
-		पूर्ण
-	पूर्ण
+			if (rv != IRQ_HANDLED)
+				return rv;
+		}
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक lpass_platक्रमm_pcm_new(काष्ठा snd_soc_component *component,
-				  काष्ठा snd_soc_pcm_runसमय *soc_runसमय)
-अणु
-	काष्ठा snd_pcm *pcm = soc_runसमय->pcm;
-	काष्ठा snd_pcm_substream *psubstream, *csubstream;
-	पूर्णांक ret;
-	माप_प्रकार size = lpass_platक्रमm_pcm_hardware.buffer_bytes_max;
+static int lpass_platform_pcm_new(struct snd_soc_component *component,
+				  struct snd_soc_pcm_runtime *soc_runtime)
+{
+	struct snd_pcm *pcm = soc_runtime->pcm;
+	struct snd_pcm_substream *psubstream, *csubstream;
+	int ret;
+	size_t size = lpass_platform_pcm_hardware.buffer_bytes_max;
 
 	psubstream = pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream;
-	अगर (psubstream) अणु
+	if (psubstream) {
 		ret = snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV,
 					component->dev,
 					size, &psubstream->dma_buffer);
-		अगर (ret) अणु
-			dev_err(soc_runसमय->dev, "Cannot allocate buffer(s)\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+		if (ret) {
+			dev_err(soc_runtime->dev, "Cannot allocate buffer(s)\n");
+			return ret;
+		}
+	}
 
 	csubstream = pcm->streams[SNDRV_PCM_STREAM_CAPTURE].substream;
-	अगर (csubstream) अणु
+	if (csubstream) {
 		ret = snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV,
 					component->dev,
 					size, &csubstream->dma_buffer);
-		अगर (ret) अणु
-			dev_err(soc_runसमय->dev, "Cannot allocate buffer(s)\n");
-			अगर (psubstream)
-				snd_dma_मुक्त_pages(&psubstream->dma_buffer);
-			वापस ret;
-		पूर्ण
+		if (ret) {
+			dev_err(soc_runtime->dev, "Cannot allocate buffer(s)\n");
+			if (psubstream)
+				snd_dma_free_pages(&psubstream->dma_buffer);
+			return ret;
+		}
 
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम lpass_platक्रमm_pcm_मुक्त(काष्ठा snd_soc_component *component,
-				    काष्ठा snd_pcm *pcm)
-अणु
-	काष्ठा snd_pcm_substream *substream;
-	पूर्णांक i;
+static void lpass_platform_pcm_free(struct snd_soc_component *component,
+				    struct snd_pcm *pcm)
+{
+	struct snd_pcm_substream *substream;
+	int i;
 
-	क्रम_each_pcm_streams(i) अणु
+	for_each_pcm_streams(i) {
 		substream = pcm->streams[i].substream;
-		अगर (substream) अणु
-			snd_dma_मुक्त_pages(&substream->dma_buffer);
-			substream->dma_buffer.area = शून्य;
+		if (substream) {
+			snd_dma_free_pages(&substream->dma_buffer);
+			substream->dma_buffer.area = NULL;
 			substream->dma_buffer.addr = 0;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक lpass_platक्रमm_pcmops_suspend(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा lpass_data *drvdata = snd_soc_component_get_drvdata(component);
-	काष्ठा regmap *map;
-	अचिन्हित पूर्णांक dai_id = component->id;
+static int lpass_platform_pcmops_suspend(struct snd_soc_component *component)
+{
+	struct lpass_data *drvdata = snd_soc_component_get_drvdata(component);
+	struct regmap *map;
+	unsigned int dai_id = component->id;
 
-	अगर (dai_id == LPASS_DP_RX)
-		map = drvdata->hdmiअगर_map;
-	अन्यथा
-		map = drvdata->lpaअगर_map;
+	if (dai_id == LPASS_DP_RX)
+		map = drvdata->hdmiif_map;
+	else
+		map = drvdata->lpaif_map;
 
 	regcache_cache_only(map, true);
 	regcache_mark_dirty(map);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lpass_platक्रमm_pcmops_resume(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा lpass_data *drvdata = snd_soc_component_get_drvdata(component);
-	काष्ठा regmap *map;
-	अचिन्हित पूर्णांक dai_id = component->id;
+static int lpass_platform_pcmops_resume(struct snd_soc_component *component)
+{
+	struct lpass_data *drvdata = snd_soc_component_get_drvdata(component);
+	struct regmap *map;
+	unsigned int dai_id = component->id;
 
-	अगर (dai_id == LPASS_DP_RX)
-		map = drvdata->hdmiअगर_map;
-	अन्यथा
-		map = drvdata->lpaअगर_map;
+	if (dai_id == LPASS_DP_RX)
+		map = drvdata->hdmiif_map;
+	else
+		map = drvdata->lpaif_map;
 
 	regcache_cache_only(map, false);
-	वापस regcache_sync(map);
-पूर्ण
+	return regcache_sync(map);
+}
 
 
-अटल स्थिर काष्ठा snd_soc_component_driver lpass_component_driver = अणु
+static const struct snd_soc_component_driver lpass_component_driver = {
 	.name		= DRV_NAME,
-	.खोलो		= lpass_platक्रमm_pcmops_खोलो,
-	.बंद		= lpass_platक्रमm_pcmops_बंद,
-	.hw_params	= lpass_platक्रमm_pcmops_hw_params,
-	.hw_मुक्त	= lpass_platक्रमm_pcmops_hw_मुक्त,
-	.prepare	= lpass_platक्रमm_pcmops_prepare,
-	.trigger	= lpass_platक्रमm_pcmops_trigger,
-	.poपूर्णांकer	= lpass_platक्रमm_pcmops_poपूर्णांकer,
-	.mmap		= lpass_platक्रमm_pcmops_mmap,
-	.pcm_स्थिरruct	= lpass_platक्रमm_pcm_new,
-	.pcm_deकाष्ठा	= lpass_platक्रमm_pcm_मुक्त,
-	.suspend		= lpass_platक्रमm_pcmops_suspend,
-	.resume			= lpass_platक्रमm_pcmops_resume,
+	.open		= lpass_platform_pcmops_open,
+	.close		= lpass_platform_pcmops_close,
+	.hw_params	= lpass_platform_pcmops_hw_params,
+	.hw_free	= lpass_platform_pcmops_hw_free,
+	.prepare	= lpass_platform_pcmops_prepare,
+	.trigger	= lpass_platform_pcmops_trigger,
+	.pointer	= lpass_platform_pcmops_pointer,
+	.mmap		= lpass_platform_pcmops_mmap,
+	.pcm_construct	= lpass_platform_pcm_new,
+	.pcm_destruct	= lpass_platform_pcm_free,
+	.suspend		= lpass_platform_pcmops_suspend,
+	.resume			= lpass_platform_pcmops_resume,
 
-पूर्ण;
+};
 
-पूर्णांक asoc_qcom_lpass_platक्रमm_रेजिस्टर(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा lpass_data *drvdata = platक्रमm_get_drvdata(pdev);
-	काष्ठा lpass_variant *v = drvdata->variant;
-	पूर्णांक ret;
+int asoc_qcom_lpass_platform_register(struct platform_device *pdev)
+{
+	struct lpass_data *drvdata = platform_get_drvdata(pdev);
+	struct lpass_variant *v = drvdata->variant;
+	int ret;
 
-	drvdata->lpaअगर_irq = platक्रमm_get_irq_byname(pdev, "lpass-irq-lpaif");
-	अगर (drvdata->lpaअगर_irq < 0)
-		वापस -ENODEV;
+	drvdata->lpaif_irq = platform_get_irq_byname(pdev, "lpass-irq-lpaif");
+	if (drvdata->lpaif_irq < 0)
+		return -ENODEV;
 
 	/* ensure audio hardware is disabled */
-	ret = regmap_ग_लिखो(drvdata->lpaअगर_map,
+	ret = regmap_write(drvdata->lpaif_map,
 			LPAIF_IRQEN_REG(v, LPAIF_IRQ_PORT_HOST), 0);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "error writing to irqen reg: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = devm_request_irq(&pdev->dev, drvdata->lpaअगर_irq,
-			lpass_platक्रमm_lpaअगर_irq, IRQF_TRIGGER_RISING,
+	ret = devm_request_irq(&pdev->dev, drvdata->lpaif_irq,
+			lpass_platform_lpaif_irq, IRQF_TRIGGER_RISING,
 			"lpass-irq-lpaif", drvdata);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "irq request failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = lpass_platक्रमm_alloc_dmactl_fields(&pdev->dev,
-						 drvdata->lpaअगर_map);
-	अगर (ret) अणु
+	ret = lpass_platform_alloc_dmactl_fields(&pdev->dev,
+						 drvdata->lpaif_map);
+	if (ret) {
 		dev_err(&pdev->dev,
 			"error initializing dmactl fields: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (drvdata->hdmi_port_enable) अणु
-		drvdata->hdmiअगर_irq = platक्रमm_get_irq_byname(pdev, "lpass-irq-hdmi");
-		अगर (drvdata->hdmiअगर_irq < 0)
-			वापस -ENODEV;
+	if (drvdata->hdmi_port_enable) {
+		drvdata->hdmiif_irq = platform_get_irq_byname(pdev, "lpass-irq-hdmi");
+		if (drvdata->hdmiif_irq < 0)
+			return -ENODEV;
 
-		ret = devm_request_irq(&pdev->dev, drvdata->hdmiअगर_irq,
-				lpass_platक्रमm_hdmiअगर_irq, 0, "lpass-irq-hdmi", drvdata);
-		अगर (ret) अणु
+		ret = devm_request_irq(&pdev->dev, drvdata->hdmiif_irq,
+				lpass_platform_hdmiif_irq, 0, "lpass-irq-hdmi", drvdata);
+		if (ret) {
 			dev_err(&pdev->dev, "irq hdmi request failed: %d\n", ret);
-			वापस ret;
-		पूर्ण
-		ret = regmap_ग_लिखो(drvdata->hdmiअगर_map,
+			return ret;
+		}
+		ret = regmap_write(drvdata->hdmiif_map,
 				LPASS_HDMITX_APP_IRQEN_REG(v), 0);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&pdev->dev, "error writing to hdmi irqen reg: %d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		ret = lpass_platक्रमm_alloc_hdmidmactl_fields(&pdev->dev,
-							 drvdata->hdmiअगर_map);
-		अगर (ret) अणु
+		ret = lpass_platform_alloc_hdmidmactl_fields(&pdev->dev,
+							 drvdata->hdmiif_map);
+		if (ret) {
 			dev_err(&pdev->dev,
 				"error initializing hdmidmactl fields: %d\n", ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
-	वापस devm_snd_soc_रेजिस्टर_component(&pdev->dev,
-			&lpass_component_driver, शून्य, 0);
-पूर्ण
-EXPORT_SYMBOL_GPL(asoc_qcom_lpass_platक्रमm_रेजिस्टर);
+			return ret;
+		}
+	}
+	return devm_snd_soc_register_component(&pdev->dev,
+			&lpass_component_driver, NULL, 0);
+}
+EXPORT_SYMBOL_GPL(asoc_qcom_lpass_platform_register);
 
 MODULE_DESCRIPTION("QTi LPASS Platform Driver");
 MODULE_LICENSE("GPL v2");

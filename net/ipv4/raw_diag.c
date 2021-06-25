@@ -1,264 +1,263 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/module.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/module.h>
 
-#समावेश <linux/inet_diag.h>
-#समावेश <linux/sock_diag.h>
+#include <linux/inet_diag.h>
+#include <linux/sock_diag.h>
 
-#समावेश <net/inet_sock.h>
-#समावेश <net/raw.h>
-#समावेश <net/rawv6.h>
+#include <net/inet_sock.h>
+#include <net/raw.h>
+#include <net/rawv6.h>
 
-#अगर_घोषित pr_fmt
+#ifdef pr_fmt
 # undef pr_fmt
-#पूर्ण_अगर
+#endif
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-अटल काष्ठा raw_hashinfo *
-raw_get_hashinfo(स्थिर काष्ठा inet_diag_req_v2 *r)
-अणु
-	अगर (r->sdiag_family == AF_INET) अणु
-		वापस &raw_v4_hashinfo;
-#अगर IS_ENABLED(CONFIG_IPV6)
-	पूर्ण अन्यथा अगर (r->sdiag_family == AF_INET6) अणु
-		वापस &raw_v6_hashinfo;
-#पूर्ण_अगर
-	पूर्ण अन्यथा अणु
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
-पूर्ण
+static struct raw_hashinfo *
+raw_get_hashinfo(const struct inet_diag_req_v2 *r)
+{
+	if (r->sdiag_family == AF_INET) {
+		return &raw_v4_hashinfo;
+#if IS_ENABLED(CONFIG_IPV6)
+	} else if (r->sdiag_family == AF_INET6) {
+		return &raw_v6_hashinfo;
+#endif
+	} else {
+		return ERR_PTR(-EINVAL);
+	}
+}
 
 /*
- * Due to requirement of not अवरोधing user API we can't simply
- * नाम @pad field in inet_diag_req_v2 काष्ठाure, instead
+ * Due to requirement of not breaking user API we can't simply
+ * rename @pad field in inet_diag_req_v2 structure, instead
  * use helper to figure it out.
  */
 
-अटल काष्ठा sock *raw_lookup(काष्ठा net *net, काष्ठा sock *from,
-			       स्थिर काष्ठा inet_diag_req_v2 *req)
-अणु
-	काष्ठा inet_diag_req_raw *r = (व्योम *)req;
-	काष्ठा sock *sk = शून्य;
+static struct sock *raw_lookup(struct net *net, struct sock *from,
+			       const struct inet_diag_req_v2 *req)
+{
+	struct inet_diag_req_raw *r = (void *)req;
+	struct sock *sk = NULL;
 
-	अगर (r->sdiag_family == AF_INET)
+	if (r->sdiag_family == AF_INET)
 		sk = __raw_v4_lookup(net, from, r->sdiag_raw_protocol,
 				     r->id.idiag_dst[0],
 				     r->id.idiag_src[0],
-				     r->id.idiag_अगर, 0);
-#अगर IS_ENABLED(CONFIG_IPV6)
-	अन्यथा
+				     r->id.idiag_if, 0);
+#if IS_ENABLED(CONFIG_IPV6)
+	else
 		sk = __raw_v6_lookup(net, from, r->sdiag_raw_protocol,
-				     (स्थिर काष्ठा in6_addr *)r->id.idiag_src,
-				     (स्थिर काष्ठा in6_addr *)r->id.idiag_dst,
-				     r->id.idiag_अगर, 0);
-#पूर्ण_अगर
-	वापस sk;
-पूर्ण
+				     (const struct in6_addr *)r->id.idiag_src,
+				     (const struct in6_addr *)r->id.idiag_dst,
+				     r->id.idiag_if, 0);
+#endif
+	return sk;
+}
 
-अटल काष्ठा sock *raw_sock_get(काष्ठा net *net, स्थिर काष्ठा inet_diag_req_v2 *r)
-अणु
-	काष्ठा raw_hashinfo *hashinfo = raw_get_hashinfo(r);
-	काष्ठा sock *sk = शून्य, *s;
-	पूर्णांक slot;
+static struct sock *raw_sock_get(struct net *net, const struct inet_diag_req_v2 *r)
+{
+	struct raw_hashinfo *hashinfo = raw_get_hashinfo(r);
+	struct sock *sk = NULL, *s;
+	int slot;
 
-	अगर (IS_ERR(hashinfo))
-		वापस ERR_CAST(hashinfo);
+	if (IS_ERR(hashinfo))
+		return ERR_CAST(hashinfo);
 
-	पढ़ो_lock(&hashinfo->lock);
-	क्रम (slot = 0; slot < RAW_HTABLE_SIZE; slot++) अणु
-		sk_क्रम_each(s, &hashinfo->ht[slot]) अणु
+	read_lock(&hashinfo->lock);
+	for (slot = 0; slot < RAW_HTABLE_SIZE; slot++) {
+		sk_for_each(s, &hashinfo->ht[slot]) {
 			sk = raw_lookup(net, s, r);
-			अगर (sk) अणु
+			if (sk) {
 				/*
 				 * Grab it and keep until we fill
 				 * diag meaage to be reported, so
 				 * caller should call sock_put then.
-				 * We can करो that because we're keeping
+				 * We can do that because we're keeping
 				 * hashinfo->lock here.
 				 */
 				sock_hold(sk);
-				जाओ out_unlock;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto out_unlock;
+			}
+		}
+	}
 out_unlock:
-	पढ़ो_unlock(&hashinfo->lock);
+	read_unlock(&hashinfo->lock);
 
-	वापस sk ? sk : ERR_PTR(-ENOENT);
-पूर्ण
+	return sk ? sk : ERR_PTR(-ENOENT);
+}
 
-अटल पूर्णांक raw_diag_dump_one(काष्ठा netlink_callback *cb,
-			     स्थिर काष्ठा inet_diag_req_v2 *r)
-अणु
-	काष्ठा sk_buff *in_skb = cb->skb;
-	काष्ठा sk_buff *rep;
-	काष्ठा sock *sk;
-	काष्ठा net *net;
-	पूर्णांक err;
+static int raw_diag_dump_one(struct netlink_callback *cb,
+			     const struct inet_diag_req_v2 *r)
+{
+	struct sk_buff *in_skb = cb->skb;
+	struct sk_buff *rep;
+	struct sock *sk;
+	struct net *net;
+	int err;
 
 	net = sock_net(in_skb->sk);
 	sk = raw_sock_get(net, r);
-	अगर (IS_ERR(sk))
-		वापस PTR_ERR(sk);
+	if (IS_ERR(sk))
+		return PTR_ERR(sk);
 
-	rep = nlmsg_new(nla_total_size(माप(काष्ठा inet_diag_msg)) +
+	rep = nlmsg_new(nla_total_size(sizeof(struct inet_diag_msg)) +
 			inet_diag_msg_attrs_size() +
-			nla_total_size(माप(काष्ठा inet_diag_meminfo)) + 64,
+			nla_total_size(sizeof(struct inet_diag_meminfo)) + 64,
 			GFP_KERNEL);
-	अगर (!rep) अणु
+	if (!rep) {
 		sock_put(sk);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	err = inet_sk_diag_fill(sk, शून्य, rep, cb, r, 0,
+	err = inet_sk_diag_fill(sk, NULL, rep, cb, r, 0,
 				netlink_net_capable(in_skb, CAP_NET_ADMIN));
 	sock_put(sk);
 
-	अगर (err < 0) अणु
-		kमुक्त_skb(rep);
-		वापस err;
-	पूर्ण
+	if (err < 0) {
+		kfree_skb(rep);
+		return err;
+	}
 
 	err = netlink_unicast(net->diag_nlsk, rep,
 			      NETLINK_CB(in_skb).portid,
 			      MSG_DONTWAIT);
-	अगर (err > 0)
+	if (err > 0)
 		err = 0;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sk_diag_dump(काष्ठा sock *sk, काष्ठा sk_buff *skb,
-			काष्ठा netlink_callback *cb,
-			स्थिर काष्ठा inet_diag_req_v2 *r,
-			काष्ठा nlattr *bc, bool net_admin)
-अणु
-	अगर (!inet_diag_bc_sk(bc, sk))
-		वापस 0;
+static int sk_diag_dump(struct sock *sk, struct sk_buff *skb,
+			struct netlink_callback *cb,
+			const struct inet_diag_req_v2 *r,
+			struct nlattr *bc, bool net_admin)
+{
+	if (!inet_diag_bc_sk(bc, sk))
+		return 0;
 
-	वापस inet_sk_diag_fill(sk, शून्य, skb, cb, r, NLM_F_MULTI, net_admin);
-पूर्ण
+	return inet_sk_diag_fill(sk, NULL, skb, cb, r, NLM_F_MULTI, net_admin);
+}
 
-अटल व्योम raw_diag_dump(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb,
-			  स्थिर काष्ठा inet_diag_req_v2 *r)
-अणु
+static void raw_diag_dump(struct sk_buff *skb, struct netlink_callback *cb,
+			  const struct inet_diag_req_v2 *r)
+{
 	bool net_admin = netlink_net_capable(cb->skb, CAP_NET_ADMIN);
-	काष्ठा raw_hashinfo *hashinfo = raw_get_hashinfo(r);
-	काष्ठा net *net = sock_net(skb->sk);
-	काष्ठा inet_diag_dump_data *cb_data;
-	पूर्णांक num, s_num, slot, s_slot;
-	काष्ठा sock *sk = शून्य;
-	काष्ठा nlattr *bc;
+	struct raw_hashinfo *hashinfo = raw_get_hashinfo(r);
+	struct net *net = sock_net(skb->sk);
+	struct inet_diag_dump_data *cb_data;
+	int num, s_num, slot, s_slot;
+	struct sock *sk = NULL;
+	struct nlattr *bc;
 
-	अगर (IS_ERR(hashinfo))
-		वापस;
+	if (IS_ERR(hashinfo))
+		return;
 
 	cb_data = cb->data;
 	bc = cb_data->inet_diag_nla_bc;
 	s_slot = cb->args[0];
 	num = s_num = cb->args[1];
 
-	पढ़ो_lock(&hashinfo->lock);
-	क्रम (slot = s_slot; slot < RAW_HTABLE_SIZE; s_num = 0, slot++) अणु
+	read_lock(&hashinfo->lock);
+	for (slot = s_slot; slot < RAW_HTABLE_SIZE; s_num = 0, slot++) {
 		num = 0;
 
-		sk_क्रम_each(sk, &hashinfo->ht[slot]) अणु
-			काष्ठा inet_sock *inet = inet_sk(sk);
+		sk_for_each(sk, &hashinfo->ht[slot]) {
+			struct inet_sock *inet = inet_sk(sk);
 
-			अगर (!net_eq(sock_net(sk), net))
-				जारी;
-			अगर (num < s_num)
-				जाओ next;
-			अगर (sk->sk_family != r->sdiag_family)
-				जाओ next;
-			अगर (r->id.idiag_sport != inet->inet_sport &&
+			if (!net_eq(sock_net(sk), net))
+				continue;
+			if (num < s_num)
+				goto next;
+			if (sk->sk_family != r->sdiag_family)
+				goto next;
+			if (r->id.idiag_sport != inet->inet_sport &&
 			    r->id.idiag_sport)
-				जाओ next;
-			अगर (r->id.idiag_dport != inet->inet_dport &&
+				goto next;
+			if (r->id.idiag_dport != inet->inet_dport &&
 			    r->id.idiag_dport)
-				जाओ next;
-			अगर (sk_diag_dump(sk, skb, cb, r, bc, net_admin) < 0)
-				जाओ out_unlock;
+				goto next;
+			if (sk_diag_dump(sk, skb, cb, r, bc, net_admin) < 0)
+				goto out_unlock;
 next:
 			num++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 out_unlock:
-	पढ़ो_unlock(&hashinfo->lock);
+	read_unlock(&hashinfo->lock);
 
 	cb->args[0] = slot;
 	cb->args[1] = num;
-पूर्ण
+}
 
-अटल व्योम raw_diag_get_info(काष्ठा sock *sk, काष्ठा inet_diag_msg *r,
-			      व्योम *info)
-अणु
+static void raw_diag_get_info(struct sock *sk, struct inet_diag_msg *r,
+			      void *info)
+{
 	r->idiag_rqueue = sk_rmem_alloc_get(sk);
 	r->idiag_wqueue = sk_wmem_alloc_get(sk);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_INET_DIAG_DESTROY
-अटल पूर्णांक raw_diag_destroy(काष्ठा sk_buff *in_skb,
-			    स्थिर काष्ठा inet_diag_req_v2 *r)
-अणु
-	काष्ठा net *net = sock_net(in_skb->sk);
-	काष्ठा sock *sk;
-	पूर्णांक err;
+#ifdef CONFIG_INET_DIAG_DESTROY
+static int raw_diag_destroy(struct sk_buff *in_skb,
+			    const struct inet_diag_req_v2 *r)
+{
+	struct net *net = sock_net(in_skb->sk);
+	struct sock *sk;
+	int err;
 
 	sk = raw_sock_get(net, r);
-	अगर (IS_ERR(sk))
-		वापस PTR_ERR(sk);
+	if (IS_ERR(sk))
+		return PTR_ERR(sk);
 	err = sock_diag_destroy(sk, ECONNABORTED);
 	sock_put(sk);
-	वापस err;
-पूर्ण
-#पूर्ण_अगर
+	return err;
+}
+#endif
 
-अटल स्थिर काष्ठा inet_diag_handler raw_diag_handler = अणु
+static const struct inet_diag_handler raw_diag_handler = {
 	.dump			= raw_diag_dump,
 	.dump_one		= raw_diag_dump_one,
 	.idiag_get_info		= raw_diag_get_info,
 	.idiag_type		= IPPROTO_RAW,
 	.idiag_info_size	= 0,
-#अगर_घोषित CONFIG_INET_DIAG_DESTROY
+#ifdef CONFIG_INET_DIAG_DESTROY
 	.destroy		= raw_diag_destroy,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल व्योम __always_unused __check_inet_diag_req_raw(व्योम)
-अणु
+static void __always_unused __check_inet_diag_req_raw(void)
+{
 	/*
-	 * Make sure the two काष्ठाures are identical,
+	 * Make sure the two structures are identical,
 	 * except the @pad field.
 	 */
-#घोषणा __offset_mismatch(m1, m2)			\
-	(दुरत्व(काष्ठा inet_diag_req_v2, m1) !=	\
-	 दुरत्व(काष्ठा inet_diag_req_raw, m2))
+#define __offset_mismatch(m1, m2)			\
+	(offsetof(struct inet_diag_req_v2, m1) !=	\
+	 offsetof(struct inet_diag_req_raw, m2))
 
-	BUILD_BUG_ON(माप(काष्ठा inet_diag_req_v2) !=
-		     माप(काष्ठा inet_diag_req_raw));
+	BUILD_BUG_ON(sizeof(struct inet_diag_req_v2) !=
+		     sizeof(struct inet_diag_req_raw));
 	BUILD_BUG_ON(__offset_mismatch(sdiag_family, sdiag_family));
 	BUILD_BUG_ON(__offset_mismatch(sdiag_protocol, sdiag_protocol));
 	BUILD_BUG_ON(__offset_mismatch(idiag_ext, idiag_ext));
 	BUILD_BUG_ON(__offset_mismatch(pad, sdiag_raw_protocol));
 	BUILD_BUG_ON(__offset_mismatch(idiag_states, idiag_states));
 	BUILD_BUG_ON(__offset_mismatch(id, id));
-#अघोषित __offset_mismatch
-पूर्ण
+#undef __offset_mismatch
+}
 
-अटल पूर्णांक __init raw_diag_init(व्योम)
-अणु
-	वापस inet_diag_रेजिस्टर(&raw_diag_handler);
-पूर्ण
+static int __init raw_diag_init(void)
+{
+	return inet_diag_register(&raw_diag_handler);
+}
 
-अटल व्योम __निकास raw_diag_निकास(व्योम)
-अणु
-	inet_diag_unरेजिस्टर(&raw_diag_handler);
-पूर्ण
+static void __exit raw_diag_exit(void)
+{
+	inet_diag_unregister(&raw_diag_handler);
+}
 
 module_init(raw_diag_init);
-module_निकास(raw_diag_निकास);
+module_exit(raw_diag_exit);
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_NET_PF_PROTO_TYPE(PF_NETLINK, NETLINK_SOCK_DIAG, 2-255 /* AF_INET - IPPROTO_RAW */);
 MODULE_ALIAS_NET_PF_PROTO_TYPE(PF_NETLINK, NETLINK_SOCK_DIAG, 10-255 /* AF_INET6 - IPPROTO_RAW */);

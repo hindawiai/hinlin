@@ -1,42 +1,41 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (C) 2014 Felix Fietkau <nbd@खोलोwrt.org>
+ * Copyright (C) 2014 Felix Fietkau <nbd@openwrt.org>
  * Copyright (C) 2015 Jakub Kicinski <kubakici@wp.pl>
  * Copyright (C) 2018 Stanislaw Gruszka <stf_xl@wp.pl>
  */
 
-#अगर_अघोषित __MT76X0U_EEPROM_H
-#घोषणा __MT76X0U_EEPROM_H
+#ifndef __MT76X0U_EEPROM_H
+#define __MT76X0U_EEPROM_H
 
-#समावेश "../mt76x02_eeprom.h"
+#include "../mt76x02_eeprom.h"
 
-काष्ठा mt76x02_dev;
+struct mt76x02_dev;
 
-#घोषणा MT76X0U_EE_MAX_VER		0x0c
-#घोषणा MT76X0_EEPROM_SIZE		512
+#define MT76X0U_EE_MAX_VER		0x0c
+#define MT76X0_EEPROM_SIZE		512
 
-पूर्णांक mt76x0_eeprom_init(काष्ठा mt76x02_dev *dev);
-व्योम mt76x0_पढ़ो_rx_gain(काष्ठा mt76x02_dev *dev);
-व्योम mt76x0_get_tx_घातer_per_rate(काष्ठा mt76x02_dev *dev,
-				  काष्ठा ieee80211_channel *chan,
-				  काष्ठा mt76_rate_घातer *t);
-व्योम mt76x0_get_घातer_info(काष्ठा mt76x02_dev *dev,
-			   काष्ठा ieee80211_channel *chan, s8 *tp);
+int mt76x0_eeprom_init(struct mt76x02_dev *dev);
+void mt76x0_read_rx_gain(struct mt76x02_dev *dev);
+void mt76x0_get_tx_power_per_rate(struct mt76x02_dev *dev,
+				  struct ieee80211_channel *chan,
+				  struct mt76_rate_power *t);
+void mt76x0_get_power_info(struct mt76x02_dev *dev,
+			   struct ieee80211_channel *chan, s8 *tp);
 
-अटल अंतरभूत s8 s6_to_s8(u32 val)
-अणु
+static inline s8 s6_to_s8(u32 val)
+{
 	s8 ret = val & GENMASK(5, 0);
 
-	अगर (ret & BIT(5))
+	if (ret & BIT(5))
 		ret -= BIT(6);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत bool mt76x0_tssi_enabled(काष्ठा mt76x02_dev *dev)
-अणु
-	वापस (mt76x02_eeprom_get(dev, MT_EE_NIC_CONF_1) &
+static inline bool mt76x0_tssi_enabled(struct mt76x02_dev *dev)
+{
+	return (mt76x02_eeprom_get(dev, MT_EE_NIC_CONF_1) &
 		MT_EE_NIC_CONF_1_TX_ALC_EN);
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif

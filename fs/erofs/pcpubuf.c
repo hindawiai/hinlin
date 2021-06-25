@@ -1,90 +1,89 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) Gao Xiang <xiang@kernel.org>
  *
  * For low-latency decompression algorithms (e.g. lz4), reserve consecutive
- * per-CPU भव memory (in pages) in advance to store such inplace I/O
- * data अगर inplace decompression is failed (due to unmet inplace margin क्रम
+ * per-CPU virtual memory (in pages) in advance to store such inplace I/O
+ * data if inplace decompression is failed (due to unmet inplace margin for
  * example).
  */
-#समावेश "internal.h"
+#include "internal.h"
 
-काष्ठा erofs_pcpubuf अणु
+struct erofs_pcpubuf {
 	raw_spinlock_t lock;
-	व्योम *ptr;
-	काष्ठा page **pages;
-	अचिन्हित पूर्णांक nrpages;
-पूर्ण;
+	void *ptr;
+	struct page **pages;
+	unsigned int nrpages;
+};
 
-अटल DEFINE_PER_CPU(काष्ठा erofs_pcpubuf, erofs_pcb);
+static DEFINE_PER_CPU(struct erofs_pcpubuf, erofs_pcb);
 
-व्योम *erofs_get_pcpubuf(अचिन्हित पूर्णांक requiredpages)
+void *erofs_get_pcpubuf(unsigned int requiredpages)
 	__acquires(pcb->lock)
-अणु
-	काष्ठा erofs_pcpubuf *pcb = &get_cpu_var(erofs_pcb);
+{
+	struct erofs_pcpubuf *pcb = &get_cpu_var(erofs_pcb);
 
 	raw_spin_lock(&pcb->lock);
-	/* check अगर the per-CPU buffer is too small */
-	अगर (requiredpages > pcb->nrpages) अणु
+	/* check if the per-CPU buffer is too small */
+	if (requiredpages > pcb->nrpages) {
 		raw_spin_unlock(&pcb->lock);
 		put_cpu_var(erofs_pcb);
-		/* (क्रम sparse checker) pretend pcb->lock is still taken */
+		/* (for sparse checker) pretend pcb->lock is still taken */
 		__acquire(pcb->lock);
-		वापस शून्य;
-	पूर्ण
-	वापस pcb->ptr;
-पूर्ण
+		return NULL;
+	}
+	return pcb->ptr;
+}
 
-व्योम erofs_put_pcpubuf(व्योम *ptr) __releases(pcb->lock)
-अणु
-	काष्ठा erofs_pcpubuf *pcb = &per_cpu(erofs_pcb, smp_processor_id());
+void erofs_put_pcpubuf(void *ptr) __releases(pcb->lock)
+{
+	struct erofs_pcpubuf *pcb = &per_cpu(erofs_pcb, smp_processor_id());
 
 	DBG_BUGON(pcb->ptr != ptr);
 	raw_spin_unlock(&pcb->lock);
 	put_cpu_var(erofs_pcb);
-पूर्ण
+}
 
 /* the next step: support per-CPU page buffers hotplug */
-पूर्णांक erofs_pcpubuf_growsize(अचिन्हित पूर्णांक nrpages)
-अणु
-	अटल DEFINE_MUTEX(pcb_resize_mutex);
-	अटल अचिन्हित पूर्णांक pcb_nrpages;
+int erofs_pcpubuf_growsize(unsigned int nrpages)
+{
+	static DEFINE_MUTEX(pcb_resize_mutex);
+	static unsigned int pcb_nrpages;
 	LIST_HEAD(pagepool);
-	पूर्णांक delta, cpu, ret, i;
+	int delta, cpu, ret, i;
 
 	mutex_lock(&pcb_resize_mutex);
 	delta = nrpages - pcb_nrpages;
 	ret = 0;
-	/* aव्योम shrinking pcpubuf, since no idea how many fses rely on */
-	अगर (delta <= 0)
-		जाओ out;
+	/* avoid shrinking pcpubuf, since no idea how many fses rely on */
+	if (delta <= 0)
+		goto out;
 
-	क्रम_each_possible_cpu(cpu) अणु
-		काष्ठा erofs_pcpubuf *pcb = &per_cpu(erofs_pcb, cpu);
-		काष्ठा page **pages, **oldpages;
-		व्योम *ptr, *old_ptr;
+	for_each_possible_cpu(cpu) {
+		struct erofs_pcpubuf *pcb = &per_cpu(erofs_pcb, cpu);
+		struct page **pages, **oldpages;
+		void *ptr, *old_ptr;
 
-		pages = kदो_स्मृति_array(nrpages, माप(*pages), GFP_KERNEL);
-		अगर (!pages) अणु
+		pages = kmalloc_array(nrpages, sizeof(*pages), GFP_KERNEL);
+		if (!pages) {
 			ret = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		क्रम (i = 0; i < nrpages; ++i) अणु
+		for (i = 0; i < nrpages; ++i) {
 			pages[i] = erofs_allocpage(&pagepool, GFP_KERNEL);
-			अगर (!pages[i]) अणु
+			if (!pages[i]) {
 				ret = -ENOMEM;
 				oldpages = pages;
-				जाओ मुक्त_pagearray;
-			पूर्ण
-		पूर्ण
+				goto free_pagearray;
+			}
+		}
 		ptr = vmap(pages, nrpages, VM_MAP, PAGE_KERNEL);
-		अगर (!ptr) अणु
+		if (!ptr) {
 			ret = -ENOMEM;
 			oldpages = pages;
-			जाओ मुक्त_pagearray;
-		पूर्ण
+			goto free_pagearray;
+		}
 		raw_spin_lock(&pcb->lock);
 		old_ptr = pcb->ptr;
 		pcb->ptr = ptr;
@@ -94,56 +93,56 @@
 		pcb->nrpages = nrpages;
 		raw_spin_unlock(&pcb->lock);
 
-		अगर (!oldpages) अणु
+		if (!oldpages) {
 			DBG_BUGON(old_ptr);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (old_ptr)
+		if (old_ptr)
 			vunmap(old_ptr);
-मुक्त_pagearray:
-		जबतक (i)
+free_pagearray:
+		while (i)
 			list_add(&oldpages[--i]->lru, &pagepool);
-		kमुक्त(oldpages);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+		kfree(oldpages);
+		if (ret)
+			break;
+	}
 	pcb_nrpages = nrpages;
 	put_pages_list(&pagepool);
 out:
 	mutex_unlock(&pcb_resize_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम erofs_pcpubuf_init(व्योम)
-अणु
-	पूर्णांक cpu;
+void erofs_pcpubuf_init(void)
+{
+	int cpu;
 
-	क्रम_each_possible_cpu(cpu) अणु
-		काष्ठा erofs_pcpubuf *pcb = &per_cpu(erofs_pcb, cpu);
+	for_each_possible_cpu(cpu) {
+		struct erofs_pcpubuf *pcb = &per_cpu(erofs_pcb, cpu);
 
 		raw_spin_lock_init(&pcb->lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम erofs_pcpubuf_निकास(व्योम)
-अणु
-	पूर्णांक cpu, i;
+void erofs_pcpubuf_exit(void)
+{
+	int cpu, i;
 
-	क्रम_each_possible_cpu(cpu) अणु
-		काष्ठा erofs_pcpubuf *pcb = &per_cpu(erofs_pcb, cpu);
+	for_each_possible_cpu(cpu) {
+		struct erofs_pcpubuf *pcb = &per_cpu(erofs_pcb, cpu);
 
-		अगर (pcb->ptr) अणु
+		if (pcb->ptr) {
 			vunmap(pcb->ptr);
-			pcb->ptr = शून्य;
-		पूर्ण
-		अगर (!pcb->pages)
-			जारी;
+			pcb->ptr = NULL;
+		}
+		if (!pcb->pages)
+			continue;
 
-		क्रम (i = 0; i < pcb->nrpages; ++i)
-			अगर (pcb->pages[i])
+		for (i = 0; i < pcb->nrpages; ++i)
+			if (pcb->pages[i])
 				put_page(pcb->pages[i]);
-		kमुक्त(pcb->pages);
-		pcb->pages = शून्य;
-	पूर्ण
-पूर्ण
+		kfree(pcb->pages);
+		pcb->pages = NULL;
+	}
+}

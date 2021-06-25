@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,75 +19,75 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#समावेश "head.h"
-#समावेश "core.h"
+#include "head.h"
+#include "core.h"
 
-#समावेश "nvif/push.h"
-#समावेश <nvअगर/push507c.h>
+#include "nvif/push.h"
+#include <nvif/push507c.h>
 
-#समावेश <nvhw/class/cl917d.h>
+#include <nvhw/class/cl917d.h>
 
-अटल पूर्णांक
-head917d_dither(काष्ठा nv50_head *head, काष्ठा nv50_head_atom *asyh)
-अणु
-	काष्ठा nvअगर_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
-	स्थिर पूर्णांक i = head->base.index;
-	पूर्णांक ret;
+static int
+head917d_dither(struct nv50_head *head, struct nv50_head_atom *asyh)
+{
+	struct nvif_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
+	const int i = head->base.index;
+	int ret;
 
-	अगर ((ret = PUSH_WAIT(push, 2)))
-		वापस ret;
+	if ((ret = PUSH_WAIT(push, 2)))
+		return ret;
 
 	PUSH_MTHD(push, NV917D, HEAD_SET_DITHER_CONTROL(i),
 		  NVVAL(NV917D, HEAD_SET_DITHER_CONTROL, ENABLE, asyh->dither.enable) |
 		  NVVAL(NV917D, HEAD_SET_DITHER_CONTROL, BITS, asyh->dither.bits) |
 		  NVVAL(NV917D, HEAD_SET_DITHER_CONTROL, MODE, asyh->dither.mode) |
 		  NVVAL(NV917D, HEAD_SET_DITHER_CONTROL, PHASE, 0));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-head917d_base(काष्ठा nv50_head *head, काष्ठा nv50_head_atom *asyh)
-अणु
-	काष्ठा nvअगर_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
-	स्थिर पूर्णांक i = head->base.index;
+static int
+head917d_base(struct nv50_head *head, struct nv50_head_atom *asyh)
+{
+	struct nvif_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
+	const int i = head->base.index;
 	u32 bounds = 0;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (asyh->base.cpp) अणु
-		चयन (asyh->base.cpp) अणु
-		हाल 8: bounds |= NVDEF(NV917D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS, PIXEL_DEPTH, BPP_64); अवरोध;
-		हाल 4: bounds |= NVDEF(NV917D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS, PIXEL_DEPTH, BPP_32); अवरोध;
-		हाल 2: bounds |= NVDEF(NV917D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS, PIXEL_DEPTH, BPP_16); अवरोध;
-		हाल 1: bounds |= NVDEF(NV917D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS, PIXEL_DEPTH, BPP_8); अवरोध;
-		शेष:
+	if (asyh->base.cpp) {
+		switch (asyh->base.cpp) {
+		case 8: bounds |= NVDEF(NV917D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS, PIXEL_DEPTH, BPP_64); break;
+		case 4: bounds |= NVDEF(NV917D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS, PIXEL_DEPTH, BPP_32); break;
+		case 2: bounds |= NVDEF(NV917D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS, PIXEL_DEPTH, BPP_16); break;
+		case 1: bounds |= NVDEF(NV917D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS, PIXEL_DEPTH, BPP_8); break;
+		default:
 			WARN_ON(1);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		bounds |= NVDEF(NV917D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS, USABLE, TRUE);
 		bounds |= NVDEF(NV917D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS, BASE_LUT, USAGE_1025);
-	पूर्ण
+	}
 
-	अगर ((ret = PUSH_WAIT(push, 2)))
-		वापस ret;
+	if ((ret = PUSH_WAIT(push, 2)))
+		return ret;
 
 	PUSH_MTHD(push, NV917D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS(i), bounds);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-head917d_curs_set(काष्ठा nv50_head *head, काष्ठा nv50_head_atom *asyh)
-अणु
-	काष्ठा nvअगर_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
-	स्थिर पूर्णांक i = head->base.index;
-	पूर्णांक ret;
+static int
+head917d_curs_set(struct nv50_head *head, struct nv50_head_atom *asyh)
+{
+	struct nvif_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
+	const int i = head->base.index;
+	int ret;
 
 	ret = PUSH_WAIT(push, 5);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	PUSH_MTHD(push, NV917D, HEAD_SET_CONTROL_CURSOR(i),
 		  NVDEF(NV917D, HEAD_SET_CONTROL_CURSOR, ENABLE, ENABLE) |
-		  NVVAL(NV917D, HEAD_SET_CONTROL_CURSOR, FORMAT, asyh->curs.क्रमmat) |
+		  NVVAL(NV917D, HEAD_SET_CONTROL_CURSOR, FORMAT, asyh->curs.format) |
 		  NVVAL(NV917D, HEAD_SET_CONTROL_CURSOR, SIZE, asyh->curs.layout) |
 		  NVVAL(NV917D, HEAD_SET_CONTROL_CURSOR, HOT_SPOT_X, 0) |
 		  NVVAL(NV917D, HEAD_SET_CONTROL_CURSOR, HOT_SPOT_Y, 0) |
@@ -97,26 +96,26 @@ head917d_curs_set(काष्ठा nv50_head *head, काष्ठा nv50_he
 				HEAD_SET_OFFSET_CURSOR(i), asyh->curs.offset >> 8);
 
 	PUSH_MTHD(push, NV917D, HEAD_SET_CONTEXT_DMA_CURSOR(i), asyh->curs.handle);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-head917d_curs_layout(काष्ठा nv50_head *head, काष्ठा nv50_wndw_atom *asyw,
-		     काष्ठा nv50_head_atom *asyh)
-अणु
-	चयन (asyw->state.fb->width) अणु
-	हाल  32: asyh->curs.layout = NV917D_HEAD_SET_CONTROL_CURSOR_SIZE_W32_H32; अवरोध;
-	हाल  64: asyh->curs.layout = NV917D_HEAD_SET_CONTROL_CURSOR_SIZE_W64_H64; अवरोध;
-	हाल 128: asyh->curs.layout = NV917D_HEAD_SET_CONTROL_CURSOR_SIZE_W128_H128; अवरोध;
-	हाल 256: asyh->curs.layout = NV917D_HEAD_SET_CONTROL_CURSOR_SIZE_W256_H256; अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+int
+head917d_curs_layout(struct nv50_head *head, struct nv50_wndw_atom *asyw,
+		     struct nv50_head_atom *asyh)
+{
+	switch (asyw->state.fb->width) {
+	case  32: asyh->curs.layout = NV917D_HEAD_SET_CONTROL_CURSOR_SIZE_W32_H32; break;
+	case  64: asyh->curs.layout = NV917D_HEAD_SET_CONTROL_CURSOR_SIZE_W64_H64; break;
+	case 128: asyh->curs.layout = NV917D_HEAD_SET_CONTROL_CURSOR_SIZE_W128_H128; break;
+	case 256: asyh->curs.layout = NV917D_HEAD_SET_CONTROL_CURSOR_SIZE_W256_H256; break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-स्थिर काष्ठा nv50_head_func
-head917d = अणु
+const struct nv50_head_func
+head917d = {
 	.view = head907d_view,
 	.mode = head907d_mode,
 	.olut = head907d_olut,
@@ -127,7 +126,7 @@ head917d = अणु
 	.core_set = head907d_core_set,
 	.core_clr = head907d_core_clr,
 	.curs_layout = head917d_curs_layout,
-	.curs_क्रमmat = head507d_curs_क्रमmat,
+	.curs_format = head507d_curs_format,
 	.curs_set = head917d_curs_set,
 	.curs_clr = head907d_curs_clr,
 	.base = head917d_base,
@@ -135,4 +134,4 @@ head917d = अणु
 	.dither = head917d_dither,
 	.procamp = head907d_procamp,
 	.or = head907d_or,
-पूर्ण;
+};

@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * TI Multiplexer Clock
  *
@@ -6,141 +5,141 @@
  *
  * Tero Kristo <t-kristo@ti.com>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/err.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/clk/ti.h>
-#समावेश "clock.h"
+#include <linux/clk-provider.h>
+#include <linux/slab.h>
+#include <linux/err.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/clk/ti.h>
+#include "clock.h"
 
-#अघोषित pr_fmt
-#घोषणा pr_fmt(fmt) "%s: " fmt, __func__
+#undef pr_fmt
+#define pr_fmt(fmt) "%s: " fmt, __func__
 
-अटल u8 ti_clk_mux_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_omap_mux *mux = to_clk_omap_mux(hw);
-	पूर्णांक num_parents = clk_hw_get_num_parents(hw);
+static u8 ti_clk_mux_get_parent(struct clk_hw *hw)
+{
+	struct clk_omap_mux *mux = to_clk_omap_mux(hw);
+	int num_parents = clk_hw_get_num_parents(hw);
 	u32 val;
 
 	/*
-	 * FIXME need a mux-specअगरic flag to determine अगर val is bitwise or
+	 * FIXME need a mux-specific flag to determine if val is bitwise or
 	 * numeric. e.g. sys_clkin_ck's clksel field is 3 bits wide, but ranges
 	 * from 0x1 to 0x7 (index starts at one)
-	 * OTOH, pmd_trace_clk_mux_ck uses a separate bit क्रम each घड़ी, so
+	 * OTOH, pmd_trace_clk_mux_ck uses a separate bit for each clock, so
 	 * val = 0x4 really means "bit 2, index starts at bit 0"
 	 */
-	val = ti_clk_ll_ops->clk_पढ़ोl(&mux->reg) >> mux->shअगरt;
+	val = ti_clk_ll_ops->clk_readl(&mux->reg) >> mux->shift;
 	val &= mux->mask;
 
-	अगर (mux->table) अणु
-		पूर्णांक i;
+	if (mux->table) {
+		int i;
 
-		क्रम (i = 0; i < num_parents; i++)
-			अगर (mux->table[i] == val)
-				वापस i;
-		वापस -EINVAL;
-	पूर्ण
+		for (i = 0; i < num_parents; i++)
+			if (mux->table[i] == val)
+				return i;
+		return -EINVAL;
+	}
 
-	अगर (val && (mux->flags & CLK_MUX_INDEX_BIT))
+	if (val && (mux->flags & CLK_MUX_INDEX_BIT))
 		val = ffs(val) - 1;
 
-	अगर (val && (mux->flags & CLK_MUX_INDEX_ONE))
+	if (val && (mux->flags & CLK_MUX_INDEX_ONE))
 		val--;
 
-	अगर (val >= num_parents)
-		वापस -EINVAL;
+	if (val >= num_parents)
+		return -EINVAL;
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल पूर्णांक ti_clk_mux_set_parent(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा clk_omap_mux *mux = to_clk_omap_mux(hw);
+static int ti_clk_mux_set_parent(struct clk_hw *hw, u8 index)
+{
+	struct clk_omap_mux *mux = to_clk_omap_mux(hw);
 	u32 val;
 
-	अगर (mux->table) अणु
+	if (mux->table) {
 		index = mux->table[index];
-	पूर्ण अन्यथा अणु
-		अगर (mux->flags & CLK_MUX_INDEX_BIT)
+	} else {
+		if (mux->flags & CLK_MUX_INDEX_BIT)
 			index = (1 << ffs(index));
 
-		अगर (mux->flags & CLK_MUX_INDEX_ONE)
+		if (mux->flags & CLK_MUX_INDEX_ONE)
 			index++;
-	पूर्ण
+	}
 
-	अगर (mux->flags & CLK_MUX_HIWORD_MASK) अणु
-		val = mux->mask << (mux->shअगरt + 16);
-	पूर्ण अन्यथा अणु
-		val = ti_clk_ll_ops->clk_पढ़ोl(&mux->reg);
-		val &= ~(mux->mask << mux->shअगरt);
-	पूर्ण
-	val |= index << mux->shअगरt;
-	ti_clk_ll_ops->clk_ग_लिखोl(val, &mux->reg);
+	if (mux->flags & CLK_MUX_HIWORD_MASK) {
+		val = mux->mask << (mux->shift + 16);
+	} else {
+		val = ti_clk_ll_ops->clk_readl(&mux->reg);
+		val &= ~(mux->mask << mux->shift);
+	}
+	val |= index << mux->shift;
+	ti_clk_ll_ops->clk_writel(val, &mux->reg);
 	ti_clk_latch(&mux->reg, mux->latch);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * clk_mux_save_context - Save the parent selcted in the mux
- * @hw: poपूर्णांकer  काष्ठा clk_hw
+ * @hw: pointer  struct clk_hw
  *
  * Save the parent mux value.
  */
-अटल पूर्णांक clk_mux_save_context(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_omap_mux *mux = to_clk_omap_mux(hw);
+static int clk_mux_save_context(struct clk_hw *hw)
+{
+	struct clk_omap_mux *mux = to_clk_omap_mux(hw);
 
 	mux->saved_parent = ti_clk_mux_get_parent(hw);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * clk_mux_restore_context - Restore the parent in the mux
- * @hw: poपूर्णांकer  काष्ठा clk_hw
+ * @hw: pointer  struct clk_hw
  *
  * Restore the saved parent mux value.
  */
-अटल व्योम clk_mux_restore_context(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_omap_mux *mux = to_clk_omap_mux(hw);
+static void clk_mux_restore_context(struct clk_hw *hw)
+{
+	struct clk_omap_mux *mux = to_clk_omap_mux(hw);
 
 	ti_clk_mux_set_parent(hw, mux->saved_parent);
-पूर्ण
+}
 
-स्थिर काष्ठा clk_ops ti_clk_mux_ops = अणु
+const struct clk_ops ti_clk_mux_ops = {
 	.get_parent = ti_clk_mux_get_parent,
 	.set_parent = ti_clk_mux_set_parent,
 	.determine_rate = __clk_mux_determine_rate,
 	.save_context = clk_mux_save_context,
 	.restore_context = clk_mux_restore_context,
-पूर्ण;
+};
 
-अटल काष्ठा clk *_रेजिस्टर_mux(काष्ठा device *dev, स्थिर अक्षर *name,
-				 स्थिर अक्षर * स्थिर *parent_names,
-				 u8 num_parents, अचिन्हित दीर्घ flags,
-				 काष्ठा clk_omap_reg *reg, u8 shअगरt, u32 mask,
+static struct clk *_register_mux(struct device *dev, const char *name,
+				 const char * const *parent_names,
+				 u8 num_parents, unsigned long flags,
+				 struct clk_omap_reg *reg, u8 shift, u32 mask,
 				 s8 latch, u8 clk_mux_flags, u32 *table)
-अणु
-	काष्ठा clk_omap_mux *mux;
-	काष्ठा clk *clk;
-	काष्ठा clk_init_data init;
+{
+	struct clk_omap_mux *mux;
+	struct clk *clk;
+	struct clk_init_data init;
 
 	/* allocate the mux */
-	mux = kzalloc(माप(*mux), GFP_KERNEL);
-	अगर (!mux)
-		वापस ERR_PTR(-ENOMEM);
+	mux = kzalloc(sizeof(*mux), GFP_KERNEL);
+	if (!mux)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &ti_clk_mux_ops;
@@ -148,103 +147,103 @@
 	init.parent_names = parent_names;
 	init.num_parents = num_parents;
 
-	/* काष्ठा clk_mux assignments */
-	स_नकल(&mux->reg, reg, माप(*reg));
-	mux->shअगरt = shअगरt;
+	/* struct clk_mux assignments */
+	memcpy(&mux->reg, reg, sizeof(*reg));
+	mux->shift = shift;
 	mux->mask = mask;
 	mux->latch = latch;
 	mux->flags = clk_mux_flags;
 	mux->table = table;
 	mux->hw.init = &init;
 
-	clk = ti_clk_रेजिस्टर(dev, &mux->hw, name);
+	clk = ti_clk_register(dev, &mux->hw, name);
 
-	अगर (IS_ERR(clk))
-		kमुक्त(mux);
+	if (IS_ERR(clk))
+		kfree(mux);
 
-	वापस clk;
-पूर्ण
+	return clk;
+}
 
 /**
- * of_mux_clk_setup - Setup function क्रम simple mux rate घड़ी
- * @node: DT node क्रम the घड़ी
+ * of_mux_clk_setup - Setup function for simple mux rate clock
+ * @node: DT node for the clock
  *
- * Sets up a basic घड़ी multiplexer.
+ * Sets up a basic clock multiplexer.
  */
-अटल व्योम of_mux_clk_setup(काष्ठा device_node *node)
-अणु
-	काष्ठा clk *clk;
-	काष्ठा clk_omap_reg reg;
-	अचिन्हित पूर्णांक num_parents;
-	स्थिर अक्षर **parent_names;
+static void of_mux_clk_setup(struct device_node *node)
+{
+	struct clk *clk;
+	struct clk_omap_reg reg;
+	unsigned int num_parents;
+	const char **parent_names;
 	u8 clk_mux_flags = 0;
 	u32 mask = 0;
-	u32 shअगरt = 0;
+	u32 shift = 0;
 	s32 latch = -EINVAL;
 	u32 flags = CLK_SET_RATE_NO_REPARENT;
 
 	num_parents = of_clk_get_parent_count(node);
-	अगर (num_parents < 2) अणु
+	if (num_parents < 2) {
 		pr_err("mux-clock %pOFn must have parents\n", node);
-		वापस;
-	पूर्ण
-	parent_names = kzalloc((माप(अक्षर *) * num_parents), GFP_KERNEL);
-	अगर (!parent_names)
-		जाओ cleanup;
+		return;
+	}
+	parent_names = kzalloc((sizeof(char *) * num_parents), GFP_KERNEL);
+	if (!parent_names)
+		goto cleanup;
 
 	of_clk_parent_fill(node, parent_names, num_parents);
 
-	अगर (ti_clk_get_reg_addr(node, 0, &reg))
-		जाओ cleanup;
+	if (ti_clk_get_reg_addr(node, 0, &reg))
+		goto cleanup;
 
-	of_property_पढ़ो_u32(node, "ti,bit-shift", &shअगरt);
+	of_property_read_u32(node, "ti,bit-shift", &shift);
 
-	of_property_पढ़ो_u32(node, "ti,latch-bit", &latch);
+	of_property_read_u32(node, "ti,latch-bit", &latch);
 
-	अगर (of_property_पढ़ो_bool(node, "ti,index-starts-at-one"))
+	if (of_property_read_bool(node, "ti,index-starts-at-one"))
 		clk_mux_flags |= CLK_MUX_INDEX_ONE;
 
-	अगर (of_property_पढ़ो_bool(node, "ti,set-rate-parent"))
+	if (of_property_read_bool(node, "ti,set-rate-parent"))
 		flags |= CLK_SET_RATE_PARENT;
 
 	/* Generate bit-mask based on parent info */
 	mask = num_parents;
-	अगर (!(clk_mux_flags & CLK_MUX_INDEX_ONE))
+	if (!(clk_mux_flags & CLK_MUX_INDEX_ONE))
 		mask--;
 
 	mask = (1 << fls(mask)) - 1;
 
-	clk = _रेजिस्टर_mux(शून्य, node->name, parent_names, num_parents,
-			    flags, &reg, shअगरt, mask, latch, clk_mux_flags,
-			    शून्य);
+	clk = _register_mux(NULL, node->name, parent_names, num_parents,
+			    flags, &reg, shift, mask, latch, clk_mux_flags,
+			    NULL);
 
-	अगर (!IS_ERR(clk))
+	if (!IS_ERR(clk))
 		of_clk_add_provider(node, of_clk_src_simple_get, clk);
 
 cleanup:
-	kमुक्त(parent_names);
-पूर्ण
+	kfree(parent_names);
+}
 CLK_OF_DECLARE(mux_clk, "ti,mux-clock", of_mux_clk_setup);
 
-काष्ठा clk_hw *ti_clk_build_component_mux(काष्ठा ti_clk_mux *setup)
-अणु
-	काष्ठा clk_omap_mux *mux;
-	पूर्णांक num_parents;
+struct clk_hw *ti_clk_build_component_mux(struct ti_clk_mux *setup)
+{
+	struct clk_omap_mux *mux;
+	int num_parents;
 
-	अगर (!setup)
-		वापस शून्य;
+	if (!setup)
+		return NULL;
 
-	mux = kzalloc(माप(*mux), GFP_KERNEL);
-	अगर (!mux)
-		वापस ERR_PTR(-ENOMEM);
+	mux = kzalloc(sizeof(*mux), GFP_KERNEL);
+	if (!mux)
+		return ERR_PTR(-ENOMEM);
 
-	mux->shअगरt = setup->bit_shअगरt;
+	mux->shift = setup->bit_shift;
 	mux->latch = -EINVAL;
 
 	mux->reg.index = setup->module;
 	mux->reg.offset = setup->reg;
 
-	अगर (setup->flags & CLKF_INDEX_STARTS_AT_ONE)
+	if (setup->flags & CLKF_INDEX_STARTS_AT_ONE)
 		mux->flags |= CLK_MUX_INDEX_ONE;
 
 	num_parents = setup->num_parents;
@@ -252,43 +251,43 @@ CLK_OF_DECLARE(mux_clk, "ti,mux-clock", of_mux_clk_setup);
 	mux->mask = num_parents - 1;
 	mux->mask = (1 << fls(mux->mask)) - 1;
 
-	वापस &mux->hw;
-पूर्ण
+	return &mux->hw;
+}
 
-अटल व्योम __init of_ti_composite_mux_clk_setup(काष्ठा device_node *node)
-अणु
-	काष्ठा clk_omap_mux *mux;
-	अचिन्हित पूर्णांक num_parents;
+static void __init of_ti_composite_mux_clk_setup(struct device_node *node)
+{
+	struct clk_omap_mux *mux;
+	unsigned int num_parents;
 	u32 val;
 
-	mux = kzalloc(माप(*mux), GFP_KERNEL);
-	अगर (!mux)
-		वापस;
+	mux = kzalloc(sizeof(*mux), GFP_KERNEL);
+	if (!mux)
+		return;
 
-	अगर (ti_clk_get_reg_addr(node, 0, &mux->reg))
-		जाओ cleanup;
+	if (ti_clk_get_reg_addr(node, 0, &mux->reg))
+		goto cleanup;
 
-	अगर (!of_property_पढ़ो_u32(node, "ti,bit-shift", &val))
-		mux->shअगरt = val;
+	if (!of_property_read_u32(node, "ti,bit-shift", &val))
+		mux->shift = val;
 
-	अगर (of_property_पढ़ो_bool(node, "ti,index-starts-at-one"))
+	if (of_property_read_bool(node, "ti,index-starts-at-one"))
 		mux->flags |= CLK_MUX_INDEX_ONE;
 
 	num_parents = of_clk_get_parent_count(node);
 
-	अगर (num_parents < 2) अणु
+	if (num_parents < 2) {
 		pr_err("%pOFn must have parents\n", node);
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	mux->mask = num_parents - 1;
 	mux->mask = (1 << fls(mux->mask)) - 1;
 
-	अगर (!ti_clk_add_component(node, &mux->hw, CLK_COMPONENT_TYPE_MUX))
-		वापस;
+	if (!ti_clk_add_component(node, &mux->hw, CLK_COMPONENT_TYPE_MUX))
+		return;
 
 cleanup:
-	kमुक्त(mux);
-पूर्ण
+	kfree(mux);
+}
 CLK_OF_DECLARE(ti_composite_mux_clk_setup, "ti,composite-mux-clock",
 	       of_ti_composite_mux_clk_setup);

@@ -1,47 +1,46 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- *  Copyright (C) 2003 Aurelien Alleaume <slts@मुक्त.fr>
+ *  Copyright (C) 2003 Aurelien Alleaume <slts@free.fr>
  */
 
-#अगर !defined(_OID_MGT_H)
-#घोषणा _OID_MGT_H
+#if !defined(_OID_MGT_H)
+#define _OID_MGT_H
 
-#समावेश "isl_oid.h"
-#समावेश "islpci_dev.h"
+#include "isl_oid.h"
+#include "islpci_dev.h"
 
-बाह्य काष्ठा oid_t isl_oid[];
+extern struct oid_t isl_oid[];
 
-पूर्णांक mgt_init(islpci_निजी *);
+int mgt_init(islpci_private *);
 
-व्योम mgt_clean(islpci_निजी *);
+void mgt_clean(islpci_private *);
 
-/* I करोn't know where to put these 2 */
-बाह्य स्थिर पूर्णांक frequency_list_a[];
-पूर्णांक channel_of_freq(पूर्णांक);
+/* I don't know where to put these 2 */
+extern const int frequency_list_a[];
+int channel_of_freq(int);
 
-व्योम mgt_le_to_cpu(पूर्णांक, व्योम *);
+void mgt_le_to_cpu(int, void *);
 
-पूर्णांक mgt_set_request(islpci_निजी *, क्रमागत oid_num_t, पूर्णांक, व्योम *);
-पूर्णांक mgt_set_varlen(islpci_निजी *, क्रमागत oid_num_t, व्योम *, पूर्णांक);
+int mgt_set_request(islpci_private *, enum oid_num_t, int, void *);
+int mgt_set_varlen(islpci_private *, enum oid_num_t, void *, int);
 
 
-पूर्णांक mgt_get_request(islpci_निजी *, क्रमागत oid_num_t, पूर्णांक, व्योम *,
-		    जोड़ oid_res_t *);
+int mgt_get_request(islpci_private *, enum oid_num_t, int, void *,
+		    union oid_res_t *);
 
-पूर्णांक mgt_commit_list(islpci_निजी *, क्रमागत oid_num_t *, पूर्णांक);
+int mgt_commit_list(islpci_private *, enum oid_num_t *, int);
 
-व्योम mgt_set(islpci_निजी *, क्रमागत oid_num_t, व्योम *);
+void mgt_set(islpci_private *, enum oid_num_t, void *);
 
-व्योम mgt_get(islpci_निजी *, क्रमागत oid_num_t, व्योम *);
+void mgt_get(islpci_private *, enum oid_num_t, void *);
 
-पूर्णांक mgt_commit(islpci_निजी *);
+int mgt_commit(islpci_private *);
 
-पूर्णांक mgt_mlme_answer(islpci_निजी *);
+int mgt_mlme_answer(islpci_private *);
 
-क्रमागत oid_num_t mgt_oidtonum(u32 oid);
+enum oid_num_t mgt_oidtonum(u32 oid);
 
-पूर्णांक mgt_response_to_str(क्रमागत oid_num_t, जोड़ oid_res_t *, अक्षर *);
+int mgt_response_to_str(enum oid_num_t, union oid_res_t *, char *);
 
-#पूर्ण_अगर				/* !defined(_OID_MGT_H) */
-/* खातापूर्ण */
+#endif				/* !defined(_OID_MGT_H) */
+/* EOF */

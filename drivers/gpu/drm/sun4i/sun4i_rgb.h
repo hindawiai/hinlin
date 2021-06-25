@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2015 Free Electrons
  * Copyright (C) 2015 NextThing Co
  *
- * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
+ * Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
-#अगर_अघोषित _SUN4I_RGB_H_
-#घोषणा _SUN4I_RGB_H_
+#ifndef _SUN4I_RGB_H_
+#define _SUN4I_RGB_H_
 
-पूर्णांक sun4i_rgb_init(काष्ठा drm_device *drm, काष्ठा sun4i_tcon *tcon);
+int sun4i_rgb_init(struct drm_device *drm, struct sun4i_tcon *tcon);
 
-#पूर्ण_अगर /* _SUN4I_RGB_H_ */
+#endif /* _SUN4I_RGB_H_ */

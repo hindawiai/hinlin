@@ -1,17 +1,16 @@
-<शैली गुरु>
 /*
- *  fs/cअगरs/dns_resolve.c
+ *  fs/cifs/dns_resolve.c
  *
- *   Copyright (c) 2007 Igor Mammeकरोv
- *   Author(s): Igor Mammeकरोv (niallain@gmail.com)
+ *   Copyright (c) 2007 Igor Mammedov
+ *   Author(s): Igor Mammedov (niallain@gmail.com)
  *              Steve French (sfrench@us.ibm.com)
  *              Wang Lei (wang840925@gmail.com)
  *		David Howells (dhowells@redhat.com)
  *
- *   Contains the CIFS DFS upcall routines used क्रम hostname to
+ *   Contains the CIFS DFS upcall routines used for hostname to
  *   IP address translation.
  *
- *   This library is मुक्त software; you can redistribute it and/or modअगरy
+ *   This library is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU Lesser General Public License as published
  *   by the Free Software Foundation; either version 2.1 of the License, or
  *   (at your option) any later version.
@@ -19,83 +18,83 @@
  *   This library is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU Lesser General Public License क्रम more details.
+ *   the GNU Lesser General Public License for more details.
  *
  *   You should have received a copy of the GNU Lesser General Public License
- *   aदीर्घ with this library; अगर not, ग_लिखो to the Free Software
+ *   along with this library; if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/dns_resolver.h>
-#समावेश "dns_resolve.h"
-#समावेश "cifsglob.h"
-#समावेश "cifsproto.h"
-#समावेश "cifs_debug.h"
+#include <linux/slab.h>
+#include <linux/dns_resolver.h>
+#include "dns_resolve.h"
+#include "cifsglob.h"
+#include "cifsproto.h"
+#include "cifs_debug.h"
 
 /**
  * dns_resolve_server_name_to_ip - Resolve UNC server name to ip address.
- * @unc: UNC path specअगरying the server (with '/' as delimiter)
- * @ip_addr: Where to वापस the IP address.
+ * @unc: UNC path specifying the server (with '/' as delimiter)
+ * @ip_addr: Where to return the IP address.
  *
- * The IP address will be वापसed in string क्रमm, and the caller is
- * responsible क्रम मुक्तing it.
+ * The IP address will be returned in string form, and the caller is
+ * responsible for freeing it.
  *
  * Returns length of result on success, -ve on error.
  */
-पूर्णांक
-dns_resolve_server_name_to_ip(स्थिर अक्षर *unc, अक्षर **ip_addr)
-अणु
-	काष्ठा sockaddr_storage ss;
-	स्थिर अक्षर *hostname, *sep;
-	अक्षर *name;
-	पूर्णांक len, rc;
+int
+dns_resolve_server_name_to_ip(const char *unc, char **ip_addr)
+{
+	struct sockaddr_storage ss;
+	const char *hostname, *sep;
+	char *name;
+	int len, rc;
 
-	अगर (!ip_addr || !unc)
-		वापस -EINVAL;
+	if (!ip_addr || !unc)
+		return -EINVAL;
 
-	len = म_माप(unc);
-	अगर (len < 3) अणु
-		cअगरs_dbg(FYI, "%s: unc is too short: %s\n", __func__, unc);
-		वापस -EINVAL;
-	पूर्ण
+	len = strlen(unc);
+	if (len < 3) {
+		cifs_dbg(FYI, "%s: unc is too short: %s\n", __func__, unc);
+		return -EINVAL;
+	}
 
-	/* Discount leading slashes क्रम cअगरs */
+	/* Discount leading slashes for cifs */
 	len -= 2;
 	hostname = unc + 2;
 
-	/* Search क्रम server name delimiter */
-	sep = स_प्रथम(hostname, '/', len);
-	अगर (sep)
+	/* Search for server name delimiter */
+	sep = memchr(hostname, '/', len);
+	if (sep)
 		len = sep - hostname;
-	अन्यथा
-		cअगरs_dbg(FYI, "%s: probably server name is whole unc: %s\n",
+	else
+		cifs_dbg(FYI, "%s: probably server name is whole unc: %s\n",
 			 __func__, unc);
 
-	/* Try to पूर्णांकerpret hostname as an IPv4 or IPv6 address */
-	rc = cअगरs_convert_address((काष्ठा sockaddr *)&ss, hostname, len);
-	अगर (rc > 0)
-		जाओ name_is_IP_address;
+	/* Try to interpret hostname as an IPv4 or IPv6 address */
+	rc = cifs_convert_address((struct sockaddr *)&ss, hostname, len);
+	if (rc > 0)
+		goto name_is_IP_address;
 
-	/* Perक्रमm the upcall */
-	rc = dns_query(current->nsproxy->net_ns, शून्य, hostname, len,
-		       शून्य, ip_addr, शून्य, false);
-	अगर (rc < 0)
-		cअगरs_dbg(FYI, "%s: unable to resolve: %*.*s\n",
+	/* Perform the upcall */
+	rc = dns_query(current->nsproxy->net_ns, NULL, hostname, len,
+		       NULL, ip_addr, NULL, false);
+	if (rc < 0)
+		cifs_dbg(FYI, "%s: unable to resolve: %*.*s\n",
 			 __func__, len, len, hostname);
-	अन्यथा
-		cअगरs_dbg(FYI, "%s: resolved: %*.*s to %s\n",
+	else
+		cifs_dbg(FYI, "%s: resolved: %*.*s to %s\n",
 			 __func__, len, len, hostname, *ip_addr);
-	वापस rc;
+	return rc;
 
 name_is_IP_address:
-	name = kदो_स्मृति(len + 1, GFP_KERNEL);
-	अगर (!name)
-		वापस -ENOMEM;
-	स_नकल(name, hostname, len);
+	name = kmalloc(len + 1, GFP_KERNEL);
+	if (!name)
+		return -ENOMEM;
+	memcpy(name, hostname, len);
 	name[len] = 0;
-	cअगरs_dbg(FYI, "%s: unc is IP, skipping dns upcall: %s\n",
+	cifs_dbg(FYI, "%s: unc is IP, skipping dns upcall: %s\n",
 		 __func__, name);
 	*ip_addr = name;
-	वापस 0;
-पूर्ण
+	return 0;
+}

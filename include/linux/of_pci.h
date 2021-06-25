@@ -1,42 +1,41 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __OF_PCI_H
-#घोषणा __OF_PCI_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __OF_PCI_H
+#define __OF_PCI_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
+#include <linux/types.h>
+#include <linux/errno.h>
 
-काष्ठा pci_dev;
-काष्ठा device_node;
+struct pci_dev;
+struct device_node;
 
-#अगर IS_ENABLED(CONFIG_OF) && IS_ENABLED(CONFIG_PCI)
-काष्ठा device_node *of_pci_find_child_device(काष्ठा device_node *parent,
-					     अचिन्हित पूर्णांक devfn);
-पूर्णांक of_pci_get_devfn(काष्ठा device_node *np);
-व्योम of_pci_check_probe_only(व्योम);
-#अन्यथा
-अटल अंतरभूत काष्ठा device_node *of_pci_find_child_device(काष्ठा device_node *parent,
-					     अचिन्हित पूर्णांक devfn)
-अणु
-	वापस शून्य;
-पूर्ण
+#if IS_ENABLED(CONFIG_OF) && IS_ENABLED(CONFIG_PCI)
+struct device_node *of_pci_find_child_device(struct device_node *parent,
+					     unsigned int devfn);
+int of_pci_get_devfn(struct device_node *np);
+void of_pci_check_probe_only(void);
+#else
+static inline struct device_node *of_pci_find_child_device(struct device_node *parent,
+					     unsigned int devfn)
+{
+	return NULL;
+}
 
-अटल अंतरभूत पूर्णांक of_pci_get_devfn(काष्ठा device_node *np)
-अणु
-	वापस -EINVAL;
-पूर्ण
+static inline int of_pci_get_devfn(struct device_node *np)
+{
+	return -EINVAL;
+}
 
-अटल अंतरभूत व्योम of_pci_check_probe_only(व्योम) अणु पूर्ण
-#पूर्ण_अगर
+static inline void of_pci_check_probe_only(void) { }
+#endif
 
-#अगर IS_ENABLED(CONFIG_OF_IRQ)
-पूर्णांक of_irq_parse_and_map_pci(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin);
-#अन्यथा
-अटल अंतरभूत पूर्णांक
-of_irq_parse_and_map_pci(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_OF_IRQ)
+int of_irq_parse_and_map_pci(const struct pci_dev *dev, u8 slot, u8 pin);
+#else
+static inline int
+of_irq_parse_and_map_pci(const struct pci_dev *dev, u8 slot, u8 pin)
+{
+	return 0;
+}
+#endif
 
-#पूर्ण_अगर
+#endif

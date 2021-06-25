@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * filecheck.c
  *
@@ -8,29 +7,29 @@
  * Copyright (C) 2016 SuSE.  All rights reserved.
  */
 
-#समावेश <linux/list.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/kmod.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/kobject.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/sysctl.h>
-#समावेश <cluster/masklog.h>
+#include <linux/list.h>
+#include <linux/spinlock.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/kmod.h>
+#include <linux/fs.h>
+#include <linux/kobject.h>
+#include <linux/sysfs.h>
+#include <linux/sysctl.h>
+#include <cluster/masklog.h>
 
-#समावेश "ocfs2.h"
-#समावेश "ocfs2_fs.h"
-#समावेश "stackglue.h"
-#समावेश "inode.h"
+#include "ocfs2.h"
+#include "ocfs2_fs.h"
+#include "stackglue.h"
+#include "inode.h"
 
-#समावेश "filecheck.h"
+#include "filecheck.h"
 
 
 /* File check error strings,
  * must correspond with error number in header file.
  */
-अटल स्थिर अक्षर * स्थिर ocfs2_filecheck_errs[] = अणु
+static const char * const ocfs2_filecheck_errs[] = {
 	"SUCCESS",
 	"FAILED",
 	"INPROGRESS",
@@ -42,472 +41,472 @@
 	"VALIDFLAG",
 	"GENERATION",
 	"UNSUPPORTED"
-पूर्ण;
+};
 
-काष्ठा ocfs2_filecheck_entry अणु
-	काष्ठा list_head fe_list;
-	अचिन्हित दीर्घ fe_ino;
-	अचिन्हित पूर्णांक fe_type;
-	अचिन्हित पूर्णांक fe_करोne:1;
-	अचिन्हित पूर्णांक fe_status:31;
-पूर्ण;
+struct ocfs2_filecheck_entry {
+	struct list_head fe_list;
+	unsigned long fe_ino;
+	unsigned int fe_type;
+	unsigned int fe_done:1;
+	unsigned int fe_status:31;
+};
 
-काष्ठा ocfs2_filecheck_args अणु
-	अचिन्हित पूर्णांक fa_type;
-	जोड़ अणु
-		अचिन्हित दीर्घ fa_ino;
-		अचिन्हित पूर्णांक fa_len;
-	पूर्ण;
-पूर्ण;
+struct ocfs2_filecheck_args {
+	unsigned int fa_type;
+	union {
+		unsigned long fa_ino;
+		unsigned int fa_len;
+	};
+};
 
-अटल स्थिर अक्षर *
-ocfs2_filecheck_error(पूर्णांक त्रुटि_सं)
-अणु
-	अगर (!त्रुटि_सं)
-		वापस ocfs2_filecheck_errs[त्रुटि_सं];
+static const char *
+ocfs2_filecheck_error(int errno)
+{
+	if (!errno)
+		return ocfs2_filecheck_errs[errno];
 
-	BUG_ON(त्रुटि_सं < OCFS2_खाताCHECK_ERR_START ||
-	       त्रुटि_सं > OCFS2_खाताCHECK_ERR_END);
-	वापस ocfs2_filecheck_errs[त्रुटि_सं - OCFS2_खाताCHECK_ERR_START + 1];
-पूर्ण
+	BUG_ON(errno < OCFS2_FILECHECK_ERR_START ||
+	       errno > OCFS2_FILECHECK_ERR_END);
+	return ocfs2_filecheck_errs[errno - OCFS2_FILECHECK_ERR_START + 1];
+}
 
-अटल sमाप_प्रकार ocfs2_filecheck_attr_show(काष्ठा kobject *kobj,
-					काष्ठा kobj_attribute *attr,
-					अक्षर *buf);
-अटल sमाप_प्रकार ocfs2_filecheck_attr_store(काष्ठा kobject *kobj,
-					काष्ठा kobj_attribute *attr,
-					स्थिर अक्षर *buf, माप_प्रकार count);
-अटल काष्ठा kobj_attribute ocfs2_filecheck_attr_chk =
+static ssize_t ocfs2_filecheck_attr_show(struct kobject *kobj,
+					struct kobj_attribute *attr,
+					char *buf);
+static ssize_t ocfs2_filecheck_attr_store(struct kobject *kobj,
+					struct kobj_attribute *attr,
+					const char *buf, size_t count);
+static struct kobj_attribute ocfs2_filecheck_attr_chk =
 					__ATTR(check, S_IRUSR | S_IWUSR,
 					ocfs2_filecheck_attr_show,
 					ocfs2_filecheck_attr_store);
-अटल काष्ठा kobj_attribute ocfs2_filecheck_attr_fix =
+static struct kobj_attribute ocfs2_filecheck_attr_fix =
 					__ATTR(fix, S_IRUSR | S_IWUSR,
 					ocfs2_filecheck_attr_show,
 					ocfs2_filecheck_attr_store);
-अटल काष्ठा kobj_attribute ocfs2_filecheck_attr_set =
+static struct kobj_attribute ocfs2_filecheck_attr_set =
 					__ATTR(set, S_IRUSR | S_IWUSR,
 					ocfs2_filecheck_attr_show,
 					ocfs2_filecheck_attr_store);
-अटल काष्ठा attribute *ocfs2_filecheck_attrs[] = अणु
+static struct attribute *ocfs2_filecheck_attrs[] = {
 	&ocfs2_filecheck_attr_chk.attr,
 	&ocfs2_filecheck_attr_fix.attr,
 	&ocfs2_filecheck_attr_set.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल व्योम ocfs2_filecheck_release(काष्ठा kobject *kobj)
-अणु
-	काष्ठा ocfs2_filecheck_sysfs_entry *entry = container_of(kobj,
-				काष्ठा ocfs2_filecheck_sysfs_entry, fs_kobj);
+static void ocfs2_filecheck_release(struct kobject *kobj)
+{
+	struct ocfs2_filecheck_sysfs_entry *entry = container_of(kobj,
+				struct ocfs2_filecheck_sysfs_entry, fs_kobj);
 
-	complete(&entry->fs_kobj_unरेजिस्टर);
-पूर्ण
+	complete(&entry->fs_kobj_unregister);
+}
 
-अटल sमाप_प्रकार
-ocfs2_filecheck_show(काष्ठा kobject *kobj, काष्ठा attribute *attr, अक्षर *buf)
-अणु
-	sमाप_प्रकार ret = -EIO;
-	काष्ठा kobj_attribute *kattr = container_of(attr,
-					काष्ठा kobj_attribute, attr);
+static ssize_t
+ocfs2_filecheck_show(struct kobject *kobj, struct attribute *attr, char *buf)
+{
+	ssize_t ret = -EIO;
+	struct kobj_attribute *kattr = container_of(attr,
+					struct kobj_attribute, attr);
 
 	kobject_get(kobj);
-	अगर (kattr->show)
+	if (kattr->show)
 		ret = kattr->show(kobj, kattr, buf);
 	kobject_put(kobj);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार
-ocfs2_filecheck_store(काष्ठा kobject *kobj, काष्ठा attribute *attr,
-			स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	sमाप_प्रकार ret = -EIO;
-	काष्ठा kobj_attribute *kattr = container_of(attr,
-					काष्ठा kobj_attribute, attr);
+static ssize_t
+ocfs2_filecheck_store(struct kobject *kobj, struct attribute *attr,
+			const char *buf, size_t count)
+{
+	ssize_t ret = -EIO;
+	struct kobj_attribute *kattr = container_of(attr,
+					struct kobj_attribute, attr);
 
 	kobject_get(kobj);
-	अगर (kattr->store)
+	if (kattr->store)
 		ret = kattr->store(kobj, kattr, buf, count);
 	kobject_put(kobj);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा sysfs_ops ocfs2_filecheck_ops = अणु
+static const struct sysfs_ops ocfs2_filecheck_ops = {
 	.show = ocfs2_filecheck_show,
 	.store = ocfs2_filecheck_store,
-पूर्ण;
+};
 
-अटल काष्ठा kobj_type ocfs2_ktype_filecheck = अणु
-	.शेष_attrs = ocfs2_filecheck_attrs,
+static struct kobj_type ocfs2_ktype_filecheck = {
+	.default_attrs = ocfs2_filecheck_attrs,
 	.sysfs_ops = &ocfs2_filecheck_ops,
 	.release = ocfs2_filecheck_release,
-पूर्ण;
+};
 
-अटल व्योम
-ocfs2_filecheck_sysfs_मुक्त(काष्ठा ocfs2_filecheck_sysfs_entry *entry)
-अणु
-	काष्ठा ocfs2_filecheck_entry *p;
+static void
+ocfs2_filecheck_sysfs_free(struct ocfs2_filecheck_sysfs_entry *entry)
+{
+	struct ocfs2_filecheck_entry *p;
 
 	spin_lock(&entry->fs_fcheck->fc_lock);
-	जबतक (!list_empty(&entry->fs_fcheck->fc_head)) अणु
+	while (!list_empty(&entry->fs_fcheck->fc_head)) {
 		p = list_first_entry(&entry->fs_fcheck->fc_head,
-				     काष्ठा ocfs2_filecheck_entry, fe_list);
+				     struct ocfs2_filecheck_entry, fe_list);
 		list_del(&p->fe_list);
-		BUG_ON(!p->fe_करोne); /* To मुक्त a unकरोne file check entry */
-		kमुक्त(p);
-	पूर्ण
+		BUG_ON(!p->fe_done); /* To free a undone file check entry */
+		kfree(p);
+	}
 	spin_unlock(&entry->fs_fcheck->fc_lock);
 
-	kमुक्त(entry->fs_fcheck);
-	entry->fs_fcheck = शून्य;
-पूर्ण
+	kfree(entry->fs_fcheck);
+	entry->fs_fcheck = NULL;
+}
 
-पूर्णांक ocfs2_filecheck_create_sysfs(काष्ठा ocfs2_super *osb)
-अणु
-	पूर्णांक ret;
-	काष्ठा ocfs2_filecheck *fcheck;
-	काष्ठा ocfs2_filecheck_sysfs_entry *entry = &osb->osb_fc_ent;
+int ocfs2_filecheck_create_sysfs(struct ocfs2_super *osb)
+{
+	int ret;
+	struct ocfs2_filecheck *fcheck;
+	struct ocfs2_filecheck_sysfs_entry *entry = &osb->osb_fc_ent;
 
-	fcheck = kदो_स्मृति(माप(काष्ठा ocfs2_filecheck), GFP_NOFS);
-	अगर (!fcheck)
-		वापस -ENOMEM;
+	fcheck = kmalloc(sizeof(struct ocfs2_filecheck), GFP_NOFS);
+	if (!fcheck)
+		return -ENOMEM;
 
 	INIT_LIST_HEAD(&fcheck->fc_head);
 	spin_lock_init(&fcheck->fc_lock);
-	fcheck->fc_max = OCFS2_खाताCHECK_MINSIZE;
+	fcheck->fc_max = OCFS2_FILECHECK_MINSIZE;
 	fcheck->fc_size = 0;
-	fcheck->fc_करोne = 0;
+	fcheck->fc_done = 0;
 
 	entry->fs_kobj.kset = osb->osb_dev_kset;
-	init_completion(&entry->fs_kobj_unरेजिस्टर);
+	init_completion(&entry->fs_kobj_unregister);
 	ret = kobject_init_and_add(&entry->fs_kobj, &ocfs2_ktype_filecheck,
-					शून्य, "filecheck");
-	अगर (ret) अणु
+					NULL, "filecheck");
+	if (ret) {
 		kobject_put(&entry->fs_kobj);
-		kमुक्त(fcheck);
-		वापस ret;
-	पूर्ण
+		kfree(fcheck);
+		return ret;
+	}
 
 	entry->fs_fcheck = fcheck;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ocfs2_filecheck_हटाओ_sysfs(काष्ठा ocfs2_super *osb)
-अणु
-	अगर (!osb->osb_fc_ent.fs_fcheck)
-		वापस;
+void ocfs2_filecheck_remove_sysfs(struct ocfs2_super *osb)
+{
+	if (!osb->osb_fc_ent.fs_fcheck)
+		return;
 
 	kobject_del(&osb->osb_fc_ent.fs_kobj);
 	kobject_put(&osb->osb_fc_ent.fs_kobj);
-	रुको_क्रम_completion(&osb->osb_fc_ent.fs_kobj_unरेजिस्टर);
-	ocfs2_filecheck_sysfs_मुक्त(&osb->osb_fc_ent);
-पूर्ण
+	wait_for_completion(&osb->osb_fc_ent.fs_kobj_unregister);
+	ocfs2_filecheck_sysfs_free(&osb->osb_fc_ent);
+}
 
-अटल पूर्णांक
-ocfs2_filecheck_erase_entries(काष्ठा ocfs2_filecheck_sysfs_entry *ent,
-			      अचिन्हित पूर्णांक count);
-अटल पूर्णांक
-ocfs2_filecheck_adjust_max(काष्ठा ocfs2_filecheck_sysfs_entry *ent,
-			   अचिन्हित पूर्णांक len)
-अणु
-	पूर्णांक ret;
+static int
+ocfs2_filecheck_erase_entries(struct ocfs2_filecheck_sysfs_entry *ent,
+			      unsigned int count);
+static int
+ocfs2_filecheck_adjust_max(struct ocfs2_filecheck_sysfs_entry *ent,
+			   unsigned int len)
+{
+	int ret;
 
-	अगर ((len < OCFS2_खाताCHECK_MINSIZE) || (len > OCFS2_खाताCHECK_MAXSIZE))
-		वापस -EINVAL;
+	if ((len < OCFS2_FILECHECK_MINSIZE) || (len > OCFS2_FILECHECK_MAXSIZE))
+		return -EINVAL;
 
 	spin_lock(&ent->fs_fcheck->fc_lock);
-	अगर (len < (ent->fs_fcheck->fc_size - ent->fs_fcheck->fc_करोne)) अणु
+	if (len < (ent->fs_fcheck->fc_size - ent->fs_fcheck->fc_done)) {
 		mlog(ML_NOTICE,
 		"Cannot set online file check maximum entry number "
 		"to %u due to too many pending entries(%u)\n",
-		len, ent->fs_fcheck->fc_size - ent->fs_fcheck->fc_करोne);
+		len, ent->fs_fcheck->fc_size - ent->fs_fcheck->fc_done);
 		ret = -EBUSY;
-	पूर्ण अन्यथा अणु
-		अगर (len < ent->fs_fcheck->fc_size)
+	} else {
+		if (len < ent->fs_fcheck->fc_size)
 			BUG_ON(!ocfs2_filecheck_erase_entries(ent,
 				ent->fs_fcheck->fc_size - len));
 
 		ent->fs_fcheck->fc_max = len;
 		ret = 0;
-	पूर्ण
+	}
 	spin_unlock(&ent->fs_fcheck->fc_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा OCFS2_खाताCHECK_ARGS_LEN	24
-अटल पूर्णांक
-ocfs2_filecheck_args_get_दीर्घ(स्थिर अक्षर *buf, माप_प्रकार count,
-			      अचिन्हित दीर्घ *val)
-अणु
-	अक्षर buffer[OCFS2_खाताCHECK_ARGS_LEN];
+#define OCFS2_FILECHECK_ARGS_LEN	24
+static int
+ocfs2_filecheck_args_get_long(const char *buf, size_t count,
+			      unsigned long *val)
+{
+	char buffer[OCFS2_FILECHECK_ARGS_LEN];
 
-	स_नकल(buffer, buf, count);
+	memcpy(buffer, buf, count);
 	buffer[count] = '\0';
 
-	अगर (kम_से_अदीर्घ(buffer, 0, val))
-		वापस 1;
+	if (kstrtoul(buffer, 0, val))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-ocfs2_filecheck_type_parse(स्थिर अक्षर *name, अचिन्हित पूर्णांक *type)
-अणु
-	अगर (!म_भेदन(name, "fix", 4))
-		*type = OCFS2_खाताCHECK_TYPE_FIX;
-	अन्यथा अगर (!म_भेदन(name, "check", 6))
-		*type = OCFS2_खाताCHECK_TYPE_CHK;
-	अन्यथा अगर (!म_भेदन(name, "set", 4))
-		*type = OCFS2_खाताCHECK_TYPE_SET;
-	अन्यथा
-		वापस 1;
+static int
+ocfs2_filecheck_type_parse(const char *name, unsigned int *type)
+{
+	if (!strncmp(name, "fix", 4))
+		*type = OCFS2_FILECHECK_TYPE_FIX;
+	else if (!strncmp(name, "check", 6))
+		*type = OCFS2_FILECHECK_TYPE_CHK;
+	else if (!strncmp(name, "set", 4))
+		*type = OCFS2_FILECHECK_TYPE_SET;
+	else
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-ocfs2_filecheck_args_parse(स्थिर अक्षर *name, स्थिर अक्षर *buf, माप_प्रकार count,
-			   काष्ठा ocfs2_filecheck_args *args)
-अणु
-	अचिन्हित दीर्घ val = 0;
-	अचिन्हित पूर्णांक type;
+static int
+ocfs2_filecheck_args_parse(const char *name, const char *buf, size_t count,
+			   struct ocfs2_filecheck_args *args)
+{
+	unsigned long val = 0;
+	unsigned int type;
 
-	/* too लघु/दीर्घ args length */
-	अगर ((count < 1) || (count >= OCFS2_खाताCHECK_ARGS_LEN))
-		वापस 1;
+	/* too short/long args length */
+	if ((count < 1) || (count >= OCFS2_FILECHECK_ARGS_LEN))
+		return 1;
 
-	अगर (ocfs2_filecheck_type_parse(name, &type))
-		वापस 1;
-	अगर (ocfs2_filecheck_args_get_दीर्घ(buf, count, &val))
-		वापस 1;
+	if (ocfs2_filecheck_type_parse(name, &type))
+		return 1;
+	if (ocfs2_filecheck_args_get_long(buf, count, &val))
+		return 1;
 
-	अगर (val <= 0)
-		वापस 1;
+	if (val <= 0)
+		return 1;
 
 	args->fa_type = type;
-	अगर (type == OCFS2_खाताCHECK_TYPE_SET)
-		args->fa_len = (अचिन्हित पूर्णांक)val;
-	अन्यथा
+	if (type == OCFS2_FILECHECK_TYPE_SET)
+		args->fa_len = (unsigned int)val;
+	else
 		args->fa_ino = val;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार ocfs2_filecheck_attr_show(काष्ठा kobject *kobj,
-				    काष्ठा kobj_attribute *attr,
-				    अक्षर *buf)
-अणु
+static ssize_t ocfs2_filecheck_attr_show(struct kobject *kobj,
+				    struct kobj_attribute *attr,
+				    char *buf)
+{
 
-	sमाप_प्रकार ret = 0, total = 0, reमुख्य = PAGE_SIZE;
-	अचिन्हित पूर्णांक type;
-	काष्ठा ocfs2_filecheck_entry *p;
-	काष्ठा ocfs2_filecheck_sysfs_entry *ent = container_of(kobj,
-				काष्ठा ocfs2_filecheck_sysfs_entry, fs_kobj);
+	ssize_t ret = 0, total = 0, remain = PAGE_SIZE;
+	unsigned int type;
+	struct ocfs2_filecheck_entry *p;
+	struct ocfs2_filecheck_sysfs_entry *ent = container_of(kobj,
+				struct ocfs2_filecheck_sysfs_entry, fs_kobj);
 
-	अगर (ocfs2_filecheck_type_parse(attr->attr.name, &type))
-		वापस -EINVAL;
+	if (ocfs2_filecheck_type_parse(attr->attr.name, &type))
+		return -EINVAL;
 
-	अगर (type == OCFS2_खाताCHECK_TYPE_SET) अणु
+	if (type == OCFS2_FILECHECK_TYPE_SET) {
 		spin_lock(&ent->fs_fcheck->fc_lock);
-		total = snम_लिखो(buf, reमुख्य, "%u\n", ent->fs_fcheck->fc_max);
+		total = snprintf(buf, remain, "%u\n", ent->fs_fcheck->fc_max);
 		spin_unlock(&ent->fs_fcheck->fc_lock);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	ret = snम_लिखो(buf, reमुख्य, "INO\t\tDONE\tERROR\n");
+	ret = snprintf(buf, remain, "INO\t\tDONE\tERROR\n");
 	total += ret;
-	reमुख्य -= ret;
+	remain -= ret;
 	spin_lock(&ent->fs_fcheck->fc_lock);
-	list_क्रम_each_entry(p, &ent->fs_fcheck->fc_head, fe_list) अणु
-		अगर (p->fe_type != type)
-			जारी;
+	list_for_each_entry(p, &ent->fs_fcheck->fc_head, fe_list) {
+		if (p->fe_type != type)
+			continue;
 
-		ret = snम_लिखो(buf + total, reमुख्य, "%lu\t\t%u\t%s\n",
-			       p->fe_ino, p->fe_करोne,
+		ret = snprintf(buf + total, remain, "%lu\t\t%u\t%s\n",
+			       p->fe_ino, p->fe_done,
 			       ocfs2_filecheck_error(p->fe_status));
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			total = ret;
-			अवरोध;
-		पूर्ण
-		अगर (ret == reमुख्य) अणु
-			/* snम_लिखो() didn't fit */
+			break;
+		}
+		if (ret == remain) {
+			/* snprintf() didn't fit */
 			total = -E2BIG;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		total += ret;
-		reमुख्य -= ret;
-	पूर्ण
+		remain -= ret;
+	}
 	spin_unlock(&ent->fs_fcheck->fc_lock);
 
-निकास:
-	वापस total;
-पूर्ण
+exit:
+	return total;
+}
 
-अटल अंतरभूत पूर्णांक
-ocfs2_filecheck_is_dup_entry(काष्ठा ocfs2_filecheck_sysfs_entry *ent,
-				अचिन्हित दीर्घ ino)
-अणु
-	काष्ठा ocfs2_filecheck_entry *p;
+static inline int
+ocfs2_filecheck_is_dup_entry(struct ocfs2_filecheck_sysfs_entry *ent,
+				unsigned long ino)
+{
+	struct ocfs2_filecheck_entry *p;
 
-	list_क्रम_each_entry(p, &ent->fs_fcheck->fc_head, fe_list) अणु
-		अगर (!p->fe_करोne) अणु
-			अगर (p->fe_ino == ino)
-				वापस 1;
-		पूर्ण
-	पूर्ण
+	list_for_each_entry(p, &ent->fs_fcheck->fc_head, fe_list) {
+		if (!p->fe_done) {
+			if (p->fe_ino == ino)
+				return 1;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक
-ocfs2_filecheck_erase_entry(काष्ठा ocfs2_filecheck_sysfs_entry *ent)
-अणु
-	काष्ठा ocfs2_filecheck_entry *p;
+static inline int
+ocfs2_filecheck_erase_entry(struct ocfs2_filecheck_sysfs_entry *ent)
+{
+	struct ocfs2_filecheck_entry *p;
 
-	list_क्रम_each_entry(p, &ent->fs_fcheck->fc_head, fe_list) अणु
-		अगर (p->fe_करोne) अणु
+	list_for_each_entry(p, &ent->fs_fcheck->fc_head, fe_list) {
+		if (p->fe_done) {
 			list_del(&p->fe_list);
-			kमुक्त(p);
+			kfree(p);
 			ent->fs_fcheck->fc_size--;
-			ent->fs_fcheck->fc_करोne--;
-			वापस 1;
-		पूर्ण
-	पूर्ण
+			ent->fs_fcheck->fc_done--;
+			return 1;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-ocfs2_filecheck_erase_entries(काष्ठा ocfs2_filecheck_sysfs_entry *ent,
-			      अचिन्हित पूर्णांक count)
-अणु
-	अचिन्हित पूर्णांक i = 0;
-	अचिन्हित पूर्णांक ret = 0;
+static int
+ocfs2_filecheck_erase_entries(struct ocfs2_filecheck_sysfs_entry *ent,
+			      unsigned int count)
+{
+	unsigned int i = 0;
+	unsigned int ret = 0;
 
-	जबतक (i++ < count) अणु
-		अगर (ocfs2_filecheck_erase_entry(ent))
+	while (i++ < count) {
+		if (ocfs2_filecheck_erase_entry(ent))
 			ret++;
-		अन्यथा
-			अवरोध;
-	पूर्ण
+		else
+			break;
+	}
 
-	वापस (ret == count ? 1 : 0);
-पूर्ण
+	return (ret == count ? 1 : 0);
+}
 
-अटल व्योम
-ocfs2_filecheck_करोne_entry(काष्ठा ocfs2_filecheck_sysfs_entry *ent,
-			   काष्ठा ocfs2_filecheck_entry *entry)
-अणु
+static void
+ocfs2_filecheck_done_entry(struct ocfs2_filecheck_sysfs_entry *ent,
+			   struct ocfs2_filecheck_entry *entry)
+{
 	spin_lock(&ent->fs_fcheck->fc_lock);
-	entry->fe_करोne = 1;
-	ent->fs_fcheck->fc_करोne++;
+	entry->fe_done = 1;
+	ent->fs_fcheck->fc_done++;
 	spin_unlock(&ent->fs_fcheck->fc_lock);
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक
-ocfs2_filecheck_handle(काष्ठा ocfs2_super *osb,
-		       अचिन्हित दीर्घ ino, अचिन्हित पूर्णांक flags)
-अणु
-	अचिन्हित पूर्णांक ret = OCFS2_खाताCHECK_ERR_SUCCESS;
-	काष्ठा inode *inode = शून्य;
-	पूर्णांक rc;
+static unsigned int
+ocfs2_filecheck_handle(struct ocfs2_super *osb,
+		       unsigned long ino, unsigned int flags)
+{
+	unsigned int ret = OCFS2_FILECHECK_ERR_SUCCESS;
+	struct inode *inode = NULL;
+	int rc;
 
 	inode = ocfs2_iget(osb, ino, flags, 0);
-	अगर (IS_ERR(inode)) अणु
-		rc = (पूर्णांक)(-(दीर्घ)inode);
-		अगर (rc >= OCFS2_खाताCHECK_ERR_START &&
-		    rc < OCFS2_खाताCHECK_ERR_END)
+	if (IS_ERR(inode)) {
+		rc = (int)(-(long)inode);
+		if (rc >= OCFS2_FILECHECK_ERR_START &&
+		    rc < OCFS2_FILECHECK_ERR_END)
 			ret = rc;
-		अन्यथा
-			ret = OCFS2_खाताCHECK_ERR_FAILED;
-	पूर्ण अन्यथा
+		else
+			ret = OCFS2_FILECHECK_ERR_FAILED;
+	} else
 		iput(inode);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम
-ocfs2_filecheck_handle_entry(काष्ठा ocfs2_filecheck_sysfs_entry *ent,
-			     काष्ठा ocfs2_filecheck_entry *entry)
-अणु
-	काष्ठा ocfs2_super *osb = container_of(ent, काष्ठा ocfs2_super,
+static void
+ocfs2_filecheck_handle_entry(struct ocfs2_filecheck_sysfs_entry *ent,
+			     struct ocfs2_filecheck_entry *entry)
+{
+	struct ocfs2_super *osb = container_of(ent, struct ocfs2_super,
 						osb_fc_ent);
 
-	अगर (entry->fe_type == OCFS2_खाताCHECK_TYPE_CHK)
+	if (entry->fe_type == OCFS2_FILECHECK_TYPE_CHK)
 		entry->fe_status = ocfs2_filecheck_handle(osb,
-				entry->fe_ino, OCFS2_FI_FLAG_खाताCHECK_CHK);
-	अन्यथा अगर (entry->fe_type == OCFS2_खाताCHECK_TYPE_FIX)
+				entry->fe_ino, OCFS2_FI_FLAG_FILECHECK_CHK);
+	else if (entry->fe_type == OCFS2_FILECHECK_TYPE_FIX)
 		entry->fe_status = ocfs2_filecheck_handle(osb,
-				entry->fe_ino, OCFS2_FI_FLAG_खाताCHECK_FIX);
-	अन्यथा
-		entry->fe_status = OCFS2_खाताCHECK_ERR_UNSUPPORTED;
+				entry->fe_ino, OCFS2_FI_FLAG_FILECHECK_FIX);
+	else
+		entry->fe_status = OCFS2_FILECHECK_ERR_UNSUPPORTED;
 
-	ocfs2_filecheck_करोne_entry(ent, entry);
-पूर्ण
+	ocfs2_filecheck_done_entry(ent, entry);
+}
 
-अटल sमाप_प्रकार ocfs2_filecheck_attr_store(काष्ठा kobject *kobj,
-				     काष्ठा kobj_attribute *attr,
-				     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	sमाप_प्रकार ret = 0;
-	काष्ठा ocfs2_filecheck_args args;
-	काष्ठा ocfs2_filecheck_entry *entry;
-	काष्ठा ocfs2_filecheck_sysfs_entry *ent = container_of(kobj,
-				काष्ठा ocfs2_filecheck_sysfs_entry, fs_kobj);
+static ssize_t ocfs2_filecheck_attr_store(struct kobject *kobj,
+				     struct kobj_attribute *attr,
+				     const char *buf, size_t count)
+{
+	ssize_t ret = 0;
+	struct ocfs2_filecheck_args args;
+	struct ocfs2_filecheck_entry *entry;
+	struct ocfs2_filecheck_sysfs_entry *ent = container_of(kobj,
+				struct ocfs2_filecheck_sysfs_entry, fs_kobj);
 
-	अगर (count == 0)
-		वापस count;
+	if (count == 0)
+		return count;
 
-	अगर (ocfs2_filecheck_args_parse(attr->attr.name, buf, count, &args))
-		वापस -EINVAL;
+	if (ocfs2_filecheck_args_parse(attr->attr.name, buf, count, &args))
+		return -EINVAL;
 
-	अगर (args.fa_type == OCFS2_खाताCHECK_TYPE_SET) अणु
+	if (args.fa_type == OCFS2_FILECHECK_TYPE_SET) {
 		ret = ocfs2_filecheck_adjust_max(ent, args.fa_len);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	entry = kदो_स्मृति(माप(काष्ठा ocfs2_filecheck_entry), GFP_NOFS);
-	अगर (!entry) अणु
+	entry = kmalloc(sizeof(struct ocfs2_filecheck_entry), GFP_NOFS);
+	if (!entry) {
 		ret = -ENOMEM;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	spin_lock(&ent->fs_fcheck->fc_lock);
-	अगर (ocfs2_filecheck_is_dup_entry(ent, args.fa_ino)) अणु
+	if (ocfs2_filecheck_is_dup_entry(ent, args.fa_ino)) {
 		ret = -EEXIST;
-		kमुक्त(entry);
-	पूर्ण अन्यथा अगर ((ent->fs_fcheck->fc_size >= ent->fs_fcheck->fc_max) &&
-		(ent->fs_fcheck->fc_करोne == 0)) अणु
+		kfree(entry);
+	} else if ((ent->fs_fcheck->fc_size >= ent->fs_fcheck->fc_max) &&
+		(ent->fs_fcheck->fc_done == 0)) {
 		mlog(ML_NOTICE,
 		"Cannot do more file check "
 		"since file check queue(%u) is full now\n",
 		ent->fs_fcheck->fc_max);
 		ret = -EAGAIN;
-		kमुक्त(entry);
-	पूर्ण अन्यथा अणु
-		अगर ((ent->fs_fcheck->fc_size >= ent->fs_fcheck->fc_max) &&
-		    (ent->fs_fcheck->fc_करोne > 0)) अणु
-			/* Delete the oldest entry which was करोne,
-			 * make sure the entry size in list करोes
+		kfree(entry);
+	} else {
+		if ((ent->fs_fcheck->fc_size >= ent->fs_fcheck->fc_max) &&
+		    (ent->fs_fcheck->fc_done > 0)) {
+			/* Delete the oldest entry which was done,
+			 * make sure the entry size in list does
 			 * not exceed maximum value
 			 */
 			BUG_ON(!ocfs2_filecheck_erase_entry(ent));
-		पूर्ण
+		}
 
 		entry->fe_ino = args.fa_ino;
 		entry->fe_type = args.fa_type;
-		entry->fe_करोne = 0;
-		entry->fe_status = OCFS2_खाताCHECK_ERR_INPROGRESS;
+		entry->fe_done = 0;
+		entry->fe_status = OCFS2_FILECHECK_ERR_INPROGRESS;
 		list_add_tail(&entry->fe_list, &ent->fs_fcheck->fc_head);
 		ent->fs_fcheck->fc_size++;
-	पूर्ण
+	}
 	spin_unlock(&ent->fs_fcheck->fc_lock);
 
-	अगर (!ret)
+	if (!ret)
 		ocfs2_filecheck_handle_entry(ent, entry);
 
-निकास:
-	वापस (!ret ? count : ret);
-पूर्ण
+exit:
+	return (!ret ? count : ret);
+}

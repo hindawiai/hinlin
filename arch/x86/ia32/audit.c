@@ -1,46 +1,45 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <यंत्र/unistd_32.h>
-#समावेश <यंत्र/audit.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <asm/unistd_32.h>
+#include <asm/audit.h>
 
-अचिन्हित ia32_dir_class[] = अणु
-#समावेश <यंत्र-generic/audit_dir_ग_लिखो.h>
+unsigned ia32_dir_class[] = {
+#include <asm-generic/audit_dir_write.h>
 ~0U
-पूर्ण;
+};
 
-अचिन्हित ia32_chattr_class[] = अणु
-#समावेश <यंत्र-generic/audit_change_attr.h>
+unsigned ia32_chattr_class[] = {
+#include <asm-generic/audit_change_attr.h>
 ~0U
-पूर्ण;
+};
 
-अचिन्हित ia32_ग_लिखो_class[] = अणु
-#समावेश <यंत्र-generic/audit_ग_लिखो.h>
+unsigned ia32_write_class[] = {
+#include <asm-generic/audit_write.h>
 ~0U
-पूर्ण;
+};
 
-अचिन्हित ia32_पढ़ो_class[] = अणु
-#समावेश <यंत्र-generic/audit_पढ़ो.h>
+unsigned ia32_read_class[] = {
+#include <asm-generic/audit_read.h>
 ~0U
-पूर्ण;
+};
 
-अचिन्हित ia32_संकेत_class[] = अणु
-#समावेश <यंत्र-generic/audit_संकेत.स>
+unsigned ia32_signal_class[] = {
+#include <asm-generic/audit_signal.h>
 ~0U
-पूर्ण;
+};
 
-पूर्णांक ia32_classअगरy_syscall(अचिन्हित syscall)
-अणु
-	चयन (syscall) अणु
-	हाल __NR_खोलो:
-		वापस 2;
-	हाल __NR_खोलोat:
-		वापस 3;
-	हाल __NR_socketcall:
-		वापस 4;
-	हाल __NR_execve:
-	हाल __NR_execveat:
-		वापस 5;
-	शेष:
-		वापस 1;
-	पूर्ण
-पूर्ण
+int ia32_classify_syscall(unsigned syscall)
+{
+	switch (syscall) {
+	case __NR_open:
+		return 2;
+	case __NR_openat:
+		return 3;
+	case __NR_socketcall:
+		return 4;
+	case __NR_execve:
+	case __NR_execveat:
+		return 5;
+	default:
+		return 1;
+	}
+}

@@ -1,208 +1,207 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * NVMe Fabrics command implementation.
  * Copyright (c) 2015-2016 HGST, a Western Digital Company.
  */
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#समावेश <linux/blkdev.h>
-#समावेश "nvmet.h"
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/blkdev.h>
+#include "nvmet.h"
 
-अटल व्योम nvmet_execute_prop_set(काष्ठा nvmet_req *req)
-अणु
+static void nvmet_execute_prop_set(struct nvmet_req *req)
+{
 	u64 val = le64_to_cpu(req->cmd->prop_set.value);
 	u16 status = 0;
 
-	अगर (!nvmet_check_transfer_len(req, 0))
-		वापस;
+	if (!nvmet_check_transfer_len(req, 0))
+		return;
 
-	अगर (req->cmd->prop_set.attrib & 1) अणु
+	if (req->cmd->prop_set.attrib & 1) {
 		req->error_loc =
-			दुरत्व(काष्ठा nvmf_property_set_command, attrib);
+			offsetof(struct nvmf_property_set_command, attrib);
 		status = NVME_SC_INVALID_FIELD | NVME_SC_DNR;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (le32_to_cpu(req->cmd->prop_set.offset)) अणु
-	हाल NVME_REG_CC:
+	switch (le32_to_cpu(req->cmd->prop_set.offset)) {
+	case NVME_REG_CC:
 		nvmet_update_cc(req->sq->ctrl, val);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		req->error_loc =
-			दुरत्व(काष्ठा nvmf_property_set_command, offset);
+			offsetof(struct nvmf_property_set_command, offset);
 		status = NVME_SC_INVALID_FIELD | NVME_SC_DNR;
-	पूर्ण
+	}
 out:
 	nvmet_req_complete(req, status);
-पूर्ण
+}
 
-अटल व्योम nvmet_execute_prop_get(काष्ठा nvmet_req *req)
-अणु
-	काष्ठा nvmet_ctrl *ctrl = req->sq->ctrl;
+static void nvmet_execute_prop_get(struct nvmet_req *req)
+{
+	struct nvmet_ctrl *ctrl = req->sq->ctrl;
 	u16 status = 0;
 	u64 val = 0;
 
-	अगर (!nvmet_check_transfer_len(req, 0))
-		वापस;
+	if (!nvmet_check_transfer_len(req, 0))
+		return;
 
-	अगर (req->cmd->prop_get.attrib & 1) अणु
-		चयन (le32_to_cpu(req->cmd->prop_get.offset)) अणु
-		हाल NVME_REG_CAP:
+	if (req->cmd->prop_get.attrib & 1) {
+		switch (le32_to_cpu(req->cmd->prop_get.offset)) {
+		case NVME_REG_CAP:
 			val = ctrl->cap;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			status = NVME_SC_INVALID_FIELD | NVME_SC_DNR;
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		चयन (le32_to_cpu(req->cmd->prop_get.offset)) अणु
-		हाल NVME_REG_VS:
+			break;
+		}
+	} else {
+		switch (le32_to_cpu(req->cmd->prop_get.offset)) {
+		case NVME_REG_VS:
 			val = ctrl->subsys->ver;
-			अवरोध;
-		हाल NVME_REG_CC:
+			break;
+		case NVME_REG_CC:
 			val = ctrl->cc;
-			अवरोध;
-		हाल NVME_REG_CSTS:
+			break;
+		case NVME_REG_CSTS:
 			val = ctrl->csts;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			status = NVME_SC_INVALID_FIELD | NVME_SC_DNR;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (status && req->cmd->prop_get.attrib & 1) अणु
+	if (status && req->cmd->prop_get.attrib & 1) {
 		req->error_loc =
-			दुरत्व(काष्ठा nvmf_property_get_command, offset);
-	पूर्ण अन्यथा अणु
+			offsetof(struct nvmf_property_get_command, offset);
+	} else {
 		req->error_loc =
-			दुरत्व(काष्ठा nvmf_property_get_command, attrib);
-	पूर्ण
+			offsetof(struct nvmf_property_get_command, attrib);
+	}
 
 	req->cqe->result.u64 = cpu_to_le64(val);
 	nvmet_req_complete(req, status);
-पूर्ण
+}
 
-u16 nvmet_parse_fabrics_cmd(काष्ठा nvmet_req *req)
-अणु
-	काष्ठा nvme_command *cmd = req->cmd;
+u16 nvmet_parse_fabrics_cmd(struct nvmet_req *req)
+{
+	struct nvme_command *cmd = req->cmd;
 
-	चयन (cmd->fabrics.fctype) अणु
-	हाल nvme_fabrics_type_property_set:
+	switch (cmd->fabrics.fctype) {
+	case nvme_fabrics_type_property_set:
 		req->execute = nvmet_execute_prop_set;
-		अवरोध;
-	हाल nvme_fabrics_type_property_get:
+		break;
+	case nvme_fabrics_type_property_get:
 		req->execute = nvmet_execute_prop_get;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_debug("received unknown capsule type 0x%x\n",
 			cmd->fabrics.fctype);
-		req->error_loc = दुरत्व(काष्ठा nvmf_common_command, fctype);
-		वापस NVME_SC_INVALID_OPCODE | NVME_SC_DNR;
-	पूर्ण
+		req->error_loc = offsetof(struct nvmf_common_command, fctype);
+		return NVME_SC_INVALID_OPCODE | NVME_SC_DNR;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u16 nvmet_install_queue(काष्ठा nvmet_ctrl *ctrl, काष्ठा nvmet_req *req)
-अणु
-	काष्ठा nvmf_connect_command *c = &req->cmd->connect;
+static u16 nvmet_install_queue(struct nvmet_ctrl *ctrl, struct nvmet_req *req)
+{
+	struct nvmf_connect_command *c = &req->cmd->connect;
 	u16 qid = le16_to_cpu(c->qid);
 	u16 sqsize = le16_to_cpu(c->sqsize);
-	काष्ठा nvmet_ctrl *old;
+	struct nvmet_ctrl *old;
 	u16 ret;
 
-	old = cmpxchg(&req->sq->ctrl, शून्य, ctrl);
-	अगर (old) अणु
+	old = cmpxchg(&req->sq->ctrl, NULL, ctrl);
+	if (old) {
 		pr_warn("queue already connected!\n");
-		req->error_loc = दुरत्व(काष्ठा nvmf_connect_command, opcode);
-		वापस NVME_SC_CONNECT_CTRL_BUSY | NVME_SC_DNR;
-	पूर्ण
-	अगर (!sqsize) अणु
+		req->error_loc = offsetof(struct nvmf_connect_command, opcode);
+		return NVME_SC_CONNECT_CTRL_BUSY | NVME_SC_DNR;
+	}
+	if (!sqsize) {
 		pr_warn("queue size zero!\n");
-		req->error_loc = दुरत्व(काष्ठा nvmf_connect_command, sqsize);
+		req->error_loc = offsetof(struct nvmf_connect_command, sqsize);
 		ret = NVME_SC_CONNECT_INVALID_PARAM | NVME_SC_DNR;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/* note: convert queue size from 0's-based value to 1's-based value */
 	nvmet_cq_setup(ctrl, req->cq, qid, sqsize + 1);
 	nvmet_sq_setup(ctrl, req->sq, qid, sqsize + 1);
 
-	अगर (c->cattr & NVME_CONNECT_DISABLE_SQFLOW) अणु
+	if (c->cattr & NVME_CONNECT_DISABLE_SQFLOW) {
 		req->sq->sqhd_disabled = true;
 		req->cqe->sq_head = cpu_to_le16(0xffff);
-	पूर्ण
+	}
 
-	अगर (ctrl->ops->install_queue) अणु
+	if (ctrl->ops->install_queue) {
 		ret = ctrl->ops->install_queue(req->sq);
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("failed to install queue %d cntlid %d ret %x\n",
 				qid, ctrl->cntlid, ret);
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	req->sq->ctrl = शून्य;
-	वापस ret;
-पूर्ण
+	req->sq->ctrl = NULL;
+	return ret;
+}
 
-अटल व्योम nvmet_execute_admin_connect(काष्ठा nvmet_req *req)
-अणु
-	काष्ठा nvmf_connect_command *c = &req->cmd->connect;
-	काष्ठा nvmf_connect_data *d;
-	काष्ठा nvmet_ctrl *ctrl = शून्य;
+static void nvmet_execute_admin_connect(struct nvmet_req *req)
+{
+	struct nvmf_connect_command *c = &req->cmd->connect;
+	struct nvmf_connect_data *d;
+	struct nvmet_ctrl *ctrl = NULL;
 	u16 status = 0;
 
-	अगर (!nvmet_check_transfer_len(req, माप(काष्ठा nvmf_connect_data)))
-		वापस;
+	if (!nvmet_check_transfer_len(req, sizeof(struct nvmf_connect_data)))
+		return;
 
-	d = kदो_स्मृति(माप(*d), GFP_KERNEL);
-	अगर (!d) अणु
+	d = kmalloc(sizeof(*d), GFP_KERNEL);
+	if (!d) {
 		status = NVME_SC_INTERNAL;
-		जाओ complete;
-	पूर्ण
+		goto complete;
+	}
 
-	status = nvmet_copy_from_sgl(req, 0, d, माप(*d));
-	अगर (status)
-		जाओ out;
+	status = nvmet_copy_from_sgl(req, 0, d, sizeof(*d));
+	if (status)
+		goto out;
 
 	/* zero out initial completion result, assign values as needed */
 	req->cqe->result.u32 = 0;
 
-	अगर (c->recfmt != 0) अणु
+	if (c->recfmt != 0) {
 		pr_warn("invalid connect version (%d).\n",
 			le16_to_cpu(c->recfmt));
-		req->error_loc = दुरत्व(काष्ठा nvmf_connect_command, recfmt);
+		req->error_loc = offsetof(struct nvmf_connect_command, recfmt);
 		status = NVME_SC_CONNECT_FORMAT | NVME_SC_DNR;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (unlikely(d->cntlid != cpu_to_le16(0xffff))) अणु
+	if (unlikely(d->cntlid != cpu_to_le16(0xffff))) {
 		pr_warn("connect attempt for invalid controller ID %#x\n",
 			d->cntlid);
 		status = NVME_SC_CONNECT_INVALID_PARAM | NVME_SC_DNR;
 		req->cqe->result.u32 = IPO_IATTR_CONNECT_DATA(cntlid);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	status = nvmet_alloc_ctrl(d->subsysnqn, d->hostnqn, req,
 				  le32_to_cpu(c->kato), &ctrl);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 
 	ctrl->pi_support = ctrl->port->pi_enable && ctrl->subsys->pi_support;
 
 	uuid_copy(&ctrl->hostid, &d->hostid);
 
 	status = nvmet_install_queue(ctrl, req);
-	अगर (status) अणु
+	if (status) {
 		nvmet_ctrl_put(ctrl);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	pr_info("creating controller %d for subsystem %s for NQN %s%s.\n",
 		ctrl->cntlid, ctrl->subsys->subsysnqn, ctrl->hostnqn,
@@ -210,96 +209,96 @@ err:
 	req->cqe->result.u16 = cpu_to_le16(ctrl->cntlid);
 
 out:
-	kमुक्त(d);
+	kfree(d);
 complete:
 	nvmet_req_complete(req, status);
-पूर्ण
+}
 
-अटल व्योम nvmet_execute_io_connect(काष्ठा nvmet_req *req)
-अणु
-	काष्ठा nvmf_connect_command *c = &req->cmd->connect;
-	काष्ठा nvmf_connect_data *d;
-	काष्ठा nvmet_ctrl *ctrl;
+static void nvmet_execute_io_connect(struct nvmet_req *req)
+{
+	struct nvmf_connect_command *c = &req->cmd->connect;
+	struct nvmf_connect_data *d;
+	struct nvmet_ctrl *ctrl;
 	u16 qid = le16_to_cpu(c->qid);
 	u16 status = 0;
 
-	अगर (!nvmet_check_transfer_len(req, माप(काष्ठा nvmf_connect_data)))
-		वापस;
+	if (!nvmet_check_transfer_len(req, sizeof(struct nvmf_connect_data)))
+		return;
 
-	d = kदो_स्मृति(माप(*d), GFP_KERNEL);
-	अगर (!d) अणु
+	d = kmalloc(sizeof(*d), GFP_KERNEL);
+	if (!d) {
 		status = NVME_SC_INTERNAL;
-		जाओ complete;
-	पूर्ण
+		goto complete;
+	}
 
-	status = nvmet_copy_from_sgl(req, 0, d, माप(*d));
-	अगर (status)
-		जाओ out;
+	status = nvmet_copy_from_sgl(req, 0, d, sizeof(*d));
+	if (status)
+		goto out;
 
 	/* zero out initial completion result, assign values as needed */
 	req->cqe->result.u32 = 0;
 
-	अगर (c->recfmt != 0) अणु
+	if (c->recfmt != 0) {
 		pr_warn("invalid connect version (%d).\n",
 			le16_to_cpu(c->recfmt));
 		status = NVME_SC_CONNECT_FORMAT | NVME_SC_DNR;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ctrl = nvmet_ctrl_find_get(d->subsysnqn, d->hostnqn,
 				   le16_to_cpu(d->cntlid), req);
-	अगर (!ctrl) अणु
+	if (!ctrl) {
 		status = NVME_SC_CONNECT_INVALID_PARAM | NVME_SC_DNR;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (unlikely(qid > ctrl->subsys->max_qid)) अणु
+	if (unlikely(qid > ctrl->subsys->max_qid)) {
 		pr_warn("invalid queue id (%d)\n", qid);
 		status = NVME_SC_CONNECT_INVALID_PARAM | NVME_SC_DNR;
 		req->cqe->result.u32 = IPO_IATTR_CONNECT_SQE(qid);
-		जाओ out_ctrl_put;
-	पूर्ण
+		goto out_ctrl_put;
+	}
 
 	status = nvmet_install_queue(ctrl, req);
-	अगर (status) अणु
+	if (status) {
 		/* pass back cntlid that had the issue of installing queue */
 		req->cqe->result.u16 = cpu_to_le16(ctrl->cntlid);
-		जाओ out_ctrl_put;
-	पूर्ण
+		goto out_ctrl_put;
+	}
 
 	pr_debug("adding queue %d to ctrl %d.\n", qid, ctrl->cntlid);
 
 out:
-	kमुक्त(d);
+	kfree(d);
 complete:
 	nvmet_req_complete(req, status);
-	वापस;
+	return;
 
 out_ctrl_put:
 	nvmet_ctrl_put(ctrl);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-u16 nvmet_parse_connect_cmd(काष्ठा nvmet_req *req)
-अणु
-	काष्ठा nvme_command *cmd = req->cmd;
+u16 nvmet_parse_connect_cmd(struct nvmet_req *req)
+{
+	struct nvme_command *cmd = req->cmd;
 
-	अगर (!nvme_is_fabrics(cmd)) अणु
+	if (!nvme_is_fabrics(cmd)) {
 		pr_debug("invalid command 0x%x on unconnected queue.\n",
 			cmd->fabrics.opcode);
-		req->error_loc = दुरत्व(काष्ठा nvme_common_command, opcode);
-		वापस NVME_SC_INVALID_OPCODE | NVME_SC_DNR;
-	पूर्ण
-	अगर (cmd->fabrics.fctype != nvme_fabrics_type_connect) अणु
+		req->error_loc = offsetof(struct nvme_common_command, opcode);
+		return NVME_SC_INVALID_OPCODE | NVME_SC_DNR;
+	}
+	if (cmd->fabrics.fctype != nvme_fabrics_type_connect) {
 		pr_debug("invalid capsule type 0x%x on unconnected queue.\n",
 			cmd->fabrics.fctype);
-		req->error_loc = दुरत्व(काष्ठा nvmf_common_command, fctype);
-		वापस NVME_SC_INVALID_OPCODE | NVME_SC_DNR;
-	पूर्ण
+		req->error_loc = offsetof(struct nvmf_common_command, fctype);
+		return NVME_SC_INVALID_OPCODE | NVME_SC_DNR;
+	}
 
-	अगर (cmd->connect.qid == 0)
+	if (cmd->connect.qid == 0)
 		req->execute = nvmet_execute_admin_connect;
-	अन्यथा
+	else
 		req->execute = nvmet_execute_io_connect;
-	वापस 0;
-पूर्ण
+	return 0;
+}

@@ -1,36 +1,35 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2010 - 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित _IA_CSS_EVENTQ_H
-#घोषणा _IA_CSS_EVENTQ_H
+#ifndef _IA_CSS_EVENTQ_H
+#define _IA_CSS_EVENTQ_H
 
-#समावेश "ia_css_queue.h"	/* queue APIs */
+#include "ia_css_queue.h"	/* queue APIs */
 
 /**
  * @brief HOST receives event from SP.
  *
  * @param[in]	eventq_handle	eventq_handle.
  * @param[in]	payload		The event payload.
- * @वापस	0		- Successfully dequeue.
- * @वापस	-EINVAL		- Invalid argument.
- * @वापस	-ENODATA		- Queue is empty.
+ * @return	0		- Successfully dequeue.
+ * @return	-EINVAL		- Invalid argument.
+ * @return	-ENODATA		- Queue is empty.
  */
-पूर्णांक ia_css_eventq_recv(
+int ia_css_eventq_recv(
     ia_css_queue_t *eventq_handle,
-    uपूर्णांक8_t *payload);
+    uint8_t *payload);
 
 /**
  * @brief The Host sends the event to SP.
@@ -42,14 +41,14 @@
  * @param[in]	evt_payload_0	The event payload.
  * @param[in]	evt_payload_1	The event payload.
  * @param[in]	evt_payload_2	The event payload.
- * @वापस	0		- Successfully enqueue.
- * @वापस	-EINVAL		- Invalid argument.
- * @वापस	-ENOBUFS		- Queue is full.
+ * @return	0		- Successfully enqueue.
+ * @return	-EINVAL		- Invalid argument.
+ * @return	-ENOBUFS		- Queue is full.
  */
-पूर्णांक ia_css_eventq_send(
+int ia_css_eventq_send(
     ia_css_queue_t *eventq_handle,
     u8 evt_id,
     u8 evt_payload_0,
     u8 evt_payload_1,
-    uपूर्णांक8_t evt_payload_2);
-#पूर्ण_अगर /* _IA_CSS_EVENTQ_H */
+    uint8_t evt_payload_2);
+#endif /* _IA_CSS_EVENTQ_H */

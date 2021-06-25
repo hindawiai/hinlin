@@ -1,67 +1,66 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause */
+/* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
 /*
  * Copyright(c) 2017 - 2020 Intel Corporation.
  */
 
-#अगर_अघोषित _OPA_VNIC_H
-#घोषणा _OPA_VNIC_H
+#ifndef _OPA_VNIC_H
+#define _OPA_VNIC_H
 
 /*
  * This file contains Intel Omni-Path (OPA) Virtual Network Interface
- * Controller (VNIC) specअगरic declarations.
+ * Controller (VNIC) specific declarations.
  */
 
-#समावेश <rdma/ib_verbs.h>
+#include <rdma/ib_verbs.h>
 
 /* 16 header bytes + 2 reserved bytes */
-#घोषणा OPA_VNIC_L2_HDR_LEN   (16 + 2)
+#define OPA_VNIC_L2_HDR_LEN   (16 + 2)
 
-#घोषणा OPA_VNIC_L4_HDR_LEN   2
+#define OPA_VNIC_L4_HDR_LEN   2
 
-#घोषणा OPA_VNIC_HDR_LEN      (OPA_VNIC_L2_HDR_LEN + \
+#define OPA_VNIC_HDR_LEN      (OPA_VNIC_L2_HDR_LEN + \
 			       OPA_VNIC_L4_HDR_LEN)
 
-#घोषणा OPA_VNIC_L4_ETHR  0x78
+#define OPA_VNIC_L4_ETHR  0x78
 
-#घोषणा OPA_VNIC_ICRC_LEN   4
-#घोषणा OPA_VNIC_TAIL_LEN   1
-#घोषणा OPA_VNIC_ICRC_TAIL_LEN  (OPA_VNIC_ICRC_LEN + OPA_VNIC_TAIL_LEN)
+#define OPA_VNIC_ICRC_LEN   4
+#define OPA_VNIC_TAIL_LEN   1
+#define OPA_VNIC_ICRC_TAIL_LEN  (OPA_VNIC_ICRC_LEN + OPA_VNIC_TAIL_LEN)
 
-#घोषणा OPA_VNIC_SKB_MDATA_LEN         4
-#घोषणा OPA_VNIC_SKB_MDATA_ENCAP_ERR   0x1
+#define OPA_VNIC_SKB_MDATA_LEN         4
+#define OPA_VNIC_SKB_MDATA_ENCAP_ERR   0x1
 
-/* opa vnic rdma netdev's निजी data काष्ठाure */
-काष्ठा opa_vnic_rdma_netdev अणु
-	काष्ठा rdma_netdev rn;  /* keep this first */
-	/* followed by device निजी data */
-	अक्षर *dev_priv[];
-पूर्ण;
+/* opa vnic rdma netdev's private data structure */
+struct opa_vnic_rdma_netdev {
+	struct rdma_netdev rn;  /* keep this first */
+	/* followed by device private data */
+	char *dev_priv[];
+};
 
-अटल अंतरभूत व्योम *opa_vnic_priv(स्थिर काष्ठा net_device *dev)
-अणु
-	काष्ठा rdma_netdev *rn = netdev_priv(dev);
+static inline void *opa_vnic_priv(const struct net_device *dev)
+{
+	struct rdma_netdev *rn = netdev_priv(dev);
 
-	वापस rn->clnt_priv;
-पूर्ण
+	return rn->clnt_priv;
+}
 
-अटल अंतरभूत व्योम *opa_vnic_dev_priv(स्थिर काष्ठा net_device *dev)
-अणु
-	काष्ठा opa_vnic_rdma_netdev *oparn = netdev_priv(dev);
+static inline void *opa_vnic_dev_priv(const struct net_device *dev)
+{
+	struct opa_vnic_rdma_netdev *oparn = netdev_priv(dev);
 
-	वापस oparn->dev_priv;
-पूर्ण
+	return oparn->dev_priv;
+}
 
-/* opa_vnic skb meta data काष्ठाrue */
-काष्ठा opa_vnic_skb_mdata अणु
+/* opa_vnic skb meta data structrue */
+struct opa_vnic_skb_mdata {
 	u8 vl;
 	u8 entropy;
 	u8 flags;
 	u8 rsvd;
-पूर्ण __packed;
+} __packed;
 
 /* OPA VNIC group statistics */
-काष्ठा opa_vnic_grp_stats अणु
+struct opa_vnic_grp_stats {
 	u64 unicast;
 	u64 mcastbcast;
 	u64 untagged;
@@ -73,26 +72,26 @@
 	u64 s_512_1023;
 	u64 s_1024_1518;
 	u64 s_1519_max;
-पूर्ण;
+};
 
-काष्ठा opa_vnic_stats अणु
+struct opa_vnic_stats {
 	/* standard netdev statistics */
-	काष्ठा rtnl_link_stats64 netstats;
+	struct rtnl_link_stats64 netstats;
 
 	/* OPA VNIC statistics */
-	काष्ठा opa_vnic_grp_stats tx_grp;
-	काष्ठा opa_vnic_grp_stats rx_grp;
+	struct opa_vnic_grp_stats tx_grp;
+	struct opa_vnic_grp_stats rx_grp;
 	u64 tx_dlid_zero;
 	u64 tx_drop_state;
 	u64 rx_drop_state;
 	u64 rx_runt;
 	u64 rx_oversize;
-पूर्ण;
+};
 
-अटल अंतरभूत bool rdma_cap_opa_vnic(काष्ठा ib_device *device)
-अणु
-	वापस !!(device->attrs.device_cap_flags &
+static inline bool rdma_cap_opa_vnic(struct ib_device *device)
+{
+	return !!(device->attrs.device_cap_flags &
 		  IB_DEVICE_RDMA_NETDEV_OPA);
-पूर्ण
+}
 
-#पूर्ण_अगर /* _OPA_VNIC_H */
+#endif /* _OPA_VNIC_H */

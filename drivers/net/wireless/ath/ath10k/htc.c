@@ -1,143 +1,142 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2005-2011 Atheros Communications Inc.
  * Copyright (c) 2011-2017 Qualcomm Atheros, Inc.
  */
 
-#समावेश "core.h"
-#समावेश "hif.h"
-#समावेश "debug.h"
+#include "core.h"
+#include "hif.h"
+#include "debug.h"
 
 /********/
 /* Send */
 /********/
 
-अटल व्योम ath10k_htc_control_tx_complete(काष्ठा ath10k *ar,
-					   काष्ठा sk_buff *skb)
-अणु
-	kमुक्त_skb(skb);
-पूर्ण
+static void ath10k_htc_control_tx_complete(struct ath10k *ar,
+					   struct sk_buff *skb)
+{
+	kfree_skb(skb);
+}
 
-अटल काष्ठा sk_buff *ath10k_htc_build_tx_ctrl_skb(व्योम *ar)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा ath10k_skb_cb *skb_cb;
+static struct sk_buff *ath10k_htc_build_tx_ctrl_skb(void *ar)
+{
+	struct sk_buff *skb;
+	struct ath10k_skb_cb *skb_cb;
 
 	skb = dev_alloc_skb(ATH10K_HTC_CONTROL_BUFFER_SIZE);
-	अगर (!skb)
-		वापस शून्य;
+	if (!skb)
+		return NULL;
 
 	skb_reserve(skb, 20); /* FIXME: why 20 bytes? */
-	WARN_ONCE((अचिन्हित दीर्घ)skb->data & 3, "unaligned skb");
+	WARN_ONCE((unsigned long)skb->data & 3, "unaligned skb");
 
 	skb_cb = ATH10K_SKB_CB(skb);
-	स_रखो(skb_cb, 0, माप(*skb_cb));
+	memset(skb_cb, 0, sizeof(*skb_cb));
 
 	ath10k_dbg(ar, ATH10K_DBG_HTC, "%s: skb %pK\n", __func__, skb);
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल अंतरभूत व्योम ath10k_htc_restore_tx_skb(काष्ठा ath10k_htc *htc,
-					     काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ath10k_skb_cb *skb_cb = ATH10K_SKB_CB(skb);
+static inline void ath10k_htc_restore_tx_skb(struct ath10k_htc *htc,
+					     struct sk_buff *skb)
+{
+	struct ath10k_skb_cb *skb_cb = ATH10K_SKB_CB(skb);
 
-	अगर (htc->ar->bus_param.dev_type != ATH10K_DEV_TYPE_HL)
+	if (htc->ar->bus_param.dev_type != ATH10K_DEV_TYPE_HL)
 		dma_unmap_single(htc->ar->dev, skb_cb->paddr, skb->len, DMA_TO_DEVICE);
-	skb_pull(skb, माप(काष्ठा ath10k_htc_hdr));
-पूर्ण
+	skb_pull(skb, sizeof(struct ath10k_htc_hdr));
+}
 
-व्योम ath10k_htc_notअगरy_tx_completion(काष्ठा ath10k_htc_ep *ep,
-				     काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ath10k *ar = ep->htc->ar;
-	काष्ठा ath10k_htc_hdr *hdr;
+void ath10k_htc_notify_tx_completion(struct ath10k_htc_ep *ep,
+				     struct sk_buff *skb)
+{
+	struct ath10k *ar = ep->htc->ar;
+	struct ath10k_htc_hdr *hdr;
 
 	ath10k_dbg(ar, ATH10K_DBG_HTC, "%s: ep %d skb %pK\n", __func__,
 		   ep->eid, skb);
 
-	hdr = (काष्ठा ath10k_htc_hdr *)skb->data;
+	hdr = (struct ath10k_htc_hdr *)skb->data;
 	ath10k_htc_restore_tx_skb(ep->htc, skb);
 
-	अगर (!ep->ep_ops.ep_tx_complete) अणु
+	if (!ep->ep_ops.ep_tx_complete) {
 		ath10k_warn(ar, "no tx handler for eid %d\n", ep->eid);
-		dev_kमुक्त_skb_any(skb);
-		वापस;
-	पूर्ण
+		dev_kfree_skb_any(skb);
+		return;
+	}
 
-	अगर (hdr->flags & ATH10K_HTC_FLAG_SEND_BUNDLE) अणु
-		dev_kमुक्त_skb_any(skb);
-		वापस;
-	पूर्ण
+	if (hdr->flags & ATH10K_HTC_FLAG_SEND_BUNDLE) {
+		dev_kfree_skb_any(skb);
+		return;
+	}
 
 	ep->ep_ops.ep_tx_complete(ep->htc->ar, skb);
-पूर्ण
-EXPORT_SYMBOL(ath10k_htc_notअगरy_tx_completion);
+}
+EXPORT_SYMBOL(ath10k_htc_notify_tx_completion);
 
-अटल व्योम ath10k_htc_prepare_tx_skb(काष्ठा ath10k_htc_ep *ep,
-				      काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ath10k_htc_hdr *hdr;
+static void ath10k_htc_prepare_tx_skb(struct ath10k_htc_ep *ep,
+				      struct sk_buff *skb)
+{
+	struct ath10k_htc_hdr *hdr;
 
-	hdr = (काष्ठा ath10k_htc_hdr *)skb->data;
-	स_रखो(hdr, 0, माप(काष्ठा ath10k_htc_hdr));
+	hdr = (struct ath10k_htc_hdr *)skb->data;
+	memset(hdr, 0, sizeof(struct ath10k_htc_hdr));
 
 	hdr->eid = ep->eid;
-	hdr->len = __cpu_to_le16(skb->len - माप(*hdr));
+	hdr->len = __cpu_to_le16(skb->len - sizeof(*hdr));
 	hdr->flags = 0;
-	अगर (ep->tx_credit_flow_enabled && !ep->bundle_tx)
+	if (ep->tx_credit_flow_enabled && !ep->bundle_tx)
 		hdr->flags |= ATH10K_HTC_FLAG_NEED_CREDIT_UPDATE;
 
 	spin_lock_bh(&ep->htc->tx_lock);
 	hdr->seq_no = ep->seq_no++;
 	spin_unlock_bh(&ep->htc->tx_lock);
-पूर्ण
+}
 
-अटल पूर्णांक ath10k_htc_consume_credit(काष्ठा ath10k_htc_ep *ep,
-				     अचिन्हित पूर्णांक len,
+static int ath10k_htc_consume_credit(struct ath10k_htc_ep *ep,
+				     unsigned int len,
 				     bool consume)
-अणु
-	काष्ठा ath10k_htc *htc = ep->htc;
-	काष्ठा ath10k *ar = htc->ar;
-	क्रमागत ath10k_htc_ep_id eid = ep->eid;
-	पूर्णांक credits, ret = 0;
+{
+	struct ath10k_htc *htc = ep->htc;
+	struct ath10k *ar = htc->ar;
+	enum ath10k_htc_ep_id eid = ep->eid;
+	int credits, ret = 0;
 
-	अगर (!ep->tx_credit_flow_enabled)
-		वापस 0;
+	if (!ep->tx_credit_flow_enabled)
+		return 0;
 
 	credits = DIV_ROUND_UP(len, ep->tx_credit_size);
 	spin_lock_bh(&htc->tx_lock);
 
-	अगर (ep->tx_credits < credits) अणु
+	if (ep->tx_credits < credits) {
 		ath10k_dbg(ar, ATH10K_DBG_HTC,
 			   "htc insufficient credits ep %d required %d available %d consume %d\n",
 			   eid, credits, ep->tx_credits, consume);
 		ret = -EAGAIN;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (consume) अणु
+	if (consume) {
 		ep->tx_credits -= credits;
 		ath10k_dbg(ar, ATH10K_DBG_HTC,
 			   "htc ep %d consumed %d credits total %d\n",
 			   eid, credits, ep->tx_credits);
-	पूर्ण
+	}
 
 unlock:
 	spin_unlock_bh(&htc->tx_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ath10k_htc_release_credit(काष्ठा ath10k_htc_ep *ep, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा ath10k_htc *htc = ep->htc;
-	काष्ठा ath10k *ar = htc->ar;
-	क्रमागत ath10k_htc_ep_id eid = ep->eid;
-	पूर्णांक credits;
+static void ath10k_htc_release_credit(struct ath10k_htc_ep *ep, unsigned int len)
+{
+	struct ath10k_htc *htc = ep->htc;
+	struct ath10k *ar = htc->ar;
+	enum ath10k_htc_ep_id eid = ep->eid;
+	int credits;
 
-	अगर (!ep->tx_credit_flow_enabled)
-		वापस;
+	if (!ep->tx_credit_flow_enabled)
+		return;
 
 	credits = DIV_ROUND_UP(len, ep->tx_credit_size);
 	spin_lock_bh(&htc->tx_lock);
@@ -147,49 +146,49 @@ unlock:
 		   eid, credits, ep->tx_credits);
 	spin_unlock_bh(&htc->tx_lock);
 
-	अगर (ep->ep_ops.ep_tx_credits)
+	if (ep->ep_ops.ep_tx_credits)
 		ep->ep_ops.ep_tx_credits(htc->ar);
-पूर्ण
+}
 
-पूर्णांक ath10k_htc_send(काष्ठा ath10k_htc *htc,
-		    क्रमागत ath10k_htc_ep_id eid,
-		    काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ath10k *ar = htc->ar;
-	काष्ठा ath10k_htc_ep *ep = &htc->endpoपूर्णांक[eid];
-	काष्ठा ath10k_skb_cb *skb_cb = ATH10K_SKB_CB(skb);
-	काष्ठा ath10k_hअगर_sg_item sg_item;
-	काष्ठा device *dev = htc->ar->dev;
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक skb_len;
+int ath10k_htc_send(struct ath10k_htc *htc,
+		    enum ath10k_htc_ep_id eid,
+		    struct sk_buff *skb)
+{
+	struct ath10k *ar = htc->ar;
+	struct ath10k_htc_ep *ep = &htc->endpoint[eid];
+	struct ath10k_skb_cb *skb_cb = ATH10K_SKB_CB(skb);
+	struct ath10k_hif_sg_item sg_item;
+	struct device *dev = htc->ar->dev;
+	int ret;
+	unsigned int skb_len;
 
-	अगर (htc->ar->state == ATH10K_STATE_WEDGED)
-		वापस -ECOMM;
+	if (htc->ar->state == ATH10K_STATE_WEDGED)
+		return -ECOMM;
 
-	अगर (eid >= ATH10K_HTC_EP_COUNT) अणु
+	if (eid >= ATH10K_HTC_EP_COUNT) {
 		ath10k_warn(ar, "Invalid endpoint id: %d\n", eid);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	skb_push(skb, माप(काष्ठा ath10k_htc_hdr));
+	skb_push(skb, sizeof(struct ath10k_htc_hdr));
 
 	skb_len = skb->len;
 	ret = ath10k_htc_consume_credit(ep, skb_len, true);
-	अगर (ret)
-		जाओ err_pull;
+	if (ret)
+		goto err_pull;
 
 	ath10k_htc_prepare_tx_skb(ep, skb);
 
 	skb_cb->eid = eid;
-	अगर (ar->bus_param.dev_type != ATH10K_DEV_TYPE_HL) अणु
+	if (ar->bus_param.dev_type != ATH10K_DEV_TYPE_HL) {
 		skb_cb->paddr = dma_map_single(dev, skb->data, skb->len,
 					       DMA_TO_DEVICE);
 		ret = dma_mapping_error(dev, skb_cb->paddr);
-		अगर (ret) अणु
+		if (ret) {
 			ret = -EIO;
-			जाओ err_credits;
-		पूर्ण
-	पूर्ण
+			goto err_credits;
+		}
+	}
 
 	sg_item.transfer_id = ep->eid;
 	sg_item.transfer_context = skb;
@@ -197,204 +196,204 @@ unlock:
 	sg_item.paddr = skb_cb->paddr;
 	sg_item.len = skb->len;
 
-	ret = ath10k_hअगर_tx_sg(htc->ar, ep->ul_pipe_id, &sg_item, 1);
-	अगर (ret)
-		जाओ err_unmap;
+	ret = ath10k_hif_tx_sg(htc->ar, ep->ul_pipe_id, &sg_item, 1);
+	if (ret)
+		goto err_unmap;
 
-	वापस 0;
+	return 0;
 
 err_unmap:
-	अगर (ar->bus_param.dev_type != ATH10K_DEV_TYPE_HL)
+	if (ar->bus_param.dev_type != ATH10K_DEV_TYPE_HL)
 		dma_unmap_single(dev, skb_cb->paddr, skb->len, DMA_TO_DEVICE);
 err_credits:
 	ath10k_htc_release_credit(ep, skb_len);
 err_pull:
-	skb_pull(skb, माप(काष्ठा ath10k_htc_hdr));
-	वापस ret;
-पूर्ण
+	skb_pull(skb, sizeof(struct ath10k_htc_hdr));
+	return ret;
+}
 
-व्योम ath10k_htc_tx_completion_handler(काष्ठा ath10k *ar, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ath10k_htc *htc = &ar->htc;
-	काष्ठा ath10k_skb_cb *skb_cb;
-	काष्ठा ath10k_htc_ep *ep;
+void ath10k_htc_tx_completion_handler(struct ath10k *ar, struct sk_buff *skb)
+{
+	struct ath10k_htc *htc = &ar->htc;
+	struct ath10k_skb_cb *skb_cb;
+	struct ath10k_htc_ep *ep;
 
-	अगर (WARN_ON_ONCE(!skb))
-		वापस;
+	if (WARN_ON_ONCE(!skb))
+		return;
 
 	skb_cb = ATH10K_SKB_CB(skb);
-	ep = &htc->endpoपूर्णांक[skb_cb->eid];
+	ep = &htc->endpoint[skb_cb->eid];
 
-	ath10k_htc_notअगरy_tx_completion(ep, skb);
-	/* the skb now beदीर्घs to the completion handler */
-पूर्ण
+	ath10k_htc_notify_tx_completion(ep, skb);
+	/* the skb now belongs to the completion handler */
+}
 EXPORT_SYMBOL(ath10k_htc_tx_completion_handler);
 
 /***********/
 /* Receive */
 /***********/
 
-अटल व्योम
-ath10k_htc_process_credit_report(काष्ठा ath10k_htc *htc,
-				 स्थिर काष्ठा ath10k_htc_credit_report *report,
-				 पूर्णांक len,
-				 क्रमागत ath10k_htc_ep_id eid)
-अणु
-	काष्ठा ath10k *ar = htc->ar;
-	काष्ठा ath10k_htc_ep *ep;
-	पूर्णांक i, n_reports;
+static void
+ath10k_htc_process_credit_report(struct ath10k_htc *htc,
+				 const struct ath10k_htc_credit_report *report,
+				 int len,
+				 enum ath10k_htc_ep_id eid)
+{
+	struct ath10k *ar = htc->ar;
+	struct ath10k_htc_ep *ep;
+	int i, n_reports;
 
-	अगर (len % माप(*report))
+	if (len % sizeof(*report))
 		ath10k_warn(ar, "Uneven credit report len %d", len);
 
-	n_reports = len / माप(*report);
+	n_reports = len / sizeof(*report);
 
 	spin_lock_bh(&htc->tx_lock);
-	क्रम (i = 0; i < n_reports; i++, report++) अणु
-		अगर (report->eid >= ATH10K_HTC_EP_COUNT)
-			अवरोध;
+	for (i = 0; i < n_reports; i++, report++) {
+		if (report->eid >= ATH10K_HTC_EP_COUNT)
+			break;
 
-		ep = &htc->endpoपूर्णांक[report->eid];
+		ep = &htc->endpoint[report->eid];
 		ep->tx_credits += report->credits;
 
 		ath10k_dbg(ar, ATH10K_DBG_HTC, "htc ep %d got %d credits (total %d)\n",
 			   report->eid, report->credits, ep->tx_credits);
 
-		अगर (ep->ep_ops.ep_tx_credits) अणु
+		if (ep->ep_ops.ep_tx_credits) {
 			spin_unlock_bh(&htc->tx_lock);
 			ep->ep_ops.ep_tx_credits(htc->ar);
 			spin_lock_bh(&htc->tx_lock);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_bh(&htc->tx_lock);
-पूर्ण
+}
 
-अटल पूर्णांक
-ath10k_htc_process_lookahead(काष्ठा ath10k_htc *htc,
-			     स्थिर काष्ठा ath10k_htc_lookahead_report *report,
-			     पूर्णांक len,
-			     क्रमागत ath10k_htc_ep_id eid,
-			     व्योम *next_lookaheads,
-			     पूर्णांक *next_lookaheads_len)
-अणु
-	काष्ठा ath10k *ar = htc->ar;
+static int
+ath10k_htc_process_lookahead(struct ath10k_htc *htc,
+			     const struct ath10k_htc_lookahead_report *report,
+			     int len,
+			     enum ath10k_htc_ep_id eid,
+			     void *next_lookaheads,
+			     int *next_lookaheads_len)
+{
+	struct ath10k *ar = htc->ar;
 
 	/* Invalid lookahead flags are actually transmitted by
 	 * the target in the HTC control message.
 	 * Since this will happen at every boot we silently ignore
-	 * the lookahead in this हाल
+	 * the lookahead in this case
 	 */
-	अगर (report->pre_valid != ((~report->post_valid) & 0xFF))
-		वापस 0;
+	if (report->pre_valid != ((~report->post_valid) & 0xFF))
+		return 0;
 
-	अगर (next_lookaheads && next_lookaheads_len) अणु
+	if (next_lookaheads && next_lookaheads_len) {
 		ath10k_dbg(ar, ATH10K_DBG_HTC,
 			   "htc rx lookahead found pre_valid 0x%x post_valid 0x%x\n",
 			   report->pre_valid, report->post_valid);
 
 		/* look ahead bytes are valid, copy them over */
-		स_नकल((u8 *)next_lookaheads, report->lookahead, 4);
+		memcpy((u8 *)next_lookaheads, report->lookahead, 4);
 
 		*next_lookaheads_len = 1;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-ath10k_htc_process_lookahead_bundle(काष्ठा ath10k_htc *htc,
-				    स्थिर काष्ठा ath10k_htc_lookahead_bundle *report,
-				    पूर्णांक len,
-				    क्रमागत ath10k_htc_ep_id eid,
-				    व्योम *next_lookaheads,
-				    पूर्णांक *next_lookaheads_len)
-अणु
-	काष्ठा ath10k *ar = htc->ar;
-	पूर्णांक bundle_cnt = len / माप(*report);
+static int
+ath10k_htc_process_lookahead_bundle(struct ath10k_htc *htc,
+				    const struct ath10k_htc_lookahead_bundle *report,
+				    int len,
+				    enum ath10k_htc_ep_id eid,
+				    void *next_lookaheads,
+				    int *next_lookaheads_len)
+{
+	struct ath10k *ar = htc->ar;
+	int bundle_cnt = len / sizeof(*report);
 
-	अगर (!bundle_cnt || (bundle_cnt > htc->max_msgs_per_htc_bundle)) अणु
+	if (!bundle_cnt || (bundle_cnt > htc->max_msgs_per_htc_bundle)) {
 		ath10k_warn(ar, "Invalid lookahead bundle count: %d\n",
 			    bundle_cnt);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (next_lookaheads && next_lookaheads_len) अणु
-		पूर्णांक i;
+	if (next_lookaheads && next_lookaheads_len) {
+		int i;
 
-		क्रम (i = 0; i < bundle_cnt; i++) अणु
-			स_नकल(((u8 *)next_lookaheads) + 4 * i,
+		for (i = 0; i < bundle_cnt; i++) {
+			memcpy(((u8 *)next_lookaheads) + 4 * i,
 			       report->lookahead, 4);
 			report++;
-		पूर्ण
+		}
 
 		*next_lookaheads_len = bundle_cnt;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ath10k_htc_process_trailer(काष्ठा ath10k_htc *htc,
+int ath10k_htc_process_trailer(struct ath10k_htc *htc,
 			       u8 *buffer,
-			       पूर्णांक length,
-			       क्रमागत ath10k_htc_ep_id src_eid,
-			       व्योम *next_lookaheads,
-			       पूर्णांक *next_lookaheads_len)
-अणु
-	काष्ठा ath10k_htc_lookahead_bundle *bundle;
-	काष्ठा ath10k *ar = htc->ar;
-	पूर्णांक status = 0;
-	काष्ठा ath10k_htc_record *record;
+			       int length,
+			       enum ath10k_htc_ep_id src_eid,
+			       void *next_lookaheads,
+			       int *next_lookaheads_len)
+{
+	struct ath10k_htc_lookahead_bundle *bundle;
+	struct ath10k *ar = htc->ar;
+	int status = 0;
+	struct ath10k_htc_record *record;
 	u8 *orig_buffer;
-	पूर्णांक orig_length;
-	माप_प्रकार len;
+	int orig_length;
+	size_t len;
 
 	orig_buffer = buffer;
 	orig_length = length;
 
-	जबतक (length > 0) अणु
-		record = (काष्ठा ath10k_htc_record *)buffer;
+	while (length > 0) {
+		record = (struct ath10k_htc_record *)buffer;
 
-		अगर (length < माप(record->hdr)) अणु
+		if (length < sizeof(record->hdr)) {
 			status = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (record->hdr.len > length) अणु
-			/* no room left in buffer क्रम record */
+		if (record->hdr.len > length) {
+			/* no room left in buffer for record */
 			ath10k_warn(ar, "Invalid record length: %d\n",
 				    record->hdr.len);
 			status = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		चयन (record->hdr.id) अणु
-		हाल ATH10K_HTC_RECORD_CREDITS:
-			len = माप(काष्ठा ath10k_htc_credit_report);
-			अगर (record->hdr.len < len) अणु
+		switch (record->hdr.id) {
+		case ATH10K_HTC_RECORD_CREDITS:
+			len = sizeof(struct ath10k_htc_credit_report);
+			if (record->hdr.len < len) {
 				ath10k_warn(ar, "Credit report too long\n");
 				status = -EINVAL;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			ath10k_htc_process_credit_report(htc,
 							 record->credit_report,
 							 record->hdr.len,
 							 src_eid);
-			अवरोध;
-		हाल ATH10K_HTC_RECORD_LOOKAHEAD:
-			len = माप(काष्ठा ath10k_htc_lookahead_report);
-			अगर (record->hdr.len < len) अणु
+			break;
+		case ATH10K_HTC_RECORD_LOOKAHEAD:
+			len = sizeof(struct ath10k_htc_lookahead_report);
+			if (record->hdr.len < len) {
 				ath10k_warn(ar, "Lookahead report too long\n");
 				status = -EINVAL;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			status = ath10k_htc_process_lookahead(htc,
 							      record->lookahead_report,
 							      record->hdr.len,
 							      src_eid,
 							      next_lookaheads,
 							      next_lookaheads_len);
-			अवरोध;
-		हाल ATH10K_HTC_RECORD_LOOKAHEAD_BUNDLE:
+			break;
+		case ATH10K_HTC_RECORD_LOOKAHEAD_BUNDLE:
 			bundle = record->lookahead_bundle;
 			status = ath10k_htc_process_lookahead_bundle(htc,
 								     bundle,
@@ -402,655 +401,655 @@ ath10k_htc_process_lookahead_bundle(काष्ठा ath10k_htc *htc,
 								     src_eid,
 								     next_lookaheads,
 								     next_lookaheads_len);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			ath10k_warn(ar, "Unhandled record: id:%d length:%d\n",
 				    record->hdr.id, record->hdr.len);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (status)
-			अवरोध;
+		if (status)
+			break;
 
 		/* multiple records may be present in a trailer */
-		buffer += माप(record->hdr) + record->hdr.len;
-		length -= माप(record->hdr) + record->hdr.len;
-	पूर्ण
+		buffer += sizeof(record->hdr) + record->hdr.len;
+		length -= sizeof(record->hdr) + record->hdr.len;
+	}
 
-	अगर (status)
+	if (status)
 		ath10k_dbg_dump(ar, ATH10K_DBG_HTC, "htc rx bad trailer", "",
 				orig_buffer, orig_length);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 EXPORT_SYMBOL(ath10k_htc_process_trailer);
 
-व्योम ath10k_htc_rx_completion_handler(काष्ठा ath10k *ar, काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक status = 0;
-	काष्ठा ath10k_htc *htc = &ar->htc;
-	काष्ठा ath10k_htc_hdr *hdr;
-	काष्ठा ath10k_htc_ep *ep;
+void ath10k_htc_rx_completion_handler(struct ath10k *ar, struct sk_buff *skb)
+{
+	int status = 0;
+	struct ath10k_htc *htc = &ar->htc;
+	struct ath10k_htc_hdr *hdr;
+	struct ath10k_htc_ep *ep;
 	u16 payload_len;
 	u32 trailer_len = 0;
-	माप_प्रकार min_len;
+	size_t min_len;
 	u8 eid;
 	bool trailer_present;
 
-	hdr = (काष्ठा ath10k_htc_hdr *)skb->data;
-	skb_pull(skb, माप(*hdr));
+	hdr = (struct ath10k_htc_hdr *)skb->data;
+	skb_pull(skb, sizeof(*hdr));
 
 	eid = hdr->eid;
 
-	अगर (eid >= ATH10K_HTC_EP_COUNT) अणु
+	if (eid >= ATH10K_HTC_EP_COUNT) {
 		ath10k_warn(ar, "HTC Rx: invalid eid %d\n", eid);
 		ath10k_dbg_dump(ar, ATH10K_DBG_HTC, "htc bad header", "",
-				hdr, माप(*hdr));
-		जाओ out;
-	पूर्ण
+				hdr, sizeof(*hdr));
+		goto out;
+	}
 
-	ep = &htc->endpoपूर्णांक[eid];
-	अगर (ep->service_id == ATH10K_HTC_SVC_ID_UNUSED) अणु
+	ep = &htc->endpoint[eid];
+	if (ep->service_id == ATH10K_HTC_SVC_ID_UNUSED) {
 		ath10k_warn(ar, "htc rx endpoint %d is not connected\n", eid);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	payload_len = __le16_to_cpu(hdr->len);
 
-	अगर (payload_len + माप(*hdr) > ATH10K_HTC_MAX_LEN) अणु
+	if (payload_len + sizeof(*hdr) > ATH10K_HTC_MAX_LEN) {
 		ath10k_warn(ar, "HTC rx frame too long, len: %zu\n",
-			    payload_len + माप(*hdr));
+			    payload_len + sizeof(*hdr));
 		ath10k_dbg_dump(ar, ATH10K_DBG_HTC, "htc bad rx pkt len", "",
-				hdr, माप(*hdr));
-		जाओ out;
-	पूर्ण
+				hdr, sizeof(*hdr));
+		goto out;
+	}
 
-	अगर (skb->len < payload_len) अणु
+	if (skb->len < payload_len) {
 		ath10k_dbg(ar, ATH10K_DBG_HTC,
 			   "HTC Rx: insufficient length, got %d, expected %d\n",
 			   skb->len, payload_len);
 		ath10k_dbg_dump(ar, ATH10K_DBG_HTC, "htc bad rx pkt len",
-				"", hdr, माप(*hdr));
-		जाओ out;
-	पूर्ण
+				"", hdr, sizeof(*hdr));
+		goto out;
+	}
 
-	/* get flags to check क्रम trailer */
+	/* get flags to check for trailer */
 	trailer_present = hdr->flags & ATH10K_HTC_FLAG_TRAILER_PRESENT;
-	अगर (trailer_present) अणु
+	if (trailer_present) {
 		u8 *trailer;
 
 		trailer_len = hdr->trailer_len;
-		min_len = माप(काष्ठा ath10k_ath10k_htc_record_hdr);
+		min_len = sizeof(struct ath10k_ath10k_htc_record_hdr);
 
-		अगर ((trailer_len < min_len) ||
-		    (trailer_len > payload_len)) अणु
+		if ((trailer_len < min_len) ||
+		    (trailer_len > payload_len)) {
 			ath10k_warn(ar, "Invalid trailer length: %d\n",
 				    trailer_len);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		trailer = (u8 *)hdr;
-		trailer += माप(*hdr);
+		trailer += sizeof(*hdr);
 		trailer += payload_len;
 		trailer -= trailer_len;
 		status = ath10k_htc_process_trailer(htc, trailer,
 						    trailer_len, hdr->eid,
-						    शून्य, शून्य);
-		अगर (status)
-			जाओ out;
+						    NULL, NULL);
+		if (status)
+			goto out;
 
 		skb_trim(skb, skb->len - trailer_len);
-	पूर्ण
+	}
 
-	अगर (((पूर्णांक)payload_len - (पूर्णांक)trailer_len) <= 0)
+	if (((int)payload_len - (int)trailer_len) <= 0)
 		/* zero length packet with trailer data, just drop these */
-		जाओ out;
+		goto out;
 
 	ath10k_dbg(ar, ATH10K_DBG_HTC, "htc rx completion ep %d skb %pK\n",
 		   eid, skb);
 	ep->ep_ops.ep_rx_complete(ar, skb);
 
 	/* skb is now owned by the rx completion handler */
-	skb = शून्य;
+	skb = NULL;
 out:
-	kमुक्त_skb(skb);
-पूर्ण
+	kfree_skb(skb);
+}
 EXPORT_SYMBOL(ath10k_htc_rx_completion_handler);
 
-अटल व्योम ath10k_htc_control_rx_complete(काष्ठा ath10k *ar,
-					   काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ath10k_htc *htc = &ar->htc;
-	काष्ठा ath10k_htc_msg *msg = (काष्ठा ath10k_htc_msg *)skb->data;
+static void ath10k_htc_control_rx_complete(struct ath10k *ar,
+					   struct sk_buff *skb)
+{
+	struct ath10k_htc *htc = &ar->htc;
+	struct ath10k_htc_msg *msg = (struct ath10k_htc_msg *)skb->data;
 
-	चयन (__le16_to_cpu(msg->hdr.message_id)) अणु
-	हाल ATH10K_HTC_MSG_READY_ID:
-	हाल ATH10K_HTC_MSG_CONNECT_SERVICE_RESP_ID:
+	switch (__le16_to_cpu(msg->hdr.message_id)) {
+	case ATH10K_HTC_MSG_READY_ID:
+	case ATH10K_HTC_MSG_CONNECT_SERVICE_RESP_ID:
 		/* handle HTC control message */
-		अगर (completion_करोne(&htc->ctl_resp)) अणु
+		if (completion_done(&htc->ctl_resp)) {
 			/* this is a fatal error, target should not be
 			 * sending unsolicited messages on the ep 0
 			 */
 			ath10k_warn(ar, "HTC rx ctrl still processing\n");
 			complete(&htc->ctl_resp);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		htc->control_resp_len =
-			min_t(पूर्णांक, skb->len,
+			min_t(int, skb->len,
 			      ATH10K_HTC_MAX_CTRL_MSG_LEN);
 
-		स_नकल(htc->control_resp_buffer, skb->data,
+		memcpy(htc->control_resp_buffer, skb->data,
 		       htc->control_resp_len);
 
 		complete(&htc->ctl_resp);
-		अवरोध;
-	हाल ATH10K_HTC_MSG_SEND_SUSPEND_COMPLETE:
+		break;
+	case ATH10K_HTC_MSG_SEND_SUSPEND_COMPLETE:
 		htc->htc_ops.target_send_suspend_complete(ar);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ath10k_warn(ar, "ignoring unsolicited htc ep0 event\n");
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 out:
-	kमुक्त_skb(skb);
-पूर्ण
+	kfree_skb(skb);
+}
 
 /***************/
 /* Init/Deinit */
 /***************/
 
-अटल स्थिर अक्षर *htc_service_name(क्रमागत ath10k_htc_svc_id id)
-अणु
-	चयन (id) अणु
-	हाल ATH10K_HTC_SVC_ID_RESERVED:
-		वापस "Reserved";
-	हाल ATH10K_HTC_SVC_ID_RSVD_CTRL:
-		वापस "Control";
-	हाल ATH10K_HTC_SVC_ID_WMI_CONTROL:
-		वापस "WMI";
-	हाल ATH10K_HTC_SVC_ID_WMI_DATA_BE:
-		वापस "DATA BE";
-	हाल ATH10K_HTC_SVC_ID_WMI_DATA_BK:
-		वापस "DATA BK";
-	हाल ATH10K_HTC_SVC_ID_WMI_DATA_VI:
-		वापस "DATA VI";
-	हाल ATH10K_HTC_SVC_ID_WMI_DATA_VO:
-		वापस "DATA VO";
-	हाल ATH10K_HTC_SVC_ID_NMI_CONTROL:
-		वापस "NMI Control";
-	हाल ATH10K_HTC_SVC_ID_NMI_DATA:
-		वापस "NMI Data";
-	हाल ATH10K_HTC_SVC_ID_HTT_DATA_MSG:
-		वापस "HTT Data";
-	हाल ATH10K_HTC_SVC_ID_HTT_DATA2_MSG:
-		वापस "HTT Data";
-	हाल ATH10K_HTC_SVC_ID_HTT_DATA3_MSG:
-		वापस "HTT Data";
-	हाल ATH10K_HTC_SVC_ID_TEST_RAW_STREAMS:
-		वापस "RAW";
-	हाल ATH10K_HTC_SVC_ID_HTT_LOG_MSG:
-		वापस "PKTLOG";
-	पूर्ण
+static const char *htc_service_name(enum ath10k_htc_svc_id id)
+{
+	switch (id) {
+	case ATH10K_HTC_SVC_ID_RESERVED:
+		return "Reserved";
+	case ATH10K_HTC_SVC_ID_RSVD_CTRL:
+		return "Control";
+	case ATH10K_HTC_SVC_ID_WMI_CONTROL:
+		return "WMI";
+	case ATH10K_HTC_SVC_ID_WMI_DATA_BE:
+		return "DATA BE";
+	case ATH10K_HTC_SVC_ID_WMI_DATA_BK:
+		return "DATA BK";
+	case ATH10K_HTC_SVC_ID_WMI_DATA_VI:
+		return "DATA VI";
+	case ATH10K_HTC_SVC_ID_WMI_DATA_VO:
+		return "DATA VO";
+	case ATH10K_HTC_SVC_ID_NMI_CONTROL:
+		return "NMI Control";
+	case ATH10K_HTC_SVC_ID_NMI_DATA:
+		return "NMI Data";
+	case ATH10K_HTC_SVC_ID_HTT_DATA_MSG:
+		return "HTT Data";
+	case ATH10K_HTC_SVC_ID_HTT_DATA2_MSG:
+		return "HTT Data";
+	case ATH10K_HTC_SVC_ID_HTT_DATA3_MSG:
+		return "HTT Data";
+	case ATH10K_HTC_SVC_ID_TEST_RAW_STREAMS:
+		return "RAW";
+	case ATH10K_HTC_SVC_ID_HTT_LOG_MSG:
+		return "PKTLOG";
+	}
 
-	वापस "Unknown";
-पूर्ण
+	return "Unknown";
+}
 
-अटल व्योम ath10k_htc_reset_endpoपूर्णांक_states(काष्ठा ath10k_htc *htc)
-अणु
-	काष्ठा ath10k_htc_ep *ep;
-	पूर्णांक i;
+static void ath10k_htc_reset_endpoint_states(struct ath10k_htc *htc)
+{
+	struct ath10k_htc_ep *ep;
+	int i;
 
-	क्रम (i = ATH10K_HTC_EP_0; i < ATH10K_HTC_EP_COUNT; i++) अणु
-		ep = &htc->endpoपूर्णांक[i];
+	for (i = ATH10K_HTC_EP_0; i < ATH10K_HTC_EP_COUNT; i++) {
+		ep = &htc->endpoint[i];
 		ep->service_id = ATH10K_HTC_SVC_ID_UNUSED;
 		ep->max_ep_message_len = 0;
 		ep->max_tx_queue_depth = 0;
 		ep->eid = i;
 		ep->htc = htc;
 		ep->tx_credit_flow_enabled = true;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u8 ath10k_htc_get_credit_allocation(काष्ठा ath10k_htc *htc,
+static u8 ath10k_htc_get_credit_allocation(struct ath10k_htc *htc,
 					   u16 service_id)
-अणु
+{
 	u8 allocation = 0;
 
 	/* The WMI control service is the only service with flow control.
 	 * Let it have all transmit credits.
 	 */
-	अगर (service_id == ATH10K_HTC_SVC_ID_WMI_CONTROL)
+	if (service_id == ATH10K_HTC_SVC_ID_WMI_CONTROL)
 		allocation = htc->total_transmit_credits;
 
-	वापस allocation;
-पूर्ण
+	return allocation;
+}
 
-अटल पूर्णांक ath10k_htc_send_bundle(काष्ठा ath10k_htc_ep *ep,
-				  काष्ठा sk_buff *bundle_skb,
-				  काष्ठा sk_buff_head *tx_save_head)
-अणु
-	काष्ठा ath10k_hअगर_sg_item sg_item;
-	काष्ठा ath10k_htc *htc = ep->htc;
-	काष्ठा ath10k *ar = htc->ar;
-	काष्ठा sk_buff *skb;
-	पूर्णांक ret, cn = 0;
-	अचिन्हित पूर्णांक skb_len;
+static int ath10k_htc_send_bundle(struct ath10k_htc_ep *ep,
+				  struct sk_buff *bundle_skb,
+				  struct sk_buff_head *tx_save_head)
+{
+	struct ath10k_hif_sg_item sg_item;
+	struct ath10k_htc *htc = ep->htc;
+	struct ath10k *ar = htc->ar;
+	struct sk_buff *skb;
+	int ret, cn = 0;
+	unsigned int skb_len;
 
 	ath10k_dbg(ar, ATH10K_DBG_HTC, "bundle skb len %d\n", bundle_skb->len);
 	skb_len = bundle_skb->len;
 	ret = ath10k_htc_consume_credit(ep, skb_len, true);
 
-	अगर (!ret) अणु
+	if (!ret) {
 		sg_item.transfer_id = ep->eid;
 		sg_item.transfer_context = bundle_skb;
 		sg_item.vaddr = bundle_skb->data;
 		sg_item.len = bundle_skb->len;
 
-		ret = ath10k_hअगर_tx_sg(htc->ar, ep->ul_pipe_id, &sg_item, 1);
-		अगर (ret)
+		ret = ath10k_hif_tx_sg(htc->ar, ep->ul_pipe_id, &sg_item, 1);
+		if (ret)
 			ath10k_htc_release_credit(ep, skb_len);
-	पूर्ण
+	}
 
-	अगर (ret)
-		dev_kमुक्त_skb_any(bundle_skb);
+	if (ret)
+		dev_kfree_skb_any(bundle_skb);
 
-	क्रम (cn = 0; (skb = skb_dequeue_tail(tx_save_head)); cn++) अणु
-		अगर (ret) अणु
-			skb_pull(skb, माप(काष्ठा ath10k_htc_hdr));
+	for (cn = 0; (skb = skb_dequeue_tail(tx_save_head)); cn++) {
+		if (ret) {
+			skb_pull(skb, sizeof(struct ath10k_htc_hdr));
 			skb_queue_head(&ep->tx_req_head, skb);
-		पूर्ण अन्यथा अणु
+		} else {
 			skb_queue_tail(&ep->tx_complete_head, skb);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!ret)
+	if (!ret)
 		queue_work(ar->workqueue_tx_complete, &ar->tx_complete_work);
 
 	ath10k_dbg(ar, ATH10K_DBG_HTC,
 		   "bundle tx status %d eid %d req count %d count %d len %d\n",
 		   ret, ep->eid, skb_queue_len(&ep->tx_req_head), cn, skb_len);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ath10k_htc_send_one_skb(काष्ठा ath10k_htc_ep *ep, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ath10k_htc *htc = ep->htc;
-	काष्ठा ath10k *ar = htc->ar;
-	पूर्णांक ret;
+static void ath10k_htc_send_one_skb(struct ath10k_htc_ep *ep, struct sk_buff *skb)
+{
+	struct ath10k_htc *htc = ep->htc;
+	struct ath10k *ar = htc->ar;
+	int ret;
 
 	ret = ath10k_htc_send(htc, ep->eid, skb);
 
-	अगर (ret)
+	if (ret)
 		skb_queue_head(&ep->tx_req_head, skb);
 
 	ath10k_dbg(ar, ATH10K_DBG_HTC, "tx one status %d eid %d len %d pending count %d\n",
 		   ret, ep->eid, skb->len, skb_queue_len(&ep->tx_req_head));
-पूर्ण
+}
 
-अटल पूर्णांक ath10k_htc_send_bundle_skbs(काष्ठा ath10k_htc_ep *ep)
-अणु
-	काष्ठा ath10k_htc *htc = ep->htc;
-	काष्ठा sk_buff *bundle_skb, *skb;
-	काष्ठा sk_buff_head tx_save_head;
-	काष्ठा ath10k_htc_hdr *hdr;
+static int ath10k_htc_send_bundle_skbs(struct ath10k_htc_ep *ep)
+{
+	struct ath10k_htc *htc = ep->htc;
+	struct sk_buff *bundle_skb, *skb;
+	struct sk_buff_head tx_save_head;
+	struct ath10k_htc_hdr *hdr;
 	u8 *bundle_buf;
-	पूर्णांक ret = 0, credit_pad, credit_reमुख्यder, trans_len, bundles_left = 0;
+	int ret = 0, credit_pad, credit_remainder, trans_len, bundles_left = 0;
 
-	अगर (htc->ar->state == ATH10K_STATE_WEDGED)
-		वापस -ECOMM;
+	if (htc->ar->state == ATH10K_STATE_WEDGED)
+		return -ECOMM;
 
-	अगर (ep->tx_credit_flow_enabled &&
+	if (ep->tx_credit_flow_enabled &&
 	    ep->tx_credits < ATH10K_MIN_CREDIT_PER_HTC_TX_BUNDLE)
-		वापस 0;
+		return 0;
 
 	bundles_left = ATH10K_MAX_MSG_PER_HTC_TX_BUNDLE * ep->tx_credit_size;
 	bundle_skb = dev_alloc_skb(bundles_left);
 
-	अगर (!bundle_skb)
-		वापस -ENOMEM;
+	if (!bundle_skb)
+		return -ENOMEM;
 
 	bundle_buf = bundle_skb->data;
 	skb_queue_head_init(&tx_save_head);
 
-	जबतक (true) अणु
+	while (true) {
 		skb = skb_dequeue(&ep->tx_req_head);
-		अगर (!skb)
-			अवरोध;
+		if (!skb)
+			break;
 
 		credit_pad = 0;
-		trans_len = skb->len + माप(*hdr);
-		credit_reमुख्यder = trans_len % ep->tx_credit_size;
+		trans_len = skb->len + sizeof(*hdr);
+		credit_remainder = trans_len % ep->tx_credit_size;
 
-		अगर (credit_reमुख्यder != 0) अणु
-			credit_pad = ep->tx_credit_size - credit_reमुख्यder;
+		if (credit_remainder != 0) {
+			credit_pad = ep->tx_credit_size - credit_remainder;
 			trans_len += credit_pad;
-		पूर्ण
+		}
 
 		ret = ath10k_htc_consume_credit(ep,
 						bundle_buf + trans_len - bundle_skb->data,
 						false);
-		अगर (ret) अणु
+		if (ret) {
 			skb_queue_head(&ep->tx_req_head, skb);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (bundles_left < trans_len) अणु
+		if (bundles_left < trans_len) {
 			bundle_skb->len = bundle_buf - bundle_skb->data;
 			ret = ath10k_htc_send_bundle(ep, bundle_skb, &tx_save_head);
 
-			अगर (ret) अणु
+			if (ret) {
 				skb_queue_head(&ep->tx_req_head, skb);
-				वापस ret;
-			पूर्ण
+				return ret;
+			}
 
-			अगर (skb_queue_len(&ep->tx_req_head) == 0) अणु
+			if (skb_queue_len(&ep->tx_req_head) == 0) {
 				ath10k_htc_send_one_skb(ep, skb);
-				वापस ret;
-			पूर्ण
+				return ret;
+			}
 
-			अगर (ep->tx_credit_flow_enabled &&
-			    ep->tx_credits < ATH10K_MIN_CREDIT_PER_HTC_TX_BUNDLE) अणु
+			if (ep->tx_credit_flow_enabled &&
+			    ep->tx_credits < ATH10K_MIN_CREDIT_PER_HTC_TX_BUNDLE) {
 				skb_queue_head(&ep->tx_req_head, skb);
-				वापस 0;
-			पूर्ण
+				return 0;
+			}
 
 			bundles_left =
 				ATH10K_MAX_MSG_PER_HTC_TX_BUNDLE * ep->tx_credit_size;
 			bundle_skb = dev_alloc_skb(bundles_left);
 
-			अगर (!bundle_skb) अणु
+			if (!bundle_skb) {
 				skb_queue_head(&ep->tx_req_head, skb);
-				वापस -ENOMEM;
-			पूर्ण
+				return -ENOMEM;
+			}
 			bundle_buf = bundle_skb->data;
 			skb_queue_head_init(&tx_save_head);
-		पूर्ण
+		}
 
-		skb_push(skb, माप(काष्ठा ath10k_htc_hdr));
+		skb_push(skb, sizeof(struct ath10k_htc_hdr));
 		ath10k_htc_prepare_tx_skb(ep, skb);
 
-		स_नकल(bundle_buf, skb->data, skb->len);
-		hdr = (काष्ठा ath10k_htc_hdr *)bundle_buf;
+		memcpy(bundle_buf, skb->data, skb->len);
+		hdr = (struct ath10k_htc_hdr *)bundle_buf;
 		hdr->flags |= ATH10K_HTC_FLAG_SEND_BUNDLE;
 		hdr->pad_len = __cpu_to_le16(credit_pad);
 		bundle_buf += trans_len;
 		bundles_left -= trans_len;
 		skb_queue_tail(&tx_save_head, skb);
-	पूर्ण
+	}
 
-	अगर (bundle_buf != bundle_skb->data) अणु
+	if (bundle_buf != bundle_skb->data) {
 		bundle_skb->len = bundle_buf - bundle_skb->data;
 		ret = ath10k_htc_send_bundle(ep, bundle_skb, &tx_save_head);
-	पूर्ण अन्यथा अणु
-		dev_kमुक्त_skb_any(bundle_skb);
-	पूर्ण
+	} else {
+		dev_kfree_skb_any(bundle_skb);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ath10k_htc_bundle_tx_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ath10k *ar = container_of(work, काष्ठा ath10k, bundle_tx_work);
-	काष्ठा ath10k_htc_ep *ep;
-	काष्ठा sk_buff *skb;
-	पूर्णांक i;
+static void ath10k_htc_bundle_tx_work(struct work_struct *work)
+{
+	struct ath10k *ar = container_of(work, struct ath10k, bundle_tx_work);
+	struct ath10k_htc_ep *ep;
+	struct sk_buff *skb;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(ar->htc.endpoपूर्णांक); i++) अणु
-		ep = &ar->htc.endpoपूर्णांक[i];
+	for (i = 0; i < ARRAY_SIZE(ar->htc.endpoint); i++) {
+		ep = &ar->htc.endpoint[i];
 
-		अगर (!ep->bundle_tx)
-			जारी;
+		if (!ep->bundle_tx)
+			continue;
 
 		ath10k_dbg(ar, ATH10K_DBG_HTC, "bundle tx work eid %d count %d\n",
 			   ep->eid, skb_queue_len(&ep->tx_req_head));
 
-		अगर (skb_queue_len(&ep->tx_req_head) >=
-		    ATH10K_MIN_MSG_PER_HTC_TX_BUNDLE) अणु
+		if (skb_queue_len(&ep->tx_req_head) >=
+		    ATH10K_MIN_MSG_PER_HTC_TX_BUNDLE) {
 			ath10k_htc_send_bundle_skbs(ep);
-		पूर्ण अन्यथा अणु
+		} else {
 			skb = skb_dequeue(&ep->tx_req_head);
 
-			अगर (!skb)
-				जारी;
+			if (!skb)
+				continue;
 			ath10k_htc_send_one_skb(ep, skb);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम ath10k_htc_tx_complete_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ath10k *ar = container_of(work, काष्ठा ath10k, tx_complete_work);
-	काष्ठा ath10k_htc_ep *ep;
-	क्रमागत ath10k_htc_ep_id eid;
-	काष्ठा sk_buff *skb;
-	पूर्णांक i;
+static void ath10k_htc_tx_complete_work(struct work_struct *work)
+{
+	struct ath10k *ar = container_of(work, struct ath10k, tx_complete_work);
+	struct ath10k_htc_ep *ep;
+	enum ath10k_htc_ep_id eid;
+	struct sk_buff *skb;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(ar->htc.endpoपूर्णांक); i++) अणु
-		ep = &ar->htc.endpoपूर्णांक[i];
+	for (i = 0; i < ARRAY_SIZE(ar->htc.endpoint); i++) {
+		ep = &ar->htc.endpoint[i];
 		eid = ep->eid;
-		अगर (ep->bundle_tx && eid == ar->htt.eid) अणु
+		if (ep->bundle_tx && eid == ar->htt.eid) {
 			ath10k_dbg(ar, ATH10K_DBG_HTC, "bundle tx complete eid %d pending complete count%d\n",
 				   ep->eid, skb_queue_len(&ep->tx_complete_head));
 
-			जबतक (true) अणु
+			while (true) {
 				skb = skb_dequeue(&ep->tx_complete_head);
-				अगर (!skb)
-					अवरोध;
-				ath10k_htc_notअगरy_tx_completion(ep, skb);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+				if (!skb)
+					break;
+				ath10k_htc_notify_tx_completion(ep, skb);
+			}
+		}
+	}
+}
 
-पूर्णांक ath10k_htc_send_hl(काष्ठा ath10k_htc *htc,
-		       क्रमागत ath10k_htc_ep_id eid,
-		       काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ath10k_htc_ep *ep = &htc->endpoपूर्णांक[eid];
-	काष्ठा ath10k *ar = htc->ar;
+int ath10k_htc_send_hl(struct ath10k_htc *htc,
+		       enum ath10k_htc_ep_id eid,
+		       struct sk_buff *skb)
+{
+	struct ath10k_htc_ep *ep = &htc->endpoint[eid];
+	struct ath10k *ar = htc->ar;
 
-	अगर (माप(काष्ठा ath10k_htc_hdr) + skb->len > ep->tx_credit_size) अणु
+	if (sizeof(struct ath10k_htc_hdr) + skb->len > ep->tx_credit_size) {
 		ath10k_dbg(ar, ATH10K_DBG_HTC, "tx exceed max len %d\n", skb->len);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ath10k_dbg(ar, ATH10K_DBG_HTC, "htc send hl eid %d bundle %d tx count %d len %d\n",
 		   eid, ep->bundle_tx, skb_queue_len(&ep->tx_req_head), skb->len);
 
-	अगर (ep->bundle_tx) अणु
+	if (ep->bundle_tx) {
 		skb_queue_tail(&ep->tx_req_head, skb);
 		queue_work(ar->workqueue, &ar->bundle_tx_work);
-		वापस 0;
-	पूर्ण अन्यथा अणु
-		वापस ath10k_htc_send(htc, eid, skb);
-	पूर्ण
-पूर्ण
+		return 0;
+	} else {
+		return ath10k_htc_send(htc, eid, skb);
+	}
+}
 
-व्योम ath10k_htc_setup_tx_req(काष्ठा ath10k_htc_ep *ep)
-अणु
-	अगर (ep->htc->max_msgs_per_htc_bundle >= ATH10K_MIN_MSG_PER_HTC_TX_BUNDLE &&
-	    !ep->bundle_tx) अणु
+void ath10k_htc_setup_tx_req(struct ath10k_htc_ep *ep)
+{
+	if (ep->htc->max_msgs_per_htc_bundle >= ATH10K_MIN_MSG_PER_HTC_TX_BUNDLE &&
+	    !ep->bundle_tx) {
 		ep->bundle_tx = true;
 		skb_queue_head_init(&ep->tx_req_head);
 		skb_queue_head_init(&ep->tx_complete_head);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम ath10k_htc_stop_hl(काष्ठा ath10k *ar)
-अणु
-	काष्ठा ath10k_htc_ep *ep;
-	पूर्णांक i;
+void ath10k_htc_stop_hl(struct ath10k *ar)
+{
+	struct ath10k_htc_ep *ep;
+	int i;
 
 	cancel_work_sync(&ar->bundle_tx_work);
 	cancel_work_sync(&ar->tx_complete_work);
 
-	क्रम (i = 0; i < ARRAY_SIZE(ar->htc.endpoपूर्णांक); i++) अणु
-		ep = &ar->htc.endpoपूर्णांक[i];
+	for (i = 0; i < ARRAY_SIZE(ar->htc.endpoint); i++) {
+		ep = &ar->htc.endpoint[i];
 
-		अगर (!ep->bundle_tx)
-			जारी;
+		if (!ep->bundle_tx)
+			continue;
 
 		ath10k_dbg(ar, ATH10K_DBG_HTC, "stop tx work eid %d count %d\n",
 			   ep->eid, skb_queue_len(&ep->tx_req_head));
 
 		skb_queue_purge(&ep->tx_req_head);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक ath10k_htc_रुको_target(काष्ठा ath10k_htc *htc)
-अणु
-	काष्ठा ath10k *ar = htc->ar;
-	पूर्णांक i, status = 0;
-	अचिन्हित दीर्घ समय_left;
-	काष्ठा ath10k_htc_msg *msg;
+int ath10k_htc_wait_target(struct ath10k_htc *htc)
+{
+	struct ath10k *ar = htc->ar;
+	int i, status = 0;
+	unsigned long time_left;
+	struct ath10k_htc_msg *msg;
 	u16 message_id;
 
-	समय_left = रुको_क्रम_completion_समयout(&htc->ctl_resp,
+	time_left = wait_for_completion_timeout(&htc->ctl_resp,
 						ATH10K_HTC_WAIT_TIMEOUT_HZ);
-	अगर (!समय_left) अणु
-		/* Workaround: In some हालs the PCI HIF करोesn't
-		 * receive पूर्णांकerrupt क्रम the control response message
-		 * even अगर the buffer was completed. It is suspected
-		 * iomap ग_लिखोs unmasking PCI CE irqs aren't propagated
-		 * properly in KVM PCI-passthrough someबार.
+	if (!time_left) {
+		/* Workaround: In some cases the PCI HIF doesn't
+		 * receive interrupt for the control response message
+		 * even if the buffer was completed. It is suspected
+		 * iomap writes unmasking PCI CE irqs aren't propagated
+		 * properly in KVM PCI-passthrough sometimes.
 		 */
 		ath10k_warn(ar, "failed to receive control response completion, polling..\n");
 
-		क्रम (i = 0; i < CE_COUNT; i++)
-			ath10k_hअगर_send_complete_check(htc->ar, i, 1);
+		for (i = 0; i < CE_COUNT; i++)
+			ath10k_hif_send_complete_check(htc->ar, i, 1);
 
-		समय_left =
-		रुको_क्रम_completion_समयout(&htc->ctl_resp,
+		time_left =
+		wait_for_completion_timeout(&htc->ctl_resp,
 					    ATH10K_HTC_WAIT_TIMEOUT_HZ);
 
-		अगर (!समय_left)
+		if (!time_left)
 			status = -ETIMEDOUT;
-	पूर्ण
+	}
 
-	अगर (status < 0) अणु
+	if (status < 0) {
 		ath10k_err(ar, "ctl_resp never came in (%d)\n", status);
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
-	अगर (htc->control_resp_len < माप(msg->hdr) + माप(msg->पढ़ोy)) अणु
+	if (htc->control_resp_len < sizeof(msg->hdr) + sizeof(msg->ready)) {
 		ath10k_err(ar, "Invalid HTC ready msg len:%d\n",
 			   htc->control_resp_len);
-		वापस -ECOMM;
-	पूर्ण
+		return -ECOMM;
+	}
 
-	msg = (काष्ठा ath10k_htc_msg *)htc->control_resp_buffer;
+	msg = (struct ath10k_htc_msg *)htc->control_resp_buffer;
 	message_id   = __le16_to_cpu(msg->hdr.message_id);
 
-	अगर (message_id != ATH10K_HTC_MSG_READY_ID) अणु
+	if (message_id != ATH10K_HTC_MSG_READY_ID) {
 		ath10k_err(ar, "Invalid HTC ready msg: 0x%x\n", message_id);
-		वापस -ECOMM;
-	पूर्ण
+		return -ECOMM;
+	}
 
-	htc->total_transmit_credits = __le16_to_cpu(msg->पढ़ोy.credit_count);
-	htc->target_credit_size = __le16_to_cpu(msg->पढ़ोy.credit_size);
+	htc->total_transmit_credits = __le16_to_cpu(msg->ready.credit_count);
+	htc->target_credit_size = __le16_to_cpu(msg->ready.credit_size);
 
 	ath10k_dbg(ar, ATH10K_DBG_HTC,
 		   "Target ready! transmit resources: %d size:%d\n",
 		   htc->total_transmit_credits,
 		   htc->target_credit_size);
 
-	अगर ((htc->total_transmit_credits == 0) ||
-	    (htc->target_credit_size == 0)) अणु
+	if ((htc->total_transmit_credits == 0) ||
+	    (htc->target_credit_size == 0)) {
 		ath10k_err(ar, "Invalid credit size received\n");
-		वापस -ECOMM;
-	पूर्ण
+		return -ECOMM;
+	}
 
-	/* The only way to determine अगर the पढ़ोy message is an extended
+	/* The only way to determine if the ready message is an extended
 	 * message is from the size.
 	 */
-	अगर (htc->control_resp_len >=
-	    माप(msg->hdr) + माप(msg->पढ़ोy_ext)) अणु
+	if (htc->control_resp_len >=
+	    sizeof(msg->hdr) + sizeof(msg->ready_ext)) {
 		htc->alt_data_credit_size =
-			__le16_to_cpu(msg->पढ़ोy_ext.reserved) &
+			__le16_to_cpu(msg->ready_ext.reserved) &
 			ATH10K_HTC_MSG_READY_EXT_ALT_DATA_MASK;
 		htc->max_msgs_per_htc_bundle =
-			min_t(u8, msg->पढ़ोy_ext.max_msgs_per_htc_bundle,
+			min_t(u8, msg->ready_ext.max_msgs_per_htc_bundle,
 			      HTC_HOST_MAX_MSG_PER_RX_BUNDLE);
 		ath10k_dbg(ar, ATH10K_DBG_HTC,
 			   "Extended ready message RX bundle size %d alt size %d\n",
 			   htc->max_msgs_per_htc_bundle,
 			   htc->alt_data_credit_size);
-	पूर्ण
+	}
 
 	INIT_WORK(&ar->bundle_tx_work, ath10k_htc_bundle_tx_work);
 	INIT_WORK(&ar->tx_complete_work, ath10k_htc_tx_complete_work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ath10k_htc_change_tx_credit_flow(काष्ठा ath10k_htc *htc,
-				      क्रमागत ath10k_htc_ep_id eid,
+void ath10k_htc_change_tx_credit_flow(struct ath10k_htc *htc,
+				      enum ath10k_htc_ep_id eid,
 				      bool enable)
-अणु
-	काष्ठा ath10k *ar = htc->ar;
-	काष्ठा ath10k_htc_ep *ep = &ar->htc.endpoपूर्णांक[eid];
+{
+	struct ath10k *ar = htc->ar;
+	struct ath10k_htc_ep *ep = &ar->htc.endpoint[eid];
 
 	ep->tx_credit_flow_enabled = enable;
-पूर्ण
+}
 
-पूर्णांक ath10k_htc_connect_service(काष्ठा ath10k_htc *htc,
-			       काष्ठा ath10k_htc_svc_conn_req *conn_req,
-			       काष्ठा ath10k_htc_svc_conn_resp *conn_resp)
-अणु
-	काष्ठा ath10k *ar = htc->ar;
-	काष्ठा ath10k_htc_msg *msg;
-	काष्ठा ath10k_htc_conn_svc *req_msg;
-	काष्ठा ath10k_htc_conn_svc_response resp_msg_dummy;
-	काष्ठा ath10k_htc_conn_svc_response *resp_msg = &resp_msg_dummy;
-	क्रमागत ath10k_htc_ep_id asचिन्हित_eid = ATH10K_HTC_EP_COUNT;
-	काष्ठा ath10k_htc_ep *ep;
-	काष्ठा sk_buff *skb;
-	अचिन्हित पूर्णांक max_msg_size = 0;
-	पूर्णांक length, status;
-	अचिन्हित दीर्घ समय_left;
+int ath10k_htc_connect_service(struct ath10k_htc *htc,
+			       struct ath10k_htc_svc_conn_req *conn_req,
+			       struct ath10k_htc_svc_conn_resp *conn_resp)
+{
+	struct ath10k *ar = htc->ar;
+	struct ath10k_htc_msg *msg;
+	struct ath10k_htc_conn_svc *req_msg;
+	struct ath10k_htc_conn_svc_response resp_msg_dummy;
+	struct ath10k_htc_conn_svc_response *resp_msg = &resp_msg_dummy;
+	enum ath10k_htc_ep_id assigned_eid = ATH10K_HTC_EP_COUNT;
+	struct ath10k_htc_ep *ep;
+	struct sk_buff *skb;
+	unsigned int max_msg_size = 0;
+	int length, status;
+	unsigned long time_left;
 	bool disable_credit_flow_ctrl = false;
 	u16 message_id, service_id, flags = 0;
 	u8 tx_alloc = 0;
 
-	/* special हाल क्रम HTC pseuकरो control service */
-	अगर (conn_req->service_id == ATH10K_HTC_SVC_ID_RSVD_CTRL) अणु
+	/* special case for HTC pseudo control service */
+	if (conn_req->service_id == ATH10K_HTC_SVC_ID_RSVD_CTRL) {
 		disable_credit_flow_ctrl = true;
-		asचिन्हित_eid = ATH10K_HTC_EP_0;
+		assigned_eid = ATH10K_HTC_EP_0;
 		max_msg_size = ATH10K_HTC_MAX_CTRL_MSG_LEN;
-		स_रखो(&resp_msg_dummy, 0, माप(resp_msg_dummy));
-		जाओ setup;
-	पूर्ण
+		memset(&resp_msg_dummy, 0, sizeof(resp_msg_dummy));
+		goto setup;
+	}
 
 	tx_alloc = ath10k_htc_get_credit_allocation(htc,
 						    conn_req->service_id);
-	अगर (!tx_alloc)
+	if (!tx_alloc)
 		ath10k_dbg(ar, ATH10K_DBG_BOOT,
 			   "boot htc service %s does not allocate target credits\n",
 			   htc_service_name(conn_req->service_id));
 
 	skb = ath10k_htc_build_tx_ctrl_skb(htc->ar);
-	अगर (!skb) अणु
+	if (!skb) {
 		ath10k_err(ar, "Failed to allocate HTC packet\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	length = माप(msg->hdr) + माप(msg->connect_service);
+	length = sizeof(msg->hdr) + sizeof(msg->connect_service);
 	skb_put(skb, length);
-	स_रखो(skb->data, 0, length);
+	memset(skb->data, 0, length);
 
-	msg = (काष्ठा ath10k_htc_msg *)skb->data;
+	msg = (struct ath10k_htc_msg *)skb->data;
 	msg->hdr.message_id =
 		__cpu_to_le16(ATH10K_HTC_MSG_CONNECT_SERVICE_ID);
 
 	flags |= SM(tx_alloc, ATH10K_HTC_CONN_FLAGS_RECV_ALLOC);
 
-	/* Only enable credit flow control क्रम WMI ctrl service */
-	अगर (conn_req->service_id != ATH10K_HTC_SVC_ID_WMI_CONTROL) अणु
+	/* Only enable credit flow control for WMI ctrl service */
+	if (conn_req->service_id != ATH10K_HTC_SVC_ID_WMI_CONTROL) {
 		flags |= ATH10K_HTC_CONN_FLAGS_DISABLE_CREDIT_FLOW_CTRL;
 		disable_credit_flow_ctrl = true;
-	पूर्ण
+	}
 
 	req_msg = &msg->connect_service;
 	req_msg->flags = __cpu_to_le16(flags);
@@ -1059,31 +1058,31 @@ out:
 	reinit_completion(&htc->ctl_resp);
 
 	status = ath10k_htc_send(htc, ATH10K_HTC_EP_0, skb);
-	अगर (status) अणु
-		kमुक्त_skb(skb);
-		वापस status;
-	पूर्ण
+	if (status) {
+		kfree_skb(skb);
+		return status;
+	}
 
-	/* रुको क्रम response */
-	समय_left = रुको_क्रम_completion_समयout(&htc->ctl_resp,
+	/* wait for response */
+	time_left = wait_for_completion_timeout(&htc->ctl_resp,
 						ATH10K_HTC_CONN_SVC_TIMEOUT_HZ);
-	अगर (!समय_left) अणु
+	if (!time_left) {
 		ath10k_err(ar, "Service connect timeout\n");
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
 	/* we controlled the buffer creation, it's aligned */
-	msg = (काष्ठा ath10k_htc_msg *)htc->control_resp_buffer;
+	msg = (struct ath10k_htc_msg *)htc->control_resp_buffer;
 	resp_msg = &msg->connect_service_response;
 	message_id = __le16_to_cpu(msg->hdr.message_id);
 	service_id = __le16_to_cpu(resp_msg->service_id);
 
-	अगर ((message_id != ATH10K_HTC_MSG_CONNECT_SERVICE_RESP_ID) ||
-	    (htc->control_resp_len < माप(msg->hdr) +
-	     माप(msg->connect_service_response))) अणु
+	if ((message_id != ATH10K_HTC_MSG_CONNECT_SERVICE_RESP_ID) ||
+	    (htc->control_resp_len < sizeof(msg->hdr) +
+	     sizeof(msg->connect_service_response))) {
 		ath10k_err(ar, "Invalid resp message ID 0x%x", message_id);
-		वापस -EPROTO;
-	पूर्ण
+		return -EPROTO;
+	}
 
 	ath10k_dbg(ar, ATH10K_DBG_HTC,
 		   "HTC Service %s connect response: status: 0x%x, assigned ep: 0x%x\n",
@@ -1093,201 +1092,201 @@ out:
 	conn_resp->connect_resp_code = resp_msg->status;
 
 	/* check response status */
-	अगर (resp_msg->status != ATH10K_HTC_CONN_SVC_STATUS_SUCCESS) अणु
+	if (resp_msg->status != ATH10K_HTC_CONN_SVC_STATUS_SUCCESS) {
 		ath10k_err(ar, "HTC Service %s connect request failed: 0x%x)\n",
 			   htc_service_name(service_id),
 			   resp_msg->status);
-		वापस -EPROTO;
-	पूर्ण
+		return -EPROTO;
+	}
 
-	asचिन्हित_eid = (क्रमागत ath10k_htc_ep_id)resp_msg->eid;
+	assigned_eid = (enum ath10k_htc_ep_id)resp_msg->eid;
 	max_msg_size = __le16_to_cpu(resp_msg->max_msg_size);
 
 setup:
 
-	अगर (asचिन्हित_eid >= ATH10K_HTC_EP_COUNT)
-		वापस -EPROTO;
+	if (assigned_eid >= ATH10K_HTC_EP_COUNT)
+		return -EPROTO;
 
-	अगर (max_msg_size == 0)
-		वापस -EPROTO;
+	if (max_msg_size == 0)
+		return -EPROTO;
 
-	ep = &htc->endpoपूर्णांक[asचिन्हित_eid];
-	ep->eid = asचिन्हित_eid;
+	ep = &htc->endpoint[assigned_eid];
+	ep->eid = assigned_eid;
 
-	अगर (ep->service_id != ATH10K_HTC_SVC_ID_UNUSED)
-		वापस -EPROTO;
+	if (ep->service_id != ATH10K_HTC_SVC_ID_UNUSED)
+		return -EPROTO;
 
-	/* वापस asचिन्हित endpoपूर्णांक to caller */
-	conn_resp->eid = asचिन्हित_eid;
+	/* return assigned endpoint to caller */
+	conn_resp->eid = assigned_eid;
 	conn_resp->max_msg_len = __le16_to_cpu(resp_msg->max_msg_size);
 
-	/* setup the endpoपूर्णांक */
+	/* setup the endpoint */
 	ep->service_id = conn_req->service_id;
 	ep->max_tx_queue_depth = conn_req->max_send_queue_depth;
 	ep->max_ep_message_len = __le16_to_cpu(resp_msg->max_msg_size);
 	ep->tx_credits = tx_alloc;
 	ep->tx_credit_size = htc->target_credit_size;
 
-	अगर (conn_req->service_id == ATH10K_HTC_SVC_ID_HTT_DATA_MSG &&
+	if (conn_req->service_id == ATH10K_HTC_SVC_ID_HTT_DATA_MSG &&
 	    htc->alt_data_credit_size != 0)
 		ep->tx_credit_size = htc->alt_data_credit_size;
 
 	/* copy all the callbacks */
 	ep->ep_ops = conn_req->ep_ops;
 
-	status = ath10k_hअगर_map_service_to_pipe(htc->ar,
+	status = ath10k_hif_map_service_to_pipe(htc->ar,
 						ep->service_id,
 						&ep->ul_pipe_id,
 						&ep->dl_pipe_id);
-	अगर (status) अणु
+	if (status) {
 		ath10k_dbg(ar, ATH10K_DBG_BOOT, "unsupported HTC service id: %d\n",
 			   ep->service_id);
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
 	ath10k_dbg(ar, ATH10K_DBG_BOOT,
 		   "boot htc service '%s' ul pipe %d dl pipe %d eid %d ready\n",
 		   htc_service_name(ep->service_id), ep->ul_pipe_id,
 		   ep->dl_pipe_id, ep->eid);
 
-	अगर (disable_credit_flow_ctrl && ep->tx_credit_flow_enabled) अणु
+	if (disable_credit_flow_ctrl && ep->tx_credit_flow_enabled) {
 		ep->tx_credit_flow_enabled = false;
 		ath10k_dbg(ar, ATH10K_DBG_BOOT,
 			   "boot htc service '%s' eid %d TX flow control disabled\n",
-			   htc_service_name(ep->service_id), asचिन्हित_eid);
-	पूर्ण
+			   htc_service_name(ep->service_id), assigned_eid);
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-काष्ठा sk_buff *ath10k_htc_alloc_skb(काष्ठा ath10k *ar, पूर्णांक size)
-अणु
-	काष्ठा sk_buff *skb;
+struct sk_buff *ath10k_htc_alloc_skb(struct ath10k *ar, int size)
+{
+	struct sk_buff *skb;
 
-	skb = dev_alloc_skb(size + माप(काष्ठा ath10k_htc_hdr));
-	अगर (!skb)
-		वापस शून्य;
+	skb = dev_alloc_skb(size + sizeof(struct ath10k_htc_hdr));
+	if (!skb)
+		return NULL;
 
-	skb_reserve(skb, माप(काष्ठा ath10k_htc_hdr));
+	skb_reserve(skb, sizeof(struct ath10k_htc_hdr));
 
 	/* FW/HTC requires 4-byte aligned streams */
-	अगर (!IS_ALIGNED((अचिन्हित दीर्घ)skb->data, 4))
+	if (!IS_ALIGNED((unsigned long)skb->data, 4))
 		ath10k_warn(ar, "Unaligned HTC tx skb\n");
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल व्योम ath10k_htc_pktlog_process_rx(काष्ठा ath10k *ar, काष्ठा sk_buff *skb)
-अणु
+static void ath10k_htc_pktlog_process_rx(struct ath10k *ar, struct sk_buff *skb)
+{
 	trace_ath10k_htt_pktlog(ar, skb->data, skb->len);
-	dev_kमुक्त_skb_any(skb);
-पूर्ण
+	dev_kfree_skb_any(skb);
+}
 
-अटल पूर्णांक ath10k_htc_pktlog_connect(काष्ठा ath10k *ar)
-अणु
-	काष्ठा ath10k_htc_svc_conn_resp conn_resp;
-	काष्ठा ath10k_htc_svc_conn_req conn_req;
-	पूर्णांक status;
+static int ath10k_htc_pktlog_connect(struct ath10k *ar)
+{
+	struct ath10k_htc_svc_conn_resp conn_resp;
+	struct ath10k_htc_svc_conn_req conn_req;
+	int status;
 
-	स_रखो(&conn_req, 0, माप(conn_req));
-	स_रखो(&conn_resp, 0, माप(conn_resp));
+	memset(&conn_req, 0, sizeof(conn_req));
+	memset(&conn_resp, 0, sizeof(conn_resp));
 
-	conn_req.ep_ops.ep_tx_complete = शून्य;
+	conn_req.ep_ops.ep_tx_complete = NULL;
 	conn_req.ep_ops.ep_rx_complete = ath10k_htc_pktlog_process_rx;
-	conn_req.ep_ops.ep_tx_credits = शून्य;
+	conn_req.ep_ops.ep_tx_credits = NULL;
 
 	/* connect to control service */
 	conn_req.service_id = ATH10K_HTC_SVC_ID_HTT_LOG_MSG;
 	status = ath10k_htc_connect_service(&ar->htc, &conn_req, &conn_resp);
-	अगर (status) अणु
+	if (status) {
 		ath10k_warn(ar, "failed to connect to PKTLOG service: %d\n",
 			    status);
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool ath10k_htc_pktlog_svc_supported(काष्ठा ath10k *ar)
-अणु
+static bool ath10k_htc_pktlog_svc_supported(struct ath10k *ar)
+{
 	u8 ul_pipe_id;
 	u8 dl_pipe_id;
-	पूर्णांक status;
+	int status;
 
-	status = ath10k_hअगर_map_service_to_pipe(ar, ATH10K_HTC_SVC_ID_HTT_LOG_MSG,
+	status = ath10k_hif_map_service_to_pipe(ar, ATH10K_HTC_SVC_ID_HTT_LOG_MSG,
 						&ul_pipe_id,
 						&dl_pipe_id);
-	अगर (status) अणु
+	if (status) {
 		ath10k_dbg(ar, ATH10K_DBG_BOOT, "unsupported HTC pktlog service id: %d\n",
 			   ATH10K_HTC_SVC_ID_HTT_LOG_MSG);
 
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-पूर्णांक ath10k_htc_start(काष्ठा ath10k_htc *htc)
-अणु
-	काष्ठा ath10k *ar = htc->ar;
-	काष्ठा sk_buff *skb;
-	पूर्णांक status = 0;
-	काष्ठा ath10k_htc_msg *msg;
+int ath10k_htc_start(struct ath10k_htc *htc)
+{
+	struct ath10k *ar = htc->ar;
+	struct sk_buff *skb;
+	int status = 0;
+	struct ath10k_htc_msg *msg;
 
 	skb = ath10k_htc_build_tx_ctrl_skb(htc->ar);
-	अगर (!skb)
-		वापस -ENOMEM;
+	if (!skb)
+		return -ENOMEM;
 
-	skb_put(skb, माप(msg->hdr) + माप(msg->setup_complete_ext));
-	स_रखो(skb->data, 0, skb->len);
+	skb_put(skb, sizeof(msg->hdr) + sizeof(msg->setup_complete_ext));
+	memset(skb->data, 0, skb->len);
 
-	msg = (काष्ठा ath10k_htc_msg *)skb->data;
+	msg = (struct ath10k_htc_msg *)skb->data;
 	msg->hdr.message_id =
 		__cpu_to_le16(ATH10K_HTC_MSG_SETUP_COMPLETE_EX_ID);
 
-	अगर (ar->hअगर.bus == ATH10K_BUS_SDIO) अणु
+	if (ar->hif.bus == ATH10K_BUS_SDIO) {
 		/* Extra setup params used by SDIO */
 		msg->setup_complete_ext.flags =
 			__cpu_to_le32(ATH10K_HTC_SETUP_COMPLETE_FLAGS_RX_BNDL_EN);
 		msg->setup_complete_ext.max_msgs_per_bundled_recv =
 			htc->max_msgs_per_htc_bundle;
-	पूर्ण
+	}
 	ath10k_dbg(ar, ATH10K_DBG_HTC, "HTC is using TX credit flow control\n");
 
 	status = ath10k_htc_send(htc, ATH10K_HTC_EP_0, skb);
-	अगर (status) अणु
-		kमुक्त_skb(skb);
-		वापस status;
-	पूर्ण
+	if (status) {
+		kfree_skb(skb);
+		return status;
+	}
 
-	अगर (ath10k_htc_pktlog_svc_supported(ar)) अणु
+	if (ath10k_htc_pktlog_svc_supported(ar)) {
 		status = ath10k_htc_pktlog_connect(ar);
-		अगर (status) अणु
+		if (status) {
 			ath10k_err(ar, "failed to connect to pktlog: %d\n", status);
-			वापस status;
-		पूर्ण
-	पूर्ण
+			return status;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* रेजिस्टरed target arrival callback from the HIF layer */
-पूर्णांक ath10k_htc_init(काष्ठा ath10k *ar)
-अणु
-	पूर्णांक status;
-	काष्ठा ath10k_htc *htc = &ar->htc;
-	काष्ठा ath10k_htc_svc_conn_req conn_req;
-	काष्ठा ath10k_htc_svc_conn_resp conn_resp;
+/* registered target arrival callback from the HIF layer */
+int ath10k_htc_init(struct ath10k *ar)
+{
+	int status;
+	struct ath10k_htc *htc = &ar->htc;
+	struct ath10k_htc_svc_conn_req conn_req;
+	struct ath10k_htc_svc_conn_resp conn_resp;
 
 	spin_lock_init(&htc->tx_lock);
 
-	ath10k_htc_reset_endpoपूर्णांक_states(htc);
+	ath10k_htc_reset_endpoint_states(htc);
 
 	htc->ar = ar;
 
-	/* setup our pseuकरो HTC control endpoपूर्णांक connection */
-	स_रखो(&conn_req, 0, माप(conn_req));
-	स_रखो(&conn_resp, 0, माप(conn_resp));
+	/* setup our pseudo HTC control endpoint connection */
+	memset(&conn_req, 0, sizeof(conn_req));
+	memset(&conn_resp, 0, sizeof(conn_resp));
 	conn_req.ep_ops.ep_tx_complete = ath10k_htc_control_tx_complete;
 	conn_req.ep_ops.ep_rx_complete = ath10k_htc_control_rx_complete;
 	conn_req.max_send_queue_depth = ATH10K_NUM_CONTROL_TX_BUFFERS;
@@ -1295,13 +1294,13 @@ setup:
 
 	/* connect fake service */
 	status = ath10k_htc_connect_service(htc, &conn_req, &conn_resp);
-	अगर (status) अणु
+	if (status) {
 		ath10k_err(ar, "could not connect to htc service (%d)\n",
 			   status);
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
 	init_completion(&htc->ctl_resp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

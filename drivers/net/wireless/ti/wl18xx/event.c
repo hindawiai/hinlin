@@ -1,63 +1,62 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * This file is part of wl12xx
  *
  * Copyright (C) 2012 Texas Instruments. All rights reserved.
  */
 
-#समावेश <net/genetlink.h>
-#समावेश "event.h"
-#समावेश "scan.h"
-#समावेश "conf.h"
-#समावेश "../wlcore/cmd.h"
-#समावेश "../wlcore/debug.h"
-#समावेश "../wlcore/vendor_cmd.h"
+#include <net/genetlink.h>
+#include "event.h"
+#include "scan.h"
+#include "conf.h"
+#include "../wlcore/cmd.h"
+#include "../wlcore/debug.h"
+#include "../wlcore/vendor_cmd.h"
 
-पूर्णांक wl18xx_रुको_क्रम_event(काष्ठा wl1271 *wl, क्रमागत wlcore_रुको_event event,
-			  bool *समयout)
-अणु
+int wl18xx_wait_for_event(struct wl1271 *wl, enum wlcore_wait_event event,
+			  bool *timeout)
+{
 	u32 local_event;
 
-	चयन (event) अणु
-	हाल WLCORE_EVENT_PEER_REMOVE_COMPLETE:
+	switch (event) {
+	case WLCORE_EVENT_PEER_REMOVE_COMPLETE:
 		local_event = PEER_REMOVE_COMPLETE_EVENT_ID;
-		अवरोध;
+		break;
 
-	हाल WLCORE_EVENT_DFS_CONFIG_COMPLETE:
+	case WLCORE_EVENT_DFS_CONFIG_COMPLETE:
 		local_event = DFS_CHANNELS_CONFIG_COMPLETE_EVENT;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		/* event not implemented */
-		वापस 0;
-	पूर्ण
-	वापस wlcore_cmd_रुको_क्रम_event_or_समयout(wl, local_event, समयout);
-पूर्ण
+		return 0;
+	}
+	return wlcore_cmd_wait_for_event_or_timeout(wl, local_event, timeout);
+}
 
-अटल स्थिर अक्षर *wl18xx_radar_type_decode(u8 radar_type)
-अणु
-	चयन (radar_type) अणु
-	हाल RADAR_TYPE_REGULAR:
-		वापस "REGULAR";
-	हाल RADAR_TYPE_CHIRP:
-		वापस "CHIRP";
-	हाल RADAR_TYPE_NONE:
-	शेष:
-		वापस "N/A";
-	पूर्ण
-पूर्ण
+static const char *wl18xx_radar_type_decode(u8 radar_type)
+{
+	switch (radar_type) {
+	case RADAR_TYPE_REGULAR:
+		return "REGULAR";
+	case RADAR_TYPE_CHIRP:
+		return "CHIRP";
+	case RADAR_TYPE_NONE:
+	default:
+		return "N/A";
+	}
+}
 
-अटल पूर्णांक wlcore_smart_config_sync_event(काष्ठा wl1271 *wl, u8 sync_channel,
+static int wlcore_smart_config_sync_event(struct wl1271 *wl, u8 sync_channel,
 					  u8 sync_band)
-अणु
-	काष्ठा sk_buff *skb;
-	क्रमागत nl80211_band band;
-	पूर्णांक freq;
+{
+	struct sk_buff *skb;
+	enum nl80211_band band;
+	int freq;
 
-	अगर (sync_band == WLCORE_BAND_5GHZ)
+	if (sync_band == WLCORE_BAND_5GHZ)
 		band = NL80211_BAND_5GHZ;
-	अन्यथा
+	else
 		band = NL80211_BAND_2GHZ;
 
 	freq = ieee80211_channel_to_frequency(sync_channel, band);
@@ -65,173 +64,173 @@
 	wl1271_debug(DEBUG_EVENT,
 		     "SMART_CONFIG_SYNC_EVENT_ID, freq: %d (chan: %d band %d)",
 		     freq, sync_channel, sync_band);
-	skb = cfg80211_venकरोr_event_alloc(wl->hw->wiphy, शून्य, 20,
+	skb = cfg80211_vendor_event_alloc(wl->hw->wiphy, NULL, 20,
 					  WLCORE_VENDOR_EVENT_SC_SYNC,
 					  GFP_KERNEL);
 
-	अगर (nla_put_u32(skb, WLCORE_VENDOR_ATTR_FREQ, freq)) अणु
-		kमुक्त_skb(skb);
-		वापस -EMSGSIZE;
-	पूर्ण
-	cfg80211_venकरोr_event(skb, GFP_KERNEL);
-	वापस 0;
-पूर्ण
+	if (nla_put_u32(skb, WLCORE_VENDOR_ATTR_FREQ, freq)) {
+		kfree_skb(skb);
+		return -EMSGSIZE;
+	}
+	cfg80211_vendor_event(skb, GFP_KERNEL);
+	return 0;
+}
 
-अटल पूर्णांक wlcore_smart_config_decode_event(काष्ठा wl1271 *wl,
+static int wlcore_smart_config_decode_event(struct wl1271 *wl,
 					    u8 ssid_len, u8 *ssid,
 					    u8 pwd_len, u8 *pwd)
-अणु
-	काष्ठा sk_buff *skb;
+{
+	struct sk_buff *skb;
 
 	wl1271_debug(DEBUG_EVENT, "SMART_CONFIG_DECODE_EVENT_ID");
 	wl1271_dump_ascii(DEBUG_EVENT, "SSID:", ssid, ssid_len);
 
-	skb = cfg80211_venकरोr_event_alloc(wl->hw->wiphy, शून्य,
+	skb = cfg80211_vendor_event_alloc(wl->hw->wiphy, NULL,
 					  ssid_len + pwd_len + 20,
 					  WLCORE_VENDOR_EVENT_SC_DECODE,
 					  GFP_KERNEL);
 
-	अगर (nla_put(skb, WLCORE_VENDOR_ATTR_SSID, ssid_len, ssid) ||
-	    nla_put(skb, WLCORE_VENDOR_ATTR_PSK, pwd_len, pwd)) अणु
-		kमुक्त_skb(skb);
-		वापस -EMSGSIZE;
-	पूर्ण
-	cfg80211_venकरोr_event(skb, GFP_KERNEL);
-	वापस 0;
-पूर्ण
+	if (nla_put(skb, WLCORE_VENDOR_ATTR_SSID, ssid_len, ssid) ||
+	    nla_put(skb, WLCORE_VENDOR_ATTR_PSK, pwd_len, pwd)) {
+		kfree_skb(skb);
+		return -EMSGSIZE;
+	}
+	cfg80211_vendor_event(skb, GFP_KERNEL);
+	return 0;
+}
 
-अटल व्योम wlcore_event_समय_sync(काष्ठा wl1271 *wl,
+static void wlcore_event_time_sync(struct wl1271 *wl,
 				   u16 tsf_high_msb, u16 tsf_high_lsb,
 				   u16 tsf_low_msb, u16 tsf_low_lsb)
-अणु
-	u32 घड़ी_low;
-	u32 घड़ी_high;
+{
+	u32 clock_low;
+	u32 clock_high;
 
-	घड़ी_high = (tsf_high_msb << 16) | tsf_high_lsb;
-	घड़ी_low = (tsf_low_msb << 16) | tsf_low_lsb;
+	clock_high = (tsf_high_msb << 16) | tsf_high_lsb;
+	clock_low = (tsf_low_msb << 16) | tsf_low_lsb;
 
 	wl1271_info("TIME_SYNC_EVENT_ID: clock_high %u, clock low %u",
-		    घड़ी_high, घड़ी_low);
-पूर्ण
+		    clock_high, clock_low);
+}
 
-पूर्णांक wl18xx_process_mailbox_events(काष्ठा wl1271 *wl)
-अणु
-	काष्ठा wl18xx_event_mailbox *mbox = wl->mbox;
+int wl18xx_process_mailbox_events(struct wl1271 *wl)
+{
+	struct wl18xx_event_mailbox *mbox = wl->mbox;
 	u32 vector;
 
 	vector = le32_to_cpu(mbox->events_vector);
 	wl1271_debug(DEBUG_EVENT, "MBOX vector: 0x%x", vector);
 
-	अगर (vector & SCAN_COMPLETE_EVENT_ID) अणु
+	if (vector & SCAN_COMPLETE_EVENT_ID) {
 		wl1271_debug(DEBUG_EVENT, "scan results: %d",
 			     mbox->number_of_scan_results);
 
-		अगर (wl->scan_wlvअगर)
-			wl18xx_scan_completed(wl, wl->scan_wlvअगर);
-	पूर्ण
+		if (wl->scan_wlvif)
+			wl18xx_scan_completed(wl, wl->scan_wlvif);
+	}
 
-	अगर (vector & TIME_SYNC_EVENT_ID)
-		wlcore_event_समय_sync(wl,
-			mbox->समय_sync_tsf_high_msb,
-			mbox->समय_sync_tsf_high_lsb,
-			mbox->समय_sync_tsf_low_msb,
-			mbox->समय_sync_tsf_low_lsb);
+	if (vector & TIME_SYNC_EVENT_ID)
+		wlcore_event_time_sync(wl,
+			mbox->time_sync_tsf_high_msb,
+			mbox->time_sync_tsf_high_lsb,
+			mbox->time_sync_tsf_low_msb,
+			mbox->time_sync_tsf_low_lsb);
 
-	अगर (vector & RADAR_DETECTED_EVENT_ID) अणु
+	if (vector & RADAR_DETECTED_EVENT_ID) {
 		wl1271_info("radar event: channel %d type %s",
 			    mbox->radar_channel,
 			    wl18xx_radar_type_decode(mbox->radar_type));
 
-		अगर (!wl->radar_debug_mode)
+		if (!wl->radar_debug_mode)
 			ieee80211_radar_detected(wl->hw);
-	पूर्ण
+	}
 
-	अगर (vector & PERIODIC_SCAN_REPORT_EVENT_ID) अणु
+	if (vector & PERIODIC_SCAN_REPORT_EVENT_ID) {
 		wl1271_debug(DEBUG_EVENT,
 			     "PERIODIC_SCAN_REPORT_EVENT (results %d)",
 			     mbox->number_of_sched_scan_results);
 
 		wlcore_scan_sched_scan_results(wl);
-	पूर्ण
+	}
 
-	अगर (vector & PERIODIC_SCAN_COMPLETE_EVENT_ID)
+	if (vector & PERIODIC_SCAN_COMPLETE_EVENT_ID)
 		wlcore_event_sched_scan_completed(wl, 1);
 
-	अगर (vector & RSSI_SNR_TRIGGER_0_EVENT_ID)
+	if (vector & RSSI_SNR_TRIGGER_0_EVENT_ID)
 		wlcore_event_rssi_trigger(wl, mbox->rssi_snr_trigger_metric);
 
-	अगर (vector & BA_SESSION_RX_CONSTRAINT_EVENT_ID)
-		wlcore_event_ba_rx_स्थिरraपूर्णांक(wl,
-				le16_to_cpu(mbox->rx_ba_role_id_biपंचांगap),
-				le16_to_cpu(mbox->rx_ba_allowed_biपंचांगap));
+	if (vector & BA_SESSION_RX_CONSTRAINT_EVENT_ID)
+		wlcore_event_ba_rx_constraint(wl,
+				le16_to_cpu(mbox->rx_ba_role_id_bitmap),
+				le16_to_cpu(mbox->rx_ba_allowed_bitmap));
 
-	अगर (vector & BSS_LOSS_EVENT_ID)
+	if (vector & BSS_LOSS_EVENT_ID)
 		wlcore_event_beacon_loss(wl,
-					 le16_to_cpu(mbox->bss_loss_biपंचांगap));
+					 le16_to_cpu(mbox->bss_loss_bitmap));
 
-	अगर (vector & CHANNEL_SWITCH_COMPLETE_EVENT_ID)
-		wlcore_event_channel_चयन(wl,
-			le16_to_cpu(mbox->channel_चयन_role_id_biपंचांगap),
+	if (vector & CHANNEL_SWITCH_COMPLETE_EVENT_ID)
+		wlcore_event_channel_switch(wl,
+			le16_to_cpu(mbox->channel_switch_role_id_bitmap),
 			true);
 
-	अगर (vector & DUMMY_PACKET_EVENT_ID)
+	if (vector & DUMMY_PACKET_EVENT_ID)
 		wlcore_event_dummy_packet(wl);
 
 	/*
-	 * "TX retries exceeded" has a dअगरferent meaning according to mode.
+	 * "TX retries exceeded" has a different meaning according to mode.
 	 * In AP mode the offending station is disconnected.
 	 */
-	अगर (vector & MAX_TX_FAILURE_EVENT_ID)
+	if (vector & MAX_TX_FAILURE_EVENT_ID)
 		wlcore_event_max_tx_failure(wl,
-				le16_to_cpu(mbox->tx_retry_exceeded_biपंचांगap));
+				le16_to_cpu(mbox->tx_retry_exceeded_bitmap));
 
-	अगर (vector & INACTIVE_STA_EVENT_ID)
+	if (vector & INACTIVE_STA_EVENT_ID)
 		wlcore_event_inactive_sta(wl,
-				le16_to_cpu(mbox->inactive_sta_biपंचांगap));
+				le16_to_cpu(mbox->inactive_sta_bitmap));
 
-	अगर (vector & REMAIN_ON_CHANNEL_COMPLETE_EVENT_ID)
+	if (vector & REMAIN_ON_CHANNEL_COMPLETE_EVENT_ID)
 		wlcore_event_roc_complete(wl);
 
-	अगर (vector & SMART_CONFIG_SYNC_EVENT_ID)
+	if (vector & SMART_CONFIG_SYNC_EVENT_ID)
 		wlcore_smart_config_sync_event(wl, mbox->sc_sync_channel,
 					       mbox->sc_sync_band);
 
-	अगर (vector & SMART_CONFIG_DECODE_EVENT_ID)
+	if (vector & SMART_CONFIG_DECODE_EVENT_ID)
 		wlcore_smart_config_decode_event(wl,
 						 mbox->sc_ssid_len,
 						 mbox->sc_ssid,
 						 mbox->sc_pwd_len,
 						 mbox->sc_pwd);
-	अगर (vector & FW_LOGGER_INDICATION)
+	if (vector & FW_LOGGER_INDICATION)
 		wlcore_event_fw_logger(wl);
 
-	अगर (vector & RX_BA_WIN_SIZE_CHANGE_EVENT_ID) अणु
-		काष्ठा wl12xx_vअगर *wlvअगर;
-		काष्ठा ieee80211_vअगर *vअगर;
-		काष्ठा ieee80211_sta *sta;
+	if (vector & RX_BA_WIN_SIZE_CHANGE_EVENT_ID) {
+		struct wl12xx_vif *wlvif;
+		struct ieee80211_vif *vif;
+		struct ieee80211_sta *sta;
 		u8 link_id = mbox->rx_ba_link_id;
 		u8 win_size = mbox->rx_ba_win_size;
-		स्थिर u8 *addr;
+		const u8 *addr;
 
-		wlvअगर = wl->links[link_id].wlvअगर;
-		vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
+		wlvif = wl->links[link_id].wlvif;
+		vif = wl12xx_wlvif_to_vif(wlvif);
 
-		/* Update RX aggregation winकरोw size and call
-		 * MAC routine to stop active RX aggregations क्रम this link
+		/* Update RX aggregation window size and call
+		 * MAC routine to stop active RX aggregations for this link
 		 */
-		अगर (wlvअगर->bss_type != BSS_TYPE_AP_BSS)
-			addr = vअगर->bss_conf.bssid;
-		अन्यथा
+		if (wlvif->bss_type != BSS_TYPE_AP_BSS)
+			addr = vif->bss_conf.bssid;
+		else
 			addr = wl->links[link_id].addr;
 
-		sta = ieee80211_find_sta(vअगर, addr);
-		अगर (sta) अणु
+		sta = ieee80211_find_sta(vif, addr);
+		if (sta) {
 			sta->max_rx_aggregation_subframes = win_size;
-			ieee80211_stop_rx_ba_session(vअगर,
-						wl->links[link_id].ba_biपंचांगap,
+			ieee80211_stop_rx_ba_session(vif,
+						wl->links[link_id].ba_bitmap,
 						addr);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

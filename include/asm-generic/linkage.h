@@ -1,9 +1,8 @@
-<शैली गुरु>
-#अगर_अघोषित __ASM_GENERIC_LINKAGE_H
-#घोषणा __ASM_GENERIC_LINKAGE_H
+#ifndef __ASM_GENERIC_LINKAGE_H
+#define __ASM_GENERIC_LINKAGE_H
 /*
- * linux/linkage.h provides reasonable शेषs.
+ * linux/linkage.h provides reasonable defaults.
  * an architecture can override them by providing its own version.
  */
 
-#पूर्ण_अगर /* __ASM_GENERIC_LINKAGE_H */
+#endif /* __ASM_GENERIC_LINKAGE_H */

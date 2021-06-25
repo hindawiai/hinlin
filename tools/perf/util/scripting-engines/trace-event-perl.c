@@ -1,10 +1,9 @@
-<शैली गुरु>
 /*
- * trace-event-perl.  Feed perf script events to an embedded Perl पूर्णांकerpreter.
+ * trace-event-perl.  Feed perf script events to an embedded Perl interpreter.
  *
  * Copyright (C) 2009 Tom Zanussi <tzanussi@gmail.com>
  *
- *  This program is मुक्त software; you can redistribute it and/or modअगरy
+ *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
@@ -12,74 +11,74 @@
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License क्रम more details.
+ *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+ *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
 
-#समावेश <पूर्णांकtypes.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <प्रकार.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/समय64.h>
+#include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>
+#include <linux/bitmap.h>
+#include <linux/time64.h>
 
-#समावेश <stdbool.h>
+#include <stdbool.h>
 /* perl needs the following define, right after including stdbool.h */
-#घोषणा HAS_BOOL
-#समावेश <EXTERN.h>
-#समावेश <perl.h>
+#define HAS_BOOL
+#include <EXTERN.h>
+#include <perl.h>
 
-#समावेश "../callchain.h"
-#समावेश "../dso.h"
-#समावेश "../machine.h"
-#समावेश "../map.h"
-#समावेश "../symbol.h"
-#समावेश "../thread.h"
-#समावेश "../event.h"
-#समावेश "../trace-event.h"
-#समावेश "../evsel.h"
-#समावेश "../debug.h"
+#include "../callchain.h"
+#include "../dso.h"
+#include "../machine.h"
+#include "../map.h"
+#include "../symbol.h"
+#include "../thread.h"
+#include "../event.h"
+#include "../trace-event.h"
+#include "../evsel.h"
+#include "../debug.h"
 
-व्योम boot_Perf__Trace__Context(pTHX_ CV *cv);
-व्योम boot_DynaLoader(pTHX_ CV *cv);
-प्रकार PerlInterpreter * INTERP;
+void boot_Perf__Trace__Context(pTHX_ CV *cv);
+void boot_DynaLoader(pTHX_ CV *cv);
+typedef PerlInterpreter * INTERP;
 
-व्योम xs_init(pTHX);
+void xs_init(pTHX);
 
-व्योम xs_init(pTHX)
-अणु
-	स्थिर अक्षर *file = __खाता__;
+void xs_init(pTHX)
+{
+	const char *file = __FILE__;
 	dXSUB_SYS;
 
 	newXS("Perf::Trace::Context::bootstrap", boot_Perf__Trace__Context,
 	      file);
 	newXS("DynaLoader::boot_DynaLoader", boot_DynaLoader, file);
-पूर्ण
+}
 
 INTERP my_perl;
 
-#घोषणा TRACE_EVENT_TYPE_MAX				\
-	((1 << (माप(अचिन्हित लघु) * 8)) - 1)
+#define TRACE_EVENT_TYPE_MAX				\
+	((1 << (sizeof(unsigned short) * 8)) - 1)
 
-अटल DECLARE_BITMAP(events_defined, TRACE_EVENT_TYPE_MAX);
+static DECLARE_BITMAP(events_defined, TRACE_EVENT_TYPE_MAX);
 
-बाह्य काष्ठा scripting_context *scripting_context;
+extern struct scripting_context *scripting_context;
 
-अटल अक्षर *cur_field_name;
-अटल पूर्णांक zero_flag_atom;
+static char *cur_field_name;
+static int zero_flag_atom;
 
-अटल व्योम define_symbolic_value(स्थिर अक्षर *ev_name,
-				  स्थिर अक्षर *field_name,
-				  स्थिर अक्षर *field_value,
-				  स्थिर अक्षर *field_str)
-अणु
-	अचिन्हित दीर्घ दीर्घ value;
+static void define_symbolic_value(const char *ev_name,
+				  const char *field_name,
+				  const char *field_value,
+				  const char *field_str)
+{
+	unsigned long long value;
 	dSP;
 
 	value = eval_flag(field_value);
@@ -94,26 +93,26 @@ INTERP my_perl;
 	XPUSHs(sv_2mortal(newSVpv(field_str, 0)));
 
 	PUTBACK;
-	अगर (get_cv("main::define_symbolic_value", 0))
+	if (get_cv("main::define_symbolic_value", 0))
 		call_pv("main::define_symbolic_value", G_SCALAR);
 	SPAGAIN;
 	PUTBACK;
 	FREETMPS;
 	LEAVE;
-पूर्ण
+}
 
-अटल व्योम define_symbolic_values(काष्ठा tep_prपूर्णांक_flag_sym *field,
-				   स्थिर अक्षर *ev_name,
-				   स्थिर अक्षर *field_name)
-अणु
+static void define_symbolic_values(struct tep_print_flag_sym *field,
+				   const char *ev_name,
+				   const char *field_name)
+{
 	define_symbolic_value(ev_name, field_name, field->value, field->str);
-	अगर (field->next)
+	if (field->next)
 		define_symbolic_values(field->next, ev_name, field_name);
-पूर्ण
+}
 
-अटल व्योम define_symbolic_field(स्थिर अक्षर *ev_name,
-				  स्थिर अक्षर *field_name)
-अणु
+static void define_symbolic_field(const char *ev_name,
+				  const char *field_name)
+{
 	dSP;
 
 	ENTER;
@@ -124,20 +123,20 @@ INTERP my_perl;
 	XPUSHs(sv_2mortal(newSVpv(field_name, 0)));
 
 	PUTBACK;
-	अगर (get_cv("main::define_symbolic_field", 0))
+	if (get_cv("main::define_symbolic_field", 0))
 		call_pv("main::define_symbolic_field", G_SCALAR);
 	SPAGAIN;
 	PUTBACK;
 	FREETMPS;
 	LEAVE;
-पूर्ण
+}
 
-अटल व्योम define_flag_value(स्थिर अक्षर *ev_name,
-			      स्थिर अक्षर *field_name,
-			      स्थिर अक्षर *field_value,
-			      स्थिर अक्षर *field_str)
-अणु
-	अचिन्हित दीर्घ दीर्घ value;
+static void define_flag_value(const char *ev_name,
+			      const char *field_name,
+			      const char *field_value,
+			      const char *field_str)
+{
+	unsigned long long value;
 	dSP;
 
 	value = eval_flag(field_value);
@@ -152,27 +151,27 @@ INTERP my_perl;
 	XPUSHs(sv_2mortal(newSVpv(field_str, 0)));
 
 	PUTBACK;
-	अगर (get_cv("main::define_flag_value", 0))
+	if (get_cv("main::define_flag_value", 0))
 		call_pv("main::define_flag_value", G_SCALAR);
 	SPAGAIN;
 	PUTBACK;
 	FREETMPS;
 	LEAVE;
-पूर्ण
+}
 
-अटल व्योम define_flag_values(काष्ठा tep_prपूर्णांक_flag_sym *field,
-			       स्थिर अक्षर *ev_name,
-			       स्थिर अक्षर *field_name)
-अणु
+static void define_flag_values(struct tep_print_flag_sym *field,
+			       const char *ev_name,
+			       const char *field_name)
+{
 	define_flag_value(ev_name, field_name, field->value, field->str);
-	अगर (field->next)
+	if (field->next)
 		define_flag_values(field->next, ev_name, field_name);
-पूर्ण
+}
 
-अटल व्योम define_flag_field(स्थिर अक्षर *ev_name,
-			      स्थिर अक्षर *field_name,
-			      स्थिर अक्षर *delim)
-अणु
+static void define_flag_field(const char *ev_name,
+			      const char *field_name,
+			      const char *delim)
+{
 	dSP;
 
 	ENTER;
@@ -184,196 +183,196 @@ INTERP my_perl;
 	XPUSHs(sv_2mortal(newSVpv(delim, 0)));
 
 	PUTBACK;
-	अगर (get_cv("main::define_flag_field", 0))
+	if (get_cv("main::define_flag_field", 0))
 		call_pv("main::define_flag_field", G_SCALAR);
 	SPAGAIN;
 	PUTBACK;
 	FREETMPS;
 	LEAVE;
-पूर्ण
+}
 
-अटल व्योम define_event_symbols(काष्ठा tep_event *event,
-				 स्थिर अक्षर *ev_name,
-				 काष्ठा tep_prपूर्णांक_arg *args)
-अणु
-	अगर (args == शून्य)
-		वापस;
+static void define_event_symbols(struct tep_event *event,
+				 const char *ev_name,
+				 struct tep_print_arg *args)
+{
+	if (args == NULL)
+		return;
 
-	चयन (args->type) अणु
-	हाल TEP_PRINT_शून्य:
-		अवरोध;
-	हाल TEP_PRINT_ATOM:
+	switch (args->type) {
+	case TEP_PRINT_NULL:
+		break;
+	case TEP_PRINT_ATOM:
 		define_flag_value(ev_name, cur_field_name, "0",
 				  args->atom.atom);
 		zero_flag_atom = 0;
-		अवरोध;
-	हाल TEP_PRINT_FIELD:
-		मुक्त(cur_field_name);
+		break;
+	case TEP_PRINT_FIELD:
+		free(cur_field_name);
 		cur_field_name = strdup(args->field.name);
-		अवरोध;
-	हाल TEP_PRINT_FLAGS:
+		break;
+	case TEP_PRINT_FLAGS:
 		define_event_symbols(event, ev_name, args->flags.field);
 		define_flag_field(ev_name, cur_field_name, args->flags.delim);
 		define_flag_values(args->flags.flags, ev_name, cur_field_name);
-		अवरोध;
-	हाल TEP_PRINT_SYMBOL:
+		break;
+	case TEP_PRINT_SYMBOL:
 		define_event_symbols(event, ev_name, args->symbol.field);
 		define_symbolic_field(ev_name, cur_field_name);
 		define_symbolic_values(args->symbol.symbols, ev_name,
 				       cur_field_name);
-		अवरोध;
-	हाल TEP_PRINT_HEX:
-	हाल TEP_PRINT_HEX_STR:
+		break;
+	case TEP_PRINT_HEX:
+	case TEP_PRINT_HEX_STR:
 		define_event_symbols(event, ev_name, args->hex.field);
 		define_event_symbols(event, ev_name, args->hex.size);
-		अवरोध;
-	हाल TEP_PRINT_INT_ARRAY:
-		define_event_symbols(event, ev_name, args->पूर्णांक_array.field);
-		define_event_symbols(event, ev_name, args->पूर्णांक_array.count);
-		define_event_symbols(event, ev_name, args->पूर्णांक_array.el_size);
-		अवरोध;
-	हाल TEP_PRINT_BSTRING:
-	हाल TEP_PRINT_DYNAMIC_ARRAY:
-	हाल TEP_PRINT_DYNAMIC_ARRAY_LEN:
-	हाल TEP_PRINT_STRING:
-	हाल TEP_PRINT_BITMASK:
-		अवरोध;
-	हाल TEP_PRINT_TYPE:
+		break;
+	case TEP_PRINT_INT_ARRAY:
+		define_event_symbols(event, ev_name, args->int_array.field);
+		define_event_symbols(event, ev_name, args->int_array.count);
+		define_event_symbols(event, ev_name, args->int_array.el_size);
+		break;
+	case TEP_PRINT_BSTRING:
+	case TEP_PRINT_DYNAMIC_ARRAY:
+	case TEP_PRINT_DYNAMIC_ARRAY_LEN:
+	case TEP_PRINT_STRING:
+	case TEP_PRINT_BITMASK:
+		break;
+	case TEP_PRINT_TYPE:
 		define_event_symbols(event, ev_name, args->typecast.item);
-		अवरोध;
-	हाल TEP_PRINT_OP:
-		अगर (म_भेद(args->op.op, ":") == 0)
+		break;
+	case TEP_PRINT_OP:
+		if (strcmp(args->op.op, ":") == 0)
 			zero_flag_atom = 1;
 		define_event_symbols(event, ev_name, args->op.left);
 		define_event_symbols(event, ev_name, args->op.right);
-		अवरोध;
-	हाल TEP_PRINT_FUNC:
-	शेष:
+		break;
+	case TEP_PRINT_FUNC:
+	default:
 		pr_err("Unsupported print arg type\n");
 		/* we should warn... */
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (args->next)
+	if (args->next)
 		define_event_symbols(event, ev_name, args->next);
-पूर्ण
+}
 
-अटल SV *perl_process_callchain(काष्ठा perf_sample *sample,
-				  काष्ठा evsel *evsel,
-				  काष्ठा addr_location *al)
-अणु
+static SV *perl_process_callchain(struct perf_sample *sample,
+				  struct evsel *evsel,
+				  struct addr_location *al)
+{
 	AV *list;
 
 	list = newAV();
-	अगर (!list)
-		जाओ निकास;
+	if (!list)
+		goto exit;
 
-	अगर (!symbol_conf.use_callchain || !sample->callchain)
-		जाओ निकास;
+	if (!symbol_conf.use_callchain || !sample->callchain)
+		goto exit;
 
-	अगर (thपढ़ो__resolve_callchain(al->thपढ़ो, &callchain_cursor, evsel,
-				      sample, शून्य, शून्य, scripting_max_stack) != 0) अणु
+	if (thread__resolve_callchain(al->thread, &callchain_cursor, evsel,
+				      sample, NULL, NULL, scripting_max_stack) != 0) {
 		pr_err("Failed to resolve callchain. Skipping\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 	callchain_cursor_commit(&callchain_cursor);
 
 
-	जबतक (1) अणु
+	while (1) {
 		HV *elem;
-		काष्ठा callchain_cursor_node *node;
+		struct callchain_cursor_node *node;
 		node = callchain_cursor_current(&callchain_cursor);
-		अगर (!node)
-			अवरोध;
+		if (!node)
+			break;
 
 		elem = newHV();
-		अगर (!elem)
-			जाओ निकास;
+		if (!elem)
+			goto exit;
 
-		अगर (!hv_stores(elem, "ip", newSVuv(node->ip))) अणु
+		if (!hv_stores(elem, "ip", newSVuv(node->ip))) {
 			hv_undef(elem);
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
-		अगर (node->ms.sym) अणु
+		if (node->ms.sym) {
 			HV *sym = newHV();
-			अगर (!sym) अणु
+			if (!sym) {
 				hv_undef(elem);
-				जाओ निकास;
-			पूर्ण
-			अगर (!hv_stores(sym, "start",   newSVuv(node->ms.sym->start)) ||
+				goto exit;
+			}
+			if (!hv_stores(sym, "start",   newSVuv(node->ms.sym->start)) ||
 			    !hv_stores(sym, "end",     newSVuv(node->ms.sym->end)) ||
 			    !hv_stores(sym, "binding", newSVuv(node->ms.sym->binding)) ||
 			    !hv_stores(sym, "name",    newSVpvn(node->ms.sym->name,
 								node->ms.sym->namelen)) ||
-			    !hv_stores(elem, "sym",    newRV_noinc((SV*)sym))) अणु
+			    !hv_stores(elem, "sym",    newRV_noinc((SV*)sym))) {
 				hv_undef(sym);
 				hv_undef(elem);
-				जाओ निकास;
-			पूर्ण
-		पूर्ण
+				goto exit;
+			}
+		}
 
-		अगर (node->ms.map) अणु
-			काष्ठा map *map = node->ms.map;
-			स्थिर अक्षर *dsoname = "[unknown]";
-			अगर (map && map->dso) अणु
-				अगर (symbol_conf.show_kernel_path && map->dso->दीर्घ_name)
-					dsoname = map->dso->दीर्घ_name;
-				अन्यथा
+		if (node->ms.map) {
+			struct map *map = node->ms.map;
+			const char *dsoname = "[unknown]";
+			if (map && map->dso) {
+				if (symbol_conf.show_kernel_path && map->dso->long_name)
+					dsoname = map->dso->long_name;
+				else
 					dsoname = map->dso->name;
-			पूर्ण
-			अगर (!hv_stores(elem, "dso", newSVpv(dsoname,0))) अणु
+			}
+			if (!hv_stores(elem, "dso", newSVpv(dsoname,0))) {
 				hv_undef(elem);
-				जाओ निकास;
-			पूर्ण
-		पूर्ण
+				goto exit;
+			}
+		}
 
 		callchain_cursor_advance(&callchain_cursor);
 		av_push(list, newRV_noinc((SV*)elem));
-	पूर्ण
+	}
 
-निकास:
-	वापस newRV_noinc((SV*)list);
-पूर्ण
+exit:
+	return newRV_noinc((SV*)list);
+}
 
-अटल व्योम perl_process_tracepoपूर्णांक(काष्ठा perf_sample *sample,
-				    काष्ठा evsel *evsel,
-				    काष्ठा addr_location *al)
-अणु
-	काष्ठा thपढ़ो *thपढ़ो = al->thपढ़ो;
-	काष्ठा tep_event *event = evsel->tp_क्रमmat;
-	काष्ठा tep_क्रमmat_field *field;
-	अटल अक्षर handler[256];
-	अचिन्हित दीर्घ दीर्घ val;
-	अचिन्हित दीर्घ s, ns;
-	पूर्णांक pid;
-	पूर्णांक cpu = sample->cpu;
-	व्योम *data = sample->raw_data;
-	अचिन्हित दीर्घ दीर्घ nsecs = sample->समय;
-	स्थिर अक्षर *comm = thपढ़ो__comm_str(thपढ़ो);
+static void perl_process_tracepoint(struct perf_sample *sample,
+				    struct evsel *evsel,
+				    struct addr_location *al)
+{
+	struct thread *thread = al->thread;
+	struct tep_event *event = evsel->tp_format;
+	struct tep_format_field *field;
+	static char handler[256];
+	unsigned long long val;
+	unsigned long s, ns;
+	int pid;
+	int cpu = sample->cpu;
+	void *data = sample->raw_data;
+	unsigned long long nsecs = sample->time;
+	const char *comm = thread__comm_str(thread);
 
 	dSP;
 
-	अगर (evsel->core.attr.type != PERF_TYPE_TRACEPOINT)
-		वापस;
+	if (evsel->core.attr.type != PERF_TYPE_TRACEPOINT)
+		return;
 
-	अगर (!event) अणु
+	if (!event) {
 		pr_debug("ug! no event found for type %" PRIu64, (u64)evsel->core.attr.config);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	pid = raw_field_value(event, "common_pid", data);
 
-	प्र_लिखो(handler, "%s::%s", event->प्रणाली, event->name);
+	sprintf(handler, "%s::%s", event->system, event->name);
 
-	अगर (!test_and_set_bit(event->id, events_defined))
-		define_event_symbols(event, handler, event->prपूर्णांक_fmt.args);
+	if (!test_and_set_bit(event->id, events_defined))
+		define_event_symbols(event, handler, event->print_fmt.args);
 
 	s = nsecs / NSEC_PER_SEC;
 	ns = nsecs - s * NSEC_PER_SEC;
 
 	scripting_context->event_data = data;
-	scripting_context->pevent = evsel->tp_क्रमmat->tep;
+	scripting_context->pevent = evsel->tp_format->tep;
 
 	ENTER;
 	SAVETMPS;
@@ -390,31 +389,31 @@ INTERP my_perl;
 
 	/* common fields other than pid can be accessed via xsub fns */
 
-	क्रम (field = event->क्रमmat.fields; field; field = field->next) अणु
-		अगर (field->flags & TEP_FIELD_IS_STRING) अणु
-			पूर्णांक offset;
-			अगर (field->flags & TEP_FIELD_IS_DYNAMIC) अणु
-				offset = *(पूर्णांक *)(data + field->offset);
+	for (field = event->format.fields; field; field = field->next) {
+		if (field->flags & TEP_FIELD_IS_STRING) {
+			int offset;
+			if (field->flags & TEP_FIELD_IS_DYNAMIC) {
+				offset = *(int *)(data + field->offset);
 				offset &= 0xffff;
-			पूर्ण अन्यथा
+			} else
 				offset = field->offset;
-			XPUSHs(sv_2mortal(newSVpv((अक्षर *)data + offset, 0)));
-		पूर्ण अन्यथा अणु /* FIELD_IS_NUMERIC */
-			val = पढ़ो_size(event, data + field->offset,
+			XPUSHs(sv_2mortal(newSVpv((char *)data + offset, 0)));
+		} else { /* FIELD_IS_NUMERIC */
+			val = read_size(event, data + field->offset,
 					field->size);
-			अगर (field->flags & TEP_FIELD_IS_SIGNED) अणु
+			if (field->flags & TEP_FIELD_IS_SIGNED) {
 				XPUSHs(sv_2mortal(newSViv(val)));
-			पूर्ण अन्यथा अणु
+			} else {
 				XPUSHs(sv_2mortal(newSVuv(val)));
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	PUTBACK;
 
-	अगर (get_cv(handler, 0))
+	if (get_cv(handler, 0))
 		call_pv(handler, G_SCALAR);
-	अन्यथा अगर (get_cv("main::trace_unhandled", 0)) अणु
+	else if (get_cv("main::trace_unhandled", 0)) {
 		XPUSHs(sv_2mortal(newSVpv(handler, 0)));
 		XPUSHs(sv_2mortal(newSViv(PTR2IV(scripting_context))));
 		XPUSHs(sv_2mortal(newSVuv(cpu)));
@@ -423,305 +422,305 @@ INTERP my_perl;
 		XPUSHs(sv_2mortal(newSVpv(comm, 0)));
 		XPUSHs(sv_2mortal(perl_process_callchain(sample, evsel, al)));
 		call_pv("main::trace_unhandled", G_SCALAR);
-	पूर्ण
+	}
 	SPAGAIN;
 	PUTBACK;
 	FREETMPS;
 	LEAVE;
-पूर्ण
+}
 
-अटल व्योम perl_process_event_generic(जोड़ perf_event *event,
-				       काष्ठा perf_sample *sample,
-				       काष्ठा evsel *evsel)
-अणु
+static void perl_process_event_generic(union perf_event *event,
+				       struct perf_sample *sample,
+				       struct evsel *evsel)
+{
 	dSP;
 
-	अगर (!get_cv("process_event", 0))
-		वापस;
+	if (!get_cv("process_event", 0))
+		return;
 
 	ENTER;
 	SAVETMPS;
 	PUSHMARK(SP);
-	XPUSHs(sv_2mortal(newSVpvn((स्थिर अक्षर *)event, event->header.size)));
-	XPUSHs(sv_2mortal(newSVpvn((स्थिर अक्षर *)&evsel->core.attr, माप(evsel->core.attr))));
-	XPUSHs(sv_2mortal(newSVpvn((स्थिर अक्षर *)sample, माप(*sample))));
-	XPUSHs(sv_2mortal(newSVpvn((स्थिर अक्षर *)sample->raw_data, sample->raw_size)));
+	XPUSHs(sv_2mortal(newSVpvn((const char *)event, event->header.size)));
+	XPUSHs(sv_2mortal(newSVpvn((const char *)&evsel->core.attr, sizeof(evsel->core.attr))));
+	XPUSHs(sv_2mortal(newSVpvn((const char *)sample, sizeof(*sample))));
+	XPUSHs(sv_2mortal(newSVpvn((const char *)sample->raw_data, sample->raw_size)));
 	PUTBACK;
 	call_pv("process_event", G_SCALAR);
 	SPAGAIN;
 	PUTBACK;
 	FREETMPS;
 	LEAVE;
-पूर्ण
+}
 
-अटल व्योम perl_process_event(जोड़ perf_event *event,
-			       काष्ठा perf_sample *sample,
-			       काष्ठा evsel *evsel,
-			       काष्ठा addr_location *al)
-अणु
-	perl_process_tracepoपूर्णांक(sample, evsel, al);
+static void perl_process_event(union perf_event *event,
+			       struct perf_sample *sample,
+			       struct evsel *evsel,
+			       struct addr_location *al)
+{
+	perl_process_tracepoint(sample, evsel, al);
 	perl_process_event_generic(event, sample, evsel);
-पूर्ण
+}
 
-अटल व्योम run_start_sub(व्योम)
-अणु
+static void run_start_sub(void)
+{
 	dSP; /* access to Perl stack */
 	PUSHMARK(SP);
 
-	अगर (get_cv("main::trace_begin", 0))
+	if (get_cv("main::trace_begin", 0))
 		call_pv("main::trace_begin", G_DISCARD | G_NOARGS);
-पूर्ण
+}
 
 /*
  * Start trace script
  */
-अटल पूर्णांक perl_start_script(स्थिर अक्षर *script, पूर्णांक argc, स्थिर अक्षर **argv)
-अणु
-	स्थिर अक्षर **command_line;
-	पूर्णांक i, err = 0;
+static int perl_start_script(const char *script, int argc, const char **argv)
+{
+	const char **command_line;
+	int i, err = 0;
 
-	command_line = दो_स्मृति((argc + 2) * माप(स्थिर अक्षर *));
+	command_line = malloc((argc + 2) * sizeof(const char *));
 	command_line[0] = "";
 	command_line[1] = script;
-	क्रम (i = 2; i < argc + 2; i++)
+	for (i = 2; i < argc + 2; i++)
 		command_line[i] = argv[i - 2];
 
 	my_perl = perl_alloc();
-	perl_स्थिरruct(my_perl);
+	perl_construct(my_perl);
 
-	अगर (perl_parse(my_perl, xs_init, argc + 2, (अक्षर **)command_line,
-		       (अक्षर **)शून्य)) अणु
+	if (perl_parse(my_perl, xs_init, argc + 2, (char **)command_line,
+		       (char **)NULL)) {
 		err = -1;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	अगर (perl_run(my_perl)) अणु
+	if (perl_run(my_perl)) {
 		err = -1;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	अगर (SvTRUE(ERRSV)) अणु
+	if (SvTRUE(ERRSV)) {
 		err = -1;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	run_start_sub();
 
-	मुक्त(command_line);
-	वापस 0;
+	free(command_line);
+	return 0;
 error:
-	perl_मुक्त(my_perl);
-	मुक्त(command_line);
+	perl_free(my_perl);
+	free(command_line);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक perl_flush_script(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static int perl_flush_script(void)
+{
+	return 0;
+}
 
 /*
  * Stop trace script
  */
-अटल पूर्णांक perl_stop_script(व्योम)
-अणु
+static int perl_stop_script(void)
+{
 	dSP; /* access to Perl stack */
 	PUSHMARK(SP);
 
-	अगर (get_cv("main::trace_end", 0))
+	if (get_cv("main::trace_end", 0))
 		call_pv("main::trace_end", G_DISCARD | G_NOARGS);
 
-	perl_deकाष्ठा(my_perl);
-	perl_मुक्त(my_perl);
+	perl_destruct(my_perl);
+	perl_free(my_perl);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक perl_generate_script(काष्ठा tep_handle *pevent, स्थिर अक्षर *outfile)
-अणु
-	पूर्णांक i, not_first, count, nr_events;
-	काष्ठा tep_event **all_events;
-	काष्ठा tep_event *event = शून्य;
-	काष्ठा tep_क्रमmat_field *f;
-	अक्षर fname[PATH_MAX];
-	खाता *ofp;
+static int perl_generate_script(struct tep_handle *pevent, const char *outfile)
+{
+	int i, not_first, count, nr_events;
+	struct tep_event **all_events;
+	struct tep_event *event = NULL;
+	struct tep_format_field *f;
+	char fname[PATH_MAX];
+	FILE *ofp;
 
-	प्र_लिखो(fname, "%s.pl", outfile);
-	ofp = ख_खोलो(fname, "w");
-	अगर (ofp == शून्य) अणु
-		ख_लिखो(मानक_त्रुटि, "couldn't open %s\n", fname);
-		वापस -1;
-	पूर्ण
+	sprintf(fname, "%s.pl", outfile);
+	ofp = fopen(fname, "w");
+	if (ofp == NULL) {
+		fprintf(stderr, "couldn't open %s\n", fname);
+		return -1;
+	}
 
-	ख_लिखो(ofp, "# perf script event handlers, "
+	fprintf(ofp, "# perf script event handlers, "
 		"generated by perf script -g perl\n");
 
-	ख_लिखो(ofp, "# Licensed under the terms of the GNU GPL"
+	fprintf(ofp, "# Licensed under the terms of the GNU GPL"
 		" License version 2\n\n");
 
-	ख_लिखो(ofp, "# The common_* event handler fields are the most useful "
+	fprintf(ofp, "# The common_* event handler fields are the most useful "
 		"fields common to\n");
 
-	ख_लिखो(ofp, "# all events.  They don't necessarily correspond to "
+	fprintf(ofp, "# all events.  They don't necessarily correspond to "
 		"the 'common_*' fields\n");
 
-	ख_लिखो(ofp, "# in the format files.  Those fields not available as "
+	fprintf(ofp, "# in the format files.  Those fields not available as "
 		"handler params can\n");
 
-	ख_लिखो(ofp, "# be retrieved using Perl functions of the form "
+	fprintf(ofp, "# be retrieved using Perl functions of the form "
 		"common_*($context).\n");
 
-	ख_लिखो(ofp, "# See Context.pm for the list of available "
+	fprintf(ofp, "# See Context.pm for the list of available "
 		"functions.\n\n");
 
-	ख_लिखो(ofp, "use lib \"$ENV{'PERF_EXEC_PATH'}/scripts/perl/"
+	fprintf(ofp, "use lib \"$ENV{'PERF_EXEC_PATH'}/scripts/perl/"
 		"Perf-Trace-Util/lib\";\n");
 
-	ख_लिखो(ofp, "use lib \"./Perf-Trace-Util/lib\";\n");
-	ख_लिखो(ofp, "use Perf::Trace::Core;\n");
-	ख_लिखो(ofp, "use Perf::Trace::Context;\n");
-	ख_लिखो(ofp, "use Perf::Trace::Util;\n\n");
+	fprintf(ofp, "use lib \"./Perf-Trace-Util/lib\";\n");
+	fprintf(ofp, "use Perf::Trace::Core;\n");
+	fprintf(ofp, "use Perf::Trace::Context;\n");
+	fprintf(ofp, "use Perf::Trace::Util;\n\n");
 
-	ख_लिखो(ofp, "sub trace_begin\n{\n\t# optional\n}\n\n");
-	ख_लिखो(ofp, "sub trace_end\n{\n\t# optional\n}\n");
+	fprintf(ofp, "sub trace_begin\n{\n\t# optional\n}\n\n");
+	fprintf(ofp, "sub trace_end\n{\n\t# optional\n}\n");
 
 
-	ख_लिखो(ofp, "\न\
-sub prपूर्णांक_backtrace\न\
-अणु\न\
-	my $callchain = shअगरt;\न\
-	क्रम my $node (@$callchain)\न\
-	अणु\न\
-		अगर(exists $node->अणुsymपूर्ण)\न\
-		अणु\न\
-			म_लिखो( \"\\t[\\%%x] \\%%s\\n\", $node->अणुipपूर्ण, $node->अणुsymपूर्णअणुnameपूर्ण);\न\
-		पूर्ण\न\
-		अन्यथा\न\
-		अणु\न\
-			म_लिखो( \"\\t[\\%%x]\\n\", $nodeअणुipपूर्ण);\न\
-		पूर्ण\न\
-	पूर्ण\न\
-पूर्ण\न\न\
+	fprintf(ofp, "\n\
+sub print_backtrace\n\
+{\n\
+	my $callchain = shift;\n\
+	for my $node (@$callchain)\n\
+	{\n\
+		if(exists $node->{sym})\n\
+		{\n\
+			printf( \"\\t[\\%%x] \\%%s\\n\", $node->{ip}, $node->{sym}{name});\n\
+		}\n\
+		else\n\
+		{\n\
+			printf( \"\\t[\\%%x]\\n\", $node{ip});\n\
+		}\n\
+	}\n\
+}\n\n\
 ");
 
 	nr_events = tep_get_events_count(pevent);
 	all_events = tep_list_events(pevent, TEP_EVENT_SORT_ID);
 
-	क्रम (i = 0; all_events && i < nr_events; i++) अणु
+	for (i = 0; all_events && i < nr_events; i++) {
 		event = all_events[i];
-		ख_लिखो(ofp, "sub %s::%s\n{\n", event->प्रणाली, event->name);
-		ख_लिखो(ofp, "\tmy (");
+		fprintf(ofp, "sub %s::%s\n{\n", event->system, event->name);
+		fprintf(ofp, "\tmy (");
 
-		ख_लिखो(ofp, "$event_name, ");
-		ख_लिखो(ofp, "$context, ");
-		ख_लिखो(ofp, "$common_cpu, ");
-		ख_लिखो(ofp, "$common_secs, ");
-		ख_लिखो(ofp, "$common_nsecs,\n");
-		ख_लिखो(ofp, "\t    $common_pid, ");
-		ख_लिखो(ofp, "$common_comm, ");
-		ख_लिखो(ofp, "$common_callchain,\n\t    ");
+		fprintf(ofp, "$event_name, ");
+		fprintf(ofp, "$context, ");
+		fprintf(ofp, "$common_cpu, ");
+		fprintf(ofp, "$common_secs, ");
+		fprintf(ofp, "$common_nsecs,\n");
+		fprintf(ofp, "\t    $common_pid, ");
+		fprintf(ofp, "$common_comm, ");
+		fprintf(ofp, "$common_callchain,\n\t    ");
 
 		not_first = 0;
 		count = 0;
 
-		क्रम (f = event->क्रमmat.fields; f; f = f->next) अणु
-			अगर (not_first++)
-				ख_लिखो(ofp, ", ");
-			अगर (++count % 5 == 0)
-				ख_लिखो(ofp, "\n\t    ");
+		for (f = event->format.fields; f; f = f->next) {
+			if (not_first++)
+				fprintf(ofp, ", ");
+			if (++count % 5 == 0)
+				fprintf(ofp, "\n\t    ");
 
-			ख_लिखो(ofp, "$%s", f->name);
-		पूर्ण
-		ख_लिखो(ofp, ") = @_;\n\n");
+			fprintf(ofp, "$%s", f->name);
+		}
+		fprintf(ofp, ") = @_;\n\n");
 
-		ख_लिखो(ofp, "\tprint_header($event_name, $common_cpu, "
+		fprintf(ofp, "\tprint_header($event_name, $common_cpu, "
 			"$common_secs, $common_nsecs,\n\t             "
 			"$common_pid, $common_comm, $common_callchain);\n\n");
 
-		ख_लिखो(ofp, "\tprintf(\"");
+		fprintf(ofp, "\tprintf(\"");
 
 		not_first = 0;
 		count = 0;
 
-		क्रम (f = event->क्रमmat.fields; f; f = f->next) अणु
-			अगर (not_first++)
-				ख_लिखो(ofp, ", ");
-			अगर (count && count % 4 == 0) अणु
-				ख_लिखो(ofp, "\".\n\t       \"");
-			पूर्ण
+		for (f = event->format.fields; f; f = f->next) {
+			if (not_first++)
+				fprintf(ofp, ", ");
+			if (count && count % 4 == 0) {
+				fprintf(ofp, "\".\n\t       \"");
+			}
 			count++;
 
-			ख_लिखो(ofp, "%s=", f->name);
-			अगर (f->flags & TEP_FIELD_IS_STRING ||
+			fprintf(ofp, "%s=", f->name);
+			if (f->flags & TEP_FIELD_IS_STRING ||
 			    f->flags & TEP_FIELD_IS_FLAG ||
 			    f->flags & TEP_FIELD_IS_SYMBOLIC)
-				ख_लिखो(ofp, "%%s");
-			अन्यथा अगर (f->flags & TEP_FIELD_IS_SIGNED)
-				ख_लिखो(ofp, "%%d");
-			अन्यथा
-				ख_लिखो(ofp, "%%u");
-		पूर्ण
+				fprintf(ofp, "%%s");
+			else if (f->flags & TEP_FIELD_IS_SIGNED)
+				fprintf(ofp, "%%d");
+			else
+				fprintf(ofp, "%%u");
+		}
 
-		ख_लिखो(ofp, "\\n\",\n\t       ");
+		fprintf(ofp, "\\n\",\n\t       ");
 
 		not_first = 0;
 		count = 0;
 
-		क्रम (f = event->क्रमmat.fields; f; f = f->next) अणु
-			अगर (not_first++)
-				ख_लिखो(ofp, ", ");
+		for (f = event->format.fields; f; f = f->next) {
+			if (not_first++)
+				fprintf(ofp, ", ");
 
-			अगर (++count % 5 == 0)
-				ख_लिखो(ofp, "\n\t       ");
+			if (++count % 5 == 0)
+				fprintf(ofp, "\n\t       ");
 
-			अगर (f->flags & TEP_FIELD_IS_FLAG) अणु
-				अगर ((count - 1) % 5 != 0) अणु
-					ख_लिखो(ofp, "\n\t       ");
+			if (f->flags & TEP_FIELD_IS_FLAG) {
+				if ((count - 1) % 5 != 0) {
+					fprintf(ofp, "\n\t       ");
 					count = 4;
-				पूर्ण
-				ख_लिखो(ofp, "flag_str(\"");
-				ख_लिखो(ofp, "%s::%s\", ", event->प्रणाली,
+				}
+				fprintf(ofp, "flag_str(\"");
+				fprintf(ofp, "%s::%s\", ", event->system,
 					event->name);
-				ख_लिखो(ofp, "\"%s\", $%s)", f->name,
+				fprintf(ofp, "\"%s\", $%s)", f->name,
 					f->name);
-			पूर्ण अन्यथा अगर (f->flags & TEP_FIELD_IS_SYMBOLIC) अणु
-				अगर ((count - 1) % 5 != 0) अणु
-					ख_लिखो(ofp, "\n\t       ");
+			} else if (f->flags & TEP_FIELD_IS_SYMBOLIC) {
+				if ((count - 1) % 5 != 0) {
+					fprintf(ofp, "\n\t       ");
 					count = 4;
-				पूर्ण
-				ख_लिखो(ofp, "symbol_str(\"");
-				ख_लिखो(ofp, "%s::%s\", ", event->प्रणाली,
+				}
+				fprintf(ofp, "symbol_str(\"");
+				fprintf(ofp, "%s::%s\", ", event->system,
 					event->name);
-				ख_लिखो(ofp, "\"%s\", $%s)", f->name,
+				fprintf(ofp, "\"%s\", $%s)", f->name,
 					f->name);
-			पूर्ण अन्यथा
-				ख_लिखो(ofp, "$%s", f->name);
-		पूर्ण
+			} else
+				fprintf(ofp, "$%s", f->name);
+		}
 
-		ख_लिखो(ofp, ");\n\n");
+		fprintf(ofp, ");\n\n");
 
-		ख_लिखो(ofp, "\tprint_backtrace($common_callchain);\n");
+		fprintf(ofp, "\tprint_backtrace($common_callchain);\n");
 
-		ख_लिखो(ofp, "}\n\n");
-	पूर्ण
+		fprintf(ofp, "}\n\n");
+	}
 
-	ख_लिखो(ofp, "sub trace_unhandled\n{\n\tmy ($event_name, $context, "
+	fprintf(ofp, "sub trace_unhandled\n{\n\tmy ($event_name, $context, "
 		"$common_cpu, $common_secs, $common_nsecs,\n\t    "
 		"$common_pid, $common_comm, $common_callchain) = @_;\n\n");
 
-	ख_लिखो(ofp, "\tprint_header($event_name, $common_cpu, "
+	fprintf(ofp, "\tprint_header($event_name, $common_cpu, "
 		"$common_secs, $common_nsecs,\n\t             $common_pid, "
 		"$common_comm, $common_callchain);\n");
-	ख_लिखो(ofp, "\tprint_backtrace($common_callchain);\n");
-	ख_लिखो(ofp, "}\n\n");
+	fprintf(ofp, "\tprint_backtrace($common_callchain);\n");
+	fprintf(ofp, "}\n\n");
 
-	ख_लिखो(ofp, "sub print_header\n{\n"
+	fprintf(ofp, "sub print_header\n{\n"
 		"\tmy ($event_name, $cpu, $secs, $nsecs, $pid, $comm) = @_;\n\n"
 		"\tprintf(\"%%-20s %%5u %%05u.%%09u %%8u %%-20s \",\n\t       "
 		"$event_name, $cpu, $secs, $nsecs, $pid, $comm);\n}\n");
 
-	ख_लिखो(ofp,
+	fprintf(ofp,
 		"\n# Packed byte string args of process_event():\n"
 		"#\n"
 		"# $event:\tunion perf_event\tutil/event.h\n"
@@ -742,18 +741,18 @@ sub prपूर्णांक_backtrace\न\
 		"\tprint Dumper \\@event, \\@attr, \\@sample, \\@raw_data;\n"
 		"}\n");
 
-	ख_बंद(ofp);
+	fclose(ofp);
 
-	ख_लिखो(मानक_त्रुटि, "generated Perl script: %s\n", fname);
+	fprintf(stderr, "generated Perl script: %s\n", fname);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा scripting_ops perl_scripting_ops = अणु
+struct scripting_ops perl_scripting_ops = {
 	.name = "Perl",
 	.start_script = perl_start_script,
 	.flush_script = perl_flush_script,
 	.stop_script = perl_stop_script,
 	.process_event = perl_process_event,
 	.generate_script = perl_generate_script,
-पूर्ण;
+};

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
+/* SPDX-License-Identifier: GPL-2.0 OR MIT */
 
 /*
  * Xen frontend/backend page directory based shared buffer
@@ -10,81 +9,81 @@
  * Author: Oleksandr Andrushchenko <oleksandr_andrushchenko@epam.com>
  */
 
-#अगर_अघोषित __XEN_FRONT_PGसूची_SHBUF_H_
-#घोषणा __XEN_FRONT_PGसूची_SHBUF_H_
+#ifndef __XEN_FRONT_PGDIR_SHBUF_H_
+#define __XEN_FRONT_PGDIR_SHBUF_H_
 
-#समावेश <linux/kernel.h>
+#include <linux/kernel.h>
 
-#समावेश <xen/grant_table.h>
+#include <xen/grant_table.h>
 
-काष्ठा xen_front_pgdir_shbuf_ops;
+struct xen_front_pgdir_shbuf_ops;
 
-काष्ठा xen_front_pgdir_shbuf अणु
+struct xen_front_pgdir_shbuf {
 	/*
-	 * Number of references granted क्रम the backend use:
+	 * Number of references granted for the backend use:
 	 *
-	 *  - क्रम frontend allocated/imported buffers this holds the number
-	 *    of grant references क्रम the page directory and the pages
+	 *  - for frontend allocated/imported buffers this holds the number
+	 *    of grant references for the page directory and the pages
 	 *    of the buffer
 	 *
-	 *  - क्रम the buffer provided by the backend this only holds the number
-	 *    of grant references क्रम the page directory itself as grant
-	 *    references क्रम the buffer will be provided by the backend.
+	 *  - for the buffer provided by the backend this only holds the number
+	 *    of grant references for the page directory itself as grant
+	 *    references for the buffer will be provided by the backend.
 	 */
-	पूर्णांक num_grefs;
+	int num_grefs;
 	grant_ref_t *grefs;
 	/* Page directory backing storage. */
 	u8 *directory;
 
 	/*
-	 * Number of pages क्रम the shared buffer itself (excluding the page
+	 * Number of pages for the shared buffer itself (excluding the page
 	 * directory).
 	 */
-	पूर्णांक num_pages;
+	int num_pages;
 	/*
 	 * Backing storage of the shared buffer: these are the pages being
 	 * shared.
 	 */
-	काष्ठा page **pages;
+	struct page **pages;
 
-	काष्ठा xenbus_device *xb_dev;
+	struct xenbus_device *xb_dev;
 
-	/* These are the ops used पूर्णांकernally depending on be_alloc mode. */
-	स्थिर काष्ठा xen_front_pgdir_shbuf_ops *ops;
+	/* These are the ops used internally depending on be_alloc mode. */
+	const struct xen_front_pgdir_shbuf_ops *ops;
 
-	/* Xen map handles क्रम the buffer allocated by the backend. */
+	/* Xen map handles for the buffer allocated by the backend. */
 	grant_handle_t *backend_map_handles;
-पूर्ण;
+};
 
-काष्ठा xen_front_pgdir_shbuf_cfg अणु
-	काष्ठा xenbus_device *xb_dev;
+struct xen_front_pgdir_shbuf_cfg {
+	struct xenbus_device *xb_dev;
 
 	/* Number of pages of the buffer backing storage. */
-	पूर्णांक num_pages;
+	int num_pages;
 	/* Pages of the buffer to be shared. */
-	काष्ठा page **pages;
+	struct page **pages;
 
 	/*
-	 * This is allocated outside because there are use-हालs when
-	 * the buffer काष्ठाure is allocated as a part of a bigger one.
+	 * This is allocated outside because there are use-cases when
+	 * the buffer structure is allocated as a part of a bigger one.
 	 */
-	काष्ठा xen_front_pgdir_shbuf *pgdir;
+	struct xen_front_pgdir_shbuf *pgdir;
 	/*
-	 * Mode of grant reference sharing: अगर set then backend will share
+	 * Mode of grant reference sharing: if set then backend will share
 	 * grant references to the buffer with the frontend.
 	 */
-	पूर्णांक be_alloc;
-पूर्ण;
+	int be_alloc;
+};
 
-पूर्णांक xen_front_pgdir_shbuf_alloc(काष्ठा xen_front_pgdir_shbuf_cfg *cfg);
+int xen_front_pgdir_shbuf_alloc(struct xen_front_pgdir_shbuf_cfg *cfg);
 
 grant_ref_t
-xen_front_pgdir_shbuf_get_dir_start(काष्ठा xen_front_pgdir_shbuf *buf);
+xen_front_pgdir_shbuf_get_dir_start(struct xen_front_pgdir_shbuf *buf);
 
-पूर्णांक xen_front_pgdir_shbuf_map(काष्ठा xen_front_pgdir_shbuf *buf);
+int xen_front_pgdir_shbuf_map(struct xen_front_pgdir_shbuf *buf);
 
-पूर्णांक xen_front_pgdir_shbuf_unmap(काष्ठा xen_front_pgdir_shbuf *buf);
+int xen_front_pgdir_shbuf_unmap(struct xen_front_pgdir_shbuf *buf);
 
-व्योम xen_front_pgdir_shbuf_मुक्त(काष्ठा xen_front_pgdir_shbuf *buf);
+void xen_front_pgdir_shbuf_free(struct xen_front_pgdir_shbuf *buf);
 
-#पूर्ण_अगर /* __XEN_FRONT_PGसूची_SHBUF_H_ */
+#endif /* __XEN_FRONT_PGDIR_SHBUF_H_ */

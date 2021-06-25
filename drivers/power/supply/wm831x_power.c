@@ -1,133 +1,132 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * PMU driver क्रम Wolfson Microelectronics wm831x PMICs
+ * PMU driver for Wolfson Microelectronics wm831x PMICs
  *
  * Copyright 2009 Wolfson Microelectronics PLC.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/err.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/usb/phy.h>
+#include <linux/module.h>
+#include <linux/err.h>
+#include <linux/platform_device.h>
+#include <linux/power_supply.h>
+#include <linux/slab.h>
+#include <linux/usb/phy.h>
 
-#समावेश <linux/mfd/wm831x/core.h>
-#समावेश <linux/mfd/wm831x/auxadc.h>
-#समावेश <linux/mfd/wm831x/pmu.h>
-#समावेश <linux/mfd/wm831x/pdata.h>
+#include <linux/mfd/wm831x/core.h>
+#include <linux/mfd/wm831x/auxadc.h>
+#include <linux/mfd/wm831x/pmu.h>
+#include <linux/mfd/wm831x/pdata.h>
 
-काष्ठा wm831x_घातer अणु
-	काष्ठा wm831x *wm831x;
-	काष्ठा घातer_supply *wall;
-	काष्ठा घातer_supply *usb;
-	काष्ठा घातer_supply *battery;
-	काष्ठा घातer_supply_desc wall_desc;
-	काष्ठा घातer_supply_desc usb_desc;
-	काष्ठा घातer_supply_desc battery_desc;
-	अक्षर wall_name[20];
-	अक्षर usb_name[20];
-	अक्षर battery_name[20];
+struct wm831x_power {
+	struct wm831x *wm831x;
+	struct power_supply *wall;
+	struct power_supply *usb;
+	struct power_supply *battery;
+	struct power_supply_desc wall_desc;
+	struct power_supply_desc usb_desc;
+	struct power_supply_desc battery_desc;
+	char wall_name[20];
+	char usb_name[20];
+	char battery_name[20];
 	bool have_battery;
-	काष्ठा usb_phy *usb_phy;
-	काष्ठा notअगरier_block usb_notअगरy;
-पूर्ण;
+	struct usb_phy *usb_phy;
+	struct notifier_block usb_notify;
+};
 
-अटल पूर्णांक wm831x_घातer_check_online(काष्ठा wm831x *wm831x, पूर्णांक supply,
-				     जोड़ घातer_supply_propval *val)
-अणु
-	पूर्णांक ret;
+static int wm831x_power_check_online(struct wm831x *wm831x, int supply,
+				     union power_supply_propval *val)
+{
+	int ret;
 
-	ret = wm831x_reg_पढ़ो(wm831x, WM831X_SYSTEM_STATUS);
-	अगर (ret < 0)
-		वापस ret;
+	ret = wm831x_reg_read(wm831x, WM831X_SYSTEM_STATUS);
+	if (ret < 0)
+		return ret;
 
-	अगर (ret & supply)
-		val->पूर्णांकval = 1;
-	अन्यथा
-		val->पूर्णांकval = 0;
+	if (ret & supply)
+		val->intval = 1;
+	else
+		val->intval = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm831x_घातer_पढ़ो_voltage(काष्ठा wm831x *wm831x,
-				     क्रमागत wm831x_auxadc src,
-				     जोड़ घातer_supply_propval *val)
-अणु
-	पूर्णांक ret;
+static int wm831x_power_read_voltage(struct wm831x *wm831x,
+				     enum wm831x_auxadc src,
+				     union power_supply_propval *val)
+{
+	int ret;
 
-	ret = wm831x_auxadc_पढ़ो_uv(wm831x, src);
-	अगर (ret >= 0)
-		val->पूर्णांकval = ret;
+	ret = wm831x_auxadc_read_uv(wm831x, src);
+	if (ret >= 0)
+		val->intval = ret;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*********************************************************************
  *		WALL Power
  *********************************************************************/
-अटल पूर्णांक wm831x_wall_get_prop(काष्ठा घातer_supply *psy,
-				क्रमागत घातer_supply_property psp,
-				जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा wm831x_घातer *wm831x_घातer = dev_get_drvdata(psy->dev.parent);
-	काष्ठा wm831x *wm831x = wm831x_घातer->wm831x;
-	पूर्णांक ret = 0;
+static int wm831x_wall_get_prop(struct power_supply *psy,
+				enum power_supply_property psp,
+				union power_supply_propval *val)
+{
+	struct wm831x_power *wm831x_power = dev_get_drvdata(psy->dev.parent);
+	struct wm831x *wm831x = wm831x_power->wm831x;
+	int ret = 0;
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_ONLINE:
-		ret = wm831x_घातer_check_online(wm831x, WM831X_PWR_WALL, val);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		ret = wm831x_घातer_पढ़ो_voltage(wm831x, WM831X_AUX_WALL, val);
-		अवरोध;
-	शेष:
+	switch (psp) {
+	case POWER_SUPPLY_PROP_ONLINE:
+		ret = wm831x_power_check_online(wm831x, WM831X_PWR_WALL, val);
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		ret = wm831x_power_read_voltage(wm831x, WM831X_AUX_WALL, val);
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल क्रमागत घातer_supply_property wm831x_wall_props[] = अणु
+static enum power_supply_property wm831x_wall_props[] = {
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
-पूर्ण;
+};
 
 /*********************************************************************
  *		USB Power
  *********************************************************************/
-अटल पूर्णांक wm831x_usb_get_prop(काष्ठा घातer_supply *psy,
-			       क्रमागत घातer_supply_property psp,
-			       जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा wm831x_घातer *wm831x_घातer = dev_get_drvdata(psy->dev.parent);
-	काष्ठा wm831x *wm831x = wm831x_घातer->wm831x;
-	पूर्णांक ret = 0;
+static int wm831x_usb_get_prop(struct power_supply *psy,
+			       enum power_supply_property psp,
+			       union power_supply_propval *val)
+{
+	struct wm831x_power *wm831x_power = dev_get_drvdata(psy->dev.parent);
+	struct wm831x *wm831x = wm831x_power->wm831x;
+	int ret = 0;
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_ONLINE:
-		ret = wm831x_घातer_check_online(wm831x, WM831X_PWR_USB, val);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		ret = wm831x_घातer_पढ़ो_voltage(wm831x, WM831X_AUX_USB, val);
-		अवरोध;
-	शेष:
+	switch (psp) {
+	case POWER_SUPPLY_PROP_ONLINE:
+		ret = wm831x_power_check_online(wm831x, WM831X_PWR_USB, val);
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		ret = wm831x_power_read_voltage(wm831x, WM831X_AUX_USB, val);
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल क्रमागत घातer_supply_property wm831x_usb_props[] = अणु
+static enum power_supply_property wm831x_usb_props[] = {
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
-पूर्ण;
+};
 
 /* In milliamps */
-अटल स्थिर अचिन्हित पूर्णांक wm831x_usb_limits[] = अणु
+static const unsigned int wm831x_usb_limits[] = {
 	0,
 	2,
 	100,
@@ -136,150 +135,150 @@
 	1500,
 	1800,
 	550,
-पूर्ण;
+};
 
-अटल पूर्णांक wm831x_usb_limit_change(काष्ठा notअगरier_block *nb,
-				   अचिन्हित दीर्घ limit, व्योम *data)
-अणु
-	काष्ठा wm831x_घातer *wm831x_घातer = container_of(nb,
-							 काष्ठा wm831x_घातer,
-							 usb_notअगरy);
-	अचिन्हित पूर्णांक i, best;
+static int wm831x_usb_limit_change(struct notifier_block *nb,
+				   unsigned long limit, void *data)
+{
+	struct wm831x_power *wm831x_power = container_of(nb,
+							 struct wm831x_power,
+							 usb_notify);
+	unsigned int i, best;
 
 	/* Find the highest supported limit */
 	best = 0;
-	क्रम (i = 0; i < ARRAY_SIZE(wm831x_usb_limits); i++) अणु
-		अगर (limit >= wm831x_usb_limits[i] &&
+	for (i = 0; i < ARRAY_SIZE(wm831x_usb_limits); i++) {
+		if (limit >= wm831x_usb_limits[i] &&
 		    wm831x_usb_limits[best] < wm831x_usb_limits[i])
 			best = i;
-	पूर्ण
+	}
 
-	dev_dbg(wm831x_घातer->wm831x->dev,
+	dev_dbg(wm831x_power->wm831x->dev,
 		"Limiting USB current to %umA", wm831x_usb_limits[best]);
 
-	wm831x_set_bits(wm831x_घातer->wm831x, WM831X_POWER_STATE,
+	wm831x_set_bits(wm831x_power->wm831x, WM831X_POWER_STATE,
 		        WM831X_USB_ILIM_MASK, best);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*********************************************************************
  *		Battery properties
  *********************************************************************/
 
-काष्ठा chg_map अणु
-	पूर्णांक val;
-	पूर्णांक reg_val;
-पूर्ण;
+struct chg_map {
+	int val;
+	int reg_val;
+};
 
-अटल काष्ठा chg_map trickle_ilims[] = अणु
-	अणु  50, 0 << WM831X_CHG_TRKL_ILIM_SHIFT पूर्ण,
-	अणु 100, 1 << WM831X_CHG_TRKL_ILIM_SHIFT पूर्ण,
-	अणु 150, 2 << WM831X_CHG_TRKL_ILIM_SHIFT पूर्ण,
-	अणु 200, 3 << WM831X_CHG_TRKL_ILIM_SHIFT पूर्ण,
-पूर्ण;
+static struct chg_map trickle_ilims[] = {
+	{  50, 0 << WM831X_CHG_TRKL_ILIM_SHIFT },
+	{ 100, 1 << WM831X_CHG_TRKL_ILIM_SHIFT },
+	{ 150, 2 << WM831X_CHG_TRKL_ILIM_SHIFT },
+	{ 200, 3 << WM831X_CHG_TRKL_ILIM_SHIFT },
+};
 
-अटल काष्ठा chg_map vsels[] = अणु
-	अणु 4050, 0 << WM831X_CHG_VSEL_SHIFT पूर्ण,
-	अणु 4100, 1 << WM831X_CHG_VSEL_SHIFT पूर्ण,
-	अणु 4150, 2 << WM831X_CHG_VSEL_SHIFT पूर्ण,
-	अणु 4200, 3 << WM831X_CHG_VSEL_SHIFT पूर्ण,
-पूर्ण;
+static struct chg_map vsels[] = {
+	{ 4050, 0 << WM831X_CHG_VSEL_SHIFT },
+	{ 4100, 1 << WM831X_CHG_VSEL_SHIFT },
+	{ 4150, 2 << WM831X_CHG_VSEL_SHIFT },
+	{ 4200, 3 << WM831X_CHG_VSEL_SHIFT },
+};
 
-अटल काष्ठा chg_map fast_ilims[] = अणु
-	अणु    0,  0 << WM831X_CHG_FAST_ILIM_SHIFT पूर्ण,
-	अणु   50,  1 << WM831X_CHG_FAST_ILIM_SHIFT पूर्ण,
-	अणु  100,  2 << WM831X_CHG_FAST_ILIM_SHIFT पूर्ण,
-	अणु  150,  3 << WM831X_CHG_FAST_ILIM_SHIFT पूर्ण,
-	अणु  200,  4 << WM831X_CHG_FAST_ILIM_SHIFT पूर्ण,
-	अणु  250,  5 << WM831X_CHG_FAST_ILIM_SHIFT पूर्ण,
-	अणु  300,  6 << WM831X_CHG_FAST_ILIM_SHIFT पूर्ण,
-	अणु  350,  7 << WM831X_CHG_FAST_ILIM_SHIFT पूर्ण,
-	अणु  400,  8 << WM831X_CHG_FAST_ILIM_SHIFT पूर्ण,
-	अणु  450,  9 << WM831X_CHG_FAST_ILIM_SHIFT पूर्ण,
-	अणु  500, 10 << WM831X_CHG_FAST_ILIM_SHIFT पूर्ण,
-	अणु  600, 11 << WM831X_CHG_FAST_ILIM_SHIFT पूर्ण,
-	अणु  700, 12 << WM831X_CHG_FAST_ILIM_SHIFT पूर्ण,
-	अणु  800, 13 << WM831X_CHG_FAST_ILIM_SHIFT पूर्ण,
-	अणु  900, 14 << WM831X_CHG_FAST_ILIM_SHIFT पूर्ण,
-	अणु 1000, 15 << WM831X_CHG_FAST_ILIM_SHIFT पूर्ण,
-पूर्ण;
+static struct chg_map fast_ilims[] = {
+	{    0,  0 << WM831X_CHG_FAST_ILIM_SHIFT },
+	{   50,  1 << WM831X_CHG_FAST_ILIM_SHIFT },
+	{  100,  2 << WM831X_CHG_FAST_ILIM_SHIFT },
+	{  150,  3 << WM831X_CHG_FAST_ILIM_SHIFT },
+	{  200,  4 << WM831X_CHG_FAST_ILIM_SHIFT },
+	{  250,  5 << WM831X_CHG_FAST_ILIM_SHIFT },
+	{  300,  6 << WM831X_CHG_FAST_ILIM_SHIFT },
+	{  350,  7 << WM831X_CHG_FAST_ILIM_SHIFT },
+	{  400,  8 << WM831X_CHG_FAST_ILIM_SHIFT },
+	{  450,  9 << WM831X_CHG_FAST_ILIM_SHIFT },
+	{  500, 10 << WM831X_CHG_FAST_ILIM_SHIFT },
+	{  600, 11 << WM831X_CHG_FAST_ILIM_SHIFT },
+	{  700, 12 << WM831X_CHG_FAST_ILIM_SHIFT },
+	{  800, 13 << WM831X_CHG_FAST_ILIM_SHIFT },
+	{  900, 14 << WM831X_CHG_FAST_ILIM_SHIFT },
+	{ 1000, 15 << WM831X_CHG_FAST_ILIM_SHIFT },
+};
 
-अटल काष्ठा chg_map eoc_iterms[] = अणु
-	अणु 20, 0 << WM831X_CHG_ITERM_SHIFT पूर्ण,
-	अणु 30, 1 << WM831X_CHG_ITERM_SHIFT पूर्ण,
-	अणु 40, 2 << WM831X_CHG_ITERM_SHIFT पूर्ण,
-	अणु 50, 3 << WM831X_CHG_ITERM_SHIFT पूर्ण,
-	अणु 60, 4 << WM831X_CHG_ITERM_SHIFT पूर्ण,
-	अणु 70, 5 << WM831X_CHG_ITERM_SHIFT पूर्ण,
-	अणु 80, 6 << WM831X_CHG_ITERM_SHIFT पूर्ण,
-	अणु 90, 7 << WM831X_CHG_ITERM_SHIFT पूर्ण,
-पूर्ण;
+static struct chg_map eoc_iterms[] = {
+	{ 20, 0 << WM831X_CHG_ITERM_SHIFT },
+	{ 30, 1 << WM831X_CHG_ITERM_SHIFT },
+	{ 40, 2 << WM831X_CHG_ITERM_SHIFT },
+	{ 50, 3 << WM831X_CHG_ITERM_SHIFT },
+	{ 60, 4 << WM831X_CHG_ITERM_SHIFT },
+	{ 70, 5 << WM831X_CHG_ITERM_SHIFT },
+	{ 80, 6 << WM831X_CHG_ITERM_SHIFT },
+	{ 90, 7 << WM831X_CHG_ITERM_SHIFT },
+};
 
-अटल काष्ठा chg_map chg_बार[] = अणु
-	अणु  60,  0 << WM831X_CHG_TIME_SHIFT पूर्ण,
-	अणु  90,  1 << WM831X_CHG_TIME_SHIFT पूर्ण,
-	अणु 120,  2 << WM831X_CHG_TIME_SHIFT पूर्ण,
-	अणु 150,  3 << WM831X_CHG_TIME_SHIFT पूर्ण,
-	अणु 180,  4 << WM831X_CHG_TIME_SHIFT पूर्ण,
-	अणु 210,  5 << WM831X_CHG_TIME_SHIFT पूर्ण,
-	अणु 240,  6 << WM831X_CHG_TIME_SHIFT पूर्ण,
-	अणु 270,  7 << WM831X_CHG_TIME_SHIFT पूर्ण,
-	अणु 300,  8 << WM831X_CHG_TIME_SHIFT पूर्ण,
-	अणु 330,  9 << WM831X_CHG_TIME_SHIFT पूर्ण,
-	अणु 360, 10 << WM831X_CHG_TIME_SHIFT पूर्ण,
-	अणु 390, 11 << WM831X_CHG_TIME_SHIFT पूर्ण,
-	अणु 420, 12 << WM831X_CHG_TIME_SHIFT पूर्ण,
-	अणु 450, 13 << WM831X_CHG_TIME_SHIFT पूर्ण,
-	अणु 480, 14 << WM831X_CHG_TIME_SHIFT पूर्ण,
-	अणु 510, 15 << WM831X_CHG_TIME_SHIFT पूर्ण,
-पूर्ण;
+static struct chg_map chg_times[] = {
+	{  60,  0 << WM831X_CHG_TIME_SHIFT },
+	{  90,  1 << WM831X_CHG_TIME_SHIFT },
+	{ 120,  2 << WM831X_CHG_TIME_SHIFT },
+	{ 150,  3 << WM831X_CHG_TIME_SHIFT },
+	{ 180,  4 << WM831X_CHG_TIME_SHIFT },
+	{ 210,  5 << WM831X_CHG_TIME_SHIFT },
+	{ 240,  6 << WM831X_CHG_TIME_SHIFT },
+	{ 270,  7 << WM831X_CHG_TIME_SHIFT },
+	{ 300,  8 << WM831X_CHG_TIME_SHIFT },
+	{ 330,  9 << WM831X_CHG_TIME_SHIFT },
+	{ 360, 10 << WM831X_CHG_TIME_SHIFT },
+	{ 390, 11 << WM831X_CHG_TIME_SHIFT },
+	{ 420, 12 << WM831X_CHG_TIME_SHIFT },
+	{ 450, 13 << WM831X_CHG_TIME_SHIFT },
+	{ 480, 14 << WM831X_CHG_TIME_SHIFT },
+	{ 510, 15 << WM831X_CHG_TIME_SHIFT },
+};
 
-अटल व्योम wm831x_battey_apply_config(काष्ठा wm831x *wm831x,
-				       काष्ठा chg_map *map, पूर्णांक count, पूर्णांक val,
-				       पूर्णांक *reg, स्थिर अक्षर *name,
-				       स्थिर अक्षर *units)
-अणु
-	पूर्णांक i;
+static void wm831x_battey_apply_config(struct wm831x *wm831x,
+				       struct chg_map *map, int count, int val,
+				       int *reg, const char *name,
+				       const char *units)
+{
+	int i;
 
-	क्रम (i = 0; i < count; i++)
-		अगर (val == map[i].val)
-			अवरोध;
-	अगर (i == count) अणु
+	for (i = 0; i < count; i++)
+		if (val == map[i].val)
+			break;
+	if (i == count) {
 		dev_err(wm831x->dev, "Invalid %s %d%s\n",
 			name, val, units);
-	पूर्ण अन्यथा अणु
+	} else {
 		*reg |= map[i].reg_val;
 		dev_dbg(wm831x->dev, "Set %s of %d%s\n", name, val, units);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम wm831x_config_battery(काष्ठा wm831x *wm831x)
-अणु
-	काष्ठा wm831x_pdata *wm831x_pdata = wm831x->dev->platक्रमm_data;
-	काष्ठा wm831x_battery_pdata *pdata;
-	पूर्णांक ret, reg1, reg2;
+static void wm831x_config_battery(struct wm831x *wm831x)
+{
+	struct wm831x_pdata *wm831x_pdata = wm831x->dev->platform_data;
+	struct wm831x_battery_pdata *pdata;
+	int ret, reg1, reg2;
 
-	अगर (!wm831x_pdata || !wm831x_pdata->battery) अणु
+	if (!wm831x_pdata || !wm831x_pdata->battery) {
 		dev_warn(wm831x->dev,
 			 "No battery charger configuration\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	pdata = wm831x_pdata->battery;
 
 	reg1 = 0;
 	reg2 = 0;
 
-	अगर (!pdata->enable) अणु
+	if (!pdata->enable) {
 		dev_info(wm831x->dev, "Battery charger disabled\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	reg1 |= WM831X_CHG_ENA;
-	अगर (pdata->off_mask)
+	if (pdata->off_mask)
 		reg2 |= WM831X_CHG_OFF_MSK;
-	अगर (pdata->fast_enable)
+	if (pdata->fast_enable)
 		reg1 |= WM831X_CHG_FAST;
 
 	wm831x_battey_apply_config(wm831x, trickle_ilims,
@@ -299,22 +298,22 @@
 				   pdata->eoc_iterm, &reg1,
 				   "end of charge current threshold", "mA");
 
-	wm831x_battey_apply_config(wm831x, chg_बार, ARRAY_SIZE(chg_बार),
-				   pdata->समयout, &reg2,
+	wm831x_battey_apply_config(wm831x, chg_times, ARRAY_SIZE(chg_times),
+				   pdata->timeout, &reg2,
 				   "charger timeout", "min");
 
 	ret = wm831x_reg_unlock(wm831x);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		dev_err(wm831x->dev, "Failed to unlock registers: %d\n", ret);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ret = wm831x_set_bits(wm831x, WM831X_CHARGER_CONTROL_1,
 			      WM831X_CHG_ENA_MASK |
 			      WM831X_CHG_FAST_MASK |
 			      WM831X_CHG_ITERM_MASK,
 			      reg1);
-	अगर (ret != 0)
+	if (ret != 0)
 		dev_err(wm831x->dev, "Failed to set charger control 1: %d\n",
 			ret);
 
@@ -325,153 +324,153 @@
 			      WM831X_CHG_TRKL_ILIM_MASK |
 			      WM831X_CHG_VSEL_MASK,
 			      reg2);
-	अगर (ret != 0)
+	if (ret != 0)
 		dev_err(wm831x->dev, "Failed to set charger control 2: %d\n",
 			ret);
 
 	wm831x_reg_lock(wm831x);
-पूर्ण
+}
 
-अटल पूर्णांक wm831x_bat_check_status(काष्ठा wm831x *wm831x, पूर्णांक *status)
-अणु
-	पूर्णांक ret;
+static int wm831x_bat_check_status(struct wm831x *wm831x, int *status)
+{
+	int ret;
 
-	ret = wm831x_reg_पढ़ो(wm831x, WM831X_SYSTEM_STATUS);
-	अगर (ret < 0)
-		वापस ret;
+	ret = wm831x_reg_read(wm831x, WM831X_SYSTEM_STATUS);
+	if (ret < 0)
+		return ret;
 
-	अगर (ret & WM831X_PWR_SRC_BATT) अणु
+	if (ret & WM831X_PWR_SRC_BATT) {
 		*status = POWER_SUPPLY_STATUS_DISCHARGING;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	ret = wm831x_reg_पढ़ो(wm831x, WM831X_CHARGER_STATUS);
-	अगर (ret < 0)
-		वापस ret;
+	ret = wm831x_reg_read(wm831x, WM831X_CHARGER_STATUS);
+	if (ret < 0)
+		return ret;
 
-	चयन (ret & WM831X_CHG_STATE_MASK) अणु
-	हाल WM831X_CHG_STATE_OFF:
+	switch (ret & WM831X_CHG_STATE_MASK) {
+	case WM831X_CHG_STATE_OFF:
 		*status = POWER_SUPPLY_STATUS_NOT_CHARGING;
-		अवरोध;
-	हाल WM831X_CHG_STATE_TRICKLE:
-	हाल WM831X_CHG_STATE_FAST:
+		break;
+	case WM831X_CHG_STATE_TRICKLE:
+	case WM831X_CHG_STATE_FAST:
 		*status = POWER_SUPPLY_STATUS_CHARGING;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		*status = POWER_SUPPLY_STATUS_UNKNOWN;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm831x_bat_check_type(काष्ठा wm831x *wm831x, पूर्णांक *type)
-अणु
-	पूर्णांक ret;
+static int wm831x_bat_check_type(struct wm831x *wm831x, int *type)
+{
+	int ret;
 
-	ret = wm831x_reg_पढ़ो(wm831x, WM831X_CHARGER_STATUS);
-	अगर (ret < 0)
-		वापस ret;
+	ret = wm831x_reg_read(wm831x, WM831X_CHARGER_STATUS);
+	if (ret < 0)
+		return ret;
 
-	चयन (ret & WM831X_CHG_STATE_MASK) अणु
-	हाल WM831X_CHG_STATE_TRICKLE:
-	हाल WM831X_CHG_STATE_TRICKLE_OT:
+	switch (ret & WM831X_CHG_STATE_MASK) {
+	case WM831X_CHG_STATE_TRICKLE:
+	case WM831X_CHG_STATE_TRICKLE_OT:
 		*type = POWER_SUPPLY_CHARGE_TYPE_TRICKLE;
-		अवरोध;
-	हाल WM831X_CHG_STATE_FAST:
-	हाल WM831X_CHG_STATE_FAST_OT:
+		break;
+	case WM831X_CHG_STATE_FAST:
+	case WM831X_CHG_STATE_FAST_OT:
 		*type = POWER_SUPPLY_CHARGE_TYPE_FAST;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		*type = POWER_SUPPLY_CHARGE_TYPE_NONE;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm831x_bat_check_health(काष्ठा wm831x *wm831x, पूर्णांक *health)
-अणु
-	पूर्णांक ret;
+static int wm831x_bat_check_health(struct wm831x *wm831x, int *health)
+{
+	int ret;
 
-	ret = wm831x_reg_पढ़ो(wm831x, WM831X_CHARGER_STATUS);
-	अगर (ret < 0)
-		वापस ret;
+	ret = wm831x_reg_read(wm831x, WM831X_CHARGER_STATUS);
+	if (ret < 0)
+		return ret;
 
-	अगर (ret & WM831X_BATT_HOT_STS) अणु
+	if (ret & WM831X_BATT_HOT_STS) {
 		*health = POWER_SUPPLY_HEALTH_OVERHEAT;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (ret & WM831X_BATT_COLD_STS) अणु
+	if (ret & WM831X_BATT_COLD_STS) {
 		*health = POWER_SUPPLY_HEALTH_COLD;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (ret & WM831X_BATT_OV_STS) अणु
+	if (ret & WM831X_BATT_OV_STS) {
 		*health = POWER_SUPPLY_HEALTH_OVERVOLTAGE;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	चयन (ret & WM831X_CHG_STATE_MASK) अणु
-	हाल WM831X_CHG_STATE_TRICKLE_OT:
-	हाल WM831X_CHG_STATE_FAST_OT:
+	switch (ret & WM831X_CHG_STATE_MASK) {
+	case WM831X_CHG_STATE_TRICKLE_OT:
+	case WM831X_CHG_STATE_FAST_OT:
 		*health = POWER_SUPPLY_HEALTH_OVERHEAT;
-		अवरोध;
-	हाल WM831X_CHG_STATE_DEFECTIVE:
+		break;
+	case WM831X_CHG_STATE_DEFECTIVE:
 		*health = POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		*health = POWER_SUPPLY_HEALTH_GOOD;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm831x_bat_get_prop(काष्ठा घातer_supply *psy,
-			       क्रमागत घातer_supply_property psp,
-			       जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा wm831x_घातer *wm831x_घातer = dev_get_drvdata(psy->dev.parent);
-	काष्ठा wm831x *wm831x = wm831x_घातer->wm831x;
-	पूर्णांक ret = 0;
+static int wm831x_bat_get_prop(struct power_supply *psy,
+			       enum power_supply_property psp,
+			       union power_supply_propval *val)
+{
+	struct wm831x_power *wm831x_power = dev_get_drvdata(psy->dev.parent);
+	struct wm831x *wm831x = wm831x_power->wm831x;
+	int ret = 0;
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_STATUS:
-		ret = wm831x_bat_check_status(wm831x, &val->पूर्णांकval);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_ONLINE:
-		ret = wm831x_घातer_check_online(wm831x, WM831X_PWR_SRC_BATT,
+	switch (psp) {
+	case POWER_SUPPLY_PROP_STATUS:
+		ret = wm831x_bat_check_status(wm831x, &val->intval);
+		break;
+	case POWER_SUPPLY_PROP_ONLINE:
+		ret = wm831x_power_check_online(wm831x, WM831X_PWR_SRC_BATT,
 						val);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		ret = wm831x_घातer_पढ़ो_voltage(wm831x, WM831X_AUX_BATT, val);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_HEALTH:
-		ret = wm831x_bat_check_health(wm831x, &val->पूर्णांकval);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CHARGE_TYPE:
-		ret = wm831x_bat_check_type(wm831x, &val->पूर्णांकval);
-		अवरोध;
-	शेष:
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		ret = wm831x_power_read_voltage(wm831x, WM831X_AUX_BATT, val);
+		break;
+	case POWER_SUPPLY_PROP_HEALTH:
+		ret = wm831x_bat_check_health(wm831x, &val->intval);
+		break;
+	case POWER_SUPPLY_PROP_CHARGE_TYPE:
+		ret = wm831x_bat_check_type(wm831x, &val->intval);
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल क्रमागत घातer_supply_property wm831x_bat_props[] = अणु
+static enum power_supply_property wm831x_bat_props[] = {
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_HEALTH,
 	POWER_SUPPLY_PROP_CHARGE_TYPE,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *wm831x_bat_irqs[] = अणु
+static const char *wm831x_bat_irqs[] = {
 	"BATT HOT",
 	"BATT COLD",
 	"BATT FAIL",
@@ -480,261 +479,261 @@
 	"TO",
 	"MODE",
 	"START",
-पूर्ण;
+};
 
-अटल irqवापस_t wm831x_bat_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा wm831x_घातer *wm831x_घातer = data;
-	काष्ठा wm831x *wm831x = wm831x_घातer->wm831x;
+static irqreturn_t wm831x_bat_irq(int irq, void *data)
+{
+	struct wm831x_power *wm831x_power = data;
+	struct wm831x *wm831x = wm831x_power->wm831x;
 
 	dev_dbg(wm831x->dev, "Battery status changed: %d\n", irq);
 
-	/* The battery अक्षरger is स्वतःnomous so we करोn't need to करो
+	/* The battery charger is autonomous so we don't need to do
 	 * anything except kick user space */
-	अगर (wm831x_घातer->have_battery)
-		घातer_supply_changed(wm831x_घातer->battery);
+	if (wm831x_power->have_battery)
+		power_supply_changed(wm831x_power->battery);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 
 /*********************************************************************
  *		Initialisation
  *********************************************************************/
 
-अटल irqवापस_t wm831x_syslo_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा wm831x_घातer *wm831x_घातer = data;
-	काष्ठा wm831x *wm831x = wm831x_घातer->wm831x;
+static irqreturn_t wm831x_syslo_irq(int irq, void *data)
+{
+	struct wm831x_power *wm831x_power = data;
+	struct wm831x *wm831x = wm831x_power->wm831x;
 
-	/* Not much we can actually *करो* but tell people क्रम
-	 * posterity, we're probably about to run out of घातer. */
+	/* Not much we can actually *do* but tell people for
+	 * posterity, we're probably about to run out of power. */
 	dev_crit(wm831x->dev, "SYSVDD under voltage\n");
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t wm831x_pwr_src_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा wm831x_घातer *wm831x_घातer = data;
-	काष्ठा wm831x *wm831x = wm831x_घातer->wm831x;
+static irqreturn_t wm831x_pwr_src_irq(int irq, void *data)
+{
+	struct wm831x_power *wm831x_power = data;
+	struct wm831x *wm831x = wm831x_power->wm831x;
 
 	dev_dbg(wm831x->dev, "Power source changed\n");
 
-	/* Just notअगरy क्रम everything - little harm in overnotअगरying. */
-	अगर (wm831x_घातer->have_battery)
-		घातer_supply_changed(wm831x_घातer->battery);
-	घातer_supply_changed(wm831x_घातer->usb);
-	घातer_supply_changed(wm831x_घातer->wall);
+	/* Just notify for everything - little harm in overnotifying. */
+	if (wm831x_power->have_battery)
+		power_supply_changed(wm831x_power->battery);
+	power_supply_changed(wm831x_power->usb);
+	power_supply_changed(wm831x_power->wall);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक wm831x_घातer_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा wm831x *wm831x = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा wm831x_pdata *wm831x_pdata = wm831x->dev->platक्रमm_data;
-	काष्ठा wm831x_घातer *घातer;
-	पूर्णांक ret, irq, i;
+static int wm831x_power_probe(struct platform_device *pdev)
+{
+	struct wm831x *wm831x = dev_get_drvdata(pdev->dev.parent);
+	struct wm831x_pdata *wm831x_pdata = wm831x->dev->platform_data;
+	struct wm831x_power *power;
+	int ret, irq, i;
 
-	घातer = devm_kzalloc(&pdev->dev, माप(काष्ठा wm831x_घातer),
+	power = devm_kzalloc(&pdev->dev, sizeof(struct wm831x_power),
 			     GFP_KERNEL);
-	अगर (घातer == शून्य)
-		वापस -ENOMEM;
+	if (power == NULL)
+		return -ENOMEM;
 
-	घातer->wm831x = wm831x;
-	platक्रमm_set_drvdata(pdev, घातer);
+	power->wm831x = wm831x;
+	platform_set_drvdata(pdev, power);
 
-	अगर (wm831x_pdata && wm831x_pdata->wm831x_num) अणु
-		snम_लिखो(घातer->wall_name, माप(घातer->wall_name),
+	if (wm831x_pdata && wm831x_pdata->wm831x_num) {
+		snprintf(power->wall_name, sizeof(power->wall_name),
 			 "wm831x-wall.%d", wm831x_pdata->wm831x_num);
-		snम_लिखो(घातer->battery_name, माप(घातer->wall_name),
+		snprintf(power->battery_name, sizeof(power->wall_name),
 			 "wm831x-battery.%d", wm831x_pdata->wm831x_num);
-		snम_लिखो(घातer->usb_name, माप(घातer->wall_name),
+		snprintf(power->usb_name, sizeof(power->wall_name),
 			 "wm831x-usb.%d", wm831x_pdata->wm831x_num);
-	पूर्ण अन्यथा अणु
-		snम_लिखो(घातer->wall_name, माप(घातer->wall_name),
+	} else {
+		snprintf(power->wall_name, sizeof(power->wall_name),
 			 "wm831x-wall");
-		snम_लिखो(घातer->battery_name, माप(घातer->wall_name),
+		snprintf(power->battery_name, sizeof(power->wall_name),
 			 "wm831x-battery");
-		snम_लिखो(घातer->usb_name, माप(घातer->wall_name),
+		snprintf(power->usb_name, sizeof(power->wall_name),
 			 "wm831x-usb");
-	पूर्ण
+	}
 
-	/* We ignore configuration failures since we can still पढ़ो back
-	 * the status without enabling the अक्षरger.
+	/* We ignore configuration failures since we can still read back
+	 * the status without enabling the charger.
 	 */
 	wm831x_config_battery(wm831x);
 
-	घातer->wall_desc.name = घातer->wall_name;
-	घातer->wall_desc.type = POWER_SUPPLY_TYPE_MAINS;
-	घातer->wall_desc.properties = wm831x_wall_props;
-	घातer->wall_desc.num_properties = ARRAY_SIZE(wm831x_wall_props);
-	घातer->wall_desc.get_property = wm831x_wall_get_prop;
-	घातer->wall = घातer_supply_रेजिस्टर(&pdev->dev, &घातer->wall_desc,
-					    शून्य);
-	अगर (IS_ERR(घातer->wall)) अणु
-		ret = PTR_ERR(घातer->wall);
-		जाओ err;
-	पूर्ण
+	power->wall_desc.name = power->wall_name;
+	power->wall_desc.type = POWER_SUPPLY_TYPE_MAINS;
+	power->wall_desc.properties = wm831x_wall_props;
+	power->wall_desc.num_properties = ARRAY_SIZE(wm831x_wall_props);
+	power->wall_desc.get_property = wm831x_wall_get_prop;
+	power->wall = power_supply_register(&pdev->dev, &power->wall_desc,
+					    NULL);
+	if (IS_ERR(power->wall)) {
+		ret = PTR_ERR(power->wall);
+		goto err;
+	}
 
-	घातer->usb_desc.name = घातer->usb_name,
-	घातer->usb_desc.type = POWER_SUPPLY_TYPE_USB;
-	घातer->usb_desc.properties = wm831x_usb_props;
-	घातer->usb_desc.num_properties = ARRAY_SIZE(wm831x_usb_props);
-	घातer->usb_desc.get_property = wm831x_usb_get_prop;
-	घातer->usb = घातer_supply_रेजिस्टर(&pdev->dev, &घातer->usb_desc, शून्य);
-	अगर (IS_ERR(घातer->usb)) अणु
-		ret = PTR_ERR(घातer->usb);
-		जाओ err_wall;
-	पूर्ण
+	power->usb_desc.name = power->usb_name,
+	power->usb_desc.type = POWER_SUPPLY_TYPE_USB;
+	power->usb_desc.properties = wm831x_usb_props;
+	power->usb_desc.num_properties = ARRAY_SIZE(wm831x_usb_props);
+	power->usb_desc.get_property = wm831x_usb_get_prop;
+	power->usb = power_supply_register(&pdev->dev, &power->usb_desc, NULL);
+	if (IS_ERR(power->usb)) {
+		ret = PTR_ERR(power->usb);
+		goto err_wall;
+	}
 
-	ret = wm831x_reg_पढ़ो(wm831x, WM831X_CHARGER_CONTROL_1);
-	अगर (ret < 0)
-		जाओ err_wall;
-	घातer->have_battery = ret & WM831X_CHG_ENA;
+	ret = wm831x_reg_read(wm831x, WM831X_CHARGER_CONTROL_1);
+	if (ret < 0)
+		goto err_wall;
+	power->have_battery = ret & WM831X_CHG_ENA;
 
-	अगर (घातer->have_battery) अणु
-		घातer->battery_desc.name = घातer->battery_name;
-		घातer->battery_desc.properties = wm831x_bat_props;
-		घातer->battery_desc.num_properties = ARRAY_SIZE(wm831x_bat_props);
-		घातer->battery_desc.get_property = wm831x_bat_get_prop;
-		घातer->battery_desc.use_क्रम_apm = 1;
-		घातer->battery = घातer_supply_रेजिस्टर(&pdev->dev,
-						       &घातer->battery_desc,
-						       शून्य);
-		अगर (IS_ERR(घातer->battery)) अणु
-			ret = PTR_ERR(घातer->battery);
-			जाओ err_usb;
-		पूर्ण
-	पूर्ण
+	if (power->have_battery) {
+		power->battery_desc.name = power->battery_name;
+		power->battery_desc.properties = wm831x_bat_props;
+		power->battery_desc.num_properties = ARRAY_SIZE(wm831x_bat_props);
+		power->battery_desc.get_property = wm831x_bat_get_prop;
+		power->battery_desc.use_for_apm = 1;
+		power->battery = power_supply_register(&pdev->dev,
+						       &power->battery_desc,
+						       NULL);
+		if (IS_ERR(power->battery)) {
+			ret = PTR_ERR(power->battery);
+			goto err_usb;
+		}
+	}
 
-	irq = wm831x_irq(wm831x, platक्रमm_get_irq_byname(pdev, "SYSLO"));
-	ret = request_thपढ़ोed_irq(irq, शून्य, wm831x_syslo_irq,
+	irq = wm831x_irq(wm831x, platform_get_irq_byname(pdev, "SYSLO"));
+	ret = request_threaded_irq(irq, NULL, wm831x_syslo_irq,
 				   IRQF_TRIGGER_RISING | IRQF_ONESHOT, "System power low",
-				   घातer);
-	अगर (ret != 0) अणु
+				   power);
+	if (ret != 0) {
 		dev_err(&pdev->dev, "Failed to request SYSLO IRQ %d: %d\n",
 			irq, ret);
-		जाओ err_battery;
-	पूर्ण
+		goto err_battery;
+	}
 
-	irq = wm831x_irq(wm831x, platक्रमm_get_irq_byname(pdev, "PWR SRC"));
-	ret = request_thपढ़ोed_irq(irq, शून्य, wm831x_pwr_src_irq,
+	irq = wm831x_irq(wm831x, platform_get_irq_byname(pdev, "PWR SRC"));
+	ret = request_threaded_irq(irq, NULL, wm831x_pwr_src_irq,
 				   IRQF_TRIGGER_RISING | IRQF_ONESHOT, "Power source",
-				   घातer);
-	अगर (ret != 0) अणु
+				   power);
+	if (ret != 0) {
 		dev_err(&pdev->dev, "Failed to request PWR SRC IRQ %d: %d\n",
 			irq, ret);
-		जाओ err_syslo;
-	पूर्ण
+		goto err_syslo;
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(wm831x_bat_irqs); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(wm831x_bat_irqs); i++) {
 		irq = wm831x_irq(wm831x,
-				 platक्रमm_get_irq_byname(pdev,
+				 platform_get_irq_byname(pdev,
 							 wm831x_bat_irqs[i]));
-		ret = request_thपढ़ोed_irq(irq, शून्य, wm831x_bat_irq,
+		ret = request_threaded_irq(irq, NULL, wm831x_bat_irq,
 					   IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 					   wm831x_bat_irqs[i],
-					   घातer);
-		अगर (ret != 0) अणु
+					   power);
+		if (ret != 0) {
 			dev_err(&pdev->dev,
 				"Failed to request %s IRQ %d: %d\n",
 				wm831x_bat_irqs[i], irq, ret);
-			जाओ err_bat_irq;
-		पूर्ण
-	पूर्ण
+			goto err_bat_irq;
+		}
+	}
 
-	घातer->usb_phy = devm_usb_get_phy_by_phandle(&pdev->dev, "phys", 0);
-	ret = PTR_ERR_OR_ZERO(घातer->usb_phy);
+	power->usb_phy = devm_usb_get_phy_by_phandle(&pdev->dev, "phys", 0);
+	ret = PTR_ERR_OR_ZERO(power->usb_phy);
 
-	चयन (ret) अणु
-	हाल 0:
-		घातer->usb_notअगरy.notअगरier_call = wm831x_usb_limit_change;
-		ret = usb_रेजिस्टर_notअगरier(घातer->usb_phy, &घातer->usb_notअगरy);
-		अगर (ret) अणु
+	switch (ret) {
+	case 0:
+		power->usb_notify.notifier_call = wm831x_usb_limit_change;
+		ret = usb_register_notifier(power->usb_phy, &power->usb_notify);
+		if (ret) {
 			dev_err(&pdev->dev, "Failed to register notifier: %d\n",
 				ret);
-			जाओ err_bat_irq;
-		पूर्ण
-		अवरोध;
-	हाल -EINVAL:
-	हाल -ENODEV:
+			goto err_bat_irq;
+		}
+		break;
+	case -EINVAL:
+	case -ENODEV:
 		/* ignore missing usb-phy, it's optional */
-		घातer->usb_phy = शून्य;
+		power->usb_phy = NULL;
 		ret = 0;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(&pdev->dev, "Failed to find USB phy: %d\n", ret);
 		fallthrough;
-	हाल -EPROBE_DEFER:
-		जाओ err_bat_irq;
-	पूर्ण
+	case -EPROBE_DEFER:
+		goto err_bat_irq;
+	}
 
-	वापस ret;
+	return ret;
 
 err_bat_irq:
 	--i;
-	क्रम (; i >= 0; i--) अणु
-		irq = platक्रमm_get_irq_byname(pdev, wm831x_bat_irqs[i]);
-		मुक्त_irq(irq, घातer);
-	पूर्ण
-	irq = wm831x_irq(wm831x, platक्रमm_get_irq_byname(pdev, "PWR SRC"));
-	मुक्त_irq(irq, घातer);
+	for (; i >= 0; i--) {
+		irq = platform_get_irq_byname(pdev, wm831x_bat_irqs[i]);
+		free_irq(irq, power);
+	}
+	irq = wm831x_irq(wm831x, platform_get_irq_byname(pdev, "PWR SRC"));
+	free_irq(irq, power);
 err_syslo:
-	irq = wm831x_irq(wm831x, platक्रमm_get_irq_byname(pdev, "SYSLO"));
-	मुक्त_irq(irq, घातer);
+	irq = wm831x_irq(wm831x, platform_get_irq_byname(pdev, "SYSLO"));
+	free_irq(irq, power);
 err_battery:
-	अगर (घातer->have_battery)
-		घातer_supply_unरेजिस्टर(घातer->battery);
+	if (power->have_battery)
+		power_supply_unregister(power->battery);
 err_usb:
-	घातer_supply_unरेजिस्टर(घातer->usb);
+	power_supply_unregister(power->usb);
 err_wall:
-	घातer_supply_unरेजिस्टर(घातer->wall);
+	power_supply_unregister(power->wall);
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wm831x_घातer_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा wm831x_घातer *wm831x_घातer = platक्रमm_get_drvdata(pdev);
-	काष्ठा wm831x *wm831x = wm831x_घातer->wm831x;
-	पूर्णांक irq, i;
+static int wm831x_power_remove(struct platform_device *pdev)
+{
+	struct wm831x_power *wm831x_power = platform_get_drvdata(pdev);
+	struct wm831x *wm831x = wm831x_power->wm831x;
+	int irq, i;
 
-	अगर (wm831x_घातer->usb_phy) अणु
-		usb_unरेजिस्टर_notअगरier(wm831x_घातer->usb_phy,
-					&wm831x_घातer->usb_notअगरy);
-	पूर्ण
+	if (wm831x_power->usb_phy) {
+		usb_unregister_notifier(wm831x_power->usb_phy,
+					&wm831x_power->usb_notify);
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(wm831x_bat_irqs); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(wm831x_bat_irqs); i++) {
 		irq = wm831x_irq(wm831x, 
-				 platक्रमm_get_irq_byname(pdev,
+				 platform_get_irq_byname(pdev,
 							 wm831x_bat_irqs[i]));
-		मुक्त_irq(irq, wm831x_घातer);
-	पूर्ण
+		free_irq(irq, wm831x_power);
+	}
 
-	irq = wm831x_irq(wm831x, platक्रमm_get_irq_byname(pdev, "PWR SRC"));
-	मुक्त_irq(irq, wm831x_घातer);
+	irq = wm831x_irq(wm831x, platform_get_irq_byname(pdev, "PWR SRC"));
+	free_irq(irq, wm831x_power);
 
-	irq = wm831x_irq(wm831x, platक्रमm_get_irq_byname(pdev, "SYSLO"));
-	मुक्त_irq(irq, wm831x_घातer);
+	irq = wm831x_irq(wm831x, platform_get_irq_byname(pdev, "SYSLO"));
+	free_irq(irq, wm831x_power);
 
-	अगर (wm831x_घातer->have_battery)
-		घातer_supply_unरेजिस्टर(wm831x_घातer->battery);
-	घातer_supply_unरेजिस्टर(wm831x_घातer->wall);
-	घातer_supply_unरेजिस्टर(wm831x_घातer->usb);
-	वापस 0;
-पूर्ण
+	if (wm831x_power->have_battery)
+		power_supply_unregister(wm831x_power->battery);
+	power_supply_unregister(wm831x_power->wall);
+	power_supply_unregister(wm831x_power->usb);
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver wm831x_घातer_driver = अणु
-	.probe = wm831x_घातer_probe,
-	.हटाओ = wm831x_घातer_हटाओ,
-	.driver = अणु
+static struct platform_driver wm831x_power_driver = {
+	.probe = wm831x_power_probe,
+	.remove = wm831x_power_remove,
+	.driver = {
 		.name = "wm831x-power",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(wm831x_घातer_driver);
+module_platform_driver(wm831x_power_driver);
 
 MODULE_DESCRIPTION("Power supply driver for WM831x PMICs");
 MODULE_AUTHOR("Mark Brown <broonie@opensource.wolfsonmicro.com>");

@@ -1,39 +1,38 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-#अगर_अघोषित _OBJTOOL_ENDIANNESS_H
-#घोषणा _OBJTOOL_ENDIANNESS_H
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#ifndef _OBJTOOL_ENDIANNESS_H
+#define _OBJTOOL_ENDIANNESS_H
 
-#समावेश <arch/endianness.h>
-#समावेश <linux/kernel.h>
-#समावेश <endian.h>
+#include <arch/endianness.h>
+#include <linux/kernel.h>
+#include <endian.h>
 
-#अगर_अघोषित __TARGET_BYTE_ORDER
-#त्रुटि undefined arch __TARGET_BYTE_ORDER
-#पूर्ण_अगर
+#ifndef __TARGET_BYTE_ORDER
+#error undefined arch __TARGET_BYTE_ORDER
+#endif
 
-#अगर __BYTE_ORDER != __TARGET_BYTE_ORDER
-#घोषणा __NEED_BSWAP 1
-#अन्यथा
-#घोषणा __NEED_BSWAP 0
-#पूर्ण_अगर
+#if __BYTE_ORDER != __TARGET_BYTE_ORDER
+#define __NEED_BSWAP 1
+#else
+#define __NEED_BSWAP 0
+#endif
 
 /*
- * Does a byte swap अगर target endianness करोesn't match the host, i.e. cross
- * compilation क्रम little endian on big endian and vice versa.
- * To be used क्रम multi-byte values conversion, which are पढ़ो from / about
+ * Does a byte swap if target endianness doesn't match the host, i.e. cross
+ * compilation for little endian on big endian and vice versa.
+ * To be used for multi-byte values conversion, which are read from / about
  * to be written to a target native endianness ELF file.
  */
-#घोषणा bswap_अगर_needed(val)						\
-(अणु									\
+#define bswap_if_needed(val)						\
+({									\
 	__typeof__(val) __ret;						\
-	चयन (माप(val)) अणु						\
-	हाल 8: __ret = __NEED_BSWAP ? bswap_64(val) : (val); अवरोध;	\
-	हाल 4: __ret = __NEED_BSWAP ? bswap_32(val) : (val); अवरोध;	\
-	हाल 2: __ret = __NEED_BSWAP ? bswap_16(val) : (val); अवरोध;	\
-	शेष:							\
-		BUILD_BUG(); अवरोध;					\
-	पूर्ण								\
+	switch (sizeof(val)) {						\
+	case 8: __ret = __NEED_BSWAP ? bswap_64(val) : (val); break;	\
+	case 4: __ret = __NEED_BSWAP ? bswap_32(val) : (val); break;	\
+	case 2: __ret = __NEED_BSWAP ? bswap_16(val) : (val); break;	\
+	default:							\
+		BUILD_BUG(); break;					\
+	}								\
 	__ret;								\
-पूर्ण)
+})
 
-#पूर्ण_अगर /* _OBJTOOL_ENDIANNESS_H */
+#endif /* _OBJTOOL_ENDIANNESS_H */

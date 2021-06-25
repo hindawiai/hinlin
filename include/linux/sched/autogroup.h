@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_SCHED_AUTOGROUP_H
-#घोषणा _LINUX_SCHED_AUTOGROUP_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_SCHED_AUTOGROUP_H
+#define _LINUX_SCHED_AUTOGROUP_H
 
-काष्ठा संकेत_काष्ठा;
-काष्ठा task_काष्ठा;
-काष्ठा task_group;
-काष्ठा seq_file;
+struct signal_struct;
+struct task_struct;
+struct task_group;
+struct seq_file;
 
-#अगर_घोषित CONFIG_SCHED_AUTOGROUP
-बाह्य व्योम sched_स्वतःgroup_create_attach(काष्ठा task_काष्ठा *p);
-बाह्य व्योम sched_स्वतःgroup_detach(काष्ठा task_काष्ठा *p);
-बाह्य व्योम sched_स्वतःgroup_विभाजन(काष्ठा संकेत_काष्ठा *sig);
-बाह्य व्योम sched_स्वतःgroup_निकास(काष्ठा संकेत_काष्ठा *sig);
-बाह्य व्योम sched_स्वतःgroup_निकास_task(काष्ठा task_काष्ठा *p);
-#अगर_घोषित CONFIG_PROC_FS
-बाह्य व्योम proc_sched_स्वतःgroup_show_task(काष्ठा task_काष्ठा *p, काष्ठा seq_file *m);
-बाह्य पूर्णांक proc_sched_स्वतःgroup_set_nice(काष्ठा task_काष्ठा *p, पूर्णांक nice);
-#पूर्ण_अगर
-#अन्यथा
-अटल अंतरभूत व्योम sched_स्वतःgroup_create_attach(काष्ठा task_काष्ठा *p) अणु पूर्ण
-अटल अंतरभूत व्योम sched_स्वतःgroup_detach(काष्ठा task_काष्ठा *p) अणु पूर्ण
-अटल अंतरभूत व्योम sched_स्वतःgroup_विभाजन(काष्ठा संकेत_काष्ठा *sig) अणु पूर्ण
-अटल अंतरभूत व्योम sched_स्वतःgroup_निकास(काष्ठा संकेत_काष्ठा *sig) अणु पूर्ण
-अटल अंतरभूत व्योम sched_स्वतःgroup_निकास_task(काष्ठा task_काष्ठा *p) अणु पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_SCHED_AUTOGROUP
+extern void sched_autogroup_create_attach(struct task_struct *p);
+extern void sched_autogroup_detach(struct task_struct *p);
+extern void sched_autogroup_fork(struct signal_struct *sig);
+extern void sched_autogroup_exit(struct signal_struct *sig);
+extern void sched_autogroup_exit_task(struct task_struct *p);
+#ifdef CONFIG_PROC_FS
+extern void proc_sched_autogroup_show_task(struct task_struct *p, struct seq_file *m);
+extern int proc_sched_autogroup_set_nice(struct task_struct *p, int nice);
+#endif
+#else
+static inline void sched_autogroup_create_attach(struct task_struct *p) { }
+static inline void sched_autogroup_detach(struct task_struct *p) { }
+static inline void sched_autogroup_fork(struct signal_struct *sig) { }
+static inline void sched_autogroup_exit(struct signal_struct *sig) { }
+static inline void sched_autogroup_exit_task(struct task_struct *p) { }
+#endif
 
-#अगर_घोषित CONFIG_CGROUP_SCHED
-बाह्य काष्ठा task_group root_task_group;
-#पूर्ण_अगर /* CONFIG_CGROUP_SCHED */
+#ifdef CONFIG_CGROUP_SCHED
+extern struct task_group root_task_group;
+#endif /* CONFIG_CGROUP_SCHED */
 
-#पूर्ण_अगर /* _LINUX_SCHED_AUTOGROUP_H */
+#endif /* _LINUX_SCHED_AUTOGROUP_H */

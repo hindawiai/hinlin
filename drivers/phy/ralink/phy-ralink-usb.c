@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2017 John Crispin <john@phrozen.org>
  *
@@ -7,70 +6,70 @@
  * Allwinner Technology Co., Ltd. <www.allwinnertech.com>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/phy/phy.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/reset.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/mfd/syscon.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/of_platform.h>
+#include <linux/phy/phy.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/reset.h>
 
-#घोषणा RT_SYSC_REG_SYSCFG1		0x014
-#घोषणा RT_SYSC_REG_CLKCFG1		0x030
-#घोषणा RT_SYSC_REG_USB_PHY_CFG		0x05c
+#define RT_SYSC_REG_SYSCFG1		0x014
+#define RT_SYSC_REG_CLKCFG1		0x030
+#define RT_SYSC_REG_USB_PHY_CFG		0x05c
 
-#घोषणा OFS_U2_PHY_AC0			0x800
-#घोषणा OFS_U2_PHY_AC1			0x804
-#घोषणा OFS_U2_PHY_AC2			0x808
-#घोषणा OFS_U2_PHY_ACR0			0x810
-#घोषणा OFS_U2_PHY_ACR1			0x814
-#घोषणा OFS_U2_PHY_ACR2			0x818
-#घोषणा OFS_U2_PHY_ACR3			0x81C
-#घोषणा OFS_U2_PHY_ACR4			0x820
-#घोषणा OFS_U2_PHY_AMON0		0x824
-#घोषणा OFS_U2_PHY_DCR0			0x860
-#घोषणा OFS_U2_PHY_DCR1			0x864
-#घोषणा OFS_U2_PHY_DTM0			0x868
-#घोषणा OFS_U2_PHY_DTM1			0x86C
+#define OFS_U2_PHY_AC0			0x800
+#define OFS_U2_PHY_AC1			0x804
+#define OFS_U2_PHY_AC2			0x808
+#define OFS_U2_PHY_ACR0			0x810
+#define OFS_U2_PHY_ACR1			0x814
+#define OFS_U2_PHY_ACR2			0x818
+#define OFS_U2_PHY_ACR3			0x81C
+#define OFS_U2_PHY_ACR4			0x820
+#define OFS_U2_PHY_AMON0		0x824
+#define OFS_U2_PHY_DCR0			0x860
+#define OFS_U2_PHY_DCR1			0x864
+#define OFS_U2_PHY_DTM0			0x868
+#define OFS_U2_PHY_DTM1			0x86C
 
-#घोषणा RT_RSTCTRL_UDEV			BIT(25)
-#घोषणा RT_RSTCTRL_UHST			BIT(22)
-#घोषणा RT_SYSCFG1_USB0_HOST_MODE	BIT(10)
+#define RT_RSTCTRL_UDEV			BIT(25)
+#define RT_RSTCTRL_UHST			BIT(22)
+#define RT_SYSCFG1_USB0_HOST_MODE	BIT(10)
 
-#घोषणा MT7620_CLKCFG1_UPHY0_CLK_EN	BIT(25)
-#घोषणा MT7620_CLKCFG1_UPHY1_CLK_EN	BIT(22)
-#घोषणा RT_CLKCFG1_UPHY1_CLK_EN		BIT(20)
-#घोषणा RT_CLKCFG1_UPHY0_CLK_EN		BIT(18)
+#define MT7620_CLKCFG1_UPHY0_CLK_EN	BIT(25)
+#define MT7620_CLKCFG1_UPHY1_CLK_EN	BIT(22)
+#define RT_CLKCFG1_UPHY1_CLK_EN		BIT(20)
+#define RT_CLKCFG1_UPHY0_CLK_EN		BIT(18)
 
-#घोषणा USB_PHY_UTMI_8B60M		BIT(1)
-#घोषणा UDEV_WAKEUP			BIT(0)
+#define USB_PHY_UTMI_8B60M		BIT(1)
+#define UDEV_WAKEUP			BIT(0)
 
-काष्ठा ralink_usb_phy अणु
-	काष्ठा reset_control	*rstdev;
-	काष्ठा reset_control	*rsthost;
+struct ralink_usb_phy {
+	struct reset_control	*rstdev;
+	struct reset_control	*rsthost;
 	u32			clk;
-	काष्ठा phy		*phy;
-	व्योम __iomem		*base;
-	काष्ठा regmap		*sysctl;
-पूर्ण;
+	struct phy		*phy;
+	void __iomem		*base;
+	struct regmap		*sysctl;
+};
 
-अटल व्योम u2_phy_w32(काष्ठा ralink_usb_phy *phy, u32 val, u32 reg)
-अणु
-	ग_लिखोl(val, phy->base + reg);
-पूर्ण
+static void u2_phy_w32(struct ralink_usb_phy *phy, u32 val, u32 reg)
+{
+	writel(val, phy->base + reg);
+}
 
-अटल u32 u2_phy_r32(काष्ठा ralink_usb_phy *phy, u32 reg)
-अणु
-	वापस पढ़ोl(phy->base + reg);
-पूर्ण
+static u32 u2_phy_r32(struct ralink_usb_phy *phy, u32 reg)
+{
+	return readl(phy->base + reg);
+}
 
-अटल व्योम ralink_usb_phy_init(काष्ठा ralink_usb_phy *phy)
-अणु
+static void ralink_usb_phy_init(struct ralink_usb_phy *phy)
+{
 	u2_phy_r32(phy, OFS_U2_PHY_AC2);
 	u2_phy_r32(phy, OFS_U2_PHY_ACR0);
 	u2_phy_r32(phy, OFS_U2_PHY_DCR0);
@@ -87,11 +86,11 @@
 	u2_phy_w32(phy, 0x4400001c, OFS_U2_PHY_AC1);
 	u2_phy_w32(phy, 0xc0200000, OFS_U2_PHY_ACR3);
 	u2_phy_w32(phy, 0x02000000, OFS_U2_PHY_DTM0);
-पूर्ण
+}
 
-अटल पूर्णांक ralink_usb_phy_घातer_on(काष्ठा phy *_phy)
-अणु
-	काष्ठा ralink_usb_phy *phy = phy_get_drvdata(_phy);
+static int ralink_usb_phy_power_on(struct phy *_phy)
+{
+	struct ralink_usb_phy *phy = phy_get_drvdata(_phy);
 	u32 t;
 
 	/* enable the phy */
@@ -103,9 +102,9 @@
 			   RT_SYSCFG1_USB0_HOST_MODE,
 			   RT_SYSCFG1_USB0_HOST_MODE);
 
-	/* deनिश्चित the reset lines */
-	reset_control_deनिश्चित(phy->rsthost);
-	reset_control_deनिश्चित(phy->rstdev);
+	/* deassert the reset lines */
+	reset_control_deassert(phy->rsthost);
+	reset_control_deassert(phy->rstdev);
 
 	/*
 	 * The SDK kernel had a delay of 100ms. however on device
@@ -113,126 +112,126 @@
 	 */
 	mdelay(10);
 
-	अगर (phy->base)
+	if (phy->base)
 		ralink_usb_phy_init(phy);
 
-	/* prपूर्णांक some status info */
-	regmap_पढ़ो(phy->sysctl, RT_SYSC_REG_USB_PHY_CFG, &t);
+	/* print some status info */
+	regmap_read(phy->sysctl, RT_SYSC_REG_USB_PHY_CFG, &t);
 	dev_info(&phy->phy->dev, "remote usb device wakeup %s\n",
 		(t & UDEV_WAKEUP) ? ("enabled") : ("disabled"));
-	अगर (t & USB_PHY_UTMI_8B60M)
+	if (t & USB_PHY_UTMI_8B60M)
 		dev_info(&phy->phy->dev, "UTMI 8bit 60MHz\n");
-	अन्यथा
+	else
 		dev_info(&phy->phy->dev, "UTMI 16bit 30MHz\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ralink_usb_phy_घातer_off(काष्ठा phy *_phy)
-अणु
-	काष्ठा ralink_usb_phy *phy = phy_get_drvdata(_phy);
+static int ralink_usb_phy_power_off(struct phy *_phy)
+{
+	struct ralink_usb_phy *phy = phy_get_drvdata(_phy);
 
 	/* disable the phy */
 	regmap_update_bits(phy->sysctl, RT_SYSC_REG_CLKCFG1,
 			   phy->clk, 0);
 
-	/* निश्चित the reset lines */
-	reset_control_निश्चित(phy->rstdev);
-	reset_control_निश्चित(phy->rsthost);
+	/* assert the reset lines */
+	reset_control_assert(phy->rstdev);
+	reset_control_assert(phy->rsthost);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा phy_ops ralink_usb_phy_ops = अणु
-	.घातer_on	= ralink_usb_phy_घातer_on,
-	.घातer_off	= ralink_usb_phy_घातer_off,
+static const struct phy_ops ralink_usb_phy_ops = {
+	.power_on	= ralink_usb_phy_power_on,
+	.power_off	= ralink_usb_phy_power_off,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id ralink_usb_phy_of_match[] = अणु
-	अणु
+static const struct of_device_id ralink_usb_phy_of_match[] = {
+	{
 		.compatible = "ralink,rt3352-usbphy",
-		.data = (व्योम *)(uपूर्णांकptr_t)(RT_CLKCFG1_UPHY1_CLK_EN |
+		.data = (void *)(uintptr_t)(RT_CLKCFG1_UPHY1_CLK_EN |
 					    RT_CLKCFG1_UPHY0_CLK_EN)
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "mediatek,mt7620-usbphy",
-		.data = (व्योम *)(uपूर्णांकptr_t)(MT7620_CLKCFG1_UPHY1_CLK_EN |
+		.data = (void *)(uintptr_t)(MT7620_CLKCFG1_UPHY1_CLK_EN |
 					    MT7620_CLKCFG1_UPHY0_CLK_EN)
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "mediatek,mt7628-usbphy",
-		.data = (व्योम *)(uपूर्णांकptr_t)(MT7620_CLKCFG1_UPHY1_CLK_EN |
-					    MT7620_CLKCFG1_UPHY0_CLK_EN) पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+		.data = (void *)(uintptr_t)(MT7620_CLKCFG1_UPHY1_CLK_EN |
+					    MT7620_CLKCFG1_UPHY0_CLK_EN) },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, ralink_usb_phy_of_match);
 
-अटल पूर्णांक ralink_usb_phy_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा phy_provider *phy_provider;
-	स्थिर काष्ठा of_device_id *match;
-	काष्ठा ralink_usb_phy *phy;
+static int ralink_usb_phy_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct phy_provider *phy_provider;
+	const struct of_device_id *match;
+	struct ralink_usb_phy *phy;
 
 	match = of_match_device(ralink_usb_phy_of_match, &pdev->dev);
-	अगर (!match)
-		वापस -ENODEV;
+	if (!match)
+		return -ENODEV;
 
-	phy = devm_kzalloc(dev, माप(*phy), GFP_KERNEL);
-	अगर (!phy)
-		वापस -ENOMEM;
+	phy = devm_kzalloc(dev, sizeof(*phy), GFP_KERNEL);
+	if (!phy)
+		return -ENOMEM;
 
-	phy->clk = (uपूर्णांकptr_t)match->data;
-	phy->base = शून्य;
+	phy->clk = (uintptr_t)match->data;
+	phy->base = NULL;
 
 	phy->sysctl = syscon_regmap_lookup_by_phandle(dev->of_node, "ralink,sysctl");
-	अगर (IS_ERR(phy->sysctl)) अणु
+	if (IS_ERR(phy->sysctl)) {
 		dev_err(dev, "failed to get sysctl registers\n");
-		वापस PTR_ERR(phy->sysctl);
-	पूर्ण
+		return PTR_ERR(phy->sysctl);
+	}
 
-	/* The MT7628 and MT7688 require extra setup of PHY रेजिस्टरs. */
-	अगर (of_device_is_compatible(dev->of_node, "mediatek,mt7628-usbphy")) अणु
-		phy->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-		अगर (IS_ERR(phy->base)) अणु
+	/* The MT7628 and MT7688 require extra setup of PHY registers. */
+	if (of_device_is_compatible(dev->of_node, "mediatek,mt7628-usbphy")) {
+		phy->base = devm_platform_ioremap_resource(pdev, 0);
+		if (IS_ERR(phy->base)) {
 			dev_err(dev, "failed to remap register memory\n");
-			वापस PTR_ERR(phy->base);
-		पूर्ण
-	पूर्ण
+			return PTR_ERR(phy->base);
+		}
+	}
 
 	phy->rsthost = devm_reset_control_get(&pdev->dev, "host");
-	अगर (IS_ERR(phy->rsthost)) अणु
+	if (IS_ERR(phy->rsthost)) {
 		dev_err(dev, "host reset is missing\n");
-		वापस PTR_ERR(phy->rsthost);
-	पूर्ण
+		return PTR_ERR(phy->rsthost);
+	}
 
 	phy->rstdev = devm_reset_control_get(&pdev->dev, "device");
-	अगर (IS_ERR(phy->rstdev)) अणु
+	if (IS_ERR(phy->rstdev)) {
 		dev_err(dev, "device reset is missing\n");
-		वापस PTR_ERR(phy->rstdev);
-	पूर्ण
+		return PTR_ERR(phy->rstdev);
+	}
 
-	phy->phy = devm_phy_create(dev, शून्य, &ralink_usb_phy_ops);
-	अगर (IS_ERR(phy->phy)) अणु
+	phy->phy = devm_phy_create(dev, NULL, &ralink_usb_phy_ops);
+	if (IS_ERR(phy->phy)) {
 		dev_err(dev, "failed to create PHY\n");
-		वापस PTR_ERR(phy->phy);
-	पूर्ण
+		return PTR_ERR(phy->phy);
+	}
 	phy_set_drvdata(phy->phy, phy);
 
-	phy_provider = devm_of_phy_provider_रेजिस्टर(dev, of_phy_simple_xlate);
+	phy_provider = devm_of_phy_provider_register(dev, of_phy_simple_xlate);
 
-	वापस PTR_ERR_OR_ZERO(phy_provider);
-पूर्ण
+	return PTR_ERR_OR_ZERO(phy_provider);
+}
 
-अटल काष्ठा platक्रमm_driver ralink_usb_phy_driver = अणु
+static struct platform_driver ralink_usb_phy_driver = {
 	.probe	= ralink_usb_phy_probe,
-	.driver = अणु
+	.driver = {
 		.of_match_table	= ralink_usb_phy_of_match,
 		.name  = "ralink-usb-phy",
-	पूर्ण
-पूर्ण;
-module_platक्रमm_driver(ralink_usb_phy_driver);
+	}
+};
+module_platform_driver(ralink_usb_phy_driver);
 
 MODULE_DESCRIPTION("Ralink USB phy driver");
 MODULE_AUTHOR("John Crispin <john@phrozen.org>");

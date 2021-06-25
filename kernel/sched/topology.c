@@ -1,754 +1,753 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Scheduler topology setup/handling methods
  */
-#समावेश "sched.h"
+#include "sched.h"
 
-DEFINE_MUTEX(sched_करोमुख्यs_mutex);
+DEFINE_MUTEX(sched_domains_mutex);
 
-/* Protected by sched_करोमुख्यs_mutex: */
-अटल cpumask_var_t sched_करोमुख्यs_पंचांगpmask;
-अटल cpumask_var_t sched_करोमुख्यs_पंचांगpmask2;
+/* Protected by sched_domains_mutex: */
+static cpumask_var_t sched_domains_tmpmask;
+static cpumask_var_t sched_domains_tmpmask2;
 
-#अगर_घोषित CONFIG_SCHED_DEBUG
+#ifdef CONFIG_SCHED_DEBUG
 
-अटल पूर्णांक __init sched_debug_setup(अक्षर *str)
-अणु
+static int __init sched_debug_setup(char *str)
+{
 	sched_debug_verbose = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_param("sched_verbose", sched_debug_setup);
 
-अटल अंतरभूत bool sched_debug(व्योम)
-अणु
-	वापस sched_debug_verbose;
-पूर्ण
+static inline bool sched_debug(void)
+{
+	return sched_debug_verbose;
+}
 
-#घोषणा SD_FLAG(_name, mflags) [__##_name] = अणु .meta_flags = mflags, .name = #_name पूर्ण,
-स्थिर काष्ठा sd_flag_debug sd_flag_debug[] = अणु
-#समावेश <linux/sched/sd_flags.h>
-पूर्ण;
-#अघोषित SD_FLAG
+#define SD_FLAG(_name, mflags) [__##_name] = { .meta_flags = mflags, .name = #_name },
+const struct sd_flag_debug sd_flag_debug[] = {
+#include <linux/sched/sd_flags.h>
+};
+#undef SD_FLAG
 
-अटल पूर्णांक sched_करोमुख्य_debug_one(काष्ठा sched_करोमुख्य *sd, पूर्णांक cpu, पूर्णांक level,
-				  काष्ठा cpumask *groupmask)
-अणु
-	काष्ठा sched_group *group = sd->groups;
-	अचिन्हित दीर्घ flags = sd->flags;
-	अचिन्हित पूर्णांक idx;
+static int sched_domain_debug_one(struct sched_domain *sd, int cpu, int level,
+				  struct cpumask *groupmask)
+{
+	struct sched_group *group = sd->groups;
+	unsigned long flags = sd->flags;
+	unsigned int idx;
 
 	cpumask_clear(groupmask);
 
-	prपूर्णांकk(KERN_DEBUG "%*s domain-%d: ", level, "", level);
-	prपूर्णांकk(KERN_CONT "span=%*pbl level=%s\n",
-	       cpumask_pr_args(sched_करोमुख्य_span(sd)), sd->name);
+	printk(KERN_DEBUG "%*s domain-%d: ", level, "", level);
+	printk(KERN_CONT "span=%*pbl level=%s\n",
+	       cpumask_pr_args(sched_domain_span(sd)), sd->name);
 
-	अगर (!cpumask_test_cpu(cpu, sched_करोमुख्य_span(sd))) अणु
-		prपूर्णांकk(KERN_ERR "ERROR: domain->span does not contain CPU%d\n", cpu);
-	पूर्ण
-	अगर (group && !cpumask_test_cpu(cpu, sched_group_span(group))) अणु
-		prपूर्णांकk(KERN_ERR "ERROR: domain->groups does not contain CPU%d\n", cpu);
-	पूर्ण
+	if (!cpumask_test_cpu(cpu, sched_domain_span(sd))) {
+		printk(KERN_ERR "ERROR: domain->span does not contain CPU%d\n", cpu);
+	}
+	if (group && !cpumask_test_cpu(cpu, sched_group_span(group))) {
+		printk(KERN_ERR "ERROR: domain->groups does not contain CPU%d\n", cpu);
+	}
 
-	क्रम_each_set_bit(idx, &flags, __SD_FLAG_CNT) अणु
-		अचिन्हित पूर्णांक flag = BIT(idx);
-		अचिन्हित पूर्णांक meta_flags = sd_flag_debug[idx].meta_flags;
+	for_each_set_bit(idx, &flags, __SD_FLAG_CNT) {
+		unsigned int flag = BIT(idx);
+		unsigned int meta_flags = sd_flag_debug[idx].meta_flags;
 
-		अगर ((meta_flags & SDF_SHARED_CHILD) && sd->child &&
+		if ((meta_flags & SDF_SHARED_CHILD) && sd->child &&
 		    !(sd->child->flags & flag))
-			prपूर्णांकk(KERN_ERR "ERROR: flag %s set here but not in child\n",
+			printk(KERN_ERR "ERROR: flag %s set here but not in child\n",
 			       sd_flag_debug[idx].name);
 
-		अगर ((meta_flags & SDF_SHARED_PARENT) && sd->parent &&
+		if ((meta_flags & SDF_SHARED_PARENT) && sd->parent &&
 		    !(sd->parent->flags & flag))
-			prपूर्णांकk(KERN_ERR "ERROR: flag %s set here but not in parent\n",
+			printk(KERN_ERR "ERROR: flag %s set here but not in parent\n",
 			       sd_flag_debug[idx].name);
-	पूर्ण
+	}
 
-	prपूर्णांकk(KERN_DEBUG "%*s groups:", level + 1, "");
-	करो अणु
-		अगर (!group) अणु
-			prपूर्णांकk("\n");
-			prपूर्णांकk(KERN_ERR "ERROR: group is NULL\n");
-			अवरोध;
-		पूर्ण
+	printk(KERN_DEBUG "%*s groups:", level + 1, "");
+	do {
+		if (!group) {
+			printk("\n");
+			printk(KERN_ERR "ERROR: group is NULL\n");
+			break;
+		}
 
-		अगर (!cpumask_weight(sched_group_span(group))) अणु
-			prपूर्णांकk(KERN_CONT "\n");
-			prपूर्णांकk(KERN_ERR "ERROR: empty group\n");
-			अवरोध;
-		पूर्ण
+		if (!cpumask_weight(sched_group_span(group))) {
+			printk(KERN_CONT "\n");
+			printk(KERN_ERR "ERROR: empty group\n");
+			break;
+		}
 
-		अगर (!(sd->flags & SD_OVERLAP) &&
-		    cpumask_पूर्णांकersects(groupmask, sched_group_span(group))) अणु
-			prपूर्णांकk(KERN_CONT "\n");
-			prपूर्णांकk(KERN_ERR "ERROR: repeated CPUs\n");
-			अवरोध;
-		पूर्ण
+		if (!(sd->flags & SD_OVERLAP) &&
+		    cpumask_intersects(groupmask, sched_group_span(group))) {
+			printk(KERN_CONT "\n");
+			printk(KERN_ERR "ERROR: repeated CPUs\n");
+			break;
+		}
 
 		cpumask_or(groupmask, groupmask, sched_group_span(group));
 
-		prपूर्णांकk(KERN_CONT " %d:{ span=%*pbl",
+		printk(KERN_CONT " %d:{ span=%*pbl",
 				group->sgc->id,
 				cpumask_pr_args(sched_group_span(group)));
 
-		अगर ((sd->flags & SD_OVERLAP) &&
-		    !cpumask_equal(group_balance_mask(group), sched_group_span(group))) अणु
-			prपूर्णांकk(KERN_CONT " mask=%*pbl",
+		if ((sd->flags & SD_OVERLAP) &&
+		    !cpumask_equal(group_balance_mask(group), sched_group_span(group))) {
+			printk(KERN_CONT " mask=%*pbl",
 				cpumask_pr_args(group_balance_mask(group)));
-		पूर्ण
+		}
 
-		अगर (group->sgc->capacity != SCHED_CAPACITY_SCALE)
-			prपूर्णांकk(KERN_CONT " cap=%lu", group->sgc->capacity);
+		if (group->sgc->capacity != SCHED_CAPACITY_SCALE)
+			printk(KERN_CONT " cap=%lu", group->sgc->capacity);
 
-		अगर (group == sd->groups && sd->child &&
-		    !cpumask_equal(sched_करोमुख्य_span(sd->child),
-				   sched_group_span(group))) अणु
-			prपूर्णांकk(KERN_ERR "ERROR: domain->groups does not match domain->child\n");
-		पूर्ण
+		if (group == sd->groups && sd->child &&
+		    !cpumask_equal(sched_domain_span(sd->child),
+				   sched_group_span(group))) {
+			printk(KERN_ERR "ERROR: domain->groups does not match domain->child\n");
+		}
 
-		prपूर्णांकk(KERN_CONT " }");
+		printk(KERN_CONT " }");
 
 		group = group->next;
 
-		अगर (group != sd->groups)
-			prपूर्णांकk(KERN_CONT ",");
+		if (group != sd->groups)
+			printk(KERN_CONT ",");
 
-	पूर्ण जबतक (group != sd->groups);
-	prपूर्णांकk(KERN_CONT "\n");
+	} while (group != sd->groups);
+	printk(KERN_CONT "\n");
 
-	अगर (!cpumask_equal(sched_करोमुख्य_span(sd), groupmask))
-		prपूर्णांकk(KERN_ERR "ERROR: groups don't span domain->span\n");
+	if (!cpumask_equal(sched_domain_span(sd), groupmask))
+		printk(KERN_ERR "ERROR: groups don't span domain->span\n");
 
-	अगर (sd->parent &&
-	    !cpumask_subset(groupmask, sched_करोमुख्य_span(sd->parent)))
-		prपूर्णांकk(KERN_ERR "ERROR: parent span is not a superset of domain->span\n");
-	वापस 0;
-पूर्ण
+	if (sd->parent &&
+	    !cpumask_subset(groupmask, sched_domain_span(sd->parent)))
+		printk(KERN_ERR "ERROR: parent span is not a superset of domain->span\n");
+	return 0;
+}
 
-अटल व्योम sched_करोमुख्य_debug(काष्ठा sched_करोमुख्य *sd, पूर्णांक cpu)
-अणु
-	पूर्णांक level = 0;
+static void sched_domain_debug(struct sched_domain *sd, int cpu)
+{
+	int level = 0;
 
-	अगर (!sched_debug_verbose)
-		वापस;
+	if (!sched_debug_verbose)
+		return;
 
-	अगर (!sd) अणु
-		prपूर्णांकk(KERN_DEBUG "CPU%d attaching NULL sched-domain.\n", cpu);
-		वापस;
-	पूर्ण
+	if (!sd) {
+		printk(KERN_DEBUG "CPU%d attaching NULL sched-domain.\n", cpu);
+		return;
+	}
 
-	prपूर्णांकk(KERN_DEBUG "CPU%d attaching sched-domain(s):\n", cpu);
+	printk(KERN_DEBUG "CPU%d attaching sched-domain(s):\n", cpu);
 
-	क्रम (;;) अणु
-		अगर (sched_करोमुख्य_debug_one(sd, cpu, level, sched_करोमुख्यs_पंचांगpmask))
-			अवरोध;
+	for (;;) {
+		if (sched_domain_debug_one(sd, cpu, level, sched_domains_tmpmask))
+			break;
 		level++;
 		sd = sd->parent;
-		अगर (!sd)
-			अवरोध;
-	पूर्ण
-पूर्ण
-#अन्यथा /* !CONFIG_SCHED_DEBUG */
+		if (!sd)
+			break;
+	}
+}
+#else /* !CONFIG_SCHED_DEBUG */
 
 # define sched_debug_verbose 0
-# define sched_करोमुख्य_debug(sd, cpu) करो अणु पूर्ण जबतक (0)
-अटल अंतरभूत bool sched_debug(व्योम)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SCHED_DEBUG */
+# define sched_domain_debug(sd, cpu) do { } while (0)
+static inline bool sched_debug(void)
+{
+	return false;
+}
+#endif /* CONFIG_SCHED_DEBUG */
 
 /* Generate a mask of SD flags with the SDF_NEEDS_GROUPS metaflag */
-#घोषणा SD_FLAG(name, mflags) (name * !!((mflags) & SDF_NEEDS_GROUPS)) |
-अटल स्थिर अचिन्हित पूर्णांक SD_DEGENERATE_GROUPS_MASK =
-#समावेश <linux/sched/sd_flags.h>
+#define SD_FLAG(name, mflags) (name * !!((mflags) & SDF_NEEDS_GROUPS)) |
+static const unsigned int SD_DEGENERATE_GROUPS_MASK =
+#include <linux/sched/sd_flags.h>
 0;
-#अघोषित SD_FLAG
+#undef SD_FLAG
 
-अटल पूर्णांक sd_degenerate(काष्ठा sched_करोमुख्य *sd)
-अणु
-	अगर (cpumask_weight(sched_करोमुख्य_span(sd)) == 1)
-		वापस 1;
+static int sd_degenerate(struct sched_domain *sd)
+{
+	if (cpumask_weight(sched_domain_span(sd)) == 1)
+		return 1;
 
 	/* Following flags need at least 2 groups */
-	अगर ((sd->flags & SD_DEGENERATE_GROUPS_MASK) &&
+	if ((sd->flags & SD_DEGENERATE_GROUPS_MASK) &&
 	    (sd->groups != sd->groups->next))
-		वापस 0;
+		return 0;
 
-	/* Following flags करोn't use groups */
-	अगर (sd->flags & (SD_WAKE_AFFINE))
-		वापस 0;
+	/* Following flags don't use groups */
+	if (sd->flags & (SD_WAKE_AFFINE))
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक
-sd_parent_degenerate(काष्ठा sched_करोमुख्य *sd, काष्ठा sched_करोमुख्य *parent)
-अणु
-	अचिन्हित दीर्घ cflags = sd->flags, pflags = parent->flags;
+static int
+sd_parent_degenerate(struct sched_domain *sd, struct sched_domain *parent)
+{
+	unsigned long cflags = sd->flags, pflags = parent->flags;
 
-	अगर (sd_degenerate(parent))
-		वापस 1;
+	if (sd_degenerate(parent))
+		return 1;
 
-	अगर (!cpumask_equal(sched_करोमुख्य_span(sd), sched_करोमुख्य_span(parent)))
-		वापस 0;
+	if (!cpumask_equal(sched_domain_span(sd), sched_domain_span(parent)))
+		return 0;
 
-	/* Flags needing groups करोn't count अगर only 1 group in parent */
-	अगर (parent->groups == parent->groups->next)
+	/* Flags needing groups don't count if only 1 group in parent */
+	if (parent->groups == parent->groups->next)
 		pflags &= ~SD_DEGENERATE_GROUPS_MASK;
 
-	अगर (~cflags & pflags)
-		वापस 0;
+	if (~cflags & pflags)
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-#अगर defined(CONFIG_ENERGY_MODEL) && defined(CONFIG_CPU_FREQ_GOV_SCHEDUTIL)
+#if defined(CONFIG_ENERGY_MODEL) && defined(CONFIG_CPU_FREQ_GOV_SCHEDUTIL)
 DEFINE_STATIC_KEY_FALSE(sched_energy_present);
-अचिन्हित पूर्णांक sysctl_sched_energy_aware = 1;
+unsigned int sysctl_sched_energy_aware = 1;
 DEFINE_MUTEX(sched_energy_mutex);
 bool sched_energy_update;
 
-व्योम rebuild_sched_करोमुख्यs_energy(व्योम)
-अणु
+void rebuild_sched_domains_energy(void)
+{
 	mutex_lock(&sched_energy_mutex);
 	sched_energy_update = true;
-	rebuild_sched_करोमुख्यs();
+	rebuild_sched_domains();
 	sched_energy_update = false;
 	mutex_unlock(&sched_energy_mutex);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PROC_SYSCTL
-पूर्णांक sched_energy_aware_handler(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
-		व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
-अणु
-	पूर्णांक ret, state;
+#ifdef CONFIG_PROC_SYSCTL
+int sched_energy_aware_handler(struct ctl_table *table, int write,
+		void *buffer, size_t *lenp, loff_t *ppos)
+{
+	int ret, state;
 
-	अगर (ग_लिखो && !capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
+	if (write && !capable(CAP_SYS_ADMIN))
+		return -EPERM;
 
-	ret = proc_करोपूर्णांकvec_minmax(table, ग_लिखो, buffer, lenp, ppos);
-	अगर (!ret && ग_लिखो) अणु
-		state = अटल_branch_unlikely(&sched_energy_present);
-		अगर (state != sysctl_sched_energy_aware)
-			rebuild_sched_करोमुख्यs_energy();
-	पूर्ण
+	ret = proc_dointvec_minmax(table, write, buffer, lenp, ppos);
+	if (!ret && write) {
+		state = static_branch_unlikely(&sched_energy_present);
+		if (state != sysctl_sched_energy_aware)
+			rebuild_sched_domains_energy();
+	}
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
-अटल व्योम मुक्त_pd(काष्ठा perf_करोमुख्य *pd)
-अणु
-	काष्ठा perf_करोमुख्य *पंचांगp;
+static void free_pd(struct perf_domain *pd)
+{
+	struct perf_domain *tmp;
 
-	जबतक (pd) अणु
-		पंचांगp = pd->next;
-		kमुक्त(pd);
-		pd = पंचांगp;
-	पूर्ण
-पूर्ण
+	while (pd) {
+		tmp = pd->next;
+		kfree(pd);
+		pd = tmp;
+	}
+}
 
-अटल काष्ठा perf_करोमुख्य *find_pd(काष्ठा perf_करोमुख्य *pd, पूर्णांक cpu)
-अणु
-	जबतक (pd) अणु
-		अगर (cpumask_test_cpu(cpu, perf_करोमुख्य_span(pd)))
-			वापस pd;
+static struct perf_domain *find_pd(struct perf_domain *pd, int cpu)
+{
+	while (pd) {
+		if (cpumask_test_cpu(cpu, perf_domain_span(pd)))
+			return pd;
 		pd = pd->next;
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा perf_करोमुख्य *pd_init(पूर्णांक cpu)
-अणु
-	काष्ठा em_perf_करोमुख्य *obj = em_cpu_get(cpu);
-	काष्ठा perf_करोमुख्य *pd;
+static struct perf_domain *pd_init(int cpu)
+{
+	struct em_perf_domain *obj = em_cpu_get(cpu);
+	struct perf_domain *pd;
 
-	अगर (!obj) अणु
-		अगर (sched_debug())
+	if (!obj) {
+		if (sched_debug())
 			pr_info("%s: no EM found for CPU%d\n", __func__, cpu);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	pd = kzalloc(माप(*pd), GFP_KERNEL);
-	अगर (!pd)
-		वापस शून्य;
+	pd = kzalloc(sizeof(*pd), GFP_KERNEL);
+	if (!pd)
+		return NULL;
 	pd->em_pd = obj;
 
-	वापस pd;
-पूर्ण
+	return pd;
+}
 
-अटल व्योम perf_करोमुख्य_debug(स्थिर काष्ठा cpumask *cpu_map,
-						काष्ठा perf_करोमुख्य *pd)
-अणु
-	अगर (!sched_debug() || !pd)
-		वापस;
+static void perf_domain_debug(const struct cpumask *cpu_map,
+						struct perf_domain *pd)
+{
+	if (!sched_debug() || !pd)
+		return;
 
-	prपूर्णांकk(KERN_DEBUG "root_domain %*pbl:", cpumask_pr_args(cpu_map));
+	printk(KERN_DEBUG "root_domain %*pbl:", cpumask_pr_args(cpu_map));
 
-	जबतक (pd) अणु
-		prपूर्णांकk(KERN_CONT " pd%d:{ cpus=%*pbl nr_pstate=%d }",
-				cpumask_first(perf_करोमुख्य_span(pd)),
-				cpumask_pr_args(perf_करोमुख्य_span(pd)),
+	while (pd) {
+		printk(KERN_CONT " pd%d:{ cpus=%*pbl nr_pstate=%d }",
+				cpumask_first(perf_domain_span(pd)),
+				cpumask_pr_args(perf_domain_span(pd)),
 				em_pd_nr_perf_states(pd->em_pd));
 		pd = pd->next;
-	पूर्ण
+	}
 
-	prपूर्णांकk(KERN_CONT "\n");
-पूर्ण
+	printk(KERN_CONT "\n");
+}
 
-अटल व्योम destroy_perf_करोमुख्य_rcu(काष्ठा rcu_head *rp)
-अणु
-	काष्ठा perf_करोमुख्य *pd;
+static void destroy_perf_domain_rcu(struct rcu_head *rp)
+{
+	struct perf_domain *pd;
 
-	pd = container_of(rp, काष्ठा perf_करोमुख्य, rcu);
-	मुक्त_pd(pd);
-पूर्ण
+	pd = container_of(rp, struct perf_domain, rcu);
+	free_pd(pd);
+}
 
-अटल व्योम sched_energy_set(bool has_eas)
-अणु
-	अगर (!has_eas && अटल_branch_unlikely(&sched_energy_present)) अणु
-		अगर (sched_debug())
+static void sched_energy_set(bool has_eas)
+{
+	if (!has_eas && static_branch_unlikely(&sched_energy_present)) {
+		if (sched_debug())
 			pr_info("%s: stopping EAS\n", __func__);
-		अटल_branch_disable_cpuslocked(&sched_energy_present);
-	पूर्ण अन्यथा अगर (has_eas && !अटल_branch_unlikely(&sched_energy_present)) अणु
-		अगर (sched_debug())
+		static_branch_disable_cpuslocked(&sched_energy_present);
+	} else if (has_eas && !static_branch_unlikely(&sched_energy_present)) {
+		if (sched_debug())
 			pr_info("%s: starting EAS\n", __func__);
-		अटल_branch_enable_cpuslocked(&sched_energy_present);
-	पूर्ण
-पूर्ण
+		static_branch_enable_cpuslocked(&sched_energy_present);
+	}
+}
 
 /*
- * EAS can be used on a root करोमुख्य अगर it meets all the following conditions:
+ * EAS can be used on a root domain if it meets all the following conditions:
  *    1. an Energy Model (EM) is available;
- *    2. the SD_ASYM_CPUCAPACITY flag is set in the sched_करोमुख्य hierarchy.
+ *    2. the SD_ASYM_CPUCAPACITY flag is set in the sched_domain hierarchy.
  *    3. no SMT is detected.
- *    4. the EM complनिकासy is low enough to keep scheduling overheads low;
+ *    4. the EM complexity is low enough to keep scheduling overheads low;
  *    5. schedutil is driving the frequency of all CPUs of the rd;
  *    6. frequency invariance support is present;
  *
- * The complनिकासy of the Energy Model is defined as:
+ * The complexity of the Energy Model is defined as:
  *
  *              C = nr_pd * (nr_cpus + nr_ps)
  *
  * with parameters defined as:
- *  - nr_pd:    the number of perक्रमmance करोमुख्यs
+ *  - nr_pd:    the number of performance domains
  *  - nr_cpus:  the number of CPUs
- *  - nr_ps:    the sum of the number of perक्रमmance states of all perक्रमmance
- *              करोमुख्यs (क्रम example, on a प्रणाली with 2 perक्रमmance करोमुख्यs,
- *              with 10 perक्रमmance states each, nr_ps = 2 * 10 = 20).
+ *  - nr_ps:    the sum of the number of performance states of all performance
+ *              domains (for example, on a system with 2 performance domains,
+ *              with 10 performance states each, nr_ps = 2 * 10 = 20).
  *
  * It is generally not a good idea to use such a model in the wake-up path on
- * very complex platक्रमms because of the associated scheduling overheads. The
- * arbitrary स्थिरraपूर्णांक below prevents that. It makes EAS usable up to 16 CPUs
- * with per-CPU DVFS and less than 8 perक्रमmance states each, क्रम example.
+ * very complex platforms because of the associated scheduling overheads. The
+ * arbitrary constraint below prevents that. It makes EAS usable up to 16 CPUs
+ * with per-CPU DVFS and less than 8 performance states each, for example.
  */
-#घोषणा EM_MAX_COMPLEXITY 2048
+#define EM_MAX_COMPLEXITY 2048
 
-बाह्य काष्ठा cpufreq_governor schedutil_gov;
-अटल bool build_perf_करोमुख्यs(स्थिर काष्ठा cpumask *cpu_map)
-अणु
-	पूर्णांक i, nr_pd = 0, nr_ps = 0, nr_cpus = cpumask_weight(cpu_map);
-	काष्ठा perf_करोमुख्य *pd = शून्य, *पंचांगp;
-	पूर्णांक cpu = cpumask_first(cpu_map);
-	काष्ठा root_करोमुख्य *rd = cpu_rq(cpu)->rd;
-	काष्ठा cpufreq_policy *policy;
-	काष्ठा cpufreq_governor *gov;
+extern struct cpufreq_governor schedutil_gov;
+static bool build_perf_domains(const struct cpumask *cpu_map)
+{
+	int i, nr_pd = 0, nr_ps = 0, nr_cpus = cpumask_weight(cpu_map);
+	struct perf_domain *pd = NULL, *tmp;
+	int cpu = cpumask_first(cpu_map);
+	struct root_domain *rd = cpu_rq(cpu)->rd;
+	struct cpufreq_policy *policy;
+	struct cpufreq_governor *gov;
 
-	अगर (!sysctl_sched_energy_aware)
-		जाओ मुक्त;
+	if (!sysctl_sched_energy_aware)
+		goto free;
 
-	/* EAS is enabled क्रम asymmetric CPU capacity topologies. */
-	अगर (!per_cpu(sd_asym_cpucapacity, cpu)) अणु
-		अगर (sched_debug()) अणु
+	/* EAS is enabled for asymmetric CPU capacity topologies. */
+	if (!per_cpu(sd_asym_cpucapacity, cpu)) {
+		if (sched_debug()) {
 			pr_info("rd %*pbl: CPUs do not have asymmetric capacities\n",
 					cpumask_pr_args(cpu_map));
-		पूर्ण
-		जाओ मुक्त;
-	पूर्ण
+		}
+		goto free;
+	}
 
-	/* EAS definitely करोes *not* handle SMT */
-	अगर (sched_smt_active()) अणु
+	/* EAS definitely does *not* handle SMT */
+	if (sched_smt_active()) {
 		pr_warn("rd %*pbl: Disabling EAS, SMT is not supported\n",
 			cpumask_pr_args(cpu_map));
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
-	अगर (!arch_scale_freq_invariant()) अणु
-		अगर (sched_debug()) अणु
+	if (!arch_scale_freq_invariant()) {
+		if (sched_debug()) {
 			pr_warn("rd %*pbl: Disabling EAS: frequency-invariant load tracking not yet supported",
 				cpumask_pr_args(cpu_map));
-		पूर्ण
-		जाओ मुक्त;
-	पूर्ण
+		}
+		goto free;
+	}
 
-	क्रम_each_cpu(i, cpu_map) अणु
-		/* Skip alपढ़ोy covered CPUs. */
-		अगर (find_pd(pd, i))
-			जारी;
+	for_each_cpu(i, cpu_map) {
+		/* Skip already covered CPUs. */
+		if (find_pd(pd, i))
+			continue;
 
-		/* Do not attempt EAS अगर schedutil is not being used. */
+		/* Do not attempt EAS if schedutil is not being used. */
 		policy = cpufreq_cpu_get(i);
-		अगर (!policy)
-			जाओ मुक्त;
+		if (!policy)
+			goto free;
 		gov = policy->governor;
 		cpufreq_cpu_put(policy);
-		अगर (gov != &schedutil_gov) अणु
-			अगर (rd->pd)
+		if (gov != &schedutil_gov) {
+			if (rd->pd)
 				pr_warn("rd %*pbl: Disabling EAS, schedutil is mandatory\n",
 						cpumask_pr_args(cpu_map));
-			जाओ मुक्त;
-		पूर्ण
+			goto free;
+		}
 
 		/* Create the new pd and add it to the local list. */
-		पंचांगp = pd_init(i);
-		अगर (!पंचांगp)
-			जाओ मुक्त;
-		पंचांगp->next = pd;
-		pd = पंचांगp;
+		tmp = pd_init(i);
+		if (!tmp)
+			goto free;
+		tmp->next = pd;
+		pd = tmp;
 
 		/*
-		 * Count perक्रमmance करोमुख्यs and perक्रमmance states क्रम the
-		 * complनिकासy check.
+		 * Count performance domains and performance states for the
+		 * complexity check.
 		 */
 		nr_pd++;
 		nr_ps += em_pd_nr_perf_states(pd->em_pd);
-	पूर्ण
+	}
 
-	/* Bail out अगर the Energy Model complनिकासy is too high. */
-	अगर (nr_pd * (nr_ps + nr_cpus) > EM_MAX_COMPLEXITY) अणु
+	/* Bail out if the Energy Model complexity is too high. */
+	if (nr_pd * (nr_ps + nr_cpus) > EM_MAX_COMPLEXITY) {
 		WARN(1, "rd %*pbl: Failed to start EAS, EM complexity is too high\n",
 						cpumask_pr_args(cpu_map));
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
-	perf_करोमुख्य_debug(cpu_map, pd);
+	perf_domain_debug(cpu_map, pd);
 
-	/* Attach the new list of perक्रमmance करोमुख्यs to the root करोमुख्य. */
-	पंचांगp = rd->pd;
-	rcu_assign_poपूर्णांकer(rd->pd, pd);
-	अगर (पंचांगp)
-		call_rcu(&पंचांगp->rcu, destroy_perf_करोमुख्य_rcu);
+	/* Attach the new list of performance domains to the root domain. */
+	tmp = rd->pd;
+	rcu_assign_pointer(rd->pd, pd);
+	if (tmp)
+		call_rcu(&tmp->rcu, destroy_perf_domain_rcu);
 
-	वापस !!pd;
+	return !!pd;
 
-मुक्त:
-	मुक्त_pd(pd);
-	पंचांगp = rd->pd;
-	rcu_assign_poपूर्णांकer(rd->pd, शून्य);
-	अगर (पंचांगp)
-		call_rcu(&पंचांगp->rcu, destroy_perf_करोमुख्य_rcu);
+free:
+	free_pd(pd);
+	tmp = rd->pd;
+	rcu_assign_pointer(rd->pd, NULL);
+	if (tmp)
+		call_rcu(&tmp->rcu, destroy_perf_domain_rcu);
 
-	वापस false;
-पूर्ण
-#अन्यथा
-अटल व्योम मुक्त_pd(काष्ठा perf_करोमुख्य *pd) अणु पूर्ण
-#पूर्ण_अगर /* CONFIG_ENERGY_MODEL && CONFIG_CPU_FREQ_GOV_SCHEDUTIL*/
+	return false;
+}
+#else
+static void free_pd(struct perf_domain *pd) { }
+#endif /* CONFIG_ENERGY_MODEL && CONFIG_CPU_FREQ_GOV_SCHEDUTIL*/
 
-अटल व्योम मुक्त_rootकरोमुख्य(काष्ठा rcu_head *rcu)
-अणु
-	काष्ठा root_करोमुख्य *rd = container_of(rcu, काष्ठा root_करोमुख्य, rcu);
+static void free_rootdomain(struct rcu_head *rcu)
+{
+	struct root_domain *rd = container_of(rcu, struct root_domain, rcu);
 
 	cpupri_cleanup(&rd->cpupri);
 	cpudl_cleanup(&rd->cpudl);
-	मुक्त_cpumask_var(rd->dlo_mask);
-	मुक्त_cpumask_var(rd->rto_mask);
-	मुक्त_cpumask_var(rd->online);
-	मुक्त_cpumask_var(rd->span);
-	मुक्त_pd(rd->pd);
-	kमुक्त(rd);
-पूर्ण
+	free_cpumask_var(rd->dlo_mask);
+	free_cpumask_var(rd->rto_mask);
+	free_cpumask_var(rd->online);
+	free_cpumask_var(rd->span);
+	free_pd(rd->pd);
+	kfree(rd);
+}
 
-व्योम rq_attach_root(काष्ठा rq *rq, काष्ठा root_करोमुख्य *rd)
-अणु
-	काष्ठा root_करोमुख्य *old_rd = शून्य;
-	अचिन्हित दीर्घ flags;
+void rq_attach_root(struct rq *rq, struct root_domain *rd)
+{
+	struct root_domain *old_rd = NULL;
+	unsigned long flags;
 
 	raw_spin_lock_irqsave(&rq->lock, flags);
 
-	अगर (rq->rd) अणु
+	if (rq->rd) {
 		old_rd = rq->rd;
 
-		अगर (cpumask_test_cpu(rq->cpu, old_rd->online))
+		if (cpumask_test_cpu(rq->cpu, old_rd->online))
 			set_rq_offline(rq);
 
 		cpumask_clear_cpu(rq->cpu, old_rd->span);
 
 		/*
-		 * If we करोnt want to मुक्त the old_rd yet then
-		 * set old_rd to शून्य to skip the मुक्तing later
+		 * If we dont want to free the old_rd yet then
+		 * set old_rd to NULL to skip the freeing later
 		 * in this function:
 		 */
-		अगर (!atomic_dec_and_test(&old_rd->refcount))
-			old_rd = शून्य;
-	पूर्ण
+		if (!atomic_dec_and_test(&old_rd->refcount))
+			old_rd = NULL;
+	}
 
 	atomic_inc(&rd->refcount);
 	rq->rd = rd;
 
 	cpumask_set_cpu(rq->cpu, rd->span);
-	अगर (cpumask_test_cpu(rq->cpu, cpu_active_mask))
+	if (cpumask_test_cpu(rq->cpu, cpu_active_mask))
 		set_rq_online(rq);
 
 	raw_spin_unlock_irqrestore(&rq->lock, flags);
 
-	अगर (old_rd)
-		call_rcu(&old_rd->rcu, मुक्त_rootकरोमुख्य);
-पूर्ण
+	if (old_rd)
+		call_rcu(&old_rd->rcu, free_rootdomain);
+}
 
-व्योम sched_get_rd(काष्ठा root_करोमुख्य *rd)
-अणु
+void sched_get_rd(struct root_domain *rd)
+{
 	atomic_inc(&rd->refcount);
-पूर्ण
+}
 
-व्योम sched_put_rd(काष्ठा root_करोमुख्य *rd)
-अणु
-	अगर (!atomic_dec_and_test(&rd->refcount))
-		वापस;
+void sched_put_rd(struct root_domain *rd)
+{
+	if (!atomic_dec_and_test(&rd->refcount))
+		return;
 
-	call_rcu(&rd->rcu, मुक्त_rootकरोमुख्य);
-पूर्ण
+	call_rcu(&rd->rcu, free_rootdomain);
+}
 
-अटल पूर्णांक init_rootकरोमुख्य(काष्ठा root_करोमुख्य *rd)
-अणु
-	अगर (!zalloc_cpumask_var(&rd->span, GFP_KERNEL))
-		जाओ out;
-	अगर (!zalloc_cpumask_var(&rd->online, GFP_KERNEL))
-		जाओ मुक्त_span;
-	अगर (!zalloc_cpumask_var(&rd->dlo_mask, GFP_KERNEL))
-		जाओ मुक्त_online;
-	अगर (!zalloc_cpumask_var(&rd->rto_mask, GFP_KERNEL))
-		जाओ मुक्त_dlo_mask;
+static int init_rootdomain(struct root_domain *rd)
+{
+	if (!zalloc_cpumask_var(&rd->span, GFP_KERNEL))
+		goto out;
+	if (!zalloc_cpumask_var(&rd->online, GFP_KERNEL))
+		goto free_span;
+	if (!zalloc_cpumask_var(&rd->dlo_mask, GFP_KERNEL))
+		goto free_online;
+	if (!zalloc_cpumask_var(&rd->rto_mask, GFP_KERNEL))
+		goto free_dlo_mask;
 
-#अगर_घोषित HAVE_RT_PUSH_IPI
+#ifdef HAVE_RT_PUSH_IPI
 	rd->rto_cpu = -1;
 	raw_spin_lock_init(&rd->rto_lock);
 	init_irq_work(&rd->rto_push_work, rto_push_irq_work_func);
-#पूर्ण_अगर
+#endif
 
 	rd->visit_gen = 0;
 	init_dl_bw(&rd->dl_bw);
-	अगर (cpudl_init(&rd->cpudl) != 0)
-		जाओ मुक्त_rto_mask;
+	if (cpudl_init(&rd->cpudl) != 0)
+		goto free_rto_mask;
 
-	अगर (cpupri_init(&rd->cpupri) != 0)
-		जाओ मुक्त_cpudl;
-	वापस 0;
+	if (cpupri_init(&rd->cpupri) != 0)
+		goto free_cpudl;
+	return 0;
 
-मुक्त_cpudl:
+free_cpudl:
 	cpudl_cleanup(&rd->cpudl);
-मुक्त_rto_mask:
-	मुक्त_cpumask_var(rd->rto_mask);
-मुक्त_dlo_mask:
-	मुक्त_cpumask_var(rd->dlo_mask);
-मुक्त_online:
-	मुक्त_cpumask_var(rd->online);
-मुक्त_span:
-	मुक्त_cpumask_var(rd->span);
+free_rto_mask:
+	free_cpumask_var(rd->rto_mask);
+free_dlo_mask:
+	free_cpumask_var(rd->dlo_mask);
+free_online:
+	free_cpumask_var(rd->online);
+free_span:
+	free_cpumask_var(rd->span);
 out:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
 /*
- * By शेष the प्रणाली creates a single root-करोमुख्य with all CPUs as
+ * By default the system creates a single root-domain with all CPUs as
  * members (mimicking the global state we have today).
  */
-काष्ठा root_करोमुख्य def_root_करोमुख्य;
+struct root_domain def_root_domain;
 
-व्योम init_defrootकरोमुख्य(व्योम)
-अणु
-	init_rootकरोमुख्य(&def_root_करोमुख्य);
+void init_defrootdomain(void)
+{
+	init_rootdomain(&def_root_domain);
 
-	atomic_set(&def_root_करोमुख्य.refcount, 1);
-पूर्ण
+	atomic_set(&def_root_domain.refcount, 1);
+}
 
-अटल काष्ठा root_करोमुख्य *alloc_rootकरोमुख्य(व्योम)
-अणु
-	काष्ठा root_करोमुख्य *rd;
+static struct root_domain *alloc_rootdomain(void)
+{
+	struct root_domain *rd;
 
-	rd = kzalloc(माप(*rd), GFP_KERNEL);
-	अगर (!rd)
-		वापस शून्य;
+	rd = kzalloc(sizeof(*rd), GFP_KERNEL);
+	if (!rd)
+		return NULL;
 
-	अगर (init_rootकरोमुख्य(rd) != 0) अणु
-		kमुक्त(rd);
-		वापस शून्य;
-	पूर्ण
+	if (init_rootdomain(rd) != 0) {
+		kfree(rd);
+		return NULL;
+	}
 
-	वापस rd;
-पूर्ण
+	return rd;
+}
 
-अटल व्योम मुक्त_sched_groups(काष्ठा sched_group *sg, पूर्णांक मुक्त_sgc)
-अणु
-	काष्ठा sched_group *पंचांगp, *first;
+static void free_sched_groups(struct sched_group *sg, int free_sgc)
+{
+	struct sched_group *tmp, *first;
 
-	अगर (!sg)
-		वापस;
+	if (!sg)
+		return;
 
 	first = sg;
-	करो अणु
-		पंचांगp = sg->next;
+	do {
+		tmp = sg->next;
 
-		अगर (मुक्त_sgc && atomic_dec_and_test(&sg->sgc->ref))
-			kमुक्त(sg->sgc);
+		if (free_sgc && atomic_dec_and_test(&sg->sgc->ref))
+			kfree(sg->sgc);
 
-		अगर (atomic_dec_and_test(&sg->ref))
-			kमुक्त(sg);
-		sg = पंचांगp;
-	पूर्ण जबतक (sg != first);
-पूर्ण
+		if (atomic_dec_and_test(&sg->ref))
+			kfree(sg);
+		sg = tmp;
+	} while (sg != first);
+}
 
-अटल व्योम destroy_sched_करोमुख्य(काष्ठा sched_करोमुख्य *sd)
-अणु
+static void destroy_sched_domain(struct sched_domain *sd)
+{
 	/*
-	 * A normal sched करोमुख्य may have multiple group references, an
-	 * overlapping करोमुख्य, having निजी groups, only one.  Iterate,
-	 * dropping group/capacity references, मुक्तing where none reमुख्य.
+	 * A normal sched domain may have multiple group references, an
+	 * overlapping domain, having private groups, only one.  Iterate,
+	 * dropping group/capacity references, freeing where none remain.
 	 */
-	मुक्त_sched_groups(sd->groups, 1);
+	free_sched_groups(sd->groups, 1);
 
-	अगर (sd->shared && atomic_dec_and_test(&sd->shared->ref))
-		kमुक्त(sd->shared);
-	kमुक्त(sd);
-पूर्ण
+	if (sd->shared && atomic_dec_and_test(&sd->shared->ref))
+		kfree(sd->shared);
+	kfree(sd);
+}
 
-अटल व्योम destroy_sched_करोमुख्यs_rcu(काष्ठा rcu_head *rcu)
-अणु
-	काष्ठा sched_करोमुख्य *sd = container_of(rcu, काष्ठा sched_करोमुख्य, rcu);
+static void destroy_sched_domains_rcu(struct rcu_head *rcu)
+{
+	struct sched_domain *sd = container_of(rcu, struct sched_domain, rcu);
 
-	जबतक (sd) अणु
-		काष्ठा sched_करोमुख्य *parent = sd->parent;
-		destroy_sched_करोमुख्य(sd);
+	while (sd) {
+		struct sched_domain *parent = sd->parent;
+		destroy_sched_domain(sd);
 		sd = parent;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम destroy_sched_करोमुख्यs(काष्ठा sched_करोमुख्य *sd)
-अणु
-	अगर (sd)
-		call_rcu(&sd->rcu, destroy_sched_करोमुख्यs_rcu);
-पूर्ण
+static void destroy_sched_domains(struct sched_domain *sd)
+{
+	if (sd)
+		call_rcu(&sd->rcu, destroy_sched_domains_rcu);
+}
 
 /*
- * Keep a special poपूर्णांकer to the highest sched_करोमुख्य that has
- * SD_SHARE_PKG_RESOURCE set (Last Level Cache Doमुख्य) क्रम this
- * allows us to aव्योम some poपूर्णांकer chasing select_idle_sibling().
+ * Keep a special pointer to the highest sched_domain that has
+ * SD_SHARE_PKG_RESOURCE set (Last Level Cache Domain) for this
+ * allows us to avoid some pointer chasing select_idle_sibling().
  *
- * Also keep a unique ID per करोमुख्य (we use the first CPU number in
- * the cpumask of the करोमुख्य), this allows us to quickly tell अगर
- * two CPUs are in the same cache करोमुख्य, see cpus_share_cache().
+ * Also keep a unique ID per domain (we use the first CPU number in
+ * the cpumask of the domain), this allows us to quickly tell if
+ * two CPUs are in the same cache domain, see cpus_share_cache().
  */
-DEFINE_PER_CPU(काष्ठा sched_करोमुख्य __rcu *, sd_llc);
-DEFINE_PER_CPU(पूर्णांक, sd_llc_size);
-DEFINE_PER_CPU(पूर्णांक, sd_llc_id);
-DEFINE_PER_CPU(काष्ठा sched_करोमुख्य_shared __rcu *, sd_llc_shared);
-DEFINE_PER_CPU(काष्ठा sched_करोमुख्य __rcu *, sd_numa);
-DEFINE_PER_CPU(काष्ठा sched_करोमुख्य __rcu *, sd_asym_packing);
-DEFINE_PER_CPU(काष्ठा sched_करोमुख्य __rcu *, sd_asym_cpucapacity);
+DEFINE_PER_CPU(struct sched_domain __rcu *, sd_llc);
+DEFINE_PER_CPU(int, sd_llc_size);
+DEFINE_PER_CPU(int, sd_llc_id);
+DEFINE_PER_CPU(struct sched_domain_shared __rcu *, sd_llc_shared);
+DEFINE_PER_CPU(struct sched_domain __rcu *, sd_numa);
+DEFINE_PER_CPU(struct sched_domain __rcu *, sd_asym_packing);
+DEFINE_PER_CPU(struct sched_domain __rcu *, sd_asym_cpucapacity);
 DEFINE_STATIC_KEY_FALSE(sched_asym_cpucapacity);
 
-अटल व्योम update_top_cache_करोमुख्य(पूर्णांक cpu)
-अणु
-	काष्ठा sched_करोमुख्य_shared *sds = शून्य;
-	काष्ठा sched_करोमुख्य *sd;
-	पूर्णांक id = cpu;
-	पूर्णांक size = 1;
+static void update_top_cache_domain(int cpu)
+{
+	struct sched_domain_shared *sds = NULL;
+	struct sched_domain *sd;
+	int id = cpu;
+	int size = 1;
 
-	sd = highest_flag_करोमुख्य(cpu, SD_SHARE_PKG_RESOURCES);
-	अगर (sd) अणु
-		id = cpumask_first(sched_करोमुख्य_span(sd));
-		size = cpumask_weight(sched_करोमुख्य_span(sd));
+	sd = highest_flag_domain(cpu, SD_SHARE_PKG_RESOURCES);
+	if (sd) {
+		id = cpumask_first(sched_domain_span(sd));
+		size = cpumask_weight(sched_domain_span(sd));
 		sds = sd->shared;
-	पूर्ण
+	}
 
-	rcu_assign_poपूर्णांकer(per_cpu(sd_llc, cpu), sd);
+	rcu_assign_pointer(per_cpu(sd_llc, cpu), sd);
 	per_cpu(sd_llc_size, cpu) = size;
 	per_cpu(sd_llc_id, cpu) = id;
-	rcu_assign_poपूर्णांकer(per_cpu(sd_llc_shared, cpu), sds);
+	rcu_assign_pointer(per_cpu(sd_llc_shared, cpu), sds);
 
-	sd = lowest_flag_करोमुख्य(cpu, SD_NUMA);
-	rcu_assign_poपूर्णांकer(per_cpu(sd_numa, cpu), sd);
+	sd = lowest_flag_domain(cpu, SD_NUMA);
+	rcu_assign_pointer(per_cpu(sd_numa, cpu), sd);
 
-	sd = highest_flag_करोमुख्य(cpu, SD_ASYM_PACKING);
-	rcu_assign_poपूर्णांकer(per_cpu(sd_asym_packing, cpu), sd);
+	sd = highest_flag_domain(cpu, SD_ASYM_PACKING);
+	rcu_assign_pointer(per_cpu(sd_asym_packing, cpu), sd);
 
-	sd = lowest_flag_करोमुख्य(cpu, SD_ASYM_CPUCAPACITY);
-	rcu_assign_poपूर्णांकer(per_cpu(sd_asym_cpucapacity, cpu), sd);
-पूर्ण
+	sd = lowest_flag_domain(cpu, SD_ASYM_CPUCAPACITY);
+	rcu_assign_pointer(per_cpu(sd_asym_cpucapacity, cpu), sd);
+}
 
 /*
- * Attach the करोमुख्य 'sd' to 'cpu' as its base करोमुख्य. Callers must
+ * Attach the domain 'sd' to 'cpu' as its base domain. Callers must
  * hold the hotplug lock.
  */
-अटल व्योम
-cpu_attach_करोमुख्य(काष्ठा sched_करोमुख्य *sd, काष्ठा root_करोमुख्य *rd, पूर्णांक cpu)
-अणु
-	काष्ठा rq *rq = cpu_rq(cpu);
-	काष्ठा sched_करोमुख्य *पंचांगp;
-	पूर्णांक numa_distance = 0;
+static void
+cpu_attach_domain(struct sched_domain *sd, struct root_domain *rd, int cpu)
+{
+	struct rq *rq = cpu_rq(cpu);
+	struct sched_domain *tmp;
+	int numa_distance = 0;
 
-	/* Remove the sched करोमुख्यs which करो not contribute to scheduling. */
-	क्रम (पंचांगp = sd; पंचांगp; ) अणु
-		काष्ठा sched_करोमुख्य *parent = पंचांगp->parent;
-		अगर (!parent)
-			अवरोध;
+	/* Remove the sched domains which do not contribute to scheduling. */
+	for (tmp = sd; tmp; ) {
+		struct sched_domain *parent = tmp->parent;
+		if (!parent)
+			break;
 
-		अगर (sd_parent_degenerate(पंचांगp, parent)) अणु
-			पंचांगp->parent = parent->parent;
-			अगर (parent->parent)
-				parent->parent->child = पंचांगp;
+		if (sd_parent_degenerate(tmp, parent)) {
+			tmp->parent = parent->parent;
+			if (parent->parent)
+				parent->parent->child = tmp;
 			/*
-			 * Transfer SD_PREFER_SIBLING करोwn in हाल of a
-			 * degenerate parent; the spans match क्रम this
+			 * Transfer SD_PREFER_SIBLING down in case of a
+			 * degenerate parent; the spans match for this
 			 * so the property transfers.
 			 */
-			अगर (parent->flags & SD_PREFER_SIBLING)
-				पंचांगp->flags |= SD_PREFER_SIBLING;
-			destroy_sched_करोमुख्य(parent);
-		पूर्ण अन्यथा
-			पंचांगp = पंचांगp->parent;
-	पूर्ण
+			if (parent->flags & SD_PREFER_SIBLING)
+				tmp->flags |= SD_PREFER_SIBLING;
+			destroy_sched_domain(parent);
+		} else
+			tmp = tmp->parent;
+	}
 
-	अगर (sd && sd_degenerate(sd)) अणु
-		पंचांगp = sd;
+	if (sd && sd_degenerate(sd)) {
+		tmp = sd;
 		sd = sd->parent;
-		destroy_sched_करोमुख्य(पंचांगp);
-		अगर (sd)
-			sd->child = शून्य;
-	पूर्ण
+		destroy_sched_domain(tmp);
+		if (sd)
+			sd->child = NULL;
+	}
 
-	क्रम (पंचांगp = sd; पंचांगp; पंचांगp = पंचांगp->parent)
-		numa_distance += !!(पंचांगp->flags & SD_NUMA);
+	for (tmp = sd; tmp; tmp = tmp->parent)
+		numa_distance += !!(tmp->flags & SD_NUMA);
 
-	sched_करोमुख्य_debug(sd, cpu);
+	sched_domain_debug(sd, cpu);
 
 	rq_attach_root(rq, rd);
-	पंचांगp = rq->sd;
-	rcu_assign_poपूर्णांकer(rq->sd, sd);
-	dirty_sched_करोमुख्य_sysctl(cpu);
-	destroy_sched_करोमुख्यs(पंचांगp);
+	tmp = rq->sd;
+	rcu_assign_pointer(rq->sd, sd);
+	dirty_sched_domain_sysctl(cpu);
+	destroy_sched_domains(tmp);
 
-	update_top_cache_करोमुख्य(cpu);
-पूर्ण
+	update_top_cache_domain(cpu);
+}
 
-काष्ठा s_data अणु
-	काष्ठा sched_करोमुख्य * __percpu *sd;
-	काष्ठा root_करोमुख्य	*rd;
-पूर्ण;
+struct s_data {
+	struct sched_domain * __percpu *sd;
+	struct root_domain	*rd;
+};
 
-क्रमागत s_alloc अणु
-	sa_rootकरोमुख्य,
+enum s_alloc {
+	sa_rootdomain,
 	sa_sd,
 	sa_sd_storage,
 	sa_none,
-पूर्ण;
+};
 
 /*
- * Return the canonical balance CPU क्रम this group, this is the first CPU
+ * Return the canonical balance CPU for this group, this is the first CPU
  * of this group that's also in the balance mask.
  *
  * The balance mask are all those CPUs that could actually end up at this
@@ -756,16 +755,16 @@ cpu_attach_करोमुख्य(काष्ठा sched_करोमुख�
  *
  * Also see should_we_balance().
  */
-पूर्णांक group_balance_cpu(काष्ठा sched_group *sg)
-अणु
-	वापस cpumask_first(group_balance_mask(sg));
-पूर्ण
+int group_balance_cpu(struct sched_group *sg)
+{
+	return cpumask_first(group_balance_mask(sg));
+}
 
 
 /*
- * NUMA topology (first पढ़ो the regular topology blurb below)
+ * NUMA topology (first read the regular topology blurb below)
  *
- * Given a node-distance table, क्रम example:
+ * Given a node-distance table, for example:
  *
  *   node   0   1   2   3
  *     0:  10  20  30  20
@@ -781,49 +780,49 @@ cpu_attach_करोमुख्य(काष्ठा sched_करोमुख�
  *   |       |
  *   3 ----- 2
  *
- * We want to स्थिरruct करोमुख्यs and groups to represent this. The way we go
- * about करोing this is to build the करोमुख्यs on 'hops'. For each NUMA level we
- * स्थिरruct the mask of all nodes reachable in @level hops.
+ * We want to construct domains and groups to represent this. The way we go
+ * about doing this is to build the domains on 'hops'. For each NUMA level we
+ * construct the mask of all nodes reachable in @level hops.
  *
  * For the above NUMA topology that gives 3 levels:
  *
  * NUMA-2	0-3		0-3		0-3		0-3
- *  groups:	अणु0-1,3पूर्ण,अणु1-3पूर्ण	अणु0-2पूर्ण,अणु0,2-3पूर्ण	अणु1-3पूर्ण,अणु0-1,3पूर्ण	अणु0,2-3पूर्ण,अणु0-2पूर्ण
+ *  groups:	{0-1,3},{1-3}	{0-2},{0,2-3}	{1-3},{0-1,3}	{0,2-3},{0-2}
  *
  * NUMA-1	0-1,3		0-2		1-3		0,2-3
- *  groups:	अणु0पूर्ण,अणु1पूर्ण,अणु3पूर्ण	अणु0पूर्ण,अणु1पूर्ण,अणु2पूर्ण	अणु1पूर्ण,अणु2पूर्ण,अणु3पूर्ण	अणु0पूर्ण,अणु2पूर्ण,अणु3पूर्ण
+ *  groups:	{0},{1},{3}	{0},{1},{2}	{1},{2},{3}	{0},{2},{3}
  *
  * NUMA-0	0		1		2		3
  *
  *
- * As can be seen; things करोn't nicely line up as with the regular topology.
- * When we iterate a करोमुख्य in child करोमुख्य chunks some nodes can be
- * represented multiple बार -- hence the "overlap" naming क्रम this part of
+ * As can be seen; things don't nicely line up as with the regular topology.
+ * When we iterate a domain in child domain chunks some nodes can be
+ * represented multiple times -- hence the "overlap" naming for this part of
  * the topology.
  *
  * In order to minimize this overlap, we only build enough groups to cover the
- * करोमुख्य. For instance Node-0 NUMA-2 would only get groups: 0-1,3 and 1-3.
+ * domain. For instance Node-0 NUMA-2 would only get groups: 0-1,3 and 1-3.
  *
  * Because:
  *
- *  - the first group of each करोमुख्य is its child करोमुख्य; this
- *    माला_लो us the first 0-1,3
- *  - the only uncovered node is 2, who's child करोमुख्य is 1-3.
+ *  - the first group of each domain is its child domain; this
+ *    gets us the first 0-1,3
+ *  - the only uncovered node is 2, who's child domain is 1-3.
  *
- * However, because of the overlap, computing a unique CPU क्रम each group is
- * more complicated. Consider क्रम instance the groups of NODE-1 NUMA-2, both
- * groups include the CPUs of Node-0, जबतक those CPUs would not in fact ever
+ * However, because of the overlap, computing a unique CPU for each group is
+ * more complicated. Consider for instance the groups of NODE-1 NUMA-2, both
+ * groups include the CPUs of Node-0, while those CPUs would not in fact ever
  * end up at those groups (they would end up in group: 0-1,3).
  *
- * To correct this we have to पूर्णांकroduce the group balance mask. This mask
+ * To correct this we have to introduce the group balance mask. This mask
  * will contain those CPUs in the group that can reach this group given the
- * (child) करोमुख्य tree.
+ * (child) domain tree.
  *
  * With this we can once again compute balance_cpu and sched_group_capacity
  * relations.
  *
- * XXX include words on how balance_cpu is unique and thereक्रमe can be
- * used क्रम sched_group_capacity links.
+ * XXX include words on how balance_cpu is unique and therefore can be
+ * used for sched_group_capacity links.
  *
  *
  * Another 'interesting' topology is:
@@ -845,11 +844,11 @@ cpu_attach_करोमुख्य(काष्ठा sched_करोमुख�
  * This topology is asymmetric, nodes 1,2 are fully connected, but nodes 0,3
  * are not.
  *
- * This leads to a few particularly weird हालs where the sched_करोमुख्य's are
- * not of the same number क्रम each CPU. Consider:
+ * This leads to a few particularly weird cases where the sched_domain's are
+ * not of the same number for each CPU. Consider:
  *
  * NUMA-2	0-3						0-3
- *  groups:	अणु0-2पूर्ण,अणु1-3पूर्ण					अणु1-3पूर्ण,अणु0-2पूर्ण
+ *  groups:	{0-2},{1-3}					{1-3},{0-2}
  *
  * NUMA-1	0-2		0-3		0-3		1-3
  *
@@ -860,164 +859,164 @@ cpu_attach_करोमुख्य(काष्ठा sched_करोमुख�
 
 /*
  * Build the balance mask; it contains only those CPUs that can arrive at this
- * group and should be considered to जारी balancing.
+ * group and should be considered to continue balancing.
  *
- * We करो this during the group creation pass, thereक्रमe the group inक्रमmation
- * isn't complete yet, however since each group represents a (child) करोमुख्य we
- * can fully स्थिरruct this using the sched_करोमुख्य bits (which are alपढ़ोy
+ * We do this during the group creation pass, therefore the group information
+ * isn't complete yet, however since each group represents a (child) domain we
+ * can fully construct this using the sched_domain bits (which are already
  * complete).
  */
-अटल व्योम
-build_balance_mask(काष्ठा sched_करोमुख्य *sd, काष्ठा sched_group *sg, काष्ठा cpumask *mask)
-अणु
-	स्थिर काष्ठा cpumask *sg_span = sched_group_span(sg);
-	काष्ठा sd_data *sdd = sd->निजी;
-	काष्ठा sched_करोमुख्य *sibling;
-	पूर्णांक i;
+static void
+build_balance_mask(struct sched_domain *sd, struct sched_group *sg, struct cpumask *mask)
+{
+	const struct cpumask *sg_span = sched_group_span(sg);
+	struct sd_data *sdd = sd->private;
+	struct sched_domain *sibling;
+	int i;
 
 	cpumask_clear(mask);
 
-	क्रम_each_cpu(i, sg_span) अणु
+	for_each_cpu(i, sg_span) {
 		sibling = *per_cpu_ptr(sdd->sd, i);
 
 		/*
-		 * Can happen in the asymmetric हाल, where these siblings are
+		 * Can happen in the asymmetric case, where these siblings are
 		 * unused. The mask will not be empty because those CPUs that
-		 * करो have the top करोमुख्य _should_ span the करोमुख्य.
+		 * do have the top domain _should_ span the domain.
 		 */
-		अगर (!sibling->child)
-			जारी;
+		if (!sibling->child)
+			continue;
 
-		/* If we would not end up here, we can't जारी from here */
-		अगर (!cpumask_equal(sg_span, sched_करोमुख्य_span(sibling->child)))
-			जारी;
+		/* If we would not end up here, we can't continue from here */
+		if (!cpumask_equal(sg_span, sched_domain_span(sibling->child)))
+			continue;
 
 		cpumask_set_cpu(i, mask);
-	पूर्ण
+	}
 
 	/* We must not have empty masks here */
 	WARN_ON_ONCE(cpumask_empty(mask));
-पूर्ण
+}
 
 /*
  * XXX: This creates per-node group entries; since the load-balancer will
- * immediately access remote memory to स्थिरruct this group's load-balance
+ * immediately access remote memory to construct this group's load-balance
  * statistics having the groups node local is of dubious benefit.
  */
-अटल काष्ठा sched_group *
-build_group_from_child_sched_करोमुख्य(काष्ठा sched_करोमुख्य *sd, पूर्णांक cpu)
-अणु
-	काष्ठा sched_group *sg;
-	काष्ठा cpumask *sg_span;
+static struct sched_group *
+build_group_from_child_sched_domain(struct sched_domain *sd, int cpu)
+{
+	struct sched_group *sg;
+	struct cpumask *sg_span;
 
-	sg = kzalloc_node(माप(काष्ठा sched_group) + cpumask_size(),
+	sg = kzalloc_node(sizeof(struct sched_group) + cpumask_size(),
 			GFP_KERNEL, cpu_to_node(cpu));
 
-	अगर (!sg)
-		वापस शून्य;
+	if (!sg)
+		return NULL;
 
 	sg_span = sched_group_span(sg);
-	अगर (sd->child)
-		cpumask_copy(sg_span, sched_करोमुख्य_span(sd->child));
-	अन्यथा
-		cpumask_copy(sg_span, sched_करोमुख्य_span(sd));
+	if (sd->child)
+		cpumask_copy(sg_span, sched_domain_span(sd->child));
+	else
+		cpumask_copy(sg_span, sched_domain_span(sd));
 
 	atomic_inc(&sg->ref);
-	वापस sg;
-पूर्ण
+	return sg;
+}
 
-अटल व्योम init_overlap_sched_group(काष्ठा sched_करोमुख्य *sd,
-				     काष्ठा sched_group *sg)
-अणु
-	काष्ठा cpumask *mask = sched_करोमुख्यs_पंचांगpmask2;
-	काष्ठा sd_data *sdd = sd->निजी;
-	काष्ठा cpumask *sg_span;
-	पूर्णांक cpu;
+static void init_overlap_sched_group(struct sched_domain *sd,
+				     struct sched_group *sg)
+{
+	struct cpumask *mask = sched_domains_tmpmask2;
+	struct sd_data *sdd = sd->private;
+	struct cpumask *sg_span;
+	int cpu;
 
 	build_balance_mask(sd, sg, mask);
 	cpu = cpumask_first(mask);
 
 	sg->sgc = *per_cpu_ptr(sdd->sgc, cpu);
-	अगर (atomic_inc_वापस(&sg->sgc->ref) == 1)
+	if (atomic_inc_return(&sg->sgc->ref) == 1)
 		cpumask_copy(group_balance_mask(sg), mask);
-	अन्यथा
+	else
 		WARN_ON_ONCE(!cpumask_equal(group_balance_mask(sg), mask));
 
 	/*
-	 * Initialize sgc->capacity such that even अगर we mess up the
-	 * करोमुख्यs and no possible iteration will get us here, we won't
+	 * Initialize sgc->capacity such that even if we mess up the
+	 * domains and no possible iteration will get us here, we won't
 	 * die on a /0 trap.
 	 */
 	sg_span = sched_group_span(sg);
 	sg->sgc->capacity = SCHED_CAPACITY_SCALE * cpumask_weight(sg_span);
 	sg->sgc->min_capacity = SCHED_CAPACITY_SCALE;
 	sg->sgc->max_capacity = SCHED_CAPACITY_SCALE;
-पूर्ण
+}
 
-अटल काष्ठा sched_करोमुख्य *
-find_descended_sibling(काष्ठा sched_करोमुख्य *sd, काष्ठा sched_करोमुख्य *sibling)
-अणु
+static struct sched_domain *
+find_descended_sibling(struct sched_domain *sd, struct sched_domain *sibling)
+{
 	/*
 	 * The proper descendant would be the one whose child won't span out
 	 * of sd
 	 */
-	जबतक (sibling->child &&
-	       !cpumask_subset(sched_करोमुख्य_span(sibling->child),
-			       sched_करोमुख्य_span(sd)))
+	while (sibling->child &&
+	       !cpumask_subset(sched_domain_span(sibling->child),
+			       sched_domain_span(sd)))
 		sibling = sibling->child;
 
 	/*
-	 * As we are referencing sgc across dअगरferent topology level, we need
-	 * to go करोwn to skip those sched_करोमुख्यs which करोn't contribute to
-	 * scheduling because they will be degenerated in cpu_attach_करोमुख्य
+	 * As we are referencing sgc across different topology level, we need
+	 * to go down to skip those sched_domains which don't contribute to
+	 * scheduling because they will be degenerated in cpu_attach_domain
 	 */
-	जबतक (sibling->child &&
-	       cpumask_equal(sched_करोमुख्य_span(sibling->child),
-			     sched_करोमुख्य_span(sibling)))
+	while (sibling->child &&
+	       cpumask_equal(sched_domain_span(sibling->child),
+			     sched_domain_span(sibling)))
 		sibling = sibling->child;
 
-	वापस sibling;
-पूर्ण
+	return sibling;
+}
 
-अटल पूर्णांक
-build_overlap_sched_groups(काष्ठा sched_करोमुख्य *sd, पूर्णांक cpu)
-अणु
-	काष्ठा sched_group *first = शून्य, *last = शून्य, *sg;
-	स्थिर काष्ठा cpumask *span = sched_करोमुख्य_span(sd);
-	काष्ठा cpumask *covered = sched_करोमुख्यs_पंचांगpmask;
-	काष्ठा sd_data *sdd = sd->निजी;
-	काष्ठा sched_करोमुख्य *sibling;
-	पूर्णांक i;
+static int
+build_overlap_sched_groups(struct sched_domain *sd, int cpu)
+{
+	struct sched_group *first = NULL, *last = NULL, *sg;
+	const struct cpumask *span = sched_domain_span(sd);
+	struct cpumask *covered = sched_domains_tmpmask;
+	struct sd_data *sdd = sd->private;
+	struct sched_domain *sibling;
+	int i;
 
 	cpumask_clear(covered);
 
-	क्रम_each_cpu_wrap(i, span, cpu) अणु
-		काष्ठा cpumask *sg_span;
+	for_each_cpu_wrap(i, span, cpu) {
+		struct cpumask *sg_span;
 
-		अगर (cpumask_test_cpu(i, covered))
-			जारी;
+		if (cpumask_test_cpu(i, covered))
+			continue;
 
 		sibling = *per_cpu_ptr(sdd->sd, i);
 
 		/*
 		 * Asymmetric node setups can result in situations where the
-		 * करोमुख्य tree is of unequal depth, make sure to skip करोमुख्यs
-		 * that alपढ़ोy cover the entire range.
+		 * domain tree is of unequal depth, make sure to skip domains
+		 * that already cover the entire range.
 		 *
-		 * In that हाल build_sched_करोमुख्यs() will have terminated the
+		 * In that case build_sched_domains() will have terminated the
 		 * iteration early and our sibling sd spans will be empty.
-		 * Doमुख्यs should always include the CPU they're built on, so
+		 * Domains should always include the CPU they're built on, so
 		 * check that.
 		 */
-		अगर (!cpumask_test_cpu(i, sched_करोमुख्य_span(sibling)))
-			जारी;
+		if (!cpumask_test_cpu(i, sched_domain_span(sibling)))
+			continue;
 
 		/*
-		 * Usually we build sched_group by sibling's child sched_करोमुख्य
-		 * But क्रम machines whose NUMA diameter are 3 or above, we move
+		 * Usually we build sched_group by sibling's child sched_domain
+		 * But for machines whose NUMA diameter are 3 or above, we move
 		 * to build sched_group by sibling's proper descendant's child
-		 * करोमुख्य because sibling's child sched_करोमुख्य will span out of
-		 * the sched_करोमुख्य being built as below.
+		 * domain because sibling's child sched_domain will span out of
+		 * the sched_domain being built as below.
 		 *
 		 * Smallest diameter=3 topology is:
 		 *
@@ -1030,77 +1029,77 @@ build_overlap_sched_groups(काष्ठा sched_करोमुख्य *sd
 		 *   0 --- 1 --- 2 --- 3
 		 *
 		 * NUMA-3       0-3             N/A             N/A             0-3
-		 *  groups:     अणु0-2पूर्ण,अणु1-3पूर्ण                                     अणु1-3पूर्ण,अणु0-2पूर्ण
+		 *  groups:     {0-2},{1-3}                                     {1-3},{0-2}
 		 *
 		 * NUMA-2       0-2             0-3             0-3             1-3
-		 *  groups:     अणु0-1पूर्ण,अणु1-3पूर्ण     अणु0-2पूर्ण,अणु2-3पूर्ण     अणु1-3पूर्ण,अणु0-1पूर्ण     अणु2-3पूर्ण,अणु0-2पूर्ण
+		 *  groups:     {0-1},{1-3}     {0-2},{2-3}     {1-3},{0-1}     {2-3},{0-2}
 		 *
 		 * NUMA-1       0-1             0-2             1-3             2-3
-		 *  groups:     अणु0पूर्ण,अणु1पूर्ण         अणु1पूर्ण,अणु2पूर्ण,अणु0पूर्ण     अणु2पूर्ण,अणु3पूर्ण,अणु1पूर्ण     अणु3पूर्ण,अणु2पूर्ण
+		 *  groups:     {0},{1}         {1},{2},{0}     {2},{3},{1}     {3},{2}
 		 *
 		 * NUMA-0       0               1               2               3
 		 *
-		 * The NUMA-2 groups क्रम nodes 0 and 3 are obviously buggered, as the
-		 * group span isn't a subset of the करोमुख्य span.
+		 * The NUMA-2 groups for nodes 0 and 3 are obviously buggered, as the
+		 * group span isn't a subset of the domain span.
 		 */
-		अगर (sibling->child &&
-		    !cpumask_subset(sched_करोमुख्य_span(sibling->child), span))
+		if (sibling->child &&
+		    !cpumask_subset(sched_domain_span(sibling->child), span))
 			sibling = find_descended_sibling(sd, sibling);
 
-		sg = build_group_from_child_sched_करोमुख्य(sibling, cpu);
-		अगर (!sg)
-			जाओ fail;
+		sg = build_group_from_child_sched_domain(sibling, cpu);
+		if (!sg)
+			goto fail;
 
 		sg_span = sched_group_span(sg);
 		cpumask_or(covered, covered, sg_span);
 
 		init_overlap_sched_group(sibling, sg);
 
-		अगर (!first)
+		if (!first)
 			first = sg;
-		अगर (last)
+		if (last)
 			last->next = sg;
 		last = sg;
 		last->next = first;
-	पूर्ण
+	}
 	sd->groups = first;
 
-	वापस 0;
+	return 0;
 
 fail:
-	मुक्त_sched_groups(first, 0);
+	free_sched_groups(first, 0);
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
 
 /*
  * Package topology (also see the load-balance blurb in fair.c)
  *
- * The scheduler builds a tree काष्ठाure to represent a number of important
- * topology features. By शेष (शेष_topology[]) these include:
+ * The scheduler builds a tree structure to represent a number of important
+ * topology features. By default (default_topology[]) these include:
  *
- *  - Simultaneous multithपढ़ोing (SMT)
+ *  - Simultaneous multithreading (SMT)
  *  - Multi-Core Cache (MC)
  *  - Package (DIE)
  *
  * Where the last one more or less denotes everything up to a NUMA node.
  *
- * The tree consists of 3 primary data काष्ठाures:
+ * The tree consists of 3 primary data structures:
  *
- *	sched_करोमुख्य -> sched_group -> sched_group_capacity
+ *	sched_domain -> sched_group -> sched_group_capacity
  *	    ^ ^             ^ ^
  *          `-'             `-'
  *
- * The sched_करोमुख्यs are per-CPU and have a two way link (parent & child) and
- * denote the ever growing mask of CPUs beदीर्घing to that level of topology.
+ * The sched_domains are per-CPU and have a two way link (parent & child) and
+ * denote the ever growing mask of CPUs belonging to that level of topology.
  *
- * Each sched_करोमुख्य has a circular (द्विगुन) linked list of sched_group's, each
- * denoting the करोमुख्यs of the level below (or inभागidual CPUs in हाल of the
- * first करोमुख्य level). The sched_group linked by a sched_करोमुख्य includes the
- * CPU of that sched_करोमुख्य [*].
+ * Each sched_domain has a circular (double) linked list of sched_group's, each
+ * denoting the domains of the level below (or individual CPUs in case of the
+ * first domain level). The sched_group linked by a sched_domain includes the
+ * CPU of that sched_domain [*].
  *
- * Take क्रम instance a 2 thपढ़ोed, 2 core, 2 cache cluster part:
+ * Take for instance a 2 threaded, 2 core, 2 cache cluster part:
  *
  * CPU   0   1   2   3   4   5   6   7
  *
@@ -1116,270 +1115,270 @@ fail:
  *
  * CPU   0   1   2   3   4   5   6   7
  *
- * One way to think about it is: sched_करोमुख्य moves you up and करोwn among these
- * topology levels, जबतक sched_group moves you sideways through it, at child
- * करोमुख्य granularity.
+ * One way to think about it is: sched_domain moves you up and down among these
+ * topology levels, while sched_group moves you sideways through it, at child
+ * domain granularity.
  *
  * sched_group_capacity ensures each unique sched_group has shared storage.
  *
- * There are two related स्थिरruction problems, both require a CPU that
- * uniquely identअगरy each group (क्रम a given करोमुख्य):
+ * There are two related construction problems, both require a CPU that
+ * uniquely identify each group (for a given domain):
  *
  *  - The first is the balance_cpu (see should_we_balance() and the
- *    load-balance blub in fair.c); क्रम each group we only want 1 CPU to
- *    जारी balancing at a higher करोमुख्य.
+ *    load-balance blub in fair.c); for each group we only want 1 CPU to
+ *    continue balancing at a higher domain.
  *
  *  - The second is the sched_group_capacity; we want all identical groups
  *    to share a single sched_group_capacity.
  *
- * Since these topologies are exclusive by स्थिरruction. That is, its
- * impossible क्रम an SMT thपढ़ो to beदीर्घ to multiple cores, and cores to
+ * Since these topologies are exclusive by construction. That is, its
+ * impossible for an SMT thread to belong to multiple cores, and cores to
  * be part of multiple caches. There is a very clear and unique location
- * क्रम each CPU in the hierarchy.
+ * for each CPU in the hierarchy.
  *
- * Thereक्रमe computing a unique CPU क्रम each group is trivial (the iteration
+ * Therefore computing a unique CPU for each group is trivial (the iteration
  * mask is redundant and set all 1s; all CPUs in a group will end up at _that_
  * group), we can simply pick the first CPU in each group.
  *
  *
- * [*] in other words, the first group of each करोमुख्य is its child करोमुख्य.
+ * [*] in other words, the first group of each domain is its child domain.
  */
 
-अटल काष्ठा sched_group *get_group(पूर्णांक cpu, काष्ठा sd_data *sdd)
-अणु
-	काष्ठा sched_करोमुख्य *sd = *per_cpu_ptr(sdd->sd, cpu);
-	काष्ठा sched_करोमुख्य *child = sd->child;
-	काष्ठा sched_group *sg;
-	bool alपढ़ोy_visited;
+static struct sched_group *get_group(int cpu, struct sd_data *sdd)
+{
+	struct sched_domain *sd = *per_cpu_ptr(sdd->sd, cpu);
+	struct sched_domain *child = sd->child;
+	struct sched_group *sg;
+	bool already_visited;
 
-	अगर (child)
-		cpu = cpumask_first(sched_करोमुख्य_span(child));
+	if (child)
+		cpu = cpumask_first(sched_domain_span(child));
 
 	sg = *per_cpu_ptr(sdd->sg, cpu);
 	sg->sgc = *per_cpu_ptr(sdd->sgc, cpu);
 
-	/* Increase refcounts क्रम claim_allocations: */
-	alपढ़ोy_visited = atomic_inc_वापस(&sg->ref) > 1;
+	/* Increase refcounts for claim_allocations: */
+	already_visited = atomic_inc_return(&sg->ref) > 1;
 	/* sgc visits should follow a similar trend as sg */
-	WARN_ON(alपढ़ोy_visited != (atomic_inc_वापस(&sg->sgc->ref) > 1));
+	WARN_ON(already_visited != (atomic_inc_return(&sg->sgc->ref) > 1));
 
-	/* If we have alपढ़ोy visited that group, it's alपढ़ोy initialized. */
-	अगर (alपढ़ोy_visited)
-		वापस sg;
+	/* If we have already visited that group, it's already initialized. */
+	if (already_visited)
+		return sg;
 
-	अगर (child) अणु
-		cpumask_copy(sched_group_span(sg), sched_करोमुख्य_span(child));
+	if (child) {
+		cpumask_copy(sched_group_span(sg), sched_domain_span(child));
 		cpumask_copy(group_balance_mask(sg), sched_group_span(sg));
-	पूर्ण अन्यथा अणु
+	} else {
 		cpumask_set_cpu(cpu, sched_group_span(sg));
 		cpumask_set_cpu(cpu, group_balance_mask(sg));
-	पूर्ण
+	}
 
 	sg->sgc->capacity = SCHED_CAPACITY_SCALE * cpumask_weight(sched_group_span(sg));
 	sg->sgc->min_capacity = SCHED_CAPACITY_SCALE;
 	sg->sgc->max_capacity = SCHED_CAPACITY_SCALE;
 
-	वापस sg;
-पूर्ण
+	return sg;
+}
 
 /*
  * build_sched_groups will build a circular linked list of the groups
  * covered by the given span, will set each group's ->cpumask correctly,
  * and will initialize their ->sgc.
  *
- * Assumes the sched_करोमुख्य tree is fully स्थिरructed
+ * Assumes the sched_domain tree is fully constructed
  */
-अटल पूर्णांक
-build_sched_groups(काष्ठा sched_करोमुख्य *sd, पूर्णांक cpu)
-अणु
-	काष्ठा sched_group *first = शून्य, *last = शून्य;
-	काष्ठा sd_data *sdd = sd->निजी;
-	स्थिर काष्ठा cpumask *span = sched_करोमुख्य_span(sd);
-	काष्ठा cpumask *covered;
-	पूर्णांक i;
+static int
+build_sched_groups(struct sched_domain *sd, int cpu)
+{
+	struct sched_group *first = NULL, *last = NULL;
+	struct sd_data *sdd = sd->private;
+	const struct cpumask *span = sched_domain_span(sd);
+	struct cpumask *covered;
+	int i;
 
-	lockdep_निश्चित_held(&sched_करोमुख्यs_mutex);
-	covered = sched_करोमुख्यs_पंचांगpmask;
+	lockdep_assert_held(&sched_domains_mutex);
+	covered = sched_domains_tmpmask;
 
 	cpumask_clear(covered);
 
-	क्रम_each_cpu_wrap(i, span, cpu) अणु
-		काष्ठा sched_group *sg;
+	for_each_cpu_wrap(i, span, cpu) {
+		struct sched_group *sg;
 
-		अगर (cpumask_test_cpu(i, covered))
-			जारी;
+		if (cpumask_test_cpu(i, covered))
+			continue;
 
 		sg = get_group(i, sdd);
 
 		cpumask_or(covered, covered, sched_group_span(sg));
 
-		अगर (!first)
+		if (!first)
 			first = sg;
-		अगर (last)
+		if (last)
 			last->next = sg;
 		last = sg;
-	पूर्ण
+	}
 	last->next = first;
 	sd->groups = first;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Initialize sched groups cpu_capacity.
  *
- * cpu_capacity indicates the capacity of sched group, which is used जबतक
- * distributing the load between dअगरferent sched groups in a sched करोमुख्य.
- * Typically cpu_capacity क्रम all the groups in a sched करोमुख्य will be same
+ * cpu_capacity indicates the capacity of sched group, which is used while
+ * distributing the load between different sched groups in a sched domain.
+ * Typically cpu_capacity for all the groups in a sched domain will be same
  * unless there are asymmetries in the topology. If there are asymmetries,
  * group having more cpu_capacity will pickup more load compared to the
  * group having less cpu_capacity.
  */
-अटल व्योम init_sched_groups_capacity(पूर्णांक cpu, काष्ठा sched_करोमुख्य *sd)
-अणु
-	काष्ठा sched_group *sg = sd->groups;
+static void init_sched_groups_capacity(int cpu, struct sched_domain *sd)
+{
+	struct sched_group *sg = sd->groups;
 
 	WARN_ON(!sg);
 
-	करो अणु
-		पूर्णांक cpu, max_cpu = -1;
+	do {
+		int cpu, max_cpu = -1;
 
 		sg->group_weight = cpumask_weight(sched_group_span(sg));
 
-		अगर (!(sd->flags & SD_ASYM_PACKING))
-			जाओ next;
+		if (!(sd->flags & SD_ASYM_PACKING))
+			goto next;
 
-		क्रम_each_cpu(cpu, sched_group_span(sg)) अणु
-			अगर (max_cpu < 0)
+		for_each_cpu(cpu, sched_group_span(sg)) {
+			if (max_cpu < 0)
 				max_cpu = cpu;
-			अन्यथा अगर (sched_asym_prefer(cpu, max_cpu))
+			else if (sched_asym_prefer(cpu, max_cpu))
 				max_cpu = cpu;
-		पूर्ण
+		}
 		sg->asym_prefer_cpu = max_cpu;
 
 next:
 		sg = sg->next;
-	पूर्ण जबतक (sg != sd->groups);
+	} while (sg != sd->groups);
 
-	अगर (cpu != group_balance_cpu(sg))
-		वापस;
+	if (cpu != group_balance_cpu(sg))
+		return;
 
 	update_group_capacity(sd, cpu);
-पूर्ण
+}
 
 /*
- * Initializers क्रम schedule करोमुख्यs
- * Non-अंतरभूतd to reduce accumulated stack pressure in build_sched_करोमुख्यs()
+ * Initializers for schedule domains
+ * Non-inlined to reduce accumulated stack pressure in build_sched_domains()
  */
 
-अटल पूर्णांक शेष_relax_करोमुख्य_level = -1;
-पूर्णांक sched_करोमुख्य_level_max;
+static int default_relax_domain_level = -1;
+int sched_domain_level_max;
 
-अटल पूर्णांक __init setup_relax_करोमुख्य_level(अक्षर *str)
-अणु
-	अगर (kstrtoपूर्णांक(str, 0, &शेष_relax_करोमुख्य_level))
+static int __init setup_relax_domain_level(char *str)
+{
+	if (kstrtoint(str, 0, &default_relax_domain_level))
 		pr_warn("Unable to set relax_domain_level\n");
 
-	वापस 1;
-पूर्ण
-__setup("relax_domain_level=", setup_relax_करोमुख्य_level);
+	return 1;
+}
+__setup("relax_domain_level=", setup_relax_domain_level);
 
-अटल व्योम set_करोमुख्य_attribute(काष्ठा sched_करोमुख्य *sd,
-				 काष्ठा sched_करोमुख्य_attr *attr)
-अणु
-	पूर्णांक request;
+static void set_domain_attribute(struct sched_domain *sd,
+				 struct sched_domain_attr *attr)
+{
+	int request;
 
-	अगर (!attr || attr->relax_करोमुख्य_level < 0) अणु
-		अगर (शेष_relax_करोमुख्य_level < 0)
-			वापस;
-		request = शेष_relax_करोमुख्य_level;
-	पूर्ण अन्यथा
-		request = attr->relax_करोमुख्य_level;
+	if (!attr || attr->relax_domain_level < 0) {
+		if (default_relax_domain_level < 0)
+			return;
+		request = default_relax_domain_level;
+	} else
+		request = attr->relax_domain_level;
 
-	अगर (sd->level > request) अणु
-		/* Turn off idle balance on this करोमुख्य: */
+	if (sd->level > request) {
+		/* Turn off idle balance on this domain: */
 		sd->flags &= ~(SD_BALANCE_WAKE|SD_BALANCE_NEWIDLE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __sdt_मुक्त(स्थिर काष्ठा cpumask *cpu_map);
-अटल पूर्णांक __sdt_alloc(स्थिर काष्ठा cpumask *cpu_map);
+static void __sdt_free(const struct cpumask *cpu_map);
+static int __sdt_alloc(const struct cpumask *cpu_map);
 
-अटल व्योम __मुक्त_करोमुख्य_allocs(काष्ठा s_data *d, क्रमागत s_alloc what,
-				 स्थिर काष्ठा cpumask *cpu_map)
-अणु
-	चयन (what) अणु
-	हाल sa_rootकरोमुख्य:
-		अगर (!atomic_पढ़ो(&d->rd->refcount))
-			मुक्त_rootकरोमुख्य(&d->rd->rcu);
+static void __free_domain_allocs(struct s_data *d, enum s_alloc what,
+				 const struct cpumask *cpu_map)
+{
+	switch (what) {
+	case sa_rootdomain:
+		if (!atomic_read(&d->rd->refcount))
+			free_rootdomain(&d->rd->rcu);
 		fallthrough;
-	हाल sa_sd:
-		मुक्त_percpu(d->sd);
+	case sa_sd:
+		free_percpu(d->sd);
 		fallthrough;
-	हाल sa_sd_storage:
-		__sdt_मुक्त(cpu_map);
+	case sa_sd_storage:
+		__sdt_free(cpu_map);
 		fallthrough;
-	हाल sa_none:
-		अवरोध;
-	पूर्ण
-पूर्ण
+	case sa_none:
+		break;
+	}
+}
 
-अटल क्रमागत s_alloc
-__visit_करोमुख्य_allocation_hell(काष्ठा s_data *d, स्थिर काष्ठा cpumask *cpu_map)
-अणु
-	स_रखो(d, 0, माप(*d));
+static enum s_alloc
+__visit_domain_allocation_hell(struct s_data *d, const struct cpumask *cpu_map)
+{
+	memset(d, 0, sizeof(*d));
 
-	अगर (__sdt_alloc(cpu_map))
-		वापस sa_sd_storage;
-	d->sd = alloc_percpu(काष्ठा sched_करोमुख्य *);
-	अगर (!d->sd)
-		वापस sa_sd_storage;
-	d->rd = alloc_rootकरोमुख्य();
-	अगर (!d->rd)
-		वापस sa_sd;
+	if (__sdt_alloc(cpu_map))
+		return sa_sd_storage;
+	d->sd = alloc_percpu(struct sched_domain *);
+	if (!d->sd)
+		return sa_sd_storage;
+	d->rd = alloc_rootdomain();
+	if (!d->rd)
+		return sa_sd;
 
-	वापस sa_rootकरोमुख्य;
-पूर्ण
+	return sa_rootdomain;
+}
 
 /*
- * शून्य the sd_data elements we've used to build the sched_करोमुख्य and
- * sched_group काष्ठाure so that the subsequent __मुक्त_करोमुख्य_allocs()
- * will not मुक्त the data we're using.
+ * NULL the sd_data elements we've used to build the sched_domain and
+ * sched_group structure so that the subsequent __free_domain_allocs()
+ * will not free the data we're using.
  */
-अटल व्योम claim_allocations(पूर्णांक cpu, काष्ठा sched_करोमुख्य *sd)
-अणु
-	काष्ठा sd_data *sdd = sd->निजी;
+static void claim_allocations(int cpu, struct sched_domain *sd)
+{
+	struct sd_data *sdd = sd->private;
 
 	WARN_ON_ONCE(*per_cpu_ptr(sdd->sd, cpu) != sd);
-	*per_cpu_ptr(sdd->sd, cpu) = शून्य;
+	*per_cpu_ptr(sdd->sd, cpu) = NULL;
 
-	अगर (atomic_पढ़ो(&(*per_cpu_ptr(sdd->sds, cpu))->ref))
-		*per_cpu_ptr(sdd->sds, cpu) = शून्य;
+	if (atomic_read(&(*per_cpu_ptr(sdd->sds, cpu))->ref))
+		*per_cpu_ptr(sdd->sds, cpu) = NULL;
 
-	अगर (atomic_पढ़ो(&(*per_cpu_ptr(sdd->sg, cpu))->ref))
-		*per_cpu_ptr(sdd->sg, cpu) = शून्य;
+	if (atomic_read(&(*per_cpu_ptr(sdd->sg, cpu))->ref))
+		*per_cpu_ptr(sdd->sg, cpu) = NULL;
 
-	अगर (atomic_पढ़ो(&(*per_cpu_ptr(sdd->sgc, cpu))->ref))
-		*per_cpu_ptr(sdd->sgc, cpu) = शून्य;
-पूर्ण
+	if (atomic_read(&(*per_cpu_ptr(sdd->sgc, cpu))->ref))
+		*per_cpu_ptr(sdd->sgc, cpu) = NULL;
+}
 
-#अगर_घोषित CONFIG_NUMA
-क्रमागत numa_topology_type sched_numa_topology_type;
+#ifdef CONFIG_NUMA
+enum numa_topology_type sched_numa_topology_type;
 
-अटल पूर्णांक			sched_करोमुख्यs_numa_levels;
-अटल पूर्णांक			sched_करोमुख्यs_curr_level;
+static int			sched_domains_numa_levels;
+static int			sched_domains_curr_level;
 
-पूर्णांक				sched_max_numa_distance;
-अटल पूर्णांक			*sched_करोमुख्यs_numa_distance;
-अटल काष्ठा cpumask		***sched_करोमुख्यs_numa_masks;
-पूर्णांक __पढ़ो_mostly		node_reclaim_distance = RECLAIM_DISTANCE;
-#पूर्ण_अगर
+int				sched_max_numa_distance;
+static int			*sched_domains_numa_distance;
+static struct cpumask		***sched_domains_numa_masks;
+int __read_mostly		node_reclaim_distance = RECLAIM_DISTANCE;
+#endif
 
 /*
  * SD_flags allowed in topology descriptions.
  *
- * These flags are purely descriptive of the topology and करो not prescribe
- * behaviour. Behaviour is artअगरicial and mapped in the below sd_init()
+ * These flags are purely descriptive of the topology and do not prescribe
+ * behaviour. Behaviour is artificial and mapped in the below sd_init()
  * function:
  *
  *   SD_SHARE_CPUCAPACITY   - describes SMT topologies
@@ -1387,46 +1386,46 @@ __visit_करोमुख्य_allocation_hell(काष्ठा s_data *d, �
  *   SD_NUMA                - describes NUMA topologies
  *
  * Odd one out, which beside describing the topology has a quirk also
- * prescribes the desired behaviour that goes aदीर्घ with it:
+ * prescribes the desired behaviour that goes along with it:
  *
  *   SD_ASYM_PACKING        - describes SMT quirks
  */
-#घोषणा TOPOLOGY_SD_FLAGS		\
+#define TOPOLOGY_SD_FLAGS		\
 	(SD_SHARE_CPUCAPACITY	|	\
 	 SD_SHARE_PKG_RESOURCES |	\
 	 SD_NUMA		|	\
 	 SD_ASYM_PACKING)
 
-अटल काष्ठा sched_करोमुख्य *
-sd_init(काष्ठा sched_करोमुख्य_topology_level *tl,
-	स्थिर काष्ठा cpumask *cpu_map,
-	काष्ठा sched_करोमुख्य *child, पूर्णांक dflags, पूर्णांक cpu)
-अणु
-	काष्ठा sd_data *sdd = &tl->data;
-	काष्ठा sched_करोमुख्य *sd = *per_cpu_ptr(sdd->sd, cpu);
-	पूर्णांक sd_id, sd_weight, sd_flags = 0;
+static struct sched_domain *
+sd_init(struct sched_domain_topology_level *tl,
+	const struct cpumask *cpu_map,
+	struct sched_domain *child, int dflags, int cpu)
+{
+	struct sd_data *sdd = &tl->data;
+	struct sched_domain *sd = *per_cpu_ptr(sdd->sd, cpu);
+	int sd_id, sd_weight, sd_flags = 0;
 
-#अगर_घोषित CONFIG_NUMA
+#ifdef CONFIG_NUMA
 	/*
 	 * Ugly hack to pass state to sd_numa_mask()...
 	 */
-	sched_करोमुख्यs_curr_level = tl->numa_level;
-#पूर्ण_अगर
+	sched_domains_curr_level = tl->numa_level;
+#endif
 
 	sd_weight = cpumask_weight(tl->mask(cpu));
 
-	अगर (tl->sd_flags)
+	if (tl->sd_flags)
 		sd_flags = (*tl->sd_flags)();
-	अगर (WARN_ONCE(sd_flags & ~TOPOLOGY_SD_FLAGS,
+	if (WARN_ONCE(sd_flags & ~TOPOLOGY_SD_FLAGS,
 			"wrong sd_flags in topology description\n"))
 		sd_flags &= TOPOLOGY_SD_FLAGS;
 
 	/* Apply detected topology flags */
 	sd_flags |= dflags;
 
-	*sd = (काष्ठा sched_करोमुख्य)अणु
-		.min_पूर्णांकerval		= sd_weight,
-		.max_पूर्णांकerval		= 2*sd_weight,
+	*sd = (struct sched_domain){
+		.min_interval		= sd_weight,
+		.max_interval		= 2*sd_weight,
 		.busy_factor		= 16,
 		.imbalance_pct		= 117,
 
@@ -1445,957 +1444,957 @@ sd_init(काष्ठा sched_करोमुख्य_topology_level *tl,
 					| sd_flags
 					,
 
-		.last_balance		= jअगरfies,
-		.balance_पूर्णांकerval	= sd_weight,
+		.last_balance		= jiffies,
+		.balance_interval	= sd_weight,
 		.max_newidle_lb_cost	= 0,
-		.next_decay_max_lb_cost	= jअगरfies,
+		.next_decay_max_lb_cost	= jiffies,
 		.child			= child,
-#अगर_घोषित CONFIG_SCHED_DEBUG
+#ifdef CONFIG_SCHED_DEBUG
 		.name			= tl->name,
-#पूर्ण_अगर
-	पूर्ण;
+#endif
+	};
 
-	cpumask_and(sched_करोमुख्य_span(sd), cpu_map, tl->mask(cpu));
-	sd_id = cpumask_first(sched_करोमुख्य_span(sd));
+	cpumask_and(sched_domain_span(sd), cpu_map, tl->mask(cpu));
+	sd_id = cpumask_first(sched_domain_span(sd));
 
 	/*
-	 * Convert topological properties पूर्णांकo behaviour.
+	 * Convert topological properties into behaviour.
 	 */
 
-	/* Don't attempt to spपढ़ो across CPUs of dअगरferent capacities. */
-	अगर ((sd->flags & SD_ASYM_CPUCAPACITY) && sd->child)
+	/* Don't attempt to spread across CPUs of different capacities. */
+	if ((sd->flags & SD_ASYM_CPUCAPACITY) && sd->child)
 		sd->child->flags &= ~SD_PREFER_SIBLING;
 
-	अगर (sd->flags & SD_SHARE_CPUCAPACITY) अणु
+	if (sd->flags & SD_SHARE_CPUCAPACITY) {
 		sd->imbalance_pct = 110;
 
-	पूर्ण अन्यथा अगर (sd->flags & SD_SHARE_PKG_RESOURCES) अणु
+	} else if (sd->flags & SD_SHARE_PKG_RESOURCES) {
 		sd->imbalance_pct = 117;
 		sd->cache_nice_tries = 1;
 
-#अगर_घोषित CONFIG_NUMA
-	पूर्ण अन्यथा अगर (sd->flags & SD_NUMA) अणु
+#ifdef CONFIG_NUMA
+	} else if (sd->flags & SD_NUMA) {
 		sd->cache_nice_tries = 2;
 
 		sd->flags &= ~SD_PREFER_SIBLING;
 		sd->flags |= SD_SERIALIZE;
-		अगर (sched_करोमुख्यs_numa_distance[tl->numa_level] > node_reclaim_distance) अणु
+		if (sched_domains_numa_distance[tl->numa_level] > node_reclaim_distance) {
 			sd->flags &= ~(SD_BALANCE_EXEC |
 				       SD_BALANCE_FORK |
 				       SD_WAKE_AFFINE);
-		पूर्ण
+		}
 
-#पूर्ण_अगर
-	पूर्ण अन्यथा अणु
+#endif
+	} else {
 		sd->cache_nice_tries = 1;
-	पूर्ण
+	}
 
 	/*
-	 * For all levels sharing cache; connect a sched_करोमुख्य_shared
+	 * For all levels sharing cache; connect a sched_domain_shared
 	 * instance.
 	 */
-	अगर (sd->flags & SD_SHARE_PKG_RESOURCES) अणु
+	if (sd->flags & SD_SHARE_PKG_RESOURCES) {
 		sd->shared = *per_cpu_ptr(sdd->sds, sd_id);
 		atomic_inc(&sd->shared->ref);
 		atomic_set(&sd->shared->nr_busy_cpus, sd_weight);
-	पूर्ण
+	}
 
-	sd->निजी = sdd;
+	sd->private = sdd;
 
-	वापस sd;
-पूर्ण
+	return sd;
+}
 
 /*
  * Topology list, bottom-up.
  */
-अटल काष्ठा sched_करोमुख्य_topology_level शेष_topology[] = अणु
-#अगर_घोषित CONFIG_SCHED_SMT
-	अणु cpu_smt_mask, cpu_smt_flags, SD_INIT_NAME(SMT) पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_SCHED_MC
-	अणु cpu_coregroup_mask, cpu_core_flags, SD_INIT_NAME(MC) पूर्ण,
-#पूर्ण_अगर
-	अणु cpu_cpu_mask, SD_INIT_NAME(DIE) पूर्ण,
-	अणु शून्य, पूर्ण,
-पूर्ण;
+static struct sched_domain_topology_level default_topology[] = {
+#ifdef CONFIG_SCHED_SMT
+	{ cpu_smt_mask, cpu_smt_flags, SD_INIT_NAME(SMT) },
+#endif
+#ifdef CONFIG_SCHED_MC
+	{ cpu_coregroup_mask, cpu_core_flags, SD_INIT_NAME(MC) },
+#endif
+	{ cpu_cpu_mask, SD_INIT_NAME(DIE) },
+	{ NULL, },
+};
 
-अटल काष्ठा sched_करोमुख्य_topology_level *sched_करोमुख्य_topology =
-	शेष_topology;
+static struct sched_domain_topology_level *sched_domain_topology =
+	default_topology;
 
-#घोषणा क्रम_each_sd_topology(tl)			\
-	क्रम (tl = sched_करोमुख्य_topology; tl->mask; tl++)
+#define for_each_sd_topology(tl)			\
+	for (tl = sched_domain_topology; tl->mask; tl++)
 
-व्योम set_sched_topology(काष्ठा sched_करोमुख्य_topology_level *tl)
-अणु
-	अगर (WARN_ON_ONCE(sched_smp_initialized))
-		वापस;
+void set_sched_topology(struct sched_domain_topology_level *tl)
+{
+	if (WARN_ON_ONCE(sched_smp_initialized))
+		return;
 
-	sched_करोमुख्य_topology = tl;
-पूर्ण
+	sched_domain_topology = tl;
+}
 
-#अगर_घोषित CONFIG_NUMA
+#ifdef CONFIG_NUMA
 
-अटल स्थिर काष्ठा cpumask *sd_numa_mask(पूर्णांक cpu)
-अणु
-	वापस sched_करोमुख्यs_numa_masks[sched_करोमुख्यs_curr_level][cpu_to_node(cpu)];
-पूर्ण
+static const struct cpumask *sd_numa_mask(int cpu)
+{
+	return sched_domains_numa_masks[sched_domains_curr_level][cpu_to_node(cpu)];
+}
 
-अटल व्योम sched_numa_warn(स्थिर अक्षर *str)
-अणु
-	अटल पूर्णांक करोne = false;
-	पूर्णांक i,j;
+static void sched_numa_warn(const char *str)
+{
+	static int done = false;
+	int i,j;
 
-	अगर (करोne)
-		वापस;
+	if (done)
+		return;
 
-	करोne = true;
+	done = true;
 
-	prपूर्णांकk(KERN_WARNING "ERROR: %s\n\n", str);
+	printk(KERN_WARNING "ERROR: %s\n\n", str);
 
-	क्रम (i = 0; i < nr_node_ids; i++) अणु
-		prपूर्णांकk(KERN_WARNING "  ");
-		क्रम (j = 0; j < nr_node_ids; j++)
-			prपूर्णांकk(KERN_CONT "%02d ", node_distance(i,j));
-		prपूर्णांकk(KERN_CONT "\n");
-	पूर्ण
-	prपूर्णांकk(KERN_WARNING "\n");
-पूर्ण
+	for (i = 0; i < nr_node_ids; i++) {
+		printk(KERN_WARNING "  ");
+		for (j = 0; j < nr_node_ids; j++)
+			printk(KERN_CONT "%02d ", node_distance(i,j));
+		printk(KERN_CONT "\n");
+	}
+	printk(KERN_WARNING "\n");
+}
 
-bool find_numa_distance(पूर्णांक distance)
-अणु
-	पूर्णांक i;
+bool find_numa_distance(int distance)
+{
+	int i;
 
-	अगर (distance == node_distance(0, 0))
-		वापस true;
+	if (distance == node_distance(0, 0))
+		return true;
 
-	क्रम (i = 0; i < sched_करोमुख्यs_numa_levels; i++) अणु
-		अगर (sched_करोमुख्यs_numa_distance[i] == distance)
-			वापस true;
-	पूर्ण
+	for (i = 0; i < sched_domains_numa_levels; i++) {
+		if (sched_domains_numa_distance[i] == distance)
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
- * A प्रणाली can have three types of NUMA topology:
- * NUMA_सूचीECT: all nodes are directly connected, or not a NUMA प्रणाली
- * NUMA_GLUELESS_MESH: some nodes reachable through पूर्णांकermediary nodes
+ * A system can have three types of NUMA topology:
+ * NUMA_DIRECT: all nodes are directly connected, or not a NUMA system
+ * NUMA_GLUELESS_MESH: some nodes reachable through intermediary nodes
  * NUMA_BACKPLANE: nodes can reach other nodes through a backplane
  *
- * The dअगरference between a glueless mesh topology and a backplane
+ * The difference between a glueless mesh topology and a backplane
  * topology lies in whether communication between not directly
- * connected nodes goes through पूर्णांकermediary nodes (where programs
+ * connected nodes goes through intermediary nodes (where programs
  * could run), or through backplane controllers. This affects
  * placement of programs.
  *
  * The type of topology can be discerned with the following tests:
- * - If the maximum distance between any nodes is 1 hop, the प्रणाली
+ * - If the maximum distance between any nodes is 1 hop, the system
  *   is directly connected.
- * - If क्रम two nodes A and B, located N > 1 hops away from each other,
- *   there is an पूर्णांकermediary node C, which is < N hops away from both
- *   nodes A and B, the प्रणाली is a glueless mesh.
+ * - If for two nodes A and B, located N > 1 hops away from each other,
+ *   there is an intermediary node C, which is < N hops away from both
+ *   nodes A and B, the system is a glueless mesh.
  */
-अटल व्योम init_numa_topology_type(व्योम)
-अणु
-	पूर्णांक a, b, c, n;
+static void init_numa_topology_type(void)
+{
+	int a, b, c, n;
 
 	n = sched_max_numa_distance;
 
-	अगर (sched_करोमुख्यs_numa_levels <= 2) अणु
-		sched_numa_topology_type = NUMA_सूचीECT;
-		वापस;
-	पूर्ण
+	if (sched_domains_numa_levels <= 2) {
+		sched_numa_topology_type = NUMA_DIRECT;
+		return;
+	}
 
-	क्रम_each_online_node(a) अणु
-		क्रम_each_online_node(b) अणु
-			/* Find two nodes furthest हटाओd from each other. */
-			अगर (node_distance(a, b) < n)
-				जारी;
+	for_each_online_node(a) {
+		for_each_online_node(b) {
+			/* Find two nodes furthest removed from each other. */
+			if (node_distance(a, b) < n)
+				continue;
 
-			/* Is there an पूर्णांकermediary node between a and b? */
-			क्रम_each_online_node(c) अणु
-				अगर (node_distance(a, c) < n &&
-				    node_distance(b, c) < n) अणु
+			/* Is there an intermediary node between a and b? */
+			for_each_online_node(c) {
+				if (node_distance(a, c) < n &&
+				    node_distance(b, c) < n) {
 					sched_numa_topology_type =
 							NUMA_GLUELESS_MESH;
-					वापस;
-				पूर्ण
-			पूर्ण
+					return;
+				}
+			}
 
 			sched_numa_topology_type = NUMA_BACKPLANE;
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			return;
+		}
+	}
+}
 
 
-#घोषणा NR_DISTANCE_VALUES (1 << DISTANCE_BITS)
+#define NR_DISTANCE_VALUES (1 << DISTANCE_BITS)
 
-व्योम sched_init_numa(व्योम)
-अणु
-	काष्ठा sched_करोमुख्य_topology_level *tl;
-	अचिन्हित दीर्घ *distance_map;
-	पूर्णांक nr_levels = 0;
-	पूर्णांक i, j;
+void sched_init_numa(void)
+{
+	struct sched_domain_topology_level *tl;
+	unsigned long *distance_map;
+	int nr_levels = 0;
+	int i, j;
 
 	/*
 	 * O(nr_nodes^2) deduplicating selection sort -- in order to find the
 	 * unique distances in the node_distance() table.
 	 */
-	distance_map = biपंचांगap_alloc(NR_DISTANCE_VALUES, GFP_KERNEL);
-	अगर (!distance_map)
-		वापस;
+	distance_map = bitmap_alloc(NR_DISTANCE_VALUES, GFP_KERNEL);
+	if (!distance_map)
+		return;
 
-	biपंचांगap_zero(distance_map, NR_DISTANCE_VALUES);
-	क्रम (i = 0; i < nr_node_ids; i++) अणु
-		क्रम (j = 0; j < nr_node_ids; j++) अणु
-			पूर्णांक distance = node_distance(i, j);
+	bitmap_zero(distance_map, NR_DISTANCE_VALUES);
+	for (i = 0; i < nr_node_ids; i++) {
+		for (j = 0; j < nr_node_ids; j++) {
+			int distance = node_distance(i, j);
 
-			अगर (distance < LOCAL_DISTANCE || distance >= NR_DISTANCE_VALUES) अणु
+			if (distance < LOCAL_DISTANCE || distance >= NR_DISTANCE_VALUES) {
 				sched_numa_warn("Invalid distance value range");
-				वापस;
-			पूर्ण
+				return;
+			}
 
-			biपंचांगap_set(distance_map, distance, 1);
-		पूर्ण
-	पूर्ण
+			bitmap_set(distance_map, distance, 1);
+		}
+	}
 	/*
 	 * We can now figure out how many unique distance values there are and
 	 * allocate memory accordingly.
 	 */
-	nr_levels = biपंचांगap_weight(distance_map, NR_DISTANCE_VALUES);
+	nr_levels = bitmap_weight(distance_map, NR_DISTANCE_VALUES);
 
-	sched_करोमुख्यs_numa_distance = kसुस्मृति(nr_levels, माप(पूर्णांक), GFP_KERNEL);
-	अगर (!sched_करोमुख्यs_numa_distance) अणु
-		biपंचांगap_मुक्त(distance_map);
-		वापस;
-	पूर्ण
+	sched_domains_numa_distance = kcalloc(nr_levels, sizeof(int), GFP_KERNEL);
+	if (!sched_domains_numa_distance) {
+		bitmap_free(distance_map);
+		return;
+	}
 
-	क्रम (i = 0, j = 0; i < nr_levels; i++, j++) अणु
+	for (i = 0, j = 0; i < nr_levels; i++, j++) {
 		j = find_next_bit(distance_map, NR_DISTANCE_VALUES, j);
-		sched_करोमुख्यs_numa_distance[i] = j;
-	पूर्ण
+		sched_domains_numa_distance[i] = j;
+	}
 
-	biपंचांगap_मुक्त(distance_map);
+	bitmap_free(distance_map);
 
 	/*
 	 * 'nr_levels' contains the number of unique distances
 	 *
-	 * The sched_करोमुख्यs_numa_distance[] array includes the actual distance
+	 * The sched_domains_numa_distance[] array includes the actual distance
 	 * numbers.
 	 */
 
 	/*
-	 * Here, we should temporarily reset sched_करोमुख्यs_numa_levels to 0.
-	 * If it fails to allocate memory क्रम array sched_करोमुख्यs_numa_masks[][],
+	 * Here, we should temporarily reset sched_domains_numa_levels to 0.
+	 * If it fails to allocate memory for array sched_domains_numa_masks[][],
 	 * the array will contain less then 'nr_levels' members. This could be
-	 * dangerous when we use it to iterate array sched_करोमुख्यs_numa_masks[][]
+	 * dangerous when we use it to iterate array sched_domains_numa_masks[][]
 	 * in other functions.
 	 *
 	 * We reset it to 'nr_levels' at the end of this function.
 	 */
-	sched_करोमुख्यs_numa_levels = 0;
+	sched_domains_numa_levels = 0;
 
-	sched_करोमुख्यs_numa_masks = kzalloc(माप(व्योम *) * nr_levels, GFP_KERNEL);
-	अगर (!sched_करोमुख्यs_numa_masks)
-		वापस;
+	sched_domains_numa_masks = kzalloc(sizeof(void *) * nr_levels, GFP_KERNEL);
+	if (!sched_domains_numa_masks)
+		return;
 
 	/*
-	 * Now क्रम each level, स्थिरruct a mask per node which contains all
+	 * Now for each level, construct a mask per node which contains all
 	 * CPUs of nodes that are that many hops away from us.
 	 */
-	क्रम (i = 0; i < nr_levels; i++) अणु
-		sched_करोमुख्यs_numa_masks[i] =
-			kzalloc(nr_node_ids * माप(व्योम *), GFP_KERNEL);
-		अगर (!sched_करोमुख्यs_numa_masks[i])
-			वापस;
+	for (i = 0; i < nr_levels; i++) {
+		sched_domains_numa_masks[i] =
+			kzalloc(nr_node_ids * sizeof(void *), GFP_KERNEL);
+		if (!sched_domains_numa_masks[i])
+			return;
 
-		क्रम (j = 0; j < nr_node_ids; j++) अणु
-			काष्ठा cpumask *mask = kzalloc(cpumask_size(), GFP_KERNEL);
-			पूर्णांक k;
+		for (j = 0; j < nr_node_ids; j++) {
+			struct cpumask *mask = kzalloc(cpumask_size(), GFP_KERNEL);
+			int k;
 
-			अगर (!mask)
-				वापस;
+			if (!mask)
+				return;
 
-			sched_करोमुख्यs_numa_masks[i][j] = mask;
+			sched_domains_numa_masks[i][j] = mask;
 
-			क्रम_each_node(k) अणु
-				अगर (sched_debug() && (node_distance(j, k) != node_distance(k, j)))
+			for_each_node(k) {
+				if (sched_debug() && (node_distance(j, k) != node_distance(k, j)))
 					sched_numa_warn("Node-distance not symmetric");
 
-				अगर (node_distance(j, k) > sched_करोमुख्यs_numa_distance[i])
-					जारी;
+				if (node_distance(j, k) > sched_domains_numa_distance[i])
+					continue;
 
 				cpumask_or(mask, mask, cpumask_of_node(k));
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	/* Compute शेष topology size */
-	क्रम (i = 0; sched_करोमुख्य_topology[i].mask; i++);
+	/* Compute default topology size */
+	for (i = 0; sched_domain_topology[i].mask; i++);
 
 	tl = kzalloc((i + nr_levels + 1) *
-			माप(काष्ठा sched_करोमुख्य_topology_level), GFP_KERNEL);
-	अगर (!tl)
-		वापस;
+			sizeof(struct sched_domain_topology_level), GFP_KERNEL);
+	if (!tl)
+		return;
 
 	/*
-	 * Copy the शेष topology bits..
+	 * Copy the default topology bits..
 	 */
-	क्रम (i = 0; sched_करोमुख्य_topology[i].mask; i++)
-		tl[i] = sched_करोमुख्य_topology[i];
+	for (i = 0; sched_domain_topology[i].mask; i++)
+		tl[i] = sched_domain_topology[i];
 
 	/*
 	 * Add the NUMA identity distance, aka single NODE.
 	 */
-	tl[i++] = (काष्ठा sched_करोमुख्य_topology_level)अणु
+	tl[i++] = (struct sched_domain_topology_level){
 		.mask = sd_numa_mask,
 		.numa_level = 0,
 		SD_INIT_NAME(NODE)
-	पूर्ण;
+	};
 
 	/*
 	 * .. and append 'j' levels of NUMA goodness.
 	 */
-	क्रम (j = 1; j < nr_levels; i++, j++) अणु
-		tl[i] = (काष्ठा sched_करोमुख्य_topology_level)अणु
+	for (j = 1; j < nr_levels; i++, j++) {
+		tl[i] = (struct sched_domain_topology_level){
 			.mask = sd_numa_mask,
 			.sd_flags = cpu_numa_flags,
 			.flags = SDTL_OVERLAP,
 			.numa_level = j,
 			SD_INIT_NAME(NUMA)
-		पूर्ण;
-	पूर्ण
+		};
+	}
 
-	sched_करोमुख्य_topology = tl;
+	sched_domain_topology = tl;
 
-	sched_करोमुख्यs_numa_levels = nr_levels;
-	sched_max_numa_distance = sched_करोमुख्यs_numa_distance[nr_levels - 1];
+	sched_domains_numa_levels = nr_levels;
+	sched_max_numa_distance = sched_domains_numa_distance[nr_levels - 1];
 
 	init_numa_topology_type();
-पूर्ण
+}
 
-व्योम sched_करोमुख्यs_numa_masks_set(अचिन्हित पूर्णांक cpu)
-अणु
-	पूर्णांक node = cpu_to_node(cpu);
-	पूर्णांक i, j;
+void sched_domains_numa_masks_set(unsigned int cpu)
+{
+	int node = cpu_to_node(cpu);
+	int i, j;
 
-	क्रम (i = 0; i < sched_करोमुख्यs_numa_levels; i++) अणु
-		क्रम (j = 0; j < nr_node_ids; j++) अणु
-			अगर (node_distance(j, node) <= sched_करोमुख्यs_numa_distance[i])
-				cpumask_set_cpu(cpu, sched_करोमुख्यs_numa_masks[i][j]);
-		पूर्ण
-	पूर्ण
-पूर्ण
+	for (i = 0; i < sched_domains_numa_levels; i++) {
+		for (j = 0; j < nr_node_ids; j++) {
+			if (node_distance(j, node) <= sched_domains_numa_distance[i])
+				cpumask_set_cpu(cpu, sched_domains_numa_masks[i][j]);
+		}
+	}
+}
 
-व्योम sched_करोमुख्यs_numa_masks_clear(अचिन्हित पूर्णांक cpu)
-अणु
-	पूर्णांक i, j;
+void sched_domains_numa_masks_clear(unsigned int cpu)
+{
+	int i, j;
 
-	क्रम (i = 0; i < sched_करोमुख्यs_numa_levels; i++) अणु
-		क्रम (j = 0; j < nr_node_ids; j++)
-			cpumask_clear_cpu(cpu, sched_करोमुख्यs_numa_masks[i][j]);
-	पूर्ण
-पूर्ण
+	for (i = 0; i < sched_domains_numa_levels; i++) {
+		for (j = 0; j < nr_node_ids; j++)
+			cpumask_clear_cpu(cpu, sched_domains_numa_masks[i][j]);
+	}
+}
 
 /*
- * sched_numa_find_बंदst() - given the NUMA topology, find the cpu
- *                             बंदst to @cpu from @cpumask.
+ * sched_numa_find_closest() - given the NUMA topology, find the cpu
+ *                             closest to @cpu from @cpumask.
  * cpumask: cpumask to find a cpu from
- * cpu: cpu to be बंद to
+ * cpu: cpu to be close to
  *
- * वापसs: cpu, or nr_cpu_ids when nothing found.
+ * returns: cpu, or nr_cpu_ids when nothing found.
  */
-पूर्णांक sched_numa_find_बंदst(स्थिर काष्ठा cpumask *cpus, पूर्णांक cpu)
-अणु
-	पूर्णांक i, j = cpu_to_node(cpu);
+int sched_numa_find_closest(const struct cpumask *cpus, int cpu)
+{
+	int i, j = cpu_to_node(cpu);
 
-	क्रम (i = 0; i < sched_करोमुख्यs_numa_levels; i++) अणु
-		cpu = cpumask_any_and(cpus, sched_करोमुख्यs_numa_masks[i][j]);
-		अगर (cpu < nr_cpu_ids)
-			वापस cpu;
-	पूर्ण
-	वापस nr_cpu_ids;
-पूर्ण
+	for (i = 0; i < sched_domains_numa_levels; i++) {
+		cpu = cpumask_any_and(cpus, sched_domains_numa_masks[i][j]);
+		if (cpu < nr_cpu_ids)
+			return cpu;
+	}
+	return nr_cpu_ids;
+}
 
-#पूर्ण_अगर /* CONFIG_NUMA */
+#endif /* CONFIG_NUMA */
 
-अटल पूर्णांक __sdt_alloc(स्थिर काष्ठा cpumask *cpu_map)
-अणु
-	काष्ठा sched_करोमुख्य_topology_level *tl;
-	पूर्णांक j;
+static int __sdt_alloc(const struct cpumask *cpu_map)
+{
+	struct sched_domain_topology_level *tl;
+	int j;
 
-	क्रम_each_sd_topology(tl) अणु
-		काष्ठा sd_data *sdd = &tl->data;
+	for_each_sd_topology(tl) {
+		struct sd_data *sdd = &tl->data;
 
-		sdd->sd = alloc_percpu(काष्ठा sched_करोमुख्य *);
-		अगर (!sdd->sd)
-			वापस -ENOMEM;
+		sdd->sd = alloc_percpu(struct sched_domain *);
+		if (!sdd->sd)
+			return -ENOMEM;
 
-		sdd->sds = alloc_percpu(काष्ठा sched_करोमुख्य_shared *);
-		अगर (!sdd->sds)
-			वापस -ENOMEM;
+		sdd->sds = alloc_percpu(struct sched_domain_shared *);
+		if (!sdd->sds)
+			return -ENOMEM;
 
-		sdd->sg = alloc_percpu(काष्ठा sched_group *);
-		अगर (!sdd->sg)
-			वापस -ENOMEM;
+		sdd->sg = alloc_percpu(struct sched_group *);
+		if (!sdd->sg)
+			return -ENOMEM;
 
-		sdd->sgc = alloc_percpu(काष्ठा sched_group_capacity *);
-		अगर (!sdd->sgc)
-			वापस -ENOMEM;
+		sdd->sgc = alloc_percpu(struct sched_group_capacity *);
+		if (!sdd->sgc)
+			return -ENOMEM;
 
-		क्रम_each_cpu(j, cpu_map) अणु
-			काष्ठा sched_करोमुख्य *sd;
-			काष्ठा sched_करोमुख्य_shared *sds;
-			काष्ठा sched_group *sg;
-			काष्ठा sched_group_capacity *sgc;
+		for_each_cpu(j, cpu_map) {
+			struct sched_domain *sd;
+			struct sched_domain_shared *sds;
+			struct sched_group *sg;
+			struct sched_group_capacity *sgc;
 
-			sd = kzalloc_node(माप(काष्ठा sched_करोमुख्य) + cpumask_size(),
+			sd = kzalloc_node(sizeof(struct sched_domain) + cpumask_size(),
 					GFP_KERNEL, cpu_to_node(j));
-			अगर (!sd)
-				वापस -ENOMEM;
+			if (!sd)
+				return -ENOMEM;
 
 			*per_cpu_ptr(sdd->sd, j) = sd;
 
-			sds = kzalloc_node(माप(काष्ठा sched_करोमुख्य_shared),
+			sds = kzalloc_node(sizeof(struct sched_domain_shared),
 					GFP_KERNEL, cpu_to_node(j));
-			अगर (!sds)
-				वापस -ENOMEM;
+			if (!sds)
+				return -ENOMEM;
 
 			*per_cpu_ptr(sdd->sds, j) = sds;
 
-			sg = kzalloc_node(माप(काष्ठा sched_group) + cpumask_size(),
+			sg = kzalloc_node(sizeof(struct sched_group) + cpumask_size(),
 					GFP_KERNEL, cpu_to_node(j));
-			अगर (!sg)
-				वापस -ENOMEM;
+			if (!sg)
+				return -ENOMEM;
 
 			sg->next = sg;
 
 			*per_cpu_ptr(sdd->sg, j) = sg;
 
-			sgc = kzalloc_node(माप(काष्ठा sched_group_capacity) + cpumask_size(),
+			sgc = kzalloc_node(sizeof(struct sched_group_capacity) + cpumask_size(),
 					GFP_KERNEL, cpu_to_node(j));
-			अगर (!sgc)
-				वापस -ENOMEM;
+			if (!sgc)
+				return -ENOMEM;
 
-#अगर_घोषित CONFIG_SCHED_DEBUG
+#ifdef CONFIG_SCHED_DEBUG
 			sgc->id = j;
-#पूर्ण_अगर
+#endif
 
 			*per_cpu_ptr(sdd->sgc, j) = sgc;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __sdt_मुक्त(स्थिर काष्ठा cpumask *cpu_map)
-अणु
-	काष्ठा sched_करोमुख्य_topology_level *tl;
-	पूर्णांक j;
+static void __sdt_free(const struct cpumask *cpu_map)
+{
+	struct sched_domain_topology_level *tl;
+	int j;
 
-	क्रम_each_sd_topology(tl) अणु
-		काष्ठा sd_data *sdd = &tl->data;
+	for_each_sd_topology(tl) {
+		struct sd_data *sdd = &tl->data;
 
-		क्रम_each_cpu(j, cpu_map) अणु
-			काष्ठा sched_करोमुख्य *sd;
+		for_each_cpu(j, cpu_map) {
+			struct sched_domain *sd;
 
-			अगर (sdd->sd) अणु
+			if (sdd->sd) {
 				sd = *per_cpu_ptr(sdd->sd, j);
-				अगर (sd && (sd->flags & SD_OVERLAP))
-					मुक्त_sched_groups(sd->groups, 0);
-				kमुक्त(*per_cpu_ptr(sdd->sd, j));
-			पूर्ण
+				if (sd && (sd->flags & SD_OVERLAP))
+					free_sched_groups(sd->groups, 0);
+				kfree(*per_cpu_ptr(sdd->sd, j));
+			}
 
-			अगर (sdd->sds)
-				kमुक्त(*per_cpu_ptr(sdd->sds, j));
-			अगर (sdd->sg)
-				kमुक्त(*per_cpu_ptr(sdd->sg, j));
-			अगर (sdd->sgc)
-				kमुक्त(*per_cpu_ptr(sdd->sgc, j));
-		पूर्ण
-		मुक्त_percpu(sdd->sd);
-		sdd->sd = शून्य;
-		मुक्त_percpu(sdd->sds);
-		sdd->sds = शून्य;
-		मुक्त_percpu(sdd->sg);
-		sdd->sg = शून्य;
-		मुक्त_percpu(sdd->sgc);
-		sdd->sgc = शून्य;
-	पूर्ण
-पूर्ण
+			if (sdd->sds)
+				kfree(*per_cpu_ptr(sdd->sds, j));
+			if (sdd->sg)
+				kfree(*per_cpu_ptr(sdd->sg, j));
+			if (sdd->sgc)
+				kfree(*per_cpu_ptr(sdd->sgc, j));
+		}
+		free_percpu(sdd->sd);
+		sdd->sd = NULL;
+		free_percpu(sdd->sds);
+		sdd->sds = NULL;
+		free_percpu(sdd->sg);
+		sdd->sg = NULL;
+		free_percpu(sdd->sgc);
+		sdd->sgc = NULL;
+	}
+}
 
-अटल काष्ठा sched_करोमुख्य *build_sched_करोमुख्य(काष्ठा sched_करोमुख्य_topology_level *tl,
-		स्थिर काष्ठा cpumask *cpu_map, काष्ठा sched_करोमुख्य_attr *attr,
-		काष्ठा sched_करोमुख्य *child, पूर्णांक dflags, पूर्णांक cpu)
-अणु
-	काष्ठा sched_करोमुख्य *sd = sd_init(tl, cpu_map, child, dflags, cpu);
+static struct sched_domain *build_sched_domain(struct sched_domain_topology_level *tl,
+		const struct cpumask *cpu_map, struct sched_domain_attr *attr,
+		struct sched_domain *child, int dflags, int cpu)
+{
+	struct sched_domain *sd = sd_init(tl, cpu_map, child, dflags, cpu);
 
-	अगर (child) अणु
+	if (child) {
 		sd->level = child->level + 1;
-		sched_करोमुख्य_level_max = max(sched_करोमुख्य_level_max, sd->level);
+		sched_domain_level_max = max(sched_domain_level_max, sd->level);
 		child->parent = sd;
 
-		अगर (!cpumask_subset(sched_करोमुख्य_span(child),
-				    sched_करोमुख्य_span(sd))) अणु
+		if (!cpumask_subset(sched_domain_span(child),
+				    sched_domain_span(sd))) {
 			pr_err("BUG: arch topology borken\n");
-#अगर_घोषित CONFIG_SCHED_DEBUG
+#ifdef CONFIG_SCHED_DEBUG
 			pr_err("     the %s domain not a subset of the %s domain\n",
 					child->name, sd->name);
-#पूर्ण_अगर
+#endif
 			/* Fixup, ensure @sd has at least @child CPUs. */
-			cpumask_or(sched_करोमुख्य_span(sd),
-				   sched_करोमुख्य_span(sd),
-				   sched_करोमुख्य_span(child));
-		पूर्ण
+			cpumask_or(sched_domain_span(sd),
+				   sched_domain_span(sd),
+				   sched_domain_span(child));
+		}
 
-	पूर्ण
-	set_करोमुख्य_attribute(sd, attr);
+	}
+	set_domain_attribute(sd, attr);
 
-	वापस sd;
-पूर्ण
+	return sd;
+}
 
 /*
- * Ensure topology masks are sane, i.e. there are no conflicts (overlaps) क्रम
+ * Ensure topology masks are sane, i.e. there are no conflicts (overlaps) for
  * any two given CPUs at this (non-NUMA) topology level.
  */
-अटल bool topology_span_sane(काष्ठा sched_करोमुख्य_topology_level *tl,
-			      स्थिर काष्ठा cpumask *cpu_map, पूर्णांक cpu)
-अणु
-	पूर्णांक i;
+static bool topology_span_sane(struct sched_domain_topology_level *tl,
+			      const struct cpumask *cpu_map, int cpu)
+{
+	int i;
 
 	/* NUMA levels are allowed to overlap */
-	अगर (tl->flags & SDTL_OVERLAP)
-		वापस true;
+	if (tl->flags & SDTL_OVERLAP)
+		return true;
 
 	/*
 	 * Non-NUMA levels cannot partially overlap - they must be either
-	 * completely equal or completely disjoपूर्णांक. Otherwise we can end up
-	 * अवरोधing the sched_group lists - i.e. a later get_group() pass
-	 * अवरोधs the linking करोne क्रम an earlier span.
+	 * completely equal or completely disjoint. Otherwise we can end up
+	 * breaking the sched_group lists - i.e. a later get_group() pass
+	 * breaks the linking done for an earlier span.
 	 */
-	क्रम_each_cpu(i, cpu_map) अणु
-		अगर (i == cpu)
-			जारी;
+	for_each_cpu(i, cpu_map) {
+		if (i == cpu)
+			continue;
 		/*
 		 * We should 'and' all those masks with 'cpu_map' to exactly
 		 * match the topology we're about to build, but that can only
-		 * हटाओ CPUs, which only lessens our ability to detect
+		 * remove CPUs, which only lessens our ability to detect
 		 * overlaps
 		 */
-		अगर (!cpumask_equal(tl->mask(cpu), tl->mask(i)) &&
-		    cpumask_पूर्णांकersects(tl->mask(cpu), tl->mask(i)))
-			वापस false;
-	पूर्ण
+		if (!cpumask_equal(tl->mask(cpu), tl->mask(i)) &&
+		    cpumask_intersects(tl->mask(cpu), tl->mask(i)))
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * Find the sched_करोमुख्य_topology_level where all CPU capacities are visible
- * क्रम all CPUs.
+ * Find the sched_domain_topology_level where all CPU capacities are visible
+ * for all CPUs.
  */
-अटल काष्ठा sched_करोमुख्य_topology_level
-*asym_cpu_capacity_level(स्थिर काष्ठा cpumask *cpu_map)
-अणु
-	पूर्णांक i, j, asym_level = 0;
+static struct sched_domain_topology_level
+*asym_cpu_capacity_level(const struct cpumask *cpu_map)
+{
+	int i, j, asym_level = 0;
 	bool asym = false;
-	काष्ठा sched_करोमुख्य_topology_level *tl, *asym_tl = शून्य;
-	अचिन्हित दीर्घ cap;
+	struct sched_domain_topology_level *tl, *asym_tl = NULL;
+	unsigned long cap;
 
 	/* Is there any asymmetry? */
 	cap = arch_scale_cpu_capacity(cpumask_first(cpu_map));
 
-	क्रम_each_cpu(i, cpu_map) अणु
-		अगर (arch_scale_cpu_capacity(i) != cap) अणु
+	for_each_cpu(i, cpu_map) {
+		if (arch_scale_cpu_capacity(i) != cap) {
 			asym = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!asym)
-		वापस शून्य;
+	if (!asym)
+		return NULL;
 
 	/*
-	 * Examine topology from all CPU's poपूर्णांक of views to detect the lowest
-	 * sched_करोमुख्य_topology_level where a highest capacity CPU is visible
+	 * Examine topology from all CPU's point of views to detect the lowest
+	 * sched_domain_topology_level where a highest capacity CPU is visible
 	 * to everyone.
 	 */
-	क्रम_each_cpu(i, cpu_map) अणु
-		अचिन्हित दीर्घ max_capacity = arch_scale_cpu_capacity(i);
-		पूर्णांक tl_id = 0;
+	for_each_cpu(i, cpu_map) {
+		unsigned long max_capacity = arch_scale_cpu_capacity(i);
+		int tl_id = 0;
 
-		क्रम_each_sd_topology(tl) अणु
-			अगर (tl_id < asym_level)
-				जाओ next_level;
+		for_each_sd_topology(tl) {
+			if (tl_id < asym_level)
+				goto next_level;
 
-			क्रम_each_cpu_and(j, tl->mask(i), cpu_map) अणु
-				अचिन्हित दीर्घ capacity;
+			for_each_cpu_and(j, tl->mask(i), cpu_map) {
+				unsigned long capacity;
 
 				capacity = arch_scale_cpu_capacity(j);
 
-				अगर (capacity <= max_capacity)
-					जारी;
+				if (capacity <= max_capacity)
+					continue;
 
 				max_capacity = capacity;
 				asym_level = tl_id;
 				asym_tl = tl;
-			पूर्ण
+			}
 next_level:
 			tl_id++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस asym_tl;
-पूर्ण
+	return asym_tl;
+}
 
 
 /*
- * Build sched करोमुख्यs क्रम a given set of CPUs and attach the sched करोमुख्यs
- * to the inभागidual CPUs
+ * Build sched domains for a given set of CPUs and attach the sched domains
+ * to the individual CPUs
  */
-अटल पूर्णांक
-build_sched_करोमुख्यs(स्थिर काष्ठा cpumask *cpu_map, काष्ठा sched_करोमुख्य_attr *attr)
-अणु
-	क्रमागत s_alloc alloc_state = sa_none;
-	काष्ठा sched_करोमुख्य *sd;
-	काष्ठा s_data d;
-	काष्ठा rq *rq = शून्य;
-	पूर्णांक i, ret = -ENOMEM;
-	काष्ठा sched_करोमुख्य_topology_level *tl_asym;
+static int
+build_sched_domains(const struct cpumask *cpu_map, struct sched_domain_attr *attr)
+{
+	enum s_alloc alloc_state = sa_none;
+	struct sched_domain *sd;
+	struct s_data d;
+	struct rq *rq = NULL;
+	int i, ret = -ENOMEM;
+	struct sched_domain_topology_level *tl_asym;
 	bool has_asym = false;
 
-	अगर (WARN_ON(cpumask_empty(cpu_map)))
-		जाओ error;
+	if (WARN_ON(cpumask_empty(cpu_map)))
+		goto error;
 
-	alloc_state = __visit_करोमुख्य_allocation_hell(&d, cpu_map);
-	अगर (alloc_state != sa_rootकरोमुख्य)
-		जाओ error;
+	alloc_state = __visit_domain_allocation_hell(&d, cpu_map);
+	if (alloc_state != sa_rootdomain)
+		goto error;
 
 	tl_asym = asym_cpu_capacity_level(cpu_map);
 
-	/* Set up करोमुख्यs क्रम CPUs specअगरied by the cpu_map: */
-	क्रम_each_cpu(i, cpu_map) अणु
-		काष्ठा sched_करोमुख्य_topology_level *tl;
-		पूर्णांक dflags = 0;
+	/* Set up domains for CPUs specified by the cpu_map: */
+	for_each_cpu(i, cpu_map) {
+		struct sched_domain_topology_level *tl;
+		int dflags = 0;
 
-		sd = शून्य;
-		क्रम_each_sd_topology(tl) अणु
-			अगर (tl == tl_asym) अणु
+		sd = NULL;
+		for_each_sd_topology(tl) {
+			if (tl == tl_asym) {
 				dflags |= SD_ASYM_CPUCAPACITY;
 				has_asym = true;
-			पूर्ण
+			}
 
-			अगर (WARN_ON(!topology_span_sane(tl, cpu_map, i)))
-				जाओ error;
+			if (WARN_ON(!topology_span_sane(tl, cpu_map, i)))
+				goto error;
 
-			sd = build_sched_करोमुख्य(tl, cpu_map, attr, sd, dflags, i);
+			sd = build_sched_domain(tl, cpu_map, attr, sd, dflags, i);
 
-			अगर (tl == sched_करोमुख्य_topology)
+			if (tl == sched_domain_topology)
 				*per_cpu_ptr(d.sd, i) = sd;
-			अगर (tl->flags & SDTL_OVERLAP)
+			if (tl->flags & SDTL_OVERLAP)
 				sd->flags |= SD_OVERLAP;
-			अगर (cpumask_equal(cpu_map, sched_करोमुख्य_span(sd)))
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (cpumask_equal(cpu_map, sched_domain_span(sd)))
+				break;
+		}
+	}
 
-	/* Build the groups क्रम the करोमुख्यs */
-	क्रम_each_cpu(i, cpu_map) अणु
-		क्रम (sd = *per_cpu_ptr(d.sd, i); sd; sd = sd->parent) अणु
-			sd->span_weight = cpumask_weight(sched_करोमुख्य_span(sd));
-			अगर (sd->flags & SD_OVERLAP) अणु
-				अगर (build_overlap_sched_groups(sd, i))
-					जाओ error;
-			पूर्ण अन्यथा अणु
-				अगर (build_sched_groups(sd, i))
-					जाओ error;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+	/* Build the groups for the domains */
+	for_each_cpu(i, cpu_map) {
+		for (sd = *per_cpu_ptr(d.sd, i); sd; sd = sd->parent) {
+			sd->span_weight = cpumask_weight(sched_domain_span(sd));
+			if (sd->flags & SD_OVERLAP) {
+				if (build_overlap_sched_groups(sd, i))
+					goto error;
+			} else {
+				if (build_sched_groups(sd, i))
+					goto error;
+			}
+		}
+	}
 
-	/* Calculate CPU capacity क्रम physical packages and nodes */
-	क्रम (i = nr_cpumask_bits-1; i >= 0; i--) अणु
-		अगर (!cpumask_test_cpu(i, cpu_map))
-			जारी;
+	/* Calculate CPU capacity for physical packages and nodes */
+	for (i = nr_cpumask_bits-1; i >= 0; i--) {
+		if (!cpumask_test_cpu(i, cpu_map))
+			continue;
 
-		क्रम (sd = *per_cpu_ptr(d.sd, i); sd; sd = sd->parent) अणु
+		for (sd = *per_cpu_ptr(d.sd, i); sd; sd = sd->parent) {
 			claim_allocations(i, sd);
 			init_sched_groups_capacity(i, sd);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Attach the करोमुख्यs */
-	rcu_पढ़ो_lock();
-	क्रम_each_cpu(i, cpu_map) अणु
+	/* Attach the domains */
+	rcu_read_lock();
+	for_each_cpu(i, cpu_map) {
 		rq = cpu_rq(i);
 		sd = *per_cpu_ptr(d.sd, i);
 
-		/* Use READ_ONCE()/WRITE_ONCE() to aव्योम load/store tearing: */
-		अगर (rq->cpu_capacity_orig > READ_ONCE(d.rd->max_cpu_capacity))
+		/* Use READ_ONCE()/WRITE_ONCE() to avoid load/store tearing: */
+		if (rq->cpu_capacity_orig > READ_ONCE(d.rd->max_cpu_capacity))
 			WRITE_ONCE(d.rd->max_cpu_capacity, rq->cpu_capacity_orig);
 
-		cpu_attach_करोमुख्य(sd, d.rd, i);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		cpu_attach_domain(sd, d.rd, i);
+	}
+	rcu_read_unlock();
 
-	अगर (has_asym)
-		अटल_branch_inc_cpuslocked(&sched_asym_cpucapacity);
+	if (has_asym)
+		static_branch_inc_cpuslocked(&sched_asym_cpucapacity);
 
-	अगर (rq && sched_debug_verbose) अणु
+	if (rq && sched_debug_verbose) {
 		pr_info("root domain span: %*pbl (max cpu_capacity = %lu)\n",
 			cpumask_pr_args(cpu_map), rq->rd->max_cpu_capacity);
-	पूर्ण
+	}
 
 	ret = 0;
 error:
-	__मुक्त_करोमुख्य_allocs(&d, alloc_state, cpu_map);
+	__free_domain_allocs(&d, alloc_state, cpu_map);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Current sched करोमुख्यs: */
-अटल cpumask_var_t			*करोms_cur;
+/* Current sched domains: */
+static cpumask_var_t			*doms_cur;
 
-/* Number of sched करोमुख्यs in 'doms_cur': */
-अटल पूर्णांक				nकरोms_cur;
+/* Number of sched domains in 'doms_cur': */
+static int				ndoms_cur;
 
-/* Attributes of custom करोमुख्यs in 'doms_cur' */
-अटल काष्ठा sched_करोमुख्य_attr		*dattr_cur;
-
-/*
- * Special हाल: If a kदो_स्मृति() of a करोms_cur partition (array of
- * cpumask) fails, then fallback to a single sched करोमुख्य,
- * as determined by the single cpumask fallback_करोms.
- */
-अटल cpumask_var_t			fallback_करोms;
+/* Attributes of custom domains in 'doms_cur' */
+static struct sched_domain_attr		*dattr_cur;
 
 /*
- * arch_update_cpu_topology lets भवized architectures update the
- * CPU core maps. It is supposed to वापस 1 अगर the topology changed
- * or 0 अगर it stayed the same.
+ * Special case: If a kmalloc() of a doms_cur partition (array of
+ * cpumask) fails, then fallback to a single sched domain,
+ * as determined by the single cpumask fallback_doms.
  */
-पूर्णांक __weak arch_update_cpu_topology(व्योम)
-अणु
-	वापस 0;
-पूर्ण
-
-cpumask_var_t *alloc_sched_करोमुख्यs(अचिन्हित पूर्णांक nकरोms)
-अणु
-	पूर्णांक i;
-	cpumask_var_t *करोms;
-
-	करोms = kदो_स्मृति_array(nकरोms, माप(*करोms), GFP_KERNEL);
-	अगर (!करोms)
-		वापस शून्य;
-	क्रम (i = 0; i < nकरोms; i++) अणु
-		अगर (!alloc_cpumask_var(&करोms[i], GFP_KERNEL)) अणु
-			मुक्त_sched_करोमुख्यs(करोms, i);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
-	वापस करोms;
-पूर्ण
-
-व्योम मुक्त_sched_करोमुख्यs(cpumask_var_t करोms[], अचिन्हित पूर्णांक nकरोms)
-अणु
-	अचिन्हित पूर्णांक i;
-	क्रम (i = 0; i < nकरोms; i++)
-		मुक्त_cpumask_var(करोms[i]);
-	kमुक्त(करोms);
-पूर्ण
+static cpumask_var_t			fallback_doms;
 
 /*
- * Set up scheduler करोमुख्यs and groups.  For now this just excludes isolated
- * CPUs, but could be used to exclude other special हालs in the future.
+ * arch_update_cpu_topology lets virtualized architectures update the
+ * CPU core maps. It is supposed to return 1 if the topology changed
+ * or 0 if it stayed the same.
  */
-पूर्णांक sched_init_करोमुख्यs(स्थिर काष्ठा cpumask *cpu_map)
-अणु
-	पूर्णांक err;
+int __weak arch_update_cpu_topology(void)
+{
+	return 0;
+}
 
-	zalloc_cpumask_var(&sched_करोमुख्यs_पंचांगpmask, GFP_KERNEL);
-	zalloc_cpumask_var(&sched_करोमुख्यs_पंचांगpmask2, GFP_KERNEL);
-	zalloc_cpumask_var(&fallback_करोms, GFP_KERNEL);
+cpumask_var_t *alloc_sched_domains(unsigned int ndoms)
+{
+	int i;
+	cpumask_var_t *doms;
+
+	doms = kmalloc_array(ndoms, sizeof(*doms), GFP_KERNEL);
+	if (!doms)
+		return NULL;
+	for (i = 0; i < ndoms; i++) {
+		if (!alloc_cpumask_var(&doms[i], GFP_KERNEL)) {
+			free_sched_domains(doms, i);
+			return NULL;
+		}
+	}
+	return doms;
+}
+
+void free_sched_domains(cpumask_var_t doms[], unsigned int ndoms)
+{
+	unsigned int i;
+	for (i = 0; i < ndoms; i++)
+		free_cpumask_var(doms[i]);
+	kfree(doms);
+}
+
+/*
+ * Set up scheduler domains and groups.  For now this just excludes isolated
+ * CPUs, but could be used to exclude other special cases in the future.
+ */
+int sched_init_domains(const struct cpumask *cpu_map)
+{
+	int err;
+
+	zalloc_cpumask_var(&sched_domains_tmpmask, GFP_KERNEL);
+	zalloc_cpumask_var(&sched_domains_tmpmask2, GFP_KERNEL);
+	zalloc_cpumask_var(&fallback_doms, GFP_KERNEL);
 
 	arch_update_cpu_topology();
-	nकरोms_cur = 1;
-	करोms_cur = alloc_sched_करोमुख्यs(nकरोms_cur);
-	अगर (!करोms_cur)
-		करोms_cur = &fallback_करोms;
-	cpumask_and(करोms_cur[0], cpu_map, housekeeping_cpumask(HK_FLAG_DOMAIN));
-	err = build_sched_करोमुख्यs(करोms_cur[0], शून्य);
+	ndoms_cur = 1;
+	doms_cur = alloc_sched_domains(ndoms_cur);
+	if (!doms_cur)
+		doms_cur = &fallback_doms;
+	cpumask_and(doms_cur[0], cpu_map, housekeeping_cpumask(HK_FLAG_DOMAIN));
+	err = build_sched_domains(doms_cur[0], NULL);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * Detach sched करोमुख्यs from a group of CPUs specअगरied in cpu_map
- * These CPUs will now be attached to the शून्य करोमुख्य
+ * Detach sched domains from a group of CPUs specified in cpu_map
+ * These CPUs will now be attached to the NULL domain
  */
-अटल व्योम detach_destroy_करोमुख्यs(स्थिर काष्ठा cpumask *cpu_map)
-अणु
-	अचिन्हित पूर्णांक cpu = cpumask_any(cpu_map);
-	पूर्णांक i;
+static void detach_destroy_domains(const struct cpumask *cpu_map)
+{
+	unsigned int cpu = cpumask_any(cpu_map);
+	int i;
 
-	अगर (rcu_access_poपूर्णांकer(per_cpu(sd_asym_cpucapacity, cpu)))
-		अटल_branch_dec_cpuslocked(&sched_asym_cpucapacity);
+	if (rcu_access_pointer(per_cpu(sd_asym_cpucapacity, cpu)))
+		static_branch_dec_cpuslocked(&sched_asym_cpucapacity);
 
-	rcu_पढ़ो_lock();
-	क्रम_each_cpu(i, cpu_map)
-		cpu_attach_करोमुख्य(शून्य, &def_root_करोमुख्य, i);
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_lock();
+	for_each_cpu(i, cpu_map)
+		cpu_attach_domain(NULL, &def_root_domain, i);
+	rcu_read_unlock();
+}
 
 /* handle null as "default" */
-अटल पूर्णांक dattrs_equal(काष्ठा sched_करोमुख्य_attr *cur, पूर्णांक idx_cur,
-			काष्ठा sched_करोमुख्य_attr *new, पूर्णांक idx_new)
-अणु
-	काष्ठा sched_करोमुख्य_attr पंचांगp;
+static int dattrs_equal(struct sched_domain_attr *cur, int idx_cur,
+			struct sched_domain_attr *new, int idx_new)
+{
+	struct sched_domain_attr tmp;
 
 	/* Fast path: */
-	अगर (!new && !cur)
-		वापस 1;
+	if (!new && !cur)
+		return 1;
 
-	पंचांगp = SD_ATTR_INIT;
+	tmp = SD_ATTR_INIT;
 
-	वापस !स_भेद(cur ? (cur + idx_cur) : &पंचांगp,
-			new ? (new + idx_new) : &पंचांगp,
-			माप(काष्ठा sched_करोमुख्य_attr));
-पूर्ण
+	return !memcmp(cur ? (cur + idx_cur) : &tmp,
+			new ? (new + idx_new) : &tmp,
+			sizeof(struct sched_domain_attr));
+}
 
 /*
- * Partition sched करोमुख्यs as specअगरied by the 'ndoms_new'
- * cpumasks in the array करोms_new[] of cpumasks. This compares
- * करोms_new[] to the current sched करोमुख्य partitioning, करोms_cur[].
- * It destroys each deleted करोमुख्य and builds each new करोमुख्य.
+ * Partition sched domains as specified by the 'ndoms_new'
+ * cpumasks in the array doms_new[] of cpumasks. This compares
+ * doms_new[] to the current sched domain partitioning, doms_cur[].
+ * It destroys each deleted domain and builds each new domain.
  *
  * 'doms_new' is an array of cpumask_var_t's of length 'ndoms_new'.
- * The masks करोn't intersect (don't overlap.) We should setup one
- * sched करोमुख्य क्रम each mask. CPUs not in any of the cpumasks will
+ * The masks don't intersect (don't overlap.) We should setup one
+ * sched domain for each mask. CPUs not in any of the cpumasks will
  * not be load balanced. If the same cpumask appears both in the
  * current 'doms_cur' domains and in the new 'doms_new', we can leave
  * it as it is.
  *
  * The passed in 'doms_new' should be allocated using
- * alloc_sched_करोमुख्यs.  This routine takes ownership of it and will
- * मुक्त_sched_करोमुख्यs it when करोne with it. If the caller failed the
- * alloc call, then it can pass in करोms_new == शून्य && nकरोms_new == 1,
- * and partition_sched_करोमुख्यs() will fallback to the single partition
- * 'fallback_doms', it also क्रमces the करोमुख्यs to be rebuilt.
+ * alloc_sched_domains.  This routine takes ownership of it and will
+ * free_sched_domains it when done with it. If the caller failed the
+ * alloc call, then it can pass in doms_new == NULL && ndoms_new == 1,
+ * and partition_sched_domains() will fallback to the single partition
+ * 'fallback_doms', it also forces the domains to be rebuilt.
  *
- * If करोms_new == शून्य it will be replaced with cpu_online_mask.
- * nकरोms_new == 0 is a special हाल क्रम destroying existing करोमुख्यs,
- * and it will not create the शेष करोमुख्य.
+ * If doms_new == NULL it will be replaced with cpu_online_mask.
+ * ndoms_new == 0 is a special case for destroying existing domains,
+ * and it will not create the default domain.
  *
- * Call with hotplug lock and sched_करोमुख्यs_mutex held
+ * Call with hotplug lock and sched_domains_mutex held
  */
-व्योम partition_sched_करोमुख्यs_locked(पूर्णांक nकरोms_new, cpumask_var_t करोms_new[],
-				    काष्ठा sched_करोमुख्य_attr *dattr_new)
-अणु
+void partition_sched_domains_locked(int ndoms_new, cpumask_var_t doms_new[],
+				    struct sched_domain_attr *dattr_new)
+{
 	bool __maybe_unused has_eas = false;
-	पूर्णांक i, j, n;
-	पूर्णांक new_topology;
+	int i, j, n;
+	int new_topology;
 
-	lockdep_निश्चित_held(&sched_करोमुख्यs_mutex);
+	lockdep_assert_held(&sched_domains_mutex);
 
 	/* Let the architecture update CPU core mappings: */
 	new_topology = arch_update_cpu_topology();
 
-	अगर (!करोms_new) अणु
+	if (!doms_new) {
 		WARN_ON_ONCE(dattr_new);
 		n = 0;
-		करोms_new = alloc_sched_करोमुख्यs(1);
-		अगर (करोms_new) अणु
+		doms_new = alloc_sched_domains(1);
+		if (doms_new) {
 			n = 1;
-			cpumask_and(करोms_new[0], cpu_active_mask,
+			cpumask_and(doms_new[0], cpu_active_mask,
 				    housekeeping_cpumask(HK_FLAG_DOMAIN));
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		n = nकरोms_new;
-	पूर्ण
+		}
+	} else {
+		n = ndoms_new;
+	}
 
-	/* Destroy deleted करोमुख्यs: */
-	क्रम (i = 0; i < nकरोms_cur; i++) अणु
-		क्रम (j = 0; j < n && !new_topology; j++) अणु
-			अगर (cpumask_equal(करोms_cur[i], करोms_new[j]) &&
-			    dattrs_equal(dattr_cur, i, dattr_new, j)) अणु
-				काष्ठा root_करोमुख्य *rd;
+	/* Destroy deleted domains: */
+	for (i = 0; i < ndoms_cur; i++) {
+		for (j = 0; j < n && !new_topology; j++) {
+			if (cpumask_equal(doms_cur[i], doms_new[j]) &&
+			    dattrs_equal(dattr_cur, i, dattr_new, j)) {
+				struct root_domain *rd;
 
 				/*
-				 * This करोमुख्य won't be destroyed and as such
+				 * This domain won't be destroyed and as such
 				 * its dl_bw->total_bw needs to be cleared.  It
 				 * will be recomputed in function
-				 * update_tasks_root_करोमुख्य().
+				 * update_tasks_root_domain().
 				 */
-				rd = cpu_rq(cpumask_any(करोms_cur[i]))->rd;
-				dl_clear_root_करोमुख्य(rd);
-				जाओ match1;
-			पूर्ण
-		पूर्ण
-		/* No match - a current sched करोमुख्य not in new करोms_new[] */
-		detach_destroy_करोमुख्यs(करोms_cur[i]);
+				rd = cpu_rq(cpumask_any(doms_cur[i]))->rd;
+				dl_clear_root_domain(rd);
+				goto match1;
+			}
+		}
+		/* No match - a current sched domain not in new doms_new[] */
+		detach_destroy_domains(doms_cur[i]);
 match1:
 		;
-	पूर्ण
+	}
 
-	n = nकरोms_cur;
-	अगर (!करोms_new) अणु
+	n = ndoms_cur;
+	if (!doms_new) {
 		n = 0;
-		करोms_new = &fallback_करोms;
-		cpumask_and(करोms_new[0], cpu_active_mask,
+		doms_new = &fallback_doms;
+		cpumask_and(doms_new[0], cpu_active_mask,
 			    housekeeping_cpumask(HK_FLAG_DOMAIN));
-	पूर्ण
+	}
 
-	/* Build new करोमुख्यs: */
-	क्रम (i = 0; i < nकरोms_new; i++) अणु
-		क्रम (j = 0; j < n && !new_topology; j++) अणु
-			अगर (cpumask_equal(करोms_new[i], करोms_cur[j]) &&
+	/* Build new domains: */
+	for (i = 0; i < ndoms_new; i++) {
+		for (j = 0; j < n && !new_topology; j++) {
+			if (cpumask_equal(doms_new[i], doms_cur[j]) &&
 			    dattrs_equal(dattr_new, i, dattr_cur, j))
-				जाओ match2;
-		पूर्ण
-		/* No match - add a new करोms_new */
-		build_sched_करोमुख्यs(करोms_new[i], dattr_new ? dattr_new + i : शून्य);
+				goto match2;
+		}
+		/* No match - add a new doms_new */
+		build_sched_domains(doms_new[i], dattr_new ? dattr_new + i : NULL);
 match2:
 		;
-	पूर्ण
+	}
 
-#अगर defined(CONFIG_ENERGY_MODEL) && defined(CONFIG_CPU_FREQ_GOV_SCHEDUTIL)
-	/* Build perf. करोमुख्यs: */
-	क्रम (i = 0; i < nकरोms_new; i++) अणु
-		क्रम (j = 0; j < n && !sched_energy_update; j++) अणु
-			अगर (cpumask_equal(करोms_new[i], करोms_cur[j]) &&
-			    cpu_rq(cpumask_first(करोms_cur[j]))->rd->pd) अणु
+#if defined(CONFIG_ENERGY_MODEL) && defined(CONFIG_CPU_FREQ_GOV_SCHEDUTIL)
+	/* Build perf. domains: */
+	for (i = 0; i < ndoms_new; i++) {
+		for (j = 0; j < n && !sched_energy_update; j++) {
+			if (cpumask_equal(doms_new[i], doms_cur[j]) &&
+			    cpu_rq(cpumask_first(doms_cur[j]))->rd->pd) {
 				has_eas = true;
-				जाओ match3;
-			पूर्ण
-		पूर्ण
-		/* No match - add perf. करोमुख्यs क्रम a new rd */
-		has_eas |= build_perf_करोमुख्यs(करोms_new[i]);
+				goto match3;
+			}
+		}
+		/* No match - add perf. domains for a new rd */
+		has_eas |= build_perf_domains(doms_new[i]);
 match3:
 		;
-	पूर्ण
+	}
 	sched_energy_set(has_eas);
-#पूर्ण_अगर
+#endif
 
-	/* Remember the new sched करोमुख्यs: */
-	अगर (करोms_cur != &fallback_करोms)
-		मुक्त_sched_करोमुख्यs(करोms_cur, nकरोms_cur);
+	/* Remember the new sched domains: */
+	if (doms_cur != &fallback_doms)
+		free_sched_domains(doms_cur, ndoms_cur);
 
-	kमुक्त(dattr_cur);
-	करोms_cur = करोms_new;
+	kfree(dattr_cur);
+	doms_cur = doms_new;
 	dattr_cur = dattr_new;
-	nकरोms_cur = nकरोms_new;
+	ndoms_cur = ndoms_new;
 
-	update_sched_करोमुख्य_debugfs();
-पूर्ण
+	update_sched_domain_debugfs();
+}
 
 /*
  * Call with hotplug lock held
  */
-व्योम partition_sched_करोमुख्यs(पूर्णांक nकरोms_new, cpumask_var_t करोms_new[],
-			     काष्ठा sched_करोमुख्य_attr *dattr_new)
-अणु
-	mutex_lock(&sched_करोमुख्यs_mutex);
-	partition_sched_करोमुख्यs_locked(nकरोms_new, करोms_new, dattr_new);
-	mutex_unlock(&sched_करोमुख्यs_mutex);
-पूर्ण
+void partition_sched_domains(int ndoms_new, cpumask_var_t doms_new[],
+			     struct sched_domain_attr *dattr_new)
+{
+	mutex_lock(&sched_domains_mutex);
+	partition_sched_domains_locked(ndoms_new, doms_new, dattr_new);
+	mutex_unlock(&sched_domains_mutex);
+}

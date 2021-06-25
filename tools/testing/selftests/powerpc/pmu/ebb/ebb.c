@@ -1,42 +1,41 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2014, Michael Ellerman, IBM Corp.
  */
 
-#घोषणा _GNU_SOURCE	/* For CPU_ZERO etc. */
+#define _GNU_SOURCE	/* For CPU_ZERO etc. */
 
-#समावेश <sched.h>
-#समावेश <sys/रुको.h>
-#समावेश <समलाँघ.स>
-#समावेश <संकेत.स>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sys/ioctl.h>
+#include <sched.h>
+#include <sys/wait.h>
+#include <setjmp.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
 
-#समावेश "trace.h"
-#समावेश "ebb.h"
+#include "trace.h"
+#include "ebb.h"
 
 
-व्योम (*ebb_user_func)(व्योम);
+void (*ebb_user_func)(void);
 
-व्योम ebb_hook(व्योम)
-अणु
-	अगर (ebb_user_func)
+void ebb_hook(void)
+{
+	if (ebb_user_func)
 		ebb_user_func();
-पूर्ण
+}
 
-काष्ठा ebb_state ebb_state;
+struct ebb_state ebb_state;
 
 u64 sample_period = 0x40000000ull;
 
-व्योम reset_ebb_with_clear_mask(अचिन्हित दीर्घ mmcr0_clear_mask)
-अणु
+void reset_ebb_with_clear_mask(unsigned long mmcr0_clear_mask)
+{
 	u64 val;
 
-	/* 2) clear MMCR0[PMAO] - करोcs say BESCR[PMEO] should करो this */
-	/* 3) set MMCR0[PMAE]	- करोcs say BESCR[PME] should करो this */
+	/* 2) clear MMCR0[PMAO] - docs say BESCR[PMEO] should do this */
+	/* 3) set MMCR0[PMAE]	- docs say BESCR[PME] should do this */
 	val = mfspr(SPRN_MMCR0);
 	mtspr(SPRN_MMCR0, (val & ~mmcr0_clear_mask) | MMCR0_PMAE);
 
@@ -46,67 +45,67 @@ u64 sample_period = 0x40000000ull;
 	/* 5) set BESCR[PME] */
 	mtspr(SPRN_BESCRS, BESCR_PME);
 
-	/* 6) rfebb 1 - करोne in our caller */
-पूर्ण
+	/* 6) rfebb 1 - done in our caller */
+}
 
-व्योम reset_ebb(व्योम)
-अणु
+void reset_ebb(void)
+{
 	reset_ebb_with_clear_mask(MMCR0_PMAO | MMCR0_FC);
-पूर्ण
+}
 
 /* Called outside of the EBB handler to check MMCR0 is sane */
-पूर्णांक ebb_check_mmcr0(व्योम)
-अणु
+int ebb_check_mmcr0(void)
+{
 	u64 val;
 
 	val = mfspr(SPRN_MMCR0);
-	अगर ((val & (MMCR0_FC | MMCR0_PMAO)) == MMCR0_FC) अणु
-		/* It's OK अगर we see FC & PMAO, but not FC by itself */
-		म_लिखो("Outside of loop, only FC set 0x%llx\n", val);
-		वापस 1;
-	पूर्ण
+	if ((val & (MMCR0_FC | MMCR0_PMAO)) == MMCR0_FC) {
+		/* It's OK if we see FC & PMAO, but not FC by itself */
+		printf("Outside of loop, only FC set 0x%llx\n", val);
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-bool ebb_check_count(पूर्णांक pmc, u64 sample_period, पूर्णांक fudge)
-अणु
+bool ebb_check_count(int pmc, u64 sample_period, int fudge)
+{
 	u64 count, upper, lower;
 
 	count = ebb_state.stats.pmc_count[PMC_INDEX(pmc)];
 
 	lower = ebb_state.stats.ebb_count * (sample_period - fudge);
 
-	अगर (count < lower) अणु
-		म_लिखो("PMC%d count (0x%llx) below lower limit 0x%llx (-0x%llx)\n",
+	if (count < lower) {
+		printf("PMC%d count (0x%llx) below lower limit 0x%llx (-0x%llx)\n",
 			pmc, count, lower, lower - count);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	upper = ebb_state.stats.ebb_count * (sample_period + fudge);
 
-	अगर (count > upper) अणु
-		म_लिखो("PMC%d count (0x%llx) above upper limit 0x%llx (+0x%llx)\n",
+	if (count > upper) {
+		printf("PMC%d count (0x%llx) above upper limit 0x%llx (+0x%llx)\n",
 			pmc, count, upper, count - upper);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	म_लिखो("PMC%d count (0x%llx) is between 0x%llx and 0x%llx delta +0x%llx/-0x%llx\n",
+	printf("PMC%d count (0x%llx) is between 0x%llx and 0x%llx delta +0x%llx/-0x%llx\n",
 		pmc, count, lower, upper, count - lower, upper - count);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम standard_ebb_callee(व्योम)
-अणु
-	पूर्णांक found, i;
+void standard_ebb_callee(void)
+{
+	int found, i;
 	u64 val;
 
 	val = mfspr(SPRN_BESCR);
-	अगर (!(val & BESCR_PMEO)) अणु
+	if (!(val & BESCR_PMEO)) {
 		ebb_state.stats.spurious++;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ebb_state.stats.ebb_count++;
 	trace_log_counter(ebb_state.trace, ebb_state.stats.ebb_count);
@@ -115,56 +114,56 @@ bool ebb_check_count(पूर्णांक pmc, u64 sample_period, पूर�
 	trace_log_reg(ebb_state.trace, SPRN_MMCR0, val);
 
 	found = 0;
-	क्रम (i = 1; i <= 6; i++) अणु
-		अगर (ebb_state.pmc_enable[PMC_INDEX(i)])
+	for (i = 1; i <= 6; i++) {
+		if (ebb_state.pmc_enable[PMC_INDEX(i)])
 			found += count_pmc(i, sample_period);
-	पूर्ण
+	}
 
-	अगर (!found)
+	if (!found)
 		ebb_state.stats.no_overflow++;
 
 out:
 	reset_ebb();
-पूर्ण
+}
 
-बाह्य व्योम ebb_handler(व्योम);
+extern void ebb_handler(void);
 
-व्योम setup_ebb_handler(व्योम (*callee)(व्योम))
-अणु
+void setup_ebb_handler(void (*callee)(void))
+{
 	u64 entry;
 
-#अगर defined(_CALL_ELF) && _CALL_ELF == 2
+#if defined(_CALL_ELF) && _CALL_ELF == 2
 	entry = (u64)ebb_handler;
-#अन्यथा
-	काष्ठा opd
-	अणु
+#else
+	struct opd
+	{
 	    u64 entry;
 	    u64 toc;
-	पूर्ण *opd;
+	} *opd;
 
-	opd = (काष्ठा opd *)ebb_handler;
+	opd = (struct opd *)ebb_handler;
 	entry = opd->entry;
-#पूर्ण_अगर
-	म_लिखो("EBB Handler is at %#llx\n", entry);
+#endif
+	printf("EBB Handler is at %#llx\n", entry);
 
 	ebb_user_func = callee;
 
-	/* Ensure ebb_user_func is set beक्रमe we set the handler */
+	/* Ensure ebb_user_func is set before we set the handler */
 	mb();
 	mtspr(SPRN_EBBHR, entry);
 
-	/* Make sure the handler is set beक्रमe we वापस */
+	/* Make sure the handler is set before we return */
 	mb();
-पूर्ण
+}
 
-व्योम clear_ebb_stats(व्योम)
-अणु
-	स_रखो(&ebb_state.stats, 0, माप(ebb_state.stats));
-पूर्ण
+void clear_ebb_stats(void)
+{
+	memset(&ebb_state.stats, 0, sizeof(ebb_state.stats));
+}
 
-व्योम dump_summary_ebb_state(व्योम)
-अणु
-	म_लिखो("ebb_state:\n"			\
+void dump_summary_ebb_state(void)
+{
+	printf("ebb_state:\n"			\
 	       "  ebb_count    = %d\n"		\
 	       "  spurious     = %d\n"		\
 	       "  negative     = %d\n"		\
@@ -180,49 +179,49 @@ out:
 		ebb_state.stats.pmc_count[0], ebb_state.stats.pmc_count[1],
 		ebb_state.stats.pmc_count[2], ebb_state.stats.pmc_count[3],
 		ebb_state.stats.pmc_count[4], ebb_state.stats.pmc_count[5]);
-पूर्ण
+}
 
-अटल अक्षर *decode_mmcr0(u32 value)
-अणु
-	अटल अक्षर buf[16];
-
-	buf[0] = '\0';
-
-	अगर (value & (1 << 31))
-		म_जोड़ो(buf, "FC ");
-	अगर (value & (1 << 26))
-		म_जोड़ो(buf, "PMAE ");
-	अगर (value & (1 << 7))
-		म_जोड़ो(buf, "PMAO ");
-
-	वापस buf;
-पूर्ण
-
-अटल अक्षर *decode_bescr(u64 value)
-अणु
-	अटल अक्षर buf[16];
+static char *decode_mmcr0(u32 value)
+{
+	static char buf[16];
 
 	buf[0] = '\0';
 
-	अगर (value & (1ull << 63))
-		म_जोड़ो(buf, "GE ");
-	अगर (value & (1ull << 32))
-		म_जोड़ो(buf, "PMAE ");
-	अगर (value & 1)
-		म_जोड़ो(buf, "PMAO ");
+	if (value & (1 << 31))
+		strcat(buf, "FC ");
+	if (value & (1 << 26))
+		strcat(buf, "PMAE ");
+	if (value & (1 << 7))
+		strcat(buf, "PMAO ");
 
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
-व्योम dump_ebb_hw_state(व्योम)
-अणु
+static char *decode_bescr(u64 value)
+{
+	static char buf[16];
+
+	buf[0] = '\0';
+
+	if (value & (1ull << 63))
+		strcat(buf, "GE ");
+	if (value & (1ull << 32))
+		strcat(buf, "PMAE ");
+	if (value & 1)
+		strcat(buf, "PMAO ");
+
+	return buf;
+}
+
+void dump_ebb_hw_state(void)
+{
 	u64 bescr;
 	u32 mmcr0;
 
 	mmcr0 = mfspr(SPRN_MMCR0);
 	bescr = mfspr(SPRN_BESCR);
 
-	म_लिखो("HW state:\n"		\
+	printf("HW state:\n"		\
 	       "MMCR0 0x%016x %s\n"	\
 	       "MMCR2 0x%016lx\n"	\
 	       "EBBHR 0x%016lx\n"	\
@@ -239,120 +238,120 @@ out:
 	       mfspr(SPRN_PMC1), mfspr(SPRN_PMC2), mfspr(SPRN_PMC3),
 	       mfspr(SPRN_PMC4), mfspr(SPRN_PMC5), mfspr(SPRN_PMC6),
 	       mfspr(SPRN_SIAR));
-पूर्ण
+}
 
-व्योम dump_ebb_state(व्योम)
-अणु
+void dump_ebb_state(void)
+{
 	dump_summary_ebb_state();
 
 	dump_ebb_hw_state();
 
-	trace_buffer_prपूर्णांक(ebb_state.trace);
-पूर्ण
+	trace_buffer_print(ebb_state.trace);
+}
 
-पूर्णांक count_pmc(पूर्णांक pmc, uपूर्णांक32_t sample_period)
-अणु
-	uपूर्णांक32_t start_value;
+int count_pmc(int pmc, uint32_t sample_period)
+{
+	uint32_t start_value;
 	u64 val;
 
 	/* 0) Read PMC */
 	start_value = pmc_sample_period(sample_period);
 
-	val = पढ़ो_pmc(pmc);
-	अगर (val < start_value)
+	val = read_pmc(pmc);
+	if (val < start_value)
 		ebb_state.stats.negative++;
-	अन्यथा
+	else
 		ebb_state.stats.pmc_count[PMC_INDEX(pmc)] += val - start_value;
 
 	trace_log_reg(ebb_state.trace, SPRN_PMC1 + pmc - 1, val);
 
 	/* 1) Reset PMC */
-	ग_लिखो_pmc(pmc, start_value);
+	write_pmc(pmc, start_value);
 
-	/* Report अगर we overflowed */
-	वापस val >= COUNTER_OVERFLOW;
-पूर्ण
+	/* Report if we overflowed */
+	return val >= COUNTER_OVERFLOW;
+}
 
-पूर्णांक ebb_event_enable(काष्ठा event *e)
-अणु
-	पूर्णांक rc;
+int ebb_event_enable(struct event *e)
+{
+	int rc;
 
-	/* Ensure any SPR ग_लिखोs are ordered vs us */
+	/* Ensure any SPR writes are ordered vs us */
 	mb();
 
 	rc = ioctl(e->fd, PERF_EVENT_IOC_ENABLE);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	rc = event_पढ़ो(e);
+	rc = event_read(e);
 
 	/* Ditto */
 	mb();
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-व्योम ebb_मुक्तze_pmcs(व्योम)
-अणु
+void ebb_freeze_pmcs(void)
+{
 	mtspr(SPRN_MMCR0, mfspr(SPRN_MMCR0) | MMCR0_FC);
 	mb();
-पूर्ण
+}
 
-व्योम ebb_unमुक्तze_pmcs(व्योम)
-अणु
-	/* Unमुक्तze counters */
+void ebb_unfreeze_pmcs(void)
+{
+	/* Unfreeze counters */
 	mtspr(SPRN_MMCR0, mfspr(SPRN_MMCR0) & ~MMCR0_FC);
 	mb();
-पूर्ण
+}
 
-व्योम ebb_global_enable(व्योम)
-अणु
+void ebb_global_enable(void)
+{
 	/* Enable EBBs globally and PMU EBBs */
 	mtspr(SPRN_BESCR, 0x8000000100000000ull);
 	mb();
-पूर्ण
+}
 
-व्योम ebb_global_disable(व्योम)
-अणु
-	/* Disable EBBs & मुक्तze counters, events are still scheduled */
+void ebb_global_disable(void)
+{
+	/* Disable EBBs & freeze counters, events are still scheduled */
 	mtspr(SPRN_BESCRR, BESCR_PME);
 	mb();
-पूर्ण
+}
 
-bool ebb_is_supported(व्योम)
-अणु
-#अगर_घोषित PPC_FEATURE2_EBB
+bool ebb_is_supported(void)
+{
+#ifdef PPC_FEATURE2_EBB
 	/* EBB requires at least POWER8 */
-	वापस have_hwcap2(PPC_FEATURE2_EBB);
-#अन्यथा
-	वापस false;
-#पूर्ण_अगर
-पूर्ण
+	return have_hwcap2(PPC_FEATURE2_EBB);
+#else
+	return false;
+#endif
+}
 
-व्योम event_ebb_init(काष्ठा event *e)
-अणु
+void event_ebb_init(struct event *e)
+{
 	e->attr.config |= (1ull << 63);
-पूर्ण
+}
 
-व्योम event_bhrb_init(काष्ठा event *e, अचिन्हित अगरm)
-अणु
-	e->attr.config |= (1ull << 62) | ((u64)अगरm << 60);
-पूर्ण
+void event_bhrb_init(struct event *e, unsigned ifm)
+{
+	e->attr.config |= (1ull << 62) | ((u64)ifm << 60);
+}
 
-व्योम event_leader_ebb_init(काष्ठा event *e)
-अणु
+void event_leader_ebb_init(struct event *e)
+{
 	event_ebb_init(e);
 
 	e->attr.exclusive = 1;
 	e->attr.pinned = 1;
-पूर्ण
+}
 
-पूर्णांक ebb_child(जोड़ pipe पढ़ो_pipe, जोड़ pipe ग_लिखो_pipe)
-अणु
-	काष्ठा event event;
-	uपूर्णांक64_t val;
+int ebb_child(union pipe read_pipe, union pipe write_pipe)
+{
+	struct event event;
+	uint64_t val;
 
-	FAIL_IF(रुको_क्रम_parent(पढ़ो_pipe));
+	FAIL_IF(wait_for_parent(read_pipe));
 
 	event_init_named(&event, 0x1001e, "cycles");
 	event_leader_ebb_init(&event);
@@ -361,7 +360,7 @@ bool ebb_is_supported(व्योम)
 	event.attr.exclude_hv = 1;
 	event.attr.exclude_idle = 1;
 
-	FAIL_IF(event_खोलो(&event));
+	FAIL_IF(event_open(&event));
 
 	ebb_enable_pmc_counting(1);
 	setup_ebb_handler(standard_ebb_callee);
@@ -369,118 +368,118 @@ bool ebb_is_supported(व्योम)
 
 	FAIL_IF(event_enable(&event));
 
-	अगर (event_पढ़ो(&event)) अणु
+	if (event_read(&event)) {
 		/*
-		 * Some tests expect to fail here, so करोn't report an error on
-		 * this line, and वापस a distinguisable error code. Tell the
+		 * Some tests expect to fail here, so don't report an error on
+		 * this line, and return a distinguisable error code. Tell the
 		 * parent an error happened.
 		 */
-		notअगरy_parent_of_error(ग_लिखो_pipe);
-		वापस 2;
-	पूर्ण
+		notify_parent_of_error(write_pipe);
+		return 2;
+	}
 
 	mtspr(SPRN_PMC1, pmc_sample_period(sample_period));
 
-	FAIL_IF(notअगरy_parent(ग_लिखो_pipe));
-	FAIL_IF(रुको_क्रम_parent(पढ़ो_pipe));
-	FAIL_IF(notअगरy_parent(ग_लिखो_pipe));
+	FAIL_IF(notify_parent(write_pipe));
+	FAIL_IF(wait_for_parent(read_pipe));
+	FAIL_IF(notify_parent(write_pipe));
 
-	जबतक (ebb_state.stats.ebb_count < 20) अणु
+	while (ebb_state.stats.ebb_count < 20) {
 		FAIL_IF(core_busy_loop());
 
-		/* To try and hit संक_अवैध हाल */
+		/* To try and hit SIGILL case */
 		val  = mfspr(SPRN_MMCRA);
 		val |= mfspr(SPRN_MMCR2);
 		val |= mfspr(SPRN_MMCR0);
-	पूर्ण
+	}
 
 	ebb_global_disable();
-	ebb_मुक्तze_pmcs();
+	ebb_freeze_pmcs();
 
 	dump_ebb_state();
 
-	event_बंद(&event);
+	event_close(&event);
 
 	FAIL_IF(ebb_state.stats.ebb_count == 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल लाँघ_बफ बनाओ_लाँघ_env;
+static jmp_buf setjmp_env;
 
-अटल व्योम sigill_handler(पूर्णांक संकेत)
-अणु
-	म_लिखो("Took sigill\n");
-	दीर्घ_लाँघ(बनाओ_लाँघ_env, 1);
-पूर्ण
+static void sigill_handler(int signal)
+{
+	printf("Took sigill\n");
+	longjmp(setjmp_env, 1);
+}
 
-अटल काष्ठा sigaction sigill_action = अणु
+static struct sigaction sigill_action = {
 	.sa_handler = sigill_handler,
-पूर्ण;
+};
 
-पूर्णांक catch_sigill(व्योम (*func)(व्योम))
-अणु
-	अगर (sigaction(संक_अवैध, &sigill_action, शून्य)) अणु
-		लिखो_त्रुटि("sigaction");
-		वापस 1;
-	पूर्ण
+int catch_sigill(void (*func)(void))
+{
+	if (sigaction(SIGILL, &sigill_action, NULL)) {
+		perror("sigaction");
+		return 1;
+	}
 
-	अगर (बनाओ_लाँघ(बनाओ_लाँघ_env) == 0) अणु
+	if (setjmp(setjmp_env) == 0) {
 		func();
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ग_लिखो_pmc1(व्योम)
-अणु
+void write_pmc1(void)
+{
 	mtspr(SPRN_PMC1, 0);
-पूर्ण
+}
 
-व्योम ग_लिखो_pmc(पूर्णांक pmc, u64 value)
-अणु
-	चयन (pmc) अणु
-		हाल 1: mtspr(SPRN_PMC1, value); अवरोध;
-		हाल 2: mtspr(SPRN_PMC2, value); अवरोध;
-		हाल 3: mtspr(SPRN_PMC3, value); अवरोध;
-		हाल 4: mtspr(SPRN_PMC4, value); अवरोध;
-		हाल 5: mtspr(SPRN_PMC5, value); अवरोध;
-		हाल 6: mtspr(SPRN_PMC6, value); अवरोध;
-	पूर्ण
-पूर्ण
+void write_pmc(int pmc, u64 value)
+{
+	switch (pmc) {
+		case 1: mtspr(SPRN_PMC1, value); break;
+		case 2: mtspr(SPRN_PMC2, value); break;
+		case 3: mtspr(SPRN_PMC3, value); break;
+		case 4: mtspr(SPRN_PMC4, value); break;
+		case 5: mtspr(SPRN_PMC5, value); break;
+		case 6: mtspr(SPRN_PMC6, value); break;
+	}
+}
 
-u64 पढ़ो_pmc(पूर्णांक pmc)
-अणु
-	चयन (pmc) अणु
-		हाल 1: वापस mfspr(SPRN_PMC1);
-		हाल 2: वापस mfspr(SPRN_PMC2);
-		हाल 3: वापस mfspr(SPRN_PMC3);
-		हाल 4: वापस mfspr(SPRN_PMC4);
-		हाल 5: वापस mfspr(SPRN_PMC5);
-		हाल 6: वापस mfspr(SPRN_PMC6);
-	पूर्ण
+u64 read_pmc(int pmc)
+{
+	switch (pmc) {
+		case 1: return mfspr(SPRN_PMC1);
+		case 2: return mfspr(SPRN_PMC2);
+		case 3: return mfspr(SPRN_PMC3);
+		case 4: return mfspr(SPRN_PMC4);
+		case 5: return mfspr(SPRN_PMC5);
+		case 6: return mfspr(SPRN_PMC6);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम term_handler(पूर्णांक संकेत)
-अणु
+static void term_handler(int signal)
+{
 	dump_summary_ebb_state();
 	dump_ebb_hw_state();
-	पात();
-पूर्ण
+	abort();
+}
 
-काष्ठा sigaction term_action = अणु
+struct sigaction term_action = {
 	.sa_handler = term_handler,
-पूर्ण;
+};
 
-अटल व्योम __attribute__((स्थिरructor)) ebb_init(व्योम)
-अणु
+static void __attribute__((constructor)) ebb_init(void)
+{
 	clear_ebb_stats();
 
-	अगर (sigaction(संक_इति, &term_action, शून्य))
-		लिखो_त्रुटि("sigaction");
+	if (sigaction(SIGTERM, &term_action, NULL))
+		perror("sigaction");
 
 	ebb_state.trace = trace_buffer_allocate(1 * 1024 * 1024);
-पूर्ण
+}

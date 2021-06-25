@@ -1,56 +1,55 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
 
-#अगर_अघोषित _ARC_KPROBES_H
-#घोषणा _ARC_KPROBES_H
+#ifndef _ARC_KPROBES_H
+#define _ARC_KPROBES_H
 
-#समावेश <यंत्र-generic/kprobes.h>
+#include <asm-generic/kprobes.h>
 
-#अगर_घोषित CONFIG_KPROBES
+#ifdef CONFIG_KPROBES
 
-प्रकार u16 kprobe_opcode_t;
+typedef u16 kprobe_opcode_t;
 
-#घोषणा UNIMP_S_INSTRUCTION 0x79e0
-#घोषणा TRAP_S_2_INSTRUCTION 0x785e
+#define UNIMP_S_INSTRUCTION 0x79e0
+#define TRAP_S_2_INSTRUCTION 0x785e
 
-#घोषणा MAX_INSN_SIZE   8
-#घोषणा MAX_STACK_SIZE  64
+#define MAX_INSN_SIZE   8
+#define MAX_STACK_SIZE  64
 
-काष्ठा arch_specअगरic_insn अणु
-	पूर्णांक is_लघु;
+struct arch_specific_insn {
+	int is_short;
 	kprobe_opcode_t *t1_addr, *t2_addr;
 	kprobe_opcode_t t1_opcode, t2_opcode;
-पूर्ण;
+};
 
-#घोषणा flush_insn_slot(p)  करो अणु  पूर्ण जबतक (0)
+#define flush_insn_slot(p)  do {  } while (0)
 
-#घोषणा kretprobe_blacklist_size    0
+#define kretprobe_blacklist_size    0
 
-काष्ठा kprobe;
+struct kprobe;
 
-व्योम arch_हटाओ_kprobe(काष्ठा kprobe *p);
+void arch_remove_kprobe(struct kprobe *p);
 
-पूर्णांक kprobe_exceptions_notअगरy(काष्ठा notअगरier_block *self,
-			     अचिन्हित दीर्घ val, व्योम *data);
+int kprobe_exceptions_notify(struct notifier_block *self,
+			     unsigned long val, void *data);
 
-काष्ठा prev_kprobe अणु
-	काष्ठा kprobe *kp;
-	अचिन्हित दीर्घ status;
-पूर्ण;
+struct prev_kprobe {
+	struct kprobe *kp;
+	unsigned long status;
+};
 
-काष्ठा kprobe_ctlblk अणु
-	अचिन्हित पूर्णांक kprobe_status;
-	काष्ठा prev_kprobe prev_kprobe;
-पूर्ण;
+struct kprobe_ctlblk {
+	unsigned int kprobe_status;
+	struct prev_kprobe prev_kprobe;
+};
 
-पूर्णांक kprobe_fault_handler(काष्ठा pt_regs *regs, अचिन्हित दीर्घ cause);
-व्योम kretprobe_trampoline(व्योम);
-व्योम trap_is_kprobe(अचिन्हित दीर्घ address, काष्ठा pt_regs *regs);
-#अन्यथा
-#घोषणा trap_is_kprobe(address, regs)
-#पूर्ण_अगर /* CONFIG_KPROBES */
+int kprobe_fault_handler(struct pt_regs *regs, unsigned long cause);
+void kretprobe_trampoline(void);
+void trap_is_kprobe(unsigned long address, struct pt_regs *regs);
+#else
+#define trap_is_kprobe(address, regs)
+#endif /* CONFIG_KPROBES */
 
-#पूर्ण_अगर /* _ARC_KPROBES_H */
+#endif /* _ARC_KPROBES_H */

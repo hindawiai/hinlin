@@ -1,8 +1,7 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-/* s390-specअगरic घड़ीsource additions */
+/* SPDX-License-Identifier: GPL-2.0 */
+/* s390-specific clocksource additions */
 
-#अगर_अघोषित _ASM_S390_CLOCKSOURCE_H
-#घोषणा _ASM_S390_CLOCKSOURCE_H
+#ifndef _ASM_S390_CLOCKSOURCE_H
+#define _ASM_S390_CLOCKSOURCE_H
 
-#पूर्ण_अगर /* _ASM_S390_CLOCKSOURCE_H */
+#endif /* _ASM_S390_CLOCKSOURCE_H */

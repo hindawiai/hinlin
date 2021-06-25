@@ -1,216 +1,215 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 
-#अगर_अघोषित __SOC_MEDIATEK_MTK_MMSYS_H
-#घोषणा __SOC_MEDIATEK_MTK_MMSYS_H
+#ifndef __SOC_MEDIATEK_MTK_MMSYS_H
+#define __SOC_MEDIATEK_MTK_MMSYS_H
 
-#घोषणा DISP_REG_CONFIG_DISP_OVL0_MOUT_EN	0x040
-#घोषणा DISP_REG_CONFIG_DISP_OVL1_MOUT_EN	0x044
-#घोषणा DISP_REG_CONFIG_DISP_OD_MOUT_EN		0x048
-#घोषणा DISP_REG_CONFIG_DISP_GAMMA_MOUT_EN	0x04c
-#घोषणा DISP_REG_CONFIG_DISP_UFOE_MOUT_EN	0x050
-#घोषणा DISP_REG_CONFIG_DISP_COLOR0_SEL_IN	0x084
-#घोषणा DISP_REG_CONFIG_DISP_COLOR1_SEL_IN	0x088
-#घोषणा DISP_REG_CONFIG_DSIE_SEL_IN		0x0a4
-#घोषणा DISP_REG_CONFIG_DSIO_SEL_IN		0x0a8
-#घोषणा DISP_REG_CONFIG_DPI_SEL_IN		0x0ac
-#घोषणा DISP_REG_CONFIG_DISP_RDMA2_SOUT		0x0b8
-#घोषणा DISP_REG_CONFIG_DISP_RDMA0_SOUT_EN	0x0c4
-#घोषणा DISP_REG_CONFIG_DISP_RDMA1_SOUT_EN	0x0c8
-#घोषणा DISP_REG_CONFIG_MMSYS_CG_CON0		0x100
+#define DISP_REG_CONFIG_DISP_OVL0_MOUT_EN	0x040
+#define DISP_REG_CONFIG_DISP_OVL1_MOUT_EN	0x044
+#define DISP_REG_CONFIG_DISP_OD_MOUT_EN		0x048
+#define DISP_REG_CONFIG_DISP_GAMMA_MOUT_EN	0x04c
+#define DISP_REG_CONFIG_DISP_UFOE_MOUT_EN	0x050
+#define DISP_REG_CONFIG_DISP_COLOR0_SEL_IN	0x084
+#define DISP_REG_CONFIG_DISP_COLOR1_SEL_IN	0x088
+#define DISP_REG_CONFIG_DSIE_SEL_IN		0x0a4
+#define DISP_REG_CONFIG_DSIO_SEL_IN		0x0a8
+#define DISP_REG_CONFIG_DPI_SEL_IN		0x0ac
+#define DISP_REG_CONFIG_DISP_RDMA2_SOUT		0x0b8
+#define DISP_REG_CONFIG_DISP_RDMA0_SOUT_EN	0x0c4
+#define DISP_REG_CONFIG_DISP_RDMA1_SOUT_EN	0x0c8
+#define DISP_REG_CONFIG_MMSYS_CG_CON0		0x100
 
-#घोषणा DISP_REG_CONFIG_DISP_OVL_MOUT_EN	0x030
-#घोषणा DISP_REG_CONFIG_OUT_SEL			0x04c
-#घोषणा DISP_REG_CONFIG_DSI_SEL			0x050
-#घोषणा DISP_REG_CONFIG_DPI_SEL			0x064
+#define DISP_REG_CONFIG_DISP_OVL_MOUT_EN	0x030
+#define DISP_REG_CONFIG_OUT_SEL			0x04c
+#define DISP_REG_CONFIG_DSI_SEL			0x050
+#define DISP_REG_CONFIG_DPI_SEL			0x064
 
-#घोषणा OVL0_MOUT_EN_COLOR0			0x1
-#घोषणा OD_MOUT_EN_RDMA0			0x1
-#घोषणा OD1_MOUT_EN_RDMA1			BIT(16)
-#घोषणा UFOE_MOUT_EN_DSI0			0x1
-#घोषणा COLOR0_SEL_IN_OVL0			0x1
-#घोषणा OVL1_MOUT_EN_COLOR1			0x1
-#घोषणा GAMMA_MOUT_EN_RDMA1			0x1
-#घोषणा RDMA0_SOUT_DPI0				0x2
-#घोषणा RDMA0_SOUT_DPI1				0x3
-#घोषणा RDMA0_SOUT_DSI1				0x1
-#घोषणा RDMA0_SOUT_DSI2				0x4
-#घोषणा RDMA0_SOUT_DSI3				0x5
-#घोषणा RDMA1_SOUT_DPI0				0x2
-#घोषणा RDMA1_SOUT_DPI1				0x3
-#घोषणा RDMA1_SOUT_DSI1				0x1
-#घोषणा RDMA1_SOUT_DSI2				0x4
-#घोषणा RDMA1_SOUT_DSI3				0x5
-#घोषणा RDMA2_SOUT_DPI0				0x2
-#घोषणा RDMA2_SOUT_DPI1				0x3
-#घोषणा RDMA2_SOUT_DSI1				0x1
-#घोषणा RDMA2_SOUT_DSI2				0x4
-#घोषणा RDMA2_SOUT_DSI3				0x5
-#घोषणा DPI0_SEL_IN_RDMA1			0x1
-#घोषणा DPI0_SEL_IN_RDMA2			0x3
-#घोषणा DPI1_SEL_IN_RDMA1			(0x1 << 8)
-#घोषणा DPI1_SEL_IN_RDMA2			(0x3 << 8)
-#घोषणा DSI0_SEL_IN_RDMA1			0x1
-#घोषणा DSI0_SEL_IN_RDMA2			0x4
-#घोषणा DSI1_SEL_IN_RDMA1			0x1
-#घोषणा DSI1_SEL_IN_RDMA2			0x4
-#घोषणा DSI2_SEL_IN_RDMA1			(0x1 << 16)
-#घोषणा DSI2_SEL_IN_RDMA2			(0x4 << 16)
-#घोषणा DSI3_SEL_IN_RDMA1			(0x1 << 16)
-#घोषणा DSI3_SEL_IN_RDMA2			(0x4 << 16)
-#घोषणा COLOR1_SEL_IN_OVL1			0x1
+#define OVL0_MOUT_EN_COLOR0			0x1
+#define OD_MOUT_EN_RDMA0			0x1
+#define OD1_MOUT_EN_RDMA1			BIT(16)
+#define UFOE_MOUT_EN_DSI0			0x1
+#define COLOR0_SEL_IN_OVL0			0x1
+#define OVL1_MOUT_EN_COLOR1			0x1
+#define GAMMA_MOUT_EN_RDMA1			0x1
+#define RDMA0_SOUT_DPI0				0x2
+#define RDMA0_SOUT_DPI1				0x3
+#define RDMA0_SOUT_DSI1				0x1
+#define RDMA0_SOUT_DSI2				0x4
+#define RDMA0_SOUT_DSI3				0x5
+#define RDMA1_SOUT_DPI0				0x2
+#define RDMA1_SOUT_DPI1				0x3
+#define RDMA1_SOUT_DSI1				0x1
+#define RDMA1_SOUT_DSI2				0x4
+#define RDMA1_SOUT_DSI3				0x5
+#define RDMA2_SOUT_DPI0				0x2
+#define RDMA2_SOUT_DPI1				0x3
+#define RDMA2_SOUT_DSI1				0x1
+#define RDMA2_SOUT_DSI2				0x4
+#define RDMA2_SOUT_DSI3				0x5
+#define DPI0_SEL_IN_RDMA1			0x1
+#define DPI0_SEL_IN_RDMA2			0x3
+#define DPI1_SEL_IN_RDMA1			(0x1 << 8)
+#define DPI1_SEL_IN_RDMA2			(0x3 << 8)
+#define DSI0_SEL_IN_RDMA1			0x1
+#define DSI0_SEL_IN_RDMA2			0x4
+#define DSI1_SEL_IN_RDMA1			0x1
+#define DSI1_SEL_IN_RDMA2			0x4
+#define DSI2_SEL_IN_RDMA1			(0x1 << 16)
+#define DSI2_SEL_IN_RDMA2			(0x4 << 16)
+#define DSI3_SEL_IN_RDMA1			(0x1 << 16)
+#define DSI3_SEL_IN_RDMA2			(0x4 << 16)
+#define COLOR1_SEL_IN_OVL1			0x1
 
-#घोषणा OVL_MOUT_EN_RDMA			0x1
-#घोषणा BLS_TO_DSI_RDMA1_TO_DPI1		0x8
-#घोषणा BLS_TO_DPI_RDMA1_TO_DSI			0x2
-#घोषणा DSI_SEL_IN_BLS				0x0
-#घोषणा DPI_SEL_IN_BLS				0x0
-#घोषणा DSI_SEL_IN_RDMA				0x1
+#define OVL_MOUT_EN_RDMA			0x1
+#define BLS_TO_DSI_RDMA1_TO_DPI1		0x8
+#define BLS_TO_DPI_RDMA1_TO_DSI			0x2
+#define DSI_SEL_IN_BLS				0x0
+#define DPI_SEL_IN_BLS				0x0
+#define DSI_SEL_IN_RDMA				0x1
 
-काष्ठा mtk_mmsys_routes अणु
+struct mtk_mmsys_routes {
 	u32 from_comp;
 	u32 to_comp;
 	u32 addr;
 	u32 val;
-पूर्ण;
+};
 
-काष्ठा mtk_mmsys_driver_data अणु
-	स्थिर अक्षर *clk_driver;
-	स्थिर काष्ठा mtk_mmsys_routes *routes;
-	स्थिर अचिन्हित पूर्णांक num_routes;
-पूर्ण;
+struct mtk_mmsys_driver_data {
+	const char *clk_driver;
+	const struct mtk_mmsys_routes *routes;
+	const unsigned int num_routes;
+};
 
 /*
- * Routes in mt8173, mt2701, mt2712 are dअगरferent. That means
- * in the same रेजिस्टर address, it controls dअगरferent input/output
- * selection क्रम each SoC. But, right now, they use the same table as
- * शेष routes meet their requirements. But we करोn't have the complete
- * route inक्रमmation क्रम these three SoC, so just keep them in the same
- * table. After we've more inक्रमmation, we could separate mt2701, mt2712
+ * Routes in mt8173, mt2701, mt2712 are different. That means
+ * in the same register address, it controls different input/output
+ * selection for each SoC. But, right now, they use the same table as
+ * default routes meet their requirements. But we don't have the complete
+ * route information for these three SoC, so just keep them in the same
+ * table. After we've more information, we could separate mt2701, mt2712
  * to an independent table.
  */
-अटल स्थिर काष्ठा mtk_mmsys_routes mmsys_शेष_routing_table[] = अणु
-	अणु
+static const struct mtk_mmsys_routes mmsys_default_routing_table[] = {
+	{
 		DDP_COMPONENT_BLS, DDP_COMPONENT_DSI0,
 		DISP_REG_CONFIG_OUT_SEL, BLS_TO_DSI_RDMA1_TO_DPI1
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_BLS, DDP_COMPONENT_DSI0,
 		DISP_REG_CONFIG_DSI_SEL, DSI_SEL_IN_BLS
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_BLS, DDP_COMPONENT_DPI0,
 		DISP_REG_CONFIG_OUT_SEL, BLS_TO_DPI_RDMA1_TO_DSI
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_BLS, DDP_COMPONENT_DPI0,
 		DISP_REG_CONFIG_DSI_SEL, DSI_SEL_IN_RDMA
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_BLS, DDP_COMPONENT_DPI0,
 		DISP_REG_CONFIG_DPI_SEL, DPI_SEL_IN_BLS
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_GAMMA, DDP_COMPONENT_RDMA1,
 		DISP_REG_CONFIG_DISP_GAMMA_MOUT_EN, GAMMA_MOUT_EN_RDMA1
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_OD0, DDP_COMPONENT_RDMA0,
 		DISP_REG_CONFIG_DISP_OD_MOUT_EN, OD_MOUT_EN_RDMA0
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_OD1, DDP_COMPONENT_RDMA1,
 		DISP_REG_CONFIG_DISP_OD_MOUT_EN, OD1_MOUT_EN_RDMA1
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_OVL0, DDP_COMPONENT_COLOR0,
 		DISP_REG_CONFIG_DISP_OVL0_MOUT_EN, OVL0_MOUT_EN_COLOR0
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_OVL0, DDP_COMPONENT_COLOR0,
 		DISP_REG_CONFIG_DISP_COLOR0_SEL_IN, COLOR0_SEL_IN_OVL0
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_OVL0, DDP_COMPONENT_RDMA0,
 		DISP_REG_CONFIG_DISP_OVL_MOUT_EN, OVL_MOUT_EN_RDMA
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_OVL1, DDP_COMPONENT_COLOR1,
 		DISP_REG_CONFIG_DISP_OVL1_MOUT_EN, OVL1_MOUT_EN_COLOR1
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_OVL1, DDP_COMPONENT_COLOR1,
 		DISP_REG_CONFIG_DISP_COLOR1_SEL_IN, COLOR1_SEL_IN_OVL1
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA0, DDP_COMPONENT_DPI0,
 		DISP_REG_CONFIG_DISP_RDMA0_SOUT_EN, RDMA0_SOUT_DPI0
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA0, DDP_COMPONENT_DPI1,
 		DISP_REG_CONFIG_DISP_RDMA0_SOUT_EN, RDMA0_SOUT_DPI1
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA0, DDP_COMPONENT_DSI1,
 		DISP_REG_CONFIG_DISP_RDMA0_SOUT_EN, RDMA0_SOUT_DSI1
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA0, DDP_COMPONENT_DSI2,
 		DISP_REG_CONFIG_DISP_RDMA0_SOUT_EN, RDMA0_SOUT_DSI2
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA0, DDP_COMPONENT_DSI3,
 		DISP_REG_CONFIG_DISP_RDMA0_SOUT_EN, RDMA0_SOUT_DSI3
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA1, DDP_COMPONENT_DPI0,
 		DISP_REG_CONFIG_DISP_RDMA1_SOUT_EN, RDMA1_SOUT_DPI0
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA1, DDP_COMPONENT_DPI0,
 		DISP_REG_CONFIG_DPI_SEL_IN, DPI0_SEL_IN_RDMA1
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA1, DDP_COMPONENT_DPI1,
 		DISP_REG_CONFIG_DISP_RDMA1_SOUT_EN, RDMA1_SOUT_DPI1
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA1, DDP_COMPONENT_DPI1,
 		DISP_REG_CONFIG_DPI_SEL_IN, DPI1_SEL_IN_RDMA1
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA1, DDP_COMPONENT_DSI0,
 		DISP_REG_CONFIG_DSIE_SEL_IN, DSI0_SEL_IN_RDMA1
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA1, DDP_COMPONENT_DSI1,
 		DISP_REG_CONFIG_DISP_RDMA1_SOUT_EN, RDMA1_SOUT_DSI1
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA1, DDP_COMPONENT_DSI1,
 		DISP_REG_CONFIG_DSIO_SEL_IN, DSI1_SEL_IN_RDMA1
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA1, DDP_COMPONENT_DSI2,
 		DISP_REG_CONFIG_DISP_RDMA1_SOUT_EN, RDMA1_SOUT_DSI2
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA1, DDP_COMPONENT_DSI2,
 		DISP_REG_CONFIG_DSIE_SEL_IN, DSI2_SEL_IN_RDMA1
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA1, DDP_COMPONENT_DSI3,
 		DISP_REG_CONFIG_DISP_RDMA1_SOUT_EN, RDMA1_SOUT_DSI3
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA1, DDP_COMPONENT_DSI3,
 		DISP_REG_CONFIG_DSIO_SEL_IN, DSI3_SEL_IN_RDMA1
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA2, DDP_COMPONENT_DPI0,
 		DISP_REG_CONFIG_DISP_RDMA2_SOUT, RDMA2_SOUT_DPI0
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA2, DDP_COMPONENT_DPI0,
 		DISP_REG_CONFIG_DPI_SEL_IN, DPI0_SEL_IN_RDMA2
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA2, DDP_COMPONENT_DPI1,
 		DISP_REG_CONFIG_DISP_RDMA2_SOUT, RDMA2_SOUT_DPI1
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA2, DDP_COMPONENT_DPI1,
 		DISP_REG_CONFIG_DPI_SEL_IN, DPI1_SEL_IN_RDMA2
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA2, DDP_COMPONENT_DSI0,
 		DISP_REG_CONFIG_DSIE_SEL_IN, DSI0_SEL_IN_RDMA2
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA2, DDP_COMPONENT_DSI1,
 		DISP_REG_CONFIG_DISP_RDMA2_SOUT, RDMA2_SOUT_DSI1
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA2, DDP_COMPONENT_DSI1,
 		DISP_REG_CONFIG_DSIO_SEL_IN, DSI1_SEL_IN_RDMA2
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA2, DDP_COMPONENT_DSI2,
 		DISP_REG_CONFIG_DISP_RDMA2_SOUT, RDMA2_SOUT_DSI2
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA2, DDP_COMPONENT_DSI2,
 		DISP_REG_CONFIG_DSIE_SEL_IN, DSI2_SEL_IN_RDMA2
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA2, DDP_COMPONENT_DSI3,
 		DISP_REG_CONFIG_DISP_RDMA2_SOUT, RDMA2_SOUT_DSI3
-	पूर्ण, अणु
+	}, {
 		DDP_COMPONENT_RDMA2, DDP_COMPONENT_DSI3,
 		DISP_REG_CONFIG_DSIO_SEL_IN, DSI3_SEL_IN_RDMA2
-	पूर्ण
-पूर्ण;
+	}
+};
 
-#पूर्ण_अगर /* __SOC_MEDIATEK_MTK_MMSYS_H */
+#endif /* __SOC_MEDIATEK_MTK_MMSYS_H */

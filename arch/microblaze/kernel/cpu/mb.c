@@ -1,54 +1,53 @@
-<शैली गुरु>
 /*
- * CPU-version specअगरic code
+ * CPU-version specific code
  *
  * Copyright (C) 2007-2009 Michal Simek <monstr@monstr.eu>
  * Copyright (C) 2006-2009 PetaLogix
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License. See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License. See the file "COPYING" in the main directory of this archive
+ * for more details.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/initrd.h>
+#include <linux/init.h>
+#include <linux/string.h>
+#include <linux/seq_file.h>
+#include <linux/cpu.h>
+#include <linux/initrd.h>
 
-#समावेश <linux/bug.h>
-#समावेश <यंत्र/cpuinfo.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/page.h>
-#समावेश <linux/param.h>
-#समावेश <यंत्र/pvr.h>
-#समावेश <यंत्र/sections.h>
-#समावेश <यंत्र/setup.h>
+#include <linux/bug.h>
+#include <asm/cpuinfo.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <asm/page.h>
+#include <linux/param.h>
+#include <asm/pvr.h>
+#include <asm/sections.h>
+#include <asm/setup.h>
 
-अटल पूर्णांक show_cpuinfo(काष्ठा seq_file *m, व्योम *v)
-अणु
-	अक्षर *fpga_family = "Unknown";
-	अक्षर *cpu_ver = "Unknown";
-	पूर्णांक i;
+static int show_cpuinfo(struct seq_file *m, void *v)
+{
+	char *fpga_family = "Unknown";
+	char *cpu_ver = "Unknown";
+	int i;
 
 	/* Denormalised to get the fpga family string */
-	क्रम (i = 0; family_string_lookup[i].s != शून्य; i++) अणु
-		अगर (cpuinfo.fpga_family_code == family_string_lookup[i].k) अणु
-			fpga_family = (अक्षर *)family_string_lookup[i].s;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	for (i = 0; family_string_lookup[i].s != NULL; i++) {
+		if (cpuinfo.fpga_family_code == family_string_lookup[i].k) {
+			fpga_family = (char *)family_string_lookup[i].s;
+			break;
+		}
+	}
 
 	/* Denormalised to get the hw version string */
-	क्रम (i = 0; cpu_ver_lookup[i].s != शून्य; i++) अणु
-		अगर (cpuinfo.ver_code == cpu_ver_lookup[i].k) अणु
-			cpu_ver = (अक्षर *)cpu_ver_lookup[i].s;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	for (i = 0; cpu_ver_lookup[i].s != NULL; i++) {
+		if (cpuinfo.ver_code == cpu_ver_lookup[i].k) {
+			cpu_ver = (char *)cpu_ver_lookup[i].s;
+			break;
+		}
+	}
 
-	seq_म_लिखो(m,
+	seq_printf(m,
 		   "CPU-Family:	MicroBlaze\n"
 		   "FPGA-Arch:	%s\n"
 		   "CPU-Ver:	%s, %s endian\n"
@@ -57,12 +56,12 @@
 		   fpga_family,
 		   cpu_ver,
 		   cpuinfo.endian ? "little" : "big",
-		   cpuinfo.cpu_घड़ी_freq / 1000000,
-		   cpuinfo.cpu_घड़ी_freq % 1000000,
-		   loops_per_jअगरfy / (500000 / HZ),
-		   (loops_per_jअगरfy / (5000 / HZ)) % 100);
+		   cpuinfo.cpu_clock_freq / 1000000,
+		   cpuinfo.cpu_clock_freq % 1000000,
+		   loops_per_jiffy / (500000 / HZ),
+		   (loops_per_jiffy / (5000 / HZ)) % 100);
 
-	seq_म_लिखो(m,
+	seq_printf(m,
 		   "HW:\n Shift:\t\t%s\n"
 		   " MSR:\t\t%s\n"
 		   " PCMP:\t\t%s\n"
@@ -72,9 +71,9 @@
 		   (cpuinfo.use_instr & PVR2_USE_PCMP_INSTR) ? "yes" : "no",
 		   (cpuinfo.use_instr & PVR0_USE_DIV_MASK) ? "yes" : "no");
 
-	seq_म_लिखो(m, " MMU:\t\t%x\n", cpuinfo.mmu);
+	seq_printf(m, " MMU:\t\t%x\n", cpuinfo.mmu);
 
-	seq_म_लिखो(m,
+	seq_printf(m,
 		   " MUL:\t\t%s\n"
 		   " FPU:\t\t%s\n",
 		   (cpuinfo.use_mult & PVR2_USE_MUL64_MASK) ? "v2" :
@@ -82,7 +81,7 @@
 		   (cpuinfo.use_fpu & PVR2_USE_FPU2_MASK) ? "v2" :
 		   (cpuinfo.use_fpu & PVR0_USE_FPU_MASK) ? "v1" : "no");
 
-	seq_म_लिखो(m,
+	seq_printf(m,
 		   " Exc:\t\t%s%s%s%s%s%s%s%s\n",
 		   (cpuinfo.use_exc & PVR2_OPCODE_0x0_ILL_MASK) ? "op0x0 " : "",
 		   (cpuinfo.use_exc & PVR2_UNALIGNED_EXC_MASK) ? "unal " : "",
@@ -93,67 +92,67 @@
 		   (cpuinfo.use_exc & PVR2_FPU_EXC_MASK) ? "fpu " : "",
 		   (cpuinfo.use_exc & PVR2_USE_FSL_EXC) ? "fsl " : "");
 
-	seq_म_लिखो(m,
+	seq_printf(m,
 		   "Stream-insns:\t%sprivileged\n",
 		   cpuinfo.mmu_privins ? "un" : "");
 
-	अगर (cpuinfo.use_icache)
-		seq_म_लिखो(m,
+	if (cpuinfo.use_icache)
+		seq_printf(m,
 			   "Icache:\t\t%ukB\tline length:\t%dB\n",
 			   cpuinfo.icache_size >> 10,
 			   cpuinfo.icache_line_length);
-	अन्यथा
-		seq_माला_दो(m, "Icache:\t\tno\n");
+	else
+		seq_puts(m, "Icache:\t\tno\n");
 
-	अगर (cpuinfo.use_dcache) अणु
-		seq_म_लिखो(m,
+	if (cpuinfo.use_dcache) {
+		seq_printf(m,
 			   "Dcache:\t\t%ukB\tline length:\t%dB\n",
 			   cpuinfo.dcache_size >> 10,
 			   cpuinfo.dcache_line_length);
-		seq_माला_दो(m, "Dcache-Policy:\t");
-		अगर (cpuinfo.dcache_wb)
-			seq_माला_दो(m, "write-back\n");
-		अन्यथा
-			seq_माला_दो(m, "write-through\n");
-	पूर्ण अन्यथा अणु
-		seq_माला_दो(m, "Dcache:\t\tno\n");
-	पूर्ण
+		seq_puts(m, "Dcache-Policy:\t");
+		if (cpuinfo.dcache_wb)
+			seq_puts(m, "write-back\n");
+		else
+			seq_puts(m, "write-through\n");
+	} else {
+		seq_puts(m, "Dcache:\t\tno\n");
+	}
 
-	seq_म_लिखो(m,
+	seq_printf(m,
 		   "HW-Debug:\t%s\n",
 		   cpuinfo.hw_debug ? "yes" : "no");
 
-	seq_म_लिखो(m,
+	seq_printf(m,
 		   "PVR-USR1:\t%02x\n"
 		   "PVR-USR2:\t%08x\n",
 		   cpuinfo.pvr_user1,
 		   cpuinfo.pvr_user2);
 
-	seq_म_लिखो(m, "Page size:\t%lu\n", PAGE_SIZE);
+	seq_printf(m, "Page size:\t%lu\n", PAGE_SIZE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम *c_start(काष्ठा seq_file *m, loff_t *pos)
-अणु
-	पूर्णांक i = *pos;
+static void *c_start(struct seq_file *m, loff_t *pos)
+{
+	int i = *pos;
 
-	वापस i < NR_CPUS ? (व्योम *) (i + 1) : शून्य;
-पूर्ण
+	return i < NR_CPUS ? (void *) (i + 1) : NULL;
+}
 
-अटल व्योम *c_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
-अणु
+static void *c_next(struct seq_file *m, void *v, loff_t *pos)
+{
 	++*pos;
-	वापस c_start(m, pos);
-पूर्ण
+	return c_start(m, pos);
+}
 
-अटल व्योम c_stop(काष्ठा seq_file *m, व्योम *v)
-अणु
-पूर्ण
+static void c_stop(struct seq_file *m, void *v)
+{
+}
 
-स्थिर काष्ठा seq_operations cpuinfo_op = अणु
+const struct seq_operations cpuinfo_op = {
 	.start = c_start,
 	.next = c_next,
 	.stop = c_stop,
 	.show = show_cpuinfo,
-पूर्ण;
+};

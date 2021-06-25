@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2006-2009 Simtec Electronics
  *	http://armlinux.simtec.co.uk/
@@ -7,294 +6,294 @@
  *
  * S3C CPU frequency scaling support - core support
  */
-#अगर_अघोषित __LINUX_SOC_SAMSUNG_S3C_CPUFREQ_CORE_H
-#घोषणा __LINUX_SOC_SAMSUNG_S3C_CPUFREQ_CORE_H
+#ifndef __LINUX_SOC_SAMSUNG_S3C_CPUFREQ_CORE_H
+#define __LINUX_SOC_SAMSUNG_S3C_CPUFREQ_CORE_H
 
-#समावेश <linux/soc/samsung/s3c-cpu-freq.h>
+#include <linux/soc/samsung/s3c-cpu-freq.h>
 
-काष्ठा seq_file;
+struct seq_file;
 
-#घोषणा MAX_BANKS (8)
-#घोषणा S3C2412_MAX_IO	(8)
+#define MAX_BANKS (8)
+#define S3C2412_MAX_IO	(8)
 
 /**
- * काष्ठा s3c2410_iobank_timing - IO bank timings क्रम S3C2410 style timings
- * @bankcon: The cached version of settings in this काष्ठाure.
+ * struct s3c2410_iobank_timing - IO bank timings for S3C2410 style timings
+ * @bankcon: The cached version of settings in this structure.
  * @tacp:
- * @tacs: Time from address valid to nCS निश्चितed.
- * @tcos: Time from nCS निश्चितed to nOE or nWE निश्चितed.
- * @tacc: Time that nOE or nWE is निश्चितed.
+ * @tacs: Time from address valid to nCS asserted.
+ * @tcos: Time from nCS asserted to nOE or nWE asserted.
+ * @tacc: Time that nOE or nWE is asserted.
  * @tcoh: Time nCS is held after nOE or nWE are released.
- * @tcah: Time address is held क्रम after
- * @nरुको_en: Whether nWAIT is enabled क्रम this bank.
+ * @tcah: Time address is held for after
+ * @nwait_en: Whether nWAIT is enabled for this bank.
  *
- * This काष्ठाure represents the IO timings क्रम a S3C2410 style IO bank
- * used by the CPU frequency support अगर it needs to change the settings
+ * This structure represents the IO timings for a S3C2410 style IO bank
+ * used by the CPU frequency support if it needs to change the settings
  * of the IO.
  */
-काष्ठा s3c2410_iobank_timing अणु
-	अचिन्हित दीर्घ	bankcon;
-	अचिन्हित पूर्णांक	tacp;
-	अचिन्हित पूर्णांक	tacs;
-	अचिन्हित पूर्णांक	tcos;
-	अचिन्हित पूर्णांक	tacc;
-	अचिन्हित पूर्णांक	tcoh;		/* nCS hold after nOE/nWE */
-	अचिन्हित पूर्णांक	tcah;		/* Address hold after nCS */
-	अचिन्हित अक्षर	nरुको_en;	/* nWait enabled क्रम bank. */
-पूर्ण;
+struct s3c2410_iobank_timing {
+	unsigned long	bankcon;
+	unsigned int	tacp;
+	unsigned int	tacs;
+	unsigned int	tcos;
+	unsigned int	tacc;
+	unsigned int	tcoh;		/* nCS hold after nOE/nWE */
+	unsigned int	tcah;		/* Address hold after nCS */
+	unsigned char	nwait_en;	/* nWait enabled for bank. */
+};
 
 /**
- * काष्ठा s3c2412_iobank_timing - io timings क्रम PL092 (S3C2412) style IO
- * @idcy: The idle cycle समय between transactions.
- * @wstrd: nCS release to end of पढ़ो cycle.
- * @wstwr: nCS release to end of ग_लिखो cycle.
- * @wstoen: nCS निश्चितion to nOE निश्चितion समय.
- * @wstwen: nCS निश्चितion to nWE निश्चितion समय.
- * @wstbrd: Burst पढ़ोy delay.
- * @smbidcyr: Register cache क्रम smbidcyr value.
- * @smbwstrd: Register cache क्रम smbwstrd value.
- * @smbwstwr: Register cache क्रम smbwstwr value.
- * @smbwstoen: Register cache क्रम smbwstoen value.
- * @smbwstwen: Register cache क्रम smbwstwen value.
- * @smbwstbrd: Register cache क्रम smbwstbrd value.
+ * struct s3c2412_iobank_timing - io timings for PL092 (S3C2412) style IO
+ * @idcy: The idle cycle time between transactions.
+ * @wstrd: nCS release to end of read cycle.
+ * @wstwr: nCS release to end of write cycle.
+ * @wstoen: nCS assertion to nOE assertion time.
+ * @wstwen: nCS assertion to nWE assertion time.
+ * @wstbrd: Burst ready delay.
+ * @smbidcyr: Register cache for smbidcyr value.
+ * @smbwstrd: Register cache for smbwstrd value.
+ * @smbwstwr: Register cache for smbwstwr value.
+ * @smbwstoen: Register cache for smbwstoen value.
+ * @smbwstwen: Register cache for smbwstwen value.
+ * @smbwstbrd: Register cache for smbwstbrd value.
  *
- * Timing inक्रमmation क्रम a IO bank on an S3C2412 or similar प्रणाली which
+ * Timing information for a IO bank on an S3C2412 or similar system which
  * uses a PL093 block.
  */
-काष्ठा s3c2412_iobank_timing अणु
-	अचिन्हित पूर्णांक	idcy;
-	अचिन्हित पूर्णांक	wstrd;
-	अचिन्हित पूर्णांक	wstwr;
-	अचिन्हित पूर्णांक	wstoen;
-	अचिन्हित पूर्णांक	wstwen;
-	अचिन्हित पूर्णांक	wstbrd;
+struct s3c2412_iobank_timing {
+	unsigned int	idcy;
+	unsigned int	wstrd;
+	unsigned int	wstwr;
+	unsigned int	wstoen;
+	unsigned int	wstwen;
+	unsigned int	wstbrd;
 
-	/* रेजिस्टर cache */
-	अचिन्हित अक्षर	smbidcyr;
-	अचिन्हित अक्षर	smbwstrd;
-	अचिन्हित अक्षर	smbwstwr;
-	अचिन्हित अक्षर	smbwstoen;
-	अचिन्हित अक्षर	smbwstwen;
-	अचिन्हित अक्षर	smbwstbrd;
-पूर्ण;
+	/* register cache */
+	unsigned char	smbidcyr;
+	unsigned char	smbwstrd;
+	unsigned char	smbwstwr;
+	unsigned char	smbwstoen;
+	unsigned char	smbwstwen;
+	unsigned char	smbwstbrd;
+};
 
-जोड़ s3c_iobank अणु
-	काष्ठा s3c2410_iobank_timing	*io_2410;
-	काष्ठा s3c2412_iobank_timing	*io_2412;
-पूर्ण;
+union s3c_iobank {
+	struct s3c2410_iobank_timing	*io_2410;
+	struct s3c2412_iobank_timing	*io_2412;
+};
 
 /**
- * काष्ठा s3c_iotimings - Chip IO timings holder
- * @bank: The timings क्रम each IO bank.
+ * struct s3c_iotimings - Chip IO timings holder
+ * @bank: The timings for each IO bank.
  */
-काष्ठा s3c_iotimings अणु
-	जोड़ s3c_iobank	bank[MAX_BANKS];
-पूर्ण;
+struct s3c_iotimings {
+	union s3c_iobank	bank[MAX_BANKS];
+};
 
 /**
- * काष्ठा s3c_plltab - PLL table inक्रमmation.
+ * struct s3c_plltab - PLL table information.
  * @vals: List of PLL values.
  * @size: Size of the PLL table @vals.
  */
-काष्ठा s3c_plltab अणु
-	काष्ठा s3c_pllval	*vals;
-	पूर्णांक			 size;
-पूर्ण;
+struct s3c_plltab {
+	struct s3c_pllval	*vals;
+	int			 size;
+};
 
 /**
- * काष्ठा s3c_cpufreq_config - current cpu frequency configuration
- * @freq: The current settings क्रम the core घड़ीs.
+ * struct s3c_cpufreq_config - current cpu frequency configuration
+ * @freq: The current settings for the core clocks.
  * @max: Maxium settings, derived from core, board and user settings.
- * @pll: The PLL table entry क्रम the current PLL settings.
- * @भागs: The भागisor settings क्रम the core घड़ीs.
- * @info: The current core driver inक्रमmation.
- * @board: The inक्रमmation क्रम the board we are running on.
- * @lock_pll: Set अगर the PLL settings cannot be changed.
+ * @pll: The PLL table entry for the current PLL settings.
+ * @divs: The divisor settings for the core clocks.
+ * @info: The current core driver information.
+ * @board: The information for the board we are running on.
+ * @lock_pll: Set if the PLL settings cannot be changed.
  *
- * This is क्रम the core drivers that need to know inक्रमmation about
+ * This is for the core drivers that need to know information about
  * the current settings and values. It should not be needed by any
  * device drivers.
 */
-काष्ठा s3c_cpufreq_config अणु
-	काष्ठा s3c_freq		freq;
-	काष्ठा s3c_freq		max;
-	काष्ठा clk		*mpll;
-	काष्ठा cpufreq_frequency_table pll;
-	काष्ठा s3c_clkभागs	भागs;
-	काष्ठा s3c_cpufreq_info *info;	/* क्रम core, not drivers */
-	काष्ठा s3c_cpufreq_board *board;
+struct s3c_cpufreq_config {
+	struct s3c_freq		freq;
+	struct s3c_freq		max;
+	struct clk		*mpll;
+	struct cpufreq_frequency_table pll;
+	struct s3c_clkdivs	divs;
+	struct s3c_cpufreq_info *info;	/* for core, not drivers */
+	struct s3c_cpufreq_board *board;
 
-	अचिन्हित पूर्णांक	lock_pll:1;
-पूर्ण;
+	unsigned int	lock_pll:1;
+};
 
 /**
- * काष्ठा s3c_cpufreq_info - Inक्रमmation क्रम the CPU frequency driver.
+ * struct s3c_cpufreq_info - Information for the CPU frequency driver.
  * @name: The name of this implementation.
- * @max: The maximum frequencies क्रम the प्रणाली.
+ * @max: The maximum frequencies for the system.
  * @latency: Transition latency to give to cpufreq.
- * @lockसमय_m: The lock-समय in uS क्रम the MPLL.
- * @lockसमय_u: The lock-समय in uS क्रम the UPLL.
- * @loctसमय_bits: The number of bits each LOCKTIME field.
- * @need_pll: Set अगर this driver needs to change the PLL values to achieve
+ * @locktime_m: The lock-time in uS for the MPLL.
+ * @locktime_u: The lock-time in uS for the UPLL.
+ * @locttime_bits: The number of bits each LOCKTIME field.
+ * @need_pll: Set if this driver needs to change the PLL values to achieve
  *	any frequency changes. This is really only need by devices like the
- *	S3C2410 where there is no or limited भागider between the PLL and the
+ *	S3C2410 where there is no or limited divider between the PLL and the
  *	ARMCLK.
- * @get_iotiming: Get the current IO timing data, मुख्यly क्रम use at start.
+ * @get_iotiming: Get the current IO timing data, mainly for use at start.
  * @set_iotiming: Update the IO timings from the cached copies calculated
  *	from the @calc_iotiming entry when changing the frequency.
  * @calc_iotiming: Calculate and update the cached copies of the IO timings
  *	from the newly calculated frequencies.
  * @calc_freqtable: Calculate (fill in) the given frequency table from the
- *	current frequency configuration. If the table passed in is शून्य,
- *	then the वापस is the number of elements to be filled क्रम allocation
+ *	current frequency configuration. If the table passed in is NULL,
+ *	then the return is the number of elements to be filled for allocation
  *	of the table.
  * @set_refresh: Set the memory refresh configuration.
  * @set_fvco: Set the PLL frequencies.
- * @set_भागs: Update the घड़ी भागisors.
- * @calc_भागs: Calculate the घड़ी भागisors.
+ * @set_divs: Update the clock divisors.
+ * @calc_divs: Calculate the clock divisors.
  */
-काष्ठा s3c_cpufreq_info अणु
-	स्थिर अक्षर		*name;
-	काष्ठा s3c_freq		max;
+struct s3c_cpufreq_info {
+	const char		*name;
+	struct s3c_freq		max;
 
-	अचिन्हित पूर्णांक		latency;
+	unsigned int		latency;
 
-	अचिन्हित पूर्णांक		lockसमय_m;
-	अचिन्हित पूर्णांक		lockसमय_u;
-	अचिन्हित अक्षर		lockसमय_bits;
+	unsigned int		locktime_m;
+	unsigned int		locktime_u;
+	unsigned char		locktime_bits;
 
-	अचिन्हित पूर्णांक		need_pll:1;
+	unsigned int		need_pll:1;
 
 	/* driver routines */
 
-	पूर्णांक		(*get_iotiming)(काष्ठा s3c_cpufreq_config *cfg,
-					काष्ठा s3c_iotimings *timings);
+	int		(*get_iotiming)(struct s3c_cpufreq_config *cfg,
+					struct s3c_iotimings *timings);
 
-	व्योम		(*set_iotiming)(काष्ठा s3c_cpufreq_config *cfg,
-					काष्ठा s3c_iotimings *timings);
+	void		(*set_iotiming)(struct s3c_cpufreq_config *cfg,
+					struct s3c_iotimings *timings);
 
-	पूर्णांक		(*calc_iotiming)(काष्ठा s3c_cpufreq_config *cfg,
-					 काष्ठा s3c_iotimings *timings);
+	int		(*calc_iotiming)(struct s3c_cpufreq_config *cfg,
+					 struct s3c_iotimings *timings);
 
-	पूर्णांक		(*calc_freqtable)(काष्ठा s3c_cpufreq_config *cfg,
-					  काष्ठा cpufreq_frequency_table *t,
-					  माप_प्रकार table_size);
+	int		(*calc_freqtable)(struct s3c_cpufreq_config *cfg,
+					  struct cpufreq_frequency_table *t,
+					  size_t table_size);
 
-	व्योम		(*debug_io_show)(काष्ठा seq_file *seq,
-					 काष्ठा s3c_cpufreq_config *cfg,
-					 जोड़ s3c_iobank *iob);
+	void		(*debug_io_show)(struct seq_file *seq,
+					 struct s3c_cpufreq_config *cfg,
+					 union s3c_iobank *iob);
 
-	व्योम		(*set_refresh)(काष्ठा s3c_cpufreq_config *cfg);
-	व्योम		(*set_fvco)(काष्ठा s3c_cpufreq_config *cfg);
-	व्योम		(*set_भागs)(काष्ठा s3c_cpufreq_config *cfg);
-	पूर्णांक		(*calc_भागs)(काष्ठा s3c_cpufreq_config *cfg);
-पूर्ण;
+	void		(*set_refresh)(struct s3c_cpufreq_config *cfg);
+	void		(*set_fvco)(struct s3c_cpufreq_config *cfg);
+	void		(*set_divs)(struct s3c_cpufreq_config *cfg);
+	int		(*calc_divs)(struct s3c_cpufreq_config *cfg);
+};
 
-बाह्य पूर्णांक s3c_cpufreq_रेजिस्टर(काष्ठा s3c_cpufreq_info *info);
+extern int s3c_cpufreq_register(struct s3c_cpufreq_info *info);
 
-बाह्य पूर्णांक s3c_plltab_रेजिस्टर(काष्ठा cpufreq_frequency_table *plls,
-			       अचिन्हित पूर्णांक plls_no);
+extern int s3c_plltab_register(struct cpufreq_frequency_table *plls,
+			       unsigned int plls_no);
 
-/* exports and utilities क्रम debugfs */
-बाह्य काष्ठा s3c_cpufreq_config *s3c_cpufreq_अ_लोonfig(व्योम);
-बाह्य काष्ठा s3c_iotimings *s3c_cpufreq_getiotimings(व्योम);
+/* exports and utilities for debugfs */
+extern struct s3c_cpufreq_config *s3c_cpufreq_getconfig(void);
+extern struct s3c_iotimings *s3c_cpufreq_getiotimings(void);
 
-#अगर_घोषित CONFIG_ARM_S3C24XX_CPUFREQ_DEBUGFS
-#घोषणा s3c_cpufreq_debugfs_call(x) x
-#अन्यथा
-#घोषणा s3c_cpufreq_debugfs_call(x) शून्य
-#पूर्ण_अगर
+#ifdef CONFIG_ARM_S3C24XX_CPUFREQ_DEBUGFS
+#define s3c_cpufreq_debugfs_call(x) x
+#else
+#define s3c_cpufreq_debugfs_call(x) NULL
+#endif
 
 /* Useful utility functions. */
 
-बाह्य काष्ठा clk *s3c_cpufreq_clk_get(काष्ठा device *, स्थिर अक्षर *);
+extern struct clk *s3c_cpufreq_clk_get(struct device *, const char *);
 
 /* S3C2410 and compatible exported functions */
 
-बाह्य व्योम s3c2410_cpufreq_setrefresh(काष्ठा s3c_cpufreq_config *cfg);
-बाह्य व्योम s3c2410_set_fvco(काष्ठा s3c_cpufreq_config *cfg);
+extern void s3c2410_cpufreq_setrefresh(struct s3c_cpufreq_config *cfg);
+extern void s3c2410_set_fvco(struct s3c_cpufreq_config *cfg);
 
-#अगर_घोषित CONFIG_S3C2410_IOTIMING
-बाह्य व्योम s3c2410_iotiming_debugfs(काष्ठा seq_file *seq,
-				     काष्ठा s3c_cpufreq_config *cfg,
-				     जोड़ s3c_iobank *iob);
+#ifdef CONFIG_S3C2410_IOTIMING
+extern void s3c2410_iotiming_debugfs(struct seq_file *seq,
+				     struct s3c_cpufreq_config *cfg,
+				     union s3c_iobank *iob);
 
-बाह्य पूर्णांक s3c2410_iotiming_calc(काष्ठा s3c_cpufreq_config *cfg,
-				 काष्ठा s3c_iotimings *iot);
+extern int s3c2410_iotiming_calc(struct s3c_cpufreq_config *cfg,
+				 struct s3c_iotimings *iot);
 
-बाह्य पूर्णांक s3c2410_iotiming_get(काष्ठा s3c_cpufreq_config *cfg,
-				काष्ठा s3c_iotimings *timings);
+extern int s3c2410_iotiming_get(struct s3c_cpufreq_config *cfg,
+				struct s3c_iotimings *timings);
 
-बाह्य व्योम s3c2410_iotiming_set(काष्ठा s3c_cpufreq_config *cfg,
-				 काष्ठा s3c_iotimings *iot);
-#अन्यथा
-#घोषणा s3c2410_iotiming_debugfs शून्य
-#घोषणा s3c2410_iotiming_calc शून्य
-#घोषणा s3c2410_iotiming_get शून्य
-#घोषणा s3c2410_iotiming_set शून्य
-#पूर्ण_अगर /* CONFIG_S3C2410_IOTIMING */
+extern void s3c2410_iotiming_set(struct s3c_cpufreq_config *cfg,
+				 struct s3c_iotimings *iot);
+#else
+#define s3c2410_iotiming_debugfs NULL
+#define s3c2410_iotiming_calc NULL
+#define s3c2410_iotiming_get NULL
+#define s3c2410_iotiming_set NULL
+#endif /* CONFIG_S3C2410_IOTIMING */
 
 /* S3C2412 compatible routines */
 
-#अगर_घोषित CONFIG_S3C2412_IOTIMING
-बाह्य व्योम s3c2412_iotiming_debugfs(काष्ठा seq_file *seq,
-				     काष्ठा s3c_cpufreq_config *cfg,
-				     जोड़ s3c_iobank *iob);
+#ifdef CONFIG_S3C2412_IOTIMING
+extern void s3c2412_iotiming_debugfs(struct seq_file *seq,
+				     struct s3c_cpufreq_config *cfg,
+				     union s3c_iobank *iob);
 
-बाह्य पूर्णांक s3c2412_iotiming_get(काष्ठा s3c_cpufreq_config *cfg,
-				काष्ठा s3c_iotimings *timings);
+extern int s3c2412_iotiming_get(struct s3c_cpufreq_config *cfg,
+				struct s3c_iotimings *timings);
 
-बाह्य पूर्णांक s3c2412_iotiming_calc(काष्ठा s3c_cpufreq_config *cfg,
-				 काष्ठा s3c_iotimings *iot);
+extern int s3c2412_iotiming_calc(struct s3c_cpufreq_config *cfg,
+				 struct s3c_iotimings *iot);
 
-बाह्य व्योम s3c2412_iotiming_set(काष्ठा s3c_cpufreq_config *cfg,
-				 काष्ठा s3c_iotimings *iot);
-बाह्य व्योम s3c2412_cpufreq_setrefresh(काष्ठा s3c_cpufreq_config *cfg);
-#अन्यथा
-#घोषणा s3c2412_iotiming_debugfs शून्य
-#घोषणा s3c2412_iotiming_calc शून्य
-#घोषणा s3c2412_iotiming_get शून्य
-#घोषणा s3c2412_iotiming_set शून्य
-#पूर्ण_अगर /* CONFIG_S3C2412_IOTIMING */
+extern void s3c2412_iotiming_set(struct s3c_cpufreq_config *cfg,
+				 struct s3c_iotimings *iot);
+extern void s3c2412_cpufreq_setrefresh(struct s3c_cpufreq_config *cfg);
+#else
+#define s3c2412_iotiming_debugfs NULL
+#define s3c2412_iotiming_calc NULL
+#define s3c2412_iotiming_get NULL
+#define s3c2412_iotiming_set NULL
+#endif /* CONFIG_S3C2412_IOTIMING */
 
-#अगर_घोषित CONFIG_ARM_S3C24XX_CPUFREQ_DEBUG
-#घोषणा s3c_freq_dbg(x...) prपूर्णांकk(KERN_INFO x)
-#अन्यथा
-#घोषणा s3c_freq_dbg(x...) करो अणु अगर (0) prपूर्णांकk(x); पूर्ण जबतक (0)
-#पूर्ण_अगर /* CONFIG_ARM_S3C24XX_CPUFREQ_DEBUG */
+#ifdef CONFIG_ARM_S3C24XX_CPUFREQ_DEBUG
+#define s3c_freq_dbg(x...) printk(KERN_INFO x)
+#else
+#define s3c_freq_dbg(x...) do { if (0) printk(x); } while (0)
+#endif /* CONFIG_ARM_S3C24XX_CPUFREQ_DEBUG */
 
-#अगर_घोषित CONFIG_ARM_S3C24XX_CPUFREQ_IODEBUG
-#घोषणा s3c_freq_iodbg(x...) prपूर्णांकk(KERN_INFO x)
-#अन्यथा
-#घोषणा s3c_freq_iodbg(x...) करो अणु अगर (0) prपूर्णांकk(x); पूर्ण जबतक (0)
-#पूर्ण_अगर /* CONFIG_ARM_S3C24XX_CPUFREQ_IODEBUG */
+#ifdef CONFIG_ARM_S3C24XX_CPUFREQ_IODEBUG
+#define s3c_freq_iodbg(x...) printk(KERN_INFO x)
+#else
+#define s3c_freq_iodbg(x...) do { if (0) printk(x); } while (0)
+#endif /* CONFIG_ARM_S3C24XX_CPUFREQ_IODEBUG */
 
-अटल अंतरभूत पूर्णांक s3c_cpufreq_addfreq(काष्ठा cpufreq_frequency_table *table,
-				      पूर्णांक index, माप_प्रकार table_size,
-				      अचिन्हित पूर्णांक freq)
-अणु
-	अगर (index < 0)
-		वापस index;
+static inline int s3c_cpufreq_addfreq(struct cpufreq_frequency_table *table,
+				      int index, size_t table_size,
+				      unsigned int freq)
+{
+	if (index < 0)
+		return index;
 
-	अगर (table) अणु
-		अगर (index >= table_size)
-			वापस -ENOMEM;
+	if (table) {
+		if (index >= table_size)
+			return -ENOMEM;
 
 		s3c_freq_dbg("%s: { %d = %u kHz }\n",
 			     __func__, index, freq);
 
 		table[index].driver_data = index;
 		table[index].frequency = freq;
-	पूर्ण
+	}
 
-	वापस index + 1;
-पूर्ण
+	return index + 1;
+}
 
-u32 s3c2440_पढ़ो_camभागn(व्योम);
-व्योम s3c2440_ग_लिखो_camभागn(u32 camभाग);
-u32 s3c24xx_पढ़ो_clkभागn(व्योम);
-व्योम s3c24xx_ग_लिखो_clkभागn(u32 clkभाग);
-u32 s3c24xx_पढ़ो_mpllcon(व्योम);
-व्योम s3c24xx_ग_लिखो_lockसमय(u32 lockसमय);
+u32 s3c2440_read_camdivn(void);
+void s3c2440_write_camdivn(u32 camdiv);
+u32 s3c24xx_read_clkdivn(void);
+void s3c24xx_write_clkdivn(u32 clkdiv);
+u32 s3c24xx_read_mpllcon(void);
+void s3c24xx_write_locktime(u32 locktime);
 
-#पूर्ण_अगर
+#endif

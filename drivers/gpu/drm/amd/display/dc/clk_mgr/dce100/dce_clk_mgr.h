@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-16 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -25,36 +24,36 @@
  */
 
 
-#अगर_अघोषित _DCE_CLK_MGR_H_
-#घोषणा _DCE_CLK_MGR_H_
+#ifndef _DCE_CLK_MGR_H_
+#define _DCE_CLK_MGR_H_
 
-#समावेश "dc.h"
+#include "dc.h"
 
 /* functions shared by other dce clk mgrs */
-पूर्णांक dce_adjust_dp_ref_freq_क्रम_ss(काष्ठा clk_mgr_पूर्णांकernal *clk_mgr_dce, पूर्णांक dp_ref_clk_khz);
-पूर्णांक dce_get_dp_ref_freq_khz(काष्ठा clk_mgr *clk_mgr_base);
-क्रमागत dm_pp_घड़ीs_state dce_get_required_घड़ीs_state(
-	काष्ठा clk_mgr *clk_mgr_base,
-	काष्ठा dc_state *context);
+int dce_adjust_dp_ref_freq_for_ss(struct clk_mgr_internal *clk_mgr_dce, int dp_ref_clk_khz);
+int dce_get_dp_ref_freq_khz(struct clk_mgr *clk_mgr_base);
+enum dm_pp_clocks_state dce_get_required_clocks_state(
+	struct clk_mgr *clk_mgr_base,
+	struct dc_state *context);
 
-uपूर्णांक32_t dce_get_max_pixel_घड़ी_क्रम_all_paths(काष्ठा dc_state *context);
-
-
-व्योम dce_clk_mgr_स्थिरruct(
-		काष्ठा dc_context *ctx,
-		काष्ठा clk_mgr_पूर्णांकernal *clk_mgr_dce);
-
-व्योम dce_घड़ी_पढ़ो_ss_info(काष्ठा clk_mgr_पूर्णांकernal *dccg_dce);
-
-पूर्णांक dce12_get_dp_ref_freq_khz(काष्ठा clk_mgr *dccg);
-
-पूर्णांक dce_set_घड़ी(
-	काष्ठा clk_mgr *clk_mgr_base,
-	पूर्णांक requested_clk_khz);
+uint32_t dce_get_max_pixel_clock_for_all_paths(struct dc_state *context);
 
 
-व्योम dce_clk_mgr_destroy(काष्ठा clk_mgr **clk_mgr);
+void dce_clk_mgr_construct(
+		struct dc_context *ctx,
+		struct clk_mgr_internal *clk_mgr_dce);
 
-पूर्णांक dentist_get_भागider_from_did(पूर्णांक did);
+void dce_clock_read_ss_info(struct clk_mgr_internal *dccg_dce);
 
-#पूर्ण_अगर /* _DCE_CLK_MGR_H_ */
+int dce12_get_dp_ref_freq_khz(struct clk_mgr *dccg);
+
+int dce_set_clock(
+	struct clk_mgr *clk_mgr_base,
+	int requested_clk_khz);
+
+
+void dce_clk_mgr_destroy(struct clk_mgr **clk_mgr);
+
+int dentist_get_divider_from_did(int did);
+
+#endif /* _DCE_CLK_MGR_H_ */

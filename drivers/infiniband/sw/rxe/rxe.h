@@ -1,88 +1,87 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
+/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
 /*
  * Copyright (c) 2016 Mellanox Technologies Ltd. All rights reserved.
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
 
-#अगर_अघोषित RXE_H
-#घोषणा RXE_H
+#ifndef RXE_H
+#define RXE_H
 
-#अगर_घोषित pr_fmt
-#अघोषित pr_fmt
-#पूर्ण_अगर
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#ifdef pr_fmt
+#undef pr_fmt
+#endif
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/crc32.h>
+#include <linux/module.h>
+#include <linux/skbuff.h>
+#include <linux/crc32.h>
 
-#समावेश <rdma/ib_verbs.h>
-#समावेश <rdma/ib_user_verbs.h>
-#समावेश <rdma/ib_pack.h>
-#समावेश <rdma/ib_smi.h>
-#समावेश <rdma/ib_uस्मृति.स>
-#समावेश <rdma/ib_cache.h>
-#समावेश <rdma/ib_addr.h>
-#समावेश <crypto/hash.h>
+#include <rdma/ib_verbs.h>
+#include <rdma/ib_user_verbs.h>
+#include <rdma/ib_pack.h>
+#include <rdma/ib_smi.h>
+#include <rdma/ib_umem.h>
+#include <rdma/ib_cache.h>
+#include <rdma/ib_addr.h>
+#include <crypto/hash.h>
 
-#समावेश "rxe_net.h"
-#समावेश "rxe_opcode.h"
-#समावेश "rxe_hdr.h"
-#समावेश "rxe_param.h"
-#समावेश "rxe_verbs.h"
-#समावेश "rxe_loc.h"
+#include "rxe_net.h"
+#include "rxe_opcode.h"
+#include "rxe_hdr.h"
+#include "rxe_param.h"
+#include "rxe_verbs.h"
+#include "rxe_loc.h"
 
 /*
  * Version 1 and Version 2 are identical on 64 bit machines, but on 32 bit
- * machines Version 2 has a dअगरferent काष्ठा layout.
+ * machines Version 2 has a different struct layout.
  */
-#घोषणा RXE_UVERBS_ABI_VERSION		2
+#define RXE_UVERBS_ABI_VERSION		2
 
-#घोषणा RXE_ROCE_V2_SPORT		(0xc000)
+#define RXE_ROCE_V2_SPORT		(0xc000)
 
-बाह्य bool rxe_initialized;
+extern bool rxe_initialized;
 
-अटल अंतरभूत u32 rxe_crc32(काष्ठा rxe_dev *rxe,
-			    u32 crc, व्योम *next, माप_प्रकार len)
-अणु
+static inline u32 rxe_crc32(struct rxe_dev *rxe,
+			    u32 crc, void *next, size_t len)
+{
 	u32 retval;
-	पूर्णांक err;
+	int err;
 
 	SHASH_DESC_ON_STACK(shash, rxe->tfm);
 
 	shash->tfm = rxe->tfm;
 	*(u32 *)shash_desc_ctx(shash) = crc;
 	err = crypto_shash_update(shash, next, len);
-	अगर (unlikely(err)) अणु
+	if (unlikely(err)) {
 		pr_warn_ratelimited("failed crc calculation, err: %d\n", err);
-		वापस crc32_le(crc, next, len);
-	पूर्ण
+		return crc32_le(crc, next, len);
+	}
 
 	retval = *(u32 *)shash_desc_ctx(shash);
 	barrier_data(shash_desc_ctx(shash));
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-व्योम rxe_set_mtu(काष्ठा rxe_dev *rxe, अचिन्हित पूर्णांक dev_mtu);
+void rxe_set_mtu(struct rxe_dev *rxe, unsigned int dev_mtu);
 
-पूर्णांक rxe_add(काष्ठा rxe_dev *rxe, अचिन्हित पूर्णांक mtu, स्थिर अक्षर *ibdev_name);
+int rxe_add(struct rxe_dev *rxe, unsigned int mtu, const char *ibdev_name);
 
-व्योम rxe_rcv(काष्ठा sk_buff *skb);
+void rxe_rcv(struct sk_buff *skb);
 
-/* The caller must करो a matching ib_device_put(&dev->ib_dev) */
-अटल अंतरभूत काष्ठा rxe_dev *rxe_get_dev_from_net(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ib_device *ibdev =
+/* The caller must do a matching ib_device_put(&dev->ib_dev) */
+static inline struct rxe_dev *rxe_get_dev_from_net(struct net_device *ndev)
+{
+	struct ib_device *ibdev =
 		ib_device_get_by_netdev(ndev, RDMA_DRIVER_RXE);
 
-	अगर (!ibdev)
-		वापस शून्य;
-	वापस container_of(ibdev, काष्ठा rxe_dev, ib_dev);
-पूर्ण
+	if (!ibdev)
+		return NULL;
+	return container_of(ibdev, struct rxe_dev, ib_dev);
+}
 
-व्योम rxe_port_up(काष्ठा rxe_dev *rxe);
-व्योम rxe_port_करोwn(काष्ठा rxe_dev *rxe);
-व्योम rxe_set_port_state(काष्ठा rxe_dev *rxe);
+void rxe_port_up(struct rxe_dev *rxe);
+void rxe_port_down(struct rxe_dev *rxe);
+void rxe_set_port_state(struct rxe_dev *rxe);
 
-#पूर्ण_अगर /* RXE_H */
+#endif /* RXE_H */

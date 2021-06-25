@@ -1,192 +1,191 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_SCHED_CPUTIME_H
-#घोषणा _LINUX_SCHED_CPUTIME_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_SCHED_CPUTIME_H
+#define _LINUX_SCHED_CPUTIME_H
 
-#समावेश <linux/sched/संकेत.स>
+#include <linux/sched/signal.h>
 
 /*
- * cpuसमय accounting APIs:
+ * cputime accounting APIs:
  */
 
-#अगर_घोषित CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
-#समावेश <यंत्र/cpuसमय.स>
+#ifdef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
+#include <asm/cputime.h>
 
-#अगर_अघोषित cpuसमय_प्रकारo_nsecs
-# define cpuसमय_प्रकारo_nsecs(__ct)	\
-	(cpuसमय_प्रकारo_usecs(__ct) * NSEC_PER_USEC)
-#पूर्ण_अगर
-#पूर्ण_अगर /* CONFIG_VIRT_CPU_ACCOUNTING_NATIVE */
+#ifndef cputime_to_nsecs
+# define cputime_to_nsecs(__ct)	\
+	(cputime_to_usecs(__ct) * NSEC_PER_USEC)
+#endif
+#endif /* CONFIG_VIRT_CPU_ACCOUNTING_NATIVE */
 
-#अगर_घोषित CONFIG_VIRT_CPU_ACCOUNTING_GEN
-बाह्य व्योम task_cpuसमय(काष्ठा task_काष्ठा *t,
-			 u64 *uसमय, u64 *sसमय);
-बाह्य u64 task_gसमय(काष्ठा task_काष्ठा *t);
-#अन्यथा
-अटल अंतरभूत व्योम task_cpuसमय(काष्ठा task_काष्ठा *t,
-				u64 *uसमय, u64 *sसमय)
-अणु
-	*uसमय = t->uसमय;
-	*sसमय = t->sसमय;
-पूर्ण
+#ifdef CONFIG_VIRT_CPU_ACCOUNTING_GEN
+extern void task_cputime(struct task_struct *t,
+			 u64 *utime, u64 *stime);
+extern u64 task_gtime(struct task_struct *t);
+#else
+static inline void task_cputime(struct task_struct *t,
+				u64 *utime, u64 *stime)
+{
+	*utime = t->utime;
+	*stime = t->stime;
+}
 
-अटल अंतरभूत u64 task_gसमय(काष्ठा task_काष्ठा *t)
-अणु
-	वापस t->gसमय;
-पूर्ण
-#पूर्ण_अगर
+static inline u64 task_gtime(struct task_struct *t)
+{
+	return t->gtime;
+}
+#endif
 
-#अगर_घोषित CONFIG_ARCH_HAS_SCALED_CPUTIME
-अटल अंतरभूत व्योम task_cpuसमय_scaled(काष्ठा task_काष्ठा *t,
-				       u64 *uबारcaled,
-				       u64 *sबारcaled)
-अणु
-	*uबारcaled = t->uबारcaled;
-	*sबारcaled = t->sबारcaled;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम task_cpuसमय_scaled(काष्ठा task_काष्ठा *t,
-				       u64 *uबारcaled,
-				       u64 *sबारcaled)
-अणु
-	task_cpuसमय(t, uबारcaled, sबारcaled);
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_ARCH_HAS_SCALED_CPUTIME
+static inline void task_cputime_scaled(struct task_struct *t,
+				       u64 *utimescaled,
+				       u64 *stimescaled)
+{
+	*utimescaled = t->utimescaled;
+	*stimescaled = t->stimescaled;
+}
+#else
+static inline void task_cputime_scaled(struct task_struct *t,
+				       u64 *utimescaled,
+				       u64 *stimescaled)
+{
+	task_cputime(t, utimescaled, stimescaled);
+}
+#endif
 
-बाह्य व्योम task_cpuसमय_adjusted(काष्ठा task_काष्ठा *p, u64 *ut, u64 *st);
-बाह्य व्योम thपढ़ो_group_cpuसमय_adjusted(काष्ठा task_काष्ठा *p, u64 *ut, u64 *st);
-बाह्य व्योम cpuसमय_adjust(काष्ठा task_cpuसमय *curr, काष्ठा prev_cpuसमय *prev,
+extern void task_cputime_adjusted(struct task_struct *p, u64 *ut, u64 *st);
+extern void thread_group_cputime_adjusted(struct task_struct *p, u64 *ut, u64 *st);
+extern void cputime_adjust(struct task_cputime *curr, struct prev_cputime *prev,
 			   u64 *ut, u64 *st);
 
 /*
- * Thपढ़ो group CPU समय accounting.
+ * Thread group CPU time accounting.
  */
-व्योम thपढ़ो_group_cpuसमय(काष्ठा task_काष्ठा *tsk, काष्ठा task_cpuसमय *बार);
-व्योम thपढ़ो_group_sample_cpuसमय(काष्ठा task_काष्ठा *tsk, u64 *samples);
+void thread_group_cputime(struct task_struct *tsk, struct task_cputime *times);
+void thread_group_sample_cputime(struct task_struct *tsk, u64 *samples);
 
 /*
- * The following are functions that support scheduler-पूर्णांकernal समय accounting.
- * These functions are generally called at the समयr tick.  None of this depends
+ * The following are functions that support scheduler-internal time accounting.
+ * These functions are generally called at the timer tick.  None of this depends
  * on CONFIG_SCHEDSTATS.
  */
 
 /**
- * get_running_cpuसमयr - वापस &tsk->संकेत->cpuसमयr अगर cpuसमयrs are active
+ * get_running_cputimer - return &tsk->signal->cputimer if cputimers are active
  *
- * @tsk:	Poपूर्णांकer to target task.
+ * @tsk:	Pointer to target task.
  */
-#अगर_घोषित CONFIG_POSIX_TIMERS
-अटल अंतरभूत
-काष्ठा thपढ़ो_group_cpuसमयr *get_running_cpuसमयr(काष्ठा task_काष्ठा *tsk)
-अणु
-	काष्ठा thपढ़ो_group_cpuसमयr *cpuसमयr = &tsk->संकेत->cpuसमयr;
+#ifdef CONFIG_POSIX_TIMERS
+static inline
+struct thread_group_cputimer *get_running_cputimer(struct task_struct *tsk)
+{
+	struct thread_group_cputimer *cputimer = &tsk->signal->cputimer;
 
 	/*
-	 * Check whether posix CPU समयrs are active. If not the thपढ़ो
+	 * Check whether posix CPU timers are active. If not the thread
 	 * group accounting is not active either. Lockless check.
 	 */
-	अगर (!READ_ONCE(tsk->संकेत->posix_cpuसमयrs.समयrs_active))
-		वापस शून्य;
+	if (!READ_ONCE(tsk->signal->posix_cputimers.timers_active))
+		return NULL;
 
 	/*
-	 * After we flush the task's sum_exec_runसमय to sig->sum_sched_runसमय
-	 * in __निकास_संकेत(), we won't account to the संकेत काष्ठा further
-	 * cpuसमय consumed by that task, even though the task can still be
-	 * ticking after __निकास_संकेत().
+	 * After we flush the task's sum_exec_runtime to sig->sum_sched_runtime
+	 * in __exit_signal(), we won't account to the signal struct further
+	 * cputime consumed by that task, even though the task can still be
+	 * ticking after __exit_signal().
 	 *
-	 * In order to keep a consistent behaviour between thपढ़ो group cpuसमय
-	 * and thपढ़ो group cpuसमयr accounting, lets also ignore the cpuसमय
-	 * elapsing after __निकास_संकेत() in any thपढ़ो group समयr running.
+	 * In order to keep a consistent behaviour between thread group cputime
+	 * and thread group cputimer accounting, lets also ignore the cputime
+	 * elapsing after __exit_signal() in any thread group timer running.
 	 *
-	 * This makes sure that POSIX CPU घड़ीs and समयrs are synchronized, so
-	 * that a POSIX CPU समयr won't expire जबतक the corresponding POSIX CPU
-	 * घड़ी delta is behind the expiring समयr value.
+	 * This makes sure that POSIX CPU clocks and timers are synchronized, so
+	 * that a POSIX CPU timer won't expire while the corresponding POSIX CPU
+	 * clock delta is behind the expiring timer value.
 	 */
-	अगर (unlikely(!tsk->sighand))
-		वापस शून्य;
+	if (unlikely(!tsk->sighand))
+		return NULL;
 
-	वापस cpuसमयr;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत
-काष्ठा thपढ़ो_group_cpuसमयr *get_running_cpuसमयr(काष्ठा task_काष्ठा *tsk)
-अणु
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर
-
-/**
- * account_group_user_समय - Maपूर्णांकain uसमय क्रम a thपढ़ो group.
- *
- * @tsk:	Poपूर्णांकer to task काष्ठाure.
- * @cpuसमय:	Time value by which to increment the uसमय field of the
- *		thपढ़ो_group_cpuसमय काष्ठाure.
- *
- * If thपढ़ो group समय is being मुख्यtained, get the काष्ठाure क्रम the
- * running CPU and update the uसमय field there.
- */
-अटल अंतरभूत व्योम account_group_user_समय(काष्ठा task_काष्ठा *tsk,
-					   u64 cpuसमय)
-अणु
-	काष्ठा thपढ़ो_group_cpuसमयr *cpuसमयr = get_running_cpuसमयr(tsk);
-
-	अगर (!cpuसमयr)
-		वापस;
-
-	atomic64_add(cpuसमय, &cpuसमयr->cpuसमय_atomic.uसमय);
-पूर्ण
+	return cputimer;
+}
+#else
+static inline
+struct thread_group_cputimer *get_running_cputimer(struct task_struct *tsk)
+{
+	return NULL;
+}
+#endif
 
 /**
- * account_group_प्रणाली_समय - Maपूर्णांकain sसमय क्रम a thपढ़ो group.
+ * account_group_user_time - Maintain utime for a thread group.
  *
- * @tsk:	Poपूर्णांकer to task काष्ठाure.
- * @cpuसमय:	Time value by which to increment the sसमय field of the
- *		thपढ़ो_group_cpuसमय काष्ठाure.
+ * @tsk:	Pointer to task structure.
+ * @cputime:	Time value by which to increment the utime field of the
+ *		thread_group_cputime structure.
  *
- * If thपढ़ो group समय is being मुख्यtained, get the काष्ठाure क्रम the
- * running CPU and update the sसमय field there.
+ * If thread group time is being maintained, get the structure for the
+ * running CPU and update the utime field there.
  */
-अटल अंतरभूत व्योम account_group_प्रणाली_समय(काष्ठा task_काष्ठा *tsk,
-					     u64 cpuसमय)
-अणु
-	काष्ठा thपढ़ो_group_cpuसमयr *cpuसमयr = get_running_cpuसमयr(tsk);
+static inline void account_group_user_time(struct task_struct *tsk,
+					   u64 cputime)
+{
+	struct thread_group_cputimer *cputimer = get_running_cputimer(tsk);
 
-	अगर (!cpuसमयr)
-		वापस;
+	if (!cputimer)
+		return;
 
-	atomic64_add(cpuसमय, &cpuसमयr->cpuसमय_atomic.sसमय);
-पूर्ण
+	atomic64_add(cputime, &cputimer->cputime_atomic.utime);
+}
 
 /**
- * account_group_exec_runसमय - Maपूर्णांकain exec runसमय क्रम a thपढ़ो group.
+ * account_group_system_time - Maintain stime for a thread group.
  *
- * @tsk:	Poपूर्णांकer to task काष्ठाure.
- * @ns:		Time value by which to increment the sum_exec_runसमय field
- *		of the thपढ़ो_group_cpuसमय काष्ठाure.
+ * @tsk:	Pointer to task structure.
+ * @cputime:	Time value by which to increment the stime field of the
+ *		thread_group_cputime structure.
  *
- * If thपढ़ो group समय is being मुख्यtained, get the काष्ठाure क्रम the
- * running CPU and update the sum_exec_runसमय field there.
+ * If thread group time is being maintained, get the structure for the
+ * running CPU and update the stime field there.
  */
-अटल अंतरभूत व्योम account_group_exec_runसमय(काष्ठा task_काष्ठा *tsk,
-					      अचिन्हित दीर्घ दीर्घ ns)
-अणु
-	काष्ठा thपढ़ो_group_cpuसमयr *cpuसमयr = get_running_cpuसमयr(tsk);
+static inline void account_group_system_time(struct task_struct *tsk,
+					     u64 cputime)
+{
+	struct thread_group_cputimer *cputimer = get_running_cputimer(tsk);
 
-	अगर (!cpuसमयr)
-		वापस;
+	if (!cputimer)
+		return;
 
-	atomic64_add(ns, &cpuसमयr->cpuसमय_atomic.sum_exec_runसमय);
-पूर्ण
+	atomic64_add(cputime, &cputimer->cputime_atomic.stime);
+}
 
-अटल अंतरभूत व्योम prev_cpuसमय_init(काष्ठा prev_cpuसमय *prev)
-अणु
-#अगर_अघोषित CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
-	prev->uसमय = prev->sसमय = 0;
+/**
+ * account_group_exec_runtime - Maintain exec runtime for a thread group.
+ *
+ * @tsk:	Pointer to task structure.
+ * @ns:		Time value by which to increment the sum_exec_runtime field
+ *		of the thread_group_cputime structure.
+ *
+ * If thread group time is being maintained, get the structure for the
+ * running CPU and update the sum_exec_runtime field there.
+ */
+static inline void account_group_exec_runtime(struct task_struct *tsk,
+					      unsigned long long ns)
+{
+	struct thread_group_cputimer *cputimer = get_running_cputimer(tsk);
+
+	if (!cputimer)
+		return;
+
+	atomic64_add(ns, &cputimer->cputime_atomic.sum_exec_runtime);
+}
+
+static inline void prev_cputime_init(struct prev_cputime *prev)
+{
+#ifndef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
+	prev->utime = prev->stime = 0;
 	raw_spin_lock_init(&prev->lock);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-बाह्य अचिन्हित दीर्घ दीर्घ
-task_sched_runसमय(काष्ठा task_काष्ठा *task);
+extern unsigned long long
+task_sched_runtime(struct task_struct *task);
 
-#पूर्ण_अगर /* _LINUX_SCHED_CPUTIME_H */
+#endif /* _LINUX_SCHED_CPUTIME_H */

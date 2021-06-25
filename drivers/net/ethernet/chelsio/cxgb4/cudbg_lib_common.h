@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *  Copyright (C) 2017 Chelsio Communications.  All rights reserved.
  */
 
-#अगर_अघोषित __CUDBG_LIB_COMMON_H__
-#घोषणा __CUDBG_LIB_COMMON_H__
+#ifndef __CUDBG_LIB_COMMON_H__
+#define __CUDBG_LIB_COMMON_H__
 
-#घोषणा CUDBG_SIGNATURE 67856866 /* CUDB in ascii */
+#define CUDBG_SIGNATURE 67856866 /* CUDB in ascii */
 
-क्रमागत cudbg_dump_type अणु
+enum cudbg_dump_type {
 	CUDBG_DUMP_TYPE_MINI = 1,
-पूर्ण;
+};
 
-क्रमागत cudbg_compression_type अणु
+enum cudbg_compression_type {
 	CUDBG_COMPRESSION_NONE = 1,
 	CUDBG_COMPRESSION_ZLIB,
-पूर्ण;
+};
 
-काष्ठा cudbg_hdr अणु
+struct cudbg_hdr {
 	u32 signature;
 	u32 hdr_len;
 	u16 major_ver;
@@ -31,48 +30,48 @@
 	u8 reserved1:1;
 	u8 compress_type:4;
 	u32 reserved[8];
-पूर्ण;
+};
 
-काष्ठा cudbg_entity_hdr अणु
+struct cudbg_entity_hdr {
 	u32 entity_type;
 	u32 start_offset;
 	u32 size;
-	पूर्णांक hdr_flags;
+	int hdr_flags;
 	u32 sys_warn;
 	u32 sys_err;
 	u8 num_pad;
 	u8 flag;             /* bit 0 is used to indicate ext data */
 	u8 reserved1[2];
-	u32 next_ext_offset; /* poपूर्णांकer to next extended entity meta data */
+	u32 next_ext_offset; /* pointer to next extended entity meta data */
 	u32 reserved[5];
-पूर्ण;
+};
 
-काष्ठा cudbg_ver_hdr अणु
+struct cudbg_ver_hdr {
 	u32 signature;
 	u16 revision;
 	u16 size;
-पूर्ण;
+};
 
-काष्ठा cudbg_buffer अणु
+struct cudbg_buffer {
 	u32 size;
 	u32 offset;
-	अक्षर *data;
-पूर्ण;
+	char *data;
+};
 
-काष्ठा cudbg_error अणु
-	पूर्णांक sys_err;
-	पूर्णांक sys_warn;
-	पूर्णांक app_err;
-पूर्ण;
+struct cudbg_error {
+	int sys_err;
+	int sys_warn;
+	int app_err;
+};
 
-#घोषणा CDUMP_MAX_COMP_BUF_SIZE ((64 * 1024) - 1)
-#घोषणा CUDBG_CHUNK_SIZE ((CDUMP_MAX_COMP_BUF_SIZE / 1024) * 1024)
+#define CDUMP_MAX_COMP_BUF_SIZE ((64 * 1024) - 1)
+#define CUDBG_CHUNK_SIZE ((CDUMP_MAX_COMP_BUF_SIZE / 1024) * 1024)
 
-पूर्णांक cudbg_get_buff(काष्ठा cudbg_init *pdbg_init,
-		   काष्ठा cudbg_buffer *pdbg_buff, u32 size,
-		   काष्ठा cudbg_buffer *pin_buff);
-व्योम cudbg_put_buff(काष्ठा cudbg_init *pdbg_init,
-		    काष्ठा cudbg_buffer *pin_buff);
-व्योम cudbg_update_buff(काष्ठा cudbg_buffer *pin_buff,
-		       काष्ठा cudbg_buffer *pout_buff);
-#पूर्ण_अगर /* __CUDBG_LIB_COMMON_H__ */
+int cudbg_get_buff(struct cudbg_init *pdbg_init,
+		   struct cudbg_buffer *pdbg_buff, u32 size,
+		   struct cudbg_buffer *pin_buff);
+void cudbg_put_buff(struct cudbg_init *pdbg_init,
+		    struct cudbg_buffer *pin_buff);
+void cudbg_update_buff(struct cudbg_buffer *pin_buff,
+		       struct cudbg_buffer *pout_buff);
+#endif /* __CUDBG_LIB_COMMON_H__ */

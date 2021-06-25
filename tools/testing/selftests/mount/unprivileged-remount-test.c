@@ -1,372 +1,371 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#घोषणा _GNU_SOURCE
-#समावेश <sched.h>
-#समावेश <मानकपन.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <माला.स>
-#समावेश <sys/types.h>
-#समावेश <sys/mount.h>
-#समावेश <sys/रुको.h>
-#समावेश <sys/vfs.h>
-#समावेश <sys/statvfs.h>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
-#समावेश <fcntl.h>
-#समावेश <grp.h>
-#समावेश <stdbool.h>
-#समावेश <मानकतर्क.स>
+// SPDX-License-Identifier: GPL-2.0
+#define _GNU_SOURCE
+#include <sched.h>
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/mount.h>
+#include <sys/wait.h>
+#include <sys/vfs.h>
+#include <sys/statvfs.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <grp.h>
+#include <stdbool.h>
+#include <stdarg.h>
 
-#अगर_अघोषित CLONE_NEWNS
+#ifndef CLONE_NEWNS
 # define CLONE_NEWNS 0x00020000
-#पूर्ण_अगर
-#अगर_अघोषित CLONE_NEWUTS
+#endif
+#ifndef CLONE_NEWUTS
 # define CLONE_NEWUTS 0x04000000
-#पूर्ण_अगर
-#अगर_अघोषित CLONE_NEWIPC
+#endif
+#ifndef CLONE_NEWIPC
 # define CLONE_NEWIPC 0x08000000
-#पूर्ण_अगर
-#अगर_अघोषित CLONE_NEWNET
+#endif
+#ifndef CLONE_NEWNET
 # define CLONE_NEWNET 0x40000000
-#पूर्ण_अगर
-#अगर_अघोषित CLONE_NEWUSER
+#endif
+#ifndef CLONE_NEWUSER
 # define CLONE_NEWUSER 0x10000000
-#पूर्ण_अगर
-#अगर_अघोषित CLONE_NEWPID
+#endif
+#ifndef CLONE_NEWPID
 # define CLONE_NEWPID 0x20000000
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित MS_REC
+#ifndef MS_REC
 # define MS_REC 16384
-#पूर्ण_अगर
-#अगर_अघोषित MS_RELATIME
+#endif
+#ifndef MS_RELATIME
 # define MS_RELATIME (1 << 21)
-#पूर्ण_अगर
-#अगर_अघोषित MS_STRICTATIME
+#endif
+#ifndef MS_STRICTATIME
 # define MS_STRICTATIME (1 << 24)
-#पूर्ण_अगर
+#endif
 
-अटल व्योम die(अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
-	बहु_शुरू(ap, fmt);
-	भख_लिखो(मानक_त्रुटि, fmt, ap);
-	बहु_पूर्ण(ap);
-	निकास(निकास_त्रुटि);
-पूर्ण
+static void die(char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	exit(EXIT_FAILURE);
+}
 
-अटल व्योम vmaybe_ग_लिखो_file(bool enoent_ok, अक्षर *filename, अक्षर *fmt, बहु_सूची ap)
-अणु
-	अक्षर buf[4096];
-	पूर्णांक fd;
-	sमाप_प्रकार written;
-	पूर्णांक buf_len;
+static void vmaybe_write_file(bool enoent_ok, char *filename, char *fmt, va_list ap)
+{
+	char buf[4096];
+	int fd;
+	ssize_t written;
+	int buf_len;
 
-	buf_len = vsnम_लिखो(buf, माप(buf), fmt, ap);
-	अगर (buf_len < 0) अणु
+	buf_len = vsnprintf(buf, sizeof(buf), fmt, ap);
+	if (buf_len < 0) {
 		die("vsnprintf failed: %s\n",
-		    म_त्रुटि(त्रुटि_सं));
-	पूर्ण
-	अगर (buf_len >= माप(buf)) अणु
+		    strerror(errno));
+	}
+	if (buf_len >= sizeof(buf)) {
 		die("vsnprintf output truncated\n");
-	पूर्ण
+	}
 
-	fd = खोलो(filename, O_WRONLY);
-	अगर (fd < 0) अणु
-		अगर ((त्रुटि_सं == ENOENT) && enoent_ok)
-			वापस;
+	fd = open(filename, O_WRONLY);
+	if (fd < 0) {
+		if ((errno == ENOENT) && enoent_ok)
+			return;
 		die("open of %s failed: %s\n",
-		    filename, म_त्रुटि(त्रुटि_सं));
-	पूर्ण
-	written = ग_लिखो(fd, buf, buf_len);
-	अगर (written != buf_len) अणु
-		अगर (written >= 0) अणु
+		    filename, strerror(errno));
+	}
+	written = write(fd, buf, buf_len);
+	if (written != buf_len) {
+		if (written >= 0) {
 			die("short write to %s\n", filename);
-		पूर्ण अन्यथा अणु
+		} else {
 			die("write to %s failed: %s\n",
-				filename, म_त्रुटि(त्रुटि_सं));
-		पूर्ण
-	पूर्ण
-	अगर (बंद(fd) != 0) अणु
+				filename, strerror(errno));
+		}
+	}
+	if (close(fd) != 0) {
 		die("close of %s failed: %s\n",
-			filename, म_त्रुटि(त्रुटि_सं));
-	पूर्ण
-पूर्ण
+			filename, strerror(errno));
+	}
+}
 
-अटल व्योम maybe_ग_लिखो_file(अक्षर *filename, अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
+static void maybe_write_file(char *filename, char *fmt, ...)
+{
+	va_list ap;
 
-	बहु_शुरू(ap, fmt);
-	vmaybe_ग_लिखो_file(true, filename, fmt, ap);
-	बहु_पूर्ण(ap);
+	va_start(ap, fmt);
+	vmaybe_write_file(true, filename, fmt, ap);
+	va_end(ap);
 
-पूर्ण
+}
 
-अटल व्योम ग_लिखो_file(अक्षर *filename, अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
+static void write_file(char *filename, char *fmt, ...)
+{
+	va_list ap;
 
-	बहु_शुरू(ap, fmt);
-	vmaybe_ग_लिखो_file(false, filename, fmt, ap);
-	बहु_पूर्ण(ap);
+	va_start(ap, fmt);
+	vmaybe_write_file(false, filename, fmt, ap);
+	va_end(ap);
 
-पूर्ण
+}
 
-अटल पूर्णांक पढ़ो_mnt_flags(स्थिर अक्षर *path)
-अणु
-	पूर्णांक ret;
-	काष्ठा statvfs stat;
-	पूर्णांक mnt_flags;
+static int read_mnt_flags(const char *path)
+{
+	int ret;
+	struct statvfs stat;
+	int mnt_flags;
 
 	ret = statvfs(path, &stat);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		die("statvfs of %s failed: %s\n",
-			path, म_त्रुटि(त्रुटि_सं));
-	पूर्ण
-	अगर (stat.f_flag & ~(ST_RDONLY | ST_NOSUID | ST_NODEV | \
-			ST_NOEXEC | ST_NOATIME | ST_NOसूचीATIME | ST_RELATIME | \
-			ST_SYNCHRONOUS | ST_MANDLOCK)) अणु
+			path, strerror(errno));
+	}
+	if (stat.f_flag & ~(ST_RDONLY | ST_NOSUID | ST_NODEV | \
+			ST_NOEXEC | ST_NOATIME | ST_NODIRATIME | ST_RELATIME | \
+			ST_SYNCHRONOUS | ST_MANDLOCK)) {
 		die("Unrecognized mount flags\n");
-	पूर्ण
+	}
 	mnt_flags = 0;
-	अगर (stat.f_flag & ST_RDONLY)
+	if (stat.f_flag & ST_RDONLY)
 		mnt_flags |= MS_RDONLY;
-	अगर (stat.f_flag & ST_NOSUID)
+	if (stat.f_flag & ST_NOSUID)
 		mnt_flags |= MS_NOSUID;
-	अगर (stat.f_flag & ST_NODEV)
+	if (stat.f_flag & ST_NODEV)
 		mnt_flags |= MS_NODEV;
-	अगर (stat.f_flag & ST_NOEXEC)
+	if (stat.f_flag & ST_NOEXEC)
 		mnt_flags |= MS_NOEXEC;
-	अगर (stat.f_flag & ST_NOATIME)
+	if (stat.f_flag & ST_NOATIME)
 		mnt_flags |= MS_NOATIME;
-	अगर (stat.f_flag & ST_NOसूचीATIME)
-		mnt_flags |= MS_NOसूचीATIME;
-	अगर (stat.f_flag & ST_RELATIME)
+	if (stat.f_flag & ST_NODIRATIME)
+		mnt_flags |= MS_NODIRATIME;
+	if (stat.f_flag & ST_RELATIME)
 		mnt_flags |= MS_RELATIME;
-	अगर (stat.f_flag & ST_SYNCHRONOUS)
+	if (stat.f_flag & ST_SYNCHRONOUS)
 		mnt_flags |= MS_SYNCHRONOUS;
-	अगर (stat.f_flag & ST_MANDLOCK)
+	if (stat.f_flag & ST_MANDLOCK)
 		mnt_flags |= ST_MANDLOCK;
 
-	वापस mnt_flags;
-पूर्ण
+	return mnt_flags;
+}
 
-अटल व्योम create_and_enter_userns(व्योम)
-अणु
+static void create_and_enter_userns(void)
+{
 	uid_t uid;
 	gid_t gid;
 
 	uid = getuid();
 	gid = getgid();
 
-	अगर (unshare(CLONE_NEWUSER) !=0) अणु
+	if (unshare(CLONE_NEWUSER) !=0) {
 		die("unshare(CLONE_NEWUSER) failed: %s\n",
-			म_त्रुटि(त्रुटि_सं));
-	पूर्ण
+			strerror(errno));
+	}
 
-	maybe_ग_लिखो_file("/proc/self/setgroups", "deny");
-	ग_लिखो_file("/proc/self/uid_map", "0 %d 1", uid);
-	ग_लिखो_file("/proc/self/gid_map", "0 %d 1", gid);
+	maybe_write_file("/proc/self/setgroups", "deny");
+	write_file("/proc/self/uid_map", "0 %d 1", uid);
+	write_file("/proc/self/gid_map", "0 %d 1", gid);
 
-	अगर (setgid(0) != 0) अणु
+	if (setgid(0) != 0) {
 		die ("setgid(0) failed %s\n",
-			म_त्रुटि(त्रुटि_सं));
-	पूर्ण
-	अगर (setuid(0) != 0) अणु
+			strerror(errno));
+	}
+	if (setuid(0) != 0) {
 		die("setuid(0) failed %s\n",
-			म_त्रुटि(त्रुटि_सं));
-	पूर्ण
-पूर्ण
+			strerror(errno));
+	}
+}
 
-अटल
-bool test_unpriv_remount(स्थिर अक्षर *fstype, स्थिर अक्षर *mount_options,
-			 पूर्णांक mount_flags, पूर्णांक remount_flags, पूर्णांक invalid_flags)
-अणु
+static
+bool test_unpriv_remount(const char *fstype, const char *mount_options,
+			 int mount_flags, int remount_flags, int invalid_flags)
+{
 	pid_t child;
 
-	child = विभाजन();
-	अगर (child == -1) अणु
+	child = fork();
+	if (child == -1) {
 		die("fork failed: %s\n",
-			म_त्रुटि(त्रुटि_सं));
-	पूर्ण
-	अगर (child != 0) अणु /* parent */
+			strerror(errno));
+	}
+	if (child != 0) { /* parent */
 		pid_t pid;
-		पूर्णांक status;
-		pid = रुकोpid(child, &status, 0);
-		अगर (pid == -1) अणु
+		int status;
+		pid = waitpid(child, &status, 0);
+		if (pid == -1) {
 			die("waitpid failed: %s\n",
-				म_त्रुटि(त्रुटि_सं));
-		पूर्ण
-		अगर (pid != child) अणु
+				strerror(errno));
+		}
+		if (pid != child) {
 			die("waited for %d got %d\n",
 				child, pid);
-		पूर्ण
-		अगर (!WIFEXITED(status)) अणु
+		}
+		if (!WIFEXITED(status)) {
 			die("child did not terminate cleanly\n");
-		पूर्ण
-		वापस WEXITSTATUS(status) == निकास_सफल ? true : false;
-	पूर्ण
+		}
+		return WEXITSTATUS(status) == EXIT_SUCCESS ? true : false;
+	}
 
 	create_and_enter_userns();
-	अगर (unshare(CLONE_NEWNS) != 0) अणु
+	if (unshare(CLONE_NEWNS) != 0) {
 		die("unshare(CLONE_NEWNS) failed: %s\n",
-			म_त्रुटि(त्रुटि_सं));
-	पूर्ण
+			strerror(errno));
+	}
 
-	अगर (mount("testing", "/tmp", fstype, mount_flags, mount_options) != 0) अणु
+	if (mount("testing", "/tmp", fstype, mount_flags, mount_options) != 0) {
 		die("mount of %s with options '%s' on /tmp failed: %s\n",
 		    fstype,
 		    mount_options? mount_options : "",
-		    म_त्रुटि(त्रुटि_सं));
-	पूर्ण
+		    strerror(errno));
+	}
 
 	create_and_enter_userns();
 
-	अगर (unshare(CLONE_NEWNS) != 0) अणु
+	if (unshare(CLONE_NEWNS) != 0) {
 		die("unshare(CLONE_NEWNS) failed: %s\n",
-			म_त्रुटि(त्रुटि_सं));
-	पूर्ण
+			strerror(errno));
+	}
 
-	अगर (mount("/tmp", "/tmp", "none",
-		  MS_REMOUNT | MS_BIND | remount_flags, शून्य) != 0) अणु
-		/* प्रणाली("cat /proc/self/mounts"); */
+	if (mount("/tmp", "/tmp", "none",
+		  MS_REMOUNT | MS_BIND | remount_flags, NULL) != 0) {
+		/* system("cat /proc/self/mounts"); */
 		die("remount of /tmp failed: %s\n",
-		    म_त्रुटि(त्रुटि_सं));
-	पूर्ण
+		    strerror(errno));
+	}
 
-	अगर (mount("/tmp", "/tmp", "none",
-		  MS_REMOUNT | MS_BIND | invalid_flags, शून्य) == 0) अणु
-		/* प्रणाली("cat /proc/self/mounts"); */
+	if (mount("/tmp", "/tmp", "none",
+		  MS_REMOUNT | MS_BIND | invalid_flags, NULL) == 0) {
+		/* system("cat /proc/self/mounts"); */
 		die("remount of /tmp with invalid flags "
 		    "succeeded unexpectedly\n");
-	पूर्ण
-	निकास(निकास_सफल);
-पूर्ण
+	}
+	exit(EXIT_SUCCESS);
+}
 
-अटल bool test_unpriv_remount_simple(पूर्णांक mount_flags)
-अणु
-	वापस test_unpriv_remount("ramfs", शून्य, mount_flags, mount_flags, 0);
-पूर्ण
+static bool test_unpriv_remount_simple(int mount_flags)
+{
+	return test_unpriv_remount("ramfs", NULL, mount_flags, mount_flags, 0);
+}
 
-अटल bool test_unpriv_remount_aसमय(पूर्णांक mount_flags, पूर्णांक invalid_flags)
-अणु
-	वापस test_unpriv_remount("ramfs", शून्य, mount_flags, mount_flags,
+static bool test_unpriv_remount_atime(int mount_flags, int invalid_flags)
+{
+	return test_unpriv_remount("ramfs", NULL, mount_flags, mount_flags,
 				   invalid_flags);
-पूर्ण
+}
 
-अटल bool test_priv_mount_unpriv_remount(व्योम)
-अणु
+static bool test_priv_mount_unpriv_remount(void)
+{
 	pid_t child;
-	पूर्णांक ret;
-	स्थिर अक्षर *orig_path = "/dev";
-	स्थिर अक्षर *dest_path = "/tmp";
-	पूर्णांक orig_mnt_flags, remount_mnt_flags;
+	int ret;
+	const char *orig_path = "/dev";
+	const char *dest_path = "/tmp";
+	int orig_mnt_flags, remount_mnt_flags;
 
-	child = विभाजन();
-	अगर (child == -1) अणु
+	child = fork();
+	if (child == -1) {
 		die("fork failed: %s\n",
-			म_त्रुटि(त्रुटि_सं));
-	पूर्ण
-	अगर (child != 0) अणु /* parent */
+			strerror(errno));
+	}
+	if (child != 0) { /* parent */
 		pid_t pid;
-		पूर्णांक status;
-		pid = रुकोpid(child, &status, 0);
-		अगर (pid == -1) अणु
+		int status;
+		pid = waitpid(child, &status, 0);
+		if (pid == -1) {
 			die("waitpid failed: %s\n",
-				म_त्रुटि(त्रुटि_सं));
-		पूर्ण
-		अगर (pid != child) अणु
+				strerror(errno));
+		}
+		if (pid != child) {
 			die("waited for %d got %d\n",
 				child, pid);
-		पूर्ण
-		अगर (!WIFEXITED(status)) अणु
+		}
+		if (!WIFEXITED(status)) {
 			die("child did not terminate cleanly\n");
-		पूर्ण
-		वापस WEXITSTATUS(status) == निकास_सफल ? true : false;
-	पूर्ण
+		}
+		return WEXITSTATUS(status) == EXIT_SUCCESS ? true : false;
+	}
 
-	orig_mnt_flags = पढ़ो_mnt_flags(orig_path);
+	orig_mnt_flags = read_mnt_flags(orig_path);
 
 	create_and_enter_userns();
 	ret = unshare(CLONE_NEWNS);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		die("unshare(CLONE_NEWNS) failed: %s\n",
-			म_त्रुटि(त्रुटि_सं));
-	पूर्ण
+			strerror(errno));
+	}
 
-	ret = mount(orig_path, dest_path, "bind", MS_BIND | MS_REC, शून्य);
-	अगर (ret != 0) अणु
+	ret = mount(orig_path, dest_path, "bind", MS_BIND | MS_REC, NULL);
+	if (ret != 0) {
 		die("recursive bind mount of %s onto %s failed: %s\n",
-			orig_path, dest_path, म_त्रुटि(त्रुटि_सं));
-	पूर्ण
+			orig_path, dest_path, strerror(errno));
+	}
 
 	ret = mount(dest_path, dest_path, "none",
-		    MS_REMOUNT | MS_BIND | orig_mnt_flags , शून्य);
-	अगर (ret != 0) अणु
-		/* प्रणाली("cat /proc/self/mounts"); */
+		    MS_REMOUNT | MS_BIND | orig_mnt_flags , NULL);
+	if (ret != 0) {
+		/* system("cat /proc/self/mounts"); */
 		die("remount of /tmp failed: %s\n",
-		    म_त्रुटि(त्रुटि_सं));
-	पूर्ण
+		    strerror(errno));
+	}
 
-	remount_mnt_flags = पढ़ो_mnt_flags(dest_path);
-	अगर (orig_mnt_flags != remount_mnt_flags) अणु
+	remount_mnt_flags = read_mnt_flags(dest_path);
+	if (orig_mnt_flags != remount_mnt_flags) {
 		die("Mount flags unexpectedly changed during remount of %s originally mounted on %s\n",
 			dest_path, orig_path);
-	पूर्ण
-	निकास(निकास_सफल);
-पूर्ण
+	}
+	exit(EXIT_SUCCESS);
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	अगर (!test_unpriv_remount_simple(MS_RDONLY)) अणु
+int main(int argc, char **argv)
+{
+	if (!test_unpriv_remount_simple(MS_RDONLY)) {
 		die("MS_RDONLY malfunctions\n");
-	पूर्ण
-	अगर (!test_unpriv_remount("devpts", "newinstance", MS_NODEV, MS_NODEV, 0)) अणु
+	}
+	if (!test_unpriv_remount("devpts", "newinstance", MS_NODEV, MS_NODEV, 0)) {
 		die("MS_NODEV malfunctions\n");
-	पूर्ण
-	अगर (!test_unpriv_remount_simple(MS_NOSUID)) अणु
+	}
+	if (!test_unpriv_remount_simple(MS_NOSUID)) {
 		die("MS_NOSUID malfunctions\n");
-	पूर्ण
-	अगर (!test_unpriv_remount_simple(MS_NOEXEC)) अणु
+	}
+	if (!test_unpriv_remount_simple(MS_NOEXEC)) {
 		die("MS_NOEXEC malfunctions\n");
-	पूर्ण
-	अगर (!test_unpriv_remount_aसमय(MS_RELATIME,
+	}
+	if (!test_unpriv_remount_atime(MS_RELATIME,
 				       MS_NOATIME))
-	अणु
+	{
 		die("MS_RELATIME malfunctions\n");
-	पूर्ण
-	अगर (!test_unpriv_remount_aसमय(MS_STRICTATIME,
+	}
+	if (!test_unpriv_remount_atime(MS_STRICTATIME,
 				       MS_NOATIME))
-	अणु
+	{
 		die("MS_STRICTATIME malfunctions\n");
-	पूर्ण
-	अगर (!test_unpriv_remount_aसमय(MS_NOATIME,
+	}
+	if (!test_unpriv_remount_atime(MS_NOATIME,
 				       MS_STRICTATIME))
-	अणु
+	{
 		die("MS_NOATIME malfunctions\n");
-	पूर्ण
-	अगर (!test_unpriv_remount_aसमय(MS_RELATIME|MS_NOसूचीATIME,
+	}
+	if (!test_unpriv_remount_atime(MS_RELATIME|MS_NODIRATIME,
 				       MS_NOATIME))
-	अणु
+	{
 		die("MS_RELATIME|MS_NODIRATIME malfunctions\n");
-	पूर्ण
-	अगर (!test_unpriv_remount_aसमय(MS_STRICTATIME|MS_NOसूचीATIME,
+	}
+	if (!test_unpriv_remount_atime(MS_STRICTATIME|MS_NODIRATIME,
 				       MS_NOATIME))
-	अणु
+	{
 		die("MS_STRICTATIME|MS_NODIRATIME malfunctions\n");
-	पूर्ण
-	अगर (!test_unpriv_remount_aसमय(MS_NOATIME|MS_NOसूचीATIME,
+	}
+	if (!test_unpriv_remount_atime(MS_NOATIME|MS_NODIRATIME,
 				       MS_STRICTATIME))
-	अणु
+	{
 		die("MS_NOATIME|MS_DIRATIME malfunctions\n");
-	पूर्ण
-	अगर (!test_unpriv_remount("ramfs", शून्य, MS_STRICTATIME, 0, MS_NOATIME))
-	अणु
+	}
+	if (!test_unpriv_remount("ramfs", NULL, MS_STRICTATIME, 0, MS_NOATIME))
+	{
 		die("Default atime malfunctions\n");
-	पूर्ण
-	अगर (!test_priv_mount_unpriv_remount()) अणु
+	}
+	if (!test_priv_mount_unpriv_remount()) {
 		die("Mount flags unexpectedly changed after remount\n");
-	पूर्ण
-	वापस निकास_सफल;
-पूर्ण
+	}
+	return EXIT_SUCCESS;
+}

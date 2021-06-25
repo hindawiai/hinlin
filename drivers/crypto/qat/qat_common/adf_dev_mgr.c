@@ -1,221 +1,220 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (BSD-3-Clause OR GPL-2.0-only)
+// SPDX-License-Identifier: (BSD-3-Clause OR GPL-2.0-only)
 /* Copyright(c) 2014 - 2020 Intel Corporation */
-#समावेश <linux/mutex.h>
-#समावेश <linux/list.h>
-#समावेश "adf_cfg.h"
-#समावेश "adf_common_drv.h"
+#include <linux/mutex.h>
+#include <linux/list.h>
+#include "adf_cfg.h"
+#include "adf_common_drv.h"
 
-अटल LIST_HEAD(accel_table);
-अटल LIST_HEAD(vfs_table);
-अटल DEFINE_MUTEX(table_lock);
-अटल u32 num_devices;
-अटल u8 id_map[ADF_MAX_DEVICES];
+static LIST_HEAD(accel_table);
+static LIST_HEAD(vfs_table);
+static DEFINE_MUTEX(table_lock);
+static u32 num_devices;
+static u8 id_map[ADF_MAX_DEVICES];
 
-काष्ठा vf_id_map अणु
+struct vf_id_map {
 	u32 bdf;
 	u32 id;
 	u32 fake_id;
 	bool attached;
-	काष्ठा list_head list;
-पूर्ण;
+	struct list_head list;
+};
 
-अटल पूर्णांक adf_get_vf_id(काष्ठा adf_accel_dev *vf)
-अणु
-	वापस ((7 * (PCI_SLOT(accel_to_pci_dev(vf)->devfn) - 1)) +
+static int adf_get_vf_id(struct adf_accel_dev *vf)
+{
+	return ((7 * (PCI_SLOT(accel_to_pci_dev(vf)->devfn) - 1)) +
 		PCI_FUNC(accel_to_pci_dev(vf)->devfn) +
 		(PCI_SLOT(accel_to_pci_dev(vf)->devfn) - 1));
-पूर्ण
+}
 
-अटल पूर्णांक adf_get_vf_num(काष्ठा adf_accel_dev *vf)
-अणु
-	वापस (accel_to_pci_dev(vf)->bus->number << 8) | adf_get_vf_id(vf);
-पूर्ण
+static int adf_get_vf_num(struct adf_accel_dev *vf)
+{
+	return (accel_to_pci_dev(vf)->bus->number << 8) | adf_get_vf_id(vf);
+}
 
-अटल काष्ठा vf_id_map *adf_find_vf(u32 bdf)
-अणु
-	काष्ठा list_head *itr;
+static struct vf_id_map *adf_find_vf(u32 bdf)
+{
+	struct list_head *itr;
 
-	list_क्रम_each(itr, &vfs_table) अणु
-		काष्ठा vf_id_map *ptr =
-			list_entry(itr, काष्ठा vf_id_map, list);
+	list_for_each(itr, &vfs_table) {
+		struct vf_id_map *ptr =
+			list_entry(itr, struct vf_id_map, list);
 
-		अगर (ptr->bdf == bdf)
-			वापस ptr;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		if (ptr->bdf == bdf)
+			return ptr;
+	}
+	return NULL;
+}
 
-अटल पूर्णांक adf_get_vf_real_id(u32 fake)
-अणु
-	काष्ठा list_head *itr;
+static int adf_get_vf_real_id(u32 fake)
+{
+	struct list_head *itr;
 
-	list_क्रम_each(itr, &vfs_table) अणु
-		काष्ठा vf_id_map *ptr =
-			list_entry(itr, काष्ठा vf_id_map, list);
-		अगर (ptr->fake_id == fake)
-			वापस ptr->id;
-	पूर्ण
-	वापस -1;
-पूर्ण
+	list_for_each(itr, &vfs_table) {
+		struct vf_id_map *ptr =
+			list_entry(itr, struct vf_id_map, list);
+		if (ptr->fake_id == fake)
+			return ptr->id;
+	}
+	return -1;
+}
 
 /**
  * adf_clean_vf_map() - Cleans VF id mapings
  *
- * Function cleans पूर्णांकernal ids क्रम भव functions.
+ * Function cleans internal ids for virtual functions.
  * @vf: flag indicating whether mappings is cleaned
- *	क्रम vfs only or क्रम vfs and pfs
+ *	for vfs only or for vfs and pfs
  */
-व्योम adf_clean_vf_map(bool vf)
-अणु
-	काष्ठा vf_id_map *map;
-	काष्ठा list_head *ptr, *पंचांगp;
+void adf_clean_vf_map(bool vf)
+{
+	struct vf_id_map *map;
+	struct list_head *ptr, *tmp;
 
 	mutex_lock(&table_lock);
-	list_क्रम_each_safe(ptr, पंचांगp, &vfs_table) अणु
-		map = list_entry(ptr, काष्ठा vf_id_map, list);
-		अगर (map->bdf != -1) अणु
+	list_for_each_safe(ptr, tmp, &vfs_table) {
+		map = list_entry(ptr, struct vf_id_map, list);
+		if (map->bdf != -1) {
 			id_map[map->id] = 0;
 			num_devices--;
-		पूर्ण
+		}
 
-		अगर (vf && map->bdf == -1)
-			जारी;
+		if (vf && map->bdf == -1)
+			continue;
 
 		list_del(ptr);
-		kमुक्त(map);
-	पूर्ण
+		kfree(map);
+	}
 	mutex_unlock(&table_lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(adf_clean_vf_map);
 
 /**
- * adf_devmgr_update_class_index() - Update पूर्णांकernal index
- * @hw_data:  Poपूर्णांकer to पूर्णांकernal device data.
+ * adf_devmgr_update_class_index() - Update internal index
+ * @hw_data:  Pointer to internal device data.
  *
- * Function updates पूर्णांकernal dev index क्रम VFs
+ * Function updates internal dev index for VFs
  */
-व्योम adf_devmgr_update_class_index(काष्ठा adf_hw_device_data *hw_data)
-अणु
-	काष्ठा adf_hw_device_class *class = hw_data->dev_class;
-	काष्ठा list_head *itr;
-	पूर्णांक i = 0;
+void adf_devmgr_update_class_index(struct adf_hw_device_data *hw_data)
+{
+	struct adf_hw_device_class *class = hw_data->dev_class;
+	struct list_head *itr;
+	int i = 0;
 
-	list_क्रम_each(itr, &accel_table) अणु
-		काष्ठा adf_accel_dev *ptr =
-				list_entry(itr, काष्ठा adf_accel_dev, list);
+	list_for_each(itr, &accel_table) {
+		struct adf_accel_dev *ptr =
+				list_entry(itr, struct adf_accel_dev, list);
 
-		अगर (ptr->hw_device->dev_class == class)
+		if (ptr->hw_device->dev_class == class)
 			ptr->hw_device->instance_id = i++;
 
-		अगर (i == class->instances)
-			अवरोध;
-	पूर्ण
-पूर्ण
+		if (i == class->instances)
+			break;
+	}
+}
 EXPORT_SYMBOL_GPL(adf_devmgr_update_class_index);
 
-अटल अचिन्हित पूर्णांक adf_find_मुक्त_id(व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
+static unsigned int adf_find_free_id(void)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ADF_MAX_DEVICES; i++) अणु
-		अगर (!id_map[i]) अणु
+	for (i = 0; i < ADF_MAX_DEVICES; i++) {
+		if (!id_map[i]) {
 			id_map[i] = 1;
-			वापस i;
-		पूर्ण
-	पूर्ण
-	वापस ADF_MAX_DEVICES + 1;
-पूर्ण
+			return i;
+		}
+	}
+	return ADF_MAX_DEVICES + 1;
+}
 
 /**
  * adf_devmgr_add_dev() - Add accel_dev to the acceleration framework
- * @accel_dev:  Poपूर्णांकer to acceleration device.
- * @pf:		Corresponding PF अगर the accel_dev is a VF
+ * @accel_dev:  Pointer to acceleration device.
+ * @pf:		Corresponding PF if the accel_dev is a VF
  *
  * Function adds acceleration device to the acceleration framework.
- * To be used by QAT device specअगरic drivers.
+ * To be used by QAT device specific drivers.
  *
  * Return: 0 on success, error code otherwise.
  */
-पूर्णांक adf_devmgr_add_dev(काष्ठा adf_accel_dev *accel_dev,
-		       काष्ठा adf_accel_dev *pf)
-अणु
-	काष्ठा list_head *itr;
-	पूर्णांक ret = 0;
+int adf_devmgr_add_dev(struct adf_accel_dev *accel_dev,
+		       struct adf_accel_dev *pf)
+{
+	struct list_head *itr;
+	int ret = 0;
 
-	अगर (num_devices == ADF_MAX_DEVICES) अणु
+	if (num_devices == ADF_MAX_DEVICES) {
 		dev_err(&GET_DEV(accel_dev), "Only support up to %d devices\n",
 			ADF_MAX_DEVICES);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	mutex_lock(&table_lock);
 	atomic_set(&accel_dev->ref_count, 0);
 
-	/* PF on host or VF on guest - optimized to हटाओ redundant is_vf */
-	अगर (!accel_dev->is_vf || !pf) अणु
-		काष्ठा vf_id_map *map;
+	/* PF on host or VF on guest - optimized to remove redundant is_vf */
+	if (!accel_dev->is_vf || !pf) {
+		struct vf_id_map *map;
 
-		list_क्रम_each(itr, &accel_table) अणु
-			काष्ठा adf_accel_dev *ptr =
-				list_entry(itr, काष्ठा adf_accel_dev, list);
+		list_for_each(itr, &accel_table) {
+			struct adf_accel_dev *ptr =
+				list_entry(itr, struct adf_accel_dev, list);
 
-			अगर (ptr == accel_dev) अणु
+			if (ptr == accel_dev) {
 				ret = -EEXIST;
-				जाओ unlock;
-			पूर्ण
-		पूर्ण
+				goto unlock;
+			}
+		}
 
 		list_add_tail(&accel_dev->list, &accel_table);
-		accel_dev->accel_id = adf_find_मुक्त_id();
-		अगर (accel_dev->accel_id > ADF_MAX_DEVICES) अणु
+		accel_dev->accel_id = adf_find_free_id();
+		if (accel_dev->accel_id > ADF_MAX_DEVICES) {
 			ret = -EFAULT;
-			जाओ unlock;
-		पूर्ण
+			goto unlock;
+		}
 		num_devices++;
-		map = kzalloc(माप(*map), GFP_KERNEL);
-		अगर (!map) अणु
+		map = kzalloc(sizeof(*map), GFP_KERNEL);
+		if (!map) {
 			ret = -ENOMEM;
-			जाओ unlock;
-		पूर्ण
+			goto unlock;
+		}
 		map->bdf = ~0;
 		map->id = accel_dev->accel_id;
 		map->fake_id = map->id;
 		map->attached = true;
 		list_add_tail(&map->list, &vfs_table);
-	पूर्ण अन्यथा अगर (accel_dev->is_vf && pf) अणु
+	} else if (accel_dev->is_vf && pf) {
 		/* VF on host */
-		काष्ठा vf_id_map *map;
+		struct vf_id_map *map;
 
 		map = adf_find_vf(adf_get_vf_num(accel_dev));
-		अगर (map) अणु
-			काष्ठा vf_id_map *next;
+		if (map) {
+			struct vf_id_map *next;
 
 			accel_dev->accel_id = map->id;
 			list_add_tail(&accel_dev->list, &accel_table);
 			map->fake_id++;
 			map->attached = true;
 			next = list_next_entry(map, list);
-			जबतक (next && &next->list != &vfs_table) अणु
+			while (next && &next->list != &vfs_table) {
 				next->fake_id++;
 				next = list_next_entry(next, list);
-			पूर्ण
+			}
 
 			ret = 0;
-			जाओ unlock;
-		पूर्ण
+			goto unlock;
+		}
 
-		map = kzalloc(माप(*map), GFP_KERNEL);
-		अगर (!map) अणु
+		map = kzalloc(sizeof(*map), GFP_KERNEL);
+		if (!map) {
 			ret = -ENOMEM;
-			जाओ unlock;
-		पूर्ण
-		accel_dev->accel_id = adf_find_मुक्त_id();
-		अगर (accel_dev->accel_id > ADF_MAX_DEVICES) अणु
-			kमुक्त(map);
+			goto unlock;
+		}
+		accel_dev->accel_id = adf_find_free_id();
+		if (accel_dev->accel_id > ADF_MAX_DEVICES) {
+			kfree(map);
 			ret = -EFAULT;
-			जाओ unlock;
-		पूर्ण
+			goto unlock;
+		}
 		num_devices++;
 		list_add_tail(&accel_dev->list, &accel_table);
 		map->bdf = adf_get_vf_num(accel_dev);
@@ -223,229 +222,229 @@ EXPORT_SYMBOL_GPL(adf_devmgr_update_class_index);
 		map->fake_id = map->id;
 		map->attached = true;
 		list_add_tail(&map->list, &vfs_table);
-	पूर्ण
+	}
 unlock:
 	mutex_unlock(&table_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(adf_devmgr_add_dev);
 
-काष्ठा list_head *adf_devmgr_get_head(व्योम)
-अणु
-	वापस &accel_table;
-पूर्ण
+struct list_head *adf_devmgr_get_head(void)
+{
+	return &accel_table;
+}
 
 /**
  * adf_devmgr_rm_dev() - Remove accel_dev from the acceleration framework.
- * @accel_dev:  Poपूर्णांकer to acceleration device.
- * @pf:		Corresponding PF अगर the accel_dev is a VF
+ * @accel_dev:  Pointer to acceleration device.
+ * @pf:		Corresponding PF if the accel_dev is a VF
  *
- * Function हटाओs acceleration device from the acceleration framework.
- * To be used by QAT device specअगरic drivers.
+ * Function removes acceleration device from the acceleration framework.
+ * To be used by QAT device specific drivers.
  *
- * Return: व्योम
+ * Return: void
  */
-व्योम adf_devmgr_rm_dev(काष्ठा adf_accel_dev *accel_dev,
-		       काष्ठा adf_accel_dev *pf)
-अणु
+void adf_devmgr_rm_dev(struct adf_accel_dev *accel_dev,
+		       struct adf_accel_dev *pf)
+{
 	mutex_lock(&table_lock);
-	/* PF on host or VF on guest - optimized to हटाओ redundant is_vf */
-	अगर (!accel_dev->is_vf || !pf) अणु
+	/* PF on host or VF on guest - optimized to remove redundant is_vf */
+	if (!accel_dev->is_vf || !pf) {
 		id_map[accel_dev->accel_id] = 0;
 		num_devices--;
-	पूर्ण अन्यथा अगर (accel_dev->is_vf && pf) अणु
-		काष्ठा vf_id_map *map, *next;
+	} else if (accel_dev->is_vf && pf) {
+		struct vf_id_map *map, *next;
 
 		map = adf_find_vf(adf_get_vf_num(accel_dev));
-		अगर (!map) अणु
+		if (!map) {
 			dev_err(&GET_DEV(accel_dev), "Failed to find VF map\n");
-			जाओ unlock;
-		पूर्ण
+			goto unlock;
+		}
 		map->fake_id--;
 		map->attached = false;
 		next = list_next_entry(map, list);
-		जबतक (next && &next->list != &vfs_table) अणु
+		while (next && &next->list != &vfs_table) {
 			next->fake_id--;
 			next = list_next_entry(next, list);
-		पूर्ण
-	पूर्ण
+		}
+	}
 unlock:
 	list_del(&accel_dev->list);
 	mutex_unlock(&table_lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(adf_devmgr_rm_dev);
 
-काष्ठा adf_accel_dev *adf_devmgr_get_first(व्योम)
-अणु
-	काष्ठा adf_accel_dev *dev = शून्य;
+struct adf_accel_dev *adf_devmgr_get_first(void)
+{
+	struct adf_accel_dev *dev = NULL;
 
-	अगर (!list_empty(&accel_table))
-		dev = list_first_entry(&accel_table, काष्ठा adf_accel_dev,
+	if (!list_empty(&accel_table))
+		dev = list_first_entry(&accel_table, struct adf_accel_dev,
 				       list);
-	वापस dev;
-पूर्ण
+	return dev;
+}
 
 /**
  * adf_devmgr_pci_to_accel_dev() - Get accel_dev associated with the pci_dev.
- * @pci_dev:  Poपूर्णांकer to PCI device.
+ * @pci_dev:  Pointer to PCI device.
  *
- * Function वापसs acceleration device associated with the given PCI device.
- * To be used by QAT device specअगरic drivers.
+ * Function returns acceleration device associated with the given PCI device.
+ * To be used by QAT device specific drivers.
  *
- * Return: poपूर्णांकer to accel_dev or शून्य अगर not found.
+ * Return: pointer to accel_dev or NULL if not found.
  */
-काष्ठा adf_accel_dev *adf_devmgr_pci_to_accel_dev(काष्ठा pci_dev *pci_dev)
-अणु
-	काष्ठा list_head *itr;
+struct adf_accel_dev *adf_devmgr_pci_to_accel_dev(struct pci_dev *pci_dev)
+{
+	struct list_head *itr;
 
 	mutex_lock(&table_lock);
-	list_क्रम_each(itr, &accel_table) अणु
-		काष्ठा adf_accel_dev *ptr =
-				list_entry(itr, काष्ठा adf_accel_dev, list);
+	list_for_each(itr, &accel_table) {
+		struct adf_accel_dev *ptr =
+				list_entry(itr, struct adf_accel_dev, list);
 
-		अगर (ptr->accel_pci_dev.pci_dev == pci_dev) अणु
+		if (ptr->accel_pci_dev.pci_dev == pci_dev) {
 			mutex_unlock(&table_lock);
-			वापस ptr;
-		पूर्ण
-	पूर्ण
+			return ptr;
+		}
+	}
 	mutex_unlock(&table_lock);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(adf_devmgr_pci_to_accel_dev);
 
-काष्ठा adf_accel_dev *adf_devmgr_get_dev_by_id(u32 id)
-अणु
-	काष्ठा list_head *itr;
-	पूर्णांक real_id;
+struct adf_accel_dev *adf_devmgr_get_dev_by_id(u32 id)
+{
+	struct list_head *itr;
+	int real_id;
 
 	mutex_lock(&table_lock);
 	real_id = adf_get_vf_real_id(id);
-	अगर (real_id < 0)
-		जाओ unlock;
+	if (real_id < 0)
+		goto unlock;
 
 	id = real_id;
 
-	list_क्रम_each(itr, &accel_table) अणु
-		काष्ठा adf_accel_dev *ptr =
-				list_entry(itr, काष्ठा adf_accel_dev, list);
-		अगर (ptr->accel_id == id) अणु
+	list_for_each(itr, &accel_table) {
+		struct adf_accel_dev *ptr =
+				list_entry(itr, struct adf_accel_dev, list);
+		if (ptr->accel_id == id) {
 			mutex_unlock(&table_lock);
-			वापस ptr;
-		पूर्ण
-	पूर्ण
+			return ptr;
+		}
+	}
 unlock:
 	mutex_unlock(&table_lock);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-पूर्णांक adf_devmgr_verअगरy_id(u32 id)
-अणु
-	अगर (id == ADF_CFG_ALL_DEVICES)
-		वापस 0;
+int adf_devmgr_verify_id(u32 id)
+{
+	if (id == ADF_CFG_ALL_DEVICES)
+		return 0;
 
-	अगर (adf_devmgr_get_dev_by_id(id))
-		वापस 0;
+	if (adf_devmgr_get_dev_by_id(id))
+		return 0;
 
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल पूर्णांक adf_get_num_dettached_vfs(व्योम)
-अणु
-	काष्ठा list_head *itr;
-	पूर्णांक vfs = 0;
+static int adf_get_num_dettached_vfs(void)
+{
+	struct list_head *itr;
+	int vfs = 0;
 
 	mutex_lock(&table_lock);
-	list_क्रम_each(itr, &vfs_table) अणु
-		काष्ठा vf_id_map *ptr =
-			list_entry(itr, काष्ठा vf_id_map, list);
-		अगर (ptr->bdf != ~0 && !ptr->attached)
+	list_for_each(itr, &vfs_table) {
+		struct vf_id_map *ptr =
+			list_entry(itr, struct vf_id_map, list);
+		if (ptr->bdf != ~0 && !ptr->attached)
 			vfs++;
-	पूर्ण
+	}
 	mutex_unlock(&table_lock);
-	वापस vfs;
-पूर्ण
+	return vfs;
+}
 
-व्योम adf_devmgr_get_num_dev(u32 *num)
-अणु
+void adf_devmgr_get_num_dev(u32 *num)
+{
 	*num = num_devices - adf_get_num_dettached_vfs();
-पूर्ण
+}
 
 /**
  * adf_dev_in_use() - Check whether accel_dev is currently in use
- * @accel_dev: Poपूर्णांकer to acceleration device.
+ * @accel_dev: Pointer to acceleration device.
  *
- * To be used by QAT device specअगरic drivers.
+ * To be used by QAT device specific drivers.
  *
  * Return: 1 when device is in use, 0 otherwise.
  */
-पूर्णांक adf_dev_in_use(काष्ठा adf_accel_dev *accel_dev)
-अणु
-	वापस atomic_पढ़ो(&accel_dev->ref_count) != 0;
-पूर्ण
+int adf_dev_in_use(struct adf_accel_dev *accel_dev)
+{
+	return atomic_read(&accel_dev->ref_count) != 0;
+}
 EXPORT_SYMBOL_GPL(adf_dev_in_use);
 
 /**
  * adf_dev_get() - Increment accel_dev reference count
- * @accel_dev: Poपूर्णांकer to acceleration device.
+ * @accel_dev: Pointer to acceleration device.
  *
- * Increment the accel_dev refcount and अगर this is the first समय
+ * Increment the accel_dev refcount and if this is the first time
  * incrementing it during this period the accel_dev is in use,
  * increment the module refcount too.
- * To be used by QAT device specअगरic drivers.
+ * To be used by QAT device specific drivers.
  *
  * Return: 0 when successful, EFAULT when fail to bump module refcount
  */
-पूर्णांक adf_dev_get(काष्ठा adf_accel_dev *accel_dev)
-अणु
-	अगर (atomic_add_वापस(1, &accel_dev->ref_count) == 1)
-		अगर (!try_module_get(accel_dev->owner))
-			वापस -EFAULT;
-	वापस 0;
-पूर्ण
+int adf_dev_get(struct adf_accel_dev *accel_dev)
+{
+	if (atomic_add_return(1, &accel_dev->ref_count) == 1)
+		if (!try_module_get(accel_dev->owner))
+			return -EFAULT;
+	return 0;
+}
 EXPORT_SYMBOL_GPL(adf_dev_get);
 
 /**
  * adf_dev_put() - Decrement accel_dev reference count
- * @accel_dev: Poपूर्णांकer to acceleration device.
+ * @accel_dev: Pointer to acceleration device.
  *
- * Decrement the accel_dev refcount and अगर this is the last समय
+ * Decrement the accel_dev refcount and if this is the last time
  * decrementing it during this period the accel_dev is in use,
  * decrement the module refcount too.
- * To be used by QAT device specअगरic drivers.
+ * To be used by QAT device specific drivers.
  *
- * Return: व्योम
+ * Return: void
  */
-व्योम adf_dev_put(काष्ठा adf_accel_dev *accel_dev)
-अणु
-	अगर (atomic_sub_वापस(1, &accel_dev->ref_count) == 0)
+void adf_dev_put(struct adf_accel_dev *accel_dev)
+{
+	if (atomic_sub_return(1, &accel_dev->ref_count) == 0)
 		module_put(accel_dev->owner);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(adf_dev_put);
 
 /**
  * adf_devmgr_in_reset() - Check whether device is in reset
- * @accel_dev: Poपूर्णांकer to acceleration device.
+ * @accel_dev: Pointer to acceleration device.
  *
- * To be used by QAT device specअगरic drivers.
+ * To be used by QAT device specific drivers.
  *
  * Return: 1 when the device is being reset, 0 otherwise.
  */
-पूर्णांक adf_devmgr_in_reset(काष्ठा adf_accel_dev *accel_dev)
-अणु
-	वापस test_bit(ADF_STATUS_RESTARTING, &accel_dev->status);
-पूर्ण
+int adf_devmgr_in_reset(struct adf_accel_dev *accel_dev)
+{
+	return test_bit(ADF_STATUS_RESTARTING, &accel_dev->status);
+}
 EXPORT_SYMBOL_GPL(adf_devmgr_in_reset);
 
 /**
  * adf_dev_started() - Check whether device has started
- * @accel_dev: Poपूर्णांकer to acceleration device.
+ * @accel_dev: Pointer to acceleration device.
  *
- * To be used by QAT device specअगरic drivers.
+ * To be used by QAT device specific drivers.
  *
  * Return: 1 when the device has started, 0 otherwise
  */
-पूर्णांक adf_dev_started(काष्ठा adf_accel_dev *accel_dev)
-अणु
-	वापस test_bit(ADF_STATUS_STARTED, &accel_dev->status);
-पूर्ण
+int adf_dev_started(struct adf_accel_dev *accel_dev)
+{
+	return test_bit(ADF_STATUS_STARTED, &accel_dev->status);
+}
 EXPORT_SYMBOL_GPL(adf_dev_started);

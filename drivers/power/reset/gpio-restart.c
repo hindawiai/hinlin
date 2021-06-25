@@ -1,34 +1,33 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Toggles a GPIO pin to restart a device
  *
  * Copyright (C) 2014 Google, Inc.
  *
- * Based on the gpio-घातeroff driver.
+ * Based on the gpio-poweroff driver.
  */
-#समावेश <linux/reboot.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/module.h>
+#include <linux/reboot.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/platform_device.h>
+#include <linux/gpio/consumer.h>
+#include <linux/of_platform.h>
+#include <linux/module.h>
 
-काष्ठा gpio_restart अणु
-	काष्ठा gpio_desc *reset_gpio;
-	काष्ठा notअगरier_block restart_handler;
+struct gpio_restart {
+	struct gpio_desc *reset_gpio;
+	struct notifier_block restart_handler;
 	u32 active_delay_ms;
 	u32 inactive_delay_ms;
-	u32 रुको_delay_ms;
-पूर्ण;
+	u32 wait_delay_ms;
+};
 
-अटल पूर्णांक gpio_restart_notअगरy(काष्ठा notअगरier_block *this,
-				अचिन्हित दीर्घ mode, व्योम *cmd)
-अणु
-	काष्ठा gpio_restart *gpio_restart =
-		container_of(this, काष्ठा gpio_restart, restart_handler);
+static int gpio_restart_notify(struct notifier_block *this,
+				unsigned long mode, void *cmd)
+{
+	struct gpio_restart *gpio_restart =
+		container_of(this, struct gpio_restart, restart_handler);
 
 	/* drive it active, also inactive->active edge */
 	gpiod_direction_output(gpio_restart->reset_gpio, 1);
@@ -41,102 +40,102 @@
 	/* drive it active, also inactive->active edge */
 	gpiod_set_value(gpio_restart->reset_gpio, 1);
 
-	/* give it some समय */
-	mdelay(gpio_restart->रुको_delay_ms);
+	/* give it some time */
+	mdelay(gpio_restart->wait_delay_ms);
 
 	WARN_ON(1);
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल पूर्णांक gpio_restart_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा gpio_restart *gpio_restart;
-	bool खोलो_source = false;
+static int gpio_restart_probe(struct platform_device *pdev)
+{
+	struct gpio_restart *gpio_restart;
+	bool open_source = false;
 	u32 property;
-	पूर्णांक ret;
+	int ret;
 
-	gpio_restart = devm_kzalloc(&pdev->dev, माप(*gpio_restart),
+	gpio_restart = devm_kzalloc(&pdev->dev, sizeof(*gpio_restart),
 			GFP_KERNEL);
-	अगर (!gpio_restart)
-		वापस -ENOMEM;
+	if (!gpio_restart)
+		return -ENOMEM;
 
-	खोलो_source = of_property_पढ़ो_bool(pdev->dev.of_node, "open-source");
+	open_source = of_property_read_bool(pdev->dev.of_node, "open-source");
 
-	gpio_restart->reset_gpio = devm_gpiod_get(&pdev->dev, शून्य,
-			खोलो_source ? GPIOD_IN : GPIOD_OUT_LOW);
+	gpio_restart->reset_gpio = devm_gpiod_get(&pdev->dev, NULL,
+			open_source ? GPIOD_IN : GPIOD_OUT_LOW);
 	ret = PTR_ERR_OR_ZERO(gpio_restart->reset_gpio);
-	अगर (ret) अणु
-		अगर (ret != -EPROBE_DEFER)
+	if (ret) {
+		if (ret != -EPROBE_DEFER)
 			dev_err(&pdev->dev, "Could not get reset GPIO\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	gpio_restart->restart_handler.notअगरier_call = gpio_restart_notअगरy;
+	gpio_restart->restart_handler.notifier_call = gpio_restart_notify;
 	gpio_restart->restart_handler.priority = 129;
 	gpio_restart->active_delay_ms = 100;
 	gpio_restart->inactive_delay_ms = 100;
-	gpio_restart->रुको_delay_ms = 3000;
+	gpio_restart->wait_delay_ms = 3000;
 
-	ret = of_property_पढ़ो_u32(pdev->dev.of_node, "priority", &property);
-	अगर (!ret) अणु
-		अगर (property > 255)
+	ret = of_property_read_u32(pdev->dev.of_node, "priority", &property);
+	if (!ret) {
+		if (property > 255)
 			dev_err(&pdev->dev, "Invalid priority property: %u\n",
 					property);
-		अन्यथा
+		else
 			gpio_restart->restart_handler.priority = property;
-	पूर्ण
+	}
 
-	of_property_पढ़ो_u32(pdev->dev.of_node, "active-delay",
+	of_property_read_u32(pdev->dev.of_node, "active-delay",
 			&gpio_restart->active_delay_ms);
-	of_property_पढ़ो_u32(pdev->dev.of_node, "inactive-delay",
+	of_property_read_u32(pdev->dev.of_node, "inactive-delay",
 			&gpio_restart->inactive_delay_ms);
-	of_property_पढ़ो_u32(pdev->dev.of_node, "wait-delay",
-			&gpio_restart->रुको_delay_ms);
+	of_property_read_u32(pdev->dev.of_node, "wait-delay",
+			&gpio_restart->wait_delay_ms);
 
-	platक्रमm_set_drvdata(pdev, gpio_restart);
+	platform_set_drvdata(pdev, gpio_restart);
 
-	ret = रेजिस्टर_restart_handler(&gpio_restart->restart_handler);
-	अगर (ret) अणु
+	ret = register_restart_handler(&gpio_restart->restart_handler);
+	if (ret) {
 		dev_err(&pdev->dev, "%s: cannot register restart handler, %d\n",
 				__func__, ret);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gpio_restart_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा gpio_restart *gpio_restart = platक्रमm_get_drvdata(pdev);
-	पूर्णांक ret;
+static int gpio_restart_remove(struct platform_device *pdev)
+{
+	struct gpio_restart *gpio_restart = platform_get_drvdata(pdev);
+	int ret;
 
-	ret = unरेजिस्टर_restart_handler(&gpio_restart->restart_handler);
-	अगर (ret) अणु
+	ret = unregister_restart_handler(&gpio_restart->restart_handler);
+	if (ret) {
 		dev_err(&pdev->dev,
 				"%s: cannot unregister restart handler, %d\n",
 				__func__, ret);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id of_gpio_restart_match[] = अणु
-	अणु .compatible = "gpio-restart", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id of_gpio_restart_match[] = {
+	{ .compatible = "gpio-restart", },
+	{},
+};
 
-अटल काष्ठा platक्रमm_driver gpio_restart_driver = अणु
+static struct platform_driver gpio_restart_driver = {
 	.probe = gpio_restart_probe,
-	.हटाओ = gpio_restart_हटाओ,
-	.driver = अणु
+	.remove = gpio_restart_remove,
+	.driver = {
 		.name = "restart-gpio",
 		.of_match_table = of_gpio_restart_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(gpio_restart_driver);
+module_platform_driver(gpio_restart_driver);
 
 MODULE_AUTHOR("David Riley <davidriley@chromium.org>");
 MODULE_DESCRIPTION("GPIO restart driver");

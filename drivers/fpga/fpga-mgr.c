@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * FPGA Manager Core
  *
@@ -9,231 +8,231 @@
  * With code from the mailing list:
  * Copyright (C) 2013 Xilinx, Inc.
  */
-#समावेश <linux/firmware.h>
-#समावेश <linux/fpga/fpga-mgr.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/highस्मृति.स>
+#include <linux/firmware.h>
+#include <linux/fpga/fpga-mgr.h>
+#include <linux/idr.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
+#include <linux/scatterlist.h>
+#include <linux/highmem.h>
 
-अटल DEFINE_IDA(fpga_mgr_ida);
-अटल काष्ठा class *fpga_mgr_class;
+static DEFINE_IDA(fpga_mgr_ida);
+static struct class *fpga_mgr_class;
 
-काष्ठा fpga_mgr_devres अणु
-	काष्ठा fpga_manager *mgr;
-पूर्ण;
+struct fpga_mgr_devres {
+	struct fpga_manager *mgr;
+};
 
 /**
- * fpga_image_info_alloc - Allocate a FPGA image info काष्ठा
+ * fpga_image_info_alloc - Allocate a FPGA image info struct
  * @dev: owning device
  *
- * Return: काष्ठा fpga_image_info or शून्य
+ * Return: struct fpga_image_info or NULL
  */
-काष्ठा fpga_image_info *fpga_image_info_alloc(काष्ठा device *dev)
-अणु
-	काष्ठा fpga_image_info *info;
+struct fpga_image_info *fpga_image_info_alloc(struct device *dev)
+{
+	struct fpga_image_info *info;
 
 	get_device(dev);
 
-	info = devm_kzalloc(dev, माप(*info), GFP_KERNEL);
-	अगर (!info) अणु
+	info = devm_kzalloc(dev, sizeof(*info), GFP_KERNEL);
+	if (!info) {
 		put_device(dev);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	info->dev = dev;
 
-	वापस info;
-पूर्ण
+	return info;
+}
 EXPORT_SYMBOL_GPL(fpga_image_info_alloc);
 
 /**
- * fpga_image_info_मुक्त - Free a FPGA image info काष्ठा
- * @info: FPGA image info काष्ठा to मुक्त
+ * fpga_image_info_free - Free a FPGA image info struct
+ * @info: FPGA image info struct to free
  */
-व्योम fpga_image_info_मुक्त(काष्ठा fpga_image_info *info)
-अणु
-	काष्ठा device *dev;
+void fpga_image_info_free(struct fpga_image_info *info)
+{
+	struct device *dev;
 
-	अगर (!info)
-		वापस;
+	if (!info)
+		return;
 
 	dev = info->dev;
-	अगर (info->firmware_name)
-		devm_kमुक्त(dev, info->firmware_name);
+	if (info->firmware_name)
+		devm_kfree(dev, info->firmware_name);
 
-	devm_kमुक्त(dev, info);
+	devm_kfree(dev, info);
 	put_device(dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(fpga_image_info_मुक्त);
+}
+EXPORT_SYMBOL_GPL(fpga_image_info_free);
 
 /*
- * Call the low level driver's ग_लिखो_init function.  This will करो the
- * device-specअगरic things to get the FPGA पूर्णांकo the state where it is पढ़ोy to
- * receive an FPGA image. The low level driver only माला_लो to see the first
+ * Call the low level driver's write_init function.  This will do the
+ * device-specific things to get the FPGA into the state where it is ready to
+ * receive an FPGA image. The low level driver only gets to see the first
  * initial_header_size bytes in the buffer.
  */
-अटल पूर्णांक fpga_mgr_ग_लिखो_init_buf(काष्ठा fpga_manager *mgr,
-				   काष्ठा fpga_image_info *info,
-				   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक ret;
+static int fpga_mgr_write_init_buf(struct fpga_manager *mgr,
+				   struct fpga_image_info *info,
+				   const char *buf, size_t count)
+{
+	int ret;
 
 	mgr->state = FPGA_MGR_STATE_WRITE_INIT;
-	अगर (!mgr->mops->initial_header_size)
-		ret = mgr->mops->ग_लिखो_init(mgr, info, शून्य, 0);
-	अन्यथा
-		ret = mgr->mops->ग_लिखो_init(
+	if (!mgr->mops->initial_header_size)
+		ret = mgr->mops->write_init(mgr, info, NULL, 0);
+	else
+		ret = mgr->mops->write_init(
 		    mgr, info, buf, min(mgr->mops->initial_header_size, count));
 
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&mgr->dev, "Error preparing FPGA for writing\n");
 		mgr->state = FPGA_MGR_STATE_WRITE_INIT_ERR;
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fpga_mgr_ग_लिखो_init_sg(काष्ठा fpga_manager *mgr,
-				  काष्ठा fpga_image_info *info,
-				  काष्ठा sg_table *sgt)
-अणु
-	काष्ठा sg_mapping_iter miter;
-	माप_प्रकार len;
-	अक्षर *buf;
-	पूर्णांक ret;
+static int fpga_mgr_write_init_sg(struct fpga_manager *mgr,
+				  struct fpga_image_info *info,
+				  struct sg_table *sgt)
+{
+	struct sg_mapping_iter miter;
+	size_t len;
+	char *buf;
+	int ret;
 
-	अगर (!mgr->mops->initial_header_size)
-		वापस fpga_mgr_ग_लिखो_init_buf(mgr, info, शून्य, 0);
+	if (!mgr->mops->initial_header_size)
+		return fpga_mgr_write_init_buf(mgr, info, NULL, 0);
 
 	/*
 	 * First try to use miter to map the first fragment to access the
 	 * header, this is the typical path.
 	 */
 	sg_miter_start(&miter, sgt->sgl, sgt->nents, SG_MITER_FROM_SG);
-	अगर (sg_miter_next(&miter) &&
-	    miter.length >= mgr->mops->initial_header_size) अणु
-		ret = fpga_mgr_ग_लिखो_init_buf(mgr, info, miter.addr,
+	if (sg_miter_next(&miter) &&
+	    miter.length >= mgr->mops->initial_header_size) {
+		ret = fpga_mgr_write_init_buf(mgr, info, miter.addr,
 					      miter.length);
 		sg_miter_stop(&miter);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	sg_miter_stop(&miter);
 
-	/* Otherwise copy the fragments पूर्णांकo temporary memory. */
-	buf = kदो_स्मृति(mgr->mops->initial_header_size, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	/* Otherwise copy the fragments into temporary memory. */
+	buf = kmalloc(mgr->mops->initial_header_size, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
 	len = sg_copy_to_buffer(sgt->sgl, sgt->nents, buf,
 				mgr->mops->initial_header_size);
-	ret = fpga_mgr_ग_लिखो_init_buf(mgr, info, buf, len);
+	ret = fpga_mgr_write_init_buf(mgr, info, buf, len);
 
-	kमुक्त(buf);
+	kfree(buf);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * After all the FPGA image has been written, करो the device specअगरic steps to
- * finish and set the FPGA पूर्णांकo operating mode.
+ * After all the FPGA image has been written, do the device specific steps to
+ * finish and set the FPGA into operating mode.
  */
-अटल पूर्णांक fpga_mgr_ग_लिखो_complete(काष्ठा fpga_manager *mgr,
-				   काष्ठा fpga_image_info *info)
-अणु
-	पूर्णांक ret;
+static int fpga_mgr_write_complete(struct fpga_manager *mgr,
+				   struct fpga_image_info *info)
+{
+	int ret;
 
 	mgr->state = FPGA_MGR_STATE_WRITE_COMPLETE;
-	ret = mgr->mops->ग_लिखो_complete(mgr, info);
-	अगर (ret) अणु
+	ret = mgr->mops->write_complete(mgr, info);
+	if (ret) {
 		dev_err(&mgr->dev, "Error after writing image data to FPGA\n");
 		mgr->state = FPGA_MGR_STATE_WRITE_COMPLETE_ERR;
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	mgr->state = FPGA_MGR_STATE_OPERATING;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * fpga_mgr_buf_load_sg - load fpga from image in buffer from a scatter list
  * @mgr:	fpga manager
- * @info:	fpga image specअगरic inक्रमmation
+ * @info:	fpga image specific information
  * @sgt:	scatterlist table
  *
- * Step the low level fpga manager through the device-specअगरic steps of getting
- * an FPGA पढ़ोy to be configured, writing the image to it, then करोing whatever
+ * Step the low level fpga manager through the device-specific steps of getting
+ * an FPGA ready to be configured, writing the image to it, then doing whatever
  * post-configuration steps necessary.  This code assumes the caller got the
- * mgr poपूर्णांकer from of_fpga_mgr_get() or fpga_mgr_get() and checked that it is
+ * mgr pointer from of_fpga_mgr_get() or fpga_mgr_get() and checked that it is
  * not an error code.
  *
- * This is the preferred entry poपूर्णांक क्रम FPGA programming, it करोes not require
+ * This is the preferred entry point for FPGA programming, it does not require
  * any contiguous kernel memory.
  *
  * Return: 0 on success, negative error code otherwise.
  */
-अटल पूर्णांक fpga_mgr_buf_load_sg(काष्ठा fpga_manager *mgr,
-				काष्ठा fpga_image_info *info,
-				काष्ठा sg_table *sgt)
-अणु
-	पूर्णांक ret;
+static int fpga_mgr_buf_load_sg(struct fpga_manager *mgr,
+				struct fpga_image_info *info,
+				struct sg_table *sgt)
+{
+	int ret;
 
-	ret = fpga_mgr_ग_लिखो_init_sg(mgr, info, sgt);
-	अगर (ret)
-		वापस ret;
+	ret = fpga_mgr_write_init_sg(mgr, info, sgt);
+	if (ret)
+		return ret;
 
 	/* Write the FPGA image to the FPGA. */
 	mgr->state = FPGA_MGR_STATE_WRITE;
-	अगर (mgr->mops->ग_लिखो_sg) अणु
-		ret = mgr->mops->ग_लिखो_sg(mgr, sgt);
-	पूर्ण अन्यथा अणु
-		काष्ठा sg_mapping_iter miter;
+	if (mgr->mops->write_sg) {
+		ret = mgr->mops->write_sg(mgr, sgt);
+	} else {
+		struct sg_mapping_iter miter;
 
 		sg_miter_start(&miter, sgt->sgl, sgt->nents, SG_MITER_FROM_SG);
-		जबतक (sg_miter_next(&miter)) अणु
-			ret = mgr->mops->ग_लिखो(mgr, miter.addr, miter.length);
-			अगर (ret)
-				अवरोध;
-		पूर्ण
+		while (sg_miter_next(&miter)) {
+			ret = mgr->mops->write(mgr, miter.addr, miter.length);
+			if (ret)
+				break;
+		}
 		sg_miter_stop(&miter);
-	पूर्ण
+	}
 
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&mgr->dev, "Error while writing image data to FPGA\n");
 		mgr->state = FPGA_MGR_STATE_WRITE_ERR;
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस fpga_mgr_ग_लिखो_complete(mgr, info);
-पूर्ण
+	return fpga_mgr_write_complete(mgr, info);
+}
 
-अटल पूर्णांक fpga_mgr_buf_load_mapped(काष्ठा fpga_manager *mgr,
-				    काष्ठा fpga_image_info *info,
-				    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक ret;
+static int fpga_mgr_buf_load_mapped(struct fpga_manager *mgr,
+				    struct fpga_image_info *info,
+				    const char *buf, size_t count)
+{
+	int ret;
 
-	ret = fpga_mgr_ग_लिखो_init_buf(mgr, info, buf, count);
-	अगर (ret)
-		वापस ret;
+	ret = fpga_mgr_write_init_buf(mgr, info, buf, count);
+	if (ret)
+		return ret;
 
 	/*
 	 * Write the FPGA image to the FPGA.
 	 */
 	mgr->state = FPGA_MGR_STATE_WRITE;
-	ret = mgr->mops->ग_लिखो(mgr, buf, count);
-	अगर (ret) अणु
+	ret = mgr->mops->write(mgr, buf, count);
+	if (ret) {
 		dev_err(&mgr->dev, "Error while writing image data to FPGA\n");
 		mgr->state = FPGA_MGR_STATE_WRITE_ERR;
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस fpga_mgr_ग_लिखो_complete(mgr, info);
-पूर्ण
+	return fpga_mgr_write_complete(mgr, info);
+}
 
 /**
  * fpga_mgr_buf_load - load fpga from image in buffer
@@ -242,54 +241,54 @@ EXPORT_SYMBOL_GPL(fpga_image_info_मुक्त);
  * @buf:	buffer contain fpga image
  * @count:	byte count of buf
  *
- * Step the low level fpga manager through the device-specअगरic steps of getting
- * an FPGA पढ़ोy to be configured, writing the image to it, then करोing whatever
+ * Step the low level fpga manager through the device-specific steps of getting
+ * an FPGA ready to be configured, writing the image to it, then doing whatever
  * post-configuration steps necessary.  This code assumes the caller got the
- * mgr poपूर्णांकer from of_fpga_mgr_get() and checked that it is not an error code.
+ * mgr pointer from of_fpga_mgr_get() and checked that it is not an error code.
  *
  * Return: 0 on success, negative error code otherwise.
  */
-अटल पूर्णांक fpga_mgr_buf_load(काष्ठा fpga_manager *mgr,
-			     काष्ठा fpga_image_info *info,
-			     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा page **pages;
-	काष्ठा sg_table sgt;
-	स्थिर व्योम *p;
-	पूर्णांक nr_pages;
-	पूर्णांक index;
-	पूर्णांक rc;
+static int fpga_mgr_buf_load(struct fpga_manager *mgr,
+			     struct fpga_image_info *info,
+			     const char *buf, size_t count)
+{
+	struct page **pages;
+	struct sg_table sgt;
+	const void *p;
+	int nr_pages;
+	int index;
+	int rc;
 
 	/*
-	 * This is just a fast path अगर the caller has alपढ़ोy created a
-	 * contiguous kernel buffer and the driver करोesn't require SG, non-SG
+	 * This is just a fast path if the caller has already created a
+	 * contiguous kernel buffer and the driver doesn't require SG, non-SG
 	 * drivers will still work on the slow path.
 	 */
-	अगर (mgr->mops->ग_लिखो)
-		वापस fpga_mgr_buf_load_mapped(mgr, info, buf, count);
+	if (mgr->mops->write)
+		return fpga_mgr_buf_load_mapped(mgr, info, buf, count);
 
 	/*
-	 * Convert the linear kernel poपूर्णांकer पूर्णांकo a sg_table of pages क्रम use
+	 * Convert the linear kernel pointer into a sg_table of pages for use
 	 * by the driver.
 	 */
-	nr_pages = DIV_ROUND_UP((अचिन्हित दीर्घ)buf + count, PAGE_SIZE) -
-		   (अचिन्हित दीर्घ)buf / PAGE_SIZE;
-	pages = kदो_स्मृति_array(nr_pages, माप(काष्ठा page *), GFP_KERNEL);
-	अगर (!pages)
-		वापस -ENOMEM;
+	nr_pages = DIV_ROUND_UP((unsigned long)buf + count, PAGE_SIZE) -
+		   (unsigned long)buf / PAGE_SIZE;
+	pages = kmalloc_array(nr_pages, sizeof(struct page *), GFP_KERNEL);
+	if (!pages)
+		return -ENOMEM;
 
 	p = buf - offset_in_page(buf);
-	क्रम (index = 0; index < nr_pages; index++) अणु
-		अगर (is_vदो_स्मृति_addr(p))
-			pages[index] = vदो_स्मृति_to_page(p);
-		अन्यथा
-			pages[index] = kmap_to_page((व्योम *)p);
-		अगर (!pages[index]) अणु
-			kमुक्त(pages);
-			वापस -EFAULT;
-		पूर्ण
+	for (index = 0; index < nr_pages; index++) {
+		if (is_vmalloc_addr(p))
+			pages[index] = vmalloc_to_page(p);
+		else
+			pages[index] = kmap_to_page((void *)p);
+		if (!pages[index]) {
+			kfree(pages);
+			return -EFAULT;
+		}
 		p += PAGE_SIZE;
-	पूर्ण
+	}
 
 	/*
 	 * The temporary pages list is used to code share the merging algorithm
@@ -297,79 +296,79 @@ EXPORT_SYMBOL_GPL(fpga_image_info_मुक्त);
 	 */
 	rc = sg_alloc_table_from_pages(&sgt, pages, index, offset_in_page(buf),
 				       count, GFP_KERNEL);
-	kमुक्त(pages);
-	अगर (rc)
-		वापस rc;
+	kfree(pages);
+	if (rc)
+		return rc;
 
 	rc = fpga_mgr_buf_load_sg(mgr, info, &sgt);
-	sg_मुक्त_table(&sgt);
+	sg_free_table(&sgt);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * fpga_mgr_firmware_load - request firmware and load to fpga
  * @mgr:	fpga manager
- * @info:	fpga image specअगरic inक्रमmation
+ * @info:	fpga image specific information
  * @image_name:	name of image file on the firmware search path
  *
- * Request an FPGA image using the firmware class, then ग_लिखो out to the FPGA.
- * Update the state beक्रमe each step to provide info on what step failed अगर
- * there is a failure.  This code assumes the caller got the mgr poपूर्णांकer
+ * Request an FPGA image using the firmware class, then write out to the FPGA.
+ * Update the state before each step to provide info on what step failed if
+ * there is a failure.  This code assumes the caller got the mgr pointer
  * from of_fpga_mgr_get() or fpga_mgr_get() and checked that it is not an error
  * code.
  *
  * Return: 0 on success, negative error code otherwise.
  */
-अटल पूर्णांक fpga_mgr_firmware_load(काष्ठा fpga_manager *mgr,
-				  काष्ठा fpga_image_info *info,
-				  स्थिर अक्षर *image_name)
-अणु
-	काष्ठा device *dev = &mgr->dev;
-	स्थिर काष्ठा firmware *fw;
-	पूर्णांक ret;
+static int fpga_mgr_firmware_load(struct fpga_manager *mgr,
+				  struct fpga_image_info *info,
+				  const char *image_name)
+{
+	struct device *dev = &mgr->dev;
+	const struct firmware *fw;
+	int ret;
 
 	dev_info(dev, "writing %s to %s\n", image_name, mgr->name);
 
 	mgr->state = FPGA_MGR_STATE_FIRMWARE_REQ;
 
 	ret = request_firmware(&fw, image_name, dev);
-	अगर (ret) अणु
+	if (ret) {
 		mgr->state = FPGA_MGR_STATE_FIRMWARE_REQ_ERR;
 		dev_err(dev, "Error requesting firmware %s\n", image_name);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = fpga_mgr_buf_load(mgr, info, fw->data, fw->size);
 
 	release_firmware(fw);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * fpga_mgr_load - load FPGA from scatter/gather table, buffer, or firmware
  * @mgr:	fpga manager
- * @info:	fpga image inक्रमmation.
+ * @info:	fpga image information.
  *
  * Load the FPGA from an image which is indicated in @info.  If successful, the
  * FPGA ends up in operating mode.
  *
  * Return: 0 on success, negative error code otherwise.
  */
-पूर्णांक fpga_mgr_load(काष्ठा fpga_manager *mgr, काष्ठा fpga_image_info *info)
-अणु
-	अगर (info->sgt)
-		वापस fpga_mgr_buf_load_sg(mgr, info, info->sgt);
-	अगर (info->buf && info->count)
-		वापस fpga_mgr_buf_load(mgr, info, info->buf, info->count);
-	अगर (info->firmware_name)
-		वापस fpga_mgr_firmware_load(mgr, info, info->firmware_name);
-	वापस -EINVAL;
-पूर्ण
+int fpga_mgr_load(struct fpga_manager *mgr, struct fpga_image_info *info)
+{
+	if (info->sgt)
+		return fpga_mgr_buf_load_sg(mgr, info, info->sgt);
+	if (info->buf && info->count)
+		return fpga_mgr_buf_load(mgr, info, info->buf, info->count);
+	if (info->firmware_name)
+		return fpga_mgr_firmware_load(mgr, info, info->firmware_name);
+	return -EINVAL;
+}
 EXPORT_SYMBOL_GPL(fpga_mgr_load);
 
-अटल स्थिर अक्षर * स्थिर state_str[] = अणु
+static const char * const state_str[] = {
 	[FPGA_MGR_STATE_UNKNOWN] =		"unknown",
 	[FPGA_MGR_STATE_POWER_OFF] =		"power off",
 	[FPGA_MGR_STATE_POWER_UP] =		"power up",
@@ -393,98 +392,98 @@ EXPORT_SYMBOL_GPL(fpga_mgr_load);
 
 	/* FPGA reports to be in normal operating mode */
 	[FPGA_MGR_STATE_OPERATING] =		"operating",
-पूर्ण;
+};
 
-अटल sमाप_प्रकार name_show(काष्ठा device *dev,
-			 काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा fpga_manager *mgr = to_fpga_manager(dev);
+static ssize_t name_show(struct device *dev,
+			 struct device_attribute *attr, char *buf)
+{
+	struct fpga_manager *mgr = to_fpga_manager(dev);
 
-	वापस प्र_लिखो(buf, "%s\n", mgr->name);
-पूर्ण
+	return sprintf(buf, "%s\n", mgr->name);
+}
 
-अटल sमाप_प्रकार state_show(काष्ठा device *dev,
-			  काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा fpga_manager *mgr = to_fpga_manager(dev);
+static ssize_t state_show(struct device *dev,
+			  struct device_attribute *attr, char *buf)
+{
+	struct fpga_manager *mgr = to_fpga_manager(dev);
 
-	वापस प्र_लिखो(buf, "%s\n", state_str[mgr->state]);
-पूर्ण
+	return sprintf(buf, "%s\n", state_str[mgr->state]);
+}
 
-अटल sमाप_प्रकार status_show(काष्ठा device *dev,
-			   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा fpga_manager *mgr = to_fpga_manager(dev);
+static ssize_t status_show(struct device *dev,
+			   struct device_attribute *attr, char *buf)
+{
+	struct fpga_manager *mgr = to_fpga_manager(dev);
 	u64 status;
-	पूर्णांक len = 0;
+	int len = 0;
 
-	अगर (!mgr->mops->status)
-		वापस -ENOENT;
+	if (!mgr->mops->status)
+		return -ENOENT;
 
 	status = mgr->mops->status(mgr);
 
-	अगर (status & FPGA_MGR_STATUS_OPERATION_ERR)
-		len += प्र_लिखो(buf + len, "reconfig operation error\n");
-	अगर (status & FPGA_MGR_STATUS_CRC_ERR)
-		len += प्र_लिखो(buf + len, "reconfig CRC error\n");
-	अगर (status & FPGA_MGR_STATUS_INCOMPATIBLE_IMAGE_ERR)
-		len += प्र_लिखो(buf + len, "reconfig incompatible image\n");
-	अगर (status & FPGA_MGR_STATUS_IP_PROTOCOL_ERR)
-		len += प्र_लिखो(buf + len, "reconfig IP protocol error\n");
-	अगर (status & FPGA_MGR_STATUS_FIFO_OVERFLOW_ERR)
-		len += प्र_लिखो(buf + len, "reconfig fifo overflow error\n");
+	if (status & FPGA_MGR_STATUS_OPERATION_ERR)
+		len += sprintf(buf + len, "reconfig operation error\n");
+	if (status & FPGA_MGR_STATUS_CRC_ERR)
+		len += sprintf(buf + len, "reconfig CRC error\n");
+	if (status & FPGA_MGR_STATUS_INCOMPATIBLE_IMAGE_ERR)
+		len += sprintf(buf + len, "reconfig incompatible image\n");
+	if (status & FPGA_MGR_STATUS_IP_PROTOCOL_ERR)
+		len += sprintf(buf + len, "reconfig IP protocol error\n");
+	if (status & FPGA_MGR_STATUS_FIFO_OVERFLOW_ERR)
+		len += sprintf(buf + len, "reconfig fifo overflow error\n");
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल DEVICE_ATTR_RO(name);
-अटल DEVICE_ATTR_RO(state);
-अटल DEVICE_ATTR_RO(status);
+static DEVICE_ATTR_RO(name);
+static DEVICE_ATTR_RO(state);
+static DEVICE_ATTR_RO(status);
 
-अटल काष्ठा attribute *fpga_mgr_attrs[] = अणु
+static struct attribute *fpga_mgr_attrs[] = {
 	&dev_attr_name.attr,
 	&dev_attr_state.attr,
 	&dev_attr_status.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 ATTRIBUTE_GROUPS(fpga_mgr);
 
-अटल काष्ठा fpga_manager *__fpga_mgr_get(काष्ठा device *dev)
-अणु
-	काष्ठा fpga_manager *mgr;
+static struct fpga_manager *__fpga_mgr_get(struct device *dev)
+{
+	struct fpga_manager *mgr;
 
 	mgr = to_fpga_manager(dev);
 
-	अगर (!try_module_get(dev->parent->driver->owner))
-		जाओ err_dev;
+	if (!try_module_get(dev->parent->driver->owner))
+		goto err_dev;
 
-	वापस mgr;
+	return mgr;
 
 err_dev:
 	put_device(dev);
-	वापस ERR_PTR(-ENODEV);
-पूर्ण
+	return ERR_PTR(-ENODEV);
+}
 
-अटल पूर्णांक fpga_mgr_dev_match(काष्ठा device *dev, स्थिर व्योम *data)
-अणु
-	वापस dev->parent == data;
-पूर्ण
+static int fpga_mgr_dev_match(struct device *dev, const void *data)
+{
+	return dev->parent == data;
+}
 
 /**
  * fpga_mgr_get - Given a device, get a reference to a fpga mgr.
- * @dev:	parent device that fpga mgr was रेजिस्टरed with
+ * @dev:	parent device that fpga mgr was registered with
  *
- * Return: fpga manager काष्ठा or IS_ERR() condition containing error code.
+ * Return: fpga manager struct or IS_ERR() condition containing error code.
  */
-काष्ठा fpga_manager *fpga_mgr_get(काष्ठा device *dev)
-अणु
-	काष्ठा device *mgr_dev = class_find_device(fpga_mgr_class, शून्य, dev,
+struct fpga_manager *fpga_mgr_get(struct device *dev)
+{
+	struct device *mgr_dev = class_find_device(fpga_mgr_class, NULL, dev,
 						   fpga_mgr_dev_match);
-	अगर (!mgr_dev)
-		वापस ERR_PTR(-ENODEV);
+	if (!mgr_dev)
+		return ERR_PTR(-ENODEV);
 
-	वापस __fpga_mgr_get(mgr_dev);
-पूर्ण
+	return __fpga_mgr_get(mgr_dev);
+}
 EXPORT_SYMBOL_GPL(fpga_mgr_get);
 
 /**
@@ -492,102 +491,102 @@ EXPORT_SYMBOL_GPL(fpga_mgr_get);
  *
  * @node:	device node
  *
- * Return: fpga manager काष्ठा or IS_ERR() condition containing error code.
+ * Return: fpga manager struct or IS_ERR() condition containing error code.
  */
-काष्ठा fpga_manager *of_fpga_mgr_get(काष्ठा device_node *node)
-अणु
-	काष्ठा device *dev;
+struct fpga_manager *of_fpga_mgr_get(struct device_node *node)
+{
+	struct device *dev;
 
 	dev = class_find_device_by_of_node(fpga_mgr_class, node);
-	अगर (!dev)
-		वापस ERR_PTR(-ENODEV);
+	if (!dev)
+		return ERR_PTR(-ENODEV);
 
-	वापस __fpga_mgr_get(dev);
-पूर्ण
+	return __fpga_mgr_get(dev);
+}
 EXPORT_SYMBOL_GPL(of_fpga_mgr_get);
 
 /**
  * fpga_mgr_put - release a reference to a fpga manager
- * @mgr:	fpga manager काष्ठाure
+ * @mgr:	fpga manager structure
  */
-व्योम fpga_mgr_put(काष्ठा fpga_manager *mgr)
-अणु
+void fpga_mgr_put(struct fpga_manager *mgr)
+{
 	module_put(mgr->dev.parent->driver->owner);
 	put_device(&mgr->dev);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(fpga_mgr_put);
 
 /**
- * fpga_mgr_lock - Lock FPGA manager क्रम exclusive use
+ * fpga_mgr_lock - Lock FPGA manager for exclusive use
  * @mgr:	fpga manager
  *
- * Given a poपूर्णांकer to FPGA Manager (from fpga_mgr_get() or
+ * Given a pointer to FPGA Manager (from fpga_mgr_get() or
  * of_fpga_mgr_put()) attempt to get the mutex. The user should call
- * fpga_mgr_lock() and verअगरy that it वापसs 0 beक्रमe attempting to
+ * fpga_mgr_lock() and verify that it returns 0 before attempting to
  * program the FPGA.  Likewise, the user should call fpga_mgr_unlock
- * when करोne programming the FPGA.
+ * when done programming the FPGA.
  *
- * Return: 0 क्रम success or -EBUSY
+ * Return: 0 for success or -EBUSY
  */
-पूर्णांक fpga_mgr_lock(काष्ठा fpga_manager *mgr)
-अणु
-	अगर (!mutex_trylock(&mgr->ref_mutex)) अणु
+int fpga_mgr_lock(struct fpga_manager *mgr)
+{
+	if (!mutex_trylock(&mgr->ref_mutex)) {
 		dev_err(&mgr->dev, "FPGA manager is in use.\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(fpga_mgr_lock);
 
 /**
- * fpga_mgr_unlock - Unlock FPGA manager after करोne programming
+ * fpga_mgr_unlock - Unlock FPGA manager after done programming
  * @mgr:	fpga manager
  */
-व्योम fpga_mgr_unlock(काष्ठा fpga_manager *mgr)
-अणु
+void fpga_mgr_unlock(struct fpga_manager *mgr)
+{
 	mutex_unlock(&mgr->ref_mutex);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(fpga_mgr_unlock);
 
 /**
- * fpga_mgr_create - create and initialize a FPGA manager काष्ठा
+ * fpga_mgr_create - create and initialize a FPGA manager struct
  * @dev:	fpga manager device from pdev
  * @name:	fpga manager name
- * @mops:	poपूर्णांकer to काष्ठाure of fpga manager ops
- * @priv:	fpga manager निजी data
+ * @mops:	pointer to structure of fpga manager ops
+ * @priv:	fpga manager private data
  *
- * The caller of this function is responsible क्रम मुक्तing the काष्ठा with
- * fpga_mgr_मुक्त().  Using devm_fpga_mgr_create() instead is recommended.
+ * The caller of this function is responsible for freeing the struct with
+ * fpga_mgr_free().  Using devm_fpga_mgr_create() instead is recommended.
  *
- * Return: poपूर्णांकer to काष्ठा fpga_manager or शून्य
+ * Return: pointer to struct fpga_manager or NULL
  */
-काष्ठा fpga_manager *fpga_mgr_create(काष्ठा device *dev, स्थिर अक्षर *name,
-				     स्थिर काष्ठा fpga_manager_ops *mops,
-				     व्योम *priv)
-अणु
-	काष्ठा fpga_manager *mgr;
-	पूर्णांक id, ret;
+struct fpga_manager *fpga_mgr_create(struct device *dev, const char *name,
+				     const struct fpga_manager_ops *mops,
+				     void *priv)
+{
+	struct fpga_manager *mgr;
+	int id, ret;
 
-	अगर (!mops || !mops->ग_लिखो_complete || !mops->state ||
-	    !mops->ग_लिखो_init || (!mops->ग_लिखो && !mops->ग_लिखो_sg) ||
-	    (mops->ग_लिखो && mops->ग_लिखो_sg)) अणु
+	if (!mops || !mops->write_complete || !mops->state ||
+	    !mops->write_init || (!mops->write && !mops->write_sg) ||
+	    (mops->write && mops->write_sg)) {
 		dev_err(dev, "Attempt to register without fpga_manager_ops\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (!name || !म_माप(name)) अणु
+	if (!name || !strlen(name)) {
 		dev_err(dev, "Attempt to register with no name!\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	mgr = kzalloc(माप(*mgr), GFP_KERNEL);
-	अगर (!mgr)
-		वापस शून्य;
+	mgr = kzalloc(sizeof(*mgr), GFP_KERNEL);
+	if (!mgr)
+		return NULL;
 
 	id = ida_simple_get(&fpga_mgr_ida, 0, 0, GFP_KERNEL);
-	अगर (id < 0)
-		जाओ error_kमुक्त;
+	if (id < 0)
+		goto error_kfree;
 
 	mutex_init(&mgr->ref_mutex);
 
@@ -603,210 +602,210 @@ EXPORT_SYMBOL_GPL(fpga_mgr_unlock);
 	mgr->dev.id = id;
 
 	ret = dev_set_name(&mgr->dev, "fpga%d", id);
-	अगर (ret)
-		जाओ error_device;
+	if (ret)
+		goto error_device;
 
-	वापस mgr;
+	return mgr;
 
 error_device:
-	ida_simple_हटाओ(&fpga_mgr_ida, id);
-error_kमुक्त:
-	kमुक्त(mgr);
+	ida_simple_remove(&fpga_mgr_ida, id);
+error_kfree:
+	kfree(mgr);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(fpga_mgr_create);
 
 /**
- * fpga_mgr_मुक्त - मुक्त a FPGA manager created with fpga_mgr_create()
- * @mgr:	fpga manager काष्ठा
+ * fpga_mgr_free - free a FPGA manager created with fpga_mgr_create()
+ * @mgr:	fpga manager struct
  */
-व्योम fpga_mgr_मुक्त(काष्ठा fpga_manager *mgr)
-अणु
-	ida_simple_हटाओ(&fpga_mgr_ida, mgr->dev.id);
-	kमुक्त(mgr);
-पूर्ण
-EXPORT_SYMBOL_GPL(fpga_mgr_मुक्त);
+void fpga_mgr_free(struct fpga_manager *mgr)
+{
+	ida_simple_remove(&fpga_mgr_ida, mgr->dev.id);
+	kfree(mgr);
+}
+EXPORT_SYMBOL_GPL(fpga_mgr_free);
 
-अटल व्योम devm_fpga_mgr_release(काष्ठा device *dev, व्योम *res)
-अणु
-	काष्ठा fpga_mgr_devres *dr = res;
+static void devm_fpga_mgr_release(struct device *dev, void *res)
+{
+	struct fpga_mgr_devres *dr = res;
 
-	fpga_mgr_मुक्त(dr->mgr);
-पूर्ण
+	fpga_mgr_free(dr->mgr);
+}
 
 /**
- * devm_fpga_mgr_create - create and initialize a managed FPGA manager काष्ठा
+ * devm_fpga_mgr_create - create and initialize a managed FPGA manager struct
  * @dev:	fpga manager device from pdev
  * @name:	fpga manager name
- * @mops:	poपूर्णांकer to काष्ठाure of fpga manager ops
- * @priv:	fpga manager निजी data
+ * @mops:	pointer to structure of fpga manager ops
+ * @priv:	fpga manager private data
  *
- * This function is पूर्णांकended क्रम use in a FPGA manager driver's probe function.
- * After the manager driver creates the manager काष्ठा with
- * devm_fpga_mgr_create(), it should रेजिस्टर it with fpga_mgr_रेजिस्टर().  The
- * manager driver's हटाओ function should call fpga_mgr_unरेजिस्टर().  The
- * manager काष्ठा allocated with this function will be मुक्तd स्वतःmatically on
- * driver detach.  This includes the हाल of a probe function वापसing error
- * beक्रमe calling fpga_mgr_रेजिस्टर(), the काष्ठा will still get cleaned up.
+ * This function is intended for use in a FPGA manager driver's probe function.
+ * After the manager driver creates the manager struct with
+ * devm_fpga_mgr_create(), it should register it with fpga_mgr_register().  The
+ * manager driver's remove function should call fpga_mgr_unregister().  The
+ * manager struct allocated with this function will be freed automatically on
+ * driver detach.  This includes the case of a probe function returning error
+ * before calling fpga_mgr_register(), the struct will still get cleaned up.
  *
- * Return: poपूर्णांकer to काष्ठा fpga_manager or शून्य
+ * Return: pointer to struct fpga_manager or NULL
  */
-काष्ठा fpga_manager *devm_fpga_mgr_create(काष्ठा device *dev, स्थिर अक्षर *name,
-					  स्थिर काष्ठा fpga_manager_ops *mops,
-					  व्योम *priv)
-अणु
-	काष्ठा fpga_mgr_devres *dr;
+struct fpga_manager *devm_fpga_mgr_create(struct device *dev, const char *name,
+					  const struct fpga_manager_ops *mops,
+					  void *priv)
+{
+	struct fpga_mgr_devres *dr;
 
-	dr = devres_alloc(devm_fpga_mgr_release, माप(*dr), GFP_KERNEL);
-	अगर (!dr)
-		वापस शून्य;
+	dr = devres_alloc(devm_fpga_mgr_release, sizeof(*dr), GFP_KERNEL);
+	if (!dr)
+		return NULL;
 
 	dr->mgr = fpga_mgr_create(dev, name, mops, priv);
-	अगर (!dr->mgr) अणु
-		devres_मुक्त(dr);
-		वापस शून्य;
-	पूर्ण
+	if (!dr->mgr) {
+		devres_free(dr);
+		return NULL;
+	}
 
 	devres_add(dev, dr);
 
-	वापस dr->mgr;
-पूर्ण
+	return dr->mgr;
+}
 EXPORT_SYMBOL_GPL(devm_fpga_mgr_create);
 
 /**
- * fpga_mgr_रेजिस्टर - रेजिस्टर a FPGA manager
- * @mgr: fpga manager काष्ठा
+ * fpga_mgr_register - register a FPGA manager
+ * @mgr: fpga manager struct
  *
  * Return: 0 on success, negative error code otherwise.
  */
-पूर्णांक fpga_mgr_रेजिस्टर(काष्ठा fpga_manager *mgr)
-अणु
-	पूर्णांक ret;
+int fpga_mgr_register(struct fpga_manager *mgr)
+{
+	int ret;
 
 	/*
-	 * Initialize framework state by requesting low level driver पढ़ो state
+	 * Initialize framework state by requesting low level driver read state
 	 * from device.  FPGA may be in reset mode or may have been programmed
 	 * by bootloader or EEPROM.
 	 */
 	mgr->state = mgr->mops->state(mgr);
 
 	ret = device_add(&mgr->dev);
-	अगर (ret)
-		जाओ error_device;
+	if (ret)
+		goto error_device;
 
 	dev_info(&mgr->dev, "%s registered\n", mgr->name);
 
-	वापस 0;
+	return 0;
 
 error_device:
-	ida_simple_हटाओ(&fpga_mgr_ida, mgr->dev.id);
+	ida_simple_remove(&fpga_mgr_ida, mgr->dev.id);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(fpga_mgr_रेजिस्टर);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(fpga_mgr_register);
 
 /**
- * fpga_mgr_unरेजिस्टर - unरेजिस्टर a FPGA manager
- * @mgr: fpga manager काष्ठा
+ * fpga_mgr_unregister - unregister a FPGA manager
+ * @mgr: fpga manager struct
  *
- * This function is पूर्णांकended क्रम use in a FPGA manager driver's हटाओ function.
+ * This function is intended for use in a FPGA manager driver's remove function.
  */
-व्योम fpga_mgr_unरेजिस्टर(काष्ठा fpga_manager *mgr)
-अणु
+void fpga_mgr_unregister(struct fpga_manager *mgr)
+{
 	dev_info(&mgr->dev, "%s %s\n", __func__, mgr->name);
 
 	/*
-	 * If the low level driver provides a method क्रम putting fpga पूर्णांकo
-	 * a desired state upon unरेजिस्टर, करो it.
+	 * If the low level driver provides a method for putting fpga into
+	 * a desired state upon unregister, do it.
 	 */
-	अगर (mgr->mops->fpga_हटाओ)
-		mgr->mops->fpga_हटाओ(mgr);
+	if (mgr->mops->fpga_remove)
+		mgr->mops->fpga_remove(mgr);
 
-	device_unरेजिस्टर(&mgr->dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(fpga_mgr_unरेजिस्टर);
+	device_unregister(&mgr->dev);
+}
+EXPORT_SYMBOL_GPL(fpga_mgr_unregister);
 
-अटल पूर्णांक fpga_mgr_devres_match(काष्ठा device *dev, व्योम *res,
-				 व्योम *match_data)
-अणु
-	काष्ठा fpga_mgr_devres *dr = res;
+static int fpga_mgr_devres_match(struct device *dev, void *res,
+				 void *match_data)
+{
+	struct fpga_mgr_devres *dr = res;
 
-	वापस match_data == dr->mgr;
-पूर्ण
+	return match_data == dr->mgr;
+}
 
-अटल व्योम devm_fpga_mgr_unरेजिस्टर(काष्ठा device *dev, व्योम *res)
-अणु
-	काष्ठा fpga_mgr_devres *dr = res;
+static void devm_fpga_mgr_unregister(struct device *dev, void *res)
+{
+	struct fpga_mgr_devres *dr = res;
 
-	fpga_mgr_unरेजिस्टर(dr->mgr);
-पूर्ण
+	fpga_mgr_unregister(dr->mgr);
+}
 
 /**
- * devm_fpga_mgr_रेजिस्टर - resource managed variant of fpga_mgr_रेजिस्टर()
- * @dev: managing device क्रम this FPGA manager
- * @mgr: fpga manager काष्ठा
+ * devm_fpga_mgr_register - resource managed variant of fpga_mgr_register()
+ * @dev: managing device for this FPGA manager
+ * @mgr: fpga manager struct
  *
- * This is the devres variant of fpga_mgr_रेजिस्टर() क्रम which the unरेजिस्टर
- * function will be called स्वतःmatically when the managing device is detached.
+ * This is the devres variant of fpga_mgr_register() for which the unregister
+ * function will be called automatically when the managing device is detached.
  */
-पूर्णांक devm_fpga_mgr_रेजिस्टर(काष्ठा device *dev, काष्ठा fpga_manager *mgr)
-अणु
-	काष्ठा fpga_mgr_devres *dr;
-	पूर्णांक ret;
+int devm_fpga_mgr_register(struct device *dev, struct fpga_manager *mgr)
+{
+	struct fpga_mgr_devres *dr;
+	int ret;
 
 	/*
-	 * Make sure that the काष्ठा fpga_manager * that is passed in is
+	 * Make sure that the struct fpga_manager * that is passed in is
 	 * managed itself.
 	 */
-	अगर (WARN_ON(!devres_find(dev, devm_fpga_mgr_release,
+	if (WARN_ON(!devres_find(dev, devm_fpga_mgr_release,
 				 fpga_mgr_devres_match, mgr)))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	dr = devres_alloc(devm_fpga_mgr_unरेजिस्टर, माप(*dr), GFP_KERNEL);
-	अगर (!dr)
-		वापस -ENOMEM;
+	dr = devres_alloc(devm_fpga_mgr_unregister, sizeof(*dr), GFP_KERNEL);
+	if (!dr)
+		return -ENOMEM;
 
-	ret = fpga_mgr_रेजिस्टर(mgr);
-	अगर (ret) अणु
-		devres_मुक्त(dr);
-		वापस ret;
-	पूर्ण
+	ret = fpga_mgr_register(mgr);
+	if (ret) {
+		devres_free(dr);
+		return ret;
+	}
 
 	dr->mgr = mgr;
 	devres_add(dev, dr);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_fpga_mgr_रेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(devm_fpga_mgr_register);
 
-अटल व्योम fpga_mgr_dev_release(काष्ठा device *dev)
-अणु
-पूर्ण
+static void fpga_mgr_dev_release(struct device *dev)
+{
+}
 
-अटल पूर्णांक __init fpga_mgr_class_init(व्योम)
-अणु
+static int __init fpga_mgr_class_init(void)
+{
 	pr_info("FPGA manager framework\n");
 
 	fpga_mgr_class = class_create(THIS_MODULE, "fpga_manager");
-	अगर (IS_ERR(fpga_mgr_class))
-		वापस PTR_ERR(fpga_mgr_class);
+	if (IS_ERR(fpga_mgr_class))
+		return PTR_ERR(fpga_mgr_class);
 
 	fpga_mgr_class->dev_groups = fpga_mgr_groups;
 	fpga_mgr_class->dev_release = fpga_mgr_dev_release;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास fpga_mgr_class_निकास(व्योम)
-अणु
+static void __exit fpga_mgr_class_exit(void)
+{
 	class_destroy(fpga_mgr_class);
 	ida_destroy(&fpga_mgr_ida);
-पूर्ण
+}
 
 MODULE_AUTHOR("Alan Tull <atull@kernel.org>");
 MODULE_DESCRIPTION("FPGA manager framework");
 MODULE_LICENSE("GPL v2");
 
 subsys_initcall(fpga_mgr_class_init);
-module_निकास(fpga_mgr_class_निकास);
+module_exit(fpga_mgr_class_exit);

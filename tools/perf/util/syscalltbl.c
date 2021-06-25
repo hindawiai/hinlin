@@ -1,181 +1,180 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * System call table mapper
  *
- * (C) 2016 Arnalकरो Carvalho de Melo <acme@redhat.com>
+ * (C) 2016 Arnaldo Carvalho de Melo <acme@redhat.com>
  */
 
-#समावेश "syscalltbl.h"
-#समावेश <मानककोष.स>
-#समावेश <linux/compiler.h>
-#समावेश <linux/zभाग.स>
+#include "syscalltbl.h"
+#include <stdlib.h>
+#include <linux/compiler.h>
+#include <linux/zalloc.h>
 
-#अगर_घोषित HAVE_SYSCALL_TABLE_SUPPORT
-#समावेश <माला.स>
-#समावेश "string2.h"
+#ifdef HAVE_SYSCALL_TABLE_SUPPORT
+#include <string.h>
+#include "string2.h"
 
-#अगर defined(__x86_64__)
-#समावेश <यंत्र/syscalls_64.c>
-स्थिर पूर्णांक syscalltbl_native_max_id = SYSCALLTBL_x86_64_MAX_ID;
-अटल स्थिर अक्षर **syscalltbl_native = syscalltbl_x86_64;
-#या_अगर defined(__s390x__)
-#समावेश <यंत्र/syscalls_64.c>
-स्थिर पूर्णांक syscalltbl_native_max_id = SYSCALLTBL_S390_64_MAX_ID;
-अटल स्थिर अक्षर **syscalltbl_native = syscalltbl_s390_64;
-#या_अगर defined(__घातerpc64__)
-#समावेश <यंत्र/syscalls_64.c>
-स्थिर पूर्णांक syscalltbl_native_max_id = SYSCALLTBL_POWERPC_64_MAX_ID;
-अटल स्थिर अक्षर **syscalltbl_native = syscalltbl_घातerpc_64;
-#या_अगर defined(__घातerpc__)
-#समावेश <यंत्र/syscalls_32.c>
-स्थिर पूर्णांक syscalltbl_native_max_id = SYSCALLTBL_POWERPC_32_MAX_ID;
-अटल स्थिर अक्षर **syscalltbl_native = syscalltbl_घातerpc_32;
-#या_अगर defined(__aarch64__)
-#समावेश <यंत्र/syscalls.c>
-स्थिर पूर्णांक syscalltbl_native_max_id = SYSCALLTBL_ARM64_MAX_ID;
-अटल स्थिर अक्षर **syscalltbl_native = syscalltbl_arm64;
-#या_अगर defined(__mips__)
-#समावेश <यंत्र/syscalls_n64.c>
-स्थिर पूर्णांक syscalltbl_native_max_id = SYSCALLTBL_MIPS_N64_MAX_ID;
-अटल स्थिर अक्षर **syscalltbl_native = syscalltbl_mips_n64;
-#पूर्ण_अगर
+#if defined(__x86_64__)
+#include <asm/syscalls_64.c>
+const int syscalltbl_native_max_id = SYSCALLTBL_x86_64_MAX_ID;
+static const char **syscalltbl_native = syscalltbl_x86_64;
+#elif defined(__s390x__)
+#include <asm/syscalls_64.c>
+const int syscalltbl_native_max_id = SYSCALLTBL_S390_64_MAX_ID;
+static const char **syscalltbl_native = syscalltbl_s390_64;
+#elif defined(__powerpc64__)
+#include <asm/syscalls_64.c>
+const int syscalltbl_native_max_id = SYSCALLTBL_POWERPC_64_MAX_ID;
+static const char **syscalltbl_native = syscalltbl_powerpc_64;
+#elif defined(__powerpc__)
+#include <asm/syscalls_32.c>
+const int syscalltbl_native_max_id = SYSCALLTBL_POWERPC_32_MAX_ID;
+static const char **syscalltbl_native = syscalltbl_powerpc_32;
+#elif defined(__aarch64__)
+#include <asm/syscalls.c>
+const int syscalltbl_native_max_id = SYSCALLTBL_ARM64_MAX_ID;
+static const char **syscalltbl_native = syscalltbl_arm64;
+#elif defined(__mips__)
+#include <asm/syscalls_n64.c>
+const int syscalltbl_native_max_id = SYSCALLTBL_MIPS_N64_MAX_ID;
+static const char **syscalltbl_native = syscalltbl_mips_n64;
+#endif
 
-काष्ठा syscall अणु
-	पूर्णांक id;
-	स्थिर अक्षर *name;
-पूर्ण;
+struct syscall {
+	int id;
+	const char *name;
+};
 
-अटल पूर्णांक syscallcmpname(स्थिर व्योम *vkey, स्थिर व्योम *ventry)
-अणु
-	स्थिर अक्षर *key = vkey;
-	स्थिर काष्ठा syscall *entry = ventry;
+static int syscallcmpname(const void *vkey, const void *ventry)
+{
+	const char *key = vkey;
+	const struct syscall *entry = ventry;
 
-	वापस म_भेद(key, entry->name);
-पूर्ण
+	return strcmp(key, entry->name);
+}
 
-अटल पूर्णांक syscallcmp(स्थिर व्योम *va, स्थिर व्योम *vb)
-अणु
-	स्थिर काष्ठा syscall *a = va, *b = vb;
+static int syscallcmp(const void *va, const void *vb)
+{
+	const struct syscall *a = va, *b = vb;
 
-	वापस म_भेद(a->name, b->name);
-पूर्ण
+	return strcmp(a->name, b->name);
+}
 
-अटल पूर्णांक syscalltbl__init_native(काष्ठा syscalltbl *tbl)
-अणु
-	पूर्णांक nr_entries = 0, i, j;
-	काष्ठा syscall *entries;
+static int syscalltbl__init_native(struct syscalltbl *tbl)
+{
+	int nr_entries = 0, i, j;
+	struct syscall *entries;
 
-	क्रम (i = 0; i <= syscalltbl_native_max_id; ++i)
-		अगर (syscalltbl_native[i])
+	for (i = 0; i <= syscalltbl_native_max_id; ++i)
+		if (syscalltbl_native[i])
 			++nr_entries;
 
-	entries = tbl->syscalls.entries = दो_स्मृति(माप(काष्ठा syscall) * nr_entries);
-	अगर (tbl->syscalls.entries == शून्य)
-		वापस -1;
+	entries = tbl->syscalls.entries = malloc(sizeof(struct syscall) * nr_entries);
+	if (tbl->syscalls.entries == NULL)
+		return -1;
 
-	क्रम (i = 0, j = 0; i <= syscalltbl_native_max_id; ++i) अणु
-		अगर (syscalltbl_native[i]) अणु
+	for (i = 0, j = 0; i <= syscalltbl_native_max_id; ++i) {
+		if (syscalltbl_native[i]) {
 			entries[j].name = syscalltbl_native[i];
 			entries[j].id = i;
 			++j;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्विक(tbl->syscalls.entries, nr_entries, माप(काष्ठा syscall), syscallcmp);
+	qsort(tbl->syscalls.entries, nr_entries, sizeof(struct syscall), syscallcmp);
 	tbl->syscalls.nr_entries = nr_entries;
 	tbl->syscalls.max_id	 = syscalltbl_native_max_id;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा syscalltbl *syscalltbl__new(व्योम)
-अणु
-	काष्ठा syscalltbl *tbl = दो_स्मृति(माप(*tbl));
-	अगर (tbl) अणु
-		अगर (syscalltbl__init_native(tbl)) अणु
-			मुक्त(tbl);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
-	वापस tbl;
-पूर्ण
+struct syscalltbl *syscalltbl__new(void)
+{
+	struct syscalltbl *tbl = malloc(sizeof(*tbl));
+	if (tbl) {
+		if (syscalltbl__init_native(tbl)) {
+			free(tbl);
+			return NULL;
+		}
+	}
+	return tbl;
+}
 
-व्योम syscalltbl__delete(काष्ठा syscalltbl *tbl)
-अणु
-	zमुक्त(&tbl->syscalls.entries);
-	मुक्त(tbl);
-पूर्ण
+void syscalltbl__delete(struct syscalltbl *tbl)
+{
+	zfree(&tbl->syscalls.entries);
+	free(tbl);
+}
 
-स्थिर अक्षर *syscalltbl__name(स्थिर काष्ठा syscalltbl *tbl __maybe_unused, पूर्णांक id)
-अणु
-	वापस id <= syscalltbl_native_max_id ? syscalltbl_native[id]: शून्य;
-पूर्ण
+const char *syscalltbl__name(const struct syscalltbl *tbl __maybe_unused, int id)
+{
+	return id <= syscalltbl_native_max_id ? syscalltbl_native[id]: NULL;
+}
 
-पूर्णांक syscalltbl__id(काष्ठा syscalltbl *tbl, स्थिर अक्षर *name)
-अणु
-	काष्ठा syscall *sc = द्वा_खोज(name, tbl->syscalls.entries,
-				     tbl->syscalls.nr_entries, माप(*sc),
+int syscalltbl__id(struct syscalltbl *tbl, const char *name)
+{
+	struct syscall *sc = bsearch(name, tbl->syscalls.entries,
+				     tbl->syscalls.nr_entries, sizeof(*sc),
 				     syscallcmpname);
 
-	वापस sc ? sc->id : -1;
-पूर्ण
+	return sc ? sc->id : -1;
+}
 
-पूर्णांक syscalltbl__strglobmatch_next(काष्ठा syscalltbl *tbl, स्थिर अक्षर *syscall_glob, पूर्णांक *idx)
-अणु
-	पूर्णांक i;
-	काष्ठा syscall *syscalls = tbl->syscalls.entries;
+int syscalltbl__strglobmatch_next(struct syscalltbl *tbl, const char *syscall_glob, int *idx)
+{
+	int i;
+	struct syscall *syscalls = tbl->syscalls.entries;
 
-	क्रम (i = *idx + 1; i < tbl->syscalls.nr_entries; ++i) अणु
-		अगर (strglobmatch(syscalls[i].name, syscall_glob)) अणु
+	for (i = *idx + 1; i < tbl->syscalls.nr_entries; ++i) {
+		if (strglobmatch(syscalls[i].name, syscall_glob)) {
 			*idx = i;
-			वापस syscalls[i].id;
-		पूर्ण
-	पूर्ण
+			return syscalls[i].id;
+		}
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-पूर्णांक syscalltbl__strglobmatch_first(काष्ठा syscalltbl *tbl, स्थिर अक्षर *syscall_glob, पूर्णांक *idx)
-अणु
+int syscalltbl__strglobmatch_first(struct syscalltbl *tbl, const char *syscall_glob, int *idx)
+{
 	*idx = -1;
-	वापस syscalltbl__strglobmatch_next(tbl, syscall_glob, idx);
-पूर्ण
+	return syscalltbl__strglobmatch_next(tbl, syscall_glob, idx);
+}
 
-#अन्यथा /* HAVE_SYSCALL_TABLE_SUPPORT */
+#else /* HAVE_SYSCALL_TABLE_SUPPORT */
 
-#समावेश <libaudit.h>
+#include <libaudit.h>
 
-काष्ठा syscalltbl *syscalltbl__new(व्योम)
-अणु
-	काष्ठा syscalltbl *tbl = zalloc(माप(*tbl));
-	अगर (tbl)
+struct syscalltbl *syscalltbl__new(void)
+{
+	struct syscalltbl *tbl = zalloc(sizeof(*tbl));
+	if (tbl)
 		tbl->audit_machine = audit_detect_machine();
-	वापस tbl;
-पूर्ण
+	return tbl;
+}
 
-व्योम syscalltbl__delete(काष्ठा syscalltbl *tbl)
-अणु
-	मुक्त(tbl);
-पूर्ण
+void syscalltbl__delete(struct syscalltbl *tbl)
+{
+	free(tbl);
+}
 
-स्थिर अक्षर *syscalltbl__name(स्थिर काष्ठा syscalltbl *tbl, पूर्णांक id)
-अणु
-	वापस audit_syscall_to_name(id, tbl->audit_machine);
-पूर्ण
+const char *syscalltbl__name(const struct syscalltbl *tbl, int id)
+{
+	return audit_syscall_to_name(id, tbl->audit_machine);
+}
 
-पूर्णांक syscalltbl__id(काष्ठा syscalltbl *tbl, स्थिर अक्षर *name)
-अणु
-	वापस audit_name_to_syscall(name, tbl->audit_machine);
-पूर्ण
+int syscalltbl__id(struct syscalltbl *tbl, const char *name)
+{
+	return audit_name_to_syscall(name, tbl->audit_machine);
+}
 
-पूर्णांक syscalltbl__strglobmatch_next(काष्ठा syscalltbl *tbl __maybe_unused,
-				  स्थिर अक्षर *syscall_glob __maybe_unused, पूर्णांक *idx __maybe_unused)
-अणु
-	वापस -1;
-पूर्ण
+int syscalltbl__strglobmatch_next(struct syscalltbl *tbl __maybe_unused,
+				  const char *syscall_glob __maybe_unused, int *idx __maybe_unused)
+{
+	return -1;
+}
 
-पूर्णांक syscalltbl__strglobmatch_first(काष्ठा syscalltbl *tbl, स्थिर अक्षर *syscall_glob, पूर्णांक *idx)
-अणु
-	वापस syscalltbl__strglobmatch_next(tbl, syscall_glob, idx);
-पूर्ण
-#पूर्ण_अगर /* HAVE_SYSCALL_TABLE_SUPPORT */
+int syscalltbl__strglobmatch_first(struct syscalltbl *tbl, const char *syscall_glob, int *idx)
+{
+	return syscalltbl__strglobmatch_next(tbl, syscall_glob, idx);
+}
+#endif /* HAVE_SYSCALL_TABLE_SUPPORT */

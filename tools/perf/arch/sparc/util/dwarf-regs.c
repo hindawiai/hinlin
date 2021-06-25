@@ -1,17 +1,16 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Mapping of DWARF debug रेजिस्टर numbers पूर्णांकo रेजिस्टर names.
+ * Mapping of DWARF debug register numbers into register names.
  *
  * Copyright (C) 2010 David S. Miller <davem@davemloft.net>
  */
 
-#समावेश <मानकघोष.स>
-#समावेश <dwarf-regs.h>
+#include <stddef.h>
+#include <dwarf-regs.h>
 
-#घोषणा SPARC_MAX_REGS	96
+#define SPARC_MAX_REGS	96
 
-स्थिर अक्षर *sparc_regs_table[SPARC_MAX_REGS] = अणु
+const char *sparc_regs_table[SPARC_MAX_REGS] = {
 	"%g0", "%g1", "%g2", "%g3", "%g4", "%g5", "%g6", "%g7",
 	"%o0", "%o1", "%o2", "%o3", "%o4", "%o5", "%sp", "%o7",
 	"%l0", "%l1", "%l2", "%l3", "%l4", "%l5", "%l6", "%l7",
@@ -24,17 +23,17 @@
 	"%f40", "%f41", "%f42", "%f43", "%f44", "%f45", "%f46", "%f47",
 	"%f48", "%f49", "%f50", "%f51", "%f52", "%f53", "%f54", "%f55",
 	"%f56", "%f57", "%f58", "%f59", "%f60", "%f61", "%f62", "%f63",
-पूर्ण;
+};
 
 /**
- * get_arch_regstr() - lookup रेजिस्टर name from it's DWARF रेजिस्टर number
- * @n:	the DWARF रेजिस्टर number
+ * get_arch_regstr() - lookup register name from it's DWARF register number
+ * @n:	the DWARF register number
  *
- * get_arch_regstr() वापसs the name of the रेजिस्टर in काष्ठा
- * regdwarfnum_table from it's DWARF रेजिस्टर number. If the रेजिस्टर is not
- * found in the table, this वापसs शून्य;
+ * get_arch_regstr() returns the name of the register in struct
+ * regdwarfnum_table from it's DWARF register number. If the register is not
+ * found in the table, this returns NULL;
  */
-स्थिर अक्षर *get_arch_regstr(अचिन्हित पूर्णांक n)
-अणु
-	वापस (n < SPARC_MAX_REGS) ? sparc_regs_table[n] : शून्य;
-पूर्ण
+const char *get_arch_regstr(unsigned int n)
+{
+	return (n < SPARC_MAX_REGS) ? sparc_regs_table[n] : NULL;
+}

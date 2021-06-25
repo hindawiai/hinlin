@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2020 Matt Helsley <mhelsley@vmware.com>
  * Weak definitions necessary to compile objtool without
  * some subcommands (e.g. check, orc).
  */
 
-#समावेश <stdbool.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <objtool/objtool.h>
+#include <stdbool.h>
+#include <errno.h>
+#include <objtool/objtool.h>
 
-#घोषणा UNSUPPORTED(name)						\
-(अणु									\
-	ख_लिखो(मानक_त्रुटि, "error: objtool: " name " not implemented\n");	\
-	वापस ENOSYS;							\
-पूर्ण)
+#define UNSUPPORTED(name)						\
+({									\
+	fprintf(stderr, "error: objtool: " name " not implemented\n");	\
+	return ENOSYS;							\
+})
 
-पूर्णांक __weak check(काष्ठा objtool_file *file)
-अणु
+int __weak check(struct objtool_file *file)
+{
 	UNSUPPORTED("check subcommand");
-पूर्ण
+}
 
-पूर्णांक __weak orc_dump(स्थिर अक्षर *_objname)
-अणु
+int __weak orc_dump(const char *_objname)
+{
 	UNSUPPORTED("orc");
-पूर्ण
+}
 
-पूर्णांक __weak orc_create(काष्ठा objtool_file *file)
-अणु
+int __weak orc_create(struct objtool_file *file)
+{
 	UNSUPPORTED("orc");
-पूर्ण
+}

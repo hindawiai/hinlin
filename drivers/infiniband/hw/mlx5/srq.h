@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
+/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
 /*
  * Copyright (c) 2013-2018, Mellanox Technologies. All rights reserved.
  */
 
-#अगर_अघोषित MLX5_IB_SRQ_H
-#घोषणा MLX5_IB_SRQ_H
+#ifndef MLX5_IB_SRQ_H
+#define MLX5_IB_SRQ_H
 
-क्रमागत अणु
+enum {
 	MLX5_SRQ_FLAG_ERR    = (1 << 0),
 	MLX5_SRQ_FLAG_WQ_SIG = (1 << 1),
 	MLX5_SRQ_FLAG_RNDV   = (1 << 2),
-पूर्ण;
+};
 
-काष्ठा mlx5_srq_attr अणु
+struct mlx5_srq_attr {
 	u32 type;
 	u32 flags;
 	u32 log_size;
-	u32 wqe_shअगरt;
+	u32 wqe_shift;
 	u32 log_page_size;
 	u32 wqe_cnt;
 	u32 srqn;
@@ -29,42 +28,42 @@
 	u32 user_index;
 	u64 db_record;
 	__be64 *pas;
-	काष्ठा ib_umem *umem;
-	u32 पंचांग_log_list_size;
-	u32 पंचांग_next_tag;
-	u32 पंचांग_hw_phase_cnt;
-	u32 पंचांग_sw_phase_cnt;
+	struct ib_umem *umem;
+	u32 tm_log_list_size;
+	u32 tm_next_tag;
+	u32 tm_hw_phase_cnt;
+	u32 tm_sw_phase_cnt;
 	u16 uid;
-पूर्ण;
+};
 
-काष्ठा mlx5_ib_dev;
+struct mlx5_ib_dev;
 
-काष्ठा mlx5_core_srq अणु
-	काष्ठा mlx5_core_rsc_common common; /* must be first */
+struct mlx5_core_srq {
+	struct mlx5_core_rsc_common common; /* must be first */
 	u32 srqn;
-	पूर्णांक max;
-	माप_प्रकार max_gs;
-	माप_प्रकार max_avail_gather;
-	पूर्णांक wqe_shअगरt;
-	व्योम (*event)(काष्ठा mlx5_core_srq *srq, क्रमागत mlx5_event e);
+	int max;
+	size_t max_gs;
+	size_t max_avail_gather;
+	int wqe_shift;
+	void (*event)(struct mlx5_core_srq *srq, enum mlx5_event e);
 
 	u16 uid;
-पूर्ण;
+};
 
-काष्ठा mlx5_srq_table अणु
-	काष्ठा notअगरier_block nb;
-	काष्ठा xarray array;
-पूर्ण;
+struct mlx5_srq_table {
+	struct notifier_block nb;
+	struct xarray array;
+};
 
-पूर्णांक mlx5_cmd_create_srq(काष्ठा mlx5_ib_dev *dev, काष्ठा mlx5_core_srq *srq,
-			काष्ठा mlx5_srq_attr *in);
-पूर्णांक mlx5_cmd_destroy_srq(काष्ठा mlx5_ib_dev *dev, काष्ठा mlx5_core_srq *srq);
-पूर्णांक mlx5_cmd_query_srq(काष्ठा mlx5_ib_dev *dev, काष्ठा mlx5_core_srq *srq,
-		       काष्ठा mlx5_srq_attr *out);
-पूर्णांक mlx5_cmd_arm_srq(काष्ठा mlx5_ib_dev *dev, काष्ठा mlx5_core_srq *srq,
-		     u16 lwm, पूर्णांक is_srq);
-काष्ठा mlx5_core_srq *mlx5_cmd_get_srq(काष्ठा mlx5_ib_dev *dev, u32 srqn);
+int mlx5_cmd_create_srq(struct mlx5_ib_dev *dev, struct mlx5_core_srq *srq,
+			struct mlx5_srq_attr *in);
+int mlx5_cmd_destroy_srq(struct mlx5_ib_dev *dev, struct mlx5_core_srq *srq);
+int mlx5_cmd_query_srq(struct mlx5_ib_dev *dev, struct mlx5_core_srq *srq,
+		       struct mlx5_srq_attr *out);
+int mlx5_cmd_arm_srq(struct mlx5_ib_dev *dev, struct mlx5_core_srq *srq,
+		     u16 lwm, int is_srq);
+struct mlx5_core_srq *mlx5_cmd_get_srq(struct mlx5_ib_dev *dev, u32 srqn);
 
-पूर्णांक mlx5_init_srq_table(काष्ठा mlx5_ib_dev *dev);
-व्योम mlx5_cleanup_srq_table(काष्ठा mlx5_ib_dev *dev);
-#पूर्ण_अगर /* MLX5_IB_SRQ_H */
+int mlx5_init_srq_table(struct mlx5_ib_dev *dev);
+void mlx5_cleanup_srq_table(struct mlx5_ib_dev *dev);
+#endif /* MLX5_IB_SRQ_H */

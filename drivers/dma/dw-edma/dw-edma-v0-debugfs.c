@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2018-2019 Synopsys, Inc. and/or its affiliates.
  * Synopsys DesignWare eDMA v0 core
@@ -7,74 +6,74 @@
  * Author: Gustavo Pimentel <gustavo.pimentel@synopsys.com>
  */
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/bitfield.h>
+#include <linux/debugfs.h>
+#include <linux/bitfield.h>
 
-#समावेश "dw-edma-v0-debugfs.h"
-#समावेश "dw-edma-v0-regs.h"
-#समावेश "dw-edma-core.h"
+#include "dw-edma-v0-debugfs.h"
+#include "dw-edma-v0-regs.h"
+#include "dw-edma-core.h"
 
-#घोषणा REGS_ADDR(name) \
-	((व्योम __क्रमce *)&regs->name)
-#घोषणा REGISTER(name) \
-	अणु #name, REGS_ADDR(name) पूर्ण
+#define REGS_ADDR(name) \
+	((void __force *)&regs->name)
+#define REGISTER(name) \
+	{ #name, REGS_ADDR(name) }
 
-#घोषणा WR_REGISTER(name) \
-	अणु #name, REGS_ADDR(wr_##name) पूर्ण
-#घोषणा RD_REGISTER(name) \
-	अणु #name, REGS_ADDR(rd_##name) पूर्ण
+#define WR_REGISTER(name) \
+	{ #name, REGS_ADDR(wr_##name) }
+#define RD_REGISTER(name) \
+	{ #name, REGS_ADDR(rd_##name) }
 
-#घोषणा WR_REGISTER_LEGACY(name) \
-	अणु #name, REGS_ADDR(type.legacy.wr_##name) पूर्ण
-#घोषणा RD_REGISTER_LEGACY(name) \
-	अणु #name, REGS_ADDR(type.legacy.rd_##name) पूर्ण
+#define WR_REGISTER_LEGACY(name) \
+	{ #name, REGS_ADDR(type.legacy.wr_##name) }
+#define RD_REGISTER_LEGACY(name) \
+	{ #name, REGS_ADDR(type.legacy.rd_##name) }
 
-#घोषणा WR_REGISTER_UNROLL(name) \
-	अणु #name, REGS_ADDR(type.unroll.wr_##name) पूर्ण
-#घोषणा RD_REGISTER_UNROLL(name) \
-	अणु #name, REGS_ADDR(type.unroll.rd_##name) पूर्ण
+#define WR_REGISTER_UNROLL(name) \
+	{ #name, REGS_ADDR(type.unroll.wr_##name) }
+#define RD_REGISTER_UNROLL(name) \
+	{ #name, REGS_ADDR(type.unroll.rd_##name) }
 
-#घोषणा WRITE_STR				"write"
-#घोषणा READ_STR				"read"
-#घोषणा CHANNEL_STR				"channel"
-#घोषणा REGISTERS_STR				"registers"
+#define WRITE_STR				"write"
+#define READ_STR				"read"
+#define CHANNEL_STR				"channel"
+#define REGISTERS_STR				"registers"
 
-अटल काष्ठा dw_edma				*dw;
-अटल काष्ठा dw_edma_v0_regs			__iomem *regs;
+static struct dw_edma				*dw;
+static struct dw_edma_v0_regs			__iomem *regs;
 
-अटल काष्ठा अणु
-	व्योम					__iomem *start;
-	व्योम					__iomem *end;
-पूर्ण lim[2][EDMA_V0_MAX_NR_CH];
+static struct {
+	void					__iomem *start;
+	void					__iomem *end;
+} lim[2][EDMA_V0_MAX_NR_CH];
 
-काष्ठा debugfs_entries अणु
-	स्थिर अक्षर				*name;
+struct debugfs_entries {
+	const char				*name;
 	dma_addr_t				*reg;
-पूर्ण;
+};
 
-अटल पूर्णांक dw_edma_debugfs_u32_get(व्योम *data, u64 *val)
-अणु
-	व्योम __iomem *reg = (व्योम __क्रमce __iomem *)data;
-	अगर (dw->mf == EDMA_MF_EDMA_LEGACY &&
-	    reg >= (व्योम __iomem *)&regs->type.legacy.ch) अणु
-		व्योम __iomem *ptr = &regs->type.legacy.ch;
+static int dw_edma_debugfs_u32_get(void *data, u64 *val)
+{
+	void __iomem *reg = (void __force __iomem *)data;
+	if (dw->mf == EDMA_MF_EDMA_LEGACY &&
+	    reg >= (void __iomem *)&regs->type.legacy.ch) {
+		void __iomem *ptr = &regs->type.legacy.ch;
 		u32 viewport_sel = 0;
-		अचिन्हित दीर्घ flags;
+		unsigned long flags;
 		u16 ch;
 
-		क्रम (ch = 0; ch < dw->wr_ch_cnt; ch++)
-			अगर (lim[0][ch].start >= reg && reg < lim[0][ch].end) अणु
+		for (ch = 0; ch < dw->wr_ch_cnt; ch++)
+			if (lim[0][ch].start >= reg && reg < lim[0][ch].end) {
 				ptr += (reg - lim[0][ch].start);
-				जाओ legacy_sel_wr;
-			पूर्ण
+				goto legacy_sel_wr;
+			}
 
-		क्रम (ch = 0; ch < dw->rd_ch_cnt; ch++)
-			अगर (lim[1][ch].start >= reg && reg < lim[1][ch].end) अणु
+		for (ch = 0; ch < dw->rd_ch_cnt; ch++)
+			if (lim[1][ch].start >= reg && reg < lim[1][ch].end) {
 				ptr += (reg - lim[1][ch].start);
-				जाओ legacy_sel_rd;
-			पूर्ण
+				goto legacy_sel_rd;
+			}
 
-		वापस 0;
+		return 0;
 legacy_sel_rd:
 		viewport_sel = BIT(31);
 legacy_sel_wr:
@@ -82,35 +81,35 @@ legacy_sel_wr:
 
 		raw_spin_lock_irqsave(&dw->lock, flags);
 
-		ग_लिखोl(viewport_sel, &regs->type.legacy.viewport_sel);
-		*val = पढ़ोl(ptr);
+		writel(viewport_sel, &regs->type.legacy.viewport_sel);
+		*val = readl(ptr);
 
 		raw_spin_unlock_irqrestore(&dw->lock, flags);
-	पूर्ण अन्यथा अणु
-		*val = पढ़ोl(reg);
-	पूर्ण
+	} else {
+		*val = readl(reg);
+	}
 
-	वापस 0;
-पूर्ण
-DEFINE_DEBUGFS_ATTRIBUTE(fops_x32, dw_edma_debugfs_u32_get, शून्य, "0x%08llx\n");
+	return 0;
+}
+DEFINE_DEBUGFS_ATTRIBUTE(fops_x32, dw_edma_debugfs_u32_get, NULL, "0x%08llx\n");
 
-अटल व्योम dw_edma_debugfs_create_x32(स्थिर काष्ठा debugfs_entries entries[],
-				       पूर्णांक nr_entries, काष्ठा dentry *dir)
-अणु
-	पूर्णांक i;
+static void dw_edma_debugfs_create_x32(const struct debugfs_entries entries[],
+				       int nr_entries, struct dentry *dir)
+{
+	int i;
 
-	क्रम (i = 0; i < nr_entries; i++) अणु
-		अगर (!debugfs_create_file_unsafe(entries[i].name, 0444, dir,
+	for (i = 0; i < nr_entries; i++) {
+		if (!debugfs_create_file_unsafe(entries[i].name, 0444, dir,
 						entries[i].reg,	&fops_x32))
-			अवरोध;
-	पूर्ण
-पूर्ण
+			break;
+	}
+}
 
-अटल व्योम dw_edma_debugfs_regs_ch(काष्ठा dw_edma_v0_ch_regs __iomem *regs,
-				    काष्ठा dentry *dir)
-अणु
-	पूर्णांक nr_entries;
-	स्थिर काष्ठा debugfs_entries debugfs_regs[] = अणु
+static void dw_edma_debugfs_regs_ch(struct dw_edma_v0_ch_regs __iomem *regs,
+				    struct dentry *dir)
+{
+	int nr_entries;
+	const struct debugfs_entries debugfs_regs[] = {
 		REGISTER(ch_control1),
 		REGISTER(ch_control2),
 		REGISTER(transfer_size),
@@ -120,36 +119,36 @@ DEFINE_DEBUGFS_ATTRIBUTE(fops_x32, dw_edma_debugfs_u32_get, शून्य, "0x
 		REGISTER(dar.msb),
 		REGISTER(llp.lsb),
 		REGISTER(llp.msb),
-	पूर्ण;
+	};
 
 	nr_entries = ARRAY_SIZE(debugfs_regs);
 	dw_edma_debugfs_create_x32(debugfs_regs, nr_entries, dir);
-पूर्ण
+}
 
-अटल व्योम dw_edma_debugfs_regs_wr(काष्ठा dentry *dir)
-अणु
-	स्थिर काष्ठा debugfs_entries debugfs_regs[] = अणु
-		/* eDMA global रेजिस्टरs */
+static void dw_edma_debugfs_regs_wr(struct dentry *dir)
+{
+	const struct debugfs_entries debugfs_regs[] = {
+		/* eDMA global registers */
 		WR_REGISTER(engine_en),
-		WR_REGISTER(करोorbell),
+		WR_REGISTER(doorbell),
 		WR_REGISTER(ch_arb_weight.lsb),
 		WR_REGISTER(ch_arb_weight.msb),
-		/* eDMA पूर्णांकerrupts रेजिस्टरs */
-		WR_REGISTER(पूर्णांक_status),
-		WR_REGISTER(पूर्णांक_mask),
-		WR_REGISTER(पूर्णांक_clear),
+		/* eDMA interrupts registers */
+		WR_REGISTER(int_status),
+		WR_REGISTER(int_mask),
+		WR_REGISTER(int_clear),
 		WR_REGISTER(err_status),
-		WR_REGISTER(करोne_imwr.lsb),
-		WR_REGISTER(करोne_imwr.msb),
-		WR_REGISTER(पात_imwr.lsb),
-		WR_REGISTER(पात_imwr.msb),
+		WR_REGISTER(done_imwr.lsb),
+		WR_REGISTER(done_imwr.msb),
+		WR_REGISTER(abort_imwr.lsb),
+		WR_REGISTER(abort_imwr.msb),
 		WR_REGISTER(ch01_imwr_data),
 		WR_REGISTER(ch23_imwr_data),
 		WR_REGISTER(ch45_imwr_data),
 		WR_REGISTER(ch67_imwr_data),
 		WR_REGISTER(linked_list_err_en),
-	पूर्ण;
-	स्थिर काष्ठा debugfs_entries debugfs_unroll_regs[] = अणु
+	};
+	const struct debugfs_entries debugfs_unroll_regs[] = {
 		/* eDMA channel context grouping */
 		WR_REGISTER_UNROLL(engine_chgroup),
 		WR_REGISTER_UNROLL(engine_hshake_cnt.lsb),
@@ -162,63 +161,63 @@ DEFINE_DEBUGFS_ATTRIBUTE(fops_x32, dw_edma_debugfs_u32_get, शून्य, "0x
 		WR_REGISTER_UNROLL(ch5_pwr_en),
 		WR_REGISTER_UNROLL(ch6_pwr_en),
 		WR_REGISTER_UNROLL(ch7_pwr_en),
-	पूर्ण;
-	काष्ठा dentry *regs_dir, *ch_dir;
-	पूर्णांक nr_entries, i;
-	अक्षर name[16];
+	};
+	struct dentry *regs_dir, *ch_dir;
+	int nr_entries, i;
+	char name[16];
 
 	regs_dir = debugfs_create_dir(WRITE_STR, dir);
-	अगर (!regs_dir)
-		वापस;
+	if (!regs_dir)
+		return;
 
 	nr_entries = ARRAY_SIZE(debugfs_regs);
 	dw_edma_debugfs_create_x32(debugfs_regs, nr_entries, regs_dir);
 
-	अगर (dw->mf == EDMA_MF_HDMA_COMPAT) अणु
+	if (dw->mf == EDMA_MF_HDMA_COMPAT) {
 		nr_entries = ARRAY_SIZE(debugfs_unroll_regs);
 		dw_edma_debugfs_create_x32(debugfs_unroll_regs, nr_entries,
 					   regs_dir);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < dw->wr_ch_cnt; i++) अणु
-		snम_लिखो(name, माप(name), "%s:%d", CHANNEL_STR, i);
+	for (i = 0; i < dw->wr_ch_cnt; i++) {
+		snprintf(name, sizeof(name), "%s:%d", CHANNEL_STR, i);
 
 		ch_dir = debugfs_create_dir(name, regs_dir);
-		अगर (!ch_dir)
-			वापस;
+		if (!ch_dir)
+			return;
 
 		dw_edma_debugfs_regs_ch(&regs->type.unroll.ch[i].wr, ch_dir);
 
 		lim[0][i].start = &regs->type.unroll.ch[i].wr;
 		lim[0][i].end = &regs->type.unroll.ch[i].padding_1[0];
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम dw_edma_debugfs_regs_rd(काष्ठा dentry *dir)
-अणु
-	स्थिर काष्ठा debugfs_entries debugfs_regs[] = अणु
-		/* eDMA global रेजिस्टरs */
+static void dw_edma_debugfs_regs_rd(struct dentry *dir)
+{
+	const struct debugfs_entries debugfs_regs[] = {
+		/* eDMA global registers */
 		RD_REGISTER(engine_en),
-		RD_REGISTER(करोorbell),
+		RD_REGISTER(doorbell),
 		RD_REGISTER(ch_arb_weight.lsb),
 		RD_REGISTER(ch_arb_weight.msb),
-		/* eDMA पूर्णांकerrupts रेजिस्टरs */
-		RD_REGISTER(पूर्णांक_status),
-		RD_REGISTER(पूर्णांक_mask),
-		RD_REGISTER(पूर्णांक_clear),
+		/* eDMA interrupts registers */
+		RD_REGISTER(int_status),
+		RD_REGISTER(int_mask),
+		RD_REGISTER(int_clear),
 		RD_REGISTER(err_status.lsb),
 		RD_REGISTER(err_status.msb),
 		RD_REGISTER(linked_list_err_en),
-		RD_REGISTER(करोne_imwr.lsb),
-		RD_REGISTER(करोne_imwr.msb),
-		RD_REGISTER(पात_imwr.lsb),
-		RD_REGISTER(पात_imwr.msb),
+		RD_REGISTER(done_imwr.lsb),
+		RD_REGISTER(done_imwr.msb),
+		RD_REGISTER(abort_imwr.lsb),
+		RD_REGISTER(abort_imwr.msb),
 		RD_REGISTER(ch01_imwr_data),
 		RD_REGISTER(ch23_imwr_data),
 		RD_REGISTER(ch45_imwr_data),
 		RD_REGISTER(ch67_imwr_data),
-	पूर्ण;
-	स्थिर काष्ठा debugfs_entries debugfs_unroll_regs[] = अणु
+	};
+	const struct debugfs_entries debugfs_unroll_regs[] = {
 		/* eDMA channel context grouping */
 		RD_REGISTER_UNROLL(engine_chgroup),
 		RD_REGISTER_UNROLL(engine_hshake_cnt.lsb),
@@ -231,85 +230,85 @@ DEFINE_DEBUGFS_ATTRIBUTE(fops_x32, dw_edma_debugfs_u32_get, शून्य, "0x
 		RD_REGISTER_UNROLL(ch5_pwr_en),
 		RD_REGISTER_UNROLL(ch6_pwr_en),
 		RD_REGISTER_UNROLL(ch7_pwr_en),
-	पूर्ण;
-	काष्ठा dentry *regs_dir, *ch_dir;
-	पूर्णांक nr_entries, i;
-	अक्षर name[16];
+	};
+	struct dentry *regs_dir, *ch_dir;
+	int nr_entries, i;
+	char name[16];
 
 	regs_dir = debugfs_create_dir(READ_STR, dir);
-	अगर (!regs_dir)
-		वापस;
+	if (!regs_dir)
+		return;
 
 	nr_entries = ARRAY_SIZE(debugfs_regs);
 	dw_edma_debugfs_create_x32(debugfs_regs, nr_entries, regs_dir);
 
-	अगर (dw->mf == EDMA_MF_HDMA_COMPAT) अणु
+	if (dw->mf == EDMA_MF_HDMA_COMPAT) {
 		nr_entries = ARRAY_SIZE(debugfs_unroll_regs);
 		dw_edma_debugfs_create_x32(debugfs_unroll_regs, nr_entries,
 					   regs_dir);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < dw->rd_ch_cnt; i++) अणु
-		snम_लिखो(name, माप(name), "%s:%d", CHANNEL_STR, i);
+	for (i = 0; i < dw->rd_ch_cnt; i++) {
+		snprintf(name, sizeof(name), "%s:%d", CHANNEL_STR, i);
 
 		ch_dir = debugfs_create_dir(name, regs_dir);
-		अगर (!ch_dir)
-			वापस;
+		if (!ch_dir)
+			return;
 
 		dw_edma_debugfs_regs_ch(&regs->type.unroll.ch[i].rd, ch_dir);
 
 		lim[1][i].start = &regs->type.unroll.ch[i].rd;
 		lim[1][i].end = &regs->type.unroll.ch[i].padding_2[0];
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम dw_edma_debugfs_regs(व्योम)
-अणु
-	स्थिर काष्ठा debugfs_entries debugfs_regs[] = अणु
+static void dw_edma_debugfs_regs(void)
+{
+	const struct debugfs_entries debugfs_regs[] = {
 		REGISTER(ctrl_data_arb_prior),
 		REGISTER(ctrl),
-	पूर्ण;
-	काष्ठा dentry *regs_dir;
-	पूर्णांक nr_entries;
+	};
+	struct dentry *regs_dir;
+	int nr_entries;
 
 	regs_dir = debugfs_create_dir(REGISTERS_STR, dw->debugfs);
-	अगर (!regs_dir)
-		वापस;
+	if (!regs_dir)
+		return;
 
 	nr_entries = ARRAY_SIZE(debugfs_regs);
 	dw_edma_debugfs_create_x32(debugfs_regs, nr_entries, regs_dir);
 
 	dw_edma_debugfs_regs_wr(regs_dir);
 	dw_edma_debugfs_regs_rd(regs_dir);
-पूर्ण
+}
 
-व्योम dw_edma_v0_debugfs_on(काष्ठा dw_edma_chip *chip)
-अणु
+void dw_edma_v0_debugfs_on(struct dw_edma_chip *chip)
+{
 	dw = chip->dw;
-	अगर (!dw)
-		वापस;
+	if (!dw)
+		return;
 
 	regs = dw->rg_region.vaddr;
-	अगर (!regs)
-		वापस;
+	if (!regs)
+		return;
 
-	dw->debugfs = debugfs_create_dir(dw->name, शून्य);
-	अगर (!dw->debugfs)
-		वापस;
+	dw->debugfs = debugfs_create_dir(dw->name, NULL);
+	if (!dw->debugfs)
+		return;
 
 	debugfs_create_u32("mf", 0444, dw->debugfs, &dw->mf);
 	debugfs_create_u16("wr_ch_cnt", 0444, dw->debugfs, &dw->wr_ch_cnt);
 	debugfs_create_u16("rd_ch_cnt", 0444, dw->debugfs, &dw->rd_ch_cnt);
 
 	dw_edma_debugfs_regs();
-पूर्ण
+}
 
-व्योम dw_edma_v0_debugfs_off(काष्ठा dw_edma_chip *chip)
-अणु
+void dw_edma_v0_debugfs_off(struct dw_edma_chip *chip)
+{
 	dw = chip->dw;
-	अगर (!dw)
-		वापस;
+	if (!dw)
+		return;
 
-	debugfs_हटाओ_recursive(dw->debugfs);
-	dw->debugfs = शून्य;
-पूर्ण
+	debugfs_remove_recursive(dw->debugfs);
+	dw->debugfs = NULL;
+}

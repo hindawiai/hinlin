@@ -1,138 +1,137 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (c) 2018 Jernej Skrabec <jernej.skrabec@siol.net>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_platक्रमm.h>
+#include <linux/delay.h>
+#include <linux/of_address.h>
+#include <linux/of_platform.h>
 
-#समावेश "sun8i_dw_hdmi.h"
+#include "sun8i_dw_hdmi.h"
 
 /*
  * Address can be actually any value. Here is set to same value as
  * it is set in BSP driver.
  */
-#घोषणा I2C_ADDR	0x69
+#define I2C_ADDR	0x69
 
-अटल स्थिर काष्ठा dw_hdmi_mpll_config sun50i_h6_mpll_cfg[] = अणु
-	अणु
-		30666000, अणु
-			अणु 0x00b3, 0x0000 पूर्ण,
-			अणु 0x2153, 0x0000 पूर्ण,
-			अणु 0x40f3, 0x0000 पूर्ण,
-		पूर्ण,
-	पूर्ण,  अणु
-		36800000, अणु
-			अणु 0x00b3, 0x0000 पूर्ण,
-			अणु 0x2153, 0x0000 पूर्ण,
-			अणु 0x40a2, 0x0001 पूर्ण,
-		पूर्ण,
-	पूर्ण,  अणु
-		46000000, अणु
-			अणु 0x00b3, 0x0000 पूर्ण,
-			अणु 0x2142, 0x0001 पूर्ण,
-			अणु 0x40a2, 0x0001 पूर्ण,
-		पूर्ण,
-	पूर्ण,  अणु
-		61333000, अणु
-			अणु 0x0072, 0x0001 पूर्ण,
-			अणु 0x2142, 0x0001 पूर्ण,
-			अणु 0x40a2, 0x0001 पूर्ण,
-		पूर्ण,
-	पूर्ण,  अणु
-		73600000, अणु
-			अणु 0x0072, 0x0001 पूर्ण,
-			अणु 0x2142, 0x0001 पूर्ण,
-			अणु 0x4061, 0x0002 पूर्ण,
-		पूर्ण,
-	पूर्ण,  अणु
-		92000000, अणु
-			अणु 0x0072, 0x0001 पूर्ण,
-			अणु 0x2145, 0x0002 पूर्ण,
-			अणु 0x4061, 0x0002 पूर्ण,
-		पूर्ण,
-	पूर्ण,  अणु
-		122666000, अणु
-			अणु 0x0051, 0x0002 पूर्ण,
-			अणु 0x2145, 0x0002 पूर्ण,
-			अणु 0x4061, 0x0002 पूर्ण,
-		पूर्ण,
-	पूर्ण,  अणु
-		147200000, अणु
-			अणु 0x0051, 0x0002 पूर्ण,
-			अणु 0x2145, 0x0002 पूर्ण,
-			अणु 0x4064, 0x0003 पूर्ण,
-		पूर्ण,
-	पूर्ण,  अणु
-		184000000, अणु
-			अणु 0x0051, 0x0002 पूर्ण,
-			अणु 0x214c, 0x0003 पूर्ण,
-			अणु 0x4064, 0x0003 पूर्ण,
-		पूर्ण,
-	पूर्ण,  अणु
-		226666000, अणु
-			अणु 0x0040, 0x0003 पूर्ण,
-			अणु 0x214c, 0x0003 पूर्ण,
-			अणु 0x4064, 0x0003 पूर्ण,
-		पूर्ण,
-	पूर्ण,  अणु
-		272000000, अणु
-			अणु 0x0040, 0x0003 पूर्ण,
-			अणु 0x214c, 0x0003 पूर्ण,
-			अणु 0x5a64, 0x0003 पूर्ण,
-		पूर्ण,
-	पूर्ण,  अणु
-		340000000, अणु
-			अणु 0x0040, 0x0003 पूर्ण,
-			अणु 0x3b4c, 0x0003 पूर्ण,
-			अणु 0x5a64, 0x0003 पूर्ण,
-		पूर्ण,
-	पूर्ण,  अणु
-		594000000, अणु
-			अणु 0x1a40, 0x0003 पूर्ण,
-			अणु 0x3b4c, 0x0003 पूर्ण,
-			अणु 0x5a64, 0x0003 पूर्ण,
-		पूर्ण,
-	पूर्ण, अणु
-		~0UL, अणु
-			अणु 0x0000, 0x0000 पूर्ण,
-			अणु 0x0000, 0x0000 पूर्ण,
-			अणु 0x0000, 0x0000 पूर्ण,
-		पूर्ण,
-	पूर्ण
-पूर्ण;
+static const struct dw_hdmi_mpll_config sun50i_h6_mpll_cfg[] = {
+	{
+		30666000, {
+			{ 0x00b3, 0x0000 },
+			{ 0x2153, 0x0000 },
+			{ 0x40f3, 0x0000 },
+		},
+	},  {
+		36800000, {
+			{ 0x00b3, 0x0000 },
+			{ 0x2153, 0x0000 },
+			{ 0x40a2, 0x0001 },
+		},
+	},  {
+		46000000, {
+			{ 0x00b3, 0x0000 },
+			{ 0x2142, 0x0001 },
+			{ 0x40a2, 0x0001 },
+		},
+	},  {
+		61333000, {
+			{ 0x0072, 0x0001 },
+			{ 0x2142, 0x0001 },
+			{ 0x40a2, 0x0001 },
+		},
+	},  {
+		73600000, {
+			{ 0x0072, 0x0001 },
+			{ 0x2142, 0x0001 },
+			{ 0x4061, 0x0002 },
+		},
+	},  {
+		92000000, {
+			{ 0x0072, 0x0001 },
+			{ 0x2145, 0x0002 },
+			{ 0x4061, 0x0002 },
+		},
+	},  {
+		122666000, {
+			{ 0x0051, 0x0002 },
+			{ 0x2145, 0x0002 },
+			{ 0x4061, 0x0002 },
+		},
+	},  {
+		147200000, {
+			{ 0x0051, 0x0002 },
+			{ 0x2145, 0x0002 },
+			{ 0x4064, 0x0003 },
+		},
+	},  {
+		184000000, {
+			{ 0x0051, 0x0002 },
+			{ 0x214c, 0x0003 },
+			{ 0x4064, 0x0003 },
+		},
+	},  {
+		226666000, {
+			{ 0x0040, 0x0003 },
+			{ 0x214c, 0x0003 },
+			{ 0x4064, 0x0003 },
+		},
+	},  {
+		272000000, {
+			{ 0x0040, 0x0003 },
+			{ 0x214c, 0x0003 },
+			{ 0x5a64, 0x0003 },
+		},
+	},  {
+		340000000, {
+			{ 0x0040, 0x0003 },
+			{ 0x3b4c, 0x0003 },
+			{ 0x5a64, 0x0003 },
+		},
+	},  {
+		594000000, {
+			{ 0x1a40, 0x0003 },
+			{ 0x3b4c, 0x0003 },
+			{ 0x5a64, 0x0003 },
+		},
+	}, {
+		~0UL, {
+			{ 0x0000, 0x0000 },
+			{ 0x0000, 0x0000 },
+			{ 0x0000, 0x0000 },
+		},
+	}
+};
 
-अटल स्थिर काष्ठा dw_hdmi_curr_ctrl sun50i_h6_cur_ctr[] = अणु
+static const struct dw_hdmi_curr_ctrl sun50i_h6_cur_ctr[] = {
 	/* pixelclk    bpp8    bpp10   bpp12 */
-	अणु 27000000,  अणु 0x0012, 0x0000, 0x0000 पूर्ण, पूर्ण,
-	अणु 74250000,  अणु 0x0013, 0x001a, 0x001b पूर्ण, पूर्ण,
-	अणु 148500000, अणु 0x0019, 0x0033, 0x0034 पूर्ण, पूर्ण,
-	अणु 297000000, अणु 0x0019, 0x001b, 0x001b पूर्ण, पूर्ण,
-	अणु 594000000, अणु 0x0010, 0x001b, 0x001b पूर्ण, पूर्ण,
-	अणु ~0UL,      अणु 0x0000, 0x0000, 0x0000 पूर्ण, पूर्ण
-पूर्ण;
+	{ 27000000,  { 0x0012, 0x0000, 0x0000 }, },
+	{ 74250000,  { 0x0013, 0x001a, 0x001b }, },
+	{ 148500000, { 0x0019, 0x0033, 0x0034 }, },
+	{ 297000000, { 0x0019, 0x001b, 0x001b }, },
+	{ 594000000, { 0x0010, 0x001b, 0x001b }, },
+	{ ~0UL,      { 0x0000, 0x0000, 0x0000 }, }
+};
 
-अटल स्थिर काष्ठा dw_hdmi_phy_config sun50i_h6_phy_config[] = अणु
+static const struct dw_hdmi_phy_config sun50i_h6_phy_config[] = {
 	/*pixelclk   symbol   term   vlev*/
-	अणु 27000000,  0x8009, 0x0007, 0x02b0 पूर्ण,
-	अणु 74250000,  0x8009, 0x0006, 0x022d पूर्ण,
-	अणु 148500000, 0x8029, 0x0006, 0x0270 पूर्ण,
-	अणु 297000000, 0x8039, 0x0005, 0x01ab पूर्ण,
-	अणु 594000000, 0x8029, 0x0000, 0x008a पूर्ण,
-	अणु ~0UL,	     0x0000, 0x0000, 0x0000पूर्ण
-पूर्ण;
+	{ 27000000,  0x8009, 0x0007, 0x02b0 },
+	{ 74250000,  0x8009, 0x0006, 0x022d },
+	{ 148500000, 0x8029, 0x0006, 0x0270 },
+	{ 297000000, 0x8039, 0x0005, 0x01ab },
+	{ 594000000, 0x8029, 0x0000, 0x008a },
+	{ ~0UL,	     0x0000, 0x0000, 0x0000}
+};
 
-अटल पूर्णांक sun8i_hdmi_phy_config_a83t(काष्ठा dw_hdmi *hdmi,
-				      काष्ठा sun8i_hdmi_phy *phy,
-				      अचिन्हित पूर्णांक clk_rate)
-अणु
+static int sun8i_hdmi_phy_config_a83t(struct dw_hdmi *hdmi,
+				      struct sun8i_hdmi_phy *phy,
+				      unsigned int clk_rate)
+{
 	regmap_update_bits(phy->regs, SUN8I_HDMI_PHY_REXT_CTRL_REG,
 			   SUN8I_HDMI_PHY_REXT_CTRL_REXT_EN,
 			   SUN8I_HDMI_PHY_REXT_CTRL_REXT_EN);
 
-	/* घातer करोwn */
+	/* power down */
 	dw_hdmi_phy_gen2_txpwron(hdmi, 0);
 	dw_hdmi_phy_gen2_pddq(hdmi, 1);
 
@@ -144,52 +143,52 @@
 
 	/*
 	 * Values are taken from BSP HDMI driver. Although AW didn't
-	 * release any करोcumentation, explanation of this values can
+	 * release any documentation, explanation of this values can
 	 * be found in i.MX 6Dual/6Quad Reference Manual.
 	 */
-	अगर (clk_rate <= 27000000) अणु
-		dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x01e0, 0x06);
-		dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x0000, 0x15);
-		dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x08da, 0x10);
-		dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x0007, 0x19);
-		dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x0318, 0x0e);
-		dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x8009, 0x09);
-	पूर्ण अन्यथा अगर (clk_rate <= 74250000) अणु
-		dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x0540, 0x06);
-		dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x0005, 0x15);
-		dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x0000, 0x10);
-		dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x0007, 0x19);
-		dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x02b5, 0x0e);
-		dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x8009, 0x09);
-	पूर्ण अन्यथा अगर (clk_rate <= 148500000) अणु
-		dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x04a0, 0x06);
-		dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x000a, 0x15);
-		dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x0000, 0x10);
-		dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x0002, 0x19);
-		dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x0021, 0x0e);
-		dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x8029, 0x09);
-	पूर्ण अन्यथा अणु
-		dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x0000, 0x06);
-		dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x000f, 0x15);
-		dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x0000, 0x10);
-		dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x0002, 0x19);
-		dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x0000, 0x0e);
-		dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x802b, 0x09);
-	पूर्ण
+	if (clk_rate <= 27000000) {
+		dw_hdmi_phy_i2c_write(hdmi, 0x01e0, 0x06);
+		dw_hdmi_phy_i2c_write(hdmi, 0x0000, 0x15);
+		dw_hdmi_phy_i2c_write(hdmi, 0x08da, 0x10);
+		dw_hdmi_phy_i2c_write(hdmi, 0x0007, 0x19);
+		dw_hdmi_phy_i2c_write(hdmi, 0x0318, 0x0e);
+		dw_hdmi_phy_i2c_write(hdmi, 0x8009, 0x09);
+	} else if (clk_rate <= 74250000) {
+		dw_hdmi_phy_i2c_write(hdmi, 0x0540, 0x06);
+		dw_hdmi_phy_i2c_write(hdmi, 0x0005, 0x15);
+		dw_hdmi_phy_i2c_write(hdmi, 0x0000, 0x10);
+		dw_hdmi_phy_i2c_write(hdmi, 0x0007, 0x19);
+		dw_hdmi_phy_i2c_write(hdmi, 0x02b5, 0x0e);
+		dw_hdmi_phy_i2c_write(hdmi, 0x8009, 0x09);
+	} else if (clk_rate <= 148500000) {
+		dw_hdmi_phy_i2c_write(hdmi, 0x04a0, 0x06);
+		dw_hdmi_phy_i2c_write(hdmi, 0x000a, 0x15);
+		dw_hdmi_phy_i2c_write(hdmi, 0x0000, 0x10);
+		dw_hdmi_phy_i2c_write(hdmi, 0x0002, 0x19);
+		dw_hdmi_phy_i2c_write(hdmi, 0x0021, 0x0e);
+		dw_hdmi_phy_i2c_write(hdmi, 0x8029, 0x09);
+	} else {
+		dw_hdmi_phy_i2c_write(hdmi, 0x0000, 0x06);
+		dw_hdmi_phy_i2c_write(hdmi, 0x000f, 0x15);
+		dw_hdmi_phy_i2c_write(hdmi, 0x0000, 0x10);
+		dw_hdmi_phy_i2c_write(hdmi, 0x0002, 0x19);
+		dw_hdmi_phy_i2c_write(hdmi, 0x0000, 0x0e);
+		dw_hdmi_phy_i2c_write(hdmi, 0x802b, 0x09);
+	}
 
-	dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x0000, 0x1e);
-	dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x0000, 0x13);
-	dw_hdmi_phy_i2c_ग_लिखो(hdmi, 0x0000, 0x17);
+	dw_hdmi_phy_i2c_write(hdmi, 0x0000, 0x1e);
+	dw_hdmi_phy_i2c_write(hdmi, 0x0000, 0x13);
+	dw_hdmi_phy_i2c_write(hdmi, 0x0000, 0x17);
 
 	dw_hdmi_phy_gen2_txpwron(hdmi, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sun8i_hdmi_phy_config_h3(काष्ठा dw_hdmi *hdmi,
-				    काष्ठा sun8i_hdmi_phy *phy,
-				    अचिन्हित पूर्णांक clk_rate)
-अणु
+static int sun8i_hdmi_phy_config_h3(struct dw_hdmi *hdmi,
+				    struct sun8i_hdmi_phy *phy,
+				    unsigned int clk_rate)
+{
 	u32 pll_cfg1_init;
 	u32 pll_cfg2_init;
 	u32 ana_cfg1_end;
@@ -248,7 +247,7 @@
 			SUN8I_HDMI_PHY_ANA_CFG3_SCLEN;
 
 	/* bandwidth / frequency dependent settings */
-	अगर (clk_rate <= 27000000) अणु
+	if (clk_rate <= 27000000) {
 		pll_cfg1_init |= SUN8I_HDMI_PHY_PLL_CFG1_HV_IS_33 |
 				 SUN8I_HDMI_PHY_PLL_CFG1_CNT_INT(32);
 		pll_cfg2_init |= SUN8I_HDMI_PHY_PLL_CFG2_VCO_S(4) |
@@ -258,7 +257,7 @@
 				 SUN8I_HDMI_PHY_ANA_CFG2_REG_RESDI(phy->rcal);
 		ana_cfg3_init |= SUN8I_HDMI_PHY_ANA_CFG3_REG_AMPCK(3) |
 				 SUN8I_HDMI_PHY_ANA_CFG3_REG_AMP(5);
-	पूर्ण अन्यथा अगर (clk_rate <= 74250000) अणु
+	} else if (clk_rate <= 74250000) {
 		pll_cfg1_init |= SUN8I_HDMI_PHY_PLL_CFG1_HV_IS_33 |
 				 SUN8I_HDMI_PHY_PLL_CFG1_CNT_INT(32);
 		pll_cfg2_init |= SUN8I_HDMI_PHY_PLL_CFG2_VCO_S(4) |
@@ -268,7 +267,7 @@
 				 SUN8I_HDMI_PHY_ANA_CFG2_REG_RESDI(phy->rcal);
 		ana_cfg3_init |= SUN8I_HDMI_PHY_ANA_CFG3_REG_AMPCK(5) |
 				 SUN8I_HDMI_PHY_ANA_CFG3_REG_AMP(7);
-	पूर्ण अन्यथा अगर (clk_rate <= 148500000) अणु
+	} else if (clk_rate <= 148500000) {
 		pll_cfg1_init |= SUN8I_HDMI_PHY_PLL_CFG1_HV_IS_33 |
 				 SUN8I_HDMI_PHY_PLL_CFG1_CNT_INT(32);
 		pll_cfg2_init |= SUN8I_HDMI_PHY_PLL_CFG2_VCO_S(4) |
@@ -278,7 +277,7 @@
 				 SUN8I_HDMI_PHY_ANA_CFG2_REG_SLV(2);
 		ana_cfg3_init |= SUN8I_HDMI_PHY_ANA_CFG3_REG_AMPCK(7) |
 				 SUN8I_HDMI_PHY_ANA_CFG3_REG_AMP(9);
-	पूर्ण अन्यथा अणु
+	} else {
 		b_offset = 2;
 		pll_cfg1_init |= SUN8I_HDMI_PHY_PLL_CFG1_CNT_INT(63);
 		pll_cfg2_init |= SUN8I_HDMI_PHY_PLL_CFG2_VCO_S(6) |
@@ -289,14 +288,14 @@
 		ana_cfg3_init |= SUN8I_HDMI_PHY_ANA_CFG3_REG_AMPCK(9) |
 				 SUN8I_HDMI_PHY_ANA_CFG3_REG_AMP(13) |
 				 SUN8I_HDMI_PHY_ANA_CFG3_REG_EMP(3);
-	पूर्ण
+	}
 
 	regmap_update_bits(phy->regs, SUN8I_HDMI_PHY_ANA_CFG1_REG,
 			   SUN8I_HDMI_PHY_ANA_CFG1_TXEN_MASK, 0);
 
 	/*
-	 * NOTE: We have to be careful not to overग_लिखो PHY parent
-	 * घड़ी selection bit and घड़ी भागider.
+	 * NOTE: We have to be careful not to overwrite PHY parent
+	 * clock selection bit and clock divider.
 	 */
 	regmap_update_bits(phy->regs, SUN8I_HDMI_PHY_PLL_CFG1_REG,
 			   (u32)~SUN8I_HDMI_PHY_PLL_CFG1_CKIN_SEL_MSK,
@@ -305,7 +304,7 @@
 			   (u32)~SUN8I_HDMI_PHY_PLL_CFG2_PREDIV_MSK,
 			   pll_cfg2_init);
 	usleep_range(10000, 15000);
-	regmap_ग_लिखो(phy->regs, SUN8I_HDMI_PHY_PLL_CFG3_REG,
+	regmap_write(phy->regs, SUN8I_HDMI_PHY_PLL_CFG3_REG,
 		     SUN8I_HDMI_PHY_PLL_CFG3_SOUT_DIV2);
 	regmap_update_bits(phy->regs, SUN8I_HDMI_PHY_PLL_CFG1_REG,
 			   SUN8I_HDMI_PHY_PLL_CFG1_PLLEN,
@@ -313,7 +312,7 @@
 	msleep(100);
 
 	/* get B value */
-	regmap_पढ़ो(phy->regs, SUN8I_HDMI_PHY_ANA_STS_REG, &val);
+	regmap_read(phy->regs, SUN8I_HDMI_PHY_ANA_STS_REG, &val);
 	val = (val & SUN8I_HDMI_PHY_ANA_STS_B_OUT_MSK) >>
 		SUN8I_HDMI_PHY_ANA_STS_B_OUT_SHIFT;
 	val = min(val + b_offset, (u32)0x3f);
@@ -327,93 +326,93 @@
 			   SUN8I_HDMI_PHY_PLL_CFG1_B_IN_MSK,
 			   val << SUN8I_HDMI_PHY_PLL_CFG1_B_IN_SHIFT);
 	msleep(100);
-	regmap_ग_लिखो(phy->regs, SUN8I_HDMI_PHY_ANA_CFG1_REG, ana_cfg1_end);
-	regmap_ग_लिखो(phy->regs, SUN8I_HDMI_PHY_ANA_CFG2_REG, ana_cfg2_init);
-	regmap_ग_लिखो(phy->regs, SUN8I_HDMI_PHY_ANA_CFG3_REG, ana_cfg3_init);
+	regmap_write(phy->regs, SUN8I_HDMI_PHY_ANA_CFG1_REG, ana_cfg1_end);
+	regmap_write(phy->regs, SUN8I_HDMI_PHY_ANA_CFG2_REG, ana_cfg2_init);
+	regmap_write(phy->regs, SUN8I_HDMI_PHY_ANA_CFG3_REG, ana_cfg3_init);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sun8i_hdmi_phy_config(काष्ठा dw_hdmi *hdmi, व्योम *data,
-				 स्थिर काष्ठा drm_display_info *display,
-				 स्थिर काष्ठा drm_display_mode *mode)
-अणु
-	काष्ठा sun8i_hdmi_phy *phy = (काष्ठा sun8i_hdmi_phy *)data;
+static int sun8i_hdmi_phy_config(struct dw_hdmi *hdmi, void *data,
+				 const struct drm_display_info *display,
+				 const struct drm_display_mode *mode)
+{
+	struct sun8i_hdmi_phy *phy = (struct sun8i_hdmi_phy *)data;
 	u32 val = 0;
 
-	अगर (mode->flags & DRM_MODE_FLAG_NHSYNC)
+	if (mode->flags & DRM_MODE_FLAG_NHSYNC)
 		val |= SUN8I_HDMI_PHY_DBG_CTRL_POL_NHSYNC;
 
-	अगर (mode->flags & DRM_MODE_FLAG_NVSYNC)
+	if (mode->flags & DRM_MODE_FLAG_NVSYNC)
 		val |= SUN8I_HDMI_PHY_DBG_CTRL_POL_NVSYNC;
 
 	regmap_update_bits(phy->regs, SUN8I_HDMI_PHY_DBG_CTRL_REG,
 			   SUN8I_HDMI_PHY_DBG_CTRL_POL_MASK, val);
 
-	अगर (phy->variant->has_phy_clk)
-		clk_set_rate(phy->clk_phy, mode->crtc_घड़ी * 1000);
+	if (phy->variant->has_phy_clk)
+		clk_set_rate(phy->clk_phy, mode->crtc_clock * 1000);
 
-	वापस phy->variant->phy_config(hdmi, phy, mode->crtc_घड़ी * 1000);
-पूर्ण;
+	return phy->variant->phy_config(hdmi, phy, mode->crtc_clock * 1000);
+};
 
-अटल व्योम sun8i_hdmi_phy_disable_a83t(काष्ठा dw_hdmi *hdmi,
-					काष्ठा sun8i_hdmi_phy *phy)
-अणु
+static void sun8i_hdmi_phy_disable_a83t(struct dw_hdmi *hdmi,
+					struct sun8i_hdmi_phy *phy)
+{
 	dw_hdmi_phy_gen2_txpwron(hdmi, 0);
 	dw_hdmi_phy_gen2_pddq(hdmi, 1);
 
 	regmap_update_bits(phy->regs, SUN8I_HDMI_PHY_REXT_CTRL_REG,
 			   SUN8I_HDMI_PHY_REXT_CTRL_REXT_EN, 0);
-पूर्ण
+}
 
-अटल व्योम sun8i_hdmi_phy_disable_h3(काष्ठा dw_hdmi *hdmi,
-				      काष्ठा sun8i_hdmi_phy *phy)
-अणु
-	regmap_ग_लिखो(phy->regs, SUN8I_HDMI_PHY_ANA_CFG1_REG,
+static void sun8i_hdmi_phy_disable_h3(struct dw_hdmi *hdmi,
+				      struct sun8i_hdmi_phy *phy)
+{
+	regmap_write(phy->regs, SUN8I_HDMI_PHY_ANA_CFG1_REG,
 		     SUN8I_HDMI_PHY_ANA_CFG1_LDOEN |
 		     SUN8I_HDMI_PHY_ANA_CFG1_ENVBS |
 		     SUN8I_HDMI_PHY_ANA_CFG1_ENBI);
-	regmap_ग_लिखो(phy->regs, SUN8I_HDMI_PHY_PLL_CFG1_REG, 0);
-पूर्ण
+	regmap_write(phy->regs, SUN8I_HDMI_PHY_PLL_CFG1_REG, 0);
+}
 
-अटल व्योम sun8i_hdmi_phy_disable(काष्ठा dw_hdmi *hdmi, व्योम *data)
-अणु
-	काष्ठा sun8i_hdmi_phy *phy = (काष्ठा sun8i_hdmi_phy *)data;
+static void sun8i_hdmi_phy_disable(struct dw_hdmi *hdmi, void *data)
+{
+	struct sun8i_hdmi_phy *phy = (struct sun8i_hdmi_phy *)data;
 
 	phy->variant->phy_disable(hdmi, phy);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा dw_hdmi_phy_ops sun8i_hdmi_phy_ops = अणु
+static const struct dw_hdmi_phy_ops sun8i_hdmi_phy_ops = {
 	.init = &sun8i_hdmi_phy_config,
 	.disable = &sun8i_hdmi_phy_disable,
-	.पढ़ो_hpd = &dw_hdmi_phy_पढ़ो_hpd,
+	.read_hpd = &dw_hdmi_phy_read_hpd,
 	.update_hpd = &dw_hdmi_phy_update_hpd,
 	.setup_hpd = &dw_hdmi_phy_setup_hpd,
-पूर्ण;
+};
 
-अटल व्योम sun8i_hdmi_phy_unlock(काष्ठा sun8i_hdmi_phy *phy)
-अणु
-	/* enable पढ़ो access to HDMI controller */
-	regmap_ग_लिखो(phy->regs, SUN8I_HDMI_PHY_READ_EN_REG,
+static void sun8i_hdmi_phy_unlock(struct sun8i_hdmi_phy *phy)
+{
+	/* enable read access to HDMI controller */
+	regmap_write(phy->regs, SUN8I_HDMI_PHY_READ_EN_REG,
 		     SUN8I_HDMI_PHY_READ_EN_MAGIC);
 
-	/* unscramble रेजिस्टर offsets */
-	regmap_ग_लिखो(phy->regs, SUN8I_HDMI_PHY_UNSCRAMBLE_REG,
+	/* unscramble register offsets */
+	regmap_write(phy->regs, SUN8I_HDMI_PHY_UNSCRAMBLE_REG,
 		     SUN8I_HDMI_PHY_UNSCRAMBLE_MAGIC);
-पूर्ण
+}
 
-अटल व्योम sun50i_hdmi_phy_init_h6(काष्ठा sun8i_hdmi_phy *phy)
-अणु
+static void sun50i_hdmi_phy_init_h6(struct sun8i_hdmi_phy *phy)
+{
 	regmap_update_bits(phy->regs, SUN8I_HDMI_PHY_REXT_CTRL_REG,
 			   SUN8I_HDMI_PHY_REXT_CTRL_REXT_EN,
 			   SUN8I_HDMI_PHY_REXT_CTRL_REXT_EN);
 
 	regmap_update_bits(phy->regs, SUN8I_HDMI_PHY_REXT_CTRL_REG,
 			   0xffff0000, 0x80c00000);
-पूर्ण
+}
 
-अटल व्योम sun8i_hdmi_phy_init_a83t(काष्ठा sun8i_hdmi_phy *phy)
-अणु
+static void sun8i_hdmi_phy_init_a83t(struct sun8i_hdmi_phy *phy)
+{
 	sun8i_hdmi_phy_unlock(phy);
 
 	regmap_update_bits(phy->regs, SUN8I_HDMI_PHY_DBG_CTRL_REG,
@@ -427,15 +426,15 @@
 	regmap_update_bits(phy->regs, SUN8I_HDMI_PHY_DBG_CTRL_REG,
 			   SUN8I_HDMI_PHY_DBG_CTRL_ADDR_MASK,
 			   SUN8I_HDMI_PHY_DBG_CTRL_ADDR(I2C_ADDR));
-पूर्ण
+}
 
-अटल व्योम sun8i_hdmi_phy_init_h3(काष्ठा sun8i_hdmi_phy *phy)
-अणु
-	अचिन्हित पूर्णांक val;
+static void sun8i_hdmi_phy_init_h3(struct sun8i_hdmi_phy *phy)
+{
+	unsigned int val;
 
 	sun8i_hdmi_phy_unlock(phy);
 
-	regmap_ग_लिखो(phy->regs, SUN8I_HDMI_PHY_ANA_CFG1_REG, 0);
+	regmap_write(phy->regs, SUN8I_HDMI_PHY_ANA_CFG1_REG, 0);
 	regmap_update_bits(phy->regs, SUN8I_HDMI_PHY_ANA_CFG1_REG,
 			   SUN8I_HDMI_PHY_ANA_CFG1_ENBI,
 			   SUN8I_HDMI_PHY_ANA_CFG1_ENBI);
@@ -470,8 +469,8 @@
 			   SUN8I_HDMI_PHY_ANA_CFG1_ENP2S_TMDS1 |
 			   SUN8I_HDMI_PHY_ANA_CFG1_ENP2S_TMDS2);
 
-	/* रुको क्रम calibration to finish */
-	regmap_पढ़ो_poll_समयout(phy->regs, SUN8I_HDMI_PHY_ANA_STS_REG, val,
+	/* wait for calibration to finish */
+	regmap_read_poll_timeout(phy->regs, SUN8I_HDMI_PHY_ANA_STS_REG, val,
 				 (val & SUN8I_HDMI_PHY_ANA_STS_RCALEND2D),
 				 100, 2000);
 
@@ -495,247 +494,247 @@
 			   SUN8I_HDMI_PHY_ANA_CFG3_SCLEN |
 			   SUN8I_HDMI_PHY_ANA_CFG3_SDAEN);
 
-	/* reset PHY PLL घड़ी parent */
+	/* reset PHY PLL clock parent */
 	regmap_update_bits(phy->regs, SUN8I_HDMI_PHY_PLL_CFG1_REG,
 			   SUN8I_HDMI_PHY_PLL_CFG1_CKIN_SEL_MSK, 0);
 
 	/* set HW control of CEC pins */
-	regmap_ग_लिखो(phy->regs, SUN8I_HDMI_PHY_CEC_REG, 0);
+	regmap_write(phy->regs, SUN8I_HDMI_PHY_CEC_REG, 0);
 
-	/* पढ़ो calibration data */
-	regmap_पढ़ो(phy->regs, SUN8I_HDMI_PHY_ANA_STS_REG, &val);
+	/* read calibration data */
+	regmap_read(phy->regs, SUN8I_HDMI_PHY_ANA_STS_REG, &val);
 	phy->rcal = (val & SUN8I_HDMI_PHY_ANA_STS_RCAL_MASK) >> 2;
-पूर्ण
+}
 
-व्योम sun8i_hdmi_phy_init(काष्ठा sun8i_hdmi_phy *phy)
-अणु
+void sun8i_hdmi_phy_init(struct sun8i_hdmi_phy *phy)
+{
 	phy->variant->phy_init(phy);
-पूर्ण
+}
 
-व्योम sun8i_hdmi_phy_set_ops(काष्ठा sun8i_hdmi_phy *phy,
-			    काष्ठा dw_hdmi_plat_data *plat_data)
-अणु
-	काष्ठा sun8i_hdmi_phy_variant *variant = phy->variant;
+void sun8i_hdmi_phy_set_ops(struct sun8i_hdmi_phy *phy,
+			    struct dw_hdmi_plat_data *plat_data)
+{
+	struct sun8i_hdmi_phy_variant *variant = phy->variant;
 
-	अगर (variant->is_custom_phy) अणु
+	if (variant->is_custom_phy) {
 		plat_data->phy_ops = &sun8i_hdmi_phy_ops;
 		plat_data->phy_name = "sun8i_dw_hdmi_phy";
 		plat_data->phy_data = phy;
-	पूर्ण अन्यथा अणु
+	} else {
 		plat_data->mpll_cfg = variant->mpll_cfg;
 		plat_data->cur_ctr = variant->cur_ctr;
 		plat_data->phy_config = variant->phy_cfg;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा regmap_config sun8i_hdmi_phy_regmap_config = अणु
+static const struct regmap_config sun8i_hdmi_phy_regmap_config = {
 	.reg_bits	= 32,
 	.val_bits	= 32,
 	.reg_stride	= 4,
-	.max_रेजिस्टर	= SUN8I_HDMI_PHY_CEC_REG,
+	.max_register	= SUN8I_HDMI_PHY_CEC_REG,
 	.name		= "phy"
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sun8i_hdmi_phy_variant sun8i_a83t_hdmi_phy = अणु
+static const struct sun8i_hdmi_phy_variant sun8i_a83t_hdmi_phy = {
 	.is_custom_phy = true,
 	.phy_init = &sun8i_hdmi_phy_init_a83t,
 	.phy_disable = &sun8i_hdmi_phy_disable_a83t,
 	.phy_config = &sun8i_hdmi_phy_config_a83t,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sun8i_hdmi_phy_variant sun8i_h3_hdmi_phy = अणु
+static const struct sun8i_hdmi_phy_variant sun8i_h3_hdmi_phy = {
 	.has_phy_clk = true,
 	.is_custom_phy = true,
 	.phy_init = &sun8i_hdmi_phy_init_h3,
 	.phy_disable = &sun8i_hdmi_phy_disable_h3,
 	.phy_config = &sun8i_hdmi_phy_config_h3,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sun8i_hdmi_phy_variant sun8i_r40_hdmi_phy = अणु
+static const struct sun8i_hdmi_phy_variant sun8i_r40_hdmi_phy = {
 	.has_phy_clk = true,
 	.has_second_pll = true,
 	.is_custom_phy = true,
 	.phy_init = &sun8i_hdmi_phy_init_h3,
 	.phy_disable = &sun8i_hdmi_phy_disable_h3,
 	.phy_config = &sun8i_hdmi_phy_config_h3,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sun8i_hdmi_phy_variant sun50i_a64_hdmi_phy = अणु
+static const struct sun8i_hdmi_phy_variant sun50i_a64_hdmi_phy = {
 	.has_phy_clk = true,
 	.is_custom_phy = true,
 	.phy_init = &sun8i_hdmi_phy_init_h3,
 	.phy_disable = &sun8i_hdmi_phy_disable_h3,
 	.phy_config = &sun8i_hdmi_phy_config_h3,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sun8i_hdmi_phy_variant sun50i_h6_hdmi_phy = अणु
+static const struct sun8i_hdmi_phy_variant sun50i_h6_hdmi_phy = {
 	.cur_ctr  = sun50i_h6_cur_ctr,
 	.mpll_cfg = sun50i_h6_mpll_cfg,
 	.phy_cfg  = sun50i_h6_phy_config,
 	.phy_init = &sun50i_hdmi_phy_init_h6,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id sun8i_hdmi_phy_of_table[] = अणु
-	अणु
+static const struct of_device_id sun8i_hdmi_phy_of_table[] = {
+	{
 		.compatible = "allwinner,sun8i-a83t-hdmi-phy",
 		.data = &sun8i_a83t_hdmi_phy,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "allwinner,sun8i-h3-hdmi-phy",
 		.data = &sun8i_h3_hdmi_phy,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "allwinner,sun8i-r40-hdmi-phy",
 		.data = &sun8i_r40_hdmi_phy,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "allwinner,sun50i-a64-hdmi-phy",
 		.data = &sun50i_a64_hdmi_phy,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "allwinner,sun50i-h6-hdmi-phy",
 		.data = &sun50i_h6_hdmi_phy,
-	पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+	},
+	{ /* sentinel */ }
+};
 
-पूर्णांक sun8i_hdmi_phy_get(काष्ठा sun8i_dw_hdmi *hdmi, काष्ठा device_node *node)
-अणु
-	काष्ठा platक्रमm_device *pdev = of_find_device_by_node(node);
-	काष्ठा sun8i_hdmi_phy *phy;
+int sun8i_hdmi_phy_get(struct sun8i_dw_hdmi *hdmi, struct device_node *node)
+{
+	struct platform_device *pdev = of_find_device_by_node(node);
+	struct sun8i_hdmi_phy *phy;
 
-	अगर (!pdev)
-		वापस -EPROBE_DEFER;
+	if (!pdev)
+		return -EPROBE_DEFER;
 
-	phy = platक्रमm_get_drvdata(pdev);
-	अगर (!phy)
-		वापस -EPROBE_DEFER;
+	phy = platform_get_drvdata(pdev);
+	if (!phy)
+		return -EPROBE_DEFER;
 
 	hdmi->phy = phy;
 
 	put_device(&pdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sun8i_hdmi_phy_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा of_device_id *match;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *node = dev->of_node;
-	काष्ठा sun8i_hdmi_phy *phy;
-	काष्ठा resource res;
-	व्योम __iomem *regs;
-	पूर्णांक ret;
+static int sun8i_hdmi_phy_probe(struct platform_device *pdev)
+{
+	const struct of_device_id *match;
+	struct device *dev = &pdev->dev;
+	struct device_node *node = dev->of_node;
+	struct sun8i_hdmi_phy *phy;
+	struct resource res;
+	void __iomem *regs;
+	int ret;
 
 	match = of_match_node(sun8i_hdmi_phy_of_table, node);
-	अगर (!match) अणु
+	if (!match) {
 		dev_err(dev, "Incompatible HDMI PHY\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	phy = devm_kzalloc(dev, माप(*phy), GFP_KERNEL);
-	अगर (!phy)
-		वापस -ENOMEM;
+	phy = devm_kzalloc(dev, sizeof(*phy), GFP_KERNEL);
+	if (!phy)
+		return -ENOMEM;
 
-	phy->variant = (काष्ठा sun8i_hdmi_phy_variant *)match->data;
+	phy->variant = (struct sun8i_hdmi_phy_variant *)match->data;
 
 	ret = of_address_to_resource(node, 0, &res);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "phy: Couldn't get our resources\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	regs = devm_ioremap_resource(dev, &res);
-	अगर (IS_ERR(regs)) अणु
+	if (IS_ERR(regs)) {
 		dev_err(dev, "Couldn't map the HDMI PHY registers\n");
-		वापस PTR_ERR(regs);
-	पूर्ण
+		return PTR_ERR(regs);
+	}
 
 	phy->regs = devm_regmap_init_mmio(dev, regs,
 					  &sun8i_hdmi_phy_regmap_config);
-	अगर (IS_ERR(phy->regs)) अणु
+	if (IS_ERR(phy->regs)) {
 		dev_err(dev, "Couldn't create the HDMI PHY regmap\n");
-		वापस PTR_ERR(phy->regs);
-	पूर्ण
+		return PTR_ERR(phy->regs);
+	}
 
 	phy->clk_bus = of_clk_get_by_name(node, "bus");
-	अगर (IS_ERR(phy->clk_bus)) अणु
+	if (IS_ERR(phy->clk_bus)) {
 		dev_err(dev, "Could not get bus clock\n");
-		वापस PTR_ERR(phy->clk_bus);
-	पूर्ण
+		return PTR_ERR(phy->clk_bus);
+	}
 
 	phy->clk_mod = of_clk_get_by_name(node, "mod");
-	अगर (IS_ERR(phy->clk_mod)) अणु
+	if (IS_ERR(phy->clk_mod)) {
 		dev_err(dev, "Could not get mod clock\n");
 		ret = PTR_ERR(phy->clk_mod);
-		जाओ err_put_clk_bus;
-	पूर्ण
+		goto err_put_clk_bus;
+	}
 
-	अगर (phy->variant->has_phy_clk) अणु
+	if (phy->variant->has_phy_clk) {
 		phy->clk_pll0 = of_clk_get_by_name(node, "pll-0");
-		अगर (IS_ERR(phy->clk_pll0)) अणु
+		if (IS_ERR(phy->clk_pll0)) {
 			dev_err(dev, "Could not get pll-0 clock\n");
 			ret = PTR_ERR(phy->clk_pll0);
-			जाओ err_put_clk_mod;
-		पूर्ण
+			goto err_put_clk_mod;
+		}
 
-		अगर (phy->variant->has_second_pll) अणु
+		if (phy->variant->has_second_pll) {
 			phy->clk_pll1 = of_clk_get_by_name(node, "pll-1");
-			अगर (IS_ERR(phy->clk_pll1)) अणु
+			if (IS_ERR(phy->clk_pll1)) {
 				dev_err(dev, "Could not get pll-1 clock\n");
 				ret = PTR_ERR(phy->clk_pll1);
-				जाओ err_put_clk_pll0;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto err_put_clk_pll0;
+			}
+		}
+	}
 
 	phy->rst_phy = of_reset_control_get_shared(node, "phy");
-	अगर (IS_ERR(phy->rst_phy)) अणु
+	if (IS_ERR(phy->rst_phy)) {
 		dev_err(dev, "Could not get phy reset control\n");
 		ret = PTR_ERR(phy->rst_phy);
-		जाओ err_put_clk_pll1;
-	पूर्ण
+		goto err_put_clk_pll1;
+	}
 
-	ret = reset_control_deनिश्चित(phy->rst_phy);
-	अगर (ret) अणु
+	ret = reset_control_deassert(phy->rst_phy);
+	if (ret) {
 		dev_err(dev, "Cannot deassert phy reset control: %d\n", ret);
-		जाओ err_put_rst_phy;
-	पूर्ण
+		goto err_put_rst_phy;
+	}
 
 	ret = clk_prepare_enable(phy->clk_bus);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Cannot enable bus clock: %d\n", ret);
-		जाओ err_deनिश्चित_rst_phy;
-	पूर्ण
+		goto err_deassert_rst_phy;
+	}
 
 	ret = clk_prepare_enable(phy->clk_mod);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Cannot enable mod clock: %d\n", ret);
-		जाओ err_disable_clk_bus;
-	पूर्ण
+		goto err_disable_clk_bus;
+	}
 
-	अगर (phy->variant->has_phy_clk) अणु
+	if (phy->variant->has_phy_clk) {
 		ret = sun8i_phy_clk_create(phy, dev,
 					   phy->variant->has_second_pll);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "Couldn't create the PHY clock\n");
-			जाओ err_disable_clk_mod;
-		पूर्ण
+			goto err_disable_clk_mod;
+		}
 
 		clk_prepare_enable(phy->clk_phy);
-	पूर्ण
+	}
 
-	platक्रमm_set_drvdata(pdev, phy);
+	platform_set_drvdata(pdev, phy);
 
-	वापस 0;
+	return 0;
 
 err_disable_clk_mod:
 	clk_disable_unprepare(phy->clk_mod);
 err_disable_clk_bus:
 	clk_disable_unprepare(phy->clk_bus);
-err_deनिश्चित_rst_phy:
-	reset_control_निश्चित(phy->rst_phy);
+err_deassert_rst_phy:
+	reset_control_assert(phy->rst_phy);
 err_put_rst_phy:
 	reset_control_put(phy->rst_phy);
 err_put_clk_pll1:
@@ -747,18 +746,18 @@ err_put_clk_mod:
 err_put_clk_bus:
 	clk_put(phy->clk_bus);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sun8i_hdmi_phy_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sun8i_hdmi_phy *phy = platक्रमm_get_drvdata(pdev);
+static int sun8i_hdmi_phy_remove(struct platform_device *pdev)
+{
+	struct sun8i_hdmi_phy *phy = platform_get_drvdata(pdev);
 
 	clk_disable_unprepare(phy->clk_mod);
 	clk_disable_unprepare(phy->clk_bus);
 	clk_disable_unprepare(phy->clk_phy);
 
-	reset_control_निश्चित(phy->rst_phy);
+	reset_control_assert(phy->rst_phy);
 
 	reset_control_put(phy->rst_phy);
 
@@ -766,14 +765,14 @@ err_put_clk_bus:
 	clk_put(phy->clk_pll1);
 	clk_put(phy->clk_mod);
 	clk_put(phy->clk_bus);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा platक्रमm_driver sun8i_hdmi_phy_driver = अणु
+struct platform_driver sun8i_hdmi_phy_driver = {
 	.probe  = sun8i_hdmi_phy_probe,
-	.हटाओ = sun8i_hdmi_phy_हटाओ,
-	.driver = अणु
+	.remove = sun8i_hdmi_phy_remove,
+	.driver = {
 		.name = "sun8i-hdmi-phy",
 		.of_match_table = sun8i_hdmi_phy_of_table,
-	पूर्ण,
-पूर्ण;
+	},
+};

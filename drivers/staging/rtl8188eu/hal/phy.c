@@ -1,239 +1,238 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#घोषणा _RTL8188E_PHYCFG_C_
+#define _RTL8188E_PHYCFG_C_
 
-#समावेश <osdep_service.h>
-#समावेश <drv_types.h>
-#समावेश <rtl8188e_hal.h>
-#समावेश <rf.h>
-#समावेश <phy.h>
+#include <osdep_service.h>
+#include <drv_types.h>
+#include <rtl8188e_hal.h>
+#include <rf.h>
+#include <phy.h>
 
-#घोषणा MAX_PRECMD_CNT 16
-#घोषणा MAX_RFDEPENDCMD_CNT 16
-#घोषणा MAX_POSTCMD_CNT 16
+#define MAX_PRECMD_CNT 16
+#define MAX_RFDEPENDCMD_CNT 16
+#define MAX_POSTCMD_CNT 16
 
-#घोषणा MAX_DOZE_WAITING_TIMES_9x 64
+#define MAX_DOZE_WAITING_TIMES_9x 64
 
-अटल u32 cal_bit_shअगरt(u32 biपंचांगask)
-अणु
+static u32 cal_bit_shift(u32 bitmask)
+{
 	u32 i;
 
-	क्रम (i = 0; i <= 31; i++) अणु
-		अगर (((biपंचांगask >> i) & 0x1) == 1)
-			अवरोध;
-	पूर्ण
-	वापस i;
-पूर्ण
+	for (i = 0; i <= 31; i++) {
+		if (((bitmask >> i) & 0x1) == 1)
+			break;
+	}
+	return i;
+}
 
-u32 phy_query_bb_reg(काष्ठा adapter *adapt, u32 regaddr, u32 biपंचांगask)
-अणु
-	u32 original_value, bit_shअगरt;
+u32 phy_query_bb_reg(struct adapter *adapt, u32 regaddr, u32 bitmask)
+{
+	u32 original_value, bit_shift;
 
-	original_value = usb_पढ़ो32(adapt, regaddr);
-	bit_shअगरt = cal_bit_shअगरt(biपंचांगask);
-	वापस (original_value & biपंचांगask) >> bit_shअगरt;
-पूर्ण
+	original_value = usb_read32(adapt, regaddr);
+	bit_shift = cal_bit_shift(bitmask);
+	return (original_value & bitmask) >> bit_shift;
+}
 
-व्योम phy_set_bb_reg(काष्ठा adapter *adapt, u32 regaddr, u32 biपंचांगask, u32 data)
-अणु
-	u32 original_value, bit_shअगरt;
+void phy_set_bb_reg(struct adapter *adapt, u32 regaddr, u32 bitmask, u32 data)
+{
+	u32 original_value, bit_shift;
 
-	अगर (biपंचांगask != bMaskDWord) अणु /* अगर not "double word" ग_लिखो */
-		original_value = usb_पढ़ो32(adapt, regaddr);
-		bit_shअगरt = cal_bit_shअगरt(biपंचांगask);
-		data = (original_value & (~biपंचांगask)) | (data << bit_shअगरt);
-	पूर्ण
+	if (bitmask != bMaskDWord) { /* if not "double word" write */
+		original_value = usb_read32(adapt, regaddr);
+		bit_shift = cal_bit_shift(bitmask);
+		data = (original_value & (~bitmask)) | (data << bit_shift);
+	}
 
-	usb_ग_लिखो32(adapt, regaddr, data);
-पूर्ण
+	usb_write32(adapt, regaddr, data);
+}
 
-अटल u32 rf_serial_पढ़ो(काष्ठा adapter *adapt, क्रमागत rf_radio_path rfpath, u32 offset)
-अणु
+static u32 rf_serial_read(struct adapter *adapt, enum rf_radio_path rfpath, u32 offset)
+{
 	u32 ret = 0;
-	काष्ठा bb_reg_def *phyreg = &adapt->HalData->PHYRegDef[rfpath];
-	u32 पंचांगpदीर्घ, पंचांगpदीर्घ2;
+	struct bb_reg_def *phyreg = &adapt->HalData->PHYRegDef[rfpath];
+	u32 tmplong, tmplong2;
 	u8 rfpi_enable = 0;
 
 	offset &= 0xff;
 
-	पंचांगpदीर्घ = phy_query_bb_reg(adapt, rFPGA0_XA_HSSIParameter2, bMaskDWord);
-	अगर (rfpath == RF_PATH_A)
-		पंचांगpदीर्घ2 = पंचांगpदीर्घ;
-	अन्यथा
-		पंचांगpदीर्घ2 = phy_query_bb_reg(adapt, phyreg->rfHSSIPara2,
+	tmplong = phy_query_bb_reg(adapt, rFPGA0_XA_HSSIParameter2, bMaskDWord);
+	if (rfpath == RF_PATH_A)
+		tmplong2 = tmplong;
+	else
+		tmplong2 = phy_query_bb_reg(adapt, phyreg->rfHSSIPara2,
 					    bMaskDWord);
 
-	पंचांगpदीर्घ2 = (पंचांगpदीर्घ2 & (~bLSSIReadAddress)) |
+	tmplong2 = (tmplong2 & (~bLSSIReadAddress)) |
 		   (offset << 23) | bLSSIReadEdge;
 
 	phy_set_bb_reg(adapt, rFPGA0_XA_HSSIParameter2, bMaskDWord,
-		       पंचांगpदीर्घ & (~bLSSIReadEdge));
+		       tmplong & (~bLSSIReadEdge));
 	udelay(10);
 
-	phy_set_bb_reg(adapt, phyreg->rfHSSIPara2, bMaskDWord, पंचांगpदीर्घ2);
+	phy_set_bb_reg(adapt, phyreg->rfHSSIPara2, bMaskDWord, tmplong2);
 	udelay(100);
 
 	udelay(10);
 
-	अगर (rfpath == RF_PATH_A)
+	if (rfpath == RF_PATH_A)
 		rfpi_enable = (u8)phy_query_bb_reg(adapt, rFPGA0_XA_HSSIParameter1, BIT(8));
-	अन्यथा अगर (rfpath == RF_PATH_B)
+	else if (rfpath == RF_PATH_B)
 		rfpi_enable = (u8)phy_query_bb_reg(adapt, rFPGA0_XB_HSSIParameter1, BIT(8));
 
-	अगर (rfpi_enable)
+	if (rfpi_enable)
 		ret = phy_query_bb_reg(adapt, phyreg->rfLSSIReadBackPi,
 				       bLSSIReadBackData);
-	अन्यथा
+	else
 		ret = phy_query_bb_reg(adapt, phyreg->rfLSSIReadBack,
 				       bLSSIReadBackData);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम rf_serial_ग_लिखो(काष्ठा adapter *adapt,
-			    क्रमागत rf_radio_path rfpath, u32 offset,
+static void rf_serial_write(struct adapter *adapt,
+			    enum rf_radio_path rfpath, u32 offset,
 			    u32 data)
-अणु
+{
 	u32 data_and_addr = 0;
-	काष्ठा bb_reg_def *phyreg = &adapt->HalData->PHYRegDef[rfpath];
+	struct bb_reg_def *phyreg = &adapt->HalData->PHYRegDef[rfpath];
 
 	offset &= 0xff;
 	data_and_addr = ((offset << 20) | (data & 0x000fffff)) & 0x0fffffff;
 	phy_set_bb_reg(adapt, phyreg->rf3wireOffset, bMaskDWord, data_and_addr);
-पूर्ण
+}
 
-u32 rtw_hal_पढ़ो_rfreg(काष्ठा adapter *adapt, क्रमागत rf_radio_path rf_path,
+u32 rtw_hal_read_rfreg(struct adapter *adapt, enum rf_radio_path rf_path,
 		       u32 reg_addr, u32 bit_mask)
-अणु
-	u32 original_value, bit_shअगरt;
+{
+	u32 original_value, bit_shift;
 
-	original_value = rf_serial_पढ़ो(adapt, rf_path, reg_addr);
-	bit_shअगरt =  cal_bit_shअगरt(bit_mask);
-	वापस (original_value & bit_mask) >> bit_shअगरt;
-पूर्ण
+	original_value = rf_serial_read(adapt, rf_path, reg_addr);
+	bit_shift =  cal_bit_shift(bit_mask);
+	return (original_value & bit_mask) >> bit_shift;
+}
 
-व्योम phy_set_rf_reg(काष्ठा adapter *adapt, क्रमागत rf_radio_path rf_path,
+void phy_set_rf_reg(struct adapter *adapt, enum rf_radio_path rf_path,
 		    u32 reg_addr, u32 bit_mask, u32 data)
-अणु
-	u32 original_value, bit_shअगरt;
+{
+	u32 original_value, bit_shift;
 
 	/*  RF data is 12 bits only */
-	अगर (bit_mask != bRFRegOffsetMask) अणु
-		original_value = rf_serial_पढ़ो(adapt, rf_path, reg_addr);
-		bit_shअगरt =  cal_bit_shअगरt(bit_mask);
-		data = (original_value & (~bit_mask)) | (data << bit_shअगरt);
-	पूर्ण
+	if (bit_mask != bRFRegOffsetMask) {
+		original_value = rf_serial_read(adapt, rf_path, reg_addr);
+		bit_shift =  cal_bit_shift(bit_mask);
+		data = (original_value & (~bit_mask)) | (data << bit_shift);
+	}
 
-	rf_serial_ग_लिखो(adapt, rf_path, reg_addr, data);
-पूर्ण
+	rf_serial_write(adapt, rf_path, reg_addr, data);
+}
 
-अटल व्योम get_tx_घातer_index(काष्ठा adapter *adapt, u8 channel, u8 *cck_pwr,
+static void get_tx_power_index(struct adapter *adapt, u8 channel, u8 *cck_pwr,
 			       u8 *ofdm_pwr, u8 *bw20_pwr, u8 *bw40_pwr)
-अणु
-	काष्ठा hal_data_8188e *hal_data = adapt->HalData;
+{
+	struct hal_data_8188e *hal_data = adapt->HalData;
 	u8 index = (channel - 1);
 	u8 TxCount = 0, path_nums;
 
 	path_nums = 1;
 
-	क्रम (TxCount = 0; TxCount < path_nums; TxCount++) अणु
-		अगर (TxCount == RF_PATH_A) अणु
+	for (TxCount = 0; TxCount < path_nums; TxCount++) {
+		if (TxCount == RF_PATH_A) {
 			cck_pwr[TxCount] = hal_data->Index24G_CCK_Base[TxCount][index];
 			ofdm_pwr[TxCount] = hal_data->Index24G_BW40_Base[RF_PATH_A][index] +
-					    hal_data->OFDM_24G_Dअगरf[TxCount][RF_PATH_A];
+					    hal_data->OFDM_24G_Diff[TxCount][RF_PATH_A];
 
 			bw20_pwr[TxCount] = hal_data->Index24G_BW40_Base[RF_PATH_A][index] +
-					    hal_data->BW20_24G_Dअगरf[TxCount][RF_PATH_A];
+					    hal_data->BW20_24G_Diff[TxCount][RF_PATH_A];
 			bw40_pwr[TxCount] = hal_data->Index24G_BW40_Base[TxCount][index];
-		पूर्ण अन्यथा अगर (TxCount == RF_PATH_B) अणु
+		} else if (TxCount == RF_PATH_B) {
 			cck_pwr[TxCount] = hal_data->Index24G_CCK_Base[TxCount][index];
 			ofdm_pwr[TxCount] = hal_data->Index24G_BW40_Base[RF_PATH_A][index] +
-			hal_data->BW20_24G_Dअगरf[RF_PATH_A][index] +
-			hal_data->BW20_24G_Dअगरf[TxCount][index];
+			hal_data->BW20_24G_Diff[RF_PATH_A][index] +
+			hal_data->BW20_24G_Diff[TxCount][index];
 
 			bw20_pwr[TxCount] = hal_data->Index24G_BW40_Base[RF_PATH_A][index] +
-			hal_data->BW20_24G_Dअगरf[TxCount][RF_PATH_A] +
-			hal_data->BW20_24G_Dअगरf[TxCount][index];
+			hal_data->BW20_24G_Diff[TxCount][RF_PATH_A] +
+			hal_data->BW20_24G_Diff[TxCount][index];
 			bw40_pwr[TxCount] = hal_data->Index24G_BW40_Base[TxCount][index];
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम phy_घातer_index_check(काष्ठा adapter *adapt, u8 channel,
+static void phy_power_index_check(struct adapter *adapt, u8 channel,
 				  u8 *cck_pwr, u8 *ofdm_pwr, u8 *bw20_pwr,
 				  u8 *bw40_pwr)
-अणु
-	काष्ठा hal_data_8188e *hal_data = adapt->HalData;
+{
+	struct hal_data_8188e *hal_data = adapt->HalData;
 
 	hal_data->CurrentCckTxPwrIdx = cck_pwr[0];
 	hal_data->CurrentOfdm24GTxPwrIdx = ofdm_pwr[0];
 	hal_data->CurrentBW2024GTxPwrIdx = bw20_pwr[0];
 	hal_data->CurrentBW4024GTxPwrIdx = bw40_pwr[0];
-पूर्ण
+}
 
-व्योम phy_set_tx_घातer_level(काष्ठा adapter *adapt, u8 channel)
-अणु
-	u8 cck_pwr[MAX_TX_COUNT] = अणु0पूर्ण;
-	u8 ofdm_pwr[MAX_TX_COUNT] = अणु0पूर्ण;/*  [0]:RF-A, [1]:RF-B */
-	u8 bw20_pwr[MAX_TX_COUNT] = अणु0पूर्ण;
-	u8 bw40_pwr[MAX_TX_COUNT] = अणु0पूर्ण;
+void phy_set_tx_power_level(struct adapter *adapt, u8 channel)
+{
+	u8 cck_pwr[MAX_TX_COUNT] = {0};
+	u8 ofdm_pwr[MAX_TX_COUNT] = {0};/*  [0]:RF-A, [1]:RF-B */
+	u8 bw20_pwr[MAX_TX_COUNT] = {0};
+	u8 bw40_pwr[MAX_TX_COUNT] = {0};
 
-	get_tx_घातer_index(adapt, channel, &cck_pwr[0], &ofdm_pwr[0],
+	get_tx_power_index(adapt, channel, &cck_pwr[0], &ofdm_pwr[0],
 			   &bw20_pwr[0], &bw40_pwr[0]);
 
-	phy_घातer_index_check(adapt, channel, &cck_pwr[0], &ofdm_pwr[0],
+	phy_power_index_check(adapt, channel, &cck_pwr[0], &ofdm_pwr[0],
 			      &bw20_pwr[0], &bw40_pwr[0]);
 
-	rtl88eu_phy_rf6052_set_cck_txघातer(adapt, &cck_pwr[0]);
-	rtl88eu_phy_rf6052_set_ofdm_txघातer(adapt, &ofdm_pwr[0], &bw20_pwr[0],
+	rtl88eu_phy_rf6052_set_cck_txpower(adapt, &cck_pwr[0]);
+	rtl88eu_phy_rf6052_set_ofdm_txpower(adapt, &ofdm_pwr[0], &bw20_pwr[0],
 					    &bw40_pwr[0], channel);
-पूर्ण
+}
 
-अटल व्योम phy_set_bw_mode_callback(काष्ठा adapter *adapt)
-अणु
-	काष्ठा hal_data_8188e *hal_data = adapt->HalData;
+static void phy_set_bw_mode_callback(struct adapter *adapt)
+{
+	struct hal_data_8188e *hal_data = adapt->HalData;
 	u8 reg_bw_opmode;
 	u8 reg_prsr_rsc;
 
-	अगर (adapt->bDriverStopped)
-		वापस;
+	if (adapt->bDriverStopped)
+		return;
 
-	/* Set MAC रेजिस्टर */
+	/* Set MAC register */
 
-	reg_bw_opmode = usb_पढ़ो8(adapt, REG_BWOPMODE);
-	reg_prsr_rsc = usb_पढ़ो8(adapt, REG_RRSR + 2);
+	reg_bw_opmode = usb_read8(adapt, REG_BWOPMODE);
+	reg_prsr_rsc = usb_read8(adapt, REG_RRSR + 2);
 
-	चयन (hal_data->CurrentChannelBW) अणु
-	हाल HT_CHANNEL_WIDTH_20:
+	switch (hal_data->CurrentChannelBW) {
+	case HT_CHANNEL_WIDTH_20:
 		reg_bw_opmode |= BW_OPMODE_20MHZ;
-		usb_ग_लिखो8(adapt, REG_BWOPMODE, reg_bw_opmode);
-		अवरोध;
-	हाल HT_CHANNEL_WIDTH_40:
+		usb_write8(adapt, REG_BWOPMODE, reg_bw_opmode);
+		break;
+	case HT_CHANNEL_WIDTH_40:
 		reg_bw_opmode &= ~BW_OPMODE_20MHZ;
-		usb_ग_लिखो8(adapt, REG_BWOPMODE, reg_bw_opmode);
+		usb_write8(adapt, REG_BWOPMODE, reg_bw_opmode);
 		reg_prsr_rsc = (reg_prsr_rsc & 0x90) |
 			       (hal_data->nCur40MhzPrimeSC << 5);
-		usb_ग_लिखो8(adapt, REG_RRSR + 2, reg_prsr_rsc);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		usb_write8(adapt, REG_RRSR + 2, reg_prsr_rsc);
+		break;
+	default:
+		break;
+	}
 
-	/* Set PHY related रेजिस्टर */
-	चयन (hal_data->CurrentChannelBW) अणु
-	हाल HT_CHANNEL_WIDTH_20:
+	/* Set PHY related register */
+	switch (hal_data->CurrentChannelBW) {
+	case HT_CHANNEL_WIDTH_20:
 		phy_set_bb_reg(adapt, rFPGA0_RFMOD, bRFMOD, 0x0);
 		phy_set_bb_reg(adapt, rFPGA1_RFMOD, bRFMOD, 0x0);
-		अवरोध;
-	हाल HT_CHANNEL_WIDTH_40:
+		break;
+	case HT_CHANNEL_WIDTH_40:
 		phy_set_bb_reg(adapt, rFPGA0_RFMOD, bRFMOD, 0x1);
 		phy_set_bb_reg(adapt, rFPGA1_RFMOD, bRFMOD, 0x1);
 		/* Set Control channel to upper or lower.
-		 * These settings are required only क्रम 40MHz
+		 * These settings are required only for 40MHz
 		 */
 		phy_set_bb_reg(adapt, rCCK0_System, bCCKSideBand,
 			       (hal_data->nCur40MhzPrimeSC >> 1));
@@ -241,36 +240,36 @@ u32 rtw_hal_पढ़ो_rfreg(काष्ठा adapter *adapt, क्रम�
 			       hal_data->nCur40MhzPrimeSC);
 		phy_set_bb_reg(adapt, 0x818, (BIT(26) | BIT(27)),
 			       (hal_data->nCur40MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_LOWER) ? 2 : 1);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	/* Set RF related रेजिस्टर */
+	/* Set RF related register */
 	rtl88eu_phy_rf6052_set_bandwidth(adapt, hal_data->CurrentChannelBW);
-पूर्ण
+}
 
-व्योम rtw_hal_set_bwmode(काष्ठा adapter *adapt, क्रमागत ht_channel_width bandwidth,
-			अचिन्हित अक्षर offset)
-अणु
-	काष्ठा hal_data_8188e *hal_data = adapt->HalData;
-	क्रमागत ht_channel_width पंचांगp_bw = hal_data->CurrentChannelBW;
+void rtw_hal_set_bwmode(struct adapter *adapt, enum ht_channel_width bandwidth,
+			unsigned char offset)
+{
+	struct hal_data_8188e *hal_data = adapt->HalData;
+	enum ht_channel_width tmp_bw = hal_data->CurrentChannelBW;
 
 	hal_data->CurrentChannelBW = bandwidth;
 	hal_data->nCur40MhzPrimeSC = offset;
 
-	अगर ((!adapt->bDriverStopped) && (!adapt->bSurpriseRemoved))
+	if ((!adapt->bDriverStopped) && (!adapt->bSurpriseRemoved))
 		phy_set_bw_mode_callback(adapt);
-	अन्यथा
-		hal_data->CurrentChannelBW = पंचांगp_bw;
-पूर्ण
+	else
+		hal_data->CurrentChannelBW = tmp_bw;
+}
 
-अटल व्योम phy_sw_chnl_callback(काष्ठा adapter *adapt, u8 channel)
-अणु
+static void phy_sw_chnl_callback(struct adapter *adapt, u8 channel)
+{
 	u32 param1, param2;
-	काष्ठा hal_data_8188e *hal_data = adapt->HalData;
+	struct hal_data_8188e *hal_data = adapt->HalData;
 
-	phy_set_tx_घातer_level(adapt, channel);
+	phy_set_tx_power_level(adapt, channel);
 
 	param1 = RF_CHNLBW;
 	param2 = channel;
@@ -278,105 +277,105 @@ u32 rtw_hal_पढ़ो_rfreg(काष्ठा adapter *adapt, क्रम�
 					  0xfffffc00) | param2;
 	phy_set_rf_reg(adapt, 0, param1,
 		       bRFRegOffsetMask, hal_data->RfRegChnlVal[0]);
-पूर्ण
+}
 
-व्योम rtw_hal_set_chan(काष्ठा adapter *adapt, u8 channel)
-अणु
-	काष्ठा hal_data_8188e *hal_data = adapt->HalData;
-	u8 पंचांगpchannel = hal_data->CurrentChannel;
+void rtw_hal_set_chan(struct adapter *adapt, u8 channel)
+{
+	struct hal_data_8188e *hal_data = adapt->HalData;
+	u8 tmpchannel = hal_data->CurrentChannel;
 
-	अगर (channel == 0)
+	if (channel == 0)
 		channel = 1;
 
 	hal_data->CurrentChannel = channel;
 
-	अगर ((!adapt->bDriverStopped) && (!adapt->bSurpriseRemoved))
+	if ((!adapt->bDriverStopped) && (!adapt->bSurpriseRemoved))
 		phy_sw_chnl_callback(adapt, channel);
-	अन्यथा
-		hal_data->CurrentChannel = पंचांगpchannel;
-पूर्ण
+	else
+		hal_data->CurrentChannel = tmpchannel;
+}
 
-#घोषणा ODM_TXPWRTRACK_MAX_IDX_88E  6
+#define ODM_TXPWRTRACK_MAX_IDX_88E  6
 
-व्योम rtl88eu_dm_txघातer_track_adjust(काष्ठा odm_dm_काष्ठा *dm_odm, u8 type,
-				     u8 *direction, u32 *out_ग_लिखो_val)
-अणु
+void rtl88eu_dm_txpower_track_adjust(struct odm_dm_struct *dm_odm, u8 type,
+				     u8 *direction, u32 *out_write_val)
+{
 	u8 pwr_value = 0;
-	/*  Tx घातer tracking BB swing table. */
-	अगर (type == 0) अणु /* For OFDM adjust */
+	/*  Tx power tracking BB swing table. */
+	if (type == 0) { /* For OFDM adjust */
 		ODM_RT_TRACE(dm_odm, ODM_COMP_TX_PWR_TRACK, ODM_DBG_LOUD,
 			     ("BbSwingIdxOfdm = %d BbSwingFlagOfdm=%d\n",
 			     dm_odm->BbSwingIdxOfdm, dm_odm->BbSwingFlagOfdm));
 
-		अगर (dm_odm->BbSwingIdxOfdm <= dm_odm->BbSwingIdxOfdmBase) अणु
+		if (dm_odm->BbSwingIdxOfdm <= dm_odm->BbSwingIdxOfdmBase) {
 			*direction = 1;
 			pwr_value = dm_odm->BbSwingIdxOfdmBase -
 				     dm_odm->BbSwingIdxOfdm;
-		पूर्ण अन्यथा अणु
+		} else {
 			*direction = 2;
 			pwr_value = dm_odm->BbSwingIdxOfdm -
 				     dm_odm->BbSwingIdxOfdmBase;
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा अगर (type == 1) अणु /* For CCK adjust. */
+	} else if (type == 1) { /* For CCK adjust. */
 		ODM_RT_TRACE(dm_odm, ODM_COMP_TX_PWR_TRACK, ODM_DBG_LOUD,
 			     ("dm_odm->BbSwingIdxCck = %d dm_odm->BbSwingIdxCckBase = %d\n",
 			     dm_odm->BbSwingIdxCck, dm_odm->BbSwingIdxCckBase));
 
-		अगर (dm_odm->BbSwingIdxCck <= dm_odm->BbSwingIdxCckBase) अणु
+		if (dm_odm->BbSwingIdxCck <= dm_odm->BbSwingIdxCckBase) {
 			*direction = 1;
 			pwr_value = dm_odm->BbSwingIdxCckBase -
 				     dm_odm->BbSwingIdxCck;
-		पूर्ण अन्यथा अणु
+		} else {
 			*direction = 2;
 			pwr_value = dm_odm->BbSwingIdxCck -
 				     dm_odm->BbSwingIdxCckBase;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (pwr_value >= ODM_TXPWRTRACK_MAX_IDX_88E && *direction == 1)
+	if (pwr_value >= ODM_TXPWRTRACK_MAX_IDX_88E && *direction == 1)
 		pwr_value = ODM_TXPWRTRACK_MAX_IDX_88E;
 
-	*out_ग_लिखो_val = pwr_value | (pwr_value << 8) | (pwr_value << 16) |
+	*out_write_val = pwr_value | (pwr_value << 8) | (pwr_value << 16) |
 			 (pwr_value << 24);
-पूर्ण
+}
 
-अटल व्योम dm_txpwr_track_setpwr(काष्ठा odm_dm_काष्ठा *dm_odm)
-अणु
-	अगर (dm_odm->BbSwingFlagOfdm || dm_odm->BbSwingFlagCck) अणु
+static void dm_txpwr_track_setpwr(struct odm_dm_struct *dm_odm)
+{
+	if (dm_odm->BbSwingFlagOfdm || dm_odm->BbSwingFlagCck) {
 		ODM_RT_TRACE(dm_odm, ODM_COMP_TX_PWR_TRACK, ODM_DBG_LOUD,
 			     ("%s CH=%d\n", __func__, *dm_odm->pChannel));
-		phy_set_tx_घातer_level(dm_odm->Adapter, *dm_odm->pChannel);
+		phy_set_tx_power_level(dm_odm->Adapter, *dm_odm->pChannel);
 		dm_odm->BbSwingFlagOfdm = false;
 		dm_odm->BbSwingFlagCck = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम rtl88eu_dm_txघातer_tracking_callback_thermalmeter(काष्ठा adapter *adapt)
-अणु
-	काष्ठा hal_data_8188e *hal_data = adapt->HalData;
+void rtl88eu_dm_txpower_tracking_callback_thermalmeter(struct adapter *adapt)
+{
+	struct hal_data_8188e *hal_data = adapt->HalData;
 	u8 thermal_val = 0, delta, delta_lck, delta_iqk, offset;
 	u8 thermal_avg_count = 0;
 	u32 thermal_avg = 0;
 	s32 ele_d, temp_cck;
 	s8 ofdm_index[2], cck_index = 0;
-	s8 ofdm_index_old[2] = अणु0, 0पूर्ण, cck_index_old = 0;
+	s8 ofdm_index_old[2] = {0, 0}, cck_index_old = 0;
 	u32 i = 0, j = 0;
 
 	u8 ofdm_min_index = 6; /* OFDM BB Swing should be less than +3.0dB */
-	s8 ofdm_index_mapping[2][index_mapping_NUM_88E] = अणु
-		/* 2.4G, decrease घातer */
-		अणु0, 0, 2, 3, 4, 4, 5, 6, 7, 7, 8, 9, 10, 10, 11पूर्ण,
-		/* 2.4G, increase घातer */
-		अणु0, 0, -1, -2, -3, -4, -4, -4, -4, -5, -7, -8, -9, -9, -10पूर्ण,
-	पूर्ण;
-	u8 thermal_mapping[2][index_mapping_NUM_88E] = अणु
-		/* 2.4G, decrease घातer */
-		अणु0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 27पूर्ण,
-		/* 2.4G, increase घातer */
-		अणु0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 25, 25, 25पूर्ण,
-	पूर्ण;
-	काष्ठा odm_dm_काष्ठा *dm_odm = &hal_data->odmpriv;
+	s8 ofdm_index_mapping[2][index_mapping_NUM_88E] = {
+		/* 2.4G, decrease power */
+		{0, 0, 2, 3, 4, 4, 5, 6, 7, 7, 8, 9, 10, 10, 11},
+		/* 2.4G, increase power */
+		{0, 0, -1, -2, -3, -4, -4, -4, -4, -5, -7, -8, -9, -9, -10},
+	};
+	u8 thermal_mapping[2][index_mapping_NUM_88E] = {
+		/* 2.4G, decrease power */
+		{0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 27},
+		/* 2.4G, increase power */
+		{0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 25, 25, 25},
+	};
+	struct odm_dm_struct *dm_odm = &hal_data->odmpriv;
 
 	dm_txpwr_track_setpwr(dm_odm);
 
@@ -384,146 +383,146 @@ u32 rtw_hal_पढ़ो_rfreg(काष्ठा adapter *adapt, क्रम�
 
 	dm_odm->RFCalibrateInfo.RegA24 = 0x090e1317;
 
-	thermal_val = (u8)rtw_hal_पढ़ो_rfreg(adapt, RF_PATH_A,
+	thermal_val = (u8)rtw_hal_read_rfreg(adapt, RF_PATH_A,
 					   RF_T_METER_88E, 0xfc00);
 
-	अगर (thermal_val) अणु
-		/* Query OFDM path A शेष setting */
+	if (thermal_val) {
+		/* Query OFDM path A default setting */
 		ele_d = phy_query_bb_reg(adapt, rOFDM0_XATxIQImbalance, bMaskDWord) & bMaskOFDM_D;
-		क्रम (i = 0; i < OFDM_TABLE_SIZE_92D; i++) अणु
-			अगर (ele_d == (OFDMSwingTable[i] & bMaskOFDM_D)) अणु
+		for (i = 0; i < OFDM_TABLE_SIZE_92D; i++) {
+			if (ele_d == (OFDMSwingTable[i] & bMaskOFDM_D)) {
 				ofdm_index_old[0] = (u8)i;
 				dm_odm->BbSwingIdxOfdmBase = (u8)i;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		/* Query CCK शेष setting From 0xa24 */
+		/* Query CCK default setting From 0xa24 */
 		temp_cck = dm_odm->RFCalibrateInfo.RegA24;
 
-		क्रम (i = 0; i < CCK_TABLE_SIZE; i++) अणु
-			अगर ((dm_odm->RFCalibrateInfo.bCCKinCH14 &&
-			     स_भेद(&temp_cck, &CCKSwingTable_Ch14[i][2], 4)) ||
-			    स_भेद(&temp_cck, &CCKSwingTable_Ch1_Ch13[i][2], 4)) अणु
+		for (i = 0; i < CCK_TABLE_SIZE; i++) {
+			if ((dm_odm->RFCalibrateInfo.bCCKinCH14 &&
+			     memcmp(&temp_cck, &CCKSwingTable_Ch14[i][2], 4)) ||
+			    memcmp(&temp_cck, &CCKSwingTable_Ch1_Ch13[i][2], 4)) {
 				cck_index_old = (u8)i;
 				dm_odm->BbSwingIdxCckBase = (u8)i;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (!dm_odm->RFCalibrateInfo.ThermalValue) अणु
+		if (!dm_odm->RFCalibrateInfo.ThermalValue) {
 			dm_odm->RFCalibrateInfo.ThermalValue = hal_data->EEPROMThermalMeter;
 			dm_odm->RFCalibrateInfo.ThermalValue_LCK = thermal_val;
 			dm_odm->RFCalibrateInfo.ThermalValue_IQK = thermal_val;
 
 			dm_odm->RFCalibrateInfo.OFDM_index[0] = ofdm_index_old[0];
 			dm_odm->RFCalibrateInfo.CCK_index = cck_index_old;
-		पूर्ण
+		}
 
 		/* calculate average thermal meter */
 		dm_odm->RFCalibrateInfo.ThermalValue_AVG[dm_odm->RFCalibrateInfo.ThermalValue_AVG_index] = thermal_val;
 		dm_odm->RFCalibrateInfo.ThermalValue_AVG_index++;
-		अगर (dm_odm->RFCalibrateInfo.ThermalValue_AVG_index == AVG_THERMAL_NUM_88E)
+		if (dm_odm->RFCalibrateInfo.ThermalValue_AVG_index == AVG_THERMAL_NUM_88E)
 			dm_odm->RFCalibrateInfo.ThermalValue_AVG_index = 0;
 
-		क्रम (i = 0; i < AVG_THERMAL_NUM_88E; i++) अणु
-			अगर (dm_odm->RFCalibrateInfo.ThermalValue_AVG[i]) अणु
+		for (i = 0; i < AVG_THERMAL_NUM_88E; i++) {
+			if (dm_odm->RFCalibrateInfo.ThermalValue_AVG[i]) {
 				thermal_avg += dm_odm->RFCalibrateInfo.ThermalValue_AVG[i];
 				thermal_avg_count++;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (thermal_avg_count)
+		if (thermal_avg_count)
 			thermal_val = (u8)(thermal_avg / thermal_avg_count);
 
-		अगर (dm_odm->RFCalibrateInfo.bDoneTxघातer &&
-		    !dm_odm->RFCalibrateInfo.bReloadtxघातerindex) अणु
-			delta = असल(thermal_val - dm_odm->RFCalibrateInfo.ThermalValue);
-		पूर्ण अन्यथा अणु
-			delta = असल(thermal_val - hal_data->EEPROMThermalMeter);
-			अगर (dm_odm->RFCalibrateInfo.bReloadtxघातerindex) अणु
-				dm_odm->RFCalibrateInfo.bReloadtxघातerindex = false;
-				dm_odm->RFCalibrateInfo.bDoneTxघातer = false;
-			पूर्ण
-		पूर्ण
+		if (dm_odm->RFCalibrateInfo.bDoneTxpower &&
+		    !dm_odm->RFCalibrateInfo.bReloadtxpowerindex) {
+			delta = abs(thermal_val - dm_odm->RFCalibrateInfo.ThermalValue);
+		} else {
+			delta = abs(thermal_val - hal_data->EEPROMThermalMeter);
+			if (dm_odm->RFCalibrateInfo.bReloadtxpowerindex) {
+				dm_odm->RFCalibrateInfo.bReloadtxpowerindex = false;
+				dm_odm->RFCalibrateInfo.bDoneTxpower = false;
+			}
+		}
 
-		delta_lck = असल(dm_odm->RFCalibrateInfo.ThermalValue_LCK - thermal_val);
-		delta_iqk = असल(dm_odm->RFCalibrateInfo.ThermalValue_IQK - thermal_val);
+		delta_lck = abs(dm_odm->RFCalibrateInfo.ThermalValue_LCK - thermal_val);
+		delta_iqk = abs(dm_odm->RFCalibrateInfo.ThermalValue_IQK - thermal_val);
 
 		/* Delta temperature is equal to or larger than 20 centigrade.*/
-		अगर ((delta_lck >= 8)) अणु
+		if ((delta_lck >= 8)) {
 			dm_odm->RFCalibrateInfo.ThermalValue_LCK = thermal_val;
 			rtl88eu_phy_lc_calibrate(adapt);
-		पूर्ण
+		}
 
-		अगर (delta > 0 && dm_odm->RFCalibrateInfo.TxPowerTrackControl) अणु
-			delta = असल(hal_data->EEPROMThermalMeter - thermal_val);
+		if (delta > 0 && dm_odm->RFCalibrateInfo.TxPowerTrackControl) {
+			delta = abs(hal_data->EEPROMThermalMeter - thermal_val);
 
 			/* calculate new OFDM / CCK offset */
-			अगर (thermal_val > hal_data->EEPROMThermalMeter)
+			if (thermal_val > hal_data->EEPROMThermalMeter)
 				j = 1;
-			अन्यथा
+			else
 				j = 0;
-			क्रम (offset = 0; offset < index_mapping_NUM_88E; offset++) अणु
-				अगर (delta < thermal_mapping[j][offset]) अणु
-					अगर (offset != 0)
+			for (offset = 0; offset < index_mapping_NUM_88E; offset++) {
+				if (delta < thermal_mapping[j][offset]) {
+					if (offset != 0)
 						offset--;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-			अगर (offset >= index_mapping_NUM_88E)
+					break;
+				}
+			}
+			if (offset >= index_mapping_NUM_88E)
 				offset = index_mapping_NUM_88E - 1;
 
 			/* Updating ofdm_index values with new OFDM / CCK offset */
 			ofdm_index[0] = dm_odm->RFCalibrateInfo.OFDM_index[0] + ofdm_index_mapping[j][offset];
-			अगर (ofdm_index[0] > OFDM_TABLE_SIZE_92D - 1)
+			if (ofdm_index[0] > OFDM_TABLE_SIZE_92D - 1)
 				ofdm_index[0] = OFDM_TABLE_SIZE_92D - 1;
-			अन्यथा अगर (ofdm_index[0] < ofdm_min_index)
+			else if (ofdm_index[0] < ofdm_min_index)
 				ofdm_index[0] = ofdm_min_index;
 
 			cck_index = dm_odm->RFCalibrateInfo.CCK_index + ofdm_index_mapping[j][offset];
-			अगर (cck_index > CCK_TABLE_SIZE - 1)
+			if (cck_index > CCK_TABLE_SIZE - 1)
 				cck_index = CCK_TABLE_SIZE - 1;
-			अन्यथा अगर (cck_index < 0)
+			else if (cck_index < 0)
 				cck_index = 0;
 
-			/* 2 temporarily हटाओ bNOPG */
+			/* 2 temporarily remove bNOPG */
 			/* Config by SwingTable */
-			अगर (dm_odm->RFCalibrateInfo.TxPowerTrackControl) अणु
-				dm_odm->RFCalibrateInfo.bDoneTxघातer = true;
+			if (dm_odm->RFCalibrateInfo.TxPowerTrackControl) {
+				dm_odm->RFCalibrateInfo.bDoneTxpower = true;
 
-				/*  Revse TX घातer table. */
+				/*  Revse TX power table. */
 				dm_odm->BbSwingIdxOfdm = (u8)ofdm_index[0];
 				dm_odm->BbSwingIdxCck = (u8)cck_index;
 
-				अगर (dm_odm->BbSwingIdxOfdmCurrent != dm_odm->BbSwingIdxOfdm) अणु
+				if (dm_odm->BbSwingIdxOfdmCurrent != dm_odm->BbSwingIdxOfdm) {
 					dm_odm->BbSwingIdxOfdmCurrent = dm_odm->BbSwingIdxOfdm;
 					dm_odm->BbSwingFlagOfdm = true;
-				पूर्ण
+				}
 
-				अगर (dm_odm->BbSwingIdxCckCurrent != dm_odm->BbSwingIdxCck) अणु
+				if (dm_odm->BbSwingIdxCckCurrent != dm_odm->BbSwingIdxCck) {
 					dm_odm->BbSwingIdxCckCurrent = dm_odm->BbSwingIdxCck;
 					dm_odm->BbSwingFlagCck = true;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				}
+			}
+		}
 
 		/* Delta temperature is equal to or larger than 20 centigrade.*/
-		अगर (delta_iqk >= 8) अणु
+		if (delta_iqk >= 8) {
 			dm_odm->RFCalibrateInfo.ThermalValue_IQK = thermal_val;
 			rtl88eu_phy_iq_calibrate(adapt, false);
-		पूर्ण
+		}
 		/* update thermal meter value */
-		अगर (dm_odm->RFCalibrateInfo.TxPowerTrackControl)
+		if (dm_odm->RFCalibrateInfo.TxPowerTrackControl)
 			dm_odm->RFCalibrateInfo.ThermalValue = thermal_val;
-	पूर्ण
+	}
 	dm_odm->RFCalibrateInfo.TXPowercount = 0;
-पूर्ण
+}
 
-#घोषणा MAX_TOLERANCE 5
+#define MAX_TOLERANCE 5
 
-अटल u8 phy_path_a_iqk(काष्ठा adapter *adapt, bool config_pathb)
-अणु
+static u8 phy_path_a_iqk(struct adapter *adapt, bool config_pathb)
+{
 	u32 reg_eac, reg_e94, reg_e9c;
 	u8 result = 0x00;
 
@@ -544,24 +543,24 @@ u32 rtw_hal_पढ़ो_rfreg(काष्ठा adapter *adapt, क्रम�
 	mdelay(IQK_DELAY_TIME_88E);
 
 	reg_eac = phy_query_bb_reg(adapt, rRx_Power_After_IQK_A_2, bMaskDWord);
-	reg_e94 = phy_query_bb_reg(adapt, rTx_Power_Beक्रमe_IQK_A, bMaskDWord);
+	reg_e94 = phy_query_bb_reg(adapt, rTx_Power_Before_IQK_A, bMaskDWord);
 	reg_e9c = phy_query_bb_reg(adapt, rTx_Power_After_IQK_A, bMaskDWord);
 
-	अगर (!(reg_eac & BIT(28)) &&
+	if (!(reg_eac & BIT(28)) &&
 	    (((reg_e94 & 0x03FF0000) >> 16) != 0x142) &&
 	    (((reg_e9c & 0x03FF0000) >> 16) != 0x42))
 		result |= 0x01;
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल u8 phy_path_a_rx_iqk(काष्ठा adapter *adapt, bool configPathB)
-अणु
-	u32 reg_eac, reg_e94, reg_e9c, reg_ea4, u4पंचांगp;
+static u8 phy_path_a_rx_iqk(struct adapter *adapt, bool configPathB)
+{
+	u32 reg_eac, reg_e94, reg_e9c, reg_ea4, u4tmp;
 	u8 result = 0x00;
-	काष्ठा odm_dm_काष्ठा *dm_odm = &adapt->HalData->odmpriv;
+	struct odm_dm_struct *dm_odm = &adapt->HalData->odmpriv;
 
 	/* 1 Get TXIMR setting */
-	/* modअगरy RXIQK mode table */
+	/* modify RXIQK mode table */
 	phy_set_bb_reg(adapt, rFPGA0_IQK, bMaskDWord, 0x00000000);
 	phy_set_rf_reg(adapt, RF_PATH_A, RF_WE_LUT, bRFRegOffsetMask, 0x800a0);
 	phy_set_rf_reg(adapt, RF_PATH_A, RF_RCK_OS, bRFRegOffsetMask, 0x30000);
@@ -596,21 +595,21 @@ u32 rtw_hal_पढ़ो_rfreg(काष्ठा adapter *adapt, क्रम�
 
 	/* Check failed */
 	reg_eac = phy_query_bb_reg(adapt, rRx_Power_After_IQK_A_2, bMaskDWord);
-	reg_e94 = phy_query_bb_reg(adapt, rTx_Power_Beक्रमe_IQK_A, bMaskDWord);
+	reg_e94 = phy_query_bb_reg(adapt, rTx_Power_Before_IQK_A, bMaskDWord);
 	reg_e9c = phy_query_bb_reg(adapt, rTx_Power_After_IQK_A, bMaskDWord);
 
-	अगर (!(reg_eac & BIT(28)) &&
+	if (!(reg_eac & BIT(28)) &&
 	    (((reg_e94 & 0x03FF0000) >> 16) != 0x142) &&
 	    (((reg_e9c & 0x03FF0000) >> 16) != 0x42))
 		result |= 0x01;
-	अन्यथा					/* अगर Tx not OK, ignore Rx */
-		वापस result;
+	else					/* if Tx not OK, ignore Rx */
+		return result;
 
-	u4पंचांगp = 0x80007C00 | (reg_e94 & 0x3FF0000)  | ((reg_e9c & 0x3FF0000) >> 16);
-	phy_set_bb_reg(adapt, rTx_IQK, bMaskDWord, u4पंचांगp);
+	u4tmp = 0x80007C00 | (reg_e94 & 0x3FF0000)  | ((reg_e9c & 0x3FF0000) >> 16);
+	phy_set_bb_reg(adapt, rTx_IQK, bMaskDWord, u4tmp);
 
 	/* 1 RX IQK */
-	/* modअगरy RXIQK mode table */
+	/* modify RXIQK mode table */
 	ODM_RT_TRACE(dm_odm, ODM_COMP_CALIBRATION, ODM_DBG_LOUD,
 		     ("Path-A Rx IQK modify RXIQK mode table 2!\n"));
 	phy_set_bb_reg(adapt, rFPGA0_IQK, bMaskDWord, 0x00000000);
@@ -639,30 +638,30 @@ u32 rtw_hal_पढ़ो_rfreg(काष्ठा adapter *adapt, क्रम�
 
 	/*  Check failed */
 	reg_eac = phy_query_bb_reg(adapt, rRx_Power_After_IQK_A_2, bMaskDWord);
-	reg_e94 = phy_query_bb_reg(adapt, rTx_Power_Beक्रमe_IQK_A, bMaskDWord);
+	reg_e94 = phy_query_bb_reg(adapt, rTx_Power_Before_IQK_A, bMaskDWord);
 	reg_e9c = phy_query_bb_reg(adapt, rTx_Power_After_IQK_A, bMaskDWord);
-	reg_ea4 = phy_query_bb_reg(adapt, rRx_Power_Beक्रमe_IQK_A_2, bMaskDWord);
+	reg_ea4 = phy_query_bb_reg(adapt, rRx_Power_Before_IQK_A_2, bMaskDWord);
 
 	/* reload RF 0xdf */
 	phy_set_bb_reg(adapt, rFPGA0_IQK, bMaskDWord, 0x00000000);
 	phy_set_rf_reg(adapt, RF_PATH_A, 0xdf, bRFRegOffsetMask, 0x180);
 
-	अगर (!(reg_eac & BIT(27)) && /* अगर Tx is OK, check whether Rx is OK */
+	if (!(reg_eac & BIT(27)) && /* if Tx is OK, check whether Rx is OK */
 	    (((reg_ea4 & 0x03FF0000) >> 16) != 0x132) &&
 	    (((reg_eac & 0x03FF0000) >> 16) != 0x36))
 		result |= 0x02;
-	अन्यथा
+	else
 		ODM_RT_TRACE(dm_odm, ODM_COMP_CALIBRATION, ODM_DBG_LOUD,
 			     ("Path A Rx IQK fail!!\n"));
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल u8 phy_path_b_iqk(काष्ठा adapter *adapt)
-अणु
+static u8 phy_path_b_iqk(struct adapter *adapt)
+{
 	u32 regeac, regeb4, regebc, regec4, regecc;
 	u8 result = 0x00;
-	काष्ठा odm_dm_काष्ठा *dm_odm = &adapt->HalData->odmpriv;
+	struct odm_dm_struct *dm_odm = &adapt->HalData->odmpriv;
 
 	/* One shot, path B LOK & IQK */
 	phy_set_bb_reg(adapt, rIQK_AGC_Cont, bMaskDWord, 0x00000002);
@@ -671,41 +670,41 @@ u32 rtw_hal_पढ़ो_rfreg(काष्ठा adapter *adapt, क्रम�
 	mdelay(IQK_DELAY_TIME_88E);
 
 	regeac = phy_query_bb_reg(adapt, rRx_Power_After_IQK_A_2, bMaskDWord);
-	regeb4 = phy_query_bb_reg(adapt, rTx_Power_Beक्रमe_IQK_B, bMaskDWord);
+	regeb4 = phy_query_bb_reg(adapt, rTx_Power_Before_IQK_B, bMaskDWord);
 	regebc = phy_query_bb_reg(adapt, rTx_Power_After_IQK_B, bMaskDWord);
-	regec4 = phy_query_bb_reg(adapt, rRx_Power_Beक्रमe_IQK_B_2, bMaskDWord);
+	regec4 = phy_query_bb_reg(adapt, rRx_Power_Before_IQK_B_2, bMaskDWord);
 	regecc = phy_query_bb_reg(adapt, rRx_Power_After_IQK_B_2, bMaskDWord);
 
-	अगर (!(regeac & BIT(31)) &&
+	if (!(regeac & BIT(31)) &&
 	    (((regeb4 & 0x03FF0000) >> 16) != 0x142) &&
 	    (((regebc & 0x03FF0000) >> 16) != 0x42))
 		result |= 0x01;
-	अन्यथा
-		वापस result;
+	else
+		return result;
 
-	अगर (!(regeac & BIT(30)) &&
+	if (!(regeac & BIT(30)) &&
 	    (((regec4 & 0x03FF0000) >> 16) != 0x132) &&
 	    (((regecc & 0x03FF0000) >> 16) != 0x36))
 		result |= 0x02;
-	अन्यथा
+	else
 		ODM_RT_TRACE(dm_odm, ODM_COMP_CALIBRATION,
 			     ODM_DBG_LOUD,  ("Path B Rx IQK fail!!\n"));
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल व्योम patha_fill_iqk(काष्ठा adapter *adapt, bool iqkok, s32 result[][8],
+static void patha_fill_iqk(struct adapter *adapt, bool iqkok, s32 result[][8],
 			   u8 final_candidate, bool txonly)
-अणु
+{
 	u32 oldval_0, x, tx0_a, reg;
 	s32 y, tx0_c;
 
-	अगर (final_candidate == 0xFF) अणु
-		वापस;
-	पूर्ण अन्यथा अगर (iqkok) अणु
+	if (final_candidate == 0xFF) {
+		return;
+	} else if (iqkok) {
 		oldval_0 = (phy_query_bb_reg(adapt, rOFDM0_XATxIQImbalance, bMaskDWord) >> 22) & 0x3FF;
 
 		x = result[final_candidate][0];
-		अगर ((x & 0x00000200) != 0)
+		if ((x & 0x00000200) != 0)
 			x = x | 0xFFFFFC00;
 
 		tx0_a = (x * oldval_0) >> 8;
@@ -714,7 +713,7 @@ u32 rtw_hal_पढ़ो_rfreg(काष्ठा adapter *adapt, क्रम�
 			       ((x * oldval_0 >> 7) & 0x1));
 
 		y = result[final_candidate][1];
-		अगर ((y & 0x00000200) != 0)
+		if ((y & 0x00000200) != 0)
 			y = y | 0xFFFFFC00;
 
 		tx0_c = (y * oldval_0) >> 8;
@@ -725,8 +724,8 @@ u32 rtw_hal_पढ़ो_rfreg(काष्ठा adapter *adapt, क्रम�
 		phy_set_bb_reg(adapt, rOFDM0_ECCAThreshold, BIT(29),
 			       ((y * oldval_0 >> 7) & 0x1));
 
-		अगर (txonly)
-			वापस;
+		if (txonly)
+			return;
 
 		reg = result[final_candidate][2];
 		phy_set_bb_reg(adapt, rOFDM0_XARxIQImbalance, 0x3FF, reg);
@@ -736,22 +735,22 @@ u32 rtw_hal_पढ़ो_rfreg(काष्ठा adapter *adapt, क्रम�
 
 		reg = (result[final_candidate][3] >> 6) & 0xF;
 		phy_set_bb_reg(adapt, rOFDM0_RxIQExtAnta, 0xF0000000, reg);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम pathb_fill_iqk(काष्ठा adapter *adapt, bool iqkok, s32 result[][8],
+static void pathb_fill_iqk(struct adapter *adapt, bool iqkok, s32 result[][8],
 			   u8 final_candidate, bool txonly)
-अणु
+{
 	u32 oldval_1, x, tx1_a, reg;
 	s32 y, tx1_c;
 
-	अगर (final_candidate == 0xFF) अणु
-		वापस;
-	पूर्ण अन्यथा अगर (iqkok) अणु
+	if (final_candidate == 0xFF) {
+		return;
+	} else if (iqkok) {
 		oldval_1 = (phy_query_bb_reg(adapt, rOFDM0_XBTxIQImbalance, bMaskDWord) >> 22) & 0x3FF;
 
 		x = result[final_candidate][4];
-		अगर ((x & 0x00000200) != 0)
+		if ((x & 0x00000200) != 0)
 			x = x | 0xFFFFFC00;
 		tx1_a = (x * oldval_1) >> 8;
 		phy_set_bb_reg(adapt, rOFDM0_XBTxIQImbalance, 0x3FF, tx1_a);
@@ -760,7 +759,7 @@ u32 rtw_hal_पढ़ो_rfreg(काष्ठा adapter *adapt, क्रम�
 			       ((x * oldval_1 >> 7) & 0x1));
 
 		y = result[final_candidate][5];
-		अगर ((y & 0x00000200) != 0)
+		if ((y & 0x00000200) != 0)
 			y = y | 0xFFFFFC00;
 
 		tx1_c = (y * oldval_1) >> 8;
@@ -772,8 +771,8 @@ u32 rtw_hal_पढ़ो_rfreg(काष्ठा adapter *adapt, क्रम�
 		phy_set_bb_reg(adapt, rOFDM0_ECCAThreshold, BIT(25),
 			       ((y * oldval_1 >> 7) & 0x1));
 
-		अगर (txonly)
-			वापस;
+		if (txonly)
+			return;
 
 		reg = result[final_candidate][6];
 		phy_set_bb_reg(adapt, rOFDM0_XBRxIQImbalance, 0x3FF, reg);
@@ -783,177 +782,177 @@ u32 rtw_hal_पढ़ो_rfreg(काष्ठा adapter *adapt, क्रम�
 
 		reg = (result[final_candidate][7] >> 6) & 0xF;
 		phy_set_bb_reg(adapt, rOFDM0_AGCRSSITable, 0x0000F000, reg);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम save_adda_रेजिस्टरs(काष्ठा adapter *adapt, स्थिर u32 *addareg,
-				u32 *backup, u32 रेजिस्टर_num)
-अणु
+static void save_adda_registers(struct adapter *adapt, const u32 *addareg,
+				u32 *backup, u32 register_num)
+{
 	u32 i;
 
-	क्रम (i = 0; i < रेजिस्टर_num; i++)
+	for (i = 0; i < register_num; i++)
 		backup[i] = phy_query_bb_reg(adapt, addareg[i], bMaskDWord);
-पूर्ण
+}
 
-अटल व्योम save_mac_रेजिस्टरs(काष्ठा adapter *adapt, स्थिर u32 *mac_reg,
+static void save_mac_registers(struct adapter *adapt, const u32 *mac_reg,
 			       u32 *backup)
-अणु
+{
 	u32 i;
 
-	क्रम (i = 0; i < (IQK_MAC_REG_NUM - 1); i++)
-		backup[i] = usb_पढ़ो8(adapt, mac_reg[i]);
+	for (i = 0; i < (IQK_MAC_REG_NUM - 1); i++)
+		backup[i] = usb_read8(adapt, mac_reg[i]);
 
-	backup[i] = usb_पढ़ो32(adapt, mac_reg[i]);
-पूर्ण
+	backup[i] = usb_read32(adapt, mac_reg[i]);
+}
 
-अटल व्योम reload_adda_reg(काष्ठा adapter *adapt, स्थिर u32 *adda_reg,
+static void reload_adda_reg(struct adapter *adapt, const u32 *adda_reg,
 			    u32 *backup, u32 regiester_num)
-अणु
+{
 	u32 i;
 
-	क्रम (i = 0; i < regiester_num; i++)
+	for (i = 0; i < regiester_num; i++)
 		phy_set_bb_reg(adapt, adda_reg[i], bMaskDWord, backup[i]);
-पूर्ण
+}
 
-अटल व्योम reload_mac_रेजिस्टरs(काष्ठा adapter *adapt, स्थिर u32 *mac_reg,
+static void reload_mac_registers(struct adapter *adapt, const u32 *mac_reg,
 				 u32 *backup)
-अणु
+{
 	u32 i;
 
-	क्रम (i = 0; i < (IQK_MAC_REG_NUM - 1); i++)
-		usb_ग_लिखो8(adapt, mac_reg[i], (u8)backup[i]);
+	for (i = 0; i < (IQK_MAC_REG_NUM - 1); i++)
+		usb_write8(adapt, mac_reg[i], (u8)backup[i]);
 
-	usb_ग_लिखो32(adapt, mac_reg[i], backup[i]);
-पूर्ण
+	usb_write32(adapt, mac_reg[i], backup[i]);
+}
 
-अटल व्योम path_adda_on(काष्ठा adapter *adapt, स्थिर u32 *adda_reg,
+static void path_adda_on(struct adapter *adapt, const u32 *adda_reg,
 			 bool is_path_a_on, bool is2t)
-अणु
+{
 	u32 path_on;
 	u32 i;
 
-	अगर (!is2t) अणु
+	if (!is2t) {
 		path_on = 0x0bdb25a0;
 		phy_set_bb_reg(adapt, adda_reg[0], bMaskDWord, 0x0b1b25a0);
-	पूर्ण अन्यथा अणु
+	} else {
 		path_on = is_path_a_on ? 0x04db25a4 : 0x0b1b25a4;
 		phy_set_bb_reg(adapt, adda_reg[0], bMaskDWord, path_on);
-	पूर्ण
+	}
 
-	क्रम (i = 1; i < IQK_ADDA_REG_NUM; i++)
+	for (i = 1; i < IQK_ADDA_REG_NUM; i++)
 		phy_set_bb_reg(adapt, adda_reg[i], bMaskDWord, path_on);
-पूर्ण
+}
 
-अटल व्योम mac_setting_calibration(काष्ठा adapter *adapt, स्थिर u32 *mac_reg,
+static void mac_setting_calibration(struct adapter *adapt, const u32 *mac_reg,
 				    u32 *backup)
-अणु
+{
 	u32 i = 0;
 
-	usb_ग_लिखो8(adapt, mac_reg[i], 0x3F);
+	usb_write8(adapt, mac_reg[i], 0x3F);
 
-	क्रम (i = 1; i < (IQK_MAC_REG_NUM - 1); i++)
-		usb_ग_लिखो8(adapt, mac_reg[i], (u8)(backup[i] & (~BIT(3))));
+	for (i = 1; i < (IQK_MAC_REG_NUM - 1); i++)
+		usb_write8(adapt, mac_reg[i], (u8)(backup[i] & (~BIT(3))));
 
-	usb_ग_लिखो8(adapt, mac_reg[i], (u8)(backup[i] & (~BIT(5))));
-पूर्ण
+	usb_write8(adapt, mac_reg[i], (u8)(backup[i] & (~BIT(5))));
+}
 
-अटल व्योम path_a_standby(काष्ठा adapter *adapt)
-अणु
+static void path_a_standby(struct adapter *adapt)
+{
 	phy_set_bb_reg(adapt, rFPGA0_IQK, bMaskDWord, 0x0);
 	phy_set_bb_reg(adapt, 0x840, bMaskDWord, 0x00010000);
 	phy_set_bb_reg(adapt, rFPGA0_IQK, bMaskDWord, 0x80800000);
-पूर्ण
+}
 
-अटल व्योम pi_mode_चयन(काष्ठा adapter *adapt, bool pi_mode)
-अणु
+static void pi_mode_switch(struct adapter *adapt, bool pi_mode)
+{
 	u32 mode;
 
 	mode = pi_mode ? 0x01000100 : 0x01000000;
 	phy_set_bb_reg(adapt, rFPGA0_XA_HSSIParameter1, bMaskDWord, mode);
 	phy_set_bb_reg(adapt, rFPGA0_XB_HSSIParameter1, bMaskDWord, mode);
-पूर्ण
+}
 
-अटल bool simularity_compare(काष्ठा adapter *adapt, s32 resulta[][8],
+static bool simularity_compare(struct adapter *adapt, s32 resulta[][8],
 			       u8 c1, u8 c2)
-अणु
-	u32 i, j, dअगरf, sim_biपंचांगap = 0, bound;
-	u8 final_candidate[2] = अणु0xFF, 0xFFपूर्ण;	/* क्रम path A and path B */
+{
+	u32 i, j, diff, sim_bitmap = 0, bound;
+	u8 final_candidate[2] = {0xFF, 0xFF};	/* for path A and path B */
 	bool result = true;
-	s32 पंचांगp1 = 0, पंचांगp2 = 0;
+	s32 tmp1 = 0, tmp2 = 0;
 
 	bound = 4;
 
-	क्रम (i = 0; i < bound; i++) अणु
-		अगर ((i == 1) || (i == 3) || (i == 5) || (i == 7)) अणु
-			अगर ((resulta[c1][i] & 0x00000200) != 0)
-				पंचांगp1 = resulta[c1][i] | 0xFFFFFC00;
-			अन्यथा
-				पंचांगp1 = resulta[c1][i];
+	for (i = 0; i < bound; i++) {
+		if ((i == 1) || (i == 3) || (i == 5) || (i == 7)) {
+			if ((resulta[c1][i] & 0x00000200) != 0)
+				tmp1 = resulta[c1][i] | 0xFFFFFC00;
+			else
+				tmp1 = resulta[c1][i];
 
-			अगर ((resulta[c2][i] & 0x00000200) != 0)
-				पंचांगp2 = resulta[c2][i] | 0xFFFFFC00;
-			अन्यथा
-				पंचांगp2 = resulta[c2][i];
-		पूर्ण अन्यथा अणु
-			पंचांगp1 = resulta[c1][i];
-			पंचांगp2 = resulta[c2][i];
-		पूर्ण
+			if ((resulta[c2][i] & 0x00000200) != 0)
+				tmp2 = resulta[c2][i] | 0xFFFFFC00;
+			else
+				tmp2 = resulta[c2][i];
+		} else {
+			tmp1 = resulta[c1][i];
+			tmp2 = resulta[c2][i];
+		}
 
-		dअगरf = असल(पंचांगp1 - पंचांगp2);
+		diff = abs(tmp1 - tmp2);
 
-		अगर (dअगरf > MAX_TOLERANCE) अणु
-			अगर ((i == 2 || i == 6) && !sim_biपंचांगap) अणु
-				अगर (resulta[c1][i] + resulta[c1][i + 1] == 0)
+		if (diff > MAX_TOLERANCE) {
+			if ((i == 2 || i == 6) && !sim_bitmap) {
+				if (resulta[c1][i] + resulta[c1][i + 1] == 0)
 					final_candidate[(i / 4)] = c2;
-				अन्यथा अगर (resulta[c2][i] + resulta[c2][i + 1] == 0)
+				else if (resulta[c2][i] + resulta[c2][i + 1] == 0)
 					final_candidate[(i / 4)] = c1;
-				अन्यथा
-					sim_biपंचांगap = sim_biपंचांगap | (1 << i);
-			पूर्ण अन्यथा अणु
-				sim_biपंचांगap = sim_biपंचांगap | (1 << i);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				else
+					sim_bitmap = sim_bitmap | (1 << i);
+			} else {
+				sim_bitmap = sim_bitmap | (1 << i);
+			}
+		}
+	}
 
-	अगर (sim_biपंचांगap == 0) अणु
-		क्रम (i = 0; i < (bound / 4); i++) अणु
-			अगर (final_candidate[i] != 0xFF) अणु
-				क्रम (j = i * 4; j < (i + 1) * 4 - 2; j++)
+	if (sim_bitmap == 0) {
+		for (i = 0; i < (bound / 4); i++) {
+			if (final_candidate[i] != 0xFF) {
+				for (j = i * 4; j < (i + 1) * 4 - 2; j++)
 					resulta[3][j] = resulta[final_candidate[i]][j];
 				result = false;
-			पूर्ण
-		पूर्ण
-		वापस result;
-	पूर्ण
+			}
+		}
+		return result;
+	}
 
-	अगर (!(sim_biपंचांगap & 0x03)) अणु		   /* path A TX OK */
-		क्रम (i = 0; i < 2; i++)
+	if (!(sim_bitmap & 0x03)) {		   /* path A TX OK */
+		for (i = 0; i < 2; i++)
 			resulta[3][i] = resulta[c1][i];
-	पूर्ण
-	अगर (!(sim_biपंचांगap & 0x0c)) अणु		   /* path A RX OK */
-		क्रम (i = 2; i < 4; i++)
+	}
+	if (!(sim_bitmap & 0x0c)) {		   /* path A RX OK */
+		for (i = 2; i < 4; i++)
 			resulta[3][i] = resulta[c1][i];
-	पूर्ण
+	}
 
-	अगर (!(sim_biपंचांगap & 0x30)) अणु /* path B TX OK */
-		क्रम (i = 4; i < 6; i++)
+	if (!(sim_bitmap & 0x30)) { /* path B TX OK */
+		for (i = 4; i < 6; i++)
 			resulta[3][i] = resulta[c1][i];
-	पूर्ण
+	}
 
-	अगर (!(sim_biपंचांगap & 0xc0)) अणु /* path B RX OK */
-		क्रम (i = 6; i < 8; i++)
+	if (!(sim_bitmap & 0xc0)) { /* path B RX OK */
+		for (i = 6; i < 8; i++)
 			resulta[3][i] = resulta[c1][i];
-	पूर्ण
-	वापस false;
-पूर्ण
+	}
+	return false;
+}
 
-अटल व्योम phy_iq_calibrate(काष्ठा adapter *adapt, s32 result[][8],
+static void phy_iq_calibrate(struct adapter *adapt, s32 result[][8],
 			     u8 t, bool is2t)
-अणु
-	काष्ठा odm_dm_काष्ठा *dm_odm = &adapt->HalData->odmpriv;
+{
+	struct odm_dm_struct *dm_odm = &adapt->HalData->odmpriv;
 	u32 i;
 	u8 path_a_ok, path_b_ok;
-	अटल स्थिर u32 adda_reg[IQK_ADDA_REG_NUM] = अणु
+	static const u32 adda_reg[IQK_ADDA_REG_NUM] = {
 		rFPGA0_XCD_SwitchControl, rBlue_Tooth,
 		rRx_Wait_CCA, rTx_CCK_RFON,
 		rTx_CCK_BBON, rTx_OFDM_RFON,
@@ -962,45 +961,45 @@ u32 rtw_hal_पढ़ो_rfreg(काष्ठा adapter *adapt, क्रम�
 		rRx_OFDM, rRx_Wait_RIFS,
 		rRx_TO_Rx, rStandby,
 		rSleep, rPMPD_ANAEN
-	पूर्ण;
-	अटल स्थिर u32 iqk_mac_reg[IQK_MAC_REG_NUM] = अणु
+	};
+	static const u32 iqk_mac_reg[IQK_MAC_REG_NUM] = {
 		REG_TXPAUSE, REG_BCN_CTRL,
 		REG_BCN_CTRL_1, REG_GPIO_MUXCFG
-	पूर्ण;
-	/* since 92C & 92D have the dअगरferent define in IQK_BB_REG */
-	अटल स्थिर u32 iqk_bb_reg_92c[IQK_BB_REG_NUM] = अणु
+	};
+	/* since 92C & 92D have the different define in IQK_BB_REG */
+	static const u32 iqk_bb_reg_92c[IQK_BB_REG_NUM] = {
 		rOFDM0_TRxPathEnable, rOFDM0_TRMuxPar,
 		rFPGA0_XCD_RFInterfaceSW, rConfig_AntA, rConfig_AntB,
 		rFPGA0_XAB_RFInterfaceSW, rFPGA0_XA_RFInterfaceOE,
 		rFPGA0_XB_RFInterfaceOE, rFPGA0_RFMOD
-	पूर्ण;
+	};
 
 	u32 retry_count = 9;
 
-	अगर (*dm_odm->mp_mode == 1)
+	if (*dm_odm->mp_mode == 1)
 		retry_count = 9;
-	अन्यथा
+	else
 		retry_count = 2;
 
-	अगर (t == 0) अणु
+	if (t == 0) {
 		/*  Save ADDA parameters, turn Path A ADDA on */
-		save_adda_रेजिस्टरs(adapt, adda_reg, dm_odm->RFCalibrateInfo.ADDA_backup,
+		save_adda_registers(adapt, adda_reg, dm_odm->RFCalibrateInfo.ADDA_backup,
 				    IQK_ADDA_REG_NUM);
-		save_mac_रेजिस्टरs(adapt, iqk_mac_reg,
+		save_mac_registers(adapt, iqk_mac_reg,
 				   dm_odm->RFCalibrateInfo.IQK_MAC_backup);
-		save_adda_रेजिस्टरs(adapt, iqk_bb_reg_92c,
+		save_adda_registers(adapt, iqk_bb_reg_92c,
 				    dm_odm->RFCalibrateInfo.IQK_BB_backup, IQK_BB_REG_NUM);
-	पूर्ण
+	}
 
 	path_adda_on(adapt, adda_reg, true, is2t);
-	अगर (t == 0)
+	if (t == 0)
 		dm_odm->RFCalibrateInfo.bRfPiEnable = (u8)phy_query_bb_reg(adapt, rFPGA0_XA_HSSIParameter1,
 									   BIT(8));
 
-	अगर (!dm_odm->RFCalibrateInfo.bRfPiEnable) अणु
-		/*  Switch BB to PI mode to करो IQ Calibration. */
-		pi_mode_चयन(adapt, true);
-	पूर्ण
+	if (!dm_odm->RFCalibrateInfo.bRfPiEnable) {
+		/*  Switch BB to PI mode to do IQ Calibration. */
+		pi_mode_switch(adapt, true);
+	}
 
 	/* BB setting */
 	phy_set_bb_reg(adapt, rFPGA0_RFMOD, BIT(24), 0x00);
@@ -1013,12 +1012,12 @@ u32 rtw_hal_पढ़ो_rfreg(काष्ठा adapter *adapt, क्रम�
 	phy_set_bb_reg(adapt, rFPGA0_XA_RFInterfaceOE, BIT(10), 0x00);
 	phy_set_bb_reg(adapt, rFPGA0_XB_RFInterfaceOE, BIT(10), 0x00);
 
-	अगर (is2t) अणु
+	if (is2t) {
 		phy_set_bb_reg(adapt, rFPGA0_XA_LSSIParameter, bMaskDWord,
 			       0x00010000);
 		phy_set_bb_reg(adapt, rFPGA0_XB_LSSIParameter, bMaskDWord,
 			       0x00010000);
-	पूर्ण
+	}
 
 	/* MAC settings */
 	mac_setting_calibration(adapt, iqk_mac_reg,
@@ -1028,7 +1027,7 @@ u32 rtw_hal_पढ़ो_rfreg(काष्ठा adapter *adapt, क्रम�
 	/* AP or IQK */
 	phy_set_bb_reg(adapt, rConfig_AntA, bMaskDWord, 0x0f600000);
 
-	अगर (is2t)
+	if (is2t)
 		phy_set_bb_reg(adapt, rConfig_AntB, bMaskDWord, 0x0f600000);
 
 	/*  IQ calibration setting */
@@ -1036,84 +1035,84 @@ u32 rtw_hal_पढ़ो_rfreg(काष्ठा adapter *adapt, क्रम�
 	phy_set_bb_reg(adapt, rTx_IQK, bMaskDWord, 0x01007c00);
 	phy_set_bb_reg(adapt, rRx_IQK, bMaskDWord, 0x81004800);
 
-	क्रम (i = 0; i < retry_count; i++) अणु
+	for (i = 0; i < retry_count; i++) {
 		path_a_ok = phy_path_a_iqk(adapt, is2t);
-		अगर (path_a_ok == 0x01) अणु
-			result[t][0] = (phy_query_bb_reg(adapt, rTx_Power_Beक्रमe_IQK_A,
+		if (path_a_ok == 0x01) {
+			result[t][0] = (phy_query_bb_reg(adapt, rTx_Power_Before_IQK_A,
 							 bMaskDWord) & 0x3FF0000) >> 16;
 			result[t][1] = (phy_query_bb_reg(adapt, rTx_Power_After_IQK_A,
 							 bMaskDWord) & 0x3FF0000) >> 16;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	क्रम (i = 0; i < retry_count; i++) अणु
+	for (i = 0; i < retry_count; i++) {
 		path_a_ok = phy_path_a_rx_iqk(adapt, is2t);
-		अगर (path_a_ok == 0x03) अणु
-			result[t][2] = (phy_query_bb_reg(adapt, rRx_Power_Beक्रमe_IQK_A_2,
+		if (path_a_ok == 0x03) {
+			result[t][2] = (phy_query_bb_reg(adapt, rRx_Power_Before_IQK_A_2,
 							 bMaskDWord) & 0x3FF0000) >> 16;
 			result[t][3] = (phy_query_bb_reg(adapt, rRx_Power_After_IQK_A_2,
 							 bMaskDWord) & 0x3FF0000) >> 16;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ODM_RT_TRACE(dm_odm, ODM_COMP_CALIBRATION, ODM_DBG_LOUD,
 			     ("Path A Rx IQK Fail!!\n"));
-	पूर्ण
+	}
 
-	अगर (path_a_ok == 0x00) अणु
+	if (path_a_ok == 0x00) {
 		ODM_RT_TRACE(dm_odm, ODM_COMP_CALIBRATION, ODM_DBG_LOUD,
 			     ("Path A IQK failed!!\n"));
-	पूर्ण
+	}
 
-	अगर (is2t) अणु
+	if (is2t) {
 		path_a_standby(adapt);
 
 		/*  Turn Path B ADDA on */
 		path_adda_on(adapt, adda_reg, false, is2t);
 
-		क्रम (i = 0; i < retry_count; i++) अणु
+		for (i = 0; i < retry_count; i++) {
 			path_b_ok = phy_path_b_iqk(adapt);
-			अगर (path_b_ok == 0x03) अणु
-				result[t][4] = (phy_query_bb_reg(adapt, rTx_Power_Beक्रमe_IQK_B,
+			if (path_b_ok == 0x03) {
+				result[t][4] = (phy_query_bb_reg(adapt, rTx_Power_Before_IQK_B,
 								 bMaskDWord) & 0x3FF0000) >> 16;
 				result[t][5] = (phy_query_bb_reg(adapt, rTx_Power_After_IQK_B,
 								 bMaskDWord) & 0x3FF0000) >> 16;
-				result[t][6] = (phy_query_bb_reg(adapt, rRx_Power_Beक्रमe_IQK_B_2,
+				result[t][6] = (phy_query_bb_reg(adapt, rRx_Power_Before_IQK_B_2,
 								 bMaskDWord) & 0x3FF0000) >> 16;
 				result[t][7] = (phy_query_bb_reg(adapt, rRx_Power_After_IQK_B_2,
 								 bMaskDWord) & 0x3FF0000) >> 16;
-				अवरोध;
-			पूर्ण अन्यथा अगर (i == (retry_count - 1) && path_b_ok == 0x01) अणु	/* Tx IQK OK */
-				result[t][4] = (phy_query_bb_reg(adapt, rTx_Power_Beक्रमe_IQK_B,
+				break;
+			} else if (i == (retry_count - 1) && path_b_ok == 0x01) {	/* Tx IQK OK */
+				result[t][4] = (phy_query_bb_reg(adapt, rTx_Power_Before_IQK_B,
 								 bMaskDWord) & 0x3FF0000) >> 16;
 				result[t][5] = (phy_query_bb_reg(adapt, rTx_Power_After_IQK_B,
 								 bMaskDWord) & 0x3FF0000) >> 16;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (path_b_ok == 0x00) अणु
+		if (path_b_ok == 0x00) {
 			ODM_RT_TRACE(dm_odm, ODM_COMP_CALIBRATION, ODM_DBG_LOUD,
 				     ("Path B IQK failed!!\n"));
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Back to BB mode, load original value */
 	phy_set_bb_reg(adapt, rFPGA0_IQK, bMaskDWord, 0);
 
-	अगर (t != 0) अणु
-		अगर (!dm_odm->RFCalibrateInfo.bRfPiEnable) अणु
+	if (t != 0) {
+		if (!dm_odm->RFCalibrateInfo.bRfPiEnable) {
 			/* Switch back BB to SI mode after
 			 * finish IQ Calibration.
 			 */
-			pi_mode_चयन(adapt, false);
-		पूर्ण
+			pi_mode_switch(adapt, false);
+		}
 
-		/*  Reload ADDA घातer saving parameters */
+		/*  Reload ADDA power saving parameters */
 		reload_adda_reg(adapt, adda_reg, dm_odm->RFCalibrateInfo.ADDA_backup,
 				IQK_ADDA_REG_NUM);
 
 		/*  Reload MAC parameters */
-		reload_mac_रेजिस्टरs(adapt, iqk_mac_reg,
+		reload_mac_registers(adapt, iqk_mac_reg,
 				     dm_odm->RFCalibrateInfo.IQK_MAC_backup);
 
 		reload_adda_reg(adapt, iqk_bb_reg_92c, dm_odm->RFCalibrateInfo.IQK_BB_backup,
@@ -1122,38 +1121,38 @@ u32 rtw_hal_पढ़ो_rfreg(काष्ठा adapter *adapt, क्रम�
 		/*  Restore RX initial gain */
 		phy_set_bb_reg(adapt, rFPGA0_XA_LSSIParameter,
 			       bMaskDWord, 0x00032ed3);
-		अगर (is2t)
+		if (is2t)
 			phy_set_bb_reg(adapt, rFPGA0_XB_LSSIParameter,
 				       bMaskDWord, 0x00032ed3);
 
-		/* load 0xe30 IQC शेष value */
+		/* load 0xe30 IQC default value */
 		phy_set_bb_reg(adapt, rTx_IQK_Tone_A, bMaskDWord, 0x01008c00);
 		phy_set_bb_reg(adapt, rRx_IQK_Tone_A, bMaskDWord, 0x01008c00);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम phy_lc_calibrate(काष्ठा adapter *adapt, bool is2t)
-अणु
-	u8 पंचांगpreg;
+static void phy_lc_calibrate(struct adapter *adapt, bool is2t)
+{
+	u8 tmpreg;
 	u32 rf_a_mode = 0, rf_b_mode = 0, lc_cal;
 
 	/* Check continuous TX and Packet TX */
-	पंचांगpreg = usb_पढ़ो8(adapt, 0xd03);
+	tmpreg = usb_read8(adapt, 0xd03);
 
-	अगर ((पंचांगpreg & 0x70) != 0)
-		usb_ग_लिखो8(adapt, 0xd03, पंचांगpreg & 0x8F);
-	अन्यथा
-		usb_ग_लिखो8(adapt, REG_TXPAUSE, 0xFF);
+	if ((tmpreg & 0x70) != 0)
+		usb_write8(adapt, 0xd03, tmpreg & 0x8F);
+	else
+		usb_write8(adapt, REG_TXPAUSE, 0xFF);
 
-	अगर ((पंचांगpreg & 0x70) != 0) अणु
+	if ((tmpreg & 0x70) != 0) {
 		/* 1. Read original RF mode */
 		/* Path-A */
-		rf_a_mode = rtw_hal_पढ़ो_rfreg(adapt, RF_PATH_A, RF_AC,
+		rf_a_mode = rtw_hal_read_rfreg(adapt, RF_PATH_A, RF_AC,
 					       bMask12Bits);
 
 		/* Path-B */
-		अगर (is2t)
-			rf_b_mode = rtw_hal_पढ़ो_rfreg(adapt, RF_PATH_B, RF_AC,
+		if (is2t)
+			rf_b_mode = rtw_hal_read_rfreg(adapt, RF_PATH_B, RF_AC,
 						       bMask12Bits);
 
 		/* 2. Set RF mode = standby mode */
@@ -1162,13 +1161,13 @@ u32 rtw_hal_पढ़ो_rfreg(काष्ठा adapter *adapt, क्रम�
 			       (rf_a_mode & 0x8FFFF) | 0x10000);
 
 		/* Path-B */
-		अगर (is2t)
+		if (is2t)
 			phy_set_rf_reg(adapt, RF_PATH_B, RF_AC, bMask12Bits,
 				       (rf_b_mode & 0x8FFFF) | 0x10000);
-	पूर्ण
+	}
 
 	/* 3. Read RF reg18 */
-	lc_cal = rtw_hal_पढ़ो_rfreg(adapt, RF_PATH_A, RF_CHNLBW, bMask12Bits);
+	lc_cal = rtw_hal_read_rfreg(adapt, RF_PATH_A, RF_CHNLBW, bMask12Bits);
 
 	/* 4. Set LC calibration begin bit15 */
 	phy_set_rf_reg(adapt, RF_PATH_A, RF_CHNLBW, bMask12Bits,
@@ -1177,53 +1176,53 @@ u32 rtw_hal_पढ़ो_rfreg(काष्ठा adapter *adapt, क्रम�
 	msleep(100);
 
 	/* Restore original situation */
-	अगर ((पंचांगpreg & 0x70) != 0) अणु
-		/* Deal with continuous TX हाल */
+	if ((tmpreg & 0x70) != 0) {
+		/* Deal with continuous TX case */
 		/* Path-A */
-		usb_ग_लिखो8(adapt, 0xd03, पंचांगpreg);
+		usb_write8(adapt, 0xd03, tmpreg);
 		phy_set_rf_reg(adapt, RF_PATH_A, RF_AC, bMask12Bits, rf_a_mode);
 
 		/* Path-B */
-		अगर (is2t)
+		if (is2t)
 			phy_set_rf_reg(adapt, RF_PATH_B, RF_AC, bMask12Bits,
 				       rf_b_mode);
-	पूर्ण अन्यथा अणु
-		/* Deal with Packet TX हाल */
-		usb_ग_लिखो8(adapt, REG_TXPAUSE, 0x00);
-	पूर्ण
-पूर्ण
+	} else {
+		/* Deal with Packet TX case */
+		usb_write8(adapt, REG_TXPAUSE, 0x00);
+	}
+}
 
-व्योम rtl88eu_phy_iq_calibrate(काष्ठा adapter *adapt, bool recovery)
-अणु
-	काष्ठा odm_dm_काष्ठा *dm_odm = &adapt->HalData->odmpriv;
+void rtl88eu_phy_iq_calibrate(struct adapter *adapt, bool recovery)
+{
+	struct odm_dm_struct *dm_odm = &adapt->HalData->odmpriv;
 	s32 result[4][8];
 	u8 i, final;
 	bool pathaok, pathbok;
 	s32 reg_e94, reg_e9c, reg_ea4, reg_eb4, reg_ebc, reg_ec4;
 	bool is12simular, is13simular, is23simular;
-	u32 iqk_bb_reg_92c[IQK_BB_REG_NUM] = अणु
+	u32 iqk_bb_reg_92c[IQK_BB_REG_NUM] = {
 		rOFDM0_XARxIQImbalance, rOFDM0_XBRxIQImbalance,
 		rOFDM0_ECCAThreshold, rOFDM0_AGCRSSITable,
 		rOFDM0_XATxIQImbalance, rOFDM0_XBTxIQImbalance,
 		rOFDM0_XCTxAFE, rOFDM0_XDTxAFE,
-		rOFDM0_RxIQExtAntaपूर्ण;
+		rOFDM0_RxIQExtAnta};
 	bool is2t;
 
 	is2t = false;
 
-	अगर (!(dm_odm->SupportAbility & ODM_RF_CALIBRATION))
-		वापस;
+	if (!(dm_odm->SupportAbility & ODM_RF_CALIBRATION))
+		return;
 
-	अगर (recovery) अणु
+	if (recovery) {
 		ODM_RT_TRACE(dm_odm, ODM_COMP_INIT, ODM_DBG_LOUD,
 			     ("phy_iq_calibrate: Return due to recovery!\n"));
 		reload_adda_reg(adapt, iqk_bb_reg_92c,
 				dm_odm->RFCalibrateInfo.IQK_BB_backup_recover, 9);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	स_रखो(result, 0, माप(result));
-	क्रम (i = 0; i < 8; i += 2)
+	memset(result, 0, sizeof(result));
+	for (i = 0; i < 8; i += 2)
 		result[3][i] = 0x100;
 
 	final = 0xff;
@@ -1233,41 +1232,41 @@ u32 rtw_hal_पढ़ो_rfreg(काष्ठा adapter *adapt, क्रम�
 	is23simular = false;
 	is13simular = false;
 
-	क्रम (i = 0; i < 3; i++) अणु
+	for (i = 0; i < 3; i++) {
 		phy_iq_calibrate(adapt, result, i, is2t);
 
-		अगर (i == 1) अणु
+		if (i == 1) {
 			is12simular = simularity_compare(adapt, result, 0, 1);
-			अगर (is12simular) अणु
+			if (is12simular) {
 				final = 0;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (i == 2) अणु
+		if (i == 2) {
 			is13simular = simularity_compare(adapt, result, 0, 2);
-			अगर (is13simular) अणु
+			if (is13simular) {
 				final = 0;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			is23simular = simularity_compare(adapt, result, 1, 2);
-			अगर (is23simular)
+			if (is23simular)
 				final = 1;
-			अन्यथा
+			else
 				final = 3;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (i = 0; i < 4; i++) अणु
+	for (i = 0; i < 4; i++) {
 		reg_e94 = result[i][0];
 		reg_e9c = result[i][1];
 		reg_ea4 = result[i][2];
 		reg_eb4 = result[i][4];
 		reg_ebc = result[i][5];
 		reg_ec4 = result[i][6];
-	पूर्ण
+	}
 
-	अगर (final != 0xff) अणु
+	if (final != 0xff) {
 		reg_e94 = result[final][0];
 		reg_e9c = result[final][1];
 		reg_ea4 = result[final][2];
@@ -1280,49 +1279,49 @@ u32 rtw_hal_पढ़ो_rfreg(काष्ठा adapter *adapt, क्रम�
 		reg_ec4 = result[final][6];
 		pathaok = true;
 		pathbok = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		ODM_RT_TRACE(dm_odm, ODM_COMP_CALIBRATION, ODM_DBG_LOUD,
 			     ("IQK: FAIL use default value\n"));
 		dm_odm->RFCalibrateInfo.RegE94 = 0x100;
 		dm_odm->RFCalibrateInfo.RegEB4 = 0x100;
 		dm_odm->RFCalibrateInfo.RegE9C = 0x0;
 		dm_odm->RFCalibrateInfo.RegEBC = 0x0;
-	पूर्ण
-	अगर (reg_e94 != 0)
+	}
+	if (reg_e94 != 0)
 		patha_fill_iqk(adapt, pathaok, result, final,
 			       (reg_ea4 == 0));
-	अगर (is2t) अणु
-		अगर (reg_eb4 != 0)
+	if (is2t) {
+		if (reg_eb4 != 0)
 			pathb_fill_iqk(adapt, pathbok, result, final,
 				       (reg_ec4 == 0));
-	पूर्ण
+	}
 
-	अगर (final < 4) अणु
-		क्रम (i = 0; i < IQK_Matrix_REG_NUM; i++)
+	if (final < 4) {
+		for (i = 0; i < IQK_Matrix_REG_NUM; i++)
 			dm_odm->RFCalibrateInfo.IQKMatrixRegSetting[0].Value[0][i] = result[final][i];
 		dm_odm->RFCalibrateInfo.IQKMatrixRegSetting[0].bIQKDone = true;
-	पूर्ण
+	}
 
-	save_adda_रेजिस्टरs(adapt, iqk_bb_reg_92c,
+	save_adda_registers(adapt, iqk_bb_reg_92c,
 			    dm_odm->RFCalibrateInfo.IQK_BB_backup_recover, 9);
-पूर्ण
+}
 
-व्योम rtl88eu_phy_lc_calibrate(काष्ठा adapter *adapt)
-अणु
-	u32 समयout = 2000, समयcount = 0;
-	काष्ठा odm_dm_काष्ठा *dm_odm = &adapt->HalData->odmpriv;
+void rtl88eu_phy_lc_calibrate(struct adapter *adapt)
+{
+	u32 timeout = 2000, timecount = 0;
+	struct odm_dm_struct *dm_odm = &adapt->HalData->odmpriv;
 
-	अगर (!(dm_odm->SupportAbility & ODM_RF_CALIBRATION))
-		वापस;
+	if (!(dm_odm->SupportAbility & ODM_RF_CALIBRATION))
+		return;
 
-	जबतक (*dm_odm->pbScanInProcess && समयcount < समयout) अणु
+	while (*dm_odm->pbScanInProcess && timecount < timeout) {
 		mdelay(50);
-		समयcount += 50;
-	पूर्ण
+		timecount += 50;
+	}
 
 	dm_odm->RFCalibrateInfo.bLCKInProgress = true;
 
 	phy_lc_calibrate(adapt, false);
 
 	dm_odm->RFCalibrateInfo.bLCKInProgress = false;
-पूर्ण
+}

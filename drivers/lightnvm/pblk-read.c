@@ -1,82 +1,81 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2016 CNEX Lअसल
- * Initial release: Javier Gonzalez <javier@cnexद_असल.com>
- *                  Matias Bjorling <matias@cnexद_असल.com>
+ * Copyright (C) 2016 CNEX Labs
+ * Initial release: Javier Gonzalez <javier@cnexlabs.com>
+ *                  Matias Bjorling <matias@cnexlabs.com>
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License version
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
  * 2 as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License क्रम more details.
+ * General Public License for more details.
  *
- * pblk-पढ़ो.c - pblk's पढ़ो path
+ * pblk-read.c - pblk's read path
  */
 
-#समावेश "pblk.h"
+#include "pblk.h"
 
 /*
- * There is no guarantee that the value पढ़ो from cache has not been updated and
- * resides at another location in the cache. We guarantee though that अगर the
- * value is पढ़ो from the cache, it beदीर्घs to the mapped lba. In order to
- * guarantee and order between ग_लिखोs and पढ़ोs are ordered, a flush must be
+ * There is no guarantee that the value read from cache has not been updated and
+ * resides at another location in the cache. We guarantee though that if the
+ * value is read from the cache, it belongs to the mapped lba. In order to
+ * guarantee and order between writes and reads are ordered, a flush must be
  * issued.
  */
-अटल पूर्णांक pblk_पढ़ो_from_cache(काष्ठा pblk *pblk, काष्ठा bio *bio,
-				sector_t lba, काष्ठा ppa_addr ppa)
-अणु
-#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
-	/* Callers must ensure that the ppa poपूर्णांकs to a cache address */
+static int pblk_read_from_cache(struct pblk *pblk, struct bio *bio,
+				sector_t lba, struct ppa_addr ppa)
+{
+#ifdef CONFIG_NVM_PBLK_DEBUG
+	/* Callers must ensure that the ppa points to a cache address */
 	BUG_ON(pblk_ppa_empty(ppa));
 	BUG_ON(!pblk_addr_in_cache(ppa));
-#पूर्ण_अगर
+#endif
 
-	वापस pblk_rb_copy_to_bio(&pblk->rwb, bio, lba, ppa);
-पूर्ण
+	return pblk_rb_copy_to_bio(&pblk->rwb, bio, lba, ppa);
+}
 
-अटल पूर्णांक pblk_पढ़ो_ppalist_rq(काष्ठा pblk *pblk, काष्ठा nvm_rq *rqd,
-				 काष्ठा bio *bio, sector_t blba,
+static int pblk_read_ppalist_rq(struct pblk *pblk, struct nvm_rq *rqd,
+				 struct bio *bio, sector_t blba,
 				 bool *from_cache)
-अणु
-	व्योम *meta_list = rqd->meta_list;
-	पूर्णांक nr_secs, i;
+{
+	void *meta_list = rqd->meta_list;
+	int nr_secs, i;
 
 retry:
 	nr_secs = pblk_lookup_l2p_seq(pblk, rqd->ppa_list, blba, rqd->nr_ppas,
 					from_cache);
 
-	अगर (!*from_cache)
-		जाओ end;
+	if (!*from_cache)
+		goto end;
 
-	क्रम (i = 0; i < nr_secs; i++) अणु
-		काष्ठा pblk_sec_meta *meta = pblk_get_meta(pblk, meta_list, i);
+	for (i = 0; i < nr_secs; i++) {
+		struct pblk_sec_meta *meta = pblk_get_meta(pblk, meta_list, i);
 		sector_t lba = blba + i;
 
-		अगर (pblk_ppa_empty(rqd->ppa_list[i])) अणु
+		if (pblk_ppa_empty(rqd->ppa_list[i])) {
 			__le64 addr_empty = cpu_to_le64(ADDR_EMPTY);
 
 			meta->lba = addr_empty;
-		पूर्ण अन्यथा अगर (pblk_addr_in_cache(rqd->ppa_list[i])) अणु
+		} else if (pblk_addr_in_cache(rqd->ppa_list[i])) {
 			/*
-			 * Try to पढ़ो from ग_लिखो buffer. The address is later
-			 * checked on the ग_लिखो buffer to prevent retrieving
+			 * Try to read from write buffer. The address is later
+			 * checked on the write buffer to prevent retrieving
 			 * overwritten data.
 			 */
-			अगर (!pblk_पढ़ो_from_cache(pblk, bio, lba,
-							rqd->ppa_list[i])) अणु
-				अगर (i == 0) अणु
+			if (!pblk_read_from_cache(pblk, bio, lba,
+							rqd->ppa_list[i])) {
+				if (i == 0) {
 					/*
 					 * We didn't call with bio_advance()
 					 * yet, so we can just retry.
 					 */
-					जाओ retry;
-				पूर्ण अन्यथा अणु
+					goto retry;
+				} else {
 					/*
-					 * We alपढ़ोy call bio_advance()
+					 * We already call bio_advance()
 					 * so we cannot retry and we need
 					 * to quit that function in order
 					 * to allow caller to handle the bio
@@ -84,236 +83,236 @@ retry:
 					 * position.
 					 */
 					nr_secs = i;
-					जाओ end;
-				पूर्ण
-			पूर्ण
+					goto end;
+				}
+			}
 			meta->lba = cpu_to_le64(lba);
-#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
-			atomic_दीर्घ_inc(&pblk->cache_पढ़ोs);
-#पूर्ण_अगर
-		पूर्ण
+#ifdef CONFIG_NVM_PBLK_DEBUG
+			atomic_long_inc(&pblk->cache_reads);
+#endif
+		}
 		bio_advance(bio, PBLK_EXPOSED_PAGE_SIZE);
-	पूर्ण
+	}
 
 end:
-	अगर (pblk_io_aligned(pblk, nr_secs))
+	if (pblk_io_aligned(pblk, nr_secs))
 		rqd->is_seq = 1;
 
-#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
-	atomic_दीर्घ_add(nr_secs, &pblk->inflight_पढ़ोs);
-#पूर्ण_अगर
+#ifdef CONFIG_NVM_PBLK_DEBUG
+	atomic_long_add(nr_secs, &pblk->inflight_reads);
+#endif
 
-	वापस nr_secs;
-पूर्ण
+	return nr_secs;
+}
 
 
-अटल व्योम pblk_पढ़ो_check_seq(काष्ठा pblk *pblk, काष्ठा nvm_rq *rqd,
+static void pblk_read_check_seq(struct pblk *pblk, struct nvm_rq *rqd,
 				sector_t blba)
-अणु
-	व्योम *meta_list = rqd->meta_list;
-	पूर्णांक nr_lbas = rqd->nr_ppas;
-	पूर्णांक i;
+{
+	void *meta_list = rqd->meta_list;
+	int nr_lbas = rqd->nr_ppas;
+	int i;
 
-	अगर (!pblk_is_oob_meta_supported(pblk))
-		वापस;
+	if (!pblk_is_oob_meta_supported(pblk))
+		return;
 
-	क्रम (i = 0; i < nr_lbas; i++) अणु
-		काष्ठा pblk_sec_meta *meta = pblk_get_meta(pblk, meta_list, i);
+	for (i = 0; i < nr_lbas; i++) {
+		struct pblk_sec_meta *meta = pblk_get_meta(pblk, meta_list, i);
 		u64 lba = le64_to_cpu(meta->lba);
 
-		अगर (lba == ADDR_EMPTY)
-			जारी;
+		if (lba == ADDR_EMPTY)
+			continue;
 
-		अगर (lba != blba + i) अणु
-#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
-			काष्ठा ppa_addr *ppa_list = nvm_rq_to_ppa_list(rqd);
+		if (lba != blba + i) {
+#ifdef CONFIG_NVM_PBLK_DEBUG
+			struct ppa_addr *ppa_list = nvm_rq_to_ppa_list(rqd);
 
-			prपूर्णांक_ppa(pblk, &ppa_list[i], "seq", i);
-#पूर्ण_अगर
+			print_ppa(pblk, &ppa_list[i], "seq", i);
+#endif
 			pblk_err(pblk, "corrupted read LBA (%llu/%llu)\n",
 							lba, (u64)blba + i);
 			WARN_ON(1);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
  * There can be holes in the lba list.
  */
-अटल व्योम pblk_पढ़ो_check_अक्रम(काष्ठा pblk *pblk, काष्ठा nvm_rq *rqd,
-				 u64 *lba_list, पूर्णांक nr_lbas)
-अणु
-	व्योम *meta_lba_list = rqd->meta_list;
-	पूर्णांक i, j;
+static void pblk_read_check_rand(struct pblk *pblk, struct nvm_rq *rqd,
+				 u64 *lba_list, int nr_lbas)
+{
+	void *meta_lba_list = rqd->meta_list;
+	int i, j;
 
-	अगर (!pblk_is_oob_meta_supported(pblk))
-		वापस;
+	if (!pblk_is_oob_meta_supported(pblk))
+		return;
 
-	क्रम (i = 0, j = 0; i < nr_lbas; i++) अणु
-		काष्ठा pblk_sec_meta *meta = pblk_get_meta(pblk,
+	for (i = 0, j = 0; i < nr_lbas; i++) {
+		struct pblk_sec_meta *meta = pblk_get_meta(pblk,
 							   meta_lba_list, j);
 		u64 lba = lba_list[i];
 		u64 meta_lba;
 
-		अगर (lba == ADDR_EMPTY)
-			जारी;
+		if (lba == ADDR_EMPTY)
+			continue;
 
 		meta_lba = le64_to_cpu(meta->lba);
 
-		अगर (lba != meta_lba) अणु
-#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
-			काष्ठा ppa_addr *ppa_list = nvm_rq_to_ppa_list(rqd);
+		if (lba != meta_lba) {
+#ifdef CONFIG_NVM_PBLK_DEBUG
+			struct ppa_addr *ppa_list = nvm_rq_to_ppa_list(rqd);
 
-			prपूर्णांक_ppa(pblk, &ppa_list[j], "rnd", j);
-#पूर्ण_अगर
+			print_ppa(pblk, &ppa_list[j], "rnd", j);
+#endif
 			pblk_err(pblk, "corrupted read LBA (%llu/%llu)\n",
 							meta_lba, lba);
 			WARN_ON(1);
-		पूर्ण
+		}
 
 		j++;
-	पूर्ण
+	}
 
 	WARN_ONCE(j != rqd->nr_ppas, "pblk: corrupted random request\n");
-पूर्ण
+}
 
-अटल व्योम pblk_end_user_पढ़ो(काष्ठा bio *bio, पूर्णांक error)
-अणु
-	अगर (error && error != NVM_RSP_WARN_HIGHECC)
+static void pblk_end_user_read(struct bio *bio, int error)
+{
+	if (error && error != NVM_RSP_WARN_HIGHECC)
 		bio_io_error(bio);
-	अन्यथा
+	else
 		bio_endio(bio);
-पूर्ण
+}
 
-अटल व्योम __pblk_end_io_पढ़ो(काष्ठा pblk *pblk, काष्ठा nvm_rq *rqd,
+static void __pblk_end_io_read(struct pblk *pblk, struct nvm_rq *rqd,
 			       bool put_line)
-अणु
-	काष्ठा pblk_g_ctx *r_ctx = nvm_rq_to_pdu(rqd);
-	काष्ठा bio *पूर्णांक_bio = rqd->bio;
-	अचिन्हित दीर्घ start_समय = r_ctx->start_समय;
+{
+	struct pblk_g_ctx *r_ctx = nvm_rq_to_pdu(rqd);
+	struct bio *int_bio = rqd->bio;
+	unsigned long start_time = r_ctx->start_time;
 
-	bio_end_io_acct(पूर्णांक_bio, start_समय);
+	bio_end_io_acct(int_bio, start_time);
 
-	अगर (rqd->error)
-		pblk_log_पढ़ो_err(pblk, rqd);
+	if (rqd->error)
+		pblk_log_read_err(pblk, rqd);
 
-	pblk_पढ़ो_check_seq(pblk, rqd, r_ctx->lba);
-	bio_put(पूर्णांक_bio);
+	pblk_read_check_seq(pblk, rqd, r_ctx->lba);
+	bio_put(int_bio);
 
-	अगर (put_line)
+	if (put_line)
 		pblk_rq_to_line_put(pblk, rqd);
 
-#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
-	atomic_दीर्घ_add(rqd->nr_ppas, &pblk->sync_पढ़ोs);
-	atomic_दीर्घ_sub(rqd->nr_ppas, &pblk->inflight_पढ़ोs);
-#पूर्ण_अगर
+#ifdef CONFIG_NVM_PBLK_DEBUG
+	atomic_long_add(rqd->nr_ppas, &pblk->sync_reads);
+	atomic_long_sub(rqd->nr_ppas, &pblk->inflight_reads);
+#endif
 
-	pblk_मुक्त_rqd(pblk, rqd, PBLK_READ);
+	pblk_free_rqd(pblk, rqd, PBLK_READ);
 	atomic_dec(&pblk->inflight_io);
-पूर्ण
+}
 
-अटल व्योम pblk_end_io_पढ़ो(काष्ठा nvm_rq *rqd)
-अणु
-	काष्ठा pblk *pblk = rqd->निजी;
-	काष्ठा pblk_g_ctx *r_ctx = nvm_rq_to_pdu(rqd);
-	काष्ठा bio *bio = (काष्ठा bio *)r_ctx->निजी;
+static void pblk_end_io_read(struct nvm_rq *rqd)
+{
+	struct pblk *pblk = rqd->private;
+	struct pblk_g_ctx *r_ctx = nvm_rq_to_pdu(rqd);
+	struct bio *bio = (struct bio *)r_ctx->private;
 
-	pblk_end_user_पढ़ो(bio, rqd->error);
-	__pblk_end_io_पढ़ो(pblk, rqd, true);
-पूर्ण
+	pblk_end_user_read(bio, rqd->error);
+	__pblk_end_io_read(pblk, rqd, true);
+}
 
-अटल व्योम pblk_पढ़ो_rq(काष्ठा pblk *pblk, काष्ठा nvm_rq *rqd, काष्ठा bio *bio,
+static void pblk_read_rq(struct pblk *pblk, struct nvm_rq *rqd, struct bio *bio,
 			 sector_t lba, bool *from_cache)
-अणु
-	काष्ठा pblk_sec_meta *meta = pblk_get_meta(pblk, rqd->meta_list, 0);
-	काष्ठा ppa_addr ppa;
+{
+	struct pblk_sec_meta *meta = pblk_get_meta(pblk, rqd->meta_list, 0);
+	struct ppa_addr ppa;
 
 	pblk_lookup_l2p_seq(pblk, &ppa, lba, 1, from_cache);
 
-#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
-	atomic_दीर्घ_inc(&pblk->inflight_पढ़ोs);
-#पूर्ण_अगर
+#ifdef CONFIG_NVM_PBLK_DEBUG
+	atomic_long_inc(&pblk->inflight_reads);
+#endif
 
 retry:
-	अगर (pblk_ppa_empty(ppa)) अणु
+	if (pblk_ppa_empty(ppa)) {
 		__le64 addr_empty = cpu_to_le64(ADDR_EMPTY);
 
 		meta->lba = addr_empty;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Try to पढ़ो from ग_लिखो buffer. The address is later checked on the
-	 * ग_लिखो buffer to prevent retrieving overwritten data.
+	/* Try to read from write buffer. The address is later checked on the
+	 * write buffer to prevent retrieving overwritten data.
 	 */
-	अगर (pblk_addr_in_cache(ppa)) अणु
-		अगर (!pblk_पढ़ो_from_cache(pblk, bio, lba, ppa)) अणु
+	if (pblk_addr_in_cache(ppa)) {
+		if (!pblk_read_from_cache(pblk, bio, lba, ppa)) {
 			pblk_lookup_l2p_seq(pblk, &ppa, lba, 1, from_cache);
-			जाओ retry;
-		पूर्ण
+			goto retry;
+		}
 
 		meta->lba = cpu_to_le64(lba);
 
-#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
-		atomic_दीर्घ_inc(&pblk->cache_पढ़ोs);
-#पूर्ण_अगर
-	पूर्ण अन्यथा अणु
+#ifdef CONFIG_NVM_PBLK_DEBUG
+		atomic_long_inc(&pblk->cache_reads);
+#endif
+	} else {
 		rqd->ppa_addr = ppa;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम pblk_submit_पढ़ो(काष्ठा pblk *pblk, काष्ठा bio *bio)
-अणु
+void pblk_submit_read(struct pblk *pblk, struct bio *bio)
+{
 	sector_t blba = pblk_get_lba(bio);
-	अचिन्हित पूर्णांक nr_secs = pblk_get_secs(bio);
+	unsigned int nr_secs = pblk_get_secs(bio);
 	bool from_cache;
-	काष्ठा pblk_g_ctx *r_ctx;
-	काष्ठा nvm_rq *rqd;
-	काष्ठा bio *पूर्णांक_bio, *split_bio;
-	अचिन्हित दीर्घ start_समय;
+	struct pblk_g_ctx *r_ctx;
+	struct nvm_rq *rqd;
+	struct bio *int_bio, *split_bio;
+	unsigned long start_time;
 
-	start_समय = bio_start_io_acct(bio);
+	start_time = bio_start_io_acct(bio);
 
 	rqd = pblk_alloc_rqd(pblk, PBLK_READ);
 
 	rqd->opcode = NVM_OP_PREAD;
 	rqd->nr_ppas = nr_secs;
-	rqd->निजी = pblk;
-	rqd->end_io = pblk_end_io_पढ़ो;
+	rqd->private = pblk;
+	rqd->end_io = pblk_end_io_read;
 
 	r_ctx = nvm_rq_to_pdu(rqd);
-	r_ctx->start_समय = start_समय;
+	r_ctx->start_time = start_time;
 	r_ctx->lba = blba;
 
-	अगर (pblk_alloc_rqd_meta(pblk, rqd)) अणु
+	if (pblk_alloc_rqd_meta(pblk, rqd)) {
 		bio_io_error(bio);
-		pblk_मुक्त_rqd(pblk, rqd, PBLK_READ);
-		वापस;
-	पूर्ण
+		pblk_free_rqd(pblk, rqd, PBLK_READ);
+		return;
+	}
 
-	/* Clone पढ़ो bio to deal पूर्णांकernally with:
-	 * -पढ़ो errors when पढ़ोing from drive
-	 * -bio_advance() calls during cache पढ़ोs
+	/* Clone read bio to deal internally with:
+	 * -read errors when reading from drive
+	 * -bio_advance() calls during cache reads
 	 */
-	पूर्णांक_bio = bio_clone_fast(bio, GFP_KERNEL, &pblk_bio_set);
+	int_bio = bio_clone_fast(bio, GFP_KERNEL, &pblk_bio_set);
 
-	अगर (nr_secs > 1)
-		nr_secs = pblk_पढ़ो_ppalist_rq(pblk, rqd, पूर्णांक_bio, blba,
+	if (nr_secs > 1)
+		nr_secs = pblk_read_ppalist_rq(pblk, rqd, int_bio, blba,
 						&from_cache);
-	अन्यथा
-		pblk_पढ़ो_rq(pblk, rqd, पूर्णांक_bio, blba, &from_cache);
+	else
+		pblk_read_rq(pblk, rqd, int_bio, blba, &from_cache);
 
 split_retry:
-	r_ctx->निजी = bio; /* original bio */
-	rqd->bio = पूर्णांक_bio; /* पूर्णांकernal bio */
+	r_ctx->private = bio; /* original bio */
+	rqd->bio = int_bio; /* internal bio */
 
-	अगर (from_cache && nr_secs == rqd->nr_ppas) अणु
-		/* All data was पढ़ो from cache, we can complete the IO. */
-		pblk_end_user_पढ़ो(bio, 0);
+	if (from_cache && nr_secs == rqd->nr_ppas) {
+		/* All data was read from cache, we can complete the IO. */
+		pblk_end_user_read(bio, 0);
 		atomic_inc(&pblk->inflight_io);
-		__pblk_end_io_पढ़ो(pblk, rqd, false);
-	पूर्ण अन्यथा अगर (nr_secs != rqd->nr_ppas) अणु
-		/* The पढ़ो bio request could be partially filled by the ग_लिखो
-		 * buffer, but there are some holes that need to be पढ़ो from
+		__pblk_end_io_read(pblk, rqd, false);
+	} else if (nr_secs != rqd->nr_ppas) {
+		/* The read bio request could be partially filled by the write
+		 * buffer, but there are some holes that need to be read from
 		 * the drive. In order to handle this, we will use block layer
 		 * mechanism to split this request in to smaller ones and make
 		 * a chain of it.
@@ -324,152 +323,152 @@ split_retry:
 		submit_bio_noacct(bio);
 
 		/* New bio contains first N sectors of the previous one, so
-		 * we can जारी to use existing rqd, but we need to shrink
+		 * we can continue to use existing rqd, but we need to shrink
 		 * the number of PPAs in it. New bio is also guaranteed that
 		 * it contains only either data from cache or from drive, newer
 		 * mix of them.
 		 */
 		bio = split_bio;
 		rqd->nr_ppas = nr_secs;
-		अगर (rqd->nr_ppas == 1)
+		if (rqd->nr_ppas == 1)
 			rqd->ppa_addr = rqd->ppa_list[0];
 
-		/* Recreate पूर्णांक_bio - existing might have some needed पूर्णांकernal
-		 * fields modअगरied alपढ़ोy.
+		/* Recreate int_bio - existing might have some needed internal
+		 * fields modified already.
 		 */
-		bio_put(पूर्णांक_bio);
-		पूर्णांक_bio = bio_clone_fast(bio, GFP_KERNEL, &pblk_bio_set);
-		जाओ split_retry;
-	पूर्ण अन्यथा अगर (pblk_submit_io(pblk, rqd, शून्य)) अणु
+		bio_put(int_bio);
+		int_bio = bio_clone_fast(bio, GFP_KERNEL, &pblk_bio_set);
+		goto split_retry;
+	} else if (pblk_submit_io(pblk, rqd, NULL)) {
 		/* Submitting IO to drive failed, let's report an error */
 		rqd->error = -ENODEV;
-		pblk_end_io_पढ़ो(rqd);
-	पूर्ण
-पूर्ण
+		pblk_end_io_read(rqd);
+	}
+}
 
-अटल पूर्णांक पढ़ो_ppalist_rq_gc(काष्ठा pblk *pblk, काष्ठा nvm_rq *rqd,
-			      काष्ठा pblk_line *line, u64 *lba_list,
-			      u64 *paddr_list_gc, अचिन्हित पूर्णांक nr_secs)
-अणु
-	काष्ठा ppa_addr ppa_list_l2p[NVM_MAX_VLBA];
-	काष्ठा ppa_addr ppa_gc;
-	पूर्णांक valid_secs = 0;
-	पूर्णांक i;
+static int read_ppalist_rq_gc(struct pblk *pblk, struct nvm_rq *rqd,
+			      struct pblk_line *line, u64 *lba_list,
+			      u64 *paddr_list_gc, unsigned int nr_secs)
+{
+	struct ppa_addr ppa_list_l2p[NVM_MAX_VLBA];
+	struct ppa_addr ppa_gc;
+	int valid_secs = 0;
+	int i;
 
-	pblk_lookup_l2p_अक्रम(pblk, ppa_list_l2p, lba_list, nr_secs);
+	pblk_lookup_l2p_rand(pblk, ppa_list_l2p, lba_list, nr_secs);
 
-	क्रम (i = 0; i < nr_secs; i++) अणु
-		अगर (lba_list[i] == ADDR_EMPTY)
-			जारी;
+	for (i = 0; i < nr_secs; i++) {
+		if (lba_list[i] == ADDR_EMPTY)
+			continue;
 
 		ppa_gc = addr_to_gen_ppa(pblk, paddr_list_gc[i], line->id);
-		अगर (!pblk_ppa_comp(ppa_list_l2p[i], ppa_gc)) अणु
+		if (!pblk_ppa_comp(ppa_list_l2p[i], ppa_gc)) {
 			paddr_list_gc[i] = lba_list[i] = ADDR_EMPTY;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		rqd->ppa_list[valid_secs++] = ppa_list_l2p[i];
-	पूर्ण
+	}
 
-#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
-	atomic_दीर्घ_add(valid_secs, &pblk->inflight_पढ़ोs);
-#पूर्ण_अगर
+#ifdef CONFIG_NVM_PBLK_DEBUG
+	atomic_long_add(valid_secs, &pblk->inflight_reads);
+#endif
 
-	वापस valid_secs;
-पूर्ण
+	return valid_secs;
+}
 
-अटल पूर्णांक पढ़ो_rq_gc(काष्ठा pblk *pblk, काष्ठा nvm_rq *rqd,
-		      काष्ठा pblk_line *line, sector_t lba,
+static int read_rq_gc(struct pblk *pblk, struct nvm_rq *rqd,
+		      struct pblk_line *line, sector_t lba,
 		      u64 paddr_gc)
-अणु
-	काष्ठा ppa_addr ppa_l2p, ppa_gc;
-	पूर्णांक valid_secs = 0;
+{
+	struct ppa_addr ppa_l2p, ppa_gc;
+	int valid_secs = 0;
 
-	अगर (lba == ADDR_EMPTY)
-		जाओ out;
+	if (lba == ADDR_EMPTY)
+		goto out;
 
 	/* logic error: lba out-of-bounds */
-	अगर (lba >= pblk->capacity) अणु
+	if (lba >= pblk->capacity) {
 		WARN(1, "pblk: read lba out of bounds\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	spin_lock(&pblk->trans_lock);
 	ppa_l2p = pblk_trans_map_get(pblk, lba);
 	spin_unlock(&pblk->trans_lock);
 
 	ppa_gc = addr_to_gen_ppa(pblk, paddr_gc, line->id);
-	अगर (!pblk_ppa_comp(ppa_l2p, ppa_gc))
-		जाओ out;
+	if (!pblk_ppa_comp(ppa_l2p, ppa_gc))
+		goto out;
 
 	rqd->ppa_addr = ppa_l2p;
 	valid_secs = 1;
 
-#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
-	atomic_दीर्घ_inc(&pblk->inflight_पढ़ोs);
-#पूर्ण_अगर
+#ifdef CONFIG_NVM_PBLK_DEBUG
+	atomic_long_inc(&pblk->inflight_reads);
+#endif
 
 out:
-	वापस valid_secs;
-पूर्ण
+	return valid_secs;
+}
 
-पूर्णांक pblk_submit_पढ़ो_gc(काष्ठा pblk *pblk, काष्ठा pblk_gc_rq *gc_rq)
-अणु
-	काष्ठा nvm_rq rqd;
-	पूर्णांक ret = NVM_IO_OK;
+int pblk_submit_read_gc(struct pblk *pblk, struct pblk_gc_rq *gc_rq)
+{
+	struct nvm_rq rqd;
+	int ret = NVM_IO_OK;
 
-	स_रखो(&rqd, 0, माप(काष्ठा nvm_rq));
+	memset(&rqd, 0, sizeof(struct nvm_rq));
 
 	ret = pblk_alloc_rqd_meta(pblk, &rqd);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (gc_rq->nr_secs > 1) अणु
-		gc_rq->secs_to_gc = पढ़ो_ppalist_rq_gc(pblk, &rqd, gc_rq->line,
+	if (gc_rq->nr_secs > 1) {
+		gc_rq->secs_to_gc = read_ppalist_rq_gc(pblk, &rqd, gc_rq->line,
 							gc_rq->lba_list,
 							gc_rq->paddr_list,
 							gc_rq->nr_secs);
-		अगर (gc_rq->secs_to_gc == 1)
+		if (gc_rq->secs_to_gc == 1)
 			rqd.ppa_addr = rqd.ppa_list[0];
-	पूर्ण अन्यथा अणु
-		gc_rq->secs_to_gc = पढ़ो_rq_gc(pblk, &rqd, gc_rq->line,
+	} else {
+		gc_rq->secs_to_gc = read_rq_gc(pblk, &rqd, gc_rq->line,
 							gc_rq->lba_list[0],
 							gc_rq->paddr_list[0]);
-	पूर्ण
+	}
 
-	अगर (!(gc_rq->secs_to_gc))
-		जाओ out;
+	if (!(gc_rq->secs_to_gc))
+		goto out;
 
 	rqd.opcode = NVM_OP_PREAD;
 	rqd.nr_ppas = gc_rq->secs_to_gc;
 
-	अगर (pblk_submit_io_sync(pblk, &rqd, gc_rq->data)) अणु
+	if (pblk_submit_io_sync(pblk, &rqd, gc_rq->data)) {
 		ret = -EIO;
-		जाओ err_मुक्त_dma;
-	पूर्ण
+		goto err_free_dma;
+	}
 
-	pblk_पढ़ो_check_अक्रम(pblk, &rqd, gc_rq->lba_list, gc_rq->nr_secs);
+	pblk_read_check_rand(pblk, &rqd, gc_rq->lba_list, gc_rq->nr_secs);
 
 	atomic_dec(&pblk->inflight_io);
 
-	अगर (rqd.error) अणु
-		atomic_दीर्घ_inc(&pblk->पढ़ो_failed_gc);
-#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
-		pblk_prपूर्णांक_failed_rqd(pblk, &rqd, rqd.error);
-#पूर्ण_अगर
-	पूर्ण
+	if (rqd.error) {
+		atomic_long_inc(&pblk->read_failed_gc);
+#ifdef CONFIG_NVM_PBLK_DEBUG
+		pblk_print_failed_rqd(pblk, &rqd, rqd.error);
+#endif
+	}
 
-#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
-	atomic_दीर्घ_add(gc_rq->secs_to_gc, &pblk->sync_पढ़ोs);
-	atomic_दीर्घ_add(gc_rq->secs_to_gc, &pblk->recov_gc_पढ़ोs);
-	atomic_दीर्घ_sub(gc_rq->secs_to_gc, &pblk->inflight_पढ़ोs);
-#पूर्ण_अगर
+#ifdef CONFIG_NVM_PBLK_DEBUG
+	atomic_long_add(gc_rq->secs_to_gc, &pblk->sync_reads);
+	atomic_long_add(gc_rq->secs_to_gc, &pblk->recov_gc_reads);
+	atomic_long_sub(gc_rq->secs_to_gc, &pblk->inflight_reads);
+#endif
 
 out:
-	pblk_मुक्त_rqd_meta(pblk, &rqd);
-	वापस ret;
+	pblk_free_rqd_meta(pblk, &rqd);
+	return ret;
 
-err_मुक्त_dma:
-	pblk_मुक्त_rqd_meta(pblk, &rqd);
-	वापस ret;
-पूर्ण
+err_free_dma:
+	pblk_free_rqd_meta(pblk, &rqd);
+	return ret;
+}

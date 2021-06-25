@@ -1,38 +1,37 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * lib/hexdump.c
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/minmax.h>
-#समावेश <linux/export.h>
-#समावेश <यंत्र/unaligned.h>
+#include <linux/types.h>
+#include <linux/ctype.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/minmax.h>
+#include <linux/export.h>
+#include <asm/unaligned.h>
 
-स्थिर अक्षर hex_asc[] = "0123456789abcdef";
+const char hex_asc[] = "0123456789abcdef";
 EXPORT_SYMBOL(hex_asc);
-स्थिर अक्षर hex_asc_upper[] = "0123456789ABCDEF";
+const char hex_asc_upper[] = "0123456789ABCDEF";
 EXPORT_SYMBOL(hex_asc_upper);
 
 /**
  * hex_to_bin - convert a hex digit to its real value
- * @ch: ascii अक्षरacter represents hex digit
+ * @ch: ascii character represents hex digit
  *
- * hex_to_bin() converts one hex digit to its actual value or -1 in हाल of bad
+ * hex_to_bin() converts one hex digit to its actual value or -1 in case of bad
  * input.
  */
-पूर्णांक hex_to_bin(अक्षर ch)
-अणु
-	अगर ((ch >= '0') && (ch <= '9'))
-		वापस ch - '0';
-	ch = छोटे(ch);
-	अगर ((ch >= 'a') && (ch <= 'f'))
-		वापस ch - 'a' + 10;
-	वापस -1;
-पूर्ण
+int hex_to_bin(char ch)
+{
+	if ((ch >= '0') && (ch <= '9'))
+		return ch - '0';
+	ch = tolower(ch);
+	if ((ch >= 'a') && (ch <= 'f'))
+		return ch - 'a' + 10;
+	return -1;
+}
 EXPORT_SYMBOL(hex_to_bin);
 
 /**
@@ -41,21 +40,21 @@ EXPORT_SYMBOL(hex_to_bin);
  * @src: ascii hexadecimal string
  * @count: result length
  *
- * Return 0 on success, -EINVAL in हाल of bad input.
+ * Return 0 on success, -EINVAL in case of bad input.
  */
-पूर्णांक hex2bin(u8 *dst, स्थिर अक्षर *src, माप_प्रकार count)
-अणु
-	जबतक (count--) अणु
-		पूर्णांक hi = hex_to_bin(*src++);
-		पूर्णांक lo = hex_to_bin(*src++);
+int hex2bin(u8 *dst, const char *src, size_t count)
+{
+	while (count--) {
+		int hi = hex_to_bin(*src++);
+		int lo = hex_to_bin(*src++);
 
-		अगर ((hi < 0) || (lo < 0))
-			वापस -EINVAL;
+		if ((hi < 0) || (lo < 0))
+			return -EINVAL;
 
 		*dst++ = (hi << 4) | lo;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 EXPORT_SYMBOL(hex2bin);
 
 /**
@@ -64,27 +63,27 @@ EXPORT_SYMBOL(hex2bin);
  * @src: binary data
  * @count: binary data length
  */
-अक्षर *bin2hex(अक्षर *dst, स्थिर व्योम *src, माप_प्रकार count)
-अणु
-	स्थिर अचिन्हित अक्षर *_src = src;
+char *bin2hex(char *dst, const void *src, size_t count)
+{
+	const unsigned char *_src = src;
 
-	जबतक (count--)
+	while (count--)
 		dst = hex_byte_pack(dst, *_src++);
-	वापस dst;
-पूर्ण
+	return dst;
+}
 EXPORT_SYMBOL(bin2hex);
 
 /**
  * hex_dump_to_buffer - convert a blob of data to "hex ASCII" in memory
  * @buf: data blob to dump
  * @len: number of bytes in the @buf
- * @rowsize: number of bytes to prपूर्णांक per line; must be 16 or 32
- * @groupsize: number of bytes to prपूर्णांक at a समय (1, 2, 4, 8; शेष = 1)
+ * @rowsize: number of bytes to print per line; must be 16 or 32
+ * @groupsize: number of bytes to print at a time (1, 2, 4, 8; default = 1)
  * @linebuf: where to put the converted data
- * @linebuflen: total size of @linebuf, including space क्रम terminating NUL
+ * @linebuflen: total size of @linebuf, including space for terminating NUL
  * @ascii: include ASCII after the hex output
  *
- * hex_dump_to_buffer() works on one "line" of output at a समय, i.e.,
+ * hex_dump_to_buffer() works on one "line" of output at a time, i.e.,
  * 16 or 32 bytes of input data converted to hex + ASCII output.
  *
  * Given a buffer of u8 data, hex_dump_to_buffer() converts the input data
@@ -93,183 +92,183 @@ EXPORT_SYMBOL(bin2hex);
  *
  * E.g.:
  *   hex_dump_to_buffer(frame->data, frame->len, 16, 1,
- *			linebuf, माप(linebuf), true);
+ *			linebuf, sizeof(linebuf), true);
  *
  * example output buffer:
  * 40 41 42 43 44 45 46 47 48 49 4a 4b 4c 4d 4e 4f  @ABCDEFGHIJKLMNO
  *
  * Return:
  * The amount of bytes placed in the buffer without terminating NUL. If the
- * output was truncated, then the वापस value is the number of bytes
+ * output was truncated, then the return value is the number of bytes
  * (excluding the terminating NUL) which would have been written to the final
- * string अगर enough space had been available.
+ * string if enough space had been available.
  */
-पूर्णांक hex_dump_to_buffer(स्थिर व्योम *buf, माप_प्रकार len, पूर्णांक rowsize, पूर्णांक groupsize,
-		       अक्षर *linebuf, माप_प्रकार linebuflen, bool ascii)
-अणु
-	स्थिर u8 *ptr = buf;
-	पूर्णांक ngroups;
+int hex_dump_to_buffer(const void *buf, size_t len, int rowsize, int groupsize,
+		       char *linebuf, size_t linebuflen, bool ascii)
+{
+	const u8 *ptr = buf;
+	int ngroups;
 	u8 ch;
-	पूर्णांक j, lx = 0;
-	पूर्णांक ascii_column;
-	पूर्णांक ret;
+	int j, lx = 0;
+	int ascii_column;
+	int ret;
 
-	अगर (rowsize != 16 && rowsize != 32)
+	if (rowsize != 16 && rowsize != 32)
 		rowsize = 16;
 
-	अगर (len > rowsize)		/* limit to one line at a समय */
+	if (len > rowsize)		/* limit to one line at a time */
 		len = rowsize;
-	अगर (!is_घातer_of_2(groupsize) || groupsize > 8)
+	if (!is_power_of_2(groupsize) || groupsize > 8)
 		groupsize = 1;
-	अगर ((len % groupsize) != 0)	/* no mixed size output */
+	if ((len % groupsize) != 0)	/* no mixed size output */
 		groupsize = 1;
 
 	ngroups = len / groupsize;
 	ascii_column = rowsize * 2 + rowsize / groupsize + 1;
 
-	अगर (!linebuflen)
-		जाओ overflow1;
+	if (!linebuflen)
+		goto overflow1;
 
-	अगर (!len)
-		जाओ nil;
+	if (!len)
+		goto nil;
 
-	अगर (groupsize == 8) अणु
-		स्थिर u64 *ptr8 = buf;
+	if (groupsize == 8) {
+		const u64 *ptr8 = buf;
 
-		क्रम (j = 0; j < ngroups; j++) अणु
-			ret = snम_लिखो(linebuf + lx, linebuflen - lx,
+		for (j = 0; j < ngroups; j++) {
+			ret = snprintf(linebuf + lx, linebuflen - lx,
 				       "%s%16.16llx", j ? " " : "",
 				       get_unaligned(ptr8 + j));
-			अगर (ret >= linebuflen - lx)
-				जाओ overflow1;
+			if (ret >= linebuflen - lx)
+				goto overflow1;
 			lx += ret;
-		पूर्ण
-	पूर्ण अन्यथा अगर (groupsize == 4) अणु
-		स्थिर u32 *ptr4 = buf;
+		}
+	} else if (groupsize == 4) {
+		const u32 *ptr4 = buf;
 
-		क्रम (j = 0; j < ngroups; j++) अणु
-			ret = snम_लिखो(linebuf + lx, linebuflen - lx,
+		for (j = 0; j < ngroups; j++) {
+			ret = snprintf(linebuf + lx, linebuflen - lx,
 				       "%s%8.8x", j ? " " : "",
 				       get_unaligned(ptr4 + j));
-			अगर (ret >= linebuflen - lx)
-				जाओ overflow1;
+			if (ret >= linebuflen - lx)
+				goto overflow1;
 			lx += ret;
-		पूर्ण
-	पूर्ण अन्यथा अगर (groupsize == 2) अणु
-		स्थिर u16 *ptr2 = buf;
+		}
+	} else if (groupsize == 2) {
+		const u16 *ptr2 = buf;
 
-		क्रम (j = 0; j < ngroups; j++) अणु
-			ret = snम_लिखो(linebuf + lx, linebuflen - lx,
+		for (j = 0; j < ngroups; j++) {
+			ret = snprintf(linebuf + lx, linebuflen - lx,
 				       "%s%4.4x", j ? " " : "",
 				       get_unaligned(ptr2 + j));
-			अगर (ret >= linebuflen - lx)
-				जाओ overflow1;
+			if (ret >= linebuflen - lx)
+				goto overflow1;
 			lx += ret;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		क्रम (j = 0; j < len; j++) अणु
-			अगर (linebuflen < lx + 2)
-				जाओ overflow2;
+		}
+	} else {
+		for (j = 0; j < len; j++) {
+			if (linebuflen < lx + 2)
+				goto overflow2;
 			ch = ptr[j];
 			linebuf[lx++] = hex_asc_hi(ch);
-			अगर (linebuflen < lx + 2)
-				जाओ overflow2;
+			if (linebuflen < lx + 2)
+				goto overflow2;
 			linebuf[lx++] = hex_asc_lo(ch);
-			अगर (linebuflen < lx + 2)
-				जाओ overflow2;
+			if (linebuflen < lx + 2)
+				goto overflow2;
 			linebuf[lx++] = ' ';
-		पूर्ण
-		अगर (j)
+		}
+		if (j)
 			lx--;
-	पूर्ण
-	अगर (!ascii)
-		जाओ nil;
+	}
+	if (!ascii)
+		goto nil;
 
-	जबतक (lx < ascii_column) अणु
-		अगर (linebuflen < lx + 2)
-			जाओ overflow2;
+	while (lx < ascii_column) {
+		if (linebuflen < lx + 2)
+			goto overflow2;
 		linebuf[lx++] = ' ';
-	पूर्ण
-	क्रम (j = 0; j < len; j++) अणु
-		अगर (linebuflen < lx + 2)
-			जाओ overflow2;
+	}
+	for (j = 0; j < len; j++) {
+		if (linebuflen < lx + 2)
+			goto overflow2;
 		ch = ptr[j];
-		linebuf[lx++] = (isascii(ch) && है_छाप(ch)) ? ch : '.';
-	पूर्ण
+		linebuf[lx++] = (isascii(ch) && isprint(ch)) ? ch : '.';
+	}
 nil:
 	linebuf[lx] = '\0';
-	वापस lx;
+	return lx;
 overflow2:
 	linebuf[lx++] = '\0';
 overflow1:
-	वापस ascii ? ascii_column + len : (groupsize * 2 + 1) * ngroups - 1;
-पूर्ण
+	return ascii ? ascii_column + len : (groupsize * 2 + 1) * ngroups - 1;
+}
 EXPORT_SYMBOL(hex_dump_to_buffer);
 
-#अगर_घोषित CONFIG_PRINTK
+#ifdef CONFIG_PRINTK
 /**
- * prपूर्णांक_hex_dump - prपूर्णांक a text hex dump to syslog क्रम a binary blob of data
+ * print_hex_dump - print a text hex dump to syslog for a binary blob of data
  * @level: kernel log level (e.g. KERN_DEBUG)
  * @prefix_str: string to prefix each line with;
- *  caller supplies trailing spaces क्रम alignment अगर desired
+ *  caller supplies trailing spaces for alignment if desired
  * @prefix_type: controls whether prefix of an offset, address, or none
- *  is prपूर्णांकed (%DUMP_PREFIX_OFFSET, %DUMP_PREFIX_ADDRESS, %DUMP_PREFIX_NONE)
- * @rowsize: number of bytes to prपूर्णांक per line; must be 16 or 32
- * @groupsize: number of bytes to prपूर्णांक at a समय (1, 2, 4, 8; शेष = 1)
+ *  is printed (%DUMP_PREFIX_OFFSET, %DUMP_PREFIX_ADDRESS, %DUMP_PREFIX_NONE)
+ * @rowsize: number of bytes to print per line; must be 16 or 32
+ * @groupsize: number of bytes to print at a time (1, 2, 4, 8; default = 1)
  * @buf: data blob to dump
  * @len: number of bytes in the @buf
  * @ascii: include ASCII after the hex output
  *
- * Given a buffer of u8 data, prपूर्णांक_hex_dump() prपूर्णांकs a hex + ASCII dump
- * to the kernel log at the specअगरied kernel log level, with an optional
+ * Given a buffer of u8 data, print_hex_dump() prints a hex + ASCII dump
+ * to the kernel log at the specified kernel log level, with an optional
  * leading prefix.
  *
- * prपूर्णांक_hex_dump() works on one "line" of output at a समय, i.e.,
+ * print_hex_dump() works on one "line" of output at a time, i.e.,
  * 16 or 32 bytes of input data converted to hex + ASCII output.
- * prपूर्णांक_hex_dump() iterates over the entire input @buf, अवरोधing it पूर्णांकo
- * "line size" chunks to क्रमmat and prपूर्णांक.
+ * print_hex_dump() iterates over the entire input @buf, breaking it into
+ * "line size" chunks to format and print.
  *
  * E.g.:
- *   prपूर्णांक_hex_dump(KERN_DEBUG, "raw data: ", DUMP_PREFIX_ADDRESS,
+ *   print_hex_dump(KERN_DEBUG, "raw data: ", DUMP_PREFIX_ADDRESS,
  *		    16, 1, frame->data, frame->len, true);
  *
  * Example output using %DUMP_PREFIX_OFFSET and 1-byte mode:
  * 0009ab42: 40 41 42 43 44 45 46 47 48 49 4a 4b 4c 4d 4e 4f  @ABCDEFGHIJKLMNO
  * Example output using %DUMP_PREFIX_ADDRESS and 4-byte mode:
- * ffffffff88089af0: 73727170 77767574 7b7a7978 7f7e7d7c  pqrstuvwxyzअणु|पूर्ण~.
+ * ffffffff88089af0: 73727170 77767574 7b7a7978 7f7e7d7c  pqrstuvwxyz{|}~.
  */
-व्योम prपूर्णांक_hex_dump(स्थिर अक्षर *level, स्थिर अक्षर *prefix_str, पूर्णांक prefix_type,
-		    पूर्णांक rowsize, पूर्णांक groupsize,
-		    स्थिर व्योम *buf, माप_प्रकार len, bool ascii)
-अणु
-	स्थिर u8 *ptr = buf;
-	पूर्णांक i, linelen, reमुख्यing = len;
-	अचिन्हित अक्षर linebuf[32 * 3 + 2 + 32 + 1];
+void print_hex_dump(const char *level, const char *prefix_str, int prefix_type,
+		    int rowsize, int groupsize,
+		    const void *buf, size_t len, bool ascii)
+{
+	const u8 *ptr = buf;
+	int i, linelen, remaining = len;
+	unsigned char linebuf[32 * 3 + 2 + 32 + 1];
 
-	अगर (rowsize != 16 && rowsize != 32)
+	if (rowsize != 16 && rowsize != 32)
 		rowsize = 16;
 
-	क्रम (i = 0; i < len; i += rowsize) अणु
-		linelen = min(reमुख्यing, rowsize);
-		reमुख्यing -= rowsize;
+	for (i = 0; i < len; i += rowsize) {
+		linelen = min(remaining, rowsize);
+		remaining -= rowsize;
 
 		hex_dump_to_buffer(ptr + i, linelen, rowsize, groupsize,
-				   linebuf, माप(linebuf), ascii);
+				   linebuf, sizeof(linebuf), ascii);
 
-		चयन (prefix_type) अणु
-		हाल DUMP_PREFIX_ADDRESS:
-			prपूर्णांकk("%s%s%p: %s\n",
+		switch (prefix_type) {
+		case DUMP_PREFIX_ADDRESS:
+			printk("%s%s%p: %s\n",
 			       level, prefix_str, ptr + i, linebuf);
-			अवरोध;
-		हाल DUMP_PREFIX_OFFSET:
-			prपूर्णांकk("%s%s%.8x: %s\n", level, prefix_str, i, linebuf);
-			अवरोध;
-		शेष:
-			prपूर्णांकk("%s%s%s\n", level, prefix_str, linebuf);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(prपूर्णांक_hex_dump);
+			break;
+		case DUMP_PREFIX_OFFSET:
+			printk("%s%s%.8x: %s\n", level, prefix_str, i, linebuf);
+			break;
+		default:
+			printk("%s%s%s\n", level, prefix_str, linebuf);
+			break;
+		}
+	}
+}
+EXPORT_SYMBOL(print_hex_dump);
 
-#पूर्ण_अगर /* defined(CONFIG_PRINTK) */
+#endif /* defined(CONFIG_PRINTK) */

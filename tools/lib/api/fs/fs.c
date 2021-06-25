@@ -1,315 +1,314 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <प्रकार.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <सीमा.स>
-#समावेश <stdbool.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sys/vfs.h>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <fcntl.h>
-#समावेश <unistd.h>
-#समावेश <sys/mount.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <ctype.h>
+#include <errno.h>
+#include <limits.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/vfs.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/mount.h>
 
-#समावेश "fs.h"
-#समावेश "debug-internal.h"
+#include "fs.h"
+#include "debug-internal.h"
 
-#घोषणा _STR(x) #x
-#घोषणा STR(x) _STR(x)
+#define _STR(x) #x
+#define STR(x) _STR(x)
 
-#अगर_अघोषित SYSFS_MAGIC
-#घोषणा SYSFS_MAGIC            0x62656572
-#पूर्ण_अगर
+#ifndef SYSFS_MAGIC
+#define SYSFS_MAGIC            0x62656572
+#endif
 
-#अगर_अघोषित PROC_SUPER_MAGIC
-#घोषणा PROC_SUPER_MAGIC       0x9fa0
-#पूर्ण_अगर
+#ifndef PROC_SUPER_MAGIC
+#define PROC_SUPER_MAGIC       0x9fa0
+#endif
 
-#अगर_अघोषित DEBUGFS_MAGIC
-#घोषणा DEBUGFS_MAGIC          0x64626720
-#पूर्ण_अगर
+#ifndef DEBUGFS_MAGIC
+#define DEBUGFS_MAGIC          0x64626720
+#endif
 
-#अगर_अघोषित TRACEFS_MAGIC
-#घोषणा TRACEFS_MAGIC          0x74726163
-#पूर्ण_अगर
+#ifndef TRACEFS_MAGIC
+#define TRACEFS_MAGIC          0x74726163
+#endif
 
-#अगर_अघोषित HUGETLBFS_MAGIC
-#घोषणा HUGETLBFS_MAGIC        0x958458f6
-#पूर्ण_अगर
+#ifndef HUGETLBFS_MAGIC
+#define HUGETLBFS_MAGIC        0x958458f6
+#endif
 
-#अगर_अघोषित BPF_FS_MAGIC
-#घोषणा BPF_FS_MAGIC           0xcafe4a11
-#पूर्ण_अगर
+#ifndef BPF_FS_MAGIC
+#define BPF_FS_MAGIC           0xcafe4a11
+#endif
 
-अटल स्थिर अक्षर * स्थिर sysfs__fs_known_mountpoपूर्णांकs[] = अणु
+static const char * const sysfs__fs_known_mountpoints[] = {
 	"/sys",
 	0,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर procfs__known_mountpoपूर्णांकs[] = अणु
+static const char * const procfs__known_mountpoints[] = {
 	"/proc",
 	0,
-पूर्ण;
+};
 
-#अगर_अघोषित DEBUGFS_DEFAULT_PATH
-#घोषणा DEBUGFS_DEFAULT_PATH "/sys/kernel/debug"
-#पूर्ण_अगर
+#ifndef DEBUGFS_DEFAULT_PATH
+#define DEBUGFS_DEFAULT_PATH "/sys/kernel/debug"
+#endif
 
-अटल स्थिर अक्षर * स्थिर debugfs__known_mountpoपूर्णांकs[] = अणु
+static const char * const debugfs__known_mountpoints[] = {
 	DEBUGFS_DEFAULT_PATH,
 	"/debug",
 	0,
-पूर्ण;
+};
 
 
-#अगर_अघोषित TRACEFS_DEFAULT_PATH
-#घोषणा TRACEFS_DEFAULT_PATH "/sys/kernel/tracing"
-#पूर्ण_अगर
+#ifndef TRACEFS_DEFAULT_PATH
+#define TRACEFS_DEFAULT_PATH "/sys/kernel/tracing"
+#endif
 
-अटल स्थिर अक्षर * स्थिर tracefs__known_mountpoपूर्णांकs[] = अणु
+static const char * const tracefs__known_mountpoints[] = {
 	TRACEFS_DEFAULT_PATH,
 	"/sys/kernel/debug/tracing",
 	"/tracing",
 	"/trace",
 	0,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर hugetlbfs__known_mountpoपूर्णांकs[] = अणु
+static const char * const hugetlbfs__known_mountpoints[] = {
 	0,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर bpf_fs__known_mountpoपूर्णांकs[] = अणु
+static const char * const bpf_fs__known_mountpoints[] = {
 	"/sys/fs/bpf",
 	0,
-पूर्ण;
+};
 
-काष्ठा fs अणु
-	स्थिर अक्षर		*name;
-	स्थिर अक्षर * स्थिर	*mounts;
-	अक्षर			 path[PATH_MAX];
+struct fs {
+	const char		*name;
+	const char * const	*mounts;
+	char			 path[PATH_MAX];
 	bool			 found;
 	bool			 checked;
-	दीर्घ			 magic;
-पूर्ण;
+	long			 magic;
+};
 
-क्रमागत अणु
+enum {
 	FS__SYSFS   = 0,
 	FS__PROCFS  = 1,
 	FS__DEBUGFS = 2,
 	FS__TRACEFS = 3,
 	FS__HUGETLBFS = 4,
 	FS__BPF_FS = 5,
-पूर्ण;
+};
 
-#अगर_अघोषित TRACEFS_MAGIC
-#घोषणा TRACEFS_MAGIC 0x74726163
-#पूर्ण_अगर
+#ifndef TRACEFS_MAGIC
+#define TRACEFS_MAGIC 0x74726163
+#endif
 
-अटल काष्ठा fs fs__entries[] = अणु
-	[FS__SYSFS] = अणु
+static struct fs fs__entries[] = {
+	[FS__SYSFS] = {
 		.name	= "sysfs",
-		.mounts	= sysfs__fs_known_mountpoपूर्णांकs,
+		.mounts	= sysfs__fs_known_mountpoints,
 		.magic	= SYSFS_MAGIC,
 		.checked = false,
-	पूर्ण,
-	[FS__PROCFS] = अणु
+	},
+	[FS__PROCFS] = {
 		.name	= "proc",
-		.mounts	= procfs__known_mountpoपूर्णांकs,
+		.mounts	= procfs__known_mountpoints,
 		.magic	= PROC_SUPER_MAGIC,
 		.checked = false,
-	पूर्ण,
-	[FS__DEBUGFS] = अणु
+	},
+	[FS__DEBUGFS] = {
 		.name	= "debugfs",
-		.mounts	= debugfs__known_mountpoपूर्णांकs,
+		.mounts	= debugfs__known_mountpoints,
 		.magic	= DEBUGFS_MAGIC,
 		.checked = false,
-	पूर्ण,
-	[FS__TRACEFS] = अणु
+	},
+	[FS__TRACEFS] = {
 		.name	= "tracefs",
-		.mounts	= tracefs__known_mountpoपूर्णांकs,
+		.mounts	= tracefs__known_mountpoints,
 		.magic	= TRACEFS_MAGIC,
 		.checked = false,
-	पूर्ण,
-	[FS__HUGETLBFS] = अणु
+	},
+	[FS__HUGETLBFS] = {
 		.name	= "hugetlbfs",
-		.mounts = hugetlbfs__known_mountpoपूर्णांकs,
+		.mounts = hugetlbfs__known_mountpoints,
 		.magic	= HUGETLBFS_MAGIC,
 		.checked = false,
-	पूर्ण,
-	[FS__BPF_FS] = अणु
+	},
+	[FS__BPF_FS] = {
 		.name	= "bpf",
-		.mounts = bpf_fs__known_mountpoपूर्णांकs,
+		.mounts = bpf_fs__known_mountpoints,
 		.magic	= BPF_FS_MAGIC,
 		.checked = false,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल bool fs__पढ़ो_mounts(काष्ठा fs *fs)
-अणु
+static bool fs__read_mounts(struct fs *fs)
+{
 	bool found = false;
-	अक्षर type[100];
-	खाता *fp;
+	char type[100];
+	FILE *fp;
 
-	fp = ख_खोलो("/proc/mounts", "r");
-	अगर (fp == शून्य)
-		वापस शून्य;
+	fp = fopen("/proc/mounts", "r");
+	if (fp == NULL)
+		return NULL;
 
-	जबतक (!found &&
-	       ख_पूछो(fp, "%*s %" STR(PATH_MAX) "s %99s %*s %*d %*d\n",
-		      fs->path, type) == 2) अणु
+	while (!found &&
+	       fscanf(fp, "%*s %" STR(PATH_MAX) "s %99s %*s %*d %*d\n",
+		      fs->path, type) == 2) {
 
-		अगर (म_भेद(type, fs->name) == 0)
+		if (strcmp(type, fs->name) == 0)
 			found = true;
-	पूर्ण
+	}
 
-	ख_बंद(fp);
+	fclose(fp);
 	fs->checked = true;
-	वापस fs->found = found;
-पूर्ण
+	return fs->found = found;
+}
 
-अटल पूर्णांक fs__valid_mount(स्थिर अक्षर *fs, दीर्घ magic)
-अणु
-	काष्ठा statfs st_fs;
+static int fs__valid_mount(const char *fs, long magic)
+{
+	struct statfs st_fs;
 
-	अगर (statfs(fs, &st_fs) < 0)
-		वापस -ENOENT;
-	अन्यथा अगर ((दीर्घ)st_fs.f_type != magic)
-		वापस -ENOENT;
+	if (statfs(fs, &st_fs) < 0)
+		return -ENOENT;
+	else if ((long)st_fs.f_type != magic)
+		return -ENOENT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool fs__check_mounts(काष्ठा fs *fs)
-अणु
-	स्थिर अक्षर * स्थिर *ptr;
+static bool fs__check_mounts(struct fs *fs)
+{
+	const char * const *ptr;
 
 	ptr = fs->mounts;
-	जबतक (*ptr) अणु
-		अगर (fs__valid_mount(*ptr, fs->magic) == 0) अणु
+	while (*ptr) {
+		if (fs__valid_mount(*ptr, fs->magic) == 0) {
 			fs->found = true;
-			म_नकल(fs->path, *ptr);
-			वापस true;
-		पूर्ण
+			strcpy(fs->path, *ptr);
+			return true;
+		}
 		ptr++;
-	पूर्ण
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम mem_बड़े(अक्षर *f, माप_प्रकार len)
-अणु
-	जबतक (len) अणु
-		*f = बड़े(*f);
+static void mem_toupper(char *f, size_t len)
+{
+	while (len) {
+		*f = toupper(*f);
 		f++;
 		len--;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Check क्रम "NAME_PATH" environment variable to override fs location (क्रम
+ * Check for "NAME_PATH" environment variable to override fs location (for
  * testing). This matches the recommendation in Documentation/admin-guide/sysfs-rules.rst
- * क्रम SYSFS_PATH.
+ * for SYSFS_PATH.
  */
-अटल bool fs__env_override(काष्ठा fs *fs)
-अणु
-	अक्षर *override_path;
-	माप_प्रकार name_len = म_माप(fs->name);
+static bool fs__env_override(struct fs *fs)
+{
+	char *override_path;
+	size_t name_len = strlen(fs->name);
 	/* name + "_PATH" + '\0' */
-	अक्षर upper_name[name_len + 5 + 1];
+	char upper_name[name_len + 5 + 1];
 
-	स_नकल(upper_name, fs->name, name_len);
-	mem_बड़े(upper_name, name_len);
-	म_नकल(&upper_name[name_len], "_PATH");
+	memcpy(upper_name, fs->name, name_len);
+	mem_toupper(upper_name, name_len);
+	strcpy(&upper_name[name_len], "_PATH");
 
-	override_path = दो_पर्या(upper_name);
-	अगर (!override_path)
-		वापस false;
+	override_path = getenv(upper_name);
+	if (!override_path)
+		return false;
 
 	fs->found = true;
 	fs->checked = true;
-	म_नकलन(fs->path, override_path, माप(fs->path) - 1);
-	fs->path[माप(fs->path) - 1] = '\0';
-	वापस true;
-पूर्ण
+	strncpy(fs->path, override_path, sizeof(fs->path) - 1);
+	fs->path[sizeof(fs->path) - 1] = '\0';
+	return true;
+}
 
-अटल स्थिर अक्षर *fs__get_mountpoपूर्णांक(काष्ठा fs *fs)
-अणु
-	अगर (fs__env_override(fs))
-		वापस fs->path;
+static const char *fs__get_mountpoint(struct fs *fs)
+{
+	if (fs__env_override(fs))
+		return fs->path;
 
-	अगर (fs__check_mounts(fs))
-		वापस fs->path;
+	if (fs__check_mounts(fs))
+		return fs->path;
 
-	अगर (fs__पढ़ो_mounts(fs))
-		वापस fs->path;
+	if (fs__read_mounts(fs))
+		return fs->path;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल स्थिर अक्षर *fs__mountpoपूर्णांक(पूर्णांक idx)
-अणु
-	काष्ठा fs *fs = &fs__entries[idx];
+static const char *fs__mountpoint(int idx)
+{
+	struct fs *fs = &fs__entries[idx];
 
-	अगर (fs->found)
-		वापस (स्थिर अक्षर *)fs->path;
+	if (fs->found)
+		return (const char *)fs->path;
 
-	/* the mount poपूर्णांक was alपढ़ोy checked क्रम the mount poपूर्णांक
-	 * but and did not exist, so वापस शून्य to aव्योम scanning again.
+	/* the mount point was already checked for the mount point
+	 * but and did not exist, so return NULL to avoid scanning again.
 	 * This makes the found and not found paths cost equivalent
-	 * in हाल of multiple calls.
+	 * in case of multiple calls.
 	 */
-	अगर (fs->checked)
-		वापस शून्य;
+	if (fs->checked)
+		return NULL;
 
-	वापस fs__get_mountpoपूर्णांक(fs);
-पूर्ण
+	return fs__get_mountpoint(fs);
+}
 
-अटल स्थिर अक्षर *mount_overload(काष्ठा fs *fs)
-अणु
-	माप_प्रकार name_len = म_माप(fs->name);
+static const char *mount_overload(struct fs *fs)
+{
+	size_t name_len = strlen(fs->name);
 	/* "PERF_" + name + "_ENVIRONMENT" + '\0' */
-	अक्षर upper_name[5 + name_len + 12 + 1];
+	char upper_name[5 + name_len + 12 + 1];
 
-	snम_लिखो(upper_name, name_len, "PERF_%s_ENVIRONMENT", fs->name);
-	mem_बड़े(upper_name, name_len);
+	snprintf(upper_name, name_len, "PERF_%s_ENVIRONMENT", fs->name);
+	mem_toupper(upper_name, name_len);
 
-	वापस दो_पर्या(upper_name) ?: *fs->mounts;
-पूर्ण
+	return getenv(upper_name) ?: *fs->mounts;
+}
 
-अटल स्थिर अक्षर *fs__mount(पूर्णांक idx)
-अणु
-	काष्ठा fs *fs = &fs__entries[idx];
-	स्थिर अक्षर *mountpoपूर्णांक;
+static const char *fs__mount(int idx)
+{
+	struct fs *fs = &fs__entries[idx];
+	const char *mountpoint;
 
-	अगर (fs__mountpoपूर्णांक(idx))
-		वापस (स्थिर अक्षर *)fs->path;
+	if (fs__mountpoint(idx))
+		return (const char *)fs->path;
 
-	mountpoपूर्णांक = mount_overload(fs);
+	mountpoint = mount_overload(fs);
 
-	अगर (mount(शून्य, mountpoपूर्णांक, fs->name, 0, शून्य) < 0)
-		वापस शून्य;
+	if (mount(NULL, mountpoint, fs->name, 0, NULL) < 0)
+		return NULL;
 
-	वापस fs__check_mounts(fs) ? fs->path : शून्य;
-पूर्ण
+	return fs__check_mounts(fs) ? fs->path : NULL;
+}
 
-#घोषणा FS(name, idx)				\
-स्थिर अक्षर *name##__mountpoपूर्णांक(व्योम)		\
-अणु						\
-	वापस fs__mountpoपूर्णांक(idx);		\
-पूर्ण						\
+#define FS(name, idx)				\
+const char *name##__mountpoint(void)		\
+{						\
+	return fs__mountpoint(idx);		\
+}						\
 						\
-स्थिर अक्षर *name##__mount(व्योम)			\
-अणु						\
-	वापस fs__mount(idx);			\
-पूर्ण						\
+const char *name##__mount(void)			\
+{						\
+	return fs__mount(idx);			\
+}						\
 						\
-bool name##__configured(व्योम)			\
-अणु						\
-	वापस name##__mountpoपूर्णांक() != शून्य;	\
-पूर्ण
+bool name##__configured(void)			\
+{						\
+	return name##__mountpoint() != NULL;	\
+}
 
 FS(sysfs,   FS__SYSFS);
 FS(procfs,  FS__PROCFS);
@@ -318,242 +317,242 @@ FS(tracefs, FS__TRACEFS);
 FS(hugetlbfs, FS__HUGETLBFS);
 FS(bpf_fs, FS__BPF_FS);
 
-पूर्णांक filename__पढ़ो_पूर्णांक(स्थिर अक्षर *filename, पूर्णांक *value)
-अणु
-	अक्षर line[64];
-	पूर्णांक fd = खोलो(filename, O_RDONLY), err = -1;
+int filename__read_int(const char *filename, int *value)
+{
+	char line[64];
+	int fd = open(filename, O_RDONLY), err = -1;
 
-	अगर (fd < 0)
-		वापस -1;
+	if (fd < 0)
+		return -1;
 
-	अगर (पढ़ो(fd, line, माप(line)) > 0) अणु
-		*value = म_से_प(line);
+	if (read(fd, line, sizeof(line)) > 0) {
+		*value = atoi(line);
 		err = 0;
-	पूर्ण
+	}
 
-	बंद(fd);
-	वापस err;
-पूर्ण
+	close(fd);
+	return err;
+}
 
-अटल पूर्णांक filename__पढ़ो_ull_base(स्थिर अक्षर *filename,
-				   अचिन्हित दीर्घ दीर्घ *value, पूर्णांक base)
-अणु
-	अक्षर line[64];
-	पूर्णांक fd = खोलो(filename, O_RDONLY), err = -1;
+static int filename__read_ull_base(const char *filename,
+				   unsigned long long *value, int base)
+{
+	char line[64];
+	int fd = open(filename, O_RDONLY), err = -1;
 
-	अगर (fd < 0)
-		वापस -1;
+	if (fd < 0)
+		return -1;
 
-	अगर (पढ़ो(fd, line, माप(line)) > 0) अणु
-		*value = म_से_अदीर्घl(line, शून्य, base);
-		अगर (*value != ULदीर्घ_उच्च)
+	if (read(fd, line, sizeof(line)) > 0) {
+		*value = strtoull(line, NULL, base);
+		if (*value != ULLONG_MAX)
 			err = 0;
-	पूर्ण
+	}
 
-	बंद(fd);
-	वापस err;
-पूर्ण
-
-/*
- * Parses @value out of @filename with म_से_अदीर्घl.
- * By using 16 क्रम base to treat the number as hex.
- */
-पूर्णांक filename__पढ़ो_xll(स्थिर अक्षर *filename, अचिन्हित दीर्घ दीर्घ *value)
-अणु
-	वापस filename__पढ़ो_ull_base(filename, value, 16);
-पूर्ण
+	close(fd);
+	return err;
+}
 
 /*
- * Parses @value out of @filename with म_से_अदीर्घl.
- * By using 0 क्रम base, the म_से_अदीर्घl detects the
- * base स्वतःmatically (see man म_से_अदीर्घl).
+ * Parses @value out of @filename with strtoull.
+ * By using 16 for base to treat the number as hex.
  */
-पूर्णांक filename__पढ़ो_ull(स्थिर अक्षर *filename, अचिन्हित दीर्घ दीर्घ *value)
-अणु
-	वापस filename__पढ़ो_ull_base(filename, value, 0);
-पूर्ण
+int filename__read_xll(const char *filename, unsigned long long *value)
+{
+	return filename__read_ull_base(filename, value, 16);
+}
 
-#घोषणा STRERR_बफ_मानE  128     /* For the buffer size of म_त्रुटि_r */
+/*
+ * Parses @value out of @filename with strtoull.
+ * By using 0 for base, the strtoull detects the
+ * base automatically (see man strtoull).
+ */
+int filename__read_ull(const char *filename, unsigned long long *value)
+{
+	return filename__read_ull_base(filename, value, 0);
+}
 
-पूर्णांक filename__पढ़ो_str(स्थिर अक्षर *filename, अक्षर **buf, माप_प्रकार *sizep)
-अणु
-	माप_प्रकार size = 0, alloc_size = 0;
-	व्योम *bf = शून्य, *nbf;
-	पूर्णांक fd, n, err = 0;
-	अक्षर sbuf[STRERR_बफ_मानE];
+#define STRERR_BUFSIZE  128     /* For the buffer size of strerror_r */
 
-	fd = खोलो(filename, O_RDONLY);
-	अगर (fd < 0)
-		वापस -त्रुटि_सं;
+int filename__read_str(const char *filename, char **buf, size_t *sizep)
+{
+	size_t size = 0, alloc_size = 0;
+	void *bf = NULL, *nbf;
+	int fd, n, err = 0;
+	char sbuf[STRERR_BUFSIZE];
 
-	करो अणु
-		अगर (size == alloc_size) अणु
-			alloc_size += बफ_मान;
-			nbf = पुनः_स्मृति(bf, alloc_size);
-			अगर (!nbf) अणु
+	fd = open(filename, O_RDONLY);
+	if (fd < 0)
+		return -errno;
+
+	do {
+		if (size == alloc_size) {
+			alloc_size += BUFSIZ;
+			nbf = realloc(bf, alloc_size);
+			if (!nbf) {
 				err = -ENOMEM;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			bf = nbf;
-		पूर्ण
+		}
 
-		n = पढ़ो(fd, bf + size, alloc_size - size);
-		अगर (n < 0) अणु
-			अगर (size) अणु
-				pr_warn("read failed %d: %s\n", त्रुटि_सं,
-					म_त्रुटि_r(त्रुटि_सं, sbuf, माप(sbuf)));
+		n = read(fd, bf + size, alloc_size - size);
+		if (n < 0) {
+			if (size) {
+				pr_warn("read failed %d: %s\n", errno,
+					strerror_r(errno, sbuf, sizeof(sbuf)));
 				err = 0;
-			पूर्ण अन्यथा
-				err = -त्रुटि_सं;
+			} else
+				err = -errno;
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		size += n;
-	पूर्ण जबतक (n > 0);
+	} while (n > 0);
 
-	अगर (!err) अणु
+	if (!err) {
 		*sizep = size;
 		*buf   = bf;
-	पूर्ण अन्यथा
-		मुक्त(bf);
+	} else
+		free(bf);
 
-	बंद(fd);
-	वापस err;
-पूर्ण
+	close(fd);
+	return err;
+}
 
-पूर्णांक filename__ग_लिखो_पूर्णांक(स्थिर अक्षर *filename, पूर्णांक value)
-अणु
-	पूर्णांक fd = खोलो(filename, O_WRONLY), err = -1;
-	अक्षर buf[64];
+int filename__write_int(const char *filename, int value)
+{
+	int fd = open(filename, O_WRONLY), err = -1;
+	char buf[64];
 
-	अगर (fd < 0)
-		वापस err;
+	if (fd < 0)
+		return err;
 
-	प्र_लिखो(buf, "%d", value);
-	अगर (ग_लिखो(fd, buf, माप(buf)) == माप(buf))
+	sprintf(buf, "%d", value);
+	if (write(fd, buf, sizeof(buf)) == sizeof(buf))
 		err = 0;
 
-	बंद(fd);
-	वापस err;
-पूर्ण
+	close(fd);
+	return err;
+}
 
-पूर्णांक procfs__पढ़ो_str(स्थिर अक्षर *entry, अक्षर **buf, माप_प्रकार *sizep)
-अणु
-	अक्षर path[PATH_MAX];
-	स्थिर अक्षर *procfs = procfs__mountpoपूर्णांक();
+int procfs__read_str(const char *entry, char **buf, size_t *sizep)
+{
+	char path[PATH_MAX];
+	const char *procfs = procfs__mountpoint();
 
-	अगर (!procfs)
-		वापस -1;
+	if (!procfs)
+		return -1;
 
-	snम_लिखो(path, माप(path), "%s/%s", procfs, entry);
+	snprintf(path, sizeof(path), "%s/%s", procfs, entry);
 
-	वापस filename__पढ़ो_str(path, buf, sizep);
-पूर्ण
+	return filename__read_str(path, buf, sizep);
+}
 
-अटल पूर्णांक sysfs__पढ़ो_ull_base(स्थिर अक्षर *entry,
-				अचिन्हित दीर्घ दीर्घ *value, पूर्णांक base)
-अणु
-	अक्षर path[PATH_MAX];
-	स्थिर अक्षर *sysfs = sysfs__mountpoपूर्णांक();
+static int sysfs__read_ull_base(const char *entry,
+				unsigned long long *value, int base)
+{
+	char path[PATH_MAX];
+	const char *sysfs = sysfs__mountpoint();
 
-	अगर (!sysfs)
-		वापस -1;
+	if (!sysfs)
+		return -1;
 
-	snम_लिखो(path, माप(path), "%s/%s", sysfs, entry);
+	snprintf(path, sizeof(path), "%s/%s", sysfs, entry);
 
-	वापस filename__पढ़ो_ull_base(path, value, base);
-पूर्ण
+	return filename__read_ull_base(path, value, base);
+}
 
-पूर्णांक sysfs__पढ़ो_xll(स्थिर अक्षर *entry, अचिन्हित दीर्घ दीर्घ *value)
-अणु
-	वापस sysfs__पढ़ो_ull_base(entry, value, 16);
-पूर्ण
+int sysfs__read_xll(const char *entry, unsigned long long *value)
+{
+	return sysfs__read_ull_base(entry, value, 16);
+}
 
-पूर्णांक sysfs__पढ़ो_ull(स्थिर अक्षर *entry, अचिन्हित दीर्घ दीर्घ *value)
-अणु
-	वापस sysfs__पढ़ो_ull_base(entry, value, 0);
-पूर्ण
+int sysfs__read_ull(const char *entry, unsigned long long *value)
+{
+	return sysfs__read_ull_base(entry, value, 0);
+}
 
-पूर्णांक sysfs__पढ़ो_पूर्णांक(स्थिर अक्षर *entry, पूर्णांक *value)
-अणु
-	अक्षर path[PATH_MAX];
-	स्थिर अक्षर *sysfs = sysfs__mountpoपूर्णांक();
+int sysfs__read_int(const char *entry, int *value)
+{
+	char path[PATH_MAX];
+	const char *sysfs = sysfs__mountpoint();
 
-	अगर (!sysfs)
-		वापस -1;
+	if (!sysfs)
+		return -1;
 
-	snम_लिखो(path, माप(path), "%s/%s", sysfs, entry);
+	snprintf(path, sizeof(path), "%s/%s", sysfs, entry);
 
-	वापस filename__पढ़ो_पूर्णांक(path, value);
-पूर्ण
+	return filename__read_int(path, value);
+}
 
-पूर्णांक sysfs__पढ़ो_str(स्थिर अक्षर *entry, अक्षर **buf, माप_प्रकार *sizep)
-अणु
-	अक्षर path[PATH_MAX];
-	स्थिर अक्षर *sysfs = sysfs__mountpoपूर्णांक();
+int sysfs__read_str(const char *entry, char **buf, size_t *sizep)
+{
+	char path[PATH_MAX];
+	const char *sysfs = sysfs__mountpoint();
 
-	अगर (!sysfs)
-		वापस -1;
+	if (!sysfs)
+		return -1;
 
-	snम_लिखो(path, माप(path), "%s/%s", sysfs, entry);
+	snprintf(path, sizeof(path), "%s/%s", sysfs, entry);
 
-	वापस filename__पढ़ो_str(path, buf, sizep);
-पूर्ण
+	return filename__read_str(path, buf, sizep);
+}
 
-पूर्णांक sysfs__पढ़ो_bool(स्थिर अक्षर *entry, bool *value)
-अणु
-	अक्षर *buf;
-	माप_प्रकार size;
-	पूर्णांक ret;
+int sysfs__read_bool(const char *entry, bool *value)
+{
+	char *buf;
+	size_t size;
+	int ret;
 
-	ret = sysfs__पढ़ो_str(entry, &buf, &size);
-	अगर (ret < 0)
-		वापस ret;
+	ret = sysfs__read_str(entry, &buf, &size);
+	if (ret < 0)
+		return ret;
 
-	चयन (buf[0]) अणु
-	हाल '1':
-	हाल 'y':
-	हाल 'Y':
+	switch (buf[0]) {
+	case '1':
+	case 'y':
+	case 'Y':
 		*value = true;
-		अवरोध;
-	हाल '0':
-	हाल 'n':
-	हाल 'N':
+		break;
+	case '0':
+	case 'n':
+	case 'N':
 		*value = false;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -1;
-	पूर्ण
+	}
 
-	मुक्त(buf);
+	free(buf);
 
-	वापस ret;
-पूर्ण
-पूर्णांक sysctl__पढ़ो_पूर्णांक(स्थिर अक्षर *sysctl, पूर्णांक *value)
-अणु
-	अक्षर path[PATH_MAX];
-	स्थिर अक्षर *procfs = procfs__mountpoपूर्णांक();
+	return ret;
+}
+int sysctl__read_int(const char *sysctl, int *value)
+{
+	char path[PATH_MAX];
+	const char *procfs = procfs__mountpoint();
 
-	अगर (!procfs)
-		वापस -1;
+	if (!procfs)
+		return -1;
 
-	snम_लिखो(path, माप(path), "%s/sys/%s", procfs, sysctl);
+	snprintf(path, sizeof(path), "%s/sys/%s", procfs, sysctl);
 
-	वापस filename__पढ़ो_पूर्णांक(path, value);
-पूर्ण
+	return filename__read_int(path, value);
+}
 
-पूर्णांक sysfs__ग_लिखो_पूर्णांक(स्थिर अक्षर *entry, पूर्णांक value)
-अणु
-	अक्षर path[PATH_MAX];
-	स्थिर अक्षर *sysfs = sysfs__mountpoपूर्णांक();
+int sysfs__write_int(const char *entry, int value)
+{
+	char path[PATH_MAX];
+	const char *sysfs = sysfs__mountpoint();
 
-	अगर (!sysfs)
-		वापस -1;
+	if (!sysfs)
+		return -1;
 
-	अगर (snम_लिखो(path, माप(path), "%s/%s", sysfs, entry) >= PATH_MAX)
-		वापस -1;
+	if (snprintf(path, sizeof(path), "%s/%s", sysfs, entry) >= PATH_MAX)
+		return -1;
 
-	वापस filename__ग_लिखो_पूर्णांक(path, value);
-पूर्ण
+	return filename__write_int(path, value);
+}

@@ -1,92 +1,91 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2014 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
-#समावेश <drm/drm_atomic_uapi.h>
-#समावेश <drm/drm_gem_atomic_helper.h>
-#समावेश <drm/drm_vblank.h>
+#include <drm/drm_atomic_uapi.h>
+#include <drm/drm_gem_atomic_helper.h>
+#include <drm/drm_vblank.h>
 
-#समावेश "msm_atomic_trace.h"
-#समावेश "msm_drv.h"
-#समावेश "msm_gem.h"
-#समावेश "msm_kms.h"
+#include "msm_atomic_trace.h"
+#include "msm_drv.h"
+#include "msm_gem.h"
+#include "msm_kms.h"
 
-पूर्णांक msm_atomic_prepare_fb(काष्ठा drm_plane *plane,
-			  काष्ठा drm_plane_state *new_state)
-अणु
-	काष्ठा msm_drm_निजी *priv = plane->dev->dev_निजी;
-	काष्ठा msm_kms *kms = priv->kms;
+int msm_atomic_prepare_fb(struct drm_plane *plane,
+			  struct drm_plane_state *new_state)
+{
+	struct msm_drm_private *priv = plane->dev->dev_private;
+	struct msm_kms *kms = priv->kms;
 
-	अगर (!new_state->fb)
-		वापस 0;
+	if (!new_state->fb)
+		return 0;
 
 	drm_gem_plane_helper_prepare_fb(plane, new_state);
 
-	वापस msm_framebuffer_prepare(new_state->fb, kms->aspace);
-पूर्ण
+	return msm_framebuffer_prepare(new_state->fb, kms->aspace);
+}
 
 /*
- * Helpers to control vblanks जबतक we flush.. basically just to ensure
- * that vblank accounting is चयनed on, so we get valid seqn/बारtamp
- * on pageflip events (अगर requested)
+ * Helpers to control vblanks while we flush.. basically just to ensure
+ * that vblank accounting is switched on, so we get valid seqn/timestamp
+ * on pageflip events (if requested)
  */
 
-अटल व्योम vblank_get(काष्ठा msm_kms *kms, अचिन्हित crtc_mask)
-अणु
-	काष्ठा drm_crtc *crtc;
+static void vblank_get(struct msm_kms *kms, unsigned crtc_mask)
+{
+	struct drm_crtc *crtc;
 
-	क्रम_each_crtc_mask(kms->dev, crtc, crtc_mask) अणु
-		अगर (!crtc->state->active)
-			जारी;
+	for_each_crtc_mask(kms->dev, crtc, crtc_mask) {
+		if (!crtc->state->active)
+			continue;
 		drm_crtc_vblank_get(crtc);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम vblank_put(काष्ठा msm_kms *kms, अचिन्हित crtc_mask)
-अणु
-	काष्ठा drm_crtc *crtc;
+static void vblank_put(struct msm_kms *kms, unsigned crtc_mask)
+{
+	struct drm_crtc *crtc;
 
-	क्रम_each_crtc_mask(kms->dev, crtc, crtc_mask) अणु
-		अगर (!crtc->state->active)
-			जारी;
+	for_each_crtc_mask(kms->dev, crtc, crtc_mask) {
+		if (!crtc->state->active)
+			continue;
 		drm_crtc_vblank_put(crtc);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम lock_crtcs(काष्ठा msm_kms *kms, अचिन्हित पूर्णांक crtc_mask)
-अणु
-	पूर्णांक crtc_index;
-	काष्ठा drm_crtc *crtc;
+static void lock_crtcs(struct msm_kms *kms, unsigned int crtc_mask)
+{
+	int crtc_index;
+	struct drm_crtc *crtc;
 
-	क्रम_each_crtc_mask(kms->dev, crtc, crtc_mask) अणु
+	for_each_crtc_mask(kms->dev, crtc, crtc_mask) {
 		crtc_index = drm_crtc_index(crtc);
 		mutex_lock_nested(&kms->commit_lock[crtc_index], crtc_index);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम unlock_crtcs(काष्ठा msm_kms *kms, अचिन्हित पूर्णांक crtc_mask)
-अणु
-	काष्ठा drm_crtc *crtc;
+static void unlock_crtcs(struct msm_kms *kms, unsigned int crtc_mask)
+{
+	struct drm_crtc *crtc;
 
-	क्रम_each_crtc_mask_reverse(kms->dev, crtc, crtc_mask)
+	for_each_crtc_mask_reverse(kms->dev, crtc, crtc_mask)
 		mutex_unlock(&kms->commit_lock[drm_crtc_index(crtc)]);
-पूर्ण
+}
 
-अटल व्योम msm_atomic_async_commit(काष्ठा msm_kms *kms, पूर्णांक crtc_idx)
-अणु
-	अचिन्हित crtc_mask = BIT(crtc_idx);
+static void msm_atomic_async_commit(struct msm_kms *kms, int crtc_idx)
+{
+	unsigned crtc_mask = BIT(crtc_idx);
 
 	trace_msm_atomic_async_commit_start(crtc_mask);
 
 	lock_crtcs(kms, crtc_mask);
 
-	अगर (!(kms->pending_crtc_mask & crtc_mask)) अणु
+	if (!(kms->pending_crtc_mask & crtc_mask)) {
 		unlock_crtcs(kms, crtc_mask);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	kms->pending_crtc_mask &= ~crtc_mask;
 
@@ -101,11 +100,11 @@
 	kms->funcs->flush_commit(kms, crtc_mask);
 
 	/*
-	 * Wait क्रम flush to complete:
+	 * Wait for flush to complete:
 	 */
-	trace_msm_atomic_रुको_flush_start(crtc_mask);
-	kms->funcs->रुको_flush(kms, crtc_mask);
-	trace_msm_atomic_रुको_flush_finish(crtc_mask);
+	trace_msm_atomic_wait_flush_start(crtc_mask);
+	kms->funcs->wait_flush(kms, crtc_mask);
+	trace_msm_atomic_wait_flush_finish(crtc_mask);
 
 	vblank_put(kms, crtc_mask);
 
@@ -115,104 +114,104 @@
 
 out:
 	trace_msm_atomic_async_commit_finish(crtc_mask);
-पूर्ण
+}
 
-अटल क्रमागत hrसमयr_restart msm_atomic_pending_समयr(काष्ठा hrसमयr *t)
-अणु
-	काष्ठा msm_pending_समयr *समयr = container_of(t,
-			काष्ठा msm_pending_समयr, समयr);
+static enum hrtimer_restart msm_atomic_pending_timer(struct hrtimer *t)
+{
+	struct msm_pending_timer *timer = container_of(t,
+			struct msm_pending_timer, timer);
 
-	kthपढ़ो_queue_work(समयr->worker, &समयr->work);
+	kthread_queue_work(timer->worker, &timer->work);
 
-	वापस HRTIMER_NORESTART;
-पूर्ण
+	return HRTIMER_NORESTART;
+}
 
-अटल व्योम msm_atomic_pending_work(काष्ठा kthपढ़ो_work *work)
-अणु
-	काष्ठा msm_pending_समयr *समयr = container_of(work,
-			काष्ठा msm_pending_समयr, work);
+static void msm_atomic_pending_work(struct kthread_work *work)
+{
+	struct msm_pending_timer *timer = container_of(work,
+			struct msm_pending_timer, work);
 
-	msm_atomic_async_commit(समयr->kms, समयr->crtc_idx);
-पूर्ण
+	msm_atomic_async_commit(timer->kms, timer->crtc_idx);
+}
 
-पूर्णांक msm_atomic_init_pending_समयr(काष्ठा msm_pending_समयr *समयr,
-		काष्ठा msm_kms *kms, पूर्णांक crtc_idx)
-अणु
-	समयr->kms = kms;
-	समयr->crtc_idx = crtc_idx;
-	hrसमयr_init(&समयr->समयr, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
-	समयr->समयr.function = msm_atomic_pending_समयr;
+int msm_atomic_init_pending_timer(struct msm_pending_timer *timer,
+		struct msm_kms *kms, int crtc_idx)
+{
+	timer->kms = kms;
+	timer->crtc_idx = crtc_idx;
+	hrtimer_init(&timer->timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
+	timer->timer.function = msm_atomic_pending_timer;
 
-	समयr->worker = kthपढ़ो_create_worker(0, "atomic-worker-%d", crtc_idx);
-	अगर (IS_ERR(समयr->worker)) अणु
-		पूर्णांक ret = PTR_ERR(समयr->worker);
-		समयr->worker = शून्य;
-		वापस ret;
-	पूर्ण
-	sched_set_fअगरo(समयr->worker->task);
-	kthपढ़ो_init_work(&समयr->work, msm_atomic_pending_work);
+	timer->worker = kthread_create_worker(0, "atomic-worker-%d", crtc_idx);
+	if (IS_ERR(timer->worker)) {
+		int ret = PTR_ERR(timer->worker);
+		timer->worker = NULL;
+		return ret;
+	}
+	sched_set_fifo(timer->worker->task);
+	kthread_init_work(&timer->work, msm_atomic_pending_work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम msm_atomic_destroy_pending_समयr(काष्ठा msm_pending_समयr *समयr)
-अणु
-	अगर (समयr->worker)
-		kthपढ़ो_destroy_worker(समयr->worker);
-पूर्ण
+void msm_atomic_destroy_pending_timer(struct msm_pending_timer *timer)
+{
+	if (timer->worker)
+		kthread_destroy_worker(timer->worker);
+}
 
-अटल bool can_करो_async(काष्ठा drm_atomic_state *state,
-		काष्ठा drm_crtc **async_crtc)
-अणु
-	काष्ठा drm_connector_state *connector_state;
-	काष्ठा drm_connector *connector;
-	काष्ठा drm_crtc_state *crtc_state;
-	काष्ठा drm_crtc *crtc;
-	पूर्णांक i, num_crtcs = 0;
+static bool can_do_async(struct drm_atomic_state *state,
+		struct drm_crtc **async_crtc)
+{
+	struct drm_connector_state *connector_state;
+	struct drm_connector *connector;
+	struct drm_crtc_state *crtc_state;
+	struct drm_crtc *crtc;
+	int i, num_crtcs = 0;
 
-	अगर (!(state->legacy_cursor_update || state->async_update))
-		वापस false;
+	if (!(state->legacy_cursor_update || state->async_update))
+		return false;
 
 	/* any connector change, means slow path: */
-	क्रम_each_new_connector_in_state(state, connector, connector_state, i)
-		वापस false;
+	for_each_new_connector_in_state(state, connector, connector_state, i)
+		return false;
 
-	क्रम_each_new_crtc_in_state(state, crtc, crtc_state, i) अणु
-		अगर (drm_atomic_crtc_needs_modeset(crtc_state))
-			वापस false;
-		अगर (++num_crtcs > 1)
-			वापस false;
+	for_each_new_crtc_in_state(state, crtc, crtc_state, i) {
+		if (drm_atomic_crtc_needs_modeset(crtc_state))
+			return false;
+		if (++num_crtcs > 1)
+			return false;
 		*async_crtc = crtc;
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-/* Get biपंचांगask of crtcs that will need to be flushed.  The biपंचांगask
- * can be used with क्रम_each_crtc_mask() iterator, to iterate
+/* Get bitmask of crtcs that will need to be flushed.  The bitmask
+ * can be used with for_each_crtc_mask() iterator, to iterate
  * effected crtcs without needing to preserve the atomic state.
  */
-अटल अचिन्हित get_crtc_mask(काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_crtc_state *crtc_state;
-	काष्ठा drm_crtc *crtc;
-	अचिन्हित i, mask = 0;
+static unsigned get_crtc_mask(struct drm_atomic_state *state)
+{
+	struct drm_crtc_state *crtc_state;
+	struct drm_crtc *crtc;
+	unsigned i, mask = 0;
 
-	क्रम_each_new_crtc_in_state(state, crtc, crtc_state, i)
+	for_each_new_crtc_in_state(state, crtc, crtc_state, i)
 		mask |= drm_crtc_mask(crtc);
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-व्योम msm_atomic_commit_tail(काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_device *dev = state->dev;
-	काष्ठा msm_drm_निजी *priv = dev->dev_निजी;
-	काष्ठा msm_kms *kms = priv->kms;
-	काष्ठा drm_crtc *async_crtc = शून्य;
-	अचिन्हित crtc_mask = get_crtc_mask(state);
-	bool async = kms->funcs->vsync_समय &&
-			can_करो_async(state, &async_crtc);
+void msm_atomic_commit_tail(struct drm_atomic_state *state)
+{
+	struct drm_device *dev = state->dev;
+	struct msm_drm_private *priv = dev->dev_private;
+	struct msm_kms *kms = priv->kms;
+	struct drm_crtc *async_crtc = NULL;
+	unsigned crtc_mask = get_crtc_mask(state);
+	bool async = kms->funcs->vsync_time &&
+			can_do_async(state, &async_crtc);
 
 	trace_msm_atomic_commit_tail_start(async, crtc_mask);
 
@@ -223,9 +222,9 @@ out:
 	 * completed:
 	 */
 	lock_crtcs(kms, crtc_mask);
-	trace_msm_atomic_रुको_flush_start(crtc_mask);
-	kms->funcs->रुको_flush(kms, crtc_mask);
-	trace_msm_atomic_रुको_flush_finish(crtc_mask);
+	trace_msm_atomic_wait_flush_start(crtc_mask);
+	kms->funcs->wait_flush(kms, crtc_mask);
+	trace_msm_atomic_wait_flush_finish(crtc_mask);
 
 	/*
 	 * Now that there is no in-progress flush, prepare the
@@ -234,53 +233,53 @@ out:
 	kms->funcs->prepare_commit(kms, state);
 
 	/*
-	 * Push atomic updates करोwn to hardware:
+	 * Push atomic updates down to hardware:
 	 */
 	drm_atomic_helper_commit_modeset_disables(dev, state);
 	drm_atomic_helper_commit_planes(dev, state, 0);
 	drm_atomic_helper_commit_modeset_enables(dev, state);
 
-	अगर (async) अणु
-		काष्ठा msm_pending_समयr *समयr =
-			&kms->pending_समयrs[drm_crtc_index(async_crtc)];
+	if (async) {
+		struct msm_pending_timer *timer =
+			&kms->pending_timers[drm_crtc_index(async_crtc)];
 
 		/* async updates are limited to single-crtc updates: */
 		WARN_ON(crtc_mask != drm_crtc_mask(async_crtc));
 
 		/*
-		 * Start समयr अगर we करोn't alपढ़ोy have an update pending
+		 * Start timer if we don't already have an update pending
 		 * on this crtc:
 		 */
-		अगर (!(kms->pending_crtc_mask & crtc_mask)) अणु
-			kसमय_प्रकार vsync_समय, wakeup_समय;
+		if (!(kms->pending_crtc_mask & crtc_mask)) {
+			ktime_t vsync_time, wakeup_time;
 
 			kms->pending_crtc_mask |= crtc_mask;
 
-			vsync_समय = kms->funcs->vsync_समय(kms, async_crtc);
-			wakeup_समय = kसमय_sub(vsync_समय, ms_to_kसमय(1));
+			vsync_time = kms->funcs->vsync_time(kms, async_crtc);
+			wakeup_time = ktime_sub(vsync_time, ms_to_ktime(1));
 
-			hrसमयr_start(&समयr->समयr, wakeup_समय,
+			hrtimer_start(&timer->timer, wakeup_time,
 					HRTIMER_MODE_ABS);
-		पूर्ण
+		}
 
 		kms->funcs->disable_commit(kms);
 		unlock_crtcs(kms, crtc_mask);
 		/*
-		 * At this poपूर्णांक, from drm core's perspective, we
-		 * are करोne with the atomic update, so we can just
-		 * go ahead and संकेत that it is करोne:
+		 * At this point, from drm core's perspective, we
+		 * are done with the atomic update, so we can just
+		 * go ahead and signal that it is done:
 		 */
-		drm_atomic_helper_commit_hw_करोne(state);
+		drm_atomic_helper_commit_hw_done(state);
 		drm_atomic_helper_cleanup_planes(dev, state);
 
 		trace_msm_atomic_commit_tail_finish(async, crtc_mask);
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * If there is any async flush pending on updated crtcs, fold
-	 * them पूर्णांकo the current flush.
+	 * them into the current flush.
 	 */
 	kms->pending_crtc_mask &= ~crtc_mask;
 
@@ -293,11 +292,11 @@ out:
 	kms->funcs->flush_commit(kms, crtc_mask);
 	unlock_crtcs(kms, crtc_mask);
 	/*
-	 * Wait क्रम flush to complete:
+	 * Wait for flush to complete:
 	 */
-	trace_msm_atomic_रुको_flush_start(crtc_mask);
-	kms->funcs->रुको_flush(kms, crtc_mask);
-	trace_msm_atomic_रुको_flush_finish(crtc_mask);
+	trace_msm_atomic_wait_flush_start(crtc_mask);
+	kms->funcs->wait_flush(kms, crtc_mask);
+	trace_msm_atomic_wait_flush_finish(crtc_mask);
 
 	vblank_put(kms, crtc_mask);
 
@@ -306,8 +305,8 @@ out:
 	unlock_crtcs(kms, crtc_mask);
 	kms->funcs->disable_commit(kms);
 
-	drm_atomic_helper_commit_hw_करोne(state);
+	drm_atomic_helper_commit_hw_done(state);
 	drm_atomic_helper_cleanup_planes(dev, state);
 
 	trace_msm_atomic_commit_tail_finish(async, crtc_mask);
-पूर्ण
+}

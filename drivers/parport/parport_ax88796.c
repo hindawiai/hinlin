@@ -1,325 +1,324 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* linux/drivers/parport/parport_ax88796.c
  *
  * (c) 2005,2006 Simtec Electronics
  *	Ben Dooks <ben@simtec.co.uk>
 */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/parport.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/parport.h>
+#include <linux/interrupt.h>
+#include <linux/errno.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/irq.h>
+#include <asm/io.h>
+#include <asm/irq.h>
 
-#घोषणा AX_SPR_BUSY		(1<<7)
-#घोषणा AX_SPR_ACK		(1<<6)
-#घोषणा AX_SPR_PE		(1<<5)
-#घोषणा AX_SPR_SLCT		(1<<4)
-#घोषणा AX_SPR_ERR		(1<<3)
+#define AX_SPR_BUSY		(1<<7)
+#define AX_SPR_ACK		(1<<6)
+#define AX_SPR_PE		(1<<5)
+#define AX_SPR_SLCT		(1<<4)
+#define AX_SPR_ERR		(1<<3)
 
-#घोषणा AX_CPR_nDOE		(1<<5)
-#घोषणा AX_CPR_SLCTIN		(1<<3)
-#घोषणा AX_CPR_nINIT		(1<<2)
-#घोषणा AX_CPR_ATFD		(1<<1)
-#घोषणा AX_CPR_STRB		(1<<0)
+#define AX_CPR_nDOE		(1<<5)
+#define AX_CPR_SLCTIN		(1<<3)
+#define AX_CPR_nINIT		(1<<2)
+#define AX_CPR_ATFD		(1<<1)
+#define AX_CPR_STRB		(1<<0)
 
-काष्ठा ax_drvdata अणु
-	काष्ठा parport		*parport;
-	काष्ठा parport_state	 suspend;
+struct ax_drvdata {
+	struct parport		*parport;
+	struct parport_state	 suspend;
 
-	काष्ठा device		*dev;
-	काष्ठा resource		*io;
+	struct device		*dev;
+	struct resource		*io;
 
-	अचिन्हित अक्षर		 irq_enabled;
+	unsigned char		 irq_enabled;
 
-	व्योम __iomem		*base;
-	व्योम __iomem		*spp_data;
-	व्योम __iomem		*spp_spr;
-	व्योम __iomem		*spp_cpr;
-पूर्ण;
+	void __iomem		*base;
+	void __iomem		*spp_data;
+	void __iomem		*spp_spr;
+	void __iomem		*spp_cpr;
+};
 
-अटल अंतरभूत काष्ठा ax_drvdata *pp_to_drv(काष्ठा parport *p)
-अणु
-	वापस p->निजी_data;
-पूर्ण
+static inline struct ax_drvdata *pp_to_drv(struct parport *p)
+{
+	return p->private_data;
+}
 
-अटल अचिन्हित अक्षर
-parport_ax88796_पढ़ो_data(काष्ठा parport *p)
-अणु
-	काष्ठा ax_drvdata *dd = pp_to_drv(p);
+static unsigned char
+parport_ax88796_read_data(struct parport *p)
+{
+	struct ax_drvdata *dd = pp_to_drv(p);
 
-	वापस पढ़ोb(dd->spp_data);
-पूर्ण
+	return readb(dd->spp_data);
+}
 
-अटल व्योम
-parport_ax88796_ग_लिखो_data(काष्ठा parport *p, अचिन्हित अक्षर data)
-अणु
-	काष्ठा ax_drvdata *dd = pp_to_drv(p);
+static void
+parport_ax88796_write_data(struct parport *p, unsigned char data)
+{
+	struct ax_drvdata *dd = pp_to_drv(p);
 
-	ग_लिखोb(data, dd->spp_data);
-पूर्ण
+	writeb(data, dd->spp_data);
+}
 
-अटल अचिन्हित अक्षर
-parport_ax88796_पढ़ो_control(काष्ठा parport *p)
-अणु
-	काष्ठा ax_drvdata *dd = pp_to_drv(p);
-	अचिन्हित पूर्णांक cpr = पढ़ोb(dd->spp_cpr);
-	अचिन्हित पूर्णांक ret = 0;
+static unsigned char
+parport_ax88796_read_control(struct parport *p)
+{
+	struct ax_drvdata *dd = pp_to_drv(p);
+	unsigned int cpr = readb(dd->spp_cpr);
+	unsigned int ret = 0;
 
-	अगर (!(cpr & AX_CPR_STRB))
+	if (!(cpr & AX_CPR_STRB))
 		ret |= PARPORT_CONTROL_STROBE;
 
-	अगर (!(cpr & AX_CPR_ATFD))
+	if (!(cpr & AX_CPR_ATFD))
 		ret |= PARPORT_CONTROL_AUTOFD;
 
-	अगर (cpr & AX_CPR_nINIT)
+	if (cpr & AX_CPR_nINIT)
 		ret |= PARPORT_CONTROL_INIT;
 
-	अगर (!(cpr & AX_CPR_SLCTIN))
+	if (!(cpr & AX_CPR_SLCTIN))
 		ret |= PARPORT_CONTROL_SELECT;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम
-parport_ax88796_ग_लिखो_control(काष्ठा parport *p, अचिन्हित अक्षर control)
-अणु
-	काष्ठा ax_drvdata *dd = pp_to_drv(p);
-	अचिन्हित पूर्णांक cpr = पढ़ोb(dd->spp_cpr);
+static void
+parport_ax88796_write_control(struct parport *p, unsigned char control)
+{
+	struct ax_drvdata *dd = pp_to_drv(p);
+	unsigned int cpr = readb(dd->spp_cpr);
 
 	cpr &= AX_CPR_nDOE;
 
-	अगर (!(control & PARPORT_CONTROL_STROBE))
+	if (!(control & PARPORT_CONTROL_STROBE))
 		cpr |= AX_CPR_STRB;
 
-	अगर (!(control & PARPORT_CONTROL_AUTOFD))
+	if (!(control & PARPORT_CONTROL_AUTOFD))
 		cpr |= AX_CPR_ATFD;
 
-	अगर (control & PARPORT_CONTROL_INIT)
+	if (control & PARPORT_CONTROL_INIT)
 		cpr |= AX_CPR_nINIT;
 
-	अगर (!(control & PARPORT_CONTROL_SELECT))
+	if (!(control & PARPORT_CONTROL_SELECT))
 		cpr |= AX_CPR_SLCTIN;
 
 	dev_dbg(dd->dev, "write_control: ctrl=%02x, cpr=%02x\n", control, cpr);
-	ग_लिखोb(cpr, dd->spp_cpr);
+	writeb(cpr, dd->spp_cpr);
 
-	अगर (parport_ax88796_पढ़ो_control(p) != control) अणु
+	if (parport_ax88796_read_control(p) != control) {
 		dev_err(dd->dev, "write_control: read != set (%02x, %02x)\n",
-			parport_ax88796_पढ़ो_control(p), control);
-	पूर्ण
-पूर्ण
+			parport_ax88796_read_control(p), control);
+	}
+}
 
-अटल अचिन्हित अक्षर
-parport_ax88796_पढ़ो_status(काष्ठा parport *p)
-अणु
-	काष्ठा ax_drvdata *dd = pp_to_drv(p);
-	अचिन्हित पूर्णांक status = पढ़ोb(dd->spp_spr);
-	अचिन्हित पूर्णांक ret = 0;
+static unsigned char
+parport_ax88796_read_status(struct parport *p)
+{
+	struct ax_drvdata *dd = pp_to_drv(p);
+	unsigned int status = readb(dd->spp_spr);
+	unsigned int ret = 0;
 
-	अगर (status & AX_SPR_BUSY)
+	if (status & AX_SPR_BUSY)
 		ret |= PARPORT_STATUS_BUSY;
 
-	अगर (status & AX_SPR_ACK)
+	if (status & AX_SPR_ACK)
 		ret |= PARPORT_STATUS_ACK;
 
-	अगर (status & AX_SPR_ERR)
+	if (status & AX_SPR_ERR)
 		ret |= PARPORT_STATUS_ERROR;
 
-	अगर (status & AX_SPR_SLCT)
+	if (status & AX_SPR_SLCT)
 		ret |= PARPORT_STATUS_SELECT;
 
-	अगर (status & AX_SPR_PE)
+	if (status & AX_SPR_PE)
 		ret |= PARPORT_STATUS_PAPEROUT;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अचिन्हित अक्षर
-parport_ax88796_frob_control(काष्ठा parport *p, अचिन्हित अक्षर mask,
-			     अचिन्हित अक्षर val)
-अणु
-	काष्ठा ax_drvdata *dd = pp_to_drv(p);
-	अचिन्हित अक्षर old = parport_ax88796_पढ़ो_control(p);
+static unsigned char
+parport_ax88796_frob_control(struct parport *p, unsigned char mask,
+			     unsigned char val)
+{
+	struct ax_drvdata *dd = pp_to_drv(p);
+	unsigned char old = parport_ax88796_read_control(p);
 
 	dev_dbg(dd->dev, "frob: mask=%02x, val=%02x, old=%02x\n",
 		mask, val, old);
 
-	parport_ax88796_ग_लिखो_control(p, (old & ~mask) | val);
-	वापस old;
-पूर्ण
+	parport_ax88796_write_control(p, (old & ~mask) | val);
+	return old;
+}
 
-अटल व्योम
-parport_ax88796_enable_irq(काष्ठा parport *p)
-अणु
-	काष्ठा ax_drvdata *dd = pp_to_drv(p);
-	अचिन्हित दीर्घ flags;
+static void
+parport_ax88796_enable_irq(struct parport *p)
+{
+	struct ax_drvdata *dd = pp_to_drv(p);
+	unsigned long flags;
 
 	local_irq_save(flags);
-	अगर (!dd->irq_enabled) अणु
+	if (!dd->irq_enabled) {
 		enable_irq(p->irq);
 		dd->irq_enabled = 1;
-	पूर्ण
+	}
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल व्योम
-parport_ax88796_disable_irq(काष्ठा parport *p)
-अणु
-	काष्ठा ax_drvdata *dd = pp_to_drv(p);
-	अचिन्हित दीर्घ flags;
+static void
+parport_ax88796_disable_irq(struct parport *p)
+{
+	struct ax_drvdata *dd = pp_to_drv(p);
+	unsigned long flags;
 
 	local_irq_save(flags);
-	अगर (dd->irq_enabled) अणु
+	if (dd->irq_enabled) {
 		disable_irq(p->irq);
 		dd->irq_enabled = 0;
-	पूर्ण
+	}
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल व्योम
-parport_ax88796_data_क्रमward(काष्ठा parport *p)
-अणु
-	काष्ठा ax_drvdata *dd = pp_to_drv(p);
-	व्योम __iomem *cpr = dd->spp_cpr;
+static void
+parport_ax88796_data_forward(struct parport *p)
+{
+	struct ax_drvdata *dd = pp_to_drv(p);
+	void __iomem *cpr = dd->spp_cpr;
 
-	ग_लिखोb((पढ़ोb(cpr) & ~AX_CPR_nDOE), cpr);
-पूर्ण
+	writeb((readb(cpr) & ~AX_CPR_nDOE), cpr);
+}
 
-अटल व्योम
-parport_ax88796_data_reverse(काष्ठा parport *p)
-अणु
-	काष्ठा ax_drvdata *dd = pp_to_drv(p);
-	व्योम __iomem *cpr = dd->spp_cpr;
+static void
+parport_ax88796_data_reverse(struct parport *p)
+{
+	struct ax_drvdata *dd = pp_to_drv(p);
+	void __iomem *cpr = dd->spp_cpr;
 
-	ग_लिखोb(पढ़ोb(cpr) | AX_CPR_nDOE, cpr);
-पूर्ण
+	writeb(readb(cpr) | AX_CPR_nDOE, cpr);
+}
 
-अटल व्योम
-parport_ax88796_init_state(काष्ठा pardevice *d, काष्ठा parport_state *s)
-अणु
-	काष्ठा ax_drvdata *dd = pp_to_drv(d->port);
+static void
+parport_ax88796_init_state(struct pardevice *d, struct parport_state *s)
+{
+	struct ax_drvdata *dd = pp_to_drv(d->port);
 
-	स_रखो(s, 0, माप(काष्ठा parport_state));
+	memset(s, 0, sizeof(struct parport_state));
 
 	dev_dbg(dd->dev, "init_state: %p: state=%p\n", d, s);
-	s->u.ax88796.cpr = पढ़ोb(dd->spp_cpr);
-पूर्ण
+	s->u.ax88796.cpr = readb(dd->spp_cpr);
+}
 
-अटल व्योम
-parport_ax88796_save_state(काष्ठा parport *p, काष्ठा parport_state *s)
-अणु
-	काष्ठा ax_drvdata *dd = pp_to_drv(p);
+static void
+parport_ax88796_save_state(struct parport *p, struct parport_state *s)
+{
+	struct ax_drvdata *dd = pp_to_drv(p);
 
 	dev_dbg(dd->dev, "save_state: %p: state=%p\n", p, s);
-	s->u.ax88796.cpr = पढ़ोb(dd->spp_cpr);
-पूर्ण
+	s->u.ax88796.cpr = readb(dd->spp_cpr);
+}
 
-अटल व्योम
-parport_ax88796_restore_state(काष्ठा parport *p, काष्ठा parport_state *s)
-अणु
-	काष्ठा ax_drvdata *dd = pp_to_drv(p);
+static void
+parport_ax88796_restore_state(struct parport *p, struct parport_state *s)
+{
+	struct ax_drvdata *dd = pp_to_drv(p);
 
 	dev_dbg(dd->dev, "restore_state: %p: state=%p\n", p, s);
-	ग_लिखोb(s->u.ax88796.cpr, dd->spp_cpr);
-पूर्ण
+	writeb(s->u.ax88796.cpr, dd->spp_cpr);
+}
 
-अटल काष्ठा parport_operations parport_ax88796_ops = अणु
-	.ग_लिखो_data	= parport_ax88796_ग_लिखो_data,
-	.पढ़ो_data	= parport_ax88796_पढ़ो_data,
+static struct parport_operations parport_ax88796_ops = {
+	.write_data	= parport_ax88796_write_data,
+	.read_data	= parport_ax88796_read_data,
 
-	.ग_लिखो_control	= parport_ax88796_ग_लिखो_control,
-	.पढ़ो_control	= parport_ax88796_पढ़ो_control,
+	.write_control	= parport_ax88796_write_control,
+	.read_control	= parport_ax88796_read_control,
 	.frob_control	= parport_ax88796_frob_control,
 
-	.पढ़ो_status	= parport_ax88796_पढ़ो_status,
+	.read_status	= parport_ax88796_read_status,
 
 	.enable_irq	= parport_ax88796_enable_irq,
 	.disable_irq	= parport_ax88796_disable_irq,
 
-	.data_क्रमward	= parport_ax88796_data_क्रमward,
+	.data_forward	= parport_ax88796_data_forward,
 	.data_reverse	= parport_ax88796_data_reverse,
 
 	.init_state	= parport_ax88796_init_state,
 	.save_state	= parport_ax88796_save_state,
 	.restore_state	= parport_ax88796_restore_state,
 
-	.epp_ग_लिखो_data	= parport_ieee1284_epp_ग_लिखो_data,
-	.epp_पढ़ो_data	= parport_ieee1284_epp_पढ़ो_data,
-	.epp_ग_लिखो_addr	= parport_ieee1284_epp_ग_लिखो_addr,
-	.epp_पढ़ो_addr	= parport_ieee1284_epp_पढ़ो_addr,
+	.epp_write_data	= parport_ieee1284_epp_write_data,
+	.epp_read_data	= parport_ieee1284_epp_read_data,
+	.epp_write_addr	= parport_ieee1284_epp_write_addr,
+	.epp_read_addr	= parport_ieee1284_epp_read_addr,
 
-	.ecp_ग_लिखो_data	= parport_ieee1284_ecp_ग_लिखो_data,
-	.ecp_पढ़ो_data	= parport_ieee1284_ecp_पढ़ो_data,
-	.ecp_ग_लिखो_addr	= parport_ieee1284_ecp_ग_लिखो_addr,
+	.ecp_write_data	= parport_ieee1284_ecp_write_data,
+	.ecp_read_data	= parport_ieee1284_ecp_read_data,
+	.ecp_write_addr	= parport_ieee1284_ecp_write_addr,
 
-	.compat_ग_लिखो_data	= parport_ieee1284_ग_लिखो_compat,
-	.nibble_पढ़ो_data	= parport_ieee1284_पढ़ो_nibble,
-	.byte_पढ़ो_data		= parport_ieee1284_पढ़ो_byte,
+	.compat_write_data	= parport_ieee1284_write_compat,
+	.nibble_read_data	= parport_ieee1284_read_nibble,
+	.byte_read_data		= parport_ieee1284_read_byte,
 
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक parport_ax88796_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *_dev = &pdev->dev;
-	काष्ठा ax_drvdata *dd;
-	काष्ठा parport *pp;
-	काष्ठा resource *res;
-	अचिन्हित दीर्घ size;
-	पूर्णांक spacing;
-	पूर्णांक irq;
-	पूर्णांक ret;
+static int parport_ax88796_probe(struct platform_device *pdev)
+{
+	struct device *_dev = &pdev->dev;
+	struct ax_drvdata *dd;
+	struct parport *pp;
+	struct resource *res;
+	unsigned long size;
+	int spacing;
+	int irq;
+	int ret;
 
-	dd = kzalloc(माप(*dd), GFP_KERNEL);
-	अगर (!dd)
-		वापस -ENOMEM;
+	dd = kzalloc(sizeof(*dd), GFP_KERNEL);
+	if (!dd)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (res == शून्य) अणु
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (res == NULL) {
 		dev_err(_dev, "no MEM specified\n");
 		ret = -ENXIO;
-		जाओ निकास_mem;
-	पूर्ण
+		goto exit_mem;
+	}
 
 	size = resource_size(res);
 	spacing = size / 3;
 
 	dd->io = request_mem_region(res->start, size, pdev->name);
-	अगर (dd->io == शून्य) अणु
+	if (dd->io == NULL) {
 		dev_err(_dev, "cannot reserve memory\n");
 		ret = -ENXIO;
-		जाओ निकास_mem;
-	पूर्ण
+		goto exit_mem;
+	}
 
 	dd->base = ioremap(res->start, size);
-	अगर (dd->base == शून्य) अणु
+	if (dd->base == NULL) {
 		dev_err(_dev, "cannot ioremap region\n");
 		ret = -ENXIO;
-		जाओ निकास_res;
-	पूर्ण
+		goto exit_res;
+	}
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq <= 0)
+	irq = platform_get_irq(pdev, 0);
+	if (irq <= 0)
 		irq = PARPORT_IRQ_NONE;
 
-	pp = parport_रेजिस्टर_port((अचिन्हित दीर्घ)dd->base, irq,
+	pp = parport_register_port((unsigned long)dd->base, irq,
 				   PARPORT_DMA_NONE,
 				   &parport_ax88796_ops);
 
-	अगर (pp == शून्य) अणु
+	if (pp == NULL) {
 		dev_err(_dev, "failed to register parallel port\n");
 		ret = -ENOMEM;
-		जाओ निकास_unmap;
-	पूर्ण
+		goto exit_unmap;
+	}
 
-	pp->निजी_data = dd;
+	pp->private_data = dd;
 	dd->parport = pp;
 	dd->dev = _dev;
 
@@ -328,91 +327,91 @@ parport_ax88796_restore_state(काष्ठा parport *p, काष्ठा 
 	dd->spp_cpr  = dd->base + (spacing * 2);
 
 	/* initialise the port controls */
-	ग_लिखोb(AX_CPR_STRB, dd->spp_cpr);
+	writeb(AX_CPR_STRB, dd->spp_cpr);
 
-	अगर (irq >= 0) अणु
+	if (irq >= 0) {
 		/* request irq */
 		ret = request_irq(irq, parport_irq_handler,
 				  IRQF_TRIGGER_FALLING, pdev->name, pp);
 
-		अगर (ret < 0)
-			जाओ निकास_port;
+		if (ret < 0)
+			goto exit_port;
 
 		dd->irq_enabled = 1;
-	पूर्ण
+	}
 
-	platक्रमm_set_drvdata(pdev, pp);
+	platform_set_drvdata(pdev, pp);
 
 	dev_info(_dev, "attached parallel port driver\n");
 	parport_announce_port(pp);
 
-	वापस 0;
+	return 0;
 
- निकास_port:
-	parport_हटाओ_port(pp);
- निकास_unmap:
+ exit_port:
+	parport_remove_port(pp);
+ exit_unmap:
 	iounmap(dd->base);
- निकास_res:
+ exit_res:
 	release_mem_region(dd->io->start, size);
- निकास_mem:
-	kमुक्त(dd);
-	वापस ret;
-पूर्ण
+ exit_mem:
+	kfree(dd);
+	return ret;
+}
 
-अटल पूर्णांक parport_ax88796_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा parport *p = platक्रमm_get_drvdata(pdev);
-	काष्ठा ax_drvdata *dd = pp_to_drv(p);
+static int parport_ax88796_remove(struct platform_device *pdev)
+{
+	struct parport *p = platform_get_drvdata(pdev);
+	struct ax_drvdata *dd = pp_to_drv(p);
 
-	मुक्त_irq(p->irq, p);
-	parport_हटाओ_port(p);
+	free_irq(p->irq, p);
+	parport_remove_port(p);
 	iounmap(dd->base);
 	release_mem_region(dd->io->start, resource_size(dd->io));
-	kमुक्त(dd);
+	kfree(dd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 
-अटल पूर्णांक parport_ax88796_suspend(काष्ठा platक्रमm_device *dev,
+static int parport_ax88796_suspend(struct platform_device *dev,
 				   pm_message_t state)
-अणु
-	काष्ठा parport *p = platक्रमm_get_drvdata(dev);
-	काष्ठा ax_drvdata *dd = pp_to_drv(p);
+{
+	struct parport *p = platform_get_drvdata(dev);
+	struct ax_drvdata *dd = pp_to_drv(p);
 
 	parport_ax88796_save_state(p, &dd->suspend);
-	ग_लिखोb(AX_CPR_nDOE | AX_CPR_STRB, dd->spp_cpr);
-	वापस 0;
-पूर्ण
+	writeb(AX_CPR_nDOE | AX_CPR_STRB, dd->spp_cpr);
+	return 0;
+}
 
-अटल पूर्णांक parport_ax88796_resume(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा parport *p = platक्रमm_get_drvdata(dev);
-	काष्ठा ax_drvdata *dd = pp_to_drv(p);
+static int parport_ax88796_resume(struct platform_device *dev)
+{
+	struct parport *p = platform_get_drvdata(dev);
+	struct ax_drvdata *dd = pp_to_drv(p);
 
 	parport_ax88796_restore_state(p, &dd->suspend);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अन्यथा
-#घोषणा parport_ax88796_suspend शून्य
-#घोषणा parport_ax88796_resume  शून्य
-#पूर्ण_अगर
+#else
+#define parport_ax88796_suspend NULL
+#define parport_ax88796_resume  NULL
+#endif
 
 MODULE_ALIAS("platform:ax88796-pp");
 
-अटल काष्ठा platक्रमm_driver axdrv = अणु
-	.driver		= अणु
+static struct platform_driver axdrv = {
+	.driver		= {
 		.name	= "ax88796-pp",
-	पूर्ण,
+	},
 	.probe		= parport_ax88796_probe,
-	.हटाओ		= parport_ax88796_हटाओ,
+	.remove		= parport_ax88796_remove,
 	.suspend	= parport_ax88796_suspend,
 	.resume		= parport_ax88796_resume,
-पूर्ण;
+};
 
-module_platक्रमm_driver(axdrv);
+module_platform_driver(axdrv);
 
 MODULE_AUTHOR("Ben Dooks <ben@simtec.co.uk>");
 MODULE_DESCRIPTION("AX88796 Parport parallel port driver");

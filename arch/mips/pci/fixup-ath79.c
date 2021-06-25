@@ -1,19 +1,18 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  Copyright (C) 2018 John Crispin <john@phrozen.org>
  */
 
-#समावेश <linux/pci.h>
-//#समावेश <linux/of_irq.h>
-#समावेश <linux/of_pci.h>
+#include <linux/pci.h>
+//#include <linux/of_irq.h>
+#include <linux/of_pci.h>
 
-पूर्णांक pcibios_plat_dev_init(काष्ठा pci_dev *dev)
-अणु
-	वापस PCIBIOS_SUCCESSFUL;
-पूर्ण
+int pcibios_plat_dev_init(struct pci_dev *dev)
+{
+	return PCIBIOS_SUCCESSFUL;
+}
 
-पूर्णांक pcibios_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
-अणु
-	वापस of_irq_parse_and_map_pci(dev, slot, pin);
-पूर्ण
+int pcibios_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
+{
+	return of_irq_parse_and_map_pci(dev, slot, pin);
+}

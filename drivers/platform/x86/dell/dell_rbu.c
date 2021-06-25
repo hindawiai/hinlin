@@ -1,125 +1,124 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * dell_rbu.c
- * Bios Update driver क्रम Dell प्रणालीs
+ * Bios Update driver for Dell systems
  * Author: Dell Inc
  *         Abhay Salunke <abhay_salunke@dell.com>
  *
  * Copyright (C) 2005 Dell Inc.
  *
- * Remote BIOS Update (rbu) driver is used क्रम updating DELL BIOS by
- * creating entries in the /sys file प्रणालीs on Linux 2.6 and higher
+ * Remote BIOS Update (rbu) driver is used for updating DELL BIOS by
+ * creating entries in the /sys file systems on Linux 2.6 and higher
  * kernels. The driver supports two mechanism to update the BIOS namely
  * contiguous and packetized. Both these methods still require having some
  * application to set the CMOS bit indicating the BIOS to update itself
  * after a reboot.
  *
  * Contiguous method:
- * This driver ग_लिखोs the incoming data in a monolithic image by allocating
+ * This driver writes the incoming data in a monolithic image by allocating
  * contiguous physical pages large enough to accommodate the incoming BIOS
  * image size.
  *
  * Packetized method:
- * The driver ग_लिखोs the incoming packet image by allocating a new packet
- * on every समय the packet data is written. This driver requires an
- * application to अवरोध the BIOS image in to fixed sized packet chunks.
+ * The driver writes the incoming packet image by allocating a new packet
+ * on every time the packet data is written. This driver requires an
+ * application to break the BIOS image in to fixed sized packet chunks.
  *
- * See Documentation/admin-guide/dell_rbu.rst क्रम more info.
+ * See Documentation/admin-guide/dell_rbu.rst for more info.
  */
 
-#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <यंत्र/set_memory.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/blkdev.h>
+#include <linux/platform_device.h>
+#include <linux/spinlock.h>
+#include <linux/moduleparam.h>
+#include <linux/firmware.h>
+#include <linux/dma-mapping.h>
+#include <asm/set_memory.h>
 
 MODULE_AUTHOR("Abhay Salunke <abhay_salunke@dell.com>");
 MODULE_DESCRIPTION("Driver for updating BIOS image on DELL systems");
 MODULE_LICENSE("GPL");
 MODULE_VERSION("3.2");
 
-#घोषणा BIOS_SCAN_LIMIT 0xffffffff
-#घोषणा MAX_IMAGE_LENGTH 16
-अटल काष्ठा _rbu_data अणु
-	व्योम *image_update_buffer;
-	अचिन्हित दीर्घ image_update_buffer_size;
-	अचिन्हित दीर्घ bios_image_size;
-	पूर्णांक image_update_ordernum;
+#define BIOS_SCAN_LIMIT 0xffffffff
+#define MAX_IMAGE_LENGTH 16
+static struct _rbu_data {
+	void *image_update_buffer;
+	unsigned long image_update_buffer_size;
+	unsigned long bios_image_size;
+	int image_update_ordernum;
 	spinlock_t lock;
-	अचिन्हित दीर्घ packet_पढ़ो_count;
-	अचिन्हित दीर्घ num_packets;
-	अचिन्हित दीर्घ packetsize;
-	अचिन्हित दीर्घ imagesize;
-	पूर्णांक entry_created;
-पूर्ण rbu_data;
+	unsigned long packet_read_count;
+	unsigned long num_packets;
+	unsigned long packetsize;
+	unsigned long imagesize;
+	int entry_created;
+} rbu_data;
 
-अटल अक्षर image_type[MAX_IMAGE_LENGTH + 1] = "mono";
-module_param_string(image_type, image_type, माप (image_type), 0);
+static char image_type[MAX_IMAGE_LENGTH + 1] = "mono";
+module_param_string(image_type, image_type, sizeof (image_type), 0);
 MODULE_PARM_DESC(image_type, "BIOS image type. choose- mono or packet or init");
 
-अटल अचिन्हित दीर्घ allocation_न्यूनमान = 0x100000;
-module_param(allocation_न्यूनमान, uदीर्घ, 0644);
-MODULE_PARM_DESC(allocation_न्यूनमान, "Minimum address for allocations when using Packet mode");
+static unsigned long allocation_floor = 0x100000;
+module_param(allocation_floor, ulong, 0644);
+MODULE_PARM_DESC(allocation_floor, "Minimum address for allocations when using Packet mode");
 
-काष्ठा packet_data अणु
-	काष्ठा list_head list;
-	माप_प्रकार length;
-	व्योम *data;
-	पूर्णांक ordernum;
-पूर्ण;
+struct packet_data {
+	struct list_head list;
+	size_t length;
+	void *data;
+	int ordernum;
+};
 
-अटल काष्ठा packet_data packet_data_head;
+static struct packet_data packet_data_head;
 
-अटल काष्ठा platक्रमm_device *rbu_device;
-अटल पूर्णांक context;
+static struct platform_device *rbu_device;
+static int context;
 
-अटल व्योम init_packet_head(व्योम)
-अणु
+static void init_packet_head(void)
+{
 	INIT_LIST_HEAD(&packet_data_head.list);
-	rbu_data.packet_पढ़ो_count = 0;
+	rbu_data.packet_read_count = 0;
 	rbu_data.num_packets = 0;
 	rbu_data.packetsize = 0;
 	rbu_data.imagesize = 0;
-पूर्ण
+}
 
-अटल पूर्णांक create_packet(व्योम *data, माप_प्रकार length)
-अणु
-	काष्ठा packet_data *newpacket;
-	पूर्णांक ordernum = 0;
-	पूर्णांक retval = 0;
-	अचिन्हित पूर्णांक packet_array_size = 0;
-	व्योम **invalid_addr_packet_array = शून्य;
-	व्योम *packet_data_temp_buf = शून्य;
-	अचिन्हित पूर्णांक idx = 0;
+static int create_packet(void *data, size_t length)
+{
+	struct packet_data *newpacket;
+	int ordernum = 0;
+	int retval = 0;
+	unsigned int packet_array_size = 0;
+	void **invalid_addr_packet_array = NULL;
+	void *packet_data_temp_buf = NULL;
+	unsigned int idx = 0;
 
 	pr_debug("entry\n");
 
-	अगर (!rbu_data.packetsize) अणु
+	if (!rbu_data.packetsize) {
 		pr_debug("packetsize not specified\n");
 		retval = -EINVAL;
-		जाओ out_noalloc;
-	पूर्ण
+		goto out_noalloc;
+	}
 
 	spin_unlock(&rbu_data.lock);
 
-	newpacket = kzalloc(माप (काष्ठा packet_data), GFP_KERNEL);
+	newpacket = kzalloc(sizeof (struct packet_data), GFP_KERNEL);
 
-	अगर (!newpacket) अणु
+	if (!newpacket) {
 		pr_warn("failed to allocate new packet\n");
 		retval = -ENOMEM;
 		spin_lock(&rbu_data.lock);
-		जाओ out_noalloc;
-	पूर्ण
+		goto out_noalloc;
+	}
 
 	ordernum = get_order(length);
 
@@ -128,54 +127,54 @@ MODULE_PARM_DESC(allocation_न्यूनमान, "Minimum address for alloc
 	 * be overwritten by BIOS.
 	 *
 	 * array to temporarily hold packets
-	 * that are below the allocation न्यूनमान
+	 * that are below the allocation floor
 	 *
-	 * NOTE: very simplistic because we only need the न्यूनमान to be at 1MB
-	 *       due to BIOS errata. This shouldn't be used क्रम higher न्यूनमानs
+	 * NOTE: very simplistic because we only need the floor to be at 1MB
+	 *       due to BIOS errata. This shouldn't be used for higher floors
 	 *       or you will run out of mem trying to allocate the array.
 	 */
-	packet_array_size = max_t(अचिन्हित पूर्णांक, allocation_न्यूनमान / rbu_data.packetsize, 1);
-	invalid_addr_packet_array = kसुस्मृति(packet_array_size, माप(व्योम *),
+	packet_array_size = max_t(unsigned int, allocation_floor / rbu_data.packetsize, 1);
+	invalid_addr_packet_array = kcalloc(packet_array_size, sizeof(void *),
 						GFP_KERNEL);
 
-	अगर (!invalid_addr_packet_array) अणु
+	if (!invalid_addr_packet_array) {
 		pr_warn("failed to allocate invalid_addr_packet_array\n");
 		retval = -ENOMEM;
 		spin_lock(&rbu_data.lock);
-		जाओ out_alloc_packet;
-	पूर्ण
+		goto out_alloc_packet;
+	}
 
-	जबतक (!packet_data_temp_buf) अणु
-		packet_data_temp_buf = (अचिन्हित अक्षर *)
-			__get_मुक्त_pages(GFP_KERNEL, ordernum);
-		अगर (!packet_data_temp_buf) अणु
+	while (!packet_data_temp_buf) {
+		packet_data_temp_buf = (unsigned char *)
+			__get_free_pages(GFP_KERNEL, ordernum);
+		if (!packet_data_temp_buf) {
 			pr_warn("failed to allocate new packet\n");
 			retval = -ENOMEM;
 			spin_lock(&rbu_data.lock);
-			जाओ out_alloc_packet_array;
-		पूर्ण
+			goto out_alloc_packet_array;
+		}
 
-		अगर ((अचिन्हित दीर्घ)virt_to_phys(packet_data_temp_buf)
-				< allocation_न्यूनमान) अणु
+		if ((unsigned long)virt_to_phys(packet_data_temp_buf)
+				< allocation_floor) {
 			pr_debug("packet 0x%lx below floor at 0x%lx\n",
-					(अचिन्हित दीर्घ)virt_to_phys(
+					(unsigned long)virt_to_phys(
 						packet_data_temp_buf),
-					allocation_न्यूनमान);
+					allocation_floor);
 			invalid_addr_packet_array[idx++] = packet_data_temp_buf;
-			packet_data_temp_buf = शून्य;
-		पूर्ण
-	पूर्ण
+			packet_data_temp_buf = NULL;
+		}
+	}
 	/*
-	 * set to uncachable or it may never get written back beक्रमe reboot
+	 * set to uncachable or it may never get written back before reboot
 	 */
-	set_memory_uc((अचिन्हित दीर्घ)packet_data_temp_buf, 1 << ordernum);
+	set_memory_uc((unsigned long)packet_data_temp_buf, 1 << ordernum);
 
 	spin_lock(&rbu_data.lock);
 
 	newpacket->data = packet_data_temp_buf;
 
 	pr_debug("newpacket at physical addr %lx\n",
-		(अचिन्हित दीर्घ)virt_to_phys(newpacket->data));
+		(unsigned long)virt_to_phys(newpacket->data));
 
 	/* packets may not have fixed size */
 	newpacket->length = length;
@@ -186,493 +185,493 @@ MODULE_PARM_DESC(allocation_न्यूनमान, "Minimum address for alloc
 	INIT_LIST_HEAD(&newpacket->list);
 	list_add_tail(&newpacket->list, &packet_data_head.list);
 
-	स_नकल(newpacket->data, data, length);
+	memcpy(newpacket->data, data, length);
 
 	pr_debug("exit\n");
 
 out_alloc_packet_array:
-	/* always मुक्त packet array */
-	जबतक (idx--) अणु
+	/* always free packet array */
+	while (idx--) {
 		pr_debug("freeing unused packet below floor 0x%lx\n",
-			(अचिन्हित दीर्घ)virt_to_phys(invalid_addr_packet_array[idx]));
-		मुक्त_pages((अचिन्हित दीर्घ)invalid_addr_packet_array[idx], ordernum);
-	पूर्ण
-	kमुक्त(invalid_addr_packet_array);
+			(unsigned long)virt_to_phys(invalid_addr_packet_array[idx]));
+		free_pages((unsigned long)invalid_addr_packet_array[idx], ordernum);
+	}
+	kfree(invalid_addr_packet_array);
 
 out_alloc_packet:
-	/* अगर error, मुक्त data */
-	अगर (retval)
-		kमुक्त(newpacket);
+	/* if error, free data */
+	if (retval)
+		kfree(newpacket);
 
 out_noalloc:
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक packetize_data(स्थिर u8 *data, माप_प्रकार length)
-अणु
-	पूर्णांक rc = 0;
-	पूर्णांक करोne = 0;
-	पूर्णांक packet_length;
+static int packetize_data(const u8 *data, size_t length)
+{
+	int rc = 0;
+	int done = 0;
+	int packet_length;
 	u8 *temp;
 	u8 *end = (u8 *) data + length;
 	pr_debug("data length %zd\n", length);
-	अगर (!rbu_data.packetsize) अणु
+	if (!rbu_data.packetsize) {
 		pr_warn("packetsize not specified\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	temp = (u8 *) data;
 
 	/* packetize the hunk */
-	जबतक (!करोne) अणु
-		अगर ((temp + rbu_data.packetsize) < end)
+	while (!done) {
+		if ((temp + rbu_data.packetsize) < end)
 			packet_length = rbu_data.packetsize;
-		अन्यथा अणु
+		else {
 			/* this is the last packet */
 			packet_length = end - temp;
-			करोne = 1;
-		पूर्ण
+			done = 1;
+		}
 
-		अगर ((rc = create_packet(temp, packet_length)))
-			वापस rc;
+		if ((rc = create_packet(temp, packet_length)))
+			return rc;
 
 		pr_debug("%p:%td\n", temp, (end - temp));
 		temp += packet_length;
-	पूर्ण
+	}
 
 	rbu_data.imagesize = length;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक करो_packet_पढ़ो(अक्षर *data, काष्ठा packet_data *newpacket,
-	पूर्णांक length, पूर्णांक bytes_पढ़ो, पूर्णांक *list_पढ़ो_count)
-अणु
-	व्योम *ptemp_buf;
-	पूर्णांक bytes_copied = 0;
-	पूर्णांक j = 0;
+static int do_packet_read(char *data, struct packet_data *newpacket,
+	int length, int bytes_read, int *list_read_count)
+{
+	void *ptemp_buf;
+	int bytes_copied = 0;
+	int j = 0;
 
-	*list_पढ़ो_count += newpacket->length;
+	*list_read_count += newpacket->length;
 
-	अगर (*list_पढ़ो_count > bytes_पढ़ो) अणु
-		/* poपूर्णांक to the start of unपढ़ो data */
-		j = newpacket->length - (*list_पढ़ो_count - bytes_पढ़ो);
-		/* poपूर्णांक to the offset in the packet buffer */
+	if (*list_read_count > bytes_read) {
+		/* point to the start of unread data */
+		j = newpacket->length - (*list_read_count - bytes_read);
+		/* point to the offset in the packet buffer */
 		ptemp_buf = (u8 *) newpacket->data + j;
 		/*
-		 * check अगर there is enough room in
+		 * check if there is enough room in
 		 * * the incoming buffer
 		 */
-		अगर (length > (*list_पढ़ो_count - bytes_पढ़ो))
+		if (length > (*list_read_count - bytes_read))
 			/*
 			 * copy what ever is there in this
 			 * packet and move on
 			 */
-			bytes_copied = (*list_पढ़ो_count - bytes_पढ़ो);
-		अन्यथा
-			/* copy the reमुख्यing */
+			bytes_copied = (*list_read_count - bytes_read);
+		else
+			/* copy the remaining */
 			bytes_copied = length;
-		स_नकल(data, ptemp_buf, bytes_copied);
-	पूर्ण
-	वापस bytes_copied;
-पूर्ण
+		memcpy(data, ptemp_buf, bytes_copied);
+	}
+	return bytes_copied;
+}
 
-अटल पूर्णांक packet_पढ़ो_list(अक्षर *data, माप_प्रकार * pपढ़ो_length)
-अणु
-	काष्ठा packet_data *newpacket;
-	पूर्णांक temp_count = 0;
-	पूर्णांक bytes_copied = 0;
-	पूर्णांक bytes_पढ़ो = 0;
-	पूर्णांक reमुख्यing_bytes = 0;
-	अक्षर *pdest = data;
+static int packet_read_list(char *data, size_t * pread_length)
+{
+	struct packet_data *newpacket;
+	int temp_count = 0;
+	int bytes_copied = 0;
+	int bytes_read = 0;
+	int remaining_bytes = 0;
+	char *pdest = data;
 
-	/* check अगर we have any packets */
-	अगर (0 == rbu_data.num_packets)
-		वापस -ENOMEM;
+	/* check if we have any packets */
+	if (0 == rbu_data.num_packets)
+		return -ENOMEM;
 
-	reमुख्यing_bytes = *pपढ़ो_length;
-	bytes_पढ़ो = rbu_data.packet_पढ़ो_count;
+	remaining_bytes = *pread_length;
+	bytes_read = rbu_data.packet_read_count;
 
-	list_क्रम_each_entry(newpacket, (&packet_data_head.list)->next, list) अणु
-		bytes_copied = करो_packet_पढ़ो(pdest, newpacket,
-			reमुख्यing_bytes, bytes_पढ़ो, &temp_count);
-		reमुख्यing_bytes -= bytes_copied;
-		bytes_पढ़ो += bytes_copied;
+	list_for_each_entry(newpacket, (&packet_data_head.list)->next, list) {
+		bytes_copied = do_packet_read(pdest, newpacket,
+			remaining_bytes, bytes_read, &temp_count);
+		remaining_bytes -= bytes_copied;
+		bytes_read += bytes_copied;
 		pdest += bytes_copied;
 		/*
-		 * check अगर we reached end of buffer beक्रमe reaching the
+		 * check if we reached end of buffer before reaching the
 		 * last packet
 		 */
-		अगर (reमुख्यing_bytes == 0)
-			अवरोध;
-	पूर्ण
-	/*finally set the bytes पढ़ो */
-	*pपढ़ो_length = bytes_पढ़ो - rbu_data.packet_पढ़ो_count;
-	rbu_data.packet_पढ़ो_count = bytes_पढ़ो;
-	वापस 0;
-पूर्ण
+		if (remaining_bytes == 0)
+			break;
+	}
+	/*finally set the bytes read */
+	*pread_length = bytes_read - rbu_data.packet_read_count;
+	rbu_data.packet_read_count = bytes_read;
+	return 0;
+}
 
-अटल व्योम packet_empty_list(व्योम)
-अणु
-	काष्ठा packet_data *newpacket, *पंचांगp;
+static void packet_empty_list(void)
+{
+	struct packet_data *newpacket, *tmp;
 
-	list_क्रम_each_entry_safe(newpacket, पंचांगp, (&packet_data_head.list)->next, list) अणु
+	list_for_each_entry_safe(newpacket, tmp, (&packet_data_head.list)->next, list) {
 		list_del(&newpacket->list);
 
 		/*
-		 * zero out the RBU packet memory beक्रमe मुक्तing
+		 * zero out the RBU packet memory before freeing
 		 * to make sure there are no stale RBU packets left in memory
 		 */
-		स_रखो(newpacket->data, 0, rbu_data.packetsize);
-		set_memory_wb((अचिन्हित दीर्घ)newpacket->data,
+		memset(newpacket->data, 0, rbu_data.packetsize);
+		set_memory_wb((unsigned long)newpacket->data,
 			1 << newpacket->ordernum);
-		मुक्त_pages((अचिन्हित दीर्घ) newpacket->data,
+		free_pages((unsigned long) newpacket->data,
 			newpacket->ordernum);
-		kमुक्त(newpacket);
-	पूर्ण
-	rbu_data.packet_पढ़ो_count = 0;
+		kfree(newpacket);
+	}
+	rbu_data.packet_read_count = 0;
 	rbu_data.num_packets = 0;
 	rbu_data.imagesize = 0;
-पूर्ण
+}
 
 /*
- * img_update_मुक्त: Frees the buffer allocated क्रम storing BIOS image
- * Always called with lock held and वापसed with lock held
+ * img_update_free: Frees the buffer allocated for storing BIOS image
+ * Always called with lock held and returned with lock held
  */
-अटल व्योम img_update_मुक्त(व्योम)
-अणु
-	अगर (!rbu_data.image_update_buffer)
-		वापस;
+static void img_update_free(void)
+{
+	if (!rbu_data.image_update_buffer)
+		return;
 	/*
-	 * zero out this buffer beक्रमe मुक्तing it to get rid of any stale
+	 * zero out this buffer before freeing it to get rid of any stale
 	 * BIOS image copied in memory.
 	 */
-	स_रखो(rbu_data.image_update_buffer, 0,
+	memset(rbu_data.image_update_buffer, 0,
 		rbu_data.image_update_buffer_size);
-	मुक्त_pages((अचिन्हित दीर्घ) rbu_data.image_update_buffer,
+	free_pages((unsigned long) rbu_data.image_update_buffer,
 		rbu_data.image_update_ordernum);
 
 	/*
-	 * Re-initialize the rbu_data variables after a मुक्त
+	 * Re-initialize the rbu_data variables after a free
 	 */
 	rbu_data.image_update_ordernum = -1;
-	rbu_data.image_update_buffer = शून्य;
+	rbu_data.image_update_buffer = NULL;
 	rbu_data.image_update_buffer_size = 0;
 	rbu_data.bios_image_size = 0;
-पूर्ण
+}
 
 /*
- * img_update_पुनः_स्मृति: This function allocates the contiguous pages to
+ * img_update_realloc: This function allocates the contiguous pages to
  * accommodate the requested size of data. The memory address and size
  * values are stored globally and on every call to this function the new
- * size is checked to see अगर more data is required than the existing size.
- * If true the previous memory is मुक्तd and new allocation is करोne to
+ * size is checked to see if more data is required than the existing size.
+ * If true the previous memory is freed and new allocation is done to
  * accommodate the new size. If the incoming size is less then than the
- * alपढ़ोy allocated size, then that memory is reused. This function is
- * called with lock held and वापसs with lock held.
+ * already allocated size, then that memory is reused. This function is
+ * called with lock held and returns with lock held.
  */
-अटल पूर्णांक img_update_पुनः_स्मृति(अचिन्हित दीर्घ size)
-अणु
-	अचिन्हित अक्षर *image_update_buffer = शून्य;
-	अचिन्हित दीर्घ img_buf_phys_addr;
-	पूर्णांक ordernum;
+static int img_update_realloc(unsigned long size)
+{
+	unsigned char *image_update_buffer = NULL;
+	unsigned long img_buf_phys_addr;
+	int ordernum;
 
 	/*
-	 * check अगर the buffer of sufficient size has been
-	 * alपढ़ोy allocated
+	 * check if the buffer of sufficient size has been
+	 * already allocated
 	 */
-	अगर (rbu_data.image_update_buffer_size >= size) अणु
+	if (rbu_data.image_update_buffer_size >= size) {
 		/*
-		 * check क्रम corruption
+		 * check for corruption
 		 */
-		अगर ((size != 0) && (rbu_data.image_update_buffer == शून्य)) अणु
+		if ((size != 0) && (rbu_data.image_update_buffer == NULL)) {
 			pr_err("corruption check failed\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		/*
 		 * we have a valid pre-allocated buffer with
 		 * sufficient size
 		 */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
-	 * मुक्त any previously allocated buffer
+	 * free any previously allocated buffer
 	 */
-	img_update_मुक्त();
+	img_update_free();
 
 	spin_unlock(&rbu_data.lock);
 
 	ordernum = get_order(size);
 	image_update_buffer =
-		(अचिन्हित अक्षर *)__get_मुक्त_pages(GFP_DMA32, ordernum);
+		(unsigned char *)__get_free_pages(GFP_DMA32, ordernum);
 	spin_lock(&rbu_data.lock);
-	अगर (!image_update_buffer) अणु
+	if (!image_update_buffer) {
 		pr_debug("Not enough memory for image update: size = %ld\n", size);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	img_buf_phys_addr = (अचिन्हित दीर्घ)virt_to_phys(image_update_buffer);
-	अगर (WARN_ON_ONCE(img_buf_phys_addr > BIOS_SCAN_LIMIT))
-		वापस -EINVAL; /* can't happen per definition */
+	img_buf_phys_addr = (unsigned long)virt_to_phys(image_update_buffer);
+	if (WARN_ON_ONCE(img_buf_phys_addr > BIOS_SCAN_LIMIT))
+		return -EINVAL; /* can't happen per definition */
 
 	rbu_data.image_update_buffer = image_update_buffer;
 	rbu_data.image_update_buffer_size = size;
 	rbu_data.bios_image_size = rbu_data.image_update_buffer_size;
 	rbu_data.image_update_ordernum = ordernum;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार पढ़ो_packet_data(अक्षर *buffer, loff_t pos, माप_प्रकार count)
-अणु
-	पूर्णांक retval;
-	माप_प्रकार bytes_left;
-	माप_प्रकार data_length;
-	अक्षर *ptempBuf = buffer;
+static ssize_t read_packet_data(char *buffer, loff_t pos, size_t count)
+{
+	int retval;
+	size_t bytes_left;
+	size_t data_length;
+	char *ptempBuf = buffer;
 
-	/* check to see अगर we have something to वापस */
-	अगर (rbu_data.num_packets == 0) अणु
+	/* check to see if we have something to return */
+	if (rbu_data.num_packets == 0) {
 		pr_debug("no packets written\n");
 		retval = -ENOMEM;
-		जाओ पढ़ो_rbu_data_निकास;
-	पूर्ण
+		goto read_rbu_data_exit;
+	}
 
-	अगर (pos > rbu_data.imagesize) अणु
+	if (pos > rbu_data.imagesize) {
 		retval = 0;
 		pr_warn("data underrun\n");
-		जाओ पढ़ो_rbu_data_निकास;
-	पूर्ण
+		goto read_rbu_data_exit;
+	}
 
 	bytes_left = rbu_data.imagesize - pos;
 	data_length = min(bytes_left, count);
 
-	अगर ((retval = packet_पढ़ो_list(ptempBuf, &data_length)) < 0)
-		जाओ पढ़ो_rbu_data_निकास;
+	if ((retval = packet_read_list(ptempBuf, &data_length)) < 0)
+		goto read_rbu_data_exit;
 
-	अगर ((pos + count) > rbu_data.imagesize) अणु
-		rbu_data.packet_पढ़ो_count = 0;
+	if ((pos + count) > rbu_data.imagesize) {
+		rbu_data.packet_read_count = 0;
 		/* this was the last copy */
 		retval = bytes_left;
-	पूर्ण अन्यथा
+	} else
 		retval = count;
 
-      पढ़ो_rbu_data_निकास:
-	वापस retval;
-पूर्ण
+      read_rbu_data_exit:
+	return retval;
+}
 
-अटल sमाप_प्रकार पढ़ो_rbu_mono_data(अक्षर *buffer, loff_t pos, माप_प्रकार count)
-अणु
-	/* check to see अगर we have something to वापस */
-	अगर ((rbu_data.image_update_buffer == शून्य) ||
-		(rbu_data.bios_image_size == 0)) अणु
+static ssize_t read_rbu_mono_data(char *buffer, loff_t pos, size_t count)
+{
+	/* check to see if we have something to return */
+	if ((rbu_data.image_update_buffer == NULL) ||
+		(rbu_data.bios_image_size == 0)) {
 		pr_debug("image_update_buffer %p, bios_image_size %lu\n",
 			rbu_data.image_update_buffer,
 			rbu_data.bios_image_size);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	वापस memory_पढ़ो_from_buffer(buffer, count, &pos,
+	return memory_read_from_buffer(buffer, count, &pos,
 			rbu_data.image_update_buffer, rbu_data.bios_image_size);
-पूर्ण
+}
 
-अटल sमाप_प्रकार data_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
-			 काष्ठा bin_attribute *bin_attr,
-			 अक्षर *buffer, loff_t pos, माप_प्रकार count)
-अणु
-	sमाप_प्रकार ret_count = 0;
+static ssize_t data_read(struct file *filp, struct kobject *kobj,
+			 struct bin_attribute *bin_attr,
+			 char *buffer, loff_t pos, size_t count)
+{
+	ssize_t ret_count = 0;
 
 	spin_lock(&rbu_data.lock);
 
-	अगर (!म_भेद(image_type, "mono"))
-		ret_count = पढ़ो_rbu_mono_data(buffer, pos, count);
-	अन्यथा अगर (!म_भेद(image_type, "packet"))
-		ret_count = पढ़ो_packet_data(buffer, pos, count);
-	अन्यथा
+	if (!strcmp(image_type, "mono"))
+		ret_count = read_rbu_mono_data(buffer, pos, count);
+	else if (!strcmp(image_type, "packet"))
+		ret_count = read_packet_data(buffer, pos, count);
+	else
 		pr_debug("invalid image type specified\n");
 
 	spin_unlock(&rbu_data.lock);
-	वापस ret_count;
-पूर्ण
-अटल BIN_ATTR_RO(data, 0);
+	return ret_count;
+}
+static BIN_ATTR_RO(data, 0);
 
-अटल व्योम callbackfn_rbu(स्थिर काष्ठा firmware *fw, व्योम *context)
-अणु
+static void callbackfn_rbu(const struct firmware *fw, void *context)
+{
 	rbu_data.entry_created = 0;
 
-	अगर (!fw)
-		वापस;
+	if (!fw)
+		return;
 
-	अगर (!fw->size)
-		जाओ out;
+	if (!fw->size)
+		goto out;
 
 	spin_lock(&rbu_data.lock);
-	अगर (!म_भेद(image_type, "mono")) अणु
-		अगर (!img_update_पुनः_स्मृति(fw->size))
-			स_नकल(rbu_data.image_update_buffer,
+	if (!strcmp(image_type, "mono")) {
+		if (!img_update_realloc(fw->size))
+			memcpy(rbu_data.image_update_buffer,
 				fw->data, fw->size);
-	पूर्ण अन्यथा अगर (!म_भेद(image_type, "packet")) अणु
+	} else if (!strcmp(image_type, "packet")) {
 		/*
-		 * we need to मुक्त previous packets अगर a
-		 * new hunk of packets needs to be करोwnloaded
+		 * we need to free previous packets if a
+		 * new hunk of packets needs to be downloaded
 		 */
 		packet_empty_list();
-		अगर (packetize_data(fw->data, fw->size))
-			/* Inहाल something goes wrong when we are
+		if (packetize_data(fw->data, fw->size))
+			/* Incase something goes wrong when we are
 			 * in middle of packetizing the data, we
-			 * need to मुक्त up whatever packets might
-			 * have been created beक्रमe we quit.
+			 * need to free up whatever packets might
+			 * have been created before we quit.
 			 */
 			packet_empty_list();
-	पूर्ण अन्यथा
+	} else
 		pr_debug("invalid image type specified\n");
 	spin_unlock(&rbu_data.lock);
  out:
 	release_firmware(fw);
-पूर्ण
+}
 
-अटल sमाप_प्रकार image_type_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
-			       काष्ठा bin_attribute *bin_attr,
-			       अक्षर *buffer, loff_t pos, माप_प्रकार count)
-अणु
-	पूर्णांक size = 0;
-	अगर (!pos)
-		size = scnम_लिखो(buffer, count, "%s\n", image_type);
-	वापस size;
-पूर्ण
+static ssize_t image_type_read(struct file *filp, struct kobject *kobj,
+			       struct bin_attribute *bin_attr,
+			       char *buffer, loff_t pos, size_t count)
+{
+	int size = 0;
+	if (!pos)
+		size = scnprintf(buffer, count, "%s\n", image_type);
+	return size;
+}
 
-अटल sमाप_प्रकार image_type_ग_लिखो(काष्ठा file *filp, काष्ठा kobject *kobj,
-				काष्ठा bin_attribute *bin_attr,
-				अक्षर *buffer, loff_t pos, माप_प्रकार count)
-अणु
-	पूर्णांक rc = count;
-	पूर्णांक req_firm_rc = 0;
-	पूर्णांक i;
+static ssize_t image_type_write(struct file *filp, struct kobject *kobj,
+				struct bin_attribute *bin_attr,
+				char *buffer, loff_t pos, size_t count)
+{
+	int rc = count;
+	int req_firm_rc = 0;
+	int i;
 	spin_lock(&rbu_data.lock);
 	/*
 	 * Find the first newline or space
 	 */
-	क्रम (i = 0; i < count; ++i)
-		अगर (buffer[i] == '\n' || buffer[i] == ' ') अणु
+	for (i = 0; i < count; ++i)
+		if (buffer[i] == '\n' || buffer[i] == ' ') {
 			buffer[i] = '\0';
-			अवरोध;
-		पूर्ण
-	अगर (i == count)
+			break;
+		}
+	if (i == count)
 		buffer[count] = '\0';
 
-	अगर (म_माला(buffer, "mono"))
-		म_नकल(image_type, "mono");
-	अन्यथा अगर (म_माला(buffer, "packet"))
-		म_नकल(image_type, "packet");
-	अन्यथा अगर (म_माला(buffer, "init")) अणु
+	if (strstr(buffer, "mono"))
+		strcpy(image_type, "mono");
+	else if (strstr(buffer, "packet"))
+		strcpy(image_type, "packet");
+	else if (strstr(buffer, "init")) {
 		/*
-		 * If due to the user error the driver माला_लो in a bad
+		 * If due to the user error the driver gets in a bad
 		 * state where even though it is loaded , the
 		 * /sys/class/firmware/dell_rbu entries are missing.
 		 * to cover this situation the user can recreate entries
 		 * by writing init to image_type.
 		 */
-		अगर (!rbu_data.entry_created) अणु
+		if (!rbu_data.entry_created) {
 			spin_unlock(&rbu_data.lock);
-			req_firm_rc = request_firmware_noरुको(THIS_MODULE,
+			req_firm_rc = request_firmware_nowait(THIS_MODULE,
 				FW_ACTION_NOHOTPLUG, "dell_rbu",
 				&rbu_device->dev, GFP_KERNEL, &context,
 				callbackfn_rbu);
-			अगर (req_firm_rc) अणु
+			if (req_firm_rc) {
 				pr_err("request_firmware_nowait failed %d\n", rc);
 				rc = -EIO;
-			पूर्ण अन्यथा
+			} else
 				rbu_data.entry_created = 1;
 
 			spin_lock(&rbu_data.lock);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		pr_warn("image_type is invalid\n");
 		spin_unlock(&rbu_data.lock);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* we must मुक्त all previous allocations */
+	/* we must free all previous allocations */
 	packet_empty_list();
-	img_update_मुक्त();
+	img_update_free();
 	spin_unlock(&rbu_data.lock);
 
-	वापस rc;
-पूर्ण
-अटल BIN_ATTR_RW(image_type, 0);
+	return rc;
+}
+static BIN_ATTR_RW(image_type, 0);
 
-अटल sमाप_प्रकार packet_size_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
-				काष्ठा bin_attribute *bin_attr,
-				अक्षर *buffer, loff_t pos, माप_प्रकार count)
-अणु
-	पूर्णांक size = 0;
-	अगर (!pos) अणु
+static ssize_t packet_size_read(struct file *filp, struct kobject *kobj,
+				struct bin_attribute *bin_attr,
+				char *buffer, loff_t pos, size_t count)
+{
+	int size = 0;
+	if (!pos) {
 		spin_lock(&rbu_data.lock);
-		size = scnम_लिखो(buffer, count, "%lu\n", rbu_data.packetsize);
+		size = scnprintf(buffer, count, "%lu\n", rbu_data.packetsize);
 		spin_unlock(&rbu_data.lock);
-	पूर्ण
-	वापस size;
-पूर्ण
+	}
+	return size;
+}
 
-अटल sमाप_प्रकार packet_size_ग_लिखो(काष्ठा file *filp, काष्ठा kobject *kobj,
-				 काष्ठा bin_attribute *bin_attr,
-				 अक्षर *buffer, loff_t pos, माप_प्रकार count)
-अणु
-	अचिन्हित दीर्घ temp;
+static ssize_t packet_size_write(struct file *filp, struct kobject *kobj,
+				 struct bin_attribute *bin_attr,
+				 char *buffer, loff_t pos, size_t count)
+{
+	unsigned long temp;
 	spin_lock(&rbu_data.lock);
 	packet_empty_list();
-	माला_पूछो(buffer, "%lu", &temp);
-	अगर (temp < 0xffffffff)
+	sscanf(buffer, "%lu", &temp);
+	if (temp < 0xffffffff)
 		rbu_data.packetsize = temp;
 
 	spin_unlock(&rbu_data.lock);
-	वापस count;
-पूर्ण
-अटल BIN_ATTR_RW(packet_size, 0);
+	return count;
+}
+static BIN_ATTR_RW(packet_size, 0);
 
-अटल काष्ठा bin_attribute *rbu_bin_attrs[] = अणु
+static struct bin_attribute *rbu_bin_attrs[] = {
 	&bin_attr_data,
 	&bin_attr_image_type,
 	&bin_attr_packet_size,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group rbu_group = अणु
+static const struct attribute_group rbu_group = {
 	.bin_attrs = rbu_bin_attrs,
-पूर्ण;
+};
 
-अटल पूर्णांक __init dcdrbu_init(व्योम)
-अणु
-	पूर्णांक rc;
+static int __init dcdrbu_init(void)
+{
+	int rc;
 	spin_lock_init(&rbu_data.lock);
 
 	init_packet_head();
-	rbu_device = platक्रमm_device_रेजिस्टर_simple("dell_rbu", -1, शून्य, 0);
-	अगर (IS_ERR(rbu_device)) अणु
+	rbu_device = platform_device_register_simple("dell_rbu", -1, NULL, 0);
+	if (IS_ERR(rbu_device)) {
 		pr_err("platform_device_register_simple failed\n");
-		वापस PTR_ERR(rbu_device);
-	पूर्ण
+		return PTR_ERR(rbu_device);
+	}
 
 	rc = sysfs_create_group(&rbu_device->dev.kobj, &rbu_group);
-	अगर (rc)
-		जाओ out_devreg;
+	if (rc)
+		goto out_devreg;
 
 	rbu_data.entry_created = 0;
-	वापस 0;
+	return 0;
 
 out_devreg:
-	platक्रमm_device_unरेजिस्टर(rbu_device);
-	वापस rc;
-पूर्ण
+	platform_device_unregister(rbu_device);
+	return rc;
+}
 
-अटल __निकास व्योम dcdrbu_निकास(व्योम)
-अणु
+static __exit void dcdrbu_exit(void)
+{
 	spin_lock(&rbu_data.lock);
 	packet_empty_list();
-	img_update_मुक्त();
+	img_update_free();
 	spin_unlock(&rbu_data.lock);
-	sysfs_हटाओ_group(&rbu_device->dev.kobj, &rbu_group);
-	platक्रमm_device_unरेजिस्टर(rbu_device);
-पूर्ण
+	sysfs_remove_group(&rbu_device->dev.kobj, &rbu_group);
+	platform_device_unregister(rbu_device);
+}
 
-module_निकास(dcdrbu_निकास);
+module_exit(dcdrbu_exit);
 module_init(dcdrbu_init);

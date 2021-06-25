@@ -1,214 +1,213 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2009 Patrick McHardy <kaber@trash.net>
  *
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/list.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/netlink.h>
-#समावेश <linux/netfilter.h>
-#समावेश <linux/netfilter/nf_tables.h>
-#समावेश <net/netfilter/nf_tables.h>
-#समावेश <net/netfilter/nf_tables_core.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/list.h>
+#include <linux/rbtree.h>
+#include <linux/netlink.h>
+#include <linux/netfilter.h>
+#include <linux/netfilter/nf_tables.h>
+#include <net/netfilter/nf_tables.h>
+#include <net/netfilter/nf_tables_core.h>
 
-काष्ठा nft_lookup अणु
-	काष्ठा nft_set			*set;
+struct nft_lookup {
+	struct nft_set			*set;
 	u8				sreg;
 	u8				dreg;
 	bool				invert;
-	काष्ठा nft_set_binding		binding;
-पूर्ण;
+	struct nft_set_binding		binding;
+};
 
-व्योम nft_lookup_eval(स्थिर काष्ठा nft_expr *expr,
-		     काष्ठा nft_regs *regs,
-		     स्थिर काष्ठा nft_pktinfo *pkt)
-अणु
-	स्थिर काष्ठा nft_lookup *priv = nft_expr_priv(expr);
-	स्थिर काष्ठा nft_set *set = priv->set;
-	स्थिर काष्ठा nft_set_ext *ext = शून्य;
-	स्थिर काष्ठा net *net = nft_net(pkt);
+void nft_lookup_eval(const struct nft_expr *expr,
+		     struct nft_regs *regs,
+		     const struct nft_pktinfo *pkt)
+{
+	const struct nft_lookup *priv = nft_expr_priv(expr);
+	const struct nft_set *set = priv->set;
+	const struct nft_set_ext *ext = NULL;
+	const struct net *net = nft_net(pkt);
 	bool found;
 
 	found = set->ops->lookup(net, set, &regs->data[priv->sreg], &ext) ^
 				 priv->invert;
-	अगर (!found) अणु
+	if (!found) {
 		ext = nft_set_catchall_lookup(net, set);
-		अगर (!ext) अणु
+		if (!ext) {
 			regs->verdict.code = NFT_BREAK;
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
-	अगर (ext) अणु
-		अगर (set->flags & NFT_SET_MAP)
+	if (ext) {
+		if (set->flags & NFT_SET_MAP)
 			nft_data_copy(&regs->data[priv->dreg],
 				      nft_set_ext_data(ext), set->dlen);
 
 		nft_set_elem_update_expr(ext, regs, pkt);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा nla_policy nft_lookup_policy[NFTA_LOOKUP_MAX + 1] = अणु
-	[NFTA_LOOKUP_SET]	= अणु .type = NLA_STRING,
-				    .len = NFT_SET_MAXNAMELEN - 1 पूर्ण,
-	[NFTA_LOOKUP_SET_ID]	= अणु .type = NLA_U32 पूर्ण,
-	[NFTA_LOOKUP_SREG]	= अणु .type = NLA_U32 पूर्ण,
-	[NFTA_LOOKUP_DREG]	= अणु .type = NLA_U32 पूर्ण,
-	[NFTA_LOOKUP_FLAGS]	= अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy nft_lookup_policy[NFTA_LOOKUP_MAX + 1] = {
+	[NFTA_LOOKUP_SET]	= { .type = NLA_STRING,
+				    .len = NFT_SET_MAXNAMELEN - 1 },
+	[NFTA_LOOKUP_SET_ID]	= { .type = NLA_U32 },
+	[NFTA_LOOKUP_SREG]	= { .type = NLA_U32 },
+	[NFTA_LOOKUP_DREG]	= { .type = NLA_U32 },
+	[NFTA_LOOKUP_FLAGS]	= { .type = NLA_U32 },
+};
 
-अटल पूर्णांक nft_lookup_init(स्थिर काष्ठा nft_ctx *ctx,
-			   स्थिर काष्ठा nft_expr *expr,
-			   स्थिर काष्ठा nlattr * स्थिर tb[])
-अणु
-	काष्ठा nft_lookup *priv = nft_expr_priv(expr);
+static int nft_lookup_init(const struct nft_ctx *ctx,
+			   const struct nft_expr *expr,
+			   const struct nlattr * const tb[])
+{
+	struct nft_lookup *priv = nft_expr_priv(expr);
 	u8 genmask = nft_genmask_next(ctx->net);
-	काष्ठा nft_set *set;
+	struct nft_set *set;
 	u32 flags;
-	पूर्णांक err;
+	int err;
 
-	अगर (tb[NFTA_LOOKUP_SET] == शून्य ||
-	    tb[NFTA_LOOKUP_SREG] == शून्य)
-		वापस -EINVAL;
+	if (tb[NFTA_LOOKUP_SET] == NULL ||
+	    tb[NFTA_LOOKUP_SREG] == NULL)
+		return -EINVAL;
 
 	set = nft_set_lookup_global(ctx->net, ctx->table, tb[NFTA_LOOKUP_SET],
 				    tb[NFTA_LOOKUP_SET_ID], genmask);
-	अगर (IS_ERR(set))
-		वापस PTR_ERR(set);
+	if (IS_ERR(set))
+		return PTR_ERR(set);
 
-	err = nft_parse_रेजिस्टर_load(tb[NFTA_LOOKUP_SREG], &priv->sreg,
+	err = nft_parse_register_load(tb[NFTA_LOOKUP_SREG], &priv->sreg,
 				      set->klen);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (tb[NFTA_LOOKUP_FLAGS]) अणु
+	if (tb[NFTA_LOOKUP_FLAGS]) {
 		flags = ntohl(nla_get_be32(tb[NFTA_LOOKUP_FLAGS]));
 
-		अगर (flags & ~NFT_LOOKUP_F_INV)
-			वापस -EINVAL;
+		if (flags & ~NFT_LOOKUP_F_INV)
+			return -EINVAL;
 
-		अगर (flags & NFT_LOOKUP_F_INV) अणु
-			अगर (set->flags & NFT_SET_MAP)
-				वापस -EINVAL;
+		if (flags & NFT_LOOKUP_F_INV) {
+			if (set->flags & NFT_SET_MAP)
+				return -EINVAL;
 			priv->invert = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (tb[NFTA_LOOKUP_DREG] != शून्य) अणु
-		अगर (priv->invert)
-			वापस -EINVAL;
-		अगर (!(set->flags & NFT_SET_MAP))
-			वापस -EINVAL;
+	if (tb[NFTA_LOOKUP_DREG] != NULL) {
+		if (priv->invert)
+			return -EINVAL;
+		if (!(set->flags & NFT_SET_MAP))
+			return -EINVAL;
 
-		err = nft_parse_रेजिस्टर_store(ctx, tb[NFTA_LOOKUP_DREG],
-					       &priv->dreg, शून्य, set->dtype,
+		err = nft_parse_register_store(ctx, tb[NFTA_LOOKUP_DREG],
+					       &priv->dreg, NULL, set->dtype,
 					       set->dlen);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण अन्यथा अगर (set->flags & NFT_SET_MAP)
-		वापस -EINVAL;
+		if (err < 0)
+			return err;
+	} else if (set->flags & NFT_SET_MAP)
+		return -EINVAL;
 
 	priv->binding.flags = set->flags & NFT_SET_MAP;
 
 	err = nf_tables_bind_set(ctx, set, &priv->binding);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	priv->set = set;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nft_lookup_deactivate(स्थिर काष्ठा nft_ctx *ctx,
-				  स्थिर काष्ठा nft_expr *expr,
-				  क्रमागत nft_trans_phase phase)
-अणु
-	काष्ठा nft_lookup *priv = nft_expr_priv(expr);
+static void nft_lookup_deactivate(const struct nft_ctx *ctx,
+				  const struct nft_expr *expr,
+				  enum nft_trans_phase phase)
+{
+	struct nft_lookup *priv = nft_expr_priv(expr);
 
 	nf_tables_deactivate_set(ctx, priv->set, &priv->binding, phase);
-पूर्ण
+}
 
-अटल व्योम nft_lookup_activate(स्थिर काष्ठा nft_ctx *ctx,
-				स्थिर काष्ठा nft_expr *expr)
-अणु
-	काष्ठा nft_lookup *priv = nft_expr_priv(expr);
+static void nft_lookup_activate(const struct nft_ctx *ctx,
+				const struct nft_expr *expr)
+{
+	struct nft_lookup *priv = nft_expr_priv(expr);
 
 	priv->set->use++;
-पूर्ण
+}
 
-अटल व्योम nft_lookup_destroy(स्थिर काष्ठा nft_ctx *ctx,
-			       स्थिर काष्ठा nft_expr *expr)
-अणु
-	काष्ठा nft_lookup *priv = nft_expr_priv(expr);
+static void nft_lookup_destroy(const struct nft_ctx *ctx,
+			       const struct nft_expr *expr)
+{
+	struct nft_lookup *priv = nft_expr_priv(expr);
 
 	nf_tables_destroy_set(ctx, priv->set);
-पूर्ण
+}
 
-अटल पूर्णांक nft_lookup_dump(काष्ठा sk_buff *skb, स्थिर काष्ठा nft_expr *expr)
-अणु
-	स्थिर काष्ठा nft_lookup *priv = nft_expr_priv(expr);
+static int nft_lookup_dump(struct sk_buff *skb, const struct nft_expr *expr)
+{
+	const struct nft_lookup *priv = nft_expr_priv(expr);
 	u32 flags = priv->invert ? NFT_LOOKUP_F_INV : 0;
 
-	अगर (nla_put_string(skb, NFTA_LOOKUP_SET, priv->set->name))
-		जाओ nla_put_failure;
-	अगर (nft_dump_रेजिस्टर(skb, NFTA_LOOKUP_SREG, priv->sreg))
-		जाओ nla_put_failure;
-	अगर (priv->set->flags & NFT_SET_MAP)
-		अगर (nft_dump_रेजिस्टर(skb, NFTA_LOOKUP_DREG, priv->dreg))
-			जाओ nla_put_failure;
-	अगर (nla_put_be32(skb, NFTA_LOOKUP_FLAGS, htonl(flags)))
-		जाओ nla_put_failure;
-	वापस 0;
+	if (nla_put_string(skb, NFTA_LOOKUP_SET, priv->set->name))
+		goto nla_put_failure;
+	if (nft_dump_register(skb, NFTA_LOOKUP_SREG, priv->sreg))
+		goto nla_put_failure;
+	if (priv->set->flags & NFT_SET_MAP)
+		if (nft_dump_register(skb, NFTA_LOOKUP_DREG, priv->dreg))
+			goto nla_put_failure;
+	if (nla_put_be32(skb, NFTA_LOOKUP_FLAGS, htonl(flags)))
+		goto nla_put_failure;
+	return 0;
 
 nla_put_failure:
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक nft_lookup_validate_setelem(स्थिर काष्ठा nft_ctx *ctx,
-				       काष्ठा nft_set *set,
-				       स्थिर काष्ठा nft_set_iter *iter,
-				       काष्ठा nft_set_elem *elem)
-अणु
-	स्थिर काष्ठा nft_set_ext *ext = nft_set_elem_ext(set, elem->priv);
-	काष्ठा nft_ctx *pctx = (काष्ठा nft_ctx *)ctx;
-	स्थिर काष्ठा nft_data *data;
-	पूर्णांक err;
+static int nft_lookup_validate_setelem(const struct nft_ctx *ctx,
+				       struct nft_set *set,
+				       const struct nft_set_iter *iter,
+				       struct nft_set_elem *elem)
+{
+	const struct nft_set_ext *ext = nft_set_elem_ext(set, elem->priv);
+	struct nft_ctx *pctx = (struct nft_ctx *)ctx;
+	const struct nft_data *data;
+	int err;
 
-	अगर (nft_set_ext_exists(ext, NFT_SET_EXT_FLAGS) &&
+	if (nft_set_ext_exists(ext, NFT_SET_EXT_FLAGS) &&
 	    *nft_set_ext_flags(ext) & NFT_SET_ELEM_INTERVAL_END)
-		वापस 0;
+		return 0;
 
 	data = nft_set_ext_data(ext);
-	चयन (data->verdict.code) अणु
-	हाल NFT_JUMP:
-	हाल NFT_GOTO:
+	switch (data->verdict.code) {
+	case NFT_JUMP:
+	case NFT_GOTO:
 		pctx->level++;
 		err = nft_chain_validate(ctx, data->verdict.chain);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 		pctx->level--;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nft_lookup_validate(स्थिर काष्ठा nft_ctx *ctx,
-			       स्थिर काष्ठा nft_expr *expr,
-			       स्थिर काष्ठा nft_data **d)
-अणु
-	स्थिर काष्ठा nft_lookup *priv = nft_expr_priv(expr);
-	काष्ठा nft_set_iter iter;
+static int nft_lookup_validate(const struct nft_ctx *ctx,
+			       const struct nft_expr *expr,
+			       const struct nft_data **d)
+{
+	const struct nft_lookup *priv = nft_expr_priv(expr);
+	struct nft_set_iter iter;
 
-	अगर (!(priv->set->flags & NFT_SET_MAP) ||
+	if (!(priv->set->flags & NFT_SET_MAP) ||
 	    priv->set->dtype != NFT_DATA_VERDICT)
-		वापस 0;
+		return 0;
 
 	iter.genmask	= nft_genmask_next(ctx->net);
 	iter.skip	= 0;
@@ -217,15 +216,15 @@ nla_put_failure:
 	iter.fn		= nft_lookup_validate_setelem;
 
 	priv->set->ops->walk(ctx, priv->set, &iter);
-	अगर (iter.err < 0)
-		वापस iter.err;
+	if (iter.err < 0)
+		return iter.err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा nft_expr_ops nft_lookup_ops = अणु
+static const struct nft_expr_ops nft_lookup_ops = {
 	.type		= &nft_lookup_type,
-	.size		= NFT_EXPR_SIZE(माप(काष्ठा nft_lookup)),
+	.size		= NFT_EXPR_SIZE(sizeof(struct nft_lookup)),
 	.eval		= nft_lookup_eval,
 	.init		= nft_lookup_init,
 	.activate	= nft_lookup_activate,
@@ -233,12 +232,12 @@ nla_put_failure:
 	.destroy	= nft_lookup_destroy,
 	.dump		= nft_lookup_dump,
 	.validate	= nft_lookup_validate,
-पूर्ण;
+};
 
-काष्ठा nft_expr_type nft_lookup_type __पढ़ो_mostly = अणु
+struct nft_expr_type nft_lookup_type __read_mostly = {
 	.name		= "lookup",
 	.ops		= &nft_lookup_ops,
 	.policy		= nft_lookup_policy,
 	.maxattr	= NFTA_LOOKUP_MAX,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};

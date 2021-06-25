@@ -1,22 +1,21 @@
-<शैली गुरु>
 /*
- * f75375s.h - platक्रमm data काष्ठाure क्रम f75375s sensor
+ * f75375s.h - platform data structure for f75375s sensor
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2007, Riku Voipio <riku.voipio@iki.fi>
  */
 
-#अगर_अघोषित __LINUX_F75375S_H
-#घोषणा __LINUX_F75375S_H
+#ifndef __LINUX_F75375S_H
+#define __LINUX_F75375S_H
 
-/* We want to set fans spinning on प्रणालीs where there is no
- * BIOS to करो that क्रम us */
-काष्ठा f75375s_platक्रमm_data अणु
+/* We want to set fans spinning on systems where there is no
+ * BIOS to do that for us */
+struct f75375s_platform_data {
 	u8 pwm[2];
 	u8 pwm_enable[2];
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __LINUX_F75375S_H */
+#endif /* __LINUX_F75375S_H */

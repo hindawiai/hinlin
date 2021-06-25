@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Force feedback support क्रम Zeroplus based devices
+ *  Force feedback support for Zeroplus based devices
  *
  *  Copyright (c) 2005, 2006 Anssi Hannula <anssi.hannula@gmail.com>
  */
@@ -10,29 +9,29 @@
  */
 
 
-#समावेश <linux/hid.h>
-#समावेश <linux/input.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
+#include <linux/hid.h>
+#include <linux/input.h>
+#include <linux/slab.h>
+#include <linux/module.h>
 
-#समावेश "hid-ids.h"
+#include "hid-ids.h"
 
-#अगर_घोषित CONFIG_ZEROPLUS_FF
+#ifdef CONFIG_ZEROPLUS_FF
 
-काष्ठा zpff_device अणु
-	काष्ठा hid_report *report;
-पूर्ण;
+struct zpff_device {
+	struct hid_report *report;
+};
 
-अटल पूर्णांक zpff_play(काष्ठा input_dev *dev, व्योम *data,
-			 काष्ठा ff_effect *effect)
-अणु
-	काष्ठा hid_device *hid = input_get_drvdata(dev);
-	काष्ठा zpff_device *zpff = data;
-	पूर्णांक left, right;
+static int zpff_play(struct input_dev *dev, void *data,
+			 struct ff_effect *effect)
+{
+	struct hid_device *hid = input_get_drvdata(dev);
+	struct zpff_device *zpff = data;
+	int left, right;
 
 	/*
-	 * The following is specअगरied the other way around in the Zeroplus
-	 * datasheet but the order below is correct क्रम the XFX Executioner;
+	 * The following is specified the other way around in the Zeroplus
+	 * datasheet but the order below is correct for the XFX Executioner;
 	 * however it is possible that the XFX Executioner is an exception
 	 */
 
@@ -48,41 +47,41 @@
 	dbg_hid("running with 0x%02x 0x%02x\n", left, right);
 	hid_hw_request(hid, zpff->report, HID_REQ_SET_REPORT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zpff_init(काष्ठा hid_device *hid)
-अणु
-	काष्ठा zpff_device *zpff;
-	काष्ठा hid_report *report;
-	काष्ठा hid_input *hidinput;
-	काष्ठा input_dev *dev;
-	पूर्णांक i, error;
+static int zpff_init(struct hid_device *hid)
+{
+	struct zpff_device *zpff;
+	struct hid_report *report;
+	struct hid_input *hidinput;
+	struct input_dev *dev;
+	int i, error;
 
-	अगर (list_empty(&hid->inमाला_दो)) अणु
+	if (list_empty(&hid->inputs)) {
 		hid_err(hid, "no inputs found\n");
-		वापस -ENODEV;
-	पूर्ण
-	hidinput = list_entry(hid->inमाला_दो.next, काष्ठा hid_input, list);
+		return -ENODEV;
+	}
+	hidinput = list_entry(hid->inputs.next, struct hid_input, list);
 	dev = hidinput->input;
 
-	क्रम (i = 0; i < 4; i++) अणु
+	for (i = 0; i < 4; i++) {
 		report = hid_validate_values(hid, HID_OUTPUT_REPORT, 0, i, 1);
-		अगर (!report)
-			वापस -ENODEV;
-	पूर्ण
+		if (!report)
+			return -ENODEV;
+	}
 
-	zpff = kzalloc(माप(काष्ठा zpff_device), GFP_KERNEL);
-	अगर (!zpff)
-		वापस -ENOMEM;
+	zpff = kzalloc(sizeof(struct zpff_device), GFP_KERNEL);
+	if (!zpff)
+		return -ENOMEM;
 
 	set_bit(FF_RUMBLE, dev->ffbit);
 
 	error = input_ff_create_memless(dev, zpff, zpff_play);
-	अगर (error) अणु
-		kमुक्त(zpff);
-		वापस error;
-	पूर्ण
+	if (error) {
+		kfree(zpff);
+		return error;
+	}
 
 	zpff->report = report;
 	zpff->report->field[0]->value[0] = 0x00;
@@ -93,50 +92,50 @@
 
 	hid_info(hid, "force feedback for Zeroplus based devices by Anssi Hannula <anssi.hannula@gmail.com>\n");
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक zpff_init(काष्ठा hid_device *hid)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#else
+static inline int zpff_init(struct hid_device *hid)
+{
+	return 0;
+}
+#endif
 
-अटल पूर्णांक zp_probe(काष्ठा hid_device *hdev, स्थिर काष्ठा hid_device_id *id)
-अणु
-	पूर्णांक ret;
+static int zp_probe(struct hid_device *hdev, const struct hid_device_id *id)
+{
+	int ret;
 
 	ret = hid_parse(hdev);
-	अगर (ret) अणु
+	if (ret) {
 		hid_err(hdev, "parse failed\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = hid_hw_start(hdev, HID_CONNECT_DEFAULT & ~HID_CONNECT_FF);
-	अगर (ret) अणु
+	if (ret) {
 		hid_err(hdev, "hw start failed\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	zpff_init(hdev);
 
-	वापस 0;
+	return 0;
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा hid_device_id zp_devices[] = अणु
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_ZEROPLUS, 0x0005) पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_ZEROPLUS, 0x0030) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct hid_device_id zp_devices[] = {
+	{ HID_USB_DEVICE(USB_VENDOR_ID_ZEROPLUS, 0x0005) },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_ZEROPLUS, 0x0030) },
+	{ }
+};
 MODULE_DEVICE_TABLE(hid, zp_devices);
 
-अटल काष्ठा hid_driver zp_driver = अणु
+static struct hid_driver zp_driver = {
 	.name = "zeroplus",
 	.id_table = zp_devices,
 	.probe = zp_probe,
-पूर्ण;
+};
 module_hid_driver(zp_driver);
 
 MODULE_LICENSE("GPL");

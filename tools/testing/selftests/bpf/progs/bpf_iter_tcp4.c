@@ -1,160 +1,159 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
-#समावेश "bpf_iter.h"
-#समावेश "bpf_tracing_net.h"
-#समावेश <bpf/bpf_helpers.h>
-#समावेश <bpf/bpf_tracing.h>
-#समावेश <bpf/bpf_endian.h>
+#include "bpf_iter.h"
+#include "bpf_tracing_net.h"
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_tracing.h>
+#include <bpf/bpf_endian.h>
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";
 
-अटल पूर्णांक hlist_unhashed_lockless(स्थिर काष्ठा hlist_node *h)
-अणु
-        वापस !(h->pprev);
-पूर्ण
+static int hlist_unhashed_lockless(const struct hlist_node *h)
+{
+        return !(h->pprev);
+}
 
-अटल पूर्णांक समयr_pending(स्थिर काष्ठा समयr_list * समयr)
-अणु
-	वापस !hlist_unhashed_lockless(&समयr->entry);
-पूर्ण
+static int timer_pending(const struct timer_list * timer)
+{
+	return !hlist_unhashed_lockless(&timer->entry);
+}
 
-बाह्य अचिन्हित CONFIG_HZ __kconfig;
+extern unsigned CONFIG_HZ __kconfig;
 
-#घोषणा USER_HZ		100
-#घोषणा NSEC_PER_SEC	1000000000ULL
-अटल घड़ी_प्रकार jअगरfies_to_घड़ी_प्रकार(अचिन्हित दीर्घ x)
-अणु
+#define USER_HZ		100
+#define NSEC_PER_SEC	1000000000ULL
+static clock_t jiffies_to_clock_t(unsigned long x)
+{
 	/* The implementation here tailored to a particular
 	 * setting of USER_HZ.
 	 */
 	u64 tick_nsec = (NSEC_PER_SEC + CONFIG_HZ/2) / CONFIG_HZ;
 	u64 user_hz_nsec = NSEC_PER_SEC / USER_HZ;
 
-	अगर ((tick_nsec % user_hz_nsec) == 0) अणु
-		अगर (CONFIG_HZ < USER_HZ)
-			वापस x * (USER_HZ / CONFIG_HZ);
-		अन्यथा
-			वापस x / (CONFIG_HZ / USER_HZ);
-	पूर्ण
-	वापस x * tick_nsec/user_hz_nsec;
-पूर्ण
+	if ((tick_nsec % user_hz_nsec) == 0) {
+		if (CONFIG_HZ < USER_HZ)
+			return x * (USER_HZ / CONFIG_HZ);
+		else
+			return x / (CONFIG_HZ / USER_HZ);
+	}
+	return x * tick_nsec/user_hz_nsec;
+}
 
-अटल घड़ी_प्रकार jअगरfies_delta_to_घड़ी_प्रकार(दीर्घ delta)
-अणु
-	अगर (delta <= 0)
-		वापस 0;
+static clock_t jiffies_delta_to_clock_t(long delta)
+{
+	if (delta <= 0)
+		return 0;
 
-	वापस jअगरfies_to_घड़ी_प्रकार(delta);
-पूर्ण
+	return jiffies_to_clock_t(delta);
+}
 
-अटल दीर्घ sock_i_ino(स्थिर काष्ठा sock *sk)
-अणु
-	स्थिर काष्ठा socket *sk_socket = sk->sk_socket;
-	स्थिर काष्ठा inode *inode;
-	अचिन्हित दीर्घ ino;
+static long sock_i_ino(const struct sock *sk)
+{
+	const struct socket *sk_socket = sk->sk_socket;
+	const struct inode *inode;
+	unsigned long ino;
 
-	अगर (!sk_socket)
-		वापस 0;
+	if (!sk_socket)
+		return 0;
 
-	inode = &container_of(sk_socket, काष्ठा socket_alloc, socket)->vfs_inode;
-	bpf_probe_पढ़ो_kernel(&ino, माप(ino), &inode->i_ino);
-	वापस ino;
-पूर्ण
+	inode = &container_of(sk_socket, struct socket_alloc, socket)->vfs_inode;
+	bpf_probe_read_kernel(&ino, sizeof(ino), &inode->i_ino);
+	return ino;
+}
 
-अटल bool
-inet_csk_in_pingpong_mode(स्थिर काष्ठा inet_connection_sock *icsk)
-अणु
-	वापस icsk->icsk_ack.pingpong >= TCP_PINGPONG_THRESH;
-पूर्ण
+static bool
+inet_csk_in_pingpong_mode(const struct inet_connection_sock *icsk)
+{
+	return icsk->icsk_ack.pingpong >= TCP_PINGPONG_THRESH;
+}
 
-अटल bool tcp_in_initial_slowstart(स्थिर काष्ठा tcp_sock *tcp)
-अणु
-	वापस tcp->snd_ssthresh >= TCP_INFINITE_SSTHRESH;
-पूर्ण
+static bool tcp_in_initial_slowstart(const struct tcp_sock *tcp)
+{
+	return tcp->snd_ssthresh >= TCP_INFINITE_SSTHRESH;
+}
 
-अटल पूर्णांक dump_tcp_sock(काष्ठा seq_file *seq, काष्ठा tcp_sock *tp,
+static int dump_tcp_sock(struct seq_file *seq, struct tcp_sock *tp,
 			 uid_t uid, __u32 seq_num)
-अणु
-	स्थिर काष्ठा inet_connection_sock *icsk;
-	स्थिर काष्ठा fastखोलो_queue *fastखोलोq;
-	स्थिर काष्ठा inet_sock *inet;
-	अचिन्हित दीर्घ समयr_expires;
-	स्थिर काष्ठा sock *sp;
+{
+	const struct inet_connection_sock *icsk;
+	const struct fastopen_queue *fastopenq;
+	const struct inet_sock *inet;
+	unsigned long timer_expires;
+	const struct sock *sp;
 	__u16 destp, srcp;
 	__be32 dest, src;
-	पूर्णांक समयr_active;
-	पूर्णांक rx_queue;
-	पूर्णांक state;
+	int timer_active;
+	int rx_queue;
+	int state;
 
 	icsk = &tp->inet_conn;
 	inet = &icsk->icsk_inet;
 	sp = &inet->sk;
-	fastखोलोq = &icsk->icsk_accept_queue.fastखोलोq;
+	fastopenq = &icsk->icsk_accept_queue.fastopenq;
 
 	dest = inet->inet_daddr;
 	src = inet->inet_rcv_saddr;
 	destp = bpf_ntohs(inet->inet_dport);
 	srcp = bpf_ntohs(inet->inet_sport);
 
-	अगर (icsk->icsk_pending == ICSK_TIME_RETRANS ||
+	if (icsk->icsk_pending == ICSK_TIME_RETRANS ||
 	    icsk->icsk_pending == ICSK_TIME_REO_TIMEOUT ||
-	    icsk->icsk_pending == ICSK_TIME_LOSS_PROBE) अणु
-		समयr_active = 1;
-		समयr_expires = icsk->icsk_समयout;
-	पूर्ण अन्यथा अगर (icsk->icsk_pending == ICSK_TIME_PROBE0) अणु
-		समयr_active = 4;
-		समयr_expires = icsk->icsk_समयout;
-	पूर्ण अन्यथा अगर (समयr_pending(&sp->sk_समयr)) अणु
-		समयr_active = 2;
-		समयr_expires = sp->sk_समयr.expires;
-	पूर्ण अन्यथा अणु
-		समयr_active = 0;
-		समयr_expires = bpf_jअगरfies64();
-	पूर्ण
+	    icsk->icsk_pending == ICSK_TIME_LOSS_PROBE) {
+		timer_active = 1;
+		timer_expires = icsk->icsk_timeout;
+	} else if (icsk->icsk_pending == ICSK_TIME_PROBE0) {
+		timer_active = 4;
+		timer_expires = icsk->icsk_timeout;
+	} else if (timer_pending(&sp->sk_timer)) {
+		timer_active = 2;
+		timer_expires = sp->sk_timer.expires;
+	} else {
+		timer_active = 0;
+		timer_expires = bpf_jiffies64();
+	}
 
 	state = sp->sk_state;
-	अगर (state == TCP_LISTEN) अणु
+	if (state == TCP_LISTEN) {
 		rx_queue = sp->sk_ack_backlog;
-	पूर्ण अन्यथा अणु
+	} else {
 		rx_queue = tp->rcv_nxt - tp->copied_seq;
-		अगर (rx_queue < 0)
+		if (rx_queue < 0)
 			rx_queue = 0;
-	पूर्ण
+	}
 
 	BPF_SEQ_PRINTF(seq, "%4d: %08X:%04X %08X:%04X ",
 		       seq_num, src, srcp, destp, destp);
 	BPF_SEQ_PRINTF(seq, "%02X %08X:%08X %02X:%08lX %08X %5u %8d %lu %d ",
 		       state,
-		       tp->ग_लिखो_seq - tp->snd_una, rx_queue,
-		       समयr_active,
-		       jअगरfies_delta_to_घड़ी_प्रकार(समयr_expires - bpf_jअगरfies64()),
+		       tp->write_seq - tp->snd_una, rx_queue,
+		       timer_active,
+		       jiffies_delta_to_clock_t(timer_expires - bpf_jiffies64()),
 		       icsk->icsk_retransmits, uid,
 		       icsk->icsk_probes_out,
 		       sock_i_ino(sp),
 		       sp->sk_refcnt.refs.counter);
 	BPF_SEQ_PRINTF(seq, "%pK %lu %lu %u %u %d\n",
 		       tp,
-		       jअगरfies_to_घड़ी_प्रकार(icsk->icsk_rto),
-		       jअगरfies_to_घड़ी_प्रकार(icsk->icsk_ack.ato),
+		       jiffies_to_clock_t(icsk->icsk_rto),
+		       jiffies_to_clock_t(icsk->icsk_ack.ato),
 		       (icsk->icsk_ack.quick << 1) | inet_csk_in_pingpong_mode(icsk),
 		       tp->snd_cwnd,
-		       state == TCP_LISTEN ? fastखोलोq->max_qlen
+		       state == TCP_LISTEN ? fastopenq->max_qlen
 				: (tcp_in_initial_slowstart(tp) ? -1 : tp->snd_ssthresh)
 		      );
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dump_tw_sock(काष्ठा seq_file *seq, काष्ठा tcp_समयरुको_sock *ttw,
+static int dump_tw_sock(struct seq_file *seq, struct tcp_timewait_sock *ttw,
 			uid_t uid, __u32 seq_num)
-अणु
-	काष्ठा inet_समयरुको_sock *tw = &ttw->tw_sk;
+{
+	struct inet_timewait_sock *tw = &ttw->tw_sk;
 	__u16 destp, srcp;
 	__be32 dest, src;
-	दीर्घ delta;
+	long delta;
 
-	delta = tw->tw_समयr.expires - bpf_jअगरfies64();
+	delta = tw->tw_timer.expires - bpf_jiffies64();
 	dest = tw->tw_daddr;
 	src  = tw->tw_rcv_saddr;
 	destp = bpf_ntohs(tw->tw_dport);
@@ -165,22 +164,22 @@ inet_csk_in_pingpong_mode(स्थिर काष्ठा inet_connection_soc
 
 	BPF_SEQ_PRINTF(seq, "%02X %08X:%08X %02X:%08lX %08X %5d %8d %d %d %pK\n",
 		       tw->tw_substate, 0, 0,
-		       3, jअगरfies_delta_to_घड़ी_प्रकार(delta), 0, 0, 0, 0,
+		       3, jiffies_delta_to_clock_t(delta), 0, 0, 0, 0,
 		       tw->tw_refcnt.refs.counter, tw);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dump_req_sock(काष्ठा seq_file *seq, काष्ठा tcp_request_sock *treq,
+static int dump_req_sock(struct seq_file *seq, struct tcp_request_sock *treq,
 			 uid_t uid, __u32 seq_num)
-अणु
-	काष्ठा inet_request_sock *irsk = &treq->req;
-	काष्ठा request_sock *req = &irsk->req;
-	दीर्घ ttd;
+{
+	struct inet_request_sock *irsk = &treq->req;
+	struct request_sock *req = &irsk->req;
+	long ttd;
 
-	ttd = req->rsk_समयr.expires - bpf_jअगरfies64();
+	ttd = req->rsk_timer.expires - bpf_jiffies64();
 
-	अगर (ttd < 0)
+	if (ttd < 0)
 		ttd = 0;
 
 	BPF_SEQ_PRINTF(seq, "%4d: %08X:%04X %08X:%04X ",
@@ -188,48 +187,48 @@ inet_csk_in_pingpong_mode(स्थिर काष्ठा inet_connection_soc
 		       irsk->ir_num, irsk->ir_rmt_addr,
 		       bpf_ntohs(irsk->ir_rmt_port));
 	BPF_SEQ_PRINTF(seq, "%02X %08X:%08X %02X:%08lX %08X %5d %8d %d %d %pK\n",
-		       TCP_SYN_RECV, 0, 0, 1, jअगरfies_to_घड़ी_प्रकार(ttd),
-		       req->num_समयout, uid, 0, 0, 0, req);
+		       TCP_SYN_RECV, 0, 0, 1, jiffies_to_clock_t(ttd),
+		       req->num_timeout, uid, 0, 0, 0, req);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 SEC("iter/tcp")
-पूर्णांक dump_tcp4(काष्ठा bpf_iter__tcp *ctx)
-अणु
-	काष्ठा sock_common *sk_common = ctx->sk_common;
-	काष्ठा seq_file *seq = ctx->meta->seq;
-	काष्ठा tcp_समयरुको_sock *tw;
-	काष्ठा tcp_request_sock *req;
-	काष्ठा tcp_sock *tp;
+int dump_tcp4(struct bpf_iter__tcp *ctx)
+{
+	struct sock_common *sk_common = ctx->sk_common;
+	struct seq_file *seq = ctx->meta->seq;
+	struct tcp_timewait_sock *tw;
+	struct tcp_request_sock *req;
+	struct tcp_sock *tp;
 	uid_t uid = ctx->uid;
 	__u32 seq_num;
 
-	अगर (sk_common == (व्योम *)0)
-		वापस 0;
+	if (sk_common == (void *)0)
+		return 0;
 
 	seq_num = ctx->meta->seq_num;
-	अगर (seq_num == 0)
+	if (seq_num == 0)
 		BPF_SEQ_PRINTF(seq, "  sl  "
 				    "local_address "
 				    "rem_address   "
 				    "st tx_queue rx_queue tr tm->when retrnsmt"
 				    "   uid  timeout inode\n");
 
-	अगर (sk_common->skc_family != AF_INET)
-		वापस 0;
+	if (sk_common->skc_family != AF_INET)
+		return 0;
 
 	tp = bpf_skc_to_tcp_sock(sk_common);
-	अगर (tp)
-		वापस dump_tcp_sock(seq, tp, uid, seq_num);
+	if (tp)
+		return dump_tcp_sock(seq, tp, uid, seq_num);
 
-	tw = bpf_skc_to_tcp_समयरुको_sock(sk_common);
-	अगर (tw)
-		वापस dump_tw_sock(seq, tw, uid, seq_num);
+	tw = bpf_skc_to_tcp_timewait_sock(sk_common);
+	if (tw)
+		return dump_tw_sock(seq, tw, uid, seq_num);
 
 	req = bpf_skc_to_tcp_request_sock(sk_common);
-	अगर (req)
-		वापस dump_req_sock(seq, req, uid, seq_num);
+	if (req)
+		return dump_req_sock(seq, req, uid, seq_num);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

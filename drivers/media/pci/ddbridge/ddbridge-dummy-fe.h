@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- *  Driver क्रम Dummy Frontend
+ *  Driver for Dummy Frontend
  *
  *  Written by Emard <emard@softhome.net>
  */
 
-#अगर_अघोषित DDBRIDGE_DUMMY_FE_H
-#घोषणा DDBRIDGE_DUMMY_FE_H
+#ifndef DDBRIDGE_DUMMY_FE_H
+#define DDBRIDGE_DUMMY_FE_H
 
-#समावेश <linux/dvb/frontend.h>
-#समावेश <media/dvb_frontend.h>
+#include <linux/dvb/frontend.h>
+#include <media/dvb_frontend.h>
 
-काष्ठा dvb_frontend *ddbridge_dummy_fe_qam_attach(व्योम);
+struct dvb_frontend *ddbridge_dummy_fe_qam_attach(void);
 
-#पूर्ण_अगर // DDBRIDGE_DUMMY_FE_H
+#endif // DDBRIDGE_DUMMY_FE_H

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2013 STMicroelectronics
  *
@@ -8,349 +7,349 @@
  * Author: Maxime Coquelin <maxime.coquelin@st.com>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of.h>
-#समावेश <linux/pinctrl/consumer.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/i2c.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/of.h>
+#include <linux/pinctrl/consumer.h>
+#include <linux/platform_device.h>
 
-/* SSC रेजिस्टरs */
-#घोषणा SSC_BRG				0x000
-#घोषणा SSC_TBUF			0x004
-#घोषणा SSC_RBUF			0x008
-#घोषणा SSC_CTL				0x00C
-#घोषणा SSC_IEN				0x010
-#घोषणा SSC_STA				0x014
-#घोषणा SSC_I2C				0x018
-#घोषणा SSC_SLAD			0x01C
-#घोषणा SSC_REP_START_HOLD		0x020
-#घोषणा SSC_START_HOLD			0x024
-#घोषणा SSC_REP_START_SETUP		0x028
-#घोषणा SSC_DATA_SETUP			0x02C
-#घोषणा SSC_STOP_SETUP			0x030
-#घोषणा SSC_BUS_FREE			0x034
-#घोषणा SSC_TX_FSTAT			0x038
-#घोषणा SSC_RX_FSTAT			0x03C
-#घोषणा SSC_PRE_SCALER_BRG		0x040
-#घोषणा SSC_CLR				0x080
-#घोषणा SSC_NOISE_SUPP_WIDTH		0x100
-#घोषणा SSC_PRSCALER			0x104
-#घोषणा SSC_NOISE_SUPP_WIDTH_DATAOUT	0x108
-#घोषणा SSC_PRSCALER_DATAOUT		0x10c
+/* SSC registers */
+#define SSC_BRG				0x000
+#define SSC_TBUF			0x004
+#define SSC_RBUF			0x008
+#define SSC_CTL				0x00C
+#define SSC_IEN				0x010
+#define SSC_STA				0x014
+#define SSC_I2C				0x018
+#define SSC_SLAD			0x01C
+#define SSC_REP_START_HOLD		0x020
+#define SSC_START_HOLD			0x024
+#define SSC_REP_START_SETUP		0x028
+#define SSC_DATA_SETUP			0x02C
+#define SSC_STOP_SETUP			0x030
+#define SSC_BUS_FREE			0x034
+#define SSC_TX_FSTAT			0x038
+#define SSC_RX_FSTAT			0x03C
+#define SSC_PRE_SCALER_BRG		0x040
+#define SSC_CLR				0x080
+#define SSC_NOISE_SUPP_WIDTH		0x100
+#define SSC_PRSCALER			0x104
+#define SSC_NOISE_SUPP_WIDTH_DATAOUT	0x108
+#define SSC_PRSCALER_DATAOUT		0x10c
 
 /* SSC Control */
-#घोषणा SSC_CTL_DATA_WIDTH_9		0x8
-#घोषणा SSC_CTL_DATA_WIDTH_MSK		0xf
-#घोषणा SSC_CTL_BM			0xf
-#घोषणा SSC_CTL_HB			BIT(4)
-#घोषणा SSC_CTL_PH			BIT(5)
-#घोषणा SSC_CTL_PO			BIT(6)
-#घोषणा SSC_CTL_SR			BIT(7)
-#घोषणा SSC_CTL_MS			BIT(8)
-#घोषणा SSC_CTL_EN			BIT(9)
-#घोषणा SSC_CTL_LPB			BIT(10)
-#घोषणा SSC_CTL_EN_TX_FIFO		BIT(11)
-#घोषणा SSC_CTL_EN_RX_FIFO		BIT(12)
-#घोषणा SSC_CTL_EN_CLST_RX		BIT(13)
+#define SSC_CTL_DATA_WIDTH_9		0x8
+#define SSC_CTL_DATA_WIDTH_MSK		0xf
+#define SSC_CTL_BM			0xf
+#define SSC_CTL_HB			BIT(4)
+#define SSC_CTL_PH			BIT(5)
+#define SSC_CTL_PO			BIT(6)
+#define SSC_CTL_SR			BIT(7)
+#define SSC_CTL_MS			BIT(8)
+#define SSC_CTL_EN			BIT(9)
+#define SSC_CTL_LPB			BIT(10)
+#define SSC_CTL_EN_TX_FIFO		BIT(11)
+#define SSC_CTL_EN_RX_FIFO		BIT(12)
+#define SSC_CTL_EN_CLST_RX		BIT(13)
 
 /* SSC Interrupt Enable */
-#घोषणा SSC_IEN_RIEN			BIT(0)
-#घोषणा SSC_IEN_TIEN			BIT(1)
-#घोषणा SSC_IEN_TEEN			BIT(2)
-#घोषणा SSC_IEN_REEN			BIT(3)
-#घोषणा SSC_IEN_PEEN			BIT(4)
-#घोषणा SSC_IEN_AASEN			BIT(6)
-#घोषणा SSC_IEN_STOPEN			BIT(7)
-#घोषणा SSC_IEN_ARBLEN			BIT(8)
-#घोषणा SSC_IEN_NACKEN			BIT(10)
-#घोषणा SSC_IEN_REPSTRTEN		BIT(11)
-#घोषणा SSC_IEN_TX_FIFO_HALF		BIT(12)
-#घोषणा SSC_IEN_RX_FIFO_HALF_FULL	BIT(14)
+#define SSC_IEN_RIEN			BIT(0)
+#define SSC_IEN_TIEN			BIT(1)
+#define SSC_IEN_TEEN			BIT(2)
+#define SSC_IEN_REEN			BIT(3)
+#define SSC_IEN_PEEN			BIT(4)
+#define SSC_IEN_AASEN			BIT(6)
+#define SSC_IEN_STOPEN			BIT(7)
+#define SSC_IEN_ARBLEN			BIT(8)
+#define SSC_IEN_NACKEN			BIT(10)
+#define SSC_IEN_REPSTRTEN		BIT(11)
+#define SSC_IEN_TX_FIFO_HALF		BIT(12)
+#define SSC_IEN_RX_FIFO_HALF_FULL	BIT(14)
 
 /* SSC Status */
-#घोषणा SSC_STA_RIR			BIT(0)
-#घोषणा SSC_STA_TIR			BIT(1)
-#घोषणा SSC_STA_TE			BIT(2)
-#घोषणा SSC_STA_RE			BIT(3)
-#घोषणा SSC_STA_PE			BIT(4)
-#घोषणा SSC_STA_CLST			BIT(5)
-#घोषणा SSC_STA_AAS			BIT(6)
-#घोषणा SSC_STA_STOP			BIT(7)
-#घोषणा SSC_STA_ARBL			BIT(8)
-#घोषणा SSC_STA_BUSY			BIT(9)
-#घोषणा SSC_STA_NACK			BIT(10)
-#घोषणा SSC_STA_REPSTRT			BIT(11)
-#घोषणा SSC_STA_TX_FIFO_HALF		BIT(12)
-#घोषणा SSC_STA_TX_FIFO_FULL		BIT(13)
-#घोषणा SSC_STA_RX_FIFO_HALF		BIT(14)
+#define SSC_STA_RIR			BIT(0)
+#define SSC_STA_TIR			BIT(1)
+#define SSC_STA_TE			BIT(2)
+#define SSC_STA_RE			BIT(3)
+#define SSC_STA_PE			BIT(4)
+#define SSC_STA_CLST			BIT(5)
+#define SSC_STA_AAS			BIT(6)
+#define SSC_STA_STOP			BIT(7)
+#define SSC_STA_ARBL			BIT(8)
+#define SSC_STA_BUSY			BIT(9)
+#define SSC_STA_NACK			BIT(10)
+#define SSC_STA_REPSTRT			BIT(11)
+#define SSC_STA_TX_FIFO_HALF		BIT(12)
+#define SSC_STA_TX_FIFO_FULL		BIT(13)
+#define SSC_STA_RX_FIFO_HALF		BIT(14)
 
 /* SSC I2C Control */
-#घोषणा SSC_I2C_I2CM			BIT(0)
-#घोषणा SSC_I2C_STRTG			BIT(1)
-#घोषणा SSC_I2C_STOPG			BIT(2)
-#घोषणा SSC_I2C_ACKG			BIT(3)
-#घोषणा SSC_I2C_AD10			BIT(4)
-#घोषणा SSC_I2C_TXENB			BIT(5)
-#घोषणा SSC_I2C_REPSTRTG		BIT(11)
-#घोषणा SSC_I2C_SLAVE_DISABLE		BIT(12)
+#define SSC_I2C_I2CM			BIT(0)
+#define SSC_I2C_STRTG			BIT(1)
+#define SSC_I2C_STOPG			BIT(2)
+#define SSC_I2C_ACKG			BIT(3)
+#define SSC_I2C_AD10			BIT(4)
+#define SSC_I2C_TXENB			BIT(5)
+#define SSC_I2C_REPSTRTG		BIT(11)
+#define SSC_I2C_SLAVE_DISABLE		BIT(12)
 
 /* SSC Tx FIFO Status */
-#घोषणा SSC_TX_FSTAT_STATUS		0x07
+#define SSC_TX_FSTAT_STATUS		0x07
 
 /* SSC Rx FIFO Status */
-#घोषणा SSC_RX_FSTAT_STATUS		0x07
+#define SSC_RX_FSTAT_STATUS		0x07
 
 /* SSC Clear bit operation */
-#घोषणा SSC_CLR_SSCAAS			BIT(6)
-#घोषणा SSC_CLR_SSCSTOP			BIT(7)
-#घोषणा SSC_CLR_SSCARBL			BIT(8)
-#घोषणा SSC_CLR_NACK			BIT(10)
-#घोषणा SSC_CLR_REPSTRT			BIT(11)
+#define SSC_CLR_SSCAAS			BIT(6)
+#define SSC_CLR_SSCSTOP			BIT(7)
+#define SSC_CLR_SSCARBL			BIT(8)
+#define SSC_CLR_NACK			BIT(10)
+#define SSC_CLR_REPSTRT			BIT(11)
 
 /* SSC Clock Prescaler */
-#घोषणा SSC_PRSC_VALUE			0x0f
+#define SSC_PRSC_VALUE			0x0f
 
 
-#घोषणा SSC_TXFIFO_SIZE			0x8
-#घोषणा SSC_RXFIFO_SIZE			0x8
+#define SSC_TXFIFO_SIZE			0x8
+#define SSC_RXFIFO_SIZE			0x8
 
-क्रमागत st_i2c_mode अणु
+enum st_i2c_mode {
 	I2C_MODE_STANDARD,
 	I2C_MODE_FAST,
 	I2C_MODE_END,
-पूर्ण;
+};
 
 /**
- * काष्ठा st_i2c_timings - per-Mode tuning parameters
+ * struct st_i2c_timings - per-Mode tuning parameters
  * @rate: I2C bus rate
- * @rep_start_hold: I2C repeated start hold समय requirement
- * @rep_start_setup: I2C repeated start set up समय requirement
- * @start_hold: I2C start hold समय requirement
- * @data_setup_समय: I2C data set up समय requirement
- * @stop_setup_समय: I2C stop set up समय requirement
- * @bus_मुक्त_समय: I2C bus मुक्त समय requirement
+ * @rep_start_hold: I2C repeated start hold time requirement
+ * @rep_start_setup: I2C repeated start set up time requirement
+ * @start_hold: I2C start hold time requirement
+ * @data_setup_time: I2C data set up time requirement
+ * @stop_setup_time: I2C stop set up time requirement
+ * @bus_free_time: I2C bus free time requirement
  * @sda_pulse_min_limit: I2C SDA pulse mini width limit
  */
-काष्ठा st_i2c_timings अणु
+struct st_i2c_timings {
 	u32 rate;
 	u32 rep_start_hold;
 	u32 rep_start_setup;
 	u32 start_hold;
-	u32 data_setup_समय;
-	u32 stop_setup_समय;
-	u32 bus_मुक्त_समय;
+	u32 data_setup_time;
+	u32 stop_setup_time;
+	u32 bus_free_time;
 	u32 sda_pulse_min_limit;
-पूर्ण;
+};
 
 /**
- * काष्ठा st_i2c_client - client specअगरic data
+ * struct st_i2c_client - client specific data
  * @addr: 8-bit slave addr, including r/w bit
  * @count: number of bytes to be transfered
- * @xfered: number of bytes alपढ़ोy transferred
+ * @xfered: number of bytes already transferred
  * @buf: data buffer
  * @result: result of the transfer
  * @stop: last I2C msg to be sent, i.e. STOP to be generated
  */
-काष्ठा st_i2c_client अणु
+struct st_i2c_client {
 	u8	addr;
 	u32	count;
 	u32	xfered;
 	u8	*buf;
-	पूर्णांक	result;
+	int	result;
 	bool	stop;
-पूर्ण;
+};
 
 /**
- * काष्ठा st_i2c_dev - निजी data of the controller
- * @adap: I2C adapter क्रम this controller
- * @dev: device क्रम this controller
- * @base: भव memory area
+ * struct st_i2c_dev - private data of the controller
+ * @adap: I2C adapter for this controller
+ * @dev: device for this controller
+ * @base: virtual memory area
  * @complete: completion of I2C message
- * @irq: पूर्णांकerrupt line क्रम th controller
- * @clk: hw ssc block घड़ी
+ * @irq: interrupt line for th controller
+ * @clk: hw ssc block clock
  * @mode: I2C mode of the controller. Standard or Fast only supported
  * @scl_min_width_us: SCL line minimum pulse width in us
  * @sda_min_width_us: SDA line minimum pulse width in us
- * @client: I2C transfert inक्रमmation
+ * @client: I2C transfert information
  * @busy: I2C transfer on-going
  */
-काष्ठा st_i2c_dev अणु
-	काष्ठा i2c_adapter	adap;
-	काष्ठा device		*dev;
-	व्योम __iomem		*base;
-	काष्ठा completion	complete;
-	पूर्णांक			irq;
-	काष्ठा clk		*clk;
-	पूर्णांक			mode;
+struct st_i2c_dev {
+	struct i2c_adapter	adap;
+	struct device		*dev;
+	void __iomem		*base;
+	struct completion	complete;
+	int			irq;
+	struct clk		*clk;
+	int			mode;
 	u32			scl_min_width_us;
 	u32			sda_min_width_us;
-	काष्ठा st_i2c_client	client;
+	struct st_i2c_client	client;
 	bool			busy;
-पूर्ण;
+};
 
-अटल अंतरभूत व्योम st_i2c_set_bits(व्योम __iomem *reg, u32 mask)
-अणु
-	ग_लिखोl_relaxed(पढ़ोl_relaxed(reg) | mask, reg);
-पूर्ण
+static inline void st_i2c_set_bits(void __iomem *reg, u32 mask)
+{
+	writel_relaxed(readl_relaxed(reg) | mask, reg);
+}
 
-अटल अंतरभूत व्योम st_i2c_clr_bits(व्योम __iomem *reg, u32 mask)
-अणु
-	ग_लिखोl_relaxed(पढ़ोl_relaxed(reg) & ~mask, reg);
-पूर्ण
+static inline void st_i2c_clr_bits(void __iomem *reg, u32 mask)
+{
+	writel_relaxed(readl_relaxed(reg) & ~mask, reg);
+}
 
 /*
- * From I2C Specअगरications v0.5.
+ * From I2C Specifications v0.5.
  *
  * All the values below have +10% margin added to be
  * compatible with some out-of-spec devices,
  * like HDMI link of the Toshiba 19AV600 TV.
  */
-अटल काष्ठा st_i2c_timings i2c_timings[] = अणु
-	[I2C_MODE_STANDARD] = अणु
+static struct st_i2c_timings i2c_timings[] = {
+	[I2C_MODE_STANDARD] = {
 		.rate			= I2C_MAX_STANDARD_MODE_FREQ,
 		.rep_start_hold		= 4400,
 		.rep_start_setup	= 5170,
 		.start_hold		= 4400,
-		.data_setup_समय	= 275,
-		.stop_setup_समय	= 4400,
-		.bus_मुक्त_समय		= 5170,
-	पूर्ण,
-	[I2C_MODE_FAST] = अणु
+		.data_setup_time	= 275,
+		.stop_setup_time	= 4400,
+		.bus_free_time		= 5170,
+	},
+	[I2C_MODE_FAST] = {
 		.rate			= I2C_MAX_FAST_MODE_FREQ,
 		.rep_start_hold		= 660,
 		.rep_start_setup	= 660,
 		.start_hold		= 660,
-		.data_setup_समय	= 110,
-		.stop_setup_समय	= 660,
-		.bus_मुक्त_समय		= 1430,
-	पूर्ण,
-पूर्ण;
+		.data_setup_time	= 110,
+		.stop_setup_time	= 660,
+		.bus_free_time		= 1430,
+	},
+};
 
-अटल व्योम st_i2c_flush_rx_fअगरo(काष्ठा st_i2c_dev *i2c_dev)
-अणु
-	पूर्णांक count, i;
+static void st_i2c_flush_rx_fifo(struct st_i2c_dev *i2c_dev)
+{
+	int count, i;
 
 	/*
-	 * Counter only counts up to 7 but fअगरo size is 8...
-	 * When fअगरo is full, counter is 0 and RIR bit of status रेजिस्टर is
+	 * Counter only counts up to 7 but fifo size is 8...
+	 * When fifo is full, counter is 0 and RIR bit of status register is
 	 * set
 	 */
-	अगर (पढ़ोl_relaxed(i2c_dev->base + SSC_STA) & SSC_STA_RIR)
+	if (readl_relaxed(i2c_dev->base + SSC_STA) & SSC_STA_RIR)
 		count = SSC_RXFIFO_SIZE;
-	अन्यथा
-		count = पढ़ोl_relaxed(i2c_dev->base + SSC_RX_FSTAT) &
+	else
+		count = readl_relaxed(i2c_dev->base + SSC_RX_FSTAT) &
 			SSC_RX_FSTAT_STATUS;
 
-	क्रम (i = 0; i < count; i++)
-		पढ़ोl_relaxed(i2c_dev->base + SSC_RBUF);
-पूर्ण
+	for (i = 0; i < count; i++)
+		readl_relaxed(i2c_dev->base + SSC_RBUF);
+}
 
-अटल व्योम st_i2c_soft_reset(काष्ठा st_i2c_dev *i2c_dev)
-अणु
+static void st_i2c_soft_reset(struct st_i2c_dev *i2c_dev)
+{
 	/*
-	 * FIFO needs to be emptied beक्रमe reseting the IP,
-	 * अन्यथा the controller उठाओs a BUSY error.
+	 * FIFO needs to be emptied before reseting the IP,
+	 * else the controller raises a BUSY error.
 	 */
-	st_i2c_flush_rx_fअगरo(i2c_dev);
+	st_i2c_flush_rx_fifo(i2c_dev);
 
 	st_i2c_set_bits(i2c_dev->base + SSC_CTL, SSC_CTL_SR);
 	st_i2c_clr_bits(i2c_dev->base + SSC_CTL, SSC_CTL_SR);
-पूर्ण
+}
 
 /**
  * st_i2c_hw_config() - Prepare SSC block, calculate and apply tuning timings
- * @i2c_dev: Controller's निजी data
+ * @i2c_dev: Controller's private data
  */
-अटल व्योम st_i2c_hw_config(काष्ठा st_i2c_dev *i2c_dev)
-अणु
-	अचिन्हित दीर्घ rate;
+static void st_i2c_hw_config(struct st_i2c_dev *i2c_dev)
+{
+	unsigned long rate;
 	u32 val, ns_per_clk;
-	काष्ठा st_i2c_timings *t = &i2c_timings[i2c_dev->mode];
+	struct st_i2c_timings *t = &i2c_timings[i2c_dev->mode];
 
 	st_i2c_soft_reset(i2c_dev);
 
 	val = SSC_CLR_REPSTRT | SSC_CLR_NACK | SSC_CLR_SSCARBL |
 		SSC_CLR_SSCAAS | SSC_CLR_SSCSTOP;
-	ग_लिखोl_relaxed(val, i2c_dev->base + SSC_CLR);
+	writel_relaxed(val, i2c_dev->base + SSC_CLR);
 
-	/* SSC Control रेजिस्टर setup */
+	/* SSC Control register setup */
 	val = SSC_CTL_PO | SSC_CTL_PH | SSC_CTL_HB | SSC_CTL_DATA_WIDTH_9;
-	ग_लिखोl_relaxed(val, i2c_dev->base + SSC_CTL);
+	writel_relaxed(val, i2c_dev->base + SSC_CTL);
 
 	rate = clk_get_rate(i2c_dev->clk);
 	ns_per_clk = 1000000000 / rate;
 
 	/* Baudrate */
 	val = rate / (2 * t->rate);
-	ग_लिखोl_relaxed(val, i2c_dev->base + SSC_BRG);
+	writel_relaxed(val, i2c_dev->base + SSC_BRG);
 
 	/* Pre-scaler baudrate */
-	ग_लिखोl_relaxed(1, i2c_dev->base + SSC_PRE_SCALER_BRG);
+	writel_relaxed(1, i2c_dev->base + SSC_PRE_SCALER_BRG);
 
 	/* Enable I2C mode */
-	ग_लिखोl_relaxed(SSC_I2C_I2CM, i2c_dev->base + SSC_I2C);
+	writel_relaxed(SSC_I2C_I2CM, i2c_dev->base + SSC_I2C);
 
-	/* Repeated start hold समय */
+	/* Repeated start hold time */
 	val = t->rep_start_hold / ns_per_clk;
-	ग_लिखोl_relaxed(val, i2c_dev->base + SSC_REP_START_HOLD);
+	writel_relaxed(val, i2c_dev->base + SSC_REP_START_HOLD);
 
-	/* Repeated start set up समय */
+	/* Repeated start set up time */
 	val = t->rep_start_setup / ns_per_clk;
-	ग_लिखोl_relaxed(val, i2c_dev->base + SSC_REP_START_SETUP);
+	writel_relaxed(val, i2c_dev->base + SSC_REP_START_SETUP);
 
-	/* Start hold समय */
+	/* Start hold time */
 	val = t->start_hold / ns_per_clk;
-	ग_लिखोl_relaxed(val, i2c_dev->base + SSC_START_HOLD);
+	writel_relaxed(val, i2c_dev->base + SSC_START_HOLD);
 
-	/* Data set up समय */
-	val = t->data_setup_समय / ns_per_clk;
-	ग_लिखोl_relaxed(val, i2c_dev->base + SSC_DATA_SETUP);
+	/* Data set up time */
+	val = t->data_setup_time / ns_per_clk;
+	writel_relaxed(val, i2c_dev->base + SSC_DATA_SETUP);
 
-	/* Stop set up समय */
-	val = t->stop_setup_समय / ns_per_clk;
-	ग_लिखोl_relaxed(val, i2c_dev->base + SSC_STOP_SETUP);
+	/* Stop set up time */
+	val = t->stop_setup_time / ns_per_clk;
+	writel_relaxed(val, i2c_dev->base + SSC_STOP_SETUP);
 
-	/* Bus मुक्त समय */
-	val = t->bus_मुक्त_समय / ns_per_clk;
-	ग_लिखोl_relaxed(val, i2c_dev->base + SSC_BUS_FREE);
+	/* Bus free time */
+	val = t->bus_free_time / ns_per_clk;
+	writel_relaxed(val, i2c_dev->base + SSC_BUS_FREE);
 
 	/* Prescalers set up */
 	val = rate / 10000000;
-	ग_लिखोl_relaxed(val, i2c_dev->base + SSC_PRSCALER);
-	ग_लिखोl_relaxed(val, i2c_dev->base + SSC_PRSCALER_DATAOUT);
+	writel_relaxed(val, i2c_dev->base + SSC_PRSCALER);
+	writel_relaxed(val, i2c_dev->base + SSC_PRSCALER_DATAOUT);
 
 	/* Noise suppression witdh */
 	val = i2c_dev->scl_min_width_us * rate / 100000000;
-	ग_लिखोl_relaxed(val, i2c_dev->base + SSC_NOISE_SUPP_WIDTH);
+	writel_relaxed(val, i2c_dev->base + SSC_NOISE_SUPP_WIDTH);
 
 	/* Noise suppression max output data delay width */
 	val = i2c_dev->sda_min_width_us * rate / 100000000;
-	ग_लिखोl_relaxed(val, i2c_dev->base + SSC_NOISE_SUPP_WIDTH_DATAOUT);
-पूर्ण
+	writel_relaxed(val, i2c_dev->base + SSC_NOISE_SUPP_WIDTH_DATAOUT);
+}
 
-अटल पूर्णांक st_i2c_recover_bus(काष्ठा i2c_adapter *i2c_adap)
-अणु
-	काष्ठा st_i2c_dev *i2c_dev = i2c_get_adapdata(i2c_adap);
+static int st_i2c_recover_bus(struct i2c_adapter *i2c_adap)
+{
+	struct st_i2c_dev *i2c_dev = i2c_get_adapdata(i2c_adap);
 	u32 ctl;
 
 	dev_dbg(i2c_dev->dev, "Trying to recover bus\n");
 
 	/*
-	 * SSP IP is dual role SPI/I2C to generate 9 घड़ी pulses
-	 * we चयन to SPI node, 9 bit words and ग_लिखो a 0. This
+	 * SSP IP is dual role SPI/I2C to generate 9 clock pulses
+	 * we switch to SPI node, 9 bit words and write a 0. This
 	 * has been validate with a oscilloscope and is easier
-	 * than चयनing to GPIO mode.
+	 * than switching to GPIO mode.
 	 */
 
-	/* Disable पूर्णांकerrupts */
-	ग_लिखोl_relaxed(0, i2c_dev->base + SSC_IEN);
+	/* Disable interrupts */
+	writel_relaxed(0, i2c_dev->base + SSC_IEN);
 
 	st_i2c_hw_config(i2c_dev);
 
@@ -360,296 +359,296 @@
 	st_i2c_clr_bits(i2c_dev->base + SSC_I2C, SSC_I2C_I2CM);
 	usleep_range(8000, 10000);
 
-	ग_लिखोl_relaxed(0, i2c_dev->base + SSC_TBUF);
+	writel_relaxed(0, i2c_dev->base + SSC_TBUF);
 	usleep_range(2000, 4000);
 	st_i2c_set_bits(i2c_dev->base + SSC_I2C, SSC_I2C_I2CM);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक st_i2c_रुको_मुक्त_bus(काष्ठा st_i2c_dev *i2c_dev)
-अणु
+static int st_i2c_wait_free_bus(struct st_i2c_dev *i2c_dev)
+{
 	u32 sta;
-	पूर्णांक i, ret;
+	int i, ret;
 
-	क्रम (i = 0; i < 10; i++) अणु
-		sta = पढ़ोl_relaxed(i2c_dev->base + SSC_STA);
-		अगर (!(sta & SSC_STA_BUSY))
-			वापस 0;
+	for (i = 0; i < 10; i++) {
+		sta = readl_relaxed(i2c_dev->base + SSC_STA);
+		if (!(sta & SSC_STA_BUSY))
+			return 0;
 
 		usleep_range(2000, 4000);
-	पूर्ण
+	}
 
 	dev_err(i2c_dev->dev, "bus not free (status = 0x%08x)\n", sta);
 
 	ret = i2c_recover_bus(&i2c_dev->adap);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(i2c_dev->dev, "Failed to recover the bus (%d)\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस -EBUSY;
-पूर्ण
+	return -EBUSY;
+}
 
 /**
- * st_i2c_ग_लिखो_tx_fअगरo() - Write a byte in the Tx FIFO
- * @i2c_dev: Controller's निजी data
- * @byte: Data to ग_लिखो in the Tx FIFO
+ * st_i2c_write_tx_fifo() - Write a byte in the Tx FIFO
+ * @i2c_dev: Controller's private data
+ * @byte: Data to write in the Tx FIFO
  */
-अटल अंतरभूत व्योम st_i2c_ग_लिखो_tx_fअगरo(काष्ठा st_i2c_dev *i2c_dev, u8 byte)
-अणु
+static inline void st_i2c_write_tx_fifo(struct st_i2c_dev *i2c_dev, u8 byte)
+{
 	u16 tbuf = byte << 1;
 
-	ग_लिखोl_relaxed(tbuf | 1, i2c_dev->base + SSC_TBUF);
-पूर्ण
+	writel_relaxed(tbuf | 1, i2c_dev->base + SSC_TBUF);
+}
 
 /**
- * st_i2c_wr_fill_tx_fअगरo() - Fill the Tx FIFO in ग_लिखो mode
- * @i2c_dev: Controller's निजी data
+ * st_i2c_wr_fill_tx_fifo() - Fill the Tx FIFO in write mode
+ * @i2c_dev: Controller's private data
  *
  * This functions fills the Tx FIFO with I2C transfert buffer when
- * in ग_लिखो mode.
+ * in write mode.
  */
-अटल व्योम st_i2c_wr_fill_tx_fअगरo(काष्ठा st_i2c_dev *i2c_dev)
-अणु
-	काष्ठा st_i2c_client *c = &i2c_dev->client;
-	u32 tx_ख_स्थिति, sta;
-	पूर्णांक i;
+static void st_i2c_wr_fill_tx_fifo(struct st_i2c_dev *i2c_dev)
+{
+	struct st_i2c_client *c = &i2c_dev->client;
+	u32 tx_fstat, sta;
+	int i;
 
-	sta = पढ़ोl_relaxed(i2c_dev->base + SSC_STA);
-	अगर (sta & SSC_STA_TX_FIFO_FULL)
-		वापस;
+	sta = readl_relaxed(i2c_dev->base + SSC_STA);
+	if (sta & SSC_STA_TX_FIFO_FULL)
+		return;
 
-	tx_ख_स्थिति = पढ़ोl_relaxed(i2c_dev->base + SSC_TX_FSTAT);
-	tx_ख_स्थिति &= SSC_TX_FSTAT_STATUS;
+	tx_fstat = readl_relaxed(i2c_dev->base + SSC_TX_FSTAT);
+	tx_fstat &= SSC_TX_FSTAT_STATUS;
 
-	अगर (c->count < (SSC_TXFIFO_SIZE - tx_ख_स्थिति))
+	if (c->count < (SSC_TXFIFO_SIZE - tx_fstat))
 		i = c->count;
-	अन्यथा
-		i = SSC_TXFIFO_SIZE - tx_ख_स्थिति;
+	else
+		i = SSC_TXFIFO_SIZE - tx_fstat;
 
-	क्रम (; i > 0; i--, c->count--, c->buf++)
-		st_i2c_ग_लिखो_tx_fअगरo(i2c_dev, *c->buf);
-पूर्ण
+	for (; i > 0; i--, c->count--, c->buf++)
+		st_i2c_write_tx_fifo(i2c_dev, *c->buf);
+}
 
 /**
- * st_i2c_rd_fill_tx_fअगरo() - Fill the Tx FIFO in पढ़ो mode
- * @i2c_dev: Controller's निजी data
- * @max: Maximum amount of data to fill पूर्णांकo the Tx FIFO
+ * st_i2c_rd_fill_tx_fifo() - Fill the Tx FIFO in read mode
+ * @i2c_dev: Controller's private data
+ * @max: Maximum amount of data to fill into the Tx FIFO
  *
  * This functions fills the Tx FIFO with fixed pattern when
- * in पढ़ो mode to trigger घड़ी.
+ * in read mode to trigger clock.
  */
-अटल व्योम st_i2c_rd_fill_tx_fअगरo(काष्ठा st_i2c_dev *i2c_dev, पूर्णांक max)
-अणु
-	काष्ठा st_i2c_client *c = &i2c_dev->client;
-	u32 tx_ख_स्थिति, sta;
-	पूर्णांक i;
+static void st_i2c_rd_fill_tx_fifo(struct st_i2c_dev *i2c_dev, int max)
+{
+	struct st_i2c_client *c = &i2c_dev->client;
+	u32 tx_fstat, sta;
+	int i;
 
-	sta = पढ़ोl_relaxed(i2c_dev->base + SSC_STA);
-	अगर (sta & SSC_STA_TX_FIFO_FULL)
-		वापस;
+	sta = readl_relaxed(i2c_dev->base + SSC_STA);
+	if (sta & SSC_STA_TX_FIFO_FULL)
+		return;
 
-	tx_ख_स्थिति = पढ़ोl_relaxed(i2c_dev->base + SSC_TX_FSTAT);
-	tx_ख_स्थिति &= SSC_TX_FSTAT_STATUS;
+	tx_fstat = readl_relaxed(i2c_dev->base + SSC_TX_FSTAT);
+	tx_fstat &= SSC_TX_FSTAT_STATUS;
 
-	अगर (max < (SSC_TXFIFO_SIZE - tx_ख_स्थिति))
+	if (max < (SSC_TXFIFO_SIZE - tx_fstat))
 		i = max;
-	अन्यथा
-		i = SSC_TXFIFO_SIZE - tx_ख_स्थिति;
+	else
+		i = SSC_TXFIFO_SIZE - tx_fstat;
 
-	क्रम (; i > 0; i--, c->xfered++)
-		st_i2c_ग_लिखो_tx_fअगरo(i2c_dev, 0xff);
-पूर्ण
+	for (; i > 0; i--, c->xfered++)
+		st_i2c_write_tx_fifo(i2c_dev, 0xff);
+}
 
-अटल व्योम st_i2c_पढ़ो_rx_fअगरo(काष्ठा st_i2c_dev *i2c_dev)
-अणु
-	काष्ठा st_i2c_client *c = &i2c_dev->client;
+static void st_i2c_read_rx_fifo(struct st_i2c_dev *i2c_dev)
+{
+	struct st_i2c_client *c = &i2c_dev->client;
 	u32 i, sta;
 	u16 rbuf;
 
-	sta = पढ़ोl_relaxed(i2c_dev->base + SSC_STA);
-	अगर (sta & SSC_STA_RIR) अणु
+	sta = readl_relaxed(i2c_dev->base + SSC_STA);
+	if (sta & SSC_STA_RIR) {
 		i = SSC_RXFIFO_SIZE;
-	पूर्ण अन्यथा अणु
-		i = पढ़ोl_relaxed(i2c_dev->base + SSC_RX_FSTAT);
+	} else {
+		i = readl_relaxed(i2c_dev->base + SSC_RX_FSTAT);
 		i &= SSC_RX_FSTAT_STATUS;
-	पूर्ण
+	}
 
-	क्रम (; (i > 0) && (c->count > 0); i--, c->count--) अणु
-		rbuf = पढ़ोl_relaxed(i2c_dev->base + SSC_RBUF) >> 1;
+	for (; (i > 0) && (c->count > 0); i--, c->count--) {
+		rbuf = readl_relaxed(i2c_dev->base + SSC_RBUF) >> 1;
 		*c->buf++ = (u8)rbuf & 0xff;
-	पूर्ण
+	}
 
-	अगर (i) अणु
+	if (i) {
 		dev_err(i2c_dev->dev, "Unexpected %d bytes in rx fifo\n", i);
-		st_i2c_flush_rx_fअगरo(i2c_dev);
-	पूर्ण
-पूर्ण
+		st_i2c_flush_rx_fifo(i2c_dev);
+	}
+}
 
 /**
  * st_i2c_terminate_xfer() - Send either STOP or REPSTART condition
- * @i2c_dev: Controller's निजी data
+ * @i2c_dev: Controller's private data
  */
-अटल व्योम st_i2c_terminate_xfer(काष्ठा st_i2c_dev *i2c_dev)
-अणु
-	काष्ठा st_i2c_client *c = &i2c_dev->client;
+static void st_i2c_terminate_xfer(struct st_i2c_dev *i2c_dev)
+{
+	struct st_i2c_client *c = &i2c_dev->client;
 
 	st_i2c_clr_bits(i2c_dev->base + SSC_IEN, SSC_IEN_TEEN);
 	st_i2c_clr_bits(i2c_dev->base + SSC_I2C, SSC_I2C_STRTG);
 
-	अगर (c->stop) अणु
+	if (c->stop) {
 		st_i2c_set_bits(i2c_dev->base + SSC_IEN, SSC_IEN_STOPEN);
 		st_i2c_set_bits(i2c_dev->base + SSC_I2C, SSC_I2C_STOPG);
-	पूर्ण अन्यथा अणु
+	} else {
 		st_i2c_set_bits(i2c_dev->base + SSC_IEN, SSC_IEN_REPSTRTEN);
 		st_i2c_set_bits(i2c_dev->base + SSC_I2C, SSC_I2C_REPSTRTG);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * st_i2c_handle_ग_लिखो() - Handle FIFO empty पूर्णांकerrupt in हाल of ग_लिखो
- * @i2c_dev: Controller's निजी data
+ * st_i2c_handle_write() - Handle FIFO empty interrupt in case of write
+ * @i2c_dev: Controller's private data
  */
-अटल व्योम st_i2c_handle_ग_लिखो(काष्ठा st_i2c_dev *i2c_dev)
-अणु
-	काष्ठा st_i2c_client *c = &i2c_dev->client;
+static void st_i2c_handle_write(struct st_i2c_dev *i2c_dev)
+{
+	struct st_i2c_client *c = &i2c_dev->client;
 
-	st_i2c_flush_rx_fअगरo(i2c_dev);
+	st_i2c_flush_rx_fifo(i2c_dev);
 
-	अगर (!c->count)
+	if (!c->count)
 		/* End of xfer, send stop or repstart */
 		st_i2c_terminate_xfer(i2c_dev);
-	अन्यथा
-		st_i2c_wr_fill_tx_fअगरo(i2c_dev);
-पूर्ण
+	else
+		st_i2c_wr_fill_tx_fifo(i2c_dev);
+}
 
 /**
- * st_i2c_handle_पढ़ो() - Handle FIFO empty पूर्णांकerrupt in हाल of पढ़ो
- * @i2c_dev: Controller's निजी data
+ * st_i2c_handle_read() - Handle FIFO empty interrupt in case of read
+ * @i2c_dev: Controller's private data
  */
-अटल व्योम st_i2c_handle_पढ़ो(काष्ठा st_i2c_dev *i2c_dev)
-अणु
-	काष्ठा st_i2c_client *c = &i2c_dev->client;
+static void st_i2c_handle_read(struct st_i2c_dev *i2c_dev)
+{
+	struct st_i2c_client *c = &i2c_dev->client;
 	u32 ien;
 
-	/* Trash the address पढ़ो back */
-	अगर (!c->xfered) अणु
-		पढ़ोl_relaxed(i2c_dev->base + SSC_RBUF);
+	/* Trash the address read back */
+	if (!c->xfered) {
+		readl_relaxed(i2c_dev->base + SSC_RBUF);
 		st_i2c_clr_bits(i2c_dev->base + SSC_I2C, SSC_I2C_TXENB);
-	पूर्ण अन्यथा अणु
-		st_i2c_पढ़ो_rx_fअगरo(i2c_dev);
-	पूर्ण
+	} else {
+		st_i2c_read_rx_fifo(i2c_dev);
+	}
 
-	अगर (!c->count) अणु
+	if (!c->count) {
 		/* End of xfer, send stop or repstart */
 		st_i2c_terminate_xfer(i2c_dev);
-	पूर्ण अन्यथा अगर (c->count == 1) अणु
+	} else if (c->count == 1) {
 		/* Penultimate byte to xfer, disable ACK gen. */
 		st_i2c_clr_bits(i2c_dev->base + SSC_I2C, SSC_I2C_ACKG);
 
-		/* Last received byte is to be handled by NACK पूर्णांकerrupt */
+		/* Last received byte is to be handled by NACK interrupt */
 		ien = SSC_IEN_NACKEN | SSC_IEN_ARBLEN;
-		ग_लिखोl_relaxed(ien, i2c_dev->base + SSC_IEN);
+		writel_relaxed(ien, i2c_dev->base + SSC_IEN);
 
-		st_i2c_rd_fill_tx_fअगरo(i2c_dev, c->count);
-	पूर्ण अन्यथा अणु
-		st_i2c_rd_fill_tx_fअगरo(i2c_dev, c->count - 1);
-	पूर्ण
-पूर्ण
+		st_i2c_rd_fill_tx_fifo(i2c_dev, c->count);
+	} else {
+		st_i2c_rd_fill_tx_fifo(i2c_dev, c->count - 1);
+	}
+}
 
 /**
- * st_i2c_isr_thपढ़ो() - Interrupt routine
- * @irq: पूर्णांकerrupt number
- * @data: Controller's निजी data
+ * st_i2c_isr_thread() - Interrupt routine
+ * @irq: interrupt number
+ * @data: Controller's private data
  */
-अटल irqवापस_t st_i2c_isr_thपढ़ो(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा st_i2c_dev *i2c_dev = data;
-	काष्ठा st_i2c_client *c = &i2c_dev->client;
+static irqreturn_t st_i2c_isr_thread(int irq, void *data)
+{
+	struct st_i2c_dev *i2c_dev = data;
+	struct st_i2c_client *c = &i2c_dev->client;
 	u32 sta, ien;
-	पूर्णांक it;
+	int it;
 
-	ien = पढ़ोl_relaxed(i2c_dev->base + SSC_IEN);
-	sta = पढ़ोl_relaxed(i2c_dev->base + SSC_STA);
+	ien = readl_relaxed(i2c_dev->base + SSC_IEN);
+	sta = readl_relaxed(i2c_dev->base + SSC_STA);
 
 	/* Use __fls() to check error bits first */
 	it = __fls(sta & ien);
-	अगर (it < 0) अणु
+	if (it < 0) {
 		dev_dbg(i2c_dev->dev, "spurious it (sta=0x%04x, ien=0x%04x)\n",
 				sta, ien);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	चयन (1 << it) अणु
-	हाल SSC_STA_TE:
-		अगर (c->addr & I2C_M_RD)
-			st_i2c_handle_पढ़ो(i2c_dev);
-		अन्यथा
-			st_i2c_handle_ग_लिखो(i2c_dev);
-		अवरोध;
+	switch (1 << it) {
+	case SSC_STA_TE:
+		if (c->addr & I2C_M_RD)
+			st_i2c_handle_read(i2c_dev);
+		else
+			st_i2c_handle_write(i2c_dev);
+		break;
 
-	हाल SSC_STA_STOP:
-	हाल SSC_STA_REPSTRT:
-		ग_लिखोl_relaxed(0, i2c_dev->base + SSC_IEN);
+	case SSC_STA_STOP:
+	case SSC_STA_REPSTRT:
+		writel_relaxed(0, i2c_dev->base + SSC_IEN);
 		complete(&i2c_dev->complete);
-		अवरोध;
+		break;
 
-	हाल SSC_STA_NACK:
-		ग_लिखोl_relaxed(SSC_CLR_NACK, i2c_dev->base + SSC_CLR);
+	case SSC_STA_NACK:
+		writel_relaxed(SSC_CLR_NACK, i2c_dev->base + SSC_CLR);
 
-		/* Last received byte handled by NACK पूर्णांकerrupt */
-		अगर ((c->addr & I2C_M_RD) && (c->count == 1) && (c->xfered)) अणु
-			st_i2c_handle_पढ़ो(i2c_dev);
-			अवरोध;
-		पूर्ण
+		/* Last received byte handled by NACK interrupt */
+		if ((c->addr & I2C_M_RD) && (c->count == 1) && (c->xfered)) {
+			st_i2c_handle_read(i2c_dev);
+			break;
+		}
 
 		it = SSC_IEN_STOPEN | SSC_IEN_ARBLEN;
-		ग_लिखोl_relaxed(it, i2c_dev->base + SSC_IEN);
+		writel_relaxed(it, i2c_dev->base + SSC_IEN);
 
 		st_i2c_set_bits(i2c_dev->base + SSC_I2C, SSC_I2C_STOPG);
 		c->result = -EIO;
-		अवरोध;
+		break;
 
-	हाल SSC_STA_ARBL:
-		ग_लिखोl_relaxed(SSC_CLR_SSCARBL, i2c_dev->base + SSC_CLR);
+	case SSC_STA_ARBL:
+		writel_relaxed(SSC_CLR_SSCARBL, i2c_dev->base + SSC_CLR);
 
 		it = SSC_IEN_STOPEN | SSC_IEN_ARBLEN;
-		ग_लिखोl_relaxed(it, i2c_dev->base + SSC_IEN);
+		writel_relaxed(it, i2c_dev->base + SSC_IEN);
 
 		st_i2c_set_bits(i2c_dev->base + SSC_I2C, SSC_I2C_STOPG);
 		c->result = -EAGAIN;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		dev_err(i2c_dev->dev,
 				"it %d unhandled (sta=0x%04x)\n", it, sta);
-	पूर्ण
+	}
 
 	/*
-	 * Read IEN रेजिस्टर to ensure पूर्णांकerrupt mask ग_लिखो is effective
-	 * beक्रमe re-enabling पूर्णांकerrupt at GIC level, and thus aव्योम spurious
-	 * पूर्णांकerrupts.
+	 * Read IEN register to ensure interrupt mask write is effective
+	 * before re-enabling interrupt at GIC level, and thus avoid spurious
+	 * interrupts.
 	 */
-	पढ़ोl(i2c_dev->base + SSC_IEN);
+	readl(i2c_dev->base + SSC_IEN);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /**
  * st_i2c_xfer_msg() - Transfer a single I2C message
- * @i2c_dev: Controller's निजी data
+ * @i2c_dev: Controller's private data
  * @msg: I2C message to transfer
  * @is_first: first message of the sequence
  * @is_last: last message of the sequence
  */
-अटल पूर्णांक st_i2c_xfer_msg(काष्ठा st_i2c_dev *i2c_dev, काष्ठा i2c_msg *msg,
+static int st_i2c_xfer_msg(struct st_i2c_dev *i2c_dev, struct i2c_msg *msg,
 			    bool is_first, bool is_last)
-अणु
-	काष्ठा st_i2c_client *c = &i2c_dev->client;
+{
+	struct st_i2c_client *c = &i2c_dev->client;
 	u32 ctl, i2c, it;
-	अचिन्हित दीर्घ समयout;
-	पूर्णांक ret;
+	unsigned long timeout;
+	int ret;
 
 	c->addr		= i2c_8bit_addr_from_msg(msg);
 	c->buf		= msg->buf;
@@ -664,72 +663,72 @@
 	st_i2c_set_bits(i2c_dev->base + SSC_CTL, ctl);
 
 	i2c = SSC_I2C_TXENB;
-	अगर (c->addr & I2C_M_RD)
+	if (c->addr & I2C_M_RD)
 		i2c |= SSC_I2C_ACKG;
 	st_i2c_set_bits(i2c_dev->base + SSC_I2C, i2c);
 
 	/* Write slave address */
-	st_i2c_ग_लिखो_tx_fअगरo(i2c_dev, c->addr);
+	st_i2c_write_tx_fifo(i2c_dev, c->addr);
 
-	/* Pre-fill Tx fअगरo with data in हाल of ग_लिखो */
-	अगर (!(c->addr & I2C_M_RD))
-		st_i2c_wr_fill_tx_fअगरo(i2c_dev);
+	/* Pre-fill Tx fifo with data in case of write */
+	if (!(c->addr & I2C_M_RD))
+		st_i2c_wr_fill_tx_fifo(i2c_dev);
 
 	it = SSC_IEN_NACKEN | SSC_IEN_TEEN | SSC_IEN_ARBLEN;
-	ग_लिखोl_relaxed(it, i2c_dev->base + SSC_IEN);
+	writel_relaxed(it, i2c_dev->base + SSC_IEN);
 
-	अगर (is_first) अणु
-		ret = st_i2c_रुको_मुक्त_bus(i2c_dev);
-		अगर (ret)
-			वापस ret;
+	if (is_first) {
+		ret = st_i2c_wait_free_bus(i2c_dev);
+		if (ret)
+			return ret;
 
 		st_i2c_set_bits(i2c_dev->base + SSC_I2C, SSC_I2C_STRTG);
-	पूर्ण
+	}
 
-	समयout = रुको_क्रम_completion_समयout(&i2c_dev->complete,
-			i2c_dev->adap.समयout);
+	timeout = wait_for_completion_timeout(&i2c_dev->complete,
+			i2c_dev->adap.timeout);
 	ret = c->result;
 
-	अगर (!समयout) अणु
+	if (!timeout) {
 		dev_err(i2c_dev->dev, "Write to slave 0x%x timed out\n",
 				c->addr);
 		ret = -ETIMEDOUT;
-	पूर्ण
+	}
 
 	i2c = SSC_I2C_STOPG | SSC_I2C_REPSTRTG;
 	st_i2c_clr_bits(i2c_dev->base + SSC_I2C, i2c);
 
-	ग_लिखोl_relaxed(SSC_CLR_SSCSTOP | SSC_CLR_REPSTRT,
+	writel_relaxed(SSC_CLR_SSCSTOP | SSC_CLR_REPSTRT,
 			i2c_dev->base + SSC_CLR);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * st_i2c_xfer() - Transfer a single I2C message
- * @i2c_adap: Adapter poपूर्णांकer to the controller
- * @msgs: Poपूर्णांकer to data to be written.
+ * @i2c_adap: Adapter pointer to the controller
+ * @msgs: Pointer to data to be written.
  * @num: Number of messages to be executed
  */
-अटल पूर्णांक st_i2c_xfer(काष्ठा i2c_adapter *i2c_adap,
-			काष्ठा i2c_msg msgs[], पूर्णांक num)
-अणु
-	काष्ठा st_i2c_dev *i2c_dev = i2c_get_adapdata(i2c_adap);
-	पूर्णांक ret, i;
+static int st_i2c_xfer(struct i2c_adapter *i2c_adap,
+			struct i2c_msg msgs[], int num)
+{
+	struct st_i2c_dev *i2c_dev = i2c_get_adapdata(i2c_adap);
+	int ret, i;
 
 	i2c_dev->busy = true;
 
 	ret = clk_prepare_enable(i2c_dev->clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(i2c_dev->dev, "Failed to prepare_enable clock\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	pinctrl_pm_select_शेष_state(i2c_dev->dev);
+	pinctrl_pm_select_default_state(i2c_dev->dev);
 
 	st_i2c_hw_config(i2c_dev);
 
-	क्रम (i = 0; (i < num) && !ret; i++)
+	for (i = 0; (i < num) && !ret; i++)
 		ret = st_i2c_xfer_msg(i2c_dev, &msgs[i], i == 0, i == num - 1);
 
 	pinctrl_pm_select_idle_state(i2c_dev->dev);
@@ -738,131 +737,131 @@
 
 	i2c_dev->busy = false;
 
-	वापस (ret < 0) ? ret : i;
-पूर्ण
+	return (ret < 0) ? ret : i;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक st_i2c_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा st_i2c_dev *i2c_dev = dev_get_drvdata(dev);
+#ifdef CONFIG_PM_SLEEP
+static int st_i2c_suspend(struct device *dev)
+{
+	struct st_i2c_dev *i2c_dev = dev_get_drvdata(dev);
 
-	अगर (i2c_dev->busy)
-		वापस -EBUSY;
+	if (i2c_dev->busy)
+		return -EBUSY;
 
 	pinctrl_pm_select_sleep_state(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक st_i2c_resume(काष्ठा device *dev)
-अणु
-	pinctrl_pm_select_शेष_state(dev);
-	/* Go in idle state अगर available */
+static int st_i2c_resume(struct device *dev)
+{
+	pinctrl_pm_select_default_state(dev);
+	/* Go in idle state if available */
 	pinctrl_pm_select_idle_state(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(st_i2c_pm, st_i2c_suspend, st_i2c_resume);
-#घोषणा ST_I2C_PM	(&st_i2c_pm)
-#अन्यथा
-#घोषणा ST_I2C_PM	शून्य
-#पूर्ण_अगर
+static SIMPLE_DEV_PM_OPS(st_i2c_pm, st_i2c_suspend, st_i2c_resume);
+#define ST_I2C_PM	(&st_i2c_pm)
+#else
+#define ST_I2C_PM	NULL
+#endif
 
-अटल u32 st_i2c_func(काष्ठा i2c_adapter *adap)
-अणु
-	वापस I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
-पूर्ण
+static u32 st_i2c_func(struct i2c_adapter *adap)
+{
+	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
+}
 
-अटल स्थिर काष्ठा i2c_algorithm st_i2c_algo = अणु
+static const struct i2c_algorithm st_i2c_algo = {
 	.master_xfer = st_i2c_xfer,
 	.functionality = st_i2c_func,
-पूर्ण;
+};
 
-अटल काष्ठा i2c_bus_recovery_info st_i2c_recovery_info = अणु
+static struct i2c_bus_recovery_info st_i2c_recovery_info = {
 	.recover_bus = st_i2c_recover_bus,
-पूर्ण;
+};
 
-अटल पूर्णांक st_i2c_of_get_deglitch(काष्ठा device_node *np,
-		काष्ठा st_i2c_dev *i2c_dev)
-अणु
-	पूर्णांक ret;
+static int st_i2c_of_get_deglitch(struct device_node *np,
+		struct st_i2c_dev *i2c_dev)
+{
+	int ret;
 
-	ret = of_property_पढ़ो_u32(np, "st,i2c-min-scl-pulse-width-us",
+	ret = of_property_read_u32(np, "st,i2c-min-scl-pulse-width-us",
 			&i2c_dev->scl_min_width_us);
-	अगर ((ret == -ENODATA) || (ret == -EOVERFLOW)) अणु
+	if ((ret == -ENODATA) || (ret == -EOVERFLOW)) {
 		dev_err(i2c_dev->dev, "st,i2c-min-scl-pulse-width-us invalid\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = of_property_पढ़ो_u32(np, "st,i2c-min-sda-pulse-width-us",
+	ret = of_property_read_u32(np, "st,i2c-min-sda-pulse-width-us",
 			&i2c_dev->sda_min_width_us);
-	अगर ((ret == -ENODATA) || (ret == -EOVERFLOW)) अणु
+	if ((ret == -ENODATA) || (ret == -EOVERFLOW)) {
 		dev_err(i2c_dev->dev, "st,i2c-min-sda-pulse-width-us invalid\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक st_i2c_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा st_i2c_dev *i2c_dev;
-	काष्ठा resource *res;
+static int st_i2c_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct st_i2c_dev *i2c_dev;
+	struct resource *res;
 	u32 clk_rate;
-	काष्ठा i2c_adapter *adap;
-	पूर्णांक ret;
+	struct i2c_adapter *adap;
+	int ret;
 
-	i2c_dev = devm_kzalloc(&pdev->dev, माप(*i2c_dev), GFP_KERNEL);
-	अगर (!i2c_dev)
-		वापस -ENOMEM;
+	i2c_dev = devm_kzalloc(&pdev->dev, sizeof(*i2c_dev), GFP_KERNEL);
+	if (!i2c_dev)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	i2c_dev->base = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(i2c_dev->base))
-		वापस PTR_ERR(i2c_dev->base);
+	if (IS_ERR(i2c_dev->base))
+		return PTR_ERR(i2c_dev->base);
 
 	i2c_dev->irq = irq_of_parse_and_map(np, 0);
-	अगर (!i2c_dev->irq) अणु
+	if (!i2c_dev->irq) {
 		dev_err(&pdev->dev, "IRQ missing or invalid\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	i2c_dev->clk = of_clk_get_by_name(np, "ssc");
-	अगर (IS_ERR(i2c_dev->clk)) अणु
+	if (IS_ERR(i2c_dev->clk)) {
 		dev_err(&pdev->dev, "Unable to request clock\n");
-		वापस PTR_ERR(i2c_dev->clk);
-	पूर्ण
+		return PTR_ERR(i2c_dev->clk);
+	}
 
 	i2c_dev->mode = I2C_MODE_STANDARD;
-	ret = of_property_पढ़ो_u32(np, "clock-frequency", &clk_rate);
-	अगर (!ret && (clk_rate == I2C_MAX_FAST_MODE_FREQ))
+	ret = of_property_read_u32(np, "clock-frequency", &clk_rate);
+	if (!ret && (clk_rate == I2C_MAX_FAST_MODE_FREQ))
 		i2c_dev->mode = I2C_MODE_FAST;
 
 	i2c_dev->dev = &pdev->dev;
 
-	ret = devm_request_thपढ़ोed_irq(&pdev->dev, i2c_dev->irq,
-			शून्य, st_i2c_isr_thपढ़ो,
+	ret = devm_request_threaded_irq(&pdev->dev, i2c_dev->irq,
+			NULL, st_i2c_isr_thread,
 			IRQF_ONESHOT, pdev->name, i2c_dev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Failed to request irq %i\n", i2c_dev->irq);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	pinctrl_pm_select_शेष_state(i2c_dev->dev);
-	/* In हाल idle state available, select it */
+	pinctrl_pm_select_default_state(i2c_dev->dev);
+	/* In case idle state available, select it */
 	pinctrl_pm_select_idle_state(i2c_dev->dev);
 
 	ret = st_i2c_of_get_deglitch(np, i2c_dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	adap = &i2c_dev->adap;
 	i2c_set_adapdata(adap, i2c_dev);
-	snम_लिखो(adap->name, माप(adap->name), "ST I2C(%pa)", &res->start);
+	snprintf(adap->name, sizeof(adap->name), "ST I2C(%pa)", &res->start);
 	adap->owner = THIS_MODULE;
-	adap->समयout = 2 * HZ;
+	adap->timeout = 2 * HZ;
 	adap->retries = 0;
 	adap->algo = &st_i2c_algo;
 	adap->bus_recovery_info = &st_i2c_recovery_info;
@@ -872,43 +871,43 @@
 	init_completion(&i2c_dev->complete);
 
 	ret = i2c_add_adapter(adap);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	platक्रमm_set_drvdata(pdev, i2c_dev);
+	platform_set_drvdata(pdev, i2c_dev);
 
 	dev_info(i2c_dev->dev, "%s initialized\n", adap->name);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक st_i2c_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा st_i2c_dev *i2c_dev = platक्रमm_get_drvdata(pdev);
+static int st_i2c_remove(struct platform_device *pdev)
+{
+	struct st_i2c_dev *i2c_dev = platform_get_drvdata(pdev);
 
 	i2c_del_adapter(&i2c_dev->adap);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id st_i2c_match[] = अणु
-	अणु .compatible = "st,comms-ssc-i2c", पूर्ण,
-	अणु .compatible = "st,comms-ssc4-i2c", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id st_i2c_match[] = {
+	{ .compatible = "st,comms-ssc-i2c", },
+	{ .compatible = "st,comms-ssc4-i2c", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, st_i2c_match);
 
-अटल काष्ठा platक्रमm_driver st_i2c_driver = अणु
-	.driver = अणु
+static struct platform_driver st_i2c_driver = {
+	.driver = {
 		.name = "st-i2c",
 		.of_match_table = st_i2c_match,
 		.pm = ST_I2C_PM,
-	पूर्ण,
+	},
 	.probe = st_i2c_probe,
-	.हटाओ = st_i2c_हटाओ,
-पूर्ण;
+	.remove = st_i2c_remove,
+};
 
-module_platक्रमm_driver(st_i2c_driver);
+module_platform_driver(st_i2c_driver);
 
 MODULE_AUTHOR("Maxime Coquelin <maxime.coquelin@st.com>");
 MODULE_DESCRIPTION("STMicroelectronics I2C driver");

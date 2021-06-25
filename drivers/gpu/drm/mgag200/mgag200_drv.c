@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2012 Red Hat
  *
@@ -7,21 +6,21 @@
  *          Dave Airlie
  */
 
-#समावेश <linux/console.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/vदो_स्मृति.h>
+#include <linux/console.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/vmalloc.h>
 
-#समावेश <drm/drm_drv.h>
-#समावेश <drm/drm_file.h>
-#समावेश <drm/drm_ioctl.h>
-#समावेश <drm/drm_pciids.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_file.h>
+#include <drm/drm_ioctl.h>
+#include <drm/drm_pciids.h>
 
-#समावेश "mgag200_drv.h"
+#include "mgag200_drv.h"
 
-पूर्णांक mgag200_modeset = -1;
+int mgag200_modeset = -1;
 MODULE_PARM_DESC(modeset, "Disable/Enable modesetting");
-module_param_named(modeset, mgag200_modeset, पूर्णांक, 0400);
+module_param_named(modeset, mgag200_modeset, int, 0400);
 
 /*
  * DRM driver
@@ -29,7 +28,7 @@ module_param_named(modeset, mgag200_modeset, पूर्णांक, 0400);
 
 DEFINE_DRM_GEM_FOPS(mgag200_driver_fops);
 
-अटल स्थिर काष्ठा drm_driver mgag200_driver = अणु
+static const struct drm_driver mgag200_driver = {
 	.driver_features = DRIVER_ATOMIC | DRIVER_GEM | DRIVER_MODESET,
 	.fops = &mgag200_driver_fops,
 	.name = DRIVER_NAME,
@@ -39,361 +38,361 @@ DEFINE_DRM_GEM_FOPS(mgag200_driver_fops);
 	.minor = DRIVER_MINOR,
 	.patchlevel = DRIVER_PATCHLEVEL,
 	DRM_GEM_SHMEM_DRIVER_OPS,
-पूर्ण;
+};
 
 /*
  * DRM device
  */
 
-अटल bool mgag200_has_sgram(काष्ठा mga_device *mdev)
-अणु
-	काष्ठा drm_device *dev = &mdev->base;
-	काष्ठा pci_dev *pdev = to_pci_dev(dev->dev);
+static bool mgag200_has_sgram(struct mga_device *mdev)
+{
+	struct drm_device *dev = &mdev->base;
+	struct pci_dev *pdev = to_pci_dev(dev->dev);
 	u32 option;
-	पूर्णांक ret;
+	int ret;
 
-	ret = pci_पढ़ो_config_dword(pdev, PCI_MGA_OPTION, &option);
-	अगर (drm_WARN(dev, ret, "failed to read PCI config dword: %d\n", ret))
-		वापस false;
+	ret = pci_read_config_dword(pdev, PCI_MGA_OPTION, &option);
+	if (drm_WARN(dev, ret, "failed to read PCI config dword: %d\n", ret))
+		return false;
 
-	वापस !!(option & PCI_MGA_OPTION_HARDPWMSK);
-पूर्ण
+	return !!(option & PCI_MGA_OPTION_HARDPWMSK);
+}
 
-अटल पूर्णांक mgag200_regs_init(काष्ठा mga_device *mdev)
-अणु
-	काष्ठा drm_device *dev = &mdev->base;
-	काष्ठा pci_dev *pdev = to_pci_dev(dev->dev);
+static int mgag200_regs_init(struct mga_device *mdev)
+{
+	struct drm_device *dev = &mdev->base;
+	struct pci_dev *pdev = to_pci_dev(dev->dev);
 	u32 option, option2;
 	u8 crtcext3;
 
-	चयन (mdev->type) अणु
-	हाल G200_PCI:
-	हाल G200_AGP:
-		अगर (mgag200_has_sgram(mdev))
+	switch (mdev->type) {
+	case G200_PCI:
+	case G200_AGP:
+		if (mgag200_has_sgram(mdev))
 			option = 0x4049cd21;
-		अन्यथा
+		else
 			option = 0x40499121;
 		option2 = 0x00008000;
-		अवरोध;
-	हाल G200_SE_A:
-	हाल G200_SE_B:
+		break;
+	case G200_SE_A:
+	case G200_SE_B:
 		option = 0x40049120;
-		अगर (mgag200_has_sgram(mdev))
+		if (mgag200_has_sgram(mdev))
 			option |= PCI_MGA_OPTION_HARDPWMSK;
 		option2 = 0x00008000;
-		अवरोध;
-	हाल G200_WB:
-	हाल G200_EW3:
+		break;
+	case G200_WB:
+	case G200_EW3:
 		option = 0x41049120;
 		option2 = 0x0000b000;
-		अवरोध;
-	हाल G200_EV:
+		break;
+	case G200_EV:
 		option = 0x00000120;
 		option2 = 0x0000b000;
-		अवरोध;
-	हाल G200_EH:
-	हाल G200_EH3:
+		break;
+	case G200_EH:
+	case G200_EH3:
 		option = 0x00000120;
 		option2 = 0x0000b000;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		option = 0;
 		option2 = 0;
-	पूर्ण
+	}
 
-	अगर (option)
-		pci_ग_लिखो_config_dword(pdev, PCI_MGA_OPTION, option);
-	अगर (option2)
-		pci_ग_लिखो_config_dword(pdev, PCI_MGA_OPTION2, option2);
+	if (option)
+		pci_write_config_dword(pdev, PCI_MGA_OPTION, option);
+	if (option2)
+		pci_write_config_dword(pdev, PCI_MGA_OPTION2, option2);
 
-	/* BAR 1 contains रेजिस्टरs */
+	/* BAR 1 contains registers */
 	mdev->rmmio_base = pci_resource_start(pdev, 1);
 	mdev->rmmio_size = pci_resource_len(pdev, 1);
 
-	अगर (!devm_request_mem_region(dev->dev, mdev->rmmio_base,
-				     mdev->rmmio_size, "mgadrmfb_mmio")) अणु
+	if (!devm_request_mem_region(dev->dev, mdev->rmmio_base,
+				     mdev->rmmio_size, "mgadrmfb_mmio")) {
 		drm_err(dev, "can't reserve mmio registers\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	mdev->rmmio = pcim_iomap(pdev, 1, 0);
-	अगर (mdev->rmmio == शून्य)
-		वापस -ENOMEM;
+	if (mdev->rmmio == NULL)
+		return -ENOMEM;
 
 	RREG_ECRT(0x03, crtcext3);
 	crtcext3 |= MGAREG_CRTCEXT3_MGAMODE;
 	WREG_ECRT(0x03, crtcext3);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mgag200_g200_पूर्णांकerpret_bios(काष्ठा mga_device *mdev,
-					स्थिर अचिन्हित अक्षर *bios,
-					माप_प्रकार size)
-अणु
-	अटल स्थिर अक्षर matrox[] = अणु'M', 'A', 'T', 'R', 'O', 'X'पूर्ण;
-	अटल स्थिर अचिन्हित पूर्णांक expected_length[6] = अणु
+static void mgag200_g200_interpret_bios(struct mga_device *mdev,
+					const unsigned char *bios,
+					size_t size)
+{
+	static const char matrox[] = {'M', 'A', 'T', 'R', 'O', 'X'};
+	static const unsigned int expected_length[6] = {
 		0, 64, 64, 64, 128, 128
-	पूर्ण;
-	काष्ठा drm_device *dev = &mdev->base;
-	स्थिर अचिन्हित अक्षर *pins;
-	अचिन्हित पूर्णांक pins_len, version;
-	पूर्णांक offset;
-	पूर्णांक पंचांगp;
+	};
+	struct drm_device *dev = &mdev->base;
+	const unsigned char *pins;
+	unsigned int pins_len, version;
+	int offset;
+	int tmp;
 
-	/* Test क्रम MATROX string. */
-	अगर (size < 45 + माप(matrox))
-		वापस;
-	अगर (स_भेद(&bios[45], matrox, माप(matrox)) != 0)
-		वापस;
+	/* Test for MATROX string. */
+	if (size < 45 + sizeof(matrox))
+		return;
+	if (memcmp(&bios[45], matrox, sizeof(matrox)) != 0)
+		return;
 
 	/* Get the PInS offset. */
-	अगर (size < MGA_BIOS_OFFSET + 2)
-		वापस;
+	if (size < MGA_BIOS_OFFSET + 2)
+		return;
 	offset = (bios[MGA_BIOS_OFFSET + 1] << 8) | bios[MGA_BIOS_OFFSET];
 
-	/* Get PInS data काष्ठाure. */
+	/* Get PInS data structure. */
 
-	अगर (size < offset + 6)
-		वापस;
+	if (size < offset + 6)
+		return;
 	pins = bios + offset;
-	अगर (pins[0] == 0x2e && pins[1] == 0x41) अणु
+	if (pins[0] == 0x2e && pins[1] == 0x41) {
 		version = pins[5];
 		pins_len = pins[2];
-	पूर्ण अन्यथा अणु
+	} else {
 		version = 1;
 		pins_len = pins[0] + (pins[1] << 8);
-	पूर्ण
+	}
 
-	अगर (version < 1 || version > 5) अणु
+	if (version < 1 || version > 5) {
 		drm_warn(dev, "Unknown BIOS PInS version: %d\n", version);
-		वापस;
-	पूर्ण
-	अगर (pins_len != expected_length[version]) अणु
+		return;
+	}
+	if (pins_len != expected_length[version]) {
 		drm_warn(dev, "Unexpected BIOS PInS size: %d expected: %d\n",
 			 pins_len, expected_length[version]);
-		वापस;
-	पूर्ण
-	अगर (size < offset + pins_len)
-		वापस;
+		return;
+	}
+	if (size < offset + pins_len)
+		return;
 
 	drm_dbg_kms(dev, "MATROX BIOS PInS version %d size: %d found\n",
 		    version, pins_len);
 
-	/* Extract the घड़ी values */
+	/* Extract the clock values */
 
-	चयन (version) अणु
-	हाल 1:
-		पंचांगp = pins[24] + (pins[25] << 8);
-		अगर (पंचांगp)
-			mdev->model.g200.pclk_max = पंचांगp * 10;
-		अवरोध;
-	हाल 2:
-		अगर (pins[41] != 0xff)
+	switch (version) {
+	case 1:
+		tmp = pins[24] + (pins[25] << 8);
+		if (tmp)
+			mdev->model.g200.pclk_max = tmp * 10;
+		break;
+	case 2:
+		if (pins[41] != 0xff)
 			mdev->model.g200.pclk_max = (pins[41] + 100) * 1000;
-		अवरोध;
-	हाल 3:
-		अगर (pins[36] != 0xff)
+		break;
+	case 3:
+		if (pins[36] != 0xff)
 			mdev->model.g200.pclk_max = (pins[36] + 100) * 1000;
-		अगर (pins[52] & 0x20)
+		if (pins[52] & 0x20)
 			mdev->model.g200.ref_clk = 14318;
-		अवरोध;
-	हाल 4:
-		अगर (pins[39] != 0xff)
+		break;
+	case 4:
+		if (pins[39] != 0xff)
 			mdev->model.g200.pclk_max = pins[39] * 4 * 1000;
-		अगर (pins[92] & 0x01)
+		if (pins[92] & 0x01)
 			mdev->model.g200.ref_clk = 14318;
-		अवरोध;
-	हाल 5:
-		पंचांगp = pins[4] ? 8000 : 6000;
-		अगर (pins[123] != 0xff)
-			mdev->model.g200.pclk_min = pins[123] * पंचांगp;
-		अगर (pins[38] != 0xff)
-			mdev->model.g200.pclk_max = pins[38] * पंचांगp;
-		अगर (pins[110] & 0x01)
+		break;
+	case 5:
+		tmp = pins[4] ? 8000 : 6000;
+		if (pins[123] != 0xff)
+			mdev->model.g200.pclk_min = pins[123] * tmp;
+		if (pins[38] != 0xff)
+			mdev->model.g200.pclk_max = pins[38] * tmp;
+		if (pins[110] & 0x01)
 			mdev->model.g200.ref_clk = 14318;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम mgag200_g200_init_refclk(काष्ठा mga_device *mdev)
-अणु
-	काष्ठा drm_device *dev = &mdev->base;
-	काष्ठा pci_dev *pdev = to_pci_dev(dev->dev);
-	अचिन्हित अक्षर __iomem *rom;
-	अचिन्हित अक्षर *bios;
-	माप_प्रकार size;
+static void mgag200_g200_init_refclk(struct mga_device *mdev)
+{
+	struct drm_device *dev = &mdev->base;
+	struct pci_dev *pdev = to_pci_dev(dev->dev);
+	unsigned char __iomem *rom;
+	unsigned char *bios;
+	size_t size;
 
 	mdev->model.g200.pclk_min = 50000;
 	mdev->model.g200.pclk_max = 230000;
 	mdev->model.g200.ref_clk = 27050;
 
 	rom = pci_map_rom(pdev, &size);
-	अगर (!rom)
-		वापस;
+	if (!rom)
+		return;
 
-	bios = vदो_स्मृति(size);
-	अगर (!bios)
-		जाओ out;
-	स_नकल_fromio(bios, rom, size);
+	bios = vmalloc(size);
+	if (!bios)
+		goto out;
+	memcpy_fromio(bios, rom, size);
 
-	अगर (size != 0 && bios[0] == 0x55 && bios[1] == 0xaa)
-		mgag200_g200_पूर्णांकerpret_bios(mdev, bios, size);
+	if (size != 0 && bios[0] == 0x55 && bios[1] == 0xaa)
+		mgag200_g200_interpret_bios(mdev, bios, size);
 
 	drm_dbg_kms(dev, "pclk_min: %ld pclk_max: %ld ref_clk: %ld\n",
 		    mdev->model.g200.pclk_min, mdev->model.g200.pclk_max,
 		    mdev->model.g200.ref_clk);
 
-	vमुक्त(bios);
+	vfree(bios);
 out:
 	pci_unmap_rom(pdev, rom);
-पूर्ण
+}
 
-अटल व्योम mgag200_g200se_init_unique_id(काष्ठा mga_device *mdev)
-अणु
-	काष्ठा drm_device *dev = &mdev->base;
+static void mgag200_g200se_init_unique_id(struct mga_device *mdev)
+{
+	struct drm_device *dev = &mdev->base;
 
-	/* stash G200 SE model number क्रम later use */
+	/* stash G200 SE model number for later use */
 	mdev->model.g200se.unique_rev_id = RREG32(0x1e24);
 
 	drm_dbg(dev, "G200 SE unique revision id is 0x%x\n",
 		mdev->model.g200se.unique_rev_id);
-पूर्ण
+}
 
-अटल पूर्णांक mgag200_device_init(काष्ठा mga_device *mdev, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा drm_device *dev = &mdev->base;
-	पूर्णांक ret;
+static int mgag200_device_init(struct mga_device *mdev, unsigned long flags)
+{
+	struct drm_device *dev = &mdev->base;
+	int ret;
 
 	mdev->flags = mgag200_flags_from_driver_data(flags);
 	mdev->type = mgag200_type_from_driver_data(flags);
 
 	ret = mgag200_regs_init(mdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (mdev->type == G200_PCI || mdev->type == G200_AGP)
+	if (mdev->type == G200_PCI || mdev->type == G200_AGP)
 		mgag200_g200_init_refclk(mdev);
-	अन्यथा अगर (IS_G200_SE(mdev))
+	else if (IS_G200_SE(mdev))
 		mgag200_g200se_init_unique_id(mdev);
 
 	ret = mgag200_mm_init(mdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = mgag200_modeset_init(mdev);
-	अगर (ret) अणु
+	if (ret) {
 		drm_err(dev, "Fatal error during modeset init: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा mga_device *
-mgag200_device_create(काष्ठा pci_dev *pdev, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा drm_device *dev;
-	काष्ठा mga_device *mdev;
-	पूर्णांक ret;
+static struct mga_device *
+mgag200_device_create(struct pci_dev *pdev, unsigned long flags)
+{
+	struct drm_device *dev;
+	struct mga_device *mdev;
+	int ret;
 
 	mdev = devm_drm_dev_alloc(&pdev->dev, &mgag200_driver,
-				  काष्ठा mga_device, base);
-	अगर (IS_ERR(mdev))
-		वापस mdev;
+				  struct mga_device, base);
+	if (IS_ERR(mdev))
+		return mdev;
 	dev = &mdev->base;
 
 	pci_set_drvdata(pdev, dev);
 
 	ret = mgag200_device_init(mdev, flags);
-	अगर (ret)
-		वापस ERR_PTR(ret);
+	if (ret)
+		return ERR_PTR(ret);
 
-	वापस mdev;
-पूर्ण
+	return mdev;
+}
 
 /*
  * PCI driver
  */
 
-अटल स्थिर काष्ठा pci_device_id mgag200_pciidlist[] = अणु
-	अणु PCI_VENDOR_ID_MATROX, 0x520, PCI_ANY_ID, PCI_ANY_ID, 0, 0, G200_PCI पूर्ण,
-	अणु PCI_VENDOR_ID_MATROX, 0x521, PCI_ANY_ID, PCI_ANY_ID, 0, 0, G200_AGP पूर्ण,
-	अणु PCI_VENDOR_ID_MATROX, 0x522, PCI_ANY_ID, PCI_ANY_ID, 0, 0,
-		G200_SE_A | MGAG200_FLAG_HW_BUG_NO_STARTADDपूर्ण,
-	अणु PCI_VENDOR_ID_MATROX, 0x524, PCI_ANY_ID, PCI_ANY_ID, 0, 0, G200_SE_B पूर्ण,
-	अणु PCI_VENDOR_ID_MATROX, 0x530, PCI_ANY_ID, PCI_ANY_ID, 0, 0, G200_EV पूर्ण,
-	अणु PCI_VENDOR_ID_MATROX, 0x532, PCI_ANY_ID, PCI_ANY_ID, 0, 0, G200_WB पूर्ण,
-	अणु PCI_VENDOR_ID_MATROX, 0x533, PCI_ANY_ID, PCI_ANY_ID, 0, 0, G200_EH पूर्ण,
-	अणु PCI_VENDOR_ID_MATROX, 0x534, PCI_ANY_ID, PCI_ANY_ID, 0, 0, G200_ER पूर्ण,
-	अणु PCI_VENDOR_ID_MATROX, 0x536, PCI_ANY_ID, PCI_ANY_ID, 0, 0, G200_EW3 पूर्ण,
-	अणु PCI_VENDOR_ID_MATROX, 0x538, PCI_ANY_ID, PCI_ANY_ID, 0, 0, G200_EH3 पूर्ण,
-	अणु0,पूर्ण
-पूर्ण;
+static const struct pci_device_id mgag200_pciidlist[] = {
+	{ PCI_VENDOR_ID_MATROX, 0x520, PCI_ANY_ID, PCI_ANY_ID, 0, 0, G200_PCI },
+	{ PCI_VENDOR_ID_MATROX, 0x521, PCI_ANY_ID, PCI_ANY_ID, 0, 0, G200_AGP },
+	{ PCI_VENDOR_ID_MATROX, 0x522, PCI_ANY_ID, PCI_ANY_ID, 0, 0,
+		G200_SE_A | MGAG200_FLAG_HW_BUG_NO_STARTADD},
+	{ PCI_VENDOR_ID_MATROX, 0x524, PCI_ANY_ID, PCI_ANY_ID, 0, 0, G200_SE_B },
+	{ PCI_VENDOR_ID_MATROX, 0x530, PCI_ANY_ID, PCI_ANY_ID, 0, 0, G200_EV },
+	{ PCI_VENDOR_ID_MATROX, 0x532, PCI_ANY_ID, PCI_ANY_ID, 0, 0, G200_WB },
+	{ PCI_VENDOR_ID_MATROX, 0x533, PCI_ANY_ID, PCI_ANY_ID, 0, 0, G200_EH },
+	{ PCI_VENDOR_ID_MATROX, 0x534, PCI_ANY_ID, PCI_ANY_ID, 0, 0, G200_ER },
+	{ PCI_VENDOR_ID_MATROX, 0x536, PCI_ANY_ID, PCI_ANY_ID, 0, 0, G200_EW3 },
+	{ PCI_VENDOR_ID_MATROX, 0x538, PCI_ANY_ID, PCI_ANY_ID, 0, 0, G200_EH3 },
+	{0,}
+};
 
 MODULE_DEVICE_TABLE(pci, mgag200_pciidlist);
 
-अटल पूर्णांक
-mgag200_pci_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
-अणु
-	काष्ठा mga_device *mdev;
-	काष्ठा drm_device *dev;
-	पूर्णांक ret;
+static int
+mgag200_pci_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
+{
+	struct mga_device *mdev;
+	struct drm_device *dev;
+	int ret;
 
-	drm_fb_helper_हटाओ_conflicting_pci_framebuffers(pdev, "mgag200drmfb");
+	drm_fb_helper_remove_conflicting_pci_framebuffers(pdev, "mgag200drmfb");
 
 	ret = pcim_enable_device(pdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mdev = mgag200_device_create(pdev, ent->driver_data);
-	अगर (IS_ERR(mdev))
-		वापस PTR_ERR(mdev);
+	if (IS_ERR(mdev))
+		return PTR_ERR(mdev);
 	dev = &mdev->base;
 
-	ret = drm_dev_रेजिस्टर(dev, ent->driver_data);
-	अगर (ret)
-		वापस ret;
+	ret = drm_dev_register(dev, ent->driver_data);
+	if (ret)
+		return ret;
 
 	drm_fbdev_generic_setup(dev, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mgag200_pci_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा drm_device *dev = pci_get_drvdata(pdev);
+static void mgag200_pci_remove(struct pci_dev *pdev)
+{
+	struct drm_device *dev = pci_get_drvdata(pdev);
 
-	drm_dev_unरेजिस्टर(dev);
-पूर्ण
+	drm_dev_unregister(dev);
+}
 
-अटल काष्ठा pci_driver mgag200_pci_driver = अणु
+static struct pci_driver mgag200_pci_driver = {
 	.name = DRIVER_NAME,
 	.id_table = mgag200_pciidlist,
 	.probe = mgag200_pci_probe,
-	.हटाओ = mgag200_pci_हटाओ,
-पूर्ण;
+	.remove = mgag200_pci_remove,
+};
 
-अटल पूर्णांक __init mgag200_init(व्योम)
-अणु
-	अगर (vgacon_text_क्रमce() && mgag200_modeset == -1)
-		वापस -EINVAL;
+static int __init mgag200_init(void)
+{
+	if (vgacon_text_force() && mgag200_modeset == -1)
+		return -EINVAL;
 
-	अगर (mgag200_modeset == 0)
-		वापस -EINVAL;
+	if (mgag200_modeset == 0)
+		return -EINVAL;
 
-	वापस pci_रेजिस्टर_driver(&mgag200_pci_driver);
-पूर्ण
+	return pci_register_driver(&mgag200_pci_driver);
+}
 
-अटल व्योम __निकास mgag200_निकास(व्योम)
-अणु
-	pci_unरेजिस्टर_driver(&mgag200_pci_driver);
-पूर्ण
+static void __exit mgag200_exit(void)
+{
+	pci_unregister_driver(&mgag200_pci_driver);
+}
 
 module_init(mgag200_init);
-module_निकास(mgag200_निकास);
+module_exit(mgag200_exit);
 
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);

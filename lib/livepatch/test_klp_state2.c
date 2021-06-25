@@ -1,191 +1,190 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2019 SUSE
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/livepatch.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/printk.h>
+#include <linux/livepatch.h>
 
-#घोषणा CONSOLE_LOGLEVEL_STATE 1
+#define CONSOLE_LOGLEVEL_STATE 1
 /* Version 2 supports migration. */
-#घोषणा CONSOLE_LOGLEVEL_STATE_VERSION 2
+#define CONSOLE_LOGLEVEL_STATE_VERSION 2
 
-अटल स्थिर अक्षर *स्थिर module_state[] = अणु
+static const char *const module_state[] = {
 	[MODULE_STATE_LIVE]	= "[MODULE_STATE_LIVE] Normal state",
 	[MODULE_STATE_COMING]	= "[MODULE_STATE_COMING] Full formed, running module_init",
 	[MODULE_STATE_GOING]	= "[MODULE_STATE_GOING] Going away",
 	[MODULE_STATE_UNFORMED]	= "[MODULE_STATE_UNFORMED] Still setting it up",
-पूर्ण;
+};
 
-अटल व्योम callback_info(स्थिर अक्षर *callback, काष्ठा klp_object *obj)
-अणु
-	अगर (obj->mod)
+static void callback_info(const char *callback, struct klp_object *obj)
+{
+	if (obj->mod)
 		pr_info("%s: %s -> %s\n", callback, obj->mod->name,
 			module_state[obj->mod->state]);
-	अन्यथा
+	else
 		pr_info("%s: vmlinux\n", callback);
-पूर्ण
+}
 
-अटल काष्ठा klp_patch patch;
+static struct klp_patch patch;
 
-अटल पूर्णांक allocate_loglevel_state(व्योम)
-अणु
-	काष्ठा klp_state *loglevel_state, *prev_loglevel_state;
+static int allocate_loglevel_state(void)
+{
+	struct klp_state *loglevel_state, *prev_loglevel_state;
 
 	prev_loglevel_state = klp_get_prev_state(CONSOLE_LOGLEVEL_STATE);
-	अगर (prev_loglevel_state) अणु
+	if (prev_loglevel_state) {
 		pr_info("%s: space to store console_loglevel already allocated\n",
 		__func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	loglevel_state = klp_get_state(&patch, CONSOLE_LOGLEVEL_STATE);
-	अगर (!loglevel_state)
-		वापस -EINVAL;
+	if (!loglevel_state)
+		return -EINVAL;
 
-	loglevel_state->data = kzalloc(माप(console_loglevel), GFP_KERNEL);
-	अगर (!loglevel_state->data)
-		वापस -ENOMEM;
+	loglevel_state->data = kzalloc(sizeof(console_loglevel), GFP_KERNEL);
+	if (!loglevel_state->data)
+		return -ENOMEM;
 
 	pr_info("%s: allocating space to store console_loglevel\n",
 		__func__);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम fix_console_loglevel(व्योम)
-अणु
-	काष्ठा klp_state *loglevel_state, *prev_loglevel_state;
+static void fix_console_loglevel(void)
+{
+	struct klp_state *loglevel_state, *prev_loglevel_state;
 
 	loglevel_state = klp_get_state(&patch, CONSOLE_LOGLEVEL_STATE);
-	अगर (!loglevel_state)
-		वापस;
+	if (!loglevel_state)
+		return;
 
 	prev_loglevel_state = klp_get_prev_state(CONSOLE_LOGLEVEL_STATE);
-	अगर (prev_loglevel_state) अणु
+	if (prev_loglevel_state) {
 		pr_info("%s: taking over the console_loglevel change\n",
 		__func__);
 		loglevel_state->data = prev_loglevel_state->data;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	pr_info("%s: fixing console_loglevel\n", __func__);
-	*(पूर्णांक *)loglevel_state->data = console_loglevel;
+	*(int *)loglevel_state->data = console_loglevel;
 	console_loglevel = CONSOLE_LOGLEVEL_MOTORMOUTH;
-पूर्ण
+}
 
-अटल व्योम restore_console_loglevel(व्योम)
-अणु
-	काष्ठा klp_state *loglevel_state, *prev_loglevel_state;
+static void restore_console_loglevel(void)
+{
+	struct klp_state *loglevel_state, *prev_loglevel_state;
 
 	prev_loglevel_state = klp_get_prev_state(CONSOLE_LOGLEVEL_STATE);
-	अगर (prev_loglevel_state) अणु
+	if (prev_loglevel_state) {
 		pr_info("%s: passing the console_loglevel change back to the old livepatch\n",
 		__func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	loglevel_state = klp_get_state(&patch, CONSOLE_LOGLEVEL_STATE);
-	अगर (!loglevel_state)
-		वापस;
+	if (!loglevel_state)
+		return;
 
 	pr_info("%s: restoring console_loglevel\n", __func__);
-	console_loglevel = *(पूर्णांक *)loglevel_state->data;
-पूर्ण
+	console_loglevel = *(int *)loglevel_state->data;
+}
 
-अटल व्योम मुक्त_loglevel_state(व्योम)
-अणु
-	काष्ठा klp_state *loglevel_state, *prev_loglevel_state;
+static void free_loglevel_state(void)
+{
+	struct klp_state *loglevel_state, *prev_loglevel_state;
 
 	prev_loglevel_state = klp_get_prev_state(CONSOLE_LOGLEVEL_STATE);
-	अगर (prev_loglevel_state) अणु
+	if (prev_loglevel_state) {
 		pr_info("%s: keeping space to store console_loglevel\n",
 		__func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	loglevel_state = klp_get_state(&patch, CONSOLE_LOGLEVEL_STATE);
-	अगर (!loglevel_state)
-		वापस;
+	if (!loglevel_state)
+		return;
 
 	pr_info("%s: freeing space for the stored console_loglevel\n",
 		__func__);
-	kमुक्त(loglevel_state->data);
-पूर्ण
+	kfree(loglevel_state->data);
+}
 
 /* Executed on object patching (ie, patch enablement) */
-अटल पूर्णांक pre_patch_callback(काष्ठा klp_object *obj)
-अणु
+static int pre_patch_callback(struct klp_object *obj)
+{
 	callback_info(__func__, obj);
-	वापस allocate_loglevel_state();
-पूर्ण
+	return allocate_loglevel_state();
+}
 
 /* Executed on object unpatching (ie, patch disablement) */
-अटल व्योम post_patch_callback(काष्ठा klp_object *obj)
-अणु
+static void post_patch_callback(struct klp_object *obj)
+{
 	callback_info(__func__, obj);
 	fix_console_loglevel();
-पूर्ण
+}
 
 /* Executed on object unpatching (ie, patch disablement) */
-अटल व्योम pre_unpatch_callback(काष्ठा klp_object *obj)
-अणु
+static void pre_unpatch_callback(struct klp_object *obj)
+{
 	callback_info(__func__, obj);
 	restore_console_loglevel();
-पूर्ण
+}
 
 /* Executed on object unpatching (ie, patch disablement) */
-अटल व्योम post_unpatch_callback(काष्ठा klp_object *obj)
-अणु
+static void post_unpatch_callback(struct klp_object *obj)
+{
 	callback_info(__func__, obj);
-	मुक्त_loglevel_state();
-पूर्ण
+	free_loglevel_state();
+}
 
-अटल काष्ठा klp_func no_funcs[] = अणु
-	अणुपूर्ण
-पूर्ण;
+static struct klp_func no_funcs[] = {
+	{}
+};
 
-अटल काष्ठा klp_object objs[] = अणु
-	अणु
-		.name = शून्य,	/* vmlinux */
+static struct klp_object objs[] = {
+	{
+		.name = NULL,	/* vmlinux */
 		.funcs = no_funcs,
-		.callbacks = अणु
+		.callbacks = {
 			.pre_patch = pre_patch_callback,
 			.post_patch = post_patch_callback,
 			.pre_unpatch = pre_unpatch_callback,
 			.post_unpatch = post_unpatch_callback,
-		पूर्ण,
-	पूर्ण, अणु पूर्ण
-पूर्ण;
+		},
+	}, { }
+};
 
-अटल काष्ठा klp_state states[] = अणु
-	अणु
+static struct klp_state states[] = {
+	{
 		.id = CONSOLE_LOGLEVEL_STATE,
 		.version = CONSOLE_LOGLEVEL_STATE_VERSION,
-	पूर्ण, अणु पूर्ण
-पूर्ण;
+	}, { }
+};
 
-अटल काष्ठा klp_patch patch = अणु
+static struct klp_patch patch = {
 	.mod = THIS_MODULE,
 	.objs = objs,
 	.states = states,
 	.replace = true,
-पूर्ण;
+};
 
-अटल पूर्णांक test_klp_callbacks_demo_init(व्योम)
-अणु
-	वापस klp_enable_patch(&patch);
-पूर्ण
+static int test_klp_callbacks_demo_init(void)
+{
+	return klp_enable_patch(&patch);
+}
 
-अटल व्योम test_klp_callbacks_demo_निकास(व्योम)
-अणु
-पूर्ण
+static void test_klp_callbacks_demo_exit(void)
+{
+}
 
 module_init(test_klp_callbacks_demo_init);
-module_निकास(test_klp_callbacks_demo_निकास);
+module_exit(test_klp_callbacks_demo_exit);
 MODULE_LICENSE("GPL");
 MODULE_INFO(livepatch, "Y");
 MODULE_AUTHOR("Petr Mladek <pmladek@suse.com>");

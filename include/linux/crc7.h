@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_CRC7_H
-#घोषणा _LINUX_CRC7_H
-#समावेश <linux/types.h>
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_CRC7_H
+#define _LINUX_CRC7_H
+#include <linux/types.h>
 
-बाह्य स्थिर u8 crc7_be_syndrome_table[256];
+extern const u8 crc7_be_syndrome_table[256];
 
-अटल अंतरभूत u8 crc7_be_byte(u8 crc, u8 data)
-अणु
-	वापस crc7_be_syndrome_table[crc ^ data];
-पूर्ण
+static inline u8 crc7_be_byte(u8 crc, u8 data)
+{
+	return crc7_be_syndrome_table[crc ^ data];
+}
 
-बाह्य u8 crc7_be(u8 crc, स्थिर u8 *buffer, माप_प्रकार len);
+extern u8 crc7_be(u8 crc, const u8 *buffer, size_t len);
 
-#पूर्ण_अगर
+#endif

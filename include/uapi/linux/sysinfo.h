@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _LINUX_SYSINFO_H
-#घोषणा _LINUX_SYSINFO_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _LINUX_SYSINFO_H
+#define _LINUX_SYSINFO_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#घोषणा SI_LOAD_SHIFT	16
-काष्ठा sysinfo अणु
-	__kernel_दीर्घ_t upसमय;		/* Seconds since boot */
-	__kernel_uदीर्घ_t loads[3];	/* 1, 5, and 15 minute load averages */
-	__kernel_uदीर्घ_t totalram;	/* Total usable मुख्य memory size */
-	__kernel_uदीर्घ_t मुक्तram;	/* Available memory size */
-	__kernel_uदीर्घ_t sharedram;	/* Amount of shared memory */
-	__kernel_uदीर्घ_t bufferram;	/* Memory used by buffers */
-	__kernel_uदीर्घ_t totalswap;	/* Total swap space size */
-	__kernel_uदीर्घ_t मुक्तswap;	/* swap space still available */
+#define SI_LOAD_SHIFT	16
+struct sysinfo {
+	__kernel_long_t uptime;		/* Seconds since boot */
+	__kernel_ulong_t loads[3];	/* 1, 5, and 15 minute load averages */
+	__kernel_ulong_t totalram;	/* Total usable main memory size */
+	__kernel_ulong_t freeram;	/* Available memory size */
+	__kernel_ulong_t sharedram;	/* Amount of shared memory */
+	__kernel_ulong_t bufferram;	/* Memory used by buffers */
+	__kernel_ulong_t totalswap;	/* Total swap space size */
+	__kernel_ulong_t freeswap;	/* swap space still available */
 	__u16 procs;		   	/* Number of current processes */
-	__u16 pad;		   	/* Explicit padding क्रम m68k */
-	__kernel_uदीर्घ_t totalhigh;	/* Total high memory size */
-	__kernel_uदीर्घ_t मुक्तhigh;	/* Available high memory size */
+	__u16 pad;		   	/* Explicit padding for m68k */
+	__kernel_ulong_t totalhigh;	/* Total high memory size */
+	__kernel_ulong_t freehigh;	/* Available high memory size */
 	__u32 mem_unit;			/* Memory unit size in bytes */
-	अक्षर _f[20-2*माप(__kernel_uदीर्घ_t)-माप(__u32)];	/* Padding: libc5 uses this.. */
-पूर्ण;
+	char _f[20-2*sizeof(__kernel_ulong_t)-sizeof(__u32)];	/* Padding: libc5 uses this.. */
+};
 
-#पूर्ण_अगर /* _LINUX_SYSINFO_H */
+#endif /* _LINUX_SYSINFO_H */

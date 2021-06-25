@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_X86_THERMAL_H
-#घोषणा _ASM_X86_THERMAL_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_X86_THERMAL_H
+#define _ASM_X86_THERMAL_H
 
-#अगर_घोषित CONFIG_X86_THERMAL_VECTOR
-व्योम therm_lvt_init(व्योम);
-व्योम पूर्णांकel_init_thermal(काष्ठा cpuinfo_x86 *c);
-bool x86_thermal_enabled(व्योम);
-व्योम पूर्णांकel_thermal_पूर्णांकerrupt(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम therm_lvt_init(व्योम)				अणु पूर्ण
-अटल अंतरभूत व्योम पूर्णांकel_init_thermal(काष्ठा cpuinfo_x86 *c)	अणु पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_X86_THERMAL_VECTOR
+void therm_lvt_init(void);
+void intel_init_thermal(struct cpuinfo_x86 *c);
+bool x86_thermal_enabled(void);
+void intel_thermal_interrupt(void);
+#else
+static inline void therm_lvt_init(void)				{ }
+static inline void intel_init_thermal(struct cpuinfo_x86 *c)	{ }
+#endif
 
-#पूर्ण_अगर /* _ASM_X86_THERMAL_H */
+#endif /* _ASM_X86_THERMAL_H */

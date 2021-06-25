@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_RESOURCE_H
-#घोषणा _LINUX_RESOURCE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_RESOURCE_H
+#define _LINUX_RESOURCE_H
 
-#समावेश <uapi/linux/resource.h>
+#include <uapi/linux/resource.h>
 
 
-काष्ठा task_काष्ठा;
+struct task_struct;
 
-व्योम getrusage(काष्ठा task_काष्ठा *p, पूर्णांक who, काष्ठा rusage *ru);
-पूर्णांक करो_prlimit(काष्ठा task_काष्ठा *tsk, अचिन्हित पूर्णांक resource,
-		काष्ठा rlimit *new_rlim, काष्ठा rlimit *old_rlim);
+void getrusage(struct task_struct *p, int who, struct rusage *ru);
+int do_prlimit(struct task_struct *tsk, unsigned int resource,
+		struct rlimit *new_rlim, struct rlimit *old_rlim);
 
-#पूर्ण_अगर
+#endif

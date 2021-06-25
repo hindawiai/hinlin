@@ -1,259 +1,258 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * stv6110.c
  *
- * Driver क्रम ST STV6110 satellite tuner IC.
+ * Driver for ST STV6110 satellite tuner IC.
  *
  * Copyright (C) 2009 NetUP Inc.
  * Copyright (C) 2009 Igor M. Liplianin <liplianin@netup.ru>
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/dvb/frontend.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/dvb/frontend.h>
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#समावेश "stv6110.h"
+#include "stv6110.h"
 
-/* Max transfer size करोne by I2C transfer functions */
-#घोषणा MAX_XFER_SIZE  64
+/* Max transfer size done by I2C transfer functions */
+#define MAX_XFER_SIZE  64
 
-अटल पूर्णांक debug;
+static int debug;
 
-काष्ठा stv6110_priv अणु
-	पूर्णांक i2c_address;
-	काष्ठा i2c_adapter *i2c;
+struct stv6110_priv {
+	int i2c_address;
+	struct i2c_adapter *i2c;
 
 	u32 mclk;
-	u8 clk_भाग;
+	u8 clk_div;
 	u8 gain;
 	u8 regs[8];
-पूर्ण;
+};
 
-#घोषणा dprपूर्णांकk(args...) \
-	करो अणु \
-		अगर (debug) \
-			prपूर्णांकk(KERN_DEBUG args); \
-	पूर्ण जबतक (0)
+#define dprintk(args...) \
+	do { \
+		if (debug) \
+			printk(KERN_DEBUG args); \
+	} while (0)
 
-अटल s32 असलsub(s32 a, s32 b)
-अणु
-	अगर (a > b)
-		वापस a - b;
-	अन्यथा
-		वापस b - a;
-पूर्ण;
+static s32 abssub(s32 a, s32 b)
+{
+	if (a > b)
+		return a - b;
+	else
+		return b - a;
+};
 
-अटल व्योम stv6110_release(काष्ठा dvb_frontend *fe)
-अणु
-	kमुक्त(fe->tuner_priv);
-	fe->tuner_priv = शून्य;
-पूर्ण
+static void stv6110_release(struct dvb_frontend *fe)
+{
+	kfree(fe->tuner_priv);
+	fe->tuner_priv = NULL;
+}
 
-अटल पूर्णांक stv6110_ग_लिखो_regs(काष्ठा dvb_frontend *fe, u8 buf[],
-							पूर्णांक start, पूर्णांक len)
-अणु
-	काष्ठा stv6110_priv *priv = fe->tuner_priv;
-	पूर्णांक rc;
+static int stv6110_write_regs(struct dvb_frontend *fe, u8 buf[],
+							int start, int len)
+{
+	struct stv6110_priv *priv = fe->tuner_priv;
+	int rc;
 	u8 cmdbuf[MAX_XFER_SIZE];
-	काष्ठा i2c_msg msg = अणु
+	struct i2c_msg msg = {
 		.addr	= priv->i2c_address,
 		.flags	= 0,
 		.buf	= cmdbuf,
 		.len	= len + 1
-	पूर्ण;
+	};
 
-	dprपूर्णांकk("%s\n", __func__);
+	dprintk("%s\n", __func__);
 
-	अगर (1 + len > माप(cmdbuf)) अणु
-		prपूर्णांकk(KERN_WARNING
+	if (1 + len > sizeof(cmdbuf)) {
+		printk(KERN_WARNING
 		       "%s: i2c wr: len=%d is too big!\n",
 		       KBUILD_MODNAME, len);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (start + len > 8)
-		वापस -EINVAL;
+	if (start + len > 8)
+		return -EINVAL;
 
-	स_नकल(&cmdbuf[1], buf, len);
+	memcpy(&cmdbuf[1], buf, len);
 	cmdbuf[0] = start;
 
-	अगर (fe->ops.i2c_gate_ctrl)
+	if (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
 
 	rc = i2c_transfer(priv->i2c, &msg, 1);
-	अगर (rc != 1)
-		dprपूर्णांकk("%s: i2c error\n", __func__);
+	if (rc != 1)
+		dprintk("%s: i2c error\n", __func__);
 
-	अगर (fe->ops.i2c_gate_ctrl)
+	if (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stv6110_पढ़ो_regs(काष्ठा dvb_frontend *fe, u8 regs[],
-							पूर्णांक start, पूर्णांक len)
-अणु
-	काष्ठा stv6110_priv *priv = fe->tuner_priv;
-	पूर्णांक rc;
-	u8 reg[] = अणु start पूर्ण;
-	काष्ठा i2c_msg msg[] = अणु
-		अणु
+static int stv6110_read_regs(struct dvb_frontend *fe, u8 regs[],
+							int start, int len)
+{
+	struct stv6110_priv *priv = fe->tuner_priv;
+	int rc;
+	u8 reg[] = { start };
+	struct i2c_msg msg[] = {
+		{
 			.addr	= priv->i2c_address,
 			.flags	= 0,
 			.buf	= reg,
 			.len	= 1,
-		पूर्ण, अणु
+		}, {
 			.addr	= priv->i2c_address,
 			.flags	= I2C_M_RD,
 			.buf	= regs,
 			.len	= len,
-		पूर्ण,
-	पूर्ण;
+		},
+	};
 
-	अगर (fe->ops.i2c_gate_ctrl)
+	if (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
 
 	rc = i2c_transfer(priv->i2c, msg, 2);
-	अगर (rc != 2)
-		dprपूर्णांकk("%s: i2c error\n", __func__);
+	if (rc != 2)
+		dprintk("%s: i2c error\n", __func__);
 
-	अगर (fe->ops.i2c_gate_ctrl)
+	if (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 0);
 
-	स_नकल(&priv->regs[start], regs, len);
+	memcpy(&priv->regs[start], regs, len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stv6110_पढ़ो_reg(काष्ठा dvb_frontend *fe, पूर्णांक start)
-अणु
-	u8 buf[] = अणु 0 पूर्ण;
-	stv6110_पढ़ो_regs(fe, buf, start, 1);
+static int stv6110_read_reg(struct dvb_frontend *fe, int start)
+{
+	u8 buf[] = { 0 };
+	stv6110_read_regs(fe, buf, start, 1);
 
-	वापस buf[0];
-पूर्ण
+	return buf[0];
+}
 
-अटल पूर्णांक stv6110_sleep(काष्ठा dvb_frontend *fe)
-अणु
-	u8 reg[] = अणु 0 पूर्ण;
-	stv6110_ग_लिखो_regs(fe, reg, 0, 1);
+static int stv6110_sleep(struct dvb_frontend *fe)
+{
+	u8 reg[] = { 0 };
+	stv6110_write_regs(fe, reg, 0, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 carrier_width(u32 symbol_rate, क्रमागत fe_rolloff rolloff)
-अणु
+static u32 carrier_width(u32 symbol_rate, enum fe_rolloff rolloff)
+{
 	u32 rlf;
 
-	चयन (rolloff) अणु
-	हाल ROLLOFF_20:
+	switch (rolloff) {
+	case ROLLOFF_20:
 		rlf = 20;
-		अवरोध;
-	हाल ROLLOFF_25:
+		break;
+	case ROLLOFF_25:
 		rlf = 25;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rlf = 35;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस symbol_rate  + ((symbol_rate * rlf) / 100);
-पूर्ण
+	return symbol_rate  + ((symbol_rate * rlf) / 100);
+}
 
-अटल पूर्णांक stv6110_set_bandwidth(काष्ठा dvb_frontend *fe, u32 bandwidth)
-अणु
-	काष्ठा stv6110_priv *priv = fe->tuner_priv;
+static int stv6110_set_bandwidth(struct dvb_frontend *fe, u32 bandwidth)
+{
+	struct stv6110_priv *priv = fe->tuner_priv;
 	u8 r8, ret = 0x04;
-	पूर्णांक i;
+	int i;
 
-	अगर ((bandwidth / 2) > 36000000) /*BW/2 max=31+5=36 mhz क्रम r8=31*/
+	if ((bandwidth / 2) > 36000000) /*BW/2 max=31+5=36 mhz for r8=31*/
 		r8 = 31;
-	अन्यथा अगर ((bandwidth / 2) < 5000000) /* BW/2 min=5Mhz क्रम F=0 */
+	else if ((bandwidth / 2) < 5000000) /* BW/2 min=5Mhz for F=0 */
 		r8 = 0;
-	अन्यथा /*अगर 5 < BW/2 < 36*/
+	else /*if 5 < BW/2 < 36*/
 		r8 = (bandwidth / 2) / 1000000 - 5;
 
 	/* ctrl3, RCCLKOFF = 0 Activate the calibration Clock */
 	/* ctrl3, CF = r8 Set the LPF value */
 	priv->regs[RSTV6110_CTRL3] &= ~((1 << 6) | 0x1f);
 	priv->regs[RSTV6110_CTRL3] |= (r8 & 0x1f);
-	stv6110_ग_लिखो_regs(fe, &priv->regs[RSTV6110_CTRL3], RSTV6110_CTRL3, 1);
-	/* stat1, CALRCSTRT = 1 Start LPF स्वतः calibration*/
+	stv6110_write_regs(fe, &priv->regs[RSTV6110_CTRL3], RSTV6110_CTRL3, 1);
+	/* stat1, CALRCSTRT = 1 Start LPF auto calibration*/
 	priv->regs[RSTV6110_STAT1] |= 0x02;
-	stv6110_ग_लिखो_regs(fe, &priv->regs[RSTV6110_STAT1], RSTV6110_STAT1, 1);
+	stv6110_write_regs(fe, &priv->regs[RSTV6110_STAT1], RSTV6110_STAT1, 1);
 
 	i = 0;
-	/* Wait क्रम CALRCSTRT == 0 */
-	जबतक ((i < 10) && (ret != 0)) अणु
-		ret = ((stv6110_पढ़ो_reg(fe, RSTV6110_STAT1)) & 0x02);
-		mdelay(1);	/* रुको क्रम LPF स्वतः calibration */
+	/* Wait for CALRCSTRT == 0 */
+	while ((i < 10) && (ret != 0)) {
+		ret = ((stv6110_read_reg(fe, RSTV6110_STAT1)) & 0x02);
+		mdelay(1);	/* wait for LPF auto calibration */
 		i++;
-	पूर्ण
+	}
 
-	/* RCCLKOFF = 1 calibration करोne, deactivate the calibration Clock */
+	/* RCCLKOFF = 1 calibration done, deactivate the calibration Clock */
 	priv->regs[RSTV6110_CTRL3] |= (1 << 6);
-	stv6110_ग_लिखो_regs(fe, &priv->regs[RSTV6110_CTRL3], RSTV6110_CTRL3, 1);
-	वापस 0;
-पूर्ण
+	stv6110_write_regs(fe, &priv->regs[RSTV6110_CTRL3], RSTV6110_CTRL3, 1);
+	return 0;
+}
 
-अटल पूर्णांक stv6110_init(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा stv6110_priv *priv = fe->tuner_priv;
-	u8 buf0[] = अणु 0x07, 0x11, 0xdc, 0x85, 0x17, 0x01, 0xe6, 0x1e पूर्ण;
+static int stv6110_init(struct dvb_frontend *fe)
+{
+	struct stv6110_priv *priv = fe->tuner_priv;
+	u8 buf0[] = { 0x07, 0x11, 0xdc, 0x85, 0x17, 0x01, 0xe6, 0x1e };
 
-	स_नकल(priv->regs, buf0, 8);
+	memcpy(priv->regs, buf0, 8);
 	/* K = (Reference / 1000000) - 16 */
 	priv->regs[RSTV6110_CTRL1] &= ~(0x1f << 3);
 	priv->regs[RSTV6110_CTRL1] |=
 				((((priv->mclk / 1000000) - 16) & 0x1f) << 3);
 
-	/* भागisor value क्रम the output घड़ी */
+	/* divisor value for the output clock */
 	priv->regs[RSTV6110_CTRL2] &= ~0xc0;
-	priv->regs[RSTV6110_CTRL2] |= (priv->clk_भाग << 6);
+	priv->regs[RSTV6110_CTRL2] |= (priv->clk_div << 6);
 
-	stv6110_ग_लिखो_regs(fe, &priv->regs[RSTV6110_CTRL1], RSTV6110_CTRL1, 8);
+	stv6110_write_regs(fe, &priv->regs[RSTV6110_CTRL1], RSTV6110_CTRL1, 8);
 	msleep(1);
 	stv6110_set_bandwidth(fe, 72000000);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stv6110_get_frequency(काष्ठा dvb_frontend *fe, u32 *frequency)
-अणु
-	काष्ठा stv6110_priv *priv = fe->tuner_priv;
-	u32 nbsteps, भागider, psd2, freq;
-	u8 regs[] = अणु 0, 0, 0, 0, 0, 0, 0, 0 पूर्ण;
+static int stv6110_get_frequency(struct dvb_frontend *fe, u32 *frequency)
+{
+	struct stv6110_priv *priv = fe->tuner_priv;
+	u32 nbsteps, divider, psd2, freq;
+	u8 regs[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
-	stv6110_पढ़ो_regs(fe, regs, 0, 8);
+	stv6110_read_regs(fe, regs, 0, 8);
 	/*N*/
-	भागider = (priv->regs[RSTV6110_TUNING2] & 0x0f) << 8;
-	भागider += priv->regs[RSTV6110_TUNING1];
+	divider = (priv->regs[RSTV6110_TUNING2] & 0x0f) << 8;
+	divider += priv->regs[RSTV6110_TUNING1];
 
 	/*R*/
 	nbsteps  = (priv->regs[RSTV6110_TUNING2] >> 6) & 3;
 	/*p*/
 	psd2  = (priv->regs[RSTV6110_TUNING2] >> 4) & 1;
 
-	freq = भागider * (priv->mclk / 1000);
+	freq = divider * (priv->mclk / 1000);
 	freq /= (1 << (nbsteps + psd2));
 	freq /= 4;
 
 	*frequency = freq;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stv6110_set_frequency(काष्ठा dvb_frontend *fe, u32 frequency)
-अणु
-	काष्ठा stv6110_priv *priv = fe->tuner_priv;
+static int stv6110_set_frequency(struct dvb_frontend *fe, u32 frequency)
+{
+	struct stv6110_priv *priv = fe->tuner_priv;
 	u8 ret = 0x04;
-	u32 भागider, ref, p, presc, i, result_freq, vco_freq;
-	s32 p_calc, p_calc_opt = 1000, r_भाग, r_भाग_opt = 0, p_val;
+	u32 divider, ref, p, presc, i, result_freq, vco_freq;
+	s32 p_calc, p_calc_opt = 1000, r_div, r_div_opt = 0, p_val;
 
-	dprपूर्णांकk("%s, freq=%d kHz, mclk=%d Hz\n", __func__,
+	dprintk("%s, freq=%d kHz, mclk=%d Hz\n", __func__,
 						frequency, priv->mclk);
 
 	/* K = (Reference / 1000000) - 16 */
@@ -265,19 +264,19 @@
 	priv->regs[RSTV6110_CTRL2] &= ~0x0f;
 	priv->regs[RSTV6110_CTRL2] |= (priv->gain & 0x0f);
 
-	अगर (frequency <= 1023000) अणु
+	if (frequency <= 1023000) {
 		p = 1;
 		presc = 0;
-	पूर्ण अन्यथा अगर (frequency <= 1300000) अणु
+	} else if (frequency <= 1300000) {
 		p = 1;
 		presc = 1;
-	पूर्ण अन्यथा अगर (frequency <= 2046000) अणु
+	} else if (frequency <= 2046000) {
 		p = 0;
 		presc = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		p = 0;
 		presc = 1;
-	पूर्ण
+	}
 	/* DIV4SEL = p*/
 	priv->regs[RSTV6110_TUNING2] &= ~(1 << 4);
 	priv->regs[RSTV6110_TUNING2] |= (p << 4);
@@ -286,86 +285,86 @@
 	priv->regs[RSTV6110_TUNING2] &= ~(1 << 5);
 	priv->regs[RSTV6110_TUNING2] |= (presc << 5);
 
-	p_val = (पूर्णांक)(1 << (p + 1)) * 10;/* P = 2 or P = 4 */
-	क्रम (r_भाग = 0; r_भाग <= 3; r_भाग++) अणु
+	p_val = (int)(1 << (p + 1)) * 10;/* P = 2 or P = 4 */
+	for (r_div = 0; r_div <= 3; r_div++) {
 		p_calc = (priv->mclk / 100000);
-		p_calc /= (1 << (r_भाग + 1));
-		अगर ((असलsub(p_calc, p_val)) < (असलsub(p_calc_opt, p_val)))
-			r_भाग_opt = r_भाग;
+		p_calc /= (1 << (r_div + 1));
+		if ((abssub(p_calc, p_val)) < (abssub(p_calc_opt, p_val)))
+			r_div_opt = r_div;
 
 		p_calc_opt = (priv->mclk / 100000);
-		p_calc_opt /= (1 << (r_भाग_opt + 1));
-	पूर्ण
+		p_calc_opt /= (1 << (r_div_opt + 1));
+	}
 
-	ref = priv->mclk / ((1 << (r_भाग_opt + 1))  * (1 << (p + 1)));
-	भागider = (((frequency * 1000) + (ref >> 1)) / ref);
+	ref = priv->mclk / ((1 << (r_div_opt + 1))  * (1 << (p + 1)));
+	divider = (((frequency * 1000) + (ref >> 1)) / ref);
 
-	/* RDIV = r_भाग_opt */
+	/* RDIV = r_div_opt */
 	priv->regs[RSTV6110_TUNING2] &= ~(3 << 6);
-	priv->regs[RSTV6110_TUNING2] |= (((r_भाग_opt) & 3) << 6);
+	priv->regs[RSTV6110_TUNING2] |= (((r_div_opt) & 3) << 6);
 
-	/* NDIV_MSB = MSB(भागider) */
+	/* NDIV_MSB = MSB(divider) */
 	priv->regs[RSTV6110_TUNING2] &= ~0x0f;
-	priv->regs[RSTV6110_TUNING2] |= (((भागider) >> 8) & 0x0f);
+	priv->regs[RSTV6110_TUNING2] |= (((divider) >> 8) & 0x0f);
 
-	/* NDIV_LSB, LSB(भागider) */
-	priv->regs[RSTV6110_TUNING1] = (भागider & 0xff);
+	/* NDIV_LSB, LSB(divider) */
+	priv->regs[RSTV6110_TUNING1] = (divider & 0xff);
 
 	/* CALVCOSTRT = 1 VCO Auto Calibration */
 	priv->regs[RSTV6110_STAT1] |= 0x04;
-	stv6110_ग_लिखो_regs(fe, &priv->regs[RSTV6110_CTRL1],
+	stv6110_write_regs(fe, &priv->regs[RSTV6110_CTRL1],
 						RSTV6110_CTRL1, 8);
 
 	i = 0;
-	/* Wait क्रम CALVCOSTRT == 0 */
-	जबतक ((i < 10) && (ret != 0)) अणु
-		ret = ((stv6110_पढ़ो_reg(fe, RSTV6110_STAT1)) & 0x04);
-		msleep(1); /* रुको क्रम VCO स्वतः calibration */
+	/* Wait for CALVCOSTRT == 0 */
+	while ((i < 10) && (ret != 0)) {
+		ret = ((stv6110_read_reg(fe, RSTV6110_STAT1)) & 0x04);
+		msleep(1); /* wait for VCO auto calibration */
 		i++;
-	पूर्ण
+	}
 
-	ret = stv6110_पढ़ो_reg(fe, RSTV6110_STAT1);
+	ret = stv6110_read_reg(fe, RSTV6110_STAT1);
 	stv6110_get_frequency(fe, &result_freq);
 
-	vco_freq = भागider * ((priv->mclk / 1000) / ((1 << (r_भाग_opt + 1))));
-	dprपूर्णांकk("%s, stat1=%x, lo_freq=%d kHz, vco_frec=%d kHz\n", __func__,
+	vco_freq = divider * ((priv->mclk / 1000) / ((1 << (r_div_opt + 1))));
+	dprintk("%s, stat1=%x, lo_freq=%d kHz, vco_frec=%d kHz\n", __func__,
 						ret, result_freq, vco_freq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stv6110_set_params(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+static int stv6110_set_params(struct dvb_frontend *fe)
+{
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
 	u32 bandwidth = carrier_width(c->symbol_rate, c->rolloff);
 
 	stv6110_set_frequency(fe, c->frequency);
 	stv6110_set_bandwidth(fe, bandwidth);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stv6110_get_bandwidth(काष्ठा dvb_frontend *fe, u32 *bandwidth)
-अणु
-	काष्ठा stv6110_priv *priv = fe->tuner_priv;
+static int stv6110_get_bandwidth(struct dvb_frontend *fe, u32 *bandwidth)
+{
+	struct stv6110_priv *priv = fe->tuner_priv;
 	u8 r8 = 0;
-	u8 regs[] = अणु 0, 0, 0, 0, 0, 0, 0, 0 पूर्ण;
-	stv6110_पढ़ो_regs(fe, regs, 0, 8);
+	u8 regs[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+	stv6110_read_regs(fe, regs, 0, 8);
 
 	/* CF */
 	r8 = priv->regs[RSTV6110_CTRL3] & 0x1f;
-	*bandwidth = (r8 + 5) * 2000000;/* x2 क्रम ZIF tuner BW/2 = F+5 Mhz */
+	*bandwidth = (r8 + 5) * 2000000;/* x2 for ZIF tuner BW/2 = F+5 Mhz */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dvb_tuner_ops stv6110_tuner_ops = अणु
-	.info = अणु
+static const struct dvb_tuner_ops stv6110_tuner_ops = {
+	.info = {
 		.name = "ST STV6110",
 		.frequency_min_hz  =  950 * MHz,
 		.frequency_max_hz  = 2150 * MHz,
 		.frequency_step_hz =    1 * MHz,
-	पूर्ण,
+	},
 	.init = stv6110_init,
 	.release = stv6110_release,
 	.sleep = stv6110_sleep,
@@ -375,62 +374,62 @@
 	.get_bandwidth = stv6110_get_bandwidth,
 	.set_bandwidth = stv6110_set_bandwidth,
 
-पूर्ण;
+};
 
-काष्ठा dvb_frontend *stv6110_attach(काष्ठा dvb_frontend *fe,
-					स्थिर काष्ठा stv6110_config *config,
-					काष्ठा i2c_adapter *i2c)
-अणु
-	काष्ठा stv6110_priv *priv = शून्य;
-	u8 reg0[] = अणु 0x00, 0x07, 0x11, 0xdc, 0x85, 0x17, 0x01, 0xe6, 0x1e पूर्ण;
+struct dvb_frontend *stv6110_attach(struct dvb_frontend *fe,
+					const struct stv6110_config *config,
+					struct i2c_adapter *i2c)
+{
+	struct stv6110_priv *priv = NULL;
+	u8 reg0[] = { 0x00, 0x07, 0x11, 0xdc, 0x85, 0x17, 0x01, 0xe6, 0x1e };
 
-	काष्ठा i2c_msg msg[] = अणु
-		अणु
+	struct i2c_msg msg[] = {
+		{
 			.addr = config->i2c_address,
 			.flags = 0,
 			.buf = reg0,
 			.len = 9
-		पूर्ण
-	पूर्ण;
-	पूर्णांक ret;
+		}
+	};
+	int ret;
 
-	/* भागisor value क्रम the output घड़ी */
+	/* divisor value for the output clock */
 	reg0[2] &= ~0xc0;
-	reg0[2] |= (config->clk_भाग << 6);
+	reg0[2] |= (config->clk_div << 6);
 
-	अगर (fe->ops.i2c_gate_ctrl)
+	if (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
 
 	ret = i2c_transfer(i2c, msg, 1);
 
-	अगर (fe->ops.i2c_gate_ctrl)
+	if (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 0);
 
-	अगर (ret != 1)
-		वापस शून्य;
+	if (ret != 1)
+		return NULL;
 
-	priv = kzalloc(माप(काष्ठा stv6110_priv), GFP_KERNEL);
-	अगर (priv == शून्य)
-		वापस शून्य;
+	priv = kzalloc(sizeof(struct stv6110_priv), GFP_KERNEL);
+	if (priv == NULL)
+		return NULL;
 
 	priv->i2c_address = config->i2c_address;
 	priv->i2c = i2c;
 	priv->mclk = config->mclk;
-	priv->clk_भाग = config->clk_भाग;
+	priv->clk_div = config->clk_div;
 	priv->gain = config->gain;
 
-	स_नकल(&priv->regs, &reg0[1], 8);
+	memcpy(&priv->regs, &reg0[1], 8);
 
-	स_नकल(&fe->ops.tuner_ops, &stv6110_tuner_ops,
-				माप(काष्ठा dvb_tuner_ops));
+	memcpy(&fe->ops.tuner_ops, &stv6110_tuner_ops,
+				sizeof(struct dvb_tuner_ops));
 	fe->tuner_priv = priv;
-	prपूर्णांकk(KERN_INFO "STV6110 attached on addr=%x!\n", priv->i2c_address);
+	printk(KERN_INFO "STV6110 attached on addr=%x!\n", priv->i2c_address);
 
-	वापस fe;
-पूर्ण
+	return fe;
+}
 EXPORT_SYMBOL(stv6110_attach);
 
-module_param(debug, पूर्णांक, 0644);
+module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug, "Turn on/off frontend debugging (default:off).");
 
 MODULE_DESCRIPTION("ST STV6110 driver");

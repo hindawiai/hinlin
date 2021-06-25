@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _UAPI_LINUX_IF_LINK_H
-#घोषणा _UAPI_LINUX_IF_LINK_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _UAPI_LINUX_IF_LINK_H
+#define _UAPI_LINUX_IF_LINK_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/netlink.h>
+#include <linux/types.h>
+#include <linux/netlink.h>
 
-/* This काष्ठा should be in sync with काष्ठा rtnl_link_stats64 */
-काष्ठा rtnl_link_stats अणु
+/* This struct should be in sync with struct rtnl_link_stats64 */
+struct rtnl_link_stats {
 	__u32	rx_packets;
 	__u32	tx_packets;
 	__u32	rx_bytes;
@@ -23,34 +22,34 @@
 	__u32	rx_over_errors;
 	__u32	rx_crc_errors;
 	__u32	rx_frame_errors;
-	__u32	rx_fअगरo_errors;
+	__u32	rx_fifo_errors;
 	__u32	rx_missed_errors;
 
 	/* detailed tx_errors */
-	__u32	tx_पातed_errors;
+	__u32	tx_aborted_errors;
 	__u32	tx_carrier_errors;
-	__u32	tx_fअगरo_errors;
+	__u32	tx_fifo_errors;
 	__u32	tx_heartbeat_errors;
-	__u32	tx_winकरोw_errors;
+	__u32	tx_window_errors;
 
-	/* क्रम cslip etc */
+	/* for cslip etc */
 	__u32	rx_compressed;
 	__u32	tx_compressed;
 
 	__u32	rx_nohandler;
-पूर्ण;
+};
 
 /**
- * काष्ठा rtnl_link_stats64 - The मुख्य device statistics काष्ठाure.
+ * struct rtnl_link_stats64 - The main device statistics structure.
  *
- * @rx_packets: Number of good packets received by the पूर्णांकerface.
- *   For hardware पूर्णांकerfaces counts all good packets received from the device
+ * @rx_packets: Number of good packets received by the interface.
+ *   For hardware interfaces counts all good packets received from the device
  *   by the host, including packets which host had to drop at various stages
  *   of processing (even in the driver).
  *
  * @tx_packets: Number of packets successfully transmitted.
- *   For hardware पूर्णांकerfaces counts packets which host was able to successfully
- *   hand over to the device, which करोes not necessarily mean that packets
+ *   For hardware interfaces counts packets which host was able to successfully
+ *   hand over to the device, which does not necessarily mean that packets
  *   had been successfully transmitted out of the device, only that device
  *   acknowledged it copied them out of host memory.
  *
@@ -70,13 +69,13 @@
  *   counted.
  *
  * @tx_errors: Total number of transmit problems.
- *   This counter must include events counter by @tx_पातed_errors,
- *   @tx_carrier_errors, @tx_fअगरo_errors, @tx_heartbeat_errors,
- *   @tx_winकरोw_errors and other errors not otherwise counted.
+ *   This counter must include events counter by @tx_aborted_errors,
+ *   @tx_carrier_errors, @tx_fifo_errors, @tx_heartbeat_errors,
+ *   @tx_window_errors and other errors not otherwise counted.
  *
  * @rx_dropped: Number of packets received but not processed,
  *   e.g. due to lack of resources or unsupported protocol.
- *   For hardware पूर्णांकerfaces this counter may include packets discarded
+ *   For hardware interfaces this counter may include packets discarded
  *   due to L2 address filtering but should not include packets dropped
  *   by the device due to buffer exhaustion which are counted separately in
  *   @rx_missed_errors (since procfs folds those two counters together).
@@ -85,8 +84,8 @@
  *   e.g. due to lack of resources.
  *
  * @multicast: Multicast packets received.
- *   For hardware पूर्णांकerfaces this statistic is commonly calculated
- *   at the device level (unlike @rx_packets) and thereक्रमe may include
+ *   For hardware interfaces this statistic is commonly calculated
+ *   at the device level (unlike @rx_packets) and therefore may include
  *   packets which did not reach the host.
  *
  *   For IEEE 802.3 devices this counter may be equivalent to:
@@ -108,18 +107,18 @@
  * @rx_over_errors: Receiver FIFO overflow event counter.
  *
  *   Historically the count of overflow events. Such events may be
- *   reported in the receive descriptors or via पूर्णांकerrupts, and may
+ *   reported in the receive descriptors or via interrupts, and may
  *   not correspond one-to-one with dropped packets.
  *
- *   The recommended पूर्णांकerpretation क्रम high speed पूर्णांकerfaces is -
- *   number of packets dropped because they did not fit पूर्णांकo buffers
+ *   The recommended interpretation for high speed interfaces is -
+ *   number of packets dropped because they did not fit into buffers
  *   provided by the host, e.g. packets larger than MTU or next buffer
- *   in the ring was not available क्रम a scatter transfer.
+ *   in the ring was not available for a scatter transfer.
  *
  *   Part of aggregate "frame" errors in `/proc/net/dev`.
  *
- *   This statistics was historically used पूर्णांकerchangeably with
- *   @rx_fअगरo_errors.
+ *   This statistics was historically used interchangeably with
+ *   @rx_fifo_errors.
  *
  *   This statistic corresponds to hardware events and is not commonly used
  *   on software devices.
@@ -138,37 +137,37 @@
  *
  *    - 30.3.1.1.7 aAlignmentErrors
  *
- * @rx_fअगरo_errors: Receiver FIFO error counter.
+ * @rx_fifo_errors: Receiver FIFO error counter.
  *
  *   Historically the count of overflow events. Those events may be
- *   reported in the receive descriptors or via पूर्णांकerrupts, and may
+ *   reported in the receive descriptors or via interrupts, and may
  *   not correspond one-to-one with dropped packets.
  *
- *   This statistics was used पूर्णांकerchangeably with @rx_over_errors.
- *   Not recommended क्रम use in drivers क्रम high speed पूर्णांकerfaces.
+ *   This statistics was used interchangeably with @rx_over_errors.
+ *   Not recommended for use in drivers for high speed interfaces.
  *
  *   This statistic is used on software devices, e.g. to count software
  *   packet queue overflow (can) or sequencing errors (GRE).
  *
  * @rx_missed_errors: Count of packets missed by the host.
- *   Folded पूर्णांकo the "drop" counter in `/proc/net/dev`.
+ *   Folded into the "drop" counter in `/proc/net/dev`.
  *
  *   Counts number of packets dropped by the device due to lack
- *   of buffer space. This usually indicates that the host पूर्णांकerface
- *   is slower than the network पूर्णांकerface, or host is not keeping up
+ *   of buffer space. This usually indicates that the host interface
+ *   is slower than the network interface, or host is not keeping up
  *   with the receive packet rate.
  *
  *   This statistic corresponds to hardware events and is not used
  *   on software devices.
  *
- * @tx_पातed_errors:
+ * @tx_aborted_errors:
  *   Part of aggregate "carrier" errors in `/proc/net/dev`.
  *   For IEEE 802.3 devices capable of half-duplex operation this counter
  *   must be equivalent to:
  *
  *    - 30.3.1.1.11 aFramesAbortedDueToXSColls
  *
- *   High speed पूर्णांकerfaces may use this counter as a general device
+ *   High speed interfaces may use this counter as a general device
  *   discard counter.
  *
  * @tx_carrier_errors: Number of frame transmission errors due to loss
@@ -179,13 +178,13 @@
  *
  *    - 30.3.1.1.13 aCarrierSenseErrors
  *
- * @tx_fअगरo_errors: Number of frame transmission errors due to device
+ * @tx_fifo_errors: Number of frame transmission errors due to device
  *   FIFO underrun / underflow. This condition occurs when the device
  *   begins transmission of a frame but is unable to deliver the
- *   entire frame to the transmitter in समय क्रम transmission.
+ *   entire frame to the transmitter in time for transmission.
  *   Part of aggregate "carrier" errors in `/proc/net/dev`.
  *
- * @tx_heartbeat_errors: Number of Heartbeat / SQE Test errors क्रम
+ * @tx_heartbeat_errors: Number of Heartbeat / SQE Test errors for
  *   old half-duplex Ethernet.
  *   Part of aggregate "carrier" errors in `/proc/net/dev`.
  *
@@ -193,8 +192,8 @@
  *
  *    - 30.3.2.1.4 aSQETestErrors
  *
- * @tx_winकरोw_errors: Number of frame transmission errors due
- *   to late collisions (क्रम Ethernet - after the first 64B of transmission).
+ * @tx_window_errors: Number of frame transmission errors due
+ *   to late collisions (for Ethernet - after the first 64B of transmission).
  *   Part of aggregate "carrier" errors in `/proc/net/dev`.
  *
  *   For IEEE 802.3 devices this counter must be equivalent to:
@@ -202,18 +201,18 @@
  *    - 30.3.1.1.10 aLateCollisions
  *
  * @rx_compressed: Number of correctly received compressed packets.
- *   This counters is only meaningful क्रम पूर्णांकerfaces which support
+ *   This counters is only meaningful for interfaces which support
  *   packet compression (e.g. CSLIP, PPP).
  *
  * @tx_compressed: Number of transmitted compressed packets.
- *   This counters is only meaningful क्रम पूर्णांकerfaces which support
+ *   This counters is only meaningful for interfaces which support
  *   packet compression (e.g. CSLIP, PPP).
  *
- * @rx_nohandler: Number of packets received on the पूर्णांकerface
+ * @rx_nohandler: Number of packets received on the interface
  *   but dropped by the networking stack because the device is
  *   not designated to receive packets (e.g. backup link in a bond).
  */
-काष्ठा rtnl_link_stats64 अणु
+struct rtnl_link_stats64 {
 	__u64	rx_packets;
 	__u64	tx_packets;
 	__u64	rx_bytes;
@@ -230,51 +229,51 @@
 	__u64	rx_over_errors;
 	__u64	rx_crc_errors;
 	__u64	rx_frame_errors;
-	__u64	rx_fअगरo_errors;
+	__u64	rx_fifo_errors;
 	__u64	rx_missed_errors;
 
 	/* detailed tx_errors */
-	__u64	tx_पातed_errors;
+	__u64	tx_aborted_errors;
 	__u64	tx_carrier_errors;
-	__u64	tx_fअगरo_errors;
+	__u64	tx_fifo_errors;
 	__u64	tx_heartbeat_errors;
-	__u64	tx_winकरोw_errors;
+	__u64	tx_window_errors;
 
-	/* क्रम cslip etc */
+	/* for cslip etc */
 	__u64	rx_compressed;
 	__u64	tx_compressed;
 	__u64	rx_nohandler;
-पूर्ण;
+};
 
-/* The काष्ठा should be in sync with काष्ठा अगरmap */
-काष्ठा rtnl_link_अगरmap अणु
+/* The struct should be in sync with struct ifmap */
+struct rtnl_link_ifmap {
 	__u64	mem_start;
 	__u64	mem_end;
 	__u64	base_addr;
 	__u16	irq;
 	__u8	dma;
 	__u8	port;
-पूर्ण;
+};
 
 /*
  * IFLA_AF_SPEC
- *   Contains nested attributes क्रम address family specअगरic attributes.
+ *   Contains nested attributes for address family specific attributes.
  *   Each address family may create a attribute with the address family
- *   number as type and create its own attribute काष्ठाure in it.
+ *   number as type and create its own attribute structure in it.
  *
  *   Example:
- *   [IFLA_AF_SPEC] = अणु
- *       [AF_INET] = अणु
+ *   [IFLA_AF_SPEC] = {
+ *       [AF_INET] = {
  *           [IFLA_INET_CONF] = ...,
- *       पूर्ण,
- *       [AF_INET6] = अणु
+ *       },
+ *       [AF_INET6] = {
  *           [IFLA_INET6_FLAGS] = ...,
  *           [IFLA_INET6_CONF] = ...,
- *       पूर्ण
- *   पूर्ण
+ *       }
+ *   }
  */
 
-क्रमागत अणु
+enum {
 	IFLA_UNSPEC,
 	IFLA_ADDRESS,
 	IFLA_BROADCAST,
@@ -284,38 +283,38 @@
 	IFLA_QDISC,
 	IFLA_STATS,
 	IFLA_COST,
-#घोषणा IFLA_COST IFLA_COST
+#define IFLA_COST IFLA_COST
 	IFLA_PRIORITY,
-#घोषणा IFLA_PRIORITY IFLA_PRIORITY
+#define IFLA_PRIORITY IFLA_PRIORITY
 	IFLA_MASTER,
-#घोषणा IFLA_MASTER IFLA_MASTER
+#define IFLA_MASTER IFLA_MASTER
 	IFLA_WIRELESS,		/* Wireless Extension event - see wireless.h */
-#घोषणा IFLA_WIRELESS IFLA_WIRELESS
-	IFLA_PROTINFO,		/* Protocol specअगरic inक्रमmation क्रम a link */
-#घोषणा IFLA_PROTINFO IFLA_PROTINFO
+#define IFLA_WIRELESS IFLA_WIRELESS
+	IFLA_PROTINFO,		/* Protocol specific information for a link */
+#define IFLA_PROTINFO IFLA_PROTINFO
 	IFLA_TXQLEN,
-#घोषणा IFLA_TXQLEN IFLA_TXQLEN
+#define IFLA_TXQLEN IFLA_TXQLEN
 	IFLA_MAP,
-#घोषणा IFLA_MAP IFLA_MAP
+#define IFLA_MAP IFLA_MAP
 	IFLA_WEIGHT,
-#घोषणा IFLA_WEIGHT IFLA_WEIGHT
+#define IFLA_WEIGHT IFLA_WEIGHT
 	IFLA_OPERSTATE,
 	IFLA_LINKMODE,
 	IFLA_LINKINFO,
-#घोषणा IFLA_LINKINFO IFLA_LINKINFO
+#define IFLA_LINKINFO IFLA_LINKINFO
 	IFLA_NET_NS_PID,
 	IFLA_IFALIAS,
-	IFLA_NUM_VF,		/* Number of VFs अगर device is SR-IOV PF */
+	IFLA_NUM_VF,		/* Number of VFs if device is SR-IOV PF */
 	IFLA_VFINFO_LIST,
 	IFLA_STATS64,
 	IFLA_VF_PORTS,
 	IFLA_PORT_SELF,
 	IFLA_AF_SPEC,
-	IFLA_GROUP,		/* Group the device beदीर्घs to */
+	IFLA_GROUP,		/* Group the device belongs to */
 	IFLA_NET_NS_FD,
 	IFLA_EXT_MASK,		/* Extended info mask, VFs, etc */
 	IFLA_PROMISCUITY,	/* Promiscuity count: > 0 means acts PROMISC */
-#घोषणा IFLA_PROMISCUITY IFLA_PROMISCUITY
+#define IFLA_PROMISCUITY IFLA_PROMISCUITY
 	IFLA_NUM_TX_QUEUES,
 	IFLA_NUM_RX_QUEUES,
 	IFLA_CARRIER,
@@ -339,93 +338,93 @@
 	IFLA_MIN_MTU,
 	IFLA_MAX_MTU,
 	IFLA_PROP_LIST,
-	IFLA_ALT_IFNAME, /* Alternative अगरname */
+	IFLA_ALT_IFNAME, /* Alternative ifname */
 	IFLA_PERM_ADDRESS,
 	IFLA_PROTO_DOWN_REASON,
 	__IFLA_MAX
-पूर्ण;
+};
 
 
-#घोषणा IFLA_MAX (__IFLA_MAX - 1)
+#define IFLA_MAX (__IFLA_MAX - 1)
 
-क्रमागत अणु
+enum {
 	IFLA_PROTO_DOWN_REASON_UNSPEC,
-	IFLA_PROTO_DOWN_REASON_MASK,	/* u32, mask क्रम reason bits */
+	IFLA_PROTO_DOWN_REASON_MASK,	/* u32, mask for reason bits */
 	IFLA_PROTO_DOWN_REASON_VALUE,   /* u32, reason bit value */
 
 	__IFLA_PROTO_DOWN_REASON_CNT,
 	IFLA_PROTO_DOWN_REASON_MAX = __IFLA_PROTO_DOWN_REASON_CNT - 1
-पूर्ण;
+};
 
-/* backwards compatibility क्रम userspace */
-#अगर_अघोषित __KERNEL__
-#घोषणा IFLA_RTA(r)  ((काष्ठा rtattr*)(((अक्षर*)(r)) + NLMSG_ALIGN(माप(काष्ठा अगरinfomsg))))
-#घोषणा IFLA_PAYLOAD(n) NLMSG_PAYLOAD(n,माप(काष्ठा अगरinfomsg))
-#पूर्ण_अगर
+/* backwards compatibility for userspace */
+#ifndef __KERNEL__
+#define IFLA_RTA(r)  ((struct rtattr*)(((char*)(r)) + NLMSG_ALIGN(sizeof(struct ifinfomsg))))
+#define IFLA_PAYLOAD(n) NLMSG_PAYLOAD(n,sizeof(struct ifinfomsg))
+#endif
 
-क्रमागत अणु
+enum {
 	IFLA_INET_UNSPEC,
 	IFLA_INET_CONF,
 	__IFLA_INET_MAX,
-पूर्ण;
+};
 
-#घोषणा IFLA_INET_MAX (__IFLA_INET_MAX - 1)
+#define IFLA_INET_MAX (__IFLA_INET_MAX - 1)
 
-/* अगरi_flags.
+/* ifi_flags.
 
    IFF_* flags.
 
    The only change is:
    IFF_LOOPBACK, IFF_BROADCAST and IFF_POINTOPOINT are
    more not changeable by user. They describe link media
-   अक्षरacteristics and set by device driver.
+   characteristics and set by device driver.
 
    Comments:
    - Combination IFF_BROADCAST|IFF_POINTOPOINT is invalid
    - If neither of these three flags are set;
-     the पूर्णांकerface is NBMA.
+     the interface is NBMA.
 
-   - IFF_MULTICAST करोes not mean anything special:
+   - IFF_MULTICAST does not mean anything special:
    multicasts can be used on all not-NBMA links.
    IFF_MULTICAST means that this media uses special encapsulation
-   क्रम multicast frames. Apparently, all IFF_POINTOPOINT and
+   for multicast frames. Apparently, all IFF_POINTOPOINT and
    IFF_BROADCAST devices are able to use multicasts too.
  */
 
 /* IFLA_LINK.
-   For usual devices it is equal अगरi_index.
-   If it is a "virtual interface" (f.e. tunnel), अगरi_link
-   can poपूर्णांक to real physical पूर्णांकerface (f.e. क्रम bandwidth calculations),
+   For usual devices it is equal ifi_index.
+   If it is a "virtual interface" (f.e. tunnel), ifi_link
+   can point to real physical interface (f.e. for bandwidth calculations),
    or maybe 0, what means, that real media is unknown (usual
-   क्रम IPIP tunnels, when route to endpoपूर्णांक is allowed to change)
+   for IPIP tunnels, when route to endpoint is allowed to change)
  */
 
-/* Subtype attributes क्रम IFLA_PROTINFO */
-क्रमागत अणु
+/* Subtype attributes for IFLA_PROTINFO */
+enum {
 	IFLA_INET6_UNSPEC,
 	IFLA_INET6_FLAGS,	/* link flags			*/
 	IFLA_INET6_CONF,	/* sysctl parameters		*/
 	IFLA_INET6_STATS,	/* statistics			*/
 	IFLA_INET6_MCAST,	/* MC things. What of them?	*/
-	IFLA_INET6_CACHEINFO,	/* समय values and max reयंत्र size */
+	IFLA_INET6_CACHEINFO,	/* time values and max reasm size */
 	IFLA_INET6_ICMP6STATS,	/* statistics (icmpv6)		*/
 	IFLA_INET6_TOKEN,	/* device token			*/
 	IFLA_INET6_ADDR_GEN_MODE, /* implicit address generator mode */
 	__IFLA_INET6_MAX
-पूर्ण;
+};
 
-#घोषणा IFLA_INET6_MAX	(__IFLA_INET6_MAX - 1)
+#define IFLA_INET6_MAX	(__IFLA_INET6_MAX - 1)
 
-क्रमागत in6_addr_gen_mode अणु
+enum in6_addr_gen_mode {
 	IN6_ADDR_GEN_MODE_EUI64,
 	IN6_ADDR_GEN_MODE_NONE,
 	IN6_ADDR_GEN_MODE_STABLE_PRIVACY,
 	IN6_ADDR_GEN_MODE_RANDOM,
-पूर्ण;
+};
 
 /* Bridge section */
 
-क्रमागत अणु
+enum {
 	IFLA_BR_UNSPEC,
 	IFLA_BR_FORWARD_DELAY,
 	IFLA_BR_HELLO_TIME,
@@ -474,21 +473,21 @@
 	IFLA_BR_VLAN_STATS_PER_PORT,
 	IFLA_BR_MULTI_BOOLOPT,
 	__IFLA_BR_MAX,
-पूर्ण;
+};
 
-#घोषणा IFLA_BR_MAX	(__IFLA_BR_MAX - 1)
+#define IFLA_BR_MAX	(__IFLA_BR_MAX - 1)
 
-काष्ठा अगरla_bridge_id अणु
+struct ifla_bridge_id {
 	__u8	prio[2];
 	__u8	addr[6]; /* ETH_ALEN */
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	BRIDGE_MODE_UNSPEC,
 	BRIDGE_MODE_HAIRPIN,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	IFLA_BRPORT_UNSPEC,
 	IFLA_BRPORT_STATE,	/* Spanning tree state     */
 	IFLA_BRPORT_PRIORITY,	/* "             priority  */
@@ -501,7 +500,7 @@
 	IFLA_BRPORT_UNICAST_FLOOD, /* flood unicast traffic */
 	IFLA_BRPORT_PROXYARP,	/* proxy ARP */
 	IFLA_BRPORT_LEARNING_SYNC, /* mac learning sync from device */
-	IFLA_BRPORT_PROXYARP_WIFI, /* proxy ARP क्रम Wi-Fi */
+	IFLA_BRPORT_PROXYARP_WIFI, /* proxy ARP for Wi-Fi */
 	IFLA_BRPORT_ROOT_ID,	/* designated root */
 	IFLA_BRPORT_BRIDGE_ID,	/* designated bridge */
 	IFLA_BRPORT_DESIGNATED_PORT,
@@ -529,17 +528,17 @@
 	IFLA_BRPORT_MCAST_EHT_HOSTS_LIMIT,
 	IFLA_BRPORT_MCAST_EHT_HOSTS_CNT,
 	__IFLA_BRPORT_MAX
-पूर्ण;
-#घोषणा IFLA_BRPORT_MAX (__IFLA_BRPORT_MAX - 1)
+};
+#define IFLA_BRPORT_MAX (__IFLA_BRPORT_MAX - 1)
 
-काष्ठा अगरla_cacheinfo अणु
-	__u32	max_reयंत्र_len;
-	__u32	tstamp;		/* ipv6InterfaceTable updated बारtamp */
-	__u32	reachable_समय;
-	__u32	retrans_समय;
-पूर्ण;
+struct ifla_cacheinfo {
+	__u32	max_reasm_len;
+	__u32	tstamp;		/* ipv6InterfaceTable updated timestamp */
+	__u32	reachable_time;
+	__u32	retrans_time;
+};
 
-क्रमागत अणु
+enum {
 	IFLA_INFO_UNSPEC,
 	IFLA_INFO_KIND,
 	IFLA_INFO_DATA,
@@ -547,13 +546,13 @@
 	IFLA_INFO_SLAVE_KIND,
 	IFLA_INFO_SLAVE_DATA,
 	__IFLA_INFO_MAX,
-पूर्ण;
+};
 
-#घोषणा IFLA_INFO_MAX	(__IFLA_INFO_MAX - 1)
+#define IFLA_INFO_MAX	(__IFLA_INFO_MAX - 1)
 
 /* VLAN section */
 
-क्रमागत अणु
+enum {
 	IFLA_VLAN_UNSPEC,
 	IFLA_VLAN_ID,
 	IFLA_VLAN_FLAGS,
@@ -561,30 +560,30 @@
 	IFLA_VLAN_INGRESS_QOS,
 	IFLA_VLAN_PROTOCOL,
 	__IFLA_VLAN_MAX,
-पूर्ण;
+};
 
-#घोषणा IFLA_VLAN_MAX	(__IFLA_VLAN_MAX - 1)
+#define IFLA_VLAN_MAX	(__IFLA_VLAN_MAX - 1)
 
-काष्ठा अगरla_vlan_flags अणु
+struct ifla_vlan_flags {
 	__u32	flags;
 	__u32	mask;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	IFLA_VLAN_QOS_UNSPEC,
 	IFLA_VLAN_QOS_MAPPING,
 	__IFLA_VLAN_QOS_MAX
-पूर्ण;
+};
 
-#घोषणा IFLA_VLAN_QOS_MAX	(__IFLA_VLAN_QOS_MAX - 1)
+#define IFLA_VLAN_QOS_MAX	(__IFLA_VLAN_QOS_MAX - 1)
 
-काष्ठा अगरla_vlan_qos_mapping अणु
+struct ifla_vlan_qos_mapping {
 	__u32 from;
 	__u32 to;
-पूर्ण;
+};
 
 /* MACVLAN section */
-क्रमागत अणु
+enum {
 	IFLA_MACVLAN_UNSPEC,
 	IFLA_MACVLAN_MODE,
 	IFLA_MACVLAN_FLAGS,
@@ -595,47 +594,47 @@
 	IFLA_MACVLAN_BC_QUEUE_LEN,
 	IFLA_MACVLAN_BC_QUEUE_LEN_USED,
 	__IFLA_MACVLAN_MAX,
-पूर्ण;
+};
 
-#घोषणा IFLA_MACVLAN_MAX (__IFLA_MACVLAN_MAX - 1)
+#define IFLA_MACVLAN_MAX (__IFLA_MACVLAN_MAX - 1)
 
-क्रमागत macvlan_mode अणु
-	MACVLAN_MODE_PRIVATE = 1, /* करोn't talk to other macvlans */
+enum macvlan_mode {
+	MACVLAN_MODE_PRIVATE = 1, /* don't talk to other macvlans */
 	MACVLAN_MODE_VEPA    = 2, /* talk to other ports through ext bridge */
 	MACVLAN_MODE_BRIDGE  = 4, /* talk to bridge ports directly */
 	MACVLAN_MODE_PASSTHRU = 8,/* take over the underlying device */
 	MACVLAN_MODE_SOURCE  = 16,/* use source MAC address list to assign */
-पूर्ण;
+};
 
-क्रमागत macvlan_macaddr_mode अणु
+enum macvlan_macaddr_mode {
 	MACVLAN_MACADDR_ADD,
 	MACVLAN_MACADDR_DEL,
 	MACVLAN_MACADDR_FLUSH,
 	MACVLAN_MACADDR_SET,
-पूर्ण;
+};
 
-#घोषणा MACVLAN_FLAG_NOPROMISC	1
-#घोषणा MACVLAN_FLAG_NODST	2 /* skip dst macvlan अगर matching src macvlan */
+#define MACVLAN_FLAG_NOPROMISC	1
+#define MACVLAN_FLAG_NODST	2 /* skip dst macvlan if matching src macvlan */
 
 /* VRF section */
-क्रमागत अणु
+enum {
 	IFLA_VRF_UNSPEC,
 	IFLA_VRF_TABLE,
 	__IFLA_VRF_MAX
-पूर्ण;
+};
 
-#घोषणा IFLA_VRF_MAX (__IFLA_VRF_MAX - 1)
+#define IFLA_VRF_MAX (__IFLA_VRF_MAX - 1)
 
-क्रमागत अणु
+enum {
 	IFLA_VRF_PORT_UNSPEC,
 	IFLA_VRF_PORT_TABLE,
 	__IFLA_VRF_PORT_MAX
-पूर्ण;
+};
 
-#घोषणा IFLA_VRF_PORT_MAX (__IFLA_VRF_PORT_MAX - 1)
+#define IFLA_VRF_PORT_MAX (__IFLA_VRF_PORT_MAX - 1)
 
 /* MACSEC section */
-क्रमागत अणु
+enum {
 	IFLA_MACSEC_UNSPEC,
 	IFLA_MACSEC_SCI,
 	IFLA_MACSEC_PORT,
@@ -653,58 +652,58 @@
 	IFLA_MACSEC_PAD,
 	IFLA_MACSEC_OFFLOAD,
 	__IFLA_MACSEC_MAX,
-पूर्ण;
+};
 
-#घोषणा IFLA_MACSEC_MAX (__IFLA_MACSEC_MAX - 1)
+#define IFLA_MACSEC_MAX (__IFLA_MACSEC_MAX - 1)
 
 /* XFRM section */
-क्रमागत अणु
+enum {
 	IFLA_XFRM_UNSPEC,
 	IFLA_XFRM_LINK,
 	IFLA_XFRM_IF_ID,
 	__IFLA_XFRM_MAX
-पूर्ण;
+};
 
-#घोषणा IFLA_XFRM_MAX (__IFLA_XFRM_MAX - 1)
+#define IFLA_XFRM_MAX (__IFLA_XFRM_MAX - 1)
 
-क्रमागत macsec_validation_type अणु
+enum macsec_validation_type {
 	MACSEC_VALIDATE_DISABLED = 0,
 	MACSEC_VALIDATE_CHECK = 1,
 	MACSEC_VALIDATE_STRICT = 2,
 	__MACSEC_VALIDATE_END,
 	MACSEC_VALIDATE_MAX = __MACSEC_VALIDATE_END - 1,
-पूर्ण;
+};
 
-क्रमागत macsec_offload अणु
+enum macsec_offload {
 	MACSEC_OFFLOAD_OFF = 0,
 	MACSEC_OFFLOAD_PHY = 1,
 	MACSEC_OFFLOAD_MAC = 2,
 	__MACSEC_OFFLOAD_END,
 	MACSEC_OFFLOAD_MAX = __MACSEC_OFFLOAD_END - 1,
-पूर्ण;
+};
 
 /* IPVLAN section */
-क्रमागत अणु
+enum {
 	IFLA_IPVLAN_UNSPEC,
 	IFLA_IPVLAN_MODE,
 	IFLA_IPVLAN_FLAGS,
 	__IFLA_IPVLAN_MAX
-पूर्ण;
+};
 
-#घोषणा IFLA_IPVLAN_MAX (__IFLA_IPVLAN_MAX - 1)
+#define IFLA_IPVLAN_MAX (__IFLA_IPVLAN_MAX - 1)
 
-क्रमागत ipvlan_mode अणु
+enum ipvlan_mode {
 	IPVLAN_MODE_L2 = 0,
 	IPVLAN_MODE_L3,
 	IPVLAN_MODE_L3S,
 	IPVLAN_MODE_MAX
-पूर्ण;
+};
 
-#घोषणा IPVLAN_F_PRIVATE	0x01
-#घोषणा IPVLAN_F_VEPA		0x02
+#define IPVLAN_F_PRIVATE	0x01
+#define IPVLAN_F_VEPA		0x02
 
 /* VXLAN section */
-क्रमागत अणु
+enum {
 	IFLA_VXLAN_UNSPEC,
 	IFLA_VXLAN_ID,
 	IFLA_VXLAN_GROUP,	/* group or remote address */
@@ -736,24 +735,24 @@
 	IFLA_VXLAN_TTL_INHERIT,
 	IFLA_VXLAN_DF,
 	__IFLA_VXLAN_MAX
-पूर्ण;
-#घोषणा IFLA_VXLAN_MAX	(__IFLA_VXLAN_MAX - 1)
+};
+#define IFLA_VXLAN_MAX	(__IFLA_VXLAN_MAX - 1)
 
-काष्ठा अगरla_vxlan_port_range अणु
+struct ifla_vxlan_port_range {
 	__be16	low;
 	__be16	high;
-पूर्ण;
+};
 
-क्रमागत अगरla_vxlan_df अणु
+enum ifla_vxlan_df {
 	VXLAN_DF_UNSET = 0,
 	VXLAN_DF_SET,
 	VXLAN_DF_INHERIT,
 	__VXLAN_DF_END,
 	VXLAN_DF_MAX = __VXLAN_DF_END - 1,
-पूर्ण;
+};
 
 /* GENEVE section */
-क्रमागत अणु
+enum {
 	IFLA_GENEVE_UNSPEC,
 	IFLA_GENEVE_ID,
 	IFLA_GENEVE_REMOTE,
@@ -769,57 +768,57 @@
 	IFLA_GENEVE_TTL_INHERIT,
 	IFLA_GENEVE_DF,
 	__IFLA_GENEVE_MAX
-पूर्ण;
-#घोषणा IFLA_GENEVE_MAX	(__IFLA_GENEVE_MAX - 1)
+};
+#define IFLA_GENEVE_MAX	(__IFLA_GENEVE_MAX - 1)
 
-क्रमागत अगरla_geneve_df अणु
+enum ifla_geneve_df {
 	GENEVE_DF_UNSET = 0,
 	GENEVE_DF_SET,
 	GENEVE_DF_INHERIT,
 	__GENEVE_DF_END,
 	GENEVE_DF_MAX = __GENEVE_DF_END - 1,
-पूर्ण;
+};
 
 /* Bareudp section  */
-क्रमागत अणु
+enum {
 	IFLA_BAREUDP_UNSPEC,
 	IFLA_BAREUDP_PORT,
 	IFLA_BAREUDP_ETHERTYPE,
 	IFLA_BAREUDP_SRCPORT_MIN,
 	IFLA_BAREUDP_MULTIPROTO_MODE,
 	__IFLA_BAREUDP_MAX
-पूर्ण;
+};
 
-#घोषणा IFLA_BAREUDP_MAX (__IFLA_BAREUDP_MAX - 1)
+#define IFLA_BAREUDP_MAX (__IFLA_BAREUDP_MAX - 1)
 
 /* PPP section */
-क्रमागत अणु
+enum {
 	IFLA_PPP_UNSPEC,
 	IFLA_PPP_DEV_FD,
 	__IFLA_PPP_MAX
-पूर्ण;
-#घोषणा IFLA_PPP_MAX (__IFLA_PPP_MAX - 1)
+};
+#define IFLA_PPP_MAX (__IFLA_PPP_MAX - 1)
 
 /* GTP section */
 
-क्रमागत अगरla_gtp_role अणु
+enum ifla_gtp_role {
 	GTP_ROLE_GGSN = 0,
 	GTP_ROLE_SGSN,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	IFLA_GTP_UNSPEC,
 	IFLA_GTP_FD0,
 	IFLA_GTP_FD1,
 	IFLA_GTP_PDP_HASHSIZE,
 	IFLA_GTP_ROLE,
 	__IFLA_GTP_MAX,
-पूर्ण;
-#घोषणा IFLA_GTP_MAX (__IFLA_GTP_MAX - 1)
+};
+#define IFLA_GTP_MAX (__IFLA_GTP_MAX - 1)
 
 /* Bonding section */
 
-क्रमागत अणु
+enum {
 	IFLA_BOND_UNSPEC,
 	IFLA_BOND_MODE,
 	IFLA_BOND_ACTIVE_SLAVE,
@@ -850,11 +849,11 @@
 	IFLA_BOND_TLB_DYNAMIC_LB,
 	IFLA_BOND_PEER_NOTIF_DELAY,
 	__IFLA_BOND_MAX,
-पूर्ण;
+};
 
-#घोषणा IFLA_BOND_MAX	(__IFLA_BOND_MAX - 1)
+#define IFLA_BOND_MAX	(__IFLA_BOND_MAX - 1)
 
-क्रमागत अणु
+enum {
 	IFLA_BOND_AD_INFO_UNSPEC,
 	IFLA_BOND_AD_INFO_AGGREGATOR,
 	IFLA_BOND_AD_INFO_NUM_PORTS,
@@ -862,11 +861,11 @@
 	IFLA_BOND_AD_INFO_PARTNER_KEY,
 	IFLA_BOND_AD_INFO_PARTNER_MAC,
 	__IFLA_BOND_AD_INFO_MAX,
-पूर्ण;
+};
 
-#घोषणा IFLA_BOND_AD_INFO_MAX	(__IFLA_BOND_AD_INFO_MAX - 1)
+#define IFLA_BOND_AD_INFO_MAX	(__IFLA_BOND_AD_INFO_MAX - 1)
 
-क्रमागत अणु
+enum {
 	IFLA_BOND_SLAVE_UNSPEC,
 	IFLA_BOND_SLAVE_STATE,
 	IFLA_BOND_SLAVE_MII_STATUS,
@@ -877,112 +876,112 @@
 	IFLA_BOND_SLAVE_AD_ACTOR_OPER_PORT_STATE,
 	IFLA_BOND_SLAVE_AD_PARTNER_OPER_PORT_STATE,
 	__IFLA_BOND_SLAVE_MAX,
-पूर्ण;
+};
 
-#घोषणा IFLA_BOND_SLAVE_MAX	(__IFLA_BOND_SLAVE_MAX - 1)
+#define IFLA_BOND_SLAVE_MAX	(__IFLA_BOND_SLAVE_MAX - 1)
 
-/* SR-IOV भव function management section */
+/* SR-IOV virtual function management section */
 
-क्रमागत अणु
+enum {
 	IFLA_VF_INFO_UNSPEC,
 	IFLA_VF_INFO,
 	__IFLA_VF_INFO_MAX,
-पूर्ण;
+};
 
-#घोषणा IFLA_VF_INFO_MAX (__IFLA_VF_INFO_MAX - 1)
+#define IFLA_VF_INFO_MAX (__IFLA_VF_INFO_MAX - 1)
 
-क्रमागत अणु
+enum {
 	IFLA_VF_UNSPEC,
-	IFLA_VF_MAC,		/* Hardware queue specअगरic attributes */
+	IFLA_VF_MAC,		/* Hardware queue specific attributes */
 	IFLA_VF_VLAN,		/* VLAN ID and QoS */
 	IFLA_VF_TX_RATE,	/* Max TX Bandwidth Allocation */
-	IFLA_VF_SPOOFCHK,	/* Spoof Checking on/off चयन */
-	IFLA_VF_LINK_STATE,	/* link state enable/disable/स्वतः चयन */
+	IFLA_VF_SPOOFCHK,	/* Spoof Checking on/off switch */
+	IFLA_VF_LINK_STATE,	/* link state enable/disable/auto switch */
 	IFLA_VF_RATE,		/* Min and Max TX Bandwidth Allocation */
 	IFLA_VF_RSS_QUERY_EN,	/* RSS Redirection Table and Hash Key query
-				 * on/off चयन
+				 * on/off switch
 				 */
 	IFLA_VF_STATS,		/* network device statistics */
 	IFLA_VF_TRUST,		/* Trust VF */
 	IFLA_VF_IB_NODE_GUID,	/* VF Infiniband node GUID */
 	IFLA_VF_IB_PORT_GUID,	/* VF Infiniband port GUID */
-	IFLA_VF_VLAN_LIST,	/* nested list of vlans, option क्रम QinQ */
+	IFLA_VF_VLAN_LIST,	/* nested list of vlans, option for QinQ */
 	IFLA_VF_BROADCAST,	/* VF broadcast */
 	__IFLA_VF_MAX,
-पूर्ण;
+};
 
-#घोषणा IFLA_VF_MAX (__IFLA_VF_MAX - 1)
+#define IFLA_VF_MAX (__IFLA_VF_MAX - 1)
 
-काष्ठा अगरla_vf_mac अणु
+struct ifla_vf_mac {
 	__u32 vf;
 	__u8 mac[32]; /* MAX_ADDR_LEN */
-पूर्ण;
+};
 
-काष्ठा अगरla_vf_broadcast अणु
+struct ifla_vf_broadcast {
 	__u8 broadcast[32];
-पूर्ण;
+};
 
-काष्ठा अगरla_vf_vlan अणु
+struct ifla_vf_vlan {
 	__u32 vf;
 	__u32 vlan; /* 0 - 4095, 0 disables VLAN filter */
 	__u32 qos;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	IFLA_VF_VLAN_INFO_UNSPEC,
 	IFLA_VF_VLAN_INFO,	/* VLAN ID, QoS and VLAN protocol */
 	__IFLA_VF_VLAN_INFO_MAX,
-पूर्ण;
+};
 
-#घोषणा IFLA_VF_VLAN_INFO_MAX (__IFLA_VF_VLAN_INFO_MAX - 1)
-#घोषणा MAX_VLAN_LIST_LEN 1
+#define IFLA_VF_VLAN_INFO_MAX (__IFLA_VF_VLAN_INFO_MAX - 1)
+#define MAX_VLAN_LIST_LEN 1
 
-काष्ठा अगरla_vf_vlan_info अणु
+struct ifla_vf_vlan_info {
 	__u32 vf;
 	__u32 vlan; /* 0 - 4095, 0 disables VLAN filter */
 	__u32 qos;
 	__be16 vlan_proto; /* VLAN protocol either 802.1Q or 802.1ad */
-पूर्ण;
+};
 
-काष्ठा अगरla_vf_tx_rate अणु
+struct ifla_vf_tx_rate {
 	__u32 vf;
 	__u32 rate; /* Max TX bandwidth in Mbps, 0 disables throttling */
-पूर्ण;
+};
 
-काष्ठा अगरla_vf_rate अणु
+struct ifla_vf_rate {
 	__u32 vf;
 	__u32 min_tx_rate; /* Min Bandwidth in Mbps */
 	__u32 max_tx_rate; /* Max Bandwidth in Mbps */
-पूर्ण;
+};
 
-काष्ठा अगरla_vf_spoofchk अणु
+struct ifla_vf_spoofchk {
 	__u32 vf;
 	__u32 setting;
-पूर्ण;
+};
 
-काष्ठा अगरla_vf_guid अणु
+struct ifla_vf_guid {
 	__u32 vf;
 	__u64 guid;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	IFLA_VF_LINK_STATE_AUTO,	/* link state of the uplink */
 	IFLA_VF_LINK_STATE_ENABLE,	/* link always up */
-	IFLA_VF_LINK_STATE_DISABLE,	/* link always करोwn */
+	IFLA_VF_LINK_STATE_DISABLE,	/* link always down */
 	__IFLA_VF_LINK_STATE_MAX,
-पूर्ण;
+};
 
-काष्ठा अगरla_vf_link_state अणु
+struct ifla_vf_link_state {
 	__u32 vf;
 	__u32 link_state;
-पूर्ण;
+};
 
-काष्ठा अगरla_vf_rss_query_en अणु
+struct ifla_vf_rss_query_en {
 	__u32 vf;
 	__u32 setting;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	IFLA_VF_STATS_RX_PACKETS,
 	IFLA_VF_STATS_TX_PACKETS,
 	IFLA_VF_STATS_RX_BYTES,
@@ -993,14 +992,14 @@
 	IFLA_VF_STATS_RX_DROPPED,
 	IFLA_VF_STATS_TX_DROPPED,
 	__IFLA_VF_STATS_MAX,
-पूर्ण;
+};
 
-#घोषणा IFLA_VF_STATS_MAX (__IFLA_VF_STATS_MAX - 1)
+#define IFLA_VF_STATS_MAX (__IFLA_VF_STATS_MAX - 1)
 
-काष्ठा अगरla_vf_trust अणु
+struct ifla_vf_trust {
 	__u32 vf;
 	__u32 setting;
-पूर्ण;
+};
 
 /* VF ports management section
  *
@@ -1017,40 +1016,40 @@
  *			[IFLA_PORT_*], ...
  */
 
-क्रमागत अणु
+enum {
 	IFLA_VF_PORT_UNSPEC,
 	IFLA_VF_PORT,			/* nest */
 	__IFLA_VF_PORT_MAX,
-पूर्ण;
+};
 
-#घोषणा IFLA_VF_PORT_MAX (__IFLA_VF_PORT_MAX - 1)
+#define IFLA_VF_PORT_MAX (__IFLA_VF_PORT_MAX - 1)
 
-क्रमागत अणु
+enum {
 	IFLA_PORT_UNSPEC,
 	IFLA_PORT_VF,			/* __u32 */
-	IFLA_PORT_PROखाता,		/* string */
+	IFLA_PORT_PROFILE,		/* string */
 	IFLA_PORT_VSI_TYPE,		/* 802.1Qbg (pre-)standard VDP */
 	IFLA_PORT_INSTANCE_UUID,	/* binary UUID */
 	IFLA_PORT_HOST_UUID,		/* binary UUID */
 	IFLA_PORT_REQUEST,		/* __u8 */
 	IFLA_PORT_RESPONSE,		/* __u16, output only */
 	__IFLA_PORT_MAX,
-पूर्ण;
+};
 
-#घोषणा IFLA_PORT_MAX (__IFLA_PORT_MAX - 1)
+#define IFLA_PORT_MAX (__IFLA_PORT_MAX - 1)
 
-#घोषणा PORT_PROखाता_MAX	40
-#घोषणा PORT_UUID_MAX		16
-#घोषणा PORT_SELF_VF		-1
+#define PORT_PROFILE_MAX	40
+#define PORT_UUID_MAX		16
+#define PORT_SELF_VF		-1
 
-क्रमागत अणु
+enum {
 	PORT_REQUEST_PREASSOCIATE = 0,
 	PORT_REQUEST_PREASSOCIATE_RR,
 	PORT_REQUEST_ASSOCIATE,
 	PORT_REQUEST_DISASSOCIATE,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	PORT_VDP_RESPONSE_SUCCESS = 0,
 	PORT_VDP_RESPONSE_INVALID_FORMAT,
 	PORT_VDP_RESPONSE_INSUFFICIENT_RESOURCES,
@@ -1058,51 +1057,51 @@
 	PORT_VDP_RESPONSE_VTID_VIOLATION,
 	PORT_VDP_RESPONSE_VTID_VERSION_VIOALTION,
 	PORT_VDP_RESPONSE_OUT_OF_SYNC,
-	/* 0x08-0xFF reserved क्रम future VDP use */
-	PORT_PROखाता_RESPONSE_SUCCESS = 0x100,
-	PORT_PROखाता_RESPONSE_INPROGRESS,
-	PORT_PROखाता_RESPONSE_INVALID,
-	PORT_PROखाता_RESPONSE_BADSTATE,
-	PORT_PROखाता_RESPONSE_INSUFFICIENT_RESOURCES,
-	PORT_PROखाता_RESPONSE_ERROR,
-पूर्ण;
+	/* 0x08-0xFF reserved for future VDP use */
+	PORT_PROFILE_RESPONSE_SUCCESS = 0x100,
+	PORT_PROFILE_RESPONSE_INPROGRESS,
+	PORT_PROFILE_RESPONSE_INVALID,
+	PORT_PROFILE_RESPONSE_BADSTATE,
+	PORT_PROFILE_RESPONSE_INSUFFICIENT_RESOURCES,
+	PORT_PROFILE_RESPONSE_ERROR,
+};
 
-काष्ठा अगरla_port_vsi अणु
+struct ifla_port_vsi {
 	__u8 vsi_mgr_id;
 	__u8 vsi_type_id[3];
 	__u8 vsi_type_version;
 	__u8 pad[3];
-पूर्ण;
+};
 
 
 /* IPoIB section */
 
-क्रमागत अणु
+enum {
 	IFLA_IPOIB_UNSPEC,
 	IFLA_IPOIB_PKEY,
 	IFLA_IPOIB_MODE,
 	IFLA_IPOIB_UMCAST,
 	__IFLA_IPOIB_MAX
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	IPOIB_MODE_DATAGRAM  = 0, /* using unreliable datagram QPs */
 	IPOIB_MODE_CONNECTED = 1, /* using connected QPs */
-पूर्ण;
+};
 
-#घोषणा IFLA_IPOIB_MAX (__IFLA_IPOIB_MAX - 1)
+#define IFLA_IPOIB_MAX (__IFLA_IPOIB_MAX - 1)
 
 
-/* HSR/PRP section, both uses same पूर्णांकerface */
+/* HSR/PRP section, both uses same interface */
 
-/* Dअगरferent redundancy protocols क्रम hsr device */
-क्रमागत अणु
+/* Different redundancy protocols for hsr device */
+enum {
 	HSR_PROTOCOL_HSR,
 	HSR_PROTOCOL_PRP,
 	HSR_PROTOCOL_MAX,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	IFLA_HSR_UNSPEC,
 	IFLA_HSR_SLAVE1,
 	IFLA_HSR_SLAVE2,
@@ -1110,28 +1109,28 @@
 	IFLA_HSR_SUPERVISION_ADDR,	/* Supervision frame multicast addr */
 	IFLA_HSR_SEQ_NR,
 	IFLA_HSR_VERSION,		/* HSR version */
-	IFLA_HSR_PROTOCOL,		/* Indicate dअगरferent protocol than
+	IFLA_HSR_PROTOCOL,		/* Indicate different protocol than
 					 * HSR. For example PRP.
 					 */
 	__IFLA_HSR_MAX,
-पूर्ण;
+};
 
-#घोषणा IFLA_HSR_MAX (__IFLA_HSR_MAX - 1)
+#define IFLA_HSR_MAX (__IFLA_HSR_MAX - 1)
 
 /* STATS section */
 
-काष्ठा अगर_stats_msg अणु
+struct if_stats_msg {
 	__u8  family;
 	__u8  pad1;
 	__u16 pad2;
-	__u32 अगरindex;
+	__u32 ifindex;
 	__u32 filter_mask;
-पूर्ण;
+};
 
-/* A stats attribute can be netdev specअगरic or a global stat.
+/* A stats attribute can be netdev specific or a global stat.
  * For netdev stats, lets use the prefix IFLA_STATS_LINK_*
  */
-क्रमागत अणु
+enum {
 	IFLA_STATS_UNSPEC, /* also used as 64bit pad attribute */
 	IFLA_STATS_LINK_64,
 	IFLA_STATS_LINK_XSTATS,
@@ -1139,56 +1138,56 @@
 	IFLA_STATS_LINK_OFFLOAD_XSTATS,
 	IFLA_STATS_AF_SPEC,
 	__IFLA_STATS_MAX,
-पूर्ण;
+};
 
-#घोषणा IFLA_STATS_MAX (__IFLA_STATS_MAX - 1)
+#define IFLA_STATS_MAX (__IFLA_STATS_MAX - 1)
 
-#घोषणा IFLA_STATS_FILTER_BIT(ATTR)	(1 << (ATTR - 1))
+#define IFLA_STATS_FILTER_BIT(ATTR)	(1 << (ATTR - 1))
 
-/* These are embedded पूर्णांकo IFLA_STATS_LINK_XSTATS:
+/* These are embedded into IFLA_STATS_LINK_XSTATS:
  * [IFLA_STATS_LINK_XSTATS]
  * -> [LINK_XSTATS_TYPE_xxx]
- *    -> [rtnl link type specअगरic attributes]
+ *    -> [rtnl link type specific attributes]
  */
-क्रमागत अणु
+enum {
 	LINK_XSTATS_TYPE_UNSPEC,
 	LINK_XSTATS_TYPE_BRIDGE,
 	LINK_XSTATS_TYPE_BOND,
 	__LINK_XSTATS_TYPE_MAX
-पूर्ण;
-#घोषणा LINK_XSTATS_TYPE_MAX (__LINK_XSTATS_TYPE_MAX - 1)
+};
+#define LINK_XSTATS_TYPE_MAX (__LINK_XSTATS_TYPE_MAX - 1)
 
-/* These are stats embedded पूर्णांकo IFLA_STATS_LINK_OFFLOAD_XSTATS */
-क्रमागत अणु
+/* These are stats embedded into IFLA_STATS_LINK_OFFLOAD_XSTATS */
+enum {
 	IFLA_OFFLOAD_XSTATS_UNSPEC,
-	IFLA_OFFLOAD_XSTATS_CPU_HIT, /* काष्ठा rtnl_link_stats64 */
+	IFLA_OFFLOAD_XSTATS_CPU_HIT, /* struct rtnl_link_stats64 */
 	__IFLA_OFFLOAD_XSTATS_MAX
-पूर्ण;
-#घोषणा IFLA_OFFLOAD_XSTATS_MAX (__IFLA_OFFLOAD_XSTATS_MAX - 1)
+};
+#define IFLA_OFFLOAD_XSTATS_MAX (__IFLA_OFFLOAD_XSTATS_MAX - 1)
 
 /* XDP section */
 
-#घोषणा XDP_FLAGS_UPDATE_IF_NOEXIST	(1U << 0)
-#घोषणा XDP_FLAGS_SKB_MODE		(1U << 1)
-#घोषणा XDP_FLAGS_DRV_MODE		(1U << 2)
-#घोषणा XDP_FLAGS_HW_MODE		(1U << 3)
-#घोषणा XDP_FLAGS_REPLACE		(1U << 4)
-#घोषणा XDP_FLAGS_MODES			(XDP_FLAGS_SKB_MODE | \
+#define XDP_FLAGS_UPDATE_IF_NOEXIST	(1U << 0)
+#define XDP_FLAGS_SKB_MODE		(1U << 1)
+#define XDP_FLAGS_DRV_MODE		(1U << 2)
+#define XDP_FLAGS_HW_MODE		(1U << 3)
+#define XDP_FLAGS_REPLACE		(1U << 4)
+#define XDP_FLAGS_MODES			(XDP_FLAGS_SKB_MODE | \
 					 XDP_FLAGS_DRV_MODE | \
 					 XDP_FLAGS_HW_MODE)
-#घोषणा XDP_FLAGS_MASK			(XDP_FLAGS_UPDATE_IF_NOEXIST | \
+#define XDP_FLAGS_MASK			(XDP_FLAGS_UPDATE_IF_NOEXIST | \
 					 XDP_FLAGS_MODES | XDP_FLAGS_REPLACE)
 
-/* These are stored पूर्णांकo IFLA_XDP_ATTACHED on dump. */
-क्रमागत अणु
+/* These are stored into IFLA_XDP_ATTACHED on dump. */
+enum {
 	XDP_ATTACHED_NONE = 0,
 	XDP_ATTACHED_DRV,
 	XDP_ATTACHED_SKB,
 	XDP_ATTACHED_HW,
 	XDP_ATTACHED_MULTI,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	IFLA_XDP_UNSPEC,
 	IFLA_XDP_FD,
 	IFLA_XDP_ATTACHED,
@@ -1199,23 +1198,23 @@
 	IFLA_XDP_HW_PROG_ID,
 	IFLA_XDP_EXPECTED_FD,
 	__IFLA_XDP_MAX,
-पूर्ण;
+};
 
-#घोषणा IFLA_XDP_MAX (__IFLA_XDP_MAX - 1)
+#define IFLA_XDP_MAX (__IFLA_XDP_MAX - 1)
 
-क्रमागत अणु
+enum {
 	IFLA_EVENT_NONE,
-	IFLA_EVENT_REBOOT,		/* पूर्णांकernal reset / reboot */
+	IFLA_EVENT_REBOOT,		/* internal reset / reboot */
 	IFLA_EVENT_FEATURES,		/* change in offload features */
 	IFLA_EVENT_BONDING_FAILOVER,	/* change in active slave */
 	IFLA_EVENT_NOTIFY_PEERS,	/* re-sent grat. arp/ndisc */
 	IFLA_EVENT_IGMP_RESEND,		/* re-sent IGMP JOIN */
 	IFLA_EVENT_BONDING_OPTIONS,	/* change in bonding options */
-पूर्ण;
+};
 
 /* tun section */
 
-क्रमागत अणु
+enum {
 	IFLA_TUN_UNSPEC,
 	IFLA_TUN_OWNER,
 	IFLA_TUN_GROUP,
@@ -1227,29 +1226,29 @@
 	IFLA_TUN_NUM_QUEUES,
 	IFLA_TUN_NUM_DISABLED_QUEUES,
 	__IFLA_TUN_MAX,
-पूर्ण;
+};
 
-#घोषणा IFLA_TUN_MAX (__IFLA_TUN_MAX - 1)
+#define IFLA_TUN_MAX (__IFLA_TUN_MAX - 1)
 
 /* rmnet section */
 
-#घोषणा RMNET_FLAGS_INGRESS_DEAGGREGATION         (1U << 0)
-#घोषणा RMNET_FLAGS_INGRESS_MAP_COMMANDS          (1U << 1)
-#घोषणा RMNET_FLAGS_INGRESS_MAP_CKSUMV4           (1U << 2)
-#घोषणा RMNET_FLAGS_EGRESS_MAP_CKSUMV4            (1U << 3)
+#define RMNET_FLAGS_INGRESS_DEAGGREGATION         (1U << 0)
+#define RMNET_FLAGS_INGRESS_MAP_COMMANDS          (1U << 1)
+#define RMNET_FLAGS_INGRESS_MAP_CKSUMV4           (1U << 2)
+#define RMNET_FLAGS_EGRESS_MAP_CKSUMV4            (1U << 3)
 
-क्रमागत अणु
+enum {
 	IFLA_RMNET_UNSPEC,
 	IFLA_RMNET_MUX_ID,
 	IFLA_RMNET_FLAGS,
 	__IFLA_RMNET_MAX,
-पूर्ण;
+};
 
-#घोषणा IFLA_RMNET_MAX	(__IFLA_RMNET_MAX - 1)
+#define IFLA_RMNET_MAX	(__IFLA_RMNET_MAX - 1)
 
-काष्ठा अगरla_rmnet_flags अणु
+struct ifla_rmnet_flags {
 	__u32	flags;
 	__u32	mask;
-पूर्ण;
+};
 
-#पूर्ण_अगर /* _UAPI_LINUX_IF_LINK_H */
+#endif /* _UAPI_LINUX_IF_LINK_H */

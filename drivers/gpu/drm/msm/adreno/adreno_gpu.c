@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
@@ -7,214 +6,214 @@
  * Copyright (c) 2014 The Linux Foundation. All rights reserved.
  */
 
-#समावेश <linux/ascii85.h>
-#समावेश <linux/पूर्णांकerconnect.h>
-#समावेश <linux/qcom_scm.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/pm_opp.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/soc/qcom/mdt_loader.h>
-#समावेश <soc/qcom/ocस्मृति.स>
-#समावेश "adreno_gpu.h"
-#समावेश "a6xx_gpu.h"
-#समावेश "msm_gem.h"
-#समावेश "msm_mmu.h"
+#include <linux/ascii85.h>
+#include <linux/interconnect.h>
+#include <linux/qcom_scm.h>
+#include <linux/kernel.h>
+#include <linux/of_address.h>
+#include <linux/pm_opp.h>
+#include <linux/slab.h>
+#include <linux/soc/qcom/mdt_loader.h>
+#include <soc/qcom/ocmem.h>
+#include "adreno_gpu.h"
+#include "a6xx_gpu.h"
+#include "msm_gem.h"
+#include "msm_mmu.h"
 
-अटल bool zap_available = true;
+static bool zap_available = true;
 
-अटल पूर्णांक zap_shader_load_mdt(काष्ठा msm_gpu *gpu, स्थिर अक्षर *fwname,
+static int zap_shader_load_mdt(struct msm_gpu *gpu, const char *fwname,
 		u32 pasid)
-अणु
-	काष्ठा device *dev = &gpu->pdev->dev;
-	स्थिर काष्ठा firmware *fw;
-	स्थिर अक्षर *चिन्हित_fwname = शून्य;
-	काष्ठा device_node *np, *mem_np;
-	काष्ठा resource r;
+{
+	struct device *dev = &gpu->pdev->dev;
+	const struct firmware *fw;
+	const char *signed_fwname = NULL;
+	struct device_node *np, *mem_np;
+	struct resource r;
 	phys_addr_t mem_phys;
-	sमाप_प्रकार mem_size;
-	व्योम *mem_region = शून्य;
-	पूर्णांक ret;
+	ssize_t mem_size;
+	void *mem_region = NULL;
+	int ret;
 
-	अगर (!IS_ENABLED(CONFIG_ARCH_QCOM)) अणु
+	if (!IS_ENABLED(CONFIG_ARCH_QCOM)) {
 		zap_available = false;
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	np = of_get_child_by_name(dev->of_node, "zap-shader");
-	अगर (!np) अणु
+	if (!np) {
 		zap_available = false;
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	mem_np = of_parse_phandle(np, "memory-region", 0);
 	of_node_put(np);
-	अगर (!mem_np) अणु
+	if (!mem_np) {
 		zap_available = false;
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = of_address_to_resource(mem_np, 0, &r);
 	of_node_put(mem_np);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mem_phys = r.start;
 
 	/*
-	 * Check क्रम a firmware-name property.  This is the new scheme
-	 * to handle firmware that may be चिन्हित with device specअगरic
-	 * keys, allowing us to have a dअगरferent zap fw path क्रम dअगरferent
+	 * Check for a firmware-name property.  This is the new scheme
+	 * to handle firmware that may be signed with device specific
+	 * keys, allowing us to have a different zap fw path for different
 	 * devices.
 	 *
 	 * If the firmware-name property is found, we bypass the
-	 * adreno_request_fw() mechanism, because we करोn't need to handle
-	 * the /lib/firmware/qcom/... vs /lib/firmware/... हाल.
+	 * adreno_request_fw() mechanism, because we don't need to handle
+	 * the /lib/firmware/qcom/... vs /lib/firmware/... case.
 	 *
-	 * If the firmware-name property is not found, क्रम backwards
+	 * If the firmware-name property is not found, for backwards
 	 * compatibility we fall back to the fwname from the gpulist
 	 * table.
 	 */
-	of_property_पढ़ो_string_index(np, "firmware-name", 0, &चिन्हित_fwname);
-	अगर (चिन्हित_fwname) अणु
-		fwname = चिन्हित_fwname;
+	of_property_read_string_index(np, "firmware-name", 0, &signed_fwname);
+	if (signed_fwname) {
+		fwname = signed_fwname;
 		ret = request_firmware_direct(&fw, fwname, gpu->dev->dev);
-		अगर (ret)
+		if (ret)
 			fw = ERR_PTR(ret);
-	पूर्ण अन्यथा अगर (fwname) अणु
-		/* Request the MDT file from the शेष location: */
+	} else if (fwname) {
+		/* Request the MDT file from the default location: */
 		fw = adreno_request_fw(to_adreno_gpu(gpu), fwname);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * For new tarमाला_लो, we require the firmware-name property,
-		 * अगर a zap-shader is required, rather than falling back
-		 * to a firmware name specअगरied in gpulist.
+		 * For new targets, we require the firmware-name property,
+		 * if a zap-shader is required, rather than falling back
+		 * to a firmware name specified in gpulist.
 		 *
-		 * Because the firmware is चिन्हित with a (potentially)
-		 * device specअगरic key, having the name come from gpulist
-		 * was a bad idea, and is only provided क्रम backwards
-		 * compatibility क्रम older tarमाला_लो.
+		 * Because the firmware is signed with a (potentially)
+		 * device specific key, having the name come from gpulist
+		 * was a bad idea, and is only provided for backwards
+		 * compatibility for older targets.
 		 */
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (IS_ERR(fw)) अणु
+	if (IS_ERR(fw)) {
 		DRM_DEV_ERROR(dev, "Unable to load %s\n", fwname);
-		वापस PTR_ERR(fw);
-	पूर्ण
+		return PTR_ERR(fw);
+	}
 
 	/* Figure out how much memory we need */
 	mem_size = qcom_mdt_get_size(fw);
-	अगर (mem_size < 0) अणु
+	if (mem_size < 0) {
 		ret = mem_size;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (mem_size > resource_size(&r)) अणु
+	if (mem_size > resource_size(&r)) {
 		DRM_DEV_ERROR(dev,
 			"memory region is too small to load the MDT\n");
 		ret = -E2BIG;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Allocate memory क्रम the firmware image */
+	/* Allocate memory for the firmware image */
 	mem_region = memremap(mem_phys, mem_size,  MEMREMAP_WC);
-	अगर (!mem_region) अणु
+	if (!mem_region) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * Load the rest of the MDT
 	 *
-	 * Note that we could be dealing with two dअगरferent paths, since
+	 * Note that we could be dealing with two different paths, since
 	 * with upstream linux-firmware it would be in a qcom/ subdir..
-	 * adreno_request_fw() handles this, but qcom_mdt_load() करोes
-	 * not.  But since we've alपढ़ोy gotten through adreno_request_fw()
-	 * we know which of the two हालs it is:
+	 * adreno_request_fw() handles this, but qcom_mdt_load() does
+	 * not.  But since we've already gotten through adreno_request_fw()
+	 * we know which of the two cases it is:
 	 */
-	अगर (चिन्हित_fwname || (to_adreno_gpu(gpu)->fwloc == FW_LOCATION_LEGACY)) अणु
+	if (signed_fwname || (to_adreno_gpu(gpu)->fwloc == FW_LOCATION_LEGACY)) {
 		ret = qcom_mdt_load(dev, fw, fwname, pasid,
-				mem_region, mem_phys, mem_size, शून्य);
-	पूर्ण अन्यथा अणु
-		अक्षर *newname;
+				mem_region, mem_phys, mem_size, NULL);
+	} else {
+		char *newname;
 
-		newname = kaप्र_लिखो(GFP_KERNEL, "qcom/%s", fwname);
+		newname = kasprintf(GFP_KERNEL, "qcom/%s", fwname);
 
 		ret = qcom_mdt_load(dev, fw, newname, pasid,
-				mem_region, mem_phys, mem_size, शून्य);
-		kमुक्त(newname);
-	पूर्ण
-	अगर (ret)
-		जाओ out;
+				mem_region, mem_phys, mem_size, NULL);
+		kfree(newname);
+	}
+	if (ret)
+		goto out;
 
 	/* Send the image to the secure world */
 	ret = qcom_scm_pas_auth_and_reset(pasid);
 
 	/*
-	 * If the scm call वापसs -EOPNOTSUPP we assume that this target
-	 * करोesn't need/support the zap shader so quietly fail
+	 * If the scm call returns -EOPNOTSUPP we assume that this target
+	 * doesn't need/support the zap shader so quietly fail
 	 */
-	अगर (ret == -EOPNOTSUPP)
+	if (ret == -EOPNOTSUPP)
 		zap_available = false;
-	अन्यथा अगर (ret)
+	else if (ret)
 		DRM_DEV_ERROR(dev, "Unable to authorize the image\n");
 
 out:
-	अगर (mem_region)
+	if (mem_region)
 		memunmap(mem_region);
 
 	release_firmware(fw);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक adreno_zap_shader_load(काष्ठा msm_gpu *gpu, u32 pasid)
-अणु
-	काष्ठा adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
-	काष्ठा platक्रमm_device *pdev = gpu->pdev;
+int adreno_zap_shader_load(struct msm_gpu *gpu, u32 pasid)
+{
+	struct adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
+	struct platform_device *pdev = gpu->pdev;
 
-	/* Short cut अगर we determine the zap shader isn't available/needed */
-	अगर (!zap_available)
-		वापस -ENODEV;
+	/* Short cut if we determine the zap shader isn't available/needed */
+	if (!zap_available)
+		return -ENODEV;
 
 	/* We need SCM to be able to load the firmware */
-	अगर (!qcom_scm_is_available()) अणु
+	if (!qcom_scm_is_available()) {
 		DRM_DEV_ERROR(&pdev->dev, "SCM is not available\n");
-		वापस -EPROBE_DEFER;
-	पूर्ण
+		return -EPROBE_DEFER;
+	}
 
-	वापस zap_shader_load_mdt(gpu, adreno_gpu->info->zapfw, pasid);
-पूर्ण
+	return zap_shader_load_mdt(gpu, adreno_gpu->info->zapfw, pasid);
+}
 
-व्योम adreno_set_llc_attributes(काष्ठा iommu_करोमुख्य *iommu)
-अणु
+void adreno_set_llc_attributes(struct iommu_domain *iommu)
+{
 	iommu_set_pgtable_quirks(iommu, IO_PGTABLE_QUIRK_ARM_OUTER_WBWA);
-पूर्ण
+}
 
-काष्ठा msm_gem_address_space *
-adreno_iommu_create_address_space(काष्ठा msm_gpu *gpu,
-		काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा iommu_करोमुख्य *iommu;
-	काष्ठा msm_mmu *mmu;
-	काष्ठा msm_gem_address_space *aspace;
+struct msm_gem_address_space *
+adreno_iommu_create_address_space(struct msm_gpu *gpu,
+		struct platform_device *pdev)
+{
+	struct iommu_domain *iommu;
+	struct msm_mmu *mmu;
+	struct msm_gem_address_space *aspace;
 	u64 start, size;
 
-	iommu = iommu_करोमुख्य_alloc(&platक्रमm_bus_type);
-	अगर (!iommu)
-		वापस शून्य;
+	iommu = iommu_domain_alloc(&platform_bus_type);
+	if (!iommu)
+		return NULL;
 
 	mmu = msm_iommu_new(&pdev->dev, iommu);
-	अगर (IS_ERR(mmu)) अणु
-		iommu_करोमुख्य_मुक्त(iommu);
-		वापस ERR_CAST(mmu);
-	पूर्ण
+	if (IS_ERR(mmu)) {
+		iommu_domain_free(iommu);
+		return ERR_CAST(mmu);
+	}
 
 	/*
 	 * Use the aperture start or SZ_16M, whichever is greater. This will
-	 * ensure that we align with the allocated pagetable range जबतक still
-	 * allowing room in the lower 32 bits क्रम GMEM and whatnot
+	 * ensure that we align with the allocated pagetable range while still
+	 * allowing room in the lower 32 bits for GMEM and whatnot
 	 */
 	start = max_t(u64, SZ_16M, iommu->geometry.aperture_start);
 	size = iommu->geometry.aperture_end - start + 1;
@@ -222,204 +221,204 @@ adreno_iommu_create_address_space(काष्ठा msm_gpu *gpu,
 	aspace = msm_gem_address_space_create(mmu, "gpu",
 		start & GENMASK_ULL(48, 0), size);
 
-	अगर (IS_ERR(aspace) && !IS_ERR(mmu))
+	if (IS_ERR(aspace) && !IS_ERR(mmu))
 		mmu->funcs->destroy(mmu);
 
-	वापस aspace;
-पूर्ण
+	return aspace;
+}
 
-पूर्णांक adreno_get_param(काष्ठा msm_gpu *gpu, uपूर्णांक32_t param, uपूर्णांक64_t *value)
-अणु
-	काष्ठा adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
+int adreno_get_param(struct msm_gpu *gpu, uint32_t param, uint64_t *value)
+{
+	struct adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
 
-	चयन (param) अणु
-	हाल MSM_PARAM_GPU_ID:
+	switch (param) {
+	case MSM_PARAM_GPU_ID:
 		*value = adreno_gpu->info->revn;
-		वापस 0;
-	हाल MSM_PARAM_GMEM_SIZE:
+		return 0;
+	case MSM_PARAM_GMEM_SIZE:
 		*value = adreno_gpu->gmem;
-		वापस 0;
-	हाल MSM_PARAM_GMEM_BASE:
+		return 0;
+	case MSM_PARAM_GMEM_BASE:
 		*value = !adreno_is_a650(adreno_gpu) ? 0x100000 : 0;
-		वापस 0;
-	हाल MSM_PARAM_CHIP_ID:
+		return 0;
+	case MSM_PARAM_CHIP_ID:
 		*value = adreno_gpu->rev.patchid |
 				(adreno_gpu->rev.minor << 8) |
 				(adreno_gpu->rev.major << 16) |
 				(adreno_gpu->rev.core << 24);
-		वापस 0;
-	हाल MSM_PARAM_MAX_FREQ:
+		return 0;
+	case MSM_PARAM_MAX_FREQ:
 		*value = adreno_gpu->base.fast_rate;
-		वापस 0;
-	हाल MSM_PARAM_TIMESTAMP:
-		अगर (adreno_gpu->funcs->get_बारtamp) अणु
-			पूर्णांक ret;
+		return 0;
+	case MSM_PARAM_TIMESTAMP:
+		if (adreno_gpu->funcs->get_timestamp) {
+			int ret;
 
-			pm_runसमय_get_sync(&gpu->pdev->dev);
-			ret = adreno_gpu->funcs->get_बारtamp(gpu, value);
-			pm_runसमय_put_स्वतःsuspend(&gpu->pdev->dev);
+			pm_runtime_get_sync(&gpu->pdev->dev);
+			ret = adreno_gpu->funcs->get_timestamp(gpu, value);
+			pm_runtime_put_autosuspend(&gpu->pdev->dev);
 
-			वापस ret;
-		पूर्ण
-		वापस -EINVAL;
-	हाल MSM_PARAM_NR_RINGS:
+			return ret;
+		}
+		return -EINVAL;
+	case MSM_PARAM_NR_RINGS:
 		*value = gpu->nr_rings;
-		वापस 0;
-	हाल MSM_PARAM_PP_PGTABLE:
+		return 0;
+	case MSM_PARAM_PP_PGTABLE:
 		*value = 0;
-		वापस 0;
-	हाल MSM_PARAM_FAULTS:
+		return 0;
+	case MSM_PARAM_FAULTS:
 		*value = gpu->global_faults;
-		वापस 0;
-	हाल MSM_PARAM_SUSPENDS:
+		return 0;
+	case MSM_PARAM_SUSPENDS:
 		*value = gpu->suspend_count;
-		वापस 0;
-	शेष:
+		return 0;
+	default:
 		DBG("%s: invalid param: %u", gpu->name, param);
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return -EINVAL;
+	}
+}
 
-स्थिर काष्ठा firmware *
-adreno_request_fw(काष्ठा adreno_gpu *adreno_gpu, स्थिर अक्षर *fwname)
-अणु
-	काष्ठा drm_device *drm = adreno_gpu->base.dev;
-	स्थिर काष्ठा firmware *fw = शून्य;
-	अक्षर *newname;
-	पूर्णांक ret;
+const struct firmware *
+adreno_request_fw(struct adreno_gpu *adreno_gpu, const char *fwname)
+{
+	struct drm_device *drm = adreno_gpu->base.dev;
+	const struct firmware *fw = NULL;
+	char *newname;
+	int ret;
 
-	newname = kaप्र_लिखो(GFP_KERNEL, "qcom/%s", fwname);
-	अगर (!newname)
-		वापस ERR_PTR(-ENOMEM);
+	newname = kasprintf(GFP_KERNEL, "qcom/%s", fwname);
+	if (!newname)
+		return ERR_PTR(-ENOMEM);
 
 	/*
-	 * Try first to load from qcom/$fwfile using a direct load (to aव्योम
-	 * a potential समयout रुकोing क्रम usermode helper)
+	 * Try first to load from qcom/$fwfile using a direct load (to avoid
+	 * a potential timeout waiting for usermode helper)
 	 */
-	अगर ((adreno_gpu->fwloc == FW_LOCATION_UNKNOWN) ||
-	    (adreno_gpu->fwloc == FW_LOCATION_NEW)) अणु
+	if ((adreno_gpu->fwloc == FW_LOCATION_UNKNOWN) ||
+	    (adreno_gpu->fwloc == FW_LOCATION_NEW)) {
 
 		ret = request_firmware_direct(&fw, newname, drm->dev);
-		अगर (!ret) अणु
+		if (!ret) {
 			DRM_DEV_INFO(drm->dev, "loaded %s from new location\n",
 				newname);
 			adreno_gpu->fwloc = FW_LOCATION_NEW;
-			जाओ out;
-		पूर्ण अन्यथा अगर (adreno_gpu->fwloc != FW_LOCATION_UNKNOWN) अणु
+			goto out;
+		} else if (adreno_gpu->fwloc != FW_LOCATION_UNKNOWN) {
 			DRM_DEV_ERROR(drm->dev, "failed to load %s: %d\n",
 				newname, ret);
 			fw = ERR_PTR(ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	/*
 	 * Then try the legacy location without qcom/ prefix
 	 */
-	अगर ((adreno_gpu->fwloc == FW_LOCATION_UNKNOWN) ||
-	    (adreno_gpu->fwloc == FW_LOCATION_LEGACY)) अणु
+	if ((adreno_gpu->fwloc == FW_LOCATION_UNKNOWN) ||
+	    (adreno_gpu->fwloc == FW_LOCATION_LEGACY)) {
 
 		ret = request_firmware_direct(&fw, fwname, drm->dev);
-		अगर (!ret) अणु
+		if (!ret) {
 			DRM_DEV_INFO(drm->dev, "loaded %s from legacy location\n",
 				newname);
 			adreno_gpu->fwloc = FW_LOCATION_LEGACY;
-			जाओ out;
-		पूर्ण अन्यथा अगर (adreno_gpu->fwloc != FW_LOCATION_UNKNOWN) अणु
+			goto out;
+		} else if (adreno_gpu->fwloc != FW_LOCATION_UNKNOWN) {
 			DRM_DEV_ERROR(drm->dev, "failed to load %s: %d\n",
 				fwname, ret);
 			fw = ERR_PTR(ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	/*
-	 * Finally fall back to request_firmware() क्रम हालs where the
-	 * usermode helper is needed (I think मुख्यly android)
+	 * Finally fall back to request_firmware() for cases where the
+	 * usermode helper is needed (I think mainly android)
 	 */
-	अगर ((adreno_gpu->fwloc == FW_LOCATION_UNKNOWN) ||
-	    (adreno_gpu->fwloc == FW_LOCATION_HELPER)) अणु
+	if ((adreno_gpu->fwloc == FW_LOCATION_UNKNOWN) ||
+	    (adreno_gpu->fwloc == FW_LOCATION_HELPER)) {
 
 		ret = request_firmware(&fw, newname, drm->dev);
-		अगर (!ret) अणु
+		if (!ret) {
 			DRM_DEV_INFO(drm->dev, "loaded %s with helper\n",
 				newname);
 			adreno_gpu->fwloc = FW_LOCATION_HELPER;
-			जाओ out;
-		पूर्ण अन्यथा अगर (adreno_gpu->fwloc != FW_LOCATION_UNKNOWN) अणु
+			goto out;
+		} else if (adreno_gpu->fwloc != FW_LOCATION_UNKNOWN) {
 			DRM_DEV_ERROR(drm->dev, "failed to load %s: %d\n",
 				newname, ret);
 			fw = ERR_PTR(ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	DRM_DEV_ERROR(drm->dev, "failed to load %s\n", fwname);
 	fw = ERR_PTR(-ENOENT);
 out:
-	kमुक्त(newname);
-	वापस fw;
-पूर्ण
+	kfree(newname);
+	return fw;
+}
 
-पूर्णांक adreno_load_fw(काष्ठा adreno_gpu *adreno_gpu)
-अणु
-	पूर्णांक i;
+int adreno_load_fw(struct adreno_gpu *adreno_gpu)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(adreno_gpu->info->fw); i++) अणु
-		स्थिर काष्ठा firmware *fw;
+	for (i = 0; i < ARRAY_SIZE(adreno_gpu->info->fw); i++) {
+		const struct firmware *fw;
 
-		अगर (!adreno_gpu->info->fw[i])
-			जारी;
+		if (!adreno_gpu->info->fw[i])
+			continue;
 
-		/* Skip अगर the firmware has alपढ़ोy been loaded */
-		अगर (adreno_gpu->fw[i])
-			जारी;
+		/* Skip if the firmware has already been loaded */
+		if (adreno_gpu->fw[i])
+			continue;
 
 		fw = adreno_request_fw(adreno_gpu, adreno_gpu->info->fw[i]);
-		अगर (IS_ERR(fw))
-			वापस PTR_ERR(fw);
+		if (IS_ERR(fw))
+			return PTR_ERR(fw);
 
 		adreno_gpu->fw[i] = fw;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा drm_gem_object *adreno_fw_create_bo(काष्ठा msm_gpu *gpu,
-		स्थिर काष्ठा firmware *fw, u64 *iova)
-अणु
-	काष्ठा drm_gem_object *bo;
-	व्योम *ptr;
+struct drm_gem_object *adreno_fw_create_bo(struct msm_gpu *gpu,
+		const struct firmware *fw, u64 *iova)
+{
+	struct drm_gem_object *bo;
+	void *ptr;
 
 	ptr = msm_gem_kernel_new_locked(gpu->dev, fw->size - 4,
 		MSM_BO_UNCACHED | MSM_BO_GPU_READONLY, gpu->aspace, &bo, iova);
 
-	अगर (IS_ERR(ptr))
-		वापस ERR_CAST(ptr);
+	if (IS_ERR(ptr))
+		return ERR_CAST(ptr);
 
-	स_नकल(ptr, &fw->data[4], fw->size - 4);
+	memcpy(ptr, &fw->data[4], fw->size - 4);
 
 	msm_gem_put_vaddr(bo);
 
-	वापस bo;
-पूर्ण
+	return bo;
+}
 
-पूर्णांक adreno_hw_init(काष्ठा msm_gpu *gpu)
-अणु
-	काष्ठा adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
-	पूर्णांक ret, i;
+int adreno_hw_init(struct msm_gpu *gpu)
+{
+	struct adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
+	int ret, i;
 
 	DBG("%s", gpu->name);
 
 	ret = adreno_load_fw(adreno_gpu);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	क्रम (i = 0; i < gpu->nr_rings; i++) अणु
-		काष्ठा msm_ringbuffer *ring = gpu->rb[i];
+	for (i = 0; i < gpu->nr_rings; i++) {
+		struct msm_ringbuffer *ring = gpu->rb[i];
 
-		अगर (!ring)
-			जारी;
+		if (!ring)
+			continue;
 
 		ring->cur = ring->start;
 		ring->next = ring->start;
@@ -427,90 +426,90 @@ out:
 		/* reset completed fence seqno: */
 		ring->memptrs->fence = ring->fctx->completed_fence;
 		ring->memptrs->rptr = 0;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Use this helper to पढ़ो rptr, since a430 करोesn't update rptr in memory */
-अटल uपूर्णांक32_t get_rptr(काष्ठा adreno_gpu *adreno_gpu,
-		काष्ठा msm_ringbuffer *ring)
-अणु
-	काष्ठा msm_gpu *gpu = &adreno_gpu->base;
+/* Use this helper to read rptr, since a430 doesn't update rptr in memory */
+static uint32_t get_rptr(struct adreno_gpu *adreno_gpu,
+		struct msm_ringbuffer *ring)
+{
+	struct msm_gpu *gpu = &adreno_gpu->base;
 
-	वापस gpu->funcs->get_rptr(gpu, ring);
-पूर्ण
+	return gpu->funcs->get_rptr(gpu, ring);
+}
 
-काष्ठा msm_ringbuffer *adreno_active_ring(काष्ठा msm_gpu *gpu)
-अणु
-	वापस gpu->rb[0];
-पूर्ण
+struct msm_ringbuffer *adreno_active_ring(struct msm_gpu *gpu)
+{
+	return gpu->rb[0];
+}
 
-व्योम adreno_recover(काष्ठा msm_gpu *gpu)
-अणु
-	काष्ठा drm_device *dev = gpu->dev;
-	पूर्णांक ret;
+void adreno_recover(struct msm_gpu *gpu)
+{
+	struct drm_device *dev = gpu->dev;
+	int ret;
 
-	// XXX pm-runसमय??  we *need* the device to be off after this
+	// XXX pm-runtime??  we *need* the device to be off after this
 	// so maybe continuing to call ->pm_suspend/resume() is better?
 
 	gpu->funcs->pm_suspend(gpu);
 	gpu->funcs->pm_resume(gpu);
 
 	ret = msm_gpu_hw_init(gpu);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_DEV_ERROR(dev->dev, "gpu hw init failed: %d\n", ret);
 		/* hmm, oh well? */
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम adreno_flush(काष्ठा msm_gpu *gpu, काष्ठा msm_ringbuffer *ring, u32 reg)
-अणु
-	uपूर्णांक32_t wptr;
+void adreno_flush(struct msm_gpu *gpu, struct msm_ringbuffer *ring, u32 reg)
+{
+	uint32_t wptr;
 
-	/* Copy the shaकरोw to the actual रेजिस्टर */
+	/* Copy the shadow to the actual register */
 	ring->cur = ring->next;
 
 	/*
 	 * Mask wptr value that we calculate to fit in the HW range. This is
-	 * to account क्रम the possibility that the last command fit exactly पूर्णांकo
+	 * to account for the possibility that the last command fit exactly into
 	 * the ringbuffer and rb->next hasn't wrapped to zero yet
 	 */
 	wptr = get_wptr(ring);
 
-	/* ensure ग_लिखोs to ringbuffer have hit प्रणाली memory: */
+	/* ensure writes to ringbuffer have hit system memory: */
 	mb();
 
-	gpu_ग_लिखो(gpu, reg, wptr);
-पूर्ण
+	gpu_write(gpu, reg, wptr);
+}
 
-bool adreno_idle(काष्ठा msm_gpu *gpu, काष्ठा msm_ringbuffer *ring)
-अणु
-	काष्ठा adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
-	uपूर्णांक32_t wptr = get_wptr(ring);
+bool adreno_idle(struct msm_gpu *gpu, struct msm_ringbuffer *ring)
+{
+	struct adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
+	uint32_t wptr = get_wptr(ring);
 
-	/* रुको क्रम CP to drain ringbuffer: */
-	अगर (!spin_until(get_rptr(adreno_gpu, ring) == wptr))
-		वापस true;
+	/* wait for CP to drain ringbuffer: */
+	if (!spin_until(get_rptr(adreno_gpu, ring) == wptr))
+		return true;
 
 	/* TODO maybe we need to reset GPU here to recover from hang? */
 	DRM_ERROR("%s: timeout waiting to drain ringbuffer %d rptr/wptr = %X/%X\n",
 		gpu->name, ring->id, get_rptr(adreno_gpu, ring), wptr);
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-पूर्णांक adreno_gpu_state_get(काष्ठा msm_gpu *gpu, काष्ठा msm_gpu_state *state)
-अणु
-	काष्ठा adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
-	पूर्णांक i, count = 0;
+int adreno_gpu_state_get(struct msm_gpu *gpu, struct msm_gpu_state *state)
+{
+	struct adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
+	int i, count = 0;
 
 	kref_init(&state->ref);
 
-	kसमय_get_real_ts64(&state->समय);
+	ktime_get_real_ts64(&state->time);
 
-	क्रम (i = 0; i < gpu->nr_rings; i++) अणु
-		पूर्णांक size = 0, j;
+	for (i = 0; i < gpu->nr_rings; i++) {
+		int size = 0, j;
 
 		state->ring[i].fence = gpu->rb[i]->memptrs->fence;
 		state->ring[i].iova = gpu->rb[i]->iova;
@@ -522,123 +521,123 @@ bool adreno_idle(काष्ठा msm_gpu *gpu, काष्ठा msm_ringbuf
 		size = state->ring[i].wptr;
 
 		/* After wptr find the last non zero dword to save space */
-		क्रम (j = state->ring[i].wptr; j < MSM_GPU_RINGBUFFER_SZ >> 2; j++)
-			अगर (gpu->rb[i]->start[j])
+		for (j = state->ring[i].wptr; j < MSM_GPU_RINGBUFFER_SZ >> 2; j++)
+			if (gpu->rb[i]->start[j])
 				size = j + 1;
 
-		अगर (size) अणु
-			state->ring[i].data = kvदो_स्मृति(size << 2, GFP_KERNEL);
-			अगर (state->ring[i].data) अणु
-				स_नकल(state->ring[i].data, gpu->rb[i]->start, size << 2);
+		if (size) {
+			state->ring[i].data = kvmalloc(size << 2, GFP_KERNEL);
+			if (state->ring[i].data) {
+				memcpy(state->ring[i].data, gpu->rb[i]->start, size << 2);
 				state->ring[i].data_size = size << 2;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	/* Some tarमाला_लो prefer to collect their own रेजिस्टरs */
-	अगर (!adreno_gpu->रेजिस्टरs)
-		वापस 0;
+	/* Some targets prefer to collect their own registers */
+	if (!adreno_gpu->registers)
+		return 0;
 
-	/* Count the number of रेजिस्टरs */
-	क्रम (i = 0; adreno_gpu->रेजिस्टरs[i] != ~0; i += 2)
-		count += adreno_gpu->रेजिस्टरs[i + 1] -
-			adreno_gpu->रेजिस्टरs[i] + 1;
+	/* Count the number of registers */
+	for (i = 0; adreno_gpu->registers[i] != ~0; i += 2)
+		count += adreno_gpu->registers[i + 1] -
+			adreno_gpu->registers[i] + 1;
 
-	state->रेजिस्टरs = kसुस्मृति(count * 2, माप(u32), GFP_KERNEL);
-	अगर (state->रेजिस्टरs) अणु
-		पूर्णांक pos = 0;
+	state->registers = kcalloc(count * 2, sizeof(u32), GFP_KERNEL);
+	if (state->registers) {
+		int pos = 0;
 
-		क्रम (i = 0; adreno_gpu->रेजिस्टरs[i] != ~0; i += 2) अणु
-			u32 start = adreno_gpu->रेजिस्टरs[i];
-			u32 end   = adreno_gpu->रेजिस्टरs[i + 1];
+		for (i = 0; adreno_gpu->registers[i] != ~0; i += 2) {
+			u32 start = adreno_gpu->registers[i];
+			u32 end   = adreno_gpu->registers[i + 1];
 			u32 addr;
 
-			क्रम (addr = start; addr <= end; addr++) अणु
-				state->रेजिस्टरs[pos++] = addr;
-				state->रेजिस्टरs[pos++] = gpu_पढ़ो(gpu, addr);
-			पूर्ण
-		पूर्ण
+			for (addr = start; addr <= end; addr++) {
+				state->registers[pos++] = addr;
+				state->registers[pos++] = gpu_read(gpu, addr);
+			}
+		}
 
-		state->nr_रेजिस्टरs = count;
-	पूर्ण
+		state->nr_registers = count;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम adreno_gpu_state_destroy(काष्ठा msm_gpu_state *state)
-अणु
-	पूर्णांक i;
+void adreno_gpu_state_destroy(struct msm_gpu_state *state)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(state->ring); i++)
-		kvमुक्त(state->ring[i].data);
+	for (i = 0; i < ARRAY_SIZE(state->ring); i++)
+		kvfree(state->ring[i].data);
 
-	क्रम (i = 0; state->bos && i < state->nr_bos; i++)
-		kvमुक्त(state->bos[i].data);
+	for (i = 0; state->bos && i < state->nr_bos; i++)
+		kvfree(state->bos[i].data);
 
-	kमुक्त(state->bos);
-	kमुक्त(state->comm);
-	kमुक्त(state->cmd);
-	kमुक्त(state->रेजिस्टरs);
-पूर्ण
+	kfree(state->bos);
+	kfree(state->comm);
+	kfree(state->cmd);
+	kfree(state->registers);
+}
 
-अटल व्योम adreno_gpu_state_kref_destroy(काष्ठा kref *kref)
-अणु
-	काष्ठा msm_gpu_state *state = container_of(kref,
-		काष्ठा msm_gpu_state, ref);
+static void adreno_gpu_state_kref_destroy(struct kref *kref)
+{
+	struct msm_gpu_state *state = container_of(kref,
+		struct msm_gpu_state, ref);
 
 	adreno_gpu_state_destroy(state);
-	kमुक्त(state);
-पूर्ण
+	kfree(state);
+}
 
-पूर्णांक adreno_gpu_state_put(काष्ठा msm_gpu_state *state)
-अणु
-	अगर (IS_ERR_OR_शून्य(state))
-		वापस 1;
+int adreno_gpu_state_put(struct msm_gpu_state *state)
+{
+	if (IS_ERR_OR_NULL(state))
+		return 1;
 
-	वापस kref_put(&state->ref, adreno_gpu_state_kref_destroy);
-पूर्ण
+	return kref_put(&state->ref, adreno_gpu_state_kref_destroy);
+}
 
-#अगर defined(CONFIG_DEBUG_FS) || defined(CONFIG_DEV_COREDUMP)
+#if defined(CONFIG_DEBUG_FS) || defined(CONFIG_DEV_COREDUMP)
 
-अटल अक्षर *adreno_gpu_ascii85_encode(u32 *src, माप_प्रकार len)
-अणु
-	व्योम *buf;
-	माप_प्रकार buf_itr = 0, buffer_size;
-	अक्षर out[ASCII85_BUFSZ];
-	दीर्घ l;
-	पूर्णांक i;
+static char *adreno_gpu_ascii85_encode(u32 *src, size_t len)
+{
+	void *buf;
+	size_t buf_itr = 0, buffer_size;
+	char out[ASCII85_BUFSZ];
+	long l;
+	int i;
 
-	अगर (!src || !len)
-		वापस शून्य;
+	if (!src || !len)
+		return NULL;
 
 	l = ascii85_encode_len(len);
 
 	/*
-	 * Ascii85 outमाला_दो either a 5 byte string or a 1 byte string. So we
-	 * account क्रम the worst हाल of 5 bytes per dword plus the 1 क्रम '\0'
+	 * Ascii85 outputs either a 5 byte string or a 1 byte string. So we
+	 * account for the worst case of 5 bytes per dword plus the 1 for '\0'
 	 */
 	buffer_size = (l * 5) + 1;
 
-	buf = kvदो_स्मृति(buffer_size, GFP_KERNEL);
-	अगर (!buf)
-		वापस शून्य;
+	buf = kvmalloc(buffer_size, GFP_KERNEL);
+	if (!buf)
+		return NULL;
 
-	क्रम (i = 0; i < l; i++)
-		buf_itr += scnम_लिखो(buf + buf_itr, buffer_size - buf_itr, "%s",
+	for (i = 0; i < l; i++)
+		buf_itr += scnprintf(buf + buf_itr, buffer_size - buf_itr, "%s",
 				ascii85_encode(src[i], out));
 
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
 /* len is expected to be in bytes */
-अटल व्योम adreno_show_object(काष्ठा drm_prपूर्णांकer *p, व्योम **ptr, पूर्णांक len,
+static void adreno_show_object(struct drm_printer *p, void **ptr, int len,
 		bool *encoded)
-अणु
-	अगर (!*ptr || !len)
-		वापस;
+{
+	if (!*ptr || !len)
+		return;
 
-	अगर (!*encoded) अणु
-		दीर्घ datalen, i;
+	if (!*encoded) {
+		long datalen, i;
 		u32 *buf = *ptr;
 
 		/*
@@ -646,8 +645,8 @@ bool adreno_idle(काष्ठा msm_gpu *gpu, काष्ठा msm_ringbuf
 		 * any data completely fill the entire allocated size of
 		 * the buffer.
 		 */
-		क्रम (datalen = 0, i = 0; i < len >> 2; i++)
-			अगर (buf[i])
+		for (datalen = 0, i = 0; i < len >> 2; i++)
+			if (buf[i])
 				datalen = ((i + 1) << 2);
 
 		/*
@@ -656,263 +655,263 @@ bool adreno_idle(काष्ठा msm_gpu *gpu, काष्ठा msm_ringbuf
 		 */
 		*ptr = adreno_gpu_ascii85_encode(buf, datalen);
 
-		kvमुक्त(buf);
+		kvfree(buf);
 
 		*encoded = true;
-	पूर्ण
+	}
 
-	अगर (!*ptr)
-		वापस;
+	if (!*ptr)
+		return;
 
-	drm_माला_दो(p, "    data: !!ascii85 |\n");
-	drm_माला_दो(p, "     ");
+	drm_puts(p, "    data: !!ascii85 |\n");
+	drm_puts(p, "     ");
 
-	drm_माला_दो(p, *ptr);
+	drm_puts(p, *ptr);
 
-	drm_माला_दो(p, "\n");
-पूर्ण
+	drm_puts(p, "\n");
+}
 
-व्योम adreno_show(काष्ठा msm_gpu *gpu, काष्ठा msm_gpu_state *state,
-		काष्ठा drm_prपूर्णांकer *p)
-अणु
-	काष्ठा adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
-	पूर्णांक i;
+void adreno_show(struct msm_gpu *gpu, struct msm_gpu_state *state,
+		struct drm_printer *p)
+{
+	struct adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
+	int i;
 
-	अगर (IS_ERR_OR_शून्य(state))
-		वापस;
+	if (IS_ERR_OR_NULL(state))
+		return;
 
-	drm_म_लिखो(p, "revision: %d (%d.%d.%d.%d)\n",
+	drm_printf(p, "revision: %d (%d.%d.%d.%d)\n",
 			adreno_gpu->info->revn, adreno_gpu->rev.core,
 			adreno_gpu->rev.major, adreno_gpu->rev.minor,
 			adreno_gpu->rev.patchid);
 
-	drm_म_लिखो(p, "rbbm-status: 0x%08x\n", state->rbbm_status);
+	drm_printf(p, "rbbm-status: 0x%08x\n", state->rbbm_status);
 
-	drm_माला_दो(p, "ringbuffer:\n");
+	drm_puts(p, "ringbuffer:\n");
 
-	क्रम (i = 0; i < gpu->nr_rings; i++) अणु
-		drm_म_लिखो(p, "  - id: %d\n", i);
-		drm_म_लिखो(p, "    iova: 0x%016llx\n", state->ring[i].iova);
-		drm_म_लिखो(p, "    last-fence: %d\n", state->ring[i].seqno);
-		drm_म_लिखो(p, "    retired-fence: %d\n", state->ring[i].fence);
-		drm_म_लिखो(p, "    rptr: %d\n", state->ring[i].rptr);
-		drm_म_लिखो(p, "    wptr: %d\n", state->ring[i].wptr);
-		drm_म_लिखो(p, "    size: %d\n", MSM_GPU_RINGBUFFER_SZ);
+	for (i = 0; i < gpu->nr_rings; i++) {
+		drm_printf(p, "  - id: %d\n", i);
+		drm_printf(p, "    iova: 0x%016llx\n", state->ring[i].iova);
+		drm_printf(p, "    last-fence: %d\n", state->ring[i].seqno);
+		drm_printf(p, "    retired-fence: %d\n", state->ring[i].fence);
+		drm_printf(p, "    rptr: %d\n", state->ring[i].rptr);
+		drm_printf(p, "    wptr: %d\n", state->ring[i].wptr);
+		drm_printf(p, "    size: %d\n", MSM_GPU_RINGBUFFER_SZ);
 
 		adreno_show_object(p, &state->ring[i].data,
 			state->ring[i].data_size, &state->ring[i].encoded);
-	पूर्ण
+	}
 
-	अगर (state->bos) अणु
-		drm_माला_दो(p, "bos:\n");
+	if (state->bos) {
+		drm_puts(p, "bos:\n");
 
-		क्रम (i = 0; i < state->nr_bos; i++) अणु
-			drm_म_लिखो(p, "  - iova: 0x%016llx\n",
+		for (i = 0; i < state->nr_bos; i++) {
+			drm_printf(p, "  - iova: 0x%016llx\n",
 				state->bos[i].iova);
-			drm_म_लिखो(p, "    size: %zd\n", state->bos[i].size);
+			drm_printf(p, "    size: %zd\n", state->bos[i].size);
 
 			adreno_show_object(p, &state->bos[i].data,
 				state->bos[i].size, &state->bos[i].encoded);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (state->nr_रेजिस्टरs) अणु
-		drm_माला_दो(p, "registers:\n");
+	if (state->nr_registers) {
+		drm_puts(p, "registers:\n");
 
-		क्रम (i = 0; i < state->nr_रेजिस्टरs; i++) अणु
-			drm_म_लिखो(p, "  - { offset: 0x%04x, value: 0x%08x }\n",
-				state->रेजिस्टरs[i * 2] << 2,
-				state->रेजिस्टरs[(i * 2) + 1]);
-		पूर्ण
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+		for (i = 0; i < state->nr_registers; i++) {
+			drm_printf(p, "  - { offset: 0x%04x, value: 0x%08x }\n",
+				state->registers[i * 2] << 2,
+				state->registers[(i * 2) + 1]);
+		}
+	}
+}
+#endif
 
-/* Dump common gpu status and scratch रेजिस्टरs on any hang, to make
- * the hangcheck logs more useful.  The scratch रेजिस्टरs seem always
- * safe to पढ़ो when GPU has hung (unlike some other regs, depending
+/* Dump common gpu status and scratch registers on any hang, to make
+ * the hangcheck logs more useful.  The scratch registers seem always
+ * safe to read when GPU has hung (unlike some other regs, depending
  * on how the GPU hung), and they are useful to match up to cmdstream
  * dumps when debugging hangs:
  */
-व्योम adreno_dump_info(काष्ठा msm_gpu *gpu)
-अणु
-	काष्ठा adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
-	पूर्णांक i;
+void adreno_dump_info(struct msm_gpu *gpu)
+{
+	struct adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
+	int i;
 
-	prपूर्णांकk("revision: %d (%d.%d.%d.%d)\n",
+	printk("revision: %d (%d.%d.%d.%d)\n",
 			adreno_gpu->info->revn, adreno_gpu->rev.core,
 			adreno_gpu->rev.major, adreno_gpu->rev.minor,
 			adreno_gpu->rev.patchid);
 
-	क्रम (i = 0; i < gpu->nr_rings; i++) अणु
-		काष्ठा msm_ringbuffer *ring = gpu->rb[i];
+	for (i = 0; i < gpu->nr_rings; i++) {
+		struct msm_ringbuffer *ring = gpu->rb[i];
 
-		prपूर्णांकk("rb %d: fence:    %d/%d\n", i,
+		printk("rb %d: fence:    %d/%d\n", i,
 			ring->memptrs->fence,
 			ring->seqno);
 
-		prपूर्णांकk("rptr:     %d\n", get_rptr(adreno_gpu, ring));
-		prपूर्णांकk("rb wptr:  %d\n", get_wptr(ring));
-	पूर्ण
-पूर्ण
+		printk("rptr:     %d\n", get_rptr(adreno_gpu, ring));
+		printk("rb wptr:  %d\n", get_wptr(ring));
+	}
+}
 
-/* would be nice to not have to duplicate the _show() stuff with prपूर्णांकk(): */
-व्योम adreno_dump(काष्ठा msm_gpu *gpu)
-अणु
-	काष्ठा adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
-	पूर्णांक i;
+/* would be nice to not have to duplicate the _show() stuff with printk(): */
+void adreno_dump(struct msm_gpu *gpu)
+{
+	struct adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
+	int i;
 
-	अगर (!adreno_gpu->रेजिस्टरs)
-		वापस;
+	if (!adreno_gpu->registers)
+		return;
 
-	/* dump these out in a क्रमm that can be parsed by demsm: */
-	prपूर्णांकk("IO:region %s 00000000 00020000\n", gpu->name);
-	क्रम (i = 0; adreno_gpu->रेजिस्टरs[i] != ~0; i += 2) अणु
-		uपूर्णांक32_t start = adreno_gpu->रेजिस्टरs[i];
-		uपूर्णांक32_t end   = adreno_gpu->रेजिस्टरs[i+1];
-		uपूर्णांक32_t addr;
+	/* dump these out in a form that can be parsed by demsm: */
+	printk("IO:region %s 00000000 00020000\n", gpu->name);
+	for (i = 0; adreno_gpu->registers[i] != ~0; i += 2) {
+		uint32_t start = adreno_gpu->registers[i];
+		uint32_t end   = adreno_gpu->registers[i+1];
+		uint32_t addr;
 
-		क्रम (addr = start; addr <= end; addr++) अणु
-			uपूर्णांक32_t val = gpu_पढ़ो(gpu, addr);
-			prपूर्णांकk("IO:R %08x %08x\n", addr<<2, val);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		for (addr = start; addr <= end; addr++) {
+			uint32_t val = gpu_read(gpu, addr);
+			printk("IO:R %08x %08x\n", addr<<2, val);
+		}
+	}
+}
 
-अटल uपूर्णांक32_t ring_मुक्तwords(काष्ठा msm_ringbuffer *ring)
-अणु
-	काष्ठा adreno_gpu *adreno_gpu = to_adreno_gpu(ring->gpu);
-	uपूर्णांक32_t size = MSM_GPU_RINGBUFFER_SZ >> 2;
-	/* Use ring->next to calculate मुक्त size */
-	uपूर्णांक32_t wptr = ring->next - ring->start;
-	uपूर्णांक32_t rptr = get_rptr(adreno_gpu, ring);
-	वापस (rptr + (size - 1) - wptr) % size;
-पूर्ण
+static uint32_t ring_freewords(struct msm_ringbuffer *ring)
+{
+	struct adreno_gpu *adreno_gpu = to_adreno_gpu(ring->gpu);
+	uint32_t size = MSM_GPU_RINGBUFFER_SZ >> 2;
+	/* Use ring->next to calculate free size */
+	uint32_t wptr = ring->next - ring->start;
+	uint32_t rptr = get_rptr(adreno_gpu, ring);
+	return (rptr + (size - 1) - wptr) % size;
+}
 
-व्योम adreno_रुको_ring(काष्ठा msm_ringbuffer *ring, uपूर्णांक32_t ndwords)
-अणु
-	अगर (spin_until(ring_मुक्तwords(ring) >= ndwords))
+void adreno_wait_ring(struct msm_ringbuffer *ring, uint32_t ndwords)
+{
+	if (spin_until(ring_freewords(ring) >= ndwords))
 		DRM_DEV_ERROR(ring->gpu->dev->dev,
 			"timeout waiting for space in ringbuffer %d\n",
 			ring->id);
-पूर्ण
+}
 
-/* Get legacy घातerlevels from qcom,gpu-pwrlevels and populate the opp table */
-अटल पूर्णांक adreno_get_legacy_pwrlevels(काष्ठा device *dev)
-अणु
-	काष्ठा device_node *child, *node;
-	पूर्णांक ret;
+/* Get legacy powerlevels from qcom,gpu-pwrlevels and populate the opp table */
+static int adreno_get_legacy_pwrlevels(struct device *dev)
+{
+	struct device_node *child, *node;
+	int ret;
 
 	node = of_get_compatible_child(dev->of_node, "qcom,gpu-pwrlevels");
-	अगर (!node) अणु
+	if (!node) {
 		DRM_DEV_DEBUG(dev, "Could not find the GPU powerlevels\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	क्रम_each_child_of_node(node, child) अणु
-		अचिन्हित पूर्णांक val;
+	for_each_child_of_node(node, child) {
+		unsigned int val;
 
-		ret = of_property_पढ़ो_u32(child, "qcom,gpu-freq", &val);
-		अगर (ret)
-			जारी;
+		ret = of_property_read_u32(child, "qcom,gpu-freq", &val);
+		if (ret)
+			continue;
 
 		/*
-		 * Skip the पूर्णांकentionally bogus घड़ी value found at the bottom
+		 * Skip the intentionally bogus clock value found at the bottom
 		 * of most legacy frequency tables
 		 */
-		अगर (val != 27000000)
+		if (val != 27000000)
 			dev_pm_opp_add(dev, val, 0);
-	पूर्ण
+	}
 
 	of_node_put(node);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम adreno_get_pwrlevels(काष्ठा device *dev,
-		काष्ठा msm_gpu *gpu)
-अणु
-	अचिन्हित दीर्घ freq = अच_दीर्घ_उच्च;
-	काष्ठा dev_pm_opp *opp;
-	पूर्णांक ret;
+static void adreno_get_pwrlevels(struct device *dev,
+		struct msm_gpu *gpu)
+{
+	unsigned long freq = ULONG_MAX;
+	struct dev_pm_opp *opp;
+	int ret;
 
 	gpu->fast_rate = 0;
 
-	/* You करोwn with OPP? */
-	अगर (!of_find_property(dev->of_node, "operating-points-v2", शून्य))
+	/* You down with OPP? */
+	if (!of_find_property(dev->of_node, "operating-points-v2", NULL))
 		ret = adreno_get_legacy_pwrlevels(dev);
-	अन्यथा अणु
+	else {
 		ret = dev_pm_opp_of_add_table(dev);
-		अगर (ret)
+		if (ret)
 			DRM_DEV_ERROR(dev, "Unable to set the OPP table\n");
-	पूर्ण
+	}
 
-	अगर (!ret) अणु
+	if (!ret) {
 		/* Find the fastest defined rate */
-		opp = dev_pm_opp_find_freq_न्यूनमान(dev, &freq);
-		अगर (!IS_ERR(opp)) अणु
+		opp = dev_pm_opp_find_freq_floor(dev, &freq);
+		if (!IS_ERR(opp)) {
 			gpu->fast_rate = freq;
 			dev_pm_opp_put(opp);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!gpu->fast_rate) अणु
+	if (!gpu->fast_rate) {
 		dev_warn(dev,
 			"Could not find a clock rate. Using a reasonable default\n");
-		/* Pick a suitably safe घड़ी speed क्रम any target */
+		/* Pick a suitably safe clock speed for any target */
 		gpu->fast_rate = 200000000;
-	पूर्ण
+	}
 
 	DBG("fast_rate=%u, slow_rate=27000000", gpu->fast_rate);
-पूर्ण
+}
 
-पूर्णांक adreno_gpu_ocmem_init(काष्ठा device *dev, काष्ठा adreno_gpu *adreno_gpu,
-			  काष्ठा adreno_ocmem *adreno_ocmem)
-अणु
-	काष्ठा ocmem_buf *ocmem_hdl;
-	काष्ठा ocmem *ocmem;
+int adreno_gpu_ocmem_init(struct device *dev, struct adreno_gpu *adreno_gpu,
+			  struct adreno_ocmem *adreno_ocmem)
+{
+	struct ocmem_buf *ocmem_hdl;
+	struct ocmem *ocmem;
 
 	ocmem = of_get_ocmem(dev);
-	अगर (IS_ERR(ocmem)) अणु
-		अगर (PTR_ERR(ocmem) == -ENODEV) अणु
+	if (IS_ERR(ocmem)) {
+		if (PTR_ERR(ocmem) == -ENODEV) {
 			/*
 			 * Return success since either the ocmem property was
-			 * not specअगरied in device tree, or ocmem support is
-			 * not compiled पूर्णांकo the kernel.
+			 * not specified in device tree, or ocmem support is
+			 * not compiled into the kernel.
 			 */
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		वापस PTR_ERR(ocmem);
-	पूर्ण
+		return PTR_ERR(ocmem);
+	}
 
 	ocmem_hdl = ocmem_allocate(ocmem, OCMEM_GRAPHICS, adreno_gpu->gmem);
-	अगर (IS_ERR(ocmem_hdl))
-		वापस PTR_ERR(ocmem_hdl);
+	if (IS_ERR(ocmem_hdl))
+		return PTR_ERR(ocmem_hdl);
 
 	adreno_ocmem->ocmem = ocmem;
 	adreno_ocmem->base = ocmem_hdl->addr;
 	adreno_ocmem->hdl = ocmem_hdl;
 	adreno_gpu->gmem = ocmem_hdl->len;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम adreno_gpu_ocmem_cleanup(काष्ठा adreno_ocmem *adreno_ocmem)
-अणु
-	अगर (adreno_ocmem && adreno_ocmem->base)
-		ocmem_मुक्त(adreno_ocmem->ocmem, OCMEM_GRAPHICS,
+void adreno_gpu_ocmem_cleanup(struct adreno_ocmem *adreno_ocmem)
+{
+	if (adreno_ocmem && adreno_ocmem->base)
+		ocmem_free(adreno_ocmem->ocmem, OCMEM_GRAPHICS,
 			   adreno_ocmem->hdl);
-पूर्ण
+}
 
-पूर्णांक adreno_gpu_init(काष्ठा drm_device *drm, काष्ठा platक्रमm_device *pdev,
-		काष्ठा adreno_gpu *adreno_gpu,
-		स्थिर काष्ठा adreno_gpu_funcs *funcs, पूर्णांक nr_rings)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा adreno_platक्रमm_config *config = dev->platक्रमm_data;
-	काष्ठा msm_gpu_config adreno_gpu_config  = अणु 0 पूर्ण;
-	काष्ठा msm_gpu *gpu = &adreno_gpu->base;
+int adreno_gpu_init(struct drm_device *drm, struct platform_device *pdev,
+		struct adreno_gpu *adreno_gpu,
+		const struct adreno_gpu_funcs *funcs, int nr_rings)
+{
+	struct device *dev = &pdev->dev;
+	struct adreno_platform_config *config = dev->platform_data;
+	struct msm_gpu_config adreno_gpu_config  = { 0 };
+	struct msm_gpu *gpu = &adreno_gpu->base;
 
 	adreno_gpu->funcs = funcs;
 	adreno_gpu->info = adreno_info(config->rev);
@@ -926,28 +925,28 @@ bool adreno_idle(काष्ठा msm_gpu *gpu, काष्ठा msm_ringbuf
 
 	adreno_get_pwrlevels(dev, gpu);
 
-	pm_runसमय_set_स्वतःsuspend_delay(dev,
+	pm_runtime_set_autosuspend_delay(dev,
 		adreno_gpu->info->inactive_period);
-	pm_runसमय_use_स्वतःsuspend(dev);
-	pm_runसमय_enable(dev);
+	pm_runtime_use_autosuspend(dev);
+	pm_runtime_enable(dev);
 
-	वापस msm_gpu_init(drm, pdev, &adreno_gpu->base, &funcs->base,
+	return msm_gpu_init(drm, pdev, &adreno_gpu->base, &funcs->base,
 			adreno_gpu->info->name, &adreno_gpu_config);
-पूर्ण
+}
 
-व्योम adreno_gpu_cleanup(काष्ठा adreno_gpu *adreno_gpu)
-अणु
-	काष्ठा msm_gpu *gpu = &adreno_gpu->base;
-	काष्ठा msm_drm_निजी *priv = gpu->dev->dev_निजी;
-	अचिन्हित पूर्णांक i;
+void adreno_gpu_cleanup(struct adreno_gpu *adreno_gpu)
+{
+	struct msm_gpu *gpu = &adreno_gpu->base;
+	struct msm_drm_private *priv = gpu->dev->dev_private;
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(adreno_gpu->info->fw); i++)
+	for (i = 0; i < ARRAY_SIZE(adreno_gpu->info->fw); i++)
 		release_firmware(adreno_gpu->fw[i]);
 
-	pm_runसमय_disable(&priv->gpu_pdev->dev);
+	pm_runtime_disable(&priv->gpu_pdev->dev);
 
 	msm_gpu_cleanup(&adreno_gpu->base);
 
 	icc_put(gpu->icc_path);
 	icc_put(gpu->ocmem_icc_path);
-पूर्ण
+}

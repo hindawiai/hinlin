@@ -1,47 +1,46 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- *  arch/arm/include/यंत्र/thपढ़ो_notअगरy.h
+ *  arch/arm/include/asm/thread_notify.h
  *
  *  Copyright (C) 2006 Russell King.
  */
-#अगर_अघोषित ASMARM_THREAD_NOTIFY_H
-#घोषणा ASMARM_THREAD_NOTIFY_H
+#ifndef ASMARM_THREAD_NOTIFY_H
+#define ASMARM_THREAD_NOTIFY_H
 
-#अगर_घोषित __KERNEL__
+#ifdef __KERNEL__
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#समावेश <linux/notअगरier.h>
-#समावेश <यंत्र/thपढ़ो_info.h>
+#include <linux/notifier.h>
+#include <asm/thread_info.h>
 
-अटल अंतरभूत पूर्णांक thपढ़ो_रेजिस्टर_notअगरier(काष्ठा notअगरier_block *n)
-अणु
-	बाह्य काष्ठा atomic_notअगरier_head thपढ़ो_notअगरy_head;
-	वापस atomic_notअगरier_chain_रेजिस्टर(&thपढ़ो_notअगरy_head, n);
-पूर्ण
+static inline int thread_register_notifier(struct notifier_block *n)
+{
+	extern struct atomic_notifier_head thread_notify_head;
+	return atomic_notifier_chain_register(&thread_notify_head, n);
+}
 
-अटल अंतरभूत व्योम thपढ़ो_unरेजिस्टर_notअगरier(काष्ठा notअगरier_block *n)
-अणु
-	बाह्य काष्ठा atomic_notअगरier_head thपढ़ो_notअगरy_head;
-	atomic_notअगरier_chain_unरेजिस्टर(&thपढ़ो_notअगरy_head, n);
-पूर्ण
+static inline void thread_unregister_notifier(struct notifier_block *n)
+{
+	extern struct atomic_notifier_head thread_notify_head;
+	atomic_notifier_chain_unregister(&thread_notify_head, n);
+}
 
-अटल अंतरभूत व्योम thपढ़ो_notअगरy(अचिन्हित दीर्घ rc, काष्ठा thपढ़ो_info *thपढ़ो)
-अणु
-	बाह्य काष्ठा atomic_notअगरier_head thपढ़ो_notअगरy_head;
-	atomic_notअगरier_call_chain(&thपढ़ो_notअगरy_head, rc, thपढ़ो);
-पूर्ण
+static inline void thread_notify(unsigned long rc, struct thread_info *thread)
+{
+	extern struct atomic_notifier_head thread_notify_head;
+	atomic_notifier_call_chain(&thread_notify_head, rc, thread);
+}
 
-#पूर्ण_अगर
+#endif
 
 /*
- * These are the reason codes क्रम the thपढ़ो notअगरier.
+ * These are the reason codes for the thread notifier.
  */
-#घोषणा THREAD_NOTIFY_FLUSH	0
-#घोषणा THREAD_NOTIFY_EXIT	1
-#घोषणा THREAD_NOTIFY_SWITCH	2
-#घोषणा THREAD_NOTIFY_COPY	3
+#define THREAD_NOTIFY_FLUSH	0
+#define THREAD_NOTIFY_EXIT	1
+#define THREAD_NOTIFY_SWITCH	2
+#define THREAD_NOTIFY_COPY	3
 
-#पूर्ण_अगर
-#पूर्ण_अगर
+#endif
+#endif

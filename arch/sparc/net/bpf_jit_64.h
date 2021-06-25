@@ -1,39 +1,38 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _BPF_JIT_H
-#घोषणा _BPF_JIT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _BPF_JIT_H
+#define _BPF_JIT_H
 
-#अगर_अघोषित __ASSEMBLER__
-#घोषणा G0		0x00
-#घोषणा G1		0x01
-#घोषणा G2		0x02
-#घोषणा G3		0x03
-#घोषणा G6		0x06
-#घोषणा G7		0x07
-#घोषणा O0		0x08
-#घोषणा O1		0x09
-#घोषणा O2		0x0a
-#घोषणा O3		0x0b
-#घोषणा O4		0x0c
-#घोषणा O5		0x0d
-#घोषणा SP		0x0e
-#घोषणा O7		0x0f
-#घोषणा L0		0x10
-#घोषणा L1		0x11
-#घोषणा L2		0x12
-#घोषणा L3		0x13
-#घोषणा L4		0x14
-#घोषणा L5		0x15
-#घोषणा L6		0x16
-#घोषणा L7		0x17
-#घोषणा I0		0x18
-#घोषणा I1		0x19
-#घोषणा I2		0x1a
-#घोषणा I3		0x1b
-#घोषणा I4		0x1c
-#घोषणा I5		0x1d
-#घोषणा FP		0x1e
-#घोषणा I7		0x1f
-#पूर्ण_अगर
+#ifndef __ASSEMBLER__
+#define G0		0x00
+#define G1		0x01
+#define G2		0x02
+#define G3		0x03
+#define G6		0x06
+#define G7		0x07
+#define O0		0x08
+#define O1		0x09
+#define O2		0x0a
+#define O3		0x0b
+#define O4		0x0c
+#define O5		0x0d
+#define SP		0x0e
+#define O7		0x0f
+#define L0		0x10
+#define L1		0x11
+#define L2		0x12
+#define L3		0x13
+#define L4		0x14
+#define L5		0x15
+#define L6		0x16
+#define L7		0x17
+#define I0		0x18
+#define I1		0x19
+#define I2		0x1a
+#define I3		0x1b
+#define I4		0x1c
+#define I5		0x1d
+#define FP		0x1e
+#define I7		0x1f
+#endif
 
-#पूर्ण_अगर /* _BPF_JIT_H */
+#endif /* _BPF_JIT_H */

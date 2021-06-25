@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
 /*
  * linux/include/linux/ppdev.h
  *
@@ -7,8 +6,8 @@
  *
  * Copyright (C) 1998-9 Tim Waugh <tim@cyberelk.demon.co.uk>
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version
  * 2 of the License, or (at your option) any later version.
  *
@@ -16,89 +15,89 @@
  * Added PPGETMODES/PPGETMODE/PPGETPHASE, Fred Barnes <frmb2@ukc.ac.uk>, 03/01/2001
  */
 
-#अगर_अघोषित _UAPI_LINUX_PPDEV_H
-#घोषणा _UAPI_LINUX_PPDEV_H
+#ifndef _UAPI_LINUX_PPDEV_H
+#define _UAPI_LINUX_PPDEV_H
 
-#घोषणा PP_IOCTL	'p'
+#define PP_IOCTL	'p'
 
-/* Set mode क्रम पढ़ो/ग_लिखो (e.g. IEEE1284_MODE_EPP) */
-#घोषणा PPSETMODE	_IOW(PP_IOCTL, 0x80, पूर्णांक)
+/* Set mode for read/write (e.g. IEEE1284_MODE_EPP) */
+#define PPSETMODE	_IOW(PP_IOCTL, 0x80, int)
 
 /* Read status */
-#घोषणा PPRSTATUS	_IOR(PP_IOCTL, 0x81, अचिन्हित अक्षर)
-#घोषणा PPWSTATUS	OBSOLETE__IOW(PP_IOCTL, 0x82, अचिन्हित अक्षर)
+#define PPRSTATUS	_IOR(PP_IOCTL, 0x81, unsigned char)
+#define PPWSTATUS	OBSOLETE__IOW(PP_IOCTL, 0x82, unsigned char)
 
-/* Read/ग_लिखो control */
-#घोषणा PPRCONTROL	_IOR(PP_IOCTL, 0x83, अचिन्हित अक्षर)
-#घोषणा PPWCONTROL	_IOW(PP_IOCTL, 0x84, अचिन्हित अक्षर)
+/* Read/write control */
+#define PPRCONTROL	_IOR(PP_IOCTL, 0x83, unsigned char)
+#define PPWCONTROL	_IOW(PP_IOCTL, 0x84, unsigned char)
 
-काष्ठा ppdev_frob_काष्ठा अणु
-	अचिन्हित अक्षर mask;
-	अचिन्हित अक्षर val;
-पूर्ण;
-#घोषणा PPFCONTROL      _IOW(PP_IOCTL, 0x8e, काष्ठा ppdev_frob_काष्ठा)
+struct ppdev_frob_struct {
+	unsigned char mask;
+	unsigned char val;
+};
+#define PPFCONTROL      _IOW(PP_IOCTL, 0x8e, struct ppdev_frob_struct)
 
-/* Read/ग_लिखो data */
-#घोषणा PPRDATA		_IOR(PP_IOCTL, 0x85, अचिन्हित अक्षर)
-#घोषणा PPWDATA		_IOW(PP_IOCTL, 0x86, अचिन्हित अक्षर)
+/* Read/write data */
+#define PPRDATA		_IOR(PP_IOCTL, 0x85, unsigned char)
+#define PPWDATA		_IOW(PP_IOCTL, 0x86, unsigned char)
 
-/* Read/ग_लिखो econtrol (not used) */
-#घोषणा PPRECONTROL	OBSOLETE__IOR(PP_IOCTL, 0x87, अचिन्हित अक्षर)
-#घोषणा PPWECONTROL	OBSOLETE__IOW(PP_IOCTL, 0x88, अचिन्हित अक्षर)
+/* Read/write econtrol (not used) */
+#define PPRECONTROL	OBSOLETE__IOR(PP_IOCTL, 0x87, unsigned char)
+#define PPWECONTROL	OBSOLETE__IOW(PP_IOCTL, 0x88, unsigned char)
 
-/* Read/ग_लिखो FIFO (not used) */
-#घोषणा PPRFIFO		OBSOLETE__IOR(PP_IOCTL, 0x89, अचिन्हित अक्षर)
-#घोषणा PPWFIFO		OBSOLETE__IOW(PP_IOCTL, 0x8a, अचिन्हित अक्षर)
+/* Read/write FIFO (not used) */
+#define PPRFIFO		OBSOLETE__IOR(PP_IOCTL, 0x89, unsigned char)
+#define PPWFIFO		OBSOLETE__IOW(PP_IOCTL, 0x8a, unsigned char)
 
 /* Claim the port to start using it */
-#घोषणा PPCLAIM		_IO(PP_IOCTL, 0x8b)
+#define PPCLAIM		_IO(PP_IOCTL, 0x8b)
 
 /* Release the port when you aren't using it */
-#घोषणा PPRELEASE	_IO(PP_IOCTL, 0x8c)
+#define PPRELEASE	_IO(PP_IOCTL, 0x8c)
 
-/* Yield the port (release it अगर another driver is रुकोing,
+/* Yield the port (release it if another driver is waiting,
  * then reclaim) */
-#घोषणा PPYIELD		_IO(PP_IOCTL, 0x8d)
+#define PPYIELD		_IO(PP_IOCTL, 0x8d)
 
-/* Register device exclusively (must be beक्रमe PPCLAIM). */
-#घोषणा PPEXCL		_IO(PP_IOCTL, 0x8f)
+/* Register device exclusively (must be before PPCLAIM). */
+#define PPEXCL		_IO(PP_IOCTL, 0x8f)
 
-/* Data line direction: non-zero क्रम input mode. */
-#घोषणा PPDATAसूची	_IOW(PP_IOCTL, 0x90, पूर्णांक)
+/* Data line direction: non-zero for input mode. */
+#define PPDATADIR	_IOW(PP_IOCTL, 0x90, int)
 
 /* Negotiate a particular IEEE 1284 mode. */
-#घोषणा PPNEGOT		_IOW(PP_IOCTL, 0x91, पूर्णांक)
+#define PPNEGOT		_IOW(PP_IOCTL, 0x91, int)
 
-/* Set control lines when an पूर्णांकerrupt occurs. */
-#घोषणा PPWCTLONIRQ	_IOW(PP_IOCTL, 0x92, अचिन्हित अक्षर)
+/* Set control lines when an interrupt occurs. */
+#define PPWCTLONIRQ	_IOW(PP_IOCTL, 0x92, unsigned char)
 
-/* Clear (and वापस) पूर्णांकerrupt count. */
-#घोषणा PPCLRIRQ	_IOR(PP_IOCTL, 0x93, पूर्णांक)
+/* Clear (and return) interrupt count. */
+#define PPCLRIRQ	_IOR(PP_IOCTL, 0x93, int)
 
 /* Set the IEEE 1284 phase that we're in (e.g. IEEE1284_PH_FWD_IDLE) */
-#घोषणा PPSETPHASE	_IOW(PP_IOCTL, 0x94, पूर्णांक)
+#define PPSETPHASE	_IOW(PP_IOCTL, 0x94, int)
 
-/* Set and get port समयout (काष्ठा समयval's) */
-#घोषणा PPGETTIME	_IOR(PP_IOCTL, 0x95, काष्ठा समयval)
-#घोषणा PPSETTIME	_IOW(PP_IOCTL, 0x96, काष्ठा समयval)
+/* Set and get port timeout (struct timeval's) */
+#define PPGETTIME	_IOR(PP_IOCTL, 0x95, struct timeval)
+#define PPSETTIME	_IOW(PP_IOCTL, 0x96, struct timeval)
 
-/* Get available modes (what the hardware can करो) */
-#घोषणा PPGETMODES	_IOR(PP_IOCTL, 0x97, अचिन्हित पूर्णांक)
+/* Get available modes (what the hardware can do) */
+#define PPGETMODES	_IOR(PP_IOCTL, 0x97, unsigned int)
 
 /* Get the current mode and phaze */
-#घोषणा PPGETMODE	_IOR(PP_IOCTL, 0x98, पूर्णांक)
-#घोषणा PPGETPHASE	_IOR(PP_IOCTL, 0x99, पूर्णांक)
+#define PPGETMODE	_IOR(PP_IOCTL, 0x98, int)
+#define PPGETPHASE	_IOR(PP_IOCTL, 0x99, int)
 
 /* get/set flags */
-#घोषणा PPGETFLAGS	_IOR(PP_IOCTL, 0x9a, पूर्णांक)
-#घोषणा PPSETFLAGS	_IOW(PP_IOCTL, 0x9b, पूर्णांक)
+#define PPGETFLAGS	_IOR(PP_IOCTL, 0x9a, int)
+#define PPSETFLAGS	_IOW(PP_IOCTL, 0x9b, int)
 
 /* flags visible to the world */
-#घोषणा PP_FASTWRITE	(1<<2)
-#घोषणा PP_FASTREAD	(1<<3)
-#घोषणा PP_W91284PIC	(1<<4)
+#define PP_FASTWRITE	(1<<2)
+#define PP_FASTREAD	(1<<3)
+#define PP_W91284PIC	(1<<4)
 
 /* only masks user-visible flags */
-#घोषणा PP_FLAGMASK	(PP_FASTWRITE | PP_FASTREAD | PP_W91284PIC)
+#define PP_FLAGMASK	(PP_FASTWRITE | PP_FASTREAD | PP_W91284PIC)
 
-#पूर्ण_अगर /* _UAPI_LINUX_PPDEV_H */
+#endif /* _UAPI_LINUX_PPDEV_H */

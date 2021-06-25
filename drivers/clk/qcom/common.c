@@ -1,98 +1,97 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2013-2014, The Linux Foundation. All rights reserved.
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/module.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/reset-controller.h>
-#समावेश <linux/of.h>
+#include <linux/export.h>
+#include <linux/module.h>
+#include <linux/regmap.h>
+#include <linux/platform_device.h>
+#include <linux/clk-provider.h>
+#include <linux/reset-controller.h>
+#include <linux/of.h>
 
-#समावेश "common.h"
-#समावेश "clk-rcg.h"
-#समावेश "clk-regmap.h"
-#समावेश "reset.h"
-#समावेश "gdsc.h"
+#include "common.h"
+#include "clk-rcg.h"
+#include "clk-regmap.h"
+#include "reset.h"
+#include "gdsc.h"
 
-काष्ठा qcom_cc अणु
-	काष्ठा qcom_reset_controller reset;
-	काष्ठा clk_regmap **rclks;
-	माप_प्रकार num_rclks;
-पूर्ण;
+struct qcom_cc {
+	struct qcom_reset_controller reset;
+	struct clk_regmap **rclks;
+	size_t num_rclks;
+};
 
-स्थिर
-काष्ठा freq_tbl *qcom_find_freq(स्थिर काष्ठा freq_tbl *f, अचिन्हित दीर्घ rate)
-अणु
-	अगर (!f)
-		वापस शून्य;
+const
+struct freq_tbl *qcom_find_freq(const struct freq_tbl *f, unsigned long rate)
+{
+	if (!f)
+		return NULL;
 
-	अगर (!f->freq)
-		वापस f;
+	if (!f->freq)
+		return f;
 
-	क्रम (; f->freq; f++)
-		अगर (rate <= f->freq)
-			वापस f;
+	for (; f->freq; f++)
+		if (rate <= f->freq)
+			return f;
 
 	/* Default to our fastest rate */
-	वापस f - 1;
-पूर्ण
+	return f - 1;
+}
 EXPORT_SYMBOL_GPL(qcom_find_freq);
 
-स्थिर काष्ठा freq_tbl *qcom_find_freq_न्यूनमान(स्थिर काष्ठा freq_tbl *f,
-					    अचिन्हित दीर्घ rate)
-अणु
-	स्थिर काष्ठा freq_tbl *best = शून्य;
+const struct freq_tbl *qcom_find_freq_floor(const struct freq_tbl *f,
+					    unsigned long rate)
+{
+	const struct freq_tbl *best = NULL;
 
-	क्रम ( ; f->freq; f++) अणु
-		अगर (rate >= f->freq)
+	for ( ; f->freq; f++) {
+		if (rate >= f->freq)
 			best = f;
-		अन्यथा
-			अवरोध;
-	पूर्ण
+		else
+			break;
+	}
 
-	वापस best;
-पूर्ण
-EXPORT_SYMBOL_GPL(qcom_find_freq_न्यूनमान);
+	return best;
+}
+EXPORT_SYMBOL_GPL(qcom_find_freq_floor);
 
-पूर्णांक qcom_find_src_index(काष्ठा clk_hw *hw, स्थिर काष्ठा parent_map *map, u8 src)
-अणु
-	पूर्णांक i, num_parents = clk_hw_get_num_parents(hw);
+int qcom_find_src_index(struct clk_hw *hw, const struct parent_map *map, u8 src)
+{
+	int i, num_parents = clk_hw_get_num_parents(hw);
 
-	क्रम (i = 0; i < num_parents; i++)
-		अगर (src == map[i].src)
-			वापस i;
+	for (i = 0; i < num_parents; i++)
+		if (src == map[i].src)
+			return i;
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 EXPORT_SYMBOL_GPL(qcom_find_src_index);
 
-काष्ठा regmap *
-qcom_cc_map(काष्ठा platक्रमm_device *pdev, स्थिर काष्ठा qcom_cc_desc *desc)
-अणु
-	व्योम __iomem *base;
-	काष्ठा resource *res;
-	काष्ठा device *dev = &pdev->dev;
+struct regmap *
+qcom_cc_map(struct platform_device *pdev, const struct qcom_cc_desc *desc)
+{
+	void __iomem *base;
+	struct resource *res;
+	struct device *dev = &pdev->dev;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	base = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(base))
-		वापस ERR_CAST(base);
+	if (IS_ERR(base))
+		return ERR_CAST(base);
 
-	वापस devm_regmap_init_mmio(dev, base, desc->config);
-पूर्ण
+	return devm_regmap_init_mmio(dev, base, desc->config);
+}
 EXPORT_SYMBOL_GPL(qcom_cc_map);
 
-व्योम
-qcom_pll_set_fsm_mode(काष्ठा regmap *map, u32 reg, u8 bias_count, u8 lock_count)
-अणु
+void
+qcom_pll_set_fsm_mode(struct regmap *map, u32 reg, u8 bias_count, u8 lock_count)
+{
 	u32 val;
 	u32 mask;
 
-	/* De-निश्चित reset to FSM */
+	/* De-assert reset to FSM */
 	regmap_update_bits(map, reg, PLL_VOTE_FSM_RESET, 0);
 
 	/* Program bias count and lock count */
@@ -104,40 +103,40 @@ qcom_pll_set_fsm_mode(काष्ठा regmap *map, u32 reg, u8 bias_count, u8
 
 	/* Enable PLL FSM voting */
 	regmap_update_bits(map, reg, PLL_VOTE_FSM_ENA, PLL_VOTE_FSM_ENA);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(qcom_pll_set_fsm_mode);
 
-अटल व्योम qcom_cc_gdsc_unरेजिस्टर(व्योम *data)
-अणु
-	gdsc_unरेजिस्टर(data);
-पूर्ण
+static void qcom_cc_gdsc_unregister(void *data)
+{
+	gdsc_unregister(data);
+}
 
 /*
  * Backwards compatibility with old DTs. Register a pass-through factor 1/1
- * घड़ी to translate 'path' clk into 'name' clk and register the 'path'
- * clk as a fixed rate घड़ी अगर it isn't present.
+ * clock to translate 'path' clk into 'name' clk and register the 'path'
+ * clk as a fixed rate clock if it isn't present.
  */
-अटल पूर्णांक _qcom_cc_रेजिस्टर_board_clk(काष्ठा device *dev, स्थिर अक्षर *path,
-				       स्थिर अक्षर *name, अचिन्हित दीर्घ rate,
+static int _qcom_cc_register_board_clk(struct device *dev, const char *path,
+				       const char *name, unsigned long rate,
 				       bool add_factor)
-अणु
-	काष्ठा device_node *node = शून्य;
-	काष्ठा device_node *घड़ीs_node;
-	काष्ठा clk_fixed_factor *factor;
-	काष्ठा clk_fixed_rate *fixed;
-	काष्ठा clk_init_data init_data = अणु पूर्ण;
-	पूर्णांक ret;
+{
+	struct device_node *node = NULL;
+	struct device_node *clocks_node;
+	struct clk_fixed_factor *factor;
+	struct clk_fixed_rate *fixed;
+	struct clk_init_data init_data = { };
+	int ret;
 
-	घड़ीs_node = of_find_node_by_path("/clocks");
-	अगर (घड़ीs_node) अणु
-		node = of_get_child_by_name(घड़ीs_node, path);
-		of_node_put(घड़ीs_node);
-	पूर्ण
+	clocks_node = of_find_node_by_path("/clocks");
+	if (clocks_node) {
+		node = of_get_child_by_name(clocks_node, path);
+		of_node_put(clocks_node);
+	}
 
-	अगर (!node) अणु
-		fixed = devm_kzalloc(dev, माप(*fixed), GFP_KERNEL);
-		अगर (!fixed)
-			वापस -EINVAL;
+	if (!node) {
+		fixed = devm_kzalloc(dev, sizeof(*fixed), GFP_KERNEL);
+		if (!fixed)
+			return -EINVAL;
 
 		fixed->fixed_rate = rate;
 		fixed->hw.init = &init_data;
@@ -145,18 +144,18 @@ EXPORT_SYMBOL_GPL(qcom_pll_set_fsm_mode);
 		init_data.name = path;
 		init_data.ops = &clk_fixed_rate_ops;
 
-		ret = devm_clk_hw_रेजिस्टर(dev, &fixed->hw);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		ret = devm_clk_hw_register(dev, &fixed->hw);
+		if (ret)
+			return ret;
+	}
 	of_node_put(node);
 
-	अगर (add_factor) अणु
-		factor = devm_kzalloc(dev, माप(*factor), GFP_KERNEL);
-		अगर (!factor)
-			वापस -EINVAL;
+	if (add_factor) {
+		factor = devm_kzalloc(dev, sizeof(*factor), GFP_KERNEL);
+		if (!factor)
+			return -EINVAL;
 
-		factor->mult = factor->भाग = 1;
+		factor->mult = factor->div = 1;
 		factor->hw.init = &init_data;
 
 		init_data.name = name;
@@ -165,82 +164,82 @@ EXPORT_SYMBOL_GPL(qcom_pll_set_fsm_mode);
 		init_data.flags = 0;
 		init_data.ops = &clk_fixed_factor_ops;
 
-		ret = devm_clk_hw_रेजिस्टर(dev, &factor->hw);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		ret = devm_clk_hw_register(dev, &factor->hw);
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक qcom_cc_रेजिस्टर_board_clk(काष्ठा device *dev, स्थिर अक्षर *path,
-			       स्थिर अक्षर *name, अचिन्हित दीर्घ rate)
-अणु
+int qcom_cc_register_board_clk(struct device *dev, const char *path,
+			       const char *name, unsigned long rate)
+{
 	bool add_factor = true;
 
 	/*
-	 * TODO: The RPM घड़ी driver currently करोes not support the xo घड़ी.
-	 * When xo is added to the RPM घड़ी driver, we should change this
-	 * function to skip registration of xo factor घड़ीs.
+	 * TODO: The RPM clock driver currently does not support the xo clock.
+	 * When xo is added to the RPM clock driver, we should change this
+	 * function to skip registration of xo factor clocks.
 	 */
 
-	वापस _qcom_cc_रेजिस्टर_board_clk(dev, path, name, rate, add_factor);
-पूर्ण
-EXPORT_SYMBOL_GPL(qcom_cc_रेजिस्टर_board_clk);
+	return _qcom_cc_register_board_clk(dev, path, name, rate, add_factor);
+}
+EXPORT_SYMBOL_GPL(qcom_cc_register_board_clk);
 
-पूर्णांक qcom_cc_रेजिस्टर_sleep_clk(काष्ठा device *dev)
-अणु
-	वापस _qcom_cc_रेजिस्टर_board_clk(dev, "sleep_clk", "sleep_clk_src",
+int qcom_cc_register_sleep_clk(struct device *dev)
+{
+	return _qcom_cc_register_board_clk(dev, "sleep_clk", "sleep_clk_src",
 					   32768, true);
-पूर्ण
-EXPORT_SYMBOL_GPL(qcom_cc_रेजिस्टर_sleep_clk);
+}
+EXPORT_SYMBOL_GPL(qcom_cc_register_sleep_clk);
 
-/* Drop 'protected-clocks' from the list of घड़ीs to रेजिस्टर */
-अटल व्योम qcom_cc_drop_रक्षित(काष्ठा device *dev, काष्ठा qcom_cc *cc)
-अणु
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा property *prop;
-	स्थिर __be32 *p;
+/* Drop 'protected-clocks' from the list of clocks to register */
+static void qcom_cc_drop_protected(struct device *dev, struct qcom_cc *cc)
+{
+	struct device_node *np = dev->of_node;
+	struct property *prop;
+	const __be32 *p;
 	u32 i;
 
-	of_property_क्रम_each_u32(np, "protected-clocks", prop, p, i) अणु
-		अगर (i >= cc->num_rclks)
-			जारी;
+	of_property_for_each_u32(np, "protected-clocks", prop, p, i) {
+		if (i >= cc->num_rclks)
+			continue;
 
-		cc->rclks[i] = शून्य;
-	पूर्ण
-पूर्ण
+		cc->rclks[i] = NULL;
+	}
+}
 
-अटल काष्ठा clk_hw *qcom_cc_clk_hw_get(काष्ठा of_phandle_args *clkspec,
-					 व्योम *data)
-अणु
-	काष्ठा qcom_cc *cc = data;
-	अचिन्हित पूर्णांक idx = clkspec->args[0];
+static struct clk_hw *qcom_cc_clk_hw_get(struct of_phandle_args *clkspec,
+					 void *data)
+{
+	struct qcom_cc *cc = data;
+	unsigned int idx = clkspec->args[0];
 
-	अगर (idx >= cc->num_rclks) अणु
+	if (idx >= cc->num_rclks) {
 		pr_err("%s: invalid index %u\n", __func__, idx);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	वापस cc->rclks[idx] ? &cc->rclks[idx]->hw : शून्य;
-पूर्ण
+	return cc->rclks[idx] ? &cc->rclks[idx]->hw : NULL;
+}
 
-पूर्णांक qcom_cc_really_probe(काष्ठा platक्रमm_device *pdev,
-			 स्थिर काष्ठा qcom_cc_desc *desc, काष्ठा regmap *regmap)
-अणु
-	पूर्णांक i, ret;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा qcom_reset_controller *reset;
-	काष्ठा qcom_cc *cc;
-	काष्ठा gdsc_desc *scd;
-	माप_प्रकार num_clks = desc->num_clks;
-	काष्ठा clk_regmap **rclks = desc->clks;
-	माप_प्रकार num_clk_hws = desc->num_clk_hws;
-	काष्ठा clk_hw **clk_hws = desc->clk_hws;
+int qcom_cc_really_probe(struct platform_device *pdev,
+			 const struct qcom_cc_desc *desc, struct regmap *regmap)
+{
+	int i, ret;
+	struct device *dev = &pdev->dev;
+	struct qcom_reset_controller *reset;
+	struct qcom_cc *cc;
+	struct gdsc_desc *scd;
+	size_t num_clks = desc->num_clks;
+	struct clk_regmap **rclks = desc->clks;
+	size_t num_clk_hws = desc->num_clk_hws;
+	struct clk_hw **clk_hws = desc->clk_hws;
 
-	cc = devm_kzalloc(dev, माप(*cc), GFP_KERNEL);
-	अगर (!cc)
-		वापस -ENOMEM;
+	cc = devm_kzalloc(dev, sizeof(*cc), GFP_KERNEL);
+	if (!cc)
+		return -ENOMEM;
 
 	reset = &cc->reset;
 	reset->rcdev.of_node = dev->of_node;
@@ -250,84 +249,84 @@ EXPORT_SYMBOL_GPL(qcom_cc_रेजिस्टर_sleep_clk);
 	reset->regmap = regmap;
 	reset->reset_map = desc->resets;
 
-	ret = devm_reset_controller_रेजिस्टर(dev, &reset->rcdev);
-	अगर (ret)
-		वापस ret;
+	ret = devm_reset_controller_register(dev, &reset->rcdev);
+	if (ret)
+		return ret;
 
-	अगर (desc->gdscs && desc->num_gdscs) अणु
-		scd = devm_kzalloc(dev, माप(*scd), GFP_KERNEL);
-		अगर (!scd)
-			वापस -ENOMEM;
+	if (desc->gdscs && desc->num_gdscs) {
+		scd = devm_kzalloc(dev, sizeof(*scd), GFP_KERNEL);
+		if (!scd)
+			return -ENOMEM;
 		scd->dev = dev;
 		scd->scs = desc->gdscs;
 		scd->num = desc->num_gdscs;
-		ret = gdsc_रेजिस्टर(scd, &reset->rcdev, regmap);
-		अगर (ret)
-			वापस ret;
-		ret = devm_add_action_or_reset(dev, qcom_cc_gdsc_unरेजिस्टर,
+		ret = gdsc_register(scd, &reset->rcdev, regmap);
+		if (ret)
+			return ret;
+		ret = devm_add_action_or_reset(dev, qcom_cc_gdsc_unregister,
 					       scd);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	cc->rclks = rclks;
 	cc->num_rclks = num_clks;
 
-	qcom_cc_drop_रक्षित(dev, cc);
+	qcom_cc_drop_protected(dev, cc);
 
-	क्रम (i = 0; i < num_clk_hws; i++) अणु
-		ret = devm_clk_hw_रेजिस्टर(dev, clk_hws[i]);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	for (i = 0; i < num_clk_hws; i++) {
+		ret = devm_clk_hw_register(dev, clk_hws[i]);
+		if (ret)
+			return ret;
+	}
 
-	क्रम (i = 0; i < num_clks; i++) अणु
-		अगर (!rclks[i])
-			जारी;
+	for (i = 0; i < num_clks; i++) {
+		if (!rclks[i])
+			continue;
 
-		ret = devm_clk_रेजिस्टर_regmap(dev, rclks[i]);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		ret = devm_clk_register_regmap(dev, rclks[i]);
+		if (ret)
+			return ret;
+	}
 
 	ret = devm_of_clk_add_hw_provider(dev, qcom_cc_clk_hw_get, cc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(qcom_cc_really_probe);
 
-पूर्णांक qcom_cc_probe(काष्ठा platक्रमm_device *pdev, स्थिर काष्ठा qcom_cc_desc *desc)
-अणु
-	काष्ठा regmap *regmap;
+int qcom_cc_probe(struct platform_device *pdev, const struct qcom_cc_desc *desc)
+{
+	struct regmap *regmap;
 
 	regmap = qcom_cc_map(pdev, desc);
-	अगर (IS_ERR(regmap))
-		वापस PTR_ERR(regmap);
+	if (IS_ERR(regmap))
+		return PTR_ERR(regmap);
 
-	वापस qcom_cc_really_probe(pdev, desc, regmap);
-पूर्ण
+	return qcom_cc_really_probe(pdev, desc, regmap);
+}
 EXPORT_SYMBOL_GPL(qcom_cc_probe);
 
-पूर्णांक qcom_cc_probe_by_index(काष्ठा platक्रमm_device *pdev, पूर्णांक index,
-			   स्थिर काष्ठा qcom_cc_desc *desc)
-अणु
-	काष्ठा regmap *regmap;
-	काष्ठा resource *res;
-	व्योम __iomem *base;
+int qcom_cc_probe_by_index(struct platform_device *pdev, int index,
+			   const struct qcom_cc_desc *desc)
+{
+	struct regmap *regmap;
+	struct resource *res;
+	void __iomem *base;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, index);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, index);
 	base = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(base))
-		वापस -ENOMEM;
+	if (IS_ERR(base))
+		return -ENOMEM;
 
 	regmap = devm_regmap_init_mmio(&pdev->dev, base, desc->config);
-	अगर (IS_ERR(regmap))
-		वापस PTR_ERR(regmap);
+	if (IS_ERR(regmap))
+		return PTR_ERR(regmap);
 
-	वापस qcom_cc_really_probe(pdev, desc, regmap);
-पूर्ण
+	return qcom_cc_really_probe(pdev, desc, regmap);
+}
 EXPORT_SYMBOL_GPL(qcom_cc_probe_by_index);
 
 MODULE_LICENSE("GPL v2");

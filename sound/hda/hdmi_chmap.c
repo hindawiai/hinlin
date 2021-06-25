@@ -1,13 +1,12 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * HDMI Channel map support helpers
  */
 
-#समावेश <linux/module.h>
-#समावेश <sound/control.h>
-#समावेश <sound/tlv.h>
-#समावेश <sound/hda_chmap.h>
+#include <linux/module.h>
+#include <sound/control.h>
+#include <sound/tlv.h>
+#include <sound/hda_chmap.h>
 
 /*
  * CEA speaker placement:
@@ -23,7 +22,7 @@
  * The Left/Right Surround channel _notions_ LS/RS in SMPTE 320M corresponds to
  * CEA RL/RR; The SMPTE channel _assignment_ C/LFE is swapped to CEA LFE/FC.
  */
-क्रमागत cea_speaker_placement अणु
+enum cea_speaker_placement {
 	FL  = (1 <<  0),	/* Front Left           */
 	FC  = (1 <<  1),	/* Front Center         */
 	FR  = (1 <<  2),	/* Front Right          */
@@ -41,9 +40,9 @@
 	FCH = (1 << 14),	/* Front Center High    */
 	FRH = (1 << 15),	/* Front Right High     */
 	TC  = (1 << 16),	/* Top Center           */
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर cea_speaker_allocation_names[] = अणु
+static const char * const cea_speaker_allocation_names[] = {
 	/*  0 */ "FL/FR",
 	/*  1 */ "LFE",
 	/*  2 */ "FC",
@@ -55,12 +54,12 @@
 	/*  8 */ "FLH/FRH",
 	/*  9 */ "TC",
 	/* 10 */ "FCH",
-पूर्ण;
+};
 
 /*
  * ELD SA bits in the CEA Speaker Allocation data block
  */
-अटल स्थिर पूर्णांक eld_speaker_allocation_bits[] = अणु
+static const int eld_speaker_allocation_bits[] = {
 	[0] = FL | FR,
 	[1] = LFE,
 	[2] = FC,
@@ -73,7 +72,7 @@
 	[8] = FLH | FRH,
 	[9] = TC,
 	[10] = FCH,
-पूर्ण;
+};
 
 /*
  * ALSA sequence is:
@@ -88,28 +87,28 @@
  * ch6                                                       side left
  * ch7                                                       side right
  *
- * surround71 = अणुFL, FR, RLC, RRC, FC, LFE, RL, RRपूर्ण
+ * surround71 = {FL, FR, RLC, RRC, FC, LFE, RL, RR}
  */
-अटल पूर्णांक hdmi_channel_mapping[0x32][8] = अणु
+static int hdmi_channel_mapping[0x32][8] = {
 	/* stereo */
-	[0x00] = अणु 0x00, 0x11, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7 पूर्ण,
+	[0x00] = { 0x00, 0x11, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7 },
 	/* 2.1 */
-	[0x01] = अणु 0x00, 0x11, 0x22, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7 पूर्ण,
+	[0x01] = { 0x00, 0x11, 0x22, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7 },
 	/* Dolby Surround */
-	[0x02] = अणु 0x00, 0x11, 0x23, 0xf2, 0xf4, 0xf5, 0xf6, 0xf7 पूर्ण,
+	[0x02] = { 0x00, 0x11, 0x23, 0xf2, 0xf4, 0xf5, 0xf6, 0xf7 },
 	/* surround40 */
-	[0x08] = अणु 0x00, 0x11, 0x24, 0x35, 0xf3, 0xf2, 0xf6, 0xf7 पूर्ण,
+	[0x08] = { 0x00, 0x11, 0x24, 0x35, 0xf3, 0xf2, 0xf6, 0xf7 },
 	/* 4ch */
-	[0x03] = अणु 0x00, 0x11, 0x23, 0x32, 0x44, 0xf5, 0xf6, 0xf7 पूर्ण,
+	[0x03] = { 0x00, 0x11, 0x23, 0x32, 0x44, 0xf5, 0xf6, 0xf7 },
 	/* surround41 */
-	[0x09] = अणु 0x00, 0x11, 0x24, 0x35, 0x42, 0xf3, 0xf6, 0xf7 पूर्ण,
+	[0x09] = { 0x00, 0x11, 0x24, 0x35, 0x42, 0xf3, 0xf6, 0xf7 },
 	/* surround50 */
-	[0x0a] = अणु 0x00, 0x11, 0x24, 0x35, 0x43, 0xf2, 0xf6, 0xf7 पूर्ण,
+	[0x0a] = { 0x00, 0x11, 0x24, 0x35, 0x43, 0xf2, 0xf6, 0xf7 },
 	/* surround51 */
-	[0x0b] = अणु 0x00, 0x11, 0x24, 0x35, 0x43, 0x52, 0xf6, 0xf7 पूर्ण,
+	[0x0b] = { 0x00, 0x11, 0x24, 0x35, 0x43, 0x52, 0xf6, 0xf7 },
 	/* 7.1 */
-	[0x13] = अणु 0x00, 0x11, 0x26, 0x37, 0x43, 0x52, 0x64, 0x75 पूर्ण,
-पूर्ण;
+	[0x13] = { 0x00, 0x11, 0x26, 0x37, 0x43, 0x52, 0x64, 0x75 },
+};
 
 /*
  * This is an ordered list!
@@ -117,98 +116,98 @@
  * The preceding ones have better chances to be selected by
  * hdmi_channel_allocation().
  */
-अटल काष्ठा hdac_cea_channel_speaker_allocation channel_allocations[] = अणु
+static struct hdac_cea_channel_speaker_allocation channel_allocations[] = {
 /*			  channel:   7     6    5    4    3     2    1    0  */
-अणु .ca_index = 0x00,  .speakers = अणु   0,    0,   0,   0,   0,    0,  FR,  FL पूर्ण पूर्ण,
+{ .ca_index = 0x00,  .speakers = {   0,    0,   0,   0,   0,    0,  FR,  FL } },
 				 /* 2.1 */
-अणु .ca_index = 0x01,  .speakers = अणु   0,    0,   0,   0,   0,  LFE,  FR,  FL पूर्ण पूर्ण,
+{ .ca_index = 0x01,  .speakers = {   0,    0,   0,   0,   0,  LFE,  FR,  FL } },
 				 /* Dolby Surround */
-अणु .ca_index = 0x02,  .speakers = अणु   0,    0,   0,   0,  FC,    0,  FR,  FL पूर्ण पूर्ण,
+{ .ca_index = 0x02,  .speakers = {   0,    0,   0,   0,  FC,    0,  FR,  FL } },
 				 /* surround40 */
-अणु .ca_index = 0x08,  .speakers = अणु   0,    0,  RR,  RL,   0,    0,  FR,  FL पूर्ण पूर्ण,
+{ .ca_index = 0x08,  .speakers = {   0,    0,  RR,  RL,   0,    0,  FR,  FL } },
 				 /* surround41 */
-अणु .ca_index = 0x09,  .speakers = अणु   0,    0,  RR,  RL,   0,  LFE,  FR,  FL पूर्ण पूर्ण,
+{ .ca_index = 0x09,  .speakers = {   0,    0,  RR,  RL,   0,  LFE,  FR,  FL } },
 				 /* surround50 */
-अणु .ca_index = 0x0a,  .speakers = अणु   0,    0,  RR,  RL,  FC,    0,  FR,  FL पूर्ण पूर्ण,
+{ .ca_index = 0x0a,  .speakers = {   0,    0,  RR,  RL,  FC,    0,  FR,  FL } },
 				 /* surround51 */
-अणु .ca_index = 0x0b,  .speakers = अणु   0,    0,  RR,  RL,  FC,  LFE,  FR,  FL पूर्ण पूर्ण,
+{ .ca_index = 0x0b,  .speakers = {   0,    0,  RR,  RL,  FC,  LFE,  FR,  FL } },
 				 /* 6.1 */
-अणु .ca_index = 0x0f,  .speakers = अणु   0,   RC,  RR,  RL,  FC,  LFE,  FR,  FL पूर्ण पूर्ण,
+{ .ca_index = 0x0f,  .speakers = {   0,   RC,  RR,  RL,  FC,  LFE,  FR,  FL } },
 				 /* surround71 */
-अणु .ca_index = 0x13,  .speakers = अणु RRC,  RLC,  RR,  RL,  FC,  LFE,  FR,  FL पूर्ण पूर्ण,
+{ .ca_index = 0x13,  .speakers = { RRC,  RLC,  RR,  RL,  FC,  LFE,  FR,  FL } },
 
-अणु .ca_index = 0x03,  .speakers = अणु   0,    0,   0,   0,  FC,  LFE,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x04,  .speakers = अणु   0,    0,   0,  RC,   0,    0,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x05,  .speakers = अणु   0,    0,   0,  RC,   0,  LFE,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x06,  .speakers = अणु   0,    0,   0,  RC,  FC,    0,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x07,  .speakers = अणु   0,    0,   0,  RC,  FC,  LFE,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x0c,  .speakers = अणु   0,   RC,  RR,  RL,   0,    0,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x0d,  .speakers = अणु   0,   RC,  RR,  RL,   0,  LFE,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x0e,  .speakers = अणु   0,   RC,  RR,  RL,  FC,    0,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x10,  .speakers = अणु RRC,  RLC,  RR,  RL,   0,    0,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x11,  .speakers = अणु RRC,  RLC,  RR,  RL,   0,  LFE,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x12,  .speakers = अणु RRC,  RLC,  RR,  RL,  FC,    0,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x14,  .speakers = अणु FRC,  FLC,   0,   0,   0,    0,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x15,  .speakers = अणु FRC,  FLC,   0,   0,   0,  LFE,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x16,  .speakers = अणु FRC,  FLC,   0,   0,  FC,    0,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x17,  .speakers = अणु FRC,  FLC,   0,   0,  FC,  LFE,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x18,  .speakers = अणु FRC,  FLC,   0,  RC,   0,    0,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x19,  .speakers = अणु FRC,  FLC,   0,  RC,   0,  LFE,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x1a,  .speakers = अणु FRC,  FLC,   0,  RC,  FC,    0,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x1b,  .speakers = अणु FRC,  FLC,   0,  RC,  FC,  LFE,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x1c,  .speakers = अणु FRC,  FLC,  RR,  RL,   0,    0,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x1d,  .speakers = अणु FRC,  FLC,  RR,  RL,   0,  LFE,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x1e,  .speakers = अणु FRC,  FLC,  RR,  RL,  FC,    0,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x1f,  .speakers = अणु FRC,  FLC,  RR,  RL,  FC,  LFE,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x20,  .speakers = अणु   0,  FCH,  RR,  RL,  FC,    0,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x21,  .speakers = अणु   0,  FCH,  RR,  RL,  FC,  LFE,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x22,  .speakers = अणु  TC,    0,  RR,  RL,  FC,    0,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x23,  .speakers = अणु  TC,    0,  RR,  RL,  FC,  LFE,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x24,  .speakers = अणु FRH,  FLH,  RR,  RL,   0,    0,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x25,  .speakers = अणु FRH,  FLH,  RR,  RL,   0,  LFE,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x26,  .speakers = अणु FRW,  FLW,  RR,  RL,   0,    0,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x27,  .speakers = अणु FRW,  FLW,  RR,  RL,   0,  LFE,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x28,  .speakers = अणु  TC,   RC,  RR,  RL,  FC,    0,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x29,  .speakers = अणु  TC,   RC,  RR,  RL,  FC,  LFE,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x2a,  .speakers = अणु FCH,   RC,  RR,  RL,  FC,    0,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x2b,  .speakers = अणु FCH,   RC,  RR,  RL,  FC,  LFE,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x2c,  .speakers = अणु  TC,  FCH,  RR,  RL,  FC,    0,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x2d,  .speakers = अणु  TC,  FCH,  RR,  RL,  FC,  LFE,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x2e,  .speakers = अणु FRH,  FLH,  RR,  RL,  FC,    0,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x2f,  .speakers = अणु FRH,  FLH,  RR,  RL,  FC,  LFE,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x30,  .speakers = अणु FRW,  FLW,  RR,  RL,  FC,    0,  FR,  FL पूर्ण पूर्ण,
-अणु .ca_index = 0x31,  .speakers = अणु FRW,  FLW,  RR,  RL,  FC,  LFE,  FR,  FL पूर्ण पूर्ण,
-पूर्ण;
+{ .ca_index = 0x03,  .speakers = {   0,    0,   0,   0,  FC,  LFE,  FR,  FL } },
+{ .ca_index = 0x04,  .speakers = {   0,    0,   0,  RC,   0,    0,  FR,  FL } },
+{ .ca_index = 0x05,  .speakers = {   0,    0,   0,  RC,   0,  LFE,  FR,  FL } },
+{ .ca_index = 0x06,  .speakers = {   0,    0,   0,  RC,  FC,    0,  FR,  FL } },
+{ .ca_index = 0x07,  .speakers = {   0,    0,   0,  RC,  FC,  LFE,  FR,  FL } },
+{ .ca_index = 0x0c,  .speakers = {   0,   RC,  RR,  RL,   0,    0,  FR,  FL } },
+{ .ca_index = 0x0d,  .speakers = {   0,   RC,  RR,  RL,   0,  LFE,  FR,  FL } },
+{ .ca_index = 0x0e,  .speakers = {   0,   RC,  RR,  RL,  FC,    0,  FR,  FL } },
+{ .ca_index = 0x10,  .speakers = { RRC,  RLC,  RR,  RL,   0,    0,  FR,  FL } },
+{ .ca_index = 0x11,  .speakers = { RRC,  RLC,  RR,  RL,   0,  LFE,  FR,  FL } },
+{ .ca_index = 0x12,  .speakers = { RRC,  RLC,  RR,  RL,  FC,    0,  FR,  FL } },
+{ .ca_index = 0x14,  .speakers = { FRC,  FLC,   0,   0,   0,    0,  FR,  FL } },
+{ .ca_index = 0x15,  .speakers = { FRC,  FLC,   0,   0,   0,  LFE,  FR,  FL } },
+{ .ca_index = 0x16,  .speakers = { FRC,  FLC,   0,   0,  FC,    0,  FR,  FL } },
+{ .ca_index = 0x17,  .speakers = { FRC,  FLC,   0,   0,  FC,  LFE,  FR,  FL } },
+{ .ca_index = 0x18,  .speakers = { FRC,  FLC,   0,  RC,   0,    0,  FR,  FL } },
+{ .ca_index = 0x19,  .speakers = { FRC,  FLC,   0,  RC,   0,  LFE,  FR,  FL } },
+{ .ca_index = 0x1a,  .speakers = { FRC,  FLC,   0,  RC,  FC,    0,  FR,  FL } },
+{ .ca_index = 0x1b,  .speakers = { FRC,  FLC,   0,  RC,  FC,  LFE,  FR,  FL } },
+{ .ca_index = 0x1c,  .speakers = { FRC,  FLC,  RR,  RL,   0,    0,  FR,  FL } },
+{ .ca_index = 0x1d,  .speakers = { FRC,  FLC,  RR,  RL,   0,  LFE,  FR,  FL } },
+{ .ca_index = 0x1e,  .speakers = { FRC,  FLC,  RR,  RL,  FC,    0,  FR,  FL } },
+{ .ca_index = 0x1f,  .speakers = { FRC,  FLC,  RR,  RL,  FC,  LFE,  FR,  FL } },
+{ .ca_index = 0x20,  .speakers = {   0,  FCH,  RR,  RL,  FC,    0,  FR,  FL } },
+{ .ca_index = 0x21,  .speakers = {   0,  FCH,  RR,  RL,  FC,  LFE,  FR,  FL } },
+{ .ca_index = 0x22,  .speakers = {  TC,    0,  RR,  RL,  FC,    0,  FR,  FL } },
+{ .ca_index = 0x23,  .speakers = {  TC,    0,  RR,  RL,  FC,  LFE,  FR,  FL } },
+{ .ca_index = 0x24,  .speakers = { FRH,  FLH,  RR,  RL,   0,    0,  FR,  FL } },
+{ .ca_index = 0x25,  .speakers = { FRH,  FLH,  RR,  RL,   0,  LFE,  FR,  FL } },
+{ .ca_index = 0x26,  .speakers = { FRW,  FLW,  RR,  RL,   0,    0,  FR,  FL } },
+{ .ca_index = 0x27,  .speakers = { FRW,  FLW,  RR,  RL,   0,  LFE,  FR,  FL } },
+{ .ca_index = 0x28,  .speakers = {  TC,   RC,  RR,  RL,  FC,    0,  FR,  FL } },
+{ .ca_index = 0x29,  .speakers = {  TC,   RC,  RR,  RL,  FC,  LFE,  FR,  FL } },
+{ .ca_index = 0x2a,  .speakers = { FCH,   RC,  RR,  RL,  FC,    0,  FR,  FL } },
+{ .ca_index = 0x2b,  .speakers = { FCH,   RC,  RR,  RL,  FC,  LFE,  FR,  FL } },
+{ .ca_index = 0x2c,  .speakers = {  TC,  FCH,  RR,  RL,  FC,    0,  FR,  FL } },
+{ .ca_index = 0x2d,  .speakers = {  TC,  FCH,  RR,  RL,  FC,  LFE,  FR,  FL } },
+{ .ca_index = 0x2e,  .speakers = { FRH,  FLH,  RR,  RL,  FC,    0,  FR,  FL } },
+{ .ca_index = 0x2f,  .speakers = { FRH,  FLH,  RR,  RL,  FC,  LFE,  FR,  FL } },
+{ .ca_index = 0x30,  .speakers = { FRW,  FLW,  RR,  RL,  FC,    0,  FR,  FL } },
+{ .ca_index = 0x31,  .speakers = { FRW,  FLW,  RR,  RL,  FC,  LFE,  FR,  FL } },
+};
 
-अटल पूर्णांक hdmi_pin_set_slot_channel(काष्ठा hdac_device *codec,
-		hda_nid_t pin_nid, पूर्णांक asp_slot, पूर्णांक channel)
-अणु
-	वापस snd_hdac_codec_ग_लिखो(codec, pin_nid, 0,
+static int hdmi_pin_set_slot_channel(struct hdac_device *codec,
+		hda_nid_t pin_nid, int asp_slot, int channel)
+{
+	return snd_hdac_codec_write(codec, pin_nid, 0,
 				AC_VERB_SET_HDMI_CHAN_SLOT,
 				(channel << 4) | asp_slot);
-पूर्ण
+}
 
-अटल पूर्णांक hdmi_pin_get_slot_channel(काष्ठा hdac_device *codec,
-			hda_nid_t pin_nid, पूर्णांक asp_slot)
-अणु
-	वापस (snd_hdac_codec_पढ़ो(codec, pin_nid, 0,
+static int hdmi_pin_get_slot_channel(struct hdac_device *codec,
+			hda_nid_t pin_nid, int asp_slot)
+{
+	return (snd_hdac_codec_read(codec, pin_nid, 0,
 				   AC_VERB_GET_HDMI_CHAN_SLOT,
 				   asp_slot) & 0xf0) >> 4;
-पूर्ण
+}
 
-अटल पूर्णांक hdmi_get_channel_count(काष्ठा hdac_device *codec, hda_nid_t cvt_nid)
-अणु
-	वापस 1 + snd_hdac_codec_पढ़ो(codec, cvt_nid, 0,
+static int hdmi_get_channel_count(struct hdac_device *codec, hda_nid_t cvt_nid)
+{
+	return 1 + snd_hdac_codec_read(codec, cvt_nid, 0,
 					AC_VERB_GET_CVT_CHAN_COUNT, 0);
-पूर्ण
+}
 
-अटल व्योम hdmi_set_channel_count(काष्ठा hdac_device *codec,
-				   hda_nid_t cvt_nid, पूर्णांक chs)
-अणु
-	अगर (chs != hdmi_get_channel_count(codec, cvt_nid))
-		snd_hdac_codec_ग_लिखो(codec, cvt_nid, 0,
+static void hdmi_set_channel_count(struct hdac_device *codec,
+				   hda_nid_t cvt_nid, int chs)
+{
+	if (chs != hdmi_get_channel_count(codec, cvt_nid))
+		snd_hdac_codec_write(codec, cvt_nid, 0,
 				    AC_VERB_SET_CVT_CHAN_COUNT, chs - 1);
-पूर्ण
+}
 
 /*
  * Channel mapping routines
@@ -217,635 +216,635 @@
 /*
  * Compute derived values in channel_allocations[].
  */
-अटल व्योम init_channel_allocations(व्योम)
-अणु
-	पूर्णांक i, j;
-	काष्ठा hdac_cea_channel_speaker_allocation *p;
+static void init_channel_allocations(void)
+{
+	int i, j;
+	struct hdac_cea_channel_speaker_allocation *p;
 
-	क्रम (i = 0; i < ARRAY_SIZE(channel_allocations); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(channel_allocations); i++) {
 		p = channel_allocations + i;
 		p->channels = 0;
 		p->spk_mask = 0;
-		क्रम (j = 0; j < ARRAY_SIZE(p->speakers); j++)
-			अगर (p->speakers[j]) अणु
+		for (j = 0; j < ARRAY_SIZE(p->speakers); j++)
+			if (p->speakers[j]) {
 				p->channels++;
 				p->spk_mask |= p->speakers[j];
-			पूर्ण
-	पूर्ण
-पूर्ण
+			}
+	}
+}
 
-अटल पूर्णांक get_channel_allocation_order(पूर्णांक ca)
-अणु
-	पूर्णांक i;
+static int get_channel_allocation_order(int ca)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(channel_allocations); i++) अणु
-		अगर (channel_allocations[i].ca_index == ca)
-			अवरोध;
-	पूर्ण
-	वापस i;
-पूर्ण
+	for (i = 0; i < ARRAY_SIZE(channel_allocations); i++) {
+		if (channel_allocations[i].ca_index == ca)
+			break;
+	}
+	return i;
+}
 
-व्योम snd_hdac_prपूर्णांक_channel_allocation(पूर्णांक spk_alloc, अक्षर *buf, पूर्णांक buflen)
-अणु
-	पूर्णांक i, j;
+void snd_hdac_print_channel_allocation(int spk_alloc, char *buf, int buflen)
+{
+	int i, j;
 
-	क्रम (i = 0, j = 0; i < ARRAY_SIZE(cea_speaker_allocation_names); i++) अणु
-		अगर (spk_alloc & (1 << i))
-			j += scnम_लिखो(buf + j, buflen - j,  " %s",
+	for (i = 0, j = 0; i < ARRAY_SIZE(cea_speaker_allocation_names); i++) {
+		if (spk_alloc & (1 << i))
+			j += scnprintf(buf + j, buflen - j,  " %s",
 					cea_speaker_allocation_names[i]);
-	पूर्ण
+	}
 	buf[j] = '\0';	/* necessary when j == 0 */
-पूर्ण
-EXPORT_SYMBOL_GPL(snd_hdac_prपूर्णांक_channel_allocation);
+}
+EXPORT_SYMBOL_GPL(snd_hdac_print_channel_allocation);
 
 /*
- * The transक्रमmation takes two steps:
+ * The transformation takes two steps:
  *
  *	eld->spk_alloc => (eld_speaker_allocation_bits[]) => spk_mask
  *	      spk_mask => (channel_allocations[])         => ai->CA
  *
  * TODO: it could select the wrong CA from multiple candidates.
 */
-अटल पूर्णांक hdmi_channel_allocation_spk_alloc_blk(काष्ठा hdac_device *codec,
-				   पूर्णांक spk_alloc, पूर्णांक channels)
-अणु
-	पूर्णांक i;
-	पूर्णांक ca = 0;
-	पूर्णांक spk_mask = 0;
-	अक्षर buf[SND_PRINT_CHANNEL_ALLOCATION_ADVISED_बफ_मानE];
+static int hdmi_channel_allocation_spk_alloc_blk(struct hdac_device *codec,
+				   int spk_alloc, int channels)
+{
+	int i;
+	int ca = 0;
+	int spk_mask = 0;
+	char buf[SND_PRINT_CHANNEL_ALLOCATION_ADVISED_BUFSIZE];
 
 	/*
-	 * CA शेषs to 0 क्रम basic stereo audio
+	 * CA defaults to 0 for basic stereo audio
 	 */
-	अगर (channels <= 2)
-		वापस 0;
+	if (channels <= 2)
+		return 0;
 
 	/*
 	 * expand ELD's speaker allocation mask
 	 *
-	 * ELD tells the speaker mask in a compact(paired) क्रमm,
+	 * ELD tells the speaker mask in a compact(paired) form,
 	 * expand ELD's notions to match the ones used by Audio InfoFrame.
 	 */
-	क्रम (i = 0; i < ARRAY_SIZE(eld_speaker_allocation_bits); i++) अणु
-		अगर (spk_alloc & (1 << i))
+	for (i = 0; i < ARRAY_SIZE(eld_speaker_allocation_bits); i++) {
+		if (spk_alloc & (1 << i))
 			spk_mask |= eld_speaker_allocation_bits[i];
-	पूर्ण
+	}
 
-	/* search क्रम the first working match in the CA table */
-	क्रम (i = 0; i < ARRAY_SIZE(channel_allocations); i++) अणु
-		अगर (channels == channel_allocations[i].channels &&
+	/* search for the first working match in the CA table */
+	for (i = 0; i < ARRAY_SIZE(channel_allocations); i++) {
+		if (channels == channel_allocations[i].channels &&
 		    (spk_mask & channel_allocations[i].spk_mask) ==
-				channel_allocations[i].spk_mask) अणु
+				channel_allocations[i].spk_mask) {
 			ca = channel_allocations[i].ca_index;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!ca) अणु
+	if (!ca) {
 		/*
-		 * अगर there was no match, select the regular ALSA channel
+		 * if there was no match, select the regular ALSA channel
 		 * allocation with the matching number of channels
 		 */
-		क्रम (i = 0; i < ARRAY_SIZE(channel_allocations); i++) अणु
-			अगर (channels == channel_allocations[i].channels) अणु
+		for (i = 0; i < ARRAY_SIZE(channel_allocations); i++) {
+			if (channels == channel_allocations[i].channels) {
 				ca = channel_allocations[i].ca_index;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	snd_hdac_prपूर्णांक_channel_allocation(spk_alloc, buf, माप(buf));
+	snd_hdac_print_channel_allocation(spk_alloc, buf, sizeof(buf));
 	dev_dbg(&codec->dev, "HDMI: select CA 0x%x for %d-channel allocation: %s\n",
 		    ca, channels, buf);
 
-	वापस ca;
-पूर्ण
+	return ca;
+}
 
-अटल व्योम hdmi_debug_channel_mapping(काष्ठा hdac_chmap *chmap,
+static void hdmi_debug_channel_mapping(struct hdac_chmap *chmap,
 				       hda_nid_t pin_nid)
-अणु
-#अगर_घोषित CONFIG_SND_DEBUG_VERBOSE
-	पूर्णांक i;
-	पूर्णांक channel;
+{
+#ifdef CONFIG_SND_DEBUG_VERBOSE
+	int i;
+	int channel;
 
-	क्रम (i = 0; i < 8; i++) अणु
+	for (i = 0; i < 8; i++) {
 		channel = chmap->ops.pin_get_slot_channel(
 				chmap->hdac, pin_nid, i);
 		dev_dbg(&chmap->hdac->dev, "HDMI: ASP channel %d => slot %d\n",
 						channel, i);
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+	}
+#endif
+}
 
-अटल व्योम hdmi_std_setup_channel_mapping(काष्ठा hdac_chmap *chmap,
+static void hdmi_std_setup_channel_mapping(struct hdac_chmap *chmap,
 				       hda_nid_t pin_nid,
 				       bool non_pcm,
-				       पूर्णांक ca)
-अणु
-	काष्ठा hdac_cea_channel_speaker_allocation *ch_alloc;
-	पूर्णांक i;
-	पूर्णांक err;
-	पूर्णांक order;
-	पूर्णांक non_pcm_mapping[8];
+				       int ca)
+{
+	struct hdac_cea_channel_speaker_allocation *ch_alloc;
+	int i;
+	int err;
+	int order;
+	int non_pcm_mapping[8];
 
 	order = get_channel_allocation_order(ca);
 	ch_alloc = &channel_allocations[order];
 
-	अगर (hdmi_channel_mapping[ca][1] == 0) अणु
-		पूर्णांक hdmi_slot = 0;
+	if (hdmi_channel_mapping[ca][1] == 0) {
+		int hdmi_slot = 0;
 		/* fill actual channel mappings in ALSA channel (i) order */
-		क्रम (i = 0; i < ch_alloc->channels; i++) अणु
-			जबतक (!WARN_ON(hdmi_slot >= 8) &&
+		for (i = 0; i < ch_alloc->channels; i++) {
+			while (!WARN_ON(hdmi_slot >= 8) &&
 			       !ch_alloc->speakers[7 - hdmi_slot])
 				hdmi_slot++; /* skip zero slots */
 
 			hdmi_channel_mapping[ca][i] = (i << 4) | hdmi_slot++;
-		पूर्ण
+		}
 		/* fill the rest of the slots with ALSA channel 0xf */
-		क्रम (hdmi_slot = 0; hdmi_slot < 8; hdmi_slot++)
-			अगर (!ch_alloc->speakers[7 - hdmi_slot])
+		for (hdmi_slot = 0; hdmi_slot < 8; hdmi_slot++)
+			if (!ch_alloc->speakers[7 - hdmi_slot])
 				hdmi_channel_mapping[ca][i++] = (0xf << 4) | hdmi_slot;
-	पूर्ण
+	}
 
-	अगर (non_pcm) अणु
-		क्रम (i = 0; i < ch_alloc->channels; i++)
+	if (non_pcm) {
+		for (i = 0; i < ch_alloc->channels; i++)
 			non_pcm_mapping[i] = (i << 4) | i;
-		क्रम (; i < 8; i++)
+		for (; i < 8; i++)
 			non_pcm_mapping[i] = (0xf << 4) | i;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < 8; i++) अणु
-		पूर्णांक slotsetup = non_pcm ? non_pcm_mapping[i] : hdmi_channel_mapping[ca][i];
-		पूर्णांक hdmi_slot = slotsetup & 0x0f;
-		पूर्णांक channel = (slotsetup & 0xf0) >> 4;
+	for (i = 0; i < 8; i++) {
+		int slotsetup = non_pcm ? non_pcm_mapping[i] : hdmi_channel_mapping[ca][i];
+		int hdmi_slot = slotsetup & 0x0f;
+		int channel = (slotsetup & 0xf0) >> 4;
 
 		err = chmap->ops.pin_set_slot_channel(chmap->hdac,
 				pin_nid, hdmi_slot, channel);
-		अगर (err) अणु
+		if (err) {
 			dev_dbg(&chmap->hdac->dev, "HDMI: channel mapping failed\n");
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
-काष्ठा channel_map_table अणु
-	अचिन्हित अक्षर map;		/* ALSA API channel map position */
-	पूर्णांक spk_mask;			/* speaker position bit mask */
-पूर्ण;
+struct channel_map_table {
+	unsigned char map;		/* ALSA API channel map position */
+	int spk_mask;			/* speaker position bit mask */
+};
 
-अटल काष्ठा channel_map_table map_tables[] = अणु
-	अणु SNDRV_CHMAP_FL,	FL पूर्ण,
-	अणु SNDRV_CHMAP_FR,	FR पूर्ण,
-	अणु SNDRV_CHMAP_RL,	RL पूर्ण,
-	अणु SNDRV_CHMAP_RR,	RR पूर्ण,
-	अणु SNDRV_CHMAP_LFE,	LFE पूर्ण,
-	अणु SNDRV_CHMAP_FC,	FC पूर्ण,
-	अणु SNDRV_CHMAP_RLC,	RLC पूर्ण,
-	अणु SNDRV_CHMAP_RRC,	RRC पूर्ण,
-	अणु SNDRV_CHMAP_RC,	RC पूर्ण,
-	अणु SNDRV_CHMAP_FLC,	FLC पूर्ण,
-	अणु SNDRV_CHMAP_FRC,	FRC पूर्ण,
-	अणु SNDRV_CHMAP_TFL,	FLH पूर्ण,
-	अणु SNDRV_CHMAP_TFR,	FRH पूर्ण,
-	अणु SNDRV_CHMAP_FLW,	FLW पूर्ण,
-	अणु SNDRV_CHMAP_FRW,	FRW पूर्ण,
-	अणु SNDRV_CHMAP_TC,	TC पूर्ण,
-	अणु SNDRV_CHMAP_TFC,	FCH पूर्ण,
-	अणुपूर्ण /* terminator */
-पूर्ण;
+static struct channel_map_table map_tables[] = {
+	{ SNDRV_CHMAP_FL,	FL },
+	{ SNDRV_CHMAP_FR,	FR },
+	{ SNDRV_CHMAP_RL,	RL },
+	{ SNDRV_CHMAP_RR,	RR },
+	{ SNDRV_CHMAP_LFE,	LFE },
+	{ SNDRV_CHMAP_FC,	FC },
+	{ SNDRV_CHMAP_RLC,	RLC },
+	{ SNDRV_CHMAP_RRC,	RRC },
+	{ SNDRV_CHMAP_RC,	RC },
+	{ SNDRV_CHMAP_FLC,	FLC },
+	{ SNDRV_CHMAP_FRC,	FRC },
+	{ SNDRV_CHMAP_TFL,	FLH },
+	{ SNDRV_CHMAP_TFR,	FRH },
+	{ SNDRV_CHMAP_FLW,	FLW },
+	{ SNDRV_CHMAP_FRW,	FRW },
+	{ SNDRV_CHMAP_TC,	TC },
+	{ SNDRV_CHMAP_TFC,	FCH },
+	{} /* terminator */
+};
 
 /* from ALSA API channel position to speaker bit mask */
-पूर्णांक snd_hdac_chmap_to_spk_mask(अचिन्हित अक्षर c)
-अणु
-	काष्ठा channel_map_table *t = map_tables;
+int snd_hdac_chmap_to_spk_mask(unsigned char c)
+{
+	struct channel_map_table *t = map_tables;
 
-	क्रम (; t->map; t++) अणु
-		अगर (t->map == c)
-			वापस t->spk_mask;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	for (; t->map; t++) {
+		if (t->map == c)
+			return t->spk_mask;
+	}
+	return 0;
+}
 EXPORT_SYMBOL_GPL(snd_hdac_chmap_to_spk_mask);
 
 /* from ALSA API channel position to CEA slot */
-अटल पूर्णांक to_cea_slot(पूर्णांक ordered_ca, अचिन्हित अक्षर pos)
-अणु
-	पूर्णांक mask = snd_hdac_chmap_to_spk_mask(pos);
-	पूर्णांक i;
+static int to_cea_slot(int ordered_ca, unsigned char pos)
+{
+	int mask = snd_hdac_chmap_to_spk_mask(pos);
+	int i;
 
 	/* Add sanity check to pass klockwork check.
 	 * This should never happen.
 	 */
-	अगर (ordered_ca >= ARRAY_SIZE(channel_allocations))
-		वापस -1;
+	if (ordered_ca >= ARRAY_SIZE(channel_allocations))
+		return -1;
 
-	अगर (mask) अणु
-		क्रम (i = 0; i < 8; i++) अणु
-			अगर (channel_allocations[ordered_ca].speakers[7 - i] == mask)
-				वापस i;
-		पूर्ण
-	पूर्ण
+	if (mask) {
+		for (i = 0; i < 8; i++) {
+			if (channel_allocations[ordered_ca].speakers[7 - i] == mask)
+				return i;
+		}
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
 /* from speaker bit mask to ALSA API channel position */
-पूर्णांक snd_hdac_spk_to_chmap(पूर्णांक spk)
-अणु
-	काष्ठा channel_map_table *t = map_tables;
+int snd_hdac_spk_to_chmap(int spk)
+{
+	struct channel_map_table *t = map_tables;
 
-	क्रम (; t->map; t++) अणु
-		अगर (t->spk_mask == spk)
-			वापस t->map;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	for (; t->map; t++) {
+		if (t->spk_mask == spk)
+			return t->map;
+	}
+	return 0;
+}
 EXPORT_SYMBOL_GPL(snd_hdac_spk_to_chmap);
 
 /* from CEA slot to ALSA API channel position */
-अटल पूर्णांक from_cea_slot(पूर्णांक ordered_ca, अचिन्हित अक्षर slot)
-अणु
-	पूर्णांक mask;
+static int from_cea_slot(int ordered_ca, unsigned char slot)
+{
+	int mask;
 
 	/* Add sanity check to pass klockwork check.
 	 * This should never happen.
 	 */
-	अगर (slot >= 8)
-		वापस 0;
+	if (slot >= 8)
+		return 0;
 
 	mask = channel_allocations[ordered_ca].speakers[7 - slot];
 
-	वापस snd_hdac_spk_to_chmap(mask);
-पूर्ण
+	return snd_hdac_spk_to_chmap(mask);
+}
 
 /* get the CA index corresponding to the given ALSA API channel map */
-अटल पूर्णांक hdmi_manual_channel_allocation(पूर्णांक chs, अचिन्हित अक्षर *map)
-अणु
-	पूर्णांक i, spks = 0, spk_mask = 0;
+static int hdmi_manual_channel_allocation(int chs, unsigned char *map)
+{
+	int i, spks = 0, spk_mask = 0;
 
-	क्रम (i = 0; i < chs; i++) अणु
-		पूर्णांक mask = snd_hdac_chmap_to_spk_mask(map[i]);
+	for (i = 0; i < chs; i++) {
+		int mask = snd_hdac_chmap_to_spk_mask(map[i]);
 
-		अगर (mask) अणु
+		if (mask) {
 			spk_mask |= mask;
 			spks++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(channel_allocations); i++) अणु
-		अगर ((chs == channel_allocations[i].channels ||
+	for (i = 0; i < ARRAY_SIZE(channel_allocations); i++) {
+		if ((chs == channel_allocations[i].channels ||
 		     spks == channel_allocations[i].channels) &&
 		    (spk_mask & channel_allocations[i].spk_mask) ==
 				channel_allocations[i].spk_mask)
-			वापस channel_allocations[i].ca_index;
-	पूर्ण
-	वापस -1;
-पूर्ण
+			return channel_allocations[i].ca_index;
+	}
+	return -1;
+}
 
-/* set up the channel slots क्रम the given ALSA API channel map */
-अटल पूर्णांक hdmi_manual_setup_channel_mapping(काष्ठा hdac_chmap *chmap,
+/* set up the channel slots for the given ALSA API channel map */
+static int hdmi_manual_setup_channel_mapping(struct hdac_chmap *chmap,
 					     hda_nid_t pin_nid,
-					     पूर्णांक chs, अचिन्हित अक्षर *map,
-					     पूर्णांक ca)
-अणु
-	पूर्णांक ordered_ca = get_channel_allocation_order(ca);
-	पूर्णांक alsa_pos, hdmi_slot;
-	पूर्णांक assignments[8] = अणु[0 ... 7] = 0xfपूर्ण;
+					     int chs, unsigned char *map,
+					     int ca)
+{
+	int ordered_ca = get_channel_allocation_order(ca);
+	int alsa_pos, hdmi_slot;
+	int assignments[8] = {[0 ... 7] = 0xf};
 
-	क्रम (alsa_pos = 0; alsa_pos < chs; alsa_pos++) अणु
+	for (alsa_pos = 0; alsa_pos < chs; alsa_pos++) {
 
 		hdmi_slot = to_cea_slot(ordered_ca, map[alsa_pos]);
 
-		अगर (hdmi_slot < 0)
-			जारी; /* unasचिन्हित channel */
+		if (hdmi_slot < 0)
+			continue; /* unassigned channel */
 
 		assignments[hdmi_slot] = alsa_pos;
-	पूर्ण
+	}
 
-	क्रम (hdmi_slot = 0; hdmi_slot < 8; hdmi_slot++) अणु
-		पूर्णांक err;
+	for (hdmi_slot = 0; hdmi_slot < 8; hdmi_slot++) {
+		int err;
 
 		err = chmap->ops.pin_set_slot_channel(chmap->hdac,
 				pin_nid, hdmi_slot, assignments[hdmi_slot]);
-		अगर (err)
-			वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (err)
+			return -EINVAL;
+	}
+	return 0;
+}
 
-/* store ALSA API channel map from the current शेष map */
-अटल व्योम hdmi_setup_fake_chmap(अचिन्हित अक्षर *map, पूर्णांक ca)
-अणु
-	पूर्णांक i;
-	पूर्णांक ordered_ca = get_channel_allocation_order(ca);
+/* store ALSA API channel map from the current default map */
+static void hdmi_setup_fake_chmap(unsigned char *map, int ca)
+{
+	int i;
+	int ordered_ca = get_channel_allocation_order(ca);
 
-	क्रम (i = 0; i < 8; i++) अणु
-		अगर (ordered_ca < ARRAY_SIZE(channel_allocations) &&
+	for (i = 0; i < 8; i++) {
+		if (ordered_ca < ARRAY_SIZE(channel_allocations) &&
 		    i < channel_allocations[ordered_ca].channels)
 			map[i] = from_cea_slot(ordered_ca, hdmi_channel_mapping[ca][i] & 0x0f);
-		अन्यथा
+		else
 			map[i] = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम snd_hdac_setup_channel_mapping(काष्ठा hdac_chmap *chmap,
-				       hda_nid_t pin_nid, bool non_pcm, पूर्णांक ca,
-				       पूर्णांक channels, अचिन्हित अक्षर *map,
+void snd_hdac_setup_channel_mapping(struct hdac_chmap *chmap,
+				       hda_nid_t pin_nid, bool non_pcm, int ca,
+				       int channels, unsigned char *map,
 				       bool chmap_set)
-अणु
-	अगर (!non_pcm && chmap_set) अणु
+{
+	if (!non_pcm && chmap_set) {
 		hdmi_manual_setup_channel_mapping(chmap, pin_nid,
 						  channels, map, ca);
-	पूर्ण अन्यथा अणु
+	} else {
 		hdmi_std_setup_channel_mapping(chmap, pin_nid, non_pcm, ca);
 		hdmi_setup_fake_chmap(map, ca);
-	पूर्ण
+	}
 
 	hdmi_debug_channel_mapping(chmap, pin_nid);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(snd_hdac_setup_channel_mapping);
 
-पूर्णांक snd_hdac_get_active_channels(पूर्णांक ca)
-अणु
-	पूर्णांक ordered_ca = get_channel_allocation_order(ca);
+int snd_hdac_get_active_channels(int ca)
+{
+	int ordered_ca = get_channel_allocation_order(ca);
 
 	/* Add sanity check to pass klockwork check.
 	 * This should never happen.
 	 */
-	अगर (ordered_ca >= ARRAY_SIZE(channel_allocations))
+	if (ordered_ca >= ARRAY_SIZE(channel_allocations))
 		ordered_ca = 0;
 
-	वापस channel_allocations[ordered_ca].channels;
-पूर्ण
+	return channel_allocations[ordered_ca].channels;
+}
 EXPORT_SYMBOL_GPL(snd_hdac_get_active_channels);
 
-काष्ठा hdac_cea_channel_speaker_allocation *snd_hdac_get_ch_alloc_from_ca(पूर्णांक ca)
-अणु
-	वापस &channel_allocations[get_channel_allocation_order(ca)];
-पूर्ण
+struct hdac_cea_channel_speaker_allocation *snd_hdac_get_ch_alloc_from_ca(int ca)
+{
+	return &channel_allocations[get_channel_allocation_order(ca)];
+}
 EXPORT_SYMBOL_GPL(snd_hdac_get_ch_alloc_from_ca);
 
-पूर्णांक snd_hdac_channel_allocation(काष्ठा hdac_device *hdac, पूर्णांक spk_alloc,
-		पूर्णांक channels, bool chmap_set, bool non_pcm, अचिन्हित अक्षर *map)
-अणु
-	पूर्णांक ca;
+int snd_hdac_channel_allocation(struct hdac_device *hdac, int spk_alloc,
+		int channels, bool chmap_set, bool non_pcm, unsigned char *map)
+{
+	int ca;
 
-	अगर (!non_pcm && chmap_set)
+	if (!non_pcm && chmap_set)
 		ca = hdmi_manual_channel_allocation(channels, map);
-	अन्यथा
+	else
 		ca = hdmi_channel_allocation_spk_alloc_blk(hdac,
 					spk_alloc, channels);
 
-	अगर (ca < 0)
+	if (ca < 0)
 		ca = 0;
 
-	वापस ca;
-पूर्ण
+	return ca;
+}
 EXPORT_SYMBOL_GPL(snd_hdac_channel_allocation);
 
 /*
  * ALSA API channel-map control callbacks
  */
-अटल पूर्णांक hdmi_chmap_ctl_info(काष्ठा snd_kcontrol *kcontrol,
-			       काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	काष्ठा snd_pcm_chmap *info = snd_kcontrol_chip(kcontrol);
-	काष्ठा hdac_chmap *chmap = info->निजी_data;
+static int hdmi_chmap_ctl_info(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_info *uinfo)
+{
+	struct snd_pcm_chmap *info = snd_kcontrol_chip(kcontrol);
+	struct hdac_chmap *chmap = info->private_data;
 
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = chmap->channels_max;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = SNDRV_CHMAP_LAST;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = SNDRV_CHMAP_LAST;
+	return 0;
+}
 
-अटल पूर्णांक hdmi_chmap_cea_alloc_validate_get_type(काष्ठा hdac_chmap *chmap,
-		काष्ठा hdac_cea_channel_speaker_allocation *cap, पूर्णांक channels)
-अणु
+static int hdmi_chmap_cea_alloc_validate_get_type(struct hdac_chmap *chmap,
+		struct hdac_cea_channel_speaker_allocation *cap, int channels)
+{
 	/* If the speaker allocation matches the channel count, it is OK.*/
-	अगर (cap->channels != channels)
-		वापस -1;
+	if (cap->channels != channels)
+		return -1;
 
-	/* all channels are remappable मुक्तly */
-	वापस SNDRV_CTL_TLVT_CHMAP_VAR;
-पूर्ण
+	/* all channels are remappable freely */
+	return SNDRV_CTL_TLVT_CHMAP_VAR;
+}
 
-अटल व्योम hdmi_cea_alloc_to_tlv_chmap(काष्ठा hdac_chmap *hchmap,
-		काष्ठा hdac_cea_channel_speaker_allocation *cap,
-		अचिन्हित पूर्णांक *chmap, पूर्णांक channels)
-अणु
-	पूर्णांक count = 0;
-	पूर्णांक c;
+static void hdmi_cea_alloc_to_tlv_chmap(struct hdac_chmap *hchmap,
+		struct hdac_cea_channel_speaker_allocation *cap,
+		unsigned int *chmap, int channels)
+{
+	int count = 0;
+	int c;
 
-	क्रम (c = 7; c >= 0; c--) अणु
-		पूर्णांक spk = cap->speakers[c];
+	for (c = 7; c >= 0; c--) {
+		int spk = cap->speakers[c];
 
-		अगर (!spk)
-			जारी;
+		if (!spk)
+			continue;
 
 		chmap[count++] = snd_hdac_spk_to_chmap(spk);
-	पूर्ण
+	}
 
 	WARN_ON(count != channels);
-पूर्ण
+}
 
-अटल पूर्णांक spk_mask_from_spk_alloc(पूर्णांक spk_alloc)
-अणु
-	पूर्णांक i;
-	पूर्णांक spk_mask = eld_speaker_allocation_bits[0];
+static int spk_mask_from_spk_alloc(int spk_alloc)
+{
+	int i;
+	int spk_mask = eld_speaker_allocation_bits[0];
 
-	क्रम (i = 0; i < ARRAY_SIZE(eld_speaker_allocation_bits); i++) अणु
-		अगर (spk_alloc & (1 << i))
+	for (i = 0; i < ARRAY_SIZE(eld_speaker_allocation_bits); i++) {
+		if (spk_alloc & (1 << i))
 			spk_mask |= eld_speaker_allocation_bits[i];
-	पूर्ण
+	}
 
-	वापस spk_mask;
-पूर्ण
+	return spk_mask;
+}
 
-अटल पूर्णांक hdmi_chmap_ctl_tlv(काष्ठा snd_kcontrol *kcontrol, पूर्णांक op_flag,
-			      अचिन्हित पूर्णांक size, अचिन्हित पूर्णांक __user *tlv)
-अणु
-	काष्ठा snd_pcm_chmap *info = snd_kcontrol_chip(kcontrol);
-	काष्ठा hdac_chmap *chmap = info->निजी_data;
-	पूर्णांक pcm_idx = kcontrol->निजी_value;
-	अचिन्हित पूर्णांक __user *dst;
-	पूर्णांक chs, count = 0;
-	अचिन्हित दीर्घ max_chs;
-	पूर्णांक type;
-	पूर्णांक spk_alloc, spk_mask;
+static int hdmi_chmap_ctl_tlv(struct snd_kcontrol *kcontrol, int op_flag,
+			      unsigned int size, unsigned int __user *tlv)
+{
+	struct snd_pcm_chmap *info = snd_kcontrol_chip(kcontrol);
+	struct hdac_chmap *chmap = info->private_data;
+	int pcm_idx = kcontrol->private_value;
+	unsigned int __user *dst;
+	int chs, count = 0;
+	unsigned long max_chs;
+	int type;
+	int spk_alloc, spk_mask;
 
-	अगर (size < 8)
-		वापस -ENOMEM;
-	अगर (put_user(SNDRV_CTL_TLVT_CONTAINER, tlv))
-		वापस -EFAULT;
+	if (size < 8)
+		return -ENOMEM;
+	if (put_user(SNDRV_CTL_TLVT_CONTAINER, tlv))
+		return -EFAULT;
 	size -= 8;
 	dst = tlv + 2;
 
 	spk_alloc = chmap->ops.get_spk_alloc(chmap->hdac, pcm_idx);
 	spk_mask = spk_mask_from_spk_alloc(spk_alloc);
 
-	max_chs = hweight_दीर्घ(spk_mask);
+	max_chs = hweight_long(spk_mask);
 
-	क्रम (chs = 2; chs <= max_chs; chs++) अणु
-		पूर्णांक i;
-		काष्ठा hdac_cea_channel_speaker_allocation *cap;
+	for (chs = 2; chs <= max_chs; chs++) {
+		int i;
+		struct hdac_cea_channel_speaker_allocation *cap;
 
 		cap = channel_allocations;
-		क्रम (i = 0; i < ARRAY_SIZE(channel_allocations); i++, cap++) अणु
-			पूर्णांक chs_bytes = chs * 4;
-			अचिन्हित पूर्णांक tlv_chmap[8];
+		for (i = 0; i < ARRAY_SIZE(channel_allocations); i++, cap++) {
+			int chs_bytes = chs * 4;
+			unsigned int tlv_chmap[8];
 
-			अगर (cap->channels != chs)
-				जारी;
+			if (cap->channels != chs)
+				continue;
 
-			अगर (!(cap->spk_mask == (spk_mask & cap->spk_mask)))
-				जारी;
+			if (!(cap->spk_mask == (spk_mask & cap->spk_mask)))
+				continue;
 
 			type = chmap->ops.chmap_cea_alloc_validate_get_type(
 							chmap, cap, chs);
-			अगर (type < 0)
-				वापस -ENODEV;
-			अगर (size < 8)
-				वापस -ENOMEM;
+			if (type < 0)
+				return -ENODEV;
+			if (size < 8)
+				return -ENOMEM;
 
-			अगर (put_user(type, dst) ||
+			if (put_user(type, dst) ||
 			    put_user(chs_bytes, dst + 1))
-				वापस -EFAULT;
+				return -EFAULT;
 
 			dst += 2;
 			size -= 8;
 			count += 8;
 
-			अगर (size < chs_bytes)
-				वापस -ENOMEM;
+			if (size < chs_bytes)
+				return -ENOMEM;
 
 			size -= chs_bytes;
 			count += chs_bytes;
 			chmap->ops.cea_alloc_to_tlv_chmap(chmap, cap,
 						tlv_chmap, chs);
 
-			अगर (copy_to_user(dst, tlv_chmap, chs_bytes))
-				वापस -EFAULT;
+			if (copy_to_user(dst, tlv_chmap, chs_bytes))
+				return -EFAULT;
 			dst += chs;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (put_user(count, tlv + 1))
-		वापस -EFAULT;
+	if (put_user(count, tlv + 1))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hdmi_chmap_ctl_get(काष्ठा snd_kcontrol *kcontrol,
-			      काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_pcm_chmap *info = snd_kcontrol_chip(kcontrol);
-	काष्ठा hdac_chmap *chmap = info->निजी_data;
-	पूर्णांक pcm_idx = kcontrol->निजी_value;
-	अचिन्हित अक्षर pcm_chmap[8];
-	पूर्णांक i;
+static int hdmi_chmap_ctl_get(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_pcm_chmap *info = snd_kcontrol_chip(kcontrol);
+	struct hdac_chmap *chmap = info->private_data;
+	int pcm_idx = kcontrol->private_value;
+	unsigned char pcm_chmap[8];
+	int i;
 
-	स_रखो(pcm_chmap, 0, माप(pcm_chmap));
+	memset(pcm_chmap, 0, sizeof(pcm_chmap));
 	chmap->ops.get_chmap(chmap->hdac, pcm_idx, pcm_chmap);
 
-	क्रम (i = 0; i < ARRAY_SIZE(pcm_chmap); i++)
-		ucontrol->value.पूर्णांकeger.value[i] = pcm_chmap[i];
+	for (i = 0; i < ARRAY_SIZE(pcm_chmap); i++)
+		ucontrol->value.integer.value[i] = pcm_chmap[i];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hdmi_chmap_ctl_put(काष्ठा snd_kcontrol *kcontrol,
-			      काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_pcm_chmap *info = snd_kcontrol_chip(kcontrol);
-	काष्ठा hdac_chmap *hchmap = info->निजी_data;
-	पूर्णांक pcm_idx = kcontrol->निजी_value;
-	अचिन्हित पूर्णांक ctl_idx;
-	काष्ठा snd_pcm_substream *substream;
-	अचिन्हित अक्षर chmap[8], per_pin_chmap[8];
-	पूर्णांक i, err, ca, prepared = 0;
+static int hdmi_chmap_ctl_put(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_pcm_chmap *info = snd_kcontrol_chip(kcontrol);
+	struct hdac_chmap *hchmap = info->private_data;
+	int pcm_idx = kcontrol->private_value;
+	unsigned int ctl_idx;
+	struct snd_pcm_substream *substream;
+	unsigned char chmap[8], per_pin_chmap[8];
+	int i, err, ca, prepared = 0;
 
 	/* No monitor is connected in dyn_pcm_assign.
 	 * It's invalid to setup the chmap
 	 */
-	अगर (!hchmap->ops.is_pcm_attached(hchmap->hdac, pcm_idx))
-		वापस 0;
+	if (!hchmap->ops.is_pcm_attached(hchmap->hdac, pcm_idx))
+		return 0;
 
 	ctl_idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id);
 	substream = snd_pcm_chmap_substream(info, ctl_idx);
-	अगर (!substream || !substream->runसमय)
-		वापस 0; /* just क्रम aव्योमing error from alsactl restore */
-	चयन (substream->runसमय->status->state) अणु
-	हाल SNDRV_PCM_STATE_OPEN:
-	हाल SNDRV_PCM_STATE_SETUP:
-		अवरोध;
-	हाल SNDRV_PCM_STATE_PREPARED:
+	if (!substream || !substream->runtime)
+		return 0; /* just for avoiding error from alsactl restore */
+	switch (substream->runtime->status->state) {
+	case SNDRV_PCM_STATE_OPEN:
+	case SNDRV_PCM_STATE_SETUP:
+		break;
+	case SNDRV_PCM_STATE_PREPARED:
 		prepared = 1;
-		अवरोध;
-	शेष:
-		वापस -EBUSY;
-	पूर्ण
-	स_रखो(chmap, 0, माप(chmap));
-	क्रम (i = 0; i < ARRAY_SIZE(chmap); i++)
-		chmap[i] = ucontrol->value.पूर्णांकeger.value[i];
+		break;
+	default:
+		return -EBUSY;
+	}
+	memset(chmap, 0, sizeof(chmap));
+	for (i = 0; i < ARRAY_SIZE(chmap); i++)
+		chmap[i] = ucontrol->value.integer.value[i];
 
 	hchmap->ops.get_chmap(hchmap->hdac, pcm_idx, per_pin_chmap);
-	अगर (!स_भेद(chmap, per_pin_chmap, माप(chmap)))
-		वापस 0;
+	if (!memcmp(chmap, per_pin_chmap, sizeof(chmap)))
+		return 0;
 	ca = hdmi_manual_channel_allocation(ARRAY_SIZE(chmap), chmap);
-	अगर (ca < 0)
-		वापस -EINVAL;
-	अगर (hchmap->ops.chmap_validate) अणु
+	if (ca < 0)
+		return -EINVAL;
+	if (hchmap->ops.chmap_validate) {
 		err = hchmap->ops.chmap_validate(hchmap, ca,
 				ARRAY_SIZE(chmap), chmap);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	hchmap->ops.set_chmap(hchmap->hdac, pcm_idx, chmap, prepared);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा hdac_chmap_ops chmap_ops = अणु
+static const struct hdac_chmap_ops chmap_ops = {
 	.chmap_cea_alloc_validate_get_type	= hdmi_chmap_cea_alloc_validate_get_type,
 	.cea_alloc_to_tlv_chmap			= hdmi_cea_alloc_to_tlv_chmap,
 	.pin_get_slot_channel			= hdmi_pin_get_slot_channel,
 	.pin_set_slot_channel			= hdmi_pin_set_slot_channel,
 	.set_channel_count			= hdmi_set_channel_count,
-पूर्ण;
+};
 
-व्योम snd_hdac_रेजिस्टर_chmap_ops(काष्ठा hdac_device *hdac,
-				काष्ठा hdac_chmap *chmap)
-अणु
+void snd_hdac_register_chmap_ops(struct hdac_device *hdac,
+				struct hdac_chmap *chmap)
+{
 	chmap->ops = chmap_ops;
 	chmap->hdac = hdac;
 	init_channel_allocations();
-पूर्ण
-EXPORT_SYMBOL_GPL(snd_hdac_रेजिस्टर_chmap_ops);
+}
+EXPORT_SYMBOL_GPL(snd_hdac_register_chmap_ops);
 
-पूर्णांक snd_hdac_add_chmap_ctls(काष्ठा snd_pcm *pcm, पूर्णांक pcm_idx,
-				काष्ठा hdac_chmap *hchmap)
-अणु
-	काष्ठा snd_pcm_chmap *chmap;
-	काष्ठा snd_kcontrol *kctl;
-	पूर्णांक err, i;
+int snd_hdac_add_chmap_ctls(struct snd_pcm *pcm, int pcm_idx,
+				struct hdac_chmap *hchmap)
+{
+	struct snd_pcm_chmap *chmap;
+	struct snd_kcontrol *kctl;
+	int err, i;
 
 	err = snd_pcm_add_chmap_ctls(pcm,
 				     SNDRV_PCM_STREAM_PLAYBACK,
-				     शून्य, 0, pcm_idx, &chmap);
-	अगर (err < 0)
-		वापस err;
+				     NULL, 0, pcm_idx, &chmap);
+	if (err < 0)
+		return err;
 	/* override handlers */
-	chmap->निजी_data = hchmap;
+	chmap->private_data = hchmap;
 	kctl = chmap->kctl;
-	क्रम (i = 0; i < kctl->count; i++)
+	for (i = 0; i < kctl->count; i++)
 		kctl->vd[i].access |= SNDRV_CTL_ELEM_ACCESS_WRITE;
 	kctl->info = hdmi_chmap_ctl_info;
 	kctl->get = hdmi_chmap_ctl_get;
 	kctl->put = hdmi_chmap_ctl_put;
 	kctl->tlv.c = hdmi_chmap_ctl_tlv;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(snd_hdac_add_chmap_ctls);

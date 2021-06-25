@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Cadence CDNSP DRD Driver.
  *
@@ -9,5 +8,5 @@
  *
  */
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश "cdnsp-trace.h"
+#define CREATE_TRACE_POINTS
+#include "cdnsp-trace.h"

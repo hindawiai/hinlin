@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * AMD Encrypted Register State Support
  *
@@ -7,26 +6,26 @@
  *
  * This file is not compiled stand-alone. It contains code shared
  * between the pre-decompression boot code and the running Linux kernel
- * and is included directly पूर्णांकo both code-bases.
+ * and is included directly into both code-bases.
  */
 
-#अगर_अघोषित __BOOT_COMPRESSED
-#घोषणा error(v)	pr_err(v)
-#घोषणा has_cpuflag(f)	boot_cpu_has(f)
-#पूर्ण_अगर
+#ifndef __BOOT_COMPRESSED
+#define error(v)	pr_err(v)
+#define has_cpuflag(f)	boot_cpu_has(f)
+#endif
 
-अटल bool __init sev_es_check_cpu_features(व्योम)
-अणु
-	अगर (!has_cpuflag(X86_FEATURE_RDRAND)) अणु
+static bool __init sev_es_check_cpu_features(void)
+{
+	if (!has_cpuflag(X86_FEATURE_RDRAND)) {
 		error("RDRAND instruction not supported - no trusted source of randomness available\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम __noवापस sev_es_terminate(अचिन्हित पूर्णांक reason)
-अणु
+static void __noreturn sev_es_terminate(unsigned int reason)
+{
 	u64 val = GHCB_MSR_TERM_REQ;
 
 	/*
@@ -39,12 +38,12 @@
 	sev_es_wr_ghcb_msr(val);
 	VMGEXIT();
 
-	जबतक (true)
-		यंत्र अस्थिर("hlt\n" : : : "memory");
-पूर्ण
+	while (true)
+		asm volatile("hlt\n" : : : "memory");
+}
 
-अटल bool sev_es_negotiate_protocol(व्योम)
-अणु
+static bool sev_es_negotiate_protocol(void)
+{
 	u64 val;
 
 	/* Do the GHCB protocol version negotiation */
@@ -52,142 +51,142 @@
 	VMGEXIT();
 	val = sev_es_rd_ghcb_msr();
 
-	अगर (GHCB_MSR_INFO(val) != GHCB_MSR_SEV_INFO_RESP)
-		वापस false;
+	if (GHCB_MSR_INFO(val) != GHCB_MSR_SEV_INFO_RESP)
+		return false;
 
-	अगर (GHCB_MSR_PROTO_MAX(val) < GHCB_PROTO_OUR ||
+	if (GHCB_MSR_PROTO_MAX(val) < GHCB_PROTO_OUR ||
 	    GHCB_MSR_PROTO_MIN(val) > GHCB_PROTO_OUR)
-		वापस false;
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल __always_अंतरभूत व्योम vc_ghcb_invalidate(काष्ठा ghcb *ghcb)
-अणु
-	ghcb->save.sw_निकास_code = 0;
-	स_रखो(ghcb->save.valid_biपंचांगap, 0, माप(ghcb->save.valid_biपंचांगap));
-पूर्ण
+static __always_inline void vc_ghcb_invalidate(struct ghcb *ghcb)
+{
+	ghcb->save.sw_exit_code = 0;
+	memset(ghcb->save.valid_bitmap, 0, sizeof(ghcb->save.valid_bitmap));
+}
 
-अटल bool vc_decoding_needed(अचिन्हित दीर्घ निकास_code)
-अणु
-	/* Exceptions करोn't require to decode the inकाष्ठाion */
-	वापस !(निकास_code >= SVM_EXIT_EXCP_BASE &&
-		 निकास_code <= SVM_EXIT_LAST_EXCP);
-पूर्ण
+static bool vc_decoding_needed(unsigned long exit_code)
+{
+	/* Exceptions don't require to decode the instruction */
+	return !(exit_code >= SVM_EXIT_EXCP_BASE &&
+		 exit_code <= SVM_EXIT_LAST_EXCP);
+}
 
-अटल क्रमागत es_result vc_init_em_ctxt(काष्ठा es_em_ctxt *ctxt,
-				      काष्ठा pt_regs *regs,
-				      अचिन्हित दीर्घ निकास_code)
-अणु
-	क्रमागत es_result ret = ES_OK;
+static enum es_result vc_init_em_ctxt(struct es_em_ctxt *ctxt,
+				      struct pt_regs *regs,
+				      unsigned long exit_code)
+{
+	enum es_result ret = ES_OK;
 
-	स_रखो(ctxt, 0, माप(*ctxt));
+	memset(ctxt, 0, sizeof(*ctxt));
 	ctxt->regs = regs;
 
-	अगर (vc_decoding_needed(निकास_code))
+	if (vc_decoding_needed(exit_code))
 		ret = vc_decode_insn(ctxt);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम vc_finish_insn(काष्ठा es_em_ctxt *ctxt)
-अणु
+static void vc_finish_insn(struct es_em_ctxt *ctxt)
+{
 	ctxt->regs->ip += ctxt->insn.length;
-पूर्ण
+}
 
-अटल क्रमागत es_result sev_es_ghcb_hv_call(काष्ठा ghcb *ghcb,
-					  काष्ठा es_em_ctxt *ctxt,
-					  u64 निकास_code, u64 निकास_info_1,
-					  u64 निकास_info_2)
-अणु
-	क्रमागत es_result ret;
+static enum es_result sev_es_ghcb_hv_call(struct ghcb *ghcb,
+					  struct es_em_ctxt *ctxt,
+					  u64 exit_code, u64 exit_info_1,
+					  u64 exit_info_2)
+{
+	enum es_result ret;
 
-	/* Fill in protocol and क्रमmat specअगरiers */
+	/* Fill in protocol and format specifiers */
 	ghcb->protocol_version = GHCB_PROTOCOL_MAX;
 	ghcb->ghcb_usage       = GHCB_DEFAULT_USAGE;
 
-	ghcb_set_sw_निकास_code(ghcb, निकास_code);
-	ghcb_set_sw_निकास_info_1(ghcb, निकास_info_1);
-	ghcb_set_sw_निकास_info_2(ghcb, निकास_info_2);
+	ghcb_set_sw_exit_code(ghcb, exit_code);
+	ghcb_set_sw_exit_info_1(ghcb, exit_info_1);
+	ghcb_set_sw_exit_info_2(ghcb, exit_info_2);
 
 	sev_es_wr_ghcb_msr(__pa(ghcb));
 	VMGEXIT();
 
-	अगर ((ghcb->save.sw_निकास_info_1 & 0xffffffff) == 1) अणु
-		u64 info = ghcb->save.sw_निकास_info_2;
-		अचिन्हित दीर्घ v;
+	if ((ghcb->save.sw_exit_info_1 & 0xffffffff) == 1) {
+		u64 info = ghcb->save.sw_exit_info_2;
+		unsigned long v;
 
-		info = ghcb->save.sw_निकास_info_2;
+		info = ghcb->save.sw_exit_info_2;
 		v = info & SVM_EVTINJ_VEC_MASK;
 
-		/* Check अगर exception inक्रमmation from hypervisor is sane. */
-		अगर ((info & SVM_EVTINJ_VALID) &&
+		/* Check if exception information from hypervisor is sane. */
+		if ((info & SVM_EVTINJ_VALID) &&
 		    ((v == X86_TRAP_GP) || (v == X86_TRAP_UD)) &&
-		    ((info & SVM_EVTINJ_TYPE_MASK) == SVM_EVTINJ_TYPE_EXEPT)) अणु
+		    ((info & SVM_EVTINJ_TYPE_MASK) == SVM_EVTINJ_TYPE_EXEPT)) {
 			ctxt->fi.vector = v;
-			अगर (info & SVM_EVTINJ_VALID_ERR)
+			if (info & SVM_EVTINJ_VALID_ERR)
 				ctxt->fi.error_code = info >> 32;
 			ret = ES_EXCEPTION;
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = ES_VMM_ERROR;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		ret = ES_OK;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Boot VC Handler - This is the first VC handler during boot, there is no GHCB
  * page yet, so it only supports the MSR based communication with the
- * hypervisor and only the CPUID निकास-code.
+ * hypervisor and only the CPUID exit-code.
  */
-व्योम __init करो_vc_no_ghcb(काष्ठा pt_regs *regs, अचिन्हित दीर्घ निकास_code)
-अणु
-	अचिन्हित पूर्णांक fn = lower_bits(regs->ax, 32);
-	अचिन्हित दीर्घ val;
+void __init do_vc_no_ghcb(struct pt_regs *regs, unsigned long exit_code)
+{
+	unsigned int fn = lower_bits(regs->ax, 32);
+	unsigned long val;
 
 	/* Only CPUID is supported via MSR protocol */
-	अगर (निकास_code != SVM_EXIT_CPUID)
-		जाओ fail;
+	if (exit_code != SVM_EXIT_CPUID)
+		goto fail;
 
 	sev_es_wr_ghcb_msr(GHCB_CPUID_REQ(fn, GHCB_CPUID_REQ_EAX));
 	VMGEXIT();
 	val = sev_es_rd_ghcb_msr();
-	अगर (GHCB_RESP_CODE(val) != GHCB_MSR_CPUID_RESP)
-		जाओ fail;
+	if (GHCB_RESP_CODE(val) != GHCB_MSR_CPUID_RESP)
+		goto fail;
 	regs->ax = val >> 32;
 
 	sev_es_wr_ghcb_msr(GHCB_CPUID_REQ(fn, GHCB_CPUID_REQ_EBX));
 	VMGEXIT();
 	val = sev_es_rd_ghcb_msr();
-	अगर (GHCB_RESP_CODE(val) != GHCB_MSR_CPUID_RESP)
-		जाओ fail;
+	if (GHCB_RESP_CODE(val) != GHCB_MSR_CPUID_RESP)
+		goto fail;
 	regs->bx = val >> 32;
 
 	sev_es_wr_ghcb_msr(GHCB_CPUID_REQ(fn, GHCB_CPUID_REQ_ECX));
 	VMGEXIT();
 	val = sev_es_rd_ghcb_msr();
-	अगर (GHCB_RESP_CODE(val) != GHCB_MSR_CPUID_RESP)
-		जाओ fail;
+	if (GHCB_RESP_CODE(val) != GHCB_MSR_CPUID_RESP)
+		goto fail;
 	regs->cx = val >> 32;
 
 	sev_es_wr_ghcb_msr(GHCB_CPUID_REQ(fn, GHCB_CPUID_REQ_EDX));
 	VMGEXIT();
 	val = sev_es_rd_ghcb_msr();
-	अगर (GHCB_RESP_CODE(val) != GHCB_MSR_CPUID_RESP)
-		जाओ fail;
+	if (GHCB_RESP_CODE(val) != GHCB_MSR_CPUID_RESP)
+		goto fail;
 	regs->dx = val >> 32;
 
 	/*
-	 * This is a VC handler and the #VC is only उठाओd when SEV-ES is
+	 * This is a VC handler and the #VC is only raised when SEV-ES is
 	 * active, which means SEV must be active too. Do sanity checks on the
-	 * CPUID results to make sure the hypervisor करोes not trick the kernel
-	 * पूर्णांकo the no-sev path. This could map sensitive data unencrypted and
+	 * CPUID results to make sure the hypervisor does not trick the kernel
+	 * into the no-sev path. This could map sensitive data unencrypted and
 	 * make it accessible to the hypervisor.
 	 *
-	 * In particular, check क्रम:
+	 * In particular, check for:
 	 *	- Availability of CPUID leaf 0x8000001f
 	 *	- SEV CPUID bit.
 	 *
@@ -195,333 +194,333 @@
 	 * can't be checked here.
 	 */
 
-	अगर (fn == 0x80000000 && (regs->ax < 0x8000001f))
+	if (fn == 0x80000000 && (regs->ax < 0x8000001f))
 		/* SEV leaf check */
-		जाओ fail;
-	अन्यथा अगर ((fn == 0x8000001f && !(regs->ax & BIT(1))))
+		goto fail;
+	else if ((fn == 0x8000001f && !(regs->ax & BIT(1))))
 		/* SEV bit */
-		जाओ fail;
+		goto fail;
 
 	/* Skip over the CPUID two-byte opcode */
 	regs->ip += 2;
 
-	वापस;
+	return;
 
 fail:
 	/* Terminate the guest */
 	sev_es_terminate(GHCB_SEV_ES_REASON_GENERAL_REQUEST);
-पूर्ण
+}
 
-अटल क्रमागत es_result vc_insn_string_पढ़ो(काष्ठा es_em_ctxt *ctxt,
-					  व्योम *src, अक्षर *buf,
-					  अचिन्हित पूर्णांक data_size,
-					  अचिन्हित पूर्णांक count,
+static enum es_result vc_insn_string_read(struct es_em_ctxt *ctxt,
+					  void *src, char *buf,
+					  unsigned int data_size,
+					  unsigned int count,
 					  bool backwards)
-अणु
-	पूर्णांक i, b = backwards ? -1 : 1;
-	क्रमागत es_result ret = ES_OK;
+{
+	int i, b = backwards ? -1 : 1;
+	enum es_result ret = ES_OK;
 
-	क्रम (i = 0; i < count; i++) अणु
-		व्योम *s = src + (i * data_size * b);
-		अक्षर *d = buf + (i * data_size);
+	for (i = 0; i < count; i++) {
+		void *s = src + (i * data_size * b);
+		char *d = buf + (i * data_size);
 
-		ret = vc_पढ़ो_mem(ctxt, s, d, data_size);
-		अगर (ret != ES_OK)
-			अवरोध;
-	पूर्ण
+		ret = vc_read_mem(ctxt, s, d, data_size);
+		if (ret != ES_OK)
+			break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल क्रमागत es_result vc_insn_string_ग_लिखो(काष्ठा es_em_ctxt *ctxt,
-					   व्योम *dst, अक्षर *buf,
-					   अचिन्हित पूर्णांक data_size,
-					   अचिन्हित पूर्णांक count,
+static enum es_result vc_insn_string_write(struct es_em_ctxt *ctxt,
+					   void *dst, char *buf,
+					   unsigned int data_size,
+					   unsigned int count,
 					   bool backwards)
-अणु
-	पूर्णांक i, s = backwards ? -1 : 1;
-	क्रमागत es_result ret = ES_OK;
+{
+	int i, s = backwards ? -1 : 1;
+	enum es_result ret = ES_OK;
 
-	क्रम (i = 0; i < count; i++) अणु
-		व्योम *d = dst + (i * data_size * s);
-		अक्षर *b = buf + (i * data_size);
+	for (i = 0; i < count; i++) {
+		void *d = dst + (i * data_size * s);
+		char *b = buf + (i * data_size);
 
-		ret = vc_ग_लिखो_mem(ctxt, d, b, data_size);
-		अगर (ret != ES_OK)
-			अवरोध;
-	पूर्ण
+		ret = vc_write_mem(ctxt, d, b, data_size);
+		if (ret != ES_OK)
+			break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा IOIO_TYPE_STR  BIT(2)
-#घोषणा IOIO_TYPE_IN   1
-#घोषणा IOIO_TYPE_INS  (IOIO_TYPE_IN | IOIO_TYPE_STR)
-#घोषणा IOIO_TYPE_OUT  0
-#घोषणा IOIO_TYPE_OUTS (IOIO_TYPE_OUT | IOIO_TYPE_STR)
+#define IOIO_TYPE_STR  BIT(2)
+#define IOIO_TYPE_IN   1
+#define IOIO_TYPE_INS  (IOIO_TYPE_IN | IOIO_TYPE_STR)
+#define IOIO_TYPE_OUT  0
+#define IOIO_TYPE_OUTS (IOIO_TYPE_OUT | IOIO_TYPE_STR)
 
-#घोषणा IOIO_REP       BIT(3)
+#define IOIO_REP       BIT(3)
 
-#घोषणा IOIO_ADDR_64   BIT(9)
-#घोषणा IOIO_ADDR_32   BIT(8)
-#घोषणा IOIO_ADDR_16   BIT(7)
+#define IOIO_ADDR_64   BIT(9)
+#define IOIO_ADDR_32   BIT(8)
+#define IOIO_ADDR_16   BIT(7)
 
-#घोषणा IOIO_DATA_32   BIT(6)
-#घोषणा IOIO_DATA_16   BIT(5)
-#घोषणा IOIO_DATA_8    BIT(4)
+#define IOIO_DATA_32   BIT(6)
+#define IOIO_DATA_16   BIT(5)
+#define IOIO_DATA_8    BIT(4)
 
-#घोषणा IOIO_SEG_ES    (0 << 10)
-#घोषणा IOIO_SEG_DS    (3 << 10)
+#define IOIO_SEG_ES    (0 << 10)
+#define IOIO_SEG_DS    (3 << 10)
 
-अटल क्रमागत es_result vc_ioio_निकासinfo(काष्ठा es_em_ctxt *ctxt, u64 *निकासinfo)
-अणु
-	काष्ठा insn *insn = &ctxt->insn;
-	*निकासinfo = 0;
+static enum es_result vc_ioio_exitinfo(struct es_em_ctxt *ctxt, u64 *exitinfo)
+{
+	struct insn *insn = &ctxt->insn;
+	*exitinfo = 0;
 
-	चयन (insn->opcode.bytes[0]) अणु
+	switch (insn->opcode.bytes[0]) {
 	/* INS opcodes */
-	हाल 0x6c:
-	हाल 0x6d:
-		*निकासinfo |= IOIO_TYPE_INS;
-		*निकासinfo |= IOIO_SEG_ES;
-		*निकासinfo |= (ctxt->regs->dx & 0xffff) << 16;
-		अवरोध;
+	case 0x6c:
+	case 0x6d:
+		*exitinfo |= IOIO_TYPE_INS;
+		*exitinfo |= IOIO_SEG_ES;
+		*exitinfo |= (ctxt->regs->dx & 0xffff) << 16;
+		break;
 
 	/* OUTS opcodes */
-	हाल 0x6e:
-	हाल 0x6f:
-		*निकासinfo |= IOIO_TYPE_OUTS;
-		*निकासinfo |= IOIO_SEG_DS;
-		*निकासinfo |= (ctxt->regs->dx & 0xffff) << 16;
-		अवरोध;
+	case 0x6e:
+	case 0x6f:
+		*exitinfo |= IOIO_TYPE_OUTS;
+		*exitinfo |= IOIO_SEG_DS;
+		*exitinfo |= (ctxt->regs->dx & 0xffff) << 16;
+		break;
 
 	/* IN immediate opcodes */
-	हाल 0xe4:
-	हाल 0xe5:
-		*निकासinfo |= IOIO_TYPE_IN;
-		*निकासinfo |= (u8)insn->immediate.value << 16;
-		अवरोध;
+	case 0xe4:
+	case 0xe5:
+		*exitinfo |= IOIO_TYPE_IN;
+		*exitinfo |= (u8)insn->immediate.value << 16;
+		break;
 
 	/* OUT immediate opcodes */
-	हाल 0xe6:
-	हाल 0xe7:
-		*निकासinfo |= IOIO_TYPE_OUT;
-		*निकासinfo |= (u8)insn->immediate.value << 16;
-		अवरोध;
+	case 0xe6:
+	case 0xe7:
+		*exitinfo |= IOIO_TYPE_OUT;
+		*exitinfo |= (u8)insn->immediate.value << 16;
+		break;
 
-	/* IN रेजिस्टर opcodes */
-	हाल 0xec:
-	हाल 0xed:
-		*निकासinfo |= IOIO_TYPE_IN;
-		*निकासinfo |= (ctxt->regs->dx & 0xffff) << 16;
-		अवरोध;
+	/* IN register opcodes */
+	case 0xec:
+	case 0xed:
+		*exitinfo |= IOIO_TYPE_IN;
+		*exitinfo |= (ctxt->regs->dx & 0xffff) << 16;
+		break;
 
-	/* OUT रेजिस्टर opcodes */
-	हाल 0xee:
-	हाल 0xef:
-		*निकासinfo |= IOIO_TYPE_OUT;
-		*निकासinfo |= (ctxt->regs->dx & 0xffff) << 16;
-		अवरोध;
+	/* OUT register opcodes */
+	case 0xee:
+	case 0xef:
+		*exitinfo |= IOIO_TYPE_OUT;
+		*exitinfo |= (ctxt->regs->dx & 0xffff) << 16;
+		break;
 
-	शेष:
-		वापस ES_DECODE_FAILED;
-	पूर्ण
+	default:
+		return ES_DECODE_FAILED;
+	}
 
-	चयन (insn->opcode.bytes[0]) अणु
-	हाल 0x6c:
-	हाल 0x6e:
-	हाल 0xe4:
-	हाल 0xe6:
-	हाल 0xec:
-	हाल 0xee:
+	switch (insn->opcode.bytes[0]) {
+	case 0x6c:
+	case 0x6e:
+	case 0xe4:
+	case 0xe6:
+	case 0xec:
+	case 0xee:
 		/* Single byte opcodes */
-		*निकासinfo |= IOIO_DATA_8;
-		अवरोध;
-	शेष:
-		/* Length determined by inकाष्ठाion parsing */
-		*निकासinfo |= (insn->opnd_bytes == 2) ? IOIO_DATA_16
+		*exitinfo |= IOIO_DATA_8;
+		break;
+	default:
+		/* Length determined by instruction parsing */
+		*exitinfo |= (insn->opnd_bytes == 2) ? IOIO_DATA_16
 						     : IOIO_DATA_32;
-	पूर्ण
-	चयन (insn->addr_bytes) अणु
-	हाल 2:
-		*निकासinfo |= IOIO_ADDR_16;
-		अवरोध;
-	हाल 4:
-		*निकासinfo |= IOIO_ADDR_32;
-		अवरोध;
-	हाल 8:
-		*निकासinfo |= IOIO_ADDR_64;
-		अवरोध;
-	पूर्ण
+	}
+	switch (insn->addr_bytes) {
+	case 2:
+		*exitinfo |= IOIO_ADDR_16;
+		break;
+	case 4:
+		*exitinfo |= IOIO_ADDR_32;
+		break;
+	case 8:
+		*exitinfo |= IOIO_ADDR_64;
+		break;
+	}
 
-	अगर (insn_has_rep_prefix(insn))
-		*निकासinfo |= IOIO_REP;
+	if (insn_has_rep_prefix(insn))
+		*exitinfo |= IOIO_REP;
 
-	वापस ES_OK;
-पूर्ण
+	return ES_OK;
+}
 
-अटल क्रमागत es_result vc_handle_ioio(काष्ठा ghcb *ghcb, काष्ठा es_em_ctxt *ctxt)
-अणु
-	काष्ठा pt_regs *regs = ctxt->regs;
-	u64 निकास_info_1, निकास_info_2;
-	क्रमागत es_result ret;
+static enum es_result vc_handle_ioio(struct ghcb *ghcb, struct es_em_ctxt *ctxt)
+{
+	struct pt_regs *regs = ctxt->regs;
+	u64 exit_info_1, exit_info_2;
+	enum es_result ret;
 
-	ret = vc_ioio_निकासinfo(ctxt, &निकास_info_1);
-	अगर (ret != ES_OK)
-		वापस ret;
+	ret = vc_ioio_exitinfo(ctxt, &exit_info_1);
+	if (ret != ES_OK)
+		return ret;
 
-	अगर (निकास_info_1 & IOIO_TYPE_STR) अणु
+	if (exit_info_1 & IOIO_TYPE_STR) {
 
 		/* (REP) INS/OUTS */
 
 		bool df = ((regs->flags & X86_EFLAGS_DF) == X86_EFLAGS_DF);
-		अचिन्हित पूर्णांक io_bytes, निकास_bytes;
-		अचिन्हित पूर्णांक ghcb_count, op_count;
-		अचिन्हित दीर्घ es_base;
+		unsigned int io_bytes, exit_bytes;
+		unsigned int ghcb_count, op_count;
+		unsigned long es_base;
 		u64 sw_scratch;
 
 		/*
 		 * For the string variants with rep prefix the amount of in/out
 		 * operations per #VC exception is limited so that the kernel
-		 * has a chance to take पूर्णांकerrupts and re-schedule जबतक the
-		 * inकाष्ठाion is emulated.
+		 * has a chance to take interrupts and re-schedule while the
+		 * instruction is emulated.
 		 */
-		io_bytes   = (निकास_info_1 >> 4) & 0x7;
-		ghcb_count = माप(ghcb->shared_buffer) / io_bytes;
+		io_bytes   = (exit_info_1 >> 4) & 0x7;
+		ghcb_count = sizeof(ghcb->shared_buffer) / io_bytes;
 
-		op_count    = (निकास_info_1 & IOIO_REP) ? regs->cx : 1;
-		निकास_info_2 = min(op_count, ghcb_count);
-		निकास_bytes  = निकास_info_2 * io_bytes;
+		op_count    = (exit_info_1 & IOIO_REP) ? regs->cx : 1;
+		exit_info_2 = min(op_count, ghcb_count);
+		exit_bytes  = exit_info_2 * io_bytes;
 
 		es_base = insn_get_seg_base(ctxt->regs, INAT_SEG_REG_ES);
 
-		/* Read bytes of OUTS पूर्णांकo the shared buffer */
-		अगर (!(निकास_info_1 & IOIO_TYPE_IN)) अणु
-			ret = vc_insn_string_पढ़ो(ctxt,
-					       (व्योम *)(es_base + regs->si),
+		/* Read bytes of OUTS into the shared buffer */
+		if (!(exit_info_1 & IOIO_TYPE_IN)) {
+			ret = vc_insn_string_read(ctxt,
+					       (void *)(es_base + regs->si),
 					       ghcb->shared_buffer, io_bytes,
-					       निकास_info_2, df);
-			अगर (ret)
-				वापस ret;
-		पूर्ण
+					       exit_info_2, df);
+			if (ret)
+				return ret;
+		}
 
 		/*
 		 * Issue an VMGEXIT to the HV to consume the bytes from the
-		 * shared buffer or to have it ग_लिखो them पूर्णांकo the shared buffer
-		 * depending on the inकाष्ठाion: OUTS or INS.
+		 * shared buffer or to have it write them into the shared buffer
+		 * depending on the instruction: OUTS or INS.
 		 */
-		sw_scratch = __pa(ghcb) + दुरत्व(काष्ठा ghcb, shared_buffer);
+		sw_scratch = __pa(ghcb) + offsetof(struct ghcb, shared_buffer);
 		ghcb_set_sw_scratch(ghcb, sw_scratch);
 		ret = sev_es_ghcb_hv_call(ghcb, ctxt, SVM_EXIT_IOIO,
-					  निकास_info_1, निकास_info_2);
-		अगर (ret != ES_OK)
-			वापस ret;
+					  exit_info_1, exit_info_2);
+		if (ret != ES_OK)
+			return ret;
 
-		/* Read bytes from shared buffer पूर्णांकo the guest's destination. */
-		अगर (निकास_info_1 & IOIO_TYPE_IN) अणु
-			ret = vc_insn_string_ग_लिखो(ctxt,
-						   (व्योम *)(es_base + regs->di),
+		/* Read bytes from shared buffer into the guest's destination. */
+		if (exit_info_1 & IOIO_TYPE_IN) {
+			ret = vc_insn_string_write(ctxt,
+						   (void *)(es_base + regs->di),
 						   ghcb->shared_buffer, io_bytes,
-						   निकास_info_2, df);
-			अगर (ret)
-				वापस ret;
+						   exit_info_2, df);
+			if (ret)
+				return ret;
 
-			अगर (df)
-				regs->di -= निकास_bytes;
-			अन्यथा
-				regs->di += निकास_bytes;
-		पूर्ण अन्यथा अणु
-			अगर (df)
-				regs->si -= निकास_bytes;
-			अन्यथा
-				regs->si += निकास_bytes;
-		पूर्ण
+			if (df)
+				regs->di -= exit_bytes;
+			else
+				regs->di += exit_bytes;
+		} else {
+			if (df)
+				regs->si -= exit_bytes;
+			else
+				regs->si += exit_bytes;
+		}
 
-		अगर (निकास_info_1 & IOIO_REP)
-			regs->cx -= निकास_info_2;
+		if (exit_info_1 & IOIO_REP)
+			regs->cx -= exit_info_2;
 
 		ret = regs->cx ? ES_RETRY : ES_OK;
 
-	पूर्ण अन्यथा अणु
+	} else {
 
-		/* IN/OUT पूर्णांकo/from rAX */
+		/* IN/OUT into/from rAX */
 
-		पूर्णांक bits = (निकास_info_1 & 0x70) >> 1;
+		int bits = (exit_info_1 & 0x70) >> 1;
 		u64 rax = 0;
 
-		अगर (!(निकास_info_1 & IOIO_TYPE_IN))
+		if (!(exit_info_1 & IOIO_TYPE_IN))
 			rax = lower_bits(regs->ax, bits);
 
 		ghcb_set_rax(ghcb, rax);
 
-		ret = sev_es_ghcb_hv_call(ghcb, ctxt, SVM_EXIT_IOIO, निकास_info_1, 0);
-		अगर (ret != ES_OK)
-			वापस ret;
+		ret = sev_es_ghcb_hv_call(ghcb, ctxt, SVM_EXIT_IOIO, exit_info_1, 0);
+		if (ret != ES_OK)
+			return ret;
 
-		अगर (निकास_info_1 & IOIO_TYPE_IN) अणु
-			अगर (!ghcb_rax_is_valid(ghcb))
-				वापस ES_VMM_ERROR;
+		if (exit_info_1 & IOIO_TYPE_IN) {
+			if (!ghcb_rax_is_valid(ghcb))
+				return ES_VMM_ERROR;
 			regs->ax = lower_bits(ghcb->save.rax, bits);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल क्रमागत es_result vc_handle_cpuid(काष्ठा ghcb *ghcb,
-				      काष्ठा es_em_ctxt *ctxt)
-अणु
-	काष्ठा pt_regs *regs = ctxt->regs;
-	u32 cr4 = native_पढ़ो_cr4();
-	क्रमागत es_result ret;
+static enum es_result vc_handle_cpuid(struct ghcb *ghcb,
+				      struct es_em_ctxt *ctxt)
+{
+	struct pt_regs *regs = ctxt->regs;
+	u32 cr4 = native_read_cr4();
+	enum es_result ret;
 
 	ghcb_set_rax(ghcb, regs->ax);
 	ghcb_set_rcx(ghcb, regs->cx);
 
-	अगर (cr4 & X86_CR4_OSXSAVE)
-		/* Safe to पढ़ो xcr0 */
+	if (cr4 & X86_CR4_OSXSAVE)
+		/* Safe to read xcr0 */
 		ghcb_set_xcr0(ghcb, xgetbv(XCR_XFEATURE_ENABLED_MASK));
-	अन्यथा
-		/* xgetbv will cause #GP - use reset value क्रम xcr0 */
+	else
+		/* xgetbv will cause #GP - use reset value for xcr0 */
 		ghcb_set_xcr0(ghcb, 1);
 
 	ret = sev_es_ghcb_hv_call(ghcb, ctxt, SVM_EXIT_CPUID, 0, 0);
-	अगर (ret != ES_OK)
-		वापस ret;
+	if (ret != ES_OK)
+		return ret;
 
-	अगर (!(ghcb_rax_is_valid(ghcb) &&
+	if (!(ghcb_rax_is_valid(ghcb) &&
 	      ghcb_rbx_is_valid(ghcb) &&
 	      ghcb_rcx_is_valid(ghcb) &&
 	      ghcb_rdx_is_valid(ghcb)))
-		वापस ES_VMM_ERROR;
+		return ES_VMM_ERROR;
 
 	regs->ax = ghcb->save.rax;
 	regs->bx = ghcb->save.rbx;
 	regs->cx = ghcb->save.rcx;
 	regs->dx = ghcb->save.rdx;
 
-	वापस ES_OK;
-पूर्ण
+	return ES_OK;
+}
 
-अटल क्रमागत es_result vc_handle_rdtsc(काष्ठा ghcb *ghcb,
-				      काष्ठा es_em_ctxt *ctxt,
-				      अचिन्हित दीर्घ निकास_code)
-अणु
-	bool rdtscp = (निकास_code == SVM_EXIT_RDTSCP);
-	क्रमागत es_result ret;
+static enum es_result vc_handle_rdtsc(struct ghcb *ghcb,
+				      struct es_em_ctxt *ctxt,
+				      unsigned long exit_code)
+{
+	bool rdtscp = (exit_code == SVM_EXIT_RDTSCP);
+	enum es_result ret;
 
-	ret = sev_es_ghcb_hv_call(ghcb, ctxt, निकास_code, 0, 0);
-	अगर (ret != ES_OK)
-		वापस ret;
+	ret = sev_es_ghcb_hv_call(ghcb, ctxt, exit_code, 0, 0);
+	if (ret != ES_OK)
+		return ret;
 
-	अगर (!(ghcb_rax_is_valid(ghcb) && ghcb_rdx_is_valid(ghcb) &&
+	if (!(ghcb_rax_is_valid(ghcb) && ghcb_rdx_is_valid(ghcb) &&
 	     (!rdtscp || ghcb_rcx_is_valid(ghcb))))
-		वापस ES_VMM_ERROR;
+		return ES_VMM_ERROR;
 
 	ctxt->regs->ax = ghcb->save.rax;
 	ctxt->regs->dx = ghcb->save.rdx;
-	अगर (rdtscp)
+	if (rdtscp)
 		ctxt->regs->cx = ghcb->save.rcx;
 
-	वापस ES_OK;
-पूर्ण
+	return ES_OK;
+}

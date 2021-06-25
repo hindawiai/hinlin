@@ -1,169 +1,168 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  * Copyright(c) 2008 - 2010 Realtek Corporation. All rights reserved.
  *
- * Contact Inक्रमmation:
+ * Contact Information:
  * wlanfae <wlanfae@realtek.com>
  ******************************************************************************/
-#समावेश "dot11d.h"
+#include "dot11d.h"
 
-काष्ठा channel_list अणु
+struct channel_list {
 	u8      channel[32];
 	u8      len;
-पूर्ण;
+};
 
-अटल काष्ठा channel_list channel_array[] = अणु
-	अणुअणु1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 36, 40, 44, 48, 52, 56, 60, 64,
-	  149, 153, 157, 161, 165पूर्ण, 24पूर्ण,
-	अणुअणु1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11पूर्ण, 11पूर्ण,
-	अणुअणु1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 36, 40, 44, 48, 52, 56,
-	  60, 64पूर्ण, 21पूर्ण,
-	अणुअणु1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13पूर्ण, 13पूर्ण,
-	अणुअणु1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13पूर्ण, 13पूर्ण,
-	अणुअणु1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 36, 40, 44, 48, 52,
-	  56, 60, 64पूर्ण, 22पूर्ण,
-	अणुअणु1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 36, 40, 44, 48, 52,
-	  56, 60, 64पूर्ण, 22पूर्ण,
-	अणुअणु1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13पूर्ण, 13पूर्ण,
-	अणुअणु1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 36, 40, 44, 48, 52,
-	  56, 60, 64पूर्ण, 22पूर्ण,
-	अणुअणु1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 36, 40, 44, 48, 52,
-	 56, 60, 64पूर्ण, 22पूर्ण,
-	अणुअणु1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14पूर्ण, 14पूर्ण,
-	अणुअणु1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13पूर्ण, 13पूर्ण,
-	अणुअणु1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 36, 40, 44, 48, 52,
-	  56, 60, 64पूर्ण, 21पूर्ण
-पूर्ण;
+static struct channel_list channel_array[] = {
+	{{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 36, 40, 44, 48, 52, 56, 60, 64,
+	  149, 153, 157, 161, 165}, 24},
+	{{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}, 11},
+	{{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 36, 40, 44, 48, 52, 56,
+	  60, 64}, 21},
+	{{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}, 13},
+	{{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}, 13},
+	{{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 36, 40, 44, 48, 52,
+	  56, 60, 64}, 22},
+	{{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 36, 40, 44, 48, 52,
+	  56, 60, 64}, 22},
+	{{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}, 13},
+	{{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 36, 40, 44, 48, 52,
+	  56, 60, 64}, 22},
+	{{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 36, 40, 44, 48, 52,
+	 56, 60, 64}, 22},
+	{{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}, 14},
+	{{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}, 13},
+	{{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 36, 40, 44, 48, 52,
+	  56, 60, 64}, 21}
+};
 
-व्योम करोt11d_init(काष्ठा rtllib_device *ieee)
-अणु
-	काष्ठा rt_करोt11d_info *करोt11d_info = GET_DOT11D_INFO(ieee);
+void dot11d_init(struct rtllib_device *ieee)
+{
+	struct rt_dot11d_info *dot11d_info = GET_DOT11D_INFO(ieee);
 
-	करोt11d_info->enabled = false;
+	dot11d_info->enabled = false;
 
-	करोt11d_info->state = DOT11D_STATE_NONE;
-	करोt11d_info->country_len = 0;
-	स_रखो(करोt11d_info->channel_map, 0, MAX_CHANNEL_NUMBER + 1);
-	स_रखो(करोt11d_info->max_tx_घातer_list, 0xFF, MAX_CHANNEL_NUMBER + 1);
+	dot11d_info->state = DOT11D_STATE_NONE;
+	dot11d_info->country_len = 0;
+	memset(dot11d_info->channel_map, 0, MAX_CHANNEL_NUMBER + 1);
+	memset(dot11d_info->max_tx_power_list, 0xFF, MAX_CHANNEL_NUMBER + 1);
 	RESET_CIE_WATCHDOG(ieee);
-पूर्ण
-EXPORT_SYMBOL(करोt11d_init);
+}
+EXPORT_SYMBOL(dot11d_init);
 
-व्योम करोt11d_channel_map(u8 channel_plan, काष्ठा rtllib_device *ieee)
-अणु
-	पूर्णांक i, max_chan = 14, min_chan = 1;
+void dot11d_channel_map(u8 channel_plan, struct rtllib_device *ieee)
+{
+	int i, max_chan = 14, min_chan = 1;
 
-	ieee->global_करोमुख्य = false;
+	ieee->global_domain = false;
 
-	अगर (channel_array[channel_plan].len != 0) अणु
-		स_रखो(GET_DOT11D_INFO(ieee)->channel_map, 0,
-		       माप(GET_DOT11D_INFO(ieee)->channel_map));
-		क्रम (i = 0; i < channel_array[channel_plan].len; i++) अणु
-			अगर (channel_array[channel_plan].channel[i] < min_chan ||
+	if (channel_array[channel_plan].len != 0) {
+		memset(GET_DOT11D_INFO(ieee)->channel_map, 0,
+		       sizeof(GET_DOT11D_INFO(ieee)->channel_map));
+		for (i = 0; i < channel_array[channel_plan].len; i++) {
+			if (channel_array[channel_plan].channel[i] < min_chan ||
 			    channel_array[channel_plan].channel[i] > max_chan)
-				अवरोध;
+				break;
 			GET_DOT11D_INFO(ieee)->channel_map[channel_array
 					[channel_plan].channel[i]] = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	चयन (channel_plan) अणु
-	हाल COUNTRY_CODE_GLOBAL_DOMAIN:
-		ieee->global_करोमुख्य = true;
-		क्रम (i = 12; i <= 14; i++)
+	switch (channel_plan) {
+	case COUNTRY_CODE_GLOBAL_DOMAIN:
+		ieee->global_domain = true;
+		for (i = 12; i <= 14; i++)
 			GET_DOT11D_INFO(ieee)->channel_map[i] = 2;
 		ieee->bss_start_channel = 10;
 		ieee->ibss_maxjoin_chal = 11;
-		अवरोध;
+		break;
 
-	हाल COUNTRY_CODE_WORLD_WIDE_13:
-		क्रम (i = 12; i <= 13; i++)
+	case COUNTRY_CODE_WORLD_WIDE_13:
+		for (i = 12; i <= 13; i++)
 			GET_DOT11D_INFO(ieee)->channel_map[i] = 2;
 		ieee->bss_start_channel = 10;
 		ieee->ibss_maxjoin_chal = 11;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		ieee->bss_start_channel = 1;
 		ieee->ibss_maxjoin_chal = 14;
-		अवरोध;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(करोt11d_channel_map);
+		break;
+	}
+}
+EXPORT_SYMBOL(dot11d_channel_map);
 
-व्योम करोt11d_reset(काष्ठा rtllib_device *ieee)
-अणु
-	काष्ठा rt_करोt11d_info *करोt11d_info = GET_DOT11D_INFO(ieee);
+void dot11d_reset(struct rtllib_device *ieee)
+{
+	struct rt_dot11d_info *dot11d_info = GET_DOT11D_INFO(ieee);
 	u32 i;
 
-	स_रखो(करोt11d_info->channel_map, 0, MAX_CHANNEL_NUMBER + 1);
-	स_रखो(करोt11d_info->max_tx_घातer_list, 0xFF, MAX_CHANNEL_NUMBER + 1);
-	क्रम (i = 1; i <= 11; i++)
-		(करोt11d_info->channel_map)[i] = 1;
-	क्रम (i = 12; i <= 14; i++)
-		(करोt11d_info->channel_map)[i] = 2;
-	करोt11d_info->state = DOT11D_STATE_NONE;
-	करोt11d_info->country_len = 0;
+	memset(dot11d_info->channel_map, 0, MAX_CHANNEL_NUMBER + 1);
+	memset(dot11d_info->max_tx_power_list, 0xFF, MAX_CHANNEL_NUMBER + 1);
+	for (i = 1; i <= 11; i++)
+		(dot11d_info->channel_map)[i] = 1;
+	for (i = 12; i <= 14; i++)
+		(dot11d_info->channel_map)[i] = 2;
+	dot11d_info->state = DOT11D_STATE_NONE;
+	dot11d_info->country_len = 0;
 	RESET_CIE_WATCHDOG(ieee);
-पूर्ण
+}
 
-व्योम करोt11d_update_country(काष्ठा rtllib_device *dev, u8 *address,
+void dot11d_update_country(struct rtllib_device *dev, u8 *address,
 			   u16 country_len, u8 *country)
-अणु
-	काष्ठा rt_करोt11d_info *करोt11d_info = GET_DOT11D_INFO(dev);
+{
+	struct rt_dot11d_info *dot11d_info = GET_DOT11D_INFO(dev);
 	u8 i, j, number_of_triples, max_channel_number;
-	काष्ठा chnl_txघात_triple *triple;
+	struct chnl_txpow_triple *triple;
 
-	स_रखो(करोt11d_info->channel_map, 0, MAX_CHANNEL_NUMBER + 1);
-	स_रखो(करोt11d_info->max_tx_घातer_list, 0xFF, MAX_CHANNEL_NUMBER + 1);
+	memset(dot11d_info->channel_map, 0, MAX_CHANNEL_NUMBER + 1);
+	memset(dot11d_info->max_tx_power_list, 0xFF, MAX_CHANNEL_NUMBER + 1);
 	max_channel_number = 0;
 	number_of_triples = (country_len - 3) / 3;
-	triple = (काष्ठा chnl_txघात_triple *)(country + 3);
-	क्रम (i = 0; i < number_of_triples; i++) अणु
-		अगर (max_channel_number >= triple->first_channel) अणु
+	triple = (struct chnl_txpow_triple *)(country + 3);
+	for (i = 0; i < number_of_triples; i++) {
+		if (max_channel_number >= triple->first_channel) {
 			netdev_info(dev->dev,
 				    "%s: Invalid country IE, skip it......1\n",
 				    __func__);
-			वापस;
-		पूर्ण
-		अगर (MAX_CHANNEL_NUMBER < (triple->first_channel +
-		    triple->num_channels)) अणु
+			return;
+		}
+		if (MAX_CHANNEL_NUMBER < (triple->first_channel +
+		    triple->num_channels)) {
 			netdev_info(dev->dev,
 				    "%s: Invalid country IE, skip it......2\n",
 				    __func__);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		क्रम (j = 0; j < triple->num_channels; j++) अणु
-			करोt11d_info->channel_map[triple->first_channel + j] = 1;
-			करोt11d_info->max_tx_घातer_list[triple->first_channel + j] =
-						 triple->max_tx_घातer;
+		for (j = 0; j < triple->num_channels; j++) {
+			dot11d_info->channel_map[triple->first_channel + j] = 1;
+			dot11d_info->max_tx_power_list[triple->first_channel + j] =
+						 triple->max_tx_power;
 			max_channel_number = triple->first_channel + j;
-		पूर्ण
+		}
 
-		triple = (काष्ठा chnl_txघात_triple *)((u8 *)triple + 3);
-	पूर्ण
+		triple = (struct chnl_txpow_triple *)((u8 *)triple + 3);
+	}
 
 	UPDATE_CIE_SRC(dev, address);
 
-	करोt11d_info->country_len = country_len;
-	स_नकल(करोt11d_info->country_buffer, country, country_len);
-	करोt11d_info->state = DOT11D_STATE_LEARNED;
-पूर्ण
+	dot11d_info->country_len = country_len;
+	memcpy(dot11d_info->country_buffer, country, country_len);
+	dot11d_info->state = DOT11D_STATE_LEARNED;
+}
 
-व्योम करोt11d_scan_complete(काष्ठा rtllib_device *dev)
-अणु
-	काष्ठा rt_करोt11d_info *करोt11d_info = GET_DOT11D_INFO(dev);
+void dot11d_scan_complete(struct rtllib_device *dev)
+{
+	struct rt_dot11d_info *dot11d_info = GET_DOT11D_INFO(dev);
 
-	चयन (करोt11d_info->state) अणु
-	हाल DOT11D_STATE_LEARNED:
-		करोt11d_info->state = DOT11D_STATE_DONE;
-		अवरोध;
-	हाल DOT11D_STATE_DONE:
-		करोt11d_reset(dev);
-		अवरोध;
-	हाल DOT11D_STATE_NONE:
-		अवरोध;
-	पूर्ण
-पूर्ण
+	switch (dot11d_info->state) {
+	case DOT11D_STATE_LEARNED:
+		dot11d_info->state = DOT11D_STATE_DONE;
+		break;
+	case DOT11D_STATE_DONE:
+		dot11d_reset(dev);
+		break;
+	case DOT11D_STATE_NONE:
+		break;
+	}
+}

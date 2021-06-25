@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2016 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,47 +21,47 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "gk104.h"
-#समावेश "cgrp.h"
-#समावेश "changk104.h"
+#include "gk104.h"
+#include "cgrp.h"
+#include "changk104.h"
 
-#समावेश <core/memory.h>
+#include <core/memory.h>
 
-#समावेश <nvअगर/class.h>
+#include <nvif/class.h>
 
-व्योम
-gk110_fअगरo_runlist_cgrp(काष्ठा nvkm_fअगरo_cgrp *cgrp,
-			काष्ठा nvkm_memory *memory, u32 offset)
-अणु
+void
+gk110_fifo_runlist_cgrp(struct nvkm_fifo_cgrp *cgrp,
+			struct nvkm_memory *memory, u32 offset)
+{
 	nvkm_wo32(memory, offset + 0, (cgrp->chan_nr << 26) | (128 << 18) |
 				      (3 << 14) | 0x00002000 | cgrp->id);
 	nvkm_wo32(memory, offset + 4, 0x00000000);
-पूर्ण
+}
 
-स्थिर काष्ठा gk104_fअगरo_runlist_func
-gk110_fअगरo_runlist = अणु
+const struct gk104_fifo_runlist_func
+gk110_fifo_runlist = {
 	.size = 8,
-	.cgrp = gk110_fअगरo_runlist_cgrp,
-	.chan = gk104_fअगरo_runlist_chan,
-	.commit = gk104_fअगरo_runlist_commit,
-पूर्ण;
+	.cgrp = gk110_fifo_runlist_cgrp,
+	.chan = gk104_fifo_runlist_chan,
+	.commit = gk104_fifo_runlist_commit,
+};
 
-अटल स्थिर काष्ठा gk104_fअगरo_func
-gk110_fअगरo = अणु
-	.पूर्णांकr.fault = gf100_fअगरo_पूर्णांकr_fault,
-	.pbdma = &gk104_fअगरo_pbdma,
-	.fault.access = gk104_fअगरo_fault_access,
-	.fault.engine = gk104_fअगरo_fault_engine,
-	.fault.reason = gk104_fअगरo_fault_reason,
-	.fault.hubclient = gk104_fअगरo_fault_hubclient,
-	.fault.gpcclient = gk104_fअगरo_fault_gpcclient,
-	.runlist = &gk110_fअगरo_runlist,
-	.chan = अणुअणु0,0,KEPLER_CHANNEL_GPFIFO_Bपूर्ण, gk104_fअगरo_gpfअगरo_new पूर्ण,
-पूर्ण;
+static const struct gk104_fifo_func
+gk110_fifo = {
+	.intr.fault = gf100_fifo_intr_fault,
+	.pbdma = &gk104_fifo_pbdma,
+	.fault.access = gk104_fifo_fault_access,
+	.fault.engine = gk104_fifo_fault_engine,
+	.fault.reason = gk104_fifo_fault_reason,
+	.fault.hubclient = gk104_fifo_fault_hubclient,
+	.fault.gpcclient = gk104_fifo_fault_gpcclient,
+	.runlist = &gk110_fifo_runlist,
+	.chan = {{0,0,KEPLER_CHANNEL_GPFIFO_B}, gk104_fifo_gpfifo_new },
+};
 
-पूर्णांक
-gk110_fअगरo_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
-	       काष्ठा nvkm_fअगरo **pfअगरo)
-अणु
-	वापस gk104_fअगरo_new_(&gk110_fअगरo, device, type, inst, 4096, pfअगरo);
-पूर्ण
+int
+gk110_fifo_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
+	       struct nvkm_fifo **pfifo)
+{
+	return gk104_fifo_new_(&gk110_fifo, device, type, inst, 4096, pfifo);
+}

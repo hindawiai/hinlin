@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
+/* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**********************************************************
  * Copyright 2007-2015 VMware, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person
- * obtaining a copy of this software and associated करोcumentation
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
  * files (the "Software"), to deal in the Software without
  * restriction, including without limitation the rights to use, copy,
- * modअगरy, merge, publish, distribute, sublicense, and/or sell copies
+ * modify, merge, publish, distribute, sublicense, and/or sell copies
  * of the Software, and to permit persons to whom the Software is
- * furnished to करो so, subject to the following conditions:
+ * furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
@@ -28,94 +27,94 @@
 /*
  * svga_overlay.h --
  *
- *    Definitions क्रम video-overlay support.
+ *    Definitions for video-overlay support.
  */
 
-#अगर_अघोषित _SVGA_OVERLAY_H_
-#घोषणा _SVGA_OVERLAY_H_
+#ifndef _SVGA_OVERLAY_H_
+#define _SVGA_OVERLAY_H_
 
-#समावेश "svga_reg.h"
+#include "svga_reg.h"
 
 /*
- * Video क्रमmats we support
+ * Video formats we support
  */
 
-#घोषणा VMWARE_FOURCC_YV12 0x32315659 /* 'Y' 'V' '1' '2' */
-#घोषणा VMWARE_FOURCC_YUY2 0x32595559 /* 'Y' 'U' 'Y' '2' */
-#घोषणा VMWARE_FOURCC_UYVY 0x59565955 /* 'U' 'Y' 'V' 'Y' */
+#define VMWARE_FOURCC_YV12 0x32315659 /* 'Y' 'V' '1' '2' */
+#define VMWARE_FOURCC_YUY2 0x32595559 /* 'Y' 'U' 'Y' '2' */
+#define VMWARE_FOURCC_UYVY 0x59565955 /* 'U' 'Y' 'V' 'Y' */
 
-प्रकार क्रमागत अणु
+typedef enum {
    SVGA_OVERLAY_FORMAT_INVALID = 0,
    SVGA_OVERLAY_FORMAT_YV12 = VMWARE_FOURCC_YV12,
    SVGA_OVERLAY_FORMAT_YUY2 = VMWARE_FOURCC_YUY2,
    SVGA_OVERLAY_FORMAT_UYVY = VMWARE_FOURCC_UYVY,
-पूर्ण SVGAOverlayFormat;
+} SVGAOverlayFormat;
 
-#घोषणा SVGA_VIDEO_COLORKEY_MASK             0x00ffffff
+#define SVGA_VIDEO_COLORKEY_MASK             0x00ffffff
 
-#घोषणा SVGA_ESCAPE_VMWARE_VIDEO             0x00020000
+#define SVGA_ESCAPE_VMWARE_VIDEO             0x00020000
 
-#घोषणा SVGA_ESCAPE_VMWARE_VIDEO_SET_REGS    0x00020001
+#define SVGA_ESCAPE_VMWARE_VIDEO_SET_REGS    0x00020001
         /* FIFO escape layout:
          * Type, Stream Id, (Register Id, Value) pairs */
 
-#घोषणा SVGA_ESCAPE_VMWARE_VIDEO_FLUSH       0x00020002
+#define SVGA_ESCAPE_VMWARE_VIDEO_FLUSH       0x00020002
         /* FIFO escape layout:
          * Type, Stream Id */
 
-प्रकार
-काष्ठा SVGAEscapeVideoSetRegs अणु
-   काष्ठा अणु
-      uपूर्णांक32 cmdType;
-      uपूर्णांक32 streamId;
-   पूर्ण header;
+typedef
+struct SVGAEscapeVideoSetRegs {
+   struct {
+      uint32 cmdType;
+      uint32 streamId;
+   } header;
 
    /* May include zero or more items. */
-   काष्ठा अणु
-      uपूर्णांक32 रेजिस्टरId;
-      uपूर्णांक32 value;
-   पूर्ण items[1];
-पूर्ण SVGAEscapeVideoSetRegs;
+   struct {
+      uint32 registerId;
+      uint32 value;
+   } items[1];
+} SVGAEscapeVideoSetRegs;
 
-प्रकार
-काष्ठा SVGAEscapeVideoFlush अणु
-   uपूर्णांक32 cmdType;
-   uपूर्णांक32 streamId;
-पूर्ण SVGAEscapeVideoFlush;
+typedef
+struct SVGAEscapeVideoFlush {
+   uint32 cmdType;
+   uint32 streamId;
+} SVGAEscapeVideoFlush;
 
 
 /*
- * Struct definitions क्रम the video overlay commands built on
- * SVGAFअगरoCmdEscape.
+ * Struct definitions for the video overlay commands built on
+ * SVGAFifoCmdEscape.
  */
-प्रकार
-काष्ठा अणु
-   uपूर्णांक32 command;
-   uपूर्णांक32 overlay;
-पूर्ण SVGAFअगरoEscapeCmdVideoBase;
+typedef
+struct {
+   uint32 command;
+   uint32 overlay;
+} SVGAFifoEscapeCmdVideoBase;
 
-प्रकार
-काष्ठा अणु
-   SVGAFअगरoEscapeCmdVideoBase videoCmd;
-पूर्ण SVGAFअगरoEscapeCmdVideoFlush;
+typedef
+struct {
+   SVGAFifoEscapeCmdVideoBase videoCmd;
+} SVGAFifoEscapeCmdVideoFlush;
 
-प्रकार
-काष्ठा अणु
-   SVGAFअगरoEscapeCmdVideoBase videoCmd;
-   काष्ठा अणु
-      uपूर्णांक32 regId;
-      uपूर्णांक32 value;
-   पूर्ण items[1];
-पूर्ण SVGAFअगरoEscapeCmdVideoSetRegs;
+typedef
+struct {
+   SVGAFifoEscapeCmdVideoBase videoCmd;
+   struct {
+      uint32 regId;
+      uint32 value;
+   } items[1];
+} SVGAFifoEscapeCmdVideoSetRegs;
 
-प्रकार
-काष्ठा अणु
-   SVGAFअगरoEscapeCmdVideoBase videoCmd;
-   काष्ठा अणु
-      uपूर्णांक32 regId;
-      uपूर्णांक32 value;
-   पूर्ण items[SVGA_VIDEO_NUM_REGS];
-पूर्ण SVGAFअगरoEscapeCmdVideoSetAllRegs;
+typedef
+struct {
+   SVGAFifoEscapeCmdVideoBase videoCmd;
+   struct {
+      uint32 regId;
+      uint32 value;
+   } items[SVGA_VIDEO_NUM_REGS];
+} SVGAFifoEscapeCmdVideoSetAllRegs;
 
 
 /*
@@ -123,79 +122,79 @@
  *
  * VMwareVideoGetAttributes --
  *
- *      Computes the size, pitches and offsets क्रम YUV frames.
+ *      Computes the size, pitches and offsets for YUV frames.
  *
  * Results:
  *      TRUE on success; otherwise FALSE on failure.
  *
  * Side effects:
- *      Pitches and offsets क्रम the given YUV frame are put in 'pitches'
+ *      Pitches and offsets for the given YUV frame are put in 'pitches'
  *      and 'offsets' respectively. They are both optional though.
  *
  *----------------------------------------------------------------------
  */
 
-अटल अंतरभूत bool
-VMwareVideoGetAttributes(स्थिर SVGAOverlayFormat क्रमmat,    /* IN */
-                         uपूर्णांक32 *width,                     /* IN / OUT */
-                         uपूर्णांक32 *height,                    /* IN / OUT */
-                         uपूर्णांक32 *size,                      /* OUT */
-                         uपूर्णांक32 *pitches,                   /* OUT (optional) */
-                         uपूर्णांक32 *offsets)                   /* OUT (optional) */
-अणु
-    पूर्णांक पंचांगp;
+static inline bool
+VMwareVideoGetAttributes(const SVGAOverlayFormat format,    /* IN */
+                         uint32 *width,                     /* IN / OUT */
+                         uint32 *height,                    /* IN / OUT */
+                         uint32 *size,                      /* OUT */
+                         uint32 *pitches,                   /* OUT (optional) */
+                         uint32 *offsets)                   /* OUT (optional) */
+{
+    int tmp;
 
     *width = (*width + 1) & ~1;
 
-    अगर (offsets) अणु
+    if (offsets) {
         offsets[0] = 0;
-    पूर्ण
+    }
 
-    चयन (क्रमmat) अणु
-    हाल VMWARE_FOURCC_YV12:
+    switch (format) {
+    case VMWARE_FOURCC_YV12:
        *height = (*height + 1) & ~1;
        *size = (*width) * (*height);
 
-       अगर (pitches) अणु
+       if (pitches) {
           pitches[0] = *width;
-       पूर्ण
+       }
 
-       अगर (offsets) अणु
+       if (offsets) {
           offsets[1] = *size;
-       पूर्ण
+       }
 
-       पंचांगp = *width >> 1;
+       tmp = *width >> 1;
 
-       अगर (pitches) अणु
-          pitches[1] = pitches[2] = पंचांगp;
-       पूर्ण
+       if (pitches) {
+          pitches[1] = pitches[2] = tmp;
+       }
 
-       पंचांगp *= (*height >> 1);
-       *size += पंचांगp;
+       tmp *= (*height >> 1);
+       *size += tmp;
 
-       अगर (offsets) अणु
+       if (offsets) {
           offsets[2] = *size;
-       पूर्ण
+       }
 
-       *size += पंचांगp;
-       अवरोध;
+       *size += tmp;
+       break;
 
-    हाल VMWARE_FOURCC_YUY2:
-    हाल VMWARE_FOURCC_UYVY:
+    case VMWARE_FOURCC_YUY2:
+    case VMWARE_FOURCC_UYVY:
        *size = *width * 2;
 
-       अगर (pitches) अणु
+       if (pitches) {
           pitches[0] = *size;
-       पूर्ण
+       }
 
        *size *= *height;
-       अवरोध;
+       break;
 
-    शेष:
-       वापस false;
-    पूर्ण
+    default:
+       return false;
+    }
 
-    वापस true;
-पूर्ण
+    return true;
+}
 
-#पूर्ण_अगर /* _SVGA_OVERLAY_H_ */
+#endif /* _SVGA_OVERLAY_H_ */

@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#समावेश <linux/माला.स> /* क्रम स_नकल() */
+#include <linux/string.h> /* for memcpy() */
 
-#समावेश <type_support.h>
-#समावेश "system_global.h"
-#समावेश "vamem.h"
-#समावेश "ia_css_types.h"
-#समावेश "ia_css_gc_table.host.h"
+#include <type_support.h>
+#include "system_global.h"
+#include "vamem.h"
+#include "ia_css_types.h"
+#include "ia_css_gc_table.host.h"
 
 
-काष्ठा ia_css_gamma_table शेष_gamma_table;
+struct ia_css_gamma_table default_gamma_table;
 
-अटल स्थिर uपूर्णांक16_t
-शेष_gamma_table_data[IA_CSS_VAMEM_2_GAMMA_TABLE_SIZE] = अणु
+static const uint16_t
+default_gamma_table_data[IA_CSS_VAMEM_2_GAMMA_TABLE_SIZE] = {
 	0,   4,   8,  12,  17,  21,  27,  32,
 	38,  44,  49,  55,  61,  66,  71,  76,
 	80,  84,  88,  92,  95,  98, 102, 105,
@@ -60,13 +59,13 @@
 	251, 251, 252, 252, 252, 252, 253, 253,
 	253, 253, 254, 254, 254, 254, 255, 255,
 	255
-पूर्ण;
+};
 
 
-व्योम
-ia_css_config_gamma_table(व्योम)
-अणु
-	स_नकल(शेष_gamma_table.data.vamem_2, शेष_gamma_table_data,
-	       माप(शेष_gamma_table_data));
-	शेष_gamma_table.vamem_type   = IA_CSS_VAMEM_TYPE_2;
-पूर्ण
+void
+ia_css_config_gamma_table(void)
+{
+	memcpy(default_gamma_table.data.vamem_2, default_gamma_table_data,
+	       sizeof(default_gamma_table_data));
+	default_gamma_table.vamem_type   = IA_CSS_VAMEM_TYPE_2;
+}

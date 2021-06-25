@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_घोषित __ASSEMBLY__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifdef __ASSEMBLY__
 
-/* EcoVec board specअगरic boot code:
- * converts the "partner-jet-script.txt" script पूर्णांकo assembly
+/* EcoVec board specific boot code:
+ * converts the "partner-jet-script.txt" script into assembly
  * the assembly code is the first code to be executed in the romImage
  */
 
-#समावेश <यंत्र/romimage-macros.h>
-#समावेश <mach/partner-jet-setup.txt>
+#include <asm/romimage-macros.h>
+#include <mach/partner-jet-setup.txt>
 
 	/* execute icbi after enabling cache */
 	mov.l	1f, r0
@@ -20,12 +19,12 @@
 	nop
 
 	.align 2
-1 :	.दीर्घ 0xa8000000
+1 :	.long 0xa8000000
 2 :
 
-#अन्यथा /* __ASSEMBLY__ */
+#else /* __ASSEMBLY__ */
 
-/* Ecovec board specअगरic inक्रमmation:
+/* Ecovec board specific information:
  *
  * Set the following to enable MMCIF boot from the MMC card in CN12:
  *
@@ -34,16 +33,16 @@
  * DS2.7 = ON  (Select MMCIF on CN12 instead of SDHI1)
  *
  */
-#घोषणा HIZCRA		0xa4050158
-#घोषणा PGDR		0xa405012c
+#define HIZCRA		0xa4050158
+#define PGDR		0xa405012c
 
-अटल अंतरभूत व्योम mmcअगर_update_progress(पूर्णांक nr)
-अणु
-	/* disable Hi-Z क्रम LED pins */
-	__raw_ग_लिखोw(__raw_पढ़ोw(HIZCRA) & ~(1 << 1), HIZCRA);
+static inline void mmcif_update_progress(int nr)
+{
+	/* disable Hi-Z for LED pins */
+	__raw_writew(__raw_readw(HIZCRA) & ~(1 << 1), HIZCRA);
 
 	/* update progress on LED4, LED5, LED6 and LED7 */
-	__raw_ग_लिखोb(1 << (nr - 1), PGDR);
-पूर्ण
+	__raw_writeb(1 << (nr - 1), PGDR);
+}
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
+#endif /* __ASSEMBLY__ */

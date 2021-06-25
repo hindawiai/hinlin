@@ -1,111 +1,110 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/ethtool.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <net/rtnetlink.h>
-#समावेश <net/sock.h>
-#समावेश <net/af_vsock.h>
-#समावेश <uapi/linux/vsockmon.h>
-#समावेश <linux/virtio_vsock.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/ethtool.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/if_arp.h>
+#include <net/rtnetlink.h>
+#include <net/sock.h>
+#include <net/af_vsock.h>
+#include <uapi/linux/vsockmon.h>
+#include <linux/virtio_vsock.h>
 
 /* Virtio transport max packet size plus header */
-#घोषणा DEFAULT_MTU (VIRTIO_VSOCK_MAX_PKT_BUF_SIZE + \
-		     माप(काष्ठा af_vsockmon_hdr))
+#define DEFAULT_MTU (VIRTIO_VSOCK_MAX_PKT_BUF_SIZE + \
+		     sizeof(struct af_vsockmon_hdr))
 
-अटल पूर्णांक vsockmon_dev_init(काष्ठा net_device *dev)
-अणु
-	dev->lstats = netdev_alloc_pcpu_stats(काष्ठा pcpu_lstats);
-	अगर (!dev->lstats)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+static int vsockmon_dev_init(struct net_device *dev)
+{
+	dev->lstats = netdev_alloc_pcpu_stats(struct pcpu_lstats);
+	if (!dev->lstats)
+		return -ENOMEM;
+	return 0;
+}
 
-अटल व्योम vsockmon_dev_uninit(काष्ठा net_device *dev)
-अणु
-	मुक्त_percpu(dev->lstats);
-पूर्ण
+static void vsockmon_dev_uninit(struct net_device *dev)
+{
+	free_percpu(dev->lstats);
+}
 
-काष्ठा vsockmon अणु
-	काष्ठा vsock_tap vt;
-पूर्ण;
+struct vsockmon {
+	struct vsock_tap vt;
+};
 
-अटल पूर्णांक vsockmon_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा vsockmon *vsockmon = netdev_priv(dev);
+static int vsockmon_open(struct net_device *dev)
+{
+	struct vsockmon *vsockmon = netdev_priv(dev);
 
 	vsockmon->vt.dev = dev;
 	vsockmon->vt.module = THIS_MODULE;
-	वापस vsock_add_tap(&vsockmon->vt);
-पूर्ण
+	return vsock_add_tap(&vsockmon->vt);
+}
 
-अटल पूर्णांक vsockmon_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा vsockmon *vsockmon = netdev_priv(dev);
+static int vsockmon_close(struct net_device *dev)
+{
+	struct vsockmon *vsockmon = netdev_priv(dev);
 
-	वापस vsock_हटाओ_tap(&vsockmon->vt);
-पूर्ण
+	return vsock_remove_tap(&vsockmon->vt);
+}
 
-अटल netdev_tx_t vsockmon_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
+static netdev_tx_t vsockmon_xmit(struct sk_buff *skb, struct net_device *dev)
+{
 	dev_lstats_add(dev, skb->len);
 
-	dev_kमुक्त_skb(skb);
+	dev_kfree_skb(skb);
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-अटल व्योम
-vsockmon_get_stats64(काष्ठा net_device *dev, काष्ठा rtnl_link_stats64 *stats)
-अणु
-	dev_lstats_पढ़ो(dev, &stats->rx_packets, &stats->rx_bytes);
+static void
+vsockmon_get_stats64(struct net_device *dev, struct rtnl_link_stats64 *stats)
+{
+	dev_lstats_read(dev, &stats->rx_packets, &stats->rx_bytes);
 
 	stats->tx_packets = 0;
 	stats->tx_bytes = 0;
-पूर्ण
+}
 
-अटल पूर्णांक vsockmon_is_valid_mtu(पूर्णांक new_mtu)
-अणु
-	वापस new_mtu >= (पूर्णांक)माप(काष्ठा af_vsockmon_hdr);
-पूर्ण
+static int vsockmon_is_valid_mtu(int new_mtu)
+{
+	return new_mtu >= (int)sizeof(struct af_vsockmon_hdr);
+}
 
-अटल पूर्णांक vsockmon_change_mtu(काष्ठा net_device *dev, पूर्णांक new_mtu)
-अणु
-	अगर (!vsockmon_is_valid_mtu(new_mtu))
-		वापस -EINVAL;
+static int vsockmon_change_mtu(struct net_device *dev, int new_mtu)
+{
+	if (!vsockmon_is_valid_mtu(new_mtu))
+		return -EINVAL;
 
 	dev->mtu = new_mtu;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा net_device_ops vsockmon_ops = अणु
-	.nकरो_init = vsockmon_dev_init,
-	.nकरो_uninit = vsockmon_dev_uninit,
-	.nकरो_खोलो = vsockmon_खोलो,
-	.nकरो_stop = vsockmon_बंद,
-	.nकरो_start_xmit = vsockmon_xmit,
-	.nकरो_get_stats64 = vsockmon_get_stats64,
-	.nकरो_change_mtu = vsockmon_change_mtu,
-पूर्ण;
+static const struct net_device_ops vsockmon_ops = {
+	.ndo_init = vsockmon_dev_init,
+	.ndo_uninit = vsockmon_dev_uninit,
+	.ndo_open = vsockmon_open,
+	.ndo_stop = vsockmon_close,
+	.ndo_start_xmit = vsockmon_xmit,
+	.ndo_get_stats64 = vsockmon_get_stats64,
+	.ndo_change_mtu = vsockmon_change_mtu,
+};
 
-अटल u32 always_on(काष्ठा net_device *dev)
-अणु
-	वापस 1;
-पूर्ण
+static u32 always_on(struct net_device *dev)
+{
+	return 1;
+}
 
-अटल स्थिर काष्ठा ethtool_ops vsockmon_ethtool_ops = अणु
+static const struct ethtool_ops vsockmon_ethtool_ops = {
 	.get_link = always_on,
-पूर्ण;
+};
 
-अटल व्योम vsockmon_setup(काष्ठा net_device *dev)
-अणु
+static void vsockmon_setup(struct net_device *dev)
+{
 	dev->type = ARPHRD_VSOCKMON;
 	dev->priv_flags |= IFF_NO_QUEUE;
 
 	dev->netdev_ops	= &vsockmon_ops;
 	dev->ethtool_ops = &vsockmon_ethtool_ops;
-	dev->needs_मुक्त_netdev = true;
+	dev->needs_free_netdev = true;
 
 	dev->features = NETIF_F_SG | NETIF_F_FRAGLIST |
 			NETIF_F_HIGHDMA | NETIF_F_LLTX;
@@ -113,26 +112,26 @@ vsockmon_get_stats64(काष्ठा net_device *dev, काष्ठा rtnl
 	dev->flags = IFF_NOARP;
 
 	dev->mtu = DEFAULT_MTU;
-पूर्ण
+}
 
-अटल काष्ठा rtnl_link_ops vsockmon_link_ops __पढ़ो_mostly = अणु
+static struct rtnl_link_ops vsockmon_link_ops __read_mostly = {
 	.kind			= "vsockmon",
-	.priv_size		= माप(काष्ठा vsockmon),
+	.priv_size		= sizeof(struct vsockmon),
 	.setup			= vsockmon_setup,
-पूर्ण;
+};
 
-अटल __init पूर्णांक vsockmon_रेजिस्टर(व्योम)
-अणु
-	वापस rtnl_link_रेजिस्टर(&vsockmon_link_ops);
-पूर्ण
+static __init int vsockmon_register(void)
+{
+	return rtnl_link_register(&vsockmon_link_ops);
+}
 
-अटल __निकास व्योम vsockmon_unरेजिस्टर(व्योम)
-अणु
-	rtnl_link_unरेजिस्टर(&vsockmon_link_ops);
-पूर्ण
+static __exit void vsockmon_unregister(void)
+{
+	rtnl_link_unregister(&vsockmon_link_ops);
+}
 
-module_init(vsockmon_रेजिस्टर);
-module_निकास(vsockmon_unरेजिस्टर);
+module_init(vsockmon_register);
+module_exit(vsockmon_unregister);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Gerard Garcia <ggarcia@deic.uab.cat>");

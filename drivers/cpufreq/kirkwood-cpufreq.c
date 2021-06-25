@@ -1,174 +1,173 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *	kirkwood_freq.c: cpufreq driver क्रम the Marvell kirkwood
+ *	kirkwood_freq.c: cpufreq driver for the Marvell kirkwood
  *
  *	Copyright (C) 2013 Andrew Lunn <andrew@lunn.ch>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/proc-fns.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/clk.h>
+#include <linux/cpufreq.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/io.h>
+#include <asm/proc-fns.h>
 
-#घोषणा CPU_SW_INT_BLK BIT(28)
+#define CPU_SW_INT_BLK BIT(28)
 
-अटल काष्ठा priv
-अणु
-	काष्ठा clk *cpu_clk;
-	काष्ठा clk *ddr_clk;
-	काष्ठा clk *घातersave_clk;
-	काष्ठा device *dev;
-	व्योम __iomem *base;
-पूर्ण priv;
+static struct priv
+{
+	struct clk *cpu_clk;
+	struct clk *ddr_clk;
+	struct clk *powersave_clk;
+	struct device *dev;
+	void __iomem *base;
+} priv;
 
-#घोषणा STATE_CPU_FREQ 0x01
-#घोषणा STATE_DDR_FREQ 0x02
+#define STATE_CPU_FREQ 0x01
+#define STATE_DDR_FREQ 0x02
 
 /*
- * Kirkwood can swap the घड़ी to the CPU between two घड़ीs:
+ * Kirkwood can swap the clock to the CPU between two clocks:
  *
  * - cpu clk
  * - ddr clk
  *
- * The frequencies are set at runसमय beक्रमe रेजिस्टरing this table.
+ * The frequencies are set at runtime before registering this table.
  */
-अटल काष्ठा cpufreq_frequency_table kirkwood_freq_table[] = अणु
-	अणु0, STATE_CPU_FREQ,	0पूर्ण, /* CPU uses cpuclk */
-	अणु0, STATE_DDR_FREQ,	0पूर्ण, /* CPU uses ddrclk */
-	अणु0, 0,			CPUFREQ_TABLE_ENDपूर्ण,
-पूर्ण;
+static struct cpufreq_frequency_table kirkwood_freq_table[] = {
+	{0, STATE_CPU_FREQ,	0}, /* CPU uses cpuclk */
+	{0, STATE_DDR_FREQ,	0}, /* CPU uses ddrclk */
+	{0, 0,			CPUFREQ_TABLE_END},
+};
 
-अटल अचिन्हित पूर्णांक kirkwood_cpufreq_get_cpu_frequency(अचिन्हित पूर्णांक cpu)
-अणु
-	वापस clk_get_rate(priv.घातersave_clk) / 1000;
-पूर्ण
+static unsigned int kirkwood_cpufreq_get_cpu_frequency(unsigned int cpu)
+{
+	return clk_get_rate(priv.powersave_clk) / 1000;
+}
 
-अटल पूर्णांक kirkwood_cpufreq_target(काष्ठा cpufreq_policy *policy,
-			    अचिन्हित पूर्णांक index)
-अणु
-	अचिन्हित पूर्णांक state = kirkwood_freq_table[index].driver_data;
-	अचिन्हित दीर्घ reg;
+static int kirkwood_cpufreq_target(struct cpufreq_policy *policy,
+			    unsigned int index)
+{
+	unsigned int state = kirkwood_freq_table[index].driver_data;
+	unsigned long reg;
 
 	local_irq_disable();
 
-	/* Disable पूर्णांकerrupts to the CPU */
-	reg = पढ़ोl_relaxed(priv.base);
+	/* Disable interrupts to the CPU */
+	reg = readl_relaxed(priv.base);
 	reg |= CPU_SW_INT_BLK;
-	ग_लिखोl_relaxed(reg, priv.base);
+	writel_relaxed(reg, priv.base);
 
-	चयन (state) अणु
-	हाल STATE_CPU_FREQ:
-		clk_set_parent(priv.घातersave_clk, priv.cpu_clk);
-		अवरोध;
-	हाल STATE_DDR_FREQ:
-		clk_set_parent(priv.घातersave_clk, priv.ddr_clk);
-		अवरोध;
-	पूर्ण
+	switch (state) {
+	case STATE_CPU_FREQ:
+		clk_set_parent(priv.powersave_clk, priv.cpu_clk);
+		break;
+	case STATE_DDR_FREQ:
+		clk_set_parent(priv.powersave_clk, priv.ddr_clk);
+		break;
+	}
 
-	/* Wait-क्रम-Interrupt, जबतक the hardware changes frequency */
-	cpu_करो_idle();
+	/* Wait-for-Interrupt, while the hardware changes frequency */
+	cpu_do_idle();
 
-	/* Enable पूर्णांकerrupts to the CPU */
-	reg = पढ़ोl_relaxed(priv.base);
+	/* Enable interrupts to the CPU */
+	reg = readl_relaxed(priv.base);
 	reg &= ~CPU_SW_INT_BLK;
-	ग_लिखोl_relaxed(reg, priv.base);
+	writel_relaxed(reg, priv.base);
 
 	local_irq_enable();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Module init and निकास code */
-अटल पूर्णांक kirkwood_cpufreq_cpu_init(काष्ठा cpufreq_policy *policy)
-अणु
+/* Module init and exit code */
+static int kirkwood_cpufreq_cpu_init(struct cpufreq_policy *policy)
+{
 	cpufreq_generic_init(policy, kirkwood_freq_table, 5000);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा cpufreq_driver kirkwood_cpufreq_driver = अणु
+static struct cpufreq_driver kirkwood_cpufreq_driver = {
 	.flags	= CPUFREQ_NEED_INITIAL_FREQ_CHECK,
 	.get	= kirkwood_cpufreq_get_cpu_frequency,
-	.verअगरy	= cpufreq_generic_frequency_table_verअगरy,
+	.verify	= cpufreq_generic_frequency_table_verify,
 	.target_index = kirkwood_cpufreq_target,
 	.init	= kirkwood_cpufreq_cpu_init,
 	.name	= "kirkwood-cpufreq",
 	.attr	= cpufreq_generic_attr,
-पूर्ण;
+};
 
-अटल पूर्णांक kirkwood_cpufreq_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np;
-	पूर्णांक err;
+static int kirkwood_cpufreq_probe(struct platform_device *pdev)
+{
+	struct device_node *np;
+	int err;
 
 	priv.dev = &pdev->dev;
 
-	priv.base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(priv.base))
-		वापस PTR_ERR(priv.base);
+	priv.base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(priv.base))
+		return PTR_ERR(priv.base);
 
 	np = of_cpu_device_node_get(0);
-	अगर (!np) अणु
+	if (!np) {
 		dev_err(&pdev->dev, "failed to get cpu device node\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	priv.cpu_clk = of_clk_get_by_name(np, "cpu_clk");
-	अगर (IS_ERR(priv.cpu_clk)) अणु
+	if (IS_ERR(priv.cpu_clk)) {
 		dev_err(priv.dev, "Unable to get cpuclk\n");
 		err = PTR_ERR(priv.cpu_clk);
-		जाओ out_node;
-	पूर्ण
+		goto out_node;
+	}
 
 	err = clk_prepare_enable(priv.cpu_clk);
-	अगर (err) अणु
+	if (err) {
 		dev_err(priv.dev, "Unable to prepare cpuclk\n");
-		जाओ out_node;
-	पूर्ण
+		goto out_node;
+	}
 
 	kirkwood_freq_table[0].frequency = clk_get_rate(priv.cpu_clk) / 1000;
 
 	priv.ddr_clk = of_clk_get_by_name(np, "ddrclk");
-	अगर (IS_ERR(priv.ddr_clk)) अणु
+	if (IS_ERR(priv.ddr_clk)) {
 		dev_err(priv.dev, "Unable to get ddrclk\n");
 		err = PTR_ERR(priv.ddr_clk);
-		जाओ out_cpu;
-	पूर्ण
+		goto out_cpu;
+	}
 
 	err = clk_prepare_enable(priv.ddr_clk);
-	अगर (err) अणु
+	if (err) {
 		dev_err(priv.dev, "Unable to prepare ddrclk\n");
-		जाओ out_cpu;
-	पूर्ण
+		goto out_cpu;
+	}
 	kirkwood_freq_table[1].frequency = clk_get_rate(priv.ddr_clk) / 1000;
 
-	priv.घातersave_clk = of_clk_get_by_name(np, "powersave");
-	अगर (IS_ERR(priv.घातersave_clk)) अणु
+	priv.powersave_clk = of_clk_get_by_name(np, "powersave");
+	if (IS_ERR(priv.powersave_clk)) {
 		dev_err(priv.dev, "Unable to get powersave\n");
-		err = PTR_ERR(priv.घातersave_clk);
-		जाओ out_ddr;
-	पूर्ण
-	err = clk_prepare_enable(priv.घातersave_clk);
-	अगर (err) अणु
+		err = PTR_ERR(priv.powersave_clk);
+		goto out_ddr;
+	}
+	err = clk_prepare_enable(priv.powersave_clk);
+	if (err) {
 		dev_err(priv.dev, "Unable to prepare powersave clk\n");
-		जाओ out_ddr;
-	पूर्ण
+		goto out_ddr;
+	}
 
-	err = cpufreq_रेजिस्टर_driver(&kirkwood_cpufreq_driver);
-	अगर (err) अणु
+	err = cpufreq_register_driver(&kirkwood_cpufreq_driver);
+	if (err) {
 		dev_err(priv.dev, "Failed to register cpufreq driver\n");
-		जाओ out_घातersave;
-	पूर्ण
+		goto out_powersave;
+	}
 
 	of_node_put(np);
-	वापस 0;
+	return 0;
 
-out_घातersave:
-	clk_disable_unprepare(priv.घातersave_clk);
+out_powersave:
+	clk_disable_unprepare(priv.powersave_clk);
 out_ddr:
 	clk_disable_unprepare(priv.ddr_clk);
 out_cpu:
@@ -176,29 +175,29 @@ out_cpu:
 out_node:
 	of_node_put(np);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक kirkwood_cpufreq_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	cpufreq_unरेजिस्टर_driver(&kirkwood_cpufreq_driver);
+static int kirkwood_cpufreq_remove(struct platform_device *pdev)
+{
+	cpufreq_unregister_driver(&kirkwood_cpufreq_driver);
 
-	clk_disable_unprepare(priv.घातersave_clk);
+	clk_disable_unprepare(priv.powersave_clk);
 	clk_disable_unprepare(priv.ddr_clk);
 	clk_disable_unprepare(priv.cpu_clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver kirkwood_cpufreq_platक्रमm_driver = अणु
+static struct platform_driver kirkwood_cpufreq_platform_driver = {
 	.probe = kirkwood_cpufreq_probe,
-	.हटाओ = kirkwood_cpufreq_हटाओ,
-	.driver = अणु
+	.remove = kirkwood_cpufreq_remove,
+	.driver = {
 		.name = "kirkwood-cpufreq",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(kirkwood_cpufreq_platक्रमm_driver);
+module_platform_driver(kirkwood_cpufreq_platform_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Andrew Lunn <andrew@lunn.ch");

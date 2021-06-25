@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -25,15 +24,15 @@
  */
 
 
-#अगर_अघोषित __DML_LOGGER_H_
-#घोषणा __DML_LOGGER_H_
+#ifndef __DML_LOGGER_H_
+#define __DML_LOGGER_H_
 
-#घोषणा DC_LOGGER \
+#define DC_LOGGER \
 	mode_lib->logger
 
-#घोषणा dml_prपूर्णांक(str, ...) अणुDC_LOG_DML(str, ##__VA_ARGS__); पूर्ण
-#घोषणा DTRACE(str, ...) अणुDC_LOG_DML(str, ##__VA_ARGS__); पूर्ण
+#define dml_print(str, ...) {DC_LOG_DML(str, ##__VA_ARGS__); }
+#define DTRACE(str, ...) {DC_LOG_DML(str, ##__VA_ARGS__); }
 
-#पूर्ण_अगर
+#endif
 
 

@@ -1,132 +1,131 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  */
 
-#अगर_अघोषित __DPU_CORE_IRQ_H__
-#घोषणा __DPU_CORE_IRQ_H__
+#ifndef __DPU_CORE_IRQ_H__
+#define __DPU_CORE_IRQ_H__
 
-#समावेश "dpu_kms.h"
-#समावेश "dpu_hw_interrupts.h"
+#include "dpu_kms.h"
+#include "dpu_hw_interrupts.h"
 
 /**
- * dpu_core_irq_preinstall - perक्रमm pre-installation of core IRQ handler
+ * dpu_core_irq_preinstall - perform pre-installation of core IRQ handler
  * @dpu_kms:		DPU handle
- * @वापस:		none
+ * @return:		none
  */
-व्योम dpu_core_irq_preinstall(काष्ठा dpu_kms *dpu_kms);
+void dpu_core_irq_preinstall(struct dpu_kms *dpu_kms);
 
 /**
  * dpu_core_irq_uninstall - uninstall core IRQ handler
  * @dpu_kms:		DPU handle
- * @वापस:		none
+ * @return:		none
  */
-व्योम dpu_core_irq_uninstall(काष्ठा dpu_kms *dpu_kms);
+void dpu_core_irq_uninstall(struct dpu_kms *dpu_kms);
 
 /**
  * dpu_core_irq - core IRQ handler
  * @dpu_kms:		DPU handle
- * @वापस:		पूर्णांकerrupt handling status
+ * @return:		interrupt handling status
  */
-irqवापस_t dpu_core_irq(काष्ठा dpu_kms *dpu_kms);
+irqreturn_t dpu_core_irq(struct dpu_kms *dpu_kms);
 
 /**
- * dpu_core_irq_idx_lookup - IRQ helper function क्रम lookup irq_idx from HW
- *                      पूर्णांकerrupt mapping table.
+ * dpu_core_irq_idx_lookup - IRQ helper function for lookup irq_idx from HW
+ *                      interrupt mapping table.
  * @dpu_kms:		DPU handle
- * @पूर्णांकr_type:		DPU HW पूर्णांकerrupt type क्रम lookup
+ * @intr_type:		DPU HW interrupt type for lookup
  * @instance_idx:	DPU HW block instance defined in dpu_hw_mdss.h
- * @वापस:		irq_idx or -EINVAL when fail to lookup
+ * @return:		irq_idx or -EINVAL when fail to lookup
  */
-पूर्णांक dpu_core_irq_idx_lookup(
-		काष्ठा dpu_kms *dpu_kms,
-		क्रमागत dpu_पूर्णांकr_type पूर्णांकr_type,
-		uपूर्णांक32_t instance_idx);
+int dpu_core_irq_idx_lookup(
+		struct dpu_kms *dpu_kms,
+		enum dpu_intr_type intr_type,
+		uint32_t instance_idx);
 
 /**
- * dpu_core_irq_enable - IRQ helper function क्रम enabling one or more IRQs
+ * dpu_core_irq_enable - IRQ helper function for enabling one or more IRQs
  * @dpu_kms:		DPU handle
  * @irq_idxs:		Array of irq index
  * @irq_count:		Number of irq_idx provided in the array
- * @वापस:		0 क्रम success enabling IRQ, otherwise failure
+ * @return:		0 for success enabling IRQ, otherwise failure
  *
  * This function increments count on each enable and decrements on each
- * disable.  Interrupts is enabled अगर count is 0 beक्रमe increment.
+ * disable.  Interrupts is enabled if count is 0 before increment.
  */
-पूर्णांक dpu_core_irq_enable(
-		काष्ठा dpu_kms *dpu_kms,
-		पूर्णांक *irq_idxs,
-		uपूर्णांक32_t irq_count);
+int dpu_core_irq_enable(
+		struct dpu_kms *dpu_kms,
+		int *irq_idxs,
+		uint32_t irq_count);
 
 /**
- * dpu_core_irq_disable - IRQ helper function क्रम disabling one of more IRQs
+ * dpu_core_irq_disable - IRQ helper function for disabling one of more IRQs
  * @dpu_kms:		DPU handle
  * @irq_idxs:		Array of irq index
  * @irq_count:		Number of irq_idx provided in the array
- * @वापस:		0 क्रम success disabling IRQ, otherwise failure
+ * @return:		0 for success disabling IRQ, otherwise failure
  *
  * This function increments count on each enable and decrements on each
- * disable.  Interrupts is disabled अगर count is 0 after decrement.
+ * disable.  Interrupts is disabled if count is 0 after decrement.
  */
-पूर्णांक dpu_core_irq_disable(
-		काष्ठा dpu_kms *dpu_kms,
-		पूर्णांक *irq_idxs,
-		uपूर्णांक32_t irq_count);
+int dpu_core_irq_disable(
+		struct dpu_kms *dpu_kms,
+		int *irq_idxs,
+		uint32_t irq_count);
 
 /**
- * dpu_core_irq_पढ़ो - IRQ helper function क्रम पढ़ोing IRQ status
+ * dpu_core_irq_read - IRQ helper function for reading IRQ status
  * @dpu_kms:		DPU handle
  * @irq_idx:		irq index
- * @clear:		True to clear the irq after पढ़ो
- * @वापस:		non-zero अगर irq detected; otherwise no irq detected
+ * @clear:		True to clear the irq after read
+ * @return:		non-zero if irq detected; otherwise no irq detected
  */
-u32 dpu_core_irq_पढ़ो(
-		काष्ठा dpu_kms *dpu_kms,
-		पूर्णांक irq_idx,
+u32 dpu_core_irq_read(
+		struct dpu_kms *dpu_kms,
+		int irq_idx,
 		bool clear);
 
 /**
- * dpu_core_irq_रेजिस्टर_callback - For रेजिस्टरing callback function on IRQ
- *                             पूर्णांकerrupt
+ * dpu_core_irq_register_callback - For registering callback function on IRQ
+ *                             interrupt
  * @dpu_kms:		DPU handle
  * @irq_idx:		irq index
- * @irq_cb:		IRQ callback काष्ठाure, containing callback function
- *			and argument. Passing शून्य क्रम irq_cb will unरेजिस्टर
- *			the callback क्रम the given irq_idx
+ * @irq_cb:		IRQ callback structure, containing callback function
+ *			and argument. Passing NULL for irq_cb will unregister
+ *			the callback for the given irq_idx
  *			This must exist until un-registration.
- * @वापस:		0 क्रम success रेजिस्टरing callback, otherwise failure
+ * @return:		0 for success registering callback, otherwise failure
  *
- * This function supports registration of multiple callbacks क्रम each पूर्णांकerrupt.
+ * This function supports registration of multiple callbacks for each interrupt.
  */
-पूर्णांक dpu_core_irq_रेजिस्टर_callback(
-		काष्ठा dpu_kms *dpu_kms,
-		पूर्णांक irq_idx,
-		काष्ठा dpu_irq_callback *irq_cb);
+int dpu_core_irq_register_callback(
+		struct dpu_kms *dpu_kms,
+		int irq_idx,
+		struct dpu_irq_callback *irq_cb);
 
 /**
- * dpu_core_irq_unरेजिस्टर_callback - For unरेजिस्टरing callback function on IRQ
- *                             पूर्णांकerrupt
+ * dpu_core_irq_unregister_callback - For unregistering callback function on IRQ
+ *                             interrupt
  * @dpu_kms:		DPU handle
  * @irq_idx:		irq index
- * @irq_cb:		IRQ callback काष्ठाure, containing callback function
- *			and argument. Passing शून्य क्रम irq_cb will unरेजिस्टर
- *			the callback क्रम the given irq_idx
+ * @irq_cb:		IRQ callback structure, containing callback function
+ *			and argument. Passing NULL for irq_cb will unregister
+ *			the callback for the given irq_idx
  *			This must match with registration.
- * @वापस:		0 क्रम success रेजिस्टरing callback, otherwise failure
+ * @return:		0 for success registering callback, otherwise failure
  *
- * This function supports registration of multiple callbacks क्रम each पूर्णांकerrupt.
+ * This function supports registration of multiple callbacks for each interrupt.
  */
-पूर्णांक dpu_core_irq_unरेजिस्टर_callback(
-		काष्ठा dpu_kms *dpu_kms,
-		पूर्णांक irq_idx,
-		काष्ठा dpu_irq_callback *irq_cb);
+int dpu_core_irq_unregister_callback(
+		struct dpu_kms *dpu_kms,
+		int irq_idx,
+		struct dpu_irq_callback *irq_cb);
 
 /**
- * dpu_debugfs_core_irq_init - रेजिस्टर core irq debugfs
- * @dpu_kms: poपूर्णांकer to kms
+ * dpu_debugfs_core_irq_init - register core irq debugfs
+ * @dpu_kms: pointer to kms
  * @parent: debugfs directory root
  */
-व्योम dpu_debugfs_core_irq_init(काष्ठा dpu_kms *dpu_kms,
-		काष्ठा dentry *parent);
+void dpu_debugfs_core_irq_init(struct dpu_kms *dpu_kms,
+		struct dentry *parent);
 
-#पूर्ण_अगर /* __DPU_CORE_IRQ_H__ */
+#endif /* __DPU_CORE_IRQ_H__ */

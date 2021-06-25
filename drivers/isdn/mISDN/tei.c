@@ -1,195 +1,194 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *
  * Author	Karsten Keil <kkeil@novell.com>
  *
  * Copyright 2008  by Karsten Keil <kkeil@novell.com>
  */
-#समावेश "layer2.h"
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/slab.h>
-#समावेश "core.h"
+#include "layer2.h"
+#include <linux/random.h>
+#include <linux/slab.h>
+#include "core.h"
 
-#घोषणा ID_REQUEST	1
-#घोषणा ID_ASSIGNED	2
-#घोषणा ID_DENIED	3
-#घोषणा ID_CHK_REQ	4
-#घोषणा ID_CHK_RES	5
-#घोषणा ID_REMOVE	6
-#घोषणा ID_VERIFY	7
+#define ID_REQUEST	1
+#define ID_ASSIGNED	2
+#define ID_DENIED	3
+#define ID_CHK_REQ	4
+#define ID_CHK_RES	5
+#define ID_REMOVE	6
+#define ID_VERIFY	7
 
-#घोषणा TEI_ENTITY_ID	0xf
+#define TEI_ENTITY_ID	0xf
 
-#घोषणा MGR_PH_ACTIVE	16
-#घोषणा MGR_PH_NOTREADY	17
+#define MGR_PH_ACTIVE	16
+#define MGR_PH_NOTREADY	17
 
-#घोषणा DATIMER_VAL	10000
+#define DATIMER_VAL	10000
 
-अटल	u_पूर्णांक	*debug;
+static	u_int	*debug;
 
-अटल काष्ठा Fsm deactfsm = अणुशून्य, 0, 0, शून्य, शून्यपूर्ण;
-अटल काष्ठा Fsm teअगरsmu = अणुशून्य, 0, 0, शून्य, शून्यपूर्ण;
-अटल काष्ठा Fsm teअगरsmn = अणुशून्य, 0, 0, शून्य, शून्यपूर्ण;
+static struct Fsm deactfsm = {NULL, 0, 0, NULL, NULL};
+static struct Fsm teifsmu = {NULL, 0, 0, NULL, NULL};
+static struct Fsm teifsmn = {NULL, 0, 0, NULL, NULL};
 
-क्रमागत अणु
+enum {
 	ST_L1_DEACT,
 	ST_L1_DEACT_PENDING,
 	ST_L1_ACTIV,
-पूर्ण;
-#घोषणा DEACT_STATE_COUNT (ST_L1_ACTIV + 1)
+};
+#define DEACT_STATE_COUNT (ST_L1_ACTIV + 1)
 
-अटल अक्षर *strDeactState[] =
-अणु
+static char *strDeactState[] =
+{
 	"ST_L1_DEACT",
 	"ST_L1_DEACT_PENDING",
 	"ST_L1_ACTIV",
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	EV_ACTIVATE,
 	EV_ACTIVATE_IND,
 	EV_DEACTIVATE,
 	EV_DEACTIVATE_IND,
 	EV_UI,
 	EV_DATIMER,
-पूर्ण;
+};
 
-#घोषणा DEACT_EVENT_COUNT (EV_DATIMER + 1)
+#define DEACT_EVENT_COUNT (EV_DATIMER + 1)
 
-अटल अक्षर *strDeactEvent[] =
-अणु
+static char *strDeactEvent[] =
+{
 	"EV_ACTIVATE",
 	"EV_ACTIVATE_IND",
 	"EV_DEACTIVATE",
 	"EV_DEACTIVATE_IND",
 	"EV_UI",
 	"EV_DATIMER",
-पूर्ण;
+};
 
-अटल व्योम
-da_debug(काष्ठा FsmInst *fi, अक्षर *fmt, ...)
-अणु
-	काष्ठा manager	*mgr = fi->userdata;
-	काष्ठा va_क्रमmat vaf;
-	बहु_सूची va;
+static void
+da_debug(struct FsmInst *fi, char *fmt, ...)
+{
+	struct manager	*mgr = fi->userdata;
+	struct va_format vaf;
+	va_list va;
 
-	अगर (!(*debug & DEBUG_L2_TEIFSM))
-		वापस;
+	if (!(*debug & DEBUG_L2_TEIFSM))
+		return;
 
-	बहु_शुरू(va, fmt);
+	va_start(va, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &va;
 
-	prपूर्णांकk(KERN_DEBUG "mgr(%d): %pV\n", mgr->ch.st->dev->id, &vaf);
+	printk(KERN_DEBUG "mgr(%d): %pV\n", mgr->ch.st->dev->id, &vaf);
 
-	बहु_पूर्ण(va);
-पूर्ण
+	va_end(va);
+}
 
-अटल व्योम
-da_activate(काष्ठा FsmInst *fi, पूर्णांक event, व्योम *arg)
-अणु
-	काष्ठा manager	*mgr = fi->userdata;
+static void
+da_activate(struct FsmInst *fi, int event, void *arg)
+{
+	struct manager	*mgr = fi->userdata;
 
-	अगर (fi->state == ST_L1_DEACT_PENDING)
-		mISDN_FsmDelTimer(&mgr->daसमयr, 1);
+	if (fi->state == ST_L1_DEACT_PENDING)
+		mISDN_FsmDelTimer(&mgr->datimer, 1);
 	mISDN_FsmChangeState(fi, ST_L1_ACTIV);
-पूर्ण
+}
 
-अटल व्योम
-da_deactivate_ind(काष्ठा FsmInst *fi, पूर्णांक event, व्योम *arg)
-अणु
+static void
+da_deactivate_ind(struct FsmInst *fi, int event, void *arg)
+{
 	mISDN_FsmChangeState(fi, ST_L1_DEACT);
-पूर्ण
+}
 
-अटल व्योम
-da_deactivate(काष्ठा FsmInst *fi, पूर्णांक event, व्योम *arg)
-अणु
-	काष्ठा manager	*mgr = fi->userdata;
-	काष्ठा layer2	*l2;
-	u_दीर्घ		flags;
+static void
+da_deactivate(struct FsmInst *fi, int event, void *arg)
+{
+	struct manager	*mgr = fi->userdata;
+	struct layer2	*l2;
+	u_long		flags;
 
-	पढ़ो_lock_irqsave(&mgr->lock, flags);
-	list_क्रम_each_entry(l2, &mgr->layer2, list) अणु
-		अगर (l2->l2m.state > ST_L2_4) अणु
+	read_lock_irqsave(&mgr->lock, flags);
+	list_for_each_entry(l2, &mgr->layer2, list) {
+		if (l2->l2m.state > ST_L2_4) {
 			/* have still activ TEI */
-			पढ़ो_unlock_irqrestore(&mgr->lock, flags);
-			वापस;
-		पूर्ण
-	पूर्ण
-	पढ़ो_unlock_irqrestore(&mgr->lock, flags);
+			read_unlock_irqrestore(&mgr->lock, flags);
+			return;
+		}
+	}
+	read_unlock_irqrestore(&mgr->lock, flags);
 	/* All TEI are inactiv */
-	अगर (!test_bit(OPTION_L1_HOLD, &mgr->options)) अणु
-		mISDN_FsmAddTimer(&mgr->daसमयr, DATIMER_VAL, EV_DATIMER,
-				  शून्य, 1);
+	if (!test_bit(OPTION_L1_HOLD, &mgr->options)) {
+		mISDN_FsmAddTimer(&mgr->datimer, DATIMER_VAL, EV_DATIMER,
+				  NULL, 1);
 		mISDN_FsmChangeState(fi, ST_L1_DEACT_PENDING);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-da_ui(काष्ठा FsmInst *fi, पूर्णांक event, व्योम *arg)
-अणु
-	काष्ठा manager	*mgr = fi->userdata;
+static void
+da_ui(struct FsmInst *fi, int event, void *arg)
+{
+	struct manager	*mgr = fi->userdata;
 
-	/* restart da समयr */
-	अगर (!test_bit(OPTION_L1_HOLD, &mgr->options)) अणु
-		mISDN_FsmDelTimer(&mgr->daसमयr, 2);
-		mISDN_FsmAddTimer(&mgr->daसमयr, DATIMER_VAL, EV_DATIMER,
-				  शून्य, 2);
-	पूर्ण
-पूर्ण
+	/* restart da timer */
+	if (!test_bit(OPTION_L1_HOLD, &mgr->options)) {
+		mISDN_FsmDelTimer(&mgr->datimer, 2);
+		mISDN_FsmAddTimer(&mgr->datimer, DATIMER_VAL, EV_DATIMER,
+				  NULL, 2);
+	}
+}
 
-अटल व्योम
-da_समयr(काष्ठा FsmInst *fi, पूर्णांक event, व्योम *arg)
-अणु
-	काष्ठा manager	*mgr = fi->userdata;
-	काष्ठा layer2	*l2;
-	u_दीर्घ		flags;
+static void
+da_timer(struct FsmInst *fi, int event, void *arg)
+{
+	struct manager	*mgr = fi->userdata;
+	struct layer2	*l2;
+	u_long		flags;
 
 	/* check again */
-	पढ़ो_lock_irqsave(&mgr->lock, flags);
-	list_क्रम_each_entry(l2, &mgr->layer2, list) अणु
-		अगर (l2->l2m.state > ST_L2_4) अणु
+	read_lock_irqsave(&mgr->lock, flags);
+	list_for_each_entry(l2, &mgr->layer2, list) {
+		if (l2->l2m.state > ST_L2_4) {
 			/* have still activ TEI */
-			पढ़ो_unlock_irqrestore(&mgr->lock, flags);
+			read_unlock_irqrestore(&mgr->lock, flags);
 			mISDN_FsmChangeState(fi, ST_L1_ACTIV);
-			वापस;
-		पूर्ण
-	पूर्ण
-	पढ़ो_unlock_irqrestore(&mgr->lock, flags);
+			return;
+		}
+	}
+	read_unlock_irqrestore(&mgr->lock, flags);
 	/* All TEI are inactiv */
 	mISDN_FsmChangeState(fi, ST_L1_DEACT);
-	_queue_data(&mgr->ch, PH_DEACTIVATE_REQ, MISDN_ID_ANY, 0, शून्य,
+	_queue_data(&mgr->ch, PH_DEACTIVATE_REQ, MISDN_ID_ANY, 0, NULL,
 		    GFP_ATOMIC);
-पूर्ण
+}
 
-अटल काष्ठा FsmNode DeactFnList[] =
-अणु
-	अणुST_L1_DEACT, EV_ACTIVATE_IND, da_activateपूर्ण,
-	अणुST_L1_ACTIV, EV_DEACTIVATE_IND, da_deactivate_indपूर्ण,
-	अणुST_L1_ACTIV, EV_DEACTIVATE, da_deactivateपूर्ण,
-	अणुST_L1_DEACT_PENDING, EV_ACTIVATE, da_activateपूर्ण,
-	अणुST_L1_DEACT_PENDING, EV_UI, da_uiपूर्ण,
-	अणुST_L1_DEACT_PENDING, EV_DATIMER, da_समयrपूर्ण,
-पूर्ण;
+static struct FsmNode DeactFnList[] =
+{
+	{ST_L1_DEACT, EV_ACTIVATE_IND, da_activate},
+	{ST_L1_ACTIV, EV_DEACTIVATE_IND, da_deactivate_ind},
+	{ST_L1_ACTIV, EV_DEACTIVATE, da_deactivate},
+	{ST_L1_DEACT_PENDING, EV_ACTIVATE, da_activate},
+	{ST_L1_DEACT_PENDING, EV_UI, da_ui},
+	{ST_L1_DEACT_PENDING, EV_DATIMER, da_timer},
+};
 
-क्रमागत अणु
+enum {
 	ST_TEI_NOP,
 	ST_TEI_IDREQ,
 	ST_TEI_IDVERIFY,
-पूर्ण;
+};
 
-#घोषणा TEI_STATE_COUNT (ST_TEI_IDVERIFY + 1)
+#define TEI_STATE_COUNT (ST_TEI_IDVERIFY + 1)
 
-अटल अक्षर *strTeiState[] =
-अणु
+static char *strTeiState[] =
+{
 	"ST_TEI_NOP",
 	"ST_TEI_IDREQ",
 	"ST_TEI_IDVERIFY",
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	EV_IDREQ,
 	EV_ASSIGN,
 	EV_ASSIGN_REQ,
@@ -199,12 +198,12 @@ da_समयr(काष्ठा FsmInst *fi, पूर्णांक event, �
 	EV_REMOVE,
 	EV_VERIFY,
 	EV_TIMER,
-पूर्ण;
+};
 
-#घोषणा TEI_EVENT_COUNT (EV_TIMER + 1)
+#define TEI_EVENT_COUNT (EV_TIMER + 1)
 
-अटल अक्षर *strTeiEvent[] =
-अणु
+static char *strTeiEvent[] =
+{
 	"EV_IDREQ",
 	"EV_ASSIGN",
 	"EV_ASSIGN_REQ",
@@ -214,183 +213,183 @@ da_समयr(काष्ठा FsmInst *fi, पूर्णांक event, �
 	"EV_REMOVE",
 	"EV_VERIFY",
 	"EV_TIMER",
-पूर्ण;
+};
 
-अटल व्योम
-tei_debug(काष्ठा FsmInst *fi, अक्षर *fmt, ...)
-अणु
-	काष्ठा teimgr	*पंचांग = fi->userdata;
-	काष्ठा va_क्रमmat vaf;
-	बहु_सूची va;
+static void
+tei_debug(struct FsmInst *fi, char *fmt, ...)
+{
+	struct teimgr	*tm = fi->userdata;
+	struct va_format vaf;
+	va_list va;
 
-	अगर (!(*debug & DEBUG_L2_TEIFSM))
-		वापस;
+	if (!(*debug & DEBUG_L2_TEIFSM))
+		return;
 
-	बहु_शुरू(va, fmt);
+	va_start(va, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &va;
 
-	prपूर्णांकk(KERN_DEBUG "sapi(%d) tei(%d): %pV\n",
-	       पंचांग->l2->sapi, पंचांग->l2->tei, &vaf);
+	printk(KERN_DEBUG "sapi(%d) tei(%d): %pV\n",
+	       tm->l2->sapi, tm->l2->tei, &vaf);
 
-	बहु_पूर्ण(va);
-पूर्ण
+	va_end(va);
+}
 
 
 
-अटल पूर्णांक
-get_मुक्त_id(काष्ठा manager *mgr)
-अणु
-	DECLARE_BITMAP(ids, 64) = अणु [0 ... BITS_TO_LONGS(64) - 1] = 0 पूर्ण;
-	पूर्णांक		i;
-	काष्ठा layer2	*l2;
+static int
+get_free_id(struct manager *mgr)
+{
+	DECLARE_BITMAP(ids, 64) = { [0 ... BITS_TO_LONGS(64) - 1] = 0 };
+	int		i;
+	struct layer2	*l2;
 
-	list_क्रम_each_entry(l2, &mgr->layer2, list) अणु
-		अगर (l2->ch.nr > 63) अणु
-			prपूर्णांकk(KERN_WARNING
+	list_for_each_entry(l2, &mgr->layer2, list) {
+		if (l2->ch.nr > 63) {
+			printk(KERN_WARNING
 			       "%s: more as 63 layer2 for one device\n",
 			       __func__);
-			वापस -EBUSY;
-		पूर्ण
+			return -EBUSY;
+		}
 		__set_bit(l2->ch.nr, ids);
-	पूर्ण
+	}
 	i = find_next_zero_bit(ids, 64, 1);
-	अगर (i < 64)
-		वापस i;
-	prपूर्णांकk(KERN_WARNING "%s: more as 63 layer2 for one device\n",
+	if (i < 64)
+		return i;
+	printk(KERN_WARNING "%s: more as 63 layer2 for one device\n",
 	       __func__);
-	वापस -EBUSY;
-पूर्ण
+	return -EBUSY;
+}
 
-अटल पूर्णांक
-get_मुक्त_tei(काष्ठा manager *mgr)
-अणु
-	DECLARE_BITMAP(ids, 64) = अणु [0 ... BITS_TO_LONGS(64) - 1] = 0 पूर्ण;
-	पूर्णांक		i;
-	काष्ठा layer2	*l2;
+static int
+get_free_tei(struct manager *mgr)
+{
+	DECLARE_BITMAP(ids, 64) = { [0 ... BITS_TO_LONGS(64) - 1] = 0 };
+	int		i;
+	struct layer2	*l2;
 
-	list_क्रम_each_entry(l2, &mgr->layer2, list) अणु
-		अगर (l2->ch.nr == 0)
-			जारी;
-		अगर ((l2->ch.addr & 0xff) != 0)
-			जारी;
+	list_for_each_entry(l2, &mgr->layer2, list) {
+		if (l2->ch.nr == 0)
+			continue;
+		if ((l2->ch.addr & 0xff) != 0)
+			continue;
 		i = l2->ch.addr >> 8;
-		अगर (i < 64)
-			जारी;
+		if (i < 64)
+			continue;
 		i -= 64;
 
 		__set_bit(i, ids);
-	पूर्ण
+	}
 	i = find_first_zero_bit(ids, 64);
-	अगर (i < 64)
-		वापस i + 64;
-	prपूर्णांकk(KERN_WARNING "%s: more as 63 dynamic tei for one device\n",
+	if (i < 64)
+		return i + 64;
+	printk(KERN_WARNING "%s: more as 63 dynamic tei for one device\n",
 	       __func__);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल व्योम
-teiup_create(काष्ठा manager *mgr, u_पूर्णांक prim, पूर्णांक len, व्योम *arg)
-अणु
-	काष्ठा sk_buff	*skb;
-	काष्ठा mISDNhead *hh;
-	पूर्णांक		err;
+static void
+teiup_create(struct manager *mgr, u_int prim, int len, void *arg)
+{
+	struct sk_buff	*skb;
+	struct mISDNhead *hh;
+	int		err;
 
 	skb = mI_alloc_skb(len, GFP_ATOMIC);
-	अगर (!skb)
-		वापस;
+	if (!skb)
+		return;
 	hh = mISDN_HEAD_P(skb);
 	hh->prim = prim;
 	hh->id = (mgr->ch.nr << 16) | mgr->ch.addr;
-	अगर (len)
+	if (len)
 		skb_put_data(skb, arg, len);
 	err = mgr->up->send(mgr->up, skb);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_WARNING "%s: err=%d\n", __func__, err);
-		dev_kमुक्त_skb(skb);
-	पूर्ण
-पूर्ण
+	if (err) {
+		printk(KERN_WARNING "%s: err=%d\n", __func__, err);
+		dev_kfree_skb(skb);
+	}
+}
 
-अटल u_पूर्णांक
-new_id(काष्ठा manager *mgr)
-अणु
-	u_पूर्णांक	id;
+static u_int
+new_id(struct manager *mgr)
+{
+	u_int	id;
 
 	id = mgr->nextid++;
-	अगर (id == 0x7fff)
+	if (id == 0x7fff)
 		mgr->nextid = 1;
 	id <<= 16;
 	id |= GROUP_TEI << 8;
 	id |= TEI_SAPI;
-	वापस id;
-पूर्ण
+	return id;
+}
 
-अटल व्योम
-करो_send(काष्ठा manager *mgr)
-अणु
-	अगर (!test_bit(MGR_PH_ACTIVE, &mgr->options))
-		वापस;
+static void
+do_send(struct manager *mgr)
+{
+	if (!test_bit(MGR_PH_ACTIVE, &mgr->options))
+		return;
 
-	अगर (!test_and_set_bit(MGR_PH_NOTREADY, &mgr->options)) अणु
-		काष्ठा sk_buff	*skb = skb_dequeue(&mgr->sendq);
+	if (!test_and_set_bit(MGR_PH_NOTREADY, &mgr->options)) {
+		struct sk_buff	*skb = skb_dequeue(&mgr->sendq);
 
-		अगर (!skb) अणु
+		if (!skb) {
 			test_and_clear_bit(MGR_PH_NOTREADY, &mgr->options);
-			वापस;
-		पूर्ण
+			return;
+		}
 		mgr->lastid = mISDN_HEAD_ID(skb);
-		mISDN_FsmEvent(&mgr->deact, EV_UI, शून्य);
-		अगर (mgr->ch.recv(mgr->ch.peer, skb)) अणु
-			dev_kमुक्त_skb(skb);
+		mISDN_FsmEvent(&mgr->deact, EV_UI, NULL);
+		if (mgr->ch.recv(mgr->ch.peer, skb)) {
+			dev_kfree_skb(skb);
 			test_and_clear_bit(MGR_PH_NOTREADY, &mgr->options);
 			mgr->lastid = MISDN_ID_NONE;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम
-करो_ack(काष्ठा manager *mgr, u_पूर्णांक id)
-अणु
-	अगर (test_bit(MGR_PH_NOTREADY, &mgr->options)) अणु
-		अगर (id == mgr->lastid) अणु
-			अगर (test_bit(MGR_PH_ACTIVE, &mgr->options)) अणु
-				काष्ठा sk_buff	*skb;
+static void
+do_ack(struct manager *mgr, u_int id)
+{
+	if (test_bit(MGR_PH_NOTREADY, &mgr->options)) {
+		if (id == mgr->lastid) {
+			if (test_bit(MGR_PH_ACTIVE, &mgr->options)) {
+				struct sk_buff	*skb;
 
 				skb = skb_dequeue(&mgr->sendq);
-				अगर (skb) अणु
+				if (skb) {
 					mgr->lastid = mISDN_HEAD_ID(skb);
-					अगर (!mgr->ch.recv(mgr->ch.peer, skb))
-						वापस;
-					dev_kमुक्त_skb(skb);
-				पूर्ण
-			पूर्ण
+					if (!mgr->ch.recv(mgr->ch.peer, skb))
+						return;
+					dev_kfree_skb(skb);
+				}
+			}
 			mgr->lastid = MISDN_ID_NONE;
 			test_and_clear_bit(MGR_PH_NOTREADY, &mgr->options);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम
-mgr_send_करोwn(काष्ठा manager *mgr, काष्ठा sk_buff *skb)
-अणु
+static void
+mgr_send_down(struct manager *mgr, struct sk_buff *skb)
+{
 	skb_queue_tail(&mgr->sendq, skb);
-	अगर (!test_bit(MGR_PH_ACTIVE, &mgr->options)) अणु
+	if (!test_bit(MGR_PH_ACTIVE, &mgr->options)) {
 		_queue_data(&mgr->ch, PH_ACTIVATE_REQ, MISDN_ID_ANY, 0,
-			    शून्य, GFP_KERNEL);
-	पूर्ण अन्यथा अणु
-		करो_send(mgr);
-	पूर्ण
-पूर्ण
+			    NULL, GFP_KERNEL);
+	} else {
+		do_send(mgr);
+	}
+}
 
-अटल पूर्णांक
-dl_unit_data(काष्ठा manager *mgr, काष्ठा sk_buff *skb)
-अणु
-	अगर (!test_bit(MGR_OPT_NETWORK, &mgr->options)) /* only net send UI */
-		वापस -EINVAL;
-	अगर (!test_bit(MGR_PH_ACTIVE, &mgr->options))
+static int
+dl_unit_data(struct manager *mgr, struct sk_buff *skb)
+{
+	if (!test_bit(MGR_OPT_NETWORK, &mgr->options)) /* only net send UI */
+		return -EINVAL;
+	if (!test_bit(MGR_PH_ACTIVE, &mgr->options))
 		_queue_data(&mgr->ch, PH_ACTIVATE_REQ, MISDN_ID_ANY, 0,
-			    शून्य, GFP_KERNEL);
+			    NULL, GFP_KERNEL);
 	skb_push(skb, 3);
 	skb->data[0] = 0x02; /* SAPI 0 C/R = 1 */
 	skb->data[1] = 0xff; /* TEI 127 */
@@ -398,46 +397,46 @@ dl_unit_data(काष्ठा manager *mgr, काष्ठा sk_buff *skb)
 	mISDN_HEAD_PRIM(skb) = PH_DATA_REQ;
 	mISDN_HEAD_ID(skb) = new_id(mgr);
 	skb_queue_tail(&mgr->sendq, skb);
-	करो_send(mgr);
-	वापस 0;
-पूर्ण
+	do_send(mgr);
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक
-अक्रमom_ri(व्योम)
-अणु
+static unsigned int
+random_ri(void)
+{
 	u16 x;
 
-	get_अक्रमom_bytes(&x, माप(x));
-	वापस x;
-पूर्ण
+	get_random_bytes(&x, sizeof(x));
+	return x;
+}
 
-अटल काष्ठा layer2 *
-findtei(काष्ठा manager *mgr, पूर्णांक tei)
-अणु
-	काष्ठा layer2	*l2;
-	u_दीर्घ		flags;
+static struct layer2 *
+findtei(struct manager *mgr, int tei)
+{
+	struct layer2	*l2;
+	u_long		flags;
 
-	पढ़ो_lock_irqsave(&mgr->lock, flags);
-	list_क्रम_each_entry(l2, &mgr->layer2, list) अणु
-		अगर ((l2->sapi == 0) && (l2->tei > 0) &&
+	read_lock_irqsave(&mgr->lock, flags);
+	list_for_each_entry(l2, &mgr->layer2, list) {
+		if ((l2->sapi == 0) && (l2->tei > 0) &&
 		    (l2->tei != GROUP_TEI) && (l2->tei == tei))
-			जाओ करोne;
-	पूर्ण
-	l2 = शून्य;
-करोne:
-	पढ़ो_unlock_irqrestore(&mgr->lock, flags);
-	वापस l2;
-पूर्ण
+			goto done;
+	}
+	l2 = NULL;
+done:
+	read_unlock_irqrestore(&mgr->lock, flags);
+	return l2;
+}
 
-अटल व्योम
-put_tei_msg(काष्ठा manager *mgr, u_अक्षर m_id, अचिन्हित पूर्णांक ri, पूर्णांक tei)
-अणु
-	काष्ठा sk_buff *skb;
-	u_अक्षर bp[8];
+static void
+put_tei_msg(struct manager *mgr, u_char m_id, unsigned int ri, int tei)
+{
+	struct sk_buff *skb;
+	u_char bp[8];
 
 	bp[0] = (TEI_SAPI << 2);
-	अगर (test_bit(MGR_OPT_NETWORK, &mgr->options))
-		bp[0] |= 2; /* CR:=1 क्रम net command */
+	if (test_bit(MGR_OPT_NETWORK, &mgr->options))
+		bp[0] |= 2; /* CR:=1 for net command */
 	bp[1] = (GROUP_TEI << 1) | 0x1;
 	bp[2] = UI;
 	bp[3] = TEI_ENTITY_ID;
@@ -446,863 +445,863 @@ put_tei_msg(काष्ठा manager *mgr, u_अक्षर m_id, अचि�
 	bp[6] = m_id;
 	bp[7] = ((tei << 1) & 0xff) | 1;
 	skb = _alloc_mISDN_skb(PH_DATA_REQ, new_id(mgr), 8, bp, GFP_ATOMIC);
-	अगर (!skb) अणु
-		prपूर्णांकk(KERN_WARNING "%s: no skb for tei msg\n", __func__);
-		वापस;
-	पूर्ण
-	mgr_send_करोwn(mgr, skb);
-पूर्ण
+	if (!skb) {
+		printk(KERN_WARNING "%s: no skb for tei msg\n", __func__);
+		return;
+	}
+	mgr_send_down(mgr, skb);
+}
 
-अटल व्योम
-tei_id_request(काष्ठा FsmInst *fi, पूर्णांक event, व्योम *arg)
-अणु
-	काष्ठा teimgr *पंचांग = fi->userdata;
+static void
+tei_id_request(struct FsmInst *fi, int event, void *arg)
+{
+	struct teimgr *tm = fi->userdata;
 
-	अगर (पंचांग->l2->tei != GROUP_TEI) अणु
-		पंचांग->tei_m.prपूर्णांकdebug(&पंचांग->tei_m,
+	if (tm->l2->tei != GROUP_TEI) {
+		tm->tei_m.printdebug(&tm->tei_m,
 				     "assign request for already assigned tei %d",
-				     पंचांग->l2->tei);
-		वापस;
-	पूर्ण
-	पंचांग->ri = अक्रमom_ri();
-	अगर (*debug & DEBUG_L2_TEI)
-		पंचांग->tei_m.prपूर्णांकdebug(&पंचांग->tei_m,
-				     "assign request ri %d", पंचांग->ri);
-	put_tei_msg(पंचांग->mgr, ID_REQUEST, पंचांग->ri, GROUP_TEI);
+				     tm->l2->tei);
+		return;
+	}
+	tm->ri = random_ri();
+	if (*debug & DEBUG_L2_TEI)
+		tm->tei_m.printdebug(&tm->tei_m,
+				     "assign request ri %d", tm->ri);
+	put_tei_msg(tm->mgr, ID_REQUEST, tm->ri, GROUP_TEI);
 	mISDN_FsmChangeState(fi, ST_TEI_IDREQ);
-	mISDN_FsmAddTimer(&पंचांग->समयr, पंचांग->tval, EV_TIMER, शून्य, 1);
-	पंचांग->nval = 3;
-पूर्ण
+	mISDN_FsmAddTimer(&tm->timer, tm->tval, EV_TIMER, NULL, 1);
+	tm->nval = 3;
+}
 
-अटल व्योम
-tei_id_assign(काष्ठा FsmInst *fi, पूर्णांक event, व्योम *arg)
-अणु
-	काष्ठा teimgr	*पंचांग = fi->userdata;
-	काष्ठा layer2	*l2;
-	u_अक्षर *dp = arg;
-	पूर्णांक ri, tei;
+static void
+tei_id_assign(struct FsmInst *fi, int event, void *arg)
+{
+	struct teimgr	*tm = fi->userdata;
+	struct layer2	*l2;
+	u_char *dp = arg;
+	int ri, tei;
 
-	ri = ((अचिन्हित पूर्णांक) *dp++ << 8);
+	ri = ((unsigned int) *dp++ << 8);
 	ri += *dp++;
 	dp++;
 	tei = *dp >> 1;
-	अगर (*debug & DEBUG_L2_TEI)
-		पंचांग->tei_m.prपूर्णांकdebug(fi, "identity assign ri %d tei %d",
+	if (*debug & DEBUG_L2_TEI)
+		tm->tei_m.printdebug(fi, "identity assign ri %d tei %d",
 				     ri, tei);
-	l2 = findtei(पंचांग->mgr, tei);
-	अगर (l2) अणु	/* same tei is in use */
-		अगर (ri != l2->पंचांग->ri) अणु
-			पंचांग->tei_m.prपूर्णांकdebug(fi,
+	l2 = findtei(tm->mgr, tei);
+	if (l2) {	/* same tei is in use */
+		if (ri != l2->tm->ri) {
+			tm->tei_m.printdebug(fi,
 					     "possible duplicate assignment tei %d", tei);
 			tei_l2(l2, MDL_ERROR_RSP, 0);
-		पूर्ण
-	पूर्ण अन्यथा अगर (ri == पंचांग->ri) अणु
-		mISDN_FsmDelTimer(&पंचांग->समयr, 1);
+		}
+	} else if (ri == tm->ri) {
+		mISDN_FsmDelTimer(&tm->timer, 1);
 		mISDN_FsmChangeState(fi, ST_TEI_NOP);
-		tei_l2(पंचांग->l2, MDL_ASSIGN_REQ, tei);
-	पूर्ण
-पूर्ण
+		tei_l2(tm->l2, MDL_ASSIGN_REQ, tei);
+	}
+}
 
-अटल व्योम
-tei_id_test_dup(काष्ठा FsmInst *fi, पूर्णांक event, व्योम *arg)
-अणु
-	काष्ठा teimgr	*पंचांग = fi->userdata;
-	काष्ठा layer2	*l2;
-	u_अक्षर *dp = arg;
-	पूर्णांक tei, ri;
+static void
+tei_id_test_dup(struct FsmInst *fi, int event, void *arg)
+{
+	struct teimgr	*tm = fi->userdata;
+	struct layer2	*l2;
+	u_char *dp = arg;
+	int tei, ri;
 
-	ri = ((अचिन्हित पूर्णांक) *dp++ << 8);
+	ri = ((unsigned int) *dp++ << 8);
 	ri += *dp++;
 	dp++;
 	tei = *dp >> 1;
-	अगर (*debug & DEBUG_L2_TEI)
-		पंचांग->tei_m.prपूर्णांकdebug(fi, "foreign identity assign ri %d tei %d",
+	if (*debug & DEBUG_L2_TEI)
+		tm->tei_m.printdebug(fi, "foreign identity assign ri %d tei %d",
 				     ri, tei);
-	l2 = findtei(पंचांग->mgr, tei);
-	अगर (l2) अणु	/* same tei is in use */
-		अगर (ri != l2->पंचांग->ri) अणु	/* and it wasn't our request */
-			पंचांग->tei_m.prपूर्णांकdebug(fi,
+	l2 = findtei(tm->mgr, tei);
+	if (l2) {	/* same tei is in use */
+		if (ri != l2->tm->ri) {	/* and it wasn't our request */
+			tm->tei_m.printdebug(fi,
 					     "possible duplicate assignment tei %d", tei);
-			mISDN_FsmEvent(&l2->पंचांग->tei_m, EV_VERIFY, शून्य);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			mISDN_FsmEvent(&l2->tm->tei_m, EV_VERIFY, NULL);
+		}
+	}
+}
 
-अटल व्योम
-tei_id_denied(काष्ठा FsmInst *fi, पूर्णांक event, व्योम *arg)
-अणु
-	काष्ठा teimgr *पंचांग = fi->userdata;
-	u_अक्षर *dp = arg;
-	पूर्णांक ri, tei;
+static void
+tei_id_denied(struct FsmInst *fi, int event, void *arg)
+{
+	struct teimgr *tm = fi->userdata;
+	u_char *dp = arg;
+	int ri, tei;
 
-	ri = ((अचिन्हित पूर्णांक) *dp++ << 8);
+	ri = ((unsigned int) *dp++ << 8);
 	ri += *dp++;
 	dp++;
 	tei = *dp >> 1;
-	अगर (*debug & DEBUG_L2_TEI)
-		पंचांग->tei_m.prपूर्णांकdebug(fi, "identity denied ri %d tei %d",
+	if (*debug & DEBUG_L2_TEI)
+		tm->tei_m.printdebug(fi, "identity denied ri %d tei %d",
 				     ri, tei);
-पूर्ण
+}
 
-अटल व्योम
-tei_id_chk_req(काष्ठा FsmInst *fi, पूर्णांक event, व्योम *arg)
-अणु
-	काष्ठा teimgr *पंचांग = fi->userdata;
-	u_अक्षर *dp = arg;
-	पूर्णांक tei;
-
-	tei = *(dp + 3) >> 1;
-	अगर (*debug & DEBUG_L2_TEI)
-		पंचांग->tei_m.prपूर्णांकdebug(fi, "identity check req tei %d", tei);
-	अगर ((पंचांग->l2->tei != GROUP_TEI) && ((tei == GROUP_TEI) ||
-					   (tei == पंचांग->l2->tei))) अणु
-		mISDN_FsmDelTimer(&पंचांग->समयr, 4);
-		mISDN_FsmChangeState(&पंचांग->tei_m, ST_TEI_NOP);
-		put_tei_msg(पंचांग->mgr, ID_CHK_RES, अक्रमom_ri(), पंचांग->l2->tei);
-	पूर्ण
-पूर्ण
-
-अटल व्योम
-tei_id_हटाओ(काष्ठा FsmInst *fi, पूर्णांक event, व्योम *arg)
-अणु
-	काष्ठा teimgr *पंचांग = fi->userdata;
-	u_अक्षर *dp = arg;
-	पूर्णांक tei;
+static void
+tei_id_chk_req(struct FsmInst *fi, int event, void *arg)
+{
+	struct teimgr *tm = fi->userdata;
+	u_char *dp = arg;
+	int tei;
 
 	tei = *(dp + 3) >> 1;
-	अगर (*debug & DEBUG_L2_TEI)
-		पंचांग->tei_m.prपूर्णांकdebug(fi, "identity remove tei %d", tei);
-	अगर ((पंचांग->l2->tei != GROUP_TEI) &&
-	    ((tei == GROUP_TEI) || (tei == पंचांग->l2->tei))) अणु
-		mISDN_FsmDelTimer(&पंचांग->समयr, 5);
-		mISDN_FsmChangeState(&पंचांग->tei_m, ST_TEI_NOP);
-		tei_l2(पंचांग->l2, MDL_REMOVE_REQ, 0);
-	पूर्ण
-पूर्ण
+	if (*debug & DEBUG_L2_TEI)
+		tm->tei_m.printdebug(fi, "identity check req tei %d", tei);
+	if ((tm->l2->tei != GROUP_TEI) && ((tei == GROUP_TEI) ||
+					   (tei == tm->l2->tei))) {
+		mISDN_FsmDelTimer(&tm->timer, 4);
+		mISDN_FsmChangeState(&tm->tei_m, ST_TEI_NOP);
+		put_tei_msg(tm->mgr, ID_CHK_RES, random_ri(), tm->l2->tei);
+	}
+}
 
-अटल व्योम
-tei_id_verअगरy(काष्ठा FsmInst *fi, पूर्णांक event, व्योम *arg)
-अणु
-	काष्ठा teimgr *पंचांग = fi->userdata;
+static void
+tei_id_remove(struct FsmInst *fi, int event, void *arg)
+{
+	struct teimgr *tm = fi->userdata;
+	u_char *dp = arg;
+	int tei;
 
-	अगर (*debug & DEBUG_L2_TEI)
-		पंचांग->tei_m.prपूर्णांकdebug(fi, "id verify request for tei %d",
-				     पंचांग->l2->tei);
-	put_tei_msg(पंचांग->mgr, ID_VERIFY, 0, पंचांग->l2->tei);
-	mISDN_FsmChangeState(&पंचांग->tei_m, ST_TEI_IDVERIFY);
-	mISDN_FsmAddTimer(&पंचांग->समयr, पंचांग->tval, EV_TIMER, शून्य, 2);
-	पंचांग->nval = 2;
-पूर्ण
+	tei = *(dp + 3) >> 1;
+	if (*debug & DEBUG_L2_TEI)
+		tm->tei_m.printdebug(fi, "identity remove tei %d", tei);
+	if ((tm->l2->tei != GROUP_TEI) &&
+	    ((tei == GROUP_TEI) || (tei == tm->l2->tei))) {
+		mISDN_FsmDelTimer(&tm->timer, 5);
+		mISDN_FsmChangeState(&tm->tei_m, ST_TEI_NOP);
+		tei_l2(tm->l2, MDL_REMOVE_REQ, 0);
+	}
+}
 
-अटल व्योम
-tei_id_req_tout(काष्ठा FsmInst *fi, पूर्णांक event, व्योम *arg)
-अणु
-	काष्ठा teimgr *पंचांग = fi->userdata;
+static void
+tei_id_verify(struct FsmInst *fi, int event, void *arg)
+{
+	struct teimgr *tm = fi->userdata;
 
-	अगर (--पंचांग->nval) अणु
-		पंचांग->ri = अक्रमom_ri();
-		अगर (*debug & DEBUG_L2_TEI)
-			पंचांग->tei_m.prपूर्णांकdebug(fi, "assign req(%d) ri %d",
-					     4 - पंचांग->nval, पंचांग->ri);
-		put_tei_msg(पंचांग->mgr, ID_REQUEST, पंचांग->ri, GROUP_TEI);
-		mISDN_FsmAddTimer(&पंचांग->समयr, पंचांग->tval, EV_TIMER, शून्य, 3);
-	पूर्ण अन्यथा अणु
-		पंचांग->tei_m.prपूर्णांकdebug(fi, "assign req failed");
-		tei_l2(पंचांग->l2, MDL_ERROR_RSP, 0);
+	if (*debug & DEBUG_L2_TEI)
+		tm->tei_m.printdebug(fi, "id verify request for tei %d",
+				     tm->l2->tei);
+	put_tei_msg(tm->mgr, ID_VERIFY, 0, tm->l2->tei);
+	mISDN_FsmChangeState(&tm->tei_m, ST_TEI_IDVERIFY);
+	mISDN_FsmAddTimer(&tm->timer, tm->tval, EV_TIMER, NULL, 2);
+	tm->nval = 2;
+}
+
+static void
+tei_id_req_tout(struct FsmInst *fi, int event, void *arg)
+{
+	struct teimgr *tm = fi->userdata;
+
+	if (--tm->nval) {
+		tm->ri = random_ri();
+		if (*debug & DEBUG_L2_TEI)
+			tm->tei_m.printdebug(fi, "assign req(%d) ri %d",
+					     4 - tm->nval, tm->ri);
+		put_tei_msg(tm->mgr, ID_REQUEST, tm->ri, GROUP_TEI);
+		mISDN_FsmAddTimer(&tm->timer, tm->tval, EV_TIMER, NULL, 3);
+	} else {
+		tm->tei_m.printdebug(fi, "assign req failed");
+		tei_l2(tm->l2, MDL_ERROR_RSP, 0);
 		mISDN_FsmChangeState(fi, ST_TEI_NOP);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-tei_id_ver_tout(काष्ठा FsmInst *fi, पूर्णांक event, व्योम *arg)
-अणु
-	काष्ठा teimgr *पंचांग = fi->userdata;
+static void
+tei_id_ver_tout(struct FsmInst *fi, int event, void *arg)
+{
+	struct teimgr *tm = fi->userdata;
 
-	अगर (--पंचांग->nval) अणु
-		अगर (*debug & DEBUG_L2_TEI)
-			पंचांग->tei_m.prपूर्णांकdebug(fi,
+	if (--tm->nval) {
+		if (*debug & DEBUG_L2_TEI)
+			tm->tei_m.printdebug(fi,
 					     "id verify req(%d) for tei %d",
-					     3 - पंचांग->nval, पंचांग->l2->tei);
-		put_tei_msg(पंचांग->mgr, ID_VERIFY, 0, पंचांग->l2->tei);
-		mISDN_FsmAddTimer(&पंचांग->समयr, पंचांग->tval, EV_TIMER, शून्य, 4);
-	पूर्ण अन्यथा अणु
-		पंचांग->tei_m.prपूर्णांकdebug(fi, "verify req for tei %d failed",
-				     पंचांग->l2->tei);
-		tei_l2(पंचांग->l2, MDL_REMOVE_REQ, 0);
+					     3 - tm->nval, tm->l2->tei);
+		put_tei_msg(tm->mgr, ID_VERIFY, 0, tm->l2->tei);
+		mISDN_FsmAddTimer(&tm->timer, tm->tval, EV_TIMER, NULL, 4);
+	} else {
+		tm->tei_m.printdebug(fi, "verify req for tei %d failed",
+				     tm->l2->tei);
+		tei_l2(tm->l2, MDL_REMOVE_REQ, 0);
 		mISDN_FsmChangeState(fi, ST_TEI_NOP);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा FsmNode TeiFnListUser[] =
-अणु
-	अणुST_TEI_NOP, EV_IDREQ, tei_id_requestपूर्ण,
-	अणुST_TEI_NOP, EV_ASSIGN, tei_id_test_dupपूर्ण,
-	अणुST_TEI_NOP, EV_VERIFY, tei_id_verअगरyपूर्ण,
-	अणुST_TEI_NOP, EV_REMOVE, tei_id_हटाओपूर्ण,
-	अणुST_TEI_NOP, EV_CHKREQ, tei_id_chk_reqपूर्ण,
-	अणुST_TEI_IDREQ, EV_TIMER, tei_id_req_toutपूर्ण,
-	अणुST_TEI_IDREQ, EV_ASSIGN, tei_id_assignपूर्ण,
-	अणुST_TEI_IDREQ, EV_DENIED, tei_id_deniedपूर्ण,
-	अणुST_TEI_IDVERIFY, EV_TIMER, tei_id_ver_toutपूर्ण,
-	अणुST_TEI_IDVERIFY, EV_REMOVE, tei_id_हटाओपूर्ण,
-	अणुST_TEI_IDVERIFY, EV_CHKREQ, tei_id_chk_reqपूर्ण,
-पूर्ण;
+static struct FsmNode TeiFnListUser[] =
+{
+	{ST_TEI_NOP, EV_IDREQ, tei_id_request},
+	{ST_TEI_NOP, EV_ASSIGN, tei_id_test_dup},
+	{ST_TEI_NOP, EV_VERIFY, tei_id_verify},
+	{ST_TEI_NOP, EV_REMOVE, tei_id_remove},
+	{ST_TEI_NOP, EV_CHKREQ, tei_id_chk_req},
+	{ST_TEI_IDREQ, EV_TIMER, tei_id_req_tout},
+	{ST_TEI_IDREQ, EV_ASSIGN, tei_id_assign},
+	{ST_TEI_IDREQ, EV_DENIED, tei_id_denied},
+	{ST_TEI_IDVERIFY, EV_TIMER, tei_id_ver_tout},
+	{ST_TEI_IDVERIFY, EV_REMOVE, tei_id_remove},
+	{ST_TEI_IDVERIFY, EV_CHKREQ, tei_id_chk_req},
+};
 
-अटल व्योम
-tei_l2हटाओ(काष्ठा layer2 *l2)
-अणु
-	put_tei_msg(l2->पंचांग->mgr, ID_REMOVE, 0, l2->tei);
+static void
+tei_l2remove(struct layer2 *l2)
+{
+	put_tei_msg(l2->tm->mgr, ID_REMOVE, 0, l2->tei);
 	tei_l2(l2, MDL_REMOVE_REQ, 0);
 	list_del(&l2->ch.list);
-	l2->ch.ctrl(&l2->ch, CLOSE_CHANNEL, शून्य);
-पूर्ण
+	l2->ch.ctrl(&l2->ch, CLOSE_CHANNEL, NULL);
+}
 
-अटल व्योम
-tei_assign_req(काष्ठा FsmInst *fi, पूर्णांक event, व्योम *arg)
-अणु
-	काष्ठा teimgr *पंचांग = fi->userdata;
-	u_अक्षर *dp = arg;
+static void
+tei_assign_req(struct FsmInst *fi, int event, void *arg)
+{
+	struct teimgr *tm = fi->userdata;
+	u_char *dp = arg;
 
-	अगर (पंचांग->l2->tei == GROUP_TEI) अणु
-		पंचांग->tei_m.prपूर्णांकdebug(&पंचांग->tei_m,
+	if (tm->l2->tei == GROUP_TEI) {
+		tm->tei_m.printdebug(&tm->tei_m,
 				     "net tei assign request without tei");
-		वापस;
-	पूर्ण
-	पंचांग->ri = ((अचिन्हित पूर्णांक) *dp++ << 8);
-	पंचांग->ri += *dp++;
-	अगर (*debug & DEBUG_L2_TEI)
-		पंचांग->tei_m.prपूर्णांकdebug(&पंचांग->tei_m,
-				     "net assign request ri %d teim %d", पंचांग->ri, *dp);
-	put_tei_msg(पंचांग->mgr, ID_ASSIGNED, पंचांग->ri, पंचांग->l2->tei);
+		return;
+	}
+	tm->ri = ((unsigned int) *dp++ << 8);
+	tm->ri += *dp++;
+	if (*debug & DEBUG_L2_TEI)
+		tm->tei_m.printdebug(&tm->tei_m,
+				     "net assign request ri %d teim %d", tm->ri, *dp);
+	put_tei_msg(tm->mgr, ID_ASSIGNED, tm->ri, tm->l2->tei);
 	mISDN_FsmChangeState(fi, ST_TEI_NOP);
-पूर्ण
+}
 
-अटल व्योम
-tei_id_chk_req_net(काष्ठा FsmInst *fi, पूर्णांक event, व्योम *arg)
-अणु
-	काष्ठा teimgr	*पंचांग = fi->userdata;
+static void
+tei_id_chk_req_net(struct FsmInst *fi, int event, void *arg)
+{
+	struct teimgr	*tm = fi->userdata;
 
-	अगर (*debug & DEBUG_L2_TEI)
-		पंचांग->tei_m.prपूर्णांकdebug(fi, "id check request for tei %d",
-				     पंचांग->l2->tei);
-	पंचांग->rcnt = 0;
-	put_tei_msg(पंचांग->mgr, ID_CHK_REQ, 0, पंचांग->l2->tei);
-	mISDN_FsmChangeState(&पंचांग->tei_m, ST_TEI_IDVERIFY);
-	mISDN_FsmAddTimer(&पंचांग->समयr, पंचांग->tval, EV_TIMER, शून्य, 2);
-	पंचांग->nval = 2;
-पूर्ण
+	if (*debug & DEBUG_L2_TEI)
+		tm->tei_m.printdebug(fi, "id check request for tei %d",
+				     tm->l2->tei);
+	tm->rcnt = 0;
+	put_tei_msg(tm->mgr, ID_CHK_REQ, 0, tm->l2->tei);
+	mISDN_FsmChangeState(&tm->tei_m, ST_TEI_IDVERIFY);
+	mISDN_FsmAddTimer(&tm->timer, tm->tval, EV_TIMER, NULL, 2);
+	tm->nval = 2;
+}
 
-अटल व्योम
-tei_id_chk_resp(काष्ठा FsmInst *fi, पूर्णांक event, व्योम *arg)
-अणु
-	काष्ठा teimgr *पंचांग = fi->userdata;
-	u_अक्षर *dp = arg;
-	पूर्णांक tei;
-
-	tei = dp[3] >> 1;
-	अगर (*debug & DEBUG_L2_TEI)
-		पंचांग->tei_m.prपूर्णांकdebug(fi, "identity check resp tei %d", tei);
-	अगर (tei == पंचांग->l2->tei)
-		पंचांग->rcnt++;
-पूर्ण
-
-अटल व्योम
-tei_id_verअगरy_net(काष्ठा FsmInst *fi, पूर्णांक event, व्योम *arg)
-अणु
-	काष्ठा teimgr *पंचांग = fi->userdata;
-	u_अक्षर *dp = arg;
-	पूर्णांक tei;
+static void
+tei_id_chk_resp(struct FsmInst *fi, int event, void *arg)
+{
+	struct teimgr *tm = fi->userdata;
+	u_char *dp = arg;
+	int tei;
 
 	tei = dp[3] >> 1;
-	अगर (*debug & DEBUG_L2_TEI)
-		पंचांग->tei_m.prपूर्णांकdebug(fi, "identity verify req tei %d/%d",
-				     tei, पंचांग->l2->tei);
-	अगर (tei == पंचांग->l2->tei)
+	if (*debug & DEBUG_L2_TEI)
+		tm->tei_m.printdebug(fi, "identity check resp tei %d", tei);
+	if (tei == tm->l2->tei)
+		tm->rcnt++;
+}
+
+static void
+tei_id_verify_net(struct FsmInst *fi, int event, void *arg)
+{
+	struct teimgr *tm = fi->userdata;
+	u_char *dp = arg;
+	int tei;
+
+	tei = dp[3] >> 1;
+	if (*debug & DEBUG_L2_TEI)
+		tm->tei_m.printdebug(fi, "identity verify req tei %d/%d",
+				     tei, tm->l2->tei);
+	if (tei == tm->l2->tei)
 		tei_id_chk_req_net(fi, event, arg);
-पूर्ण
+}
 
-अटल व्योम
-tei_id_ver_tout_net(काष्ठा FsmInst *fi, पूर्णांक event, व्योम *arg)
-अणु
-	काष्ठा teimgr *पंचांग = fi->userdata;
+static void
+tei_id_ver_tout_net(struct FsmInst *fi, int event, void *arg)
+{
+	struct teimgr *tm = fi->userdata;
 
-	अगर (पंचांग->rcnt == 1) अणु
-		अगर (*debug & DEBUG_L2_TEI)
-			पंचांग->tei_m.prपूर्णांकdebug(fi,
-					     "check req for tei %d successful\n", पंचांग->l2->tei);
+	if (tm->rcnt == 1) {
+		if (*debug & DEBUG_L2_TEI)
+			tm->tei_m.printdebug(fi,
+					     "check req for tei %d successful\n", tm->l2->tei);
 		mISDN_FsmChangeState(fi, ST_TEI_NOP);
-	पूर्ण अन्यथा अगर (पंचांग->rcnt > 1) अणु
-		/* duplicate assignment; हटाओ */
-		tei_l2हटाओ(पंचांग->l2);
-	पूर्ण अन्यथा अगर (--पंचांग->nval) अणु
-		अगर (*debug & DEBUG_L2_TEI)
-			पंचांग->tei_m.prपूर्णांकdebug(fi,
+	} else if (tm->rcnt > 1) {
+		/* duplicate assignment; remove */
+		tei_l2remove(tm->l2);
+	} else if (--tm->nval) {
+		if (*debug & DEBUG_L2_TEI)
+			tm->tei_m.printdebug(fi,
 					     "id check req(%d) for tei %d",
-					     3 - पंचांग->nval, पंचांग->l2->tei);
-		put_tei_msg(पंचांग->mgr, ID_CHK_REQ, 0, पंचांग->l2->tei);
-		mISDN_FsmAddTimer(&पंचांग->समयr, पंचांग->tval, EV_TIMER, शून्य, 4);
-	पूर्ण अन्यथा अणु
-		पंचांग->tei_m.prपूर्णांकdebug(fi, "check req for tei %d failed",
-				     पंचांग->l2->tei);
+					     3 - tm->nval, tm->l2->tei);
+		put_tei_msg(tm->mgr, ID_CHK_REQ, 0, tm->l2->tei);
+		mISDN_FsmAddTimer(&tm->timer, tm->tval, EV_TIMER, NULL, 4);
+	} else {
+		tm->tei_m.printdebug(fi, "check req for tei %d failed",
+				     tm->l2->tei);
 		mISDN_FsmChangeState(fi, ST_TEI_NOP);
-		tei_l2हटाओ(पंचांग->l2);
-	पूर्ण
-पूर्ण
+		tei_l2remove(tm->l2);
+	}
+}
 
-अटल काष्ठा FsmNode TeiFnListNet[] =
-अणु
-	अणुST_TEI_NOP, EV_ASSIGN_REQ, tei_assign_reqपूर्ण,
-	अणुST_TEI_NOP, EV_VERIFY, tei_id_verअगरy_netपूर्ण,
-	अणुST_TEI_NOP, EV_CHKREQ, tei_id_chk_req_netपूर्ण,
-	अणुST_TEI_IDVERIFY, EV_TIMER, tei_id_ver_tout_netपूर्ण,
-	अणुST_TEI_IDVERIFY, EV_CHKRESP, tei_id_chk_respपूर्ण,
-पूर्ण;
+static struct FsmNode TeiFnListNet[] =
+{
+	{ST_TEI_NOP, EV_ASSIGN_REQ, tei_assign_req},
+	{ST_TEI_NOP, EV_VERIFY, tei_id_verify_net},
+	{ST_TEI_NOP, EV_CHKREQ, tei_id_chk_req_net},
+	{ST_TEI_IDVERIFY, EV_TIMER, tei_id_ver_tout_net},
+	{ST_TEI_IDVERIFY, EV_CHKRESP, tei_id_chk_resp},
+};
 
-अटल व्योम
-tei_ph_data_ind(काष्ठा teimgr *पंचांग, u_पूर्णांक mt, u_अक्षर *dp, पूर्णांक len)
-अणु
-	अगर (test_bit(FLG_FIXED_TEI, &पंचांग->l2->flag))
-		वापस;
-	अगर (*debug & DEBUG_L2_TEI)
-		पंचांग->tei_m.prपूर्णांकdebug(&पंचांग->tei_m, "tei handler mt %x", mt);
-	अगर (mt == ID_ASSIGNED)
-		mISDN_FsmEvent(&पंचांग->tei_m, EV_ASSIGN, dp);
-	अन्यथा अगर (mt == ID_DENIED)
-		mISDN_FsmEvent(&पंचांग->tei_m, EV_DENIED, dp);
-	अन्यथा अगर (mt == ID_CHK_REQ)
-		mISDN_FsmEvent(&पंचांग->tei_m, EV_CHKREQ, dp);
-	अन्यथा अगर (mt == ID_REMOVE)
-		mISDN_FsmEvent(&पंचांग->tei_m, EV_REMOVE, dp);
-	अन्यथा अगर (mt == ID_VERIFY)
-		mISDN_FsmEvent(&पंचांग->tei_m, EV_VERIFY, dp);
-	अन्यथा अगर (mt == ID_CHK_RES)
-		mISDN_FsmEvent(&पंचांग->tei_m, EV_CHKRESP, dp);
-पूर्ण
+static void
+tei_ph_data_ind(struct teimgr *tm, u_int mt, u_char *dp, int len)
+{
+	if (test_bit(FLG_FIXED_TEI, &tm->l2->flag))
+		return;
+	if (*debug & DEBUG_L2_TEI)
+		tm->tei_m.printdebug(&tm->tei_m, "tei handler mt %x", mt);
+	if (mt == ID_ASSIGNED)
+		mISDN_FsmEvent(&tm->tei_m, EV_ASSIGN, dp);
+	else if (mt == ID_DENIED)
+		mISDN_FsmEvent(&tm->tei_m, EV_DENIED, dp);
+	else if (mt == ID_CHK_REQ)
+		mISDN_FsmEvent(&tm->tei_m, EV_CHKREQ, dp);
+	else if (mt == ID_REMOVE)
+		mISDN_FsmEvent(&tm->tei_m, EV_REMOVE, dp);
+	else if (mt == ID_VERIFY)
+		mISDN_FsmEvent(&tm->tei_m, EV_VERIFY, dp);
+	else if (mt == ID_CHK_RES)
+		mISDN_FsmEvent(&tm->tei_m, EV_CHKRESP, dp);
+}
 
-अटल काष्ठा layer2 *
-create_new_tei(काष्ठा manager *mgr, पूर्णांक tei, पूर्णांक sapi)
-अणु
-	अचिन्हित दीर्घ		opt = 0;
-	अचिन्हित दीर्घ		flags;
-	पूर्णांक			id;
-	काष्ठा layer2		*l2;
-	काष्ठा channel_req	rq;
+static struct layer2 *
+create_new_tei(struct manager *mgr, int tei, int sapi)
+{
+	unsigned long		opt = 0;
+	unsigned long		flags;
+	int			id;
+	struct layer2		*l2;
+	struct channel_req	rq;
 
-	अगर (!mgr->up)
-		वापस शून्य;
-	अगर ((tei >= 0) && (tei < 64))
+	if (!mgr->up)
+		return NULL;
+	if ((tei >= 0) && (tei < 64))
 		test_and_set_bit(OPTION_L2_FIXEDTEI, &opt);
-	अगर (mgr->ch.st->dev->Dprotocols & ((1 << ISDN_P_TE_E1) |
-	    (1 << ISDN_P_NT_E1))) अणु
+	if (mgr->ch.st->dev->Dprotocols & ((1 << ISDN_P_TE_E1) |
+	    (1 << ISDN_P_NT_E1))) {
 		test_and_set_bit(OPTION_L2_PMX, &opt);
 		rq.protocol = ISDN_P_NT_E1;
-	पूर्ण अन्यथा अणु
+	} else {
 		rq.protocol = ISDN_P_NT_S0;
-	पूर्ण
+	}
 	l2 = create_l2(mgr->up, ISDN_P_LAPD_NT, opt, tei, sapi);
-	अगर (!l2) अणु
-		prपूर्णांकk(KERN_WARNING "%s:no memory for layer2\n", __func__);
-		वापस शून्य;
-	पूर्ण
-	l2->पंचांग = kzalloc(माप(काष्ठा teimgr), GFP_KERNEL);
-	अगर (!l2->पंचांग) अणु
-		kमुक्त(l2);
-		prपूर्णांकk(KERN_WARNING "%s:no memory for teimgr\n", __func__);
-		वापस शून्य;
-	पूर्ण
-	l2->पंचांग->mgr = mgr;
-	l2->पंचांग->l2 = l2;
-	l2->पंचांग->tei_m.debug = *debug & DEBUG_L2_TEIFSM;
-	l2->पंचांग->tei_m.userdata = l2->पंचांग;
-	l2->पंचांग->tei_m.prपूर्णांकdebug = tei_debug;
-	l2->पंचांग->tei_m.fsm = &teअगरsmn;
-	l2->पंचांग->tei_m.state = ST_TEI_NOP;
-	l2->पंचांग->tval = 2000; /* T202  2 sec */
-	mISDN_FsmInitTimer(&l2->पंचांग->tei_m, &l2->पंचांग->समयr);
-	ग_लिखो_lock_irqsave(&mgr->lock, flags);
-	id = get_मुक्त_id(mgr);
+	if (!l2) {
+		printk(KERN_WARNING "%s:no memory for layer2\n", __func__);
+		return NULL;
+	}
+	l2->tm = kzalloc(sizeof(struct teimgr), GFP_KERNEL);
+	if (!l2->tm) {
+		kfree(l2);
+		printk(KERN_WARNING "%s:no memory for teimgr\n", __func__);
+		return NULL;
+	}
+	l2->tm->mgr = mgr;
+	l2->tm->l2 = l2;
+	l2->tm->tei_m.debug = *debug & DEBUG_L2_TEIFSM;
+	l2->tm->tei_m.userdata = l2->tm;
+	l2->tm->tei_m.printdebug = tei_debug;
+	l2->tm->tei_m.fsm = &teifsmn;
+	l2->tm->tei_m.state = ST_TEI_NOP;
+	l2->tm->tval = 2000; /* T202  2 sec */
+	mISDN_FsmInitTimer(&l2->tm->tei_m, &l2->tm->timer);
+	write_lock_irqsave(&mgr->lock, flags);
+	id = get_free_id(mgr);
 	list_add_tail(&l2->list, &mgr->layer2);
-	ग_लिखो_unlock_irqrestore(&mgr->lock, flags);
-	अगर (id < 0) अणु
-		l2->ch.ctrl(&l2->ch, CLOSE_CHANNEL, शून्य);
-		prपूर्णांकk(KERN_WARNING "%s:no free id\n", __func__);
-		वापस शून्य;
-	पूर्ण अन्यथा अणु
+	write_unlock_irqrestore(&mgr->lock, flags);
+	if (id < 0) {
+		l2->ch.ctrl(&l2->ch, CLOSE_CHANNEL, NULL);
+		printk(KERN_WARNING "%s:no free id\n", __func__);
+		return NULL;
+	} else {
 		l2->ch.nr = id;
 		__add_layer2(&l2->ch, mgr->ch.st);
 		l2->ch.recv = mgr->ch.recv;
 		l2->ch.peer = mgr->ch.peer;
-		l2->ch.ctrl(&l2->ch, OPEN_CHANNEL, शून्य);
-		/* We need खोलो here L1 क्रम the manager as well (refcounting) */
+		l2->ch.ctrl(&l2->ch, OPEN_CHANNEL, NULL);
+		/* We need open here L1 for the manager as well (refcounting) */
 		rq.adr.dev = mgr->ch.st->dev->id;
 		id = mgr->ch.st->own.ctrl(&mgr->ch.st->own, OPEN_CHANNEL, &rq);
-		अगर (id < 0) अणु
-			prपूर्णांकk(KERN_WARNING "%s: cannot open L1\n", __func__);
-			l2->ch.ctrl(&l2->ch, CLOSE_CHANNEL, शून्य);
-			l2 = शून्य;
-		पूर्ण
-	पूर्ण
-	वापस l2;
-पूर्ण
+		if (id < 0) {
+			printk(KERN_WARNING "%s: cannot open L1\n", __func__);
+			l2->ch.ctrl(&l2->ch, CLOSE_CHANNEL, NULL);
+			l2 = NULL;
+		}
+	}
+	return l2;
+}
 
-अटल व्योम
-new_tei_req(काष्ठा manager *mgr, u_अक्षर *dp)
-अणु
-	पूर्णांक		tei, ri;
-	काष्ठा layer2	*l2;
+static void
+new_tei_req(struct manager *mgr, u_char *dp)
+{
+	int		tei, ri;
+	struct layer2	*l2;
 
 	ri = dp[0] << 8;
 	ri += dp[1];
-	अगर (!mgr->up)
-		जाओ denied;
-	अगर (!(dp[3] & 1)) /* Extension bit != 1 */
-		जाओ denied;
-	अगर (dp[3] != 0xff)
+	if (!mgr->up)
+		goto denied;
+	if (!(dp[3] & 1)) /* Extension bit != 1 */
+		goto denied;
+	if (dp[3] != 0xff)
 		tei = dp[3] >> 1; /* 3GPP TS 08.56 6.1.11.2 */
-	अन्यथा
-		tei = get_मुक्त_tei(mgr);
-	अगर (tei < 0) अणु
-		prपूर्णांकk(KERN_WARNING "%s:No free tei\n", __func__);
-		जाओ denied;
-	पूर्ण
+	else
+		tei = get_free_tei(mgr);
+	if (tei < 0) {
+		printk(KERN_WARNING "%s:No free tei\n", __func__);
+		goto denied;
+	}
 	l2 = create_new_tei(mgr, tei, CTRL_SAPI);
-	अगर (!l2)
-		जाओ denied;
-	अन्यथा
-		mISDN_FsmEvent(&l2->पंचांग->tei_m, EV_ASSIGN_REQ, dp);
-	वापस;
+	if (!l2)
+		goto denied;
+	else
+		mISDN_FsmEvent(&l2->tm->tei_m, EV_ASSIGN_REQ, dp);
+	return;
 denied:
 	put_tei_msg(mgr, ID_DENIED, ri, GROUP_TEI);
-पूर्ण
+}
 
-अटल पूर्णांक
-ph_data_ind(काष्ठा manager *mgr, काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक		ret = -EINVAL;
-	काष्ठा layer2	*l2, *nl2;
-	u_अक्षर		mt;
+static int
+ph_data_ind(struct manager *mgr, struct sk_buff *skb)
+{
+	int		ret = -EINVAL;
+	struct layer2	*l2, *nl2;
+	u_char		mt;
 
-	अगर (skb->len < 8) अणु
-		अगर (*debug  & DEBUG_L2_TEI)
-			prपूर्णांकk(KERN_DEBUG "%s: short mgr frame %d/8\n",
+	if (skb->len < 8) {
+		if (*debug  & DEBUG_L2_TEI)
+			printk(KERN_DEBUG "%s: short mgr frame %d/8\n",
 			       __func__, skb->len);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर ((skb->data[0] >> 2) != TEI_SAPI) /* not क्रम us */
-		जाओ करोne;
-	अगर (skb->data[0] & 1) /* EA0 क्रमmal error */
-		जाओ करोne;
-	अगर (!(skb->data[1] & 1)) /* EA1 क्रमmal error */
-		जाओ करोne;
-	अगर ((skb->data[1] >> 1) != GROUP_TEI) /* not क्रम us */
-		जाओ करोne;
-	अगर ((skb->data[2] & 0xef) != UI) /* not UI */
-		जाओ करोne;
-	अगर (skb->data[3] != TEI_ENTITY_ID) /* not tei entity */
-		जाओ करोne;
+	if ((skb->data[0] >> 2) != TEI_SAPI) /* not for us */
+		goto done;
+	if (skb->data[0] & 1) /* EA0 formal error */
+		goto done;
+	if (!(skb->data[1] & 1)) /* EA1 formal error */
+		goto done;
+	if ((skb->data[1] >> 1) != GROUP_TEI) /* not for us */
+		goto done;
+	if ((skb->data[2] & 0xef) != UI) /* not UI */
+		goto done;
+	if (skb->data[3] != TEI_ENTITY_ID) /* not tei entity */
+		goto done;
 	mt = skb->data[6];
-	चयन (mt) अणु
-	हाल ID_REQUEST:
-	हाल ID_CHK_RES:
-	हाल ID_VERIFY:
-		अगर (!test_bit(MGR_OPT_NETWORK, &mgr->options))
-			जाओ करोne;
-		अवरोध;
-	हाल ID_ASSIGNED:
-	हाल ID_DENIED:
-	हाल ID_CHK_REQ:
-	हाल ID_REMOVE:
-		अगर (test_bit(MGR_OPT_NETWORK, &mgr->options))
-			जाओ करोne;
-		अवरोध;
-	शेष:
-		जाओ करोne;
-	पूर्ण
+	switch (mt) {
+	case ID_REQUEST:
+	case ID_CHK_RES:
+	case ID_VERIFY:
+		if (!test_bit(MGR_OPT_NETWORK, &mgr->options))
+			goto done;
+		break;
+	case ID_ASSIGNED:
+	case ID_DENIED:
+	case ID_CHK_REQ:
+	case ID_REMOVE:
+		if (test_bit(MGR_OPT_NETWORK, &mgr->options))
+			goto done;
+		break;
+	default:
+		goto done;
+	}
 	ret = 0;
-	अगर (mt == ID_REQUEST) अणु
+	if (mt == ID_REQUEST) {
 		new_tei_req(mgr, &skb->data[4]);
-		जाओ करोne;
-	पूर्ण
-	list_क्रम_each_entry_safe(l2, nl2, &mgr->layer2, list) अणु
-		tei_ph_data_ind(l2->पंचांग, mt, &skb->data[4], skb->len - 4);
-	पूर्ण
-करोne:
-	वापस ret;
-पूर्ण
+		goto done;
+	}
+	list_for_each_entry_safe(l2, nl2, &mgr->layer2, list) {
+		tei_ph_data_ind(l2->tm, mt, &skb->data[4], skb->len - 4);
+	}
+done:
+	return ret;
+}
 
-पूर्णांक
-l2_tei(काष्ठा layer2 *l2, u_पूर्णांक cmd, u_दीर्घ arg)
-अणु
-	काष्ठा teimgr	*पंचांग = l2->पंचांग;
+int
+l2_tei(struct layer2 *l2, u_int cmd, u_long arg)
+{
+	struct teimgr	*tm = l2->tm;
 
-	अगर (test_bit(FLG_FIXED_TEI, &l2->flag))
-		वापस 0;
-	अगर (*debug & DEBUG_L2_TEI)
-		prपूर्णांकk(KERN_DEBUG "%s: cmd(%x)\n", __func__, cmd);
-	चयन (cmd) अणु
-	हाल MDL_ASSIGN_IND:
-		mISDN_FsmEvent(&पंचांग->tei_m, EV_IDREQ, शून्य);
-		अवरोध;
-	हाल MDL_ERROR_IND:
-		अगर (test_bit(MGR_OPT_NETWORK, &पंचांग->mgr->options))
-			mISDN_FsmEvent(&पंचांग->tei_m, EV_CHKREQ, &l2->tei);
-		अगर (test_bit(MGR_OPT_USER, &पंचांग->mgr->options))
-			mISDN_FsmEvent(&पंचांग->tei_m, EV_VERIFY, शून्य);
-		अवरोध;
-	हाल MDL_STATUS_UP_IND:
-		अगर (test_bit(MGR_OPT_NETWORK, &पंचांग->mgr->options))
-			mISDN_FsmEvent(&पंचांग->mgr->deact, EV_ACTIVATE, शून्य);
-		अवरोध;
-	हाल MDL_STATUS_DOWN_IND:
-		अगर (test_bit(MGR_OPT_NETWORK, &पंचांग->mgr->options))
-			mISDN_FsmEvent(&पंचांग->mgr->deact, EV_DEACTIVATE, शून्य);
-		अवरोध;
-	हाल MDL_STATUS_UI_IND:
-		अगर (test_bit(MGR_OPT_NETWORK, &पंचांग->mgr->options))
-			mISDN_FsmEvent(&पंचांग->mgr->deact, EV_UI, शून्य);
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (test_bit(FLG_FIXED_TEI, &l2->flag))
+		return 0;
+	if (*debug & DEBUG_L2_TEI)
+		printk(KERN_DEBUG "%s: cmd(%x)\n", __func__, cmd);
+	switch (cmd) {
+	case MDL_ASSIGN_IND:
+		mISDN_FsmEvent(&tm->tei_m, EV_IDREQ, NULL);
+		break;
+	case MDL_ERROR_IND:
+		if (test_bit(MGR_OPT_NETWORK, &tm->mgr->options))
+			mISDN_FsmEvent(&tm->tei_m, EV_CHKREQ, &l2->tei);
+		if (test_bit(MGR_OPT_USER, &tm->mgr->options))
+			mISDN_FsmEvent(&tm->tei_m, EV_VERIFY, NULL);
+		break;
+	case MDL_STATUS_UP_IND:
+		if (test_bit(MGR_OPT_NETWORK, &tm->mgr->options))
+			mISDN_FsmEvent(&tm->mgr->deact, EV_ACTIVATE, NULL);
+		break;
+	case MDL_STATUS_DOWN_IND:
+		if (test_bit(MGR_OPT_NETWORK, &tm->mgr->options))
+			mISDN_FsmEvent(&tm->mgr->deact, EV_DEACTIVATE, NULL);
+		break;
+	case MDL_STATUS_UI_IND:
+		if (test_bit(MGR_OPT_NETWORK, &tm->mgr->options))
+			mISDN_FsmEvent(&tm->mgr->deact, EV_UI, NULL);
+		break;
+	}
+	return 0;
+}
 
-व्योम
-TEIrelease(काष्ठा layer2 *l2)
-अणु
-	काष्ठा teimgr	*पंचांग = l2->पंचांग;
-	u_दीर्घ		flags;
+void
+TEIrelease(struct layer2 *l2)
+{
+	struct teimgr	*tm = l2->tm;
+	u_long		flags;
 
-	mISDN_FsmDelTimer(&पंचांग->समयr, 1);
-	ग_लिखो_lock_irqsave(&पंचांग->mgr->lock, flags);
+	mISDN_FsmDelTimer(&tm->timer, 1);
+	write_lock_irqsave(&tm->mgr->lock, flags);
 	list_del(&l2->list);
-	ग_लिखो_unlock_irqrestore(&पंचांग->mgr->lock, flags);
-	l2->पंचांग = शून्य;
-	kमुक्त(पंचांग);
-पूर्ण
+	write_unlock_irqrestore(&tm->mgr->lock, flags);
+	l2->tm = NULL;
+	kfree(tm);
+}
 
-अटल पूर्णांक
-create_teimgr(काष्ठा manager *mgr, काष्ठा channel_req *crq)
-अणु
-	काष्ठा layer2		*l2;
-	अचिन्हित दीर्घ		opt = 0;
-	अचिन्हित दीर्घ		flags;
-	पूर्णांक			id;
-	काष्ठा channel_req	l1rq;
+static int
+create_teimgr(struct manager *mgr, struct channel_req *crq)
+{
+	struct layer2		*l2;
+	unsigned long		opt = 0;
+	unsigned long		flags;
+	int			id;
+	struct channel_req	l1rq;
 
-	अगर (*debug & DEBUG_L2_TEI)
-		prपूर्णांकk(KERN_DEBUG "%s: %s proto(%x) adr(%d %d %d %d)\n",
+	if (*debug & DEBUG_L2_TEI)
+		printk(KERN_DEBUG "%s: %s proto(%x) adr(%d %d %d %d)\n",
 		       __func__, dev_name(&mgr->ch.st->dev->dev),
 		       crq->protocol, crq->adr.dev, crq->adr.channel,
 		       crq->adr.sapi, crq->adr.tei);
-	अगर (crq->adr.tei > GROUP_TEI)
-		वापस -EINVAL;
-	अगर (crq->adr.tei < 64)
+	if (crq->adr.tei > GROUP_TEI)
+		return -EINVAL;
+	if (crq->adr.tei < 64)
 		test_and_set_bit(OPTION_L2_FIXEDTEI, &opt);
-	अगर (crq->adr.tei == 0)
+	if (crq->adr.tei == 0)
 		test_and_set_bit(OPTION_L2_PTP, &opt);
-	अगर (test_bit(MGR_OPT_NETWORK, &mgr->options)) अणु
-		अगर (crq->protocol == ISDN_P_LAPD_TE)
-			वापस -EPROTONOSUPPORT;
-		अगर ((crq->adr.tei != 0) && (crq->adr.tei != 127))
-			वापस -EINVAL;
-		अगर (mgr->up) अणु
-			prपूर्णांकk(KERN_WARNING
+	if (test_bit(MGR_OPT_NETWORK, &mgr->options)) {
+		if (crq->protocol == ISDN_P_LAPD_TE)
+			return -EPROTONOSUPPORT;
+		if ((crq->adr.tei != 0) && (crq->adr.tei != 127))
+			return -EINVAL;
+		if (mgr->up) {
+			printk(KERN_WARNING
 			       "%s: only one network manager is allowed\n",
 			       __func__);
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण अन्यथा अगर (test_bit(MGR_OPT_USER, &mgr->options)) अणु
-		अगर (crq->protocol == ISDN_P_LAPD_NT)
-			वापस -EPROTONOSUPPORT;
-		अगर ((crq->adr.tei >= 64) && (crq->adr.tei < GROUP_TEI))
-			वापस -EINVAL; /* dyn tei */
-	पूर्ण अन्यथा अणु
-		अगर (crq->protocol == ISDN_P_LAPD_NT)
+			return -EBUSY;
+		}
+	} else if (test_bit(MGR_OPT_USER, &mgr->options)) {
+		if (crq->protocol == ISDN_P_LAPD_NT)
+			return -EPROTONOSUPPORT;
+		if ((crq->adr.tei >= 64) && (crq->adr.tei < GROUP_TEI))
+			return -EINVAL; /* dyn tei */
+	} else {
+		if (crq->protocol == ISDN_P_LAPD_NT)
 			test_and_set_bit(MGR_OPT_NETWORK, &mgr->options);
-		अगर (crq->protocol == ISDN_P_LAPD_TE)
+		if (crq->protocol == ISDN_P_LAPD_TE)
 			test_and_set_bit(MGR_OPT_USER, &mgr->options);
-	पूर्ण
+	}
 	l1rq.adr = crq->adr;
-	अगर (mgr->ch.st->dev->Dprotocols
+	if (mgr->ch.st->dev->Dprotocols
 	    & ((1 << ISDN_P_TE_E1) | (1 << ISDN_P_NT_E1)))
 		test_and_set_bit(OPTION_L2_PMX, &opt);
-	अगर ((crq->protocol == ISDN_P_LAPD_NT) && (crq->adr.tei == 127)) अणु
+	if ((crq->protocol == ISDN_P_LAPD_NT) && (crq->adr.tei == 127)) {
 		mgr->up = crq->ch;
 		id = DL_INFO_L2_CONNECT;
-		teiup_create(mgr, DL_INFORMATION_IND, माप(id), &id);
-		अगर (test_bit(MGR_PH_ACTIVE, &mgr->options))
-			teiup_create(mgr, PH_ACTIVATE_IND, 0, शून्य);
-		crq->ch = शून्य;
-		अगर (!list_empty(&mgr->layer2)) अणु
-			पढ़ो_lock_irqsave(&mgr->lock, flags);
-			list_क्रम_each_entry(l2, &mgr->layer2, list) अणु
+		teiup_create(mgr, DL_INFORMATION_IND, sizeof(id), &id);
+		if (test_bit(MGR_PH_ACTIVE, &mgr->options))
+			teiup_create(mgr, PH_ACTIVATE_IND, 0, NULL);
+		crq->ch = NULL;
+		if (!list_empty(&mgr->layer2)) {
+			read_lock_irqsave(&mgr->lock, flags);
+			list_for_each_entry(l2, &mgr->layer2, list) {
 				l2->up = mgr->up;
-				l2->ch.ctrl(&l2->ch, OPEN_CHANNEL, शून्य);
-			पूर्ण
-			पढ़ो_unlock_irqrestore(&mgr->lock, flags);
-		पूर्ण
-		वापस 0;
-	पूर्ण
+				l2->ch.ctrl(&l2->ch, OPEN_CHANNEL, NULL);
+			}
+			read_unlock_irqrestore(&mgr->lock, flags);
+		}
+		return 0;
+	}
 	l2 = create_l2(crq->ch, crq->protocol, opt,
 		       crq->adr.tei, crq->adr.sapi);
-	अगर (!l2)
-		वापस -ENOMEM;
-	l2->पंचांग = kzalloc(माप(काष्ठा teimgr), GFP_KERNEL);
-	अगर (!l2->पंचांग) अणु
-		kमुक्त(l2);
-		prपूर्णांकk(KERN_ERR "kmalloc teimgr failed\n");
-		वापस -ENOMEM;
-	पूर्ण
-	l2->पंचांग->mgr = mgr;
-	l2->पंचांग->l2 = l2;
-	l2->पंचांग->tei_m.debug = *debug & DEBUG_L2_TEIFSM;
-	l2->पंचांग->tei_m.userdata = l2->पंचांग;
-	l2->पंचांग->tei_m.prपूर्णांकdebug = tei_debug;
-	अगर (crq->protocol == ISDN_P_LAPD_TE) अणु
-		l2->पंचांग->tei_m.fsm = &teअगरsmu;
-		l2->पंचांग->tei_m.state = ST_TEI_NOP;
-		l2->पंचांग->tval = 1000; /* T201  1 sec */
-		अगर (test_bit(OPTION_L2_PMX, &opt))
+	if (!l2)
+		return -ENOMEM;
+	l2->tm = kzalloc(sizeof(struct teimgr), GFP_KERNEL);
+	if (!l2->tm) {
+		kfree(l2);
+		printk(KERN_ERR "kmalloc teimgr failed\n");
+		return -ENOMEM;
+	}
+	l2->tm->mgr = mgr;
+	l2->tm->l2 = l2;
+	l2->tm->tei_m.debug = *debug & DEBUG_L2_TEIFSM;
+	l2->tm->tei_m.userdata = l2->tm;
+	l2->tm->tei_m.printdebug = tei_debug;
+	if (crq->protocol == ISDN_P_LAPD_TE) {
+		l2->tm->tei_m.fsm = &teifsmu;
+		l2->tm->tei_m.state = ST_TEI_NOP;
+		l2->tm->tval = 1000; /* T201  1 sec */
+		if (test_bit(OPTION_L2_PMX, &opt))
 			l1rq.protocol = ISDN_P_TE_E1;
-		अन्यथा
+		else
 			l1rq.protocol = ISDN_P_TE_S0;
-	पूर्ण अन्यथा अणु
-		l2->पंचांग->tei_m.fsm = &teअगरsmn;
-		l2->पंचांग->tei_m.state = ST_TEI_NOP;
-		l2->पंचांग->tval = 2000; /* T202  2 sec */
-		अगर (test_bit(OPTION_L2_PMX, &opt))
+	} else {
+		l2->tm->tei_m.fsm = &teifsmn;
+		l2->tm->tei_m.state = ST_TEI_NOP;
+		l2->tm->tval = 2000; /* T202  2 sec */
+		if (test_bit(OPTION_L2_PMX, &opt))
 			l1rq.protocol = ISDN_P_NT_E1;
-		अन्यथा
+		else
 			l1rq.protocol = ISDN_P_NT_S0;
-	पूर्ण
-	mISDN_FsmInitTimer(&l2->पंचांग->tei_m, &l2->पंचांग->समयr);
-	ग_लिखो_lock_irqsave(&mgr->lock, flags);
-	id = get_मुक्त_id(mgr);
+	}
+	mISDN_FsmInitTimer(&l2->tm->tei_m, &l2->tm->timer);
+	write_lock_irqsave(&mgr->lock, flags);
+	id = get_free_id(mgr);
 	list_add_tail(&l2->list, &mgr->layer2);
-	ग_लिखो_unlock_irqrestore(&mgr->lock, flags);
-	अगर (id >= 0) अणु
+	write_unlock_irqrestore(&mgr->lock, flags);
+	if (id >= 0) {
 		l2->ch.nr = id;
 		l2->up->nr = id;
 		crq->ch = &l2->ch;
-		/* We need खोलो here L1 क्रम the manager as well (refcounting) */
+		/* We need open here L1 for the manager as well (refcounting) */
 		id = mgr->ch.st->own.ctrl(&mgr->ch.st->own, OPEN_CHANNEL,
 					  &l1rq);
-	पूर्ण
-	अगर (id < 0)
-		l2->ch.ctrl(&l2->ch, CLOSE_CHANNEL, शून्य);
-	वापस id;
-पूर्ण
+	}
+	if (id < 0)
+		l2->ch.ctrl(&l2->ch, CLOSE_CHANNEL, NULL);
+	return id;
+}
 
-अटल पूर्णांक
-mgr_send(काष्ठा mISDNchannel *ch, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा manager	*mgr;
-	काष्ठा mISDNhead	*hh =  mISDN_HEAD_P(skb);
-	पूर्णांक			ret = -EINVAL;
+static int
+mgr_send(struct mISDNchannel *ch, struct sk_buff *skb)
+{
+	struct manager	*mgr;
+	struct mISDNhead	*hh =  mISDN_HEAD_P(skb);
+	int			ret = -EINVAL;
 
-	mgr = container_of(ch, काष्ठा manager, ch);
-	अगर (*debug & DEBUG_L2_RECV)
-		prपूर्णांकk(KERN_DEBUG "%s: prim(%x) id(%x)\n",
+	mgr = container_of(ch, struct manager, ch);
+	if (*debug & DEBUG_L2_RECV)
+		printk(KERN_DEBUG "%s: prim(%x) id(%x)\n",
 		       __func__, hh->prim, hh->id);
-	चयन (hh->prim) अणु
-	हाल PH_DATA_IND:
-		mISDN_FsmEvent(&mgr->deact, EV_UI, शून्य);
+	switch (hh->prim) {
+	case PH_DATA_IND:
+		mISDN_FsmEvent(&mgr->deact, EV_UI, NULL);
 		ret = ph_data_ind(mgr, skb);
-		अवरोध;
-	हाल PH_DATA_CNF:
-		करो_ack(mgr, hh->id);
+		break;
+	case PH_DATA_CNF:
+		do_ack(mgr, hh->id);
 		ret = 0;
-		अवरोध;
-	हाल PH_ACTIVATE_IND:
+		break;
+	case PH_ACTIVATE_IND:
 		test_and_set_bit(MGR_PH_ACTIVE, &mgr->options);
-		अगर (mgr->up)
-			teiup_create(mgr, PH_ACTIVATE_IND, 0, शून्य);
-		mISDN_FsmEvent(&mgr->deact, EV_ACTIVATE_IND, शून्य);
-		करो_send(mgr);
+		if (mgr->up)
+			teiup_create(mgr, PH_ACTIVATE_IND, 0, NULL);
+		mISDN_FsmEvent(&mgr->deact, EV_ACTIVATE_IND, NULL);
+		do_send(mgr);
 		ret = 0;
-		अवरोध;
-	हाल PH_DEACTIVATE_IND:
+		break;
+	case PH_DEACTIVATE_IND:
 		test_and_clear_bit(MGR_PH_ACTIVE, &mgr->options);
-		अगर (mgr->up)
-			teiup_create(mgr, PH_DEACTIVATE_IND, 0, शून्य);
-		mISDN_FsmEvent(&mgr->deact, EV_DEACTIVATE_IND, शून्य);
+		if (mgr->up)
+			teiup_create(mgr, PH_DEACTIVATE_IND, 0, NULL);
+		mISDN_FsmEvent(&mgr->deact, EV_DEACTIVATE_IND, NULL);
 		ret = 0;
-		अवरोध;
-	हाल DL_UNITDATA_REQ:
-		वापस dl_unit_data(mgr, skb);
-	पूर्ण
-	अगर (!ret)
-		dev_kमुक्त_skb(skb);
-	वापस ret;
-पूर्ण
+		break;
+	case DL_UNITDATA_REQ:
+		return dl_unit_data(mgr, skb);
+	}
+	if (!ret)
+		dev_kfree_skb(skb);
+	return ret;
+}
 
-अटल पूर्णांक
-मुक्त_teimanager(काष्ठा manager *mgr)
-अणु
-	काष्ठा layer2	*l2, *nl2;
+static int
+free_teimanager(struct manager *mgr)
+{
+	struct layer2	*l2, *nl2;
 
 	test_and_clear_bit(OPTION_L1_HOLD, &mgr->options);
-	अगर (test_bit(MGR_OPT_NETWORK, &mgr->options)) अणु
+	if (test_bit(MGR_OPT_NETWORK, &mgr->options)) {
 		/* not locked lock is taken in release tei */
-		mgr->up = शून्य;
-		अगर (test_bit(OPTION_L2_CLEANUP, &mgr->options)) अणु
-			list_क्रम_each_entry_safe(l2, nl2, &mgr->layer2, list) अणु
+		mgr->up = NULL;
+		if (test_bit(OPTION_L2_CLEANUP, &mgr->options)) {
+			list_for_each_entry_safe(l2, nl2, &mgr->layer2, list) {
 				put_tei_msg(mgr, ID_REMOVE, 0, l2->tei);
 				mutex_lock(&mgr->ch.st->lmutex);
 				list_del(&l2->ch.list);
 				mutex_unlock(&mgr->ch.st->lmutex);
-				l2->ch.ctrl(&l2->ch, CLOSE_CHANNEL, शून्य);
-			पूर्ण
+				l2->ch.ctrl(&l2->ch, CLOSE_CHANNEL, NULL);
+			}
 			test_and_clear_bit(MGR_OPT_NETWORK, &mgr->options);
-		पूर्ण अन्यथा अणु
-			list_क्रम_each_entry_safe(l2, nl2, &mgr->layer2, list) अणु
-				l2->up = शून्य;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	अगर (test_bit(MGR_OPT_USER, &mgr->options)) अणु
-		अगर (list_empty(&mgr->layer2))
+		} else {
+			list_for_each_entry_safe(l2, nl2, &mgr->layer2, list) {
+				l2->up = NULL;
+			}
+		}
+	}
+	if (test_bit(MGR_OPT_USER, &mgr->options)) {
+		if (list_empty(&mgr->layer2))
 			test_and_clear_bit(MGR_OPT_USER, &mgr->options);
-	पूर्ण
-	mgr->ch.st->dev->D.ctrl(&mgr->ch.st->dev->D, CLOSE_CHANNEL, शून्य);
-	वापस 0;
-पूर्ण
+	}
+	mgr->ch.st->dev->D.ctrl(&mgr->ch.st->dev->D, CLOSE_CHANNEL, NULL);
+	return 0;
+}
 
-अटल पूर्णांक
-ctrl_teimanager(काष्ठा manager *mgr, व्योम *arg)
-अणु
+static int
+ctrl_teimanager(struct manager *mgr, void *arg)
+{
 	/* currently we only have one option */
-	अचिन्हित पूर्णांक *val = (अचिन्हित पूर्णांक *)arg;
+	unsigned int *val = (unsigned int *)arg;
 
-	चयन (val[0]) अणु
-	हाल IMCLEAR_L2:
-		अगर (val[1])
+	switch (val[0]) {
+	case IMCLEAR_L2:
+		if (val[1])
 			test_and_set_bit(OPTION_L2_CLEANUP, &mgr->options);
-		अन्यथा
+		else
 			test_and_clear_bit(OPTION_L2_CLEANUP, &mgr->options);
-		अवरोध;
-	हाल IMHOLD_L1:
-		अगर (val[1])
+		break;
+	case IMHOLD_L1:
+		if (val[1])
 			test_and_set_bit(OPTION_L1_HOLD, &mgr->options);
-		अन्यथा
+		else
 			test_and_clear_bit(OPTION_L1_HOLD, &mgr->options);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-/* This function करोes create a L2 क्रम fixed TEI in NT Mode */
-अटल पूर्णांक
-check_data(काष्ठा manager *mgr, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा mISDNhead	*hh =  mISDN_HEAD_P(skb);
-	पूर्णांक			ret, tei, sapi;
-	काष्ठा layer2		*l2;
+/* This function does create a L2 for fixed TEI in NT Mode */
+static int
+check_data(struct manager *mgr, struct sk_buff *skb)
+{
+	struct mISDNhead	*hh =  mISDN_HEAD_P(skb);
+	int			ret, tei, sapi;
+	struct layer2		*l2;
 
-	अगर (*debug & DEBUG_L2_CTRL)
-		prपूर्णांकk(KERN_DEBUG "%s: prim(%x) id(%x)\n",
+	if (*debug & DEBUG_L2_CTRL)
+		printk(KERN_DEBUG "%s: prim(%x) id(%x)\n",
 		       __func__, hh->prim, hh->id);
-	अगर (test_bit(MGR_OPT_USER, &mgr->options))
-		वापस -ENOTCONN;
-	अगर (hh->prim != PH_DATA_IND)
-		वापस -ENOTCONN;
-	अगर (skb->len != 3)
-		वापस -ENOTCONN;
-	अगर (skb->data[0] & 3) /* EA0 and CR must be  0 */
-		वापस -EINVAL;
+	if (test_bit(MGR_OPT_USER, &mgr->options))
+		return -ENOTCONN;
+	if (hh->prim != PH_DATA_IND)
+		return -ENOTCONN;
+	if (skb->len != 3)
+		return -ENOTCONN;
+	if (skb->data[0] & 3) /* EA0 and CR must be  0 */
+		return -EINVAL;
 	sapi = skb->data[0] >> 2;
-	अगर (!(skb->data[1] & 1)) /* invalid EA1 */
-		वापस -EINVAL;
+	if (!(skb->data[1] & 1)) /* invalid EA1 */
+		return -EINVAL;
 	tei = skb->data[1] >> 1;
-	अगर (tei > 63) /* not a fixed tei */
-		वापस -ENOTCONN;
-	अगर ((skb->data[2] & ~0x10) != SABME)
-		वापस -ENOTCONN;
-	/* We got a SABME क्रम a fixed TEI */
-	अगर (*debug & DEBUG_L2_CTRL)
-		prपूर्णांकk(KERN_DEBUG "%s: SABME sapi(%d) tei(%d)\n",
+	if (tei > 63) /* not a fixed tei */
+		return -ENOTCONN;
+	if ((skb->data[2] & ~0x10) != SABME)
+		return -ENOTCONN;
+	/* We got a SABME for a fixed TEI */
+	if (*debug & DEBUG_L2_CTRL)
+		printk(KERN_DEBUG "%s: SABME sapi(%d) tei(%d)\n",
 		       __func__, sapi, tei);
 	l2 = create_new_tei(mgr, tei, sapi);
-	अगर (!l2) अणु
-		अगर (*debug & DEBUG_L2_CTRL)
-			prपूर्णांकk(KERN_DEBUG "%s: failed to create new tei\n",
+	if (!l2) {
+		if (*debug & DEBUG_L2_CTRL)
+			printk(KERN_DEBUG "%s: failed to create new tei\n",
 			       __func__);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	ret = l2->ch.send(&l2->ch, skb);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम
-delete_teimanager(काष्ठा mISDNchannel *ch)
-अणु
-	काष्ठा manager	*mgr;
-	काष्ठा layer2	*l2, *nl2;
+void
+delete_teimanager(struct mISDNchannel *ch)
+{
+	struct manager	*mgr;
+	struct layer2	*l2, *nl2;
 
-	mgr = container_of(ch, काष्ठा manager, ch);
+	mgr = container_of(ch, struct manager, ch);
 	/* not locked lock is taken in release tei */
-	list_क्रम_each_entry_safe(l2, nl2, &mgr->layer2, list) अणु
+	list_for_each_entry_safe(l2, nl2, &mgr->layer2, list) {
 		mutex_lock(&mgr->ch.st->lmutex);
 		list_del(&l2->ch.list);
 		mutex_unlock(&mgr->ch.st->lmutex);
-		l2->ch.ctrl(&l2->ch, CLOSE_CHANNEL, शून्य);
-	पूर्ण
+		l2->ch.ctrl(&l2->ch, CLOSE_CHANNEL, NULL);
+	}
 	list_del(&mgr->ch.list);
 	list_del(&mgr->bcast.list);
 	skb_queue_purge(&mgr->sendq);
-	kमुक्त(mgr);
-पूर्ण
+	kfree(mgr);
+}
 
-अटल पूर्णांक
-mgr_ctrl(काष्ठा mISDNchannel *ch, u_पूर्णांक cmd, व्योम *arg)
-अणु
-	काष्ठा manager	*mgr;
-	पूर्णांक		ret = -EINVAL;
+static int
+mgr_ctrl(struct mISDNchannel *ch, u_int cmd, void *arg)
+{
+	struct manager	*mgr;
+	int		ret = -EINVAL;
 
-	mgr = container_of(ch, काष्ठा manager, ch);
-	अगर (*debug & DEBUG_L2_CTRL)
-		prपूर्णांकk(KERN_DEBUG "%s(%x, %p)\n", __func__, cmd, arg);
-	चयन (cmd) अणु
-	हाल OPEN_CHANNEL:
+	mgr = container_of(ch, struct manager, ch);
+	if (*debug & DEBUG_L2_CTRL)
+		printk(KERN_DEBUG "%s(%x, %p)\n", __func__, cmd, arg);
+	switch (cmd) {
+	case OPEN_CHANNEL:
 		ret = create_teimgr(mgr, arg);
-		अवरोध;
-	हाल CLOSE_CHANNEL:
-		ret = मुक्त_teimanager(mgr);
-		अवरोध;
-	हाल CONTROL_CHANNEL:
+		break;
+	case CLOSE_CHANNEL:
+		ret = free_teimanager(mgr);
+		break;
+	case CONTROL_CHANNEL:
 		ret = ctrl_teimanager(mgr, arg);
-		अवरोध;
-	हाल CHECK_DATA:
+		break;
+	case CHECK_DATA:
 		ret = check_data(mgr, arg);
-		अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		break;
+	}
+	return ret;
+}
 
-अटल पूर्णांक
-mgr_bcast(काष्ठा mISDNchannel *ch, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा manager		*mgr = container_of(ch, काष्ठा manager, bcast);
-	काष्ठा mISDNhead	*hhc, *hh = mISDN_HEAD_P(skb);
-	काष्ठा sk_buff		*cskb = शून्य;
-	काष्ठा layer2		*l2;
-	u_दीर्घ			flags;
-	पूर्णांक			ret;
+static int
+mgr_bcast(struct mISDNchannel *ch, struct sk_buff *skb)
+{
+	struct manager		*mgr = container_of(ch, struct manager, bcast);
+	struct mISDNhead	*hhc, *hh = mISDN_HEAD_P(skb);
+	struct sk_buff		*cskb = NULL;
+	struct layer2		*l2;
+	u_long			flags;
+	int			ret;
 
-	पढ़ो_lock_irqsave(&mgr->lock, flags);
-	list_क्रम_each_entry(l2, &mgr->layer2, list) अणु
-		अगर ((hh->id & MISDN_ID_SAPI_MASK) ==
-		    (l2->ch.addr & MISDN_ID_SAPI_MASK)) अणु
-			अगर (list_is_last(&l2->list, &mgr->layer2)) अणु
+	read_lock_irqsave(&mgr->lock, flags);
+	list_for_each_entry(l2, &mgr->layer2, list) {
+		if ((hh->id & MISDN_ID_SAPI_MASK) ==
+		    (l2->ch.addr & MISDN_ID_SAPI_MASK)) {
+			if (list_is_last(&l2->list, &mgr->layer2)) {
 				cskb = skb;
-				skb = शून्य;
-			पूर्ण अन्यथा अणु
-				अगर (!cskb)
+				skb = NULL;
+			} else {
+				if (!cskb)
 					cskb = skb_copy(skb, GFP_ATOMIC);
-			पूर्ण
-			अगर (cskb) अणु
+			}
+			if (cskb) {
 				hhc = mISDN_HEAD_P(cskb);
 				/* save original header behind normal header */
 				hhc++;
@@ -1311,44 +1310,44 @@ mgr_bcast(काष्ठा mISDNchannel *ch, काष्ठा sk_buff *skb)
 				hhc->prim = DL_INTERN_MSG;
 				hhc->id = l2->ch.nr;
 				ret = ch->st->own.recv(&ch->st->own, cskb);
-				अगर (ret) अणु
-					अगर (*debug & DEBUG_SEND_ERR)
-						prपूर्णांकk(KERN_DEBUG
+				if (ret) {
+					if (*debug & DEBUG_SEND_ERR)
+						printk(KERN_DEBUG
 						       "%s ch%d prim(%x) addr(%x)"
 						       " err %d\n",
 						       __func__, l2->ch.nr,
 						       hh->prim, l2->ch.addr, ret);
-				पूर्ण अन्यथा
-					cskb = शून्य;
-			पूर्ण अन्यथा अणु
-				prपूर्णांकk(KERN_WARNING "%s ch%d addr %x no mem\n",
+				} else
+					cskb = NULL;
+			} else {
+				printk(KERN_WARNING "%s ch%d addr %x no mem\n",
 				       __func__, ch->nr, ch->addr);
-				जाओ out;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto out;
+			}
+		}
+	}
 out:
-	पढ़ो_unlock_irqrestore(&mgr->lock, flags);
-	dev_kमुक्त_skb(cskb);
-	dev_kमुक्त_skb(skb);
-	वापस 0;
-पूर्ण
+	read_unlock_irqrestore(&mgr->lock, flags);
+	dev_kfree_skb(cskb);
+	dev_kfree_skb(skb);
+	return 0;
+}
 
-अटल पूर्णांक
-mgr_bcast_ctrl(काष्ठा mISDNchannel *ch, u_पूर्णांक cmd, व्योम *arg)
-अणु
+static int
+mgr_bcast_ctrl(struct mISDNchannel *ch, u_int cmd, void *arg)
+{
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-पूर्णांक
-create_teimanager(काष्ठा mISDNdevice *dev)
-अणु
-	काष्ठा manager *mgr;
+int
+create_teimanager(struct mISDNdevice *dev)
+{
+	struct manager *mgr;
 
-	mgr = kzalloc(माप(काष्ठा manager), GFP_KERNEL);
-	अगर (!mgr)
-		वापस -ENOMEM;
+	mgr = kzalloc(sizeof(struct manager), GFP_KERNEL);
+	if (!mgr)
+		return -ENOMEM;
 	INIT_LIST_HEAD(&mgr->layer2);
 	rwlock_init(&mgr->lock);
 	skb_queue_head_init(&mgr->sendq);
@@ -1366,52 +1365,52 @@ create_teimanager(काष्ठा mISDNdevice *dev)
 	add_layer2(&mgr->bcast, dev->D.st);
 	mgr->deact.debug = *debug & DEBUG_MANAGER;
 	mgr->deact.userdata = mgr;
-	mgr->deact.prपूर्णांकdebug = da_debug;
+	mgr->deact.printdebug = da_debug;
 	mgr->deact.fsm = &deactfsm;
 	mgr->deact.state = ST_L1_DEACT;
-	mISDN_FsmInitTimer(&mgr->deact, &mgr->daसमयr);
+	mISDN_FsmInitTimer(&mgr->deact, &mgr->datimer);
 	dev->teimgr = &mgr->ch;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक TEIInit(u_पूर्णांक *deb)
-अणु
-	पूर्णांक res;
+int TEIInit(u_int *deb)
+{
+	int res;
 	debug = deb;
-	teअगरsmu.state_count = TEI_STATE_COUNT;
-	teअगरsmu.event_count = TEI_EVENT_COUNT;
-	teअगरsmu.strEvent = strTeiEvent;
-	teअगरsmu.strState = strTeiState;
-	res = mISDN_FsmNew(&teअगरsmu, TeiFnListUser, ARRAY_SIZE(TeiFnListUser));
-	अगर (res)
-		जाओ error;
-	teअगरsmn.state_count = TEI_STATE_COUNT;
-	teअगरsmn.event_count = TEI_EVENT_COUNT;
-	teअगरsmn.strEvent = strTeiEvent;
-	teअगरsmn.strState = strTeiState;
-	res = mISDN_FsmNew(&teअगरsmn, TeiFnListNet, ARRAY_SIZE(TeiFnListNet));
-	अगर (res)
-		जाओ error_smn;
+	teifsmu.state_count = TEI_STATE_COUNT;
+	teifsmu.event_count = TEI_EVENT_COUNT;
+	teifsmu.strEvent = strTeiEvent;
+	teifsmu.strState = strTeiState;
+	res = mISDN_FsmNew(&teifsmu, TeiFnListUser, ARRAY_SIZE(TeiFnListUser));
+	if (res)
+		goto error;
+	teifsmn.state_count = TEI_STATE_COUNT;
+	teifsmn.event_count = TEI_EVENT_COUNT;
+	teifsmn.strEvent = strTeiEvent;
+	teifsmn.strState = strTeiState;
+	res = mISDN_FsmNew(&teifsmn, TeiFnListNet, ARRAY_SIZE(TeiFnListNet));
+	if (res)
+		goto error_smn;
 	deactfsm.state_count =  DEACT_STATE_COUNT;
 	deactfsm.event_count = DEACT_EVENT_COUNT;
 	deactfsm.strEvent = strDeactEvent;
 	deactfsm.strState = strDeactState;
 	res = mISDN_FsmNew(&deactfsm, DeactFnList, ARRAY_SIZE(DeactFnList));
-	अगर (res)
-		जाओ error_deact;
-	वापस 0;
+	if (res)
+		goto error_deact;
+	return 0;
 
 error_deact:
-	mISDN_FsmFree(&teअगरsmn);
+	mISDN_FsmFree(&teifsmn);
 error_smn:
-	mISDN_FsmFree(&teअगरsmu);
+	mISDN_FsmFree(&teifsmu);
 error:
-	वापस res;
-पूर्ण
+	return res;
+}
 
-व्योम TEIFree(व्योम)
-अणु
-	mISDN_FsmFree(&teअगरsmu);
-	mISDN_FsmFree(&teअगरsmn);
+void TEIFree(void)
+{
+	mISDN_FsmFree(&teifsmu);
+	mISDN_FsmFree(&teifsmn);
 	mISDN_FsmFree(&deactfsm);
-पूर्ण
+}

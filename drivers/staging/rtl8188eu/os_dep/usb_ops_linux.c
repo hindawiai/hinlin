@@ -1,86 +1,85 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#घोषणा _USB_OPS_LINUX_C_
+#define _USB_OPS_LINUX_C_
 
-#समावेश <drv_types.h>
-#समावेश <recv_osdep.h>
-#समावेश <rtw_sreset.h>
+#include <drv_types.h>
+#include <recv_osdep.h>
+#include <rtw_sreset.h>
 
-#घोषणा RTW_USB_CONTROL_MSG_TIMEOUT	500 /* ms */
+#define RTW_USB_CONTROL_MSG_TIMEOUT	500 /* ms */
 
-#घोषणा MAX_USBCTRL_VENDORREQ_TIMES	10
+#define MAX_USBCTRL_VENDORREQ_TIMES	10
 
-#घोषणा ALIGNMENT_UNIT			16
-#घोषणा MAX_VENDOR_REQ_CMD_SIZE	254
-#घोषणा MAX_USB_IO_CTL_SIZE	(MAX_VENDOR_REQ_CMD_SIZE + ALIGNMENT_UNIT)
+#define ALIGNMENT_UNIT			16
+#define MAX_VENDOR_REQ_CMD_SIZE	254
+#define MAX_USB_IO_CTL_SIZE	(MAX_VENDOR_REQ_CMD_SIZE + ALIGNMENT_UNIT)
 
-#घोषणा REALTEK_USB_VENQT_READ	(USB_सूची_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE)
-#घोषणा REALTEK_USB_VENQT_WRITE	(USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE)
+#define REALTEK_USB_VENQT_READ	(USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE)
+#define REALTEK_USB_VENQT_WRITE	(USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE)
 
-#घोषणा REALTEK_USB_VENQT_CMD_REQ	0x05
-#घोषणा REALTEK_USB_VENQT_CMD_IDX	0x00
+#define REALTEK_USB_VENQT_CMD_REQ	0x05
+#define REALTEK_USB_VENQT_CMD_IDX	0x00
 
-अटल व्योम पूर्णांकerrupt_handler_8188eu(काष्ठा adapter *adapt, u16 pkt_len, u8 *pbuf)
-अणु
-	काष्ठा hal_data_8188e *haldata = adapt->HalData;
+static void interrupt_handler_8188eu(struct adapter *adapt, u16 pkt_len, u8 *pbuf)
+{
+	struct hal_data_8188e *haldata = adapt->HalData;
 
-	अगर (pkt_len != INTERRUPT_MSG_FORMAT_LEN) अणु
+	if (pkt_len != INTERRUPT_MSG_FORMAT_LEN) {
 		DBG_88E("%s Invalid interrupt content length (%d)!\n", __func__, pkt_len);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*  HISR */
-	स_नकल(&haldata->IntArray[0], &pbuf[USB_INTR_CONTENT_HISR_OFFSET], 4);
-	स_नकल(&haldata->IntArray[1], &pbuf[USB_INTR_CONTENT_HISRE_OFFSET], 4);
+	memcpy(&haldata->IntArray[0], &pbuf[USB_INTR_CONTENT_HISR_OFFSET], 4);
+	memcpy(&haldata->IntArray[1], &pbuf[USB_INTR_CONTENT_HISRE_OFFSET], 4);
 
 	/*  C2H Event */
-	अगर (pbuf[0] != 0)
-		स_नकल(&haldata->C2hArray[0],
+	if (pbuf[0] != 0)
+		memcpy(&haldata->C2hArray[0],
 		       &pbuf[USB_INTR_CONTENT_C2H_OFFSET], 16);
-पूर्ण
+}
 
-अटल पूर्णांक recvbuf2recvframe(काष्ठा adapter *adapt, काष्ठा sk_buff *pskb)
-अणु
+static int recvbuf2recvframe(struct adapter *adapt, struct sk_buff *pskb)
+{
 	u8 *pbuf;
-	u8 shअगरt_sz = 0;
+	u8 shift_sz = 0;
 	u16 pkt_cnt;
 	u32 pkt_offset, skb_len, alloc_sz;
 	s32 transfer_len;
-	काष्ठा recv_stat *prxstat;
-	काष्ठा phy_stat *pphy_status = शून्य;
-	काष्ठा sk_buff *pkt_copy = शून्य;
-	काष्ठा recv_frame *precvframe = शून्य;
-	काष्ठा rx_pkt_attrib *pattrib = शून्य;
-	काष्ठा hal_data_8188e *haldata = adapt->HalData;
-	काष्ठा recv_priv *precvpriv = &adapt->recvpriv;
-	काष्ठा __queue *pमुक्त_recv_queue = &precvpriv->मुक्त_recv_queue;
+	struct recv_stat *prxstat;
+	struct phy_stat *pphy_status = NULL;
+	struct sk_buff *pkt_copy = NULL;
+	struct recv_frame *precvframe = NULL;
+	struct rx_pkt_attrib *pattrib = NULL;
+	struct hal_data_8188e *haldata = adapt->HalData;
+	struct recv_priv *precvpriv = &adapt->recvpriv;
+	struct __queue *pfree_recv_queue = &precvpriv->free_recv_queue;
 
 	transfer_len = (s32)pskb->len;
 	pbuf = pskb->data;
 
-	prxstat = (काष्ठा recv_stat *)pbuf;
+	prxstat = (struct recv_stat *)pbuf;
 	pkt_cnt = (le32_to_cpu(prxstat->rxdw2) >> 16) & 0xff;
 
-	करो अणु
+	do {
 		RT_TRACE(_module_rtl871x_recv_c_, _drv_info_,
 			 ("%s: rxdesc=offsset 0:0x%08x, 4:0x%08x, 8:0x%08x, C:0x%08x\n",
 			  __func__, prxstat->rxdw0, prxstat->rxdw1,
 			  prxstat->rxdw2, prxstat->rxdw4));
 
-		prxstat = (काष्ठा recv_stat *)pbuf;
+		prxstat = (struct recv_stat *)pbuf;
 
-		precvframe = rtw_alloc_recvframe(pमुक्त_recv_queue);
-		अगर (!precvframe) अणु
+		precvframe = rtw_alloc_recvframe(pfree_recv_queue);
+		if (!precvframe) {
 			RT_TRACE(_module_rtl871x_recv_c_, _drv_err_,
 				 ("%s: precvframe==NULL\n", __func__));
 			DBG_88E("%s()-%d: rtw_alloc_recvframe() failed! RX Drop!\n", __func__, __LINE__);
-			जाओ _निकास_recvbuf2recvframe;
-		पूर्ण
+			goto _exit_recvbuf2recvframe;
+		}
 
 		INIT_LIST_HEAD(&precvframe->list);
 
@@ -88,262 +87,262 @@
 
 		pattrib = &precvframe->attrib;
 
-		अगर ((pattrib->crc_err) || (pattrib->icv_err)) अणु
+		if ((pattrib->crc_err) || (pattrib->icv_err)) {
 			DBG_88E("%s: RX Warning! crc_err=%d icv_err=%d, skip!\n", __func__, pattrib->crc_err, pattrib->icv_err);
 
-			rtw_मुक्त_recvframe(precvframe, pमुक्त_recv_queue);
-			जाओ _निकास_recvbuf2recvframe;
-		पूर्ण
+			rtw_free_recvframe(precvframe, pfree_recv_queue);
+			goto _exit_recvbuf2recvframe;
+		}
 
-		अगर ((pattrib->physt) && (pattrib->pkt_rpt_type == NORMAL_RX))
-			pphy_status = (काष्ठा phy_stat *)(pbuf + RXDESC_OFFSET);
+		if ((pattrib->physt) && (pattrib->pkt_rpt_type == NORMAL_RX))
+			pphy_status = (struct phy_stat *)(pbuf + RXDESC_OFFSET);
 
-		pkt_offset = RXDESC_SIZE + pattrib->drvinfo_sz + pattrib->shअगरt_sz + pattrib->pkt_len;
+		pkt_offset = RXDESC_SIZE + pattrib->drvinfo_sz + pattrib->shift_sz + pattrib->pkt_len;
 
-		अगर ((pattrib->pkt_len <= 0) || (pkt_offset > transfer_len)) अणु
+		if ((pattrib->pkt_len <= 0) || (pkt_offset > transfer_len)) {
 			RT_TRACE(_module_rtl871x_recv_c_, _drv_info_,
 				 ("%s: pkt_len<=0\n", __func__));
 			DBG_88E("%s()-%d: RX Warning!,pkt_len<=0 or pkt_offset> transfer_len\n", __func__, __LINE__);
-			rtw_मुक्त_recvframe(precvframe, pमुक्त_recv_queue);
-			जाओ _निकास_recvbuf2recvframe;
-		पूर्ण
+			rtw_free_recvframe(precvframe, pfree_recv_queue);
+			goto _exit_recvbuf2recvframe;
+		}
 
-		/*	Modअगरied by Albert 20101213 */
+		/*	Modified by Albert 20101213 */
 		/*	For 8 bytes IP header alignment. */
-		अगर (pattrib->qos)	/*	Qos data, wireless lan header length is 26 */
-			shअगरt_sz = 6;
-		अन्यथा
-			shअगरt_sz = 0;
+		if (pattrib->qos)	/*	Qos data, wireless lan header length is 26 */
+			shift_sz = 6;
+		else
+			shift_sz = 0;
 
 		skb_len = pattrib->pkt_len;
 
-		/*  क्रम first fragment packet, driver need allocate 1536+drvinfo_sz+RXDESC_SIZE to defrag packet. */
-		/*  modअगरy alloc_sz क्रम recvive crc error packet by thomas 2011-06-02 */
-		अगर ((pattrib->mfrag == 1) && (pattrib->frag_num == 0)) अणु
-			अगर (skb_len <= 1650)
+		/*  for first fragment packet, driver need allocate 1536+drvinfo_sz+RXDESC_SIZE to defrag packet. */
+		/*  modify alloc_sz for recvive crc error packet by thomas 2011-06-02 */
+		if ((pattrib->mfrag == 1) && (pattrib->frag_num == 0)) {
+			if (skb_len <= 1650)
 				alloc_sz = 1664;
-			अन्यथा
+			else
 				alloc_sz = skb_len + 14;
-		पूर्ण अन्यथा अणु
+		} else {
 			alloc_sz = skb_len;
-			/*	6 is क्रम IP header 8 bytes alignment in QoS packet हाल. */
-			/*	8 is क्रम skb->data 4 bytes alignment. */
+			/*	6 is for IP header 8 bytes alignment in QoS packet case. */
+			/*	8 is for skb->data 4 bytes alignment. */
 			alloc_sz += 14;
-		पूर्ण
+		}
 
 		pkt_copy = netdev_alloc_skb(adapt->pnetdev, alloc_sz);
-		अगर (pkt_copy) अणु
+		if (pkt_copy) {
 			pkt_copy->dev = adapt->pnetdev;
 			precvframe->pkt = pkt_copy;
-			skb_reserve(pkt_copy, 8 - ((माप_प्रकार)(pkt_copy->data) & 7));/* क्रमce pkt_copy->data at 8-byte alignment address */
-			skb_reserve(pkt_copy, shअगरt_sz);/* क्रमce ip_hdr at 8-byte alignment address according to shअगरt_sz. */
+			skb_reserve(pkt_copy, 8 - ((size_t)(pkt_copy->data) & 7));/* force pkt_copy->data at 8-byte alignment address */
+			skb_reserve(pkt_copy, shift_sz);/* force ip_hdr at 8-byte alignment address according to shift_sz. */
 			skb_put_data(pkt_copy, (pbuf + pattrib->drvinfo_sz + RXDESC_SIZE), skb_len);
-		पूर्ण अन्यथा अणु
+		} else {
 			DBG_88E("%s: alloc_skb fail , drop frag frame\n",
 				__func__);
-			rtw_मुक्त_recvframe(precvframe, pमुक्त_recv_queue);
-			जाओ _निकास_recvbuf2recvframe;
-		पूर्ण
+			rtw_free_recvframe(precvframe, pfree_recv_queue);
+			goto _exit_recvbuf2recvframe;
+		}
 
-		चयन (haldata->UsbRxAggMode) अणु
-		हाल USB_RX_AGG_DMA:
-		हाल USB_RX_AGG_MIX:
+		switch (haldata->UsbRxAggMode) {
+		case USB_RX_AGG_DMA:
+		case USB_RX_AGG_MIX:
 			pkt_offset = (u16)round_up(pkt_offset, 128);
-			अवरोध;
-		हाल USB_RX_AGG_USB:
+			break;
+		case USB_RX_AGG_USB:
 			pkt_offset = (u16)round_up(pkt_offset, 4);
-			अवरोध;
-		हाल USB_RX_AGG_DISABLE:
-		शेष:
-			अवरोध;
-		पूर्ण
-		अगर (pattrib->pkt_rpt_type == NORMAL_RX) अणु /* Normal rx packet */
-			अगर (pattrib->physt)
+			break;
+		case USB_RX_AGG_DISABLE:
+		default:
+			break;
+		}
+		if (pattrib->pkt_rpt_type == NORMAL_RX) { /* Normal rx packet */
+			if (pattrib->physt)
 				update_recvframe_phyinfo_88e(precvframe, pphy_status);
-			अगर (rtw_recv_entry(precvframe) != _SUCCESS) अणु
+			if (rtw_recv_entry(precvframe) != _SUCCESS) {
 				RT_TRACE(_module_rtl871x_recv_c_, _drv_err_,
 					 ("%s: rtw_recv_entry(precvframe) != _SUCCESS\n",
 					 __func__));
-			पूर्ण
-		पूर्ण अन्यथा अगर (pattrib->pkt_rpt_type == TX_REPORT1) अणु
-			/* CCX-TXRPT ack क्रम xmit mgmt frames. */
+			}
+		} else if (pattrib->pkt_rpt_type == TX_REPORT1) {
+			/* CCX-TXRPT ack for xmit mgmt frames. */
 			handle_txrpt_ccx_88e(adapt, precvframe->pkt->data);
-			rtw_मुक्त_recvframe(precvframe, pमुक्त_recv_queue);
-		पूर्ण अन्यथा अगर (pattrib->pkt_rpt_type == TX_REPORT2) अणु
+			rtw_free_recvframe(precvframe, pfree_recv_queue);
+		} else if (pattrib->pkt_rpt_type == TX_REPORT2) {
 			ODM_RA_TxRPT2Handle_8188E(&haldata->odmpriv,
 						  precvframe->pkt->data,
 						  pattrib->pkt_len,
 						  pattrib->MacIDValidEntry[0],
 						  pattrib->MacIDValidEntry[1]);
-			rtw_मुक्त_recvframe(precvframe, pमुक्त_recv_queue);
-		पूर्ण अन्यथा अगर (pattrib->pkt_rpt_type == HIS_REPORT) अणु
-			पूर्णांकerrupt_handler_8188eu(adapt, pattrib->pkt_len, precvframe->pkt->data);
-			rtw_मुक्त_recvframe(precvframe, pमुक्त_recv_queue);
-		पूर्ण
+			rtw_free_recvframe(precvframe, pfree_recv_queue);
+		} else if (pattrib->pkt_rpt_type == HIS_REPORT) {
+			interrupt_handler_8188eu(adapt, pattrib->pkt_len, precvframe->pkt->data);
+			rtw_free_recvframe(precvframe, pfree_recv_queue);
+		}
 		pkt_cnt--;
 		transfer_len -= pkt_offset;
 		pbuf += pkt_offset;
-		precvframe = शून्य;
-		pkt_copy = शून्य;
+		precvframe = NULL;
+		pkt_copy = NULL;
 
-		अगर (transfer_len > 0 && pkt_cnt == 0)
+		if (transfer_len > 0 && pkt_cnt == 0)
 			pkt_cnt = (le32_to_cpu(prxstat->rxdw2) >> 16) & 0xff;
 
-	पूर्ण जबतक ((transfer_len > 0) && (pkt_cnt > 0));
+	} while ((transfer_len > 0) && (pkt_cnt > 0));
 
-_निकास_recvbuf2recvframe:
+_exit_recvbuf2recvframe:
 
-	वापस _SUCCESS;
-पूर्ण
+	return _SUCCESS;
+}
 
-अटल अचिन्हित पूर्णांक ffaddr2pipehdl(काष्ठा dvobj_priv *pdvobj, u32 addr)
-अणु
-	अचिन्हित पूर्णांक pipe = 0, ep_num = 0;
-	काष्ठा usb_device *pusbd = pdvobj->pusbdev;
+static unsigned int ffaddr2pipehdl(struct dvobj_priv *pdvobj, u32 addr)
+{
+	unsigned int pipe = 0, ep_num = 0;
+	struct usb_device *pusbd = pdvobj->pusbdev;
 
-	अगर (addr == RECV_BULK_IN_ADDR) अणु
+	if (addr == RECV_BULK_IN_ADDR) {
 		pipe = usb_rcvbulkpipe(pusbd, pdvobj->RtInPipe[0]);
-	पूर्ण अन्यथा अगर (addr == RECV_INT_IN_ADDR) अणु
+	} else if (addr == RECV_INT_IN_ADDR) {
 		pipe = usb_rcvbulkpipe(pusbd, pdvobj->RtInPipe[1]);
-	पूर्ण अन्यथा अगर (addr < HW_QUEUE_ENTRY) अणु
+	} else if (addr < HW_QUEUE_ENTRY) {
 		ep_num = pdvobj->Queue2Pipe[addr];
 		pipe = usb_sndbulkpipe(pusbd, ep_num);
-	पूर्ण
+	}
 
-	वापस pipe;
-पूर्ण
+	return pipe;
+}
 
-अटल पूर्णांक
-usbctrl_venकरोrreq(काष्ठा adapter *adapt, u16 value, व्योम *pdata, u16 len, u8 reqtype)
-अणु
-	काष्ठा dvobj_priv *dvobjpriv = adapter_to_dvobj(adapt);
-	काष्ठा usb_device *udev = dvobjpriv->pusbdev;
-	अचिन्हित पूर्णांक pipe;
-	पूर्णांक status = 0;
+static int
+usbctrl_vendorreq(struct adapter *adapt, u16 value, void *pdata, u16 len, u8 reqtype)
+{
+	struct dvobj_priv *dvobjpriv = adapter_to_dvobj(adapt);
+	struct usb_device *udev = dvobjpriv->pusbdev;
+	unsigned int pipe;
+	int status = 0;
 	u8 *pIo_buf;
-	पूर्णांक venकरोrreq_बार = 0;
+	int vendorreq_times = 0;
 
-	अगर ((adapt->bSurpriseRemoved) || (adapt->pwrctrlpriv.pnp_bstop_trx)) अणु
+	if ((adapt->bSurpriseRemoved) || (adapt->pwrctrlpriv.pnp_bstop_trx)) {
 		RT_TRACE(_module_hci_ops_os_c_, _drv_err_,
 			 ("%s:(adapt->bSurpriseRemoved ||adapter->pwrctrlpriv.pnp_bstop_trx)!!!\n",
 			  __func__));
 		status = -EPERM;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (len > MAX_VENDOR_REQ_CMD_SIZE) अणु
+	if (len > MAX_VENDOR_REQ_CMD_SIZE) {
 		DBG_88E("[%s] Buffer len error ,vendor request failed\n", __func__);
 		status = -EINVAL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (mutex_lock_पूर्णांकerruptible(&dvobjpriv->usb_venकरोr_req_mutex)) अणु
+	if (mutex_lock_interruptible(&dvobjpriv->usb_vendor_req_mutex)) {
 		status = -ERESTARTSYS;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	/*  Acquire IO memory क्रम venकरोrreq */
-	pIo_buf = kदो_स्मृति(MAX_USB_IO_CTL_SIZE, GFP_ATOMIC);
+	/*  Acquire IO memory for vendorreq */
+	pIo_buf = kmalloc(MAX_USB_IO_CTL_SIZE, GFP_ATOMIC);
 
-	अगर (!pIo_buf) अणु
+	if (!pIo_buf) {
 		status = -ENOMEM;
-		जाओ release_mutex;
-	पूर्ण
+		goto release_mutex;
+	}
 
-	अगर (reqtype == REALTEK_USB_VENQT_READ) अणु
+	if (reqtype == REALTEK_USB_VENQT_READ) {
 		pipe = usb_rcvctrlpipe(udev, 0);
-	पूर्ण अन्यथा अगर (reqtype == REALTEK_USB_VENQT_WRITE) अणु
+	} else if (reqtype == REALTEK_USB_VENQT_WRITE) {
 		pipe = usb_sndctrlpipe(udev, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		status = -EINVAL;
-		जाओ मुक्त_buf;
-	पूर्ण
+		goto free_buf;
+	}
 
-	जबतक (++venकरोrreq_बार <= MAX_USBCTRL_VENDORREQ_TIMES) अणु
-		अगर (reqtype == REALTEK_USB_VENQT_READ)
-			स_रखो(pIo_buf, 0, len);
-		अन्यथा
-			स_नकल(pIo_buf, pdata, len);
+	while (++vendorreq_times <= MAX_USBCTRL_VENDORREQ_TIMES) {
+		if (reqtype == REALTEK_USB_VENQT_READ)
+			memset(pIo_buf, 0, len);
+		else
+			memcpy(pIo_buf, pdata, len);
 
 		status = usb_control_msg(udev, pipe, REALTEK_USB_VENQT_CMD_REQ,
 					 reqtype, value, REALTEK_USB_VENQT_CMD_IDX,
 					 pIo_buf, len, RTW_USB_CONTROL_MSG_TIMEOUT);
 
-		अगर (status == len) अणु   /*  Success this control transfer. */
-			अगर (reqtype == REALTEK_USB_VENQT_READ)
-				स_नकल(pdata, pIo_buf,  len);
-		पूर्ण अन्यथा अणु /*  error हालs */
+		if (status == len) {   /*  Success this control transfer. */
+			if (reqtype == REALTEK_USB_VENQT_READ)
+				memcpy(pdata, pIo_buf,  len);
+		} else { /*  error cases */
 			DBG_88E("reg 0x%x, usb %s %u fail, status:%d value=0x%x, vendorreq_times:%d\n",
 				value, (reqtype == REALTEK_USB_VENQT_READ) ? "read" : "write",
-				len, status, *(u32 *)pdata, venकरोrreq_बार);
+				len, status, *(u32 *)pdata, vendorreq_times);
 
-			अगर (status < 0) अणु
-				अगर (status == -ESHUTDOWN || status == -ENODEV)
+			if (status < 0) {
+				if (status == -ESHUTDOWN || status == -ENODEV)
 					adapt->bSurpriseRemoved = true;
-				अन्यथा
-					adapt->HalData->srestpriv.wअगरi_error_status = USB_VEN_REQ_CMD_FAIL;
-			पूर्ण अन्यथा अणु /*  status != len && status >= 0 */
-				अगर (status > 0) अणु
-					अगर (reqtype == REALTEK_USB_VENQT_READ) अणु
-						/*  For Control पढ़ो transfer, we have to copy the पढ़ो data from pIo_buf to pdata. */
-						स_नकल(pdata, pIo_buf,  len);
-					पूर्ण
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				else
+					adapt->HalData->srestpriv.wifi_error_status = USB_VEN_REQ_CMD_FAIL;
+			} else { /*  status != len && status >= 0 */
+				if (status > 0) {
+					if (reqtype == REALTEK_USB_VENQT_READ) {
+						/*  For Control read transfer, we have to copy the read data from pIo_buf to pdata. */
+						memcpy(pdata, pIo_buf,  len);
+					}
+				}
+			}
+		}
 
-		/*  firmware करोwnload is checksummed, करोn't retry */
-		अगर ((value >= FW_8188E_START_ADDRESS && value <= FW_8188E_END_ADDRESS) || status == len)
-			अवरोध;
-	पूर्ण
+		/*  firmware download is checksummed, don't retry */
+		if ((value >= FW_8188E_START_ADDRESS && value <= FW_8188E_END_ADDRESS) || status == len)
+			break;
+	}
 
-मुक्त_buf:
-	kमुक्त(pIo_buf);
+free_buf:
+	kfree(pIo_buf);
 release_mutex:
-	mutex_unlock(&dvobjpriv->usb_venकरोr_req_mutex);
-निकास:
-	वापस status;
-पूर्ण
+	mutex_unlock(&dvobjpriv->usb_vendor_req_mutex);
+exit:
+	return status;
+}
 
-u8 usb_पढ़ो8(काष्ठा adapter *adapter, u32 addr)
-अणु
+u8 usb_read8(struct adapter *adapter, u32 addr)
+{
 	u16 wvalue = (u16)(addr & 0xffff);
 	u8 data;
 
-	usbctrl_venकरोrreq(adapter, wvalue, &data, 1, REALTEK_USB_VENQT_READ);
+	usbctrl_vendorreq(adapter, wvalue, &data, 1, REALTEK_USB_VENQT_READ);
 
-	वापस data;
-पूर्ण
+	return data;
+}
 
-u16 usb_पढ़ो16(काष्ठा adapter *adapter, u32 addr)
-अणु
+u16 usb_read16(struct adapter *adapter, u32 addr)
+{
 	u16 wvalue = (u16)(addr & 0xffff);
 	__le32 data;
 
-	usbctrl_venकरोrreq(adapter, wvalue, &data, 2, REALTEK_USB_VENQT_READ);
+	usbctrl_vendorreq(adapter, wvalue, &data, 2, REALTEK_USB_VENQT_READ);
 
-	वापस (u16)(le32_to_cpu(data) & 0xffff);
-पूर्ण
+	return (u16)(le32_to_cpu(data) & 0xffff);
+}
 
-u32 usb_पढ़ो32(काष्ठा adapter *adapter, u32 addr)
-अणु
+u32 usb_read32(struct adapter *adapter, u32 addr)
+{
 	u16 wvalue = (u16)(addr & 0xffff);
 	__le32 data;
 
-	usbctrl_venकरोrreq(adapter, wvalue, &data, 4, REALTEK_USB_VENQT_READ);
+	usbctrl_vendorreq(adapter, wvalue, &data, 4, REALTEK_USB_VENQT_READ);
 
-	वापस le32_to_cpu(data);
-पूर्ण
+	return le32_to_cpu(data);
+}
 
-अटल व्योम usb_पढ़ो_port_complete(काष्ठा urb *purb)
-अणु
-	काष्ठा recv_buf *precvbuf = (काष्ठा recv_buf *)purb->context;
-	काष्ठा adapter *adapt = (काष्ठा adapter *)precvbuf->adapter;
-	काष्ठा recv_priv *precvpriv = &adapt->recvpriv;
+static void usb_read_port_complete(struct urb *purb)
+{
+	struct recv_buf *precvbuf = (struct recv_buf *)purb->context;
+	struct adapter *adapt = (struct adapter *)precvbuf->adapter;
+	struct recv_priv *precvpriv = &adapt->recvpriv;
 
 	RT_TRACE(_module_hci_ops_os_c_, _drv_err_, ("%s!!!\n", __func__));
 
-	अगर (adapt->bSurpriseRemoved || adapt->bDriverStopped || adapt->bReadPortCancel) अणु
+	if (adapt->bSurpriseRemoved || adapt->bDriverStopped || adapt->bReadPortCancel) {
 		RT_TRACE(_module_hci_ops_os_c_, _drv_err_,
 			 ("%s:bDriverStopped(%d) OR bSurpriseRemoved(%d)\n",
 			 __func__, adapt->bDriverStopped,
@@ -353,105 +352,105 @@ u32 usb_पढ़ो32(काष्ठा adapter *adapter, u32 addr)
 		DBG_88E("%s() RX Warning! bDriverStopped(%d) OR bSurpriseRemoved(%d) bReadPortCancel(%d)\n",
 			__func__, adapt->bDriverStopped,
 			adapt->bSurpriseRemoved, adapt->bReadPortCancel);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (purb->status == 0) अणु /* SUCCESS */
-		अगर ((purb->actual_length > MAX_RECVBUF_SZ) || (purb->actual_length < RXDESC_SIZE)) अणु
+	if (purb->status == 0) { /* SUCCESS */
+		if ((purb->actual_length > MAX_RECVBUF_SZ) || (purb->actual_length < RXDESC_SIZE)) {
 			RT_TRACE(_module_hci_ops_os_c_, _drv_err_,
 				 ("%s: (purb->actual_length > MAX_RECVBUF_SZ) || (purb->actual_length < RXDESC_SIZE)\n",
 				 __func__));
 			precvbuf->reuse = true;
-			usb_पढ़ो_port(adapt, RECV_BULK_IN_ADDR, precvbuf);
+			usb_read_port(adapt, RECV_BULK_IN_ADDR, precvbuf);
 			DBG_88E("%s()-%d: RX Warning!\n", __func__, __LINE__);
-		पूर्ण अन्यथा अणु
+		} else {
 			skb_put(precvbuf->pskb, purb->actual_length);
 			skb_queue_tail(&precvpriv->rx_skb_queue, precvbuf->pskb);
 
-			अगर (skb_queue_len(&precvpriv->rx_skb_queue) <= 1)
+			if (skb_queue_len(&precvpriv->rx_skb_queue) <= 1)
 				tasklet_schedule(&precvpriv->recv_tasklet);
 
-			precvbuf->pskb = शून्य;
+			precvbuf->pskb = NULL;
 			precvbuf->reuse = false;
-			usb_पढ़ो_port(adapt, RECV_BULK_IN_ADDR, precvbuf);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			usb_read_port(adapt, RECV_BULK_IN_ADDR, precvbuf);
+		}
+	} else {
 		RT_TRACE(_module_hci_ops_os_c_, _drv_err_,
 			 ("%s : purb->status(%d) != 0\n",
 			  __func__, purb->status));
 
 		DBG_88E("###=> %s => urb status(%d)\n", __func__, purb->status);
 		skb_put(precvbuf->pskb, purb->actual_length);
-		precvbuf->pskb = शून्य;
+		precvbuf->pskb = NULL;
 
-		चयन (purb->status) अणु
-		हाल -EINVAL:
-		हाल -EPIPE:
-		हाल -ENODEV:
-		हाल -ESHUTDOWN:
+		switch (purb->status) {
+		case -EINVAL:
+		case -EPIPE:
+		case -ENODEV:
+		case -ESHUTDOWN:
 			adapt->bSurpriseRemoved = true;
 			fallthrough;
-		हाल -ENOENT:
+		case -ENOENT:
 			adapt->bDriverStopped = true;
 			RT_TRACE(_module_hci_ops_os_c_, _drv_err_,
 				 ("%s:bDriverStopped=true\n", __func__));
-			अवरोध;
-		हाल -EPROTO:
-		हाल -EOVERFLOW:
-			adapt->HalData->srestpriv.wअगरi_error_status = USB_READ_PORT_FAIL;
+			break;
+		case -EPROTO:
+		case -EOVERFLOW:
+			adapt->HalData->srestpriv.wifi_error_status = USB_READ_PORT_FAIL;
 			precvbuf->reuse = true;
-			usb_पढ़ो_port(adapt, RECV_BULK_IN_ADDR, precvbuf);
-			अवरोध;
-		हाल -EINPROGRESS:
+			usb_read_port(adapt, RECV_BULK_IN_ADDR, precvbuf);
+			break;
+		case -EINPROGRESS:
 			DBG_88E("ERROR: URB IS IN PROGRESS!\n");
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		default:
+			break;
+		}
+	}
+}
 
-u32 usb_पढ़ो_port(काष्ठा adapter *adapter, u32 addr, काष्ठा recv_buf *precvbuf)
-अणु
-	काष्ठा urb *purb = शून्य;
-	काष्ठा dvobj_priv *pdvobj = adapter_to_dvobj(adapter);
-	काष्ठा recv_priv *precvpriv = &adapter->recvpriv;
-	काष्ठा usb_device *pusbd = pdvobj->pusbdev;
-	पूर्णांक err;
-	अचिन्हित पूर्णांक pipe;
+u32 usb_read_port(struct adapter *adapter, u32 addr, struct recv_buf *precvbuf)
+{
+	struct urb *purb = NULL;
+	struct dvobj_priv *pdvobj = adapter_to_dvobj(adapter);
+	struct recv_priv *precvpriv = &adapter->recvpriv;
+	struct usb_device *pusbd = pdvobj->pusbdev;
+	int err;
+	unsigned int pipe;
 	u32 ret = _SUCCESS;
 
-	अगर (adapter->bDriverStopped || adapter->bSurpriseRemoved ||
-	    adapter->pwrctrlpriv.pnp_bstop_trx) अणु
+	if (adapter->bDriverStopped || adapter->bSurpriseRemoved ||
+	    adapter->pwrctrlpriv.pnp_bstop_trx) {
 		RT_TRACE(_module_hci_ops_os_c_, _drv_err_,
 			 ("%s:(adapt->bDriverStopped ||adapt->bSurpriseRemoved ||adapter->pwrctrlpriv.pnp_bstop_trx)!!!\n",
 			  __func__));
-		वापस _FAIL;
-	पूर्ण
+		return _FAIL;
+	}
 
-	अगर (!precvbuf) अणु
+	if (!precvbuf) {
 		RT_TRACE(_module_hci_ops_os_c_, _drv_err_,
 			 ("%s:precvbuf==NULL\n", __func__));
-		वापस _FAIL;
-	पूर्ण
+		return _FAIL;
+	}
 
-	अगर (!precvbuf->reuse || !precvbuf->pskb) अणु
-		precvbuf->pskb = skb_dequeue(&precvpriv->मुक्त_recv_skb_queue);
-		अगर (precvbuf->pskb)
+	if (!precvbuf->reuse || !precvbuf->pskb) {
+		precvbuf->pskb = skb_dequeue(&precvpriv->free_recv_skb_queue);
+		if (precvbuf->pskb)
 			precvbuf->reuse = true;
-	पूर्ण
+	}
 
-	/* re-assign क्रम linux based on skb */
-	अगर (!precvbuf->reuse || !precvbuf->pskb) अणु
+	/* re-assign for linux based on skb */
+	if (!precvbuf->reuse || !precvbuf->pskb) {
 		precvbuf->pskb = netdev_alloc_skb(adapter->pnetdev, MAX_RECVBUF_SZ);
-		अगर (!precvbuf->pskb) अणु
+		if (!precvbuf->pskb) {
 			RT_TRACE(_module_hci_ops_os_c_, _drv_err_, ("init_recvbuf(): alloc_skb fail!\n"));
 			DBG_88E("#### %s() alloc_skb fail!#####\n", __func__);
-			वापस _FAIL;
-		पूर्ण
-	पूर्ण अन्यथा अणु /* reuse skb */
+			return _FAIL;
+		}
+	} else { /* reuse skb */
 		precvbuf->reuse = false;
-	पूर्ण
+	}
 
 	purb = precvbuf->purb;
 
@@ -461,26 +460,26 @@ u32 usb_पढ़ो_port(काष्ठा adapter *adapter, u32 addr, का�
 	usb_fill_bulk_urb(purb, pusbd, pipe,
 			  precvbuf->pskb->data,
 			  MAX_RECVBUF_SZ,
-			  usb_पढ़ो_port_complete,
+			  usb_read_port_complete,
 			  precvbuf);/* context is precvbuf */
 
 	err = usb_submit_urb(purb, GFP_ATOMIC);
-	अगर ((err) && (err != (-EPERM))) अणु
+	if ((err) && (err != (-EPERM))) {
 		RT_TRACE(_module_hci_ops_os_c_, _drv_err_,
 			 ("cannot submit rx in-token(err=0x%.8x), URB_STATUS =0x%.8x",
 			 err, purb->status));
 		DBG_88E("cannot submit rx in-token(err = 0x%08x),urb_status = %d\n",
 			err, purb->status);
 		ret = _FAIL;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम rtw_hal_inirp_deinit(काष्ठा adapter *padapter)
-अणु
-	पूर्णांक i;
-	काष्ठा recv_buf *precvbuf;
+void rtw_hal_inirp_deinit(struct adapter *padapter)
+{
+	int i;
+	struct recv_buf *precvbuf;
 
 	precvbuf = padapter->recvpriv.precv_buf;
 
@@ -488,68 +487,68 @@ u32 usb_पढ़ो_port(काष्ठा adapter *adapter, u32 addr, का�
 
 	padapter->bReadPortCancel = true;
 
-	क्रम (i = 0; i < NR_RECVBUFF; i++) अणु
+	for (i = 0; i < NR_RECVBUFF; i++) {
 		precvbuf->reuse = true;
-		अगर (precvbuf->purb)
-			usb_समाप्त_urb(precvbuf->purb);
+		if (precvbuf->purb)
+			usb_kill_urb(precvbuf->purb);
 		precvbuf++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक usb_ग_लिखो8(काष्ठा adapter *adapter, u32 addr, u8 val)
-अणु
+int usb_write8(struct adapter *adapter, u32 addr, u8 val)
+{
 	u16 wvalue = (u16)(addr & 0xffff);
 	u8 data = val;
 
-	वापस usbctrl_venकरोrreq(adapter, wvalue, &data, 1, REALTEK_USB_VENQT_WRITE);
-पूर्ण
+	return usbctrl_vendorreq(adapter, wvalue, &data, 1, REALTEK_USB_VENQT_WRITE);
+}
 
-पूर्णांक usb_ग_लिखो16(काष्ठा adapter *adapter, u32 addr, u16 val)
-अणु
+int usb_write16(struct adapter *adapter, u32 addr, u16 val)
+{
 	u16 wvalue = (u16)(addr & 0xffff);
 	__le32 data = cpu_to_le32(val & 0xffff);
 
-	वापस usbctrl_venकरोrreq(adapter, wvalue, &data, 2, REALTEK_USB_VENQT_WRITE);
-पूर्ण
+	return usbctrl_vendorreq(adapter, wvalue, &data, 2, REALTEK_USB_VENQT_WRITE);
+}
 
-पूर्णांक usb_ग_लिखो32(काष्ठा adapter *adapter, u32 addr, u32 val)
-अणु
+int usb_write32(struct adapter *adapter, u32 addr, u32 val)
+{
 	u16 wvalue = (u16)(addr & 0xffff);
 	__le32 data = cpu_to_le32(val);
 
-	वापस usbctrl_venकरोrreq(adapter, wvalue, &data, 4, REALTEK_USB_VENQT_WRITE);
-पूर्ण
+	return usbctrl_vendorreq(adapter, wvalue, &data, 4, REALTEK_USB_VENQT_WRITE);
+}
 
-अटल व्योम usb_ग_लिखो_port_complete(काष्ठा urb *purb)
-अणु
-	काष्ठा xmit_buf *pxmitbuf = (काष्ठा xmit_buf *)purb->context;
-	काष्ठा adapter *padapter = pxmitbuf->padapter;
-	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
+static void usb_write_port_complete(struct urb *purb)
+{
+	struct xmit_buf *pxmitbuf = (struct xmit_buf *)purb->context;
+	struct adapter *padapter = pxmitbuf->padapter;
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
 
-	चयन (pxmitbuf->flags) अणु
-	हाल VO_QUEUE_INX:
+	switch (pxmitbuf->flags) {
+	case VO_QUEUE_INX:
 		pxmitpriv->voq_cnt--;
-		अवरोध;
-	हाल VI_QUEUE_INX:
+		break;
+	case VI_QUEUE_INX:
 		pxmitpriv->viq_cnt--;
-		अवरोध;
-	हाल BE_QUEUE_INX:
+		break;
+	case BE_QUEUE_INX:
 		pxmitpriv->beq_cnt--;
-		अवरोध;
-	हाल BK_QUEUE_INX:
+		break;
+	case BK_QUEUE_INX:
 		pxmitpriv->bkq_cnt--;
-		अवरोध;
-	हाल HIGH_QUEUE_INX:
-#अगर_घोषित CONFIG_88EU_AP_MODE
+		break;
+	case HIGH_QUEUE_INX:
+#ifdef CONFIG_88EU_AP_MODE
 		rtw_chk_hi_queue_cmd(padapter);
-#पूर्ण_अगर
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+#endif
+		break;
+	default:
+		break;
+	}
 
-	अगर (padapter->bSurpriseRemoved || padapter->bDriverStopped ||
-	    padapter->bWritePortCancel) अणु
+	if (padapter->bSurpriseRemoved || padapter->bDriverStopped ||
+	    padapter->bWritePortCancel) {
 		RT_TRACE(_module_hci_ops_os_c_, _drv_err_,
 			 ("%s:bDriverStopped(%d) OR bSurpriseRemoved(%d)",
 			  __func__, padapter->bDriverStopped,
@@ -559,101 +558,101 @@ u32 usb_पढ़ो_port(काष्ठा adapter *adapter, u32 addr, का�
 			padapter->bSurpriseRemoved, padapter->bReadPortCancel,
 			pxmitbuf->ext_tag);
 
-		जाओ check_completion;
-	पूर्ण
+		goto check_completion;
+	}
 
-	अगर (purb->status) अणु
+	if (purb->status) {
 		RT_TRACE(_module_hci_ops_os_c_, _drv_err_,
 			 ("%s : purb->status(%d) != 0\n",
 			  __func__, purb->status));
 		DBG_88E("###=> %s status(%d)\n", __func__, purb->status);
-		अगर ((purb->status == -EPIPE) || (purb->status == -EPROTO)) अणु
-			sreset_set_wअगरi_error_status(padapter, USB_WRITE_PORT_FAIL);
-		पूर्ण अन्यथा अगर (purb->status == -EINPROGRESS) अणु
+		if ((purb->status == -EPIPE) || (purb->status == -EPROTO)) {
+			sreset_set_wifi_error_status(padapter, USB_WRITE_PORT_FAIL);
+		} else if (purb->status == -EINPROGRESS) {
 			RT_TRACE(_module_hci_ops_os_c_, _drv_err_,
 				 ("%s: EINPROGRESS\n", __func__));
-			जाओ check_completion;
-		पूर्ण अन्यथा अगर (purb->status == -ENOENT) अणु
+			goto check_completion;
+		} else if (purb->status == -ENOENT) {
 			DBG_88E("%s: -ENOENT\n", __func__);
-			जाओ check_completion;
-		पूर्ण अन्यथा अगर (purb->status == -ECONNRESET) अणु
+			goto check_completion;
+		} else if (purb->status == -ECONNRESET) {
 			DBG_88E("%s: -ECONNRESET\n", __func__);
-			जाओ check_completion;
-		पूर्ण अन्यथा अगर (purb->status == -ESHUTDOWN) अणु
+			goto check_completion;
+		} else if (purb->status == -ESHUTDOWN) {
 			RT_TRACE(_module_hci_ops_os_c_, _drv_err_,
 				 ("%s: ESHUTDOWN\n", __func__));
 			padapter->bDriverStopped = true;
 			RT_TRACE(_module_hci_ops_os_c_, _drv_err_,
 				 ("%s:bDriverStopped = true\n", __func__));
-			जाओ check_completion;
-		पूर्ण अन्यथा अणु
+			goto check_completion;
+		} else {
 			padapter->bSurpriseRemoved = true;
 			DBG_88E("bSurpriseRemoved = true\n");
 			RT_TRACE(_module_hci_ops_os_c_, _drv_err_,
 				 ("%s:bSurpriseRemoved = true\n", __func__));
-			जाओ check_completion;
-		पूर्ण
-	पूर्ण
+			goto check_completion;
+		}
+	}
 
 check_completion:
-	rtw_sctx_करोne_err(&pxmitbuf->sctx,
+	rtw_sctx_done_err(&pxmitbuf->sctx,
 			  purb->status ? RTW_SCTX_DONE_WRITE_PORT_ERR :
 			  RTW_SCTX_DONE_SUCCESS);
 
-	rtw_मुक्त_xmitbuf(pxmitpriv, pxmitbuf);
+	rtw_free_xmitbuf(pxmitpriv, pxmitbuf);
 
 	tasklet_hi_schedule(&pxmitpriv->xmit_tasklet);
-पूर्ण
+}
 
-u32 usb_ग_लिखो_port(काष्ठा adapter *padapter, u32 addr, u32 cnt, काष्ठा xmit_buf *xmitbuf)
-अणु
-	अचिन्हित दीर्घ irqL;
-	अचिन्हित पूर्णांक pipe;
-	पूर्णांक status;
+u32 usb_write_port(struct adapter *padapter, u32 addr, u32 cnt, struct xmit_buf *xmitbuf)
+{
+	unsigned long irqL;
+	unsigned int pipe;
+	int status;
 	u32 ret = _FAIL;
-	काष्ठा urb *purb = शून्य;
-	काष्ठा dvobj_priv *pdvobj = adapter_to_dvobj(padapter);
-	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
-	काष्ठा xmit_frame *pxmitframe = (काष्ठा xmit_frame *)xmitbuf->priv_data;
-	काष्ठा usb_device *pusbd = pdvobj->pusbdev;
+	struct urb *purb = NULL;
+	struct dvobj_priv *pdvobj = adapter_to_dvobj(padapter);
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	struct xmit_frame *pxmitframe = (struct xmit_frame *)xmitbuf->priv_data;
+	struct usb_device *pusbd = pdvobj->pusbdev;
 
 	RT_TRACE(_module_hci_ops_os_c_, _drv_err_, ("+%s\n", __func__));
 
-	अगर ((padapter->bDriverStopped) || (padapter->bSurpriseRemoved) ||
-	    (padapter->pwrctrlpriv.pnp_bstop_trx)) अणु
+	if ((padapter->bDriverStopped) || (padapter->bSurpriseRemoved) ||
+	    (padapter->pwrctrlpriv.pnp_bstop_trx)) {
 		RT_TRACE(_module_hci_ops_os_c_, _drv_err_,
 			 ("%s:( padapter->bDriverStopped ||padapter->bSurpriseRemoved ||adapter->pwrctrlpriv.pnp_bstop_trx)!!!\n",
 			  __func__));
-		rtw_sctx_करोne_err(&xmitbuf->sctx, RTW_SCTX_DONE_TX_DENY);
-		जाओ निकास;
-	पूर्ण
+		rtw_sctx_done_err(&xmitbuf->sctx, RTW_SCTX_DONE_TX_DENY);
+		goto exit;
+	}
 
 	spin_lock_irqsave(&pxmitpriv->lock, irqL);
 
-	चयन (addr) अणु
-	हाल VO_QUEUE_INX:
+	switch (addr) {
+	case VO_QUEUE_INX:
 		pxmitpriv->voq_cnt++;
 		xmitbuf->flags = VO_QUEUE_INX;
-		अवरोध;
-	हाल VI_QUEUE_INX:
+		break;
+	case VI_QUEUE_INX:
 		pxmitpriv->viq_cnt++;
 		xmitbuf->flags = VI_QUEUE_INX;
-		अवरोध;
-	हाल BE_QUEUE_INX:
+		break;
+	case BE_QUEUE_INX:
 		pxmitpriv->beq_cnt++;
 		xmitbuf->flags = BE_QUEUE_INX;
-		अवरोध;
-	हाल BK_QUEUE_INX:
+		break;
+	case BK_QUEUE_INX:
 		pxmitpriv->bkq_cnt++;
 		xmitbuf->flags = BK_QUEUE_INX;
-		अवरोध;
-	हाल HIGH_QUEUE_INX:
+		break;
+	case HIGH_QUEUE_INX:
 		xmitbuf->flags = HIGH_QUEUE_INX;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		xmitbuf->flags = MGT_QUEUE_INX;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	spin_unlock_irqrestore(&pxmitpriv->lock, irqL);
 
@@ -665,96 +664,96 @@ u32 usb_ग_लिखो_port(काष्ठा adapter *padapter, u32 addr, u3
 	usb_fill_bulk_urb(purb, pusbd, pipe,
 			  pxmitframe->buf_addr, /*  xmitbuf->pbuf */
 			  cnt,
-			  usb_ग_लिखो_port_complete,
+			  usb_write_port_complete,
 			  xmitbuf);/* context is xmitbuf */
 
 	status = usb_submit_urb(purb, GFP_ATOMIC);
-	अगर (status) अणु
-		rtw_sctx_करोne_err(&xmitbuf->sctx, RTW_SCTX_DONE_WRITE_PORT_ERR);
+	if (status) {
+		rtw_sctx_done_err(&xmitbuf->sctx, RTW_SCTX_DONE_WRITE_PORT_ERR);
 		DBG_88E("%s, status =%d\n", __func__, status);
 		RT_TRACE(_module_hci_ops_os_c_, _drv_err_,
 			 ("%s(): usb_submit_urb, status =%x\n",
 			  __func__, status));
 
-		अगर (status == -ENODEV)
+		if (status == -ENODEV)
 			padapter->bDriverStopped = true;
 
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	ret = _SUCCESS;
 
 	RT_TRACE(_module_hci_ops_os_c_, _drv_err_, ("-%s\n", __func__));
 
-निकास:
-	अगर (ret != _SUCCESS)
-		rtw_मुक्त_xmitbuf(pxmitpriv, xmitbuf);
-	वापस ret;
-पूर्ण
+exit:
+	if (ret != _SUCCESS)
+		rtw_free_xmitbuf(pxmitpriv, xmitbuf);
+	return ret;
+}
 
-व्योम usb_ग_लिखो_port_cancel(काष्ठा adapter *padapter)
-अणु
-	पूर्णांक i, j;
-	काष्ठा xmit_buf *pxmitbuf = (काष्ठा xmit_buf *)padapter->xmitpriv.pxmitbuf;
+void usb_write_port_cancel(struct adapter *padapter)
+{
+	int i, j;
+	struct xmit_buf *pxmitbuf = (struct xmit_buf *)padapter->xmitpriv.pxmitbuf;
 
 	DBG_88E("%s\n", __func__);
 
 	padapter->bWritePortCancel = true;
 
-	क्रम (i = 0; i < NR_XMITBUFF; i++) अणु
-		क्रम (j = 0; j < 8; j++) अणु
-			अगर (pxmitbuf->pxmit_urb[j])
-				usb_समाप्त_urb(pxmitbuf->pxmit_urb[j]);
-		पूर्ण
+	for (i = 0; i < NR_XMITBUFF; i++) {
+		for (j = 0; j < 8; j++) {
+			if (pxmitbuf->pxmit_urb[j])
+				usb_kill_urb(pxmitbuf->pxmit_urb[j]);
+		}
 		pxmitbuf++;
-	पूर्ण
+	}
 
-	pxmitbuf = (काष्ठा xmit_buf *)padapter->xmitpriv.pxmit_extbuf;
-	क्रम (i = 0; i < NR_XMIT_EXTBUFF; i++) अणु
-		क्रम (j = 0; j < 8; j++) अणु
-			अगर (pxmitbuf->pxmit_urb[j])
-				usb_समाप्त_urb(pxmitbuf->pxmit_urb[j]);
-		पूर्ण
+	pxmitbuf = (struct xmit_buf *)padapter->xmitpriv.pxmit_extbuf;
+	for (i = 0; i < NR_XMIT_EXTBUFF; i++) {
+		for (j = 0; j < 8; j++) {
+			if (pxmitbuf->pxmit_urb[j])
+				usb_kill_urb(pxmitbuf->pxmit_urb[j]);
+		}
 		pxmitbuf++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम rtl8188eu_recv_tasklet(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा sk_buff *pskb;
-	काष्ठा adapter *adapt = from_tasklet(adapt, t, recvpriv.recv_tasklet);
-	काष्ठा recv_priv *precvpriv = &adapt->recvpriv;
+void rtl8188eu_recv_tasklet(struct tasklet_struct *t)
+{
+	struct sk_buff *pskb;
+	struct adapter *adapt = from_tasklet(adapt, t, recvpriv.recv_tasklet);
+	struct recv_priv *precvpriv = &adapt->recvpriv;
 
-	जबतक (शून्य != (pskb = skb_dequeue(&precvpriv->rx_skb_queue))) अणु
-		अगर ((adapt->bDriverStopped) || (adapt->bSurpriseRemoved)) अणु
+	while (NULL != (pskb = skb_dequeue(&precvpriv->rx_skb_queue))) {
+		if ((adapt->bDriverStopped) || (adapt->bSurpriseRemoved)) {
 			DBG_88E("recv_tasklet => bDriverStopped or bSurpriseRemoved\n");
-			dev_kमुक्त_skb_any(pskb);
-			अवरोध;
-		पूर्ण
+			dev_kfree_skb_any(pskb);
+			break;
+		}
 		recvbuf2recvframe(adapt, pskb);
-		skb_reset_tail_poपूर्णांकer(pskb);
+		skb_reset_tail_pointer(pskb);
 		pskb->len = 0;
-		skb_queue_tail(&precvpriv->मुक्त_recv_skb_queue, pskb);
-	पूर्ण
-पूर्ण
+		skb_queue_tail(&precvpriv->free_recv_skb_queue, pskb);
+	}
+}
 
-व्योम rtl8188eu_xmit_tasklet(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा adapter *adapt = from_tasklet(adapt, t, xmitpriv.xmit_tasklet);
-	काष्ठा xmit_priv *pxmitpriv = &adapt->xmitpriv;
+void rtl8188eu_xmit_tasklet(struct tasklet_struct *t)
+{
+	struct adapter *adapt = from_tasklet(adapt, t, xmitpriv.xmit_tasklet);
+	struct xmit_priv *pxmitpriv = &adapt->xmitpriv;
 
-	अगर (check_fwstate(&adapt->mlmepriv, _FW_UNDER_SURVEY))
-		वापस;
+	if (check_fwstate(&adapt->mlmepriv, _FW_UNDER_SURVEY))
+		return;
 
-	जबतक (1) अणु
-		अगर ((adapt->bDriverStopped) ||
+	while (1) {
+		if ((adapt->bDriverStopped) ||
 		    (adapt->bSurpriseRemoved) ||
-		    (adapt->bWritePortCancel)) अणु
+		    (adapt->bWritePortCancel)) {
 			DBG_88E("xmit_tasklet => bDriverStopped or bSurpriseRemoved or bWritePortCancel\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (!rtl8188eu_xmitframe_complete(adapt, pxmitpriv))
-			अवरोध;
-	पूर्ण
-पूर्ण
+		if (!rtl8188eu_xmitframe_complete(adapt, pxmitpriv))
+			break;
+	}
+}

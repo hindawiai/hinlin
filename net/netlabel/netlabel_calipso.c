@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * NetLabel CALIPSO/IPv6 Support
  *
- * This file defines the CALIPSO/IPv6 functions क्रम the NetLabel प्रणाली.  The
- * NetLabel प्रणाली manages अटल and dynamic label mappings क्रम network
+ * This file defines the CALIPSO/IPv6 functions for the NetLabel system.  The
+ * NetLabel system manages static and dynamic label mappings for network
  * protocols such as CIPSO and CALIPSO.
  *
  * Authors: Paul Moore <paul@paul-moore.com>
@@ -15,52 +14,52 @@
  * (c) Copyright Huw Davies <huw@codeweavers.com>, 2015
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/audit.h>
-#समावेश <linux/slab.h>
-#समावेश <net/sock.h>
-#समावेश <net/netlink.h>
-#समावेश <net/genetlink.h>
-#समावेश <net/netlabel.h>
-#समावेश <net/calipso.h>
-#समावेश <linux/atomic.h>
+#include <linux/types.h>
+#include <linux/socket.h>
+#include <linux/string.h>
+#include <linux/skbuff.h>
+#include <linux/audit.h>
+#include <linux/slab.h>
+#include <net/sock.h>
+#include <net/netlink.h>
+#include <net/genetlink.h>
+#include <net/netlabel.h>
+#include <net/calipso.h>
+#include <linux/atomic.h>
 
-#समावेश "netlabel_user.h"
-#समावेश "netlabel_calipso.h"
-#समावेश "netlabel_mgmt.h"
-#समावेश "netlabel_domainhash.h"
+#include "netlabel_user.h"
+#include "netlabel_calipso.h"
+#include "netlabel_mgmt.h"
+#include "netlabel_domainhash.h"
 
-/* Argument काष्ठा क्रम calipso_करोi_walk() */
-काष्ठा netlbl_calipso_करोiwalk_arg अणु
-	काष्ठा netlink_callback *nl_cb;
-	काष्ठा sk_buff *skb;
+/* Argument struct for calipso_doi_walk() */
+struct netlbl_calipso_doiwalk_arg {
+	struct netlink_callback *nl_cb;
+	struct sk_buff *skb;
 	u32 seq;
-पूर्ण;
+};
 
-/* Argument काष्ठा क्रम netlbl_करोmhsh_walk() */
-काष्ठा netlbl_करोmhsh_walk_arg अणु
-	काष्ठा netlbl_audit *audit_info;
-	u32 करोi;
-पूर्ण;
+/* Argument struct for netlbl_domhsh_walk() */
+struct netlbl_domhsh_walk_arg {
+	struct netlbl_audit *audit_info;
+	u32 doi;
+};
 
 /* NetLabel Generic NETLINK CALIPSO family */
-अटल काष्ठा genl_family netlbl_calipso_gnl_family;
+static struct genl_family netlbl_calipso_gnl_family;
 
 /* NetLabel Netlink attribute policy */
-अटल स्थिर काष्ठा nla_policy calipso_genl_policy[NLBL_CALIPSO_A_MAX + 1] = अणु
-	[NLBL_CALIPSO_A_DOI] = अणु .type = NLA_U32 पूर्ण,
-	[NLBL_CALIPSO_A_MTYPE] = अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy calipso_genl_policy[NLBL_CALIPSO_A_MAX + 1] = {
+	[NLBL_CALIPSO_A_DOI] = { .type = NLA_U32 },
+	[NLBL_CALIPSO_A_MTYPE] = { .type = NLA_U32 },
+};
 
 /* NetLabel Command Handlers
  */
 /**
  * netlbl_calipso_add_pass - Adds a CALIPSO pass DOI definition
  * @info: the Generic NETLINK info block
- * @audit_info: NetLabel audit inक्रमmation
+ * @audit_info: NetLabel audit information
  *
  * Description:
  * Create a new CALIPSO_MAP_PASS DOI definition based on the given ADD message
@@ -68,23 +67,23 @@
  * error.
  *
  */
-अटल पूर्णांक netlbl_calipso_add_pass(काष्ठा genl_info *info,
-				   काष्ठा netlbl_audit *audit_info)
-अणु
-	पूर्णांक ret_val;
-	काष्ठा calipso_करोi *करोi_def = शून्य;
+static int netlbl_calipso_add_pass(struct genl_info *info,
+				   struct netlbl_audit *audit_info)
+{
+	int ret_val;
+	struct calipso_doi *doi_def = NULL;
 
-	करोi_def = kदो_स्मृति(माप(*करोi_def), GFP_KERNEL);
-	अगर (!करोi_def)
-		वापस -ENOMEM;
-	करोi_def->type = CALIPSO_MAP_PASS;
-	करोi_def->करोi = nla_get_u32(info->attrs[NLBL_CALIPSO_A_DOI]);
-	ret_val = calipso_करोi_add(करोi_def, audit_info);
-	अगर (ret_val != 0)
-		calipso_करोi_मुक्त(करोi_def);
+	doi_def = kmalloc(sizeof(*doi_def), GFP_KERNEL);
+	if (!doi_def)
+		return -ENOMEM;
+	doi_def->type = CALIPSO_MAP_PASS;
+	doi_def->doi = nla_get_u32(info->attrs[NLBL_CALIPSO_A_DOI]);
+	ret_val = calipso_doi_add(doi_def, audit_info);
+	if (ret_val != 0)
+		calipso_doi_free(doi_def);
 
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
 /**
  * netlbl_calipso_add - Handle an ADD message
@@ -96,27 +95,27 @@
  * CALIPSO engine.  Returns zero on success, negative values on failure.
  *
  */
-अटल पूर्णांक netlbl_calipso_add(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+static int netlbl_calipso_add(struct sk_buff *skb, struct genl_info *info)
 
-अणु
-	पूर्णांक ret_val = -EINVAL;
-	काष्ठा netlbl_audit audit_info;
+{
+	int ret_val = -EINVAL;
+	struct netlbl_audit audit_info;
 
-	अगर (!info->attrs[NLBL_CALIPSO_A_DOI] ||
+	if (!info->attrs[NLBL_CALIPSO_A_DOI] ||
 	    !info->attrs[NLBL_CALIPSO_A_MTYPE])
-		वापस -EINVAL;
+		return -EINVAL;
 
 	netlbl_netlink_auditinfo(skb, &audit_info);
-	चयन (nla_get_u32(info->attrs[NLBL_CALIPSO_A_MTYPE])) अणु
-	हाल CALIPSO_MAP_PASS:
+	switch (nla_get_u32(info->attrs[NLBL_CALIPSO_A_MTYPE])) {
+	case CALIPSO_MAP_PASS:
 		ret_val = netlbl_calipso_add_pass(info, &audit_info);
-		अवरोध;
-	पूर्ण
-	अगर (ret_val == 0)
+		break;
+	}
+	if (ret_val == 0)
 		atomic_inc(&netlabel_mgmt_protocount);
 
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
 /**
  * netlbl_calipso_list - Handle a LIST message
@@ -128,95 +127,95 @@
  * Returns zero on success and negative values on error.
  *
  */
-अटल पूर्णांक netlbl_calipso_list(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	पूर्णांक ret_val;
-	काष्ठा sk_buff *ans_skb = शून्य;
-	व्योम *data;
-	u32 करोi;
-	काष्ठा calipso_करोi *करोi_def;
+static int netlbl_calipso_list(struct sk_buff *skb, struct genl_info *info)
+{
+	int ret_val;
+	struct sk_buff *ans_skb = NULL;
+	void *data;
+	u32 doi;
+	struct calipso_doi *doi_def;
 
-	अगर (!info->attrs[NLBL_CALIPSO_A_DOI]) अणु
+	if (!info->attrs[NLBL_CALIPSO_A_DOI]) {
 		ret_val = -EINVAL;
-		जाओ list_failure;
-	पूर्ण
+		goto list_failure;
+	}
 
-	करोi = nla_get_u32(info->attrs[NLBL_CALIPSO_A_DOI]);
+	doi = nla_get_u32(info->attrs[NLBL_CALIPSO_A_DOI]);
 
-	करोi_def = calipso_करोi_getdef(करोi);
-	अगर (!करोi_def) अणु
+	doi_def = calipso_doi_getdef(doi);
+	if (!doi_def) {
 		ret_val = -EINVAL;
-		जाओ list_failure;
-	पूर्ण
+		goto list_failure;
+	}
 
 	ans_skb = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!ans_skb) अणु
+	if (!ans_skb) {
 		ret_val = -ENOMEM;
-		जाओ list_failure_put;
-	पूर्ण
+		goto list_failure_put;
+	}
 	data = genlmsg_put_reply(ans_skb, info, &netlbl_calipso_gnl_family,
 				 0, NLBL_CALIPSO_C_LIST);
-	अगर (!data) अणु
+	if (!data) {
 		ret_val = -ENOMEM;
-		जाओ list_failure_put;
-	पूर्ण
+		goto list_failure_put;
+	}
 
-	ret_val = nla_put_u32(ans_skb, NLBL_CALIPSO_A_MTYPE, करोi_def->type);
-	अगर (ret_val != 0)
-		जाओ list_failure_put;
+	ret_val = nla_put_u32(ans_skb, NLBL_CALIPSO_A_MTYPE, doi_def->type);
+	if (ret_val != 0)
+		goto list_failure_put;
 
-	calipso_करोi_putdef(करोi_def);
+	calipso_doi_putdef(doi_def);
 
 	genlmsg_end(ans_skb, data);
-	वापस genlmsg_reply(ans_skb, info);
+	return genlmsg_reply(ans_skb, info);
 
 list_failure_put:
-	calipso_करोi_putdef(करोi_def);
+	calipso_doi_putdef(doi_def);
 list_failure:
-	kमुक्त_skb(ans_skb);
-	वापस ret_val;
-पूर्ण
+	kfree_skb(ans_skb);
+	return ret_val;
+}
 
 /**
- * netlbl_calipso_listall_cb - calipso_करोi_walk() callback क्रम LISTALL
- * @करोi_def: the CALIPSO DOI definition
- * @arg: the netlbl_calipso_करोiwalk_arg काष्ठाure
+ * netlbl_calipso_listall_cb - calipso_doi_walk() callback for LISTALL
+ * @doi_def: the CALIPSO DOI definition
+ * @arg: the netlbl_calipso_doiwalk_arg structure
  *
  * Description:
- * This function is deचिन्हित to be used as a callback to the
- * calipso_करोi_walk() function क्रम use in generating a response क्रम a LISTALL
+ * This function is designed to be used as a callback to the
+ * calipso_doi_walk() function for use in generating a response for a LISTALL
  * message.  Returns the size of the message on success, negative values on
  * failure.
  *
  */
-अटल पूर्णांक netlbl_calipso_listall_cb(काष्ठा calipso_करोi *करोi_def, व्योम *arg)
-अणु
-	पूर्णांक ret_val = -ENOMEM;
-	काष्ठा netlbl_calipso_करोiwalk_arg *cb_arg = arg;
-	व्योम *data;
+static int netlbl_calipso_listall_cb(struct calipso_doi *doi_def, void *arg)
+{
+	int ret_val = -ENOMEM;
+	struct netlbl_calipso_doiwalk_arg *cb_arg = arg;
+	void *data;
 
 	data = genlmsg_put(cb_arg->skb, NETLINK_CB(cb_arg->nl_cb->skb).portid,
 			   cb_arg->seq, &netlbl_calipso_gnl_family,
 			   NLM_F_MULTI, NLBL_CALIPSO_C_LISTALL);
-	अगर (!data)
-		जाओ listall_cb_failure;
+	if (!data)
+		goto listall_cb_failure;
 
-	ret_val = nla_put_u32(cb_arg->skb, NLBL_CALIPSO_A_DOI, करोi_def->करोi);
-	अगर (ret_val != 0)
-		जाओ listall_cb_failure;
+	ret_val = nla_put_u32(cb_arg->skb, NLBL_CALIPSO_A_DOI, doi_def->doi);
+	if (ret_val != 0)
+		goto listall_cb_failure;
 	ret_val = nla_put_u32(cb_arg->skb,
 			      NLBL_CALIPSO_A_MTYPE,
-			      करोi_def->type);
-	अगर (ret_val != 0)
-		जाओ listall_cb_failure;
+			      doi_def->type);
+	if (ret_val != 0)
+		goto listall_cb_failure;
 
 	genlmsg_end(cb_arg->skb, data);
-	वापस 0;
+	return 0;
 
 listall_cb_failure:
 	genlmsg_cancel(cb_arg->skb, data);
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
 /**
  * netlbl_calipso_listall - Handle a LISTALL message
@@ -228,47 +227,47 @@ listall_cb_failure:
  * zero on success and negative values on error.
  *
  */
-अटल पूर्णांक netlbl_calipso_listall(काष्ठा sk_buff *skb,
-				  काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा netlbl_calipso_करोiwalk_arg cb_arg;
-	u32 करोi_skip = cb->args[0];
+static int netlbl_calipso_listall(struct sk_buff *skb,
+				  struct netlink_callback *cb)
+{
+	struct netlbl_calipso_doiwalk_arg cb_arg;
+	u32 doi_skip = cb->args[0];
 
 	cb_arg.nl_cb = cb;
 	cb_arg.skb = skb;
 	cb_arg.seq = cb->nlh->nlmsg_seq;
 
-	calipso_करोi_walk(&करोi_skip, netlbl_calipso_listall_cb, &cb_arg);
+	calipso_doi_walk(&doi_skip, netlbl_calipso_listall_cb, &cb_arg);
 
-	cb->args[0] = करोi_skip;
-	वापस skb->len;
-पूर्ण
+	cb->args[0] = doi_skip;
+	return skb->len;
+}
 
 /**
- * netlbl_calipso_हटाओ_cb - netlbl_calipso_हटाओ() callback क्रम REMOVE
- * @entry: LSM करोमुख्य mapping entry
- * @arg: the netlbl_करोmhsh_walk_arg काष्ठाure
+ * netlbl_calipso_remove_cb - netlbl_calipso_remove() callback for REMOVE
+ * @entry: LSM domain mapping entry
+ * @arg: the netlbl_domhsh_walk_arg structure
  *
  * Description:
- * This function is पूर्णांकended क्रम use by netlbl_calipso_हटाओ() as the callback
- * क्रम the netlbl_करोmhsh_walk() function; it हटाओs LSM करोमुख्य map entries
- * which are associated with the CALIPSO DOI specअगरied in @arg.  Returns zero on
+ * This function is intended for use by netlbl_calipso_remove() as the callback
+ * for the netlbl_domhsh_walk() function; it removes LSM domain map entries
+ * which are associated with the CALIPSO DOI specified in @arg.  Returns zero on
  * success, negative values on failure.
  *
  */
-अटल पूर्णांक netlbl_calipso_हटाओ_cb(काष्ठा netlbl_करोm_map *entry, व्योम *arg)
-अणु
-	काष्ठा netlbl_करोmhsh_walk_arg *cb_arg = arg;
+static int netlbl_calipso_remove_cb(struct netlbl_dom_map *entry, void *arg)
+{
+	struct netlbl_domhsh_walk_arg *cb_arg = arg;
 
-	अगर (entry->def.type == NETLBL_NLTYPE_CALIPSO &&
-	    entry->def.calipso->करोi == cb_arg->करोi)
-		वापस netlbl_करोmhsh_हटाओ_entry(entry, cb_arg->audit_info);
+	if (entry->def.type == NETLBL_NLTYPE_CALIPSO &&
+	    entry->def.calipso->doi == cb_arg->doi)
+		return netlbl_domhsh_remove_entry(entry, cb_arg->audit_info);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * netlbl_calipso_हटाओ - Handle a REMOVE message
+ * netlbl_calipso_remove - Handle a REMOVE message
  * @skb: the NETLINK buffer
  * @info: the Generic NETLINK info block
  *
@@ -277,66 +276,66 @@ listall_cb_failure:
  * zero on success, negative values on failure.
  *
  */
-अटल पूर्णांक netlbl_calipso_हटाओ(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	पूर्णांक ret_val = -EINVAL;
-	काष्ठा netlbl_करोmhsh_walk_arg cb_arg;
-	काष्ठा netlbl_audit audit_info;
+static int netlbl_calipso_remove(struct sk_buff *skb, struct genl_info *info)
+{
+	int ret_val = -EINVAL;
+	struct netlbl_domhsh_walk_arg cb_arg;
+	struct netlbl_audit audit_info;
 	u32 skip_bkt = 0;
 	u32 skip_chain = 0;
 
-	अगर (!info->attrs[NLBL_CALIPSO_A_DOI])
-		वापस -EINVAL;
+	if (!info->attrs[NLBL_CALIPSO_A_DOI])
+		return -EINVAL;
 
 	netlbl_netlink_auditinfo(skb, &audit_info);
-	cb_arg.करोi = nla_get_u32(info->attrs[NLBL_CALIPSO_A_DOI]);
+	cb_arg.doi = nla_get_u32(info->attrs[NLBL_CALIPSO_A_DOI]);
 	cb_arg.audit_info = &audit_info;
-	ret_val = netlbl_करोmhsh_walk(&skip_bkt, &skip_chain,
-				     netlbl_calipso_हटाओ_cb, &cb_arg);
-	अगर (ret_val == 0 || ret_val == -ENOENT) अणु
-		ret_val = calipso_करोi_हटाओ(cb_arg.करोi, &audit_info);
-		अगर (ret_val == 0)
+	ret_val = netlbl_domhsh_walk(&skip_bkt, &skip_chain,
+				     netlbl_calipso_remove_cb, &cb_arg);
+	if (ret_val == 0 || ret_val == -ENOENT) {
+		ret_val = calipso_doi_remove(cb_arg.doi, &audit_info);
+		if (ret_val == 0)
 			atomic_dec(&netlabel_mgmt_protocount);
-	पूर्ण
+	}
 
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
 /* NetLabel Generic NETLINK Command Definitions
  */
 
-अटल स्थिर काष्ठा genl_small_ops netlbl_calipso_ops[] = अणु
-	अणु
+static const struct genl_small_ops netlbl_calipso_ops[] = {
+	{
 	.cmd = NLBL_CALIPSO_C_ADD,
 	.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 	.flags = GENL_ADMIN_PERM,
-	.करोit = netlbl_calipso_add,
-	.dumpit = शून्य,
-	पूर्ण,
-	अणु
+	.doit = netlbl_calipso_add,
+	.dumpit = NULL,
+	},
+	{
 	.cmd = NLBL_CALIPSO_C_REMOVE,
 	.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 	.flags = GENL_ADMIN_PERM,
-	.करोit = netlbl_calipso_हटाओ,
-	.dumpit = शून्य,
-	पूर्ण,
-	अणु
+	.doit = netlbl_calipso_remove,
+	.dumpit = NULL,
+	},
+	{
 	.cmd = NLBL_CALIPSO_C_LIST,
 	.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 	.flags = 0,
-	.करोit = netlbl_calipso_list,
-	.dumpit = शून्य,
-	पूर्ण,
-	अणु
+	.doit = netlbl_calipso_list,
+	.dumpit = NULL,
+	},
+	{
 	.cmd = NLBL_CALIPSO_C_LISTALL,
 	.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 	.flags = 0,
-	.करोit = शून्य,
+	.doit = NULL,
 	.dumpit = netlbl_calipso_listall,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा genl_family netlbl_calipso_gnl_family __ro_after_init = अणु
+static struct genl_family netlbl_calipso_gnl_family __ro_after_init = {
 	.hdrsize = 0,
 	.name = NETLBL_NLTYPE_CALIPSO_NAME,
 	.version = NETLBL_PROTO_VERSION,
@@ -345,7 +344,7 @@ listall_cb_failure:
 	.module = THIS_MODULE,
 	.small_ops = netlbl_calipso_ops,
 	.n_small_ops = ARRAY_SIZE(netlbl_calipso_ops),
-पूर्ण;
+};
 
 /* NetLabel Generic NETLINK Protocol Functions
  */
@@ -358,154 +357,154 @@ listall_cb_failure:
  * mechanism.  Returns zero on success, negative values on failure.
  *
  */
-पूर्णांक __init netlbl_calipso_genl_init(व्योम)
-अणु
-	वापस genl_रेजिस्टर_family(&netlbl_calipso_gnl_family);
-पूर्ण
+int __init netlbl_calipso_genl_init(void)
+{
+	return genl_register_family(&netlbl_calipso_gnl_family);
+}
 
-अटल स्थिर काष्ठा netlbl_calipso_ops *calipso_ops;
+static const struct netlbl_calipso_ops *calipso_ops;
 
 /**
- * netlbl_calipso_ops_रेजिस्टर - Register the CALIPSO operations
- * @ops: ops to रेजिस्टर
+ * netlbl_calipso_ops_register - Register the CALIPSO operations
+ * @ops: ops to register
  *
  * Description:
  * Register the CALIPSO packet engine operations.
  *
  */
-स्थिर काष्ठा netlbl_calipso_ops *
-netlbl_calipso_ops_रेजिस्टर(स्थिर काष्ठा netlbl_calipso_ops *ops)
-अणु
-	वापस xchg(&calipso_ops, ops);
-पूर्ण
-EXPORT_SYMBOL(netlbl_calipso_ops_रेजिस्टर);
+const struct netlbl_calipso_ops *
+netlbl_calipso_ops_register(const struct netlbl_calipso_ops *ops)
+{
+	return xchg(&calipso_ops, ops);
+}
+EXPORT_SYMBOL(netlbl_calipso_ops_register);
 
-अटल स्थिर काष्ठा netlbl_calipso_ops *netlbl_calipso_ops_get(व्योम)
-अणु
-	वापस READ_ONCE(calipso_ops);
-पूर्ण
+static const struct netlbl_calipso_ops *netlbl_calipso_ops_get(void)
+{
+	return READ_ONCE(calipso_ops);
+}
 
 /**
- * calipso_करोi_add - Add a new DOI to the CALIPSO protocol engine
- * @करोi_def: the DOI काष्ठाure
- * @audit_info: NetLabel audit inक्रमmation
+ * calipso_doi_add - Add a new DOI to the CALIPSO protocol engine
+ * @doi_def: the DOI structure
+ * @audit_info: NetLabel audit information
  *
  * Description:
- * The caller defines a new DOI क्रम use by the CALIPSO engine and calls this
- * function to add it to the list of acceptable करोमुख्यs.  The caller must
- * ensure that the mapping table specअगरied in @करोi_def->map meets all of the
- * requirements of the mapping type (see calipso.h क्रम details).  Returns
+ * The caller defines a new DOI for use by the CALIPSO engine and calls this
+ * function to add it to the list of acceptable domains.  The caller must
+ * ensure that the mapping table specified in @doi_def->map meets all of the
+ * requirements of the mapping type (see calipso.h for details).  Returns
  * zero on success and non-zero on failure.
  *
  */
-पूर्णांक calipso_करोi_add(काष्ठा calipso_करोi *करोi_def,
-		    काष्ठा netlbl_audit *audit_info)
-अणु
-	पूर्णांक ret_val = -ENOMSG;
-	स्थिर काष्ठा netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
+int calipso_doi_add(struct calipso_doi *doi_def,
+		    struct netlbl_audit *audit_info)
+{
+	int ret_val = -ENOMSG;
+	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
-	अगर (ops)
-		ret_val = ops->करोi_add(करोi_def, audit_info);
-	वापस ret_val;
-पूर्ण
+	if (ops)
+		ret_val = ops->doi_add(doi_def, audit_info);
+	return ret_val;
+}
 
 /**
- * calipso_करोi_मुक्त - Frees a DOI definition
- * @करोi_def: the DOI definition
+ * calipso_doi_free - Frees a DOI definition
+ * @doi_def: the DOI definition
  *
  * Description:
- * This function मुक्तs all of the memory associated with a DOI definition.
+ * This function frees all of the memory associated with a DOI definition.
  *
  */
-व्योम calipso_करोi_मुक्त(काष्ठा calipso_करोi *करोi_def)
-अणु
-	स्थिर काष्ठा netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
+void calipso_doi_free(struct calipso_doi *doi_def)
+{
+	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
-	अगर (ops)
-		ops->करोi_मुक्त(करोi_def);
-पूर्ण
+	if (ops)
+		ops->doi_free(doi_def);
+}
 
 /**
- * calipso_करोi_हटाओ - Remove an existing DOI from the CALIPSO protocol engine
- * @करोi: the DOI value
- * @audit_info: NetLabel audit inक्रमmation
+ * calipso_doi_remove - Remove an existing DOI from the CALIPSO protocol engine
+ * @doi: the DOI value
+ * @audit_info: NetLabel audit information
  *
  * Description:
  * Removes a DOI definition from the CALIPSO engine.  The NetLabel routines will
- * be called to release their own LSM करोमुख्य mappings as well as our own
- * करोमुख्य list.  Returns zero on success and negative values on failure.
+ * be called to release their own LSM domain mappings as well as our own
+ * domain list.  Returns zero on success and negative values on failure.
  *
  */
-पूर्णांक calipso_करोi_हटाओ(u32 करोi, काष्ठा netlbl_audit *audit_info)
-अणु
-	पूर्णांक ret_val = -ENOMSG;
-	स्थिर काष्ठा netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
+int calipso_doi_remove(u32 doi, struct netlbl_audit *audit_info)
+{
+	int ret_val = -ENOMSG;
+	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
-	अगर (ops)
-		ret_val = ops->करोi_हटाओ(करोi, audit_info);
-	वापस ret_val;
-पूर्ण
+	if (ops)
+		ret_val = ops->doi_remove(doi, audit_info);
+	return ret_val;
+}
 
 /**
- * calipso_करोi_getdef - Returns a reference to a valid DOI definition
- * @करोi: the DOI value
+ * calipso_doi_getdef - Returns a reference to a valid DOI definition
+ * @doi: the DOI value
  *
  * Description:
- * Searches क्रम a valid DOI definition and अगर one is found it is वापसed to
- * the caller.  Otherwise शून्य is वापसed.  The caller must ensure that
- * calipso_करोi_putdef() is called when the caller is करोne.
+ * Searches for a valid DOI definition and if one is found it is returned to
+ * the caller.  Otherwise NULL is returned.  The caller must ensure that
+ * calipso_doi_putdef() is called when the caller is done.
  *
  */
-काष्ठा calipso_करोi *calipso_करोi_getdef(u32 करोi)
-अणु
-	काष्ठा calipso_करोi *ret_val = शून्य;
-	स्थिर काष्ठा netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
+struct calipso_doi *calipso_doi_getdef(u32 doi)
+{
+	struct calipso_doi *ret_val = NULL;
+	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
-	अगर (ops)
-		ret_val = ops->करोi_getdef(करोi);
-	वापस ret_val;
-पूर्ण
+	if (ops)
+		ret_val = ops->doi_getdef(doi);
+	return ret_val;
+}
 
 /**
- * calipso_करोi_putdef - Releases a reference क्रम the given DOI definition
- * @करोi_def: the DOI definition
+ * calipso_doi_putdef - Releases a reference for the given DOI definition
+ * @doi_def: the DOI definition
  *
  * Description:
- * Releases a DOI definition reference obtained from calipso_करोi_getdef().
+ * Releases a DOI definition reference obtained from calipso_doi_getdef().
  *
  */
-व्योम calipso_करोi_putdef(काष्ठा calipso_करोi *करोi_def)
-अणु
-	स्थिर काष्ठा netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
+void calipso_doi_putdef(struct calipso_doi *doi_def)
+{
+	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
-	अगर (ops)
-		ops->करोi_putdef(करोi_def);
-पूर्ण
+	if (ops)
+		ops->doi_putdef(doi_def);
+}
 
 /**
- * calipso_करोi_walk - Iterate through the DOI definitions
+ * calipso_doi_walk - Iterate through the DOI definitions
  * @skip_cnt: skip past this number of DOI definitions, updated
- * @callback: callback क्रम each DOI definition
- * @cb_arg: argument क्रम the callback function
+ * @callback: callback for each DOI definition
+ * @cb_arg: argument for the callback function
  *
  * Description:
  * Iterate over the DOI definition list, skipping the first @skip_cnt entries.
- * For each entry call @callback, अगर @callback वापसs a negative value stop
- * 'walking' through the list and वापस.  Updates the value in @skip_cnt upon
- * वापस.  Returns zero on success, negative values on failure.
+ * For each entry call @callback, if @callback returns a negative value stop
+ * 'walking' through the list and return.  Updates the value in @skip_cnt upon
+ * return.  Returns zero on success, negative values on failure.
  *
  */
-पूर्णांक calipso_करोi_walk(u32 *skip_cnt,
-		     पूर्णांक (*callback)(काष्ठा calipso_करोi *करोi_def, व्योम *arg),
-		     व्योम *cb_arg)
-अणु
-	पूर्णांक ret_val = -ENOMSG;
-	स्थिर काष्ठा netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
+int calipso_doi_walk(u32 *skip_cnt,
+		     int (*callback)(struct calipso_doi *doi_def, void *arg),
+		     void *cb_arg)
+{
+	int ret_val = -ENOMSG;
+	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
-	अगर (ops)
-		ret_val = ops->करोi_walk(skip_cnt, callback, cb_arg);
-	वापस ret_val;
-पूर्ण
+	if (ops)
+		ret_val = ops->doi_walk(skip_cnt, callback, cb_arg);
+	return ret_val;
+}
 
 /**
  * calipso_sock_getattr - Get the security attributes from a sock
@@ -513,27 +512,27 @@ EXPORT_SYMBOL(netlbl_calipso_ops_रेजिस्टर);
  * @secattr: the security attributes
  *
  * Description:
- * Query @sk to see अगर there is a CALIPSO option attached to the sock and अगर
- * there is वापस the CALIPSO security attributes in @secattr.  This function
- * requires that @sk be locked, or निजीly held, but it करोes not करो any
+ * Query @sk to see if there is a CALIPSO option attached to the sock and if
+ * there is return the CALIPSO security attributes in @secattr.  This function
+ * requires that @sk be locked, or privately held, but it does not do any
  * locking itself.  Returns zero on success and negative values on failure.
  *
  */
-पूर्णांक calipso_sock_getattr(काष्ठा sock *sk, काष्ठा netlbl_lsm_secattr *secattr)
-अणु
-	पूर्णांक ret_val = -ENOMSG;
-	स्थिर काष्ठा netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
+int calipso_sock_getattr(struct sock *sk, struct netlbl_lsm_secattr *secattr)
+{
+	int ret_val = -ENOMSG;
+	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
-	अगर (ops)
+	if (ops)
 		ret_val = ops->sock_getattr(sk, secattr);
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
 /**
  * calipso_sock_setattr - Add a CALIPSO option to a socket
  * @sk: the socket
- * @करोi_def: the CALIPSO DOI to use
- * @secattr: the specअगरic security attributes of the socket
+ * @doi_def: the CALIPSO DOI to use
+ * @secattr: the specific security attributes of the socket
  *
  * Description:
  * Set the CALIPSO option on the given socket using the DOI definition and
@@ -543,39 +542,39 @@ EXPORT_SYMBOL(netlbl_calipso_ops_रेजिस्टर);
  * values on failure.
  *
  */
-पूर्णांक calipso_sock_setattr(काष्ठा sock *sk,
-			 स्थिर काष्ठा calipso_करोi *करोi_def,
-			 स्थिर काष्ठा netlbl_lsm_secattr *secattr)
-अणु
-	पूर्णांक ret_val = -ENOMSG;
-	स्थिर काष्ठा netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
+int calipso_sock_setattr(struct sock *sk,
+			 const struct calipso_doi *doi_def,
+			 const struct netlbl_lsm_secattr *secattr)
+{
+	int ret_val = -ENOMSG;
+	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
-	अगर (ops)
-		ret_val = ops->sock_setattr(sk, करोi_def, secattr);
-	वापस ret_val;
-पूर्ण
+	if (ops)
+		ret_val = ops->sock_setattr(sk, doi_def, secattr);
+	return ret_val;
+}
 
 /**
  * calipso_sock_delattr - Delete the CALIPSO option from a socket
  * @sk: the socket
  *
  * Description:
- * Removes the CALIPSO option from a socket, अगर present.
+ * Removes the CALIPSO option from a socket, if present.
  *
  */
-व्योम calipso_sock_delattr(काष्ठा sock *sk)
-अणु
-	स्थिर काष्ठा netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
+void calipso_sock_delattr(struct sock *sk)
+{
+	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
-	अगर (ops)
+	if (ops)
 		ops->sock_delattr(sk);
-पूर्ण
+}
 
 /**
  * calipso_req_setattr - Add a CALIPSO option to a connection request socket
  * @req: the connection request socket
- * @करोi_def: the CALIPSO DOI to use
- * @secattr: the specअगरic security attributes of the socket
+ * @doi_def: the CALIPSO DOI to use
+ * @secattr: the specific security attributes of the socket
  *
  * Description:
  * Set the CALIPSO option on the given socket using the DOI definition and
@@ -583,52 +582,52 @@ EXPORT_SYMBOL(netlbl_calipso_ops_रेजिस्टर);
  * negative values on failure.
  *
  */
-पूर्णांक calipso_req_setattr(काष्ठा request_sock *req,
-			स्थिर काष्ठा calipso_करोi *करोi_def,
-			स्थिर काष्ठा netlbl_lsm_secattr *secattr)
-अणु
-	पूर्णांक ret_val = -ENOMSG;
-	स्थिर काष्ठा netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
+int calipso_req_setattr(struct request_sock *req,
+			const struct calipso_doi *doi_def,
+			const struct netlbl_lsm_secattr *secattr)
+{
+	int ret_val = -ENOMSG;
+	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
-	अगर (ops)
-		ret_val = ops->req_setattr(req, करोi_def, secattr);
-	वापस ret_val;
-पूर्ण
+	if (ops)
+		ret_val = ops->req_setattr(req, doi_def, secattr);
+	return ret_val;
+}
 
 /**
  * calipso_req_delattr - Delete the CALIPSO option from a request socket
  * @req: the request socket
  *
  * Description:
- * Removes the CALIPSO option from a request socket, अगर present.
+ * Removes the CALIPSO option from a request socket, if present.
  *
  */
-व्योम calipso_req_delattr(काष्ठा request_sock *req)
-अणु
-	स्थिर काष्ठा netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
+void calipso_req_delattr(struct request_sock *req)
+{
+	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
-	अगर (ops)
+	if (ops)
 		ops->req_delattr(req);
-पूर्ण
+}
 
 /**
  * calipso_optptr - Find the CALIPSO option in the packet
  * @skb: the packet
  *
  * Description:
- * Parse the packet's IP header looking क्रम a CALIPSO option.  Returns a poपूर्णांकer
- * to the start of the CALIPSO option on success, शून्य अगर one अगर not found.
+ * Parse the packet's IP header looking for a CALIPSO option.  Returns a pointer
+ * to the start of the CALIPSO option on success, NULL if one if not found.
  *
  */
-अचिन्हित अक्षर *calipso_optptr(स्थिर काष्ठा sk_buff *skb)
-अणु
-	अचिन्हित अक्षर *ret_val = शून्य;
-	स्थिर काष्ठा netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
+unsigned char *calipso_optptr(const struct sk_buff *skb)
+{
+	unsigned char *ret_val = NULL;
+	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
-	अगर (ops)
+	if (ops)
 		ret_val = ops->skbuff_optptr(skb);
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
 /**
  * calipso_getattr - Get the security attributes from a memory block.
@@ -636,43 +635,43 @@ EXPORT_SYMBOL(netlbl_calipso_ops_रेजिस्टर);
  * @secattr: the security attributes
  *
  * Description:
- * Inspect @calipso and वापस the security attributes in @secattr.
+ * Inspect @calipso and return the security attributes in @secattr.
  * Returns zero on success and negative values on failure.
  *
  */
-पूर्णांक calipso_getattr(स्थिर अचिन्हित अक्षर *calipso,
-		    काष्ठा netlbl_lsm_secattr *secattr)
-अणु
-	पूर्णांक ret_val = -ENOMSG;
-	स्थिर काष्ठा netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
+int calipso_getattr(const unsigned char *calipso,
+		    struct netlbl_lsm_secattr *secattr)
+{
+	int ret_val = -ENOMSG;
+	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
-	अगर (ops)
+	if (ops)
 		ret_val = ops->opt_getattr(calipso, secattr);
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
 /**
  * calipso_skbuff_setattr - Set the CALIPSO option on a packet
  * @skb: the packet
- * @करोi_def: the CALIPSO DOI to use
+ * @doi_def: the CALIPSO DOI to use
  * @secattr: the security attributes
  *
  * Description:
  * Set the CALIPSO option on the given packet based on the security attributes.
- * Returns a poपूर्णांकer to the IP header on success and शून्य on failure.
+ * Returns a pointer to the IP header on success and NULL on failure.
  *
  */
-पूर्णांक calipso_skbuff_setattr(काष्ठा sk_buff *skb,
-			   स्थिर काष्ठा calipso_करोi *करोi_def,
-			   स्थिर काष्ठा netlbl_lsm_secattr *secattr)
-अणु
-	पूर्णांक ret_val = -ENOMSG;
-	स्थिर काष्ठा netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
+int calipso_skbuff_setattr(struct sk_buff *skb,
+			   const struct calipso_doi *doi_def,
+			   const struct netlbl_lsm_secattr *secattr)
+{
+	int ret_val = -ENOMSG;
+	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
-	अगर (ops)
-		ret_val = ops->skbuff_setattr(skb, करोi_def, secattr);
-	वापस ret_val;
-पूर्ण
+	if (ops)
+		ret_val = ops->skbuff_setattr(skb, doi_def, secattr);
+	return ret_val;
+}
 
 /**
  * calipso_skbuff_delattr - Delete any CALIPSO options from a packet
@@ -683,31 +682,31 @@ EXPORT_SYMBOL(netlbl_calipso_ops_रेजिस्टर);
  * success, negative values on failure.
  *
  */
-पूर्णांक calipso_skbuff_delattr(काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक ret_val = -ENOMSG;
-	स्थिर काष्ठा netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
+int calipso_skbuff_delattr(struct sk_buff *skb)
+{
+	int ret_val = -ENOMSG;
+	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
-	अगर (ops)
+	if (ops)
 		ret_val = ops->skbuff_delattr(skb);
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
 /**
  * calipso_cache_invalidate - Invalidates the current CALIPSO cache
  *
  * Description:
- * Invalidates and मुक्तs any entries in the CALIPSO cache.  Returns zero on
+ * Invalidates and frees any entries in the CALIPSO cache.  Returns zero on
  * success and negative values on failure.
  *
  */
-व्योम calipso_cache_invalidate(व्योम)
-अणु
-	स्थिर काष्ठा netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
+void calipso_cache_invalidate(void)
+{
+	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
-	अगर (ops)
+	if (ops)
 		ops->cache_invalidate();
-पूर्ण
+}
 
 /**
  * calipso_cache_add - Add an entry to the CALIPSO cache
@@ -715,18 +714,18 @@ EXPORT_SYMBOL(netlbl_calipso_ops_रेजिस्टर);
  * @secattr: the packet's security attributes
  *
  * Description:
- * Add a new entry पूर्णांकo the CALIPSO label mapping cache.
+ * Add a new entry into the CALIPSO label mapping cache.
  * Returns zero on success, negative values on failure.
  *
  */
-पूर्णांक calipso_cache_add(स्थिर अचिन्हित अक्षर *calipso_ptr,
-		      स्थिर काष्ठा netlbl_lsm_secattr *secattr)
+int calipso_cache_add(const unsigned char *calipso_ptr,
+		      const struct netlbl_lsm_secattr *secattr)
 
-अणु
-	पूर्णांक ret_val = -ENOMSG;
-	स्थिर काष्ठा netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
+{
+	int ret_val = -ENOMSG;
+	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
-	अगर (ops)
+	if (ops)
 		ret_val = ops->cache_add(calipso_ptr, secattr);
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}

@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVKM_DMA_PRIV_H__
-#घोषणा __NVKM_DMA_PRIV_H__
-#घोषणा nvkm_dma(p) container_of((p), काष्ठा nvkm_dma, engine)
-#समावेश <engine/dma.h>
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVKM_DMA_PRIV_H__
+#define __NVKM_DMA_PRIV_H__
+#define nvkm_dma(p) container_of((p), struct nvkm_dma, engine)
+#include <engine/dma.h>
 
-काष्ठा nvkm_dmaobj_func अणु
-	पूर्णांक (*bind)(काष्ठा nvkm_dmaobj *, काष्ठा nvkm_gpuobj *, पूर्णांक align,
-		    काष्ठा nvkm_gpuobj **);
-पूर्ण;
+struct nvkm_dmaobj_func {
+	int (*bind)(struct nvkm_dmaobj *, struct nvkm_gpuobj *, int align,
+		    struct nvkm_gpuobj **);
+};
 
-पूर्णांक nvkm_dma_new_(स्थिर काष्ठा nvkm_dma_func *, काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक,
-		  काष्ठा nvkm_dma **);
+int nvkm_dma_new_(const struct nvkm_dma_func *, struct nvkm_device *, enum nvkm_subdev_type, int,
+		  struct nvkm_dma **);
 
-काष्ठा nvkm_dma_func अणु
-	पूर्णांक (*class_new)(काष्ठा nvkm_dma *, स्थिर काष्ठा nvkm_oclass *,
-			 व्योम *data, u32 size, काष्ठा nvkm_dmaobj **);
-पूर्ण;
-#पूर्ण_अगर
+struct nvkm_dma_func {
+	int (*class_new)(struct nvkm_dma *, const struct nvkm_oclass *,
+			 void *data, u32 size, struct nvkm_dmaobj **);
+};
+#endif

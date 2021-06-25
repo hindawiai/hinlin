@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
 /*
- * Xen dma-buf functionality क्रम gntdev.
+ * Xen dma-buf functionality for gntdev.
  *
  * Copyright (c) 2018 Oleksandr Andrushchenko, EPAM Systems Inc.
  */
 
-#अगर_अघोषित _GNTDEV_DMABUF_H
-#घोषणा _GNTDEV_DMABUF_H
+#ifndef _GNTDEV_DMABUF_H
+#define _GNTDEV_DMABUF_H
 
-#समावेश <xen/gntdev.h>
+#include <xen/gntdev.h>
 
-काष्ठा gntdev_dmabuf_priv;
-काष्ठा gntdev_priv;
+struct gntdev_dmabuf_priv;
+struct gntdev_priv;
 
-काष्ठा gntdev_dmabuf_priv *gntdev_dmabuf_init(काष्ठा file *filp);
+struct gntdev_dmabuf_priv *gntdev_dmabuf_init(struct file *filp);
 
-व्योम gntdev_dmabuf_fini(काष्ठा gntdev_dmabuf_priv *priv);
+void gntdev_dmabuf_fini(struct gntdev_dmabuf_priv *priv);
 
-दीर्घ gntdev_ioctl_dmabuf_exp_from_refs(काष्ठा gntdev_priv *priv, पूर्णांक use_ptemod,
-				       काष्ठा ioctl_gntdev_dmabuf_exp_from_refs __user *u);
+long gntdev_ioctl_dmabuf_exp_from_refs(struct gntdev_priv *priv, int use_ptemod,
+				       struct ioctl_gntdev_dmabuf_exp_from_refs __user *u);
 
-दीर्घ gntdev_ioctl_dmabuf_exp_रुको_released(काष्ठा gntdev_priv *priv,
-					   काष्ठा ioctl_gntdev_dmabuf_exp_रुको_released __user *u);
+long gntdev_ioctl_dmabuf_exp_wait_released(struct gntdev_priv *priv,
+					   struct ioctl_gntdev_dmabuf_exp_wait_released __user *u);
 
-दीर्घ gntdev_ioctl_dmabuf_imp_to_refs(काष्ठा gntdev_priv *priv,
-				     काष्ठा ioctl_gntdev_dmabuf_imp_to_refs __user *u);
+long gntdev_ioctl_dmabuf_imp_to_refs(struct gntdev_priv *priv,
+				     struct ioctl_gntdev_dmabuf_imp_to_refs __user *u);
 
-दीर्घ gntdev_ioctl_dmabuf_imp_release(काष्ठा gntdev_priv *priv,
-				     काष्ठा ioctl_gntdev_dmabuf_imp_release __user *u);
+long gntdev_ioctl_dmabuf_imp_release(struct gntdev_priv *priv,
+				     struct ioctl_gntdev_dmabuf_imp_release __user *u);
 
-#पूर्ण_अगर
+#endif

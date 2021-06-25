@@ -1,250 +1,249 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * gpiolib support क्रम Wolfson WM831x PMICs
+ * gpiolib support for Wolfson WM831x PMICs
  *
  * Copyright 2009 Wolfson Microelectronics PLC.
  *
- * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
  *
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/mfd/core.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/seq_file.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/gpio/driver.h>
+#include <linux/mfd/core.h>
+#include <linux/platform_device.h>
+#include <linux/seq_file.h>
 
-#समावेश <linux/mfd/wm831x/core.h>
-#समावेश <linux/mfd/wm831x/pdata.h>
-#समावेश <linux/mfd/wm831x/gpपन.स>
-#समावेश <linux/mfd/wm831x/irq.h>
+#include <linux/mfd/wm831x/core.h>
+#include <linux/mfd/wm831x/pdata.h>
+#include <linux/mfd/wm831x/gpio.h>
+#include <linux/mfd/wm831x/irq.h>
 
-काष्ठा wm831x_gpio अणु
-	काष्ठा wm831x *wm831x;
-	काष्ठा gpio_chip gpio_chip;
-पूर्ण;
+struct wm831x_gpio {
+	struct wm831x *wm831x;
+	struct gpio_chip gpio_chip;
+};
 
-अटल पूर्णांक wm831x_gpio_direction_in(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा wm831x_gpio *wm831x_gpio = gpiochip_get_data(chip);
-	काष्ठा wm831x *wm831x = wm831x_gpio->wm831x;
-	पूर्णांक val = WM831X_GPN_सूची;
+static int wm831x_gpio_direction_in(struct gpio_chip *chip, unsigned offset)
+{
+	struct wm831x_gpio *wm831x_gpio = gpiochip_get_data(chip);
+	struct wm831x *wm831x = wm831x_gpio->wm831x;
+	int val = WM831X_GPN_DIR;
 
-	अगर (wm831x->has_gpio_ena)
+	if (wm831x->has_gpio_ena)
 		val |= WM831X_GPN_TRI;
 
-	वापस wm831x_set_bits(wm831x, WM831X_GPIO1_CONTROL + offset,
-			       WM831X_GPN_सूची | WM831X_GPN_TRI |
+	return wm831x_set_bits(wm831x, WM831X_GPIO1_CONTROL + offset,
+			       WM831X_GPN_DIR | WM831X_GPN_TRI |
 			       WM831X_GPN_FN_MASK, val);
-पूर्ण
+}
 
-अटल पूर्णांक wm831x_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा wm831x_gpio *wm831x_gpio = gpiochip_get_data(chip);
-	काष्ठा wm831x *wm831x = wm831x_gpio->wm831x;
-	पूर्णांक ret;
+static int wm831x_gpio_get(struct gpio_chip *chip, unsigned offset)
+{
+	struct wm831x_gpio *wm831x_gpio = gpiochip_get_data(chip);
+	struct wm831x *wm831x = wm831x_gpio->wm831x;
+	int ret;
 
-	ret = wm831x_reg_पढ़ो(wm831x, WM831X_GPIO_LEVEL);
-	अगर (ret < 0)
-		वापस ret;
+	ret = wm831x_reg_read(wm831x, WM831X_GPIO_LEVEL);
+	if (ret < 0)
+		return ret;
 
-	अगर (ret & 1 << offset)
-		वापस 1;
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (ret & 1 << offset)
+		return 1;
+	else
+		return 0;
+}
 
-अटल व्योम wm831x_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक value)
-अणु
-	काष्ठा wm831x_gpio *wm831x_gpio = gpiochip_get_data(chip);
-	काष्ठा wm831x *wm831x = wm831x_gpio->wm831x;
+static void wm831x_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
+{
+	struct wm831x_gpio *wm831x_gpio = gpiochip_get_data(chip);
+	struct wm831x *wm831x = wm831x_gpio->wm831x;
 
 	wm831x_set_bits(wm831x, WM831X_GPIO_LEVEL, 1 << offset,
 			value << offset);
-पूर्ण
+}
 
-अटल पूर्णांक wm831x_gpio_direction_out(काष्ठा gpio_chip *chip,
-				     अचिन्हित offset, पूर्णांक value)
-अणु
-	काष्ठा wm831x_gpio *wm831x_gpio = gpiochip_get_data(chip);
-	काष्ठा wm831x *wm831x = wm831x_gpio->wm831x;
-	पूर्णांक val = 0;
-	पूर्णांक ret;
+static int wm831x_gpio_direction_out(struct gpio_chip *chip,
+				     unsigned offset, int value)
+{
+	struct wm831x_gpio *wm831x_gpio = gpiochip_get_data(chip);
+	struct wm831x *wm831x = wm831x_gpio->wm831x;
+	int val = 0;
+	int ret;
 
-	अगर (wm831x->has_gpio_ena)
+	if (wm831x->has_gpio_ena)
 		val |= WM831X_GPN_TRI;
 
 	ret = wm831x_set_bits(wm831x, WM831X_GPIO1_CONTROL + offset,
-			      WM831X_GPN_सूची | WM831X_GPN_TRI |
+			      WM831X_GPN_DIR | WM831X_GPN_TRI |
 			      WM831X_GPN_FN_MASK, val);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* Can only set GPIO state once it's in output mode */
 	wm831x_gpio_set(chip, offset, value);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm831x_gpio_to_irq(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा wm831x_gpio *wm831x_gpio = gpiochip_get_data(chip);
-	काष्ठा wm831x *wm831x = wm831x_gpio->wm831x;
+static int wm831x_gpio_to_irq(struct gpio_chip *chip, unsigned offset)
+{
+	struct wm831x_gpio *wm831x_gpio = gpiochip_get_data(chip);
+	struct wm831x *wm831x = wm831x_gpio->wm831x;
 
-	वापस irq_create_mapping(wm831x->irq_करोमुख्य,
+	return irq_create_mapping(wm831x->irq_domain,
 				  WM831X_IRQ_GPIO_1 + offset);
-पूर्ण
+}
 
-अटल पूर्णांक wm831x_gpio_set_debounce(काष्ठा wm831x *wm831x, अचिन्हित offset,
-				    अचिन्हित debounce)
-अणु
-	पूर्णांक reg = WM831X_GPIO1_CONTROL + offset;
-	पूर्णांक ret, fn;
+static int wm831x_gpio_set_debounce(struct wm831x *wm831x, unsigned offset,
+				    unsigned debounce)
+{
+	int reg = WM831X_GPIO1_CONTROL + offset;
+	int ret, fn;
 
-	ret = wm831x_reg_पढ़ो(wm831x, reg);
-	अगर (ret < 0)
-		वापस ret;
+	ret = wm831x_reg_read(wm831x, reg);
+	if (ret < 0)
+		return ret;
 
-	चयन (ret & WM831X_GPN_FN_MASK) अणु
-	हाल 0:
-	हाल 1:
-		अवरोध;
-	शेष:
+	switch (ret & WM831X_GPN_FN_MASK) {
+	case 0:
+	case 1:
+		break;
+	default:
 		/* Not in GPIO mode */
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	अगर (debounce >= 32 && debounce <= 64)
+	if (debounce >= 32 && debounce <= 64)
 		fn = 0;
-	अन्यथा अगर (debounce >= 4000 && debounce <= 8000)
+	else if (debounce >= 4000 && debounce <= 8000)
 		fn = 1;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
-	वापस wm831x_set_bits(wm831x, reg, WM831X_GPN_FN_MASK, fn);
-पूर्ण
+	return wm831x_set_bits(wm831x, reg, WM831X_GPN_FN_MASK, fn);
+}
 
-अटल पूर्णांक wm831x_set_config(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
-			     अचिन्हित दीर्घ config)
-अणु
-	काष्ठा wm831x_gpio *wm831x_gpio = gpiochip_get_data(chip);
-	काष्ठा wm831x *wm831x = wm831x_gpio->wm831x;
-	पूर्णांक reg = WM831X_GPIO1_CONTROL + offset;
+static int wm831x_set_config(struct gpio_chip *chip, unsigned int offset,
+			     unsigned long config)
+{
+	struct wm831x_gpio *wm831x_gpio = gpiochip_get_data(chip);
+	struct wm831x *wm831x = wm831x_gpio->wm831x;
+	int reg = WM831X_GPIO1_CONTROL + offset;
 
-	चयन (pinconf_to_config_param(config)) अणु
-	हाल PIN_CONFIG_DRIVE_OPEN_DRAIN:
-		वापस wm831x_set_bits(wm831x, reg,
+	switch (pinconf_to_config_param(config)) {
+	case PIN_CONFIG_DRIVE_OPEN_DRAIN:
+		return wm831x_set_bits(wm831x, reg,
 				       WM831X_GPN_OD_MASK, WM831X_GPN_OD);
-	हाल PIN_CONFIG_DRIVE_PUSH_PULL:
-		वापस wm831x_set_bits(wm831x, reg,
+	case PIN_CONFIG_DRIVE_PUSH_PULL:
+		return wm831x_set_bits(wm831x, reg,
 				       WM831X_GPN_OD_MASK, 0);
-	हाल PIN_CONFIG_INPUT_DEBOUNCE:
-		वापस wm831x_gpio_set_debounce(wm831x, offset,
+	case PIN_CONFIG_INPUT_DEBOUNCE:
+		return wm831x_gpio_set_debounce(wm831x, offset,
 			pinconf_to_config_argument(config));
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	वापस -ENOTSUPP;
-पूर्ण
+	return -ENOTSUPP;
+}
 
-#अगर_घोषित CONFIG_DEBUG_FS
-अटल व्योम wm831x_gpio_dbg_show(काष्ठा seq_file *s, काष्ठा gpio_chip *chip)
-अणु
-	काष्ठा wm831x_gpio *wm831x_gpio = gpiochip_get_data(chip);
-	काष्ठा wm831x *wm831x = wm831x_gpio->wm831x;
-	पूर्णांक i, tristated;
+#ifdef CONFIG_DEBUG_FS
+static void wm831x_gpio_dbg_show(struct seq_file *s, struct gpio_chip *chip)
+{
+	struct wm831x_gpio *wm831x_gpio = gpiochip_get_data(chip);
+	struct wm831x *wm831x = wm831x_gpio->wm831x;
+	int i, tristated;
 
-	क्रम (i = 0; i < chip->ngpio; i++) अणु
-		पूर्णांक gpio = i + chip->base;
-		पूर्णांक reg;
-		स्थिर अक्षर *label, *pull, *घातerकरोमुख्य;
+	for (i = 0; i < chip->ngpio; i++) {
+		int gpio = i + chip->base;
+		int reg;
+		const char *label, *pull, *powerdomain;
 
-		/* We report the GPIO even अगर it's not requested since
+		/* We report the GPIO even if it's not requested since
 		 * we're also reporting things like alternate
 		 * functions which apply even when the GPIO is not in
 		 * use as a GPIO.
 		 */
 		label = gpiochip_is_requested(chip, i);
-		अगर (!label)
+		if (!label)
 			label = "Unrequested";
 
-		seq_म_लिखो(s, " gpio-%-3d (%-20.20s) ", gpio, label);
+		seq_printf(s, " gpio-%-3d (%-20.20s) ", gpio, label);
 
-		reg = wm831x_reg_पढ़ो(wm831x, WM831X_GPIO1_CONTROL + i);
-		अगर (reg < 0) अणु
+		reg = wm831x_reg_read(wm831x, WM831X_GPIO1_CONTROL + i);
+		if (reg < 0) {
 			dev_err(wm831x->dev,
 				"GPIO control %d read failed: %d\n",
 				gpio, reg);
-			seq_अ_दो(s, '\n');
-			जारी;
-		पूर्ण
+			seq_putc(s, '\n');
+			continue;
+		}
 
-		चयन (reg & WM831X_GPN_PULL_MASK) अणु
-		हाल WM831X_GPIO_PULL_NONE:
+		switch (reg & WM831X_GPN_PULL_MASK) {
+		case WM831X_GPIO_PULL_NONE:
 			pull = "nopull";
-			अवरोध;
-		हाल WM831X_GPIO_PULL_DOWN:
+			break;
+		case WM831X_GPIO_PULL_DOWN:
 			pull = "pulldown";
-			अवरोध;
-		हाल WM831X_GPIO_PULL_UP:
+			break;
+		case WM831X_GPIO_PULL_UP:
 			pull = "pullup";
-			अवरोध;
-		शेष:
+			break;
+		default:
 			pull = "INVALID PULL";
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		चयन (i + 1) अणु
-		हाल 1 ... 3:
-		हाल 7 ... 9:
-			अगर (reg & WM831X_GPN_PWR_DOM)
-				घातerकरोमुख्य = "VPMIC";
-			अन्यथा
-				घातerकरोमुख्य = "DBVDD";
-			अवरोध;
+		switch (i + 1) {
+		case 1 ... 3:
+		case 7 ... 9:
+			if (reg & WM831X_GPN_PWR_DOM)
+				powerdomain = "VPMIC";
+			else
+				powerdomain = "DBVDD";
+			break;
 
-		हाल 4 ... 6:
-		हाल 10 ... 12:
-			अगर (reg & WM831X_GPN_PWR_DOM)
-				घातerकरोमुख्य = "SYSVDD";
-			अन्यथा
-				घातerकरोमुख्य = "DBVDD";
-			अवरोध;
+		case 4 ... 6:
+		case 10 ... 12:
+			if (reg & WM831X_GPN_PWR_DOM)
+				powerdomain = "SYSVDD";
+			else
+				powerdomain = "DBVDD";
+			break;
 
-		हाल 13 ... 16:
-			घातerकरोमुख्य = "TPVDD";
-			अवरोध;
+		case 13 ... 16:
+			powerdomain = "TPVDD";
+			break;
 
-		शेष:
+		default:
 			BUG();
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		tristated = reg & WM831X_GPN_TRI;
-		अगर (wm831x->has_gpio_ena)
+		if (wm831x->has_gpio_ena)
 			tristated = !tristated;
 
-		seq_म_लिखो(s, " %s %s %s %s%s\n"
+		seq_printf(s, " %s %s %s %s%s\n"
 			   "                                  %s%s (0x%4x)\n",
-			   reg & WM831X_GPN_सूची ? "in" : "out",
+			   reg & WM831X_GPN_DIR ? "in" : "out",
 			   wm831x_gpio_get(chip, i) ? "high" : "low",
 			   pull,
-			   घातerकरोमुख्य,
+			   powerdomain,
 			   reg & WM831X_GPN_POL ? "" : " inverted",
 			   reg & WM831X_GPN_OD ? "open-drain" : "push-pull",
 			   tristated ? " tristated" : "",
 			   reg);
-	पूर्ण
-पूर्ण
-#अन्यथा
-#घोषणा wm831x_gpio_dbg_show शून्य
-#पूर्ण_अगर
+	}
+}
+#else
+#define wm831x_gpio_dbg_show NULL
+#endif
 
-अटल स्थिर काष्ठा gpio_chip ढाँचा_chip = अणु
+static const struct gpio_chip template_chip = {
 	.label			= "wm831x",
 	.owner			= THIS_MODULE,
 	.direction_input	= wm831x_gpio_direction_in,
@@ -255,60 +254,60 @@
 	.set_config		= wm831x_set_config,
 	.dbg_show		= wm831x_gpio_dbg_show,
 	.can_sleep		= true,
-पूर्ण;
+};
 
-अटल पूर्णांक wm831x_gpio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा wm831x *wm831x = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा wm831x_pdata *pdata = &wm831x->pdata;
-	काष्ठा wm831x_gpio *wm831x_gpio;
-	पूर्णांक ret;
+static int wm831x_gpio_probe(struct platform_device *pdev)
+{
+	struct wm831x *wm831x = dev_get_drvdata(pdev->dev.parent);
+	struct wm831x_pdata *pdata = &wm831x->pdata;
+	struct wm831x_gpio *wm831x_gpio;
+	int ret;
 
-	wm831x_gpio = devm_kzalloc(&pdev->dev, माप(*wm831x_gpio),
+	wm831x_gpio = devm_kzalloc(&pdev->dev, sizeof(*wm831x_gpio),
 				   GFP_KERNEL);
-	अगर (wm831x_gpio == शून्य)
-		वापस -ENOMEM;
+	if (wm831x_gpio == NULL)
+		return -ENOMEM;
 
 	wm831x_gpio->wm831x = wm831x;
-	wm831x_gpio->gpio_chip = ढाँचा_chip;
+	wm831x_gpio->gpio_chip = template_chip;
 	wm831x_gpio->gpio_chip.ngpio = wm831x->num_gpio;
 	wm831x_gpio->gpio_chip.parent = &pdev->dev;
-	अगर (pdata && pdata->gpio_base)
+	if (pdata && pdata->gpio_base)
 		wm831x_gpio->gpio_chip.base = pdata->gpio_base;
-	अन्यथा
+	else
 		wm831x_gpio->gpio_chip.base = -1;
-#अगर_घोषित CONFIG_OF_GPIO
+#ifdef CONFIG_OF_GPIO
 	wm831x_gpio->gpio_chip.of_node = wm831x->dev->of_node;
-#पूर्ण_अगर
+#endif
 
 	ret = devm_gpiochip_add_data(&pdev->dev, &wm831x_gpio->gpio_chip,
 				     wm831x_gpio);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "Could not register gpiochip, %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	platक्रमm_set_drvdata(pdev, wm831x_gpio);
+	platform_set_drvdata(pdev, wm831x_gpio);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा platक्रमm_driver wm831x_gpio_driver = अणु
+static struct platform_driver wm831x_gpio_driver = {
 	.driver.name	= "wm831x-gpio",
 	.probe		= wm831x_gpio_probe,
-पूर्ण;
+};
 
-अटल पूर्णांक __init wm831x_gpio_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&wm831x_gpio_driver);
-पूर्ण
+static int __init wm831x_gpio_init(void)
+{
+	return platform_driver_register(&wm831x_gpio_driver);
+}
 subsys_initcall(wm831x_gpio_init);
 
-अटल व्योम __निकास wm831x_gpio_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&wm831x_gpio_driver);
-पूर्ण
-module_निकास(wm831x_gpio_निकास);
+static void __exit wm831x_gpio_exit(void)
+{
+	platform_driver_unregister(&wm831x_gpio_driver);
+}
+module_exit(wm831x_gpio_exit);
 
 MODULE_AUTHOR("Mark Brown <broonie@opensource.wolfsonmicro.com>");
 MODULE_DESCRIPTION("GPIO interface for WM831x PMICs");

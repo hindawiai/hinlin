@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2010 Cisco Systems, Inc.
  *
@@ -15,119 +14,119 @@
 
 /* XXX TBD some includes may be extraneous */
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/utsname.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/types.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/configfs.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/hash.h>
-#समावेश <linux/ratelimit.h>
-#समावेश <यंत्र/unaligned.h>
-#समावेश <scsi/libfc.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/utsname.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/kthread.h>
+#include <linux/types.h>
+#include <linux/string.h>
+#include <linux/configfs.h>
+#include <linux/ctype.h>
+#include <linux/hash.h>
+#include <linux/ratelimit.h>
+#include <asm/unaligned.h>
+#include <scsi/libfc.h>
 
-#समावेश <target/target_core_base.h>
-#समावेश <target/target_core_fabric.h>
+#include <target/target_core_base.h>
+#include <target/target_core_fabric.h>
 
-#समावेश "tcm_fc.h"
+#include "tcm_fc.h"
 
 /*
- * Deliver पढ़ो data back to initiator.
+ * Deliver read data back to initiator.
  * XXX TBD handle resource problems later.
  */
-पूर्णांक ft_queue_data_in(काष्ठा se_cmd *se_cmd)
-अणु
-	काष्ठा ft_cmd *cmd = container_of(se_cmd, काष्ठा ft_cmd, se_cmd);
-	काष्ठा fc_frame *fp = शून्य;
-	काष्ठा fc_exch *ep;
-	काष्ठा fc_lport *lport;
-	काष्ठा scatterlist *sg = शून्य;
-	माप_प्रकार reमुख्यing;
+int ft_queue_data_in(struct se_cmd *se_cmd)
+{
+	struct ft_cmd *cmd = container_of(se_cmd, struct ft_cmd, se_cmd);
+	struct fc_frame *fp = NULL;
+	struct fc_exch *ep;
+	struct fc_lport *lport;
+	struct scatterlist *sg = NULL;
+	size_t remaining;
 	u32 f_ctl = FC_FC_EX_CTX | FC_FC_REL_OFF;
 	u32 mem_off = 0;
 	u32 fh_off = 0;
 	u32 frame_off = 0;
-	माप_प्रकार frame_len = 0;
-	माप_प्रकार mem_len = 0;
-	माप_प्रकार tlen;
-	माप_प्रकार off_in_page;
-	काष्ठा page *page = शून्य;
-	पूर्णांक use_sg;
-	पूर्णांक error;
-	व्योम *page_addr;
-	व्योम *from;
-	व्योम *to = शून्य;
+	size_t frame_len = 0;
+	size_t mem_len = 0;
+	size_t tlen;
+	size_t off_in_page;
+	struct page *page = NULL;
+	int use_sg;
+	int error;
+	void *page_addr;
+	void *from;
+	void *to = NULL;
 
-	अगर (cmd->पातed)
-		वापस 0;
+	if (cmd->aborted)
+		return 0;
 
-	अगर (se_cmd->scsi_status == SAM_STAT_TASK_SET_FULL)
-		जाओ queue_status;
+	if (se_cmd->scsi_status == SAM_STAT_TASK_SET_FULL)
+		goto queue_status;
 
 	ep = fc_seq_exch(cmd->seq);
 	lport = ep->lp;
 	cmd->seq = fc_seq_start_next(cmd->seq);
 
-	reमुख्यing = se_cmd->data_length;
+	remaining = se_cmd->data_length;
 
 	/*
 	 * Setup to use first mem list entry, unless no data.
 	 */
-	BUG_ON(reमुख्यing && !se_cmd->t_data_sg);
-	अगर (reमुख्यing) अणु
+	BUG_ON(remaining && !se_cmd->t_data_sg);
+	if (remaining) {
 		sg = se_cmd->t_data_sg;
 		mem_len = sg->length;
 		mem_off = sg->offset;
 		page = sg_page(sg);
-	पूर्ण
+	}
 
-	/* no scatter/gather in skb क्रम odd word length due to fc_seq_send() */
-	use_sg = !(reमुख्यing % 4);
+	/* no scatter/gather in skb for odd word length due to fc_seq_send() */
+	use_sg = !(remaining % 4);
 
-	जबतक (reमुख्यing) अणु
-		काष्ठा fc_seq *seq = cmd->seq;
+	while (remaining) {
+		struct fc_seq *seq = cmd->seq;
 
-		अगर (!seq) अणु
+		if (!seq) {
 			pr_debug("%s: Command aborted, xid 0x%x\n",
 				 __func__, ep->xid);
-			अवरोध;
-		पूर्ण
-		अगर (!mem_len) अणु
+			break;
+		}
+		if (!mem_len) {
 			sg = sg_next(sg);
-			mem_len = min((माप_प्रकार)sg->length, reमुख्यing);
+			mem_len = min((size_t)sg->length, remaining);
 			mem_off = sg->offset;
 			page = sg_page(sg);
-		पूर्ण
-		अगर (!frame_len) अणु
+		}
+		if (!frame_len) {
 			/*
 			 * If lport's has capability of Large Send Offload LSO)
 			 * , then allow 'frame_len' to be as big as 'lso_max'
-			 * अगर indicated transfer length is >= lport->lso_max
+			 * if indicated transfer length is >= lport->lso_max
 			 */
 			frame_len = (lport->seq_offload) ? lport->lso_max :
 							  cmd->sess->max_frame;
-			frame_len = min(frame_len, reमुख्यing);
+			frame_len = min(frame_len, remaining);
 			fp = fc_frame_alloc(lport, use_sg ? 0 : frame_len);
-			अगर (!fp)
-				वापस -ENOMEM;
+			if (!fp)
+				return -ENOMEM;
 			to = fc_frame_payload_get(fp, 0);
 			fh_off = frame_off;
 			frame_off += frame_len;
 			/*
 			 * Setup the frame's max payload which is used by base
 			 * driver to indicate HW about max frame size, so that
-			 * HW can करो fragmentation appropriately based on
+			 * HW can do fragmentation appropriately based on
 			 * "gso_max_size" of underline netdev.
 			 */
 			fr_max_payload(fp) = cmd->sess->max_frame;
-		पूर्ण
+		}
 		tlen = min(mem_len, frame_len);
 
-		अगर (use_sg) अणु
+		if (use_sg) {
 			off_in_page = mem_off;
 			BUG_ON(!page);
 			get_page(page);
@@ -137,97 +136,97 @@
 			fr_len(fp) += tlen;
 			fp_skb(fp)->data_len += tlen;
 			fp_skb(fp)->truesize += page_size(page);
-		पूर्ण अन्यथा अणु
+		} else {
 			BUG_ON(!page);
 			from = kmap_atomic(page + (mem_off >> PAGE_SHIFT));
 			page_addr = from;
 			from += offset_in_page(mem_off);
-			tlen = min(tlen, (माप_प्रकार)(PAGE_SIZE -
+			tlen = min(tlen, (size_t)(PAGE_SIZE -
 						offset_in_page(mem_off)));
-			स_नकल(to, from, tlen);
+			memcpy(to, from, tlen);
 			kunmap_atomic(page_addr);
 			to += tlen;
-		पूर्ण
+		}
 
 		mem_off += tlen;
 		mem_len -= tlen;
 		frame_len -= tlen;
-		reमुख्यing -= tlen;
+		remaining -= tlen;
 
-		अगर (frame_len &&
+		if (frame_len &&
 		    (skb_shinfo(fp_skb(fp))->nr_frags < FC_FRAME_SG_LEN))
-			जारी;
-		अगर (!reमुख्यing)
+			continue;
+		if (!remaining)
 			f_ctl |= FC_FC_END_SEQ;
 		fc_fill_fc_hdr(fp, FC_RCTL_DD_SOL_DATA, ep->did, ep->sid,
 			       FC_TYPE_FCP, f_ctl, fh_off);
 		error = fc_seq_send(lport, seq, fp);
-		अगर (error) अणु
+		if (error) {
 			pr_info_ratelimited("%s: Failed to send frame %p, "
 						"xid <0x%x>, remaining %zu, "
 						"lso_max <0x%x>\n",
 						__func__, fp, ep->xid,
-						reमुख्यing, lport->lso_max);
+						remaining, lport->lso_max);
 			/*
 			 * Go ahead and set TASK_SET_FULL status ignoring the
 			 * rest of the DataIN, and immediately attempt to
 			 * send the response via ft_queue_status() in order
-			 * to notअगरy the initiator that it should reduce it's
+			 * to notify the initiator that it should reduce it's
 			 * per LUN queue_depth.
 			 */
 			se_cmd->scsi_status = SAM_STAT_TASK_SET_FULL;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 queue_status:
-	वापस ft_queue_status(se_cmd);
-पूर्ण
+	return ft_queue_status(se_cmd);
+}
 
-अटल व्योम ft_execute_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ft_cmd *cmd = container_of(work, काष्ठा ft_cmd, work);
+static void ft_execute_work(struct work_struct *work)
+{
+	struct ft_cmd *cmd = container_of(work, struct ft_cmd, work);
 
 	target_execute_cmd(&cmd->se_cmd);
-पूर्ण
+}
 
 /*
- * Receive ग_लिखो data frame.
+ * Receive write data frame.
  */
-व्योम ft_recv_ग_लिखो_data(काष्ठा ft_cmd *cmd, काष्ठा fc_frame *fp)
-अणु
-	काष्ठा se_cmd *se_cmd = &cmd->se_cmd;
-	काष्ठा fc_seq *seq = cmd->seq;
-	काष्ठा fc_exch *ep;
-	काष्ठा fc_lport *lport;
-	काष्ठा fc_frame_header *fh;
-	काष्ठा scatterlist *sg = शून्य;
+void ft_recv_write_data(struct ft_cmd *cmd, struct fc_frame *fp)
+{
+	struct se_cmd *se_cmd = &cmd->se_cmd;
+	struct fc_seq *seq = cmd->seq;
+	struct fc_exch *ep;
+	struct fc_lport *lport;
+	struct fc_frame_header *fh;
+	struct scatterlist *sg = NULL;
 	u32 mem_off = 0;
 	u32 rel_off;
-	माप_प्रकार frame_len;
-	माप_प्रकार mem_len = 0;
-	माप_प्रकार tlen;
-	काष्ठा page *page = शून्य;
-	व्योम *page_addr;
-	व्योम *from;
-	व्योम *to;
+	size_t frame_len;
+	size_t mem_len = 0;
+	size_t tlen;
+	struct page *page = NULL;
+	void *page_addr;
+	void *from;
+	void *to;
 	u32 f_ctl;
-	व्योम *buf;
+	void *buf;
 
 	fh = fc_frame_header_get(fp);
-	अगर (!(ntoh24(fh->fh_f_ctl) & FC_FC_REL_OFF))
-		जाओ drop;
+	if (!(ntoh24(fh->fh_f_ctl) & FC_FC_REL_OFF))
+		goto drop;
 
 	f_ctl = ntoh24(fh->fh_f_ctl);
 	ep = fc_seq_exch(seq);
 	lport = ep->lp;
-	अगर (cmd->was_ddp_setup) अणु
+	if (cmd->was_ddp_setup) {
 		BUG_ON(!lport);
 		/*
-		 * Since DDP (Large Rx offload) was setup क्रम this request,
+		 * Since DDP (Large Rx offload) was setup for this request,
 		 * payload is expected to be copied directly to user buffers.
 		 */
 		buf = fc_frame_payload_get(fp, 1);
-		अगर (buf)
+		if (buf)
 			pr_err("%s: xid 0x%x, f_ctl 0x%x, cmd->sg %p, "
 				"cmd->sg_cnt 0x%x. DDP was setup"
 				" hence not expected to receive frame with "
@@ -236,7 +235,7 @@ queue_status:
 				"not set\n", __func__, ep->xid, f_ctl,
 				se_cmd->t_data_sg, se_cmd->t_data_nents);
 		/*
-		 * Invalidate HW DDP context अगर it was setup क्रम respective
+		 * Invalidate HW DDP context if it was setup for respective
 		 * command. Invalidation of HW DDP context is requited in both
 		 * situation (success and error).
 		 */
@@ -244,54 +243,54 @@ queue_status:
 
 		/*
 		 * If "Sequence Initiative (TSI)" bit set in f_ctl, means last
-		 * ग_लिखो data frame is received successfully where payload is
+		 * write data frame is received successfully where payload is
 		 * posted directly to user buffer and only the last frame's
 		 * header is posted in receive queue.
 		 *
 		 * If "Sequence Initiative (TSI)" bit is not set, means error
 		 * condition w.r.t. DDP, hence drop the packet and let explict
-		 * ABORTS from other end of exchange समयr trigger the recovery.
+		 * ABORTS from other end of exchange timer trigger the recovery.
 		 */
-		अगर (f_ctl & FC_FC_SEQ_INIT)
-			जाओ last_frame;
-		अन्यथा
-			जाओ drop;
-	पूर्ण
+		if (f_ctl & FC_FC_SEQ_INIT)
+			goto last_frame;
+		else
+			goto drop;
+	}
 
 	rel_off = ntohl(fh->fh_parm_offset);
 	frame_len = fr_len(fp);
-	अगर (frame_len <= माप(*fh))
-		जाओ drop;
-	frame_len -= माप(*fh);
+	if (frame_len <= sizeof(*fh))
+		goto drop;
+	frame_len -= sizeof(*fh);
 	from = fc_frame_payload_get(fp, 0);
-	अगर (rel_off >= se_cmd->data_length)
-		जाओ drop;
-	अगर (frame_len + rel_off > se_cmd->data_length)
+	if (rel_off >= se_cmd->data_length)
+		goto drop;
+	if (frame_len + rel_off > se_cmd->data_length)
 		frame_len = se_cmd->data_length - rel_off;
 
 	/*
 	 * Setup to use first mem list entry, unless no data.
 	 */
 	BUG_ON(frame_len && !se_cmd->t_data_sg);
-	अगर (frame_len) अणु
+	if (frame_len) {
 		sg = se_cmd->t_data_sg;
 		mem_len = sg->length;
 		mem_off = sg->offset;
 		page = sg_page(sg);
-	पूर्ण
+	}
 
-	जबतक (frame_len) अणु
-		अगर (!mem_len) अणु
+	while (frame_len) {
+		if (!mem_len) {
 			sg = sg_next(sg);
 			mem_len = sg->length;
 			mem_off = sg->offset;
 			page = sg_page(sg);
-		पूर्ण
-		अगर (rel_off >= mem_len) अणु
+		}
+		if (rel_off >= mem_len) {
 			rel_off -= mem_len;
 			mem_len = 0;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		mem_off += rel_off;
 		mem_len -= rel_off;
 		rel_off = 0;
@@ -301,60 +300,60 @@ queue_status:
 		to = kmap_atomic(page + (mem_off >> PAGE_SHIFT));
 		page_addr = to;
 		to += offset_in_page(mem_off);
-		tlen = min(tlen, (माप_प्रकार)(PAGE_SIZE -
+		tlen = min(tlen, (size_t)(PAGE_SIZE -
 					  offset_in_page(mem_off)));
-		स_नकल(to, from, tlen);
+		memcpy(to, from, tlen);
 		kunmap_atomic(page_addr);
 
 		from += tlen;
 		frame_len -= tlen;
 		mem_off += tlen;
 		mem_len -= tlen;
-		cmd->ग_लिखो_data_len += tlen;
-	पूर्ण
+		cmd->write_data_len += tlen;
+	}
 last_frame:
-	अगर (cmd->ग_लिखो_data_len == se_cmd->data_length) अणु
+	if (cmd->write_data_len == se_cmd->data_length) {
 		INIT_WORK(&cmd->work, ft_execute_work);
 		queue_work(cmd->sess->tport->tpg->workqueue, &cmd->work);
-	पूर्ण
+	}
 drop:
-	fc_frame_मुक्त(fp);
-पूर्ण
+	fc_frame_free(fp);
+}
 
 /*
- * Handle and cleanup any HW specअगरic resources अगर
- * received ABORTS, errors, समयouts.
+ * Handle and cleanup any HW specific resources if
+ * received ABORTS, errors, timeouts.
  */
-व्योम ft_invl_hw_context(काष्ठा ft_cmd *cmd)
-अणु
-	काष्ठा fc_seq *seq;
-	काष्ठा fc_exch *ep = शून्य;
-	काष्ठा fc_lport *lport = शून्य;
+void ft_invl_hw_context(struct ft_cmd *cmd)
+{
+	struct fc_seq *seq;
+	struct fc_exch *ep = NULL;
+	struct fc_lport *lport = NULL;
 
 	BUG_ON(!cmd);
 	seq = cmd->seq;
 
-	/* Cleanup the DDP context in HW अगर DDP was setup */
-	अगर (cmd->was_ddp_setup && seq) अणु
+	/* Cleanup the DDP context in HW if DDP was setup */
+	if (cmd->was_ddp_setup && seq) {
 		ep = fc_seq_exch(seq);
-		अगर (ep) अणु
+		if (ep) {
 			lport = ep->lp;
-			अगर (lport && (ep->xid <= lport->lro_xid)) अणु
+			if (lport && (ep->xid <= lport->lro_xid)) {
 				/*
 				 * "ddp_done" trigger invalidation of HW
-				 * specअगरic DDP context
+				 * specific DDP context
 				 */
-				cmd->ग_लिखो_data_len = lport->tt.ddp_करोne(lport,
+				cmd->write_data_len = lport->tt.ddp_done(lport,
 								      ep->xid);
 
 				/*
 				 * Resetting same variable to indicate HW's
-				 * DDP context has been invalidated to aव्योम
+				 * DDP context has been invalidated to avoid
 				 * re_invalidation of same context (context is
-				 * identअगरied using ep->xid)
+				 * identified using ep->xid)
 				 */
 				cmd->was_ddp_setup = 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}

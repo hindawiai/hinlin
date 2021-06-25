@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /* drivers/video/backlight/ili9320.h
  *
  * ILI9320 LCD controller driver core.
@@ -10,69 +9,69 @@
  * http://armlinux.simtec.co.uk/
 */
 
-/* Holder क्रम रेजिस्टर and value pairs. */
-काष्ठा ili9320_reg अणु
-	अचिन्हित लघु		address;
-	अचिन्हित लघु		value;
-पूर्ण;
+/* Holder for register and value pairs. */
+struct ili9320_reg {
+	unsigned short		address;
+	unsigned short		value;
+};
 
-काष्ठा ili9320;
+struct ili9320;
 
-काष्ठा ili9320_client अणु
-	स्थिर अक्षर	*name;
-	पूर्णांक	(*init)(काष्ठा ili9320 *ili, काष्ठा ili9320_platdata *cfg);
+struct ili9320_client {
+	const char	*name;
+	int	(*init)(struct ili9320 *ili, struct ili9320_platdata *cfg);
 
-पूर्ण;
+};
 /* Device attached via an SPI bus. */
-काष्ठा  ili9320_spi अणु
-	काष्ठा spi_device	*dev;
-	काष्ठा spi_message	message;
-	काष्ठा spi_transfer	xfer[2];
+struct  ili9320_spi {
+	struct spi_device	*dev;
+	struct spi_message	message;
+	struct spi_transfer	xfer[2];
 
-	अचिन्हित अक्षर		id;
-	अचिन्हित अक्षर		buffer_addr[4];
-	अचिन्हित अक्षर		buffer_data[4];
-पूर्ण;
+	unsigned char		id;
+	unsigned char		buffer_addr[4];
+	unsigned char		buffer_data[4];
+};
 
 /* ILI9320 device state. */
-काष्ठा ili9320 अणु
-	जोड़ अणु
-		काष्ठा ili9320_spi	spi;	/* SPI attachged device. */
-	पूर्ण access;				/* Register access method. */
+struct ili9320 {
+	union {
+		struct ili9320_spi	spi;	/* SPI attachged device. */
+	} access;				/* Register access method. */
 
-	काष्ठा device			*dev;
-	काष्ठा lcd_device		*lcd;	/* LCD device we created. */
-	काष्ठा ili9320_client		*client;
-	काष्ठा ili9320_platdata		*platdata;
+	struct device			*dev;
+	struct lcd_device		*lcd;	/* LCD device we created. */
+	struct ili9320_client		*client;
+	struct ili9320_platdata		*platdata;
 
-	पूर्णांक				 घातer; /* current घातer state. */
-	पूर्णांक				 initialised;
+	int				 power; /* current power state. */
+	int				 initialised;
 
-	अचिन्हित लघु			 display1;
-	अचिन्हित लघु			 घातer1;
+	unsigned short			 display1;
+	unsigned short			 power1;
 
-	पूर्णांक (*ग_लिखो)(काष्ठा ili9320 *ili, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val);
-पूर्ण;
+	int (*write)(struct ili9320 *ili, unsigned int reg, unsigned int val);
+};
 
 
-/* ILI9320 रेजिस्टर access routines */
+/* ILI9320 register access routines */
 
-बाह्य पूर्णांक ili9320_ग_लिखो(काष्ठा ili9320 *ili,
-			 अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक value);
+extern int ili9320_write(struct ili9320 *ili,
+			 unsigned int reg, unsigned int value);
 
-बाह्य पूर्णांक ili9320_ग_लिखो_regs(काष्ठा ili9320 *ili,
-			      स्थिर काष्ठा ili9320_reg *values,
-			      पूर्णांक nr_values);
+extern int ili9320_write_regs(struct ili9320 *ili,
+			      const struct ili9320_reg *values,
+			      int nr_values);
 
 /* Device probe */
 
-बाह्य पूर्णांक ili9320_probe_spi(काष्ठा spi_device *spi,
-			     काष्ठा ili9320_client *cli);
+extern int ili9320_probe_spi(struct spi_device *spi,
+			     struct ili9320_client *cli);
 
-बाह्य पूर्णांक ili9320_हटाओ(काष्ठा ili9320 *lcd);
-बाह्य व्योम ili9320_shutकरोwn(काष्ठा ili9320 *lcd);
+extern int ili9320_remove(struct ili9320 *lcd);
+extern void ili9320_shutdown(struct ili9320 *lcd);
 
 /* PM */
 
-बाह्य पूर्णांक ili9320_suspend(काष्ठा ili9320 *lcd);
-बाह्य पूर्णांक ili9320_resume(काष्ठा ili9320 *lcd);
+extern int ili9320_suspend(struct ili9320 *lcd);
+extern int ili9320_resume(struct ili9320 *lcd);

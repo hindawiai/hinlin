@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,100 +21,100 @@
  *
  */
 
-#समावेश "common_baco.h"
+#include "common_baco.h"
 
 
-अटल bool baco_रुको_रेजिस्टर(काष्ठा pp_hwmgr *hwmgr, u32 reg, u32 mask, u32 value)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)(hwmgr->adev);
-	u32 समयout = 5000, data;
+static bool baco_wait_register(struct pp_hwmgr *hwmgr, u32 reg, u32 mask, u32 value)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)(hwmgr->adev);
+	u32 timeout = 5000, data;
 
-	करो अणु
+	do {
 		msleep(1);
 		data = RREG32(reg);
-		समयout--;
-	पूर्ण जबतक (value != (data & mask) && (समयout != 0));
+		timeout--;
+	} while (value != (data & mask) && (timeout != 0));
 
-	अगर (समयout == 0)
-		वापस false;
+	if (timeout == 0)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool baco_cmd_handler(काष्ठा pp_hwmgr *hwmgr, u32 command, u32 reg, u32 mask,
-			        u32 shअगरt, u32 value, u32 समयout)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)(hwmgr->adev);
+static bool baco_cmd_handler(struct pp_hwmgr *hwmgr, u32 command, u32 reg, u32 mask,
+			        u32 shift, u32 value, u32 timeout)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)(hwmgr->adev);
 	u32 data;
 	bool ret = true;
 
-	चयन (command) अणु
-	हाल CMD_WRITE:
-		WREG32(reg, value << shअगरt);
-		अवरोध;
-	हाल CMD_READMODIFYWRITE:
+	switch (command) {
+	case CMD_WRITE:
+		WREG32(reg, value << shift);
+		break;
+	case CMD_READMODIFYWRITE:
 		data = RREG32(reg);
-		data = (data & (~mask)) | (value << shअगरt);
+		data = (data & (~mask)) | (value << shift);
 		WREG32(reg, data);
-		अवरोध;
-	हाल CMD_WAITFOR:
-		ret = baco_रुको_रेजिस्टर(hwmgr, reg, mask, value);
-		अवरोध;
-	हाल CMD_DELAY_MS:
-		अगर (समयout)
+		break;
+	case CMD_WAITFOR:
+		ret = baco_wait_register(hwmgr, reg, mask, value);
+		break;
+	case CMD_DELAY_MS:
+		if (timeout)
 			/* Delay in milli Seconds */
-			msleep(समयout);
-		अवरोध;
-	हाल CMD_DELAY_US:
-		अगर (समयout)
+			msleep(timeout);
+		break;
+	case CMD_DELAY_US:
+		if (timeout)
 			/* Delay in micro Seconds */
-			udelay(समयout);
-		अवरोध;
+			udelay(timeout);
+		break;
 
-	शेष:
+	default:
 		dev_warn(adev->dev, "Invalid BACO command.\n");
 		ret = false;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-bool baco_program_रेजिस्टरs(काष्ठा pp_hwmgr *hwmgr,
-			    स्थिर काष्ठा baco_cmd_entry *entry,
-			    स्थिर u32 array_size)
-अणु
+bool baco_program_registers(struct pp_hwmgr *hwmgr,
+			    const struct baco_cmd_entry *entry,
+			    const u32 array_size)
+{
 	u32 i, reg = 0;
 
-	क्रम (i = 0; i < array_size; i++) अणु
-		अगर ((entry[i].cmd == CMD_WRITE) ||
+	for (i = 0; i < array_size; i++) {
+		if ((entry[i].cmd == CMD_WRITE) ||
 		    (entry[i].cmd == CMD_READMODIFYWRITE) ||
 		    (entry[i].cmd == CMD_WAITFOR))
 			reg = entry[i].reg_offset;
-		अगर (!baco_cmd_handler(hwmgr, entry[i].cmd, reg, entry[i].mask,
-				     entry[i].shअगरt, entry[i].val, entry[i].समयout))
-			वापस false;
-	पूर्ण
+		if (!baco_cmd_handler(hwmgr, entry[i].cmd, reg, entry[i].mask,
+				     entry[i].shift, entry[i].val, entry[i].timeout))
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-bool soc15_baco_program_रेजिस्टरs(काष्ठा pp_hwmgr *hwmgr,
-				 स्थिर काष्ठा soc15_baco_cmd_entry *entry,
-				 स्थिर u32 array_size)
-अणु
-	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)(hwmgr->adev);
+bool soc15_baco_program_registers(struct pp_hwmgr *hwmgr,
+				 const struct soc15_baco_cmd_entry *entry,
+				 const u32 array_size)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)(hwmgr->adev);
 	u32 i, reg = 0;
 
-	क्रम (i = 0; i < array_size; i++) अणु
-		अगर ((entry[i].cmd == CMD_WRITE) ||
+	for (i = 0; i < array_size; i++) {
+		if ((entry[i].cmd == CMD_WRITE) ||
 		    (entry[i].cmd == CMD_READMODIFYWRITE) ||
 		    (entry[i].cmd == CMD_WAITFOR))
 			reg = adev->reg_offset[entry[i].hwip][entry[i].inst][entry[i].seg]
 				+ entry[i].reg_offset;
-		अगर (!baco_cmd_handler(hwmgr, entry[i].cmd, reg, entry[i].mask,
-				     entry[i].shअगरt, entry[i].val, entry[i].समयout))
-			वापस false;
-	पूर्ण
+		if (!baco_cmd_handler(hwmgr, entry[i].cmd, reg, entry[i].mask,
+				     entry[i].shift, entry[i].val, entry[i].timeout))
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}

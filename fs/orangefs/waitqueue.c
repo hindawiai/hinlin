@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * (C) 2001 Clemson University and The University of Chicago
  * (C) 2011 Omnibond Systems
@@ -11,33 +10,33 @@
  */
 
 /*
- *  In-kernel रुकोqueue operations.
+ *  In-kernel waitqueue operations.
  */
 
-#समावेश "protocol.h"
-#समावेश "orangefs-kernel.h"
-#समावेश "orangefs-bufmap.h"
+#include "protocol.h"
+#include "orangefs-kernel.h"
+#include "orangefs-bufmap.h"
 
-अटल पूर्णांक रुको_क्रम_matching_करोwncall(काष्ठा orangefs_kernel_op_s *op,
-		दीर्घ समयout,
-		पूर्णांक flags)
+static int wait_for_matching_downcall(struct orangefs_kernel_op_s *op,
+		long timeout,
+		int flags)
 			__acquires(op->lock);
-अटल व्योम orangefs_clean_up_पूर्णांकerrupted_operation(काष्ठा orangefs_kernel_op_s *op)
+static void orangefs_clean_up_interrupted_operation(struct orangefs_kernel_op_s *op)
 	__releases(op->lock);
 
 /*
- * What we करो in this function is to walk the list of operations that are
+ * What we do in this function is to walk the list of operations that are
  * present in the request queue and mark them as purged.
- * NOTE: This is called from the device बंद after client-core has
+ * NOTE: This is called from the device close after client-core has
  * guaranteed that no new operations could appear on the list since the
- * client-core is anyway going to निकास.
+ * client-core is anyway going to exit.
  */
-व्योम purge_रुकोing_ops(व्योम)
-अणु
-	काष्ठा orangefs_kernel_op_s *op, *पंचांगp;
+void purge_waiting_ops(void)
+{
+	struct orangefs_kernel_op_s *op, *tmp;
 
 	spin_lock(&orangefs_request_list_lock);
-	list_क्रम_each_entry_safe(op, पंचांगp, &orangefs_request_list, list) अणु
+	list_for_each_entry_safe(op, tmp, &orangefs_request_list, list) {
 		gossip_debug(GOSSIP_WAIT_DEBUG,
 			     "pvfs2-client-core: purging op tag %llu %s\n",
 			     llu(op->tag),
@@ -49,34 +48,34 @@
 			     get_opname_string(op),
 			     op->op_state,
 			     current->comm);
-	पूर्ण
+	}
 	spin_unlock(&orangefs_request_list_lock);
-पूर्ण
+}
 
 /*
- * submits a ORANGEFS operation and रुकोs क्रम it to complete
+ * submits a ORANGEFS operation and waits for it to complete
  *
- * Note op->करोwncall.status will contain the status of the operation (in
- * त्रुटि_सं क्रमmat), whether provided by pvfs2-client or a result of failure to
+ * Note op->downcall.status will contain the status of the operation (in
+ * errno format), whether provided by pvfs2-client or a result of failure to
  * service the operation.  If the caller wishes to distinguish, then
- * op->state can be checked to see अगर it was serviced or not.
+ * op->state can be checked to see if it was serviced or not.
  *
- * Returns contents of op->करोwncall.status क्रम convenience
+ * Returns contents of op->downcall.status for convenience
  */
-पूर्णांक service_operation(काष्ठा orangefs_kernel_op_s *op,
-		      स्थिर अक्षर *op_name,
-		      पूर्णांक flags)
-अणु
-	दीर्घ समयout = MAX_SCHEDULE_TIMEOUT;
-	पूर्णांक ret = 0;
+int service_operation(struct orangefs_kernel_op_s *op,
+		      const char *op_name,
+		      int flags)
+{
+	long timeout = MAX_SCHEDULE_TIMEOUT;
+	int ret = 0;
 
-	DEFINE_WAIT(रुको_entry);
+	DEFINE_WAIT(wait_entry);
 
 	op->upcall.tgid = current->tgid;
 	op->upcall.pid = current->pid;
 
 retry_servicing:
-	op->करोwncall.status = 0;
+	op->downcall.status = 0;
 	gossip_debug(GOSSIP_WAIT_DEBUG,
 		     "%s: %s op:%p: process:%s: pid:%d:\n",
 		     __func__,
@@ -86,33 +85,33 @@ retry_servicing:
 		     current->pid);
 
 	/*
-	 * If ORANGEFS_OP_NO_MUTEX was set in flags, we need to aव्योम
+	 * If ORANGEFS_OP_NO_MUTEX was set in flags, we need to avoid
 	 * acquiring the request_mutex because we're servicing a
 	 * high priority remount operation and the request_mutex is
-	 * alपढ़ोy taken.
+	 * already taken.
 	 */
-	अगर (!(flags & ORANGEFS_OP_NO_MUTEX)) अणु
-		अगर (flags & ORANGEFS_OP_INTERRUPTIBLE)
-			ret = mutex_lock_पूर्णांकerruptible(&orangefs_request_mutex);
-		अन्यथा
-			ret = mutex_lock_समाप्तable(&orangefs_request_mutex);
+	if (!(flags & ORANGEFS_OP_NO_MUTEX)) {
+		if (flags & ORANGEFS_OP_INTERRUPTIBLE)
+			ret = mutex_lock_interruptible(&orangefs_request_mutex);
+		else
+			ret = mutex_lock_killable(&orangefs_request_mutex);
 		/*
-		 * check to see अगर we were पूर्णांकerrupted जबतक रुकोing क्रम
+		 * check to see if we were interrupted while waiting for
 		 * mutex
 		 */
-		अगर (ret < 0) अणु
-			op->करोwncall.status = ret;
+		if (ret < 0) {
+			op->downcall.status = ret;
 			gossip_debug(GOSSIP_WAIT_DEBUG,
 				     "%s: service_operation interrupted.\n",
 				     __func__);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	/* queue up the operation */
 	spin_lock(&orangefs_request_list_lock);
 	spin_lock(&op->lock);
-	set_op_state_रुकोing(op);
+	set_op_state_waiting(op);
 	gossip_debug(GOSSIP_DEV_DEBUG,
 		     "%s: op:%s: op_state:%d: process:%s:\n",
 		     __func__,
@@ -120,64 +119,64 @@ retry_servicing:
 		     op->op_state,
 		     current->comm);
 	/* add high priority remount op to the front of the line. */
-	अगर (flags & ORANGEFS_OP_PRIORITY)
+	if (flags & ORANGEFS_OP_PRIORITY)
 		list_add(&op->list, &orangefs_request_list);
-	अन्यथा
+	else
 		list_add_tail(&op->list, &orangefs_request_list);
 	spin_unlock(&op->lock);
-	wake_up_पूर्णांकerruptible(&orangefs_request_list_रुकोq);
-	अगर (!__is_daemon_in_service()) अणु
+	wake_up_interruptible(&orangefs_request_list_waitq);
+	if (!__is_daemon_in_service()) {
 		gossip_debug(GOSSIP_WAIT_DEBUG,
 			     "%s:client core is NOT in service.\n",
 			     __func__);
 		/*
-		 * Don't रुको क्रम the userspace component to वापस अगर
-		 * the fileप्रणाली is being umounted anyway.
+		 * Don't wait for the userspace component to return if
+		 * the filesystem is being umounted anyway.
 		 */
-		अगर (op->upcall.type == ORANGEFS_VFS_OP_FS_UMOUNT)
-			समयout = 0;
-		अन्यथा
-			समयout = op_समयout_secs * HZ;
-	पूर्ण
+		if (op->upcall.type == ORANGEFS_VFS_OP_FS_UMOUNT)
+			timeout = 0;
+		else
+			timeout = op_timeout_secs * HZ;
+	}
 	spin_unlock(&orangefs_request_list_lock);
 
-	अगर (!(flags & ORANGEFS_OP_NO_MUTEX))
+	if (!(flags & ORANGEFS_OP_NO_MUTEX))
 		mutex_unlock(&orangefs_request_mutex);
 
-	ret = रुको_क्रम_matching_करोwncall(op, समयout, flags);
+	ret = wait_for_matching_downcall(op, timeout, flags);
 	gossip_debug(GOSSIP_WAIT_DEBUG,
 		     "%s: wait_for_matching_downcall returned %d for %p\n",
 		     __func__,
 		     ret,
 		     op);
 
-	/* got matching करोwncall; make sure status is in त्रुटि_सं क्रमmat */
-	अगर (!ret) अणु
+	/* got matching downcall; make sure status is in errno format */
+	if (!ret) {
 		spin_unlock(&op->lock);
-		op->करोwncall.status =
-		    orangefs_normalize_to_त्रुटि_सं(op->करोwncall.status);
-		ret = op->करोwncall.status;
-		जाओ out;
-	पूर्ण
+		op->downcall.status =
+		    orangefs_normalize_to_errno(op->downcall.status);
+		ret = op->downcall.status;
+		goto out;
+	}
 
-	/* failed to get matching करोwncall */
-	अगर (ret == -ETIMEDOUT) अणु
+	/* failed to get matching downcall */
+	if (ret == -ETIMEDOUT) {
 		gossip_err("%s: %s -- wait timed out; aborting attempt.\n",
 			   __func__,
 			   op_name);
-	पूर्ण
+	}
 
 	/*
-	 * हटाओ a रुकोing op from the request list or
-	 * हटाओ an in-progress op from the in-progress list.
+	 * remove a waiting op from the request list or
+	 * remove an in-progress op from the in-progress list.
 	 */
-	orangefs_clean_up_पूर्णांकerrupted_operation(op);
+	orangefs_clean_up_interrupted_operation(op);
 
-	op->करोwncall.status = ret;
-	/* retry अगर operation has not been serviced and अगर requested */
-	अगर (ret == -EAGAIN) अणु
+	op->downcall.status = ret;
+	/* retry if operation has not been serviced and if requested */
+	if (ret == -EAGAIN) {
 		op->attempts++;
-		समयout = op_समयout_secs * HZ;
+		timeout = op_timeout_secs * HZ;
 		gossip_debug(GOSSIP_WAIT_DEBUG,
 			     "orangefs: tag %llu (%s)"
 			     " -- operation to be retried (%d attempt)\n",
@@ -187,12 +186,12 @@ retry_servicing:
 
 		/*
 		 * io ops (ops that use the shared memory buffer) have
-		 * to be वापसed to their caller क्रम a retry. Other ops
+		 * to be returned to their caller for a retry. Other ops
 		 * can just be recycled here.
 		 */
-		अगर (!op->uses_shared_memory)
-			जाओ retry_servicing;
-	पूर्ण
+		if (!op->uses_shared_memory)
+			goto retry_servicing;
+	}
 
 out:
 	gossip_debug(GOSSIP_WAIT_DEBUG,
@@ -201,33 +200,33 @@ out:
 		     op_name,
 		     ret,
 		     op);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* This can get called on an I/O op अगर it had a bad service_operation. */
-bool orangefs_cancel_op_in_progress(काष्ठा orangefs_kernel_op_s *op)
-अणु
+/* This can get called on an I/O op if it had a bad service_operation. */
+bool orangefs_cancel_op_in_progress(struct orangefs_kernel_op_s *op)
+{
 	u64 tag = op->tag;
-	अगर (!op_state_in_progress(op))
-		वापस false;
+	if (!op_state_in_progress(op))
+		return false;
 
-	op->slot_to_मुक्त = op->upcall.req.io.buf_index;
-	स_रखो(&op->upcall, 0, माप(op->upcall));
-	स_रखो(&op->करोwncall, 0, माप(op->करोwncall));
+	op->slot_to_free = op->upcall.req.io.buf_index;
+	memset(&op->upcall, 0, sizeof(op->upcall));
+	memset(&op->downcall, 0, sizeof(op->downcall));
 	op->upcall.type = ORANGEFS_VFS_OP_CANCEL;
 	op->upcall.req.cancel.op_tag = tag;
-	op->करोwncall.type = ORANGEFS_VFS_OP_INVALID;
-	op->करोwncall.status = -1;
+	op->downcall.type = ORANGEFS_VFS_OP_INVALID;
+	op->downcall.status = -1;
 	orangefs_new_tag(op);
 
 	spin_lock(&orangefs_request_list_lock);
 	/* orangefs_request_list_lock is enough of a barrier here */
-	अगर (!__is_daemon_in_service()) अणु
+	if (!__is_daemon_in_service()) {
 		spin_unlock(&orangefs_request_list_lock);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 	spin_lock(&op->lock);
-	set_op_state_रुकोing(op);
+	set_op_state_waiting(op);
 	gossip_debug(GOSSIP_DEV_DEBUG,
 		     "%s: op:%s: op_state:%d: process:%s:\n",
 		     __func__,
@@ -241,37 +240,37 @@ bool orangefs_cancel_op_in_progress(काष्ठा orangefs_kernel_op_s *op)
 	gossip_debug(GOSSIP_WAIT_DEBUG,
 		     "Attempting ORANGEFS operation cancellation of tag %llu\n",
 		     llu(tag));
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * Change an op to the "given up" state and हटाओ it from its list.
+ * Change an op to the "given up" state and remove it from its list.
  */
-अटल व्योम
-	orangefs_clean_up_पूर्णांकerrupted_operation(काष्ठा orangefs_kernel_op_s *op)
+static void
+	orangefs_clean_up_interrupted_operation(struct orangefs_kernel_op_s *op)
 		__releases(op->lock)
-अणु
+{
 	/*
-	 * handle पूर्णांकerrupted हालs depending on what state we were in when
-	 * the पूर्णांकerruption is detected.
+	 * handle interrupted cases depending on what state we were in when
+	 * the interruption is detected.
 	 *
 	 * Called with op->lock held.
 	 */
 
 	/*
-	 * List manipulation code अन्यथाwhere will ignore ops that
+	 * List manipulation code elsewhere will ignore ops that
 	 * have been given up upon.
 	 */
 	op->op_state |= OP_VFS_STATE_GIVEN_UP;
 
-	अगर (list_empty(&op->list)) अणु
+	if (list_empty(&op->list)) {
 		/* caught copying to/from daemon */
 		BUG_ON(op_state_serviced(op));
 		spin_unlock(&op->lock);
-		रुको_क्रम_completion(&op->रुकोq);
-	पूर्ण अन्यथा अगर (op_state_रुकोing(op)) अणु
+		wait_for_completion(&op->waitq);
+	} else if (op_state_waiting(op)) {
 		/*
-		 * upcall hasn't been पढ़ो; हटाओ op from upcall request
+		 * upcall hasn't been read; remove op from upcall request
 		 * list.
 		 */
 		spin_unlock(&op->lock);
@@ -281,8 +280,8 @@ bool orangefs_cancel_op_in_progress(काष्ठा orangefs_kernel_op_s *op)
 		gossip_debug(GOSSIP_WAIT_DEBUG,
 			     "Interrupted: Removed op %p from request_list\n",
 			     op);
-	पूर्ण अन्यथा अगर (op_state_in_progress(op)) अणु
-		/* op must be हटाओd from the in progress htable */
+	} else if (op_state_in_progress(op)) {
+		/* op must be removed from the in progress htable */
 		spin_unlock(&op->lock);
 		spin_lock(&orangefs_htable_ops_in_progress_lock);
 		list_del_init(&op->list);
@@ -291,84 +290,84 @@ bool orangefs_cancel_op_in_progress(काष्ठा orangefs_kernel_op_s *op)
 			     "Interrupted: Removed op %p"
 			     " from htable_ops_in_progress\n",
 			     op);
-	पूर्ण अन्यथा अणु
+	} else {
 		spin_unlock(&op->lock);
 		gossip_err("interrupted operation is in a weird state 0x%x\n",
 			   op->op_state);
-	पूर्ण
-	reinit_completion(&op->रुकोq);
-पूर्ण
+	}
+	reinit_completion(&op->waitq);
+}
 
 /*
- * Sleeps on रुकोqueue रुकोing क्रम matching करोwncall.
+ * Sleeps on waitqueue waiting for matching downcall.
  * If client-core finishes servicing, then we are good to go.
- * अन्यथा अगर client-core निकासs, we get woken up here, and retry with a समयout
+ * else if client-core exits, we get woken up here, and retry with a timeout
  *
- * When this call वापसs to the caller, the specअगरied op will no
- * दीर्घer be in either the in_progress hash table or on the request list.
+ * When this call returns to the caller, the specified op will no
+ * longer be in either the in_progress hash table or on the request list.
  *
- * Returns 0 on success and -त्रुटि_सं on failure
+ * Returns 0 on success and -errno on failure
  * Errors are:
- * EAGAIN in हाल we want the caller to requeue and try again..
- * EINTR/EIO/ETIMEDOUT indicating we are करोne trying to service this
- * operation since client-core seems to be निकासing too often
- * or अगर we were पूर्णांकerrupted.
+ * EAGAIN in case we want the caller to requeue and try again..
+ * EINTR/EIO/ETIMEDOUT indicating we are done trying to service this
+ * operation since client-core seems to be exiting too often
+ * or if we were interrupted.
  *
  * Returns with op->lock taken.
  */
-अटल पूर्णांक रुको_क्रम_matching_करोwncall(काष्ठा orangefs_kernel_op_s *op,
-		दीर्घ समयout,
-		पूर्णांक flags)
+static int wait_for_matching_downcall(struct orangefs_kernel_op_s *op,
+		long timeout,
+		int flags)
 			__acquires(op->lock)
-अणु
-	दीर्घ n;
-	पूर्णांक ग_लिखोback = flags & ORANGEFS_OP_WRITEBACK,
-	    पूर्णांकerruptible = flags & ORANGEFS_OP_INTERRUPTIBLE;
+{
+	long n;
+	int writeback = flags & ORANGEFS_OP_WRITEBACK,
+	    interruptible = flags & ORANGEFS_OP_INTERRUPTIBLE;
 
 	/*
-	 * There's a "schedule_timeout" inside of these रुको
+	 * There's a "schedule_timeout" inside of these wait
 	 * primitives, during which the op is out of the hands of the
-	 * user process that needs something करोne and is being
+	 * user process that needs something done and is being
 	 * manipulated by the client-core process.
 	 */
-	अगर (ग_लिखोback)
-		n = रुको_क्रम_completion_io_समयout(&op->रुकोq, समयout);
-	अन्यथा अगर (!ग_लिखोback && पूर्णांकerruptible)
-		n = रुको_क्रम_completion_पूर्णांकerruptible_समयout(&op->रुकोq,
-								      समयout);
-	अन्यथा /* !ग_लिखोback && !पूर्णांकerruptible but compiler complains */
-		n = रुको_क्रम_completion_समाप्तable_समयout(&op->रुकोq, समयout);
+	if (writeback)
+		n = wait_for_completion_io_timeout(&op->waitq, timeout);
+	else if (!writeback && interruptible)
+		n = wait_for_completion_interruptible_timeout(&op->waitq,
+								      timeout);
+	else /* !writeback && !interruptible but compiler complains */
+		n = wait_for_completion_killable_timeout(&op->waitq, timeout);
 
 	spin_lock(&op->lock);
 
-	अगर (op_state_serviced(op))
-		वापस 0;
+	if (op_state_serviced(op))
+		return 0;
 
-	अगर (unlikely(n < 0)) अणु
+	if (unlikely(n < 0)) {
 		gossip_debug(GOSSIP_WAIT_DEBUG,
 			     "%s: operation interrupted, tag %llu, %p\n",
 			     __func__,
 			     llu(op->tag),
 			     op);
-		वापस -EINTR;
-	पूर्ण
-	अगर (op_state_purged(op)) अणु
+		return -EINTR;
+	}
+	if (op_state_purged(op)) {
 		gossip_debug(GOSSIP_WAIT_DEBUG,
 			     "%s: operation purged, tag %llu, %p, %d\n",
 			     __func__,
 			     llu(op->tag),
 			     op,
 			     op->attempts);
-		वापस (op->attempts < ORANGEFS_PURGE_RETRY_COUNT) ?
+		return (op->attempts < ORANGEFS_PURGE_RETRY_COUNT) ?
 			 -EAGAIN :
 			 -EIO;
-	पूर्ण
-	/* must have समयd out, then... */
+	}
+	/* must have timed out, then... */
 	gossip_debug(GOSSIP_WAIT_DEBUG,
 		     "%s: operation timed out, tag %llu, %p, %d)\n",
 		     __func__,
 		     llu(op->tag),
 		     op,
 		     op->attempts);
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}

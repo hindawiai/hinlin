@@ -1,141 +1,140 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * SMC 37C93X initialization code
  */
 
-#समावेश <linux/kernel.h>
+#include <linux/kernel.h>
 
-#समावेश <linux/mm.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
+#include <linux/mm.h>
+#include <linux/init.h>
+#include <linux/delay.h>
 
-#समावेश <यंत्र/hwrpb.h>
-#समावेश <यंत्र/पन.स>
+#include <asm/hwrpb.h>
+#include <asm/io.h>
 
-#घोषणा SMC_DEBUG 0
+#define SMC_DEBUG 0
 
-#अगर SMC_DEBUG
-# define DBG_DEVS(args)         prपूर्णांकk args
-#अन्यथा
+#if SMC_DEBUG
+# define DBG_DEVS(args)         printk args
+#else
 # define DBG_DEVS(args)
-#पूर्ण_अगर
+#endif
 
-#घोषणा KB              1024
-#घोषणा MB              (1024*KB)
-#घोषणा GB              (1024*MB)
+#define KB              1024
+#define MB              (1024*KB)
+#define GB              (1024*MB)
 
-/* device "activate" रेजिस्टर contents */
-#घोषणा DEVICE_ON		1
-#घोषणा DEVICE_OFF		0
+/* device "activate" register contents */
+#define DEVICE_ON		1
+#define DEVICE_OFF		0
 
 /* configuration on/off keys */
-#घोषणा CONFIG_ON_KEY		0x55
-#घोषणा CONFIG_OFF_KEY		0xaa
+#define CONFIG_ON_KEY		0x55
+#define CONFIG_OFF_KEY		0xaa
 
 /* configuration space device definitions */
-#घोषणा FDC			0
-#घोषणा IDE1			1
-#घोषणा IDE2			2
-#घोषणा PARP			3
-#घोषणा SER1			4
-#घोषणा SER2			5
-#घोषणा RTCL			6
-#घोषणा KYBD			7
-#घोषणा AUXIO			8
+#define FDC			0
+#define IDE1			1
+#define IDE2			2
+#define PARP			3
+#define SER1			4
+#define SER2			5
+#define RTCL			6
+#define KYBD			7
+#define AUXIO			8
 
-/* Chip रेजिस्टर offsets from base */
-#घोषणा CONFIG_CONTROL		0x02
-#घोषणा INDEX_ADDRESS		0x03
-#घोषणा LOGICAL_DEVICE_NUMBER	0x07
-#घोषणा DEVICE_ID		0x20
-#घोषणा DEVICE_REV		0x21
-#घोषणा POWER_CONTROL		0x22
-#घोषणा POWER_MGMT		0x23
-#घोषणा OSC			0x24
+/* Chip register offsets from base */
+#define CONFIG_CONTROL		0x02
+#define INDEX_ADDRESS		0x03
+#define LOGICAL_DEVICE_NUMBER	0x07
+#define DEVICE_ID		0x20
+#define DEVICE_REV		0x21
+#define POWER_CONTROL		0x22
+#define POWER_MGMT		0x23
+#define OSC			0x24
 
-#घोषणा ACTIVATE		0x30
-#घोषणा ADDR_HI			0x60
-#घोषणा ADDR_LO			0x61
-#घोषणा INTERRUPT_SEL		0x70
-#घोषणा INTERRUPT_SEL_2		0x72 /* KYBD/MOUS only */
-#घोषणा DMA_CHANNEL_SEL		0x74 /* FDC/PARP only */
+#define ACTIVATE		0x30
+#define ADDR_HI			0x60
+#define ADDR_LO			0x61
+#define INTERRUPT_SEL		0x70
+#define INTERRUPT_SEL_2		0x72 /* KYBD/MOUS only */
+#define DMA_CHANNEL_SEL		0x74 /* FDC/PARP only */
 
-#घोषणा FDD_MODE_REGISTER	0x90
-#घोषणा FDD_OPTION_REGISTER	0x91
+#define FDD_MODE_REGISTER	0x90
+#define FDD_OPTION_REGISTER	0x91
 
-/* values that we पढ़ो back that are expected ... */
-#घोषणा VALID_DEVICE_ID		2
+/* values that we read back that are expected ... */
+#define VALID_DEVICE_ID		2
 
-/* शेष device addresses */
-#घोषणा KYBD_INTERRUPT		1
-#घोषणा MOUS_INTERRUPT		12
-#घोषणा COM2_BASE		0x2f8
-#घोषणा COM2_INTERRUPT		3
-#घोषणा COM1_BASE		0x3f8
-#घोषणा COM1_INTERRUPT		4
-#घोषणा PARP_BASE		0x3bc
-#घोषणा PARP_INTERRUPT		7
+/* default device addresses */
+#define KYBD_INTERRUPT		1
+#define MOUS_INTERRUPT		12
+#define COM2_BASE		0x2f8
+#define COM2_INTERRUPT		3
+#define COM1_BASE		0x3f8
+#define COM1_INTERRUPT		4
+#define PARP_BASE		0x3bc
+#define PARP_INTERRUPT		7
 
-अटल अचिन्हित दीर्घ __init SMCConfigState(अचिन्हित दीर्घ baseAddr)
-अणु
-	अचिन्हित अक्षर devId;
+static unsigned long __init SMCConfigState(unsigned long baseAddr)
+{
+	unsigned char devId;
 
-	अचिन्हित दीर्घ configPort;
-	अचिन्हित दीर्घ indexPort;
-	अचिन्हित दीर्घ dataPort;
+	unsigned long configPort;
+	unsigned long indexPort;
+	unsigned long dataPort;
 
-	पूर्णांक i;
+	int i;
 
 	configPort = indexPort = baseAddr;
 	dataPort = configPort + 1;
 
-#घोषणा NUM_RETRIES 5
+#define NUM_RETRIES 5
 
-	क्रम (i = 0; i < NUM_RETRIES; i++)
-	अणु
+	for (i = 0; i < NUM_RETRIES; i++)
+	{
 		outb(CONFIG_ON_KEY, configPort);
 		outb(CONFIG_ON_KEY, configPort);
 		outb(DEVICE_ID, indexPort);
 		devId = inb(dataPort);
-		अगर (devId == VALID_DEVICE_ID) अणु
+		if (devId == VALID_DEVICE_ID) {
 			outb(DEVICE_REV, indexPort);
-			/* अचिन्हित अक्षर devRev = */ inb(dataPort);
-			अवरोध;
-		पूर्ण
-		अन्यथा
+			/* unsigned char devRev = */ inb(dataPort);
+			break;
+		}
+		else
 			udelay(100);
-	पूर्ण
-	वापस (i != NUM_RETRIES) ? baseAddr : 0L;
-पूर्ण
+	}
+	return (i != NUM_RETRIES) ? baseAddr : 0L;
+}
 
-अटल व्योम __init SMCRunState(अचिन्हित दीर्घ baseAddr)
-अणु
+static void __init SMCRunState(unsigned long baseAddr)
+{
 	outb(CONFIG_OFF_KEY, baseAddr);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ __init SMCDetectUltraIO(व्योम)
-अणु
-	अचिन्हित दीर्घ baseAddr;
+static unsigned long __init SMCDetectUltraIO(void)
+{
+	unsigned long baseAddr;
 
 	baseAddr = 0x3F0;
-	अगर ( ( baseAddr = SMCConfigState( baseAddr ) ) == 0x3F0 ) अणु
-		वापस( baseAddr );
-	पूर्ण
+	if ( ( baseAddr = SMCConfigState( baseAddr ) ) == 0x3F0 ) {
+		return( baseAddr );
+	}
 	baseAddr = 0x370;
-	अगर ( ( baseAddr = SMCConfigState( baseAddr ) ) == 0x370 ) अणु
-		वापस( baseAddr );
-	पूर्ण
-	वापस( ( अचिन्हित दीर्घ )0 );
-पूर्ण
+	if ( ( baseAddr = SMCConfigState( baseAddr ) ) == 0x370 ) {
+		return( baseAddr );
+	}
+	return( ( unsigned long )0 );
+}
 
-अटल व्योम __init SMCEnableDevice(अचिन्हित दीर्घ baseAddr,
-			    अचिन्हित दीर्घ device,
-			    अचिन्हित दीर्घ portaddr,
-			    अचिन्हित दीर्घ पूर्णांकerrupt)
-अणु
-	अचिन्हित दीर्घ indexPort;
-	अचिन्हित दीर्घ dataPort;
+static void __init SMCEnableDevice(unsigned long baseAddr,
+			    unsigned long device,
+			    unsigned long portaddr,
+			    unsigned long interrupt)
+{
+	unsigned long indexPort;
+	unsigned long dataPort;
 
 	indexPort = baseAddr;
 	dataPort = baseAddr + 1;
@@ -150,16 +149,16 @@
 	outb((portaddr >> 8) & 0xFF, dataPort);
 
 	outb(INTERRUPT_SEL, indexPort);
-	outb(पूर्णांकerrupt, dataPort);
+	outb(interrupt, dataPort);
 
 	outb(ACTIVATE, indexPort);
 	outb(DEVICE_ON, dataPort);
-पूर्ण
+}
 
-अटल व्योम __init SMCEnableKYBD(अचिन्हित दीर्घ baseAddr)
-अणु
-	अचिन्हित दीर्घ indexPort;
-	अचिन्हित दीर्घ dataPort;
+static void __init SMCEnableKYBD(unsigned long baseAddr)
+{
+	unsigned long indexPort;
+	unsigned long dataPort;
 
 	indexPort = baseAddr;
 	dataPort = baseAddr + 1;
@@ -167,22 +166,22 @@
 	outb(LOGICAL_DEVICE_NUMBER, indexPort);
 	outb(KYBD, dataPort);
 
-	outb(INTERRUPT_SEL, indexPort); /* Primary पूर्णांकerrupt select */
+	outb(INTERRUPT_SEL, indexPort); /* Primary interrupt select */
 	outb(KYBD_INTERRUPT, dataPort);
 
-	outb(INTERRUPT_SEL_2, indexPort); /* Secondary पूर्णांकerrupt select */
+	outb(INTERRUPT_SEL_2, indexPort); /* Secondary interrupt select */
 	outb(MOUS_INTERRUPT, dataPort);
 
 	outb(ACTIVATE, indexPort);
 	outb(DEVICE_ON, dataPort);
-पूर्ण
+}
 
-अटल व्योम __init SMCEnableFDC(अचिन्हित दीर्घ baseAddr)
-अणु
-	अचिन्हित दीर्घ indexPort;
-	अचिन्हित दीर्घ dataPort;
+static void __init SMCEnableFDC(unsigned long baseAddr)
+{
+	unsigned long indexPort;
+	unsigned long dataPort;
 
-	अचिन्हित अक्षर oldValue;
+	unsigned char oldValue;
 
 	indexPort = baseAddr;
 	dataPort = baseAddr + 1;
@@ -196,7 +195,7 @@
 	oldValue |= 0x0E;                   /* Enable burst mode */
 	outb(oldValue, dataPort);
 
-	outb(INTERRUPT_SEL, indexPort);	    /* Primary पूर्णांकerrupt select */
+	outb(INTERRUPT_SEL, indexPort);	    /* Primary interrupt select */
 	outb(0x06, dataPort );
 
 	outb(DMA_CHANNEL_SEL, indexPort);   /* DMA channel select */
@@ -204,14 +203,14 @@
 
 	outb(ACTIVATE, indexPort);
 	outb(DEVICE_ON, dataPort);
-पूर्ण
+}
 
-#अगर SMC_DEBUG
-अटल व्योम __init SMCReportDeviceStatus(अचिन्हित दीर्घ baseAddr)
-अणु
-	अचिन्हित दीर्घ indexPort;
-	अचिन्हित दीर्घ dataPort;
-	अचिन्हित अक्षर currentControl;
+#if SMC_DEBUG
+static void __init SMCReportDeviceStatus(unsigned long baseAddr)
+{
+	unsigned long indexPort;
+	unsigned long dataPort;
+	unsigned char currentControl;
 
 	indexPort = baseAddr;
 	dataPort = baseAddr + 1;
@@ -219,33 +218,33 @@
 	outb(POWER_CONTROL, indexPort);
 	currentControl = inb(dataPort);
 
-	prपूर्णांकk(currentControl & (1 << FDC)
+	printk(currentControl & (1 << FDC)
 	       ? "\t+FDC Enabled\n" : "\t-FDC Disabled\n");
-	prपूर्णांकk(currentControl & (1 << IDE1)
+	printk(currentControl & (1 << IDE1)
 	       ? "\t+IDE1 Enabled\n" : "\t-IDE1 Disabled\n");
-	prपूर्णांकk(currentControl & (1 << IDE2)
+	printk(currentControl & (1 << IDE2)
 	       ? "\t+IDE2 Enabled\n" : "\t-IDE2 Disabled\n");
-	prपूर्णांकk(currentControl & (1 << PARP)
+	printk(currentControl & (1 << PARP)
 	       ? "\t+PARP Enabled\n" : "\t-PARP Disabled\n");
-	prपूर्णांकk(currentControl & (1 << SER1)
+	printk(currentControl & (1 << SER1)
 	       ? "\t+SER1 Enabled\n" : "\t-SER1 Disabled\n");
-	prपूर्णांकk(currentControl & (1 << SER2)
+	printk(currentControl & (1 << SER2)
 	       ? "\t+SER2 Enabled\n" : "\t-SER2 Disabled\n");
 
-	prपूर्णांकk( "\n" );
-पूर्ण
-#पूर्ण_अगर
+	printk( "\n" );
+}
+#endif
 
-पूर्णांक __init SMC93x_Init(व्योम)
-अणु
-	अचिन्हित दीर्घ SMCUltraBase;
-	अचिन्हित दीर्घ flags;
+int __init SMC93x_Init(void)
+{
+	unsigned long SMCUltraBase;
+	unsigned long flags;
 
 	local_irq_save(flags);
-	अगर ((SMCUltraBase = SMCDetectUltraIO()) != 0UL) अणु
-#अगर SMC_DEBUG
+	if ((SMCUltraBase = SMCDetectUltraIO()) != 0UL) {
+#if SMC_DEBUG
 		SMCReportDeviceStatus(SMCUltraBase);
-#पूर्ण_अगर
+#endif
 		SMCEnableDevice(SMCUltraBase, SER1, COM1_BASE, COM1_INTERRUPT);
 		DBG_DEVS(("SMC FDC37C93X: SER1 done\n"));
 		SMCEnableDevice(SMCUltraBase, SER2, COM2_BASE, COM2_INTERRUPT);
@@ -258,18 +257,18 @@
 		DBG_DEVS(("SMC FDC37C93X: KYB done\n"));
 		SMCEnableFDC(SMCUltraBase);
 		DBG_DEVS(("SMC FDC37C93X: FDC done\n"));
-#अगर SMC_DEBUG
+#if SMC_DEBUG
 		SMCReportDeviceStatus(SMCUltraBase);
-#पूर्ण_अगर
+#endif
 		SMCRunState(SMCUltraBase);
 		local_irq_restore(flags);
-		prपूर्णांकk("SMC FDC37C93X Ultra I/O Controller found @ 0x%lx\n",
+		printk("SMC FDC37C93X Ultra I/O Controller found @ 0x%lx\n",
 		       SMCUltraBase);
-		वापस 1;
-	पूर्ण
-	अन्यथा अणु
+		return 1;
+	}
+	else {
 		local_irq_restore(flags);
 		DBG_DEVS(("No SMC FDC37C93X Ultra I/O Controller found\n"));
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}

@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-/* ASN.1 Object identअगरier (OID) registry
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+/* ASN.1 Object identifier (OID) registry
  *
  * Copyright (C) 2012 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#अगर_अघोषित _LINUX_OID_REGISTRY_H
-#घोषणा _LINUX_OID_REGISTRY_H
+#ifndef _LINUX_OID_REGISTRY_H
+#define _LINUX_OID_REGISTRY_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
 /*
- * OIDs are turned पूर्णांकo these values अगर possible, or OID__NR अगर not held here.
+ * OIDs are turned into these values if possible, or OID__NR if not held here.
  *
- * NOTE!  Do not mess with the क्रमmat of each line as this is पढ़ो by
- *	  build_OID_registry.pl to generate the data क्रम look_up_OID().
+ * NOTE!  Do not mess with the format of each line as this is read by
+ *	  build_OID_registry.pl to generate the data for look_up_OID().
  */
-क्रमागत OID अणु
+enum OID {
 	OID_id_dsa_with_sha1,		/* 1.2.840.10030.4.3 */
 	OID_id_dsa,			/* 1.2.840.10040.4.1 */
 	OID_id_ecPublicKey,		/* 1.2.840.10045.2.1 */
@@ -29,7 +28,7 @@
 	OID_id_ecdsa_with_sha384,	/* 1.2.840.10045.4.3.3 */
 	OID_id_ecdsa_with_sha512,	/* 1.2.840.10045.4.3.4 */
 
-	/* PKCS#1 अणुiso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-1(1)पूर्ण */
+	/* PKCS#1 {iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-1(1)} */
 	OID_rsaEncryption,		/* 1.2.840.113549.1.1.1 */
 	OID_md2WithRSAEncryption,	/* 1.2.840.113549.1.1.2 */
 	OID_md3WithRSAEncryption,	/* 1.2.840.113549.1.1.3 */
@@ -39,10 +38,10 @@
 	OID_sha384WithRSAEncryption,	/* 1.2.840.113549.1.1.12 */
 	OID_sha512WithRSAEncryption,	/* 1.2.840.113549.1.1.13 */
 	OID_sha224WithRSAEncryption,	/* 1.2.840.113549.1.1.14 */
-	/* PKCS#7 अणुiso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-7(7)पूर्ण */
+	/* PKCS#7 {iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-7(7)} */
 	OID_data,			/* 1.2.840.113549.1.7.1 */
-	OID_चिन्हित_data,		/* 1.2.840.113549.1.7.2 */
-	/* PKCS#9 अणुiso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-9(9)पूर्ण */
+	OID_signed_data,		/* 1.2.840.113549.1.7.2 */
+	/* PKCS#9 {iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-9(9)} */
 	OID_email_address,		/* 1.2.840.113549.1.9.1 */
 	OID_contentType,		/* 1.2.840.113549.1.9.3 */
 	OID_messageDigest,		/* 1.2.840.113549.1.9.4 */
@@ -50,7 +49,7 @@
 	OID_smimeCapabilites,		/* 1.2.840.113549.1.9.15 */
 	OID_smimeAuthenticatedAttrs,	/* 1.2.840.113549.1.9.16.2.11 */
 
-	/* अणुiso(1) member-body(2) us(840) rsadsi(113549) digestAlgorithm(2)पूर्ण */
+	/* {iso(1) member-body(2) us(840) rsadsi(113549) digestAlgorithm(2)} */
 	OID_md2,			/* 1.2.840.113549.2.2 */
 	OID_md4,			/* 1.2.840.113549.2.4 */
 	OID_md5,			/* 1.2.840.113549.2.5 */
@@ -60,7 +59,7 @@
 	OID_msStatementType,		/* 1.3.6.1.4.1.311.2.1.11 */
 	OID_msSpOpusInfo,		/* 1.3.6.1.4.1.311.2.1.12 */
 	OID_msPeImageDataObjId,		/* 1.3.6.1.4.1.311.2.1.15 */
-	OID_msInभागidualSPKeyPurpose,	/* 1.3.6.1.4.1.311.2.1.21 */
+	OID_msIndividualSPKeyPurpose,	/* 1.3.6.1.4.1.311.2.1.21 */
 	OID_msOutlookExpress,		/* 1.3.6.1.4.1.311.16.4 */
 
 	OID_certAuthInfoAccess,		/* 1.3.6.1.5.5.7.1.1 */
@@ -84,17 +83,17 @@
 	OID_name,			/* 2.5.4.41 */
 	OID_givenName,			/* 2.5.4.42 */
 	OID_initials,			/* 2.5.4.43 */
-	OID_generationalQualअगरier,	/* 2.5.4.44 */
+	OID_generationalQualifier,	/* 2.5.4.44 */
 
-	/* Certअगरicate extension IDs */
-	OID_subjectKeyIdentअगरier,	/* 2.5.29.14 */
+	/* Certificate extension IDs */
+	OID_subjectKeyIdentifier,	/* 2.5.29.14 */
 	OID_keyUsage,			/* 2.5.29.15 */
 	OID_subjectAltName,		/* 2.5.29.17 */
 	OID_issuerAltName,		/* 2.5.29.18 */
-	OID_basicConstraपूर्णांकs,		/* 2.5.29.19 */
-	OID_crlDistributionPoपूर्णांकs,	/* 2.5.29.31 */
+	OID_basicConstraints,		/* 2.5.29.19 */
+	OID_crlDistributionPoints,	/* 2.5.29.31 */
 	OID_certPolicies,		/* 2.5.29.32 */
-	OID_authorityKeyIdentअगरier,	/* 2.5.29.35 */
+	OID_authorityKeyIdentifier,	/* 2.5.29.35 */
 	OID_extKeyUsage,		/* 2.5.29.37 */
 
 	/* EC-RDSA */
@@ -121,17 +120,17 @@
 	OID_SM2_with_SM3,		/* 1.2.156.10197.1.501 */
 	OID_sm3WithRSAEncryption,	/* 1.2.156.10197.1.504 */
 
-	/* TCG defined OIDS क्रम TPM based keys */
+	/* TCG defined OIDS for TPM based keys */
 	OID_TPMLoadableKey,		/* 2.23.133.10.1.3 */
 	OID_TPMImportableKey,		/* 2.23.133.10.1.4 */
 	OID_TPMSealedData,		/* 2.23.133.10.1.5 */
 
 	OID__NR
-पूर्ण;
+};
 
-बाह्य क्रमागत OID look_up_OID(स्थिर व्योम *data, माप_प्रकार datasize);
-बाह्य पूर्णांक parse_OID(स्थिर व्योम *data, माप_प्रकार datasize, क्रमागत OID *oid);
-बाह्य पूर्णांक sprपूर्णांक_oid(स्थिर व्योम *, माप_प्रकार, अक्षर *, माप_प्रकार);
-बाह्य पूर्णांक sprपूर्णांक_OID(क्रमागत OID, अक्षर *, माप_प्रकार);
+extern enum OID look_up_OID(const void *data, size_t datasize);
+extern int parse_OID(const void *data, size_t datasize, enum OID *oid);
+extern int sprint_oid(const void *, size_t, char *, size_t);
+extern int sprint_OID(enum OID, char *, size_t);
 
-#पूर्ण_अगर /* _LINUX_OID_REGISTRY_H */
+#endif /* _LINUX_OID_REGISTRY_H */

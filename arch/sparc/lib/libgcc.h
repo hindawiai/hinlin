@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_LIBGCC_H
-#घोषणा __ASM_LIBGCC_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_LIBGCC_H
+#define __ASM_LIBGCC_H
 
-#समावेश <यंत्र/byteorder.h>
+#include <asm/byteorder.h>
 
-प्रकार पूर्णांक word_type __attribute__ ((mode (__word__)));
+typedef int word_type __attribute__ ((mode (__word__)));
 
-काष्ठा DWकाष्ठा अणु
-	पूर्णांक high, low;
-पूर्ण;
+struct DWstruct {
+	int high, low;
+};
 
-प्रकार जोड़
-अणु
-	काष्ठा DWकाष्ठा s;
-	दीर्घ दीर्घ ll;
-पूर्ण DWजोड़;
+typedef union
+{
+	struct DWstruct s;
+	long long ll;
+} DWunion;
 
-#पूर्ण_अगर /* __ASM_LIBGCC_H */
+#endif /* __ASM_LIBGCC_H */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * ADXL345/346 Three-Axis Digital Accelerometers
  *
@@ -8,220 +7,220 @@
  * Copyright (C) 2009 Michael Hennerich, Analog Devices Inc.
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/input.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/input/adxl34x.h>
-#समावेश <linux/module.h>
+#include <linux/device.h>
+#include <linux/delay.h>
+#include <linux/input.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/slab.h>
+#include <linux/workqueue.h>
+#include <linux/input/adxl34x.h>
+#include <linux/module.h>
 
-#समावेश "adxl34x.h"
+#include "adxl34x.h"
 
 /* ADXL345/6 Register Map */
-#घोषणा DEVID		0x00	/* R   Device ID */
-#घोषणा THRESH_TAP	0x1D	/* R/W Tap threshold */
-#घोषणा OFSX		0x1E	/* R/W X-axis offset */
-#घोषणा OFSY		0x1F	/* R/W Y-axis offset */
-#घोषणा OFSZ		0x20	/* R/W Z-axis offset */
-#घोषणा DUR		0x21	/* R/W Tap duration */
-#घोषणा LATENT		0x22	/* R/W Tap latency */
-#घोषणा WINDOW		0x23	/* R/W Tap winकरोw */
-#घोषणा THRESH_ACT	0x24	/* R/W Activity threshold */
-#घोषणा THRESH_INACT	0x25	/* R/W Inactivity threshold */
-#घोषणा TIME_INACT	0x26	/* R/W Inactivity समय */
-#घोषणा ACT_INACT_CTL	0x27	/* R/W Axis enable control क्रम activity and */
+#define DEVID		0x00	/* R   Device ID */
+#define THRESH_TAP	0x1D	/* R/W Tap threshold */
+#define OFSX		0x1E	/* R/W X-axis offset */
+#define OFSY		0x1F	/* R/W Y-axis offset */
+#define OFSZ		0x20	/* R/W Z-axis offset */
+#define DUR		0x21	/* R/W Tap duration */
+#define LATENT		0x22	/* R/W Tap latency */
+#define WINDOW		0x23	/* R/W Tap window */
+#define THRESH_ACT	0x24	/* R/W Activity threshold */
+#define THRESH_INACT	0x25	/* R/W Inactivity threshold */
+#define TIME_INACT	0x26	/* R/W Inactivity time */
+#define ACT_INACT_CTL	0x27	/* R/W Axis enable control for activity and */
 				/* inactivity detection */
-#घोषणा THRESH_FF	0x28	/* R/W Free-fall threshold */
-#घोषणा TIME_FF		0x29	/* R/W Free-fall समय */
-#घोषणा TAP_AXES	0x2A	/* R/W Axis control क्रम tap/द्विगुन tap */
-#घोषणा ACT_TAP_STATUS	0x2B	/* R   Source of tap/द्विगुन tap */
-#घोषणा BW_RATE		0x2C	/* R/W Data rate and घातer mode control */
-#घोषणा POWER_CTL	0x2D	/* R/W Power saving features control */
-#घोषणा INT_ENABLE	0x2E	/* R/W Interrupt enable control */
-#घोषणा INT_MAP		0x2F	/* R/W Interrupt mapping control */
-#घोषणा INT_SOURCE	0x30	/* R   Source of पूर्णांकerrupts */
-#घोषणा DATA_FORMAT	0x31	/* R/W Data क्रमmat control */
-#घोषणा DATAX0		0x32	/* R   X-Axis Data 0 */
-#घोषणा DATAX1		0x33	/* R   X-Axis Data 1 */
-#घोषणा DATAY0		0x34	/* R   Y-Axis Data 0 */
-#घोषणा DATAY1		0x35	/* R   Y-Axis Data 1 */
-#घोषणा DATAZ0		0x36	/* R   Z-Axis Data 0 */
-#घोषणा DATAZ1		0x37	/* R   Z-Axis Data 1 */
-#घोषणा FIFO_CTL	0x38	/* R/W FIFO control */
-#घोषणा FIFO_STATUS	0x39	/* R   FIFO status */
-#घोषणा TAP_SIGN	0x3A	/* R   Sign and source क्रम tap/द्विगुन tap */
+#define THRESH_FF	0x28	/* R/W Free-fall threshold */
+#define TIME_FF		0x29	/* R/W Free-fall time */
+#define TAP_AXES	0x2A	/* R/W Axis control for tap/double tap */
+#define ACT_TAP_STATUS	0x2B	/* R   Source of tap/double tap */
+#define BW_RATE		0x2C	/* R/W Data rate and power mode control */
+#define POWER_CTL	0x2D	/* R/W Power saving features control */
+#define INT_ENABLE	0x2E	/* R/W Interrupt enable control */
+#define INT_MAP		0x2F	/* R/W Interrupt mapping control */
+#define INT_SOURCE	0x30	/* R   Source of interrupts */
+#define DATA_FORMAT	0x31	/* R/W Data format control */
+#define DATAX0		0x32	/* R   X-Axis Data 0 */
+#define DATAX1		0x33	/* R   X-Axis Data 1 */
+#define DATAY0		0x34	/* R   Y-Axis Data 0 */
+#define DATAY1		0x35	/* R   Y-Axis Data 1 */
+#define DATAZ0		0x36	/* R   Z-Axis Data 0 */
+#define DATAZ1		0x37	/* R   Z-Axis Data 1 */
+#define FIFO_CTL	0x38	/* R/W FIFO control */
+#define FIFO_STATUS	0x39	/* R   FIFO status */
+#define TAP_SIGN	0x3A	/* R   Sign and source for tap/double tap */
 /* Orientation ADXL346 only */
-#घोषणा ORIENT_CONF	0x3B	/* R/W Orientation configuration */
-#घोषणा ORIENT		0x3C	/* R   Orientation status */
+#define ORIENT_CONF	0x3B	/* R/W Orientation configuration */
+#define ORIENT		0x3C	/* R   Orientation status */
 
 /* DEVIDs */
-#घोषणा ID_ADXL345	0xE5
-#घोषणा ID_ADXL346	0xE6
+#define ID_ADXL345	0xE5
+#define ID_ADXL346	0xE6
 
 /* INT_ENABLE/INT_MAP/INT_SOURCE Bits */
-#घोषणा DATA_READY	(1 << 7)
-#घोषणा SINGLE_TAP	(1 << 6)
-#घोषणा DOUBLE_TAP	(1 << 5)
-#घोषणा ACTIVITY	(1 << 4)
-#घोषणा INACTIVITY	(1 << 3)
-#घोषणा FREE_FALL	(1 << 2)
-#घोषणा WATERMARK	(1 << 1)
-#घोषणा OVERRUN		(1 << 0)
+#define DATA_READY	(1 << 7)
+#define SINGLE_TAP	(1 << 6)
+#define DOUBLE_TAP	(1 << 5)
+#define ACTIVITY	(1 << 4)
+#define INACTIVITY	(1 << 3)
+#define FREE_FALL	(1 << 2)
+#define WATERMARK	(1 << 1)
+#define OVERRUN		(1 << 0)
 
 /* ACT_INACT_CONTROL Bits */
-#घोषणा ACT_ACDC	(1 << 7)
-#घोषणा ACT_X_EN	(1 << 6)
-#घोषणा ACT_Y_EN	(1 << 5)
-#घोषणा ACT_Z_EN	(1 << 4)
-#घोषणा INACT_ACDC	(1 << 3)
-#घोषणा INACT_X_EN	(1 << 2)
-#घोषणा INACT_Y_EN	(1 << 1)
-#घोषणा INACT_Z_EN	(1 << 0)
+#define ACT_ACDC	(1 << 7)
+#define ACT_X_EN	(1 << 6)
+#define ACT_Y_EN	(1 << 5)
+#define ACT_Z_EN	(1 << 4)
+#define INACT_ACDC	(1 << 3)
+#define INACT_X_EN	(1 << 2)
+#define INACT_Y_EN	(1 << 1)
+#define INACT_Z_EN	(1 << 0)
 
 /* TAP_AXES Bits */
-#घोषणा SUPPRESS	(1 << 3)
-#घोषणा TAP_X_EN	(1 << 2)
-#घोषणा TAP_Y_EN	(1 << 1)
-#घोषणा TAP_Z_EN	(1 << 0)
+#define SUPPRESS	(1 << 3)
+#define TAP_X_EN	(1 << 2)
+#define TAP_Y_EN	(1 << 1)
+#define TAP_Z_EN	(1 << 0)
 
 /* ACT_TAP_STATUS Bits */
-#घोषणा ACT_X_SRC	(1 << 6)
-#घोषणा ACT_Y_SRC	(1 << 5)
-#घोषणा ACT_Z_SRC	(1 << 4)
-#घोषणा ASLEEP		(1 << 3)
-#घोषणा TAP_X_SRC	(1 << 2)
-#घोषणा TAP_Y_SRC	(1 << 1)
-#घोषणा TAP_Z_SRC	(1 << 0)
+#define ACT_X_SRC	(1 << 6)
+#define ACT_Y_SRC	(1 << 5)
+#define ACT_Z_SRC	(1 << 4)
+#define ASLEEP		(1 << 3)
+#define TAP_X_SRC	(1 << 2)
+#define TAP_Y_SRC	(1 << 1)
+#define TAP_Z_SRC	(1 << 0)
 
 /* BW_RATE Bits */
-#घोषणा LOW_POWER	(1 << 4)
-#घोषणा RATE(x)		((x) & 0xF)
+#define LOW_POWER	(1 << 4)
+#define RATE(x)		((x) & 0xF)
 
 /* POWER_CTL Bits */
-#घोषणा PCTL_LINK	(1 << 5)
-#घोषणा PCTL_AUTO_SLEEP (1 << 4)
-#घोषणा PCTL_MEASURE	(1 << 3)
-#घोषणा PCTL_SLEEP	(1 << 2)
-#घोषणा PCTL_WAKEUP(x)	((x) & 0x3)
+#define PCTL_LINK	(1 << 5)
+#define PCTL_AUTO_SLEEP (1 << 4)
+#define PCTL_MEASURE	(1 << 3)
+#define PCTL_SLEEP	(1 << 2)
+#define PCTL_WAKEUP(x)	((x) & 0x3)
 
 /* DATA_FORMAT Bits */
-#घोषणा SELF_TEST	(1 << 7)
-#घोषणा SPI		(1 << 6)
-#घोषणा INT_INVERT	(1 << 5)
-#घोषणा FULL_RES	(1 << 3)
-#घोषणा JUSTIFY		(1 << 2)
-#घोषणा RANGE(x)	((x) & 0x3)
-#घोषणा RANGE_PM_2g	0
-#घोषणा RANGE_PM_4g	1
-#घोषणा RANGE_PM_8g	2
-#घोषणा RANGE_PM_16g	3
+#define SELF_TEST	(1 << 7)
+#define SPI		(1 << 6)
+#define INT_INVERT	(1 << 5)
+#define FULL_RES	(1 << 3)
+#define JUSTIFY		(1 << 2)
+#define RANGE(x)	((x) & 0x3)
+#define RANGE_PM_2g	0
+#define RANGE_PM_4g	1
+#define RANGE_PM_8g	2
+#define RANGE_PM_16g	3
 
 /*
- * Maximum value our axis may get in full res mode क्रम the input device
- * (चिन्हित 13 bits)
+ * Maximum value our axis may get in full res mode for the input device
+ * (signed 13 bits)
  */
-#घोषणा ADXL_FULLRES_MAX_VAL 4096
+#define ADXL_FULLRES_MAX_VAL 4096
 
 /*
- * Maximum value our axis may get in fixed res mode क्रम the input device
- * (चिन्हित 10 bits)
+ * Maximum value our axis may get in fixed res mode for the input device
+ * (signed 10 bits)
  */
-#घोषणा ADXL_FIXEDRES_MAX_VAL 512
+#define ADXL_FIXEDRES_MAX_VAL 512
 
 /* FIFO_CTL Bits */
-#घोषणा FIFO_MODE(x)	(((x) & 0x3) << 6)
-#घोषणा FIFO_BYPASS	0
-#घोषणा FIFO_FIFO	1
-#घोषणा FIFO_STREAM	2
-#घोषणा FIFO_TRIGGER	3
-#घोषणा TRIGGER		(1 << 5)
-#घोषणा SAMPLES(x)	((x) & 0x1F)
+#define FIFO_MODE(x)	(((x) & 0x3) << 6)
+#define FIFO_BYPASS	0
+#define FIFO_FIFO	1
+#define FIFO_STREAM	2
+#define FIFO_TRIGGER	3
+#define TRIGGER		(1 << 5)
+#define SAMPLES(x)	((x) & 0x1F)
 
 /* FIFO_STATUS Bits */
-#घोषणा FIFO_TRIG	(1 << 7)
-#घोषणा ENTRIES(x)	((x) & 0x3F)
+#define FIFO_TRIG	(1 << 7)
+#define ENTRIES(x)	((x) & 0x3F)
 
 /* TAP_SIGN Bits ADXL346 only */
-#घोषणा XSIGN		(1 << 6)
-#घोषणा YSIGN		(1 << 5)
-#घोषणा ZSIGN		(1 << 4)
-#घोषणा XTAP		(1 << 3)
-#घोषणा YTAP		(1 << 2)
-#घोषणा ZTAP		(1 << 1)
+#define XSIGN		(1 << 6)
+#define YSIGN		(1 << 5)
+#define ZSIGN		(1 << 4)
+#define XTAP		(1 << 3)
+#define YTAP		(1 << 2)
+#define ZTAP		(1 << 1)
 
 /* ORIENT_CONF ADXL346 only */
-#घोषणा ORIENT_DEADZONE(x)	(((x) & 0x7) << 4)
-#घोषणा ORIENT_DIVISOR(x)	((x) & 0x7)
+#define ORIENT_DEADZONE(x)	(((x) & 0x7) << 4)
+#define ORIENT_DIVISOR(x)	((x) & 0x7)
 
 /* ORIENT ADXL346 only */
-#घोषणा ADXL346_2D_VALID		(1 << 6)
-#घोषणा ADXL346_2D_ORIENT(x)		(((x) & 0x30) >> 4)
-#घोषणा ADXL346_3D_VALID		(1 << 3)
-#घोषणा ADXL346_3D_ORIENT(x)		((x) & 0x7)
-#घोषणा ADXL346_2D_PORTRAIT_POS		0	/* +X */
-#घोषणा ADXL346_2D_PORTRAIT_NEG		1	/* -X */
-#घोषणा ADXL346_2D_LANDSCAPE_POS	2	/* +Y */
-#घोषणा ADXL346_2D_LANDSCAPE_NEG	3	/* -Y */
+#define ADXL346_2D_VALID		(1 << 6)
+#define ADXL346_2D_ORIENT(x)		(((x) & 0x30) >> 4)
+#define ADXL346_3D_VALID		(1 << 3)
+#define ADXL346_3D_ORIENT(x)		((x) & 0x7)
+#define ADXL346_2D_PORTRAIT_POS		0	/* +X */
+#define ADXL346_2D_PORTRAIT_NEG		1	/* -X */
+#define ADXL346_2D_LANDSCAPE_POS	2	/* +Y */
+#define ADXL346_2D_LANDSCAPE_NEG	3	/* -Y */
 
-#घोषणा ADXL346_3D_FRONT		3	/* +X */
-#घोषणा ADXL346_3D_BACK			4	/* -X */
-#घोषणा ADXL346_3D_RIGHT		2	/* +Y */
-#घोषणा ADXL346_3D_LEFT			5	/* -Y */
-#घोषणा ADXL346_3D_TOP			1	/* +Z */
-#घोषणा ADXL346_3D_BOTTOM		6	/* -Z */
+#define ADXL346_3D_FRONT		3	/* +X */
+#define ADXL346_3D_BACK			4	/* -X */
+#define ADXL346_3D_RIGHT		2	/* +Y */
+#define ADXL346_3D_LEFT			5	/* -Y */
+#define ADXL346_3D_TOP			1	/* +Z */
+#define ADXL346_3D_BOTTOM		6	/* -Z */
 
-#अघोषित ADXL_DEBUG
+#undef ADXL_DEBUG
 
-#घोषणा ADXL_X_AXIS			0
-#घोषणा ADXL_Y_AXIS			1
-#घोषणा ADXL_Z_AXIS			2
+#define ADXL_X_AXIS			0
+#define ADXL_Y_AXIS			1
+#define ADXL_Z_AXIS			2
 
-#घोषणा AC_READ(ac, reg)	((ac)->bops->पढ़ो((ac)->dev, reg))
-#घोषणा AC_WRITE(ac, reg, val)	((ac)->bops->ग_लिखो((ac)->dev, reg, val))
+#define AC_READ(ac, reg)	((ac)->bops->read((ac)->dev, reg))
+#define AC_WRITE(ac, reg, val)	((ac)->bops->write((ac)->dev, reg, val))
 
-काष्ठा axis_triple अणु
-	पूर्णांक x;
-	पूर्णांक y;
-	पूर्णांक z;
-पूर्ण;
+struct axis_triple {
+	int x;
+	int y;
+	int z;
+};
 
-काष्ठा adxl34x अणु
-	काष्ठा device *dev;
-	काष्ठा input_dev *input;
-	काष्ठा mutex mutex;	/* reentrant protection क्रम काष्ठा */
-	काष्ठा adxl34x_platक्रमm_data pdata;
-	काष्ठा axis_triple swcal;
-	काष्ठा axis_triple hwcal;
-	काष्ठा axis_triple saved;
-	अक्षर phys[32];
-	अचिन्हित orient2d_saved;
-	अचिन्हित orient3d_saved;
+struct adxl34x {
+	struct device *dev;
+	struct input_dev *input;
+	struct mutex mutex;	/* reentrant protection for struct */
+	struct adxl34x_platform_data pdata;
+	struct axis_triple swcal;
+	struct axis_triple hwcal;
+	struct axis_triple saved;
+	char phys[32];
+	unsigned orient2d_saved;
+	unsigned orient3d_saved;
 	bool disabled;	/* P: mutex */
-	bool खोलोed;	/* P: mutex */
+	bool opened;	/* P: mutex */
 	bool suspended;	/* P: mutex */
-	bool fअगरo_delay;
-	पूर्णांक irq;
-	अचिन्हित model;
-	अचिन्हित पूर्णांक_mask;
+	bool fifo_delay;
+	int irq;
+	unsigned model;
+	unsigned int_mask;
 
-	स्थिर काष्ठा adxl34x_bus_ops *bops;
-पूर्ण;
+	const struct adxl34x_bus_ops *bops;
+};
 
-अटल स्थिर काष्ठा adxl34x_platक्रमm_data adxl34x_शेष_init = अणु
+static const struct adxl34x_platform_data adxl34x_default_init = {
 	.tap_threshold = 35,
 	.tap_duration = 3,
 	.tap_latency = 20,
-	.tap_winकरोw = 20,
+	.tap_window = 20,
 	.tap_axis_control = ADXL_TAP_X_EN | ADXL_TAP_Y_EN | ADXL_TAP_Z_EN,
 	.act_axis_control = 0xFF,
 	.activity_threshold = 6,
 	.inactivity_threshold = 4,
-	.inactivity_समय = 3,
-	.मुक्त_fall_threshold = 8,
-	.मुक्त_fall_समय = 0x20,
+	.inactivity_time = 3,
+	.free_fall_threshold = 8,
+	.free_fall_time = 0x20,
 	.data_rate = 8,
 	.data_range = ADXL_FULL_RES,
 
@@ -230,17 +229,17 @@
 	.ev_code_y = ABS_Y,	/* EV_REL */
 	.ev_code_z = ABS_Z,	/* EV_REL */
 
-	.ev_code_tap = अणुBTN_TOUCH, BTN_TOUCH, BTN_TOUCHपूर्ण, /* EV_KEY अणुx,y,zपूर्ण */
-	.घातer_mode = ADXL_AUTO_SLEEP | ADXL_LINK,
-	.fअगरo_mode = ADXL_FIFO_STREAM,
+	.ev_code_tap = {BTN_TOUCH, BTN_TOUCH, BTN_TOUCH}, /* EV_KEY {x,y,z} */
+	.power_mode = ADXL_AUTO_SLEEP | ADXL_LINK,
+	.fifo_mode = ADXL_FIFO_STREAM,
 	.watermark = 0,
-पूर्ण;
+};
 
-अटल व्योम adxl34x_get_triple(काष्ठा adxl34x *ac, काष्ठा axis_triple *axis)
-अणु
-	लघु buf[3];
+static void adxl34x_get_triple(struct adxl34x *ac, struct axis_triple *axis)
+{
+	short buf[3];
 
-	ac->bops->पढ़ो_block(ac->dev, DATAX0, DATAZ1 - DATAX0 + 1, buf);
+	ac->bops->read_block(ac->dev, DATAX0, DATAZ1 - DATAX0 + 1, buf);
 
 	mutex_lock(&ac->mutex);
 	ac->saved.x = (s16) le16_to_cpu(buf[0]);
@@ -252,12 +251,12 @@
 	ac->saved.z = (s16) le16_to_cpu(buf[2]);
 	axis->z = ac->saved.z;
 	mutex_unlock(&ac->mutex);
-पूर्ण
+}
 
-अटल व्योम adxl34x_service_ev_fअगरo(काष्ठा adxl34x *ac)
-अणु
-	काष्ठा adxl34x_platक्रमm_data *pdata = &ac->pdata;
-	काष्ठा axis_triple axis;
+static void adxl34x_service_ev_fifo(struct adxl34x *ac)
+{
+	struct adxl34x_platform_data *pdata = &ac->pdata;
+	struct axis_triple axis;
 
 	adxl34x_get_triple(ac, &axis);
 
@@ -267,244 +266,244 @@
 		    axis.y - ac->swcal.y);
 	input_event(ac->input, pdata->ev_type, pdata->ev_code_z,
 		    axis.z - ac->swcal.z);
-पूर्ण
+}
 
-अटल व्योम adxl34x_report_key_single(काष्ठा input_dev *input, पूर्णांक key)
-अणु
+static void adxl34x_report_key_single(struct input_dev *input, int key)
+{
 	input_report_key(input, key, true);
 	input_sync(input);
 	input_report_key(input, key, false);
-पूर्ण
+}
 
-अटल व्योम adxl34x_send_key_events(काष्ठा adxl34x *ac,
-		काष्ठा adxl34x_platक्रमm_data *pdata, पूर्णांक status, पूर्णांक press)
-अणु
-	पूर्णांक i;
+static void adxl34x_send_key_events(struct adxl34x *ac,
+		struct adxl34x_platform_data *pdata, int status, int press)
+{
+	int i;
 
-	क्रम (i = ADXL_X_AXIS; i <= ADXL_Z_AXIS; i++) अणु
-		अगर (status & (1 << (ADXL_Z_AXIS - i)))
+	for (i = ADXL_X_AXIS; i <= ADXL_Z_AXIS; i++) {
+		if (status & (1 << (ADXL_Z_AXIS - i)))
 			input_report_key(ac->input,
 					 pdata->ev_code_tap[i], press);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम adxl34x_करो_tap(काष्ठा adxl34x *ac,
-		काष्ठा adxl34x_platक्रमm_data *pdata, पूर्णांक status)
-अणु
+static void adxl34x_do_tap(struct adxl34x *ac,
+		struct adxl34x_platform_data *pdata, int status)
+{
 	adxl34x_send_key_events(ac, pdata, status, true);
 	input_sync(ac->input);
 	adxl34x_send_key_events(ac, pdata, status, false);
-पूर्ण
+}
 
-अटल irqवापस_t adxl34x_irq(पूर्णांक irq, व्योम *handle)
-अणु
-	काष्ठा adxl34x *ac = handle;
-	काष्ठा adxl34x_platक्रमm_data *pdata = &ac->pdata;
-	पूर्णांक पूर्णांक_stat, tap_stat, samples, orient, orient_code;
+static irqreturn_t adxl34x_irq(int irq, void *handle)
+{
+	struct adxl34x *ac = handle;
+	struct adxl34x_platform_data *pdata = &ac->pdata;
+	int int_stat, tap_stat, samples, orient, orient_code;
 
 	/*
-	 * ACT_TAP_STATUS should be पढ़ो beक्रमe clearing the पूर्णांकerrupt
-	 * Aव्योम पढ़ोing ACT_TAP_STATUS in हाल TAP detection is disabled
+	 * ACT_TAP_STATUS should be read before clearing the interrupt
+	 * Avoid reading ACT_TAP_STATUS in case TAP detection is disabled
 	 */
 
-	अगर (pdata->tap_axis_control & (TAP_X_EN | TAP_Y_EN | TAP_Z_EN))
+	if (pdata->tap_axis_control & (TAP_X_EN | TAP_Y_EN | TAP_Z_EN))
 		tap_stat = AC_READ(ac, ACT_TAP_STATUS);
-	अन्यथा
+	else
 		tap_stat = 0;
 
-	पूर्णांक_stat = AC_READ(ac, INT_SOURCE);
+	int_stat = AC_READ(ac, INT_SOURCE);
 
-	अगर (पूर्णांक_stat & FREE_FALL)
+	if (int_stat & FREE_FALL)
 		adxl34x_report_key_single(ac->input, pdata->ev_code_ff);
 
-	अगर (पूर्णांक_stat & OVERRUN)
+	if (int_stat & OVERRUN)
 		dev_dbg(ac->dev, "OVERRUN\n");
 
-	अगर (पूर्णांक_stat & (SINGLE_TAP | DOUBLE_TAP)) अणु
-		adxl34x_करो_tap(ac, pdata, tap_stat);
+	if (int_stat & (SINGLE_TAP | DOUBLE_TAP)) {
+		adxl34x_do_tap(ac, pdata, tap_stat);
 
-		अगर (पूर्णांक_stat & DOUBLE_TAP)
-			adxl34x_करो_tap(ac, pdata, tap_stat);
-	पूर्ण
+		if (int_stat & DOUBLE_TAP)
+			adxl34x_do_tap(ac, pdata, tap_stat);
+	}
 
-	अगर (pdata->ev_code_act_inactivity) अणु
-		अगर (पूर्णांक_stat & ACTIVITY)
+	if (pdata->ev_code_act_inactivity) {
+		if (int_stat & ACTIVITY)
 			input_report_key(ac->input,
 					 pdata->ev_code_act_inactivity, 1);
-		अगर (पूर्णांक_stat & INACTIVITY)
+		if (int_stat & INACTIVITY)
 			input_report_key(ac->input,
 					 pdata->ev_code_act_inactivity, 0);
-	पूर्ण
+	}
 
 	/*
 	 * ORIENTATION SENSING ADXL346 only
 	 */
-	अगर (pdata->orientation_enable) अणु
+	if (pdata->orientation_enable) {
 		orient = AC_READ(ac, ORIENT);
-		अगर ((pdata->orientation_enable & ADXL_EN_ORIENTATION_2D) &&
-		    (orient & ADXL346_2D_VALID)) अणु
+		if ((pdata->orientation_enable & ADXL_EN_ORIENTATION_2D) &&
+		    (orient & ADXL346_2D_VALID)) {
 
 			orient_code = ADXL346_2D_ORIENT(orient);
 			/* Report orientation only when it changes */
-			अगर (ac->orient2d_saved != orient_code) अणु
+			if (ac->orient2d_saved != orient_code) {
 				ac->orient2d_saved = orient_code;
 				adxl34x_report_key_single(ac->input,
 					pdata->ev_codes_orient_2d[orient_code]);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर ((pdata->orientation_enable & ADXL_EN_ORIENTATION_3D) &&
-		    (orient & ADXL346_3D_VALID)) अणु
+		if ((pdata->orientation_enable & ADXL_EN_ORIENTATION_3D) &&
+		    (orient & ADXL346_3D_VALID)) {
 
 			orient_code = ADXL346_3D_ORIENT(orient) - 1;
 			/* Report orientation only when it changes */
-			अगर (ac->orient3d_saved != orient_code) अणु
+			if (ac->orient3d_saved != orient_code) {
 				ac->orient3d_saved = orient_code;
 				adxl34x_report_key_single(ac->input,
 					pdata->ev_codes_orient_3d[orient_code]);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (पूर्णांक_stat & (DATA_READY | WATERMARK)) अणु
+	if (int_stat & (DATA_READY | WATERMARK)) {
 
-		अगर (pdata->fअगरo_mode)
+		if (pdata->fifo_mode)
 			samples = ENTRIES(AC_READ(ac, FIFO_STATUS)) + 1;
-		अन्यथा
+		else
 			samples = 1;
 
-		क्रम (; samples > 0; samples--) अणु
-			adxl34x_service_ev_fअगरo(ac);
+		for (; samples > 0; samples--) {
+			adxl34x_service_ev_fifo(ac);
 			/*
 			 * To ensure that the FIFO has
 			 * completely popped, there must be at least 5 us between
-			 * the end of पढ़ोing the data रेजिस्टरs, signअगरied by the
-			 * transition to रेजिस्टर 0x38 from 0x37 or the CS pin
-			 * going high, and the start of new पढ़ोs of the FIFO or
-			 * पढ़ोing the FIFO_STATUS रेजिस्टर. For SPI operation at
-			 * 1.5 MHz or lower, the रेजिस्टर addressing portion of the
+			 * the end of reading the data registers, signified by the
+			 * transition to register 0x38 from 0x37 or the CS pin
+			 * going high, and the start of new reads of the FIFO or
+			 * reading the FIFO_STATUS register. For SPI operation at
+			 * 1.5 MHz or lower, the register addressing portion of the
 			 * transmission is sufficient delay to ensure the FIFO has
-			 * completely popped. It is necessary क्रम SPI operation
-			 * greater than 1.5 MHz to de-निश्चित the CS pin to ensure a
+			 * completely popped. It is necessary for SPI operation
+			 * greater than 1.5 MHz to de-assert the CS pin to ensure a
 			 * total of 5 us, which is at most 3.4 us at 5 MHz
 			 * operation.
 			 */
-			अगर (ac->fअगरo_delay && (samples > 1))
+			if (ac->fifo_delay && (samples > 1))
 				udelay(3);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	input_sync(ac->input);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम __adxl34x_disable(काष्ठा adxl34x *ac)
-अणु
+static void __adxl34x_disable(struct adxl34x *ac)
+{
 	/*
-	 * A '0' places the ADXL34x पूर्णांकo standby mode
-	 * with minimum घातer consumption.
+	 * A '0' places the ADXL34x into standby mode
+	 * with minimum power consumption.
 	 */
 	AC_WRITE(ac, POWER_CTL, 0);
-पूर्ण
+}
 
-अटल व्योम __adxl34x_enable(काष्ठा adxl34x *ac)
-अणु
-	AC_WRITE(ac, POWER_CTL, ac->pdata.घातer_mode | PCTL_MEASURE);
-पूर्ण
+static void __adxl34x_enable(struct adxl34x *ac)
+{
+	AC_WRITE(ac, POWER_CTL, ac->pdata.power_mode | PCTL_MEASURE);
+}
 
-व्योम adxl34x_suspend(काष्ठा adxl34x *ac)
-अणु
+void adxl34x_suspend(struct adxl34x *ac)
+{
 	mutex_lock(&ac->mutex);
 
-	अगर (!ac->suspended && !ac->disabled && ac->खोलोed)
+	if (!ac->suspended && !ac->disabled && ac->opened)
 		__adxl34x_disable(ac);
 
 	ac->suspended = true;
 
 	mutex_unlock(&ac->mutex);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(adxl34x_suspend);
 
-व्योम adxl34x_resume(काष्ठा adxl34x *ac)
-अणु
+void adxl34x_resume(struct adxl34x *ac)
+{
 	mutex_lock(&ac->mutex);
 
-	अगर (ac->suspended && !ac->disabled && ac->खोलोed)
+	if (ac->suspended && !ac->disabled && ac->opened)
 		__adxl34x_enable(ac);
 
 	ac->suspended = false;
 
 	mutex_unlock(&ac->mutex);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(adxl34x_resume);
 
-अटल sमाप_प्रकार adxl34x_disable_show(काष्ठा device *dev,
-				    काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा adxl34x *ac = dev_get_drvdata(dev);
+static ssize_t adxl34x_disable_show(struct device *dev,
+				    struct device_attribute *attr, char *buf)
+{
+	struct adxl34x *ac = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%u\n", ac->disabled);
-पूर्ण
+	return sprintf(buf, "%u\n", ac->disabled);
+}
 
-अटल sमाप_प्रकार adxl34x_disable_store(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr,
-				     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा adxl34x *ac = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक error;
+static ssize_t adxl34x_disable_store(struct device *dev,
+				     struct device_attribute *attr,
+				     const char *buf, size_t count)
+{
+	struct adxl34x *ac = dev_get_drvdata(dev);
+	unsigned int val;
+	int error;
 
-	error = kstrtouपूर्णांक(buf, 10, &val);
-	अगर (error)
-		वापस error;
+	error = kstrtouint(buf, 10, &val);
+	if (error)
+		return error;
 
 	mutex_lock(&ac->mutex);
 
-	अगर (!ac->suspended && ac->खोलोed) अणु
-		अगर (val) अणु
-			अगर (!ac->disabled)
+	if (!ac->suspended && ac->opened) {
+		if (val) {
+			if (!ac->disabled)
 				__adxl34x_disable(ac);
-		पूर्ण अन्यथा अणु
-			अगर (ac->disabled)
+		} else {
+			if (ac->disabled)
 				__adxl34x_enable(ac);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ac->disabled = !!val;
 
 	mutex_unlock(&ac->mutex);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(disable, 0664, adxl34x_disable_show, adxl34x_disable_store);
+static DEVICE_ATTR(disable, 0664, adxl34x_disable_show, adxl34x_disable_store);
 
-अटल sमाप_प्रकार adxl34x_calibrate_show(काष्ठा device *dev,
-				      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा adxl34x *ac = dev_get_drvdata(dev);
-	sमाप_प्रकार count;
+static ssize_t adxl34x_calibrate_show(struct device *dev,
+				      struct device_attribute *attr, char *buf)
+{
+	struct adxl34x *ac = dev_get_drvdata(dev);
+	ssize_t count;
 
 	mutex_lock(&ac->mutex);
-	count = प्र_लिखो(buf, "%d,%d,%d\n",
+	count = sprintf(buf, "%d,%d,%d\n",
 			ac->hwcal.x * 4 + ac->swcal.x,
 			ac->hwcal.y * 4 + ac->swcal.y,
 			ac->hwcal.z * 4 + ac->swcal.z);
 	mutex_unlock(&ac->mutex);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार adxl34x_calibrate_store(काष्ठा device *dev,
-				       काष्ठा device_attribute *attr,
-				       स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा adxl34x *ac = dev_get_drvdata(dev);
+static ssize_t adxl34x_calibrate_store(struct device *dev,
+				       struct device_attribute *attr,
+				       const char *buf, size_t count)
+{
+	struct adxl34x *ac = dev_get_drvdata(dev);
 
 	/*
 	 * Hardware offset calibration has a resolution of 15.6 mg/LSB.
-	 * We use HW calibration and handle the reमुख्यing bits in SW. (4mg/LSB)
+	 * We use HW calibration and handle the remaining bits in SW. (4mg/LSB)
 	 */
 
 	mutex_lock(&ac->mutex);
@@ -522,204 +521,204 @@ EXPORT_SYMBOL_GPL(adxl34x_resume);
 	AC_WRITE(ac, OFSZ, (s8) ac->hwcal.z);
 	mutex_unlock(&ac->mutex);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(calibrate, 0664,
+static DEVICE_ATTR(calibrate, 0664,
 		   adxl34x_calibrate_show, adxl34x_calibrate_store);
 
-अटल sमाप_प्रकार adxl34x_rate_show(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा adxl34x *ac = dev_get_drvdata(dev);
+static ssize_t adxl34x_rate_show(struct device *dev,
+				 struct device_attribute *attr, char *buf)
+{
+	struct adxl34x *ac = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%u\n", RATE(ac->pdata.data_rate));
-पूर्ण
+	return sprintf(buf, "%u\n", RATE(ac->pdata.data_rate));
+}
 
-अटल sमाप_प्रकार adxl34x_rate_store(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr,
-				  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा adxl34x *ac = dev_get_drvdata(dev);
-	अचिन्हित अक्षर val;
-	पूर्णांक error;
+static ssize_t adxl34x_rate_store(struct device *dev,
+				  struct device_attribute *attr,
+				  const char *buf, size_t count)
+{
+	struct adxl34x *ac = dev_get_drvdata(dev);
+	unsigned char val;
+	int error;
 
 	error = kstrtou8(buf, 10, &val);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	mutex_lock(&ac->mutex);
 
 	ac->pdata.data_rate = RATE(val);
 	AC_WRITE(ac, BW_RATE,
 		 ac->pdata.data_rate |
-			(ac->pdata.low_घातer_mode ? LOW_POWER : 0));
+			(ac->pdata.low_power_mode ? LOW_POWER : 0));
 
 	mutex_unlock(&ac->mutex);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(rate, 0664, adxl34x_rate_show, adxl34x_rate_store);
+static DEVICE_ATTR(rate, 0664, adxl34x_rate_show, adxl34x_rate_store);
 
-अटल sमाप_प्रकार adxl34x_स्वतःsleep_show(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा adxl34x *ac = dev_get_drvdata(dev);
+static ssize_t adxl34x_autosleep_show(struct device *dev,
+				 struct device_attribute *attr, char *buf)
+{
+	struct adxl34x *ac = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%u\n",
-		ac->pdata.घातer_mode & (PCTL_AUTO_SLEEP | PCTL_LINK) ? 1 : 0);
-पूर्ण
+	return sprintf(buf, "%u\n",
+		ac->pdata.power_mode & (PCTL_AUTO_SLEEP | PCTL_LINK) ? 1 : 0);
+}
 
-अटल sमाप_प्रकार adxl34x_स्वतःsleep_store(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr,
-				  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा adxl34x *ac = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक error;
+static ssize_t adxl34x_autosleep_store(struct device *dev,
+				  struct device_attribute *attr,
+				  const char *buf, size_t count)
+{
+	struct adxl34x *ac = dev_get_drvdata(dev);
+	unsigned int val;
+	int error;
 
-	error = kstrtouपूर्णांक(buf, 10, &val);
-	अगर (error)
-		वापस error;
+	error = kstrtouint(buf, 10, &val);
+	if (error)
+		return error;
 
 	mutex_lock(&ac->mutex);
 
-	अगर (val)
-		ac->pdata.घातer_mode |= (PCTL_AUTO_SLEEP | PCTL_LINK);
-	अन्यथा
-		ac->pdata.घातer_mode &= ~(PCTL_AUTO_SLEEP | PCTL_LINK);
+	if (val)
+		ac->pdata.power_mode |= (PCTL_AUTO_SLEEP | PCTL_LINK);
+	else
+		ac->pdata.power_mode &= ~(PCTL_AUTO_SLEEP | PCTL_LINK);
 
-	अगर (!ac->disabled && !ac->suspended && ac->खोलोed)
-		AC_WRITE(ac, POWER_CTL, ac->pdata.घातer_mode | PCTL_MEASURE);
+	if (!ac->disabled && !ac->suspended && ac->opened)
+		AC_WRITE(ac, POWER_CTL, ac->pdata.power_mode | PCTL_MEASURE);
 
 	mutex_unlock(&ac->mutex);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(स्वतःsleep, 0664,
-		   adxl34x_स्वतःsleep_show, adxl34x_स्वतःsleep_store);
+static DEVICE_ATTR(autosleep, 0664,
+		   adxl34x_autosleep_show, adxl34x_autosleep_store);
 
-अटल sमाप_प्रकार adxl34x_position_show(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा adxl34x *ac = dev_get_drvdata(dev);
-	sमाप_प्रकार count;
+static ssize_t adxl34x_position_show(struct device *dev,
+				 struct device_attribute *attr, char *buf)
+{
+	struct adxl34x *ac = dev_get_drvdata(dev);
+	ssize_t count;
 
 	mutex_lock(&ac->mutex);
-	count = प्र_लिखो(buf, "(%d, %d, %d)\n",
+	count = sprintf(buf, "(%d, %d, %d)\n",
 			ac->saved.x, ac->saved.y, ac->saved.z);
 	mutex_unlock(&ac->mutex);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(position, S_IRUGO, adxl34x_position_show, शून्य);
+static DEVICE_ATTR(position, S_IRUGO, adxl34x_position_show, NULL);
 
-#अगर_घोषित ADXL_DEBUG
-अटल sमाप_प्रकार adxl34x_ग_लिखो_store(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr,
-				   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा adxl34x *ac = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक error;
+#ifdef ADXL_DEBUG
+static ssize_t adxl34x_write_store(struct device *dev,
+				   struct device_attribute *attr,
+				   const char *buf, size_t count)
+{
+	struct adxl34x *ac = dev_get_drvdata(dev);
+	unsigned int val;
+	int error;
 
 	/*
-	 * This allows basic ADXL रेजिस्टर ग_लिखो access क्रम debug purposes.
+	 * This allows basic ADXL register write access for debug purposes.
 	 */
-	error = kstrtouपूर्णांक(buf, 16, &val);
-	अगर (error)
-		वापस error;
+	error = kstrtouint(buf, 16, &val);
+	if (error)
+		return error;
 
 	mutex_lock(&ac->mutex);
 	AC_WRITE(ac, val >> 8, val & 0xFF);
 	mutex_unlock(&ac->mutex);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(ग_लिखो, 0664, शून्य, adxl34x_ग_लिखो_store);
-#पूर्ण_अगर
+static DEVICE_ATTR(write, 0664, NULL, adxl34x_write_store);
+#endif
 
-अटल काष्ठा attribute *adxl34x_attributes[] = अणु
+static struct attribute *adxl34x_attributes[] = {
 	&dev_attr_disable.attr,
 	&dev_attr_calibrate.attr,
 	&dev_attr_rate.attr,
-	&dev_attr_स्वतःsleep.attr,
+	&dev_attr_autosleep.attr,
 	&dev_attr_position.attr,
-#अगर_घोषित ADXL_DEBUG
-	&dev_attr_ग_लिखो.attr,
-#पूर्ण_अगर
-	शून्य
-पूर्ण;
+#ifdef ADXL_DEBUG
+	&dev_attr_write.attr,
+#endif
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group adxl34x_attr_group = अणु
+static const struct attribute_group adxl34x_attr_group = {
 	.attrs = adxl34x_attributes,
-पूर्ण;
+};
 
-अटल पूर्णांक adxl34x_input_खोलो(काष्ठा input_dev *input)
-अणु
-	काष्ठा adxl34x *ac = input_get_drvdata(input);
+static int adxl34x_input_open(struct input_dev *input)
+{
+	struct adxl34x *ac = input_get_drvdata(input);
 
 	mutex_lock(&ac->mutex);
 
-	अगर (!ac->suspended && !ac->disabled)
+	if (!ac->suspended && !ac->disabled)
 		__adxl34x_enable(ac);
 
-	ac->खोलोed = true;
+	ac->opened = true;
 
 	mutex_unlock(&ac->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम adxl34x_input_बंद(काष्ठा input_dev *input)
-अणु
-	काष्ठा adxl34x *ac = input_get_drvdata(input);
+static void adxl34x_input_close(struct input_dev *input)
+{
+	struct adxl34x *ac = input_get_drvdata(input);
 
 	mutex_lock(&ac->mutex);
 
-	अगर (!ac->suspended && !ac->disabled)
+	if (!ac->suspended && !ac->disabled)
 		__adxl34x_disable(ac);
 
-	ac->खोलोed = false;
+	ac->opened = false;
 
 	mutex_unlock(&ac->mutex);
-पूर्ण
+}
 
-काष्ठा adxl34x *adxl34x_probe(काष्ठा device *dev, पूर्णांक irq,
-			      bool fअगरo_delay_शेष,
-			      स्थिर काष्ठा adxl34x_bus_ops *bops)
-अणु
-	काष्ठा adxl34x *ac;
-	काष्ठा input_dev *input_dev;
-	स्थिर काष्ठा adxl34x_platक्रमm_data *pdata;
-	पूर्णांक err, range, i;
-	पूर्णांक revid;
+struct adxl34x *adxl34x_probe(struct device *dev, int irq,
+			      bool fifo_delay_default,
+			      const struct adxl34x_bus_ops *bops)
+{
+	struct adxl34x *ac;
+	struct input_dev *input_dev;
+	const struct adxl34x_platform_data *pdata;
+	int err, range, i;
+	int revid;
 
-	अगर (!irq) अणु
+	if (!irq) {
 		dev_err(dev, "no IRQ?\n");
 		err = -ENODEV;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
-	ac = kzalloc(माप(*ac), GFP_KERNEL);
+	ac = kzalloc(sizeof(*ac), GFP_KERNEL);
 	input_dev = input_allocate_device();
-	अगर (!ac || !input_dev) अणु
+	if (!ac || !input_dev) {
 		err = -ENOMEM;
-		जाओ err_मुक्त_mem;
-	पूर्ण
+		goto err_free_mem;
+	}
 
-	ac->fअगरo_delay = fअगरo_delay_शेष;
+	ac->fifo_delay = fifo_delay_default;
 
 	pdata = dev_get_platdata(dev);
-	अगर (!pdata) अणु
+	if (!pdata) {
 		dev_dbg(dev,
 			"No platform data: Using default initialization\n");
-		pdata = &adxl34x_शेष_init;
-	पूर्ण
+		pdata = &adxl34x_default_init;
+	}
 
 	ac->pdata = *pdata;
 	pdata = &ac->pdata;
@@ -734,98 +733,98 @@ EXPORT_SYMBOL_GPL(adxl34x_resume);
 	input_dev->name = "ADXL34x accelerometer";
 	revid = AC_READ(ac, DEVID);
 
-	चयन (revid) अणु
-	हाल ID_ADXL345:
+	switch (revid) {
+	case ID_ADXL345:
 		ac->model = 345;
-		अवरोध;
-	हाल ID_ADXL346:
+		break;
+	case ID_ADXL346:
 		ac->model = 346;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(dev, "Failed to probe %s\n", input_dev->name);
 		err = -ENODEV;
-		जाओ err_मुक्त_mem;
-	पूर्ण
+		goto err_free_mem;
+	}
 
-	snम_लिखो(ac->phys, माप(ac->phys), "%s/input0", dev_name(dev));
+	snprintf(ac->phys, sizeof(ac->phys), "%s/input0", dev_name(dev));
 
 	input_dev->phys = ac->phys;
 	input_dev->dev.parent = dev;
 	input_dev->id.product = ac->model;
 	input_dev->id.bustype = bops->bustype;
-	input_dev->खोलो = adxl34x_input_खोलो;
-	input_dev->बंद = adxl34x_input_बंद;
+	input_dev->open = adxl34x_input_open;
+	input_dev->close = adxl34x_input_close;
 
 	input_set_drvdata(input_dev, ac);
 
 	__set_bit(ac->pdata.ev_type, input_dev->evbit);
 
-	अगर (ac->pdata.ev_type == EV_REL) अणु
+	if (ac->pdata.ev_type == EV_REL) {
 		__set_bit(REL_X, input_dev->relbit);
 		__set_bit(REL_Y, input_dev->relbit);
 		__set_bit(REL_Z, input_dev->relbit);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* EV_ABS */
-		__set_bit(ABS_X, input_dev->असलbit);
-		__set_bit(ABS_Y, input_dev->असलbit);
-		__set_bit(ABS_Z, input_dev->असलbit);
+		__set_bit(ABS_X, input_dev->absbit);
+		__set_bit(ABS_Y, input_dev->absbit);
+		__set_bit(ABS_Z, input_dev->absbit);
 
-		अगर (pdata->data_range & FULL_RES)
+		if (pdata->data_range & FULL_RES)
 			range = ADXL_FULLRES_MAX_VAL;	/* Signed 13-bit */
-		अन्यथा
+		else
 			range = ADXL_FIXEDRES_MAX_VAL;	/* Signed 10-bit */
 
-		input_set_असल_params(input_dev, ABS_X, -range, range, 3, 3);
-		input_set_असल_params(input_dev, ABS_Y, -range, range, 3, 3);
-		input_set_असल_params(input_dev, ABS_Z, -range, range, 3, 3);
-	पूर्ण
+		input_set_abs_params(input_dev, ABS_X, -range, range, 3, 3);
+		input_set_abs_params(input_dev, ABS_Y, -range, range, 3, 3);
+		input_set_abs_params(input_dev, ABS_Z, -range, range, 3, 3);
+	}
 
 	__set_bit(EV_KEY, input_dev->evbit);
 	__set_bit(pdata->ev_code_tap[ADXL_X_AXIS], input_dev->keybit);
 	__set_bit(pdata->ev_code_tap[ADXL_Y_AXIS], input_dev->keybit);
 	__set_bit(pdata->ev_code_tap[ADXL_Z_AXIS], input_dev->keybit);
 
-	अगर (pdata->ev_code_ff) अणु
-		ac->पूर्णांक_mask = FREE_FALL;
+	if (pdata->ev_code_ff) {
+		ac->int_mask = FREE_FALL;
 		__set_bit(pdata->ev_code_ff, input_dev->keybit);
-	पूर्ण
+	}
 
-	अगर (pdata->ev_code_act_inactivity)
+	if (pdata->ev_code_act_inactivity)
 		__set_bit(pdata->ev_code_act_inactivity, input_dev->keybit);
 
-	ac->पूर्णांक_mask |= ACTIVITY | INACTIVITY;
+	ac->int_mask |= ACTIVITY | INACTIVITY;
 
-	अगर (pdata->watermark) अणु
-		ac->पूर्णांक_mask |= WATERMARK;
-		अगर (FIFO_MODE(pdata->fअगरo_mode) == FIFO_BYPASS)
-			ac->pdata.fअगरo_mode |= FIFO_STREAM;
-	पूर्ण अन्यथा अणु
-		ac->पूर्णांक_mask |= DATA_READY;
-	पूर्ण
+	if (pdata->watermark) {
+		ac->int_mask |= WATERMARK;
+		if (FIFO_MODE(pdata->fifo_mode) == FIFO_BYPASS)
+			ac->pdata.fifo_mode |= FIFO_STREAM;
+	} else {
+		ac->int_mask |= DATA_READY;
+	}
 
-	अगर (pdata->tap_axis_control & (TAP_X_EN | TAP_Y_EN | TAP_Z_EN))
-		ac->पूर्णांक_mask |= SINGLE_TAP | DOUBLE_TAP;
+	if (pdata->tap_axis_control & (TAP_X_EN | TAP_Y_EN | TAP_Z_EN))
+		ac->int_mask |= SINGLE_TAP | DOUBLE_TAP;
 
-	अगर (FIFO_MODE(pdata->fअगरo_mode) == FIFO_BYPASS)
-		ac->fअगरo_delay = false;
+	if (FIFO_MODE(pdata->fifo_mode) == FIFO_BYPASS)
+		ac->fifo_delay = false;
 
 	AC_WRITE(ac, POWER_CTL, 0);
 
-	err = request_thपढ़ोed_irq(ac->irq, शून्य, adxl34x_irq,
+	err = request_threaded_irq(ac->irq, NULL, adxl34x_irq,
 				   IRQF_TRIGGER_HIGH | IRQF_ONESHOT,
 				   dev_name(dev), ac);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "irq %d busy?\n", ac->irq);
-		जाओ err_मुक्त_mem;
-	पूर्ण
+		goto err_free_mem;
+	}
 
 	err = sysfs_create_group(&dev->kobj, &adxl34x_attr_group);
-	अगर (err)
-		जाओ err_मुक्त_irq;
+	if (err)
+		goto err_free_irq;
 
-	err = input_रेजिस्टर_device(input_dev);
-	अगर (err)
-		जाओ err_हटाओ_attr;
+	err = input_register_device(input_dev);
+	if (err)
+		goto err_remove_attr;
 
 	AC_WRITE(ac, OFSX, pdata->x_axis_offset);
 	ac->hwcal.x = pdata->x_axis_offset;
@@ -836,78 +835,78 @@ EXPORT_SYMBOL_GPL(adxl34x_resume);
 	AC_WRITE(ac, THRESH_TAP, pdata->tap_threshold);
 	AC_WRITE(ac, DUR, pdata->tap_duration);
 	AC_WRITE(ac, LATENT, pdata->tap_latency);
-	AC_WRITE(ac, WINDOW, pdata->tap_winकरोw);
+	AC_WRITE(ac, WINDOW, pdata->tap_window);
 	AC_WRITE(ac, THRESH_ACT, pdata->activity_threshold);
 	AC_WRITE(ac, THRESH_INACT, pdata->inactivity_threshold);
-	AC_WRITE(ac, TIME_INACT, pdata->inactivity_समय);
-	AC_WRITE(ac, THRESH_FF, pdata->मुक्त_fall_threshold);
-	AC_WRITE(ac, TIME_FF, pdata->मुक्त_fall_समय);
+	AC_WRITE(ac, TIME_INACT, pdata->inactivity_time);
+	AC_WRITE(ac, THRESH_FF, pdata->free_fall_threshold);
+	AC_WRITE(ac, TIME_FF, pdata->free_fall_time);
 	AC_WRITE(ac, TAP_AXES, pdata->tap_axis_control);
 	AC_WRITE(ac, ACT_INACT_CTL, pdata->act_axis_control);
 	AC_WRITE(ac, BW_RATE, RATE(ac->pdata.data_rate) |
-		 (pdata->low_घातer_mode ? LOW_POWER : 0));
+		 (pdata->low_power_mode ? LOW_POWER : 0));
 	AC_WRITE(ac, DATA_FORMAT, pdata->data_range);
-	AC_WRITE(ac, FIFO_CTL, FIFO_MODE(pdata->fअगरo_mode) |
+	AC_WRITE(ac, FIFO_CTL, FIFO_MODE(pdata->fifo_mode) |
 			SAMPLES(pdata->watermark));
 
-	अगर (pdata->use_पूर्णांक2) अणु
+	if (pdata->use_int2) {
 		/* Map all INTs to INT2 */
-		AC_WRITE(ac, INT_MAP, ac->पूर्णांक_mask | OVERRUN);
-	पूर्ण अन्यथा अणु
+		AC_WRITE(ac, INT_MAP, ac->int_mask | OVERRUN);
+	} else {
 		/* Map all INTs to INT1 */
 		AC_WRITE(ac, INT_MAP, 0);
-	पूर्ण
+	}
 
-	अगर (ac->model == 346 && ac->pdata.orientation_enable) अणु
+	if (ac->model == 346 && ac->pdata.orientation_enable) {
 		AC_WRITE(ac, ORIENT_CONF,
 			ORIENT_DEADZONE(ac->pdata.deadzone_angle) |
-			ORIENT_DIVISOR(ac->pdata.भागisor_length));
+			ORIENT_DIVISOR(ac->pdata.divisor_length));
 
 		ac->orient2d_saved = 1234;
 		ac->orient3d_saved = 1234;
 
-		अगर (pdata->orientation_enable & ADXL_EN_ORIENTATION_3D)
-			क्रम (i = 0; i < ARRAY_SIZE(pdata->ev_codes_orient_3d); i++)
+		if (pdata->orientation_enable & ADXL_EN_ORIENTATION_3D)
+			for (i = 0; i < ARRAY_SIZE(pdata->ev_codes_orient_3d); i++)
 				__set_bit(pdata->ev_codes_orient_3d[i],
 					  input_dev->keybit);
 
-		अगर (pdata->orientation_enable & ADXL_EN_ORIENTATION_2D)
-			क्रम (i = 0; i < ARRAY_SIZE(pdata->ev_codes_orient_2d); i++)
+		if (pdata->orientation_enable & ADXL_EN_ORIENTATION_2D)
+			for (i = 0; i < ARRAY_SIZE(pdata->ev_codes_orient_2d); i++)
 				__set_bit(pdata->ev_codes_orient_2d[i],
 					  input_dev->keybit);
-	पूर्ण अन्यथा अणु
+	} else {
 		ac->pdata.orientation_enable = 0;
-	पूर्ण
+	}
 
-	AC_WRITE(ac, INT_ENABLE, ac->पूर्णांक_mask | OVERRUN);
+	AC_WRITE(ac, INT_ENABLE, ac->int_mask | OVERRUN);
 
-	ac->pdata.घातer_mode &= (PCTL_AUTO_SLEEP | PCTL_LINK);
+	ac->pdata.power_mode &= (PCTL_AUTO_SLEEP | PCTL_LINK);
 
-	वापस ac;
+	return ac;
 
- err_हटाओ_attr:
-	sysfs_हटाओ_group(&dev->kobj, &adxl34x_attr_group);
- err_मुक्त_irq:
-	मुक्त_irq(ac->irq, ac);
- err_मुक्त_mem:
-	input_मुक्त_device(input_dev);
-	kमुक्त(ac);
+ err_remove_attr:
+	sysfs_remove_group(&dev->kobj, &adxl34x_attr_group);
+ err_free_irq:
+	free_irq(ac->irq, ac);
+ err_free_mem:
+	input_free_device(input_dev);
+	kfree(ac);
  err_out:
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 EXPORT_SYMBOL_GPL(adxl34x_probe);
 
-पूर्णांक adxl34x_हटाओ(काष्ठा adxl34x *ac)
-अणु
-	sysfs_हटाओ_group(&ac->dev->kobj, &adxl34x_attr_group);
-	मुक्त_irq(ac->irq, ac);
-	input_unरेजिस्टर_device(ac->input);
+int adxl34x_remove(struct adxl34x *ac)
+{
+	sysfs_remove_group(&ac->dev->kobj, &adxl34x_attr_group);
+	free_irq(ac->irq, ac);
+	input_unregister_device(ac->input);
 	dev_dbg(ac->dev, "unregistered accelerometer\n");
-	kमुक्त(ac);
+	kfree(ac);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(adxl34x_हटाओ);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(adxl34x_remove);
 
 MODULE_AUTHOR("Michael Hennerich <hennerich@blackfin.uclinux.org>");
 MODULE_DESCRIPTION("ADXL345/346 Three-Axis Digital Accelerometer Driver");

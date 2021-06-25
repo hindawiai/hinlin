@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * motu-hwdep.c - a part of driver क्रम MOTU FireWire series
+ * motu-hwdep.c - a part of driver for MOTU FireWire series
  *
  * Copyright (c) 2015-2017 Takashi Sakamoto <o-takashi@sakamocchi.jp>
  */
@@ -9,190 +8,190 @@
 /*
  * This codes have five functionalities.
  *
- * 1.get inक्रमmation about firewire node
- * 2.get notअगरication about starting/stopping stream
+ * 1.get information about firewire node
+ * 2.get notification about starting/stopping stream
  * 3.lock/unlock streaming
  *
  */
 
-#समावेश "motu.h"
+#include "motu.h"
 
-अटल दीर्घ hwdep_पढ़ो(काष्ठा snd_hwdep *hwdep, अक्षर __user *buf, दीर्घ count,
+static long hwdep_read(struct snd_hwdep *hwdep, char __user *buf, long count,
 		       loff_t *offset)
-अणु
-	काष्ठा snd_motu *motu = hwdep->निजी_data;
-	DEFINE_WAIT(रुको);
-	जोड़ snd_firewire_event event;
+{
+	struct snd_motu *motu = hwdep->private_data;
+	DEFINE_WAIT(wait);
+	union snd_firewire_event event;
 
 	spin_lock_irq(&motu->lock);
 
-	जबतक (!motu->dev_lock_changed && motu->msg == 0) अणु
-		prepare_to_रुको(&motu->hwdep_रुको, &रुको, TASK_INTERRUPTIBLE);
+	while (!motu->dev_lock_changed && motu->msg == 0) {
+		prepare_to_wait(&motu->hwdep_wait, &wait, TASK_INTERRUPTIBLE);
 		spin_unlock_irq(&motu->lock);
 		schedule();
-		finish_रुको(&motu->hwdep_रुको, &रुको);
-		अगर (संकेत_pending(current))
-			वापस -ERESTARTSYS;
+		finish_wait(&motu->hwdep_wait, &wait);
+		if (signal_pending(current))
+			return -ERESTARTSYS;
 		spin_lock_irq(&motu->lock);
-	पूर्ण
+	}
 
-	स_रखो(&event, 0, माप(event));
-	अगर (motu->dev_lock_changed) अणु
+	memset(&event, 0, sizeof(event));
+	if (motu->dev_lock_changed) {
 		event.lock_status.type = SNDRV_FIREWIRE_EVENT_LOCK_STATUS;
 		event.lock_status.status = (motu->dev_lock_count > 0);
 		motu->dev_lock_changed = false;
 
-		count = min_t(दीर्घ, count, माप(event.lock_status));
-	पूर्ण अन्यथा अणु
-		event.motu_notअगरication.type = SNDRV_FIREWIRE_EVENT_MOTU_NOTIFICATION;
-		event.motu_notअगरication.message = motu->msg;
+		count = min_t(long, count, sizeof(event.lock_status));
+	} else {
+		event.motu_notification.type = SNDRV_FIREWIRE_EVENT_MOTU_NOTIFICATION;
+		event.motu_notification.message = motu->msg;
 		motu->msg = 0;
 
-		count = min_t(दीर्घ, count, माप(event.motu_notअगरication));
-	पूर्ण
+		count = min_t(long, count, sizeof(event.motu_notification));
+	}
 
 	spin_unlock_irq(&motu->lock);
 
-	अगर (copy_to_user(buf, &event, count))
-		वापस -EFAULT;
+	if (copy_to_user(buf, &event, count))
+		return -EFAULT;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल __poll_t hwdep_poll(काष्ठा snd_hwdep *hwdep, काष्ठा file *file,
-			       poll_table *रुको)
-अणु
-	काष्ठा snd_motu *motu = hwdep->निजी_data;
+static __poll_t hwdep_poll(struct snd_hwdep *hwdep, struct file *file,
+			       poll_table *wait)
+{
+	struct snd_motu *motu = hwdep->private_data;
 	__poll_t events;
 
-	poll_रुको(file, &motu->hwdep_रुको, रुको);
+	poll_wait(file, &motu->hwdep_wait, wait);
 
 	spin_lock_irq(&motu->lock);
-	अगर (motu->dev_lock_changed || motu->msg)
+	if (motu->dev_lock_changed || motu->msg)
 		events = EPOLLIN | EPOLLRDNORM;
-	अन्यथा
+	else
 		events = 0;
 	spin_unlock_irq(&motu->lock);
 
-	वापस events | EPOLLOUT;
-पूर्ण
+	return events | EPOLLOUT;
+}
 
-अटल पूर्णांक hwdep_get_info(काष्ठा snd_motu *motu, व्योम __user *arg)
-अणु
-	काष्ठा fw_device *dev = fw_parent_device(motu->unit);
-	काष्ठा snd_firewire_get_info info;
+static int hwdep_get_info(struct snd_motu *motu, void __user *arg)
+{
+	struct fw_device *dev = fw_parent_device(motu->unit);
+	struct snd_firewire_get_info info;
 
-	स_रखो(&info, 0, माप(info));
+	memset(&info, 0, sizeof(info));
 	info.type = SNDRV_FIREWIRE_TYPE_MOTU;
 	info.card = dev->card->index;
 	*(__be32 *)&info.guid[0] = cpu_to_be32(dev->config_rom[3]);
 	*(__be32 *)&info.guid[4] = cpu_to_be32(dev->config_rom[4]);
 	strscpy(info.device_name, dev_name(&dev->device),
-		माप(info.device_name));
+		sizeof(info.device_name));
 
-	अगर (copy_to_user(arg, &info, माप(info)))
-		वापस -EFAULT;
+	if (copy_to_user(arg, &info, sizeof(info)))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hwdep_lock(काष्ठा snd_motu *motu)
-अणु
-	पूर्णांक err;
+static int hwdep_lock(struct snd_motu *motu)
+{
+	int err;
 
 	spin_lock_irq(&motu->lock);
 
-	अगर (motu->dev_lock_count == 0) अणु
+	if (motu->dev_lock_count == 0) {
 		motu->dev_lock_count = -1;
 		err = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		err = -EBUSY;
-	पूर्ण
+	}
 
 	spin_unlock_irq(&motu->lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक hwdep_unlock(काष्ठा snd_motu *motu)
-अणु
-	पूर्णांक err;
+static int hwdep_unlock(struct snd_motu *motu)
+{
+	int err;
 
 	spin_lock_irq(&motu->lock);
 
-	अगर (motu->dev_lock_count == -1) अणु
+	if (motu->dev_lock_count == -1) {
 		motu->dev_lock_count = 0;
 		err = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		err = -EBADFD;
-	पूर्ण
+	}
 
 	spin_unlock_irq(&motu->lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक hwdep_release(काष्ठा snd_hwdep *hwdep, काष्ठा file *file)
-अणु
-	काष्ठा snd_motu *motu = hwdep->निजी_data;
+static int hwdep_release(struct snd_hwdep *hwdep, struct file *file)
+{
+	struct snd_motu *motu = hwdep->private_data;
 
 	spin_lock_irq(&motu->lock);
-	अगर (motu->dev_lock_count == -1)
+	if (motu->dev_lock_count == -1)
 		motu->dev_lock_count = 0;
 	spin_unlock_irq(&motu->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hwdep_ioctl(काष्ठा snd_hwdep *hwdep, काष्ठा file *file,
-	    अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा snd_motu *motu = hwdep->निजी_data;
+static int hwdep_ioctl(struct snd_hwdep *hwdep, struct file *file,
+	    unsigned int cmd, unsigned long arg)
+{
+	struct snd_motu *motu = hwdep->private_data;
 
-	चयन (cmd) अणु
-	हाल SNDRV_FIREWIRE_IOCTL_GET_INFO:
-		वापस hwdep_get_info(motu, (व्योम __user *)arg);
-	हाल SNDRV_FIREWIRE_IOCTL_LOCK:
-		वापस hwdep_lock(motu);
-	हाल SNDRV_FIREWIRE_IOCTL_UNLOCK:
-		वापस hwdep_unlock(motu);
-	शेष:
-		वापस -ENOIOCTLCMD;
-	पूर्ण
-पूर्ण
+	switch (cmd) {
+	case SNDRV_FIREWIRE_IOCTL_GET_INFO:
+		return hwdep_get_info(motu, (void __user *)arg);
+	case SNDRV_FIREWIRE_IOCTL_LOCK:
+		return hwdep_lock(motu);
+	case SNDRV_FIREWIRE_IOCTL_UNLOCK:
+		return hwdep_unlock(motu);
+	default:
+		return -ENOIOCTLCMD;
+	}
+}
 
-#अगर_घोषित CONFIG_COMPAT
-अटल पूर्णांक hwdep_compat_ioctl(काष्ठा snd_hwdep *hwdep, काष्ठा file *file,
-			      अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	वापस hwdep_ioctl(hwdep, file, cmd,
-			   (अचिन्हित दीर्घ)compat_ptr(arg));
-पूर्ण
-#अन्यथा
-#घोषणा hwdep_compat_ioctl शून्य
-#पूर्ण_अगर
+#ifdef CONFIG_COMPAT
+static int hwdep_compat_ioctl(struct snd_hwdep *hwdep, struct file *file,
+			      unsigned int cmd, unsigned long arg)
+{
+	return hwdep_ioctl(hwdep, file, cmd,
+			   (unsigned long)compat_ptr(arg));
+}
+#else
+#define hwdep_compat_ioctl NULL
+#endif
 
-पूर्णांक snd_motu_create_hwdep_device(काष्ठा snd_motu *motu)
-अणु
-	अटल स्थिर काष्ठा snd_hwdep_ops ops = अणु
-		.पढ़ो		= hwdep_पढ़ो,
+int snd_motu_create_hwdep_device(struct snd_motu *motu)
+{
+	static const struct snd_hwdep_ops ops = {
+		.read		= hwdep_read,
 		.release	= hwdep_release,
 		.poll		= hwdep_poll,
 		.ioctl		= hwdep_ioctl,
 		.ioctl_compat	= hwdep_compat_ioctl,
-	पूर्ण;
-	काष्ठा snd_hwdep *hwdep;
-	पूर्णांक err;
+	};
+	struct snd_hwdep *hwdep;
+	int err;
 
 	err = snd_hwdep_new(motu->card, motu->card->driver, 0, &hwdep);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	म_नकल(hwdep->name, "MOTU");
-	hwdep->अगरace = SNDRV_HWDEP_IFACE_FW_MOTU;
+	strcpy(hwdep->name, "MOTU");
+	hwdep->iface = SNDRV_HWDEP_IFACE_FW_MOTU;
 	hwdep->ops = ops;
-	hwdep->निजी_data = motu;
+	hwdep->private_data = motu;
 	hwdep->exclusive = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

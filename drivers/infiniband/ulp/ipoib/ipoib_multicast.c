@@ -1,26 +1,25 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2004, 2005 Topspin Communications.  All rights reserved.
- * Copyright (c) 2005 Sun Microप्रणालीs, Inc. All rights reserved.
+ * Copyright (c) 2005 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2004 Voltaire, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -33,205 +32,205 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/skbuff.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/in.h>
-#समावेश <linux/igmp.h>
-#समावेश <linux/inetdevice.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/slab.h>
+#include <linux/skbuff.h>
+#include <linux/rtnetlink.h>
+#include <linux/moduleparam.h>
+#include <linux/ip.h>
+#include <linux/in.h>
+#include <linux/igmp.h>
+#include <linux/inetdevice.h>
+#include <linux/delay.h>
+#include <linux/completion.h>
+#include <linux/slab.h>
 
-#समावेश <net/dst.h>
+#include <net/dst.h>
 
-#समावेश "ipoib.h"
+#include "ipoib.h"
 
-#अगर_घोषित CONFIG_INFINIBAND_IPOIB_DEBUG
-अटल पूर्णांक mcast_debug_level;
+#ifdef CONFIG_INFINIBAND_IPOIB_DEBUG
+static int mcast_debug_level;
 
-module_param(mcast_debug_level, पूर्णांक, 0644);
+module_param(mcast_debug_level, int, 0644);
 MODULE_PARM_DESC(mcast_debug_level,
 		 "Enable multicast debug tracing if > 0");
-#पूर्ण_अगर
+#endif
 
-काष्ठा ipoib_mcast_iter अणु
-	काष्ठा net_device *dev;
-	जोड़ ib_gid       mgid;
-	अचिन्हित दीर्घ      created;
-	अचिन्हित पूर्णांक       queuelen;
-	अचिन्हित पूर्णांक       complete;
-	अचिन्हित पूर्णांक       send_only;
-पूर्ण;
+struct ipoib_mcast_iter {
+	struct net_device *dev;
+	union ib_gid       mgid;
+	unsigned long      created;
+	unsigned int       queuelen;
+	unsigned int       complete;
+	unsigned int       send_only;
+};
 
-/* join state that allows creating mcg with senकरोnly member request */
-#घोषणा SENDONLY_FULLMEMBER_JOIN	8
+/* join state that allows creating mcg with sendonly member request */
+#define SENDONLY_FULLMEMBER_JOIN	8
 
 /*
  * This should be called with the priv->lock held
  */
-अटल व्योम __ipoib_mcast_schedule_join_thपढ़ो(काष्ठा ipoib_dev_priv *priv,
-					       काष्ठा ipoib_mcast *mcast,
+static void __ipoib_mcast_schedule_join_thread(struct ipoib_dev_priv *priv,
+					       struct ipoib_mcast *mcast,
 					       bool delay)
-अणु
-	अगर (!test_bit(IPOIB_FLAG_OPER_UP, &priv->flags))
-		वापस;
+{
+	if (!test_bit(IPOIB_FLAG_OPER_UP, &priv->flags))
+		return;
 
 	/*
 	 * We will be scheduling *something*, so cancel whatever is
 	 * currently scheduled first
 	 */
 	cancel_delayed_work(&priv->mcast_task);
-	अगर (mcast && delay) अणु
+	if (mcast && delay) {
 		/*
 		 * We had a failure and want to schedule a retry later
 		 */
 		mcast->backoff *= 2;
-		अगर (mcast->backoff > IPOIB_MAX_BACKOFF_SECONDS)
+		if (mcast->backoff > IPOIB_MAX_BACKOFF_SECONDS)
 			mcast->backoff = IPOIB_MAX_BACKOFF_SECONDS;
-		mcast->delay_until = jअगरfies + (mcast->backoff * HZ);
+		mcast->delay_until = jiffies + (mcast->backoff * HZ);
 		/*
-		 * Mark this mcast क्रम its delay, but restart the
+		 * Mark this mcast for its delay, but restart the
 		 * task immediately.  The join task will make sure to
 		 * clear out all entries without delays, and then
 		 * schedule itself to run again when the earliest
 		 * delay expires
 		 */
 		queue_delayed_work(priv->wq, &priv->mcast_task, 0);
-	पूर्ण अन्यथा अगर (delay) अणु
+	} else if (delay) {
 		/*
-		 * Special हाल of retrying after a failure to
-		 * allocate the broadcast multicast group, रुको
+		 * Special case of retrying after a failure to
+		 * allocate the broadcast multicast group, wait
 		 * 1 second and try again
 		 */
 		queue_delayed_work(priv->wq, &priv->mcast_task, HZ);
-	पूर्ण अन्यथा
+	} else
 		queue_delayed_work(priv->wq, &priv->mcast_task, 0);
-पूर्ण
+}
 
-अटल व्योम ipoib_mcast_मुक्त(काष्ठा ipoib_mcast *mcast)
-अणु
-	काष्ठा net_device *dev = mcast->dev;
-	पूर्णांक tx_dropped = 0;
+static void ipoib_mcast_free(struct ipoib_mcast *mcast)
+{
+	struct net_device *dev = mcast->dev;
+	int tx_dropped = 0;
 
 	ipoib_dbg_mcast(ipoib_priv(dev), "deleting multicast group %pI6\n",
 			mcast->mcmember.mgid.raw);
 
-	/* हटाओ all neigh connected to this mcast */
+	/* remove all neigh connected to this mcast */
 	ipoib_del_neighs_by_gid(dev, mcast->mcmember.mgid.raw);
 
-	अगर (mcast->ah)
+	if (mcast->ah)
 		ipoib_put_ah(mcast->ah);
 
-	जबतक (!skb_queue_empty(&mcast->pkt_queue)) अणु
+	while (!skb_queue_empty(&mcast->pkt_queue)) {
 		++tx_dropped;
-		dev_kमुक्त_skb_any(skb_dequeue(&mcast->pkt_queue));
-	पूर्ण
+		dev_kfree_skb_any(skb_dequeue(&mcast->pkt_queue));
+	}
 
-	netअगर_tx_lock_bh(dev);
+	netif_tx_lock_bh(dev);
 	dev->stats.tx_dropped += tx_dropped;
-	netअगर_tx_unlock_bh(dev);
+	netif_tx_unlock_bh(dev);
 
-	kमुक्त(mcast);
-पूर्ण
+	kfree(mcast);
+}
 
-अटल काष्ठा ipoib_mcast *ipoib_mcast_alloc(काष्ठा net_device *dev)
-अणु
-	काष्ठा ipoib_mcast *mcast;
+static struct ipoib_mcast *ipoib_mcast_alloc(struct net_device *dev)
+{
+	struct ipoib_mcast *mcast;
 
-	mcast = kzalloc(माप(*mcast), GFP_ATOMIC);
-	अगर (!mcast)
-		वापस शून्य;
+	mcast = kzalloc(sizeof(*mcast), GFP_ATOMIC);
+	if (!mcast)
+		return NULL;
 
 	mcast->dev = dev;
-	mcast->created = jअगरfies;
-	mcast->delay_until = jअगरfies;
+	mcast->created = jiffies;
+	mcast->delay_until = jiffies;
 	mcast->backoff = 1;
 
 	INIT_LIST_HEAD(&mcast->list);
 	INIT_LIST_HEAD(&mcast->neigh_list);
 	skb_queue_head_init(&mcast->pkt_queue);
 
-	वापस mcast;
-पूर्ण
+	return mcast;
+}
 
-अटल काष्ठा ipoib_mcast *__ipoib_mcast_find(काष्ठा net_device *dev, व्योम *mgid)
-अणु
-	काष्ठा ipoib_dev_priv *priv = ipoib_priv(dev);
-	काष्ठा rb_node *n = priv->multicast_tree.rb_node;
+static struct ipoib_mcast *__ipoib_mcast_find(struct net_device *dev, void *mgid)
+{
+	struct ipoib_dev_priv *priv = ipoib_priv(dev);
+	struct rb_node *n = priv->multicast_tree.rb_node;
 
-	जबतक (n) अणु
-		काष्ठा ipoib_mcast *mcast;
-		पूर्णांक ret;
+	while (n) {
+		struct ipoib_mcast *mcast;
+		int ret;
 
-		mcast = rb_entry(n, काष्ठा ipoib_mcast, rb_node);
+		mcast = rb_entry(n, struct ipoib_mcast, rb_node);
 
-		ret = स_भेद(mgid, mcast->mcmember.mgid.raw,
-			     माप (जोड़ ib_gid));
-		अगर (ret < 0)
+		ret = memcmp(mgid, mcast->mcmember.mgid.raw,
+			     sizeof (union ib_gid));
+		if (ret < 0)
 			n = n->rb_left;
-		अन्यथा अगर (ret > 0)
+		else if (ret > 0)
 			n = n->rb_right;
-		अन्यथा
-			वापस mcast;
-	पूर्ण
+		else
+			return mcast;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक __ipoib_mcast_add(काष्ठा net_device *dev, काष्ठा ipoib_mcast *mcast)
-अणु
-	काष्ठा ipoib_dev_priv *priv = ipoib_priv(dev);
-	काष्ठा rb_node **n = &priv->multicast_tree.rb_node, *pn = शून्य;
+static int __ipoib_mcast_add(struct net_device *dev, struct ipoib_mcast *mcast)
+{
+	struct ipoib_dev_priv *priv = ipoib_priv(dev);
+	struct rb_node **n = &priv->multicast_tree.rb_node, *pn = NULL;
 
-	जबतक (*n) अणु
-		काष्ठा ipoib_mcast *पंचांगcast;
-		पूर्णांक ret;
+	while (*n) {
+		struct ipoib_mcast *tmcast;
+		int ret;
 
 		pn = *n;
-		पंचांगcast = rb_entry(pn, काष्ठा ipoib_mcast, rb_node);
+		tmcast = rb_entry(pn, struct ipoib_mcast, rb_node);
 
-		ret = स_भेद(mcast->mcmember.mgid.raw, पंचांगcast->mcmember.mgid.raw,
-			     माप (जोड़ ib_gid));
-		अगर (ret < 0)
+		ret = memcmp(mcast->mcmember.mgid.raw, tmcast->mcmember.mgid.raw,
+			     sizeof (union ib_gid));
+		if (ret < 0)
 			n = &pn->rb_left;
-		अन्यथा अगर (ret > 0)
+		else if (ret > 0)
 			n = &pn->rb_right;
-		अन्यथा
-			वापस -EEXIST;
-	पूर्ण
+		else
+			return -EEXIST;
+	}
 
 	rb_link_node(&mcast->rb_node, pn, n);
 	rb_insert_color(&mcast->rb_node, &priv->multicast_tree);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ipoib_mcast_join_finish(काष्ठा ipoib_mcast *mcast,
-				   काष्ठा ib_sa_mcmember_rec *mcmember)
-अणु
-	काष्ठा net_device *dev = mcast->dev;
-	काष्ठा ipoib_dev_priv *priv = ipoib_priv(dev);
-	काष्ठा rdma_netdev *rn = netdev_priv(dev);
-	काष्ठा ipoib_ah *ah;
-	काष्ठा rdma_ah_attr av;
-	पूर्णांक ret;
-	पूर्णांक set_qkey = 0;
-	पूर्णांक mtu;
+static int ipoib_mcast_join_finish(struct ipoib_mcast *mcast,
+				   struct ib_sa_mcmember_rec *mcmember)
+{
+	struct net_device *dev = mcast->dev;
+	struct ipoib_dev_priv *priv = ipoib_priv(dev);
+	struct rdma_netdev *rn = netdev_priv(dev);
+	struct ipoib_ah *ah;
+	struct rdma_ah_attr av;
+	int ret;
+	int set_qkey = 0;
+	int mtu;
 
 	mcast->mcmember = *mcmember;
 
-	/* Set the multicast MTU and cached Q_Key beक्रमe we attach अगर it's
+	/* Set the multicast MTU and cached Q_Key before we attach if it's
 	 * the broadcast group.
 	 */
-	अगर (!स_भेद(mcast->mcmember.mgid.raw, priv->dev->broadcast + 4,
-		    माप (जोड़ ib_gid))) अणु
+	if (!memcmp(mcast->mcmember.mgid.raw, priv->dev->broadcast + 4,
+		    sizeof (union ib_gid))) {
 		spin_lock_irq(&priv->lock);
-		अगर (!priv->broadcast) अणु
+		if (!priv->broadcast) {
 			spin_unlock_irq(&priv->lock);
-			वापस -EAGAIN;
-		पूर्ण
+			return -EAGAIN;
+		}
 		/*update priv member according to the new mcast*/
 		priv->broadcast->mcmember.qkey = mcmember->qkey;
 		priv->broadcast->mcmember.mtu = mcmember->mtu;
@@ -240,10 +239,10 @@ MODULE_PARM_DESC(mcast_debug_level,
 		priv->broadcast->mcmember.sl = mcmember->sl;
 		priv->broadcast->mcmember.flow_label = mcmember->flow_label;
 		priv->broadcast->mcmember.hop_limit = mcmember->hop_limit;
-		/* assume अगर the admin and the mcast are the same both can be changed */
-		mtu = rdma_mtu_क्रमागत_to_पूर्णांक(priv->ca,  priv->port,
+		/* assume if the admin and the mcast are the same both can be changed */
+		mtu = rdma_mtu_enum_to_int(priv->ca,  priv->port,
 					   priv->broadcast->mcmember.mtu);
-		अगर (priv->mcast_mtu == priv->admin_mtu)
+		if (priv->mcast_mtu == priv->admin_mtu)
 			priv->admin_mtu = IPOIB_UD_MTU(mtu);
 		priv->mcast_mtu = IPOIB_UD_MTU(mtu);
 		rn->mtu = priv->mcast_mtu;
@@ -252,34 +251,34 @@ MODULE_PARM_DESC(mcast_debug_level,
 		spin_unlock_irq(&priv->lock);
 		priv->tx_wr.remote_qkey = priv->qkey;
 		set_qkey = 1;
-	पूर्ण
+	}
 
-	अगर (!test_bit(IPOIB_MCAST_FLAG_SENDONLY, &mcast->flags)) अणु
-		अगर (test_and_set_bit(IPOIB_MCAST_FLAG_ATTACHED, &mcast->flags)) अणु
+	if (!test_bit(IPOIB_MCAST_FLAG_SENDONLY, &mcast->flags)) {
+		if (test_and_set_bit(IPOIB_MCAST_FLAG_ATTACHED, &mcast->flags)) {
 			ipoib_warn(priv, "multicast group %pI6 already attached\n",
 				   mcast->mcmember.mgid.raw);
 
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		ret = rn->attach_mcast(dev, priv->ca, &mcast->mcmember.mgid,
 				       be16_to_cpu(mcast->mcmember.mlid),
 				       set_qkey, priv->qkey);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			ipoib_warn(priv, "couldn't attach QP to multicast group %pI6\n",
 				   mcast->mcmember.mgid.raw);
 
 			clear_bit(IPOIB_MCAST_FLAG_ATTACHED, &mcast->flags);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	स_रखो(&av, 0, माप(av));
+	memset(&av, 0, sizeof(av));
 	av.type = rdma_ah_find_type(priv->ca, priv->port);
 	rdma_ah_set_dlid(&av, be16_to_cpu(mcast->mcmember.mlid));
 	rdma_ah_set_port_num(&av, priv->port);
 	rdma_ah_set_sl(&av, mcast->mcmember.sl);
-	rdma_ah_set_अटल_rate(&av, mcast->mcmember.rate);
+	rdma_ah_set_static_rate(&av, mcast->mcmember.rate);
 
 	rdma_ah_set_grh(&av, &mcast->mcmember.mgid,
 			be32_to_cpu(mcast->mcmember.flow_label),
@@ -287,12 +286,12 @@ MODULE_PARM_DESC(mcast_debug_level,
 			mcast->mcmember.traffic_class);
 
 	ah = ipoib_create_ah(dev, priv->pd, &av);
-	अगर (IS_ERR(ah)) अणु
+	if (IS_ERR(ah)) {
 		ipoib_warn(priv, "ib_address_create failed %ld\n",
 			   -PTR_ERR(ah));
 		/* use original error */
-		वापस PTR_ERR(ah);
-	पूर्ण
+		return PTR_ERR(ah);
+	}
 	spin_lock_irq(&priv->lock);
 	mcast->ah = ah;
 	spin_unlock_irq(&priv->lock);
@@ -304,177 +303,177 @@ MODULE_PARM_DESC(mcast_debug_level,
 			mcast->mcmember.sl);
 
 	/* actually send any queued packets */
-	netअगर_tx_lock_bh(dev);
-	जबतक (!skb_queue_empty(&mcast->pkt_queue)) अणु
-		काष्ठा sk_buff *skb = skb_dequeue(&mcast->pkt_queue);
+	netif_tx_lock_bh(dev);
+	while (!skb_queue_empty(&mcast->pkt_queue)) {
+		struct sk_buff *skb = skb_dequeue(&mcast->pkt_queue);
 
-		netअगर_tx_unlock_bh(dev);
+		netif_tx_unlock_bh(dev);
 
 		skb->dev = dev;
 
 		ret = dev_queue_xmit(skb);
-		अगर (ret)
+		if (ret)
 			ipoib_warn(priv, "%s:dev_queue_xmit failed to re-queue packet, ret:%d\n",
 				   __func__, ret);
-		netअगर_tx_lock_bh(dev);
-	पूर्ण
-	netअगर_tx_unlock_bh(dev);
+		netif_tx_lock_bh(dev);
+	}
+	netif_tx_unlock_bh(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ipoib_mcast_carrier_on_task(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ipoib_dev_priv *priv = container_of(work, काष्ठा ipoib_dev_priv,
+void ipoib_mcast_carrier_on_task(struct work_struct *work)
+{
+	struct ipoib_dev_priv *priv = container_of(work, struct ipoib_dev_priv,
 						   carrier_on_task);
-	काष्ठा ib_port_attr attr;
+	struct ib_port_attr attr;
 
-	अगर (ib_query_port(priv->ca, priv->port, &attr) ||
-	    attr.state != IB_PORT_ACTIVE) अणु
+	if (ib_query_port(priv->ca, priv->port, &attr) ||
+	    attr.state != IB_PORT_ACTIVE) {
 		ipoib_dbg(priv, "Keeping carrier off until IB port is active\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 	/*
-	 * Take rtnl_lock to aव्योम racing with ipoib_stop() and
-	 * turning the carrier back on जबतक a device is being
-	 * हटाओd.  However, ipoib_stop() will attempt to flush
-	 * the workqueue जबतक holding the rtnl lock, so loop
+	 * Take rtnl_lock to avoid racing with ipoib_stop() and
+	 * turning the carrier back on while a device is being
+	 * removed.  However, ipoib_stop() will attempt to flush
+	 * the workqueue while holding the rtnl lock, so loop
 	 * on trylock until either we get the lock or we see
-	 * FLAG_OPER_UP go away as that संकेतs that we are bailing
+	 * FLAG_OPER_UP go away as that signals that we are bailing
 	 * and can safely ignore the carrier on work.
 	 */
-	जबतक (!rtnl_trylock()) अणु
-		अगर (!test_bit(IPOIB_FLAG_OPER_UP, &priv->flags))
-			वापस;
-		अन्यथा
+	while (!rtnl_trylock()) {
+		if (!test_bit(IPOIB_FLAG_OPER_UP, &priv->flags))
+			return;
+		else
 			msleep(20);
-	पूर्ण
-	अगर (!ipoib_cm_admin_enabled(priv->dev))
+	}
+	if (!ipoib_cm_admin_enabled(priv->dev))
 		dev_set_mtu(priv->dev, min(priv->mcast_mtu, priv->admin_mtu));
-	netअगर_carrier_on(priv->dev);
+	netif_carrier_on(priv->dev);
 	rtnl_unlock();
-पूर्ण
+}
 
-अटल पूर्णांक ipoib_mcast_join_complete(पूर्णांक status,
-				     काष्ठा ib_sa_multicast *multicast)
-अणु
-	काष्ठा ipoib_mcast *mcast = multicast->context;
-	काष्ठा net_device *dev = mcast->dev;
-	काष्ठा ipoib_dev_priv *priv = ipoib_priv(dev);
+static int ipoib_mcast_join_complete(int status,
+				     struct ib_sa_multicast *multicast)
+{
+	struct ipoib_mcast *mcast = multicast->context;
+	struct net_device *dev = mcast->dev;
+	struct ipoib_dev_priv *priv = ipoib_priv(dev);
 
 	ipoib_dbg_mcast(priv, "%sjoin completion for %pI6 (status %d)\n",
 			test_bit(IPOIB_MCAST_FLAG_SENDONLY, &mcast->flags) ?
 			"sendonly " : "",
 			mcast->mcmember.mgid.raw, status);
 
-	/* We trap क्रम port events ourselves. */
-	अगर (status == -ENETRESET) अणु
+	/* We trap for port events ourselves. */
+	if (status == -ENETRESET) {
 		status = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!status)
+	if (!status)
 		status = ipoib_mcast_join_finish(mcast, &multicast->rec);
 
-	अगर (!status) अणु
+	if (!status) {
 		mcast->backoff = 1;
-		mcast->delay_until = jअगरfies;
+		mcast->delay_until = jiffies;
 
 		/*
-		 * Defer carrier on work to priv->wq to aव्योम a
+		 * Defer carrier on work to priv->wq to avoid a
 		 * deadlock on rtnl_lock here.  Requeue our multicast
 		 * work too, which will end up happening right after
 		 * our carrier on task work and will allow us to
 		 * send out all of the non-broadcast joins
 		 */
-		अगर (mcast == priv->broadcast) अणु
+		if (mcast == priv->broadcast) {
 			spin_lock_irq(&priv->lock);
 			queue_work(priv->wq, &priv->carrier_on_task);
-			__ipoib_mcast_schedule_join_thपढ़ो(priv, शून्य, 0);
-			जाओ out_locked;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			__ipoib_mcast_schedule_join_thread(priv, NULL, 0);
+			goto out_locked;
+		}
+	} else {
 		bool silent_fail =
 		    test_bit(IPOIB_MCAST_FLAG_SENDONLY, &mcast->flags) &&
 		    status == -EINVAL;
 
-		अगर (mcast->logcount < 20) अणु
-			अगर (status == -ETIMEDOUT || status == -EAGAIN ||
-			    silent_fail) अणु
+		if (mcast->logcount < 20) {
+			if (status == -ETIMEDOUT || status == -EAGAIN ||
+			    silent_fail) {
 				ipoib_dbg_mcast(priv, "%smulticast join failed for %pI6, status %d\n",
 						test_bit(IPOIB_MCAST_FLAG_SENDONLY, &mcast->flags) ? "sendonly " : "",
 						mcast->mcmember.mgid.raw, status);
-			पूर्ण अन्यथा अणु
+			} else {
 				ipoib_warn(priv, "%smulticast join failed for %pI6, status %d\n",
 						test_bit(IPOIB_MCAST_FLAG_SENDONLY, &mcast->flags) ? "sendonly " : "",
 					   mcast->mcmember.mgid.raw, status);
-			पूर्ण
+			}
 
-			अगर (!silent_fail)
+			if (!silent_fail)
 				mcast->logcount++;
-		पूर्ण
+		}
 
-		अगर (test_bit(IPOIB_MCAST_FLAG_SENDONLY, &mcast->flags) &&
-		    mcast->backoff >= 2) अणु
+		if (test_bit(IPOIB_MCAST_FLAG_SENDONLY, &mcast->flags) &&
+		    mcast->backoff >= 2) {
 			/*
-			 * We only retry senकरोnly joins once beक्रमe we drop
+			 * We only retry sendonly joins once before we drop
 			 * the packet and quit trying to deal with the
 			 * group.  However, we leave the group in the
 			 * mcast list as an unjoined group.  If we want to
 			 * try joining again, we simply queue up a packet
-			 * and restart the join thपढ़ो.  The empty queue
-			 * is why the join thपढ़ो ignores this group.
+			 * and restart the join thread.  The empty queue
+			 * is why the join thread ignores this group.
 			 */
 			mcast->backoff = 1;
-			netअगर_tx_lock_bh(dev);
-			जबतक (!skb_queue_empty(&mcast->pkt_queue)) अणु
+			netif_tx_lock_bh(dev);
+			while (!skb_queue_empty(&mcast->pkt_queue)) {
 				++dev->stats.tx_dropped;
-				dev_kमुक्त_skb_any(skb_dequeue(&mcast->pkt_queue));
-			पूर्ण
-			netअगर_tx_unlock_bh(dev);
-		पूर्ण अन्यथा अणु
+				dev_kfree_skb_any(skb_dequeue(&mcast->pkt_queue));
+			}
+			netif_tx_unlock_bh(dev);
+		} else {
 			spin_lock_irq(&priv->lock);
 			/* Requeue this join task with a backoff delay */
-			__ipoib_mcast_schedule_join_thपढ़ो(priv, mcast, 1);
-			जाओ out_locked;
-		पूर्ण
-	पूर्ण
+			__ipoib_mcast_schedule_join_thread(priv, mcast, 1);
+			goto out_locked;
+		}
+	}
 out:
 	spin_lock_irq(&priv->lock);
 out_locked:
 	/*
-	 * Make sure to set mcast->mc beक्रमe we clear the busy flag to aव्योम
-	 * racing with code that checks क्रम BUSY beक्रमe checking mcast->mc
+	 * Make sure to set mcast->mc before we clear the busy flag to avoid
+	 * racing with code that checks for BUSY before checking mcast->mc
 	 */
-	अगर (status)
-		mcast->mc = शून्य;
-	अन्यथा
+	if (status)
+		mcast->mc = NULL;
+	else
 		mcast->mc = multicast;
 	clear_bit(IPOIB_MCAST_FLAG_BUSY, &mcast->flags);
 	spin_unlock_irq(&priv->lock);
-	complete(&mcast->करोne);
+	complete(&mcast->done);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Caller must hold 'priv->lock'
  */
-अटल पूर्णांक ipoib_mcast_join(काष्ठा net_device *dev, काष्ठा ipoib_mcast *mcast)
-अणु
-	काष्ठा ipoib_dev_priv *priv = ipoib_priv(dev);
-	काष्ठा ib_sa_multicast *multicast;
-	काष्ठा ib_sa_mcmember_rec rec = अणु
+static int ipoib_mcast_join(struct net_device *dev, struct ipoib_mcast *mcast)
+{
+	struct ipoib_dev_priv *priv = ipoib_priv(dev);
+	struct ib_sa_multicast *multicast;
+	struct ib_sa_mcmember_rec rec = {
 		.join_state = 1
-	पूर्ण;
+	};
 	ib_sa_comp_mask comp_mask;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (!priv->broadcast ||
+	if (!priv->broadcast ||
 	    !test_bit(IPOIB_FLAG_OPER_UP, &priv->flags))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	init_completion(&mcast->करोne);
+	init_completion(&mcast->done);
 	set_bit(IPOIB_MCAST_FLAG_BUSY, &mcast->flags);
 
 	ipoib_dbg_mcast(priv, "joining MGID %pI6\n", mcast->mcmember.mgid.raw);
@@ -489,7 +488,7 @@ out_locked:
 		IB_SA_MCMEMBER_REC_PKEY		|
 		IB_SA_MCMEMBER_REC_JOIN_STATE;
 
-	अगर (mcast != priv->broadcast) अणु
+	if (mcast != priv->broadcast) {
 		/*
 		 * RFC 4391:
 		 *  The MGID MUST use the same P_Key, Q_Key, SL, MTU,
@@ -520,76 +519,76 @@ out_locked:
 
 		/*
 		 * Send-only IB Multicast joins work at the core IB layer but
-		 * require specअगरic SM support.
-		 * We can use such joins here only अगर the current SM supports that feature.
-		 * However, अगर not, we emulate an Ethernet multicast send,
-		 * which करोes not require a multicast subscription and will
+		 * require specific SM support.
+		 * We can use such joins here only if the current SM supports that feature.
+		 * However, if not, we emulate an Ethernet multicast send,
+		 * which does not require a multicast subscription and will
 		 * still send properly. The most appropriate thing to
-		 * करो is to create the group अगर it करोesn't exist as that
-		 * most बंदly emulates the behavior, from a user space
+		 * do is to create the group if it doesn't exist as that
+		 * most closely emulates the behavior, from a user space
 		 * application perspective, of Ethernet multicast operation.
 		 */
-		अगर (test_bit(IPOIB_MCAST_FLAG_SENDONLY, &mcast->flags))
+		if (test_bit(IPOIB_MCAST_FLAG_SENDONLY, &mcast->flags))
 			rec.join_state = SENDONLY_FULLMEMBER_JOIN;
-	पूर्ण
+	}
 	spin_unlock_irq(&priv->lock);
 
 	multicast = ib_sa_join_multicast(&ipoib_sa_client, priv->ca, priv->port,
 					 &rec, comp_mask, GFP_KERNEL,
 					 ipoib_mcast_join_complete, mcast);
 	spin_lock_irq(&priv->lock);
-	अगर (IS_ERR(multicast)) अणु
+	if (IS_ERR(multicast)) {
 		ret = PTR_ERR(multicast);
 		ipoib_warn(priv, "ib_sa_join_multicast failed, status %d\n", ret);
 		/* Requeue this join task with a backoff delay */
-		__ipoib_mcast_schedule_join_thपढ़ो(priv, mcast, 1);
+		__ipoib_mcast_schedule_join_thread(priv, mcast, 1);
 		clear_bit(IPOIB_MCAST_FLAG_BUSY, &mcast->flags);
 		spin_unlock_irq(&priv->lock);
-		complete(&mcast->करोne);
+		complete(&mcast->done);
 		spin_lock_irq(&priv->lock);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-व्योम ipoib_mcast_join_task(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ipoib_dev_priv *priv =
-		container_of(work, काष्ठा ipoib_dev_priv, mcast_task.work);
-	काष्ठा net_device *dev = priv->dev;
-	काष्ठा ib_port_attr port_attr;
-	अचिन्हित दीर्घ delay_until = 0;
-	काष्ठा ipoib_mcast *mcast = शून्य;
+void ipoib_mcast_join_task(struct work_struct *work)
+{
+	struct ipoib_dev_priv *priv =
+		container_of(work, struct ipoib_dev_priv, mcast_task.work);
+	struct net_device *dev = priv->dev;
+	struct ib_port_attr port_attr;
+	unsigned long delay_until = 0;
+	struct ipoib_mcast *mcast = NULL;
 
-	अगर (!test_bit(IPOIB_FLAG_OPER_UP, &priv->flags))
-		वापस;
+	if (!test_bit(IPOIB_FLAG_OPER_UP, &priv->flags))
+		return;
 
-	अगर (ib_query_port(priv->ca, priv->port, &port_attr)) अणु
+	if (ib_query_port(priv->ca, priv->port, &port_attr)) {
 		ipoib_dbg(priv, "ib_query_port() failed\n");
-		वापस;
-	पूर्ण
-	अगर (port_attr.state != IB_PORT_ACTIVE) अणु
+		return;
+	}
+	if (port_attr.state != IB_PORT_ACTIVE) {
 		ipoib_dbg(priv, "port state is not ACTIVE (state = %d) suspending join task\n",
 			  port_attr.state);
-		वापस;
-	पूर्ण
+		return;
+	}
 	priv->local_lid = port_attr.lid;
-	netअगर_addr_lock_bh(dev);
+	netif_addr_lock_bh(dev);
 
-	अगर (!test_bit(IPOIB_FLAG_DEV_ADDR_SET, &priv->flags)) अणु
-		netअगर_addr_unlock_bh(dev);
-		वापस;
-	पूर्ण
-	netअगर_addr_unlock_bh(dev);
+	if (!test_bit(IPOIB_FLAG_DEV_ADDR_SET, &priv->flags)) {
+		netif_addr_unlock_bh(dev);
+		return;
+	}
+	netif_addr_unlock_bh(dev);
 
 	spin_lock_irq(&priv->lock);
-	अगर (!test_bit(IPOIB_FLAG_OPER_UP, &priv->flags))
-		जाओ out;
+	if (!test_bit(IPOIB_FLAG_OPER_UP, &priv->flags))
+		goto out;
 
-	अगर (!priv->broadcast) अणु
-		काष्ठा ipoib_mcast *broadcast;
+	if (!priv->broadcast) {
+		struct ipoib_mcast *broadcast;
 
 		broadcast = ipoib_mcast_alloc(dev);
-		अगर (!broadcast) अणु
+		if (!broadcast) {
 			ipoib_warn(priv, "failed to allocate broadcast group\n");
 			/*
 			 * Restart us after a 1 second delay to retry
@@ -597,425 +596,425 @@ out_locked:
 			 * it.  Until this succeeds, this ipoib dev is
 			 * completely stalled (multicast wise).
 			 */
-			__ipoib_mcast_schedule_join_thपढ़ो(priv, शून्य, 1);
-			जाओ out;
-		पूर्ण
+			__ipoib_mcast_schedule_join_thread(priv, NULL, 1);
+			goto out;
+		}
 
-		स_नकल(broadcast->mcmember.mgid.raw, priv->dev->broadcast + 4,
-		       माप (जोड़ ib_gid));
+		memcpy(broadcast->mcmember.mgid.raw, priv->dev->broadcast + 4,
+		       sizeof (union ib_gid));
 		priv->broadcast = broadcast;
 
 		__ipoib_mcast_add(dev, priv->broadcast);
-	पूर्ण
+	}
 
-	अगर (!test_bit(IPOIB_MCAST_FLAG_ATTACHED, &priv->broadcast->flags)) अणु
-		अगर (IS_ERR_OR_शून्य(priv->broadcast->mc) &&
-		    !test_bit(IPOIB_MCAST_FLAG_BUSY, &priv->broadcast->flags)) अणु
+	if (!test_bit(IPOIB_MCAST_FLAG_ATTACHED, &priv->broadcast->flags)) {
+		if (IS_ERR_OR_NULL(priv->broadcast->mc) &&
+		    !test_bit(IPOIB_MCAST_FLAG_BUSY, &priv->broadcast->flags)) {
 			mcast = priv->broadcast;
-			अगर (mcast->backoff > 1 &&
-			    समय_beक्रमe(jअगरfies, mcast->delay_until)) अणु
+			if (mcast->backoff > 1 &&
+			    time_before(jiffies, mcast->delay_until)) {
 				delay_until = mcast->delay_until;
-				mcast = शून्य;
-			पूर्ण
-		पूर्ण
-		जाओ out;
-	पूर्ण
+				mcast = NULL;
+			}
+		}
+		goto out;
+	}
 
 	/*
 	 * We'll never get here until the broadcast group is both allocated
 	 * and attached
 	 */
-	list_क्रम_each_entry(mcast, &priv->multicast_list, list) अणु
-		अगर (IS_ERR_OR_शून्य(mcast->mc) &&
+	list_for_each_entry(mcast, &priv->multicast_list, list) {
+		if (IS_ERR_OR_NULL(mcast->mc) &&
 		    !test_bit(IPOIB_MCAST_FLAG_BUSY, &mcast->flags) &&
 		    (!test_bit(IPOIB_MCAST_FLAG_SENDONLY, &mcast->flags) ||
-		     !skb_queue_empty(&mcast->pkt_queue))) अणु
-			अगर (mcast->backoff == 1 ||
-			    समय_after_eq(jअगरfies, mcast->delay_until)) अणु
+		     !skb_queue_empty(&mcast->pkt_queue))) {
+			if (mcast->backoff == 1 ||
+			    time_after_eq(jiffies, mcast->delay_until)) {
 				/* Found the next unjoined group */
-				अगर (ipoib_mcast_join(dev, mcast)) अणु
+				if (ipoib_mcast_join(dev, mcast)) {
 					spin_unlock_irq(&priv->lock);
-					वापस;
-				पूर्ण
-			पूर्ण अन्यथा अगर (!delay_until ||
-				 समय_beक्रमe(mcast->delay_until, delay_until))
+					return;
+				}
+			} else if (!delay_until ||
+				 time_before(mcast->delay_until, delay_until))
 				delay_until = mcast->delay_until;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	mcast = शून्य;
+	mcast = NULL;
 	ipoib_dbg_mcast(priv, "successfully started all multicast joins\n");
 
 out:
-	अगर (delay_until) अणु
+	if (delay_until) {
 		cancel_delayed_work(&priv->mcast_task);
 		queue_delayed_work(priv->wq, &priv->mcast_task,
-				   delay_until - jअगरfies);
-	पूर्ण
-	अगर (mcast)
+				   delay_until - jiffies);
+	}
+	if (mcast)
 		ipoib_mcast_join(dev, mcast);
 
 	spin_unlock_irq(&priv->lock);
-पूर्ण
+}
 
-व्योम ipoib_mcast_start_thपढ़ो(काष्ठा net_device *dev)
-अणु
-	काष्ठा ipoib_dev_priv *priv = ipoib_priv(dev);
-	अचिन्हित दीर्घ flags;
+void ipoib_mcast_start_thread(struct net_device *dev)
+{
+	struct ipoib_dev_priv *priv = ipoib_priv(dev);
+	unsigned long flags;
 
 	ipoib_dbg_mcast(priv, "starting multicast thread\n");
 
 	spin_lock_irqsave(&priv->lock, flags);
-	__ipoib_mcast_schedule_join_thपढ़ो(priv, शून्य, 0);
+	__ipoib_mcast_schedule_join_thread(priv, NULL, 0);
 	spin_unlock_irqrestore(&priv->lock, flags);
-पूर्ण
+}
 
-व्योम ipoib_mcast_stop_thपढ़ो(काष्ठा net_device *dev)
-अणु
-	काष्ठा ipoib_dev_priv *priv = ipoib_priv(dev);
+void ipoib_mcast_stop_thread(struct net_device *dev)
+{
+	struct ipoib_dev_priv *priv = ipoib_priv(dev);
 
 	ipoib_dbg_mcast(priv, "stopping multicast thread\n");
 
 	cancel_delayed_work_sync(&priv->mcast_task);
-पूर्ण
+}
 
-अटल पूर्णांक ipoib_mcast_leave(काष्ठा net_device *dev, काष्ठा ipoib_mcast *mcast)
-अणु
-	काष्ठा ipoib_dev_priv *priv = ipoib_priv(dev);
-	काष्ठा rdma_netdev *rn = netdev_priv(dev);
-	पूर्णांक ret = 0;
+static int ipoib_mcast_leave(struct net_device *dev, struct ipoib_mcast *mcast)
+{
+	struct ipoib_dev_priv *priv = ipoib_priv(dev);
+	struct rdma_netdev *rn = netdev_priv(dev);
+	int ret = 0;
 
-	अगर (test_and_clear_bit(IPOIB_MCAST_FLAG_BUSY, &mcast->flags))
+	if (test_and_clear_bit(IPOIB_MCAST_FLAG_BUSY, &mcast->flags))
 		ipoib_warn(priv, "ipoib_mcast_leave on an in-flight join\n");
 
-	अगर (!IS_ERR_OR_शून्य(mcast->mc))
-		ib_sa_मुक्त_multicast(mcast->mc);
+	if (!IS_ERR_OR_NULL(mcast->mc))
+		ib_sa_free_multicast(mcast->mc);
 
-	अगर (test_and_clear_bit(IPOIB_MCAST_FLAG_ATTACHED, &mcast->flags)) अणु
+	if (test_and_clear_bit(IPOIB_MCAST_FLAG_ATTACHED, &mcast->flags)) {
 		ipoib_dbg_mcast(priv, "leaving MGID %pI6\n",
 				mcast->mcmember.mgid.raw);
 
 		/* Remove ourselves from the multicast group */
 		ret = rn->detach_mcast(dev, priv->ca, &mcast->mcmember.mgid,
 				       be16_to_cpu(mcast->mcmember.mlid));
-		अगर (ret)
+		if (ret)
 			ipoib_warn(priv, "ib_detach_mcast failed (result = %d)\n", ret);
-	पूर्ण अन्यथा अगर (!test_bit(IPOIB_MCAST_FLAG_SENDONLY, &mcast->flags))
+	} else if (!test_bit(IPOIB_MCAST_FLAG_SENDONLY, &mcast->flags))
 		ipoib_dbg(priv, "leaving with no mcmember but not a "
 			  "SENDONLY join\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Check अगर the multicast group is senकरोnly. If so हटाओ it from the maps
- * and add to the हटाओ list
+ * Check if the multicast group is sendonly. If so remove it from the maps
+ * and add to the remove list
  */
-व्योम ipoib_check_and_add_mcast_senकरोnly(काष्ठा ipoib_dev_priv *priv, u8 *mgid,
-				काष्ठा list_head *हटाओ_list)
-अणु
+void ipoib_check_and_add_mcast_sendonly(struct ipoib_dev_priv *priv, u8 *mgid,
+				struct list_head *remove_list)
+{
 	/* Is this multicast ? */
-	अगर (*mgid == 0xff) अणु
-		काष्ठा ipoib_mcast *mcast = __ipoib_mcast_find(priv->dev, mgid);
+	if (*mgid == 0xff) {
+		struct ipoib_mcast *mcast = __ipoib_mcast_find(priv->dev, mgid);
 
-		अगर (mcast && test_bit(IPOIB_MCAST_FLAG_SENDONLY, &mcast->flags)) अणु
+		if (mcast && test_bit(IPOIB_MCAST_FLAG_SENDONLY, &mcast->flags)) {
 			list_del(&mcast->list);
 			rb_erase(&mcast->rb_node, &priv->multicast_tree);
-			list_add_tail(&mcast->list, हटाओ_list);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			list_add_tail(&mcast->list, remove_list);
+		}
+	}
+}
 
-व्योम ipoib_mcast_हटाओ_list(काष्ठा list_head *हटाओ_list)
-अणु
-	काष्ठा ipoib_mcast *mcast, *पंचांगcast;
+void ipoib_mcast_remove_list(struct list_head *remove_list)
+{
+	struct ipoib_mcast *mcast, *tmcast;
 
 	/*
-	 * make sure the in-flight joins have finished beक्रमe we attempt
+	 * make sure the in-flight joins have finished before we attempt
 	 * to leave
 	 */
-	list_क्रम_each_entry_safe(mcast, पंचांगcast, हटाओ_list, list)
-		अगर (test_bit(IPOIB_MCAST_FLAG_BUSY, &mcast->flags))
-			रुको_क्रम_completion(&mcast->करोne);
+	list_for_each_entry_safe(mcast, tmcast, remove_list, list)
+		if (test_bit(IPOIB_MCAST_FLAG_BUSY, &mcast->flags))
+			wait_for_completion(&mcast->done);
 
-	list_क्रम_each_entry_safe(mcast, पंचांगcast, हटाओ_list, list) अणु
+	list_for_each_entry_safe(mcast, tmcast, remove_list, list) {
 		ipoib_mcast_leave(mcast->dev, mcast);
-		ipoib_mcast_मुक्त(mcast);
-	पूर्ण
-पूर्ण
+		ipoib_mcast_free(mcast);
+	}
+}
 
-व्योम ipoib_mcast_send(काष्ठा net_device *dev, u8 *daddr, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ipoib_dev_priv *priv = ipoib_priv(dev);
-	काष्ठा rdma_netdev *rn = netdev_priv(dev);
-	काष्ठा ipoib_mcast *mcast;
-	अचिन्हित दीर्घ flags;
-	व्योम *mgid = daddr + 4;
+void ipoib_mcast_send(struct net_device *dev, u8 *daddr, struct sk_buff *skb)
+{
+	struct ipoib_dev_priv *priv = ipoib_priv(dev);
+	struct rdma_netdev *rn = netdev_priv(dev);
+	struct ipoib_mcast *mcast;
+	unsigned long flags;
+	void *mgid = daddr + 4;
 
 	spin_lock_irqsave(&priv->lock, flags);
 
-	अगर (!test_bit(IPOIB_FLAG_OPER_UP, &priv->flags)		||
+	if (!test_bit(IPOIB_FLAG_OPER_UP, &priv->flags)		||
 	    !priv->broadcast					||
-	    !test_bit(IPOIB_MCAST_FLAG_ATTACHED, &priv->broadcast->flags)) अणु
+	    !test_bit(IPOIB_MCAST_FLAG_ATTACHED, &priv->broadcast->flags)) {
 		++dev->stats.tx_dropped;
-		dev_kमुक्त_skb_any(skb);
-		जाओ unlock;
-	पूर्ण
+		dev_kfree_skb_any(skb);
+		goto unlock;
+	}
 
 	mcast = __ipoib_mcast_find(dev, mgid);
-	अगर (!mcast || !mcast->ah) अणु
-		अगर (!mcast) अणु
+	if (!mcast || !mcast->ah) {
+		if (!mcast) {
 			/* Let's create a new send only group now */
 			ipoib_dbg_mcast(priv, "setting up send only multicast group for %pI6\n",
 					mgid);
 
 			mcast = ipoib_mcast_alloc(dev);
-			अगर (!mcast) अणु
+			if (!mcast) {
 				ipoib_warn(priv, "unable to allocate memory "
 					   "for multicast structure\n");
 				++dev->stats.tx_dropped;
-				dev_kमुक्त_skb_any(skb);
-				जाओ unlock;
-			पूर्ण
+				dev_kfree_skb_any(skb);
+				goto unlock;
+			}
 
 			set_bit(IPOIB_MCAST_FLAG_SENDONLY, &mcast->flags);
-			स_नकल(mcast->mcmember.mgid.raw, mgid,
-			       माप (जोड़ ib_gid));
+			memcpy(mcast->mcmember.mgid.raw, mgid,
+			       sizeof (union ib_gid));
 			__ipoib_mcast_add(dev, mcast);
 			list_add_tail(&mcast->list, &priv->multicast_list);
-		पूर्ण
-		अगर (skb_queue_len(&mcast->pkt_queue) < IPOIB_MAX_MCAST_QUEUE) अणु
-			/* put pseuकरोheader back on क्रम next समय */
-			skb_push(skb, माप(काष्ठा ipoib_pseuकरो_header));
+		}
+		if (skb_queue_len(&mcast->pkt_queue) < IPOIB_MAX_MCAST_QUEUE) {
+			/* put pseudoheader back on for next time */
+			skb_push(skb, sizeof(struct ipoib_pseudo_header));
 			skb_queue_tail(&mcast->pkt_queue, skb);
-		पूर्ण अन्यथा अणु
+		} else {
 			++dev->stats.tx_dropped;
-			dev_kमुक्त_skb_any(skb);
-		पूर्ण
-		अगर (!test_bit(IPOIB_MCAST_FLAG_BUSY, &mcast->flags)) अणु
-			__ipoib_mcast_schedule_join_thपढ़ो(priv, शून्य, 0);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		काष्ठा ipoib_neigh *neigh;
+			dev_kfree_skb_any(skb);
+		}
+		if (!test_bit(IPOIB_MCAST_FLAG_BUSY, &mcast->flags)) {
+			__ipoib_mcast_schedule_join_thread(priv, NULL, 0);
+		}
+	} else {
+		struct ipoib_neigh *neigh;
 
 		spin_unlock_irqrestore(&priv->lock, flags);
 		neigh = ipoib_neigh_get(dev, daddr);
 		spin_lock_irqsave(&priv->lock, flags);
-		अगर (!neigh) अणु
+		if (!neigh) {
 			neigh = ipoib_neigh_alloc(daddr, dev);
 			/* Make sure that the neigh will be added only
 			 * once to mcast list.
 			 */
-			अगर (neigh && list_empty(&neigh->list)) अणु
+			if (neigh && list_empty(&neigh->list)) {
 				kref_get(&mcast->ah->ref);
 				neigh->ah	= mcast->ah;
 				neigh->ah->valid = 1;
 				list_add_tail(&neigh->list, &mcast->neigh_list);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		spin_unlock_irqrestore(&priv->lock, flags);
 		mcast->ah->last_send = rn->send(dev, skb, mcast->ah->ah,
 						IB_MULTICAST_QPN);
-		अगर (neigh)
+		if (neigh)
 			ipoib_neigh_put(neigh);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 unlock:
 	spin_unlock_irqrestore(&priv->lock, flags);
-पूर्ण
+}
 
-व्योम ipoib_mcast_dev_flush(काष्ठा net_device *dev)
-अणु
-	काष्ठा ipoib_dev_priv *priv = ipoib_priv(dev);
-	LIST_HEAD(हटाओ_list);
-	काष्ठा ipoib_mcast *mcast, *पंचांगcast;
-	अचिन्हित दीर्घ flags;
+void ipoib_mcast_dev_flush(struct net_device *dev)
+{
+	struct ipoib_dev_priv *priv = ipoib_priv(dev);
+	LIST_HEAD(remove_list);
+	struct ipoib_mcast *mcast, *tmcast;
+	unsigned long flags;
 
 	mutex_lock(&priv->mcast_mutex);
 	ipoib_dbg_mcast(priv, "flushing multicast list\n");
 
 	spin_lock_irqsave(&priv->lock, flags);
 
-	list_क्रम_each_entry_safe(mcast, पंचांगcast, &priv->multicast_list, list) अणु
+	list_for_each_entry_safe(mcast, tmcast, &priv->multicast_list, list) {
 		list_del(&mcast->list);
 		rb_erase(&mcast->rb_node, &priv->multicast_tree);
-		list_add_tail(&mcast->list, &हटाओ_list);
-	पूर्ण
+		list_add_tail(&mcast->list, &remove_list);
+	}
 
-	अगर (priv->broadcast) अणु
+	if (priv->broadcast) {
 		rb_erase(&priv->broadcast->rb_node, &priv->multicast_tree);
-		list_add_tail(&priv->broadcast->list, &हटाओ_list);
-		priv->broadcast = शून्य;
-	पूर्ण
+		list_add_tail(&priv->broadcast->list, &remove_list);
+		priv->broadcast = NULL;
+	}
 
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	ipoib_mcast_हटाओ_list(&हटाओ_list);
+	ipoib_mcast_remove_list(&remove_list);
 	mutex_unlock(&priv->mcast_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक ipoib_mcast_addr_is_valid(स्थिर u8 *addr, स्थिर u8 *broadcast)
-अणु
+static int ipoib_mcast_addr_is_valid(const u8 *addr, const u8 *broadcast)
+{
 	/* reserved QPN, prefix, scope */
-	अगर (स_भेद(addr, broadcast, 6))
-		वापस 0;
+	if (memcmp(addr, broadcast, 6))
+		return 0;
 	/* signature lower, pkey */
-	अगर (स_भेद(addr + 7, broadcast + 7, 3))
-		वापस 0;
-	वापस 1;
-पूर्ण
+	if (memcmp(addr + 7, broadcast + 7, 3))
+		return 0;
+	return 1;
+}
 
-व्योम ipoib_mcast_restart_task(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ipoib_dev_priv *priv =
-		container_of(work, काष्ठा ipoib_dev_priv, restart_task);
-	काष्ठा net_device *dev = priv->dev;
-	काष्ठा netdev_hw_addr *ha;
-	काष्ठा ipoib_mcast *mcast, *पंचांगcast;
-	LIST_HEAD(हटाओ_list);
-	काष्ठा ib_sa_mcmember_rec rec;
+void ipoib_mcast_restart_task(struct work_struct *work)
+{
+	struct ipoib_dev_priv *priv =
+		container_of(work, struct ipoib_dev_priv, restart_task);
+	struct net_device *dev = priv->dev;
+	struct netdev_hw_addr *ha;
+	struct ipoib_mcast *mcast, *tmcast;
+	LIST_HEAD(remove_list);
+	struct ib_sa_mcmember_rec rec;
 
-	अगर (!test_bit(IPOIB_FLAG_OPER_UP, &priv->flags))
+	if (!test_bit(IPOIB_FLAG_OPER_UP, &priv->flags))
 		/*
-		 * लघुcut...on shutकरोwn flush is called next, just
-		 * let it करो all the work
+		 * shortcut...on shutdown flush is called next, just
+		 * let it do all the work
 		 */
-		वापस;
+		return;
 
 	ipoib_dbg_mcast(priv, "restarting multicast task\n");
 
-	netअगर_addr_lock_bh(dev);
+	netif_addr_lock_bh(dev);
 	spin_lock_irq(&priv->lock);
 
 	/*
-	 * Unक्रमtunately, the networking core only gives us a list of all of
+	 * Unfortunately, the networking core only gives us a list of all of
 	 * the multicast hardware addresses. We need to figure out which ones
-	 * are new and which ones have been हटाओd
+	 * are new and which ones have been removed
 	 */
 
 	/* Clear out the found flag */
-	list_क्रम_each_entry(mcast, &priv->multicast_list, list)
+	list_for_each_entry(mcast, &priv->multicast_list, list)
 		clear_bit(IPOIB_MCAST_FLAG_FOUND, &mcast->flags);
 
-	/* Mark all of the entries that are found or करोn't exist */
-	netdev_क्रम_each_mc_addr(ha, dev) अणु
-		जोड़ ib_gid mgid;
+	/* Mark all of the entries that are found or don't exist */
+	netdev_for_each_mc_addr(ha, dev) {
+		union ib_gid mgid;
 
-		अगर (!ipoib_mcast_addr_is_valid(ha->addr, dev->broadcast))
-			जारी;
+		if (!ipoib_mcast_addr_is_valid(ha->addr, dev->broadcast))
+			continue;
 
-		स_नकल(mgid.raw, ha->addr + 4, माप(mgid));
+		memcpy(mgid.raw, ha->addr + 4, sizeof(mgid));
 
 		mcast = __ipoib_mcast_find(dev, &mgid);
-		अगर (!mcast || test_bit(IPOIB_MCAST_FLAG_SENDONLY, &mcast->flags)) अणु
-			काष्ठा ipoib_mcast *nmcast;
+		if (!mcast || test_bit(IPOIB_MCAST_FLAG_SENDONLY, &mcast->flags)) {
+			struct ipoib_mcast *nmcast;
 
 			/* ignore group which is directly joined by userspace */
-			अगर (test_bit(IPOIB_FLAG_UMCAST, &priv->flags) &&
-			    !ib_sa_get_mcmember_rec(priv->ca, priv->port, &mgid, &rec)) अणु
+			if (test_bit(IPOIB_FLAG_UMCAST, &priv->flags) &&
+			    !ib_sa_get_mcmember_rec(priv->ca, priv->port, &mgid, &rec)) {
 				ipoib_dbg_mcast(priv, "ignoring multicast entry for mgid %pI6\n",
 						mgid.raw);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			/* Not found or send-only group, let's add a new entry */
 			ipoib_dbg_mcast(priv, "adding multicast entry for mgid %pI6\n",
 					mgid.raw);
 
 			nmcast = ipoib_mcast_alloc(dev);
-			अगर (!nmcast) अणु
+			if (!nmcast) {
 				ipoib_warn(priv, "unable to allocate memory for multicast structure\n");
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			set_bit(IPOIB_MCAST_FLAG_FOUND, &nmcast->flags);
 
 			nmcast->mcmember.mgid = mgid;
 
-			अगर (mcast) अणु
+			if (mcast) {
 				/* Destroy the send only entry */
-				list_move_tail(&mcast->list, &हटाओ_list);
+				list_move_tail(&mcast->list, &remove_list);
 
 				rb_replace_node(&mcast->rb_node,
 						&nmcast->rb_node,
 						&priv->multicast_tree);
-			पूर्ण अन्यथा
+			} else
 				__ipoib_mcast_add(dev, nmcast);
 
 			list_add_tail(&nmcast->list, &priv->multicast_list);
-		पूर्ण
+		}
 
-		अगर (mcast)
+		if (mcast)
 			set_bit(IPOIB_MCAST_FLAG_FOUND, &mcast->flags);
-	पूर्ण
+	}
 
-	/* Remove all of the entries करोn't exist anymore */
-	list_क्रम_each_entry_safe(mcast, पंचांगcast, &priv->multicast_list, list) अणु
-		अगर (!test_bit(IPOIB_MCAST_FLAG_FOUND, &mcast->flags) &&
-		    !test_bit(IPOIB_MCAST_FLAG_SENDONLY, &mcast->flags)) अणु
+	/* Remove all of the entries don't exist anymore */
+	list_for_each_entry_safe(mcast, tmcast, &priv->multicast_list, list) {
+		if (!test_bit(IPOIB_MCAST_FLAG_FOUND, &mcast->flags) &&
+		    !test_bit(IPOIB_MCAST_FLAG_SENDONLY, &mcast->flags)) {
 			ipoib_dbg_mcast(priv, "deleting multicast group %pI6\n",
 					mcast->mcmember.mgid.raw);
 
 			rb_erase(&mcast->rb_node, &priv->multicast_tree);
 
-			/* Move to the हटाओ list */
-			list_move_tail(&mcast->list, &हटाओ_list);
-		पूर्ण
-	पूर्ण
+			/* Move to the remove list */
+			list_move_tail(&mcast->list, &remove_list);
+		}
+	}
 
 	spin_unlock_irq(&priv->lock);
-	netअगर_addr_unlock_bh(dev);
+	netif_addr_unlock_bh(dev);
 
-	ipoib_mcast_हटाओ_list(&हटाओ_list);
+	ipoib_mcast_remove_list(&remove_list);
 
 	/*
 	 * Double check that we are still up
 	 */
-	अगर (test_bit(IPOIB_FLAG_OPER_UP, &priv->flags)) अणु
+	if (test_bit(IPOIB_FLAG_OPER_UP, &priv->flags)) {
 		spin_lock_irq(&priv->lock);
-		__ipoib_mcast_schedule_join_thपढ़ो(priv, शून्य, 0);
+		__ipoib_mcast_schedule_join_thread(priv, NULL, 0);
 		spin_unlock_irq(&priv->lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अगर_घोषित CONFIG_INFINIBAND_IPOIB_DEBUG
+#ifdef CONFIG_INFINIBAND_IPOIB_DEBUG
 
-काष्ठा ipoib_mcast_iter *ipoib_mcast_iter_init(काष्ठा net_device *dev)
-अणु
-	काष्ठा ipoib_mcast_iter *iter;
+struct ipoib_mcast_iter *ipoib_mcast_iter_init(struct net_device *dev)
+{
+	struct ipoib_mcast_iter *iter;
 
-	iter = kदो_स्मृति(माप(*iter), GFP_KERNEL);
-	अगर (!iter)
-		वापस शून्य;
+	iter = kmalloc(sizeof(*iter), GFP_KERNEL);
+	if (!iter)
+		return NULL;
 
 	iter->dev = dev;
-	स_रखो(iter->mgid.raw, 0, 16);
+	memset(iter->mgid.raw, 0, 16);
 
-	अगर (ipoib_mcast_iter_next(iter)) अणु
-		kमुक्त(iter);
-		वापस शून्य;
-	पूर्ण
+	if (ipoib_mcast_iter_next(iter)) {
+		kfree(iter);
+		return NULL;
+	}
 
-	वापस iter;
-पूर्ण
+	return iter;
+}
 
-पूर्णांक ipoib_mcast_iter_next(काष्ठा ipoib_mcast_iter *iter)
-अणु
-	काष्ठा ipoib_dev_priv *priv = ipoib_priv(iter->dev);
-	काष्ठा rb_node *n;
-	काष्ठा ipoib_mcast *mcast;
-	पूर्णांक ret = 1;
+int ipoib_mcast_iter_next(struct ipoib_mcast_iter *iter)
+{
+	struct ipoib_dev_priv *priv = ipoib_priv(iter->dev);
+	struct rb_node *n;
+	struct ipoib_mcast *mcast;
+	int ret = 1;
 
 	spin_lock_irq(&priv->lock);
 
 	n = rb_first(&priv->multicast_tree);
 
-	जबतक (n) अणु
-		mcast = rb_entry(n, काष्ठा ipoib_mcast, rb_node);
+	while (n) {
+		mcast = rb_entry(n, struct ipoib_mcast, rb_node);
 
-		अगर (स_भेद(iter->mgid.raw, mcast->mcmember.mgid.raw,
-			   माप (जोड़ ib_gid)) < 0) अणु
+		if (memcmp(iter->mgid.raw, mcast->mcmember.mgid.raw,
+			   sizeof (union ib_gid)) < 0) {
 			iter->mgid      = mcast->mcmember.mgid;
 			iter->created   = mcast->created;
 			iter->queuelen  = skb_queue_len(&mcast->pkt_queue);
@@ -1024,29 +1023,29 @@ unlock:
 
 			ret = 0;
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		n = rb_next(n);
-	पूर्ण
+	}
 
 	spin_unlock_irq(&priv->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम ipoib_mcast_iter_पढ़ो(काष्ठा ipoib_mcast_iter *iter,
-			   जोड़ ib_gid *mgid,
-			   अचिन्हित दीर्घ *created,
-			   अचिन्हित पूर्णांक *queuelen,
-			   अचिन्हित पूर्णांक *complete,
-			   अचिन्हित पूर्णांक *send_only)
-अणु
+void ipoib_mcast_iter_read(struct ipoib_mcast_iter *iter,
+			   union ib_gid *mgid,
+			   unsigned long *created,
+			   unsigned int *queuelen,
+			   unsigned int *complete,
+			   unsigned int *send_only)
+{
 	*mgid      = iter->mgid;
 	*created   = iter->created;
 	*queuelen  = iter->queuelen;
 	*complete  = iter->complete;
 	*send_only = iter->send_only;
-पूर्ण
+}
 
-#पूर्ण_अगर /* CONFIG_INFINIBAND_IPOIB_DEBUG */
+#endif /* CONFIG_INFINIBAND_IPOIB_DEBUG */

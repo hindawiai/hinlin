@@ -1,52 +1,51 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * STMicroelectronics TPM Linux driver क्रम TPM ST33ZP24
+ * STMicroelectronics TPM Linux driver for TPM ST33ZP24
  * Copyright (C) 2009 - 2016 STMicroelectronics
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/मुक्तzer.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/fs.h>
+#include <linux/kernel.h>
+#include <linux/delay.h>
+#include <linux/wait.h>
+#include <linux/freezer.h>
+#include <linux/string.h>
+#include <linux/interrupt.h>
+#include <linux/gpio.h>
+#include <linux/sched.h>
+#include <linux/uaccess.h>
+#include <linux/io.h>
+#include <linux/slab.h>
 
-#समावेश "../tpm.h"
-#समावेश "st33zp24.h"
+#include "../tpm.h"
+#include "st33zp24.h"
 
-#घोषणा TPM_ACCESS			0x0
-#घोषणा TPM_STS				0x18
-#घोषणा TPM_DATA_FIFO			0x24
-#घोषणा TPM_INTF_CAPABILITY		0x14
-#घोषणा TPM_INT_STATUS			0x10
-#घोषणा TPM_INT_ENABLE			0x08
+#define TPM_ACCESS			0x0
+#define TPM_STS				0x18
+#define TPM_DATA_FIFO			0x24
+#define TPM_INTF_CAPABILITY		0x14
+#define TPM_INT_STATUS			0x10
+#define TPM_INT_ENABLE			0x08
 
-#घोषणा LOCALITY0			0
+#define LOCALITY0			0
 
-क्रमागत st33zp24_access अणु
+enum st33zp24_access {
 	TPM_ACCESS_VALID = 0x80,
 	TPM_ACCESS_ACTIVE_LOCALITY = 0x20,
 	TPM_ACCESS_REQUEST_PENDING = 0x04,
 	TPM_ACCESS_REQUEST_USE = 0x02,
-पूर्ण;
+};
 
-क्रमागत st33zp24_status अणु
+enum st33zp24_status {
 	TPM_STS_VALID = 0x80,
 	TPM_STS_COMMAND_READY = 0x40,
 	TPM_STS_GO = 0x20,
 	TPM_STS_DATA_AVAIL = 0x10,
 	TPM_STS_DATA_EXPECT = 0x08,
-पूर्ण;
+};
 
-क्रमागत st33zp24_पूर्णांक_flags अणु
+enum st33zp24_int_flags {
 	TPM_GLOBAL_INT_ENABLE = 0x80,
 	TPM_INTF_CMD_READY_INT = 0x080,
 	TPM_INTF_FIFO_AVALAIBLE_INT = 0x040,
@@ -54,443 +53,443 @@
 	TPM_INTF_LOCALITY_CHANGE_INT = 0x004,
 	TPM_INTF_STS_VALID_INT = 0x002,
 	TPM_INTF_DATA_AVAIL_INT = 0x001,
-पूर्ण;
+};
 
-क्रमागत tis_शेषs अणु
+enum tis_defaults {
 	TIS_SHORT_TIMEOUT = 750,
 	TIS_LONG_TIMEOUT = 2000,
-पूर्ण;
+};
 
 /*
- * clear_पूर्णांकerruption clear the pending पूर्णांकerrupt.
+ * clear_interruption clear the pending interrupt.
  * @param: tpm_dev, the tpm device device.
- * @वापस: the पूर्णांकerrupt status value.
+ * @return: the interrupt status value.
  */
-अटल u8 clear_पूर्णांकerruption(काष्ठा st33zp24_dev *tpm_dev)
-अणु
-	u8 पूर्णांकerrupt;
+static u8 clear_interruption(struct st33zp24_dev *tpm_dev)
+{
+	u8 interrupt;
 
-	tpm_dev->ops->recv(tpm_dev->phy_id, TPM_INT_STATUS, &पूर्णांकerrupt, 1);
-	tpm_dev->ops->send(tpm_dev->phy_id, TPM_INT_STATUS, &पूर्णांकerrupt, 1);
-	वापस पूर्णांकerrupt;
-पूर्ण /* clear_पूर्णांकerruption() */
+	tpm_dev->ops->recv(tpm_dev->phy_id, TPM_INT_STATUS, &interrupt, 1);
+	tpm_dev->ops->send(tpm_dev->phy_id, TPM_INT_STATUS, &interrupt, 1);
+	return interrupt;
+} /* clear_interruption() */
 
 /*
  * st33zp24_cancel, cancel the current command execution or
  * set STS to COMMAND READY.
- * @param: chip, the tpm_chip description as specअगरied in driver/अक्षर/tpm/tpm.h
+ * @param: chip, the tpm_chip description as specified in driver/char/tpm/tpm.h
  */
-अटल व्योम st33zp24_cancel(काष्ठा tpm_chip *chip)
-अणु
-	काष्ठा st33zp24_dev *tpm_dev = dev_get_drvdata(&chip->dev);
+static void st33zp24_cancel(struct tpm_chip *chip)
+{
+	struct st33zp24_dev *tpm_dev = dev_get_drvdata(&chip->dev);
 	u8 data;
 
 	data = TPM_STS_COMMAND_READY;
 	tpm_dev->ops->send(tpm_dev->phy_id, TPM_STS, &data, 1);
-पूर्ण /* st33zp24_cancel() */
+} /* st33zp24_cancel() */
 
 /*
- * st33zp24_status वापस the TPM_STS रेजिस्टर
+ * st33zp24_status return the TPM_STS register
  * @param: chip, the tpm chip description
- * @वापस: the TPM_STS रेजिस्टर value.
+ * @return: the TPM_STS register value.
  */
-अटल u8 st33zp24_status(काष्ठा tpm_chip *chip)
-अणु
-	काष्ठा st33zp24_dev *tpm_dev = dev_get_drvdata(&chip->dev);
+static u8 st33zp24_status(struct tpm_chip *chip)
+{
+	struct st33zp24_dev *tpm_dev = dev_get_drvdata(&chip->dev);
 	u8 data;
 
 	tpm_dev->ops->recv(tpm_dev->phy_id, TPM_STS, &data, 1);
-	वापस data;
-पूर्ण /* st33zp24_status() */
+	return data;
+} /* st33zp24_status() */
 
 /*
- * check_locality अगर the locality is active
+ * check_locality if the locality is active
  * @param: chip, the tpm chip description
- * @वापस: true अगर LOCALITY0 is active, otherwise false
+ * @return: true if LOCALITY0 is active, otherwise false
  */
-अटल bool check_locality(काष्ठा tpm_chip *chip)
-अणु
-	काष्ठा st33zp24_dev *tpm_dev = dev_get_drvdata(&chip->dev);
+static bool check_locality(struct tpm_chip *chip)
+{
+	struct st33zp24_dev *tpm_dev = dev_get_drvdata(&chip->dev);
 	u8 data;
 	u8 status;
 
 	status = tpm_dev->ops->recv(tpm_dev->phy_id, TPM_ACCESS, &data, 1);
-	अगर (status && (data &
+	if (status && (data &
 		(TPM_ACCESS_ACTIVE_LOCALITY | TPM_ACCESS_VALID)) ==
 		(TPM_ACCESS_ACTIVE_LOCALITY | TPM_ACCESS_VALID))
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण /* check_locality() */
+	return false;
+} /* check_locality() */
 
 /*
  * request_locality request the TPM locality
  * @param: chip, the chip description
- * @वापस: the active locality or negative value.
+ * @return: the active locality or negative value.
  */
-अटल पूर्णांक request_locality(काष्ठा tpm_chip *chip)
-अणु
-	काष्ठा st33zp24_dev *tpm_dev = dev_get_drvdata(&chip->dev);
-	अचिन्हित दीर्घ stop;
-	दीर्घ ret;
+static int request_locality(struct tpm_chip *chip)
+{
+	struct st33zp24_dev *tpm_dev = dev_get_drvdata(&chip->dev);
+	unsigned long stop;
+	long ret;
 	u8 data;
 
-	अगर (check_locality(chip))
-		वापस tpm_dev->locality;
+	if (check_locality(chip))
+		return tpm_dev->locality;
 
 	data = TPM_ACCESS_REQUEST_USE;
 	ret = tpm_dev->ops->send(tpm_dev->phy_id, TPM_ACCESS, &data, 1);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	stop = jअगरfies + chip->समयout_a;
+	stop = jiffies + chip->timeout_a;
 
 	/* Request locality is usually effective after the request */
-	करो अणु
-		अगर (check_locality(chip))
-			वापस tpm_dev->locality;
+	do {
+		if (check_locality(chip))
+			return tpm_dev->locality;
 		msleep(TPM_TIMEOUT);
-	पूर्ण जबतक (समय_beक्रमe(jअगरfies, stop));
+	} while (time_before(jiffies, stop));
 
 	/* could not get locality */
-	वापस -EACCES;
-पूर्ण /* request_locality() */
+	return -EACCES;
+} /* request_locality() */
 
 /*
  * release_locality release the active locality
  * @param: chip, the tpm chip description.
  */
-अटल व्योम release_locality(काष्ठा tpm_chip *chip)
-अणु
-	काष्ठा st33zp24_dev *tpm_dev = dev_get_drvdata(&chip->dev);
+static void release_locality(struct tpm_chip *chip)
+{
+	struct st33zp24_dev *tpm_dev = dev_get_drvdata(&chip->dev);
 	u8 data;
 
 	data = TPM_ACCESS_ACTIVE_LOCALITY;
 
 	tpm_dev->ops->send(tpm_dev->phy_id, TPM_ACCESS, &data, 1);
-पूर्ण
+}
 
 /*
- * get_burstcount वापस the burstcount value
+ * get_burstcount return the burstcount value
  * @param: chip, the chip description
- * वापस: the burstcount or negative value.
+ * return: the burstcount or negative value.
  */
-अटल पूर्णांक get_burstcount(काष्ठा tpm_chip *chip)
-अणु
-	काष्ठा st33zp24_dev *tpm_dev = dev_get_drvdata(&chip->dev);
-	अचिन्हित दीर्घ stop;
-	पूर्णांक burstcnt, status;
+static int get_burstcount(struct tpm_chip *chip)
+{
+	struct st33zp24_dev *tpm_dev = dev_get_drvdata(&chip->dev);
+	unsigned long stop;
+	int burstcnt, status;
 	u8 temp;
 
-	stop = jअगरfies + chip->समयout_d;
-	करो अणु
+	stop = jiffies + chip->timeout_d;
+	do {
 		status = tpm_dev->ops->recv(tpm_dev->phy_id, TPM_STS + 1,
 					    &temp, 1);
-		अगर (status < 0)
-			वापस -EBUSY;
+		if (status < 0)
+			return -EBUSY;
 
 		burstcnt = temp;
 		status = tpm_dev->ops->recv(tpm_dev->phy_id, TPM_STS + 2,
 					    &temp, 1);
-		अगर (status < 0)
-			वापस -EBUSY;
+		if (status < 0)
+			return -EBUSY;
 
 		burstcnt |= temp << 8;
-		अगर (burstcnt)
-			वापस burstcnt;
+		if (burstcnt)
+			return burstcnt;
 		msleep(TPM_TIMEOUT);
-	पूर्ण जबतक (समय_beक्रमe(jअगरfies, stop));
-	वापस -EBUSY;
-पूर्ण /* get_burstcount() */
+	} while (time_before(jiffies, stop));
+	return -EBUSY;
+} /* get_burstcount() */
 
 
 /*
- * रुको_क्रम_tpm_stat_cond
+ * wait_for_tpm_stat_cond
  * @param: chip, chip description
  * @param: mask, expected mask value
- * @param: check_cancel, करोes the command expected to be canceled ?
+ * @param: check_cancel, does the command expected to be canceled ?
  * @param: canceled, did we received a cancel request ?
- * @वापस: true अगर status == mask or अगर the command is canceled.
- * false in other हालs.
+ * @return: true if status == mask or if the command is canceled.
+ * false in other cases.
  */
-अटल bool रुको_क्रम_tpm_stat_cond(काष्ठा tpm_chip *chip, u8 mask,
+static bool wait_for_tpm_stat_cond(struct tpm_chip *chip, u8 mask,
 				bool check_cancel, bool *canceled)
-अणु
+{
 	u8 status = chip->ops->status(chip);
 
 	*canceled = false;
-	अगर ((status & mask) == mask)
-		वापस true;
-	अगर (check_cancel && chip->ops->req_canceled(chip, status)) अणु
+	if ((status & mask) == mask)
+		return true;
+	if (check_cancel && chip->ops->req_canceled(chip, status)) {
 		*canceled = true;
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		return true;
+	}
+	return false;
+}
 
 /*
- * रुको_क्रम_stat रुको क्रम a TPM_STS value
+ * wait_for_stat wait for a TPM_STS value
  * @param: chip, the tpm chip description
- * @param: mask, the value mask to रुको
- * @param: समयout, the समयout
- * @param: queue, the रुको queue.
- * @param: check_cancel, करोes the command can be cancelled ?
- * @वापस: the tpm status, 0 अगर success, -ETIME अगर समयout is reached.
+ * @param: mask, the value mask to wait
+ * @param: timeout, the timeout
+ * @param: queue, the wait queue.
+ * @param: check_cancel, does the command can be cancelled ?
+ * @return: the tpm status, 0 if success, -ETIME if timeout is reached.
  */
-अटल पूर्णांक रुको_क्रम_stat(काष्ठा tpm_chip *chip, u8 mask, अचिन्हित दीर्घ समयout,
-			रुको_queue_head_t *queue, bool check_cancel)
-अणु
-	काष्ठा st33zp24_dev *tpm_dev = dev_get_drvdata(&chip->dev);
-	अचिन्हित दीर्घ stop;
-	पूर्णांक ret = 0;
+static int wait_for_stat(struct tpm_chip *chip, u8 mask, unsigned long timeout,
+			wait_queue_head_t *queue, bool check_cancel)
+{
+	struct st33zp24_dev *tpm_dev = dev_get_drvdata(&chip->dev);
+	unsigned long stop;
+	int ret = 0;
 	bool canceled = false;
 	bool condition;
-	u32 cur_पूर्णांकrs;
+	u32 cur_intrs;
 	u8 status;
 
 	/* check current status */
 	status = st33zp24_status(chip);
-	अगर ((status & mask) == mask)
-		वापस 0;
+	if ((status & mask) == mask)
+		return 0;
 
-	stop = jअगरfies + समयout;
+	stop = jiffies + timeout;
 
-	अगर (chip->flags & TPM_CHIP_FLAG_IRQ) अणु
-		cur_पूर्णांकrs = tpm_dev->पूर्णांकrs;
-		clear_पूर्णांकerruption(tpm_dev);
+	if (chip->flags & TPM_CHIP_FLAG_IRQ) {
+		cur_intrs = tpm_dev->intrs;
+		clear_interruption(tpm_dev);
 		enable_irq(tpm_dev->irq);
 
-		करो अणु
-			अगर (ret == -ERESTARTSYS && मुक्तzing(current))
-				clear_thपढ़ो_flag(TIF_SIGPENDING);
+		do {
+			if (ret == -ERESTARTSYS && freezing(current))
+				clear_thread_flag(TIF_SIGPENDING);
 
-			समयout = stop - jअगरfies;
-			अगर ((दीर्घ) समयout <= 0)
-				वापस -1;
+			timeout = stop - jiffies;
+			if ((long) timeout <= 0)
+				return -1;
 
-			ret = रुको_event_पूर्णांकerruptible_समयout(*queue,
-						cur_पूर्णांकrs != tpm_dev->पूर्णांकrs,
-						समयout);
-			clear_पूर्णांकerruption(tpm_dev);
-			condition = रुको_क्रम_tpm_stat_cond(chip, mask,
+			ret = wait_event_interruptible_timeout(*queue,
+						cur_intrs != tpm_dev->intrs,
+						timeout);
+			clear_interruption(tpm_dev);
+			condition = wait_for_tpm_stat_cond(chip, mask,
 						check_cancel, &canceled);
-			अगर (ret >= 0 && condition) अणु
-				अगर (canceled)
-					वापस -ECANCELED;
-				वापस 0;
-			पूर्ण
-		पूर्ण जबतक (ret == -ERESTARTSYS && मुक्तzing(current));
+			if (ret >= 0 && condition) {
+				if (canceled)
+					return -ECANCELED;
+				return 0;
+			}
+		} while (ret == -ERESTARTSYS && freezing(current));
 
 		disable_irq_nosync(tpm_dev->irq);
 
-	पूर्ण अन्यथा अणु
-		करो अणु
+	} else {
+		do {
 			msleep(TPM_TIMEOUT);
 			status = chip->ops->status(chip);
-			अगर ((status & mask) == mask)
-				वापस 0;
-		पूर्ण जबतक (समय_beक्रमe(jअगरfies, stop));
-	पूर्ण
+			if ((status & mask) == mask)
+				return 0;
+		} while (time_before(jiffies, stop));
+	}
 
-	वापस -ETIME;
-पूर्ण /* रुको_क्रम_stat() */
+	return -ETIME;
+} /* wait_for_stat() */
 
 /*
  * recv_data receive data
  * @param: chip, the tpm chip description
  * @param: buf, the buffer where the data are received
  * @param: count, the number of data to receive
- * @वापस: the number of bytes पढ़ो from TPM FIFO.
+ * @return: the number of bytes read from TPM FIFO.
  */
-अटल पूर्णांक recv_data(काष्ठा tpm_chip *chip, u8 *buf, माप_प्रकार count)
-अणु
-	काष्ठा st33zp24_dev *tpm_dev = dev_get_drvdata(&chip->dev);
-	पूर्णांक size = 0, burstcnt, len, ret;
+static int recv_data(struct tpm_chip *chip, u8 *buf, size_t count)
+{
+	struct st33zp24_dev *tpm_dev = dev_get_drvdata(&chip->dev);
+	int size = 0, burstcnt, len, ret;
 
-	जबतक (size < count &&
-	       रुको_क्रम_stat(chip,
+	while (size < count &&
+	       wait_for_stat(chip,
 			     TPM_STS_DATA_AVAIL | TPM_STS_VALID,
-			     chip->समयout_c,
-			     &tpm_dev->पढ़ो_queue, true) == 0) अणु
+			     chip->timeout_c,
+			     &tpm_dev->read_queue, true) == 0) {
 		burstcnt = get_burstcount(chip);
-		अगर (burstcnt < 0)
-			वापस burstcnt;
-		len = min_t(पूर्णांक, burstcnt, count - size);
+		if (burstcnt < 0)
+			return burstcnt;
+		len = min_t(int, burstcnt, count - size);
 		ret = tpm_dev->ops->recv(tpm_dev->phy_id, TPM_DATA_FIFO,
 					 buf + size, len);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		size += len;
-	पूर्ण
-	वापस size;
-पूर्ण
+	}
+	return size;
+}
 
 /*
  * tpm_ioserirq_handler the serirq irq handler
  * @param: irq, the tpm chip description
  * @param: dev_id, the description of the chip
- * @वापस: the status of the handler.
+ * @return: the status of the handler.
  */
-अटल irqवापस_t tpm_ioserirq_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा tpm_chip *chip = dev_id;
-	काष्ठा st33zp24_dev *tpm_dev = dev_get_drvdata(&chip->dev);
+static irqreturn_t tpm_ioserirq_handler(int irq, void *dev_id)
+{
+	struct tpm_chip *chip = dev_id;
+	struct st33zp24_dev *tpm_dev = dev_get_drvdata(&chip->dev);
 
-	tpm_dev->पूर्णांकrs++;
-	wake_up_पूर्णांकerruptible(&tpm_dev->पढ़ो_queue);
+	tpm_dev->intrs++;
+	wake_up_interruptible(&tpm_dev->read_queue);
 	disable_irq_nosync(tpm_dev->irq);
 
-	वापस IRQ_HANDLED;
-पूर्ण /* tpm_ioserirq_handler() */
+	return IRQ_HANDLED;
+} /* tpm_ioserirq_handler() */
 
 /*
  * st33zp24_send send TPM commands through the I2C bus.
  *
- * @param: chip, the tpm_chip description as specअगरied in driver/अक्षर/tpm/tpm.h
+ * @param: chip, the tpm_chip description as specified in driver/char/tpm/tpm.h
  * @param: buf,	the buffer to send.
  * @param: count, the number of bytes to send.
- * @वापस: In हाल of success the number of bytes sent.
- *			In other हाल, a < 0 value describing the issue.
+ * @return: In case of success the number of bytes sent.
+ *			In other case, a < 0 value describing the issue.
  */
-अटल पूर्णांक st33zp24_send(काष्ठा tpm_chip *chip, अचिन्हित अक्षर *buf,
-			 माप_प्रकार len)
-अणु
-	काष्ठा st33zp24_dev *tpm_dev = dev_get_drvdata(&chip->dev);
+static int st33zp24_send(struct tpm_chip *chip, unsigned char *buf,
+			 size_t len)
+{
+	struct st33zp24_dev *tpm_dev = dev_get_drvdata(&chip->dev);
 	u32 status, i, size, ordinal;
-	पूर्णांक burstcnt = 0;
-	पूर्णांक ret;
+	int burstcnt = 0;
+	int ret;
 	u8 data;
 
-	अगर (len < TPM_HEADER_SIZE)
-		वापस -EBUSY;
+	if (len < TPM_HEADER_SIZE)
+		return -EBUSY;
 
 	ret = request_locality(chip);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	status = st33zp24_status(chip);
-	अगर ((status & TPM_STS_COMMAND_READY) == 0) अणु
+	if ((status & TPM_STS_COMMAND_READY) == 0) {
 		st33zp24_cancel(chip);
-		अगर (रुको_क्रम_stat
-		    (chip, TPM_STS_COMMAND_READY, chip->समयout_b,
-		     &tpm_dev->पढ़ो_queue, false) < 0) अणु
+		if (wait_for_stat
+		    (chip, TPM_STS_COMMAND_READY, chip->timeout_b,
+		     &tpm_dev->read_queue, false) < 0) {
 			ret = -ETIME;
-			जाओ out_err;
-		पूर्ण
-	पूर्ण
+			goto out_err;
+		}
+	}
 
-	क्रम (i = 0; i < len - 1;) अणु
+	for (i = 0; i < len - 1;) {
 		burstcnt = get_burstcount(chip);
-		अगर (burstcnt < 0)
-			वापस burstcnt;
-		size = min_t(पूर्णांक, len - i - 1, burstcnt);
+		if (burstcnt < 0)
+			return burstcnt;
+		size = min_t(int, len - i - 1, burstcnt);
 		ret = tpm_dev->ops->send(tpm_dev->phy_id, TPM_DATA_FIFO,
 					 buf + i, size);
-		अगर (ret < 0)
-			जाओ out_err;
+		if (ret < 0)
+			goto out_err;
 
 		i += size;
-	पूर्ण
+	}
 
 	status = st33zp24_status(chip);
-	अगर ((status & TPM_STS_DATA_EXPECT) == 0) अणु
+	if ((status & TPM_STS_DATA_EXPECT) == 0) {
 		ret = -EIO;
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
 	ret = tpm_dev->ops->send(tpm_dev->phy_id, TPM_DATA_FIFO,
 				 buf + len - 1, 1);
-	अगर (ret < 0)
-		जाओ out_err;
+	if (ret < 0)
+		goto out_err;
 
 	status = st33zp24_status(chip);
-	अगर ((status & TPM_STS_DATA_EXPECT) != 0) अणु
+	if ((status & TPM_STS_DATA_EXPECT) != 0) {
 		ret = -EIO;
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
 	data = TPM_STS_GO;
 	ret = tpm_dev->ops->send(tpm_dev->phy_id, TPM_STS, &data, 1);
-	अगर (ret < 0)
-		जाओ out_err;
+	if (ret < 0)
+		goto out_err;
 
-	अगर (chip->flags & TPM_CHIP_FLAG_IRQ) अणु
+	if (chip->flags & TPM_CHIP_FLAG_IRQ) {
 		ordinal = be32_to_cpu(*((__be32 *) (buf + 6)));
 
-		ret = रुको_क्रम_stat(chip, TPM_STS_DATA_AVAIL | TPM_STS_VALID,
+		ret = wait_for_stat(chip, TPM_STS_DATA_AVAIL | TPM_STS_VALID,
 				tpm_calc_ordinal_duration(chip, ordinal),
-				&tpm_dev->पढ़ो_queue, false);
-		अगर (ret < 0)
-			जाओ out_err;
-	पूर्ण
+				&tpm_dev->read_queue, false);
+		if (ret < 0)
+			goto out_err;
+	}
 
-	वापस 0;
+	return 0;
 out_err:
 	st33zp24_cancel(chip);
 	release_locality(chip);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * st33zp24_recv received TPM response through TPM phy.
- * @param: chip, the tpm_chip description as specअगरied in driver/अक्षर/tpm/tpm.h.
+ * @param: chip, the tpm_chip description as specified in driver/char/tpm/tpm.h.
  * @param: buf,	the buffer to store datas.
  * @param: count, the number of bytes to send.
- * @वापस: In हाल of success the number of bytes received.
- *	    In other हाल, a < 0 value describing the issue.
+ * @return: In case of success the number of bytes received.
+ *	    In other case, a < 0 value describing the issue.
  */
-अटल पूर्णांक st33zp24_recv(काष्ठा tpm_chip *chip, अचिन्हित अक्षर *buf,
-			    माप_प्रकार count)
-अणु
-	पूर्णांक size = 0;
+static int st33zp24_recv(struct tpm_chip *chip, unsigned char *buf,
+			    size_t count)
+{
+	int size = 0;
 	u32 expected;
 
-	अगर (!chip)
-		वापस -EBUSY;
+	if (!chip)
+		return -EBUSY;
 
-	अगर (count < TPM_HEADER_SIZE) अणु
+	if (count < TPM_HEADER_SIZE) {
 		size = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	size = recv_data(chip, buf, TPM_HEADER_SIZE);
-	अगर (size < TPM_HEADER_SIZE) अणु
+	if (size < TPM_HEADER_SIZE) {
 		dev_err(&chip->dev, "Unable to read header\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	expected = be32_to_cpu(*(__be32 *)(buf + 2));
-	अगर (expected > count || expected < TPM_HEADER_SIZE) अणु
+	if (expected > count || expected < TPM_HEADER_SIZE) {
 		size = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	size += recv_data(chip, &buf[TPM_HEADER_SIZE],
 			expected - TPM_HEADER_SIZE);
-	अगर (size < expected) अणु
+	if (size < expected) {
 		dev_err(&chip->dev, "Unable to read remainder of result\n");
 		size = -ETIME;
-	पूर्ण
+	}
 
 out:
 	st33zp24_cancel(chip);
 	release_locality(chip);
-	वापस size;
-पूर्ण
+	return size;
+}
 
 /*
  * st33zp24_req_canceled
- * @param: chip, the tpm_chip description as specअगरied in driver/अक्षर/tpm/tpm.h.
+ * @param: chip, the tpm_chip description as specified in driver/char/tpm/tpm.h.
  * @param: status, the TPM status.
- * @वापस: Does TPM पढ़ोy to compute a new command ? true.
+ * @return: Does TPM ready to compute a new command ? true.
  */
-अटल bool st33zp24_req_canceled(काष्ठा tpm_chip *chip, u8 status)
-अणु
-	वापस (status == TPM_STS_COMMAND_READY);
-पूर्ण
+static bool st33zp24_req_canceled(struct tpm_chip *chip, u8 status)
+{
+	return (status == TPM_STS_COMMAND_READY);
+}
 
-अटल स्थिर काष्ठा tpm_class_ops st33zp24_tpm = अणु
+static const struct tpm_class_ops st33zp24_tpm = {
 	.flags = TPM_OPS_AUTO_STARTUP,
 	.send = st33zp24_send,
 	.recv = st33zp24_recv,
@@ -499,151 +498,151 @@ out:
 	.req_complete_mask = TPM_STS_DATA_AVAIL | TPM_STS_VALID,
 	.req_complete_val = TPM_STS_DATA_AVAIL | TPM_STS_VALID,
 	.req_canceled = st33zp24_req_canceled,
-पूर्ण;
+};
 
 /*
  * st33zp24_probe initialize the TPM device
  * @param: client, the i2c_client description (TPM I2C description).
- * @param: id, the i2c_device_id काष्ठा.
- * @वापस: 0 in हाल of success.
- *	 -1 in other हाल.
+ * @param: id, the i2c_device_id struct.
+ * @return: 0 in case of success.
+ *	 -1 in other case.
  */
-पूर्णांक st33zp24_probe(व्योम *phy_id, स्थिर काष्ठा st33zp24_phy_ops *ops,
-		   काष्ठा device *dev, पूर्णांक irq, पूर्णांक io_lpcpd)
-अणु
-	पूर्णांक ret;
-	u8 पूर्णांकmask = 0;
-	काष्ठा tpm_chip *chip;
-	काष्ठा st33zp24_dev *tpm_dev;
+int st33zp24_probe(void *phy_id, const struct st33zp24_phy_ops *ops,
+		   struct device *dev, int irq, int io_lpcpd)
+{
+	int ret;
+	u8 intmask = 0;
+	struct tpm_chip *chip;
+	struct st33zp24_dev *tpm_dev;
 
 	chip = tpmm_chip_alloc(dev, &st33zp24_tpm);
-	अगर (IS_ERR(chip))
-		वापस PTR_ERR(chip);
+	if (IS_ERR(chip))
+		return PTR_ERR(chip);
 
-	tpm_dev = devm_kzalloc(dev, माप(काष्ठा st33zp24_dev),
+	tpm_dev = devm_kzalloc(dev, sizeof(struct st33zp24_dev),
 			       GFP_KERNEL);
-	अगर (!tpm_dev)
-		वापस -ENOMEM;
+	if (!tpm_dev)
+		return -ENOMEM;
 
 	tpm_dev->phy_id = phy_id;
 	tpm_dev->ops = ops;
 	dev_set_drvdata(&chip->dev, tpm_dev);
 
-	chip->समयout_a = msecs_to_jअगरfies(TIS_SHORT_TIMEOUT);
-	chip->समयout_b = msecs_to_jअगरfies(TIS_LONG_TIMEOUT);
-	chip->समयout_c = msecs_to_jअगरfies(TIS_SHORT_TIMEOUT);
-	chip->समयout_d = msecs_to_jअगरfies(TIS_SHORT_TIMEOUT);
+	chip->timeout_a = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
+	chip->timeout_b = msecs_to_jiffies(TIS_LONG_TIMEOUT);
+	chip->timeout_c = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
+	chip->timeout_d = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
 
 	tpm_dev->locality = LOCALITY0;
 
-	अगर (irq) अणु
+	if (irq) {
 		/* INTERRUPT Setup */
-		init_रुकोqueue_head(&tpm_dev->पढ़ो_queue);
-		tpm_dev->पूर्णांकrs = 0;
+		init_waitqueue_head(&tpm_dev->read_queue);
+		tpm_dev->intrs = 0;
 
-		अगर (request_locality(chip) != LOCALITY0) अणु
+		if (request_locality(chip) != LOCALITY0) {
 			ret = -ENODEV;
-			जाओ _tpm_clean_answer;
-		पूर्ण
+			goto _tpm_clean_answer;
+		}
 
-		clear_पूर्णांकerruption(tpm_dev);
+		clear_interruption(tpm_dev);
 		ret = devm_request_irq(dev, irq, tpm_ioserirq_handler,
 				IRQF_TRIGGER_HIGH, "TPM SERIRQ management",
 				chip);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(&chip->dev, "TPM SERIRQ signals %d not available\n",
 				irq);
-			जाओ _tpm_clean_answer;
-		पूर्ण
+			goto _tpm_clean_answer;
+		}
 
-		पूर्णांकmask |= TPM_INTF_CMD_READY_INT
+		intmask |= TPM_INTF_CMD_READY_INT
 			|  TPM_INTF_STS_VALID_INT
 			|  TPM_INTF_DATA_AVAIL_INT;
 
 		ret = tpm_dev->ops->send(tpm_dev->phy_id, TPM_INT_ENABLE,
-					 &पूर्णांकmask, 1);
-		अगर (ret < 0)
-			जाओ _tpm_clean_answer;
+					 &intmask, 1);
+		if (ret < 0)
+			goto _tpm_clean_answer;
 
-		पूर्णांकmask = TPM_GLOBAL_INT_ENABLE;
+		intmask = TPM_GLOBAL_INT_ENABLE;
 		ret = tpm_dev->ops->send(tpm_dev->phy_id, (TPM_INT_ENABLE + 3),
-					 &पूर्णांकmask, 1);
-		अगर (ret < 0)
-			जाओ _tpm_clean_answer;
+					 &intmask, 1);
+		if (ret < 0)
+			goto _tpm_clean_answer;
 
 		tpm_dev->irq = irq;
 		chip->flags |= TPM_CHIP_FLAG_IRQ;
 
 		disable_irq_nosync(tpm_dev->irq);
-	पूर्ण
+	}
 
-	वापस tpm_chip_रेजिस्टर(chip);
+	return tpm_chip_register(chip);
 _tpm_clean_answer:
 	dev_info(&chip->dev, "TPM initialization fail\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(st33zp24_probe);
 
 /*
- * st33zp24_हटाओ हटाओ the TPM device
+ * st33zp24_remove remove the TPM device
  * @param: tpm_data, the tpm phy.
- * @वापस: 0 in हाल of success.
+ * @return: 0 in case of success.
  */
-पूर्णांक st33zp24_हटाओ(काष्ठा tpm_chip *chip)
-अणु
-	tpm_chip_unरेजिस्टर(chip);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(st33zp24_हटाओ);
+int st33zp24_remove(struct tpm_chip *chip)
+{
+	tpm_chip_unregister(chip);
+	return 0;
+}
+EXPORT_SYMBOL(st33zp24_remove);
 
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 /*
  * st33zp24_pm_suspend suspend the TPM device
  * @param: tpm_data, the tpm phy.
- * @param: mesg, the घातer management message.
- * @वापस: 0 in हाल of success.
+ * @param: mesg, the power management message.
+ * @return: 0 in case of success.
  */
-पूर्णांक st33zp24_pm_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा tpm_chip *chip = dev_get_drvdata(dev);
-	काष्ठा st33zp24_dev *tpm_dev = dev_get_drvdata(&chip->dev);
+int st33zp24_pm_suspend(struct device *dev)
+{
+	struct tpm_chip *chip = dev_get_drvdata(dev);
+	struct st33zp24_dev *tpm_dev = dev_get_drvdata(&chip->dev);
 
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (gpio_is_valid(tpm_dev->io_lpcpd))
+	if (gpio_is_valid(tpm_dev->io_lpcpd))
 		gpio_set_value(tpm_dev->io_lpcpd, 0);
-	अन्यथा
+	else
 		ret = tpm_pm_suspend(dev);
 
-	वापस ret;
-पूर्ण /* st33zp24_pm_suspend() */
+	return ret;
+} /* st33zp24_pm_suspend() */
 EXPORT_SYMBOL(st33zp24_pm_suspend);
 
 /*
  * st33zp24_pm_resume resume the TPM device
  * @param: tpm_data, the tpm phy.
- * @वापस: 0 in हाल of success.
+ * @return: 0 in case of success.
  */
-पूर्णांक st33zp24_pm_resume(काष्ठा device *dev)
-अणु
-	काष्ठा tpm_chip *chip = dev_get_drvdata(dev);
-	काष्ठा st33zp24_dev *tpm_dev = dev_get_drvdata(&chip->dev);
-	पूर्णांक ret = 0;
+int st33zp24_pm_resume(struct device *dev)
+{
+	struct tpm_chip *chip = dev_get_drvdata(dev);
+	struct st33zp24_dev *tpm_dev = dev_get_drvdata(&chip->dev);
+	int ret = 0;
 
-	अगर (gpio_is_valid(tpm_dev->io_lpcpd)) अणु
+	if (gpio_is_valid(tpm_dev->io_lpcpd)) {
 		gpio_set_value(tpm_dev->io_lpcpd, 1);
-		ret = रुको_क्रम_stat(chip,
-				TPM_STS_VALID, chip->समयout_b,
-				&tpm_dev->पढ़ो_queue, false);
-	पूर्ण अन्यथा अणु
+		ret = wait_for_stat(chip,
+				TPM_STS_VALID, chip->timeout_b,
+				&tpm_dev->read_queue, false);
+	} else {
 		ret = tpm_pm_resume(dev);
-		अगर (!ret)
-			tpm1_करो_selftest(chip);
-	पूर्ण
-	वापस ret;
-पूर्ण /* st33zp24_pm_resume() */
+		if (!ret)
+			tpm1_do_selftest(chip);
+	}
+	return ret;
+} /* st33zp24_pm_resume() */
 EXPORT_SYMBOL(st33zp24_pm_resume);
-#पूर्ण_अगर
+#endif
 
 MODULE_AUTHOR("TPM support (TPMsupport@list.st.com)");
 MODULE_DESCRIPTION("ST33ZP24 TPM 1.2 driver");

@@ -1,174 +1,173 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2010-2011 Atheros Communications Inc.
  *
- * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#समावेश <linux/export.h>
-#समावेश "hw.h"
-#समावेश "ar9003_phy.h"
+#include <linux/export.h>
+#include "hw.h"
+#include "ar9003_phy.h"
 
-व्योम ar9003_paprd_enable(काष्ठा ath_hw *ah, bool val)
-अणु
-	काष्ठा ath9k_channel *chan = ah->curchan;
-	काष्ठा ar9300_eeprom *eep = &ah->eeprom.ar9300_eep;
+void ar9003_paprd_enable(struct ath_hw *ah, bool val)
+{
+	struct ath9k_channel *chan = ah->curchan;
+	struct ar9300_eeprom *eep = &ah->eeprom.ar9300_eep;
 
 	/*
-	 * 3 bits क्रम modalHeader5G.papdRateMaskHt20
-	 * is used क्रम sub-band disabling of PAPRD.
-	 * 5G band is भागided पूर्णांकo 3 sub-bands -- upper,
+	 * 3 bits for modalHeader5G.papdRateMaskHt20
+	 * is used for sub-band disabling of PAPRD.
+	 * 5G band is divided into 3 sub-bands -- upper,
 	 * middle, lower.
-	 * अगर bit 30 of modalHeader5G.papdRateMaskHt20 is set
-	 * -- disable PAPRD क्रम upper band 5GHz
-	 * अगर bit 29 of modalHeader5G.papdRateMaskHt20 is set
-	 * -- disable PAPRD क्रम middle band 5GHz
-	 * अगर bit 28 of modalHeader5G.papdRateMaskHt20 is set
-	 * -- disable PAPRD क्रम lower band 5GHz
+	 * if bit 30 of modalHeader5G.papdRateMaskHt20 is set
+	 * -- disable PAPRD for upper band 5GHz
+	 * if bit 29 of modalHeader5G.papdRateMaskHt20 is set
+	 * -- disable PAPRD for middle band 5GHz
+	 * if bit 28 of modalHeader5G.papdRateMaskHt20 is set
+	 * -- disable PAPRD for lower band 5GHz
 	 */
 
-	अगर (IS_CHAN_5GHZ(chan)) अणु
-		अगर (chan->channel >= UPPER_5G_SUB_BAND_START) अणु
-			अगर (le32_to_cpu(eep->modalHeader5G.papdRateMaskHt20)
+	if (IS_CHAN_5GHZ(chan)) {
+		if (chan->channel >= UPPER_5G_SUB_BAND_START) {
+			if (le32_to_cpu(eep->modalHeader5G.papdRateMaskHt20)
 								  & BIT(30))
 				val = false;
-		पूर्ण अन्यथा अगर (chan->channel >= MID_5G_SUB_BAND_START) अणु
-			अगर (le32_to_cpu(eep->modalHeader5G.papdRateMaskHt20)
+		} else if (chan->channel >= MID_5G_SUB_BAND_START) {
+			if (le32_to_cpu(eep->modalHeader5G.papdRateMaskHt20)
 								  & BIT(29))
 				val = false;
-		पूर्ण अन्यथा अणु
-			अगर (le32_to_cpu(eep->modalHeader5G.papdRateMaskHt20)
+		} else {
+			if (le32_to_cpu(eep->modalHeader5G.papdRateMaskHt20)
 								  & BIT(28))
 				val = false;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (val) अणु
-		ah->paprd_table_ग_लिखो_करोne = true;
-		ath9k_hw_apply_txघातer(ah, chan, false);
-	पूर्ण
+	if (val) {
+		ah->paprd_table_write_done = true;
+		ath9k_hw_apply_txpower(ah, chan, false);
+	}
 
 	REG_RMW_FIELD(ah, AR_PHY_PAPRD_CTRL0_B0,
 		      AR_PHY_PAPRD_CTRL0_PAPRD_ENABLE, !!val);
-	अगर (ah->caps.tx_chainmask & BIT(1))
+	if (ah->caps.tx_chainmask & BIT(1))
 		REG_RMW_FIELD(ah, AR_PHY_PAPRD_CTRL0_B1,
 			      AR_PHY_PAPRD_CTRL0_PAPRD_ENABLE, !!val);
-	अगर (ah->caps.tx_chainmask & BIT(2))
+	if (ah->caps.tx_chainmask & BIT(2))
 		REG_RMW_FIELD(ah, AR_PHY_PAPRD_CTRL0_B2,
 			      AR_PHY_PAPRD_CTRL0_PAPRD_ENABLE, !!val);
-पूर्ण
+}
 EXPORT_SYMBOL(ar9003_paprd_enable);
 
-अटल पूर्णांक ar9003_get_training_घातer_2g(काष्ठा ath_hw *ah)
-अणु
-	काष्ठा ath9k_channel *chan = ah->curchan;
-	अचिन्हित पूर्णांक घातer, scale, delta;
+static int ar9003_get_training_power_2g(struct ath_hw *ah)
+{
+	struct ath9k_channel *chan = ah->curchan;
+	unsigned int power, scale, delta;
 
 	scale = ar9003_get_paprd_scale_factor(ah, chan);
 
-	अगर (AR_SREV_9330(ah) || AR_SREV_9340(ah) ||
-	    AR_SREV_9462(ah) || AR_SREV_9565(ah)) अणु
-		घातer = ah->paprd_target_घातer + 2;
-	पूर्ण अन्यथा अगर (AR_SREV_9485(ah)) अणु
-		घातer = 25;
-	पूर्ण अन्यथा अणु
-		घातer = REG_READ_FIELD(ah, AR_PHY_POWERTX_RATE5,
+	if (AR_SREV_9330(ah) || AR_SREV_9340(ah) ||
+	    AR_SREV_9462(ah) || AR_SREV_9565(ah)) {
+		power = ah->paprd_target_power + 2;
+	} else if (AR_SREV_9485(ah)) {
+		power = 25;
+	} else {
+		power = REG_READ_FIELD(ah, AR_PHY_POWERTX_RATE5,
 				       AR_PHY_POWERTX_RATE5_POWERTXHT20_0);
 
-		delta = असल((पूर्णांक) ah->paprd_target_घातer - (पूर्णांक) घातer);
-		अगर (delta > scale)
-			वापस -1;
+		delta = abs((int) ah->paprd_target_power - (int) power);
+		if (delta > scale)
+			return -1;
 
-		अगर (delta < 4)
-			घातer -= 4 - delta;
-	पूर्ण
+		if (delta < 4)
+			power -= 4 - delta;
+	}
 
-	वापस घातer;
-पूर्ण
+	return power;
+}
 
-अटल पूर्णांक ar9003_get_training_घातer_5g(काष्ठा ath_hw *ah)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	काष्ठा ath9k_channel *chan = ah->curchan;
-	अचिन्हित पूर्णांक घातer, scale, delta;
+static int ar9003_get_training_power_5g(struct ath_hw *ah)
+{
+	struct ath_common *common = ath9k_hw_common(ah);
+	struct ath9k_channel *chan = ah->curchan;
+	unsigned int power, scale, delta;
 
 	scale = ar9003_get_paprd_scale_factor(ah, chan);
 
-	अगर (IS_CHAN_HT40(chan))
-		घातer = REG_READ_FIELD(ah, AR_PHY_POWERTX_RATE8,
+	if (IS_CHAN_HT40(chan))
+		power = REG_READ_FIELD(ah, AR_PHY_POWERTX_RATE8,
 			AR_PHY_POWERTX_RATE8_POWERTXHT40_5);
-	अन्यथा
-		घातer = REG_READ_FIELD(ah, AR_PHY_POWERTX_RATE6,
+	else
+		power = REG_READ_FIELD(ah, AR_PHY_POWERTX_RATE6,
 			AR_PHY_POWERTX_RATE6_POWERTXHT20_5);
 
-	घातer += scale;
-	delta = असल((पूर्णांक) ah->paprd_target_घातer - (पूर्णांक) घातer);
-	अगर (delta > scale)
-		वापस -1;
+	power += scale;
+	delta = abs((int) ah->paprd_target_power - (int) power);
+	if (delta > scale)
+		return -1;
 
-	चयन (get_streams(ah->txchainmask)) अणु
-	हाल 1:
+	switch (get_streams(ah->txchainmask)) {
+	case 1:
 		delta = 6;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		delta = 4;
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		delta = 2;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		delta = 0;
 		ath_dbg(common, CALIBRATE, "Invalid tx-chainmask: %u\n",
 			ah->txchainmask);
-	पूर्ण
+	}
 
-	घातer += delta;
-	वापस घातer;
-पूर्ण
+	power += delta;
+	return power;
+}
 
-अटल पूर्णांक ar9003_paprd_setup_single_table(काष्ठा ath_hw *ah)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	अटल स्थिर u32 ctrl0[3] = अणु
+static int ar9003_paprd_setup_single_table(struct ath_hw *ah)
+{
+	struct ath_common *common = ath9k_hw_common(ah);
+	static const u32 ctrl0[3] = {
 		AR_PHY_PAPRD_CTRL0_B0,
 		AR_PHY_PAPRD_CTRL0_B1,
 		AR_PHY_PAPRD_CTRL0_B2
-	पूर्ण;
-	अटल स्थिर u32 ctrl1[3] = अणु
+	};
+	static const u32 ctrl1[3] = {
 		AR_PHY_PAPRD_CTRL1_B0,
 		AR_PHY_PAPRD_CTRL1_B1,
 		AR_PHY_PAPRD_CTRL1_B2
-	पूर्ण;
-	पूर्णांक training_घातer;
-	पूर्णांक i, val;
+	};
+	int training_power;
+	int i, val;
 	u32 am2pm_mask = ah->paprd_ratemask;
 
-	अगर (IS_CHAN_2GHZ(ah->curchan))
-		training_घातer = ar9003_get_training_घातer_2g(ah);
-	अन्यथा
-		training_घातer = ar9003_get_training_घातer_5g(ah);
+	if (IS_CHAN_2GHZ(ah->curchan))
+		training_power = ar9003_get_training_power_2g(ah);
+	else
+		training_power = ar9003_get_training_power_5g(ah);
 
 	ath_dbg(common, CALIBRATE, "Training power: %d, Target power: %d\n",
-		training_घातer, ah->paprd_target_घातer);
+		training_power, ah->paprd_target_power);
 
-	अगर (training_घातer < 0) अणु
+	if (training_power < 0) {
 		ath_dbg(common, CALIBRATE,
 			"PAPRD target power delta out of range\n");
-		वापस -दुस्फल;
-	पूर्ण
-	ah->paprd_training_घातer = training_घातer;
+		return -ERANGE;
+	}
+	ah->paprd_training_power = training_power;
 
-	अगर (AR_SREV_9330(ah))
+	if (AR_SREV_9330(ah))
 		am2pm_mask = 0;
 
 	REG_RMW_FIELD(ah, AR_PHY_PAPRD_AM2AM, AR_PHY_PAPRD_AM2AM_MASK,
@@ -181,7 +180,7 @@ EXPORT_SYMBOL(ar9003_paprd_enable);
 	ath_dbg(common, CALIBRATE, "PAPRD HT20 mask: 0x%x, HT40 mask: 0x%x\n",
 		ah->paprd_ratemask, ah->paprd_ratemask_ht40);
 
-	क्रम (i = 0; i < ah->caps.max_txchains; i++) अणु
+	for (i = 0; i < ah->caps.max_txchains; i++) {
 		REG_RMW_FIELD(ah, ctrl0[i],
 			      AR_PHY_PAPRD_CTRL0_USE_SINGLE_TABLE_MASK, 1);
 		REG_RMW_FIELD(ah, ctrl1[i],
@@ -198,7 +197,7 @@ EXPORT_SYMBOL(ar9003_paprd_enable);
 			      AR_PHY_PAPRD_CTRL1_ADAPTIVE_SCALING_ENA, 0);
 		REG_RMW_FIELD(ah, ctrl0[i],
 			      AR_PHY_PAPRD_CTRL0_PAPRD_MAG_THRSH, 3);
-	पूर्ण
+	}
 
 	ar9003_paprd_enable(ah, false);
 
@@ -217,18 +216,18 @@ EXPORT_SYMBOL(ar9003_paprd_enable);
 	REG_RMW_FIELD(ah, AR_PHY_PAPRD_TRAINER_CNTL1,
 		      AR_PHY_PAPRD_TRAINER_CNTL1_CF_CF_PAPRD_TRAIN_ENABLE, 1);
 
-	अगर (AR_SREV_9485(ah)) अणु
+	if (AR_SREV_9485(ah)) {
 		val = 148;
-	पूर्ण अन्यथा अणु
-		अगर (IS_CHAN_2GHZ(ah->curchan)) अणु
-			अगर (AR_SREV_9462(ah) || AR_SREV_9565(ah))
+	} else {
+		if (IS_CHAN_2GHZ(ah->curchan)) {
+			if (AR_SREV_9462(ah) || AR_SREV_9565(ah))
 				val = 145;
-			अन्यथा
+			else
 				val = 147;
-		पूर्ण अन्यथा अणु
+		} else {
 			val = 137;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	REG_RMW_FIELD(ah, AR_PHY_PAPRD_TRAINER_CNTL2,
 		      AR_PHY_PAPRD_TRAINER_CNTL2_CF_PAPRD_INIT_RX_BB_GAIN, val);
@@ -241,7 +240,7 @@ EXPORT_SYMBOL(ar9003_paprd_enable);
 	REG_RMW_FIELD(ah, AR_PHY_PAPRD_TRAINER_CNTL3,
 		      AR_PHY_PAPRD_TRAINER_CNTL3_CF_PAPRD_MIN_LOOPBACK_DEL, 1);
 
-	अगर (AR_SREV_9485(ah) ||
+	if (AR_SREV_9485(ah) ||
 	    AR_SREV_9462(ah) ||
 	    AR_SREV_9565(ah) ||
 	    AR_SREV_9550(ah) ||
@@ -249,13 +248,13 @@ EXPORT_SYMBOL(ar9003_paprd_enable);
 	    AR_SREV_9340(ah))
 		REG_RMW_FIELD(ah, AR_PHY_PAPRD_TRAINER_CNTL3,
 			      AR_PHY_PAPRD_TRAINER_CNTL3_CF_PAPRD_QUICK_DROP, -3);
-	अन्यथा
+	else
 		REG_RMW_FIELD(ah, AR_PHY_PAPRD_TRAINER_CNTL3,
 			      AR_PHY_PAPRD_TRAINER_CNTL3_CF_PAPRD_QUICK_DROP, -6);
 
 	val = -10;
 
-	अगर (IS_CHAN_2GHZ(ah->curchan) && !AR_SREV_9462(ah) && !AR_SREV_9565(ah))
+	if (IS_CHAN_2GHZ(ah->curchan) && !AR_SREV_9462(ah) && !AR_SREV_9565(ah))
 		val = -15;
 
 	REG_RMW_FIELD(ah, AR_PHY_PAPRD_TRAINER_CNTL3,
@@ -286,32 +285,32 @@ EXPORT_SYMBOL(ar9003_paprd_enable);
 		      AR_PHY_PAPRD_PRE_POST_SCALING, 185706);
 	REG_RMW_FIELD(ah, AR_PHY_PAPRD_PRE_POST_SCALE_7_B0,
 		      AR_PHY_PAPRD_PRE_POST_SCALING, 175487);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ar9003_paprd_get_gain_table(काष्ठा ath_hw *ah)
-अणु
+static void ar9003_paprd_get_gain_table(struct ath_hw *ah)
+{
 	u32 *entry = ah->paprd_gain_table_entries;
 	u8 *index = ah->paprd_gain_table_index;
 	u32 reg = AR_PHY_TXGAIN_TABLE;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < PAPRD_GAIN_TABLE_ENTRIES; i++) अणु
+	for (i = 0; i < PAPRD_GAIN_TABLE_ENTRIES; i++) {
 		entry[i] = REG_READ(ah, reg);
 		index[i] = (entry[i] >> 24) & 0xff;
 		reg += 4;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अचिन्हित पूर्णांक ar9003_get_desired_gain(काष्ठा ath_hw *ah, पूर्णांक chain,
-					    पूर्णांक target_घातer)
-अणु
-	पूर्णांक olpc_gain_delta = 0, cl_gain_mod;
-	पूर्णांक alpha_therm, alpha_volt;
-	पूर्णांक therm_cal_value, volt_cal_value;
-	पूर्णांक therm_value, volt_value;
-	पूर्णांक thermal_gain_corr, voltage_gain_corr;
-	पूर्णांक desired_scale, desired_gain = 0;
+static unsigned int ar9003_get_desired_gain(struct ath_hw *ah, int chain,
+					    int target_power)
+{
+	int olpc_gain_delta = 0, cl_gain_mod;
+	int alpha_therm, alpha_volt;
+	int therm_cal_value, volt_cal_value;
+	int therm_value, volt_value;
+	int thermal_gain_corr, voltage_gain_corr;
+	int desired_scale, desired_gain = 0;
 	u32 reg_olpc  = 0, reg_cl_gain  = 0;
 
 	REG_CLR_BIT(ah, AR_PHY_PAPRD_TRAINER_STAT1,
@@ -331,47 +330,47 @@ EXPORT_SYMBOL(ar9003_paprd_enable);
 	volt_value = REG_READ_FIELD(ah, AR_PHY_BB_THERM_ADC_4,
 				    AR_PHY_BB_THERM_ADC_4_LATEST_VOLT_VALUE);
 
-	चयन (chain) अणु
-	हाल 0:
+	switch (chain) {
+	case 0:
 		reg_olpc = AR_PHY_TPC_11_B0;
 		reg_cl_gain = AR_PHY_CL_TAB_0;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		reg_olpc = AR_PHY_TPC_11_B1;
 		reg_cl_gain = AR_PHY_CL_TAB_1;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		reg_olpc = AR_PHY_TPC_11_B2;
 		reg_cl_gain = AR_PHY_CL_TAB_2;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ath_dbg(ath9k_hw_common(ah), CALIBRATE,
 			"Invalid chainmask: %d\n", chain);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	olpc_gain_delta = REG_READ_FIELD(ah, reg_olpc,
 					 AR_PHY_TPC_11_OLPC_GAIN_DELTA);
 	cl_gain_mod = REG_READ_FIELD(ah, reg_cl_gain,
 					 AR_PHY_CL_TAB_CL_GAIN_MOD);
 
-	अगर (olpc_gain_delta >= 128)
+	if (olpc_gain_delta >= 128)
 		olpc_gain_delta = olpc_gain_delta - 256;
 
 	thermal_gain_corr = (alpha_therm * (therm_value - therm_cal_value) +
 			     (256 / 2)) / 256;
 	voltage_gain_corr = (alpha_volt * (volt_value - volt_cal_value) +
 			     (128 / 2)) / 128;
-	desired_gain = target_घातer - olpc_gain_delta - thermal_gain_corr -
+	desired_gain = target_power - olpc_gain_delta - thermal_gain_corr -
 	    voltage_gain_corr + desired_scale + cl_gain_mod;
 
-	वापस desired_gain;
-पूर्ण
+	return desired_gain;
+}
 
-अटल व्योम ar9003_tx_क्रमce_gain(काष्ठा ath_hw *ah, अचिन्हित पूर्णांक gain_index)
-अणु
-	पूर्णांक selected_gain_entry, txbb1dbgain, txbb6dbgain, txmxrgain;
-	पूर्णांक padrvgnA, padrvgnB, padrvgnC, padrvgnD;
+static void ar9003_tx_force_gain(struct ath_hw *ah, unsigned int gain_index)
+{
+	int selected_gain_entry, txbb1dbgain, txbb6dbgain, txmxrgain;
+	int padrvgnA, padrvgnB, padrvgnC, padrvgnD;
 	u32 *gain_table_entries = ah->paprd_gain_table_entries;
 
 	selected_gain_entry = gain_table_entries[gain_index];
@@ -403,57 +402,57 @@ EXPORT_SYMBOL(ar9003_paprd_enable);
 		      AR_PHY_TX_FORCED_GAIN_FORCE_TX_GAIN, 0);
 	REG_RMW_FIELD(ah, AR_PHY_TPC_1, AR_PHY_TPC_1_FORCED_DAC_GAIN, 0);
 	REG_RMW_FIELD(ah, AR_PHY_TPC_1, AR_PHY_TPC_1_FORCE_DAC_GAIN, 0);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक find_expn(पूर्णांक num)
-अणु
-	वापस fls(num) - 1;
-पूर्ण
+static inline int find_expn(int num)
+{
+	return fls(num) - 1;
+}
 
-अटल अंतरभूत पूर्णांक find_proper_scale(पूर्णांक expn, पूर्णांक N)
-अणु
-	वापस (expn > N) ? expn - 10 : 0;
-पूर्ण
+static inline int find_proper_scale(int expn, int N)
+{
+	return (expn > N) ? expn - 10 : 0;
+}
 
-#घोषणा NUM_BIN 23
+#define NUM_BIN 23
 
-अटल bool create_pa_curve(u32 *data_L, u32 *data_U, u32 *pa_table, u16 *gain)
-अणु
-	अचिन्हित पूर्णांक thresh_accum_cnt;
-	पूर्णांक x_est[NUM_BIN + 1], Y[NUM_BIN + 1], theta[NUM_BIN + 1];
-	पूर्णांक PA_in[NUM_BIN + 1];
-	पूर्णांक B1_पंचांगp[NUM_BIN + 1], B2_पंचांगp[NUM_BIN + 1];
-	अचिन्हित पूर्णांक B1_असल_max, B2_असल_max;
-	पूर्णांक max_index, scale_factor;
-	पूर्णांक y_est[NUM_BIN + 1];
-	पूर्णांक x_est_fxp1_nonlin, x_tilde[NUM_BIN + 1];
-	अचिन्हित पूर्णांक x_tilde_असल;
-	पूर्णांक G_fxp, Y_पूर्णांकercept, order_x_by_y, M, I, L, sum_y_sqr, sum_y_quad;
-	पूर्णांक Q_x, Q_B1, Q_B2, beta_raw, alpha_raw, scale_B;
-	पूर्णांक Q_scale_B, Q_beta, Q_alpha, alpha, beta, order_1, order_2;
-	पूर्णांक order1_5x, order2_3x, order1_5x_rem, order2_3x_rem;
-	पूर्णांक y5, y3, पंचांगp;
-	पूर्णांक theta_low_bin = 0;
-	पूर्णांक i;
+static bool create_pa_curve(u32 *data_L, u32 *data_U, u32 *pa_table, u16 *gain)
+{
+	unsigned int thresh_accum_cnt;
+	int x_est[NUM_BIN + 1], Y[NUM_BIN + 1], theta[NUM_BIN + 1];
+	int PA_in[NUM_BIN + 1];
+	int B1_tmp[NUM_BIN + 1], B2_tmp[NUM_BIN + 1];
+	unsigned int B1_abs_max, B2_abs_max;
+	int max_index, scale_factor;
+	int y_est[NUM_BIN + 1];
+	int x_est_fxp1_nonlin, x_tilde[NUM_BIN + 1];
+	unsigned int x_tilde_abs;
+	int G_fxp, Y_intercept, order_x_by_y, M, I, L, sum_y_sqr, sum_y_quad;
+	int Q_x, Q_B1, Q_B2, beta_raw, alpha_raw, scale_B;
+	int Q_scale_B, Q_beta, Q_alpha, alpha, beta, order_1, order_2;
+	int order1_5x, order2_3x, order1_5x_rem, order2_3x_rem;
+	int y5, y3, tmp;
+	int theta_low_bin = 0;
+	int i;
 
 	/* disregard any bin that contains <= 16 samples */
 	thresh_accum_cnt = 16;
 	scale_factor = 5;
 	max_index = 0;
-	स_रखो(theta, 0, माप(theta));
-	स_रखो(x_est, 0, माप(x_est));
-	स_रखो(Y, 0, माप(Y));
-	स_रखो(y_est, 0, माप(y_est));
-	स_रखो(x_tilde, 0, माप(x_tilde));
+	memset(theta, 0, sizeof(theta));
+	memset(x_est, 0, sizeof(x_est));
+	memset(Y, 0, sizeof(Y));
+	memset(y_est, 0, sizeof(y_est));
+	memset(x_tilde, 0, sizeof(x_tilde));
 
-	क्रम (i = 0; i < NUM_BIN; i++) अणु
+	for (i = 0; i < NUM_BIN; i++) {
 		s32 accum_cnt, accum_tx, accum_rx, accum_ang;
 
 		/* number of samples */
 		accum_cnt = data_L[i] & 0xffff;
 
-		अगर (accum_cnt <= thresh_accum_cnt)
-			जारी;
+		if (accum_cnt <= thresh_accum_cnt)
+			continue;
 
 		max_index++;
 
@@ -480,60 +479,60 @@ EXPORT_SYMBOL(ar9003_paprd_enable);
 			    scale_factor) +
 			(1 << scale_factor) * i + 16;
 
-		अगर (accum_ang >= (1 << 26))
+		if (accum_ang >= (1 << 26))
 			accum_ang -= 1 << 27;
 
 		theta[max_index] =
 			((accum_ang * (1 << scale_factor)) + accum_cnt) /
 			accum_cnt;
-	पूर्ण
+	}
 
 	/*
 	 * Find average theta of first 5 bin and all of those to same value.
 	 * Curve is linear at that range.
 	 */
-	क्रम (i = 1; i < 6; i++)
+	for (i = 1; i < 6; i++)
 		theta_low_bin += theta[i];
 
 	theta_low_bin = theta_low_bin / 5;
-	क्रम (i = 1; i < 6; i++)
+	for (i = 1; i < 6; i++)
 		theta[i] = theta_low_bin;
 
 	/* Set values at origin */
 	theta[0] = theta_low_bin;
-	क्रम (i = 0; i <= max_index; i++)
+	for (i = 0; i <= max_index; i++)
 		theta[i] -= theta_low_bin;
 
 	x_est[0] = 0;
 	Y[0] = 0;
 	scale_factor = 8;
 
-	/* low संकेत gain */
-	अगर (x_est[6] == x_est[3])
-		वापस false;
+	/* low signal gain */
+	if (x_est[6] == x_est[3])
+		return false;
 
 	G_fxp =
 	    (((Y[6] - Y[3]) * 1 << scale_factor) +
 	     (x_est[6] - x_est[3])) / (x_est[6] - x_est[3]);
 
-	/* prevent भागision by zero */
-	अगर (G_fxp == 0)
-		वापस false;
+	/* prevent division by zero */
+	if (G_fxp == 0)
+		return false;
 
-	Y_पूर्णांकercept =
+	Y_intercept =
 	    (G_fxp * (x_est[0] - x_est[3]) +
 	     (1 << scale_factor)) / (1 << scale_factor) + Y[3];
 
-	क्रम (i = 0; i <= max_index; i++)
-		y_est[i] = Y[i] - Y_पूर्णांकercept;
+	for (i = 0; i <= max_index; i++)
+		y_est[i] = Y[i] - Y_intercept;
 
-	क्रम (i = 0; i <= 3; i++) अणु
+	for (i = 0; i <= 3; i++) {
 		y_est[i] = i * 32;
 		x_est[i] = ((y_est[i] * 1 << scale_factor) + G_fxp) / G_fxp;
-	पूर्ण
+	}
 
-	अगर (y_est[max_index] == 0)
-		वापस false;
+	if (y_est[max_index] == 0)
+		return false;
 
 	x_est_fxp1_nonlin =
 	    x_est[max_index] - ((1 << scale_factor) * y_est[max_index] +
@@ -542,11 +541,11 @@ EXPORT_SYMBOL(ar9003_paprd_enable);
 	order_x_by_y =
 	    (x_est_fxp1_nonlin + y_est[max_index]) / y_est[max_index];
 
-	अगर (order_x_by_y == 0)
+	if (order_x_by_y == 0)
 		M = 10;
-	अन्यथा अगर (order_x_by_y == 1)
+	else if (order_x_by_y == 1)
 		M = 9;
-	अन्यथा
+	else
 		M = 8;
 
 	I = (max_index > 15) ? 7 : max_index >> 1;
@@ -554,16 +553,16 @@ EXPORT_SYMBOL(ar9003_paprd_enable);
 	scale_factor = 8;
 	sum_y_sqr = 0;
 	sum_y_quad = 0;
-	x_tilde_असल = 0;
+	x_tilde_abs = 0;
 
-	क्रम (i = 0; i <= L; i++) अणु
-		अचिन्हित पूर्णांक y_sqr;
-		अचिन्हित पूर्णांक y_quad;
-		अचिन्हित पूर्णांक पंचांगp_असल;
+	for (i = 0; i <= L; i++) {
+		unsigned int y_sqr;
+		unsigned int y_quad;
+		unsigned int tmp_abs;
 
-		/* prevent भागision by zero */
-		अगर (y_est[i + I] == 0)
-			वापस false;
+		/* prevent division by zero */
+		if (y_est[i + I] == 0)
+			return false;
 
 		x_est_fxp1_nonlin =
 		    x_est[i + I] - ((1 << scale_factor) * y_est[i + I] +
@@ -580,58 +579,58 @@ EXPORT_SYMBOL(ar9003_paprd_enable);
 		    (y_est[i + I] * y_est[i + I] +
 		     (scale_factor * scale_factor)) / (scale_factor *
 						       scale_factor);
-		पंचांगp_असल = असल(x_tilde[i]);
-		अगर (पंचांगp_असल > x_tilde_असल)
-			x_tilde_असल = पंचांगp_असल;
+		tmp_abs = abs(x_tilde[i]);
+		if (tmp_abs > x_tilde_abs)
+			x_tilde_abs = tmp_abs;
 
 		y_quad = y_sqr * y_sqr;
 		sum_y_sqr = sum_y_sqr + y_sqr;
 		sum_y_quad = sum_y_quad + y_quad;
-		B1_पंचांगp[i] = y_sqr * (L + 1);
-		B2_पंचांगp[i] = y_sqr;
-	पूर्ण
+		B1_tmp[i] = y_sqr * (L + 1);
+		B2_tmp[i] = y_sqr;
+	}
 
-	B1_असल_max = 0;
-	B2_असल_max = 0;
-	क्रम (i = 0; i <= L; i++) अणु
-		पूर्णांक असल_val;
+	B1_abs_max = 0;
+	B2_abs_max = 0;
+	for (i = 0; i <= L; i++) {
+		int abs_val;
 
-		B1_पंचांगp[i] -= sum_y_sqr;
-		B2_पंचांगp[i] = sum_y_quad - sum_y_sqr * B2_पंचांगp[i];
+		B1_tmp[i] -= sum_y_sqr;
+		B2_tmp[i] = sum_y_quad - sum_y_sqr * B2_tmp[i];
 
-		असल_val = असल(B1_पंचांगp[i]);
-		अगर (असल_val > B1_असल_max)
-			B1_असल_max = असल_val;
+		abs_val = abs(B1_tmp[i]);
+		if (abs_val > B1_abs_max)
+			B1_abs_max = abs_val;
 
-		असल_val = असल(B2_पंचांगp[i]);
-		अगर (असल_val > B2_असल_max)
-			B2_असल_max = असल_val;
-	पूर्ण
+		abs_val = abs(B2_tmp[i]);
+		if (abs_val > B2_abs_max)
+			B2_abs_max = abs_val;
+	}
 
-	Q_x = find_proper_scale(find_expn(x_tilde_असल), 10);
-	Q_B1 = find_proper_scale(find_expn(B1_असल_max), 10);
-	Q_B2 = find_proper_scale(find_expn(B2_असल_max), 10);
+	Q_x = find_proper_scale(find_expn(x_tilde_abs), 10);
+	Q_B1 = find_proper_scale(find_expn(B1_abs_max), 10);
+	Q_B2 = find_proper_scale(find_expn(B2_abs_max), 10);
 
 	beta_raw = 0;
 	alpha_raw = 0;
-	क्रम (i = 0; i <= L; i++) अणु
+	for (i = 0; i <= L; i++) {
 		x_tilde[i] = x_tilde[i] / (1 << Q_x);
-		B1_पंचांगp[i] = B1_पंचांगp[i] / (1 << Q_B1);
-		B2_पंचांगp[i] = B2_पंचांगp[i] / (1 << Q_B2);
-		beta_raw = beta_raw + B1_पंचांगp[i] * x_tilde[i];
-		alpha_raw = alpha_raw + B2_पंचांगp[i] * x_tilde[i];
-	पूर्ण
+		B1_tmp[i] = B1_tmp[i] / (1 << Q_B1);
+		B2_tmp[i] = B2_tmp[i] / (1 << Q_B2);
+		beta_raw = beta_raw + B1_tmp[i] * x_tilde[i];
+		alpha_raw = alpha_raw + B2_tmp[i] * x_tilde[i];
+	}
 
 	scale_B =
 	    ((sum_y_quad / scale_factor) * (L + 1) -
 	     (sum_y_sqr / scale_factor) * sum_y_sqr) * scale_factor;
 
-	Q_scale_B = find_proper_scale(find_expn(असल(scale_B)), 10);
+	Q_scale_B = find_proper_scale(find_expn(abs(scale_B)), 10);
 	scale_B = scale_B / (1 << Q_scale_B);
-	अगर (scale_B == 0)
-		वापस false;
-	Q_beta = find_proper_scale(find_expn(असल(beta_raw)), 10);
-	Q_alpha = find_proper_scale(find_expn(असल(alpha_raw)), 10);
+	if (scale_B == 0)
+		return false;
+	Q_beta = find_proper_scale(find_expn(abs(beta_raw)), 10);
+	Q_alpha = find_proper_scale(find_expn(abs(alpha_raw)), 10);
 	beta_raw = beta_raw / (1 << Q_beta);
 	alpha_raw = alpha_raw / (1 << Q_alpha);
 	alpha = (alpha_raw << 10) / scale_B;
@@ -643,47 +642,47 @@ EXPORT_SYMBOL(ar9003_paprd_enable);
 	order1_5x_rem = order_1 - 5 * order1_5x;
 	order2_3x_rem = order_2 - 3 * order2_3x;
 
-	क्रम (i = 0; i < PAPRD_TABLE_SZ; i++) अणु
-		पंचांगp = i * 32;
-		y5 = ((beta * पंचांगp) >> 6) >> order1_5x;
-		y5 = (y5 * पंचांगp) >> order1_5x;
-		y5 = (y5 * पंचांगp) >> order1_5x;
-		y5 = (y5 * पंचांगp) >> order1_5x;
-		y5 = (y5 * पंचांगp) >> order1_5x;
+	for (i = 0; i < PAPRD_TABLE_SZ; i++) {
+		tmp = i * 32;
+		y5 = ((beta * tmp) >> 6) >> order1_5x;
+		y5 = (y5 * tmp) >> order1_5x;
+		y5 = (y5 * tmp) >> order1_5x;
+		y5 = (y5 * tmp) >> order1_5x;
+		y5 = (y5 * tmp) >> order1_5x;
 		y5 = y5 >> order1_5x_rem;
-		y3 = (alpha * पंचांगp) >> order2_3x;
-		y3 = (y3 * पंचांगp) >> order2_3x;
-		y3 = (y3 * पंचांगp) >> order2_3x;
+		y3 = (alpha * tmp) >> order2_3x;
+		y3 = (y3 * tmp) >> order2_3x;
+		y3 = (y3 * tmp) >> order2_3x;
 		y3 = y3 >> order2_3x_rem;
-		PA_in[i] = y5 + y3 + (256 * पंचांगp) / G_fxp;
+		PA_in[i] = y5 + y3 + (256 * tmp) / G_fxp;
 
-		अगर (i >= 2) अणु
-			पंचांगp = PA_in[i] - PA_in[i - 1];
-			अगर (पंचांगp < 0)
+		if (i >= 2) {
+			tmp = PA_in[i] - PA_in[i - 1];
+			if (tmp < 0)
 				PA_in[i] =
 				    PA_in[i - 1] + (PA_in[i - 1] -
 						    PA_in[i - 2]);
-		पूर्ण
+		}
 
 		PA_in[i] = (PA_in[i] < 1400) ? PA_in[i] : 1400;
-	पूर्ण
+	}
 
 	beta_raw = 0;
 	alpha_raw = 0;
 
-	क्रम (i = 0; i <= L; i++) अणु
-		पूर्णांक theta_tilde =
+	for (i = 0; i <= L; i++) {
+		int theta_tilde =
 		    ((theta[i + I] << M) + y_est[i + I]) / y_est[i + I];
 		theta_tilde =
 		    ((theta_tilde << M) + y_est[i + I]) / y_est[i + I];
 		theta_tilde =
 		    ((theta_tilde << M) + y_est[i + I]) / y_est[i + I];
-		beta_raw = beta_raw + B1_पंचांगp[i] * theta_tilde;
-		alpha_raw = alpha_raw + B2_पंचांगp[i] * theta_tilde;
-	पूर्ण
+		beta_raw = beta_raw + B1_tmp[i] * theta_tilde;
+		alpha_raw = alpha_raw + B2_tmp[i] * theta_tilde;
+	}
 
-	Q_beta = find_proper_scale(find_expn(असल(beta_raw)), 10);
-	Q_alpha = find_proper_scale(find_expn(असल(alpha_raw)), 10);
+	Q_beta = find_proper_scale(find_expn(abs(beta_raw)), 10);
+	Q_alpha = find_proper_scale(find_expn(abs(alpha_raw)), 10);
 	beta_raw = beta_raw / (1 << Q_beta);
 	alpha_raw = alpha_raw / (1 << Q_alpha);
 
@@ -696,239 +695,239 @@ EXPORT_SYMBOL(ar9003_paprd_enable);
 	order1_5x_rem = order_1 - 5 * order1_5x;
 	order2_3x_rem = order_2 - 3 * order2_3x;
 
-	क्रम (i = 0; i < PAPRD_TABLE_SZ; i++) अणु
-		पूर्णांक PA_angle;
+	for (i = 0; i < PAPRD_TABLE_SZ; i++) {
+		int PA_angle;
 
-		/* pa_table[4] is calculated from PA_angle क्रम i=5 */
-		अगर (i == 4)
-			जारी;
+		/* pa_table[4] is calculated from PA_angle for i=5 */
+		if (i == 4)
+			continue;
 
-		पंचांगp = i * 32;
-		अगर (beta > 0)
-			y5 = (((beta * पंचांगp - 64) >> 6) -
+		tmp = i * 32;
+		if (beta > 0)
+			y5 = (((beta * tmp - 64) >> 6) -
 			      (1 << order1_5x)) / (1 << order1_5x);
-		अन्यथा
-			y5 = ((((beta * पंचांगp - 64) >> 6) +
+		else
+			y5 = ((((beta * tmp - 64) >> 6) +
 			       (1 << order1_5x)) / (1 << order1_5x));
 
-		y5 = (y5 * पंचांगp) / (1 << order1_5x);
-		y5 = (y5 * पंचांगp) / (1 << order1_5x);
-		y5 = (y5 * पंचांगp) / (1 << order1_5x);
-		y5 = (y5 * पंचांगp) / (1 << order1_5x);
+		y5 = (y5 * tmp) / (1 << order1_5x);
+		y5 = (y5 * tmp) / (1 << order1_5x);
+		y5 = (y5 * tmp) / (1 << order1_5x);
+		y5 = (y5 * tmp) / (1 << order1_5x);
 		y5 = y5 / (1 << order1_5x_rem);
 
-		अगर (beta > 0)
-			y3 = (alpha * पंचांगp -
+		if (beta > 0)
+			y3 = (alpha * tmp -
 			      (1 << order2_3x)) / (1 << order2_3x);
-		अन्यथा
-			y3 = (alpha * पंचांगp +
+		else
+			y3 = (alpha * tmp +
 			      (1 << order2_3x)) / (1 << order2_3x);
-		y3 = (y3 * पंचांगp) / (1 << order2_3x);
-		y3 = (y3 * पंचांगp) / (1 << order2_3x);
+		y3 = (y3 * tmp) / (1 << order2_3x);
+		y3 = (y3 * tmp) / (1 << order2_3x);
 		y3 = y3 / (1 << order2_3x_rem);
 
-		अगर (i < 4) अणु
+		if (i < 4) {
 			PA_angle = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			PA_angle = y5 + y3;
-			अगर (PA_angle < -150)
+			if (PA_angle < -150)
 				PA_angle = -150;
-			अन्यथा अगर (PA_angle > 150)
+			else if (PA_angle > 150)
 				PA_angle = 150;
-		पूर्ण
+		}
 
 		pa_table[i] = ((PA_in[i] & 0x7ff) << 11) + (PA_angle & 0x7ff);
-		अगर (i == 5) अणु
+		if (i == 5) {
 			PA_angle = (PA_angle + 2) >> 1;
 			pa_table[i - 1] = ((PA_in[i - 1] & 0x7ff) << 11) +
 			    (PA_angle & 0x7ff);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	*gain = G_fxp;
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम ar9003_paprd_populate_single_table(काष्ठा ath_hw *ah,
-					काष्ठा ath9k_hw_cal_data *caldata,
-					पूर्णांक chain)
-अणु
+void ar9003_paprd_populate_single_table(struct ath_hw *ah,
+					struct ath9k_hw_cal_data *caldata,
+					int chain)
+{
 	u32 *paprd_table_val = caldata->pa_table[chain];
-	u32 small_संकेत_gain = caldata->small_संकेत_gain[chain];
-	u32 training_घातer = ah->paprd_training_घातer;
+	u32 small_signal_gain = caldata->small_signal_gain[chain];
+	u32 training_power = ah->paprd_training_power;
 	u32 reg = 0;
-	पूर्णांक i;
+	int i;
 
-	अगर (chain == 0)
+	if (chain == 0)
 		reg = AR_PHY_PAPRD_MEM_TAB_B0;
-	अन्यथा अगर (chain == 1)
+	else if (chain == 1)
 		reg = AR_PHY_PAPRD_MEM_TAB_B1;
-	अन्यथा अगर (chain == 2)
+	else if (chain == 2)
 		reg = AR_PHY_PAPRD_MEM_TAB_B2;
 
-	क्रम (i = 0; i < PAPRD_TABLE_SZ; i++) अणु
+	for (i = 0; i < PAPRD_TABLE_SZ; i++) {
 		REG_WRITE(ah, reg, paprd_table_val[i]);
 		reg = reg + 4;
-	पूर्ण
+	}
 
-	अगर (chain == 0)
+	if (chain == 0)
 		reg = AR_PHY_PA_GAIN123_B0;
-	अन्यथा अगर (chain == 1)
+	else if (chain == 1)
 		reg = AR_PHY_PA_GAIN123_B1;
-	अन्यथा
+	else
 		reg = AR_PHY_PA_GAIN123_B2;
 
-	REG_RMW_FIELD(ah, reg, AR_PHY_PA_GAIN123_PA_GAIN1, small_संकेत_gain);
+	REG_RMW_FIELD(ah, reg, AR_PHY_PA_GAIN123_PA_GAIN1, small_signal_gain);
 
 	REG_RMW_FIELD(ah, AR_PHY_PAPRD_CTRL1_B0,
 		      AR_PHY_PAPRD_CTRL1_PAPRD_POWER_AT_AM2AM_CAL,
-		      training_घातer);
+		      training_power);
 
-	अगर (ah->caps.tx_chainmask & BIT(1))
+	if (ah->caps.tx_chainmask & BIT(1))
 		REG_RMW_FIELD(ah, AR_PHY_PAPRD_CTRL1_B1,
 			      AR_PHY_PAPRD_CTRL1_PAPRD_POWER_AT_AM2AM_CAL,
-			      training_घातer);
+			      training_power);
 
-	अगर (ah->caps.tx_chainmask & BIT(2))
+	if (ah->caps.tx_chainmask & BIT(2))
 		/* val AR_PHY_PAPRD_CTRL1_PAPRD_POWER_AT_AM2AM_CAL correct? */
 		REG_RMW_FIELD(ah, AR_PHY_PAPRD_CTRL1_B2,
 			      AR_PHY_PAPRD_CTRL1_PAPRD_POWER_AT_AM2AM_CAL,
-			      training_घातer);
-पूर्ण
+			      training_power);
+}
 EXPORT_SYMBOL(ar9003_paprd_populate_single_table);
 
-व्योम ar9003_paprd_setup_gain_table(काष्ठा ath_hw *ah, पूर्णांक chain)
-अणु
-	अचिन्हित पूर्णांक i, desired_gain, gain_index;
-	अचिन्हित पूर्णांक train_घातer = ah->paprd_training_घातer;
+void ar9003_paprd_setup_gain_table(struct ath_hw *ah, int chain)
+{
+	unsigned int i, desired_gain, gain_index;
+	unsigned int train_power = ah->paprd_training_power;
 
-	desired_gain = ar9003_get_desired_gain(ah, chain, train_घातer);
+	desired_gain = ar9003_get_desired_gain(ah, chain, train_power);
 
 	gain_index = 0;
-	क्रम (i = 0; i < PAPRD_GAIN_TABLE_ENTRIES; i++) अणु
-		अगर (ah->paprd_gain_table_index[i] >= desired_gain)
-			अवरोध;
+	for (i = 0; i < PAPRD_GAIN_TABLE_ENTRIES; i++) {
+		if (ah->paprd_gain_table_index[i] >= desired_gain)
+			break;
 		gain_index++;
-	पूर्ण
+	}
 
-	ar9003_tx_क्रमce_gain(ah, gain_index);
+	ar9003_tx_force_gain(ah, gain_index);
 
 	REG_CLR_BIT(ah, AR_PHY_PAPRD_TRAINER_STAT1,
 			AR_PHY_PAPRD_TRAINER_STAT1_PAPRD_TRAIN_DONE);
-पूर्ण
+}
 EXPORT_SYMBOL(ar9003_paprd_setup_gain_table);
 
-अटल bool ar9003_paprd_retrain_pa_in(काष्ठा ath_hw *ah,
-				       काष्ठा ath9k_hw_cal_data *caldata,
-				       पूर्णांक chain)
-अणु
+static bool ar9003_paprd_retrain_pa_in(struct ath_hw *ah,
+				       struct ath9k_hw_cal_data *caldata,
+				       int chain)
+{
 	u32 *pa_in = caldata->pa_table[chain];
-	पूर्णांक capभाग_offset, quick_drop_offset;
-	पूर्णांक capभाग2g, quick_drop;
-	पूर्णांक count = 0;
-	पूर्णांक i;
+	int capdiv_offset, quick_drop_offset;
+	int capdiv2g, quick_drop;
+	int count = 0;
+	int i;
 
-	अगर (!AR_SREV_9485(ah) && !AR_SREV_9330(ah))
-		वापस false;
+	if (!AR_SREV_9485(ah) && !AR_SREV_9330(ah))
+		return false;
 
-	capभाग2g = REG_READ_FIELD(ah, AR_PHY_65NM_CH0_TXRF3,
+	capdiv2g = REG_READ_FIELD(ah, AR_PHY_65NM_CH0_TXRF3,
 				  AR_PHY_65NM_CH0_TXRF3_CAPDIV2G);
 
 	quick_drop = REG_READ_FIELD(ah, AR_PHY_PAPRD_TRAINER_CNTL3,
 				    AR_PHY_PAPRD_TRAINER_CNTL3_CF_PAPRD_QUICK_DROP);
 
-	अगर (quick_drop)
+	if (quick_drop)
 		quick_drop -= 0x40;
 
-	क्रम (i = 0; i < NUM_BIN + 1; i++) अणु
-		अगर (pa_in[i] == 1400)
+	for (i = 0; i < NUM_BIN + 1; i++) {
+		if (pa_in[i] == 1400)
 			count++;
-	पूर्ण
+	}
 
-	अगर (AR_SREV_9485(ah)) अणु
-		अगर (pa_in[23] < 800) अणु
-			capभाग_offset = (पूर्णांक)((1000 - pa_in[23] + 75) / 150);
-			capभाग2g += capभाग_offset;
-			अगर (capभाग2g > 7) अणु
-				capभाग2g = 7;
-				अगर (pa_in[23] < 600) अणु
+	if (AR_SREV_9485(ah)) {
+		if (pa_in[23] < 800) {
+			capdiv_offset = (int)((1000 - pa_in[23] + 75) / 150);
+			capdiv2g += capdiv_offset;
+			if (capdiv2g > 7) {
+				capdiv2g = 7;
+				if (pa_in[23] < 600) {
 					quick_drop++;
-					अगर (quick_drop > 0)
+					if (quick_drop > 0)
 						quick_drop = 0;
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अगर (pa_in[23] == 1400) अणु
-			quick_drop_offset = min_t(पूर्णांक, count / 3, 2);
+				}
+			}
+		} else if (pa_in[23] == 1400) {
+			quick_drop_offset = min_t(int, count / 3, 2);
 			quick_drop += quick_drop_offset;
-			capभाग2g += quick_drop_offset / 2;
+			capdiv2g += quick_drop_offset / 2;
 
-			अगर (capभाग2g > 7)
-				capभाग2g = 7;
+			if (capdiv2g > 7)
+				capdiv2g = 7;
 
-			अगर (quick_drop > 0) अणु
+			if (quick_drop > 0) {
 				quick_drop = 0;
-				capभाग2g -= quick_drop_offset;
-				अगर (capभाग2g < 0)
-					capभाग2g = 0;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			वापस false;
-		पूर्ण
-	पूर्ण अन्यथा अगर (AR_SREV_9330(ah)) अणु
-		अगर (pa_in[23] < 1000) अणु
-			capभाग_offset = (1000 - pa_in[23]) / 100;
-			capभाग2g += capभाग_offset;
-			अगर (capभाग_offset > 3) अणु
-				capभाग_offset = 1;
+				capdiv2g -= quick_drop_offset;
+				if (capdiv2g < 0)
+					capdiv2g = 0;
+			}
+		} else {
+			return false;
+		}
+	} else if (AR_SREV_9330(ah)) {
+		if (pa_in[23] < 1000) {
+			capdiv_offset = (1000 - pa_in[23]) / 100;
+			capdiv2g += capdiv_offset;
+			if (capdiv_offset > 3) {
+				capdiv_offset = 1;
 				quick_drop--;
-			पूर्ण
+			}
 
-			capभाग2g += capभाग_offset;
-			अगर (capभाग2g > 6)
-				capभाग2g = 6;
-			अगर (quick_drop < -4)
+			capdiv2g += capdiv_offset;
+			if (capdiv2g > 6)
+				capdiv2g = 6;
+			if (quick_drop < -4)
 				quick_drop = -4;
-		पूर्ण अन्यथा अगर (pa_in[23] == 1400) अणु
-			अगर (count > 3) अणु
+		} else if (pa_in[23] == 1400) {
+			if (count > 3) {
 				quick_drop++;
-				capभाग2g -= count / 4;
-				अगर (quick_drop > -2)
+				capdiv2g -= count / 4;
+				if (quick_drop > -2)
 					quick_drop = -2;
-			पूर्ण अन्यथा अणु
-				capभाग2g--;
-			पूर्ण
+			} else {
+				capdiv2g--;
+			}
 
-			अगर (capभाग2g < 0)
-				capभाग2g = 0;
-		पूर्ण अन्यथा अणु
-			वापस false;
-		पूर्ण
-	पूर्ण
+			if (capdiv2g < 0)
+				capdiv2g = 0;
+		} else {
+			return false;
+		}
+	}
 
 	REG_RMW_FIELD(ah, AR_PHY_65NM_CH0_TXRF3,
-		      AR_PHY_65NM_CH0_TXRF3_CAPDIV2G, capभाग2g);
+		      AR_PHY_65NM_CH0_TXRF3_CAPDIV2G, capdiv2g);
 	REG_RMW_FIELD(ah, AR_PHY_PAPRD_TRAINER_CNTL3,
 		      AR_PHY_PAPRD_TRAINER_CNTL3_CF_PAPRD_QUICK_DROP,
 		      quick_drop);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-पूर्णांक ar9003_paprd_create_curve(काष्ठा ath_hw *ah,
-			      काष्ठा ath9k_hw_cal_data *caldata, पूर्णांक chain)
-अणु
-	u16 *small_संकेत_gain = &caldata->small_संकेत_gain[chain];
+int ar9003_paprd_create_curve(struct ath_hw *ah,
+			      struct ath9k_hw_cal_data *caldata, int chain)
+{
+	u16 *small_signal_gain = &caldata->small_signal_gain[chain];
 	u32 *pa_table = caldata->pa_table[chain];
 	u32 *data_L, *data_U;
-	पूर्णांक i, status = 0;
+	int i, status = 0;
 	u32 *buf;
 	u32 reg;
 
-	स_रखो(caldata->pa_table[chain], 0, माप(caldata->pa_table[chain]));
+	memset(caldata->pa_table[chain], 0, sizeof(caldata->pa_table[chain]));
 
-	buf = kदो_स्मृति_array(2 * 48, माप(u32), GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc_array(2 * 48, sizeof(u32), GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
 	data_L = &buf[0];
 	data_U = &buf[48];
@@ -937,78 +936,78 @@ EXPORT_SYMBOL(ar9003_paprd_setup_gain_table);
 		    AR_PHY_CHAN_INFO_MEMORY_CHANINFOMEM_S2_READ);
 
 	reg = AR_PHY_CHAN_INFO_TAB_0;
-	क्रम (i = 0; i < 48; i++)
+	for (i = 0; i < 48; i++)
 		data_L[i] = REG_READ(ah, reg + (i << 2));
 
 	REG_SET_BIT(ah, AR_PHY_CHAN_INFO_MEMORY,
 		    AR_PHY_CHAN_INFO_MEMORY_CHANINFOMEM_S2_READ);
 
-	क्रम (i = 0; i < 48; i++)
+	for (i = 0; i < 48; i++)
 		data_U[i] = REG_READ(ah, reg + (i << 2));
 
-	अगर (!create_pa_curve(data_L, data_U, pa_table, small_संकेत_gain))
+	if (!create_pa_curve(data_L, data_U, pa_table, small_signal_gain))
 		status = -2;
 
-	अगर (ar9003_paprd_retrain_pa_in(ah, caldata, chain))
+	if (ar9003_paprd_retrain_pa_in(ah, caldata, chain))
 		status = -EINPROGRESS;
 
 	REG_CLR_BIT(ah, AR_PHY_PAPRD_TRAINER_STAT1,
 		    AR_PHY_PAPRD_TRAINER_STAT1_PAPRD_TRAIN_DONE);
 
-	kमुक्त(buf);
+	kfree(buf);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 EXPORT_SYMBOL(ar9003_paprd_create_curve);
 
-पूर्णांक ar9003_paprd_init_table(काष्ठा ath_hw *ah)
-अणु
-	पूर्णांक ret;
+int ar9003_paprd_init_table(struct ath_hw *ah)
+{
+	int ret;
 
 	ret = ar9003_paprd_setup_single_table(ah);
-	अगर (ret < 0)
-	    वापस ret;
+	if (ret < 0)
+	    return ret;
 
 	ar9003_paprd_get_gain_table(ah);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(ar9003_paprd_init_table);
 
-bool ar9003_paprd_is_करोne(काष्ठा ath_hw *ah)
-अणु
-	पूर्णांक paprd_करोne, agc2_pwr;
+bool ar9003_paprd_is_done(struct ath_hw *ah)
+{
+	int paprd_done, agc2_pwr;
 
-	paprd_करोne = REG_READ_FIELD(ah, AR_PHY_PAPRD_TRAINER_STAT1,
+	paprd_done = REG_READ_FIELD(ah, AR_PHY_PAPRD_TRAINER_STAT1,
 				AR_PHY_PAPRD_TRAINER_STAT1_PAPRD_TRAIN_DONE);
 
-	अगर (AR_SREV_9485(ah))
-		जाओ निकास;
+	if (AR_SREV_9485(ah))
+		goto exit;
 
-	अगर (paprd_करोne == 0x1) अणु
+	if (paprd_done == 0x1) {
 		agc2_pwr = REG_READ_FIELD(ah, AR_PHY_PAPRD_TRAINER_STAT1,
 				AR_PHY_PAPRD_TRAINER_STAT1_PAPRD_AGC2_PWR);
 
 		ath_dbg(ath9k_hw_common(ah), CALIBRATE,
 			"AGC2_PWR = 0x%x training done = 0x%x\n",
-			agc2_pwr, paprd_करोne);
+			agc2_pwr, paprd_done);
 	/*
 	 * agc2_pwr range should not be less than 'IDEAL_AGC2_PWR_CHANGE'
-	 * when the training is completely करोne, otherwise retraining is
-	 * करोne to make sure the value is in ideal range
+	 * when the training is completely done, otherwise retraining is
+	 * done to make sure the value is in ideal range
 	 */
-		अगर (agc2_pwr <= PAPRD_IDEAL_AGC2_PWR_RANGE)
-			paprd_करोne = 0;
-	पूर्ण
-निकास:
-	वापस !!paprd_करोne;
-पूर्ण
-EXPORT_SYMBOL(ar9003_paprd_is_करोne);
+		if (agc2_pwr <= PAPRD_IDEAL_AGC2_PWR_RANGE)
+			paprd_done = 0;
+	}
+exit:
+	return !!paprd_done;
+}
+EXPORT_SYMBOL(ar9003_paprd_is_done);
 
-bool ar9003_is_paprd_enabled(काष्ठा ath_hw *ah)
-अणु
-	अगर ((ah->caps.hw_caps & ATH9K_HW_CAP_PAPRD) && ah->config.enable_paprd)
-		वापस true;
+bool ar9003_is_paprd_enabled(struct ath_hw *ah)
+{
+	if ((ah->caps.hw_caps & ATH9K_HW_CAP_PAPRD) && ah->config.enable_paprd)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 EXPORT_SYMBOL(ar9003_is_paprd_enabled);

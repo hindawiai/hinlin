@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Data verअगरication functions, i.e. hooks क्रम ->पढ़ोpages()
+ * Data verification functions, i.e. hooks for ->readpages()
  *
  * Copyright 2019 Google LLC
  */
 
-#समावेश "fsverity_private.h"
+#include "fsverity_private.h"
 
-#समावेश <crypto/hash.h>
-#समावेश <linux/bपन.स>
-#समावेश <linux/ratelimit.h>
+#include <crypto/hash.h>
+#include <linux/bio.h>
+#include <linux/ratelimit.h>
 
-अटल काष्ठा workqueue_काष्ठा *fsverity_पढ़ो_workqueue;
+static struct workqueue_struct *fsverity_read_workqueue;
 
 /**
  * hash_at_level() - compute the location of the block's hash at the given level
  *
  * @params:	(in) the Merkle tree parameters
- * @dindex:	(in) the index of the data block being verअगरied
+ * @dindex:	(in) the index of the data block being verified
  * @level:	(in) the level of hash we want (0 is leaf level)
  * @hindex:	(out) the index of the hash block containing the wanted hash
  * @hoffset:	(out) the byte offset to the wanted hash within the hash block
  */
-अटल व्योम hash_at_level(स्थिर काष्ठा merkle_tree_params *params,
-			  pgoff_t dindex, अचिन्हित पूर्णांक level, pgoff_t *hindex,
-			  अचिन्हित पूर्णांक *hoffset)
-अणु
+static void hash_at_level(const struct merkle_tree_params *params,
+			  pgoff_t dindex, unsigned int level, pgoff_t *hindex,
+			  unsigned int *hoffset)
+{
 	pgoff_t position;
 
 	/* Offset of the hash within the level's region, in hashes */
@@ -38,265 +37,265 @@
 	/* Offset of the wanted hash (in bytes) within the hash block */
 	*hoffset = (position & ((1 << params->log_arity) - 1)) <<
 		   (params->log_blocksize - params->log_arity);
-पूर्ण
+}
 
 /* Extract a hash from a hash page */
-अटल व्योम extract_hash(काष्ठा page *hpage, अचिन्हित पूर्णांक hoffset,
-			 अचिन्हित पूर्णांक hsize, u8 *out)
-अणु
-	व्योम *virt = kmap_atomic(hpage);
+static void extract_hash(struct page *hpage, unsigned int hoffset,
+			 unsigned int hsize, u8 *out)
+{
+	void *virt = kmap_atomic(hpage);
 
-	स_नकल(out, virt + hoffset, hsize);
+	memcpy(out, virt + hoffset, hsize);
 	kunmap_atomic(virt);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक cmp_hashes(स्थिर काष्ठा fsverity_info *vi,
-			     स्थिर u8 *want_hash, स्थिर u8 *real_hash,
-			     pgoff_t index, पूर्णांक level)
-अणु
-	स्थिर अचिन्हित पूर्णांक hsize = vi->tree_params.digest_size;
+static inline int cmp_hashes(const struct fsverity_info *vi,
+			     const u8 *want_hash, const u8 *real_hash,
+			     pgoff_t index, int level)
+{
+	const unsigned int hsize = vi->tree_params.digest_size;
 
-	अगर (स_भेद(want_hash, real_hash, hsize) == 0)
-		वापस 0;
+	if (memcmp(want_hash, real_hash, hsize) == 0)
+		return 0;
 
 	fsverity_err(vi->inode,
 		     "FILE CORRUPTED! index=%lu, level=%d, want_hash=%s:%*phN, real_hash=%s:%*phN",
 		     index, level,
 		     vi->tree_params.hash_alg->name, hsize, want_hash,
 		     vi->tree_params.hash_alg->name, hsize, real_hash);
-	वापस -EBADMSG;
-पूर्ण
+	return -EBADMSG;
+}
 
 /*
- * Verअगरy a single data page against the file's Merkle tree.
+ * Verify a single data page against the file's Merkle tree.
  *
- * In principle, we need to verअगरy the entire path to the root node.  However,
- * क्रम efficiency the fileप्रणाली may cache the hash pages.  Thereक्रमe we need
- * only ascend the tree until an alपढ़ोy-verअगरied page is seen, as indicated by
- * the PageChecked bit being set; then verअगरy the path to that page.
+ * In principle, we need to verify the entire path to the root node.  However,
+ * for efficiency the filesystem may cache the hash pages.  Therefore we need
+ * only ascend the tree until an already-verified page is seen, as indicated by
+ * the PageChecked bit being set; then verify the path to that page.
  *
- * This code currently only supports the हाल where the verity block size is
+ * This code currently only supports the case where the verity block size is
  * equal to PAGE_SIZE.  Doing otherwise would be possible but tricky, since we
  * wouldn't be able to use the PageChecked bit.
  *
- * Note that multiple processes may race to verअगरy a hash page and mark it
- * Checked, but it करोesn't matter; the result will be the same either way.
+ * Note that multiple processes may race to verify a hash page and mark it
+ * Checked, but it doesn't matter; the result will be the same either way.
  *
- * Return: true अगर the page is valid, अन्यथा false.
+ * Return: true if the page is valid, else false.
  */
-अटल bool verअगरy_page(काष्ठा inode *inode, स्थिर काष्ठा fsverity_info *vi,
-			काष्ठा ahash_request *req, काष्ठा page *data_page,
-			अचिन्हित दीर्घ level0_ra_pages)
-अणु
-	स्थिर काष्ठा merkle_tree_params *params = &vi->tree_params;
-	स्थिर अचिन्हित पूर्णांक hsize = params->digest_size;
-	स्थिर pgoff_t index = data_page->index;
-	पूर्णांक level;
+static bool verify_page(struct inode *inode, const struct fsverity_info *vi,
+			struct ahash_request *req, struct page *data_page,
+			unsigned long level0_ra_pages)
+{
+	const struct merkle_tree_params *params = &vi->tree_params;
+	const unsigned int hsize = params->digest_size;
+	const pgoff_t index = data_page->index;
+	int level;
 	u8 _want_hash[FS_VERITY_MAX_DIGEST_SIZE];
-	स्थिर u8 *want_hash;
+	const u8 *want_hash;
 	u8 real_hash[FS_VERITY_MAX_DIGEST_SIZE];
-	काष्ठा page *hpages[FS_VERITY_MAX_LEVELS];
-	अचिन्हित पूर्णांक hoffsets[FS_VERITY_MAX_LEVELS];
-	पूर्णांक err;
+	struct page *hpages[FS_VERITY_MAX_LEVELS];
+	unsigned int hoffsets[FS_VERITY_MAX_LEVELS];
+	int err;
 
-	अगर (WARN_ON_ONCE(!PageLocked(data_page) || PageUptodate(data_page)))
-		वापस false;
+	if (WARN_ON_ONCE(!PageLocked(data_page) || PageUptodate(data_page)))
+		return false;
 
 	pr_debug_ratelimited("Verifying data page %lu...\n", index);
 
 	/*
-	 * Starting at the leaf level, ascend the tree saving hash pages aदीर्घ
-	 * the way until we find a verअगरied hash page, indicated by PageChecked;
+	 * Starting at the leaf level, ascend the tree saving hash pages along
+	 * the way until we find a verified hash page, indicated by PageChecked;
 	 * or until we reach the root.
 	 */
-	क्रम (level = 0; level < params->num_levels; level++) अणु
+	for (level = 0; level < params->num_levels; level++) {
 		pgoff_t hindex;
-		अचिन्हित पूर्णांक hoffset;
-		काष्ठा page *hpage;
+		unsigned int hoffset;
+		struct page *hpage;
 
 		hash_at_level(params, index, level, &hindex, &hoffset);
 
 		pr_debug_ratelimited("Level %d: hindex=%lu, hoffset=%u\n",
 				     level, hindex, hoffset);
 
-		hpage = inode->i_sb->s_vop->पढ़ो_merkle_tree_page(inode, hindex,
+		hpage = inode->i_sb->s_vop->read_merkle_tree_page(inode, hindex,
 				level == 0 ? level0_ra_pages : 0);
-		अगर (IS_ERR(hpage)) अणु
+		if (IS_ERR(hpage)) {
 			err = PTR_ERR(hpage);
 			fsverity_err(inode,
 				     "Error %d reading Merkle tree page %lu",
 				     err, hindex);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (PageChecked(hpage)) अणु
+		if (PageChecked(hpage)) {
 			extract_hash(hpage, hoffset, hsize, _want_hash);
 			want_hash = _want_hash;
 			put_page(hpage);
 			pr_debug_ratelimited("Hash page already checked, want %s:%*phN\n",
 					     params->hash_alg->name,
 					     hsize, want_hash);
-			जाओ descend;
-		पूर्ण
+			goto descend;
+		}
 		pr_debug_ratelimited("Hash page not yet checked\n");
 		hpages[level] = hpage;
 		hoffsets[level] = hoffset;
-	पूर्ण
+	}
 
 	want_hash = vi->root_hash;
 	pr_debug("Want root hash: %s:%*phN\n",
 		 params->hash_alg->name, hsize, want_hash);
 descend:
-	/* Descend the tree verअगरying hash pages */
-	क्रम (; level > 0; level--) अणु
-		काष्ठा page *hpage = hpages[level - 1];
-		अचिन्हित पूर्णांक hoffset = hoffsets[level - 1];
+	/* Descend the tree verifying hash pages */
+	for (; level > 0; level--) {
+		struct page *hpage = hpages[level - 1];
+		unsigned int hoffset = hoffsets[level - 1];
 
 		err = fsverity_hash_page(params, inode, req, hpage, real_hash);
-		अगर (err)
-			जाओ out;
+		if (err)
+			goto out;
 		err = cmp_hashes(vi, want_hash, real_hash, index, level - 1);
-		अगर (err)
-			जाओ out;
+		if (err)
+			goto out;
 		SetPageChecked(hpage);
 		extract_hash(hpage, hoffset, hsize, _want_hash);
 		want_hash = _want_hash;
 		put_page(hpage);
 		pr_debug("Verified hash page at level %d, now want %s:%*phN\n",
 			 level - 1, params->hash_alg->name, hsize, want_hash);
-	पूर्ण
+	}
 
-	/* Finally, verअगरy the data page */
+	/* Finally, verify the data page */
 	err = fsverity_hash_page(params, inode, req, data_page, real_hash);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 	err = cmp_hashes(vi, want_hash, real_hash, index, -1);
 out:
-	क्रम (; level > 0; level--)
+	for (; level > 0; level--)
 		put_page(hpages[level - 1]);
 
-	वापस err == 0;
-पूर्ण
+	return err == 0;
+}
 
 /**
- * fsverity_verअगरy_page() - verअगरy a data page
+ * fsverity_verify_page() - verify a data page
  * @page: the page to verity
  *
- * Verअगरy a page that has just been पढ़ो from a verity file.  The page must be a
+ * Verify a page that has just been read from a verity file.  The page must be a
  * pagecache page that is still locked and not yet uptodate.
  *
- * Return: true अगर the page is valid, अन्यथा false.
+ * Return: true if the page is valid, else false.
  */
-bool fsverity_verअगरy_page(काष्ठा page *page)
-अणु
-	काष्ठा inode *inode = page->mapping->host;
-	स्थिर काष्ठा fsverity_info *vi = inode->i_verity_info;
-	काष्ठा ahash_request *req;
+bool fsverity_verify_page(struct page *page)
+{
+	struct inode *inode = page->mapping->host;
+	const struct fsverity_info *vi = inode->i_verity_info;
+	struct ahash_request *req;
 	bool valid;
 
 	/* This allocation never fails, since it's mempool-backed. */
 	req = fsverity_alloc_hash_request(vi->tree_params.hash_alg, GFP_NOFS);
 
-	valid = verअगरy_page(inode, vi, req, page, 0);
+	valid = verify_page(inode, vi, req, page, 0);
 
-	fsverity_मुक्त_hash_request(vi->tree_params.hash_alg, req);
+	fsverity_free_hash_request(vi->tree_params.hash_alg, req);
 
-	वापस valid;
-पूर्ण
-EXPORT_SYMBOL_GPL(fsverity_verअगरy_page);
+	return valid;
+}
+EXPORT_SYMBOL_GPL(fsverity_verify_page);
 
-#अगर_घोषित CONFIG_BLOCK
+#ifdef CONFIG_BLOCK
 /**
- * fsverity_verअगरy_bio() - verअगरy a 'read' bio that has just completed
- * @bio: the bio to verअगरy
+ * fsverity_verify_bio() - verify a 'read' bio that has just completed
+ * @bio: the bio to verify
  *
- * Verअगरy a set of pages that have just been पढ़ो from a verity file.  The pages
+ * Verify a set of pages that have just been read from a verity file.  The pages
  * must be pagecache pages that are still locked and not yet uptodate.  Pages
- * that fail verअगरication are set to the Error state.  Verअगरication is skipped
- * क्रम pages alपढ़ोy in the Error state, e.g. due to fscrypt decryption failure.
+ * that fail verification are set to the Error state.  Verification is skipped
+ * for pages already in the Error state, e.g. due to fscrypt decryption failure.
  *
- * This is a helper function क्रम use by the ->पढ़ोpages() method of fileप्रणालीs
- * that issue bios to पढ़ो data directly पूर्णांकo the page cache.  Fileप्रणालीs that
+ * This is a helper function for use by the ->readpages() method of filesystems
+ * that issue bios to read data directly into the page cache.  Filesystems that
  * populate the page cache without issuing bios (e.g. non block-based
- * fileप्रणालीs) must instead call fsverity_verअगरy_page() directly on each page.
- * All fileप्रणालीs must also call fsverity_verअगरy_page() on holes.
+ * filesystems) must instead call fsverity_verify_page() directly on each page.
+ * All filesystems must also call fsverity_verify_page() on holes.
  */
-व्योम fsverity_verअगरy_bio(काष्ठा bio *bio)
-अणु
-	काष्ठा inode *inode = bio_first_page_all(bio)->mapping->host;
-	स्थिर काष्ठा fsverity_info *vi = inode->i_verity_info;
-	स्थिर काष्ठा merkle_tree_params *params = &vi->tree_params;
-	काष्ठा ahash_request *req;
-	काष्ठा bio_vec *bv;
-	काष्ठा bvec_iter_all iter_all;
-	अचिन्हित दीर्घ max_ra_pages = 0;
+void fsverity_verify_bio(struct bio *bio)
+{
+	struct inode *inode = bio_first_page_all(bio)->mapping->host;
+	const struct fsverity_info *vi = inode->i_verity_info;
+	const struct merkle_tree_params *params = &vi->tree_params;
+	struct ahash_request *req;
+	struct bio_vec *bv;
+	struct bvec_iter_all iter_all;
+	unsigned long max_ra_pages = 0;
 
 	/* This allocation never fails, since it's mempool-backed. */
 	req = fsverity_alloc_hash_request(params->hash_alg, GFP_NOFS);
 
-	अगर (bio->bi_opf & REQ_RAHEAD) अणु
+	if (bio->bi_opf & REQ_RAHEAD) {
 		/*
-		 * If this bio is क्रम data पढ़ोahead, then we also करो पढ़ोahead
+		 * If this bio is for data readahead, then we also do readahead
 		 * of the first (largest) level of the Merkle tree.  Namely,
-		 * when a Merkle tree page is पढ़ो, we also try to piggy-back on
+		 * when a Merkle tree page is read, we also try to piggy-back on
 		 * some additional pages -- up to 1/4 the number of data pages.
 		 *
-		 * This improves sequential पढ़ो perक्रमmance, as it greatly
+		 * This improves sequential read performance, as it greatly
 		 * reduces the number of I/O requests made to the Merkle tree.
 		 */
-		bio_क्रम_each_segment_all(bv, bio, iter_all)
+		bio_for_each_segment_all(bv, bio, iter_all)
 			max_ra_pages++;
 		max_ra_pages /= 4;
-	पूर्ण
+	}
 
-	bio_क्रम_each_segment_all(bv, bio, iter_all) अणु
-		काष्ठा page *page = bv->bv_page;
-		अचिन्हित दीर्घ level0_index = page->index >> params->log_arity;
-		अचिन्हित दीर्घ level0_ra_pages =
+	bio_for_each_segment_all(bv, bio, iter_all) {
+		struct page *page = bv->bv_page;
+		unsigned long level0_index = page->index >> params->log_arity;
+		unsigned long level0_ra_pages =
 			min(max_ra_pages, params->level0_blocks - level0_index);
 
-		अगर (!PageError(page) &&
-		    !verअगरy_page(inode, vi, req, page, level0_ra_pages))
+		if (!PageError(page) &&
+		    !verify_page(inode, vi, req, page, level0_ra_pages))
 			SetPageError(page);
-	पूर्ण
+	}
 
-	fsverity_मुक्त_hash_request(params->hash_alg, req);
-पूर्ण
-EXPORT_SYMBOL_GPL(fsverity_verअगरy_bio);
-#पूर्ण_अगर /* CONFIG_BLOCK */
+	fsverity_free_hash_request(params->hash_alg, req);
+}
+EXPORT_SYMBOL_GPL(fsverity_verify_bio);
+#endif /* CONFIG_BLOCK */
 
 /**
- * fsverity_enqueue_verअगरy_work() - enqueue work on the fs-verity workqueue
+ * fsverity_enqueue_verify_work() - enqueue work on the fs-verity workqueue
  * @work: the work to enqueue
  *
- * Enqueue verअगरication work क्रम asynchronous processing.
+ * Enqueue verification work for asynchronous processing.
  */
-व्योम fsverity_enqueue_verअगरy_work(काष्ठा work_काष्ठा *work)
-अणु
-	queue_work(fsverity_पढ़ो_workqueue, work);
-पूर्ण
-EXPORT_SYMBOL_GPL(fsverity_enqueue_verअगरy_work);
+void fsverity_enqueue_verify_work(struct work_struct *work)
+{
+	queue_work(fsverity_read_workqueue, work);
+}
+EXPORT_SYMBOL_GPL(fsverity_enqueue_verify_work);
 
-पूर्णांक __init fsverity_init_workqueue(व्योम)
-अणु
+int __init fsverity_init_workqueue(void)
+{
 	/*
-	 * Use an unbound workqueue to allow bios to be verअगरied in parallel
-	 * even when they happen to complete on the same CPU.  This sacrअगरices
-	 * locality, but it's worthजबतक since hashing is CPU-पूर्णांकensive.
+	 * Use an unbound workqueue to allow bios to be verified in parallel
+	 * even when they happen to complete on the same CPU.  This sacrifices
+	 * locality, but it's worthwhile since hashing is CPU-intensive.
 	 *
-	 * Also use a high-priority workqueue to prioritize verअगरication work,
-	 * which blocks पढ़ोs from completing, over regular application tasks.
+	 * Also use a high-priority workqueue to prioritize verification work,
+	 * which blocks reads from completing, over regular application tasks.
 	 */
-	fsverity_पढ़ो_workqueue = alloc_workqueue("fsverity_read_queue",
+	fsverity_read_workqueue = alloc_workqueue("fsverity_read_queue",
 						  WQ_UNBOUND | WQ_HIGHPRI,
 						  num_online_cpus());
-	अगर (!fsverity_पढ़ो_workqueue)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+	if (!fsverity_read_workqueue)
+		return -ENOMEM;
+	return 0;
+}
 
-व्योम __init fsverity_निकास_workqueue(व्योम)
-अणु
-	destroy_workqueue(fsverity_पढ़ो_workqueue);
-	fsverity_पढ़ो_workqueue = शून्य;
-पूर्ण
+void __init fsverity_exit_workqueue(void)
+{
+	destroy_workqueue(fsverity_read_workqueue);
+	fsverity_read_workqueue = NULL;
+}

@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Unusual Devices File क्रम the Rio Karma
+ * Unusual Devices File for the Rio Karma
  */
 
-#अगर defined(CONFIG_USB_STORAGE_KARMA) || \
+#if defined(CONFIG_USB_STORAGE_KARMA) || \
 		defined(CONFIG_USB_STORAGE_KARMA_MODULE)
 
 UNUSUAL_DEV(  0x045a, 0x5210, 0x0101, 0x0101,
@@ -12,4 +11,4 @@ UNUSUAL_DEV(  0x045a, 0x5210, 0x0101, 0x0101,
 		"Rio Karma",
 		USB_SC_SCSI, USB_PR_KARMA, rio_karma_init, 0),
 
-#पूर्ण_अगर /* defined(CONFIG_USB_STORAGE_KARMA) || ... */
+#endif /* defined(CONFIG_USB_STORAGE_KARMA) || ... */

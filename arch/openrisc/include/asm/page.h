@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * OpenRISC Linux
  *
@@ -13,81 +12,81 @@
  * et al.
  */
 
-#अगर_अघोषित __ASM_OPENRISC_PAGE_H
-#घोषणा __ASM_OPENRISC_PAGE_H
+#ifndef __ASM_OPENRISC_PAGE_H
+#define __ASM_OPENRISC_PAGE_H
 
 
 /* PAGE_SHIFT determines the page size */
 
-#घोषणा PAGE_SHIFT      13
-#अगर_घोषित __ASSEMBLY__
-#घोषणा PAGE_SIZE       (1 << PAGE_SHIFT)
-#अन्यथा
-#घोषणा PAGE_SIZE       (1UL << PAGE_SHIFT)
-#पूर्ण_अगर
-#घोषणा PAGE_MASK       (~(PAGE_SIZE-1))
+#define PAGE_SHIFT      13
+#ifdef __ASSEMBLY__
+#define PAGE_SIZE       (1 << PAGE_SHIFT)
+#else
+#define PAGE_SIZE       (1UL << PAGE_SHIFT)
+#endif
+#define PAGE_MASK       (~(PAGE_SIZE-1))
 
-#घोषणा PAGE_OFFSET	0xc0000000
-#घोषणा KERNELBASE	PAGE_OFFSET
+#define PAGE_OFFSET	0xc0000000
+#define KERNELBASE	PAGE_OFFSET
 
-/* This is not necessarily the right place क्रम this, but it's needed by
+/* This is not necessarily the right place for this, but it's needed by
  * drivers/of/fdt.c
  */
-#समावेश <यंत्र/setup.h>
+#include <asm/setup.h>
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#घोषणा clear_page(page)	स_रखो((page), 0, PAGE_SIZE)
-#घोषणा copy_page(to, from)	स_नकल((to), (from), PAGE_SIZE)
+#define clear_page(page)	memset((page), 0, PAGE_SIZE)
+#define copy_page(to, from)	memcpy((to), (from), PAGE_SIZE)
 
-#घोषणा clear_user_page(page, vaddr, pg)        clear_page(page)
-#घोषणा copy_user_page(to, from, vaddr, pg)     copy_page(to, from)
+#define clear_user_page(page, vaddr, pg)        clear_page(page)
+#define copy_user_page(to, from, vaddr, pg)     copy_page(to, from)
 
 /*
  * These are used to make use of C type-checking..
  */
-प्रकार काष्ठा अणु
-	अचिन्हित दीर्घ pte;
-पूर्ण pte_t;
-प्रकार काष्ठा अणु
-	अचिन्हित दीर्घ pgd;
-पूर्ण pgd_t;
-प्रकार काष्ठा अणु
-	अचिन्हित दीर्घ pgprot;
-पूर्ण pgprot_t;
-प्रकार काष्ठा page *pgtable_t;
+typedef struct {
+	unsigned long pte;
+} pte_t;
+typedef struct {
+	unsigned long pgd;
+} pgd_t;
+typedef struct {
+	unsigned long pgprot;
+} pgprot_t;
+typedef struct page *pgtable_t;
 
-#घोषणा pte_val(x)	((x).pte)
-#घोषणा pgd_val(x)	((x).pgd)
-#घोषणा pgprot_val(x)	((x).pgprot)
+#define pte_val(x)	((x).pte)
+#define pgd_val(x)	((x).pgd)
+#define pgprot_val(x)	((x).pgprot)
 
-#घोषणा __pte(x)	((pte_t) अणु (x) पूर्ण)
-#घोषणा __pgd(x)	((pgd_t) अणु (x) पूर्ण)
-#घोषणा __pgprot(x)	((pgprot_t) अणु (x) पूर्ण)
+#define __pte(x)	((pte_t) { (x) })
+#define __pgd(x)	((pgd_t) { (x) })
+#define __pgprot(x)	((pgprot_t) { (x) })
 
-#पूर्ण_अगर /* !__ASSEMBLY__ */
+#endif /* !__ASSEMBLY__ */
 
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#घोषणा __va(x) ((व्योम *)((अचिन्हित दीर्घ)(x) + PAGE_OFFSET))
-#घोषणा __pa(x) ((अचिन्हित दीर्घ) (x) - PAGE_OFFSET)
+#define __va(x) ((void *)((unsigned long)(x) + PAGE_OFFSET))
+#define __pa(x) ((unsigned long) (x) - PAGE_OFFSET)
 
-#घोषणा virt_to_pfn(kaddr)      (__pa(kaddr) >> PAGE_SHIFT)
-#घोषणा pfn_to_virt(pfn)        __va((pfn) << PAGE_SHIFT)
+#define virt_to_pfn(kaddr)      (__pa(kaddr) >> PAGE_SHIFT)
+#define pfn_to_virt(pfn)        __va((pfn) << PAGE_SHIFT)
 
-#घोषणा virt_to_page(addr) \
-	(mem_map + (((अचिन्हित दीर्घ)(addr)-PAGE_OFFSET) >> PAGE_SHIFT))
+#define virt_to_page(addr) \
+	(mem_map + (((unsigned long)(addr)-PAGE_OFFSET) >> PAGE_SHIFT))
 
-#घोषणा page_to_phys(page)      ((dma_addr_t)page_to_pfn(page) << PAGE_SHIFT)
+#define page_to_phys(page)      ((dma_addr_t)page_to_pfn(page) << PAGE_SHIFT)
 
-#घोषणा pfn_valid(pfn)          ((pfn) < max_mapnr)
+#define pfn_valid(pfn)          ((pfn) < max_mapnr)
 
-#घोषणा virt_addr_valid(kaddr)	(pfn_valid(virt_to_pfn(kaddr)))
+#define virt_addr_valid(kaddr)	(pfn_valid(virt_to_pfn(kaddr)))
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
+#endif /* __ASSEMBLY__ */
 
-#समावेश <यंत्र-generic/memory_model.h>
-#समावेश <यंत्र-generic/getorder.h>
+#include <asm-generic/memory_model.h>
+#include <asm-generic/getorder.h>
 
-#पूर्ण_अगर /* __ASM_OPENRISC_PAGE_H */
+#endif /* __ASM_OPENRISC_PAGE_H */

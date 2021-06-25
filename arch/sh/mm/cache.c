@@ -1,301 +1,300 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * arch/sh/mm/cache.c
  *
  * Copyright (C) 1999, 2000, 2002  Niibe Yutaka
  * Copyright (C) 2002 - 2010  Paul Mundt
  */
-#समावेश <linux/mm.h>
-#समावेश <linux/init.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/module.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/cacheflush.h>
+#include <linux/mm.h>
+#include <linux/init.h>
+#include <linux/mutex.h>
+#include <linux/fs.h>
+#include <linux/smp.h>
+#include <linux/highmem.h>
+#include <linux/module.h>
+#include <asm/mmu_context.h>
+#include <asm/cacheflush.h>
 
-व्योम (*local_flush_cache_all)(व्योम *args) = cache_noop;
-व्योम (*local_flush_cache_mm)(व्योम *args) = cache_noop;
-व्योम (*local_flush_cache_dup_mm)(व्योम *args) = cache_noop;
-व्योम (*local_flush_cache_page)(व्योम *args) = cache_noop;
-व्योम (*local_flush_cache_range)(व्योम *args) = cache_noop;
-व्योम (*local_flush_dcache_page)(व्योम *args) = cache_noop;
-व्योम (*local_flush_icache_range)(व्योम *args) = cache_noop;
-व्योम (*local_flush_icache_page)(व्योम *args) = cache_noop;
-व्योम (*local_flush_cache_sigtramp)(व्योम *args) = cache_noop;
+void (*local_flush_cache_all)(void *args) = cache_noop;
+void (*local_flush_cache_mm)(void *args) = cache_noop;
+void (*local_flush_cache_dup_mm)(void *args) = cache_noop;
+void (*local_flush_cache_page)(void *args) = cache_noop;
+void (*local_flush_cache_range)(void *args) = cache_noop;
+void (*local_flush_dcache_page)(void *args) = cache_noop;
+void (*local_flush_icache_range)(void *args) = cache_noop;
+void (*local_flush_icache_page)(void *args) = cache_noop;
+void (*local_flush_cache_sigtramp)(void *args) = cache_noop;
 
-व्योम (*__flush_wback_region)(व्योम *start, पूर्णांक size);
+void (*__flush_wback_region)(void *start, int size);
 EXPORT_SYMBOL(__flush_wback_region);
-व्योम (*__flush_purge_region)(व्योम *start, पूर्णांक size);
+void (*__flush_purge_region)(void *start, int size);
 EXPORT_SYMBOL(__flush_purge_region);
-व्योम (*__flush_invalidate_region)(व्योम *start, पूर्णांक size);
+void (*__flush_invalidate_region)(void *start, int size);
 EXPORT_SYMBOL(__flush_invalidate_region);
 
-अटल अंतरभूत व्योम noop__flush_region(व्योम *start, पूर्णांक size)
-अणु
-पूर्ण
+static inline void noop__flush_region(void *start, int size)
+{
+}
 
-अटल अंतरभूत व्योम cacheop_on_each_cpu(व्योम (*func) (व्योम *info), व्योम *info,
-                                   पूर्णांक रुको)
-अणु
+static inline void cacheop_on_each_cpu(void (*func) (void *info), void *info,
+                                   int wait)
+{
 	preempt_disable();
 
-	/* Needing IPI क्रम cross-core flush is SHX3-specअगरic. */
-#अगर_घोषित CONFIG_CPU_SHX3
+	/* Needing IPI for cross-core flush is SHX3-specific. */
+#ifdef CONFIG_CPU_SHX3
 	/*
-	 * It's possible that this माला_लो called early on when IRQs are
-	 * still disabled due to ioremapping by the boot CPU, so करोn't
+	 * It's possible that this gets called early on when IRQs are
+	 * still disabled due to ioremapping by the boot CPU, so don't
 	 * even attempt IPIs unless there are other CPUs online.
 	 */
-	अगर (num_online_cpus() > 1)
-		smp_call_function(func, info, रुको);
-#पूर्ण_अगर
+	if (num_online_cpus() > 1)
+		smp_call_function(func, info, wait);
+#endif
 
 	func(info);
 
 	preempt_enable();
-पूर्ण
+}
 
-व्योम copy_to_user_page(काष्ठा vm_area_काष्ठा *vma, काष्ठा page *page,
-		       अचिन्हित दीर्घ vaddr, व्योम *dst, स्थिर व्योम *src,
-		       अचिन्हित दीर्घ len)
-अणु
-	अगर (boot_cpu_data.dcache.n_aliases && page_mapcount(page) &&
-	    test_bit(PG_dcache_clean, &page->flags)) अणु
-		व्योम *vto = kmap_coherent(page, vaddr) + (vaddr & ~PAGE_MASK);
-		स_नकल(vto, src, len);
+void copy_to_user_page(struct vm_area_struct *vma, struct page *page,
+		       unsigned long vaddr, void *dst, const void *src,
+		       unsigned long len)
+{
+	if (boot_cpu_data.dcache.n_aliases && page_mapcount(page) &&
+	    test_bit(PG_dcache_clean, &page->flags)) {
+		void *vto = kmap_coherent(page, vaddr) + (vaddr & ~PAGE_MASK);
+		memcpy(vto, src, len);
 		kunmap_coherent(vto);
-	पूर्ण अन्यथा अणु
-		स_नकल(dst, src, len);
-		अगर (boot_cpu_data.dcache.n_aliases)
+	} else {
+		memcpy(dst, src, len);
+		if (boot_cpu_data.dcache.n_aliases)
 			clear_bit(PG_dcache_clean, &page->flags);
-	पूर्ण
+	}
 
-	अगर (vma->vm_flags & VM_EXEC)
+	if (vma->vm_flags & VM_EXEC)
 		flush_cache_page(vma, vaddr, page_to_pfn(page));
-पूर्ण
+}
 
-व्योम copy_from_user_page(काष्ठा vm_area_काष्ठा *vma, काष्ठा page *page,
-			 अचिन्हित दीर्घ vaddr, व्योम *dst, स्थिर व्योम *src,
-			 अचिन्हित दीर्घ len)
-अणु
-	अगर (boot_cpu_data.dcache.n_aliases && page_mapcount(page) &&
-	    test_bit(PG_dcache_clean, &page->flags)) अणु
-		व्योम *vfrom = kmap_coherent(page, vaddr) + (vaddr & ~PAGE_MASK);
-		स_नकल(dst, vfrom, len);
+void copy_from_user_page(struct vm_area_struct *vma, struct page *page,
+			 unsigned long vaddr, void *dst, const void *src,
+			 unsigned long len)
+{
+	if (boot_cpu_data.dcache.n_aliases && page_mapcount(page) &&
+	    test_bit(PG_dcache_clean, &page->flags)) {
+		void *vfrom = kmap_coherent(page, vaddr) + (vaddr & ~PAGE_MASK);
+		memcpy(dst, vfrom, len);
 		kunmap_coherent(vfrom);
-	पूर्ण अन्यथा अणु
-		स_नकल(dst, src, len);
-		अगर (boot_cpu_data.dcache.n_aliases)
+	} else {
+		memcpy(dst, src, len);
+		if (boot_cpu_data.dcache.n_aliases)
 			clear_bit(PG_dcache_clean, &page->flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम copy_user_highpage(काष्ठा page *to, काष्ठा page *from,
-			अचिन्हित दीर्घ vaddr, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	व्योम *vfrom, *vto;
+void copy_user_highpage(struct page *to, struct page *from,
+			unsigned long vaddr, struct vm_area_struct *vma)
+{
+	void *vfrom, *vto;
 
 	vto = kmap_atomic(to);
 
-	अगर (boot_cpu_data.dcache.n_aliases && page_mapcount(from) &&
-	    test_bit(PG_dcache_clean, &from->flags)) अणु
+	if (boot_cpu_data.dcache.n_aliases && page_mapcount(from) &&
+	    test_bit(PG_dcache_clean, &from->flags)) {
 		vfrom = kmap_coherent(from, vaddr);
 		copy_page(vto, vfrom);
 		kunmap_coherent(vfrom);
-	पूर्ण अन्यथा अणु
+	} else {
 		vfrom = kmap_atomic(from);
 		copy_page(vto, vfrom);
 		kunmap_atomic(vfrom);
-	पूर्ण
+	}
 
-	अगर (pages_करो_alias((अचिन्हित दीर्घ)vto, vaddr & PAGE_MASK) ||
+	if (pages_do_alias((unsigned long)vto, vaddr & PAGE_MASK) ||
 	    (vma->vm_flags & VM_EXEC))
 		__flush_purge_region(vto, PAGE_SIZE);
 
 	kunmap_atomic(vto);
-	/* Make sure this page is cleared on other CPU's too beक्रमe using it */
+	/* Make sure this page is cleared on other CPU's too before using it */
 	smp_wmb();
-पूर्ण
+}
 EXPORT_SYMBOL(copy_user_highpage);
 
-व्योम clear_user_highpage(काष्ठा page *page, अचिन्हित दीर्घ vaddr)
-अणु
-	व्योम *kaddr = kmap_atomic(page);
+void clear_user_highpage(struct page *page, unsigned long vaddr)
+{
+	void *kaddr = kmap_atomic(page);
 
 	clear_page(kaddr);
 
-	अगर (pages_करो_alias((अचिन्हित दीर्घ)kaddr, vaddr & PAGE_MASK))
+	if (pages_do_alias((unsigned long)kaddr, vaddr & PAGE_MASK))
 		__flush_purge_region(kaddr, PAGE_SIZE);
 
 	kunmap_atomic(kaddr);
-पूर्ण
+}
 EXPORT_SYMBOL(clear_user_highpage);
 
-व्योम __update_cache(काष्ठा vm_area_काष्ठा *vma,
-		    अचिन्हित दीर्घ address, pte_t pte)
-अणु
-	काष्ठा page *page;
-	अचिन्हित दीर्घ pfn = pte_pfn(pte);
+void __update_cache(struct vm_area_struct *vma,
+		    unsigned long address, pte_t pte)
+{
+	struct page *page;
+	unsigned long pfn = pte_pfn(pte);
 
-	अगर (!boot_cpu_data.dcache.n_aliases)
-		वापस;
+	if (!boot_cpu_data.dcache.n_aliases)
+		return;
 
 	page = pfn_to_page(pfn);
-	अगर (pfn_valid(pfn)) अणु
-		पूर्णांक dirty = !test_and_set_bit(PG_dcache_clean, &page->flags);
-		अगर (dirty)
+	if (pfn_valid(pfn)) {
+		int dirty = !test_and_set_bit(PG_dcache_clean, &page->flags);
+		if (dirty)
 			__flush_purge_region(page_address(page), PAGE_SIZE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम __flush_anon_page(काष्ठा page *page, अचिन्हित दीर्घ vmaddr)
-अणु
-	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ) page_address(page);
+void __flush_anon_page(struct page *page, unsigned long vmaddr)
+{
+	unsigned long addr = (unsigned long) page_address(page);
 
-	अगर (pages_करो_alias(addr, vmaddr)) अणु
-		अगर (boot_cpu_data.dcache.n_aliases && page_mapcount(page) &&
-		    test_bit(PG_dcache_clean, &page->flags)) अणु
-			व्योम *kaddr;
+	if (pages_do_alias(addr, vmaddr)) {
+		if (boot_cpu_data.dcache.n_aliases && page_mapcount(page) &&
+		    test_bit(PG_dcache_clean, &page->flags)) {
+			void *kaddr;
 
 			kaddr = kmap_coherent(page, vmaddr);
-			/* XXX.. For now kunmap_coherent() करोes a purge */
-			/* __flush_purge_region((व्योम *)kaddr, PAGE_SIZE); */
+			/* XXX.. For now kunmap_coherent() does a purge */
+			/* __flush_purge_region((void *)kaddr, PAGE_SIZE); */
 			kunmap_coherent(kaddr);
-		पूर्ण अन्यथा
-			__flush_purge_region((व्योम *)addr, PAGE_SIZE);
-	पूर्ण
-पूर्ण
+		} else
+			__flush_purge_region((void *)addr, PAGE_SIZE);
+	}
+}
 
-व्योम flush_cache_all(व्योम)
-अणु
-	cacheop_on_each_cpu(local_flush_cache_all, शून्य, 1);
-पूर्ण
+void flush_cache_all(void)
+{
+	cacheop_on_each_cpu(local_flush_cache_all, NULL, 1);
+}
 EXPORT_SYMBOL(flush_cache_all);
 
-व्योम flush_cache_mm(काष्ठा mm_काष्ठा *mm)
-अणु
-	अगर (boot_cpu_data.dcache.n_aliases == 0)
-		वापस;
+void flush_cache_mm(struct mm_struct *mm)
+{
+	if (boot_cpu_data.dcache.n_aliases == 0)
+		return;
 
 	cacheop_on_each_cpu(local_flush_cache_mm, mm, 1);
-पूर्ण
+}
 
-व्योम flush_cache_dup_mm(काष्ठा mm_काष्ठा *mm)
-अणु
-	अगर (boot_cpu_data.dcache.n_aliases == 0)
-		वापस;
+void flush_cache_dup_mm(struct mm_struct *mm)
+{
+	if (boot_cpu_data.dcache.n_aliases == 0)
+		return;
 
 	cacheop_on_each_cpu(local_flush_cache_dup_mm, mm, 1);
-पूर्ण
+}
 
-व्योम flush_cache_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
-		      अचिन्हित दीर्घ pfn)
-अणु
-	काष्ठा flusher_data data;
+void flush_cache_page(struct vm_area_struct *vma, unsigned long addr,
+		      unsigned long pfn)
+{
+	struct flusher_data data;
 
 	data.vma = vma;
 	data.addr1 = addr;
 	data.addr2 = pfn;
 
-	cacheop_on_each_cpu(local_flush_cache_page, (व्योम *)&data, 1);
-पूर्ण
+	cacheop_on_each_cpu(local_flush_cache_page, (void *)&data, 1);
+}
 
-व्योम flush_cache_range(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start,
-		       अचिन्हित दीर्घ end)
-अणु
-	काष्ठा flusher_data data;
+void flush_cache_range(struct vm_area_struct *vma, unsigned long start,
+		       unsigned long end)
+{
+	struct flusher_data data;
 
 	data.vma = vma;
 	data.addr1 = start;
 	data.addr2 = end;
 
-	cacheop_on_each_cpu(local_flush_cache_range, (व्योम *)&data, 1);
-पूर्ण
+	cacheop_on_each_cpu(local_flush_cache_range, (void *)&data, 1);
+}
 EXPORT_SYMBOL(flush_cache_range);
 
-व्योम flush_dcache_page(काष्ठा page *page)
-अणु
+void flush_dcache_page(struct page *page)
+{
 	cacheop_on_each_cpu(local_flush_dcache_page, page, 1);
-पूर्ण
+}
 EXPORT_SYMBOL(flush_dcache_page);
 
-व्योम flush_icache_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-	काष्ठा flusher_data data;
+void flush_icache_range(unsigned long start, unsigned long end)
+{
+	struct flusher_data data;
 
-	data.vma = शून्य;
+	data.vma = NULL;
 	data.addr1 = start;
 	data.addr2 = end;
 
-	cacheop_on_each_cpu(local_flush_icache_range, (व्योम *)&data, 1);
-पूर्ण
+	cacheop_on_each_cpu(local_flush_icache_range, (void *)&data, 1);
+}
 EXPORT_SYMBOL(flush_icache_range);
 
-व्योम flush_icache_page(काष्ठा vm_area_काष्ठा *vma, काष्ठा page *page)
-अणु
-	/* Nothing uses the VMA, so just pass the काष्ठा page aदीर्घ */
+void flush_icache_page(struct vm_area_struct *vma, struct page *page)
+{
+	/* Nothing uses the VMA, so just pass the struct page along */
 	cacheop_on_each_cpu(local_flush_icache_page, page, 1);
-पूर्ण
+}
 
-व्योम flush_cache_sigtramp(अचिन्हित दीर्घ address)
-अणु
-	cacheop_on_each_cpu(local_flush_cache_sigtramp, (व्योम *)address, 1);
-पूर्ण
+void flush_cache_sigtramp(unsigned long address)
+{
+	cacheop_on_each_cpu(local_flush_cache_sigtramp, (void *)address, 1);
+}
 
-अटल व्योम compute_alias(काष्ठा cache_info *c)
-अणु
-#अगर_घोषित CONFIG_MMU
-	c->alias_mask = ((c->sets - 1) << c->entry_shअगरt) & ~(PAGE_SIZE - 1);
-#अन्यथा
+static void compute_alias(struct cache_info *c)
+{
+#ifdef CONFIG_MMU
+	c->alias_mask = ((c->sets - 1) << c->entry_shift) & ~(PAGE_SIZE - 1);
+#else
 	c->alias_mask = 0;
-#पूर्ण_अगर
+#endif
 	c->n_aliases = c->alias_mask ? (c->alias_mask >> PAGE_SHIFT) + 1 : 0;
-पूर्ण
+}
 
-अटल व्योम __init emit_cache_params(व्योम)
-अणु
-	prपूर्णांकk(KERN_NOTICE "I-cache : n_ways=%d n_sets=%d way_incr=%d\n",
+static void __init emit_cache_params(void)
+{
+	printk(KERN_NOTICE "I-cache : n_ways=%d n_sets=%d way_incr=%d\n",
 		boot_cpu_data.icache.ways,
 		boot_cpu_data.icache.sets,
 		boot_cpu_data.icache.way_incr);
-	prपूर्णांकk(KERN_NOTICE "I-cache : entry_mask=0x%08x alias_mask=0x%08x n_aliases=%d\n",
+	printk(KERN_NOTICE "I-cache : entry_mask=0x%08x alias_mask=0x%08x n_aliases=%d\n",
 		boot_cpu_data.icache.entry_mask,
 		boot_cpu_data.icache.alias_mask,
 		boot_cpu_data.icache.n_aliases);
-	prपूर्णांकk(KERN_NOTICE "D-cache : n_ways=%d n_sets=%d way_incr=%d\n",
+	printk(KERN_NOTICE "D-cache : n_ways=%d n_sets=%d way_incr=%d\n",
 		boot_cpu_data.dcache.ways,
 		boot_cpu_data.dcache.sets,
 		boot_cpu_data.dcache.way_incr);
-	prपूर्णांकk(KERN_NOTICE "D-cache : entry_mask=0x%08x alias_mask=0x%08x n_aliases=%d\n",
+	printk(KERN_NOTICE "D-cache : entry_mask=0x%08x alias_mask=0x%08x n_aliases=%d\n",
 		boot_cpu_data.dcache.entry_mask,
 		boot_cpu_data.dcache.alias_mask,
 		boot_cpu_data.dcache.n_aliases);
 
 	/*
-	 * Emit Secondary Cache parameters अगर the CPU has a probed L2.
+	 * Emit Secondary Cache parameters if the CPU has a probed L2.
 	 */
-	अगर (boot_cpu_data.flags & CPU_HAS_L2_CACHE) अणु
-		prपूर्णांकk(KERN_NOTICE "S-cache : n_ways=%d n_sets=%d way_incr=%d\n",
+	if (boot_cpu_data.flags & CPU_HAS_L2_CACHE) {
+		printk(KERN_NOTICE "S-cache : n_ways=%d n_sets=%d way_incr=%d\n",
 			boot_cpu_data.scache.ways,
 			boot_cpu_data.scache.sets,
 			boot_cpu_data.scache.way_incr);
-		prपूर्णांकk(KERN_NOTICE "S-cache : entry_mask=0x%08x alias_mask=0x%08x n_aliases=%d\n",
+		printk(KERN_NOTICE "S-cache : entry_mask=0x%08x alias_mask=0x%08x n_aliases=%d\n",
 			boot_cpu_data.scache.entry_mask,
 			boot_cpu_data.scache.alias_mask,
 			boot_cpu_data.scache.n_aliases);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम __init cpu_cache_init(व्योम)
-अणु
-	अचिन्हित पूर्णांक cache_disabled = 0;
+void __init cpu_cache_init(void)
+{
+	unsigned int cache_disabled = 0;
 
-#अगर_घोषित SH_CCR
-	cache_disabled = !(__raw_पढ़ोl(SH_CCR) & CCR_CACHE_ENABLE);
-#पूर्ण_अगर
+#ifdef SH_CCR
+	cache_disabled = !(__raw_readl(SH_CCR) & CCR_CACHE_ENABLE);
+#endif
 
 	compute_alias(&boot_cpu_data.icache);
 	compute_alias(&boot_cpu_data.dcache);
@@ -306,56 +305,56 @@ EXPORT_SYMBOL(flush_icache_range);
 	__flush_invalidate_region	= noop__flush_region;
 
 	/*
-	 * No flushing is necessary in the disabled cache हाल so we can
+	 * No flushing is necessary in the disabled cache case so we can
 	 * just keep the noop functions in local_flush_..() and __flush_..()
 	 */
-	अगर (unlikely(cache_disabled))
-		जाओ skip;
+	if (unlikely(cache_disabled))
+		goto skip;
 
-	अगर (boot_cpu_data.type == CPU_J2) अणु
-		बाह्य व्योम __weak j2_cache_init(व्योम);
+	if (boot_cpu_data.type == CPU_J2) {
+		extern void __weak j2_cache_init(void);
 
 		j2_cache_init();
-	पूर्ण अन्यथा अगर (boot_cpu_data.family == CPU_FAMILY_SH2) अणु
-		बाह्य व्योम __weak sh2_cache_init(व्योम);
+	} else if (boot_cpu_data.family == CPU_FAMILY_SH2) {
+		extern void __weak sh2_cache_init(void);
 
 		sh2_cache_init();
-	पूर्ण
+	}
 
-	अगर (boot_cpu_data.family == CPU_FAMILY_SH2A) अणु
-		बाह्य व्योम __weak sh2a_cache_init(व्योम);
+	if (boot_cpu_data.family == CPU_FAMILY_SH2A) {
+		extern void __weak sh2a_cache_init(void);
 
 		sh2a_cache_init();
-	पूर्ण
+	}
 
-	अगर (boot_cpu_data.family == CPU_FAMILY_SH3) अणु
-		बाह्य व्योम __weak sh3_cache_init(व्योम);
+	if (boot_cpu_data.family == CPU_FAMILY_SH3) {
+		extern void __weak sh3_cache_init(void);
 
 		sh3_cache_init();
 
-		अगर ((boot_cpu_data.type == CPU_SH7705) &&
-		    (boot_cpu_data.dcache.sets == 512)) अणु
-			बाह्य व्योम __weak sh7705_cache_init(व्योम);
+		if ((boot_cpu_data.type == CPU_SH7705) &&
+		    (boot_cpu_data.dcache.sets == 512)) {
+			extern void __weak sh7705_cache_init(void);
 
 			sh7705_cache_init();
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर ((boot_cpu_data.family == CPU_FAMILY_SH4) ||
+	if ((boot_cpu_data.family == CPU_FAMILY_SH4) ||
 	    (boot_cpu_data.family == CPU_FAMILY_SH4A) ||
-	    (boot_cpu_data.family == CPU_FAMILY_SH4AL_DSP)) अणु
-		बाह्य व्योम __weak sh4_cache_init(व्योम);
+	    (boot_cpu_data.family == CPU_FAMILY_SH4AL_DSP)) {
+		extern void __weak sh4_cache_init(void);
 
 		sh4_cache_init();
 
-		अगर ((boot_cpu_data.type == CPU_SH7786) ||
-		    (boot_cpu_data.type == CPU_SHX3)) अणु
-			बाह्य व्योम __weak shx3_cache_init(व्योम);
+		if ((boot_cpu_data.type == CPU_SH7786) ||
+		    (boot_cpu_data.type == CPU_SHX3)) {
+			extern void __weak shx3_cache_init(void);
 
 			shx3_cache_init();
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 skip:
 	emit_cache_params();
-पूर्ण
+}

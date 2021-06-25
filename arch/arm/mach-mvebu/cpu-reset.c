@@ -1,105 +1,104 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2014 Marvell
  *
- * Thomas Petazzoni <thomas.petazzoni@मुक्त-electrons.com>
+ * Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#घोषणा pr_fmt(fmt) "mvebu-cpureset: " fmt
+#define pr_fmt(fmt) "mvebu-cpureset: " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/resource.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/of_address.h>
+#include <linux/io.h>
+#include <linux/resource.h>
 
-#समावेश "common.h"
+#include "common.h"
 
-अटल व्योम __iomem *cpu_reset_base;
-अटल माप_प्रकार cpu_reset_size;
+static void __iomem *cpu_reset_base;
+static size_t cpu_reset_size;
 
-#घोषणा CPU_RESET_OFFSET(cpu) (cpu * 0x8)
-#घोषणा CPU_RESET_ASSERT      BIT(0)
+#define CPU_RESET_OFFSET(cpu) (cpu * 0x8)
+#define CPU_RESET_ASSERT      BIT(0)
 
-पूर्णांक mvebu_cpu_reset_deनिश्चित(पूर्णांक cpu)
-अणु
+int mvebu_cpu_reset_deassert(int cpu)
+{
 	u32 reg;
 
-	अगर (!cpu_reset_base)
-		वापस -ENODEV;
+	if (!cpu_reset_base)
+		return -ENODEV;
 
-	अगर (CPU_RESET_OFFSET(cpu) >= cpu_reset_size)
-		वापस -EINVAL;
+	if (CPU_RESET_OFFSET(cpu) >= cpu_reset_size)
+		return -EINVAL;
 
-	reg = पढ़ोl(cpu_reset_base + CPU_RESET_OFFSET(cpu));
+	reg = readl(cpu_reset_base + CPU_RESET_OFFSET(cpu));
 	reg &= ~CPU_RESET_ASSERT;
-	ग_लिखोl(reg, cpu_reset_base + CPU_RESET_OFFSET(cpu));
+	writel(reg, cpu_reset_base + CPU_RESET_OFFSET(cpu));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mvebu_cpu_reset_map(काष्ठा device_node *np, पूर्णांक res_idx)
-अणु
-	काष्ठा resource res;
+static int mvebu_cpu_reset_map(struct device_node *np, int res_idx)
+{
+	struct resource res;
 
-	अगर (of_address_to_resource(np, res_idx, &res)) अणु
+	if (of_address_to_resource(np, res_idx, &res)) {
 		pr_err("unable to get resource\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	अगर (!request_mem_region(res.start, resource_size(&res),
-				np->full_name)) अणु
+	if (!request_mem_region(res.start, resource_size(&res),
+				np->full_name)) {
 		pr_err("unable to request region\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	cpu_reset_base = ioremap(res.start, resource_size(&res));
-	अगर (!cpu_reset_base) अणु
+	if (!cpu_reset_base) {
 		pr_err("unable to map registers\n");
 		release_mem_region(res.start, resource_size(&res));
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	cpu_reset_size = resource_size(&res);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init mvebu_cpu_reset_init(व्योम)
-अणु
-	काष्ठा device_node *np;
-	पूर्णांक res_idx;
-	पूर्णांक ret;
+static int __init mvebu_cpu_reset_init(void)
+{
+	struct device_node *np;
+	int res_idx;
+	int ret;
 
-	np = of_find_compatible_node(शून्य, शून्य,
+	np = of_find_compatible_node(NULL, NULL,
 				     "marvell,armada-370-cpu-reset");
-	अगर (np) अणु
+	if (np) {
 		res_idx = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * This code is kept क्रम backward compatibility with
+		 * This code is kept for backward compatibility with
 		 * old Device Trees.
 		 */
-		np = of_find_compatible_node(शून्य, शून्य,
+		np = of_find_compatible_node(NULL, NULL,
 					     "marvell,armada-370-xp-pmsu");
-		अगर (np) अणु
+		if (np) {
 			pr_warn(FW_WARN "deprecated pmsu binding\n");
 			res_idx = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* No reset node found */
-	अगर (!np)
-		वापस -ENODEV;
+	if (!np)
+		return -ENODEV;
 
 	ret = mvebu_cpu_reset_map(np, res_idx);
 	of_node_put(np);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 early_initcall(mvebu_cpu_reset_init);

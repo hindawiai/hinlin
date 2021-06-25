@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-omap2/cpuidle34xx.c
  *
@@ -15,144 +14,144 @@
  * Tony Lindgren <tony@atomide.com>
  *
  * Copyright (C) 2005 Texas Instruments, Inc.
- * Riअक्षरd Woodruff <r-woodruff2@ti.com>
+ * Richard Woodruff <r-woodruff2@ti.com>
  *
- * Based on pm.c क्रम omap2
+ * Based on pm.c for omap2
  */
 
-#समावेश <linux/sched.h>
-#समावेश <linux/cpuidle.h>
-#समावेश <linux/export.h>
-#समावेश <linux/cpu_pm.h>
-#समावेश <यंत्र/cpuidle.h>
+#include <linux/sched.h>
+#include <linux/cpuidle.h>
+#include <linux/export.h>
+#include <linux/cpu_pm.h>
+#include <asm/cpuidle.h>
 
-#समावेश "powerdomain.h"
-#समावेश "clockdomain.h"
+#include "powerdomain.h"
+#include "clockdomain.h"
 
-#समावेश "pm.h"
-#समावेश "control.h"
-#समावेश "common.h"
-#समावेश "soc.h"
+#include "pm.h"
+#include "control.h"
+#include "common.h"
+#include "soc.h"
 
-/* Mach specअगरic inक्रमmation to be recorded in the C-state driver_data */
-काष्ठा omap3_idle_statedata अणु
+/* Mach specific information to be recorded in the C-state driver_data */
+struct omap3_idle_statedata {
 	u8 mpu_state;
 	u8 core_state;
 	u8 per_min_state;
 	u8 flags;
-पूर्ण;
+};
 
-अटल काष्ठा घातerकरोमुख्य *mpu_pd, *core_pd, *per_pd, *cam_pd;
+static struct powerdomain *mpu_pd, *core_pd, *per_pd, *cam_pd;
 
 /*
- * Possible flag bits क्रम काष्ठा omap3_idle_statedata.flags:
+ * Possible flag bits for struct omap3_idle_statedata.flags:
  *
- * OMAP_CPUIDLE_CX_NO_CLKDM_IDLE: करोn't allow the MPU घड़ीकरोमुख्य to go
- *    inactive.  This in turn prevents the MPU DPLL from entering स्वतःidle
+ * OMAP_CPUIDLE_CX_NO_CLKDM_IDLE: don't allow the MPU clockdomain to go
+ *    inactive.  This in turn prevents the MPU DPLL from entering autoidle
  *    mode, so wakeup latency is greatly reduced, at the cost of additional
- *    energy consumption.  This also prevents the CORE घड़ीकरोमुख्य from
+ *    energy consumption.  This also prevents the CORE clockdomain from
  *    entering idle.
  */
-#घोषणा OMAP_CPUIDLE_CX_NO_CLKDM_IDLE		BIT(0)
+#define OMAP_CPUIDLE_CX_NO_CLKDM_IDLE		BIT(0)
 
 /*
- * Prevent PER OFF अगर CORE is not in RETention or OFF as this would
+ * Prevent PER OFF if CORE is not in RETention or OFF as this would
  * disable PER wakeups completely.
  */
-अटल काष्ठा omap3_idle_statedata omap3_idle_data[] = अणु
-	अणु
+static struct omap3_idle_statedata omap3_idle_data[] = {
+	{
 		.mpu_state = PWRDM_POWER_ON,
 		.core_state = PWRDM_POWER_ON,
-		/* In C1 करो not allow PER state lower than CORE state */
+		/* In C1 do not allow PER state lower than CORE state */
 		.per_min_state = PWRDM_POWER_ON,
 		.flags = OMAP_CPUIDLE_CX_NO_CLKDM_IDLE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mpu_state = PWRDM_POWER_ON,
 		.core_state = PWRDM_POWER_ON,
 		.per_min_state = PWRDM_POWER_RET,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mpu_state = PWRDM_POWER_RET,
 		.core_state = PWRDM_POWER_ON,
 		.per_min_state = PWRDM_POWER_RET,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mpu_state = PWRDM_POWER_OFF,
 		.core_state = PWRDM_POWER_ON,
 		.per_min_state = PWRDM_POWER_RET,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mpu_state = PWRDM_POWER_RET,
 		.core_state = PWRDM_POWER_RET,
 		.per_min_state = PWRDM_POWER_OFF,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mpu_state = PWRDM_POWER_OFF,
 		.core_state = PWRDM_POWER_RET,
 		.per_min_state = PWRDM_POWER_OFF,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mpu_state = PWRDM_POWER_OFF,
 		.core_state = PWRDM_POWER_OFF,
 		.per_min_state = PWRDM_POWER_OFF,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /**
- * omap3_enter_idle - Programs OMAP3 to enter the specअगरied state
+ * omap3_enter_idle - Programs OMAP3 to enter the specified state
  * @dev: cpuidle device
  * @drv: cpuidle driver
  * @index: the index of state to be entered
  */
-अटल पूर्णांक omap3_enter_idle(काष्ठा cpuidle_device *dev,
-			    काष्ठा cpuidle_driver *drv,
-			    पूर्णांक index)
-अणु
-	काष्ठा omap3_idle_statedata *cx = &omap3_idle_data[index];
-	पूर्णांक error;
+static int omap3_enter_idle(struct cpuidle_device *dev,
+			    struct cpuidle_driver *drv,
+			    int index)
+{
+	struct omap3_idle_statedata *cx = &omap3_idle_data[index];
+	int error;
 
-	अगर (omap_irq_pending() || need_resched())
-		जाओ वापस_sleep_समय;
+	if (omap_irq_pending() || need_resched())
+		goto return_sleep_time;
 
-	/* Deny idle क्रम C1 */
-	अगर (cx->flags & OMAP_CPUIDLE_CX_NO_CLKDM_IDLE) अणु
+	/* Deny idle for C1 */
+	if (cx->flags & OMAP_CPUIDLE_CX_NO_CLKDM_IDLE) {
 		clkdm_deny_idle(mpu_pd->pwrdm_clkdms[0]);
-	पूर्ण अन्यथा अणु
+	} else {
 		pwrdm_set_next_pwrst(mpu_pd, cx->mpu_state);
 		pwrdm_set_next_pwrst(core_pd, cx->core_state);
-	पूर्ण
+	}
 
 	/*
-	 * Call idle CPU PM enter notअगरier chain so that
+	 * Call idle CPU PM enter notifier chain so that
 	 * VFP context is saved.
 	 */
-	अगर (cx->mpu_state == PWRDM_POWER_OFF) अणु
+	if (cx->mpu_state == PWRDM_POWER_OFF) {
 		error = cpu_pm_enter();
-		अगर (error)
-			जाओ out_clkdm_set;
-	पूर्ण
+		if (error)
+			goto out_clkdm_set;
+	}
 
 	/* Execute ARM wfi */
 	omap_sram_idle();
 
 	/*
-	 * Call idle CPU PM enter notअगरier chain to restore
+	 * Call idle CPU PM enter notifier chain to restore
 	 * VFP context.
 	 */
-	अगर (cx->mpu_state == PWRDM_POWER_OFF &&
-	    pwrdm_पढ़ो_prev_pwrst(mpu_pd) == PWRDM_POWER_OFF)
-		cpu_pm_निकास();
+	if (cx->mpu_state == PWRDM_POWER_OFF &&
+	    pwrdm_read_prev_pwrst(mpu_pd) == PWRDM_POWER_OFF)
+		cpu_pm_exit();
 
 out_clkdm_set:
-	/* Re-allow idle क्रम C1 */
-	अगर (cx->flags & OMAP_CPUIDLE_CX_NO_CLKDM_IDLE)
+	/* Re-allow idle for C1 */
+	if (cx->flags & OMAP_CPUIDLE_CX_NO_CLKDM_IDLE)
 		clkdm_allow_idle(mpu_pd->pwrdm_clkdms[0]);
 
-वापस_sleep_समय:
+return_sleep_time:
 
-	वापस index;
-पूर्ण
+	return index;
+}
 
 /**
  * next_valid_state - Find next valid C-state
@@ -160,248 +159,248 @@ out_clkdm_set:
  * @drv: cpuidle driver
  * @index: Index of currently selected c-state
  *
- * If the state corresponding to index is valid, index is वापसed back
- * to the caller. Else, this function searches क्रम a lower c-state which is
- * still valid (as defined in omap3_घातer_states[]) and वापसs its index.
+ * If the state corresponding to index is valid, index is returned back
+ * to the caller. Else, this function searches for a lower c-state which is
+ * still valid (as defined in omap3_power_states[]) and returns its index.
  *
- * A state is valid अगर the 'valid' field is enabled and
- * अगर it satisfies the enable_off_mode condition.
+ * A state is valid if the 'valid' field is enabled and
+ * if it satisfies the enable_off_mode condition.
  */
-अटल पूर्णांक next_valid_state(काष्ठा cpuidle_device *dev,
-			    काष्ठा cpuidle_driver *drv, पूर्णांक index)
-अणु
-	काष्ठा omap3_idle_statedata *cx = &omap3_idle_data[index];
+static int next_valid_state(struct cpuidle_device *dev,
+			    struct cpuidle_driver *drv, int index)
+{
+	struct omap3_idle_statedata *cx = &omap3_idle_data[index];
 	u32 mpu_deepest_state = PWRDM_POWER_RET;
 	u32 core_deepest_state = PWRDM_POWER_RET;
-	पूर्णांक idx;
-	पूर्णांक next_index = 0; /* C1 is the शेष value */
+	int idx;
+	int next_index = 0; /* C1 is the default value */
 
-	अगर (enable_off_mode) अणु
+	if (enable_off_mode) {
 		mpu_deepest_state = PWRDM_POWER_OFF;
 		/*
-		 * Erratum i583: valable क्रम ES rev < Es1.2 on 3630.
-		 * CORE OFF mode is not supported in a stable क्रमm, restrict
+		 * Erratum i583: valable for ES rev < Es1.2 on 3630.
+		 * CORE OFF mode is not supported in a stable form, restrict
 		 * instead the CORE state to RET.
 		 */
-		अगर (!IS_PM34XX_ERRATUM(PM_SDRC_WAKEUP_ERRATUM_i583))
+		if (!IS_PM34XX_ERRATUM(PM_SDRC_WAKEUP_ERRATUM_i583))
 			core_deepest_state = PWRDM_POWER_OFF;
-	पूर्ण
+	}
 
-	/* Check अगर current state is valid */
-	अगर ((cx->mpu_state >= mpu_deepest_state) &&
+	/* Check if current state is valid */
+	if ((cx->mpu_state >= mpu_deepest_state) &&
 	    (cx->core_state >= core_deepest_state))
-		वापस index;
+		return index;
 
 	/*
 	 * Drop to next valid state.
 	 * Start search from the next (lower) state.
 	 */
-	क्रम (idx = index - 1; idx >= 0; idx--) अणु
+	for (idx = index - 1; idx >= 0; idx--) {
 		cx = &omap3_idle_data[idx];
-		अगर ((cx->mpu_state >= mpu_deepest_state) &&
-		    (cx->core_state >= core_deepest_state)) अणु
+		if ((cx->mpu_state >= mpu_deepest_state) &&
+		    (cx->core_state >= core_deepest_state)) {
 			next_index = idx;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस next_index;
-पूर्ण
+	return next_index;
+}
 
 /**
- * omap3_enter_idle_bm - Checks क्रम any bus activity
+ * omap3_enter_idle_bm - Checks for any bus activity
  * @dev: cpuidle device
  * @drv: cpuidle driver
  * @index: array index of target state to be programmed
  *
- * This function checks क्रम any pending activity and then programs
- * the device to the specअगरied or a safer state.
+ * This function checks for any pending activity and then programs
+ * the device to the specified or a safer state.
  */
-अटल पूर्णांक omap3_enter_idle_bm(काष्ठा cpuidle_device *dev,
-			       काष्ठा cpuidle_driver *drv,
-			       पूर्णांक index)
-अणु
-	पूर्णांक new_state_idx, ret;
+static int omap3_enter_idle_bm(struct cpuidle_device *dev,
+			       struct cpuidle_driver *drv,
+			       int index)
+{
+	int new_state_idx, ret;
 	u8 per_next_state, per_saved_state;
-	काष्ठा omap3_idle_statedata *cx;
+	struct omap3_idle_statedata *cx;
 
 	/*
-	 * Use only C1 अगर CAM is active.
-	 * CAM करोes not have wakeup capability in OMAP3.
+	 * Use only C1 if CAM is active.
+	 * CAM does not have wakeup capability in OMAP3.
 	 */
-	अगर (pwrdm_पढ़ो_pwrst(cam_pd) == PWRDM_POWER_ON)
+	if (pwrdm_read_pwrst(cam_pd) == PWRDM_POWER_ON)
 		new_state_idx = drv->safe_state_index;
-	अन्यथा
+	else
 		new_state_idx = next_valid_state(dev, drv, index);
 
 	/*
-	 * FIXME: we currently manage device-specअगरic idle states
-	 *        क्रम PER and CORE in combination with CPU-specअगरic
-	 *        idle states.  This is wrong, and device-specअगरic
-	 *        idle management needs to be separated out पूर्णांकo
+	 * FIXME: we currently manage device-specific idle states
+	 *        for PER and CORE in combination with CPU-specific
+	 *        idle states.  This is wrong, and device-specific
+	 *        idle management needs to be separated out into
 	 *        its own code.
 	 */
 
 	/* Program PER state */
 	cx = &omap3_idle_data[new_state_idx];
 
-	per_next_state = pwrdm_पढ़ो_next_pwrst(per_pd);
+	per_next_state = pwrdm_read_next_pwrst(per_pd);
 	per_saved_state = per_next_state;
-	अगर (per_next_state < cx->per_min_state) अणु
+	if (per_next_state < cx->per_min_state) {
 		per_next_state = cx->per_min_state;
 		pwrdm_set_next_pwrst(per_pd, per_next_state);
-	पूर्ण
+	}
 
 	ret = omap3_enter_idle(dev, drv, new_state_idx);
 
-	/* Restore original PER state अगर it was modअगरied */
-	अगर (per_next_state != per_saved_state)
+	/* Restore original PER state if it was modified */
+	if (per_next_state != per_saved_state)
 		pwrdm_set_next_pwrst(per_pd, per_saved_state);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा cpuidle_driver omap3_idle_driver = अणु
+static struct cpuidle_driver omap3_idle_driver = {
 	.name             = "omap3_idle",
 	.owner            = THIS_MODULE,
-	.states = अणु
-		अणु
+	.states = {
+		{
 			.enter		  = omap3_enter_idle_bm,
-			.निकास_latency	  = 2 + 2,
+			.exit_latency	  = 2 + 2,
 			.target_residency = 5,
 			.name		  = "C1",
 			.desc		  = "MPU ON + CORE ON",
-		पूर्ण,
-		अणु
+		},
+		{
 			.enter		  = omap3_enter_idle_bm,
-			.निकास_latency	  = 10 + 10,
+			.exit_latency	  = 10 + 10,
 			.target_residency = 30,
 			.name		  = "C2",
 			.desc		  = "MPU ON + CORE ON",
-		पूर्ण,
-		अणु
+		},
+		{
 			.enter		  = omap3_enter_idle_bm,
-			.निकास_latency	  = 50 + 50,
+			.exit_latency	  = 50 + 50,
 			.target_residency = 300,
 			.name		  = "C3",
 			.desc		  = "MPU RET + CORE ON",
-		पूर्ण,
-		अणु
+		},
+		{
 			.enter		  = omap3_enter_idle_bm,
-			.निकास_latency	  = 1500 + 1800,
+			.exit_latency	  = 1500 + 1800,
 			.target_residency = 4000,
 			.name		  = "C4",
 			.desc		  = "MPU OFF + CORE ON",
-		पूर्ण,
-		अणु
+		},
+		{
 			.enter		  = omap3_enter_idle_bm,
-			.निकास_latency	  = 2500 + 7500,
+			.exit_latency	  = 2500 + 7500,
 			.target_residency = 12000,
 			.name		  = "C5",
 			.desc		  = "MPU RET + CORE RET",
-		पूर्ण,
-		अणु
+		},
+		{
 			.enter		  = omap3_enter_idle_bm,
-			.निकास_latency	  = 3000 + 8500,
+			.exit_latency	  = 3000 + 8500,
 			.target_residency = 15000,
 			.name		  = "C6",
 			.desc		  = "MPU OFF + CORE RET",
-		पूर्ण,
-		अणु
+		},
+		{
 			.enter		  = omap3_enter_idle_bm,
-			.निकास_latency	  = 10000 + 30000,
+			.exit_latency	  = 10000 + 30000,
 			.target_residency = 30000,
 			.name		  = "C7",
 			.desc		  = "MPU OFF + CORE OFF",
-		पूर्ण,
-	पूर्ण,
+		},
+	},
 	.state_count = ARRAY_SIZE(omap3_idle_data),
 	.safe_state_index = 0,
-पूर्ण;
+};
 
 /*
- * Numbers based on measurements made in October 2009 क्रम PM optimized kernel
- * with CPU freq enabled on device Nokia N900. Assumes OPP2 (मुख्य idle OPP,
- * and worst हाल latencies).
+ * Numbers based on measurements made in October 2009 for PM optimized kernel
+ * with CPU freq enabled on device Nokia N900. Assumes OPP2 (main idle OPP,
+ * and worst case latencies).
  */
-अटल काष्ठा cpuidle_driver omap3430_idle_driver = अणु
+static struct cpuidle_driver omap3430_idle_driver = {
 	.name             = "omap3430_idle",
 	.owner            = THIS_MODULE,
-	.states = अणु
-		अणु
+	.states = {
+		{
 			.enter		  = omap3_enter_idle_bm,
-			.निकास_latency	  = 110 + 162,
+			.exit_latency	  = 110 + 162,
 			.target_residency = 5,
 			.name		  = "C1",
 			.desc		  = "MPU ON + CORE ON",
-		पूर्ण,
-		अणु
+		},
+		{
 			.enter		  = omap3_enter_idle_bm,
-			.निकास_latency	  = 106 + 180,
+			.exit_latency	  = 106 + 180,
 			.target_residency = 309,
 			.name		  = "C2",
 			.desc		  = "MPU ON + CORE ON",
-		पूर्ण,
-		अणु
+		},
+		{
 			.enter		  = omap3_enter_idle_bm,
-			.निकास_latency	  = 107 + 410,
+			.exit_latency	  = 107 + 410,
 			.target_residency = 46057,
 			.name		  = "C3",
 			.desc		  = "MPU RET + CORE ON",
-		पूर्ण,
-		अणु
+		},
+		{
 			.enter		  = omap3_enter_idle_bm,
-			.निकास_latency	  = 121 + 3374,
+			.exit_latency	  = 121 + 3374,
 			.target_residency = 46057,
 			.name		  = "C4",
 			.desc		  = "MPU OFF + CORE ON",
-		पूर्ण,
-		अणु
+		},
+		{
 			.enter		  = omap3_enter_idle_bm,
-			.निकास_latency	  = 855 + 1146,
+			.exit_latency	  = 855 + 1146,
 			.target_residency = 46057,
 			.name		  = "C5",
 			.desc		  = "MPU RET + CORE RET",
-		पूर्ण,
-		अणु
+		},
+		{
 			.enter		  = omap3_enter_idle_bm,
-			.निकास_latency	  = 7580 + 4134,
+			.exit_latency	  = 7580 + 4134,
 			.target_residency = 484329,
 			.name		  = "C6",
 			.desc		  = "MPU OFF + CORE RET",
-		पूर्ण,
-		अणु
+		},
+		{
 			.enter		  = omap3_enter_idle_bm,
-			.निकास_latency	  = 7505 + 15274,
+			.exit_latency	  = 7505 + 15274,
 			.target_residency = 484329,
 			.name		  = "C7",
 			.desc		  = "MPU OFF + CORE OFF",
-		पूर्ण,
-	पूर्ण,
+		},
+	},
 	.state_count = ARRAY_SIZE(omap3_idle_data),
 	.safe_state_index = 0,
-पूर्ण;
+};
 
 /* Public functions */
 
 /**
- * omap3_idle_init - Init routine क्रम OMAP3 idle
+ * omap3_idle_init - Init routine for OMAP3 idle
  *
- * Registers the OMAP3 specअगरic cpuidle driver to the cpuidle
+ * Registers the OMAP3 specific cpuidle driver to the cpuidle
  * framework with the valid set of states.
  */
-पूर्णांक __init omap3_idle_init(व्योम)
-अणु
+int __init omap3_idle_init(void)
+{
 	mpu_pd = pwrdm_lookup("mpu_pwrdm");
 	core_pd = pwrdm_lookup("core_pwrdm");
 	per_pd = pwrdm_lookup("per_pwrdm");
 	cam_pd = pwrdm_lookup("cam_pwrdm");
 
-	अगर (!mpu_pd || !core_pd || !per_pd || !cam_pd)
-		वापस -ENODEV;
+	if (!mpu_pd || !core_pd || !per_pd || !cam_pd)
+		return -ENODEV;
 
-	अगर (cpu_is_omap3430())
-		वापस cpuidle_रेजिस्टर(&omap3430_idle_driver, शून्य);
-	अन्यथा
-		वापस cpuidle_रेजिस्टर(&omap3_idle_driver, शून्य);
-पूर्ण
+	if (cpu_is_omap3430())
+		return cpuidle_register(&omap3430_idle_driver, NULL);
+	else
+		return cpuidle_register(&omap3_idle_driver, NULL);
+}

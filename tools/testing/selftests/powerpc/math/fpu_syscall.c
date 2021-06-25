@@ -1,87 +1,86 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2015, Cyril Bur, IBM Corp.
  *
- * This test attempts to see अगर the FPU रेजिस्टरs change across a syscall (विभाजन).
+ * This test attempts to see if the FPU registers change across a syscall (fork).
  */
 
-#समावेश <मानकपन.स>
-#समावेश <unistd.h>
-#समावेश <sys/syscall.h>
-#समावेश <sys/समय.स>
-#समावेश <sys/types.h>
-#समावेश <sys/रुको.h>
-#समावेश <मानककोष.स>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/syscall.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <stdlib.h>
 
-#समावेश "utils.h"
+#include "utils.h"
 
-बाह्य पूर्णांक test_fpu(द्विगुन *darray, pid_t *pid);
+extern int test_fpu(double *darray, pid_t *pid);
 
-द्विगुन darray[] = अणु0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0,
+double darray[] = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0,
 		     1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0,
-		     2.1पूर्ण;
+		     2.1};
 
-पूर्णांक syscall_fpu(व्योम)
-अणु
-	pid_t विभाजन_pid;
-	पूर्णांक i;
-	पूर्णांक ret;
-	पूर्णांक child_ret;
-	क्रम (i = 0; i < 1000; i++) अणु
-		/* test_fpu will विभाजन() */
-		ret = test_fpu(darray, &विभाजन_pid);
-		अगर (विभाजन_pid == -1)
-			वापस -1;
-		अगर (विभाजन_pid == 0)
-			निकास(ret);
-		रुकोpid(विभाजन_pid, &child_ret, 0);
-		अगर (ret || child_ret)
-			वापस 1;
-	पूर्ण
+int syscall_fpu(void)
+{
+	pid_t fork_pid;
+	int i;
+	int ret;
+	int child_ret;
+	for (i = 0; i < 1000; i++) {
+		/* test_fpu will fork() */
+		ret = test_fpu(darray, &fork_pid);
+		if (fork_pid == -1)
+			return -1;
+		if (fork_pid == 0)
+			exit(ret);
+		waitpid(fork_pid, &child_ret, 0);
+		if (ret || child_ret)
+			return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक test_syscall_fpu(व्योम)
-अणु
+int test_syscall_fpu(void)
+{
 	/*
-	 * Setup an environment with much context चयनing
+	 * Setup an environment with much context switching
 	 */
 	pid_t pid2;
-	pid_t pid = विभाजन();
-	पूर्णांक ret;
-	पूर्णांक child_ret;
+	pid_t pid = fork();
+	int ret;
+	int child_ret;
 	FAIL_IF(pid == -1);
 
-	pid2 = विभाजन();
-	/* Can't FAIL_IF(pid2 == -1); because alपढ़ोy विभाजनed once */
-	अगर (pid2 == -1) अणु
+	pid2 = fork();
+	/* Can't FAIL_IF(pid2 == -1); because already forked once */
+	if (pid2 == -1) {
 		/*
-		 * Couldn't विभाजन, ensure test is a fail
+		 * Couldn't fork, ensure test is a fail
 		 */
 		child_ret = ret = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = syscall_fpu();
-		अगर (pid2)
-			रुकोpid(pid2, &child_ret, 0);
-		अन्यथा
-			निकास(ret);
-	पूर्ण
+		if (pid2)
+			waitpid(pid2, &child_ret, 0);
+		else
+			exit(ret);
+	}
 
 	ret |= child_ret;
 
-	अगर (pid)
-		रुकोpid(pid, &child_ret, 0);
-	अन्यथा
-		निकास(ret);
+	if (pid)
+		waitpid(pid, &child_ret, 0);
+	else
+		exit(ret);
 
 	FAIL_IF(ret || child_ret);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	वापस test_harness(test_syscall_fpu, "syscall_fpu");
+int main(int argc, char *argv[])
+{
+	return test_harness(test_syscall_fpu, "syscall_fpu");
 
-पूर्ण
+}

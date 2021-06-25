@@ -1,287 +1,286 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR MIT
+// SPDX-License-Identifier: GPL-2.0 OR MIT
 
 /*
- * Xen para-भव sound device
+ * Xen para-virtual sound device
  *
  * Copyright (C) 2016-2018 EPAM Systems Inc.
  *
  * Author: Oleksandr Andrushchenko <oleksandr_andrushchenko@epam.com>
  */
 
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/platform_device.h>
 
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
 
-#समावेश <xen/xenbus.h>
-#समावेश <xen/xen-front-pgdir-shbuf.h>
+#include <xen/xenbus.h>
+#include <xen/xen-front-pgdir-shbuf.h>
 
-#समावेश "xen_snd_front.h"
-#समावेश "xen_snd_front_alsa.h"
-#समावेश "xen_snd_front_cfg.h"
-#समावेश "xen_snd_front_evtchnl.h"
+#include "xen_snd_front.h"
+#include "xen_snd_front_alsa.h"
+#include "xen_snd_front_cfg.h"
+#include "xen_snd_front_evtchnl.h"
 
-काष्ठा xen_snd_front_pcm_stream_info अणु
-	काष्ठा xen_snd_front_info *front_info;
-	काष्ठा xen_snd_front_evtchnl_pair *evt_pair;
+struct xen_snd_front_pcm_stream_info {
+	struct xen_snd_front_info *front_info;
+	struct xen_snd_front_evtchnl_pair *evt_pair;
 
 	/* This is the shared buffer with its backing storage. */
-	काष्ठा xen_front_pgdir_shbuf shbuf;
+	struct xen_front_pgdir_shbuf shbuf;
 	u8 *buffer;
-	माप_प्रकार buffer_sz;
-	पूर्णांक num_pages;
-	काष्ठा page **pages;
+	size_t buffer_sz;
+	int num_pages;
+	struct page **pages;
 
-	पूर्णांक index;
+	int index;
 
-	bool is_खोलो;
-	काष्ठा snd_pcm_hardware pcm_hw;
+	bool is_open;
+	struct snd_pcm_hardware pcm_hw;
 
 	/* Number of processed frames as reported by the backend. */
 	snd_pcm_uframes_t be_cur_frame;
-	/* Current HW poपूर्णांकer to be reported via .period callback. */
+	/* Current HW pointer to be reported via .period callback. */
 	atomic_t hw_ptr;
-	/* Modulo of the number of processed frames - क्रम period detection. */
+	/* Modulo of the number of processed frames - for period detection. */
 	u32 out_frames;
-पूर्ण;
+};
 
-काष्ठा xen_snd_front_pcm_instance_info अणु
-	काष्ठा xen_snd_front_card_info *card_info;
-	काष्ठा snd_pcm *pcm;
-	काष्ठा snd_pcm_hardware pcm_hw;
-	पूर्णांक num_pcm_streams_pb;
-	काष्ठा xen_snd_front_pcm_stream_info *streams_pb;
-	पूर्णांक num_pcm_streams_cap;
-	काष्ठा xen_snd_front_pcm_stream_info *streams_cap;
-पूर्ण;
+struct xen_snd_front_pcm_instance_info {
+	struct xen_snd_front_card_info *card_info;
+	struct snd_pcm *pcm;
+	struct snd_pcm_hardware pcm_hw;
+	int num_pcm_streams_pb;
+	struct xen_snd_front_pcm_stream_info *streams_pb;
+	int num_pcm_streams_cap;
+	struct xen_snd_front_pcm_stream_info *streams_cap;
+};
 
-काष्ठा xen_snd_front_card_info अणु
-	काष्ठा xen_snd_front_info *front_info;
-	काष्ठा snd_card *card;
-	काष्ठा snd_pcm_hardware pcm_hw;
-	पूर्णांक num_pcm_instances;
-	काष्ठा xen_snd_front_pcm_instance_info *pcm_instances;
-पूर्ण;
+struct xen_snd_front_card_info {
+	struct xen_snd_front_info *front_info;
+	struct snd_card *card;
+	struct snd_pcm_hardware pcm_hw;
+	int num_pcm_instances;
+	struct xen_snd_front_pcm_instance_info *pcm_instances;
+};
 
-काष्ठा alsa_sndअगर_sample_क्रमmat अणु
-	u8 sndअगर;
-	snd_pcm_क्रमmat_t alsa;
-पूर्ण;
+struct alsa_sndif_sample_format {
+	u8 sndif;
+	snd_pcm_format_t alsa;
+};
 
-काष्ठा alsa_sndअगर_hw_param अणु
-	u8 sndअगर;
+struct alsa_sndif_hw_param {
+	u8 sndif;
 	snd_pcm_hw_param_t alsa;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा alsa_sndअगर_sample_क्रमmat ALSA_SNDIF_FORMATS[] = अणु
-	अणु
-		.sndअगर = XENSND_PCM_FORMAT_U8,
+static const struct alsa_sndif_sample_format ALSA_SNDIF_FORMATS[] = {
+	{
+		.sndif = XENSND_PCM_FORMAT_U8,
 		.alsa = SNDRV_PCM_FORMAT_U8
-	पूर्ण,
-	अणु
-		.sndअगर = XENSND_PCM_FORMAT_S8,
+	},
+	{
+		.sndif = XENSND_PCM_FORMAT_S8,
 		.alsa = SNDRV_PCM_FORMAT_S8
-	पूर्ण,
-	अणु
-		.sndअगर = XENSND_PCM_FORMAT_U16_LE,
+	},
+	{
+		.sndif = XENSND_PCM_FORMAT_U16_LE,
 		.alsa = SNDRV_PCM_FORMAT_U16_LE
-	पूर्ण,
-	अणु
-		.sndअगर = XENSND_PCM_FORMAT_U16_BE,
+	},
+	{
+		.sndif = XENSND_PCM_FORMAT_U16_BE,
 		.alsa = SNDRV_PCM_FORMAT_U16_BE
-	पूर्ण,
-	अणु
-		.sndअगर = XENSND_PCM_FORMAT_S16_LE,
+	},
+	{
+		.sndif = XENSND_PCM_FORMAT_S16_LE,
 		.alsa = SNDRV_PCM_FORMAT_S16_LE
-	पूर्ण,
-	अणु
-		.sndअगर = XENSND_PCM_FORMAT_S16_BE,
+	},
+	{
+		.sndif = XENSND_PCM_FORMAT_S16_BE,
 		.alsa = SNDRV_PCM_FORMAT_S16_BE
-	पूर्ण,
-	अणु
-		.sndअगर = XENSND_PCM_FORMAT_U24_LE,
+	},
+	{
+		.sndif = XENSND_PCM_FORMAT_U24_LE,
 		.alsa = SNDRV_PCM_FORMAT_U24_LE
-	पूर्ण,
-	अणु
-		.sndअगर = XENSND_PCM_FORMAT_U24_BE,
+	},
+	{
+		.sndif = XENSND_PCM_FORMAT_U24_BE,
 		.alsa = SNDRV_PCM_FORMAT_U24_BE
-	पूर्ण,
-	अणु
-		.sndअगर = XENSND_PCM_FORMAT_S24_LE,
+	},
+	{
+		.sndif = XENSND_PCM_FORMAT_S24_LE,
 		.alsa = SNDRV_PCM_FORMAT_S24_LE
-	पूर्ण,
-	अणु
-		.sndअगर = XENSND_PCM_FORMAT_S24_BE,
+	},
+	{
+		.sndif = XENSND_PCM_FORMAT_S24_BE,
 		.alsa = SNDRV_PCM_FORMAT_S24_BE
-	पूर्ण,
-	अणु
-		.sndअगर = XENSND_PCM_FORMAT_U32_LE,
+	},
+	{
+		.sndif = XENSND_PCM_FORMAT_U32_LE,
 		.alsa = SNDRV_PCM_FORMAT_U32_LE
-	पूर्ण,
-	अणु
-		.sndअगर = XENSND_PCM_FORMAT_U32_BE,
+	},
+	{
+		.sndif = XENSND_PCM_FORMAT_U32_BE,
 		.alsa = SNDRV_PCM_FORMAT_U32_BE
-	पूर्ण,
-	अणु
-		.sndअगर = XENSND_PCM_FORMAT_S32_LE,
+	},
+	{
+		.sndif = XENSND_PCM_FORMAT_S32_LE,
 		.alsa = SNDRV_PCM_FORMAT_S32_LE
-	पूर्ण,
-	अणु
-		.sndअगर = XENSND_PCM_FORMAT_S32_BE,
+	},
+	{
+		.sndif = XENSND_PCM_FORMAT_S32_BE,
 		.alsa = SNDRV_PCM_FORMAT_S32_BE
-	पूर्ण,
-	अणु
-		.sndअगर = XENSND_PCM_FORMAT_A_LAW,
+	},
+	{
+		.sndif = XENSND_PCM_FORMAT_A_LAW,
 		.alsa = SNDRV_PCM_FORMAT_A_LAW
-	पूर्ण,
-	अणु
-		.sndअगर = XENSND_PCM_FORMAT_MU_LAW,
+	},
+	{
+		.sndif = XENSND_PCM_FORMAT_MU_LAW,
 		.alsa = SNDRV_PCM_FORMAT_MU_LAW
-	पूर्ण,
-	अणु
-		.sndअगर = XENSND_PCM_FORMAT_F32_LE,
+	},
+	{
+		.sndif = XENSND_PCM_FORMAT_F32_LE,
 		.alsa = SNDRV_PCM_FORMAT_FLOAT_LE
-	पूर्ण,
-	अणु
-		.sndअगर = XENSND_PCM_FORMAT_F32_BE,
+	},
+	{
+		.sndif = XENSND_PCM_FORMAT_F32_BE,
 		.alsa = SNDRV_PCM_FORMAT_FLOAT_BE
-	पूर्ण,
-	अणु
-		.sndअगर = XENSND_PCM_FORMAT_F64_LE,
+	},
+	{
+		.sndif = XENSND_PCM_FORMAT_F64_LE,
 		.alsa = SNDRV_PCM_FORMAT_FLOAT64_LE
-	पूर्ण,
-	अणु
-		.sndअगर = XENSND_PCM_FORMAT_F64_BE,
+	},
+	{
+		.sndif = XENSND_PCM_FORMAT_F64_BE,
 		.alsa = SNDRV_PCM_FORMAT_FLOAT64_BE
-	पूर्ण,
-	अणु
-		.sndअगर = XENSND_PCM_FORMAT_IEC958_SUBFRAME_LE,
+	},
+	{
+		.sndif = XENSND_PCM_FORMAT_IEC958_SUBFRAME_LE,
 		.alsa = SNDRV_PCM_FORMAT_IEC958_SUBFRAME_LE
-	पूर्ण,
-	अणु
-		.sndअगर = XENSND_PCM_FORMAT_IEC958_SUBFRAME_BE,
+	},
+	{
+		.sndif = XENSND_PCM_FORMAT_IEC958_SUBFRAME_BE,
 		.alsa = SNDRV_PCM_FORMAT_IEC958_SUBFRAME_BE
-	पूर्ण,
-	अणु
-		.sndअगर = XENSND_PCM_FORMAT_IMA_ADPCM,
+	},
+	{
+		.sndif = XENSND_PCM_FORMAT_IMA_ADPCM,
 		.alsa = SNDRV_PCM_FORMAT_IMA_ADPCM
-	पूर्ण,
-	अणु
-		.sndअगर = XENSND_PCM_FORMAT_MPEG,
+	},
+	{
+		.sndif = XENSND_PCM_FORMAT_MPEG,
 		.alsa = SNDRV_PCM_FORMAT_MPEG
-	पूर्ण,
-	अणु
-		.sndअगर = XENSND_PCM_FORMAT_GSM,
+	},
+	{
+		.sndif = XENSND_PCM_FORMAT_GSM,
 		.alsa = SNDRV_PCM_FORMAT_GSM
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक to_sndअगर_क्रमmat(snd_pcm_क्रमmat_t क्रमmat)
-अणु
-	पूर्णांक i;
+static int to_sndif_format(snd_pcm_format_t format)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(ALSA_SNDIF_FORMATS); i++)
-		अगर (ALSA_SNDIF_FORMATS[i].alsa == क्रमmat)
-			वापस ALSA_SNDIF_FORMATS[i].sndअगर;
+	for (i = 0; i < ARRAY_SIZE(ALSA_SNDIF_FORMATS); i++)
+		if (ALSA_SNDIF_FORMATS[i].alsa == format)
+			return ALSA_SNDIF_FORMATS[i].sndif;
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल u64 to_sndअगर_क्रमmats_mask(u64 alsa_क्रमmats)
-अणु
+static u64 to_sndif_formats_mask(u64 alsa_formats)
+{
 	u64 mask;
-	पूर्णांक i;
+	int i;
 
 	mask = 0;
-	क्रम (i = 0; i < ARRAY_SIZE(ALSA_SNDIF_FORMATS); i++)
-		अगर (pcm_क्रमmat_to_bits(ALSA_SNDIF_FORMATS[i].alsa) & alsa_क्रमmats)
-			mask |= BIT_ULL(ALSA_SNDIF_FORMATS[i].sndअगर);
+	for (i = 0; i < ARRAY_SIZE(ALSA_SNDIF_FORMATS); i++)
+		if (pcm_format_to_bits(ALSA_SNDIF_FORMATS[i].alsa) & alsa_formats)
+			mask |= BIT_ULL(ALSA_SNDIF_FORMATS[i].sndif);
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल u64 to_alsa_क्रमmats_mask(u64 sndअगर_क्रमmats)
-अणु
+static u64 to_alsa_formats_mask(u64 sndif_formats)
+{
 	u64 mask;
-	पूर्णांक i;
+	int i;
 
 	mask = 0;
-	क्रम (i = 0; i < ARRAY_SIZE(ALSA_SNDIF_FORMATS); i++)
-		अगर (BIT_ULL(ALSA_SNDIF_FORMATS[i].sndअगर) & sndअगर_क्रमmats)
-			mask |= pcm_क्रमmat_to_bits(ALSA_SNDIF_FORMATS[i].alsa);
+	for (i = 0; i < ARRAY_SIZE(ALSA_SNDIF_FORMATS); i++)
+		if (BIT_ULL(ALSA_SNDIF_FORMATS[i].sndif) & sndif_formats)
+			mask |= pcm_format_to_bits(ALSA_SNDIF_FORMATS[i].alsa);
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल व्योम stream_clear(काष्ठा xen_snd_front_pcm_stream_info *stream)
-अणु
-	stream->is_खोलो = false;
+static void stream_clear(struct xen_snd_front_pcm_stream_info *stream)
+{
+	stream->is_open = false;
 	stream->be_cur_frame = 0;
 	stream->out_frames = 0;
 	atomic_set(&stream->hw_ptr, 0);
 	xen_snd_front_evtchnl_pair_clear(stream->evt_pair);
-	स_रखो(&stream->shbuf, 0, माप(stream->shbuf));
-	stream->buffer = शून्य;
+	memset(&stream->shbuf, 0, sizeof(stream->shbuf));
+	stream->buffer = NULL;
 	stream->buffer_sz = 0;
-	stream->pages = शून्य;
+	stream->pages = NULL;
 	stream->num_pages = 0;
-पूर्ण
+}
 
-अटल व्योम stream_मुक्त(काष्ठा xen_snd_front_pcm_stream_info *stream)
-अणु
+static void stream_free(struct xen_snd_front_pcm_stream_info *stream)
+{
 	xen_front_pgdir_shbuf_unmap(&stream->shbuf);
-	xen_front_pgdir_shbuf_मुक्त(&stream->shbuf);
-	अगर (stream->buffer)
-		मुक्त_pages_exact(stream->buffer, stream->buffer_sz);
-	kमुक्त(stream->pages);
+	xen_front_pgdir_shbuf_free(&stream->shbuf);
+	if (stream->buffer)
+		free_pages_exact(stream->buffer, stream->buffer_sz);
+	kfree(stream->pages);
 	stream_clear(stream);
-पूर्ण
+}
 
-अटल काष्ठा xen_snd_front_pcm_stream_info *
-stream_get(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा xen_snd_front_pcm_instance_info *pcm_instance =
+static struct xen_snd_front_pcm_stream_info *
+stream_get(struct snd_pcm_substream *substream)
+{
+	struct xen_snd_front_pcm_instance_info *pcm_instance =
 			snd_pcm_substream_chip(substream);
-	काष्ठा xen_snd_front_pcm_stream_info *stream;
+	struct xen_snd_front_pcm_stream_info *stream;
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		stream = &pcm_instance->streams_pb[substream->number];
-	अन्यथा
+	else
 		stream = &pcm_instance->streams_cap[substream->number];
 
-	वापस stream;
-पूर्ण
+	return stream;
+}
 
-अटल पूर्णांक alsa_hw_rule(काष्ठा snd_pcm_hw_params *params,
-			काष्ठा snd_pcm_hw_rule *rule)
-अणु
-	काष्ठा xen_snd_front_pcm_stream_info *stream = rule->निजी;
-	काष्ठा device *dev = &stream->front_info->xb_dev->dev;
-	काष्ठा snd_mask *क्रमmats =
+static int alsa_hw_rule(struct snd_pcm_hw_params *params,
+			struct snd_pcm_hw_rule *rule)
+{
+	struct xen_snd_front_pcm_stream_info *stream = rule->private;
+	struct device *dev = &stream->front_info->xb_dev->dev;
+	struct snd_mask *formats =
 			hw_param_mask(params, SNDRV_PCM_HW_PARAM_FORMAT);
-	काष्ठा snd_पूर्णांकerval *rates =
-			hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_RATE);
-	काष्ठा snd_पूर्णांकerval *channels =
-			hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_CHANNELS);
-	काष्ठा snd_पूर्णांकerval *period =
-			hw_param_पूर्णांकerval(params,
+	struct snd_interval *rates =
+			hw_param_interval(params, SNDRV_PCM_HW_PARAM_RATE);
+	struct snd_interval *channels =
+			hw_param_interval(params, SNDRV_PCM_HW_PARAM_CHANNELS);
+	struct snd_interval *period =
+			hw_param_interval(params,
 					  SNDRV_PCM_HW_PARAM_PERIOD_SIZE);
-	काष्ठा snd_पूर्णांकerval *buffer =
-			hw_param_पूर्णांकerval(params,
+	struct snd_interval *buffer =
+			hw_param_interval(params,
 					  SNDRV_PCM_HW_PARAM_BUFFER_SIZE);
-	काष्ठा xensnd_query_hw_param req;
-	काष्ठा xensnd_query_hw_param resp;
-	काष्ठा snd_पूर्णांकerval पूर्णांकerval;
-	काष्ठा snd_mask mask;
-	u64 sndअगर_क्रमmats;
-	पूर्णांक changed, ret;
+	struct xensnd_query_hw_param req;
+	struct xensnd_query_hw_param resp;
+	struct snd_interval interval;
+	struct snd_mask mask;
+	u64 sndif_formats;
+	int changed, ret;
 
-	/* Collect all the values we need क्रम the query. */
+	/* Collect all the values we need for the query. */
 
-	req.क्रमmats = to_sndअगर_क्रमmats_mask((u64)क्रमmats->bits[0] |
-					    (u64)(क्रमmats->bits[1]) << 32);
+	req.formats = to_sndif_formats_mask((u64)formats->bits[0] |
+					    (u64)(formats->bits[1]) << 32);
 
 	req.rates.min = rates->min;
 	req.rates.max = rates->max;
@@ -297,84 +296,84 @@ stream_get(काष्ठा snd_pcm_substream *substream)
 
 	ret = xen_snd_front_stream_query_hw_param(&stream->evt_pair->req,
 						  &req, &resp);
-	अगर (ret < 0) अणु
-		/* Check अगर this is due to backend communication error. */
-		अगर (ret == -EIO || ret == -ETIMEDOUT)
+	if (ret < 0) {
+		/* Check if this is due to backend communication error. */
+		if (ret == -EIO || ret == -ETIMEDOUT)
 			dev_err(dev, "Failed to query ALSA HW parameters\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Refine HW parameters after the query. */
 	changed  = 0;
 
-	sndअगर_क्रमmats = to_alsa_क्रमmats_mask(resp.क्रमmats);
+	sndif_formats = to_alsa_formats_mask(resp.formats);
 	snd_mask_none(&mask);
-	mask.bits[0] = (u32)sndअगर_क्रमmats;
-	mask.bits[1] = (u32)(sndअगर_क्रमmats >> 32);
-	ret = snd_mask_refine(क्रमmats, &mask);
-	अगर (ret < 0)
-		वापस ret;
+	mask.bits[0] = (u32)sndif_formats;
+	mask.bits[1] = (u32)(sndif_formats >> 32);
+	ret = snd_mask_refine(formats, &mask);
+	if (ret < 0)
+		return ret;
 	changed |= ret;
 
-	पूर्णांकerval.खोलोmin = 0;
-	पूर्णांकerval.खोलोmax = 0;
-	पूर्णांकerval.पूर्णांकeger = 1;
+	interval.openmin = 0;
+	interval.openmax = 0;
+	interval.integer = 1;
 
-	पूर्णांकerval.min = resp.rates.min;
-	पूर्णांकerval.max = resp.rates.max;
-	ret = snd_पूर्णांकerval_refine(rates, &पूर्णांकerval);
-	अगर (ret < 0)
-		वापस ret;
+	interval.min = resp.rates.min;
+	interval.max = resp.rates.max;
+	ret = snd_interval_refine(rates, &interval);
+	if (ret < 0)
+		return ret;
 	changed |= ret;
 
-	पूर्णांकerval.min = resp.channels.min;
-	पूर्णांकerval.max = resp.channels.max;
-	ret = snd_पूर्णांकerval_refine(channels, &पूर्णांकerval);
-	अगर (ret < 0)
-		वापस ret;
+	interval.min = resp.channels.min;
+	interval.max = resp.channels.max;
+	ret = snd_interval_refine(channels, &interval);
+	if (ret < 0)
+		return ret;
 	changed |= ret;
 
-	पूर्णांकerval.min = resp.buffer.min;
-	पूर्णांकerval.max = resp.buffer.max;
-	ret = snd_पूर्णांकerval_refine(buffer, &पूर्णांकerval);
-	अगर (ret < 0)
-		वापस ret;
+	interval.min = resp.buffer.min;
+	interval.max = resp.buffer.max;
+	ret = snd_interval_refine(buffer, &interval);
+	if (ret < 0)
+		return ret;
 	changed |= ret;
 
-	पूर्णांकerval.min = resp.period.min;
-	पूर्णांकerval.max = resp.period.max;
-	ret = snd_पूर्णांकerval_refine(period, &पूर्णांकerval);
-	अगर (ret < 0)
-		वापस ret;
+	interval.min = resp.period.min;
+	interval.max = resp.period.max;
+	ret = snd_interval_refine(period, &interval);
+	if (ret < 0)
+		return ret;
 	changed |= ret;
 
-	वापस changed;
-पूर्ण
+	return changed;
+}
 
-अटल पूर्णांक alsa_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा xen_snd_front_pcm_instance_info *pcm_instance =
+static int alsa_open(struct snd_pcm_substream *substream)
+{
+	struct xen_snd_front_pcm_instance_info *pcm_instance =
 			snd_pcm_substream_chip(substream);
-	काष्ठा xen_snd_front_pcm_stream_info *stream = stream_get(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा xen_snd_front_info *front_info =
+	struct xen_snd_front_pcm_stream_info *stream = stream_get(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct xen_snd_front_info *front_info =
 			pcm_instance->card_info->front_info;
-	काष्ठा device *dev = &front_info->xb_dev->dev;
-	पूर्णांक ret;
+	struct device *dev = &front_info->xb_dev->dev;
+	int ret;
 
 	/*
-	 * Return our HW properties: override शेषs with those configured
+	 * Return our HW properties: override defaults with those configured
 	 * via XenStore.
 	 */
-	runसमय->hw = stream->pcm_hw;
-	runसमय->hw.info &= ~(SNDRV_PCM_INFO_MMAP |
+	runtime->hw = stream->pcm_hw;
+	runtime->hw.info &= ~(SNDRV_PCM_INFO_MMAP |
 			      SNDRV_PCM_INFO_MMAP_VALID |
 			      SNDRV_PCM_INFO_DOUBLE |
 			      SNDRV_PCM_INFO_BATCH |
 			      SNDRV_PCM_INFO_NONINTERLEAVED |
 			      SNDRV_PCM_INFO_RESUME |
 			      SNDRV_PCM_INFO_PAUSE);
-	runसमय->hw.info |= SNDRV_PCM_INFO_INTERLEAVED;
+	runtime->hw.info |= SNDRV_PCM_INFO_INTERLEAVED;
 
 	stream->evt_pair = &front_info->evt_pairs[stream->index];
 
@@ -386,341 +385,341 @@ stream_get(काष्ठा snd_pcm_substream *substream)
 
 	xen_snd_front_evtchnl_pair_set_connected(stream->evt_pair, true);
 
-	ret = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_FORMAT,
+	ret = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_FORMAT,
 				  alsa_hw_rule, stream,
 				  SNDRV_PCM_HW_PARAM_FORMAT, -1);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to add HW rule for SNDRV_PCM_HW_PARAM_FORMAT\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_RATE,
+	ret = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_RATE,
 				  alsa_hw_rule, stream,
 				  SNDRV_PCM_HW_PARAM_RATE, -1);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to add HW rule for SNDRV_PCM_HW_PARAM_RATE\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_CHANNELS,
+	ret = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_CHANNELS,
 				  alsa_hw_rule, stream,
 				  SNDRV_PCM_HW_PARAM_CHANNELS, -1);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to add HW rule for SNDRV_PCM_HW_PARAM_CHANNELS\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_PERIOD_SIZE,
+	ret = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_PERIOD_SIZE,
 				  alsa_hw_rule, stream,
 				  SNDRV_PCM_HW_PARAM_PERIOD_SIZE, -1);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to add HW rule for SNDRV_PCM_HW_PARAM_PERIOD_SIZE\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_BUFFER_SIZE,
+	ret = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_BUFFER_SIZE,
 				  alsa_hw_rule, stream,
 				  SNDRV_PCM_HW_PARAM_BUFFER_SIZE, -1);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to add HW rule for SNDRV_PCM_HW_PARAM_BUFFER_SIZE\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक alsa_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा xen_snd_front_pcm_stream_info *stream = stream_get(substream);
+static int alsa_close(struct snd_pcm_substream *substream)
+{
+	struct xen_snd_front_pcm_stream_info *stream = stream_get(substream);
 
 	xen_snd_front_evtchnl_pair_set_connected(stream->evt_pair, false);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक shbuf_setup_backstore(काष्ठा xen_snd_front_pcm_stream_info *stream,
-				 माप_प्रकार buffer_sz)
-अणु
-	पूर्णांक i;
+static int shbuf_setup_backstore(struct xen_snd_front_pcm_stream_info *stream,
+				 size_t buffer_sz)
+{
+	int i;
 
 	stream->buffer = alloc_pages_exact(buffer_sz, GFP_KERNEL);
-	अगर (!stream->buffer)
-		वापस -ENOMEM;
+	if (!stream->buffer)
+		return -ENOMEM;
 
 	stream->buffer_sz = buffer_sz;
 	stream->num_pages = DIV_ROUND_UP(stream->buffer_sz, PAGE_SIZE);
-	stream->pages = kसुस्मृति(stream->num_pages, माप(काष्ठा page *),
+	stream->pages = kcalloc(stream->num_pages, sizeof(struct page *),
 				GFP_KERNEL);
-	अगर (!stream->pages)
-		वापस -ENOMEM;
+	if (!stream->pages)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < stream->num_pages; i++)
+	for (i = 0; i < stream->num_pages; i++)
 		stream->pages[i] = virt_to_page(stream->buffer + i * PAGE_SIZE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक alsa_hw_params(काष्ठा snd_pcm_substream *substream,
-			  काष्ठा snd_pcm_hw_params *params)
-अणु
-	काष्ठा xen_snd_front_pcm_stream_info *stream = stream_get(substream);
-	काष्ठा xen_snd_front_info *front_info = stream->front_info;
-	काष्ठा xen_front_pgdir_shbuf_cfg buf_cfg;
-	पूर्णांक ret;
+static int alsa_hw_params(struct snd_pcm_substream *substream,
+			  struct snd_pcm_hw_params *params)
+{
+	struct xen_snd_front_pcm_stream_info *stream = stream_get(substream);
+	struct xen_snd_front_info *front_info = stream->front_info;
+	struct xen_front_pgdir_shbuf_cfg buf_cfg;
+	int ret;
 
 	/*
-	 * This callback may be called multiple बार,
-	 * so मुक्त the previously allocated shared buffer अगर any.
+	 * This callback may be called multiple times,
+	 * so free the previously allocated shared buffer if any.
 	 */
-	stream_मुक्त(stream);
+	stream_free(stream);
 	ret = shbuf_setup_backstore(stream, params_buffer_bytes(params));
-	अगर (ret < 0)
-		जाओ fail;
+	if (ret < 0)
+		goto fail;
 
-	स_रखो(&buf_cfg, 0, माप(buf_cfg));
+	memset(&buf_cfg, 0, sizeof(buf_cfg));
 	buf_cfg.xb_dev = front_info->xb_dev;
 	buf_cfg.pgdir = &stream->shbuf;
 	buf_cfg.num_pages = stream->num_pages;
 	buf_cfg.pages = stream->pages;
 
 	ret = xen_front_pgdir_shbuf_alloc(&buf_cfg);
-	अगर (ret < 0)
-		जाओ fail;
+	if (ret < 0)
+		goto fail;
 
 	ret = xen_front_pgdir_shbuf_map(&stream->shbuf);
-	अगर (ret < 0)
-		जाओ fail;
+	if (ret < 0)
+		goto fail;
 
-	वापस 0;
+	return 0;
 
 fail:
-	stream_मुक्त(stream);
+	stream_free(stream);
 	dev_err(&front_info->xb_dev->dev,
 		"Failed to allocate buffers for stream with index %d\n",
 		stream->index);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक alsa_hw_मुक्त(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा xen_snd_front_pcm_stream_info *stream = stream_get(substream);
-	पूर्णांक ret;
+static int alsa_hw_free(struct snd_pcm_substream *substream)
+{
+	struct xen_snd_front_pcm_stream_info *stream = stream_get(substream);
+	int ret;
 
-	ret = xen_snd_front_stream_बंद(&stream->evt_pair->req);
-	stream_मुक्त(stream);
-	वापस ret;
-पूर्ण
+	ret = xen_snd_front_stream_close(&stream->evt_pair->req);
+	stream_free(stream);
+	return ret;
+}
 
-अटल पूर्णांक alsa_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा xen_snd_front_pcm_stream_info *stream = stream_get(substream);
+static int alsa_prepare(struct snd_pcm_substream *substream)
+{
+	struct xen_snd_front_pcm_stream_info *stream = stream_get(substream);
 
-	अगर (!stream->is_खोलो) अणु
-		काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-		u8 sndअगर_क्रमmat;
-		पूर्णांक ret;
+	if (!stream->is_open) {
+		struct snd_pcm_runtime *runtime = substream->runtime;
+		u8 sndif_format;
+		int ret;
 
-		ret = to_sndअगर_क्रमmat(runसमय->क्रमmat);
-		अगर (ret < 0) अणु
+		ret = to_sndif_format(runtime->format);
+		if (ret < 0) {
 			dev_err(&stream->front_info->xb_dev->dev,
 				"Unsupported sample format: %d\n",
-				runसमय->क्रमmat);
-			वापस ret;
-		पूर्ण
-		sndअगर_क्रमmat = ret;
+				runtime->format);
+			return ret;
+		}
+		sndif_format = ret;
 
 		ret = xen_snd_front_stream_prepare(&stream->evt_pair->req,
 						   &stream->shbuf,
-						   sndअगर_क्रमmat,
-						   runसमय->channels,
-						   runसमय->rate,
+						   sndif_format,
+						   runtime->channels,
+						   runtime->rate,
 						   snd_pcm_lib_buffer_bytes(substream),
 						   snd_pcm_lib_period_bytes(substream));
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
-		stream->is_खोलो = true;
-	पूर्ण
+		stream->is_open = true;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक alsa_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
-अणु
-	काष्ठा xen_snd_front_pcm_stream_info *stream = stream_get(substream);
-	पूर्णांक type;
+static int alsa_trigger(struct snd_pcm_substream *substream, int cmd)
+{
+	struct xen_snd_front_pcm_stream_info *stream = stream_get(substream);
+	int type;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
 		type = XENSND_OP_TRIGGER_START;
-		अवरोध;
+		break;
 
-	हाल SNDRV_PCM_TRIGGER_RESUME:
+	case SNDRV_PCM_TRIGGER_RESUME:
 		type = XENSND_OP_TRIGGER_RESUME;
-		अवरोध;
+		break;
 
-	हाल SNDRV_PCM_TRIGGER_STOP:
+	case SNDRV_PCM_TRIGGER_STOP:
 		type = XENSND_OP_TRIGGER_STOP;
-		अवरोध;
+		break;
 
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+	case SNDRV_PCM_TRIGGER_SUSPEND:
 		type = XENSND_OP_TRIGGER_PAUSE;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस xen_snd_front_stream_trigger(&stream->evt_pair->req, type);
-पूर्ण
+	return xen_snd_front_stream_trigger(&stream->evt_pair->req, type);
+}
 
-व्योम xen_snd_front_alsa_handle_cur_pos(काष्ठा xen_snd_front_evtchnl *evtchnl,
+void xen_snd_front_alsa_handle_cur_pos(struct xen_snd_front_evtchnl *evtchnl,
 				       u64 pos_bytes)
-अणु
-	काष्ठा snd_pcm_substream *substream = evtchnl->u.evt.substream;
-	काष्ठा xen_snd_front_pcm_stream_info *stream = stream_get(substream);
+{
+	struct snd_pcm_substream *substream = evtchnl->u.evt.substream;
+	struct xen_snd_front_pcm_stream_info *stream = stream_get(substream);
 	snd_pcm_uframes_t delta, new_hw_ptr, cur_frame;
 
-	cur_frame = bytes_to_frames(substream->runसमय, pos_bytes);
+	cur_frame = bytes_to_frames(substream->runtime, pos_bytes);
 
 	delta = cur_frame - stream->be_cur_frame;
 	stream->be_cur_frame = cur_frame;
 
-	new_hw_ptr = (snd_pcm_uframes_t)atomic_पढ़ो(&stream->hw_ptr);
-	new_hw_ptr = (new_hw_ptr + delta) % substream->runसमय->buffer_size;
-	atomic_set(&stream->hw_ptr, (पूर्णांक)new_hw_ptr);
+	new_hw_ptr = (snd_pcm_uframes_t)atomic_read(&stream->hw_ptr);
+	new_hw_ptr = (new_hw_ptr + delta) % substream->runtime->buffer_size;
+	atomic_set(&stream->hw_ptr, (int)new_hw_ptr);
 
 	stream->out_frames += delta;
-	अगर (stream->out_frames > substream->runसमय->period_size) अणु
-		stream->out_frames %= substream->runसमय->period_size;
+	if (stream->out_frames > substream->runtime->period_size) {
+		stream->out_frames %= substream->runtime->period_size;
 		snd_pcm_period_elapsed(substream);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल snd_pcm_uframes_t alsa_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा xen_snd_front_pcm_stream_info *stream = stream_get(substream);
+static snd_pcm_uframes_t alsa_pointer(struct snd_pcm_substream *substream)
+{
+	struct xen_snd_front_pcm_stream_info *stream = stream_get(substream);
 
-	वापस (snd_pcm_uframes_t)atomic_पढ़ो(&stream->hw_ptr);
-पूर्ण
+	return (snd_pcm_uframes_t)atomic_read(&stream->hw_ptr);
+}
 
-अटल पूर्णांक alsa_pb_copy_user(काष्ठा snd_pcm_substream *substream,
-			     पूर्णांक channel, अचिन्हित दीर्घ pos, व्योम __user *src,
-			     अचिन्हित दीर्घ count)
-अणु
-	काष्ठा xen_snd_front_pcm_stream_info *stream = stream_get(substream);
+static int alsa_pb_copy_user(struct snd_pcm_substream *substream,
+			     int channel, unsigned long pos, void __user *src,
+			     unsigned long count)
+{
+	struct xen_snd_front_pcm_stream_info *stream = stream_get(substream);
 
-	अगर (unlikely(pos + count > stream->buffer_sz))
-		वापस -EINVAL;
+	if (unlikely(pos + count > stream->buffer_sz))
+		return -EINVAL;
 
-	अगर (copy_from_user(stream->buffer + pos, src, count))
-		वापस -EFAULT;
+	if (copy_from_user(stream->buffer + pos, src, count))
+		return -EFAULT;
 
-	वापस xen_snd_front_stream_ग_लिखो(&stream->evt_pair->req, pos, count);
-पूर्ण
+	return xen_snd_front_stream_write(&stream->evt_pair->req, pos, count);
+}
 
-अटल पूर्णांक alsa_pb_copy_kernel(काष्ठा snd_pcm_substream *substream,
-			       पूर्णांक channel, अचिन्हित दीर्घ pos, व्योम *src,
-			       अचिन्हित दीर्घ count)
-अणु
-	काष्ठा xen_snd_front_pcm_stream_info *stream = stream_get(substream);
+static int alsa_pb_copy_kernel(struct snd_pcm_substream *substream,
+			       int channel, unsigned long pos, void *src,
+			       unsigned long count)
+{
+	struct xen_snd_front_pcm_stream_info *stream = stream_get(substream);
 
-	अगर (unlikely(pos + count > stream->buffer_sz))
-		वापस -EINVAL;
+	if (unlikely(pos + count > stream->buffer_sz))
+		return -EINVAL;
 
-	स_नकल(stream->buffer + pos, src, count);
+	memcpy(stream->buffer + pos, src, count);
 
-	वापस xen_snd_front_stream_ग_लिखो(&stream->evt_pair->req, pos, count);
-पूर्ण
+	return xen_snd_front_stream_write(&stream->evt_pair->req, pos, count);
+}
 
-अटल पूर्णांक alsa_cap_copy_user(काष्ठा snd_pcm_substream *substream,
-			      पूर्णांक channel, अचिन्हित दीर्घ pos, व्योम __user *dst,
-			      अचिन्हित दीर्घ count)
-अणु
-	काष्ठा xen_snd_front_pcm_stream_info *stream = stream_get(substream);
-	पूर्णांक ret;
+static int alsa_cap_copy_user(struct snd_pcm_substream *substream,
+			      int channel, unsigned long pos, void __user *dst,
+			      unsigned long count)
+{
+	struct xen_snd_front_pcm_stream_info *stream = stream_get(substream);
+	int ret;
 
-	अगर (unlikely(pos + count > stream->buffer_sz))
-		वापस -EINVAL;
+	if (unlikely(pos + count > stream->buffer_sz))
+		return -EINVAL;
 
-	ret = xen_snd_front_stream_पढ़ो(&stream->evt_pair->req, pos, count);
-	अगर (ret < 0)
-		वापस ret;
+	ret = xen_snd_front_stream_read(&stream->evt_pair->req, pos, count);
+	if (ret < 0)
+		return ret;
 
-	वापस copy_to_user(dst, stream->buffer + pos, count) ?
+	return copy_to_user(dst, stream->buffer + pos, count) ?
 		-EFAULT : 0;
-पूर्ण
+}
 
-अटल पूर्णांक alsa_cap_copy_kernel(काष्ठा snd_pcm_substream *substream,
-				पूर्णांक channel, अचिन्हित दीर्घ pos, व्योम *dst,
-				अचिन्हित दीर्घ count)
-अणु
-	काष्ठा xen_snd_front_pcm_stream_info *stream = stream_get(substream);
-	पूर्णांक ret;
+static int alsa_cap_copy_kernel(struct snd_pcm_substream *substream,
+				int channel, unsigned long pos, void *dst,
+				unsigned long count)
+{
+	struct xen_snd_front_pcm_stream_info *stream = stream_get(substream);
+	int ret;
 
-	अगर (unlikely(pos + count > stream->buffer_sz))
-		वापस -EINVAL;
+	if (unlikely(pos + count > stream->buffer_sz))
+		return -EINVAL;
 
-	ret = xen_snd_front_stream_पढ़ो(&stream->evt_pair->req, pos, count);
-	अगर (ret < 0)
-		वापस ret;
+	ret = xen_snd_front_stream_read(&stream->evt_pair->req, pos, count);
+	if (ret < 0)
+		return ret;
 
-	स_नकल(dst, stream->buffer + pos, count);
+	memcpy(dst, stream->buffer + pos, count);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक alsa_pb_fill_silence(काष्ठा snd_pcm_substream *substream,
-				पूर्णांक channel, अचिन्हित दीर्घ pos,
-				अचिन्हित दीर्घ count)
-अणु
-	काष्ठा xen_snd_front_pcm_stream_info *stream = stream_get(substream);
+static int alsa_pb_fill_silence(struct snd_pcm_substream *substream,
+				int channel, unsigned long pos,
+				unsigned long count)
+{
+	struct xen_snd_front_pcm_stream_info *stream = stream_get(substream);
 
-	अगर (unlikely(pos + count > stream->buffer_sz))
-		वापस -EINVAL;
+	if (unlikely(pos + count > stream->buffer_sz))
+		return -EINVAL;
 
-	स_रखो(stream->buffer + pos, 0, count);
+	memset(stream->buffer + pos, 0, count);
 
-	वापस xen_snd_front_stream_ग_लिखो(&stream->evt_pair->req, pos, count);
-पूर्ण
+	return xen_snd_front_stream_write(&stream->evt_pair->req, pos, count);
+}
 
 /*
  * FIXME: The mmaped data transfer is asynchronous and there is no
- * ack संकेत from user-space when it is करोne. This is the
- * reason it is not implemented in the PV driver as we करो need
+ * ack signal from user-space when it is done. This is the
+ * reason it is not implemented in the PV driver as we do need
  * to know when the buffer can be transferred to the backend.
  */
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_drv_alsa_playback_ops = अणु
-	.खोलो		= alsa_खोलो,
-	.बंद		= alsa_बंद,
+static const struct snd_pcm_ops snd_drv_alsa_playback_ops = {
+	.open		= alsa_open,
+	.close		= alsa_close,
 	.hw_params	= alsa_hw_params,
-	.hw_मुक्त	= alsa_hw_मुक्त,
+	.hw_free	= alsa_hw_free,
 	.prepare	= alsa_prepare,
 	.trigger	= alsa_trigger,
-	.poपूर्णांकer	= alsa_poपूर्णांकer,
+	.pointer	= alsa_pointer,
 	.copy_user	= alsa_pb_copy_user,
 	.copy_kernel	= alsa_pb_copy_kernel,
 	.fill_silence	= alsa_pb_fill_silence,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_drv_alsa_capture_ops = अणु
-	.खोलो		= alsa_खोलो,
-	.बंद		= alsa_बंद,
+static const struct snd_pcm_ops snd_drv_alsa_capture_ops = {
+	.open		= alsa_open,
+	.close		= alsa_close,
 	.hw_params	= alsa_hw_params,
-	.hw_मुक्त	= alsa_hw_मुक्त,
+	.hw_free	= alsa_hw_free,
 	.prepare	= alsa_prepare,
 	.trigger	= alsa_trigger,
-	.poपूर्णांकer	= alsa_poपूर्णांकer,
+	.pointer	= alsa_pointer,
 	.copy_user	= alsa_cap_copy_user,
 	.copy_kernel	= alsa_cap_copy_kernel,
-पूर्ण;
+};
 
-अटल पूर्णांक new_pcm_instance(काष्ठा xen_snd_front_card_info *card_info,
-			    काष्ठा xen_front_cfg_pcm_instance *instance_cfg,
-			    काष्ठा xen_snd_front_pcm_instance_info *pcm_instance_info)
-अणु
-	काष्ठा snd_pcm *pcm;
-	पूर्णांक ret, i;
+static int new_pcm_instance(struct xen_snd_front_card_info *card_info,
+			    struct xen_front_cfg_pcm_instance *instance_cfg,
+			    struct xen_snd_front_pcm_instance_info *pcm_instance_info)
+{
+	struct snd_pcm *pcm;
+	int ret, i;
 
 	dev_dbg(&card_info->front_info->xb_dev->dev,
 		"New PCM device \"%s\" with id %d playback %d capture %d",
@@ -733,141 +732,141 @@ fail:
 
 	pcm_instance_info->pcm_hw = instance_cfg->pcm_hw;
 
-	अगर (instance_cfg->num_streams_pb) अणु
+	if (instance_cfg->num_streams_pb) {
 		pcm_instance_info->streams_pb =
-				devm_kसुस्मृति(&card_info->card->card_dev,
+				devm_kcalloc(&card_info->card->card_dev,
 					     instance_cfg->num_streams_pb,
-					     माप(काष्ठा xen_snd_front_pcm_stream_info),
+					     sizeof(struct xen_snd_front_pcm_stream_info),
 					     GFP_KERNEL);
-		अगर (!pcm_instance_info->streams_pb)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!pcm_instance_info->streams_pb)
+			return -ENOMEM;
+	}
 
-	अगर (instance_cfg->num_streams_cap) अणु
+	if (instance_cfg->num_streams_cap) {
 		pcm_instance_info->streams_cap =
-				devm_kसुस्मृति(&card_info->card->card_dev,
+				devm_kcalloc(&card_info->card->card_dev,
 					     instance_cfg->num_streams_cap,
-					     माप(काष्ठा xen_snd_front_pcm_stream_info),
+					     sizeof(struct xen_snd_front_pcm_stream_info),
 					     GFP_KERNEL);
-		अगर (!pcm_instance_info->streams_cap)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!pcm_instance_info->streams_cap)
+			return -ENOMEM;
+	}
 
 	pcm_instance_info->num_pcm_streams_pb =
 			instance_cfg->num_streams_pb;
 	pcm_instance_info->num_pcm_streams_cap =
 			instance_cfg->num_streams_cap;
 
-	क्रम (i = 0; i < pcm_instance_info->num_pcm_streams_pb; i++) अणु
+	for (i = 0; i < pcm_instance_info->num_pcm_streams_pb; i++) {
 		pcm_instance_info->streams_pb[i].pcm_hw =
 			instance_cfg->streams_pb[i].pcm_hw;
 		pcm_instance_info->streams_pb[i].index =
 			instance_cfg->streams_pb[i].index;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < pcm_instance_info->num_pcm_streams_cap; i++) अणु
+	for (i = 0; i < pcm_instance_info->num_pcm_streams_cap; i++) {
 		pcm_instance_info->streams_cap[i].pcm_hw =
 			instance_cfg->streams_cap[i].pcm_hw;
 		pcm_instance_info->streams_cap[i].index =
 			instance_cfg->streams_cap[i].index;
-	पूर्ण
+	}
 
 	ret = snd_pcm_new(card_info->card, instance_cfg->name,
 			  instance_cfg->device_id,
 			  instance_cfg->num_streams_pb,
 			  instance_cfg->num_streams_cap,
 			  &pcm);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	pcm->निजी_data = pcm_instance_info;
+	pcm->private_data = pcm_instance_info;
 	pcm->info_flags = 0;
 	/* we want to handle all PCM operations in non-atomic context */
 	pcm->nonatomic = true;
-	म_नकलन(pcm->name, "Virtual card PCM", माप(pcm->name));
+	strncpy(pcm->name, "Virtual card PCM", sizeof(pcm->name));
 
-	अगर (instance_cfg->num_streams_pb)
+	if (instance_cfg->num_streams_pb)
 		snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK,
 				&snd_drv_alsa_playback_ops);
 
-	अगर (instance_cfg->num_streams_cap)
+	if (instance_cfg->num_streams_cap)
 		snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE,
 				&snd_drv_alsa_capture_ops);
 
 	pcm_instance_info->pcm = pcm;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक xen_snd_front_alsa_init(काष्ठा xen_snd_front_info *front_info)
-अणु
-	काष्ठा device *dev = &front_info->xb_dev->dev;
-	काष्ठा xen_front_cfg_card *cfg = &front_info->cfg;
-	काष्ठा xen_snd_front_card_info *card_info;
-	काष्ठा snd_card *card;
-	पूर्णांक ret, i;
+int xen_snd_front_alsa_init(struct xen_snd_front_info *front_info)
+{
+	struct device *dev = &front_info->xb_dev->dev;
+	struct xen_front_cfg_card *cfg = &front_info->cfg;
+	struct xen_snd_front_card_info *card_info;
+	struct snd_card *card;
+	int ret, i;
 
 	dev_dbg(dev, "Creating virtual sound card\n");
 
 	ret = snd_card_new(dev, 0, XENSND_DRIVER_NAME, THIS_MODULE,
-			   माप(काष्ठा xen_snd_front_card_info), &card);
-	अगर (ret < 0)
-		वापस ret;
+			   sizeof(struct xen_snd_front_card_info), &card);
+	if (ret < 0)
+		return ret;
 
-	card_info = card->निजी_data;
+	card_info = card->private_data;
 	card_info->front_info = front_info;
 	front_info->card_info = card_info;
 	card_info->card = card;
 	card_info->pcm_instances =
-			devm_kसुस्मृति(dev, cfg->num_pcm_instances,
-				     माप(काष्ठा xen_snd_front_pcm_instance_info),
+			devm_kcalloc(dev, cfg->num_pcm_instances,
+				     sizeof(struct xen_snd_front_pcm_instance_info),
 				     GFP_KERNEL);
-	अगर (!card_info->pcm_instances) अणु
+	if (!card_info->pcm_instances) {
 		ret = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	card_info->num_pcm_instances = cfg->num_pcm_instances;
 	card_info->pcm_hw = cfg->pcm_hw;
 
-	क्रम (i = 0; i < cfg->num_pcm_instances; i++) अणु
+	for (i = 0; i < cfg->num_pcm_instances; i++) {
 		ret = new_pcm_instance(card_info, &cfg->pcm_instances[i],
 				       &card_info->pcm_instances[i]);
-		अगर (ret < 0)
-			जाओ fail;
-	पूर्ण
+		if (ret < 0)
+			goto fail;
+	}
 
-	म_नकलन(card->driver, XENSND_DRIVER_NAME, माप(card->driver));
-	म_नकलन(card->लघुname, cfg->name_लघु, माप(card->लघुname));
-	म_नकलन(card->दीर्घname, cfg->name_दीर्घ, माप(card->दीर्घname));
+	strncpy(card->driver, XENSND_DRIVER_NAME, sizeof(card->driver));
+	strncpy(card->shortname, cfg->name_short, sizeof(card->shortname));
+	strncpy(card->longname, cfg->name_long, sizeof(card->longname));
 
-	ret = snd_card_रेजिस्टर(card);
-	अगर (ret < 0)
-		जाओ fail;
+	ret = snd_card_register(card);
+	if (ret < 0)
+		goto fail;
 
-	वापस 0;
+	return 0;
 
 fail:
-	snd_card_मुक्त(card);
-	वापस ret;
-पूर्ण
+	snd_card_free(card);
+	return ret;
+}
 
-व्योम xen_snd_front_alsa_fini(काष्ठा xen_snd_front_info *front_info)
-अणु
-	काष्ठा xen_snd_front_card_info *card_info;
-	काष्ठा snd_card *card;
+void xen_snd_front_alsa_fini(struct xen_snd_front_info *front_info)
+{
+	struct xen_snd_front_card_info *card_info;
+	struct snd_card *card;
 
 	card_info = front_info->card_info;
-	अगर (!card_info)
-		वापस;
+	if (!card_info)
+		return;
 
 	card = card_info->card;
-	अगर (!card)
-		वापस;
+	if (!card)
+		return;
 
 	dev_dbg(&front_info->xb_dev->dev, "Removing virtual sound card %d\n",
 		card->number);
-	snd_card_मुक्त(card);
+	snd_card_free(card);
 
-	/* Card_info will be मुक्तd when destroying front_info->xb_dev->dev. */
-	card_info->card = शून्य;
-पूर्ण
+	/* Card_info will be freed when destroying front_info->xb_dev->dev. */
+	card_info->card = NULL;
+}

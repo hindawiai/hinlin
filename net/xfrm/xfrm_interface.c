@@ -1,321 +1,320 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *	XFRM भव पूर्णांकerface
+ *	XFRM virtual interface
  *
  *	Copyright (C) 2018 secunet Security Networks AG
  *
  *	Author:
- *	Steffen Klनिश्चित <steffen.klनिश्चित@secunet.com>
+ *	Steffen Klassert <steffen.klassert@secunet.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/capability.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/sockios.h>
-#समावेश <linux/icmp.h>
-#समावेश <linux/अगर.h>
-#समावेश <linux/in.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/net.h>
-#समावेश <linux/in6.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/अगर_link.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/icmpv6.h>
-#समावेश <linux/init.h>
-#समावेश <linux/route.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/netfilter_ipv6.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/hash.h>
+#include <linux/module.h>
+#include <linux/capability.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/sockios.h>
+#include <linux/icmp.h>
+#include <linux/if.h>
+#include <linux/in.h>
+#include <linux/ip.h>
+#include <linux/net.h>
+#include <linux/in6.h>
+#include <linux/netdevice.h>
+#include <linux/if_link.h>
+#include <linux/if_arp.h>
+#include <linux/icmpv6.h>
+#include <linux/init.h>
+#include <linux/route.h>
+#include <linux/rtnetlink.h>
+#include <linux/netfilter_ipv6.h>
+#include <linux/slab.h>
+#include <linux/hash.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <linux/atomic.h>
+#include <linux/uaccess.h>
+#include <linux/atomic.h>
 
-#समावेश <net/icmp.h>
-#समावेश <net/ip.h>
-#समावेश <net/ipv6.h>
-#समावेश <net/ip6_route.h>
-#समावेश <net/ip_tunnels.h>
-#समावेश <net/addrconf.h>
-#समावेश <net/xfrm.h>
-#समावेश <net/net_namespace.h>
-#समावेश <net/netns/generic.h>
-#समावेश <linux/etherdevice.h>
+#include <net/icmp.h>
+#include <net/ip.h>
+#include <net/ipv6.h>
+#include <net/ip6_route.h>
+#include <net/ip_tunnels.h>
+#include <net/addrconf.h>
+#include <net/xfrm.h>
+#include <net/net_namespace.h>
+#include <net/netns/generic.h>
+#include <linux/etherdevice.h>
 
-अटल पूर्णांक xfrmi_dev_init(काष्ठा net_device *dev);
-अटल व्योम xfrmi_dev_setup(काष्ठा net_device *dev);
-अटल काष्ठा rtnl_link_ops xfrmi_link_ops __पढ़ो_mostly;
-अटल अचिन्हित पूर्णांक xfrmi_net_id __पढ़ो_mostly;
-अटल स्थिर काष्ठा net_device_ops xfrmi_netdev_ops;
+static int xfrmi_dev_init(struct net_device *dev);
+static void xfrmi_dev_setup(struct net_device *dev);
+static struct rtnl_link_ops xfrmi_link_ops __read_mostly;
+static unsigned int xfrmi_net_id __read_mostly;
+static const struct net_device_ops xfrmi_netdev_ops;
 
-#घोषणा XFRMI_HASH_BITS	8
-#घोषणा XFRMI_HASH_SIZE	BIT(XFRMI_HASH_BITS)
+#define XFRMI_HASH_BITS	8
+#define XFRMI_HASH_SIZE	BIT(XFRMI_HASH_BITS)
 
-काष्ठा xfrmi_net अणु
-	/* lists क्रम storing पूर्णांकerfaces in use */
-	काष्ठा xfrm_अगर __rcu *xfrmi[XFRMI_HASH_SIZE];
-पूर्ण;
+struct xfrmi_net {
+	/* lists for storing interfaces in use */
+	struct xfrm_if __rcu *xfrmi[XFRMI_HASH_SIZE];
+};
 
-#घोषणा क्रम_each_xfrmi_rcu(start, xi) \
-	क्रम (xi = rcu_dereference(start); xi; xi = rcu_dereference(xi->next))
+#define for_each_xfrmi_rcu(start, xi) \
+	for (xi = rcu_dereference(start); xi; xi = rcu_dereference(xi->next))
 
-अटल u32 xfrmi_hash(u32 अगर_id)
-अणु
-	वापस hash_32(अगर_id, XFRMI_HASH_BITS);
-पूर्ण
+static u32 xfrmi_hash(u32 if_id)
+{
+	return hash_32(if_id, XFRMI_HASH_BITS);
+}
 
-अटल काष्ठा xfrm_अगर *xfrmi_lookup(काष्ठा net *net, काष्ठा xfrm_state *x)
-अणु
-	काष्ठा xfrmi_net *xfrmn = net_generic(net, xfrmi_net_id);
-	काष्ठा xfrm_अगर *xi;
+static struct xfrm_if *xfrmi_lookup(struct net *net, struct xfrm_state *x)
+{
+	struct xfrmi_net *xfrmn = net_generic(net, xfrmi_net_id);
+	struct xfrm_if *xi;
 
-	क्रम_each_xfrmi_rcu(xfrmn->xfrmi[xfrmi_hash(x->अगर_id)], xi) अणु
-		अगर (x->अगर_id == xi->p.अगर_id &&
+	for_each_xfrmi_rcu(xfrmn->xfrmi[xfrmi_hash(x->if_id)], xi) {
+		if (x->if_id == xi->p.if_id &&
 		    (xi->dev->flags & IFF_UP))
-			वापस xi;
-	पूर्ण
+			return xi;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा xfrm_अगर *xfrmi_decode_session(काष्ठा sk_buff *skb,
-					    अचिन्हित लघु family)
-अणु
-	काष्ठा net_device *dev;
-	पूर्णांक अगरindex = 0;
+static struct xfrm_if *xfrmi_decode_session(struct sk_buff *skb,
+					    unsigned short family)
+{
+	struct net_device *dev;
+	int ifindex = 0;
 
-	अगर (!secpath_exists(skb) || !skb->dev)
-		वापस शून्य;
+	if (!secpath_exists(skb) || !skb->dev)
+		return NULL;
 
-	चयन (family) अणु
-	हाल AF_INET6:
-		अगरindex = inet6_sdअगर(skb);
-		अवरोध;
-	हाल AF_INET:
-		अगरindex = inet_sdअगर(skb);
-		अवरोध;
-	पूर्ण
+	switch (family) {
+	case AF_INET6:
+		ifindex = inet6_sdif(skb);
+		break;
+	case AF_INET:
+		ifindex = inet_sdif(skb);
+		break;
+	}
 
-	अगर (अगरindex) अणु
-		काष्ठा net *net = xs_net(xfrm_input_state(skb));
+	if (ifindex) {
+		struct net *net = xs_net(xfrm_input_state(skb));
 
-		dev = dev_get_by_index_rcu(net, अगरindex);
-	पूर्ण अन्यथा अणु
+		dev = dev_get_by_index_rcu(net, ifindex);
+	} else {
 		dev = skb->dev;
-	पूर्ण
+	}
 
-	अगर (!dev || !(dev->flags & IFF_UP))
-		वापस शून्य;
-	अगर (dev->netdev_ops != &xfrmi_netdev_ops)
-		वापस शून्य;
+	if (!dev || !(dev->flags & IFF_UP))
+		return NULL;
+	if (dev->netdev_ops != &xfrmi_netdev_ops)
+		return NULL;
 
-	वापस netdev_priv(dev);
-पूर्ण
+	return netdev_priv(dev);
+}
 
-अटल व्योम xfrmi_link(काष्ठा xfrmi_net *xfrmn, काष्ठा xfrm_अगर *xi)
-अणु
-	काष्ठा xfrm_अगर __rcu **xip = &xfrmn->xfrmi[xfrmi_hash(xi->p.अगर_id)];
+static void xfrmi_link(struct xfrmi_net *xfrmn, struct xfrm_if *xi)
+{
+	struct xfrm_if __rcu **xip = &xfrmn->xfrmi[xfrmi_hash(xi->p.if_id)];
 
-	rcu_assign_poपूर्णांकer(xi->next , rtnl_dereference(*xip));
-	rcu_assign_poपूर्णांकer(*xip, xi);
-पूर्ण
+	rcu_assign_pointer(xi->next , rtnl_dereference(*xip));
+	rcu_assign_pointer(*xip, xi);
+}
 
-अटल व्योम xfrmi_unlink(काष्ठा xfrmi_net *xfrmn, काष्ठा xfrm_अगर *xi)
-अणु
-	काष्ठा xfrm_अगर __rcu **xip;
-	काष्ठा xfrm_अगर *iter;
+static void xfrmi_unlink(struct xfrmi_net *xfrmn, struct xfrm_if *xi)
+{
+	struct xfrm_if __rcu **xip;
+	struct xfrm_if *iter;
 
-	क्रम (xip = &xfrmn->xfrmi[xfrmi_hash(xi->p.अगर_id)];
-	     (iter = rtnl_dereference(*xip)) != शून्य;
-	     xip = &iter->next) अणु
-		अगर (xi == iter) अणु
-			rcu_assign_poपूर्णांकer(*xip, xi->next);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+	for (xip = &xfrmn->xfrmi[xfrmi_hash(xi->p.if_id)];
+	     (iter = rtnl_dereference(*xip)) != NULL;
+	     xip = &iter->next) {
+		if (xi == iter) {
+			rcu_assign_pointer(*xip, xi->next);
+			break;
+		}
+	}
+}
 
-अटल व्योम xfrmi_dev_मुक्त(काष्ठा net_device *dev)
-अणु
-	काष्ठा xfrm_अगर *xi = netdev_priv(dev);
+static void xfrmi_dev_free(struct net_device *dev)
+{
+	struct xfrm_if *xi = netdev_priv(dev);
 
 	gro_cells_destroy(&xi->gro_cells);
-	मुक्त_percpu(dev->tstats);
-पूर्ण
+	free_percpu(dev->tstats);
+}
 
-अटल पूर्णांक xfrmi_create(काष्ठा net_device *dev)
-अणु
-	काष्ठा xfrm_अगर *xi = netdev_priv(dev);
-	काष्ठा net *net = dev_net(dev);
-	काष्ठा xfrmi_net *xfrmn = net_generic(net, xfrmi_net_id);
-	पूर्णांक err;
+static int xfrmi_create(struct net_device *dev)
+{
+	struct xfrm_if *xi = netdev_priv(dev);
+	struct net *net = dev_net(dev);
+	struct xfrmi_net *xfrmn = net_generic(net, xfrmi_net_id);
+	int err;
 
 	dev->rtnl_link_ops = &xfrmi_link_ops;
-	err = रेजिस्टर_netdevice(dev);
-	अगर (err < 0)
-		जाओ out;
+	err = register_netdevice(dev);
+	if (err < 0)
+		goto out;
 
 	xfrmi_link(xfrmn, xi);
 
-	वापस 0;
+	return 0;
 
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा xfrm_अगर *xfrmi_locate(काष्ठा net *net, काष्ठा xfrm_अगर_parms *p)
-अणु
-	काष्ठा xfrm_अगर __rcu **xip;
-	काष्ठा xfrm_अगर *xi;
-	काष्ठा xfrmi_net *xfrmn = net_generic(net, xfrmi_net_id);
+static struct xfrm_if *xfrmi_locate(struct net *net, struct xfrm_if_parms *p)
+{
+	struct xfrm_if __rcu **xip;
+	struct xfrm_if *xi;
+	struct xfrmi_net *xfrmn = net_generic(net, xfrmi_net_id);
 
-	क्रम (xip = &xfrmn->xfrmi[xfrmi_hash(p->अगर_id)];
-	     (xi = rtnl_dereference(*xip)) != शून्य;
+	for (xip = &xfrmn->xfrmi[xfrmi_hash(p->if_id)];
+	     (xi = rtnl_dereference(*xip)) != NULL;
 	     xip = &xi->next)
-		अगर (xi->p.अगर_id == p->अगर_id)
-			वापस xi;
+		if (xi->p.if_id == p->if_id)
+			return xi;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम xfrmi_dev_uninit(काष्ठा net_device *dev)
-अणु
-	काष्ठा xfrm_अगर *xi = netdev_priv(dev);
-	काष्ठा xfrmi_net *xfrmn = net_generic(xi->net, xfrmi_net_id);
+static void xfrmi_dev_uninit(struct net_device *dev)
+{
+	struct xfrm_if *xi = netdev_priv(dev);
+	struct xfrmi_net *xfrmn = net_generic(xi->net, xfrmi_net_id);
 
 	xfrmi_unlink(xfrmn, xi);
-पूर्ण
+}
 
-अटल व्योम xfrmi_scrub_packet(काष्ठा sk_buff *skb, bool xnet)
-अणु
+static void xfrmi_scrub_packet(struct sk_buff *skb, bool xnet)
+{
 	skb->tstamp = 0;
 	skb->pkt_type = PACKET_HOST;
-	skb->skb_iअगर = 0;
+	skb->skb_iif = 0;
 	skb->ignore_df = 0;
 	skb_dst_drop(skb);
 	nf_reset_ct(skb);
 	nf_reset_trace(skb);
 
-	अगर (!xnet)
-		वापस;
+	if (!xnet)
+		return;
 
 	ipvs_reset(skb);
 	secpath_reset(skb);
 	skb_orphan(skb);
 	skb->mark = 0;
-पूर्ण
+}
 
-अटल पूर्णांक xfrmi_rcv_cb(काष्ठा sk_buff *skb, पूर्णांक err)
-अणु
-	स्थिर काष्ठा xfrm_mode *inner_mode;
-	काष्ठा net_device *dev;
-	काष्ठा xfrm_state *x;
-	काष्ठा xfrm_अगर *xi;
+static int xfrmi_rcv_cb(struct sk_buff *skb, int err)
+{
+	const struct xfrm_mode *inner_mode;
+	struct net_device *dev;
+	struct xfrm_state *x;
+	struct xfrm_if *xi;
 	bool xnet;
 
-	अगर (err && !secpath_exists(skb))
-		वापस 0;
+	if (err && !secpath_exists(skb))
+		return 0;
 
 	x = xfrm_input_state(skb);
 
 	xi = xfrmi_lookup(xs_net(x), x);
-	अगर (!xi)
-		वापस 1;
+	if (!xi)
+		return 1;
 
 	dev = xi->dev;
 	skb->dev = dev;
 
-	अगर (err) अणु
+	if (err) {
 		dev->stats.rx_errors++;
 		dev->stats.rx_dropped++;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	xnet = !net_eq(xi->net, dev_net(skb->dev));
 
-	अगर (xnet) अणु
+	if (xnet) {
 		inner_mode = &x->inner_mode;
 
-		अगर (x->sel.family == AF_UNSPEC) अणु
+		if (x->sel.family == AF_UNSPEC) {
 			inner_mode = xfrm_ip2inner_mode(x, XFRM_MODE_SKB_CB(skb)->protocol);
-			अगर (inner_mode == शून्य) अणु
+			if (inner_mode == NULL) {
 				XFRM_INC_STATS(dev_net(skb->dev),
 					       LINUX_MIB_XFRMINSTATEMODEERROR);
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
+				return -EINVAL;
+			}
+		}
 
-		अगर (!xfrm_policy_check(शून्य, XFRM_POLICY_IN, skb,
+		if (!xfrm_policy_check(NULL, XFRM_POLICY_IN, skb,
 				       inner_mode->family))
-			वापस -EPERM;
-	पूर्ण
+			return -EPERM;
+	}
 
 	xfrmi_scrub_packet(skb, xnet);
 	dev_sw_netstats_rx_add(dev, skb->len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-xfrmi_xmit2(काष्ठा sk_buff *skb, काष्ठा net_device *dev, काष्ठा flowi *fl)
-अणु
-	काष्ठा xfrm_अगर *xi = netdev_priv(dev);
-	काष्ठा net_device_stats *stats = &xi->dev->stats;
-	काष्ठा dst_entry *dst = skb_dst(skb);
-	अचिन्हित पूर्णांक length = skb->len;
-	काष्ठा net_device *tdev;
-	काष्ठा xfrm_state *x;
-	पूर्णांक err = -1;
-	पूर्णांक mtu;
+static int
+xfrmi_xmit2(struct sk_buff *skb, struct net_device *dev, struct flowi *fl)
+{
+	struct xfrm_if *xi = netdev_priv(dev);
+	struct net_device_stats *stats = &xi->dev->stats;
+	struct dst_entry *dst = skb_dst(skb);
+	unsigned int length = skb->len;
+	struct net_device *tdev;
+	struct xfrm_state *x;
+	int err = -1;
+	int mtu;
 
 	dst_hold(dst);
-	dst = xfrm_lookup_with_अगरid(xi->net, dst, fl, शून्य, 0, xi->p.अगर_id);
-	अगर (IS_ERR(dst)) अणु
+	dst = xfrm_lookup_with_ifid(xi->net, dst, fl, NULL, 0, xi->p.if_id);
+	if (IS_ERR(dst)) {
 		err = PTR_ERR(dst);
-		dst = शून्य;
-		जाओ tx_err_link_failure;
-	पूर्ण
+		dst = NULL;
+		goto tx_err_link_failure;
+	}
 
 	x = dst->xfrm;
-	अगर (!x)
-		जाओ tx_err_link_failure;
+	if (!x)
+		goto tx_err_link_failure;
 
-	अगर (x->अगर_id != xi->p.अगर_id)
-		जाओ tx_err_link_failure;
+	if (x->if_id != xi->p.if_id)
+		goto tx_err_link_failure;
 
 	tdev = dst->dev;
 
-	अगर (tdev == dev) अणु
+	if (tdev == dev) {
 		stats->collisions++;
 		net_warn_ratelimited("%s: Local routing loop detected!\n",
 				     dev->name);
-		जाओ tx_err_dst_release;
-	पूर्ण
+		goto tx_err_dst_release;
+	}
 
 	mtu = dst_mtu(dst);
-	अगर ((!skb_is_gso(skb) && skb->len > mtu) ||
-	    (skb_is_gso(skb) && !skb_gso_validate_network_len(skb, mtu))) अणु
+	if ((!skb_is_gso(skb) && skb->len > mtu) ||
+	    (skb_is_gso(skb) && !skb_gso_validate_network_len(skb, mtu))) {
 		skb_dst_update_pmtu_no_confirm(skb, mtu);
 
-		अगर (skb->protocol == htons(ETH_P_IPV6)) अणु
-			अगर (mtu < IPV6_MIN_MTU)
+		if (skb->protocol == htons(ETH_P_IPV6)) {
+			if (mtu < IPV6_MIN_MTU)
 				mtu = IPV6_MIN_MTU;
 
-			icmpv6_nकरो_send(skb, ICMPV6_PKT_TOOBIG, 0, mtu);
-		पूर्ण अन्यथा अणु
-			अगर (!(ip_hdr(skb)->frag_off & htons(IP_DF)))
-				जाओ xmit;
-			icmp_nकरो_send(skb, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED,
+			icmpv6_ndo_send(skb, ICMPV6_PKT_TOOBIG, 0, mtu);
+		} else {
+			if (!(ip_hdr(skb)->frag_off & htons(IP_DF)))
+				goto xmit;
+			icmp_ndo_send(skb, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED,
 				      htonl(mtu));
-		पूर्ण
+		}
 
 		dst_release(dst);
-		वापस -EMSGSIZE;
-	पूर्ण
+		return -EMSGSIZE;
+	}
 
 xmit:
 	xfrmi_scrub_packet(skb, !net_eq(xi->net, dev_net(dev)));
@@ -323,238 +322,238 @@ xmit:
 	skb->dev = tdev;
 
 	err = dst_output(xi->net, skb->sk, skb);
-	अगर (net_xmit_eval(err) == 0) अणु
+	if (net_xmit_eval(err) == 0) {
 		dev_sw_netstats_tx_add(dev, 1, length);
-	पूर्ण अन्यथा अणु
+	} else {
 		stats->tx_errors++;
-		stats->tx_पातed_errors++;
-	पूर्ण
+		stats->tx_aborted_errors++;
+	}
 
-	वापस 0;
+	return 0;
 tx_err_link_failure:
 	stats->tx_carrier_errors++;
 	dst_link_failure(skb);
 tx_err_dst_release:
 	dst_release(dst);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल netdev_tx_t xfrmi_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा xfrm_अगर *xi = netdev_priv(dev);
-	काष्ठा net_device_stats *stats = &xi->dev->stats;
-	काष्ठा dst_entry *dst = skb_dst(skb);
-	काष्ठा flowi fl;
-	पूर्णांक ret;
+static netdev_tx_t xfrmi_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	struct xfrm_if *xi = netdev_priv(dev);
+	struct net_device_stats *stats = &xi->dev->stats;
+	struct dst_entry *dst = skb_dst(skb);
+	struct flowi fl;
+	int ret;
 
-	स_रखो(&fl, 0, माप(fl));
+	memset(&fl, 0, sizeof(fl));
 
-	चयन (skb->protocol) अणु
-	हाल htons(ETH_P_IPV6):
+	switch (skb->protocol) {
+	case htons(ETH_P_IPV6):
 		xfrm_decode_session(skb, &fl, AF_INET6);
-		स_रखो(IP6CB(skb), 0, माप(*IP6CB(skb)));
-		अगर (!dst) अणु
-			fl.u.ip6.flowi6_oअगर = dev->अगरindex;
+		memset(IP6CB(skb), 0, sizeof(*IP6CB(skb)));
+		if (!dst) {
+			fl.u.ip6.flowi6_oif = dev->ifindex;
 			fl.u.ip6.flowi6_flags |= FLOWI_FLAG_ANYSRC;
-			dst = ip6_route_output(dev_net(dev), शून्य, &fl.u.ip6);
-			अगर (dst->error) अणु
+			dst = ip6_route_output(dev_net(dev), NULL, &fl.u.ip6);
+			if (dst->error) {
 				dst_release(dst);
 				stats->tx_carrier_errors++;
-				जाओ tx_err;
-			पूर्ण
+				goto tx_err;
+			}
 			skb_dst_set(skb, dst);
-		पूर्ण
-		अवरोध;
-	हाल htons(ETH_P_IP):
+		}
+		break;
+	case htons(ETH_P_IP):
 		xfrm_decode_session(skb, &fl, AF_INET);
-		स_रखो(IPCB(skb), 0, माप(*IPCB(skb)));
-		अगर (!dst) अणु
-			काष्ठा rtable *rt;
+		memset(IPCB(skb), 0, sizeof(*IPCB(skb)));
+		if (!dst) {
+			struct rtable *rt;
 
-			fl.u.ip4.flowi4_oअगर = dev->अगरindex;
+			fl.u.ip4.flowi4_oif = dev->ifindex;
 			fl.u.ip4.flowi4_flags |= FLOWI_FLAG_ANYSRC;
 			rt = __ip_route_output_key(dev_net(dev), &fl.u.ip4);
-			अगर (IS_ERR(rt)) अणु
+			if (IS_ERR(rt)) {
 				stats->tx_carrier_errors++;
-				जाओ tx_err;
-			पूर्ण
+				goto tx_err;
+			}
 			skb_dst_set(skb, &rt->dst);
-		पूर्ण
-		अवरोध;
-	शेष:
-		जाओ tx_err;
-	पूर्ण
+		}
+		break;
+	default:
+		goto tx_err;
+	}
 
-	fl.flowi_oअगर = xi->p.link;
+	fl.flowi_oif = xi->p.link;
 
 	ret = xfrmi_xmit2(skb, dev, &fl);
-	अगर (ret < 0)
-		जाओ tx_err;
+	if (ret < 0)
+		goto tx_err;
 
-	वापस NETDEV_TX_OK;
+	return NETDEV_TX_OK;
 
 tx_err:
 	stats->tx_errors++;
 	stats->tx_dropped++;
-	kमुक्त_skb(skb);
-	वापस NETDEV_TX_OK;
-पूर्ण
+	kfree_skb(skb);
+	return NETDEV_TX_OK;
+}
 
-अटल पूर्णांक xfrmi4_err(काष्ठा sk_buff *skb, u32 info)
-अणु
-	स्थिर काष्ठा iphdr *iph = (स्थिर काष्ठा iphdr *)skb->data;
-	काष्ठा net *net = dev_net(skb->dev);
-	पूर्णांक protocol = iph->protocol;
-	काष्ठा ip_comp_hdr *ipch;
-	काष्ठा ip_esp_hdr *esph;
-	काष्ठा ip_auth_hdr *ah ;
-	काष्ठा xfrm_state *x;
-	काष्ठा xfrm_अगर *xi;
+static int xfrmi4_err(struct sk_buff *skb, u32 info)
+{
+	const struct iphdr *iph = (const struct iphdr *)skb->data;
+	struct net *net = dev_net(skb->dev);
+	int protocol = iph->protocol;
+	struct ip_comp_hdr *ipch;
+	struct ip_esp_hdr *esph;
+	struct ip_auth_hdr *ah ;
+	struct xfrm_state *x;
+	struct xfrm_if *xi;
 	__be32 spi;
 
-	चयन (protocol) अणु
-	हाल IPPROTO_ESP:
-		esph = (काष्ठा ip_esp_hdr *)(skb->data+(iph->ihl<<2));
+	switch (protocol) {
+	case IPPROTO_ESP:
+		esph = (struct ip_esp_hdr *)(skb->data+(iph->ihl<<2));
 		spi = esph->spi;
-		अवरोध;
-	हाल IPPROTO_AH:
-		ah = (काष्ठा ip_auth_hdr *)(skb->data+(iph->ihl<<2));
+		break;
+	case IPPROTO_AH:
+		ah = (struct ip_auth_hdr *)(skb->data+(iph->ihl<<2));
 		spi = ah->spi;
-		अवरोध;
-	हाल IPPROTO_COMP:
-		ipch = (काष्ठा ip_comp_hdr *)(skb->data+(iph->ihl<<2));
+		break;
+	case IPPROTO_COMP:
+		ipch = (struct ip_comp_hdr *)(skb->data+(iph->ihl<<2));
 		spi = htonl(ntohs(ipch->cpi));
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+		break;
+	default:
+		return 0;
+	}
 
-	चयन (icmp_hdr(skb)->type) अणु
-	हाल ICMP_DEST_UNREACH:
-		अगर (icmp_hdr(skb)->code != ICMP_FRAG_NEEDED)
-			वापस 0;
-	हाल ICMP_REसूचीECT:
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+	switch (icmp_hdr(skb)->type) {
+	case ICMP_DEST_UNREACH:
+		if (icmp_hdr(skb)->code != ICMP_FRAG_NEEDED)
+			return 0;
+	case ICMP_REDIRECT:
+		break;
+	default:
+		return 0;
+	}
 
-	x = xfrm_state_lookup(net, skb->mark, (स्थिर xfrm_address_t *)&iph->daddr,
+	x = xfrm_state_lookup(net, skb->mark, (const xfrm_address_t *)&iph->daddr,
 			      spi, protocol, AF_INET);
-	अगर (!x)
-		वापस 0;
+	if (!x)
+		return 0;
 
 	xi = xfrmi_lookup(net, x);
-	अगर (!xi) अणु
+	if (!xi) {
 		xfrm_state_put(x);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (icmp_hdr(skb)->type == ICMP_DEST_UNREACH)
+	if (icmp_hdr(skb)->type == ICMP_DEST_UNREACH)
 		ipv4_update_pmtu(skb, net, info, 0, protocol);
-	अन्यथा
+	else
 		ipv4_redirect(skb, net, 0, protocol);
 	xfrm_state_put(x);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xfrmi6_err(काष्ठा sk_buff *skb, काष्ठा inet6_skb_parm *opt,
-		    u8 type, u8 code, पूर्णांक offset, __be32 info)
-अणु
-	स्थिर काष्ठा ipv6hdr *iph = (स्थिर काष्ठा ipv6hdr *)skb->data;
-	काष्ठा net *net = dev_net(skb->dev);
-	पूर्णांक protocol = iph->nexthdr;
-	काष्ठा ip_comp_hdr *ipch;
-	काष्ठा ip_esp_hdr *esph;
-	काष्ठा ip_auth_hdr *ah;
-	काष्ठा xfrm_state *x;
-	काष्ठा xfrm_अगर *xi;
+static int xfrmi6_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
+		    u8 type, u8 code, int offset, __be32 info)
+{
+	const struct ipv6hdr *iph = (const struct ipv6hdr *)skb->data;
+	struct net *net = dev_net(skb->dev);
+	int protocol = iph->nexthdr;
+	struct ip_comp_hdr *ipch;
+	struct ip_esp_hdr *esph;
+	struct ip_auth_hdr *ah;
+	struct xfrm_state *x;
+	struct xfrm_if *xi;
 	__be32 spi;
 
-	चयन (protocol) अणु
-	हाल IPPROTO_ESP:
-		esph = (काष्ठा ip_esp_hdr *)(skb->data + offset);
+	switch (protocol) {
+	case IPPROTO_ESP:
+		esph = (struct ip_esp_hdr *)(skb->data + offset);
 		spi = esph->spi;
-		अवरोध;
-	हाल IPPROTO_AH:
-		ah = (काष्ठा ip_auth_hdr *)(skb->data + offset);
+		break;
+	case IPPROTO_AH:
+		ah = (struct ip_auth_hdr *)(skb->data + offset);
 		spi = ah->spi;
-		अवरोध;
-	हाल IPPROTO_COMP:
-		ipch = (काष्ठा ip_comp_hdr *)(skb->data + offset);
+		break;
+	case IPPROTO_COMP:
+		ipch = (struct ip_comp_hdr *)(skb->data + offset);
 		spi = htonl(ntohs(ipch->cpi));
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+		break;
+	default:
+		return 0;
+	}
 
-	अगर (type != ICMPV6_PKT_TOOBIG &&
-	    type != NDISC_REसूचीECT)
-		वापस 0;
+	if (type != ICMPV6_PKT_TOOBIG &&
+	    type != NDISC_REDIRECT)
+		return 0;
 
-	x = xfrm_state_lookup(net, skb->mark, (स्थिर xfrm_address_t *)&iph->daddr,
+	x = xfrm_state_lookup(net, skb->mark, (const xfrm_address_t *)&iph->daddr,
 			      spi, protocol, AF_INET6);
-	अगर (!x)
-		वापस 0;
+	if (!x)
+		return 0;
 
 	xi = xfrmi_lookup(net, x);
-	अगर (!xi) अणु
+	if (!xi) {
 		xfrm_state_put(x);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (type == NDISC_REसूचीECT)
-		ip6_redirect(skb, net, skb->dev->अगरindex, 0,
-			     sock_net_uid(net, शून्य));
-	अन्यथा
-		ip6_update_pmtu(skb, net, info, 0, 0, sock_net_uid(net, शून्य));
+	if (type == NDISC_REDIRECT)
+		ip6_redirect(skb, net, skb->dev->ifindex, 0,
+			     sock_net_uid(net, NULL));
+	else
+		ip6_update_pmtu(skb, net, info, 0, 0, sock_net_uid(net, NULL));
 	xfrm_state_put(x);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xfrmi_change(काष्ठा xfrm_अगर *xi, स्थिर काष्ठा xfrm_अगर_parms *p)
-अणु
-	अगर (xi->p.link != p->link)
-		वापस -EINVAL;
+static int xfrmi_change(struct xfrm_if *xi, const struct xfrm_if_parms *p)
+{
+	if (xi->p.link != p->link)
+		return -EINVAL;
 
-	xi->p.अगर_id = p->अगर_id;
+	xi->p.if_id = p->if_id;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xfrmi_update(काष्ठा xfrm_अगर *xi, काष्ठा xfrm_अगर_parms *p)
-अणु
-	काष्ठा net *net = xi->net;
-	काष्ठा xfrmi_net *xfrmn = net_generic(net, xfrmi_net_id);
-	पूर्णांक err;
+static int xfrmi_update(struct xfrm_if *xi, struct xfrm_if_parms *p)
+{
+	struct net *net = xi->net;
+	struct xfrmi_net *xfrmn = net_generic(net, xfrmi_net_id);
+	int err;
 
 	xfrmi_unlink(xfrmn, xi);
 	synchronize_net();
 	err = xfrmi_change(xi, p);
 	xfrmi_link(xfrmn, xi);
 	netdev_state_change(xi->dev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक xfrmi_get_अगरlink(स्थिर काष्ठा net_device *dev)
-अणु
-	काष्ठा xfrm_अगर *xi = netdev_priv(dev);
+static int xfrmi_get_iflink(const struct net_device *dev)
+{
+	struct xfrm_if *xi = netdev_priv(dev);
 
-	वापस xi->p.link;
-पूर्ण
+	return xi->p.link;
+}
 
-अटल स्थिर काष्ठा net_device_ops xfrmi_netdev_ops = अणु
-	.nकरो_init	= xfrmi_dev_init,
-	.nकरो_uninit	= xfrmi_dev_uninit,
-	.nकरो_start_xmit = xfrmi_xmit,
-	.nकरो_get_stats64 = dev_get_tstats64,
-	.nकरो_get_अगरlink = xfrmi_get_अगरlink,
-पूर्ण;
+static const struct net_device_ops xfrmi_netdev_ops = {
+	.ndo_init	= xfrmi_dev_init,
+	.ndo_uninit	= xfrmi_dev_uninit,
+	.ndo_start_xmit = xfrmi_xmit,
+	.ndo_get_stats64 = dev_get_tstats64,
+	.ndo_get_iflink = xfrmi_get_iflink,
+};
 
-अटल व्योम xfrmi_dev_setup(काष्ठा net_device *dev)
-अणु
+static void xfrmi_dev_setup(struct net_device *dev)
+{
 	dev->netdev_ops 	= &xfrmi_netdev_ops;
 	dev->header_ops		= &ip_tunnel_header_ops;
 	dev->type		= ARPHRD_NONE;
@@ -562,89 +561,89 @@ tx_err:
 	dev->min_mtu		= ETH_MIN_MTU;
 	dev->max_mtu		= IP_MAX_MTU;
 	dev->flags 		= IFF_NOARP;
-	dev->needs_मुक्त_netdev	= true;
-	dev->priv_deकाष्ठाor	= xfrmi_dev_मुक्त;
-	netअगर_keep_dst(dev);
+	dev->needs_free_netdev	= true;
+	dev->priv_destructor	= xfrmi_dev_free;
+	netif_keep_dst(dev);
 
 	eth_broadcast_addr(dev->broadcast);
-पूर्ण
+}
 
-#घोषणा XFRMI_FEATURES (NETIF_F_SG |		\
+#define XFRMI_FEATURES (NETIF_F_SG |		\
 			NETIF_F_FRAGLIST |	\
 			NETIF_F_GSO_SOFTWARE |	\
 			NETIF_F_HW_CSUM)
 
-अटल पूर्णांक xfrmi_dev_init(काष्ठा net_device *dev)
-अणु
-	काष्ठा xfrm_अगर *xi = netdev_priv(dev);
-	काष्ठा net_device *phydev = __dev_get_by_index(xi->net, xi->p.link);
-	पूर्णांक err;
+static int xfrmi_dev_init(struct net_device *dev)
+{
+	struct xfrm_if *xi = netdev_priv(dev);
+	struct net_device *phydev = __dev_get_by_index(xi->net, xi->p.link);
+	int err;
 
-	dev->tstats = netdev_alloc_pcpu_stats(काष्ठा pcpu_sw_netstats);
-	अगर (!dev->tstats)
-		वापस -ENOMEM;
+	dev->tstats = netdev_alloc_pcpu_stats(struct pcpu_sw_netstats);
+	if (!dev->tstats)
+		return -ENOMEM;
 
 	err = gro_cells_init(&xi->gro_cells, dev);
-	अगर (err) अणु
-		मुक्त_percpu(dev->tstats);
-		वापस err;
-	पूर्ण
+	if (err) {
+		free_percpu(dev->tstats);
+		return err;
+	}
 
 	dev->features |= NETIF_F_LLTX;
 	dev->features |= XFRMI_FEATURES;
 	dev->hw_features |= XFRMI_FEATURES;
 
-	अगर (phydev) अणु
+	if (phydev) {
 		dev->needed_headroom = phydev->needed_headroom;
 		dev->needed_tailroom = phydev->needed_tailroom;
 
-		अगर (is_zero_ether_addr(dev->dev_addr))
+		if (is_zero_ether_addr(dev->dev_addr))
 			eth_hw_addr_inherit(dev, phydev);
-		अगर (is_zero_ether_addr(dev->broadcast))
-			स_नकल(dev->broadcast, phydev->broadcast,
+		if (is_zero_ether_addr(dev->broadcast))
+			memcpy(dev->broadcast, phydev->broadcast,
 			       dev->addr_len);
-	पूर्ण अन्यथा अणु
-		eth_hw_addr_अक्रमom(dev);
+	} else {
+		eth_hw_addr_random(dev);
 		eth_broadcast_addr(dev->broadcast);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xfrmi_validate(काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
-			 काष्ठा netlink_ext_ack *extack)
-अणु
-	वापस 0;
-पूर्ण
+static int xfrmi_validate(struct nlattr *tb[], struct nlattr *data[],
+			 struct netlink_ext_ack *extack)
+{
+	return 0;
+}
 
-अटल व्योम xfrmi_netlink_parms(काष्ठा nlattr *data[],
-			       काष्ठा xfrm_अगर_parms *parms)
-अणु
-	स_रखो(parms, 0, माप(*parms));
+static void xfrmi_netlink_parms(struct nlattr *data[],
+			       struct xfrm_if_parms *parms)
+{
+	memset(parms, 0, sizeof(*parms));
 
-	अगर (!data)
-		वापस;
+	if (!data)
+		return;
 
-	अगर (data[IFLA_XFRM_LINK])
+	if (data[IFLA_XFRM_LINK])
 		parms->link = nla_get_u32(data[IFLA_XFRM_LINK]);
 
-	अगर (data[IFLA_XFRM_IF_ID])
-		parms->अगर_id = nla_get_u32(data[IFLA_XFRM_IF_ID]);
-पूर्ण
+	if (data[IFLA_XFRM_IF_ID])
+		parms->if_id = nla_get_u32(data[IFLA_XFRM_IF_ID]);
+}
 
-अटल पूर्णांक xfrmi_newlink(काष्ठा net *src_net, काष्ठा net_device *dev,
-			काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
-			काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा net *net = dev_net(dev);
-	काष्ठा xfrm_अगर_parms p;
-	काष्ठा xfrm_अगर *xi;
-	पूर्णांक err;
+static int xfrmi_newlink(struct net *src_net, struct net_device *dev,
+			struct nlattr *tb[], struct nlattr *data[],
+			struct netlink_ext_ack *extack)
+{
+	struct net *net = dev_net(dev);
+	struct xfrm_if_parms p;
+	struct xfrm_if *xi;
+	int err;
 
 	xfrmi_netlink_parms(data, &p);
 	xi = xfrmi_locate(net, &p);
-	अगर (xi)
-		वापस -EEXIST;
+	if (xi)
+		return -EEXIST;
 
 	xi = netdev_priv(dev);
 	xi->p = p;
@@ -652,75 +651,75 @@ tx_err:
 	xi->dev = dev;
 
 	err = xfrmi_create(dev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम xfrmi_dellink(काष्ठा net_device *dev, काष्ठा list_head *head)
-अणु
-	unरेजिस्टर_netdevice_queue(dev, head);
-पूर्ण
+static void xfrmi_dellink(struct net_device *dev, struct list_head *head)
+{
+	unregister_netdevice_queue(dev, head);
+}
 
-अटल पूर्णांक xfrmi_changelink(काष्ठा net_device *dev, काष्ठा nlattr *tb[],
-			   काष्ठा nlattr *data[],
-			   काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा xfrm_अगर *xi = netdev_priv(dev);
-	काष्ठा net *net = xi->net;
-	काष्ठा xfrm_अगर_parms p;
+static int xfrmi_changelink(struct net_device *dev, struct nlattr *tb[],
+			   struct nlattr *data[],
+			   struct netlink_ext_ack *extack)
+{
+	struct xfrm_if *xi = netdev_priv(dev);
+	struct net *net = xi->net;
+	struct xfrm_if_parms p;
 
 	xfrmi_netlink_parms(data, &p);
 	xi = xfrmi_locate(net, &p);
-	अगर (!xi) अणु
+	if (!xi) {
 		xi = netdev_priv(dev);
-	पूर्ण अन्यथा अणु
-		अगर (xi->dev != dev)
-			वापस -EEXIST;
-	पूर्ण
+	} else {
+		if (xi->dev != dev)
+			return -EEXIST;
+	}
 
-	वापस xfrmi_update(xi, &p);
-पूर्ण
+	return xfrmi_update(xi, &p);
+}
 
-अटल माप_प्रकार xfrmi_get_size(स्थिर काष्ठा net_device *dev)
-अणु
-	वापस
+static size_t xfrmi_get_size(const struct net_device *dev)
+{
+	return
 		/* IFLA_XFRM_LINK */
 		nla_total_size(4) +
 		/* IFLA_XFRM_IF_ID */
 		nla_total_size(4) +
 		0;
-पूर्ण
+}
 
-अटल पूर्णांक xfrmi_fill_info(काष्ठा sk_buff *skb, स्थिर काष्ठा net_device *dev)
-अणु
-	काष्ठा xfrm_अगर *xi = netdev_priv(dev);
-	काष्ठा xfrm_अगर_parms *parm = &xi->p;
+static int xfrmi_fill_info(struct sk_buff *skb, const struct net_device *dev)
+{
+	struct xfrm_if *xi = netdev_priv(dev);
+	struct xfrm_if_parms *parm = &xi->p;
 
-	अगर (nla_put_u32(skb, IFLA_XFRM_LINK, parm->link) ||
-	    nla_put_u32(skb, IFLA_XFRM_IF_ID, parm->अगर_id))
-		जाओ nla_put_failure;
-	वापस 0;
+	if (nla_put_u32(skb, IFLA_XFRM_LINK, parm->link) ||
+	    nla_put_u32(skb, IFLA_XFRM_IF_ID, parm->if_id))
+		goto nla_put_failure;
+	return 0;
 
 nla_put_failure:
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल काष्ठा net *xfrmi_get_link_net(स्थिर काष्ठा net_device *dev)
-अणु
-	काष्ठा xfrm_अगर *xi = netdev_priv(dev);
+static struct net *xfrmi_get_link_net(const struct net_device *dev)
+{
+	struct xfrm_if *xi = netdev_priv(dev);
 
-	वापस xi->net;
-पूर्ण
+	return xi->net;
+}
 
-अटल स्थिर काष्ठा nla_policy xfrmi_policy[IFLA_XFRM_MAX + 1] = अणु
-	[IFLA_XFRM_LINK]	= अणु .type = NLA_U32 पूर्ण,
-	[IFLA_XFRM_IF_ID]	= अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy xfrmi_policy[IFLA_XFRM_MAX + 1] = {
+	[IFLA_XFRM_LINK]	= { .type = NLA_U32 },
+	[IFLA_XFRM_IF_ID]	= { .type = NLA_U32 },
+};
 
-अटल काष्ठा rtnl_link_ops xfrmi_link_ops __पढ़ो_mostly = अणु
+static struct rtnl_link_ops xfrmi_link_ops __read_mostly = {
 	.kind		= "xfrm",
 	.maxtype	= IFLA_XFRM_MAX,
 	.policy		= xfrmi_policy,
-	.priv_size	= माप(काष्ठा xfrm_अगर),
+	.priv_size	= sizeof(struct xfrm_if),
 	.setup		= xfrmi_dev_setup,
 	.validate	= xfrmi_validate,
 	.newlink	= xfrmi_newlink,
@@ -729,289 +728,289 @@ nla_put_failure:
 	.get_size	= xfrmi_get_size,
 	.fill_info	= xfrmi_fill_info,
 	.get_link_net	= xfrmi_get_link_net,
-पूर्ण;
+};
 
-अटल व्योम __net_निकास xfrmi_निकास_batch_net(काष्ठा list_head *net_निकास_list)
-अणु
-	काष्ठा net *net;
+static void __net_exit xfrmi_exit_batch_net(struct list_head *net_exit_list)
+{
+	struct net *net;
 	LIST_HEAD(list);
 
 	rtnl_lock();
-	list_क्रम_each_entry(net, net_निकास_list, निकास_list) अणु
-		काष्ठा xfrmi_net *xfrmn = net_generic(net, xfrmi_net_id);
-		काष्ठा xfrm_अगर __rcu **xip;
-		काष्ठा xfrm_अगर *xi;
-		पूर्णांक i;
+	list_for_each_entry(net, net_exit_list, exit_list) {
+		struct xfrmi_net *xfrmn = net_generic(net, xfrmi_net_id);
+		struct xfrm_if __rcu **xip;
+		struct xfrm_if *xi;
+		int i;
 
-		क्रम (i = 0; i < XFRMI_HASH_SIZE; i++) अणु
-			क्रम (xip = &xfrmn->xfrmi[i];
-			     (xi = rtnl_dereference(*xip)) != शून्य;
+		for (i = 0; i < XFRMI_HASH_SIZE; i++) {
+			for (xip = &xfrmn->xfrmi[i];
+			     (xi = rtnl_dereference(*xip)) != NULL;
 			     xip = &xi->next)
-				unरेजिस्टर_netdevice_queue(xi->dev, &list);
-		पूर्ण
-	पूर्ण
-	unरेजिस्टर_netdevice_many(&list);
+				unregister_netdevice_queue(xi->dev, &list);
+		}
+	}
+	unregister_netdevice_many(&list);
 	rtnl_unlock();
-पूर्ण
+}
 
-अटल काष्ठा pernet_operations xfrmi_net_ops = अणु
-	.निकास_batch = xfrmi_निकास_batch_net,
+static struct pernet_operations xfrmi_net_ops = {
+	.exit_batch = xfrmi_exit_batch_net,
 	.id   = &xfrmi_net_id,
-	.size = माप(काष्ठा xfrmi_net),
-पूर्ण;
+	.size = sizeof(struct xfrmi_net),
+};
 
-अटल काष्ठा xfrm6_protocol xfrmi_esp6_protocol __पढ़ो_mostly = अणु
+static struct xfrm6_protocol xfrmi_esp6_protocol __read_mostly = {
 	.handler	=	xfrm6_rcv,
 	.input_handler	=	xfrm_input,
 	.cb_handler	=	xfrmi_rcv_cb,
 	.err_handler	=	xfrmi6_err,
 	.priority	=	10,
-पूर्ण;
+};
 
-अटल काष्ठा xfrm6_protocol xfrmi_ah6_protocol __पढ़ो_mostly = अणु
+static struct xfrm6_protocol xfrmi_ah6_protocol __read_mostly = {
 	.handler	=	xfrm6_rcv,
 	.input_handler	=	xfrm_input,
 	.cb_handler	=	xfrmi_rcv_cb,
 	.err_handler	=	xfrmi6_err,
 	.priority	=	10,
-पूर्ण;
+};
 
-अटल काष्ठा xfrm6_protocol xfrmi_ipcomp6_protocol __पढ़ो_mostly = अणु
+static struct xfrm6_protocol xfrmi_ipcomp6_protocol __read_mostly = {
 	.handler	=	xfrm6_rcv,
 	.input_handler	=	xfrm_input,
 	.cb_handler	=	xfrmi_rcv_cb,
 	.err_handler	=	xfrmi6_err,
 	.priority	=	10,
-पूर्ण;
+};
 
-#अगर IS_REACHABLE(CONFIG_INET6_XFRM_TUNNEL)
-अटल पूर्णांक xfrmi6_rcv_tunnel(काष्ठा sk_buff *skb)
-अणु
-	स्थिर xfrm_address_t *saddr;
+#if IS_REACHABLE(CONFIG_INET6_XFRM_TUNNEL)
+static int xfrmi6_rcv_tunnel(struct sk_buff *skb)
+{
+	const xfrm_address_t *saddr;
 	__be32 spi;
 
-	saddr = (स्थिर xfrm_address_t *)&ipv6_hdr(skb)->saddr;
+	saddr = (const xfrm_address_t *)&ipv6_hdr(skb)->saddr;
 	spi = xfrm6_tunnel_spi_lookup(dev_net(skb->dev), saddr);
 
-	वापस xfrm6_rcv_spi(skb, IPPROTO_IPV6, spi, शून्य);
-पूर्ण
+	return xfrm6_rcv_spi(skb, IPPROTO_IPV6, spi, NULL);
+}
 
-अटल काष्ठा xfrm6_tunnel xfrmi_ipv6_handler __पढ़ो_mostly = अणु
+static struct xfrm6_tunnel xfrmi_ipv6_handler __read_mostly = {
 	.handler	=	xfrmi6_rcv_tunnel,
 	.cb_handler	=	xfrmi_rcv_cb,
 	.err_handler	=	xfrmi6_err,
 	.priority	=	2,
-पूर्ण;
+};
 
-अटल काष्ठा xfrm6_tunnel xfrmi_ip6ip_handler __पढ़ो_mostly = अणु
+static struct xfrm6_tunnel xfrmi_ip6ip_handler __read_mostly = {
 	.handler	=	xfrmi6_rcv_tunnel,
 	.cb_handler	=	xfrmi_rcv_cb,
 	.err_handler	=	xfrmi6_err,
 	.priority	=	2,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल काष्ठा xfrm4_protocol xfrmi_esp4_protocol __पढ़ो_mostly = अणु
+static struct xfrm4_protocol xfrmi_esp4_protocol __read_mostly = {
 	.handler	=	xfrm4_rcv,
 	.input_handler	=	xfrm_input,
 	.cb_handler	=	xfrmi_rcv_cb,
 	.err_handler	=	xfrmi4_err,
 	.priority	=	10,
-पूर्ण;
+};
 
-अटल काष्ठा xfrm4_protocol xfrmi_ah4_protocol __पढ़ो_mostly = अणु
+static struct xfrm4_protocol xfrmi_ah4_protocol __read_mostly = {
 	.handler	=	xfrm4_rcv,
 	.input_handler	=	xfrm_input,
 	.cb_handler	=	xfrmi_rcv_cb,
 	.err_handler	=	xfrmi4_err,
 	.priority	=	10,
-पूर्ण;
+};
 
-अटल काष्ठा xfrm4_protocol xfrmi_ipcomp4_protocol __पढ़ो_mostly = अणु
+static struct xfrm4_protocol xfrmi_ipcomp4_protocol __read_mostly = {
 	.handler	=	xfrm4_rcv,
 	.input_handler	=	xfrm_input,
 	.cb_handler	=	xfrmi_rcv_cb,
 	.err_handler	=	xfrmi4_err,
 	.priority	=	10,
-पूर्ण;
+};
 
-#अगर IS_REACHABLE(CONFIG_INET_XFRM_TUNNEL)
-अटल पूर्णांक xfrmi4_rcv_tunnel(काष्ठा sk_buff *skb)
-अणु
-	वापस xfrm4_rcv_spi(skb, IPPROTO_IPIP, ip_hdr(skb)->saddr);
-पूर्ण
+#if IS_REACHABLE(CONFIG_INET_XFRM_TUNNEL)
+static int xfrmi4_rcv_tunnel(struct sk_buff *skb)
+{
+	return xfrm4_rcv_spi(skb, IPPROTO_IPIP, ip_hdr(skb)->saddr);
+}
 
-अटल काष्ठा xfrm_tunnel xfrmi_ipip_handler __पढ़ो_mostly = अणु
+static struct xfrm_tunnel xfrmi_ipip_handler __read_mostly = {
 	.handler	=	xfrmi4_rcv_tunnel,
 	.cb_handler	=	xfrmi_rcv_cb,
 	.err_handler	=	xfrmi4_err,
 	.priority	=	3,
-पूर्ण;
+};
 
-अटल काष्ठा xfrm_tunnel xfrmi_ipip6_handler __पढ़ो_mostly = अणु
+static struct xfrm_tunnel xfrmi_ipip6_handler __read_mostly = {
 	.handler	=	xfrmi4_rcv_tunnel,
 	.cb_handler	=	xfrmi_rcv_cb,
 	.err_handler	=	xfrmi4_err,
 	.priority	=	2,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल पूर्णांक __init xfrmi4_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init xfrmi4_init(void)
+{
+	int err;
 
-	err = xfrm4_protocol_रेजिस्टर(&xfrmi_esp4_protocol, IPPROTO_ESP);
-	अगर (err < 0)
-		जाओ xfrm_proto_esp_failed;
-	err = xfrm4_protocol_रेजिस्टर(&xfrmi_ah4_protocol, IPPROTO_AH);
-	अगर (err < 0)
-		जाओ xfrm_proto_ah_failed;
-	err = xfrm4_protocol_रेजिस्टर(&xfrmi_ipcomp4_protocol, IPPROTO_COMP);
-	अगर (err < 0)
-		जाओ xfrm_proto_comp_failed;
-#अगर IS_REACHABLE(CONFIG_INET_XFRM_TUNNEL)
-	err = xfrm4_tunnel_रेजिस्टर(&xfrmi_ipip_handler, AF_INET);
-	अगर (err < 0)
-		जाओ xfrm_tunnel_ipip_failed;
-	err = xfrm4_tunnel_रेजिस्टर(&xfrmi_ipip6_handler, AF_INET6);
-	अगर (err < 0)
-		जाओ xfrm_tunnel_ipip6_failed;
-#पूर्ण_अगर
+	err = xfrm4_protocol_register(&xfrmi_esp4_protocol, IPPROTO_ESP);
+	if (err < 0)
+		goto xfrm_proto_esp_failed;
+	err = xfrm4_protocol_register(&xfrmi_ah4_protocol, IPPROTO_AH);
+	if (err < 0)
+		goto xfrm_proto_ah_failed;
+	err = xfrm4_protocol_register(&xfrmi_ipcomp4_protocol, IPPROTO_COMP);
+	if (err < 0)
+		goto xfrm_proto_comp_failed;
+#if IS_REACHABLE(CONFIG_INET_XFRM_TUNNEL)
+	err = xfrm4_tunnel_register(&xfrmi_ipip_handler, AF_INET);
+	if (err < 0)
+		goto xfrm_tunnel_ipip_failed;
+	err = xfrm4_tunnel_register(&xfrmi_ipip6_handler, AF_INET6);
+	if (err < 0)
+		goto xfrm_tunnel_ipip6_failed;
+#endif
 
-	वापस 0;
+	return 0;
 
-#अगर IS_REACHABLE(CONFIG_INET_XFRM_TUNNEL)
+#if IS_REACHABLE(CONFIG_INET_XFRM_TUNNEL)
 xfrm_tunnel_ipip6_failed:
-	xfrm4_tunnel_deरेजिस्टर(&xfrmi_ipip_handler, AF_INET);
+	xfrm4_tunnel_deregister(&xfrmi_ipip_handler, AF_INET);
 xfrm_tunnel_ipip_failed:
-	xfrm4_protocol_deरेजिस्टर(&xfrmi_ipcomp4_protocol, IPPROTO_COMP);
-#पूर्ण_अगर
+	xfrm4_protocol_deregister(&xfrmi_ipcomp4_protocol, IPPROTO_COMP);
+#endif
 xfrm_proto_comp_failed:
-	xfrm4_protocol_deरेजिस्टर(&xfrmi_ah4_protocol, IPPROTO_AH);
+	xfrm4_protocol_deregister(&xfrmi_ah4_protocol, IPPROTO_AH);
 xfrm_proto_ah_failed:
-	xfrm4_protocol_deरेजिस्टर(&xfrmi_esp4_protocol, IPPROTO_ESP);
+	xfrm4_protocol_deregister(&xfrmi_esp4_protocol, IPPROTO_ESP);
 xfrm_proto_esp_failed:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम xfrmi4_fini(व्योम)
-अणु
-#अगर IS_REACHABLE(CONFIG_INET_XFRM_TUNNEL)
-	xfrm4_tunnel_deरेजिस्टर(&xfrmi_ipip6_handler, AF_INET6);
-	xfrm4_tunnel_deरेजिस्टर(&xfrmi_ipip_handler, AF_INET);
-#पूर्ण_अगर
-	xfrm4_protocol_deरेजिस्टर(&xfrmi_ipcomp4_protocol, IPPROTO_COMP);
-	xfrm4_protocol_deरेजिस्टर(&xfrmi_ah4_protocol, IPPROTO_AH);
-	xfrm4_protocol_deरेजिस्टर(&xfrmi_esp4_protocol, IPPROTO_ESP);
-पूर्ण
+static void xfrmi4_fini(void)
+{
+#if IS_REACHABLE(CONFIG_INET_XFRM_TUNNEL)
+	xfrm4_tunnel_deregister(&xfrmi_ipip6_handler, AF_INET6);
+	xfrm4_tunnel_deregister(&xfrmi_ipip_handler, AF_INET);
+#endif
+	xfrm4_protocol_deregister(&xfrmi_ipcomp4_protocol, IPPROTO_COMP);
+	xfrm4_protocol_deregister(&xfrmi_ah4_protocol, IPPROTO_AH);
+	xfrm4_protocol_deregister(&xfrmi_esp4_protocol, IPPROTO_ESP);
+}
 
-अटल पूर्णांक __init xfrmi6_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init xfrmi6_init(void)
+{
+	int err;
 
-	err = xfrm6_protocol_रेजिस्टर(&xfrmi_esp6_protocol, IPPROTO_ESP);
-	अगर (err < 0)
-		जाओ xfrm_proto_esp_failed;
-	err = xfrm6_protocol_रेजिस्टर(&xfrmi_ah6_protocol, IPPROTO_AH);
-	अगर (err < 0)
-		जाओ xfrm_proto_ah_failed;
-	err = xfrm6_protocol_रेजिस्टर(&xfrmi_ipcomp6_protocol, IPPROTO_COMP);
-	अगर (err < 0)
-		जाओ xfrm_proto_comp_failed;
-#अगर IS_REACHABLE(CONFIG_INET6_XFRM_TUNNEL)
-	err = xfrm6_tunnel_रेजिस्टर(&xfrmi_ipv6_handler, AF_INET6);
-	अगर (err < 0)
-		जाओ xfrm_tunnel_ipv6_failed;
-	err = xfrm6_tunnel_रेजिस्टर(&xfrmi_ip6ip_handler, AF_INET);
-	अगर (err < 0)
-		जाओ xfrm_tunnel_ip6ip_failed;
-#पूर्ण_अगर
+	err = xfrm6_protocol_register(&xfrmi_esp6_protocol, IPPROTO_ESP);
+	if (err < 0)
+		goto xfrm_proto_esp_failed;
+	err = xfrm6_protocol_register(&xfrmi_ah6_protocol, IPPROTO_AH);
+	if (err < 0)
+		goto xfrm_proto_ah_failed;
+	err = xfrm6_protocol_register(&xfrmi_ipcomp6_protocol, IPPROTO_COMP);
+	if (err < 0)
+		goto xfrm_proto_comp_failed;
+#if IS_REACHABLE(CONFIG_INET6_XFRM_TUNNEL)
+	err = xfrm6_tunnel_register(&xfrmi_ipv6_handler, AF_INET6);
+	if (err < 0)
+		goto xfrm_tunnel_ipv6_failed;
+	err = xfrm6_tunnel_register(&xfrmi_ip6ip_handler, AF_INET);
+	if (err < 0)
+		goto xfrm_tunnel_ip6ip_failed;
+#endif
 
-	वापस 0;
+	return 0;
 
-#अगर IS_REACHABLE(CONFIG_INET6_XFRM_TUNNEL)
+#if IS_REACHABLE(CONFIG_INET6_XFRM_TUNNEL)
 xfrm_tunnel_ip6ip_failed:
-	xfrm6_tunnel_deरेजिस्टर(&xfrmi_ipv6_handler, AF_INET6);
+	xfrm6_tunnel_deregister(&xfrmi_ipv6_handler, AF_INET6);
 xfrm_tunnel_ipv6_failed:
-	xfrm6_protocol_deरेजिस्टर(&xfrmi_ipcomp6_protocol, IPPROTO_COMP);
-#पूर्ण_अगर
+	xfrm6_protocol_deregister(&xfrmi_ipcomp6_protocol, IPPROTO_COMP);
+#endif
 xfrm_proto_comp_failed:
-	xfrm6_protocol_deरेजिस्टर(&xfrmi_ah6_protocol, IPPROTO_AH);
+	xfrm6_protocol_deregister(&xfrmi_ah6_protocol, IPPROTO_AH);
 xfrm_proto_ah_failed:
-	xfrm6_protocol_deरेजिस्टर(&xfrmi_esp6_protocol, IPPROTO_ESP);
+	xfrm6_protocol_deregister(&xfrmi_esp6_protocol, IPPROTO_ESP);
 xfrm_proto_esp_failed:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम xfrmi6_fini(व्योम)
-अणु
-#अगर IS_REACHABLE(CONFIG_INET6_XFRM_TUNNEL)
-	xfrm6_tunnel_deरेजिस्टर(&xfrmi_ip6ip_handler, AF_INET);
-	xfrm6_tunnel_deरेजिस्टर(&xfrmi_ipv6_handler, AF_INET6);
-#पूर्ण_अगर
-	xfrm6_protocol_deरेजिस्टर(&xfrmi_ipcomp6_protocol, IPPROTO_COMP);
-	xfrm6_protocol_deरेजिस्टर(&xfrmi_ah6_protocol, IPPROTO_AH);
-	xfrm6_protocol_deरेजिस्टर(&xfrmi_esp6_protocol, IPPROTO_ESP);
-पूर्ण
+static void xfrmi6_fini(void)
+{
+#if IS_REACHABLE(CONFIG_INET6_XFRM_TUNNEL)
+	xfrm6_tunnel_deregister(&xfrmi_ip6ip_handler, AF_INET);
+	xfrm6_tunnel_deregister(&xfrmi_ipv6_handler, AF_INET6);
+#endif
+	xfrm6_protocol_deregister(&xfrmi_ipcomp6_protocol, IPPROTO_COMP);
+	xfrm6_protocol_deregister(&xfrmi_ah6_protocol, IPPROTO_AH);
+	xfrm6_protocol_deregister(&xfrmi_esp6_protocol, IPPROTO_ESP);
+}
 
-अटल स्थिर काष्ठा xfrm_अगर_cb xfrm_अगर_cb = अणु
+static const struct xfrm_if_cb xfrm_if_cb = {
 	.decode_session =	xfrmi_decode_session,
-पूर्ण;
+};
 
-अटल पूर्णांक __init xfrmi_init(व्योम)
-अणु
-	स्थिर अक्षर *msg;
-	पूर्णांक err;
+static int __init xfrmi_init(void)
+{
+	const char *msg;
+	int err;
 
 	pr_info("IPsec XFRM device driver\n");
 
 	msg = "tunnel device";
-	err = रेजिस्टर_pernet_device(&xfrmi_net_ops);
-	अगर (err < 0)
-		जाओ pernet_dev_failed;
+	err = register_pernet_device(&xfrmi_net_ops);
+	if (err < 0)
+		goto pernet_dev_failed;
 
 	msg = "xfrm4 protocols";
 	err = xfrmi4_init();
-	अगर (err < 0)
-		जाओ xfrmi4_failed;
+	if (err < 0)
+		goto xfrmi4_failed;
 
 	msg = "xfrm6 protocols";
 	err = xfrmi6_init();
-	अगर (err < 0)
-		जाओ xfrmi6_failed;
+	if (err < 0)
+		goto xfrmi6_failed;
 
 
 	msg = "netlink interface";
-	err = rtnl_link_रेजिस्टर(&xfrmi_link_ops);
-	अगर (err < 0)
-		जाओ rtnl_link_failed;
+	err = rtnl_link_register(&xfrmi_link_ops);
+	if (err < 0)
+		goto rtnl_link_failed;
 
-	xfrm_अगर_रेजिस्टर_cb(&xfrm_अगर_cb);
+	xfrm_if_register_cb(&xfrm_if_cb);
 
-	वापस err;
+	return err;
 
 rtnl_link_failed:
 	xfrmi6_fini();
 xfrmi6_failed:
 	xfrmi4_fini();
 xfrmi4_failed:
-	unरेजिस्टर_pernet_device(&xfrmi_net_ops);
+	unregister_pernet_device(&xfrmi_net_ops);
 pernet_dev_failed:
 	pr_err("xfrmi init: failed to register %s\n", msg);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __निकास xfrmi_fini(व्योम)
-अणु
-	xfrm_अगर_unरेजिस्टर_cb();
-	rtnl_link_unरेजिस्टर(&xfrmi_link_ops);
+static void __exit xfrmi_fini(void)
+{
+	xfrm_if_unregister_cb();
+	rtnl_link_unregister(&xfrmi_link_ops);
 	xfrmi4_fini();
 	xfrmi6_fini();
-	unरेजिस्टर_pernet_device(&xfrmi_net_ops);
-पूर्ण
+	unregister_pernet_device(&xfrmi_net_ops);
+}
 
 module_init(xfrmi_init);
-module_निकास(xfrmi_fini);
+module_exit(xfrmi_fini);
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_RTNL_LINK("xfrm");
 MODULE_ALIAS_NETDEV("xfrm0");

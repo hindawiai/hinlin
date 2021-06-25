@@ -1,16 +1,15 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2009-2012  Realtek Corporation.*/
 
-#समावेश "wifi.h"
-#समावेश "core.h"
-#समावेश "pci.h"
-#समावेश "base.h"
-#समावेश "ps.h"
-#समावेश "efuse.h"
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/export.h>
-#समावेश <linux/module.h>
+#include "wifi.h"
+#include "core.h"
+#include "pci.h"
+#include "base.h"
+#include "ps.h"
+#include "efuse.h"
+#include <linux/interrupt.h>
+#include <linux/export.h>
+#include <linux/module.h>
 
 MODULE_AUTHOR("lizhaoming	<chaoming_li@realsil.com.cn>");
 MODULE_AUTHOR("Realtek WlanFAE	<wlanfae@realtek.com>");
@@ -18,258 +17,258 @@ MODULE_AUTHOR("Larry Finger	<Larry.FInger@lwfinger.net>");
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("PCI basic driver for rtlwifi");
 
-अटल स्थिर u16 pcibridge_venकरोrs[PCI_BRIDGE_VENDOR_MAX] = अणु
+static const u16 pcibridge_vendors[PCI_BRIDGE_VENDOR_MAX] = {
 	INTEL_VENDOR_ID,
 	ATI_VENDOR_ID,
 	AMD_VENDOR_ID,
 	SIS_VENDOR_ID
-पूर्ण;
+};
 
-अटल स्थिर u8 ac_to_hwq[] = अणु
+static const u8 ac_to_hwq[] = {
 	VO_QUEUE,
 	VI_QUEUE,
 	BE_QUEUE,
 	BK_QUEUE
-पूर्ण;
+};
 
-अटल u8 _rtl_mac_to_hwqueue(काष्ठा ieee80211_hw *hw, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+static u8 _rtl_mac_to_hwqueue(struct ieee80211_hw *hw, struct sk_buff *skb)
+{
+	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
 	__le16 fc = rtl_get_fc(skb);
 	u8 queue_index = skb_get_queue_mapping(skb);
-	काष्ठा ieee80211_hdr *hdr;
+	struct ieee80211_hdr *hdr;
 
-	अगर (unlikely(ieee80211_is_beacon(fc)))
-		वापस BEACON_QUEUE;
-	अगर (ieee80211_is_mgmt(fc) || ieee80211_is_ctl(fc))
-		वापस MGNT_QUEUE;
-	अगर (rtlhal->hw_type == HARDWARE_TYPE_RTL8192SE)
-		अगर (ieee80211_is_nullfunc(fc))
-			वापस HIGH_QUEUE;
-	अगर (rtlhal->hw_type == HARDWARE_TYPE_RTL8822BE) अणु
+	if (unlikely(ieee80211_is_beacon(fc)))
+		return BEACON_QUEUE;
+	if (ieee80211_is_mgmt(fc) || ieee80211_is_ctl(fc))
+		return MGNT_QUEUE;
+	if (rtlhal->hw_type == HARDWARE_TYPE_RTL8192SE)
+		if (ieee80211_is_nullfunc(fc))
+			return HIGH_QUEUE;
+	if (rtlhal->hw_type == HARDWARE_TYPE_RTL8822BE) {
 		hdr = rtl_get_hdr(skb);
 
-		अगर (is_multicast_ether_addr(hdr->addr1) ||
+		if (is_multicast_ether_addr(hdr->addr1) ||
 		    is_broadcast_ether_addr(hdr->addr1))
-			वापस HIGH_QUEUE;
-	पूर्ण
+			return HIGH_QUEUE;
+	}
 
-	वापस ac_to_hwq[queue_index];
-पूर्ण
+	return ac_to_hwq[queue_index];
+}
 
-/* Update PCI dependent शेष settings*/
-अटल व्योम _rtl_pci_update_शेष_setting(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_pci_priv *pcipriv = rtl_pcipriv(hw);
-	काष्ठा rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	u8 pcibridge_venकरोr = pcipriv->ndis_adapter.pcibridge_venकरोr;
+/* Update PCI dependent default settings*/
+static void _rtl_pci_update_default_setting(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_pci_priv *pcipriv = rtl_pcipriv(hw);
+	struct rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	u8 pcibridge_vendor = pcipriv->ndis_adapter.pcibridge_vendor;
 	u8 init_aspm;
 
 	ppsc->reg_rfps_level = 0;
 	ppsc->support_aspm = false;
 
 	/*Update PCI ASPM setting */
-	ppsc->स्थिर_amdpci_aspm = rtlpci->स्थिर_amdpci_aspm;
-	चयन (rtlpci->स्थिर_pci_aspm) अणु
-	हाल 0:
+	ppsc->const_amdpci_aspm = rtlpci->const_amdpci_aspm;
+	switch (rtlpci->const_pci_aspm) {
+	case 0:
 		/*No ASPM */
-		अवरोध;
+		break;
 
-	हाल 1:
+	case 1:
 		/*ASPM dynamically enabled/disable. */
 		ppsc->reg_rfps_level |= RT_RF_LPS_LEVEL_ASPM;
-		अवरोध;
+		break;
 
-	हाल 2:
+	case 2:
 		/*ASPM with Clock Req dynamically enabled/disable. */
 		ppsc->reg_rfps_level |= (RT_RF_LPS_LEVEL_ASPM |
 					 RT_RF_OFF_LEVL_CLK_REQ);
-		अवरोध;
+		break;
 
-	हाल 3:
+	case 3:
 		/* Always enable ASPM and Clock Req
 		 * from initialization to halt.
 		 */
 		ppsc->reg_rfps_level &= ~(RT_RF_LPS_LEVEL_ASPM);
 		ppsc->reg_rfps_level |= (RT_RF_PS_LEVEL_ALWAYS_ASPM |
 					 RT_RF_OFF_LEVL_CLK_REQ);
-		अवरोध;
+		break;
 
-	हाल 4:
+	case 4:
 		/* Always enable ASPM without Clock Req
 		 * from initialization to halt.
 		 */
 		ppsc->reg_rfps_level &= ~(RT_RF_LPS_LEVEL_ASPM |
 					  RT_RF_OFF_LEVL_CLK_REQ);
 		ppsc->reg_rfps_level |= RT_RF_PS_LEVEL_ALWAYS_ASPM;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	ppsc->reg_rfps_level |= RT_RF_OFF_LEVL_HALT_NIC;
 
 	/*Update Radio OFF setting */
-	चयन (rtlpci->स्थिर_hwsw_rfoff_d3) अणु
-	हाल 1:
-		अगर (ppsc->reg_rfps_level & RT_RF_LPS_LEVEL_ASPM)
+	switch (rtlpci->const_hwsw_rfoff_d3) {
+	case 1:
+		if (ppsc->reg_rfps_level & RT_RF_LPS_LEVEL_ASPM)
 			ppsc->reg_rfps_level |= RT_RF_OFF_LEVL_ASPM;
-		अवरोध;
+		break;
 
-	हाल 2:
-		अगर (ppsc->reg_rfps_level & RT_RF_LPS_LEVEL_ASPM)
+	case 2:
+		if (ppsc->reg_rfps_level & RT_RF_LPS_LEVEL_ASPM)
 			ppsc->reg_rfps_level |= RT_RF_OFF_LEVL_ASPM;
 		ppsc->reg_rfps_level |= RT_RF_OFF_LEVL_HALT_NIC;
-		अवरोध;
+		break;
 
-	हाल 3:
+	case 3:
 		ppsc->reg_rfps_level |= RT_RF_OFF_LEVL_PCI_D3;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	/*Set HW definition to determine अगर it supports ASPM. */
-	चयन (rtlpci->स्थिर_support_pciaspm) अणु
-	हाल 0:
+	/*Set HW definition to determine if it supports ASPM. */
+	switch (rtlpci->const_support_pciaspm) {
+	case 0:
 		/*Not support ASPM. */
 		ppsc->support_aspm = false;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		/*Support ASPM. */
 		ppsc->support_aspm = true;
-		ppsc->support_backकरोor = true;
-		अवरोध;
-	हाल 2:
+		ppsc->support_backdoor = true;
+		break;
+	case 2:
 		/*ASPM value set by chipset. */
-		अगर (pcibridge_venकरोr == PCI_BRIDGE_VENDOR_INTEL)
+		if (pcibridge_vendor == PCI_BRIDGE_VENDOR_INTEL)
 			ppsc->support_aspm = true;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_err("switch case %#x not processed\n",
-		       rtlpci->स्थिर_support_pciaspm);
-		अवरोध;
-	पूर्ण
+		       rtlpci->const_support_pciaspm);
+		break;
+	}
 
 	/* toshiba aspm issue, toshiba will set aspm selfly
 	 * so we should not set aspm in driver
 	 */
-	pci_पढ़ो_config_byte(rtlpci->pdev, 0x80, &init_aspm);
-	अगर (rtlpriv->rtlhal.hw_type == HARDWARE_TYPE_RTL8192SE &&
+	pci_read_config_byte(rtlpci->pdev, 0x80, &init_aspm);
+	if (rtlpriv->rtlhal.hw_type == HARDWARE_TYPE_RTL8192SE &&
 	    init_aspm == 0x43)
 		ppsc->support_aspm = false;
-पूर्ण
+}
 
-अटल bool _rtl_pci_platक्रमm_चयन_device_pci_aspm(
-			काष्ठा ieee80211_hw *hw,
+static bool _rtl_pci_platform_switch_device_pci_aspm(
+			struct ieee80211_hw *hw,
 			u8 value)
-अणु
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+{
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
 
-	अगर (rtlhal->hw_type != HARDWARE_TYPE_RTL8192SE)
+	if (rtlhal->hw_type != HARDWARE_TYPE_RTL8192SE)
 		value |= 0x40;
 
-	pci_ग_लिखो_config_byte(rtlpci->pdev, 0x80, value);
+	pci_write_config_byte(rtlpci->pdev, 0x80, value);
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*When we set 0x01 to enable clk request. Set 0x0 to disable clk req.*/
-अटल व्योम _rtl_pci_चयन_clk_req(काष्ठा ieee80211_hw *hw, u8 value)
-अणु
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+static void _rtl_pci_switch_clk_req(struct ieee80211_hw *hw, u8 value)
+{
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
 
-	pci_ग_लिखो_config_byte(rtlpci->pdev, 0x81, value);
+	pci_write_config_byte(rtlpci->pdev, 0x81, value);
 
-	अगर (rtlhal->hw_type == HARDWARE_TYPE_RTL8192SE)
+	if (rtlhal->hw_type == HARDWARE_TYPE_RTL8192SE)
 		udelay(100);
-पूर्ण
+}
 
 /*Disable RTL8192SE ASPM & Disable Pci Bridge ASPM*/
-अटल व्योम rtl_pci_disable_aspm(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_pci_priv *pcipriv = rtl_pcipriv(hw);
-	काष्ठा rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	u8 pcibridge_venकरोr = pcipriv->ndis_adapter.pcibridge_venकरोr;
+static void rtl_pci_disable_aspm(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_pci_priv *pcipriv = rtl_pcipriv(hw);
+	struct rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	u8 pcibridge_vendor = pcipriv->ndis_adapter.pcibridge_vendor;
 	u8 num4bytes = pcipriv->ndis_adapter.num4bytes;
 	/*Retrieve original configuration settings. */
 	u8 linkctrl_reg = pcipriv->ndis_adapter.linkctrl_reg;
 	u16 pcibridge_linkctrlreg = pcipriv->ndis_adapter.
 				pcibridge_linkctrlreg;
 	u16 aspmlevel = 0;
-	u8 पंचांगp_u1b = 0;
+	u8 tmp_u1b = 0;
 
-	अगर (!ppsc->support_aspm)
-		वापस;
+	if (!ppsc->support_aspm)
+		return;
 
-	अगर (pcibridge_venकरोr == PCI_BRIDGE_VENDOR_UNKNOWN) अणु
+	if (pcibridge_vendor == PCI_BRIDGE_VENDOR_UNKNOWN) {
 		rtl_dbg(rtlpriv, COMP_POWER, DBG_TRACE,
 			"PCI(Bridge) UNKNOWN\n");
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (ppsc->reg_rfps_level & RT_RF_OFF_LEVL_CLK_REQ) अणु
+	if (ppsc->reg_rfps_level & RT_RF_OFF_LEVL_CLK_REQ) {
 		RT_CLEAR_PS_LEVEL(ppsc, RT_RF_OFF_LEVL_CLK_REQ);
-		_rtl_pci_चयन_clk_req(hw, 0x0);
-	पूर्ण
+		_rtl_pci_switch_clk_req(hw, 0x0);
+	}
 
-	/*क्रम promising device will in L0 state after an I/O. */
-	pci_पढ़ो_config_byte(rtlpci->pdev, 0x80, &पंचांगp_u1b);
+	/*for promising device will in L0 state after an I/O. */
+	pci_read_config_byte(rtlpci->pdev, 0x80, &tmp_u1b);
 
 	/*Set corresponding value. */
 	aspmlevel |= BIT(0) | BIT(1);
 	linkctrl_reg &= ~aspmlevel;
 	pcibridge_linkctrlreg &= ~(BIT(0) | BIT(1));
 
-	_rtl_pci_platक्रमm_चयन_device_pci_aspm(hw, linkctrl_reg);
+	_rtl_pci_platform_switch_device_pci_aspm(hw, linkctrl_reg);
 	udelay(50);
 
 	/*4 Disable Pci Bridge ASPM */
-	pci_ग_लिखो_config_byte(rtlpci->pdev, (num4bytes << 2),
+	pci_write_config_byte(rtlpci->pdev, (num4bytes << 2),
 			      pcibridge_linkctrlreg);
 
 	udelay(50);
-पूर्ण
+}
 
-/*Enable RTL8192SE ASPM & Enable Pci Bridge ASPM क्रम
- *घातer saving We should follow the sequence to enable
+/*Enable RTL8192SE ASPM & Enable Pci Bridge ASPM for
+ *power saving We should follow the sequence to enable
  *RTL8192SE first then enable Pci Bridge ASPM
- *or the प्रणाली will show bluescreen.
+ *or the system will show bluescreen.
  */
-अटल व्योम rtl_pci_enable_aspm(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_pci_priv *pcipriv = rtl_pcipriv(hw);
-	काष्ठा rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	u8 pcibridge_venकरोr = pcipriv->ndis_adapter.pcibridge_venकरोr;
+static void rtl_pci_enable_aspm(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_pci_priv *pcipriv = rtl_pcipriv(hw);
+	struct rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	u8 pcibridge_vendor = pcipriv->ndis_adapter.pcibridge_vendor;
 	u8 num4bytes = pcipriv->ndis_adapter.num4bytes;
 	u16 aspmlevel;
 	u8 u_pcibridge_aspmsetting;
 	u8 u_device_aspmsetting;
 
-	अगर (!ppsc->support_aspm)
-		वापस;
+	if (!ppsc->support_aspm)
+		return;
 
-	अगर (pcibridge_venकरोr == PCI_BRIDGE_VENDOR_UNKNOWN) अणु
+	if (pcibridge_vendor == PCI_BRIDGE_VENDOR_UNKNOWN) {
 		rtl_dbg(rtlpriv, COMP_POWER, DBG_TRACE,
 			"PCI(Bridge) UNKNOWN\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*4 Enable Pci Bridge ASPM */
 
 	u_pcibridge_aspmsetting =
 	    pcipriv->ndis_adapter.pcibridge_linkctrlreg |
-	    rtlpci->स्थिर_hostpci_aspm_setting;
+	    rtlpci->const_hostpci_aspm_setting;
 
-	अगर (pcibridge_venकरोr == PCI_BRIDGE_VENDOR_INTEL)
+	if (pcibridge_vendor == PCI_BRIDGE_VENDOR_INTEL)
 		u_pcibridge_aspmsetting &= ~BIT(0);
 
-	pci_ग_लिखो_config_byte(rtlpci->pdev, (num4bytes << 2),
+	pci_write_config_byte(rtlpci->pdev, (num4bytes << 2),
 			      u_pcibridge_aspmsetting);
 
 	rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD,
@@ -280,58 +279,58 @@ MODULE_DESCRIPTION("PCI basic driver for rtlwifi");
 	udelay(50);
 
 	/*Get ASPM level (with/without Clock Req) */
-	aspmlevel = rtlpci->स्थिर_devicepci_aspm_setting;
+	aspmlevel = rtlpci->const_devicepci_aspm_setting;
 	u_device_aspmsetting = pcipriv->ndis_adapter.linkctrl_reg;
 
-	/*_rtl_pci_platक्रमm_चयन_device_pci_aspm(dev,*/
+	/*_rtl_pci_platform_switch_device_pci_aspm(dev,*/
 	/*(priv->ndis_adapter.linkctrl_reg | ASPMLevel)); */
 
 	u_device_aspmsetting |= aspmlevel;
 
-	_rtl_pci_platक्रमm_चयन_device_pci_aspm(hw, u_device_aspmsetting);
+	_rtl_pci_platform_switch_device_pci_aspm(hw, u_device_aspmsetting);
 
-	अगर (ppsc->reg_rfps_level & RT_RF_OFF_LEVL_CLK_REQ) अणु
-		_rtl_pci_चयन_clk_req(hw, (ppsc->reg_rfps_level &
+	if (ppsc->reg_rfps_level & RT_RF_OFF_LEVL_CLK_REQ) {
+		_rtl_pci_switch_clk_req(hw, (ppsc->reg_rfps_level &
 					     RT_RF_OFF_LEVL_CLK_REQ) ? 1 : 0);
 		RT_SET_PS_LEVEL(ppsc, RT_RF_OFF_LEVL_CLK_REQ);
-	पूर्ण
+	}
 	udelay(100);
-पूर्ण
+}
 
-अटल bool rtl_pci_get_amd_l1_patch(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+static bool rtl_pci_get_amd_l1_patch(struct ieee80211_hw *hw)
+{
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
 
 	bool status = false;
 	u8 offset_e0;
-	अचिन्हित पूर्णांक offset_e4;
+	unsigned int offset_e4;
 
-	pci_ग_लिखो_config_byte(rtlpci->pdev, 0xe0, 0xa0);
+	pci_write_config_byte(rtlpci->pdev, 0xe0, 0xa0);
 
-	pci_पढ़ो_config_byte(rtlpci->pdev, 0xe0, &offset_e0);
+	pci_read_config_byte(rtlpci->pdev, 0xe0, &offset_e0);
 
-	अगर (offset_e0 == 0xA0) अणु
-		pci_पढ़ो_config_dword(rtlpci->pdev, 0xe4, &offset_e4);
-		अगर (offset_e4 & BIT(23))
+	if (offset_e0 == 0xA0) {
+		pci_read_config_dword(rtlpci->pdev, 0xe4, &offset_e4);
+		if (offset_e4 & BIT(23))
 			status = true;
-	पूर्ण
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल bool rtl_pci_check_buddy_priv(काष्ठा ieee80211_hw *hw,
-				     काष्ठा rtl_priv **buddy_priv)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_pci_priv *pcipriv = rtl_pcipriv(hw);
+static bool rtl_pci_check_buddy_priv(struct ieee80211_hw *hw,
+				     struct rtl_priv **buddy_priv)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_pci_priv *pcipriv = rtl_pcipriv(hw);
 	bool find_buddy_priv = false;
-	काष्ठा rtl_priv *tpriv;
-	काष्ठा rtl_pci_priv *tpcipriv = शून्य;
+	struct rtl_priv *tpriv;
+	struct rtl_pci_priv *tpcipriv = NULL;
 
-	अगर (!list_empty(&rtlpriv->glb_var->glb_priv_list)) अणु
-		list_क्रम_each_entry(tpriv, &rtlpriv->glb_var->glb_priv_list,
-				    list) अणु
-			tpcipriv = (काष्ठा rtl_pci_priv *)tpriv->priv;
+	if (!list_empty(&rtlpriv->glb_var->glb_priv_list)) {
+		list_for_each_entry(tpriv, &rtlpriv->glb_var->glb_priv_list,
+				    list) {
+			tpcipriv = (struct rtl_pci_priv *)tpriv->priv;
 			rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD,
 				"pcipriv->ndis_adapter.funcnumber %x\n",
 				pcipriv->ndis_adapter.funcnumber);
@@ -339,31 +338,31 @@ MODULE_DESCRIPTION("PCI basic driver for rtlwifi");
 				"tpcipriv->ndis_adapter.funcnumber %x\n",
 				tpcipriv->ndis_adapter.funcnumber);
 
-			अगर (pcipriv->ndis_adapter.busnumber ==
+			if (pcipriv->ndis_adapter.busnumber ==
 			    tpcipriv->ndis_adapter.busnumber &&
 			    pcipriv->ndis_adapter.devnumber ==
 			    tpcipriv->ndis_adapter.devnumber &&
 			    pcipriv->ndis_adapter.funcnumber !=
-			    tpcipriv->ndis_adapter.funcnumber) अणु
+			    tpcipriv->ndis_adapter.funcnumber) {
 				find_buddy_priv = true;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
 	rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD,
 		"find_buddy_priv %d\n", find_buddy_priv);
 
-	अगर (find_buddy_priv)
+	if (find_buddy_priv)
 		*buddy_priv = tpriv;
 
-	वापस find_buddy_priv;
-पूर्ण
+	return find_buddy_priv;
+}
 
-अटल व्योम rtl_pci_get_linkcontrol_field(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_pci_priv *pcipriv = rtl_pcipriv(hw);
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(pcipriv);
+static void rtl_pci_get_linkcontrol_field(struct ieee80211_hw *hw)
+{
+	struct rtl_pci_priv *pcipriv = rtl_pcipriv(hw);
+	struct rtl_pci *rtlpci = rtl_pcidev(pcipriv);
 	u8 capabilityoffset = pcipriv->ndis_adapter.pcibridge_pciehdr_offset;
 	u8 linkctrl_reg;
 	u8 num4bbytes;
@@ -371,180 +370,180 @@ MODULE_DESCRIPTION("PCI basic driver for rtlwifi");
 	num4bbytes = (capabilityoffset + 0x10) / 4;
 
 	/*Read  Link Control Register */
-	pci_पढ़ो_config_byte(rtlpci->pdev, (num4bbytes << 2), &linkctrl_reg);
+	pci_read_config_byte(rtlpci->pdev, (num4bbytes << 2), &linkctrl_reg);
 
 	pcipriv->ndis_adapter.pcibridge_linkctrlreg = linkctrl_reg;
-पूर्ण
+}
 
-अटल व्योम rtl_pci_parse_configuration(काष्ठा pci_dev *pdev,
-					काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_pci_priv *pcipriv = rtl_pcipriv(hw);
+static void rtl_pci_parse_configuration(struct pci_dev *pdev,
+					struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_pci_priv *pcipriv = rtl_pcipriv(hw);
 
-	u8 पंचांगp;
+	u8 tmp;
 	u16 linkctrl_reg;
 
 	/*Link Control Register */
-	pcie_capability_पढ़ो_word(pdev, PCI_EXP_LNKCTL, &linkctrl_reg);
+	pcie_capability_read_word(pdev, PCI_EXP_LNKCTL, &linkctrl_reg);
 	pcipriv->ndis_adapter.linkctrl_reg = (u8)linkctrl_reg;
 
 	rtl_dbg(rtlpriv, COMP_INIT, DBG_TRACE, "Link Control Register =%x\n",
 		pcipriv->ndis_adapter.linkctrl_reg);
 
-	pci_पढ़ो_config_byte(pdev, 0x98, &पंचांगp);
-	पंचांगp |= BIT(4);
-	pci_ग_लिखो_config_byte(pdev, 0x98, पंचांगp);
+	pci_read_config_byte(pdev, 0x98, &tmp);
+	tmp |= BIT(4);
+	pci_write_config_byte(pdev, 0x98, tmp);
 
-	पंचांगp = 0x17;
-	pci_ग_लिखो_config_byte(pdev, 0x70f, पंचांगp);
-पूर्ण
+	tmp = 0x17;
+	pci_write_config_byte(pdev, 0x70f, tmp);
+}
 
-अटल व्योम rtl_pci_init_aspm(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
+static void rtl_pci_init_aspm(struct ieee80211_hw *hw)
+{
+	struct rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
 
-	_rtl_pci_update_शेष_setting(hw);
+	_rtl_pci_update_default_setting(hw);
 
-	अगर (ppsc->reg_rfps_level & RT_RF_PS_LEVEL_ALWAYS_ASPM) अणु
+	if (ppsc->reg_rfps_level & RT_RF_PS_LEVEL_ALWAYS_ASPM) {
 		/*Always enable ASPM & Clock Req. */
 		rtl_pci_enable_aspm(hw);
 		RT_SET_PS_LEVEL(ppsc, RT_RF_PS_LEVEL_ALWAYS_ASPM);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम _rtl_pci_io_handler_init(काष्ठा device *dev,
-				     काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+static void _rtl_pci_io_handler_init(struct device *dev,
+				     struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
 
 	rtlpriv->io.dev = dev;
 
-	rtlpriv->io.ग_लिखो8_async = pci_ग_लिखो8_async;
-	rtlpriv->io.ग_लिखो16_async = pci_ग_लिखो16_async;
-	rtlpriv->io.ग_लिखो32_async = pci_ग_लिखो32_async;
+	rtlpriv->io.write8_async = pci_write8_async;
+	rtlpriv->io.write16_async = pci_write16_async;
+	rtlpriv->io.write32_async = pci_write32_async;
 
-	rtlpriv->io.पढ़ो8_sync = pci_पढ़ो8_sync;
-	rtlpriv->io.पढ़ो16_sync = pci_पढ़ो16_sync;
-	rtlpriv->io.पढ़ो32_sync = pci_पढ़ो32_sync;
-पूर्ण
+	rtlpriv->io.read8_sync = pci_read8_sync;
+	rtlpriv->io.read16_sync = pci_read16_sync;
+	rtlpriv->io.read32_sync = pci_read32_sync;
+}
 
-अटल bool _rtl_update_earlymode_info(काष्ठा ieee80211_hw *hw,
-				       काष्ठा sk_buff *skb,
-				       काष्ठा rtl_tcb_desc *tcb_desc, u8 tid)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	काष्ठा sk_buff *next_skb;
+static bool _rtl_update_earlymode_info(struct ieee80211_hw *hw,
+				       struct sk_buff *skb,
+				       struct rtl_tcb_desc *tcb_desc, u8 tid)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	struct sk_buff *next_skb;
 	u8 additionlen = FCS_LEN;
 
-	/* here खोलो is 4, wep/tkip is 8, aes is 12*/
-	अगर (info->control.hw_key)
+	/* here open is 4, wep/tkip is 8, aes is 12*/
+	if (info->control.hw_key)
 		additionlen += info->control.hw_key->icv_len;
 
 	/* The most skb num is 6 */
 	tcb_desc->empkt_num = 0;
-	spin_lock_bh(&rtlpriv->locks.रुकोq_lock);
-	skb_queue_walk(&rtlpriv->mac80211.skb_रुकोq[tid], next_skb) अणु
-		काष्ठा ieee80211_tx_info *next_info;
+	spin_lock_bh(&rtlpriv->locks.waitq_lock);
+	skb_queue_walk(&rtlpriv->mac80211.skb_waitq[tid], next_skb) {
+		struct ieee80211_tx_info *next_info;
 
 		next_info = IEEE80211_SKB_CB(next_skb);
-		अगर (next_info->flags & IEEE80211_TX_CTL_AMPDU) अणु
+		if (next_info->flags & IEEE80211_TX_CTL_AMPDU) {
 			tcb_desc->empkt_len[tcb_desc->empkt_num] =
 				next_skb->len + additionlen;
 			tcb_desc->empkt_num++;
-		पूर्ण अन्यथा अणु
-			अवरोध;
-		पूर्ण
+		} else {
+			break;
+		}
 
-		अगर (skb_queue_is_last(&rtlpriv->mac80211.skb_रुकोq[tid],
+		if (skb_queue_is_last(&rtlpriv->mac80211.skb_waitq[tid],
 				      next_skb))
-			अवरोध;
+			break;
 
-		अगर (tcb_desc->empkt_num >= rtlhal->max_earlymode_num)
-			अवरोध;
-	पूर्ण
-	spin_unlock_bh(&rtlpriv->locks.रुकोq_lock);
+		if (tcb_desc->empkt_num >= rtlhal->max_earlymode_num)
+			break;
+	}
+	spin_unlock_bh(&rtlpriv->locks.waitq_lock);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-/* just क्रम early mode now */
-अटल व्योम _rtl_pci_tx_chk_रुकोq(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	काष्ठा sk_buff *skb = शून्य;
-	काष्ठा ieee80211_tx_info *info = शून्य;
-	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	पूर्णांक tid;
+/* just for early mode now */
+static void _rtl_pci_tx_chk_waitq(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	struct sk_buff *skb = NULL;
+	struct ieee80211_tx_info *info = NULL;
+	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	int tid;
 
-	अगर (!rtlpriv->rtlhal.earlymode_enable)
-		वापस;
+	if (!rtlpriv->rtlhal.earlymode_enable)
+		return;
 
-	अगर (rtlpriv->dm.supp_phymode_चयन &&
-	    (rtlpriv->easy_concurrent_ctl.चयन_in_process ||
+	if (rtlpriv->dm.supp_phymode_switch &&
+	    (rtlpriv->easy_concurrent_ctl.switch_in_process ||
 	    (rtlpriv->buddy_priv &&
-	    rtlpriv->buddy_priv->easy_concurrent_ctl.चयन_in_process)))
-		वापस;
-	/* we just use em क्रम BE/BK/VI/VO */
-	क्रम (tid = 7; tid >= 0; tid--) अणु
+	    rtlpriv->buddy_priv->easy_concurrent_ctl.switch_in_process)))
+		return;
+	/* we just use em for BE/BK/VI/VO */
+	for (tid = 7; tid >= 0; tid--) {
 		u8 hw_queue = ac_to_hwq[rtl_tid_to_ac(tid)];
-		काष्ठा rtl8192_tx_ring *ring = &rtlpci->tx_ring[hw_queue];
+		struct rtl8192_tx_ring *ring = &rtlpci->tx_ring[hw_queue];
 
-		जबतक (!mac->act_scanning &&
-		       rtlpriv->psc.rfpwr_state == ERFON) अणु
-			काष्ठा rtl_tcb_desc tcb_desc;
+		while (!mac->act_scanning &&
+		       rtlpriv->psc.rfpwr_state == ERFON) {
+			struct rtl_tcb_desc tcb_desc;
 
-			स_रखो(&tcb_desc, 0, माप(काष्ठा rtl_tcb_desc));
+			memset(&tcb_desc, 0, sizeof(struct rtl_tcb_desc));
 
-			spin_lock(&rtlpriv->locks.रुकोq_lock);
-			अगर (!skb_queue_empty(&mac->skb_रुकोq[tid]) &&
+			spin_lock(&rtlpriv->locks.waitq_lock);
+			if (!skb_queue_empty(&mac->skb_waitq[tid]) &&
 			    (ring->entries - skb_queue_len(&ring->queue) >
-			     rtlhal->max_earlymode_num)) अणु
-				skb = skb_dequeue(&mac->skb_रुकोq[tid]);
-			पूर्ण अन्यथा अणु
-				spin_unlock(&rtlpriv->locks.रुकोq_lock);
-				अवरोध;
-			पूर्ण
-			spin_unlock(&rtlpriv->locks.रुकोq_lock);
+			     rtlhal->max_earlymode_num)) {
+				skb = skb_dequeue(&mac->skb_waitq[tid]);
+			} else {
+				spin_unlock(&rtlpriv->locks.waitq_lock);
+				break;
+			}
+			spin_unlock(&rtlpriv->locks.waitq_lock);
 
-			/* Some macaddr can't करो early mode. like
+			/* Some macaddr can't do early mode. like
 			 * multicast/broadcast/no_qos data
 			 */
 			info = IEEE80211_SKB_CB(skb);
-			अगर (info->flags & IEEE80211_TX_CTL_AMPDU)
+			if (info->flags & IEEE80211_TX_CTL_AMPDU)
 				_rtl_update_earlymode_info(hw, skb,
 							   &tcb_desc, tid);
 
-			rtlpriv->पूर्णांकf_ops->adapter_tx(hw, शून्य, skb, &tcb_desc);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			rtlpriv->intf_ops->adapter_tx(hw, NULL, skb, &tcb_desc);
+		}
+	}
+}
 
-अटल व्योम _rtl_pci_tx_isr(काष्ठा ieee80211_hw *hw, पूर्णांक prio)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+static void _rtl_pci_tx_isr(struct ieee80211_hw *hw, int prio)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
 
-	काष्ठा rtl8192_tx_ring *ring = &rtlpci->tx_ring[prio];
+	struct rtl8192_tx_ring *ring = &rtlpci->tx_ring[prio];
 
-	जबतक (skb_queue_len(&ring->queue)) अणु
-		काष्ठा sk_buff *skb;
-		काष्ठा ieee80211_tx_info *info;
+	while (skb_queue_len(&ring->queue)) {
+		struct sk_buff *skb;
+		struct ieee80211_tx_info *info;
 		__le16 fc;
 		u8 tid;
 		u8 *entry;
 
-		अगर (rtlpriv->use_new_trx_flow)
+		if (rtlpriv->use_new_trx_flow)
 			entry = (u8 *)(&ring->buffer_desc[ring->idx]);
-		अन्यथा
+		else
 			entry = (u8 *)(&ring->desc[ring->idx]);
 
-		अगर (!rtlpriv->cfg->ops->is_tx_desc_बंदd(hw, prio, ring->idx))
-			वापस;
+		if (!rtlpriv->cfg->ops->is_tx_desc_closed(hw, prio, ring->idx))
+			return;
 		ring->idx = (ring->idx + 1) % ring->entries;
 
 		skb = __skb_dequeue(&ring->queue);
@@ -553,8 +552,8 @@ MODULE_DESCRIPTION("PCI basic driver for rtlwifi");
 						true, HW_DESC_TXBUFF_ADDR),
 				 skb->len, DMA_TO_DEVICE);
 
-		/* हटाओ early mode header */
-		अगर (rtlpriv->rtlhal.earlymode_enable)
+		/* remove early mode header */
+		if (rtlpriv->rtlhal.earlymode_enable)
 			skb_pull(skb, EM_HDR_LEN);
 
 		rtl_dbg(rtlpriv, (COMP_INTR | COMP_SEND), DBG_TRACE,
@@ -563,101 +562,101 @@ MODULE_DESCRIPTION("PCI basic driver for rtlwifi");
 			skb_queue_len(&ring->queue),
 			*(u16 *)(skb->data + 22));
 
-		अगर (prio == TXCMD_QUEUE) अणु
-			dev_kमुक्त_skb(skb);
-			जाओ tx_status_ok;
-		पूर्ण
+		if (prio == TXCMD_QUEUE) {
+			dev_kfree_skb(skb);
+			goto tx_status_ok;
+		}
 
-		/* क्रम sw LPS, just after शून्य skb send out, we can
+		/* for sw LPS, just after NULL skb send out, we can
 		 * sure AP knows we are sleeping, we should not let
 		 * rf sleep
 		 */
 		fc = rtl_get_fc(skb);
-		अगर (ieee80211_is_nullfunc(fc)) अणु
-			अगर (ieee80211_has_pm(fc)) अणु
+		if (ieee80211_is_nullfunc(fc)) {
+			if (ieee80211_has_pm(fc)) {
 				rtlpriv->mac80211.offchan_delay = true;
 				rtlpriv->psc.state_inap = true;
-			पूर्ण अन्यथा अणु
+			} else {
 				rtlpriv->psc.state_inap = false;
-			पूर्ण
-		पूर्ण
-		अगर (ieee80211_is_action(fc)) अणु
-			काष्ठा ieee80211_mgmt *action_frame =
-				(काष्ठा ieee80211_mgmt *)skb->data;
-			अगर (action_frame->u.action.u.ht_smps.action ==
-			    WLAN_HT_ACTION_SMPS) अणु
-				dev_kमुक्त_skb(skb);
-				जाओ tx_status_ok;
-			पूर्ण
-		पूर्ण
+			}
+		}
+		if (ieee80211_is_action(fc)) {
+			struct ieee80211_mgmt *action_frame =
+				(struct ieee80211_mgmt *)skb->data;
+			if (action_frame->u.action.u.ht_smps.action ==
+			    WLAN_HT_ACTION_SMPS) {
+				dev_kfree_skb(skb);
+				goto tx_status_ok;
+			}
+		}
 
 		/* update tid tx pkt num */
 		tid = rtl_get_tid(skb);
-		अगर (tid <= 7)
+		if (tid <= 7)
 			rtlpriv->link_info.tidtx_inperiod[tid]++;
 
 		info = IEEE80211_SKB_CB(skb);
 
-		अगर (likely(!ieee80211_is_nullfunc(fc))) अणु
+		if (likely(!ieee80211_is_nullfunc(fc))) {
 			ieee80211_tx_info_clear_status(info);
 			info->flags |= IEEE80211_TX_STAT_ACK;
 			/*info->status.rates[0].count = 1; */
 			ieee80211_tx_status_irqsafe(hw, skb);
-		पूर्ण अन्यथा अणु
+		} else {
 			rtl_tx_ackqueue(hw, skb);
-		पूर्ण
+		}
 
-		अगर ((ring->entries - skb_queue_len(&ring->queue)) <= 4) अणु
+		if ((ring->entries - skb_queue_len(&ring->queue)) <= 4) {
 			rtl_dbg(rtlpriv, COMP_ERR, DBG_DMESG,
 				"more desc left, wake skb_queue@%d, ring->idx = %d, skb_queue_len = 0x%x\n",
 				prio, ring->idx,
 				skb_queue_len(&ring->queue));
 
 			ieee80211_wake_queue(hw, skb_get_queue_mapping(skb));
-		पूर्ण
+		}
 tx_status_ok:
-		skb = शून्य;
-	पूर्ण
+		skb = NULL;
+	}
 
-	अगर (((rtlpriv->link_info.num_rx_inperiod +
+	if (((rtlpriv->link_info.num_rx_inperiod +
 	      rtlpriv->link_info.num_tx_inperiod) > 8) ||
 	      rtlpriv->link_info.num_rx_inperiod > 2)
 		rtl_lps_leave(hw, false);
-पूर्ण
+}
 
-अटल पूर्णांक _rtl_pci_init_one_rxdesc(काष्ठा ieee80211_hw *hw,
-				    काष्ठा sk_buff *new_skb, u8 *entry,
-				    पूर्णांक rxring_idx, पूर्णांक desc_idx)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+static int _rtl_pci_init_one_rxdesc(struct ieee80211_hw *hw,
+				    struct sk_buff *new_skb, u8 *entry,
+				    int rxring_idx, int desc_idx)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
 	u32 bufferaddress;
-	u8 पंचांगp_one = 1;
-	काष्ठा sk_buff *skb;
+	u8 tmp_one = 1;
+	struct sk_buff *skb;
 
-	अगर (likely(new_skb)) अणु
+	if (likely(new_skb)) {
 		skb = new_skb;
-		जाओ remap;
-	पूर्ण
+		goto remap;
+	}
 	skb = dev_alloc_skb(rtlpci->rxbuffersize);
-	अगर (!skb)
-		वापस 0;
+	if (!skb)
+		return 0;
 
 remap:
-	/* just set skb->cb to mapping addr क्रम pci_unmap_single use */
+	/* just set skb->cb to mapping addr for pci_unmap_single use */
 	*((dma_addr_t *)skb->cb) =
-		dma_map_single(&rtlpci->pdev->dev, skb_tail_poपूर्णांकer(skb),
+		dma_map_single(&rtlpci->pdev->dev, skb_tail_pointer(skb),
 			       rtlpci->rxbuffersize, DMA_FROM_DEVICE);
 	bufferaddress = *((dma_addr_t *)skb->cb);
-	अगर (dma_mapping_error(&rtlpci->pdev->dev, bufferaddress))
-		वापस 0;
+	if (dma_mapping_error(&rtlpci->pdev->dev, bufferaddress))
+		return 0;
 	rtlpci->rx_ring[rxring_idx].rx_buf[desc_idx] = skb;
-	अगर (rtlpriv->use_new_trx_flow) अणु
+	if (rtlpriv->use_new_trx_flow) {
 		/* skb->cb may be 64 bit address */
 		rtlpriv->cfg->ops->set_desc(hw, (u8 *)entry, false,
 					    HW_DESC_RX_PREPARE,
 					    (u8 *)(dma_addr_t *)skb->cb);
-	पूर्ण अन्यथा अणु
+	} else {
 		rtlpriv->cfg->ops->set_desc(hw, (u8 *)entry, false,
 					    HW_DESC_RXBUFF_ADDR,
 					    (u8 *)&bufferaddress);
@@ -666,125 +665,125 @@ remap:
 					    (u8 *)&rtlpci->rxbuffersize);
 		rtlpriv->cfg->ops->set_desc(hw, (u8 *)entry, false,
 					    HW_DESC_RXOWN,
-					    (u8 *)&पंचांगp_one);
-	पूर्ण
-	वापस 1;
-पूर्ण
+					    (u8 *)&tmp_one);
+	}
+	return 1;
+}
 
 /* inorder to receive 8K AMSDU we have set skb to
- * 9100bytes in init rx ring, but अगर this packet is
+ * 9100bytes in init rx ring, but if this packet is
  * not a AMSDU, this large packet will be sent to
  * TCP/IP directly, this cause big packet ping fail
- * like: "ping -s 65507", so here we will पुनः_स्मृति skb
+ * like: "ping -s 65507", so here we will realloc skb
  * based on the true size of packet, Mac80211
- * Probably will करो it better, but करोes not yet.
+ * Probably will do it better, but does not yet.
  *
- * Some platक्रमm will fail when alloc skb someबार.
+ * Some platform will fail when alloc skb sometimes.
  * in this condition, we will send the old skb to
  * mac80211 directly, this will not cause any other
  * issues, but only this packet will be lost by TCP/IP
  */
-अटल व्योम _rtl_pci_rx_to_mac80211(काष्ठा ieee80211_hw *hw,
-				    काष्ठा sk_buff *skb,
-				    काष्ठा ieee80211_rx_status rx_status)
-अणु
-	अगर (unlikely(!rtl_action_proc(hw, skb, false))) अणु
-		dev_kमुक्त_skb_any(skb);
-	पूर्ण अन्यथा अणु
-		काष्ठा sk_buff *uskb = शून्य;
+static void _rtl_pci_rx_to_mac80211(struct ieee80211_hw *hw,
+				    struct sk_buff *skb,
+				    struct ieee80211_rx_status rx_status)
+{
+	if (unlikely(!rtl_action_proc(hw, skb, false))) {
+		dev_kfree_skb_any(skb);
+	} else {
+		struct sk_buff *uskb = NULL;
 
 		uskb = dev_alloc_skb(skb->len + 128);
-		अगर (likely(uskb)) अणु
-			स_नकल(IEEE80211_SKB_RXCB(uskb), &rx_status,
-			       माप(rx_status));
+		if (likely(uskb)) {
+			memcpy(IEEE80211_SKB_RXCB(uskb), &rx_status,
+			       sizeof(rx_status));
 			skb_put_data(uskb, skb->data, skb->len);
-			dev_kमुक्त_skb_any(skb);
+			dev_kfree_skb_any(skb);
 			ieee80211_rx_irqsafe(hw, uskb);
-		पूर्ण अन्यथा अणु
+		} else {
 			ieee80211_rx_irqsafe(hw, skb);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-/*hsisr पूर्णांकerrupt handler*/
-अटल व्योम _rtl_pci_hs_पूर्णांकerrupt(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+/*hsisr interrupt handler*/
+static void _rtl_pci_hs_interrupt(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
 
-	rtl_ग_लिखो_byte(rtlpriv, rtlpriv->cfg->maps[MAC_HSISR],
-		       rtl_पढ़ो_byte(rtlpriv, rtlpriv->cfg->maps[MAC_HSISR]) |
+	rtl_write_byte(rtlpriv, rtlpriv->cfg->maps[MAC_HSISR],
+		       rtl_read_byte(rtlpriv, rtlpriv->cfg->maps[MAC_HSISR]) |
 		       rtlpci->sys_irq_mask);
-पूर्ण
+}
 
-अटल व्योम _rtl_pci_rx_पूर्णांकerrupt(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	पूर्णांक rxring_idx = RTL_PCI_RX_MPDU_QUEUE;
-	काष्ठा ieee80211_rx_status rx_status = अणु 0 पूर्ण;
-	अचिन्हित पूर्णांक count = rtlpci->rxringcount;
+static void _rtl_pci_rx_interrupt(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	int rxring_idx = RTL_PCI_RX_MPDU_QUEUE;
+	struct ieee80211_rx_status rx_status = { 0 };
+	unsigned int count = rtlpci->rxringcount;
 	u8 own;
-	u8 पंचांगp_one;
+	u8 tmp_one;
 	bool unicast = false;
 	u8 hw_queue = 0;
-	अचिन्हित पूर्णांक rx_reमुख्यed_cnt = 0;
-	काष्ठा rtl_stats stats = अणु
-		.संकेत = 0,
+	unsigned int rx_remained_cnt = 0;
+	struct rtl_stats stats = {
+		.signal = 0,
 		.rate = 0,
-	पूर्ण;
+	};
 
 	/*RX NORMAL PKT */
-	जबतक (count--) अणु
-		काष्ठा ieee80211_hdr *hdr;
+	while (count--) {
+		struct ieee80211_hdr *hdr;
 		__le16 fc;
 		u16 len;
 		/*rx buffer descriptor */
-		काष्ठा rtl_rx_buffer_desc *buffer_desc = शून्य;
-		/*अगर use new trx flow, it means wअगरi info */
-		काष्ठा rtl_rx_desc *pdesc = शून्य;
+		struct rtl_rx_buffer_desc *buffer_desc = NULL;
+		/*if use new trx flow, it means wifi info */
+		struct rtl_rx_desc *pdesc = NULL;
 		/*rx pkt */
-		काष्ठा sk_buff *skb = rtlpci->rx_ring[rxring_idx].rx_buf[
+		struct sk_buff *skb = rtlpci->rx_ring[rxring_idx].rx_buf[
 				      rtlpci->rx_ring[rxring_idx].idx];
-		काष्ठा sk_buff *new_skb;
+		struct sk_buff *new_skb;
 
-		अगर (rtlpriv->use_new_trx_flow) अणु
-			अगर (rx_reमुख्यed_cnt == 0)
-				rx_reमुख्यed_cnt =
-				rtlpriv->cfg->ops->rx_desc_buff_reमुख्यed_cnt(hw,
+		if (rtlpriv->use_new_trx_flow) {
+			if (rx_remained_cnt == 0)
+				rx_remained_cnt =
+				rtlpriv->cfg->ops->rx_desc_buff_remained_cnt(hw,
 								      hw_queue);
-			अगर (rx_reमुख्यed_cnt == 0)
-				वापस;
+			if (rx_remained_cnt == 0)
+				return;
 			buffer_desc = &rtlpci->rx_ring[rxring_idx].buffer_desc[
 				rtlpci->rx_ring[rxring_idx].idx];
-			pdesc = (काष्ठा rtl_rx_desc *)skb->data;
-		पूर्ण अन्यथा अणु	/* rx descriptor */
+			pdesc = (struct rtl_rx_desc *)skb->data;
+		} else {	/* rx descriptor */
 			pdesc = &rtlpci->rx_ring[rxring_idx].desc[
 				rtlpci->rx_ring[rxring_idx].idx];
 
 			own = (u8)rtlpriv->cfg->ops->get_desc(hw, (u8 *)pdesc,
 							      false,
 							      HW_DESC_OWN);
-			अगर (own) /* रुको data to be filled by hardware */
-				वापस;
-		पूर्ण
+			if (own) /* wait data to be filled by hardware */
+				return;
+		}
 
-		/* Reaching this poपूर्णांक means: data is filled alपढ़ोy
+		/* Reaching this point means: data is filled already
 		 * AAAAAAttention !!!
 		 * We can NOT access 'skb' before 'pci_unmap_single'
 		 */
 		dma_unmap_single(&rtlpci->pdev->dev, *((dma_addr_t *)skb->cb),
 				 rtlpci->rxbuffersize, DMA_FROM_DEVICE);
 
-		/* get a new skb - अगर fail, old one will be reused */
+		/* get a new skb - if fail, old one will be reused */
 		new_skb = dev_alloc_skb(rtlpci->rxbuffersize);
-		अगर (unlikely(!new_skb))
-			जाओ no_new;
-		स_रखो(&rx_status, 0, माप(rx_status));
+		if (unlikely(!new_skb))
+			goto no_new;
+		memset(&rx_status, 0, sizeof(rx_status));
 		rtlpriv->cfg->ops->query_rx_desc(hw, &stats,
 						 &rx_status, (u8 *)pdesc, skb);
 
-		अगर (rtlpriv->use_new_trx_flow)
+		if (rtlpriv->use_new_trx_flow)
 			rtlpriv->cfg->ops->rx_check_dma_ok(hw,
 							   (u8 *)buffer_desc,
 							   hw_queue);
@@ -792,249 +791,249 @@ remap:
 		len = rtlpriv->cfg->ops->get_desc(hw, (u8 *)pdesc, false,
 						  HW_DESC_RXPKT_LEN);
 
-		अगर (skb->end - skb->tail > len) अणु
+		if (skb->end - skb->tail > len) {
 			skb_put(skb, len);
-			अगर (rtlpriv->use_new_trx_flow)
+			if (rtlpriv->use_new_trx_flow)
 				skb_reserve(skb, stats.rx_drvinfo_size +
-					    stats.rx_bufshअगरt + 24);
-			अन्यथा
+					    stats.rx_bufshift + 24);
+			else
 				skb_reserve(skb, stats.rx_drvinfo_size +
-					    stats.rx_bufshअगरt);
-		पूर्ण अन्यथा अणु
+					    stats.rx_bufshift);
+		} else {
 			rtl_dbg(rtlpriv, COMP_ERR, DBG_WARNING,
 				"skb->end - skb->tail = %d, len is %d\n",
 				skb->end - skb->tail, len);
-			dev_kमुक्त_skb_any(skb);
-			जाओ new_trx_end;
-		पूर्ण
+			dev_kfree_skb_any(skb);
+			goto new_trx_end;
+		}
 		/* handle command packet here */
-		अगर (stats.packet_report_type == C2H_PACKET) अणु
+		if (stats.packet_report_type == C2H_PACKET) {
 			rtl_c2hcmd_enqueue(hw, skb);
-			जाओ new_trx_end;
-		पूर्ण
+			goto new_trx_end;
+		}
 
-		/* NOTICE This can not be use क्रम mac80211,
-		 * this is करोne in mac80211 code,
-		 * अगर करोne here sec DHCP will fail
+		/* NOTICE This can not be use for mac80211,
+		 * this is done in mac80211 code,
+		 * if done here sec DHCP will fail
 		 * skb_trim(skb, skb->len - 4);
 		 */
 
 		hdr = rtl_get_hdr(skb);
 		fc = rtl_get_fc(skb);
 
-		अगर (!stats.crc && !stats.hwerror && (skb->len > FCS_LEN)) अणु
-			स_नकल(IEEE80211_SKB_RXCB(skb), &rx_status,
-			       माप(rx_status));
+		if (!stats.crc && !stats.hwerror && (skb->len > FCS_LEN)) {
+			memcpy(IEEE80211_SKB_RXCB(skb), &rx_status,
+			       sizeof(rx_status));
 
-			अगर (is_broadcast_ether_addr(hdr->addr1)) अणु
+			if (is_broadcast_ether_addr(hdr->addr1)) {
 				;/*TODO*/
-			पूर्ण अन्यथा अगर (is_multicast_ether_addr(hdr->addr1)) अणु
+			} else if (is_multicast_ether_addr(hdr->addr1)) {
 				;/*TODO*/
-			पूर्ण अन्यथा अणु
+			} else {
 				unicast = true;
 				rtlpriv->stats.rxbytesunicast += skb->len;
-			पूर्ण
+			}
 			rtl_is_special_data(hw, skb, false, true);
 
-			अगर (ieee80211_is_data(fc)) अणु
+			if (ieee80211_is_data(fc)) {
 				rtlpriv->cfg->ops->led_control(hw, LED_CTL_RX);
-				अगर (unicast)
+				if (unicast)
 					rtlpriv->link_info.num_rx_inperiod++;
-			पूर्ण
+			}
 
 			rtl_collect_scan_list(hw, skb);
 
-			/* अटल bcn क्रम roaming */
+			/* static bcn for roaming */
 			rtl_beacon_statistic(hw, skb);
-			rtl_p2p_info(hw, (व्योम *)skb->data, skb->len);
-			/* क्रम sw lps */
-			rtl_swlps_beacon(hw, (व्योम *)skb->data, skb->len);
-			rtl_recognize_peer(hw, (व्योम *)skb->data, skb->len);
-			अगर (rtlpriv->mac80211.opmode == NL80211_IFTYPE_AP &&
+			rtl_p2p_info(hw, (void *)skb->data, skb->len);
+			/* for sw lps */
+			rtl_swlps_beacon(hw, (void *)skb->data, skb->len);
+			rtl_recognize_peer(hw, (void *)skb->data, skb->len);
+			if (rtlpriv->mac80211.opmode == NL80211_IFTYPE_AP &&
 			    rtlpriv->rtlhal.current_bandtype == BAND_ON_2_4G &&
 			    (ieee80211_is_beacon(fc) ||
-			     ieee80211_is_probe_resp(fc))) अणु
-				dev_kमुक्त_skb_any(skb);
-			पूर्ण अन्यथा अणु
+			     ieee80211_is_probe_resp(fc))) {
+				dev_kfree_skb_any(skb);
+			} else {
 				_rtl_pci_rx_to_mac80211(hw, skb, rx_status);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			/* drop packets with errors or those too लघु */
-			dev_kमुक्त_skb_any(skb);
-		पूर्ण
+			}
+		} else {
+			/* drop packets with errors or those too short */
+			dev_kfree_skb_any(skb);
+		}
 new_trx_end:
-		अगर (rtlpriv->use_new_trx_flow) अणु
+		if (rtlpriv->use_new_trx_flow) {
 			rtlpci->rx_ring[hw_queue].next_rx_rp += 1;
 			rtlpci->rx_ring[hw_queue].next_rx_rp %=
 					RTL_PCI_MAX_RX_COUNT;
 
-			rx_reमुख्यed_cnt--;
-			rtl_ग_लिखो_word(rtlpriv, 0x3B4,
+			rx_remained_cnt--;
+			rtl_write_word(rtlpriv, 0x3B4,
 				       rtlpci->rx_ring[hw_queue].next_rx_rp);
-		पूर्ण
-		अगर (((rtlpriv->link_info.num_rx_inperiod +
+		}
+		if (((rtlpriv->link_info.num_rx_inperiod +
 		      rtlpriv->link_info.num_tx_inperiod) > 8) ||
 		      rtlpriv->link_info.num_rx_inperiod > 2)
 			rtl_lps_leave(hw, false);
 		skb = new_skb;
 no_new:
-		अगर (rtlpriv->use_new_trx_flow) अणु
+		if (rtlpriv->use_new_trx_flow) {
 			_rtl_pci_init_one_rxdesc(hw, skb, (u8 *)buffer_desc,
 						 rxring_idx,
 						 rtlpci->rx_ring[rxring_idx].idx);
-		पूर्ण अन्यथा अणु
+		} else {
 			_rtl_pci_init_one_rxdesc(hw, skb, (u8 *)pdesc,
 						 rxring_idx,
 						 rtlpci->rx_ring[rxring_idx].idx);
-			अगर (rtlpci->rx_ring[rxring_idx].idx ==
+			if (rtlpci->rx_ring[rxring_idx].idx ==
 			    rtlpci->rxringcount - 1)
 				rtlpriv->cfg->ops->set_desc(hw, (u8 *)pdesc,
 							    false,
 							    HW_DESC_RXERO,
-							    (u8 *)&पंचांगp_one);
-		पूर्ण
+							    (u8 *)&tmp_one);
+		}
 		rtlpci->rx_ring[rxring_idx].idx =
 				(rtlpci->rx_ring[rxring_idx].idx + 1) %
 				rtlpci->rxringcount;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल irqवापस_t _rtl_pci_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा ieee80211_hw *hw = dev_id;
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	अचिन्हित दीर्घ flags;
-	काष्ठा rtl_पूर्णांक पूर्णांकvec = अणु0पूर्ण;
+static irqreturn_t _rtl_pci_interrupt(int irq, void *dev_id)
+{
+	struct ieee80211_hw *hw = dev_id;
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	unsigned long flags;
+	struct rtl_int intvec = {0};
 
-	irqवापस_t ret = IRQ_HANDLED;
+	irqreturn_t ret = IRQ_HANDLED;
 
-	अगर (rtlpci->irq_enabled == 0)
-		वापस ret;
+	if (rtlpci->irq_enabled == 0)
+		return ret;
 
 	spin_lock_irqsave(&rtlpriv->locks.irq_th_lock, flags);
-	rtlpriv->cfg->ops->disable_पूर्णांकerrupt(hw);
+	rtlpriv->cfg->ops->disable_interrupt(hw);
 
-	/*पढ़ो ISR: 4/8bytes */
-	rtlpriv->cfg->ops->पूर्णांकerrupt_recognized(hw, &पूर्णांकvec);
+	/*read ISR: 4/8bytes */
+	rtlpriv->cfg->ops->interrupt_recognized(hw, &intvec);
 
 	/*Shared IRQ or HW disappeared */
-	अगर (!पूर्णांकvec.पूर्णांकa || पूर्णांकvec.पूर्णांकa == 0xffff)
-		जाओ करोne;
+	if (!intvec.inta || intvec.inta == 0xffff)
+		goto done;
 
 	/*<1> beacon related */
-	अगर (पूर्णांकvec.पूर्णांकa & rtlpriv->cfg->maps[RTL_IMR_TBDOK])
+	if (intvec.inta & rtlpriv->cfg->maps[RTL_IMR_TBDOK])
 		rtl_dbg(rtlpriv, COMP_INTR, DBG_TRACE,
 			"beacon ok interrupt!\n");
 
-	अगर (unlikely(पूर्णांकvec.पूर्णांकa & rtlpriv->cfg->maps[RTL_IMR_TBDER]))
+	if (unlikely(intvec.inta & rtlpriv->cfg->maps[RTL_IMR_TBDER]))
 		rtl_dbg(rtlpriv, COMP_INTR, DBG_TRACE,
 			"beacon err interrupt!\n");
 
-	अगर (पूर्णांकvec.पूर्णांकa & rtlpriv->cfg->maps[RTL_IMR_BDOK])
+	if (intvec.inta & rtlpriv->cfg->maps[RTL_IMR_BDOK])
 		rtl_dbg(rtlpriv, COMP_INTR, DBG_TRACE, "beacon interrupt!\n");
 
-	अगर (पूर्णांकvec.पूर्णांकa & rtlpriv->cfg->maps[RTL_IMR_BCNINT]) अणु
+	if (intvec.inta & rtlpriv->cfg->maps[RTL_IMR_BCNINT]) {
 		rtl_dbg(rtlpriv, COMP_INTR, DBG_TRACE,
 			"prepare beacon for interrupt!\n");
 		tasklet_schedule(&rtlpriv->works.irq_prepare_bcn_tasklet);
-	पूर्ण
+	}
 
 	/*<2> Tx related */
-	अगर (unlikely(पूर्णांकvec.पूर्णांकb & rtlpriv->cfg->maps[RTL_IMR_TXFOVW]))
+	if (unlikely(intvec.intb & rtlpriv->cfg->maps[RTL_IMR_TXFOVW]))
 		rtl_dbg(rtlpriv, COMP_ERR, DBG_WARNING, "IMR_TXFOVW!\n");
 
-	अगर (पूर्णांकvec.पूर्णांकa & rtlpriv->cfg->maps[RTL_IMR_MGNTDOK]) अणु
+	if (intvec.inta & rtlpriv->cfg->maps[RTL_IMR_MGNTDOK]) {
 		rtl_dbg(rtlpriv, COMP_INTR, DBG_TRACE,
 			"Manage ok interrupt!\n");
 		_rtl_pci_tx_isr(hw, MGNT_QUEUE);
-	पूर्ण
+	}
 
-	अगर (पूर्णांकvec.पूर्णांकa & rtlpriv->cfg->maps[RTL_IMR_HIGHDOK]) अणु
+	if (intvec.inta & rtlpriv->cfg->maps[RTL_IMR_HIGHDOK]) {
 		rtl_dbg(rtlpriv, COMP_INTR, DBG_TRACE,
 			"HIGH_QUEUE ok interrupt!\n");
 		_rtl_pci_tx_isr(hw, HIGH_QUEUE);
-	पूर्ण
+	}
 
-	अगर (पूर्णांकvec.पूर्णांकa & rtlpriv->cfg->maps[RTL_IMR_BKDOK]) अणु
+	if (intvec.inta & rtlpriv->cfg->maps[RTL_IMR_BKDOK]) {
 		rtlpriv->link_info.num_tx_inperiod++;
 
 		rtl_dbg(rtlpriv, COMP_INTR, DBG_TRACE,
 			"BK Tx OK interrupt!\n");
 		_rtl_pci_tx_isr(hw, BK_QUEUE);
-	पूर्ण
+	}
 
-	अगर (पूर्णांकvec.पूर्णांकa & rtlpriv->cfg->maps[RTL_IMR_BEDOK]) अणु
+	if (intvec.inta & rtlpriv->cfg->maps[RTL_IMR_BEDOK]) {
 		rtlpriv->link_info.num_tx_inperiod++;
 
 		rtl_dbg(rtlpriv, COMP_INTR, DBG_TRACE,
 			"BE TX OK interrupt!\n");
 		_rtl_pci_tx_isr(hw, BE_QUEUE);
-	पूर्ण
+	}
 
-	अगर (पूर्णांकvec.पूर्णांकa & rtlpriv->cfg->maps[RTL_IMR_VIDOK]) अणु
+	if (intvec.inta & rtlpriv->cfg->maps[RTL_IMR_VIDOK]) {
 		rtlpriv->link_info.num_tx_inperiod++;
 
 		rtl_dbg(rtlpriv, COMP_INTR, DBG_TRACE,
 			"VI TX OK interrupt!\n");
 		_rtl_pci_tx_isr(hw, VI_QUEUE);
-	पूर्ण
+	}
 
-	अगर (पूर्णांकvec.पूर्णांकa & rtlpriv->cfg->maps[RTL_IMR_VODOK]) अणु
+	if (intvec.inta & rtlpriv->cfg->maps[RTL_IMR_VODOK]) {
 		rtlpriv->link_info.num_tx_inperiod++;
 
 		rtl_dbg(rtlpriv, COMP_INTR, DBG_TRACE,
 			"Vo TX OK interrupt!\n");
 		_rtl_pci_tx_isr(hw, VO_QUEUE);
-	पूर्ण
+	}
 
-	अगर (rtlhal->hw_type == HARDWARE_TYPE_RTL8822BE) अणु
-		अगर (पूर्णांकvec.पूर्णांकd & rtlpriv->cfg->maps[RTL_IMR_H2CDOK]) अणु
+	if (rtlhal->hw_type == HARDWARE_TYPE_RTL8822BE) {
+		if (intvec.intd & rtlpriv->cfg->maps[RTL_IMR_H2CDOK]) {
 			rtlpriv->link_info.num_tx_inperiod++;
 
 			rtl_dbg(rtlpriv, COMP_INTR, DBG_TRACE,
 				"H2C TX OK interrupt!\n");
 			_rtl_pci_tx_isr(hw, H2C_QUEUE);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (rtlhal->hw_type == HARDWARE_TYPE_RTL8192SE) अणु
-		अगर (पूर्णांकvec.पूर्णांकa & rtlpriv->cfg->maps[RTL_IMR_COMDOK]) अणु
+	if (rtlhal->hw_type == HARDWARE_TYPE_RTL8192SE) {
+		if (intvec.inta & rtlpriv->cfg->maps[RTL_IMR_COMDOK]) {
 			rtlpriv->link_info.num_tx_inperiod++;
 
 			rtl_dbg(rtlpriv, COMP_INTR, DBG_TRACE,
 				"CMD TX OK interrupt!\n");
 			_rtl_pci_tx_isr(hw, TXCMD_QUEUE);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*<3> Rx related */
-	अगर (पूर्णांकvec.पूर्णांकa & rtlpriv->cfg->maps[RTL_IMR_ROK]) अणु
+	if (intvec.inta & rtlpriv->cfg->maps[RTL_IMR_ROK]) {
 		rtl_dbg(rtlpriv, COMP_INTR, DBG_TRACE, "Rx ok interrupt!\n");
-		_rtl_pci_rx_पूर्णांकerrupt(hw);
-	पूर्ण
+		_rtl_pci_rx_interrupt(hw);
+	}
 
-	अगर (unlikely(पूर्णांकvec.पूर्णांकa & rtlpriv->cfg->maps[RTL_IMR_RDU])) अणु
+	if (unlikely(intvec.inta & rtlpriv->cfg->maps[RTL_IMR_RDU])) {
 		rtl_dbg(rtlpriv, COMP_ERR, DBG_WARNING,
 			"rx descriptor unavailable!\n");
-		_rtl_pci_rx_पूर्णांकerrupt(hw);
-	पूर्ण
+		_rtl_pci_rx_interrupt(hw);
+	}
 
-	अगर (unlikely(पूर्णांकvec.पूर्णांकb & rtlpriv->cfg->maps[RTL_IMR_RXFOVW])) अणु
+	if (unlikely(intvec.intb & rtlpriv->cfg->maps[RTL_IMR_RXFOVW])) {
 		rtl_dbg(rtlpriv, COMP_ERR, DBG_WARNING, "rx overflow !\n");
-		_rtl_pci_rx_पूर्णांकerrupt(hw);
-	पूर्ण
+		_rtl_pci_rx_interrupt(hw);
+	}
 
 	/*<4> fw related*/
-	अगर (rtlhal->hw_type == HARDWARE_TYPE_RTL8723AE) अणु
-		अगर (पूर्णांकvec.पूर्णांकa & rtlpriv->cfg->maps[RTL_IMR_C2HCMD]) अणु
+	if (rtlhal->hw_type == HARDWARE_TYPE_RTL8723AE) {
+		if (intvec.inta & rtlpriv->cfg->maps[RTL_IMR_C2HCMD]) {
 			rtl_dbg(rtlpriv, COMP_INTR, DBG_TRACE,
 				"firmware interrupt!\n");
 			queue_delayed_work(rtlpriv->works.rtl_wq,
 					   &rtlpriv->works.fwevt_wq, 0);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*<5> hsisr related*/
 	/* Only 8188EE & 8723BE Supported.
@@ -1042,134 +1041,134 @@ no_new:
 	 * because maps[RTL_IMR_HSISR_IND] & maps[MAC_HSISR]
 	 * are not initialized
 	 */
-	अगर (rtlhal->hw_type == HARDWARE_TYPE_RTL8188EE ||
-	    rtlhal->hw_type == HARDWARE_TYPE_RTL8723BE) अणु
-		अगर (unlikely(पूर्णांकvec.पूर्णांकa &
-		    rtlpriv->cfg->maps[RTL_IMR_HSISR_IND])) अणु
+	if (rtlhal->hw_type == HARDWARE_TYPE_RTL8188EE ||
+	    rtlhal->hw_type == HARDWARE_TYPE_RTL8723BE) {
+		if (unlikely(intvec.inta &
+		    rtlpriv->cfg->maps[RTL_IMR_HSISR_IND])) {
 			rtl_dbg(rtlpriv, COMP_INTR, DBG_TRACE,
 				"hsisr interrupt!\n");
-			_rtl_pci_hs_पूर्णांकerrupt(hw);
-		पूर्ण
-	पूर्ण
+			_rtl_pci_hs_interrupt(hw);
+		}
+	}
 
-	अगर (rtlpriv->rtlhal.earlymode_enable)
+	if (rtlpriv->rtlhal.earlymode_enable)
 		tasklet_schedule(&rtlpriv->works.irq_tasklet);
 
-करोne:
-	rtlpriv->cfg->ops->enable_पूर्णांकerrupt(hw);
+done:
+	rtlpriv->cfg->ops->enable_interrupt(hw);
 	spin_unlock_irqrestore(&rtlpriv->locks.irq_th_lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम _rtl_pci_irq_tasklet(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा rtl_priv *rtlpriv = from_tasklet(rtlpriv, t, works.irq_tasklet);
-	काष्ठा ieee80211_hw *hw = rtlpriv->hw;
-	_rtl_pci_tx_chk_रुकोq(hw);
-पूर्ण
+static void _rtl_pci_irq_tasklet(struct tasklet_struct *t)
+{
+	struct rtl_priv *rtlpriv = from_tasklet(rtlpriv, t, works.irq_tasklet);
+	struct ieee80211_hw *hw = rtlpriv->hw;
+	_rtl_pci_tx_chk_waitq(hw);
+}
 
-अटल व्योम _rtl_pci_prepare_bcn_tasklet(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा rtl_priv *rtlpriv = from_tasklet(rtlpriv, t,
+static void _rtl_pci_prepare_bcn_tasklet(struct tasklet_struct *t)
+{
+	struct rtl_priv *rtlpriv = from_tasklet(rtlpriv, t,
 						works.irq_prepare_bcn_tasklet);
-	काष्ठा ieee80211_hw *hw = rtlpriv->hw;
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	काष्ठा rtl8192_tx_ring *ring = शून्य;
-	काष्ठा ieee80211_hdr *hdr = शून्य;
-	काष्ठा ieee80211_tx_info *info = शून्य;
-	काष्ठा sk_buff *pskb = शून्य;
-	काष्ठा rtl_tx_desc *pdesc = शून्य;
-	काष्ठा rtl_tcb_desc tcb_desc;
-	/*This is क्रम new trx flow*/
-	काष्ठा rtl_tx_buffer_desc *pbuffer_desc = शून्य;
+	struct ieee80211_hw *hw = rtlpriv->hw;
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	struct rtl8192_tx_ring *ring = NULL;
+	struct ieee80211_hdr *hdr = NULL;
+	struct ieee80211_tx_info *info = NULL;
+	struct sk_buff *pskb = NULL;
+	struct rtl_tx_desc *pdesc = NULL;
+	struct rtl_tcb_desc tcb_desc;
+	/*This is for new trx flow*/
+	struct rtl_tx_buffer_desc *pbuffer_desc = NULL;
 	u8 temp_one = 1;
 	u8 *entry;
 
-	स_रखो(&tcb_desc, 0, माप(काष्ठा rtl_tcb_desc));
+	memset(&tcb_desc, 0, sizeof(struct rtl_tcb_desc));
 	ring = &rtlpci->tx_ring[BEACON_QUEUE];
 	pskb = __skb_dequeue(&ring->queue);
-	अगर (rtlpriv->use_new_trx_flow)
+	if (rtlpriv->use_new_trx_flow)
 		entry = (u8 *)(&ring->buffer_desc[ring->idx]);
-	अन्यथा
+	else
 		entry = (u8 *)(&ring->desc[ring->idx]);
-	अगर (pskb) अणु
+	if (pskb) {
 		dma_unmap_single(&rtlpci->pdev->dev,
 				 rtlpriv->cfg->ops->get_desc(hw, (u8 *)entry,
 						true, HW_DESC_TXBUFF_ADDR),
 				 pskb->len, DMA_TO_DEVICE);
-		kमुक्त_skb(pskb);
-	पूर्ण
+		kfree_skb(pskb);
+	}
 
 	/*NB: the beacon data buffer must be 32-bit aligned. */
-	pskb = ieee80211_beacon_get(hw, mac->vअगर);
-	अगर (!pskb)
-		वापस;
+	pskb = ieee80211_beacon_get(hw, mac->vif);
+	if (!pskb)
+		return;
 	hdr = rtl_get_hdr(pskb);
 	info = IEEE80211_SKB_CB(pskb);
 	pdesc = &ring->desc[0];
-	अगर (rtlpriv->use_new_trx_flow)
+	if (rtlpriv->use_new_trx_flow)
 		pbuffer_desc = &ring->buffer_desc[0];
 
 	rtlpriv->cfg->ops->fill_tx_desc(hw, hdr, (u8 *)pdesc,
-					(u8 *)pbuffer_desc, info, शून्य, pskb,
+					(u8 *)pbuffer_desc, info, NULL, pskb,
 					BEACON_QUEUE, &tcb_desc);
 
 	__skb_queue_tail(&ring->queue, pskb);
 
-	अगर (rtlpriv->use_new_trx_flow) अणु
+	if (rtlpriv->use_new_trx_flow) {
 		temp_one = 4;
 		rtlpriv->cfg->ops->set_desc(hw, (u8 *)pbuffer_desc, true,
 					    HW_DESC_OWN, (u8 *)&temp_one);
-	पूर्ण अन्यथा अणु
+	} else {
 		rtlpriv->cfg->ops->set_desc(hw, (u8 *)pdesc, true, HW_DESC_OWN,
 					    &temp_one);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम _rtl_pci_init_trx_var(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_hal *rtlhal = rtl_hal(rtlpriv);
+static void _rtl_pci_init_trx_var(struct ieee80211_hw *hw)
+{
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_hal *rtlhal = rtl_hal(rtlpriv);
 	u8 i;
 	u16 desc_num;
 
-	अगर (rtlhal->hw_type == HARDWARE_TYPE_RTL8192EE)
+	if (rtlhal->hw_type == HARDWARE_TYPE_RTL8192EE)
 		desc_num = TX_DESC_NUM_92E;
-	अन्यथा अगर (rtlhal->hw_type == HARDWARE_TYPE_RTL8822BE)
+	else if (rtlhal->hw_type == HARDWARE_TYPE_RTL8822BE)
 		desc_num = TX_DESC_NUM_8822B;
-	अन्यथा
+	else
 		desc_num = RT_TXDESC_NUM;
 
-	क्रम (i = 0; i < RTL_PCI_MAX_TX_QUEUE_COUNT; i++)
+	for (i = 0; i < RTL_PCI_MAX_TX_QUEUE_COUNT; i++)
 		rtlpci->txringcount[i] = desc_num;
 
-	/*we just alloc 2 desc क्रम beacon queue,
+	/*we just alloc 2 desc for beacon queue,
 	 *because we just need first desc in hw beacon.
 	 */
 	rtlpci->txringcount[BEACON_QUEUE] = 2;
 
-	/*BE queue need more descriptor क्रम perक्रमmance
+	/*BE queue need more descriptor for performance
 	 *consideration or, No more tx desc will happen,
 	 *and may cause mac80211 mem leakage.
 	 */
-	अगर (!rtl_priv(hw)->use_new_trx_flow)
+	if (!rtl_priv(hw)->use_new_trx_flow)
 		rtlpci->txringcount[BE_QUEUE] = RT_TXDESC_NUM_BE_QUEUE;
 
 	rtlpci->rxbuffersize = 9100;	/*2048/1024; */
 	rtlpci->rxringcount = RTL_PCI_MAX_RX_COUNT;	/*64; */
-पूर्ण
+}
 
-अटल व्योम _rtl_pci_init_काष्ठा(काष्ठा ieee80211_hw *hw,
-				 काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+static void _rtl_pci_init_struct(struct ieee80211_hw *hw,
+				 struct pci_dev *pdev)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
 
-	rtlpci->up_first_समय = true;
+	rtlpci->up_first_time = true;
 	rtlpci->being_init_adapter = false;
 
 	rtlhal->hw = hw;
@@ -1179,18 +1178,18 @@ no_new:
 	_rtl_pci_init_trx_var(hw);
 
 	/*IBSS*/
-	mac->beacon_पूर्णांकerval = 100;
+	mac->beacon_interval = 100;
 
 	/*AMPDU*/
 	mac->min_space_cfg = 0;
 	mac->max_mss_density = 0;
-	/*set sane AMPDU शेषs */
+	/*set sane AMPDU defaults */
 	mac->current_ampdu_density = 7;
 	mac->current_ampdu_factor = 3;
 
 	/*Retry Limit*/
-	mac->retry_लघु = 7;
-	mac->retry_दीर्घ = 7;
+	mac->retry_short = 7;
+	mac->retry_long = 7;
 
 	/*QOS*/
 	rtlpci->acm_method = EACMWAY2_SW;
@@ -1201,47 +1200,47 @@ no_new:
 		     _rtl_pci_prepare_bcn_tasklet);
 	INIT_WORK(&rtlpriv->works.lps_change_work,
 		  rtl_lps_change_work_callback);
-पूर्ण
+}
 
-अटल पूर्णांक _rtl_pci_init_tx_ring(काष्ठा ieee80211_hw *hw,
-				 अचिन्हित पूर्णांक prio, अचिन्हित पूर्णांक entries)
-अणु
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_tx_buffer_desc *buffer_desc;
-	काष्ठा rtl_tx_desc *desc;
+static int _rtl_pci_init_tx_ring(struct ieee80211_hw *hw,
+				 unsigned int prio, unsigned int entries)
+{
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_tx_buffer_desc *buffer_desc;
+	struct rtl_tx_desc *desc;
 	dma_addr_t buffer_desc_dma, desc_dma;
 	u32 nextdescaddress;
-	पूर्णांक i;
+	int i;
 
-	/* alloc tx buffer desc क्रम new trx flow*/
-	अगर (rtlpriv->use_new_trx_flow) अणु
+	/* alloc tx buffer desc for new trx flow*/
+	if (rtlpriv->use_new_trx_flow) {
 		buffer_desc =
 		   dma_alloc_coherent(&rtlpci->pdev->dev,
-				      माप(*buffer_desc) * entries,
+				      sizeof(*buffer_desc) * entries,
 				      &buffer_desc_dma, GFP_KERNEL);
 
-		अगर (!buffer_desc || (अचिन्हित दीर्घ)buffer_desc & 0xFF) अणु
+		if (!buffer_desc || (unsigned long)buffer_desc & 0xFF) {
 			pr_err("Cannot allocate TX ring (prio = %d)\n",
 			       prio);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		rtlpci->tx_ring[prio].buffer_desc = buffer_desc;
 		rtlpci->tx_ring[prio].buffer_desc_dma = buffer_desc_dma;
 
 		rtlpci->tx_ring[prio].cur_tx_rp = 0;
 		rtlpci->tx_ring[prio].cur_tx_wp = 0;
-	पूर्ण
+	}
 
-	/* alloc dma क्रम this ring */
-	desc = dma_alloc_coherent(&rtlpci->pdev->dev, माप(*desc) * entries,
+	/* alloc dma for this ring */
+	desc = dma_alloc_coherent(&rtlpci->pdev->dev, sizeof(*desc) * entries,
 				  &desc_dma, GFP_KERNEL);
 
-	अगर (!desc || (अचिन्हित दीर्घ)desc & 0xFF) अणु
+	if (!desc || (unsigned long)desc & 0xFF) {
 		pr_err("Cannot allocate TX ring (prio = %d)\n", prio);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	rtlpci->tx_ring[prio].desc = desc;
 	rtlpci->tx_ring[prio].dma = desc_dma;
@@ -1254,237 +1253,237 @@ no_new:
 		prio, desc);
 
 	/* init every desc in this ring */
-	अगर (!rtlpriv->use_new_trx_flow) अणु
-		क्रम (i = 0; i < entries; i++) अणु
+	if (!rtlpriv->use_new_trx_flow) {
+		for (i = 0; i < entries; i++) {
 			nextdescaddress = (u32)desc_dma +
 					  ((i +	1) % entries) *
-					  माप(*desc);
+					  sizeof(*desc);
 
 			rtlpriv->cfg->ops->set_desc(hw, (u8 *)&desc[i],
 						    true,
 						    HW_DESC_TX_NEXTDESC_ADDR,
 						    (u8 *)&nextdescaddress);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक _rtl_pci_init_rx_ring(काष्ठा ieee80211_hw *hw, पूर्णांक rxring_idx)
-अणु
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	पूर्णांक i;
+static int _rtl_pci_init_rx_ring(struct ieee80211_hw *hw, int rxring_idx)
+{
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	int i;
 
-	अगर (rtlpriv->use_new_trx_flow) अणु
-		काष्ठा rtl_rx_buffer_desc *entry = शून्य;
-		/* alloc dma क्रम this ring */
+	if (rtlpriv->use_new_trx_flow) {
+		struct rtl_rx_buffer_desc *entry = NULL;
+		/* alloc dma for this ring */
 		rtlpci->rx_ring[rxring_idx].buffer_desc =
 		    dma_alloc_coherent(&rtlpci->pdev->dev,
-				       माप(*rtlpci->rx_ring[rxring_idx].buffer_desc) *
+				       sizeof(*rtlpci->rx_ring[rxring_idx].buffer_desc) *
 				       rtlpci->rxringcount,
 				       &rtlpci->rx_ring[rxring_idx].dma, GFP_KERNEL);
-		अगर (!rtlpci->rx_ring[rxring_idx].buffer_desc ||
-		    (uदीर्घ)rtlpci->rx_ring[rxring_idx].buffer_desc & 0xFF) अणु
+		if (!rtlpci->rx_ring[rxring_idx].buffer_desc ||
+		    (ulong)rtlpci->rx_ring[rxring_idx].buffer_desc & 0xFF) {
 			pr_err("Cannot allocate RX ring\n");
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		/* init every desc in this ring */
 		rtlpci->rx_ring[rxring_idx].idx = 0;
-		क्रम (i = 0; i < rtlpci->rxringcount; i++) अणु
+		for (i = 0; i < rtlpci->rxringcount; i++) {
 			entry = &rtlpci->rx_ring[rxring_idx].buffer_desc[i];
-			अगर (!_rtl_pci_init_one_rxdesc(hw, शून्य, (u8 *)entry,
+			if (!_rtl_pci_init_one_rxdesc(hw, NULL, (u8 *)entry,
 						      rxring_idx, i))
-				वापस -ENOMEM;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		काष्ठा rtl_rx_desc *entry = शून्य;
-		u8 पंचांगp_one = 1;
-		/* alloc dma क्रम this ring */
+				return -ENOMEM;
+		}
+	} else {
+		struct rtl_rx_desc *entry = NULL;
+		u8 tmp_one = 1;
+		/* alloc dma for this ring */
 		rtlpci->rx_ring[rxring_idx].desc =
 		    dma_alloc_coherent(&rtlpci->pdev->dev,
-				       माप(*rtlpci->rx_ring[rxring_idx].desc) *
+				       sizeof(*rtlpci->rx_ring[rxring_idx].desc) *
 				       rtlpci->rxringcount,
 				       &rtlpci->rx_ring[rxring_idx].dma, GFP_KERNEL);
-		अगर (!rtlpci->rx_ring[rxring_idx].desc ||
-		    (अचिन्हित दीर्घ)rtlpci->rx_ring[rxring_idx].desc & 0xFF) अणु
+		if (!rtlpci->rx_ring[rxring_idx].desc ||
+		    (unsigned long)rtlpci->rx_ring[rxring_idx].desc & 0xFF) {
 			pr_err("Cannot allocate RX ring\n");
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		/* init every desc in this ring */
 		rtlpci->rx_ring[rxring_idx].idx = 0;
 
-		क्रम (i = 0; i < rtlpci->rxringcount; i++) अणु
+		for (i = 0; i < rtlpci->rxringcount; i++) {
 			entry = &rtlpci->rx_ring[rxring_idx].desc[i];
-			अगर (!_rtl_pci_init_one_rxdesc(hw, शून्य, (u8 *)entry,
+			if (!_rtl_pci_init_one_rxdesc(hw, NULL, (u8 *)entry,
 						      rxring_idx, i))
-				वापस -ENOMEM;
-		पूर्ण
+				return -ENOMEM;
+		}
 
 		rtlpriv->cfg->ops->set_desc(hw, (u8 *)entry, false,
-					    HW_DESC_RXERO, &पंचांगp_one);
-	पूर्ण
-	वापस 0;
-पूर्ण
+					    HW_DESC_RXERO, &tmp_one);
+	}
+	return 0;
+}
 
-अटल व्योम _rtl_pci_मुक्त_tx_ring(काष्ठा ieee80211_hw *hw,
-				  अचिन्हित पूर्णांक prio)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	काष्ठा rtl8192_tx_ring *ring = &rtlpci->tx_ring[prio];
+static void _rtl_pci_free_tx_ring(struct ieee80211_hw *hw,
+				  unsigned int prio)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	struct rtl8192_tx_ring *ring = &rtlpci->tx_ring[prio];
 
-	/* मुक्त every desc in this ring */
-	जबतक (skb_queue_len(&ring->queue)) अणु
+	/* free every desc in this ring */
+	while (skb_queue_len(&ring->queue)) {
 		u8 *entry;
-		काष्ठा sk_buff *skb = __skb_dequeue(&ring->queue);
+		struct sk_buff *skb = __skb_dequeue(&ring->queue);
 
-		अगर (rtlpriv->use_new_trx_flow)
+		if (rtlpriv->use_new_trx_flow)
 			entry = (u8 *)(&ring->buffer_desc[ring->idx]);
-		अन्यथा
+		else
 			entry = (u8 *)(&ring->desc[ring->idx]);
 
 		dma_unmap_single(&rtlpci->pdev->dev,
 				 rtlpriv->cfg->ops->get_desc(hw, (u8 *)entry,
 						true, HW_DESC_TXBUFF_ADDR),
 				 skb->len, DMA_TO_DEVICE);
-		kमुक्त_skb(skb);
+		kfree_skb(skb);
 		ring->idx = (ring->idx + 1) % ring->entries;
-	पूर्ण
+	}
 
-	/* मुक्त dma of this ring */
-	dma_मुक्त_coherent(&rtlpci->pdev->dev,
-			  माप(*ring->desc) * ring->entries, ring->desc,
+	/* free dma of this ring */
+	dma_free_coherent(&rtlpci->pdev->dev,
+			  sizeof(*ring->desc) * ring->entries, ring->desc,
 			  ring->dma);
-	ring->desc = शून्य;
-	अगर (rtlpriv->use_new_trx_flow) अणु
-		dma_मुक्त_coherent(&rtlpci->pdev->dev,
-				  माप(*ring->buffer_desc) * ring->entries,
+	ring->desc = NULL;
+	if (rtlpriv->use_new_trx_flow) {
+		dma_free_coherent(&rtlpci->pdev->dev,
+				  sizeof(*ring->buffer_desc) * ring->entries,
 				  ring->buffer_desc, ring->buffer_desc_dma);
-		ring->buffer_desc = शून्य;
-	पूर्ण
-पूर्ण
+		ring->buffer_desc = NULL;
+	}
+}
 
-अटल व्योम _rtl_pci_मुक्त_rx_ring(काष्ठा ieee80211_hw *hw, पूर्णांक rxring_idx)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	पूर्णांक i;
+static void _rtl_pci_free_rx_ring(struct ieee80211_hw *hw, int rxring_idx)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	int i;
 
-	/* मुक्त every desc in this ring */
-	क्रम (i = 0; i < rtlpci->rxringcount; i++) अणु
-		काष्ठा sk_buff *skb = rtlpci->rx_ring[rxring_idx].rx_buf[i];
+	/* free every desc in this ring */
+	for (i = 0; i < rtlpci->rxringcount; i++) {
+		struct sk_buff *skb = rtlpci->rx_ring[rxring_idx].rx_buf[i];
 
-		अगर (!skb)
-			जारी;
+		if (!skb)
+			continue;
 		dma_unmap_single(&rtlpci->pdev->dev, *((dma_addr_t *)skb->cb),
 				 rtlpci->rxbuffersize, DMA_FROM_DEVICE);
-		kमुक्त_skb(skb);
-	पूर्ण
+		kfree_skb(skb);
+	}
 
-	/* मुक्त dma of this ring */
-	अगर (rtlpriv->use_new_trx_flow) अणु
-		dma_मुक्त_coherent(&rtlpci->pdev->dev,
-				  माप(*rtlpci->rx_ring[rxring_idx].buffer_desc) *
+	/* free dma of this ring */
+	if (rtlpriv->use_new_trx_flow) {
+		dma_free_coherent(&rtlpci->pdev->dev,
+				  sizeof(*rtlpci->rx_ring[rxring_idx].buffer_desc) *
 				  rtlpci->rxringcount,
 				  rtlpci->rx_ring[rxring_idx].buffer_desc,
 				  rtlpci->rx_ring[rxring_idx].dma);
-		rtlpci->rx_ring[rxring_idx].buffer_desc = शून्य;
-	पूर्ण अन्यथा अणु
-		dma_मुक्त_coherent(&rtlpci->pdev->dev,
-				  माप(*rtlpci->rx_ring[rxring_idx].desc) *
+		rtlpci->rx_ring[rxring_idx].buffer_desc = NULL;
+	} else {
+		dma_free_coherent(&rtlpci->pdev->dev,
+				  sizeof(*rtlpci->rx_ring[rxring_idx].desc) *
 				  rtlpci->rxringcount,
 				  rtlpci->rx_ring[rxring_idx].desc,
 				  rtlpci->rx_ring[rxring_idx].dma);
-		rtlpci->rx_ring[rxring_idx].desc = शून्य;
-	पूर्ण
-पूर्ण
+		rtlpci->rx_ring[rxring_idx].desc = NULL;
+	}
+}
 
-अटल पूर्णांक _rtl_pci_init_trx_ring(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	पूर्णांक ret;
-	पूर्णांक i, rxring_idx;
+static int _rtl_pci_init_trx_ring(struct ieee80211_hw *hw)
+{
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	int ret;
+	int i, rxring_idx;
 
 	/* rxring_idx 0:RX_MPDU_QUEUE
 	 * rxring_idx 1:RX_CMD_QUEUE
 	 */
-	क्रम (rxring_idx = 0; rxring_idx < RTL_PCI_MAX_RX_QUEUE; rxring_idx++) अणु
+	for (rxring_idx = 0; rxring_idx < RTL_PCI_MAX_RX_QUEUE; rxring_idx++) {
 		ret = _rtl_pci_init_rx_ring(hw, rxring_idx);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	क्रम (i = 0; i < RTL_PCI_MAX_TX_QUEUE_COUNT; i++) अणु
+	for (i = 0; i < RTL_PCI_MAX_TX_QUEUE_COUNT; i++) {
 		ret = _rtl_pci_init_tx_ring(hw, i, rtlpci->txringcount[i]);
-		अगर (ret)
-			जाओ err_मुक्त_rings;
-	पूर्ण
+		if (ret)
+			goto err_free_rings;
+	}
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_rings:
-	क्रम (rxring_idx = 0; rxring_idx < RTL_PCI_MAX_RX_QUEUE; rxring_idx++)
-		_rtl_pci_मुक्त_rx_ring(hw, rxring_idx);
+err_free_rings:
+	for (rxring_idx = 0; rxring_idx < RTL_PCI_MAX_RX_QUEUE; rxring_idx++)
+		_rtl_pci_free_rx_ring(hw, rxring_idx);
 
-	क्रम (i = 0; i < RTL_PCI_MAX_TX_QUEUE_COUNT; i++)
-		अगर (rtlpci->tx_ring[i].desc ||
+	for (i = 0; i < RTL_PCI_MAX_TX_QUEUE_COUNT; i++)
+		if (rtlpci->tx_ring[i].desc ||
 		    rtlpci->tx_ring[i].buffer_desc)
-			_rtl_pci_मुक्त_tx_ring(hw, i);
+			_rtl_pci_free_tx_ring(hw, i);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक _rtl_pci_deinit_trx_ring(काष्ठा ieee80211_hw *hw)
-अणु
+static int _rtl_pci_deinit_trx_ring(struct ieee80211_hw *hw)
+{
 	u32 i, rxring_idx;
 
-	/*मुक्त rx rings */
-	क्रम (rxring_idx = 0; rxring_idx < RTL_PCI_MAX_RX_QUEUE; rxring_idx++)
-		_rtl_pci_मुक्त_rx_ring(hw, rxring_idx);
+	/*free rx rings */
+	for (rxring_idx = 0; rxring_idx < RTL_PCI_MAX_RX_QUEUE; rxring_idx++)
+		_rtl_pci_free_rx_ring(hw, rxring_idx);
 
-	/*मुक्त tx rings */
-	क्रम (i = 0; i < RTL_PCI_MAX_TX_QUEUE_COUNT; i++)
-		_rtl_pci_मुक्त_tx_ring(hw, i);
+	/*free tx rings */
+	for (i = 0; i < RTL_PCI_MAX_TX_QUEUE_COUNT; i++)
+		_rtl_pci_free_tx_ring(hw, i);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक rtl_pci_reset_trx_ring(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	पूर्णांक i, rxring_idx;
-	अचिन्हित दीर्घ flags;
-	u8 पंचांगp_one = 1;
+int rtl_pci_reset_trx_ring(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	int i, rxring_idx;
+	unsigned long flags;
+	u8 tmp_one = 1;
 	u32 bufferaddress;
 	/* rxring_idx 0:RX_MPDU_QUEUE */
 	/* rxring_idx 1:RX_CMD_QUEUE */
-	क्रम (rxring_idx = 0; rxring_idx < RTL_PCI_MAX_RX_QUEUE; rxring_idx++) अणु
-		/* क्रमce the rx_ring[RX_MPDU_QUEUE/
+	for (rxring_idx = 0; rxring_idx < RTL_PCI_MAX_RX_QUEUE; rxring_idx++) {
+		/* force the rx_ring[RX_MPDU_QUEUE/
 		 * RX_CMD_QUEUE].idx to the first one
-		 *new trx flow, करो nothing
+		 *new trx flow, do nothing
 		 */
-		अगर (!rtlpriv->use_new_trx_flow &&
-		    rtlpci->rx_ring[rxring_idx].desc) अणु
-			काष्ठा rtl_rx_desc *entry = शून्य;
+		if (!rtlpriv->use_new_trx_flow &&
+		    rtlpci->rx_ring[rxring_idx].desc) {
+			struct rtl_rx_desc *entry = NULL;
 
 			rtlpci->rx_ring[rxring_idx].idx = 0;
-			क्रम (i = 0; i < rtlpci->rxringcount; i++) अणु
+			for (i = 0; i < rtlpci->rxringcount; i++) {
 				entry = &rtlpci->rx_ring[rxring_idx].desc[i];
 				bufferaddress =
 				  rtlpriv->cfg->ops->get_desc(hw, (u8 *)entry,
 				  false, HW_DESC_RXBUFF_ADDR);
-				स_रखो((u8 *)entry, 0,
-				       माप(*rtlpci->rx_ring
+				memset((u8 *)entry, 0,
+				       sizeof(*rtlpci->rx_ring
 				       [rxring_idx].desc));/*clear one entry*/
-				अगर (rtlpriv->use_new_trx_flow) अणु
+				if (rtlpriv->use_new_trx_flow) {
 					rtlpriv->cfg->ops->set_desc(hw,
 					    (u8 *)entry, false,
 					    HW_DESC_RX_PREPARE,
 					    (u8 *)&bufferaddress);
-				पूर्ण अन्यथा अणु
+				} else {
 					rtlpriv->cfg->ops->set_desc(hw,
 					    (u8 *)entry, false,
 					    HW_DESC_RXBUFF_ADDR,
@@ -1496,153 +1495,153 @@ err_मुक्त_rings:
 					rtlpriv->cfg->ops->set_desc(hw,
 					    (u8 *)entry, false,
 					    HW_DESC_RXOWN,
-					    (u8 *)&पंचांगp_one);
-				पूर्ण
-			पूर्ण
+					    (u8 *)&tmp_one);
+				}
+			}
 			rtlpriv->cfg->ops->set_desc(hw, (u8 *)entry, false,
-					    HW_DESC_RXERO, (u8 *)&पंचांगp_one);
-		पूर्ण
+					    HW_DESC_RXERO, (u8 *)&tmp_one);
+		}
 		rtlpci->rx_ring[rxring_idx].idx = 0;
-	पूर्ण
+	}
 
 	/*after reset, release previous pending packet,
-	 *and क्रमce the  tx idx to the first one
+	 *and force the  tx idx to the first one
 	 */
 	spin_lock_irqsave(&rtlpriv->locks.irq_th_lock, flags);
-	क्रम (i = 0; i < RTL_PCI_MAX_TX_QUEUE_COUNT; i++) अणु
-		अगर (rtlpci->tx_ring[i].desc ||
-		    rtlpci->tx_ring[i].buffer_desc) अणु
-			काष्ठा rtl8192_tx_ring *ring = &rtlpci->tx_ring[i];
+	for (i = 0; i < RTL_PCI_MAX_TX_QUEUE_COUNT; i++) {
+		if (rtlpci->tx_ring[i].desc ||
+		    rtlpci->tx_ring[i].buffer_desc) {
+			struct rtl8192_tx_ring *ring = &rtlpci->tx_ring[i];
 
-			जबतक (skb_queue_len(&ring->queue)) अणु
+			while (skb_queue_len(&ring->queue)) {
 				u8 *entry;
-				काष्ठा sk_buff *skb =
+				struct sk_buff *skb =
 					__skb_dequeue(&ring->queue);
-				अगर (rtlpriv->use_new_trx_flow)
+				if (rtlpriv->use_new_trx_flow)
 					entry = (u8 *)(&ring->buffer_desc
 								[ring->idx]);
-				अन्यथा
+				else
 					entry = (u8 *)(&ring->desc[ring->idx]);
 
 				dma_unmap_single(&rtlpci->pdev->dev,
 						 rtlpriv->cfg->ops->get_desc(hw, (u8 *)entry,
 								true, HW_DESC_TXBUFF_ADDR),
 						 skb->len, DMA_TO_DEVICE);
-				dev_kमुक्त_skb_irq(skb);
+				dev_kfree_skb_irq(skb);
 				ring->idx = (ring->idx + 1) % ring->entries;
-			पूर्ण
+			}
 
-			अगर (rtlpriv->use_new_trx_flow) अणु
+			if (rtlpriv->use_new_trx_flow) {
 				rtlpci->tx_ring[i].cur_tx_rp = 0;
 				rtlpci->tx_ring[i].cur_tx_wp = 0;
-			पूर्ण
+			}
 
 			ring->idx = 0;
 			ring->entries = rtlpci->txringcount[i];
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&rtlpriv->locks.irq_th_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool rtl_pci_tx_chk_रुकोq_insert(काष्ठा ieee80211_hw *hw,
-					काष्ठा ieee80211_sta *sta,
-					काष्ठा sk_buff *skb)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_sta_info *sta_entry = शून्य;
+static bool rtl_pci_tx_chk_waitq_insert(struct ieee80211_hw *hw,
+					struct ieee80211_sta *sta,
+					struct sk_buff *skb)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_sta_info *sta_entry = NULL;
 	u8 tid = rtl_get_tid(skb);
 	__le16 fc = rtl_get_fc(skb);
 
-	अगर (!sta)
-		वापस false;
-	sta_entry = (काष्ठा rtl_sta_info *)sta->drv_priv;
+	if (!sta)
+		return false;
+	sta_entry = (struct rtl_sta_info *)sta->drv_priv;
 
-	अगर (!rtlpriv->rtlhal.earlymode_enable)
-		वापस false;
-	अगर (ieee80211_is_nullfunc(fc))
-		वापस false;
-	अगर (ieee80211_is_qos_nullfunc(fc))
-		वापस false;
-	अगर (ieee80211_is_pspoll(fc))
-		वापस false;
-	अगर (sta_entry->tids[tid].agg.agg_state != RTL_AGG_OPERATIONAL)
-		वापस false;
-	अगर (_rtl_mac_to_hwqueue(hw, skb) > VO_QUEUE)
-		वापस false;
-	अगर (tid > 7)
-		वापस false;
+	if (!rtlpriv->rtlhal.earlymode_enable)
+		return false;
+	if (ieee80211_is_nullfunc(fc))
+		return false;
+	if (ieee80211_is_qos_nullfunc(fc))
+		return false;
+	if (ieee80211_is_pspoll(fc))
+		return false;
+	if (sta_entry->tids[tid].agg.agg_state != RTL_AGG_OPERATIONAL)
+		return false;
+	if (_rtl_mac_to_hwqueue(hw, skb) > VO_QUEUE)
+		return false;
+	if (tid > 7)
+		return false;
 
 	/* maybe every tid should be checked */
-	अगर (!rtlpriv->link_info.higher_busytxtraffic[tid])
-		वापस false;
+	if (!rtlpriv->link_info.higher_busytxtraffic[tid])
+		return false;
 
-	spin_lock_bh(&rtlpriv->locks.रुकोq_lock);
-	skb_queue_tail(&rtlpriv->mac80211.skb_रुकोq[tid], skb);
-	spin_unlock_bh(&rtlpriv->locks.रुकोq_lock);
+	spin_lock_bh(&rtlpriv->locks.waitq_lock);
+	skb_queue_tail(&rtlpriv->mac80211.skb_waitq[tid], skb);
+	spin_unlock_bh(&rtlpriv->locks.waitq_lock);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक rtl_pci_tx(काष्ठा ieee80211_hw *hw,
-		      काष्ठा ieee80211_sta *sta,
-		      काष्ठा sk_buff *skb,
-		      काष्ठा rtl_tcb_desc *ptcb_desc)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-	काष्ठा rtl8192_tx_ring *ring;
-	काष्ठा rtl_tx_desc *pdesc;
-	काष्ठा rtl_tx_buffer_desc *ptx_bd_desc = शून्य;
+static int rtl_pci_tx(struct ieee80211_hw *hw,
+		      struct ieee80211_sta *sta,
+		      struct sk_buff *skb,
+		      struct rtl_tcb_desc *ptcb_desc)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+	struct rtl8192_tx_ring *ring;
+	struct rtl_tx_desc *pdesc;
+	struct rtl_tx_buffer_desc *ptx_bd_desc = NULL;
 	u16 idx;
 	u8 hw_queue = _rtl_mac_to_hwqueue(hw, skb);
-	अचिन्हित दीर्घ flags;
-	काष्ठा ieee80211_hdr *hdr = rtl_get_hdr(skb);
+	unsigned long flags;
+	struct ieee80211_hdr *hdr = rtl_get_hdr(skb);
 	__le16 fc = rtl_get_fc(skb);
 	u8 *pda_addr = hdr->addr1;
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
 	u8 own;
 	u8 temp_one = 1;
 
-	अगर (ieee80211_is_mgmt(fc))
+	if (ieee80211_is_mgmt(fc))
 		rtl_tx_mgmt_proc(hw, skb);
 
-	अगर (rtlpriv->psc.sw_ps_enabled) अणु
-		अगर (ieee80211_is_data(fc) && !ieee80211_is_nullfunc(fc) &&
+	if (rtlpriv->psc.sw_ps_enabled) {
+		if (ieee80211_is_data(fc) && !ieee80211_is_nullfunc(fc) &&
 		    !ieee80211_has_pm(fc))
 			hdr->frame_control |= cpu_to_le16(IEEE80211_FCTL_PM);
-	पूर्ण
+	}
 
 	rtl_action_proc(hw, skb, true);
 
-	अगर (is_multicast_ether_addr(pda_addr))
+	if (is_multicast_ether_addr(pda_addr))
 		rtlpriv->stats.txbytesmulticast += skb->len;
-	अन्यथा अगर (is_broadcast_ether_addr(pda_addr))
+	else if (is_broadcast_ether_addr(pda_addr))
 		rtlpriv->stats.txbytesbroadcast += skb->len;
-	अन्यथा
+	else
 		rtlpriv->stats.txbytesunicast += skb->len;
 
 	spin_lock_irqsave(&rtlpriv->locks.irq_th_lock, flags);
 	ring = &rtlpci->tx_ring[hw_queue];
-	अगर (hw_queue != BEACON_QUEUE) अणु
-		अगर (rtlpriv->use_new_trx_flow)
+	if (hw_queue != BEACON_QUEUE) {
+		if (rtlpriv->use_new_trx_flow)
 			idx = ring->cur_tx_wp;
-		अन्यथा
+		else
 			idx = (ring->idx + skb_queue_len(&ring->queue)) %
 			      ring->entries;
-	पूर्ण अन्यथा अणु
+	} else {
 		idx = 0;
-	पूर्ण
+	}
 
 	pdesc = &ring->desc[idx];
-	अगर (rtlpriv->use_new_trx_flow) अणु
+	if (rtlpriv->use_new_trx_flow) {
 		ptx_bd_desc = &ring->buffer_desc[idx];
-	पूर्ण अन्यथा अणु
+	} else {
 		own = (u8)rtlpriv->cfg->ops->get_desc(hw, (u8 *)pdesc,
 				true, HW_DESC_OWN);
 
-		अगर (own == 1 && hw_queue != BEACON_QUEUE) अणु
+		if (own == 1 && hw_queue != BEACON_QUEUE) {
 			rtl_dbg(rtlpriv, COMP_ERR, DBG_WARNING,
 				"No more TX desc@%d, ring->idx = %d, idx = %d, skb_queue_len = 0x%x\n",
 				hw_queue, ring->idx, idx,
@@ -1650,19 +1649,19 @@ err_मुक्त_rings:
 
 			spin_unlock_irqrestore(&rtlpriv->locks.irq_th_lock,
 					       flags);
-			वापस skb->len;
-		पूर्ण
-	पूर्ण
+			return skb->len;
+		}
+	}
 
-	अगर (rtlpriv->cfg->ops->get_available_desc &&
-	    rtlpriv->cfg->ops->get_available_desc(hw, hw_queue) == 0) अणु
+	if (rtlpriv->cfg->ops->get_available_desc &&
+	    rtlpriv->cfg->ops->get_available_desc(hw, hw_queue) == 0) {
 		rtl_dbg(rtlpriv, COMP_ERR, DBG_WARNING,
 			"get_available_desc fail\n");
 		spin_unlock_irqrestore(&rtlpriv->locks.irq_th_lock, flags);
-		वापस skb->len;
-	पूर्ण
+		return skb->len;
+	}
 
-	अगर (ieee80211_is_data(fc))
+	if (ieee80211_is_data(fc))
 		rtlpriv->cfg->ops->led_control(hw, LED_CTL_TX);
 
 	rtlpriv->cfg->ops->fill_tx_desc(hw, hdr, (u8 *)pdesc,
@@ -1670,191 +1669,191 @@ err_मुक्त_rings:
 
 	__skb_queue_tail(&ring->queue, skb);
 
-	अगर (rtlpriv->use_new_trx_flow) अणु
+	if (rtlpriv->use_new_trx_flow) {
 		rtlpriv->cfg->ops->set_desc(hw, (u8 *)pdesc, true,
 					    HW_DESC_OWN, &hw_queue);
-	पूर्ण अन्यथा अणु
+	} else {
 		rtlpriv->cfg->ops->set_desc(hw, (u8 *)pdesc, true,
 					    HW_DESC_OWN, &temp_one);
-	पूर्ण
+	}
 
-	अगर ((ring->entries - skb_queue_len(&ring->queue)) < 2 &&
-	    hw_queue != BEACON_QUEUE) अणु
+	if ((ring->entries - skb_queue_len(&ring->queue)) < 2 &&
+	    hw_queue != BEACON_QUEUE) {
 		rtl_dbg(rtlpriv, COMP_ERR, DBG_LOUD,
 			"less desc left, stop skb_queue@%d, ring->idx = %d, idx = %d, skb_queue_len = 0x%x\n",
 			 hw_queue, ring->idx, idx,
 			 skb_queue_len(&ring->queue));
 
 		ieee80211_stop_queue(hw, skb_get_queue_mapping(skb));
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&rtlpriv->locks.irq_th_lock, flags);
 
 	rtlpriv->cfg->ops->tx_polling(hw, hw_queue);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम rtl_pci_flush(काष्ठा ieee80211_hw *hw, u32 queues, bool drop)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_pci_priv *pcipriv = rtl_pcipriv(hw);
-	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
+static void rtl_pci_flush(struct ieee80211_hw *hw, u32 queues, bool drop)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_pci_priv *pcipriv = rtl_pcipriv(hw);
+	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
 	u16 i = 0;
-	पूर्णांक queue_id;
-	काष्ठा rtl8192_tx_ring *ring;
+	int queue_id;
+	struct rtl8192_tx_ring *ring;
 
-	अगर (mac->skip_scan)
-		वापस;
+	if (mac->skip_scan)
+		return;
 
-	क्रम (queue_id = RTL_PCI_MAX_TX_QUEUE_COUNT - 1; queue_id >= 0;) अणु
+	for (queue_id = RTL_PCI_MAX_TX_QUEUE_COUNT - 1; queue_id >= 0;) {
 		u32 queue_len;
 
-		अगर (((queues >> queue_id) & 0x1) == 0) अणु
+		if (((queues >> queue_id) & 0x1) == 0) {
 			queue_id--;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		ring = &pcipriv->dev.tx_ring[queue_id];
 		queue_len = skb_queue_len(&ring->queue);
-		अगर (queue_len == 0 || queue_id == BEACON_QUEUE ||
-		    queue_id == TXCMD_QUEUE) अणु
+		if (queue_len == 0 || queue_id == BEACON_QUEUE ||
+		    queue_id == TXCMD_QUEUE) {
 			queue_id--;
-			जारी;
-		पूर्ण अन्यथा अणु
+			continue;
+		} else {
 			msleep(20);
 			i++;
-		पूर्ण
+		}
 
-		/* we just रुको 1s क्रम all queues */
-		अगर (rtlpriv->psc.rfpwr_state == ERFOFF ||
+		/* we just wait 1s for all queues */
+		if (rtlpriv->psc.rfpwr_state == ERFOFF ||
 		    is_hal_stop(rtlhal) || i >= 200)
-			वापस;
-	पूर्ण
-पूर्ण
+			return;
+	}
+}
 
-अटल व्योम rtl_pci_deinit(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+static void rtl_pci_deinit(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
 
 	_rtl_pci_deinit_trx_ring(hw);
 
 	synchronize_irq(rtlpci->pdev->irq);
-	tasklet_समाप्त(&rtlpriv->works.irq_tasklet);
+	tasklet_kill(&rtlpriv->works.irq_tasklet);
 	cancel_work_sync(&rtlpriv->works.lps_change_work);
 
 	flush_workqueue(rtlpriv->works.rtl_wq);
 	destroy_workqueue(rtlpriv->works.rtl_wq);
-पूर्ण
+}
 
-अटल पूर्णांक rtl_pci_init(काष्ठा ieee80211_hw *hw, काष्ठा pci_dev *pdev)
-अणु
-	पूर्णांक err;
+static int rtl_pci_init(struct ieee80211_hw *hw, struct pci_dev *pdev)
+{
+	int err;
 
-	_rtl_pci_init_काष्ठा(hw, pdev);
+	_rtl_pci_init_struct(hw, pdev);
 
 	err = _rtl_pci_init_trx_ring(hw);
-	अगर (err) अणु
+	if (err) {
 		pr_err("tx ring initialization failed\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rtl_pci_start(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	काष्ठा rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
-	काष्ठा rtl_mac *rtlmac = rtl_mac(rtl_priv(hw));
-	काष्ठा rtl_btc_ops *btc_ops = rtlpriv->btcoexist.btc_ops;
+static int rtl_pci_start(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	struct rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
+	struct rtl_mac *rtlmac = rtl_mac(rtl_priv(hw));
+	struct rtl_btc_ops *btc_ops = rtlpriv->btcoexist.btc_ops;
 
-	पूर्णांक err;
+	int err;
 
 	rtl_pci_reset_trx_ring(hw);
 
 	rtlpci->driver_is_goingto_unload = false;
-	अगर (rtlpriv->cfg->ops->get_btc_status &&
-	    rtlpriv->cfg->ops->get_btc_status()) अणु
+	if (rtlpriv->cfg->ops->get_btc_status &&
+	    rtlpriv->cfg->ops->get_btc_status()) {
 		rtlpriv->btcoexist.btc_info.ap_num = 36;
 		btc_ops->btc_init_variables(rtlpriv);
 		btc_ops->btc_init_hal_vars(rtlpriv);
-	पूर्ण अन्यथा अगर (btc_ops) अणु
-		btc_ops->btc_init_variables_wअगरi_only(rtlpriv);
-	पूर्ण
+	} else if (btc_ops) {
+		btc_ops->btc_init_variables_wifi_only(rtlpriv);
+	}
 
 	err = rtlpriv->cfg->ops->hw_init(hw);
-	अगर (err) अणु
+	if (err) {
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_DMESG,
 			"Failed to config hardware!\n");
-		kमुक्त(rtlpriv->btcoexist.btc_context);
-		kमुक्त(rtlpriv->btcoexist.wअगरi_only_context);
-		वापस err;
-	पूर्ण
+		kfree(rtlpriv->btcoexist.btc_context);
+		kfree(rtlpriv->btcoexist.wifi_only_context);
+		return err;
+	}
 	rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_RETRY_LIMIT,
-			&rtlmac->retry_दीर्घ);
+			&rtlmac->retry_long);
 
-	rtlpriv->cfg->ops->enable_पूर्णांकerrupt(hw);
+	rtlpriv->cfg->ops->enable_interrupt(hw);
 	rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD, "enable_interrupt OK\n");
 
 	rtl_init_rx_config(hw);
 
-	/*should be after adapter start and पूर्णांकerrupt enable. */
+	/*should be after adapter start and interrupt enable. */
 	set_hal_start(rtlhal);
 
 	RT_CLEAR_PS_LEVEL(ppsc, RT_RF_OFF_LEVL_HALT_NIC);
 
-	rtlpci->up_first_समय = false;
+	rtlpci->up_first_time = false;
 
 	rtl_dbg(rtlpriv, COMP_INIT, DBG_DMESG, "%s OK\n", __func__);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम rtl_pci_stop(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	काष्ठा rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
-	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	अचिन्हित दीर्घ flags;
-	u8 rf_समयout = 0;
+static void rtl_pci_stop(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	struct rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
+	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	unsigned long flags;
+	u8 rf_timeout = 0;
 
-	अगर (rtlpriv->cfg->ops->get_btc_status())
-		rtlpriv->btcoexist.btc_ops->btc_halt_notअगरy(rtlpriv);
+	if (rtlpriv->cfg->ops->get_btc_status())
+		rtlpriv->btcoexist.btc_ops->btc_halt_notify(rtlpriv);
 
-	अगर (rtlpriv->btcoexist.btc_ops)
+	if (rtlpriv->btcoexist.btc_ops)
 		rtlpriv->btcoexist.btc_ops->btc_deinit_variables(rtlpriv);
 
-	/*should be beक्रमe disable पूर्णांकerrupt&adapter
-	 *and will करो it immediately.
+	/*should be before disable interrupt&adapter
+	 *and will do it immediately.
 	 */
 	set_hal_stop(rtlhal);
 
 	rtlpci->driver_is_goingto_unload = true;
-	rtlpriv->cfg->ops->disable_पूर्णांकerrupt(hw);
+	rtlpriv->cfg->ops->disable_interrupt(hw);
 	cancel_work_sync(&rtlpriv->works.lps_change_work);
 
 	spin_lock_irqsave(&rtlpriv->locks.rf_ps_lock, flags);
-	जबतक (ppsc->rfchange_inprogress) अणु
+	while (ppsc->rfchange_inprogress) {
 		spin_unlock_irqrestore(&rtlpriv->locks.rf_ps_lock, flags);
-		अगर (rf_समयout > 100) अणु
+		if (rf_timeout > 100) {
 			spin_lock_irqsave(&rtlpriv->locks.rf_ps_lock, flags);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		mdelay(1);
-		rf_समयout++;
+		rf_timeout++;
 		spin_lock_irqsave(&rtlpriv->locks.rf_ps_lock, flags);
-	पूर्ण
+	}
 	ppsc->rfchange_inprogress = true;
 	spin_unlock_irqrestore(&rtlpriv->locks.rf_ps_lock, flags);
 
 	rtlpriv->cfg->ops->hw_disable(hw);
-	/* some things are not needed अगर firmware not available */
-	अगर (!rtlpriv->max_fw_size)
-		वापस;
+	/* some things are not needed if firmware not available */
+	if (!rtlpriv->max_fw_size)
+		return;
 	rtlpriv->cfg->ops->led_control(hw, LED_CTL_POWER_OFF);
 
 	spin_lock_irqsave(&rtlpriv->locks.rf_ps_lock, flags);
@@ -1862,147 +1861,147 @@ err_मुक्त_rings:
 	spin_unlock_irqrestore(&rtlpriv->locks.rf_ps_lock, flags);
 
 	rtl_pci_enable_aspm(hw);
-पूर्ण
+}
 
-अटल bool _rtl_pci_find_adapter(काष्ठा pci_dev *pdev,
-				  काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_pci_priv *pcipriv = rtl_pcipriv(hw);
-	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	काष्ठा pci_dev *bridge_pdev = pdev->bus->self;
+static bool _rtl_pci_find_adapter(struct pci_dev *pdev,
+				  struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_pci_priv *pcipriv = rtl_pcipriv(hw);
+	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	struct pci_dev *bridge_pdev = pdev->bus->self;
 	u16 venderid;
 	u16 deviceid;
 	u8 revisionid;
 	u16 irqline;
-	u8 पंचांगp;
+	u8 tmp;
 
-	pcipriv->ndis_adapter.pcibridge_venकरोr = PCI_BRIDGE_VENDOR_UNKNOWN;
-	venderid = pdev->venकरोr;
+	pcipriv->ndis_adapter.pcibridge_vendor = PCI_BRIDGE_VENDOR_UNKNOWN;
+	venderid = pdev->vendor;
 	deviceid = pdev->device;
-	pci_पढ़ो_config_byte(pdev, 0x8, &revisionid);
-	pci_पढ़ो_config_word(pdev, 0x3C, &irqline);
+	pci_read_config_byte(pdev, 0x8, &revisionid);
+	pci_read_config_word(pdev, 0x3C, &irqline);
 
-	/* PCI ID 0x10ec:0x8192 occurs क्रम both RTL8192E, which uses
+	/* PCI ID 0x10ec:0x8192 occurs for both RTL8192E, which uses
 	 * r8192e_pci, and RTL8192SE, which uses this driver. If the
 	 * revision ID is RTL_PCI_REVISION_ID_8192PCIE (0x01), then
 	 * the correct driver is r8192e_pci, thus this routine should
-	 * वापस false.
+	 * return false.
 	 */
-	अगर (deviceid == RTL_PCI_8192SE_DID &&
+	if (deviceid == RTL_PCI_8192SE_DID &&
 	    revisionid == RTL_PCI_REVISION_ID_8192PCIE)
-		वापस false;
+		return false;
 
-	अगर (deviceid == RTL_PCI_8192_DID ||
+	if (deviceid == RTL_PCI_8192_DID ||
 	    deviceid == RTL_PCI_0044_DID ||
 	    deviceid == RTL_PCI_0047_DID ||
 	    deviceid == RTL_PCI_8192SE_DID ||
 	    deviceid == RTL_PCI_8174_DID ||
 	    deviceid == RTL_PCI_8173_DID ||
 	    deviceid == RTL_PCI_8172_DID ||
-	    deviceid == RTL_PCI_8171_DID) अणु
-		चयन (revisionid) अणु
-		हाल RTL_PCI_REVISION_ID_8192PCIE:
+	    deviceid == RTL_PCI_8171_DID) {
+		switch (revisionid) {
+		case RTL_PCI_REVISION_ID_8192PCIE:
 			rtl_dbg(rtlpriv, COMP_INIT, DBG_DMESG,
 				"8192 PCI-E is found - vid/did=%x/%x\n",
 				venderid, deviceid);
 			rtlhal->hw_type = HARDWARE_TYPE_RTL8192E;
-			वापस false;
-		हाल RTL_PCI_REVISION_ID_8192SE:
+			return false;
+		case RTL_PCI_REVISION_ID_8192SE:
 			rtl_dbg(rtlpriv, COMP_INIT, DBG_DMESG,
 				"8192SE is found - vid/did=%x/%x\n",
 				venderid, deviceid);
 			rtlhal->hw_type = HARDWARE_TYPE_RTL8192SE;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			rtl_dbg(rtlpriv, COMP_ERR, DBG_WARNING,
 				"Err: Unknown device - vid/did=%x/%x\n",
 				venderid, deviceid);
 			rtlhal->hw_type = HARDWARE_TYPE_RTL8192SE;
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अगर (deviceid == RTL_PCI_8723AE_DID) अणु
+			break;
+		}
+	} else if (deviceid == RTL_PCI_8723AE_DID) {
 		rtlhal->hw_type = HARDWARE_TYPE_RTL8723AE;
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_DMESG,
 			"8723AE PCI-E is found - vid/did=%x/%x\n",
 			venderid, deviceid);
-	पूर्ण अन्यथा अगर (deviceid == RTL_PCI_8192CET_DID ||
+	} else if (deviceid == RTL_PCI_8192CET_DID ||
 		   deviceid == RTL_PCI_8192CE_DID ||
 		   deviceid == RTL_PCI_8191CE_DID ||
-		   deviceid == RTL_PCI_8188CE_DID) अणु
+		   deviceid == RTL_PCI_8188CE_DID) {
 		rtlhal->hw_type = HARDWARE_TYPE_RTL8192CE;
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_DMESG,
 			"8192C PCI-E is found - vid/did=%x/%x\n",
 			venderid, deviceid);
-	पूर्ण अन्यथा अगर (deviceid == RTL_PCI_8192DE_DID ||
-		   deviceid == RTL_PCI_8192DE_DID2) अणु
+	} else if (deviceid == RTL_PCI_8192DE_DID ||
+		   deviceid == RTL_PCI_8192DE_DID2) {
 		rtlhal->hw_type = HARDWARE_TYPE_RTL8192DE;
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_DMESG,
 			"8192D PCI-E is found - vid/did=%x/%x\n",
 			venderid, deviceid);
-	पूर्ण अन्यथा अगर (deviceid == RTL_PCI_8188EE_DID) अणु
+	} else if (deviceid == RTL_PCI_8188EE_DID) {
 		rtlhal->hw_type = HARDWARE_TYPE_RTL8188EE;
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD,
 			"Find adapter, Hardware type is 8188EE\n");
-	पूर्ण अन्यथा अगर (deviceid == RTL_PCI_8723BE_DID) अणु
+	} else if (deviceid == RTL_PCI_8723BE_DID) {
 		rtlhal->hw_type = HARDWARE_TYPE_RTL8723BE;
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD,
 			"Find adapter, Hardware type is 8723BE\n");
-	पूर्ण अन्यथा अगर (deviceid == RTL_PCI_8192EE_DID) अणु
+	} else if (deviceid == RTL_PCI_8192EE_DID) {
 		rtlhal->hw_type = HARDWARE_TYPE_RTL8192EE;
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD,
 			"Find adapter, Hardware type is 8192EE\n");
-	पूर्ण अन्यथा अगर (deviceid == RTL_PCI_8821AE_DID) अणु
+	} else if (deviceid == RTL_PCI_8821AE_DID) {
 		rtlhal->hw_type = HARDWARE_TYPE_RTL8821AE;
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD,
 			"Find adapter, Hardware type is 8821AE\n");
-	पूर्ण अन्यथा अगर (deviceid == RTL_PCI_8812AE_DID) अणु
+	} else if (deviceid == RTL_PCI_8812AE_DID) {
 		rtlhal->hw_type = HARDWARE_TYPE_RTL8812AE;
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD,
 			"Find adapter, Hardware type is 8812AE\n");
-	पूर्ण अन्यथा अगर (deviceid == RTL_PCI_8822BE_DID) अणु
+	} else if (deviceid == RTL_PCI_8822BE_DID) {
 		rtlhal->hw_type = HARDWARE_TYPE_RTL8822BE;
 		rtlhal->bandset = BAND_ON_BOTH;
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD,
 			"Find adapter, Hardware type is 8822BE\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		rtl_dbg(rtlpriv, COMP_ERR, DBG_WARNING,
 			"Err: Unknown device - vid/did=%x/%x\n",
 			 venderid, deviceid);
 
 		rtlhal->hw_type = RTL_DEFAULT_HARDWARE_TYPE;
-	पूर्ण
+	}
 
-	अगर (rtlhal->hw_type == HARDWARE_TYPE_RTL8192DE) अणु
-		अगर (revisionid == 0 || revisionid == 1) अणु
-			अगर (revisionid == 0) अणु
+	if (rtlhal->hw_type == HARDWARE_TYPE_RTL8192DE) {
+		if (revisionid == 0 || revisionid == 1) {
+			if (revisionid == 0) {
 				rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD,
 					"Find 92DE MAC0\n");
-				rtlhal->पूर्णांकerfaceindex = 0;
-			पूर्ण अन्यथा अगर (revisionid == 1) अणु
+				rtlhal->interfaceindex = 0;
+			} else if (revisionid == 1) {
 				rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD,
 					"Find 92DE MAC1\n");
-				rtlhal->पूर्णांकerfaceindex = 1;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				rtlhal->interfaceindex = 1;
+			}
+		} else {
 			rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD,
 				"Unknown device - VendorID/DeviceID=%x/%x, Revision=%x\n",
 				 venderid, deviceid, revisionid);
-			rtlhal->पूर्णांकerfaceindex = 0;
-		पूर्ण
-	पूर्ण
+			rtlhal->interfaceindex = 0;
+		}
+	}
 
-	चयन (rtlhal->hw_type) अणु
-	हाल HARDWARE_TYPE_RTL8192EE:
-	हाल HARDWARE_TYPE_RTL8822BE:
+	switch (rtlhal->hw_type) {
+	case HARDWARE_TYPE_RTL8192EE:
+	case HARDWARE_TYPE_RTL8822BE:
 		/* use new trx flow */
 		rtlpriv->use_new_trx_flow = true;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		rtlpriv->use_new_trx_flow = false;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/*find bus info */
 	pcipriv->ndis_adapter.busnumber = pdev->bus->number;
@@ -2010,26 +2009,26 @@ err_मुक्त_rings:
 	pcipriv->ndis_adapter.funcnumber = PCI_FUNC(pdev->devfn);
 
 	/*find bridge info */
-	pcipriv->ndis_adapter.pcibridge_venकरोr = PCI_BRIDGE_VENDOR_UNKNOWN;
+	pcipriv->ndis_adapter.pcibridge_vendor = PCI_BRIDGE_VENDOR_UNKNOWN;
 	/* some ARM have no bridge_pdev and will crash here
-	 * so we should check अगर bridge_pdev is शून्य
+	 * so we should check if bridge_pdev is NULL
 	 */
-	अगर (bridge_pdev) अणु
-		/*find bridge info अगर available */
-		pcipriv->ndis_adapter.pcibridge_venकरोrid = bridge_pdev->venकरोr;
-		क्रम (पंचांगp = 0; पंचांगp < PCI_BRIDGE_VENDOR_MAX; पंचांगp++) अणु
-			अगर (bridge_pdev->venकरोr == pcibridge_venकरोrs[पंचांगp]) अणु
-				pcipriv->ndis_adapter.pcibridge_venकरोr = पंचांगp;
+	if (bridge_pdev) {
+		/*find bridge info if available */
+		pcipriv->ndis_adapter.pcibridge_vendorid = bridge_pdev->vendor;
+		for (tmp = 0; tmp < PCI_BRIDGE_VENDOR_MAX; tmp++) {
+			if (bridge_pdev->vendor == pcibridge_vendors[tmp]) {
+				pcipriv->ndis_adapter.pcibridge_vendor = tmp;
 				rtl_dbg(rtlpriv, COMP_INIT, DBG_DMESG,
 					"Pci Bridge Vendor is found index: %d\n",
-					पंचांगp);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					tmp);
+				break;
+			}
+		}
+	}
 
-	अगर (pcipriv->ndis_adapter.pcibridge_venकरोr !=
-		PCI_BRIDGE_VENDOR_UNKNOWN) अणु
+	if (pcipriv->ndis_adapter.pcibridge_vendor !=
+		PCI_BRIDGE_VENDOR_UNKNOWN) {
 		pcipriv->ndis_adapter.pcibridge_busnum =
 		    bridge_pdev->bus->number;
 		pcipriv->ndis_adapter.pcibridge_devnum =
@@ -2043,26 +2042,26 @@ err_मुक्त_rings:
 
 		rtl_pci_get_linkcontrol_field(hw);
 
-		अगर (pcipriv->ndis_adapter.pcibridge_venकरोr ==
-		    PCI_BRIDGE_VENDOR_AMD) अणु
+		if (pcipriv->ndis_adapter.pcibridge_vendor ==
+		    PCI_BRIDGE_VENDOR_AMD) {
 			pcipriv->ndis_adapter.amd_l1_patch =
 			    rtl_pci_get_amd_l1_patch(hw);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	rtl_dbg(rtlpriv, COMP_INIT, DBG_DMESG,
 		"pcidev busnumber:devnumber:funcnumber:vendor:link_ctl %d:%d:%d:%x:%x\n",
 		pcipriv->ndis_adapter.busnumber,
 		pcipriv->ndis_adapter.devnumber,
 		pcipriv->ndis_adapter.funcnumber,
-		pdev->venकरोr, pcipriv->ndis_adapter.linkctrl_reg);
+		pdev->vendor, pcipriv->ndis_adapter.linkctrl_reg);
 
 	rtl_dbg(rtlpriv, COMP_INIT, DBG_DMESG,
 		"pci_bridge busnumber:devnumber:funcnumber:vendor:pcie_cap:link_ctl_reg:amd %d:%d:%d:%x:%x:%x:%x\n",
 		pcipriv->ndis_adapter.pcibridge_busnum,
 		pcipriv->ndis_adapter.pcibridge_devnum,
 		pcipriv->ndis_adapter.pcibridge_funcnum,
-		pcibridge_venकरोrs[pcipriv->ndis_adapter.pcibridge_venकरोr],
+		pcibridge_vendors[pcipriv->ndis_adapter.pcibridge_vendor],
 		pcipriv->ndis_adapter.pcibridge_pciehdr_offset,
 		pcipriv->ndis_adapter.pcibridge_linkctrlreg,
 		pcipriv->ndis_adapter.amd_l1_patch);
@@ -2070,160 +2069,160 @@ err_मुक्त_rings:
 	rtl_pci_parse_configuration(pdev, hw);
 	list_add_tail(&rtlpriv->list, &rtlpriv->glb_var->glb_priv_list);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक rtl_pci_पूर्णांकr_mode_msi(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_pci_priv *pcipriv = rtl_pcipriv(hw);
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(pcipriv);
-	पूर्णांक ret;
+static int rtl_pci_intr_mode_msi(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_pci_priv *pcipriv = rtl_pcipriv(hw);
+	struct rtl_pci *rtlpci = rtl_pcidev(pcipriv);
+	int ret;
 
 	ret = pci_enable_msi(rtlpci->pdev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = request_irq(rtlpci->pdev->irq, &_rtl_pci_पूर्णांकerrupt,
+	ret = request_irq(rtlpci->pdev->irq, &_rtl_pci_interrupt,
 			  IRQF_SHARED, KBUILD_MODNAME, hw);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pci_disable_msi(rtlpci->pdev);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	rtlpci->using_msi = true;
 
 	rtl_dbg(rtlpriv, COMP_INIT | COMP_INTR, DBG_DMESG,
 		"MSI Interrupt Mode!\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rtl_pci_पूर्णांकr_mode_legacy(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_pci_priv *pcipriv = rtl_pcipriv(hw);
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(pcipriv);
-	पूर्णांक ret;
+static int rtl_pci_intr_mode_legacy(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_pci_priv *pcipriv = rtl_pcipriv(hw);
+	struct rtl_pci *rtlpci = rtl_pcidev(pcipriv);
+	int ret;
 
-	ret = request_irq(rtlpci->pdev->irq, &_rtl_pci_पूर्णांकerrupt,
+	ret = request_irq(rtlpci->pdev->irq, &_rtl_pci_interrupt,
 			  IRQF_SHARED, KBUILD_MODNAME, hw);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	rtlpci->using_msi = false;
 	rtl_dbg(rtlpriv, COMP_INIT | COMP_INTR, DBG_DMESG,
 		"Pin-based Interrupt Mode!\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rtl_pci_पूर्णांकr_mode_decide(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_pci_priv *pcipriv = rtl_pcipriv(hw);
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(pcipriv);
-	पूर्णांक ret;
+static int rtl_pci_intr_mode_decide(struct ieee80211_hw *hw)
+{
+	struct rtl_pci_priv *pcipriv = rtl_pcipriv(hw);
+	struct rtl_pci *rtlpci = rtl_pcidev(pcipriv);
+	int ret;
 
-	अगर (rtlpci->msi_support) अणु
-		ret = rtl_pci_पूर्णांकr_mode_msi(hw);
-		अगर (ret < 0)
-			ret = rtl_pci_पूर्णांकr_mode_legacy(hw);
-	पूर्ण अन्यथा अणु
-		ret = rtl_pci_पूर्णांकr_mode_legacy(hw);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	if (rtlpci->msi_support) {
+		ret = rtl_pci_intr_mode_msi(hw);
+		if (ret < 0)
+			ret = rtl_pci_intr_mode_legacy(hw);
+	} else {
+		ret = rtl_pci_intr_mode_legacy(hw);
+	}
+	return ret;
+}
 
-अटल व्योम platक्रमm_enable_dma64(काष्ठा pci_dev *pdev, bool dma64)
-अणु
+static void platform_enable_dma64(struct pci_dev *pdev, bool dma64)
+{
 	u8	value;
 
-	pci_पढ़ो_config_byte(pdev, 0x719, &value);
+	pci_read_config_byte(pdev, 0x719, &value);
 
 	/* 0x719 Bit5 is DMA64 bit fetch. */
-	अगर (dma64)
+	if (dma64)
 		value |= BIT(5);
-	अन्यथा
+	else
 		value &= ~BIT(5);
 
-	pci_ग_लिखो_config_byte(pdev, 0x719, value);
-पूर्ण
+	pci_write_config_byte(pdev, 0x719, value);
+}
 
-पूर्णांक rtl_pci_probe(काष्ठा pci_dev *pdev,
-		  स्थिर काष्ठा pci_device_id *id)
-अणु
-	काष्ठा ieee80211_hw *hw = शून्य;
+int rtl_pci_probe(struct pci_dev *pdev,
+		  const struct pci_device_id *id)
+{
+	struct ieee80211_hw *hw = NULL;
 
-	काष्ठा rtl_priv *rtlpriv = शून्य;
-	काष्ठा rtl_pci_priv *pcipriv = शून्य;
-	काष्ठा rtl_pci *rtlpci;
-	अचिन्हित दीर्घ pmem_start, pmem_len, pmem_flags;
-	पूर्णांक err;
+	struct rtl_priv *rtlpriv = NULL;
+	struct rtl_pci_priv *pcipriv = NULL;
+	struct rtl_pci *rtlpci;
+	unsigned long pmem_start, pmem_len, pmem_flags;
+	int err;
 
 	err = pci_enable_device(pdev);
-	अगर (err) अणु
+	if (err) {
 		WARN_ONCE(true, "%s : Cannot enable new PCI device\n",
 			  pci_name(pdev));
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (((काष्ठा rtl_hal_cfg *)id->driver_data)->mod_params->dma64 &&
-	    !dma_set_mask(&pdev->dev, DMA_BIT_MASK(64))) अणु
-		अगर (dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(64))) अणु
+	if (((struct rtl_hal_cfg *)id->driver_data)->mod_params->dma64 &&
+	    !dma_set_mask(&pdev->dev, DMA_BIT_MASK(64))) {
+		if (dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(64))) {
 			WARN_ONCE(true,
 				  "Unable to obtain 64bit DMA for consistent allocations\n");
 			err = -ENOMEM;
-			जाओ fail1;
-		पूर्ण
+			goto fail1;
+		}
 
-		platक्रमm_enable_dma64(pdev, true);
-	पूर्ण अन्यथा अगर (!dma_set_mask(&pdev->dev, DMA_BIT_MASK(32))) अणु
-		अगर (dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(32))) अणु
+		platform_enable_dma64(pdev, true);
+	} else if (!dma_set_mask(&pdev->dev, DMA_BIT_MASK(32))) {
+		if (dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(32))) {
 			WARN_ONCE(true,
 				  "rtlwifi: Unable to obtain 32bit DMA for consistent allocations\n");
 			err = -ENOMEM;
-			जाओ fail1;
-		पूर्ण
+			goto fail1;
+		}
 
-		platक्रमm_enable_dma64(pdev, false);
-	पूर्ण
+		platform_enable_dma64(pdev, false);
+	}
 
 	pci_set_master(pdev);
 
-	hw = ieee80211_alloc_hw(माप(काष्ठा rtl_pci_priv) +
-				माप(काष्ठा rtl_priv), &rtl_ops);
-	अगर (!hw) अणु
+	hw = ieee80211_alloc_hw(sizeof(struct rtl_pci_priv) +
+				sizeof(struct rtl_priv), &rtl_ops);
+	if (!hw) {
 		WARN_ONCE(true,
 			  "%s : ieee80211 alloc failed\n", pci_name(pdev));
 		err = -ENOMEM;
-		जाओ fail1;
-	पूर्ण
+		goto fail1;
+	}
 
 	SET_IEEE80211_DEV(hw, &pdev->dev);
 	pci_set_drvdata(pdev, hw);
 
 	rtlpriv = hw->priv;
 	rtlpriv->hw = hw;
-	pcipriv = (व्योम *)rtlpriv->priv;
+	pcipriv = (void *)rtlpriv->priv;
 	pcipriv->dev.pdev = pdev;
 	init_completion(&rtlpriv->firmware_loading_complete);
 	/*proximity init here*/
 	rtlpriv->proximity.proxim_on = false;
 
-	pcipriv = (व्योम *)rtlpriv->priv;
+	pcipriv = (void *)rtlpriv->priv;
 	pcipriv->dev.pdev = pdev;
 
-	/* init cfg & पूर्णांकf_ops */
-	rtlpriv->rtlhal.पूर्णांकerface = INTF_PCI;
-	rtlpriv->cfg = (काष्ठा rtl_hal_cfg *)(id->driver_data);
-	rtlpriv->पूर्णांकf_ops = &rtl_pci_ops;
+	/* init cfg & intf_ops */
+	rtlpriv->rtlhal.interface = INTF_PCI;
+	rtlpriv->cfg = (struct rtl_hal_cfg *)(id->driver_data);
+	rtlpriv->intf_ops = &rtl_pci_ops;
 	rtlpriv->glb_var = &rtl_global_var;
 	rtl_efuse_ops_init(hw);
 
 	/* MEM map */
 	err = pci_request_regions(pdev, KBUILD_MODNAME);
-	अगर (err) अणु
+	if (err) {
 		WARN_ONCE(true, "rtlwifi: Can't obtain PCI resources\n");
-		जाओ fail1;
-	पूर्ण
+		goto fail1;
+	}
 
 	pmem_start = pci_resource_start(pdev, rtlpriv->cfg->bar_id);
 	pmem_len = pci_resource_len(pdev, rtlpriv->cfg->bar_id);
@@ -2231,13 +2230,13 @@ err_मुक्त_rings:
 
 	/*shared mem start */
 	rtlpriv->io.pci_mem_start =
-			(अचिन्हित दीर्घ)pci_iomap(pdev,
+			(unsigned long)pci_iomap(pdev,
 			rtlpriv->cfg->bar_id, pmem_len);
-	अगर (rtlpriv->io.pci_mem_start == 0) अणु
+	if (rtlpriv->io.pci_mem_start == 0) {
 		WARN_ONCE(true, "rtlwifi: Can't map PCI mem\n");
 		err = -ENOMEM;
-		जाओ fail2;
-	पूर्ण
+		goto fail2;
+	}
 
 	rtl_dbg(rtlpriv, COMP_INIT, DBG_DMESG,
 		"mem mapped space: start: 0x%08lx len:%08lx flags:%08lx, after map:0x%08lx\n",
@@ -2245,29 +2244,29 @@ err_मुक्त_rings:
 		rtlpriv->io.pci_mem_start);
 
 	/* Disable Clk Request */
-	pci_ग_लिखो_config_byte(pdev, 0x81, 0);
+	pci_write_config_byte(pdev, 0x81, 0);
 	/* leave D3 mode */
-	pci_ग_लिखो_config_byte(pdev, 0x44, 0);
-	pci_ग_लिखो_config_byte(pdev, 0x04, 0x06);
-	pci_ग_लिखो_config_byte(pdev, 0x04, 0x07);
+	pci_write_config_byte(pdev, 0x44, 0);
+	pci_write_config_byte(pdev, 0x04, 0x06);
+	pci_write_config_byte(pdev, 0x04, 0x07);
 
 	/* find adapter */
-	अगर (!_rtl_pci_find_adapter(pdev, hw)) अणु
+	if (!_rtl_pci_find_adapter(pdev, hw)) {
 		err = -ENODEV;
-		जाओ fail2;
-	पूर्ण
+		goto fail2;
+	}
 
 	/* Init IO handler */
 	_rtl_pci_io_handler_init(&pdev->dev, hw);
 
-	/*like पढ़ो eeprom and so on */
-	rtlpriv->cfg->ops->पढ़ो_eeprom_info(hw);
+	/*like read eeprom and so on */
+	rtlpriv->cfg->ops->read_eeprom_info(hw);
 
-	अगर (rtlpriv->cfg->ops->init_sw_vars(hw)) अणु
+	if (rtlpriv->cfg->ops->init_sw_vars(hw)) {
 		pr_err("Can't init_sw_vars\n");
 		err = -ENODEV;
-		जाओ fail3;
-	पूर्ण
+		goto fail3;
+	}
 	rtlpriv->cfg->ops->init_sw_leds(hw);
 
 	/*aspm */
@@ -2275,171 +2274,171 @@ err_मुक्त_rings:
 
 	/* Init mac80211 sw */
 	err = rtl_init_core(hw);
-	अगर (err) अणु
+	if (err) {
 		pr_err("Can't allocate sw for mac80211\n");
-		जाओ fail3;
-	पूर्ण
+		goto fail3;
+	}
 
 	/* Init PCI sw */
 	err = rtl_pci_init(hw, pdev);
-	अगर (err) अणु
+	if (err) {
 		pr_err("Failed to init PCI\n");
-		जाओ fail3;
-	पूर्ण
+		goto fail3;
+	}
 
-	err = ieee80211_रेजिस्टर_hw(hw);
-	अगर (err) अणु
+	err = ieee80211_register_hw(hw);
+	if (err) {
 		pr_err("Can't register mac80211 hw.\n");
 		err = -ENODEV;
-		जाओ fail3;
-	पूर्ण
-	rtlpriv->mac80211.mac80211_रेजिस्टरed = 1;
+		goto fail3;
+	}
+	rtlpriv->mac80211.mac80211_registered = 1;
 
-	/* add क्रम debug */
+	/* add for debug */
 	rtl_debug_add_one(hw);
 
-	/*init rfसमाप्त */
-	rtl_init_rfसमाप्त(hw);	/* Init PCI sw */
+	/*init rfkill */
+	rtl_init_rfkill(hw);	/* Init PCI sw */
 
 	rtlpci = rtl_pcidev(pcipriv);
-	err = rtl_pci_पूर्णांकr_mode_decide(hw);
-	अगर (err) अणु
+	err = rtl_pci_intr_mode_decide(hw);
+	if (err) {
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_DMESG,
 			"%s: failed to register IRQ handler\n",
 			wiphy_name(hw->wiphy));
-		जाओ fail3;
-	पूर्ण
+		goto fail3;
+	}
 	rtlpci->irq_alloc = 1;
 
 	set_bit(RTL_STATUS_INTERFACE_START, &rtlpriv->status);
-	वापस 0;
+	return 0;
 
 fail3:
-	pci_set_drvdata(pdev, शून्य);
+	pci_set_drvdata(pdev, NULL);
 	rtl_deinit_core(hw);
 
 fail2:
-	अगर (rtlpriv->io.pci_mem_start != 0)
-		pci_iounmap(pdev, (व्योम __iomem *)rtlpriv->io.pci_mem_start);
+	if (rtlpriv->io.pci_mem_start != 0)
+		pci_iounmap(pdev, (void __iomem *)rtlpriv->io.pci_mem_start);
 
 	pci_release_regions(pdev);
 	complete(&rtlpriv->firmware_loading_complete);
 
 fail1:
-	अगर (hw)
-		ieee80211_मुक्त_hw(hw);
+	if (hw)
+		ieee80211_free_hw(hw);
 	pci_disable_device(pdev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(rtl_pci_probe);
 
-व्योम rtl_pci_disconnect(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा ieee80211_hw *hw = pci_get_drvdata(pdev);
-	काष्ठा rtl_pci_priv *pcipriv = rtl_pcipriv(hw);
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(pcipriv);
-	काष्ठा rtl_mac *rtlmac = rtl_mac(rtlpriv);
+void rtl_pci_disconnect(struct pci_dev *pdev)
+{
+	struct ieee80211_hw *hw = pci_get_drvdata(pdev);
+	struct rtl_pci_priv *pcipriv = rtl_pcipriv(hw);
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_pci *rtlpci = rtl_pcidev(pcipriv);
+	struct rtl_mac *rtlmac = rtl_mac(rtlpriv);
 
-	/* just in हाल driver is हटाओd beक्रमe firmware callback */
-	रुको_क्रम_completion(&rtlpriv->firmware_loading_complete);
+	/* just in case driver is removed before firmware callback */
+	wait_for_completion(&rtlpriv->firmware_loading_complete);
 	clear_bit(RTL_STATUS_INTERFACE_START, &rtlpriv->status);
 
-	/* हटाओ क्रमm debug */
-	rtl_debug_हटाओ_one(hw);
+	/* remove form debug */
+	rtl_debug_remove_one(hw);
 
-	/*ieee80211_unरेजिस्टर_hw will call ops_stop */
-	अगर (rtlmac->mac80211_रेजिस्टरed == 1) अणु
-		ieee80211_unरेजिस्टर_hw(hw);
-		rtlmac->mac80211_रेजिस्टरed = 0;
-	पूर्ण अन्यथा अणु
+	/*ieee80211_unregister_hw will call ops_stop */
+	if (rtlmac->mac80211_registered == 1) {
+		ieee80211_unregister_hw(hw);
+		rtlmac->mac80211_registered = 0;
+	} else {
 		rtl_deinit_deferred_work(hw, false);
-		rtlpriv->पूर्णांकf_ops->adapter_stop(hw);
-	पूर्ण
-	rtlpriv->cfg->ops->disable_पूर्णांकerrupt(hw);
+		rtlpriv->intf_ops->adapter_stop(hw);
+	}
+	rtlpriv->cfg->ops->disable_interrupt(hw);
 
-	/*deinit rfसमाप्त */
-	rtl_deinit_rfसमाप्त(hw);
+	/*deinit rfkill */
+	rtl_deinit_rfkill(hw);
 
 	rtl_pci_deinit(hw);
 	rtl_deinit_core(hw);
 	rtlpriv->cfg->ops->deinit_sw_vars(hw);
 
-	अगर (rtlpci->irq_alloc) अणु
-		मुक्त_irq(rtlpci->pdev->irq, hw);
+	if (rtlpci->irq_alloc) {
+		free_irq(rtlpci->pdev->irq, hw);
 		rtlpci->irq_alloc = 0;
-	पूर्ण
+	}
 
-	अगर (rtlpci->using_msi)
+	if (rtlpci->using_msi)
 		pci_disable_msi(rtlpci->pdev);
 
 	list_del(&rtlpriv->list);
-	अगर (rtlpriv->io.pci_mem_start != 0) अणु
-		pci_iounmap(pdev, (व्योम __iomem *)rtlpriv->io.pci_mem_start);
+	if (rtlpriv->io.pci_mem_start != 0) {
+		pci_iounmap(pdev, (void __iomem *)rtlpriv->io.pci_mem_start);
 		pci_release_regions(pdev);
-	पूर्ण
+	}
 
 	pci_disable_device(pdev);
 
 	rtl_pci_disable_aspm(hw);
 
-	pci_set_drvdata(pdev, शून्य);
+	pci_set_drvdata(pdev, NULL);
 
-	ieee80211_मुक्त_hw(hw);
-पूर्ण
+	ieee80211_free_hw(hw);
+}
 EXPORT_SYMBOL(rtl_pci_disconnect);
 
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 /***************************************
- * kernel pci घातer state define:
- * PCI_D0         ((pci_घातer_t __क्रमce) 0)
- * PCI_D1         ((pci_घातer_t __क्रमce) 1)
- * PCI_D2         ((pci_घातer_t __क्रमce) 2)
- * PCI_D3hot      ((pci_घातer_t __क्रमce) 3)
- * PCI_D3cold     ((pci_घातer_t __क्रमce) 4)
- * PCI_UNKNOWN    ((pci_घातer_t __क्रमce) 5)
+ * kernel pci power state define:
+ * PCI_D0         ((pci_power_t __force) 0)
+ * PCI_D1         ((pci_power_t __force) 1)
+ * PCI_D2         ((pci_power_t __force) 2)
+ * PCI_D3hot      ((pci_power_t __force) 3)
+ * PCI_D3cold     ((pci_power_t __force) 4)
+ * PCI_UNKNOWN    ((pci_power_t __force) 5)
 
- * This function is called when प्रणाली
- * goes पूर्णांकo suspend state mac80211 will
+ * This function is called when system
+ * goes into suspend state mac80211 will
  * call rtl_mac_stop() from the mac80211
  * suspend function first, So there is
  * no need to call hw_disable here.
  ****************************************/
-पूर्णांक rtl_pci_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा ieee80211_hw *hw = dev_get_drvdata(dev);
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+int rtl_pci_suspend(struct device *dev)
+{
+	struct ieee80211_hw *hw = dev_get_drvdata(dev);
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
 
 	rtlpriv->cfg->ops->hw_suspend(hw);
-	rtl_deinit_rfसमाप्त(hw);
+	rtl_deinit_rfkill(hw);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(rtl_pci_suspend);
 
-पूर्णांक rtl_pci_resume(काष्ठा device *dev)
-अणु
-	काष्ठा ieee80211_hw *hw = dev_get_drvdata(dev);
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+int rtl_pci_resume(struct device *dev)
+{
+	struct ieee80211_hw *hw = dev_get_drvdata(dev);
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
 
 	rtlpriv->cfg->ops->hw_resume(hw);
-	rtl_init_rfसमाप्त(hw);
-	वापस 0;
-पूर्ण
+	rtl_init_rfkill(hw);
+	return 0;
+}
 EXPORT_SYMBOL(rtl_pci_resume);
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+#endif /* CONFIG_PM_SLEEP */
 
-स्थिर काष्ठा rtl_पूर्णांकf_ops rtl_pci_ops = अणु
-	.पढ़ो_efuse_byte = पढ़ो_efuse_byte,
+const struct rtl_intf_ops rtl_pci_ops = {
+	.read_efuse_byte = read_efuse_byte,
 	.adapter_start = rtl_pci_start,
 	.adapter_stop = rtl_pci_stop,
 	.check_buddy_priv = rtl_pci_check_buddy_priv,
 	.adapter_tx = rtl_pci_tx,
 	.flush = rtl_pci_flush,
 	.reset_trx_ring = rtl_pci_reset_trx_ring,
-	.रुकोq_insert = rtl_pci_tx_chk_रुकोq_insert,
+	.waitq_insert = rtl_pci_tx_chk_waitq_insert,
 
 	.disable_aspm = rtl_pci_disable_aspm,
 	.enable_aspm = rtl_pci_enable_aspm,
-पूर्ण;
+};

@@ -1,35 +1,34 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* fpumacro.h: FPU related macros.
  *
  * Copyright (C) 1997 Jakub Jelinek (jj@sunsite.mff.cuni.cz)
  * Copyright (C) 1997 David S. Miller (davem@caip.rutgers.edu)
  */
 
-#अगर_अघोषित _SPARC64_FPUMACRO_H
-#घोषणा _SPARC64_FPUMACRO_H
+#ifndef _SPARC64_FPUMACRO_H
+#define _SPARC64_FPUMACRO_H
 
-#समावेश <यंत्र/asi.h>
-#समावेश <यंत्र/visयंत्र.h>
+#include <asm/asi.h>
+#include <asm/visasm.h>
 
-काष्ठा fpustate अणु
+struct fpustate {
 	u32	regs[64];
-पूर्ण;
+};
 
-#घोषणा FPUSTATE (काष्ठा fpustate *)(current_thपढ़ो_info()->fpregs)
+#define FPUSTATE (struct fpustate *)(current_thread_info()->fpregs)
 
-अटल अंतरभूत अचिन्हित दीर्घ fprs_पढ़ो(व्योम)
-अणु
-	अचिन्हित दीर्घ retval;
+static inline unsigned long fprs_read(void)
+{
+	unsigned long retval;
 
-	__यंत्र__ __अस्थिर__("rd %%fprs, %0" : "=r" (retval));
+	__asm__ __volatile__("rd %%fprs, %0" : "=r" (retval));
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल अंतरभूत व्योम fprs_ग_लिखो(अचिन्हित दीर्घ val)
-अणु
-	__यंत्र__ __अस्थिर__("wr %0, 0x0, %%fprs" : : "r" (val));
-पूर्ण
+static inline void fprs_write(unsigned long val)
+{
+	__asm__ __volatile__("wr %0, 0x0, %%fprs" : : "r" (val));
+}
 
-#पूर्ण_अगर /* !(_SPARC64_FPUMACRO_H) */
+#endif /* !(_SPARC64_FPUMACRO_H) */

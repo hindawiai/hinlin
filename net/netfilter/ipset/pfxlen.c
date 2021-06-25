@@ -1,15 +1,14 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/export.h>
-#समावेश <linux/netfilter/ipset/pfxlen.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/export.h>
+#include <linux/netfilter/ipset/pfxlen.h>
 
-/* Prefixlen maps क्रम fast conversions, by Jan Engelhardt. */
+/* Prefixlen maps for fast conversions, by Jan Engelhardt. */
 
-#अगर_घोषित E
-#अघोषित E
-#पूर्ण_अगर
+#ifdef E
+#undef E
+#endif
 
-#घोषणा PREFIXES_MAP						\
+#define PREFIXES_MAP						\
 	E(0x00000000, 0x00000000, 0x00000000, 0x00000000),	\
 	E(0x80000000, 0x00000000, 0x00000000, 0x00000000),	\
 	E(0xC0000000, 0x00000000, 0x00000000, 0x00000000),	\
@@ -140,51 +139,51 @@
 	E(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFE),	\
 	E(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF),
 
-#घोषणा E(a, b, c, d) \
-	अणु.ip6 = अणु \
+#define E(a, b, c, d) \
+	{.ip6 = { \
 		htonl(a), htonl(b), \
 		htonl(c), htonl(d), \
-	पूर्ण पूर्ण
+	} }
 
-/* This table works क्रम both IPv4 and IPv6;
- * just use prefixlen_neपंचांगask_map[prefixlength].ip.
+/* This table works for both IPv4 and IPv6;
+ * just use prefixlen_netmask_map[prefixlength].ip.
  */
-स्थिर जोड़ nf_inet_addr ip_set_neपंचांगask_map[] = अणु
+const union nf_inet_addr ip_set_netmask_map[] = {
 	PREFIXES_MAP
-पूर्ण;
-EXPORT_SYMBOL_GPL(ip_set_neपंचांगask_map);
+};
+EXPORT_SYMBOL_GPL(ip_set_netmask_map);
 
-#अघोषित  E
-#घोषणा E(a, b, c, d)					\
-	अणु.ip6 = अणु (__क्रमce __be32)a, (__क्रमce __be32)b,	\
-		  (__क्रमce __be32)c, (__क्रमce __be32)d,	\
-	पूर्ण पूर्ण
+#undef  E
+#define E(a, b, c, d)					\
+	{.ip6 = { (__force __be32)a, (__force __be32)b,	\
+		  (__force __be32)c, (__force __be32)d,	\
+	} }
 
-/* This table works क्रम both IPv4 and IPv6;
- * just use prefixlen_hosपंचांगask_map[prefixlength].ip.
+/* This table works for both IPv4 and IPv6;
+ * just use prefixlen_hostmask_map[prefixlength].ip.
  */
-स्थिर जोड़ nf_inet_addr ip_set_hosपंचांगask_map[] = अणु
+const union nf_inet_addr ip_set_hostmask_map[] = {
 	PREFIXES_MAP
-पूर्ण;
-EXPORT_SYMBOL_GPL(ip_set_hosपंचांगask_map);
+};
+EXPORT_SYMBOL_GPL(ip_set_hostmask_map);
 
 /* Find the largest network which matches the range from left, in host order. */
 u32
 ip_set_range_to_cidr(u32 from, u32 to, u8 *cidr)
-अणु
+{
 	u32 last;
 	u8 i;
 
-	क्रम (i = 1; i < 32; i++) अणु
-		अगर ((from & ip_set_hosपंचांगask(i)) != from)
-			जारी;
-		last = from | ~ip_set_hosपंचांगask(i);
-		अगर (!after(last, to)) अणु
+	for (i = 1; i < 32; i++) {
+		if ((from & ip_set_hostmask(i)) != from)
+			continue;
+		last = from | ~ip_set_hostmask(i);
+		if (!after(last, to)) {
 			*cidr = i;
-			वापस last;
-		पूर्ण
-	पूर्ण
+			return last;
+		}
+	}
 	*cidr = 32;
-	वापस from;
-पूर्ण
+	return from;
+}
 EXPORT_SYMBOL_GPL(ip_set_range_to_cidr);

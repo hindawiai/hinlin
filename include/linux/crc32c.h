@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_CRC32C_H
-#घोषणा _LINUX_CRC32C_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_CRC32C_H
+#define _LINUX_CRC32C_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-बाह्य u32 crc32c(u32 crc, स्थिर व्योम *address, अचिन्हित पूर्णांक length);
-बाह्य स्थिर अक्षर *crc32c_impl(व्योम);
+extern u32 crc32c(u32 crc, const void *address, unsigned int length);
+extern const char *crc32c_impl(void);
 
-/* This macro exists क्रम backwards-compatibility. */
-#घोषणा crc32c_le crc32c
+/* This macro exists for backwards-compatibility. */
+#define crc32c_le crc32c
 
-#पूर्ण_अगर	/* _LINUX_CRC32C_H */
+#endif	/* _LINUX_CRC32C_H */

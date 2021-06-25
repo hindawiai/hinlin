@@ -1,152 +1,151 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Driver क्रम the Intel SCU IPC mechanism
+ * Driver for the Intel SCU IPC mechanism
  *
  * (C) Copyright 2008-2010 Intel Corporation
- * Author: Sreedhara DS (sreedhara.ds@पूर्णांकel.com)
+ * Author: Sreedhara DS (sreedhara.ds@intel.com)
  *
- * This driver provides IOCTL पूर्णांकerfaces to call Intel SCU IPC driver API.
+ * This driver provides IOCTL interfaces to call Intel SCU IPC driver API.
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/uaccess.h>
+#include <linux/errno.h>
+#include <linux/fcntl.h>
+#include <linux/fs.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/uaccess.h>
 
-#समावेश <यंत्र/पूर्णांकel_scu_ipc.h>
+#include <asm/intel_scu_ipc.h>
 
-अटल पूर्णांक major;
+static int major;
 
-काष्ठा पूर्णांकel_scu_ipc_dev *scu;
-अटल DEFINE_MUTEX(scu_lock);
+struct intel_scu_ipc_dev *scu;
+static DEFINE_MUTEX(scu_lock);
 
 /* IOCTL commands */
-#घोषणा	INTE_SCU_IPC_REGISTER_READ	0
-#घोषणा INTE_SCU_IPC_REGISTER_WRITE	1
-#घोषणा INTE_SCU_IPC_REGISTER_UPDATE	2
+#define	INTE_SCU_IPC_REGISTER_READ	0
+#define INTE_SCU_IPC_REGISTER_WRITE	1
+#define INTE_SCU_IPC_REGISTER_UPDATE	2
 
-काष्ठा scu_ipc_data अणु
-	u32     count;  /* No. of रेजिस्टरs */
+struct scu_ipc_data {
+	u32     count;  /* No. of registers */
 	u16     addr[5]; /* Register addresses */
 	u8      data[5]; /* Register data */
-	u8      mask; /* Valid क्रम पढ़ो-modअगरy-ग_लिखो */
-पूर्ण;
+	u8      mask; /* Valid for read-modify-write */
+};
 
 /**
- *	scu_reg_access		-	implement रेजिस्टर access ioctls
- *	@cmd: command we are करोing (पढ़ो/ग_लिखो/update)
+ *	scu_reg_access		-	implement register access ioctls
+ *	@cmd: command we are doing (read/write/update)
  *	@data: kernel copy of ioctl data
  *
- *	Allow the user to perक्रमm रेजिस्टर accesses on the SCU via the
- *	kernel पूर्णांकerface
+ *	Allow the user to perform register accesses on the SCU via the
+ *	kernel interface
  */
 
-अटल पूर्णांक scu_reg_access(u32 cmd, काष्ठा scu_ipc_data  *data)
-अणु
-	अचिन्हित पूर्णांक count = data->count;
+static int scu_reg_access(u32 cmd, struct scu_ipc_data  *data)
+{
+	unsigned int count = data->count;
 
-	अगर (count == 0 || count == 3 || count > 4)
-		वापस -EINVAL;
+	if (count == 0 || count == 3 || count > 4)
+		return -EINVAL;
 
-	चयन (cmd) अणु
-	हाल INTE_SCU_IPC_REGISTER_READ:
-		वापस पूर्णांकel_scu_ipc_dev_पढ़ोv(scu, data->addr, data->data, count);
-	हाल INTE_SCU_IPC_REGISTER_WRITE:
-		वापस पूर्णांकel_scu_ipc_dev_ग_लिखोv(scu, data->addr, data->data, count);
-	हाल INTE_SCU_IPC_REGISTER_UPDATE:
-		वापस पूर्णांकel_scu_ipc_dev_update(scu, data->addr[0], data->data[0],
+	switch (cmd) {
+	case INTE_SCU_IPC_REGISTER_READ:
+		return intel_scu_ipc_dev_readv(scu, data->addr, data->data, count);
+	case INTE_SCU_IPC_REGISTER_WRITE:
+		return intel_scu_ipc_dev_writev(scu, data->addr, data->data, count);
+	case INTE_SCU_IPC_REGISTER_UPDATE:
+		return intel_scu_ipc_dev_update(scu, data->addr[0], data->data[0],
 						data->mask);
-	शेष:
-		वापस -ENOTTY;
-	पूर्ण
-पूर्ण
+	default:
+		return -ENOTTY;
+	}
+}
 
 /**
- *	scu_ipc_ioctl		-	control ioctls क्रम the SCU
+ *	scu_ipc_ioctl		-	control ioctls for the SCU
  *	@fp: file handle of the SCU device
  *	@cmd: ioctl coce
- *	@arg: poपूर्णांकer to user passed काष्ठाure
+ *	@arg: pointer to user passed structure
  *
- *	Support the I/O and firmware flashing पूर्णांकerfaces of the SCU
+ *	Support the I/O and firmware flashing interfaces of the SCU
  */
-अटल दीर्घ scu_ipc_ioctl(काष्ठा file *fp, अचिन्हित पूर्णांक cmd,
-							अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक ret;
-	काष्ठा scu_ipc_data  data;
-	व्योम __user *argp = (व्योम __user *)arg;
+static long scu_ipc_ioctl(struct file *fp, unsigned int cmd,
+							unsigned long arg)
+{
+	int ret;
+	struct scu_ipc_data  data;
+	void __user *argp = (void __user *)arg;
 
-	अगर (!capable(CAP_SYS_RAWIO))
-		वापस -EPERM;
+	if (!capable(CAP_SYS_RAWIO))
+		return -EPERM;
 
-	अगर (copy_from_user(&data, argp, माप(काष्ठा scu_ipc_data)))
-		वापस -EFAULT;
+	if (copy_from_user(&data, argp, sizeof(struct scu_ipc_data)))
+		return -EFAULT;
 	ret = scu_reg_access(cmd, &data);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (copy_to_user(argp, &data, माप(काष्ठा scu_ipc_data)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (ret < 0)
+		return ret;
+	if (copy_to_user(argp, &data, sizeof(struct scu_ipc_data)))
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक scu_ipc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	पूर्णांक ret = 0;
+static int scu_ipc_open(struct inode *inode, struct file *file)
+{
+	int ret = 0;
 
-	/* Only single खोलो at the समय */
+	/* Only single open at the time */
 	mutex_lock(&scu_lock);
-	अगर (scu) अणु
+	if (scu) {
 		ret = -EBUSY;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	scu = पूर्णांकel_scu_ipc_dev_get();
-	अगर (!scu)
+	scu = intel_scu_ipc_dev_get();
+	if (!scu)
 		ret = -ENODEV;
 
 unlock:
 	mutex_unlock(&scu_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक scu_ipc_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
+static int scu_ipc_release(struct inode *inode, struct file *file)
+{
 	mutex_lock(&scu_lock);
-	पूर्णांकel_scu_ipc_dev_put(scu);
-	scu = शून्य;
+	intel_scu_ipc_dev_put(scu);
+	scu = NULL;
 	mutex_unlock(&scu_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations scu_ipc_fops = अणु
+static const struct file_operations scu_ipc_fops = {
 	.unlocked_ioctl = scu_ipc_ioctl,
-	.खोलो = scu_ipc_खोलो,
+	.open = scu_ipc_open,
 	.release = scu_ipc_release,
-पूर्ण;
+};
 
-अटल पूर्णांक __init ipc_module_init(व्योम)
-अणु
-	major = रेजिस्टर_chrdev(0, "intel_mid_scu", &scu_ipc_fops);
-	अगर (major < 0)
-		वापस major;
+static int __init ipc_module_init(void)
+{
+	major = register_chrdev(0, "intel_mid_scu", &scu_ipc_fops);
+	if (major < 0)
+		return major;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास ipc_module_निकास(व्योम)
-अणु
-	unरेजिस्टर_chrdev(major, "intel_mid_scu");
-पूर्ण
+static void __exit ipc_module_exit(void)
+{
+	unregister_chrdev(major, "intel_mid_scu");
+}
 
 module_init(ipc_module_init);
-module_निकास(ipc_module_निकास);
+module_exit(ipc_module_exit);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Utility driver for intel scu ipc");

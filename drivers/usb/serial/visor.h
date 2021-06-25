@@ -1,158 +1,157 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * USB HandSpring Visor driver
  *
  *	Copyright (C) 1999 - 2003
- *	    Greg Kroah-Harपंचांगan (greg@kroah.com)
+ *	    Greg Kroah-Hartman (greg@kroah.com)
  *
- * See Documentation/usb/usb-serial.rst क्रम more inक्रमmation on using this
+ * See Documentation/usb/usb-serial.rst for more information on using this
  * driver.
  *
  */
 
-#अगर_अघोषित __LINUX_USB_SERIAL_VISOR_H
-#घोषणा __LINUX_USB_SERIAL_VISOR_H
+#ifndef __LINUX_USB_SERIAL_VISOR_H
+#define __LINUX_USB_SERIAL_VISOR_H
 
 
-#घोषणा HANDSPRING_VENDOR_ID		0x082d
-#घोषणा HANDSPRING_VISOR_ID		0x0100
-#घोषणा HANDSPRING_TREO_ID		0x0200
-#घोषणा HANDSPRING_TREO600_ID		0x0300
+#define HANDSPRING_VENDOR_ID		0x082d
+#define HANDSPRING_VISOR_ID		0x0100
+#define HANDSPRING_TREO_ID		0x0200
+#define HANDSPRING_TREO600_ID		0x0300
 
-#घोषणा PALM_VENDOR_ID			0x0830
-#घोषणा PALM_M500_ID			0x0001
-#घोषणा PALM_M505_ID			0x0002
-#घोषणा PALM_M515_ID			0x0003
-#घोषणा PALM_I705_ID			0x0020
-#घोषणा PALM_M125_ID			0x0040
-#घोषणा PALM_M130_ID			0x0050
-#घोषणा PALM_TUNGSTEN_T_ID		0x0060
-#घोषणा PALM_TREO_650			0x0061
-#घोषणा PALM_TUNGSTEN_Z_ID		0x0031
-#घोषणा PALM_ZIRE_ID			0x0070
-#घोषणा PALM_M100_ID			0x0080
+#define PALM_VENDOR_ID			0x0830
+#define PALM_M500_ID			0x0001
+#define PALM_M505_ID			0x0002
+#define PALM_M515_ID			0x0003
+#define PALM_I705_ID			0x0020
+#define PALM_M125_ID			0x0040
+#define PALM_M130_ID			0x0050
+#define PALM_TUNGSTEN_T_ID		0x0060
+#define PALM_TREO_650			0x0061
+#define PALM_TUNGSTEN_Z_ID		0x0031
+#define PALM_ZIRE_ID			0x0070
+#define PALM_M100_ID			0x0080
 
-#घोषणा GSPDA_VENDOR_ID		0x115e
-#घोषणा GSPDA_XPLORE_M68_ID		0xf100
+#define GSPDA_VENDOR_ID		0x115e
+#define GSPDA_XPLORE_M68_ID		0xf100
 
-#घोषणा SONY_VENDOR_ID			0x054C
-#घोषणा SONY_CLIE_3_5_ID		0x0038
-#घोषणा SONY_CLIE_4_0_ID		0x0066
-#घोषणा SONY_CLIE_S360_ID		0x0095
-#घोषणा SONY_CLIE_4_1_ID		0x009A
-#घोषणा SONY_CLIE_NX60_ID		0x00DA
-#घोषणा SONY_CLIE_NZ90V_ID		0x00E9
-#घोषणा SONY_CLIE_UX50_ID		0x0144
-#घोषणा SONY_CLIE_TJ25_ID		0x0169
+#define SONY_VENDOR_ID			0x054C
+#define SONY_CLIE_3_5_ID		0x0038
+#define SONY_CLIE_4_0_ID		0x0066
+#define SONY_CLIE_S360_ID		0x0095
+#define SONY_CLIE_4_1_ID		0x009A
+#define SONY_CLIE_NX60_ID		0x00DA
+#define SONY_CLIE_NZ90V_ID		0x00E9
+#define SONY_CLIE_UX50_ID		0x0144
+#define SONY_CLIE_TJ25_ID		0x0169
 
-#घोषणा ACER_VENDOR_ID			0x0502
-#घोषणा ACER_S10_ID			0x0001
+#define ACER_VENDOR_ID			0x0502
+#define ACER_S10_ID			0x0001
 
-#घोषणा SAMSUNG_VENDOR_ID		0x04E8
-#घोषणा SAMSUNG_SCH_I330_ID		0x8001
-#घोषणा SAMSUNG_SPH_I500_ID		0x6601
+#define SAMSUNG_VENDOR_ID		0x04E8
+#define SAMSUNG_SCH_I330_ID		0x8001
+#define SAMSUNG_SPH_I500_ID		0x6601
 
-#घोषणा TAPWAVE_VENDOR_ID		0x12EF
-#घोषणा TAPWAVE_ZODIAC_ID		0x0100
+#define TAPWAVE_VENDOR_ID		0x12EF
+#define TAPWAVE_ZODIAC_ID		0x0100
 
-#घोषणा GARMIN_VENDOR_ID		0x091E
-#घोषणा GARMIN_IQUE_3600_ID		0x0004
+#define GARMIN_VENDOR_ID		0x091E
+#define GARMIN_IQUE_3600_ID		0x0004
 
-#घोषणा ACEECA_VENDOR_ID		0x4766
-#घोषणा ACEECA_MEZ1000_ID		0x0001
+#define ACEECA_VENDOR_ID		0x4766
+#define ACEECA_MEZ1000_ID		0x0001
 
-#घोषणा KYOCERA_VENDOR_ID		0x0C88
-#घोषणा KYOCERA_7135_ID			0x0021
+#define KYOCERA_VENDOR_ID		0x0C88
+#define KYOCERA_7135_ID			0x0021
 
-#घोषणा FOSSIL_VENDOR_ID		0x0E67
-#घोषणा FOSSIL_ABACUS_ID		0x0002
+#define FOSSIL_VENDOR_ID		0x0E67
+#define FOSSIL_ABACUS_ID		0x0002
 
 /****************************************************************************
- * Handspring Visor Venकरोr specअगरic request codes (bRequest values)
- * A big thank you to Handspring क्रम providing the following inक्रमmation.
- * If anyone wants the original file where these values and काष्ठाures came
+ * Handspring Visor Vendor specific request codes (bRequest values)
+ * A big thank you to Handspring for providing the following information.
+ * If anyone wants the original file where these values and structures came
  * from, send email to <greg@kroah.com>.
  ****************************************************************************/
 
 /****************************************************************************
- * VISOR_REQUEST_BYTES_AVAILABLE asks the visor क्रम the number of bytes that
- * are available to be transferred to the host क्रम the specअगरied endpoपूर्णांक.
- * Currently this is not used, and always वापसs 0x0001
+ * VISOR_REQUEST_BYTES_AVAILABLE asks the visor for the number of bytes that
+ * are available to be transferred to the host for the specified endpoint.
+ * Currently this is not used, and always returns 0x0001
  ****************************************************************************/
-#घोषणा VISOR_REQUEST_BYTES_AVAILABLE		0x01
+#define VISOR_REQUEST_BYTES_AVAILABLE		0x01
 
 /****************************************************************************
- * VISOR_CLOSE_NOTIFICATION is set to the device to notअगरy it that the host
+ * VISOR_CLOSE_NOTIFICATION is set to the device to notify it that the host
  * is now closing the pipe. An empty packet is sent in response.
  ****************************************************************************/
-#घोषणा VISOR_CLOSE_NOTIFICATION		0x02
+#define VISOR_CLOSE_NOTIFICATION		0x02
 
 /****************************************************************************
- * VISOR_GET_CONNECTION_INFORMATION is sent by the host during क्रमागतeration to
- * get the endpoपूर्णांकs used by the connection.
+ * VISOR_GET_CONNECTION_INFORMATION is sent by the host during enumeration to
+ * get the endpoints used by the connection.
  ****************************************************************************/
-#घोषणा VISOR_GET_CONNECTION_INFORMATION	0x03
+#define VISOR_GET_CONNECTION_INFORMATION	0x03
 
 
 /****************************************************************************
- * VISOR_GET_CONNECTION_INFORMATION वापसs data in the following क्रमmat
+ * VISOR_GET_CONNECTION_INFORMATION returns data in the following format
  ****************************************************************************/
-काष्ठा visor_connection_info अणु
+struct visor_connection_info {
 	__le16	num_ports;
-	काष्ठा अणु
+	struct {
 		__u8	port_function_id;
 		__u8	port;
-	पूर्ण connections[2];
-पूर्ण;
+	} connections[2];
+};
 
 
-/* काष्ठा visor_connection_info.connection[x].port defines: */
-#घोषणा VISOR_ENDPOINT_1		0x01
-#घोषणा VISOR_ENDPOINT_2		0x02
+/* struct visor_connection_info.connection[x].port defines: */
+#define VISOR_ENDPOINT_1		0x01
+#define VISOR_ENDPOINT_2		0x02
 
-/* काष्ठा visor_connection_info.connection[x].port_function_id defines: */
-#घोषणा VISOR_FUNCTION_GENERIC		0x00
-#घोषणा VISOR_FUNCTION_DEBUGGER		0x01
-#घोषणा VISOR_FUNCTION_HOTSYNC		0x02
-#घोषणा VISOR_FUNCTION_CONSOLE		0x03
-#घोषणा VISOR_FUNCTION_REMOTE_खाता_SYS	0x04
+/* struct visor_connection_info.connection[x].port_function_id defines: */
+#define VISOR_FUNCTION_GENERIC		0x00
+#define VISOR_FUNCTION_DEBUGGER		0x01
+#define VISOR_FUNCTION_HOTSYNC		0x02
+#define VISOR_FUNCTION_CONSOLE		0x03
+#define VISOR_FUNCTION_REMOTE_FILE_SYS	0x04
 
 
 /****************************************************************************
- * PALM_GET_SOME_UNKNOWN_INFORMATION is sent by the host during क्रमागतeration to
- * get some inक्रमmation from the M series devices, that is currently unknown.
+ * PALM_GET_SOME_UNKNOWN_INFORMATION is sent by the host during enumeration to
+ * get some information from the M series devices, that is currently unknown.
  ****************************************************************************/
-#घोषणा PALM_GET_EXT_CONNECTION_INFORMATION	0x04
+#define PALM_GET_EXT_CONNECTION_INFORMATION	0x04
 
 /**
- * काष्ठा palm_ext_connection_info - वापस data from a PALM_GET_EXT_CONNECTION_INFORMATION request
+ * struct palm_ext_connection_info - return data from a PALM_GET_EXT_CONNECTION_INFORMATION request
  * @num_ports: maximum number of functions/connections in use
- * @endpoपूर्णांक_numbers_dअगरferent: will be 1 अगर in and out endpoपूर्णांकs numbers are
- *	dअगरferent, otherwise it is 0.  If value is 1, then
- *	connections.end_poपूर्णांक_info is non-zero.  If value is 0, then
- *	connections.port contains the endpoपूर्णांक number, which is the same क्रम in
+ * @endpoint_numbers_different: will be 1 if in and out endpoints numbers are
+ *	different, otherwise it is 0.  If value is 1, then
+ *	connections.end_point_info is non-zero.  If value is 0, then
+ *	connections.port contains the endpoint number, which is the same for in
  *	and out.
- * @port_function_id: contains the creator id of the application that खोलोed
+ * @port_function_id: contains the creator id of the application that opened
  *	this connection.
- * @port: contains the in/out endpoपूर्णांक number.  Is 0 अगर in and out endpoपूर्णांक
- *	numbers are dअगरferent.
- * @end_poपूर्णांक_info: high nubbe is in endpoपूर्णांक and low nibble will indicate out
- *	endpoपूर्णांक.  Is 0 अगर in and out endpoपूर्णांकs are the same.
+ * @port: contains the in/out endpoint number.  Is 0 if in and out endpoint
+ *	numbers are different.
+ * @end_point_info: high nubbe is in endpoint and low nibble will indicate out
+ *	endpoint.  Is 0 if in and out endpoints are the same.
  *
  * The maximum number of connections currently supported is 2
  */
-काष्ठा palm_ext_connection_info अणु
+struct palm_ext_connection_info {
 	__u8 num_ports;
-	__u8 endpoपूर्णांक_numbers_dअगरferent;
+	__u8 endpoint_numbers_different;
 	__le16 reserved1;
-	काष्ठा अणु
+	struct {
 		__u32 port_function_id;
 		__u8 port;
-		__u8 end_poपूर्णांक_info;
+		__u8 end_point_info;
 		__le16 reserved;
-	पूर्ण connections[2];
-पूर्ण;
+	} connections[2];
+};
 
-#पूर्ण_अगर
+#endif
 

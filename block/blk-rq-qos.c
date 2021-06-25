@@ -1,305 +1,304 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश "blk-rq-qos.h"
+#include "blk-rq-qos.h"
 
 /*
- * Increment 'v', if 'v' is below 'below'. Returns true अगर we succeeded,
- * false अगर 'v' + 1 would be bigger than 'below'.
+ * Increment 'v', if 'v' is below 'below'. Returns true if we succeeded,
+ * false if 'v' + 1 would be bigger than 'below'.
  */
-अटल bool atomic_inc_below(atomic_t *v, अचिन्हित पूर्णांक below)
-अणु
-	अचिन्हित पूर्णांक cur = atomic_पढ़ो(v);
+static bool atomic_inc_below(atomic_t *v, unsigned int below)
+{
+	unsigned int cur = atomic_read(v);
 
-	क्रम (;;) अणु
-		अचिन्हित पूर्णांक old;
+	for (;;) {
+		unsigned int old;
 
-		अगर (cur >= below)
-			वापस false;
+		if (cur >= below)
+			return false;
 		old = atomic_cmpxchg(v, cur, cur + 1);
-		अगर (old == cur)
-			अवरोध;
+		if (old == cur)
+			break;
 		cur = old;
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-bool rq_रुको_inc_below(काष्ठा rq_रुको *rq_रुको, अचिन्हित पूर्णांक limit)
-अणु
-	वापस atomic_inc_below(&rq_रुको->inflight, limit);
-पूर्ण
+bool rq_wait_inc_below(struct rq_wait *rq_wait, unsigned int limit)
+{
+	return atomic_inc_below(&rq_wait->inflight, limit);
+}
 
-व्योम __rq_qos_cleanup(काष्ठा rq_qos *rqos, काष्ठा bio *bio)
-अणु
-	करो अणु
-		अगर (rqos->ops->cleanup)
+void __rq_qos_cleanup(struct rq_qos *rqos, struct bio *bio)
+{
+	do {
+		if (rqos->ops->cleanup)
 			rqos->ops->cleanup(rqos, bio);
 		rqos = rqos->next;
-	पूर्ण जबतक (rqos);
-पूर्ण
+	} while (rqos);
+}
 
-व्योम __rq_qos_करोne(काष्ठा rq_qos *rqos, काष्ठा request *rq)
-अणु
-	करो अणु
-		अगर (rqos->ops->करोne)
-			rqos->ops->करोne(rqos, rq);
+void __rq_qos_done(struct rq_qos *rqos, struct request *rq)
+{
+	do {
+		if (rqos->ops->done)
+			rqos->ops->done(rqos, rq);
 		rqos = rqos->next;
-	पूर्ण जबतक (rqos);
-पूर्ण
+	} while (rqos);
+}
 
-व्योम __rq_qos_issue(काष्ठा rq_qos *rqos, काष्ठा request *rq)
-अणु
-	करो अणु
-		अगर (rqos->ops->issue)
+void __rq_qos_issue(struct rq_qos *rqos, struct request *rq)
+{
+	do {
+		if (rqos->ops->issue)
 			rqos->ops->issue(rqos, rq);
 		rqos = rqos->next;
-	पूर्ण जबतक (rqos);
-पूर्ण
+	} while (rqos);
+}
 
-व्योम __rq_qos_requeue(काष्ठा rq_qos *rqos, काष्ठा request *rq)
-अणु
-	करो अणु
-		अगर (rqos->ops->requeue)
+void __rq_qos_requeue(struct rq_qos *rqos, struct request *rq)
+{
+	do {
+		if (rqos->ops->requeue)
 			rqos->ops->requeue(rqos, rq);
 		rqos = rqos->next;
-	पूर्ण जबतक (rqos);
-पूर्ण
+	} while (rqos);
+}
 
-व्योम __rq_qos_throttle(काष्ठा rq_qos *rqos, काष्ठा bio *bio)
-अणु
-	करो अणु
-		अगर (rqos->ops->throttle)
+void __rq_qos_throttle(struct rq_qos *rqos, struct bio *bio)
+{
+	do {
+		if (rqos->ops->throttle)
 			rqos->ops->throttle(rqos, bio);
 		rqos = rqos->next;
-	पूर्ण जबतक (rqos);
-पूर्ण
+	} while (rqos);
+}
 
-व्योम __rq_qos_track(काष्ठा rq_qos *rqos, काष्ठा request *rq, काष्ठा bio *bio)
-अणु
-	करो अणु
-		अगर (rqos->ops->track)
+void __rq_qos_track(struct rq_qos *rqos, struct request *rq, struct bio *bio)
+{
+	do {
+		if (rqos->ops->track)
 			rqos->ops->track(rqos, rq, bio);
 		rqos = rqos->next;
-	पूर्ण जबतक (rqos);
-पूर्ण
+	} while (rqos);
+}
 
-व्योम __rq_qos_merge(काष्ठा rq_qos *rqos, काष्ठा request *rq, काष्ठा bio *bio)
-अणु
-	करो अणु
-		अगर (rqos->ops->merge)
+void __rq_qos_merge(struct rq_qos *rqos, struct request *rq, struct bio *bio)
+{
+	do {
+		if (rqos->ops->merge)
 			rqos->ops->merge(rqos, rq, bio);
 		rqos = rqos->next;
-	पूर्ण जबतक (rqos);
-पूर्ण
+	} while (rqos);
+}
 
-व्योम __rq_qos_करोne_bio(काष्ठा rq_qos *rqos, काष्ठा bio *bio)
-अणु
-	करो अणु
-		अगर (rqos->ops->करोne_bio)
-			rqos->ops->करोne_bio(rqos, bio);
+void __rq_qos_done_bio(struct rq_qos *rqos, struct bio *bio)
+{
+	do {
+		if (rqos->ops->done_bio)
+			rqos->ops->done_bio(rqos, bio);
 		rqos = rqos->next;
-	पूर्ण जबतक (rqos);
-पूर्ण
+	} while (rqos);
+}
 
-व्योम __rq_qos_queue_depth_changed(काष्ठा rq_qos *rqos)
-अणु
-	करो अणु
-		अगर (rqos->ops->queue_depth_changed)
+void __rq_qos_queue_depth_changed(struct rq_qos *rqos)
+{
+	do {
+		if (rqos->ops->queue_depth_changed)
 			rqos->ops->queue_depth_changed(rqos);
 		rqos = rqos->next;
-	पूर्ण जबतक (rqos);
-पूर्ण
+	} while (rqos);
+}
 
 /*
- * Return true, अगर we can't increase the depth further by scaling
+ * Return true, if we can't increase the depth further by scaling
  */
-bool rq_depth_calc_max_depth(काष्ठा rq_depth *rqd)
-अणु
-	अचिन्हित पूर्णांक depth;
+bool rq_depth_calc_max_depth(struct rq_depth *rqd)
+{
+	unsigned int depth;
 	bool ret = false;
 
 	/*
-	 * For QD=1 devices, this is a special हाल. It's important क्रम those
-	 * to have one request पढ़ोy when one completes, so क्रमce a depth of
-	 * 2 क्रम those devices. On the backend, it'll be a depth of 1 anyway,
+	 * For QD=1 devices, this is a special case. It's important for those
+	 * to have one request ready when one completes, so force a depth of
+	 * 2 for those devices. On the backend, it'll be a depth of 1 anyway,
 	 * since the device can't have more than that in flight. If we're
-	 * scaling करोwn, then keep a setting of 1/1/1.
+	 * scaling down, then keep a setting of 1/1/1.
 	 */
-	अगर (rqd->queue_depth == 1) अणु
-		अगर (rqd->scale_step > 0)
+	if (rqd->queue_depth == 1) {
+		if (rqd->scale_step > 0)
 			rqd->max_depth = 1;
-		अन्यथा अणु
+		else {
 			rqd->max_depth = 2;
 			ret = true;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/*
-		 * scale_step == 0 is our शेष state. If we have suffered
+		 * scale_step == 0 is our default state. If we have suffered
 		 * latency spikes, step will be > 0, and we shrink the
-		 * allowed ग_लिखो depths. If step is < 0, we're only करोing
-		 * ग_लिखोs, and we allow a temporarily higher depth to
-		 * increase perक्रमmance.
+		 * allowed write depths. If step is < 0, we're only doing
+		 * writes, and we allow a temporarily higher depth to
+		 * increase performance.
 		 */
-		depth = min_t(अचिन्हित पूर्णांक, rqd->शेष_depth,
+		depth = min_t(unsigned int, rqd->default_depth,
 			      rqd->queue_depth);
-		अगर (rqd->scale_step > 0)
+		if (rqd->scale_step > 0)
 			depth = 1 + ((depth - 1) >> min(31, rqd->scale_step));
-		अन्यथा अगर (rqd->scale_step < 0) अणु
-			अचिन्हित पूर्णांक maxd = 3 * rqd->queue_depth / 4;
+		else if (rqd->scale_step < 0) {
+			unsigned int maxd = 3 * rqd->queue_depth / 4;
 
 			depth = 1 + ((depth - 1) << -rqd->scale_step);
-			अगर (depth > maxd) अणु
+			if (depth > maxd) {
 				depth = maxd;
 				ret = true;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		rqd->max_depth = depth;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Returns true on success and false अगर scaling up wasn't possible */
-bool rq_depth_scale_up(काष्ठा rq_depth *rqd)
-अणु
+/* Returns true on success and false if scaling up wasn't possible */
+bool rq_depth_scale_up(struct rq_depth *rqd)
+{
 	/*
 	 * Hit max in previous round, stop here
 	 */
-	अगर (rqd->scaled_max)
-		वापस false;
+	if (rqd->scaled_max)
+		return false;
 
 	rqd->scale_step--;
 
 	rqd->scaled_max = rq_depth_calc_max_depth(rqd);
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * Scale rwb करोwn. If 'hard_throttle' is set, करो it quicker, since we
- * had a latency violation. Returns true on success and वापसs false अगर
- * scaling करोwn wasn't possible.
+ * Scale rwb down. If 'hard_throttle' is set, do it quicker, since we
+ * had a latency violation. Returns true on success and returns false if
+ * scaling down wasn't possible.
  */
-bool rq_depth_scale_करोwn(काष्ठा rq_depth *rqd, bool hard_throttle)
-अणु
+bool rq_depth_scale_down(struct rq_depth *rqd, bool hard_throttle)
+{
 	/*
-	 * Stop scaling करोwn when we've hit the limit. This also prevents
-	 * ->scale_step from going to crazy values, अगर the device can't
+	 * Stop scaling down when we've hit the limit. This also prevents
+	 * ->scale_step from going to crazy values, if the device can't
 	 * keep up.
 	 */
-	अगर (rqd->max_depth == 1)
-		वापस false;
+	if (rqd->max_depth == 1)
+		return false;
 
-	अगर (rqd->scale_step < 0 && hard_throttle)
+	if (rqd->scale_step < 0 && hard_throttle)
 		rqd->scale_step = 0;
-	अन्यथा
+	else
 		rqd->scale_step++;
 
 	rqd->scaled_max = false;
 	rq_depth_calc_max_depth(rqd);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-काष्ठा rq_qos_रुको_data अणु
-	काष्ठा रुको_queue_entry wq;
-	काष्ठा task_काष्ठा *task;
-	काष्ठा rq_रुको *rqw;
+struct rq_qos_wait_data {
+	struct wait_queue_entry wq;
+	struct task_struct *task;
+	struct rq_wait *rqw;
 	acquire_inflight_cb_t *cb;
-	व्योम *निजी_data;
+	void *private_data;
 	bool got_token;
-पूर्ण;
+};
 
-अटल पूर्णांक rq_qos_wake_function(काष्ठा रुको_queue_entry *curr,
-				अचिन्हित पूर्णांक mode, पूर्णांक wake_flags, व्योम *key)
-अणु
-	काष्ठा rq_qos_रुको_data *data = container_of(curr,
-						     काष्ठा rq_qos_रुको_data,
+static int rq_qos_wake_function(struct wait_queue_entry *curr,
+				unsigned int mode, int wake_flags, void *key)
+{
+	struct rq_qos_wait_data *data = container_of(curr,
+						     struct rq_qos_wait_data,
 						     wq);
 
 	/*
-	 * If we fail to get a budget, वापस -1 to पूर्णांकerrupt the wake up loop
+	 * If we fail to get a budget, return -1 to interrupt the wake up loop
 	 * in __wake_up_common.
 	 */
-	अगर (!data->cb(data->rqw, data->निजी_data))
-		वापस -1;
+	if (!data->cb(data->rqw, data->private_data))
+		return -1;
 
 	data->got_token = true;
 	smp_wmb();
 	list_del_init(&curr->entry);
 	wake_up_process(data->task);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /**
- * rq_qos_रुको - throttle on a rqw अगर we need to
+ * rq_qos_wait - throttle on a rqw if we need to
  * @rqw: rqw to throttle on
- * @निजी_data: caller provided specअगरic data
- * @acquire_inflight_cb: inc the rqw->inflight counter अगर we can
- * @cleanup_cb: the callback to cleanup in हाल we race with a waker
+ * @private_data: caller provided specific data
+ * @acquire_inflight_cb: inc the rqw->inflight counter if we can
+ * @cleanup_cb: the callback to cleanup in case we race with a waker
  *
- * This provides a unअगरorm place क्रम the rq_qos users to करो their throttling.
+ * This provides a uniform place for the rq_qos users to do their throttling.
  * Since you can end up with a lot of things sleeping at once, this manages the
  * waking up based on the resources available.  The acquire_inflight_cb should
- * inc the rqw->inflight अगर we have the ability to करो so, or वापस false अगर not
+ * inc the rqw->inflight if we have the ability to do so, or return false if not
  * and then we will sleep until the room becomes available.
  *
- * cleanup_cb is in हाल that we race with a waker and need to cleanup the
+ * cleanup_cb is in case that we race with a waker and need to cleanup the
  * inflight count accordingly.
  */
-व्योम rq_qos_रुको(काष्ठा rq_रुको *rqw, व्योम *निजी_data,
+void rq_qos_wait(struct rq_wait *rqw, void *private_data,
 		 acquire_inflight_cb_t *acquire_inflight_cb,
 		 cleanup_cb_t *cleanup_cb)
-अणु
-	काष्ठा rq_qos_रुको_data data = अणु
-		.wq = अणु
+{
+	struct rq_qos_wait_data data = {
+		.wq = {
 			.func	= rq_qos_wake_function,
 			.entry	= LIST_HEAD_INIT(data.wq.entry),
-		पूर्ण,
+		},
 		.task = current,
 		.rqw = rqw,
 		.cb = acquire_inflight_cb,
-		.निजी_data = निजी_data,
-	पूर्ण;
+		.private_data = private_data,
+	};
 	bool has_sleeper;
 
-	has_sleeper = wq_has_sleeper(&rqw->रुको);
-	अगर (!has_sleeper && acquire_inflight_cb(rqw, निजी_data))
-		वापस;
+	has_sleeper = wq_has_sleeper(&rqw->wait);
+	if (!has_sleeper && acquire_inflight_cb(rqw, private_data))
+		return;
 
-	prepare_to_रुको_exclusive(&rqw->रुको, &data.wq, TASK_UNINTERRUPTIBLE);
-	has_sleeper = !wq_has_single_sleeper(&rqw->रुको);
-	करो अणु
+	prepare_to_wait_exclusive(&rqw->wait, &data.wq, TASK_UNINTERRUPTIBLE);
+	has_sleeper = !wq_has_single_sleeper(&rqw->wait);
+	do {
 		/* The memory barrier in set_task_state saves us here. */
-		अगर (data.got_token)
-			अवरोध;
-		अगर (!has_sleeper && acquire_inflight_cb(rqw, निजी_data)) अणु
-			finish_रुको(&rqw->रुको, &data.wq);
+		if (data.got_token)
+			break;
+		if (!has_sleeper && acquire_inflight_cb(rqw, private_data)) {
+			finish_wait(&rqw->wait, &data.wq);
 
 			/*
 			 * We raced with wbt_wake_function() getting a token,
 			 * which means we now have two. Put our local token
-			 * and wake anyone अन्यथा potentially रुकोing क्रम one.
+			 * and wake anyone else potentially waiting for one.
 			 */
 			smp_rmb();
-			अगर (data.got_token)
-				cleanup_cb(rqw, निजी_data);
-			अवरोध;
-		पूर्ण
+			if (data.got_token)
+				cleanup_cb(rqw, private_data);
+			break;
+		}
 		io_schedule();
 		has_sleeper = true;
 		set_current_state(TASK_UNINTERRUPTIBLE);
-	पूर्ण जबतक (1);
-	finish_रुको(&rqw->रुको, &data.wq);
-पूर्ण
+	} while (1);
+	finish_wait(&rqw->wait, &data.wq);
+}
 
-व्योम rq_qos_निकास(काष्ठा request_queue *q)
-अणु
-	blk_mq_debugfs_unरेजिस्टर_queue_rqos(q);
+void rq_qos_exit(struct request_queue *q)
+{
+	blk_mq_debugfs_unregister_queue_rqos(q);
 
-	जबतक (q->rq_qos) अणु
-		काष्ठा rq_qos *rqos = q->rq_qos;
+	while (q->rq_qos) {
+		struct rq_qos *rqos = q->rq_qos;
 		q->rq_qos = rqos->next;
-		rqos->ops->निकास(rqos);
-	पूर्ण
-पूर्ण
+		rqos->ops->exit(rqos);
+	}
+}

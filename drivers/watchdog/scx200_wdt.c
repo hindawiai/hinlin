@@ -1,76 +1,75 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
-/* drivers/अक्षर/watchकरोg/scx200_wdt.c
+// SPDX-License-Identifier: GPL-2.0-or-later
+/* drivers/char/watchdog/scx200_wdt.c
 
-   National Semiconductor SCx200 Watchकरोg support
+   National Semiconductor SCx200 Watchdog support
 
-   Copyright (c) 2001,2002 Christer Weinigel <wingel@nano-प्रणाली.com>
+   Copyright (c) 2001,2002 Christer Weinigel <wingel@nano-system.com>
 
    Some code taken from:
    National Semiconductor PC87307/PC97307 (ala SC1200) WDT driver
    (c) Copyright 2002 Zwane Mwaikambo <zwane@commfireservices.com>
 
 
-   The author(s) of this software shall not be held liable क्रम damages
+   The author(s) of this software shall not be held liable for damages
    of any nature resulting due to the use of this software. This
    software is provided AS-IS with no warranties. */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/init.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/watchकरोg.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/scx200.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/init.h>
+#include <linux/miscdevice.h>
+#include <linux/watchdog.h>
+#include <linux/notifier.h>
+#include <linux/reboot.h>
+#include <linux/fs.h>
+#include <linux/ioport.h>
+#include <linux/scx200.h>
+#include <linux/uaccess.h>
+#include <linux/io.h>
 
-#घोषणा DEBUG
+#define DEBUG
 
 MODULE_AUTHOR("Christer Weinigel <wingel@nano-system.com>");
 MODULE_DESCRIPTION("NatSemi SCx200 Watchdog Driver");
 MODULE_LICENSE("GPL");
 
-अटल पूर्णांक margin = 60;		/* in seconds */
-module_param(margin, पूर्णांक, 0);
+static int margin = 60;		/* in seconds */
+module_param(margin, int, 0);
 MODULE_PARM_DESC(margin, "Watchdog margin in seconds");
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Disable watchdog shutdown on close");
 
-अटल u16 wdto_restart;
-अटल अक्षर expect_बंद;
-अटल अचिन्हित दीर्घ खोलो_lock;
-अटल DEFINE_SPINLOCK(scx_lock);
+static u16 wdto_restart;
+static char expect_close;
+static unsigned long open_lock;
+static DEFINE_SPINLOCK(scx_lock);
 
-/* Bits of the WDCNFG रेजिस्टर */
-#घोषणा W_ENABLE 0x00fa		/* Enable watchकरोg */
-#घोषणा W_DISABLE 0x0000	/* Disable watchकरोg */
+/* Bits of the WDCNFG register */
+#define W_ENABLE 0x00fa		/* Enable watchdog */
+#define W_DISABLE 0x0000	/* Disable watchdog */
 
-/* The scaling factor क्रम the समयr, this depends on the value of W_ENABLE */
-#घोषणा W_SCALE (32768/1024)
+/* The scaling factor for the timer, this depends on the value of W_ENABLE */
+#define W_SCALE (32768/1024)
 
-अटल व्योम scx200_wdt_ping(व्योम)
-अणु
+static void scx200_wdt_ping(void)
+{
 	spin_lock(&scx_lock);
 	outw(wdto_restart, scx200_cb_base + SCx200_WDT_WDTO);
 	spin_unlock(&scx_lock);
-पूर्ण
+}
 
-अटल व्योम scx200_wdt_update_margin(व्योम)
-अणु
+static void scx200_wdt_update_margin(void)
+{
 	pr_info("timer margin %d seconds\n", margin);
 	wdto_restart = margin * W_SCALE;
-पूर्ण
+}
 
-अटल व्योम scx200_wdt_enable(व्योम)
-अणु
+static void scx200_wdt_enable(void)
+{
 	pr_debug("enabling watchdog timer, wdto_restart = %d\n", wdto_restart);
 
 	spin_lock(&scx_lock);
@@ -80,10 +79,10 @@ MODULE_PARM_DESC(nowayout, "Disable watchdog shutdown on close");
 	spin_unlock(&scx_lock);
 
 	scx200_wdt_ping();
-पूर्ण
+}
 
-अटल व्योम scx200_wdt_disable(व्योम)
-अणु
+static void scx200_wdt_disable(void)
+{
 	pr_debug("disabling watchdog timer\n");
 
 	spin_lock(&scx_lock);
@@ -91,174 +90,174 @@ MODULE_PARM_DESC(nowayout, "Disable watchdog shutdown on close");
 	outb(SCx200_WDT_WDSTS_WDOVF, scx200_cb_base + SCx200_WDT_WDSTS);
 	outw(W_DISABLE, scx200_cb_base + SCx200_WDT_WDCNFG);
 	spin_unlock(&scx_lock);
-पूर्ण
+}
 
-अटल पूर्णांक scx200_wdt_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	/* only allow one at a समय */
-	अगर (test_and_set_bit(0, &खोलो_lock))
-		वापस -EBUSY;
+static int scx200_wdt_open(struct inode *inode, struct file *file)
+{
+	/* only allow one at a time */
+	if (test_and_set_bit(0, &open_lock))
+		return -EBUSY;
 	scx200_wdt_enable();
 
-	वापस stream_खोलो(inode, file);
-पूर्ण
+	return stream_open(inode, file);
+}
 
-अटल पूर्णांक scx200_wdt_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	अगर (expect_बंद != 42)
+static int scx200_wdt_release(struct inode *inode, struct file *file)
+{
+	if (expect_close != 42)
 		pr_warn("watchdog device closed unexpectedly, will not disable the watchdog timer\n");
-	अन्यथा अगर (!nowayout)
+	else if (!nowayout)
 		scx200_wdt_disable();
-	expect_बंद = 0;
-	clear_bit(0, &खोलो_lock);
+	expect_close = 0;
+	clear_bit(0, &open_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक scx200_wdt_notअगरy_sys(काष्ठा notअगरier_block *this,
-				      अचिन्हित दीर्घ code, व्योम *unused)
-अणु
-	अगर (code == SYS_HALT || code == SYS_POWER_OFF)
-		अगर (!nowayout)
+static int scx200_wdt_notify_sys(struct notifier_block *this,
+				      unsigned long code, void *unused)
+{
+	if (code == SYS_HALT || code == SYS_POWER_OFF)
+		if (!nowayout)
 			scx200_wdt_disable();
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block scx200_wdt_notअगरier = अणु
-	.notअगरier_call = scx200_wdt_notअगरy_sys,
-पूर्ण;
+static struct notifier_block scx200_wdt_notifier = {
+	.notifier_call = scx200_wdt_notify_sys,
+};
 
-अटल sमाप_प्रकार scx200_wdt_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *data,
-				     माप_प्रकार len, loff_t *ppos)
-अणु
-	/* check क्रम a magic बंद अक्षरacter */
-	अगर (len) अणु
-		माप_प्रकार i;
+static ssize_t scx200_wdt_write(struct file *file, const char __user *data,
+				     size_t len, loff_t *ppos)
+{
+	/* check for a magic close character */
+	if (len) {
+		size_t i;
 
 		scx200_wdt_ping();
 
-		expect_बंद = 0;
-		क्रम (i = 0; i < len; ++i) अणु
-			अक्षर c;
-			अगर (get_user(c, data + i))
-				वापस -EFAULT;
-			अगर (c == 'V')
-				expect_बंद = 42;
-		पूर्ण
+		expect_close = 0;
+		for (i = 0; i < len; ++i) {
+			char c;
+			if (get_user(c, data + i))
+				return -EFAULT;
+			if (c == 'V')
+				expect_close = 42;
+		}
 
-		वापस len;
-	पूर्ण
+		return len;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ scx200_wdt_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-							अचिन्हित दीर्घ arg)
-अणु
-	व्योम __user *argp = (व्योम __user *)arg;
-	पूर्णांक __user *p = argp;
-	अटल स्थिर काष्ठा watchकरोg_info ident = अणु
+static long scx200_wdt_ioctl(struct file *file, unsigned int cmd,
+							unsigned long arg)
+{
+	void __user *argp = (void __user *)arg;
+	int __user *p = argp;
+	static const struct watchdog_info ident = {
 		.identity = "NatSemi SCx200 Watchdog",
 		.firmware_version = 1,
 		.options = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING |
 						WDIOF_MAGICCLOSE,
-	पूर्ण;
-	पूर्णांक new_margin;
+	};
+	int new_margin;
 
-	चयन (cmd) अणु
-	हाल WDIOC_GETSUPPORT:
-		अगर (copy_to_user(argp, &ident, माप(ident)))
-			वापस -EFAULT;
-		वापस 0;
-	हाल WDIOC_GETSTATUS:
-	हाल WDIOC_GETBOOTSTATUS:
-		अगर (put_user(0, p))
-			वापस -EFAULT;
-		वापस 0;
-	हाल WDIOC_KEEPALIVE:
+	switch (cmd) {
+	case WDIOC_GETSUPPORT:
+		if (copy_to_user(argp, &ident, sizeof(ident)))
+			return -EFAULT;
+		return 0;
+	case WDIOC_GETSTATUS:
+	case WDIOC_GETBOOTSTATUS:
+		if (put_user(0, p))
+			return -EFAULT;
+		return 0;
+	case WDIOC_KEEPALIVE:
 		scx200_wdt_ping();
-		वापस 0;
-	हाल WDIOC_SETTIMEOUT:
-		अगर (get_user(new_margin, p))
-			वापस -EFAULT;
-		अगर (new_margin < 1)
-			वापस -EINVAL;
+		return 0;
+	case WDIOC_SETTIMEOUT:
+		if (get_user(new_margin, p))
+			return -EFAULT;
+		if (new_margin < 1)
+			return -EINVAL;
 		margin = new_margin;
 		scx200_wdt_update_margin();
 		scx200_wdt_ping();
 		fallthrough;
-	हाल WDIOC_GETTIMEOUT:
-		अगर (put_user(margin, p))
-			वापस -EFAULT;
-		वापस 0;
-	शेष:
-		वापस -ENOTTY;
-	पूर्ण
-पूर्ण
+	case WDIOC_GETTIMEOUT:
+		if (put_user(margin, p))
+			return -EFAULT;
+		return 0;
+	default:
+		return -ENOTTY;
+	}
+}
 
-अटल स्थिर काष्ठा file_operations scx200_wdt_fops = अणु
+static const struct file_operations scx200_wdt_fops = {
 	.owner = THIS_MODULE,
 	.llseek = no_llseek,
-	.ग_लिखो = scx200_wdt_ग_लिखो,
+	.write = scx200_wdt_write,
 	.unlocked_ioctl = scx200_wdt_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.खोलो = scx200_wdt_खोलो,
+	.open = scx200_wdt_open,
 	.release = scx200_wdt_release,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice scx200_wdt_miscdev = अणु
+static struct miscdevice scx200_wdt_miscdev = {
 	.minor = WATCHDOG_MINOR,
 	.name = "watchdog",
 	.fops = &scx200_wdt_fops,
-पूर्ण;
+};
 
-अटल पूर्णांक __init scx200_wdt_init(व्योम)
-अणु
-	पूर्णांक r;
+static int __init scx200_wdt_init(void)
+{
+	int r;
 
 	pr_debug("NatSemi SCx200 Watchdog Driver\n");
 
 	/* check that we have found the configuration block */
-	अगर (!scx200_cb_present())
-		वापस -ENODEV;
+	if (!scx200_cb_present())
+		return -ENODEV;
 
-	अगर (!request_region(scx200_cb_base + SCx200_WDT_OFFSET,
+	if (!request_region(scx200_cb_base + SCx200_WDT_OFFSET,
 			    SCx200_WDT_SIZE,
-			    "NatSemi SCx200 Watchdog")) अणु
+			    "NatSemi SCx200 Watchdog")) {
 		pr_warn("watchdog I/O region busy\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	scx200_wdt_update_margin();
 	scx200_wdt_disable();
 
-	r = रेजिस्टर_reboot_notअगरier(&scx200_wdt_notअगरier);
-	अगर (r) अणु
+	r = register_reboot_notifier(&scx200_wdt_notifier);
+	if (r) {
 		pr_err("unable to register reboot notifier\n");
 		release_region(scx200_cb_base + SCx200_WDT_OFFSET,
 				SCx200_WDT_SIZE);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	r = misc_रेजिस्टर(&scx200_wdt_miscdev);
-	अगर (r) अणु
-		unरेजिस्टर_reboot_notअगरier(&scx200_wdt_notअगरier);
+	r = misc_register(&scx200_wdt_miscdev);
+	if (r) {
+		unregister_reboot_notifier(&scx200_wdt_notifier);
 		release_region(scx200_cb_base + SCx200_WDT_OFFSET,
 				SCx200_WDT_SIZE);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास scx200_wdt_cleanup(व्योम)
-अणु
-	misc_deरेजिस्टर(&scx200_wdt_miscdev);
-	unरेजिस्टर_reboot_notअगरier(&scx200_wdt_notअगरier);
+static void __exit scx200_wdt_cleanup(void)
+{
+	misc_deregister(&scx200_wdt_miscdev);
+	unregister_reboot_notifier(&scx200_wdt_notifier);
 	release_region(scx200_cb_base + SCx200_WDT_OFFSET,
 		       SCx200_WDT_SIZE);
-पूर्ण
+}
 
 module_init(scx200_wdt_init);
-module_निकास(scx200_wdt_cleanup);
+module_exit(scx200_wdt_cleanup);

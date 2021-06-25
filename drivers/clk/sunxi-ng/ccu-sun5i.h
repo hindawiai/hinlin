@@ -1,57 +1,56 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright 2016 Maxime Ripard
  *
- * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
+ * Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
-#अगर_अघोषित _CCU_SUN5I_H_
-#घोषणा _CCU_SUN5I_H_
+#ifndef _CCU_SUN5I_H_
+#define _CCU_SUN5I_H_
 
-#समावेश <dt-bindings/घड़ी/sun5i-ccu.h>
-#समावेश <dt-bindings/reset/sun5i-ccu.h>
+#include <dt-bindings/clock/sun5i-ccu.h>
+#include <dt-bindings/reset/sun5i-ccu.h>
 
 /* The HOSC is exported */
-#घोषणा CLK_PLL_CORE		2
-#घोषणा CLK_PLL_AUDIO_BASE	3
-#घोषणा CLK_PLL_AUDIO		4
-#घोषणा CLK_PLL_AUDIO_2X	5
-#घोषणा CLK_PLL_AUDIO_4X	6
-#घोषणा CLK_PLL_AUDIO_8X	7
-#घोषणा CLK_PLL_VIDEO0		8
+#define CLK_PLL_CORE		2
+#define CLK_PLL_AUDIO_BASE	3
+#define CLK_PLL_AUDIO		4
+#define CLK_PLL_AUDIO_2X	5
+#define CLK_PLL_AUDIO_4X	6
+#define CLK_PLL_AUDIO_8X	7
+#define CLK_PLL_VIDEO0		8
 
-/* The PLL_VIDEO0_2X is exported क्रम HDMI */
+/* The PLL_VIDEO0_2X is exported for HDMI */
 
-#घोषणा CLK_PLL_VE		10
-#घोषणा CLK_PLL_DDR_BASE	11
-#घोषणा CLK_PLL_DDR		12
-#घोषणा CLK_PLL_DDR_OTHER	13
-#घोषणा CLK_PLL_PERIPH		14
-#घोषणा CLK_PLL_VIDEO1		15
+#define CLK_PLL_VE		10
+#define CLK_PLL_DDR_BASE	11
+#define CLK_PLL_DDR		12
+#define CLK_PLL_DDR_OTHER	13
+#define CLK_PLL_PERIPH		14
+#define CLK_PLL_VIDEO1		15
 
-/* The PLL_VIDEO1_2X is exported क्रम HDMI */
-/* The CPU घड़ी is exported */
+/* The PLL_VIDEO1_2X is exported for HDMI */
+/* The CPU clock is exported */
 
-#घोषणा CLK_AXI			18
-#घोषणा CLK_AHB			19
-#घोषणा CLK_APB0		20
-#घोषणा CLK_APB1		21
-#घोषणा CLK_DRAM_AXI		22
+#define CLK_AXI			18
+#define CLK_AHB			19
+#define CLK_APB0		20
+#define CLK_APB1		21
+#define CLK_DRAM_AXI		22
 
 /* AHB gates are exported */
 /* APB0 gates are exported */
 /* APB1 gates are exported */
-/* Modules घड़ीs are exported */
-/* USB घड़ीs are exported */
-/* GPS घड़ी is exported */
+/* Modules clocks are exported */
+/* USB clocks are exported */
+/* GPS clock is exported */
 /* DRAM gates are exported */
-/* More display modules घड़ीs are exported */
+/* More display modules clocks are exported */
 
-#घोषणा CLK_TCON_CH1_SCLK	91
+#define CLK_TCON_CH1_SCLK	91
 
-/* The rest of the module घड़ीs are exported */
+/* The rest of the module clocks are exported */
 
-#घोषणा CLK_NUMBER		(CLK_IEP + 1)
+#define CLK_NUMBER		(CLK_IEP + 1)
 
-#पूर्ण_अगर /* _CCU_SUN5I_H_ */
+#endif /* _CCU_SUN5I_H_ */

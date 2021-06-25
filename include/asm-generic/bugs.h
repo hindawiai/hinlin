@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_GENERIC_BUGS_H
-#घोषणा __ASM_GENERIC_BUGS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_GENERIC_BUGS_H
+#define __ASM_GENERIC_BUGS_H
 /*
- * This file is included by 'init/main.c' to check क्रम
+ * This file is included by 'init/main.c' to check for
  * architecture-dependent bugs.
  */
 
-अटल अंतरभूत व्योम check_bugs(व्योम) अणु पूर्ण
+static inline void check_bugs(void) { }
 
-#पूर्ण_अगर	/* __ASM_GENERIC_BUGS_H */
+#endif	/* __ASM_GENERIC_BUGS_H */

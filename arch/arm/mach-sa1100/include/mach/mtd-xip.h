@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * MTD primitives क्रम XIP support. Architecture specअगरic functions
+ * MTD primitives for XIP support. Architecture specific functions
  *
  * Do not include this file directly. It's included from linux/mtd/xip.h
  * 
@@ -10,15 +9,15 @@
  * Copyright:	(C) 2004 MontaVista Software, Inc.
  */
 
-#अगर_अघोषित __ARCH_SA1100_MTD_XIP_H__
-#घोषणा __ARCH_SA1100_MTD_XIP_H__
+#ifndef __ARCH_SA1100_MTD_XIP_H__
+#define __ARCH_SA1100_MTD_XIP_H__
 
-#समावेश <mach/hardware.h>
+#include <mach/hardware.h>
 
-#घोषणा xip_irqpending()	(ICIP & ICMR)
+#define xip_irqpending()	(ICIP & ICMR)
 
 /* we sample OSCR and convert desired delta to usec (1/4 ~= 1000000/3686400) */
-#घोषणा xip_currसमय()		पढ़ोl_relaxed(OSCR)
-#घोषणा xip_elapsed_since(x)	(चिन्हित)((पढ़ोl_relaxed(OSCR) - (x)) / 4)
+#define xip_currtime()		readl_relaxed(OSCR)
+#define xip_elapsed_since(x)	(signed)((readl_relaxed(OSCR) - (x)) / 4)
 
-#पूर्ण_अगर /* __ARCH_SA1100_MTD_XIP_H__ */
+#endif /* __ARCH_SA1100_MTD_XIP_H__ */

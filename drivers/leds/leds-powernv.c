@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * PowerNV LED Driver
  *
@@ -9,33 +8,33 @@
  * Author: Anshuman Khandual <khandual@linux.vnet.ibm.com>
  */
 
-#समावेश <linux/leds.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
+#include <linux/leds.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/types.h>
 
-#समावेश <यंत्र/opal.h>
+#include <asm/opal.h>
 
 /* Map LED type to description. */
-काष्ठा led_type_map अणु
-	स्थिर पूर्णांक	type;
-	स्थिर अक्षर	*desc;
-पूर्ण;
-अटल स्थिर काष्ठा led_type_map led_type_map[] = अणु
-	अणुOPAL_SLOT_LED_TYPE_ID,		"identify"पूर्ण,
-	अणुOPAL_SLOT_LED_TYPE_FAULT,	"fault"पूर्ण,
-	अणुOPAL_SLOT_LED_TYPE_ATTN,	"attention"पूर्ण,
-	अणु-1,				शून्यपूर्ण,
-पूर्ण;
+struct led_type_map {
+	const int	type;
+	const char	*desc;
+};
+static const struct led_type_map led_type_map[] = {
+	{OPAL_SLOT_LED_TYPE_ID,		"identify"},
+	{OPAL_SLOT_LED_TYPE_FAULT,	"fault"},
+	{OPAL_SLOT_LED_TYPE_ATTN,	"attention"},
+	{-1,				NULL},
+};
 
-काष्ठा घातernv_led_common अणु
+struct powernv_led_common {
 	/*
-	 * By शेष unload path resets all the LEDs. But on PowerNV
-	 * platक्रमm we want to retain LED state across reboot as these
-	 * are controlled by firmware. Also service processor can modअगरy
-	 * the LEDs independent of OS. Hence aव्योम resetting LEDs in
+	 * By default unload path resets all the LEDs. But on PowerNV
+	 * platform we want to retain LED state across reboot as these
+	 * are controlled by firmware. Also service processor can modify
+	 * the LEDs independent of OS. Hence avoid resetting LEDs in
 	 * unload path.
 	 */
 	bool		led_disabled;
@@ -44,306 +43,306 @@
 	__be64		max_led_type;
 
 	/* glabal lock */
-	काष्ठा mutex	lock;
-पूर्ण;
+	struct mutex	lock;
+};
 
 /* PowerNV LED data */
-काष्ठा घातernv_led_data अणु
-	काष्ठा led_classdev	cdev;
-	अक्षर			*loc_code;	/* LED location code */
-	पूर्णांक			led_type;	/* OPAL_SLOT_LED_TYPE_* */
+struct powernv_led_data {
+	struct led_classdev	cdev;
+	char			*loc_code;	/* LED location code */
+	int			led_type;	/* OPAL_SLOT_LED_TYPE_* */
 
-	काष्ठा घातernv_led_common *common;
-पूर्ण;
+	struct powernv_led_common *common;
+};
 
 
-/* Returns OPAL_SLOT_LED_TYPE_* क्रम given led type string */
-अटल पूर्णांक घातernv_get_led_type(स्थिर अक्षर *led_type_desc)
-अणु
-	पूर्णांक i;
+/* Returns OPAL_SLOT_LED_TYPE_* for given led type string */
+static int powernv_get_led_type(const char *led_type_desc)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(led_type_map); i++)
-		अगर (!म_भेद(led_type_map[i].desc, led_type_desc))
-			वापस led_type_map[i].type;
+	for (i = 0; i < ARRAY_SIZE(led_type_map); i++)
+		if (!strcmp(led_type_map[i].desc, led_type_desc))
+			return led_type_map[i].type;
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
 /*
  * This commits the state change of the requested LED through an OPAL call.
- * This function is called from work queue task context when ever it माला_लो
- * scheduled. This function can sleep at opal_async_रुको_response call.
+ * This function is called from work queue task context when ever it gets
+ * scheduled. This function can sleep at opal_async_wait_response call.
  */
-अटल पूर्णांक घातernv_led_set(काष्ठा घातernv_led_data *घातernv_led,
-			    क्रमागत led_brightness value)
-अणु
-	पूर्णांक rc, token;
+static int powernv_led_set(struct powernv_led_data *powernv_led,
+			    enum led_brightness value)
+{
+	int rc, token;
 	u64 led_mask, led_value = 0;
 	__be64 max_type;
-	काष्ठा opal_msg msg;
-	काष्ठा device *dev = घातernv_led->cdev.dev;
-	काष्ठा घातernv_led_common *घातernv_led_common = घातernv_led->common;
+	struct opal_msg msg;
+	struct device *dev = powernv_led->cdev.dev;
+	struct powernv_led_common *powernv_led_common = powernv_led->common;
 
-	/* Prepare क्रम the OPAL call */
-	max_type = घातernv_led_common->max_led_type;
-	led_mask = OPAL_SLOT_LED_STATE_ON << घातernv_led->led_type;
-	अगर (value)
+	/* Prepare for the OPAL call */
+	max_type = powernv_led_common->max_led_type;
+	led_mask = OPAL_SLOT_LED_STATE_ON << powernv_led->led_type;
+	if (value)
 		led_value = led_mask;
 
 	/* OPAL async call */
-	token = opal_async_get_token_पूर्णांकerruptible();
-	अगर (token < 0) अणु
-		अगर (token != -ERESTARTSYS)
+	token = opal_async_get_token_interruptible();
+	if (token < 0) {
+		if (token != -ERESTARTSYS)
 			dev_err(dev, "%s: Couldn't get OPAL async token\n",
 				__func__);
-		वापस token;
-	पूर्ण
+		return token;
+	}
 
-	rc = opal_leds_set_ind(token, घातernv_led->loc_code,
+	rc = opal_leds_set_ind(token, powernv_led->loc_code,
 			       led_mask, led_value, &max_type);
-	अगर (rc != OPAL_ASYNC_COMPLETION) अणु
+	if (rc != OPAL_ASYNC_COMPLETION) {
 		dev_err(dev, "%s: OPAL set LED call failed for %s [rc=%d]\n",
-			__func__, घातernv_led->loc_code, rc);
-		जाओ out_token;
-	पूर्ण
+			__func__, powernv_led->loc_code, rc);
+		goto out_token;
+	}
 
-	rc = opal_async_रुको_response(token, &msg);
-	अगर (rc) अणु
+	rc = opal_async_wait_response(token, &msg);
+	if (rc) {
 		dev_err(dev,
 			"%s: Failed to wait for the async response [rc=%d]\n",
 			__func__, rc);
-		जाओ out_token;
-	पूर्ण
+		goto out_token;
+	}
 
 	rc = opal_get_async_rc(msg);
-	अगर (rc != OPAL_SUCCESS)
+	if (rc != OPAL_SUCCESS)
 		dev_err(dev, "%s : OAPL async call returned failed [rc=%d]\n",
 			__func__, rc);
 
 out_token:
 	opal_async_release_token(token);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * This function fetches the LED state क्रम a given LED type क्रम
- * mentioned LED classdev काष्ठाure.
+ * This function fetches the LED state for a given LED type for
+ * mentioned LED classdev structure.
  */
-अटल क्रमागत led_brightness घातernv_led_get(काष्ठा घातernv_led_data *घातernv_led)
-अणु
-	पूर्णांक rc;
+static enum led_brightness powernv_led_get(struct powernv_led_data *powernv_led)
+{
+	int rc;
 	__be64 mask, value, max_type;
 	u64 led_mask, led_value;
-	काष्ठा device *dev = घातernv_led->cdev.dev;
-	काष्ठा घातernv_led_common *घातernv_led_common = घातernv_led->common;
+	struct device *dev = powernv_led->cdev.dev;
+	struct powernv_led_common *powernv_led_common = powernv_led->common;
 
 	/* Fetch all LED status */
 	mask = cpu_to_be64(0);
 	value = cpu_to_be64(0);
-	max_type = घातernv_led_common->max_led_type;
+	max_type = powernv_led_common->max_led_type;
 
-	rc = opal_leds_get_ind(घातernv_led->loc_code,
+	rc = opal_leds_get_ind(powernv_led->loc_code,
 			       &mask, &value, &max_type);
-	अगर (rc != OPAL_SUCCESS && rc != OPAL_PARTIAL) अणु
+	if (rc != OPAL_SUCCESS && rc != OPAL_PARTIAL) {
 		dev_err(dev, "%s: OPAL get led call failed [rc=%d]\n",
 			__func__, rc);
-		वापस LED_OFF;
-	पूर्ण
+		return LED_OFF;
+	}
 
 	led_mask = be64_to_cpu(mask);
 	led_value = be64_to_cpu(value);
 
 	/* LED status available */
-	अगर (!((led_mask >> घातernv_led->led_type) & OPAL_SLOT_LED_STATE_ON)) अणु
+	if (!((led_mask >> powernv_led->led_type) & OPAL_SLOT_LED_STATE_ON)) {
 		dev_err(dev, "%s: LED status not available for %s\n",
-			__func__, घातernv_led->cdev.name);
-		वापस LED_OFF;
-	पूर्ण
+			__func__, powernv_led->cdev.name);
+		return LED_OFF;
+	}
 
 	/* LED status value */
-	अगर ((led_value >> घातernv_led->led_type) & OPAL_SLOT_LED_STATE_ON)
-		वापस LED_FULL;
+	if ((led_value >> powernv_led->led_type) & OPAL_SLOT_LED_STATE_ON)
+		return LED_FULL;
 
-	वापस LED_OFF;
-पूर्ण
+	return LED_OFF;
+}
 
 /*
  * LED classdev 'brightness_get' function. This schedules work
  * to update LED state.
  */
-अटल पूर्णांक घातernv_brightness_set(काष्ठा led_classdev *led_cdev,
-				   क्रमागत led_brightness value)
-अणु
-	काष्ठा घातernv_led_data *घातernv_led =
-		container_of(led_cdev, काष्ठा घातernv_led_data, cdev);
-	काष्ठा घातernv_led_common *घातernv_led_common = घातernv_led->common;
-	पूर्णांक rc;
+static int powernv_brightness_set(struct led_classdev *led_cdev,
+				   enum led_brightness value)
+{
+	struct powernv_led_data *powernv_led =
+		container_of(led_cdev, struct powernv_led_data, cdev);
+	struct powernv_led_common *powernv_led_common = powernv_led->common;
+	int rc;
 
-	/* Do not modअगरy LED in unload path */
-	अगर (घातernv_led_common->led_disabled)
-		वापस 0;
+	/* Do not modify LED in unload path */
+	if (powernv_led_common->led_disabled)
+		return 0;
 
-	mutex_lock(&घातernv_led_common->lock);
-	rc = घातernv_led_set(घातernv_led, value);
-	mutex_unlock(&घातernv_led_common->lock);
+	mutex_lock(&powernv_led_common->lock);
+	rc = powernv_led_set(powernv_led, value);
+	mutex_unlock(&powernv_led_common->lock);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /* LED classdev 'brightness_get' function */
-अटल क्रमागत led_brightness घातernv_brightness_get(काष्ठा led_classdev *led_cdev)
-अणु
-	काष्ठा घातernv_led_data *घातernv_led =
-		container_of(led_cdev, काष्ठा घातernv_led_data, cdev);
+static enum led_brightness powernv_brightness_get(struct led_classdev *led_cdev)
+{
+	struct powernv_led_data *powernv_led =
+		container_of(led_cdev, struct powernv_led_data, cdev);
 
-	वापस घातernv_led_get(घातernv_led);
-पूर्ण
+	return powernv_led_get(powernv_led);
+}
 
 /*
- * This function रेजिस्टरs classdev काष्ठाure क्रम any given type of LED on
+ * This function registers classdev structure for any given type of LED on
  * a given child LED device node.
  */
-अटल पूर्णांक घातernv_led_create(काष्ठा device *dev,
-			      काष्ठा घातernv_led_data *घातernv_led,
-			      स्थिर अक्षर *led_type_desc)
-अणु
-	पूर्णांक rc;
+static int powernv_led_create(struct device *dev,
+			      struct powernv_led_data *powernv_led,
+			      const char *led_type_desc)
+{
+	int rc;
 
 	/* Make sure LED type is supported */
-	घातernv_led->led_type = घातernv_get_led_type(led_type_desc);
-	अगर (घातernv_led->led_type == -1) अणु
+	powernv_led->led_type = powernv_get_led_type(led_type_desc);
+	if (powernv_led->led_type == -1) {
 		dev_warn(dev, "%s: No support for led type : %s\n",
 			 __func__, led_type_desc);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Create the name क्रम classdev */
-	घातernv_led->cdev.name = devm_kaप्र_लिखो(dev, GFP_KERNEL, "%s:%s",
-						घातernv_led->loc_code,
+	/* Create the name for classdev */
+	powernv_led->cdev.name = devm_kasprintf(dev, GFP_KERNEL, "%s:%s",
+						powernv_led->loc_code,
 						led_type_desc);
-	अगर (!घातernv_led->cdev.name)
-		वापस -ENOMEM;
+	if (!powernv_led->cdev.name)
+		return -ENOMEM;
 
-	घातernv_led->cdev.brightness_set_blocking = घातernv_brightness_set;
-	घातernv_led->cdev.brightness_get = घातernv_brightness_get;
-	घातernv_led->cdev.brightness = LED_OFF;
-	घातernv_led->cdev.max_brightness = LED_FULL;
+	powernv_led->cdev.brightness_set_blocking = powernv_brightness_set;
+	powernv_led->cdev.brightness_get = powernv_brightness_get;
+	powernv_led->cdev.brightness = LED_OFF;
+	powernv_led->cdev.max_brightness = LED_FULL;
 
 	/* Register the classdev */
-	rc = devm_led_classdev_रेजिस्टर(dev, &घातernv_led->cdev);
-	अगर (rc) अणु
+	rc = devm_led_classdev_register(dev, &powernv_led->cdev);
+	if (rc) {
 		dev_err(dev, "%s: Classdev registration failed for %s\n",
-			__func__, घातernv_led->cdev.name);
-	पूर्ण
+			__func__, powernv_led->cdev.name);
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-/* Go through LED device tree node and रेजिस्टर LED classdev काष्ठाure */
-अटल पूर्णांक घातernv_led_classdev(काष्ठा platक्रमm_device *pdev,
-				काष्ठा device_node *led_node,
-				काष्ठा घातernv_led_common *घातernv_led_common)
-अणु
-	स्थिर अक्षर *cur = शून्य;
-	पूर्णांक rc = -1;
-	काष्ठा property *p;
-	काष्ठा device_node *np;
-	काष्ठा घातernv_led_data *घातernv_led;
-	काष्ठा device *dev = &pdev->dev;
+/* Go through LED device tree node and register LED classdev structure */
+static int powernv_led_classdev(struct platform_device *pdev,
+				struct device_node *led_node,
+				struct powernv_led_common *powernv_led_common)
+{
+	const char *cur = NULL;
+	int rc = -1;
+	struct property *p;
+	struct device_node *np;
+	struct powernv_led_data *powernv_led;
+	struct device *dev = &pdev->dev;
 
-	क्रम_each_available_child_of_node(led_node, np) अणु
-		p = of_find_property(np, "led-types", शून्य);
+	for_each_available_child_of_node(led_node, np) {
+		p = of_find_property(np, "led-types", NULL);
 
-		जबतक ((cur = of_prop_next_string(p, cur)) != शून्य) अणु
-			घातernv_led = devm_kzalloc(dev, माप(*घातernv_led),
+		while ((cur = of_prop_next_string(p, cur)) != NULL) {
+			powernv_led = devm_kzalloc(dev, sizeof(*powernv_led),
 						   GFP_KERNEL);
-			अगर (!घातernv_led) अणु
+			if (!powernv_led) {
 				of_node_put(np);
-				वापस -ENOMEM;
-			पूर्ण
+				return -ENOMEM;
+			}
 
-			घातernv_led->common = घातernv_led_common;
-			घातernv_led->loc_code = (अक्षर *)np->name;
+			powernv_led->common = powernv_led_common;
+			powernv_led->loc_code = (char *)np->name;
 
-			rc = घातernv_led_create(dev, घातernv_led, cur);
-			अगर (rc) अणु
+			rc = powernv_led_create(dev, powernv_led, cur);
+			if (rc) {
 				of_node_put(np);
-				वापस rc;
-			पूर्ण
-		पूर्ण /* जबतक end */
-	पूर्ण
+				return rc;
+			}
+		} /* while end */
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-/* Platक्रमm driver probe */
-अटल पूर्णांक घातernv_led_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *led_node;
-	काष्ठा घातernv_led_common *घातernv_led_common;
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक rc;
+/* Platform driver probe */
+static int powernv_led_probe(struct platform_device *pdev)
+{
+	struct device_node *led_node;
+	struct powernv_led_common *powernv_led_common;
+	struct device *dev = &pdev->dev;
+	int rc;
 
 	led_node = of_find_node_by_path("/ibm,opal/leds");
-	अगर (!led_node) अणु
+	if (!led_node) {
 		dev_err(dev, "%s: LED parent device node not found\n",
 			__func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	घातernv_led_common = devm_kzalloc(dev, माप(*घातernv_led_common),
+	powernv_led_common = devm_kzalloc(dev, sizeof(*powernv_led_common),
 					  GFP_KERNEL);
-	अगर (!घातernv_led_common) अणु
+	if (!powernv_led_common) {
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	mutex_init(&घातernv_led_common->lock);
-	घातernv_led_common->max_led_type = cpu_to_be64(OPAL_SLOT_LED_TYPE_MAX);
+	mutex_init(&powernv_led_common->lock);
+	powernv_led_common->max_led_type = cpu_to_be64(OPAL_SLOT_LED_TYPE_MAX);
 
-	platक्रमm_set_drvdata(pdev, घातernv_led_common);
+	platform_set_drvdata(pdev, powernv_led_common);
 
-	rc = घातernv_led_classdev(pdev, led_node, घातernv_led_common);
+	rc = powernv_led_classdev(pdev, led_node, powernv_led_common);
 out:
 	of_node_put(led_node);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-/* Platक्रमm driver हटाओ */
-अटल पूर्णांक घातernv_led_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा घातernv_led_common *घातernv_led_common;
+/* Platform driver remove */
+static int powernv_led_remove(struct platform_device *pdev)
+{
+	struct powernv_led_common *powernv_led_common;
 
 	/* Disable LED operation */
-	घातernv_led_common = platक्रमm_get_drvdata(pdev);
-	घातernv_led_common->led_disabled = true;
+	powernv_led_common = platform_get_drvdata(pdev);
+	powernv_led_common->led_disabled = true;
 
 	/* Destroy lock */
-	mutex_destroy(&घातernv_led_common->lock);
+	mutex_destroy(&powernv_led_common->lock);
 
 	dev_info(&pdev->dev, "PowerNV led module unregistered\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Platक्रमm driver property match */
-अटल स्थिर काष्ठा of_device_id घातernv_led_match[] = अणु
-	अणु
+/* Platform driver property match */
+static const struct of_device_id powernv_led_match[] = {
+	{
 		.compatible	= "ibm,opal-v3-led",
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(of, घातernv_led_match);
+	},
+	{},
+};
+MODULE_DEVICE_TABLE(of, powernv_led_match);
 
-अटल काष्ठा platक्रमm_driver घातernv_led_driver = अणु
-	.probe	= घातernv_led_probe,
-	.हटाओ = घातernv_led_हटाओ,
-	.driver = अणु
+static struct platform_driver powernv_led_driver = {
+	.probe	= powernv_led_probe,
+	.remove = powernv_led_remove,
+	.driver = {
 		.name = "powernv-led-driver",
-		.of_match_table = घातernv_led_match,
-	पूर्ण,
-पूर्ण;
+		.of_match_table = powernv_led_match,
+	},
+};
 
-module_platक्रमm_driver(घातernv_led_driver);
+module_platform_driver(powernv_led_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("PowerNV LED driver");

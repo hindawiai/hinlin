@@ -1,291 +1,290 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * EP93xx ethernet network device driver
  * Copyright (C) 2006 Lennert Buytenhek <buytenh@wantstofly.org>
  * Dedicated to Marija Kulikova.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
+#define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/mii.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
+#include <linux/dma-mapping.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/netdevice.h>
+#include <linux/mii.h>
+#include <linux/etherdevice.h>
+#include <linux/ethtool.h>
+#include <linux/interrupt.h>
+#include <linux/moduleparam.h>
+#include <linux/platform_device.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/slab.h>
 
-#समावेश <linux/platक्रमm_data/eth-ep93xx.h>
+#include <linux/platform_data/eth-ep93xx.h>
 
-#घोषणा DRV_MODULE_NAME		"ep93xx-eth"
+#define DRV_MODULE_NAME		"ep93xx-eth"
 
-#घोषणा RX_QUEUE_ENTRIES	64
-#घोषणा TX_QUEUE_ENTRIES	8
+#define RX_QUEUE_ENTRIES	64
+#define TX_QUEUE_ENTRIES	8
 
-#घोषणा MAX_PKT_SIZE		2044
-#घोषणा PKT_BUF_SIZE		2048
+#define MAX_PKT_SIZE		2044
+#define PKT_BUF_SIZE		2048
 
-#घोषणा REG_RXCTL		0x0000
-#घोषणा  REG_RXCTL_DEFAULT	0x00073800
-#घोषणा REG_TXCTL		0x0004
-#घोषणा  REG_TXCTL_ENABLE	0x00000001
-#घोषणा REG_MIICMD		0x0010
-#घोषणा  REG_MIICMD_READ	0x00008000
-#घोषणा  REG_MIICMD_WRITE	0x00004000
-#घोषणा REG_MIIDATA		0x0014
-#घोषणा REG_MIISTS		0x0018
-#घोषणा  REG_MIISTS_BUSY	0x00000001
-#घोषणा REG_SELFCTL		0x0020
-#घोषणा  REG_SELFCTL_RESET	0x00000001
-#घोषणा REG_INTEN		0x0024
-#घोषणा  REG_INTEN_TX		0x00000008
-#घोषणा  REG_INTEN_RX		0x00000007
-#घोषणा REG_INTSTSP		0x0028
-#घोषणा  REG_INTSTS_TX		0x00000008
-#घोषणा  REG_INTSTS_RX		0x00000004
-#घोषणा REG_INTSTSC		0x002c
-#घोषणा REG_AFP			0x004c
-#घोषणा REG_INDAD0		0x0050
-#घोषणा REG_INDAD1		0x0051
-#घोषणा REG_INDAD2		0x0052
-#घोषणा REG_INDAD3		0x0053
-#घोषणा REG_INDAD4		0x0054
-#घोषणा REG_INDAD5		0x0055
-#घोषणा REG_GIINTMSK		0x0064
-#घोषणा  REG_GIINTMSK_ENABLE	0x00008000
-#घोषणा REG_BMCTL		0x0080
-#घोषणा  REG_BMCTL_ENABLE_TX	0x00000100
-#घोषणा  REG_BMCTL_ENABLE_RX	0x00000001
-#घोषणा REG_BMSTS		0x0084
-#घोषणा  REG_BMSTS_RX_ACTIVE	0x00000008
-#घोषणा REG_RXDQBADD		0x0090
-#घोषणा REG_RXDQBLEN		0x0094
-#घोषणा REG_RXDCURADD		0x0098
-#घोषणा REG_RXDENQ		0x009c
-#घोषणा REG_RXSTSQBADD		0x00a0
-#घोषणा REG_RXSTSQBLEN		0x00a4
-#घोषणा REG_RXSTSQCURADD	0x00a8
-#घोषणा REG_RXSTSENQ		0x00ac
-#घोषणा REG_TXDQBADD		0x00b0
-#घोषणा REG_TXDQBLEN		0x00b4
-#घोषणा REG_TXDQCURADD		0x00b8
-#घोषणा REG_TXDENQ		0x00bc
-#घोषणा REG_TXSTSQBADD		0x00c0
-#घोषणा REG_TXSTSQBLEN		0x00c4
-#घोषणा REG_TXSTSQCURADD	0x00c8
-#घोषणा REG_MAXFRMLEN		0x00e8
+#define REG_RXCTL		0x0000
+#define  REG_RXCTL_DEFAULT	0x00073800
+#define REG_TXCTL		0x0004
+#define  REG_TXCTL_ENABLE	0x00000001
+#define REG_MIICMD		0x0010
+#define  REG_MIICMD_READ	0x00008000
+#define  REG_MIICMD_WRITE	0x00004000
+#define REG_MIIDATA		0x0014
+#define REG_MIISTS		0x0018
+#define  REG_MIISTS_BUSY	0x00000001
+#define REG_SELFCTL		0x0020
+#define  REG_SELFCTL_RESET	0x00000001
+#define REG_INTEN		0x0024
+#define  REG_INTEN_TX		0x00000008
+#define  REG_INTEN_RX		0x00000007
+#define REG_INTSTSP		0x0028
+#define  REG_INTSTS_TX		0x00000008
+#define  REG_INTSTS_RX		0x00000004
+#define REG_INTSTSC		0x002c
+#define REG_AFP			0x004c
+#define REG_INDAD0		0x0050
+#define REG_INDAD1		0x0051
+#define REG_INDAD2		0x0052
+#define REG_INDAD3		0x0053
+#define REG_INDAD4		0x0054
+#define REG_INDAD5		0x0055
+#define REG_GIINTMSK		0x0064
+#define  REG_GIINTMSK_ENABLE	0x00008000
+#define REG_BMCTL		0x0080
+#define  REG_BMCTL_ENABLE_TX	0x00000100
+#define  REG_BMCTL_ENABLE_RX	0x00000001
+#define REG_BMSTS		0x0084
+#define  REG_BMSTS_RX_ACTIVE	0x00000008
+#define REG_RXDQBADD		0x0090
+#define REG_RXDQBLEN		0x0094
+#define REG_RXDCURADD		0x0098
+#define REG_RXDENQ		0x009c
+#define REG_RXSTSQBADD		0x00a0
+#define REG_RXSTSQBLEN		0x00a4
+#define REG_RXSTSQCURADD	0x00a8
+#define REG_RXSTSENQ		0x00ac
+#define REG_TXDQBADD		0x00b0
+#define REG_TXDQBLEN		0x00b4
+#define REG_TXDQCURADD		0x00b8
+#define REG_TXDENQ		0x00bc
+#define REG_TXSTSQBADD		0x00c0
+#define REG_TXSTSQBLEN		0x00c4
+#define REG_TXSTSQCURADD	0x00c8
+#define REG_MAXFRMLEN		0x00e8
 
-काष्ठा ep93xx_rdesc
-अणु
+struct ep93xx_rdesc
+{
 	u32	buf_addr;
 	u32	rdesc1;
-पूर्ण;
+};
 
-#घोषणा RDESC1_NSOF		0x80000000
-#घोषणा RDESC1_BUFFER_INDEX	0x7fff0000
-#घोषणा RDESC1_BUFFER_LENGTH	0x0000ffff
+#define RDESC1_NSOF		0x80000000
+#define RDESC1_BUFFER_INDEX	0x7fff0000
+#define RDESC1_BUFFER_LENGTH	0x0000ffff
 
-काष्ठा ep93xx_rstat
-अणु
+struct ep93xx_rstat
+{
 	u32	rstat0;
 	u32	rstat1;
-पूर्ण;
+};
 
-#घोषणा RSTAT0_RFP		0x80000000
-#घोषणा RSTAT0_RWE		0x40000000
-#घोषणा RSTAT0_खातापूर्ण		0x20000000
-#घोषणा RSTAT0_EOB		0x10000000
-#घोषणा RSTAT0_AM		0x00c00000
-#घोषणा RSTAT0_RX_ERR		0x00200000
-#घोषणा RSTAT0_OE		0x00100000
-#घोषणा RSTAT0_FE		0x00080000
-#घोषणा RSTAT0_RUNT		0x00040000
-#घोषणा RSTAT0_EDATA		0x00020000
-#घोषणा RSTAT0_CRCE		0x00010000
-#घोषणा RSTAT0_CRCI		0x00008000
-#घोषणा RSTAT0_HTI		0x00003f00
-#घोषणा RSTAT1_RFP		0x80000000
-#घोषणा RSTAT1_BUFFER_INDEX	0x7fff0000
-#घोषणा RSTAT1_FRAME_LENGTH	0x0000ffff
+#define RSTAT0_RFP		0x80000000
+#define RSTAT0_RWE		0x40000000
+#define RSTAT0_EOF		0x20000000
+#define RSTAT0_EOB		0x10000000
+#define RSTAT0_AM		0x00c00000
+#define RSTAT0_RX_ERR		0x00200000
+#define RSTAT0_OE		0x00100000
+#define RSTAT0_FE		0x00080000
+#define RSTAT0_RUNT		0x00040000
+#define RSTAT0_EDATA		0x00020000
+#define RSTAT0_CRCE		0x00010000
+#define RSTAT0_CRCI		0x00008000
+#define RSTAT0_HTI		0x00003f00
+#define RSTAT1_RFP		0x80000000
+#define RSTAT1_BUFFER_INDEX	0x7fff0000
+#define RSTAT1_FRAME_LENGTH	0x0000ffff
 
-काष्ठा ep93xx_tdesc
-अणु
+struct ep93xx_tdesc
+{
 	u32	buf_addr;
 	u32	tdesc1;
-पूर्ण;
+};
 
-#घोषणा TDESC1_खातापूर्ण		0x80000000
-#घोषणा TDESC1_BUFFER_INDEX	0x7fff0000
-#घोषणा TDESC1_BUFFER_ABORT	0x00008000
-#घोषणा TDESC1_BUFFER_LENGTH	0x00000fff
+#define TDESC1_EOF		0x80000000
+#define TDESC1_BUFFER_INDEX	0x7fff0000
+#define TDESC1_BUFFER_ABORT	0x00008000
+#define TDESC1_BUFFER_LENGTH	0x00000fff
 
-काष्ठा ep93xx_tstat
-अणु
+struct ep93xx_tstat
+{
 	u32	tstat0;
-पूर्ण;
+};
 
-#घोषणा TSTAT0_TXFP		0x80000000
-#घोषणा TSTAT0_TXWE		0x40000000
-#घोषणा TSTAT0_FA		0x20000000
-#घोषणा TSTAT0_LCRS		0x10000000
-#घोषणा TSTAT0_OW		0x04000000
-#घोषणा TSTAT0_TXU		0x02000000
-#घोषणा TSTAT0_ECOLL		0x01000000
-#घोषणा TSTAT0_NCOLL		0x001f0000
-#घोषणा TSTAT0_BUFFER_INDEX	0x00007fff
+#define TSTAT0_TXFP		0x80000000
+#define TSTAT0_TXWE		0x40000000
+#define TSTAT0_FA		0x20000000
+#define TSTAT0_LCRS		0x10000000
+#define TSTAT0_OW		0x04000000
+#define TSTAT0_TXU		0x02000000
+#define TSTAT0_ECOLL		0x01000000
+#define TSTAT0_NCOLL		0x001f0000
+#define TSTAT0_BUFFER_INDEX	0x00007fff
 
-काष्ठा ep93xx_descs
-अणु
-	काष्ठा ep93xx_rdesc	rdesc[RX_QUEUE_ENTRIES];
-	काष्ठा ep93xx_tdesc	tdesc[TX_QUEUE_ENTRIES];
-	काष्ठा ep93xx_rstat	rstat[RX_QUEUE_ENTRIES];
-	काष्ठा ep93xx_tstat	tstat[TX_QUEUE_ENTRIES];
-पूर्ण;
+struct ep93xx_descs
+{
+	struct ep93xx_rdesc	rdesc[RX_QUEUE_ENTRIES];
+	struct ep93xx_tdesc	tdesc[TX_QUEUE_ENTRIES];
+	struct ep93xx_rstat	rstat[RX_QUEUE_ENTRIES];
+	struct ep93xx_tstat	tstat[TX_QUEUE_ENTRIES];
+};
 
-काष्ठा ep93xx_priv
-अणु
-	काष्ठा resource		*res;
-	व्योम __iomem		*base_addr;
-	पूर्णांक			irq;
+struct ep93xx_priv
+{
+	struct resource		*res;
+	void __iomem		*base_addr;
+	int			irq;
 
-	काष्ठा ep93xx_descs	*descs;
+	struct ep93xx_descs	*descs;
 	dma_addr_t		descs_dma_addr;
 
-	व्योम			*rx_buf[RX_QUEUE_ENTRIES];
-	व्योम			*tx_buf[TX_QUEUE_ENTRIES];
+	void			*rx_buf[RX_QUEUE_ENTRIES];
+	void			*tx_buf[TX_QUEUE_ENTRIES];
 
 	spinlock_t		rx_lock;
-	अचिन्हित पूर्णांक		rx_poपूर्णांकer;
-	अचिन्हित पूर्णांक		tx_clean_poपूर्णांकer;
-	अचिन्हित पूर्णांक		tx_poपूर्णांकer;
+	unsigned int		rx_pointer;
+	unsigned int		tx_clean_pointer;
+	unsigned int		tx_pointer;
 	spinlock_t		tx_pending_lock;
-	अचिन्हित पूर्णांक		tx_pending;
+	unsigned int		tx_pending;
 
-	काष्ठा net_device	*dev;
-	काष्ठा napi_काष्ठा	napi;
+	struct net_device	*dev;
+	struct napi_struct	napi;
 
-	काष्ठा mii_अगर_info	mii;
-	u8			mdc_भागisor;
-पूर्ण;
+	struct mii_if_info	mii;
+	u8			mdc_divisor;
+};
 
-#घोषणा rdb(ep, off)		__raw_पढ़ोb((ep)->base_addr + (off))
-#घोषणा rdw(ep, off)		__raw_पढ़ोw((ep)->base_addr + (off))
-#घोषणा rdl(ep, off)		__raw_पढ़ोl((ep)->base_addr + (off))
-#घोषणा wrb(ep, off, val)	__raw_ग_लिखोb((val), (ep)->base_addr + (off))
-#घोषणा wrw(ep, off, val)	__raw_ग_लिखोw((val), (ep)->base_addr + (off))
-#घोषणा wrl(ep, off, val)	__raw_ग_लिखोl((val), (ep)->base_addr + (off))
+#define rdb(ep, off)		__raw_readb((ep)->base_addr + (off))
+#define rdw(ep, off)		__raw_readw((ep)->base_addr + (off))
+#define rdl(ep, off)		__raw_readl((ep)->base_addr + (off))
+#define wrb(ep, off, val)	__raw_writeb((val), (ep)->base_addr + (off))
+#define wrw(ep, off, val)	__raw_writew((val), (ep)->base_addr + (off))
+#define wrl(ep, off, val)	__raw_writel((val), (ep)->base_addr + (off))
 
-अटल पूर्णांक ep93xx_mdio_पढ़ो(काष्ठा net_device *dev, पूर्णांक phy_id, पूर्णांक reg)
-अणु
-	काष्ठा ep93xx_priv *ep = netdev_priv(dev);
-	पूर्णांक data;
-	पूर्णांक i;
+static int ep93xx_mdio_read(struct net_device *dev, int phy_id, int reg)
+{
+	struct ep93xx_priv *ep = netdev_priv(dev);
+	int data;
+	int i;
 
 	wrl(ep, REG_MIICMD, REG_MIICMD_READ | (phy_id << 5) | reg);
 
-	क्रम (i = 0; i < 10; i++) अणु
-		अगर ((rdl(ep, REG_MIISTS) & REG_MIISTS_BUSY) == 0)
-			अवरोध;
+	for (i = 0; i < 10; i++) {
+		if ((rdl(ep, REG_MIISTS) & REG_MIISTS_BUSY) == 0)
+			break;
 		msleep(1);
-	पूर्ण
+	}
 
-	अगर (i == 10) अणु
+	if (i == 10) {
 		pr_info("mdio read timed out\n");
 		data = 0xffff;
-	पूर्ण अन्यथा अणु
+	} else {
 		data = rdl(ep, REG_MIIDATA);
-	पूर्ण
+	}
 
-	वापस data;
-पूर्ण
+	return data;
+}
 
-अटल व्योम ep93xx_mdio_ग_लिखो(काष्ठा net_device *dev, पूर्णांक phy_id, पूर्णांक reg, पूर्णांक data)
-अणु
-	काष्ठा ep93xx_priv *ep = netdev_priv(dev);
-	पूर्णांक i;
+static void ep93xx_mdio_write(struct net_device *dev, int phy_id, int reg, int data)
+{
+	struct ep93xx_priv *ep = netdev_priv(dev);
+	int i;
 
 	wrl(ep, REG_MIIDATA, data);
 	wrl(ep, REG_MIICMD, REG_MIICMD_WRITE | (phy_id << 5) | reg);
 
-	क्रम (i = 0; i < 10; i++) अणु
-		अगर ((rdl(ep, REG_MIISTS) & REG_MIISTS_BUSY) == 0)
-			अवरोध;
+	for (i = 0; i < 10; i++) {
+		if ((rdl(ep, REG_MIISTS) & REG_MIISTS_BUSY) == 0)
+			break;
 		msleep(1);
-	पूर्ण
+	}
 
-	अगर (i == 10)
+	if (i == 10)
 		pr_info("mdio write timed out\n");
-पूर्ण
+}
 
-अटल पूर्णांक ep93xx_rx(काष्ठा net_device *dev, पूर्णांक budget)
-अणु
-	काष्ठा ep93xx_priv *ep = netdev_priv(dev);
-	पूर्णांक processed = 0;
+static int ep93xx_rx(struct net_device *dev, int budget)
+{
+	struct ep93xx_priv *ep = netdev_priv(dev);
+	int processed = 0;
 
-	जबतक (processed < budget) अणु
-		पूर्णांक entry;
-		काष्ठा ep93xx_rstat *rstat;
+	while (processed < budget) {
+		int entry;
+		struct ep93xx_rstat *rstat;
 		u32 rstat0;
 		u32 rstat1;
-		पूर्णांक length;
-		काष्ठा sk_buff *skb;
+		int length;
+		struct sk_buff *skb;
 
-		entry = ep->rx_poपूर्णांकer;
+		entry = ep->rx_pointer;
 		rstat = ep->descs->rstat + entry;
 
 		rstat0 = rstat->rstat0;
 		rstat1 = rstat->rstat1;
-		अगर (!(rstat0 & RSTAT0_RFP) || !(rstat1 & RSTAT1_RFP))
-			अवरोध;
+		if (!(rstat0 & RSTAT0_RFP) || !(rstat1 & RSTAT1_RFP))
+			break;
 
 		rstat->rstat0 = 0;
 		rstat->rstat1 = 0;
 
-		अगर (!(rstat0 & RSTAT0_खातापूर्ण))
+		if (!(rstat0 & RSTAT0_EOF))
 			pr_crit("not end-of-frame %.8x %.8x\n", rstat0, rstat1);
-		अगर (!(rstat0 & RSTAT0_EOB))
+		if (!(rstat0 & RSTAT0_EOB))
 			pr_crit("not end-of-buffer %.8x %.8x\n", rstat0, rstat1);
-		अगर ((rstat1 & RSTAT1_BUFFER_INDEX) >> 16 != entry)
+		if ((rstat1 & RSTAT1_BUFFER_INDEX) >> 16 != entry)
 			pr_crit("entry mismatch %.8x %.8x\n", rstat0, rstat1);
 
-		अगर (!(rstat0 & RSTAT0_RWE)) अणु
+		if (!(rstat0 & RSTAT0_RWE)) {
 			dev->stats.rx_errors++;
-			अगर (rstat0 & RSTAT0_OE)
-				dev->stats.rx_fअगरo_errors++;
-			अगर (rstat0 & RSTAT0_FE)
+			if (rstat0 & RSTAT0_OE)
+				dev->stats.rx_fifo_errors++;
+			if (rstat0 & RSTAT0_FE)
 				dev->stats.rx_frame_errors++;
-			अगर (rstat0 & (RSTAT0_RUNT | RSTAT0_EDATA))
+			if (rstat0 & (RSTAT0_RUNT | RSTAT0_EDATA))
 				dev->stats.rx_length_errors++;
-			अगर (rstat0 & RSTAT0_CRCE)
+			if (rstat0 & RSTAT0_CRCE)
 				dev->stats.rx_crc_errors++;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		length = rstat1 & RSTAT1_FRAME_LENGTH;
-		अगर (length > MAX_PKT_SIZE) अणु
+		if (length > MAX_PKT_SIZE) {
 			pr_notice("invalid length %.8x %.8x\n", rstat0, rstat1);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		/* Strip FCS.  */
-		अगर (rstat0 & RSTAT0_CRCI)
+		if (rstat0 & RSTAT0_CRCI)
 			length -= 4;
 
 		skb = netdev_alloc_skb(dev, length + 2);
-		अगर (likely(skb != शून्य)) अणु
-			काष्ठा ep93xx_rdesc *rxd = &ep->descs->rdesc[entry];
+		if (likely(skb != NULL)) {
+			struct ep93xx_rdesc *rxd = &ep->descs->rdesc[entry];
 			skb_reserve(skb, 2);
-			dma_sync_single_क्रम_cpu(dev->dev.parent, rxd->buf_addr,
+			dma_sync_single_for_cpu(dev->dev.parent, rxd->buf_addr,
 						length, DMA_FROM_DEVICE);
 			skb_copy_to_linear_data(skb, ep->rx_buf[entry], length);
-			dma_sync_single_क्रम_device(dev->dev.parent,
+			dma_sync_single_for_device(dev->dev.parent,
 						   rxd->buf_addr, length,
 						   DMA_FROM_DEVICE);
 			skb_put(skb, length);
@@ -295,302 +294,302 @@
 
 			dev->stats.rx_packets++;
 			dev->stats.rx_bytes += length;
-		पूर्ण अन्यथा अणु
+		} else {
 			dev->stats.rx_dropped++;
-		पूर्ण
+		}
 
 err:
-		ep->rx_poपूर्णांकer = (entry + 1) & (RX_QUEUE_ENTRIES - 1);
+		ep->rx_pointer = (entry + 1) & (RX_QUEUE_ENTRIES - 1);
 		processed++;
-	पूर्ण
+	}
 
-	वापस processed;
-पूर्ण
+	return processed;
+}
 
-अटल पूर्णांक ep93xx_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
-अणु
-	काष्ठा ep93xx_priv *ep = container_of(napi, काष्ठा ep93xx_priv, napi);
-	काष्ठा net_device *dev = ep->dev;
-	पूर्णांक rx;
+static int ep93xx_poll(struct napi_struct *napi, int budget)
+{
+	struct ep93xx_priv *ep = container_of(napi, struct ep93xx_priv, napi);
+	struct net_device *dev = ep->dev;
+	int rx;
 
 	rx = ep93xx_rx(dev, budget);
-	अगर (rx < budget && napi_complete_करोne(napi, rx)) अणु
+	if (rx < budget && napi_complete_done(napi, rx)) {
 		spin_lock_irq(&ep->rx_lock);
 		wrl(ep, REG_INTEN, REG_INTEN_TX | REG_INTEN_RX);
 		spin_unlock_irq(&ep->rx_lock);
-	पूर्ण
+	}
 
-	अगर (rx) अणु
+	if (rx) {
 		wrw(ep, REG_RXDENQ, rx);
 		wrw(ep, REG_RXSTSENQ, rx);
-	पूर्ण
+	}
 
-	वापस rx;
-पूर्ण
+	return rx;
+}
 
-अटल netdev_tx_t ep93xx_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा ep93xx_priv *ep = netdev_priv(dev);
-	काष्ठा ep93xx_tdesc *txd;
-	पूर्णांक entry;
+static netdev_tx_t ep93xx_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	struct ep93xx_priv *ep = netdev_priv(dev);
+	struct ep93xx_tdesc *txd;
+	int entry;
 
-	अगर (unlikely(skb->len > MAX_PKT_SIZE)) अणु
+	if (unlikely(skb->len > MAX_PKT_SIZE)) {
 		dev->stats.tx_dropped++;
-		dev_kमुक्त_skb(skb);
-		वापस NETDEV_TX_OK;
-	पूर्ण
+		dev_kfree_skb(skb);
+		return NETDEV_TX_OK;
+	}
 
-	entry = ep->tx_poपूर्णांकer;
-	ep->tx_poपूर्णांकer = (ep->tx_poपूर्णांकer + 1) & (TX_QUEUE_ENTRIES - 1);
+	entry = ep->tx_pointer;
+	ep->tx_pointer = (ep->tx_pointer + 1) & (TX_QUEUE_ENTRIES - 1);
 
 	txd = &ep->descs->tdesc[entry];
 
-	txd->tdesc1 = TDESC1_खातापूर्ण | (entry << 16) | (skb->len & 0xfff);
-	dma_sync_single_क्रम_cpu(dev->dev.parent, txd->buf_addr, skb->len,
+	txd->tdesc1 = TDESC1_EOF | (entry << 16) | (skb->len & 0xfff);
+	dma_sync_single_for_cpu(dev->dev.parent, txd->buf_addr, skb->len,
 				DMA_TO_DEVICE);
 	skb_copy_and_csum_dev(skb, ep->tx_buf[entry]);
-	dma_sync_single_क्रम_device(dev->dev.parent, txd->buf_addr, skb->len,
+	dma_sync_single_for_device(dev->dev.parent, txd->buf_addr, skb->len,
 				   DMA_TO_DEVICE);
-	dev_kमुक्त_skb(skb);
+	dev_kfree_skb(skb);
 
 	spin_lock_irq(&ep->tx_pending_lock);
 	ep->tx_pending++;
-	अगर (ep->tx_pending == TX_QUEUE_ENTRIES)
-		netअगर_stop_queue(dev);
+	if (ep->tx_pending == TX_QUEUE_ENTRIES)
+		netif_stop_queue(dev);
 	spin_unlock_irq(&ep->tx_pending_lock);
 
 	wrl(ep, REG_TXDENQ, 1);
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-अटल व्योम ep93xx_tx_complete(काष्ठा net_device *dev)
-अणु
-	काष्ठा ep93xx_priv *ep = netdev_priv(dev);
-	पूर्णांक wake;
+static void ep93xx_tx_complete(struct net_device *dev)
+{
+	struct ep93xx_priv *ep = netdev_priv(dev);
+	int wake;
 
 	wake = 0;
 
 	spin_lock(&ep->tx_pending_lock);
-	जबतक (1) अणु
-		पूर्णांक entry;
-		काष्ठा ep93xx_tstat *tstat;
+	while (1) {
+		int entry;
+		struct ep93xx_tstat *tstat;
 		u32 tstat0;
 
-		entry = ep->tx_clean_poपूर्णांकer;
+		entry = ep->tx_clean_pointer;
 		tstat = ep->descs->tstat + entry;
 
 		tstat0 = tstat->tstat0;
-		अगर (!(tstat0 & TSTAT0_TXFP))
-			अवरोध;
+		if (!(tstat0 & TSTAT0_TXFP))
+			break;
 
 		tstat->tstat0 = 0;
 
-		अगर (tstat0 & TSTAT0_FA)
+		if (tstat0 & TSTAT0_FA)
 			pr_crit("frame aborted %.8x\n", tstat0);
-		अगर ((tstat0 & TSTAT0_BUFFER_INDEX) != entry)
+		if ((tstat0 & TSTAT0_BUFFER_INDEX) != entry)
 			pr_crit("entry mismatch %.8x\n", tstat0);
 
-		अगर (tstat0 & TSTAT0_TXWE) अणु
-			पूर्णांक length = ep->descs->tdesc[entry].tdesc1 & 0xfff;
+		if (tstat0 & TSTAT0_TXWE) {
+			int length = ep->descs->tdesc[entry].tdesc1 & 0xfff;
 
 			dev->stats.tx_packets++;
 			dev->stats.tx_bytes += length;
-		पूर्ण अन्यथा अणु
+		} else {
 			dev->stats.tx_errors++;
-		पूर्ण
+		}
 
-		अगर (tstat0 & TSTAT0_OW)
-			dev->stats.tx_winकरोw_errors++;
-		अगर (tstat0 & TSTAT0_TXU)
-			dev->stats.tx_fअगरo_errors++;
+		if (tstat0 & TSTAT0_OW)
+			dev->stats.tx_window_errors++;
+		if (tstat0 & TSTAT0_TXU)
+			dev->stats.tx_fifo_errors++;
 		dev->stats.collisions += (tstat0 >> 16) & 0x1f;
 
-		ep->tx_clean_poपूर्णांकer = (entry + 1) & (TX_QUEUE_ENTRIES - 1);
-		अगर (ep->tx_pending == TX_QUEUE_ENTRIES)
+		ep->tx_clean_pointer = (entry + 1) & (TX_QUEUE_ENTRIES - 1);
+		if (ep->tx_pending == TX_QUEUE_ENTRIES)
 			wake = 1;
 		ep->tx_pending--;
-	पूर्ण
+	}
 	spin_unlock(&ep->tx_pending_lock);
 
-	अगर (wake)
-		netअगर_wake_queue(dev);
-पूर्ण
+	if (wake)
+		netif_wake_queue(dev);
+}
 
-अटल irqवापस_t ep93xx_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा net_device *dev = dev_id;
-	काष्ठा ep93xx_priv *ep = netdev_priv(dev);
+static irqreturn_t ep93xx_irq(int irq, void *dev_id)
+{
+	struct net_device *dev = dev_id;
+	struct ep93xx_priv *ep = netdev_priv(dev);
 	u32 status;
 
 	status = rdl(ep, REG_INTSTSC);
-	अगर (status == 0)
-		वापस IRQ_NONE;
+	if (status == 0)
+		return IRQ_NONE;
 
-	अगर (status & REG_INTSTS_RX) अणु
+	if (status & REG_INTSTS_RX) {
 		spin_lock(&ep->rx_lock);
-		अगर (likely(napi_schedule_prep(&ep->napi))) अणु
+		if (likely(napi_schedule_prep(&ep->napi))) {
 			wrl(ep, REG_INTEN, REG_INTEN_TX);
 			__napi_schedule(&ep->napi);
-		पूर्ण
+		}
 		spin_unlock(&ep->rx_lock);
-	पूर्ण
+	}
 
-	अगर (status & REG_INTSTS_TX)
+	if (status & REG_INTSTS_TX)
 		ep93xx_tx_complete(dev);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम ep93xx_मुक्त_buffers(काष्ठा ep93xx_priv *ep)
-अणु
-	काष्ठा device *dev = ep->dev->dev.parent;
-	पूर्णांक i;
+static void ep93xx_free_buffers(struct ep93xx_priv *ep)
+{
+	struct device *dev = ep->dev->dev.parent;
+	int i;
 
-	अगर (!ep->descs)
-		वापस;
+	if (!ep->descs)
+		return;
 
-	क्रम (i = 0; i < RX_QUEUE_ENTRIES; i++) अणु
+	for (i = 0; i < RX_QUEUE_ENTRIES; i++) {
 		dma_addr_t d;
 
 		d = ep->descs->rdesc[i].buf_addr;
-		अगर (d)
+		if (d)
 			dma_unmap_single(dev, d, PKT_BUF_SIZE, DMA_FROM_DEVICE);
 
-		kमुक्त(ep->rx_buf[i]);
-	पूर्ण
+		kfree(ep->rx_buf[i]);
+	}
 
-	क्रम (i = 0; i < TX_QUEUE_ENTRIES; i++) अणु
+	for (i = 0; i < TX_QUEUE_ENTRIES; i++) {
 		dma_addr_t d;
 
 		d = ep->descs->tdesc[i].buf_addr;
-		अगर (d)
+		if (d)
 			dma_unmap_single(dev, d, PKT_BUF_SIZE, DMA_TO_DEVICE);
 
-		kमुक्त(ep->tx_buf[i]);
-	पूर्ण
+		kfree(ep->tx_buf[i]);
+	}
 
-	dma_मुक्त_coherent(dev, माप(काष्ठा ep93xx_descs), ep->descs,
+	dma_free_coherent(dev, sizeof(struct ep93xx_descs), ep->descs,
 							ep->descs_dma_addr);
-	ep->descs = शून्य;
-पूर्ण
+	ep->descs = NULL;
+}
 
-अटल पूर्णांक ep93xx_alloc_buffers(काष्ठा ep93xx_priv *ep)
-अणु
-	काष्ठा device *dev = ep->dev->dev.parent;
-	पूर्णांक i;
+static int ep93xx_alloc_buffers(struct ep93xx_priv *ep)
+{
+	struct device *dev = ep->dev->dev.parent;
+	int i;
 
-	ep->descs = dma_alloc_coherent(dev, माप(काष्ठा ep93xx_descs),
+	ep->descs = dma_alloc_coherent(dev, sizeof(struct ep93xx_descs),
 				&ep->descs_dma_addr, GFP_KERNEL);
-	अगर (ep->descs == शून्य)
-		वापस 1;
+	if (ep->descs == NULL)
+		return 1;
 
-	क्रम (i = 0; i < RX_QUEUE_ENTRIES; i++) अणु
-		व्योम *buf;
+	for (i = 0; i < RX_QUEUE_ENTRIES; i++) {
+		void *buf;
 		dma_addr_t d;
 
-		buf = kदो_स्मृति(PKT_BUF_SIZE, GFP_KERNEL);
-		अगर (buf == शून्य)
-			जाओ err;
+		buf = kmalloc(PKT_BUF_SIZE, GFP_KERNEL);
+		if (buf == NULL)
+			goto err;
 
 		d = dma_map_single(dev, buf, PKT_BUF_SIZE, DMA_FROM_DEVICE);
-		अगर (dma_mapping_error(dev, d)) अणु
-			kमुक्त(buf);
-			जाओ err;
-		पूर्ण
+		if (dma_mapping_error(dev, d)) {
+			kfree(buf);
+			goto err;
+		}
 
 		ep->rx_buf[i] = buf;
 		ep->descs->rdesc[i].buf_addr = d;
 		ep->descs->rdesc[i].rdesc1 = (i << 16) | PKT_BUF_SIZE;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < TX_QUEUE_ENTRIES; i++) अणु
-		व्योम *buf;
+	for (i = 0; i < TX_QUEUE_ENTRIES; i++) {
+		void *buf;
 		dma_addr_t d;
 
-		buf = kदो_स्मृति(PKT_BUF_SIZE, GFP_KERNEL);
-		अगर (buf == शून्य)
-			जाओ err;
+		buf = kmalloc(PKT_BUF_SIZE, GFP_KERNEL);
+		if (buf == NULL)
+			goto err;
 
 		d = dma_map_single(dev, buf, PKT_BUF_SIZE, DMA_TO_DEVICE);
-		अगर (dma_mapping_error(dev, d)) अणु
-			kमुक्त(buf);
-			जाओ err;
-		पूर्ण
+		if (dma_mapping_error(dev, d)) {
+			kfree(buf);
+			goto err;
+		}
 
 		ep->tx_buf[i] = buf;
 		ep->descs->tdesc[i].buf_addr = d;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	ep93xx_मुक्त_buffers(ep);
-	वापस 1;
-पूर्ण
+	ep93xx_free_buffers(ep);
+	return 1;
+}
 
-अटल पूर्णांक ep93xx_start_hw(काष्ठा net_device *dev)
-अणु
-	काष्ठा ep93xx_priv *ep = netdev_priv(dev);
-	अचिन्हित दीर्घ addr;
-	पूर्णांक i;
+static int ep93xx_start_hw(struct net_device *dev)
+{
+	struct ep93xx_priv *ep = netdev_priv(dev);
+	unsigned long addr;
+	int i;
 
 	wrl(ep, REG_SELFCTL, REG_SELFCTL_RESET);
-	क्रम (i = 0; i < 10; i++) अणु
-		अगर ((rdl(ep, REG_SELFCTL) & REG_SELFCTL_RESET) == 0)
-			अवरोध;
+	for (i = 0; i < 10; i++) {
+		if ((rdl(ep, REG_SELFCTL) & REG_SELFCTL_RESET) == 0)
+			break;
 		msleep(1);
-	पूर्ण
+	}
 
-	अगर (i == 10) अणु
+	if (i == 10) {
 		pr_crit("hw failed to reset\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	wrl(ep, REG_SELFCTL, ((ep->mdc_भागisor - 1) << 9));
+	wrl(ep, REG_SELFCTL, ((ep->mdc_divisor - 1) << 9));
 
 	/* Does the PHY support preamble suppress?  */
-	अगर ((ep93xx_mdio_पढ़ो(dev, ep->mii.phy_id, MII_BMSR) & 0x0040) != 0)
-		wrl(ep, REG_SELFCTL, ((ep->mdc_भागisor - 1) << 9) | (1 << 8));
+	if ((ep93xx_mdio_read(dev, ep->mii.phy_id, MII_BMSR) & 0x0040) != 0)
+		wrl(ep, REG_SELFCTL, ((ep->mdc_divisor - 1) << 9) | (1 << 8));
 
 	/* Receive descriptor ring.  */
-	addr = ep->descs_dma_addr + दुरत्व(काष्ठा ep93xx_descs, rdesc);
+	addr = ep->descs_dma_addr + offsetof(struct ep93xx_descs, rdesc);
 	wrl(ep, REG_RXDQBADD, addr);
 	wrl(ep, REG_RXDCURADD, addr);
-	wrw(ep, REG_RXDQBLEN, RX_QUEUE_ENTRIES * माप(काष्ठा ep93xx_rdesc));
+	wrw(ep, REG_RXDQBLEN, RX_QUEUE_ENTRIES * sizeof(struct ep93xx_rdesc));
 
 	/* Receive status ring.  */
-	addr = ep->descs_dma_addr + दुरत्व(काष्ठा ep93xx_descs, rstat);
+	addr = ep->descs_dma_addr + offsetof(struct ep93xx_descs, rstat);
 	wrl(ep, REG_RXSTSQBADD, addr);
 	wrl(ep, REG_RXSTSQCURADD, addr);
-	wrw(ep, REG_RXSTSQBLEN, RX_QUEUE_ENTRIES * माप(काष्ठा ep93xx_rstat));
+	wrw(ep, REG_RXSTSQBLEN, RX_QUEUE_ENTRIES * sizeof(struct ep93xx_rstat));
 
 	/* Transmit descriptor ring.  */
-	addr = ep->descs_dma_addr + दुरत्व(काष्ठा ep93xx_descs, tdesc);
+	addr = ep->descs_dma_addr + offsetof(struct ep93xx_descs, tdesc);
 	wrl(ep, REG_TXDQBADD, addr);
 	wrl(ep, REG_TXDQCURADD, addr);
-	wrw(ep, REG_TXDQBLEN, TX_QUEUE_ENTRIES * माप(काष्ठा ep93xx_tdesc));
+	wrw(ep, REG_TXDQBLEN, TX_QUEUE_ENTRIES * sizeof(struct ep93xx_tdesc));
 
 	/* Transmit status ring.  */
-	addr = ep->descs_dma_addr + दुरत्व(काष्ठा ep93xx_descs, tstat);
+	addr = ep->descs_dma_addr + offsetof(struct ep93xx_descs, tstat);
 	wrl(ep, REG_TXSTSQBADD, addr);
 	wrl(ep, REG_TXSTSQCURADD, addr);
-	wrw(ep, REG_TXSTSQBLEN, TX_QUEUE_ENTRIES * माप(काष्ठा ep93xx_tstat));
+	wrw(ep, REG_TXSTSQBLEN, TX_QUEUE_ENTRIES * sizeof(struct ep93xx_tstat));
 
 	wrl(ep, REG_BMCTL, REG_BMCTL_ENABLE_TX | REG_BMCTL_ENABLE_RX);
 	wrl(ep, REG_INTEN, REG_INTEN_TX | REG_INTEN_RX);
 	wrl(ep, REG_GIINTMSK, 0);
 
-	क्रम (i = 0; i < 10; i++) अणु
-		अगर ((rdl(ep, REG_BMSTS) & REG_BMSTS_RX_ACTIVE) != 0)
-			अवरोध;
+	for (i = 0; i < 10; i++) {
+		if ((rdl(ep, REG_BMSTS) & REG_BMSTS_RX_ACTIVE) != 0)
+			break;
 		msleep(1);
-	पूर्ण
+	}
 
-	अगर (i == 10) अणु
+	if (i == 10) {
 		pr_crit("hw failed to start\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	wrl(ep, REG_RXDENQ, RX_QUEUE_ENTRIES);
 	wrl(ep, REG_RXSTSENQ, RX_QUEUE_ENTRIES);
@@ -608,268 +607,268 @@ err:
 	wrl(ep, REG_RXCTL, REG_RXCTL_DEFAULT);
 	wrl(ep, REG_TXCTL, REG_TXCTL_ENABLE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ep93xx_stop_hw(काष्ठा net_device *dev)
-अणु
-	काष्ठा ep93xx_priv *ep = netdev_priv(dev);
-	पूर्णांक i;
+static void ep93xx_stop_hw(struct net_device *dev)
+{
+	struct ep93xx_priv *ep = netdev_priv(dev);
+	int i;
 
 	wrl(ep, REG_SELFCTL, REG_SELFCTL_RESET);
-	क्रम (i = 0; i < 10; i++) अणु
-		अगर ((rdl(ep, REG_SELFCTL) & REG_SELFCTL_RESET) == 0)
-			अवरोध;
+	for (i = 0; i < 10; i++) {
+		if ((rdl(ep, REG_SELFCTL) & REG_SELFCTL_RESET) == 0)
+			break;
 		msleep(1);
-	पूर्ण
+	}
 
-	अगर (i == 10)
+	if (i == 10)
 		pr_crit("hw failed to reset\n");
-पूर्ण
+}
 
-अटल पूर्णांक ep93xx_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा ep93xx_priv *ep = netdev_priv(dev);
-	पूर्णांक err;
+static int ep93xx_open(struct net_device *dev)
+{
+	struct ep93xx_priv *ep = netdev_priv(dev);
+	int err;
 
-	अगर (ep93xx_alloc_buffers(ep))
-		वापस -ENOMEM;
+	if (ep93xx_alloc_buffers(ep))
+		return -ENOMEM;
 
 	napi_enable(&ep->napi);
 
-	अगर (ep93xx_start_hw(dev)) अणु
+	if (ep93xx_start_hw(dev)) {
 		napi_disable(&ep->napi);
-		ep93xx_मुक्त_buffers(ep);
-		वापस -EIO;
-	पूर्ण
+		ep93xx_free_buffers(ep);
+		return -EIO;
+	}
 
 	spin_lock_init(&ep->rx_lock);
-	ep->rx_poपूर्णांकer = 0;
-	ep->tx_clean_poपूर्णांकer = 0;
-	ep->tx_poपूर्णांकer = 0;
+	ep->rx_pointer = 0;
+	ep->tx_clean_pointer = 0;
+	ep->tx_pointer = 0;
 	spin_lock_init(&ep->tx_pending_lock);
 	ep->tx_pending = 0;
 
 	err = request_irq(ep->irq, ep93xx_irq, IRQF_SHARED, dev->name, dev);
-	अगर (err) अणु
+	if (err) {
 		napi_disable(&ep->napi);
 		ep93xx_stop_hw(dev);
-		ep93xx_मुक्त_buffers(ep);
-		वापस err;
-	पूर्ण
+		ep93xx_free_buffers(ep);
+		return err;
+	}
 
 	wrl(ep, REG_GIINTMSK, REG_GIINTMSK_ENABLE);
 
-	netअगर_start_queue(dev);
+	netif_start_queue(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ep93xx_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा ep93xx_priv *ep = netdev_priv(dev);
+static int ep93xx_close(struct net_device *dev)
+{
+	struct ep93xx_priv *ep = netdev_priv(dev);
 
 	napi_disable(&ep->napi);
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 
 	wrl(ep, REG_GIINTMSK, 0);
-	मुक्त_irq(ep->irq, dev);
+	free_irq(ep->irq, dev);
 	ep93xx_stop_hw(dev);
-	ep93xx_मुक्त_buffers(ep);
+	ep93xx_free_buffers(ep);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ep93xx_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
-अणु
-	काष्ठा ep93xx_priv *ep = netdev_priv(dev);
-	काष्ठा mii_ioctl_data *data = अगर_mii(अगरr);
+static int ep93xx_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
+{
+	struct ep93xx_priv *ep = netdev_priv(dev);
+	struct mii_ioctl_data *data = if_mii(ifr);
 
-	वापस generic_mii_ioctl(&ep->mii, data, cmd, शून्य);
-पूर्ण
+	return generic_mii_ioctl(&ep->mii, data, cmd, NULL);
+}
 
-अटल व्योम ep93xx_get_drvinfo(काष्ठा net_device *dev, काष्ठा ethtool_drvinfo *info)
-अणु
-	strlcpy(info->driver, DRV_MODULE_NAME, माप(info->driver));
-पूर्ण
+static void ep93xx_get_drvinfo(struct net_device *dev, struct ethtool_drvinfo *info)
+{
+	strlcpy(info->driver, DRV_MODULE_NAME, sizeof(info->driver));
+}
 
-अटल पूर्णांक ep93xx_get_link_ksettings(काष्ठा net_device *dev,
-				     काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा ep93xx_priv *ep = netdev_priv(dev);
+static int ep93xx_get_link_ksettings(struct net_device *dev,
+				     struct ethtool_link_ksettings *cmd)
+{
+	struct ep93xx_priv *ep = netdev_priv(dev);
 
 	mii_ethtool_get_link_ksettings(&ep->mii, cmd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ep93xx_set_link_ksettings(काष्ठा net_device *dev,
-				     स्थिर काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा ep93xx_priv *ep = netdev_priv(dev);
-	वापस mii_ethtool_set_link_ksettings(&ep->mii, cmd);
-पूर्ण
+static int ep93xx_set_link_ksettings(struct net_device *dev,
+				     const struct ethtool_link_ksettings *cmd)
+{
+	struct ep93xx_priv *ep = netdev_priv(dev);
+	return mii_ethtool_set_link_ksettings(&ep->mii, cmd);
+}
 
-अटल पूर्णांक ep93xx_nway_reset(काष्ठा net_device *dev)
-अणु
-	काष्ठा ep93xx_priv *ep = netdev_priv(dev);
-	वापस mii_nway_restart(&ep->mii);
-पूर्ण
+static int ep93xx_nway_reset(struct net_device *dev)
+{
+	struct ep93xx_priv *ep = netdev_priv(dev);
+	return mii_nway_restart(&ep->mii);
+}
 
-अटल u32 ep93xx_get_link(काष्ठा net_device *dev)
-अणु
-	काष्ठा ep93xx_priv *ep = netdev_priv(dev);
-	वापस mii_link_ok(&ep->mii);
-पूर्ण
+static u32 ep93xx_get_link(struct net_device *dev)
+{
+	struct ep93xx_priv *ep = netdev_priv(dev);
+	return mii_link_ok(&ep->mii);
+}
 
-अटल स्थिर काष्ठा ethtool_ops ep93xx_ethtool_ops = अणु
+static const struct ethtool_ops ep93xx_ethtool_ops = {
 	.get_drvinfo		= ep93xx_get_drvinfo,
 	.nway_reset		= ep93xx_nway_reset,
 	.get_link		= ep93xx_get_link,
 	.get_link_ksettings	= ep93xx_get_link_ksettings,
 	.set_link_ksettings	= ep93xx_set_link_ksettings,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा net_device_ops ep93xx_netdev_ops = अणु
-	.nकरो_खोलो		= ep93xx_खोलो,
-	.nकरो_stop		= ep93xx_बंद,
-	.nकरो_start_xmit		= ep93xx_xmit,
-	.nकरो_करो_ioctl		= ep93xx_ioctl,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_set_mac_address	= eth_mac_addr,
-पूर्ण;
+static const struct net_device_ops ep93xx_netdev_ops = {
+	.ndo_open		= ep93xx_open,
+	.ndo_stop		= ep93xx_close,
+	.ndo_start_xmit		= ep93xx_xmit,
+	.ndo_do_ioctl		= ep93xx_ioctl,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_mac_address	= eth_mac_addr,
+};
 
-अटल काष्ठा net_device *ep93xx_dev_alloc(काष्ठा ep93xx_eth_data *data)
-अणु
-	काष्ठा net_device *dev;
+static struct net_device *ep93xx_dev_alloc(struct ep93xx_eth_data *data)
+{
+	struct net_device *dev;
 
-	dev = alloc_etherdev(माप(काष्ठा ep93xx_priv));
-	अगर (dev == शून्य)
-		वापस शून्य;
+	dev = alloc_etherdev(sizeof(struct ep93xx_priv));
+	if (dev == NULL)
+		return NULL;
 
-	स_नकल(dev->dev_addr, data->dev_addr, ETH_ALEN);
+	memcpy(dev->dev_addr, data->dev_addr, ETH_ALEN);
 
 	dev->ethtool_ops = &ep93xx_ethtool_ops;
 	dev->netdev_ops = &ep93xx_netdev_ops;
 
 	dev->features |= NETIF_F_SG | NETIF_F_HW_CSUM;
 
-	वापस dev;
-पूर्ण
+	return dev;
+}
 
 
-अटल पूर्णांक ep93xx_eth_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा ep93xx_priv *ep;
-	काष्ठा resource *mem;
+static int ep93xx_eth_remove(struct platform_device *pdev)
+{
+	struct net_device *dev;
+	struct ep93xx_priv *ep;
+	struct resource *mem;
 
-	dev = platक्रमm_get_drvdata(pdev);
-	अगर (dev == शून्य)
-		वापस 0;
+	dev = platform_get_drvdata(pdev);
+	if (dev == NULL)
+		return 0;
 
 	ep = netdev_priv(dev);
 
-	/* @@@ Force करोwn.  */
-	unरेजिस्टर_netdev(dev);
-	ep93xx_मुक्त_buffers(ep);
+	/* @@@ Force down.  */
+	unregister_netdev(dev);
+	ep93xx_free_buffers(ep);
 
-	अगर (ep->base_addr != शून्य)
+	if (ep->base_addr != NULL)
 		iounmap(ep->base_addr);
 
-	अगर (ep->res != शून्य) अणु
-		mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (ep->res != NULL) {
+		mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 		release_mem_region(mem->start, resource_size(mem));
-	पूर्ण
+	}
 
-	मुक्त_netdev(dev);
+	free_netdev(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ep93xx_eth_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ep93xx_eth_data *data;
-	काष्ठा net_device *dev;
-	काष्ठा ep93xx_priv *ep;
-	काष्ठा resource *mem;
-	पूर्णांक irq;
-	पूर्णांक err;
+static int ep93xx_eth_probe(struct platform_device *pdev)
+{
+	struct ep93xx_eth_data *data;
+	struct net_device *dev;
+	struct ep93xx_priv *ep;
+	struct resource *mem;
+	int irq;
+	int err;
 
-	अगर (pdev == शून्य)
-		वापस -ENODEV;
+	if (pdev == NULL)
+		return -ENODEV;
 	data = dev_get_platdata(&pdev->dev);
 
-	mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (!mem || irq < 0)
-		वापस -ENXIO;
+	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	irq = platform_get_irq(pdev, 0);
+	if (!mem || irq < 0)
+		return -ENXIO;
 
 	dev = ep93xx_dev_alloc(data);
-	अगर (dev == शून्य) अणु
+	if (dev == NULL) {
 		err = -ENOMEM;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 	ep = netdev_priv(dev);
 	ep->dev = dev;
 	SET_NETDEV_DEV(dev, &pdev->dev);
-	netअगर_napi_add(dev, &ep->napi, ep93xx_poll, 64);
+	netif_napi_add(dev, &ep->napi, ep93xx_poll, 64);
 
-	platक्रमm_set_drvdata(pdev, dev);
+	platform_set_drvdata(pdev, dev);
 
 	ep->res = request_mem_region(mem->start, resource_size(mem),
 				     dev_name(&pdev->dev));
-	अगर (ep->res == शून्य) अणु
+	if (ep->res == NULL) {
 		dev_err(&pdev->dev, "Could not reserve memory region\n");
 		err = -ENOMEM;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
 	ep->base_addr = ioremap(mem->start, resource_size(mem));
-	अगर (ep->base_addr == शून्य) अणु
+	if (ep->base_addr == NULL) {
 		dev_err(&pdev->dev, "Failed to ioremap ethernet registers\n");
 		err = -EIO;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 	ep->irq = irq;
 
 	ep->mii.phy_id = data->phy_id;
 	ep->mii.phy_id_mask = 0x1f;
 	ep->mii.reg_num_mask = 0x1f;
 	ep->mii.dev = dev;
-	ep->mii.mdio_पढ़ो = ep93xx_mdio_पढ़ो;
-	ep->mii.mdio_ग_लिखो = ep93xx_mdio_ग_लिखो;
-	ep->mdc_भागisor = 40;	/* Max HCLK 100 MHz, min MDIO clk 2.5 MHz.  */
+	ep->mii.mdio_read = ep93xx_mdio_read;
+	ep->mii.mdio_write = ep93xx_mdio_write;
+	ep->mdc_divisor = 40;	/* Max HCLK 100 MHz, min MDIO clk 2.5 MHz.  */
 
-	अगर (is_zero_ether_addr(dev->dev_addr))
-		eth_hw_addr_अक्रमom(dev);
+	if (is_zero_ether_addr(dev->dev_addr))
+		eth_hw_addr_random(dev);
 
-	err = रेजिस्टर_netdev(dev);
-	अगर (err) अणु
+	err = register_netdev(dev);
+	if (err) {
 		dev_err(&pdev->dev, "Failed to register netdev\n");
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
-	prपूर्णांकk(KERN_INFO "%s: ep93xx on-chip ethernet, IRQ %d, %pM\n",
+	printk(KERN_INFO "%s: ep93xx on-chip ethernet, IRQ %d, %pM\n",
 			dev->name, ep->irq, dev->dev_addr);
 
-	वापस 0;
+	return 0;
 
 err_out:
-	ep93xx_eth_हटाओ(pdev);
-	वापस err;
-पूर्ण
+	ep93xx_eth_remove(pdev);
+	return err;
+}
 
 
-अटल काष्ठा platक्रमm_driver ep93xx_eth_driver = अणु
+static struct platform_driver ep93xx_eth_driver = {
 	.probe		= ep93xx_eth_probe,
-	.हटाओ		= ep93xx_eth_हटाओ,
-	.driver		= अणु
+	.remove		= ep93xx_eth_remove,
+	.driver		= {
 		.name	= "ep93xx-eth",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(ep93xx_eth_driver);
+module_platform_driver(ep93xx_eth_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:ep93xx-eth");

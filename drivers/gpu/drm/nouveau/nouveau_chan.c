@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,170 +21,170 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश <nvअगर/push006c.h>
+#include <nvif/push006c.h>
 
-#समावेश <nvअगर/class.h>
-#समावेश <nvअगर/cl0002.h>
-#समावेश <nvअगर/cl006b.h>
-#समावेश <nvअगर/cl506f.h>
-#समावेश <nvअगर/cl906f.h>
-#समावेश <nvअगर/cla06f.h>
-#समावेश <nvअगर/clc36f.h>
-#समावेश <nvअगर/ioctl.h>
+#include <nvif/class.h>
+#include <nvif/cl0002.h>
+#include <nvif/cl006b.h>
+#include <nvif/cl506f.h>
+#include <nvif/cl906f.h>
+#include <nvif/cla06f.h>
+#include <nvif/clc36f.h>
+#include <nvif/ioctl.h>
 
-#समावेश "nouveau_drv.h"
-#समावेश "nouveau_dma.h"
-#समावेश "nouveau_bo.h"
-#समावेश "nouveau_chan.h"
-#समावेश "nouveau_fence.h"
-#समावेश "nouveau_abi16.h"
-#समावेश "nouveau_vmm.h"
-#समावेश "nouveau_svm.h"
+#include "nouveau_drv.h"
+#include "nouveau_dma.h"
+#include "nouveau_bo.h"
+#include "nouveau_chan.h"
+#include "nouveau_fence.h"
+#include "nouveau_abi16.h"
+#include "nouveau_vmm.h"
+#include "nouveau_svm.h"
 
 MODULE_PARM_DESC(vram_pushbuf, "Create DMA push buffers in VRAM");
-पूर्णांक nouveau_vram_pushbuf;
-module_param_named(vram_pushbuf, nouveau_vram_pushbuf, पूर्णांक, 0400);
+int nouveau_vram_pushbuf;
+module_param_named(vram_pushbuf, nouveau_vram_pushbuf, int, 0400);
 
-अटल पूर्णांक
-nouveau_channel_समाप्तed(काष्ठा nvअगर_notअगरy *ntfy)
-अणु
-	काष्ठा nouveau_channel *chan = container_of(ntfy, typeof(*chan), समाप्त);
-	काष्ठा nouveau_cli *cli = (व्योम *)chan->user.client;
+static int
+nouveau_channel_killed(struct nvif_notify *ntfy)
+{
+	struct nouveau_channel *chan = container_of(ntfy, typeof(*chan), kill);
+	struct nouveau_cli *cli = (void *)chan->user.client;
 	NV_PRINTK(warn, cli, "channel %d killed!\n", chan->chid);
-	atomic_set(&chan->समाप्तed, 1);
-	अगर (chan->fence)
-		nouveau_fence_context_समाप्त(chan->fence, -ENODEV);
-	वापस NVIF_NOTIFY_DROP;
-पूर्ण
+	atomic_set(&chan->killed, 1);
+	if (chan->fence)
+		nouveau_fence_context_kill(chan->fence, -ENODEV);
+	return NVIF_NOTIFY_DROP;
+}
 
-पूर्णांक
-nouveau_channel_idle(काष्ठा nouveau_channel *chan)
-अणु
-	अगर (likely(chan && chan->fence && !atomic_पढ़ो(&chan->समाप्तed))) अणु
-		काष्ठा nouveau_cli *cli = (व्योम *)chan->user.client;
-		काष्ठा nouveau_fence *fence = शून्य;
-		पूर्णांक ret;
+int
+nouveau_channel_idle(struct nouveau_channel *chan)
+{
+	if (likely(chan && chan->fence && !atomic_read(&chan->killed))) {
+		struct nouveau_cli *cli = (void *)chan->user.client;
+		struct nouveau_fence *fence = NULL;
+		int ret;
 
 		ret = nouveau_fence_new(chan, false, &fence);
-		अगर (!ret) अणु
-			ret = nouveau_fence_रुको(fence, false, false);
+		if (!ret) {
+			ret = nouveau_fence_wait(fence, false, false);
 			nouveau_fence_unref(&fence);
-		पूर्ण
+		}
 
-		अगर (ret) अणु
+		if (ret) {
 			NV_PRINTK(err, cli, "failed to idle channel %d [%s]\n",
 				  chan->chid, nvxx_client(&cli->base)->name);
-			वापस ret;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return ret;
+		}
+	}
+	return 0;
+}
 
-व्योम
-nouveau_channel_del(काष्ठा nouveau_channel **pchan)
-अणु
-	काष्ठा nouveau_channel *chan = *pchan;
-	अगर (chan) अणु
-		काष्ठा nouveau_cli *cli = (व्योम *)chan->user.client;
+void
+nouveau_channel_del(struct nouveau_channel **pchan)
+{
+	struct nouveau_channel *chan = *pchan;
+	if (chan) {
+		struct nouveau_cli *cli = (void *)chan->user.client;
 		bool super;
 
-		अगर (cli) अणु
+		if (cli) {
 			super = cli->base.super;
 			cli->base.super = true;
-		पूर्ण
+		}
 
-		अगर (chan->fence)
+		if (chan->fence)
 			nouveau_fence(chan->drm)->context_del(chan);
 
-		अगर (cli)
+		if (cli)
 			nouveau_svmm_part(chan->vmm->svmm, chan->inst);
 
-		nvअगर_object_dtor(&chan->nvsw);
-		nvअगर_object_dtor(&chan->gart);
-		nvअगर_object_dtor(&chan->vram);
-		nvअगर_notअगरy_dtor(&chan->समाप्त);
-		nvअगर_object_dtor(&chan->user);
-		nvअगर_object_dtor(&chan->push.ctxdma);
+		nvif_object_dtor(&chan->nvsw);
+		nvif_object_dtor(&chan->gart);
+		nvif_object_dtor(&chan->vram);
+		nvif_notify_dtor(&chan->kill);
+		nvif_object_dtor(&chan->user);
+		nvif_object_dtor(&chan->push.ctxdma);
 		nouveau_vma_del(&chan->push.vma);
 		nouveau_bo_unmap(chan->push.buffer);
-		अगर (chan->push.buffer && chan->push.buffer->bo.pin_count)
+		if (chan->push.buffer && chan->push.buffer->bo.pin_count)
 			nouveau_bo_unpin(chan->push.buffer);
-		nouveau_bo_ref(शून्य, &chan->push.buffer);
-		kमुक्त(chan);
+		nouveau_bo_ref(NULL, &chan->push.buffer);
+		kfree(chan);
 
-		अगर (cli)
+		if (cli)
 			cli->base.super = super;
-	पूर्ण
-	*pchan = शून्य;
-पूर्ण
+	}
+	*pchan = NULL;
+}
 
-अटल व्योम
-nouveau_channel_kick(काष्ठा nvअगर_push *push)
-अणु
-	काष्ठा nouveau_channel *chan = container_of(push, typeof(*chan), chan._push);
+static void
+nouveau_channel_kick(struct nvif_push *push)
+{
+	struct nouveau_channel *chan = container_of(push, typeof(*chan), chan._push);
 	chan->dma.cur = chan->dma.cur + (chan->chan._push.cur - chan->chan._push.bgn);
 	FIRE_RING(chan);
 	chan->chan._push.bgn = chan->chan._push.cur;
-पूर्ण
+}
 
-अटल पूर्णांक
-nouveau_channel_रुको(काष्ठा nvअगर_push *push, u32 size)
-अणु
-	काष्ठा nouveau_channel *chan = container_of(push, typeof(*chan), chan._push);
-	पूर्णांक ret;
+static int
+nouveau_channel_wait(struct nvif_push *push, u32 size)
+{
+	struct nouveau_channel *chan = container_of(push, typeof(*chan), chan._push);
+	int ret;
 	chan->dma.cur = chan->dma.cur + (chan->chan._push.cur - chan->chan._push.bgn);
 	ret = RING_SPACE(chan, size);
-	अगर (ret == 0) अणु
+	if (ret == 0) {
 		chan->chan._push.bgn = chan->chan._push.mem.object.map.ptr;
 		chan->chan._push.bgn = chan->chan._push.bgn + chan->dma.cur;
 		chan->chan._push.cur = chan->chan._push.bgn;
 		chan->chan._push.end = chan->chan._push.bgn + size;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक
-nouveau_channel_prep(काष्ठा nouveau_drm *drm, काष्ठा nvअगर_device *device,
-		     u32 size, काष्ठा nouveau_channel **pchan)
-अणु
-	काष्ठा nouveau_cli *cli = (व्योम *)device->object.client;
-	काष्ठा nv_dma_v0 args = अणुपूर्ण;
-	काष्ठा nouveau_channel *chan;
+static int
+nouveau_channel_prep(struct nouveau_drm *drm, struct nvif_device *device,
+		     u32 size, struct nouveau_channel **pchan)
+{
+	struct nouveau_cli *cli = (void *)device->object.client;
+	struct nv_dma_v0 args = {};
+	struct nouveau_channel *chan;
 	u32 target;
-	पूर्णांक ret;
+	int ret;
 
-	chan = *pchan = kzalloc(माप(*chan), GFP_KERNEL);
-	अगर (!chan)
-		वापस -ENOMEM;
+	chan = *pchan = kzalloc(sizeof(*chan), GFP_KERNEL);
+	if (!chan)
+		return -ENOMEM;
 
 	chan->device = device;
 	chan->drm = drm;
 	chan->vmm = cli->svm.cli ? &cli->svm : &cli->vmm;
-	atomic_set(&chan->समाप्तed, 0);
+	atomic_set(&chan->killed, 0);
 
-	/* allocate memory क्रम dma push buffer */
+	/* allocate memory for dma push buffer */
 	target = NOUVEAU_GEM_DOMAIN_GART | NOUVEAU_GEM_DOMAIN_COHERENT;
-	अगर (nouveau_vram_pushbuf)
+	if (nouveau_vram_pushbuf)
 		target = NOUVEAU_GEM_DOMAIN_VRAM;
 
-	ret = nouveau_bo_new(cli, size, 0, target, 0, 0, शून्य, शून्य,
+	ret = nouveau_bo_new(cli, size, 0, target, 0, 0, NULL, NULL,
 			    &chan->push.buffer);
-	अगर (ret == 0) अणु
+	if (ret == 0) {
 		ret = nouveau_bo_pin(chan->push.buffer, target, false);
-		अगर (ret == 0)
+		if (ret == 0)
 			ret = nouveau_bo_map(chan->push.buffer);
-	पूर्ण
+	}
 
-	अगर (ret) अणु
+	if (ret) {
 		nouveau_channel_del(pchan);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	chan->chan._push.mem.object.parent = cli->base.object.parent;
 	chan->chan._push.mem.object.client = &cli->base;
 	chan->chan._push.mem.object.name = "chanPush";
-	chan->chan._push.mem.object.map.ptr = chan->push.buffer->kmap.भव;
-	chan->chan._push.रुको = nouveau_channel_रुको;
+	chan->chan._push.mem.object.map.ptr = chan->push.buffer->kmap.virtual;
+	chan->chan._push.wait = nouveau_channel_wait;
 	chan->chan._push.kick = nouveau_channel_kick;
 	chan->chan.push = &chan->chan._push;
 
@@ -195,26 +194,26 @@ nouveau_channel_prep(काष्ठा nouveau_drm *drm, काष्ठा nv�
 	 */
 	chan->push.addr = chan->push.buffer->offset;
 
-	अगर (device->info.family >= NV_DEVICE_INFO_V0_TESLA) अणु
+	if (device->info.family >= NV_DEVICE_INFO_V0_TESLA) {
 		ret = nouveau_vma_new(chan->push.buffer, chan->vmm,
 				      &chan->push.vma);
-		अगर (ret) अणु
+		if (ret) {
 			nouveau_channel_del(pchan);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		chan->push.addr = chan->push.vma->addr;
 
-		अगर (device->info.family >= NV_DEVICE_INFO_V0_FERMI)
-			वापस 0;
+		if (device->info.family >= NV_DEVICE_INFO_V0_FERMI)
+			return 0;
 
 		args.target = NV_DMA_V0_TARGET_VM;
 		args.access = NV_DMA_V0_ACCESS_VM;
 		args.start = 0;
 		args.limit = chan->vmm->vmm.limit - 1;
-	पूर्ण अन्यथा
-	अगर (chan->push.buffer->bo.mem.mem_type == TTM_PL_VRAM) अणु
-		अगर (device->info.family == NV_DEVICE_INFO_V0_TNT) अणु
+	} else
+	if (chan->push.buffer->bo.mem.mem_type == TTM_PL_VRAM) {
+		if (device->info.family == NV_DEVICE_INFO_V0_TNT) {
 			/* nv04 vram pushbuf hack, retarget to its location in
 			 * the framebuffer bar rather than direct vram access..
 			 * nfi why this exists, it came from the -nv ddx.
@@ -224,43 +223,43 @@ nouveau_channel_prep(काष्ठा nouveau_drm *drm, काष्ठा nv�
 			args.start = nvxx_device(device)->func->
 				resource_addr(nvxx_device(device), 1);
 			args.limit = args.start + device->info.ram_user - 1;
-		पूर्ण अन्यथा अणु
+		} else {
 			args.target = NV_DMA_V0_TARGET_VRAM;
 			args.access = NV_DMA_V0_ACCESS_RDWR;
 			args.start = 0;
 			args.limit = device->info.ram_user - 1;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (chan->drm->agp.bridge) अणु
+		}
+	} else {
+		if (chan->drm->agp.bridge) {
 			args.target = NV_DMA_V0_TARGET_AGP;
 			args.access = NV_DMA_V0_ACCESS_RDWR;
 			args.start = chan->drm->agp.base;
 			args.limit = chan->drm->agp.base +
 				     chan->drm->agp.size - 1;
-		पूर्ण अन्यथा अणु
+		} else {
 			args.target = NV_DMA_V0_TARGET_VM;
 			args.access = NV_DMA_V0_ACCESS_RDWR;
 			args.start = 0;
 			args.limit = chan->vmm->vmm.limit - 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	ret = nvअगर_object_ctor(&device->object, "abi16PushCtxDma", 0,
-			       NV_DMA_FROM_MEMORY, &args, माप(args),
+	ret = nvif_object_ctor(&device->object, "abi16PushCtxDma", 0,
+			       NV_DMA_FROM_MEMORY, &args, sizeof(args),
 			       &chan->push.ctxdma);
-	अगर (ret) अणु
+	if (ret) {
 		nouveau_channel_del(pchan);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nouveau_channel_ind(काष्ठा nouveau_drm *drm, काष्ठा nvअगर_device *device,
-		    u64 runlist, bool priv, काष्ठा nouveau_channel **pchan)
-अणु
-	अटल स्थिर u16 oclasses[] = अणु TURING_CHANNEL_GPFIFO_A,
+static int
+nouveau_channel_ind(struct nouveau_drm *drm, struct nvif_device *device,
+		    u64 runlist, bool priv, struct nouveau_channel **pchan)
+{
+	static const u16 oclasses[] = { TURING_CHANNEL_GPFIFO_A,
 					VOLTA_CHANNEL_GPFIFO_A,
 					PASCAL_CHANNEL_GPFIFO_A,
 					MAXWELL_CHANNEL_GPFIFO_A,
@@ -269,304 +268,304 @@ nouveau_channel_ind(काष्ठा nouveau_drm *drm, काष्ठा nv�
 					FERMI_CHANNEL_GPFIFO,
 					G82_CHANNEL_GPFIFO,
 					NV50_CHANNEL_GPFIFO,
-					0 पूर्ण;
-	स्थिर u16 *oclass = oclasses;
-	जोड़ अणु
-		काष्ठा nv50_channel_gpfअगरo_v0 nv50;
-		काष्ठा fermi_channel_gpfअगरo_v0 fermi;
-		काष्ठा kepler_channel_gpfअगरo_a_v0 kepler;
-		काष्ठा volta_channel_gpfअगरo_a_v0 volta;
-	पूर्ण args;
-	काष्ठा nouveau_channel *chan;
+					0 };
+	const u16 *oclass = oclasses;
+	union {
+		struct nv50_channel_gpfifo_v0 nv50;
+		struct fermi_channel_gpfifo_v0 fermi;
+		struct kepler_channel_gpfifo_a_v0 kepler;
+		struct volta_channel_gpfifo_a_v0 volta;
+	} args;
+	struct nouveau_channel *chan;
 	u32 size;
-	पूर्णांक ret;
+	int ret;
 
 	/* allocate dma push buffer */
 	ret = nouveau_channel_prep(drm, device, 0x12000, &chan);
 	*pchan = chan;
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* create channel object */
-	करो अणु
-		अगर (oclass[0] >= VOLTA_CHANNEL_GPFIFO_A) अणु
+	do {
+		if (oclass[0] >= VOLTA_CHANNEL_GPFIFO_A) {
 			args.volta.version = 0;
 			args.volta.ilength = 0x02000;
 			args.volta.ioffset = 0x10000 + chan->push.addr;
 			args.volta.runlist = runlist;
-			args.volta.vmm = nvअगर_handle(&chan->vmm->vmm.object);
+			args.volta.vmm = nvif_handle(&chan->vmm->vmm.object);
 			args.volta.priv = priv;
-			size = माप(args.volta);
-		पूर्ण अन्यथा
-		अगर (oclass[0] >= KEPLER_CHANNEL_GPFIFO_A) अणु
+			size = sizeof(args.volta);
+		} else
+		if (oclass[0] >= KEPLER_CHANNEL_GPFIFO_A) {
 			args.kepler.version = 0;
 			args.kepler.ilength = 0x02000;
 			args.kepler.ioffset = 0x10000 + chan->push.addr;
 			args.kepler.runlist = runlist;
-			args.kepler.vmm = nvअगर_handle(&chan->vmm->vmm.object);
+			args.kepler.vmm = nvif_handle(&chan->vmm->vmm.object);
 			args.kepler.priv = priv;
-			size = माप(args.kepler);
-		पूर्ण अन्यथा
-		अगर (oclass[0] >= FERMI_CHANNEL_GPFIFO) अणु
+			size = sizeof(args.kepler);
+		} else
+		if (oclass[0] >= FERMI_CHANNEL_GPFIFO) {
 			args.fermi.version = 0;
 			args.fermi.ilength = 0x02000;
 			args.fermi.ioffset = 0x10000 + chan->push.addr;
-			args.fermi.vmm = nvअगर_handle(&chan->vmm->vmm.object);
-			size = माप(args.fermi);
-		पूर्ण अन्यथा अणु
+			args.fermi.vmm = nvif_handle(&chan->vmm->vmm.object);
+			size = sizeof(args.fermi);
+		} else {
 			args.nv50.version = 0;
 			args.nv50.ilength = 0x02000;
 			args.nv50.ioffset = 0x10000 + chan->push.addr;
-			args.nv50.pushbuf = nvअगर_handle(&chan->push.ctxdma);
-			args.nv50.vmm = nvअगर_handle(&chan->vmm->vmm.object);
-			size = माप(args.nv50);
-		पूर्ण
+			args.nv50.pushbuf = nvif_handle(&chan->push.ctxdma);
+			args.nv50.vmm = nvif_handle(&chan->vmm->vmm.object);
+			size = sizeof(args.nv50);
+		}
 
-		ret = nvअगर_object_ctor(&device->object, "abi16ChanUser", 0,
+		ret = nvif_object_ctor(&device->object, "abi16ChanUser", 0,
 				       *oclass++, &args, size, &chan->user);
-		अगर (ret == 0) अणु
-			अगर (chan->user.oclass >= VOLTA_CHANNEL_GPFIFO_A) अणु
+		if (ret == 0) {
+			if (chan->user.oclass >= VOLTA_CHANNEL_GPFIFO_A) {
 				chan->chid = args.volta.chid;
 				chan->inst = args.volta.inst;
 				chan->token = args.volta.token;
-			पूर्ण अन्यथा
-			अगर (chan->user.oclass >= KEPLER_CHANNEL_GPFIFO_A) अणु
+			} else
+			if (chan->user.oclass >= KEPLER_CHANNEL_GPFIFO_A) {
 				chan->chid = args.kepler.chid;
 				chan->inst = args.kepler.inst;
-			पूर्ण अन्यथा
-			अगर (chan->user.oclass >= FERMI_CHANNEL_GPFIFO) अणु
+			} else
+			if (chan->user.oclass >= FERMI_CHANNEL_GPFIFO) {
 				chan->chid = args.fermi.chid;
-			पूर्ण अन्यथा अणु
+			} else {
 				chan->chid = args.nv50.chid;
-			पूर्ण
-			वापस ret;
-		पूर्ण
-	पूर्ण जबतक (*oclass);
+			}
+			return ret;
+		}
+	} while (*oclass);
 
 	nouveau_channel_del(pchan);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-nouveau_channel_dma(काष्ठा nouveau_drm *drm, काष्ठा nvअगर_device *device,
-		    काष्ठा nouveau_channel **pchan)
-अणु
-	अटल स्थिर u16 oclasses[] = अणु NV40_CHANNEL_DMA,
+static int
+nouveau_channel_dma(struct nouveau_drm *drm, struct nvif_device *device,
+		    struct nouveau_channel **pchan)
+{
+	static const u16 oclasses[] = { NV40_CHANNEL_DMA,
 					NV17_CHANNEL_DMA,
 					NV10_CHANNEL_DMA,
 					NV03_CHANNEL_DMA,
-					0 पूर्ण;
-	स्थिर u16 *oclass = oclasses;
-	काष्ठा nv03_channel_dma_v0 args;
-	काष्ठा nouveau_channel *chan;
-	पूर्णांक ret;
+					0 };
+	const u16 *oclass = oclasses;
+	struct nv03_channel_dma_v0 args;
+	struct nouveau_channel *chan;
+	int ret;
 
 	/* allocate dma push buffer */
 	ret = nouveau_channel_prep(drm, device, 0x10000, &chan);
 	*pchan = chan;
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* create channel object */
 	args.version = 0;
-	args.pushbuf = nvअगर_handle(&chan->push.ctxdma);
+	args.pushbuf = nvif_handle(&chan->push.ctxdma);
 	args.offset = chan->push.addr;
 
-	करो अणु
-		ret = nvअगर_object_ctor(&device->object, "abi16ChanUser", 0,
-				       *oclass++, &args, माप(args),
+	do {
+		ret = nvif_object_ctor(&device->object, "abi16ChanUser", 0,
+				       *oclass++, &args, sizeof(args),
 				       &chan->user);
-		अगर (ret == 0) अणु
+		if (ret == 0) {
 			chan->chid = args.chid;
-			वापस ret;
-		पूर्ण
-	पूर्ण जबतक (ret && *oclass);
+			return ret;
+		}
+	} while (ret && *oclass);
 
 	nouveau_channel_del(pchan);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-nouveau_channel_init(काष्ठा nouveau_channel *chan, u32 vram, u32 gart)
-अणु
-	काष्ठा nvअगर_device *device = chan->device;
-	काष्ठा nouveau_drm *drm = chan->drm;
-	काष्ठा nv_dma_v0 args = अणुपूर्ण;
-	पूर्णांक ret, i;
+static int
+nouveau_channel_init(struct nouveau_channel *chan, u32 vram, u32 gart)
+{
+	struct nvif_device *device = chan->device;
+	struct nouveau_drm *drm = chan->drm;
+	struct nv_dma_v0 args = {};
+	int ret, i;
 
-	nvअगर_object_map(&chan->user, शून्य, 0);
+	nvif_object_map(&chan->user, NULL, 0);
 
-	अगर (chan->user.oclass >= FERMI_CHANNEL_GPFIFO) अणु
-		ret = nvअगर_notअगरy_ctor(&chan->user, "abi16ChanKilled",
-				       nouveau_channel_समाप्तed,
+	if (chan->user.oclass >= FERMI_CHANNEL_GPFIFO) {
+		ret = nvif_notify_ctor(&chan->user, "abi16ChanKilled",
+				       nouveau_channel_killed,
 				       true, NV906F_V0_NTFY_KILLED,
-				       शून्य, 0, 0, &chan->समाप्त);
-		अगर (ret == 0)
-			ret = nvअगर_notअगरy_get(&chan->समाप्त);
-		अगर (ret) अणु
+				       NULL, 0, 0, &chan->kill);
+		if (ret == 0)
+			ret = nvif_notify_get(&chan->kill);
+		if (ret) {
 			NV_ERROR(drm, "Failed to request channel kill "
 				      "notification: %d\n", ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	/* allocate dma objects to cover all allowed vram, and gart */
-	अगर (device->info.family < NV_DEVICE_INFO_V0_FERMI) अणु
-		अगर (device->info.family >= NV_DEVICE_INFO_V0_TESLA) अणु
+	if (device->info.family < NV_DEVICE_INFO_V0_FERMI) {
+		if (device->info.family >= NV_DEVICE_INFO_V0_TESLA) {
 			args.target = NV_DMA_V0_TARGET_VM;
 			args.access = NV_DMA_V0_ACCESS_VM;
 			args.start = 0;
 			args.limit = chan->vmm->vmm.limit - 1;
-		पूर्ण अन्यथा अणु
+		} else {
 			args.target = NV_DMA_V0_TARGET_VRAM;
 			args.access = NV_DMA_V0_ACCESS_RDWR;
 			args.start = 0;
 			args.limit = device->info.ram_user - 1;
-		पूर्ण
+		}
 
-		ret = nvअगर_object_ctor(&chan->user, "abi16ChanVramCtxDma", vram,
-				       NV_DMA_IN_MEMORY, &args, माप(args),
+		ret = nvif_object_ctor(&chan->user, "abi16ChanVramCtxDma", vram,
+				       NV_DMA_IN_MEMORY, &args, sizeof(args),
 				       &chan->vram);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		अगर (device->info.family >= NV_DEVICE_INFO_V0_TESLA) अणु
+		if (device->info.family >= NV_DEVICE_INFO_V0_TESLA) {
 			args.target = NV_DMA_V0_TARGET_VM;
 			args.access = NV_DMA_V0_ACCESS_VM;
 			args.start = 0;
 			args.limit = chan->vmm->vmm.limit - 1;
-		पूर्ण अन्यथा
-		अगर (chan->drm->agp.bridge) अणु
+		} else
+		if (chan->drm->agp.bridge) {
 			args.target = NV_DMA_V0_TARGET_AGP;
 			args.access = NV_DMA_V0_ACCESS_RDWR;
 			args.start = chan->drm->agp.base;
 			args.limit = chan->drm->agp.base +
 				     chan->drm->agp.size - 1;
-		पूर्ण अन्यथा अणु
+		} else {
 			args.target = NV_DMA_V0_TARGET_VM;
 			args.access = NV_DMA_V0_ACCESS_RDWR;
 			args.start = 0;
 			args.limit = chan->vmm->vmm.limit - 1;
-		पूर्ण
+		}
 
-		ret = nvअगर_object_ctor(&chan->user, "abi16ChanGartCtxDma", gart,
-				       NV_DMA_IN_MEMORY, &args, माप(args),
+		ret = nvif_object_ctor(&chan->user, "abi16ChanGartCtxDma", gart,
+				       NV_DMA_IN_MEMORY, &args, sizeof(args),
 				       &chan->gart);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	/* initialise dma tracking parameters */
-	चयन (chan->user.oclass & 0x00ff) अणु
-	हाल 0x006b:
-	हाल 0x006e:
+	switch (chan->user.oclass & 0x00ff) {
+	case 0x006b:
+	case 0x006e:
 		chan->user_put = 0x40;
 		chan->user_get = 0x44;
 		chan->dma.max = (0x10000 / 4) - 2;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		chan->user_put = 0x40;
 		chan->user_get = 0x44;
 		chan->user_get_hi = 0x60;
 		chan->dma.ib_base =  0x10000 / 4;
 		chan->dma.ib_max  = (0x02000 / 8) - 1;
 		chan->dma.ib_put  = 0;
-		chan->dma.ib_मुक्त = chan->dma.ib_max - chan->dma.ib_put;
+		chan->dma.ib_free = chan->dma.ib_max - chan->dma.ib_put;
 		chan->dma.max = chan->dma.ib_base;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	chan->dma.put = 0;
 	chan->dma.cur = chan->dma.put;
-	chan->dma.मुक्त = chan->dma.max - chan->dma.cur;
+	chan->dma.free = chan->dma.max - chan->dma.cur;
 
 	ret = PUSH_WAIT(chan->chan.push, NOUVEAU_DMA_SKIPS);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	क्रम (i = 0; i < NOUVEAU_DMA_SKIPS; i++)
+	for (i = 0; i < NOUVEAU_DMA_SKIPS; i++)
 		PUSH_DATA(chan->chan.push, 0x00000000);
 
-	/* allocate software object class (used क्रम fences on <= nv05) */
-	अगर (device->info.family < NV_DEVICE_INFO_V0_CELSIUS) अणु
-		ret = nvअगर_object_ctor(&chan->user, "abi16NvswFence", 0x006e,
+	/* allocate software object class (used for fences on <= nv05) */
+	if (device->info.family < NV_DEVICE_INFO_V0_CELSIUS) {
+		ret = nvif_object_ctor(&chan->user, "abi16NvswFence", 0x006e,
 				       NVIF_CLASS_SW_NV04,
-				       शून्य, 0, &chan->nvsw);
-		अगर (ret)
-			वापस ret;
+				       NULL, 0, &chan->nvsw);
+		if (ret)
+			return ret;
 
 		ret = PUSH_WAIT(chan->chan.push, 2);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		PUSH_NVSQ(chan->chan.push, NV_SW, 0x0000, chan->nvsw.handle);
 		PUSH_KICK(chan->chan.push);
-	पूर्ण
+	}
 
 	/* initialise synchronisation */
-	वापस nouveau_fence(chan->drm)->context_new(chan);
-पूर्ण
+	return nouveau_fence(chan->drm)->context_new(chan);
+}
 
-पूर्णांक
-nouveau_channel_new(काष्ठा nouveau_drm *drm, काष्ठा nvअगर_device *device,
+int
+nouveau_channel_new(struct nouveau_drm *drm, struct nvif_device *device,
 		    u32 arg0, u32 arg1, bool priv,
-		    काष्ठा nouveau_channel **pchan)
-अणु
-	काष्ठा nouveau_cli *cli = (व्योम *)device->object.client;
+		    struct nouveau_channel **pchan)
+{
+	struct nouveau_cli *cli = (void *)device->object.client;
 	bool super;
-	पूर्णांक ret;
+	int ret;
 
 	/* hack until fencenv50 is fixed, and agp access relaxed */
 	super = cli->base.super;
 	cli->base.super = true;
 
 	ret = nouveau_channel_ind(drm, device, arg0, priv, pchan);
-	अगर (ret) अणु
+	if (ret) {
 		NV_PRINTK(dbg, cli, "ib channel create, %d\n", ret);
 		ret = nouveau_channel_dma(drm, device, pchan);
-		अगर (ret) अणु
+		if (ret) {
 			NV_PRINTK(dbg, cli, "dma channel create, %d\n", ret);
-			जाओ करोne;
-		पूर्ण
-	पूर्ण
+			goto done;
+		}
+	}
 
 	ret = nouveau_channel_init(*pchan, arg0, arg1);
-	अगर (ret) अणु
+	if (ret) {
 		NV_PRINTK(err, cli, "channel failed to initialise, %d\n", ret);
 		nouveau_channel_del(pchan);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	ret = nouveau_svmm_join((*pchan)->vmm->svmm, (*pchan)->inst);
-	अगर (ret)
+	if (ret)
 		nouveau_channel_del(pchan);
 
-करोne:
+done:
 	cli->base.super = super;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक
-nouveau_channels_init(काष्ठा nouveau_drm *drm)
-अणु
-	काष्ठा अणु
-		काष्ठा nv_device_info_v1 m;
-		काष्ठा अणु
-			काष्ठा nv_device_info_v1_data channels;
-		पूर्ण v;
-	पूर्ण args = अणु
+int
+nouveau_channels_init(struct nouveau_drm *drm)
+{
+	struct {
+		struct nv_device_info_v1 m;
+		struct {
+			struct nv_device_info_v1_data channels;
+		} v;
+	} args = {
 		.m.version = 1,
-		.m.count = माप(args.v) / माप(args.v.channels),
+		.m.count = sizeof(args.v) / sizeof(args.v.channels),
 		.v.channels.mthd = NV_DEVICE_HOST_CHANNELS,
-	पूर्ण;
-	काष्ठा nvअगर_object *device = &drm->client.device.object;
-	पूर्णांक ret;
+	};
+	struct nvif_object *device = &drm->client.device.object;
+	int ret;
 
-	ret = nvअगर_object_mthd(device, NV_DEVICE_V0_INFO, &args, माप(args));
-	अगर (ret || args.v.channels.mthd == NV_DEVICE_INFO_INVALID)
-		वापस -ENODEV;
+	ret = nvif_object_mthd(device, NV_DEVICE_V0_INFO, &args, sizeof(args));
+	if (ret || args.v.channels.mthd == NV_DEVICE_INFO_INVALID)
+		return -ENODEV;
 
 	drm->chan.nr = args.v.channels.data;
 	drm->chan.context_base = dma_fence_context_alloc(drm->chan.nr);
-	वापस 0;
-पूर्ण
+	return 0;
+}

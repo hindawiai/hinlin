@@ -1,165 +1,164 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2015-2017 Josh Poimboeuf <jpoimboe@redhat.com>
  */
 
-#समावेश <माला.स>
-#समावेश <मानककोष.स>
+#include <string.h>
+#include <stdlib.h>
 
-#समावेश <arch/elf.h>
-#समावेश <objtool/builtin.h>
-#समावेश <objtool/cfi.h>
-#समावेश <objtool/arch.h>
-#समावेश <objtool/check.h>
-#समावेश <objtool/special.h>
-#समावेश <objtool/warn.h>
-#समावेश <objtool/endianness.h>
+#include <arch/elf.h>
+#include <objtool/builtin.h>
+#include <objtool/cfi.h>
+#include <objtool/arch.h>
+#include <objtool/check.h>
+#include <objtool/special.h>
+#include <objtool/warn.h>
+#include <objtool/endianness.h>
 
-#समावेश <linux/objtool.h>
-#समावेश <linux/hashtable.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/अटल_call_types.h>
+#include <linux/objtool.h>
+#include <linux/hashtable.h>
+#include <linux/kernel.h>
+#include <linux/static_call_types.h>
 
-काष्ठा alternative अणु
-	काष्ठा list_head list;
-	काष्ठा inकाष्ठाion *insn;
+struct alternative {
+	struct list_head list;
+	struct instruction *insn;
 	bool skip_orig;
-पूर्ण;
+};
 
-काष्ठा cfi_init_state initial_func_cfi;
+struct cfi_init_state initial_func_cfi;
 
-काष्ठा inकाष्ठाion *find_insn(काष्ठा objtool_file *file,
-			      काष्ठा section *sec, अचिन्हित दीर्घ offset)
-अणु
-	काष्ठा inकाष्ठाion *insn;
+struct instruction *find_insn(struct objtool_file *file,
+			      struct section *sec, unsigned long offset)
+{
+	struct instruction *insn;
 
-	hash_क्रम_each_possible(file->insn_hash, insn, hash, sec_offset_hash(sec, offset)) अणु
-		अगर (insn->sec == sec && insn->offset == offset)
-			वापस insn;
-	पूर्ण
+	hash_for_each_possible(file->insn_hash, insn, hash, sec_offset_hash(sec, offset)) {
+		if (insn->sec == sec && insn->offset == offset)
+			return insn;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा inकाष्ठाion *next_insn_same_sec(काष्ठा objtool_file *file,
-					      काष्ठा inकाष्ठाion *insn)
-अणु
-	काष्ठा inकाष्ठाion *next = list_next_entry(insn, list);
+static struct instruction *next_insn_same_sec(struct objtool_file *file,
+					      struct instruction *insn)
+{
+	struct instruction *next = list_next_entry(insn, list);
 
-	अगर (!next || &next->list == &file->insn_list || next->sec != insn->sec)
-		वापस शून्य;
+	if (!next || &next->list == &file->insn_list || next->sec != insn->sec)
+		return NULL;
 
-	वापस next;
-पूर्ण
+	return next;
+}
 
-अटल काष्ठा inकाष्ठाion *next_insn_same_func(काष्ठा objtool_file *file,
-					       काष्ठा inकाष्ठाion *insn)
-अणु
-	काष्ठा inकाष्ठाion *next = list_next_entry(insn, list);
-	काष्ठा symbol *func = insn->func;
+static struct instruction *next_insn_same_func(struct objtool_file *file,
+					       struct instruction *insn)
+{
+	struct instruction *next = list_next_entry(insn, list);
+	struct symbol *func = insn->func;
 
-	अगर (!func)
-		वापस शून्य;
+	if (!func)
+		return NULL;
 
-	अगर (&next->list != &file->insn_list && next->func == func)
-		वापस next;
+	if (&next->list != &file->insn_list && next->func == func)
+		return next;
 
-	/* Check अगर we're alपढ़ोy in the subfunction: */
-	अगर (func == func->cfunc)
-		वापस शून्य;
+	/* Check if we're already in the subfunction: */
+	if (func == func->cfunc)
+		return NULL;
 
 	/* Move to the subfunction: */
-	वापस find_insn(file, func->cfunc->sec, func->cfunc->offset);
-पूर्ण
+	return find_insn(file, func->cfunc->sec, func->cfunc->offset);
+}
 
-अटल काष्ठा inकाष्ठाion *prev_insn_same_sym(काष्ठा objtool_file *file,
-					       काष्ठा inकाष्ठाion *insn)
-अणु
-	काष्ठा inकाष्ठाion *prev = list_prev_entry(insn, list);
+static struct instruction *prev_insn_same_sym(struct objtool_file *file,
+					       struct instruction *insn)
+{
+	struct instruction *prev = list_prev_entry(insn, list);
 
-	अगर (&prev->list != &file->insn_list && prev->func == insn->func)
-		वापस prev;
+	if (&prev->list != &file->insn_list && prev->func == insn->func)
+		return prev;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-#घोषणा func_क्रम_each_insn(file, func, insn)				\
-	क्रम (insn = find_insn(file, func->sec, func->offset);		\
+#define func_for_each_insn(file, func, insn)				\
+	for (insn = find_insn(file, func->sec, func->offset);		\
 	     insn;							\
 	     insn = next_insn_same_func(file, insn))
 
-#घोषणा sym_क्रम_each_insn(file, sym, insn)				\
-	क्रम (insn = find_insn(file, sym->sec, sym->offset);		\
+#define sym_for_each_insn(file, sym, insn)				\
+	for (insn = find_insn(file, sym->sec, sym->offset);		\
 	     insn && &insn->list != &file->insn_list &&			\
 		insn->sec == sym->sec &&				\
 		insn->offset < sym->offset + sym->len;			\
 	     insn = list_next_entry(insn, list))
 
-#घोषणा sym_क्रम_each_insn_जारी_reverse(file, sym, insn)		\
-	क्रम (insn = list_prev_entry(insn, list);			\
+#define sym_for_each_insn_continue_reverse(file, sym, insn)		\
+	for (insn = list_prev_entry(insn, list);			\
 	     &insn->list != &file->insn_list &&				\
 		insn->sec == sym->sec && insn->offset >= sym->offset;	\
 	     insn = list_prev_entry(insn, list))
 
-#घोषणा sec_क्रम_each_insn_from(file, insn)				\
-	क्रम (; insn; insn = next_insn_same_sec(file, insn))
+#define sec_for_each_insn_from(file, insn)				\
+	for (; insn; insn = next_insn_same_sec(file, insn))
 
-#घोषणा sec_क्रम_each_insn_जारी(file, insn)				\
-	क्रम (insn = next_insn_same_sec(file, insn); insn;		\
+#define sec_for_each_insn_continue(file, insn)				\
+	for (insn = next_insn_same_sec(file, insn); insn;		\
 	     insn = next_insn_same_sec(file, insn))
 
-अटल bool is_jump_table_jump(काष्ठा inकाष्ठाion *insn)
-अणु
-	काष्ठा alt_group *alt_group = insn->alt_group;
+static bool is_jump_table_jump(struct instruction *insn)
+{
+	struct alt_group *alt_group = insn->alt_group;
 
-	अगर (insn->jump_table)
-		वापस true;
+	if (insn->jump_table)
+		return true;
 
-	/* Retpoline alternative क्रम a jump table? */
-	वापस alt_group && alt_group->orig_group &&
+	/* Retpoline alternative for a jump table? */
+	return alt_group && alt_group->orig_group &&
 	       alt_group->orig_group->first_insn->jump_table;
-पूर्ण
+}
 
-अटल bool is_sibling_call(काष्ठा inकाष्ठाion *insn)
-अणु
+static bool is_sibling_call(struct instruction *insn)
+{
 	/*
 	 * Assume only ELF functions can make sibling calls.  This ensures
-	 * sibling call detection consistency between vmlinux.o and inभागidual
+	 * sibling call detection consistency between vmlinux.o and individual
 	 * objects.
 	 */
-	अगर (!insn->func)
-		वापस false;
+	if (!insn->func)
+		return false;
 
 	/* An indirect jump is either a sibling call or a jump to a table. */
-	अगर (insn->type == INSN_JUMP_DYNAMIC)
-		वापस !is_jump_table_jump(insn);
+	if (insn->type == INSN_JUMP_DYNAMIC)
+		return !is_jump_table_jump(insn);
 
-	/* add_jump_destinations() sets insn->call_dest क्रम sibling calls. */
-	वापस (is_अटल_jump(insn) && insn->call_dest);
-पूर्ण
+	/* add_jump_destinations() sets insn->call_dest for sibling calls. */
+	return (is_static_jump(insn) && insn->call_dest);
+}
 
 /*
- * This checks to see अगर the given function is a "noreturn" function.
+ * This checks to see if the given function is a "noreturn" function.
  *
  * For global functions which are outside the scope of this object file, we
  * have to keep a manual list of them.
  *
- * For local functions, we have to detect them manually by simply looking क्रम
- * the lack of a वापस inकाष्ठाion.
+ * For local functions, we have to detect them manually by simply looking for
+ * the lack of a return instruction.
  */
-अटल bool __dead_end_function(काष्ठा objtool_file *file, काष्ठा symbol *func,
-				पूर्णांक recursion)
-अणु
-	पूर्णांक i;
-	काष्ठा inकाष्ठाion *insn;
+static bool __dead_end_function(struct objtool_file *file, struct symbol *func,
+				int recursion)
+{
+	int i;
+	struct instruction *insn;
 	bool empty = true;
 
 	/*
-	 * Unक्रमtunately these have to be hard coded because the noवापस
+	 * Unfortunately these have to be hard coded because the noreturn
 	 * attribute isn't provided in ELF data.
 	 */
-	अटल स्थिर अक्षर * स्थिर global_noवापसs[] = अणु
+	static const char * const global_noreturns[] = {
 		"__stack_chk_fail",
 		"panic",
 		"do_exit",
@@ -174,132 +173,132 @@
 		"rewind_stack_do_exit",
 		"kunit_try_catch_throw",
 		"xen_start_kernel",
-	पूर्ण;
+	};
 
-	अगर (!func)
-		वापस false;
+	if (!func)
+		return false;
 
-	अगर (func->bind == STB_WEAK)
-		वापस false;
+	if (func->bind == STB_WEAK)
+		return false;
 
-	अगर (func->bind == STB_GLOBAL)
-		क्रम (i = 0; i < ARRAY_SIZE(global_noवापसs); i++)
-			अगर (!म_भेद(func->name, global_noवापसs[i]))
-				वापस true;
+	if (func->bind == STB_GLOBAL)
+		for (i = 0; i < ARRAY_SIZE(global_noreturns); i++)
+			if (!strcmp(func->name, global_noreturns[i]))
+				return true;
 
-	अगर (!func->len)
-		वापस false;
+	if (!func->len)
+		return false;
 
 	insn = find_insn(file, func->sec, func->offset);
-	अगर (!insn->func)
-		वापस false;
+	if (!insn->func)
+		return false;
 
-	func_क्रम_each_insn(file, func, insn) अणु
+	func_for_each_insn(file, func, insn) {
 		empty = false;
 
-		अगर (insn->type == INSN_RETURN)
-			वापस false;
-	पूर्ण
+		if (insn->type == INSN_RETURN)
+			return false;
+	}
 
-	अगर (empty)
-		वापस false;
+	if (empty)
+		return false;
 
 	/*
-	 * A function can have a sibling call instead of a वापस.  In that
-	 * हाल, the function's dead-end status depends on whether the target
-	 * of the sibling call वापसs.
+	 * A function can have a sibling call instead of a return.  In that
+	 * case, the function's dead-end status depends on whether the target
+	 * of the sibling call returns.
 	 */
-	func_क्रम_each_insn(file, func, insn) अणु
-		अगर (is_sibling_call(insn)) अणु
-			काष्ठा inकाष्ठाion *dest = insn->jump_dest;
+	func_for_each_insn(file, func, insn) {
+		if (is_sibling_call(insn)) {
+			struct instruction *dest = insn->jump_dest;
 
-			अगर (!dest)
+			if (!dest)
 				/* sibling call to another file */
-				वापस false;
+				return false;
 
 			/* local sibling call */
-			अगर (recursion == 5) अणु
+			if (recursion == 5) {
 				/*
 				 * Infinite recursion: two functions have
 				 * sibling calls to each other.  This is a very
-				 * rare हाल.  It means they aren't dead ends.
+				 * rare case.  It means they aren't dead ends.
 				 */
-				वापस false;
-			पूर्ण
+				return false;
+			}
 
-			वापस __dead_end_function(file, dest->func, recursion+1);
-		पूर्ण
-	पूर्ण
+			return __dead_end_function(file, dest->func, recursion+1);
+		}
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool dead_end_function(काष्ठा objtool_file *file, काष्ठा symbol *func)
-अणु
-	वापस __dead_end_function(file, func, 0);
-पूर्ण
+static bool dead_end_function(struct objtool_file *file, struct symbol *func)
+{
+	return __dead_end_function(file, func, 0);
+}
 
-अटल व्योम init_cfi_state(काष्ठा cfi_state *cfi)
-अणु
-	पूर्णांक i;
+static void init_cfi_state(struct cfi_state *cfi)
+{
+	int i;
 
-	क्रम (i = 0; i < CFI_NUM_REGS; i++) अणु
+	for (i = 0; i < CFI_NUM_REGS; i++) {
 		cfi->regs[i].base = CFI_UNDEFINED;
 		cfi->vals[i].base = CFI_UNDEFINED;
-	पूर्ण
+	}
 	cfi->cfa.base = CFI_UNDEFINED;
 	cfi->drap_reg = CFI_UNDEFINED;
 	cfi->drap_offset = -1;
-पूर्ण
+}
 
-अटल व्योम init_insn_state(काष्ठा insn_state *state, काष्ठा section *sec)
-अणु
-	स_रखो(state, 0, माप(*state));
+static void init_insn_state(struct insn_state *state, struct section *sec)
+{
+	memset(state, 0, sizeof(*state));
 	init_cfi_state(&state->cfi);
 
 	/*
-	 * We need the full vmlinux क्रम noinstr validation, otherwise we can
-	 * not correctly determine insn->call_dest->sec (बाह्यal symbols करो
+	 * We need the full vmlinux for noinstr validation, otherwise we can
+	 * not correctly determine insn->call_dest->sec (external symbols do
 	 * not have a section).
 	 */
-	अगर (vmlinux && noinstr && sec)
+	if (vmlinux && noinstr && sec)
 		state->noinstr = sec->noinstr;
-पूर्ण
+}
 
 /*
- * Call the arch-specअगरic inकाष्ठाion decoder क्रम all the inकाष्ठाions and add
- * them to the global inकाष्ठाion list.
+ * Call the arch-specific instruction decoder for all the instructions and add
+ * them to the global instruction list.
  */
-अटल पूर्णांक decode_inकाष्ठाions(काष्ठा objtool_file *file)
-अणु
-	काष्ठा section *sec;
-	काष्ठा symbol *func;
-	अचिन्हित दीर्घ offset;
-	काष्ठा inकाष्ठाion *insn;
-	अचिन्हित दीर्घ nr_insns = 0;
-	पूर्णांक ret;
+static int decode_instructions(struct objtool_file *file)
+{
+	struct section *sec;
+	struct symbol *func;
+	unsigned long offset;
+	struct instruction *insn;
+	unsigned long nr_insns = 0;
+	int ret;
 
-	क्रम_each_sec(file, sec) अणु
+	for_each_sec(file, sec) {
 
-		अगर (!(sec->sh.sh_flags & SHF_EXECINSTR))
-			जारी;
+		if (!(sec->sh.sh_flags & SHF_EXECINSTR))
+			continue;
 
-		अगर (म_भेद(sec->name, ".altinstr_replacement") &&
-		    म_भेद(sec->name, ".altinstr_aux") &&
-		    म_भेदन(sec->name, ".discard.", 9))
+		if (strcmp(sec->name, ".altinstr_replacement") &&
+		    strcmp(sec->name, ".altinstr_aux") &&
+		    strncmp(sec->name, ".discard.", 9))
 			sec->text = true;
 
-		अगर (!म_भेद(sec->name, ".noinstr.text") ||
-		    !म_भेद(sec->name, ".entry.text"))
+		if (!strcmp(sec->name, ".noinstr.text") ||
+		    !strcmp(sec->name, ".entry.text"))
 			sec->noinstr = true;
 
-		क्रम (offset = 0; offset < sec->len; offset += insn->len) अणु
-			insn = दो_स्मृति(माप(*insn));
-			अगर (!insn) अणु
+		for (offset = 0; offset < sec->len; offset += insn->len) {
+			insn = malloc(sizeof(*insn));
+			if (!insn) {
 				WARN("malloc failed");
-				वापस -1;
-			पूर्ण
-			स_रखो(insn, 0, माप(*insn));
+				return -1;
+			}
+			memset(insn, 0, sizeof(*insn));
 			INIT_LIST_HEAD(&insn->alts);
 			INIT_LIST_HEAD(&insn->stack_ops);
 			init_cfi_state(&insn->cfi);
@@ -307,318 +306,318 @@
 			insn->sec = sec;
 			insn->offset = offset;
 
-			ret = arch_decode_inकाष्ठाion(file->elf, sec, offset,
+			ret = arch_decode_instruction(file->elf, sec, offset,
 						      sec->len - offset,
 						      &insn->len, &insn->type,
 						      &insn->immediate,
 						      &insn->stack_ops);
-			अगर (ret)
-				जाओ err;
+			if (ret)
+				goto err;
 
 			hash_add(file->insn_hash, &insn->hash, sec_offset_hash(sec, insn->offset));
 			list_add_tail(&insn->list, &file->insn_list);
 			nr_insns++;
-		पूर्ण
+		}
 
-		list_क्रम_each_entry(func, &sec->symbol_list, list) अणु
-			अगर (func->type != STT_FUNC || func->alias != func)
-				जारी;
+		list_for_each_entry(func, &sec->symbol_list, list) {
+			if (func->type != STT_FUNC || func->alias != func)
+				continue;
 
-			अगर (!find_insn(file, sec, func->offset)) अणु
+			if (!find_insn(file, sec, func->offset)) {
 				WARN("%s(): can't find starting instruction",
 				     func->name);
-				वापस -1;
-			पूर्ण
+				return -1;
+			}
 
-			sym_क्रम_each_insn(file, func, insn)
+			sym_for_each_insn(file, func, insn)
 				insn->func = func;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (stats)
-		म_लिखो("nr_insns: %lu\n", nr_insns);
+	if (stats)
+		printf("nr_insns: %lu\n", nr_insns);
 
-	वापस 0;
+	return 0;
 
 err:
-	मुक्त(insn);
-	वापस ret;
-पूर्ण
+	free(insn);
+	return ret;
+}
 
-अटल काष्ठा inकाष्ठाion *find_last_insn(काष्ठा objtool_file *file,
-					  काष्ठा section *sec)
-अणु
-	काष्ठा inकाष्ठाion *insn = शून्य;
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक end = (sec->len > 10) ? sec->len - 10 : 0;
+static struct instruction *find_last_insn(struct objtool_file *file,
+					  struct section *sec)
+{
+	struct instruction *insn = NULL;
+	unsigned int offset;
+	unsigned int end = (sec->len > 10) ? sec->len - 10 : 0;
 
-	क्रम (offset = sec->len - 1; offset >= end && !insn; offset--)
+	for (offset = sec->len - 1; offset >= end && !insn; offset--)
 		insn = find_insn(file, sec, offset);
 
-	वापस insn;
-पूर्ण
+	return insn;
+}
 
 /*
- * Mark "ud2" inकाष्ठाions and manually annotated dead ends.
+ * Mark "ud2" instructions and manually annotated dead ends.
  */
-अटल पूर्णांक add_dead_ends(काष्ठा objtool_file *file)
-अणु
-	काष्ठा section *sec;
-	काष्ठा reloc *reloc;
-	काष्ठा inकाष्ठाion *insn;
+static int add_dead_ends(struct objtool_file *file)
+{
+	struct section *sec;
+	struct reloc *reloc;
+	struct instruction *insn;
 
 	/*
-	 * By शेष, "ud2" is a dead end unless otherwise annotated, because
-	 * GCC 7 inserts it क्रम certain भागide-by-zero हालs.
+	 * By default, "ud2" is a dead end unless otherwise annotated, because
+	 * GCC 7 inserts it for certain divide-by-zero cases.
 	 */
-	क्रम_each_insn(file, insn)
-		अगर (insn->type == INSN_BUG)
+	for_each_insn(file, insn)
+		if (insn->type == INSN_BUG)
 			insn->dead_end = true;
 
 	/*
-	 * Check क्रम manually annotated dead ends.
+	 * Check for manually annotated dead ends.
 	 */
 	sec = find_section_by_name(file->elf, ".rela.discard.unreachable");
-	अगर (!sec)
-		जाओ reachable;
+	if (!sec)
+		goto reachable;
 
-	list_क्रम_each_entry(reloc, &sec->reloc_list, list) अणु
-		अगर (reloc->sym->type != STT_SECTION) अणु
+	list_for_each_entry(reloc, &sec->reloc_list, list) {
+		if (reloc->sym->type != STT_SECTION) {
 			WARN("unexpected relocation symbol type in %s", sec->name);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 		insn = find_insn(file, reloc->sym->sec, reloc->addend);
-		अगर (insn)
+		if (insn)
 			insn = list_prev_entry(insn, list);
-		अन्यथा अगर (reloc->addend == reloc->sym->sec->len) अणु
+		else if (reloc->addend == reloc->sym->sec->len) {
 			insn = find_last_insn(file, reloc->sym->sec);
-			अगर (!insn) अणु
+			if (!insn) {
 				WARN("can't find unreachable insn at %s+0x%x",
 				     reloc->sym->sec->name, reloc->addend);
-				वापस -1;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				return -1;
+			}
+		} else {
 			WARN("can't find unreachable insn at %s+0x%x",
 			     reloc->sym->sec->name, reloc->addend);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
 		insn->dead_end = true;
-	पूर्ण
+	}
 
 reachable:
 	/*
-	 * These manually annotated reachable checks are needed क्रम GCC 4.4,
-	 * where the Linux unreachable() macro isn't supported.  In that हाल
-	 * GCC करोesn't know the "ud2" is fatal, so it generates code as if it's
+	 * These manually annotated reachable checks are needed for GCC 4.4,
+	 * where the Linux unreachable() macro isn't supported.  In that case
+	 * GCC doesn't know the "ud2" is fatal, so it generates code as if it's
 	 * not a dead end.
 	 */
 	sec = find_section_by_name(file->elf, ".rela.discard.reachable");
-	अगर (!sec)
-		वापस 0;
+	if (!sec)
+		return 0;
 
-	list_क्रम_each_entry(reloc, &sec->reloc_list, list) अणु
-		अगर (reloc->sym->type != STT_SECTION) अणु
+	list_for_each_entry(reloc, &sec->reloc_list, list) {
+		if (reloc->sym->type != STT_SECTION) {
 			WARN("unexpected relocation symbol type in %s", sec->name);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 		insn = find_insn(file, reloc->sym->sec, reloc->addend);
-		अगर (insn)
+		if (insn)
 			insn = list_prev_entry(insn, list);
-		अन्यथा अगर (reloc->addend == reloc->sym->sec->len) अणु
+		else if (reloc->addend == reloc->sym->sec->len) {
 			insn = find_last_insn(file, reloc->sym->sec);
-			अगर (!insn) अणु
+			if (!insn) {
 				WARN("can't find reachable insn at %s+0x%x",
 				     reloc->sym->sec->name, reloc->addend);
-				वापस -1;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				return -1;
+			}
+		} else {
 			WARN("can't find reachable insn at %s+0x%x",
 			     reloc->sym->sec->name, reloc->addend);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
 		insn->dead_end = false;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक create_अटल_call_sections(काष्ठा objtool_file *file)
-अणु
-	काष्ठा section *sec;
-	काष्ठा अटल_call_site *site;
-	काष्ठा inकाष्ठाion *insn;
-	काष्ठा symbol *key_sym;
-	अक्षर *key_name, *पंचांगp;
-	पूर्णांक idx;
+static int create_static_call_sections(struct objtool_file *file)
+{
+	struct section *sec;
+	struct static_call_site *site;
+	struct instruction *insn;
+	struct symbol *key_sym;
+	char *key_name, *tmp;
+	int idx;
 
 	sec = find_section_by_name(file->elf, ".static_call_sites");
-	अगर (sec) अणु
-		INIT_LIST_HEAD(&file->अटल_call_list);
+	if (sec) {
+		INIT_LIST_HEAD(&file->static_call_list);
 		WARN("file already has .static_call_sites section, skipping");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (list_empty(&file->अटल_call_list))
-		वापस 0;
+	if (list_empty(&file->static_call_list))
+		return 0;
 
 	idx = 0;
-	list_क्रम_each_entry(insn, &file->अटल_call_list, call_node)
+	list_for_each_entry(insn, &file->static_call_list, call_node)
 		idx++;
 
 	sec = elf_create_section(file->elf, ".static_call_sites", SHF_WRITE,
-				 माप(काष्ठा अटल_call_site), idx);
-	अगर (!sec)
-		वापस -1;
+				 sizeof(struct static_call_site), idx);
+	if (!sec)
+		return -1;
 
 	idx = 0;
-	list_क्रम_each_entry(insn, &file->अटल_call_list, call_node) अणु
+	list_for_each_entry(insn, &file->static_call_list, call_node) {
 
-		site = (काष्ठा अटल_call_site *)sec->data->d_buf + idx;
-		स_रखो(site, 0, माप(काष्ठा अटल_call_site));
+		site = (struct static_call_site *)sec->data->d_buf + idx;
+		memset(site, 0, sizeof(struct static_call_site));
 
-		/* populate reloc क्रम 'addr' */
-		अगर (elf_add_reloc_to_insn(file->elf, sec,
-					  idx * माप(काष्ठा अटल_call_site),
+		/* populate reloc for 'addr' */
+		if (elf_add_reloc_to_insn(file->elf, sec,
+					  idx * sizeof(struct static_call_site),
 					  R_X86_64_PC32,
 					  insn->sec, insn->offset))
-			वापस -1;
+			return -1;
 
 		/* find key symbol */
 		key_name = strdup(insn->call_dest->name);
-		अगर (!key_name) अणु
-			लिखो_त्रुटि("strdup");
-			वापस -1;
-		पूर्ण
-		अगर (म_भेदन(key_name, STATIC_CALL_TRAMP_PREFIX_STR,
-			    STATIC_CALL_TRAMP_PREFIX_LEN)) अणु
+		if (!key_name) {
+			perror("strdup");
+			return -1;
+		}
+		if (strncmp(key_name, STATIC_CALL_TRAMP_PREFIX_STR,
+			    STATIC_CALL_TRAMP_PREFIX_LEN)) {
 			WARN("static_call: trampoline name malformed: %s", key_name);
-			वापस -1;
-		पूर्ण
-		पंचांगp = key_name + STATIC_CALL_TRAMP_PREFIX_LEN - STATIC_CALL_KEY_PREFIX_LEN;
-		स_नकल(पंचांगp, STATIC_CALL_KEY_PREFIX_STR, STATIC_CALL_KEY_PREFIX_LEN);
+			return -1;
+		}
+		tmp = key_name + STATIC_CALL_TRAMP_PREFIX_LEN - STATIC_CALL_KEY_PREFIX_LEN;
+		memcpy(tmp, STATIC_CALL_KEY_PREFIX_STR, STATIC_CALL_KEY_PREFIX_LEN);
 
-		key_sym = find_symbol_by_name(file->elf, पंचांगp);
-		अगर (!key_sym) अणु
-			अगर (!module) अणु
-				WARN("static_call: can't find static_call_key symbol: %s", पंचांगp);
-				वापस -1;
-			पूर्ण
+		key_sym = find_symbol_by_name(file->elf, tmp);
+		if (!key_sym) {
+			if (!module) {
+				WARN("static_call: can't find static_call_key symbol: %s", tmp);
+				return -1;
+			}
 
 			/*
 			 * For modules(), the key might not be exported, which
-			 * means the module can make अटल calls but isn't
+			 * means the module can make static calls but isn't
 			 * allowed to change them.
 			 *
-			 * In that हाल we temporarily set the key to be the
+			 * In that case we temporarily set the key to be the
 			 * trampoline address.  This is fixed up in
-			 * अटल_call_add_module().
+			 * static_call_add_module().
 			 */
 			key_sym = insn->call_dest;
-		पूर्ण
-		मुक्त(key_name);
+		}
+		free(key_name);
 
-		/* populate reloc क्रम 'key' */
-		अगर (elf_add_reloc(file->elf, sec,
-				  idx * माप(काष्ठा अटल_call_site) + 4,
+		/* populate reloc for 'key' */
+		if (elf_add_reloc(file->elf, sec,
+				  idx * sizeof(struct static_call_site) + 4,
 				  R_X86_64_PC32, key_sym,
 				  is_sibling_call(insn) * STATIC_CALL_SITE_TAIL))
-			वापस -1;
+			return -1;
 
 		idx++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक create_mcount_loc_sections(काष्ठा objtool_file *file)
-अणु
-	काष्ठा section *sec;
-	अचिन्हित दीर्घ *loc;
-	काष्ठा inकाष्ठाion *insn;
-	पूर्णांक idx;
+static int create_mcount_loc_sections(struct objtool_file *file)
+{
+	struct section *sec;
+	unsigned long *loc;
+	struct instruction *insn;
+	int idx;
 
 	sec = find_section_by_name(file->elf, "__mcount_loc");
-	अगर (sec) अणु
+	if (sec) {
 		INIT_LIST_HEAD(&file->mcount_loc_list);
 		WARN("file already has __mcount_loc section, skipping");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (list_empty(&file->mcount_loc_list))
-		वापस 0;
+	if (list_empty(&file->mcount_loc_list))
+		return 0;
 
 	idx = 0;
-	list_क्रम_each_entry(insn, &file->mcount_loc_list, mcount_loc_node)
+	list_for_each_entry(insn, &file->mcount_loc_list, mcount_loc_node)
 		idx++;
 
-	sec = elf_create_section(file->elf, "__mcount_loc", 0, माप(अचिन्हित दीर्घ), idx);
-	अगर (!sec)
-		वापस -1;
+	sec = elf_create_section(file->elf, "__mcount_loc", 0, sizeof(unsigned long), idx);
+	if (!sec)
+		return -1;
 
 	idx = 0;
-	list_क्रम_each_entry(insn, &file->mcount_loc_list, mcount_loc_node) अणु
+	list_for_each_entry(insn, &file->mcount_loc_list, mcount_loc_node) {
 
-		loc = (अचिन्हित दीर्घ *)sec->data->d_buf + idx;
-		स_रखो(loc, 0, माप(अचिन्हित दीर्घ));
+		loc = (unsigned long *)sec->data->d_buf + idx;
+		memset(loc, 0, sizeof(unsigned long));
 
-		अगर (elf_add_reloc_to_insn(file->elf, sec,
-					  idx * माप(अचिन्हित दीर्घ),
+		if (elf_add_reloc_to_insn(file->elf, sec,
+					  idx * sizeof(unsigned long),
 					  R_X86_64_64,
 					  insn->sec, insn->offset))
-			वापस -1;
+			return -1;
 
 		idx++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Warnings shouldn't be reported क्रम ignored functions.
+ * Warnings shouldn't be reported for ignored functions.
  */
-अटल व्योम add_ignores(काष्ठा objtool_file *file)
-अणु
-	काष्ठा inकाष्ठाion *insn;
-	काष्ठा section *sec;
-	काष्ठा symbol *func;
-	काष्ठा reloc *reloc;
+static void add_ignores(struct objtool_file *file)
+{
+	struct instruction *insn;
+	struct section *sec;
+	struct symbol *func;
+	struct reloc *reloc;
 
 	sec = find_section_by_name(file->elf, ".rela.discard.func_stack_frame_non_standard");
-	अगर (!sec)
-		वापस;
+	if (!sec)
+		return;
 
-	list_क्रम_each_entry(reloc, &sec->reloc_list, list) अणु
-		चयन (reloc->sym->type) अणु
-		हाल STT_FUNC:
+	list_for_each_entry(reloc, &sec->reloc_list, list) {
+		switch (reloc->sym->type) {
+		case STT_FUNC:
 			func = reloc->sym;
-			अवरोध;
+			break;
 
-		हाल STT_SECTION:
+		case STT_SECTION:
 			func = find_func_by_offset(reloc->sym->sec, reloc->addend);
-			अगर (!func)
-				जारी;
-			अवरोध;
+			if (!func)
+				continue;
+			break;
 
-		शेष:
+		default:
 			WARN("unexpected relocation symbol type in %s: %d", sec->name, reloc->sym->type);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		func_क्रम_each_insn(file, func, insn)
+		func_for_each_insn(file, func, insn)
 			insn->ignore = true;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * This is a whitelist of functions that is allowed to be called with AC set.
  * The list is meant to be minimal and only contains compiler instrumentation
- * ABI and a few functions used to implement *_अणुto,fromपूर्ण_user() functions.
+ * ABI and a few functions used to implement *_{to,from}_user() functions.
  *
  * These functions must not directly change AC, but may PUSHF/POPF.
  */
-अटल स्थिर अक्षर *uaccess_safe_builtin[] = अणु
+static const char *uaccess_safe_builtin[] = {
 	/* KASAN */
 	"kasan_report",
 	"kasan_check_range",
@@ -751,262 +750,262 @@ reachable:
 	"copy_mc_fragile_handle_tail",
 	"copy_mc_enhanced_fast_string",
 	"ftrace_likely_update", /* CONFIG_TRACE_BRANCH_PROFILING */
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल व्योम add_uaccess_safe(काष्ठा objtool_file *file)
-अणु
-	काष्ठा symbol *func;
-	स्थिर अक्षर **name;
+static void add_uaccess_safe(struct objtool_file *file)
+{
+	struct symbol *func;
+	const char **name;
 
-	अगर (!uaccess)
-		वापस;
+	if (!uaccess)
+		return;
 
-	क्रम (name = uaccess_safe_builtin; *name; name++) अणु
+	for (name = uaccess_safe_builtin; *name; name++) {
 		func = find_symbol_by_name(file->elf, *name);
-		अगर (!func)
-			जारी;
+		if (!func)
+			continue;
 
 		func->uaccess_safe = true;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * FIXME: For now, just ignore any alternatives which add retpolines.  This is
- * a temporary hack, as it करोesn't allow ORC to unwind from inside a retpoline.
+ * a temporary hack, as it doesn't allow ORC to unwind from inside a retpoline.
  * But it at least allows objtool to understand the control flow *around* the
  * retpoline.
  */
-अटल पूर्णांक add_ignore_alternatives(काष्ठा objtool_file *file)
-अणु
-	काष्ठा section *sec;
-	काष्ठा reloc *reloc;
-	काष्ठा inकाष्ठाion *insn;
+static int add_ignore_alternatives(struct objtool_file *file)
+{
+	struct section *sec;
+	struct reloc *reloc;
+	struct instruction *insn;
 
 	sec = find_section_by_name(file->elf, ".rela.discard.ignore_alts");
-	अगर (!sec)
-		वापस 0;
+	if (!sec)
+		return 0;
 
-	list_क्रम_each_entry(reloc, &sec->reloc_list, list) अणु
-		अगर (reloc->sym->type != STT_SECTION) अणु
+	list_for_each_entry(reloc, &sec->reloc_list, list) {
+		if (reloc->sym->type != STT_SECTION) {
 			WARN("unexpected relocation symbol type in %s", sec->name);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
 		insn = find_insn(file, reloc->sym->sec, reloc->addend);
-		अगर (!insn) अणु
+		if (!insn) {
 			WARN("bad .discard.ignore_alts entry");
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
 		insn->ignore_alts = true;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-__weak bool arch_is_retpoline(काष्ठा symbol *sym)
-अणु
-	वापस false;
-पूर्ण
+__weak bool arch_is_retpoline(struct symbol *sym)
+{
+	return false;
+}
 
-#घोषणा NEGATIVE_RELOC	((व्योम *)-1L)
+#define NEGATIVE_RELOC	((void *)-1L)
 
-अटल काष्ठा reloc *insn_reloc(काष्ठा objtool_file *file, काष्ठा inकाष्ठाion *insn)
-अणु
-	अगर (insn->reloc == NEGATIVE_RELOC)
-		वापस शून्य;
+static struct reloc *insn_reloc(struct objtool_file *file, struct instruction *insn)
+{
+	if (insn->reloc == NEGATIVE_RELOC)
+		return NULL;
 
-	अगर (!insn->reloc) अणु
+	if (!insn->reloc) {
 		insn->reloc = find_reloc_by_dest_range(file->elf, insn->sec,
 						       insn->offset, insn->len);
-		अगर (!insn->reloc) अणु
+		if (!insn->reloc) {
 			insn->reloc = NEGATIVE_RELOC;
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
+			return NULL;
+		}
+	}
 
-	वापस insn->reloc;
-पूर्ण
+	return insn->reloc;
+}
 
 /*
- * Find the destination inकाष्ठाions क्रम all jumps.
+ * Find the destination instructions for all jumps.
  */
-अटल पूर्णांक add_jump_destinations(काष्ठा objtool_file *file)
-अणु
-	काष्ठा inकाष्ठाion *insn;
-	काष्ठा reloc *reloc;
-	काष्ठा section *dest_sec;
-	अचिन्हित दीर्घ dest_off;
+static int add_jump_destinations(struct objtool_file *file)
+{
+	struct instruction *insn;
+	struct reloc *reloc;
+	struct section *dest_sec;
+	unsigned long dest_off;
 
-	क्रम_each_insn(file, insn) अणु
-		अगर (!is_अटल_jump(insn))
-			जारी;
+	for_each_insn(file, insn) {
+		if (!is_static_jump(insn))
+			continue;
 
 		reloc = insn_reloc(file, insn);
-		अगर (!reloc) अणु
+		if (!reloc) {
 			dest_sec = insn->sec;
 			dest_off = arch_jump_destination(insn);
-		पूर्ण अन्यथा अगर (reloc->sym->type == STT_SECTION) अणु
+		} else if (reloc->sym->type == STT_SECTION) {
 			dest_sec = reloc->sym->sec;
 			dest_off = arch_dest_reloc_offset(reloc->addend);
-		पूर्ण अन्यथा अगर (arch_is_retpoline(reloc->sym)) अणु
+		} else if (arch_is_retpoline(reloc->sym)) {
 			/*
 			 * Retpoline jumps are really dynamic jumps in
 			 * disguise, so convert them accordingly.
 			 */
-			अगर (insn->type == INSN_JUMP_UNCONDITIONAL)
+			if (insn->type == INSN_JUMP_UNCONDITIONAL)
 				insn->type = INSN_JUMP_DYNAMIC;
-			अन्यथा
+			else
 				insn->type = INSN_JUMP_DYNAMIC_CONDITIONAL;
 
 			list_add_tail(&insn->call_node,
 				      &file->retpoline_call_list);
 
 			insn->retpoline_safe = true;
-			जारी;
-		पूर्ण अन्यथा अगर (insn->func) अणु
-			/* पूर्णांकernal or बाह्यal sibling call (with reloc) */
+			continue;
+		} else if (insn->func) {
+			/* internal or external sibling call (with reloc) */
 			insn->call_dest = reloc->sym;
-			अगर (insn->call_dest->अटल_call_tramp) अणु
+			if (insn->call_dest->static_call_tramp) {
 				list_add_tail(&insn->call_node,
-					      &file->अटल_call_list);
-			पूर्ण
-			जारी;
-		पूर्ण अन्यथा अगर (reloc->sym->sec->idx) अणु
+					      &file->static_call_list);
+			}
+			continue;
+		} else if (reloc->sym->sec->idx) {
 			dest_sec = reloc->sym->sec;
 			dest_off = reloc->sym->sym.st_value +
 				   arch_dest_reloc_offset(reloc->addend);
-		पूर्ण अन्यथा अणु
-			/* non-func यंत्र code jumping to another file */
-			जारी;
-		पूर्ण
+		} else {
+			/* non-func asm code jumping to another file */
+			continue;
+		}
 
 		insn->jump_dest = find_insn(file, dest_sec, dest_off);
-		अगर (!insn->jump_dest) अणु
+		if (!insn->jump_dest) {
 
 			/*
-			 * This is a special हाल where an alt inकाष्ठाion
+			 * This is a special case where an alt instruction
 			 * jumps past the end of the section.  These are
 			 * handled later in handle_group_alt().
 			 */
-			अगर (!म_भेद(insn->sec->name, ".altinstr_replacement"))
-				जारी;
+			if (!strcmp(insn->sec->name, ".altinstr_replacement"))
+				continue;
 
 			WARN_FUNC("can't find jump dest instruction at %s+0x%lx",
 				  insn->sec, insn->offset, dest_sec->name,
 				  dest_off);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
 		/*
 		 * Cross-function jump.
 		 */
-		अगर (insn->func && insn->jump_dest->func &&
-		    insn->func != insn->jump_dest->func) अणु
+		if (insn->func && insn->jump_dest->func &&
+		    insn->func != insn->jump_dest->func) {
 
 			/*
-			 * For GCC 8+, create parent/child links क्रम any cold
+			 * For GCC 8+, create parent/child links for any cold
 			 * subfunctions.  This is _mostly_ redundant with a
-			 * similar initialization in पढ़ो_symbols().
+			 * similar initialization in read_symbols().
 			 *
 			 * If a function has aliases, we want the *first* such
 			 * function in the symbol table to be the subfunction's
-			 * parent.  In that हाल we overग_लिखो the
-			 * initialization करोne in पढ़ो_symbols().
+			 * parent.  In that case we overwrite the
+			 * initialization done in read_symbols().
 			 *
 			 * However this code can't completely replace the
-			 * पढ़ो_symbols() code because this करोesn't detect the
-			 * हाल where the parent function's only reference to a
+			 * read_symbols() code because this doesn't detect the
+			 * case where the parent function's only reference to a
 			 * subfunction is through a jump table.
 			 */
-			अगर (!म_माला(insn->func->name, ".cold") &&
-			    म_माला(insn->jump_dest->func->name, ".cold")) अणु
+			if (!strstr(insn->func->name, ".cold") &&
+			    strstr(insn->jump_dest->func->name, ".cold")) {
 				insn->func->cfunc = insn->jump_dest->func;
 				insn->jump_dest->func->pfunc = insn->func;
 
-			पूर्ण अन्यथा अगर (insn->jump_dest->func->pfunc != insn->func->pfunc &&
-				   insn->jump_dest->offset == insn->jump_dest->func->offset) अणु
+			} else if (insn->jump_dest->func->pfunc != insn->func->pfunc &&
+				   insn->jump_dest->offset == insn->jump_dest->func->offset) {
 
-				/* पूर्णांकernal sibling call (without reloc) */
+				/* internal sibling call (without reloc) */
 				insn->call_dest = insn->jump_dest->func;
-				अगर (insn->call_dest->अटल_call_tramp) अणु
+				if (insn->call_dest->static_call_tramp) {
 					list_add_tail(&insn->call_node,
-						      &file->अटल_call_list);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+						      &file->static_call_list);
+				}
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम हटाओ_insn_ops(काष्ठा inकाष्ठाion *insn)
-अणु
-	काष्ठा stack_op *op, *पंचांगp;
+static void remove_insn_ops(struct instruction *insn)
+{
+	struct stack_op *op, *tmp;
 
-	list_क्रम_each_entry_safe(op, पंचांगp, &insn->stack_ops, list) अणु
+	list_for_each_entry_safe(op, tmp, &insn->stack_ops, list) {
 		list_del(&op->list);
-		मुक्त(op);
-	पूर्ण
-पूर्ण
+		free(op);
+	}
+}
 
-अटल काष्ठा symbol *find_call_destination(काष्ठा section *sec, अचिन्हित दीर्घ offset)
-अणु
-	काष्ठा symbol *call_dest;
+static struct symbol *find_call_destination(struct section *sec, unsigned long offset)
+{
+	struct symbol *call_dest;
 
 	call_dest = find_func_by_offset(sec, offset);
-	अगर (!call_dest)
+	if (!call_dest)
 		call_dest = find_symbol_by_offset(sec, offset);
 
-	वापस call_dest;
-पूर्ण
+	return call_dest;
+}
 
 /*
- * Find the destination inकाष्ठाions क्रम all calls.
+ * Find the destination instructions for all calls.
  */
-अटल पूर्णांक add_call_destinations(काष्ठा objtool_file *file)
-अणु
-	काष्ठा inकाष्ठाion *insn;
-	अचिन्हित दीर्घ dest_off;
-	काष्ठा reloc *reloc;
+static int add_call_destinations(struct objtool_file *file)
+{
+	struct instruction *insn;
+	unsigned long dest_off;
+	struct reloc *reloc;
 
-	क्रम_each_insn(file, insn) अणु
-		अगर (insn->type != INSN_CALL)
-			जारी;
+	for_each_insn(file, insn) {
+		if (insn->type != INSN_CALL)
+			continue;
 
 		reloc = insn_reloc(file, insn);
-		अगर (!reloc) अणु
+		if (!reloc) {
 			dest_off = arch_jump_destination(insn);
 			insn->call_dest = find_call_destination(insn->sec, dest_off);
 
-			अगर (insn->ignore)
-				जारी;
+			if (insn->ignore)
+				continue;
 
-			अगर (!insn->call_dest) अणु
+			if (!insn->call_dest) {
 				WARN_FUNC("unannotated intra-function call", insn->sec, insn->offset);
-				वापस -1;
-			पूर्ण
+				return -1;
+			}
 
-			अगर (insn->func && insn->call_dest->type != STT_FUNC) अणु
+			if (insn->func && insn->call_dest->type != STT_FUNC) {
 				WARN_FUNC("unsupported call to non-function",
 					  insn->sec, insn->offset);
-				वापस -1;
-			पूर्ण
+				return -1;
+			}
 
-		पूर्ण अन्यथा अगर (reloc->sym->type == STT_SECTION) अणु
+		} else if (reloc->sym->type == STT_SECTION) {
 			dest_off = arch_dest_reloc_offset(reloc->addend);
 			insn->call_dest = find_call_destination(reloc->sym->sec,
 								dest_off);
-			अगर (!insn->call_dest) अणु
+			if (!insn->call_dest) {
 				WARN_FUNC("can't find call dest symbol at %s+0x%lx",
 					  insn->sec, insn->offset,
 					  reloc->sym->sec->name,
 					  dest_off);
-				वापस -1;
-			पूर्ण
+				return -1;
+			}
 
-		पूर्ण अन्यथा अगर (arch_is_retpoline(reloc->sym)) अणु
+		} else if (arch_is_retpoline(reloc->sym)) {
 			/*
 			 * Retpoline calls are really dynamic calls in
 			 * disguise, so convert them accordingly.
@@ -1017,42 +1016,42 @@ __weak bool arch_is_retpoline(काष्ठा symbol *sym)
 			list_add_tail(&insn->call_node,
 				      &file->retpoline_call_list);
 
-			हटाओ_insn_ops(insn);
-			जारी;
+			remove_insn_ops(insn);
+			continue;
 
-		पूर्ण अन्यथा
+		} else
 			insn->call_dest = reloc->sym;
 
-		अगर (insn->call_dest && insn->call_dest->अटल_call_tramp) अणु
+		if (insn->call_dest && insn->call_dest->static_call_tramp) {
 			list_add_tail(&insn->call_node,
-				      &file->अटल_call_list);
-		पूर्ण
+				      &file->static_call_list);
+		}
 
 		/*
 		 * Many compilers cannot disable KCOV with a function attribute
 		 * so they need a little help, NOP out any KCOV calls from noinstr
 		 * text.
 		 */
-		अगर (insn->sec->noinstr &&
-		    !म_भेदन(insn->call_dest->name, "__sanitizer_cov_", 16)) अणु
-			अगर (reloc) अणु
+		if (insn->sec->noinstr &&
+		    !strncmp(insn->call_dest->name, "__sanitizer_cov_", 16)) {
+			if (reloc) {
 				reloc->type = R_NONE;
-				elf_ग_लिखो_reloc(file->elf, reloc);
-			पूर्ण
+				elf_write_reloc(file->elf, reloc);
+			}
 
-			elf_ग_लिखो_insn(file->elf, insn->sec,
+			elf_write_insn(file->elf, insn->sec,
 				       insn->offset, insn->len,
 				       arch_nop_insn(insn->len));
 			insn->type = INSN_NOP;
-		पूर्ण
+		}
 
-		अगर (mcount && !म_भेद(insn->call_dest->name, "__fentry__")) अणु
-			अगर (reloc) अणु
+		if (mcount && !strcmp(insn->call_dest->name, "__fentry__")) {
+			if (reloc) {
 				reloc->type = R_NONE;
-				elf_ग_लिखो_reloc(file->elf, reloc);
-			पूर्ण
+				elf_write_reloc(file->elf, reloc);
+			}
 
-			elf_ग_लिखो_insn(file->elf, insn->sec,
+			elf_write_insn(file->elf, insn->sec,
 				       insn->offset, insn->len,
 				       arch_nop_insn(insn->len));
 
@@ -1060,81 +1059,81 @@ __weak bool arch_is_retpoline(काष्ठा symbol *sym)
 
 			list_add_tail(&insn->mcount_loc_node,
 				      &file->mcount_loc_list);
-		पूर्ण
+		}
 
 		/*
-		 * Whatever stack impact regular CALLs have, should be unकरोne
+		 * Whatever stack impact regular CALLs have, should be undone
 		 * by the RETURN of the called function.
 		 *
-		 * Annotated पूर्णांकra-function calls retain the stack_ops but
-		 * are converted to JUMP, see पढ़ो_पूर्णांकra_function_calls().
+		 * Annotated intra-function calls retain the stack_ops but
+		 * are converted to JUMP, see read_intra_function_calls().
 		 */
-		हटाओ_insn_ops(insn);
-	पूर्ण
+		remove_insn_ops(insn);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * The .alternatives section requires some extra special care over and above
  * other special sections because alternatives are patched in place.
  */
-अटल पूर्णांक handle_group_alt(काष्ठा objtool_file *file,
-			    काष्ठा special_alt *special_alt,
-			    काष्ठा inकाष्ठाion *orig_insn,
-			    काष्ठा inकाष्ठाion **new_insn)
-अणु
-	काष्ठा inकाष्ठाion *last_orig_insn, *last_new_insn = शून्य, *insn, *nop = शून्य;
-	काष्ठा alt_group *orig_alt_group, *new_alt_group;
-	अचिन्हित दीर्घ dest_off;
+static int handle_group_alt(struct objtool_file *file,
+			    struct special_alt *special_alt,
+			    struct instruction *orig_insn,
+			    struct instruction **new_insn)
+{
+	struct instruction *last_orig_insn, *last_new_insn = NULL, *insn, *nop = NULL;
+	struct alt_group *orig_alt_group, *new_alt_group;
+	unsigned long dest_off;
 
 
-	orig_alt_group = दो_स्मृति(माप(*orig_alt_group));
-	अगर (!orig_alt_group) अणु
+	orig_alt_group = malloc(sizeof(*orig_alt_group));
+	if (!orig_alt_group) {
 		WARN("malloc failed");
-		वापस -1;
-	पूर्ण
-	orig_alt_group->cfi = सुस्मृति(special_alt->orig_len,
-				     माप(काष्ठा cfi_state *));
-	अगर (!orig_alt_group->cfi) अणु
+		return -1;
+	}
+	orig_alt_group->cfi = calloc(special_alt->orig_len,
+				     sizeof(struct cfi_state *));
+	if (!orig_alt_group->cfi) {
 		WARN("calloc failed");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	last_orig_insn = शून्य;
+	last_orig_insn = NULL;
 	insn = orig_insn;
-	sec_क्रम_each_insn_from(file, insn) अणु
-		अगर (insn->offset >= special_alt->orig_off + special_alt->orig_len)
-			अवरोध;
+	sec_for_each_insn_from(file, insn) {
+		if (insn->offset >= special_alt->orig_off + special_alt->orig_len)
+			break;
 
 		insn->alt_group = orig_alt_group;
 		last_orig_insn = insn;
-	पूर्ण
-	orig_alt_group->orig_group = शून्य;
+	}
+	orig_alt_group->orig_group = NULL;
 	orig_alt_group->first_insn = orig_insn;
 	orig_alt_group->last_insn = last_orig_insn;
 
 
-	new_alt_group = दो_स्मृति(माप(*new_alt_group));
-	अगर (!new_alt_group) अणु
+	new_alt_group = malloc(sizeof(*new_alt_group));
+	if (!new_alt_group) {
 		WARN("malloc failed");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (special_alt->new_len < special_alt->orig_len) अणु
+	if (special_alt->new_len < special_alt->orig_len) {
 		/*
 		 * Insert a fake nop at the end to make the replacement
 		 * alt_group the same size as the original.  This is needed to
-		 * allow propagate_alt_cfi() to करो its magic.  When the last
-		 * inकाष्ठाion affects the stack, the inकाष्ठाion after it (the
+		 * allow propagate_alt_cfi() to do its magic.  When the last
+		 * instruction affects the stack, the instruction after it (the
 		 * nop) will propagate the new state to the shared CFI array.
 		 */
-		nop = दो_स्मृति(माप(*nop));
-		अगर (!nop) अणु
+		nop = malloc(sizeof(*nop));
+		if (!nop) {
 			WARN("malloc failed");
-			वापस -1;
-		पूर्ण
-		स_रखो(nop, 0, माप(*nop));
+			return -1;
+		}
+		memset(nop, 0, sizeof(*nop));
 		INIT_LIST_HEAD(&nop->alts);
 		INIT_LIST_HEAD(&nop->stack_ops);
 		init_cfi_state(&nop->cfi);
@@ -1146,19 +1145,19 @@ __weak bool arch_is_retpoline(काष्ठा symbol *sym)
 		nop->func = orig_insn->func;
 		nop->alt_group = new_alt_group;
 		nop->ignore = orig_insn->ignore_alts;
-	पूर्ण
+	}
 
-	अगर (!special_alt->new_len) अणु
+	if (!special_alt->new_len) {
 		*new_insn = nop;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	insn = *new_insn;
-	sec_क्रम_each_insn_from(file, insn) अणु
-		काष्ठा reloc *alt_reloc;
+	sec_for_each_insn_from(file, insn) {
+		struct reloc *alt_reloc;
 
-		अगर (insn->offset >= special_alt->new_off + special_alt->new_len)
-			अवरोध;
+		if (insn->offset >= special_alt->new_off + special_alt->new_len)
+			break;
 
 		last_new_insn = insn;
 
@@ -1175,136 +1174,136 @@ __weak bool arch_is_retpoline(काष्ठा symbol *sym)
 		 * accordingly.
 		 */
 		alt_reloc = insn_reloc(file, insn);
-		अगर (alt_reloc &&
-		    !arch_support_alt_relocation(special_alt, insn, alt_reloc)) अणु
+		if (alt_reloc &&
+		    !arch_support_alt_relocation(special_alt, insn, alt_reloc)) {
 
 			WARN_FUNC("unsupported relocation in alternatives section",
 				  insn->sec, insn->offset);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
-		अगर (!is_अटल_jump(insn))
-			जारी;
+		if (!is_static_jump(insn))
+			continue;
 
-		अगर (!insn->immediate)
-			जारी;
+		if (!insn->immediate)
+			continue;
 
 		dest_off = arch_jump_destination(insn);
-		अगर (dest_off == special_alt->new_off + special_alt->new_len)
+		if (dest_off == special_alt->new_off + special_alt->new_len)
 			insn->jump_dest = next_insn_same_sec(file, last_orig_insn);
 
-		अगर (!insn->jump_dest) अणु
+		if (!insn->jump_dest) {
 			WARN_FUNC("can't find alternative jump destination",
 				  insn->sec, insn->offset);
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			return -1;
+		}
+	}
 
-	अगर (!last_new_insn) अणु
+	if (!last_new_insn) {
 		WARN_FUNC("can't find last new alternative instruction",
 			  special_alt->new_sec, special_alt->new_off);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (nop)
+	if (nop)
 		list_add(&nop->list, &last_new_insn->list);
 end:
 	new_alt_group->orig_group = orig_alt_group;
 	new_alt_group->first_insn = *new_insn;
 	new_alt_group->last_insn = nop ? : last_new_insn;
 	new_alt_group->cfi = orig_alt_group->cfi;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * A jump table entry can either convert a nop to a jump or a jump to a nop.
- * If the original inकाष्ठाion is a jump, make the alt entry an effective nop
- * by just skipping the original inकाष्ठाion.
+ * If the original instruction is a jump, make the alt entry an effective nop
+ * by just skipping the original instruction.
  */
-अटल पूर्णांक handle_jump_alt(काष्ठा objtool_file *file,
-			   काष्ठा special_alt *special_alt,
-			   काष्ठा inकाष्ठाion *orig_insn,
-			   काष्ठा inकाष्ठाion **new_insn)
-अणु
-	अगर (orig_insn->type == INSN_NOP)
-		वापस 0;
+static int handle_jump_alt(struct objtool_file *file,
+			   struct special_alt *special_alt,
+			   struct instruction *orig_insn,
+			   struct instruction **new_insn)
+{
+	if (orig_insn->type == INSN_NOP)
+		return 0;
 
-	अगर (orig_insn->type != INSN_JUMP_UNCONDITIONAL) अणु
+	if (orig_insn->type != INSN_JUMP_UNCONDITIONAL) {
 		WARN_FUNC("unsupported instruction at jump label",
 			  orig_insn->sec, orig_insn->offset);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	*new_insn = list_next_entry(orig_insn, list);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Read all the special sections which have alternate inकाष्ठाions which can be
- * patched in or redirected to at runसमय.  Each inकाष्ठाion having alternate
- * inकाष्ठाion(s) has them added to its insn->alts list, which will be
+ * Read all the special sections which have alternate instructions which can be
+ * patched in or redirected to at runtime.  Each instruction having alternate
+ * instruction(s) has them added to its insn->alts list, which will be
  * traversed in validate_branch().
  */
-अटल पूर्णांक add_special_section_alts(काष्ठा objtool_file *file)
-अणु
-	काष्ठा list_head special_alts;
-	काष्ठा inकाष्ठाion *orig_insn, *new_insn;
-	काष्ठा special_alt *special_alt, *पंचांगp;
-	काष्ठा alternative *alt;
-	पूर्णांक ret;
+static int add_special_section_alts(struct objtool_file *file)
+{
+	struct list_head special_alts;
+	struct instruction *orig_insn, *new_insn;
+	struct special_alt *special_alt, *tmp;
+	struct alternative *alt;
+	int ret;
 
 	ret = special_get_alts(file->elf, &special_alts);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	list_क्रम_each_entry_safe(special_alt, पंचांगp, &special_alts, list) अणु
+	list_for_each_entry_safe(special_alt, tmp, &special_alts, list) {
 
 		orig_insn = find_insn(file, special_alt->orig_sec,
 				      special_alt->orig_off);
-		अगर (!orig_insn) अणु
+		if (!orig_insn) {
 			WARN_FUNC("special: can't find orig instruction",
 				  special_alt->orig_sec, special_alt->orig_off);
 			ret = -1;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		new_insn = शून्य;
-		अगर (!special_alt->group || special_alt->new_len) अणु
+		new_insn = NULL;
+		if (!special_alt->group || special_alt->new_len) {
 			new_insn = find_insn(file, special_alt->new_sec,
 					     special_alt->new_off);
-			अगर (!new_insn) अणु
+			if (!new_insn) {
 				WARN_FUNC("special: can't find new instruction",
 					  special_alt->new_sec,
 					  special_alt->new_off);
 				ret = -1;
-				जाओ out;
-			पूर्ण
-		पूर्ण
+				goto out;
+			}
+		}
 
-		अगर (special_alt->group) अणु
-			अगर (!special_alt->orig_len) अणु
+		if (special_alt->group) {
+			if (!special_alt->orig_len) {
 				WARN_FUNC("empty alternative entry",
 					  orig_insn->sec, orig_insn->offset);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			ret = handle_group_alt(file, special_alt, orig_insn,
 					       &new_insn);
-			अगर (ret)
-				जाओ out;
-		पूर्ण अन्यथा अगर (special_alt->jump_or_nop) अणु
+			if (ret)
+				goto out;
+		} else if (special_alt->jump_or_nop) {
 			ret = handle_jump_alt(file, special_alt, orig_insn,
 					      &new_insn);
-			अगर (ret)
-				जाओ out;
-		पूर्ण
+			if (ret)
+				goto out;
+		}
 
-		alt = दो_स्मृति(माप(*alt));
-		अगर (!alt) अणु
+		alt = malloc(sizeof(*alt));
+		if (!alt) {
 			WARN("malloc failed");
 			ret = -1;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		alt->insn = new_insn;
 		alt->skip_orig = special_alt->skip_orig;
@@ -1312,382 +1311,382 @@ end:
 		list_add_tail(&alt->list, &orig_insn->alts);
 
 		list_del(&special_alt->list);
-		मुक्त(special_alt);
-	पूर्ण
+		free(special_alt);
+	}
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक add_jump_table(काष्ठा objtool_file *file, काष्ठा inकाष्ठाion *insn,
-			    काष्ठा reloc *table)
-अणु
-	काष्ठा reloc *reloc = table;
-	काष्ठा inकाष्ठाion *dest_insn;
-	काष्ठा alternative *alt;
-	काष्ठा symbol *pfunc = insn->func->pfunc;
-	अचिन्हित पूर्णांक prev_offset = 0;
+static int add_jump_table(struct objtool_file *file, struct instruction *insn,
+			    struct reloc *table)
+{
+	struct reloc *reloc = table;
+	struct instruction *dest_insn;
+	struct alternative *alt;
+	struct symbol *pfunc = insn->func->pfunc;
+	unsigned int prev_offset = 0;
 
 	/*
-	 * Each @reloc is a चयन table relocation which poपूर्णांकs to the target
-	 * inकाष्ठाion.
+	 * Each @reloc is a switch table relocation which points to the target
+	 * instruction.
 	 */
-	list_क्रम_each_entry_from(reloc, &table->sec->reloc_list, list) अणु
+	list_for_each_entry_from(reloc, &table->sec->reloc_list, list) {
 
-		/* Check क्रम the end of the table: */
-		अगर (reloc != table && reloc->jump_table_start)
-			अवरोध;
+		/* Check for the end of the table: */
+		if (reloc != table && reloc->jump_table_start)
+			break;
 
 		/* Make sure the table entries are consecutive: */
-		अगर (prev_offset && reloc->offset != prev_offset + 8)
-			अवरोध;
+		if (prev_offset && reloc->offset != prev_offset + 8)
+			break;
 
-		/* Detect function poपूर्णांकers from contiguous objects: */
-		अगर (reloc->sym->sec == pfunc->sec &&
+		/* Detect function pointers from contiguous objects: */
+		if (reloc->sym->sec == pfunc->sec &&
 		    reloc->addend == pfunc->offset)
-			अवरोध;
+			break;
 
 		dest_insn = find_insn(file, reloc->sym->sec, reloc->addend);
-		अगर (!dest_insn)
-			अवरोध;
+		if (!dest_insn)
+			break;
 
 		/* Make sure the destination is in the same function: */
-		अगर (!dest_insn->func || dest_insn->func->pfunc != pfunc)
-			अवरोध;
+		if (!dest_insn->func || dest_insn->func->pfunc != pfunc)
+			break;
 
-		alt = दो_स्मृति(माप(*alt));
-		अगर (!alt) अणु
+		alt = malloc(sizeof(*alt));
+		if (!alt) {
 			WARN("malloc failed");
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
 		alt->insn = dest_insn;
 		list_add_tail(&alt->list, &insn->alts);
 		prev_offset = reloc->offset;
-	पूर्ण
+	}
 
-	अगर (!prev_offset) अणु
+	if (!prev_offset) {
 		WARN_FUNC("can't find switch jump table",
 			  insn->sec, insn->offset);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * find_jump_table() - Given a dynamic jump, find the चयन jump table
+ * find_jump_table() - Given a dynamic jump, find the switch jump table
  * associated with it.
  */
-अटल काष्ठा reloc *find_jump_table(काष्ठा objtool_file *file,
-				      काष्ठा symbol *func,
-				      काष्ठा inकाष्ठाion *insn)
-अणु
-	काष्ठा reloc *table_reloc;
-	काष्ठा inकाष्ठाion *dest_insn, *orig_insn = insn;
+static struct reloc *find_jump_table(struct objtool_file *file,
+				      struct symbol *func,
+				      struct instruction *insn)
+{
+	struct reloc *table_reloc;
+	struct instruction *dest_insn, *orig_insn = insn;
 
 	/*
-	 * Backward search using the @first_jump_src links, these help aव्योम
-	 * much of the 'in between' code. Which aव्योमs us getting confused by
+	 * Backward search using the @first_jump_src links, these help avoid
+	 * much of the 'in between' code. Which avoids us getting confused by
 	 * it.
 	 */
-	क्रम (;
+	for (;
 	     insn && insn->func && insn->func->pfunc == func;
-	     insn = insn->first_jump_src ?: prev_insn_same_sym(file, insn)) अणु
+	     insn = insn->first_jump_src ?: prev_insn_same_sym(file, insn)) {
 
-		अगर (insn != orig_insn && insn->type == INSN_JUMP_DYNAMIC)
-			अवरोध;
+		if (insn != orig_insn && insn->type == INSN_JUMP_DYNAMIC)
+			break;
 
 		/* allow small jumps within the range */
-		अगर (insn->type == INSN_JUMP_UNCONDITIONAL &&
+		if (insn->type == INSN_JUMP_UNCONDITIONAL &&
 		    insn->jump_dest &&
 		    (insn->jump_dest->offset <= insn->offset ||
 		     insn->jump_dest->offset > orig_insn->offset))
-		    अवरोध;
+		    break;
 
-		table_reloc = arch_find_चयन_table(file, insn);
-		अगर (!table_reloc)
-			जारी;
+		table_reloc = arch_find_switch_table(file, insn);
+		if (!table_reloc)
+			continue;
 		dest_insn = find_insn(file, table_reloc->sym->sec, table_reloc->addend);
-		अगर (!dest_insn || !dest_insn->func || dest_insn->func->pfunc != func)
-			जारी;
+		if (!dest_insn || !dest_insn->func || dest_insn->func->pfunc != func)
+			continue;
 
-		वापस table_reloc;
-	पूर्ण
+		return table_reloc;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
  * First pass: Mark the head of each jump table so that in the next pass,
  * we know when a given jump table ends and the next one starts.
  */
-अटल व्योम mark_func_jump_tables(काष्ठा objtool_file *file,
-				    काष्ठा symbol *func)
-अणु
-	काष्ठा inकाष्ठाion *insn, *last = शून्य;
-	काष्ठा reloc *reloc;
+static void mark_func_jump_tables(struct objtool_file *file,
+				    struct symbol *func)
+{
+	struct instruction *insn, *last = NULL;
+	struct reloc *reloc;
 
-	func_क्रम_each_insn(file, func, insn) अणु
-		अगर (!last)
+	func_for_each_insn(file, func, insn) {
+		if (!last)
 			last = insn;
 
 		/*
-		 * Store back-poपूर्णांकers क्रम unconditional क्रमward jumps such
+		 * Store back-pointers for unconditional forward jumps such
 		 * that find_jump_table() can back-track using those and
-		 * aव्योम some potentially confusing code.
+		 * avoid some potentially confusing code.
 		 */
-		अगर (insn->type == INSN_JUMP_UNCONDITIONAL && insn->jump_dest &&
+		if (insn->type == INSN_JUMP_UNCONDITIONAL && insn->jump_dest &&
 		    insn->offset > last->offset &&
 		    insn->jump_dest->offset > insn->offset &&
-		    !insn->jump_dest->first_jump_src) अणु
+		    !insn->jump_dest->first_jump_src) {
 
 			insn->jump_dest->first_jump_src = insn;
 			last = insn->jump_dest;
-		पूर्ण
+		}
 
-		अगर (insn->type != INSN_JUMP_DYNAMIC)
-			जारी;
+		if (insn->type != INSN_JUMP_DYNAMIC)
+			continue;
 
 		reloc = find_jump_table(file, func, insn);
-		अगर (reloc) अणु
+		if (reloc) {
 			reloc->jump_table_start = true;
 			insn->jump_table = reloc;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक add_func_jump_tables(काष्ठा objtool_file *file,
-				  काष्ठा symbol *func)
-अणु
-	काष्ठा inकाष्ठाion *insn;
-	पूर्णांक ret;
+static int add_func_jump_tables(struct objtool_file *file,
+				  struct symbol *func)
+{
+	struct instruction *insn;
+	int ret;
 
-	func_क्रम_each_insn(file, func, insn) अणु
-		अगर (!insn->jump_table)
-			जारी;
+	func_for_each_insn(file, func, insn) {
+		if (!insn->jump_table)
+			continue;
 
 		ret = add_jump_table(file, insn, insn->jump_table);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * For some चयन statements, gcc generates a jump table in the .rodata
+ * For some switch statements, gcc generates a jump table in the .rodata
  * section which contains a list of addresses within the function to jump to.
  * This finds these jump tables and adds them to the insn->alts lists.
  */
-अटल पूर्णांक add_jump_table_alts(काष्ठा objtool_file *file)
-अणु
-	काष्ठा section *sec;
-	काष्ठा symbol *func;
-	पूर्णांक ret;
+static int add_jump_table_alts(struct objtool_file *file)
+{
+	struct section *sec;
+	struct symbol *func;
+	int ret;
 
-	अगर (!file->rodata)
-		वापस 0;
+	if (!file->rodata)
+		return 0;
 
-	क्रम_each_sec(file, sec) अणु
-		list_क्रम_each_entry(func, &sec->symbol_list, list) अणु
-			अगर (func->type != STT_FUNC)
-				जारी;
+	for_each_sec(file, sec) {
+		list_for_each_entry(func, &sec->symbol_list, list) {
+			if (func->type != STT_FUNC)
+				continue;
 
 			mark_func_jump_tables(file, func);
 			ret = add_func_jump_tables(file, func);
-			अगर (ret)
-				वापस ret;
-		पूर्ण
-	पूर्ण
+			if (ret)
+				return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम set_func_state(काष्ठा cfi_state *state)
-अणु
+static void set_func_state(struct cfi_state *state)
+{
 	state->cfa = initial_func_cfi.cfa;
-	स_नकल(&state->regs, &initial_func_cfi.regs,
-	       CFI_NUM_REGS * माप(काष्ठा cfi_reg));
+	memcpy(&state->regs, &initial_func_cfi.regs,
+	       CFI_NUM_REGS * sizeof(struct cfi_reg));
 	state->stack_size = initial_func_cfi.cfa.offset;
-पूर्ण
+}
 
-अटल पूर्णांक पढ़ो_unwind_hपूर्णांकs(काष्ठा objtool_file *file)
-अणु
-	काष्ठा section *sec, *relocsec;
-	काष्ठा reloc *reloc;
-	काष्ठा unwind_hपूर्णांक *hपूर्णांक;
-	काष्ठा inकाष्ठाion *insn;
-	पूर्णांक i;
+static int read_unwind_hints(struct objtool_file *file)
+{
+	struct section *sec, *relocsec;
+	struct reloc *reloc;
+	struct unwind_hint *hint;
+	struct instruction *insn;
+	int i;
 
 	sec = find_section_by_name(file->elf, ".discard.unwind_hints");
-	अगर (!sec)
-		वापस 0;
+	if (!sec)
+		return 0;
 
 	relocsec = sec->reloc;
-	अगर (!relocsec) अणु
+	if (!relocsec) {
 		WARN("missing .rela.discard.unwind_hints section");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (sec->len % माप(काष्ठा unwind_hपूर्णांक)) अणु
+	if (sec->len % sizeof(struct unwind_hint)) {
 		WARN("struct unwind_hint size mismatch");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	file->hपूर्णांकs = true;
+	file->hints = true;
 
-	क्रम (i = 0; i < sec->len / माप(काष्ठा unwind_hपूर्णांक); i++) अणु
-		hपूर्णांक = (काष्ठा unwind_hपूर्णांक *)sec->data->d_buf + i;
+	for (i = 0; i < sec->len / sizeof(struct unwind_hint); i++) {
+		hint = (struct unwind_hint *)sec->data->d_buf + i;
 
-		reloc = find_reloc_by_dest(file->elf, sec, i * माप(*hपूर्णांक));
-		अगर (!reloc) अणु
+		reloc = find_reloc_by_dest(file->elf, sec, i * sizeof(*hint));
+		if (!reloc) {
 			WARN("can't find reloc for unwind_hints[%d]", i);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
 		insn = find_insn(file, reloc->sym->sec, reloc->addend);
-		अगर (!insn) अणु
+		if (!insn) {
 			WARN("can't find insn for unwind_hints[%d]", i);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
-		insn->hपूर्णांक = true;
+		insn->hint = true;
 
-		अगर (hपूर्णांक->type == UNWIND_HINT_TYPE_FUNC) अणु
+		if (hint->type == UNWIND_HINT_TYPE_FUNC) {
 			set_func_state(&insn->cfi);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (arch_decode_hपूर्णांक_reg(insn, hपूर्णांक->sp_reg)) अणु
+		if (arch_decode_hint_reg(insn, hint->sp_reg)) {
 			WARN_FUNC("unsupported unwind_hint sp base reg %d",
-				  insn->sec, insn->offset, hपूर्णांक->sp_reg);
-			वापस -1;
-		पूर्ण
+				  insn->sec, insn->offset, hint->sp_reg);
+			return -1;
+		}
 
-		insn->cfi.cfa.offset = bswap_अगर_needed(hपूर्णांक->sp_offset);
-		insn->cfi.type = hपूर्णांक->type;
-		insn->cfi.end = hपूर्णांक->end;
-	पूर्ण
+		insn->cfi.cfa.offset = bswap_if_needed(hint->sp_offset);
+		insn->cfi.type = hint->type;
+		insn->cfi.end = hint->end;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पढ़ो_retpoline_hपूर्णांकs(काष्ठा objtool_file *file)
-अणु
-	काष्ठा section *sec;
-	काष्ठा inकाष्ठाion *insn;
-	काष्ठा reloc *reloc;
+static int read_retpoline_hints(struct objtool_file *file)
+{
+	struct section *sec;
+	struct instruction *insn;
+	struct reloc *reloc;
 
 	sec = find_section_by_name(file->elf, ".rela.discard.retpoline_safe");
-	अगर (!sec)
-		वापस 0;
+	if (!sec)
+		return 0;
 
-	list_क्रम_each_entry(reloc, &sec->reloc_list, list) अणु
-		अगर (reloc->sym->type != STT_SECTION) अणु
+	list_for_each_entry(reloc, &sec->reloc_list, list) {
+		if (reloc->sym->type != STT_SECTION) {
 			WARN("unexpected relocation symbol type in %s", sec->name);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
 		insn = find_insn(file, reloc->sym->sec, reloc->addend);
-		अगर (!insn) अणु
+		if (!insn) {
 			WARN("bad .discard.retpoline_safe entry");
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
-		अगर (insn->type != INSN_JUMP_DYNAMIC &&
-		    insn->type != INSN_CALL_DYNAMIC) अणु
+		if (insn->type != INSN_JUMP_DYNAMIC &&
+		    insn->type != INSN_CALL_DYNAMIC) {
 			WARN_FUNC("retpoline_safe hint not an indirect jump/call",
 				  insn->sec, insn->offset);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
 		insn->retpoline_safe = true;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पढ़ो_instr_hपूर्णांकs(काष्ठा objtool_file *file)
-अणु
-	काष्ठा section *sec;
-	काष्ठा inकाष्ठाion *insn;
-	काष्ठा reloc *reloc;
+static int read_instr_hints(struct objtool_file *file)
+{
+	struct section *sec;
+	struct instruction *insn;
+	struct reloc *reloc;
 
 	sec = find_section_by_name(file->elf, ".rela.discard.instr_end");
-	अगर (!sec)
-		वापस 0;
+	if (!sec)
+		return 0;
 
-	list_क्रम_each_entry(reloc, &sec->reloc_list, list) अणु
-		अगर (reloc->sym->type != STT_SECTION) अणु
+	list_for_each_entry(reloc, &sec->reloc_list, list) {
+		if (reloc->sym->type != STT_SECTION) {
 			WARN("unexpected relocation symbol type in %s", sec->name);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
 		insn = find_insn(file, reloc->sym->sec, reloc->addend);
-		अगर (!insn) अणु
+		if (!insn) {
 			WARN("bad .discard.instr_end entry");
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
 		insn->instr--;
-	पूर्ण
+	}
 
 	sec = find_section_by_name(file->elf, ".rela.discard.instr_begin");
-	अगर (!sec)
-		वापस 0;
+	if (!sec)
+		return 0;
 
-	list_क्रम_each_entry(reloc, &sec->reloc_list, list) अणु
-		अगर (reloc->sym->type != STT_SECTION) अणु
+	list_for_each_entry(reloc, &sec->reloc_list, list) {
+		if (reloc->sym->type != STT_SECTION) {
 			WARN("unexpected relocation symbol type in %s", sec->name);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
 		insn = find_insn(file, reloc->sym->sec, reloc->addend);
-		अगर (!insn) अणु
+		if (!insn) {
 			WARN("bad .discard.instr_begin entry");
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
 		insn->instr++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पढ़ो_पूर्णांकra_function_calls(काष्ठा objtool_file *file)
-अणु
-	काष्ठा inकाष्ठाion *insn;
-	काष्ठा section *sec;
-	काष्ठा reloc *reloc;
+static int read_intra_function_calls(struct objtool_file *file)
+{
+	struct instruction *insn;
+	struct section *sec;
+	struct reloc *reloc;
 
 	sec = find_section_by_name(file->elf, ".rela.discard.intra_function_calls");
-	अगर (!sec)
-		वापस 0;
+	if (!sec)
+		return 0;
 
-	list_क्रम_each_entry(reloc, &sec->reloc_list, list) अणु
-		अचिन्हित दीर्घ dest_off;
+	list_for_each_entry(reloc, &sec->reloc_list, list) {
+		unsigned long dest_off;
 
-		अगर (reloc->sym->type != STT_SECTION) अणु
+		if (reloc->sym->type != STT_SECTION) {
 			WARN("unexpected relocation symbol type in %s",
 			     sec->name);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
 		insn = find_insn(file, reloc->sym->sec, reloc->addend);
-		अगर (!insn) अणु
+		if (!insn) {
 			WARN("bad .discard.intra_function_call entry");
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
-		अगर (insn->type != INSN_CALL) अणु
+		if (insn->type != INSN_CALL) {
 			WARN_FUNC("intra_function_call not a direct call",
 				  insn->sec, insn->offset);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
 		/*
-		 * Treat पूर्णांकra-function CALLs as JMPs, but with a stack_op.
+		 * Treat intra-function CALLs as JMPs, but with a stack_op.
 		 * See add_call_destinations(), which strips stack_ops from
 		 * normal CALLs.
 		 */
@@ -1695,246 +1694,246 @@ out:
 
 		dest_off = insn->offset + insn->len + insn->immediate;
 		insn->jump_dest = find_insn(file, insn->sec, dest_off);
-		अगर (!insn->jump_dest) अणु
+		if (!insn->jump_dest) {
 			WARN_FUNC("can't find call dest at %s+0x%lx",
 				  insn->sec, insn->offset,
 				  insn->sec->name, dest_off);
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			return -1;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पढ़ो_अटल_call_tramps(काष्ठा objtool_file *file)
-अणु
-	काष्ठा section *sec;
-	काष्ठा symbol *func;
+static int read_static_call_tramps(struct objtool_file *file)
+{
+	struct section *sec;
+	struct symbol *func;
 
-	क्रम_each_sec(file, sec) अणु
-		list_क्रम_each_entry(func, &sec->symbol_list, list) अणु
-			अगर (func->bind == STB_GLOBAL &&
-			    !म_भेदन(func->name, STATIC_CALL_TRAMP_PREFIX_STR,
-				     म_माप(STATIC_CALL_TRAMP_PREFIX_STR)))
-				func->अटल_call_tramp = true;
-		पूर्ण
-	पूर्ण
+	for_each_sec(file, sec) {
+		list_for_each_entry(func, &sec->symbol_list, list) {
+			if (func->bind == STB_GLOBAL &&
+			    !strncmp(func->name, STATIC_CALL_TRAMP_PREFIX_STR,
+				     strlen(STATIC_CALL_TRAMP_PREFIX_STR)))
+				func->static_call_tramp = true;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mark_rodata(काष्ठा objtool_file *file)
-अणु
-	काष्ठा section *sec;
+static void mark_rodata(struct objtool_file *file)
+{
+	struct section *sec;
 	bool found = false;
 
 	/*
-	 * Search क्रम the following rodata sections, each of which can
+	 * Search for the following rodata sections, each of which can
 	 * potentially contain jump tables:
 	 *
-	 * - .rodata: can contain GCC चयन tables
-	 * - .rodata.<func>: same, अगर -fdata-sections is being used
+	 * - .rodata: can contain GCC switch tables
+	 * - .rodata.<func>: same, if -fdata-sections is being used
 	 * - .rodata..c_jump_table: contains C annotated jump tables
 	 *
-	 * .rodata.str1.* sections are ignored; they करोn't contain jump tables.
+	 * .rodata.str1.* sections are ignored; they don't contain jump tables.
 	 */
-	क्रम_each_sec(file, sec) अणु
-		अगर (!म_भेदन(sec->name, ".rodata", 7) &&
-		    !म_माला(sec->name, ".str1.")) अणु
+	for_each_sec(file, sec) {
+		if (!strncmp(sec->name, ".rodata", 7) &&
+		    !strstr(sec->name, ".str1.")) {
 			sec->rodata = true;
 			found = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	file->rodata = found;
-पूर्ण
+}
 
-__weak पूर्णांक arch_reग_लिखो_retpolines(काष्ठा objtool_file *file)
-अणु
-	वापस 0;
-पूर्ण
+__weak int arch_rewrite_retpolines(struct objtool_file *file)
+{
+	return 0;
+}
 
-अटल पूर्णांक decode_sections(काष्ठा objtool_file *file)
-अणु
-	पूर्णांक ret;
+static int decode_sections(struct objtool_file *file)
+{
+	int ret;
 
 	mark_rodata(file);
 
-	ret = decode_inकाष्ठाions(file);
-	अगर (ret)
-		वापस ret;
+	ret = decode_instructions(file);
+	if (ret)
+		return ret;
 
 	ret = add_dead_ends(file);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	add_ignores(file);
 	add_uaccess_safe(file);
 
 	ret = add_ignore_alternatives(file);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
-	 * Must be beक्रमe add_अणुjump_callपूर्ण_destination.
+	 * Must be before add_{jump_call}_destination.
 	 */
-	ret = पढ़ो_अटल_call_tramps(file);
-	अगर (ret)
-		वापस ret;
+	ret = read_static_call_tramps(file);
+	if (ret)
+		return ret;
 
 	/*
-	 * Must be beक्रमe add_special_section_alts() as that depends on
+	 * Must be before add_special_section_alts() as that depends on
 	 * jump_dest being set.
 	 */
 	ret = add_jump_destinations(file);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = add_special_section_alts(file);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
-	 * Must be beक्रमe add_call_destination(); it changes INSN_CALL to
+	 * Must be before add_call_destination(); it changes INSN_CALL to
 	 * INSN_JUMP.
 	 */
-	ret = पढ़ो_पूर्णांकra_function_calls(file);
-	अगर (ret)
-		वापस ret;
+	ret = read_intra_function_calls(file);
+	if (ret)
+		return ret;
 
 	ret = add_call_destinations(file);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = add_jump_table_alts(file);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = पढ़ो_unwind_hपूर्णांकs(file);
-	अगर (ret)
-		वापस ret;
+	ret = read_unwind_hints(file);
+	if (ret)
+		return ret;
 
-	ret = पढ़ो_retpoline_hपूर्णांकs(file);
-	अगर (ret)
-		वापस ret;
+	ret = read_retpoline_hints(file);
+	if (ret)
+		return ret;
 
-	ret = पढ़ो_instr_hपूर्णांकs(file);
-	अगर (ret)
-		वापस ret;
+	ret = read_instr_hints(file);
+	if (ret)
+		return ret;
 
 	/*
 	 * Must be after add_special_section_alts(), since this will emit
-	 * alternatives. Must be after add_अणुjump,callपूर्ण_destination(), since
+	 * alternatives. Must be after add_{jump,call}_destination(), since
 	 * those create the call insn lists.
 	 */
-	ret = arch_reग_लिखो_retpolines(file);
-	अगर (ret)
-		वापस ret;
+	ret = arch_rewrite_retpolines(file);
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool is_fentry_call(काष्ठा inकाष्ठाion *insn)
-अणु
-	अगर (insn->type == INSN_CALL && insn->call_dest &&
+static bool is_fentry_call(struct instruction *insn)
+{
+	if (insn->type == INSN_CALL && insn->call_dest &&
 	    insn->call_dest->type == STT_NOTYPE &&
-	    !म_भेद(insn->call_dest->name, "__fentry__"))
-		वापस true;
+	    !strcmp(insn->call_dest->name, "__fentry__"))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool has_modअगरied_stack_frame(काष्ठा inकाष्ठाion *insn, काष्ठा insn_state *state)
-अणु
-	काष्ठा cfi_state *cfi = &state->cfi;
-	पूर्णांक i;
+static bool has_modified_stack_frame(struct instruction *insn, struct insn_state *state)
+{
+	struct cfi_state *cfi = &state->cfi;
+	int i;
 
-	अगर (cfi->cfa.base != initial_func_cfi.cfa.base || cfi->drap)
-		वापस true;
+	if (cfi->cfa.base != initial_func_cfi.cfa.base || cfi->drap)
+		return true;
 
-	अगर (cfi->cfa.offset != initial_func_cfi.cfa.offset)
-		वापस true;
+	if (cfi->cfa.offset != initial_func_cfi.cfa.offset)
+		return true;
 
-	अगर (cfi->stack_size != initial_func_cfi.cfa.offset)
-		वापस true;
+	if (cfi->stack_size != initial_func_cfi.cfa.offset)
+		return true;
 
-	क्रम (i = 0; i < CFI_NUM_REGS; i++) अणु
-		अगर (cfi->regs[i].base != initial_func_cfi.regs[i].base ||
+	for (i = 0; i < CFI_NUM_REGS; i++) {
+		if (cfi->regs[i].base != initial_func_cfi.regs[i].base ||
 		    cfi->regs[i].offset != initial_func_cfi.regs[i].offset)
-			वापस true;
-	पूर्ण
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool check_reg_frame_pos(स्थिर काष्ठा cfi_reg *reg,
-				पूर्णांक expected_offset)
-अणु
-	वापस reg->base == CFI_CFA &&
+static bool check_reg_frame_pos(const struct cfi_reg *reg,
+				int expected_offset)
+{
+	return reg->base == CFI_CFA &&
 	       reg->offset == expected_offset;
-पूर्ण
+}
 
-अटल bool has_valid_stack_frame(काष्ठा insn_state *state)
-अणु
-	काष्ठा cfi_state *cfi = &state->cfi;
+static bool has_valid_stack_frame(struct insn_state *state)
+{
+	struct cfi_state *cfi = &state->cfi;
 
-	अगर (cfi->cfa.base == CFI_BP &&
+	if (cfi->cfa.base == CFI_BP &&
 	    check_reg_frame_pos(&cfi->regs[CFI_BP], -cfi->cfa.offset) &&
 	    check_reg_frame_pos(&cfi->regs[CFI_RA], -cfi->cfa.offset + 8))
-		वापस true;
+		return true;
 
-	अगर (cfi->drap && cfi->regs[CFI_BP].base == CFI_BP)
-		वापस true;
+	if (cfi->drap && cfi->regs[CFI_BP].base == CFI_BP)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक update_cfi_state_regs(काष्ठा inकाष्ठाion *insn,
-				  काष्ठा cfi_state *cfi,
-				  काष्ठा stack_op *op)
-अणु
-	काष्ठा cfi_reg *cfa = &cfi->cfa;
+static int update_cfi_state_regs(struct instruction *insn,
+				  struct cfi_state *cfi,
+				  struct stack_op *op)
+{
+	struct cfi_reg *cfa = &cfi->cfa;
 
-	अगर (cfa->base != CFI_SP && cfa->base != CFI_SP_INसूचीECT)
-		वापस 0;
+	if (cfa->base != CFI_SP && cfa->base != CFI_SP_INDIRECT)
+		return 0;
 
 	/* push */
-	अगर (op->dest.type == OP_DEST_PUSH || op->dest.type == OP_DEST_PUSHF)
+	if (op->dest.type == OP_DEST_PUSH || op->dest.type == OP_DEST_PUSHF)
 		cfa->offset += 8;
 
 	/* pop */
-	अगर (op->src.type == OP_SRC_POP || op->src.type == OP_SRC_POPF)
+	if (op->src.type == OP_SRC_POP || op->src.type == OP_SRC_POPF)
 		cfa->offset -= 8;
 
 	/* add immediate to sp */
-	अगर (op->dest.type == OP_DEST_REG && op->src.type == OP_SRC_ADD &&
+	if (op->dest.type == OP_DEST_REG && op->src.type == OP_SRC_ADD &&
 	    op->dest.reg == CFI_SP && op->src.reg == CFI_SP)
 		cfa->offset -= op->src.offset;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम save_reg(काष्ठा cfi_state *cfi, अचिन्हित अक्षर reg, पूर्णांक base, पूर्णांक offset)
-अणु
-	अगर (arch_callee_saved_reg(reg) &&
-	    cfi->regs[reg].base == CFI_UNDEFINED) अणु
+static void save_reg(struct cfi_state *cfi, unsigned char reg, int base, int offset)
+{
+	if (arch_callee_saved_reg(reg) &&
+	    cfi->regs[reg].base == CFI_UNDEFINED) {
 		cfi->regs[reg].base = base;
 		cfi->regs[reg].offset = offset;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम restore_reg(काष्ठा cfi_state *cfi, अचिन्हित अक्षर reg)
-अणु
+static void restore_reg(struct cfi_state *cfi, unsigned char reg)
+{
 	cfi->regs[reg].base = initial_func_cfi.regs[reg].base;
 	cfi->regs[reg].offset = initial_func_cfi.regs[reg].offset;
-पूर्ण
+}
 
 /*
  * A note about DRAP stack alignment:
  *
- * GCC has the concept of a DRAP रेजिस्टर, which is used to help keep track of
- * the stack poपूर्णांकer when aligning the stack.  r10 or r13 is used as the DRAP
- * रेजिस्टर.  The typical DRAP pattern is:
+ * GCC has the concept of a DRAP register, which is used to help keep track of
+ * the stack pointer when aligning the stack.  r10 or r13 is used as the DRAP
+ * register.  The typical DRAP pattern is:
  *
  *   4c 8d 54 24 08		lea    0x8(%rsp),%r10
  *   48 83 e4 c0		and    $0xffffffffffffffc0,%rsp
@@ -1971,8 +1970,8 @@ __weak पूर्णांक arch_reग_लिखो_retpolines(काष्�
  *   49 8d 62 f8		lea    -0x8(%r10),%rsp
  *   c3				retq
  *
- * Someबार r13 is used as the DRAP रेजिस्टर, in which हाल it's saved and
- * restored beक्रमehand:
+ * Sometimes r13 is used as the DRAP register, in which case it's saved and
+ * restored beforehand:
  *
  *   41 55			push   %r13
  *   4c 8d 6c 24 10		lea    0x10(%rsp),%r13
@@ -1982,57 +1981,57 @@ __weak पूर्णांक arch_reग_लिखो_retpolines(काष्�
  *   41 5d			pop    %r13
  *   c3				retq
  */
-अटल पूर्णांक update_cfi_state(काष्ठा inकाष्ठाion *insn,
-			    काष्ठा inकाष्ठाion *next_insn,
-			    काष्ठा cfi_state *cfi, काष्ठा stack_op *op)
-अणु
-	काष्ठा cfi_reg *cfa = &cfi->cfa;
-	काष्ठा cfi_reg *regs = cfi->regs;
+static int update_cfi_state(struct instruction *insn,
+			    struct instruction *next_insn,
+			    struct cfi_state *cfi, struct stack_op *op)
+{
+	struct cfi_reg *cfa = &cfi->cfa;
+	struct cfi_reg *regs = cfi->regs;
 
-	/* stack operations करोn't make sense with an undefined CFA */
-	अगर (cfa->base == CFI_UNDEFINED) अणु
-		अगर (insn->func) अणु
+	/* stack operations don't make sense with an undefined CFA */
+	if (cfa->base == CFI_UNDEFINED) {
+		if (insn->func) {
 			WARN_FUNC("undefined stack state", insn->sec, insn->offset);
-			वापस -1;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+			return -1;
+		}
+		return 0;
+	}
 
-	अगर (cfi->type == UNWIND_HINT_TYPE_REGS ||
+	if (cfi->type == UNWIND_HINT_TYPE_REGS ||
 	    cfi->type == UNWIND_HINT_TYPE_REGS_PARTIAL)
-		वापस update_cfi_state_regs(insn, cfi, op);
+		return update_cfi_state_regs(insn, cfi, op);
 
-	चयन (op->dest.type) अणु
+	switch (op->dest.type) {
 
-	हाल OP_DEST_REG:
-		चयन (op->src.type) अणु
+	case OP_DEST_REG:
+		switch (op->src.type) {
 
-		हाल OP_SRC_REG:
-			अगर (op->src.reg == CFI_SP && op->dest.reg == CFI_BP &&
+		case OP_SRC_REG:
+			if (op->src.reg == CFI_SP && op->dest.reg == CFI_BP &&
 			    cfa->base == CFI_SP &&
-			    check_reg_frame_pos(&regs[CFI_BP], -cfa->offset)) अणु
+			    check_reg_frame_pos(&regs[CFI_BP], -cfa->offset)) {
 
 				/* mov %rsp, %rbp */
 				cfa->base = op->dest.reg;
 				cfi->bp_scratch = false;
-			पूर्ण
+			}
 
-			अन्यथा अगर (op->src.reg == CFI_SP &&
-				 op->dest.reg == CFI_BP && cfi->drap) अणु
+			else if (op->src.reg == CFI_SP &&
+				 op->dest.reg == CFI_BP && cfi->drap) {
 
 				/* drap: mov %rsp, %rbp */
 				regs[CFI_BP].base = CFI_BP;
 				regs[CFI_BP].offset = -cfi->stack_size;
 				cfi->bp_scratch = false;
-			पूर्ण
+			}
 
-			अन्यथा अगर (op->src.reg == CFI_SP && cfa->base == CFI_SP) अणु
+			else if (op->src.reg == CFI_SP && cfa->base == CFI_SP) {
 
 				/*
 				 * mov %rsp, %reg
 				 *
-				 * This is needed क्रम the rare हाल where GCC
-				 * करोes:
+				 * This is needed for the rare case where GCC
+				 * does:
 				 *
 				 *   mov    %rsp, %rax
 				 *   ...
@@ -2040,28 +2039,28 @@ __weak पूर्णांक arch_reग_लिखो_retpolines(काष्�
 				 */
 				cfi->vals[op->dest.reg].base = CFI_CFA;
 				cfi->vals[op->dest.reg].offset = -cfi->stack_size;
-			पूर्ण
+			}
 
-			अन्यथा अगर (op->src.reg == CFI_BP && op->dest.reg == CFI_SP &&
-				 (cfa->base == CFI_BP || cfa->base == cfi->drap_reg)) अणु
+			else if (op->src.reg == CFI_BP && op->dest.reg == CFI_SP &&
+				 (cfa->base == CFI_BP || cfa->base == cfi->drap_reg)) {
 
 				/*
 				 * mov %rbp, %rsp
 				 *
-				 * Restore the original stack poपूर्णांकer (Clang).
+				 * Restore the original stack pointer (Clang).
 				 */
 				cfi->stack_size = -cfi->regs[CFI_BP].offset;
-			पूर्ण
+			}
 
-			अन्यथा अगर (op->dest.reg == cfa->base) अणु
+			else if (op->dest.reg == cfa->base) {
 
 				/* mov %reg, %rsp */
-				अगर (cfa->base == CFI_SP &&
-				    cfi->vals[op->src.reg].base == CFI_CFA) अणु
+				if (cfa->base == CFI_SP &&
+				    cfi->vals[op->src.reg].base == CFI_CFA) {
 
 					/*
-					 * This is needed क्रम the rare हाल
-					 * where GCC करोes something dumb like:
+					 * This is needed for the rare case
+					 * where GCC does something dumb like:
 					 *
 					 *   lea    0x8(%rsp), %rcx
 					 *   ...
@@ -2070,9 +2069,9 @@ __weak पूर्णांक arch_reग_लिखो_retpolines(काष्�
 					cfa->offset = -cfi->vals[op->src.reg].offset;
 					cfi->stack_size = cfa->offset;
 
-				पूर्ण अन्यथा अगर (cfa->base == CFI_SP &&
-					   cfi->vals[op->src.reg].base == CFI_SP_INसूचीECT &&
-					   cfi->vals[op->src.reg].offset == cfa->offset) अणु
+				} else if (cfa->base == CFI_SP &&
+					   cfi->vals[op->src.reg].base == CFI_SP_INDIRECT &&
+					   cfi->vals[op->src.reg].offset == cfa->offset) {
 
 					/*
 					 * Stack swizzle:
@@ -2084,75 +2083,75 @@ __weak पूर्णांक arch_reग_लिखो_retpolines(काष्�
 					 *
 					 * Where:
 					 *
-					 * 1 - places a poपूर्णांकer to the previous
+					 * 1 - places a pointer to the previous
 					 *     stack at the Top-of-Stack of the
 					 *     new stack.
 					 *
-					 * 2 - चयनes to the new stack.
+					 * 2 - switches to the new stack.
 					 *
 					 * 3 - pops the Top-of-Stack to restore
 					 *     the original stack.
 					 *
-					 * Note: we set base to SP_INसूचीECT
-					 * here and preserve offset. Thereक्रमe
+					 * Note: we set base to SP_INDIRECT
+					 * here and preserve offset. Therefore
 					 * when the unwinder reaches ToS it
 					 * will dereference SP and then add the
 					 * offset to find the next frame, IOW:
 					 * (%rsp) + offset.
 					 */
-					cfa->base = CFI_SP_INसूचीECT;
+					cfa->base = CFI_SP_INDIRECT;
 
-				पूर्ण अन्यथा अणु
+				} else {
 					cfa->base = CFI_UNDEFINED;
 					cfa->offset = 0;
-				पूर्ण
-			पूर्ण
+				}
+			}
 
-			अन्यथा अगर (op->dest.reg == CFI_SP &&
-				 cfi->vals[op->src.reg].base == CFI_SP_INसूचीECT &&
-				 cfi->vals[op->src.reg].offset == cfa->offset) अणु
+			else if (op->dest.reg == CFI_SP &&
+				 cfi->vals[op->src.reg].base == CFI_SP_INDIRECT &&
+				 cfi->vals[op->src.reg].offset == cfa->offset) {
 
 				/*
-				 * The same stack swizzle हाल 2) as above. But
-				 * because we can't change cfa->base, हाल 3)
+				 * The same stack swizzle case 2) as above. But
+				 * because we can't change cfa->base, case 3)
 				 * will become a regular POP. Pretend we're a
-				 * PUSH so things करोn't go unbalanced.
+				 * PUSH so things don't go unbalanced.
 				 */
 				cfi->stack_size += 8;
-			पूर्ण
+			}
 
 
-			अवरोध;
+			break;
 
-		हाल OP_SRC_ADD:
-			अगर (op->dest.reg == CFI_SP && op->src.reg == CFI_SP) अणु
+		case OP_SRC_ADD:
+			if (op->dest.reg == CFI_SP && op->src.reg == CFI_SP) {
 
 				/* add imm, %rsp */
 				cfi->stack_size -= op->src.offset;
-				अगर (cfa->base == CFI_SP)
+				if (cfa->base == CFI_SP)
 					cfa->offset -= op->src.offset;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			अगर (op->dest.reg == CFI_SP && op->src.reg == CFI_BP) अणु
+			if (op->dest.reg == CFI_SP && op->src.reg == CFI_BP) {
 
 				/* lea disp(%rbp), %rsp */
 				cfi->stack_size = -(op->src.offset + regs[CFI_BP].offset);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			अगर (!cfi->drap && op->src.reg == CFI_SP &&
+			if (!cfi->drap && op->src.reg == CFI_SP &&
 			    op->dest.reg == CFI_BP && cfa->base == CFI_SP &&
-			    check_reg_frame_pos(&regs[CFI_BP], -cfa->offset + op->src.offset)) अणु
+			    check_reg_frame_pos(&regs[CFI_BP], -cfa->offset + op->src.offset)) {
 
 				/* lea disp(%rsp), %rbp */
 				cfa->base = CFI_BP;
 				cfa->offset -= op->src.offset;
 				cfi->bp_scratch = false;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			अगर (op->src.reg == CFI_SP && cfa->base == CFI_SP) अणु
+			if (op->src.reg == CFI_SP && cfa->base == CFI_SP) {
 
 				/* drap: lea disp(%rsp), %drap */
 				cfi->drap_reg = op->dest.reg;
@@ -2160,8 +2159,8 @@ __weak पूर्णांक arch_reग_लिखो_retpolines(काष्�
 				/*
 				 * lea disp(%rsp), %reg
 				 *
-				 * This is needed क्रम the rare हाल where GCC
-				 * करोes something dumb like:
+				 * This is needed for the rare case where GCC
+				 * does something dumb like:
 				 *
 				 *   lea    0x8(%rsp), %rcx
 				 *   ...
@@ -2171,793 +2170,793 @@ __weak पूर्णांक arch_reग_लिखो_retpolines(काष्�
 				cfi->vals[op->dest.reg].offset = \
 					-cfi->stack_size + op->src.offset;
 
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			अगर (cfi->drap && op->dest.reg == CFI_SP &&
-			    op->src.reg == cfi->drap_reg) अणु
+			if (cfi->drap && op->dest.reg == CFI_SP &&
+			    op->src.reg == cfi->drap_reg) {
 
 				 /* drap: lea disp(%drap), %rsp */
 				cfa->base = CFI_SP;
 				cfa->offset = cfi->stack_size = -op->src.offset;
 				cfi->drap_reg = CFI_UNDEFINED;
 				cfi->drap = false;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			अगर (op->dest.reg == cfi->cfa.base && !(next_insn && next_insn->hपूर्णांक)) अणु
+			if (op->dest.reg == cfi->cfa.base && !(next_insn && next_insn->hint)) {
 				WARN_FUNC("unsupported stack register modification",
 					  insn->sec, insn->offset);
-				वापस -1;
-			पूर्ण
+				return -1;
+			}
 
-			अवरोध;
+			break;
 
-		हाल OP_SRC_AND:
-			अगर (op->dest.reg != CFI_SP ||
+		case OP_SRC_AND:
+			if (op->dest.reg != CFI_SP ||
 			    (cfi->drap_reg != CFI_UNDEFINED && cfa->base != CFI_SP) ||
-			    (cfi->drap_reg == CFI_UNDEFINED && cfa->base != CFI_BP)) अणु
+			    (cfi->drap_reg == CFI_UNDEFINED && cfa->base != CFI_BP)) {
 				WARN_FUNC("unsupported stack pointer realignment",
 					  insn->sec, insn->offset);
-				वापस -1;
-			पूर्ण
+				return -1;
+			}
 
-			अगर (cfi->drap_reg != CFI_UNDEFINED) अणु
+			if (cfi->drap_reg != CFI_UNDEFINED) {
 				/* drap: and imm, %rsp */
 				cfa->base = cfi->drap_reg;
 				cfa->offset = cfi->stack_size = 0;
 				cfi->drap = true;
-			पूर्ण
+			}
 
 			/*
 			 * Older versions of GCC (4.8ish) realign the stack
-			 * without DRAP, with a frame poपूर्णांकer.
+			 * without DRAP, with a frame pointer.
 			 */
 
-			अवरोध;
+			break;
 
-		हाल OP_SRC_POP:
-		हाल OP_SRC_POPF:
-			अगर (op->dest.reg == CFI_SP && cfa->base == CFI_SP_INसूचीECT) अणु
+		case OP_SRC_POP:
+		case OP_SRC_POPF:
+			if (op->dest.reg == CFI_SP && cfa->base == CFI_SP_INDIRECT) {
 
 				/* pop %rsp; # restore from a stack swizzle */
 				cfa->base = CFI_SP;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			अगर (!cfi->drap && op->dest.reg == cfa->base) अणु
+			if (!cfi->drap && op->dest.reg == cfa->base) {
 
 				/* pop %rbp */
 				cfa->base = CFI_SP;
-			पूर्ण
+			}
 
-			अगर (cfi->drap && cfa->base == CFI_BP_INसूचीECT &&
+			if (cfi->drap && cfa->base == CFI_BP_INDIRECT &&
 			    op->dest.reg == cfi->drap_reg &&
-			    cfi->drap_offset == -cfi->stack_size) अणु
+			    cfi->drap_offset == -cfi->stack_size) {
 
 				/* drap: pop %drap */
 				cfa->base = cfi->drap_reg;
 				cfa->offset = 0;
 				cfi->drap_offset = -1;
 
-			पूर्ण अन्यथा अगर (cfi->stack_size == -regs[op->dest.reg].offset) अणु
+			} else if (cfi->stack_size == -regs[op->dest.reg].offset) {
 
 				/* pop %reg */
 				restore_reg(cfi, op->dest.reg);
-			पूर्ण
+			}
 
 			cfi->stack_size -= 8;
-			अगर (cfa->base == CFI_SP)
+			if (cfa->base == CFI_SP)
 				cfa->offset -= 8;
 
-			अवरोध;
+			break;
 
-		हाल OP_SRC_REG_INसूचीECT:
-			अगर (!cfi->drap && op->dest.reg == cfa->base &&
-			    op->dest.reg == CFI_BP) अणु
+		case OP_SRC_REG_INDIRECT:
+			if (!cfi->drap && op->dest.reg == cfa->base &&
+			    op->dest.reg == CFI_BP) {
 
 				/* mov disp(%rsp), %rbp */
 				cfa->base = CFI_SP;
 				cfa->offset = cfi->stack_size;
-			पूर्ण
+			}
 
-			अगर (cfi->drap && op->src.reg == CFI_BP &&
-			    op->src.offset == cfi->drap_offset) अणु
+			if (cfi->drap && op->src.reg == CFI_BP &&
+			    op->src.offset == cfi->drap_offset) {
 
 				/* drap: mov disp(%rbp), %drap */
 				cfa->base = cfi->drap_reg;
 				cfa->offset = 0;
 				cfi->drap_offset = -1;
-			पूर्ण
+			}
 
-			अगर (cfi->drap && op->src.reg == CFI_BP &&
-			    op->src.offset == regs[op->dest.reg].offset) अणु
+			if (cfi->drap && op->src.reg == CFI_BP &&
+			    op->src.offset == regs[op->dest.reg].offset) {
 
 				/* drap: mov disp(%rbp), %reg */
 				restore_reg(cfi, op->dest.reg);
 
-			पूर्ण अन्यथा अगर (op->src.reg == cfa->base &&
-			    op->src.offset == regs[op->dest.reg].offset + cfa->offset) अणु
+			} else if (op->src.reg == cfa->base &&
+			    op->src.offset == regs[op->dest.reg].offset + cfa->offset) {
 
 				/* mov disp(%rbp), %reg */
 				/* mov disp(%rsp), %reg */
 				restore_reg(cfi, op->dest.reg);
 
-			पूर्ण अन्यथा अगर (op->src.reg == CFI_SP &&
-				   op->src.offset == regs[op->dest.reg].offset + cfi->stack_size) अणु
+			} else if (op->src.reg == CFI_SP &&
+				   op->src.offset == regs[op->dest.reg].offset + cfi->stack_size) {
 
 				/* mov disp(%rsp), %reg */
 				restore_reg(cfi, op->dest.reg);
-			पूर्ण
+			}
 
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			WARN_FUNC("unknown stack-related instruction",
 				  insn->sec, insn->offset);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
-		अवरोध;
+		break;
 
-	हाल OP_DEST_PUSH:
-	हाल OP_DEST_PUSHF:
+	case OP_DEST_PUSH:
+	case OP_DEST_PUSHF:
 		cfi->stack_size += 8;
-		अगर (cfa->base == CFI_SP)
+		if (cfa->base == CFI_SP)
 			cfa->offset += 8;
 
-		अगर (op->src.type != OP_SRC_REG)
-			अवरोध;
+		if (op->src.type != OP_SRC_REG)
+			break;
 
-		अगर (cfi->drap) अणु
-			अगर (op->src.reg == cfa->base && op->src.reg == cfi->drap_reg) अणु
+		if (cfi->drap) {
+			if (op->src.reg == cfa->base && op->src.reg == cfi->drap_reg) {
 
 				/* drap: push %drap */
-				cfa->base = CFI_BP_INसूचीECT;
+				cfa->base = CFI_BP_INDIRECT;
 				cfa->offset = -cfi->stack_size;
 
 				/* save drap so we know when to restore it */
 				cfi->drap_offset = -cfi->stack_size;
 
-			पूर्ण अन्यथा अगर (op->src.reg == CFI_BP && cfa->base == cfi->drap_reg) अणु
+			} else if (op->src.reg == CFI_BP && cfa->base == cfi->drap_reg) {
 
 				/* drap: push %rbp */
 				cfi->stack_size = 0;
 
-			पूर्ण अन्यथा अणु
+			} else {
 
 				/* drap: push %reg */
 				save_reg(cfi, op->src.reg, CFI_BP, -cfi->stack_size);
-			पूर्ण
+			}
 
-		पूर्ण अन्यथा अणु
+		} else {
 
 			/* push %reg */
 			save_reg(cfi, op->src.reg, CFI_CFA, -cfi->stack_size);
-		पूर्ण
+		}
 
-		/* detect when यंत्र code uses rbp as a scratch रेजिस्टर */
-		अगर (!no_fp && insn->func && op->src.reg == CFI_BP &&
+		/* detect when asm code uses rbp as a scratch register */
+		if (!no_fp && insn->func && op->src.reg == CFI_BP &&
 		    cfa->base != CFI_BP)
 			cfi->bp_scratch = true;
-		अवरोध;
+		break;
 
-	हाल OP_DEST_REG_INसूचीECT:
+	case OP_DEST_REG_INDIRECT:
 
-		अगर (cfi->drap) अणु
-			अगर (op->src.reg == cfa->base && op->src.reg == cfi->drap_reg) अणु
+		if (cfi->drap) {
+			if (op->src.reg == cfa->base && op->src.reg == cfi->drap_reg) {
 
 				/* drap: mov %drap, disp(%rbp) */
-				cfa->base = CFI_BP_INसूचीECT;
+				cfa->base = CFI_BP_INDIRECT;
 				cfa->offset = op->dest.offset;
 
 				/* save drap offset so we know when to restore it */
 				cfi->drap_offset = op->dest.offset;
-			पूर्ण अन्यथा अणु
+			} else {
 
 				/* drap: mov reg, disp(%rbp) */
 				save_reg(cfi, op->src.reg, CFI_BP, op->dest.offset);
-			पूर्ण
+			}
 
-		पूर्ण अन्यथा अगर (op->dest.reg == cfa->base) अणु
+		} else if (op->dest.reg == cfa->base) {
 
 			/* mov reg, disp(%rbp) */
 			/* mov reg, disp(%rsp) */
 			save_reg(cfi, op->src.reg, CFI_CFA,
 				 op->dest.offset - cfi->cfa.offset);
 
-		पूर्ण अन्यथा अगर (op->dest.reg == CFI_SP) अणु
+		} else if (op->dest.reg == CFI_SP) {
 
 			/* mov reg, disp(%rsp) */
 			save_reg(cfi, op->src.reg, CFI_CFA,
 				 op->dest.offset - cfi->stack_size);
 
-		पूर्ण अन्यथा अगर (op->src.reg == CFI_SP && op->dest.offset == 0) अणु
+		} else if (op->src.reg == CFI_SP && op->dest.offset == 0) {
 
 			/* mov %rsp, (%reg); # setup a stack swizzle. */
-			cfi->vals[op->dest.reg].base = CFI_SP_INसूचीECT;
+			cfi->vals[op->dest.reg].base = CFI_SP_INDIRECT;
 			cfi->vals[op->dest.reg].offset = cfa->offset;
-		पूर्ण
+		}
 
-		अवरोध;
+		break;
 
-	हाल OP_DEST_MEM:
-		अगर (op->src.type != OP_SRC_POP && op->src.type != OP_SRC_POPF) अणु
+	case OP_DEST_MEM:
+		if (op->src.type != OP_SRC_POP && op->src.type != OP_SRC_POPF) {
 			WARN_FUNC("unknown stack-related memory operation",
 				  insn->sec, insn->offset);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
 		/* pop mem */
 		cfi->stack_size -= 8;
-		अगर (cfa->base == CFI_SP)
+		if (cfa->base == CFI_SP)
 			cfa->offset -= 8;
 
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		WARN_FUNC("unknown stack-related instruction",
 			  insn->sec, insn->offset);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * The stack layouts of alternatives inकाष्ठाions can someबार भागerge when
- * they have stack modअगरications.  That's fine as दीर्घ as the potential stack
- * layouts करोn't conflict at any given potential inकाष्ठाion boundary.
+ * The stack layouts of alternatives instructions can sometimes diverge when
+ * they have stack modifications.  That's fine as long as the potential stack
+ * layouts don't conflict at any given potential instruction boundary.
  *
- * Flatten the CFIs of the dअगरferent alternative code streams (both original
- * and replacement) पूर्णांकo a single shared CFI array which can be used to detect
+ * Flatten the CFIs of the different alternative code streams (both original
+ * and replacement) into a single shared CFI array which can be used to detect
  * conflicts and nicely feed a linear array of ORC entries to the unwinder.
  */
-अटल पूर्णांक propagate_alt_cfi(काष्ठा objtool_file *file, काष्ठा inकाष्ठाion *insn)
-अणु
-	काष्ठा cfi_state **alt_cfi;
-	पूर्णांक group_off;
+static int propagate_alt_cfi(struct objtool_file *file, struct instruction *insn)
+{
+	struct cfi_state **alt_cfi;
+	int group_off;
 
-	अगर (!insn->alt_group)
-		वापस 0;
+	if (!insn->alt_group)
+		return 0;
 
 	alt_cfi = insn->alt_group->cfi;
 	group_off = insn->offset - insn->alt_group->first_insn->offset;
 
-	अगर (!alt_cfi[group_off]) अणु
+	if (!alt_cfi[group_off]) {
 		alt_cfi[group_off] = &insn->cfi;
-	पूर्ण अन्यथा अणु
-		अगर (स_भेद(alt_cfi[group_off], &insn->cfi, माप(काष्ठा cfi_state))) अणु
+	} else {
+		if (memcmp(alt_cfi[group_off], &insn->cfi, sizeof(struct cfi_state))) {
 			WARN_FUNC("stack layout conflict in alternatives",
 				  insn->sec, insn->offset);
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			return -1;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक handle_insn_ops(काष्ठा inकाष्ठाion *insn,
-			   काष्ठा inकाष्ठाion *next_insn,
-			   काष्ठा insn_state *state)
-अणु
-	काष्ठा stack_op *op;
+static int handle_insn_ops(struct instruction *insn,
+			   struct instruction *next_insn,
+			   struct insn_state *state)
+{
+	struct stack_op *op;
 
-	list_क्रम_each_entry(op, &insn->stack_ops, list) अणु
+	list_for_each_entry(op, &insn->stack_ops, list) {
 
-		अगर (update_cfi_state(insn, next_insn, &state->cfi, op))
-			वापस 1;
+		if (update_cfi_state(insn, next_insn, &state->cfi, op))
+			return 1;
 
-		अगर (!insn->alt_group)
-			जारी;
+		if (!insn->alt_group)
+			continue;
 
-		अगर (op->dest.type == OP_DEST_PUSHF) अणु
-			अगर (!state->uaccess_stack) अणु
+		if (op->dest.type == OP_DEST_PUSHF) {
+			if (!state->uaccess_stack) {
 				state->uaccess_stack = 1;
-			पूर्ण अन्यथा अगर (state->uaccess_stack >> 31) अणु
+			} else if (state->uaccess_stack >> 31) {
 				WARN_FUNC("PUSHF stack exhausted",
 					  insn->sec, insn->offset);
-				वापस 1;
-			पूर्ण
+				return 1;
+			}
 			state->uaccess_stack <<= 1;
 			state->uaccess_stack  |= state->uaccess;
-		पूर्ण
+		}
 
-		अगर (op->src.type == OP_SRC_POPF) अणु
-			अगर (state->uaccess_stack) अणु
+		if (op->src.type == OP_SRC_POPF) {
+			if (state->uaccess_stack) {
 				state->uaccess = state->uaccess_stack & 1;
 				state->uaccess_stack >>= 1;
-				अगर (state->uaccess_stack == 1)
+				if (state->uaccess_stack == 1)
 					state->uaccess_stack = 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool insn_cfi_match(काष्ठा inकाष्ठाion *insn, काष्ठा cfi_state *cfi2)
-अणु
-	काष्ठा cfi_state *cfi1 = &insn->cfi;
-	पूर्णांक i;
+static bool insn_cfi_match(struct instruction *insn, struct cfi_state *cfi2)
+{
+	struct cfi_state *cfi1 = &insn->cfi;
+	int i;
 
-	अगर (स_भेद(&cfi1->cfa, &cfi2->cfa, माप(cfi1->cfa))) अणु
+	if (memcmp(&cfi1->cfa, &cfi2->cfa, sizeof(cfi1->cfa))) {
 
 		WARN_FUNC("stack state mismatch: cfa1=%d%+d cfa2=%d%+d",
 			  insn->sec, insn->offset,
 			  cfi1->cfa.base, cfi1->cfa.offset,
 			  cfi2->cfa.base, cfi2->cfa.offset);
 
-	पूर्ण अन्यथा अगर (स_भेद(&cfi1->regs, &cfi2->regs, माप(cfi1->regs))) अणु
-		क्रम (i = 0; i < CFI_NUM_REGS; i++) अणु
-			अगर (!स_भेद(&cfi1->regs[i], &cfi2->regs[i],
-				    माप(काष्ठा cfi_reg)))
-				जारी;
+	} else if (memcmp(&cfi1->regs, &cfi2->regs, sizeof(cfi1->regs))) {
+		for (i = 0; i < CFI_NUM_REGS; i++) {
+			if (!memcmp(&cfi1->regs[i], &cfi2->regs[i],
+				    sizeof(struct cfi_reg)))
+				continue;
 
 			WARN_FUNC("stack state mismatch: reg1[%d]=%d%+d reg2[%d]=%d%+d",
 				  insn->sec, insn->offset,
 				  i, cfi1->regs[i].base, cfi1->regs[i].offset,
 				  i, cfi2->regs[i].base, cfi2->regs[i].offset);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-	पूर्ण अन्यथा अगर (cfi1->type != cfi2->type) अणु
+	} else if (cfi1->type != cfi2->type) {
 
 		WARN_FUNC("stack state mismatch: type1=%d type2=%d",
 			  insn->sec, insn->offset, cfi1->type, cfi2->type);
 
-	पूर्ण अन्यथा अगर (cfi1->drap != cfi2->drap ||
+	} else if (cfi1->drap != cfi2->drap ||
 		   (cfi1->drap && cfi1->drap_reg != cfi2->drap_reg) ||
-		   (cfi1->drap && cfi1->drap_offset != cfi2->drap_offset)) अणु
+		   (cfi1->drap && cfi1->drap_offset != cfi2->drap_offset)) {
 
 		WARN_FUNC("stack state mismatch: drap1=%d(%d,%d) drap2=%d(%d,%d)",
 			  insn->sec, insn->offset,
 			  cfi1->drap, cfi1->drap_reg, cfi1->drap_offset,
 			  cfi2->drap, cfi2->drap_reg, cfi2->drap_offset);
 
-	पूर्ण अन्यथा
-		वापस true;
+	} else
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल अंतरभूत bool func_uaccess_safe(काष्ठा symbol *func)
-अणु
-	अगर (func)
-		वापस func->uaccess_safe;
+static inline bool func_uaccess_safe(struct symbol *func)
+{
+	if (func)
+		return func->uaccess_safe;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल अंतरभूत स्थिर अक्षर *call_dest_name(काष्ठा inकाष्ठाion *insn)
-अणु
-	अगर (insn->call_dest)
-		वापस insn->call_dest->name;
+static inline const char *call_dest_name(struct instruction *insn)
+{
+	if (insn->call_dest)
+		return insn->call_dest->name;
 
-	वापस "{dynamic}";
-पूर्ण
+	return "{dynamic}";
+}
 
-अटल अंतरभूत bool noinstr_call_dest(काष्ठा symbol *func)
-अणु
+static inline bool noinstr_call_dest(struct symbol *func)
+{
 	/*
 	 * We can't deal with indirect function calls at present;
 	 * assume they're instrumented.
 	 */
-	अगर (!func)
-		वापस false;
+	if (!func)
+		return false;
 
 	/*
 	 * If the symbol is from a noinstr section; we good.
 	 */
-	अगर (func->sec->noinstr)
-		वापस true;
+	if (func->sec->noinstr)
+		return true;
 
 	/*
 	 * The __ubsan_handle_*() calls are like WARN(), they only happen when
-	 * something 'BAD' happened. At the risk of taking the machine करोwn,
+	 * something 'BAD' happened. At the risk of taking the machine down,
 	 * let them proceed to get the message out.
 	 */
-	अगर (!म_भेदन(func->name, "__ubsan_handle_", 15))
-		वापस true;
+	if (!strncmp(func->name, "__ubsan_handle_", 15))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक validate_call(काष्ठा inकाष्ठाion *insn, काष्ठा insn_state *state)
-अणु
-	अगर (state->noinstr && state->instr <= 0 &&
-	    !noinstr_call_dest(insn->call_dest)) अणु
+static int validate_call(struct instruction *insn, struct insn_state *state)
+{
+	if (state->noinstr && state->instr <= 0 &&
+	    !noinstr_call_dest(insn->call_dest)) {
 		WARN_FUNC("call to %s() leaves .noinstr.text section",
 				insn->sec, insn->offset, call_dest_name(insn));
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (state->uaccess && !func_uaccess_safe(insn->call_dest)) अणु
+	if (state->uaccess && !func_uaccess_safe(insn->call_dest)) {
 		WARN_FUNC("call to %s() with UACCESS enabled",
 				insn->sec, insn->offset, call_dest_name(insn));
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (state->df) अणु
+	if (state->df) {
 		WARN_FUNC("call to %s() with DF set",
 				insn->sec, insn->offset, call_dest_name(insn));
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक validate_sibling_call(काष्ठा inकाष्ठाion *insn, काष्ठा insn_state *state)
-अणु
-	अगर (has_modअगरied_stack_frame(insn, state)) अणु
+static int validate_sibling_call(struct instruction *insn, struct insn_state *state)
+{
+	if (has_modified_stack_frame(insn, state)) {
 		WARN_FUNC("sibling call from callable instruction with modified stack frame",
 				insn->sec, insn->offset);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस validate_call(insn, state);
-पूर्ण
+	return validate_call(insn, state);
+}
 
-अटल पूर्णांक validate_वापस(काष्ठा symbol *func, काष्ठा inकाष्ठाion *insn, काष्ठा insn_state *state)
-अणु
-	अगर (state->noinstr && state->instr > 0) अणु
+static int validate_return(struct symbol *func, struct instruction *insn, struct insn_state *state)
+{
+	if (state->noinstr && state->instr > 0) {
 		WARN_FUNC("return with instrumentation enabled",
 			  insn->sec, insn->offset);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (state->uaccess && !func_uaccess_safe(func)) अणु
+	if (state->uaccess && !func_uaccess_safe(func)) {
 		WARN_FUNC("return with UACCESS enabled",
 			  insn->sec, insn->offset);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (!state->uaccess && func_uaccess_safe(func)) अणु
+	if (!state->uaccess && func_uaccess_safe(func)) {
 		WARN_FUNC("return with UACCESS disabled from a UACCESS-safe function",
 			  insn->sec, insn->offset);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (state->df) अणु
+	if (state->df) {
 		WARN_FUNC("return with DF set",
 			  insn->sec, insn->offset);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (func && has_modअगरied_stack_frame(insn, state)) अणु
+	if (func && has_modified_stack_frame(insn, state)) {
 		WARN_FUNC("return with modified stack frame",
 			  insn->sec, insn->offset);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (state->cfi.bp_scratch) अणु
+	if (state->cfi.bp_scratch) {
 		WARN_FUNC("BP used as a scratch register",
 			  insn->sec, insn->offset);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा inकाष्ठाion *next_insn_to_validate(काष्ठा objtool_file *file,
-						 काष्ठा inकाष्ठाion *insn)
-अणु
-	काष्ठा alt_group *alt_group = insn->alt_group;
+static struct instruction *next_insn_to_validate(struct objtool_file *file,
+						 struct instruction *insn)
+{
+	struct alt_group *alt_group = insn->alt_group;
 
 	/*
 	 * Simulate the fact that alternatives are patched in-place.  When the
 	 * end of a replacement alt_group is reached, redirect objtool flow to
 	 * the end of the original alt_group.
 	 */
-	अगर (alt_group && insn == alt_group->last_insn && alt_group->orig_group)
-		वापस next_insn_same_sec(file, alt_group->orig_group->last_insn);
+	if (alt_group && insn == alt_group->last_insn && alt_group->orig_group)
+		return next_insn_same_sec(file, alt_group->orig_group->last_insn);
 
-	वापस next_insn_same_sec(file, insn);
-पूर्ण
+	return next_insn_same_sec(file, insn);
+}
 
 /*
- * Follow the branch starting at the given inकाष्ठाion, and recursively follow
- * any other branches (jumps).  Meanजबतक, track the frame poपूर्णांकer state at
- * each inकाष्ठाion and validate all the rules described in
+ * Follow the branch starting at the given instruction, and recursively follow
+ * any other branches (jumps).  Meanwhile, track the frame pointer state at
+ * each instruction and validate all the rules described in
  * tools/objtool/Documentation/stack-validation.txt.
  */
-अटल पूर्णांक validate_branch(काष्ठा objtool_file *file, काष्ठा symbol *func,
-			   काष्ठा inकाष्ठाion *insn, काष्ठा insn_state state)
-अणु
-	काष्ठा alternative *alt;
-	काष्ठा inकाष्ठाion *next_insn;
-	काष्ठा section *sec;
+static int validate_branch(struct objtool_file *file, struct symbol *func,
+			   struct instruction *insn, struct insn_state state)
+{
+	struct alternative *alt;
+	struct instruction *next_insn;
+	struct section *sec;
 	u8 visited;
-	पूर्णांक ret;
+	int ret;
 
 	sec = insn->sec;
 
-	जबतक (1) अणु
+	while (1) {
 		next_insn = next_insn_to_validate(file, insn);
 
-		अगर (file->c_file && func && insn->func && func != insn->func->pfunc) अणु
+		if (file->c_file && func && insn->func && func != insn->func->pfunc) {
 			WARN("%s() falls through to next function %s()",
 			     func->name, insn->func->name);
-			वापस 1;
-		पूर्ण
+			return 1;
+		}
 
-		अगर (func && insn->ignore) अणु
+		if (func && insn->ignore) {
 			WARN_FUNC("BUG: why am I validating an ignored function?",
 				  sec, insn->offset);
-			वापस 1;
-		पूर्ण
+			return 1;
+		}
 
 		visited = 1 << state.uaccess;
-		अगर (insn->visited) अणु
-			अगर (!insn->hपूर्णांक && !insn_cfi_match(insn, &state.cfi))
-				वापस 1;
+		if (insn->visited) {
+			if (!insn->hint && !insn_cfi_match(insn, &state.cfi))
+				return 1;
 
-			अगर (insn->visited & visited)
-				वापस 0;
-		पूर्ण
+			if (insn->visited & visited)
+				return 0;
+		}
 
-		अगर (state.noinstr)
+		if (state.noinstr)
 			state.instr += insn->instr;
 
-		अगर (insn->hपूर्णांक)
+		if (insn->hint)
 			state.cfi = insn->cfi;
-		अन्यथा
+		else
 			insn->cfi = state.cfi;
 
 		insn->visited |= visited;
 
-		अगर (propagate_alt_cfi(file, insn))
-			वापस 1;
+		if (propagate_alt_cfi(file, insn))
+			return 1;
 
-		अगर (!insn->ignore_alts && !list_empty(&insn->alts)) अणु
+		if (!insn->ignore_alts && !list_empty(&insn->alts)) {
 			bool skip_orig = false;
 
-			list_क्रम_each_entry(alt, &insn->alts, list) अणु
-				अगर (alt->skip_orig)
+			list_for_each_entry(alt, &insn->alts, list) {
+				if (alt->skip_orig)
 					skip_orig = true;
 
 				ret = validate_branch(file, func, alt->insn, state);
-				अगर (ret) अणु
-					अगर (backtrace)
+				if (ret) {
+					if (backtrace)
 						BT_FUNC("(alt)", insn);
-					वापस ret;
-				पूर्ण
-			पूर्ण
+					return ret;
+				}
+			}
 
-			अगर (skip_orig)
-				वापस 0;
-		पूर्ण
+			if (skip_orig)
+				return 0;
+		}
 
-		अगर (handle_insn_ops(insn, next_insn, &state))
-			वापस 1;
+		if (handle_insn_ops(insn, next_insn, &state))
+			return 1;
 
-		चयन (insn->type) अणु
+		switch (insn->type) {
 
-		हाल INSN_RETURN:
-			वापस validate_वापस(func, insn, &state);
+		case INSN_RETURN:
+			return validate_return(func, insn, &state);
 
-		हाल INSN_CALL:
-		हाल INSN_CALL_DYNAMIC:
+		case INSN_CALL:
+		case INSN_CALL_DYNAMIC:
 			ret = validate_call(insn, &state);
-			अगर (ret)
-				वापस ret;
+			if (ret)
+				return ret;
 
-			अगर (!no_fp && func && !is_fentry_call(insn) &&
-			    !has_valid_stack_frame(&state)) अणु
+			if (!no_fp && func && !is_fentry_call(insn) &&
+			    !has_valid_stack_frame(&state)) {
 				WARN_FUNC("call without frame pointer save/setup",
 					  sec, insn->offset);
-				वापस 1;
-			पूर्ण
+				return 1;
+			}
 
-			अगर (dead_end_function(file, insn->call_dest))
-				वापस 0;
+			if (dead_end_function(file, insn->call_dest))
+				return 0;
 
-			अवरोध;
+			break;
 
-		हाल INSN_JUMP_CONDITIONAL:
-		हाल INSN_JUMP_UNCONDITIONAL:
-			अगर (is_sibling_call(insn)) अणु
+		case INSN_JUMP_CONDITIONAL:
+		case INSN_JUMP_UNCONDITIONAL:
+			if (is_sibling_call(insn)) {
 				ret = validate_sibling_call(insn, &state);
-				अगर (ret)
-					वापस ret;
+				if (ret)
+					return ret;
 
-			पूर्ण अन्यथा अगर (insn->jump_dest) अणु
+			} else if (insn->jump_dest) {
 				ret = validate_branch(file, func,
 						      insn->jump_dest, state);
-				अगर (ret) अणु
-					अगर (backtrace)
+				if (ret) {
+					if (backtrace)
 						BT_FUNC("(branch)", insn);
-					वापस ret;
-				पूर्ण
-			पूर्ण
+					return ret;
+				}
+			}
 
-			अगर (insn->type == INSN_JUMP_UNCONDITIONAL)
-				वापस 0;
+			if (insn->type == INSN_JUMP_UNCONDITIONAL)
+				return 0;
 
-			अवरोध;
+			break;
 
-		हाल INSN_JUMP_DYNAMIC:
-		हाल INSN_JUMP_DYNAMIC_CONDITIONAL:
-			अगर (is_sibling_call(insn)) अणु
+		case INSN_JUMP_DYNAMIC:
+		case INSN_JUMP_DYNAMIC_CONDITIONAL:
+			if (is_sibling_call(insn)) {
 				ret = validate_sibling_call(insn, &state);
-				अगर (ret)
-					वापस ret;
-			पूर्ण
+				if (ret)
+					return ret;
+			}
 
-			अगर (insn->type == INSN_JUMP_DYNAMIC)
-				वापस 0;
+			if (insn->type == INSN_JUMP_DYNAMIC)
+				return 0;
 
-			अवरोध;
+			break;
 
-		हाल INSN_CONTEXT_SWITCH:
-			अगर (func && (!next_insn || !next_insn->hपूर्णांक)) अणु
+		case INSN_CONTEXT_SWITCH:
+			if (func && (!next_insn || !next_insn->hint)) {
 				WARN_FUNC("unsupported instruction in callable function",
 					  sec, insn->offset);
-				वापस 1;
-			पूर्ण
-			वापस 0;
+				return 1;
+			}
+			return 0;
 
-		हाल INSN_STAC:
-			अगर (state.uaccess) अणु
+		case INSN_STAC:
+			if (state.uaccess) {
 				WARN_FUNC("recursive UACCESS enable", sec, insn->offset);
-				वापस 1;
-			पूर्ण
+				return 1;
+			}
 
 			state.uaccess = true;
-			अवरोध;
+			break;
 
-		हाल INSN_CLAC:
-			अगर (!state.uaccess && func) अणु
+		case INSN_CLAC:
+			if (!state.uaccess && func) {
 				WARN_FUNC("redundant UACCESS disable", sec, insn->offset);
-				वापस 1;
-			पूर्ण
+				return 1;
+			}
 
-			अगर (func_uaccess_safe(func) && !state.uaccess_stack) अणु
+			if (func_uaccess_safe(func) && !state.uaccess_stack) {
 				WARN_FUNC("UACCESS-safe disables UACCESS", sec, insn->offset);
-				वापस 1;
-			पूर्ण
+				return 1;
+			}
 
 			state.uaccess = false;
-			अवरोध;
+			break;
 
-		हाल INSN_STD:
-			अगर (state.df) अणु
+		case INSN_STD:
+			if (state.df) {
 				WARN_FUNC("recursive STD", sec, insn->offset);
-				वापस 1;
-			पूर्ण
+				return 1;
+			}
 
 			state.df = true;
-			अवरोध;
+			break;
 
-		हाल INSN_CLD:
-			अगर (!state.df && func) अणु
+		case INSN_CLD:
+			if (!state.df && func) {
 				WARN_FUNC("redundant CLD", sec, insn->offset);
-				वापस 1;
-			पूर्ण
+				return 1;
+			}
 
 			state.df = false;
-			अवरोध;
+			break;
 
-		शेष:
-			अवरोध;
-		पूर्ण
+		default:
+			break;
+		}
 
-		अगर (insn->dead_end)
-			वापस 0;
+		if (insn->dead_end)
+			return 0;
 
-		अगर (!next_insn) अणु
-			अगर (state.cfi.cfa.base == CFI_UNDEFINED)
-				वापस 0;
+		if (!next_insn) {
+			if (state.cfi.cfa.base == CFI_UNDEFINED)
+				return 0;
 			WARN("%s: unexpected end of section", sec->name);
-			वापस 1;
-		पूर्ण
+			return 1;
+		}
 
 		insn = next_insn;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक validate_unwind_hपूर्णांकs(काष्ठा objtool_file *file, काष्ठा section *sec)
-अणु
-	काष्ठा inकाष्ठाion *insn;
-	काष्ठा insn_state state;
-	पूर्णांक ret, warnings = 0;
+static int validate_unwind_hints(struct objtool_file *file, struct section *sec)
+{
+	struct instruction *insn;
+	struct insn_state state;
+	int ret, warnings = 0;
 
-	अगर (!file->hपूर्णांकs)
-		वापस 0;
+	if (!file->hints)
+		return 0;
 
 	init_insn_state(&state, sec);
 
-	अगर (sec) अणु
+	if (sec) {
 		insn = find_insn(file, sec, 0);
-		अगर (!insn)
-			वापस 0;
-	पूर्ण अन्यथा अणु
+		if (!insn)
+			return 0;
+	} else {
 		insn = list_first_entry(&file->insn_list, typeof(*insn), list);
-	पूर्ण
+	}
 
-	जबतक (&insn->list != &file->insn_list && (!sec || insn->sec == sec)) अणु
-		अगर (insn->hपूर्णांक && !insn->visited) अणु
+	while (&insn->list != &file->insn_list && (!sec || insn->sec == sec)) {
+		if (insn->hint && !insn->visited) {
 			ret = validate_branch(file, insn->func, insn, state);
-			अगर (ret && backtrace)
+			if (ret && backtrace)
 				BT_FUNC("<=== (hint)", insn);
 			warnings += ret;
-		पूर्ण
+		}
 
 		insn = list_next_entry(insn, list);
-	पूर्ण
+	}
 
-	वापस warnings;
-पूर्ण
+	return warnings;
+}
 
-अटल पूर्णांक validate_retpoline(काष्ठा objtool_file *file)
-अणु
-	काष्ठा inकाष्ठाion *insn;
-	पूर्णांक warnings = 0;
+static int validate_retpoline(struct objtool_file *file)
+{
+	struct instruction *insn;
+	int warnings = 0;
 
-	क्रम_each_insn(file, insn) अणु
-		अगर (insn->type != INSN_JUMP_DYNAMIC &&
+	for_each_insn(file, insn) {
+		if (insn->type != INSN_JUMP_DYNAMIC &&
 		    insn->type != INSN_CALL_DYNAMIC)
-			जारी;
+			continue;
 
-		अगर (insn->retpoline_safe)
-			जारी;
+		if (insn->retpoline_safe)
+			continue;
 
 		/*
-		 * .init.text code is ran beक्रमe userspace and thus करोesn't
-		 * strictly need retpolines, except क्रम modules which are
-		 * loaded late, they very much करो need retpoline in their
+		 * .init.text code is ran before userspace and thus doesn't
+		 * strictly need retpolines, except for modules which are
+		 * loaded late, they very much do need retpoline in their
 		 * .init.text
 		 */
-		अगर (!म_भेद(insn->sec->name, ".init.text") && !module)
-			जारी;
+		if (!strcmp(insn->sec->name, ".init.text") && !module)
+			continue;
 
 		WARN_FUNC("indirect %s found in RETPOLINE build",
 			  insn->sec, insn->offset,
 			  insn->type == INSN_JUMP_DYNAMIC ? "jump" : "call");
 
 		warnings++;
-	पूर्ण
+	}
 
-	वापस warnings;
-पूर्ण
+	return warnings;
+}
 
-अटल bool is_kasan_insn(काष्ठा inकाष्ठाion *insn)
-अणु
-	वापस (insn->type == INSN_CALL &&
-		!म_भेद(insn->call_dest->name, "__asan_handle_no_return"));
-पूर्ण
+static bool is_kasan_insn(struct instruction *insn)
+{
+	return (insn->type == INSN_CALL &&
+		!strcmp(insn->call_dest->name, "__asan_handle_no_return"));
+}
 
-अटल bool is_ubsan_insn(काष्ठा inकाष्ठाion *insn)
-अणु
-	वापस (insn->type == INSN_CALL &&
-		!म_भेद(insn->call_dest->name,
+static bool is_ubsan_insn(struct instruction *insn)
+{
+	return (insn->type == INSN_CALL &&
+		!strcmp(insn->call_dest->name,
 			"__ubsan_handle_builtin_unreachable"));
-पूर्ण
+}
 
-अटल bool ignore_unreachable_insn(काष्ठा objtool_file *file, काष्ठा inकाष्ठाion *insn)
-अणु
-	पूर्णांक i;
-	काष्ठा inकाष्ठाion *prev_insn;
+static bool ignore_unreachable_insn(struct objtool_file *file, struct instruction *insn)
+{
+	int i;
+	struct instruction *prev_insn;
 
-	अगर (insn->ignore || insn->type == INSN_NOP)
-		वापस true;
+	if (insn->ignore || insn->type == INSN_NOP)
+		return true;
 
 	/*
 	 * Ignore any unused exceptions.  This can happen when a whitelisted
 	 * function has an exception table entry.
 	 *
-	 * Also ignore alternative replacement inकाष्ठाions.  This can happen
+	 * Also ignore alternative replacement instructions.  This can happen
 	 * when a whitelisted function uses one of the ALTERNATIVE macros.
 	 */
-	अगर (!म_भेद(insn->sec->name, ".fixup") ||
-	    !म_भेद(insn->sec->name, ".altinstr_replacement") ||
-	    !म_भेद(insn->sec->name, ".altinstr_aux"))
-		वापस true;
+	if (!strcmp(insn->sec->name, ".fixup") ||
+	    !strcmp(insn->sec->name, ".altinstr_replacement") ||
+	    !strcmp(insn->sec->name, ".altinstr_aux"))
+		return true;
 
-	अगर (!insn->func)
-		वापस false;
+	if (!insn->func)
+		return false;
 
 	/*
 	 * CONFIG_UBSAN_TRAP inserts a UD2 when it sees
@@ -2965,207 +2964,207 @@ __weak पूर्णांक arch_reग_लिखो_retpolines(काष्�
 	 * the UD2, which causes GCC's undefined trap logic to emit another UD2
 	 * (or occasionally a JMP to UD2).
 	 *
-	 * It may also insert a UD2 after calling a __noवापस function.
+	 * It may also insert a UD2 after calling a __noreturn function.
 	 */
 	prev_insn = list_prev_entry(insn, list);
-	अगर ((prev_insn->dead_end || dead_end_function(file, prev_insn->call_dest)) &&
+	if ((prev_insn->dead_end || dead_end_function(file, prev_insn->call_dest)) &&
 	    (insn->type == INSN_BUG ||
 	     (insn->type == INSN_JUMP_UNCONDITIONAL &&
 	      insn->jump_dest && insn->jump_dest->type == INSN_BUG)))
-		वापस true;
+		return true;
 
 	/*
-	 * Check अगर this (or a subsequent) inकाष्ठाion is related to
+	 * Check if this (or a subsequent) instruction is related to
 	 * CONFIG_UBSAN or CONFIG_KASAN.
 	 *
-	 * End the search at 5 inकाष्ठाions to aव्योम going पूर्णांकo the weeds.
+	 * End the search at 5 instructions to avoid going into the weeds.
 	 */
-	क्रम (i = 0; i < 5; i++) अणु
+	for (i = 0; i < 5; i++) {
 
-		अगर (is_kasan_insn(insn) || is_ubsan_insn(insn))
-			वापस true;
+		if (is_kasan_insn(insn) || is_ubsan_insn(insn))
+			return true;
 
-		अगर (insn->type == INSN_JUMP_UNCONDITIONAL) अणु
-			अगर (insn->jump_dest &&
-			    insn->jump_dest->func == insn->func) अणु
+		if (insn->type == INSN_JUMP_UNCONDITIONAL) {
+			if (insn->jump_dest &&
+			    insn->jump_dest->func == insn->func) {
 				insn = insn->jump_dest;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (insn->offset + insn->len >= insn->func->offset + insn->func->len)
-			अवरोध;
+		if (insn->offset + insn->len >= insn->func->offset + insn->func->len)
+			break;
 
 		insn = list_next_entry(insn, list);
-	पूर्ण
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक validate_symbol(काष्ठा objtool_file *file, काष्ठा section *sec,
-			   काष्ठा symbol *sym, काष्ठा insn_state *state)
-अणु
-	काष्ठा inकाष्ठाion *insn;
-	पूर्णांक ret;
+static int validate_symbol(struct objtool_file *file, struct section *sec,
+			   struct symbol *sym, struct insn_state *state)
+{
+	struct instruction *insn;
+	int ret;
 
-	अगर (!sym->len) अणु
+	if (!sym->len) {
 		WARN("%s() is missing an ELF size annotation", sym->name);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (sym->pfunc != sym || sym->alias != sym)
-		वापस 0;
+	if (sym->pfunc != sym || sym->alias != sym)
+		return 0;
 
 	insn = find_insn(file, sec, sym->offset);
-	अगर (!insn || insn->ignore || insn->visited)
-		वापस 0;
+	if (!insn || insn->ignore || insn->visited)
+		return 0;
 
 	state->uaccess = sym->uaccess_safe;
 
 	ret = validate_branch(file, insn->func, insn, *state);
-	अगर (ret && backtrace)
+	if (ret && backtrace)
 		BT_FUNC("<=== (sym)", insn);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक validate_section(काष्ठा objtool_file *file, काष्ठा section *sec)
-अणु
-	काष्ठा insn_state state;
-	काष्ठा symbol *func;
-	पूर्णांक warnings = 0;
+static int validate_section(struct objtool_file *file, struct section *sec)
+{
+	struct insn_state state;
+	struct symbol *func;
+	int warnings = 0;
 
-	list_क्रम_each_entry(func, &sec->symbol_list, list) अणु
-		अगर (func->type != STT_FUNC)
-			जारी;
+	list_for_each_entry(func, &sec->symbol_list, list) {
+		if (func->type != STT_FUNC)
+			continue;
 
 		init_insn_state(&state, sec);
 		set_func_state(&state.cfi);
 
 		warnings += validate_symbol(file, sec, func, &state);
-	पूर्ण
+	}
 
-	वापस warnings;
-पूर्ण
+	return warnings;
+}
 
-अटल पूर्णांक validate_vmlinux_functions(काष्ठा objtool_file *file)
-अणु
-	काष्ठा section *sec;
-	पूर्णांक warnings = 0;
+static int validate_vmlinux_functions(struct objtool_file *file)
+{
+	struct section *sec;
+	int warnings = 0;
 
 	sec = find_section_by_name(file->elf, ".noinstr.text");
-	अगर (sec) अणु
+	if (sec) {
 		warnings += validate_section(file, sec);
-		warnings += validate_unwind_hपूर्णांकs(file, sec);
-	पूर्ण
+		warnings += validate_unwind_hints(file, sec);
+	}
 
 	sec = find_section_by_name(file->elf, ".entry.text");
-	अगर (sec) अणु
+	if (sec) {
 		warnings += validate_section(file, sec);
-		warnings += validate_unwind_hपूर्णांकs(file, sec);
-	पूर्ण
+		warnings += validate_unwind_hints(file, sec);
+	}
 
-	वापस warnings;
-पूर्ण
+	return warnings;
+}
 
-अटल पूर्णांक validate_functions(काष्ठा objtool_file *file)
-अणु
-	काष्ठा section *sec;
-	पूर्णांक warnings = 0;
+static int validate_functions(struct objtool_file *file)
+{
+	struct section *sec;
+	int warnings = 0;
 
-	क्रम_each_sec(file, sec) अणु
-		अगर (!(sec->sh.sh_flags & SHF_EXECINSTR))
-			जारी;
+	for_each_sec(file, sec) {
+		if (!(sec->sh.sh_flags & SHF_EXECINSTR))
+			continue;
 
 		warnings += validate_section(file, sec);
-	पूर्ण
+	}
 
-	वापस warnings;
-पूर्ण
+	return warnings;
+}
 
-अटल पूर्णांक validate_reachable_inकाष्ठाions(काष्ठा objtool_file *file)
-अणु
-	काष्ठा inकाष्ठाion *insn;
+static int validate_reachable_instructions(struct objtool_file *file)
+{
+	struct instruction *insn;
 
-	अगर (file->ignore_unreachables)
-		वापस 0;
+	if (file->ignore_unreachables)
+		return 0;
 
-	क्रम_each_insn(file, insn) अणु
-		अगर (insn->visited || ignore_unreachable_insn(file, insn))
-			जारी;
+	for_each_insn(file, insn) {
+		if (insn->visited || ignore_unreachable_insn(file, insn))
+			continue;
 
 		WARN_FUNC("unreachable instruction", insn->sec, insn->offset);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक check(काष्ठा objtool_file *file)
-अणु
-	पूर्णांक ret, warnings = 0;
+int check(struct objtool_file *file)
+{
+	int ret, warnings = 0;
 
 	arch_initial_func_cfi_state(&initial_func_cfi);
 
 	ret = decode_sections(file);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 	warnings += ret;
 
-	अगर (list_empty(&file->insn_list))
-		जाओ out;
+	if (list_empty(&file->insn_list))
+		goto out;
 
-	अगर (vmlinux && !validate_dup) अणु
+	if (vmlinux && !validate_dup) {
 		ret = validate_vmlinux_functions(file);
-		अगर (ret < 0)
-			जाओ out;
+		if (ret < 0)
+			goto out;
 
 		warnings += ret;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (retpoline) अणु
+	if (retpoline) {
 		ret = validate_retpoline(file);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		warnings += ret;
-	पूर्ण
+	}
 
 	ret = validate_functions(file);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 	warnings += ret;
 
-	ret = validate_unwind_hपूर्णांकs(file, शून्य);
-	अगर (ret < 0)
-		जाओ out;
+	ret = validate_unwind_hints(file, NULL);
+	if (ret < 0)
+		goto out;
 	warnings += ret;
 
-	अगर (!warnings) अणु
-		ret = validate_reachable_inकाष्ठाions(file);
-		अगर (ret < 0)
-			जाओ out;
+	if (!warnings) {
+		ret = validate_reachable_instructions(file);
+		if (ret < 0)
+			goto out;
 		warnings += ret;
-	पूर्ण
+	}
 
-	ret = create_अटल_call_sections(file);
-	अगर (ret < 0)
-		जाओ out;
+	ret = create_static_call_sections(file);
+	if (ret < 0)
+		goto out;
 	warnings += ret;
 
-	अगर (mcount) अणु
+	if (mcount) {
 		ret = create_mcount_loc_sections(file);
-		अगर (ret < 0)
-			जाओ out;
+		if (ret < 0)
+			goto out;
 		warnings += ret;
-	पूर्ण
+	}
 
 out:
 	/*
-	 *  For now, करोn't fail the kernel build on fatal warnings.  These
+	 *  For now, don't fail the kernel build on fatal warnings.  These
 	 *  errors are still fairly common due to the growing matrix of
 	 *  supported toolchains and their recent pace of change.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}

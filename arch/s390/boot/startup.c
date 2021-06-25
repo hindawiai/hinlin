@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/माला.स>
-#समावेश <linux/elf.h>
-#समावेश <यंत्र/boot_data.h>
-#समावेश <यंत्र/sections.h>
-#समावेश <यंत्र/cpu_mf.h>
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/kexec.h>
-#समावेश <यंत्र/sclp.h>
-#समावेश <यंत्र/diag.h>
-#समावेश <यंत्र/uv.h>
-#समावेश "compressed/decompressor.h"
-#समावेश "boot.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/string.h>
+#include <linux/elf.h>
+#include <asm/boot_data.h>
+#include <asm/sections.h>
+#include <asm/cpu_mf.h>
+#include <asm/setup.h>
+#include <asm/kexec.h>
+#include <asm/sclp.h>
+#include <asm/diag.h>
+#include <asm/uv.h>
+#include "compressed/decompressor.h"
+#include "boot.h"
 
-बाह्य अक्षर __boot_data_start[], __boot_data_end[];
-बाह्य अक्षर __boot_data_preserved_start[], __boot_data_preserved_end[];
-अचिन्हित दीर्घ __bootdata_preserved(__kaslr_offset);
-अचिन्हित दीर्घ __bootdata(ident_map_size);
+extern char __boot_data_start[], __boot_data_end[];
+extern char __boot_data_preserved_start[], __boot_data_preserved_end[];
+unsigned long __bootdata_preserved(__kaslr_offset);
+unsigned long __bootdata(ident_map_size);
 
 /*
  * Some code and data needs to stay below 2 GB, even when the kernel would be
@@ -25,113 +24,113 @@
  * over to the decompressed / relocated kernel via the .boot.preserved.data
  * section.
  */
-बाह्य अक्षर _sdma[], _edma[];
-बाह्य अक्षर _stext_dma[], _etext_dma[];
-बाह्य काष्ठा exception_table_entry _start_dma_ex_table[];
-बाह्य काष्ठा exception_table_entry _stop_dma_ex_table[];
-अचिन्हित दीर्घ __bootdata_preserved(__sdma) = __pa(&_sdma);
-अचिन्हित दीर्घ __bootdata_preserved(__edma) = __pa(&_edma);
-अचिन्हित दीर्घ __bootdata_preserved(__stext_dma) = __pa(&_stext_dma);
-अचिन्हित दीर्घ __bootdata_preserved(__etext_dma) = __pa(&_etext_dma);
-काष्ठा exception_table_entry *
+extern char _sdma[], _edma[];
+extern char _stext_dma[], _etext_dma[];
+extern struct exception_table_entry _start_dma_ex_table[];
+extern struct exception_table_entry _stop_dma_ex_table[];
+unsigned long __bootdata_preserved(__sdma) = __pa(&_sdma);
+unsigned long __bootdata_preserved(__edma) = __pa(&_edma);
+unsigned long __bootdata_preserved(__stext_dma) = __pa(&_stext_dma);
+unsigned long __bootdata_preserved(__etext_dma) = __pa(&_etext_dma);
+struct exception_table_entry *
 	__bootdata_preserved(__start_dma_ex_table) = _start_dma_ex_table;
-काष्ठा exception_table_entry *
+struct exception_table_entry *
 	__bootdata_preserved(__stop_dma_ex_table) = _stop_dma_ex_table;
 
-पूर्णांक _diag210_dma(काष्ठा diag210 *addr);
-पूर्णांक _diag26c_dma(व्योम *req, व्योम *resp, क्रमागत diag26c_sc subcode);
-पूर्णांक _diag14_dma(अचिन्हित दीर्घ rx, अचिन्हित दीर्घ ry1, अचिन्हित दीर्घ subcode);
-व्योम _diag0c_dma(काष्ठा hypfs_diag0c_entry *entry);
-व्योम _diag308_reset_dma(व्योम);
-काष्ठा diag_ops __bootdata_preserved(diag_dma_ops) = अणु
+int _diag210_dma(struct diag210 *addr);
+int _diag26c_dma(void *req, void *resp, enum diag26c_sc subcode);
+int _diag14_dma(unsigned long rx, unsigned long ry1, unsigned long subcode);
+void _diag0c_dma(struct hypfs_diag0c_entry *entry);
+void _diag308_reset_dma(void);
+struct diag_ops __bootdata_preserved(diag_dma_ops) = {
 	.diag210 = _diag210_dma,
 	.diag26c = _diag26c_dma,
 	.diag14 = _diag14_dma,
 	.diag0c = _diag0c_dma,
 	.diag308_reset = _diag308_reset_dma
-पूर्ण;
-अटल काष्ठा diag210 _diag210_पंचांगp_dma __section(".dma.data");
-काष्ठा diag210 *__bootdata_preserved(__diag210_पंचांगp_dma) = &_diag210_पंचांगp_dma;
+};
+static struct diag210 _diag210_tmp_dma __section(".dma.data");
+struct diag210 *__bootdata_preserved(__diag210_tmp_dma) = &_diag210_tmp_dma;
 
-व्योम error(अक्षर *x)
-अणु
-	sclp_early_prपूर्णांकk("\n\n");
-	sclp_early_prपूर्णांकk(x);
-	sclp_early_prपूर्णांकk("\n\n -- System halted");
+void error(char *x)
+{
+	sclp_early_printk("\n\n");
+	sclp_early_printk(x);
+	sclp_early_printk("\n\n -- System halted");
 
-	disabled_रुको();
-पूर्ण
+	disabled_wait();
+}
 
-अटल व्योम setup_lpp(व्योम)
-अणु
+static void setup_lpp(void)
+{
 	S390_lowcore.current_pid = 0;
 	S390_lowcore.lpp = LPP_MAGIC;
-	अगर (test_facility(40))
+	if (test_facility(40))
 		lpp(&S390_lowcore.lpp);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_KERNEL_UNCOMPRESSED
-अचिन्हित दीर्घ mem_safe_offset(व्योम)
-अणु
-	वापस vmlinux.शेष_lma + vmlinux.image_size + vmlinux.bss_size;
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_KERNEL_UNCOMPRESSED
+unsigned long mem_safe_offset(void)
+{
+	return vmlinux.default_lma + vmlinux.image_size + vmlinux.bss_size;
+}
+#endif
 
-अटल व्योम rescue_initrd(अचिन्हित दीर्घ addr)
-अणु
-	अगर (!IS_ENABLED(CONFIG_BLK_DEV_INITRD))
-		वापस;
-	अगर (!INITRD_START || !INITRD_SIZE)
-		वापस;
-	अगर (addr <= INITRD_START)
-		वापस;
-	स_हटाओ((व्योम *)addr, (व्योम *)INITRD_START, INITRD_SIZE);
+static void rescue_initrd(unsigned long addr)
+{
+	if (!IS_ENABLED(CONFIG_BLK_DEV_INITRD))
+		return;
+	if (!INITRD_START || !INITRD_SIZE)
+		return;
+	if (addr <= INITRD_START)
+		return;
+	memmove((void *)addr, (void *)INITRD_START, INITRD_SIZE);
 	INITRD_START = addr;
-पूर्ण
+}
 
-अटल व्योम copy_bootdata(व्योम)
-अणु
-	अगर (__boot_data_end - __boot_data_start != vmlinux.bootdata_size)
+static void copy_bootdata(void)
+{
+	if (__boot_data_end - __boot_data_start != vmlinux.bootdata_size)
 		error(".boot.data section size mismatch");
-	स_नकल((व्योम *)vmlinux.bootdata_off, __boot_data_start, vmlinux.bootdata_size);
-	अगर (__boot_data_preserved_end - __boot_data_preserved_start != vmlinux.bootdata_preserved_size)
+	memcpy((void *)vmlinux.bootdata_off, __boot_data_start, vmlinux.bootdata_size);
+	if (__boot_data_preserved_end - __boot_data_preserved_start != vmlinux.bootdata_preserved_size)
 		error(".boot.preserved.data section size mismatch");
-	स_नकल((व्योम *)vmlinux.bootdata_preserved_off, __boot_data_preserved_start, vmlinux.bootdata_preserved_size);
-पूर्ण
+	memcpy((void *)vmlinux.bootdata_preserved_off, __boot_data_preserved_start, vmlinux.bootdata_preserved_size);
+}
 
-अटल व्योम handle_relocs(अचिन्हित दीर्घ offset)
-अणु
+static void handle_relocs(unsigned long offset)
+{
 	Elf64_Rela *rela_start, *rela_end, *rela;
-	पूर्णांक r_type, r_sym, rc;
+	int r_type, r_sym, rc;
 	Elf64_Addr loc, val;
 	Elf64_Sym *dynsym;
 
 	rela_start = (Elf64_Rela *) vmlinux.rela_dyn_start;
 	rela_end = (Elf64_Rela *) vmlinux.rela_dyn_end;
 	dynsym = (Elf64_Sym *) vmlinux.dynsym_start;
-	क्रम (rela = rela_start; rela < rela_end; rela++) अणु
+	for (rela = rela_start; rela < rela_end; rela++) {
 		loc = rela->r_offset + offset;
 		val = rela->r_addend;
 		r_sym = ELF64_R_SYM(rela->r_info);
-		अगर (r_sym) अणु
-			अगर (dynsym[r_sym].st_shndx != SHN_UNDEF)
+		if (r_sym) {
+			if (dynsym[r_sym].st_shndx != SHN_UNDEF)
 				val += dynsym[r_sym].st_value + offset;
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * 0 == undefined symbol table index (STN_UNDEF),
-			 * used क्रम R_390_RELATIVE, only add KASLR offset
+			 * used for R_390_RELATIVE, only add KASLR offset
 			 */
 			val += offset;
-		पूर्ण
+		}
 		r_type = ELF64_R_TYPE(rela->r_info);
-		rc = arch_kexec_करो_relocs(r_type, (व्योम *) loc, val, 0);
-		अगर (rc)
+		rc = arch_kexec_do_relocs(r_type, (void *) loc, val, 0);
+		if (rc)
 			error("Unknown relocation type");
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Merge inक्रमmation from several sources पूर्णांकo a single ident_map_size value.
+ * Merge information from several sources into a single ident_map_size value.
  * "ident_map_size" represents the upper limit of physical memory we may ever
  * reach. It might not be all online memory, but also include standby (offline)
  * memory. "ident_map_size" could be lower then actual standby or even online
@@ -149,103 +148,103 @@
  * 5. "hsa" size which is a memory limit when the kernel is executed during
  *    zfcp/nvme dump.
  */
-अटल व्योम setup_ident_map_size(अचिन्हित दीर्घ max_physmem_end)
-अणु
-	अचिन्हित दीर्घ hsa_size;
+static void setup_ident_map_size(unsigned long max_physmem_end)
+{
+	unsigned long hsa_size;
 
 	ident_map_size = max_physmem_end;
-	अगर (memory_limit)
+	if (memory_limit)
 		ident_map_size = min(ident_map_size, memory_limit);
 	ident_map_size = min(ident_map_size, 1UL << MAX_PHYSMEM_BITS);
 
-#अगर_घोषित CONFIG_CRASH_DUMP
-	अगर (OLDMEM_BASE) अणु
+#ifdef CONFIG_CRASH_DUMP
+	if (OLDMEM_BASE) {
 		kaslr_enabled = 0;
 		ident_map_size = min(ident_map_size, OLDMEM_SIZE);
-	पूर्ण अन्यथा अगर (ipl_block_valid && is_ipl_block_dump()) अणु
+	} else if (ipl_block_valid && is_ipl_block_dump()) {
 		kaslr_enabled = 0;
-		अगर (!sclp_early_get_hsa_size(&hsa_size) && hsa_size)
+		if (!sclp_early_get_hsa_size(&hsa_size) && hsa_size)
 			ident_map_size = min(ident_map_size, hsa_size);
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+	}
+#endif
+}
 
 /*
  * This function clears the BSS section of the decompressed Linux kernel and NOT the decompressor's.
  */
-अटल व्योम clear_bss_section(व्योम)
-अणु
-	स_रखो((व्योम *)vmlinux.शेष_lma + vmlinux.image_size, 0, vmlinux.bss_size);
-पूर्ण
+static void clear_bss_section(void)
+{
+	memset((void *)vmlinux.default_lma + vmlinux.image_size, 0, vmlinux.bss_size);
+}
 
 /*
- * Set vदो_स्मृति area size to an 8th of (potential) physical memory
+ * Set vmalloc area size to an 8th of (potential) physical memory
  * size, unless size has been set by kernel command line parameter.
  */
-अटल व्योम setup_vदो_स्मृति_size(व्योम)
-अणु
-	अचिन्हित दीर्घ size;
+static void setup_vmalloc_size(void)
+{
+	unsigned long size;
 
-	अगर (vदो_स्मृति_size_set)
-		वापस;
+	if (vmalloc_size_set)
+		return;
 	size = round_up(ident_map_size / 8, _SEGMENT_SIZE);
-	vदो_स्मृति_size = max(size, vदो_स्मृति_size);
-पूर्ण
+	vmalloc_size = max(size, vmalloc_size);
+}
 
-व्योम startup_kernel(व्योम)
-अणु
-	अचिन्हित दीर्घ अक्रमom_lma;
-	अचिन्हित दीर्घ safe_addr;
-	व्योम *img;
+void startup_kernel(void)
+{
+	unsigned long random_lma;
+	unsigned long safe_addr;
+	void *img;
 
 	setup_lpp();
 	store_ipl_parmblock();
 	safe_addr = mem_safe_offset();
-	safe_addr = पढ़ो_ipl_report(safe_addr);
+	safe_addr = read_ipl_report(safe_addr);
 	uv_query_info();
 	rescue_initrd(safe_addr);
-	sclp_early_पढ़ो_info();
+	sclp_early_read_info();
 	setup_boot_command_line();
 	parse_boot_command_line();
 	setup_ident_map_size(detect_memory());
-	setup_vदो_स्मृति_size();
+	setup_vmalloc_size();
 
-	अक्रमom_lma = __kaslr_offset = 0;
-	अगर (IS_ENABLED(CONFIG_RANDOMIZE_BASE) && kaslr_enabled) अणु
-		अक्रमom_lma = get_अक्रमom_base(safe_addr);
-		अगर (अक्रमom_lma) अणु
-			__kaslr_offset = अक्रमom_lma - vmlinux.शेष_lma;
-			img = (व्योम *)vmlinux.शेष_lma;
-			vmlinux.शेष_lma += __kaslr_offset;
+	random_lma = __kaslr_offset = 0;
+	if (IS_ENABLED(CONFIG_RANDOMIZE_BASE) && kaslr_enabled) {
+		random_lma = get_random_base(safe_addr);
+		if (random_lma) {
+			__kaslr_offset = random_lma - vmlinux.default_lma;
+			img = (void *)vmlinux.default_lma;
+			vmlinux.default_lma += __kaslr_offset;
 			vmlinux.entry += __kaslr_offset;
 			vmlinux.bootdata_off += __kaslr_offset;
 			vmlinux.bootdata_preserved_off += __kaslr_offset;
 			vmlinux.rela_dyn_start += __kaslr_offset;
 			vmlinux.rela_dyn_end += __kaslr_offset;
 			vmlinux.dynsym_start += __kaslr_offset;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!IS_ENABLED(CONFIG_KERNEL_UNCOMPRESSED)) अणु
+	if (!IS_ENABLED(CONFIG_KERNEL_UNCOMPRESSED)) {
 		img = decompress_kernel();
-		स_हटाओ((व्योम *)vmlinux.शेष_lma, img, vmlinux.image_size);
-	पूर्ण अन्यथा अगर (__kaslr_offset)
-		स_नकल((व्योम *)vmlinux.शेष_lma, img, vmlinux.image_size);
+		memmove((void *)vmlinux.default_lma, img, vmlinux.image_size);
+	} else if (__kaslr_offset)
+		memcpy((void *)vmlinux.default_lma, img, vmlinux.image_size);
 
 	clear_bss_section();
 	copy_bootdata();
-	अगर (IS_ENABLED(CONFIG_RELOCATABLE))
+	if (IS_ENABLED(CONFIG_RELOCATABLE))
 		handle_relocs(__kaslr_offset);
 
-	अगर (__kaslr_offset) अणु
+	if (__kaslr_offset) {
 		/*
-		 * Save KASLR offset क्रम early dumps, beक्रमe vmcore_info is set.
-		 * Mark as uneven to distinguish from real vmcore_info poपूर्णांकer.
+		 * Save KASLR offset for early dumps, before vmcore_info is set.
+		 * Mark as uneven to distinguish from real vmcore_info pointer.
 		 */
 		S390_lowcore.vmcore_info = __kaslr_offset | 0x1UL;
 		/* Clear non-relocated kernel */
-		अगर (IS_ENABLED(CONFIG_KERNEL_UNCOMPRESSED))
-			स_रखो(img, 0, vmlinux.image_size);
-	पूर्ण
+		if (IS_ENABLED(CONFIG_KERNEL_UNCOMPRESSED))
+			memset(img, 0, vmlinux.image_size);
+	}
 	vmlinux.entry();
-पूर्ण
+}

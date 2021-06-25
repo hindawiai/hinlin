@@ -1,272 +1,271 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Common/core components क्रम the Surface System Aggregator Module (SSAM) HID
- * transport driver. Provides support क्रम पूर्णांकegrated HID devices on Microsoft
+ * Common/core components for the Surface System Aggregator Module (SSAM) HID
+ * transport driver. Provides support for integrated HID devices on Microsoft
  * Surface models.
  *
  * Copyright (C) 2019-2021 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
-#समावेश <यंत्र/unaligned.h>
-#समावेश <linux/hid.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/usb/ch9.h>
+#include <asm/unaligned.h>
+#include <linux/hid.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/usb/ch9.h>
 
-#समावेश <linux/surface_aggregator/controller.h>
+#include <linux/surface_aggregator/controller.h>
 
-#समावेश "surface_hid_core.h"
+#include "surface_hid_core.h"
 
 
 /* -- Device descriptor access. --------------------------------------------- */
 
-अटल पूर्णांक surface_hid_load_hid_descriptor(काष्ठा surface_hid_device *shid)
-अणु
-	पूर्णांक status;
+static int surface_hid_load_hid_descriptor(struct surface_hid_device *shid)
+{
+	int status;
 
 	status = shid->ops.get_descriptor(shid, SURFACE_HID_DESC_HID,
-			(u8 *)&shid->hid_desc, माप(shid->hid_desc));
-	अगर (status)
-		वापस status;
+			(u8 *)&shid->hid_desc, sizeof(shid->hid_desc));
+	if (status)
+		return status;
 
-	अगर (shid->hid_desc.desc_len != माप(shid->hid_desc)) अणु
+	if (shid->hid_desc.desc_len != sizeof(shid->hid_desc)) {
 		dev_err(shid->dev, "unexpected HID descriptor length: got %u, expected %zu\n",
-			shid->hid_desc.desc_len, माप(shid->hid_desc));
-		वापस -EPROTO;
-	पूर्ण
+			shid->hid_desc.desc_len, sizeof(shid->hid_desc));
+		return -EPROTO;
+	}
 
-	अगर (shid->hid_desc.desc_type != HID_DT_HID) अणु
+	if (shid->hid_desc.desc_type != HID_DT_HID) {
 		dev_err(shid->dev, "unexpected HID descriptor type: got %#04x, expected %#04x\n",
 			shid->hid_desc.desc_type, HID_DT_HID);
-		वापस -EPROTO;
-	पूर्ण
+		return -EPROTO;
+	}
 
-	अगर (shid->hid_desc.num_descriptors != 1) अणु
+	if (shid->hid_desc.num_descriptors != 1) {
 		dev_err(shid->dev, "unexpected number of descriptors: got %u, expected 1\n",
 			shid->hid_desc.num_descriptors);
-		वापस -EPROTO;
-	पूर्ण
+		return -EPROTO;
+	}
 
-	अगर (shid->hid_desc.report_desc_type != HID_DT_REPORT) अणु
+	if (shid->hid_desc.report_desc_type != HID_DT_REPORT) {
 		dev_err(shid->dev, "unexpected report descriptor type: got %#04x, expected %#04x\n",
 			shid->hid_desc.report_desc_type, HID_DT_REPORT);
-		वापस -EPROTO;
-	पूर्ण
+		return -EPROTO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक surface_hid_load_device_attributes(काष्ठा surface_hid_device *shid)
-अणु
-	पूर्णांक status;
+static int surface_hid_load_device_attributes(struct surface_hid_device *shid)
+{
+	int status;
 
 	status = shid->ops.get_descriptor(shid, SURFACE_HID_DESC_ATTRS,
-			(u8 *)&shid->attrs, माप(shid->attrs));
-	अगर (status)
-		वापस status;
+			(u8 *)&shid->attrs, sizeof(shid->attrs));
+	if (status)
+		return status;
 
-	अगर (get_unaligned_le32(&shid->attrs.length) != माप(shid->attrs)) अणु
+	if (get_unaligned_le32(&shid->attrs.length) != sizeof(shid->attrs)) {
 		dev_err(shid->dev, "unexpected attribute length: got %u, expected %zu\n",
-			get_unaligned_le32(&shid->attrs.length), माप(shid->attrs));
-		वापस -EPROTO;
-	पूर्ण
+			get_unaligned_le32(&shid->attrs.length), sizeof(shid->attrs));
+		return -EPROTO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /* -- Transport driver (common). -------------------------------------------- */
 
-अटल पूर्णांक surface_hid_start(काष्ठा hid_device *hid)
-अणु
-	काष्ठा surface_hid_device *shid = hid->driver_data;
+static int surface_hid_start(struct hid_device *hid)
+{
+	struct surface_hid_device *shid = hid->driver_data;
 
-	वापस ssam_notअगरier_रेजिस्टर(shid->ctrl, &shid->notअगर);
-पूर्ण
+	return ssam_notifier_register(shid->ctrl, &shid->notif);
+}
 
-अटल व्योम surface_hid_stop(काष्ठा hid_device *hid)
-अणु
-	काष्ठा surface_hid_device *shid = hid->driver_data;
+static void surface_hid_stop(struct hid_device *hid)
+{
+	struct surface_hid_device *shid = hid->driver_data;
 
-	/* Note: This call will log errors क्रम us, so ignore them here. */
-	ssam_notअगरier_unरेजिस्टर(shid->ctrl, &shid->notअगर);
-पूर्ण
+	/* Note: This call will log errors for us, so ignore them here. */
+	ssam_notifier_unregister(shid->ctrl, &shid->notif);
+}
 
-अटल पूर्णांक surface_hid_खोलो(काष्ठा hid_device *hid)
-अणु
-	वापस 0;
-पूर्ण
+static int surface_hid_open(struct hid_device *hid)
+{
+	return 0;
+}
 
-अटल व्योम surface_hid_बंद(काष्ठा hid_device *hid)
-अणु
-पूर्ण
+static void surface_hid_close(struct hid_device *hid)
+{
+}
 
-अटल पूर्णांक surface_hid_parse(काष्ठा hid_device *hid)
-अणु
-	काष्ठा surface_hid_device *shid = hid->driver_data;
-	माप_प्रकार len = get_unaligned_le16(&shid->hid_desc.report_desc_len);
+static int surface_hid_parse(struct hid_device *hid)
+{
+	struct surface_hid_device *shid = hid->driver_data;
+	size_t len = get_unaligned_le16(&shid->hid_desc.report_desc_len);
 	u8 *buf;
-	पूर्णांक status;
+	int status;
 
 	buf = kzalloc(len, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
 	status = shid->ops.get_descriptor(shid, SURFACE_HID_DESC_REPORT, buf, len);
-	अगर (!status)
+	if (!status)
 		status = hid_parse_report(hid, buf, len);
 
-	kमुक्त(buf);
-	वापस status;
-पूर्ण
+	kfree(buf);
+	return status;
+}
 
-अटल पूर्णांक surface_hid_raw_request(काष्ठा hid_device *hid, अचिन्हित अक्षर reportnum, u8 *buf,
-				   माप_प्रकार len, अचिन्हित अक्षर rtype, पूर्णांक reqtype)
-अणु
-	काष्ठा surface_hid_device *shid = hid->driver_data;
+static int surface_hid_raw_request(struct hid_device *hid, unsigned char reportnum, u8 *buf,
+				   size_t len, unsigned char rtype, int reqtype)
+{
+	struct surface_hid_device *shid = hid->driver_data;
 
-	अगर (rtype == HID_OUTPUT_REPORT && reqtype == HID_REQ_SET_REPORT)
-		वापस shid->ops.output_report(shid, reportnum, buf, len);
+	if (rtype == HID_OUTPUT_REPORT && reqtype == HID_REQ_SET_REPORT)
+		return shid->ops.output_report(shid, reportnum, buf, len);
 
-	अन्यथा अगर (rtype == HID_FEATURE_REPORT && reqtype == HID_REQ_GET_REPORT)
-		वापस shid->ops.get_feature_report(shid, reportnum, buf, len);
+	else if (rtype == HID_FEATURE_REPORT && reqtype == HID_REQ_GET_REPORT)
+		return shid->ops.get_feature_report(shid, reportnum, buf, len);
 
-	अन्यथा अगर (rtype == HID_FEATURE_REPORT && reqtype == HID_REQ_SET_REPORT)
-		वापस shid->ops.set_feature_report(shid, reportnum, buf, len);
+	else if (rtype == HID_FEATURE_REPORT && reqtype == HID_REQ_SET_REPORT)
+		return shid->ops.set_feature_report(shid, reportnum, buf, len);
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-अटल काष्ठा hid_ll_driver surface_hid_ll_driver = अणु
+static struct hid_ll_driver surface_hid_ll_driver = {
 	.start       = surface_hid_start,
 	.stop        = surface_hid_stop,
-	.खोलो        = surface_hid_खोलो,
-	.बंद       = surface_hid_बंद,
+	.open        = surface_hid_open,
+	.close       = surface_hid_close,
 	.parse       = surface_hid_parse,
 	.raw_request = surface_hid_raw_request,
-पूर्ण;
+};
 
 
 /* -- Common device setup. -------------------------------------------------- */
 
-पूर्णांक surface_hid_device_add(काष्ठा surface_hid_device *shid)
-अणु
-	पूर्णांक status;
+int surface_hid_device_add(struct surface_hid_device *shid)
+{
+	int status;
 
 	status = surface_hid_load_hid_descriptor(shid);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
 	status = surface_hid_load_device_attributes(shid);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
 	shid->hid = hid_allocate_device();
-	अगर (IS_ERR(shid->hid))
-		वापस PTR_ERR(shid->hid);
+	if (IS_ERR(shid->hid))
+		return PTR_ERR(shid->hid);
 
 	shid->hid->dev.parent = shid->dev;
 	shid->hid->bus = BUS_HOST;
-	shid->hid->venकरोr = get_unaligned_le16(&shid->attrs.venकरोr);
+	shid->hid->vendor = get_unaligned_le16(&shid->attrs.vendor);
 	shid->hid->product = get_unaligned_le16(&shid->attrs.product);
 	shid->hid->version = get_unaligned_le16(&shid->hid_desc.hid_version);
 	shid->hid->country = shid->hid_desc.country_code;
 
-	snम_लिखो(shid->hid->name, माप(shid->hid->name), "Microsoft Surface %04X:%04X",
-		 shid->hid->venकरोr, shid->hid->product);
+	snprintf(shid->hid->name, sizeof(shid->hid->name), "Microsoft Surface %04X:%04X",
+		 shid->hid->vendor, shid->hid->product);
 
-	strscpy(shid->hid->phys, dev_name(shid->dev), माप(shid->hid->phys));
+	strscpy(shid->hid->phys, dev_name(shid->dev), sizeof(shid->hid->phys));
 
 	shid->hid->driver_data = shid;
 	shid->hid->ll_driver = &surface_hid_ll_driver;
 
 	status = hid_add_device(shid->hid);
-	अगर (status)
+	if (status)
 		hid_destroy_device(shid->hid);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 EXPORT_SYMBOL_GPL(surface_hid_device_add);
 
-व्योम surface_hid_device_destroy(काष्ठा surface_hid_device *shid)
-अणु
+void surface_hid_device_destroy(struct surface_hid_device *shid)
+{
 	hid_destroy_device(shid->hid);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(surface_hid_device_destroy);
 
 
 /* -- PM ops. --------------------------------------------------------------- */
 
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 
-अटल पूर्णांक surface_hid_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा surface_hid_device *d = dev_get_drvdata(dev);
+static int surface_hid_suspend(struct device *dev)
+{
+	struct surface_hid_device *d = dev_get_drvdata(dev);
 
-	अगर (d->hid->driver && d->hid->driver->suspend)
-		वापस d->hid->driver->suspend(d->hid, PMSG_SUSPEND);
+	if (d->hid->driver && d->hid->driver->suspend)
+		return d->hid->driver->suspend(d->hid, PMSG_SUSPEND);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक surface_hid_resume(काष्ठा device *dev)
-अणु
-	काष्ठा surface_hid_device *d = dev_get_drvdata(dev);
+static int surface_hid_resume(struct device *dev)
+{
+	struct surface_hid_device *d = dev_get_drvdata(dev);
 
-	अगर (d->hid->driver && d->hid->driver->resume)
-		वापस d->hid->driver->resume(d->hid);
+	if (d->hid->driver && d->hid->driver->resume)
+		return d->hid->driver->resume(d->hid);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक surface_hid_मुक्तze(काष्ठा device *dev)
-अणु
-	काष्ठा surface_hid_device *d = dev_get_drvdata(dev);
+static int surface_hid_freeze(struct device *dev)
+{
+	struct surface_hid_device *d = dev_get_drvdata(dev);
 
-	अगर (d->hid->driver && d->hid->driver->suspend)
-		वापस d->hid->driver->suspend(d->hid, PMSG_FREEZE);
+	if (d->hid->driver && d->hid->driver->suspend)
+		return d->hid->driver->suspend(d->hid, PMSG_FREEZE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक surface_hid_घातeroff(काष्ठा device *dev)
-अणु
-	काष्ठा surface_hid_device *d = dev_get_drvdata(dev);
+static int surface_hid_poweroff(struct device *dev)
+{
+	struct surface_hid_device *d = dev_get_drvdata(dev);
 
-	अगर (d->hid->driver && d->hid->driver->suspend)
-		वापस d->hid->driver->suspend(d->hid, PMSG_HIBERNATE);
+	if (d->hid->driver && d->hid->driver->suspend)
+		return d->hid->driver->suspend(d->hid, PMSG_HIBERNATE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक surface_hid_restore(काष्ठा device *dev)
-अणु
-	काष्ठा surface_hid_device *d = dev_get_drvdata(dev);
+static int surface_hid_restore(struct device *dev)
+{
+	struct surface_hid_device *d = dev_get_drvdata(dev);
 
-	अगर (d->hid->driver && d->hid->driver->reset_resume)
-		वापस d->hid->driver->reset_resume(d->hid);
+	if (d->hid->driver && d->hid->driver->reset_resume)
+		return d->hid->driver->reset_resume(d->hid);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा dev_pm_ops surface_hid_pm_ops = अणु
-	.मुक्तze   = surface_hid_मुक्तze,
+const struct dev_pm_ops surface_hid_pm_ops = {
+	.freeze   = surface_hid_freeze,
 	.thaw     = surface_hid_resume,
 	.suspend  = surface_hid_suspend,
 	.resume   = surface_hid_resume,
-	.घातeroff = surface_hid_घातeroff,
+	.poweroff = surface_hid_poweroff,
 	.restore  = surface_hid_restore,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(surface_hid_pm_ops);
 
-#अन्यथा /* CONFIG_PM_SLEEP */
+#else /* CONFIG_PM_SLEEP */
 
-स्थिर काष्ठा dev_pm_ops surface_hid_pm_ops = अणु पूर्ण;
+const struct dev_pm_ops surface_hid_pm_ops = { };
 EXPORT_SYMBOL_GPL(surface_hid_pm_ops);
 
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+#endif /* CONFIG_PM_SLEEP */
 
 MODULE_AUTHOR("Maximilian Luz <luzmaximilian@gmail.com>");
 MODULE_DESCRIPTION("HID transport driver core for Surface System Aggregator Module");

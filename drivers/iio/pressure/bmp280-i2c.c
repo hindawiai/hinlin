@@ -1,69 +1,68 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/module.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/regmap.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/module.h>
+#include <linux/i2c.h>
+#include <linux/regmap.h>
 
-#समावेश "bmp280.h"
+#include "bmp280.h"
 
-अटल पूर्णांक bmp280_i2c_probe(काष्ठा i2c_client *client,
-			    स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा regmap *regmap;
-	स्थिर काष्ठा regmap_config *regmap_config;
+static int bmp280_i2c_probe(struct i2c_client *client,
+			    const struct i2c_device_id *id)
+{
+	struct regmap *regmap;
+	const struct regmap_config *regmap_config;
 
-	चयन (id->driver_data) अणु
-	हाल BMP180_CHIP_ID:
+	switch (id->driver_data) {
+	case BMP180_CHIP_ID:
 		regmap_config = &bmp180_regmap_config;
-		अवरोध;
-	हाल BMP280_CHIP_ID:
-	हाल BME280_CHIP_ID:
+		break;
+	case BMP280_CHIP_ID:
+	case BME280_CHIP_ID:
 		regmap_config = &bmp280_regmap_config;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	regmap = devm_regmap_init_i2c(client, regmap_config);
-	अगर (IS_ERR(regmap)) अणु
+	if (IS_ERR(regmap)) {
 		dev_err(&client->dev, "failed to allocate register map\n");
-		वापस PTR_ERR(regmap);
-	पूर्ण
+		return PTR_ERR(regmap);
+	}
 
-	वापस bmp280_common_probe(&client->dev,
+	return bmp280_common_probe(&client->dev,
 				   regmap,
 				   id->driver_data,
 				   id->name,
 				   client->irq);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा of_device_id bmp280_of_i2c_match[] = अणु
-	अणु .compatible = "bosch,bme280", .data = (व्योम *)BME280_CHIP_ID पूर्ण,
-	अणु .compatible = "bosch,bmp280", .data = (व्योम *)BMP280_CHIP_ID पूर्ण,
-	अणु .compatible = "bosch,bmp180", .data = (व्योम *)BMP180_CHIP_ID पूर्ण,
-	अणु .compatible = "bosch,bmp085", .data = (व्योम *)BMP180_CHIP_ID पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id bmp280_of_i2c_match[] = {
+	{ .compatible = "bosch,bme280", .data = (void *)BME280_CHIP_ID },
+	{ .compatible = "bosch,bmp280", .data = (void *)BMP280_CHIP_ID },
+	{ .compatible = "bosch,bmp180", .data = (void *)BMP180_CHIP_ID },
+	{ .compatible = "bosch,bmp085", .data = (void *)BMP180_CHIP_ID },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, bmp280_of_i2c_match);
 
-अटल स्थिर काष्ठा i2c_device_id bmp280_i2c_id[] = अणु
-	अणु"bmp280", BMP280_CHIP_ID पूर्ण,
-	अणु"bmp180", BMP180_CHIP_ID पूर्ण,
-	अणु"bmp085", BMP180_CHIP_ID पूर्ण,
-	अणु"bme280", BME280_CHIP_ID पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct i2c_device_id bmp280_i2c_id[] = {
+	{"bmp280", BMP280_CHIP_ID },
+	{"bmp180", BMP180_CHIP_ID },
+	{"bmp085", BMP180_CHIP_ID },
+	{"bme280", BME280_CHIP_ID },
+	{ },
+};
 MODULE_DEVICE_TABLE(i2c, bmp280_i2c_id);
 
-अटल काष्ठा i2c_driver bmp280_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver bmp280_i2c_driver = {
+	.driver = {
 		.name	= "bmp280",
 		.of_match_table = bmp280_of_i2c_match,
 		.pm = &bmp280_dev_pm_ops,
-	पूर्ण,
+	},
 	.probe		= bmp280_i2c_probe,
 	.id_table	= bmp280_i2c_id,
-पूर्ण;
+};
 module_i2c_driver(bmp280_i2c_driver);
 
 MODULE_AUTHOR("Vlad Dogaru <vlad.dogaru@intel.com>");

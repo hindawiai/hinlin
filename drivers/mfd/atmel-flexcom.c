@@ -1,126 +1,125 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Driver क्रम Aपंचांगel Flexcom
+ * Driver for Atmel Flexcom
  *
- * Copyright (C) 2015 Aपंचांगel Corporation
+ * Copyright (C) 2015 Atmel Corporation
  *
- * Author: Cyrille Pitchen <cyrille.pitchen@aपंचांगel.com>
+ * Author: Cyrille Pitchen <cyrille.pitchen@atmel.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/clk.h>
-#समावेश <dt-bindings/mfd/aपंचांगel-flexcom.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/clk.h>
+#include <dt-bindings/mfd/atmel-flexcom.h>
 
-/* I/O रेजिस्टर offsets */
-#घोषणा FLEX_MR		0x0	/* Mode Register */
-#घोषणा FLEX_VERSION	0xfc	/* Version Register */
+/* I/O register offsets */
+#define FLEX_MR		0x0	/* Mode Register */
+#define FLEX_VERSION	0xfc	/* Version Register */
 
 /* Mode Register bit fields */
-#घोषणा FLEX_MR_OPMODE_OFFSET	(0)  /* Operating Mode */
-#घोषणा FLEX_MR_OPMODE_MASK	(0x3 << FLEX_MR_OPMODE_OFFSET)
-#घोषणा FLEX_MR_OPMODE(opmode)	(((opmode) << FLEX_MR_OPMODE_OFFSET) &	\
+#define FLEX_MR_OPMODE_OFFSET	(0)  /* Operating Mode */
+#define FLEX_MR_OPMODE_MASK	(0x3 << FLEX_MR_OPMODE_OFFSET)
+#define FLEX_MR_OPMODE(opmode)	(((opmode) << FLEX_MR_OPMODE_OFFSET) &	\
 				 FLEX_MR_OPMODE_MASK)
 
-काष्ठा aपंचांगel_flexcom अणु
-	व्योम __iomem *base;
+struct atmel_flexcom {
+	void __iomem *base;
 	u32 opmode;
-	काष्ठा clk *clk;
-पूर्ण;
+	struct clk *clk;
+};
 
-अटल पूर्णांक aपंचांगel_flexcom_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा resource *res;
-	काष्ठा aपंचांगel_flexcom *ddata;
-	पूर्णांक err;
+static int atmel_flexcom_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct resource *res;
+	struct atmel_flexcom *ddata;
+	int err;
 
-	ddata = devm_kzalloc(&pdev->dev, माप(*ddata), GFP_KERNEL);
-	अगर (!ddata)
-		वापस -ENOMEM;
+	ddata = devm_kzalloc(&pdev->dev, sizeof(*ddata), GFP_KERNEL);
+	if (!ddata)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, ddata);
+	platform_set_drvdata(pdev, ddata);
 
-	err = of_property_पढ़ो_u32(np, "atmel,flexcom-mode", &ddata->opmode);
-	अगर (err)
-		वापस err;
+	err = of_property_read_u32(np, "atmel,flexcom-mode", &ddata->opmode);
+	if (err)
+		return err;
 
-	अगर (ddata->opmode < ATMEL_FLEXCOM_MODE_USART ||
+	if (ddata->opmode < ATMEL_FLEXCOM_MODE_USART ||
 	    ddata->opmode > ATMEL_FLEXCOM_MODE_TWI)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	ddata->base = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(ddata->base))
-		वापस PTR_ERR(ddata->base);
+	if (IS_ERR(ddata->base))
+		return PTR_ERR(ddata->base);
 
-	ddata->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(ddata->clk))
-		वापस PTR_ERR(ddata->clk);
+	ddata->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(ddata->clk))
+		return PTR_ERR(ddata->clk);
 
 	err = clk_prepare_enable(ddata->clk);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/*
 	 * Set the Operating Mode in the Mode Register: only the selected device
-	 * is घड़ीed. Hence, रेजिस्टरs of the other serial devices reमुख्य
-	 * inaccessible and are पढ़ो as zero. Also the बाह्यal I/O lines of the
+	 * is clocked. Hence, registers of the other serial devices remain
+	 * inaccessible and are read as zero. Also the external I/O lines of the
 	 * Flexcom are muxed to reach the selected device.
 	 */
-	ग_लिखोl(FLEX_MR_OPMODE(ddata->opmode), ddata->base + FLEX_MR);
+	writel(FLEX_MR_OPMODE(ddata->opmode), ddata->base + FLEX_MR);
 
 	clk_disable_unprepare(ddata->clk);
 
-	वापस devm_of_platक्रमm_populate(&pdev->dev);
-पूर्ण
+	return devm_of_platform_populate(&pdev->dev);
+}
 
-अटल स्थिर काष्ठा of_device_id aपंचांगel_flexcom_of_match[] = अणु
-	अणु .compatible = "atmel,sama5d2-flexcom" पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(of, aपंचांगel_flexcom_of_match);
+static const struct of_device_id atmel_flexcom_of_match[] = {
+	{ .compatible = "atmel,sama5d2-flexcom" },
+	{ /* sentinel */ }
+};
+MODULE_DEVICE_TABLE(of, atmel_flexcom_of_match);
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक aपंचांगel_flexcom_resume(काष्ठा device *dev)
-अणु
-	काष्ठा aपंचांगel_flexcom *ddata = dev_get_drvdata(dev);
-	पूर्णांक err;
+#ifdef CONFIG_PM_SLEEP
+static int atmel_flexcom_resume(struct device *dev)
+{
+	struct atmel_flexcom *ddata = dev_get_drvdata(dev);
+	int err;
 	u32 val;
 
 	err = clk_prepare_enable(ddata->clk);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	val = FLEX_MR_OPMODE(ddata->opmode),
-	ग_लिखोl(val, ddata->base + FLEX_MR);
+	writel(val, ddata->base + FLEX_MR);
 
 	clk_disable_unprepare(ddata->clk);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(aपंचांगel_flexcom_pm_ops, शून्य,
-			 aपंचांगel_flexcom_resume);
+static SIMPLE_DEV_PM_OPS(atmel_flexcom_pm_ops, NULL,
+			 atmel_flexcom_resume);
 
-अटल काष्ठा platक्रमm_driver aपंचांगel_flexcom_driver = अणु
-	.probe	= aपंचांगel_flexcom_probe,
-	.driver	= अणु
+static struct platform_driver atmel_flexcom_driver = {
+	.probe	= atmel_flexcom_probe,
+	.driver	= {
 		.name		= "atmel_flexcom",
-		.pm		= &aपंचांगel_flexcom_pm_ops,
-		.of_match_table	= aपंचांगel_flexcom_of_match,
-	पूर्ण,
-पूर्ण;
+		.pm		= &atmel_flexcom_pm_ops,
+		.of_match_table	= atmel_flexcom_of_match,
+	},
+};
 
-module_platक्रमm_driver(aपंचांगel_flexcom_driver);
+module_platform_driver(atmel_flexcom_driver);
 
 MODULE_AUTHOR("Cyrille Pitchen <cyrille.pitchen@atmel.com>");
 MODULE_DESCRIPTION("Atmel Flexcom MFD driver");

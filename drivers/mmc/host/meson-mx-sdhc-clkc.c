@@ -1,63 +1,62 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Amlogic Meson SDHC घड़ी controller
+ * Amlogic Meson SDHC clock controller
  *
  * Copyright (C) 2020 Martin Blumenstingl <martin.blumenstingl@googlemail.com>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/device.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include <linux/device.h>
+#include <linux/platform_device.h>
 
-#समावेश "meson-mx-sdhc.h"
+#include "meson-mx-sdhc.h"
 
-#घोषणा MESON_SDHC_NUM_BUILTIN_CLKS	6
+#define MESON_SDHC_NUM_BUILTIN_CLKS	6
 
-काष्ठा meson_mx_sdhc_clkc अणु
-	काष्ठा clk_mux			src_sel;
-	काष्ठा clk_भागider		भाग;
-	काष्ठा clk_gate			mod_clk_en;
-	काष्ठा clk_gate			tx_clk_en;
-	काष्ठा clk_gate			rx_clk_en;
-	काष्ठा clk_gate			sd_clk_en;
-पूर्ण;
+struct meson_mx_sdhc_clkc {
+	struct clk_mux			src_sel;
+	struct clk_divider		div;
+	struct clk_gate			mod_clk_en;
+	struct clk_gate			tx_clk_en;
+	struct clk_gate			rx_clk_en;
+	struct clk_gate			sd_clk_en;
+};
 
-अटल स्थिर काष्ठा clk_parent_data meson_mx_sdhc_src_sel_parents[4] = अणु
-	अणु .fw_name = "clkin0" पूर्ण,
-	अणु .fw_name = "clkin1" पूर्ण,
-	अणु .fw_name = "clkin2" पूर्ण,
-	अणु .fw_name = "clkin3" पूर्ण,
-पूर्ण;
+static const struct clk_parent_data meson_mx_sdhc_src_sel_parents[4] = {
+	{ .fw_name = "clkin0" },
+	{ .fw_name = "clkin1" },
+	{ .fw_name = "clkin2" },
+	{ .fw_name = "clkin3" },
+};
 
-अटल स्थिर काष्ठा clk_भाग_प्रकारable meson_mx_sdhc_भाग_प्रकारable[] = अणु
-	अणु .भाग = 6, .val = 5, पूर्ण,
-	अणु .भाग = 8, .val = 7, पूर्ण,
-	अणु .भाग = 9, .val = 8, पूर्ण,
-	अणु .भाग = 10, .val = 9, पूर्ण,
-	अणु .भाग = 12, .val = 11, पूर्ण,
-	अणु .भाग = 16, .val = 15, पूर्ण,
-	अणु .भाग = 18, .val = 17, पूर्ण,
-	अणु .भाग = 34, .val = 33, पूर्ण,
-	अणु .भाग = 142, .val = 141, पूर्ण,
-	अणु .भाग = 850, .val = 849, पूर्ण,
-	अणु .भाग = 2126, .val = 2125, पूर्ण,
-	अणु .भाग = 4096, .val = 4095, पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct clk_div_table meson_mx_sdhc_div_table[] = {
+	{ .div = 6, .val = 5, },
+	{ .div = 8, .val = 7, },
+	{ .div = 9, .val = 8, },
+	{ .div = 10, .val = 9, },
+	{ .div = 12, .val = 11, },
+	{ .div = 16, .val = 15, },
+	{ .div = 18, .val = 17, },
+	{ .div = 34, .val = 33, },
+	{ .div = 142, .val = 141, },
+	{ .div = 850, .val = 849, },
+	{ .div = 2126, .val = 2125, },
+	{ .div = 4096, .val = 4095, },
+	{ /* sentinel */ }
+};
 
-अटल पूर्णांक meson_mx_sdhc_clk_hw_रेजिस्टर(काष्ठा device *dev,
-					 स्थिर अक्षर *name_suffix,
-					 स्थिर काष्ठा clk_parent_data *parents,
-					 अचिन्हित पूर्णांक num_parents,
-					 स्थिर काष्ठा clk_ops *ops,
-					 काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_init_data init = अणु पूर्ण;
-	अक्षर clk_name[32];
+static int meson_mx_sdhc_clk_hw_register(struct device *dev,
+					 const char *name_suffix,
+					 const struct clk_parent_data *parents,
+					 unsigned int num_parents,
+					 const struct clk_ops *ops,
+					 struct clk_hw *hw)
+{
+	struct clk_init_data init = { };
+	char clk_name[32];
 
-	snम_लिखो(clk_name, माप(clk_name), "%s#%s", dev_name(dev),
+	snprintf(clk_name, sizeof(clk_name), "%s#%s", dev_name(dev),
 		 name_suffix);
 
 	init.name = clk_name;
@@ -68,83 +67,83 @@
 
 	hw->init = &init;
 
-	वापस devm_clk_hw_रेजिस्टर(dev, hw);
-पूर्ण
+	return devm_clk_hw_register(dev, hw);
+}
 
-अटल पूर्णांक meson_mx_sdhc_gate_clk_hw_रेजिस्टर(काष्ठा device *dev,
-					      स्थिर अक्षर *name_suffix,
-					      काष्ठा clk_hw *parent,
-					      काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_parent_data parent_data = अणु .hw = parent पूर्ण;
+static int meson_mx_sdhc_gate_clk_hw_register(struct device *dev,
+					      const char *name_suffix,
+					      struct clk_hw *parent,
+					      struct clk_hw *hw)
+{
+	struct clk_parent_data parent_data = { .hw = parent };
 
-	वापस meson_mx_sdhc_clk_hw_रेजिस्टर(dev, name_suffix, &parent_data, 1,
+	return meson_mx_sdhc_clk_hw_register(dev, name_suffix, &parent_data, 1,
 					     &clk_gate_ops, hw);
-पूर्ण
+}
 
-पूर्णांक meson_mx_sdhc_रेजिस्टर_clkc(काष्ठा device *dev, व्योम __iomem *base,
-				काष्ठा clk_bulk_data *clk_bulk_data)
-अणु
-	काष्ठा clk_parent_data भाग_parent = अणु पूर्ण;
-	काष्ठा meson_mx_sdhc_clkc *clkc_data;
-	पूर्णांक ret;
+int meson_mx_sdhc_register_clkc(struct device *dev, void __iomem *base,
+				struct clk_bulk_data *clk_bulk_data)
+{
+	struct clk_parent_data div_parent = { };
+	struct meson_mx_sdhc_clkc *clkc_data;
+	int ret;
 
-	clkc_data = devm_kzalloc(dev, माप(*clkc_data), GFP_KERNEL);
-	अगर (!clkc_data)
-		वापस -ENOMEM;
+	clkc_data = devm_kzalloc(dev, sizeof(*clkc_data), GFP_KERNEL);
+	if (!clkc_data)
+		return -ENOMEM;
 
 	clkc_data->src_sel.reg = base + MESON_SDHC_CLKC;
 	clkc_data->src_sel.mask = 0x3;
-	clkc_data->src_sel.shअगरt = 16;
-	ret = meson_mx_sdhc_clk_hw_रेजिस्टर(dev, "src_sel",
+	clkc_data->src_sel.shift = 16;
+	ret = meson_mx_sdhc_clk_hw_register(dev, "src_sel",
 					    meson_mx_sdhc_src_sel_parents, 4,
 					    &clk_mux_ops,
 					    &clkc_data->src_sel.hw);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	clkc_data->भाग.reg = base + MESON_SDHC_CLKC;
-	clkc_data->भाग.shअगरt = 0;
-	clkc_data->भाग.width = 12;
-	clkc_data->भाग.table = meson_mx_sdhc_भाग_प्रकारable;
-	भाग_parent.hw = &clkc_data->src_sel.hw;
-	ret = meson_mx_sdhc_clk_hw_रेजिस्टर(dev, "div", &भाग_parent, 1,
-					    &clk_भागider_ops,
-					    &clkc_data->भाग.hw);
-	अगर (ret)
-		वापस ret;
+	clkc_data->div.reg = base + MESON_SDHC_CLKC;
+	clkc_data->div.shift = 0;
+	clkc_data->div.width = 12;
+	clkc_data->div.table = meson_mx_sdhc_div_table;
+	div_parent.hw = &clkc_data->src_sel.hw;
+	ret = meson_mx_sdhc_clk_hw_register(dev, "div", &div_parent, 1,
+					    &clk_divider_ops,
+					    &clkc_data->div.hw);
+	if (ret)
+		return ret;
 
 	clkc_data->mod_clk_en.reg = base + MESON_SDHC_CLKC;
 	clkc_data->mod_clk_en.bit_idx = 15;
-	ret = meson_mx_sdhc_gate_clk_hw_रेजिस्टर(dev, "mod_clk_on",
-						 &clkc_data->भाग.hw,
+	ret = meson_mx_sdhc_gate_clk_hw_register(dev, "mod_clk_on",
+						 &clkc_data->div.hw,
 						 &clkc_data->mod_clk_en.hw);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	clkc_data->tx_clk_en.reg = base + MESON_SDHC_CLKC;
 	clkc_data->tx_clk_en.bit_idx = 14;
-	ret = meson_mx_sdhc_gate_clk_hw_रेजिस्टर(dev, "tx_clk_on",
-						 &clkc_data->भाग.hw,
+	ret = meson_mx_sdhc_gate_clk_hw_register(dev, "tx_clk_on",
+						 &clkc_data->div.hw,
 						 &clkc_data->tx_clk_en.hw);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	clkc_data->rx_clk_en.reg = base + MESON_SDHC_CLKC;
 	clkc_data->rx_clk_en.bit_idx = 13;
-	ret = meson_mx_sdhc_gate_clk_hw_रेजिस्टर(dev, "rx_clk_on",
-						 &clkc_data->भाग.hw,
+	ret = meson_mx_sdhc_gate_clk_hw_register(dev, "rx_clk_on",
+						 &clkc_data->div.hw,
 						 &clkc_data->rx_clk_en.hw);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	clkc_data->sd_clk_en.reg = base + MESON_SDHC_CLKC;
 	clkc_data->sd_clk_en.bit_idx = 12;
-	ret = meson_mx_sdhc_gate_clk_hw_रेजिस्टर(dev, "sd_clk_on",
-						 &clkc_data->भाग.hw,
+	ret = meson_mx_sdhc_gate_clk_hw_register(dev, "sd_clk_on",
+						 &clkc_data->div.hw,
 						 &clkc_data->sd_clk_en.hw);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
 	 * TODO: Replace clk_hw.clk with devm_clk_hw_get_clk() once that is
@@ -155,5 +154,5 @@
 	clk_bulk_data[2].clk = clkc_data->tx_clk_en.hw.clk;
 	clk_bulk_data[3].clk = clkc_data->rx_clk_en.hw.clk;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

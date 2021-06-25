@@ -1,422 +1,421 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Battery driver क्रम 7th-generation Microsoft Surface devices via Surface
+ * Battery driver for 7th-generation Microsoft Surface devices via Surface
  * System Aggregator Module (SSAM).
  *
  * Copyright (C) 2019-2021 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
-#समावेश <यंत्र/unaligned.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/types.h>
-#समावेश <linux/workqueue.h>
+#include <asm/unaligned.h>
+#include <linux/jiffies.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/power_supply.h>
+#include <linux/sysfs.h>
+#include <linux/types.h>
+#include <linux/workqueue.h>
 
-#समावेश <linux/surface_aggregator/device.h>
+#include <linux/surface_aggregator/device.h>
 
 
-/* -- SAM पूर्णांकerface. -------------------------------------------------------- */
+/* -- SAM interface. -------------------------------------------------------- */
 
-क्रमागत sam_event_cid_bat अणु
+enum sam_event_cid_bat {
 	SAM_EVENT_CID_BAT_BIX         = 0x15,
 	SAM_EVENT_CID_BAT_BST         = 0x16,
 	SAM_EVENT_CID_BAT_ADP         = 0x17,
 	SAM_EVENT_CID_BAT_PROT        = 0x18,
 	SAM_EVENT_CID_BAT_DPTF        = 0x53,
-पूर्ण;
+};
 
-क्रमागत sam_battery_sta अणु
+enum sam_battery_sta {
 	SAM_BATTERY_STA_OK            = 0x0f,
 	SAM_BATTERY_STA_PRESENT	      = 0x10,
-पूर्ण;
+};
 
-क्रमागत sam_battery_state अणु
+enum sam_battery_state {
 	SAM_BATTERY_STATE_DISCHARGING = BIT(0),
 	SAM_BATTERY_STATE_CHARGING    = BIT(1),
 	SAM_BATTERY_STATE_CRITICAL    = BIT(2),
-पूर्ण;
+};
 
-क्रमागत sam_battery_घातer_unit अणु
+enum sam_battery_power_unit {
 	SAM_BATTERY_POWER_UNIT_mW     = 0,
 	SAM_BATTERY_POWER_UNIT_mA     = 1,
-पूर्ण;
+};
 
-/* Equivalent to data वापसed in ACPI _BIX method, revision 0. */
-काष्ठा spwr_bix अणु
+/* Equivalent to data returned in ACPI _BIX method, revision 0. */
+struct spwr_bix {
 	u8  revision;
-	__le32 घातer_unit;
+	__le32 power_unit;
 	__le32 design_cap;
-	__le32 last_full_अक्षरge_cap;
+	__le32 last_full_charge_cap;
 	__le32 technology;
 	__le32 design_voltage;
 	__le32 design_cap_warn;
 	__le32 design_cap_low;
 	__le32 cycle_count;
 	__le32 measurement_accuracy;
-	__le32 max_sampling_समय;
-	__le32 min_sampling_समय;
-	__le32 max_avg_पूर्णांकerval;
-	__le32 min_avg_पूर्णांकerval;
+	__le32 max_sampling_time;
+	__le32 min_sampling_time;
+	__le32 max_avg_interval;
+	__le32 min_avg_interval;
 	__le32 bat_cap_granularity_1;
 	__le32 bat_cap_granularity_2;
 	__u8 model[21];
 	__u8 serial[11];
 	__u8 type[5];
 	__u8 oem_info[21];
-पूर्ण __packed;
+} __packed;
 
-अटल_निश्चित(माप(काष्ठा spwr_bix) == 119);
+static_assert(sizeof(struct spwr_bix) == 119);
 
-/* Equivalent to data वापसed in ACPI _BST method. */
-काष्ठा spwr_bst अणु
+/* Equivalent to data returned in ACPI _BST method. */
+struct spwr_bst {
 	__le32 state;
 	__le32 present_rate;
-	__le32 reमुख्यing_cap;
+	__le32 remaining_cap;
 	__le32 present_voltage;
-पूर्ण __packed;
+} __packed;
 
-अटल_निश्चित(माप(काष्ठा spwr_bst) == 16);
+static_assert(sizeof(struct spwr_bst) == 16);
 
-#घोषणा SPWR_BIX_REVISION		0
-#घोषणा SPWR_BATTERY_VALUE_UNKNOWN	0xffffffff
+#define SPWR_BIX_REVISION		0
+#define SPWR_BATTERY_VALUE_UNKNOWN	0xffffffff
 
 /* Get battery status (_STA) */
-SSAM_DEFINE_SYNC_REQUEST_CL_R(ssam_bat_get_sta, __le32, अणु
+SSAM_DEFINE_SYNC_REQUEST_CL_R(ssam_bat_get_sta, __le32, {
 	.target_category = SSAM_SSH_TC_BAT,
 	.command_id      = 0x01,
-पूर्ण);
+});
 
-/* Get battery अटल inक्रमmation (_BIX). */
-SSAM_DEFINE_SYNC_REQUEST_CL_R(ssam_bat_get_bix, काष्ठा spwr_bix, अणु
+/* Get battery static information (_BIX). */
+SSAM_DEFINE_SYNC_REQUEST_CL_R(ssam_bat_get_bix, struct spwr_bix, {
 	.target_category = SSAM_SSH_TC_BAT,
 	.command_id      = 0x02,
-पूर्ण);
+});
 
-/* Get battery dynamic inक्रमmation (_BST). */
-SSAM_DEFINE_SYNC_REQUEST_CL_R(ssam_bat_get_bst, काष्ठा spwr_bst, अणु
+/* Get battery dynamic information (_BST). */
+SSAM_DEFINE_SYNC_REQUEST_CL_R(ssam_bat_get_bst, struct spwr_bst, {
 	.target_category = SSAM_SSH_TC_BAT,
 	.command_id      = 0x03,
-पूर्ण);
+});
 
-/* Set battery trip poपूर्णांक (_BTP). */
-SSAM_DEFINE_SYNC_REQUEST_CL_W(ssam_bat_set_btp, __le32, अणु
+/* Set battery trip point (_BTP). */
+SSAM_DEFINE_SYNC_REQUEST_CL_W(ssam_bat_set_btp, __le32, {
 	.target_category = SSAM_SSH_TC_BAT,
 	.command_id      = 0x04,
-पूर्ण);
+});
 
 
-/* -- Device काष्ठाures. ---------------------------------------------------- */
+/* -- Device structures. ---------------------------------------------------- */
 
-काष्ठा spwr_psy_properties अणु
-	स्थिर अक्षर *name;
-	काष्ठा ssam_event_registry registry;
-पूर्ण;
+struct spwr_psy_properties {
+	const char *name;
+	struct ssam_event_registry registry;
+};
 
-काष्ठा spwr_battery_device अणु
-	काष्ठा ssam_device *sdev;
+struct spwr_battery_device {
+	struct ssam_device *sdev;
 
-	अक्षर name[32];
-	काष्ठा घातer_supply *psy;
-	काष्ठा घातer_supply_desc psy_desc;
+	char name[32];
+	struct power_supply *psy;
+	struct power_supply_desc psy_desc;
 
-	काष्ठा delayed_work update_work;
+	struct delayed_work update_work;
 
-	काष्ठा ssam_event_notअगरier notअगर;
+	struct ssam_event_notifier notif;
 
-	काष्ठा mutex lock;  /* Guards access to state data below. */
-	अचिन्हित दीर्घ बारtamp;
+	struct mutex lock;  /* Guards access to state data below. */
+	unsigned long timestamp;
 
 	__le32 sta;
-	काष्ठा spwr_bix bix;
-	काष्ठा spwr_bst bst;
+	struct spwr_bix bix;
+	struct spwr_bst bst;
 	u32 alarm;
-पूर्ण;
+};
 
 
 /* -- Module parameters. ---------------------------------------------------- */
 
-अटल अचिन्हित पूर्णांक cache_समय = 1000;
-module_param(cache_समय, uपूर्णांक, 0644);
-MODULE_PARM_DESC(cache_समय, "battery state caching time in milliseconds [default: 1000]");
+static unsigned int cache_time = 1000;
+module_param(cache_time, uint, 0644);
+MODULE_PARM_DESC(cache_time, "battery state caching time in milliseconds [default: 1000]");
 
 
 /* -- State management. ----------------------------------------------------- */
 
 /*
- * Delay क्रम battery update quirk. See spwr_बाह्यal_घातer_changed() below
- * क्रम more details.
+ * Delay for battery update quirk. See spwr_external_power_changed() below
+ * for more details.
  */
-#घोषणा SPWR_AC_BAT_UPDATE_DELAY	msecs_to_jअगरfies(5000)
+#define SPWR_AC_BAT_UPDATE_DELAY	msecs_to_jiffies(5000)
 
-अटल bool spwr_battery_present(काष्ठा spwr_battery_device *bat)
-अणु
-	lockdep_निश्चित_held(&bat->lock);
+static bool spwr_battery_present(struct spwr_battery_device *bat)
+{
+	lockdep_assert_held(&bat->lock);
 
-	वापस le32_to_cpu(bat->sta) & SAM_BATTERY_STA_PRESENT;
-पूर्ण
+	return le32_to_cpu(bat->sta) & SAM_BATTERY_STA_PRESENT;
+}
 
-अटल पूर्णांक spwr_battery_load_sta(काष्ठा spwr_battery_device *bat)
-अणु
-	lockdep_निश्चित_held(&bat->lock);
+static int spwr_battery_load_sta(struct spwr_battery_device *bat)
+{
+	lockdep_assert_held(&bat->lock);
 
-	वापस ssam_retry(ssam_bat_get_sta, bat->sdev, &bat->sta);
-पूर्ण
+	return ssam_retry(ssam_bat_get_sta, bat->sdev, &bat->sta);
+}
 
-अटल पूर्णांक spwr_battery_load_bix(काष्ठा spwr_battery_device *bat)
-अणु
-	पूर्णांक status;
+static int spwr_battery_load_bix(struct spwr_battery_device *bat)
+{
+	int status;
 
-	lockdep_निश्चित_held(&bat->lock);
+	lockdep_assert_held(&bat->lock);
 
-	अगर (!spwr_battery_present(bat))
-		वापस 0;
+	if (!spwr_battery_present(bat))
+		return 0;
 
 	status = ssam_retry(ssam_bat_get_bix, bat->sdev, &bat->bix);
 
-	/* Enक्रमce शून्य terminated strings in हाल anything goes wrong... */
+	/* Enforce NULL terminated strings in case anything goes wrong... */
 	bat->bix.model[ARRAY_SIZE(bat->bix.model) - 1] = 0;
 	bat->bix.serial[ARRAY_SIZE(bat->bix.serial) - 1] = 0;
 	bat->bix.type[ARRAY_SIZE(bat->bix.type) - 1] = 0;
 	bat->bix.oem_info[ARRAY_SIZE(bat->bix.oem_info) - 1] = 0;
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक spwr_battery_load_bst(काष्ठा spwr_battery_device *bat)
-अणु
-	lockdep_निश्चित_held(&bat->lock);
+static int spwr_battery_load_bst(struct spwr_battery_device *bat)
+{
+	lockdep_assert_held(&bat->lock);
 
-	अगर (!spwr_battery_present(bat))
-		वापस 0;
+	if (!spwr_battery_present(bat))
+		return 0;
 
-	वापस ssam_retry(ssam_bat_get_bst, bat->sdev, &bat->bst);
-पूर्ण
+	return ssam_retry(ssam_bat_get_bst, bat->sdev, &bat->bst);
+}
 
-अटल पूर्णांक spwr_battery_set_alarm_unlocked(काष्ठा spwr_battery_device *bat, u32 value)
-अणु
+static int spwr_battery_set_alarm_unlocked(struct spwr_battery_device *bat, u32 value)
+{
 	__le32 value_le = cpu_to_le32(value);
 
-	lockdep_निश्चित_held(&bat->lock);
+	lockdep_assert_held(&bat->lock);
 
 	bat->alarm = value;
-	वापस ssam_retry(ssam_bat_set_btp, bat->sdev, &value_le);
-पूर्ण
+	return ssam_retry(ssam_bat_set_btp, bat->sdev, &value_le);
+}
 
-अटल पूर्णांक spwr_battery_update_bst_unlocked(काष्ठा spwr_battery_device *bat, bool cached)
-अणु
-	अचिन्हित दीर्घ cache_deadline = bat->बारtamp + msecs_to_jअगरfies(cache_समय);
-	पूर्णांक status;
+static int spwr_battery_update_bst_unlocked(struct spwr_battery_device *bat, bool cached)
+{
+	unsigned long cache_deadline = bat->timestamp + msecs_to_jiffies(cache_time);
+	int status;
 
-	lockdep_निश्चित_held(&bat->lock);
+	lockdep_assert_held(&bat->lock);
 
-	अगर (cached && bat->बारtamp && समय_is_after_jअगरfies(cache_deadline))
-		वापस 0;
+	if (cached && bat->timestamp && time_is_after_jiffies(cache_deadline))
+		return 0;
 
 	status = spwr_battery_load_sta(bat);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
 	status = spwr_battery_load_bst(bat);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
-	bat->बारtamp = jअगरfies;
-	वापस 0;
-पूर्ण
+	bat->timestamp = jiffies;
+	return 0;
+}
 
-अटल पूर्णांक spwr_battery_update_bst(काष्ठा spwr_battery_device *bat, bool cached)
-अणु
-	पूर्णांक status;
+static int spwr_battery_update_bst(struct spwr_battery_device *bat, bool cached)
+{
+	int status;
 
 	mutex_lock(&bat->lock);
 	status = spwr_battery_update_bst_unlocked(bat, cached);
 	mutex_unlock(&bat->lock);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक spwr_battery_update_bix_unlocked(काष्ठा spwr_battery_device *bat)
-अणु
-	पूर्णांक status;
+static int spwr_battery_update_bix_unlocked(struct spwr_battery_device *bat)
+{
+	int status;
 
-	lockdep_निश्चित_held(&bat->lock);
+	lockdep_assert_held(&bat->lock);
 
 	status = spwr_battery_load_sta(bat);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
 	status = spwr_battery_load_bix(bat);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
 	status = spwr_battery_load_bst(bat);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
-	अगर (bat->bix.revision != SPWR_BIX_REVISION)
+	if (bat->bix.revision != SPWR_BIX_REVISION)
 		dev_warn(&bat->sdev->dev, "unsupported battery revision: %u\n", bat->bix.revision);
 
-	bat->बारtamp = jअगरfies;
-	वापस 0;
-पूर्ण
+	bat->timestamp = jiffies;
+	return 0;
+}
 
-अटल u32 sprw_battery_get_full_cap_safe(काष्ठा spwr_battery_device *bat)
-अणु
-	u32 full_cap = get_unaligned_le32(&bat->bix.last_full_अक्षरge_cap);
+static u32 sprw_battery_get_full_cap_safe(struct spwr_battery_device *bat)
+{
+	u32 full_cap = get_unaligned_le32(&bat->bix.last_full_charge_cap);
 
-	lockdep_निश्चित_held(&bat->lock);
+	lockdep_assert_held(&bat->lock);
 
-	अगर (full_cap == 0 || full_cap == SPWR_BATTERY_VALUE_UNKNOWN)
+	if (full_cap == 0 || full_cap == SPWR_BATTERY_VALUE_UNKNOWN)
 		full_cap = get_unaligned_le32(&bat->bix.design_cap);
 
-	वापस full_cap;
-पूर्ण
+	return full_cap;
+}
 
-अटल bool spwr_battery_is_full(काष्ठा spwr_battery_device *bat)
-अणु
+static bool spwr_battery_is_full(struct spwr_battery_device *bat)
+{
 	u32 state = get_unaligned_le32(&bat->bst.state);
 	u32 full_cap = sprw_battery_get_full_cap_safe(bat);
-	u32 reमुख्यing_cap = get_unaligned_le32(&bat->bst.reमुख्यing_cap);
+	u32 remaining_cap = get_unaligned_le32(&bat->bst.remaining_cap);
 
-	lockdep_निश्चित_held(&bat->lock);
+	lockdep_assert_held(&bat->lock);
 
-	वापस full_cap != SPWR_BATTERY_VALUE_UNKNOWN && full_cap != 0 &&
-		reमुख्यing_cap != SPWR_BATTERY_VALUE_UNKNOWN &&
-		reमुख्यing_cap >= full_cap &&
+	return full_cap != SPWR_BATTERY_VALUE_UNKNOWN && full_cap != 0 &&
+		remaining_cap != SPWR_BATTERY_VALUE_UNKNOWN &&
+		remaining_cap >= full_cap &&
 		state == 0;
-पूर्ण
+}
 
-अटल पूर्णांक spwr_battery_recheck_full(काष्ठा spwr_battery_device *bat)
-अणु
+static int spwr_battery_recheck_full(struct spwr_battery_device *bat)
+{
 	bool present;
 	u32 unit;
-	पूर्णांक status;
+	int status;
 
 	mutex_lock(&bat->lock);
-	unit = get_unaligned_le32(&bat->bix.घातer_unit);
+	unit = get_unaligned_le32(&bat->bix.power_unit);
 	present = spwr_battery_present(bat);
 
 	status = spwr_battery_update_bix_unlocked(bat);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 
 	/* If battery has been attached, (re-)initialize alarm. */
-	अगर (!present && spwr_battery_present(bat)) अणु
+	if (!present && spwr_battery_present(bat)) {
 		u32 cap_warn = get_unaligned_le32(&bat->bix.design_cap_warn);
 
 		status = spwr_battery_set_alarm_unlocked(bat, cap_warn);
-		अगर (status)
-			जाओ out;
-	पूर्ण
+		if (status)
+			goto out;
+	}
 
 	/*
-	 * Warn अगर the unit has changed. This is something we genuinely करोn't
-	 * expect to happen, so make this a big warning. If it करोes, we'll
-	 * need to add support क्रम it.
+	 * Warn if the unit has changed. This is something we genuinely don't
+	 * expect to happen, so make this a big warning. If it does, we'll
+	 * need to add support for it.
 	 */
-	WARN_ON(unit != get_unaligned_le32(&bat->bix.घातer_unit));
+	WARN_ON(unit != get_unaligned_le32(&bat->bix.power_unit));
 
 out:
 	mutex_unlock(&bat->lock);
 
-	अगर (!status)
-		घातer_supply_changed(bat->psy);
+	if (!status)
+		power_supply_changed(bat->psy);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक spwr_battery_recheck_status(काष्ठा spwr_battery_device *bat)
-अणु
-	पूर्णांक status;
+static int spwr_battery_recheck_status(struct spwr_battery_device *bat)
+{
+	int status;
 
 	status = spwr_battery_update_bst(bat, false);
-	अगर (!status)
-		घातer_supply_changed(bat->psy);
+	if (!status)
+		power_supply_changed(bat->psy);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल u32 spwr_notअगरy_bat(काष्ठा ssam_event_notअगरier *nf, स्थिर काष्ठा ssam_event *event)
-अणु
-	काष्ठा spwr_battery_device *bat = container_of(nf, काष्ठा spwr_battery_device, notअगर);
-	पूर्णांक status;
+static u32 spwr_notify_bat(struct ssam_event_notifier *nf, const struct ssam_event *event)
+{
+	struct spwr_battery_device *bat = container_of(nf, struct spwr_battery_device, notif);
+	int status;
 
 	dev_dbg(&bat->sdev->dev, "power event (cid = %#04x, iid = %#04x, tid = %#04x)\n",
 		event->command_id, event->instance_id, event->target_id);
 
-	चयन (event->command_id) अणु
-	हाल SAM_EVENT_CID_BAT_BIX:
+	switch (event->command_id) {
+	case SAM_EVENT_CID_BAT_BIX:
 		status = spwr_battery_recheck_full(bat);
-		अवरोध;
+		break;
 
-	हाल SAM_EVENT_CID_BAT_BST:
+	case SAM_EVENT_CID_BAT_BST:
 		status = spwr_battery_recheck_status(bat);
-		अवरोध;
+		break;
 
-	हाल SAM_EVENT_CID_BAT_PROT:
+	case SAM_EVENT_CID_BAT_PROT:
 		/*
-		 * TODO: Implement support क्रम battery protection status change
+		 * TODO: Implement support for battery protection status change
 		 *       event.
 		 */
 		status = 0;
-		अवरोध;
+		break;
 
-	हाल SAM_EVENT_CID_BAT_DPTF:
+	case SAM_EVENT_CID_BAT_DPTF:
 		/*
-		 * TODO: Implement support क्रम DPTF event.
+		 * TODO: Implement support for DPTF event.
 		 */
 		status = 0;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस 0;
-	पूर्ण
+	default:
+		return 0;
+	}
 
-	वापस ssam_notअगरier_from_त्रुटि_सं(status) | SSAM_NOTIF_HANDLED;
-पूर्ण
+	return ssam_notifier_from_errno(status) | SSAM_NOTIF_HANDLED;
+}
 
-अटल व्योम spwr_battery_update_bst_workfn(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *dwork = to_delayed_work(work);
-	काष्ठा spwr_battery_device *bat;
-	पूर्णांक status;
+static void spwr_battery_update_bst_workfn(struct work_struct *work)
+{
+	struct delayed_work *dwork = to_delayed_work(work);
+	struct spwr_battery_device *bat;
+	int status;
 
-	bat = container_of(dwork, काष्ठा spwr_battery_device, update_work);
+	bat = container_of(dwork, struct spwr_battery_device, update_work);
 
 	status = spwr_battery_update_bst(bat, false);
-	अगर (status) अणु
+	if (status) {
 		dev_err(&bat->sdev->dev, "failed to update battery state: %d\n", status);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	घातer_supply_changed(bat->psy);
-पूर्ण
+	power_supply_changed(bat->psy);
+}
 
-अटल व्योम spwr_बाह्यal_घातer_changed(काष्ठा घातer_supply *psy)
-अणु
-	काष्ठा spwr_battery_device *bat = घातer_supply_get_drvdata(psy);
+static void spwr_external_power_changed(struct power_supply *psy)
+{
+	struct spwr_battery_device *bat = power_supply_get_drvdata(psy);
 
 	/*
-	 * Handle battery update quirk: When the battery is fully अक्षरged (or
-	 * अक्षरged up to the limit imposed by the UEFI battery limit) and the
-	 * adapter is plugged in or हटाओd, the EC करोes not send a separate
-	 * event क्रम the state (अक्षरging/disअक्षरging) change. Furthermore it
-	 * may take some समय until the state is updated on the battery.
+	 * Handle battery update quirk: When the battery is fully charged (or
+	 * charged up to the limit imposed by the UEFI battery limit) and the
+	 * adapter is plugged in or removed, the EC does not send a separate
+	 * event for the state (charging/discharging) change. Furthermore it
+	 * may take some time until the state is updated on the battery.
 	 * Schedule an update to solve this.
 	 */
 
 	schedule_delayed_work(&bat->update_work, SPWR_AC_BAT_UPDATE_DELAY);
-पूर्ण
+}
 
 
 /* -- Properties. ----------------------------------------------------------- */
 
-अटल स्थिर क्रमागत घातer_supply_property spwr_battery_props_chg[] = अणु
+static const enum power_supply_property spwr_battery_props_chg[] = {
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_PRESENT,
 	POWER_SUPPLY_PROP_TECHNOLOGY,
@@ -432,9 +431,9 @@ out:
 	POWER_SUPPLY_PROP_MODEL_NAME,
 	POWER_SUPPLY_PROP_MANUFACTURER,
 	POWER_SUPPLY_PROP_SERIAL_NUMBER,
-पूर्ण;
+};
 
-अटल स्थिर क्रमागत घातer_supply_property spwr_battery_props_eng[] = अणु
+static const enum power_supply_property spwr_battery_props_eng[] = {
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_PRESENT,
 	POWER_SUPPLY_PROP_TECHNOLOGY,
@@ -450,415 +449,415 @@ out:
 	POWER_SUPPLY_PROP_MODEL_NAME,
 	POWER_SUPPLY_PROP_MANUFACTURER,
 	POWER_SUPPLY_PROP_SERIAL_NUMBER,
-पूर्ण;
+};
 
-अटल पूर्णांक spwr_battery_prop_status(काष्ठा spwr_battery_device *bat)
-अणु
+static int spwr_battery_prop_status(struct spwr_battery_device *bat)
+{
 	u32 state = get_unaligned_le32(&bat->bst.state);
 	u32 present_rate = get_unaligned_le32(&bat->bst.present_rate);
 
-	lockdep_निश्चित_held(&bat->lock);
+	lockdep_assert_held(&bat->lock);
 
-	अगर (state & SAM_BATTERY_STATE_DISCHARGING)
-		वापस POWER_SUPPLY_STATUS_DISCHARGING;
+	if (state & SAM_BATTERY_STATE_DISCHARGING)
+		return POWER_SUPPLY_STATUS_DISCHARGING;
 
-	अगर (state & SAM_BATTERY_STATE_CHARGING)
-		वापस POWER_SUPPLY_STATUS_CHARGING;
+	if (state & SAM_BATTERY_STATE_CHARGING)
+		return POWER_SUPPLY_STATUS_CHARGING;
 
-	अगर (spwr_battery_is_full(bat))
-		वापस POWER_SUPPLY_STATUS_FULL;
+	if (spwr_battery_is_full(bat))
+		return POWER_SUPPLY_STATUS_FULL;
 
-	अगर (present_rate == 0)
-		वापस POWER_SUPPLY_STATUS_NOT_CHARGING;
+	if (present_rate == 0)
+		return POWER_SUPPLY_STATUS_NOT_CHARGING;
 
-	वापस POWER_SUPPLY_STATUS_UNKNOWN;
-पूर्ण
+	return POWER_SUPPLY_STATUS_UNKNOWN;
+}
 
-अटल पूर्णांक spwr_battery_prop_technology(काष्ठा spwr_battery_device *bat)
-अणु
-	lockdep_निश्चित_held(&bat->lock);
+static int spwr_battery_prop_technology(struct spwr_battery_device *bat)
+{
+	lockdep_assert_held(&bat->lock);
 
-	अगर (!strहालcmp("NiCd", bat->bix.type))
-		वापस POWER_SUPPLY_TECHNOLOGY_NiCd;
+	if (!strcasecmp("NiCd", bat->bix.type))
+		return POWER_SUPPLY_TECHNOLOGY_NiCd;
 
-	अगर (!strहालcmp("NiMH", bat->bix.type))
-		वापस POWER_SUPPLY_TECHNOLOGY_NiMH;
+	if (!strcasecmp("NiMH", bat->bix.type))
+		return POWER_SUPPLY_TECHNOLOGY_NiMH;
 
-	अगर (!strहालcmp("LION", bat->bix.type))
-		वापस POWER_SUPPLY_TECHNOLOGY_LION;
+	if (!strcasecmp("LION", bat->bix.type))
+		return POWER_SUPPLY_TECHNOLOGY_LION;
 
-	अगर (!strnहालcmp("LI-ION", bat->bix.type, 6))
-		वापस POWER_SUPPLY_TECHNOLOGY_LION;
+	if (!strncasecmp("LI-ION", bat->bix.type, 6))
+		return POWER_SUPPLY_TECHNOLOGY_LION;
 
-	अगर (!strहालcmp("LiP", bat->bix.type))
-		वापस POWER_SUPPLY_TECHNOLOGY_LIPO;
+	if (!strcasecmp("LiP", bat->bix.type))
+		return POWER_SUPPLY_TECHNOLOGY_LIPO;
 
-	वापस POWER_SUPPLY_TECHNOLOGY_UNKNOWN;
-पूर्ण
+	return POWER_SUPPLY_TECHNOLOGY_UNKNOWN;
+}
 
-अटल पूर्णांक spwr_battery_prop_capacity(काष्ठा spwr_battery_device *bat)
-अणु
+static int spwr_battery_prop_capacity(struct spwr_battery_device *bat)
+{
 	u32 full_cap = sprw_battery_get_full_cap_safe(bat);
-	u32 reमुख्यing_cap = get_unaligned_le32(&bat->bst.reमुख्यing_cap);
+	u32 remaining_cap = get_unaligned_le32(&bat->bst.remaining_cap);
 
-	lockdep_निश्चित_held(&bat->lock);
+	lockdep_assert_held(&bat->lock);
 
-	अगर (full_cap == 0 || full_cap == SPWR_BATTERY_VALUE_UNKNOWN)
-		वापस -ENODATA;
+	if (full_cap == 0 || full_cap == SPWR_BATTERY_VALUE_UNKNOWN)
+		return -ENODATA;
 
-	अगर (reमुख्यing_cap == SPWR_BATTERY_VALUE_UNKNOWN)
-		वापस -ENODATA;
+	if (remaining_cap == SPWR_BATTERY_VALUE_UNKNOWN)
+		return -ENODATA;
 
-	वापस reमुख्यing_cap * 100 / full_cap;
-पूर्ण
+	return remaining_cap * 100 / full_cap;
+}
 
-अटल पूर्णांक spwr_battery_prop_capacity_level(काष्ठा spwr_battery_device *bat)
-अणु
+static int spwr_battery_prop_capacity_level(struct spwr_battery_device *bat)
+{
 	u32 state = get_unaligned_le32(&bat->bst.state);
-	u32 reमुख्यing_cap = get_unaligned_le32(&bat->bst.reमुख्यing_cap);
+	u32 remaining_cap = get_unaligned_le32(&bat->bst.remaining_cap);
 
-	lockdep_निश्चित_held(&bat->lock);
+	lockdep_assert_held(&bat->lock);
 
-	अगर (state & SAM_BATTERY_STATE_CRITICAL)
-		वापस POWER_SUPPLY_CAPACITY_LEVEL_CRITICAL;
+	if (state & SAM_BATTERY_STATE_CRITICAL)
+		return POWER_SUPPLY_CAPACITY_LEVEL_CRITICAL;
 
-	अगर (spwr_battery_is_full(bat))
-		वापस POWER_SUPPLY_CAPACITY_LEVEL_FULL;
+	if (spwr_battery_is_full(bat))
+		return POWER_SUPPLY_CAPACITY_LEVEL_FULL;
 
-	अगर (reमुख्यing_cap <= bat->alarm)
-		वापस POWER_SUPPLY_CAPACITY_LEVEL_LOW;
+	if (remaining_cap <= bat->alarm)
+		return POWER_SUPPLY_CAPACITY_LEVEL_LOW;
 
-	वापस POWER_SUPPLY_CAPACITY_LEVEL_NORMAL;
-पूर्ण
+	return POWER_SUPPLY_CAPACITY_LEVEL_NORMAL;
+}
 
-अटल पूर्णांक spwr_battery_get_property(काष्ठा घातer_supply *psy, क्रमागत घातer_supply_property psp,
-				     जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा spwr_battery_device *bat = घातer_supply_get_drvdata(psy);
+static int spwr_battery_get_property(struct power_supply *psy, enum power_supply_property psp,
+				     union power_supply_propval *val)
+{
+	struct spwr_battery_device *bat = power_supply_get_drvdata(psy);
 	u32 value;
-	पूर्णांक status;
+	int status;
 
 	mutex_lock(&bat->lock);
 
 	status = spwr_battery_update_bst_unlocked(bat, true);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 
-	/* Abort अगर battery is not present. */
-	अगर (!spwr_battery_present(bat) && psp != POWER_SUPPLY_PROP_PRESENT) अणु
+	/* Abort if battery is not present. */
+	if (!spwr_battery_present(bat) && psp != POWER_SUPPLY_PROP_PRESENT) {
 		status = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_STATUS:
-		val->पूर्णांकval = spwr_battery_prop_status(bat);
-		अवरोध;
+	switch (psp) {
+	case POWER_SUPPLY_PROP_STATUS:
+		val->intval = spwr_battery_prop_status(bat);
+		break;
 
-	हाल POWER_SUPPLY_PROP_PRESENT:
-		val->पूर्णांकval = spwr_battery_present(bat);
-		अवरोध;
+	case POWER_SUPPLY_PROP_PRESENT:
+		val->intval = spwr_battery_present(bat);
+		break;
 
-	हाल POWER_SUPPLY_PROP_TECHNOLOGY:
-		val->पूर्णांकval = spwr_battery_prop_technology(bat);
-		अवरोध;
+	case POWER_SUPPLY_PROP_TECHNOLOGY:
+		val->intval = spwr_battery_prop_technology(bat);
+		break;
 
-	हाल POWER_SUPPLY_PROP_CYCLE_COUNT:
+	case POWER_SUPPLY_PROP_CYCLE_COUNT:
 		value = get_unaligned_le32(&bat->bix.cycle_count);
-		अगर (value != SPWR_BATTERY_VALUE_UNKNOWN)
-			val->पूर्णांकval = value;
-		अन्यथा
+		if (value != SPWR_BATTERY_VALUE_UNKNOWN)
+			val->intval = value;
+		else
 			status = -ENODATA;
-		अवरोध;
+		break;
 
-	हाल POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN:
+	case POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN:
 		value = get_unaligned_le32(&bat->bix.design_voltage);
-		अगर (value != SPWR_BATTERY_VALUE_UNKNOWN)
-			val->पूर्णांकval = value * 1000;
-		अन्यथा
+		if (value != SPWR_BATTERY_VALUE_UNKNOWN)
+			val->intval = value * 1000;
+		else
 			status = -ENODATA;
-		अवरोध;
+		break;
 
-	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
+	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
 		value = get_unaligned_le32(&bat->bst.present_voltage);
-		अगर (value != SPWR_BATTERY_VALUE_UNKNOWN)
-			val->पूर्णांकval = value * 1000;
-		अन्यथा
+		if (value != SPWR_BATTERY_VALUE_UNKNOWN)
+			val->intval = value * 1000;
+		else
 			status = -ENODATA;
-		अवरोध;
+		break;
 
-	हाल POWER_SUPPLY_PROP_CURRENT_NOW:
-	हाल POWER_SUPPLY_PROP_POWER_NOW:
+	case POWER_SUPPLY_PROP_CURRENT_NOW:
+	case POWER_SUPPLY_PROP_POWER_NOW:
 		value = get_unaligned_le32(&bat->bst.present_rate);
-		अगर (value != SPWR_BATTERY_VALUE_UNKNOWN)
-			val->पूर्णांकval = value * 1000;
-		अन्यथा
+		if (value != SPWR_BATTERY_VALUE_UNKNOWN)
+			val->intval = value * 1000;
+		else
 			status = -ENODATA;
-		अवरोध;
+		break;
 
-	हाल POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
-	हाल POWER_SUPPLY_PROP_ENERGY_FULL_DESIGN:
+	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
+	case POWER_SUPPLY_PROP_ENERGY_FULL_DESIGN:
 		value = get_unaligned_le32(&bat->bix.design_cap);
-		अगर (value != SPWR_BATTERY_VALUE_UNKNOWN)
-			val->पूर्णांकval = value * 1000;
-		अन्यथा
+		if (value != SPWR_BATTERY_VALUE_UNKNOWN)
+			val->intval = value * 1000;
+		else
 			status = -ENODATA;
-		अवरोध;
+		break;
 
-	हाल POWER_SUPPLY_PROP_CHARGE_FULL:
-	हाल POWER_SUPPLY_PROP_ENERGY_FULL:
-		value = get_unaligned_le32(&bat->bix.last_full_अक्षरge_cap);
-		अगर (value != SPWR_BATTERY_VALUE_UNKNOWN)
-			val->पूर्णांकval = value * 1000;
-		अन्यथा
+	case POWER_SUPPLY_PROP_CHARGE_FULL:
+	case POWER_SUPPLY_PROP_ENERGY_FULL:
+		value = get_unaligned_le32(&bat->bix.last_full_charge_cap);
+		if (value != SPWR_BATTERY_VALUE_UNKNOWN)
+			val->intval = value * 1000;
+		else
 			status = -ENODATA;
-		अवरोध;
+		break;
 
-	हाल POWER_SUPPLY_PROP_CHARGE_NOW:
-	हाल POWER_SUPPLY_PROP_ENERGY_NOW:
-		value = get_unaligned_le32(&bat->bst.reमुख्यing_cap);
-		अगर (value != SPWR_BATTERY_VALUE_UNKNOWN)
-			val->पूर्णांकval = value * 1000;
-		अन्यथा
+	case POWER_SUPPLY_PROP_CHARGE_NOW:
+	case POWER_SUPPLY_PROP_ENERGY_NOW:
+		value = get_unaligned_le32(&bat->bst.remaining_cap);
+		if (value != SPWR_BATTERY_VALUE_UNKNOWN)
+			val->intval = value * 1000;
+		else
 			status = -ENODATA;
-		अवरोध;
+		break;
 
-	हाल POWER_SUPPLY_PROP_CAPACITY:
-		val->पूर्णांकval = spwr_battery_prop_capacity(bat);
-		अवरोध;
+	case POWER_SUPPLY_PROP_CAPACITY:
+		val->intval = spwr_battery_prop_capacity(bat);
+		break;
 
-	हाल POWER_SUPPLY_PROP_CAPACITY_LEVEL:
-		val->पूर्णांकval = spwr_battery_prop_capacity_level(bat);
-		अवरोध;
+	case POWER_SUPPLY_PROP_CAPACITY_LEVEL:
+		val->intval = spwr_battery_prop_capacity_level(bat);
+		break;
 
-	हाल POWER_SUPPLY_PROP_MODEL_NAME:
+	case POWER_SUPPLY_PROP_MODEL_NAME:
 		val->strval = bat->bix.model;
-		अवरोध;
+		break;
 
-	हाल POWER_SUPPLY_PROP_MANUFACTURER:
+	case POWER_SUPPLY_PROP_MANUFACTURER:
 		val->strval = bat->bix.oem_info;
-		अवरोध;
+		break;
 
-	हाल POWER_SUPPLY_PROP_SERIAL_NUMBER:
+	case POWER_SUPPLY_PROP_SERIAL_NUMBER:
 		val->strval = bat->bix.serial;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		status = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 out:
 	mutex_unlock(&bat->lock);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 
 /* -- Alarm attribute. ------------------------------------------------------ */
 
-अटल sमाप_प्रकार alarm_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा घातer_supply *psy = dev_get_drvdata(dev);
-	काष्ठा spwr_battery_device *bat = घातer_supply_get_drvdata(psy);
-	पूर्णांक status;
+static ssize_t alarm_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct power_supply *psy = dev_get_drvdata(dev);
+	struct spwr_battery_device *bat = power_supply_get_drvdata(psy);
+	int status;
 
 	mutex_lock(&bat->lock);
 	status = sysfs_emit(buf, "%d\n", bat->alarm * 1000);
 	mutex_unlock(&bat->lock);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल sमाप_प्रकार alarm_store(काष्ठा device *dev, काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
-			   माप_प्रकार count)
-अणु
-	काष्ठा घातer_supply *psy = dev_get_drvdata(dev);
-	काष्ठा spwr_battery_device *bat = घातer_supply_get_drvdata(psy);
-	अचिन्हित दीर्घ value;
-	पूर्णांक status;
+static ssize_t alarm_store(struct device *dev, struct device_attribute *attr, const char *buf,
+			   size_t count)
+{
+	struct power_supply *psy = dev_get_drvdata(dev);
+	struct spwr_battery_device *bat = power_supply_get_drvdata(psy);
+	unsigned long value;
+	int status;
 
-	status = kम_से_अदीर्घ(buf, 0, &value);
-	अगर (status)
-		वापस status;
+	status = kstrtoul(buf, 0, &value);
+	if (status)
+		return status;
 
 	mutex_lock(&bat->lock);
 
-	अगर (!spwr_battery_present(bat)) अणु
+	if (!spwr_battery_present(bat)) {
 		mutex_unlock(&bat->lock);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	status = spwr_battery_set_alarm_unlocked(bat, value / 1000);
-	अगर (status) अणु
+	if (status) {
 		mutex_unlock(&bat->lock);
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
 	mutex_unlock(&bat->lock);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR_RW(alarm);
+static DEVICE_ATTR_RW(alarm);
 
-अटल काष्ठा attribute *spwr_battery_attrs[] = अणु
+static struct attribute *spwr_battery_attrs[] = {
 	&dev_attr_alarm.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 ATTRIBUTE_GROUPS(spwr_battery);
 
 
 /* -- Device setup. --------------------------------------------------------- */
 
-अटल व्योम spwr_battery_init(काष्ठा spwr_battery_device *bat, काष्ठा ssam_device *sdev,
-			      काष्ठा ssam_event_registry registry, स्थिर अक्षर *name)
-अणु
+static void spwr_battery_init(struct spwr_battery_device *bat, struct ssam_device *sdev,
+			      struct ssam_event_registry registry, const char *name)
+{
 	mutex_init(&bat->lock);
-	म_नकलन(bat->name, name, ARRAY_SIZE(bat->name) - 1);
+	strncpy(bat->name, name, ARRAY_SIZE(bat->name) - 1);
 
 	bat->sdev = sdev;
 
-	bat->notअगर.base.priority = 1;
-	bat->notअगर.base.fn = spwr_notअगरy_bat;
-	bat->notअगर.event.reg = registry;
-	bat->notअगर.event.id.target_category = sdev->uid.category;
-	bat->notअगर.event.id.instance = 0;
-	bat->notअगर.event.mask = SSAM_EVENT_MASK_STRICT;
-	bat->notअगर.event.flags = SSAM_EVENT_SEQUENCED;
+	bat->notif.base.priority = 1;
+	bat->notif.base.fn = spwr_notify_bat;
+	bat->notif.event.reg = registry;
+	bat->notif.event.id.target_category = sdev->uid.category;
+	bat->notif.event.id.instance = 0;
+	bat->notif.event.mask = SSAM_EVENT_MASK_STRICT;
+	bat->notif.event.flags = SSAM_EVENT_SEQUENCED;
 
 	bat->psy_desc.name = bat->name;
 	bat->psy_desc.type = POWER_SUPPLY_TYPE_BATTERY;
 	bat->psy_desc.get_property = spwr_battery_get_property;
 
 	INIT_DELAYED_WORK(&bat->update_work, spwr_battery_update_bst_workfn);
-पूर्ण
+}
 
-अटल पूर्णांक spwr_battery_रेजिस्टर(काष्ठा spwr_battery_device *bat)
-अणु
-	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
+static int spwr_battery_register(struct spwr_battery_device *bat)
+{
+	struct power_supply_config psy_cfg = {};
 	__le32 sta;
-	पूर्णांक status;
+	int status;
 
 	/* Make sure the device is there and functioning properly. */
 	status = ssam_retry(ssam_bat_get_sta, bat->sdev, &sta);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
-	अगर ((le32_to_cpu(sta) & SAM_BATTERY_STA_OK) != SAM_BATTERY_STA_OK)
-		वापस -ENODEV;
+	if ((le32_to_cpu(sta) & SAM_BATTERY_STA_OK) != SAM_BATTERY_STA_OK)
+		return -ENODEV;
 
 	/* Satisfy lockdep although we are in an exclusive context here. */
 	mutex_lock(&bat->lock);
 
 	status = spwr_battery_update_bix_unlocked(bat);
-	अगर (status) अणु
+	if (status) {
 		mutex_unlock(&bat->lock);
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
-	अगर (spwr_battery_present(bat)) अणु
+	if (spwr_battery_present(bat)) {
 		u32 cap_warn = get_unaligned_le32(&bat->bix.design_cap_warn);
 
 		status = spwr_battery_set_alarm_unlocked(bat, cap_warn);
-		अगर (status) अणु
+		if (status) {
 			mutex_unlock(&bat->lock);
-			वापस status;
-		पूर्ण
-	पूर्ण
+			return status;
+		}
+	}
 
 	mutex_unlock(&bat->lock);
 
-	bat->psy_desc.बाह्यal_घातer_changed = spwr_बाह्यal_घातer_changed;
+	bat->psy_desc.external_power_changed = spwr_external_power_changed;
 
-	चयन (get_unaligned_le32(&bat->bix.घातer_unit)) अणु
-	हाल SAM_BATTERY_POWER_UNIT_mW:
+	switch (get_unaligned_le32(&bat->bix.power_unit)) {
+	case SAM_BATTERY_POWER_UNIT_mW:
 		bat->psy_desc.properties = spwr_battery_props_eng;
 		bat->psy_desc.num_properties = ARRAY_SIZE(spwr_battery_props_eng);
-		अवरोध;
+		break;
 
-	हाल SAM_BATTERY_POWER_UNIT_mA:
+	case SAM_BATTERY_POWER_UNIT_mA:
 		bat->psy_desc.properties = spwr_battery_props_chg;
 		bat->psy_desc.num_properties = ARRAY_SIZE(spwr_battery_props_chg);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		dev_err(&bat->sdev->dev, "unsupported battery power unit: %u\n",
-			get_unaligned_le32(&bat->bix.घातer_unit));
-		वापस -EINVAL;
-	पूर्ण
+			get_unaligned_le32(&bat->bix.power_unit));
+		return -EINVAL;
+	}
 
 	psy_cfg.drv_data = bat;
 	psy_cfg.attr_grp = spwr_battery_groups;
 
-	bat->psy = devm_घातer_supply_रेजिस्टर(&bat->sdev->dev, &bat->psy_desc, &psy_cfg);
-	अगर (IS_ERR(bat->psy))
-		वापस PTR_ERR(bat->psy);
+	bat->psy = devm_power_supply_register(&bat->sdev->dev, &bat->psy_desc, &psy_cfg);
+	if (IS_ERR(bat->psy))
+		return PTR_ERR(bat->psy);
 
-	वापस ssam_notअगरier_रेजिस्टर(bat->sdev->ctrl, &bat->notअगर);
-पूर्ण
+	return ssam_notifier_register(bat->sdev->ctrl, &bat->notif);
+}
 
 
 /* -- Driver setup. --------------------------------------------------------- */
 
-अटल पूर्णांक __maybe_unused surface_battery_resume(काष्ठा device *dev)
-अणु
-	वापस spwr_battery_recheck_full(dev_get_drvdata(dev));
-पूर्ण
-अटल SIMPLE_DEV_PM_OPS(surface_battery_pm_ops, शून्य, surface_battery_resume);
+static int __maybe_unused surface_battery_resume(struct device *dev)
+{
+	return spwr_battery_recheck_full(dev_get_drvdata(dev));
+}
+static SIMPLE_DEV_PM_OPS(surface_battery_pm_ops, NULL, surface_battery_resume);
 
-अटल पूर्णांक surface_battery_probe(काष्ठा ssam_device *sdev)
-अणु
-	स्थिर काष्ठा spwr_psy_properties *p;
-	काष्ठा spwr_battery_device *bat;
+static int surface_battery_probe(struct ssam_device *sdev)
+{
+	const struct spwr_psy_properties *p;
+	struct spwr_battery_device *bat;
 
 	p = ssam_device_get_match_data(sdev);
-	अगर (!p)
-		वापस -ENODEV;
+	if (!p)
+		return -ENODEV;
 
-	bat = devm_kzalloc(&sdev->dev, माप(*bat), GFP_KERNEL);
-	अगर (!bat)
-		वापस -ENOMEM;
+	bat = devm_kzalloc(&sdev->dev, sizeof(*bat), GFP_KERNEL);
+	if (!bat)
+		return -ENOMEM;
 
 	spwr_battery_init(bat, sdev, p->registry, p->name);
 	ssam_device_set_drvdata(sdev, bat);
 
-	वापस spwr_battery_रेजिस्टर(bat);
-पूर्ण
+	return spwr_battery_register(bat);
+}
 
-अटल व्योम surface_battery_हटाओ(काष्ठा ssam_device *sdev)
-अणु
-	काष्ठा spwr_battery_device *bat = ssam_device_get_drvdata(sdev);
+static void surface_battery_remove(struct ssam_device *sdev)
+{
+	struct spwr_battery_device *bat = ssam_device_get_drvdata(sdev);
 
-	ssam_notअगरier_unरेजिस्टर(sdev->ctrl, &bat->notअगर);
+	ssam_notifier_unregister(sdev->ctrl, &bat->notif);
 	cancel_delayed_work_sync(&bat->update_work);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा spwr_psy_properties spwr_psy_props_bat1 = अणु
+static const struct spwr_psy_properties spwr_psy_props_bat1 = {
 	.name = "BAT1",
 	.registry = SSAM_EVENT_REGISTRY_SAM,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा spwr_psy_properties spwr_psy_props_bat2_sb3 = अणु
+static const struct spwr_psy_properties spwr_psy_props_bat2_sb3 = {
 	.name = "BAT2",
 	.registry = SSAM_EVENT_REGISTRY_KIP,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ssam_device_id surface_battery_match[] = अणु
-	अणु SSAM_SDEV(BAT, 0x01, 0x01, 0x00), (अचिन्हित दीर्घ)&spwr_psy_props_bat1     पूर्ण,
-	अणु SSAM_SDEV(BAT, 0x02, 0x01, 0x00), (अचिन्हित दीर्घ)&spwr_psy_props_bat2_sb3 पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct ssam_device_id surface_battery_match[] = {
+	{ SSAM_SDEV(BAT, 0x01, 0x01, 0x00), (unsigned long)&spwr_psy_props_bat1     },
+	{ SSAM_SDEV(BAT, 0x02, 0x01, 0x00), (unsigned long)&spwr_psy_props_bat2_sb3 },
+	{ },
+};
 MODULE_DEVICE_TABLE(ssam, surface_battery_match);
 
-अटल काष्ठा ssam_device_driver surface_battery_driver = अणु
+static struct ssam_device_driver surface_battery_driver = {
 	.probe = surface_battery_probe,
-	.हटाओ = surface_battery_हटाओ,
+	.remove = surface_battery_remove,
 	.match_table = surface_battery_match,
-	.driver = अणु
+	.driver = {
 		.name = "surface_battery",
 		.pm = &surface_battery_pm_ops,
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
-	पूर्ण,
-पूर्ण;
+	},
+};
 module_ssam_device_driver(surface_battery_driver);
 
 MODULE_AUTHOR("Maximilian Luz <luzmaximilian@gmail.com>");

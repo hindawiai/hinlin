@@ -1,9 +1,8 @@
-<शैली गुरु>
 /*
  * Copyright 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright 2007 Nuova Systems, Inc.  All rights reserved.
  *
- * This program is मुक्त software; you may redistribute it and/or modअगरy
+ * This program is free software; you may redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -18,569 +17,569 @@
  *
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/अगर.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/in.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/ipv6.h>
-#समावेश <linux/tcp.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/prefetch.h>
-#समावेश <net/ip6_checksum.h>
-#समावेश <linux/kसमय.स>
-#समावेश <linux/numa.h>
-#अगर_घोषित CONFIG_RFS_ACCEL
-#समावेश <linux/cpu_rmap.h>
-#पूर्ण_अगर
-#समावेश <linux/crash_dump.h>
-#समावेश <net/busy_poll.h>
-#समावेश <net/vxlan.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/workqueue.h>
+#include <linux/pci.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/if.h>
+#include <linux/if_ether.h>
+#include <linux/if_vlan.h>
+#include <linux/in.h>
+#include <linux/ip.h>
+#include <linux/ipv6.h>
+#include <linux/tcp.h>
+#include <linux/rtnetlink.h>
+#include <linux/prefetch.h>
+#include <net/ip6_checksum.h>
+#include <linux/ktime.h>
+#include <linux/numa.h>
+#ifdef CONFIG_RFS_ACCEL
+#include <linux/cpu_rmap.h>
+#endif
+#include <linux/crash_dump.h>
+#include <net/busy_poll.h>
+#include <net/vxlan.h>
 
-#समावेश "cq_enet_desc.h"
-#समावेश "vnic_dev.h"
-#समावेश "vnic_intr.h"
-#समावेश "vnic_stats.h"
-#समावेश "vnic_vic.h"
-#समावेश "enic_res.h"
-#समावेश "enic.h"
-#समावेश "enic_dev.h"
-#समावेश "enic_pp.h"
-#समावेश "enic_clsf.h"
+#include "cq_enet_desc.h"
+#include "vnic_dev.h"
+#include "vnic_intr.h"
+#include "vnic_stats.h"
+#include "vnic_vic.h"
+#include "enic_res.h"
+#include "enic.h"
+#include "enic_dev.h"
+#include "enic_pp.h"
+#include "enic_clsf.h"
 
-#घोषणा ENIC_NOTIFY_TIMER_PERIOD	(2 * HZ)
-#घोषणा WQ_ENET_MAX_DESC_LEN		(1 << WQ_ENET_LEN_BITS)
-#घोषणा MAX_TSO				(1 << 16)
-#घोषणा ENIC_DESC_MAX_SPLITS		(MAX_TSO / WQ_ENET_MAX_DESC_LEN + 1)
+#define ENIC_NOTIFY_TIMER_PERIOD	(2 * HZ)
+#define WQ_ENET_MAX_DESC_LEN		(1 << WQ_ENET_LEN_BITS)
+#define MAX_TSO				(1 << 16)
+#define ENIC_DESC_MAX_SPLITS		(MAX_TSO / WQ_ENET_MAX_DESC_LEN + 1)
 
-#घोषणा PCI_DEVICE_ID_CISCO_VIC_ENET         0x0043  /* ethernet vnic */
-#घोषणा PCI_DEVICE_ID_CISCO_VIC_ENET_DYN     0x0044  /* enet dynamic vnic */
-#घोषणा PCI_DEVICE_ID_CISCO_VIC_ENET_VF      0x0071  /* enet SRIOV VF */
+#define PCI_DEVICE_ID_CISCO_VIC_ENET         0x0043  /* ethernet vnic */
+#define PCI_DEVICE_ID_CISCO_VIC_ENET_DYN     0x0044  /* enet dynamic vnic */
+#define PCI_DEVICE_ID_CISCO_VIC_ENET_VF      0x0071  /* enet SRIOV VF */
 
-#घोषणा RX_COPYBREAK_DEFAULT		256
+#define RX_COPYBREAK_DEFAULT		256
 
 /* Supported devices */
-अटल स्थिर काष्ठा pci_device_id enic_id_table[] = अणु
-	अणु PCI_VDEVICE(CISCO, PCI_DEVICE_ID_CISCO_VIC_ENET) पूर्ण,
-	अणु PCI_VDEVICE(CISCO, PCI_DEVICE_ID_CISCO_VIC_ENET_DYN) पूर्ण,
-	अणु PCI_VDEVICE(CISCO, PCI_DEVICE_ID_CISCO_VIC_ENET_VF) पूर्ण,
-	अणु 0, पूर्ण	/* end of table */
-पूर्ण;
+static const struct pci_device_id enic_id_table[] = {
+	{ PCI_VDEVICE(CISCO, PCI_DEVICE_ID_CISCO_VIC_ENET) },
+	{ PCI_VDEVICE(CISCO, PCI_DEVICE_ID_CISCO_VIC_ENET_DYN) },
+	{ PCI_VDEVICE(CISCO, PCI_DEVICE_ID_CISCO_VIC_ENET_VF) },
+	{ 0, }	/* end of table */
+};
 
 MODULE_DESCRIPTION(DRV_DESCRIPTION);
 MODULE_AUTHOR("Scott Feldman <scofeldm@cisco.com>");
 MODULE_LICENSE("GPL");
 MODULE_DEVICE_TABLE(pci, enic_id_table);
 
-#घोषणा ENIC_LARGE_PKT_THRESHOLD		1000
-#घोषणा ENIC_MAX_COALESCE_TIMERS		10
+#define ENIC_LARGE_PKT_THRESHOLD		1000
+#define ENIC_MAX_COALESCE_TIMERS		10
 /*  Interrupt moderation table, which will be used to decide the
- *  coalescing समयr values
- *  अणुrx_rate in Mbps, mapping percentage of the rangeपूर्ण
+ *  coalescing timer values
+ *  {rx_rate in Mbps, mapping percentage of the range}
  */
-अटल काष्ठा enic_पूर्णांकr_mod_table mod_table[ENIC_MAX_COALESCE_TIMERS + 1] = अणु
-	अणु4000,  0पूर्ण,
-	अणु4400, 10पूर्ण,
-	अणु5060, 20पूर्ण,
-	अणु5230, 30पूर्ण,
-	अणु5540, 40पूर्ण,
-	अणु5820, 50पूर्ण,
-	अणु6120, 60पूर्ण,
-	अणु6435, 70पूर्ण,
-	अणु6745, 80पूर्ण,
-	अणु7000, 90पूर्ण,
-	अणु0xFFFFFFFF, 100पूर्ण
-पूर्ण;
+static struct enic_intr_mod_table mod_table[ENIC_MAX_COALESCE_TIMERS + 1] = {
+	{4000,  0},
+	{4400, 10},
+	{5060, 20},
+	{5230, 30},
+	{5540, 40},
+	{5820, 50},
+	{6120, 60},
+	{6435, 70},
+	{6745, 80},
+	{7000, 90},
+	{0xFFFFFFFF, 100}
+};
 
-/* This table helps the driver to pick dअगरferent ranges क्रम rx coalescing
- * समयr depending on the link speed.
+/* This table helps the driver to pick different ranges for rx coalescing
+ * timer depending on the link speed.
  */
-अटल काष्ठा enic_पूर्णांकr_mod_range mod_range[ENIC_MAX_LINK_SPEEDS] = अणु
-	अणु0,  0पूर्ण, /* 0  - 4  Gbps */
-	अणु0,  3पूर्ण, /* 4  - 10 Gbps */
-	अणु3,  6पूर्ण, /* 10 - 40 Gbps */
-पूर्ण;
+static struct enic_intr_mod_range mod_range[ENIC_MAX_LINK_SPEEDS] = {
+	{0,  0}, /* 0  - 4  Gbps */
+	{0,  3}, /* 4  - 10 Gbps */
+	{3,  6}, /* 10 - 40 Gbps */
+};
 
-अटल व्योम enic_init_affinity_hपूर्णांक(काष्ठा enic *enic)
-अणु
-	पूर्णांक numa_node = dev_to_node(&enic->pdev->dev);
-	पूर्णांक i;
+static void enic_init_affinity_hint(struct enic *enic)
+{
+	int numa_node = dev_to_node(&enic->pdev->dev);
+	int i;
 
-	क्रम (i = 0; i < enic->पूर्णांकr_count; i++) अणु
-		अगर (enic_is_err_पूर्णांकr(enic, i) || enic_is_notअगरy_पूर्णांकr(enic, i) ||
+	for (i = 0; i < enic->intr_count; i++) {
+		if (enic_is_err_intr(enic, i) || enic_is_notify_intr(enic, i) ||
 		    (cpumask_available(enic->msix[i].affinity_mask) &&
 		     !cpumask_empty(enic->msix[i].affinity_mask)))
-			जारी;
-		अगर (zalloc_cpumask_var(&enic->msix[i].affinity_mask,
+			continue;
+		if (zalloc_cpumask_var(&enic->msix[i].affinity_mask,
 				       GFP_KERNEL))
-			cpumask_set_cpu(cpumask_local_spपढ़ो(i, numa_node),
+			cpumask_set_cpu(cpumask_local_spread(i, numa_node),
 					enic->msix[i].affinity_mask);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम enic_मुक्त_affinity_hपूर्णांक(काष्ठा enic *enic)
-अणु
-	पूर्णांक i;
+static void enic_free_affinity_hint(struct enic *enic)
+{
+	int i;
 
-	क्रम (i = 0; i < enic->पूर्णांकr_count; i++) अणु
-		अगर (enic_is_err_पूर्णांकr(enic, i) || enic_is_notअगरy_पूर्णांकr(enic, i))
-			जारी;
-		मुक्त_cpumask_var(enic->msix[i].affinity_mask);
-	पूर्ण
-पूर्ण
+	for (i = 0; i < enic->intr_count; i++) {
+		if (enic_is_err_intr(enic, i) || enic_is_notify_intr(enic, i))
+			continue;
+		free_cpumask_var(enic->msix[i].affinity_mask);
+	}
+}
 
-अटल व्योम enic_set_affinity_hपूर्णांक(काष्ठा enic *enic)
-अणु
-	पूर्णांक i;
-	पूर्णांक err;
+static void enic_set_affinity_hint(struct enic *enic)
+{
+	int i;
+	int err;
 
-	क्रम (i = 0; i < enic->पूर्णांकr_count; i++) अणु
-		अगर (enic_is_err_पूर्णांकr(enic, i)		||
-		    enic_is_notअगरy_पूर्णांकr(enic, i)	||
+	for (i = 0; i < enic->intr_count; i++) {
+		if (enic_is_err_intr(enic, i)		||
+		    enic_is_notify_intr(enic, i)	||
 		    !cpumask_available(enic->msix[i].affinity_mask) ||
 		    cpumask_empty(enic->msix[i].affinity_mask))
-			जारी;
-		err = irq_set_affinity_hपूर्णांक(enic->msix_entry[i].vector,
+			continue;
+		err = irq_set_affinity_hint(enic->msix_entry[i].vector,
 					    enic->msix[i].affinity_mask);
-		अगर (err)
+		if (err)
 			netdev_warn(enic->netdev, "irq_set_affinity_hint failed, err %d\n",
 				    err);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < enic->wq_count; i++) अणु
-		पूर्णांक wq_पूर्णांकr = enic_msix_wq_पूर्णांकr(enic, i);
+	for (i = 0; i < enic->wq_count; i++) {
+		int wq_intr = enic_msix_wq_intr(enic, i);
 
-		अगर (cpumask_available(enic->msix[wq_पूर्णांकr].affinity_mask) &&
-		    !cpumask_empty(enic->msix[wq_पूर्णांकr].affinity_mask))
-			netअगर_set_xps_queue(enic->netdev,
-					    enic->msix[wq_पूर्णांकr].affinity_mask,
+		if (cpumask_available(enic->msix[wq_intr].affinity_mask) &&
+		    !cpumask_empty(enic->msix[wq_intr].affinity_mask))
+			netif_set_xps_queue(enic->netdev,
+					    enic->msix[wq_intr].affinity_mask,
 					    i);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम enic_unset_affinity_hपूर्णांक(काष्ठा enic *enic)
-अणु
-	पूर्णांक i;
+static void enic_unset_affinity_hint(struct enic *enic)
+{
+	int i;
 
-	क्रम (i = 0; i < enic->पूर्णांकr_count; i++)
-		irq_set_affinity_hपूर्णांक(enic->msix_entry[i].vector, शून्य);
-पूर्ण
+	for (i = 0; i < enic->intr_count; i++)
+		irq_set_affinity_hint(enic->msix_entry[i].vector, NULL);
+}
 
-अटल पूर्णांक enic_udp_tunnel_set_port(काष्ठा net_device *netdev,
-				    अचिन्हित पूर्णांक table, अचिन्हित पूर्णांक entry,
-				    काष्ठा udp_tunnel_info *ti)
-अणु
-	काष्ठा enic *enic = netdev_priv(netdev);
-	पूर्णांक err;
+static int enic_udp_tunnel_set_port(struct net_device *netdev,
+				    unsigned int table, unsigned int entry,
+				    struct udp_tunnel_info *ti)
+{
+	struct enic *enic = netdev_priv(netdev);
+	int err;
 
 	spin_lock_bh(&enic->devcmd_lock);
 
 	err = vnic_dev_overlay_offload_cfg(enic->vdev,
 					   OVERLAY_CFG_VXLAN_PORT_UPDATE,
 					   ntohs(ti->port));
-	अगर (err)
-		जाओ error;
+	if (err)
+		goto error;
 
 	err = vnic_dev_overlay_offload_ctrl(enic->vdev, OVERLAY_FEATURE_VXLAN,
 					    enic->vxlan.patch_level);
-	अगर (err)
-		जाओ error;
+	if (err)
+		goto error;
 
 	enic->vxlan.vxlan_udp_port_number = ntohs(ti->port);
 error:
 	spin_unlock_bh(&enic->devcmd_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक enic_udp_tunnel_unset_port(काष्ठा net_device *netdev,
-				      अचिन्हित पूर्णांक table, अचिन्हित पूर्णांक entry,
-				      काष्ठा udp_tunnel_info *ti)
-अणु
-	काष्ठा enic *enic = netdev_priv(netdev);
-	पूर्णांक err;
+static int enic_udp_tunnel_unset_port(struct net_device *netdev,
+				      unsigned int table, unsigned int entry,
+				      struct udp_tunnel_info *ti)
+{
+	struct enic *enic = netdev_priv(netdev);
+	int err;
 
 	spin_lock_bh(&enic->devcmd_lock);
 
 	err = vnic_dev_overlay_offload_ctrl(enic->vdev, OVERLAY_FEATURE_VXLAN,
 					    OVERLAY_OFFLOAD_DISABLE);
-	अगर (err)
-		जाओ unlock;
+	if (err)
+		goto unlock;
 
 	enic->vxlan.vxlan_udp_port_number = 0;
 
 unlock:
 	spin_unlock_bh(&enic->devcmd_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा udp_tunnel_nic_info enic_udp_tunnels = अणु
+static const struct udp_tunnel_nic_info enic_udp_tunnels = {
 	.set_port	= enic_udp_tunnel_set_port,
 	.unset_port	= enic_udp_tunnel_unset_port,
-	.tables		= अणु
-		अणु .n_entries = 1, .tunnel_types = UDP_TUNNEL_TYPE_VXLAN, पूर्ण,
-	पूर्ण,
-पूर्ण, enic_udp_tunnels_v4 = अणु
+	.tables		= {
+		{ .n_entries = 1, .tunnel_types = UDP_TUNNEL_TYPE_VXLAN, },
+	},
+}, enic_udp_tunnels_v4 = {
 	.set_port	= enic_udp_tunnel_set_port,
 	.unset_port	= enic_udp_tunnel_unset_port,
 	.flags		= UDP_TUNNEL_NIC_INFO_IPV4_ONLY,
-	.tables		= अणु
-		अणु .n_entries = 1, .tunnel_types = UDP_TUNNEL_TYPE_VXLAN, पूर्ण,
-	पूर्ण,
-पूर्ण;
+	.tables		= {
+		{ .n_entries = 1, .tunnel_types = UDP_TUNNEL_TYPE_VXLAN, },
+	},
+};
 
-अटल netdev_features_t enic_features_check(काष्ठा sk_buff *skb,
-					     काष्ठा net_device *dev,
+static netdev_features_t enic_features_check(struct sk_buff *skb,
+					     struct net_device *dev,
 					     netdev_features_t features)
-अणु
-	स्थिर काष्ठा ethhdr *eth = (काष्ठा ethhdr *)skb_inner_mac_header(skb);
-	काष्ठा enic *enic = netdev_priv(dev);
-	काष्ठा udphdr *udph;
+{
+	const struct ethhdr *eth = (struct ethhdr *)skb_inner_mac_header(skb);
+	struct enic *enic = netdev_priv(dev);
+	struct udphdr *udph;
 	u16 port = 0;
 	u8 proto;
 
-	अगर (!skb->encapsulation)
-		वापस features;
+	if (!skb->encapsulation)
+		return features;
 
 	features = vxlan_features_check(skb, features);
 
-	चयन (vlan_get_protocol(skb)) अणु
-	हाल htons(ETH_P_IPV6):
-		अगर (!(enic->vxlan.flags & ENIC_VXLAN_OUTER_IPV6))
-			जाओ out;
+	switch (vlan_get_protocol(skb)) {
+	case htons(ETH_P_IPV6):
+		if (!(enic->vxlan.flags & ENIC_VXLAN_OUTER_IPV6))
+			goto out;
 		proto = ipv6_hdr(skb)->nexthdr;
-		अवरोध;
-	हाल htons(ETH_P_IP):
+		break;
+	case htons(ETH_P_IP):
 		proto = ip_hdr(skb)->protocol;
-		अवरोध;
-	शेष:
-		जाओ out;
-	पूर्ण
+		break;
+	default:
+		goto out;
+	}
 
-	चयन (eth->h_proto) अणु
-	हाल ntohs(ETH_P_IPV6):
-		अगर (!(enic->vxlan.flags & ENIC_VXLAN_INNER_IPV6))
-			जाओ out;
+	switch (eth->h_proto) {
+	case ntohs(ETH_P_IPV6):
+		if (!(enic->vxlan.flags & ENIC_VXLAN_INNER_IPV6))
+			goto out;
 		fallthrough;
-	हाल ntohs(ETH_P_IP):
-		अवरोध;
-	शेष:
-		जाओ out;
-	पूर्ण
+	case ntohs(ETH_P_IP):
+		break;
+	default:
+		goto out;
+	}
 
 
-	अगर (proto == IPPROTO_UDP) अणु
+	if (proto == IPPROTO_UDP) {
 		udph = udp_hdr(skb);
 		port = be16_to_cpu(udph->dest);
-	पूर्ण
+	}
 
 	/* HW supports offload of only one UDP port. Remove CSUM and GSO MASK
-	 * क्रम other UDP port tunnels
+	 * for other UDP port tunnels
 	 */
-	अगर (port  != enic->vxlan.vxlan_udp_port_number)
-		जाओ out;
+	if (port  != enic->vxlan.vxlan_udp_port_number)
+		goto out;
 
-	वापस features;
+	return features;
 
 out:
-	वापस features & ~(NETIF_F_CSUM_MASK | NETIF_F_GSO_MASK);
-पूर्ण
+	return features & ~(NETIF_F_CSUM_MASK | NETIF_F_GSO_MASK);
+}
 
-पूर्णांक enic_is_dynamic(काष्ठा enic *enic)
-अणु
-	वापस enic->pdev->device == PCI_DEVICE_ID_CISCO_VIC_ENET_DYN;
-पूर्ण
+int enic_is_dynamic(struct enic *enic)
+{
+	return enic->pdev->device == PCI_DEVICE_ID_CISCO_VIC_ENET_DYN;
+}
 
-पूर्णांक enic_sriov_enabled(काष्ठा enic *enic)
-अणु
-	वापस (enic->priv_flags & ENIC_SRIOV_ENABLED) ? 1 : 0;
-पूर्ण
+int enic_sriov_enabled(struct enic *enic)
+{
+	return (enic->priv_flags & ENIC_SRIOV_ENABLED) ? 1 : 0;
+}
 
-अटल पूर्णांक enic_is_sriov_vf(काष्ठा enic *enic)
-अणु
-	वापस enic->pdev->device == PCI_DEVICE_ID_CISCO_VIC_ENET_VF;
-पूर्ण
+static int enic_is_sriov_vf(struct enic *enic)
+{
+	return enic->pdev->device == PCI_DEVICE_ID_CISCO_VIC_ENET_VF;
+}
 
-पूर्णांक enic_is_valid_vf(काष्ठा enic *enic, पूर्णांक vf)
-अणु
-#अगर_घोषित CONFIG_PCI_IOV
-	वापस vf >= 0 && vf < enic->num_vfs;
-#अन्यथा
-	वापस 0;
-#पूर्ण_अगर
-पूर्ण
+int enic_is_valid_vf(struct enic *enic, int vf)
+{
+#ifdef CONFIG_PCI_IOV
+	return vf >= 0 && vf < enic->num_vfs;
+#else
+	return 0;
+#endif
+}
 
-अटल व्योम enic_मुक्त_wq_buf(काष्ठा vnic_wq *wq, काष्ठा vnic_wq_buf *buf)
-अणु
-	काष्ठा enic *enic = vnic_dev_priv(wq->vdev);
+static void enic_free_wq_buf(struct vnic_wq *wq, struct vnic_wq_buf *buf)
+{
+	struct enic *enic = vnic_dev_priv(wq->vdev);
 
-	अगर (buf->sop)
+	if (buf->sop)
 		dma_unmap_single(&enic->pdev->dev, buf->dma_addr, buf->len,
 				 DMA_TO_DEVICE);
-	अन्यथा
+	else
 		dma_unmap_page(&enic->pdev->dev, buf->dma_addr, buf->len,
 			       DMA_TO_DEVICE);
 
-	अगर (buf->os_buf)
-		dev_kमुक्त_skb_any(buf->os_buf);
-पूर्ण
+	if (buf->os_buf)
+		dev_kfree_skb_any(buf->os_buf);
+}
 
-अटल व्योम enic_wq_मुक्त_buf(काष्ठा vnic_wq *wq,
-	काष्ठा cq_desc *cq_desc, काष्ठा vnic_wq_buf *buf, व्योम *opaque)
-अणु
-	enic_मुक्त_wq_buf(wq, buf);
-पूर्ण
+static void enic_wq_free_buf(struct vnic_wq *wq,
+	struct cq_desc *cq_desc, struct vnic_wq_buf *buf, void *opaque)
+{
+	enic_free_wq_buf(wq, buf);
+}
 
-अटल पूर्णांक enic_wq_service(काष्ठा vnic_dev *vdev, काष्ठा cq_desc *cq_desc,
-	u8 type, u16 q_number, u16 completed_index, व्योम *opaque)
-अणु
-	काष्ठा enic *enic = vnic_dev_priv(vdev);
+static int enic_wq_service(struct vnic_dev *vdev, struct cq_desc *cq_desc,
+	u8 type, u16 q_number, u16 completed_index, void *opaque)
+{
+	struct enic *enic = vnic_dev_priv(vdev);
 
 	spin_lock(&enic->wq_lock[q_number]);
 
 	vnic_wq_service(&enic->wq[q_number], cq_desc,
-		completed_index, enic_wq_मुक्त_buf,
+		completed_index, enic_wq_free_buf,
 		opaque);
 
-	अगर (netअगर_tx_queue_stopped(netdev_get_tx_queue(enic->netdev, q_number)) &&
+	if (netif_tx_queue_stopped(netdev_get_tx_queue(enic->netdev, q_number)) &&
 	    vnic_wq_desc_avail(&enic->wq[q_number]) >=
 	    (MAX_SKB_FRAGS + ENIC_DESC_MAX_SPLITS))
-		netअगर_wake_subqueue(enic->netdev, q_number);
+		netif_wake_subqueue(enic->netdev, q_number);
 
 	spin_unlock(&enic->wq_lock[q_number]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool enic_log_q_error(काष्ठा enic *enic)
-अणु
-	अचिन्हित पूर्णांक i;
+static bool enic_log_q_error(struct enic *enic)
+{
+	unsigned int i;
 	u32 error_status;
 	bool err = false;
 
-	क्रम (i = 0; i < enic->wq_count; i++) अणु
+	for (i = 0; i < enic->wq_count; i++) {
 		error_status = vnic_wq_error_status(&enic->wq[i]);
 		err |= error_status;
-		अगर (error_status)
+		if (error_status)
 			netdev_err(enic->netdev, "WQ[%d] error_status %d\n",
 				i, error_status);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < enic->rq_count; i++) अणु
+	for (i = 0; i < enic->rq_count; i++) {
 		error_status = vnic_rq_error_status(&enic->rq[i]);
 		err |= error_status;
-		अगर (error_status)
+		if (error_status)
 			netdev_err(enic->netdev, "RQ[%d] error_status %d\n",
 				i, error_status);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम enic_msglvl_check(काष्ठा enic *enic)
-अणु
+static void enic_msglvl_check(struct enic *enic)
+{
 	u32 msg_enable = vnic_dev_msg_lvl(enic->vdev);
 
-	अगर (msg_enable != enic->msg_enable) अणु
+	if (msg_enable != enic->msg_enable) {
 		netdev_info(enic->netdev, "msg lvl changed from 0x%x to 0x%x\n",
 			enic->msg_enable, msg_enable);
 		enic->msg_enable = msg_enable;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम enic_mtu_check(काष्ठा enic *enic)
-अणु
+static void enic_mtu_check(struct enic *enic)
+{
 	u32 mtu = vnic_dev_mtu(enic->vdev);
-	काष्ठा net_device *netdev = enic->netdev;
+	struct net_device *netdev = enic->netdev;
 
-	अगर (mtu && mtu != enic->port_mtu) अणु
+	if (mtu && mtu != enic->port_mtu) {
 		enic->port_mtu = mtu;
-		अगर (enic_is_dynamic(enic) || enic_is_sriov_vf(enic)) अणु
-			mtu = max_t(पूर्णांक, ENIC_MIN_MTU,
-				min_t(पूर्णांक, ENIC_MAX_MTU, mtu));
-			अगर (mtu != netdev->mtu)
+		if (enic_is_dynamic(enic) || enic_is_sriov_vf(enic)) {
+			mtu = max_t(int, ENIC_MIN_MTU,
+				min_t(int, ENIC_MAX_MTU, mtu));
+			if (mtu != netdev->mtu)
 				schedule_work(&enic->change_mtu_work);
-		पूर्ण अन्यथा अणु
-			अगर (mtu < netdev->mtu)
+		} else {
+			if (mtu < netdev->mtu)
 				netdev_warn(netdev,
 					"interface MTU (%d) set higher "
 					"than switch port MTU (%d)\n",
 					netdev->mtu, mtu);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम enic_link_check(काष्ठा enic *enic)
-अणु
-	पूर्णांक link_status = vnic_dev_link_status(enic->vdev);
-	पूर्णांक carrier_ok = netअगर_carrier_ok(enic->netdev);
+static void enic_link_check(struct enic *enic)
+{
+	int link_status = vnic_dev_link_status(enic->vdev);
+	int carrier_ok = netif_carrier_ok(enic->netdev);
 
-	अगर (link_status && !carrier_ok) अणु
+	if (link_status && !carrier_ok) {
 		netdev_info(enic->netdev, "Link UP\n");
-		netअगर_carrier_on(enic->netdev);
-	पूर्ण अन्यथा अगर (!link_status && carrier_ok) अणु
+		netif_carrier_on(enic->netdev);
+	} else if (!link_status && carrier_ok) {
 		netdev_info(enic->netdev, "Link DOWN\n");
-		netअगर_carrier_off(enic->netdev);
-	पूर्ण
-पूर्ण
+		netif_carrier_off(enic->netdev);
+	}
+}
 
-अटल व्योम enic_notअगरy_check(काष्ठा enic *enic)
-अणु
+static void enic_notify_check(struct enic *enic)
+{
 	enic_msglvl_check(enic);
 	enic_mtu_check(enic);
 	enic_link_check(enic);
-पूर्ण
+}
 
-#घोषणा ENIC_TEST_INTR(pba, i) (pba & (1 << i))
+#define ENIC_TEST_INTR(pba, i) (pba & (1 << i))
 
-अटल irqवापस_t enic_isr_legacy(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा net_device *netdev = data;
-	काष्ठा enic *enic = netdev_priv(netdev);
-	अचिन्हित पूर्णांक io_पूर्णांकr = enic_legacy_io_पूर्णांकr();
-	अचिन्हित पूर्णांक err_पूर्णांकr = enic_legacy_err_पूर्णांकr();
-	अचिन्हित पूर्णांक notअगरy_पूर्णांकr = enic_legacy_notअगरy_पूर्णांकr();
+static irqreturn_t enic_isr_legacy(int irq, void *data)
+{
+	struct net_device *netdev = data;
+	struct enic *enic = netdev_priv(netdev);
+	unsigned int io_intr = enic_legacy_io_intr();
+	unsigned int err_intr = enic_legacy_err_intr();
+	unsigned int notify_intr = enic_legacy_notify_intr();
 	u32 pba;
 
-	vnic_पूर्णांकr_mask(&enic->पूर्णांकr[io_पूर्णांकr]);
+	vnic_intr_mask(&enic->intr[io_intr]);
 
-	pba = vnic_पूर्णांकr_legacy_pba(enic->legacy_pba);
-	अगर (!pba) अणु
-		vnic_पूर्णांकr_unmask(&enic->पूर्णांकr[io_पूर्णांकr]);
-		वापस IRQ_NONE;	/* not our पूर्णांकerrupt */
-	पूर्ण
+	pba = vnic_intr_legacy_pba(enic->legacy_pba);
+	if (!pba) {
+		vnic_intr_unmask(&enic->intr[io_intr]);
+		return IRQ_NONE;	/* not our interrupt */
+	}
 
-	अगर (ENIC_TEST_INTR(pba, notअगरy_पूर्णांकr)) अणु
-		enic_notअगरy_check(enic);
-		vnic_पूर्णांकr_वापस_all_credits(&enic->पूर्णांकr[notअगरy_पूर्णांकr]);
-	पूर्ण
+	if (ENIC_TEST_INTR(pba, notify_intr)) {
+		enic_notify_check(enic);
+		vnic_intr_return_all_credits(&enic->intr[notify_intr]);
+	}
 
-	अगर (ENIC_TEST_INTR(pba, err_पूर्णांकr)) अणु
-		vnic_पूर्णांकr_वापस_all_credits(&enic->पूर्णांकr[err_पूर्णांकr]);
+	if (ENIC_TEST_INTR(pba, err_intr)) {
+		vnic_intr_return_all_credits(&enic->intr[err_intr]);
 		enic_log_q_error(enic);
 		/* schedule recovery from WQ/RQ error */
 		schedule_work(&enic->reset);
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
-	अगर (ENIC_TEST_INTR(pba, io_पूर्णांकr))
+	if (ENIC_TEST_INTR(pba, io_intr))
 		napi_schedule_irqoff(&enic->napi[0]);
-	अन्यथा
-		vnic_पूर्णांकr_unmask(&enic->पूर्णांकr[io_पूर्णांकr]);
+	else
+		vnic_intr_unmask(&enic->intr[io_intr]);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t enic_isr_msi(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा enic *enic = data;
+static irqreturn_t enic_isr_msi(int irq, void *data)
+{
+	struct enic *enic = data;
 
-	/* With MSI, there is no sharing of पूर्णांकerrupts, so this is
-	 * our पूर्णांकerrupt and there is no need to ack it.  The device
+	/* With MSI, there is no sharing of interrupts, so this is
+	 * our interrupt and there is no need to ack it.  The device
 	 * is not providing per-vector masking, so the OS will not
-	 * ग_लिखो to PCI config space to mask/unmask the पूर्णांकerrupt.
-	 * We're using mask_on_निश्चितion क्रम MSI, so the device
-	 * स्वतःmatically masks the पूर्णांकerrupt when the पूर्णांकerrupt is
-	 * generated.  Later, when निकासing polling, the पूर्णांकerrupt
+	 * write to PCI config space to mask/unmask the interrupt.
+	 * We're using mask_on_assertion for MSI, so the device
+	 * automatically masks the interrupt when the interrupt is
+	 * generated.  Later, when exiting polling, the interrupt
 	 * will be unmasked (see enic_poll).
 	 *
 	 * Also, the device uses the same PCIe Traffic Class (TC)
-	 * क्रम Memory Write data and MSI, so there are no ordering
+	 * for Memory Write data and MSI, so there are no ordering
 	 * issues; the MSI will always arrive at the Root Complex
 	 * _after_ corresponding Memory Writes (i.e. descriptor
-	 * ग_लिखोs).
+	 * writes).
 	 */
 
 	napi_schedule_irqoff(&enic->napi[0]);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t enic_isr_msix(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा napi_काष्ठा *napi = data;
+static irqreturn_t enic_isr_msix(int irq, void *data)
+{
+	struct napi_struct *napi = data;
 
 	napi_schedule_irqoff(napi);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t enic_isr_msix_err(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा enic *enic = data;
-	अचिन्हित पूर्णांक पूर्णांकr = enic_msix_err_पूर्णांकr(enic);
+static irqreturn_t enic_isr_msix_err(int irq, void *data)
+{
+	struct enic *enic = data;
+	unsigned int intr = enic_msix_err_intr(enic);
 
-	vnic_पूर्णांकr_वापस_all_credits(&enic->पूर्णांकr[पूर्णांकr]);
+	vnic_intr_return_all_credits(&enic->intr[intr]);
 
-	अगर (enic_log_q_error(enic))
+	if (enic_log_q_error(enic))
 		/* schedule recovery from WQ/RQ error */
 		schedule_work(&enic->reset);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t enic_isr_msix_notअगरy(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा enic *enic = data;
-	अचिन्हित पूर्णांक पूर्णांकr = enic_msix_notअगरy_पूर्णांकr(enic);
+static irqreturn_t enic_isr_msix_notify(int irq, void *data)
+{
+	struct enic *enic = data;
+	unsigned int intr = enic_msix_notify_intr(enic);
 
-	enic_notअगरy_check(enic);
-	vnic_पूर्णांकr_वापस_all_credits(&enic->पूर्णांकr[पूर्णांकr]);
+	enic_notify_check(enic);
+	vnic_intr_return_all_credits(&enic->intr[intr]);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक enic_queue_wq_skb_cont(काष्ठा enic *enic, काष्ठा vnic_wq *wq,
-				  काष्ठा sk_buff *skb, अचिन्हित पूर्णांक len_left,
-				  पूर्णांक loopback)
-अणु
-	स्थिर skb_frag_t *frag;
+static int enic_queue_wq_skb_cont(struct enic *enic, struct vnic_wq *wq,
+				  struct sk_buff *skb, unsigned int len_left,
+				  int loopback)
+{
+	const skb_frag_t *frag;
 	dma_addr_t dma_addr;
 
 	/* Queue additional data fragments */
-	क्रम (frag = skb_shinfo(skb)->frags; len_left; frag++) अणु
+	for (frag = skb_shinfo(skb)->frags; len_left; frag++) {
 		len_left -= skb_frag_size(frag);
 		dma_addr = skb_frag_dma_map(&enic->pdev->dev, frag, 0,
 					    skb_frag_size(frag),
 					    DMA_TO_DEVICE);
-		अगर (unlikely(enic_dma_map_check(enic, dma_addr)))
-			वापस -ENOMEM;
+		if (unlikely(enic_dma_map_check(enic, dma_addr)))
+			return -ENOMEM;
 		enic_queue_wq_desc_cont(wq, skb, dma_addr, skb_frag_size(frag),
 					(len_left == 0),	/* EOP? */
 					loopback);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक enic_queue_wq_skb_vlan(काष्ठा enic *enic, काष्ठा vnic_wq *wq,
-				  काष्ठा sk_buff *skb, पूर्णांक vlan_tag_insert,
-				  अचिन्हित पूर्णांक vlan_tag, पूर्णांक loopback)
-अणु
-	अचिन्हित पूर्णांक head_len = skb_headlen(skb);
-	अचिन्हित पूर्णांक len_left = skb->len - head_len;
-	पूर्णांक eop = (len_left == 0);
+static int enic_queue_wq_skb_vlan(struct enic *enic, struct vnic_wq *wq,
+				  struct sk_buff *skb, int vlan_tag_insert,
+				  unsigned int vlan_tag, int loopback)
+{
+	unsigned int head_len = skb_headlen(skb);
+	unsigned int len_left = skb->len - head_len;
+	int eop = (len_left == 0);
 	dma_addr_t dma_addr;
-	पूर्णांक err = 0;
+	int err = 0;
 
 	dma_addr = dma_map_single(&enic->pdev->dev, skb->data, head_len,
 				  DMA_TO_DEVICE);
-	अगर (unlikely(enic_dma_map_check(enic, dma_addr)))
-		वापस -ENOMEM;
+	if (unlikely(enic_dma_map_check(enic, dma_addr)))
+		return -ENOMEM;
 
-	/* Queue the मुख्य skb fragment. The fragments are no larger
+	/* Queue the main skb fragment. The fragments are no larger
 	 * than max MTU(9000)+ETH_HDR_LEN(14) bytes, which is less
 	 * than WQ_ENET_MAX_DESC_LEN length. So only one descriptor
 	 * per fragment is queued.
@@ -588,30 +587,30 @@ out:
 	enic_queue_wq_desc(wq, skb, dma_addr, head_len,	vlan_tag_insert,
 			   vlan_tag, eop, loopback);
 
-	अगर (!eop)
+	if (!eop)
 		err = enic_queue_wq_skb_cont(enic, wq, skb, len_left, loopback);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक enic_queue_wq_skb_csum_l4(काष्ठा enic *enic, काष्ठा vnic_wq *wq,
-				     काष्ठा sk_buff *skb, पूर्णांक vlan_tag_insert,
-				     अचिन्हित पूर्णांक vlan_tag, पूर्णांक loopback)
-अणु
-	अचिन्हित पूर्णांक head_len = skb_headlen(skb);
-	अचिन्हित पूर्णांक len_left = skb->len - head_len;
-	अचिन्हित पूर्णांक hdr_len = skb_checksum_start_offset(skb);
-	अचिन्हित पूर्णांक csum_offset = hdr_len + skb->csum_offset;
-	पूर्णांक eop = (len_left == 0);
+static int enic_queue_wq_skb_csum_l4(struct enic *enic, struct vnic_wq *wq,
+				     struct sk_buff *skb, int vlan_tag_insert,
+				     unsigned int vlan_tag, int loopback)
+{
+	unsigned int head_len = skb_headlen(skb);
+	unsigned int len_left = skb->len - head_len;
+	unsigned int hdr_len = skb_checksum_start_offset(skb);
+	unsigned int csum_offset = hdr_len + skb->csum_offset;
+	int eop = (len_left == 0);
 	dma_addr_t dma_addr;
-	पूर्णांक err = 0;
+	int err = 0;
 
 	dma_addr = dma_map_single(&enic->pdev->dev, skb->data, head_len,
 				  DMA_TO_DEVICE);
-	अगर (unlikely(enic_dma_map_check(enic, dma_addr)))
-		वापस -ENOMEM;
+	if (unlikely(enic_dma_map_check(enic, dma_addr)))
+		return -ENOMEM;
 
-	/* Queue the मुख्य skb fragment. The fragments are no larger
+	/* Queue the main skb fragment. The fragments are no larger
 	 * than max MTU(9000)+ETH_HDR_LEN(14) bytes, which is less
 	 * than WQ_ENET_MAX_DESC_LEN length. So only one descriptor
 	 * per fragment is queued.
@@ -620,217 +619,217 @@ out:
 				   hdr_len, vlan_tag_insert, vlan_tag, eop,
 				   loopback);
 
-	अगर (!eop)
+	if (!eop)
 		err = enic_queue_wq_skb_cont(enic, wq, skb, len_left, loopback);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम enic_preload_tcp_csum_encap(काष्ठा sk_buff *skb)
-अणु
-	स्थिर काष्ठा ethhdr *eth = (काष्ठा ethhdr *)skb_inner_mac_header(skb);
+static void enic_preload_tcp_csum_encap(struct sk_buff *skb)
+{
+	const struct ethhdr *eth = (struct ethhdr *)skb_inner_mac_header(skb);
 
-	चयन (eth->h_proto) अणु
-	हाल ntohs(ETH_P_IP):
+	switch (eth->h_proto) {
+	case ntohs(ETH_P_IP):
 		inner_ip_hdr(skb)->check = 0;
 		inner_tcp_hdr(skb)->check =
 			~csum_tcpudp_magic(inner_ip_hdr(skb)->saddr,
 					   inner_ip_hdr(skb)->daddr, 0,
 					   IPPROTO_TCP, 0);
-		अवरोध;
-	हाल ntohs(ETH_P_IPV6):
+		break;
+	case ntohs(ETH_P_IPV6):
 		inner_tcp_hdr(skb)->check =
 			~csum_ipv6_magic(&inner_ipv6_hdr(skb)->saddr,
 					 &inner_ipv6_hdr(skb)->daddr, 0,
 					 IPPROTO_TCP, 0);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ONCE(1, "Non ipv4/ipv6 inner pkt for encap offload");
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम enic_preload_tcp_csum(काष्ठा sk_buff *skb)
-अणु
-	/* Preload TCP csum field with IP pseuकरो hdr calculated
+static void enic_preload_tcp_csum(struct sk_buff *skb)
+{
+	/* Preload TCP csum field with IP pseudo hdr calculated
 	 * with IP length set to zero.  HW will later add in length
 	 * to each TCP segment resulting from the TSO.
 	 */
 
-	अगर (skb->protocol == cpu_to_be16(ETH_P_IP)) अणु
+	if (skb->protocol == cpu_to_be16(ETH_P_IP)) {
 		ip_hdr(skb)->check = 0;
 		tcp_hdr(skb)->check = ~csum_tcpudp_magic(ip_hdr(skb)->saddr,
 			ip_hdr(skb)->daddr, 0, IPPROTO_TCP, 0);
-	पूर्ण अन्यथा अगर (skb->protocol == cpu_to_be16(ETH_P_IPV6)) अणु
+	} else if (skb->protocol == cpu_to_be16(ETH_P_IPV6)) {
 		tcp_v6_gso_csum_prep(skb);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक enic_queue_wq_skb_tso(काष्ठा enic *enic, काष्ठा vnic_wq *wq,
-				 काष्ठा sk_buff *skb, अचिन्हित पूर्णांक mss,
-				 पूर्णांक vlan_tag_insert, अचिन्हित पूर्णांक vlan_tag,
-				 पूर्णांक loopback)
-अणु
-	अचिन्हित पूर्णांक frag_len_left = skb_headlen(skb);
-	अचिन्हित पूर्णांक len_left = skb->len - frag_len_left;
-	पूर्णांक eop = (len_left == 0);
-	अचिन्हित पूर्णांक offset = 0;
-	अचिन्हित पूर्णांक hdr_len;
+static int enic_queue_wq_skb_tso(struct enic *enic, struct vnic_wq *wq,
+				 struct sk_buff *skb, unsigned int mss,
+				 int vlan_tag_insert, unsigned int vlan_tag,
+				 int loopback)
+{
+	unsigned int frag_len_left = skb_headlen(skb);
+	unsigned int len_left = skb->len - frag_len_left;
+	int eop = (len_left == 0);
+	unsigned int offset = 0;
+	unsigned int hdr_len;
 	dma_addr_t dma_addr;
-	अचिन्हित पूर्णांक len;
+	unsigned int len;
 	skb_frag_t *frag;
 
-	अगर (skb->encapsulation) अणु
+	if (skb->encapsulation) {
 		hdr_len = skb_inner_transport_header(skb) - skb->data;
 		hdr_len += inner_tcp_hdrlen(skb);
 		enic_preload_tcp_csum_encap(skb);
-	पूर्ण अन्यथा अणु
+	} else {
 		hdr_len = skb_transport_offset(skb) + tcp_hdrlen(skb);
 		enic_preload_tcp_csum(skb);
-	पूर्ण
+	}
 
 	/* Queue WQ_ENET_MAX_DESC_LEN length descriptors
-	 * क्रम the मुख्य skb fragment
+	 * for the main skb fragment
 	 */
-	जबतक (frag_len_left) अणु
-		len = min(frag_len_left, (अचिन्हित पूर्णांक)WQ_ENET_MAX_DESC_LEN);
+	while (frag_len_left) {
+		len = min(frag_len_left, (unsigned int)WQ_ENET_MAX_DESC_LEN);
 		dma_addr = dma_map_single(&enic->pdev->dev,
 					  skb->data + offset, len,
 					  DMA_TO_DEVICE);
-		अगर (unlikely(enic_dma_map_check(enic, dma_addr)))
-			वापस -ENOMEM;
+		if (unlikely(enic_dma_map_check(enic, dma_addr)))
+			return -ENOMEM;
 		enic_queue_wq_desc_tso(wq, skb, dma_addr, len, mss, hdr_len,
 				       vlan_tag_insert, vlan_tag,
 				       eop && (len == frag_len_left), loopback);
 		frag_len_left -= len;
 		offset += len;
-	पूर्ण
+	}
 
-	अगर (eop)
-		वापस 0;
+	if (eop)
+		return 0;
 
 	/* Queue WQ_ENET_MAX_DESC_LEN length descriptors
-	 * क्रम additional data fragments
+	 * for additional data fragments
 	 */
-	क्रम (frag = skb_shinfo(skb)->frags; len_left; frag++) अणु
+	for (frag = skb_shinfo(skb)->frags; len_left; frag++) {
 		len_left -= skb_frag_size(frag);
 		frag_len_left = skb_frag_size(frag);
 		offset = 0;
 
-		जबतक (frag_len_left) अणु
+		while (frag_len_left) {
 			len = min(frag_len_left,
-				(अचिन्हित पूर्णांक)WQ_ENET_MAX_DESC_LEN);
+				(unsigned int)WQ_ENET_MAX_DESC_LEN);
 			dma_addr = skb_frag_dma_map(&enic->pdev->dev, frag,
 						    offset, len,
 						    DMA_TO_DEVICE);
-			अगर (unlikely(enic_dma_map_check(enic, dma_addr)))
-				वापस -ENOMEM;
+			if (unlikely(enic_dma_map_check(enic, dma_addr)))
+				return -ENOMEM;
 			enic_queue_wq_desc_cont(wq, skb, dma_addr, len,
 						(len_left == 0) &&
 						 (len == frag_len_left),/*EOP*/
 						loopback);
 			frag_len_left -= len;
 			offset += len;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक enic_queue_wq_skb_encap(काष्ठा enic *enic, काष्ठा vnic_wq *wq,
-					  काष्ठा sk_buff *skb,
-					  पूर्णांक vlan_tag_insert,
-					  अचिन्हित पूर्णांक vlan_tag, पूर्णांक loopback)
-अणु
-	अचिन्हित पूर्णांक head_len = skb_headlen(skb);
-	अचिन्हित पूर्णांक len_left = skb->len - head_len;
-	/* Hardware will overग_लिखो the checksum fields, calculating from
+static inline int enic_queue_wq_skb_encap(struct enic *enic, struct vnic_wq *wq,
+					  struct sk_buff *skb,
+					  int vlan_tag_insert,
+					  unsigned int vlan_tag, int loopback)
+{
+	unsigned int head_len = skb_headlen(skb);
+	unsigned int len_left = skb->len - head_len;
+	/* Hardware will overwrite the checksum fields, calculating from
 	 * scratch and ignoring the value placed by software.
 	 * Offload mode = 00
 	 * mss[2], mss[1], mss[0] bits are set
 	 */
-	अचिन्हित पूर्णांक mss_or_csum = 7;
-	पूर्णांक eop = (len_left == 0);
+	unsigned int mss_or_csum = 7;
+	int eop = (len_left == 0);
 	dma_addr_t dma_addr;
-	पूर्णांक err = 0;
+	int err = 0;
 
 	dma_addr = dma_map_single(&enic->pdev->dev, skb->data, head_len,
 				  DMA_TO_DEVICE);
-	अगर (unlikely(enic_dma_map_check(enic, dma_addr)))
-		वापस -ENOMEM;
+	if (unlikely(enic_dma_map_check(enic, dma_addr)))
+		return -ENOMEM;
 
 	enic_queue_wq_desc_ex(wq, skb, dma_addr, head_len, mss_or_csum, 0,
 			      vlan_tag_insert, vlan_tag,
 			      WQ_ENET_OFFLOAD_MODE_CSUM, eop, 1 /* SOP */, eop,
 			      loopback);
-	अगर (!eop)
+	if (!eop)
 		err = enic_queue_wq_skb_cont(enic, wq, skb, len_left, loopback);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत पूर्णांक enic_queue_wq_skb(काष्ठा enic *enic,
-	काष्ठा vnic_wq *wq, काष्ठा sk_buff *skb)
-अणु
-	अचिन्हित पूर्णांक mss = skb_shinfo(skb)->gso_size;
-	अचिन्हित पूर्णांक vlan_tag = 0;
-	पूर्णांक vlan_tag_insert = 0;
-	पूर्णांक loopback = 0;
-	पूर्णांक err;
+static inline int enic_queue_wq_skb(struct enic *enic,
+	struct vnic_wq *wq, struct sk_buff *skb)
+{
+	unsigned int mss = skb_shinfo(skb)->gso_size;
+	unsigned int vlan_tag = 0;
+	int vlan_tag_insert = 0;
+	int loopback = 0;
+	int err;
 
-	अगर (skb_vlan_tag_present(skb)) अणु
+	if (skb_vlan_tag_present(skb)) {
 		/* VLAN tag from trunking driver */
 		vlan_tag_insert = 1;
 		vlan_tag = skb_vlan_tag_get(skb);
-	पूर्ण अन्यथा अगर (enic->loop_enable) अणु
+	} else if (enic->loop_enable) {
 		vlan_tag = enic->loop_tag;
 		loopback = 1;
-	पूर्ण
+	}
 
-	अगर (mss)
+	if (mss)
 		err = enic_queue_wq_skb_tso(enic, wq, skb, mss,
 					    vlan_tag_insert, vlan_tag,
 					    loopback);
-	अन्यथा अगर (skb->encapsulation)
+	else if (skb->encapsulation)
 		err = enic_queue_wq_skb_encap(enic, wq, skb, vlan_tag_insert,
 					      vlan_tag, loopback);
-	अन्यथा अगर	(skb->ip_summed == CHECKSUM_PARTIAL)
+	else if	(skb->ip_summed == CHECKSUM_PARTIAL)
 		err = enic_queue_wq_skb_csum_l4(enic, wq, skb, vlan_tag_insert,
 						vlan_tag, loopback);
-	अन्यथा
+	else
 		err = enic_queue_wq_skb_vlan(enic, wq, skb, vlan_tag_insert,
 					     vlan_tag, loopback);
-	अगर (unlikely(err)) अणु
-		काष्ठा vnic_wq_buf *buf;
+	if (unlikely(err)) {
+		struct vnic_wq_buf *buf;
 
 		buf = wq->to_use->prev;
-		/* जबतक not EOP of previous pkt && queue not empty.
-		 * For all non EOP bufs, os_buf is शून्य.
+		/* while not EOP of previous pkt && queue not empty.
+		 * For all non EOP bufs, os_buf is NULL.
 		 */
-		जबतक (!buf->os_buf && (buf->next != wq->to_clean)) अणु
-			enic_मुक्त_wq_buf(wq, buf);
+		while (!buf->os_buf && (buf->next != wq->to_clean)) {
+			enic_free_wq_buf(wq, buf);
 			wq->ring.desc_avail++;
 			buf = buf->prev;
-		पूर्ण
+		}
 		wq->to_use = buf->next;
-		dev_kमुक्त_skb(skb);
-	पूर्ण
-	वापस err;
-पूर्ण
+		dev_kfree_skb(skb);
+	}
+	return err;
+}
 
-/* netअगर_tx_lock held, process context with BHs disabled, or BH */
-अटल netdev_tx_t enic_hard_start_xmit(काष्ठा sk_buff *skb,
-	काष्ठा net_device *netdev)
-अणु
-	काष्ठा enic *enic = netdev_priv(netdev);
-	काष्ठा vnic_wq *wq;
-	अचिन्हित पूर्णांक txq_map;
-	काष्ठा netdev_queue *txq;
+/* netif_tx_lock held, process context with BHs disabled, or BH */
+static netdev_tx_t enic_hard_start_xmit(struct sk_buff *skb,
+	struct net_device *netdev)
+{
+	struct enic *enic = netdev_priv(netdev);
+	struct vnic_wq *wq;
+	unsigned int txq_map;
+	struct netdev_queue *txq;
 
-	अगर (skb->len <= 0) अणु
-		dev_kमुक्त_skb_any(skb);
-		वापस NETDEV_TX_OK;
-	पूर्ण
+	if (skb->len <= 0) {
+		dev_kfree_skb_any(skb);
+		return NETDEV_TX_OK;
+	}
 
 	txq_map = skb_get_queue_mapping(skb) % enic->wq_count;
 	wq = &enic->wq[txq_map];
@@ -841,54 +840,54 @@ out:
 	 * more than * ENIC_NON_TSO_MAX_DESC, linearize the skb.
 	 */
 
-	अगर (skb_shinfo(skb)->gso_size == 0 &&
+	if (skb_shinfo(skb)->gso_size == 0 &&
 	    skb_shinfo(skb)->nr_frags + 1 > ENIC_NON_TSO_MAX_DESC &&
-	    skb_linearize(skb)) अणु
-		dev_kमुक्त_skb_any(skb);
-		वापस NETDEV_TX_OK;
-	पूर्ण
+	    skb_linearize(skb)) {
+		dev_kfree_skb_any(skb);
+		return NETDEV_TX_OK;
+	}
 
 	spin_lock(&enic->wq_lock[txq_map]);
 
-	अगर (vnic_wq_desc_avail(wq) <
-	    skb_shinfo(skb)->nr_frags + ENIC_DESC_MAX_SPLITS) अणु
-		netअगर_tx_stop_queue(txq);
+	if (vnic_wq_desc_avail(wq) <
+	    skb_shinfo(skb)->nr_frags + ENIC_DESC_MAX_SPLITS) {
+		netif_tx_stop_queue(txq);
 		/* This is a hard error, log it */
 		netdev_err(netdev, "BUG! Tx ring full when queue awake!\n");
 		spin_unlock(&enic->wq_lock[txq_map]);
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		return NETDEV_TX_BUSY;
+	}
 
-	अगर (enic_queue_wq_skb(enic, wq, skb))
-		जाओ error;
+	if (enic_queue_wq_skb(enic, wq, skb))
+		goto error;
 
-	अगर (vnic_wq_desc_avail(wq) < MAX_SKB_FRAGS + ENIC_DESC_MAX_SPLITS)
-		netअगर_tx_stop_queue(txq);
-	skb_tx_बारtamp(skb);
-	अगर (!netdev_xmit_more() || netअगर_xmit_stopped(txq))
-		vnic_wq_करोorbell(wq);
+	if (vnic_wq_desc_avail(wq) < MAX_SKB_FRAGS + ENIC_DESC_MAX_SPLITS)
+		netif_tx_stop_queue(txq);
+	skb_tx_timestamp(skb);
+	if (!netdev_xmit_more() || netif_xmit_stopped(txq))
+		vnic_wq_doorbell(wq);
 
 error:
 	spin_unlock(&enic->wq_lock[txq_map]);
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
 /* dev_base_lock rwlock held, nominally process context */
-अटल व्योम enic_get_stats(काष्ठा net_device *netdev,
-			   काष्ठा rtnl_link_stats64 *net_stats)
-अणु
-	काष्ठा enic *enic = netdev_priv(netdev);
-	काष्ठा vnic_stats *stats;
-	पूर्णांक err;
+static void enic_get_stats(struct net_device *netdev,
+			   struct rtnl_link_stats64 *net_stats)
+{
+	struct enic *enic = netdev_priv(netdev);
+	struct vnic_stats *stats;
+	int err;
 
 	err = enic_dev_stats_dump(enic, &stats);
-	/* वापस only when pci_zalloc_consistent fails in vnic_dev_stats_dump
-	 * For other failures, like devcmd failure, we वापस previously
+	/* return only when pci_zalloc_consistent fails in vnic_dev_stats_dump
+	 * For other failures, like devcmd failure, we return previously
 	 * recorded stats.
 	 */
-	अगर (err == -ENOMEM)
-		वापस;
+	if (err == -ENOMEM)
+		return;
 
 	net_stats->tx_packets = stats->tx.tx_frames_ok;
 	net_stats->tx_bytes = stats->tx.tx_bytes_ok;
@@ -902,406 +901,406 @@ error:
 	net_stats->rx_over_errors = enic->rq_truncated_pkts;
 	net_stats->rx_crc_errors = enic->rq_bad_fcs;
 	net_stats->rx_dropped = stats->rx.rx_no_bufs + stats->rx.rx_drop;
-पूर्ण
+}
 
-अटल पूर्णांक enic_mc_sync(काष्ठा net_device *netdev, स्थिर u8 *mc_addr)
-अणु
-	काष्ठा enic *enic = netdev_priv(netdev);
+static int enic_mc_sync(struct net_device *netdev, const u8 *mc_addr)
+{
+	struct enic *enic = netdev_priv(netdev);
 
-	अगर (enic->mc_count == ENIC_MULTICAST_PERFECT_FILTERS) अणु
-		अचिन्हित पूर्णांक mc_count = netdev_mc_count(netdev);
+	if (enic->mc_count == ENIC_MULTICAST_PERFECT_FILTERS) {
+		unsigned int mc_count = netdev_mc_count(netdev);
 
 		netdev_warn(netdev, "Registering only %d out of %d multicast addresses\n",
 			    ENIC_MULTICAST_PERFECT_FILTERS, mc_count);
 
-		वापस -ENOSPC;
-	पूर्ण
+		return -ENOSPC;
+	}
 
 	enic_dev_add_addr(enic, mc_addr);
 	enic->mc_count++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक enic_mc_unsync(काष्ठा net_device *netdev, स्थिर u8 *mc_addr)
-अणु
-	काष्ठा enic *enic = netdev_priv(netdev);
+static int enic_mc_unsync(struct net_device *netdev, const u8 *mc_addr)
+{
+	struct enic *enic = netdev_priv(netdev);
 
 	enic_dev_del_addr(enic, mc_addr);
 	enic->mc_count--;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक enic_uc_sync(काष्ठा net_device *netdev, स्थिर u8 *uc_addr)
-अणु
-	काष्ठा enic *enic = netdev_priv(netdev);
+static int enic_uc_sync(struct net_device *netdev, const u8 *uc_addr)
+{
+	struct enic *enic = netdev_priv(netdev);
 
-	अगर (enic->uc_count == ENIC_UNICAST_PERFECT_FILTERS) अणु
-		अचिन्हित पूर्णांक uc_count = netdev_uc_count(netdev);
+	if (enic->uc_count == ENIC_UNICAST_PERFECT_FILTERS) {
+		unsigned int uc_count = netdev_uc_count(netdev);
 
 		netdev_warn(netdev, "Registering only %d out of %d unicast addresses\n",
 			    ENIC_UNICAST_PERFECT_FILTERS, uc_count);
 
-		वापस -ENOSPC;
-	पूर्ण
+		return -ENOSPC;
+	}
 
 	enic_dev_add_addr(enic, uc_addr);
 	enic->uc_count++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक enic_uc_unsync(काष्ठा net_device *netdev, स्थिर u8 *uc_addr)
-अणु
-	काष्ठा enic *enic = netdev_priv(netdev);
+static int enic_uc_unsync(struct net_device *netdev, const u8 *uc_addr)
+{
+	struct enic *enic = netdev_priv(netdev);
 
 	enic_dev_del_addr(enic, uc_addr);
 	enic->uc_count--;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम enic_reset_addr_lists(काष्ठा enic *enic)
-अणु
-	काष्ठा net_device *netdev = enic->netdev;
+void enic_reset_addr_lists(struct enic *enic)
+{
+	struct net_device *netdev = enic->netdev;
 
-	__dev_uc_unsync(netdev, शून्य);
-	__dev_mc_unsync(netdev, शून्य);
+	__dev_uc_unsync(netdev, NULL);
+	__dev_mc_unsync(netdev, NULL);
 
 	enic->mc_count = 0;
 	enic->uc_count = 0;
 	enic->flags = 0;
-पूर्ण
+}
 
-अटल पूर्णांक enic_set_mac_addr(काष्ठा net_device *netdev, अक्षर *addr)
-अणु
-	काष्ठा enic *enic = netdev_priv(netdev);
+static int enic_set_mac_addr(struct net_device *netdev, char *addr)
+{
+	struct enic *enic = netdev_priv(netdev);
 
-	अगर (enic_is_dynamic(enic) || enic_is_sriov_vf(enic)) अणु
-		अगर (!is_valid_ether_addr(addr) && !is_zero_ether_addr(addr))
-			वापस -EADDRNOTAVAIL;
-	पूर्ण अन्यथा अणु
-		अगर (!is_valid_ether_addr(addr))
-			वापस -EADDRNOTAVAIL;
-	पूर्ण
+	if (enic_is_dynamic(enic) || enic_is_sriov_vf(enic)) {
+		if (!is_valid_ether_addr(addr) && !is_zero_ether_addr(addr))
+			return -EADDRNOTAVAIL;
+	} else {
+		if (!is_valid_ether_addr(addr))
+			return -EADDRNOTAVAIL;
+	}
 
-	स_नकल(netdev->dev_addr, addr, netdev->addr_len);
+	memcpy(netdev->dev_addr, addr, netdev->addr_len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक enic_set_mac_address_dynamic(काष्ठा net_device *netdev, व्योम *p)
-अणु
-	काष्ठा enic *enic = netdev_priv(netdev);
-	काष्ठा sockaddr *saddr = p;
-	अक्षर *addr = saddr->sa_data;
-	पूर्णांक err;
+static int enic_set_mac_address_dynamic(struct net_device *netdev, void *p)
+{
+	struct enic *enic = netdev_priv(netdev);
+	struct sockaddr *saddr = p;
+	char *addr = saddr->sa_data;
+	int err;
 
-	अगर (netअगर_running(enic->netdev)) अणु
+	if (netif_running(enic->netdev)) {
 		err = enic_dev_del_station_addr(enic);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	err = enic_set_mac_addr(netdev, addr);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (netअगर_running(enic->netdev)) अणु
+	if (netif_running(enic->netdev)) {
 		err = enic_dev_add_station_addr(enic);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक enic_set_mac_address(काष्ठा net_device *netdev, व्योम *p)
-अणु
-	काष्ठा sockaddr *saddr = p;
-	अक्षर *addr = saddr->sa_data;
-	काष्ठा enic *enic = netdev_priv(netdev);
-	पूर्णांक err;
+static int enic_set_mac_address(struct net_device *netdev, void *p)
+{
+	struct sockaddr *saddr = p;
+	char *addr = saddr->sa_data;
+	struct enic *enic = netdev_priv(netdev);
+	int err;
 
 	err = enic_dev_del_station_addr(enic);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = enic_set_mac_addr(netdev, addr);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस enic_dev_add_station_addr(enic);
-पूर्ण
+	return enic_dev_add_station_addr(enic);
+}
 
-/* netअगर_tx_lock held, BHs disabled */
-अटल व्योम enic_set_rx_mode(काष्ठा net_device *netdev)
-अणु
-	काष्ठा enic *enic = netdev_priv(netdev);
-	पूर्णांक directed = 1;
-	पूर्णांक multicast = (netdev->flags & IFF_MULTICAST) ? 1 : 0;
-	पूर्णांक broadcast = (netdev->flags & IFF_BROADCAST) ? 1 : 0;
-	पूर्णांक promisc = (netdev->flags & IFF_PROMISC) ||
+/* netif_tx_lock held, BHs disabled */
+static void enic_set_rx_mode(struct net_device *netdev)
+{
+	struct enic *enic = netdev_priv(netdev);
+	int directed = 1;
+	int multicast = (netdev->flags & IFF_MULTICAST) ? 1 : 0;
+	int broadcast = (netdev->flags & IFF_BROADCAST) ? 1 : 0;
+	int promisc = (netdev->flags & IFF_PROMISC) ||
 		netdev_uc_count(netdev) > ENIC_UNICAST_PERFECT_FILTERS;
-	पूर्णांक allmulti = (netdev->flags & IFF_ALLMULTI) ||
+	int allmulti = (netdev->flags & IFF_ALLMULTI) ||
 		netdev_mc_count(netdev) > ENIC_MULTICAST_PERFECT_FILTERS;
-	अचिन्हित पूर्णांक flags = netdev->flags |
+	unsigned int flags = netdev->flags |
 		(allmulti ? IFF_ALLMULTI : 0) |
 		(promisc ? IFF_PROMISC : 0);
 
-	अगर (enic->flags != flags) अणु
+	if (enic->flags != flags) {
 		enic->flags = flags;
 		enic_dev_packet_filter(enic, directed,
 			multicast, broadcast, promisc, allmulti);
-	पूर्ण
+	}
 
-	अगर (!promisc) अणु
+	if (!promisc) {
 		__dev_uc_sync(netdev, enic_uc_sync, enic_uc_unsync);
-		अगर (!allmulti)
+		if (!allmulti)
 			__dev_mc_sync(netdev, enic_mc_sync, enic_mc_unsync);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* netअगर_tx_lock held, BHs disabled */
-अटल व्योम enic_tx_समयout(काष्ठा net_device *netdev, अचिन्हित पूर्णांक txqueue)
-अणु
-	काष्ठा enic *enic = netdev_priv(netdev);
+/* netif_tx_lock held, BHs disabled */
+static void enic_tx_timeout(struct net_device *netdev, unsigned int txqueue)
+{
+	struct enic *enic = netdev_priv(netdev);
 	schedule_work(&enic->tx_hang_reset);
-पूर्ण
+}
 
-अटल पूर्णांक enic_set_vf_mac(काष्ठा net_device *netdev, पूर्णांक vf, u8 *mac)
-अणु
-	काष्ठा enic *enic = netdev_priv(netdev);
-	काष्ठा enic_port_profile *pp;
-	पूर्णांक err;
+static int enic_set_vf_mac(struct net_device *netdev, int vf, u8 *mac)
+{
+	struct enic *enic = netdev_priv(netdev);
+	struct enic_port_profile *pp;
+	int err;
 
 	ENIC_PP_BY_INDEX(enic, vf, pp, &err);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (is_valid_ether_addr(mac) || is_zero_ether_addr(mac)) अणु
-		अगर (vf == PORT_SELF_VF) अणु
-			स_नकल(pp->vf_mac, mac, ETH_ALEN);
-			वापस 0;
-		पूर्ण अन्यथा अणु
+	if (is_valid_ether_addr(mac) || is_zero_ether_addr(mac)) {
+		if (vf == PORT_SELF_VF) {
+			memcpy(pp->vf_mac, mac, ETH_ALEN);
+			return 0;
+		} else {
 			/*
 			 * For sriov vf's set the mac in hw
 			 */
 			ENIC_DEVCMD_PROXY_BY_INDEX(vf, err, enic,
 				vnic_dev_set_mac_addr, mac);
-			वापस enic_dev_status_to_त्रुटि_सं(err);
-		पूर्ण
-	पूर्ण अन्यथा
-		वापस -EINVAL;
-पूर्ण
+			return enic_dev_status_to_errno(err);
+		}
+	} else
+		return -EINVAL;
+}
 
-अटल पूर्णांक enic_set_vf_port(काष्ठा net_device *netdev, पूर्णांक vf,
-	काष्ठा nlattr *port[])
-अणु
-	काष्ठा enic *enic = netdev_priv(netdev);
-	काष्ठा enic_port_profile prev_pp;
-	काष्ठा enic_port_profile *pp;
-	पूर्णांक err = 0, restore_pp = 1;
+static int enic_set_vf_port(struct net_device *netdev, int vf,
+	struct nlattr *port[])
+{
+	struct enic *enic = netdev_priv(netdev);
+	struct enic_port_profile prev_pp;
+	struct enic_port_profile *pp;
+	int err = 0, restore_pp = 1;
 
 	ENIC_PP_BY_INDEX(enic, vf, pp, &err);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (!port[IFLA_PORT_REQUEST])
-		वापस -EOPNOTSUPP;
+	if (!port[IFLA_PORT_REQUEST])
+		return -EOPNOTSUPP;
 
-	स_नकल(&prev_pp, pp, माप(*enic->pp));
-	स_रखो(pp, 0, माप(*enic->pp));
+	memcpy(&prev_pp, pp, sizeof(*enic->pp));
+	memset(pp, 0, sizeof(*enic->pp));
 
 	pp->set |= ENIC_SET_REQUEST;
 	pp->request = nla_get_u8(port[IFLA_PORT_REQUEST]);
 
-	अगर (port[IFLA_PORT_PROखाता]) अणु
+	if (port[IFLA_PORT_PROFILE]) {
 		pp->set |= ENIC_SET_NAME;
-		स_नकल(pp->name, nla_data(port[IFLA_PORT_PROखाता]),
-			PORT_PROखाता_MAX);
-	पूर्ण
+		memcpy(pp->name, nla_data(port[IFLA_PORT_PROFILE]),
+			PORT_PROFILE_MAX);
+	}
 
-	अगर (port[IFLA_PORT_INSTANCE_UUID]) अणु
+	if (port[IFLA_PORT_INSTANCE_UUID]) {
 		pp->set |= ENIC_SET_INSTANCE;
-		स_नकल(pp->instance_uuid,
+		memcpy(pp->instance_uuid,
 			nla_data(port[IFLA_PORT_INSTANCE_UUID]), PORT_UUID_MAX);
-	पूर्ण
+	}
 
-	अगर (port[IFLA_PORT_HOST_UUID]) अणु
+	if (port[IFLA_PORT_HOST_UUID]) {
 		pp->set |= ENIC_SET_HOST;
-		स_नकल(pp->host_uuid,
+		memcpy(pp->host_uuid,
 			nla_data(port[IFLA_PORT_HOST_UUID]), PORT_UUID_MAX);
-	पूर्ण
+	}
 
-	अगर (vf == PORT_SELF_VF) अणु
-		/* Special हाल handling: mac came from IFLA_VF_MAC */
-		अगर (!is_zero_ether_addr(prev_pp.vf_mac))
-			स_नकल(pp->mac_addr, prev_pp.vf_mac, ETH_ALEN);
+	if (vf == PORT_SELF_VF) {
+		/* Special case handling: mac came from IFLA_VF_MAC */
+		if (!is_zero_ether_addr(prev_pp.vf_mac))
+			memcpy(pp->mac_addr, prev_pp.vf_mac, ETH_ALEN);
 
-		अगर (is_zero_ether_addr(netdev->dev_addr))
-			eth_hw_addr_अक्रमom(netdev);
-	पूर्ण अन्यथा अणु
+		if (is_zero_ether_addr(netdev->dev_addr))
+			eth_hw_addr_random(netdev);
+	} else {
 		/* SR-IOV VF: get mac from adapter */
 		ENIC_DEVCMD_PROXY_BY_INDEX(vf, err, enic,
 			vnic_dev_get_mac_addr, pp->mac_addr);
-		अगर (err) अणु
+		if (err) {
 			netdev_err(netdev, "Error getting mac for vf %d\n", vf);
-			स_नकल(pp, &prev_pp, माप(*pp));
-			वापस enic_dev_status_to_त्रुटि_सं(err);
-		पूर्ण
-	पूर्ण
+			memcpy(pp, &prev_pp, sizeof(*pp));
+			return enic_dev_status_to_errno(err);
+		}
+	}
 
 	err = enic_process_set_pp_request(enic, vf, &prev_pp, &restore_pp);
-	अगर (err) अणु
-		अगर (restore_pp) अणु
+	if (err) {
+		if (restore_pp) {
 			/* Things are still the way they were: Implicit
 			 * DISASSOCIATE failed
 			 */
-			स_नकल(pp, &prev_pp, माप(*pp));
-		पूर्ण अन्यथा अणु
-			स_रखो(pp, 0, माप(*pp));
-			अगर (vf == PORT_SELF_VF)
+			memcpy(pp, &prev_pp, sizeof(*pp));
+		} else {
+			memset(pp, 0, sizeof(*pp));
+			if (vf == PORT_SELF_VF)
 				eth_zero_addr(netdev->dev_addr);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/* Set flag to indicate that the port assoc/disassoc
 		 * request has been sent out to fw
 		 */
 		pp->set |= ENIC_PORT_REQUEST_APPLIED;
 
-		/* If DISASSOCIATE, clean up all asचिन्हित/saved macaddresses */
-		अगर (pp->request == PORT_REQUEST_DISASSOCIATE) अणु
+		/* If DISASSOCIATE, clean up all assigned/saved macaddresses */
+		if (pp->request == PORT_REQUEST_DISASSOCIATE) {
 			eth_zero_addr(pp->mac_addr);
-			अगर (vf == PORT_SELF_VF)
+			if (vf == PORT_SELF_VF)
 				eth_zero_addr(netdev->dev_addr);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (vf == PORT_SELF_VF)
+	if (vf == PORT_SELF_VF)
 		eth_zero_addr(pp->vf_mac);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक enic_get_vf_port(काष्ठा net_device *netdev, पूर्णांक vf,
-	काष्ठा sk_buff *skb)
-अणु
-	काष्ठा enic *enic = netdev_priv(netdev);
-	u16 response = PORT_PROखाता_RESPONSE_SUCCESS;
-	काष्ठा enic_port_profile *pp;
-	पूर्णांक err;
+static int enic_get_vf_port(struct net_device *netdev, int vf,
+	struct sk_buff *skb)
+{
+	struct enic *enic = netdev_priv(netdev);
+	u16 response = PORT_PROFILE_RESPONSE_SUCCESS;
+	struct enic_port_profile *pp;
+	int err;
 
 	ENIC_PP_BY_INDEX(enic, vf, pp, &err);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (!(pp->set & ENIC_PORT_REQUEST_APPLIED))
-		वापस -ENODATA;
+	if (!(pp->set & ENIC_PORT_REQUEST_APPLIED))
+		return -ENODATA;
 
 	err = enic_process_get_pp_request(enic, vf, pp->request, &response);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (nla_put_u16(skb, IFLA_PORT_REQUEST, pp->request) ||
+	if (nla_put_u16(skb, IFLA_PORT_REQUEST, pp->request) ||
 	    nla_put_u16(skb, IFLA_PORT_RESPONSE, response) ||
 	    ((pp->set & ENIC_SET_NAME) &&
-	     nla_put(skb, IFLA_PORT_PROखाता, PORT_PROखाता_MAX, pp->name)) ||
+	     nla_put(skb, IFLA_PORT_PROFILE, PORT_PROFILE_MAX, pp->name)) ||
 	    ((pp->set & ENIC_SET_INSTANCE) &&
 	     nla_put(skb, IFLA_PORT_INSTANCE_UUID, PORT_UUID_MAX,
 		     pp->instance_uuid)) ||
 	    ((pp->set & ENIC_SET_HOST) &&
 	     nla_put(skb, IFLA_PORT_HOST_UUID, PORT_UUID_MAX, pp->host_uuid)))
-		जाओ nla_put_failure;
-	वापस 0;
+		goto nla_put_failure;
+	return 0;
 
 nla_put_failure:
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल व्योम enic_मुक्त_rq_buf(काष्ठा vnic_rq *rq, काष्ठा vnic_rq_buf *buf)
-अणु
-	काष्ठा enic *enic = vnic_dev_priv(rq->vdev);
+static void enic_free_rq_buf(struct vnic_rq *rq, struct vnic_rq_buf *buf)
+{
+	struct enic *enic = vnic_dev_priv(rq->vdev);
 
-	अगर (!buf->os_buf)
-		वापस;
+	if (!buf->os_buf)
+		return;
 
 	dma_unmap_single(&enic->pdev->dev, buf->dma_addr, buf->len,
 			 DMA_FROM_DEVICE);
-	dev_kमुक्त_skb_any(buf->os_buf);
-	buf->os_buf = शून्य;
-पूर्ण
+	dev_kfree_skb_any(buf->os_buf);
+	buf->os_buf = NULL;
+}
 
-अटल पूर्णांक enic_rq_alloc_buf(काष्ठा vnic_rq *rq)
-अणु
-	काष्ठा enic *enic = vnic_dev_priv(rq->vdev);
-	काष्ठा net_device *netdev = enic->netdev;
-	काष्ठा sk_buff *skb;
-	अचिन्हित पूर्णांक len = netdev->mtu + VLAN_ETH_HLEN;
-	अचिन्हित पूर्णांक os_buf_index = 0;
+static int enic_rq_alloc_buf(struct vnic_rq *rq)
+{
+	struct enic *enic = vnic_dev_priv(rq->vdev);
+	struct net_device *netdev = enic->netdev;
+	struct sk_buff *skb;
+	unsigned int len = netdev->mtu + VLAN_ETH_HLEN;
+	unsigned int os_buf_index = 0;
 	dma_addr_t dma_addr;
-	काष्ठा vnic_rq_buf *buf = rq->to_use;
+	struct vnic_rq_buf *buf = rq->to_use;
 
-	अगर (buf->os_buf) अणु
+	if (buf->os_buf) {
 		enic_queue_rq_desc(rq, buf->os_buf, os_buf_index, buf->dma_addr,
 				   buf->len);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	skb = netdev_alloc_skb_ip_align(netdev, len);
-	अगर (!skb)
-		वापस -ENOMEM;
+	if (!skb)
+		return -ENOMEM;
 
 	dma_addr = dma_map_single(&enic->pdev->dev, skb->data, len,
 				  DMA_FROM_DEVICE);
-	अगर (unlikely(enic_dma_map_check(enic, dma_addr))) अणु
-		dev_kमुक्त_skb(skb);
-		वापस -ENOMEM;
-	पूर्ण
+	if (unlikely(enic_dma_map_check(enic, dma_addr))) {
+		dev_kfree_skb(skb);
+		return -ENOMEM;
+	}
 
 	enic_queue_rq_desc(rq, skb, os_buf_index,
 		dma_addr, len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम enic_पूर्णांकr_update_pkt_size(काष्ठा vnic_rx_bytes_counter *pkt_size,
+static void enic_intr_update_pkt_size(struct vnic_rx_bytes_counter *pkt_size,
 				      u32 pkt_len)
-अणु
-	अगर (ENIC_LARGE_PKT_THRESHOLD <= pkt_len)
+{
+	if (ENIC_LARGE_PKT_THRESHOLD <= pkt_len)
 		pkt_size->large_pkt_bytes_cnt += pkt_len;
-	अन्यथा
+	else
 		pkt_size->small_pkt_bytes_cnt += pkt_len;
-पूर्ण
+}
 
-अटल bool enic_rxcopyअवरोध(काष्ठा net_device *netdev, काष्ठा sk_buff **skb,
-			     काष्ठा vnic_rq_buf *buf, u16 len)
-अणु
-	काष्ठा enic *enic = netdev_priv(netdev);
-	काष्ठा sk_buff *new_skb;
+static bool enic_rxcopybreak(struct net_device *netdev, struct sk_buff **skb,
+			     struct vnic_rq_buf *buf, u16 len)
+{
+	struct enic *enic = netdev_priv(netdev);
+	struct sk_buff *new_skb;
 
-	अगर (len > enic->rx_copyअवरोध)
-		वापस false;
+	if (len > enic->rx_copybreak)
+		return false;
 	new_skb = netdev_alloc_skb_ip_align(netdev, len);
-	अगर (!new_skb)
-		वापस false;
-	dma_sync_single_क्रम_cpu(&enic->pdev->dev, buf->dma_addr, len,
+	if (!new_skb)
+		return false;
+	dma_sync_single_for_cpu(&enic->pdev->dev, buf->dma_addr, len,
 				DMA_FROM_DEVICE);
-	स_नकल(new_skb->data, (*skb)->data, len);
+	memcpy(new_skb->data, (*skb)->data, len);
 	*skb = new_skb;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम enic_rq_indicate_buf(काष्ठा vnic_rq *rq,
-	काष्ठा cq_desc *cq_desc, काष्ठा vnic_rq_buf *buf,
-	पूर्णांक skipped, व्योम *opaque)
-अणु
-	काष्ठा enic *enic = vnic_dev_priv(rq->vdev);
-	काष्ठा net_device *netdev = enic->netdev;
-	काष्ठा sk_buff *skb;
-	काष्ठा vnic_cq *cq = &enic->cq[enic_cq_rq(enic, rq->index)];
+static void enic_rq_indicate_buf(struct vnic_rq *rq,
+	struct cq_desc *cq_desc, struct vnic_rq_buf *buf,
+	int skipped, void *opaque)
+{
+	struct enic *enic = vnic_dev_priv(rq->vdev);
+	struct net_device *netdev = enic->netdev;
+	struct sk_buff *skb;
+	struct vnic_cq *cq = &enic->cq[enic_cq_rq(enic, rq->index)];
 
 	u8 type, color, eop, sop, ingress_port, vlan_stripped;
 	u8 fcoe, fcoe_sof, fcoe_fc_crc_ok, fcoe_enc_error, fcoe_eof;
@@ -1312,12 +1311,12 @@ nla_put_failure:
 	u32 rss_hash;
 	bool outer_csum_ok = true, encap = false;
 
-	अगर (skipped)
-		वापस;
+	if (skipped)
+		return;
 
 	skb = buf->os_buf;
 
-	cq_enet_rq_desc_dec((काष्ठा cq_enet_rq_desc *)cq_desc,
+	cq_enet_rq_desc_dec((struct cq_enet_rq_desc *)cq_desc,
 		&type, &color, &q_number, &completed_index,
 		&ingress_port, &fcoe, &eop, &sop, &rss_type,
 		&csum_not_calc, &rss_hash, &bytes_written,
@@ -1327,150 +1326,150 @@ nla_put_failure:
 		&ipv4_csum_ok, &ipv6, &ipv4, &ipv4_fragment,
 		&fcs_ok);
 
-	अगर (packet_error) अणु
+	if (packet_error) {
 
-		अगर (!fcs_ok) अणु
-			अगर (bytes_written > 0)
+		if (!fcs_ok) {
+			if (bytes_written > 0)
 				enic->rq_bad_fcs++;
-			अन्यथा अगर (bytes_written == 0)
+			else if (bytes_written == 0)
 				enic->rq_truncated_pkts++;
-		पूर्ण
+		}
 
 		dma_unmap_single(&enic->pdev->dev, buf->dma_addr, buf->len,
 				 DMA_FROM_DEVICE);
-		dev_kमुक्त_skb_any(skb);
-		buf->os_buf = शून्य;
+		dev_kfree_skb_any(skb);
+		buf->os_buf = NULL;
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (eop && bytes_written > 0) अणु
+	if (eop && bytes_written > 0) {
 
 		/* Good receive
 		 */
 
-		अगर (!enic_rxcopyअवरोध(netdev, &skb, buf, bytes_written)) अणु
-			buf->os_buf = शून्य;
+		if (!enic_rxcopybreak(netdev, &skb, buf, bytes_written)) {
+			buf->os_buf = NULL;
 			dma_unmap_single(&enic->pdev->dev, buf->dma_addr,
 					 buf->len, DMA_FROM_DEVICE);
-		पूर्ण
+		}
 		prefetch(skb->data - NET_IP_ALIGN);
 
 		skb_put(skb, bytes_written);
 		skb->protocol = eth_type_trans(skb, netdev);
 		skb_record_rx_queue(skb, q_number);
-		अगर ((netdev->features & NETIF_F_RXHASH) && rss_hash &&
-		    (type == 3)) अणु
-			चयन (rss_type) अणु
-			हाल CQ_ENET_RQ_DESC_RSS_TYPE_TCP_IPv4:
-			हाल CQ_ENET_RQ_DESC_RSS_TYPE_TCP_IPv6:
-			हाल CQ_ENET_RQ_DESC_RSS_TYPE_TCP_IPv6_EX:
+		if ((netdev->features & NETIF_F_RXHASH) && rss_hash &&
+		    (type == 3)) {
+			switch (rss_type) {
+			case CQ_ENET_RQ_DESC_RSS_TYPE_TCP_IPv4:
+			case CQ_ENET_RQ_DESC_RSS_TYPE_TCP_IPv6:
+			case CQ_ENET_RQ_DESC_RSS_TYPE_TCP_IPv6_EX:
 				skb_set_hash(skb, rss_hash, PKT_HASH_TYPE_L4);
-				अवरोध;
-			हाल CQ_ENET_RQ_DESC_RSS_TYPE_IPv4:
-			हाल CQ_ENET_RQ_DESC_RSS_TYPE_IPv6:
-			हाल CQ_ENET_RQ_DESC_RSS_TYPE_IPv6_EX:
+				break;
+			case CQ_ENET_RQ_DESC_RSS_TYPE_IPv4:
+			case CQ_ENET_RQ_DESC_RSS_TYPE_IPv6:
+			case CQ_ENET_RQ_DESC_RSS_TYPE_IPv6_EX:
 				skb_set_hash(skb, rss_hash, PKT_HASH_TYPE_L3);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (enic->vxlan.vxlan_udp_port_number) अणु
-			चयन (enic->vxlan.patch_level) अणु
-			हाल 0:
-				अगर (fcoe) अणु
+				break;
+			}
+		}
+		if (enic->vxlan.vxlan_udp_port_number) {
+			switch (enic->vxlan.patch_level) {
+			case 0:
+				if (fcoe) {
 					encap = true;
 					outer_csum_ok = fcoe_fc_crc_ok;
-				पूर्ण
-				अवरोध;
-			हाल 2:
-				अगर ((type == 7) &&
-				    (rss_hash & BIT(0))) अणु
+				}
+				break;
+			case 2:
+				if ((type == 7) &&
+				    (rss_hash & BIT(0))) {
 					encap = true;
 					outer_csum_ok = (rss_hash & BIT(1)) &&
 							(rss_hash & BIT(2));
-				पूर्ण
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				}
+				break;
+			}
+		}
 
-		/* Hardware करोes not provide whole packet checksum. It only
-		 * provides pseuकरो checksum. Since hw validates the packet
+		/* Hardware does not provide whole packet checksum. It only
+		 * provides pseudo checksum. Since hw validates the packet
 		 * checksum but not provide us the checksum value. use
 		 * CHECSUM_UNNECESSARY.
 		 *
-		 * In हाल of encap pkt tcp_udp_csum_ok/tcp_udp_csum_ok is
+		 * In case of encap pkt tcp_udp_csum_ok/tcp_udp_csum_ok is
 		 * inner csum_ok. outer_csum_ok is set by hw when outer udp
 		 * csum is correct or is zero.
 		 */
-		अगर ((netdev->features & NETIF_F_RXCSUM) && !csum_not_calc &&
+		if ((netdev->features & NETIF_F_RXCSUM) && !csum_not_calc &&
 		    tcp_udp_csum_ok && outer_csum_ok &&
-		    (ipv4_csum_ok || ipv6)) अणु
+		    (ipv4_csum_ok || ipv6)) {
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
 			skb->csum_level = encap;
-		पूर्ण
+		}
 
-		अगर (vlan_stripped)
+		if (vlan_stripped)
 			__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), vlan_tci);
 
 		skb_mark_napi_id(skb, &enic->napi[rq->index]);
-		अगर (!(netdev->features & NETIF_F_GRO))
-			netअगर_receive_skb(skb);
-		अन्यथा
+		if (!(netdev->features & NETIF_F_GRO))
+			netif_receive_skb(skb);
+		else
 			napi_gro_receive(&enic->napi[q_number], skb);
-		अगर (enic->rx_coalesce_setting.use_adaptive_rx_coalesce)
-			enic_पूर्णांकr_update_pkt_size(&cq->pkt_size_counter,
+		if (enic->rx_coalesce_setting.use_adaptive_rx_coalesce)
+			enic_intr_update_pkt_size(&cq->pkt_size_counter,
 						  bytes_written);
-	पूर्ण अन्यथा अणु
+	} else {
 
 		/* Buffer overflow
 		 */
 
 		dma_unmap_single(&enic->pdev->dev, buf->dma_addr, buf->len,
 				 DMA_FROM_DEVICE);
-		dev_kमुक्त_skb_any(skb);
-		buf->os_buf = शून्य;
-	पूर्ण
-पूर्ण
+		dev_kfree_skb_any(skb);
+		buf->os_buf = NULL;
+	}
+}
 
-अटल पूर्णांक enic_rq_service(काष्ठा vnic_dev *vdev, काष्ठा cq_desc *cq_desc,
-	u8 type, u16 q_number, u16 completed_index, व्योम *opaque)
-अणु
-	काष्ठा enic *enic = vnic_dev_priv(vdev);
+static int enic_rq_service(struct vnic_dev *vdev, struct cq_desc *cq_desc,
+	u8 type, u16 q_number, u16 completed_index, void *opaque)
+{
+	struct enic *enic = vnic_dev_priv(vdev);
 
 	vnic_rq_service(&enic->rq[q_number], cq_desc,
 		completed_index, VNIC_RQ_RETURN_DESC,
 		enic_rq_indicate_buf, opaque);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम enic_set_पूर्णांक_moderation(काष्ठा enic *enic, काष्ठा vnic_rq *rq)
-अणु
-	अचिन्हित पूर्णांक पूर्णांकr = enic_msix_rq_पूर्णांकr(enic, rq->index);
-	काष्ठा vnic_cq *cq = &enic->cq[enic_cq_rq(enic, rq->index)];
-	u32 समयr = cq->tobe_rx_coal_समयval;
+static void enic_set_int_moderation(struct enic *enic, struct vnic_rq *rq)
+{
+	unsigned int intr = enic_msix_rq_intr(enic, rq->index);
+	struct vnic_cq *cq = &enic->cq[enic_cq_rq(enic, rq->index)];
+	u32 timer = cq->tobe_rx_coal_timeval;
 
-	अगर (cq->tobe_rx_coal_समयval != cq->cur_rx_coal_समयval) अणु
-		vnic_पूर्णांकr_coalescing_समयr_set(&enic->पूर्णांकr[पूर्णांकr], समयr);
-		cq->cur_rx_coal_समयval = cq->tobe_rx_coal_समयval;
-	पूर्ण
-पूर्ण
+	if (cq->tobe_rx_coal_timeval != cq->cur_rx_coal_timeval) {
+		vnic_intr_coalescing_timer_set(&enic->intr[intr], timer);
+		cq->cur_rx_coal_timeval = cq->tobe_rx_coal_timeval;
+	}
+}
 
-अटल व्योम enic_calc_पूर्णांक_moderation(काष्ठा enic *enic, काष्ठा vnic_rq *rq)
-अणु
-	काष्ठा enic_rx_coal *rx_coal = &enic->rx_coalesce_setting;
-	काष्ठा vnic_cq *cq = &enic->cq[enic_cq_rq(enic, rq->index)];
-	काष्ठा vnic_rx_bytes_counter *pkt_size_counter = &cq->pkt_size_counter;
-	पूर्णांक index;
-	u32 समयr;
+static void enic_calc_int_moderation(struct enic *enic, struct vnic_rq *rq)
+{
+	struct enic_rx_coal *rx_coal = &enic->rx_coalesce_setting;
+	struct vnic_cq *cq = &enic->cq[enic_cq_rq(enic, rq->index)];
+	struct vnic_rx_bytes_counter *pkt_size_counter = &cq->pkt_size_counter;
+	int index;
+	u32 timer;
 	u32 range_start;
 	u32 traffic;
 	u64 delta;
-	kसमय_प्रकार now = kसमय_get();
+	ktime_t now = ktime_get();
 
-	delta = kसमय_us_delta(now, cq->prev_ts);
-	अगर (delta < ENIC_AIC_TS_BREAK)
-		वापस;
+	delta = ktime_us_delta(now, cq->prev_ts);
+	if (delta < ENIC_AIC_TS_BREAK)
+		return;
 	cq->prev_ts = now;
 
 	traffic = pkt_size_counter->large_pkt_bytes_cnt +
@@ -1484,55 +1483,55 @@ nla_put_failure:
 	 */
 
 	traffic <<= 3;
-	traffic = delta > अच_पूर्णांक_उच्च ? 0 : traffic / (u32)delta;
+	traffic = delta > UINT_MAX ? 0 : traffic / (u32)delta;
 
-	क्रम (index = 0; index < ENIC_MAX_COALESCE_TIMERS; index++)
-		अगर (traffic < mod_table[index].rx_rate)
-			अवरोध;
+	for (index = 0; index < ENIC_MAX_COALESCE_TIMERS; index++)
+		if (traffic < mod_table[index].rx_rate)
+			break;
 	range_start = (pkt_size_counter->small_pkt_bytes_cnt >
 		       pkt_size_counter->large_pkt_bytes_cnt << 1) ?
 		      rx_coal->small_pkt_range_start :
 		      rx_coal->large_pkt_range_start;
-	समयr = range_start + ((rx_coal->range_end - range_start) *
+	timer = range_start + ((rx_coal->range_end - range_start) *
 			       mod_table[index].range_percent / 100);
 	/* Damping */
-	cq->tobe_rx_coal_समयval = (समयr + cq->tobe_rx_coal_समयval) >> 1;
+	cq->tobe_rx_coal_timeval = (timer + cq->tobe_rx_coal_timeval) >> 1;
 
 	pkt_size_counter->large_pkt_bytes_cnt = 0;
 	pkt_size_counter->small_pkt_bytes_cnt = 0;
-पूर्ण
+}
 
-अटल पूर्णांक enic_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
-अणु
-	काष्ठा net_device *netdev = napi->dev;
-	काष्ठा enic *enic = netdev_priv(netdev);
-	अचिन्हित पूर्णांक cq_rq = enic_cq_rq(enic, 0);
-	अचिन्हित पूर्णांक cq_wq = enic_cq_wq(enic, 0);
-	अचिन्हित पूर्णांक पूर्णांकr = enic_legacy_io_पूर्णांकr();
-	अचिन्हित पूर्णांक rq_work_to_करो = budget;
-	अचिन्हित पूर्णांक wq_work_to_करो = ENIC_WQ_NAPI_BUDGET;
-	अचिन्हित पूर्णांक  work_करोne, rq_work_करोne = 0, wq_work_करोne;
-	पूर्णांक err;
+static int enic_poll(struct napi_struct *napi, int budget)
+{
+	struct net_device *netdev = napi->dev;
+	struct enic *enic = netdev_priv(netdev);
+	unsigned int cq_rq = enic_cq_rq(enic, 0);
+	unsigned int cq_wq = enic_cq_wq(enic, 0);
+	unsigned int intr = enic_legacy_io_intr();
+	unsigned int rq_work_to_do = budget;
+	unsigned int wq_work_to_do = ENIC_WQ_NAPI_BUDGET;
+	unsigned int  work_done, rq_work_done = 0, wq_work_done;
+	int err;
 
-	wq_work_करोne = vnic_cq_service(&enic->cq[cq_wq], wq_work_to_करो,
-				       enic_wq_service, शून्य);
+	wq_work_done = vnic_cq_service(&enic->cq[cq_wq], wq_work_to_do,
+				       enic_wq_service, NULL);
 
-	अगर (budget > 0)
-		rq_work_करोne = vnic_cq_service(&enic->cq[cq_rq],
-			rq_work_to_करो, enic_rq_service, शून्य);
+	if (budget > 0)
+		rq_work_done = vnic_cq_service(&enic->cq[cq_rq],
+			rq_work_to_do, enic_rq_service, NULL);
 
-	/* Accumulate पूर्णांकr event credits क्रम this polling
-	 * cycle.  An पूर्णांकr event is the completion of a
+	/* Accumulate intr event credits for this polling
+	 * cycle.  An intr event is the completion of a
 	 * a WQ or RQ packet.
 	 */
 
-	work_करोne = rq_work_करोne + wq_work_करोne;
+	work_done = rq_work_done + wq_work_done;
 
-	अगर (work_करोne > 0)
-		vnic_पूर्णांकr_वापस_credits(&enic->पूर्णांकr[पूर्णांकr],
-			work_करोne,
-			0 /* करोn't unmask पूर्णांकr */,
-			0 /* करोn't reset पूर्णांकr समयr */);
+	if (work_done > 0)
+		vnic_intr_return_credits(&enic->intr[intr],
+			work_done,
+			0 /* don't unmask intr */,
+			0 /* don't reset intr timer */);
 
 	err = vnic_rq_fill(&enic->rq[0], enic_rq_alloc_buf);
 
@@ -1540,124 +1539,124 @@ nla_put_failure:
 	 * mode so we can try to fill the ring again.
 	 */
 
-	अगर (err)
-		rq_work_करोne = rq_work_to_करो;
-	अगर (enic->rx_coalesce_setting.use_adaptive_rx_coalesce)
-		/* Call the function which refreshes the पूर्णांकr coalescing समयr
+	if (err)
+		rq_work_done = rq_work_to_do;
+	if (enic->rx_coalesce_setting.use_adaptive_rx_coalesce)
+		/* Call the function which refreshes the intr coalescing timer
 		 * value based on the traffic.
 		 */
-		enic_calc_पूर्णांक_moderation(enic, &enic->rq[0]);
+		enic_calc_int_moderation(enic, &enic->rq[0]);
 
-	अगर ((rq_work_करोne < budget) && napi_complete_करोne(napi, rq_work_करोne)) अणु
+	if ((rq_work_done < budget) && napi_complete_done(napi, rq_work_done)) {
 
-		/* Some work करोne, but not enough to stay in polling,
-		 * निकास polling
+		/* Some work done, but not enough to stay in polling,
+		 * exit polling
 		 */
 
-		अगर (enic->rx_coalesce_setting.use_adaptive_rx_coalesce)
-			enic_set_पूर्णांक_moderation(enic, &enic->rq[0]);
-		vnic_पूर्णांकr_unmask(&enic->पूर्णांकr[पूर्णांकr]);
-	पूर्ण
+		if (enic->rx_coalesce_setting.use_adaptive_rx_coalesce)
+			enic_set_int_moderation(enic, &enic->rq[0]);
+		vnic_intr_unmask(&enic->intr[intr]);
+	}
 
-	वापस rq_work_करोne;
-पूर्ण
+	return rq_work_done;
+}
 
-#अगर_घोषित CONFIG_RFS_ACCEL
-अटल व्योम enic_मुक्त_rx_cpu_rmap(काष्ठा enic *enic)
-अणु
-	मुक्त_irq_cpu_rmap(enic->netdev->rx_cpu_rmap);
-	enic->netdev->rx_cpu_rmap = शून्य;
-पूर्ण
+#ifdef CONFIG_RFS_ACCEL
+static void enic_free_rx_cpu_rmap(struct enic *enic)
+{
+	free_irq_cpu_rmap(enic->netdev->rx_cpu_rmap);
+	enic->netdev->rx_cpu_rmap = NULL;
+}
 
-अटल व्योम enic_set_rx_cpu_rmap(काष्ठा enic *enic)
-अणु
-	पूर्णांक i, res;
+static void enic_set_rx_cpu_rmap(struct enic *enic)
+{
+	int i, res;
 
-	अगर (vnic_dev_get_पूर्णांकr_mode(enic->vdev) == VNIC_DEV_INTR_MODE_MSIX) अणु
+	if (vnic_dev_get_intr_mode(enic->vdev) == VNIC_DEV_INTR_MODE_MSIX) {
 		enic->netdev->rx_cpu_rmap = alloc_irq_cpu_rmap(enic->rq_count);
-		अगर (unlikely(!enic->netdev->rx_cpu_rmap))
-			वापस;
-		क्रम (i = 0; i < enic->rq_count; i++) अणु
+		if (unlikely(!enic->netdev->rx_cpu_rmap))
+			return;
+		for (i = 0; i < enic->rq_count; i++) {
 			res = irq_cpu_rmap_add(enic->netdev->rx_cpu_rmap,
 					       enic->msix_entry[i].vector);
-			अगर (unlikely(res)) अणु
-				enic_मुक्त_rx_cpu_rmap(enic);
-				वापस;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			if (unlikely(res)) {
+				enic_free_rx_cpu_rmap(enic);
+				return;
+			}
+		}
+	}
+}
 
-#अन्यथा
+#else
 
-अटल व्योम enic_मुक्त_rx_cpu_rmap(काष्ठा enic *enic)
-अणु
-पूर्ण
+static void enic_free_rx_cpu_rmap(struct enic *enic)
+{
+}
 
-अटल व्योम enic_set_rx_cpu_rmap(काष्ठा enic *enic)
-अणु
-पूर्ण
+static void enic_set_rx_cpu_rmap(struct enic *enic)
+{
+}
 
-#पूर्ण_अगर /* CONFIG_RFS_ACCEL */
+#endif /* CONFIG_RFS_ACCEL */
 
-अटल पूर्णांक enic_poll_msix_wq(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
-अणु
-	काष्ठा net_device *netdev = napi->dev;
-	काष्ठा enic *enic = netdev_priv(netdev);
-	अचिन्हित पूर्णांक wq_index = (napi - &enic->napi[0]) - enic->rq_count;
-	काष्ठा vnic_wq *wq = &enic->wq[wq_index];
-	अचिन्हित पूर्णांक cq;
-	अचिन्हित पूर्णांक पूर्णांकr;
-	अचिन्हित पूर्णांक wq_work_to_करो = ENIC_WQ_NAPI_BUDGET;
-	अचिन्हित पूर्णांक wq_work_करोne;
-	अचिन्हित पूर्णांक wq_irq;
+static int enic_poll_msix_wq(struct napi_struct *napi, int budget)
+{
+	struct net_device *netdev = napi->dev;
+	struct enic *enic = netdev_priv(netdev);
+	unsigned int wq_index = (napi - &enic->napi[0]) - enic->rq_count;
+	struct vnic_wq *wq = &enic->wq[wq_index];
+	unsigned int cq;
+	unsigned int intr;
+	unsigned int wq_work_to_do = ENIC_WQ_NAPI_BUDGET;
+	unsigned int wq_work_done;
+	unsigned int wq_irq;
 
 	wq_irq = wq->index;
 	cq = enic_cq_wq(enic, wq_irq);
-	पूर्णांकr = enic_msix_wq_पूर्णांकr(enic, wq_irq);
-	wq_work_करोne = vnic_cq_service(&enic->cq[cq], wq_work_to_करो,
-				       enic_wq_service, शून्य);
+	intr = enic_msix_wq_intr(enic, wq_irq);
+	wq_work_done = vnic_cq_service(&enic->cq[cq], wq_work_to_do,
+				       enic_wq_service, NULL);
 
-	vnic_पूर्णांकr_वापस_credits(&enic->पूर्णांकr[पूर्णांकr], wq_work_करोne,
-				 0 /* करोn't unmask पूर्णांकr */,
-				 1 /* reset पूर्णांकr समयr */);
-	अगर (!wq_work_करोne) अणु
+	vnic_intr_return_credits(&enic->intr[intr], wq_work_done,
+				 0 /* don't unmask intr */,
+				 1 /* reset intr timer */);
+	if (!wq_work_done) {
 		napi_complete(napi);
-		vnic_पूर्णांकr_unmask(&enic->पूर्णांकr[पूर्णांकr]);
-		वापस 0;
-	पूर्ण
+		vnic_intr_unmask(&enic->intr[intr]);
+		return 0;
+	}
 
-	वापस budget;
-पूर्ण
+	return budget;
+}
 
-अटल पूर्णांक enic_poll_msix_rq(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
-अणु
-	काष्ठा net_device *netdev = napi->dev;
-	काष्ठा enic *enic = netdev_priv(netdev);
-	अचिन्हित पूर्णांक rq = (napi - &enic->napi[0]);
-	अचिन्हित पूर्णांक cq = enic_cq_rq(enic, rq);
-	अचिन्हित पूर्णांक पूर्णांकr = enic_msix_rq_पूर्णांकr(enic, rq);
-	अचिन्हित पूर्णांक work_to_करो = budget;
-	अचिन्हित पूर्णांक work_करोne = 0;
-	पूर्णांक err;
+static int enic_poll_msix_rq(struct napi_struct *napi, int budget)
+{
+	struct net_device *netdev = napi->dev;
+	struct enic *enic = netdev_priv(netdev);
+	unsigned int rq = (napi - &enic->napi[0]);
+	unsigned int cq = enic_cq_rq(enic, rq);
+	unsigned int intr = enic_msix_rq_intr(enic, rq);
+	unsigned int work_to_do = budget;
+	unsigned int work_done = 0;
+	int err;
 
 	/* Service RQ
 	 */
 
-	अगर (budget > 0)
-		work_करोne = vnic_cq_service(&enic->cq[cq],
-			work_to_करो, enic_rq_service, शून्य);
+	if (budget > 0)
+		work_done = vnic_cq_service(&enic->cq[cq],
+			work_to_do, enic_rq_service, NULL);
 
-	/* Return पूर्णांकr event credits क्रम this polling
-	 * cycle.  An पूर्णांकr event is the completion of a
+	/* Return intr event credits for this polling
+	 * cycle.  An intr event is the completion of a
 	 * RQ packet.
 	 */
 
-	अगर (work_करोne > 0)
-		vnic_पूर्णांकr_वापस_credits(&enic->पूर्णांकr[पूर्णांकr],
-			work_करोne,
-			0 /* करोn't unmask पूर्णांकr */,
-			0 /* करोn't reset पूर्णांकr समयr */);
+	if (work_done > 0)
+		vnic_intr_return_credits(&enic->intr[intr],
+			work_done,
+			0 /* don't unmask intr */,
+			0 /* don't reset intr timer */);
 
 	err = vnic_rq_fill(&enic->rq[rq], enic_rq_alloc_buf);
 
@@ -1665,177 +1664,177 @@ nla_put_failure:
 	 * so we can try to fill the ring again.
 	 */
 
-	अगर (err)
-		work_करोne = work_to_करो;
-	अगर (enic->rx_coalesce_setting.use_adaptive_rx_coalesce)
-		/* Call the function which refreshes the पूर्णांकr coalescing समयr
+	if (err)
+		work_done = work_to_do;
+	if (enic->rx_coalesce_setting.use_adaptive_rx_coalesce)
+		/* Call the function which refreshes the intr coalescing timer
 		 * value based on the traffic.
 		 */
-		enic_calc_पूर्णांक_moderation(enic, &enic->rq[rq]);
+		enic_calc_int_moderation(enic, &enic->rq[rq]);
 
-	अगर ((work_करोne < budget) && napi_complete_करोne(napi, work_करोne)) अणु
+	if ((work_done < budget) && napi_complete_done(napi, work_done)) {
 
-		/* Some work करोne, but not enough to stay in polling,
-		 * निकास polling
+		/* Some work done, but not enough to stay in polling,
+		 * exit polling
 		 */
 
-		अगर (enic->rx_coalesce_setting.use_adaptive_rx_coalesce)
-			enic_set_पूर्णांक_moderation(enic, &enic->rq[rq]);
-		vnic_पूर्णांकr_unmask(&enic->पूर्णांकr[पूर्णांकr]);
-	पूर्ण
+		if (enic->rx_coalesce_setting.use_adaptive_rx_coalesce)
+			enic_set_int_moderation(enic, &enic->rq[rq]);
+		vnic_intr_unmask(&enic->intr[intr]);
+	}
 
-	वापस work_करोne;
-पूर्ण
+	return work_done;
+}
 
-अटल व्योम enic_notअगरy_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा enic *enic = from_समयr(enic, t, notअगरy_समयr);
+static void enic_notify_timer(struct timer_list *t)
+{
+	struct enic *enic = from_timer(enic, t, notify_timer);
 
-	enic_notअगरy_check(enic);
+	enic_notify_check(enic);
 
-	mod_समयr(&enic->notअगरy_समयr,
-		round_jअगरfies(jअगरfies + ENIC_NOTIFY_TIMER_PERIOD));
-पूर्ण
+	mod_timer(&enic->notify_timer,
+		round_jiffies(jiffies + ENIC_NOTIFY_TIMER_PERIOD));
+}
 
-अटल व्योम enic_मुक्त_पूर्णांकr(काष्ठा enic *enic)
-अणु
-	काष्ठा net_device *netdev = enic->netdev;
-	अचिन्हित पूर्णांक i;
+static void enic_free_intr(struct enic *enic)
+{
+	struct net_device *netdev = enic->netdev;
+	unsigned int i;
 
-	enic_मुक्त_rx_cpu_rmap(enic);
-	चयन (vnic_dev_get_पूर्णांकr_mode(enic->vdev)) अणु
-	हाल VNIC_DEV_INTR_MODE_INTX:
-		मुक्त_irq(enic->pdev->irq, netdev);
-		अवरोध;
-	हाल VNIC_DEV_INTR_MODE_MSI:
-		मुक्त_irq(enic->pdev->irq, enic);
-		अवरोध;
-	हाल VNIC_DEV_INTR_MODE_MSIX:
-		क्रम (i = 0; i < ARRAY_SIZE(enic->msix); i++)
-			अगर (enic->msix[i].requested)
-				मुक्त_irq(enic->msix_entry[i].vector,
+	enic_free_rx_cpu_rmap(enic);
+	switch (vnic_dev_get_intr_mode(enic->vdev)) {
+	case VNIC_DEV_INTR_MODE_INTX:
+		free_irq(enic->pdev->irq, netdev);
+		break;
+	case VNIC_DEV_INTR_MODE_MSI:
+		free_irq(enic->pdev->irq, enic);
+		break;
+	case VNIC_DEV_INTR_MODE_MSIX:
+		for (i = 0; i < ARRAY_SIZE(enic->msix); i++)
+			if (enic->msix[i].requested)
+				free_irq(enic->msix_entry[i].vector,
 					enic->msix[i].devid);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल पूर्णांक enic_request_पूर्णांकr(काष्ठा enic *enic)
-अणु
-	काष्ठा net_device *netdev = enic->netdev;
-	अचिन्हित पूर्णांक i, पूर्णांकr;
-	पूर्णांक err = 0;
+static int enic_request_intr(struct enic *enic)
+{
+	struct net_device *netdev = enic->netdev;
+	unsigned int i, intr;
+	int err = 0;
 
 	enic_set_rx_cpu_rmap(enic);
-	चयन (vnic_dev_get_पूर्णांकr_mode(enic->vdev)) अणु
+	switch (vnic_dev_get_intr_mode(enic->vdev)) {
 
-	हाल VNIC_DEV_INTR_MODE_INTX:
+	case VNIC_DEV_INTR_MODE_INTX:
 
 		err = request_irq(enic->pdev->irq, enic_isr_legacy,
 			IRQF_SHARED, netdev->name, netdev);
-		अवरोध;
+		break;
 
-	हाल VNIC_DEV_INTR_MODE_MSI:
+	case VNIC_DEV_INTR_MODE_MSI:
 
 		err = request_irq(enic->pdev->irq, enic_isr_msi,
 			0, netdev->name, enic);
-		अवरोध;
+		break;
 
-	हाल VNIC_DEV_INTR_MODE_MSIX:
+	case VNIC_DEV_INTR_MODE_MSIX:
 
-		क्रम (i = 0; i < enic->rq_count; i++) अणु
-			पूर्णांकr = enic_msix_rq_पूर्णांकr(enic, i);
-			snम_लिखो(enic->msix[पूर्णांकr].devname,
-				माप(enic->msix[पूर्णांकr].devname),
+		for (i = 0; i < enic->rq_count; i++) {
+			intr = enic_msix_rq_intr(enic, i);
+			snprintf(enic->msix[intr].devname,
+				sizeof(enic->msix[intr].devname),
 				"%s-rx-%u", netdev->name, i);
-			enic->msix[पूर्णांकr].isr = enic_isr_msix;
-			enic->msix[पूर्णांकr].devid = &enic->napi[i];
-		पूर्ण
+			enic->msix[intr].isr = enic_isr_msix;
+			enic->msix[intr].devid = &enic->napi[i];
+		}
 
-		क्रम (i = 0; i < enic->wq_count; i++) अणु
-			पूर्णांक wq = enic_cq_wq(enic, i);
+		for (i = 0; i < enic->wq_count; i++) {
+			int wq = enic_cq_wq(enic, i);
 
-			पूर्णांकr = enic_msix_wq_पूर्णांकr(enic, i);
-			snम_लिखो(enic->msix[पूर्णांकr].devname,
-				माप(enic->msix[पूर्णांकr].devname),
+			intr = enic_msix_wq_intr(enic, i);
+			snprintf(enic->msix[intr].devname,
+				sizeof(enic->msix[intr].devname),
 				"%s-tx-%u", netdev->name, i);
-			enic->msix[पूर्णांकr].isr = enic_isr_msix;
-			enic->msix[पूर्णांकr].devid = &enic->napi[wq];
-		पूर्ण
+			enic->msix[intr].isr = enic_isr_msix;
+			enic->msix[intr].devid = &enic->napi[wq];
+		}
 
-		पूर्णांकr = enic_msix_err_पूर्णांकr(enic);
-		snम_लिखो(enic->msix[पूर्णांकr].devname,
-			माप(enic->msix[पूर्णांकr].devname),
+		intr = enic_msix_err_intr(enic);
+		snprintf(enic->msix[intr].devname,
+			sizeof(enic->msix[intr].devname),
 			"%s-err", netdev->name);
-		enic->msix[पूर्णांकr].isr = enic_isr_msix_err;
-		enic->msix[पूर्णांकr].devid = enic;
+		enic->msix[intr].isr = enic_isr_msix_err;
+		enic->msix[intr].devid = enic;
 
-		पूर्णांकr = enic_msix_notअगरy_पूर्णांकr(enic);
-		snम_लिखो(enic->msix[पूर्णांकr].devname,
-			माप(enic->msix[पूर्णांकr].devname),
+		intr = enic_msix_notify_intr(enic);
+		snprintf(enic->msix[intr].devname,
+			sizeof(enic->msix[intr].devname),
 			"%s-notify", netdev->name);
-		enic->msix[पूर्णांकr].isr = enic_isr_msix_notअगरy;
-		enic->msix[पूर्णांकr].devid = enic;
+		enic->msix[intr].isr = enic_isr_msix_notify;
+		enic->msix[intr].devid = enic;
 
-		क्रम (i = 0; i < ARRAY_SIZE(enic->msix); i++)
+		for (i = 0; i < ARRAY_SIZE(enic->msix); i++)
 			enic->msix[i].requested = 0;
 
-		क्रम (i = 0; i < enic->पूर्णांकr_count; i++) अणु
+		for (i = 0; i < enic->intr_count; i++) {
 			err = request_irq(enic->msix_entry[i].vector,
 				enic->msix[i].isr, 0,
 				enic->msix[i].devname,
 				enic->msix[i].devid);
-			अगर (err) अणु
-				enic_मुक्त_पूर्णांकr(enic);
-				अवरोध;
-			पूर्ण
+			if (err) {
+				enic_free_intr(enic);
+				break;
+			}
 			enic->msix[i].requested = 1;
-		पूर्ण
+		}
 
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम enic_synchronize_irqs(काष्ठा enic *enic)
-अणु
-	अचिन्हित पूर्णांक i;
+static void enic_synchronize_irqs(struct enic *enic)
+{
+	unsigned int i;
 
-	चयन (vnic_dev_get_पूर्णांकr_mode(enic->vdev)) अणु
-	हाल VNIC_DEV_INTR_MODE_INTX:
-	हाल VNIC_DEV_INTR_MODE_MSI:
+	switch (vnic_dev_get_intr_mode(enic->vdev)) {
+	case VNIC_DEV_INTR_MODE_INTX:
+	case VNIC_DEV_INTR_MODE_MSI:
 		synchronize_irq(enic->pdev->irq);
-		अवरोध;
-	हाल VNIC_DEV_INTR_MODE_MSIX:
-		क्रम (i = 0; i < enic->पूर्णांकr_count; i++)
+		break;
+	case VNIC_DEV_INTR_MODE_MSIX:
+		for (i = 0; i < enic->intr_count; i++)
 			synchronize_irq(enic->msix_entry[i].vector);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम enic_set_rx_coal_setting(काष्ठा enic *enic)
-अणु
-	अचिन्हित पूर्णांक speed;
-	पूर्णांक index = -1;
-	काष्ठा enic_rx_coal *rx_coal = &enic->rx_coalesce_setting;
+static void enic_set_rx_coal_setting(struct enic *enic)
+{
+	unsigned int speed;
+	int index = -1;
+	struct enic_rx_coal *rx_coal = &enic->rx_coalesce_setting;
 
 	/* 1. Read the link speed from fw
-	 * 2. Pick the शेष range क्रम the speed
+	 * 2. Pick the default range for the speed
 	 * 3. Update it in enic->rx_coalesce_setting
 	 */
 	speed = vnic_dev_port_speed(enic->vdev);
-	अगर (ENIC_LINK_SPEED_10G < speed)
+	if (ENIC_LINK_SPEED_10G < speed)
 		index = ENIC_LINK_40G_INDEX;
-	अन्यथा अगर (ENIC_LINK_SPEED_4G < speed)
+	else if (ENIC_LINK_SPEED_4G < speed)
 		index = ENIC_LINK_10G_INDEX;
-	अन्यथा
+	else
 		index = ENIC_LINK_4G_INDEX;
 
 	rx_coal->small_pkt_range_start = mod_range[index].small_pkt_range_start;
@@ -1843,475 +1842,475 @@ nla_put_failure:
 	rx_coal->range_end = ENIC_RX_COALESCE_RANGE_END;
 
 	/* Start with the value provided by UCSM */
-	क्रम (index = 0; index < enic->rq_count; index++)
-		enic->cq[index].cur_rx_coal_समयval =
-				enic->config.पूर्णांकr_समयr_usec;
+	for (index = 0; index < enic->rq_count; index++)
+		enic->cq[index].cur_rx_coal_timeval =
+				enic->config.intr_timer_usec;
 
 	rx_coal->use_adaptive_rx_coalesce = 1;
-पूर्ण
+}
 
-अटल पूर्णांक enic_dev_notअगरy_set(काष्ठा enic *enic)
-अणु
-	पूर्णांक err;
+static int enic_dev_notify_set(struct enic *enic)
+{
+	int err;
 
 	spin_lock_bh(&enic->devcmd_lock);
-	चयन (vnic_dev_get_पूर्णांकr_mode(enic->vdev)) अणु
-	हाल VNIC_DEV_INTR_MODE_INTX:
-		err = vnic_dev_notअगरy_set(enic->vdev,
-			enic_legacy_notअगरy_पूर्णांकr());
-		अवरोध;
-	हाल VNIC_DEV_INTR_MODE_MSIX:
-		err = vnic_dev_notअगरy_set(enic->vdev,
-			enic_msix_notअगरy_पूर्णांकr(enic));
-		अवरोध;
-	शेष:
-		err = vnic_dev_notअगरy_set(enic->vdev, -1 /* no पूर्णांकr */);
-		अवरोध;
-	पूर्ण
+	switch (vnic_dev_get_intr_mode(enic->vdev)) {
+	case VNIC_DEV_INTR_MODE_INTX:
+		err = vnic_dev_notify_set(enic->vdev,
+			enic_legacy_notify_intr());
+		break;
+	case VNIC_DEV_INTR_MODE_MSIX:
+		err = vnic_dev_notify_set(enic->vdev,
+			enic_msix_notify_intr(enic));
+		break;
+	default:
+		err = vnic_dev_notify_set(enic->vdev, -1 /* no intr */);
+		break;
+	}
 	spin_unlock_bh(&enic->devcmd_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम enic_notअगरy_समयr_start(काष्ठा enic *enic)
-अणु
-	चयन (vnic_dev_get_पूर्णांकr_mode(enic->vdev)) अणु
-	हाल VNIC_DEV_INTR_MODE_MSI:
-		mod_समयr(&enic->notअगरy_समयr, jअगरfies);
-		अवरोध;
-	शेष:
-		/* Using पूर्णांकr क्रम notअगरication क्रम INTx/MSI-X */
-		अवरोध;
-	पूर्ण
-पूर्ण
+static void enic_notify_timer_start(struct enic *enic)
+{
+	switch (vnic_dev_get_intr_mode(enic->vdev)) {
+	case VNIC_DEV_INTR_MODE_MSI:
+		mod_timer(&enic->notify_timer, jiffies);
+		break;
+	default:
+		/* Using intr for notification for INTx/MSI-X */
+		break;
+	}
+}
 
 /* rtnl lock is held, process context */
-अटल पूर्णांक enic_खोलो(काष्ठा net_device *netdev)
-अणु
-	काष्ठा enic *enic = netdev_priv(netdev);
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err, ret;
+static int enic_open(struct net_device *netdev)
+{
+	struct enic *enic = netdev_priv(netdev);
+	unsigned int i;
+	int err, ret;
 
-	err = enic_request_पूर्णांकr(enic);
-	अगर (err) अणु
+	err = enic_request_intr(enic);
+	if (err) {
 		netdev_err(netdev, "Unable to request irq.\n");
-		वापस err;
-	पूर्ण
-	enic_init_affinity_hपूर्णांक(enic);
-	enic_set_affinity_hपूर्णांक(enic);
+		return err;
+	}
+	enic_init_affinity_hint(enic);
+	enic_set_affinity_hint(enic);
 
-	err = enic_dev_notअगरy_set(enic);
-	अगर (err) अणु
+	err = enic_dev_notify_set(enic);
+	if (err) {
 		netdev_err(netdev,
 			"Failed to alloc notify buffer, aborting.\n");
-		जाओ err_out_मुक्त_पूर्णांकr;
-	पूर्ण
+		goto err_out_free_intr;
+	}
 
-	क्रम (i = 0; i < enic->rq_count; i++) अणु
-		/* enable rq beक्रमe updating rq desc */
+	for (i = 0; i < enic->rq_count; i++) {
+		/* enable rq before updating rq desc */
 		vnic_rq_enable(&enic->rq[i]);
 		vnic_rq_fill(&enic->rq[i], enic_rq_alloc_buf);
 		/* Need at least one buffer on ring to get going */
-		अगर (vnic_rq_desc_used(&enic->rq[i]) == 0) अणु
+		if (vnic_rq_desc_used(&enic->rq[i]) == 0) {
 			netdev_err(netdev, "Unable to alloc receive buffers\n");
 			err = -ENOMEM;
-			जाओ err_out_मुक्त_rq;
-		पूर्ण
-	पूर्ण
+			goto err_out_free_rq;
+		}
+	}
 
-	क्रम (i = 0; i < enic->wq_count; i++)
+	for (i = 0; i < enic->wq_count; i++)
 		vnic_wq_enable(&enic->wq[i]);
 
-	अगर (!enic_is_dynamic(enic) && !enic_is_sriov_vf(enic))
+	if (!enic_is_dynamic(enic) && !enic_is_sriov_vf(enic))
 		enic_dev_add_station_addr(enic);
 
 	enic_set_rx_mode(netdev);
 
-	netअगर_tx_wake_all_queues(netdev);
+	netif_tx_wake_all_queues(netdev);
 
-	क्रम (i = 0; i < enic->rq_count; i++)
+	for (i = 0; i < enic->rq_count; i++)
 		napi_enable(&enic->napi[i]);
 
-	अगर (vnic_dev_get_पूर्णांकr_mode(enic->vdev) == VNIC_DEV_INTR_MODE_MSIX)
-		क्रम (i = 0; i < enic->wq_count; i++)
+	if (vnic_dev_get_intr_mode(enic->vdev) == VNIC_DEV_INTR_MODE_MSIX)
+		for (i = 0; i < enic->wq_count; i++)
 			napi_enable(&enic->napi[enic_cq_wq(enic, i)]);
 	enic_dev_enable(enic);
 
-	क्रम (i = 0; i < enic->पूर्णांकr_count; i++)
-		vnic_पूर्णांकr_unmask(&enic->पूर्णांकr[i]);
+	for (i = 0; i < enic->intr_count; i++)
+		vnic_intr_unmask(&enic->intr[i]);
 
-	enic_notअगरy_समयr_start(enic);
-	enic_rfs_समयr_start(enic);
+	enic_notify_timer_start(enic);
+	enic_rfs_timer_start(enic);
 
-	वापस 0;
+	return 0;
 
-err_out_मुक्त_rq:
-	क्रम (i = 0; i < enic->rq_count; i++) अणु
+err_out_free_rq:
+	for (i = 0; i < enic->rq_count; i++) {
 		ret = vnic_rq_disable(&enic->rq[i]);
-		अगर (!ret)
-			vnic_rq_clean(&enic->rq[i], enic_मुक्त_rq_buf);
-	पूर्ण
-	enic_dev_notअगरy_unset(enic);
-err_out_मुक्त_पूर्णांकr:
-	enic_unset_affinity_hपूर्णांक(enic);
-	enic_मुक्त_पूर्णांकr(enic);
+		if (!ret)
+			vnic_rq_clean(&enic->rq[i], enic_free_rq_buf);
+	}
+	enic_dev_notify_unset(enic);
+err_out_free_intr:
+	enic_unset_affinity_hint(enic);
+	enic_free_intr(enic);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* rtnl lock is held, process context */
-अटल पूर्णांक enic_stop(काष्ठा net_device *netdev)
-अणु
-	काष्ठा enic *enic = netdev_priv(netdev);
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
+static int enic_stop(struct net_device *netdev)
+{
+	struct enic *enic = netdev_priv(netdev);
+	unsigned int i;
+	int err;
 
-	क्रम (i = 0; i < enic->पूर्णांकr_count; i++) अणु
-		vnic_पूर्णांकr_mask(&enic->पूर्णांकr[i]);
-		(व्योम)vnic_पूर्णांकr_masked(&enic->पूर्णांकr[i]); /* flush ग_लिखो */
-	पूर्ण
+	for (i = 0; i < enic->intr_count; i++) {
+		vnic_intr_mask(&enic->intr[i]);
+		(void)vnic_intr_masked(&enic->intr[i]); /* flush write */
+	}
 
 	enic_synchronize_irqs(enic);
 
-	del_समयr_sync(&enic->notअगरy_समयr);
-	enic_rfs_flw_tbl_मुक्त(enic);
+	del_timer_sync(&enic->notify_timer);
+	enic_rfs_flw_tbl_free(enic);
 
 	enic_dev_disable(enic);
 
-	क्रम (i = 0; i < enic->rq_count; i++)
+	for (i = 0; i < enic->rq_count; i++)
 		napi_disable(&enic->napi[i]);
 
-	netअगर_carrier_off(netdev);
-	अगर (vnic_dev_get_पूर्णांकr_mode(enic->vdev) == VNIC_DEV_INTR_MODE_MSIX)
-		क्रम (i = 0; i < enic->wq_count; i++)
+	netif_carrier_off(netdev);
+	if (vnic_dev_get_intr_mode(enic->vdev) == VNIC_DEV_INTR_MODE_MSIX)
+		for (i = 0; i < enic->wq_count; i++)
 			napi_disable(&enic->napi[enic_cq_wq(enic, i)]);
-	netअगर_tx_disable(netdev);
+	netif_tx_disable(netdev);
 
-	अगर (!enic_is_dynamic(enic) && !enic_is_sriov_vf(enic))
+	if (!enic_is_dynamic(enic) && !enic_is_sriov_vf(enic))
 		enic_dev_del_station_addr(enic);
 
-	क्रम (i = 0; i < enic->wq_count; i++) अणु
+	for (i = 0; i < enic->wq_count; i++) {
 		err = vnic_wq_disable(&enic->wq[i]);
-		अगर (err)
-			वापस err;
-	पूर्ण
-	क्रम (i = 0; i < enic->rq_count; i++) अणु
+		if (err)
+			return err;
+	}
+	for (i = 0; i < enic->rq_count; i++) {
 		err = vnic_rq_disable(&enic->rq[i]);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	enic_dev_notअगरy_unset(enic);
-	enic_unset_affinity_hपूर्णांक(enic);
-	enic_मुक्त_पूर्णांकr(enic);
+	enic_dev_notify_unset(enic);
+	enic_unset_affinity_hint(enic);
+	enic_free_intr(enic);
 
-	क्रम (i = 0; i < enic->wq_count; i++)
-		vnic_wq_clean(&enic->wq[i], enic_मुक्त_wq_buf);
-	क्रम (i = 0; i < enic->rq_count; i++)
-		vnic_rq_clean(&enic->rq[i], enic_मुक्त_rq_buf);
-	क्रम (i = 0; i < enic->cq_count; i++)
+	for (i = 0; i < enic->wq_count; i++)
+		vnic_wq_clean(&enic->wq[i], enic_free_wq_buf);
+	for (i = 0; i < enic->rq_count; i++)
+		vnic_rq_clean(&enic->rq[i], enic_free_rq_buf);
+	for (i = 0; i < enic->cq_count; i++)
 		vnic_cq_clean(&enic->cq[i]);
-	क्रम (i = 0; i < enic->पूर्णांकr_count; i++)
-		vnic_पूर्णांकr_clean(&enic->पूर्णांकr[i]);
+	for (i = 0; i < enic->intr_count; i++)
+		vnic_intr_clean(&enic->intr[i]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक _enic_change_mtu(काष्ठा net_device *netdev, पूर्णांक new_mtu)
-अणु
-	bool running = netअगर_running(netdev);
-	पूर्णांक err = 0;
+static int _enic_change_mtu(struct net_device *netdev, int new_mtu)
+{
+	bool running = netif_running(netdev);
+	int err = 0;
 
 	ASSERT_RTNL();
-	अगर (running) अणु
+	if (running) {
 		err = enic_stop(netdev);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	netdev->mtu = new_mtu;
 
-	अगर (running) अणु
-		err = enic_खोलो(netdev);
-		अगर (err)
-			वापस err;
-	पूर्ण
+	if (running) {
+		err = enic_open(netdev);
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक enic_change_mtu(काष्ठा net_device *netdev, पूर्णांक new_mtu)
-अणु
-	काष्ठा enic *enic = netdev_priv(netdev);
+static int enic_change_mtu(struct net_device *netdev, int new_mtu)
+{
+	struct enic *enic = netdev_priv(netdev);
 
-	अगर (enic_is_dynamic(enic) || enic_is_sriov_vf(enic))
-		वापस -EOPNOTSUPP;
+	if (enic_is_dynamic(enic) || enic_is_sriov_vf(enic))
+		return -EOPNOTSUPP;
 
-	अगर (netdev->mtu > enic->port_mtu)
+	if (netdev->mtu > enic->port_mtu)
 		netdev_warn(netdev,
 			    "interface MTU (%d) set higher than port MTU (%d)\n",
 			    netdev->mtu, enic->port_mtu);
 
-	वापस _enic_change_mtu(netdev, new_mtu);
-पूर्ण
+	return _enic_change_mtu(netdev, new_mtu);
+}
 
-अटल व्योम enic_change_mtu_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा enic *enic = container_of(work, काष्ठा enic, change_mtu_work);
-	काष्ठा net_device *netdev = enic->netdev;
-	पूर्णांक new_mtu = vnic_dev_mtu(enic->vdev);
+static void enic_change_mtu_work(struct work_struct *work)
+{
+	struct enic *enic = container_of(work, struct enic, change_mtu_work);
+	struct net_device *netdev = enic->netdev;
+	int new_mtu = vnic_dev_mtu(enic->vdev);
 
 	rtnl_lock();
-	(व्योम)_enic_change_mtu(netdev, new_mtu);
+	(void)_enic_change_mtu(netdev, new_mtu);
 	rtnl_unlock();
 
 	netdev_info(netdev, "interface MTU set as %d\n", netdev->mtu);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
-अटल व्योम enic_poll_controller(काष्ठा net_device *netdev)
-अणु
-	काष्ठा enic *enic = netdev_priv(netdev);
-	काष्ठा vnic_dev *vdev = enic->vdev;
-	अचिन्हित पूर्णांक i, पूर्णांकr;
+#ifdef CONFIG_NET_POLL_CONTROLLER
+static void enic_poll_controller(struct net_device *netdev)
+{
+	struct enic *enic = netdev_priv(netdev);
+	struct vnic_dev *vdev = enic->vdev;
+	unsigned int i, intr;
 
-	चयन (vnic_dev_get_पूर्णांकr_mode(vdev)) अणु
-	हाल VNIC_DEV_INTR_MODE_MSIX:
-		क्रम (i = 0; i < enic->rq_count; i++) अणु
-			पूर्णांकr = enic_msix_rq_पूर्णांकr(enic, i);
-			enic_isr_msix(enic->msix_entry[पूर्णांकr].vector,
+	switch (vnic_dev_get_intr_mode(vdev)) {
+	case VNIC_DEV_INTR_MODE_MSIX:
+		for (i = 0; i < enic->rq_count; i++) {
+			intr = enic_msix_rq_intr(enic, i);
+			enic_isr_msix(enic->msix_entry[intr].vector,
 				      &enic->napi[i]);
-		पूर्ण
+		}
 
-		क्रम (i = 0; i < enic->wq_count; i++) अणु
-			पूर्णांकr = enic_msix_wq_पूर्णांकr(enic, i);
-			enic_isr_msix(enic->msix_entry[पूर्णांकr].vector,
+		for (i = 0; i < enic->wq_count; i++) {
+			intr = enic_msix_wq_intr(enic, i);
+			enic_isr_msix(enic->msix_entry[intr].vector,
 				      &enic->napi[enic_cq_wq(enic, i)]);
-		पूर्ण
+		}
 
-		अवरोध;
-	हाल VNIC_DEV_INTR_MODE_MSI:
+		break;
+	case VNIC_DEV_INTR_MODE_MSI:
 		enic_isr_msi(enic->pdev->irq, enic);
-		अवरोध;
-	हाल VNIC_DEV_INTR_MODE_INTX:
+		break;
+	case VNIC_DEV_INTR_MODE_INTX:
 		enic_isr_legacy(enic->pdev->irq, netdev);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+		break;
+	default:
+		break;
+	}
+}
+#endif
 
-अटल पूर्णांक enic_dev_रुको(काष्ठा vnic_dev *vdev,
-	पूर्णांक (*start)(काष्ठा vnic_dev *, पूर्णांक),
-	पूर्णांक (*finished)(काष्ठा vnic_dev *, पूर्णांक *),
-	पूर्णांक arg)
-अणु
-	अचिन्हित दीर्घ समय;
-	पूर्णांक करोne;
-	पूर्णांक err;
+static int enic_dev_wait(struct vnic_dev *vdev,
+	int (*start)(struct vnic_dev *, int),
+	int (*finished)(struct vnic_dev *, int *),
+	int arg)
+{
+	unsigned long time;
+	int done;
+	int err;
 
 	err = start(vdev, arg);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* Wait क्रम func to complete...2 seconds max
+	/* Wait for func to complete...2 seconds max
 	 */
 
-	समय = jअगरfies + (HZ * 2);
-	करो अणु
+	time = jiffies + (HZ * 2);
+	do {
 
-		err = finished(vdev, &करोne);
-		अगर (err)
-			वापस err;
+		err = finished(vdev, &done);
+		if (err)
+			return err;
 
-		अगर (करोne)
-			वापस 0;
+		if (done)
+			return 0;
 
-		schedule_समयout_unपूर्णांकerruptible(HZ / 10);
+		schedule_timeout_uninterruptible(HZ / 10);
 
-	पूर्ण जबतक (समय_after(समय, jअगरfies));
+	} while (time_after(time, jiffies));
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल पूर्णांक enic_dev_खोलो(काष्ठा enic *enic)
-अणु
-	पूर्णांक err;
+static int enic_dev_open(struct enic *enic)
+{
+	int err;
 	u32 flags = CMD_OPENF_IG_DESCCACHE;
 
-	err = enic_dev_रुको(enic->vdev, vnic_dev_खोलो,
-		vnic_dev_खोलो_करोne, flags);
-	अगर (err)
+	err = enic_dev_wait(enic->vdev, vnic_dev_open,
+		vnic_dev_open_done, flags);
+	if (err)
 		dev_err(enic_get_dev(enic), "vNIC device open failed, err %d\n",
 			err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक enic_dev_soft_reset(काष्ठा enic *enic)
-अणु
-	पूर्णांक err;
+static int enic_dev_soft_reset(struct enic *enic)
+{
+	int err;
 
-	err = enic_dev_रुको(enic->vdev, vnic_dev_soft_reset,
-			    vnic_dev_soft_reset_करोne, 0);
-	अगर (err)
+	err = enic_dev_wait(enic->vdev, vnic_dev_soft_reset,
+			    vnic_dev_soft_reset_done, 0);
+	if (err)
 		netdev_err(enic->netdev, "vNIC soft reset failed, err %d\n",
 			   err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक enic_dev_hang_reset(काष्ठा enic *enic)
-अणु
-	पूर्णांक err;
+static int enic_dev_hang_reset(struct enic *enic)
+{
+	int err;
 
-	err = enic_dev_रुको(enic->vdev, vnic_dev_hang_reset,
-		vnic_dev_hang_reset_करोne, 0);
-	अगर (err)
+	err = enic_dev_wait(enic->vdev, vnic_dev_hang_reset,
+		vnic_dev_hang_reset_done, 0);
+	if (err)
 		netdev_err(enic->netdev, "vNIC hang reset failed, err %d\n",
 			err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक __enic_set_rsskey(काष्ठा enic *enic)
-अणु
-	जोड़ vnic_rss_key *rss_key_buf_va;
+int __enic_set_rsskey(struct enic *enic)
+{
+	union vnic_rss_key *rss_key_buf_va;
 	dma_addr_t rss_key_buf_pa;
-	पूर्णांक i, kidx, bidx, err;
+	int i, kidx, bidx, err;
 
 	rss_key_buf_va = dma_alloc_coherent(&enic->pdev->dev,
-					    माप(जोड़ vnic_rss_key),
+					    sizeof(union vnic_rss_key),
 					    &rss_key_buf_pa, GFP_ATOMIC);
-	अगर (!rss_key_buf_va)
-		वापस -ENOMEM;
+	if (!rss_key_buf_va)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < ENIC_RSS_LEN; i++) अणु
+	for (i = 0; i < ENIC_RSS_LEN; i++) {
 		kidx = i / ENIC_RSS_BYTES_PER_KEY;
 		bidx = i % ENIC_RSS_BYTES_PER_KEY;
 		rss_key_buf_va->key[kidx].b[bidx] = enic->rss_key[i];
-	पूर्ण
+	}
 	spin_lock_bh(&enic->devcmd_lock);
 	err = enic_set_rss_key(enic,
 		rss_key_buf_pa,
-		माप(जोड़ vnic_rss_key));
+		sizeof(union vnic_rss_key));
 	spin_unlock_bh(&enic->devcmd_lock);
 
-	dma_मुक्त_coherent(&enic->pdev->dev, माप(जोड़ vnic_rss_key),
+	dma_free_coherent(&enic->pdev->dev, sizeof(union vnic_rss_key),
 			  rss_key_buf_va, rss_key_buf_pa);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक enic_set_rsskey(काष्ठा enic *enic)
-अणु
+static int enic_set_rsskey(struct enic *enic)
+{
 	netdev_rss_key_fill(enic->rss_key, ENIC_RSS_LEN);
 
-	वापस __enic_set_rsskey(enic);
-पूर्ण
+	return __enic_set_rsskey(enic);
+}
 
-अटल पूर्णांक enic_set_rsscpu(काष्ठा enic *enic, u8 rss_hash_bits)
-अणु
+static int enic_set_rsscpu(struct enic *enic, u8 rss_hash_bits)
+{
 	dma_addr_t rss_cpu_buf_pa;
-	जोड़ vnic_rss_cpu *rss_cpu_buf_va = शून्य;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
+	union vnic_rss_cpu *rss_cpu_buf_va = NULL;
+	unsigned int i;
+	int err;
 
 	rss_cpu_buf_va = dma_alloc_coherent(&enic->pdev->dev,
-					    माप(जोड़ vnic_rss_cpu),
+					    sizeof(union vnic_rss_cpu),
 					    &rss_cpu_buf_pa, GFP_ATOMIC);
-	अगर (!rss_cpu_buf_va)
-		वापस -ENOMEM;
+	if (!rss_cpu_buf_va)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < (1 << rss_hash_bits); i++)
+	for (i = 0; i < (1 << rss_hash_bits); i++)
 		(*rss_cpu_buf_va).cpu[i/4].b[i%4] = i % enic->rq_count;
 
 	spin_lock_bh(&enic->devcmd_lock);
 	err = enic_set_rss_cpu(enic,
 		rss_cpu_buf_pa,
-		माप(जोड़ vnic_rss_cpu));
+		sizeof(union vnic_rss_cpu));
 	spin_unlock_bh(&enic->devcmd_lock);
 
-	dma_मुक्त_coherent(&enic->pdev->dev, माप(जोड़ vnic_rss_cpu),
+	dma_free_coherent(&enic->pdev->dev, sizeof(union vnic_rss_cpu),
 			  rss_cpu_buf_va, rss_cpu_buf_pa);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक enic_set_niccfg(काष्ठा enic *enic, u8 rss_शेष_cpu,
+static int enic_set_niccfg(struct enic *enic, u8 rss_default_cpu,
 	u8 rss_hash_type, u8 rss_hash_bits, u8 rss_base_cpu, u8 rss_enable)
-अणु
-	स्थिर u8 tso_ipid_split_en = 0;
-	स्थिर u8 ig_vlan_strip_en = 1;
-	पूर्णांक err;
+{
+	const u8 tso_ipid_split_en = 0;
+	const u8 ig_vlan_strip_en = 1;
+	int err;
 
 	/* Enable VLAN tag stripping.
 	*/
 
 	spin_lock_bh(&enic->devcmd_lock);
 	err = enic_set_nic_cfg(enic,
-		rss_शेष_cpu, rss_hash_type,
+		rss_default_cpu, rss_hash_type,
 		rss_hash_bits, rss_base_cpu,
 		rss_enable, tso_ipid_split_en,
 		ig_vlan_strip_en);
 	spin_unlock_bh(&enic->devcmd_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक enic_set_rss_nic_cfg(काष्ठा enic *enic)
-अणु
-	काष्ठा device *dev = enic_get_dev(enic);
-	स्थिर u8 rss_शेष_cpu = 0;
-	स्थिर u8 rss_hash_bits = 7;
-	स्थिर u8 rss_base_cpu = 0;
+static int enic_set_rss_nic_cfg(struct enic *enic)
+{
+	struct device *dev = enic_get_dev(enic);
+	const u8 rss_default_cpu = 0;
+	const u8 rss_hash_bits = 7;
+	const u8 rss_base_cpu = 0;
 	u8 rss_hash_type;
-	पूर्णांक res;
+	int res;
 	u8 rss_enable = ENIC_SETTING(enic, RSS) && (enic->rq_count > 1);
 
 	spin_lock_bh(&enic->devcmd_lock);
 	res = vnic_dev_capable_rss_hash_type(enic->vdev, &rss_hash_type);
 	spin_unlock_bh(&enic->devcmd_lock);
-	अगर (res) अणु
-		/* शेषs क्रम old adapters
+	if (res) {
+		/* defaults for old adapters
 		 */
 		rss_hash_type = NIC_CFG_RSS_HASH_TYPE_IPV4	|
 				NIC_CFG_RSS_HASH_TYPE_TCP_IPV4	|
 				NIC_CFG_RSS_HASH_TYPE_IPV6	|
 				NIC_CFG_RSS_HASH_TYPE_TCP_IPV6;
-	पूर्ण
+	}
 
-	अगर (rss_enable) अणु
-		अगर (!enic_set_rsskey(enic)) अणु
-			अगर (enic_set_rsscpu(enic, rss_hash_bits)) अणु
+	if (rss_enable) {
+		if (!enic_set_rsskey(enic)) {
+			if (enic_set_rsscpu(enic, rss_hash_bits)) {
 				rss_enable = 0;
 				dev_warn(dev, "RSS disabled, "
 					"Failed to set RSS cpu indirection table.");
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			rss_enable = 0;
 			dev_warn(dev, "RSS disabled, Failed to set RSS key.\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस enic_set_niccfg(enic, rss_शेष_cpu, rss_hash_type,
+	return enic_set_niccfg(enic, rss_default_cpu, rss_hash_type,
 		rss_hash_bits, rss_base_cpu, rss_enable);
-पूर्ण
+}
 
-अटल व्योम enic_set_api_busy(काष्ठा enic *enic, bool busy)
-अणु
+static void enic_set_api_busy(struct enic *enic, bool busy)
+{
 	spin_lock(&enic->enic_api_lock);
 	enic->enic_api_busy = busy;
 	spin_unlock(&enic->enic_api_lock);
-पूर्ण
+}
 
-अटल व्योम enic_reset(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा enic *enic = container_of(work, काष्ठा enic, reset);
+static void enic_reset(struct work_struct *work)
+{
+	struct enic *enic = container_of(work, struct enic, reset);
 
-	अगर (!netअगर_running(enic->netdev))
-		वापस;
+	if (!netif_running(enic->netdev))
+		return;
 
 	rtnl_lock();
 
@@ -2323,370 +2322,370 @@ err_out_मुक्त_पूर्णांकr:
 	enic_reset_addr_lists(enic);
 	enic_init_vnic_resources(enic);
 	enic_set_rss_nic_cfg(enic);
-	enic_dev_set_ig_vlan_reग_लिखो_mode(enic);
-	enic_खोलो(enic->netdev);
+	enic_dev_set_ig_vlan_rewrite_mode(enic);
+	enic_open(enic->netdev);
 
 	/* Allow infiniband to fiddle with the device again */
 	enic_set_api_busy(enic, false);
 
-	call_netdevice_notअगरiers(NETDEV_REBOOT, enic->netdev);
+	call_netdevice_notifiers(NETDEV_REBOOT, enic->netdev);
 
 	rtnl_unlock();
-पूर्ण
+}
 
-अटल व्योम enic_tx_hang_reset(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा enic *enic = container_of(work, काष्ठा enic, tx_hang_reset);
+static void enic_tx_hang_reset(struct work_struct *work)
+{
+	struct enic *enic = container_of(work, struct enic, tx_hang_reset);
 
 	rtnl_lock();
 
 	/* Stop any activity from infiniband */
 	enic_set_api_busy(enic, true);
 
-	enic_dev_hang_notअगरy(enic);
+	enic_dev_hang_notify(enic);
 	enic_stop(enic->netdev);
 	enic_dev_hang_reset(enic);
 	enic_reset_addr_lists(enic);
 	enic_init_vnic_resources(enic);
 	enic_set_rss_nic_cfg(enic);
-	enic_dev_set_ig_vlan_reग_लिखो_mode(enic);
-	enic_खोलो(enic->netdev);
+	enic_dev_set_ig_vlan_rewrite_mode(enic);
+	enic_open(enic->netdev);
 
 	/* Allow infiniband to fiddle with the device again */
 	enic_set_api_busy(enic, false);
 
-	call_netdevice_notअगरiers(NETDEV_REBOOT, enic->netdev);
+	call_netdevice_notifiers(NETDEV_REBOOT, enic->netdev);
 
 	rtnl_unlock();
-पूर्ण
+}
 
-अटल पूर्णांक enic_set_पूर्णांकr_mode(काष्ठा enic *enic)
-अणु
-	अचिन्हित पूर्णांक n = min_t(अचिन्हित पूर्णांक, enic->rq_count, ENIC_RQ_MAX);
-	अचिन्हित पूर्णांक m = min_t(अचिन्हित पूर्णांक, enic->wq_count, ENIC_WQ_MAX);
-	अचिन्हित पूर्णांक i;
+static int enic_set_intr_mode(struct enic *enic)
+{
+	unsigned int n = min_t(unsigned int, enic->rq_count, ENIC_RQ_MAX);
+	unsigned int m = min_t(unsigned int, enic->wq_count, ENIC_WQ_MAX);
+	unsigned int i;
 
-	/* Set पूर्णांकerrupt mode (INTx, MSI, MSI-X) depending
-	 * on प्रणाली capabilities.
+	/* Set interrupt mode (INTx, MSI, MSI-X) depending
+	 * on system capabilities.
 	 *
 	 * Try MSI-X first
 	 *
 	 * We need n RQs, m WQs, n+m CQs, and n+m+2 INTRs
-	 * (the second to last INTR is used क्रम WQ/RQ errors)
-	 * (the last INTR is used क्रम notअगरications)
+	 * (the second to last INTR is used for WQ/RQ errors)
+	 * (the last INTR is used for notifications)
 	 */
 
 	BUG_ON(ARRAY_SIZE(enic->msix_entry) < n + m + 2);
-	क्रम (i = 0; i < n + m + 2; i++)
+	for (i = 0; i < n + m + 2; i++)
 		enic->msix_entry[i].entry = i;
 
-	/* Use multiple RQs अगर RSS is enabled
+	/* Use multiple RQs if RSS is enabled
 	 */
 
-	अगर (ENIC_SETTING(enic, RSS) &&
-	    enic->config.पूर्णांकr_mode < 1 &&
+	if (ENIC_SETTING(enic, RSS) &&
+	    enic->config.intr_mode < 1 &&
 	    enic->rq_count >= n &&
 	    enic->wq_count >= m &&
 	    enic->cq_count >= n + m &&
-	    enic->पूर्णांकr_count >= n + m + 2) अणु
+	    enic->intr_count >= n + m + 2) {
 
-		अगर (pci_enable_msix_range(enic->pdev, enic->msix_entry,
-					  n + m + 2, n + m + 2) > 0) अणु
+		if (pci_enable_msix_range(enic->pdev, enic->msix_entry,
+					  n + m + 2, n + m + 2) > 0) {
 
 			enic->rq_count = n;
 			enic->wq_count = m;
 			enic->cq_count = n + m;
-			enic->पूर्णांकr_count = n + m + 2;
+			enic->intr_count = n + m + 2;
 
-			vnic_dev_set_पूर्णांकr_mode(enic->vdev,
+			vnic_dev_set_intr_mode(enic->vdev,
 				VNIC_DEV_INTR_MODE_MSIX);
 
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	अगर (enic->config.पूर्णांकr_mode < 1 &&
+	if (enic->config.intr_mode < 1 &&
 	    enic->rq_count >= 1 &&
 	    enic->wq_count >= m &&
 	    enic->cq_count >= 1 + m &&
-	    enic->पूर्णांकr_count >= 1 + m + 2) अणु
-		अगर (pci_enable_msix_range(enic->pdev, enic->msix_entry,
-					  1 + m + 2, 1 + m + 2) > 0) अणु
+	    enic->intr_count >= 1 + m + 2) {
+		if (pci_enable_msix_range(enic->pdev, enic->msix_entry,
+					  1 + m + 2, 1 + m + 2) > 0) {
 
 			enic->rq_count = 1;
 			enic->wq_count = m;
 			enic->cq_count = 1 + m;
-			enic->पूर्णांकr_count = 1 + m + 2;
+			enic->intr_count = 1 + m + 2;
 
-			vnic_dev_set_पूर्णांकr_mode(enic->vdev,
+			vnic_dev_set_intr_mode(enic->vdev,
 				VNIC_DEV_INTR_MODE_MSIX);
 
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	/* Next try MSI
 	 *
 	 * We need 1 RQ, 1 WQ, 2 CQs, and 1 INTR
 	 */
 
-	अगर (enic->config.पूर्णांकr_mode < 2 &&
+	if (enic->config.intr_mode < 2 &&
 	    enic->rq_count >= 1 &&
 	    enic->wq_count >= 1 &&
 	    enic->cq_count >= 2 &&
-	    enic->पूर्णांकr_count >= 1 &&
-	    !pci_enable_msi(enic->pdev)) अणु
+	    enic->intr_count >= 1 &&
+	    !pci_enable_msi(enic->pdev)) {
 
 		enic->rq_count = 1;
 		enic->wq_count = 1;
 		enic->cq_count = 2;
-		enic->पूर्णांकr_count = 1;
+		enic->intr_count = 1;
 
-		vnic_dev_set_पूर्णांकr_mode(enic->vdev, VNIC_DEV_INTR_MODE_MSI);
+		vnic_dev_set_intr_mode(enic->vdev, VNIC_DEV_INTR_MODE_MSI);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Next try INTx
 	 *
 	 * We need 1 RQ, 1 WQ, 2 CQs, and 3 INTRs
-	 * (the first INTR is used क्रम WQ/RQ)
-	 * (the second INTR is used क्रम WQ/RQ errors)
-	 * (the last INTR is used क्रम notअगरications)
+	 * (the first INTR is used for WQ/RQ)
+	 * (the second INTR is used for WQ/RQ errors)
+	 * (the last INTR is used for notifications)
 	 */
 
-	अगर (enic->config.पूर्णांकr_mode < 3 &&
+	if (enic->config.intr_mode < 3 &&
 	    enic->rq_count >= 1 &&
 	    enic->wq_count >= 1 &&
 	    enic->cq_count >= 2 &&
-	    enic->पूर्णांकr_count >= 3) अणु
+	    enic->intr_count >= 3) {
 
 		enic->rq_count = 1;
 		enic->wq_count = 1;
 		enic->cq_count = 2;
-		enic->पूर्णांकr_count = 3;
+		enic->intr_count = 3;
 
-		vnic_dev_set_पूर्णांकr_mode(enic->vdev, VNIC_DEV_INTR_MODE_INTX);
+		vnic_dev_set_intr_mode(enic->vdev, VNIC_DEV_INTR_MODE_INTX);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	vnic_dev_set_पूर्णांकr_mode(enic->vdev, VNIC_DEV_INTR_MODE_UNKNOWN);
+	vnic_dev_set_intr_mode(enic->vdev, VNIC_DEV_INTR_MODE_UNKNOWN);
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल व्योम enic_clear_पूर्णांकr_mode(काष्ठा enic *enic)
-अणु
-	चयन (vnic_dev_get_पूर्णांकr_mode(enic->vdev)) अणु
-	हाल VNIC_DEV_INTR_MODE_MSIX:
+static void enic_clear_intr_mode(struct enic *enic)
+{
+	switch (vnic_dev_get_intr_mode(enic->vdev)) {
+	case VNIC_DEV_INTR_MODE_MSIX:
 		pci_disable_msix(enic->pdev);
-		अवरोध;
-	हाल VNIC_DEV_INTR_MODE_MSI:
+		break;
+	case VNIC_DEV_INTR_MODE_MSI:
 		pci_disable_msi(enic->pdev);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	vnic_dev_set_पूर्णांकr_mode(enic->vdev, VNIC_DEV_INTR_MODE_UNKNOWN);
-पूर्ण
+	vnic_dev_set_intr_mode(enic->vdev, VNIC_DEV_INTR_MODE_UNKNOWN);
+}
 
-अटल स्थिर काष्ठा net_device_ops enic_netdev_dynamic_ops = अणु
-	.nकरो_खोलो		= enic_खोलो,
-	.nकरो_stop		= enic_stop,
-	.nकरो_start_xmit		= enic_hard_start_xmit,
-	.nकरो_get_stats64	= enic_get_stats,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_set_rx_mode	= enic_set_rx_mode,
-	.nकरो_set_mac_address	= enic_set_mac_address_dynamic,
-	.nकरो_change_mtu		= enic_change_mtu,
-	.nकरो_vlan_rx_add_vid	= enic_vlan_rx_add_vid,
-	.nकरो_vlan_rx_समाप्त_vid	= enic_vlan_rx_समाप्त_vid,
-	.nकरो_tx_समयout		= enic_tx_समयout,
-	.nकरो_set_vf_port	= enic_set_vf_port,
-	.nकरो_get_vf_port	= enic_get_vf_port,
-	.nकरो_set_vf_mac		= enic_set_vf_mac,
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
-	.nकरो_poll_controller	= enic_poll_controller,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_RFS_ACCEL
-	.nकरो_rx_flow_steer	= enic_rx_flow_steer,
-#पूर्ण_अगर
-	.nकरो_features_check	= enic_features_check,
-पूर्ण;
+static const struct net_device_ops enic_netdev_dynamic_ops = {
+	.ndo_open		= enic_open,
+	.ndo_stop		= enic_stop,
+	.ndo_start_xmit		= enic_hard_start_xmit,
+	.ndo_get_stats64	= enic_get_stats,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_rx_mode	= enic_set_rx_mode,
+	.ndo_set_mac_address	= enic_set_mac_address_dynamic,
+	.ndo_change_mtu		= enic_change_mtu,
+	.ndo_vlan_rx_add_vid	= enic_vlan_rx_add_vid,
+	.ndo_vlan_rx_kill_vid	= enic_vlan_rx_kill_vid,
+	.ndo_tx_timeout		= enic_tx_timeout,
+	.ndo_set_vf_port	= enic_set_vf_port,
+	.ndo_get_vf_port	= enic_get_vf_port,
+	.ndo_set_vf_mac		= enic_set_vf_mac,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller	= enic_poll_controller,
+#endif
+#ifdef CONFIG_RFS_ACCEL
+	.ndo_rx_flow_steer	= enic_rx_flow_steer,
+#endif
+	.ndo_features_check	= enic_features_check,
+};
 
-अटल स्थिर काष्ठा net_device_ops enic_netdev_ops = अणु
-	.nकरो_खोलो		= enic_खोलो,
-	.nकरो_stop		= enic_stop,
-	.nकरो_start_xmit		= enic_hard_start_xmit,
-	.nकरो_get_stats64	= enic_get_stats,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_set_mac_address	= enic_set_mac_address,
-	.nकरो_set_rx_mode	= enic_set_rx_mode,
-	.nकरो_change_mtu		= enic_change_mtu,
-	.nकरो_vlan_rx_add_vid	= enic_vlan_rx_add_vid,
-	.nकरो_vlan_rx_समाप्त_vid	= enic_vlan_rx_समाप्त_vid,
-	.nकरो_tx_समयout		= enic_tx_समयout,
-	.nकरो_set_vf_port	= enic_set_vf_port,
-	.nकरो_get_vf_port	= enic_get_vf_port,
-	.nकरो_set_vf_mac		= enic_set_vf_mac,
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
-	.nकरो_poll_controller	= enic_poll_controller,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_RFS_ACCEL
-	.nकरो_rx_flow_steer	= enic_rx_flow_steer,
-#पूर्ण_अगर
-	.nकरो_features_check	= enic_features_check,
-पूर्ण;
+static const struct net_device_ops enic_netdev_ops = {
+	.ndo_open		= enic_open,
+	.ndo_stop		= enic_stop,
+	.ndo_start_xmit		= enic_hard_start_xmit,
+	.ndo_get_stats64	= enic_get_stats,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_mac_address	= enic_set_mac_address,
+	.ndo_set_rx_mode	= enic_set_rx_mode,
+	.ndo_change_mtu		= enic_change_mtu,
+	.ndo_vlan_rx_add_vid	= enic_vlan_rx_add_vid,
+	.ndo_vlan_rx_kill_vid	= enic_vlan_rx_kill_vid,
+	.ndo_tx_timeout		= enic_tx_timeout,
+	.ndo_set_vf_port	= enic_set_vf_port,
+	.ndo_get_vf_port	= enic_get_vf_port,
+	.ndo_set_vf_mac		= enic_set_vf_mac,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller	= enic_poll_controller,
+#endif
+#ifdef CONFIG_RFS_ACCEL
+	.ndo_rx_flow_steer	= enic_rx_flow_steer,
+#endif
+	.ndo_features_check	= enic_features_check,
+};
 
-अटल व्योम enic_dev_deinit(काष्ठा enic *enic)
-अणु
-	अचिन्हित पूर्णांक i;
+static void enic_dev_deinit(struct enic *enic)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < enic->rq_count; i++)
-		__netअगर_napi_del(&enic->napi[i]);
+	for (i = 0; i < enic->rq_count; i++)
+		__netif_napi_del(&enic->napi[i]);
 
-	अगर (vnic_dev_get_पूर्णांकr_mode(enic->vdev) == VNIC_DEV_INTR_MODE_MSIX)
-		क्रम (i = 0; i < enic->wq_count; i++)
-			__netअगर_napi_del(&enic->napi[enic_cq_wq(enic, i)]);
+	if (vnic_dev_get_intr_mode(enic->vdev) == VNIC_DEV_INTR_MODE_MSIX)
+		for (i = 0; i < enic->wq_count; i++)
+			__netif_napi_del(&enic->napi[enic_cq_wq(enic, i)]);
 
-	/* observe RCU grace period after __netअगर_napi_del() calls */
+	/* observe RCU grace period after __netif_napi_del() calls */
 	synchronize_net();
 
-	enic_मुक्त_vnic_resources(enic);
-	enic_clear_पूर्णांकr_mode(enic);
-	enic_मुक्त_affinity_hपूर्णांक(enic);
-पूर्ण
+	enic_free_vnic_resources(enic);
+	enic_clear_intr_mode(enic);
+	enic_free_affinity_hint(enic);
+}
 
-अटल व्योम enic_kdump_kernel_config(काष्ठा enic *enic)
-अणु
-	अगर (is_kdump_kernel()) अणु
+static void enic_kdump_kernel_config(struct enic *enic)
+{
+	if (is_kdump_kernel()) {
 		dev_info(enic_get_dev(enic), "Running from within kdump kernel. Using minimal resources\n");
 		enic->rq_count = 1;
 		enic->wq_count = 1;
 		enic->config.rq_desc_count = ENIC_MIN_RQ_DESCS;
 		enic->config.wq_desc_count = ENIC_MIN_WQ_DESCS;
 		enic->config.mtu = min_t(u16, 1500, enic->config.mtu);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक enic_dev_init(काष्ठा enic *enic)
-अणु
-	काष्ठा device *dev = enic_get_dev(enic);
-	काष्ठा net_device *netdev = enic->netdev;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
+static int enic_dev_init(struct enic *enic)
+{
+	struct device *dev = enic_get_dev(enic);
+	struct net_device *netdev = enic->netdev;
+	unsigned int i;
+	int err;
 
-	/* Get पूर्णांकerrupt coalesce समयr info */
-	err = enic_dev_पूर्णांकr_coal_समयr_info(enic);
-	अगर (err) अणु
+	/* Get interrupt coalesce timer info */
+	err = enic_dev_intr_coal_timer_info(enic);
+	if (err) {
 		dev_warn(dev, "Using default conversion factor for "
 			"interrupt coalesce timer\n");
-		vnic_dev_पूर्णांकr_coal_समयr_info_शेष(enic->vdev);
-	पूर्ण
+		vnic_dev_intr_coal_timer_info_default(enic->vdev);
+	}
 
 	/* Get vNIC configuration
 	 */
 
 	err = enic_get_vnic_config(enic);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "Get vNIC configuration failed, aborting\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/* Get available resource counts
 	 */
 
 	enic_get_res_counts(enic);
 
-	/* modअगरy resource count अगर we are in kdump_kernel
+	/* modify resource count if we are in kdump_kernel
 	 */
 	enic_kdump_kernel_config(enic);
 
-	/* Set पूर्णांकerrupt mode based on resource counts and प्रणाली
+	/* Set interrupt mode based on resource counts and system
 	 * capabilities
 	 */
 
-	err = enic_set_पूर्णांकr_mode(enic);
-	अगर (err) अणु
+	err = enic_set_intr_mode(enic);
+	if (err) {
 		dev_err(dev, "Failed to set intr mode based on resource "
 			"counts and system capabilities, aborting\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/* Allocate and configure vNIC resources
 	 */
 
 	err = enic_alloc_vnic_resources(enic);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "Failed to alloc vNIC resources, aborting\n");
-		जाओ err_out_मुक्त_vnic_resources;
-	पूर्ण
+		goto err_out_free_vnic_resources;
+	}
 
 	enic_init_vnic_resources(enic);
 
 	err = enic_set_rss_nic_cfg(enic);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "Failed to config nic, aborting\n");
-		जाओ err_out_मुक्त_vnic_resources;
-	पूर्ण
+		goto err_out_free_vnic_resources;
+	}
 
-	चयन (vnic_dev_get_पूर्णांकr_mode(enic->vdev)) अणु
-	शेष:
-		netअगर_napi_add(netdev, &enic->napi[0], enic_poll, 64);
-		अवरोध;
-	हाल VNIC_DEV_INTR_MODE_MSIX:
-		क्रम (i = 0; i < enic->rq_count; i++) अणु
-			netअगर_napi_add(netdev, &enic->napi[i],
+	switch (vnic_dev_get_intr_mode(enic->vdev)) {
+	default:
+		netif_napi_add(netdev, &enic->napi[0], enic_poll, 64);
+		break;
+	case VNIC_DEV_INTR_MODE_MSIX:
+		for (i = 0; i < enic->rq_count; i++) {
+			netif_napi_add(netdev, &enic->napi[i],
 				enic_poll_msix_rq, NAPI_POLL_WEIGHT);
-		पूर्ण
-		क्रम (i = 0; i < enic->wq_count; i++)
-			netअगर_napi_add(netdev, &enic->napi[enic_cq_wq(enic, i)],
+		}
+		for (i = 0; i < enic->wq_count; i++)
+			netif_napi_add(netdev, &enic->napi[enic_cq_wq(enic, i)],
 				       enic_poll_msix_wq, NAPI_POLL_WEIGHT);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
+	return 0;
 
-err_out_मुक्त_vnic_resources:
-	enic_मुक्त_affinity_hपूर्णांक(enic);
-	enic_clear_पूर्णांकr_mode(enic);
-	enic_मुक्त_vnic_resources(enic);
+err_out_free_vnic_resources:
+	enic_free_affinity_hint(enic);
+	enic_clear_intr_mode(enic);
+	enic_free_vnic_resources(enic);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम enic_iounmap(काष्ठा enic *enic)
-अणु
-	अचिन्हित पूर्णांक i;
+static void enic_iounmap(struct enic *enic)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(enic->bar); i++)
-		अगर (enic->bar[i].vaddr)
+	for (i = 0; i < ARRAY_SIZE(enic->bar); i++)
+		if (enic->bar[i].vaddr)
 			iounmap(enic->bar[i].vaddr);
-पूर्ण
+}
 
-अटल पूर्णांक enic_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा net_device *netdev;
-	काष्ठा enic *enic;
-	पूर्णांक using_dac = 0;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
-#अगर_घोषित CONFIG_PCI_IOV
-	पूर्णांक pos = 0;
-#पूर्ण_अगर
-	पूर्णांक num_pps = 1;
+static int enic_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
+{
+	struct device *dev = &pdev->dev;
+	struct net_device *netdev;
+	struct enic *enic;
+	int using_dac = 0;
+	unsigned int i;
+	int err;
+#ifdef CONFIG_PCI_IOV
+	int pos = 0;
+#endif
+	int num_pps = 1;
 
-	/* Allocate net device काष्ठाure and initialize.  Private
+	/* Allocate net device structure and initialize.  Private
 	 * instance data is initialized to zero.
 	 */
 
-	netdev = alloc_etherdev_mqs(माप(काष्ठा enic),
+	netdev = alloc_etherdev_mqs(sizeof(struct enic),
 				    ENIC_RQ_MAX, ENIC_WQ_MAX);
-	अगर (!netdev)
-		वापस -ENOMEM;
+	if (!netdev)
+		return -ENOMEM;
 
 	pci_set_drvdata(pdev, netdev);
 
@@ -2700,114 +2699,114 @@ err_out_मुक्त_vnic_resources:
 	 */
 
 	err = pci_enable_device_mem(pdev);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "Cannot enable PCI device, aborting\n");
-		जाओ err_out_मुक्त_netdev;
-	पूर्ण
+		goto err_out_free_netdev;
+	}
 
 	err = pci_request_regions(pdev, DRV_NAME);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "Cannot request PCI regions, aborting\n");
-		जाओ err_out_disable_device;
-	पूर्ण
+		goto err_out_disable_device;
+	}
 
 	pci_set_master(pdev);
 
-	/* Query PCI controller on प्रणाली क्रम DMA addressing
-	 * limitation क्रम the device.  Try 47-bit first, and
+	/* Query PCI controller on system for DMA addressing
+	 * limitation for the device.  Try 47-bit first, and
 	 * fail to 32-bit.
 	 */
 
 	err = dma_set_mask(&pdev->dev, DMA_BIT_MASK(47));
-	अगर (err) अणु
+	if (err) {
 		err = dma_set_mask(&pdev->dev, DMA_BIT_MASK(32));
-		अगर (err) अणु
+		if (err) {
 			dev_err(dev, "No usable DMA configuration, aborting\n");
-			जाओ err_out_release_regions;
-		पूर्ण
+			goto err_out_release_regions;
+		}
 		err = dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(32));
-		अगर (err) अणु
+		if (err) {
 			dev_err(dev, "Unable to obtain %u-bit DMA "
 				"for consistent allocations, aborting\n", 32);
-			जाओ err_out_release_regions;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto err_out_release_regions;
+		}
+	} else {
 		err = dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(47));
-		अगर (err) अणु
+		if (err) {
 			dev_err(dev, "Unable to obtain %u-bit DMA "
 				"for consistent allocations, aborting\n", 47);
-			जाओ err_out_release_regions;
-		पूर्ण
+			goto err_out_release_regions;
+		}
 		using_dac = 1;
-	पूर्ण
+	}
 
 	/* Map vNIC resources from BAR0-5
 	 */
 
-	क्रम (i = 0; i < ARRAY_SIZE(enic->bar); i++) अणु
-		अगर (!(pci_resource_flags(pdev, i) & IORESOURCE_MEM))
-			जारी;
+	for (i = 0; i < ARRAY_SIZE(enic->bar); i++) {
+		if (!(pci_resource_flags(pdev, i) & IORESOURCE_MEM))
+			continue;
 		enic->bar[i].len = pci_resource_len(pdev, i);
 		enic->bar[i].vaddr = pci_iomap(pdev, i, enic->bar[i].len);
-		अगर (!enic->bar[i].vaddr) अणु
+		if (!enic->bar[i].vaddr) {
 			dev_err(dev, "Cannot memory-map BAR %d, aborting\n", i);
 			err = -ENODEV;
-			जाओ err_out_iounmap;
-		पूर्ण
+			goto err_out_iounmap;
+		}
 		enic->bar[i].bus_addr = pci_resource_start(pdev, i);
-	पूर्ण
+	}
 
 	/* Register vNIC device
 	 */
 
-	enic->vdev = vnic_dev_रेजिस्टर(शून्य, enic, pdev, enic->bar,
+	enic->vdev = vnic_dev_register(NULL, enic, pdev, enic->bar,
 		ARRAY_SIZE(enic->bar));
-	अगर (!enic->vdev) अणु
+	if (!enic->vdev) {
 		dev_err(dev, "vNIC registration failed, aborting\n");
 		err = -ENODEV;
-		जाओ err_out_iounmap;
-	पूर्ण
+		goto err_out_iounmap;
+	}
 
 	err = vnic_devcmd_init(enic->vdev);
 
-	अगर (err)
-		जाओ err_out_vnic_unरेजिस्टर;
+	if (err)
+		goto err_out_vnic_unregister;
 
-#अगर_घोषित CONFIG_PCI_IOV
+#ifdef CONFIG_PCI_IOV
 	/* Get number of subvnics */
 	pos = pci_find_ext_capability(pdev, PCI_EXT_CAP_ID_SRIOV);
-	अगर (pos) अणु
-		pci_पढ़ो_config_word(pdev, pos + PCI_SRIOV_TOTAL_VF,
+	if (pos) {
+		pci_read_config_word(pdev, pos + PCI_SRIOV_TOTAL_VF,
 			&enic->num_vfs);
-		अगर (enic->num_vfs) अणु
+		if (enic->num_vfs) {
 			err = pci_enable_sriov(pdev, enic->num_vfs);
-			अगर (err) अणु
+			if (err) {
 				dev_err(dev, "SRIOV enable failed, aborting."
 					" pci_enable_sriov() returned %d\n",
 					err);
-				जाओ err_out_vnic_unरेजिस्टर;
-			पूर्ण
+				goto err_out_vnic_unregister;
+			}
 			enic->priv_flags |= ENIC_SRIOV_ENABLED;
 			num_pps = enic->num_vfs;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+		}
+	}
+#endif
 
-	/* Allocate काष्ठाure क्रम port profiles */
-	enic->pp = kसुस्मृति(num_pps, माप(*enic->pp), GFP_KERNEL);
-	अगर (!enic->pp) अणु
+	/* Allocate structure for port profiles */
+	enic->pp = kcalloc(num_pps, sizeof(*enic->pp), GFP_KERNEL);
+	if (!enic->pp) {
 		err = -ENOMEM;
-		जाओ err_out_disable_sriov_pp;
-	पूर्ण
+		goto err_out_disable_sriov_pp;
+	}
 
-	/* Issue device खोलो to get device in known state
+	/* Issue device open to get device in known state
 	 */
 
-	err = enic_dev_खोलो(enic);
-	अगर (err) अणु
+	err = enic_dev_open(enic);
+	if (err) {
 		dev_err(dev, "vNIC dev open failed, aborting\n");
-		जाओ err_out_disable_sriov;
-	पूर्ण
+		goto err_out_disable_sriov;
+	}
 
 	/* Setup devcmd lock
 	 */
@@ -2816,52 +2815,52 @@ err_out_मुक्त_vnic_resources:
 	spin_lock_init(&enic->enic_api_lock);
 
 	/*
-	 * Set ingress vlan reग_लिखो mode beक्रमe vnic initialization
+	 * Set ingress vlan rewrite mode before vnic initialization
 	 */
 
-	err = enic_dev_set_ig_vlan_reग_लिखो_mode(enic);
-	अगर (err) अणु
+	err = enic_dev_set_ig_vlan_rewrite_mode(enic);
+	if (err) {
 		dev_err(dev,
 			"Failed to set ingress vlan rewrite mode, aborting.\n");
-		जाओ err_out_dev_बंद;
-	पूर्ण
+		goto err_out_dev_close;
+	}
 
-	/* Issue device init to initialize the vnic-to-चयन link.
-	 * We'll start with carrier off and रुको क्रम link UP
-	 * notअगरication later to turn on carrier.  We करोn't need
-	 * to रुको here क्रम the vnic-to-चयन link initialization
-	 * to complete; link UP notअगरication is the indication that
+	/* Issue device init to initialize the vnic-to-switch link.
+	 * We'll start with carrier off and wait for link UP
+	 * notification later to turn on carrier.  We don't need
+	 * to wait here for the vnic-to-switch link initialization
+	 * to complete; link UP notification is the indication that
 	 * the process is complete.
 	 */
 
-	netअगर_carrier_off(netdev);
+	netif_carrier_off(netdev);
 
-	/* Do not call dev_init क्रम a dynamic vnic.
+	/* Do not call dev_init for a dynamic vnic.
 	 * For a dynamic vnic, init_prov_info will be
 	 * called later by an upper layer.
 	 */
 
-	अगर (!enic_is_dynamic(enic)) अणु
+	if (!enic_is_dynamic(enic)) {
 		err = vnic_dev_init(enic->vdev, 0);
-		अगर (err) अणु
+		if (err) {
 			dev_err(dev, "vNIC dev init failed, aborting\n");
-			जाओ err_out_dev_बंद;
-		पूर्ण
-	पूर्ण
+			goto err_out_dev_close;
+		}
+	}
 
 	err = enic_dev_init(enic);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "Device initialization failed, aborting\n");
-		जाओ err_out_dev_बंद;
-	पूर्ण
+		goto err_out_dev_close;
+	}
 
-	netअगर_set_real_num_tx_queues(netdev, enic->wq_count);
-	netअगर_set_real_num_rx_queues(netdev, enic->rq_count);
+	netif_set_real_num_tx_queues(netdev, enic->wq_count);
+	netif_set_real_num_rx_queues(netdev, enic->rq_count);
 
-	/* Setup notअगरication समयr, HW reset task, and wq locks
+	/* Setup notification timer, HW reset task, and wq locks
 	 */
 
-	समयr_setup(&enic->notअगरy_समयr, enic_notअगरy_समयr, 0);
+	timer_setup(&enic->notify_timer, enic_notify_timer, 0);
 
 	enic_rfs_flw_tbl_init(enic);
 	enic_set_rx_coal_setting(enic);
@@ -2869,7 +2868,7 @@ err_out_मुक्त_vnic_resources:
 	INIT_WORK(&enic->tx_hang_reset, enic_tx_hang_reset);
 	INIT_WORK(&enic->change_mtu_work, enic_change_mtu_work);
 
-	क्रम (i = 0; i < enic->wq_count; i++)
+	for (i = 0; i < enic->wq_count; i++)
 		spin_lock_init(&enic->wq_lock[i]);
 
 	/* Register net device
@@ -2878,42 +2877,42 @@ err_out_मुक्त_vnic_resources:
 	enic->port_mtu = enic->config.mtu;
 
 	err = enic_set_mac_addr(netdev, enic->mac_addr);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "Invalid MAC address, aborting\n");
-		जाओ err_out_dev_deinit;
-	पूर्ण
+		goto err_out_dev_deinit;
+	}
 
-	enic->tx_coalesce_usecs = enic->config.पूर्णांकr_समयr_usec;
-	/* rx coalesce समय alपढ़ोy got initialized. This माला_लो used
-	 * अगर adaptive coal is turned off
+	enic->tx_coalesce_usecs = enic->config.intr_timer_usec;
+	/* rx coalesce time already got initialized. This gets used
+	 * if adaptive coal is turned off
 	 */
 	enic->rx_coalesce_usecs = enic->tx_coalesce_usecs;
 
-	अगर (enic_is_dynamic(enic) || enic_is_sriov_vf(enic))
+	if (enic_is_dynamic(enic) || enic_is_sriov_vf(enic))
 		netdev->netdev_ops = &enic_netdev_dynamic_ops;
-	अन्यथा
+	else
 		netdev->netdev_ops = &enic_netdev_ops;
 
-	netdev->watchकरोg_समयo = 2 * HZ;
+	netdev->watchdog_timeo = 2 * HZ;
 	enic_set_ethtool_ops(netdev);
 
 	netdev->features |= NETIF_F_HW_VLAN_CTAG_TX | NETIF_F_HW_VLAN_CTAG_RX;
-	अगर (ENIC_SETTING(enic, LOOP)) अणु
+	if (ENIC_SETTING(enic, LOOP)) {
 		netdev->features &= ~NETIF_F_HW_VLAN_CTAG_TX;
 		enic->loop_enable = 1;
 		enic->loop_tag = enic->config.loop_tag;
 		dev_info(dev, "loopback tag=0x%04x\n", enic->loop_tag);
-	पूर्ण
-	अगर (ENIC_SETTING(enic, TXCSUM))
+	}
+	if (ENIC_SETTING(enic, TXCSUM))
 		netdev->hw_features |= NETIF_F_SG | NETIF_F_HW_CSUM;
-	अगर (ENIC_SETTING(enic, TSO))
+	if (ENIC_SETTING(enic, TSO))
 		netdev->hw_features |= NETIF_F_TSO |
 			NETIF_F_TSO6 | NETIF_F_TSO_ECN;
-	अगर (ENIC_SETTING(enic, RSS))
+	if (ENIC_SETTING(enic, RSS))
 		netdev->hw_features |= NETIF_F_RXHASH;
-	अगर (ENIC_SETTING(enic, RXCSUM))
+	if (ENIC_SETTING(enic, RXCSUM))
 		netdev->hw_features |= NETIF_F_RXCSUM;
-	अगर (ENIC_SETTING(enic, VXLAN)) अणु
+	if (ENIC_SETTING(enic, VXLAN)) {
 		u64 patch_level;
 		u64 a1 = 0;
 
@@ -2939,7 +2938,7 @@ err_out_मुक्त_vnic_resources:
 		err = vnic_dev_get_supported_feature_ver(enic->vdev,
 							 VIC_FEATURE_VXLAN,
 							 &patch_level, &a1);
-		अगर (err)
+		if (err)
 			patch_level = 0;
 		enic->vxlan.flags = (u8)a1;
 		/* mask bits that are supported by driver
@@ -2949,22 +2948,22 @@ err_out_मुक्त_vnic_resources:
 		patch_level = patch_level ? patch_level - 1 : 0;
 		enic->vxlan.patch_level = patch_level;
 
-		अगर (vnic_dev_get_res_count(enic->vdev, RES_TYPE_WQ) == 1 ||
-		    enic->vxlan.flags & ENIC_VXLAN_MULTI_WQ) अणु
+		if (vnic_dev_get_res_count(enic->vdev, RES_TYPE_WQ) == 1 ||
+		    enic->vxlan.flags & ENIC_VXLAN_MULTI_WQ) {
 			netdev->udp_tunnel_nic_info = &enic_udp_tunnels_v4;
-			अगर (enic->vxlan.flags & ENIC_VXLAN_OUTER_IPV6)
+			if (enic->vxlan.flags & ENIC_VXLAN_OUTER_IPV6)
 				netdev->udp_tunnel_nic_info = &enic_udp_tunnels;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	netdev->features |= netdev->hw_features;
 	netdev->vlan_features |= netdev->features;
 
-#अगर_घोषित CONFIG_RFS_ACCEL
+#ifdef CONFIG_RFS_ACCEL
 	netdev->hw_features |= NETIF_F_NTUPLE;
-#पूर्ण_अगर
+#endif
 
-	अगर (using_dac)
+	if (using_dac)
 		netdev->features |= NETIF_F_HIGHDMA;
 
 	netdev->priv_flags |= IFF_UNICAST_FLT;
@@ -2974,74 +2973,74 @@ err_out_मुक्त_vnic_resources:
 	netdev->max_mtu = ENIC_MAX_MTU;
 	netdev->mtu	= enic->port_mtu;
 
-	err = रेजिस्टर_netdev(netdev);
-	अगर (err) अणु
+	err = register_netdev(netdev);
+	if (err) {
 		dev_err(dev, "Cannot register net device, aborting\n");
-		जाओ err_out_dev_deinit;
-	पूर्ण
-	enic->rx_copyअवरोध = RX_COPYBREAK_DEFAULT;
+		goto err_out_dev_deinit;
+	}
+	enic->rx_copybreak = RX_COPYBREAK_DEFAULT;
 
-	वापस 0;
+	return 0;
 
 err_out_dev_deinit:
 	enic_dev_deinit(enic);
-err_out_dev_बंद:
-	vnic_dev_बंद(enic->vdev);
+err_out_dev_close:
+	vnic_dev_close(enic->vdev);
 err_out_disable_sriov:
-	kमुक्त(enic->pp);
+	kfree(enic->pp);
 err_out_disable_sriov_pp:
-#अगर_घोषित CONFIG_PCI_IOV
-	अगर (enic_sriov_enabled(enic)) अणु
+#ifdef CONFIG_PCI_IOV
+	if (enic_sriov_enabled(enic)) {
 		pci_disable_sriov(pdev);
 		enic->priv_flags &= ~ENIC_SRIOV_ENABLED;
-	पूर्ण
-#पूर्ण_अगर
-err_out_vnic_unरेजिस्टर:
-	vnic_dev_unरेजिस्टर(enic->vdev);
+	}
+#endif
+err_out_vnic_unregister:
+	vnic_dev_unregister(enic->vdev);
 err_out_iounmap:
 	enic_iounmap(enic);
 err_out_release_regions:
 	pci_release_regions(pdev);
 err_out_disable_device:
 	pci_disable_device(pdev);
-err_out_मुक्त_netdev:
-	मुक्त_netdev(netdev);
+err_out_free_netdev:
+	free_netdev(netdev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम enic_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
+static void enic_remove(struct pci_dev *pdev)
+{
+	struct net_device *netdev = pci_get_drvdata(pdev);
 
-	अगर (netdev) अणु
-		काष्ठा enic *enic = netdev_priv(netdev);
+	if (netdev) {
+		struct enic *enic = netdev_priv(netdev);
 
 		cancel_work_sync(&enic->reset);
 		cancel_work_sync(&enic->change_mtu_work);
-		unरेजिस्टर_netdev(netdev);
+		unregister_netdev(netdev);
 		enic_dev_deinit(enic);
-		vnic_dev_बंद(enic->vdev);
-#अगर_घोषित CONFIG_PCI_IOV
-		अगर (enic_sriov_enabled(enic)) अणु
+		vnic_dev_close(enic->vdev);
+#ifdef CONFIG_PCI_IOV
+		if (enic_sriov_enabled(enic)) {
 			pci_disable_sriov(pdev);
 			enic->priv_flags &= ~ENIC_SRIOV_ENABLED;
-		पूर्ण
-#पूर्ण_अगर
-		kमुक्त(enic->pp);
-		vnic_dev_unरेजिस्टर(enic->vdev);
+		}
+#endif
+		kfree(enic->pp);
+		vnic_dev_unregister(enic->vdev);
 		enic_iounmap(enic);
 		pci_release_regions(pdev);
 		pci_disable_device(pdev);
-		मुक्त_netdev(netdev);
-	पूर्ण
-पूर्ण
+		free_netdev(netdev);
+	}
+}
 
-अटल काष्ठा pci_driver enic_driver = अणु
+static struct pci_driver enic_driver = {
 	.name = DRV_NAME,
 	.id_table = enic_id_table,
 	.probe = enic_probe,
-	.हटाओ = enic_हटाओ,
-पूर्ण;
+	.remove = enic_remove,
+};
 
 module_pci_driver(enic_driver);

@@ -1,233 +1,232 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 
-#समावेश <uapi/linux/sched/types.h>
+#include <uapi/linux/sched/types.h>
 
-#समावेश <drm/drm_prपूर्णांक.h>
-#समावेश <drm/drm_vblank.h>
-#समावेश <drm/drm_vblank_work.h>
-#समावेश <drm/drm_crtc.h>
+#include <drm/drm_print.h>
+#include <drm/drm_vblank.h>
+#include <drm/drm_vblank_work.h>
+#include <drm/drm_crtc.h>
 
-#समावेश "drm_internal.h"
+#include "drm_internal.h"
 
 /**
  * DOC: vblank works
  *
- * Many DRM drivers need to program hardware in a समय-sensitive manner, many
- * बार with a deadline of starting and finishing within a certain region of
- * the scanout. Most of the समय the safest way to accomplish this is to
- * simply करो said समय-sensitive programming in the driver's IRQ handler,
- * which allows drivers to aव्योम being preempted during these critical
+ * Many DRM drivers need to program hardware in a time-sensitive manner, many
+ * times with a deadline of starting and finishing within a certain region of
+ * the scanout. Most of the time the safest way to accomplish this is to
+ * simply do said time-sensitive programming in the driver's IRQ handler,
+ * which allows drivers to avoid being preempted during these critical
  * regions. Or even better, the hardware may even handle applying such
- * समय-critical programming independently of the CPU.
+ * time-critical programming independently of the CPU.
  *
- * While there's a decent amount of hardware that's deचिन्हित so that the CPU
- * करोesn't need to be concerned with extremely समय-sensitive programming,
- * there's a few situations where it can't be helped. Some unक्रमgiving
- * hardware may require that certain समय-sensitive programming be handled
- * completely by the CPU, and said programming may even take too दीर्घ to
+ * While there's a decent amount of hardware that's designed so that the CPU
+ * doesn't need to be concerned with extremely time-sensitive programming,
+ * there's a few situations where it can't be helped. Some unforgiving
+ * hardware may require that certain time-sensitive programming be handled
+ * completely by the CPU, and said programming may even take too long to
  * handle in an IRQ handler. Another such situation would be where the driver
- * needs to perक्रमm a task that needs to complete within a specअगरic scanout
+ * needs to perform a task that needs to complete within a specific scanout
  * period, but might possibly block and thus cannot be handled in an IRQ
  * context. Both of these situations can't be solved perfectly in Linux since
- * we're not a realसमय kernel, and thus the scheduler may cause us to miss
- * our deadline अगर it decides to preempt us. But क्रम some drivers, it's good
- * enough अगर we can lower our chance of being preempted to an असलolute
+ * we're not a realtime kernel, and thus the scheduler may cause us to miss
+ * our deadline if it decides to preempt us. But for some drivers, it's good
+ * enough if we can lower our chance of being preempted to an absolute
  * minimum.
  *
  * This is where &drm_vblank_work comes in. &drm_vblank_work provides a simple
  * generic delayed work implementation which delays work execution until a
- * particular vblank has passed, and then executes the work at realसमय
- * priority. This provides the best possible chance at perक्रमming
- * समय-sensitive hardware programming on समय, even when the प्रणाली is under
+ * particular vblank has passed, and then executes the work at realtime
+ * priority. This provides the best possible chance at performing
+ * time-sensitive hardware programming on time, even when the system is under
  * heavy load. &drm_vblank_work also supports rescheduling, so that self
  * re-arming work items can be easily implemented.
  */
 
-व्योम drm_handle_vblank_works(काष्ठा drm_vblank_crtc *vblank)
-अणु
-	काष्ठा drm_vblank_work *work, *next;
-	u64 count = atomic64_पढ़ो(&vblank->count);
+void drm_handle_vblank_works(struct drm_vblank_crtc *vblank)
+{
+	struct drm_vblank_work *work, *next;
+	u64 count = atomic64_read(&vblank->count);
 	bool wake = false;
 
-	निश्चित_spin_locked(&vblank->dev->event_lock);
+	assert_spin_locked(&vblank->dev->event_lock);
 
-	list_क्रम_each_entry_safe(work, next, &vblank->pending_work, node) अणु
-		अगर (!drm_vblank_passed(count, work->count))
-			जारी;
+	list_for_each_entry_safe(work, next, &vblank->pending_work, node) {
+		if (!drm_vblank_passed(count, work->count))
+			continue;
 
 		list_del_init(&work->node);
 		drm_vblank_put(vblank->dev, vblank->pipe);
-		kthपढ़ो_queue_work(vblank->worker, &work->base);
+		kthread_queue_work(vblank->worker, &work->base);
 		wake = true;
-	पूर्ण
-	अगर (wake)
-		wake_up_all(&vblank->work_रुको_queue);
-पूर्ण
+	}
+	if (wake)
+		wake_up_all(&vblank->work_wait_queue);
+}
 
 /* Handle cancelling any pending vblank work items and drop respective vblank
- * references in response to vblank पूर्णांकerrupts being disabled.
+ * references in response to vblank interrupts being disabled.
  */
-व्योम drm_vblank_cancel_pending_works(काष्ठा drm_vblank_crtc *vblank)
-अणु
-	काष्ठा drm_vblank_work *work, *next;
+void drm_vblank_cancel_pending_works(struct drm_vblank_crtc *vblank)
+{
+	struct drm_vblank_work *work, *next;
 
-	निश्चित_spin_locked(&vblank->dev->event_lock);
+	assert_spin_locked(&vblank->dev->event_lock);
 
-	list_क्रम_each_entry_safe(work, next, &vblank->pending_work, node) अणु
+	list_for_each_entry_safe(work, next, &vblank->pending_work, node) {
 		list_del_init(&work->node);
 		drm_vblank_put(vblank->dev, vblank->pipe);
-	पूर्ण
+	}
 
-	wake_up_all(&vblank->work_रुको_queue);
-पूर्ण
+	wake_up_all(&vblank->work_wait_queue);
+}
 
 /**
  * drm_vblank_work_schedule - schedule a vblank work
  * @work: vblank work to schedule
  * @count: target vblank count
- * @nextonmiss: defer until the next vblank अगर target vblank was missed
+ * @nextonmiss: defer until the next vblank if target vblank was missed
  *
- * Schedule @work क्रम execution once the crtc vblank count reaches @count.
+ * Schedule @work for execution once the crtc vblank count reaches @count.
  *
- * If the crtc vblank count has alपढ़ोy reached @count and @nextonmiss is
+ * If the crtc vblank count has already reached @count and @nextonmiss is
  * %false the work starts to execute immediately.
  *
- * If the crtc vblank count has alपढ़ोy reached @count and @nextonmiss is
- * %true the work is deferred until the next vblank (as अगर @count has been
- * specअगरied as crtc vblank count + 1).
+ * If the crtc vblank count has already reached @count and @nextonmiss is
+ * %true the work is deferred until the next vblank (as if @count has been
+ * specified as crtc vblank count + 1).
  *
- * If @work is alपढ़ोy scheduled, this function will reschedule said work
- * using the new @count. This can be used क्रम self-rearming work items.
+ * If @work is already scheduled, this function will reschedule said work
+ * using the new @count. This can be used for self-rearming work items.
  *
  * Returns:
- * %1 अगर @work was successfully (re)scheduled, %0 अगर it was either alपढ़ोy
+ * %1 if @work was successfully (re)scheduled, %0 if it was either already
  * scheduled or cancelled, or a negative error code on failure.
  */
-पूर्णांक drm_vblank_work_schedule(काष्ठा drm_vblank_work *work,
+int drm_vblank_work_schedule(struct drm_vblank_work *work,
 			     u64 count, bool nextonmiss)
-अणु
-	काष्ठा drm_vblank_crtc *vblank = work->vblank;
-	काष्ठा drm_device *dev = vblank->dev;
+{
+	struct drm_vblank_crtc *vblank = work->vblank;
+	struct drm_device *dev = vblank->dev;
 	u64 cur_vbl;
-	अचिन्हित दीर्घ irqflags;
+	unsigned long irqflags;
 	bool passed, inmodeset, rescheduling = false, wake = false;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	spin_lock_irqsave(&dev->event_lock, irqflags);
-	अगर (work->cancelling)
-		जाओ out;
+	if (work->cancelling)
+		goto out;
 
 	spin_lock(&dev->vbl_lock);
 	inmodeset = vblank->inmodeset;
 	spin_unlock(&dev->vbl_lock);
-	अगर (inmodeset)
-		जाओ out;
+	if (inmodeset)
+		goto out;
 
-	अगर (list_empty(&work->node)) अणु
+	if (list_empty(&work->node)) {
 		ret = drm_vblank_get(dev, vblank->pipe);
-		अगर (ret < 0)
-			जाओ out;
-	पूर्ण अन्यथा अगर (work->count == count) अणु
-		/* Alपढ़ोy scheduled w/ same vbl count */
-		जाओ out;
-	पूर्ण अन्यथा अणु
+		if (ret < 0)
+			goto out;
+	} else if (work->count == count) {
+		/* Already scheduled w/ same vbl count */
+		goto out;
+	} else {
 		rescheduling = true;
-	पूर्ण
+	}
 
 	work->count = count;
 	cur_vbl = drm_vblank_count(dev, vblank->pipe);
 	passed = drm_vblank_passed(cur_vbl, count);
-	अगर (passed)
+	if (passed)
 		drm_dbg_core(dev,
 			     "crtc %d vblank %llu already passed (current %llu)\n",
 			     vblank->pipe, count, cur_vbl);
 
-	अगर (!nextonmiss && passed) अणु
+	if (!nextonmiss && passed) {
 		drm_vblank_put(dev, vblank->pipe);
-		ret = kthपढ़ो_queue_work(vblank->worker, &work->base);
+		ret = kthread_queue_work(vblank->worker, &work->base);
 
-		अगर (rescheduling) अणु
+		if (rescheduling) {
 			list_del_init(&work->node);
 			wake = true;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (!rescheduling)
+		}
+	} else {
+		if (!rescheduling)
 			list_add_tail(&work->node, &vblank->pending_work);
 		ret = true;
-	पूर्ण
+	}
 
 out:
 	spin_unlock_irqrestore(&dev->event_lock, irqflags);
-	अगर (wake)
-		wake_up_all(&vblank->work_रुको_queue);
-	वापस ret;
-पूर्ण
+	if (wake)
+		wake_up_all(&vblank->work_wait_queue);
+	return ret;
+}
 EXPORT_SYMBOL(drm_vblank_work_schedule);
 
 /**
- * drm_vblank_work_cancel_sync - cancel a vblank work and रुको क्रम it to
+ * drm_vblank_work_cancel_sync - cancel a vblank work and wait for it to
  * finish executing
  * @work: vblank work to cancel
  *
- * Cancel an alपढ़ोy scheduled vblank work and रुको क्रम its
+ * Cancel an already scheduled vblank work and wait for its
  * execution to finish.
  *
- * On वापस, @work is guaranteed to no दीर्घer be scheduled or running, even
- * अगर it's self-arming.
+ * On return, @work is guaranteed to no longer be scheduled or running, even
+ * if it's self-arming.
  *
  * Returns:
- * %True अगर the work was cancelled beक्रमe it started to execute, %false
+ * %True if the work was cancelled before it started to execute, %false
  * otherwise.
  */
-bool drm_vblank_work_cancel_sync(काष्ठा drm_vblank_work *work)
-अणु
-	काष्ठा drm_vblank_crtc *vblank = work->vblank;
-	काष्ठा drm_device *dev = vblank->dev;
+bool drm_vblank_work_cancel_sync(struct drm_vblank_work *work)
+{
+	struct drm_vblank_crtc *vblank = work->vblank;
+	struct drm_device *dev = vblank->dev;
 	bool ret = false;
 
 	spin_lock_irq(&dev->event_lock);
-	अगर (!list_empty(&work->node)) अणु
+	if (!list_empty(&work->node)) {
 		list_del_init(&work->node);
 		drm_vblank_put(vblank->dev, vblank->pipe);
 		ret = true;
-	पूर्ण
+	}
 
 	work->cancelling++;
 	spin_unlock_irq(&dev->event_lock);
 
-	wake_up_all(&vblank->work_रुको_queue);
+	wake_up_all(&vblank->work_wait_queue);
 
-	अगर (kthपढ़ो_cancel_work_sync(&work->base))
+	if (kthread_cancel_work_sync(&work->base))
 		ret = true;
 
 	spin_lock_irq(&dev->event_lock);
 	work->cancelling--;
 	spin_unlock_irq(&dev->event_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(drm_vblank_work_cancel_sync);
 
 /**
- * drm_vblank_work_flush - रुको क्रम a scheduled vblank work to finish
+ * drm_vblank_work_flush - wait for a scheduled vblank work to finish
  * executing
  * @work: vblank work to flush
  *
  * Wait until @work has finished executing once.
  */
-व्योम drm_vblank_work_flush(काष्ठा drm_vblank_work *work)
-अणु
-	काष्ठा drm_vblank_crtc *vblank = work->vblank;
-	काष्ठा drm_device *dev = vblank->dev;
+void drm_vblank_work_flush(struct drm_vblank_work *work)
+{
+	struct drm_vblank_crtc *vblank = work->vblank;
+	struct drm_device *dev = vblank->dev;
 
 	spin_lock_irq(&dev->event_lock);
-	रुको_event_lock_irq(vblank->work_रुको_queue, list_empty(&work->node),
+	wait_event_lock_irq(vblank->work_wait_queue, list_empty(&work->node),
 			    dev->event_lock);
 	spin_unlock_irq(&dev->event_lock);
 
-	kthपढ़ो_flush_work(&work->base);
-पूर्ण
+	kthread_flush_work(&work->base);
+}
 EXPORT_SYMBOL(drm_vblank_work_flush);
 
 /**
@@ -236,31 +235,31 @@ EXPORT_SYMBOL(drm_vblank_work_flush);
  * @crtc: CRTC whose vblank will trigger the work execution
  * @func: work function to be executed
  *
- * Initialize a vblank work item क्रम a specअगरic crtc.
+ * Initialize a vblank work item for a specific crtc.
  */
-व्योम drm_vblank_work_init(काष्ठा drm_vblank_work *work, काष्ठा drm_crtc *crtc,
-			  व्योम (*func)(काष्ठा kthपढ़ो_work *work))
-अणु
-	kthपढ़ो_init_work(&work->base, func);
+void drm_vblank_work_init(struct drm_vblank_work *work, struct drm_crtc *crtc,
+			  void (*func)(struct kthread_work *work))
+{
+	kthread_init_work(&work->base, func);
 	INIT_LIST_HEAD(&work->node);
 	work->vblank = &crtc->dev->vblank[drm_crtc_index(crtc)];
-पूर्ण
+}
 EXPORT_SYMBOL(drm_vblank_work_init);
 
-पूर्णांक drm_vblank_worker_init(काष्ठा drm_vblank_crtc *vblank)
-अणु
-	काष्ठा kthपढ़ो_worker *worker;
+int drm_vblank_worker_init(struct drm_vblank_crtc *vblank)
+{
+	struct kthread_worker *worker;
 
 	INIT_LIST_HEAD(&vblank->pending_work);
-	init_रुकोqueue_head(&vblank->work_रुको_queue);
-	worker = kthपढ़ो_create_worker(0, "card%d-crtc%d",
+	init_waitqueue_head(&vblank->work_wait_queue);
+	worker = kthread_create_worker(0, "card%d-crtc%d",
 				       vblank->dev->primary->index,
 				       vblank->pipe);
-	अगर (IS_ERR(worker))
-		वापस PTR_ERR(worker);
+	if (IS_ERR(worker))
+		return PTR_ERR(worker);
 
 	vblank->worker = worker;
 
-	sched_set_fअगरo(worker->task);
-	वापस 0;
-पूर्ण
+	sched_set_fifo(worker->task);
+	return 0;
+}

@@ -1,241 +1,240 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * BCM947xx nvram variable access
  *
  * Copyright (C) 2005 Broadcom Corporation
- * Copyright (C) 2006 Felix Fietkau <nbd@खोलोwrt.org>
+ * Copyright (C) 2006 Felix Fietkau <nbd@openwrt.org>
  * Copyright (C) 2010-2012 Hauke Mehrtens <hauke@hauke-m.de>
  */
 
-#समावेश <linux/पन.स>
-#समावेश <linux/types.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/bcm47xx_nvram.h>
+#include <linux/io.h>
+#include <linux/types.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/mtd/mtd.h>
+#include <linux/bcm47xx_nvram.h>
 
-#घोषणा NVRAM_MAGIC			0x48534C46	/* 'FLSH' */
-#घोषणा NVRAM_SPACE			0x10000
-#घोषणा NVRAM_MAX_GPIO_ENTRIES		32
-#घोषणा NVRAM_MAX_GPIO_VALUE_LEN	30
+#define NVRAM_MAGIC			0x48534C46	/* 'FLSH' */
+#define NVRAM_SPACE			0x10000
+#define NVRAM_MAX_GPIO_ENTRIES		32
+#define NVRAM_MAX_GPIO_VALUE_LEN	30
 
-#घोषणा FLASH_MIN		0x00020000	/* Minimum flash size */
+#define FLASH_MIN		0x00020000	/* Minimum flash size */
 
-काष्ठा nvram_header अणु
+struct nvram_header {
 	u32 magic;
 	u32 len;
 	u32 crc_ver_init;	/* 0:7 crc, 8:15 ver, 16:31 sdram_init */
 	u32 config_refresh;	/* 0:15 sdram_config, 16:31 sdram_refresh */
-	u32 config_ncdl;	/* ncdl values क्रम memc */
-पूर्ण;
+	u32 config_ncdl;	/* ncdl values for memc */
+};
 
-अटल अक्षर nvram_buf[NVRAM_SPACE];
-अटल माप_प्रकार nvram_len;
-अटल स्थिर u32 nvram_sizes[] = अणु0x6000, 0x8000, 0xF000, 0x10000पूर्ण;
-
-/**
- * bcm47xx_nvram_is_valid - check क्रम a valid NVRAM at specअगरied memory
- */
-अटल bool bcm47xx_nvram_is_valid(व्योम __iomem *nvram)
-अणु
-	वापस ((काष्ठा nvram_header *)nvram)->magic == NVRAM_MAGIC;
-पूर्ण
+static char nvram_buf[NVRAM_SPACE];
+static size_t nvram_len;
+static const u32 nvram_sizes[] = {0x6000, 0x8000, 0xF000, 0x10000};
 
 /**
- * bcm47xx_nvram_copy - copy NVRAM to पूर्णांकernal buffer
+ * bcm47xx_nvram_is_valid - check for a valid NVRAM at specified memory
  */
-अटल व्योम bcm47xx_nvram_copy(व्योम __iomem *nvram_start, माप_प्रकार res_size)
-अणु
-	काष्ठा nvram_header __iomem *header = nvram_start;
-	माप_प्रकार copy_size;
+static bool bcm47xx_nvram_is_valid(void __iomem *nvram)
+{
+	return ((struct nvram_header *)nvram)->magic == NVRAM_MAGIC;
+}
+
+/**
+ * bcm47xx_nvram_copy - copy NVRAM to internal buffer
+ */
+static void bcm47xx_nvram_copy(void __iomem *nvram_start, size_t res_size)
+{
+	struct nvram_header __iomem *header = nvram_start;
+	size_t copy_size;
 
 	copy_size = header->len;
-	अगर (copy_size > res_size) अणु
+	if (copy_size > res_size) {
 		pr_err("The nvram size according to the header seems to be bigger than the partition on flash\n");
 		copy_size = res_size;
-	पूर्ण
-	अगर (copy_size >= NVRAM_SPACE) अणु
+	}
+	if (copy_size >= NVRAM_SPACE) {
 		pr_err("nvram on flash (%zu bytes) is bigger than the reserved space in memory, will just copy the first %i bytes\n",
 		       copy_size, NVRAM_SPACE - 1);
 		copy_size = NVRAM_SPACE - 1;
-	पूर्ण
+	}
 
-	__ioपढ़ो32_copy(nvram_buf, nvram_start, DIV_ROUND_UP(copy_size, 4));
+	__ioread32_copy(nvram_buf, nvram_start, DIV_ROUND_UP(copy_size, 4));
 	nvram_buf[NVRAM_SPACE - 1] = '\0';
 	nvram_len = copy_size;
-पूर्ण
+}
 
 /**
  * bcm47xx_nvram_find_and_copy - find NVRAM on flash mapping & copy it
  */
-अटल पूर्णांक bcm47xx_nvram_find_and_copy(व्योम __iomem *flash_start, माप_प्रकार res_size)
-अणु
-	माप_प्रकार flash_size;
-	माप_प्रकार offset;
-	पूर्णांक i;
+static int bcm47xx_nvram_find_and_copy(void __iomem *flash_start, size_t res_size)
+{
+	size_t flash_size;
+	size_t offset;
+	int i;
 
-	अगर (nvram_len) अणु
+	if (nvram_len) {
 		pr_warn("nvram already initialized\n");
-		वापस -EEXIST;
-	पूर्ण
+		return -EEXIST;
+	}
 
-	/* TODO: when nvram is on nand flash check क्रम bad blocks first. */
+	/* TODO: when nvram is on nand flash check for bad blocks first. */
 
-	/* Try every possible flash size and check क्रम NVRAM at its end */
-	क्रम (flash_size = FLASH_MIN; flash_size <= res_size; flash_size <<= 1) अणु
-		क्रम (i = 0; i < ARRAY_SIZE(nvram_sizes); i++) अणु
+	/* Try every possible flash size and check for NVRAM at its end */
+	for (flash_size = FLASH_MIN; flash_size <= res_size; flash_size <<= 1) {
+		for (i = 0; i < ARRAY_SIZE(nvram_sizes); i++) {
 			offset = flash_size - nvram_sizes[i];
-			अगर (bcm47xx_nvram_is_valid(flash_start + offset))
-				जाओ found;
-		पूर्ण
-	पूर्ण
+			if (bcm47xx_nvram_is_valid(flash_start + offset))
+				goto found;
+		}
+	}
 
 	/* Try embedded NVRAM at 4 KB and 1 KB as last resorts */
 
 	offset = 4096;
-	अगर (bcm47xx_nvram_is_valid(flash_start + offset))
-		जाओ found;
+	if (bcm47xx_nvram_is_valid(flash_start + offset))
+		goto found;
 
 	offset = 1024;
-	अगर (bcm47xx_nvram_is_valid(flash_start + offset))
-		जाओ found;
+	if (bcm47xx_nvram_is_valid(flash_start + offset))
+		goto found;
 
 	pr_err("no nvram found\n");
-	वापस -ENXIO;
+	return -ENXIO;
 
 found:
 	bcm47xx_nvram_copy(flash_start + offset, res_size - offset);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * On bcm47xx we need access to the NVRAM very early, so we can't use mtd
- * subप्रणाली to access flash. We can't even use platक्रमm device / driver to
+ * subsystem to access flash. We can't even use platform device / driver to
  * store memory offset.
  * To handle this we provide following symbol. It's supposed to be called as
- * soon as we get info about flash device, beक्रमe any NVRAM entry is needed.
+ * soon as we get info about flash device, before any NVRAM entry is needed.
  */
-पूर्णांक bcm47xx_nvram_init_from_mem(u32 base, u32 lim)
-अणु
-	व्योम __iomem *iobase;
-	पूर्णांक err;
+int bcm47xx_nvram_init_from_mem(u32 base, u32 lim)
+{
+	void __iomem *iobase;
+	int err;
 
 	iobase = ioremap(base, lim);
-	अगर (!iobase)
-		वापस -ENOMEM;
+	if (!iobase)
+		return -ENOMEM;
 
 	err = bcm47xx_nvram_find_and_copy(iobase, lim);
 
 	iounmap(iobase);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक nvram_init(व्योम)
-अणु
-#अगर_घोषित CONFIG_MTD
-	काष्ठा mtd_info *mtd;
-	काष्ठा nvram_header header;
-	माप_प्रकार bytes_पढ़ो;
-	पूर्णांक err;
+static int nvram_init(void)
+{
+#ifdef CONFIG_MTD
+	struct mtd_info *mtd;
+	struct nvram_header header;
+	size_t bytes_read;
+	int err;
 
 	mtd = get_mtd_device_nm("nvram");
-	अगर (IS_ERR(mtd))
-		वापस -ENODEV;
+	if (IS_ERR(mtd))
+		return -ENODEV;
 
-	err = mtd_पढ़ो(mtd, 0, माप(header), &bytes_पढ़ो, (uपूर्णांक8_t *)&header);
-	अगर (!err && header.magic == NVRAM_MAGIC &&
-	    header.len > माप(header)) अणु
+	err = mtd_read(mtd, 0, sizeof(header), &bytes_read, (uint8_t *)&header);
+	if (!err && header.magic == NVRAM_MAGIC &&
+	    header.len > sizeof(header)) {
 		nvram_len = header.len;
-		अगर (nvram_len >= NVRAM_SPACE) अणु
+		if (nvram_len >= NVRAM_SPACE) {
 			pr_err("nvram on flash (%zu bytes) is bigger than the reserved space in memory, will just copy the first %i bytes\n",
 				nvram_len, NVRAM_SPACE);
 			nvram_len = NVRAM_SPACE - 1;
-		पूर्ण
+		}
 
-		err = mtd_पढ़ो(mtd, 0, nvram_len, &nvram_len,
+		err = mtd_read(mtd, 0, nvram_len, &nvram_len,
 			       (u8 *)nvram_buf);
-		वापस err;
-	पूर्ण
-#पूर्ण_अगर
+		return err;
+	}
+#endif
 
-	वापस -ENXIO;
-पूर्ण
+	return -ENXIO;
+}
 
-पूर्णांक bcm47xx_nvram_दो_पर्या(स्थिर अक्षर *name, अक्षर *val, माप_प्रकार val_len)
-अणु
-	अक्षर *var, *value, *end, *eq;
-	पूर्णांक err;
+int bcm47xx_nvram_getenv(const char *name, char *val, size_t val_len)
+{
+	char *var, *value, *end, *eq;
+	int err;
 
-	अगर (!name)
-		वापस -EINVAL;
+	if (!name)
+		return -EINVAL;
 
-	अगर (!nvram_len) अणु
+	if (!nvram_len) {
 		err = nvram_init();
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	/* Look क्रम name=value and वापस value */
-	var = &nvram_buf[माप(काष्ठा nvram_header)];
-	end = nvram_buf + माप(nvram_buf);
-	जबतक (var < end && *var) अणु
-		eq = म_अक्षर(var, '=');
-		अगर (!eq)
-			अवरोध;
+	/* Look for name=value and return value */
+	var = &nvram_buf[sizeof(struct nvram_header)];
+	end = nvram_buf + sizeof(nvram_buf);
+	while (var < end && *var) {
+		eq = strchr(var, '=');
+		if (!eq)
+			break;
 		value = eq + 1;
-		अगर (eq - var == म_माप(name) &&
-		    म_भेदन(var, name, eq - var) == 0)
-			वापस snम_लिखो(val, val_len, "%s", value);
-		var = value + म_माप(value) + 1;
-	पूर्ण
-	वापस -ENOENT;
-पूर्ण
-EXPORT_SYMBOL(bcm47xx_nvram_दो_पर्या);
+		if (eq - var == strlen(name) &&
+		    strncmp(var, name, eq - var) == 0)
+			return snprintf(val, val_len, "%s", value);
+		var = value + strlen(value) + 1;
+	}
+	return -ENOENT;
+}
+EXPORT_SYMBOL(bcm47xx_nvram_getenv);
 
-पूर्णांक bcm47xx_nvram_gpio_pin(स्थिर अक्षर *name)
-अणु
-	पूर्णांक i, err;
-	अक्षर nvram_var[] = "gpioXX";
-	अक्षर buf[NVRAM_MAX_GPIO_VALUE_LEN];
+int bcm47xx_nvram_gpio_pin(const char *name)
+{
+	int i, err;
+	char nvram_var[] = "gpioXX";
+	char buf[NVRAM_MAX_GPIO_VALUE_LEN];
 
-	/* TODO: Optimize it to करोn't call दो_पर्या so many बार */
-	क्रम (i = 0; i < NVRAM_MAX_GPIO_ENTRIES; i++) अणु
-		err = snम_लिखो(nvram_var, माप(nvram_var), "gpio%i", i);
-		अगर (err <= 0)
-			जारी;
-		err = bcm47xx_nvram_दो_पर्या(nvram_var, buf, माप(buf));
-		अगर (err <= 0)
-			जारी;
-		अगर (!म_भेद(name, buf))
-			वापस i;
-	पूर्ण
-	वापस -ENOENT;
-पूर्ण
+	/* TODO: Optimize it to don't call getenv so many times */
+	for (i = 0; i < NVRAM_MAX_GPIO_ENTRIES; i++) {
+		err = snprintf(nvram_var, sizeof(nvram_var), "gpio%i", i);
+		if (err <= 0)
+			continue;
+		err = bcm47xx_nvram_getenv(nvram_var, buf, sizeof(buf));
+		if (err <= 0)
+			continue;
+		if (!strcmp(name, buf))
+			return i;
+	}
+	return -ENOENT;
+}
 EXPORT_SYMBOL(bcm47xx_nvram_gpio_pin);
 
-अक्षर *bcm47xx_nvram_get_contents(माप_प्रकार *nvram_size)
-अणु
-	पूर्णांक err;
-	अक्षर *nvram;
+char *bcm47xx_nvram_get_contents(size_t *nvram_size)
+{
+	int err;
+	char *nvram;
 
-	अगर (!nvram_len) अणु
+	if (!nvram_len) {
 		err = nvram_init();
-		अगर (err)
-			वापस शून्य;
-	पूर्ण
+		if (err)
+			return NULL;
+	}
 
-	*nvram_size = nvram_len - माप(काष्ठा nvram_header);
-	nvram = vदो_स्मृति(*nvram_size);
-	अगर (!nvram)
-		वापस शून्य;
-	स_नकल(nvram, &nvram_buf[माप(काष्ठा nvram_header)], *nvram_size);
+	*nvram_size = nvram_len - sizeof(struct nvram_header);
+	nvram = vmalloc(*nvram_size);
+	if (!nvram)
+		return NULL;
+	memcpy(nvram, &nvram_buf[sizeof(struct nvram_header)], *nvram_size);
 
-	वापस nvram;
-पूर्ण
+	return nvram;
+}
 EXPORT_SYMBOL(bcm47xx_nvram_get_contents);
 
 MODULE_LICENSE("GPL v2");

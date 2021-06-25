@@ -1,171 +1,170 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2015 Intel Corporation. All rights reserved.
  *
- * Author: Shobhit Kumar <shobhit.kumar@पूर्णांकel.com>
+ * Author: Shobhit Kumar <shobhit.kumar@intel.com>
  */
 
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/mfd/पूर्णांकel_soc_pmic.h>
-#समावेश <linux/pwm.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/mfd/intel_soc_pmic.h>
+#include <linux/pwm.h>
 
-#घोषणा PWM0_CLK_DIV		0x4B
-#घोषणा  PWM_OUTPUT_ENABLE	BIT(7)
-#घोषणा  PWM_DIV_CLK_0		0x00 /* DIVIDECLK = BASECLK */
-#घोषणा  PWM_DIV_CLK_100	0x63 /* DIVIDECLK = BASECLK/100 */
-#घोषणा  PWM_DIV_CLK_128	0x7F /* DIVIDECLK = BASECLK/128 */
+#define PWM0_CLK_DIV		0x4B
+#define  PWM_OUTPUT_ENABLE	BIT(7)
+#define  PWM_DIV_CLK_0		0x00 /* DIVIDECLK = BASECLK */
+#define  PWM_DIV_CLK_100	0x63 /* DIVIDECLK = BASECLK/100 */
+#define  PWM_DIV_CLK_128	0x7F /* DIVIDECLK = BASECLK/128 */
 
-#घोषणा PWM0_DUTY_CYCLE		0x4E
-#घोषणा BACKLIGHT_EN		0x51
+#define PWM0_DUTY_CYCLE		0x4E
+#define BACKLIGHT_EN		0x51
 
-#घोषणा PWM_MAX_LEVEL		0xFF
+#define PWM_MAX_LEVEL		0xFF
 
-#घोषणा PWM_BASE_CLK_MHZ	6	/* 6 MHz */
-#घोषणा PWM_MAX_PERIOD_NS	5461334	/* 183 Hz */
+#define PWM_BASE_CLK_MHZ	6	/* 6 MHz */
+#define PWM_MAX_PERIOD_NS	5461334	/* 183 Hz */
 
 /**
- * काष्ठा crystalcove_pwm - Crystal Cove PWM controller
- * @chip: the असलtract pwm_chip काष्ठाure.
+ * struct crystalcove_pwm - Crystal Cove PWM controller
+ * @chip: the abstract pwm_chip structure.
  * @regmap: the regmap from the parent device.
  */
-काष्ठा crystalcove_pwm अणु
-	काष्ठा pwm_chip chip;
-	काष्ठा regmap *regmap;
-पूर्ण;
+struct crystalcove_pwm {
+	struct pwm_chip chip;
+	struct regmap *regmap;
+};
 
-अटल अंतरभूत काष्ठा crystalcove_pwm *to_crc_pwm(काष्ठा pwm_chip *pc)
-अणु
-	वापस container_of(pc, काष्ठा crystalcove_pwm, chip);
-पूर्ण
+static inline struct crystalcove_pwm *to_crc_pwm(struct pwm_chip *pc)
+{
+	return container_of(pc, struct crystalcove_pwm, chip);
+}
 
-अटल पूर्णांक crc_pwm_calc_clk_भाग(पूर्णांक period_ns)
-अणु
-	पूर्णांक clk_भाग;
+static int crc_pwm_calc_clk_div(int period_ns)
+{
+	int clk_div;
 
-	clk_भाग = PWM_BASE_CLK_MHZ * period_ns / (256 * NSEC_PER_USEC);
-	/* clk_भाग 1 - 128, maps to रेजिस्टर values 0-127 */
-	अगर (clk_भाग > 0)
-		clk_भाग--;
+	clk_div = PWM_BASE_CLK_MHZ * period_ns / (256 * NSEC_PER_USEC);
+	/* clk_div 1 - 128, maps to register values 0-127 */
+	if (clk_div > 0)
+		clk_div--;
 
-	वापस clk_भाग;
-पूर्ण
+	return clk_div;
+}
 
-अटल पूर्णांक crc_pwm_apply(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm,
-			 स्थिर काष्ठा pwm_state *state)
-अणु
-	काष्ठा crystalcove_pwm *crc_pwm = to_crc_pwm(chip);
-	काष्ठा device *dev = crc_pwm->chip.dev;
-	पूर्णांक err;
+static int crc_pwm_apply(struct pwm_chip *chip, struct pwm_device *pwm,
+			 const struct pwm_state *state)
+{
+	struct crystalcove_pwm *crc_pwm = to_crc_pwm(chip);
+	struct device *dev = crc_pwm->chip.dev;
+	int err;
 
-	अगर (state->period > PWM_MAX_PERIOD_NS) अणु
+	if (state->period > PWM_MAX_PERIOD_NS) {
 		dev_err(dev, "un-supported period_ns\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (state->polarity != PWM_POLARITY_NORMAL)
-		वापस -EINVAL;
+	if (state->polarity != PWM_POLARITY_NORMAL)
+		return -EINVAL;
 
-	अगर (pwm_is_enabled(pwm) && !state->enabled) अणु
-		err = regmap_ग_लिखो(crc_pwm->regmap, BACKLIGHT_EN, 0);
-		अगर (err) अणु
+	if (pwm_is_enabled(pwm) && !state->enabled) {
+		err = regmap_write(crc_pwm->regmap, BACKLIGHT_EN, 0);
+		if (err) {
 			dev_err(dev, "Error writing BACKLIGHT_EN %d\n", err);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	अगर (pwm_get_duty_cycle(pwm) != state->duty_cycle ||
-	    pwm_get_period(pwm) != state->period) अणु
+	if (pwm_get_duty_cycle(pwm) != state->duty_cycle ||
+	    pwm_get_period(pwm) != state->period) {
 		u64 level = state->duty_cycle * PWM_MAX_LEVEL;
 
-		करो_भाग(level, state->period);
+		do_div(level, state->period);
 
-		err = regmap_ग_लिखो(crc_pwm->regmap, PWM0_DUTY_CYCLE, level);
-		अगर (err) अणु
+		err = regmap_write(crc_pwm->regmap, PWM0_DUTY_CYCLE, level);
+		if (err) {
 			dev_err(dev, "Error writing PWM0_DUTY_CYCLE %d\n", err);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	अगर (pwm_is_enabled(pwm) && state->enabled &&
-	    pwm_get_period(pwm) != state->period) अणु
-		/* changing the clk भागisor, clear PWM_OUTPUT_ENABLE first */
-		err = regmap_ग_लिखो(crc_pwm->regmap, PWM0_CLK_DIV, 0);
-		अगर (err) अणु
+	if (pwm_is_enabled(pwm) && state->enabled &&
+	    pwm_get_period(pwm) != state->period) {
+		/* changing the clk divisor, clear PWM_OUTPUT_ENABLE first */
+		err = regmap_write(crc_pwm->regmap, PWM0_CLK_DIV, 0);
+		if (err) {
 			dev_err(dev, "Error writing PWM0_CLK_DIV %d\n", err);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	अगर (pwm_get_period(pwm) != state->period ||
-	    pwm_is_enabled(pwm) != state->enabled) अणु
-		पूर्णांक clk_भाग = crc_pwm_calc_clk_भाग(state->period);
-		पूर्णांक pwm_output_enable = state->enabled ? PWM_OUTPUT_ENABLE : 0;
+	if (pwm_get_period(pwm) != state->period ||
+	    pwm_is_enabled(pwm) != state->enabled) {
+		int clk_div = crc_pwm_calc_clk_div(state->period);
+		int pwm_output_enable = state->enabled ? PWM_OUTPUT_ENABLE : 0;
 
-		err = regmap_ग_लिखो(crc_pwm->regmap, PWM0_CLK_DIV,
-				   clk_भाग | pwm_output_enable);
-		अगर (err) अणु
+		err = regmap_write(crc_pwm->regmap, PWM0_CLK_DIV,
+				   clk_div | pwm_output_enable);
+		if (err) {
 			dev_err(dev, "Error writing PWM0_CLK_DIV %d\n", err);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	अगर (!pwm_is_enabled(pwm) && state->enabled) अणु
-		err = regmap_ग_लिखो(crc_pwm->regmap, BACKLIGHT_EN, 1);
-		अगर (err) अणु
+	if (!pwm_is_enabled(pwm) && state->enabled) {
+		err = regmap_write(crc_pwm->regmap, BACKLIGHT_EN, 1);
+		if (err) {
 			dev_err(dev, "Error writing BACKLIGHT_EN %d\n", err);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम crc_pwm_get_state(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm,
-			      काष्ठा pwm_state *state)
-अणु
-	काष्ठा crystalcove_pwm *crc_pwm = to_crc_pwm(chip);
-	काष्ठा device *dev = crc_pwm->chip.dev;
-	अचिन्हित पूर्णांक clk_भाग, clk_भाग_reg, duty_cycle_reg;
-	पूर्णांक error;
+static void crc_pwm_get_state(struct pwm_chip *chip, struct pwm_device *pwm,
+			      struct pwm_state *state)
+{
+	struct crystalcove_pwm *crc_pwm = to_crc_pwm(chip);
+	struct device *dev = crc_pwm->chip.dev;
+	unsigned int clk_div, clk_div_reg, duty_cycle_reg;
+	int error;
 
-	error = regmap_पढ़ो(crc_pwm->regmap, PWM0_CLK_DIV, &clk_भाग_reg);
-	अगर (error) अणु
+	error = regmap_read(crc_pwm->regmap, PWM0_CLK_DIV, &clk_div_reg);
+	if (error) {
 		dev_err(dev, "Error reading PWM0_CLK_DIV %d\n", error);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	error = regmap_पढ़ो(crc_pwm->regmap, PWM0_DUTY_CYCLE, &duty_cycle_reg);
-	अगर (error) अणु
+	error = regmap_read(crc_pwm->regmap, PWM0_DUTY_CYCLE, &duty_cycle_reg);
+	if (error) {
 		dev_err(dev, "Error reading PWM0_DUTY_CYCLE %d\n", error);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	clk_भाग = (clk_भाग_reg & ~PWM_OUTPUT_ENABLE) + 1;
+	clk_div = (clk_div_reg & ~PWM_OUTPUT_ENABLE) + 1;
 
 	state->period =
-		DIV_ROUND_UP(clk_भाग * NSEC_PER_USEC * 256, PWM_BASE_CLK_MHZ);
+		DIV_ROUND_UP(clk_div * NSEC_PER_USEC * 256, PWM_BASE_CLK_MHZ);
 	state->duty_cycle =
 		DIV_ROUND_UP_ULL(duty_cycle_reg * state->period, PWM_MAX_LEVEL);
 	state->polarity = PWM_POLARITY_NORMAL;
-	state->enabled = !!(clk_भाग_reg & PWM_OUTPUT_ENABLE);
-पूर्ण
+	state->enabled = !!(clk_div_reg & PWM_OUTPUT_ENABLE);
+}
 
-अटल स्थिर काष्ठा pwm_ops crc_pwm_ops = अणु
+static const struct pwm_ops crc_pwm_ops = {
 	.apply = crc_pwm_apply,
 	.get_state = crc_pwm_get_state,
-पूर्ण;
+};
 
-अटल पूर्णांक crystalcove_pwm_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा crystalcove_pwm *pwm;
-	काष्ठा device *dev = pdev->dev.parent;
-	काष्ठा पूर्णांकel_soc_pmic *pmic = dev_get_drvdata(dev);
+static int crystalcove_pwm_probe(struct platform_device *pdev)
+{
+	struct crystalcove_pwm *pwm;
+	struct device *dev = pdev->dev.parent;
+	struct intel_soc_pmic *pmic = dev_get_drvdata(dev);
 
-	pwm = devm_kzalloc(&pdev->dev, माप(*pwm), GFP_KERNEL);
-	अगर (!pwm)
-		वापस -ENOMEM;
+	pwm = devm_kzalloc(&pdev->dev, sizeof(*pwm), GFP_KERNEL);
+	if (!pwm)
+		return -ENOMEM;
 
 	pwm->chip.dev = &pdev->dev;
 	pwm->chip.ops = &crc_pwm_ops;
@@ -174,24 +173,24 @@
 	/* get the PMIC regmap */
 	pwm->regmap = pmic->regmap;
 
-	platक्रमm_set_drvdata(pdev, pwm);
+	platform_set_drvdata(pdev, pwm);
 
-	वापस pwmchip_add(&pwm->chip);
-पूर्ण
+	return pwmchip_add(&pwm->chip);
+}
 
-अटल पूर्णांक crystalcove_pwm_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा crystalcove_pwm *pwm = platक्रमm_get_drvdata(pdev);
+static int crystalcove_pwm_remove(struct platform_device *pdev)
+{
+	struct crystalcove_pwm *pwm = platform_get_drvdata(pdev);
 
-	वापस pwmchip_हटाओ(&pwm->chip);
-पूर्ण
+	return pwmchip_remove(&pwm->chip);
+}
 
-अटल काष्ठा platक्रमm_driver crystalcove_pwm_driver = अणु
+static struct platform_driver crystalcove_pwm_driver = {
 	.probe = crystalcove_pwm_probe,
-	.हटाओ = crystalcove_pwm_हटाओ,
-	.driver = अणु
+	.remove = crystalcove_pwm_remove,
+	.driver = {
 		.name = "crystal_cove_pwm",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-builtin_platक्रमm_driver(crystalcove_pwm_driver);
+builtin_platform_driver(crystalcove_pwm_driver);

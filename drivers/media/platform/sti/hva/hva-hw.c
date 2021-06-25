@@ -1,70 +1,69 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) STMicroelectronics SA 2015
  * Authors: Yannick Fertre <yannick.fertre@st.com>
  *          Hugues Fruchet <hugues.fruchet@st.com>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#अगर_घोषित CONFIG_VIDEO_STI_HVA_DEBUGFS
-#समावेश <linux/seq_file.h>
-#पूर्ण_अगर
+#include <linux/clk.h>
+#include <linux/interrupt.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#ifdef CONFIG_VIDEO_STI_HVA_DEBUGFS
+#include <linux/seq_file.h>
+#endif
 
-#समावेश "hva.h"
-#समावेश "hva-hw.h"
+#include "hva.h"
+#include "hva-hw.h"
 
-/* HVA रेजिस्टर offsets */
-#घोषणा HVA_HIF_REG_RST                 0x0100U
-#घोषणा HVA_HIF_REG_RST_ACK             0x0104U
-#घोषणा HVA_HIF_REG_MIF_CFG             0x0108U
-#घोषणा HVA_HIF_REG_HEC_MIF_CFG         0x010CU
-#घोषणा HVA_HIF_REG_CFL                 0x0110U
-#घोषणा HVA_HIF_FIFO_CMD                0x0114U
-#घोषणा HVA_HIF_FIFO_STS                0x0118U
-#घोषणा HVA_HIF_REG_SFL                 0x011CU
-#घोषणा HVA_HIF_REG_IT_ACK              0x0120U
-#घोषणा HVA_HIF_REG_ERR_IT_ACK          0x0124U
-#घोषणा HVA_HIF_REG_LMI_ERR             0x0128U
-#घोषणा HVA_HIF_REG_EMI_ERR             0x012CU
-#घोषणा HVA_HIF_REG_HEC_MIF_ERR         0x0130U
-#घोषणा HVA_HIF_REG_HEC_STS             0x0134U
-#घोषणा HVA_HIF_REG_HVC_STS             0x0138U
-#घोषणा HVA_HIF_REG_HJE_STS             0x013CU
-#घोषणा HVA_HIF_REG_CNT                 0x0140U
-#घोषणा HVA_HIF_REG_HEC_CHKSYN_DIS      0x0144U
-#घोषणा HVA_HIF_REG_CLK_GATING          0x0148U
-#घोषणा HVA_HIF_REG_VERSION             0x014CU
-#घोषणा HVA_HIF_REG_BSM                 0x0150U
+/* HVA register offsets */
+#define HVA_HIF_REG_RST                 0x0100U
+#define HVA_HIF_REG_RST_ACK             0x0104U
+#define HVA_HIF_REG_MIF_CFG             0x0108U
+#define HVA_HIF_REG_HEC_MIF_CFG         0x010CU
+#define HVA_HIF_REG_CFL                 0x0110U
+#define HVA_HIF_FIFO_CMD                0x0114U
+#define HVA_HIF_FIFO_STS                0x0118U
+#define HVA_HIF_REG_SFL                 0x011CU
+#define HVA_HIF_REG_IT_ACK              0x0120U
+#define HVA_HIF_REG_ERR_IT_ACK          0x0124U
+#define HVA_HIF_REG_LMI_ERR             0x0128U
+#define HVA_HIF_REG_EMI_ERR             0x012CU
+#define HVA_HIF_REG_HEC_MIF_ERR         0x0130U
+#define HVA_HIF_REG_HEC_STS             0x0134U
+#define HVA_HIF_REG_HVC_STS             0x0138U
+#define HVA_HIF_REG_HJE_STS             0x013CU
+#define HVA_HIF_REG_CNT                 0x0140U
+#define HVA_HIF_REG_HEC_CHKSYN_DIS      0x0144U
+#define HVA_HIF_REG_CLK_GATING          0x0148U
+#define HVA_HIF_REG_VERSION             0x014CU
+#define HVA_HIF_REG_BSM                 0x0150U
 
-/* define value क्रम version id रेजिस्टर (HVA_HIF_REG_VERSION) */
-#घोषणा VERSION_ID_MASK	0x0000FFFF
+/* define value for version id register (HVA_HIF_REG_VERSION) */
+#define VERSION_ID_MASK	0x0000FFFF
 
-/* define values क्रम BSM रेजिस्टर (HVA_HIF_REG_BSM) */
-#घोषणा BSM_CFG_VAL1	0x0003F000
-#घोषणा BSM_CFG_VAL2	0x003F0000
+/* define values for BSM register (HVA_HIF_REG_BSM) */
+#define BSM_CFG_VAL1	0x0003F000
+#define BSM_CFG_VAL2	0x003F0000
 
-/* define values क्रम memory पूर्णांकerface रेजिस्टर (HVA_HIF_REG_MIF_CFG) */
-#घोषणा MIF_CFG_VAL1	0x04460446
-#घोषणा MIF_CFG_VAL2	0x04460806
-#घोषणा MIF_CFG_VAL3	0x00000000
+/* define values for memory interface register (HVA_HIF_REG_MIF_CFG) */
+#define MIF_CFG_VAL1	0x04460446
+#define MIF_CFG_VAL2	0x04460806
+#define MIF_CFG_VAL3	0x00000000
 
-/* define value क्रम HEC memory पूर्णांकerface रेजिस्टर (HVA_HIF_REG_MIF_CFG) */
-#घोषणा HEC_MIF_CFG_VAL	0x000000C4
+/* define value for HEC memory interface register (HVA_HIF_REG_MIF_CFG) */
+#define HEC_MIF_CFG_VAL	0x000000C4
 
-/*  Bits definition क्रम घड़ी gating रेजिस्टर (HVA_HIF_REG_CLK_GATING) */
-#घोषणा CLK_GATING_HVC	BIT(0)
-#घोषणा CLK_GATING_HEC	BIT(1)
-#घोषणा CLK_GATING_HJE	BIT(2)
+/*  Bits definition for clock gating register (HVA_HIF_REG_CLK_GATING) */
+#define CLK_GATING_HVC	BIT(0)
+#define CLK_GATING_HEC	BIT(1)
+#define CLK_GATING_HJE	BIT(2)
 
-/* fix hva घड़ी rate */
-#घोषणा CLK_RATE		300000000
+/* fix hva clock rate */
+#define CLK_RATE		300000000
 
-/* fix delay क्रम pmrunसमय */
-#घोषणा AUTOSUSPEND_DELAY_MS	3
+/* fix delay for pmruntime */
+#define AUTOSUSPEND_DELAY_MS	3
 
 /*
  * hw encode error values
@@ -73,17 +72,17 @@
  * H264_FRAME_SKIPPED: VECH264 Frame skipped (refers to CPB Buffer Size)
  * H264_SLICE_LIMIT_SIZE: VECH264 MB > slice limit size
  * H264_MAX_SLICE_NUMBER: VECH264 max slice number reached
- * H264_SLICE_READY: VECH264 Slice पढ़ोy
+ * H264_SLICE_READY: VECH264 Slice ready
  * TASK_LIST_FULL: HVA/FPC task list full
-		   (discard latest transक्रमm command)
- * UNKNOWN_COMMAND: Transक्रमm command not known by HVA/FPC
+		   (discard latest transform command)
+ * UNKNOWN_COMMAND: Transform command not known by HVA/FPC
  * WRONG_CODEC_OR_RESOLUTION: Wrong Codec or Resolution Selection
- * NO_INT_COMPLETION: Time-out on पूर्णांकerrupt completion
+ * NO_INT_COMPLETION: Time-out on interrupt completion
  * LMI_ERR: Local Memory Interface Error
  * EMI_ERR: External Memory Interface Error
  * HECMI_ERR: HEC Memory Interface Error
  */
-क्रमागत hva_hw_error अणु
+enum hva_hw_error {
 	NO_ERROR = 0x0,
 	H264_BITSTREAM_OVERSIZE = 0x2,
 	H264_FRAME_SKIPPED = 0x4,
@@ -97,371 +96,371 @@
 	LMI_ERR = 0x101,
 	EMI_ERR = 0x102,
 	HECMI_ERR = 0x103,
-पूर्ण;
+};
 
-अटल irqवापस_t hva_hw_its_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा hva_dev *hva = data;
+static irqreturn_t hva_hw_its_interrupt(int irq, void *data)
+{
+	struct hva_dev *hva = data;
 
-	/* पढ़ो status रेजिस्टरs */
-	hva->sts_reg = पढ़ोl_relaxed(hva->regs + HVA_HIF_FIFO_STS);
-	hva->sfl_reg = पढ़ोl_relaxed(hva->regs + HVA_HIF_REG_SFL);
+	/* read status registers */
+	hva->sts_reg = readl_relaxed(hva->regs + HVA_HIF_FIFO_STS);
+	hva->sfl_reg = readl_relaxed(hva->regs + HVA_HIF_REG_SFL);
 
-	/* acknowledge पूर्णांकerruption */
-	ग_लिखोl_relaxed(0x1, hva->regs + HVA_HIF_REG_IT_ACK);
+	/* acknowledge interruption */
+	writel_relaxed(0x1, hva->regs + HVA_HIF_REG_IT_ACK);
 
-	वापस IRQ_WAKE_THREAD;
-पूर्ण
+	return IRQ_WAKE_THREAD;
+}
 
-अटल irqवापस_t hva_hw_its_irq_thपढ़ो(पूर्णांक irq, व्योम *arg)
-अणु
-	काष्ठा hva_dev *hva = arg;
-	काष्ठा device *dev = hva_to_dev(hva);
+static irqreturn_t hva_hw_its_irq_thread(int irq, void *arg)
+{
+	struct hva_dev *hva = arg;
+	struct device *dev = hva_to_dev(hva);
 	u32 status = hva->sts_reg & 0xFF;
 	u8 ctx_id = 0;
-	काष्ठा hva_ctx *ctx = शून्य;
+	struct hva_ctx *ctx = NULL;
 
 	dev_dbg(dev, "%s     %s: status: 0x%02x fifo level: 0x%02x\n",
 		HVA_PREFIX, __func__, hva->sts_reg & 0xFF, hva->sfl_reg & 0xF);
 
 	/*
 	 * status: task_id[31:16] client_id[15:8] status[7:0]
-	 * the context identअगरier is retrieved from the client identअगरier
+	 * the context identifier is retrieved from the client identifier
 	 */
 	ctx_id = (hva->sts_reg & 0xFF00) >> 8;
-	अगर (ctx_id >= HVA_MAX_INSTANCES) अणु
+	if (ctx_id >= HVA_MAX_INSTANCES) {
 		dev_err(dev, "%s     %s: bad context identifier: %d\n",
 			ctx->name, __func__, ctx_id);
 		ctx->hw_err = true;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ctx = hva->instances[ctx_id];
-	अगर (!ctx)
-		जाओ out;
+	if (!ctx)
+		goto out;
 
-	चयन (status) अणु
-	हाल NO_ERROR:
+	switch (status) {
+	case NO_ERROR:
 		dev_dbg(dev, "%s     %s: no error\n",
 			ctx->name, __func__);
 		ctx->hw_err = false;
-		अवरोध;
-	हाल H264_SLICE_READY:
+		break;
+	case H264_SLICE_READY:
 		dev_dbg(dev, "%s     %s: h264 slice ready\n",
 			ctx->name, __func__);
 		ctx->hw_err = false;
-		अवरोध;
-	हाल H264_FRAME_SKIPPED:
+		break;
+	case H264_FRAME_SKIPPED:
 		dev_dbg(dev, "%s     %s: h264 frame skipped\n",
 			ctx->name, __func__);
 		ctx->hw_err = false;
-		अवरोध;
-	हाल H264_BITSTREAM_OVERSIZE:
+		break;
+	case H264_BITSTREAM_OVERSIZE:
 		dev_err(dev, "%s     %s:h264 bitstream oversize\n",
 			ctx->name, __func__);
 		ctx->hw_err = true;
-		अवरोध;
-	हाल H264_SLICE_LIMIT_SIZE:
+		break;
+	case H264_SLICE_LIMIT_SIZE:
 		dev_err(dev, "%s     %s: h264 slice limit size is reached\n",
 			ctx->name, __func__);
 		ctx->hw_err = true;
-		अवरोध;
-	हाल H264_MAX_SLICE_NUMBER:
+		break;
+	case H264_MAX_SLICE_NUMBER:
 		dev_err(dev, "%s     %s: h264 max slice number is reached\n",
 			ctx->name, __func__);
 		ctx->hw_err = true;
-		अवरोध;
-	हाल TASK_LIST_FULL:
+		break;
+	case TASK_LIST_FULL:
 		dev_err(dev, "%s     %s:task list full\n",
 			ctx->name, __func__);
 		ctx->hw_err = true;
-		अवरोध;
-	हाल UNKNOWN_COMMAND:
+		break;
+	case UNKNOWN_COMMAND:
 		dev_err(dev, "%s     %s: command not known\n",
 			ctx->name, __func__);
 		ctx->hw_err = true;
-		अवरोध;
-	हाल WRONG_CODEC_OR_RESOLUTION:
+		break;
+	case WRONG_CODEC_OR_RESOLUTION:
 		dev_err(dev, "%s     %s: wrong codec or resolution\n",
 			ctx->name, __func__);
 		ctx->hw_err = true;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(dev, "%s     %s: status not recognized\n",
 			ctx->name, __func__);
 		ctx->hw_err = true;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 out:
-	complete(&hva->पूर्णांकerrupt);
+	complete(&hva->interrupt);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t hva_hw_err_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा hva_dev *hva = data;
+static irqreturn_t hva_hw_err_interrupt(int irq, void *data)
+{
+	struct hva_dev *hva = data;
 
-	/* पढ़ो status रेजिस्टरs */
-	hva->sts_reg = पढ़ोl_relaxed(hva->regs + HVA_HIF_FIFO_STS);
-	hva->sfl_reg = पढ़ोl_relaxed(hva->regs + HVA_HIF_REG_SFL);
+	/* read status registers */
+	hva->sts_reg = readl_relaxed(hva->regs + HVA_HIF_FIFO_STS);
+	hva->sfl_reg = readl_relaxed(hva->regs + HVA_HIF_REG_SFL);
 
-	/* पढ़ो error रेजिस्टरs */
-	hva->lmi_err_reg = पढ़ोl_relaxed(hva->regs + HVA_HIF_REG_LMI_ERR);
-	hva->emi_err_reg = पढ़ोl_relaxed(hva->regs + HVA_HIF_REG_EMI_ERR);
-	hva->hec_mअगर_err_reg = पढ़ोl_relaxed(hva->regs +
+	/* read error registers */
+	hva->lmi_err_reg = readl_relaxed(hva->regs + HVA_HIF_REG_LMI_ERR);
+	hva->emi_err_reg = readl_relaxed(hva->regs + HVA_HIF_REG_EMI_ERR);
+	hva->hec_mif_err_reg = readl_relaxed(hva->regs +
 					     HVA_HIF_REG_HEC_MIF_ERR);
 
-	/* acknowledge पूर्णांकerruption */
-	ग_लिखोl_relaxed(0x1, hva->regs + HVA_HIF_REG_IT_ACK);
+	/* acknowledge interruption */
+	writel_relaxed(0x1, hva->regs + HVA_HIF_REG_IT_ACK);
 
-	वापस IRQ_WAKE_THREAD;
-पूर्ण
+	return IRQ_WAKE_THREAD;
+}
 
-अटल irqवापस_t hva_hw_err_irq_thपढ़ो(पूर्णांक irq, व्योम *arg)
-अणु
-	काष्ठा hva_dev *hva = arg;
-	काष्ठा device *dev = hva_to_dev(hva);
+static irqreturn_t hva_hw_err_irq_thread(int irq, void *arg)
+{
+	struct hva_dev *hva = arg;
+	struct device *dev = hva_to_dev(hva);
 	u8 ctx_id = 0;
-	काष्ठा hva_ctx *ctx;
+	struct hva_ctx *ctx;
 
 	dev_dbg(dev, "%s     status: 0x%02x fifo level: 0x%02x\n",
 		HVA_PREFIX, hva->sts_reg & 0xFF, hva->sfl_reg & 0xF);
 
 	/*
 	 * status: task_id[31:16] client_id[15:8] status[7:0]
-	 * the context identअगरier is retrieved from the client identअगरier
+	 * the context identifier is retrieved from the client identifier
 	 */
 	ctx_id = (hva->sts_reg & 0xFF00) >> 8;
-	अगर (ctx_id >= HVA_MAX_INSTANCES) अणु
+	if (ctx_id >= HVA_MAX_INSTANCES) {
 		dev_err(dev, "%s     bad context identifier: %d\n", HVA_PREFIX,
 			ctx_id);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ctx = hva->instances[ctx_id];
-	अगर (!ctx)
-		जाओ out;
+	if (!ctx)
+		goto out;
 
-	अगर (hva->lmi_err_reg) अणु
+	if (hva->lmi_err_reg) {
 		dev_err(dev, "%s     local memory interface error: 0x%08x\n",
 			ctx->name, hva->lmi_err_reg);
 		ctx->hw_err = true;
-	पूर्ण
+	}
 
-	अगर (hva->emi_err_reg) अणु
+	if (hva->emi_err_reg) {
 		dev_err(dev, "%s     external memory interface error: 0x%08x\n",
 			ctx->name, hva->emi_err_reg);
 		ctx->hw_err = true;
-	पूर्ण
+	}
 
-	अगर (hva->hec_mअगर_err_reg) अणु
+	if (hva->hec_mif_err_reg) {
 		dev_err(dev, "%s     hec memory interface error: 0x%08x\n",
-			ctx->name, hva->hec_mअगर_err_reg);
+			ctx->name, hva->hec_mif_err_reg);
 		ctx->hw_err = true;
-	पूर्ण
+	}
 out:
-	complete(&hva->पूर्णांकerrupt);
+	complete(&hva->interrupt);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल अचिन्हित दीर्घ पूर्णांक hva_hw_get_ip_version(काष्ठा hva_dev *hva)
-अणु
-	काष्ठा device *dev = hva_to_dev(hva);
-	अचिन्हित दीर्घ पूर्णांक version;
+static unsigned long int hva_hw_get_ip_version(struct hva_dev *hva)
+{
+	struct device *dev = hva_to_dev(hva);
+	unsigned long int version;
 
-	अगर (pm_runसमय_get_sync(dev) < 0) अणु
+	if (pm_runtime_get_sync(dev) < 0) {
 		dev_err(dev, "%s     failed to get pm_runtime\n", HVA_PREFIX);
-		pm_runसमय_put_noidle(dev);
+		pm_runtime_put_noidle(dev);
 		mutex_unlock(&hva->protect_mutex);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	version = पढ़ोl_relaxed(hva->regs + HVA_HIF_REG_VERSION) &
+	version = readl_relaxed(hva->regs + HVA_HIF_REG_VERSION) &
 				VERSION_ID_MASK;
 
-	pm_runसमय_put_स्वतःsuspend(dev);
+	pm_runtime_put_autosuspend(dev);
 
-	चयन (version) अणु
-	हाल HVA_VERSION_V400:
+	switch (version) {
+	case HVA_VERSION_V400:
 		dev_dbg(dev, "%s     IP hardware version 0x%lx\n",
 			HVA_PREFIX, version);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(dev, "%s     unknown IP hardware version 0x%lx\n",
 			HVA_PREFIX, version);
 		version = HVA_VERSION_UNKNOWN;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस version;
-पूर्ण
+	return version;
+}
 
-पूर्णांक hva_hw_probe(काष्ठा platक्रमm_device *pdev, काष्ठा hva_dev *hva)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा resource *regs;
-	काष्ठा resource *esram;
-	पूर्णांक ret;
+int hva_hw_probe(struct platform_device *pdev, struct hva_dev *hva)
+{
+	struct device *dev = &pdev->dev;
+	struct resource *regs;
+	struct resource *esram;
+	int ret;
 
 	WARN_ON(!hva);
 
-	/* get memory क्रम रेजिस्टरs */
-	regs = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	/* get memory for registers */
+	regs = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	hva->regs = devm_ioremap_resource(dev, regs);
-	अगर (IS_ERR(hva->regs)) अणु
+	if (IS_ERR(hva->regs)) {
 		dev_err(dev, "%s     failed to get regs\n", HVA_PREFIX);
-		वापस PTR_ERR(hva->regs);
-	पूर्ण
+		return PTR_ERR(hva->regs);
+	}
 
-	/* get memory क्रम esram */
-	esram = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
-	अगर (!esram) अणु
+	/* get memory for esram */
+	esram = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+	if (!esram) {
 		dev_err(dev, "%s     failed to get esram\n", HVA_PREFIX);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	hva->esram_addr = esram->start;
 	hva->esram_size = resource_size(esram);
 
 	dev_info(dev, "%s     esram reserved for address: 0x%x size:%d\n",
 		 HVA_PREFIX, hva->esram_addr, hva->esram_size);
 
-	/* get घड़ी resource */
+	/* get clock resource */
 	hva->clk = devm_clk_get(dev, "clk_hva");
-	अगर (IS_ERR(hva->clk)) अणु
+	if (IS_ERR(hva->clk)) {
 		dev_err(dev, "%s     failed to get clock\n", HVA_PREFIX);
-		वापस PTR_ERR(hva->clk);
-	पूर्ण
+		return PTR_ERR(hva->clk);
+	}
 
 	ret = clk_prepare(hva->clk);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "%s     failed to prepare clock\n", HVA_PREFIX);
 		hva->clk = ERR_PTR(-EINVAL);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* get status पूर्णांकerruption resource */
-	ret  = platक्रमm_get_irq(pdev, 0);
-	अगर (ret < 0)
-		जाओ err_clk;
+	/* get status interruption resource */
+	ret  = platform_get_irq(pdev, 0);
+	if (ret < 0)
+		goto err_clk;
 	hva->irq_its = ret;
 
-	ret = devm_request_thपढ़ोed_irq(dev, hva->irq_its, hva_hw_its_पूर्णांकerrupt,
-					hva_hw_its_irq_thपढ़ो,
+	ret = devm_request_threaded_irq(dev, hva->irq_its, hva_hw_its_interrupt,
+					hva_hw_its_irq_thread,
 					IRQF_ONESHOT,
 					"hva_its_irq", hva);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "%s     failed to install status IRQ 0x%x\n",
 			HVA_PREFIX, hva->irq_its);
-		जाओ err_clk;
-	पूर्ण
+		goto err_clk;
+	}
 	disable_irq(hva->irq_its);
 
-	/* get error पूर्णांकerruption resource */
-	ret = platक्रमm_get_irq(pdev, 1);
-	अगर (ret < 0)
-		जाओ err_clk;
+	/* get error interruption resource */
+	ret = platform_get_irq(pdev, 1);
+	if (ret < 0)
+		goto err_clk;
 	hva->irq_err = ret;
 
-	ret = devm_request_thपढ़ोed_irq(dev, hva->irq_err, hva_hw_err_पूर्णांकerrupt,
-					hva_hw_err_irq_thपढ़ो,
+	ret = devm_request_threaded_irq(dev, hva->irq_err, hva_hw_err_interrupt,
+					hva_hw_err_irq_thread,
 					IRQF_ONESHOT,
 					"hva_err_irq", hva);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "%s     failed to install error IRQ 0x%x\n",
 			HVA_PREFIX, hva->irq_err);
-		जाओ err_clk;
-	पूर्ण
+		goto err_clk;
+	}
 	disable_irq(hva->irq_err);
 
 	/* initialise protection mutex */
 	mutex_init(&hva->protect_mutex);
 
-	/* initialise completion संकेत */
-	init_completion(&hva->पूर्णांकerrupt);
+	/* initialise completion signal */
+	init_completion(&hva->interrupt);
 
-	/* initialise runसमय घातer management */
-	pm_runसमय_set_स्वतःsuspend_delay(dev, AUTOSUSPEND_DELAY_MS);
-	pm_runसमय_use_स्वतःsuspend(dev);
-	pm_runसमय_set_suspended(dev);
-	pm_runसमय_enable(dev);
+	/* initialise runtime power management */
+	pm_runtime_set_autosuspend_delay(dev, AUTOSUSPEND_DELAY_MS);
+	pm_runtime_use_autosuspend(dev);
+	pm_runtime_set_suspended(dev);
+	pm_runtime_enable(dev);
 
-	ret = pm_runसमय_get_sync(dev);
-	अगर (ret < 0) अणु
+	ret = pm_runtime_get_sync(dev);
+	if (ret < 0) {
 		dev_err(dev, "%s     failed to set PM\n", HVA_PREFIX);
-		जाओ err_pm;
-	पूर्ण
+		goto err_pm;
+	}
 
 	/* check IP hardware version */
 	hva->ip_version = hva_hw_get_ip_version(hva);
 
-	अगर (hva->ip_version == HVA_VERSION_UNKNOWN) अणु
+	if (hva->ip_version == HVA_VERSION_UNKNOWN) {
 		ret = -EINVAL;
-		जाओ err_pm;
-	पूर्ण
+		goto err_pm;
+	}
 
 	dev_info(dev, "%s     found hva device (version 0x%lx)\n", HVA_PREFIX,
 		 hva->ip_version);
 
-	वापस 0;
+	return 0;
 
 err_pm:
-	pm_runसमय_put(dev);
+	pm_runtime_put(dev);
 err_clk:
-	अगर (hva->clk)
+	if (hva->clk)
 		clk_unprepare(hva->clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम hva_hw_हटाओ(काष्ठा hva_dev *hva)
-अणु
-	काष्ठा device *dev = hva_to_dev(hva);
+void hva_hw_remove(struct hva_dev *hva)
+{
+	struct device *dev = hva_to_dev(hva);
 
 	disable_irq(hva->irq_its);
 	disable_irq(hva->irq_err);
 
-	pm_runसमय_put_स्वतःsuspend(dev);
-	pm_runसमय_disable(dev);
-पूर्ण
+	pm_runtime_put_autosuspend(dev);
+	pm_runtime_disable(dev);
+}
 
-पूर्णांक hva_hw_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा hva_dev *hva = dev_get_drvdata(dev);
+int hva_hw_runtime_suspend(struct device *dev)
+{
+	struct hva_dev *hva = dev_get_drvdata(dev);
 
 	clk_disable_unprepare(hva->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hva_hw_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा hva_dev *hva = dev_get_drvdata(dev);
+int hva_hw_runtime_resume(struct device *dev)
+{
+	struct hva_dev *hva = dev_get_drvdata(dev);
 
-	अगर (clk_prepare_enable(hva->clk)) अणु
+	if (clk_prepare_enable(hva->clk)) {
 		dev_err(hva->dev, "%s     failed to prepare hva clk\n",
 			HVA_PREFIX);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (clk_set_rate(hva->clk, CLK_RATE)) अणु
+	if (clk_set_rate(hva->clk, CLK_RATE)) {
 		dev_err(dev, "%s     failed to set clock frequency\n",
 			HVA_PREFIX);
 		clk_disable_unprepare(hva->clk);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hva_hw_execute_task(काष्ठा hva_ctx *ctx, क्रमागत hva_hw_cmd_type cmd,
-			काष्ठा hva_buffer *task)
-अणु
-	काष्ठा hva_dev *hva = ctx_to_hdev(ctx);
-	काष्ठा device *dev = hva_to_dev(hva);
+int hva_hw_execute_task(struct hva_ctx *ctx, enum hva_hw_cmd_type cmd,
+			struct hva_buffer *task)
+{
+	struct hva_dev *hva = ctx_to_hdev(ctx);
+	struct device *dev = hva_to_dev(hva);
 	u8 client_id = ctx->id;
-	पूर्णांक ret;
+	int ret;
 	u32 reg = 0;
 
 	mutex_lock(&hva->protect_mutex);
@@ -470,55 +469,55 @@ err_clk:
 	enable_irq(hva->irq_its);
 	enable_irq(hva->irq_err);
 
-	अगर (pm_runसमय_get_sync(dev) < 0) अणु
+	if (pm_runtime_get_sync(dev) < 0) {
 		dev_err(dev, "%s     failed to get pm_runtime\n", ctx->name);
 		ctx->sys_errors++;
 		ret = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	reg = पढ़ोl_relaxed(hva->regs + HVA_HIF_REG_CLK_GATING);
-	चयन (cmd) अणु
-	हाल H264_ENC:
+	reg = readl_relaxed(hva->regs + HVA_HIF_REG_CLK_GATING);
+	switch (cmd) {
+	case H264_ENC:
 		reg |= CLK_GATING_HVC;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_dbg(dev, "%s     unknown command 0x%x\n", ctx->name, cmd);
 		ctx->encode_errors++;
 		ret = -EFAULT;
-		जाओ out;
-	पूर्ण
-	ग_लिखोl_relaxed(reg, hva->regs + HVA_HIF_REG_CLK_GATING);
+		goto out;
+	}
+	writel_relaxed(reg, hva->regs + HVA_HIF_REG_CLK_GATING);
 
 	dev_dbg(dev, "%s     %s: write configuration registers\n", ctx->name,
 		__func__);
 
 	/* byte swap config */
-	ग_लिखोl_relaxed(BSM_CFG_VAL1, hva->regs + HVA_HIF_REG_BSM);
+	writel_relaxed(BSM_CFG_VAL1, hva->regs + HVA_HIF_REG_BSM);
 
-	/* define Max Opcode Size and Max Message Size क्रम LMI and EMI */
-	ग_लिखोl_relaxed(MIF_CFG_VAL3, hva->regs + HVA_HIF_REG_MIF_CFG);
-	ग_लिखोl_relaxed(HEC_MIF_CFG_VAL, hva->regs + HVA_HIF_REG_HEC_MIF_CFG);
+	/* define Max Opcode Size and Max Message Size for LMI and EMI */
+	writel_relaxed(MIF_CFG_VAL3, hva->regs + HVA_HIF_REG_MIF_CFG);
+	writel_relaxed(HEC_MIF_CFG_VAL, hva->regs + HVA_HIF_REG_HEC_MIF_CFG);
 
 	/*
 	 * command FIFO: task_id[31:16] client_id[15:8] command_type[7:0]
-	 * the context identअगरier is provided as client identअगरier to the
-	 * hardware, and is retrieved in the पूर्णांकerrupt functions from the
-	 * status रेजिस्टर
+	 * the context identifier is provided as client identifier to the
+	 * hardware, and is retrieved in the interrupt functions from the
+	 * status register
 	 */
 	dev_dbg(dev, "%s     %s: send task (cmd: %d, task_desc: %pad)\n",
 		ctx->name, __func__, cmd + (client_id << 8), &task->paddr);
-	ग_लिखोl_relaxed(cmd + (client_id << 8), hva->regs + HVA_HIF_FIFO_CMD);
-	ग_लिखोl_relaxed(task->paddr, hva->regs + HVA_HIF_FIFO_CMD);
+	writel_relaxed(cmd + (client_id << 8), hva->regs + HVA_HIF_FIFO_CMD);
+	writel_relaxed(task->paddr, hva->regs + HVA_HIF_FIFO_CMD);
 
-	अगर (!रुको_क्रम_completion_समयout(&hva->पूर्णांकerrupt,
-					 msecs_to_jअगरfies(2000))) अणु
+	if (!wait_for_completion_timeout(&hva->interrupt,
+					 msecs_to_jiffies(2000))) {
 		dev_err(dev, "%s     %s: time out on completion\n", ctx->name,
 			__func__);
 		ctx->encode_errors++;
 		ret = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* get encoding status */
 	ret = ctx->hw_err ? -EFAULT : 0;
@@ -529,39 +528,39 @@ out:
 	disable_irq(hva->irq_its);
 	disable_irq(hva->irq_err);
 
-	चयन (cmd) अणु
-	हाल H264_ENC:
+	switch (cmd) {
+	case H264_ENC:
 		reg &= ~CLK_GATING_HVC;
-		ग_लिखोl_relaxed(reg, hva->regs + HVA_HIF_REG_CLK_GATING);
-		अवरोध;
-	शेष:
+		writel_relaxed(reg, hva->regs + HVA_HIF_REG_CLK_GATING);
+		break;
+	default:
 		dev_dbg(dev, "%s     unknown command 0x%x\n", ctx->name, cmd);
-	पूर्ण
+	}
 
-	pm_runसमय_put_स्वतःsuspend(dev);
+	pm_runtime_put_autosuspend(dev);
 	mutex_unlock(&hva->protect_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_VIDEO_STI_HVA_DEBUGFS
-#घोषणा DUMP(reg) seq_म_लिखो(s, "%-30s: 0x%08X\n",\
-			     #reg, पढ़ोl_relaxed(hva->regs + reg))
+#ifdef CONFIG_VIDEO_STI_HVA_DEBUGFS
+#define DUMP(reg) seq_printf(s, "%-30s: 0x%08X\n",\
+			     #reg, readl_relaxed(hva->regs + reg))
 
-व्योम hva_hw_dump_regs(काष्ठा hva_dev *hva, काष्ठा seq_file *s)
-अणु
-	काष्ठा device *dev = hva_to_dev(hva);
+void hva_hw_dump_regs(struct hva_dev *hva, struct seq_file *s)
+{
+	struct device *dev = hva_to_dev(hva);
 
 	mutex_lock(&hva->protect_mutex);
 
-	अगर (pm_runसमय_get_sync(dev) < 0) अणु
-		seq_माला_दो(s, "Cannot wake up IP\n");
-		pm_runसमय_put_noidle(dev);
+	if (pm_runtime_get_sync(dev) < 0) {
+		seq_puts(s, "Cannot wake up IP\n");
+		pm_runtime_put_noidle(dev);
 		mutex_unlock(&hva->protect_mutex);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	seq_म_लिखो(s, "Registers:\nReg @ = 0x%p\n", hva->regs);
+	seq_printf(s, "Registers:\nReg @ = 0x%p\n", hva->regs);
 
 	DUMP(HVA_HIF_REG_RST);
 	DUMP(HVA_HIF_REG_RST_ACK);
@@ -580,7 +579,7 @@ out:
 	DUMP(HVA_HIF_REG_CLK_GATING);
 	DUMP(HVA_HIF_REG_VERSION);
 
-	pm_runसमय_put_स्वतःsuspend(dev);
+	pm_runtime_put_autosuspend(dev);
 	mutex_unlock(&hva->protect_mutex);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif

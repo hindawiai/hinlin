@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2018 Exceet Electronics GmbH
  * Copyright (C) 2018 Bootlin
@@ -10,35 +9,35 @@
  * spi-mem.c and spi.c.
  */
 
-#अगर_अघोषित __LINUX_SPI_INTERNALS_H
-#घोषणा __LINUX_SPI_INTERNALS_H
+#ifndef __LINUX_SPI_INTERNALS_H
+#define __LINUX_SPI_INTERNALS_H
 
-#समावेश <linux/device.h>
-#समावेश <linux/dma-direction.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/spi/spi.h>
+#include <linux/device.h>
+#include <linux/dma-direction.h>
+#include <linux/scatterlist.h>
+#include <linux/spi/spi.h>
 
-व्योम spi_flush_queue(काष्ठा spi_controller *ctrl);
+void spi_flush_queue(struct spi_controller *ctrl);
 
-#अगर_घोषित CONFIG_HAS_DMA
-पूर्णांक spi_map_buf(काष्ठा spi_controller *ctlr, काष्ठा device *dev,
-		काष्ठा sg_table *sgt, व्योम *buf, माप_प्रकार len,
-		क्रमागत dma_data_direction dir);
-व्योम spi_unmap_buf(काष्ठा spi_controller *ctlr, काष्ठा device *dev,
-		   काष्ठा sg_table *sgt, क्रमागत dma_data_direction dir);
-#अन्यथा /* !CONFIG_HAS_DMA */
-अटल अंतरभूत पूर्णांक spi_map_buf(काष्ठा spi_controller *ctlr, काष्ठा device *dev,
-			      काष्ठा sg_table *sgt, व्योम *buf, माप_प्रकार len,
-			      क्रमागत dma_data_direction dir)
-अणु
-	वापस -EINVAL;
-पूर्ण
+#ifdef CONFIG_HAS_DMA
+int spi_map_buf(struct spi_controller *ctlr, struct device *dev,
+		struct sg_table *sgt, void *buf, size_t len,
+		enum dma_data_direction dir);
+void spi_unmap_buf(struct spi_controller *ctlr, struct device *dev,
+		   struct sg_table *sgt, enum dma_data_direction dir);
+#else /* !CONFIG_HAS_DMA */
+static inline int spi_map_buf(struct spi_controller *ctlr, struct device *dev,
+			      struct sg_table *sgt, void *buf, size_t len,
+			      enum dma_data_direction dir)
+{
+	return -EINVAL;
+}
 
-अटल अंतरभूत व्योम spi_unmap_buf(काष्ठा spi_controller *ctlr,
-				 काष्ठा device *dev, काष्ठा sg_table *sgt,
-				 क्रमागत dma_data_direction dir)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_HAS_DMA */
+static inline void spi_unmap_buf(struct spi_controller *ctlr,
+				 struct device *dev, struct sg_table *sgt,
+				 enum dma_data_direction dir)
+{
+}
+#endif /* CONFIG_HAS_DMA */
 
-#पूर्ण_अगर /* __LINUX_SPI_INTERNALS_H */
+#endif /* __LINUX_SPI_INTERNALS_H */

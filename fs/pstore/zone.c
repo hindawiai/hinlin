@@ -1,1185 +1,1184 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Provide a pstore पूर्णांकermediate backend, organized पूर्णांकo kernel memory
- * allocated zones that are then mapped and flushed पूर्णांकo a single
+ * Provide a pstore intermediate backend, organized into kernel memory
+ * allocated zones that are then mapped and flushed into a single
  * contiguous region on a storage backend of some kind (block, mtd, etc).
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/pstore_zone.h>
-#समावेश <linux/kdev_t.h>
-#समावेश <linux/device.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/uपन.स>
-#समावेश <linux/ग_लिखोback.h>
-#समावेश "internal.h"
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/mount.h>
+#include <linux/printk.h>
+#include <linux/fs.h>
+#include <linux/pstore_zone.h>
+#include <linux/kdev_t.h>
+#include <linux/device.h>
+#include <linux/namei.h>
+#include <linux/fcntl.h>
+#include <linux/uio.h>
+#include <linux/writeback.h>
+#include "internal.h"
 
 /**
- * काष्ठा psz_buffer - header of zone to flush to storage
+ * struct psz_buffer - header of zone to flush to storage
  *
  * @sig: signature to indicate header (PSZ_SIG xor PSZONE-type value)
  * @datalen: length of data in @data
- * @start: offset पूर्णांकo @data where the beginning of the stored bytes begin
+ * @start: offset into @data where the beginning of the stored bytes begin
  * @data: zone data.
  */
-काष्ठा psz_buffer अणु
-#घोषणा PSZ_SIG (0x43474244) /* DBGC */
-	uपूर्णांक32_t sig;
+struct psz_buffer {
+#define PSZ_SIG (0x43474244) /* DBGC */
+	uint32_t sig;
 	atomic_t datalen;
 	atomic_t start;
-	uपूर्णांक8_t data[];
-पूर्ण;
+	uint8_t data[];
+};
 
 /**
- * काष्ठा psz_kmsg_header - kmsg dump-specअगरic header to flush to storage
+ * struct psz_kmsg_header - kmsg dump-specific header to flush to storage
  *
- * @magic: magic num क्रम kmsg dump header
- * @समय: kmsg dump trigger समय
+ * @magic: magic num for kmsg dump header
+ * @time: kmsg dump trigger time
  * @compressed: whether conpressed
  * @counter: kmsg dump counter
  * @reason: the kmsg dump reason (e.g. oops, panic, etc)
- * @data: poपूर्णांकer to log data
+ * @data: pointer to log data
  *
- * This is a sub-header क्रम a kmsg dump, trailing after &psz_buffer.
+ * This is a sub-header for a kmsg dump, trailing after &psz_buffer.
  */
-काष्ठा psz_kmsg_header अणु
-#घोषणा PSTORE_KMSG_HEADER_MAGIC 0x4dfc3ae5 /* Just a अक्रमom number */
-	uपूर्णांक32_t magic;
-	काष्ठा बारpec64 समय;
+struct psz_kmsg_header {
+#define PSTORE_KMSG_HEADER_MAGIC 0x4dfc3ae5 /* Just a random number */
+	uint32_t magic;
+	struct timespec64 time;
 	bool compressed;
-	uपूर्णांक32_t counter;
-	क्रमागत kmsg_dump_reason reason;
-	uपूर्णांक8_t data[];
-पूर्ण;
+	uint32_t counter;
+	enum kmsg_dump_reason reason;
+	uint8_t data[];
+};
 
 /**
- * काष्ठा pstore_zone - single stored buffer
+ * struct pstore_zone - single stored buffer
  *
  * @off: zone offset of storage
- * @type: front-end type क्रम this zone
- * @name: front-end name क्रम this zone
- * @buffer: poपूर्णांकer to data buffer managed by this zone
- * @oldbuf: poपूर्णांकer to old data buffer
+ * @type: front-end type for this zone
+ * @name: front-end name for this zone
+ * @buffer: pointer to data buffer managed by this zone
+ * @oldbuf: pointer to old data buffer
  * @buffer_size: bytes in @buffer->data
  * @should_recover: whether this zone should recover from storage
  * @dirty: whether the data in @buffer dirty
  *
- * zone काष्ठाure in memory.
+ * zone structure in memory.
  */
-काष्ठा pstore_zone अणु
+struct pstore_zone {
 	loff_t off;
-	स्थिर अक्षर *name;
-	क्रमागत pstore_type_id type;
+	const char *name;
+	enum pstore_type_id type;
 
-	काष्ठा psz_buffer *buffer;
-	काष्ठा psz_buffer *oldbuf;
-	माप_प्रकार buffer_size;
+	struct psz_buffer *buffer;
+	struct psz_buffer *oldbuf;
+	size_t buffer_size;
 	bool should_recover;
 	atomic_t dirty;
-पूर्ण;
+};
 
 /**
- * काष्ठा psz_context - all about running state of pstore/zone
+ * struct psz_context - all about running state of pstore/zone
  *
  * @kpszs: kmsg dump storage zones
  * @ppsz: pmsg storage zone
  * @cpsz: console storage zone
  * @fpszs: ftrace storage zones
  * @kmsg_max_cnt: max count of @kpszs
- * @kmsg_पढ़ो_cnt: counter of total पढ़ो kmsg dumps
- * @kmsg_ग_लिखो_cnt: counter of total kmsg dump ग_लिखोs
- * @pmsg_पढ़ो_cnt: counter of total पढ़ो pmsg zone
- * @console_पढ़ो_cnt: counter of total पढ़ो console zone
+ * @kmsg_read_cnt: counter of total read kmsg dumps
+ * @kmsg_write_cnt: counter of total kmsg dump writes
+ * @pmsg_read_cnt: counter of total read pmsg zone
+ * @console_read_cnt: counter of total read console zone
  * @ftrace_max_cnt: max count of @fpszs
- * @ftrace_पढ़ो_cnt: counter of max पढ़ो ftrace zone
+ * @ftrace_read_cnt: counter of max read ftrace zone
  * @oops_counter: counter of oops dumps
  * @panic_counter: counter of panic dumps
  * @recovered: whether finished recovering data from storage
  * @on_panic: whether panic is happening
  * @pstore_zone_info_lock: lock to @pstore_zone_info
- * @pstore_zone_info: inक्रमmation from backend
- * @pstore: काष्ठाure क्रम pstore
+ * @pstore_zone_info: information from backend
+ * @pstore: structure for pstore
  */
-काष्ठा psz_context अणु
-	काष्ठा pstore_zone **kpszs;
-	काष्ठा pstore_zone *ppsz;
-	काष्ठा pstore_zone *cpsz;
-	काष्ठा pstore_zone **fpszs;
-	अचिन्हित पूर्णांक kmsg_max_cnt;
-	अचिन्हित पूर्णांक kmsg_पढ़ो_cnt;
-	अचिन्हित पूर्णांक kmsg_ग_लिखो_cnt;
-	अचिन्हित पूर्णांक pmsg_पढ़ो_cnt;
-	अचिन्हित पूर्णांक console_पढ़ो_cnt;
-	अचिन्हित पूर्णांक ftrace_max_cnt;
-	अचिन्हित पूर्णांक ftrace_पढ़ो_cnt;
+struct psz_context {
+	struct pstore_zone **kpszs;
+	struct pstore_zone *ppsz;
+	struct pstore_zone *cpsz;
+	struct pstore_zone **fpszs;
+	unsigned int kmsg_max_cnt;
+	unsigned int kmsg_read_cnt;
+	unsigned int kmsg_write_cnt;
+	unsigned int pmsg_read_cnt;
+	unsigned int console_read_cnt;
+	unsigned int ftrace_max_cnt;
+	unsigned int ftrace_read_cnt;
 	/*
 	 * These counters should be calculated during recovery.
-	 * It records the oops/panic बार after crashes rather than boots.
+	 * It records the oops/panic times after crashes rather than boots.
 	 */
-	अचिन्हित पूर्णांक oops_counter;
-	अचिन्हित पूर्णांक panic_counter;
+	unsigned int oops_counter;
+	unsigned int panic_counter;
 	atomic_t recovered;
 	atomic_t on_panic;
 
 	/*
-	 * pstore_zone_info_lock protects this entire काष्ठाure during calls
-	 * to रेजिस्टर_pstore_zone()/unरेजिस्टर_pstore_zone().
+	 * pstore_zone_info_lock protects this entire structure during calls
+	 * to register_pstore_zone()/unregister_pstore_zone().
 	 */
-	काष्ठा mutex pstore_zone_info_lock;
-	काष्ठा pstore_zone_info *pstore_zone_info;
-	काष्ठा pstore_info pstore;
-पूर्ण;
-अटल काष्ठा psz_context pstore_zone_cxt;
+	struct mutex pstore_zone_info_lock;
+	struct pstore_zone_info *pstore_zone_info;
+	struct pstore_info pstore;
+};
+static struct psz_context pstore_zone_cxt;
 
-अटल व्योम psz_flush_all_dirty_zones(काष्ठा work_काष्ठा *);
-अटल DECLARE_DELAYED_WORK(psz_cleaner, psz_flush_all_dirty_zones);
+static void psz_flush_all_dirty_zones(struct work_struct *);
+static DECLARE_DELAYED_WORK(psz_cleaner, psz_flush_all_dirty_zones);
 
 /**
- * क्रमागत psz_flush_mode - flush mode क्रम psz_zone_ग_लिखो()
+ * enum psz_flush_mode - flush mode for psz_zone_write()
  *
- * @FLUSH_NONE: करो not flush to storage but update data on memory
+ * @FLUSH_NONE: do not flush to storage but update data on memory
  * @FLUSH_PART: just flush part of data including meta data to storage
  * @FLUSH_META: just flush meta data of zone to storage
  * @FLUSH_ALL: flush all of zone
  */
-क्रमागत psz_flush_mode अणु
+enum psz_flush_mode {
 	FLUSH_NONE = 0,
 	FLUSH_PART,
 	FLUSH_META,
 	FLUSH_ALL,
-पूर्ण;
+};
 
-अटल अंतरभूत पूर्णांक buffer_datalen(काष्ठा pstore_zone *zone)
-अणु
-	वापस atomic_पढ़ो(&zone->buffer->datalen);
-पूर्ण
+static inline int buffer_datalen(struct pstore_zone *zone)
+{
+	return atomic_read(&zone->buffer->datalen);
+}
 
-अटल अंतरभूत पूर्णांक buffer_start(काष्ठा pstore_zone *zone)
-अणु
-	वापस atomic_पढ़ो(&zone->buffer->start);
-पूर्ण
+static inline int buffer_start(struct pstore_zone *zone)
+{
+	return atomic_read(&zone->buffer->start);
+}
 
-अटल अंतरभूत bool is_on_panic(व्योम)
-अणु
-	वापस atomic_पढ़ो(&pstore_zone_cxt.on_panic);
-पूर्ण
+static inline bool is_on_panic(void)
+{
+	return atomic_read(&pstore_zone_cxt.on_panic);
+}
 
-अटल sमाप_प्रकार psz_zone_पढ़ो_buffer(काष्ठा pstore_zone *zone, अक्षर *buf,
-		माप_प्रकार len, अचिन्हित दीर्घ off)
-अणु
-	अगर (!buf || !zone || !zone->buffer)
-		वापस -EINVAL;
-	अगर (off > zone->buffer_size)
-		वापस -EINVAL;
-	len = min_t(माप_प्रकार, len, zone->buffer_size - off);
-	स_नकल(buf, zone->buffer->data + off, len);
-	वापस len;
-पूर्ण
+static ssize_t psz_zone_read_buffer(struct pstore_zone *zone, char *buf,
+		size_t len, unsigned long off)
+{
+	if (!buf || !zone || !zone->buffer)
+		return -EINVAL;
+	if (off > zone->buffer_size)
+		return -EINVAL;
+	len = min_t(size_t, len, zone->buffer_size - off);
+	memcpy(buf, zone->buffer->data + off, len);
+	return len;
+}
 
-अटल पूर्णांक psz_zone_पढ़ो_oldbuf(काष्ठा pstore_zone *zone, अक्षर *buf,
-		माप_प्रकार len, अचिन्हित दीर्घ off)
-अणु
-	अगर (!buf || !zone || !zone->oldbuf)
-		वापस -EINVAL;
-	अगर (off > zone->buffer_size)
-		वापस -EINVAL;
-	len = min_t(माप_प्रकार, len, zone->buffer_size - off);
-	स_नकल(buf, zone->oldbuf->data + off, len);
-	वापस 0;
-पूर्ण
+static int psz_zone_read_oldbuf(struct pstore_zone *zone, char *buf,
+		size_t len, unsigned long off)
+{
+	if (!buf || !zone || !zone->oldbuf)
+		return -EINVAL;
+	if (off > zone->buffer_size)
+		return -EINVAL;
+	len = min_t(size_t, len, zone->buffer_size - off);
+	memcpy(buf, zone->oldbuf->data + off, len);
+	return 0;
+}
 
-अटल पूर्णांक psz_zone_ग_लिखो(काष्ठा pstore_zone *zone,
-		क्रमागत psz_flush_mode flush_mode, स्थिर अक्षर *buf,
-		माप_प्रकार len, अचिन्हित दीर्घ off)
-अणु
-	काष्ठा pstore_zone_info *info = pstore_zone_cxt.pstore_zone_info;
-	sमाप_प्रकार wcnt = 0;
-	sमाप_प्रकार (*ग_लिखोop)(स्थिर अक्षर *buf, माप_प्रकार bytes, loff_t pos);
-	माप_प्रकार wlen;
+static int psz_zone_write(struct pstore_zone *zone,
+		enum psz_flush_mode flush_mode, const char *buf,
+		size_t len, unsigned long off)
+{
+	struct pstore_zone_info *info = pstore_zone_cxt.pstore_zone_info;
+	ssize_t wcnt = 0;
+	ssize_t (*writeop)(const char *buf, size_t bytes, loff_t pos);
+	size_t wlen;
 
-	अगर (off > zone->buffer_size)
-		वापस -EINVAL;
+	if (off > zone->buffer_size)
+		return -EINVAL;
 
-	wlen = min_t(माप_प्रकार, len, zone->buffer_size - off);
-	अगर (buf && wlen) अणु
-		स_नकल(zone->buffer->data + off, buf, wlen);
+	wlen = min_t(size_t, len, zone->buffer_size - off);
+	if (buf && wlen) {
+		memcpy(zone->buffer->data + off, buf, wlen);
 		atomic_set(&zone->buffer->datalen, wlen + off);
-	पूर्ण
+	}
 
-	/* aव्योम to damage old records */
-	अगर (!is_on_panic() && !atomic_पढ़ो(&pstore_zone_cxt.recovered))
-		जाओ dirty;
+	/* avoid to damage old records */
+	if (!is_on_panic() && !atomic_read(&pstore_zone_cxt.recovered))
+		goto dirty;
 
-	ग_लिखोop = is_on_panic() ? info->panic_ग_लिखो : info->ग_लिखो;
-	अगर (!ग_लिखोop)
-		जाओ dirty;
+	writeop = is_on_panic() ? info->panic_write : info->write;
+	if (!writeop)
+		goto dirty;
 
-	चयन (flush_mode) अणु
-	हाल FLUSH_NONE:
-		अगर (unlikely(buf && wlen))
-			जाओ dirty;
-		वापस 0;
-	हाल FLUSH_PART:
-		wcnt = ग_लिखोop((स्थिर अक्षर *)zone->buffer->data + off, wlen,
-				zone->off + माप(*zone->buffer) + off);
-		अगर (wcnt != wlen)
-			जाओ dirty;
+	switch (flush_mode) {
+	case FLUSH_NONE:
+		if (unlikely(buf && wlen))
+			goto dirty;
+		return 0;
+	case FLUSH_PART:
+		wcnt = writeop((const char *)zone->buffer->data + off, wlen,
+				zone->off + sizeof(*zone->buffer) + off);
+		if (wcnt != wlen)
+			goto dirty;
 		fallthrough;
-	हाल FLUSH_META:
-		wlen = माप(काष्ठा psz_buffer);
-		wcnt = ग_लिखोop((स्थिर अक्षर *)zone->buffer, wlen, zone->off);
-		अगर (wcnt != wlen)
-			जाओ dirty;
-		अवरोध;
-	हाल FLUSH_ALL:
-		wlen = zone->buffer_size + माप(*zone->buffer);
-		wcnt = ग_लिखोop((स्थिर अक्षर *)zone->buffer, wlen, zone->off);
-		अगर (wcnt != wlen)
-			जाओ dirty;
-		अवरोध;
-	पूर्ण
+	case FLUSH_META:
+		wlen = sizeof(struct psz_buffer);
+		wcnt = writeop((const char *)zone->buffer, wlen, zone->off);
+		if (wcnt != wlen)
+			goto dirty;
+		break;
+	case FLUSH_ALL:
+		wlen = zone->buffer_size + sizeof(*zone->buffer);
+		wcnt = writeop((const char *)zone->buffer, wlen, zone->off);
+		if (wcnt != wlen)
+			goto dirty;
+		break;
+	}
 
-	वापस 0;
+	return 0;
 dirty:
-	/* no need to mark dirty अगर going to try next zone */
-	अगर (wcnt == -ENOMSG)
-		वापस -ENOMSG;
+	/* no need to mark dirty if going to try next zone */
+	if (wcnt == -ENOMSG)
+		return -ENOMSG;
 	atomic_set(&zone->dirty, true);
 	/* flush dirty zones nicely */
-	अगर (wcnt == -EBUSY && !is_on_panic())
-		schedule_delayed_work(&psz_cleaner, msecs_to_jअगरfies(500));
-	वापस -EBUSY;
-पूर्ण
+	if (wcnt == -EBUSY && !is_on_panic())
+		schedule_delayed_work(&psz_cleaner, msecs_to_jiffies(500));
+	return -EBUSY;
+}
 
-अटल पूर्णांक psz_flush_dirty_zone(काष्ठा pstore_zone *zone)
-अणु
-	पूर्णांक ret;
+static int psz_flush_dirty_zone(struct pstore_zone *zone)
+{
+	int ret;
 
-	अगर (unlikely(!zone))
-		वापस -EINVAL;
+	if (unlikely(!zone))
+		return -EINVAL;
 
-	अगर (unlikely(!atomic_पढ़ो(&pstore_zone_cxt.recovered)))
-		वापस -EBUSY;
+	if (unlikely(!atomic_read(&pstore_zone_cxt.recovered)))
+		return -EBUSY;
 
-	अगर (!atomic_xchg(&zone->dirty, false))
-		वापस 0;
+	if (!atomic_xchg(&zone->dirty, false))
+		return 0;
 
-	ret = psz_zone_ग_लिखो(zone, FLUSH_ALL, शून्य, 0, 0);
-	अगर (ret)
+	ret = psz_zone_write(zone, FLUSH_ALL, NULL, 0, 0);
+	if (ret)
 		atomic_set(&zone->dirty, true);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक psz_flush_dirty_zones(काष्ठा pstore_zone **zones, अचिन्हित पूर्णांक cnt)
-अणु
-	पूर्णांक i, ret;
-	काष्ठा pstore_zone *zone;
+static int psz_flush_dirty_zones(struct pstore_zone **zones, unsigned int cnt)
+{
+	int i, ret;
+	struct pstore_zone *zone;
 
-	अगर (!zones)
-		वापस -EINVAL;
+	if (!zones)
+		return -EINVAL;
 
-	क्रम (i = 0; i < cnt; i++) अणु
+	for (i = 0; i < cnt; i++) {
 		zone = zones[i];
-		अगर (!zone)
-			वापस -EINVAL;
+		if (!zone)
+			return -EINVAL;
 		ret = psz_flush_dirty_zone(zone);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (ret)
+			return ret;
+	}
+	return 0;
+}
 
-अटल पूर्णांक psz_move_zone(काष्ठा pstore_zone *old, काष्ठा pstore_zone *new)
-अणु
-	स्थिर अक्षर *data = (स्थिर अक्षर *)old->buffer->data;
-	पूर्णांक ret;
+static int psz_move_zone(struct pstore_zone *old, struct pstore_zone *new)
+{
+	const char *data = (const char *)old->buffer->data;
+	int ret;
 
-	ret = psz_zone_ग_लिखो(new, FLUSH_ALL, data, buffer_datalen(old), 0);
-	अगर (ret) अणु
+	ret = psz_zone_write(new, FLUSH_ALL, data, buffer_datalen(old), 0);
+	if (ret) {
 		atomic_set(&new->buffer->datalen, 0);
 		atomic_set(&new->dirty, false);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	atomic_set(&old->buffer->datalen, 0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम psz_flush_all_dirty_zones(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा psz_context *cxt = &pstore_zone_cxt;
-	पूर्णांक ret = 0;
+static void psz_flush_all_dirty_zones(struct work_struct *work)
+{
+	struct psz_context *cxt = &pstore_zone_cxt;
+	int ret = 0;
 
-	अगर (cxt->ppsz)
+	if (cxt->ppsz)
 		ret |= psz_flush_dirty_zone(cxt->ppsz);
-	अगर (cxt->cpsz)
+	if (cxt->cpsz)
 		ret |= psz_flush_dirty_zone(cxt->cpsz);
-	अगर (cxt->kpszs)
+	if (cxt->kpszs)
 		ret |= psz_flush_dirty_zones(cxt->kpszs, cxt->kmsg_max_cnt);
-	अगर (cxt->fpszs)
+	if (cxt->fpszs)
 		ret |= psz_flush_dirty_zones(cxt->fpszs, cxt->ftrace_max_cnt);
-	अगर (ret && cxt->pstore_zone_info)
-		schedule_delayed_work(&psz_cleaner, msecs_to_jअगरfies(1000));
-पूर्ण
+	if (ret && cxt->pstore_zone_info)
+		schedule_delayed_work(&psz_cleaner, msecs_to_jiffies(1000));
+}
 
-अटल पूर्णांक psz_kmsg_recover_data(काष्ठा psz_context *cxt)
-अणु
-	काष्ठा pstore_zone_info *info = cxt->pstore_zone_info;
-	काष्ठा pstore_zone *zone = शून्य;
-	काष्ठा psz_buffer *buf;
-	अचिन्हित दीर्घ i;
-	sमाप_प्रकार rcnt;
+static int psz_kmsg_recover_data(struct psz_context *cxt)
+{
+	struct pstore_zone_info *info = cxt->pstore_zone_info;
+	struct pstore_zone *zone = NULL;
+	struct psz_buffer *buf;
+	unsigned long i;
+	ssize_t rcnt;
 
-	अगर (!info->पढ़ो)
-		वापस -EINVAL;
+	if (!info->read)
+		return -EINVAL;
 
-	क्रम (i = 0; i < cxt->kmsg_max_cnt; i++) अणु
+	for (i = 0; i < cxt->kmsg_max_cnt; i++) {
 		zone = cxt->kpszs[i];
-		अगर (unlikely(!zone))
-			वापस -EINVAL;
-		अगर (atomic_पढ़ो(&zone->dirty)) अणु
-			अचिन्हित पूर्णांक wcnt = cxt->kmsg_ग_लिखो_cnt;
-			काष्ठा pstore_zone *new = cxt->kpszs[wcnt];
-			पूर्णांक ret;
+		if (unlikely(!zone))
+			return -EINVAL;
+		if (atomic_read(&zone->dirty)) {
+			unsigned int wcnt = cxt->kmsg_write_cnt;
+			struct pstore_zone *new = cxt->kpszs[wcnt];
+			int ret;
 
 			ret = psz_move_zone(zone, new);
-			अगर (ret) अणु
+			if (ret) {
 				pr_err("move zone from %lu to %d failed\n",
 						i, wcnt);
-				वापस ret;
-			पूर्ण
-			cxt->kmsg_ग_लिखो_cnt = (wcnt + 1) % cxt->kmsg_max_cnt;
-		पूर्ण
-		अगर (!zone->should_recover)
-			जारी;
+				return ret;
+			}
+			cxt->kmsg_write_cnt = (wcnt + 1) % cxt->kmsg_max_cnt;
+		}
+		if (!zone->should_recover)
+			continue;
 		buf = zone->buffer;
-		rcnt = info->पढ़ो((अक्षर *)buf, zone->buffer_size + माप(*buf),
+		rcnt = info->read((char *)buf, zone->buffer_size + sizeof(*buf),
 				zone->off);
-		अगर (rcnt != zone->buffer_size + माप(*buf))
-			वापस (पूर्णांक)rcnt < 0 ? (पूर्णांक)rcnt : -EIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (rcnt != zone->buffer_size + sizeof(*buf))
+			return (int)rcnt < 0 ? (int)rcnt : -EIO;
+	}
+	return 0;
+}
 
-अटल पूर्णांक psz_kmsg_recover_meta(काष्ठा psz_context *cxt)
-अणु
-	काष्ठा pstore_zone_info *info = cxt->pstore_zone_info;
-	काष्ठा pstore_zone *zone;
-	माप_प्रकार rcnt, len;
-	काष्ठा psz_buffer *buf;
-	काष्ठा psz_kmsg_header *hdr;
-	काष्ठा बारpec64 समय = अणु पूर्ण;
-	अचिन्हित दीर्घ i;
+static int psz_kmsg_recover_meta(struct psz_context *cxt)
+{
+	struct pstore_zone_info *info = cxt->pstore_zone_info;
+	struct pstore_zone *zone;
+	size_t rcnt, len;
+	struct psz_buffer *buf;
+	struct psz_kmsg_header *hdr;
+	struct timespec64 time = { };
+	unsigned long i;
 	/*
-	 * Recover may on panic, we can't allocate any memory by kदो_स्मृति.
+	 * Recover may on panic, we can't allocate any memory by kmalloc.
 	 * So, we use local array instead.
 	 */
-	अक्षर buffer_header[माप(*buf) + माप(*hdr)] = अणु0पूर्ण;
+	char buffer_header[sizeof(*buf) + sizeof(*hdr)] = {0};
 
-	अगर (!info->पढ़ो)
-		वापस -EINVAL;
+	if (!info->read)
+		return -EINVAL;
 
-	len = माप(*buf) + माप(*hdr);
-	buf = (काष्ठा psz_buffer *)buffer_header;
-	क्रम (i = 0; i < cxt->kmsg_max_cnt; i++) अणु
+	len = sizeof(*buf) + sizeof(*hdr);
+	buf = (struct psz_buffer *)buffer_header;
+	for (i = 0; i < cxt->kmsg_max_cnt; i++) {
 		zone = cxt->kpszs[i];
-		अगर (unlikely(!zone))
-			वापस -EINVAL;
+		if (unlikely(!zone))
+			return -EINVAL;
 
-		rcnt = info->पढ़ो((अक्षर *)buf, len, zone->off);
-		अगर (rcnt == -ENOMSG) अणु
+		rcnt = info->read((char *)buf, len, zone->off);
+		if (rcnt == -ENOMSG) {
 			pr_debug("%s with id %lu may be broken, skip\n",
 					zone->name, i);
-			जारी;
-		पूर्ण अन्यथा अगर (rcnt != len) अणु
+			continue;
+		} else if (rcnt != len) {
 			pr_err("read %s with id %lu failed\n", zone->name, i);
-			वापस (पूर्णांक)rcnt < 0 ? (पूर्णांक)rcnt : -EIO;
-		पूर्ण
+			return (int)rcnt < 0 ? (int)rcnt : -EIO;
+		}
 
-		अगर (buf->sig != zone->buffer->sig) अणु
+		if (buf->sig != zone->buffer->sig) {
 			pr_debug("no valid data in kmsg dump zone %lu\n", i);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (zone->buffer_size < atomic_पढ़ो(&buf->datalen)) अणु
+		if (zone->buffer_size < atomic_read(&buf->datalen)) {
 			pr_info("found overtop zone: %s: id %lu, off %lld, size %zu\n",
 					zone->name, i, zone->off,
 					zone->buffer_size);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		hdr = (काष्ठा psz_kmsg_header *)buf->data;
-		अगर (hdr->magic != PSTORE_KMSG_HEADER_MAGIC) अणु
+		hdr = (struct psz_kmsg_header *)buf->data;
+		if (hdr->magic != PSTORE_KMSG_HEADER_MAGIC) {
 			pr_info("found invalid zone: %s: id %lu, off %lld, size %zu\n",
 					zone->name, i, zone->off,
 					zone->buffer_size);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/*
 		 * we get the newest zone, and the next one must be the oldest
-		 * or unused zone, because we करो ग_लिखो one by one like a circle.
+		 * or unused zone, because we do write one by one like a circle.
 		 */
-		अगर (hdr->समय.tv_sec >= समय.tv_sec) अणु
-			समय.tv_sec = hdr->समय.tv_sec;
-			cxt->kmsg_ग_लिखो_cnt = (i + 1) % cxt->kmsg_max_cnt;
-		पूर्ण
+		if (hdr->time.tv_sec >= time.tv_sec) {
+			time.tv_sec = hdr->time.tv_sec;
+			cxt->kmsg_write_cnt = (i + 1) % cxt->kmsg_max_cnt;
+		}
 
-		अगर (hdr->reason == KMSG_DUMP_OOPS)
+		if (hdr->reason == KMSG_DUMP_OOPS)
 			cxt->oops_counter =
 				max(cxt->oops_counter, hdr->counter);
-		अन्यथा अगर (hdr->reason == KMSG_DUMP_PANIC)
+		else if (hdr->reason == KMSG_DUMP_PANIC)
 			cxt->panic_counter =
 				max(cxt->panic_counter, hdr->counter);
 
-		अगर (!atomic_पढ़ो(&buf->datalen)) अणु
+		if (!atomic_read(&buf->datalen)) {
 			pr_debug("found erased zone: %s: id %lu, off %lld, size %zu, datalen %d\n",
 					zone->name, i, zone->off,
 					zone->buffer_size,
-					atomic_पढ़ो(&buf->datalen));
-			जारी;
-		पूर्ण
+					atomic_read(&buf->datalen));
+			continue;
+		}
 
-		अगर (!is_on_panic())
+		if (!is_on_panic())
 			zone->should_recover = true;
 		pr_debug("found nice zone: %s: id %lu, off %lld, size %zu, datalen %d\n",
 				zone->name, i, zone->off,
-				zone->buffer_size, atomic_पढ़ो(&buf->datalen));
-	पूर्ण
+				zone->buffer_size, atomic_read(&buf->datalen));
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक psz_kmsg_recover(काष्ठा psz_context *cxt)
-अणु
-	पूर्णांक ret;
+static int psz_kmsg_recover(struct psz_context *cxt)
+{
+	int ret;
 
-	अगर (!cxt->kpszs)
-		वापस 0;
+	if (!cxt->kpszs)
+		return 0;
 
 	ret = psz_kmsg_recover_meta(cxt);
-	अगर (ret)
-		जाओ recover_fail;
+	if (ret)
+		goto recover_fail;
 
 	ret = psz_kmsg_recover_data(cxt);
-	अगर (ret)
-		जाओ recover_fail;
+	if (ret)
+		goto recover_fail;
 
-	वापस 0;
+	return 0;
 recover_fail:
 	pr_debug("psz_recover_kmsg failed\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक psz_recover_zone(काष्ठा psz_context *cxt, काष्ठा pstore_zone *zone)
-अणु
-	काष्ठा pstore_zone_info *info = cxt->pstore_zone_info;
-	काष्ठा psz_buffer *oldbuf, पंचांगpbuf;
-	पूर्णांक ret = 0;
-	अक्षर *buf;
-	sमाप_प्रकार rcnt, len, start, off;
+static int psz_recover_zone(struct psz_context *cxt, struct pstore_zone *zone)
+{
+	struct pstore_zone_info *info = cxt->pstore_zone_info;
+	struct psz_buffer *oldbuf, tmpbuf;
+	int ret = 0;
+	char *buf;
+	ssize_t rcnt, len, start, off;
 
-	अगर (!zone || zone->oldbuf)
-		वापस 0;
+	if (!zone || zone->oldbuf)
+		return 0;
 
-	अगर (is_on_panic()) अणु
+	if (is_on_panic()) {
 		/* save data as much as possible */
 		psz_flush_dirty_zone(zone);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (unlikely(!info->पढ़ो))
-		वापस -EINVAL;
+	if (unlikely(!info->read))
+		return -EINVAL;
 
-	len = माप(काष्ठा psz_buffer);
-	rcnt = info->पढ़ो((अक्षर *)&पंचांगpbuf, len, zone->off);
-	अगर (rcnt != len) अणु
+	len = sizeof(struct psz_buffer);
+	rcnt = info->read((char *)&tmpbuf, len, zone->off);
+	if (rcnt != len) {
 		pr_debug("read zone %s failed\n", zone->name);
-		वापस (पूर्णांक)rcnt < 0 ? (पूर्णांक)rcnt : -EIO;
-	पूर्ण
+		return (int)rcnt < 0 ? (int)rcnt : -EIO;
+	}
 
-	अगर (पंचांगpbuf.sig != zone->buffer->sig) अणु
+	if (tmpbuf.sig != zone->buffer->sig) {
 		pr_debug("no valid data in zone %s\n", zone->name);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (zone->buffer_size < atomic_पढ़ो(&पंचांगpbuf.datalen) ||
-		zone->buffer_size < atomic_पढ़ो(&पंचांगpbuf.start)) अणु
+	if (zone->buffer_size < atomic_read(&tmpbuf.datalen) ||
+		zone->buffer_size < atomic_read(&tmpbuf.start)) {
 		pr_info("found overtop zone: %s: off %lld, size %zu\n",
 				zone->name, zone->off, zone->buffer_size);
 		/* just keep going */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!atomic_पढ़ो(&पंचांगpbuf.datalen)) अणु
+	if (!atomic_read(&tmpbuf.datalen)) {
 		pr_debug("found erased zone: %s: off %lld, size %zu, datalen %d\n",
 				zone->name, zone->off, zone->buffer_size,
-				atomic_पढ़ो(&पंचांगpbuf.datalen));
-		वापस 0;
-	पूर्ण
+				atomic_read(&tmpbuf.datalen));
+		return 0;
+	}
 
 	pr_debug("found nice zone: %s: off %lld, size %zu, datalen %d\n",
 			zone->name, zone->off, zone->buffer_size,
-			atomic_पढ़ो(&पंचांगpbuf.datalen));
+			atomic_read(&tmpbuf.datalen));
 
-	len = atomic_पढ़ो(&पंचांगpbuf.datalen) + माप(*oldbuf);
+	len = atomic_read(&tmpbuf.datalen) + sizeof(*oldbuf);
 	oldbuf = kzalloc(len, GFP_KERNEL);
-	अगर (!oldbuf)
-		वापस -ENOMEM;
+	if (!oldbuf)
+		return -ENOMEM;
 
-	स_नकल(oldbuf, &पंचांगpbuf, माप(*oldbuf));
-	buf = (अक्षर *)oldbuf + माप(*oldbuf);
-	len = atomic_पढ़ो(&oldbuf->datalen);
-	start = atomic_पढ़ो(&oldbuf->start);
-	off = zone->off + माप(*oldbuf);
+	memcpy(oldbuf, &tmpbuf, sizeof(*oldbuf));
+	buf = (char *)oldbuf + sizeof(*oldbuf);
+	len = atomic_read(&oldbuf->datalen);
+	start = atomic_read(&oldbuf->start);
+	off = zone->off + sizeof(*oldbuf);
 
 	/* get part of data */
-	rcnt = info->पढ़ो(buf, len - start, off + start);
-	अगर (rcnt != len - start) अणु
+	rcnt = info->read(buf, len - start, off + start);
+	if (rcnt != len - start) {
 		pr_err("read zone %s failed\n", zone->name);
-		ret = (पूर्णांक)rcnt < 0 ? (पूर्णांक)rcnt : -EIO;
-		जाओ मुक्त_oldbuf;
-	पूर्ण
+		ret = (int)rcnt < 0 ? (int)rcnt : -EIO;
+		goto free_oldbuf;
+	}
 
 	/* get the rest of data */
-	rcnt = info->पढ़ो(buf + len - start, start, off);
-	अगर (rcnt != start) अणु
+	rcnt = info->read(buf + len - start, start, off);
+	if (rcnt != start) {
 		pr_err("read zone %s failed\n", zone->name);
-		ret = (पूर्णांक)rcnt < 0 ? (पूर्णांक)rcnt : -EIO;
-		जाओ मुक्त_oldbuf;
-	पूर्ण
+		ret = (int)rcnt < 0 ? (int)rcnt : -EIO;
+		goto free_oldbuf;
+	}
 
 	zone->oldbuf = oldbuf;
 	psz_flush_dirty_zone(zone);
-	वापस 0;
+	return 0;
 
-मुक्त_oldbuf:
-	kमुक्त(oldbuf);
-	वापस ret;
-पूर्ण
+free_oldbuf:
+	kfree(oldbuf);
+	return ret;
+}
 
-अटल पूर्णांक psz_recover_zones(काष्ठा psz_context *cxt,
-		काष्ठा pstore_zone **zones, अचिन्हित पूर्णांक cnt)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक i;
-	काष्ठा pstore_zone *zone;
+static int psz_recover_zones(struct psz_context *cxt,
+		struct pstore_zone **zones, unsigned int cnt)
+{
+	int ret;
+	unsigned int i;
+	struct pstore_zone *zone;
 
-	अगर (!zones)
-		वापस 0;
+	if (!zones)
+		return 0;
 
-	क्रम (i = 0; i < cnt; i++) अणु
+	for (i = 0; i < cnt; i++) {
 		zone = zones[i];
-		अगर (unlikely(!zone))
-			जारी;
+		if (unlikely(!zone))
+			continue;
 		ret = psz_recover_zone(cxt, zone);
-		अगर (ret)
-			जाओ recover_fail;
-	पूर्ण
+		if (ret)
+			goto recover_fail;
+	}
 
-	वापस 0;
+	return 0;
 recover_fail:
 	pr_debug("recover %s[%u] failed\n", zone->name, i);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * psz_recovery() - recover data from storage
  * @cxt: the context of pstore/zone
  *
- * recovery means पढ़ोing data back from storage after rebooting
+ * recovery means reading data back from storage after rebooting
  *
  * Return: 0 on success, others on failure.
  */
-अटल अंतरभूत पूर्णांक psz_recovery(काष्ठा psz_context *cxt)
-अणु
-	पूर्णांक ret;
+static inline int psz_recovery(struct psz_context *cxt)
+{
+	int ret;
 
-	अगर (atomic_पढ़ो(&cxt->recovered))
-		वापस 0;
+	if (atomic_read(&cxt->recovered))
+		return 0;
 
 	ret = psz_kmsg_recover(cxt);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = psz_recover_zone(cxt, cxt->ppsz);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = psz_recover_zone(cxt, cxt->cpsz);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = psz_recover_zones(cxt, cxt->fpszs, cxt->ftrace_max_cnt);
 
 out:
-	अगर (unlikely(ret))
+	if (unlikely(ret))
 		pr_err("recover failed\n");
-	अन्यथा अणु
+	else {
 		pr_debug("recover end!\n");
 		atomic_set(&cxt->recovered, 1);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक psz_pstore_खोलो(काष्ठा pstore_info *psi)
-अणु
-	काष्ठा psz_context *cxt = psi->data;
+static int psz_pstore_open(struct pstore_info *psi)
+{
+	struct psz_context *cxt = psi->data;
 
-	cxt->kmsg_पढ़ो_cnt = 0;
-	cxt->pmsg_पढ़ो_cnt = 0;
-	cxt->console_पढ़ो_cnt = 0;
-	cxt->ftrace_पढ़ो_cnt = 0;
-	वापस 0;
-पूर्ण
+	cxt->kmsg_read_cnt = 0;
+	cxt->pmsg_read_cnt = 0;
+	cxt->console_read_cnt = 0;
+	cxt->ftrace_read_cnt = 0;
+	return 0;
+}
 
-अटल अंतरभूत bool psz_old_ok(काष्ठा pstore_zone *zone)
-अणु
-	अगर (zone && zone->oldbuf && atomic_पढ़ो(&zone->oldbuf->datalen))
-		वापस true;
-	वापस false;
-पूर्ण
+static inline bool psz_old_ok(struct pstore_zone *zone)
+{
+	if (zone && zone->oldbuf && atomic_read(&zone->oldbuf->datalen))
+		return true;
+	return false;
+}
 
-अटल अंतरभूत bool psz_ok(काष्ठा pstore_zone *zone)
-अणु
-	अगर (zone && zone->buffer && buffer_datalen(zone))
-		वापस true;
-	वापस false;
-पूर्ण
+static inline bool psz_ok(struct pstore_zone *zone)
+{
+	if (zone && zone->buffer && buffer_datalen(zone))
+		return true;
+	return false;
+}
 
-अटल अंतरभूत पूर्णांक psz_kmsg_erase(काष्ठा psz_context *cxt,
-		काष्ठा pstore_zone *zone, काष्ठा pstore_record *record)
-अणु
-	काष्ठा psz_buffer *buffer = zone->buffer;
-	काष्ठा psz_kmsg_header *hdr =
-		(काष्ठा psz_kmsg_header *)buffer->data;
-	माप_प्रकार size;
+static inline int psz_kmsg_erase(struct psz_context *cxt,
+		struct pstore_zone *zone, struct pstore_record *record)
+{
+	struct psz_buffer *buffer = zone->buffer;
+	struct psz_kmsg_header *hdr =
+		(struct psz_kmsg_header *)buffer->data;
+	size_t size;
 
-	अगर (unlikely(!psz_ok(zone)))
-		वापस 0;
+	if (unlikely(!psz_ok(zone)))
+		return 0;
 
-	/* this zone is alपढ़ोy updated, no need to erase */
-	अगर (record->count != hdr->counter)
-		वापस 0;
+	/* this zone is already updated, no need to erase */
+	if (record->count != hdr->counter)
+		return 0;
 
-	size = buffer_datalen(zone) + माप(*zone->buffer);
+	size = buffer_datalen(zone) + sizeof(*zone->buffer);
 	atomic_set(&zone->buffer->datalen, 0);
-	अगर (cxt->pstore_zone_info->erase)
-		वापस cxt->pstore_zone_info->erase(size, zone->off);
-	अन्यथा
-		वापस psz_zone_ग_लिखो(zone, FLUSH_META, शून्य, 0, 0);
-पूर्ण
+	if (cxt->pstore_zone_info->erase)
+		return cxt->pstore_zone_info->erase(size, zone->off);
+	else
+		return psz_zone_write(zone, FLUSH_META, NULL, 0, 0);
+}
 
-अटल अंतरभूत पूर्णांक psz_record_erase(काष्ठा psz_context *cxt,
-		काष्ठा pstore_zone *zone)
-अणु
-	अगर (unlikely(!psz_old_ok(zone)))
-		वापस 0;
+static inline int psz_record_erase(struct psz_context *cxt,
+		struct pstore_zone *zone)
+{
+	if (unlikely(!psz_old_ok(zone)))
+		return 0;
 
-	kमुक्त(zone->oldbuf);
-	zone->oldbuf = शून्य;
+	kfree(zone->oldbuf);
+	zone->oldbuf = NULL;
 	/*
-	 * अगर there are new data in zone buffer, that means the old data
-	 * are alपढ़ोy invalid. It is no need to flush 0 (erase) to
+	 * if there are new data in zone buffer, that means the old data
+	 * are already invalid. It is no need to flush 0 (erase) to
 	 * block device.
 	 */
-	अगर (!buffer_datalen(zone))
-		वापस psz_zone_ग_लिखो(zone, FLUSH_META, शून्य, 0, 0);
+	if (!buffer_datalen(zone))
+		return psz_zone_write(zone, FLUSH_META, NULL, 0, 0);
 	psz_flush_dirty_zone(zone);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक psz_pstore_erase(काष्ठा pstore_record *record)
-अणु
-	काष्ठा psz_context *cxt = record->psi->data;
+static int psz_pstore_erase(struct pstore_record *record)
+{
+	struct psz_context *cxt = record->psi->data;
 
-	चयन (record->type) अणु
-	हाल PSTORE_TYPE_DMESG:
-		अगर (record->id >= cxt->kmsg_max_cnt)
-			वापस -EINVAL;
-		वापस psz_kmsg_erase(cxt, cxt->kpszs[record->id], record);
-	हाल PSTORE_TYPE_PMSG:
-		वापस psz_record_erase(cxt, cxt->ppsz);
-	हाल PSTORE_TYPE_CONSOLE:
-		वापस psz_record_erase(cxt, cxt->cpsz);
-	हाल PSTORE_TYPE_FTRACE:
-		अगर (record->id >= cxt->ftrace_max_cnt)
-			वापस -EINVAL;
-		वापस psz_record_erase(cxt, cxt->fpszs[record->id]);
-	शेष: वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	switch (record->type) {
+	case PSTORE_TYPE_DMESG:
+		if (record->id >= cxt->kmsg_max_cnt)
+			return -EINVAL;
+		return psz_kmsg_erase(cxt, cxt->kpszs[record->id], record);
+	case PSTORE_TYPE_PMSG:
+		return psz_record_erase(cxt, cxt->ppsz);
+	case PSTORE_TYPE_CONSOLE:
+		return psz_record_erase(cxt, cxt->cpsz);
+	case PSTORE_TYPE_FTRACE:
+		if (record->id >= cxt->ftrace_max_cnt)
+			return -EINVAL;
+		return psz_record_erase(cxt, cxt->fpszs[record->id]);
+	default: return -EINVAL;
+	}
+}
 
-अटल व्योम psz_ग_लिखो_kmsg_hdr(काष्ठा pstore_zone *zone,
-		काष्ठा pstore_record *record)
-अणु
-	काष्ठा psz_context *cxt = record->psi->data;
-	काष्ठा psz_buffer *buffer = zone->buffer;
-	काष्ठा psz_kmsg_header *hdr =
-		(काष्ठा psz_kmsg_header *)buffer->data;
+static void psz_write_kmsg_hdr(struct pstore_zone *zone,
+		struct pstore_record *record)
+{
+	struct psz_context *cxt = record->psi->data;
+	struct psz_buffer *buffer = zone->buffer;
+	struct psz_kmsg_header *hdr =
+		(struct psz_kmsg_header *)buffer->data;
 
 	hdr->magic = PSTORE_KMSG_HEADER_MAGIC;
 	hdr->compressed = record->compressed;
-	hdr->समय.tv_sec = record->समय.tv_sec;
-	hdr->समय.tv_nsec = record->समय.tv_nsec;
+	hdr->time.tv_sec = record->time.tv_sec;
+	hdr->time.tv_nsec = record->time.tv_nsec;
 	hdr->reason = record->reason;
-	अगर (hdr->reason == KMSG_DUMP_OOPS)
+	if (hdr->reason == KMSG_DUMP_OOPS)
 		hdr->counter = ++cxt->oops_counter;
-	अन्यथा अगर (hdr->reason == KMSG_DUMP_PANIC)
+	else if (hdr->reason == KMSG_DUMP_PANIC)
 		hdr->counter = ++cxt->panic_counter;
-	अन्यथा
+	else
 		hdr->counter = 0;
-पूर्ण
+}
 
 /*
- * In हाल zone is broken, which may occur to MTD device, we try each zones,
- * start at cxt->kmsg_ग_लिखो_cnt.
+ * In case zone is broken, which may occur to MTD device, we try each zones,
+ * start at cxt->kmsg_write_cnt.
  */
-अटल अंतरभूत पूर्णांक notrace psz_kmsg_ग_लिखो_record(काष्ठा psz_context *cxt,
-		काष्ठा pstore_record *record)
-अणु
-	माप_प्रकार size, hlen;
-	काष्ठा pstore_zone *zone;
-	अचिन्हित पूर्णांक i;
+static inline int notrace psz_kmsg_write_record(struct psz_context *cxt,
+		struct pstore_record *record)
+{
+	size_t size, hlen;
+	struct pstore_zone *zone;
+	unsigned int i;
 
-	क्रम (i = 0; i < cxt->kmsg_max_cnt; i++) अणु
-		अचिन्हित पूर्णांक zonक्रमागत, len;
-		पूर्णांक ret;
+	for (i = 0; i < cxt->kmsg_max_cnt; i++) {
+		unsigned int zonenum, len;
+		int ret;
 
-		zonक्रमागत = (cxt->kmsg_ग_लिखो_cnt + i) % cxt->kmsg_max_cnt;
-		zone = cxt->kpszs[zonक्रमागत];
-		अगर (unlikely(!zone))
-			वापस -ENOSPC;
+		zonenum = (cxt->kmsg_write_cnt + i) % cxt->kmsg_max_cnt;
+		zone = cxt->kpszs[zonenum];
+		if (unlikely(!zone))
+			return -ENOSPC;
 
-		/* aव्योम destroying old data, allocate a new one */
-		len = zone->buffer_size + माप(*zone->buffer);
+		/* avoid destroying old data, allocate a new one */
+		len = zone->buffer_size + sizeof(*zone->buffer);
 		zone->oldbuf = zone->buffer;
 		zone->buffer = kzalloc(len, GFP_KERNEL);
-		अगर (!zone->buffer) अणु
+		if (!zone->buffer) {
 			zone->buffer = zone->oldbuf;
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 		zone->buffer->sig = zone->oldbuf->sig;
 
-		pr_debug("write %s to zone id %d\n", zone->name, zonक्रमागत);
-		psz_ग_लिखो_kmsg_hdr(zone, record);
-		hlen = माप(काष्ठा psz_kmsg_header);
-		size = min_t(माप_प्रकार, record->size, zone->buffer_size - hlen);
-		ret = psz_zone_ग_लिखो(zone, FLUSH_ALL, record->buf, size, hlen);
-		अगर (likely(!ret || ret != -ENOMSG)) अणु
-			cxt->kmsg_ग_लिखो_cnt = zonक्रमागत + 1;
-			cxt->kmsg_ग_लिखो_cnt %= cxt->kmsg_max_cnt;
-			/* no need to try next zone, मुक्त last zone buffer */
-			kमुक्त(zone->oldbuf);
-			zone->oldbuf = शून्य;
-			वापस ret;
-		पूर्ण
+		pr_debug("write %s to zone id %d\n", zone->name, zonenum);
+		psz_write_kmsg_hdr(zone, record);
+		hlen = sizeof(struct psz_kmsg_header);
+		size = min_t(size_t, record->size, zone->buffer_size - hlen);
+		ret = psz_zone_write(zone, FLUSH_ALL, record->buf, size, hlen);
+		if (likely(!ret || ret != -ENOMSG)) {
+			cxt->kmsg_write_cnt = zonenum + 1;
+			cxt->kmsg_write_cnt %= cxt->kmsg_max_cnt;
+			/* no need to try next zone, free last zone buffer */
+			kfree(zone->oldbuf);
+			zone->oldbuf = NULL;
+			return ret;
+		}
 
 		pr_debug("zone %u may be broken, try next dmesg zone\n",
-				zonक्रमागत);
-		kमुक्त(zone->buffer);
+				zonenum);
+		kfree(zone->buffer);
 		zone->buffer = zone->oldbuf;
-		zone->oldbuf = शून्य;
-	पूर्ण
+		zone->oldbuf = NULL;
+	}
 
-	वापस -EBUSY;
-पूर्ण
+	return -EBUSY;
+}
 
-अटल पूर्णांक notrace psz_kmsg_ग_लिखो(काष्ठा psz_context *cxt,
-		काष्ठा pstore_record *record)
-अणु
-	पूर्णांक ret;
+static int notrace psz_kmsg_write(struct psz_context *cxt,
+		struct pstore_record *record)
+{
+	int ret;
 
 	/*
 	 * Explicitly only take the first part of any new crash.
 	 * If our buffer is larger than kmsg_bytes, this can never happen,
-	 * and अगर our buffer is smaller than kmsg_bytes, we करोn't want the
+	 * and if our buffer is smaller than kmsg_bytes, we don't want the
 	 * report split across multiple records.
 	 */
-	अगर (record->part != 1)
-		वापस -ENOSPC;
+	if (record->part != 1)
+		return -ENOSPC;
 
-	अगर (!cxt->kpszs)
-		वापस -ENOSPC;
+	if (!cxt->kpszs)
+		return -ENOSPC;
 
-	ret = psz_kmsg_ग_लिखो_record(cxt, record);
-	अगर (!ret && is_on_panic()) अणु
+	ret = psz_kmsg_write_record(cxt, record);
+	if (!ret && is_on_panic()) {
 		/* ensure all data are flushed to storage when panic */
 		pr_debug("try to flush other dirty zones\n");
-		psz_flush_all_dirty_zones(शून्य);
-	पूर्ण
+		psz_flush_all_dirty_zones(NULL);
+	}
 
-	/* always वापस 0 as we had handled it on buffer */
-	वापस 0;
-पूर्ण
+	/* always return 0 as we had handled it on buffer */
+	return 0;
+}
 
-अटल पूर्णांक notrace psz_record_ग_लिखो(काष्ठा pstore_zone *zone,
-		काष्ठा pstore_record *record)
-अणु
-	माप_प्रकार start, rem;
+static int notrace psz_record_write(struct pstore_zone *zone,
+		struct pstore_record *record)
+{
+	size_t start, rem;
 	bool is_full_data = false;
-	अक्षर *buf;
-	पूर्णांक cnt;
+	char *buf;
+	int cnt;
 
-	अगर (!zone || !record)
-		वापस -ENOSPC;
+	if (!zone || !record)
+		return -ENOSPC;
 
-	अगर (atomic_पढ़ो(&zone->buffer->datalen) >= zone->buffer_size)
+	if (atomic_read(&zone->buffer->datalen) >= zone->buffer_size)
 		is_full_data = true;
 
 	cnt = record->size;
 	buf = record->buf;
-	अगर (unlikely(cnt > zone->buffer_size)) अणु
+	if (unlikely(cnt > zone->buffer_size)) {
 		buf += cnt - zone->buffer_size;
 		cnt = zone->buffer_size;
-	पूर्ण
+	}
 
 	start = buffer_start(zone);
 	rem = zone->buffer_size - start;
-	अगर (unlikely(rem < cnt)) अणु
-		psz_zone_ग_लिखो(zone, FLUSH_PART, buf, rem, start);
+	if (unlikely(rem < cnt)) {
+		psz_zone_write(zone, FLUSH_PART, buf, rem, start);
 		buf += rem;
 		cnt -= rem;
 		start = 0;
 		is_full_data = true;
-	पूर्ण
+	}
 
 	atomic_set(&zone->buffer->start, cnt + start);
-	psz_zone_ग_लिखो(zone, FLUSH_PART, buf, cnt, start);
+	psz_zone_write(zone, FLUSH_PART, buf, cnt, start);
 
 	/**
-	 * psz_zone_ग_लिखो will set datalen as start + cnt.
-	 * It work अगर actual data length lesser than buffer size.
-	 * If data length greater than buffer size, pmsg will reग_लिखो to
+	 * psz_zone_write will set datalen as start + cnt.
+	 * It work if actual data length lesser than buffer size.
+	 * If data length greater than buffer size, pmsg will rewrite to
 	 * beginning of zone, which make buffer->datalen wrongly.
 	 * So we should reset datalen as buffer size once actual data length
 	 * greater than buffer size.
 	 */
-	अगर (is_full_data) अणु
+	if (is_full_data) {
 		atomic_set(&zone->buffer->datalen, zone->buffer_size);
-		psz_zone_ग_लिखो(zone, FLUSH_META, शून्य, 0, 0);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		psz_zone_write(zone, FLUSH_META, NULL, 0, 0);
+	}
+	return 0;
+}
 
-अटल पूर्णांक notrace psz_pstore_ग_लिखो(काष्ठा pstore_record *record)
-अणु
-	काष्ठा psz_context *cxt = record->psi->data;
+static int notrace psz_pstore_write(struct pstore_record *record)
+{
+	struct psz_context *cxt = record->psi->data;
 
-	अगर (record->type == PSTORE_TYPE_DMESG &&
+	if (record->type == PSTORE_TYPE_DMESG &&
 			record->reason == KMSG_DUMP_PANIC)
 		atomic_set(&cxt->on_panic, 1);
 
 	/*
-	 * अगर on panic, करो not ग_लिखो except panic records
-	 * Fix हाल that panic_ग_लिखो prपूर्णांकs log which wakes up console backend.
+	 * if on panic, do not write except panic records
+	 * Fix case that panic_write prints log which wakes up console backend.
 	 */
-	अगर (is_on_panic() && record->type != PSTORE_TYPE_DMESG)
-		वापस -EBUSY;
+	if (is_on_panic() && record->type != PSTORE_TYPE_DMESG)
+		return -EBUSY;
 
-	चयन (record->type) अणु
-	हाल PSTORE_TYPE_DMESG:
-		वापस psz_kmsg_ग_लिखो(cxt, record);
-	हाल PSTORE_TYPE_CONSOLE:
-		वापस psz_record_ग_लिखो(cxt->cpsz, record);
-	हाल PSTORE_TYPE_PMSG:
-		वापस psz_record_ग_लिखो(cxt->ppsz, record);
-	हाल PSTORE_TYPE_FTRACE: अणु
-		पूर्णांक zonक्रमागत = smp_processor_id();
+	switch (record->type) {
+	case PSTORE_TYPE_DMESG:
+		return psz_kmsg_write(cxt, record);
+	case PSTORE_TYPE_CONSOLE:
+		return psz_record_write(cxt->cpsz, record);
+	case PSTORE_TYPE_PMSG:
+		return psz_record_write(cxt->ppsz, record);
+	case PSTORE_TYPE_FTRACE: {
+		int zonenum = smp_processor_id();
 
-		अगर (!cxt->fpszs)
-			वापस -ENOSPC;
-		वापस psz_record_ग_लिखो(cxt->fpszs[zonक्रमागत], record);
-	पूर्ण
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		if (!cxt->fpszs)
+			return -ENOSPC;
+		return psz_record_write(cxt->fpszs[zonenum], record);
+	}
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल काष्ठा pstore_zone *psz_पढ़ो_next_zone(काष्ठा psz_context *cxt)
-अणु
-	काष्ठा pstore_zone *zone = शून्य;
+static struct pstore_zone *psz_read_next_zone(struct psz_context *cxt)
+{
+	struct pstore_zone *zone = NULL;
 
-	जबतक (cxt->kmsg_पढ़ो_cnt < cxt->kmsg_max_cnt) अणु
-		zone = cxt->kpszs[cxt->kmsg_पढ़ो_cnt++];
-		अगर (psz_ok(zone))
-			वापस zone;
-	पूर्ण
+	while (cxt->kmsg_read_cnt < cxt->kmsg_max_cnt) {
+		zone = cxt->kpszs[cxt->kmsg_read_cnt++];
+		if (psz_ok(zone))
+			return zone;
+	}
 
-	अगर (cxt->ftrace_पढ़ो_cnt < cxt->ftrace_max_cnt)
+	if (cxt->ftrace_read_cnt < cxt->ftrace_max_cnt)
 		/*
-		 * No need psz_old_ok(). Let psz_ftrace_पढ़ो() करो so क्रम
-		 * combination. psz_ftrace_पढ़ो() should traverse over
-		 * all zones in हाल of some zone without data.
+		 * No need psz_old_ok(). Let psz_ftrace_read() do so for
+		 * combination. psz_ftrace_read() should traverse over
+		 * all zones in case of some zone without data.
 		 */
-		वापस cxt->fpszs[cxt->ftrace_पढ़ो_cnt++];
+		return cxt->fpszs[cxt->ftrace_read_cnt++];
 
-	अगर (cxt->pmsg_पढ़ो_cnt == 0) अणु
-		cxt->pmsg_पढ़ो_cnt++;
+	if (cxt->pmsg_read_cnt == 0) {
+		cxt->pmsg_read_cnt++;
 		zone = cxt->ppsz;
-		अगर (psz_old_ok(zone))
-			वापस zone;
-	पूर्ण
+		if (psz_old_ok(zone))
+			return zone;
+	}
 
-	अगर (cxt->console_पढ़ो_cnt == 0) अणु
-		cxt->console_पढ़ो_cnt++;
+	if (cxt->console_read_cnt == 0) {
+		cxt->console_read_cnt++;
 		zone = cxt->cpsz;
-		अगर (psz_old_ok(zone))
-			वापस zone;
-	पूर्ण
+		if (psz_old_ok(zone))
+			return zone;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक psz_kmsg_पढ़ो_hdr(काष्ठा pstore_zone *zone,
-		काष्ठा pstore_record *record)
-अणु
-	काष्ठा psz_buffer *buffer = zone->buffer;
-	काष्ठा psz_kmsg_header *hdr =
-		(काष्ठा psz_kmsg_header *)buffer->data;
+static int psz_kmsg_read_hdr(struct pstore_zone *zone,
+		struct pstore_record *record)
+{
+	struct psz_buffer *buffer = zone->buffer;
+	struct psz_kmsg_header *hdr =
+		(struct psz_kmsg_header *)buffer->data;
 
-	अगर (hdr->magic != PSTORE_KMSG_HEADER_MAGIC)
-		वापस -EINVAL;
+	if (hdr->magic != PSTORE_KMSG_HEADER_MAGIC)
+		return -EINVAL;
 	record->compressed = hdr->compressed;
-	record->समय.tv_sec = hdr->समय.tv_sec;
-	record->समय.tv_nsec = hdr->समय.tv_nsec;
+	record->time.tv_sec = hdr->time.tv_sec;
+	record->time.tv_nsec = hdr->time.tv_nsec;
 	record->reason = hdr->reason;
 	record->count = hdr->counter;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार psz_kmsg_पढ़ो(काष्ठा pstore_zone *zone,
-		काष्ठा pstore_record *record)
-अणु
-	sमाप_प्रकार size, hlen = 0;
+static ssize_t psz_kmsg_read(struct pstore_zone *zone,
+		struct pstore_record *record)
+{
+	ssize_t size, hlen = 0;
 
 	size = buffer_datalen(zone);
-	/* Clear and skip this kmsg dump record अगर it has no valid header */
-	अगर (psz_kmsg_पढ़ो_hdr(zone, record)) अणु
+	/* Clear and skip this kmsg dump record if it has no valid header */
+	if (psz_kmsg_read_hdr(zone, record)) {
 		atomic_set(&zone->buffer->datalen, 0);
 		atomic_set(&zone->dirty, 0);
-		वापस -ENOMSG;
-	पूर्ण
-	size -= माप(काष्ठा psz_kmsg_header);
+		return -ENOMSG;
+	}
+	size -= sizeof(struct psz_kmsg_header);
 
-	अगर (!record->compressed) अणु
-		अक्षर *buf = kaप्र_लिखो(GFP_KERNEL, "%s: Total %d times\n",
+	if (!record->compressed) {
+		char *buf = kasprintf(GFP_KERNEL, "%s: Total %d times\n",
 				      kmsg_dump_reason_str(record->reason),
 				      record->count);
-		hlen = म_माप(buf);
-		record->buf = kपुनः_स्मृति(buf, hlen + size, GFP_KERNEL);
-		अगर (!record->buf) अणु
-			kमुक्त(buf);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		record->buf = kदो_स्मृति(size, GFP_KERNEL);
-		अगर (!record->buf)
-			वापस -ENOMEM;
-	पूर्ण
+		hlen = strlen(buf);
+		record->buf = krealloc(buf, hlen + size, GFP_KERNEL);
+		if (!record->buf) {
+			kfree(buf);
+			return -ENOMEM;
+		}
+	} else {
+		record->buf = kmalloc(size, GFP_KERNEL);
+		if (!record->buf)
+			return -ENOMEM;
+	}
 
-	size = psz_zone_पढ़ो_buffer(zone, record->buf + hlen, size,
-			माप(काष्ठा psz_kmsg_header));
-	अगर (unlikely(size < 0)) अणु
-		kमुक्त(record->buf);
-		वापस -ENOMSG;
-	पूर्ण
+	size = psz_zone_read_buffer(zone, record->buf + hlen, size,
+			sizeof(struct psz_kmsg_header));
+	if (unlikely(size < 0)) {
+		kfree(record->buf);
+		return -ENOMSG;
+	}
 
-	वापस size + hlen;
-पूर्ण
+	return size + hlen;
+}
 
 /* try to combine all ftrace zones */
-अटल sमाप_प्रकार psz_ftrace_पढ़ो(काष्ठा pstore_zone *zone,
-		काष्ठा pstore_record *record)
-अणु
-	काष्ठा psz_context *cxt;
-	काष्ठा psz_buffer *buf;
-	पूर्णांक ret;
+static ssize_t psz_ftrace_read(struct pstore_zone *zone,
+		struct pstore_record *record)
+{
+	struct psz_context *cxt;
+	struct psz_buffer *buf;
+	int ret;
 
-	अगर (!zone || !record)
-		वापस -ENOSPC;
+	if (!zone || !record)
+		return -ENOSPC;
 
-	अगर (!psz_old_ok(zone))
-		जाओ out;
+	if (!psz_old_ok(zone))
+		goto out;
 
-	buf = (काष्ठा psz_buffer *)zone->oldbuf;
-	अगर (!buf)
-		वापस -ENOMSG;
+	buf = (struct psz_buffer *)zone->oldbuf;
+	if (!buf)
+		return -ENOMSG;
 
 	ret = pstore_ftrace_combine_log(&record->buf, &record->size,
-			(अक्षर *)buf->data, atomic_पढ़ो(&buf->datalen));
-	अगर (unlikely(ret))
-		वापस ret;
+			(char *)buf->data, atomic_read(&buf->datalen));
+	if (unlikely(ret))
+		return ret;
 
 out:
 	cxt = record->psi->data;
-	अगर (cxt->ftrace_पढ़ो_cnt < cxt->ftrace_max_cnt)
-		/* then, पढ़ो next ftrace zone */
-		वापस -ENOMSG;
+	if (cxt->ftrace_read_cnt < cxt->ftrace_max_cnt)
+		/* then, read next ftrace zone */
+		return -ENOMSG;
 	record->id = 0;
-	वापस record->size ? record->size : -ENOMSG;
-पूर्ण
+	return record->size ? record->size : -ENOMSG;
+}
 
-अटल sमाप_प्रकार psz_record_पढ़ो(काष्ठा pstore_zone *zone,
-		काष्ठा pstore_record *record)
-अणु
-	माप_प्रकार len;
-	काष्ठा psz_buffer *buf;
+static ssize_t psz_record_read(struct pstore_zone *zone,
+		struct pstore_record *record)
+{
+	size_t len;
+	struct psz_buffer *buf;
 
-	अगर (!zone || !record)
-		वापस -ENOSPC;
+	if (!zone || !record)
+		return -ENOSPC;
 
-	buf = (काष्ठा psz_buffer *)zone->oldbuf;
-	अगर (!buf)
-		वापस -ENOMSG;
+	buf = (struct psz_buffer *)zone->oldbuf;
+	if (!buf)
+		return -ENOMSG;
 
-	len = atomic_पढ़ो(&buf->datalen);
-	record->buf = kदो_स्मृति(len, GFP_KERNEL);
-	अगर (!record->buf)
-		वापस -ENOMEM;
+	len = atomic_read(&buf->datalen);
+	record->buf = kmalloc(len, GFP_KERNEL);
+	if (!record->buf)
+		return -ENOMEM;
 
-	अगर (unlikely(psz_zone_पढ़ो_oldbuf(zone, record->buf, len, 0))) अणु
-		kमुक्त(record->buf);
-		वापस -ENOMSG;
-	पूर्ण
+	if (unlikely(psz_zone_read_oldbuf(zone, record->buf, len, 0))) {
+		kfree(record->buf);
+		return -ENOMSG;
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार psz_pstore_पढ़ो(काष्ठा pstore_record *record)
-अणु
-	काष्ठा psz_context *cxt = record->psi->data;
-	sमाप_प्रकार (*पढ़ोop)(काष्ठा pstore_zone *zone,
-			काष्ठा pstore_record *record);
-	काष्ठा pstore_zone *zone;
-	sमाप_प्रकार ret;
+static ssize_t psz_pstore_read(struct pstore_record *record)
+{
+	struct psz_context *cxt = record->psi->data;
+	ssize_t (*readop)(struct pstore_zone *zone,
+			struct pstore_record *record);
+	struct pstore_zone *zone;
+	ssize_t ret;
 
-	/* beक्रमe पढ़ो, we must recover from storage */
+	/* before read, we must recover from storage */
 	ret = psz_recovery(cxt);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 next_zone:
-	zone = psz_पढ़ो_next_zone(cxt);
-	अगर (!zone)
-		वापस 0;
+	zone = psz_read_next_zone(cxt);
+	if (!zone)
+		return 0;
 
 	record->type = zone->type;
-	चयन (record->type) अणु
-	हाल PSTORE_TYPE_DMESG:
-		पढ़ोop = psz_kmsg_पढ़ो;
-		record->id = cxt->kmsg_पढ़ो_cnt - 1;
-		अवरोध;
-	हाल PSTORE_TYPE_FTRACE:
-		पढ़ोop = psz_ftrace_पढ़ो;
-		अवरोध;
-	हाल PSTORE_TYPE_CONSOLE:
-	हाल PSTORE_TYPE_PMSG:
-		पढ़ोop = psz_record_पढ़ो;
-		अवरोध;
-	शेष:
-		जाओ next_zone;
-	पूर्ण
+	switch (record->type) {
+	case PSTORE_TYPE_DMESG:
+		readop = psz_kmsg_read;
+		record->id = cxt->kmsg_read_cnt - 1;
+		break;
+	case PSTORE_TYPE_FTRACE:
+		readop = psz_ftrace_read;
+		break;
+	case PSTORE_TYPE_CONSOLE:
+	case PSTORE_TYPE_PMSG:
+		readop = psz_record_read;
+		break;
+	default:
+		goto next_zone;
+	}
 
-	ret = पढ़ोop(zone, record);
-	अगर (ret == -ENOMSG)
-		जाओ next_zone;
-	वापस ret;
-पूर्ण
+	ret = readop(zone, record);
+	if (ret == -ENOMSG)
+		goto next_zone;
+	return ret;
+}
 
-अटल काष्ठा psz_context pstore_zone_cxt = अणु
+static struct psz_context pstore_zone_cxt = {
 	.pstore_zone_info_lock =
 		__MUTEX_INITIALIZER(pstore_zone_cxt.pstore_zone_info_lock),
 	.recovered = ATOMIC_INIT(0),
 	.on_panic = ATOMIC_INIT(0),
-	.pstore = अणु
+	.pstore = {
 		.owner = THIS_MODULE,
-		.खोलो = psz_pstore_खोलो,
-		.पढ़ो = psz_pstore_पढ़ो,
-		.ग_लिखो = psz_pstore_ग_लिखो,
+		.open = psz_pstore_open,
+		.read = psz_pstore_read,
+		.write = psz_pstore_write,
 		.erase = psz_pstore_erase,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल व्योम psz_मुक्त_zone(काष्ठा pstore_zone **pszone)
-अणु
-	काष्ठा pstore_zone *zone = *pszone;
+static void psz_free_zone(struct pstore_zone **pszone)
+{
+	struct pstore_zone *zone = *pszone;
 
-	अगर (!zone)
-		वापस;
+	if (!zone)
+		return;
 
-	kमुक्त(zone->buffer);
-	kमुक्त(zone);
-	*pszone = शून्य;
-पूर्ण
+	kfree(zone->buffer);
+	kfree(zone);
+	*pszone = NULL;
+}
 
-अटल व्योम psz_मुक्त_zones(काष्ठा pstore_zone ***pszones, अचिन्हित पूर्णांक *cnt)
-अणु
-	काष्ठा pstore_zone **zones = *pszones;
+static void psz_free_zones(struct pstore_zone ***pszones, unsigned int *cnt)
+{
+	struct pstore_zone **zones = *pszones;
 
-	अगर (!zones)
-		वापस;
+	if (!zones)
+		return;
 
-	जबतक (*cnt > 0) अणु
+	while (*cnt > 0) {
 		(*cnt)--;
-		psz_मुक्त_zone(&(zones[*cnt]));
-	पूर्ण
-	kमुक्त(zones);
-	*pszones = शून्य;
-पूर्ण
+		psz_free_zone(&(zones[*cnt]));
+	}
+	kfree(zones);
+	*pszones = NULL;
+}
 
-अटल व्योम psz_मुक्त_all_zones(काष्ठा psz_context *cxt)
-अणु
-	अगर (cxt->kpszs)
-		psz_मुक्त_zones(&cxt->kpszs, &cxt->kmsg_max_cnt);
-	अगर (cxt->ppsz)
-		psz_मुक्त_zone(&cxt->ppsz);
-	अगर (cxt->cpsz)
-		psz_मुक्त_zone(&cxt->cpsz);
-	अगर (cxt->fpszs)
-		psz_मुक्त_zones(&cxt->fpszs, &cxt->ftrace_max_cnt);
-पूर्ण
+static void psz_free_all_zones(struct psz_context *cxt)
+{
+	if (cxt->kpszs)
+		psz_free_zones(&cxt->kpszs, &cxt->kmsg_max_cnt);
+	if (cxt->ppsz)
+		psz_free_zone(&cxt->ppsz);
+	if (cxt->cpsz)
+		psz_free_zone(&cxt->cpsz);
+	if (cxt->fpszs)
+		psz_free_zones(&cxt->fpszs, &cxt->ftrace_max_cnt);
+}
 
-अटल काष्ठा pstore_zone *psz_init_zone(क्रमागत pstore_type_id type,
-		loff_t *off, माप_प्रकार size)
-अणु
-	काष्ठा pstore_zone_info *info = pstore_zone_cxt.pstore_zone_info;
-	काष्ठा pstore_zone *zone;
-	स्थिर अक्षर *name = pstore_type_to_name(type);
+static struct pstore_zone *psz_init_zone(enum pstore_type_id type,
+		loff_t *off, size_t size)
+{
+	struct pstore_zone_info *info = pstore_zone_cxt.pstore_zone_info;
+	struct pstore_zone *zone;
+	const char *name = pstore_type_to_name(type);
 
-	अगर (!size)
-		वापस शून्य;
+	if (!size)
+		return NULL;
 
-	अगर (*off + size > info->total_size) अणु
+	if (*off + size > info->total_size) {
 		pr_err("no room for %s (0x%zx@0x%llx over 0x%lx)\n",
 			name, size, *off, info->total_size);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 
-	zone = kzalloc(माप(काष्ठा pstore_zone), GFP_KERNEL);
-	अगर (!zone)
-		वापस ERR_PTR(-ENOMEM);
+	zone = kzalloc(sizeof(struct pstore_zone), GFP_KERNEL);
+	if (!zone)
+		return ERR_PTR(-ENOMEM);
 
-	zone->buffer = kदो_स्मृति(size, GFP_KERNEL);
-	अगर (!zone->buffer) अणु
-		kमुक्त(zone);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
-	स_रखो(zone->buffer, 0xFF, size);
+	zone->buffer = kmalloc(size, GFP_KERNEL);
+	if (!zone->buffer) {
+		kfree(zone);
+		return ERR_PTR(-ENOMEM);
+	}
+	memset(zone->buffer, 0xFF, size);
 	zone->off = *off;
 	zone->name = name;
 	zone->type = type;
-	zone->buffer_size = size - माप(काष्ठा psz_buffer);
+	zone->buffer_size = size - sizeof(struct psz_buffer);
 	zone->buffer->sig = type ^ PSZ_SIG;
-	zone->oldbuf = शून्य;
+	zone->oldbuf = NULL;
 	atomic_set(&zone->dirty, 0);
 	atomic_set(&zone->buffer->datalen, 0);
 	atomic_set(&zone->buffer->start, 0);
@@ -1187,144 +1186,144 @@ next_zone:
 	*off += size;
 
 	pr_debug("pszone %s: off 0x%llx, %zu header, %zu data\n", zone->name,
-			zone->off, माप(*zone->buffer), zone->buffer_size);
-	वापस zone;
-पूर्ण
+			zone->off, sizeof(*zone->buffer), zone->buffer_size);
+	return zone;
+}
 
-अटल काष्ठा pstore_zone **psz_init_zones(क्रमागत pstore_type_id type,
-	loff_t *off, माप_प्रकार total_size, sमाप_प्रकार record_size,
-	अचिन्हित पूर्णांक *cnt)
-अणु
-	काष्ठा pstore_zone_info *info = pstore_zone_cxt.pstore_zone_info;
-	काष्ठा pstore_zone **zones, *zone;
-	स्थिर अक्षर *name = pstore_type_to_name(type);
-	पूर्णांक c, i;
+static struct pstore_zone **psz_init_zones(enum pstore_type_id type,
+	loff_t *off, size_t total_size, ssize_t record_size,
+	unsigned int *cnt)
+{
+	struct pstore_zone_info *info = pstore_zone_cxt.pstore_zone_info;
+	struct pstore_zone **zones, *zone;
+	const char *name = pstore_type_to_name(type);
+	int c, i;
 
 	*cnt = 0;
-	अगर (!total_size || !record_size)
-		वापस शून्य;
+	if (!total_size || !record_size)
+		return NULL;
 
-	अगर (*off + total_size > info->total_size) अणु
+	if (*off + total_size > info->total_size) {
 		pr_err("no room for zones %s (0x%zx@0x%llx over 0x%lx)\n",
 			name, total_size, *off, info->total_size);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 
 	c = total_size / record_size;
-	zones = kसुस्मृति(c, माप(*zones), GFP_KERNEL);
-	अगर (!zones) अणु
+	zones = kcalloc(c, sizeof(*zones), GFP_KERNEL);
+	if (!zones) {
 		pr_err("allocate for zones %s failed\n", name);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
-	स_रखो(zones, 0, c * माप(*zones));
+		return ERR_PTR(-ENOMEM);
+	}
+	memset(zones, 0, c * sizeof(*zones));
 
-	क्रम (i = 0; i < c; i++) अणु
+	for (i = 0; i < c; i++) {
 		zone = psz_init_zone(type, off, record_size);
-		अगर (!zone || IS_ERR(zone)) अणु
+		if (!zone || IS_ERR(zone)) {
 			pr_err("initialize zones %s failed\n", name);
-			psz_मुक्त_zones(&zones, &i);
-			वापस (व्योम *)zone;
-		पूर्ण
+			psz_free_zones(&zones, &i);
+			return (void *)zone;
+		}
 		zones[i] = zone;
-	पूर्ण
+	}
 
 	*cnt = c;
-	वापस zones;
-पूर्ण
+	return zones;
+}
 
-अटल पूर्णांक psz_alloc_zones(काष्ठा psz_context *cxt)
-अणु
-	काष्ठा pstore_zone_info *info = cxt->pstore_zone_info;
+static int psz_alloc_zones(struct psz_context *cxt)
+{
+	struct pstore_zone_info *info = cxt->pstore_zone_info;
 	loff_t off = 0;
-	पूर्णांक err;
-	माप_प्रकार off_size = 0;
+	int err;
+	size_t off_size = 0;
 
 	off_size += info->pmsg_size;
 	cxt->ppsz = psz_init_zone(PSTORE_TYPE_PMSG, &off, info->pmsg_size);
-	अगर (IS_ERR(cxt->ppsz)) अणु
+	if (IS_ERR(cxt->ppsz)) {
 		err = PTR_ERR(cxt->ppsz);
-		cxt->ppsz = शून्य;
-		जाओ मुक्त_out;
-	पूर्ण
+		cxt->ppsz = NULL;
+		goto free_out;
+	}
 
 	off_size += info->console_size;
 	cxt->cpsz = psz_init_zone(PSTORE_TYPE_CONSOLE, &off,
 			info->console_size);
-	अगर (IS_ERR(cxt->cpsz)) अणु
+	if (IS_ERR(cxt->cpsz)) {
 		err = PTR_ERR(cxt->cpsz);
-		cxt->cpsz = शून्य;
-		जाओ मुक्त_out;
-	पूर्ण
+		cxt->cpsz = NULL;
+		goto free_out;
+	}
 
 	off_size += info->ftrace_size;
 	cxt->fpszs = psz_init_zones(PSTORE_TYPE_FTRACE, &off,
 			info->ftrace_size,
 			info->ftrace_size / nr_cpu_ids,
 			&cxt->ftrace_max_cnt);
-	अगर (IS_ERR(cxt->fpszs)) अणु
+	if (IS_ERR(cxt->fpszs)) {
 		err = PTR_ERR(cxt->fpszs);
-		cxt->fpszs = शून्य;
-		जाओ मुक्त_out;
-	पूर्ण
+		cxt->fpszs = NULL;
+		goto free_out;
+	}
 
 	cxt->kpszs = psz_init_zones(PSTORE_TYPE_DMESG, &off,
 			info->total_size - off_size,
 			info->kmsg_size, &cxt->kmsg_max_cnt);
-	अगर (IS_ERR(cxt->kpszs)) अणु
+	if (IS_ERR(cxt->kpszs)) {
 		err = PTR_ERR(cxt->kpszs);
-		cxt->kpszs = शून्य;
-		जाओ मुक्त_out;
-	पूर्ण
+		cxt->kpszs = NULL;
+		goto free_out;
+	}
 
-	वापस 0;
-मुक्त_out:
-	psz_मुक्त_all_zones(cxt);
-	वापस err;
-पूर्ण
+	return 0;
+free_out:
+	psz_free_all_zones(cxt);
+	return err;
+}
 
 /**
- * रेजिस्टर_pstore_zone() - रेजिस्टर to pstore/zone
+ * register_pstore_zone() - register to pstore/zone
  *
- * @info: back-end driver inक्रमmation. See &काष्ठा pstore_zone_info.
+ * @info: back-end driver information. See &struct pstore_zone_info.
  *
- * Only one back-end at one समय.
+ * Only one back-end at one time.
  *
  * Return: 0 on success, others on failure.
  */
-पूर्णांक रेजिस्टर_pstore_zone(काष्ठा pstore_zone_info *info)
-अणु
-	पूर्णांक err = -EINVAL;
-	काष्ठा psz_context *cxt = &pstore_zone_cxt;
+int register_pstore_zone(struct pstore_zone_info *info)
+{
+	int err = -EINVAL;
+	struct psz_context *cxt = &pstore_zone_cxt;
 
-	अगर (info->total_size < 4096) अणु
+	if (info->total_size < 4096) {
 		pr_warn("total_size must be >= 4096\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (info->total_size > SZ_128M) अणु
+		return -EINVAL;
+	}
+	if (info->total_size > SZ_128M) {
 		pr_warn("capping size to 128MiB\n");
 		info->total_size = SZ_128M;
-	पूर्ण
+	}
 
-	अगर (!info->kmsg_size && !info->pmsg_size && !info->console_size &&
-	    !info->ftrace_size) अणु
+	if (!info->kmsg_size && !info->pmsg_size && !info->console_size &&
+	    !info->ftrace_size) {
 		pr_warn("at least one record size must be non-zero\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!info->name || !info->name[0])
-		वापस -EINVAL;
+	if (!info->name || !info->name[0])
+		return -EINVAL;
 
-#घोषणा check_size(name, size) अणु					\
-		अगर (info->name > 0 && info->name < (size)) अणु		\
+#define check_size(name, size) {					\
+		if (info->name > 0 && info->name < (size)) {		\
 			pr_err(#name " must be over %d\n", (size));	\
-			वापस -EINVAL;					\
-		पूर्ण							\
-		अगर (info->name & (size - 1)) अणु				\
+			return -EINVAL;					\
+		}							\
+		if (info->name & (size - 1)) {				\
 			pr_err(#name " must be a multiple of %d\n",	\
 					(size));			\
-			वापस -EINVAL;					\
-		पूर्ण							\
-	पूर्ण
+			return -EINVAL;					\
+		}							\
+	}
 
 	check_size(total_size, 4096);
 	check_size(kmsg_size, SECTOR_SIZE);
@@ -1332,25 +1331,25 @@ next_zone:
 	check_size(console_size, SECTOR_SIZE);
 	check_size(ftrace_size, SECTOR_SIZE);
 
-#अघोषित check_size
+#undef check_size
 
 	/*
-	 * the @पढ़ो and @ग_लिखो must be applied.
-	 * अगर no @पढ़ो, pstore may mount failed.
-	 * अगर no @ग_लिखो, pstore करो not support to हटाओ record file.
+	 * the @read and @write must be applied.
+	 * if no @read, pstore may mount failed.
+	 * if no @write, pstore do not support to remove record file.
 	 */
-	अगर (!info->पढ़ो || !info->ग_लिखो) अणु
+	if (!info->read || !info->write) {
 		pr_err("no valid general read/write interface\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_lock(&cxt->pstore_zone_info_lock);
-	अगर (cxt->pstore_zone_info) अणु
+	if (cxt->pstore_zone_info) {
 		pr_warn("'%s' already loaded: ignoring '%s'\n",
 				cxt->pstore_zone_info->name, info->name);
 		mutex_unlock(&cxt->pstore_zone_info_lock);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 	cxt->pstore_zone_info = info;
 
 	pr_debug("register %s with properties:\n", info->name);
@@ -1361,97 +1360,97 @@ next_zone:
 	pr_debug("\tftrace size : %ld Bytes\n", info->ftrace_size);
 
 	err = psz_alloc_zones(cxt);
-	अगर (err) अणु
+	if (err) {
 		pr_err("alloc zones failed\n");
-		जाओ fail_out;
-	पूर्ण
+		goto fail_out;
+	}
 
-	अगर (info->kmsg_size) अणु
+	if (info->kmsg_size) {
 		cxt->pstore.bufsize = cxt->kpszs[0]->buffer_size -
-			माप(काष्ठा psz_kmsg_header);
+			sizeof(struct psz_kmsg_header);
 		cxt->pstore.buf = kzalloc(cxt->pstore.bufsize, GFP_KERNEL);
-		अगर (!cxt->pstore.buf) अणु
+		if (!cxt->pstore.buf) {
 			err = -ENOMEM;
-			जाओ fail_मुक्त;
-		पूर्ण
-	पूर्ण
+			goto fail_free;
+		}
+	}
 	cxt->pstore.data = cxt;
 
 	pr_info("registered %s as backend for", info->name);
 	cxt->pstore.max_reason = info->max_reason;
 	cxt->pstore.name = info->name;
-	अगर (info->kmsg_size) अणु
+	if (info->kmsg_size) {
 		cxt->pstore.flags |= PSTORE_FLAGS_DMESG;
 		pr_cont(" kmsg(%s",
 			kmsg_dump_reason_str(cxt->pstore.max_reason));
-		अगर (cxt->pstore_zone_info->panic_ग_लिखो)
+		if (cxt->pstore_zone_info->panic_write)
 			pr_cont(",panic_write");
 		pr_cont(")");
-	पूर्ण
-	अगर (info->pmsg_size) अणु
+	}
+	if (info->pmsg_size) {
 		cxt->pstore.flags |= PSTORE_FLAGS_PMSG;
 		pr_cont(" pmsg");
-	पूर्ण
-	अगर (info->console_size) अणु
+	}
+	if (info->console_size) {
 		cxt->pstore.flags |= PSTORE_FLAGS_CONSOLE;
 		pr_cont(" console");
-	पूर्ण
-	अगर (info->ftrace_size) अणु
+	}
+	if (info->ftrace_size) {
 		cxt->pstore.flags |= PSTORE_FLAGS_FTRACE;
 		pr_cont(" ftrace");
-	पूर्ण
+	}
 	pr_cont("\n");
 
-	err = pstore_रेजिस्टर(&cxt->pstore);
-	अगर (err) अणु
+	err = pstore_register(&cxt->pstore);
+	if (err) {
 		pr_err("registering with pstore failed\n");
-		जाओ fail_मुक्त;
-	पूर्ण
+		goto fail_free;
+	}
 	mutex_unlock(&pstore_zone_cxt.pstore_zone_info_lock);
 
-	वापस 0;
+	return 0;
 
-fail_मुक्त:
-	kमुक्त(cxt->pstore.buf);
-	cxt->pstore.buf = शून्य;
+fail_free:
+	kfree(cxt->pstore.buf);
+	cxt->pstore.buf = NULL;
 	cxt->pstore.bufsize = 0;
-	psz_मुक्त_all_zones(cxt);
+	psz_free_all_zones(cxt);
 fail_out:
-	pstore_zone_cxt.pstore_zone_info = शून्य;
+	pstore_zone_cxt.pstore_zone_info = NULL;
 	mutex_unlock(&pstore_zone_cxt.pstore_zone_info_lock);
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL_GPL(रेजिस्टर_pstore_zone);
+	return err;
+}
+EXPORT_SYMBOL_GPL(register_pstore_zone);
 
 /**
- * unरेजिस्टर_pstore_zone() - unरेजिस्टर to pstore/zone
+ * unregister_pstore_zone() - unregister to pstore/zone
  *
- * @info: back-end driver inक्रमmation. See काष्ठा pstore_zone_info.
+ * @info: back-end driver information. See struct pstore_zone_info.
  */
-व्योम unरेजिस्टर_pstore_zone(काष्ठा pstore_zone_info *info)
-अणु
-	काष्ठा psz_context *cxt = &pstore_zone_cxt;
+void unregister_pstore_zone(struct pstore_zone_info *info)
+{
+	struct psz_context *cxt = &pstore_zone_cxt;
 
 	mutex_lock(&cxt->pstore_zone_info_lock);
-	अगर (!cxt->pstore_zone_info) अणु
+	if (!cxt->pstore_zone_info) {
 		mutex_unlock(&cxt->pstore_zone_info_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Stop incoming ग_लिखोs from pstore. */
-	pstore_unरेजिस्टर(&cxt->pstore);
+	/* Stop incoming writes from pstore. */
+	pstore_unregister(&cxt->pstore);
 
-	/* Flush any pending ग_लिखोs. */
-	psz_flush_all_dirty_zones(शून्य);
+	/* Flush any pending writes. */
+	psz_flush_all_dirty_zones(NULL);
 	flush_delayed_work(&psz_cleaner);
 
 	/* Clean up allocations. */
-	kमुक्त(cxt->pstore.buf);
-	cxt->pstore.buf = शून्य;
+	kfree(cxt->pstore.buf);
+	cxt->pstore.buf = NULL;
 	cxt->pstore.bufsize = 0;
-	cxt->pstore_zone_info = शून्य;
+	cxt->pstore_zone_info = NULL;
 
-	psz_मुक्त_all_zones(cxt);
+	psz_free_all_zones(cxt);
 
 	/* Clear counters and zone state. */
 	cxt->oops_counter = 0;
@@ -1460,8 +1459,8 @@ EXPORT_SYMBOL_GPL(रेजिस्टर_pstore_zone);
 	atomic_set(&cxt->on_panic, 0);
 
 	mutex_unlock(&cxt->pstore_zone_info_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(unरेजिस्टर_pstore_zone);
+}
+EXPORT_SYMBOL_GPL(unregister_pstore_zone);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("WeiXiong Liao <liaoweixiong@allwinnertech.com>");

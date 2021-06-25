@@ -1,137 +1,136 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /*
- * Irqकरोमुख्य क्रम Linux to run as the root partition on Microsoft Hypervisor.
+ * Irqdomain for Linux to run as the root partition on Microsoft Hypervisor.
  *
  * Authors:
  *  Sunil Muthuswamy <sunilmut@microsoft.com>
  *  Wei Liu <wei.liu@kernel.org>
  */
 
-#समावेश <linux/pci.h>
-#समावेश <linux/irq.h>
-#समावेश <यंत्र/mshyperv.h>
+#include <linux/pci.h>
+#include <linux/irq.h>
+#include <asm/mshyperv.h>
 
-अटल पूर्णांक hv_map_पूर्णांकerrupt(जोड़ hv_device_id device_id, bool level,
-		पूर्णांक cpu, पूर्णांक vector, काष्ठा hv_पूर्णांकerrupt_entry *entry)
-अणु
-	काष्ठा hv_input_map_device_पूर्णांकerrupt *input;
-	काष्ठा hv_output_map_device_पूर्णांकerrupt *output;
-	काष्ठा hv_device_पूर्णांकerrupt_descriptor *पूर्णांकr_desc;
-	अचिन्हित दीर्घ flags;
+static int hv_map_interrupt(union hv_device_id device_id, bool level,
+		int cpu, int vector, struct hv_interrupt_entry *entry)
+{
+	struct hv_input_map_device_interrupt *input;
+	struct hv_output_map_device_interrupt *output;
+	struct hv_device_interrupt_descriptor *intr_desc;
+	unsigned long flags;
 	u64 status;
-	पूर्णांक nr_bank, var_size;
+	int nr_bank, var_size;
 
 	local_irq_save(flags);
 
 	input = *this_cpu_ptr(hyperv_pcpu_input_arg);
 	output = *this_cpu_ptr(hyperv_pcpu_output_arg);
 
-	पूर्णांकr_desc = &input->पूर्णांकerrupt_descriptor;
-	स_रखो(input, 0, माप(*input));
+	intr_desc = &input->interrupt_descriptor;
+	memset(input, 0, sizeof(*input));
 	input->partition_id = hv_current_partition_id;
-	input->device_id = device_id.as_uपूर्णांक64;
-	पूर्णांकr_desc->पूर्णांकerrupt_type = HV_X64_INTERRUPT_TYPE_FIXED;
-	पूर्णांकr_desc->vector_count = 1;
-	पूर्णांकr_desc->target.vector = vector;
+	input->device_id = device_id.as_uint64;
+	intr_desc->interrupt_type = HV_X64_INTERRUPT_TYPE_FIXED;
+	intr_desc->vector_count = 1;
+	intr_desc->target.vector = vector;
 
-	अगर (level)
-		पूर्णांकr_desc->trigger_mode = HV_INTERRUPT_TRIGGER_MODE_LEVEL;
-	अन्यथा
-		पूर्णांकr_desc->trigger_mode = HV_INTERRUPT_TRIGGER_MODE_EDGE;
+	if (level)
+		intr_desc->trigger_mode = HV_INTERRUPT_TRIGGER_MODE_LEVEL;
+	else
+		intr_desc->trigger_mode = HV_INTERRUPT_TRIGGER_MODE_EDGE;
 
-	पूर्णांकr_desc->target.vp_set.valid_bank_mask = 0;
-	पूर्णांकr_desc->target.vp_set.क्रमmat = HV_GENERIC_SET_SPARSE_4K;
-	nr_bank = cpumask_to_vpset(&(पूर्णांकr_desc->target.vp_set), cpumask_of(cpu));
-	अगर (nr_bank < 0) अणु
+	intr_desc->target.vp_set.valid_bank_mask = 0;
+	intr_desc->target.vp_set.format = HV_GENERIC_SET_SPARSE_4K;
+	nr_bank = cpumask_to_vpset(&(intr_desc->target.vp_set), cpumask_of(cpu));
+	if (nr_bank < 0) {
 		local_irq_restore(flags);
 		pr_err("%s: unable to generate VP set\n", __func__);
-		वापस EINVAL;
-	पूर्ण
-	पूर्णांकr_desc->target.flags = HV_DEVICE_INTERRUPT_TARGET_PROCESSOR_SET;
+		return EINVAL;
+	}
+	intr_desc->target.flags = HV_DEVICE_INTERRUPT_TARGET_PROCESSOR_SET;
 
 	/*
 	 * var-sized hypercall, var-size starts after vp_mask (thus
-	 * vp_set.क्रमmat करोes not count, but vp_set.valid_bank_mask
-	 * करोes).
+	 * vp_set.format does not count, but vp_set.valid_bank_mask
+	 * does).
 	 */
 	var_size = nr_bank + 1;
 
-	status = hv_करो_rep_hypercall(HVCALL_MAP_DEVICE_INTERRUPT, 0, var_size,
+	status = hv_do_rep_hypercall(HVCALL_MAP_DEVICE_INTERRUPT, 0, var_size,
 			input, output);
-	*entry = output->पूर्णांकerrupt_entry;
+	*entry = output->interrupt_entry;
 
 	local_irq_restore(flags);
 
-	अगर (!hv_result_success(status))
+	if (!hv_result_success(status))
 		pr_err("%s: hypercall failed, status %lld\n", __func__, status);
 
-	वापस hv_result(status);
-पूर्ण
+	return hv_result(status);
+}
 
-अटल पूर्णांक hv_unmap_पूर्णांकerrupt(u64 id, काष्ठा hv_पूर्णांकerrupt_entry *old_entry)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा hv_input_unmap_device_पूर्णांकerrupt *input;
-	काष्ठा hv_पूर्णांकerrupt_entry *पूर्णांकr_entry;
+static int hv_unmap_interrupt(u64 id, struct hv_interrupt_entry *old_entry)
+{
+	unsigned long flags;
+	struct hv_input_unmap_device_interrupt *input;
+	struct hv_interrupt_entry *intr_entry;
 	u64 status;
 
 	local_irq_save(flags);
 	input = *this_cpu_ptr(hyperv_pcpu_input_arg);
 
-	स_रखो(input, 0, माप(*input));
-	पूर्णांकr_entry = &input->पूर्णांकerrupt_entry;
+	memset(input, 0, sizeof(*input));
+	intr_entry = &input->interrupt_entry;
 	input->partition_id = hv_current_partition_id;
 	input->device_id = id;
-	*पूर्णांकr_entry = *old_entry;
+	*intr_entry = *old_entry;
 
-	status = hv_करो_hypercall(HVCALL_UNMAP_DEVICE_INTERRUPT, input, शून्य);
+	status = hv_do_hypercall(HVCALL_UNMAP_DEVICE_INTERRUPT, input, NULL);
 	local_irq_restore(flags);
 
-	वापस hv_result(status);
-पूर्ण
+	return hv_result(status);
+}
 
-#अगर_घोषित CONFIG_PCI_MSI
-काष्ठा rid_data अणु
-	काष्ठा pci_dev *bridge;
+#ifdef CONFIG_PCI_MSI
+struct rid_data {
+	struct pci_dev *bridge;
 	u32 rid;
-पूर्ण;
+};
 
-अटल पूर्णांक get_rid_cb(काष्ठा pci_dev *pdev, u16 alias, व्योम *data)
-अणु
-	काष्ठा rid_data *rd = data;
+static int get_rid_cb(struct pci_dev *pdev, u16 alias, void *data)
+{
+	struct rid_data *rd = data;
 	u8 bus = PCI_BUS_NUM(rd->rid);
 
-	अगर (pdev->bus->number != bus || PCI_BUS_NUM(alias) != bus) अणु
+	if (pdev->bus->number != bus || PCI_BUS_NUM(alias) != bus) {
 		rd->bridge = pdev;
 		rd->rid = alias;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल जोड़ hv_device_id hv_build_pci_dev_id(काष्ठा pci_dev *dev)
-अणु
-	जोड़ hv_device_id dev_id;
-	काष्ठा rid_data data = अणु
-		.bridge = शून्य,
+static union hv_device_id hv_build_pci_dev_id(struct pci_dev *dev)
+{
+	union hv_device_id dev_id;
+	struct rid_data data = {
+		.bridge = NULL,
 		.rid = PCI_DEVID(dev->bus->number, dev->devfn)
-	पूर्ण;
+	};
 
-	pci_क्रम_each_dma_alias(dev, get_rid_cb, &data);
+	pci_for_each_dma_alias(dev, get_rid_cb, &data);
 
-	dev_id.as_uपूर्णांक64 = 0;
+	dev_id.as_uint64 = 0;
 	dev_id.device_type = HV_DEVICE_TYPE_PCI;
-	dev_id.pci.segment = pci_करोमुख्य_nr(dev->bus);
+	dev_id.pci.segment = pci_domain_nr(dev->bus);
 
 	dev_id.pci.bdf.bus = PCI_BUS_NUM(data.rid);
 	dev_id.pci.bdf.device = PCI_SLOT(data.rid);
 	dev_id.pci.bdf.function = PCI_FUNC(data.rid);
-	dev_id.pci.source_shaकरोw = HV_SOURCE_SHADOW_NONE;
+	dev_id.pci.source_shadow = HV_SOURCE_SHADOW_NONE;
 
-	अगर (data.bridge) अणु
-		पूर्णांक pos;
+	if (data.bridge) {
+		int pos;
 
 		/*
 		 * Microsoft Hypervisor requires a bus range when the bridge is
@@ -140,247 +139,247 @@
 		 * To distinguish conventional vs PCI-X bridge, we can check
 		 * the bridge's PCI-X Secondary Status Register, Secondary Bus
 		 * Mode and Frequency bits. See PCI Express to PCI/PCI-X Bridge
-		 * Specअगरication Revision 1.0 5.2.2.1.3.
+		 * Specification Revision 1.0 5.2.2.1.3.
 		 *
 		 * Value zero means it is in conventional mode, otherwise it is
 		 * in PCI-X mode.
 		 */
 
 		pos = pci_find_capability(data.bridge, PCI_CAP_ID_PCIX);
-		अगर (pos) अणु
+		if (pos) {
 			u16 status;
 
-			pci_पढ़ो_config_word(data.bridge, pos +
+			pci_read_config_word(data.bridge, pos +
 					PCI_X_BRIDGE_SSTATUS, &status);
 
-			अगर (status & PCI_X_SSTATUS_FREQ) अणु
+			if (status & PCI_X_SSTATUS_FREQ) {
 				/* Non-zero, PCI-X mode */
 				u8 sec_bus, sub_bus;
 
-				dev_id.pci.source_shaकरोw = HV_SOURCE_SHADOW_BRIDGE_BUS_RANGE;
+				dev_id.pci.source_shadow = HV_SOURCE_SHADOW_BRIDGE_BUS_RANGE;
 
-				pci_पढ़ो_config_byte(data.bridge, PCI_SECONDARY_BUS, &sec_bus);
-				dev_id.pci.shaकरोw_bus_range.secondary_bus = sec_bus;
-				pci_पढ़ो_config_byte(data.bridge, PCI_SUBORDINATE_BUS, &sub_bus);
-				dev_id.pci.shaकरोw_bus_range.subordinate_bus = sub_bus;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				pci_read_config_byte(data.bridge, PCI_SECONDARY_BUS, &sec_bus);
+				dev_id.pci.shadow_bus_range.secondary_bus = sec_bus;
+				pci_read_config_byte(data.bridge, PCI_SUBORDINATE_BUS, &sub_bus);
+				dev_id.pci.shadow_bus_range.subordinate_bus = sub_bus;
+			}
+		}
+	}
 
-	वापस dev_id;
-पूर्ण
+	return dev_id;
+}
 
-अटल पूर्णांक hv_map_msi_पूर्णांकerrupt(काष्ठा pci_dev *dev, पूर्णांक cpu, पूर्णांक vector,
-				काष्ठा hv_पूर्णांकerrupt_entry *entry)
-अणु
-	जोड़ hv_device_id device_id = hv_build_pci_dev_id(dev);
+static int hv_map_msi_interrupt(struct pci_dev *dev, int cpu, int vector,
+				struct hv_interrupt_entry *entry)
+{
+	union hv_device_id device_id = hv_build_pci_dev_id(dev);
 
-	वापस hv_map_पूर्णांकerrupt(device_id, false, cpu, vector, entry);
-पूर्ण
+	return hv_map_interrupt(device_id, false, cpu, vector, entry);
+}
 
-अटल अंतरभूत व्योम entry_to_msi_msg(काष्ठा hv_पूर्णांकerrupt_entry *entry, काष्ठा msi_msg *msg)
-अणु
+static inline void entry_to_msi_msg(struct hv_interrupt_entry *entry, struct msi_msg *msg)
+{
 	/* High address is always 0 */
 	msg->address_hi = 0;
-	msg->address_lo = entry->msi_entry.address.as_uपूर्णांक32;
-	msg->data = entry->msi_entry.data.as_uपूर्णांक32;
-पूर्ण
+	msg->address_lo = entry->msi_entry.address.as_uint32;
+	msg->data = entry->msi_entry.data.as_uint32;
+}
 
-अटल पूर्णांक hv_unmap_msi_पूर्णांकerrupt(काष्ठा pci_dev *dev, काष्ठा hv_पूर्णांकerrupt_entry *old_entry);
-अटल व्योम hv_irq_compose_msi_msg(काष्ठा irq_data *data, काष्ठा msi_msg *msg)
-अणु
-	काष्ठा msi_desc *msidesc;
-	काष्ठा pci_dev *dev;
-	काष्ठा hv_पूर्णांकerrupt_entry out_entry, *stored_entry;
-	काष्ठा irq_cfg *cfg = irqd_cfg(data);
+static int hv_unmap_msi_interrupt(struct pci_dev *dev, struct hv_interrupt_entry *old_entry);
+static void hv_irq_compose_msi_msg(struct irq_data *data, struct msi_msg *msg)
+{
+	struct msi_desc *msidesc;
+	struct pci_dev *dev;
+	struct hv_interrupt_entry out_entry, *stored_entry;
+	struct irq_cfg *cfg = irqd_cfg(data);
 	cpumask_t *affinity;
-	पूर्णांक cpu;
+	int cpu;
 	u64 status;
 
 	msidesc = irq_data_get_msi_desc(data);
 	dev = msi_desc_to_pci_dev(msidesc);
 
-	अगर (!cfg) अणु
+	if (!cfg) {
 		pr_debug("%s: cfg is NULL", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	affinity = irq_data_get_effective_affinity_mask(data);
 	cpu = cpumask_first_and(affinity, cpu_online_mask);
 
-	अगर (data->chip_data) अणु
+	if (data->chip_data) {
 		/*
-		 * This पूर्णांकerrupt is alपढ़ोy mapped. Let's unmap first.
+		 * This interrupt is already mapped. Let's unmap first.
 		 *
-		 * We करोn't use retarget पूर्णांकerrupt hypercalls here because
-		 * Microsoft Hypervisor करोens't allow root to change the vector
-		 * or specअगरy VPs outside of the set that is initially used
+		 * We don't use retarget interrupt hypercalls here because
+		 * Microsoft Hypervisor doens't allow root to change the vector
+		 * or specify VPs outside of the set that is initially used
 		 * during mapping.
 		 */
 		stored_entry = data->chip_data;
-		data->chip_data = शून्य;
+		data->chip_data = NULL;
 
-		status = hv_unmap_msi_पूर्णांकerrupt(dev, stored_entry);
+		status = hv_unmap_msi_interrupt(dev, stored_entry);
 
-		kमुक्त(stored_entry);
+		kfree(stored_entry);
 
-		अगर (status != HV_STATUS_SUCCESS) अणु
+		if (status != HV_STATUS_SUCCESS) {
 			pr_debug("%s: failed to unmap, status %lld", __func__, status);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
-	stored_entry = kzalloc(माप(*stored_entry), GFP_ATOMIC);
-	अगर (!stored_entry) अणु
+	stored_entry = kzalloc(sizeof(*stored_entry), GFP_ATOMIC);
+	if (!stored_entry) {
 		pr_debug("%s: failed to allocate chip data\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	status = hv_map_msi_पूर्णांकerrupt(dev, cpu, cfg->vector, &out_entry);
-	अगर (status != HV_STATUS_SUCCESS) अणु
-		kमुक्त(stored_entry);
-		वापस;
-	पूर्ण
+	status = hv_map_msi_interrupt(dev, cpu, cfg->vector, &out_entry);
+	if (status != HV_STATUS_SUCCESS) {
+		kfree(stored_entry);
+		return;
+	}
 
 	*stored_entry = out_entry;
 	data->chip_data = stored_entry;
 	entry_to_msi_msg(&out_entry, msg);
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल पूर्णांक hv_unmap_msi_पूर्णांकerrupt(काष्ठा pci_dev *dev, काष्ठा hv_पूर्णांकerrupt_entry *old_entry)
-अणु
-	वापस hv_unmap_पूर्णांकerrupt(hv_build_pci_dev_id(dev).as_uपूर्णांक64, old_entry);
-पूर्ण
+static int hv_unmap_msi_interrupt(struct pci_dev *dev, struct hv_interrupt_entry *old_entry)
+{
+	return hv_unmap_interrupt(hv_build_pci_dev_id(dev).as_uint64, old_entry);
+}
 
-अटल व्योम hv_tearकरोwn_msi_irq_common(काष्ठा pci_dev *dev, काष्ठा msi_desc *msidesc, पूर्णांक irq)
-अणु
+static void hv_teardown_msi_irq_common(struct pci_dev *dev, struct msi_desc *msidesc, int irq)
+{
 	u64 status;
-	काष्ठा hv_पूर्णांकerrupt_entry old_entry;
-	काष्ठा irq_desc *desc;
-	काष्ठा irq_data *data;
-	काष्ठा msi_msg msg;
+	struct hv_interrupt_entry old_entry;
+	struct irq_desc *desc;
+	struct irq_data *data;
+	struct msi_msg msg;
 
 	desc = irq_to_desc(irq);
-	अगर (!desc) अणु
+	if (!desc) {
 		pr_debug("%s: no irq desc\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	data = &desc->irq_data;
-	अगर (!data) अणु
+	if (!data) {
 		pr_debug("%s: no irq data\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!data->chip_data) अणु
+	if (!data->chip_data) {
 		pr_debug("%s: no chip data\n!", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	old_entry = *(काष्ठा hv_पूर्णांकerrupt_entry *)data->chip_data;
+	old_entry = *(struct hv_interrupt_entry *)data->chip_data;
 	entry_to_msi_msg(&old_entry, &msg);
 
-	kमुक्त(data->chip_data);
-	data->chip_data = शून्य;
+	kfree(data->chip_data);
+	data->chip_data = NULL;
 
-	status = hv_unmap_msi_पूर्णांकerrupt(dev, &old_entry);
+	status = hv_unmap_msi_interrupt(dev, &old_entry);
 
-	अगर (status != HV_STATUS_SUCCESS) अणु
+	if (status != HV_STATUS_SUCCESS) {
 		pr_err("%s: hypercall failed, status %lld\n", __func__, status);
-		वापस;
-	पूर्ण
-पूर्ण
+		return;
+	}
+}
 
-अटल व्योम hv_msi_करोमुख्य_मुक्त_irqs(काष्ठा irq_करोमुख्य *करोमुख्य, काष्ठा device *dev)
-अणु
-	पूर्णांक i;
-	काष्ठा msi_desc *entry;
-	काष्ठा pci_dev *pdev;
+static void hv_msi_domain_free_irqs(struct irq_domain *domain, struct device *dev)
+{
+	int i;
+	struct msi_desc *entry;
+	struct pci_dev *pdev;
 
-	अगर (WARN_ON_ONCE(!dev_is_pci(dev)))
-		वापस;
+	if (WARN_ON_ONCE(!dev_is_pci(dev)))
+		return;
 
 	pdev = to_pci_dev(dev);
 
-	क्रम_each_pci_msi_entry(entry, pdev) अणु
-		अगर (entry->irq) अणु
-			क्रम (i = 0; i < entry->nvec_used; i++) अणु
-				hv_tearकरोwn_msi_irq_common(pdev, entry, entry->irq + i);
-				irq_करोमुख्य_मुक्त_irqs(entry->irq + i, 1);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+	for_each_pci_msi_entry(entry, pdev) {
+		if (entry->irq) {
+			for (i = 0; i < entry->nvec_used; i++) {
+				hv_teardown_msi_irq_common(pdev, entry, entry->irq + i);
+				irq_domain_free_irqs(entry->irq + i, 1);
+			}
+		}
+	}
+}
 
 /*
- * IRQ Chip क्रम MSI PCI/PCI-X/PCI-Express Devices,
+ * IRQ Chip for MSI PCI/PCI-X/PCI-Express Devices,
  * which implement the MSI or MSI-X Capability Structure.
  */
-अटल काष्ठा irq_chip hv_pci_msi_controller = अणु
+static struct irq_chip hv_pci_msi_controller = {
 	.name			= "HV-PCI-MSI",
 	.irq_unmask		= pci_msi_unmask_irq,
 	.irq_mask		= pci_msi_mask_irq,
 	.irq_ack		= irq_chip_ack_parent,
 	.irq_retrigger		= irq_chip_retrigger_hierarchy,
 	.irq_compose_msi_msg	= hv_irq_compose_msi_msg,
-	.irq_set_affinity	= msi_करोमुख्य_set_affinity,
+	.irq_set_affinity	= msi_domain_set_affinity,
 	.flags			= IRQCHIP_SKIP_SET_WAKE,
-पूर्ण;
+};
 
-अटल काष्ठा msi_करोमुख्य_ops pci_msi_करोमुख्य_ops = अणु
-	.करोमुख्य_मुक्त_irqs	= hv_msi_करोमुख्य_मुक्त_irqs,
+static struct msi_domain_ops pci_msi_domain_ops = {
+	.domain_free_irqs	= hv_msi_domain_free_irqs,
 	.msi_prepare		= pci_msi_prepare,
-पूर्ण;
+};
 
-अटल काष्ठा msi_करोमुख्य_info hv_pci_msi_करोमुख्य_info = अणु
+static struct msi_domain_info hv_pci_msi_domain_info = {
 	.flags		= MSI_FLAG_USE_DEF_DOM_OPS | MSI_FLAG_USE_DEF_CHIP_OPS |
 			  MSI_FLAG_PCI_MSIX,
-	.ops		= &pci_msi_करोमुख्य_ops,
+	.ops		= &pci_msi_domain_ops,
 	.chip		= &hv_pci_msi_controller,
 	.handler	= handle_edge_irq,
 	.handler_name	= "edge",
-पूर्ण;
+};
 
-काष्ठा irq_करोमुख्य * __init hv_create_pci_msi_करोमुख्य(व्योम)
-अणु
-	काष्ठा irq_करोमुख्य *d = शून्य;
-	काष्ठा fwnode_handle *fn;
+struct irq_domain * __init hv_create_pci_msi_domain(void)
+{
+	struct irq_domain *d = NULL;
+	struct fwnode_handle *fn;
 
-	fn = irq_करोमुख्य_alloc_named_fwnode("HV-PCI-MSI");
-	अगर (fn)
-		d = pci_msi_create_irq_करोमुख्य(fn, &hv_pci_msi_करोमुख्य_info, x86_vector_करोमुख्य);
+	fn = irq_domain_alloc_named_fwnode("HV-PCI-MSI");
+	if (fn)
+		d = pci_msi_create_irq_domain(fn, &hv_pci_msi_domain_info, x86_vector_domain);
 
-	/* No poपूर्णांक in going further अगर we can't get an irq करोमुख्य */
+	/* No point in going further if we can't get an irq domain */
 	BUG_ON(!d);
 
-	वापस d;
-पूर्ण
+	return d;
+}
 
-#पूर्ण_अगर /* CONFIG_PCI_MSI */
+#endif /* CONFIG_PCI_MSI */
 
-पूर्णांक hv_unmap_ioapic_पूर्णांकerrupt(पूर्णांक ioapic_id, काष्ठा hv_पूर्णांकerrupt_entry *entry)
-अणु
-	जोड़ hv_device_id device_id;
+int hv_unmap_ioapic_interrupt(int ioapic_id, struct hv_interrupt_entry *entry)
+{
+	union hv_device_id device_id;
 
-	device_id.as_uपूर्णांक64 = 0;
+	device_id.as_uint64 = 0;
 	device_id.device_type = HV_DEVICE_TYPE_IOAPIC;
 	device_id.ioapic.ioapic_id = (u8)ioapic_id;
 
-	वापस hv_unmap_पूर्णांकerrupt(device_id.as_uपूर्णांक64, entry);
-पूर्ण
-EXPORT_SYMBOL_GPL(hv_unmap_ioapic_पूर्णांकerrupt);
+	return hv_unmap_interrupt(device_id.as_uint64, entry);
+}
+EXPORT_SYMBOL_GPL(hv_unmap_ioapic_interrupt);
 
-पूर्णांक hv_map_ioapic_पूर्णांकerrupt(पूर्णांक ioapic_id, bool level, पूर्णांक cpu, पूर्णांक vector,
-		काष्ठा hv_पूर्णांकerrupt_entry *entry)
-अणु
-	जोड़ hv_device_id device_id;
+int hv_map_ioapic_interrupt(int ioapic_id, bool level, int cpu, int vector,
+		struct hv_interrupt_entry *entry)
+{
+	union hv_device_id device_id;
 
-	device_id.as_uपूर्णांक64 = 0;
+	device_id.as_uint64 = 0;
 	device_id.device_type = HV_DEVICE_TYPE_IOAPIC;
 	device_id.ioapic.ioapic_id = (u8)ioapic_id;
 
-	वापस hv_map_पूर्णांकerrupt(device_id, level, cpu, vector, entry);
-पूर्ण
-EXPORT_SYMBOL_GPL(hv_map_ioapic_पूर्णांकerrupt);
+	return hv_map_interrupt(device_id, level, cpu, vector, entry);
+}
+EXPORT_SYMBOL_GPL(hv_map_ioapic_interrupt);

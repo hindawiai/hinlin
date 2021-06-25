@@ -1,44 +1,43 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Definitions specअगरic to SMP platक्रमms.
+ * Definitions specific to SMP platforms.
  *
  * Copyright (C) 2013 ARM Ltd.
  */
 
-#अगर_अघोषित __ASM_SMP_PLAT_H
-#घोषणा __ASM_SMP_PLAT_H
+#ifndef __ASM_SMP_PLAT_H
+#define __ASM_SMP_PLAT_H
 
-#समावेश <linux/cpumask.h>
+#include <linux/cpumask.h>
 
-#समावेश <यंत्र/types.h>
+#include <asm/types.h>
 
-काष्ठा mpidr_hash अणु
+struct mpidr_hash {
 	u64	mask;
-	u32	shअगरt_aff[4];
+	u32	shift_aff[4];
 	u32	bits;
-पूर्ण;
+};
 
-बाह्य काष्ठा mpidr_hash mpidr_hash;
+extern struct mpidr_hash mpidr_hash;
 
-अटल अंतरभूत u32 mpidr_hash_size(व्योम)
-अणु
-	वापस 1 << mpidr_hash.bits;
-पूर्ण
+static inline u32 mpidr_hash_size(void)
+{
+	return 1 << mpidr_hash.bits;
+}
 
 /*
  * Retrieve logical cpu index corresponding to a given MPIDR.Aff*
- *  - mpidr: MPIDR.Aff* bits to be used क्रम the look-up
+ *  - mpidr: MPIDR.Aff* bits to be used for the look-up
  *
  * Returns the cpu logical index or -EINVAL on look-up error
  */
-अटल अंतरभूत पूर्णांक get_logical_index(u64 mpidr)
-अणु
-	पूर्णांक cpu;
-	क्रम (cpu = 0; cpu < nr_cpu_ids; cpu++)
-		अगर (cpu_logical_map(cpu) == mpidr)
-			वापस cpu;
-	वापस -EINVAL;
-पूर्ण
+static inline int get_logical_index(u64 mpidr)
+{
+	int cpu;
+	for (cpu = 0; cpu < nr_cpu_ids; cpu++)
+		if (cpu_logical_map(cpu) == mpidr)
+			return cpu;
+	return -EINVAL;
+}
 
-#पूर्ण_अगर /* __ASM_SMP_PLAT_H */
+#endif /* __ASM_SMP_PLAT_H */

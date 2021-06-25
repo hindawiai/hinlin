@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,42 +21,42 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "channv50.h"
+#include "channv50.h"
 
-अटल व्योम
-gf119_disp_chan_uevent_fini(काष्ठा nvkm_event *event, पूर्णांक type, पूर्णांक index)
-अणु
-	काष्ठा nv50_disp *disp = container_of(event, typeof(*disp), uevent);
-	काष्ठा nvkm_device *device = disp->base.engine.subdev.device;
+static void
+gf119_disp_chan_uevent_fini(struct nvkm_event *event, int type, int index)
+{
+	struct nv50_disp *disp = container_of(event, typeof(*disp), uevent);
+	struct nvkm_device *device = disp->base.engine.subdev.device;
 	nvkm_mask(device, 0x610090, 0x00000001 << index, 0x00000000 << index);
 	nvkm_wr32(device, 0x61008c, 0x00000001 << index);
-पूर्ण
+}
 
-अटल व्योम
-gf119_disp_chan_uevent_init(काष्ठा nvkm_event *event, पूर्णांक types, पूर्णांक index)
-अणु
-	काष्ठा nv50_disp *disp = container_of(event, typeof(*disp), uevent);
-	काष्ठा nvkm_device *device = disp->base.engine.subdev.device;
+static void
+gf119_disp_chan_uevent_init(struct nvkm_event *event, int types, int index)
+{
+	struct nv50_disp *disp = container_of(event, typeof(*disp), uevent);
+	struct nvkm_device *device = disp->base.engine.subdev.device;
 	nvkm_wr32(device, 0x61008c, 0x00000001 << index);
 	nvkm_mask(device, 0x610090, 0x00000001 << index, 0x00000001 << index);
-पूर्ण
+}
 
-स्थिर काष्ठा nvkm_event_func
-gf119_disp_chan_uevent = अणु
+const struct nvkm_event_func
+gf119_disp_chan_uevent = {
 	.ctor = nv50_disp_chan_uevent_ctor,
 	.init = gf119_disp_chan_uevent_init,
 	.fini = gf119_disp_chan_uevent_fini,
-पूर्ण;
+};
 
-व्योम
-gf119_disp_chan_पूर्णांकr(काष्ठा nv50_disp_chan *chan, bool en)
-अणु
-	काष्ठा nvkm_device *device = chan->disp->base.engine.subdev.device;
-	स्थिर u32 mask = 0x00000001 << chan->chid.user;
-	अगर (!en) अणु
+void
+gf119_disp_chan_intr(struct nv50_disp_chan *chan, bool en)
+{
+	struct nvkm_device *device = chan->disp->base.engine.subdev.device;
+	const u32 mask = 0x00000001 << chan->chid.user;
+	if (!en) {
 		nvkm_mask(device, 0x610090, mask, 0x00000000);
 		nvkm_mask(device, 0x6100a0, mask, 0x00000000);
-	पूर्ण अन्यथा अणु
+	} else {
 		nvkm_mask(device, 0x6100a0, mask, mask);
-	पूर्ण
-पूर्ण
+	}
+}

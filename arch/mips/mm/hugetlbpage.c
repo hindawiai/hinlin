@@ -1,70 +1,69 @@
-<शैली गुरु>
 /*
- * MIPS Huge TLB Page Support क्रम Kernel.
+ * MIPS Huge TLB Page Support for Kernel.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
- * Copyright (C) 2002, Rohit Seth <rohit.seth@पूर्णांकel.com>
+ * Copyright (C) 2002, Rohit Seth <rohit.seth@intel.com>
  * Copyright 2005, Embedded Alley Solutions, Inc.
  * Matt Porter <mporter@embeddedalley.com>
  * Copyright (C) 2008, 2009 Cavium Networks, Inc.
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/hugetlb.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/err.h>
-#समावेश <linux/sysctl.h>
-#समावेश <यंत्र/mman.h>
-#समावेश <यंत्र/tlb.h>
-#समावेश <यंत्र/tlbflush.h>
+#include <linux/fs.h>
+#include <linux/mm.h>
+#include <linux/hugetlb.h>
+#include <linux/pagemap.h>
+#include <linux/err.h>
+#include <linux/sysctl.h>
+#include <asm/mman.h>
+#include <asm/tlb.h>
+#include <asm/tlbflush.h>
 
-pte_t *huge_pte_alloc(काष्ठा mm_काष्ठा *mm, काष्ठा vm_area_काष्ठा *vma,
-		      अचिन्हित दीर्घ addr, अचिन्हित दीर्घ sz)
-अणु
+pte_t *huge_pte_alloc(struct mm_struct *mm, struct vm_area_struct *vma,
+		      unsigned long addr, unsigned long sz)
+{
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
-	pte_t *pte = शून्य;
+	pte_t *pte = NULL;
 
 	pgd = pgd_offset(mm, addr);
 	p4d = p4d_alloc(mm, pgd, addr);
 	pud = pud_alloc(mm, p4d, addr);
-	अगर (pud)
+	if (pud)
 		pte = (pte_t *)pmd_alloc(mm, pud, addr);
 
-	वापस pte;
-पूर्ण
+	return pte;
+}
 
-pte_t *huge_pte_offset(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
-		       अचिन्हित दीर्घ sz)
-अणु
+pte_t *huge_pte_offset(struct mm_struct *mm, unsigned long addr,
+		       unsigned long sz)
+{
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
-	pmd_t *pmd = शून्य;
+	pmd_t *pmd = NULL;
 
 	pgd = pgd_offset(mm, addr);
-	अगर (pgd_present(*pgd)) अणु
+	if (pgd_present(*pgd)) {
 		p4d = p4d_offset(pgd, addr);
-		अगर (p4d_present(*p4d)) अणु
+		if (p4d_present(*p4d)) {
 			pud = pud_offset(p4d, addr);
-			अगर (pud_present(*pud))
+			if (pud_present(*pud))
 				pmd = pmd_offset(pud, addr);
-		पूर्ण
-	पूर्ण
-	वापस (pte_t *) pmd;
-पूर्ण
+		}
+	}
+	return (pte_t *) pmd;
+}
 
-पूर्णांक pmd_huge(pmd_t pmd)
-अणु
-	वापस (pmd_val(pmd) & _PAGE_HUGE) != 0;
-पूर्ण
+int pmd_huge(pmd_t pmd)
+{
+	return (pmd_val(pmd) & _PAGE_HUGE) != 0;
+}
 
-पूर्णांक pud_huge(pud_t pud)
-अणु
-	वापस (pud_val(pud) & _PAGE_HUGE) != 0;
-पूर्ण
+int pud_huge(pud_t pud)
+{
+	return (pud_val(pud) & _PAGE_HUGE) != 0;
+}

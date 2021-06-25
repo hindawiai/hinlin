@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2019-2021 Linaro Ltd.
  *
@@ -7,24 +6,24 @@
  * Sumit Garg <sumit.garg@linaro.org>
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/key-type.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/tee_drv.h>
-#समावेश <linux/uuid.h>
+#include <linux/err.h>
+#include <linux/key-type.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/tee_drv.h>
+#include <linux/uuid.h>
 
-#समावेश <keys/trusted_tee.h>
+#include <keys/trusted_tee.h>
 
-#घोषणा DRIVER_NAME "trusted-key-tee"
+#define DRIVER_NAME "trusted-key-tee"
 
 /*
- * Get अक्रमom data क्रम symmetric key
+ * Get random data for symmetric key
  *
- * [out]     memref[0]        Ranकरोm data
+ * [out]     memref[0]        Random data
  */
-#घोषणा TA_CMD_GET_RANDOM	0x0
+#define TA_CMD_GET_RANDOM	0x0
 
 /*
  * Seal trusted key using hardware unique key
@@ -32,7 +31,7 @@
  * [in]      memref[0]        Plain key
  * [out]     memref[1]        Sealed key datablob
  */
-#घोषणा TA_CMD_SEAL		0x1
+#define TA_CMD_SEAL		0x1
 
 /*
  * Unseal trusted key using hardware unique key
@@ -40,53 +39,53 @@
  * [in]      memref[0]        Sealed key datablob
  * [out]     memref[1]        Plain key
  */
-#घोषणा TA_CMD_UNSEAL		0x2
+#define TA_CMD_UNSEAL		0x2
 
 /**
- * काष्ठा trusted_key_tee_निजी - TEE Trusted key निजी data
+ * struct trusted_key_tee_private - TEE Trusted key private data
  * @dev:		TEE based Trusted key device.
  * @ctx:		TEE context handler.
- * @session_id:		Trusted key TA session identअगरier.
+ * @session_id:		Trusted key TA session identifier.
  * @shm_pool:		Memory pool shared with TEE device.
  */
-काष्ठा trusted_key_tee_निजी अणु
-	काष्ठा device *dev;
-	काष्ठा tee_context *ctx;
+struct trusted_key_tee_private {
+	struct device *dev;
+	struct tee_context *ctx;
 	u32 session_id;
-	काष्ठा tee_shm *shm_pool;
-पूर्ण;
+	struct tee_shm *shm_pool;
+};
 
-अटल काष्ठा trusted_key_tee_निजी pvt_data;
+static struct trusted_key_tee_private pvt_data;
 
 /*
  * Have the TEE seal(encrypt) the symmetric key
  */
-अटल पूर्णांक trusted_tee_seal(काष्ठा trusted_key_payload *p, अक्षर *datablob)
-अणु
-	पूर्णांक ret;
-	काष्ठा tee_ioctl_invoke_arg inv_arg;
-	काष्ठा tee_param param[4];
-	काष्ठा tee_shm *reg_shm_in = शून्य, *reg_shm_out = शून्य;
+static int trusted_tee_seal(struct trusted_key_payload *p, char *datablob)
+{
+	int ret;
+	struct tee_ioctl_invoke_arg inv_arg;
+	struct tee_param param[4];
+	struct tee_shm *reg_shm_in = NULL, *reg_shm_out = NULL;
 
-	स_रखो(&inv_arg, 0, माप(inv_arg));
-	स_रखो(&param, 0, माप(param));
+	memset(&inv_arg, 0, sizeof(inv_arg));
+	memset(&param, 0, sizeof(param));
 
-	reg_shm_in = tee_shm_रेजिस्टर(pvt_data.ctx, (अचिन्हित दीर्घ)p->key,
+	reg_shm_in = tee_shm_register(pvt_data.ctx, (unsigned long)p->key,
 				      p->key_len, TEE_SHM_DMA_BUF |
 				      TEE_SHM_KERNEL_MAPPED);
-	अगर (IS_ERR(reg_shm_in)) अणु
+	if (IS_ERR(reg_shm_in)) {
 		dev_err(pvt_data.dev, "key shm register failed\n");
-		वापस PTR_ERR(reg_shm_in);
-	पूर्ण
+		return PTR_ERR(reg_shm_in);
+	}
 
-	reg_shm_out = tee_shm_रेजिस्टर(pvt_data.ctx, (अचिन्हित दीर्घ)p->blob,
-				       माप(p->blob), TEE_SHM_DMA_BUF |
+	reg_shm_out = tee_shm_register(pvt_data.ctx, (unsigned long)p->blob,
+				       sizeof(p->blob), TEE_SHM_DMA_BUF |
 				       TEE_SHM_KERNEL_MAPPED);
-	अगर (IS_ERR(reg_shm_out)) अणु
+	if (IS_ERR(reg_shm_out)) {
 		dev_err(pvt_data.dev, "blob shm register failed\n");
 		ret = PTR_ERR(reg_shm_out);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	inv_arg.func = TA_CMD_SEAL;
 	inv_arg.session = pvt_data.session_id;
@@ -98,56 +97,56 @@
 	param[0].u.memref.shm_offs = 0;
 	param[1].attr = TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_OUTPUT;
 	param[1].u.memref.shm = reg_shm_out;
-	param[1].u.memref.size = माप(p->blob);
+	param[1].u.memref.size = sizeof(p->blob);
 	param[1].u.memref.shm_offs = 0;
 
 	ret = tee_client_invoke_func(pvt_data.ctx, &inv_arg, param);
-	अगर ((ret < 0) || (inv_arg.ret != 0)) अणु
+	if ((ret < 0) || (inv_arg.ret != 0)) {
 		dev_err(pvt_data.dev, "TA_CMD_SEAL invoke err: %x\n",
 			inv_arg.ret);
 		ret = -EFAULT;
-	पूर्ण अन्यथा अणु
+	} else {
 		p->blob_len = param[1].u.memref.size;
-	पूर्ण
+	}
 
 out:
-	अगर (reg_shm_out)
-		tee_shm_मुक्त(reg_shm_out);
-	अगर (reg_shm_in)
-		tee_shm_मुक्त(reg_shm_in);
+	if (reg_shm_out)
+		tee_shm_free(reg_shm_out);
+	if (reg_shm_in)
+		tee_shm_free(reg_shm_in);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Have the TEE unseal(decrypt) the symmetric key
  */
-अटल पूर्णांक trusted_tee_unseal(काष्ठा trusted_key_payload *p, अक्षर *datablob)
-अणु
-	पूर्णांक ret;
-	काष्ठा tee_ioctl_invoke_arg inv_arg;
-	काष्ठा tee_param param[4];
-	काष्ठा tee_shm *reg_shm_in = शून्य, *reg_shm_out = शून्य;
+static int trusted_tee_unseal(struct trusted_key_payload *p, char *datablob)
+{
+	int ret;
+	struct tee_ioctl_invoke_arg inv_arg;
+	struct tee_param param[4];
+	struct tee_shm *reg_shm_in = NULL, *reg_shm_out = NULL;
 
-	स_रखो(&inv_arg, 0, माप(inv_arg));
-	स_रखो(&param, 0, माप(param));
+	memset(&inv_arg, 0, sizeof(inv_arg));
+	memset(&param, 0, sizeof(param));
 
-	reg_shm_in = tee_shm_रेजिस्टर(pvt_data.ctx, (अचिन्हित दीर्घ)p->blob,
+	reg_shm_in = tee_shm_register(pvt_data.ctx, (unsigned long)p->blob,
 				      p->blob_len, TEE_SHM_DMA_BUF |
 				      TEE_SHM_KERNEL_MAPPED);
-	अगर (IS_ERR(reg_shm_in)) अणु
+	if (IS_ERR(reg_shm_in)) {
 		dev_err(pvt_data.dev, "blob shm register failed\n");
-		वापस PTR_ERR(reg_shm_in);
-	पूर्ण
+		return PTR_ERR(reg_shm_in);
+	}
 
-	reg_shm_out = tee_shm_रेजिस्टर(pvt_data.ctx, (अचिन्हित दीर्घ)p->key,
-				       माप(p->key), TEE_SHM_DMA_BUF |
+	reg_shm_out = tee_shm_register(pvt_data.ctx, (unsigned long)p->key,
+				       sizeof(p->key), TEE_SHM_DMA_BUF |
 				       TEE_SHM_KERNEL_MAPPED);
-	अगर (IS_ERR(reg_shm_out)) अणु
+	if (IS_ERR(reg_shm_out)) {
 		dev_err(pvt_data.dev, "key shm register failed\n");
 		ret = PTR_ERR(reg_shm_out);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	inv_arg.func = TA_CMD_UNSEAL;
 	inv_arg.session = pvt_data.session_id;
@@ -159,46 +158,46 @@ out:
 	param[0].u.memref.shm_offs = 0;
 	param[1].attr = TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_OUTPUT;
 	param[1].u.memref.shm = reg_shm_out;
-	param[1].u.memref.size = माप(p->key);
+	param[1].u.memref.size = sizeof(p->key);
 	param[1].u.memref.shm_offs = 0;
 
 	ret = tee_client_invoke_func(pvt_data.ctx, &inv_arg, param);
-	अगर ((ret < 0) || (inv_arg.ret != 0)) अणु
+	if ((ret < 0) || (inv_arg.ret != 0)) {
 		dev_err(pvt_data.dev, "TA_CMD_UNSEAL invoke err: %x\n",
 			inv_arg.ret);
 		ret = -EFAULT;
-	पूर्ण अन्यथा अणु
+	} else {
 		p->key_len = param[1].u.memref.size;
-	पूर्ण
+	}
 
 out:
-	अगर (reg_shm_out)
-		tee_shm_मुक्त(reg_shm_out);
-	अगर (reg_shm_in)
-		tee_shm_मुक्त(reg_shm_in);
+	if (reg_shm_out)
+		tee_shm_free(reg_shm_out);
+	if (reg_shm_in)
+		tee_shm_free(reg_shm_in);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Have the TEE generate अक्रमom symmetric key
+ * Have the TEE generate random symmetric key
  */
-अटल पूर्णांक trusted_tee_get_अक्रमom(अचिन्हित अक्षर *key, माप_प्रकार key_len)
-अणु
-	पूर्णांक ret;
-	काष्ठा tee_ioctl_invoke_arg inv_arg;
-	काष्ठा tee_param param[4];
-	काष्ठा tee_shm *reg_shm = शून्य;
+static int trusted_tee_get_random(unsigned char *key, size_t key_len)
+{
+	int ret;
+	struct tee_ioctl_invoke_arg inv_arg;
+	struct tee_param param[4];
+	struct tee_shm *reg_shm = NULL;
 
-	स_रखो(&inv_arg, 0, माप(inv_arg));
-	स_रखो(&param, 0, माप(param));
+	memset(&inv_arg, 0, sizeof(inv_arg));
+	memset(&param, 0, sizeof(param));
 
-	reg_shm = tee_shm_रेजिस्टर(pvt_data.ctx, (अचिन्हित दीर्घ)key, key_len,
+	reg_shm = tee_shm_register(pvt_data.ctx, (unsigned long)key, key_len,
 				   TEE_SHM_DMA_BUF | TEE_SHM_KERNEL_MAPPED);
-	अगर (IS_ERR(reg_shm)) अणु
+	if (IS_ERR(reg_shm)) {
 		dev_err(pvt_data.dev, "key shm register failed\n");
-		वापस PTR_ERR(reg_shm);
-	पूर्ण
+		return PTR_ERR(reg_shm);
+	}
 
 	inv_arg.func = TA_CMD_GET_RANDOM;
 	inv_arg.session = pvt_data.session_id;
@@ -210,110 +209,110 @@ out:
 	param[0].u.memref.shm_offs = 0;
 
 	ret = tee_client_invoke_func(pvt_data.ctx, &inv_arg, param);
-	अगर ((ret < 0) || (inv_arg.ret != 0)) अणु
+	if ((ret < 0) || (inv_arg.ret != 0)) {
 		dev_err(pvt_data.dev, "TA_CMD_GET_RANDOM invoke err: %x\n",
 			inv_arg.ret);
 		ret = -EFAULT;
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = param[0].u.memref.size;
-	पूर्ण
+	}
 
-	tee_shm_मुक्त(reg_shm);
+	tee_shm_free(reg_shm);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक optee_ctx_match(काष्ठा tee_ioctl_version_data *ver, स्थिर व्योम *data)
-अणु
-	अगर (ver->impl_id == TEE_IMPL_ID_OPTEE)
-		वापस 1;
-	अन्यथा
-		वापस 0;
-पूर्ण
+static int optee_ctx_match(struct tee_ioctl_version_data *ver, const void *data)
+{
+	if (ver->impl_id == TEE_IMPL_ID_OPTEE)
+		return 1;
+	else
+		return 0;
+}
 
-अटल पूर्णांक trusted_key_probe(काष्ठा device *dev)
-अणु
-	काष्ठा tee_client_device *rng_device = to_tee_client_device(dev);
-	पूर्णांक ret;
-	काष्ठा tee_ioctl_खोलो_session_arg sess_arg;
+static int trusted_key_probe(struct device *dev)
+{
+	struct tee_client_device *rng_device = to_tee_client_device(dev);
+	int ret;
+	struct tee_ioctl_open_session_arg sess_arg;
 
-	स_रखो(&sess_arg, 0, माप(sess_arg));
+	memset(&sess_arg, 0, sizeof(sess_arg));
 
-	pvt_data.ctx = tee_client_खोलो_context(शून्य, optee_ctx_match, शून्य,
-					       शून्य);
-	अगर (IS_ERR(pvt_data.ctx))
-		वापस -ENODEV;
+	pvt_data.ctx = tee_client_open_context(NULL, optee_ctx_match, NULL,
+					       NULL);
+	if (IS_ERR(pvt_data.ctx))
+		return -ENODEV;
 
-	स_नकल(sess_arg.uuid, rng_device->id.uuid.b, TEE_IOCTL_UUID_LEN);
+	memcpy(sess_arg.uuid, rng_device->id.uuid.b, TEE_IOCTL_UUID_LEN);
 	sess_arg.clnt_login = TEE_IOCTL_LOGIN_REE_KERNEL;
 	sess_arg.num_params = 0;
 
-	ret = tee_client_खोलो_session(pvt_data.ctx, &sess_arg, शून्य);
-	अगर ((ret < 0) || (sess_arg.ret != 0)) अणु
+	ret = tee_client_open_session(pvt_data.ctx, &sess_arg, NULL);
+	if ((ret < 0) || (sess_arg.ret != 0)) {
 		dev_err(dev, "tee_client_open_session failed, err: %x\n",
 			sess_arg.ret);
 		ret = -EINVAL;
-		जाओ out_ctx;
-	पूर्ण
+		goto out_ctx;
+	}
 	pvt_data.session_id = sess_arg.session;
 
-	ret = रेजिस्टर_key_type(&key_type_trusted);
-	अगर (ret < 0)
-		जाओ out_sess;
+	ret = register_key_type(&key_type_trusted);
+	if (ret < 0)
+		goto out_sess;
 
 	pvt_data.dev = dev;
 
-	वापस 0;
+	return 0;
 
 out_sess:
-	tee_client_बंद_session(pvt_data.ctx, pvt_data.session_id);
+	tee_client_close_session(pvt_data.ctx, pvt_data.session_id);
 out_ctx:
-	tee_client_बंद_context(pvt_data.ctx);
+	tee_client_close_context(pvt_data.ctx);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक trusted_key_हटाओ(काष्ठा device *dev)
-अणु
-	unरेजिस्टर_key_type(&key_type_trusted);
-	tee_client_बंद_session(pvt_data.ctx, pvt_data.session_id);
-	tee_client_बंद_context(pvt_data.ctx);
+static int trusted_key_remove(struct device *dev)
+{
+	unregister_key_type(&key_type_trusted);
+	tee_client_close_session(pvt_data.ctx, pvt_data.session_id);
+	tee_client_close_context(pvt_data.ctx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा tee_client_device_id trusted_key_id_table[] = अणु
-	अणुUUID_INIT(0xf04a0fe7, 0x1f5d, 0x4b9b,
-		   0xab, 0xf7, 0x61, 0x9b, 0x85, 0xb4, 0xce, 0x8c)पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct tee_client_device_id trusted_key_id_table[] = {
+	{UUID_INIT(0xf04a0fe7, 0x1f5d, 0x4b9b,
+		   0xab, 0xf7, 0x61, 0x9b, 0x85, 0xb4, 0xce, 0x8c)},
+	{}
+};
 MODULE_DEVICE_TABLE(tee, trusted_key_id_table);
 
-अटल काष्ठा tee_client_driver trusted_key_driver = अणु
+static struct tee_client_driver trusted_key_driver = {
 	.id_table	= trusted_key_id_table,
-	.driver		= अणु
+	.driver		= {
 		.name		= DRIVER_NAME,
 		.bus		= &tee_bus_type,
 		.probe		= trusted_key_probe,
-		.हटाओ		= trusted_key_हटाओ,
-	पूर्ण,
-पूर्ण;
+		.remove		= trusted_key_remove,
+	},
+};
 
-अटल पूर्णांक trusted_tee_init(व्योम)
-अणु
-	वापस driver_रेजिस्टर(&trusted_key_driver.driver);
-पूर्ण
+static int trusted_tee_init(void)
+{
+	return driver_register(&trusted_key_driver.driver);
+}
 
-अटल व्योम trusted_tee_निकास(व्योम)
-अणु
-	driver_unरेजिस्टर(&trusted_key_driver.driver);
-पूर्ण
+static void trusted_tee_exit(void)
+{
+	driver_unregister(&trusted_key_driver.driver);
+}
 
-काष्ठा trusted_key_ops trusted_key_tee_ops = अणु
+struct trusted_key_ops trusted_key_tee_ops = {
 	.migratable = 0, /* non-migratable */
 	.init = trusted_tee_init,
 	.seal = trusted_tee_seal,
 	.unseal = trusted_tee_unseal,
-	.get_अक्रमom = trusted_tee_get_अक्रमom,
-	.निकास = trusted_tee_निकास,
-पूर्ण;
+	.get_random = trusted_tee_get_random,
+	.exit = trusted_tee_exit,
+};

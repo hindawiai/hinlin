@@ -1,46 +1,45 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * FB driver क्रम the ILI9320 LCD Controller
+ * FB driver for the ILI9320 LCD Controller
  *
  * Copyright (C) 2013 Noralf Tronnes
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/delay.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/gpio/consumer.h>
+#include <linux/spi/spi.h>
+#include <linux/delay.h>
 
-#समावेश "fbtft.h"
+#include "fbtft.h"
 
-#घोषणा DRVNAME		"fb_ili9320"
-#घोषणा WIDTH		240
-#घोषणा HEIGHT		320
-#घोषणा DEFAULT_GAMMA	"07 07 6 0 0 0 5 5 4 0\n" \
+#define DRVNAME		"fb_ili9320"
+#define WIDTH		240
+#define HEIGHT		320
+#define DEFAULT_GAMMA	"07 07 6 0 0 0 5 5 4 0\n" \
 			"07 08 4 7 5 1 2 0 7 7"
 
-अटल अचिन्हित पूर्णांक पढ़ो_devicecode(काष्ठा fbtft_par *par)
-अणु
-	पूर्णांक ret;
-	u8 rxbuf[8] = अणु0, पूर्ण;
+static unsigned int read_devicecode(struct fbtft_par *par)
+{
+	int ret;
+	u8 rxbuf[8] = {0, };
 
-	ग_लिखो_reg(par, 0x0000);
-	ret = par->fbtftops.पढ़ो(par, rxbuf, 4);
-	वापस (rxbuf[2] << 8) | rxbuf[3];
-पूर्ण
+	write_reg(par, 0x0000);
+	ret = par->fbtftops.read(par, rxbuf, 4);
+	return (rxbuf[2] << 8) | rxbuf[3];
+}
 
-अटल पूर्णांक init_display(काष्ठा fbtft_par *par)
-अणु
-	अचिन्हित पूर्णांक devcode;
+static int init_display(struct fbtft_par *par)
+{
+	unsigned int devcode;
 
 	par->fbtftops.reset(par);
 
-	devcode = पढ़ो_devicecode(par);
+	devcode = read_devicecode(par);
 	fbtft_par_dbg(DEBUG_INIT_DISPLAY, par, "Device code: 0x%04X\n",
 		      devcode);
-	अगर ((devcode != 0x0000) && (devcode != 0x9320))
+	if ((devcode != 0x0000) && (devcode != 0x9320))
 		dev_warn(par->info->device,
 			 "Unrecognized Device code: 0x%04X (expected 0x9320)\n",
 			devcode);
@@ -49,214 +48,214 @@
 
 	/* *********** Start Initial Sequence ********* */
 	/* Set the Vcore voltage and this setting is must. */
-	ग_लिखो_reg(par, 0x00E5, 0x8000);
+	write_reg(par, 0x00E5, 0x8000);
 
-	/* Start पूर्णांकernal OSC. */
-	ग_लिखो_reg(par, 0x0000, 0x0001);
+	/* Start internal OSC. */
+	write_reg(par, 0x0000, 0x0001);
 
 	/* set SS and SM bit */
-	ग_लिखो_reg(par, 0x0001, 0x0100);
+	write_reg(par, 0x0001, 0x0100);
 
 	/* set 1 line inversion */
-	ग_लिखो_reg(par, 0x0002, 0x0700);
+	write_reg(par, 0x0002, 0x0700);
 
-	/* Resize रेजिस्टर */
-	ग_लिखो_reg(par, 0x0004, 0x0000);
+	/* Resize register */
+	write_reg(par, 0x0004, 0x0000);
 
 	/* set the back and front porch */
-	ग_लिखो_reg(par, 0x0008, 0x0202);
+	write_reg(par, 0x0008, 0x0202);
 
 	/* set non-display area refresh cycle */
-	ग_लिखो_reg(par, 0x0009, 0x0000);
+	write_reg(par, 0x0009, 0x0000);
 
 	/* FMARK function */
-	ग_लिखो_reg(par, 0x000A, 0x0000);
+	write_reg(par, 0x000A, 0x0000);
 
-	/* RGB पूर्णांकerface setting */
-	ग_लिखो_reg(par, 0x000C, 0x0000);
+	/* RGB interface setting */
+	write_reg(par, 0x000C, 0x0000);
 
 	/* Frame marker Position */
-	ग_लिखो_reg(par, 0x000D, 0x0000);
+	write_reg(par, 0x000D, 0x0000);
 
-	/* RGB पूर्णांकerface polarity */
-	ग_लिखो_reg(par, 0x000F, 0x0000);
+	/* RGB interface polarity */
+	write_reg(par, 0x000F, 0x0000);
 
 	/* ***********Power On sequence *************** */
 	/* SAP, BT[3:0], AP, DSTB, SLP, STB */
-	ग_लिखो_reg(par, 0x0010, 0x0000);
+	write_reg(par, 0x0010, 0x0000);
 
 	/* DC1[2:0], DC0[2:0], VC[2:0] */
-	ग_लिखो_reg(par, 0x0011, 0x0007);
+	write_reg(par, 0x0011, 0x0007);
 
 	/* VREG1OUT voltage */
-	ग_लिखो_reg(par, 0x0012, 0x0000);
+	write_reg(par, 0x0012, 0x0000);
 
-	/* VDV[4:0] क्रम VCOM amplitude */
-	ग_लिखो_reg(par, 0x0013, 0x0000);
+	/* VDV[4:0] for VCOM amplitude */
+	write_reg(par, 0x0013, 0x0000);
 
-	/* Dis-अक्षरge capacitor घातer voltage */
+	/* Dis-charge capacitor power voltage */
 	mdelay(200);
 
 	/* SAP, BT[3:0], AP, DSTB, SLP, STB */
-	ग_लिखो_reg(par, 0x0010, 0x17B0);
+	write_reg(par, 0x0010, 0x17B0);
 
 	/* R11h=0x0031 at VCI=3.3V DC1[2:0], DC0[2:0], VC[2:0] */
-	ग_लिखो_reg(par, 0x0011, 0x0031);
+	write_reg(par, 0x0011, 0x0031);
 	mdelay(50);
 
 	/* R12h=0x0138 at VCI=3.3V VREG1OUT voltage */
-	ग_लिखो_reg(par, 0x0012, 0x0138);
+	write_reg(par, 0x0012, 0x0138);
 	mdelay(50);
 
-	/* R13h=0x1800 at VCI=3.3V VDV[4:0] क्रम VCOM amplitude */
-	ग_लिखो_reg(par, 0x0013, 0x1800);
+	/* R13h=0x1800 at VCI=3.3V VDV[4:0] for VCOM amplitude */
+	write_reg(par, 0x0013, 0x1800);
 
-	/* R29h=0x0008 at VCI=3.3V VCM[4:0] क्रम VCOMH */
-	ग_लिखो_reg(par, 0x0029, 0x0008);
+	/* R29h=0x0008 at VCI=3.3V VCM[4:0] for VCOMH */
+	write_reg(par, 0x0029, 0x0008);
 	mdelay(50);
 
 	/* GRAM horizontal Address */
-	ग_लिखो_reg(par, 0x0020, 0x0000);
+	write_reg(par, 0x0020, 0x0000);
 
 	/* GRAM Vertical Address */
-	ग_लिखो_reg(par, 0x0021, 0x0000);
+	write_reg(par, 0x0021, 0x0000);
 
 	/* ------------------ Set GRAM area --------------- */
 	/* Horizontal GRAM Start Address */
-	ग_लिखो_reg(par, 0x0050, 0x0000);
+	write_reg(par, 0x0050, 0x0000);
 
 	/* Horizontal GRAM End Address */
-	ग_लिखो_reg(par, 0x0051, 0x00EF);
+	write_reg(par, 0x0051, 0x00EF);
 
 	/* Vertical GRAM Start Address */
-	ग_लिखो_reg(par, 0x0052, 0x0000);
+	write_reg(par, 0x0052, 0x0000);
 
 	/* Vertical GRAM End Address */
-	ग_लिखो_reg(par, 0x0053, 0x013F);
+	write_reg(par, 0x0053, 0x013F);
 
 	/* Gate Scan Line */
-	ग_लिखो_reg(par, 0x0060, 0x2700);
+	write_reg(par, 0x0060, 0x2700);
 
 	/* NDL,VLE, REV */
-	ग_लिखो_reg(par, 0x0061, 0x0001);
+	write_reg(par, 0x0061, 0x0001);
 
 	/* set scrolling line */
-	ग_लिखो_reg(par, 0x006A, 0x0000);
+	write_reg(par, 0x006A, 0x0000);
 
 	/* -------------- Partial Display Control --------- */
-	ग_लिखो_reg(par, 0x0080, 0x0000);
-	ग_लिखो_reg(par, 0x0081, 0x0000);
-	ग_लिखो_reg(par, 0x0082, 0x0000);
-	ग_लिखो_reg(par, 0x0083, 0x0000);
-	ग_लिखो_reg(par, 0x0084, 0x0000);
-	ग_लिखो_reg(par, 0x0085, 0x0000);
+	write_reg(par, 0x0080, 0x0000);
+	write_reg(par, 0x0081, 0x0000);
+	write_reg(par, 0x0082, 0x0000);
+	write_reg(par, 0x0083, 0x0000);
+	write_reg(par, 0x0084, 0x0000);
+	write_reg(par, 0x0085, 0x0000);
 
 	/* -------------- Panel Control ------------------- */
-	ग_लिखो_reg(par, 0x0090, 0x0010);
-	ग_लिखो_reg(par, 0x0092, 0x0000);
-	ग_लिखो_reg(par, 0x0093, 0x0003);
-	ग_लिखो_reg(par, 0x0095, 0x0110);
-	ग_लिखो_reg(par, 0x0097, 0x0000);
-	ग_लिखो_reg(par, 0x0098, 0x0000);
-	ग_लिखो_reg(par, 0x0007, 0x0173); /* 262K color and display ON */
+	write_reg(par, 0x0090, 0x0010);
+	write_reg(par, 0x0092, 0x0000);
+	write_reg(par, 0x0093, 0x0003);
+	write_reg(par, 0x0095, 0x0110);
+	write_reg(par, 0x0097, 0x0000);
+	write_reg(par, 0x0098, 0x0000);
+	write_reg(par, 0x0007, 0x0173); /* 262K color and display ON */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम set_addr_win(काष्ठा fbtft_par *par, पूर्णांक xs, पूर्णांक ys, पूर्णांक xe, पूर्णांक ye)
-अणु
-	चयन (par->info->var.rotate) अणु
+static void set_addr_win(struct fbtft_par *par, int xs, int ys, int xe, int ye)
+{
+	switch (par->info->var.rotate) {
 	/* R20h = Horizontal GRAM Start Address */
 	/* R21h = Vertical GRAM Start Address */
-	हाल 0:
-		ग_लिखो_reg(par, 0x0020, xs);
-		ग_लिखो_reg(par, 0x0021, ys);
-		अवरोध;
-	हाल 180:
-		ग_लिखो_reg(par, 0x0020, WIDTH - 1 - xs);
-		ग_लिखो_reg(par, 0x0021, HEIGHT - 1 - ys);
-		अवरोध;
-	हाल 270:
-		ग_लिखो_reg(par, 0x0020, WIDTH - 1 - ys);
-		ग_लिखो_reg(par, 0x0021, xs);
-		अवरोध;
-	हाल 90:
-		ग_लिखो_reg(par, 0x0020, ys);
-		ग_लिखो_reg(par, 0x0021, HEIGHT - 1 - xs);
-		अवरोध;
-	पूर्ण
-	ग_लिखो_reg(par, 0x0022); /* Write Data to GRAM */
-पूर्ण
+	case 0:
+		write_reg(par, 0x0020, xs);
+		write_reg(par, 0x0021, ys);
+		break;
+	case 180:
+		write_reg(par, 0x0020, WIDTH - 1 - xs);
+		write_reg(par, 0x0021, HEIGHT - 1 - ys);
+		break;
+	case 270:
+		write_reg(par, 0x0020, WIDTH - 1 - ys);
+		write_reg(par, 0x0021, xs);
+		break;
+	case 90:
+		write_reg(par, 0x0020, ys);
+		write_reg(par, 0x0021, HEIGHT - 1 - xs);
+		break;
+	}
+	write_reg(par, 0x0022); /* Write Data to GRAM */
+}
 
-अटल पूर्णांक set_var(काष्ठा fbtft_par *par)
-अणु
-	चयन (par->info->var.rotate) अणु
-	हाल 0:
-		ग_लिखो_reg(par, 0x3, (par->bgr << 12) | 0x30);
-		अवरोध;
-	हाल 270:
-		ग_लिखो_reg(par, 0x3, (par->bgr << 12) | 0x28);
-		अवरोध;
-	हाल 180:
-		ग_लिखो_reg(par, 0x3, (par->bgr << 12) | 0x00);
-		अवरोध;
-	हाल 90:
-		ग_लिखो_reg(par, 0x3, (par->bgr << 12) | 0x18);
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static int set_var(struct fbtft_par *par)
+{
+	switch (par->info->var.rotate) {
+	case 0:
+		write_reg(par, 0x3, (par->bgr << 12) | 0x30);
+		break;
+	case 270:
+		write_reg(par, 0x3, (par->bgr << 12) | 0x28);
+		break;
+	case 180:
+		write_reg(par, 0x3, (par->bgr << 12) | 0x00);
+		break;
+	case 90:
+		write_reg(par, 0x3, (par->bgr << 12) | 0x18);
+		break;
+	}
+	return 0;
+}
 
 /*
- * Gamma string क्रमmat:
+ * Gamma string format:
  *  VRP0 VRP1 RP0 RP1 KP0 KP1 KP2 KP3 KP4 KP5
  *  VRN0 VRN1 RN0 RN1 KN0 KN1 KN2 KN3 KN4 KN5
  */
-#घोषणा CURVE(num, idx)  curves[(num) * par->gamma.num_values + (idx)]
-अटल पूर्णांक set_gamma(काष्ठा fbtft_par *par, u32 *curves)
-अणु
-	अटल स्थिर अचिन्हित दीर्घ mask[] = अणु
+#define CURVE(num, idx)  curves[(num) * par->gamma.num_values + (idx)]
+static int set_gamma(struct fbtft_par *par, u32 *curves)
+{
+	static const unsigned long mask[] = {
 		0x1f, 0x1f, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
 		0x1f, 0x1f, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
-	पूर्ण;
-	पूर्णांक i, j;
+	};
+	int i, j;
 
 	/* apply mask */
-	क्रम (i = 0; i < 2; i++)
-		क्रम (j = 0; j < 10; j++)
+	for (i = 0; i < 2; i++)
+		for (j = 0; j < 10; j++)
 			CURVE(i, j) &= mask[i * par->gamma.num_values + j];
 
-	ग_लिखो_reg(par, 0x0030, CURVE(0, 5) << 8 | CURVE(0, 4));
-	ग_लिखो_reg(par, 0x0031, CURVE(0, 7) << 8 | CURVE(0, 6));
-	ग_लिखो_reg(par, 0x0032, CURVE(0, 9) << 8 | CURVE(0, 8));
-	ग_लिखो_reg(par, 0x0035, CURVE(0, 3) << 8 | CURVE(0, 2));
-	ग_लिखो_reg(par, 0x0036, CURVE(0, 1) << 8 | CURVE(0, 0));
+	write_reg(par, 0x0030, CURVE(0, 5) << 8 | CURVE(0, 4));
+	write_reg(par, 0x0031, CURVE(0, 7) << 8 | CURVE(0, 6));
+	write_reg(par, 0x0032, CURVE(0, 9) << 8 | CURVE(0, 8));
+	write_reg(par, 0x0035, CURVE(0, 3) << 8 | CURVE(0, 2));
+	write_reg(par, 0x0036, CURVE(0, 1) << 8 | CURVE(0, 0));
 
-	ग_लिखो_reg(par, 0x0037, CURVE(1, 5) << 8 | CURVE(1, 4));
-	ग_लिखो_reg(par, 0x0038, CURVE(1, 7) << 8 | CURVE(1, 6));
-	ग_लिखो_reg(par, 0x0039, CURVE(1, 9) << 8 | CURVE(1, 8));
-	ग_लिखो_reg(par, 0x003C, CURVE(1, 3) << 8 | CURVE(1, 2));
-	ग_लिखो_reg(par, 0x003D, CURVE(1, 1) << 8 | CURVE(1, 0));
+	write_reg(par, 0x0037, CURVE(1, 5) << 8 | CURVE(1, 4));
+	write_reg(par, 0x0038, CURVE(1, 7) << 8 | CURVE(1, 6));
+	write_reg(par, 0x0039, CURVE(1, 9) << 8 | CURVE(1, 8));
+	write_reg(par, 0x003C, CURVE(1, 3) << 8 | CURVE(1, 2));
+	write_reg(par, 0x003D, CURVE(1, 1) << 8 | CURVE(1, 0));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अघोषित CURVE
+#undef CURVE
 
-अटल काष्ठा fbtft_display display = अणु
+static struct fbtft_display display = {
 	.regwidth = 16,
 	.width = WIDTH,
 	.height = HEIGHT,
 	.gamma_num = 2,
 	.gamma_len = 10,
 	.gamma = DEFAULT_GAMMA,
-	.fbtftops = अणु
+	.fbtftops = {
 		.init_display = init_display,
 		.set_addr_win = set_addr_win,
 		.set_var = set_var,
 		.set_gamma = set_gamma,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 FBTFT_REGISTER_DRIVER(DRVNAME, "ilitek,ili9320", &display);
 

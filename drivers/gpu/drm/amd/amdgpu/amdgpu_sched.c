@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2017 Valve Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,144 +22,144 @@
  * Authors: Andres Rodriguez <andresx7@gmail.com>
  */
 
-#समावेश <linux/fdtable.h>
-#समावेश <linux/file.h>
-#समावेश <linux/pid.h>
+#include <linux/fdtable.h>
+#include <linux/file.h>
+#include <linux/pid.h>
 
-#समावेश <drm/amdgpu_drm.h>
+#include <drm/amdgpu_drm.h>
 
-#समावेश "amdgpu.h"
-#समावेश "amdgpu_sched.h"
-#समावेश "amdgpu_vm.h"
+#include "amdgpu.h"
+#include "amdgpu_sched.h"
+#include "amdgpu_vm.h"
 
-पूर्णांक amdgpu_to_sched_priority(पूर्णांक amdgpu_priority,
-			     क्रमागत drm_sched_priority *prio)
-अणु
-	चयन (amdgpu_priority) अणु
-	हाल AMDGPU_CTX_PRIORITY_VERY_HIGH:
+int amdgpu_to_sched_priority(int amdgpu_priority,
+			     enum drm_sched_priority *prio)
+{
+	switch (amdgpu_priority) {
+	case AMDGPU_CTX_PRIORITY_VERY_HIGH:
 		*prio = DRM_SCHED_PRIORITY_HIGH;
-		अवरोध;
-	हाल AMDGPU_CTX_PRIORITY_HIGH:
+		break;
+	case AMDGPU_CTX_PRIORITY_HIGH:
 		*prio = DRM_SCHED_PRIORITY_HIGH;
-		अवरोध;
-	हाल AMDGPU_CTX_PRIORITY_NORMAL:
+		break;
+	case AMDGPU_CTX_PRIORITY_NORMAL:
 		*prio = DRM_SCHED_PRIORITY_NORMAL;
-		अवरोध;
-	हाल AMDGPU_CTX_PRIORITY_LOW:
-	हाल AMDGPU_CTX_PRIORITY_VERY_LOW:
+		break;
+	case AMDGPU_CTX_PRIORITY_LOW:
+	case AMDGPU_CTX_PRIORITY_VERY_LOW:
 		*prio = DRM_SCHED_PRIORITY_MIN;
-		अवरोध;
-	हाल AMDGPU_CTX_PRIORITY_UNSET:
+		break;
+	case AMDGPU_CTX_PRIORITY_UNSET:
 		*prio = DRM_SCHED_PRIORITY_UNSET;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN(1, "Invalid context priority %d\n", amdgpu_priority);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक amdgpu_sched_process_priority_override(काष्ठा amdgpu_device *adev,
-						  पूर्णांक fd,
-						  क्रमागत drm_sched_priority priority)
-अणु
-	काष्ठा fd f = fdget(fd);
-	काष्ठा amdgpu_fpriv *fpriv;
-	काष्ठा amdgpu_ctx *ctx;
-	uपूर्णांक32_t id;
-	पूर्णांक r;
+static int amdgpu_sched_process_priority_override(struct amdgpu_device *adev,
+						  int fd,
+						  enum drm_sched_priority priority)
+{
+	struct fd f = fdget(fd);
+	struct amdgpu_fpriv *fpriv;
+	struct amdgpu_ctx *ctx;
+	uint32_t id;
+	int r;
 
-	अगर (!f.file)
-		वापस -EINVAL;
+	if (!f.file)
+		return -EINVAL;
 
 	r = amdgpu_file_to_fpriv(f.file, &fpriv);
-	अगर (r) अणु
+	if (r) {
 		fdput(f);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	idr_क्रम_each_entry(&fpriv->ctx_mgr.ctx_handles, ctx, id)
+	idr_for_each_entry(&fpriv->ctx_mgr.ctx_handles, ctx, id)
 		amdgpu_ctx_priority_override(ctx, priority);
 
 	fdput(f);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक amdgpu_sched_context_priority_override(काष्ठा amdgpu_device *adev,
-						  पूर्णांक fd,
-						  अचिन्हित ctx_id,
-						  क्रमागत drm_sched_priority priority)
-अणु
-	काष्ठा fd f = fdget(fd);
-	काष्ठा amdgpu_fpriv *fpriv;
-	काष्ठा amdgpu_ctx *ctx;
-	पूर्णांक r;
+static int amdgpu_sched_context_priority_override(struct amdgpu_device *adev,
+						  int fd,
+						  unsigned ctx_id,
+						  enum drm_sched_priority priority)
+{
+	struct fd f = fdget(fd);
+	struct amdgpu_fpriv *fpriv;
+	struct amdgpu_ctx *ctx;
+	int r;
 
-	अगर (!f.file)
-		वापस -EINVAL;
+	if (!f.file)
+		return -EINVAL;
 
 	r = amdgpu_file_to_fpriv(f.file, &fpriv);
-	अगर (r) अणु
+	if (r) {
 		fdput(f);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	ctx = amdgpu_ctx_get(fpriv, ctx_id);
 
-	अगर (!ctx) अणु
+	if (!ctx) {
 		fdput(f);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	amdgpu_ctx_priority_override(ctx, priority);
 	amdgpu_ctx_put(ctx);
 	fdput(f);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक amdgpu_sched_ioctl(काष्ठा drm_device *dev, व्योम *data,
-		       काष्ठा drm_file *filp)
-अणु
-	जोड़ drm_amdgpu_sched *args = data;
-	काष्ठा amdgpu_device *adev = drm_to_adev(dev);
-	क्रमागत drm_sched_priority priority;
-	पूर्णांक r;
+int amdgpu_sched_ioctl(struct drm_device *dev, void *data,
+		       struct drm_file *filp)
+{
+	union drm_amdgpu_sched *args = data;
+	struct amdgpu_device *adev = drm_to_adev(dev);
+	enum drm_sched_priority priority;
+	int r;
 
 	/* First check the op, then the op's argument.
 	 */
-	चयन (args->in.op) अणु
-	हाल AMDGPU_SCHED_OP_PROCESS_PRIORITY_OVERRIDE:
-	हाल AMDGPU_SCHED_OP_CONTEXT_PRIORITY_OVERRIDE:
-		अवरोध;
-	शेष:
+	switch (args->in.op) {
+	case AMDGPU_SCHED_OP_PROCESS_PRIORITY_OVERRIDE:
+	case AMDGPU_SCHED_OP_CONTEXT_PRIORITY_OVERRIDE:
+		break;
+	default:
 		DRM_ERROR("Invalid sched op specified: %d\n", args->in.op);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	r = amdgpu_to_sched_priority(args->in.priority, &priority);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	चयन (args->in.op) अणु
-	हाल AMDGPU_SCHED_OP_PROCESS_PRIORITY_OVERRIDE:
+	switch (args->in.op) {
+	case AMDGPU_SCHED_OP_PROCESS_PRIORITY_OVERRIDE:
 		r = amdgpu_sched_process_priority_override(adev,
 							   args->in.fd,
 							   priority);
-		अवरोध;
-	हाल AMDGPU_SCHED_OP_CONTEXT_PRIORITY_OVERRIDE:
+		break;
+	case AMDGPU_SCHED_OP_CONTEXT_PRIORITY_OVERRIDE:
 		r = amdgpu_sched_context_priority_override(adev,
 							   args->in.fd,
 							   args->in.ctx_id,
 							   priority);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* Impossible.
 		 */
 		r = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}

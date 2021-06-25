@@ -1,125 +1,124 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * r2300.c: R2000 and R3000 specअगरic mmu/cache code.
+ * r2300.c: R2000 and R3000 specific mmu/cache code.
  *
  * Copyright (C) 1996 David S. Miller (davem@davemloft.net)
  *
- * with a lot of changes to make this thing work क्रम R3000s
+ * with a lot of changes to make this thing work for R3000s
  * Tx39XX R4k style caches added. HK
  * Copyright (C) 1998, 1999, 2000 Harald Koerfgen
  * Copyright (C) 1998 Gleb Raiko & Vladimir Roganov
  * Copyright (C) 2001, 2004, 2007  Maciej W. Rozycki
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/mm.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/smp.h>
+#include <linux/mm.h>
 
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/isadep.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/bootinfo.h>
-#समावेश <यंत्र/cpu.h>
+#include <asm/page.h>
+#include <asm/mmu_context.h>
+#include <asm/isadep.h>
+#include <asm/io.h>
+#include <asm/bootinfo.h>
+#include <asm/cpu.h>
 
-अटल अचिन्हित दीर्घ icache_size, dcache_size;		/* Size in bytes */
-अटल अचिन्हित दीर्घ icache_lsize, dcache_lsize;	/* Size in bytes */
+static unsigned long icache_size, dcache_size;		/* Size in bytes */
+static unsigned long icache_lsize, dcache_lsize;	/* Size in bytes */
 
-अचिन्हित दीर्घ r3k_cache_size(अचिन्हित दीर्घ ca_flags)
-अणु
-	अचिन्हित दीर्घ flags, status, dummy, size;
-	अस्थिर अचिन्हित दीर्घ *p;
+unsigned long r3k_cache_size(unsigned long ca_flags)
+{
+	unsigned long flags, status, dummy, size;
+	volatile unsigned long *p;
 
-	p = (अस्थिर अचिन्हित दीर्घ *) KSEG0;
+	p = (volatile unsigned long *) KSEG0;
 
-	flags = पढ़ो_c0_status();
+	flags = read_c0_status();
 
 	/* isolate cache space */
-	ग_लिखो_c0_status((ca_flags|flags)&~ST0_IEC);
+	write_c0_status((ca_flags|flags)&~ST0_IEC);
 
 	*p = 0xa5a55a5a;
 	dummy = *p;
-	status = पढ़ो_c0_status();
+	status = read_c0_status();
 
-	अगर (dummy != 0xa5a55a5a || (status & ST0_CM)) अणु
+	if (dummy != 0xa5a55a5a || (status & ST0_CM)) {
 		size = 0;
-	पूर्ण अन्यथा अणु
-		क्रम (size = 128; size <= 0x40000; size <<= 1)
+	} else {
+		for (size = 128; size <= 0x40000; size <<= 1)
 			*(p + size) = 0;
 		*p = -1;
-		क्रम (size = 128;
+		for (size = 128;
 		     (size <= 0x40000) && (*(p + size) == 0);
 		     size <<= 1)
 			;
-		अगर (size > 0x40000)
+		if (size > 0x40000)
 			size = 0;
-	पूर्ण
+	}
 
-	ग_लिखो_c0_status(flags);
+	write_c0_status(flags);
 
-	वापस size * माप(*p);
-पूर्ण
+	return size * sizeof(*p);
+}
 
-अचिन्हित दीर्घ r3k_cache_lsize(अचिन्हित दीर्घ ca_flags)
-अणु
-	अचिन्हित दीर्घ flags, status, lsize, i;
-	अस्थिर अचिन्हित दीर्घ *p;
+unsigned long r3k_cache_lsize(unsigned long ca_flags)
+{
+	unsigned long flags, status, lsize, i;
+	volatile unsigned long *p;
 
-	p = (अस्थिर अचिन्हित दीर्घ *) KSEG0;
+	p = (volatile unsigned long *) KSEG0;
 
-	flags = पढ़ो_c0_status();
+	flags = read_c0_status();
 
 	/* isolate cache space */
-	ग_लिखो_c0_status((ca_flags|flags)&~ST0_IEC);
+	write_c0_status((ca_flags|flags)&~ST0_IEC);
 
-	क्रम (i = 0; i < 128; i++)
+	for (i = 0; i < 128; i++)
 		*(p + i) = 0;
-	*(अस्थिर अचिन्हित अक्षर *)p = 0;
-	क्रम (lsize = 1; lsize < 128; lsize <<= 1) अणु
+	*(volatile unsigned char *)p = 0;
+	for (lsize = 1; lsize < 128; lsize <<= 1) {
 		*(p + lsize);
-		status = पढ़ो_c0_status();
-		अगर (!(status & ST0_CM))
-			अवरोध;
-	पूर्ण
-	क्रम (i = 0; i < 128; i += lsize)
-		*(अस्थिर अचिन्हित अक्षर *)(p + i) = 0;
+		status = read_c0_status();
+		if (!(status & ST0_CM))
+			break;
+	}
+	for (i = 0; i < 128; i += lsize)
+		*(volatile unsigned char *)(p + i) = 0;
 
-	ग_लिखो_c0_status(flags);
+	write_c0_status(flags);
 
-	वापस lsize * माप(*p);
-पूर्ण
+	return lsize * sizeof(*p);
+}
 
-अटल व्योम r3k_probe_cache(व्योम)
-अणु
+static void r3k_probe_cache(void)
+{
 	dcache_size = r3k_cache_size(ST0_ISC);
-	अगर (dcache_size)
+	if (dcache_size)
 		dcache_lsize = r3k_cache_lsize(ST0_ISC);
 
 	icache_size = r3k_cache_size(ST0_ISC|ST0_SWC);
-	अगर (icache_size)
+	if (icache_size)
 		icache_lsize = r3k_cache_lsize(ST0_ISC|ST0_SWC);
-पूर्ण
+}
 
-अटल व्योम r3k_flush_icache_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-	अचिन्हित दीर्घ size, i, flags;
-	अस्थिर अचिन्हित अक्षर *p;
+static void r3k_flush_icache_range(unsigned long start, unsigned long end)
+{
+	unsigned long size, i, flags;
+	volatile unsigned char *p;
 
 	size = end - start;
-	अगर (size > icache_size || KSEGX(start) != KSEG0) अणु
+	if (size > icache_size || KSEGX(start) != KSEG0) {
 		start = KSEG0;
 		size = icache_size;
-	पूर्ण
-	p = (अक्षर *)start;
+	}
+	p = (char *)start;
 
-	flags = पढ़ो_c0_status();
+	flags = read_c0_status();
 
 	/* isolate cache space */
-	ग_लिखो_c0_status((ST0_ISC|ST0_SWC|flags)&~ST0_IEC);
+	write_c0_status((ST0_ISC|ST0_SWC|flags)&~ST0_IEC);
 
-	क्रम (i = 0; i < size; i += 0x080) अणु
-		यंत्र(	"sb\t$0, 0x000(%0)\n\t"
+	for (i = 0; i < size; i += 0x080) {
+		asm(	"sb\t$0, 0x000(%0)\n\t"
 			"sb\t$0, 0x004(%0)\n\t"
 			"sb\t$0, 0x008(%0)\n\t"
 			"sb\t$0, 0x00c(%0)\n\t"
@@ -153,30 +152,30 @@
 			"sb\t$0, 0x07c(%0)\n\t"
 			: : "r" (p) );
 		p += 0x080;
-	पूर्ण
+	}
 
-	ग_लिखो_c0_status(flags);
-पूर्ण
+	write_c0_status(flags);
+}
 
-अटल व्योम r3k_flush_dcache_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-	अचिन्हित दीर्घ size, i, flags;
-	अस्थिर अचिन्हित अक्षर *p;
+static void r3k_flush_dcache_range(unsigned long start, unsigned long end)
+{
+	unsigned long size, i, flags;
+	volatile unsigned char *p;
 
 	size = end - start;
-	अगर (size > dcache_size || KSEGX(start) != KSEG0) अणु
+	if (size > dcache_size || KSEGX(start) != KSEG0) {
 		start = KSEG0;
 		size = dcache_size;
-	पूर्ण
-	p = (अक्षर *)start;
+	}
+	p = (char *)start;
 
-	flags = पढ़ो_c0_status();
+	flags = read_c0_status();
 
 	/* isolate cache space */
-	ग_लिखो_c0_status((ST0_ISC|flags)&~ST0_IEC);
+	write_c0_status((ST0_ISC|flags)&~ST0_IEC);
 
-	क्रम (i = 0; i < size; i += 0x080) अणु
-		यंत्र(	"sb\t$0, 0x000(%0)\n\t"
+	for (i = 0; i < size; i += 0x080) {
+		asm(	"sb\t$0, 0x000(%0)\n\t"
 			"sb\t$0, 0x004(%0)\n\t"
 			"sb\t$0, 0x008(%0)\n\t"
 			"sb\t$0, 0x00c(%0)\n\t"
@@ -210,36 +209,36 @@
 			"sb\t$0, 0x07c(%0)\n\t"
 			: : "r" (p) );
 		p += 0x080;
-	पूर्ण
+	}
 
-	ग_लिखो_c0_status(flags);
-पूर्ण
+	write_c0_status(flags);
+}
 
-अटल अंतरभूत व्योम r3k_flush_cache_all(व्योम)
-अणु
-पूर्ण
+static inline void r3k_flush_cache_all(void)
+{
+}
 
-अटल अंतरभूत व्योम r3k___flush_cache_all(व्योम)
-अणु
+static inline void r3k___flush_cache_all(void)
+{
 	r3k_flush_dcache_range(KSEG0, KSEG0 + dcache_size);
 	r3k_flush_icache_range(KSEG0, KSEG0 + icache_size);
-पूर्ण
+}
 
-अटल व्योम r3k_flush_cache_mm(काष्ठा mm_काष्ठा *mm)
-अणु
-पूर्ण
+static void r3k_flush_cache_mm(struct mm_struct *mm)
+{
+}
 
-अटल व्योम r3k_flush_cache_range(काष्ठा vm_area_काष्ठा *vma,
-				  अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-पूर्ण
+static void r3k_flush_cache_range(struct vm_area_struct *vma,
+				  unsigned long start, unsigned long end)
+{
+}
 
-अटल व्योम r3k_flush_cache_page(काष्ठा vm_area_काष्ठा *vma,
-				 अचिन्हित दीर्घ addr, अचिन्हित दीर्घ pfn)
-अणु
-	अचिन्हित दीर्घ kaddr = KSEG0ADDR(pfn << PAGE_SHIFT);
-	पूर्णांक exec = vma->vm_flags & VM_EXEC;
-	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
+static void r3k_flush_cache_page(struct vm_area_struct *vma,
+				 unsigned long addr, unsigned long pfn)
+{
+	unsigned long kaddr = KSEG0ADDR(pfn << PAGE_SHIFT);
+	int exec = vma->vm_flags & VM_EXEC;
+	struct mm_struct *mm = vma->vm_mm;
 	pmd_t *pmdp;
 	pte_t *ptep;
 
@@ -247,47 +246,47 @@
 		 cpu_context(smp_processor_id(), mm), addr);
 
 	/* No ASID => no such page in the cache.  */
-	अगर (cpu_context(smp_processor_id(), mm) == 0)
-		वापस;
+	if (cpu_context(smp_processor_id(), mm) == 0)
+		return;
 
 	pmdp = pmd_off(mm, addr);
 	ptep = pte_offset_kernel(pmdp, addr);
 
 	/* Invalid => no such page in the cache.  */
-	अगर (!(pte_val(*ptep) & _PAGE_PRESENT))
-		वापस;
+	if (!(pte_val(*ptep) & _PAGE_PRESENT))
+		return;
 
 	r3k_flush_dcache_range(kaddr, kaddr + PAGE_SIZE);
-	अगर (exec)
+	if (exec)
 		r3k_flush_icache_range(kaddr, kaddr + PAGE_SIZE);
-पूर्ण
+}
 
-अटल व्योम local_r3k_flush_data_cache_page(व्योम *addr)
-अणु
-पूर्ण
+static void local_r3k_flush_data_cache_page(void *addr)
+{
+}
 
-अटल व्योम r3k_flush_data_cache_page(अचिन्हित दीर्घ addr)
-अणु
-पूर्ण
+static void r3k_flush_data_cache_page(unsigned long addr)
+{
+}
 
-अटल व्योम r3k_flush_kernel_vmap_range(अचिन्हित दीर्घ vaddr, पूर्णांक size)
-अणु
+static void r3k_flush_kernel_vmap_range(unsigned long vaddr, int size)
+{
 	BUG();
-पूर्ण
+}
 
-अटल व्योम r3k_dma_cache_wback_inv(अचिन्हित दीर्घ start, अचिन्हित दीर्घ size)
-अणु
+static void r3k_dma_cache_wback_inv(unsigned long start, unsigned long size)
+{
 	/* Catch bad driver code */
 	BUG_ON(size == 0);
 
 	iob();
 	r3k_flush_dcache_range(start, start + size);
-पूर्ण
+}
 
-व्योम r3k_cache_init(व्योम)
-अणु
-	बाह्य व्योम build_clear_page(व्योम);
-	बाह्य व्योम build_copy_page(व्योम);
+void r3k_cache_init(void)
+{
+	extern void build_clear_page(void);
+	extern void build_copy_page(void);
 
 	r3k_probe_cache();
 
@@ -317,4 +316,4 @@
 
 	build_clear_page();
 	build_copy_page();
-पूर्ण
+}

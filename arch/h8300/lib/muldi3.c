@@ -1,13 +1,12 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश "libgcc.h"
+// SPDX-License-Identifier: GPL-2.0
+#include "libgcc.h"
 
-#घोषणा __ll_B ((UWtype) 1 << (W_TYPE_SIZE / 2))
-#घोषणा __ll_lowpart(t) ((UWtype) (t) & (__ll_B - 1))
-#घोषणा __ll_highpart(t) ((UWtype) (t) >> (W_TYPE_SIZE / 2))
+#define __ll_B ((UWtype) 1 << (W_TYPE_SIZE / 2))
+#define __ll_lowpart(t) ((UWtype) (t) & (__ll_B - 1))
+#define __ll_highpart(t) ((UWtype) (t) >> (W_TYPE_SIZE / 2))
 
-#घोषणा umul_ppmm(w1, w0, u, v) \
-	करो अणु			   \
+#define umul_ppmm(w1, w0, u, v) \
+	do {			   \
 		UWtype __x0, __x1, __x2, __x3;	\
 		UHWtype __ul, __vl, __uh, __vh; \
 		__ul = __ll_lowpart(u);	\
@@ -20,27 +19,27 @@
 		__x3 = (UWtype) __uh * __vh;	\
 		__x1 += __ll_highpart(__x0);	\
 		__x1 += __x2;			\
-		अगर (__x1 < __x2)		\
+		if (__x1 < __x2)		\
 			__x3 += __ll_B;		\
 		(w1) = __x3 + __ll_highpart(__x1);	       \
 		(w0) = __ll_lowpart(__x1) * __ll_B + __ll_lowpart(__x0); \
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा __umulsidi3(u, v) (			\
-		अणु				\
-			DWजोड़ __w;		\
+#define __umulsidi3(u, v) (			\
+		{				\
+			DWunion __w;		\
 			umul_ppmm(__w.s.high, __w.s.low, u, v);	\
-			__w.ll; पूर्ण					\
+			__w.ll; }					\
 		)
 
 DWtype __muldi3(DWtype u, DWtype v)
-अणु
-	स्थिर DWजोड़ uu = अणु.ll = uपूर्ण;
-	स्थिर DWजोड़ vv = अणु.ll = vपूर्ण;
-	DWजोड़ w = अणु.ll = __umulsidi3(uu.s.low, vv.s.low)पूर्ण;
+{
+	const DWunion uu = {.ll = u};
+	const DWunion vv = {.ll = v};
+	DWunion w = {.ll = __umulsidi3(uu.s.low, vv.s.low)};
 
 	w.s.high += ((UWtype) uu.s.low * (UWtype) vv.s.high
 		     + (UWtype) uu.s.high * (UWtype) vv.s.low);
 
-	वापस w.ll;
-पूर्ण
+	return w.ll;
+}

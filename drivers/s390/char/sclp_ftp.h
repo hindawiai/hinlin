@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  *    SCLP Event Type (ET) 7 - Diagnostic Test FTP Services, useable on LPAR
  *
@@ -11,13 +10,13 @@
  *    Author(s): Ralf Hoppe (rhoppe@de.ibm.com)
  */
 
-#अगर_अघोषित __SCLP_FTP_H__
-#घोषणा __SCLP_FTP_H__
+#ifndef __SCLP_FTP_H__
+#define __SCLP_FTP_H__
 
-#समावेश "hmcdrv_ftp.h"
+#include "hmcdrv_ftp.h"
 
-पूर्णांक sclp_ftp_startup(व्योम);
-व्योम sclp_ftp_shutकरोwn(व्योम);
-sमाप_प्रकार sclp_ftp_cmd(स्थिर काष्ठा hmcdrv_ftp_cmdspec *ftp, माप_प्रकार *fsize);
+int sclp_ftp_startup(void);
+void sclp_ftp_shutdown(void);
+ssize_t sclp_ftp_cmd(const struct hmcdrv_ftp_cmdspec *ftp, size_t *fsize);
 
-#पूर्ण_अगर	 /* __SCLP_FTP_H__ */
+#endif	 /* __SCLP_FTP_H__ */

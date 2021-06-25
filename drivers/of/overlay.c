@@ -1,99 +1,98 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Functions क्रम working with device tree overlays
+ * Functions for working with device tree overlays
  *
  * Copyright (C) 2012 Pantelis Antoniou <panto@antoniou-consulting.com>
  * Copyright (C) 2012 Texas Instruments Inc.
  */
 
-#घोषणा pr_fmt(fmt)	"OF: overlay: " fmt
+#define pr_fmt(fmt)	"OF: overlay: " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_fdt.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/libfdt.h>
-#समावेश <linux/err.h>
-#समावेश <linux/idr.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_fdt.h>
+#include <linux/string.h>
+#include <linux/ctype.h>
+#include <linux/errno.h>
+#include <linux/slab.h>
+#include <linux/libfdt.h>
+#include <linux/err.h>
+#include <linux/idr.h>
 
-#समावेश "of_private.h"
+#include "of_private.h"
 
 /**
- * काष्ठा target - info about current target node as recursing through overlay
+ * struct target - info about current target node as recursing through overlay
  * @np:			node where current level of overlay will be applied
  * @in_livetree:	@np is a node in the live devicetree
  *
  * Used in the algorithm to create the portion of a changeset that describes
  * an overlay fragment, which is a devicetree subtree.  Initially @np is a node
  * in the live devicetree where the overlay subtree is targeted to be grafted
- * पूर्णांकo.  When recursing to the next level of the overlay subtree, the target
- * also recurses to the next level of the live devicetree, as दीर्घ as overlay
+ * into.  When recursing to the next level of the overlay subtree, the target
+ * also recurses to the next level of the live devicetree, as long as overlay
  * subtree node also exists in the live devicetree.  When a node in the overlay
- * subtree करोes not exist at the same level in the live devicetree, target->np
- * poपूर्णांकs to a newly allocated node, and all subsequent tarमाला_लो in the subtree
+ * subtree does not exist at the same level in the live devicetree, target->np
+ * points to a newly allocated node, and all subsequent targets in the subtree
  * will be newly allocated nodes.
  */
-काष्ठा target अणु
-	काष्ठा device_node *np;
+struct target {
+	struct device_node *np;
 	bool in_livetree;
-पूर्ण;
+};
 
 /**
- * काष्ठा fragment - info about fragment nodes in overlay expanded device tree
+ * struct fragment - info about fragment nodes in overlay expanded device tree
  * @target:	target of the overlay operation
- * @overlay:	poपूर्णांकer to the __overlay__ node
+ * @overlay:	pointer to the __overlay__ node
  */
-काष्ठा fragment अणु
-	काष्ठा device_node *overlay;
-	काष्ठा device_node *target;
-पूर्ण;
+struct fragment {
+	struct device_node *overlay;
+	struct device_node *target;
+};
 
 /**
- * काष्ठा overlay_changeset
- * @id:			changeset identअगरier
+ * struct overlay_changeset
+ * @id:			changeset identifier
  * @ovcs_list:		list on which we are located
  * @fdt:		base of memory allocated to hold aligned FDT that was unflattened to create @overlay_tree
  * @overlay_tree:	expanded device tree that contains the fragment nodes
- * @count:		count of fragment काष्ठाures
+ * @count:		count of fragment structures
  * @fragments:		fragment nodes in the overlay expanded device tree
  * @symbols_fragment:	last element of @fragments[] is the  __symbols__ node
  * @cset:		changeset to apply fragments to live device tree
  */
-काष्ठा overlay_changeset अणु
-	पूर्णांक id;
-	काष्ठा list_head ovcs_list;
-	स्थिर व्योम *fdt;
-	काष्ठा device_node *overlay_tree;
-	पूर्णांक count;
-	काष्ठा fragment *fragments;
+struct overlay_changeset {
+	int id;
+	struct list_head ovcs_list;
+	const void *fdt;
+	struct device_node *overlay_tree;
+	int count;
+	struct fragment *fragments;
 	bool symbols_fragment;
-	काष्ठा of_changeset cset;
-पूर्ण;
+	struct of_changeset cset;
+};
 
-/* flags are sticky - once set, करो not reset */
-अटल पूर्णांक devicetree_state_flags;
-#घोषणा DTSF_APPLY_FAIL		0x01
-#घोषणा DTSF_REVERT_FAIL	0x02
+/* flags are sticky - once set, do not reset */
+static int devicetree_state_flags;
+#define DTSF_APPLY_FAIL		0x01
+#define DTSF_REVERT_FAIL	0x02
 
 /*
  * If a changeset apply or revert encounters an error, an attempt will
- * be made to unकरो partial changes, but may fail.  If the unकरो fails
- * we करो not know the state of the devicetree.
+ * be made to undo partial changes, but may fail.  If the undo fails
+ * we do not know the state of the devicetree.
  */
-अटल पूर्णांक devicetree_corrupt(व्योम)
-अणु
-	वापस devicetree_state_flags &
+static int devicetree_corrupt(void)
+{
+	return devicetree_state_flags &
 		(DTSF_APPLY_FAIL | DTSF_REVERT_FAIL);
-पूर्ण
+}
 
-अटल पूर्णांक build_changeset_next_level(काष्ठा overlay_changeset *ovcs,
-		काष्ठा target *target, स्थिर काष्ठा device_node *overlay_node);
+static int build_changeset_next_level(struct overlay_changeset *ovcs,
+		struct target *target, const struct device_node *overlay_node);
 
 /*
  * of_resolve_phandles() finds the largest phandle in the live tree.
@@ -104,275 +103,275 @@
  *    of_overlay_apply()
  *    mutex_unlock(&of_overlay_phandle_mutex)
  */
-अटल DEFINE_MUTEX(of_overlay_phandle_mutex);
+static DEFINE_MUTEX(of_overlay_phandle_mutex);
 
-व्योम of_overlay_mutex_lock(व्योम)
-अणु
+void of_overlay_mutex_lock(void)
+{
 	mutex_lock(&of_overlay_phandle_mutex);
-पूर्ण
+}
 
-व्योम of_overlay_mutex_unlock(व्योम)
-अणु
+void of_overlay_mutex_unlock(void)
+{
 	mutex_unlock(&of_overlay_phandle_mutex);
-पूर्ण
+}
 
 
-अटल LIST_HEAD(ovcs_list);
-अटल DEFINE_IDR(ovcs_idr);
+static LIST_HEAD(ovcs_list);
+static DEFINE_IDR(ovcs_idr);
 
-अटल BLOCKING_NOTIFIER_HEAD(overlay_notअगरy_chain);
+static BLOCKING_NOTIFIER_HEAD(overlay_notify_chain);
 
 /**
- * of_overlay_notअगरier_रेजिस्टर() - Register notअगरier क्रम overlay operations
- * @nb:		Notअगरier block to रेजिस्टर
+ * of_overlay_notifier_register() - Register notifier for overlay operations
+ * @nb:		Notifier block to register
  *
- * Register क्रम notअगरication on overlay operations on device tree nodes. The
- * reported actions definied by @of_reconfig_change. The notअगरier callback
- * furthermore receives a poपूर्णांकer to the affected device tree node.
+ * Register for notification on overlay operations on device tree nodes. The
+ * reported actions definied by @of_reconfig_change. The notifier callback
+ * furthermore receives a pointer to the affected device tree node.
  *
- * Note that a notअगरier callback is not supposed to store poपूर्णांकers to a device
+ * Note that a notifier callback is not supposed to store pointers to a device
  * tree node or its content beyond @OF_OVERLAY_POST_REMOVE corresponding to the
  * respective node it received.
  */
-पूर्णांक of_overlay_notअगरier_रेजिस्टर(काष्ठा notअगरier_block *nb)
-अणु
-	वापस blocking_notअगरier_chain_रेजिस्टर(&overlay_notअगरy_chain, nb);
-पूर्ण
-EXPORT_SYMBOL_GPL(of_overlay_notअगरier_रेजिस्टर);
+int of_overlay_notifier_register(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_register(&overlay_notify_chain, nb);
+}
+EXPORT_SYMBOL_GPL(of_overlay_notifier_register);
 
 /**
- * of_overlay_notअगरier_unरेजिस्टर() - Unरेजिस्टर notअगरier क्रम overlay operations
- * @nb:		Notअगरier block to unरेजिस्टर
+ * of_overlay_notifier_unregister() - Unregister notifier for overlay operations
+ * @nb:		Notifier block to unregister
  */
-पूर्णांक of_overlay_notअगरier_unरेजिस्टर(काष्ठा notअगरier_block *nb)
-अणु
-	वापस blocking_notअगरier_chain_unरेजिस्टर(&overlay_notअगरy_chain, nb);
-पूर्ण
-EXPORT_SYMBOL_GPL(of_overlay_notअगरier_unरेजिस्टर);
+int of_overlay_notifier_unregister(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_unregister(&overlay_notify_chain, nb);
+}
+EXPORT_SYMBOL_GPL(of_overlay_notifier_unregister);
 
-अटल अक्षर *of_overlay_action_name[] = अणु
+static char *of_overlay_action_name[] = {
 	"pre-apply",
 	"post-apply",
 	"pre-remove",
 	"post-remove",
-पूर्ण;
+};
 
-अटल पूर्णांक overlay_notअगरy(काष्ठा overlay_changeset *ovcs,
-		क्रमागत of_overlay_notअगरy_action action)
-अणु
-	काष्ठा of_overlay_notअगरy_data nd;
-	पूर्णांक i, ret;
+static int overlay_notify(struct overlay_changeset *ovcs,
+		enum of_overlay_notify_action action)
+{
+	struct of_overlay_notify_data nd;
+	int i, ret;
 
-	क्रम (i = 0; i < ovcs->count; i++) अणु
-		काष्ठा fragment *fragment = &ovcs->fragments[i];
+	for (i = 0; i < ovcs->count; i++) {
+		struct fragment *fragment = &ovcs->fragments[i];
 
 		nd.target = fragment->target;
 		nd.overlay = fragment->overlay;
 
-		ret = blocking_notअगरier_call_chain(&overlay_notअगरy_chain,
+		ret = blocking_notifier_call_chain(&overlay_notify_chain,
 						   action, &nd);
-		अगर (ret == NOTIFY_OK || ret == NOTIFY_STOP)
-			वापस 0;
-		अगर (ret) अणु
-			ret = notअगरier_to_त्रुटि_सं(ret);
+		if (ret == NOTIFY_OK || ret == NOTIFY_STOP)
+			return 0;
+		if (ret) {
+			ret = notifier_to_errno(ret);
 			pr_err("overlay changeset %s notifier error %d, target: %pOF\n",
 			       of_overlay_action_name[action], ret, nd.target);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * The values of properties in the "/__symbols__" node are paths in
  * the ovcs->overlay_tree.  When duplicating the properties, the paths
- * need to be adjusted to be the correct path क्रम the live device tree.
+ * need to be adjusted to be the correct path for the live device tree.
  *
  * The paths refer to a node in the subtree of a fragment node's "__overlay__"
- * node, क्रम example "/fragment@0/__overlay__/symbol_path_tail",
+ * node, for example "/fragment@0/__overlay__/symbol_path_tail",
  * where symbol_path_tail can be a single node or it may be a multi-node path.
  *
- * The duplicated property value will be modअगरied by replacing the
+ * The duplicated property value will be modified by replacing the
  * "/fragment_name/__overlay/" portion of the value  with the target
  * path from the fragment node.
  */
-अटल काष्ठा property *dup_and_fixup_symbol_prop(
-		काष्ठा overlay_changeset *ovcs, स्थिर काष्ठा property *prop)
-अणु
-	काष्ठा fragment *fragment;
-	काष्ठा property *new_prop;
-	काष्ठा device_node *fragment_node;
-	काष्ठा device_node *overlay_node;
-	स्थिर अक्षर *path;
-	स्थिर अक्षर *path_tail;
-	स्थिर अक्षर *target_path;
-	पूर्णांक k;
-	पूर्णांक overlay_name_len;
-	पूर्णांक path_len;
-	पूर्णांक path_tail_len;
-	पूर्णांक target_path_len;
+static struct property *dup_and_fixup_symbol_prop(
+		struct overlay_changeset *ovcs, const struct property *prop)
+{
+	struct fragment *fragment;
+	struct property *new_prop;
+	struct device_node *fragment_node;
+	struct device_node *overlay_node;
+	const char *path;
+	const char *path_tail;
+	const char *target_path;
+	int k;
+	int overlay_name_len;
+	int path_len;
+	int path_tail_len;
+	int target_path_len;
 
-	अगर (!prop->value)
-		वापस शून्य;
-	अगर (strnlen(prop->value, prop->length) >= prop->length)
-		वापस शून्य;
+	if (!prop->value)
+		return NULL;
+	if (strnlen(prop->value, prop->length) >= prop->length)
+		return NULL;
 	path = prop->value;
-	path_len = म_माप(path);
+	path_len = strlen(path);
 
-	अगर (path_len < 1)
-		वापस शून्य;
+	if (path_len < 1)
+		return NULL;
 	fragment_node = __of_find_node_by_path(ovcs->overlay_tree, path + 1);
 	overlay_node = __of_find_node_by_path(fragment_node, "__overlay__/");
 	of_node_put(fragment_node);
 	of_node_put(overlay_node);
 
-	क्रम (k = 0; k < ovcs->count; k++) अणु
+	for (k = 0; k < ovcs->count; k++) {
 		fragment = &ovcs->fragments[k];
-		अगर (fragment->overlay == overlay_node)
-			अवरोध;
-	पूर्ण
-	अगर (k >= ovcs->count)
-		वापस शून्य;
+		if (fragment->overlay == overlay_node)
+			break;
+	}
+	if (k >= ovcs->count)
+		return NULL;
 
-	overlay_name_len = snम_लिखो(शून्य, 0, "%pOF", fragment->overlay);
+	overlay_name_len = snprintf(NULL, 0, "%pOF", fragment->overlay);
 
-	अगर (overlay_name_len > path_len)
-		वापस शून्य;
+	if (overlay_name_len > path_len)
+		return NULL;
 	path_tail = path + overlay_name_len;
-	path_tail_len = म_माप(path_tail);
+	path_tail_len = strlen(path_tail);
 
-	target_path = kaप्र_लिखो(GFP_KERNEL, "%pOF", fragment->target);
-	अगर (!target_path)
-		वापस शून्य;
-	target_path_len = म_माप(target_path);
+	target_path = kasprintf(GFP_KERNEL, "%pOF", fragment->target);
+	if (!target_path)
+		return NULL;
+	target_path_len = strlen(target_path);
 
-	new_prop = kzalloc(माप(*new_prop), GFP_KERNEL);
-	अगर (!new_prop)
-		जाओ err_मुक्त_target_path;
+	new_prop = kzalloc(sizeof(*new_prop), GFP_KERNEL);
+	if (!new_prop)
+		goto err_free_target_path;
 
 	new_prop->name = kstrdup(prop->name, GFP_KERNEL);
 	new_prop->length = target_path_len + path_tail_len + 1;
 	new_prop->value = kzalloc(new_prop->length, GFP_KERNEL);
-	अगर (!new_prop->name || !new_prop->value)
-		जाओ err_मुक्त_new_prop;
+	if (!new_prop->name || !new_prop->value)
+		goto err_free_new_prop;
 
-	म_नकल(new_prop->value, target_path);
-	म_नकल(new_prop->value + target_path_len, path_tail);
+	strcpy(new_prop->value, target_path);
+	strcpy(new_prop->value + target_path_len, path_tail);
 
 	of_property_set_flag(new_prop, OF_DYNAMIC);
 
-	kमुक्त(target_path);
+	kfree(target_path);
 
-	वापस new_prop;
+	return new_prop;
 
-err_मुक्त_new_prop:
-	kमुक्त(new_prop->name);
-	kमुक्त(new_prop->value);
-	kमुक्त(new_prop);
-err_मुक्त_target_path:
-	kमुक्त(target_path);
+err_free_new_prop:
+	kfree(new_prop->name);
+	kfree(new_prop->value);
+	kfree(new_prop);
+err_free_target_path:
+	kfree(target_path);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
  * add_changeset_property() - add @overlay_prop to overlay changeset
  * @ovcs:		overlay changeset
  * @target:		where @overlay_prop will be placed
  * @overlay_prop:	property to add or update, from overlay tree
- * @is_symbols_prop:	1 अगर @overlay_prop is from node "/__symbols__"
+ * @is_symbols_prop:	1 if @overlay_prop is from node "/__symbols__"
  *
- * If @overlay_prop करोes not alपढ़ोy exist in live devicetree, add changeset
- * entry to add @overlay_prop in @target, अन्यथा add changeset entry to update
+ * If @overlay_prop does not already exist in live devicetree, add changeset
+ * entry to add @overlay_prop in @target, else add changeset entry to update
  * value of @overlay_prop.
  *
  * @target may be either in the live devicetree or in a new subtree that
  * is contained in the changeset.
  *
- * Some special properties are not added or updated (no error वापसed):
+ * Some special properties are not added or updated (no error returned):
  * "name", "phandle", "linux,phandle".
  *
- * Properties "#address-cells" and "#size-cells" are not updated अगर they
- * are alपढ़ोy in the live tree, but अगर present in the live tree, the values
+ * Properties "#address-cells" and "#size-cells" are not updated if they
+ * are already in the live tree, but if present in the live tree, the values
  * in the overlay must match the values in the live tree.
  *
  * Update of property in symbols node is not allowed.
  *
- * Return: 0 on success, -ENOMEM अगर memory allocation failure, or -EINVAL अगर
+ * Return: 0 on success, -ENOMEM if memory allocation failure, or -EINVAL if
  * invalid @overlay.
  */
-अटल पूर्णांक add_changeset_property(काष्ठा overlay_changeset *ovcs,
-		काष्ठा target *target, काष्ठा property *overlay_prop,
+static int add_changeset_property(struct overlay_changeset *ovcs,
+		struct target *target, struct property *overlay_prop,
 		bool is_symbols_prop)
-अणु
-	काष्ठा property *new_prop = शून्य, *prop;
-	पूर्णांक ret = 0;
+{
+	struct property *new_prop = NULL, *prop;
+	int ret = 0;
 
-	अगर (target->in_livetree)
-		अगर (!of_prop_cmp(overlay_prop->name, "name") ||
+	if (target->in_livetree)
+		if (!of_prop_cmp(overlay_prop->name, "name") ||
 		    !of_prop_cmp(overlay_prop->name, "phandle") ||
 		    !of_prop_cmp(overlay_prop->name, "linux,phandle"))
-			वापस 0;
+			return 0;
 
-	अगर (target->in_livetree)
-		prop = of_find_property(target->np, overlay_prop->name, शून्य);
-	अन्यथा
-		prop = शून्य;
+	if (target->in_livetree)
+		prop = of_find_property(target->np, overlay_prop->name, NULL);
+	else
+		prop = NULL;
 
-	अगर (prop) अणु
-		अगर (!of_prop_cmp(prop->name, "#address-cells")) अणु
-			अगर (!of_prop_val_eq(prop, overlay_prop)) अणु
+	if (prop) {
+		if (!of_prop_cmp(prop->name, "#address-cells")) {
+			if (!of_prop_val_eq(prop, overlay_prop)) {
 				pr_err("ERROR: changing value of #address-cells is not allowed in %pOF\n",
 				       target->np);
 				ret = -EINVAL;
-			पूर्ण
-			वापस ret;
+			}
+			return ret;
 
-		पूर्ण अन्यथा अगर (!of_prop_cmp(prop->name, "#size-cells")) अणु
-			अगर (!of_prop_val_eq(prop, overlay_prop)) अणु
+		} else if (!of_prop_cmp(prop->name, "#size-cells")) {
+			if (!of_prop_val_eq(prop, overlay_prop)) {
 				pr_err("ERROR: changing value of #size-cells is not allowed in %pOF\n",
 				       target->np);
 				ret = -EINVAL;
-			पूर्ण
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			}
+			return ret;
+		}
+	}
 
-	अगर (is_symbols_prop) अणु
-		अगर (prop)
-			वापस -EINVAL;
+	if (is_symbols_prop) {
+		if (prop)
+			return -EINVAL;
 		new_prop = dup_and_fixup_symbol_prop(ovcs, overlay_prop);
-	पूर्ण अन्यथा अणु
+	} else {
 		new_prop = __of_prop_dup(overlay_prop, GFP_KERNEL);
-	पूर्ण
+	}
 
-	अगर (!new_prop)
-		वापस -ENOMEM;
+	if (!new_prop)
+		return -ENOMEM;
 
-	अगर (!prop) अणु
-		अगर (!target->in_livetree) अणु
+	if (!prop) {
+		if (!target->in_livetree) {
 			new_prop->next = target->np->deadprops;
 			target->np->deadprops = new_prop;
-		पूर्ण
+		}
 		ret = of_changeset_add_property(&ovcs->cset, target->np,
 						new_prop);
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = of_changeset_update_property(&ovcs->cset, target->np,
 						   new_prop);
-	पूर्ण
+	}
 
-	अगर (!of_node_check_flag(target->np, OF_OVERLAY))
+	if (!of_node_check_flag(target->np, OF_OVERLAY))
 		pr_err("WARNING: memory leak will occur if overlay removed, property: %pOF/%s\n",
 		       target->np, new_prop->name);
 
-	अगर (ret) अणु
-		kमुक्त(new_prop->name);
-		kमुक्त(new_prop->value);
-		kमुक्त(new_prop);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	if (ret) {
+		kfree(new_prop->name);
+		kfree(new_prop->value);
+		kfree(new_prop);
+	}
+	return ret;
+}
 
 /**
  * add_changeset_node() - add @node (and children) to overlay changeset
@@ -380,10 +379,10 @@ err_मुक्त_target_path:
  * @target:	where @node will be placed in live tree or changeset
  * @node:	node from within overlay device tree fragment
  *
- * If @node करोes not alपढ़ोy exist in @target, add changeset entry
+ * If @node does not already exist in @target, add changeset entry
  * to add @node in @target.
  *
- * If @node alपढ़ोy exists in @target, and the existing node has
+ * If @node already exists in @target, and the existing node has
  * a phandle, the overlay node is not allowed to have a phandle.
  *
  * If @node has child nodes, add the children recursively via
@@ -395,74 +394,74 @@ err_मुक्त_target_path:
  *       node->full_name.  However, a live devicetree created from Open
  *       Firmware may have the full path in node->full_name.
  *
- *       add_changeset_node() follows the FDT convention and करोes not include
+ *       add_changeset_node() follows the FDT convention and does not include
  *       the full path in node->full_name.  Even though it expects the overlay
- *       to not contain the full path, it uses kbasename() to हटाओ the
+ *       to not contain the full path, it uses kbasename() to remove the
  *       full path should it exist.  It also uses kbasename() in comparisons
  *       to nodes in the live devicetree so that it can apply an overlay to
  *       a live devicetree created from Open Firmware.
  *
  * NOTE_2: Multiple mods of created nodes not supported.
  *
- * Return: 0 on success, -ENOMEM अगर memory allocation failure, or -EINVAL अगर
+ * Return: 0 on success, -ENOMEM if memory allocation failure, or -EINVAL if
  * invalid @overlay.
  */
-अटल पूर्णांक add_changeset_node(काष्ठा overlay_changeset *ovcs,
-		काष्ठा target *target, काष्ठा device_node *node)
-अणु
-	स्थिर अक्षर *node_kbasename;
-	स्थिर __be32 *phandle;
-	काष्ठा device_node *tchild;
-	काष्ठा target target_child;
-	पूर्णांक ret = 0, size;
+static int add_changeset_node(struct overlay_changeset *ovcs,
+		struct target *target, struct device_node *node)
+{
+	const char *node_kbasename;
+	const __be32 *phandle;
+	struct device_node *tchild;
+	struct target target_child;
+	int ret = 0, size;
 
 	node_kbasename = kbasename(node->full_name);
 
-	क्रम_each_child_of_node(target->np, tchild)
-		अगर (!of_node_cmp(node_kbasename, kbasename(tchild->full_name)))
-			अवरोध;
+	for_each_child_of_node(target->np, tchild)
+		if (!of_node_cmp(node_kbasename, kbasename(tchild->full_name)))
+			break;
 
-	अगर (!tchild) अणु
-		tchild = __of_node_dup(शून्य, node_kbasename);
-		अगर (!tchild)
-			वापस -ENOMEM;
+	if (!tchild) {
+		tchild = __of_node_dup(NULL, node_kbasename);
+		if (!tchild)
+			return -ENOMEM;
 
 		tchild->parent = target->np;
-		tchild->name = __of_get_property(node, "name", शून्य);
+		tchild->name = __of_get_property(node, "name", NULL);
 
-		अगर (!tchild->name)
+		if (!tchild->name)
 			tchild->name = "<NULL>";
 
 		/* ignore obsolete "linux,phandle" */
 		phandle = __of_get_property(node, "phandle", &size);
-		अगर (phandle && (size == 4))
+		if (phandle && (size == 4))
 			tchild->phandle = be32_to_cpup(phandle);
 
 		of_node_set_flag(tchild, OF_OVERLAY);
 
 		ret = of_changeset_attach_node(&ovcs->cset, tchild);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		target_child.np = tchild;
 		target_child.in_livetree = false;
 
 		ret = build_changeset_next_level(ovcs, &target_child, node);
 		of_node_put(tchild);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (node->phandle && tchild->phandle) अणु
+	if (node->phandle && tchild->phandle) {
 		ret = -EINVAL;
-	पूर्ण अन्यथा अणु
+	} else {
 		target_child.np = tchild;
 		target_child.in_livetree = target->in_livetree;
 		ret = build_changeset_next_level(ovcs, &target_child, node);
-	पूर्ण
+	}
 	of_node_put(tchild);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * build_changeset_next_level() - add level of overlay changeset
@@ -470,157 +469,157 @@ err_मुक्त_target_path:
  * @target:		where to place @overlay_node in live tree
  * @overlay_node:	node from within an overlay device tree fragment
  *
- * Add the properties (अगर any) and nodes (अगर any) from @overlay_node to the
+ * Add the properties (if any) and nodes (if any) from @overlay_node to the
  * @ovcs->cset changeset.  If an added node has child nodes, they will
  * be added recursively.
  *
  * Do not allow symbols node to have any children.
  *
- * Return: 0 on success, -ENOMEM अगर memory allocation failure, or -EINVAL अगर
+ * Return: 0 on success, -ENOMEM if memory allocation failure, or -EINVAL if
  * invalid @overlay_node.
  */
-अटल पूर्णांक build_changeset_next_level(काष्ठा overlay_changeset *ovcs,
-		काष्ठा target *target, स्थिर काष्ठा device_node *overlay_node)
-अणु
-	काष्ठा device_node *child;
-	काष्ठा property *prop;
-	पूर्णांक ret;
+static int build_changeset_next_level(struct overlay_changeset *ovcs,
+		struct target *target, const struct device_node *overlay_node)
+{
+	struct device_node *child;
+	struct property *prop;
+	int ret;
 
-	क्रम_each_property_of_node(overlay_node, prop) अणु
+	for_each_property_of_node(overlay_node, prop) {
 		ret = add_changeset_property(ovcs, target, prop, 0);
-		अगर (ret) अणु
+		if (ret) {
 			pr_debug("Failed to apply prop @%pOF/%s, err=%d\n",
 				 target->np, prop->name, ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	क्रम_each_child_of_node(overlay_node, child) अणु
+	for_each_child_of_node(overlay_node, child) {
 		ret = add_changeset_node(ovcs, target, child);
-		अगर (ret) अणु
+		if (ret) {
 			pr_debug("Failed to apply node @%pOF/%pOFn, err=%d\n",
 				 target->np, child, ret);
 			of_node_put(child);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Add the properties from __overlay__ node to the @ovcs->cset changeset.
  */
-अटल पूर्णांक build_changeset_symbols_node(काष्ठा overlay_changeset *ovcs,
-		काष्ठा target *target,
-		स्थिर काष्ठा device_node *overlay_symbols_node)
-अणु
-	काष्ठा property *prop;
-	पूर्णांक ret;
+static int build_changeset_symbols_node(struct overlay_changeset *ovcs,
+		struct target *target,
+		const struct device_node *overlay_symbols_node)
+{
+	struct property *prop;
+	int ret;
 
-	क्रम_each_property_of_node(overlay_symbols_node, prop) अणु
+	for_each_property_of_node(overlay_symbols_node, prop) {
 		ret = add_changeset_property(ovcs, target, prop, 1);
-		अगर (ret) अणु
+		if (ret) {
 			pr_debug("Failed to apply symbols prop @%pOF/%s, err=%d\n",
 				 target->np, prop->name, ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक find_dup_cset_node_entry(काष्ठा overlay_changeset *ovcs,
-		काष्ठा of_changeset_entry *ce_1)
-अणु
-	काष्ठा of_changeset_entry *ce_2;
-	अक्षर *fn_1, *fn_2;
-	पूर्णांक node_path_match;
+static int find_dup_cset_node_entry(struct overlay_changeset *ovcs,
+		struct of_changeset_entry *ce_1)
+{
+	struct of_changeset_entry *ce_2;
+	char *fn_1, *fn_2;
+	int node_path_match;
 
-	अगर (ce_1->action != OF_RECONFIG_ATTACH_NODE &&
+	if (ce_1->action != OF_RECONFIG_ATTACH_NODE &&
 	    ce_1->action != OF_RECONFIG_DETACH_NODE)
-		वापस 0;
+		return 0;
 
 	ce_2 = ce_1;
-	list_क्रम_each_entry_जारी(ce_2, &ovcs->cset.entries, node) अणु
-		अगर ((ce_2->action != OF_RECONFIG_ATTACH_NODE &&
+	list_for_each_entry_continue(ce_2, &ovcs->cset.entries, node) {
+		if ((ce_2->action != OF_RECONFIG_ATTACH_NODE &&
 		     ce_2->action != OF_RECONFIG_DETACH_NODE) ||
 		    of_node_cmp(ce_1->np->full_name, ce_2->np->full_name))
-			जारी;
+			continue;
 
-		fn_1 = kaप्र_लिखो(GFP_KERNEL, "%pOF", ce_1->np);
-		fn_2 = kaप्र_लिखो(GFP_KERNEL, "%pOF", ce_2->np);
-		node_path_match = !म_भेद(fn_1, fn_2);
-		kमुक्त(fn_1);
-		kमुक्त(fn_2);
-		अगर (node_path_match) अणु
+		fn_1 = kasprintf(GFP_KERNEL, "%pOF", ce_1->np);
+		fn_2 = kasprintf(GFP_KERNEL, "%pOF", ce_2->np);
+		node_path_match = !strcmp(fn_1, fn_2);
+		kfree(fn_1);
+		kfree(fn_2);
+		if (node_path_match) {
 			pr_err("ERROR: multiple fragments add and/or delete node %pOF\n",
 			       ce_1->np);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक find_dup_cset_prop(काष्ठा overlay_changeset *ovcs,
-		काष्ठा of_changeset_entry *ce_1)
-अणु
-	काष्ठा of_changeset_entry *ce_2;
-	अक्षर *fn_1, *fn_2;
-	पूर्णांक node_path_match;
+static int find_dup_cset_prop(struct overlay_changeset *ovcs,
+		struct of_changeset_entry *ce_1)
+{
+	struct of_changeset_entry *ce_2;
+	char *fn_1, *fn_2;
+	int node_path_match;
 
-	अगर (ce_1->action != OF_RECONFIG_ADD_PROPERTY &&
+	if (ce_1->action != OF_RECONFIG_ADD_PROPERTY &&
 	    ce_1->action != OF_RECONFIG_REMOVE_PROPERTY &&
 	    ce_1->action != OF_RECONFIG_UPDATE_PROPERTY)
-		वापस 0;
+		return 0;
 
 	ce_2 = ce_1;
-	list_क्रम_each_entry_जारी(ce_2, &ovcs->cset.entries, node) अणु
-		अगर ((ce_2->action != OF_RECONFIG_ADD_PROPERTY &&
+	list_for_each_entry_continue(ce_2, &ovcs->cset.entries, node) {
+		if ((ce_2->action != OF_RECONFIG_ADD_PROPERTY &&
 		     ce_2->action != OF_RECONFIG_REMOVE_PROPERTY &&
 		     ce_2->action != OF_RECONFIG_UPDATE_PROPERTY) ||
 		    of_node_cmp(ce_1->np->full_name, ce_2->np->full_name))
-			जारी;
+			continue;
 
-		fn_1 = kaप्र_लिखो(GFP_KERNEL, "%pOF", ce_1->np);
-		fn_2 = kaप्र_लिखो(GFP_KERNEL, "%pOF", ce_2->np);
-		node_path_match = !म_भेद(fn_1, fn_2);
-		kमुक्त(fn_1);
-		kमुक्त(fn_2);
-		अगर (node_path_match &&
-		    !of_prop_cmp(ce_1->prop->name, ce_2->prop->name)) अणु
+		fn_1 = kasprintf(GFP_KERNEL, "%pOF", ce_1->np);
+		fn_2 = kasprintf(GFP_KERNEL, "%pOF", ce_2->np);
+		node_path_match = !strcmp(fn_1, fn_2);
+		kfree(fn_1);
+		kfree(fn_2);
+		if (node_path_match &&
+		    !of_prop_cmp(ce_1->prop->name, ce_2->prop->name)) {
 			pr_err("ERROR: multiple fragments add, update, and/or delete property %pOF/%s\n",
 			       ce_1->np, ce_1->prop->name);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * changeset_dup_entry_check() - check क्रम duplicate entries
+ * changeset_dup_entry_check() - check for duplicate entries
  * @ovcs:	Overlay changeset
  *
- * Check changeset @ovcs->cset क्रम multiple अणुadd or deleteपूर्ण node entries क्रम
- * the same node or duplicate अणुadd, delete, or updateपूर्ण properties entries
- * क्रम the same property.
+ * Check changeset @ovcs->cset for multiple {add or delete} node entries for
+ * the same node or duplicate {add, delete, or update} properties entries
+ * for the same property.
  *
- * Return: 0 on success, or -EINVAL अगर duplicate changeset entry found.
+ * Return: 0 on success, or -EINVAL if duplicate changeset entry found.
  */
-अटल पूर्णांक changeset_dup_entry_check(काष्ठा overlay_changeset *ovcs)
-अणु
-	काष्ठा of_changeset_entry *ce_1;
-	पूर्णांक dup_entry = 0;
+static int changeset_dup_entry_check(struct overlay_changeset *ovcs)
+{
+	struct of_changeset_entry *ce_1;
+	int dup_entry = 0;
 
-	list_क्रम_each_entry(ce_1, &ovcs->cset.entries, node) अणु
+	list_for_each_entry(ce_1, &ovcs->cset.entries, node) {
 		dup_entry |= find_dup_cset_node_entry(ovcs, ce_1);
 		dup_entry |= find_dup_cset_prop(ovcs, ce_1);
-	पूर्ण
+	}
 
-	वापस dup_entry ? -EINVAL : 0;
-पूर्ण
+	return dup_entry ? -EINVAL : 0;
+}
 
 /**
  * build_changeset() - populate overlay changeset in @ovcs from @ovcs->fragments
@@ -628,94 +627,94 @@ err_मुक्त_target_path:
  *
  * Create changeset @ovcs->cset to contain the nodes and properties of the
  * overlay device tree fragments in @ovcs->fragments[].  If an error occurs,
- * any portions of the changeset that were successfully created will reमुख्य
+ * any portions of the changeset that were successfully created will remain
  * in @ovcs->cset.
  *
- * Return: 0 on success, -ENOMEM अगर memory allocation failure, or -EINVAL अगर
+ * Return: 0 on success, -ENOMEM if memory allocation failure, or -EINVAL if
  * invalid overlay in @ovcs->fragments[].
  */
-अटल पूर्णांक build_changeset(काष्ठा overlay_changeset *ovcs)
-अणु
-	काष्ठा fragment *fragment;
-	काष्ठा target target;
-	पूर्णांक fragments_count, i, ret;
+static int build_changeset(struct overlay_changeset *ovcs)
+{
+	struct fragment *fragment;
+	struct target target;
+	int fragments_count, i, ret;
 
 	/*
-	 * अगर there is a symbols fragment in ovcs->fragments[i] it is
+	 * if there is a symbols fragment in ovcs->fragments[i] it is
 	 * the final element in the array
 	 */
-	अगर (ovcs->symbols_fragment)
+	if (ovcs->symbols_fragment)
 		fragments_count = ovcs->count - 1;
-	अन्यथा
+	else
 		fragments_count = ovcs->count;
 
-	क्रम (i = 0; i < fragments_count; i++) अणु
+	for (i = 0; i < fragments_count; i++) {
 		fragment = &ovcs->fragments[i];
 
 		target.np = fragment->target;
 		target.in_livetree = true;
 		ret = build_changeset_next_level(ovcs, &target,
 						 fragment->overlay);
-		अगर (ret) अणु
+		if (ret) {
 			pr_debug("fragment apply failed '%pOF'\n",
 				 fragment->target);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	अगर (ovcs->symbols_fragment) अणु
+	if (ovcs->symbols_fragment) {
 		fragment = &ovcs->fragments[ovcs->count - 1];
 
 		target.np = fragment->target;
 		target.in_livetree = true;
 		ret = build_changeset_symbols_node(ovcs, &target,
 						   fragment->overlay);
-		अगर (ret) अणु
+		if (ret) {
 			pr_debug("symbols fragment apply failed '%pOF'\n",
 				 fragment->target);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस changeset_dup_entry_check(ovcs);
-पूर्ण
+	return changeset_dup_entry_check(ovcs);
+}
 
 /*
- * Find the target node using a number of dअगरferent strategies
+ * Find the target node using a number of different strategies
  * in order of preference:
  *
  * 1) "target" property containing the phandle of the target
  * 2) "target-path" property containing the path of the target
  */
-अटल काष्ठा device_node *find_target(काष्ठा device_node *info_node)
-अणु
-	काष्ठा device_node *node;
-	स्थिर अक्षर *path;
+static struct device_node *find_target(struct device_node *info_node)
+{
+	struct device_node *node;
+	const char *path;
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
-	ret = of_property_पढ़ो_u32(info_node, "target", &val);
-	अगर (!ret) अणु
+	ret = of_property_read_u32(info_node, "target", &val);
+	if (!ret) {
 		node = of_find_node_by_phandle(val);
-		अगर (!node)
+		if (!node)
 			pr_err("find target, node: %pOF, phandle 0x%x not found\n",
 			       info_node, val);
-		वापस node;
-	पूर्ण
+		return node;
+	}
 
-	ret = of_property_पढ़ो_string(info_node, "target-path", &path);
-	अगर (!ret) अणु
+	ret = of_property_read_string(info_node, "target-path", &path);
+	if (!ret) {
 		node =  of_find_node_by_path(path);
-		अगर (!node)
+		if (!node)
 			pr_err("find target, node: %pOF, path '%s' not found\n",
 			       info_node, path);
-		वापस node;
-	पूर्ण
+		return node;
+	}
 
 	pr_err("find target, node: %pOF, no target property\n", info_node);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
  * init_overlay_changeset() - initialize overlay changeset from overlay tree
@@ -723,32 +722,32 @@ err_मुक्त_target_path:
  * @fdt:	base of memory allocated to hold aligned FDT that was unflattened to create @tree
  * @tree:	Contains the overlay fragments and overlay fixup nodes
  *
- * Initialize @ovcs.  Populate @ovcs->fragments with node inक्रमmation from
+ * Initialize @ovcs.  Populate @ovcs->fragments with node information from
  * the top level of @tree.  The relevant top level nodes are the fragment
  * nodes and the __symbols__ node.  Any other top level node will be ignored.
  *
- * Return: 0 on success, -ENOMEM अगर memory allocation failure, -EINVAL अगर error
- * detected in @tree, or -ENOSPC अगर idr_alloc() error.
+ * Return: 0 on success, -ENOMEM if memory allocation failure, -EINVAL if error
+ * detected in @tree, or -ENOSPC if idr_alloc() error.
  */
-अटल पूर्णांक init_overlay_changeset(काष्ठा overlay_changeset *ovcs,
-		स्थिर व्योम *fdt, काष्ठा device_node *tree)
-अणु
-	काष्ठा device_node *node, *overlay_node;
-	काष्ठा fragment *fragment;
-	काष्ठा fragment *fragments;
-	पूर्णांक cnt, id, ret;
+static int init_overlay_changeset(struct overlay_changeset *ovcs,
+		const void *fdt, struct device_node *tree)
+{
+	struct device_node *node, *overlay_node;
+	struct fragment *fragment;
+	struct fragment *fragments;
+	int cnt, id, ret;
 
 	/*
-	 * Warn क्रम some issues.  Can not वापस -EINVAL क्रम these until
+	 * Warn for some issues.  Can not return -EINVAL for these until
 	 * of_unittest_apply_overlay() is fixed to pass these checks.
 	 */
-	अगर (!of_node_check_flag(tree, OF_DYNAMIC))
+	if (!of_node_check_flag(tree, OF_DYNAMIC))
 		pr_debug("%s() tree is not dynamic\n", __func__);
 
-	अगर (!of_node_check_flag(tree, OF_DETACHED))
+	if (!of_node_check_flag(tree, OF_DETACHED))
 		pr_debug("%s() tree is not detached\n", __func__);
 
-	अगर (!of_node_is_root(tree))
+	if (!of_node_is_root(tree))
 		pr_debug("%s() tree is not root\n", __func__);
 
 	ovcs->overlay_tree = tree;
@@ -759,251 +758,251 @@ err_मुक्त_target_path:
 	of_changeset_init(&ovcs->cset);
 
 	id = idr_alloc(&ovcs_idr, ovcs, 1, 0, GFP_KERNEL);
-	अगर (id <= 0)
-		वापस id;
+	if (id <= 0)
+		return id;
 
 	cnt = 0;
 
 	/* fragment nodes */
-	क्रम_each_child_of_node(tree, node) अणु
+	for_each_child_of_node(tree, node) {
 		overlay_node = of_get_child_by_name(node, "__overlay__");
-		अगर (overlay_node) अणु
+		if (overlay_node) {
 			cnt++;
 			of_node_put(overlay_node);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	node = of_get_child_by_name(tree, "__symbols__");
-	अगर (node) अणु
+	if (node) {
 		cnt++;
 		of_node_put(node);
-	पूर्ण
+	}
 
-	fragments = kसुस्मृति(cnt, माप(*fragments), GFP_KERNEL);
-	अगर (!fragments) अणु
+	fragments = kcalloc(cnt, sizeof(*fragments), GFP_KERNEL);
+	if (!fragments) {
 		ret = -ENOMEM;
-		जाओ err_मुक्त_idr;
-	पूर्ण
+		goto err_free_idr;
+	}
 
 	cnt = 0;
-	क्रम_each_child_of_node(tree, node) अणु
+	for_each_child_of_node(tree, node) {
 		overlay_node = of_get_child_by_name(node, "__overlay__");
-		अगर (!overlay_node)
-			जारी;
+		if (!overlay_node)
+			continue;
 
 		fragment = &fragments[cnt];
 		fragment->overlay = overlay_node;
 		fragment->target = find_target(node);
-		अगर (!fragment->target) अणु
+		if (!fragment->target) {
 			of_node_put(fragment->overlay);
 			ret = -EINVAL;
 			of_node_put(node);
-			जाओ err_मुक्त_fragments;
-		पूर्ण
+			goto err_free_fragments;
+		}
 
 		cnt++;
-	पूर्ण
+	}
 
 	/*
-	 * अगर there is a symbols fragment in ovcs->fragments[i] it is
+	 * if there is a symbols fragment in ovcs->fragments[i] it is
 	 * the final element in the array
 	 */
 	node = of_get_child_by_name(tree, "__symbols__");
-	अगर (node) अणु
+	if (node) {
 		ovcs->symbols_fragment = 1;
 		fragment = &fragments[cnt];
 		fragment->overlay = node;
 		fragment->target = of_find_node_by_path("/__symbols__");
 
-		अगर (!fragment->target) अणु
+		if (!fragment->target) {
 			pr_err("symbols in overlay, but not in live tree\n");
 			ret = -EINVAL;
-			जाओ err_मुक्त_fragments;
-		पूर्ण
+			goto err_free_fragments;
+		}
 
 		cnt++;
-	पूर्ण
+	}
 
-	अगर (!cnt) अणु
+	if (!cnt) {
 		pr_err("no fragments or symbols in overlay\n");
 		ret = -EINVAL;
-		जाओ err_मुक्त_fragments;
-	पूर्ण
+		goto err_free_fragments;
+	}
 
 	ovcs->id = id;
 	ovcs->count = cnt;
 	ovcs->fragments = fragments;
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_fragments:
-	kमुक्त(fragments);
-err_मुक्त_idr:
-	idr_हटाओ(&ovcs_idr, id);
+err_free_fragments:
+	kfree(fragments);
+err_free_idr:
+	idr_remove(&ovcs_idr, id);
 
 	pr_err("%s() failed, ret = %d\n", __func__, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम मुक्त_overlay_changeset(काष्ठा overlay_changeset *ovcs)
-अणु
-	पूर्णांक i;
+static void free_overlay_changeset(struct overlay_changeset *ovcs)
+{
+	int i;
 
-	अगर (ovcs->cset.entries.next)
+	if (ovcs->cset.entries.next)
 		of_changeset_destroy(&ovcs->cset);
 
-	अगर (ovcs->id)
-		idr_हटाओ(&ovcs_idr, ovcs->id);
+	if (ovcs->id)
+		idr_remove(&ovcs_idr, ovcs->id);
 
-	क्रम (i = 0; i < ovcs->count; i++) अणु
+	for (i = 0; i < ovcs->count; i++) {
 		of_node_put(ovcs->fragments[i].target);
 		of_node_put(ovcs->fragments[i].overlay);
-	पूर्ण
-	kमुक्त(ovcs->fragments);
+	}
+	kfree(ovcs->fragments);
 	/*
-	 * There should be no live poपूर्णांकers पूर्णांकo ovcs->overlay_tree and
-	 * ovcs->fdt due to the policy that overlay notअगरiers are not allowed
-	 * to retain poपूर्णांकers पूर्णांकo the overlay devicetree.
+	 * There should be no live pointers into ovcs->overlay_tree and
+	 * ovcs->fdt due to the policy that overlay notifiers are not allowed
+	 * to retain pointers into the overlay devicetree.
 	 */
-	kमुक्त(ovcs->overlay_tree);
-	kमुक्त(ovcs->fdt);
-	kमुक्त(ovcs);
-पूर्ण
+	kfree(ovcs->overlay_tree);
+	kfree(ovcs->fdt);
+	kfree(ovcs);
+}
 
 /*
- * पूर्णांकernal करोcumentation
+ * internal documentation
  *
  * of_overlay_apply() - Create and apply an overlay changeset
  * @fdt:	base of memory allocated to hold the aligned FDT
  * @tree:	Expanded overlay device tree
- * @ovcs_id:	Poपूर्णांकer to overlay changeset id
+ * @ovcs_id:	Pointer to overlay changeset id
  *
  * Creates and applies an overlay changeset.
  *
- * If an error occurs in a pre-apply notअगरier, then no changes are made
+ * If an error occurs in a pre-apply notifier, then no changes are made
  * to the device tree.
  *
 
- * A non-zero वापस value will not have created the changeset अगर error is from:
+ * A non-zero return value will not have created the changeset if error is from:
  *   - parameter checks
  *   - building the changeset
- *   - overlay changeset pre-apply notअगरier
+ *   - overlay changeset pre-apply notifier
  *
- * If an error is वापसed by an overlay changeset pre-apply notअगरier
- * then no further overlay changeset pre-apply notअगरier will be called.
+ * If an error is returned by an overlay changeset pre-apply notifier
+ * then no further overlay changeset pre-apply notifier will be called.
  *
- * A non-zero वापस value will have created the changeset अगर error is from:
- *   - overlay changeset entry notअगरier
- *   - overlay changeset post-apply notअगरier
+ * A non-zero return value will have created the changeset if error is from:
+ *   - overlay changeset entry notifier
+ *   - overlay changeset post-apply notifier
  *
- * If an error is वापसed by an overlay changeset post-apply notअगरier
- * then no further overlay changeset post-apply notअगरier will be called.
+ * If an error is returned by an overlay changeset post-apply notifier
+ * then no further overlay changeset post-apply notifier will be called.
  *
- * If more than one notअगरier वापसs an error, then the last notअगरier
- * error to occur is वापसed.
+ * If more than one notifier returns an error, then the last notifier
+ * error to occur is returned.
  *
- * If an error occurred जबतक applying the overlay changeset, then an
+ * If an error occurred while applying the overlay changeset, then an
  * attempt is made to revert any changes that were made to the
  * device tree.  If there were any errors during the revert attempt
  * then the state of the device tree can not be determined, and any
- * following attempt to apply or हटाओ an overlay changeset will be
+ * following attempt to apply or remove an overlay changeset will be
  * refused.
  *
  * Returns 0 on success, or a negative error number.  Overlay changeset
- * id is वापसed to *ovcs_id.
+ * id is returned to *ovcs_id.
  */
 
-अटल पूर्णांक of_overlay_apply(स्थिर व्योम *fdt, काष्ठा device_node *tree,
-		पूर्णांक *ovcs_id)
-अणु
-	काष्ठा overlay_changeset *ovcs;
-	पूर्णांक ret = 0, ret_revert, ret_पंचांगp;
+static int of_overlay_apply(const void *fdt, struct device_node *tree,
+		int *ovcs_id)
+{
+	struct overlay_changeset *ovcs;
+	int ret = 0, ret_revert, ret_tmp;
 
 	/*
-	 * As of this poपूर्णांक, fdt and tree beदीर्घ to the overlay changeset.
-	 * overlay changeset code is responsible क्रम मुक्तing them.
+	 * As of this point, fdt and tree belong to the overlay changeset.
+	 * overlay changeset code is responsible for freeing them.
 	 */
 
-	अगर (devicetree_corrupt()) अणु
+	if (devicetree_corrupt()) {
 		pr_err("devicetree state suspect, refuse to apply overlay\n");
-		kमुक्त(fdt);
-		kमुक्त(tree);
+		kfree(fdt);
+		kfree(tree);
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ovcs = kzalloc(माप(*ovcs), GFP_KERNEL);
-	अगर (!ovcs) अणु
-		kमुक्त(fdt);
-		kमुक्त(tree);
+	ovcs = kzalloc(sizeof(*ovcs), GFP_KERNEL);
+	if (!ovcs) {
+		kfree(fdt);
+		kfree(tree);
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	of_overlay_mutex_lock();
 	mutex_lock(&of_mutex);
 
 	ret = of_resolve_phandles(tree);
-	अगर (ret)
-		जाओ err_मुक्त_tree;
+	if (ret)
+		goto err_free_tree;
 
 	ret = init_overlay_changeset(ovcs, fdt, tree);
-	अगर (ret)
-		जाओ err_मुक्त_tree;
+	if (ret)
+		goto err_free_tree;
 
 	/*
-	 * after overlay_notअगरy(), ovcs->overlay_tree related poपूर्णांकers may have
-	 * leaked to drivers, so can not kमुक्त() tree, aka ovcs->overlay_tree;
-	 * and can not मुक्त memory containing aligned fdt.  The aligned fdt
+	 * after overlay_notify(), ovcs->overlay_tree related pointers may have
+	 * leaked to drivers, so can not kfree() tree, aka ovcs->overlay_tree;
+	 * and can not free memory containing aligned fdt.  The aligned fdt
 	 * is contained within the memory at ovcs->fdt, possibly at an offset
 	 * from ovcs->fdt.
 	 */
-	ret = overlay_notअगरy(ovcs, OF_OVERLAY_PRE_APPLY);
-	अगर (ret) अणु
+	ret = overlay_notify(ovcs, OF_OVERLAY_PRE_APPLY);
+	if (ret) {
 		pr_err("overlay changeset pre-apply notify error %d\n", ret);
-		जाओ err_मुक्त_overlay_changeset;
-	पूर्ण
+		goto err_free_overlay_changeset;
+	}
 
 	ret = build_changeset(ovcs);
-	अगर (ret)
-		जाओ err_मुक्त_overlay_changeset;
+	if (ret)
+		goto err_free_overlay_changeset;
 
 	ret_revert = 0;
 	ret = __of_changeset_apply_entries(&ovcs->cset, &ret_revert);
-	अगर (ret) अणु
-		अगर (ret_revert) अणु
+	if (ret) {
+		if (ret_revert) {
 			pr_debug("overlay changeset revert error %d\n",
 				 ret_revert);
 			devicetree_state_flags |= DTSF_APPLY_FAIL;
-		पूर्ण
-		जाओ err_मुक्त_overlay_changeset;
-	पूर्ण
+		}
+		goto err_free_overlay_changeset;
+	}
 
-	ret = __of_changeset_apply_notअगरy(&ovcs->cset);
-	अगर (ret)
+	ret = __of_changeset_apply_notify(&ovcs->cset);
+	if (ret)
 		pr_err("overlay apply changeset entry notify error %d\n", ret);
-	/* notअगरy failure is not fatal, जारी */
+	/* notify failure is not fatal, continue */
 
 	list_add_tail(&ovcs->ovcs_list, &ovcs_list);
 	*ovcs_id = ovcs->id;
 
-	ret_पंचांगp = overlay_notअगरy(ovcs, OF_OVERLAY_POST_APPLY);
-	अगर (ret_पंचांगp) अणु
+	ret_tmp = overlay_notify(ovcs, OF_OVERLAY_POST_APPLY);
+	if (ret_tmp) {
 		pr_err("overlay changeset post-apply notify error %d\n",
-		       ret_पंचांगp);
-		अगर (!ret)
-			ret = ret_पंचांगp;
-	पूर्ण
+		       ret_tmp);
+		if (!ret)
+			ret = ret_tmp;
+	}
 
-	जाओ out_unlock;
+	goto out_unlock;
 
-err_मुक्त_tree:
-	kमुक्त(fdt);
-	kमुक्त(tree);
+err_free_tree:
+	kfree(fdt);
+	kfree(tree);
 
-err_मुक्त_overlay_changeset:
-	मुक्त_overlay_changeset(ovcs);
+err_free_overlay_changeset:
+	free_overlay_changeset(ovcs);
 
 out_unlock:
 	mutex_unlock(&of_mutex);
@@ -1012,241 +1011,241 @@ out_unlock:
 out:
 	pr_debug("%s() err=%d\n", __func__, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक of_overlay_fdt_apply(स्थिर व्योम *overlay_fdt, u32 overlay_fdt_size,
-			 पूर्णांक *ovcs_id)
-अणु
-	व्योम *new_fdt;
-	व्योम *new_fdt_align;
-	पूर्णांक ret;
+int of_overlay_fdt_apply(const void *overlay_fdt, u32 overlay_fdt_size,
+			 int *ovcs_id)
+{
+	void *new_fdt;
+	void *new_fdt_align;
+	int ret;
 	u32 size;
-	काष्ठा device_node *overlay_root = शून्य;
+	struct device_node *overlay_root = NULL;
 
 	*ovcs_id = 0;
 
-	अगर (overlay_fdt_size < माप(काष्ठा fdt_header) ||
-	    fdt_check_header(overlay_fdt)) अणु
+	if (overlay_fdt_size < sizeof(struct fdt_header) ||
+	    fdt_check_header(overlay_fdt)) {
 		pr_err("Invalid overlay_fdt header\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	size = fdt_totalsize(overlay_fdt);
-	अगर (overlay_fdt_size < size)
-		वापस -EINVAL;
+	if (overlay_fdt_size < size)
+		return -EINVAL;
 
 	/*
 	 * Must create permanent copy of FDT because of_fdt_unflatten_tree()
-	 * will create poपूर्णांकers to the passed in FDT in the unflattened tree.
+	 * will create pointers to the passed in FDT in the unflattened tree.
 	 */
-	new_fdt = kदो_स्मृति(size + FDT_ALIGN_SIZE, GFP_KERNEL);
-	अगर (!new_fdt)
-		वापस -ENOMEM;
+	new_fdt = kmalloc(size + FDT_ALIGN_SIZE, GFP_KERNEL);
+	if (!new_fdt)
+		return -ENOMEM;
 
 	new_fdt_align = PTR_ALIGN(new_fdt, FDT_ALIGN_SIZE);
-	स_नकल(new_fdt_align, overlay_fdt, size);
+	memcpy(new_fdt_align, overlay_fdt, size);
 
-	of_fdt_unflatten_tree(new_fdt_align, शून्य, &overlay_root);
-	अगर (!overlay_root) अणु
+	of_fdt_unflatten_tree(new_fdt_align, NULL, &overlay_root);
+	if (!overlay_root) {
 		pr_err("unable to unflatten overlay_fdt\n");
 		ret = -EINVAL;
-		जाओ out_मुक्त_new_fdt;
-	पूर्ण
+		goto out_free_new_fdt;
+	}
 
 	ret = of_overlay_apply(new_fdt, overlay_root, ovcs_id);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		/*
-		 * new_fdt and overlay_root now beदीर्घ to the overlay
+		 * new_fdt and overlay_root now belong to the overlay
 		 * changeset.
-		 * overlay changeset code is responsible क्रम मुक्तing them.
+		 * overlay changeset code is responsible for freeing them.
 		 */
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	वापस 0;
+	return 0;
 
 
-out_मुक्त_new_fdt:
-	kमुक्त(new_fdt);
+out_free_new_fdt:
+	kfree(new_fdt);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(of_overlay_fdt_apply);
 
 /*
  * Find @np in @tree.
  *
- * Returns 1 अगर @np is @tree or is contained in @tree, अन्यथा 0
+ * Returns 1 if @np is @tree or is contained in @tree, else 0
  */
-अटल पूर्णांक find_node(काष्ठा device_node *tree, काष्ठा device_node *np)
-अणु
-	काष्ठा device_node *child;
+static int find_node(struct device_node *tree, struct device_node *np)
+{
+	struct device_node *child;
 
-	अगर (tree == np)
-		वापस 1;
+	if (tree == np)
+		return 1;
 
-	क्रम_each_child_of_node(tree, child) अणु
-		अगर (find_node(child, np)) अणु
+	for_each_child_of_node(tree, child) {
+		if (find_node(child, np)) {
 			of_node_put(child);
-			वापस 1;
-		पूर्ण
-	पूर्ण
+			return 1;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Is @हटाओ_ce_node a child of, a parent of, or the same as any
- * node in an overlay changeset more topmost than @हटाओ_ovcs?
+ * Is @remove_ce_node a child of, a parent of, or the same as any
+ * node in an overlay changeset more topmost than @remove_ovcs?
  *
- * Returns 1 अगर found, अन्यथा 0
+ * Returns 1 if found, else 0
  */
-अटल पूर्णांक node_overlaps_later_cs(काष्ठा overlay_changeset *हटाओ_ovcs,
-		काष्ठा device_node *हटाओ_ce_node)
-अणु
-	काष्ठा overlay_changeset *ovcs;
-	काष्ठा of_changeset_entry *ce;
+static int node_overlaps_later_cs(struct overlay_changeset *remove_ovcs,
+		struct device_node *remove_ce_node)
+{
+	struct overlay_changeset *ovcs;
+	struct of_changeset_entry *ce;
 
-	list_क्रम_each_entry_reverse(ovcs, &ovcs_list, ovcs_list) अणु
-		अगर (ovcs == हटाओ_ovcs)
-			अवरोध;
+	list_for_each_entry_reverse(ovcs, &ovcs_list, ovcs_list) {
+		if (ovcs == remove_ovcs)
+			break;
 
-		list_क्रम_each_entry(ce, &ovcs->cset.entries, node) अणु
-			अगर (find_node(ce->np, हटाओ_ce_node)) अणु
+		list_for_each_entry(ce, &ovcs->cset.entries, node) {
+			if (find_node(ce->np, remove_ce_node)) {
 				pr_err("%s: #%d overlaps with #%d @%pOF\n",
-					__func__, हटाओ_ovcs->id, ovcs->id,
-					हटाओ_ce_node);
-				वापस 1;
-			पूर्ण
-			अगर (find_node(हटाओ_ce_node, ce->np)) अणु
+					__func__, remove_ovcs->id, ovcs->id,
+					remove_ce_node);
+				return 1;
+			}
+			if (find_node(remove_ce_node, ce->np)) {
 				pr_err("%s: #%d overlaps with #%d @%pOF\n",
-					__func__, हटाओ_ovcs->id, ovcs->id,
-					हटाओ_ce_node);
-				वापस 1;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					__func__, remove_ovcs->id, ovcs->id,
+					remove_ce_node);
+				return 1;
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * We can safely हटाओ the overlay only अगर it's the top-most one.
+ * We can safely remove the overlay only if it's the top-most one.
  * Newly applied overlays are inserted at the tail of the overlay list,
- * so a top most overlay is the one that is बंदst to the tail.
+ * so a top most overlay is the one that is closest to the tail.
  *
- * The topmost check is करोne by exploiting this property. For each
- * affected device node in the log list we check अगर this overlay is
- * the one बंदst to the tail. If another overlay has affected this
- * device node and is बंदst to the tail, then removal is not permited.
+ * The topmost check is done by exploiting this property. For each
+ * affected device node in the log list we check if this overlay is
+ * the one closest to the tail. If another overlay has affected this
+ * device node and is closest to the tail, then removal is not permited.
  */
-अटल पूर्णांक overlay_removal_is_ok(काष्ठा overlay_changeset *हटाओ_ovcs)
-अणु
-	काष्ठा of_changeset_entry *हटाओ_ce;
+static int overlay_removal_is_ok(struct overlay_changeset *remove_ovcs)
+{
+	struct of_changeset_entry *remove_ce;
 
-	list_क्रम_each_entry(हटाओ_ce, &हटाओ_ovcs->cset.entries, node) अणु
-		अगर (node_overlaps_later_cs(हटाओ_ovcs, हटाओ_ce->np)) अणु
-			pr_err("overlay #%d is not topmost\n", हटाओ_ovcs->id);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+	list_for_each_entry(remove_ce, &remove_ovcs->cset.entries, node) {
+		if (node_overlaps_later_cs(remove_ovcs, remove_ce->np)) {
+			pr_err("overlay #%d is not topmost\n", remove_ovcs->id);
+			return 0;
+		}
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /**
- * of_overlay_हटाओ() - Revert and मुक्त an overlay changeset
- * @ovcs_id:	Poपूर्णांकer to overlay changeset id
+ * of_overlay_remove() - Revert and free an overlay changeset
+ * @ovcs_id:	Pointer to overlay changeset id
  *
- * Removes an overlay अगर it is permissible.  @ovcs_id was previously वापसed
+ * Removes an overlay if it is permissible.  @ovcs_id was previously returned
  * by of_overlay_fdt_apply().
  *
- * If an error occurred जबतक attempting to revert the overlay changeset,
+ * If an error occurred while attempting to revert the overlay changeset,
  * then an attempt is made to re-apply any changeset entry that was
  * reverted.  If an error occurs on re-apply then the state of the device
- * tree can not be determined, and any following attempt to apply or हटाओ
+ * tree can not be determined, and any following attempt to apply or remove
  * an overlay changeset will be refused.
  *
- * A non-zero वापस value will not revert the changeset अगर error is from:
+ * A non-zero return value will not revert the changeset if error is from:
  *   - parameter checks
- *   - overlay changeset pre-हटाओ notअगरier
+ *   - overlay changeset pre-remove notifier
  *   - overlay changeset entry revert
  *
- * If an error is वापसed by an overlay changeset pre-हटाओ notअगरier
- * then no further overlay changeset pre-हटाओ notअगरier will be called.
+ * If an error is returned by an overlay changeset pre-remove notifier
+ * then no further overlay changeset pre-remove notifier will be called.
  *
- * If more than one notअगरier वापसs an error, then the last notअगरier
- * error to occur is वापसed.
+ * If more than one notifier returns an error, then the last notifier
+ * error to occur is returned.
  *
- * A non-zero वापस value will revert the changeset अगर error is from:
- *   - overlay changeset entry notअगरier
- *   - overlay changeset post-हटाओ notअगरier
+ * A non-zero return value will revert the changeset if error is from:
+ *   - overlay changeset entry notifier
+ *   - overlay changeset post-remove notifier
  *
- * If an error is वापसed by an overlay changeset post-हटाओ notअगरier
- * then no further overlay changeset post-हटाओ notअगरier will be called.
+ * If an error is returned by an overlay changeset post-remove notifier
+ * then no further overlay changeset post-remove notifier will be called.
  *
  * Return: 0 on success, or a negative error number.  *@ovcs_id is set to
- * zero after reverting the changeset, even अगर a subsequent error occurs.
+ * zero after reverting the changeset, even if a subsequent error occurs.
  */
-पूर्णांक of_overlay_हटाओ(पूर्णांक *ovcs_id)
-अणु
-	काष्ठा overlay_changeset *ovcs;
-	पूर्णांक ret, ret_apply, ret_पंचांगp;
+int of_overlay_remove(int *ovcs_id)
+{
+	struct overlay_changeset *ovcs;
+	int ret, ret_apply, ret_tmp;
 
-	अगर (devicetree_corrupt()) अणु
+	if (devicetree_corrupt()) {
 		pr_err("suspect devicetree state, refuse to remove overlay\n");
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	mutex_lock(&of_mutex);
 
 	ovcs = idr_find(&ovcs_idr, *ovcs_id);
-	अगर (!ovcs) अणु
+	if (!ovcs) {
 		ret = -ENODEV;
 		pr_err("remove: Could not find overlay #%d\n", *ovcs_id);
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	अगर (!overlay_removal_is_ok(ovcs)) अणु
+	if (!overlay_removal_is_ok(ovcs)) {
 		ret = -EBUSY;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	ret = overlay_notअगरy(ovcs, OF_OVERLAY_PRE_REMOVE);
-	अगर (ret) अणु
+	ret = overlay_notify(ovcs, OF_OVERLAY_PRE_REMOVE);
+	if (ret) {
 		pr_err("overlay changeset pre-remove notify error %d\n", ret);
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	list_del(&ovcs->ovcs_list);
 
 	ret_apply = 0;
 	ret = __of_changeset_revert_entries(&ovcs->cset, &ret_apply);
-	अगर (ret) अणु
-		अगर (ret_apply)
+	if (ret) {
+		if (ret_apply)
 			devicetree_state_flags |= DTSF_REVERT_FAIL;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	ret = __of_changeset_revert_notअगरy(&ovcs->cset);
-	अगर (ret)
+	ret = __of_changeset_revert_notify(&ovcs->cset);
+	if (ret)
 		pr_err("overlay remove changeset entry notify error %d\n", ret);
-	/* notअगरy failure is not fatal, जारी */
+	/* notify failure is not fatal, continue */
 
 	*ovcs_id = 0;
 
-	ret_पंचांगp = overlay_notअगरy(ovcs, OF_OVERLAY_POST_REMOVE);
-	अगर (ret_पंचांगp) अणु
+	ret_tmp = overlay_notify(ovcs, OF_OVERLAY_POST_REMOVE);
+	if (ret_tmp) {
 		pr_err("overlay changeset post-remove notify error %d\n",
-		       ret_पंचांगp);
-		अगर (!ret)
-			ret = ret_पंचांगp;
-	पूर्ण
+		       ret_tmp);
+		if (!ret)
+			ret = ret_tmp;
+	}
 
-	मुक्त_overlay_changeset(ovcs);
+	free_overlay_changeset(ovcs);
 
 out_unlock:
 	mutex_unlock(&of_mutex);
@@ -1254,29 +1253,29 @@ out_unlock:
 out:
 	pr_debug("%s() err=%d\n", __func__, ret);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(of_overlay_हटाओ);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(of_overlay_remove);
 
 /**
- * of_overlay_हटाओ_all() - Reverts and मुक्तs all overlay changesets
+ * of_overlay_remove_all() - Reverts and frees all overlay changesets
  *
- * Removes all overlays from the प्रणाली in the correct order.
+ * Removes all overlays from the system in the correct order.
  *
  * Return: 0 on success, or a negative error number
  */
-पूर्णांक of_overlay_हटाओ_all(व्योम)
-अणु
-	काष्ठा overlay_changeset *ovcs, *ovcs_n;
-	पूर्णांक ret;
+int of_overlay_remove_all(void)
+{
+	struct overlay_changeset *ovcs, *ovcs_n;
+	int ret;
 
-	/* the tail of list is guaranteed to be safe to हटाओ */
-	list_क्रम_each_entry_safe_reverse(ovcs, ovcs_n, &ovcs_list, ovcs_list) अणु
-		ret = of_overlay_हटाओ(&ovcs->id);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	/* the tail of list is guaranteed to be safe to remove */
+	list_for_each_entry_safe_reverse(ovcs, ovcs_n, &ovcs_list, ovcs_list) {
+		ret = of_overlay_remove(&ovcs->id);
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(of_overlay_हटाओ_all);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(of_overlay_remove_all);

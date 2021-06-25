@@ -1,380 +1,379 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * fs/f2fs/gc.c
  *
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
-#समावेश <linux/fs.h>
-#समावेश <linux/module.h>
-#समावेश <linux/backing-dev.h>
-#समावेश <linux/init.h>
-#समावेश <linux/f2fs_fs.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/मुक्तzer.h>
-#समावेश <linux/sched/संकेत.स>
+#include <linux/fs.h>
+#include <linux/module.h>
+#include <linux/backing-dev.h>
+#include <linux/init.h>
+#include <linux/f2fs_fs.h>
+#include <linux/kthread.h>
+#include <linux/delay.h>
+#include <linux/freezer.h>
+#include <linux/sched/signal.h>
 
-#समावेश "f2fs.h"
-#समावेश "node.h"
-#समावेश "segment.h"
-#समावेश "gc.h"
-#समावेश <trace/events/f2fs.h>
+#include "f2fs.h"
+#include "node.h"
+#include "segment.h"
+#include "gc.h"
+#include <trace/events/f2fs.h>
 
-अटल काष्ठा kmem_cache *victim_entry_slab;
+static struct kmem_cache *victim_entry_slab;
 
-अटल अचिन्हित पूर्णांक count_bits(स्थिर अचिन्हित दीर्घ *addr,
-				अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक len);
+static unsigned int count_bits(const unsigned long *addr,
+				unsigned int offset, unsigned int len);
 
-अटल पूर्णांक gc_thपढ़ो_func(व्योम *data)
-अणु
-	काष्ठा f2fs_sb_info *sbi = data;
-	काष्ठा f2fs_gc_kthपढ़ो *gc_th = sbi->gc_thपढ़ो;
-	रुको_queue_head_t *wq = &sbi->gc_thपढ़ो->gc_रुको_queue_head;
-	रुको_queue_head_t *fggc_wq = &sbi->gc_thपढ़ो->fggc_wq;
-	अचिन्हित पूर्णांक रुको_ms;
+static int gc_thread_func(void *data)
+{
+	struct f2fs_sb_info *sbi = data;
+	struct f2fs_gc_kthread *gc_th = sbi->gc_thread;
+	wait_queue_head_t *wq = &sbi->gc_thread->gc_wait_queue_head;
+	wait_queue_head_t *fggc_wq = &sbi->gc_thread->fggc_wq;
+	unsigned int wait_ms;
 
-	रुको_ms = gc_th->min_sleep_समय;
+	wait_ms = gc_th->min_sleep_time;
 
-	set_मुक्तzable();
-	करो अणु
-		bool sync_mode, क्रमeground = false;
+	set_freezable();
+	do {
+		bool sync_mode, foreground = false;
 
-		रुको_event_पूर्णांकerruptible_समयout(*wq,
-				kthपढ़ो_should_stop() || मुक्तzing(current) ||
-				रुकोqueue_active(fggc_wq) ||
+		wait_event_interruptible_timeout(*wq,
+				kthread_should_stop() || freezing(current) ||
+				waitqueue_active(fggc_wq) ||
 				gc_th->gc_wake,
-				msecs_to_jअगरfies(रुको_ms));
+				msecs_to_jiffies(wait_ms));
 
-		अगर (test_opt(sbi, GC_MERGE) && रुकोqueue_active(fggc_wq))
-			क्रमeground = true;
+		if (test_opt(sbi, GC_MERGE) && waitqueue_active(fggc_wq))
+			foreground = true;
 
-		/* give it a try one समय */
-		अगर (gc_th->gc_wake)
+		/* give it a try one time */
+		if (gc_th->gc_wake)
 			gc_th->gc_wake = 0;
 
-		अगर (try_to_मुक्तze()) अणु
+		if (try_to_freeze()) {
 			stat_other_skip_bggc_count(sbi);
-			जारी;
-		पूर्ण
-		अगर (kthपढ़ो_should_stop())
-			अवरोध;
+			continue;
+		}
+		if (kthread_should_stop())
+			break;
 
-		अगर (sbi->sb->s_ग_लिखोrs.frozen >= SB_FREEZE_WRITE) अणु
-			increase_sleep_समय(gc_th, &रुको_ms);
+		if (sbi->sb->s_writers.frozen >= SB_FREEZE_WRITE) {
+			increase_sleep_time(gc_th, &wait_ms);
 			stat_other_skip_bggc_count(sbi);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (समय_प्रकारo_inject(sbi, FAULT_CHECKPOINT)) अणु
+		if (time_to_inject(sbi, FAULT_CHECKPOINT)) {
 			f2fs_show_injection_info(sbi, FAULT_CHECKPOINT);
-			f2fs_stop_checkpoपूर्णांक(sbi, false);
-		पूर्ण
+			f2fs_stop_checkpoint(sbi, false);
+		}
 
-		अगर (!sb_start_ग_लिखो_trylock(sbi->sb)) अणु
+		if (!sb_start_write_trylock(sbi->sb)) {
 			stat_other_skip_bggc_count(sbi);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/*
 		 * [GC triggering condition]
 		 * 0. GC is not conducted currently.
 		 * 1. There are enough dirty segments.
-		 * 2. IO subप्रणाली is idle by checking the # of ग_लिखोback pages.
-		 * 3. IO subप्रणाली is idle by checking the # of requests in
+		 * 2. IO subsystem is idle by checking the # of writeback pages.
+		 * 3. IO subsystem is idle by checking the # of requests in
 		 *    bdev's request list.
 		 *
-		 * Note) We have to aव्योम triggering GCs frequently.
+		 * Note) We have to avoid triggering GCs frequently.
 		 * Because it is possible that some segments can be
 		 * invalidated soon after by user update or deletion.
-		 * So, I'd like to रुको some समय to collect dirty segments.
+		 * So, I'd like to wait some time to collect dirty segments.
 		 */
-		अगर (sbi->gc_mode == GC_URGENT_HIGH) अणु
-			रुको_ms = gc_th->urgent_sleep_समय;
-			करोwn_ग_लिखो(&sbi->gc_lock);
-			जाओ करो_gc;
-		पूर्ण
+		if (sbi->gc_mode == GC_URGENT_HIGH) {
+			wait_ms = gc_th->urgent_sleep_time;
+			down_write(&sbi->gc_lock);
+			goto do_gc;
+		}
 
-		अगर (क्रमeground) अणु
-			करोwn_ग_लिखो(&sbi->gc_lock);
-			जाओ करो_gc;
-		पूर्ण अन्यथा अगर (!करोwn_ग_लिखो_trylock(&sbi->gc_lock)) अणु
+		if (foreground) {
+			down_write(&sbi->gc_lock);
+			goto do_gc;
+		} else if (!down_write_trylock(&sbi->gc_lock)) {
 			stat_other_skip_bggc_count(sbi);
-			जाओ next;
-		पूर्ण
+			goto next;
+		}
 
-		अगर (!is_idle(sbi, GC_TIME)) अणु
-			increase_sleep_समय(gc_th, &रुको_ms);
-			up_ग_लिखो(&sbi->gc_lock);
+		if (!is_idle(sbi, GC_TIME)) {
+			increase_sleep_time(gc_th, &wait_ms);
+			up_write(&sbi->gc_lock);
 			stat_io_skip_bggc_count(sbi);
-			जाओ next;
-		पूर्ण
+			goto next;
+		}
 
-		अगर (has_enough_invalid_blocks(sbi))
-			decrease_sleep_समय(gc_th, &रुको_ms);
-		अन्यथा
-			increase_sleep_समय(gc_th, &रुको_ms);
-करो_gc:
-		अगर (!क्रमeground)
+		if (has_enough_invalid_blocks(sbi))
+			decrease_sleep_time(gc_th, &wait_ms);
+		else
+			increase_sleep_time(gc_th, &wait_ms);
+do_gc:
+		if (!foreground)
 			stat_inc_bggc_count(sbi->stat_info);
 
 		sync_mode = F2FS_OPTION(sbi).bggc_mode == BGGC_MODE_SYNC;
 
-		/* क्रमeground GC was been triggered via f2fs_balance_fs() */
-		अगर (क्रमeground)
+		/* foreground GC was been triggered via f2fs_balance_fs() */
+		if (foreground)
 			sync_mode = false;
 
-		/* अगर वापस value is not zero, no victim was selected */
-		अगर (f2fs_gc(sbi, sync_mode, !क्रमeground, false, शून्य_SEGNO))
-			रुको_ms = gc_th->no_gc_sleep_समय;
+		/* if return value is not zero, no victim was selected */
+		if (f2fs_gc(sbi, sync_mode, !foreground, false, NULL_SEGNO))
+			wait_ms = gc_th->no_gc_sleep_time;
 
-		अगर (क्रमeground)
+		if (foreground)
 			wake_up_all(&gc_th->fggc_wq);
 
-		trace_f2fs_background_gc(sbi->sb, रुको_ms,
-				preमुक्त_segments(sbi), मुक्त_segments(sbi));
+		trace_f2fs_background_gc(sbi->sb, wait_ms,
+				prefree_segments(sbi), free_segments(sbi));
 
 		/* balancing f2fs's metadata periodically */
 		f2fs_balance_fs_bg(sbi, true);
 next:
-		sb_end_ग_लिखो(sbi->sb);
+		sb_end_write(sbi->sb);
 
-	पूर्ण जबतक (!kthपढ़ो_should_stop());
-	वापस 0;
-पूर्ण
+	} while (!kthread_should_stop());
+	return 0;
+}
 
-पूर्णांक f2fs_start_gc_thपढ़ो(काष्ठा f2fs_sb_info *sbi)
-अणु
-	काष्ठा f2fs_gc_kthपढ़ो *gc_th;
+int f2fs_start_gc_thread(struct f2fs_sb_info *sbi)
+{
+	struct f2fs_gc_kthread *gc_th;
 	dev_t dev = sbi->sb->s_bdev->bd_dev;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	gc_th = f2fs_kदो_स्मृति(sbi, माप(काष्ठा f2fs_gc_kthपढ़ो), GFP_KERNEL);
-	अगर (!gc_th) अणु
+	gc_th = f2fs_kmalloc(sbi, sizeof(struct f2fs_gc_kthread), GFP_KERNEL);
+	if (!gc_th) {
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	gc_th->urgent_sleep_समय = DEF_GC_THREAD_URGENT_SLEEP_TIME;
-	gc_th->min_sleep_समय = DEF_GC_THREAD_MIN_SLEEP_TIME;
-	gc_th->max_sleep_समय = DEF_GC_THREAD_MAX_SLEEP_TIME;
-	gc_th->no_gc_sleep_समय = DEF_GC_THREAD_NOGC_SLEEP_TIME;
+	gc_th->urgent_sleep_time = DEF_GC_THREAD_URGENT_SLEEP_TIME;
+	gc_th->min_sleep_time = DEF_GC_THREAD_MIN_SLEEP_TIME;
+	gc_th->max_sleep_time = DEF_GC_THREAD_MAX_SLEEP_TIME;
+	gc_th->no_gc_sleep_time = DEF_GC_THREAD_NOGC_SLEEP_TIME;
 
 	gc_th->gc_wake = 0;
 
-	sbi->gc_thपढ़ो = gc_th;
-	init_रुकोqueue_head(&sbi->gc_thपढ़ो->gc_रुको_queue_head);
-	init_रुकोqueue_head(&sbi->gc_thपढ़ो->fggc_wq);
-	sbi->gc_thपढ़ो->f2fs_gc_task = kthपढ़ो_run(gc_thपढ़ो_func, sbi,
+	sbi->gc_thread = gc_th;
+	init_waitqueue_head(&sbi->gc_thread->gc_wait_queue_head);
+	init_waitqueue_head(&sbi->gc_thread->fggc_wq);
+	sbi->gc_thread->f2fs_gc_task = kthread_run(gc_thread_func, sbi,
 			"f2fs_gc-%u:%u", MAJOR(dev), MINOR(dev));
-	अगर (IS_ERR(gc_th->f2fs_gc_task)) अणु
+	if (IS_ERR(gc_th->f2fs_gc_task)) {
 		err = PTR_ERR(gc_th->f2fs_gc_task);
-		kमुक्त(gc_th);
-		sbi->gc_thपढ़ो = शून्य;
-	पूर्ण
+		kfree(gc_th);
+		sbi->gc_thread = NULL;
+	}
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम f2fs_stop_gc_thपढ़ो(काष्ठा f2fs_sb_info *sbi)
-अणु
-	काष्ठा f2fs_gc_kthपढ़ो *gc_th = sbi->gc_thपढ़ो;
+void f2fs_stop_gc_thread(struct f2fs_sb_info *sbi)
+{
+	struct f2fs_gc_kthread *gc_th = sbi->gc_thread;
 
-	अगर (!gc_th)
-		वापस;
-	kthपढ़ो_stop(gc_th->f2fs_gc_task);
+	if (!gc_th)
+		return;
+	kthread_stop(gc_th->f2fs_gc_task);
 	wake_up_all(&gc_th->fggc_wq);
-	kमुक्त(gc_th);
-	sbi->gc_thपढ़ो = शून्य;
-पूर्ण
+	kfree(gc_th);
+	sbi->gc_thread = NULL;
+}
 
-अटल पूर्णांक select_gc_type(काष्ठा f2fs_sb_info *sbi, पूर्णांक gc_type)
-अणु
-	पूर्णांक gc_mode;
+static int select_gc_type(struct f2fs_sb_info *sbi, int gc_type)
+{
+	int gc_mode;
 
-	अगर (gc_type == BG_GC) अणु
-		अगर (sbi->am.atgc_enabled)
+	if (gc_type == BG_GC) {
+		if (sbi->am.atgc_enabled)
 			gc_mode = GC_AT;
-		अन्यथा
+		else
 			gc_mode = GC_CB;
-	पूर्ण अन्यथा अणु
+	} else {
 		gc_mode = GC_GREEDY;
-	पूर्ण
+	}
 
-	चयन (sbi->gc_mode) अणु
-	हाल GC_IDLE_CB:
+	switch (sbi->gc_mode) {
+	case GC_IDLE_CB:
 		gc_mode = GC_CB;
-		अवरोध;
-	हाल GC_IDLE_GREEDY:
-	हाल GC_URGENT_HIGH:
+		break;
+	case GC_IDLE_GREEDY:
+	case GC_URGENT_HIGH:
 		gc_mode = GC_GREEDY;
-		अवरोध;
-	हाल GC_IDLE_AT:
+		break;
+	case GC_IDLE_AT:
 		gc_mode = GC_AT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस gc_mode;
-पूर्ण
+	return gc_mode;
+}
 
-अटल व्योम select_policy(काष्ठा f2fs_sb_info *sbi, पूर्णांक gc_type,
-			पूर्णांक type, काष्ठा victim_sel_policy *p)
-अणु
-	काष्ठा dirty_seglist_info *dirty_i = सूचीTY_I(sbi);
+static void select_policy(struct f2fs_sb_info *sbi, int gc_type,
+			int type, struct victim_sel_policy *p)
+{
+	struct dirty_seglist_info *dirty_i = DIRTY_I(sbi);
 
-	अगर (p->alloc_mode == SSR) अणु
+	if (p->alloc_mode == SSR) {
 		p->gc_mode = GC_GREEDY;
-		p->dirty_biपंचांगap = dirty_i->dirty_segmap[type];
+		p->dirty_bitmap = dirty_i->dirty_segmap[type];
 		p->max_search = dirty_i->nr_dirty[type];
 		p->ofs_unit = 1;
-	पूर्ण अन्यथा अगर (p->alloc_mode == AT_SSR) अणु
+	} else if (p->alloc_mode == AT_SSR) {
 		p->gc_mode = GC_GREEDY;
-		p->dirty_biपंचांगap = dirty_i->dirty_segmap[type];
+		p->dirty_bitmap = dirty_i->dirty_segmap[type];
 		p->max_search = dirty_i->nr_dirty[type];
 		p->ofs_unit = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		p->gc_mode = select_gc_type(sbi, gc_type);
 		p->ofs_unit = sbi->segs_per_sec;
-		अगर (__is_large_section(sbi)) अणु
-			p->dirty_biपंचांगap = dirty_i->dirty_secmap;
-			p->max_search = count_bits(p->dirty_biपंचांगap,
+		if (__is_large_section(sbi)) {
+			p->dirty_bitmap = dirty_i->dirty_secmap;
+			p->max_search = count_bits(p->dirty_bitmap,
 						0, MAIN_SECS(sbi));
-		पूर्ण अन्यथा अणु
-			p->dirty_biपंचांगap = dirty_i->dirty_segmap[सूचीTY];
-			p->max_search = dirty_i->nr_dirty[सूचीTY];
-		पूर्ण
-	पूर्ण
+		} else {
+			p->dirty_bitmap = dirty_i->dirty_segmap[DIRTY];
+			p->max_search = dirty_i->nr_dirty[DIRTY];
+		}
+	}
 
 	/*
-	 * adjust candidates range, should select all dirty segments क्रम
-	 * क्रमeground GC and urgent GC हालs.
+	 * adjust candidates range, should select all dirty segments for
+	 * foreground GC and urgent GC cases.
 	 */
-	अगर (gc_type != FG_GC &&
+	if (gc_type != FG_GC &&
 			(sbi->gc_mode != GC_URGENT_HIGH) &&
 			(p->gc_mode != GC_AT && p->alloc_mode != AT_SSR) &&
 			p->max_search > sbi->max_victim_search)
 		p->max_search = sbi->max_victim_search;
 
 	/* let's select beginning hot/small space first in no_heap mode*/
-	अगर (test_opt(sbi, NOHEAP) &&
+	if (test_opt(sbi, NOHEAP) &&
 		(type == CURSEG_HOT_DATA || IS_NODESEG(type)))
 		p->offset = 0;
-	अन्यथा
+	else
 		p->offset = SIT_I(sbi)->last_victim[p->gc_mode];
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक get_max_cost(काष्ठा f2fs_sb_info *sbi,
-				काष्ठा victim_sel_policy *p)
-अणु
+static unsigned int get_max_cost(struct f2fs_sb_info *sbi,
+				struct victim_sel_policy *p)
+{
 	/* SSR allocates in a segment unit */
-	अगर (p->alloc_mode == SSR)
-		वापस sbi->blocks_per_seg;
-	अन्यथा अगर (p->alloc_mode == AT_SSR)
-		वापस अच_पूर्णांक_उच्च;
+	if (p->alloc_mode == SSR)
+		return sbi->blocks_per_seg;
+	else if (p->alloc_mode == AT_SSR)
+		return UINT_MAX;
 
 	/* LFS */
-	अगर (p->gc_mode == GC_GREEDY)
-		वापस 2 * sbi->blocks_per_seg * p->ofs_unit;
-	अन्यथा अगर (p->gc_mode == GC_CB)
-		वापस अच_पूर्णांक_उच्च;
-	अन्यथा अगर (p->gc_mode == GC_AT)
-		वापस अच_पूर्णांक_उच्च;
-	अन्यथा /* No other gc_mode */
-		वापस 0;
-पूर्ण
+	if (p->gc_mode == GC_GREEDY)
+		return 2 * sbi->blocks_per_seg * p->ofs_unit;
+	else if (p->gc_mode == GC_CB)
+		return UINT_MAX;
+	else if (p->gc_mode == GC_AT)
+		return UINT_MAX;
+	else /* No other gc_mode */
+		return 0;
+}
 
-अटल अचिन्हित पूर्णांक check_bg_victims(काष्ठा f2fs_sb_info *sbi)
-अणु
-	काष्ठा dirty_seglist_info *dirty_i = सूचीTY_I(sbi);
-	अचिन्हित पूर्णांक secno;
+static unsigned int check_bg_victims(struct f2fs_sb_info *sbi)
+{
+	struct dirty_seglist_info *dirty_i = DIRTY_I(sbi);
+	unsigned int secno;
 
 	/*
 	 * If the gc_type is FG_GC, we can select victim segments
-	 * selected by background GC beक्रमe.
+	 * selected by background GC before.
 	 * Those segments guarantee they have small valid blocks.
 	 */
-	क्रम_each_set_bit(secno, dirty_i->victim_secmap, MAIN_SECS(sbi)) अणु
-		अगर (sec_usage_check(sbi, secno))
-			जारी;
+	for_each_set_bit(secno, dirty_i->victim_secmap, MAIN_SECS(sbi)) {
+		if (sec_usage_check(sbi, secno))
+			continue;
 		clear_bit(secno, dirty_i->victim_secmap);
-		वापस GET_SEG_FROM_SEC(sbi, secno);
-	पूर्ण
-	वापस शून्य_SEGNO;
-पूर्ण
+		return GET_SEG_FROM_SEC(sbi, secno);
+	}
+	return NULL_SEGNO;
+}
 
-अटल अचिन्हित पूर्णांक get_cb_cost(काष्ठा f2fs_sb_info *sbi, अचिन्हित पूर्णांक segno)
-अणु
-	काष्ठा sit_info *sit_i = SIT_I(sbi);
-	अचिन्हित पूर्णांक secno = GET_SEC_FROM_SEG(sbi, segno);
-	अचिन्हित पूर्णांक start = GET_SEG_FROM_SEC(sbi, secno);
-	अचिन्हित दीर्घ दीर्घ mसमय = 0;
-	अचिन्हित पूर्णांक vblocks;
-	अचिन्हित अक्षर age = 0;
-	अचिन्हित अक्षर u;
-	अचिन्हित पूर्णांक i;
-	अचिन्हित पूर्णांक usable_segs_per_sec = f2fs_usable_segs_in_sec(sbi, segno);
+static unsigned int get_cb_cost(struct f2fs_sb_info *sbi, unsigned int segno)
+{
+	struct sit_info *sit_i = SIT_I(sbi);
+	unsigned int secno = GET_SEC_FROM_SEG(sbi, segno);
+	unsigned int start = GET_SEG_FROM_SEC(sbi, secno);
+	unsigned long long mtime = 0;
+	unsigned int vblocks;
+	unsigned char age = 0;
+	unsigned char u;
+	unsigned int i;
+	unsigned int usable_segs_per_sec = f2fs_usable_segs_in_sec(sbi, segno);
 
-	क्रम (i = 0; i < usable_segs_per_sec; i++)
-		mसमय += get_seg_entry(sbi, start + i)->mसमय;
+	for (i = 0; i < usable_segs_per_sec; i++)
+		mtime += get_seg_entry(sbi, start + i)->mtime;
 	vblocks = get_valid_blocks(sbi, segno, true);
 
-	mसमय = भाग_u64(mसमय, usable_segs_per_sec);
-	vblocks = भाग_u64(vblocks, usable_segs_per_sec);
+	mtime = div_u64(mtime, usable_segs_per_sec);
+	vblocks = div_u64(vblocks, usable_segs_per_sec);
 
 	u = (vblocks * 100) >> sbi->log_blocks_per_seg;
 
-	/* Handle अगर the प्रणाली समय has changed by the user */
-	अगर (mसमय < sit_i->min_mसमय)
-		sit_i->min_mसमय = mसमय;
-	अगर (mसमय > sit_i->max_mसमय)
-		sit_i->max_mसमय = mसमय;
-	अगर (sit_i->max_mसमय != sit_i->min_mसमय)
-		age = 100 - भाग64_u64(100 * (mसमय - sit_i->min_mसमय),
-				sit_i->max_mसमय - sit_i->min_mसमय);
+	/* Handle if the system time has changed by the user */
+	if (mtime < sit_i->min_mtime)
+		sit_i->min_mtime = mtime;
+	if (mtime > sit_i->max_mtime)
+		sit_i->max_mtime = mtime;
+	if (sit_i->max_mtime != sit_i->min_mtime)
+		age = 100 - div64_u64(100 * (mtime - sit_i->min_mtime),
+				sit_i->max_mtime - sit_i->min_mtime);
 
-	वापस अच_पूर्णांक_उच्च - ((100 * (100 - u) * age) / (100 + u));
-पूर्ण
+	return UINT_MAX - ((100 * (100 - u) * age) / (100 + u));
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक get_gc_cost(काष्ठा f2fs_sb_info *sbi,
-			अचिन्हित पूर्णांक segno, काष्ठा victim_sel_policy *p)
-अणु
-	अगर (p->alloc_mode == SSR)
-		वापस get_seg_entry(sbi, segno)->ckpt_valid_blocks;
+static inline unsigned int get_gc_cost(struct f2fs_sb_info *sbi,
+			unsigned int segno, struct victim_sel_policy *p)
+{
+	if (p->alloc_mode == SSR)
+		return get_seg_entry(sbi, segno)->ckpt_valid_blocks;
 
 	/* alloc_mode == LFS */
-	अगर (p->gc_mode == GC_GREEDY)
-		वापस get_valid_blocks(sbi, segno, true);
-	अन्यथा अगर (p->gc_mode == GC_CB)
-		वापस get_cb_cost(sbi, segno);
+	if (p->gc_mode == GC_GREEDY)
+		return get_valid_blocks(sbi, segno, true);
+	else if (p->gc_mode == GC_CB)
+		return get_cb_cost(sbi, segno);
 
 	f2fs_bug_on(sbi, 1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक count_bits(स्थिर अचिन्हित दीर्घ *addr,
-				अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक len)
-अणु
-	अचिन्हित पूर्णांक end = offset + len, sum = 0;
+static unsigned int count_bits(const unsigned long *addr,
+				unsigned int offset, unsigned int len)
+{
+	unsigned int end = offset + len, sum = 0;
 
-	जबतक (offset < end) अणु
-		अगर (test_bit(offset++, addr))
+	while (offset < end) {
+		if (test_bit(offset++, addr))
 			++sum;
-	पूर्ण
-	वापस sum;
-पूर्ण
+	}
+	return sum;
+}
 
-अटल काष्ठा victim_entry *attach_victim_entry(काष्ठा f2fs_sb_info *sbi,
-				अचिन्हित दीर्घ दीर्घ mसमय, अचिन्हित पूर्णांक segno,
-				काष्ठा rb_node *parent, काष्ठा rb_node **p,
+static struct victim_entry *attach_victim_entry(struct f2fs_sb_info *sbi,
+				unsigned long long mtime, unsigned int segno,
+				struct rb_node *parent, struct rb_node **p,
 				bool left_most)
-अणु
-	काष्ठा atgc_management *am = &sbi->am;
-	काष्ठा victim_entry *ve;
+{
+	struct atgc_management *am = &sbi->am;
+	struct victim_entry *ve;
 
 	ve =  f2fs_kmem_cache_alloc(victim_entry_slab, GFP_NOFS);
 
-	ve->mसमय = mसमय;
+	ve->mtime = mtime;
 	ve->segno = segno;
 
 	rb_link_node(&ve->rb_node, parent, p);
@@ -384,269 +383,269 @@ out:
 
 	am->victim_count++;
 
-	वापस ve;
-पूर्ण
+	return ve;
+}
 
-अटल व्योम insert_victim_entry(काष्ठा f2fs_sb_info *sbi,
-				अचिन्हित दीर्घ दीर्घ mसमय, अचिन्हित पूर्णांक segno)
-अणु
-	काष्ठा atgc_management *am = &sbi->am;
-	काष्ठा rb_node **p;
-	काष्ठा rb_node *parent = शून्य;
+static void insert_victim_entry(struct f2fs_sb_info *sbi,
+				unsigned long long mtime, unsigned int segno)
+{
+	struct atgc_management *am = &sbi->am;
+	struct rb_node **p;
+	struct rb_node *parent = NULL;
 	bool left_most = true;
 
-	p = f2fs_lookup_rb_tree_ext(sbi, &am->root, &parent, mसमय, &left_most);
-	attach_victim_entry(sbi, mसमय, segno, parent, p, left_most);
-पूर्ण
+	p = f2fs_lookup_rb_tree_ext(sbi, &am->root, &parent, mtime, &left_most);
+	attach_victim_entry(sbi, mtime, segno, parent, p, left_most);
+}
 
-अटल व्योम add_victim_entry(काष्ठा f2fs_sb_info *sbi,
-				काष्ठा victim_sel_policy *p, अचिन्हित पूर्णांक segno)
-अणु
-	काष्ठा sit_info *sit_i = SIT_I(sbi);
-	अचिन्हित पूर्णांक secno = GET_SEC_FROM_SEG(sbi, segno);
-	अचिन्हित पूर्णांक start = GET_SEG_FROM_SEC(sbi, secno);
-	अचिन्हित दीर्घ दीर्घ mसमय = 0;
-	अचिन्हित पूर्णांक i;
+static void add_victim_entry(struct f2fs_sb_info *sbi,
+				struct victim_sel_policy *p, unsigned int segno)
+{
+	struct sit_info *sit_i = SIT_I(sbi);
+	unsigned int secno = GET_SEC_FROM_SEG(sbi, segno);
+	unsigned int start = GET_SEG_FROM_SEC(sbi, secno);
+	unsigned long long mtime = 0;
+	unsigned int i;
 
-	अगर (unlikely(is_sbi_flag_set(sbi, SBI_CP_DISABLED))) अणु
-		अगर (p->gc_mode == GC_AT &&
+	if (unlikely(is_sbi_flag_set(sbi, SBI_CP_DISABLED))) {
+		if (p->gc_mode == GC_AT &&
 			get_valid_blocks(sbi, segno, true) == 0)
-			वापस;
-	पूर्ण
+			return;
+	}
 
-	क्रम (i = 0; i < sbi->segs_per_sec; i++)
-		mसमय += get_seg_entry(sbi, start + i)->mसमय;
-	mसमय = भाग_u64(mसमय, sbi->segs_per_sec);
+	for (i = 0; i < sbi->segs_per_sec; i++)
+		mtime += get_seg_entry(sbi, start + i)->mtime;
+	mtime = div_u64(mtime, sbi->segs_per_sec);
 
-	/* Handle अगर the प्रणाली समय has changed by the user */
-	अगर (mसमय < sit_i->min_mसमय)
-		sit_i->min_mसमय = mसमय;
-	अगर (mसमय > sit_i->max_mसमय)
-		sit_i->max_mसमय = mसमय;
-	अगर (mसमय < sit_i->dirty_min_mसमय)
-		sit_i->dirty_min_mसमय = mसमय;
-	अगर (mसमय > sit_i->dirty_max_mसमय)
-		sit_i->dirty_max_mसमय = mसमय;
+	/* Handle if the system time has changed by the user */
+	if (mtime < sit_i->min_mtime)
+		sit_i->min_mtime = mtime;
+	if (mtime > sit_i->max_mtime)
+		sit_i->max_mtime = mtime;
+	if (mtime < sit_i->dirty_min_mtime)
+		sit_i->dirty_min_mtime = mtime;
+	if (mtime > sit_i->dirty_max_mtime)
+		sit_i->dirty_max_mtime = mtime;
 
-	/* करोn't choose young section as candidate */
-	अगर (sit_i->dirty_max_mसमय - mसमय < p->age_threshold)
-		वापस;
+	/* don't choose young section as candidate */
+	if (sit_i->dirty_max_mtime - mtime < p->age_threshold)
+		return;
 
-	insert_victim_entry(sbi, mसमय, segno);
-पूर्ण
+	insert_victim_entry(sbi, mtime, segno);
+}
 
-अटल काष्ठा rb_node *lookup_central_victim(काष्ठा f2fs_sb_info *sbi,
-						काष्ठा victim_sel_policy *p)
-अणु
-	काष्ठा atgc_management *am = &sbi->am;
-	काष्ठा rb_node *parent = शून्य;
+static struct rb_node *lookup_central_victim(struct f2fs_sb_info *sbi,
+						struct victim_sel_policy *p)
+{
+	struct atgc_management *am = &sbi->am;
+	struct rb_node *parent = NULL;
 	bool left_most;
 
 	f2fs_lookup_rb_tree_ext(sbi, &am->root, &parent, p->age, &left_most);
 
-	वापस parent;
-पूर्ण
+	return parent;
+}
 
-अटल व्योम atgc_lookup_victim(काष्ठा f2fs_sb_info *sbi,
-						काष्ठा victim_sel_policy *p)
-अणु
-	काष्ठा sit_info *sit_i = SIT_I(sbi);
-	काष्ठा atgc_management *am = &sbi->am;
-	काष्ठा rb_root_cached *root = &am->root;
-	काष्ठा rb_node *node;
-	काष्ठा rb_entry *re;
-	काष्ठा victim_entry *ve;
-	अचिन्हित दीर्घ दीर्घ total_समय;
-	अचिन्हित दीर्घ दीर्घ age, u, accu;
-	अचिन्हित दीर्घ दीर्घ max_mसमय = sit_i->dirty_max_mसमय;
-	अचिन्हित दीर्घ दीर्घ min_mसमय = sit_i->dirty_min_mसमय;
-	अचिन्हित पूर्णांक sec_blocks = BLKS_PER_SEC(sbi);
-	अचिन्हित पूर्णांक vblocks;
-	अचिन्हित पूर्णांक dirty_threshold = max(am->max_candidate_count,
+static void atgc_lookup_victim(struct f2fs_sb_info *sbi,
+						struct victim_sel_policy *p)
+{
+	struct sit_info *sit_i = SIT_I(sbi);
+	struct atgc_management *am = &sbi->am;
+	struct rb_root_cached *root = &am->root;
+	struct rb_node *node;
+	struct rb_entry *re;
+	struct victim_entry *ve;
+	unsigned long long total_time;
+	unsigned long long age, u, accu;
+	unsigned long long max_mtime = sit_i->dirty_max_mtime;
+	unsigned long long min_mtime = sit_i->dirty_min_mtime;
+	unsigned int sec_blocks = BLKS_PER_SEC(sbi);
+	unsigned int vblocks;
+	unsigned int dirty_threshold = max(am->max_candidate_count,
 					am->candidate_ratio *
 					am->victim_count / 100);
-	अचिन्हित पूर्णांक age_weight = am->age_weight;
-	अचिन्हित पूर्णांक cost;
-	अचिन्हित पूर्णांक iter = 0;
+	unsigned int age_weight = am->age_weight;
+	unsigned int cost;
+	unsigned int iter = 0;
 
-	अगर (max_mसमय < min_mसमय)
-		वापस;
+	if (max_mtime < min_mtime)
+		return;
 
-	max_mसमय += 1;
-	total_समय = max_mसमय - min_mसमय;
+	max_mtime += 1;
+	total_time = max_mtime - min_mtime;
 
-	accu = भाग64_u64(ULदीर्घ_उच्च, total_समय);
-	accu = min_t(अचिन्हित दीर्घ दीर्घ, भाग_u64(accu, 100),
+	accu = div64_u64(ULLONG_MAX, total_time);
+	accu = min_t(unsigned long long, div_u64(accu, 100),
 					DEFAULT_ACCURACY_CLASS);
 
 	node = rb_first_cached(root);
 next:
-	re = rb_entry_safe(node, काष्ठा rb_entry, rb_node);
-	अगर (!re)
-		वापस;
+	re = rb_entry_safe(node, struct rb_entry, rb_node);
+	if (!re)
+		return;
 
-	ve = (काष्ठा victim_entry *)re;
+	ve = (struct victim_entry *)re;
 
-	अगर (ve->mसमय >= max_mसमय || ve->mसमय < min_mसमय)
-		जाओ skip;
+	if (ve->mtime >= max_mtime || ve->mtime < min_mtime)
+		goto skip;
 
 	/* age = 10000 * x% * 60 */
-	age = भाग64_u64(accu * (max_mसमय - ve->mसमय), total_समय) *
+	age = div64_u64(accu * (max_mtime - ve->mtime), total_time) *
 								age_weight;
 
 	vblocks = get_valid_blocks(sbi, ve->segno, true);
 	f2fs_bug_on(sbi, !vblocks || vblocks == sec_blocks);
 
 	/* u = 10000 * x% * 40 */
-	u = भाग64_u64(accu * (sec_blocks - vblocks), sec_blocks) *
+	u = div64_u64(accu * (sec_blocks - vblocks), sec_blocks) *
 							(100 - age_weight);
 
-	f2fs_bug_on(sbi, age + u >= अच_पूर्णांक_उच्च);
+	f2fs_bug_on(sbi, age + u >= UINT_MAX);
 
-	cost = अच_पूर्णांक_उच्च - (age + u);
+	cost = UINT_MAX - (age + u);
 	iter++;
 
-	अगर (cost < p->min_cost ||
-			(cost == p->min_cost && age > p->oldest_age)) अणु
+	if (cost < p->min_cost ||
+			(cost == p->min_cost && age > p->oldest_age)) {
 		p->min_cost = cost;
 		p->oldest_age = age;
 		p->min_segno = ve->segno;
-	पूर्ण
+	}
 skip:
-	अगर (iter < dirty_threshold) अणु
+	if (iter < dirty_threshold) {
 		node = rb_next(node);
-		जाओ next;
-	पूर्ण
-पूर्ण
+		goto next;
+	}
+}
 
 /*
  * select candidates around source section in range of
  * [target - dirty_threshold, target + dirty_threshold]
  */
-अटल व्योम atssr_lookup_victim(काष्ठा f2fs_sb_info *sbi,
-						काष्ठा victim_sel_policy *p)
-अणु
-	काष्ठा sit_info *sit_i = SIT_I(sbi);
-	काष्ठा atgc_management *am = &sbi->am;
-	काष्ठा rb_node *node;
-	काष्ठा rb_entry *re;
-	काष्ठा victim_entry *ve;
-	अचिन्हित दीर्घ दीर्घ age;
-	अचिन्हित दीर्घ दीर्घ max_mसमय = sit_i->dirty_max_mसमय;
-	अचिन्हित दीर्घ दीर्घ min_mसमय = sit_i->dirty_min_mसमय;
-	अचिन्हित पूर्णांक seg_blocks = sbi->blocks_per_seg;
-	अचिन्हित पूर्णांक vblocks;
-	अचिन्हित पूर्णांक dirty_threshold = max(am->max_candidate_count,
+static void atssr_lookup_victim(struct f2fs_sb_info *sbi,
+						struct victim_sel_policy *p)
+{
+	struct sit_info *sit_i = SIT_I(sbi);
+	struct atgc_management *am = &sbi->am;
+	struct rb_node *node;
+	struct rb_entry *re;
+	struct victim_entry *ve;
+	unsigned long long age;
+	unsigned long long max_mtime = sit_i->dirty_max_mtime;
+	unsigned long long min_mtime = sit_i->dirty_min_mtime;
+	unsigned int seg_blocks = sbi->blocks_per_seg;
+	unsigned int vblocks;
+	unsigned int dirty_threshold = max(am->max_candidate_count,
 					am->candidate_ratio *
 					am->victim_count / 100);
-	अचिन्हित पूर्णांक cost;
-	अचिन्हित पूर्णांक iter = 0;
-	पूर्णांक stage = 0;
+	unsigned int cost;
+	unsigned int iter = 0;
+	int stage = 0;
 
-	अगर (max_mसमय < min_mसमय)
-		वापस;
-	max_mसमय += 1;
+	if (max_mtime < min_mtime)
+		return;
+	max_mtime += 1;
 next_stage:
 	node = lookup_central_victim(sbi, p);
 next_node:
-	re = rb_entry_safe(node, काष्ठा rb_entry, rb_node);
-	अगर (!re) अणु
-		अगर (stage == 0)
-			जाओ skip_stage;
-		वापस;
-	पूर्ण
+	re = rb_entry_safe(node, struct rb_entry, rb_node);
+	if (!re) {
+		if (stage == 0)
+			goto skip_stage;
+		return;
+	}
 
-	ve = (काष्ठा victim_entry *)re;
+	ve = (struct victim_entry *)re;
 
-	अगर (ve->mसमय >= max_mसमय || ve->mसमय < min_mसमय)
-		जाओ skip_node;
+	if (ve->mtime >= max_mtime || ve->mtime < min_mtime)
+		goto skip_node;
 
-	age = max_mसमय - ve->mसमय;
+	age = max_mtime - ve->mtime;
 
 	vblocks = get_seg_entry(sbi, ve->segno)->ckpt_valid_blocks;
 	f2fs_bug_on(sbi, !vblocks);
 
-	/* rare हाल */
-	अगर (vblocks == seg_blocks)
-		जाओ skip_node;
+	/* rare case */
+	if (vblocks == seg_blocks)
+		goto skip_node;
 
 	iter++;
 
-	age = max_mसमय - असल(p->age - age);
-	cost = अच_पूर्णांक_उच्च - vblocks;
+	age = max_mtime - abs(p->age - age);
+	cost = UINT_MAX - vblocks;
 
-	अगर (cost < p->min_cost ||
-			(cost == p->min_cost && age > p->oldest_age)) अणु
+	if (cost < p->min_cost ||
+			(cost == p->min_cost && age > p->oldest_age)) {
 		p->min_cost = cost;
 		p->oldest_age = age;
 		p->min_segno = ve->segno;
-	पूर्ण
+	}
 skip_node:
-	अगर (iter < dirty_threshold) अणु
-		अगर (stage == 0)
+	if (iter < dirty_threshold) {
+		if (stage == 0)
 			node = rb_prev(node);
-		अन्यथा अगर (stage == 1)
+		else if (stage == 1)
 			node = rb_next(node);
-		जाओ next_node;
-	पूर्ण
+		goto next_node;
+	}
 skip_stage:
-	अगर (stage < 1) अणु
+	if (stage < 1) {
 		stage++;
 		iter = 0;
-		जाओ next_stage;
-	पूर्ण
-पूर्ण
-अटल व्योम lookup_victim_by_age(काष्ठा f2fs_sb_info *sbi,
-						काष्ठा victim_sel_policy *p)
-अणु
+		goto next_stage;
+	}
+}
+static void lookup_victim_by_age(struct f2fs_sb_info *sbi,
+						struct victim_sel_policy *p)
+{
 	f2fs_bug_on(sbi, !f2fs_check_rb_tree_consistence(sbi,
 						&sbi->am.root, true));
 
-	अगर (p->gc_mode == GC_AT)
+	if (p->gc_mode == GC_AT)
 		atgc_lookup_victim(sbi, p);
-	अन्यथा अगर (p->alloc_mode == AT_SSR)
+	else if (p->alloc_mode == AT_SSR)
 		atssr_lookup_victim(sbi, p);
-	अन्यथा
+	else
 		f2fs_bug_on(sbi, 1);
-पूर्ण
+}
 
-अटल व्योम release_victim_entry(काष्ठा f2fs_sb_info *sbi)
-अणु
-	काष्ठा atgc_management *am = &sbi->am;
-	काष्ठा victim_entry *ve, *पंचांगp;
+static void release_victim_entry(struct f2fs_sb_info *sbi)
+{
+	struct atgc_management *am = &sbi->am;
+	struct victim_entry *ve, *tmp;
 
-	list_क्रम_each_entry_safe(ve, पंचांगp, &am->victim_list, list) अणु
+	list_for_each_entry_safe(ve, tmp, &am->victim_list, list) {
 		list_del(&ve->list);
-		kmem_cache_मुक्त(victim_entry_slab, ve);
+		kmem_cache_free(victim_entry_slab, ve);
 		am->victim_count--;
-	पूर्ण
+	}
 
 	am->root = RB_ROOT_CACHED;
 
 	f2fs_bug_on(sbi, am->victim_count);
 	f2fs_bug_on(sbi, !list_empty(&am->victim_list));
-पूर्ण
+}
 
 /*
  * This function is called from two paths.
  * One is garbage collection and the other is SSR segment selection.
- * When it is called during GC, it just माला_लो a victim segment
- * and it करोes not हटाओ it from dirty seglist.
+ * When it is called during GC, it just gets a victim segment
+ * and it does not remove it from dirty seglist.
  * When it is called from SSR segment selection, it finds a segment
- * which has minimum valid blocks and हटाओs it from dirty seglist.
+ * which has minimum valid blocks and removes it from dirty seglist.
  */
-अटल पूर्णांक get_victim_by_शेष(काष्ठा f2fs_sb_info *sbi,
-			अचिन्हित पूर्णांक *result, पूर्णांक gc_type, पूर्णांक type,
-			अक्षर alloc_mode, अचिन्हित दीर्घ दीर्घ age)
-अणु
-	काष्ठा dirty_seglist_info *dirty_i = सूचीTY_I(sbi);
-	काष्ठा sit_info *sm = SIT_I(sbi);
-	काष्ठा victim_sel_policy p;
-	अचिन्हित पूर्णांक secno, last_victim;
-	अचिन्हित पूर्णांक last_segment;
-	अचिन्हित पूर्णांक nsearched;
+static int get_victim_by_default(struct f2fs_sb_info *sbi,
+			unsigned int *result, int gc_type, int type,
+			char alloc_mode, unsigned long long age)
+{
+	struct dirty_seglist_info *dirty_i = DIRTY_I(sbi);
+	struct sit_info *sm = SIT_I(sbi);
+	struct victim_sel_policy p;
+	unsigned int secno, last_victim;
+	unsigned int last_segment;
+	unsigned int nsearched;
 	bool is_atgc;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	mutex_lock(&dirty_i->seglist_lock);
 	last_segment = MAIN_SECS(sbi) * sbi->segs_per_sec;
@@ -657,1163 +656,1163 @@ skip_stage:
 
 retry:
 	select_policy(sbi, gc_type, type, &p);
-	p.min_segno = शून्य_SEGNO;
+	p.min_segno = NULL_SEGNO;
 	p.oldest_age = 0;
 	p.min_cost = get_max_cost(sbi, &p);
 
 	is_atgc = (p.gc_mode == GC_AT || p.alloc_mode == AT_SSR);
 	nsearched = 0;
 
-	अगर (is_atgc)
-		SIT_I(sbi)->dirty_min_mसमय = ULदीर्घ_उच्च;
+	if (is_atgc)
+		SIT_I(sbi)->dirty_min_mtime = ULLONG_MAX;
 
-	अगर (*result != शून्य_SEGNO) अणु
-		अगर (!get_valid_blocks(sbi, *result, false)) अणु
+	if (*result != NULL_SEGNO) {
+		if (!get_valid_blocks(sbi, *result, false)) {
 			ret = -ENODATA;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (sec_usage_check(sbi, GET_SEC_FROM_SEG(sbi, *result)))
+		if (sec_usage_check(sbi, GET_SEC_FROM_SEG(sbi, *result)))
 			ret = -EBUSY;
-		अन्यथा
+		else
 			p.min_segno = *result;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = -ENODATA;
-	अगर (p.max_search == 0)
-		जाओ out;
+	if (p.max_search == 0)
+		goto out;
 
-	अगर (__is_large_section(sbi) && p.alloc_mode == LFS) अणु
-		अगर (sbi->next_victim_seg[BG_GC] != शून्य_SEGNO) अणु
+	if (__is_large_section(sbi) && p.alloc_mode == LFS) {
+		if (sbi->next_victim_seg[BG_GC] != NULL_SEGNO) {
 			p.min_segno = sbi->next_victim_seg[BG_GC];
 			*result = p.min_segno;
-			sbi->next_victim_seg[BG_GC] = शून्य_SEGNO;
-			जाओ got_result;
-		पूर्ण
-		अगर (gc_type == FG_GC &&
-				sbi->next_victim_seg[FG_GC] != शून्य_SEGNO) अणु
+			sbi->next_victim_seg[BG_GC] = NULL_SEGNO;
+			goto got_result;
+		}
+		if (gc_type == FG_GC &&
+				sbi->next_victim_seg[FG_GC] != NULL_SEGNO) {
 			p.min_segno = sbi->next_victim_seg[FG_GC];
 			*result = p.min_segno;
-			sbi->next_victim_seg[FG_GC] = शून्य_SEGNO;
-			जाओ got_result;
-		पूर्ण
-	पूर्ण
+			sbi->next_victim_seg[FG_GC] = NULL_SEGNO;
+			goto got_result;
+		}
+	}
 
 	last_victim = sm->last_victim[p.gc_mode];
-	अगर (p.alloc_mode == LFS && gc_type == FG_GC) अणु
+	if (p.alloc_mode == LFS && gc_type == FG_GC) {
 		p.min_segno = check_bg_victims(sbi);
-		अगर (p.min_segno != शून्य_SEGNO)
-			जाओ got_it;
-	पूर्ण
+		if (p.min_segno != NULL_SEGNO)
+			goto got_it;
+	}
 
-	जबतक (1) अणु
-		अचिन्हित दीर्घ cost, *dirty_biपंचांगap;
-		अचिन्हित पूर्णांक unit_no, segno;
+	while (1) {
+		unsigned long cost, *dirty_bitmap;
+		unsigned int unit_no, segno;
 
-		dirty_biपंचांगap = p.dirty_biपंचांगap;
-		unit_no = find_next_bit(dirty_biपंचांगap,
+		dirty_bitmap = p.dirty_bitmap;
+		unit_no = find_next_bit(dirty_bitmap,
 				last_segment / p.ofs_unit,
 				p.offset / p.ofs_unit);
 		segno = unit_no * p.ofs_unit;
-		अगर (segno >= last_segment) अणु
-			अगर (sm->last_victim[p.gc_mode]) अणु
+		if (segno >= last_segment) {
+			if (sm->last_victim[p.gc_mode]) {
 				last_segment =
 					sm->last_victim[p.gc_mode];
 				sm->last_victim[p.gc_mode] = 0;
 				p.offset = 0;
-				जारी;
-			पूर्ण
-			अवरोध;
-		पूर्ण
+				continue;
+			}
+			break;
+		}
 
 		p.offset = segno + p.ofs_unit;
 		nsearched++;
 
-#अगर_घोषित CONFIG_F2FS_CHECK_FS
+#ifdef CONFIG_F2FS_CHECK_FS
 		/*
 		 * skip selecting the invalid segno (that is failed due to block
-		 * validity check failure during GC) to aव्योम endless GC loop in
-		 * such हालs.
+		 * validity check failure during GC) to avoid endless GC loop in
+		 * such cases.
 		 */
-		अगर (test_bit(segno, sm->invalid_segmap))
-			जाओ next;
-#पूर्ण_अगर
+		if (test_bit(segno, sm->invalid_segmap))
+			goto next;
+#endif
 
 		secno = GET_SEC_FROM_SEG(sbi, segno);
 
-		अगर (sec_usage_check(sbi, secno))
-			जाओ next;
+		if (sec_usage_check(sbi, secno))
+			goto next;
 
-		/* Don't touch checkpoपूर्णांकed data */
-		अगर (unlikely(is_sbi_flag_set(sbi, SBI_CP_DISABLED))) अणु
-			अगर (p.alloc_mode == LFS) अणु
+		/* Don't touch checkpointed data */
+		if (unlikely(is_sbi_flag_set(sbi, SBI_CP_DISABLED))) {
+			if (p.alloc_mode == LFS) {
 				/*
 				 * LFS is set to find source section during GC.
-				 * The victim should have no checkpoपूर्णांकed data.
+				 * The victim should have no checkpointed data.
 				 */
-				अगर (get_ckpt_valid_blocks(sbi, segno, true))
-					जाओ next;
-			पूर्ण अन्यथा अणु
+				if (get_ckpt_valid_blocks(sbi, segno, true))
+					goto next;
+			} else {
 				/*
 				 * SSR | AT_SSR are set to find target segment
-				 * क्रम ग_लिखोs which can be full by checkpoपूर्णांकed
+				 * for writes which can be full by checkpointed
 				 * and newly written blocks.
 				 */
-				अगर (!f2fs_segment_has_मुक्त_slot(sbi, segno))
-					जाओ next;
-			पूर्ण
-		पूर्ण
+				if (!f2fs_segment_has_free_slot(sbi, segno))
+					goto next;
+			}
+		}
 
-		अगर (gc_type == BG_GC && test_bit(secno, dirty_i->victim_secmap))
-			जाओ next;
+		if (gc_type == BG_GC && test_bit(secno, dirty_i->victim_secmap))
+			goto next;
 
-		अगर (is_atgc) अणु
+		if (is_atgc) {
 			add_victim_entry(sbi, &p, segno);
-			जाओ next;
-		पूर्ण
+			goto next;
+		}
 
 		cost = get_gc_cost(sbi, segno, &p);
 
-		अगर (p.min_cost > cost) अणु
+		if (p.min_cost > cost) {
 			p.min_segno = segno;
 			p.min_cost = cost;
-		पूर्ण
+		}
 next:
-		अगर (nsearched >= p.max_search) अणु
-			अगर (!sm->last_victim[p.gc_mode] && segno <= last_victim)
+		if (nsearched >= p.max_search) {
+			if (!sm->last_victim[p.gc_mode] && segno <= last_victim)
 				sm->last_victim[p.gc_mode] =
 					last_victim + p.ofs_unit;
-			अन्यथा
+			else
 				sm->last_victim[p.gc_mode] = segno + p.ofs_unit;
 			sm->last_victim[p.gc_mode] %=
 				(MAIN_SECS(sbi) * sbi->segs_per_sec);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	/* get victim क्रम GC_AT/AT_SSR */
-	अगर (is_atgc) अणु
+	/* get victim for GC_AT/AT_SSR */
+	if (is_atgc) {
 		lookup_victim_by_age(sbi, &p);
 		release_victim_entry(sbi);
-	पूर्ण
+	}
 
-	अगर (is_atgc && p.min_segno == शून्य_SEGNO &&
-			sm->elapsed_समय < p.age_threshold) अणु
+	if (is_atgc && p.min_segno == NULL_SEGNO &&
+			sm->elapsed_time < p.age_threshold) {
 		p.age_threshold = 0;
-		जाओ retry;
-	पूर्ण
+		goto retry;
+	}
 
-	अगर (p.min_segno != शून्य_SEGNO) अणु
+	if (p.min_segno != NULL_SEGNO) {
 got_it:
 		*result = (p.min_segno / p.ofs_unit) * p.ofs_unit;
 got_result:
-		अगर (p.alloc_mode == LFS) अणु
+		if (p.alloc_mode == LFS) {
 			secno = GET_SEC_FROM_SEG(sbi, p.min_segno);
-			अगर (gc_type == FG_GC)
+			if (gc_type == FG_GC)
 				sbi->cur_victim_sec = secno;
-			अन्यथा
+			else
 				set_bit(secno, dirty_i->victim_secmap);
-		पूर्ण
+		}
 		ret = 0;
 
-	पूर्ण
+	}
 out:
-	अगर (p.min_segno != शून्य_SEGNO)
+	if (p.min_segno != NULL_SEGNO)
 		trace_f2fs_get_victim(sbi->sb, type, gc_type, &p,
 				sbi->cur_victim_sec,
-				preमुक्त_segments(sbi), मुक्त_segments(sbi));
+				prefree_segments(sbi), free_segments(sbi));
 	mutex_unlock(&dirty_i->seglist_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा victim_selection शेष_v_ops = अणु
-	.get_victim = get_victim_by_शेष,
-पूर्ण;
+static const struct victim_selection default_v_ops = {
+	.get_victim = get_victim_by_default,
+};
 
-अटल काष्ठा inode *find_gc_inode(काष्ठा gc_inode_list *gc_list, nid_t ino)
-अणु
-	काष्ठा inode_entry *ie;
+static struct inode *find_gc_inode(struct gc_inode_list *gc_list, nid_t ino)
+{
+	struct inode_entry *ie;
 
 	ie = radix_tree_lookup(&gc_list->iroot, ino);
-	अगर (ie)
-		वापस ie->inode;
-	वापस शून्य;
-पूर्ण
+	if (ie)
+		return ie->inode;
+	return NULL;
+}
 
-अटल व्योम add_gc_inode(काष्ठा gc_inode_list *gc_list, काष्ठा inode *inode)
-अणु
-	काष्ठा inode_entry *new_ie;
+static void add_gc_inode(struct gc_inode_list *gc_list, struct inode *inode)
+{
+	struct inode_entry *new_ie;
 
-	अगर (inode == find_gc_inode(gc_list, inode->i_ino)) अणु
+	if (inode == find_gc_inode(gc_list, inode->i_ino)) {
 		iput(inode);
-		वापस;
-	पूर्ण
+		return;
+	}
 	new_ie = f2fs_kmem_cache_alloc(f2fs_inode_entry_slab, GFP_NOFS);
 	new_ie->inode = inode;
 
 	f2fs_radix_tree_insert(&gc_list->iroot, inode->i_ino, new_ie);
 	list_add_tail(&new_ie->list, &gc_list->ilist);
-पूर्ण
+}
 
-अटल व्योम put_gc_inode(काष्ठा gc_inode_list *gc_list)
-अणु
-	काष्ठा inode_entry *ie, *next_ie;
+static void put_gc_inode(struct gc_inode_list *gc_list)
+{
+	struct inode_entry *ie, *next_ie;
 
-	list_क्रम_each_entry_safe(ie, next_ie, &gc_list->ilist, list) अणु
+	list_for_each_entry_safe(ie, next_ie, &gc_list->ilist, list) {
 		radix_tree_delete(&gc_list->iroot, ie->inode->i_ino);
 		iput(ie->inode);
 		list_del(&ie->list);
-		kmem_cache_मुक्त(f2fs_inode_entry_slab, ie);
-	पूर्ण
-पूर्ण
+		kmem_cache_free(f2fs_inode_entry_slab, ie);
+	}
+}
 
-अटल पूर्णांक check_valid_map(काष्ठा f2fs_sb_info *sbi,
-				अचिन्हित पूर्णांक segno, पूर्णांक offset)
-अणु
-	काष्ठा sit_info *sit_i = SIT_I(sbi);
-	काष्ठा seg_entry *sentry;
-	पूर्णांक ret;
+static int check_valid_map(struct f2fs_sb_info *sbi,
+				unsigned int segno, int offset)
+{
+	struct sit_info *sit_i = SIT_I(sbi);
+	struct seg_entry *sentry;
+	int ret;
 
-	करोwn_पढ़ो(&sit_i->sentry_lock);
+	down_read(&sit_i->sentry_lock);
 	sentry = get_seg_entry(sbi, segno);
 	ret = f2fs_test_bit(offset, sentry->cur_valid_map);
-	up_पढ़ो(&sit_i->sentry_lock);
-	वापस ret;
-पूर्ण
+	up_read(&sit_i->sentry_lock);
+	return ret;
+}
 
 /*
  * This function compares node address got in summary with that in NAT.
  * On validity, copy that node with cold status, otherwise (invalid node)
  * ignore that.
  */
-अटल पूर्णांक gc_node_segment(काष्ठा f2fs_sb_info *sbi,
-		काष्ठा f2fs_summary *sum, अचिन्हित पूर्णांक segno, पूर्णांक gc_type)
-अणु
-	काष्ठा f2fs_summary *entry;
+static int gc_node_segment(struct f2fs_sb_info *sbi,
+		struct f2fs_summary *sum, unsigned int segno, int gc_type)
+{
+	struct f2fs_summary *entry;
 	block_t start_addr;
-	पूर्णांक off;
-	पूर्णांक phase = 0;
+	int off;
+	int phase = 0;
 	bool fggc = (gc_type == FG_GC);
-	पूर्णांक submitted = 0;
-	अचिन्हित पूर्णांक usable_blks_in_seg = f2fs_usable_blks_in_seg(sbi, segno);
+	int submitted = 0;
+	unsigned int usable_blks_in_seg = f2fs_usable_blks_in_seg(sbi, segno);
 
 	start_addr = START_BLOCK(sbi, segno);
 
 next_step:
 	entry = sum;
 
-	अगर (fggc && phase == 2)
+	if (fggc && phase == 2)
 		atomic_inc(&sbi->wb_sync_req[NODE]);
 
-	क्रम (off = 0; off < usable_blks_in_seg; off++, entry++) अणु
+	for (off = 0; off < usable_blks_in_seg; off++, entry++) {
 		nid_t nid = le32_to_cpu(entry->nid);
-		काष्ठा page *node_page;
-		काष्ठा node_info ni;
-		पूर्णांक err;
+		struct page *node_page;
+		struct node_info ni;
+		int err;
 
-		/* stop BG_GC अगर there is not enough मुक्त sections. */
-		अगर (gc_type == BG_GC && has_not_enough_मुक्त_secs(sbi, 0, 0))
-			वापस submitted;
+		/* stop BG_GC if there is not enough free sections. */
+		if (gc_type == BG_GC && has_not_enough_free_secs(sbi, 0, 0))
+			return submitted;
 
-		अगर (check_valid_map(sbi, segno, off) == 0)
-			जारी;
+		if (check_valid_map(sbi, segno, off) == 0)
+			continue;
 
-		अगर (phase == 0) अणु
+		if (phase == 0) {
 			f2fs_ra_meta_pages(sbi, NAT_BLOCK_OFFSET(nid), 1,
 							META_NAT, true);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (phase == 1) अणु
+		if (phase == 1) {
 			f2fs_ra_node_page(sbi, nid);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* phase == 2 */
 		node_page = f2fs_get_node_page(sbi, nid);
-		अगर (IS_ERR(node_page))
-			जारी;
+		if (IS_ERR(node_page))
+			continue;
 
 		/* block may become invalid during f2fs_get_node_page */
-		अगर (check_valid_map(sbi, segno, off) == 0) अणु
+		if (check_valid_map(sbi, segno, off) == 0) {
 			f2fs_put_page(node_page, 1);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (f2fs_get_node_info(sbi, nid, &ni)) अणु
+		if (f2fs_get_node_info(sbi, nid, &ni)) {
 			f2fs_put_page(node_page, 1);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (ni.blk_addr != start_addr + off) अणु
+		if (ni.blk_addr != start_addr + off) {
 			f2fs_put_page(node_page, 1);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		err = f2fs_move_node_page(node_page, gc_type);
-		अगर (!err && gc_type == FG_GC)
+		if (!err && gc_type == FG_GC)
 			submitted++;
 		stat_inc_node_blk_count(sbi, 1, gc_type);
-	पूर्ण
+	}
 
-	अगर (++phase < 3)
-		जाओ next_step;
+	if (++phase < 3)
+		goto next_step;
 
-	अगर (fggc)
+	if (fggc)
 		atomic_dec(&sbi->wb_sync_req[NODE]);
-	वापस submitted;
-पूर्ण
+	return submitted;
+}
 
 /*
  * Calculate start block index indicating the given node offset.
  * Be careful, caller should give this node offset only indicating direct node
- * blocks. If any node offsets, which poपूर्णांक the other types of node blocks such
- * as indirect or द्विगुन indirect node blocks, are given, it must be a caller's
+ * blocks. If any node offsets, which point the other types of node blocks such
+ * as indirect or double indirect node blocks, are given, it must be a caller's
  * bug.
  */
-block_t f2fs_start_bidx_of_node(अचिन्हित पूर्णांक node_ofs, काष्ठा inode *inode)
-अणु
-	अचिन्हित पूर्णांक indirect_blks = 2 * NIDS_PER_BLOCK + 4;
-	अचिन्हित पूर्णांक bidx;
+block_t f2fs_start_bidx_of_node(unsigned int node_ofs, struct inode *inode)
+{
+	unsigned int indirect_blks = 2 * NIDS_PER_BLOCK + 4;
+	unsigned int bidx;
 
-	अगर (node_ofs == 0)
-		वापस 0;
+	if (node_ofs == 0)
+		return 0;
 
-	अगर (node_ofs <= 2) अणु
+	if (node_ofs <= 2) {
 		bidx = node_ofs - 1;
-	पूर्ण अन्यथा अगर (node_ofs <= indirect_blks) अणु
-		पूर्णांक dec = (node_ofs - 4) / (NIDS_PER_BLOCK + 1);
+	} else if (node_ofs <= indirect_blks) {
+		int dec = (node_ofs - 4) / (NIDS_PER_BLOCK + 1);
 
 		bidx = node_ofs - 2 - dec;
-	पूर्ण अन्यथा अणु
-		पूर्णांक dec = (node_ofs - indirect_blks - 3) / (NIDS_PER_BLOCK + 1);
+	} else {
+		int dec = (node_ofs - indirect_blks - 3) / (NIDS_PER_BLOCK + 1);
 
 		bidx = node_ofs - 5 - dec;
-	पूर्ण
-	वापस bidx * ADDRS_PER_BLOCK(inode) + ADDRS_PER_INODE(inode);
-पूर्ण
+	}
+	return bidx * ADDRS_PER_BLOCK(inode) + ADDRS_PER_INODE(inode);
+}
 
-अटल bool is_alive(काष्ठा f2fs_sb_info *sbi, काष्ठा f2fs_summary *sum,
-		काष्ठा node_info *dni, block_t blkaddr, अचिन्हित पूर्णांक *nofs)
-अणु
-	काष्ठा page *node_page;
+static bool is_alive(struct f2fs_sb_info *sbi, struct f2fs_summary *sum,
+		struct node_info *dni, block_t blkaddr, unsigned int *nofs)
+{
+	struct page *node_page;
 	nid_t nid;
-	अचिन्हित पूर्णांक ofs_in_node;
+	unsigned int ofs_in_node;
 	block_t source_blkaddr;
 
 	nid = le32_to_cpu(sum->nid);
 	ofs_in_node = le16_to_cpu(sum->ofs_in_node);
 
 	node_page = f2fs_get_node_page(sbi, nid);
-	अगर (IS_ERR(node_page))
-		वापस false;
+	if (IS_ERR(node_page))
+		return false;
 
-	अगर (f2fs_get_node_info(sbi, nid, dni)) अणु
+	if (f2fs_get_node_info(sbi, nid, dni)) {
 		f2fs_put_page(node_page, 1);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (sum->version != dni->version) अणु
+	if (sum->version != dni->version) {
 		f2fs_warn(sbi, "%s: valid data with mismatched node version.",
 			  __func__);
 		set_sbi_flag(sbi, SBI_NEED_FSCK);
-	पूर्ण
+	}
 
 	*nofs = ofs_of_node(node_page);
-	source_blkaddr = data_blkaddr(शून्य, node_page, ofs_in_node);
+	source_blkaddr = data_blkaddr(NULL, node_page, ofs_in_node);
 	f2fs_put_page(node_page, 1);
 
-	अगर (source_blkaddr != blkaddr) अणु
-#अगर_घोषित CONFIG_F2FS_CHECK_FS
-		अचिन्हित पूर्णांक segno = GET_SEGNO(sbi, blkaddr);
-		अचिन्हित दीर्घ offset = GET_BLKOFF_FROM_SEG0(sbi, blkaddr);
+	if (source_blkaddr != blkaddr) {
+#ifdef CONFIG_F2FS_CHECK_FS
+		unsigned int segno = GET_SEGNO(sbi, blkaddr);
+		unsigned long offset = GET_BLKOFF_FROM_SEG0(sbi, blkaddr);
 
-		अगर (unlikely(check_valid_map(sbi, segno, offset))) अणु
-			अगर (!test_and_set_bit(segno, SIT_I(sbi)->invalid_segmap)) अणु
+		if (unlikely(check_valid_map(sbi, segno, offset))) {
+			if (!test_and_set_bit(segno, SIT_I(sbi)->invalid_segmap)) {
 				f2fs_err(sbi, "mismatched blkaddr %u (source_blkaddr %u) in seg %u\n",
 						blkaddr, source_blkaddr, segno);
 				f2fs_bug_on(sbi, 1);
-			पूर्ण
-		पूर्ण
-#पूर्ण_अगर
-		वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+			}
+		}
+#endif
+		return false;
+	}
+	return true;
+}
 
-अटल पूर्णांक ra_data_block(काष्ठा inode *inode, pgoff_t index)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(inode);
-	काष्ठा address_space *mapping = inode->i_mapping;
-	काष्ठा dnode_of_data dn;
-	काष्ठा page *page;
-	काष्ठा extent_info ei = अणु0, 0, 0पूर्ण;
-	काष्ठा f2fs_io_info fio = अणु
+static int ra_data_block(struct inode *inode, pgoff_t index)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
+	struct address_space *mapping = inode->i_mapping;
+	struct dnode_of_data dn;
+	struct page *page;
+	struct extent_info ei = {0, 0, 0};
+	struct f2fs_io_info fio = {
 		.sbi = sbi,
 		.ino = inode->i_ino,
 		.type = DATA,
 		.temp = COLD,
 		.op = REQ_OP_READ,
 		.op_flags = 0,
-		.encrypted_page = शून्य,
+		.encrypted_page = NULL,
 		.in_list = false,
 		.retry = false,
-	पूर्ण;
-	पूर्णांक err;
+	};
+	int err;
 
 	page = f2fs_grab_cache_page(mapping, index, true);
-	अगर (!page)
-		वापस -ENOMEM;
+	if (!page)
+		return -ENOMEM;
 
-	अगर (f2fs_lookup_extent_cache(inode, index, &ei)) अणु
+	if (f2fs_lookup_extent_cache(inode, index, &ei)) {
 		dn.data_blkaddr = ei.blk + index - ei.fofs;
-		अगर (unlikely(!f2fs_is_valid_blkaddr(sbi, dn.data_blkaddr,
-						DATA_GENERIC_ENHANCE_READ))) अणु
+		if (unlikely(!f2fs_is_valid_blkaddr(sbi, dn.data_blkaddr,
+						DATA_GENERIC_ENHANCE_READ))) {
 			err = -EFSCORRUPTED;
-			जाओ put_page;
-		पूर्ण
-		जाओ got_it;
-	पूर्ण
+			goto put_page;
+		}
+		goto got_it;
+	}
 
-	set_new_dnode(&dn, inode, शून्य, शून्य, 0);
+	set_new_dnode(&dn, inode, NULL, NULL, 0);
 	err = f2fs_get_dnode_of_data(&dn, index, LOOKUP_NODE);
-	अगर (err)
-		जाओ put_page;
+	if (err)
+		goto put_page;
 	f2fs_put_dnode(&dn);
 
-	अगर (!__is_valid_data_blkaddr(dn.data_blkaddr)) अणु
+	if (!__is_valid_data_blkaddr(dn.data_blkaddr)) {
 		err = -ENOENT;
-		जाओ put_page;
-	पूर्ण
-	अगर (unlikely(!f2fs_is_valid_blkaddr(sbi, dn.data_blkaddr,
-						DATA_GENERIC_ENHANCE))) अणु
+		goto put_page;
+	}
+	if (unlikely(!f2fs_is_valid_blkaddr(sbi, dn.data_blkaddr,
+						DATA_GENERIC_ENHANCE))) {
 		err = -EFSCORRUPTED;
-		जाओ put_page;
-	पूर्ण
+		goto put_page;
+	}
 got_it:
-	/* पढ़ो page */
+	/* read page */
 	fio.page = page;
 	fio.new_blkaddr = fio.old_blkaddr = dn.data_blkaddr;
 
 	/*
-	 * करोn't cache encrypted data पूर्णांकo meta inode until previous dirty
-	 * data were ग_लिखोbacked to aव्योम racing between GC and flush.
+	 * don't cache encrypted data into meta inode until previous dirty
+	 * data were writebacked to avoid racing between GC and flush.
 	 */
-	f2fs_रुको_on_page_ग_लिखोback(page, DATA, true, true);
+	f2fs_wait_on_page_writeback(page, DATA, true, true);
 
-	f2fs_रुको_on_block_ग_लिखोback(inode, dn.data_blkaddr);
+	f2fs_wait_on_block_writeback(inode, dn.data_blkaddr);
 
 	fio.encrypted_page = f2fs_pagecache_get_page(META_MAPPING(sbi),
 					dn.data_blkaddr,
 					FGP_LOCK | FGP_CREAT, GFP_NOFS);
-	अगर (!fio.encrypted_page) अणु
+	if (!fio.encrypted_page) {
 		err = -ENOMEM;
-		जाओ put_page;
-	पूर्ण
+		goto put_page;
+	}
 
 	err = f2fs_submit_page_bio(&fio);
-	अगर (err)
-		जाओ put_encrypted_page;
+	if (err)
+		goto put_encrypted_page;
 	f2fs_put_page(fio.encrypted_page, 0);
 	f2fs_put_page(page, 1);
 
 	f2fs_update_iostat(sbi, FS_DATA_READ_IO, F2FS_BLKSIZE);
 	f2fs_update_iostat(sbi, FS_GDATA_READ_IO, F2FS_BLKSIZE);
 
-	वापस 0;
+	return 0;
 put_encrypted_page:
 	f2fs_put_page(fio.encrypted_page, 1);
 put_page:
 	f2fs_put_page(page, 1);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * Move data block via META_MAPPING जबतक keeping locked data page.
+ * Move data block via META_MAPPING while keeping locked data page.
  * This can be used to move blocks, aka LBAs, directly on disk.
  */
-अटल पूर्णांक move_data_block(काष्ठा inode *inode, block_t bidx,
-				पूर्णांक gc_type, अचिन्हित पूर्णांक segno, पूर्णांक off)
-अणु
-	काष्ठा f2fs_io_info fio = अणु
+static int move_data_block(struct inode *inode, block_t bidx,
+				int gc_type, unsigned int segno, int off)
+{
+	struct f2fs_io_info fio = {
 		.sbi = F2FS_I_SB(inode),
 		.ino = inode->i_ino,
 		.type = DATA,
 		.temp = COLD,
 		.op = REQ_OP_READ,
 		.op_flags = 0,
-		.encrypted_page = शून्य,
+		.encrypted_page = NULL,
 		.in_list = false,
 		.retry = false,
-	पूर्ण;
-	काष्ठा dnode_of_data dn;
-	काष्ठा f2fs_summary sum;
-	काष्ठा node_info ni;
-	काष्ठा page *page, *mpage;
+	};
+	struct dnode_of_data dn;
+	struct f2fs_summary sum;
+	struct node_info ni;
+	struct page *page, *mpage;
 	block_t newaddr;
-	पूर्णांक err = 0;
+	int err = 0;
 	bool lfs_mode = f2fs_lfs_mode(fio.sbi);
-	पूर्णांक type = fio.sbi->am.atgc_enabled && (gc_type == BG_GC) &&
+	int type = fio.sbi->am.atgc_enabled && (gc_type == BG_GC) &&
 				(fio.sbi->gc_mode != GC_URGENT_HIGH) ?
 				CURSEG_ALL_DATA_ATGC : CURSEG_COLD_DATA;
 
-	/* करो not पढ़ो out */
+	/* do not read out */
 	page = f2fs_grab_cache_page(inode->i_mapping, bidx, false);
-	अगर (!page)
-		वापस -ENOMEM;
+	if (!page)
+		return -ENOMEM;
 
-	अगर (!check_valid_map(F2FS_I_SB(inode), segno, off)) अणु
+	if (!check_valid_map(F2FS_I_SB(inode), segno, off)) {
 		err = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (f2fs_is_atomic_file(inode)) अणु
+	if (f2fs_is_atomic_file(inode)) {
 		F2FS_I(inode)->i_gc_failures[GC_FAILURE_ATOMIC]++;
 		F2FS_I_SB(inode)->skipped_atomic_files[gc_type]++;
 		err = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (f2fs_is_pinned_file(inode)) अणु
+	if (f2fs_is_pinned_file(inode)) {
 		f2fs_pin_file_control(inode, true);
 		err = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	set_new_dnode(&dn, inode, शून्य, शून्य, 0);
+	set_new_dnode(&dn, inode, NULL, NULL, 0);
 	err = f2fs_get_dnode_of_data(&dn, bidx, LOOKUP_NODE);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	अगर (unlikely(dn.data_blkaddr == शून्य_ADDR)) अणु
+	if (unlikely(dn.data_blkaddr == NULL_ADDR)) {
 		ClearPageUptodate(page);
 		err = -ENOENT;
-		जाओ put_out;
-	पूर्ण
+		goto put_out;
+	}
 
 	/*
-	 * करोn't cache encrypted data पूर्णांकo meta inode until previous dirty
-	 * data were ग_लिखोbacked to aव्योम racing between GC and flush.
+	 * don't cache encrypted data into meta inode until previous dirty
+	 * data were writebacked to avoid racing between GC and flush.
 	 */
-	f2fs_रुको_on_page_ग_लिखोback(page, DATA, true, true);
+	f2fs_wait_on_page_writeback(page, DATA, true, true);
 
-	f2fs_रुको_on_block_ग_लिखोback(inode, dn.data_blkaddr);
+	f2fs_wait_on_block_writeback(inode, dn.data_blkaddr);
 
 	err = f2fs_get_node_info(fio.sbi, dn.nid, &ni);
-	अगर (err)
-		जाओ put_out;
+	if (err)
+		goto put_out;
 
-	/* पढ़ो page */
+	/* read page */
 	fio.page = page;
 	fio.new_blkaddr = fio.old_blkaddr = dn.data_blkaddr;
 
-	अगर (lfs_mode)
-		करोwn_ग_लिखो(&fio.sbi->io_order_lock);
+	if (lfs_mode)
+		down_write(&fio.sbi->io_order_lock);
 
 	mpage = f2fs_grab_cache_page(META_MAPPING(fio.sbi),
 					fio.old_blkaddr, false);
-	अगर (!mpage) अणु
+	if (!mpage) {
 		err = -ENOMEM;
-		जाओ up_out;
-	पूर्ण
+		goto up_out;
+	}
 
 	fio.encrypted_page = mpage;
 
-	/* पढ़ो source block in mpage */
-	अगर (!PageUptodate(mpage)) अणु
+	/* read source block in mpage */
+	if (!PageUptodate(mpage)) {
 		err = f2fs_submit_page_bio(&fio);
-		अगर (err) अणु
+		if (err) {
 			f2fs_put_page(mpage, 1);
-			जाओ up_out;
-		पूर्ण
+			goto up_out;
+		}
 
 		f2fs_update_iostat(fio.sbi, FS_DATA_READ_IO, F2FS_BLKSIZE);
 		f2fs_update_iostat(fio.sbi, FS_GDATA_READ_IO, F2FS_BLKSIZE);
 
 		lock_page(mpage);
-		अगर (unlikely(mpage->mapping != META_MAPPING(fio.sbi) ||
-						!PageUptodate(mpage))) अणु
+		if (unlikely(mpage->mapping != META_MAPPING(fio.sbi) ||
+						!PageUptodate(mpage))) {
 			err = -EIO;
 			f2fs_put_page(mpage, 1);
-			जाओ up_out;
-		पूर्ण
-	पूर्ण
+			goto up_out;
+		}
+	}
 
 	set_summary(&sum, dn.nid, dn.ofs_in_node, ni.version);
 
 	/* allocate block address */
-	f2fs_allocate_data_block(fio.sbi, शून्य, fio.old_blkaddr, &newaddr,
-				&sum, type, शून्य);
+	f2fs_allocate_data_block(fio.sbi, NULL, fio.old_blkaddr, &newaddr,
+				&sum, type, NULL);
 
 	fio.encrypted_page = f2fs_pagecache_get_page(META_MAPPING(fio.sbi),
 				newaddr, FGP_LOCK | FGP_CREAT, GFP_NOFS);
-	अगर (!fio.encrypted_page) अणु
+	if (!fio.encrypted_page) {
 		err = -ENOMEM;
 		f2fs_put_page(mpage, 1);
-		जाओ recover_block;
-	पूर्ण
+		goto recover_block;
+	}
 
-	/* ग_लिखो target block */
-	f2fs_रुको_on_page_ग_लिखोback(fio.encrypted_page, DATA, true, true);
-	स_नकल(page_address(fio.encrypted_page),
+	/* write target block */
+	f2fs_wait_on_page_writeback(fio.encrypted_page, DATA, true, true);
+	memcpy(page_address(fio.encrypted_page),
 				page_address(mpage), PAGE_SIZE);
 	f2fs_put_page(mpage, 1);
 	invalidate_mapping_pages(META_MAPPING(fio.sbi),
 				fio.old_blkaddr, fio.old_blkaddr);
 
 	set_page_dirty(fio.encrypted_page);
-	अगर (clear_page_dirty_क्रम_io(fio.encrypted_page))
-		dec_page_count(fio.sbi, F2FS_सूचीTY_META);
+	if (clear_page_dirty_for_io(fio.encrypted_page))
+		dec_page_count(fio.sbi, F2FS_DIRTY_META);
 
-	set_page_ग_लिखोback(fio.encrypted_page);
+	set_page_writeback(fio.encrypted_page);
 	ClearPageError(page);
 
 	fio.op = REQ_OP_WRITE;
 	fio.op_flags = REQ_SYNC;
 	fio.new_blkaddr = newaddr;
-	f2fs_submit_page_ग_लिखो(&fio);
-	अगर (fio.retry) अणु
+	f2fs_submit_page_write(&fio);
+	if (fio.retry) {
 		err = -EAGAIN;
-		अगर (PageWriteback(fio.encrypted_page))
-			end_page_ग_लिखोback(fio.encrypted_page);
-		जाओ put_page_out;
-	पूर्ण
+		if (PageWriteback(fio.encrypted_page))
+			end_page_writeback(fio.encrypted_page);
+		goto put_page_out;
+	}
 
 	f2fs_update_iostat(fio.sbi, FS_GC_DATA_IO, F2FS_BLKSIZE);
 
 	f2fs_update_data_blkaddr(&dn, newaddr);
 	set_inode_flag(inode, FI_APPEND_WRITE);
-	अगर (page->index == 0)
+	if (page->index == 0)
 		set_inode_flag(inode, FI_FIRST_BLOCK_WRITTEN);
 put_page_out:
 	f2fs_put_page(fio.encrypted_page, 1);
 recover_block:
-	अगर (err)
-		f2fs_करो_replace_block(fio.sbi, &sum, newaddr, fio.old_blkaddr,
+	if (err)
+		f2fs_do_replace_block(fio.sbi, &sum, newaddr, fio.old_blkaddr,
 							true, true, true);
 up_out:
-	अगर (lfs_mode)
-		up_ग_लिखो(&fio.sbi->io_order_lock);
+	if (lfs_mode)
+		up_write(&fio.sbi->io_order_lock);
 put_out:
 	f2fs_put_dnode(&dn);
 out:
 	f2fs_put_page(page, 1);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक move_data_page(काष्ठा inode *inode, block_t bidx, पूर्णांक gc_type,
-							अचिन्हित पूर्णांक segno, पूर्णांक off)
-अणु
-	काष्ठा page *page;
-	पूर्णांक err = 0;
+static int move_data_page(struct inode *inode, block_t bidx, int gc_type,
+							unsigned int segno, int off)
+{
+	struct page *page;
+	int err = 0;
 
 	page = f2fs_get_lock_data_page(inode, bidx, true);
-	अगर (IS_ERR(page))
-		वापस PTR_ERR(page);
+	if (IS_ERR(page))
+		return PTR_ERR(page);
 
-	अगर (!check_valid_map(F2FS_I_SB(inode), segno, off)) अणु
+	if (!check_valid_map(F2FS_I_SB(inode), segno, off)) {
 		err = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (f2fs_is_atomic_file(inode)) अणु
+	if (f2fs_is_atomic_file(inode)) {
 		F2FS_I(inode)->i_gc_failures[GC_FAILURE_ATOMIC]++;
 		F2FS_I_SB(inode)->skipped_atomic_files[gc_type]++;
 		err = -EAGAIN;
-		जाओ out;
-	पूर्ण
-	अगर (f2fs_is_pinned_file(inode)) अणु
-		अगर (gc_type == FG_GC)
+		goto out;
+	}
+	if (f2fs_is_pinned_file(inode)) {
+		if (gc_type == FG_GC)
 			f2fs_pin_file_control(inode, true);
 		err = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (gc_type == BG_GC) अणु
-		अगर (PageWriteback(page)) अणु
+	if (gc_type == BG_GC) {
+		if (PageWriteback(page)) {
 			err = -EAGAIN;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		set_page_dirty(page);
 		set_cold_data(page);
-	पूर्ण अन्यथा अणु
-		काष्ठा f2fs_io_info fio = अणु
+	} else {
+		struct f2fs_io_info fio = {
 			.sbi = F2FS_I_SB(inode),
 			.ino = inode->i_ino,
 			.type = DATA,
 			.temp = COLD,
 			.op = REQ_OP_WRITE,
 			.op_flags = REQ_SYNC,
-			.old_blkaddr = शून्य_ADDR,
+			.old_blkaddr = NULL_ADDR,
 			.page = page,
-			.encrypted_page = शून्य,
+			.encrypted_page = NULL,
 			.need_lock = LOCK_REQ,
 			.io_type = FS_GC_DATA_IO,
-		पूर्ण;
+		};
 		bool is_dirty = PageDirty(page);
 
 retry:
-		f2fs_रुको_on_page_ग_लिखोback(page, DATA, true, true);
+		f2fs_wait_on_page_writeback(page, DATA, true, true);
 
 		set_page_dirty(page);
-		अगर (clear_page_dirty_क्रम_io(page)) अणु
+		if (clear_page_dirty_for_io(page)) {
 			inode_dec_dirty_pages(inode);
-			f2fs_हटाओ_dirty_inode(inode);
-		पूर्ण
+			f2fs_remove_dirty_inode(inode);
+		}
 
 		set_cold_data(page);
 
-		err = f2fs_करो_ग_लिखो_data_page(&fio);
-		अगर (err) अणु
+		err = f2fs_do_write_data_page(&fio);
+		if (err) {
 			clear_cold_data(page);
-			अगर (err == -ENOMEM) अणु
-				congestion_रुको(BLK_RW_ASYNC,
+			if (err == -ENOMEM) {
+				congestion_wait(BLK_RW_ASYNC,
 						DEFAULT_IO_TIMEOUT);
-				जाओ retry;
-			पूर्ण
-			अगर (is_dirty)
+				goto retry;
+			}
+			if (is_dirty)
 				set_page_dirty(page);
-		पूर्ण
-	पूर्ण
+		}
+	}
 out:
 	f2fs_put_page(page, 1);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * This function tries to get parent node of victim data block, and identअगरies
+ * This function tries to get parent node of victim data block, and identifies
  * data block validity. If the block is valid, copy that with cold status and
- * modअगरy parent node.
- * If the parent node is not valid or the data block address is dअगरferent,
+ * modify parent node.
+ * If the parent node is not valid or the data block address is different,
  * the victim data block is ignored.
  */
-अटल पूर्णांक gc_data_segment(काष्ठा f2fs_sb_info *sbi, काष्ठा f2fs_summary *sum,
-		काष्ठा gc_inode_list *gc_list, अचिन्हित पूर्णांक segno, पूर्णांक gc_type,
-		bool क्रमce_migrate)
-अणु
-	काष्ठा super_block *sb = sbi->sb;
-	काष्ठा f2fs_summary *entry;
+static int gc_data_segment(struct f2fs_sb_info *sbi, struct f2fs_summary *sum,
+		struct gc_inode_list *gc_list, unsigned int segno, int gc_type,
+		bool force_migrate)
+{
+	struct super_block *sb = sbi->sb;
+	struct f2fs_summary *entry;
 	block_t start_addr;
-	पूर्णांक off;
-	पूर्णांक phase = 0;
-	पूर्णांक submitted = 0;
-	अचिन्हित पूर्णांक usable_blks_in_seg = f2fs_usable_blks_in_seg(sbi, segno);
+	int off;
+	int phase = 0;
+	int submitted = 0;
+	unsigned int usable_blks_in_seg = f2fs_usable_blks_in_seg(sbi, segno);
 
 	start_addr = START_BLOCK(sbi, segno);
 
 next_step:
 	entry = sum;
 
-	क्रम (off = 0; off < usable_blks_in_seg; off++, entry++) अणु
-		काष्ठा page *data_page;
-		काष्ठा inode *inode;
-		काष्ठा node_info dni; /* dnode info क्रम the data */
-		अचिन्हित पूर्णांक ofs_in_node, nofs;
+	for (off = 0; off < usable_blks_in_seg; off++, entry++) {
+		struct page *data_page;
+		struct inode *inode;
+		struct node_info dni; /* dnode info for the data */
+		unsigned int ofs_in_node, nofs;
 		block_t start_bidx;
 		nid_t nid = le32_to_cpu(entry->nid);
 
 		/*
-		 * stop BG_GC अगर there is not enough मुक्त sections.
-		 * Or, stop GC अगर the segment becomes fully valid caused by
-		 * race condition aदीर्घ with SSR block allocation.
+		 * stop BG_GC if there is not enough free sections.
+		 * Or, stop GC if the segment becomes fully valid caused by
+		 * race condition along with SSR block allocation.
 		 */
-		अगर ((gc_type == BG_GC && has_not_enough_मुक्त_secs(sbi, 0, 0)) ||
-			(!क्रमce_migrate && get_valid_blocks(sbi, segno, true) ==
+		if ((gc_type == BG_GC && has_not_enough_free_secs(sbi, 0, 0)) ||
+			(!force_migrate && get_valid_blocks(sbi, segno, true) ==
 							BLKS_PER_SEC(sbi)))
-			वापस submitted;
+			return submitted;
 
-		अगर (check_valid_map(sbi, segno, off) == 0)
-			जारी;
+		if (check_valid_map(sbi, segno, off) == 0)
+			continue;
 
-		अगर (phase == 0) अणु
+		if (phase == 0) {
 			f2fs_ra_meta_pages(sbi, NAT_BLOCK_OFFSET(nid), 1,
 							META_NAT, true);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (phase == 1) अणु
+		if (phase == 1) {
 			f2fs_ra_node_page(sbi, nid);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* Get an inode by ino with checking validity */
-		अगर (!is_alive(sbi, entry, &dni, start_addr + off, &nofs))
-			जारी;
+		if (!is_alive(sbi, entry, &dni, start_addr + off, &nofs))
+			continue;
 
-		अगर (phase == 2) अणु
+		if (phase == 2) {
 			f2fs_ra_node_page(sbi, dni.ino);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		ofs_in_node = le16_to_cpu(entry->ofs_in_node);
 
-		अगर (phase == 3) अणु
+		if (phase == 3) {
 			inode = f2fs_iget(sb, dni.ino);
-			अगर (IS_ERR(inode) || is_bad_inode(inode)) अणु
+			if (IS_ERR(inode) || is_bad_inode(inode)) {
 				set_sbi_flag(sbi, SBI_NEED_FSCK);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			अगर (!करोwn_ग_लिखो_trylock(
-				&F2FS_I(inode)->i_gc_rwsem[WRITE])) अणु
+			if (!down_write_trylock(
+				&F2FS_I(inode)->i_gc_rwsem[WRITE])) {
 				iput(inode);
 				sbi->skipped_gc_rwsem++;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			start_bidx = f2fs_start_bidx_of_node(nofs, inode) +
 								ofs_in_node;
 
-			अगर (f2fs_post_पढ़ो_required(inode)) अणु
-				पूर्णांक err = ra_data_block(inode, start_bidx);
+			if (f2fs_post_read_required(inode)) {
+				int err = ra_data_block(inode, start_bidx);
 
-				up_ग_लिखो(&F2FS_I(inode)->i_gc_rwsem[WRITE]);
-				अगर (err) अणु
+				up_write(&F2FS_I(inode)->i_gc_rwsem[WRITE]);
+				if (err) {
 					iput(inode);
-					जारी;
-				पूर्ण
+					continue;
+				}
 				add_gc_inode(gc_list, inode);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			data_page = f2fs_get_पढ़ो_data_page(inode,
+			data_page = f2fs_get_read_data_page(inode,
 						start_bidx, REQ_RAHEAD, true);
-			up_ग_लिखो(&F2FS_I(inode)->i_gc_rwsem[WRITE]);
-			अगर (IS_ERR(data_page)) अणु
+			up_write(&F2FS_I(inode)->i_gc_rwsem[WRITE]);
+			if (IS_ERR(data_page)) {
 				iput(inode);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			f2fs_put_page(data_page, 0);
 			add_gc_inode(gc_list, inode);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* phase 4 */
 		inode = find_gc_inode(gc_list, dni.ino);
-		अगर (inode) अणु
-			काष्ठा f2fs_inode_info *fi = F2FS_I(inode);
+		if (inode) {
+			struct f2fs_inode_info *fi = F2FS_I(inode);
 			bool locked = false;
-			पूर्णांक err;
+			int err;
 
-			अगर (S_ISREG(inode->i_mode)) अणु
-				अगर (!करोwn_ग_लिखो_trylock(&fi->i_gc_rwsem[READ]))
-					जारी;
-				अगर (!करोwn_ग_लिखो_trylock(
-						&fi->i_gc_rwsem[WRITE])) अणु
+			if (S_ISREG(inode->i_mode)) {
+				if (!down_write_trylock(&fi->i_gc_rwsem[READ]))
+					continue;
+				if (!down_write_trylock(
+						&fi->i_gc_rwsem[WRITE])) {
 					sbi->skipped_gc_rwsem++;
-					up_ग_लिखो(&fi->i_gc_rwsem[READ]);
-					जारी;
-				पूर्ण
+					up_write(&fi->i_gc_rwsem[READ]);
+					continue;
+				}
 				locked = true;
 
-				/* रुको क्रम all inflight aio data */
-				inode_dio_रुको(inode);
-			पूर्ण
+				/* wait for all inflight aio data */
+				inode_dio_wait(inode);
+			}
 
 			start_bidx = f2fs_start_bidx_of_node(nofs, inode)
 								+ ofs_in_node;
-			अगर (f2fs_post_पढ़ो_required(inode))
+			if (f2fs_post_read_required(inode))
 				err = move_data_block(inode, start_bidx,
 							gc_type, segno, off);
-			अन्यथा
+			else
 				err = move_data_page(inode, start_bidx, gc_type,
 								segno, off);
 
-			अगर (!err && (gc_type == FG_GC ||
-					f2fs_post_पढ़ो_required(inode)))
+			if (!err && (gc_type == FG_GC ||
+					f2fs_post_read_required(inode)))
 				submitted++;
 
-			अगर (locked) अणु
-				up_ग_लिखो(&fi->i_gc_rwsem[WRITE]);
-				up_ग_लिखो(&fi->i_gc_rwsem[READ]);
-			पूर्ण
+			if (locked) {
+				up_write(&fi->i_gc_rwsem[WRITE]);
+				up_write(&fi->i_gc_rwsem[READ]);
+			}
 
 			stat_inc_data_blk_count(sbi, 1, gc_type);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (++phase < 5)
-		जाओ next_step;
+	if (++phase < 5)
+		goto next_step;
 
-	वापस submitted;
-पूर्ण
+	return submitted;
+}
 
-अटल पूर्णांक __get_victim(काष्ठा f2fs_sb_info *sbi, अचिन्हित पूर्णांक *victim,
-			पूर्णांक gc_type)
-अणु
-	काष्ठा sit_info *sit_i = SIT_I(sbi);
-	पूर्णांक ret;
+static int __get_victim(struct f2fs_sb_info *sbi, unsigned int *victim,
+			int gc_type)
+{
+	struct sit_info *sit_i = SIT_I(sbi);
+	int ret;
 
-	करोwn_ग_लिखो(&sit_i->sentry_lock);
-	ret = सूचीTY_I(sbi)->v_ops->get_victim(sbi, victim, gc_type,
+	down_write(&sit_i->sentry_lock);
+	ret = DIRTY_I(sbi)->v_ops->get_victim(sbi, victim, gc_type,
 					      NO_CHECK_TYPE, LFS, 0);
-	up_ग_लिखो(&sit_i->sentry_lock);
-	वापस ret;
-पूर्ण
+	up_write(&sit_i->sentry_lock);
+	return ret;
+}
 
-अटल पूर्णांक करो_garbage_collect(काष्ठा f2fs_sb_info *sbi,
-				अचिन्हित पूर्णांक start_segno,
-				काष्ठा gc_inode_list *gc_list, पूर्णांक gc_type,
-				bool क्रमce_migrate)
-अणु
-	काष्ठा page *sum_page;
-	काष्ठा f2fs_summary_block *sum;
-	काष्ठा blk_plug plug;
-	अचिन्हित पूर्णांक segno = start_segno;
-	अचिन्हित पूर्णांक end_segno = start_segno + sbi->segs_per_sec;
-	पूर्णांक seg_मुक्तd = 0, migrated = 0;
-	अचिन्हित अक्षर type = IS_DATASEG(get_seg_entry(sbi, segno)->type) ?
+static int do_garbage_collect(struct f2fs_sb_info *sbi,
+				unsigned int start_segno,
+				struct gc_inode_list *gc_list, int gc_type,
+				bool force_migrate)
+{
+	struct page *sum_page;
+	struct f2fs_summary_block *sum;
+	struct blk_plug plug;
+	unsigned int segno = start_segno;
+	unsigned int end_segno = start_segno + sbi->segs_per_sec;
+	int seg_freed = 0, migrated = 0;
+	unsigned char type = IS_DATASEG(get_seg_entry(sbi, segno)->type) ?
 						SUM_TYPE_DATA : SUM_TYPE_NODE;
-	पूर्णांक submitted = 0;
+	int submitted = 0;
 
-	अगर (__is_large_section(sbi))
-		end_segno = roundकरोwn(end_segno, sbi->segs_per_sec);
+	if (__is_large_section(sbi))
+		end_segno = rounddown(end_segno, sbi->segs_per_sec);
 
 	/*
 	 * zone-capacity can be less than zone-size in zoned devices,
 	 * resulting in less than expected usable segments in the zone,
 	 * calculate the end segno in the zone which can be garbage collected
 	 */
-	अगर (f2fs_sb_has_blkzoned(sbi))
+	if (f2fs_sb_has_blkzoned(sbi))
 		end_segno -= sbi->segs_per_sec -
 					f2fs_usable_segs_in_sec(sbi, segno);
 
 	sanity_check_seg_type(sbi, get_seg_entry(sbi, segno)->type);
 
-	/* पढ़ोahead multi ssa blocks those have contiguous address */
-	अगर (__is_large_section(sbi))
+	/* readahead multi ssa blocks those have contiguous address */
+	if (__is_large_section(sbi))
 		f2fs_ra_meta_pages(sbi, GET_SUM_BLOCK(sbi, segno),
 					end_segno - segno, META_SSA, true);
 
 	/* reference all summary page */
-	जबतक (segno < end_segno) अणु
+	while (segno < end_segno) {
 		sum_page = f2fs_get_sum_page(sbi, segno++);
-		अगर (IS_ERR(sum_page)) अणु
-			पूर्णांक err = PTR_ERR(sum_page);
+		if (IS_ERR(sum_page)) {
+			int err = PTR_ERR(sum_page);
 
 			end_segno = segno - 1;
-			क्रम (segno = start_segno; segno < end_segno; segno++) अणु
+			for (segno = start_segno; segno < end_segno; segno++) {
 				sum_page = find_get_page(META_MAPPING(sbi),
 						GET_SUM_BLOCK(sbi, segno));
 				f2fs_put_page(sum_page, 0);
 				f2fs_put_page(sum_page, 0);
-			पूर्ण
-			वापस err;
-		पूर्ण
+			}
+			return err;
+		}
 		unlock_page(sum_page);
-	पूर्ण
+	}
 
 	blk_start_plug(&plug);
 
-	क्रम (segno = start_segno; segno < end_segno; segno++) अणु
+	for (segno = start_segno; segno < end_segno; segno++) {
 
 		/* find segment summary of victim */
 		sum_page = find_get_page(META_MAPPING(sbi),
 					GET_SUM_BLOCK(sbi, segno));
 		f2fs_put_page(sum_page, 0);
 
-		अगर (get_valid_blocks(sbi, segno, false) == 0)
-			जाओ मुक्तd;
-		अगर (gc_type == BG_GC && __is_large_section(sbi) &&
+		if (get_valid_blocks(sbi, segno, false) == 0)
+			goto freed;
+		if (gc_type == BG_GC && __is_large_section(sbi) &&
 				migrated >= sbi->migration_granularity)
-			जाओ skip;
-		अगर (!PageUptodate(sum_page) || unlikely(f2fs_cp_error(sbi)))
-			जाओ skip;
+			goto skip;
+		if (!PageUptodate(sum_page) || unlikely(f2fs_cp_error(sbi)))
+			goto skip;
 
 		sum = page_address(sum_page);
-		अगर (type != GET_SUM_TYPE((&sum->footer))) अणु
+		if (type != GET_SUM_TYPE((&sum->footer))) {
 			f2fs_err(sbi, "Inconsistent segment (%u) type [%d, %d] in SSA and SIT",
 				 segno, type, GET_SUM_TYPE((&sum->footer)));
 			set_sbi_flag(sbi, SBI_NEED_FSCK);
-			f2fs_stop_checkpoपूर्णांक(sbi, false);
-			जाओ skip;
-		पूर्ण
+			f2fs_stop_checkpoint(sbi, false);
+			goto skip;
+		}
 
 		/*
-		 * this is to aव्योम deadlock:
+		 * this is to avoid deadlock:
 		 * - lock_page(sum_page)         - f2fs_replace_block
-		 *  - check_valid_map()            - करोwn_ग_लिखो(sentry_lock)
-		 *   - करोwn_पढ़ो(sentry_lock)     - change_curseg()
+		 *  - check_valid_map()            - down_write(sentry_lock)
+		 *   - down_read(sentry_lock)     - change_curseg()
 		 *                                  - lock_page(sum_page)
 		 */
-		अगर (type == SUM_TYPE_NODE)
+		if (type == SUM_TYPE_NODE)
 			submitted += gc_node_segment(sbi, sum->entries, segno,
 								gc_type);
-		अन्यथा
+		else
 			submitted += gc_data_segment(sbi, sum->entries, gc_list,
 							segno, gc_type,
-							क्रमce_migrate);
+							force_migrate);
 
 		stat_inc_seg_count(sbi, type, gc_type);
 		migrated++;
 
-मुक्तd:
-		अगर (gc_type == FG_GC &&
+freed:
+		if (gc_type == FG_GC &&
 				get_valid_blocks(sbi, segno, false) == 0)
-			seg_मुक्तd++;
+			seg_freed++;
 
-		अगर (__is_large_section(sbi) && segno + 1 < end_segno)
+		if (__is_large_section(sbi) && segno + 1 < end_segno)
 			sbi->next_victim_seg[gc_type] = segno + 1;
 skip:
 		f2fs_put_page(sum_page, 0);
-	पूर्ण
+	}
 
-	अगर (submitted)
-		f2fs_submit_merged_ग_लिखो(sbi,
+	if (submitted)
+		f2fs_submit_merged_write(sbi,
 				(type == SUM_TYPE_NODE) ? NODE : DATA);
 
 	blk_finish_plug(&plug);
 
 	stat_inc_call_count(sbi->stat_info);
 
-	वापस seg_मुक्तd;
-पूर्ण
+	return seg_freed;
+}
 
-पूर्णांक f2fs_gc(काष्ठा f2fs_sb_info *sbi, bool sync,
-			bool background, bool क्रमce, अचिन्हित पूर्णांक segno)
-अणु
-	पूर्णांक gc_type = sync ? FG_GC : BG_GC;
-	पूर्णांक sec_मुक्तd = 0, seg_मुक्तd = 0, total_मुक्तd = 0;
-	पूर्णांक ret = 0;
-	काष्ठा cp_control cpc;
-	अचिन्हित पूर्णांक init_segno = segno;
-	काष्ठा gc_inode_list gc_list = अणु
+int f2fs_gc(struct f2fs_sb_info *sbi, bool sync,
+			bool background, bool force, unsigned int segno)
+{
+	int gc_type = sync ? FG_GC : BG_GC;
+	int sec_freed = 0, seg_freed = 0, total_freed = 0;
+	int ret = 0;
+	struct cp_control cpc;
+	unsigned int init_segno = segno;
+	struct gc_inode_list gc_list = {
 		.ilist = LIST_HEAD_INIT(gc_list.ilist),
 		.iroot = RADIX_TREE_INIT(gc_list.iroot, GFP_NOFS),
-	पूर्ण;
-	अचिन्हित दीर्घ दीर्घ last_skipped = sbi->skipped_atomic_files[FG_GC];
-	अचिन्हित दीर्घ दीर्घ first_skipped;
-	अचिन्हित पूर्णांक skipped_round = 0, round = 0;
+	};
+	unsigned long long last_skipped = sbi->skipped_atomic_files[FG_GC];
+	unsigned long long first_skipped;
+	unsigned int skipped_round = 0, round = 0;
 
 	trace_f2fs_gc_begin(sbi->sb, sync, background,
-				get_pages(sbi, F2FS_सूचीTY_NODES),
-				get_pages(sbi, F2FS_सूचीTY_DENTS),
-				get_pages(sbi, F2FS_सूचीTY_IMETA),
-				मुक्त_sections(sbi),
-				मुक्त_segments(sbi),
+				get_pages(sbi, F2FS_DIRTY_NODES),
+				get_pages(sbi, F2FS_DIRTY_DENTS),
+				get_pages(sbi, F2FS_DIRTY_IMETA),
+				free_sections(sbi),
+				free_segments(sbi),
 				reserved_segments(sbi),
-				preमुक्त_segments(sbi));
+				prefree_segments(sbi));
 
 	cpc.reason = __get_cp_reason(sbi);
 	sbi->skipped_gc_rwsem = 0;
 	first_skipped = last_skipped;
 gc_more:
-	अगर (unlikely(!(sbi->sb->s_flags & SB_ACTIVE))) अणु
+	if (unlikely(!(sbi->sb->s_flags & SB_ACTIVE))) {
 		ret = -EINVAL;
-		जाओ stop;
-	पूर्ण
-	अगर (unlikely(f2fs_cp_error(sbi))) अणु
+		goto stop;
+	}
+	if (unlikely(f2fs_cp_error(sbi))) {
 		ret = -EIO;
-		जाओ stop;
-	पूर्ण
+		goto stop;
+	}
 
-	अगर (gc_type == BG_GC && has_not_enough_मुक्त_secs(sbi, 0, 0)) अणु
+	if (gc_type == BG_GC && has_not_enough_free_secs(sbi, 0, 0)) {
 		/*
-		 * For example, अगर there are many preमुक्त_segments below given
-		 * threshold, we can make them मुक्त by checkpoपूर्णांक. Then, we
-		 * secure मुक्त segments which करोesn't need fggc any more.
+		 * For example, if there are many prefree_segments below given
+		 * threshold, we can make them free by checkpoint. Then, we
+		 * secure free segments which doesn't need fggc any more.
 		 */
-		अगर (preमुक्त_segments(sbi) &&
-				!is_sbi_flag_set(sbi, SBI_CP_DISABLED)) अणु
-			ret = f2fs_ग_लिखो_checkpoपूर्णांक(sbi, &cpc);
-			अगर (ret)
-				जाओ stop;
-		पूर्ण
-		अगर (has_not_enough_मुक्त_secs(sbi, 0, 0))
+		if (prefree_segments(sbi) &&
+				!is_sbi_flag_set(sbi, SBI_CP_DISABLED)) {
+			ret = f2fs_write_checkpoint(sbi, &cpc);
+			if (ret)
+				goto stop;
+		}
+		if (has_not_enough_free_secs(sbi, 0, 0))
 			gc_type = FG_GC;
-	पूर्ण
+	}
 
-	/* f2fs_balance_fs करोesn't need to करो BG_GC in critical path. */
-	अगर (gc_type == BG_GC && !background) अणु
+	/* f2fs_balance_fs doesn't need to do BG_GC in critical path. */
+	if (gc_type == BG_GC && !background) {
 		ret = -EINVAL;
-		जाओ stop;
-	पूर्ण
+		goto stop;
+	}
 	ret = __get_victim(sbi, &segno, gc_type);
-	अगर (ret)
-		जाओ stop;
+	if (ret)
+		goto stop;
 
-	seg_मुक्तd = करो_garbage_collect(sbi, segno, &gc_list, gc_type, क्रमce);
-	अगर (gc_type == FG_GC &&
-		seg_मुक्तd == f2fs_usable_segs_in_sec(sbi, segno))
-		sec_मुक्तd++;
-	total_मुक्तd += seg_मुक्तd;
+	seg_freed = do_garbage_collect(sbi, segno, &gc_list, gc_type, force);
+	if (gc_type == FG_GC &&
+		seg_freed == f2fs_usable_segs_in_sec(sbi, segno))
+		sec_freed++;
+	total_freed += seg_freed;
 
-	अगर (gc_type == FG_GC) अणु
-		अगर (sbi->skipped_atomic_files[FG_GC] > last_skipped ||
+	if (gc_type == FG_GC) {
+		if (sbi->skipped_atomic_files[FG_GC] > last_skipped ||
 						sbi->skipped_gc_rwsem)
 			skipped_round++;
 		last_skipped = sbi->skipped_atomic_files[FG_GC];
 		round++;
-	पूर्ण
+	}
 
-	अगर (gc_type == FG_GC && seg_मुक्तd)
-		sbi->cur_victim_sec = शून्य_SEGNO;
+	if (gc_type == FG_GC && seg_freed)
+		sbi->cur_victim_sec = NULL_SEGNO;
 
-	अगर (sync)
-		जाओ stop;
+	if (sync)
+		goto stop;
 
-	अगर (has_not_enough_मुक्त_secs(sbi, sec_मुक्तd, 0)) अणु
-		अगर (skipped_round <= MAX_SKIP_GC_COUNT ||
-					skipped_round * 2 < round) अणु
-			segno = शून्य_SEGNO;
-			जाओ gc_more;
-		पूर्ण
+	if (has_not_enough_free_secs(sbi, sec_freed, 0)) {
+		if (skipped_round <= MAX_SKIP_GC_COUNT ||
+					skipped_round * 2 < round) {
+			segno = NULL_SEGNO;
+			goto gc_more;
+		}
 
-		अगर (first_skipped < last_skipped &&
+		if (first_skipped < last_skipped &&
 				(last_skipped - first_skipped) >
-						sbi->skipped_gc_rwsem) अणु
+						sbi->skipped_gc_rwsem) {
 			f2fs_drop_inmem_pages_all(sbi, true);
-			segno = शून्य_SEGNO;
-			जाओ gc_more;
-		पूर्ण
-		अगर (gc_type == FG_GC && !is_sbi_flag_set(sbi, SBI_CP_DISABLED))
-			ret = f2fs_ग_लिखो_checkpoपूर्णांक(sbi, &cpc);
-	पूर्ण
+			segno = NULL_SEGNO;
+			goto gc_more;
+		}
+		if (gc_type == FG_GC && !is_sbi_flag_set(sbi, SBI_CP_DISABLED))
+			ret = f2fs_write_checkpoint(sbi, &cpc);
+	}
 stop:
 	SIT_I(sbi)->last_victim[ALLOC_NEXT] = 0;
 	SIT_I(sbi)->last_victim[FLUSH_DEVICE] = init_segno;
 
-	trace_f2fs_gc_end(sbi->sb, ret, total_मुक्तd, sec_मुक्तd,
-				get_pages(sbi, F2FS_सूचीTY_NODES),
-				get_pages(sbi, F2FS_सूचीTY_DENTS),
-				get_pages(sbi, F2FS_सूचीTY_IMETA),
-				मुक्त_sections(sbi),
-				मुक्त_segments(sbi),
+	trace_f2fs_gc_end(sbi->sb, ret, total_freed, sec_freed,
+				get_pages(sbi, F2FS_DIRTY_NODES),
+				get_pages(sbi, F2FS_DIRTY_DENTS),
+				get_pages(sbi, F2FS_DIRTY_IMETA),
+				free_sections(sbi),
+				free_segments(sbi),
 				reserved_segments(sbi),
-				preमुक्त_segments(sbi));
+				prefree_segments(sbi));
 
-	up_ग_लिखो(&sbi->gc_lock);
+	up_write(&sbi->gc_lock);
 
 	put_gc_inode(&gc_list);
 
-	अगर (sync && !ret)
-		ret = sec_मुक्तd ? 0 : -EAGAIN;
-	वापस ret;
-पूर्ण
+	if (sync && !ret)
+		ret = sec_freed ? 0 : -EAGAIN;
+	return ret;
+}
 
-पूर्णांक __init f2fs_create_garbage_collection_cache(व्योम)
-अणु
+int __init f2fs_create_garbage_collection_cache(void)
+{
 	victim_entry_slab = f2fs_kmem_cache_create("f2fs_victim_entry",
-					माप(काष्ठा victim_entry));
-	अगर (!victim_entry_slab)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+					sizeof(struct victim_entry));
+	if (!victim_entry_slab)
+		return -ENOMEM;
+	return 0;
+}
 
-व्योम f2fs_destroy_garbage_collection_cache(व्योम)
-अणु
+void f2fs_destroy_garbage_collection_cache(void)
+{
 	kmem_cache_destroy(victim_entry_slab);
-पूर्ण
+}
 
-अटल व्योम init_atgc_management(काष्ठा f2fs_sb_info *sbi)
-अणु
-	काष्ठा atgc_management *am = &sbi->am;
+static void init_atgc_management(struct f2fs_sb_info *sbi)
+{
+	struct atgc_management *am = &sbi->am;
 
-	अगर (test_opt(sbi, ATGC) &&
-		SIT_I(sbi)->elapsed_समय >= DEF_GC_THREAD_AGE_THRESHOLD)
+	if (test_opt(sbi, ATGC) &&
+		SIT_I(sbi)->elapsed_time >= DEF_GC_THREAD_AGE_THRESHOLD)
 		am->atgc_enabled = true;
 
 	am->root = RB_ROOT_CACHED;
@@ -1823,267 +1822,267 @@ stop:
 	am->candidate_ratio = DEF_GC_THREAD_CANDIDATE_RATIO;
 	am->max_candidate_count = DEF_GC_THREAD_MAX_CANDIDATE_COUNT;
 	am->age_weight = DEF_GC_THREAD_AGE_WEIGHT;
-पूर्ण
+}
 
-व्योम f2fs_build_gc_manager(काष्ठा f2fs_sb_info *sbi)
-अणु
-	सूचीTY_I(sbi)->v_ops = &शेष_v_ops;
+void f2fs_build_gc_manager(struct f2fs_sb_info *sbi)
+{
+	DIRTY_I(sbi)->v_ops = &default_v_ops;
 
-	sbi->gc_pin_file_threshold = DEF_GC_FAILED_PINNED_खाताS;
+	sbi->gc_pin_file_threshold = DEF_GC_FAILED_PINNED_FILES;
 
 	/* give warm/cold data area from slower device */
-	अगर (f2fs_is_multi_device(sbi) && !__is_large_section(sbi))
+	if (f2fs_is_multi_device(sbi) && !__is_large_section(sbi))
 		SIT_I(sbi)->last_victim[ALLOC_NEXT] =
 				GET_SEGNO(sbi, FDEV(0).end_blk) + 1;
 
 	init_atgc_management(sbi);
-पूर्ण
+}
 
-अटल पूर्णांक मुक्त_segment_range(काष्ठा f2fs_sb_info *sbi,
-				अचिन्हित पूर्णांक secs, bool gc_only)
-अणु
-	अचिन्हित पूर्णांक segno, next_inuse, start, end;
-	काष्ठा cp_control cpc = अणु CP_RESIZE, 0, 0, 0 पूर्ण;
-	पूर्णांक gc_mode, gc_type;
-	पूर्णांक err = 0;
-	पूर्णांक type;
+static int free_segment_range(struct f2fs_sb_info *sbi,
+				unsigned int secs, bool gc_only)
+{
+	unsigned int segno, next_inuse, start, end;
+	struct cp_control cpc = { CP_RESIZE, 0, 0, 0 };
+	int gc_mode, gc_type;
+	int err = 0;
+	int type;
 
-	/* Force block allocation क्रम GC */
+	/* Force block allocation for GC */
 	MAIN_SECS(sbi) -= secs;
 	start = MAIN_SECS(sbi) * sbi->segs_per_sec;
 	end = MAIN_SEGS(sbi) - 1;
 
-	mutex_lock(&सूचीTY_I(sbi)->seglist_lock);
-	क्रम (gc_mode = 0; gc_mode < MAX_GC_POLICY; gc_mode++)
-		अगर (SIT_I(sbi)->last_victim[gc_mode] >= start)
+	mutex_lock(&DIRTY_I(sbi)->seglist_lock);
+	for (gc_mode = 0; gc_mode < MAX_GC_POLICY; gc_mode++)
+		if (SIT_I(sbi)->last_victim[gc_mode] >= start)
 			SIT_I(sbi)->last_victim[gc_mode] = 0;
 
-	क्रम (gc_type = BG_GC; gc_type <= FG_GC; gc_type++)
-		अगर (sbi->next_victim_seg[gc_type] >= start)
-			sbi->next_victim_seg[gc_type] = शून्य_SEGNO;
-	mutex_unlock(&सूचीTY_I(sbi)->seglist_lock);
+	for (gc_type = BG_GC; gc_type <= FG_GC; gc_type++)
+		if (sbi->next_victim_seg[gc_type] >= start)
+			sbi->next_victim_seg[gc_type] = NULL_SEGNO;
+	mutex_unlock(&DIRTY_I(sbi)->seglist_lock);
 
 	/* Move out cursegs from the target range */
-	क्रम (type = CURSEG_HOT_DATA; type < NR_CURSEG_PERSIST_TYPE; type++)
-		f2fs_allocate_segment_क्रम_resize(sbi, type, start, end);
+	for (type = CURSEG_HOT_DATA; type < NR_CURSEG_PERSIST_TYPE; type++)
+		f2fs_allocate_segment_for_resize(sbi, type, start, end);
 
-	/* करो GC to move out valid blocks in the range */
-	क्रम (segno = start; segno <= end; segno += sbi->segs_per_sec) अणु
-		काष्ठा gc_inode_list gc_list = अणु
+	/* do GC to move out valid blocks in the range */
+	for (segno = start; segno <= end; segno += sbi->segs_per_sec) {
+		struct gc_inode_list gc_list = {
 			.ilist = LIST_HEAD_INIT(gc_list.ilist),
 			.iroot = RADIX_TREE_INIT(gc_list.iroot, GFP_NOFS),
-		पूर्ण;
+		};
 
-		करो_garbage_collect(sbi, segno, &gc_list, FG_GC, true);
+		do_garbage_collect(sbi, segno, &gc_list, FG_GC, true);
 		put_gc_inode(&gc_list);
 
-		अगर (!gc_only && get_valid_blocks(sbi, segno, true)) अणु
+		if (!gc_only && get_valid_blocks(sbi, segno, true)) {
 			err = -EAGAIN;
-			जाओ out;
-		पूर्ण
-		अगर (fatal_संकेत_pending(current)) अणु
+			goto out;
+		}
+		if (fatal_signal_pending(current)) {
 			err = -ERESTARTSYS;
-			जाओ out;
-		पूर्ण
-	पूर्ण
-	अगर (gc_only)
-		जाओ out;
+			goto out;
+		}
+	}
+	if (gc_only)
+		goto out;
 
-	err = f2fs_ग_लिखो_checkpoपूर्णांक(sbi, &cpc);
-	अगर (err)
-		जाओ out;
+	err = f2fs_write_checkpoint(sbi, &cpc);
+	if (err)
+		goto out;
 
 	next_inuse = find_next_inuse(FREE_I(sbi), end + 1, start);
-	अगर (next_inuse <= end) अणु
+	if (next_inuse <= end) {
 		f2fs_err(sbi, "segno %u should be free but still inuse!",
 			 next_inuse);
 		f2fs_bug_on(sbi, 1);
-	पूर्ण
+	}
 out:
 	MAIN_SECS(sbi) += secs;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम update_sb_metadata(काष्ठा f2fs_sb_info *sbi, पूर्णांक secs)
-अणु
-	काष्ठा f2fs_super_block *raw_sb = F2FS_RAW_SUPER(sbi);
-	पूर्णांक section_count;
-	पूर्णांक segment_count;
-	पूर्णांक segment_count_मुख्य;
-	दीर्घ दीर्घ block_count;
-	पूर्णांक segs = secs * sbi->segs_per_sec;
+static void update_sb_metadata(struct f2fs_sb_info *sbi, int secs)
+{
+	struct f2fs_super_block *raw_sb = F2FS_RAW_SUPER(sbi);
+	int section_count;
+	int segment_count;
+	int segment_count_main;
+	long long block_count;
+	int segs = secs * sbi->segs_per_sec;
 
-	करोwn_ग_लिखो(&sbi->sb_lock);
+	down_write(&sbi->sb_lock);
 
 	section_count = le32_to_cpu(raw_sb->section_count);
 	segment_count = le32_to_cpu(raw_sb->segment_count);
-	segment_count_मुख्य = le32_to_cpu(raw_sb->segment_count_मुख्य);
+	segment_count_main = le32_to_cpu(raw_sb->segment_count_main);
 	block_count = le64_to_cpu(raw_sb->block_count);
 
 	raw_sb->section_count = cpu_to_le32(section_count + secs);
 	raw_sb->segment_count = cpu_to_le32(segment_count + segs);
-	raw_sb->segment_count_मुख्य = cpu_to_le32(segment_count_मुख्य + segs);
+	raw_sb->segment_count_main = cpu_to_le32(segment_count_main + segs);
 	raw_sb->block_count = cpu_to_le64(block_count +
-					(दीर्घ दीर्घ)segs * sbi->blocks_per_seg);
-	अगर (f2fs_is_multi_device(sbi)) अणु
-		पूर्णांक last_dev = sbi->s_ndevs - 1;
-		पूर्णांक dev_segs =
+					(long long)segs * sbi->blocks_per_seg);
+	if (f2fs_is_multi_device(sbi)) {
+		int last_dev = sbi->s_ndevs - 1;
+		int dev_segs =
 			le32_to_cpu(raw_sb->devs[last_dev].total_segments);
 
 		raw_sb->devs[last_dev].total_segments =
 						cpu_to_le32(dev_segs + segs);
-	पूर्ण
+	}
 
-	up_ग_लिखो(&sbi->sb_lock);
-पूर्ण
+	up_write(&sbi->sb_lock);
+}
 
-अटल व्योम update_fs_metadata(काष्ठा f2fs_sb_info *sbi, पूर्णांक secs)
-अणु
-	पूर्णांक segs = secs * sbi->segs_per_sec;
-	दीर्घ दीर्घ blks = (दीर्घ दीर्घ)segs * sbi->blocks_per_seg;
-	दीर्घ दीर्घ user_block_count =
+static void update_fs_metadata(struct f2fs_sb_info *sbi, int secs)
+{
+	int segs = secs * sbi->segs_per_sec;
+	long long blks = (long long)segs * sbi->blocks_per_seg;
+	long long user_block_count =
 				le64_to_cpu(F2FS_CKPT(sbi)->user_block_count);
 
-	SM_I(sbi)->segment_count = (पूर्णांक)SM_I(sbi)->segment_count + segs;
-	MAIN_SEGS(sbi) = (पूर्णांक)MAIN_SEGS(sbi) + segs;
+	SM_I(sbi)->segment_count = (int)SM_I(sbi)->segment_count + segs;
+	MAIN_SEGS(sbi) = (int)MAIN_SEGS(sbi) + segs;
 	MAIN_SECS(sbi) += secs;
-	FREE_I(sbi)->मुक्त_sections = (पूर्णांक)FREE_I(sbi)->मुक्त_sections + secs;
-	FREE_I(sbi)->मुक्त_segments = (पूर्णांक)FREE_I(sbi)->मुक्त_segments + segs;
+	FREE_I(sbi)->free_sections = (int)FREE_I(sbi)->free_sections + secs;
+	FREE_I(sbi)->free_segments = (int)FREE_I(sbi)->free_segments + segs;
 	F2FS_CKPT(sbi)->user_block_count = cpu_to_le64(user_block_count + blks);
 
-	अगर (f2fs_is_multi_device(sbi)) अणु
-		पूर्णांक last_dev = sbi->s_ndevs - 1;
+	if (f2fs_is_multi_device(sbi)) {
+		int last_dev = sbi->s_ndevs - 1;
 
 		FDEV(last_dev).total_segments =
-				(पूर्णांक)FDEV(last_dev).total_segments + segs;
+				(int)FDEV(last_dev).total_segments + segs;
 		FDEV(last_dev).end_blk =
-				(दीर्घ दीर्घ)FDEV(last_dev).end_blk + blks;
-#अगर_घोषित CONFIG_BLK_DEV_ZONED
-		FDEV(last_dev).nr_blkz = (पूर्णांक)FDEV(last_dev).nr_blkz +
-					(पूर्णांक)(blks >> sbi->log_blocks_per_blkz);
-#पूर्ण_अगर
-	पूर्ण
-पूर्ण
+				(long long)FDEV(last_dev).end_blk + blks;
+#ifdef CONFIG_BLK_DEV_ZONED
+		FDEV(last_dev).nr_blkz = (int)FDEV(last_dev).nr_blkz +
+					(int)(blks >> sbi->log_blocks_per_blkz);
+#endif
+	}
+}
 
-पूर्णांक f2fs_resize_fs(काष्ठा f2fs_sb_info *sbi, __u64 block_count)
-अणु
+int f2fs_resize_fs(struct f2fs_sb_info *sbi, __u64 block_count)
+{
 	__u64 old_block_count, shrunk_blocks;
-	काष्ठा cp_control cpc = अणु CP_RESIZE, 0, 0, 0 पूर्ण;
-	अचिन्हित पूर्णांक secs;
-	पूर्णांक err = 0;
+	struct cp_control cpc = { CP_RESIZE, 0, 0, 0 };
+	unsigned int secs;
+	int err = 0;
 	__u32 rem;
 
 	old_block_count = le64_to_cpu(F2FS_RAW_SUPER(sbi)->block_count);
-	अगर (block_count > old_block_count)
-		वापस -EINVAL;
+	if (block_count > old_block_count)
+		return -EINVAL;
 
-	अगर (f2fs_is_multi_device(sbi)) अणु
-		पूर्णांक last_dev = sbi->s_ndevs - 1;
+	if (f2fs_is_multi_device(sbi)) {
+		int last_dev = sbi->s_ndevs - 1;
 		__u64 last_segs = FDEV(last_dev).total_segments;
 
-		अगर (block_count + last_segs * sbi->blocks_per_seg <=
+		if (block_count + last_segs * sbi->blocks_per_seg <=
 								old_block_count)
-			वापस -EINVAL;
-	पूर्ण
+			return -EINVAL;
+	}
 
 	/* new fs size should align to section size */
-	भाग_u64_rem(block_count, BLKS_PER_SEC(sbi), &rem);
-	अगर (rem)
-		वापस -EINVAL;
+	div_u64_rem(block_count, BLKS_PER_SEC(sbi), &rem);
+	if (rem)
+		return -EINVAL;
 
-	अगर (block_count == old_block_count)
-		वापस 0;
+	if (block_count == old_block_count)
+		return 0;
 
-	अगर (is_sbi_flag_set(sbi, SBI_NEED_FSCK)) अणु
+	if (is_sbi_flag_set(sbi, SBI_NEED_FSCK)) {
 		f2fs_err(sbi, "Should run fsck to repair first.");
-		वापस -EFSCORRUPTED;
-	पूर्ण
+		return -EFSCORRUPTED;
+	}
 
-	अगर (test_opt(sbi, DISABLE_CHECKPOINT)) अणु
+	if (test_opt(sbi, DISABLE_CHECKPOINT)) {
 		f2fs_err(sbi, "Checkpoint should be enabled.");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	shrunk_blocks = old_block_count - block_count;
-	secs = भाग_u64(shrunk_blocks, BLKS_PER_SEC(sbi));
+	secs = div_u64(shrunk_blocks, BLKS_PER_SEC(sbi));
 
 	/* stop other GC */
-	अगर (!करोwn_ग_लिखो_trylock(&sbi->gc_lock))
-		वापस -EAGAIN;
+	if (!down_write_trylock(&sbi->gc_lock))
+		return -EAGAIN;
 
-	/* stop CP to protect MAIN_SEC in मुक्त_segment_range */
+	/* stop CP to protect MAIN_SEC in free_segment_range */
 	f2fs_lock_op(sbi);
 
 	spin_lock(&sbi->stat_lock);
-	अगर (shrunk_blocks + valid_user_blocks(sbi) +
+	if (shrunk_blocks + valid_user_blocks(sbi) +
 		sbi->current_reserved_blocks + sbi->unusable_block_count +
 		F2FS_OPTION(sbi).root_reserved_blocks > sbi->user_block_count)
 		err = -ENOSPC;
 	spin_unlock(&sbi->stat_lock);
 
-	अगर (err)
-		जाओ out_unlock;
+	if (err)
+		goto out_unlock;
 
-	err = मुक्त_segment_range(sbi, secs, true);
+	err = free_segment_range(sbi, secs, true);
 
 out_unlock:
 	f2fs_unlock_op(sbi);
-	up_ग_लिखो(&sbi->gc_lock);
-	अगर (err)
-		वापस err;
+	up_write(&sbi->gc_lock);
+	if (err)
+		return err;
 
 	set_sbi_flag(sbi, SBI_IS_RESIZEFS);
 
-	मुक्तze_super(sbi->sb);
-	करोwn_ग_लिखो(&sbi->gc_lock);
-	करोwn_ग_लिखो(&sbi->cp_global_sem);
+	freeze_super(sbi->sb);
+	down_write(&sbi->gc_lock);
+	down_write(&sbi->cp_global_sem);
 
 	spin_lock(&sbi->stat_lock);
-	अगर (shrunk_blocks + valid_user_blocks(sbi) +
+	if (shrunk_blocks + valid_user_blocks(sbi) +
 		sbi->current_reserved_blocks + sbi->unusable_block_count +
 		F2FS_OPTION(sbi).root_reserved_blocks > sbi->user_block_count)
 		err = -ENOSPC;
-	अन्यथा
+	else
 		sbi->user_block_count -= shrunk_blocks;
 	spin_unlock(&sbi->stat_lock);
-	अगर (err)
-		जाओ out_err;
+	if (err)
+		goto out_err;
 
-	err = मुक्त_segment_range(sbi, secs, false);
-	अगर (err)
-		जाओ recover_out;
+	err = free_segment_range(sbi, secs, false);
+	if (err)
+		goto recover_out;
 
 	update_sb_metadata(sbi, -secs);
 
 	err = f2fs_commit_super(sbi, false);
-	अगर (err) अणु
+	if (err) {
 		update_sb_metadata(sbi, secs);
-		जाओ recover_out;
-	पूर्ण
+		goto recover_out;
+	}
 
 	update_fs_metadata(sbi, -secs);
 	clear_sbi_flag(sbi, SBI_IS_RESIZEFS);
-	set_sbi_flag(sbi, SBI_IS_सूचीTY);
+	set_sbi_flag(sbi, SBI_IS_DIRTY);
 
-	err = f2fs_ग_लिखो_checkpoपूर्णांक(sbi, &cpc);
-	अगर (err) अणु
+	err = f2fs_write_checkpoint(sbi, &cpc);
+	if (err) {
 		update_fs_metadata(sbi, secs);
 		update_sb_metadata(sbi, secs);
 		f2fs_commit_super(sbi, false);
-	पूर्ण
+	}
 recover_out:
-	अगर (err) अणु
+	if (err) {
 		set_sbi_flag(sbi, SBI_NEED_FSCK);
 		f2fs_err(sbi, "resize_fs failed, should run fsck to repair!");
 
 		spin_lock(&sbi->stat_lock);
 		sbi->user_block_count += shrunk_blocks;
 		spin_unlock(&sbi->stat_lock);
-	पूर्ण
+	}
 out_err:
-	up_ग_लिखो(&sbi->cp_global_sem);
-	up_ग_लिखो(&sbi->gc_lock);
+	up_write(&sbi->cp_global_sem);
+	up_write(&sbi->gc_lock);
 	thaw_super(sbi->sb);
 	clear_sbi_flag(sbi, SBI_IS_RESIZEFS);
-	वापस err;
-पूर्ण
+	return err;
+}

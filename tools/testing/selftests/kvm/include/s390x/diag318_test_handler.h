@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later
+/* SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Test handler क्रम the s390x DIAGNOSE 0x0318 inकाष्ठाion.
+ * Test handler for the s390x DIAGNOSE 0x0318 instruction.
  *
  * Copyright (C) 2020, IBM
  */
 
-#अगर_अघोषित SELFTEST_KVM_DIAG318_TEST_HANDLER
-#घोषणा SELFTEST_KVM_DIAG318_TEST_HANDLER
+#ifndef SELFTEST_KVM_DIAG318_TEST_HANDLER
+#define SELFTEST_KVM_DIAG318_TEST_HANDLER
 
-uपूर्णांक64_t get_diag318_info(व्योम);
+uint64_t get_diag318_info(void);
 
-#पूर्ण_अगर
+#endif

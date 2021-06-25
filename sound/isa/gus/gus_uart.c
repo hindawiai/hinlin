@@ -1,245 +1,244 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
- *  Routines क्रम the GF1 MIDI पूर्णांकerface - like UART 6850
+ *  Routines for the GF1 MIDI interface - like UART 6850
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/समय.स>
-#समावेश <sound/core.h>
-#समावेश <sound/gus.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/time.h>
+#include <sound/core.h>
+#include <sound/gus.h>
 
-अटल व्योम snd_gf1_पूर्णांकerrupt_midi_in(काष्ठा snd_gus_card * gus)
-अणु
-	पूर्णांक count;
-	अचिन्हित अक्षर stat, byte;
-	__always_unused अचिन्हित अक्षर data;
-	अचिन्हित दीर्घ flags;
+static void snd_gf1_interrupt_midi_in(struct snd_gus_card * gus)
+{
+	int count;
+	unsigned char stat, byte;
+	__always_unused unsigned char data;
+	unsigned long flags;
 
 	count = 10;
-	जबतक (count) अणु
+	while (count) {
 		spin_lock_irqsave(&gus->uart_cmd_lock, flags);
 		stat = snd_gf1_uart_stat(gus);
-		अगर (!(stat & 0x01)) अणु	/* data in Rx FIFO? */
+		if (!(stat & 0x01)) {	/* data in Rx FIFO? */
 			spin_unlock_irqrestore(&gus->uart_cmd_lock, flags);
 			count--;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		count = 100;	/* arm counter to new value */
 		data = snd_gf1_uart_get(gus);
-		अगर (!(gus->gf1.uart_cmd & 0x80)) अणु
+		if (!(gus->gf1.uart_cmd & 0x80)) {
 			spin_unlock_irqrestore(&gus->uart_cmd_lock, flags);
-			जारी;
-		पूर्ण			
-		अगर (stat & 0x10) अणु	/* framing error */
+			continue;
+		}			
+		if (stat & 0x10) {	/* framing error */
 			gus->gf1.uart_framing++;
 			spin_unlock_irqrestore(&gus->uart_cmd_lock, flags);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		byte = snd_gf1_uart_get(gus);
 		spin_unlock_irqrestore(&gus->uart_cmd_lock, flags);
 		snd_rawmidi_receive(gus->midi_substream_input, &byte, 1);
-		अगर (stat & 0x20) अणु
+		if (stat & 0x20) {
 			gus->gf1.uart_overrun++;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम snd_gf1_पूर्णांकerrupt_midi_out(काष्ठा snd_gus_card * gus)
-अणु
-	अक्षर byte;
-	अचिन्हित दीर्घ flags;
+static void snd_gf1_interrupt_midi_out(struct snd_gus_card * gus)
+{
+	char byte;
+	unsigned long flags;
 
 	/* try unlock output */
-	अगर (snd_gf1_uart_stat(gus) & 0x01)
-		snd_gf1_पूर्णांकerrupt_midi_in(gus);
+	if (snd_gf1_uart_stat(gus) & 0x01)
+		snd_gf1_interrupt_midi_in(gus);
 
 	spin_lock_irqsave(&gus->uart_cmd_lock, flags);
-	अगर (snd_gf1_uart_stat(gus) & 0x02) अणु	/* Tx FIFO मुक्त? */
-		अगर (snd_rawmidi_transmit(gus->midi_substream_output, &byte, 1) != 1) अणु	/* no other bytes or error */
-			snd_gf1_uart_cmd(gus, gus->gf1.uart_cmd & ~0x20); /* disable Tx पूर्णांकerrupt */
-		पूर्ण अन्यथा अणु
+	if (snd_gf1_uart_stat(gus) & 0x02) {	/* Tx FIFO free? */
+		if (snd_rawmidi_transmit(gus->midi_substream_output, &byte, 1) != 1) {	/* no other bytes or error */
+			snd_gf1_uart_cmd(gus, gus->gf1.uart_cmd & ~0x20); /* disable Tx interrupt */
+		} else {
 			snd_gf1_uart_put(gus, byte);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&gus->uart_cmd_lock, flags);
-पूर्ण
+}
 
-अटल व्योम snd_gf1_uart_reset(काष्ठा snd_gus_card * gus, पूर्णांक बंद)
-अणु
+static void snd_gf1_uart_reset(struct snd_gus_card * gus, int close)
+{
 	snd_gf1_uart_cmd(gus, 0x03);	/* reset */
-	अगर (!बंद && gus->uart_enable) अणु
+	if (!close && gus->uart_enable) {
 		udelay(160);
 		snd_gf1_uart_cmd(gus, 0x00);	/* normal operations */
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक snd_gf1_uart_output_खोलो(काष्ठा snd_rawmidi_substream *substream)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_gus_card *gus;
+static int snd_gf1_uart_output_open(struct snd_rawmidi_substream *substream)
+{
+	unsigned long flags;
+	struct snd_gus_card *gus;
 
-	gus = substream->rmidi->निजी_data;
+	gus = substream->rmidi->private_data;
 	spin_lock_irqsave(&gus->uart_cmd_lock, flags);
-	अगर (!(gus->gf1.uart_cmd & 0x80)) अणु	/* input active? */
+	if (!(gus->gf1.uart_cmd & 0x80)) {	/* input active? */
 		snd_gf1_uart_reset(gus, 0);
-	पूर्ण
-	gus->gf1.पूर्णांकerrupt_handler_midi_out = snd_gf1_पूर्णांकerrupt_midi_out;
+	}
+	gus->gf1.interrupt_handler_midi_out = snd_gf1_interrupt_midi_out;
 	gus->midi_substream_output = substream;
 	spin_unlock_irqrestore(&gus->uart_cmd_lock, flags);
-#अगर 0
-	snd_prपूर्णांकk(KERN_DEBUG "write init - cmd = 0x%x, stat = 0x%x\n", gus->gf1.uart_cmd, snd_gf1_uart_stat(gus));
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+#if 0
+	snd_printk(KERN_DEBUG "write init - cmd = 0x%x, stat = 0x%x\n", gus->gf1.uart_cmd, snd_gf1_uart_stat(gus));
+#endif
+	return 0;
+}
 
-अटल पूर्णांक snd_gf1_uart_input_खोलो(काष्ठा snd_rawmidi_substream *substream)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_gus_card *gus;
-	पूर्णांक i;
+static int snd_gf1_uart_input_open(struct snd_rawmidi_substream *substream)
+{
+	unsigned long flags;
+	struct snd_gus_card *gus;
+	int i;
 
-	gus = substream->rmidi->निजी_data;
+	gus = substream->rmidi->private_data;
 	spin_lock_irqsave(&gus->uart_cmd_lock, flags);
-	अगर (gus->gf1.पूर्णांकerrupt_handler_midi_out != snd_gf1_पूर्णांकerrupt_midi_out) अणु
+	if (gus->gf1.interrupt_handler_midi_out != snd_gf1_interrupt_midi_out) {
 		snd_gf1_uart_reset(gus, 0);
-	पूर्ण
-	gus->gf1.पूर्णांकerrupt_handler_midi_in = snd_gf1_पूर्णांकerrupt_midi_in;
+	}
+	gus->gf1.interrupt_handler_midi_in = snd_gf1_interrupt_midi_in;
 	gus->midi_substream_input = substream;
-	अगर (gus->uart_enable) अणु
-		क्रम (i = 0; i < 1000 && (snd_gf1_uart_stat(gus) & 0x01); i++)
+	if (gus->uart_enable) {
+		for (i = 0; i < 1000 && (snd_gf1_uart_stat(gus) & 0x01); i++)
 			snd_gf1_uart_get(gus);	/* clean Rx */
-		अगर (i >= 1000)
-			snd_prपूर्णांकk(KERN_ERR "gus midi uart init read - cleanup error\n");
-	पूर्ण
+		if (i >= 1000)
+			snd_printk(KERN_ERR "gus midi uart init read - cleanup error\n");
+	}
 	spin_unlock_irqrestore(&gus->uart_cmd_lock, flags);
-#अगर 0
-	snd_prपूर्णांकk(KERN_DEBUG
+#if 0
+	snd_printk(KERN_DEBUG
 		   "read init - enable = %i, cmd = 0x%x, stat = 0x%x\n",
 		   gus->uart_enable, gus->gf1.uart_cmd, snd_gf1_uart_stat(gus));
-	snd_prपूर्णांकk(KERN_DEBUG
+	snd_printk(KERN_DEBUG
 		   "[0x%x] reg (ctrl/status) = 0x%x, reg (data) = 0x%x "
 		   "(page = 0x%x)\n",
 		   gus->gf1.port + 0x100, inb(gus->gf1.port + 0x100),
 		   inb(gus->gf1.port + 0x101), inb(gus->gf1.port + 0x102));
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+#endif
+	return 0;
+}
 
-अटल पूर्णांक snd_gf1_uart_output_बंद(काष्ठा snd_rawmidi_substream *substream)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_gus_card *gus;
+static int snd_gf1_uart_output_close(struct snd_rawmidi_substream *substream)
+{
+	unsigned long flags;
+	struct snd_gus_card *gus;
 
-	gus = substream->rmidi->निजी_data;
+	gus = substream->rmidi->private_data;
 	spin_lock_irqsave(&gus->uart_cmd_lock, flags);
-	अगर (gus->gf1.पूर्णांकerrupt_handler_midi_in != snd_gf1_पूर्णांकerrupt_midi_in)
+	if (gus->gf1.interrupt_handler_midi_in != snd_gf1_interrupt_midi_in)
 		snd_gf1_uart_reset(gus, 1);
-	snd_gf1_set_शेष_handlers(gus, SNDRV_GF1_HANDLER_MIDI_OUT);
-	gus->midi_substream_output = शून्य;
+	snd_gf1_set_default_handlers(gus, SNDRV_GF1_HANDLER_MIDI_OUT);
+	gus->midi_substream_output = NULL;
 	spin_unlock_irqrestore(&gus->uart_cmd_lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_gf1_uart_input_बंद(काष्ठा snd_rawmidi_substream *substream)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_gus_card *gus;
+static int snd_gf1_uart_input_close(struct snd_rawmidi_substream *substream)
+{
+	unsigned long flags;
+	struct snd_gus_card *gus;
 
-	gus = substream->rmidi->निजी_data;
+	gus = substream->rmidi->private_data;
 	spin_lock_irqsave(&gus->uart_cmd_lock, flags);
-	अगर (gus->gf1.पूर्णांकerrupt_handler_midi_out != snd_gf1_पूर्णांकerrupt_midi_out)
+	if (gus->gf1.interrupt_handler_midi_out != snd_gf1_interrupt_midi_out)
 		snd_gf1_uart_reset(gus, 1);
-	snd_gf1_set_शेष_handlers(gus, SNDRV_GF1_HANDLER_MIDI_IN);
-	gus->midi_substream_input = शून्य;
+	snd_gf1_set_default_handlers(gus, SNDRV_GF1_HANDLER_MIDI_IN);
+	gus->midi_substream_input = NULL;
 	spin_unlock_irqrestore(&gus->uart_cmd_lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम snd_gf1_uart_input_trigger(काष्ठा snd_rawmidi_substream *substream, पूर्णांक up)
-अणु
-	काष्ठा snd_gus_card *gus;
-	अचिन्हित दीर्घ flags;
+static void snd_gf1_uart_input_trigger(struct snd_rawmidi_substream *substream, int up)
+{
+	struct snd_gus_card *gus;
+	unsigned long flags;
 
-	gus = substream->rmidi->निजी_data;
+	gus = substream->rmidi->private_data;
 
 	spin_lock_irqsave(&gus->uart_cmd_lock, flags);
-	अगर (up) अणु
-		अगर ((gus->gf1.uart_cmd & 0x80) == 0)
-			snd_gf1_uart_cmd(gus, gus->gf1.uart_cmd | 0x80); /* enable Rx पूर्णांकerrupts */
-	पूर्ण अन्यथा अणु
-		अगर (gus->gf1.uart_cmd & 0x80)
-			snd_gf1_uart_cmd(gus, gus->gf1.uart_cmd & ~0x80); /* disable Rx पूर्णांकerrupts */
-	पूर्ण
+	if (up) {
+		if ((gus->gf1.uart_cmd & 0x80) == 0)
+			snd_gf1_uart_cmd(gus, gus->gf1.uart_cmd | 0x80); /* enable Rx interrupts */
+	} else {
+		if (gus->gf1.uart_cmd & 0x80)
+			snd_gf1_uart_cmd(gus, gus->gf1.uart_cmd & ~0x80); /* disable Rx interrupts */
+	}
 	spin_unlock_irqrestore(&gus->uart_cmd_lock, flags);
-पूर्ण
+}
 
-अटल व्योम snd_gf1_uart_output_trigger(काष्ठा snd_rawmidi_substream *substream, पूर्णांक up)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_gus_card *gus;
-	अक्षर byte;
-	पूर्णांक समयout;
+static void snd_gf1_uart_output_trigger(struct snd_rawmidi_substream *substream, int up)
+{
+	unsigned long flags;
+	struct snd_gus_card *gus;
+	char byte;
+	int timeout;
 
-	gus = substream->rmidi->निजी_data;
+	gus = substream->rmidi->private_data;
 
 	spin_lock_irqsave(&gus->uart_cmd_lock, flags);
-	अगर (up) अणु
-		अगर ((gus->gf1.uart_cmd & 0x20) == 0) अणु
+	if (up) {
+		if ((gus->gf1.uart_cmd & 0x20) == 0) {
 			spin_unlock_irqrestore(&gus->uart_cmd_lock, flags);
-			/* रुको क्रम empty Rx - Tx is probably unlocked */
-			समयout = 10000;
-			जबतक (समयout-- > 0 && snd_gf1_uart_stat(gus) & 0x01);
-			/* Tx FIFO मुक्त? */
+			/* wait for empty Rx - Tx is probably unlocked */
+			timeout = 10000;
+			while (timeout-- > 0 && snd_gf1_uart_stat(gus) & 0x01);
+			/* Tx FIFO free? */
 			spin_lock_irqsave(&gus->uart_cmd_lock, flags);
-			अगर (gus->gf1.uart_cmd & 0x20) अणु
+			if (gus->gf1.uart_cmd & 0x20) {
 				spin_unlock_irqrestore(&gus->uart_cmd_lock, flags);
-				वापस;
-			पूर्ण
-			अगर (snd_gf1_uart_stat(gus) & 0x02) अणु
-				अगर (snd_rawmidi_transmit(substream, &byte, 1) != 1) अणु
+				return;
+			}
+			if (snd_gf1_uart_stat(gus) & 0x02) {
+				if (snd_rawmidi_transmit(substream, &byte, 1) != 1) {
 					spin_unlock_irqrestore(&gus->uart_cmd_lock, flags);
-					वापस;
-				पूर्ण
+					return;
+				}
 				snd_gf1_uart_put(gus, byte);
-			पूर्ण
-			snd_gf1_uart_cmd(gus, gus->gf1.uart_cmd | 0x20);	/* enable Tx पूर्णांकerrupt */
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (gus->gf1.uart_cmd & 0x20)
+			}
+			snd_gf1_uart_cmd(gus, gus->gf1.uart_cmd | 0x20);	/* enable Tx interrupt */
+		}
+	} else {
+		if (gus->gf1.uart_cmd & 0x20)
 			snd_gf1_uart_cmd(gus, gus->gf1.uart_cmd & ~0x20);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&gus->uart_cmd_lock, flags);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा snd_rawmidi_ops snd_gf1_uart_output =
-अणु
-	.खोलो =		snd_gf1_uart_output_खोलो,
-	.बंद =	snd_gf1_uart_output_बंद,
+static const struct snd_rawmidi_ops snd_gf1_uart_output =
+{
+	.open =		snd_gf1_uart_output_open,
+	.close =	snd_gf1_uart_output_close,
 	.trigger =	snd_gf1_uart_output_trigger,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_rawmidi_ops snd_gf1_uart_input =
-अणु
-	.खोलो =		snd_gf1_uart_input_खोलो,
-	.बंद =	snd_gf1_uart_input_बंद,
+static const struct snd_rawmidi_ops snd_gf1_uart_input =
+{
+	.open =		snd_gf1_uart_input_open,
+	.close =	snd_gf1_uart_input_close,
 	.trigger =	snd_gf1_uart_input_trigger,
-पूर्ण;
+};
 
-पूर्णांक snd_gf1_rawmidi_new(काष्ठा snd_gus_card *gus, पूर्णांक device)
-अणु
-	काष्ठा snd_rawmidi *rmidi;
-	पूर्णांक err;
+int snd_gf1_rawmidi_new(struct snd_gus_card *gus, int device)
+{
+	struct snd_rawmidi *rmidi;
+	int err;
 
-	अगर ((err = snd_rawmidi_new(gus->card, "GF1", device, 1, 1, &rmidi)) < 0)
-		वापस err;
-	म_नकल(rmidi->name, gus->पूर्णांकerwave ? "AMD InterWave" : "GF1");
+	if ((err = snd_rawmidi_new(gus->card, "GF1", device, 1, 1, &rmidi)) < 0)
+		return err;
+	strcpy(rmidi->name, gus->interwave ? "AMD InterWave" : "GF1");
 	snd_rawmidi_set_ops(rmidi, SNDRV_RAWMIDI_STREAM_OUTPUT, &snd_gf1_uart_output);
 	snd_rawmidi_set_ops(rmidi, SNDRV_RAWMIDI_STREAM_INPUT, &snd_gf1_uart_input);
 	rmidi->info_flags |= SNDRV_RAWMIDI_INFO_OUTPUT | SNDRV_RAWMIDI_INFO_INPUT | SNDRV_RAWMIDI_INFO_DUPLEX;
-	rmidi->निजी_data = gus;
+	rmidi->private_data = gus;
 	gus->midi_uart = rmidi;
-	वापस err;
-पूर्ण
+	return err;
+}

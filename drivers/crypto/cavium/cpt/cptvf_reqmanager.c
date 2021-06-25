@@ -1,79 +1,78 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2016 Cavium, Inc.
  */
 
-#समावेश "cptvf.h"
-#समावेश "cptvf_algs.h"
-#समावेश "request_manager.h"
+#include "cptvf.h"
+#include "cptvf_algs.h"
+#include "request_manager.h"
 
 /**
- * get_मुक्त_pending_entry - get मुक्त entry from pending queue
- * @param pqinfo: pending_qinfo काष्ठाure
+ * get_free_pending_entry - get free entry from pending queue
+ * @param pqinfo: pending_qinfo structure
  * @param qno: queue number
  */
-अटल काष्ठा pending_entry *get_मुक्त_pending_entry(काष्ठा pending_queue *q,
-						    पूर्णांक qlen)
-अणु
-	काष्ठा pending_entry *ent = शून्य;
+static struct pending_entry *get_free_pending_entry(struct pending_queue *q,
+						    int qlen)
+{
+	struct pending_entry *ent = NULL;
 
 	ent = &q->head[q->rear];
-	अगर (unlikely(ent->busy)) अणु
-		ent = शून्य;
-		जाओ no_मुक्त_entry;
-	पूर्ण
+	if (unlikely(ent->busy)) {
+		ent = NULL;
+		goto no_free_entry;
+	}
 
 	q->rear++;
-	अगर (unlikely(q->rear == qlen))
+	if (unlikely(q->rear == qlen))
 		q->rear = 0;
 
-no_मुक्त_entry:
-	वापस ent;
-पूर्ण
+no_free_entry:
+	return ent;
+}
 
-अटल अंतरभूत व्योम pending_queue_inc_front(काष्ठा pending_qinfo *pqinfo,
-					   पूर्णांक qno)
-अणु
-	काष्ठा pending_queue *queue = &pqinfo->queue[qno];
+static inline void pending_queue_inc_front(struct pending_qinfo *pqinfo,
+					   int qno)
+{
+	struct pending_queue *queue = &pqinfo->queue[qno];
 
 	queue->front++;
-	अगर (unlikely(queue->front == pqinfo->qlen))
+	if (unlikely(queue->front == pqinfo->qlen))
 		queue->front = 0;
-पूर्ण
+}
 
-अटल पूर्णांक setup_sgio_components(काष्ठा cpt_vf *cptvf, काष्ठा buf_ptr *list,
-				 पूर्णांक buf_count, u8 *buffer)
-अणु
-	पूर्णांक ret = 0, i, j;
-	पूर्णांक components;
-	काष्ठा sglist_component *sg_ptr = शून्य;
-	काष्ठा pci_dev *pdev = cptvf->pdev;
+static int setup_sgio_components(struct cpt_vf *cptvf, struct buf_ptr *list,
+				 int buf_count, u8 *buffer)
+{
+	int ret = 0, i, j;
+	int components;
+	struct sglist_component *sg_ptr = NULL;
+	struct pci_dev *pdev = cptvf->pdev;
 
-	अगर (unlikely(!list)) अणु
+	if (unlikely(!list)) {
 		dev_err(&pdev->dev, "Input List pointer is NULL\n");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	क्रम (i = 0; i < buf_count; i++) अणु
-		अगर (likely(list[i].vptr)) अणु
+	for (i = 0; i < buf_count; i++) {
+		if (likely(list[i].vptr)) {
 			list[i].dma_addr = dma_map_single(&pdev->dev,
 							  list[i].vptr,
 							  list[i].size,
-							  DMA_BIसूचीECTIONAL);
-			अगर (unlikely(dma_mapping_error(&pdev->dev,
-						       list[i].dma_addr))) अणु
+							  DMA_BIDIRECTIONAL);
+			if (unlikely(dma_mapping_error(&pdev->dev,
+						       list[i].dma_addr))) {
 				dev_err(&pdev->dev, "DMA map kernel buffer failed for component: %d\n",
 					i);
 				ret = -EIO;
-				जाओ sg_cleanup;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto sg_cleanup;
+			}
+		}
+	}
 
 	components = buf_count / 4;
-	sg_ptr = (काष्ठा sglist_component *)buffer;
-	क्रम (i = 0; i < components; i++) अणु
+	sg_ptr = (struct sglist_component *)buffer;
+	for (i = 0; i < components; i++) {
 		sg_ptr->u.s.len0 = cpu_to_be16(list[i * 4 + 0].size);
 		sg_ptr->u.s.len1 = cpu_to_be16(list[i * 4 + 1].size);
 		sg_ptr->u.s.len2 = cpu_to_be16(list[i * 4 + 2].size);
@@ -83,386 +82,386 @@ no_मुक्त_entry:
 		sg_ptr->ptr2 = cpu_to_be64(list[i * 4 + 2].dma_addr);
 		sg_ptr->ptr3 = cpu_to_be64(list[i * 4 + 3].dma_addr);
 		sg_ptr++;
-	पूर्ण
+	}
 
 	components = buf_count % 4;
 
-	चयन (components) अणु
-	हाल 3:
+	switch (components) {
+	case 3:
 		sg_ptr->u.s.len2 = cpu_to_be16(list[i * 4 + 2].size);
 		sg_ptr->ptr2 = cpu_to_be64(list[i * 4 + 2].dma_addr);
 		fallthrough;
-	हाल 2:
+	case 2:
 		sg_ptr->u.s.len1 = cpu_to_be16(list[i * 4 + 1].size);
 		sg_ptr->ptr1 = cpu_to_be64(list[i * 4 + 1].dma_addr);
 		fallthrough;
-	हाल 1:
+	case 1:
 		sg_ptr->u.s.len0 = cpu_to_be16(list[i * 4 + 0].size);
 		sg_ptr->ptr0 = cpu_to_be64(list[i * 4 + 0].dma_addr);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस ret;
+	return ret;
 
 sg_cleanup:
-	क्रम (j = 0; j < i; j++) अणु
-		अगर (list[j].dma_addr) अणु
+	for (j = 0; j < i; j++) {
+		if (list[j].dma_addr) {
 			dma_unmap_single(&pdev->dev, list[i].dma_addr,
-					 list[i].size, DMA_BIसूचीECTIONAL);
-		पूर्ण
+					 list[i].size, DMA_BIDIRECTIONAL);
+		}
 
 		list[j].dma_addr = 0;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक setup_sgio_list(काष्ठा cpt_vf *cptvf,
-				  काष्ठा cpt_info_buffer *info,
-				  काष्ठा cpt_request_info *req)
-अणु
+static inline int setup_sgio_list(struct cpt_vf *cptvf,
+				  struct cpt_info_buffer *info,
+				  struct cpt_request_info *req)
+{
 	u16 g_sz_bytes = 0, s_sz_bytes = 0;
-	पूर्णांक ret = 0;
-	काष्ठा pci_dev *pdev = cptvf->pdev;
+	int ret = 0;
+	struct pci_dev *pdev = cptvf->pdev;
 
-	अगर (req->incnt > MAX_SG_IN_CNT || req->outcnt > MAX_SG_OUT_CNT) अणु
+	if (req->incnt > MAX_SG_IN_CNT || req->outcnt > MAX_SG_OUT_CNT) {
 		dev_err(&pdev->dev, "Request SG components are higher than supported\n");
 		ret = -EINVAL;
-		जाओ  scatter_gather_clean;
-	पूर्ण
+		goto  scatter_gather_clean;
+	}
 
 	/* Setup gather (input) components */
-	g_sz_bytes = ((req->incnt + 3) / 4) * माप(काष्ठा sglist_component);
+	g_sz_bytes = ((req->incnt + 3) / 4) * sizeof(struct sglist_component);
 	info->gather_components = kzalloc(g_sz_bytes, req->may_sleep ? GFP_KERNEL : GFP_ATOMIC);
-	अगर (!info->gather_components) अणु
+	if (!info->gather_components) {
 		ret = -ENOMEM;
-		जाओ  scatter_gather_clean;
-	पूर्ण
+		goto  scatter_gather_clean;
+	}
 
 	ret = setup_sgio_components(cptvf, req->in,
 				    req->incnt,
 				    info->gather_components);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Failed to setup gather list\n");
 		ret = -EFAULT;
-		जाओ  scatter_gather_clean;
-	पूर्ण
+		goto  scatter_gather_clean;
+	}
 
 	/* Setup scatter (output) components */
-	s_sz_bytes = ((req->outcnt + 3) / 4) * माप(काष्ठा sglist_component);
+	s_sz_bytes = ((req->outcnt + 3) / 4) * sizeof(struct sglist_component);
 	info->scatter_components = kzalloc(s_sz_bytes, req->may_sleep ? GFP_KERNEL : GFP_ATOMIC);
-	अगर (!info->scatter_components) अणु
+	if (!info->scatter_components) {
 		ret = -ENOMEM;
-		जाओ  scatter_gather_clean;
-	पूर्ण
+		goto  scatter_gather_clean;
+	}
 
 	ret = setup_sgio_components(cptvf, req->out,
 				    req->outcnt,
 				    info->scatter_components);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Failed to setup gather list\n");
 		ret = -EFAULT;
-		जाओ  scatter_gather_clean;
-	पूर्ण
+		goto  scatter_gather_clean;
+	}
 
 	/* Create and initialize DPTR */
 	info->dlen = g_sz_bytes + s_sz_bytes + SG_LIST_HDR_SIZE;
 	info->in_buffer = kzalloc(info->dlen, req->may_sleep ? GFP_KERNEL : GFP_ATOMIC);
-	अगर (!info->in_buffer) अणु
+	if (!info->in_buffer) {
 		ret = -ENOMEM;
-		जाओ  scatter_gather_clean;
-	पूर्ण
+		goto  scatter_gather_clean;
+	}
 
 	((__be16 *)info->in_buffer)[0] = cpu_to_be16(req->outcnt);
 	((__be16 *)info->in_buffer)[1] = cpu_to_be16(req->incnt);
 	((__be16 *)info->in_buffer)[2] = 0;
 	((__be16 *)info->in_buffer)[3] = 0;
 
-	स_नकल(&info->in_buffer[8], info->gather_components,
+	memcpy(&info->in_buffer[8], info->gather_components,
 	       g_sz_bytes);
-	स_नकल(&info->in_buffer[8 + g_sz_bytes],
+	memcpy(&info->in_buffer[8 + g_sz_bytes],
 	       info->scatter_components, s_sz_bytes);
 
 	info->dptr_baddr = dma_map_single(&pdev->dev,
-					  (व्योम *)info->in_buffer,
+					  (void *)info->in_buffer,
 					  info->dlen,
-					  DMA_BIसूचीECTIONAL);
-	अगर (dma_mapping_error(&pdev->dev, info->dptr_baddr)) अणु
+					  DMA_BIDIRECTIONAL);
+	if (dma_mapping_error(&pdev->dev, info->dptr_baddr)) {
 		dev_err(&pdev->dev, "Mapping DPTR Failed %d\n", info->dlen);
 		ret = -EIO;
-		जाओ  scatter_gather_clean;
-	पूर्ण
+		goto  scatter_gather_clean;
+	}
 
 	/* Create and initialize RPTR */
 	info->out_buffer = kzalloc(COMPLETION_CODE_SIZE, req->may_sleep ? GFP_KERNEL : GFP_ATOMIC);
-	अगर (!info->out_buffer) अणु
+	if (!info->out_buffer) {
 		ret = -ENOMEM;
-		जाओ scatter_gather_clean;
-	पूर्ण
+		goto scatter_gather_clean;
+	}
 
 	*((u64 *)info->out_buffer) = ~((u64)COMPLETION_CODE_INIT);
 	info->alternate_caddr = (u64 *)info->out_buffer;
 	info->rptr_baddr = dma_map_single(&pdev->dev,
-					  (व्योम *)info->out_buffer,
+					  (void *)info->out_buffer,
 					  COMPLETION_CODE_SIZE,
-					  DMA_BIसूचीECTIONAL);
-	अगर (dma_mapping_error(&pdev->dev, info->rptr_baddr)) अणु
+					  DMA_BIDIRECTIONAL);
+	if (dma_mapping_error(&pdev->dev, info->rptr_baddr)) {
 		dev_err(&pdev->dev, "Mapping RPTR Failed %d\n",
 			COMPLETION_CODE_SIZE);
 		ret = -EIO;
-		जाओ  scatter_gather_clean;
-	पूर्ण
+		goto  scatter_gather_clean;
+	}
 
-	वापस 0;
+	return 0;
 
 scatter_gather_clean:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक send_cpt_command(काष्ठा cpt_vf *cptvf, जोड़ cpt_inst_s *cmd,
+static int send_cpt_command(struct cpt_vf *cptvf, union cpt_inst_s *cmd,
 		     u32 qno)
-अणु
-	काष्ठा pci_dev *pdev = cptvf->pdev;
-	काष्ठा command_qinfo *qinfo = शून्य;
-	काष्ठा command_queue *queue;
-	काष्ठा command_chunk *chunk;
+{
+	struct pci_dev *pdev = cptvf->pdev;
+	struct command_qinfo *qinfo = NULL;
+	struct command_queue *queue;
+	struct command_chunk *chunk;
 	u8 *ent;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (unlikely(qno >= cptvf->nr_queues)) अणु
+	if (unlikely(qno >= cptvf->nr_queues)) {
 		dev_err(&pdev->dev, "Invalid queue (qno: %d, nr_queues: %d)\n",
 			qno, cptvf->nr_queues);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	qinfo = &cptvf->cqinfo;
 	queue = &qinfo->queue[qno];
 	/* lock commad queue */
 	spin_lock(&queue->lock);
 	ent = &queue->qhead->head[queue->idx * qinfo->cmd_size];
-	स_नकल(ent, (व्योम *)cmd, qinfo->cmd_size);
+	memcpy(ent, (void *)cmd, qinfo->cmd_size);
 
-	अगर (++queue->idx >= queue->qhead->size / 64) अणु
-		काष्ठा hlist_node *node;
+	if (++queue->idx >= queue->qhead->size / 64) {
+		struct hlist_node *node;
 
-		hlist_क्रम_each(node, &queue->chead) अणु
-			chunk = hlist_entry(node, काष्ठा command_chunk,
+		hlist_for_each(node, &queue->chead) {
+			chunk = hlist_entry(node, struct command_chunk,
 					    nextchunk);
-			अगर (chunk == queue->qhead) अणु
-				जारी;
-			पूर्ण अन्यथा अणु
+			if (chunk == queue->qhead) {
+				continue;
+			} else {
 				queue->qhead = chunk;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 		queue->idx = 0;
-	पूर्ण
-	/* make sure all memory stores are करोne beक्रमe ringing करोorbell */
+	}
+	/* make sure all memory stores are done before ringing doorbell */
 	smp_wmb();
-	cptvf_ग_लिखो_vq_करोorbell(cptvf, 1);
+	cptvf_write_vq_doorbell(cptvf, 1);
 	/* unlock command queue */
 	spin_unlock(&queue->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम करो_request_cleanup(काष्ठा cpt_vf *cptvf,
-			काष्ठा cpt_info_buffer *info)
-अणु
-	पूर्णांक i;
-	काष्ठा pci_dev *pdev = cptvf->pdev;
-	काष्ठा cpt_request_info *req;
+static void do_request_cleanup(struct cpt_vf *cptvf,
+			struct cpt_info_buffer *info)
+{
+	int i;
+	struct pci_dev *pdev = cptvf->pdev;
+	struct cpt_request_info *req;
 
-	अगर (info->dptr_baddr)
+	if (info->dptr_baddr)
 		dma_unmap_single(&pdev->dev, info->dptr_baddr,
-				 info->dlen, DMA_BIसूचीECTIONAL);
+				 info->dlen, DMA_BIDIRECTIONAL);
 
-	अगर (info->rptr_baddr)
+	if (info->rptr_baddr)
 		dma_unmap_single(&pdev->dev, info->rptr_baddr,
-				 COMPLETION_CODE_SIZE, DMA_BIसूचीECTIONAL);
+				 COMPLETION_CODE_SIZE, DMA_BIDIRECTIONAL);
 
-	अगर (info->comp_baddr)
+	if (info->comp_baddr)
 		dma_unmap_single(&pdev->dev, info->comp_baddr,
-				 माप(जोड़ cpt_res_s), DMA_BIसूचीECTIONAL);
+				 sizeof(union cpt_res_s), DMA_BIDIRECTIONAL);
 
-	अगर (info->req) अणु
+	if (info->req) {
 		req = info->req;
-		क्रम (i = 0; i < req->outcnt; i++) अणु
-			अगर (req->out[i].dma_addr)
+		for (i = 0; i < req->outcnt; i++) {
+			if (req->out[i].dma_addr)
 				dma_unmap_single(&pdev->dev,
 						 req->out[i].dma_addr,
 						 req->out[i].size,
-						 DMA_BIसूचीECTIONAL);
-		पूर्ण
+						 DMA_BIDIRECTIONAL);
+		}
 
-		क्रम (i = 0; i < req->incnt; i++) अणु
-			अगर (req->in[i].dma_addr)
+		for (i = 0; i < req->incnt; i++) {
+			if (req->in[i].dma_addr)
 				dma_unmap_single(&pdev->dev,
 						 req->in[i].dma_addr,
 						 req->in[i].size,
-						 DMA_BIसूचीECTIONAL);
-		पूर्ण
-	पूर्ण
+						 DMA_BIDIRECTIONAL);
+		}
+	}
 
-	kमुक्त_sensitive(info->scatter_components);
-	kमुक्त_sensitive(info->gather_components);
-	kमुक्त_sensitive(info->out_buffer);
-	kमुक्त_sensitive(info->in_buffer);
-	kमुक्त_sensitive((व्योम *)info->completion_addr);
-	kमुक्त_sensitive(info);
-पूर्ण
+	kfree_sensitive(info->scatter_components);
+	kfree_sensitive(info->gather_components);
+	kfree_sensitive(info->out_buffer);
+	kfree_sensitive(info->in_buffer);
+	kfree_sensitive((void *)info->completion_addr);
+	kfree_sensitive(info);
+}
 
-अटल व्योम करो_post_process(काष्ठा cpt_vf *cptvf, काष्ठा cpt_info_buffer *info)
-अणु
-	काष्ठा pci_dev *pdev = cptvf->pdev;
+static void do_post_process(struct cpt_vf *cptvf, struct cpt_info_buffer *info)
+{
+	struct pci_dev *pdev = cptvf->pdev;
 
-	अगर (!info) अणु
+	if (!info) {
 		dev_err(&pdev->dev, "incorrect cpt_info_buffer for post processing\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	करो_request_cleanup(cptvf, info);
-पूर्ण
+	do_request_cleanup(cptvf, info);
+}
 
-अटल अंतरभूत व्योम process_pending_queue(काष्ठा cpt_vf *cptvf,
-					 काष्ठा pending_qinfo *pqinfo,
-					 पूर्णांक qno)
-अणु
-	काष्ठा pci_dev *pdev = cptvf->pdev;
-	काष्ठा pending_queue *pqueue = &pqinfo->queue[qno];
-	काष्ठा pending_entry *pentry = शून्य;
-	काष्ठा cpt_info_buffer *info = शून्य;
-	जोड़ cpt_res_s *status = शून्य;
-	अचिन्हित अक्षर ccode;
+static inline void process_pending_queue(struct cpt_vf *cptvf,
+					 struct pending_qinfo *pqinfo,
+					 int qno)
+{
+	struct pci_dev *pdev = cptvf->pdev;
+	struct pending_queue *pqueue = &pqinfo->queue[qno];
+	struct pending_entry *pentry = NULL;
+	struct cpt_info_buffer *info = NULL;
+	union cpt_res_s *status = NULL;
+	unsigned char ccode;
 
-	जबतक (1) अणु
+	while (1) {
 		spin_lock_bh(&pqueue->lock);
 		pentry = &pqueue->head[pqueue->front];
-		अगर (unlikely(!pentry->busy)) अणु
+		if (unlikely(!pentry->busy)) {
 			spin_unlock_bh(&pqueue->lock);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		info = (काष्ठा cpt_info_buffer *)pentry->post_arg;
-		अगर (unlikely(!info)) अणु
+		info = (struct cpt_info_buffer *)pentry->post_arg;
+		if (unlikely(!info)) {
 			dev_err(&pdev->dev, "Pending Entry post arg NULL\n");
 			pending_queue_inc_front(pqinfo, qno);
 			spin_unlock_bh(&pqueue->lock);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		status = (जोड़ cpt_res_s *)pentry->completion_addr;
+		status = (union cpt_res_s *)pentry->completion_addr;
 		ccode = status->s.compcode;
-		अगर ((status->s.compcode == CPT_COMP_E_FAULT) ||
-		    (status->s.compcode == CPT_COMP_E_SWERR)) अणु
+		if ((status->s.compcode == CPT_COMP_E_FAULT) ||
+		    (status->s.compcode == CPT_COMP_E_SWERR)) {
 			dev_err(&pdev->dev, "Request failed with %s\n",
 				(status->s.compcode == CPT_COMP_E_FAULT) ?
 				"DMA Fault" : "Software error");
-			pentry->completion_addr = शून्य;
+			pentry->completion_addr = NULL;
 			pentry->busy = false;
 			atomic64_dec((&pqueue->pending_count));
-			pentry->post_arg = शून्य;
+			pentry->post_arg = NULL;
 			pending_queue_inc_front(pqinfo, qno);
-			करो_request_cleanup(cptvf, info);
+			do_request_cleanup(cptvf, info);
 			spin_unlock_bh(&pqueue->lock);
-			अवरोध;
-		पूर्ण अन्यथा अगर (status->s.compcode == COMPLETION_CODE_INIT) अणु
-			/* check क्रम समयout */
-			अगर (समय_after_eq(jअगरfies,
-					  (info->समय_in +
-					  (CPT_COMMAND_TIMEOUT * HZ)))) अणु
+			break;
+		} else if (status->s.compcode == COMPLETION_CODE_INIT) {
+			/* check for timeout */
+			if (time_after_eq(jiffies,
+					  (info->time_in +
+					  (CPT_COMMAND_TIMEOUT * HZ)))) {
 				dev_err(&pdev->dev, "Request timed out");
-				pentry->completion_addr = शून्य;
+				pentry->completion_addr = NULL;
 				pentry->busy = false;
 				atomic64_dec((&pqueue->pending_count));
-				pentry->post_arg = शून्य;
+				pentry->post_arg = NULL;
 				pending_queue_inc_front(pqinfo, qno);
-				करो_request_cleanup(cptvf, info);
+				do_request_cleanup(cptvf, info);
 				spin_unlock_bh(&pqueue->lock);
-				अवरोध;
-			पूर्ण अन्यथा अगर ((*info->alternate_caddr ==
+				break;
+			} else if ((*info->alternate_caddr ==
 				(~COMPLETION_CODE_INIT)) &&
-				(info->extra_समय < TIME_IN_RESET_COUNT)) अणु
-				info->समय_in = jअगरfies;
-				info->extra_समय++;
+				(info->extra_time < TIME_IN_RESET_COUNT)) {
+				info->time_in = jiffies;
+				info->extra_time++;
 				spin_unlock_bh(&pqueue->lock);
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		pentry->completion_addr = शून्य;
+		pentry->completion_addr = NULL;
 		pentry->busy = false;
-		pentry->post_arg = शून्य;
+		pentry->post_arg = NULL;
 		atomic64_dec((&pqueue->pending_count));
 		pending_queue_inc_front(pqinfo, qno);
 		spin_unlock_bh(&pqueue->lock);
 
-		करो_post_process(info->cptvf, info);
+		do_post_process(info->cptvf, info);
 		/*
 		 * Calling callback after we find
 		 * that the request has been serviced
 		 */
 		pentry->callback(ccode, pentry->callback_arg);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक process_request(काष्ठा cpt_vf *cptvf, काष्ठा cpt_request_info *req)
-अणु
-	पूर्णांक ret = 0, clear = 0, queue = 0;
-	काष्ठा cpt_info_buffer *info = शून्य;
-	काष्ठा cptvf_request *cpt_req = शून्य;
-	जोड़ ctrl_info *ctrl = शून्य;
-	जोड़ cpt_res_s *result = शून्य;
-	काष्ठा pending_entry *pentry = शून्य;
-	काष्ठा pending_queue *pqueue = शून्य;
-	काष्ठा pci_dev *pdev = cptvf->pdev;
+int process_request(struct cpt_vf *cptvf, struct cpt_request_info *req)
+{
+	int ret = 0, clear = 0, queue = 0;
+	struct cpt_info_buffer *info = NULL;
+	struct cptvf_request *cpt_req = NULL;
+	union ctrl_info *ctrl = NULL;
+	union cpt_res_s *result = NULL;
+	struct pending_entry *pentry = NULL;
+	struct pending_queue *pqueue = NULL;
+	struct pci_dev *pdev = cptvf->pdev;
 	u8 group = 0;
-	काष्ठा cpt_vq_command vq_cmd;
-	जोड़ cpt_inst_s cptinst;
+	struct cpt_vq_command vq_cmd;
+	union cpt_inst_s cptinst;
 
-	info = kzalloc(माप(*info), req->may_sleep ? GFP_KERNEL : GFP_ATOMIC);
-	अगर (unlikely(!info)) अणु
+	info = kzalloc(sizeof(*info), req->may_sleep ? GFP_KERNEL : GFP_ATOMIC);
+	if (unlikely(!info)) {
 		dev_err(&pdev->dev, "Unable to allocate memory for info_buffer\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	cpt_req = (काष्ठा cptvf_request *)&req->req;
-	ctrl = (जोड़ ctrl_info *)&req->ctrl;
+	cpt_req = (struct cptvf_request *)&req->req;
+	ctrl = (union ctrl_info *)&req->ctrl;
 
 	info->cptvf = cptvf;
 	group = ctrl->s.grp;
 	ret = setup_sgio_list(cptvf, info, req);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Setting up SG list failed");
-		जाओ request_cleanup;
-	पूर्ण
+		goto request_cleanup;
+	}
 
 	cpt_req->dlen = info->dlen;
 	/*
-	 * Get buffer क्रम जोड़ cpt_res_s response
-	 * काष्ठाure and its physical address
+	 * Get buffer for union cpt_res_s response
+	 * structure and its physical address
 	 */
-	info->completion_addr = kzalloc(माप(जोड़ cpt_res_s), req->may_sleep ? GFP_KERNEL : GFP_ATOMIC);
-	अगर (unlikely(!info->completion_addr)) अणु
+	info->completion_addr = kzalloc(sizeof(union cpt_res_s), req->may_sleep ? GFP_KERNEL : GFP_ATOMIC);
+	if (unlikely(!info->completion_addr)) {
 		dev_err(&pdev->dev, "Unable to allocate memory for completion_addr\n");
 		ret = -ENOMEM;
-		जाओ request_cleanup;
-	पूर्ण
+		goto request_cleanup;
+	}
 
-	result = (जोड़ cpt_res_s *)info->completion_addr;
+	result = (union cpt_res_s *)info->completion_addr;
 	result->s.compcode = COMPLETION_CODE_INIT;
 	info->comp_baddr = dma_map_single(&pdev->dev,
-					       (व्योम *)info->completion_addr,
-					       माप(जोड़ cpt_res_s),
-					       DMA_BIसूचीECTIONAL);
-	अगर (dma_mapping_error(&pdev->dev, info->comp_baddr)) अणु
+					       (void *)info->completion_addr,
+					       sizeof(union cpt_res_s),
+					       DMA_BIDIRECTIONAL);
+	if (dma_mapping_error(&pdev->dev, info->comp_baddr)) {
 		dev_err(&pdev->dev, "mapping compptr Failed %lu\n",
-			माप(जोड़ cpt_res_s));
+			sizeof(union cpt_res_s));
 		ret = -EFAULT;
-		जाओ  request_cleanup;
-	पूर्ण
+		goto  request_cleanup;
+	}
 
 	/* Fill the VQ command */
 	vq_cmd.cmd.u64 = 0;
@@ -480,30 +479,30 @@ scatter_gather_clean:
 	queue = 0;
 	pqueue = &cptvf->pqinfo.queue[queue];
 
-	अगर (atomic64_पढ़ो(&pqueue->pending_count) > PENDING_THOLD) अणु
+	if (atomic64_read(&pqueue->pending_count) > PENDING_THOLD) {
 		dev_err(&pdev->dev, "pending threshold reached\n");
 		process_pending_queue(cptvf, &cptvf->pqinfo, queue);
-	पूर्ण
+	}
 
 get_pending_entry:
 	spin_lock_bh(&pqueue->lock);
-	pentry = get_मुक्त_pending_entry(pqueue, cptvf->pqinfo.qlen);
-	अगर (unlikely(!pentry)) अणु
+	pentry = get_free_pending_entry(pqueue, cptvf->pqinfo.qlen);
+	if (unlikely(!pentry)) {
 		spin_unlock_bh(&pqueue->lock);
-		अगर (clear == 0) अणु
+		if (clear == 0) {
 			process_pending_queue(cptvf, &cptvf->pqinfo, queue);
 			clear = 1;
-			जाओ get_pending_entry;
-		पूर्ण
+			goto get_pending_entry;
+		}
 		dev_err(&pdev->dev, "Get free entry failed\n");
 		dev_err(&pdev->dev, "queue: %d, rear: %d, front: %d\n",
 			queue, pqueue->rear, pqueue->front);
 		ret = -EFAULT;
-		जाओ request_cleanup;
-	पूर्ण
+		goto request_cleanup;
+	}
 
 	pentry->completion_addr = info->completion_addr;
-	pentry->post_arg = (व्योम *)info;
+	pentry->post_arg = (void *)info;
 	pentry->callback = req->callback;
 	pentry->callback_arg = req->callback_arg;
 	info->pentry = pentry;
@@ -512,11 +511,11 @@ get_pending_entry:
 
 	/* Send CPT command */
 	info->pentry = pentry;
-	info->समय_in = jअगरfies;
+	info->time_in = jiffies;
 	info->req = req;
 
-	/* Create the CPT_INST_S type command क्रम HW पूर्णांकrepretation */
-	cptinst.s.करोneपूर्णांक = true;
+	/* Create the CPT_INST_S type command for HW intrepretation */
+	cptinst.s.doneint = true;
 	cptinst.s.res_addr = (u64)info->comp_baddr;
 	cptinst.s.tag = 0;
 	cptinst.s.grp = 0;
@@ -528,53 +527,53 @@ get_pending_entry:
 
 	ret = send_cpt_command(cptvf, &cptinst, queue);
 	spin_unlock_bh(&pqueue->lock);
-	अगर (unlikely(ret)) अणु
+	if (unlikely(ret)) {
 		dev_err(&pdev->dev, "Send command failed for AE\n");
 		ret = -EFAULT;
-		जाओ request_cleanup;
-	पूर्ण
+		goto request_cleanup;
+	}
 
-	वापस 0;
+	return 0;
 
 request_cleanup:
 	dev_dbg(&pdev->dev, "Failed to submit CPT command\n");
-	करो_request_cleanup(cptvf, info);
+	do_request_cleanup(cptvf, info);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम vq_post_process(काष्ठा cpt_vf *cptvf, u32 qno)
-अणु
-	काष्ठा pci_dev *pdev = cptvf->pdev;
+void vq_post_process(struct cpt_vf *cptvf, u32 qno)
+{
+	struct pci_dev *pdev = cptvf->pdev;
 
-	अगर (unlikely(qno > cptvf->nr_queues)) अणु
+	if (unlikely(qno > cptvf->nr_queues)) {
 		dev_err(&pdev->dev, "Request for post processing on invalid pending queue: %u\n",
 			qno);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	process_pending_queue(cptvf, &cptvf->pqinfo, qno);
-पूर्ण
+}
 
-पूर्णांक cptvf_करो_request(व्योम *vfdev, काष्ठा cpt_request_info *req)
-अणु
-	काष्ठा cpt_vf *cptvf = (काष्ठा cpt_vf *)vfdev;
-	काष्ठा pci_dev *pdev = cptvf->pdev;
+int cptvf_do_request(void *vfdev, struct cpt_request_info *req)
+{
+	struct cpt_vf *cptvf = (struct cpt_vf *)vfdev;
+	struct pci_dev *pdev = cptvf->pdev;
 
-	अगर (!cpt_device_पढ़ोy(cptvf)) अणु
+	if (!cpt_device_ready(cptvf)) {
 		dev_err(&pdev->dev, "CPT Device is not ready");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर ((cptvf->vftype == SE_TYPES) && (!req->ctrl.s.se_req)) अणु
+	if ((cptvf->vftype == SE_TYPES) && (!req->ctrl.s.se_req)) {
 		dev_err(&pdev->dev, "CPTVF-%d of SE TYPE got AE request",
 			cptvf->vfid);
-		वापस -EINVAL;
-	पूर्ण अन्यथा अगर ((cptvf->vftype == AE_TYPES) && (req->ctrl.s.se_req)) अणु
+		return -EINVAL;
+	} else if ((cptvf->vftype == AE_TYPES) && (req->ctrl.s.se_req)) {
 		dev_err(&pdev->dev, "CPTVF-%d of AE TYPE got SE request",
 			cptvf->vfid);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस process_request(cptvf, req);
-पूर्ण
+	return process_request(cptvf, req);
+}

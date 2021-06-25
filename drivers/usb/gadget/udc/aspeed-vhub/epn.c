@@ -1,122 +1,121 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * aspeed-vhub -- Driver क्रम Aspeed SoC "vHub" USB gadget
+ * aspeed-vhub -- Driver for Aspeed SoC "vHub" USB gadget
  *
- * epn.c - Generic endpoपूर्णांकs management
+ * epn.c - Generic endpoints management
  *
  * Copyright 2017 IBM Corporation
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/list.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/prefetch.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/usb/gadget.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/regmap.h>
-#समावेश <linux/dma-mapping.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/delay.h>
+#include <linux/ioport.h>
+#include <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/list.h>
+#include <linux/interrupt.h>
+#include <linux/proc_fs.h>
+#include <linux/prefetch.h>
+#include <linux/clk.h>
+#include <linux/usb/gadget.h>
+#include <linux/of.h>
+#include <linux/of_gpio.h>
+#include <linux/regmap.h>
+#include <linux/dma-mapping.h>
 
-#समावेश "vhub.h"
+#include "vhub.h"
 
-#घोषणा EXTRA_CHECKS
+#define EXTRA_CHECKS
 
-#अगर_घोषित EXTRA_CHECKS
-#घोषणा CHECK(ep, expr, fmt...)					\
-	करो अणु							\
-		अगर (!(expr)) EPDBG(ep, "CHECK:" fmt);		\
-	पूर्ण जबतक(0)
-#अन्यथा
-#घोषणा CHECK(ep, expr, fmt...)	करो अणु पूर्ण जबतक(0)
-#पूर्ण_अगर
+#ifdef EXTRA_CHECKS
+#define CHECK(ep, expr, fmt...)					\
+	do {							\
+		if (!(expr)) EPDBG(ep, "CHECK:" fmt);		\
+	} while(0)
+#else
+#define CHECK(ep, expr, fmt...)	do { } while(0)
+#endif
 
-अटल व्योम ast_vhub_epn_kick(काष्ठा ast_vhub_ep *ep, काष्ठा ast_vhub_req *req)
-अणु
-	अचिन्हित पूर्णांक act = req->req.actual;
-	अचिन्हित पूर्णांक len = req->req.length;
-	अचिन्हित पूर्णांक chunk;
+static void ast_vhub_epn_kick(struct ast_vhub_ep *ep, struct ast_vhub_req *req)
+{
+	unsigned int act = req->req.actual;
+	unsigned int len = req->req.length;
+	unsigned int chunk;
 
 	/* There should be no DMA ongoing */
 	WARN_ON(req->active);
 
 	/* Calculate next chunk size */
 	chunk = len - act;
-	अगर (chunk > ep->ep.maxpacket)
+	if (chunk > ep->ep.maxpacket)
 		chunk = ep->ep.maxpacket;
-	अन्यथा अगर ((chunk < ep->ep.maxpacket) || !req->req.zero)
+	else if ((chunk < ep->ep.maxpacket) || !req->req.zero)
 		req->last_desc = 1;
 
 	EPVDBG(ep, "kick req %p act=%d/%d chunk=%d last=%d\n",
 	       req, act, len, chunk, req->last_desc);
 
 	/* If DMA unavailable, using staging EP buffer */
-	अगर (!req->req.dma) अणु
+	if (!req->req.dma) {
 
 		/* For IN transfers, copy data over first */
-		अगर (ep->epn.is_in) अणु
-			स_नकल(ep->buf, req->req.buf + act, chunk);
+		if (ep->epn.is_in) {
+			memcpy(ep->buf, req->req.buf + act, chunk);
 			vhub_dma_workaround(ep->buf);
-		पूर्ण
-		ग_लिखोl(ep->buf_dma, ep->epn.regs + AST_VHUB_EP_DESC_BASE);
-	पूर्ण अन्यथा अणु
-		अगर (ep->epn.is_in)
+		}
+		writel(ep->buf_dma, ep->epn.regs + AST_VHUB_EP_DESC_BASE);
+	} else {
+		if (ep->epn.is_in)
 			vhub_dma_workaround(req->req.buf);
-		ग_लिखोl(req->req.dma + act, ep->epn.regs + AST_VHUB_EP_DESC_BASE);
-	पूर्ण
+		writel(req->req.dma + act, ep->epn.regs + AST_VHUB_EP_DESC_BASE);
+	}
 
 	/* Start DMA */
 	req->active = true;
-	ग_लिखोl(VHUB_EP_DMA_SET_TX_SIZE(chunk),
+	writel(VHUB_EP_DMA_SET_TX_SIZE(chunk),
 	       ep->epn.regs + AST_VHUB_EP_DESC_STATUS);
-	ग_लिखोl(VHUB_EP_DMA_SET_TX_SIZE(chunk) | VHUB_EP_DMA_SINGLE_KICK,
+	writel(VHUB_EP_DMA_SET_TX_SIZE(chunk) | VHUB_EP_DMA_SINGLE_KICK,
 	       ep->epn.regs + AST_VHUB_EP_DESC_STATUS);
-पूर्ण
+}
 
-अटल व्योम ast_vhub_epn_handle_ack(काष्ठा ast_vhub_ep *ep)
-अणु
-	काष्ठा ast_vhub_req *req;
-	अचिन्हित पूर्णांक len;
+static void ast_vhub_epn_handle_ack(struct ast_vhub_ep *ep)
+{
+	struct ast_vhub_req *req;
+	unsigned int len;
 	u32 stat;
 
 	/* Read EP status */
-	stat = पढ़ोl(ep->epn.regs + AST_VHUB_EP_DESC_STATUS);
+	stat = readl(ep->epn.regs + AST_VHUB_EP_DESC_STATUS);
 
-	/* Grab current request अगर any */
-	req = list_first_entry_or_null(&ep->queue, काष्ठा ast_vhub_req, queue);
+	/* Grab current request if any */
+	req = list_first_entry_or_null(&ep->queue, struct ast_vhub_req, queue);
 
 	EPVDBG(ep, "ACK status=%08x is_in=%d, req=%p (active=%d)\n",
 	       stat, ep->epn.is_in, req, req ? req->active : 0);
 
-	/* In असलence of a request, bail out, must have been dequeued */
-	अगर (!req)
-		वापस;
+	/* In absence of a request, bail out, must have been dequeued */
+	if (!req)
+		return;
 
 	/*
 	 * Request not active, move on to processing queue, active request
 	 * was probably dequeued
 	 */
-	अगर (!req->active)
-		जाओ next_chunk;
+	if (!req->active)
+		goto next_chunk;
 
-	/* Check अगर HW has moved on */
-	अगर (VHUB_EP_DMA_RPTR(stat) != 0) अणु
+	/* Check if HW has moved on */
+	if (VHUB_EP_DMA_RPTR(stat) != 0) {
 		EPDBG(ep, "DMA read pointer not 0 !\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* No current DMA ongoing */
 	req->active = false;
@@ -124,151 +123,151 @@
 	/* Grab length out of HW */
 	len = VHUB_EP_DMA_TX_SIZE(stat);
 
-	/* If not using DMA, copy data out अगर needed */
-	अगर (!req->req.dma && !ep->epn.is_in && len)
-		स_नकल(req->req.buf + req->req.actual, ep->buf, len);
+	/* If not using DMA, copy data out if needed */
+	if (!req->req.dma && !ep->epn.is_in && len)
+		memcpy(req->req.buf + req->req.actual, ep->buf, len);
 
 	/* Adjust size */
 	req->req.actual += len;
 
-	/* Check क्रम लघु packet */
-	अगर (len < ep->ep.maxpacket)
+	/* Check for short packet */
+	if (len < ep->ep.maxpacket)
 		req->last_desc = 1;
 
 	/* That's it ? complete the request and pick a new one */
-	अगर (req->last_desc >= 0) अणु
-		ast_vhub_करोne(ep, req, 0);
-		req = list_first_entry_or_null(&ep->queue, काष्ठा ast_vhub_req,
+	if (req->last_desc >= 0) {
+		ast_vhub_done(ep, req, 0);
+		req = list_first_entry_or_null(&ep->queue, struct ast_vhub_req,
 					       queue);
 
 		/*
 		 * Due to lock dropping inside "done" the next request could
-		 * alपढ़ोy be active, so check क्रम that and bail अगर needed.
+		 * already be active, so check for that and bail if needed.
 		 */
-		अगर (!req || req->active)
-			वापस;
-	पूर्ण
+		if (!req || req->active)
+			return;
+	}
 
  next_chunk:
 	ast_vhub_epn_kick(ep, req);
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक ast_vhub_count_मुक्त_descs(काष्ठा ast_vhub_ep *ep)
-अणु
+static inline unsigned int ast_vhub_count_free_descs(struct ast_vhub_ep *ep)
+{
 	/*
 	 * d_next == d_last means descriptor list empty to HW,
 	 * thus we can only have AST_VHUB_DESCS_COUNT-1 descriptors
 	 * in the list
 	 */
-	वापस (ep->epn.d_last + AST_VHUB_DESCS_COUNT - ep->epn.d_next - 1) &
+	return (ep->epn.d_last + AST_VHUB_DESCS_COUNT - ep->epn.d_next - 1) &
 		(AST_VHUB_DESCS_COUNT - 1);
-पूर्ण
+}
 
-अटल व्योम ast_vhub_epn_kick_desc(काष्ठा ast_vhub_ep *ep,
-				   काष्ठा ast_vhub_req *req)
-अणु
-	काष्ठा ast_vhub_desc *desc = शून्य;
-	अचिन्हित पूर्णांक act = req->act_count;
-	अचिन्हित पूर्णांक len = req->req.length;
-	अचिन्हित पूर्णांक chunk;
+static void ast_vhub_epn_kick_desc(struct ast_vhub_ep *ep,
+				   struct ast_vhub_req *req)
+{
+	struct ast_vhub_desc *desc = NULL;
+	unsigned int act = req->act_count;
+	unsigned int len = req->req.length;
+	unsigned int chunk;
 
-	/* Mark request active अगर not alपढ़ोy */
+	/* Mark request active if not already */
 	req->active = true;
 
-	/* If the request was alपढ़ोy completely written, करो nothing */
-	अगर (req->last_desc >= 0)
-		वापस;
+	/* If the request was already completely written, do nothing */
+	if (req->last_desc >= 0)
+		return;
 
 	EPVDBG(ep, "kick act=%d/%d chunk_max=%d free_descs=%d\n",
-	       act, len, ep->epn.chunk_max, ast_vhub_count_मुक्त_descs(ep));
+	       act, len, ep->epn.chunk_max, ast_vhub_count_free_descs(ep));
 
 	/* While we can create descriptors */
-	जबतक (ast_vhub_count_मुक्त_descs(ep) && req->last_desc < 0) अणु
-		अचिन्हित पूर्णांक d_num;
+	while (ast_vhub_count_free_descs(ep) && req->last_desc < 0) {
+		unsigned int d_num;
 
-		/* Grab next मुक्त descriptor */
+		/* Grab next free descriptor */
 		d_num = ep->epn.d_next;
 		desc = &ep->epn.descs[d_num];
 		ep->epn.d_next = (d_num + 1) & (AST_VHUB_DESCS_COUNT - 1);
 
 		/* Calculate next chunk size */
 		chunk = len - act;
-		अगर (chunk <= ep->epn.chunk_max) अणु
+		if (chunk <= ep->epn.chunk_max) {
 			/*
 			 * Is this the last packet ? Because of having up to 8
 			 * packets in a descriptor we can't just compare "chunk"
-			 * with ep.maxpacket. We have to see अगर it's a multiple
-			 * of it to know अगर we have to send a zero packet.
+			 * with ep.maxpacket. We have to see if it's a multiple
+			 * of it to know if we have to send a zero packet.
 			 * Sadly that involves a modulo which is a bit expensive
-			 * but probably still better than not करोing it.
+			 * but probably still better than not doing it.
 			 */
-			अगर (!chunk || !req->req.zero || (chunk % ep->ep.maxpacket) != 0)
+			if (!chunk || !req->req.zero || (chunk % ep->ep.maxpacket) != 0)
 				req->last_desc = d_num;
-		पूर्ण अन्यथा अणु
+		} else {
 			chunk = ep->epn.chunk_max;
-		पूर्ण
+		}
 
 		EPVDBG(ep, " chunk: act=%d/%d chunk=%d last=%d desc=%d free=%d\n",
 		       act, len, chunk, req->last_desc, d_num,
-		       ast_vhub_count_मुक्त_descs(ep));
+		       ast_vhub_count_free_descs(ep));
 
 		/* Populate descriptor */
 		desc->w0 = cpu_to_le32(req->req.dma + act);
 
-		/* Interrupt अगर end of request or no more descriptors */
+		/* Interrupt if end of request or no more descriptors */
 
 		/*
-		 * TODO: Be smarter about it, अगर we करोn't have enough
-		 * descriptors request an पूर्णांकerrupt beक्रमe queue empty
-		 * or so in order to be able to populate more beक्रमe
+		 * TODO: Be smarter about it, if we don't have enough
+		 * descriptors request an interrupt before queue empty
+		 * or so in order to be able to populate more before
 		 * the HW runs out. This isn't a problem at the moment
 		 * as we use 256 descriptors and only put at most one
 		 * request in the ring.
 		 */
 		desc->w1 = cpu_to_le32(VHUB_DSC1_IN_SET_LEN(chunk));
-		अगर (req->last_desc >= 0 || !ast_vhub_count_मुक्त_descs(ep))
+		if (req->last_desc >= 0 || !ast_vhub_count_free_descs(ep))
 			desc->w1 |= cpu_to_le32(VHUB_DSC1_IN_INTERRUPT);
 
 		/* Account packet */
 		req->act_count = act = act + chunk;
-	पूर्ण
+	}
 
-	अगर (likely(desc))
+	if (likely(desc))
 		vhub_dma_workaround(desc);
 
 	/* Tell HW about new descriptors */
-	ग_लिखोl(VHUB_EP_DMA_SET_CPU_WPTR(ep->epn.d_next),
+	writel(VHUB_EP_DMA_SET_CPU_WPTR(ep->epn.d_next),
 	       ep->epn.regs + AST_VHUB_EP_DESC_STATUS);
 
 	EPVDBG(ep, "HW kicked, d_next=%d dstat=%08x\n",
-	       ep->epn.d_next, पढ़ोl(ep->epn.regs + AST_VHUB_EP_DESC_STATUS));
-पूर्ण
+	       ep->epn.d_next, readl(ep->epn.regs + AST_VHUB_EP_DESC_STATUS));
+}
 
-अटल व्योम ast_vhub_epn_handle_ack_desc(काष्ठा ast_vhub_ep *ep)
-अणु
-	काष्ठा ast_vhub_req *req;
-	अचिन्हित पूर्णांक len, d_last;
+static void ast_vhub_epn_handle_ack_desc(struct ast_vhub_ep *ep)
+{
+	struct ast_vhub_req *req;
+	unsigned int len, d_last;
 	u32 stat, stat1;
 
 	/* Read EP status, workaround HW race */
-	करो अणु
-		stat = पढ़ोl(ep->epn.regs + AST_VHUB_EP_DESC_STATUS);
-		stat1 = पढ़ोl(ep->epn.regs + AST_VHUB_EP_DESC_STATUS);
-	पूर्ण जबतक(stat != stat1);
+	do {
+		stat = readl(ep->epn.regs + AST_VHUB_EP_DESC_STATUS);
+		stat1 = readl(ep->epn.regs + AST_VHUB_EP_DESC_STATUS);
+	} while(stat != stat1);
 
 	/* Extract RPTR */
 	d_last = VHUB_EP_DMA_RPTR(stat);
 
-	/* Grab current request अगर any */
-	req = list_first_entry_or_null(&ep->queue, काष्ठा ast_vhub_req, queue);
+	/* Grab current request if any */
+	req = list_first_entry_or_null(&ep->queue, struct ast_vhub_req, queue);
 
 	EPVDBG(ep, "ACK status=%08x is_in=%d ep->d_last=%d..%d\n",
 	       stat, ep->epn.is_in, ep->epn.d_last, d_last);
 
 	/* Check all completed descriptors */
-	जबतक (ep->epn.d_last != d_last) अणु
-		काष्ठा ast_vhub_desc *desc;
-		अचिन्हित पूर्णांक d_num;
+	while (ep->epn.d_last != d_last) {
+		struct ast_vhub_desc *desc;
+		unsigned int d_num;
 		bool is_last_desc;
 
 		/* Grab next completed descriptor */
@@ -283,8 +282,8 @@
 		       d_num, len, req, req ? req->active : 0);
 
 		/* If no active request pending, move on */
-		अगर (!req || !req->active)
-			जारी;
+		if (!req || !req->active)
+			continue;
 
 		/* Adjust size */
 		req->req.actual += len;
@@ -299,9 +298,9 @@
 		      is_last_desc, len, req->req.actual, req->req.length,
 		      req->req.zero, ep->ep.maxpacket);
 
-		अगर (is_last_desc) अणु
+		if (is_last_desc) {
 			/*
-			 * Because we can only have one request at a समय
+			 * Because we can only have one request at a time
 			 * in our descriptor list in this implementation,
 			 * d_last and ep->d_last should now be equal
 			 */
@@ -309,88 +308,88 @@
 			      "DMA read ptr mismatch %d vs %d\n",
 			      d_last, ep->epn.d_last);
 
-			/* Note: करोne will drop and re-acquire the lock */
-			ast_vhub_करोne(ep, req, 0);
+			/* Note: done will drop and re-acquire the lock */
+			ast_vhub_done(ep, req, 0);
 			req = list_first_entry_or_null(&ep->queue,
-						       काष्ठा ast_vhub_req,
+						       struct ast_vhub_req,
 						       queue);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	/* More work ? */
-	अगर (req)
+	if (req)
 		ast_vhub_epn_kick_desc(ep, req);
-पूर्ण
+}
 
-व्योम ast_vhub_epn_ack_irq(काष्ठा ast_vhub_ep *ep)
-अणु
-	अगर (ep->epn.desc_mode)
+void ast_vhub_epn_ack_irq(struct ast_vhub_ep *ep)
+{
+	if (ep->epn.desc_mode)
 		ast_vhub_epn_handle_ack_desc(ep);
-	अन्यथा
+	else
 		ast_vhub_epn_handle_ack(ep);
-पूर्ण
+}
 
-अटल पूर्णांक ast_vhub_epn_queue(काष्ठा usb_ep* u_ep, काष्ठा usb_request *u_req,
+static int ast_vhub_epn_queue(struct usb_ep* u_ep, struct usb_request *u_req,
 			      gfp_t gfp_flags)
-अणु
-	काष्ठा ast_vhub_req *req = to_ast_req(u_req);
-	काष्ठा ast_vhub_ep *ep = to_ast_ep(u_ep);
-	काष्ठा ast_vhub *vhub = ep->vhub;
-	अचिन्हित दीर्घ flags;
+{
+	struct ast_vhub_req *req = to_ast_req(u_req);
+	struct ast_vhub_ep *ep = to_ast_ep(u_ep);
+	struct ast_vhub *vhub = ep->vhub;
+	unsigned long flags;
 	bool empty;
-	पूर्णांक rc;
+	int rc;
 
 	/* Paranoid checks */
-	अगर (!u_req || !u_req->complete || !u_req->buf) अणु
+	if (!u_req || !u_req->complete || !u_req->buf) {
 		dev_warn(&vhub->pdev->dev, "Bogus EPn request ! u_req=%p\n", u_req);
-		अगर (u_req) अणु
+		if (u_req) {
 			dev_warn(&vhub->pdev->dev, "complete=%p internal=%d\n",
-				 u_req->complete, req->पूर्णांकernal);
-		पूर्ण
-		वापस -EINVAL;
-	पूर्ण
+				 u_req->complete, req->internal);
+		}
+		return -EINVAL;
+	}
 
-	/* Endpoपूर्णांक enabled ? */
-	अगर (!ep->epn.enabled || !u_ep->desc || !ep->dev || !ep->d_idx ||
-	    !ep->dev->enabled) अणु
+	/* Endpoint enabled ? */
+	if (!ep->epn.enabled || !u_ep->desc || !ep->dev || !ep->d_idx ||
+	    !ep->dev->enabled) {
 		EPDBG(ep, "Enqueuing request on wrong or disabled EP\n");
-		वापस -ESHUTDOWN;
-	पूर्ण
+		return -ESHUTDOWN;
+	}
 
-	/* Map request क्रम DMA अगर possible. For now, the rule क्रम DMA is
+	/* Map request for DMA if possible. For now, the rule for DMA is
 	 * that:
 	 *
 	 *  * For single stage mode (no descriptors):
 	 *
 	 *   - The buffer is aligned to a 8 bytes boundary (HW requirement)
-	 *   - For a OUT endpoपूर्णांक, the request size is a multiple of the EP
+	 *   - For a OUT endpoint, the request size is a multiple of the EP
 	 *     packet size (otherwise the controller will DMA past the end
-	 *     of the buffer अगर the host is sending a too दीर्घ packet).
+	 *     of the buffer if the host is sending a too long packet).
 	 *
-	 *  * For descriptor mode (tx only क्रम now), always.
+	 *  * For descriptor mode (tx only for now), always.
 	 *
 	 * We could relax the latter by making the decision to use the bounce
 	 * buffer based on the size of a given *segment* of the request rather
 	 * than the whole request.
 	 */
-	अगर (ep->epn.desc_mode ||
-	    ((((अचिन्हित दीर्घ)u_req->buf & 7) == 0) &&
-	     (ep->epn.is_in || !(u_req->length & (u_ep->maxpacket - 1))))) अणु
+	if (ep->epn.desc_mode ||
+	    ((((unsigned long)u_req->buf & 7) == 0) &&
+	     (ep->epn.is_in || !(u_req->length & (u_ep->maxpacket - 1))))) {
 		rc = usb_gadget_map_request_by_dev(&vhub->pdev->dev, u_req,
 					    ep->epn.is_in);
-		अगर (rc) अणु
+		if (rc) {
 			dev_warn(&vhub->pdev->dev,
 				 "Request mapping failure %d\n", rc);
-			वापस rc;
-		पूर्ण
-	पूर्ण अन्यथा
+			return rc;
+		}
+	} else
 		u_req->dma = 0;
 
 	EPVDBG(ep, "enqueue req @%p\n", req);
 	EPVDBG(ep, " l=%d dma=0x%x zero=%d noshort=%d noirq=%d is_in=%d\n",
 	       u_req->length, (u32)u_req->dma, u_req->zero,
-	       u_req->लघु_not_ok, u_req->no_पूर्णांकerrupt,
+	       u_req->short_not_ok, u_req->no_interrupt,
 	       ep->epn.is_in);
 
 	/* Initialize request progress fields */
@@ -402,166 +401,166 @@
 	spin_lock_irqsave(&vhub->lock, flags);
 	empty = list_empty(&ep->queue);
 
-	/* Add request to list and kick processing अगर empty */
+	/* Add request to list and kick processing if empty */
 	list_add_tail(&req->queue, &ep->queue);
-	अगर (empty) अणु
-		अगर (ep->epn.desc_mode)
+	if (empty) {
+		if (ep->epn.desc_mode)
 			ast_vhub_epn_kick_desc(ep, req);
-		अन्यथा
+		else
 			ast_vhub_epn_kick(ep, req);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&vhub->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ast_vhub_stop_active_req(काष्ठा ast_vhub_ep *ep,
+static void ast_vhub_stop_active_req(struct ast_vhub_ep *ep,
 				     bool restart_ep)
-अणु
+{
 	u32 state, reg, loops;
 
 	/* Stop DMA activity */
-	अगर (ep->epn.desc_mode)
-		ग_लिखोl(VHUB_EP_DMA_CTRL_RESET, ep->epn.regs + AST_VHUB_EP_DMA_CTLSTAT);
-	अन्यथा
-		ग_लिखोl(0, ep->epn.regs + AST_VHUB_EP_DMA_CTLSTAT);
+	if (ep->epn.desc_mode)
+		writel(VHUB_EP_DMA_CTRL_RESET, ep->epn.regs + AST_VHUB_EP_DMA_CTLSTAT);
+	else
+		writel(0, ep->epn.regs + AST_VHUB_EP_DMA_CTLSTAT);
 
-	/* Wait क्रम it to complete */
-	क्रम (loops = 0; loops < 1000; loops++) अणु
-		state = पढ़ोl(ep->epn.regs + AST_VHUB_EP_DMA_CTLSTAT);
+	/* Wait for it to complete */
+	for (loops = 0; loops < 1000; loops++) {
+		state = readl(ep->epn.regs + AST_VHUB_EP_DMA_CTLSTAT);
 		state = VHUB_EP_DMA_PROC_STATUS(state);
-		अगर (state == EP_DMA_PROC_RX_IDLE ||
+		if (state == EP_DMA_PROC_RX_IDLE ||
 		    state == EP_DMA_PROC_TX_IDLE)
-			अवरोध;
+			break;
 		udelay(1);
-	पूर्ण
-	अगर (loops >= 1000)
+	}
+	if (loops >= 1000)
 		dev_warn(&ep->vhub->pdev->dev, "Timeout waiting for DMA\n");
 
-	/* If we करोn't have to restart the endpoint, that's it */
-	अगर (!restart_ep)
-		वापस;
+	/* If we don't have to restart the endpoint, that's it */
+	if (!restart_ep)
+		return;
 
-	/* Restart the endpoपूर्णांक */
-	अगर (ep->epn.desc_mode) अणु
+	/* Restart the endpoint */
+	if (ep->epn.desc_mode) {
 		/*
-		 * Take out descriptors by resetting the DMA पढ़ो
-		 * poपूर्णांकer to be equal to the CPU ग_लिखो poपूर्णांकer.
+		 * Take out descriptors by resetting the DMA read
+		 * pointer to be equal to the CPU write pointer.
 		 *
-		 * Note: If we ever support creating descriptors क्रम
+		 * Note: If we ever support creating descriptors for
 		 * requests that aren't the head of the queue, we
-		 * may have to करो something more complex here,
-		 * especially अगर the request being taken out is
+		 * may have to do something more complex here,
+		 * especially if the request being taken out is
 		 * not the current head descriptors.
 		 */
 		reg = VHUB_EP_DMA_SET_RPTR(ep->epn.d_next) |
 			VHUB_EP_DMA_SET_CPU_WPTR(ep->epn.d_next);
-		ग_लिखोl(reg, ep->epn.regs + AST_VHUB_EP_DESC_STATUS);
+		writel(reg, ep->epn.regs + AST_VHUB_EP_DESC_STATUS);
 
 		/* Then turn it back on */
-		ग_लिखोl(ep->epn.dma_conf,
+		writel(ep->epn.dma_conf,
 		       ep->epn.regs + AST_VHUB_EP_DMA_CTLSTAT);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Single mode: just turn it back on */
-		ग_लिखोl(ep->epn.dma_conf,
+		writel(ep->epn.dma_conf,
 		       ep->epn.regs + AST_VHUB_EP_DMA_CTLSTAT);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ast_vhub_epn_dequeue(काष्ठा usb_ep* u_ep, काष्ठा usb_request *u_req)
-अणु
-	काष्ठा ast_vhub_ep *ep = to_ast_ep(u_ep);
-	काष्ठा ast_vhub *vhub = ep->vhub;
-	काष्ठा ast_vhub_req *req;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc = -EINVAL;
+static int ast_vhub_epn_dequeue(struct usb_ep* u_ep, struct usb_request *u_req)
+{
+	struct ast_vhub_ep *ep = to_ast_ep(u_ep);
+	struct ast_vhub *vhub = ep->vhub;
+	struct ast_vhub_req *req;
+	unsigned long flags;
+	int rc = -EINVAL;
 
 	spin_lock_irqsave(&vhub->lock, flags);
 
-	/* Make sure it's actually queued on this endpoपूर्णांक */
-	list_क्रम_each_entry (req, &ep->queue, queue) अणु
-		अगर (&req->req == u_req)
-			अवरोध;
-	पूर्ण
+	/* Make sure it's actually queued on this endpoint */
+	list_for_each_entry (req, &ep->queue, queue) {
+		if (&req->req == u_req)
+			break;
+	}
 
-	अगर (&req->req == u_req) अणु
+	if (&req->req == u_req) {
 		EPVDBG(ep, "dequeue req @%p active=%d\n",
 		       req, req->active);
-		अगर (req->active)
+		if (req->active)
 			ast_vhub_stop_active_req(ep, true);
-		ast_vhub_करोne(ep, req, -ECONNRESET);
+		ast_vhub_done(ep, req, -ECONNRESET);
 		rc = 0;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&vhub->lock, flags);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-व्योम ast_vhub_update_epn_stall(काष्ठा ast_vhub_ep *ep)
-अणु
+void ast_vhub_update_epn_stall(struct ast_vhub_ep *ep)
+{
 	u32 reg;
 
-	अगर (WARN_ON(ep->d_idx == 0))
-		वापस;
-	reg = पढ़ोl(ep->epn.regs + AST_VHUB_EP_CONFIG);
-	अगर (ep->epn.stalled || ep->epn.wedged)
+	if (WARN_ON(ep->d_idx == 0))
+		return;
+	reg = readl(ep->epn.regs + AST_VHUB_EP_CONFIG);
+	if (ep->epn.stalled || ep->epn.wedged)
 		reg |= VHUB_EP_CFG_STALL_CTRL;
-	अन्यथा
+	else
 		reg &= ~VHUB_EP_CFG_STALL_CTRL;
-	ग_लिखोl(reg, ep->epn.regs + AST_VHUB_EP_CONFIG);
+	writel(reg, ep->epn.regs + AST_VHUB_EP_CONFIG);
 
-	अगर (!ep->epn.stalled && !ep->epn.wedged)
-		ग_लिखोl(VHUB_EP_TOGGLE_SET_EPNUM(ep->epn.g_idx),
+	if (!ep->epn.stalled && !ep->epn.wedged)
+		writel(VHUB_EP_TOGGLE_SET_EPNUM(ep->epn.g_idx),
 		       ep->vhub->regs + AST_VHUB_EP_TOGGLE);
-पूर्ण
+}
 
-अटल पूर्णांक ast_vhub_set_halt_and_wedge(काष्ठा usb_ep* u_ep, bool halt,
+static int ast_vhub_set_halt_and_wedge(struct usb_ep* u_ep, bool halt,
 				      bool wedge)
-अणु
-	काष्ठा ast_vhub_ep *ep = to_ast_ep(u_ep);
-	काष्ठा ast_vhub *vhub = ep->vhub;
-	अचिन्हित दीर्घ flags;
+{
+	struct ast_vhub_ep *ep = to_ast_ep(u_ep);
+	struct ast_vhub *vhub = ep->vhub;
+	unsigned long flags;
 
 	EPDBG(ep, "Set halt (%d) & wedge (%d)\n", halt, wedge);
 
-	अगर (!u_ep || !u_ep->desc)
-		वापस -EINVAL;
-	अगर (ep->d_idx == 0)
-		वापस 0;
-	अगर (ep->epn.is_iso)
-		वापस -EOPNOTSUPP;
+	if (!u_ep || !u_ep->desc)
+		return -EINVAL;
+	if (ep->d_idx == 0)
+		return 0;
+	if (ep->epn.is_iso)
+		return -EOPNOTSUPP;
 
 	spin_lock_irqsave(&vhub->lock, flags);
 
-	/* Fail with still-busy IN endpoपूर्णांकs */
-	अगर (halt && ep->epn.is_in && !list_empty(&ep->queue)) अणु
+	/* Fail with still-busy IN endpoints */
+	if (halt && ep->epn.is_in && !list_empty(&ep->queue)) {
 		spin_unlock_irqrestore(&vhub->lock, flags);
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 	ep->epn.stalled = halt;
 	ep->epn.wedged = wedge;
 	ast_vhub_update_epn_stall(ep);
 
 	spin_unlock_irqrestore(&vhub->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ast_vhub_epn_set_halt(काष्ठा usb_ep *u_ep, पूर्णांक value)
-अणु
-	वापस ast_vhub_set_halt_and_wedge(u_ep, value != 0, false);
-पूर्ण
+static int ast_vhub_epn_set_halt(struct usb_ep *u_ep, int value)
+{
+	return ast_vhub_set_halt_and_wedge(u_ep, value != 0, false);
+}
 
-अटल पूर्णांक ast_vhub_epn_set_wedge(काष्ठा usb_ep *u_ep)
-अणु
-	वापस ast_vhub_set_halt_and_wedge(u_ep, true, true);
-पूर्ण
+static int ast_vhub_epn_set_wedge(struct usb_ep *u_ep)
+{
+	return ast_vhub_set_halt_and_wedge(u_ep, true, true);
+}
 
-अटल पूर्णांक ast_vhub_epn_disable(काष्ठा usb_ep* u_ep)
-अणु
-	काष्ठा ast_vhub_ep *ep = to_ast_ep(u_ep);
-	काष्ठा ast_vhub *vhub = ep->vhub;
-	अचिन्हित दीर्घ flags;
+static int ast_vhub_epn_disable(struct usb_ep* u_ep)
+{
+	struct ast_vhub_ep *ep = to_ast_ep(u_ep);
+	struct ast_vhub *vhub = ep->vhub;
+	unsigned long flags;
 	u32 imask, ep_ier;
 
 	EPDBG(ep, "Disabling !\n");
@@ -570,76 +569,76 @@
 
 	ep->epn.enabled = false;
 
-	/* Stop active DMA अगर any */
+	/* Stop active DMA if any */
 	ast_vhub_stop_active_req(ep, false);
 
-	/* Disable endpoपूर्णांक */
-	ग_लिखोl(0, ep->epn.regs + AST_VHUB_EP_CONFIG);
+	/* Disable endpoint */
+	writel(0, ep->epn.regs + AST_VHUB_EP_CONFIG);
 
-	/* Disable ACK पूर्णांकerrupt */
+	/* Disable ACK interrupt */
 	imask = VHUB_EP_IRQ(ep->epn.g_idx);
-	ep_ier = पढ़ोl(vhub->regs + AST_VHUB_EP_ACK_IER);
+	ep_ier = readl(vhub->regs + AST_VHUB_EP_ACK_IER);
 	ep_ier &= ~imask;
-	ग_लिखोl(ep_ier, vhub->regs + AST_VHUB_EP_ACK_IER);
-	ग_लिखोl(imask, vhub->regs + AST_VHUB_EP_ACK_ISR);
+	writel(ep_ier, vhub->regs + AST_VHUB_EP_ACK_IER);
+	writel(imask, vhub->regs + AST_VHUB_EP_ACK_ISR);
 
 	/* Nuke all pending requests */
 	ast_vhub_nuke(ep, -ESHUTDOWN);
 
 	/* No more descriptor associated with request */
-	ep->ep.desc = शून्य;
+	ep->ep.desc = NULL;
 
 	spin_unlock_irqrestore(&vhub->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ast_vhub_epn_enable(काष्ठा usb_ep* u_ep,
-			       स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc)
-अणु
-	काष्ठा ast_vhub_ep *ep = to_ast_ep(u_ep);
-	काष्ठा ast_vhub_dev *dev;
-	काष्ठा ast_vhub *vhub;
+static int ast_vhub_epn_enable(struct usb_ep* u_ep,
+			       const struct usb_endpoint_descriptor *desc)
+{
+	struct ast_vhub_ep *ep = to_ast_ep(u_ep);
+	struct ast_vhub_dev *dev;
+	struct ast_vhub *vhub;
 	u16 maxpacket, type;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 	u32 ep_conf, ep_ier, imask;
 
 	/* Check arguments */
-	अगर (!u_ep || !desc)
-		वापस -EINVAL;
+	if (!u_ep || !desc)
+		return -EINVAL;
 
-	maxpacket = usb_endpoपूर्णांक_maxp(desc);
-	अगर (!ep->d_idx || !ep->dev ||
+	maxpacket = usb_endpoint_maxp(desc);
+	if (!ep->d_idx || !ep->dev ||
 	    desc->bDescriptorType != USB_DT_ENDPOINT ||
-	    maxpacket == 0 || maxpacket > ep->ep.maxpacket) अणु
+	    maxpacket == 0 || maxpacket > ep->ep.maxpacket) {
 		EPDBG(ep, "Invalid EP enable,d_idx=%d,dev=%p,type=%d,mp=%d/%d\n",
 		      ep->d_idx, ep->dev, desc->bDescriptorType,
 		      maxpacket, ep->ep.maxpacket);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (ep->d_idx != usb_endpoपूर्णांक_num(desc)) अणु
+		return -EINVAL;
+	}
+	if (ep->d_idx != usb_endpoint_num(desc)) {
 		EPDBG(ep, "EP number mismatch !\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ep->epn.enabled) अणु
+	if (ep->epn.enabled) {
 		EPDBG(ep, "Already enabled\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 	dev = ep->dev;
 	vhub = ep->vhub;
 
 	/* Check device state */
-	अगर (!dev->driver) अणु
+	if (!dev->driver) {
 		EPDBG(ep, "Bogus device state: driver=%p speed=%d\n",
 		       dev->driver, dev->gadget.speed);
-		वापस -ESHUTDOWN;
-	पूर्ण
+		return -ESHUTDOWN;
+	}
 
 	/* Grab some info from the descriptor */
-	ep->epn.is_in = usb_endpoपूर्णांक_dir_in(desc);
+	ep->epn.is_in = usb_endpoint_dir_in(desc);
 	ep->ep.maxpacket = maxpacket;
-	type = usb_endpoपूर्णांक_type(desc);
+	type = usb_endpoint_type(desc);
 	ep->epn.d_next = ep->epn.d_last = 0;
 	ep->epn.is_iso = false;
 	ep->epn.stalled = false;
@@ -647,48 +646,48 @@
 
 	EPDBG(ep, "Enabling [%s] %s num %d maxpacket=%d\n",
 	      ep->epn.is_in ? "in" : "out", usb_ep_type_string(type),
-	      usb_endpoपूर्णांक_num(desc), maxpacket);
+	      usb_endpoint_num(desc), maxpacket);
 
 	/* Can we use DMA descriptor mode ? */
 	ep->epn.desc_mode = ep->epn.descs && ep->epn.is_in;
-	अगर (ep->epn.desc_mode)
-		स_रखो(ep->epn.descs, 0, 8 * AST_VHUB_DESCS_COUNT);
+	if (ep->epn.desc_mode)
+		memset(ep->epn.descs, 0, 8 * AST_VHUB_DESCS_COUNT);
 
 	/*
 	 * Large send function can send up to 8 packets from
 	 * one descriptor with a limit of 4095 bytes.
 	 */
 	ep->epn.chunk_max = ep->ep.maxpacket;
-	अगर (ep->epn.is_in) अणु
+	if (ep->epn.is_in) {
 		ep->epn.chunk_max <<= 3;
-		जबतक (ep->epn.chunk_max > 4095)
+		while (ep->epn.chunk_max > 4095)
 			ep->epn.chunk_max -= ep->ep.maxpacket;
-	पूर्ण
+	}
 
-	चयन(type) अणु
-	हाल USB_ENDPOINT_XFER_CONTROL:
+	switch(type) {
+	case USB_ENDPOINT_XFER_CONTROL:
 		EPDBG(ep, "Only one control endpoint\n");
-		वापस -EINVAL;
-	हाल USB_ENDPOINT_XFER_INT:
+		return -EINVAL;
+	case USB_ENDPOINT_XFER_INT:
 		ep_conf = VHUB_EP_CFG_SET_TYPE(EP_TYPE_INT);
-		अवरोध;
-	हाल USB_ENDPOINT_XFER_BULK:
+		break;
+	case USB_ENDPOINT_XFER_BULK:
 		ep_conf = VHUB_EP_CFG_SET_TYPE(EP_TYPE_BULK);
-		अवरोध;
-	हाल USB_ENDPOINT_XFER_ISOC:
+		break;
+	case USB_ENDPOINT_XFER_ISOC:
 		ep_conf = VHUB_EP_CFG_SET_TYPE(EP_TYPE_ISO);
 		ep->epn.is_iso = true;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	/* Encode the rest of the EP config रेजिस्टर */
-	अगर (maxpacket < 1024)
+	/* Encode the rest of the EP config register */
+	if (maxpacket < 1024)
 		ep_conf |= VHUB_EP_CFG_SET_MAX_PKT(maxpacket);
-	अगर (!ep->epn.is_in)
-		ep_conf |= VHUB_EP_CFG_सूची_OUT;
-	ep_conf |= VHUB_EP_CFG_SET_EP_NUM(usb_endpoपूर्णांक_num(desc));
+	if (!ep->epn.is_in)
+		ep_conf |= VHUB_EP_CFG_DIR_OUT;
+	ep_conf |= VHUB_EP_CFG_SET_EP_NUM(usb_endpoint_num(desc));
 	ep_conf |= VHUB_EP_CFG_ENABLE;
 	ep_conf |= VHUB_EP_CFG_SET_DEV(dev->index + 1);
 	EPVDBG(ep, "config=%08x\n", ep_conf);
@@ -696,94 +695,94 @@
 	spin_lock_irqsave(&vhub->lock, flags);
 
 	/* Disable HW and reset DMA */
-	ग_लिखोl(0, ep->epn.regs + AST_VHUB_EP_CONFIG);
-	ग_लिखोl(VHUB_EP_DMA_CTRL_RESET,
+	writel(0, ep->epn.regs + AST_VHUB_EP_CONFIG);
+	writel(VHUB_EP_DMA_CTRL_RESET,
 	       ep->epn.regs + AST_VHUB_EP_DMA_CTLSTAT);
 
 	/* Configure and enable */
-	ग_लिखोl(ep_conf, ep->epn.regs + AST_VHUB_EP_CONFIG);
+	writel(ep_conf, ep->epn.regs + AST_VHUB_EP_CONFIG);
 
-	अगर (ep->epn.desc_mode) अणु
-		/* Clear DMA status, including the DMA पढ़ो ptr */
-		ग_लिखोl(0, ep->epn.regs + AST_VHUB_EP_DESC_STATUS);
+	if (ep->epn.desc_mode) {
+		/* Clear DMA status, including the DMA read ptr */
+		writel(0, ep->epn.regs + AST_VHUB_EP_DESC_STATUS);
 
 		/* Set descriptor base */
-		ग_लिखोl(ep->epn.descs_dma,
+		writel(ep->epn.descs_dma,
 		       ep->epn.regs + AST_VHUB_EP_DESC_BASE);
 
 		/* Set base DMA config value */
 		ep->epn.dma_conf = VHUB_EP_DMA_DESC_MODE;
-		अगर (ep->epn.is_in)
+		if (ep->epn.is_in)
 			ep->epn.dma_conf |= VHUB_EP_DMA_IN_LONG_MODE;
 
 		/* First reset and disable all operations */
-		ग_लिखोl(ep->epn.dma_conf | VHUB_EP_DMA_CTRL_RESET,
+		writel(ep->epn.dma_conf | VHUB_EP_DMA_CTRL_RESET,
 		       ep->epn.regs + AST_VHUB_EP_DMA_CTLSTAT);
 
 		/* Enable descriptor mode */
-		ग_लिखोl(ep->epn.dma_conf,
+		writel(ep->epn.dma_conf,
 		       ep->epn.regs + AST_VHUB_EP_DMA_CTLSTAT);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Set base DMA config value */
 		ep->epn.dma_conf = VHUB_EP_DMA_SINGLE_STAGE;
 
-		/* Reset and चयन to single stage mode */
-		ग_लिखोl(ep->epn.dma_conf | VHUB_EP_DMA_CTRL_RESET,
+		/* Reset and switch to single stage mode */
+		writel(ep->epn.dma_conf | VHUB_EP_DMA_CTRL_RESET,
 		       ep->epn.regs + AST_VHUB_EP_DMA_CTLSTAT);
-		ग_लिखोl(ep->epn.dma_conf,
+		writel(ep->epn.dma_conf,
 		       ep->epn.regs + AST_VHUB_EP_DMA_CTLSTAT);
-		ग_लिखोl(0, ep->epn.regs + AST_VHUB_EP_DESC_STATUS);
-	पूर्ण
+		writel(0, ep->epn.regs + AST_VHUB_EP_DESC_STATUS);
+	}
 
-	/* Cleanup data toggle just in हाल */
-	ग_लिखोl(VHUB_EP_TOGGLE_SET_EPNUM(ep->epn.g_idx),
+	/* Cleanup data toggle just in case */
+	writel(VHUB_EP_TOGGLE_SET_EPNUM(ep->epn.g_idx),
 	       vhub->regs + AST_VHUB_EP_TOGGLE);
 
-	/* Cleanup and enable ACK पूर्णांकerrupt */
+	/* Cleanup and enable ACK interrupt */
 	imask = VHUB_EP_IRQ(ep->epn.g_idx);
-	ग_लिखोl(imask, vhub->regs + AST_VHUB_EP_ACK_ISR);
-	ep_ier = पढ़ोl(vhub->regs + AST_VHUB_EP_ACK_IER);
+	writel(imask, vhub->regs + AST_VHUB_EP_ACK_ISR);
+	ep_ier = readl(vhub->regs + AST_VHUB_EP_ACK_IER);
 	ep_ier |= imask;
-	ग_लिखोl(ep_ier, vhub->regs + AST_VHUB_EP_ACK_IER);
+	writel(ep_ier, vhub->regs + AST_VHUB_EP_ACK_IER);
 
 	/* Woot, we are online ! */
 	ep->epn.enabled = true;
 
 	spin_unlock_irqrestore(&vhub->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ast_vhub_epn_dispose(काष्ठा usb_ep *u_ep)
-अणु
-	काष्ठा ast_vhub_ep *ep = to_ast_ep(u_ep);
+static void ast_vhub_epn_dispose(struct usb_ep *u_ep)
+{
+	struct ast_vhub_ep *ep = to_ast_ep(u_ep);
 
-	अगर (WARN_ON(!ep->dev || !ep->d_idx))
-		वापस;
+	if (WARN_ON(!ep->dev || !ep->d_idx))
+		return;
 
 	EPDBG(ep, "Releasing endpoint\n");
 
 	/* Take it out of the EP list */
 	list_del_init(&ep->ep.ep_list);
 
-	/* Mark the address मुक्त in the device */
-	ep->dev->epns[ep->d_idx - 1] = शून्य;
+	/* Mark the address free in the device */
+	ep->dev->epns[ep->d_idx - 1] = NULL;
 
 	/* Free name & DMA buffers */
-	kमुक्त(ep->ep.name);
-	ep->ep.name = शून्य;
-	dma_मुक्त_coherent(&ep->vhub->pdev->dev,
+	kfree(ep->ep.name);
+	ep->ep.name = NULL;
+	dma_free_coherent(&ep->vhub->pdev->dev,
 			  AST_VHUB_EPn_MAX_PACKET +
 			  8 * AST_VHUB_DESCS_COUNT,
 			  ep->buf, ep->buf_dma);
-	ep->buf = शून्य;
-	ep->epn.descs = शून्य;
+	ep->buf = NULL;
+	ep->epn.descs = NULL;
 
-	/* Mark मुक्त */
-	ep->dev = शून्य;
-पूर्ण
+	/* Mark free */
+	ep->dev = NULL;
+}
 
-अटल स्थिर काष्ठा usb_ep_ops ast_vhub_epn_ops = अणु
+static const struct usb_ep_ops ast_vhub_epn_ops = {
 	.enable		= ast_vhub_epn_enable,
 	.disable	= ast_vhub_epn_disable,
 	.dispose	= ast_vhub_epn_dispose,
@@ -792,25 +791,25 @@
 	.set_halt	= ast_vhub_epn_set_halt,
 	.set_wedge	= ast_vhub_epn_set_wedge,
 	.alloc_request	= ast_vhub_alloc_request,
-	.मुक्त_request	= ast_vhub_मुक्त_request,
-पूर्ण;
+	.free_request	= ast_vhub_free_request,
+};
 
-काष्ठा ast_vhub_ep *ast_vhub_alloc_epn(काष्ठा ast_vhub_dev *d, u8 addr)
-अणु
-	काष्ठा ast_vhub *vhub = d->vhub;
-	काष्ठा ast_vhub_ep *ep;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+struct ast_vhub_ep *ast_vhub_alloc_epn(struct ast_vhub_dev *d, u8 addr)
+{
+	struct ast_vhub *vhub = d->vhub;
+	struct ast_vhub_ep *ep;
+	unsigned long flags;
+	int i;
 
-	/* Find a मुक्त one (no device) */
+	/* Find a free one (no device) */
 	spin_lock_irqsave(&vhub->lock, flags);
-	क्रम (i = 0; i < vhub->max_epns; i++)
-		अगर (vhub->epns[i].dev == शून्य)
-			अवरोध;
-	अगर (i >= vhub->max_epns) अणु
+	for (i = 0; i < vhub->max_epns; i++)
+		if (vhub->epns[i].dev == NULL)
+			break;
+	if (i >= vhub->max_epns) {
 		spin_unlock_irqrestore(&vhub->lock, flags);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	/* Set it up */
 	ep = &vhub->epns[i];
@@ -822,7 +821,7 @@
 	ep->d_idx = addr;
 	ep->vhub = vhub;
 	ep->ep.ops = &ast_vhub_epn_ops;
-	ep->ep.name = kaप्र_लिखो(GFP_KERNEL, "ep%d", addr);
+	ep->ep.name = kasprintf(GFP_KERNEL, "ep%d", addr);
 	d->epns[addr-1] = ep;
 	ep->epn.g_idx = i;
 	ep->epn.regs = vhub->regs + 0x200 + (i * 0x10);
@@ -831,11 +830,11 @@
 				     AST_VHUB_EPn_MAX_PACKET +
 				     8 * AST_VHUB_DESCS_COUNT,
 				     &ep->buf_dma, GFP_KERNEL);
-	अगर (!ep->buf) अणु
-		kमुक्त(ep->ep.name);
-		ep->ep.name = शून्य;
-		वापस शून्य;
-	पूर्ण
+	if (!ep->buf) {
+		kfree(ep->ep.name);
+		ep->ep.name = NULL;
+		return NULL;
+	}
 	ep->epn.descs = ep->buf + AST_VHUB_EPn_MAX_PACKET;
 	ep->epn.descs_dma = ep->buf_dma + AST_VHUB_EPn_MAX_PACKET;
 
@@ -843,9 +842,9 @@
 	list_add_tail(&ep->ep.ep_list, &d->gadget.ep_list);
 	ep->ep.caps.type_iso = true;
 	ep->ep.caps.type_bulk = true;
-	ep->ep.caps.type_पूर्णांक = true;
+	ep->ep.caps.type_int = true;
 	ep->ep.caps.dir_in = true;
 	ep->ep.caps.dir_out = true;
 
-	वापस ep;
-पूर्ण
+	return ep;
+}

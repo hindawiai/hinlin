@@ -1,293 +1,292 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Process version 3 NFSACL requests.
  *
  * Copyright (C) 2002-2003 Andreas Gruenbacher <agruen@suse.de>
  */
 
-#समावेश "nfsd.h"
+#include "nfsd.h"
 /* FIXME: nfsacl.h is a broken header */
-#समावेश <linux/nfsacl.h>
-#समावेश <linux/gfp.h>
-#समावेश "cache.h"
-#समावेश "xdr3.h"
-#समावेश "vfs.h"
+#include <linux/nfsacl.h>
+#include <linux/gfp.h>
+#include "cache.h"
+#include "xdr3.h"
+#include "vfs.h"
 
 /*
- * शून्य call.
+ * NULL call.
  */
-अटल __be32
-nfsd3_proc_null(काष्ठा svc_rqst *rqstp)
-अणु
-	वापस rpc_success;
-पूर्ण
+static __be32
+nfsd3_proc_null(struct svc_rqst *rqstp)
+{
+	return rpc_success;
+}
 
 /*
  * Get the Access and/or Default ACL of a file.
  */
-अटल __be32 nfsd3_proc_getacl(काष्ठा svc_rqst *rqstp)
-अणु
-	काष्ठा nfsd3_getaclargs *argp = rqstp->rq_argp;
-	काष्ठा nfsd3_getaclres *resp = rqstp->rq_resp;
-	काष्ठा posix_acl *acl;
-	काष्ठा inode *inode;
+static __be32 nfsd3_proc_getacl(struct svc_rqst *rqstp)
+{
+	struct nfsd3_getaclargs *argp = rqstp->rq_argp;
+	struct nfsd3_getaclres *resp = rqstp->rq_resp;
+	struct posix_acl *acl;
+	struct inode *inode;
 	svc_fh *fh;
 
 	fh = fh_copy(&resp->fh, &argp->fh);
-	resp->status = fh_verअगरy(rqstp, &resp->fh, 0, NFSD_MAY_NOP);
-	अगर (resp->status != nfs_ok)
-		जाओ out;
+	resp->status = fh_verify(rqstp, &resp->fh, 0, NFSD_MAY_NOP);
+	if (resp->status != nfs_ok)
+		goto out;
 
 	inode = d_inode(fh->fh_dentry);
 
-	अगर (argp->mask & ~NFS_ACL_MASK) अणु
+	if (argp->mask & ~NFS_ACL_MASK) {
 		resp->status = nfserr_inval;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	resp->mask = argp->mask;
 
-	अगर (resp->mask & (NFS_ACL|NFS_ACLCNT)) अणु
+	if (resp->mask & (NFS_ACL|NFS_ACLCNT)) {
 		acl = get_acl(inode, ACL_TYPE_ACCESS);
-		अगर (acl == शून्य) अणु
-			/* Solaris वापसs the inode's minimum ACL. */
+		if (acl == NULL) {
+			/* Solaris returns the inode's minimum ACL. */
 			acl = posix_acl_from_mode(inode->i_mode, GFP_KERNEL);
-		पूर्ण
-		अगर (IS_ERR(acl)) अणु
-			resp->status = nfsत्रुटि_सं(PTR_ERR(acl));
-			जाओ fail;
-		पूर्ण
+		}
+		if (IS_ERR(acl)) {
+			resp->status = nfserrno(PTR_ERR(acl));
+			goto fail;
+		}
 		resp->acl_access = acl;
-	पूर्ण
-	अगर (resp->mask & (NFS_DFACL|NFS_DFACLCNT)) अणु
-		/* Check how Solaris handles requests क्रम the Default ACL
+	}
+	if (resp->mask & (NFS_DFACL|NFS_DFACLCNT)) {
+		/* Check how Solaris handles requests for the Default ACL
 		   of a non-directory! */
 		acl = get_acl(inode, ACL_TYPE_DEFAULT);
-		अगर (IS_ERR(acl)) अणु
-			resp->status = nfsत्रुटि_सं(PTR_ERR(acl));
-			जाओ fail;
-		पूर्ण
-		resp->acl_शेष = acl;
-	पूर्ण
+		if (IS_ERR(acl)) {
+			resp->status = nfserrno(PTR_ERR(acl));
+			goto fail;
+		}
+		resp->acl_default = acl;
+	}
 
-	/* resp->acl_अणुaccess,शेषपूर्ण are released in nfs3svc_release_getacl. */
+	/* resp->acl_{access,default} are released in nfs3svc_release_getacl. */
 out:
-	वापस rpc_success;
+	return rpc_success;
 
 fail:
 	posix_acl_release(resp->acl_access);
-	posix_acl_release(resp->acl_शेष);
-	जाओ out;
-पूर्ण
+	posix_acl_release(resp->acl_default);
+	goto out;
+}
 
 /*
  * Set the Access and/or Default ACL of a file.
  */
-अटल __be32 nfsd3_proc_setacl(काष्ठा svc_rqst *rqstp)
-अणु
-	काष्ठा nfsd3_setaclargs *argp = rqstp->rq_argp;
-	काष्ठा nfsd3_attrstat *resp = rqstp->rq_resp;
-	काष्ठा inode *inode;
+static __be32 nfsd3_proc_setacl(struct svc_rqst *rqstp)
+{
+	struct nfsd3_setaclargs *argp = rqstp->rq_argp;
+	struct nfsd3_attrstat *resp = rqstp->rq_resp;
+	struct inode *inode;
 	svc_fh *fh;
-	पूर्णांक error;
+	int error;
 
 	fh = fh_copy(&resp->fh, &argp->fh);
-	resp->status = fh_verअगरy(rqstp, &resp->fh, 0, NFSD_MAY_SATTR);
-	अगर (resp->status != nfs_ok)
-		जाओ out;
+	resp->status = fh_verify(rqstp, &resp->fh, 0, NFSD_MAY_SATTR);
+	if (resp->status != nfs_ok)
+		goto out;
 
 	inode = d_inode(fh->fh_dentry);
 
-	error = fh_want_ग_लिखो(fh);
-	अगर (error)
-		जाओ out_त्रुटि_सं;
+	error = fh_want_write(fh);
+	if (error)
+		goto out_errno;
 
 	fh_lock(fh);
 
 	error = set_posix_acl(&init_user_ns, inode, ACL_TYPE_ACCESS,
 			      argp->acl_access);
-	अगर (error)
-		जाओ out_drop_lock;
+	if (error)
+		goto out_drop_lock;
 	error = set_posix_acl(&init_user_ns, inode, ACL_TYPE_DEFAULT,
-			      argp->acl_शेष);
+			      argp->acl_default);
 
 out_drop_lock:
 	fh_unlock(fh);
-	fh_drop_ग_लिखो(fh);
-out_त्रुटि_सं:
-	resp->status = nfsत्रुटि_सं(error);
+	fh_drop_write(fh);
+out_errno:
+	resp->status = nfserrno(error);
 out:
-	/* argp->acl_अणुaccess,शेषपूर्ण may have been allocated in
+	/* argp->acl_{access,default} may have been allocated in
 	   nfs3svc_decode_setaclargs. */
 	posix_acl_release(argp->acl_access);
-	posix_acl_release(argp->acl_शेष);
-	वापस rpc_success;
-पूर्ण
+	posix_acl_release(argp->acl_default);
+	return rpc_success;
+}
 
 /*
  * XDR decode functions
  */
 
-अटल पूर्णांक nfs3svc_decode_getaclargs(काष्ठा svc_rqst *rqstp, __be32 *p)
-अणु
-	काष्ठा xdr_stream *xdr = &rqstp->rq_arg_stream;
-	काष्ठा nfsd3_getaclargs *args = rqstp->rq_argp;
+static int nfs3svc_decode_getaclargs(struct svc_rqst *rqstp, __be32 *p)
+{
+	struct xdr_stream *xdr = &rqstp->rq_arg_stream;
+	struct nfsd3_getaclargs *args = rqstp->rq_argp;
 
-	अगर (!svcxdr_decode_nfs_fh3(xdr, &args->fh))
-		वापस 0;
-	अगर (xdr_stream_decode_u32(xdr, &args->mask) < 0)
-		वापस 0;
+	if (!svcxdr_decode_nfs_fh3(xdr, &args->fh))
+		return 0;
+	if (xdr_stream_decode_u32(xdr, &args->mask) < 0)
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक nfs3svc_decode_setaclargs(काष्ठा svc_rqst *rqstp, __be32 *p)
-अणु
-	काष्ठा xdr_stream *xdr = &rqstp->rq_arg_stream;
-	काष्ठा nfsd3_setaclargs *argp = rqstp->rq_argp;
+static int nfs3svc_decode_setaclargs(struct svc_rqst *rqstp, __be32 *p)
+{
+	struct xdr_stream *xdr = &rqstp->rq_arg_stream;
+	struct nfsd3_setaclargs *argp = rqstp->rq_argp;
 
-	अगर (!svcxdr_decode_nfs_fh3(xdr, &argp->fh))
-		वापस 0;
-	अगर (xdr_stream_decode_u32(xdr, &argp->mask) < 0)
-		वापस 0;
-	अगर (argp->mask & ~NFS_ACL_MASK)
-		वापस 0;
-	अगर (!nfs_stream_decode_acl(xdr, शून्य, (argp->mask & NFS_ACL) ?
-				   &argp->acl_access : शून्य))
-		वापस 0;
-	अगर (!nfs_stream_decode_acl(xdr, शून्य, (argp->mask & NFS_DFACL) ?
-				   &argp->acl_शेष : शून्य))
-		वापस 0;
+	if (!svcxdr_decode_nfs_fh3(xdr, &argp->fh))
+		return 0;
+	if (xdr_stream_decode_u32(xdr, &argp->mask) < 0)
+		return 0;
+	if (argp->mask & ~NFS_ACL_MASK)
+		return 0;
+	if (!nfs_stream_decode_acl(xdr, NULL, (argp->mask & NFS_ACL) ?
+				   &argp->acl_access : NULL))
+		return 0;
+	if (!nfs_stream_decode_acl(xdr, NULL, (argp->mask & NFS_DFACL) ?
+				   &argp->acl_default : NULL))
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
  * XDR encode functions
  */
 
 /* GETACL */
-अटल पूर्णांक nfs3svc_encode_getaclres(काष्ठा svc_rqst *rqstp, __be32 *p)
-अणु
-	काष्ठा xdr_stream *xdr = &rqstp->rq_res_stream;
-	काष्ठा nfsd3_getaclres *resp = rqstp->rq_resp;
-	काष्ठा dentry *dentry = resp->fh.fh_dentry;
-	काष्ठा kvec *head = rqstp->rq_res.head;
-	काष्ठा inode *inode = d_inode(dentry);
-	अचिन्हित पूर्णांक base;
-	पूर्णांक n;
-	पूर्णांक w;
+static int nfs3svc_encode_getaclres(struct svc_rqst *rqstp, __be32 *p)
+{
+	struct xdr_stream *xdr = &rqstp->rq_res_stream;
+	struct nfsd3_getaclres *resp = rqstp->rq_resp;
+	struct dentry *dentry = resp->fh.fh_dentry;
+	struct kvec *head = rqstp->rq_res.head;
+	struct inode *inode = d_inode(dentry);
+	unsigned int base;
+	int n;
+	int w;
 
-	अगर (!svcxdr_encode_nfsstat3(xdr, resp->status))
-		वापस 0;
-	चयन (resp->status) अणु
-	हाल nfs_ok:
-		अगर (!svcxdr_encode_post_op_attr(rqstp, xdr, &resp->fh))
-			वापस 0;
-		अगर (xdr_stream_encode_u32(xdr, resp->mask) < 0)
-			वापस 0;
+	if (!svcxdr_encode_nfsstat3(xdr, resp->status))
+		return 0;
+	switch (resp->status) {
+	case nfs_ok:
+		if (!svcxdr_encode_post_op_attr(rqstp, xdr, &resp->fh))
+			return 0;
+		if (xdr_stream_encode_u32(xdr, resp->mask) < 0)
+			return 0;
 
-		base = (अक्षर *)xdr->p - (अक्षर *)head->iov_base;
+		base = (char *)xdr->p - (char *)head->iov_base;
 
 		rqstp->rq_res.page_len = w = nfsacl_size(
-			(resp->mask & NFS_ACL)   ? resp->acl_access  : शून्य,
-			(resp->mask & NFS_DFACL) ? resp->acl_शेष : शून्य);
-		जबतक (w > 0) अणु
-			अगर (!*(rqstp->rq_next_page++))
-				वापस 0;
+			(resp->mask & NFS_ACL)   ? resp->acl_access  : NULL,
+			(resp->mask & NFS_DFACL) ? resp->acl_default : NULL);
+		while (w > 0) {
+			if (!*(rqstp->rq_next_page++))
+				return 0;
 			w -= PAGE_SIZE;
-		पूर्ण
+		}
 
 		n = nfsacl_encode(&rqstp->rq_res, base, inode,
 				  resp->acl_access,
 				  resp->mask & NFS_ACL, 0);
-		अगर (n > 0)
+		if (n > 0)
 			n = nfsacl_encode(&rqstp->rq_res, base + n, inode,
-					  resp->acl_शेष,
+					  resp->acl_default,
 					  resp->mask & NFS_DFACL,
 					  NFS_ACL_DEFAULT);
-		अगर (n <= 0)
-			वापस 0;
-		अवरोध;
-	शेष:
-		अगर (!svcxdr_encode_post_op_attr(rqstp, xdr, &resp->fh))
-			वापस 0;
-	पूर्ण
+		if (n <= 0)
+			return 0;
+		break;
+	default:
+		if (!svcxdr_encode_post_op_attr(rqstp, xdr, &resp->fh))
+			return 0;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /* SETACL */
-अटल पूर्णांक nfs3svc_encode_setaclres(काष्ठा svc_rqst *rqstp, __be32 *p)
-अणु
-	काष्ठा xdr_stream *xdr = &rqstp->rq_res_stream;
-	काष्ठा nfsd3_attrstat *resp = rqstp->rq_resp;
+static int nfs3svc_encode_setaclres(struct svc_rqst *rqstp, __be32 *p)
+{
+	struct xdr_stream *xdr = &rqstp->rq_res_stream;
+	struct nfsd3_attrstat *resp = rqstp->rq_resp;
 
-	वापस svcxdr_encode_nfsstat3(xdr, resp->status) &&
+	return svcxdr_encode_nfsstat3(xdr, resp->status) &&
 		svcxdr_encode_post_op_attr(rqstp, xdr, &resp->fh);
-पूर्ण
+}
 
 /*
  * XDR release functions
  */
-अटल व्योम nfs3svc_release_getacl(काष्ठा svc_rqst *rqstp)
-अणु
-	काष्ठा nfsd3_getaclres *resp = rqstp->rq_resp;
+static void nfs3svc_release_getacl(struct svc_rqst *rqstp)
+{
+	struct nfsd3_getaclres *resp = rqstp->rq_resp;
 
 	fh_put(&resp->fh);
 	posix_acl_release(resp->acl_access);
-	posix_acl_release(resp->acl_शेष);
-पूर्ण
+	posix_acl_release(resp->acl_default);
+}
 
-काष्ठा nfsd3_व्योमargs अणु पूर्णांक dummy; पूर्ण;
+struct nfsd3_voidargs { int dummy; };
 
-#घोषणा ST 1		/* status*/
-#घोषणा AT 21		/* attributes */
-#घोषणा pAT (1+AT)	/* post attributes - conditional */
-#घोषणा ACL (1+NFS_ACL_MAX_ENTRIES*3)  /* Access Control List */
+#define ST 1		/* status*/
+#define AT 21		/* attributes */
+#define pAT (1+AT)	/* post attributes - conditional */
+#define ACL (1+NFS_ACL_MAX_ENTRIES*3)  /* Access Control List */
 
-अटल स्थिर काष्ठा svc_procedure nfsd_acl_procedures3[3] = अणु
-	[ACLPROC3_शून्य] = अणु
+static const struct svc_procedure nfsd_acl_procedures3[3] = {
+	[ACLPROC3_NULL] = {
 		.pc_func = nfsd3_proc_null,
-		.pc_decode = nfssvc_decode_व्योमarg,
-		.pc_encode = nfssvc_encode_व्योमres,
-		.pc_argsize = माप(काष्ठा nfsd_व्योमargs),
-		.pc_ressize = माप(काष्ठा nfsd_व्योमres),
+		.pc_decode = nfssvc_decode_voidarg,
+		.pc_encode = nfssvc_encode_voidres,
+		.pc_argsize = sizeof(struct nfsd_voidargs),
+		.pc_ressize = sizeof(struct nfsd_voidres),
 		.pc_cachetype = RC_NOCACHE,
 		.pc_xdrressize = ST,
 		.pc_name = "NULL",
-	पूर्ण,
-	[ACLPROC3_GETACL] = अणु
+	},
+	[ACLPROC3_GETACL] = {
 		.pc_func = nfsd3_proc_getacl,
 		.pc_decode = nfs3svc_decode_getaclargs,
 		.pc_encode = nfs3svc_encode_getaclres,
 		.pc_release = nfs3svc_release_getacl,
-		.pc_argsize = माप(काष्ठा nfsd3_getaclargs),
-		.pc_ressize = माप(काष्ठा nfsd3_getaclres),
+		.pc_argsize = sizeof(struct nfsd3_getaclargs),
+		.pc_ressize = sizeof(struct nfsd3_getaclres),
 		.pc_cachetype = RC_NOCACHE,
 		.pc_xdrressize = ST+1+2*(1+ACL),
 		.pc_name = "GETACL",
-	पूर्ण,
-	[ACLPROC3_SETACL] = अणु
+	},
+	[ACLPROC3_SETACL] = {
 		.pc_func = nfsd3_proc_setacl,
 		.pc_decode = nfs3svc_decode_setaclargs,
 		.pc_encode = nfs3svc_encode_setaclres,
 		.pc_release = nfs3svc_release_fhandle,
-		.pc_argsize = माप(काष्ठा nfsd3_setaclargs),
-		.pc_ressize = माप(काष्ठा nfsd3_attrstat),
+		.pc_argsize = sizeof(struct nfsd3_setaclargs),
+		.pc_ressize = sizeof(struct nfsd3_attrstat),
 		.pc_cachetype = RC_NOCACHE,
 		.pc_xdrressize = ST+pAT,
 		.pc_name = "SETACL",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल अचिन्हित पूर्णांक nfsd_acl_count3[ARRAY_SIZE(nfsd_acl_procedures3)];
-स्थिर काष्ठा svc_version nfsd_acl_version3 = अणु
+static unsigned int nfsd_acl_count3[ARRAY_SIZE(nfsd_acl_procedures3)];
+const struct svc_version nfsd_acl_version3 = {
 	.vs_vers	= 3,
 	.vs_nproc	= 3,
 	.vs_proc	= nfsd_acl_procedures3,
 	.vs_count	= nfsd_acl_count3,
 	.vs_dispatch	= nfsd_dispatch,
 	.vs_xdrsize	= NFS3_SVC_XDRSIZE,
-पूर्ण;
+};
 

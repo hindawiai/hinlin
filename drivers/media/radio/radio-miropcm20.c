@@ -1,13 +1,12 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Miro PCM20 radio driver क्रम Linux radio support
+ * Miro PCM20 radio driver for Linux radio support
  * (c) 1998 Ruurd Reitsma <R.A.Reitsma@wbmt.tudelft.nl>
- * Thanks to Norberto Pellici क्रम the ACI device पूर्णांकerface specअगरication
+ * Thanks to Norberto Pellici for the ACI device interface specification
  * The API part is based on the radiotrack driver by M. Kirkwood
  * This driver relies on the aci mixer provided by the snd-miro
  * ALSA driver.
- * Look there क्रम further info...
+ * Look there for further info...
  *
  * From the original miro RDS sources:
  *
@@ -18,227 +17,227 @@
  *  I was able to code this driver.
  *  Thanks also to Norberto Pellicci, Dominic Mounteney
  *  <DMounteney@pinnaclesys.com> and www.teleauskunft.de
- *  क्रम good hपूर्णांकs on finding Fred. It was somewhat hard
+ *  for good hints on finding Fred. It was somewhat hard
  *  to locate him here in Germany... [:
  *
- * This code has been reपूर्णांकroduced and converted to use
+ * This code has been reintroduced and converted to use
  * the new V4L2 RDS API by:
  *
  * Hans Verkuil <hans.verkuil@cisco.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/videodev2.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-ioctl.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-fh.h>
-#समावेश <media/v4l2-event.h>
-#समावेश <sound/aci.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/delay.h>
+#include <linux/videodev2.h>
+#include <linux/kthread.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-ioctl.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-fh.h>
+#include <media/v4l2-event.h>
+#include <sound/aci.h>
 
-#घोषणा RDS_DATASHIFT          2   /* Bit 2 */
-#घोषणा RDS_DATAMASK        (1 << RDS_DATASHIFT)
-#घोषणा RDS_BUSYMASK        0x10   /* Bit 4 */
-#घोषणा RDS_CLOCKMASK       0x08   /* Bit 3 */
-#घोषणा RDS_DATA(x)         (((x) >> RDS_DATASHIFT) & 1)
+#define RDS_DATASHIFT          2   /* Bit 2 */
+#define RDS_DATAMASK        (1 << RDS_DATASHIFT)
+#define RDS_BUSYMASK        0x10   /* Bit 4 */
+#define RDS_CLOCKMASK       0x08   /* Bit 3 */
+#define RDS_DATA(x)         (((x) >> RDS_DATASHIFT) & 1)
 
-#घोषणा RDS_STATUS      0x01
-#घोषणा RDS_STATIONNAME 0x02
-#घोषणा RDS_TEXT        0x03
-#घोषणा RDS_ALTFREQ     0x04
-#घोषणा RDS_TIMEDATE    0x05
-#घोषणा RDS_PI_CODE     0x06
-#घोषणा RDS_PTYTATP     0x07
-#घोषणा RDS_RESET       0x08
-#घोषणा RDS_RXVALUE     0x09
+#define RDS_STATUS      0x01
+#define RDS_STATIONNAME 0x02
+#define RDS_TEXT        0x03
+#define RDS_ALTFREQ     0x04
+#define RDS_TIMEDATE    0x05
+#define RDS_PI_CODE     0x06
+#define RDS_PTYTATP     0x07
+#define RDS_RESET       0x08
+#define RDS_RXVALUE     0x09
 
-अटल पूर्णांक radio_nr = -1;
-module_param(radio_nr, पूर्णांक, 0);
+static int radio_nr = -1;
+module_param(radio_nr, int, 0);
 MODULE_PARM_DESC(radio_nr, "Set radio device number (/dev/radioX).  Default: -1 (autodetect)");
 
-काष्ठा pcm20 अणु
-	काष्ठा v4l2_device v4l2_dev;
-	काष्ठा video_device vdev;
-	काष्ठा v4l2_ctrl_handler ctrl_handler;
-	काष्ठा v4l2_ctrl *rds_pty;
-	काष्ठा v4l2_ctrl *rds_ps_name;
-	काष्ठा v4l2_ctrl *rds_radio_test;
-	काष्ठा v4l2_ctrl *rds_ta;
-	काष्ठा v4l2_ctrl *rds_tp;
-	काष्ठा v4l2_ctrl *rds_ms;
-	/* thपढ़ो क्रम periodic RDS status checking */
-	काष्ठा task_काष्ठा *kthपढ़ो;
-	अचिन्हित दीर्घ freq;
+struct pcm20 {
+	struct v4l2_device v4l2_dev;
+	struct video_device vdev;
+	struct v4l2_ctrl_handler ctrl_handler;
+	struct v4l2_ctrl *rds_pty;
+	struct v4l2_ctrl *rds_ps_name;
+	struct v4l2_ctrl *rds_radio_test;
+	struct v4l2_ctrl *rds_ta;
+	struct v4l2_ctrl *rds_tp;
+	struct v4l2_ctrl *rds_ms;
+	/* thread for periodic RDS status checking */
+	struct task_struct *kthread;
+	unsigned long freq;
 	u32 audmode;
-	काष्ठा snd_miro_aci *aci;
-	काष्ठा mutex lock;
-पूर्ण;
+	struct snd_miro_aci *aci;
+	struct mutex lock;
+};
 
-अटल काष्ठा pcm20 pcm20_card = अणु
+static struct pcm20 pcm20_card = {
 	.freq = 87 * 16000,
 	.audmode = V4L2_TUNER_MODE_STEREO,
-पूर्ण;
+};
 
 
-अटल पूर्णांक rds_रुकोपढ़ो(काष्ठा snd_miro_aci *aci)
-अणु
+static int rds_waitread(struct snd_miro_aci *aci)
+{
 	u8 byte;
-	पूर्णांक i = 2000;
+	int i = 2000;
 
-	करो अणु
+	do {
 		byte = inb(aci->aci_port + ACI_REG_RDS);
 		i--;
-	पूर्ण जबतक ((byte & RDS_BUSYMASK) && i);
+	} while ((byte & RDS_BUSYMASK) && i);
 
 	/*
-	 * It's magic, but without this the data that you पढ़ो later on
+	 * It's magic, but without this the data that you read later on
 	 * is unreliable and full of bit errors. With this 1 usec delay
 	 * everything is fine.
 	 */
 	udelay(1);
-	वापस i ? byte : -1;
-पूर्ण
+	return i ? byte : -1;
+}
 
-अटल पूर्णांक rds_rawग_लिखो(काष्ठा snd_miro_aci *aci, u8 byte)
-अणु
-	अगर (rds_रुकोपढ़ो(aci) >= 0) अणु
+static int rds_rawwrite(struct snd_miro_aci *aci, u8 byte)
+{
+	if (rds_waitread(aci) >= 0) {
 		outb(byte, aci->aci_port + ACI_REG_RDS);
-		वापस 0;
-	पूर्ण
-	वापस -1;
-पूर्ण
+		return 0;
+	}
+	return -1;
+}
 
-अटल पूर्णांक rds_ग_लिखो(काष्ठा snd_miro_aci *aci, u8 byte)
-अणु
+static int rds_write(struct snd_miro_aci *aci, u8 byte)
+{
 	u8 sendbuffer[8];
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 7; i >= 0; i--)
+	for (i = 7; i >= 0; i--)
 		sendbuffer[7 - i] = (byte & (1 << i)) ? RDS_DATAMASK : 0;
 	sendbuffer[0] |= RDS_CLOCKMASK;
 
-	क्रम (i = 0; i < 8; i++)
-		rds_rawग_लिखो(aci, sendbuffer[i]);
-	वापस 0;
-पूर्ण
+	for (i = 0; i < 8; i++)
+		rds_rawwrite(aci, sendbuffer[i]);
+	return 0;
+}
 
-अटल पूर्णांक rds_पढ़ोcycle_noरुको(काष्ठा snd_miro_aci *aci)
-अणु
+static int rds_readcycle_nowait(struct snd_miro_aci *aci)
+{
 	outb(0, aci->aci_port + ACI_REG_RDS);
-	वापस rds_रुकोपढ़ो(aci);
-पूर्ण
+	return rds_waitread(aci);
+}
 
-अटल पूर्णांक rds_पढ़ोcycle(काष्ठा snd_miro_aci *aci)
-अणु
-	अगर (rds_rawग_लिखो(aci, 0) < 0)
-		वापस -1;
-	वापस rds_रुकोपढ़ो(aci);
-पूर्ण
+static int rds_readcycle(struct snd_miro_aci *aci)
+{
+	if (rds_rawwrite(aci, 0) < 0)
+		return -1;
+	return rds_waitread(aci);
+}
 
-अटल पूर्णांक rds_ack(काष्ठा snd_miro_aci *aci)
-अणु
-	पूर्णांक i = rds_पढ़ोcycle(aci);
+static int rds_ack(struct snd_miro_aci *aci)
+{
+	int i = rds_readcycle(aci);
 
-	अगर (i < 0)
-		वापस -1;
-	अगर (i & RDS_DATAMASK)
-		वापस 0;  /* ACK  */
-	वापस 1;  /* NACK */
-पूर्ण
+	if (i < 0)
+		return -1;
+	if (i & RDS_DATAMASK)
+		return 0;  /* ACK  */
+	return 1;  /* NACK */
+}
 
-अटल पूर्णांक rds_cmd(काष्ठा snd_miro_aci *aci, u8 cmd, u8 databuffer[], u8 datasize)
-अणु
-	पूर्णांक i, j;
+static int rds_cmd(struct snd_miro_aci *aci, u8 cmd, u8 databuffer[], u8 datasize)
+{
+	int i, j;
 
-	rds_ग_लिखो(aci, cmd);
+	rds_write(aci, cmd);
 
-	/* RDS_RESET करोesn't need further processing */
-	अगर (cmd == RDS_RESET)
-		वापस 0;
-	अगर (rds_ack(aci))
-		वापस -EIO;
-	अगर (datasize == 0)
-		वापस 0;
+	/* RDS_RESET doesn't need further processing */
+	if (cmd == RDS_RESET)
+		return 0;
+	if (rds_ack(aci))
+		return -EIO;
+	if (datasize == 0)
+		return 0;
 
-	/* to be able to use rds_पढ़ोcycle_noरुको()
-	   I have to रुकोपढ़ो() here */
-	अगर (rds_रुकोपढ़ो(aci) < 0)
-		वापस -1;
+	/* to be able to use rds_readcycle_nowait()
+	   I have to waitread() here */
+	if (rds_waitread(aci) < 0)
+		return -1;
 
-	स_रखो(databuffer, 0, datasize);
+	memset(databuffer, 0, datasize);
 
-	क्रम (i = 0; i < 8 * datasize; i++) अणु
-		j = rds_पढ़ोcycle_noरुको(aci);
-		अगर (j < 0)
-			वापस -EIO;
+	for (i = 0; i < 8 * datasize; i++) {
+		j = rds_readcycle_nowait(aci);
+		if (j < 0)
+			return -EIO;
 		databuffer[i / 8] |= RDS_DATA(j) << (7 - (i % 8));
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक pcm20_setfreq(काष्ठा pcm20 *dev, अचिन्हित दीर्घ freq)
-अणु
-	अचिन्हित अक्षर freql;
-	अचिन्हित अक्षर freqh;
-	काष्ठा snd_miro_aci *aci = dev->aci;
+static int pcm20_setfreq(struct pcm20 *dev, unsigned long freq)
+{
+	unsigned char freql;
+	unsigned char freqh;
+	struct snd_miro_aci *aci = dev->aci;
 
 	freq /= 160;
-	अगर (!(aci->aci_version == 0x07 || aci->aci_version >= 0xb0))
-		freq /= 10;  /* I करोn't know exactly which version
+	if (!(aci->aci_version == 0x07 || aci->aci_version >= 0xb0))
+		freq /= 10;  /* I don't know exactly which version
 			      * needs this hack */
 	freql = freq & 0xff;
 	freqh = freq >> 8;
 
-	rds_cmd(aci, RDS_RESET, शून्य, 0);
-	वापस snd_aci_cmd(aci, ACI_WRITE_TUNE, freql, freqh);
-पूर्ण
+	rds_cmd(aci, RDS_RESET, NULL, 0);
+	return snd_aci_cmd(aci, ACI_WRITE_TUNE, freql, freqh);
+}
 
-अटल पूर्णांक vidioc_querycap(काष्ठा file *file, व्योम *priv,
-				काष्ठा v4l2_capability *v)
-अणु
-	काष्ठा pcm20 *dev = video_drvdata(file);
+static int vidioc_querycap(struct file *file, void *priv,
+				struct v4l2_capability *v)
+{
+	struct pcm20 *dev = video_drvdata(file);
 
-	strscpy(v->driver, "Miro PCM20", माप(v->driver));
-	strscpy(v->card, "Miro PCM20", माप(v->card));
-	snम_लिखो(v->bus_info, माप(v->bus_info), "ISA:%s", dev->v4l2_dev.name);
-	वापस 0;
-पूर्ण
+	strscpy(v->driver, "Miro PCM20", sizeof(v->driver));
+	strscpy(v->card, "Miro PCM20", sizeof(v->card));
+	snprintf(v->bus_info, sizeof(v->bus_info), "ISA:%s", dev->v4l2_dev.name);
+	return 0;
+}
 
-अटल bool sanitize(अक्षर *p, पूर्णांक size)
-अणु
-	पूर्णांक i;
+static bool sanitize(char *p, int size)
+{
+	int i;
 	bool ret = true;
 
-	क्रम (i = 0; i < size; i++) अणु
-		अगर (p[i] < 32) अणु
+	for (i = 0; i < size; i++) {
+		if (p[i] < 32) {
 			p[i] = ' ';
 			ret = false;
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+		}
+	}
+	return ret;
+}
 
-अटल पूर्णांक vidioc_g_tuner(काष्ठा file *file, व्योम *priv,
-				काष्ठा v4l2_tuner *v)
-अणु
-	काष्ठा pcm20 *dev = video_drvdata(file);
-	पूर्णांक res;
+static int vidioc_g_tuner(struct file *file, void *priv,
+				struct v4l2_tuner *v)
+{
+	struct pcm20 *dev = video_drvdata(file);
+	int res;
 	u8 buf;
 
-	अगर (v->index)
-		वापस -EINVAL;
-	strscpy(v->name, "FM", माप(v->name));
+	if (v->index)
+		return -EINVAL;
+	strscpy(v->name, "FM", sizeof(v->name));
 	v->type = V4L2_TUNER_RADIO;
 	v->rangelow = 87*16000;
 	v->rangehigh = 108*16000;
 	res = snd_aci_cmd(dev->aci, ACI_READ_TUNERSTATION, -1, -1);
-	v->संकेत = (res & 0x80) ? 0 : 0xffff;
-	/* Note: stereo detection करोes not work अगर the audio is muted,
-	   it will शेष to mono in that हाल. */
+	v->signal = (res & 0x80) ? 0 : 0xffff;
+	/* Note: stereo detection does not work if the audio is muted,
+	   it will default to mono in that case. */
 	res = snd_aci_cmd(dev->aci, ACI_READ_TUNERSTEREO, -1, -1);
 	v->rxsubchans = (res & 0x40) ? V4L2_TUNER_SUB_MONO :
 					V4L2_TUNER_SUB_STEREO;
@@ -246,97 +245,97 @@ MODULE_PARM_DESC(radio_nr, "Set radio device number (/dev/radioX).  Default: -1 
 			V4L2_TUNER_CAP_RDS | V4L2_TUNER_CAP_RDS_CONTROLS;
 	v->audmode = dev->audmode;
 	res = rds_cmd(dev->aci, RDS_RXVALUE, &buf, 1);
-	अगर (res >= 0 && buf)
+	if (res >= 0 && buf)
 		v->rxsubchans |= V4L2_TUNER_SUB_RDS;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vidioc_s_tuner(काष्ठा file *file, व्योम *priv,
-				स्थिर काष्ठा v4l2_tuner *v)
-अणु
-	काष्ठा pcm20 *dev = video_drvdata(file);
+static int vidioc_s_tuner(struct file *file, void *priv,
+				const struct v4l2_tuner *v)
+{
+	struct pcm20 *dev = video_drvdata(file);
 
-	अगर (v->index)
-		वापस -EINVAL;
-	अगर (v->audmode > V4L2_TUNER_MODE_STEREO)
+	if (v->index)
+		return -EINVAL;
+	if (v->audmode > V4L2_TUNER_MODE_STEREO)
 		dev->audmode = V4L2_TUNER_MODE_STEREO;
-	अन्यथा
+	else
 		dev->audmode = v->audmode;
 	snd_aci_cmd(dev->aci, ACI_SET_TUNERMONO,
 			dev->audmode == V4L2_TUNER_MODE_MONO, -1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vidioc_g_frequency(काष्ठा file *file, व्योम *priv,
-				काष्ठा v4l2_frequency *f)
-अणु
-	काष्ठा pcm20 *dev = video_drvdata(file);
+static int vidioc_g_frequency(struct file *file, void *priv,
+				struct v4l2_frequency *f)
+{
+	struct pcm20 *dev = video_drvdata(file);
 
-	अगर (f->tuner != 0)
-		वापस -EINVAL;
+	if (f->tuner != 0)
+		return -EINVAL;
 
 	f->type = V4L2_TUNER_RADIO;
 	f->frequency = dev->freq;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक vidioc_s_frequency(काष्ठा file *file, व्योम *priv,
-				स्थिर काष्ठा v4l2_frequency *f)
-अणु
-	काष्ठा pcm20 *dev = video_drvdata(file);
+static int vidioc_s_frequency(struct file *file, void *priv,
+				const struct v4l2_frequency *f)
+{
+	struct pcm20 *dev = video_drvdata(file);
 
-	अगर (f->tuner != 0 || f->type != V4L2_TUNER_RADIO)
-		वापस -EINVAL;
+	if (f->tuner != 0 || f->type != V4L2_TUNER_RADIO)
+		return -EINVAL;
 
 	dev->freq = clamp_t(u32, f->frequency, 87 * 16000U, 108 * 16000U);
 	pcm20_setfreq(dev, dev->freq);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcm20_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा pcm20 *dev = container_of(ctrl->handler, काष्ठा pcm20, ctrl_handler);
+static int pcm20_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct pcm20 *dev = container_of(ctrl->handler, struct pcm20, ctrl_handler);
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_AUDIO_MUTE:
+	switch (ctrl->id) {
+	case V4L2_CID_AUDIO_MUTE:
 		snd_aci_cmd(dev->aci, ACI_SET_TUNERMUTE, ctrl->val, -1);
-		वापस 0;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+		return 0;
+	}
+	return -EINVAL;
+}
 
-अटल पूर्णांक pcm20_thपढ़ो(व्योम *data)
-अणु
-	काष्ठा pcm20 *dev = data;
-	स्थिर अचिन्हित no_rds_start_counter = 5;
-	स्थिर अचिन्हित sleep_msecs = 2000;
-	अचिन्हित no_rds_counter = no_rds_start_counter;
+static int pcm20_thread(void *data)
+{
+	struct pcm20 *dev = data;
+	const unsigned no_rds_start_counter = 5;
+	const unsigned sleep_msecs = 2000;
+	unsigned no_rds_counter = no_rds_start_counter;
 
-	क्रम (;;) अणु
-		अक्षर text_buffer[66];
+	for (;;) {
+		char text_buffer[66];
 		u8 buf;
-		पूर्णांक res;
+		int res;
 
-		msleep_पूर्णांकerruptible(sleep_msecs);
+		msleep_interruptible(sleep_msecs);
 
-		अगर (kthपढ़ो_should_stop())
-			अवरोध;
+		if (kthread_should_stop())
+			break;
 
 		res = rds_cmd(dev->aci, RDS_RXVALUE, &buf, 1);
-		अगर (res)
-			जारी;
-		अगर (buf == 0) अणु
-			अगर (no_rds_counter == 0)
-				जारी;
+		if (res)
+			continue;
+		if (buf == 0) {
+			if (no_rds_counter == 0)
+				continue;
 			no_rds_counter--;
-			अगर (no_rds_counter)
-				जारी;
+			if (no_rds_counter)
+				continue;
 
 			/*
-			 * No RDS seen क्रम no_rds_start_counter * sleep_msecs
+			 * No RDS seen for no_rds_start_counter * sleep_msecs
 			 * milliseconds, clear all RDS controls to their
-			 * शेष values.
+			 * default values.
 			 */
 			v4l2_ctrl_s_ctrl_string(dev->rds_ps_name, "");
 			v4l2_ctrl_s_ctrl(dev->rds_ms, 1);
@@ -344,78 +343,78 @@ MODULE_PARM_DESC(radio_nr, "Set radio device number (/dev/radioX).  Default: -1 
 			v4l2_ctrl_s_ctrl(dev->rds_tp, 0);
 			v4l2_ctrl_s_ctrl(dev->rds_pty, 0);
 			v4l2_ctrl_s_ctrl_string(dev->rds_radio_test, "");
-			जारी;
-		पूर्ण
+			continue;
+		}
 		no_rds_counter = no_rds_start_counter;
 
 		res = rds_cmd(dev->aci, RDS_STATUS, &buf, 1);
-		अगर (res)
-			जारी;
-		अगर ((buf >> 3) & 1) अणु
+		if (res)
+			continue;
+		if ((buf >> 3) & 1) {
 			res = rds_cmd(dev->aci, RDS_STATIONNAME, text_buffer, 8);
 			text_buffer[8] = 0;
-			अगर (!res && sanitize(text_buffer, 8))
+			if (!res && sanitize(text_buffer, 8))
 				v4l2_ctrl_s_ctrl_string(dev->rds_ps_name, text_buffer);
-		पूर्ण
-		अगर ((buf >> 6) & 1) अणु
+		}
+		if ((buf >> 6) & 1) {
 			u8 pty;
 
 			res = rds_cmd(dev->aci, RDS_PTYTATP, &pty, 1);
-			अगर (!res) अणु
+			if (!res) {
 				v4l2_ctrl_s_ctrl(dev->rds_ms, !!(pty & 0x01));
 				v4l2_ctrl_s_ctrl(dev->rds_ta, !!(pty & 0x02));
 				v4l2_ctrl_s_ctrl(dev->rds_tp, !!(pty & 0x80));
 				v4l2_ctrl_s_ctrl(dev->rds_pty, (pty >> 2) & 0x1f);
-			पूर्ण
-		पूर्ण
-		अगर ((buf >> 4) & 1) अणु
+			}
+		}
+		if ((buf >> 4) & 1) {
 			res = rds_cmd(dev->aci, RDS_TEXT, text_buffer, 65);
 			text_buffer[65] = 0;
-			अगर (!res && sanitize(text_buffer + 1, 64))
+			if (!res && sanitize(text_buffer + 1, 64))
 				v4l2_ctrl_s_ctrl_string(dev->rds_radio_test, text_buffer + 1);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक pcm20_खोलो(काष्ठा file *file)
-अणु
-	काष्ठा pcm20 *dev = video_drvdata(file);
-	पूर्णांक res = v4l2_fh_खोलो(file);
+static int pcm20_open(struct file *file)
+{
+	struct pcm20 *dev = video_drvdata(file);
+	int res = v4l2_fh_open(file);
 
-	अगर (!res && v4l2_fh_is_singular_file(file) &&
-	    IS_ERR_OR_शून्य(dev->kthपढ़ो)) अणु
-		dev->kthपढ़ो = kthपढ़ो_run(pcm20_thपढ़ो, dev, "%s",
+	if (!res && v4l2_fh_is_singular_file(file) &&
+	    IS_ERR_OR_NULL(dev->kthread)) {
+		dev->kthread = kthread_run(pcm20_thread, dev, "%s",
 					   dev->v4l2_dev.name);
-		अगर (IS_ERR(dev->kthपढ़ो)) अणु
+		if (IS_ERR(dev->kthread)) {
 			v4l2_err(&dev->v4l2_dev, "kernel_thread() failed\n");
 			v4l2_fh_release(file);
-			वापस PTR_ERR(dev->kthपढ़ो);
-		पूर्ण
-	पूर्ण
-	वापस res;
-पूर्ण
+			return PTR_ERR(dev->kthread);
+		}
+	}
+	return res;
+}
 
-अटल पूर्णांक pcm20_release(काष्ठा file *file)
-अणु
-	काष्ठा pcm20 *dev = video_drvdata(file);
+static int pcm20_release(struct file *file)
+{
+	struct pcm20 *dev = video_drvdata(file);
 
-	अगर (v4l2_fh_is_singular_file(file) && !IS_ERR_OR_शून्य(dev->kthपढ़ो)) अणु
-		kthपढ़ो_stop(dev->kthपढ़ो);
-		dev->kthपढ़ो = शून्य;
-	पूर्ण
-	वापस v4l2_fh_release(file);
-पूर्ण
+	if (v4l2_fh_is_singular_file(file) && !IS_ERR_OR_NULL(dev->kthread)) {
+		kthread_stop(dev->kthread);
+		dev->kthread = NULL;
+	}
+	return v4l2_fh_release(file);
+}
 
-अटल स्थिर काष्ठा v4l2_file_operations pcm20_fops = अणु
+static const struct v4l2_file_operations pcm20_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= pcm20_खोलो,
+	.open		= pcm20_open,
 	.poll		= v4l2_ctrl_poll,
 	.release	= pcm20_release,
 	.unlocked_ioctl	= video_ioctl2,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_ioctl_ops pcm20_ioctl_ops = अणु
+static const struct v4l2_ioctl_ops pcm20_ioctl_ops = {
 	.vidioc_querycap    = vidioc_querycap,
 	.vidioc_g_tuner     = vidioc_g_tuner,
 	.vidioc_s_tuner     = vidioc_s_tuner,
@@ -424,57 +423,57 @@ MODULE_PARM_DESC(radio_nr, "Set radio device number (/dev/radioX).  Default: -1 
 	.vidioc_log_status  = v4l2_ctrl_log_status,
 	.vidioc_subscribe_event = v4l2_ctrl_subscribe_event,
 	.vidioc_unsubscribe_event = v4l2_event_unsubscribe,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops pcm20_ctrl_ops = अणु
+static const struct v4l2_ctrl_ops pcm20_ctrl_ops = {
 	.s_ctrl = pcm20_s_ctrl,
-पूर्ण;
+};
 
-अटल पूर्णांक __init pcm20_init(व्योम)
-अणु
-	काष्ठा pcm20 *dev = &pcm20_card;
-	काष्ठा v4l2_device *v4l2_dev = &dev->v4l2_dev;
-	काष्ठा v4l2_ctrl_handler *hdl;
-	पूर्णांक res;
+static int __init pcm20_init(void)
+{
+	struct pcm20 *dev = &pcm20_card;
+	struct v4l2_device *v4l2_dev = &dev->v4l2_dev;
+	struct v4l2_ctrl_handler *hdl;
+	int res;
 
 	dev->aci = snd_aci_get_aci();
-	अगर (dev->aci == शून्य) अणु
+	if (dev->aci == NULL) {
 		v4l2_err(v4l2_dev,
 			 "you must load the snd-miro driver first!\n");
-		वापस -ENODEV;
-	पूर्ण
-	strscpy(v4l2_dev->name, "radio-miropcm20", माप(v4l2_dev->name));
+		return -ENODEV;
+	}
+	strscpy(v4l2_dev->name, "radio-miropcm20", sizeof(v4l2_dev->name));
 	mutex_init(&dev->lock);
 
-	res = v4l2_device_रेजिस्टर(शून्य, v4l2_dev);
-	अगर (res < 0) अणु
+	res = v4l2_device_register(NULL, v4l2_dev);
+	if (res < 0) {
 		v4l2_err(v4l2_dev, "could not register v4l2_device\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	hdl = &dev->ctrl_handler;
 	v4l2_ctrl_handler_init(hdl, 7);
 	v4l2_ctrl_new_std(hdl, &pcm20_ctrl_ops,
 			V4L2_CID_AUDIO_MUTE, 0, 1, 1, 1);
-	dev->rds_pty = v4l2_ctrl_new_std(hdl, शून्य,
+	dev->rds_pty = v4l2_ctrl_new_std(hdl, NULL,
 			V4L2_CID_RDS_RX_PTY, 0, 0x1f, 1, 0);
-	dev->rds_ps_name = v4l2_ctrl_new_std(hdl, शून्य,
+	dev->rds_ps_name = v4l2_ctrl_new_std(hdl, NULL,
 			V4L2_CID_RDS_RX_PS_NAME, 0, 8, 8, 0);
-	dev->rds_radio_test = v4l2_ctrl_new_std(hdl, शून्य,
+	dev->rds_radio_test = v4l2_ctrl_new_std(hdl, NULL,
 			V4L2_CID_RDS_RX_RADIO_TEXT, 0, 64, 64, 0);
-	dev->rds_ta = v4l2_ctrl_new_std(hdl, शून्य,
+	dev->rds_ta = v4l2_ctrl_new_std(hdl, NULL,
 			V4L2_CID_RDS_RX_TRAFFIC_ANNOUNCEMENT, 0, 1, 1, 0);
-	dev->rds_tp = v4l2_ctrl_new_std(hdl, शून्य,
+	dev->rds_tp = v4l2_ctrl_new_std(hdl, NULL,
 			V4L2_CID_RDS_RX_TRAFFIC_PROGRAM, 0, 1, 1, 0);
-	dev->rds_ms = v4l2_ctrl_new_std(hdl, शून्य,
+	dev->rds_ms = v4l2_ctrl_new_std(hdl, NULL,
 			V4L2_CID_RDS_RX_MUSIC_SPEECH, 0, 1, 1, 1);
 	v4l2_dev->ctrl_handler = hdl;
-	अगर (hdl->error) अणु
+	if (hdl->error) {
 		res = hdl->error;
 		v4l2_err(v4l2_dev, "Could not register control\n");
-		जाओ err_hdl;
-	पूर्ण
-	strscpy(dev->vdev.name, v4l2_dev->name, माप(dev->vdev.name));
+		goto err_hdl;
+	}
+	strscpy(dev->vdev.name, v4l2_dev->name, sizeof(dev->vdev.name));
 	dev->vdev.v4l2_dev = v4l2_dev;
 	dev->vdev.fops = &pcm20_fops;
 	dev->vdev.ioctl_ops = &pcm20_ioctl_ops;
@@ -487,30 +486,30 @@ MODULE_PARM_DESC(radio_nr, "Set radio device number (/dev/radioX).  Default: -1 
 			dev->audmode == V4L2_TUNER_MODE_MONO, -1);
 	pcm20_setfreq(dev, dev->freq);
 
-	अगर (video_रेजिस्टर_device(&dev->vdev, VFL_TYPE_RADIO, radio_nr) < 0)
-		जाओ err_hdl;
+	if (video_register_device(&dev->vdev, VFL_TYPE_RADIO, radio_nr) < 0)
+		goto err_hdl;
 
 	v4l2_info(v4l2_dev, "Mirosound PCM20 Radio tuner\n");
-	वापस 0;
+	return 0;
 err_hdl:
-	v4l2_ctrl_handler_मुक्त(hdl);
-	v4l2_device_unरेजिस्टर(v4l2_dev);
-	वापस -EINVAL;
-पूर्ण
+	v4l2_ctrl_handler_free(hdl);
+	v4l2_device_unregister(v4l2_dev);
+	return -EINVAL;
+}
 
 MODULE_AUTHOR("Ruurd Reitsma, Krzysztof Helt");
 MODULE_DESCRIPTION("A driver for the Miro PCM20 radio card.");
 MODULE_LICENSE("GPL");
 
-अटल व्योम __निकास pcm20_cleanup(व्योम)
-अणु
-	काष्ठा pcm20 *dev = &pcm20_card;
+static void __exit pcm20_cleanup(void)
+{
+	struct pcm20 *dev = &pcm20_card;
 
-	video_unरेजिस्टर_device(&dev->vdev);
+	video_unregister_device(&dev->vdev);
 	snd_aci_cmd(dev->aci, ACI_SET_TUNERMUTE, 1, -1);
-	v4l2_ctrl_handler_मुक्त(&dev->ctrl_handler);
-	v4l2_device_unरेजिस्टर(&dev->v4l2_dev);
-पूर्ण
+	v4l2_ctrl_handler_free(&dev->ctrl_handler);
+	v4l2_device_unregister(&dev->v4l2_dev);
+}
 
 module_init(pcm20_init);
-module_निकास(pcm20_cleanup);
+module_exit(pcm20_cleanup);

@@ -1,54 +1,53 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * HTC simple EGPIO irq and gpio extender
  */
 
-#अगर_अघोषित __HTC_EGPIO_H__
-#घोषणा __HTC_EGPIO_H__
+#ifndef __HTC_EGPIO_H__
+#define __HTC_EGPIO_H__
 
-/* Descriptive values क्रम all-in or all-out htc_egpio_chip descriptors. */
-#घोषणा HTC_EGPIO_OUTPUT (~0)
-#घोषणा HTC_EGPIO_INPUT  0
+/* Descriptive values for all-in or all-out htc_egpio_chip descriptors. */
+#define HTC_EGPIO_OUTPUT (~0)
+#define HTC_EGPIO_INPUT  0
 
 /**
- * काष्ठा htc_egpio_chip - descriptor to create gpio_chip क्रम रेजिस्टर range
- * @reg_start: index of first रेजिस्टर
- * @gpio_base: gpio number of first pin in this रेजिस्टर range
- * @num_gpios: number of gpios in this रेजिस्टर range, max BITS_PER_LONG
- *    (number of रेजिस्टरs = DIV_ROUND_UP(num_gpios, reg_width))
+ * struct htc_egpio_chip - descriptor to create gpio_chip for register range
+ * @reg_start: index of first register
+ * @gpio_base: gpio number of first pin in this register range
+ * @num_gpios: number of gpios in this register range, max BITS_PER_LONG
+ *    (number of registers = DIV_ROUND_UP(num_gpios, reg_width))
  * @direction: bitfield, '0' = input, '1' = output,
  */
-काष्ठा htc_egpio_chip अणु
-	पूर्णांक           reg_start;
-	पूर्णांक           gpio_base;
-	पूर्णांक           num_gpios;
-	अचिन्हित दीर्घ direction;
-	अचिन्हित दीर्घ initial_values;
-पूर्ण;
+struct htc_egpio_chip {
+	int           reg_start;
+	int           gpio_base;
+	int           num_gpios;
+	unsigned long direction;
+	unsigned long initial_values;
+};
 
 /**
- * काष्ठा htc_egpio_platक्रमm_data - description provided by the arch
+ * struct htc_egpio_platform_data - description provided by the arch
  * @irq_base: beginning of available IRQs (eg, IRQ_BOARD_START)
  * @num_irqs: number of irqs
- * @reg_width: number of bits per रेजिस्टर, either 8 or 16 bit
- * @bus_width: alignment of the रेजिस्टरs, either 16 or 32 bit
- * @invert_acks: set अगर chip requires writing '0' to ack an irq, instead of '1'
- * @ack_रेजिस्टर: location of the irq/ack रेजिस्टर
- * @chip: poपूर्णांकer to array of htc_egpio_chip descriptors
+ * @reg_width: number of bits per register, either 8 or 16 bit
+ * @bus_width: alignment of the registers, either 16 or 32 bit
+ * @invert_acks: set if chip requires writing '0' to ack an irq, instead of '1'
+ * @ack_register: location of the irq/ack register
+ * @chip: pointer to array of htc_egpio_chip descriptors
  * @num_chips: number of egpio chip descriptors
  */
-काष्ठा htc_egpio_platक्रमm_data अणु
-	पूर्णांक                   bus_width;
-	पूर्णांक                   reg_width;
+struct htc_egpio_platform_data {
+	int                   bus_width;
+	int                   reg_width;
 
-	पूर्णांक                   irq_base;
-	पूर्णांक                   num_irqs;
-	पूर्णांक                   invert_acks;
-	पूर्णांक                   ack_रेजिस्टर;
+	int                   irq_base;
+	int                   num_irqs;
+	int                   invert_acks;
+	int                   ack_register;
 
-	काष्ठा htc_egpio_chip *chip;
-	पूर्णांक                   num_chips;
-पूर्ण;
+	struct htc_egpio_chip *chip;
+	int                   num_chips;
+};
 
-#पूर्ण_अगर
+#endif

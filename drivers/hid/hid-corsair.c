@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * HID driver क्रम Corsair devices
+ * HID driver for Corsair devices
  *
  * Supported devices:
  *  - Vengeance K70 Keyboard
@@ -17,47 +16,47 @@
 /*
  */
 
-#समावेश <linux/hid.h>
-#समावेश <linux/module.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/leds.h>
+#include <linux/hid.h>
+#include <linux/module.h>
+#include <linux/usb.h>
+#include <linux/leds.h>
 
-#समावेश "hid-ids.h"
+#include "hid-ids.h"
 
-#घोषणा CORSAIR_USE_K90_MACRO	(1<<0)
-#घोषणा CORSAIR_USE_K90_BACKLIGHT	(1<<1)
+#define CORSAIR_USE_K90_MACRO	(1<<0)
+#define CORSAIR_USE_K90_BACKLIGHT	(1<<1)
 
-काष्ठा k90_led अणु
-	काष्ठा led_classdev cdev;
-	पूर्णांक brightness;
-	काष्ठा work_काष्ठा work;
-	bool हटाओd;
-पूर्ण;
+struct k90_led {
+	struct led_classdev cdev;
+	int brightness;
+	struct work_struct work;
+	bool removed;
+};
 
-काष्ठा k90_drvdata अणु
-	काष्ठा k90_led record_led;
-पूर्ण;
+struct k90_drvdata {
+	struct k90_led record_led;
+};
 
-काष्ठा corsair_drvdata अणु
-	अचिन्हित दीर्घ quirks;
-	काष्ठा k90_drvdata *k90;
-	काष्ठा k90_led *backlight;
-पूर्ण;
+struct corsair_drvdata {
+	unsigned long quirks;
+	struct k90_drvdata *k90;
+	struct k90_led *backlight;
+};
 
-#घोषणा K90_GKEY_COUNT	18
+#define K90_GKEY_COUNT	18
 
-अटल पूर्णांक corsair_usage_to_gkey(अचिन्हित पूर्णांक usage)
-अणु
+static int corsair_usage_to_gkey(unsigned int usage)
+{
 	/* G1 (0xd0) to G16 (0xdf) */
-	अगर (usage >= 0xd0 && usage <= 0xdf)
-		वापस usage - 0xd0 + 1;
+	if (usage >= 0xd0 && usage <= 0xdf)
+		return usage - 0xd0 + 1;
 	/* G17 (0xe8) to G18 (0xe9) */
-	अगर (usage >= 0xe8 && usage <= 0xe9)
-		वापस usage - 0xe8 + 17;
-	वापस 0;
-पूर्ण
+	if (usage >= 0xe8 && usage <= 0xe9)
+		return usage - 0xe8 + 17;
+	return 0;
+}
 
-अटल अचिन्हित लघु corsair_gkey_map[K90_GKEY_COUNT] = अणु
+static unsigned short corsair_gkey_map[K90_GKEY_COUNT] = {
 	BTN_TRIGGER_HAPPY1,
 	BTN_TRIGGER_HAPPY2,
 	BTN_TRIGGER_HAPPY3,
@@ -76,671 +75,671 @@
 	BTN_TRIGGER_HAPPY16,
 	BTN_TRIGGER_HAPPY17,
 	BTN_TRIGGER_HAPPY18,
-पूर्ण;
+};
 
-module_param_array_named(gkey_codes, corsair_gkey_map, uलघु, शून्य, S_IRUGO);
+module_param_array_named(gkey_codes, corsair_gkey_map, ushort, NULL, S_IRUGO);
 MODULE_PARM_DESC(gkey_codes, "Key codes for the G-keys");
 
-अटल अचिन्हित लघु corsair_record_keycodes[2] = अणु
+static unsigned short corsair_record_keycodes[2] = {
 	BTN_TRIGGER_HAPPY19,
 	BTN_TRIGGER_HAPPY20
-पूर्ण;
+};
 
-module_param_array_named(recordkey_codes, corsair_record_keycodes, uलघु,
-			 शून्य, S_IRUGO);
+module_param_array_named(recordkey_codes, corsair_record_keycodes, ushort,
+			 NULL, S_IRUGO);
 MODULE_PARM_DESC(recordkey_codes, "Key codes for the MR (start and stop record) button");
 
-अटल अचिन्हित लघु corsair_profile_keycodes[3] = अणु
+static unsigned short corsair_profile_keycodes[3] = {
 	BTN_TRIGGER_HAPPY21,
 	BTN_TRIGGER_HAPPY22,
 	BTN_TRIGGER_HAPPY23
-पूर्ण;
+};
 
-module_param_array_named(profilekey_codes, corsair_profile_keycodes, uलघु,
-			 शून्य, S_IRUGO);
+module_param_array_named(profilekey_codes, corsair_profile_keycodes, ushort,
+			 NULL, S_IRUGO);
 MODULE_PARM_DESC(profilekey_codes, "Key codes for the profile buttons");
 
-#घोषणा CORSAIR_USAGE_SPECIAL_MIN 0xf0
-#घोषणा CORSAIR_USAGE_SPECIAL_MAX 0xff
+#define CORSAIR_USAGE_SPECIAL_MIN 0xf0
+#define CORSAIR_USAGE_SPECIAL_MAX 0xff
 
-#घोषणा CORSAIR_USAGE_MACRO_RECORD_START 0xf6
-#घोषणा CORSAIR_USAGE_MACRO_RECORD_STOP 0xf7
+#define CORSAIR_USAGE_MACRO_RECORD_START 0xf6
+#define CORSAIR_USAGE_MACRO_RECORD_STOP 0xf7
 
-#घोषणा CORSAIR_USAGE_PROखाता 0xf1
-#घोषणा CORSAIR_USAGE_M1 0xf1
-#घोषणा CORSAIR_USAGE_M2 0xf2
-#घोषणा CORSAIR_USAGE_M3 0xf3
-#घोषणा CORSAIR_USAGE_PROखाता_MAX 0xf3
+#define CORSAIR_USAGE_PROFILE 0xf1
+#define CORSAIR_USAGE_M1 0xf1
+#define CORSAIR_USAGE_M2 0xf2
+#define CORSAIR_USAGE_M3 0xf3
+#define CORSAIR_USAGE_PROFILE_MAX 0xf3
 
-#घोषणा CORSAIR_USAGE_META_OFF 0xf4
-#घोषणा CORSAIR_USAGE_META_ON  0xf5
+#define CORSAIR_USAGE_META_OFF 0xf4
+#define CORSAIR_USAGE_META_ON  0xf5
 
-#घोषणा CORSAIR_USAGE_LIGHT 0xfa
-#घोषणा CORSAIR_USAGE_LIGHT_OFF 0xfa
-#घोषणा CORSAIR_USAGE_LIGHT_DIM 0xfb
-#घोषणा CORSAIR_USAGE_LIGHT_MEDIUM 0xfc
-#घोषणा CORSAIR_USAGE_LIGHT_BRIGHT 0xfd
-#घोषणा CORSAIR_USAGE_LIGHT_MAX 0xfd
+#define CORSAIR_USAGE_LIGHT 0xfa
+#define CORSAIR_USAGE_LIGHT_OFF 0xfa
+#define CORSAIR_USAGE_LIGHT_DIM 0xfb
+#define CORSAIR_USAGE_LIGHT_MEDIUM 0xfc
+#define CORSAIR_USAGE_LIGHT_BRIGHT 0xfd
+#define CORSAIR_USAGE_LIGHT_MAX 0xfd
 
 /* USB control protocol */
 
-#घोषणा K90_REQUEST_BRIGHTNESS 49
-#घोषणा K90_REQUEST_MACRO_MODE 2
-#घोषणा K90_REQUEST_STATUS 4
-#घोषणा K90_REQUEST_GET_MODE 5
-#घोषणा K90_REQUEST_PROखाता 20
+#define K90_REQUEST_BRIGHTNESS 49
+#define K90_REQUEST_MACRO_MODE 2
+#define K90_REQUEST_STATUS 4
+#define K90_REQUEST_GET_MODE 5
+#define K90_REQUEST_PROFILE 20
 
-#घोषणा K90_MACRO_MODE_SW 0x0030
-#घोषणा K90_MACRO_MODE_HW 0x0001
+#define K90_MACRO_MODE_SW 0x0030
+#define K90_MACRO_MODE_HW 0x0001
 
-#घोषणा K90_MACRO_LED_ON  0x0020
-#घोषणा K90_MACRO_LED_OFF 0x0040
+#define K90_MACRO_LED_ON  0x0020
+#define K90_MACRO_LED_OFF 0x0040
 
 /*
  * LED class devices
  */
 
-#घोषणा K90_BACKLIGHT_LED_SUFFIX "::backlight"
-#घोषणा K90_RECORD_LED_SUFFIX "::record"
+#define K90_BACKLIGHT_LED_SUFFIX "::backlight"
+#define K90_RECORD_LED_SUFFIX "::record"
 
-अटल क्रमागत led_brightness k90_backlight_get(काष्ठा led_classdev *led_cdev)
-अणु
-	पूर्णांक ret;
-	काष्ठा k90_led *led = container_of(led_cdev, काष्ठा k90_led, cdev);
-	काष्ठा device *dev = led->cdev.dev->parent;
-	काष्ठा usb_पूर्णांकerface *usbअगर = to_usb_पूर्णांकerface(dev->parent);
-	काष्ठा usb_device *usbdev = पूर्णांकerface_to_usbdev(usbअगर);
-	पूर्णांक brightness;
-	अक्षर *data;
+static enum led_brightness k90_backlight_get(struct led_classdev *led_cdev)
+{
+	int ret;
+	struct k90_led *led = container_of(led_cdev, struct k90_led, cdev);
+	struct device *dev = led->cdev.dev->parent;
+	struct usb_interface *usbif = to_usb_interface(dev->parent);
+	struct usb_device *usbdev = interface_to_usbdev(usbif);
+	int brightness;
+	char *data;
 
-	data = kदो_स्मृति(8, GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = kmalloc(8, GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	ret = usb_control_msg(usbdev, usb_rcvctrlpipe(usbdev, 0),
 			      K90_REQUEST_STATUS,
-			      USB_सूची_IN | USB_TYPE_VENDOR |
+			      USB_DIR_IN | USB_TYPE_VENDOR |
 			      USB_RECIP_DEVICE, 0, 0, data, 8,
 			      USB_CTRL_SET_TIMEOUT);
-	अगर (ret < 5) अणु
+	if (ret < 5) {
 		dev_warn(dev, "Failed to get K90 initial state (error %d).\n",
 			 ret);
 		ret = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	brightness = data[4];
-	अगर (brightness < 0 || brightness > 3) अणु
+	if (brightness < 0 || brightness > 3) {
 		dev_warn(dev,
 			 "Read invalid backlight brightness: %02hhx.\n",
 			 data[4]);
 		ret = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	ret = brightness;
 out:
-	kमुक्त(data);
+	kfree(data);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल क्रमागत led_brightness k90_record_led_get(काष्ठा led_classdev *led_cdev)
-अणु
-	काष्ठा k90_led *led = container_of(led_cdev, काष्ठा k90_led, cdev);
+static enum led_brightness k90_record_led_get(struct led_classdev *led_cdev)
+{
+	struct k90_led *led = container_of(led_cdev, struct k90_led, cdev);
 
-	वापस led->brightness;
-पूर्ण
+	return led->brightness;
+}
 
-अटल व्योम k90_brightness_set(काष्ठा led_classdev *led_cdev,
-			       क्रमागत led_brightness brightness)
-अणु
-	काष्ठा k90_led *led = container_of(led_cdev, काष्ठा k90_led, cdev);
+static void k90_brightness_set(struct led_classdev *led_cdev,
+			       enum led_brightness brightness)
+{
+	struct k90_led *led = container_of(led_cdev, struct k90_led, cdev);
 
 	led->brightness = brightness;
 	schedule_work(&led->work);
-पूर्ण
+}
 
-अटल व्योम k90_backlight_work(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक ret;
-	काष्ठा k90_led *led = container_of(work, काष्ठा k90_led, work);
-	काष्ठा device *dev;
-	काष्ठा usb_पूर्णांकerface *usbअगर;
-	काष्ठा usb_device *usbdev;
+static void k90_backlight_work(struct work_struct *work)
+{
+	int ret;
+	struct k90_led *led = container_of(work, struct k90_led, work);
+	struct device *dev;
+	struct usb_interface *usbif;
+	struct usb_device *usbdev;
 
-	अगर (led->हटाओd)
-		वापस;
+	if (led->removed)
+		return;
 
 	dev = led->cdev.dev->parent;
-	usbअगर = to_usb_पूर्णांकerface(dev->parent);
-	usbdev = पूर्णांकerface_to_usbdev(usbअगर);
+	usbif = to_usb_interface(dev->parent);
+	usbdev = interface_to_usbdev(usbif);
 
 	ret = usb_control_msg(usbdev, usb_sndctrlpipe(usbdev, 0),
 			      K90_REQUEST_BRIGHTNESS,
-			      USB_सूची_OUT | USB_TYPE_VENDOR |
+			      USB_DIR_OUT | USB_TYPE_VENDOR |
 			      USB_RECIP_DEVICE, led->brightness, 0,
-			      शून्य, 0, USB_CTRL_SET_TIMEOUT);
-	अगर (ret != 0)
+			      NULL, 0, USB_CTRL_SET_TIMEOUT);
+	if (ret != 0)
 		dev_warn(dev, "Failed to set backlight brightness (error: %d).\n",
 			 ret);
-पूर्ण
+}
 
-अटल व्योम k90_record_led_work(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक ret;
-	काष्ठा k90_led *led = container_of(work, काष्ठा k90_led, work);
-	काष्ठा device *dev;
-	काष्ठा usb_पूर्णांकerface *usbअगर;
-	काष्ठा usb_device *usbdev;
-	पूर्णांक value;
+static void k90_record_led_work(struct work_struct *work)
+{
+	int ret;
+	struct k90_led *led = container_of(work, struct k90_led, work);
+	struct device *dev;
+	struct usb_interface *usbif;
+	struct usb_device *usbdev;
+	int value;
 
-	अगर (led->हटाओd)
-		वापस;
+	if (led->removed)
+		return;
 
 	dev = led->cdev.dev->parent;
-	usbअगर = to_usb_पूर्णांकerface(dev->parent);
-	usbdev = पूर्णांकerface_to_usbdev(usbअगर);
+	usbif = to_usb_interface(dev->parent);
+	usbdev = interface_to_usbdev(usbif);
 
-	अगर (led->brightness > 0)
+	if (led->brightness > 0)
 		value = K90_MACRO_LED_ON;
-	अन्यथा
+	else
 		value = K90_MACRO_LED_OFF;
 
 	ret = usb_control_msg(usbdev, usb_sndctrlpipe(usbdev, 0),
 			      K90_REQUEST_MACRO_MODE,
-			      USB_सूची_OUT | USB_TYPE_VENDOR |
-			      USB_RECIP_DEVICE, value, 0, शून्य, 0,
+			      USB_DIR_OUT | USB_TYPE_VENDOR |
+			      USB_RECIP_DEVICE, value, 0, NULL, 0,
 			      USB_CTRL_SET_TIMEOUT);
-	अगर (ret != 0)
+	if (ret != 0)
 		dev_warn(dev, "Failed to set record LED state (error: %d).\n",
 			 ret);
-पूर्ण
+}
 
 /*
  * Keyboard attributes
  */
 
-अटल sमाप_प्रकार k90_show_macro_mode(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	पूर्णांक ret;
-	काष्ठा usb_पूर्णांकerface *usbअगर = to_usb_पूर्णांकerface(dev->parent);
-	काष्ठा usb_device *usbdev = पूर्णांकerface_to_usbdev(usbअगर);
-	स्थिर अक्षर *macro_mode;
-	अक्षर *data;
+static ssize_t k90_show_macro_mode(struct device *dev,
+				   struct device_attribute *attr, char *buf)
+{
+	int ret;
+	struct usb_interface *usbif = to_usb_interface(dev->parent);
+	struct usb_device *usbdev = interface_to_usbdev(usbif);
+	const char *macro_mode;
+	char *data;
 
-	data = kदो_स्मृति(2, GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = kmalloc(2, GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	ret = usb_control_msg(usbdev, usb_rcvctrlpipe(usbdev, 0),
 			      K90_REQUEST_GET_MODE,
-			      USB_सूची_IN | USB_TYPE_VENDOR |
+			      USB_DIR_IN | USB_TYPE_VENDOR |
 			      USB_RECIP_DEVICE, 0, 0, data, 2,
 			      USB_CTRL_SET_TIMEOUT);
-	अगर (ret < 1) अणु
+	if (ret < 1) {
 		dev_warn(dev, "Failed to get K90 initial mode (error %d).\n",
 			 ret);
 		ret = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (data[0]) अणु
-	हाल K90_MACRO_MODE_HW:
+	switch (data[0]) {
+	case K90_MACRO_MODE_HW:
 		macro_mode = "HW";
-		अवरोध;
+		break;
 
-	हाल K90_MACRO_MODE_SW:
+	case K90_MACRO_MODE_SW:
 		macro_mode = "SW";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_warn(dev, "K90 in unknown mode: %02hhx.\n",
 			 data[0]);
 		ret = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = snम_लिखो(buf, PAGE_SIZE, "%s\n", macro_mode);
+	ret = snprintf(buf, PAGE_SIZE, "%s\n", macro_mode);
 out:
-	kमुक्त(data);
+	kfree(data);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार k90_store_macro_mode(काष्ठा device *dev,
-				    काष्ठा device_attribute *attr,
-				    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक ret;
-	काष्ठा usb_पूर्णांकerface *usbअगर = to_usb_पूर्णांकerface(dev->parent);
-	काष्ठा usb_device *usbdev = पूर्णांकerface_to_usbdev(usbअगर);
+static ssize_t k90_store_macro_mode(struct device *dev,
+				    struct device_attribute *attr,
+				    const char *buf, size_t count)
+{
+	int ret;
+	struct usb_interface *usbif = to_usb_interface(dev->parent);
+	struct usb_device *usbdev = interface_to_usbdev(usbif);
 	__u16 value;
 
-	अगर (म_भेदन(buf, "SW", 2) == 0)
+	if (strncmp(buf, "SW", 2) == 0)
 		value = K90_MACRO_MODE_SW;
-	अन्यथा अगर (म_भेदन(buf, "HW", 2) == 0)
+	else if (strncmp(buf, "HW", 2) == 0)
 		value = K90_MACRO_MODE_HW;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
 	ret = usb_control_msg(usbdev, usb_sndctrlpipe(usbdev, 0),
 			      K90_REQUEST_MACRO_MODE,
-			      USB_सूची_OUT | USB_TYPE_VENDOR |
-			      USB_RECIP_DEVICE, value, 0, शून्य, 0,
+			      USB_DIR_OUT | USB_TYPE_VENDOR |
+			      USB_RECIP_DEVICE, value, 0, NULL, 0,
 			      USB_CTRL_SET_TIMEOUT);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		dev_warn(dev, "Failed to set macro mode.\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार k90_show_current_profile(काष्ठा device *dev,
-					काष्ठा device_attribute *attr,
-					अक्षर *buf)
-अणु
-	पूर्णांक ret;
-	काष्ठा usb_पूर्णांकerface *usbअगर = to_usb_पूर्णांकerface(dev->parent);
-	काष्ठा usb_device *usbdev = पूर्णांकerface_to_usbdev(usbअगर);
-	पूर्णांक current_profile;
-	अक्षर *data;
+static ssize_t k90_show_current_profile(struct device *dev,
+					struct device_attribute *attr,
+					char *buf)
+{
+	int ret;
+	struct usb_interface *usbif = to_usb_interface(dev->parent);
+	struct usb_device *usbdev = interface_to_usbdev(usbif);
+	int current_profile;
+	char *data;
 
-	data = kदो_स्मृति(8, GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = kmalloc(8, GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	ret = usb_control_msg(usbdev, usb_rcvctrlpipe(usbdev, 0),
 			      K90_REQUEST_STATUS,
-			      USB_सूची_IN | USB_TYPE_VENDOR |
+			      USB_DIR_IN | USB_TYPE_VENDOR |
 			      USB_RECIP_DEVICE, 0, 0, data, 8,
 			      USB_CTRL_SET_TIMEOUT);
-	अगर (ret < 8) अणु
+	if (ret < 8) {
 		dev_warn(dev, "Failed to get K90 initial state (error %d).\n",
 			 ret);
 		ret = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	current_profile = data[7];
-	अगर (current_profile < 1 || current_profile > 3) अणु
+	if (current_profile < 1 || current_profile > 3) {
 		dev_warn(dev, "Read invalid current profile: %02hhx.\n",
 			 data[7]);
 		ret = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = snम_लिखो(buf, PAGE_SIZE, "%d\n", current_profile);
+	ret = snprintf(buf, PAGE_SIZE, "%d\n", current_profile);
 out:
-	kमुक्त(data);
+	kfree(data);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार k90_store_current_profile(काष्ठा device *dev,
-					 काष्ठा device_attribute *attr,
-					 स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक ret;
-	काष्ठा usb_पूर्णांकerface *usbअगर = to_usb_पूर्णांकerface(dev->parent);
-	काष्ठा usb_device *usbdev = पूर्णांकerface_to_usbdev(usbअगर);
-	पूर्णांक profile;
+static ssize_t k90_store_current_profile(struct device *dev,
+					 struct device_attribute *attr,
+					 const char *buf, size_t count)
+{
+	int ret;
+	struct usb_interface *usbif = to_usb_interface(dev->parent);
+	struct usb_device *usbdev = interface_to_usbdev(usbif);
+	int profile;
 
-	अगर (kstrtoपूर्णांक(buf, 10, &profile))
-		वापस -EINVAL;
-	अगर (profile < 1 || profile > 3)
-		वापस -EINVAL;
+	if (kstrtoint(buf, 10, &profile))
+		return -EINVAL;
+	if (profile < 1 || profile > 3)
+		return -EINVAL;
 
 	ret = usb_control_msg(usbdev, usb_sndctrlpipe(usbdev, 0),
-			      K90_REQUEST_PROखाता,
-			      USB_सूची_OUT | USB_TYPE_VENDOR |
-			      USB_RECIP_DEVICE, profile, 0, शून्य, 0,
+			      K90_REQUEST_PROFILE,
+			      USB_DIR_OUT | USB_TYPE_VENDOR |
+			      USB_RECIP_DEVICE, profile, 0, NULL, 0,
 			      USB_CTRL_SET_TIMEOUT);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		dev_warn(dev, "Failed to change current profile (error %d).\n",
 			 ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(macro_mode, 0644, k90_show_macro_mode, k90_store_macro_mode);
-अटल DEVICE_ATTR(current_profile, 0644, k90_show_current_profile,
+static DEVICE_ATTR(macro_mode, 0644, k90_show_macro_mode, k90_store_macro_mode);
+static DEVICE_ATTR(current_profile, 0644, k90_show_current_profile,
 		   k90_store_current_profile);
 
-अटल काष्ठा attribute *k90_attrs[] = अणु
+static struct attribute *k90_attrs[] = {
 	&dev_attr_macro_mode.attr,
 	&dev_attr_current_profile.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group k90_attr_group = अणु
+static const struct attribute_group k90_attr_group = {
 	.attrs = k90_attrs,
-पूर्ण;
+};
 
 /*
  * Driver functions
  */
 
-अटल पूर्णांक k90_init_backlight(काष्ठा hid_device *dev)
-अणु
-	पूर्णांक ret;
-	काष्ठा corsair_drvdata *drvdata = hid_get_drvdata(dev);
-	माप_प्रकार name_sz;
-	अक्षर *name;
+static int k90_init_backlight(struct hid_device *dev)
+{
+	int ret;
+	struct corsair_drvdata *drvdata = hid_get_drvdata(dev);
+	size_t name_sz;
+	char *name;
 
-	drvdata->backlight = kzalloc(माप(काष्ठा k90_led), GFP_KERNEL);
-	अगर (!drvdata->backlight) अणु
+	drvdata->backlight = kzalloc(sizeof(struct k90_led), GFP_KERNEL);
+	if (!drvdata->backlight) {
 		ret = -ENOMEM;
-		जाओ fail_backlight_alloc;
-	पूर्ण
+		goto fail_backlight_alloc;
+	}
 
 	name_sz =
-	    म_माप(dev_name(&dev->dev)) + माप(K90_BACKLIGHT_LED_SUFFIX);
+	    strlen(dev_name(&dev->dev)) + sizeof(K90_BACKLIGHT_LED_SUFFIX);
 	name = kzalloc(name_sz, GFP_KERNEL);
-	अगर (!name) अणु
+	if (!name) {
 		ret = -ENOMEM;
-		जाओ fail_name_alloc;
-	पूर्ण
-	snम_लिखो(name, name_sz, "%s" K90_BACKLIGHT_LED_SUFFIX,
+		goto fail_name_alloc;
+	}
+	snprintf(name, name_sz, "%s" K90_BACKLIGHT_LED_SUFFIX,
 		 dev_name(&dev->dev));
-	drvdata->backlight->हटाओd = false;
+	drvdata->backlight->removed = false;
 	drvdata->backlight->cdev.name = name;
 	drvdata->backlight->cdev.max_brightness = 3;
 	drvdata->backlight->cdev.brightness_set = k90_brightness_set;
 	drvdata->backlight->cdev.brightness_get = k90_backlight_get;
 	INIT_WORK(&drvdata->backlight->work, k90_backlight_work);
-	ret = led_classdev_रेजिस्टर(&dev->dev, &drvdata->backlight->cdev);
-	अगर (ret != 0)
-		जाओ fail_रेजिस्टर_cdev;
+	ret = led_classdev_register(&dev->dev, &drvdata->backlight->cdev);
+	if (ret != 0)
+		goto fail_register_cdev;
 
-	वापस 0;
+	return 0;
 
-fail_रेजिस्टर_cdev:
-	kमुक्त(drvdata->backlight->cdev.name);
+fail_register_cdev:
+	kfree(drvdata->backlight->cdev.name);
 fail_name_alloc:
-	kमुक्त(drvdata->backlight);
-	drvdata->backlight = शून्य;
+	kfree(drvdata->backlight);
+	drvdata->backlight = NULL;
 fail_backlight_alloc:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक k90_init_macro_functions(काष्ठा hid_device *dev)
-अणु
-	पूर्णांक ret;
-	काष्ठा corsair_drvdata *drvdata = hid_get_drvdata(dev);
-	काष्ठा k90_drvdata *k90;
-	माप_प्रकार name_sz;
-	अक्षर *name;
+static int k90_init_macro_functions(struct hid_device *dev)
+{
+	int ret;
+	struct corsair_drvdata *drvdata = hid_get_drvdata(dev);
+	struct k90_drvdata *k90;
+	size_t name_sz;
+	char *name;
 
-	k90 = kzalloc(माप(काष्ठा k90_drvdata), GFP_KERNEL);
-	अगर (!k90) अणु
+	k90 = kzalloc(sizeof(struct k90_drvdata), GFP_KERNEL);
+	if (!k90) {
 		ret = -ENOMEM;
-		जाओ fail_drvdata;
-	पूर्ण
+		goto fail_drvdata;
+	}
 	drvdata->k90 = k90;
 
-	/* Init LED device क्रम record LED */
-	name_sz = म_माप(dev_name(&dev->dev)) + माप(K90_RECORD_LED_SUFFIX);
+	/* Init LED device for record LED */
+	name_sz = strlen(dev_name(&dev->dev)) + sizeof(K90_RECORD_LED_SUFFIX);
 	name = kzalloc(name_sz, GFP_KERNEL);
-	अगर (!name) अणु
+	if (!name) {
 		ret = -ENOMEM;
-		जाओ fail_record_led_alloc;
-	पूर्ण
-	snम_लिखो(name, name_sz, "%s" K90_RECORD_LED_SUFFIX,
+		goto fail_record_led_alloc;
+	}
+	snprintf(name, name_sz, "%s" K90_RECORD_LED_SUFFIX,
 		 dev_name(&dev->dev));
-	k90->record_led.हटाओd = false;
+	k90->record_led.removed = false;
 	k90->record_led.cdev.name = name;
 	k90->record_led.cdev.max_brightness = 1;
 	k90->record_led.cdev.brightness_set = k90_brightness_set;
 	k90->record_led.cdev.brightness_get = k90_record_led_get;
 	INIT_WORK(&k90->record_led.work, k90_record_led_work);
 	k90->record_led.brightness = 0;
-	ret = led_classdev_रेजिस्टर(&dev->dev, &k90->record_led.cdev);
-	अगर (ret != 0)
-		जाओ fail_record_led;
+	ret = led_classdev_register(&dev->dev, &k90->record_led.cdev);
+	if (ret != 0)
+		goto fail_record_led;
 
 	/* Init attributes */
 	ret = sysfs_create_group(&dev->dev.kobj, &k90_attr_group);
-	अगर (ret != 0)
-		जाओ fail_sysfs;
+	if (ret != 0)
+		goto fail_sysfs;
 
-	वापस 0;
+	return 0;
 
 fail_sysfs:
-	k90->record_led.हटाओd = true;
-	led_classdev_unरेजिस्टर(&k90->record_led.cdev);
+	k90->record_led.removed = true;
+	led_classdev_unregister(&k90->record_led.cdev);
 	cancel_work_sync(&k90->record_led.work);
 fail_record_led:
-	kमुक्त(k90->record_led.cdev.name);
+	kfree(k90->record_led.cdev.name);
 fail_record_led_alloc:
-	kमुक्त(k90);
+	kfree(k90);
 fail_drvdata:
-	drvdata->k90 = शून्य;
-	वापस ret;
-पूर्ण
+	drvdata->k90 = NULL;
+	return ret;
+}
 
-अटल व्योम k90_cleanup_backlight(काष्ठा hid_device *dev)
-अणु
-	काष्ठा corsair_drvdata *drvdata = hid_get_drvdata(dev);
+static void k90_cleanup_backlight(struct hid_device *dev)
+{
+	struct corsair_drvdata *drvdata = hid_get_drvdata(dev);
 
-	अगर (drvdata->backlight) अणु
-		drvdata->backlight->हटाओd = true;
-		led_classdev_unरेजिस्टर(&drvdata->backlight->cdev);
+	if (drvdata->backlight) {
+		drvdata->backlight->removed = true;
+		led_classdev_unregister(&drvdata->backlight->cdev);
 		cancel_work_sync(&drvdata->backlight->work);
-		kमुक्त(drvdata->backlight->cdev.name);
-		kमुक्त(drvdata->backlight);
-	पूर्ण
-पूर्ण
+		kfree(drvdata->backlight->cdev.name);
+		kfree(drvdata->backlight);
+	}
+}
 
-अटल व्योम k90_cleanup_macro_functions(काष्ठा hid_device *dev)
-अणु
-	काष्ठा corsair_drvdata *drvdata = hid_get_drvdata(dev);
-	काष्ठा k90_drvdata *k90 = drvdata->k90;
+static void k90_cleanup_macro_functions(struct hid_device *dev)
+{
+	struct corsair_drvdata *drvdata = hid_get_drvdata(dev);
+	struct k90_drvdata *k90 = drvdata->k90;
 
-	अगर (k90) अणु
-		sysfs_हटाओ_group(&dev->dev.kobj, &k90_attr_group);
+	if (k90) {
+		sysfs_remove_group(&dev->dev.kobj, &k90_attr_group);
 
-		k90->record_led.हटाओd = true;
-		led_classdev_unरेजिस्टर(&k90->record_led.cdev);
+		k90->record_led.removed = true;
+		led_classdev_unregister(&k90->record_led.cdev);
 		cancel_work_sync(&k90->record_led.work);
-		kमुक्त(k90->record_led.cdev.name);
+		kfree(k90->record_led.cdev.name);
 
-		kमुक्त(k90);
-	पूर्ण
-पूर्ण
+		kfree(k90);
+	}
+}
 
-अटल पूर्णांक corsair_probe(काष्ठा hid_device *dev, स्थिर काष्ठा hid_device_id *id)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ quirks = id->driver_data;
-	काष्ठा corsair_drvdata *drvdata;
-	काष्ठा usb_पूर्णांकerface *usbअगर = to_usb_पूर्णांकerface(dev->dev.parent);
+static int corsair_probe(struct hid_device *dev, const struct hid_device_id *id)
+{
+	int ret;
+	unsigned long quirks = id->driver_data;
+	struct corsair_drvdata *drvdata;
+	struct usb_interface *usbif = to_usb_interface(dev->dev.parent);
 
-	drvdata = devm_kzalloc(&dev->dev, माप(काष्ठा corsair_drvdata),
+	drvdata = devm_kzalloc(&dev->dev, sizeof(struct corsair_drvdata),
 			       GFP_KERNEL);
-	अगर (drvdata == शून्य)
-		वापस -ENOMEM;
+	if (drvdata == NULL)
+		return -ENOMEM;
 	drvdata->quirks = quirks;
 	hid_set_drvdata(dev, drvdata);
 
 	ret = hid_parse(dev);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		hid_err(dev, "parse failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	ret = hid_hw_start(dev, HID_CONNECT_DEFAULT);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		hid_err(dev, "hw start failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (usbअगर->cur_altsetting->desc.bInterfaceNumber == 0) अणु
-		अगर (quirks & CORSAIR_USE_K90_MACRO) अणु
+	if (usbif->cur_altsetting->desc.bInterfaceNumber == 0) {
+		if (quirks & CORSAIR_USE_K90_MACRO) {
 			ret = k90_init_macro_functions(dev);
-			अगर (ret != 0)
+			if (ret != 0)
 				hid_warn(dev, "Failed to initialize K90 macro functions.\n");
-		पूर्ण
-		अगर (quirks & CORSAIR_USE_K90_BACKLIGHT) अणु
+		}
+		if (quirks & CORSAIR_USE_K90_BACKLIGHT) {
 			ret = k90_init_backlight(dev);
-			अगर (ret != 0)
+			if (ret != 0)
 				hid_warn(dev, "Failed to initialize K90 backlight.\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम corsair_हटाओ(काष्ठा hid_device *dev)
-अणु
+static void corsair_remove(struct hid_device *dev)
+{
 	k90_cleanup_macro_functions(dev);
 	k90_cleanup_backlight(dev);
 
 	hid_hw_stop(dev);
-पूर्ण
+}
 
-अटल पूर्णांक corsair_event(काष्ठा hid_device *dev, काष्ठा hid_field *field,
-			 काष्ठा hid_usage *usage, __s32 value)
-अणु
-	काष्ठा corsair_drvdata *drvdata = hid_get_drvdata(dev);
+static int corsair_event(struct hid_device *dev, struct hid_field *field,
+			 struct hid_usage *usage, __s32 value)
+{
+	struct corsair_drvdata *drvdata = hid_get_drvdata(dev);
 
-	अगर (!drvdata->k90)
-		वापस 0;
+	if (!drvdata->k90)
+		return 0;
 
-	चयन (usage->hid & HID_USAGE) अणु
-	हाल CORSAIR_USAGE_MACRO_RECORD_START:
+	switch (usage->hid & HID_USAGE) {
+	case CORSAIR_USAGE_MACRO_RECORD_START:
 		drvdata->k90->record_led.brightness = 1;
-		अवरोध;
-	हाल CORSAIR_USAGE_MACRO_RECORD_STOP:
+		break;
+	case CORSAIR_USAGE_MACRO_RECORD_STOP:
 		drvdata->k90->record_led.brightness = 0;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक corsair_input_mapping(काष्ठा hid_device *dev,
-				 काष्ठा hid_input *input,
-				 काष्ठा hid_field *field,
-				 काष्ठा hid_usage *usage, अचिन्हित दीर्घ **bit,
-				 पूर्णांक *max)
-अणु
-	पूर्णांक gkey;
+static int corsair_input_mapping(struct hid_device *dev,
+				 struct hid_input *input,
+				 struct hid_field *field,
+				 struct hid_usage *usage, unsigned long **bit,
+				 int *max)
+{
+	int gkey;
 
-	अगर ((usage->hid & HID_USAGE_PAGE) != HID_UP_KEYBOARD)
-		वापस 0;
+	if ((usage->hid & HID_USAGE_PAGE) != HID_UP_KEYBOARD)
+		return 0;
 
 	gkey = corsair_usage_to_gkey(usage->hid & HID_USAGE);
-	अगर (gkey != 0) अणु
+	if (gkey != 0) {
 		hid_map_usage_clear(input, usage, bit, max, EV_KEY,
 				    corsair_gkey_map[gkey - 1]);
-		वापस 1;
-	पूर्ण
-	अगर ((usage->hid & HID_USAGE) >= CORSAIR_USAGE_SPECIAL_MIN &&
-	    (usage->hid & HID_USAGE) <= CORSAIR_USAGE_SPECIAL_MAX) अणु
-		चयन (usage->hid & HID_USAGE) अणु
-		हाल CORSAIR_USAGE_MACRO_RECORD_START:
+		return 1;
+	}
+	if ((usage->hid & HID_USAGE) >= CORSAIR_USAGE_SPECIAL_MIN &&
+	    (usage->hid & HID_USAGE) <= CORSAIR_USAGE_SPECIAL_MAX) {
+		switch (usage->hid & HID_USAGE) {
+		case CORSAIR_USAGE_MACRO_RECORD_START:
 			hid_map_usage_clear(input, usage, bit, max, EV_KEY,
 					    corsair_record_keycodes[0]);
-			वापस 1;
+			return 1;
 
-		हाल CORSAIR_USAGE_MACRO_RECORD_STOP:
+		case CORSAIR_USAGE_MACRO_RECORD_STOP:
 			hid_map_usage_clear(input, usage, bit, max, EV_KEY,
 					    corsair_record_keycodes[1]);
-			वापस 1;
+			return 1;
 
-		हाल CORSAIR_USAGE_M1:
+		case CORSAIR_USAGE_M1:
 			hid_map_usage_clear(input, usage, bit, max, EV_KEY,
 					    corsair_profile_keycodes[0]);
-			वापस 1;
+			return 1;
 
-		हाल CORSAIR_USAGE_M2:
+		case CORSAIR_USAGE_M2:
 			hid_map_usage_clear(input, usage, bit, max, EV_KEY,
 					    corsair_profile_keycodes[1]);
-			वापस 1;
+			return 1;
 
-		हाल CORSAIR_USAGE_M3:
+		case CORSAIR_USAGE_M3:
 			hid_map_usage_clear(input, usage, bit, max, EV_KEY,
 					    corsair_profile_keycodes[2]);
-			वापस 1;
+			return 1;
 
-		शेष:
-			वापस -1;
-		पूर्ण
-	पूर्ण
+		default:
+			return -1;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * The report descriptor of some of the Corsair gaming mice is
- * non parseable as they define two consecutive Logical Minimum क्रम
+ * non parseable as they define two consecutive Logical Minimum for
  * the Usage Page (Consumer) in rdescs bytes 75 and 77 being 77 0x16
- * that should be obviousy 0x26 क्रम Logical Magimum of 16 bits. This
+ * that should be obviousy 0x26 for Logical Magimum of 16 bits. This
  * prevents poper parsing of the report descriptor due Logical
  * Minimum being larger than Logical Maximum.
  *
- * This driver fixes the report descriptor क्रम:
+ * This driver fixes the report descriptor for:
  * - USB ID 1b1c:1b34, sold as GLAIVE RGB Gaming mouse
  * - USB ID 1b1c:1b3e, sold as Scimitar RGB Pro Gaming mouse
  */
 
-अटल __u8 *corsair_mouse_report_fixup(काष्ठा hid_device *hdev, __u8 *rdesc,
-        अचिन्हित पूर्णांक *rsize)
-अणु
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(hdev->dev.parent);
+static __u8 *corsair_mouse_report_fixup(struct hid_device *hdev, __u8 *rdesc,
+        unsigned int *rsize)
+{
+	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
 
-	अगर (पूर्णांकf->cur_altsetting->desc.bInterfaceNumber == 1) अणु
+	if (intf->cur_altsetting->desc.bInterfaceNumber == 1) {
 		/*
 		 * Corsair GLAIVE RGB and Scimitar RGB Pro report descriptor is
-		 * broken and defines two dअगरferent Logical Minimum क्रम the
+		 * broken and defines two different Logical Minimum for the
 		 * Consumer Application. The byte 77 should be a 0x26 defining
-		 * a 16 bits पूर्णांकeger क्रम the Logical Maximum but it is a 0x16
+		 * a 16 bits integer for the Logical Maximum but it is a 0x16
 		 * instead (Logical Minimum)
 		 */
-		चयन (hdev->product) अणु
-		हाल USB_DEVICE_ID_CORSAIR_GLAIVE_RGB:
-		हाल USB_DEVICE_ID_CORSAIR_SCIMITAR_PRO_RGB:
-			अगर (*rsize >= 172 && rdesc[75] == 0x15 && rdesc[77] == 0x16
-			&& rdesc[78] == 0xff && rdesc[79] == 0x0f) अणु
+		switch (hdev->product) {
+		case USB_DEVICE_ID_CORSAIR_GLAIVE_RGB:
+		case USB_DEVICE_ID_CORSAIR_SCIMITAR_PRO_RGB:
+			if (*rsize >= 172 && rdesc[75] == 0x15 && rdesc[77] == 0x16
+			&& rdesc[78] == 0xff && rdesc[79] == 0x0f) {
 				hid_info(hdev, "Fixing up report descriptor\n");
 				rdesc[77] = 0x26;
-			पूर्ण
-			अवरोध;
-		पूर्ण
+			}
+			break;
+		}
 
-	पूर्ण
-	वापस rdesc;
-पूर्ण
+	}
+	return rdesc;
+}
 
-अटल स्थिर काष्ठा hid_device_id corsair_devices[] = अणु
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_CORSAIR, USB_DEVICE_ID_CORSAIR_K90),
+static const struct hid_device_id corsair_devices[] = {
+	{ HID_USB_DEVICE(USB_VENDOR_ID_CORSAIR, USB_DEVICE_ID_CORSAIR_K90),
 		.driver_data = CORSAIR_USE_K90_MACRO |
-			       CORSAIR_USE_K90_BACKLIGHT पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_CORSAIR,
-            USB_DEVICE_ID_CORSAIR_GLAIVE_RGB) पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_CORSAIR,
-            USB_DEVICE_ID_CORSAIR_SCIMITAR_PRO_RGB) पूर्ण,
+			       CORSAIR_USE_K90_BACKLIGHT },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_CORSAIR,
+            USB_DEVICE_ID_CORSAIR_GLAIVE_RGB) },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_CORSAIR,
+            USB_DEVICE_ID_CORSAIR_SCIMITAR_PRO_RGB) },
 	/*
 	 * Vengeance K70 and K70 RAPIDFIRE share product IDs.
 	 */
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_CORSAIR,
-            USB_DEVICE_ID_CORSAIR_K70R) पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	{ HID_USB_DEVICE(USB_VENDOR_ID_CORSAIR,
+            USB_DEVICE_ID_CORSAIR_K70R) },
+	{}
+};
 
 MODULE_DEVICE_TABLE(hid, corsair_devices);
 
-अटल काष्ठा hid_driver corsair_driver = अणु
+static struct hid_driver corsair_driver = {
 	.name = "corsair",
 	.id_table = corsair_devices,
 	.probe = corsair_probe,
 	.event = corsair_event,
-	.हटाओ = corsair_हटाओ,
+	.remove = corsair_remove,
 	.input_mapping = corsair_input_mapping,
 	.report_fixup = corsair_mouse_report_fixup,
-पूर्ण;
+};
 
 module_hid_driver(corsair_driver);
 

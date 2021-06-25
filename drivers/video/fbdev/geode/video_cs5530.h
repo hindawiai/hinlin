@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * drivers/video/geode/video_cs5530.h
  *   -- CS5530 video device
@@ -9,14 +8,14 @@
  * Based on AMD's original 2.4 driver:
  *   Copyright (C) 2004 Advanced Micro Devices, Inc.
  */
-#अगर_अघोषित __VIDEO_CS5530_H__
-#घोषणा __VIDEO_CS5530_H__
+#ifndef __VIDEO_CS5530_H__
+#define __VIDEO_CS5530_H__
 
-बाह्य स्थिर काष्ठा geode_vid_ops cs5530_vid_ops;
+extern const struct geode_vid_ops cs5530_vid_ops;
 
-/* CS5530 Video device रेजिस्टरs */
+/* CS5530 Video device registers */
 
-#घोषणा CS5530_VIDEO_CONFIG	0x0000
+#define CS5530_VIDEO_CONFIG	0x0000
 #  define CS5530_VCFG_VID_EN			0x00000001
 #  define CS5530_VCFG_VID_REG_UPDATE		0x00000002
 #  define CS5530_VCFG_VID_INP_FORMAT		0x0000000C
@@ -34,7 +33,7 @@
 #  define CS5530_VCFG_16_BIT_EN			0x20000000
 #  define CS5530_VCFG_HIGH_SPD_INT		0x40000000
 
-#घोषणा CS5530_DISPLAY_CONFIG	0x0004
+#define CS5530_DISPLAY_CONFIG	0x0004
 #  define CS5530_DCFG_DIS_EN			0x00000001
 #  define CS5530_DCFG_HSYNC_EN			0x00000002
 #  define CS5530_DCFG_VSYNC_EN			0x00000004
@@ -59,14 +58,14 @@
 #  define CS5530_DCFG_DDC_OE			0x01000000
 #  define CS5530_DCFG_16_BIT_EN			0x02000000
 
-#घोषणा CS5530_VIDEO_X_POS	0x0008
-#घोषणा CS5530_VIDEO_Y_POS	0x000C
-#घोषणा CS5530_VIDEO_SCALE	0x0010
-#घोषणा CS5530_VIDEO_COLOR_KEY	0x0014
-#घोषणा CS5530_VIDEO_COLOR_MASK 0x0018
-#घोषणा CS5530_PALETTE_ADDRESS	0x001C
-#घोषणा CS5530_PALETTE_DATA	0x0020
-#घोषणा CS5530_DOT_CLK_CONFIG	0x0024
-#घोषणा CS5530_CRCSIG_TFT_TV	0x0028
+#define CS5530_VIDEO_X_POS	0x0008
+#define CS5530_VIDEO_Y_POS	0x000C
+#define CS5530_VIDEO_SCALE	0x0010
+#define CS5530_VIDEO_COLOR_KEY	0x0014
+#define CS5530_VIDEO_COLOR_MASK 0x0018
+#define CS5530_PALETTE_ADDRESS	0x001C
+#define CS5530_PALETTE_DATA	0x0020
+#define CS5530_DOT_CLK_CONFIG	0x0024
+#define CS5530_CRCSIG_TFT_TV	0x0028
 
-#पूर्ण_अगर /* !__VIDEO_CS5530_H__ */
+#endif /* !__VIDEO_CS5530_H__ */

@@ -1,59 +1,58 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+// SPDX-License-Identifier: GPL-2.0
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/console.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/माला.स>
+#include <linux/kernel.h>
+#include <linux/console.h>
+#include <linux/errno.h>
+#include <linux/string.h>
 
-#समावेश "console_cmdline.h"
-#समावेश "braille.h"
+#include "console_cmdline.h"
+#include "braille.h"
 
-पूर्णांक _braille_console_setup(अक्षर **str, अक्षर **brl_options)
-अणु
-	माप_प्रकार len;
+int _braille_console_setup(char **str, char **brl_options)
+{
+	size_t len;
 
 	len = str_has_prefix(*str, "brl,");
-	अगर (len) अणु
+	if (len) {
 		*brl_options = "";
 		*str += len;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	len = str_has_prefix(*str, "brl=");
-	अगर (len) अणु
+	if (len) {
 		*brl_options = *str + len;
-		*str = म_अक्षर(*brl_options, ',');
-		अगर (!*str) अणु
+		*str = strchr(*brl_options, ',');
+		if (!*str) {
 			pr_err("need port name after brl=\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		*((*str)++) = 0;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-_braille_रेजिस्टर_console(काष्ठा console *console, काष्ठा console_cmdline *c)
-अणु
-	पूर्णांक rtn = 0;
+int
+_braille_register_console(struct console *console, struct console_cmdline *c)
+{
+	int rtn = 0;
 
-	अगर (c->brl_options) अणु
+	if (c->brl_options) {
 		console->flags |= CON_BRL;
-		rtn = braille_रेजिस्टर_console(console, c->index, c->options,
+		rtn = braille_register_console(console, c->index, c->options,
 					       c->brl_options);
-	पूर्ण
+	}
 
-	वापस rtn;
-पूर्ण
+	return rtn;
+}
 
-पूर्णांक
-_braille_unरेजिस्टर_console(काष्ठा console *console)
-अणु
-	अगर (console->flags & CON_BRL)
-		वापस braille_unरेजिस्टर_console(console);
+int
+_braille_unregister_console(struct console *console)
+{
+	if (console->flags & CON_BRL)
+		return braille_unregister_console(console);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

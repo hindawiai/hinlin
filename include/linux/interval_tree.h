@@ -1,31 +1,30 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_INTERVAL_TREE_H
-#घोषणा _LINUX_INTERVAL_TREE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_INTERVAL_TREE_H
+#define _LINUX_INTERVAL_TREE_H
 
-#समावेश <linux/rbtree.h>
+#include <linux/rbtree.h>
 
-काष्ठा पूर्णांकerval_tree_node अणु
-	काष्ठा rb_node rb;
-	अचिन्हित दीर्घ start;	/* Start of पूर्णांकerval */
-	अचिन्हित दीर्घ last;	/* Last location _in_ पूर्णांकerval */
-	अचिन्हित दीर्घ __subtree_last;
-पूर्ण;
+struct interval_tree_node {
+	struct rb_node rb;
+	unsigned long start;	/* Start of interval */
+	unsigned long last;	/* Last location _in_ interval */
+	unsigned long __subtree_last;
+};
 
-बाह्य व्योम
-पूर्णांकerval_tree_insert(काष्ठा पूर्णांकerval_tree_node *node,
-		     काष्ठा rb_root_cached *root);
+extern void
+interval_tree_insert(struct interval_tree_node *node,
+		     struct rb_root_cached *root);
 
-बाह्य व्योम
-पूर्णांकerval_tree_हटाओ(काष्ठा पूर्णांकerval_tree_node *node,
-		     काष्ठा rb_root_cached *root);
+extern void
+interval_tree_remove(struct interval_tree_node *node,
+		     struct rb_root_cached *root);
 
-बाह्य काष्ठा पूर्णांकerval_tree_node *
-पूर्णांकerval_tree_iter_first(काष्ठा rb_root_cached *root,
-			 अचिन्हित दीर्घ start, अचिन्हित दीर्घ last);
+extern struct interval_tree_node *
+interval_tree_iter_first(struct rb_root_cached *root,
+			 unsigned long start, unsigned long last);
 
-बाह्य काष्ठा पूर्णांकerval_tree_node *
-पूर्णांकerval_tree_iter_next(काष्ठा पूर्णांकerval_tree_node *node,
-			अचिन्हित दीर्घ start, अचिन्हित दीर्घ last);
+extern struct interval_tree_node *
+interval_tree_iter_next(struct interval_tree_node *node,
+			unsigned long start, unsigned long last);
 
-#पूर्ण_अगर	/* _LINUX_INTERVAL_TREE_H */
+#endif	/* _LINUX_INTERVAL_TREE_H */

@@ -1,107 +1,106 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2015 Nicira, Inc.
  */
 
-#अगर_अघोषित OVS_CONNTRACK_H
-#घोषणा OVS_CONNTRACK_H 1
+#ifndef OVS_CONNTRACK_H
+#define OVS_CONNTRACK_H 1
 
-#समावेश "flow.h"
+#include "flow.h"
 
-काष्ठा ovs_conntrack_info;
-काष्ठा ovs_ct_limit_info;
-क्रमागत ovs_key_attr;
+struct ovs_conntrack_info;
+struct ovs_ct_limit_info;
+enum ovs_key_attr;
 
-#अगर IS_ENABLED(CONFIG_NF_CONNTRACK)
-पूर्णांक ovs_ct_init(काष्ठा net *);
-व्योम ovs_ct_निकास(काष्ठा net *);
-bool ovs_ct_verअगरy(काष्ठा net *, क्रमागत ovs_key_attr attr);
-पूर्णांक ovs_ct_copy_action(काष्ठा net *, स्थिर काष्ठा nlattr *,
-		       स्थिर काष्ठा sw_flow_key *, काष्ठा sw_flow_actions **,
+#if IS_ENABLED(CONFIG_NF_CONNTRACK)
+int ovs_ct_init(struct net *);
+void ovs_ct_exit(struct net *);
+bool ovs_ct_verify(struct net *, enum ovs_key_attr attr);
+int ovs_ct_copy_action(struct net *, const struct nlattr *,
+		       const struct sw_flow_key *, struct sw_flow_actions **,
 		       bool log);
-पूर्णांक ovs_ct_action_to_attr(स्थिर काष्ठा ovs_conntrack_info *, काष्ठा sk_buff *);
+int ovs_ct_action_to_attr(const struct ovs_conntrack_info *, struct sk_buff *);
 
-पूर्णांक ovs_ct_execute(काष्ठा net *, काष्ठा sk_buff *, काष्ठा sw_flow_key *,
-		   स्थिर काष्ठा ovs_conntrack_info *);
-पूर्णांक ovs_ct_clear(काष्ठा sk_buff *skb, काष्ठा sw_flow_key *key);
+int ovs_ct_execute(struct net *, struct sk_buff *, struct sw_flow_key *,
+		   const struct ovs_conntrack_info *);
+int ovs_ct_clear(struct sk_buff *skb, struct sw_flow_key *key);
 
-व्योम ovs_ct_fill_key(स्थिर काष्ठा sk_buff *skb, काष्ठा sw_flow_key *key,
+void ovs_ct_fill_key(const struct sk_buff *skb, struct sw_flow_key *key,
 		     bool post_ct);
-पूर्णांक ovs_ct_put_key(स्थिर काष्ठा sw_flow_key *swkey,
-		   स्थिर काष्ठा sw_flow_key *output, काष्ठा sk_buff *skb);
-व्योम ovs_ct_मुक्त_action(स्थिर काष्ठा nlattr *a);
+int ovs_ct_put_key(const struct sw_flow_key *swkey,
+		   const struct sw_flow_key *output, struct sk_buff *skb);
+void ovs_ct_free_action(const struct nlattr *a);
 
-#घोषणा CT_SUPPORTED_MASK (OVS_CS_F_NEW | OVS_CS_F_ESTABLISHED | \
-			   OVS_CS_F_RELATED | OVS_CS_F_REPLY_सूची | \
+#define CT_SUPPORTED_MASK (OVS_CS_F_NEW | OVS_CS_F_ESTABLISHED | \
+			   OVS_CS_F_RELATED | OVS_CS_F_REPLY_DIR | \
 			   OVS_CS_F_INVALID | OVS_CS_F_TRACKED | \
 			   OVS_CS_F_SRC_NAT | OVS_CS_F_DST_NAT)
-#अन्यथा
-#समावेश <linux/त्रुटिसं.स>
+#else
+#include <linux/errno.h>
 
-अटल अंतरभूत पूर्णांक ovs_ct_init(काष्ठा net *net) अणु वापस 0; पूर्ण
+static inline int ovs_ct_init(struct net *net) { return 0; }
 
-अटल अंतरभूत व्योम ovs_ct_निकास(काष्ठा net *net) अणु पूर्ण
+static inline void ovs_ct_exit(struct net *net) { }
 
-अटल अंतरभूत bool ovs_ct_verअगरy(काष्ठा net *net, पूर्णांक attr)
-अणु
-	वापस false;
-पूर्ण
+static inline bool ovs_ct_verify(struct net *net, int attr)
+{
+	return false;
+}
 
-अटल अंतरभूत पूर्णांक ovs_ct_copy_action(काष्ठा net *net, स्थिर काष्ठा nlattr *nla,
-				     स्थिर काष्ठा sw_flow_key *key,
-				     काष्ठा sw_flow_actions **acts, bool log)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+static inline int ovs_ct_copy_action(struct net *net, const struct nlattr *nla,
+				     const struct sw_flow_key *key,
+				     struct sw_flow_actions **acts, bool log)
+{
+	return -ENOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक ovs_ct_action_to_attr(स्थिर काष्ठा ovs_conntrack_info *info,
-					काष्ठा sk_buff *skb)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+static inline int ovs_ct_action_to_attr(const struct ovs_conntrack_info *info,
+					struct sk_buff *skb)
+{
+	return -ENOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक ovs_ct_execute(काष्ठा net *net, काष्ठा sk_buff *skb,
-				 काष्ठा sw_flow_key *key,
-				 स्थिर काष्ठा ovs_conntrack_info *info)
-अणु
-	kमुक्त_skb(skb);
-	वापस -ENOTSUPP;
-पूर्ण
+static inline int ovs_ct_execute(struct net *net, struct sk_buff *skb,
+				 struct sw_flow_key *key,
+				 const struct ovs_conntrack_info *info)
+{
+	kfree_skb(skb);
+	return -ENOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक ovs_ct_clear(काष्ठा sk_buff *skb,
-			       काष्ठा sw_flow_key *key)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+static inline int ovs_ct_clear(struct sk_buff *skb,
+			       struct sw_flow_key *key)
+{
+	return -ENOTSUPP;
+}
 
-अटल अंतरभूत व्योम ovs_ct_fill_key(स्थिर काष्ठा sk_buff *skb,
-				   काष्ठा sw_flow_key *key,
+static inline void ovs_ct_fill_key(const struct sk_buff *skb,
+				   struct sw_flow_key *key,
 				   bool post_ct)
-अणु
+{
 	key->ct_state = 0;
 	key->ct_zone = 0;
 	key->ct.mark = 0;
-	स_रखो(&key->ct.labels, 0, माप(key->ct.labels));
+	memset(&key->ct.labels, 0, sizeof(key->ct.labels));
 	/* Clear 'ct_orig_proto' to mark the non-existence of original
 	 * direction key fields.
 	 */
 	key->ct_orig_proto = 0;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक ovs_ct_put_key(स्थिर काष्ठा sw_flow_key *swkey,
-				 स्थिर काष्ठा sw_flow_key *output,
-				 काष्ठा sk_buff *skb)
-अणु
-	वापस 0;
-पूर्ण
+static inline int ovs_ct_put_key(const struct sw_flow_key *swkey,
+				 const struct sw_flow_key *output,
+				 struct sk_buff *skb)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम ovs_ct_मुक्त_action(स्थिर काष्ठा nlattr *a) अणु पूर्ण
+static inline void ovs_ct_free_action(const struct nlattr *a) { }
 
-#घोषणा CT_SUPPORTED_MASK 0
-#पूर्ण_अगर /* CONFIG_NF_CONNTRACK */
+#define CT_SUPPORTED_MASK 0
+#endif /* CONFIG_NF_CONNTRACK */
 
-#अगर IS_ENABLED(CONFIG_NETFILTER_CONNCOUNT)
-बाह्य काष्ठा genl_family dp_ct_limit_genl_family;
-#पूर्ण_अगर
-#पूर्ण_अगर /* ovs_conntrack.h */
+#if IS_ENABLED(CONFIG_NETFILTER_CONNCOUNT)
+extern struct genl_family dp_ct_limit_genl_family;
+#endif
+#endif /* ovs_conntrack.h */

@@ -1,263 +1,262 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Marvell Dove PMU Core PLL भागider driver
+ * Marvell Dove PMU Core PLL divider driver
  *
  * Cleaned up by substantially rewriting, and converted to DT by
  * Russell King.  Origin is not known.
  */
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
+#include <linux/clk-provider.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
 
-#समावेश "dove-divider.h"
+#include "dove-divider.h"
 
-काष्ठा करोve_clk अणु
-	स्थिर अक्षर *name;
-	काष्ठा clk_hw hw;
-	व्योम __iomem *base;
+struct dove_clk {
+	const char *name;
+	struct clk_hw hw;
+	void __iomem *base;
 	spinlock_t *lock;
-	u8 भाग_bit_start;
-	u8 भाग_bit_end;
-	u8 भाग_bit_load;
-	u8 भाग_bit_size;
-	u32 *भागider_table;
-पूर्ण;
+	u8 div_bit_start;
+	u8 div_bit_end;
+	u8 div_bit_load;
+	u8 div_bit_size;
+	u32 *divider_table;
+};
 
-क्रमागत अणु
+enum {
 	DIV_CTRL0 = 0,
 	DIV_CTRL1 = 4,
 	DIV_CTRL1_N_RESET_MASK = BIT(10),
-पूर्ण;
+};
 
-#घोषणा to_करोve_clk(hw) container_of(hw, काष्ठा करोve_clk, hw)
+#define to_dove_clk(hw) container_of(hw, struct dove_clk, hw)
 
-अटल व्योम करोve_load_भागider(व्योम __iomem *base, u32 val, u32 mask, u32 load)
-अणु
+static void dove_load_divider(void __iomem *base, u32 val, u32 mask, u32 load)
+{
 	u32 v;
 
-	v = पढ़ोl_relaxed(base + DIV_CTRL1) | DIV_CTRL1_N_RESET_MASK;
-	ग_लिखोl_relaxed(v, base + DIV_CTRL1);
+	v = readl_relaxed(base + DIV_CTRL1) | DIV_CTRL1_N_RESET_MASK;
+	writel_relaxed(v, base + DIV_CTRL1);
 
-	v = (पढ़ोl_relaxed(base + DIV_CTRL0) & ~(mask | load)) | val;
-	ग_लिखोl_relaxed(v, base + DIV_CTRL0);
-	ग_लिखोl_relaxed(v | load, base + DIV_CTRL0);
+	v = (readl_relaxed(base + DIV_CTRL0) & ~(mask | load)) | val;
+	writel_relaxed(v, base + DIV_CTRL0);
+	writel_relaxed(v | load, base + DIV_CTRL0);
 	ndelay(250);
-	ग_लिखोl_relaxed(v, base + DIV_CTRL0);
-पूर्ण
+	writel_relaxed(v, base + DIV_CTRL0);
+}
 
-अटल अचिन्हित पूर्णांक करोve_get_भागider(काष्ठा करोve_clk *dc)
-अणु
-	अचिन्हित पूर्णांक भागider;
+static unsigned int dove_get_divider(struct dove_clk *dc)
+{
+	unsigned int divider;
 	u32 val;
 
-	val = पढ़ोl_relaxed(dc->base + DIV_CTRL0);
-	val >>= dc->भाग_bit_start;
+	val = readl_relaxed(dc->base + DIV_CTRL0);
+	val >>= dc->div_bit_start;
 
-	भागider = val & ~(~0 << dc->भाग_bit_size);
+	divider = val & ~(~0 << dc->div_bit_size);
 
-	अगर (dc->भागider_table)
-		भागider = dc->भागider_table[भागider];
+	if (dc->divider_table)
+		divider = dc->divider_table[divider];
 
-	वापस भागider;
-पूर्ण
+	return divider;
+}
 
-अटल पूर्णांक करोve_calc_भागider(स्थिर काष्ठा करोve_clk *dc, अचिन्हित दीर्घ rate,
-			     अचिन्हित दीर्घ parent_rate, bool set)
-अणु
-	अचिन्हित पूर्णांक भागider, max;
+static int dove_calc_divider(const struct dove_clk *dc, unsigned long rate,
+			     unsigned long parent_rate, bool set)
+{
+	unsigned int divider, max;
 
-	भागider = DIV_ROUND_CLOSEST(parent_rate, rate);
+	divider = DIV_ROUND_CLOSEST(parent_rate, rate);
 
-	अगर (dc->भागider_table) अणु
-		अचिन्हित पूर्णांक i;
+	if (dc->divider_table) {
+		unsigned int i;
 
-		क्रम (i = 0; dc->भागider_table[i]; i++)
-			अगर (भागider == dc->भागider_table[i]) अणु
-				भागider = i;
-				अवरोध;
-			पूर्ण
+		for (i = 0; dc->divider_table[i]; i++)
+			if (divider == dc->divider_table[i]) {
+				divider = i;
+				break;
+			}
 
-		अगर (!dc->भागider_table[i])
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
-		max = 1 << dc->भाग_bit_size;
+		if (!dc->divider_table[i])
+			return -EINVAL;
+	} else {
+		max = 1 << dc->div_bit_size;
 
-		अगर (set && (भागider == 0 || भागider >= max))
-			वापस -EINVAL;
-		अगर (भागider >= max)
-			भागider = max - 1;
-		अन्यथा अगर (भागider == 0)
-			भागider = 1;
-	पूर्ण
+		if (set && (divider == 0 || divider >= max))
+			return -EINVAL;
+		if (divider >= max)
+			divider = max - 1;
+		else if (divider == 0)
+			divider = 1;
+	}
 
-	वापस भागider;
-पूर्ण
+	return divider;
+}
 
-अटल अचिन्हित दीर्घ करोve_recalc_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ parent)
-अणु
-	काष्ठा करोve_clk *dc = to_करोve_clk(hw);
-	अचिन्हित पूर्णांक भागider = करोve_get_भागider(dc);
-	अचिन्हित दीर्घ rate = DIV_ROUND_CLOSEST(parent, भागider);
-
-	pr_debug("%s(): %s divider=%u parent=%lu rate=%lu\n",
-		 __func__, dc->name, भागider, parent, rate);
-
-	वापस rate;
-पूर्ण
-
-अटल दीर्घ करोve_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			    अचिन्हित दीर्घ *parent)
-अणु
-	काष्ठा करोve_clk *dc = to_करोve_clk(hw);
-	अचिन्हित दीर्घ parent_rate = *parent;
-	पूर्णांक भागider;
-
-	भागider = करोve_calc_भागider(dc, rate, parent_rate, false);
-	अगर (भागider < 0)
-		वापस भागider;
-
-	rate = DIV_ROUND_CLOSEST(parent_rate, भागider);
+static unsigned long dove_recalc_rate(struct clk_hw *hw, unsigned long parent)
+{
+	struct dove_clk *dc = to_dove_clk(hw);
+	unsigned int divider = dove_get_divider(dc);
+	unsigned long rate = DIV_ROUND_CLOSEST(parent, divider);
 
 	pr_debug("%s(): %s divider=%u parent=%lu rate=%lu\n",
-		 __func__, dc->name, भागider, parent_rate, rate);
+		 __func__, dc->name, divider, parent, rate);
 
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
-अटल पूर्णांक करोve_set_घड़ी(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			  अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा करोve_clk *dc = to_करोve_clk(hw);
-	u32 mask, load, भाग;
-	पूर्णांक भागider;
+static long dove_round_rate(struct clk_hw *hw, unsigned long rate,
+			    unsigned long *parent)
+{
+	struct dove_clk *dc = to_dove_clk(hw);
+	unsigned long parent_rate = *parent;
+	int divider;
 
-	भागider = करोve_calc_भागider(dc, rate, parent_rate, true);
-	अगर (भागider < 0)
-		वापस भागider;
+	divider = dove_calc_divider(dc, rate, parent_rate, false);
+	if (divider < 0)
+		return divider;
+
+	rate = DIV_ROUND_CLOSEST(parent_rate, divider);
 
 	pr_debug("%s(): %s divider=%u parent=%lu rate=%lu\n",
-		 __func__, dc->name, भागider, parent_rate, rate);
+		 __func__, dc->name, divider, parent_rate, rate);
 
-	भाग = (u32)भागider << dc->भाग_bit_start;
-	mask = ~(~0 << dc->भाग_bit_size) << dc->भाग_bit_start;
-	load = BIT(dc->भाग_bit_load);
+	return rate;
+}
+
+static int dove_set_clock(struct clk_hw *hw, unsigned long rate,
+			  unsigned long parent_rate)
+{
+	struct dove_clk *dc = to_dove_clk(hw);
+	u32 mask, load, div;
+	int divider;
+
+	divider = dove_calc_divider(dc, rate, parent_rate, true);
+	if (divider < 0)
+		return divider;
+
+	pr_debug("%s(): %s divider=%u parent=%lu rate=%lu\n",
+		 __func__, dc->name, divider, parent_rate, rate);
+
+	div = (u32)divider << dc->div_bit_start;
+	mask = ~(~0 << dc->div_bit_size) << dc->div_bit_start;
+	load = BIT(dc->div_bit_load);
 
 	spin_lock(dc->lock);
-	करोve_load_भागider(dc->base, भाग, mask, load);
+	dove_load_divider(dc->base, div, mask, load);
 	spin_unlock(dc->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops करोve_भागider_ops = अणु
-	.set_rate	= करोve_set_घड़ी,
-	.round_rate	= करोve_round_rate,
-	.recalc_rate	= करोve_recalc_rate,
-पूर्ण;
+static const struct clk_ops dove_divider_ops = {
+	.set_rate	= dove_set_clock,
+	.round_rate	= dove_round_rate,
+	.recalc_rate	= dove_recalc_rate,
+};
 
-अटल काष्ठा clk *clk_रेजिस्टर_करोve_भागider(काष्ठा device *dev,
-	काष्ठा करोve_clk *dc, स्थिर अक्षर **parent_names, माप_प्रकार num_parents,
-	व्योम __iomem *base)
-अणु
-	अक्षर name[32];
-	काष्ठा clk_init_data init = अणु
+static struct clk *clk_register_dove_divider(struct device *dev,
+	struct dove_clk *dc, const char **parent_names, size_t num_parents,
+	void __iomem *base)
+{
+	char name[32];
+	struct clk_init_data init = {
 		.name = name,
-		.ops = &करोve_भागider_ops,
+		.ops = &dove_divider_ops,
 		.parent_names = parent_names,
 		.num_parents = num_parents,
-	पूर्ण;
+	};
 
-	strlcpy(name, dc->name, माप(name));
+	strlcpy(name, dc->name, sizeof(name));
 
 	dc->hw.init = &init;
 	dc->base = base;
-	dc->भाग_bit_size = dc->भाग_bit_end - dc->भाग_bit_start + 1;
+	dc->div_bit_size = dc->div_bit_end - dc->div_bit_start + 1;
 
-	वापस clk_रेजिस्टर(dev, &dc->hw);
-पूर्ण
+	return clk_register(dev, &dc->hw);
+}
 
-अटल DEFINE_SPINLOCK(करोve_भागider_lock);
+static DEFINE_SPINLOCK(dove_divider_lock);
 
-अटल u32 axi_भागider[] = अणु-1, 2, 1, 3, 4, 6, 5, 7, 8, 10, 9, 0पूर्ण;
+static u32 axi_divider[] = {-1, 2, 1, 3, 4, 6, 5, 7, 8, 10, 9, 0};
 
-अटल काष्ठा करोve_clk करोve_hw_घड़ीs[4] = अणु
-	अणु
+static struct dove_clk dove_hw_clocks[4] = {
+	{
 		.name = "axi",
-		.lock = &करोve_भागider_lock,
-		.भाग_bit_start = 1,
-		.भाग_bit_end = 6,
-		.भाग_bit_load = 7,
-		.भागider_table = axi_भागider,
-	पूर्ण, अणु
+		.lock = &dove_divider_lock,
+		.div_bit_start = 1,
+		.div_bit_end = 6,
+		.div_bit_load = 7,
+		.divider_table = axi_divider,
+	}, {
 		.name = "gpu",
-		.lock = &करोve_भागider_lock,
-		.भाग_bit_start = 8,
-		.भाग_bit_end = 13,
-		.भाग_bit_load = 14,
-	पूर्ण, अणु
+		.lock = &dove_divider_lock,
+		.div_bit_start = 8,
+		.div_bit_end = 13,
+		.div_bit_load = 14,
+	}, {
 		.name = "vmeta",
-		.lock = &करोve_भागider_lock,
-		.भाग_bit_start = 15,
-		.भाग_bit_end = 20,
-		.भाग_bit_load = 21,
-	पूर्ण, अणु
+		.lock = &dove_divider_lock,
+		.div_bit_start = 15,
+		.div_bit_end = 20,
+		.div_bit_load = 21,
+	}, {
 		.name = "lcd",
-		.lock = &करोve_भागider_lock,
-		.भाग_bit_start = 22,
-		.भाग_bit_end = 27,
-		.भाग_bit_load = 28,
-	पूर्ण,
-पूर्ण;
+		.lock = &dove_divider_lock,
+		.div_bit_start = 22,
+		.div_bit_end = 27,
+		.div_bit_load = 28,
+	},
+};
 
-अटल स्थिर अक्षर *core_pll[] = अणु
+static const char *core_pll[] = {
 	"core-pll",
-पूर्ण;
+};
 
-अटल पूर्णांक करोve_भागider_init(काष्ठा device *dev, व्योम __iomem *base,
-	काष्ठा clk **clks)
-अणु
-	काष्ठा clk *clk;
-	पूर्णांक i;
+static int dove_divider_init(struct device *dev, void __iomem *base,
+	struct clk **clks)
+{
+	struct clk *clk;
+	int i;
 
 	/*
-	 * Create the core PLL घड़ी.  We treat this as a fixed rate
-	 * घड़ी as we करोn't know any better, and करोcumentation is sparse.
+	 * Create the core PLL clock.  We treat this as a fixed rate
+	 * clock as we don't know any better, and documentation is sparse.
 	 */
-	clk = clk_रेजिस्टर_fixed_rate(dev, core_pll[0], शून्य, 0, 2000000000UL);
-	अगर (IS_ERR(clk))
-		वापस PTR_ERR(clk);
+	clk = clk_register_fixed_rate(dev, core_pll[0], NULL, 0, 2000000000UL);
+	if (IS_ERR(clk))
+		return PTR_ERR(clk);
 
-	क्रम (i = 0; i < ARRAY_SIZE(करोve_hw_घड़ीs); i++)
-		clks[i] = clk_रेजिस्टर_करोve_भागider(dev, &करोve_hw_घड़ीs[i],
+	for (i = 0; i < ARRAY_SIZE(dove_hw_clocks); i++)
+		clks[i] = clk_register_dove_divider(dev, &dove_hw_clocks[i],
 						    core_pll,
 						    ARRAY_SIZE(core_pll), base);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा clk *करोve_भागider_घड़ीs[4];
+static struct clk *dove_divider_clocks[4];
 
-अटल काष्ठा clk_onecell_data करोve_भागider_data = अणु
-	.clks = करोve_भागider_घड़ीs,
-	.clk_num = ARRAY_SIZE(करोve_भागider_घड़ीs),
-पूर्ण;
+static struct clk_onecell_data dove_divider_data = {
+	.clks = dove_divider_clocks,
+	.clk_num = ARRAY_SIZE(dove_divider_clocks),
+};
 
-व्योम __init करोve_भागider_clk_init(काष्ठा device_node *np)
-अणु
-	व्योम __iomem *base;
+void __init dove_divider_clk_init(struct device_node *np)
+{
+	void __iomem *base;
 
 	base = of_iomap(np, 0);
-	अगर (WARN_ON(!base))
-		वापस;
+	if (WARN_ON(!base))
+		return;
 
-	अगर (WARN_ON(करोve_भागider_init(शून्य, base, करोve_भागider_घड़ीs))) अणु
+	if (WARN_ON(dove_divider_init(NULL, base, dove_divider_clocks))) {
 		iounmap(base);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	of_clk_add_provider(np, of_clk_src_onecell_get, &करोve_भागider_data);
-पूर्ण
+	of_clk_add_provider(np, of_clk_src_onecell_get, &dove_divider_data);
+}

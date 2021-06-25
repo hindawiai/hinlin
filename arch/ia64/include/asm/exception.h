@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
-#अगर_अघोषित __ASM_EXCEPTION_H
-#घोषणा __ASM_EXCEPTION_H
+/* SPDX-License-Identifier: GPL-2.0-only */
+#ifndef __ASM_EXCEPTION_H
+#define __ASM_EXCEPTION_H
 
-काष्ठा pt_regs;
-काष्ठा exception_table_entry;
+struct pt_regs;
+struct exception_table_entry;
 
-बाह्य व्योम ia64_handle_exception(काष्ठा pt_regs *regs,
-				  स्थिर काष्ठा exception_table_entry *e);
+extern void ia64_handle_exception(struct pt_regs *regs,
+				  const struct exception_table_entry *e);
 
-#घोषणा ia64_करोne_with_exception(regs)					  \
-(अणु									  \
-	पूर्णांक __ex_ret = 0;						  \
-	स्थिर काष्ठा exception_table_entry *e;				  \
+#define ia64_done_with_exception(regs)					  \
+({									  \
+	int __ex_ret = 0;						  \
+	const struct exception_table_entry *e;				  \
 	e = search_exception_tables((regs)->cr_iip + ia64_psr(regs)->ri); \
-	अगर (e) अणु							  \
+	if (e) {							  \
 		ia64_handle_exception(regs, e);				  \
 		__ex_ret = 1;						  \
-	पूर्ण								  \
+	}								  \
 	__ex_ret;							  \
-पूर्ण)
+})
 
-#पूर्ण_अगर	/* __ASM_EXCEPTION_H */
+#endif	/* __ASM_EXCEPTION_H */

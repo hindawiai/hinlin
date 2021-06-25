@@ -1,12 +1,11 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <linux/error-injection.h>
-#समावेश <linux/kprobes.h>
+#include <linux/error-injection.h>
+#include <linux/kprobes.h>
 
-यंत्रlinkage व्योम just_वापस_func(व्योम);
+asmlinkage void just_return_func(void);
 
-यंत्र(
+asm(
 	".text\n"
 	".type just_return_func, @function\n"
 	".globl just_return_func\n"
@@ -15,8 +14,8 @@
 	".size just_return_func, .-just_return_func\n"
 );
 
-व्योम override_function_with_वापस(काष्ठा pt_regs *regs)
-अणु
-	regs->ip = (अचिन्हित दीर्घ)&just_वापस_func;
-पूर्ण
-NOKPROBE_SYMBOL(override_function_with_वापस);
+void override_function_with_return(struct pt_regs *regs)
+{
+	regs->ip = (unsigned long)&just_return_func;
+}
+NOKPROBE_SYMBOL(override_function_with_return);

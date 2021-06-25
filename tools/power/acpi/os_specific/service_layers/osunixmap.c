@@ -1,52 +1,51 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Module Name: osunixmap - Unix OSL क्रम file mappings
+ * Module Name: osunixmap - Unix OSL for file mappings
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#समावेश "acpidump.h"
-#समावेश <unistd.h>
-#समावेश <sys/mman.h>
-#अगर_घोषित _मुक्त_BSD
-#समावेश <sys/param.h>
-#पूर्ण_अगर
+#include "acpidump.h"
+#include <unistd.h>
+#include <sys/mman.h>
+#ifdef _free_BSD
+#include <sys/param.h>
+#endif
 
-#घोषणा _COMPONENT          ACPI_OS_SERVICES
+#define _COMPONENT          ACPI_OS_SERVICES
 ACPI_MODULE_NAME("osunixmap")
 
-#अगर_अघोषित O_BINARY
-#घोषणा O_BINARY 0
-#पूर्ण_अगर
-#अगर defined(_dragon_fly) || defined(_मुक्त_BSD) || defined(_QNX)
-#घोषणा MMAP_FLAGS          MAP_SHARED
-#अन्यथा
-#घोषणा MMAP_FLAGS          MAP_PRIVATE
-#पूर्ण_अगर
-#घोषणा SYSTEM_MEMORY       "/dev/mem"
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
+#if defined(_dragon_fly) || defined(_free_BSD) || defined(_QNX)
+#define MMAP_FLAGS          MAP_SHARED
+#else
+#define MMAP_FLAGS          MAP_PRIVATE
+#endif
+#define SYSTEM_MEMORY       "/dev/mem"
 /*******************************************************************************
  *
  * FUNCTION:    acpi_os_get_page_size
  *
  * PARAMETERS:  None
  *
- * RETURN:      Page size of the platक्रमm.
+ * RETURN:      Page size of the platform.
  *
- * DESCRIPTION: Obtain page size of the platक्रमm.
+ * DESCRIPTION: Obtain page size of the platform.
  *
  ******************************************************************************/
-अटल acpi_size acpi_os_get_page_size(व्योम)
-अणु
+static acpi_size acpi_os_get_page_size(void)
+{
 
-#अगर_घोषित PAGE_SIZE
-	वापस PAGE_SIZE;
-#अन्यथा
-	वापस sysconf(_SC_PAGESIZE);
-#पूर्ण_अगर
-पूर्ण
+#ifdef PAGE_SIZE
+	return PAGE_SIZE;
+#else
+	return sysconf(_SC_PAGESIZE);
+#endif
+}
 
 /******************************************************************************
  *
@@ -55,24 +54,24 @@ ACPI_MODULE_NAME("osunixmap")
  * PARAMETERS:  where               - Physical address of memory to be mapped
  *              length              - How much memory to map
  *
- * RETURN:      Poपूर्णांकer to mapped memory. Null on error.
+ * RETURN:      Pointer to mapped memory. Null on error.
  *
- * DESCRIPTION: Map physical memory पूर्णांकo local address space.
+ * DESCRIPTION: Map physical memory into local address space.
  *
  *****************************************************************************/
 
-व्योम *acpi_os_map_memory(acpi_physical_address where, acpi_size length)
-अणु
+void *acpi_os_map_memory(acpi_physical_address where, acpi_size length)
+{
 	u8 *mapped_memory;
 	acpi_physical_address offset;
 	acpi_size page_size;
-	पूर्णांक fd;
+	int fd;
 
-	fd = खोलो(SYSTEM_MEMORY, O_RDONLY | O_BINARY);
-	अगर (fd < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "Cannot open %s\n", SYSTEM_MEMORY);
-		वापस (शून्य);
-	पूर्ण
+	fd = open(SYSTEM_MEMORY, O_RDONLY | O_BINARY);
+	if (fd < 0) {
+		fprintf(stderr, "Cannot open %s\n", SYSTEM_MEMORY);
+		return (NULL);
+	}
 
 	/* Align the offset to use mmap */
 
@@ -81,17 +80,17 @@ ACPI_MODULE_NAME("osunixmap")
 
 	/* Map the table header to get the length of the full table */
 
-	mapped_memory = mmap(शून्य, (length + offset), PROT_READ, MMAP_FLAGS,
+	mapped_memory = mmap(NULL, (length + offset), PROT_READ, MMAP_FLAGS,
 			     fd, (where - offset));
-	अगर (mapped_memory == MAP_FAILED) अणु
-		ख_लिखो(मानक_त्रुटि, "Cannot map %s\n", SYSTEM_MEMORY);
-		बंद(fd);
-		वापस (शून्य);
-	पूर्ण
+	if (mapped_memory == MAP_FAILED) {
+		fprintf(stderr, "Cannot map %s\n", SYSTEM_MEMORY);
+		close(fd);
+		return (NULL);
+	}
 
-	बंद(fd);
-	वापस (ACPI_CAST8(mapped_memory + offset));
-पूर्ण
+	close(fd);
+	return (ACPI_CAST8(mapped_memory + offset));
+}
 
 /******************************************************************************
  *
@@ -107,12 +106,12 @@ ACPI_MODULE_NAME("osunixmap")
  *
  *****************************************************************************/
 
-व्योम acpi_os_unmap_memory(व्योम *where, acpi_size length)
-अणु
+void acpi_os_unmap_memory(void *where, acpi_size length)
+{
 	acpi_physical_address offset;
 	acpi_size page_size;
 
 	page_size = acpi_os_get_page_size();
 	offset = ACPI_TO_INTEGER(where) % page_size;
 	munmap((u8 *)where - offset, (length + offset));
-पूर्ण
+}

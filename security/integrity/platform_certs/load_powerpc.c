@@ -1,97 +1,96 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2019 IBM Corporation
  * Author: Nayna Jain
  *
  *      - loads keys and hashes stored and controlled by the firmware.
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/cred.h>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/of.h>
-#समावेश <यंत्र/secure_boot.h>
-#समावेश <यंत्र/secvar.h>
-#समावेश "keyring_handler.h"
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/cred.h>
+#include <linux/err.h>
+#include <linux/slab.h>
+#include <linux/of.h>
+#include <asm/secure_boot.h>
+#include <asm/secvar.h>
+#include "keyring_handler.h"
 
 /*
- * Get a certअगरicate list blob from the named secure variable.
+ * Get a certificate list blob from the named secure variable.
  */
-अटल __init व्योम *get_cert_list(u8 *key, अचिन्हित दीर्घ keylen, uपूर्णांक64_t *size)
-अणु
-	पूर्णांक rc;
-	व्योम *db;
+static __init void *get_cert_list(u8 *key, unsigned long keylen, uint64_t *size)
+{
+	int rc;
+	void *db;
 
-	rc = secvar_ops->get(key, keylen, शून्य, size);
-	अगर (rc) अणु
+	rc = secvar_ops->get(key, keylen, NULL, size);
+	if (rc) {
 		pr_err("Couldn't get size: %d\n", rc);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	db = kदो_स्मृति(*size, GFP_KERNEL);
-	अगर (!db)
-		वापस शून्य;
+	db = kmalloc(*size, GFP_KERNEL);
+	if (!db)
+		return NULL;
 
 	rc = secvar_ops->get(key, keylen, db, size);
-	अगर (rc) अणु
-		kमुक्त(db);
+	if (rc) {
+		kfree(db);
 		pr_err("Error reading %s var: %d\n", key, rc);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस db;
-पूर्ण
+	return db;
+}
 
 /*
- * Load the certs contained in the keys databases पूर्णांकo the platक्रमm trusted
- * keyring and the blacklisted X.509 cert SHA256 hashes पूर्णांकo the blacklist
+ * Load the certs contained in the keys databases into the platform trusted
+ * keyring and the blacklisted X.509 cert SHA256 hashes into the blacklist
  * keyring.
  */
-अटल पूर्णांक __init load_घातerpc_certs(व्योम)
-अणु
-	व्योम *db = शून्य, *dbx = शून्य;
-	uपूर्णांक64_t dbsize = 0, dbxsize = 0;
-	पूर्णांक rc = 0;
-	काष्ठा device_node *node;
+static int __init load_powerpc_certs(void)
+{
+	void *db = NULL, *dbx = NULL;
+	uint64_t dbsize = 0, dbxsize = 0;
+	int rc = 0;
+	struct device_node *node;
 
-	अगर (!secvar_ops)
-		वापस -ENODEV;
+	if (!secvar_ops)
+		return -ENODEV;
 
-	/* The following only applies क्रम the edk2-compat backend. */
-	node = of_find_compatible_node(शून्य, शून्य, "ibm,edk2-compat-v1");
-	अगर (!node)
-		वापस -ENODEV;
+	/* The following only applies for the edk2-compat backend. */
+	node = of_find_compatible_node(NULL, NULL, "ibm,edk2-compat-v1");
+	if (!node)
+		return -ENODEV;
 
 	/*
-	 * Get db, and dbx. They might not exist, so it isn't an error अगर we
+	 * Get db, and dbx. They might not exist, so it isn't an error if we
 	 * can't get them.
 	 */
 	db = get_cert_list("db", 3, &dbsize);
-	अगर (!db) अणु
+	if (!db) {
 		pr_err("Couldn't get db list from firmware\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		rc = parse_efi_signature_list("powerpc:db", db, dbsize,
-					      get_handler_क्रम_db);
-		अगर (rc)
+					      get_handler_for_db);
+		if (rc)
 			pr_err("Couldn't parse db signatures: %d\n", rc);
-		kमुक्त(db);
-	पूर्ण
+		kfree(db);
+	}
 
 	dbx = get_cert_list("dbx", 4,  &dbxsize);
-	अगर (!dbx) अणु
+	if (!dbx) {
 		pr_info("Couldn't get dbx list from firmware\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		rc = parse_efi_signature_list("powerpc:dbx", dbx, dbxsize,
-					      get_handler_क्रम_dbx);
-		अगर (rc)
+					      get_handler_for_dbx);
+		if (rc)
 			pr_err("Couldn't parse dbx signatures: %d\n", rc);
-		kमुक्त(dbx);
-	पूर्ण
+		kfree(dbx);
+	}
 
 	of_node_put(node);
 
-	वापस rc;
-पूर्ण
-late_initcall(load_घातerpc_certs);
+	return rc;
+}
+late_initcall(load_powerpc_certs);

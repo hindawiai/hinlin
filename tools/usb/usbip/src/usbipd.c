@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2011 matt mooney <mfm@muteddisk.com>
  *               2005-2007 Takahiro Hirofuchi
@@ -8,48 +7,48 @@
  *               Krzysztof Opasiak <k.opasiak@samsung.com>
  */
 
-#अगर_घोषित HAVE_CONFIG_H
-#समावेश "../config.h"
-#पूर्ण_अगर
+#ifdef HAVE_CONFIG_H
+#include "../config.h"
+#endif
 
-#घोषणा _GNU_SOURCE
-#समावेश <त्रुटिसं.स>
-#समावेश <unistd.h>
-#समावेश <netdb.h>
-#समावेश <माला.स>
-#समावेश <मानककोष.स>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <arpa/inet.h>
-#समावेश <sys/socket.h>
-#समावेश <netinet/in.h>
+#define _GNU_SOURCE
+#include <errno.h>
+#include <unistd.h>
+#include <netdb.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
-#अगर_घोषित HAVE_LIBWRAP
-#समावेश <tcpd.h>
-#पूर्ण_अगर
+#ifdef HAVE_LIBWRAP
+#include <tcpd.h>
+#endif
 
-#समावेश <getopt.h>
-#समावेश <संकेत.स>
-#समावेश <poll.h>
+#include <getopt.h>
+#include <signal.h>
+#include <poll.h>
 
-#समावेश "usbip_host_driver.h"
-#समावेश "usbip_host_common.h"
-#समावेश "usbip_device_driver.h"
-#समावेश "usbip_common.h"
-#समावेश "usbip_network.h"
-#समावेश "list.h"
+#include "usbip_host_driver.h"
+#include "usbip_host_common.h"
+#include "usbip_device_driver.h"
+#include "usbip_common.h"
+#include "usbip_network.h"
+#include "list.h"
 
-#अघोषित  PROGNAME
-#घोषणा PROGNAME "usbipd"
-#घोषणा MAXSOCKFD 20
+#undef  PROGNAME
+#define PROGNAME "usbipd"
+#define MAXSOCKFD 20
 
-#घोषणा MAIN_LOOP_TIMEOUT 10
+#define MAIN_LOOP_TIMEOUT 10
 
-#घोषणा DEFAULT_PID_खाता "/var/run/" PROGNAME ".pid"
+#define DEFAULT_PID_FILE "/var/run/" PROGNAME ".pid"
 
-अटल स्थिर अक्षर usbip_version_string[] = PACKAGE_STRING;
+static const char usbip_version_string[] = PACKAGE_STRING;
 
-अटल स्थिर अक्षर usbipd_help_string[] =
+static const char usbipd_help_string[] =
 	"usage: usbipd [options]\n"
 	"\n"
 	"	-4, --ipv4\n"
@@ -71,7 +70,7 @@
 	"\n"
 	"	-PFILE, --pid FILE\n"
 	"		Write process id to FILE.\n"
-	"		If no FILE specified, use " DEFAULT_PID_खाता "\n"
+	"		If no FILE specified, use " DEFAULT_PID_FILE "\n"
 	"\n"
 	"	-tPORT, --tcp-port PORT\n"
 	"		Listen on TCP/IP port PORT.\n"
@@ -82,92 +81,92 @@
 	"	-v, --version\n"
 	"		Show version.\n";
 
-अटल काष्ठा usbip_host_driver *driver;
+static struct usbip_host_driver *driver;
 
-अटल व्योम usbipd_help(व्योम)
-अणु
-	म_लिखो("%s\n", usbipd_help_string);
-पूर्ण
+static void usbipd_help(void)
+{
+	printf("%s\n", usbipd_help_string);
+}
 
-अटल पूर्णांक recv_request_import(पूर्णांक sockfd)
-अणु
-	काष्ठा op_import_request req;
-	काष्ठा usbip_exported_device *edev;
-	काष्ठा usbip_usb_device pdu_udev;
-	काष्ठा list_head *i;
-	पूर्णांक found = 0;
-	पूर्णांक status = ST_OK;
-	पूर्णांक rc;
+static int recv_request_import(int sockfd)
+{
+	struct op_import_request req;
+	struct usbip_exported_device *edev;
+	struct usbip_usb_device pdu_udev;
+	struct list_head *i;
+	int found = 0;
+	int status = ST_OK;
+	int rc;
 
-	स_रखो(&req, 0, माप(req));
+	memset(&req, 0, sizeof(req));
 
-	rc = usbip_net_recv(sockfd, &req, माप(req));
-	अगर (rc < 0) अणु
+	rc = usbip_net_recv(sockfd, &req, sizeof(req));
+	if (rc < 0) {
 		dbg("usbip_net_recv failed: import request");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	PACK_OP_IMPORT_REQUEST(0, &req);
 
-	list_क्रम_each(i, &driver->edev_list) अणु
-		edev = list_entry(i, काष्ठा usbip_exported_device, node);
-		अगर (!म_भेदन(req.busid, edev->udev.busid, SYSFS_BUS_ID_SIZE)) अणु
+	list_for_each(i, &driver->edev_list) {
+		edev = list_entry(i, struct usbip_exported_device, node);
+		if (!strncmp(req.busid, edev->udev.busid, SYSFS_BUS_ID_SIZE)) {
 			info("found requested device: %s", req.busid);
 			found = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (found) अणु
-		/* should set TCP_NODELAY क्रम usbip */
+	if (found) {
+		/* should set TCP_NODELAY for usbip */
 		usbip_net_set_nodelay(sockfd);
 
 		/* export device needs a TCP/IP socket descriptor */
 		status = usbip_export_device(edev, sockfd);
-		अगर (status < 0)
+		if (status < 0)
 			status = ST_NA;
-	पूर्ण अन्यथा अणु
+	} else {
 		info("requested device not found: %s", req.busid);
 		status = ST_NODEV;
-	पूर्ण
+	}
 
 	rc = usbip_net_send_op_common(sockfd, OP_REP_IMPORT, status);
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		dbg("usbip_net_send_op_common failed: %#0x", OP_REP_IMPORT);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (status) अणु
+	if (status) {
 		dbg("import request busid %s: failed", req.busid);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	स_नकल(&pdu_udev, &edev->udev, माप(pdu_udev));
+	memcpy(&pdu_udev, &edev->udev, sizeof(pdu_udev));
 	usbip_net_pack_usb_device(1, &pdu_udev);
 
-	rc = usbip_net_send(sockfd, &pdu_udev, माप(pdu_udev));
-	अगर (rc < 0) अणु
+	rc = usbip_net_send(sockfd, &pdu_udev, sizeof(pdu_udev));
+	if (rc < 0) {
 		dbg("usbip_net_send failed: devinfo");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	dbg("import request busid %s: complete", req.busid);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक send_reply_devlist(पूर्णांक connfd)
-अणु
-	काष्ठा usbip_exported_device *edev;
-	काष्ठा usbip_usb_device pdu_udev;
-	काष्ठा usbip_usb_पूर्णांकerface pdu_uinf;
-	काष्ठा op_devlist_reply reply;
-	काष्ठा list_head *j;
-	पूर्णांक rc, i;
+static int send_reply_devlist(int connfd)
+{
+	struct usbip_exported_device *edev;
+	struct usbip_usb_device pdu_udev;
+	struct usbip_usb_interface pdu_uinf;
+	struct op_devlist_reply reply;
+	struct list_head *j;
+	int rc, i;
 
 	/*
-	 * Exclude devices that are alपढ़ोy exported to a client from
-	 * the exportable device list to aव्योम:
-	 *	- import requests क्रम devices that are exported only to
+	 * Exclude devices that are already exported to a client from
+	 * the exportable device list to avoid:
+	 *	- import requests for devices that are exported only to
 	 *	  fail the request.
 	 *	- revealing devices that are imported by a client to
 	 *	  another client.
@@ -175,513 +174,513 @@
 
 	reply.ndev = 0;
 	/* number of exported devices */
-	list_क्रम_each(j, &driver->edev_list) अणु
-		edev = list_entry(j, काष्ठा usbip_exported_device, node);
-		अगर (edev->status != SDEV_ST_USED)
+	list_for_each(j, &driver->edev_list) {
+		edev = list_entry(j, struct usbip_exported_device, node);
+		if (edev->status != SDEV_ST_USED)
 			reply.ndev += 1;
-	पूर्ण
+	}
 	info("exportable devices: %d", reply.ndev);
 
 	rc = usbip_net_send_op_common(connfd, OP_REP_DEVLIST, ST_OK);
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		dbg("usbip_net_send_op_common failed: %#0x", OP_REP_DEVLIST);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	PACK_OP_DEVLIST_REPLY(1, &reply);
 
-	rc = usbip_net_send(connfd, &reply, माप(reply));
-	अगर (rc < 0) अणु
+	rc = usbip_net_send(connfd, &reply, sizeof(reply));
+	if (rc < 0) {
 		dbg("usbip_net_send failed: %#0x", OP_REP_DEVLIST);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	list_क्रम_each(j, &driver->edev_list) अणु
-		edev = list_entry(j, काष्ठा usbip_exported_device, node);
-		अगर (edev->status == SDEV_ST_USED)
-			जारी;
+	list_for_each(j, &driver->edev_list) {
+		edev = list_entry(j, struct usbip_exported_device, node);
+		if (edev->status == SDEV_ST_USED)
+			continue;
 
 		dump_usb_device(&edev->udev);
-		स_नकल(&pdu_udev, &edev->udev, माप(pdu_udev));
+		memcpy(&pdu_udev, &edev->udev, sizeof(pdu_udev));
 		usbip_net_pack_usb_device(1, &pdu_udev);
 
-		rc = usbip_net_send(connfd, &pdu_udev, माप(pdu_udev));
-		अगर (rc < 0) अणु
+		rc = usbip_net_send(connfd, &pdu_udev, sizeof(pdu_udev));
+		if (rc < 0) {
 			dbg("usbip_net_send failed: pdu_udev");
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
-		क्रम (i = 0; i < edev->udev.bNumInterfaces; i++) अणु
-			dump_usb_पूर्णांकerface(&edev->uinf[i]);
-			स_नकल(&pdu_uinf, &edev->uinf[i], माप(pdu_uinf));
-			usbip_net_pack_usb_पूर्णांकerface(1, &pdu_uinf);
+		for (i = 0; i < edev->udev.bNumInterfaces; i++) {
+			dump_usb_interface(&edev->uinf[i]);
+			memcpy(&pdu_uinf, &edev->uinf[i], sizeof(pdu_uinf));
+			usbip_net_pack_usb_interface(1, &pdu_uinf);
 
 			rc = usbip_net_send(connfd, &pdu_uinf,
-					माप(pdu_uinf));
-			अगर (rc < 0) अणु
+					sizeof(pdu_uinf));
+			if (rc < 0) {
 				err("usbip_net_send failed: pdu_uinf");
-				वापस -1;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return -1;
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक recv_request_devlist(पूर्णांक connfd)
-अणु
-	काष्ठा op_devlist_request req;
-	पूर्णांक rc;
+static int recv_request_devlist(int connfd)
+{
+	struct op_devlist_request req;
+	int rc;
 
-	स_रखो(&req, 0, माप(req));
+	memset(&req, 0, sizeof(req));
 
-	rc = usbip_net_recv(connfd, &req, माप(req));
-	अगर (rc < 0) अणु
+	rc = usbip_net_recv(connfd, &req, sizeof(req));
+	if (rc < 0) {
 		dbg("usbip_net_recv failed: devlist request");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	rc = send_reply_devlist(connfd);
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		dbg("send_reply_devlist failed");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक recv_pdu(पूर्णांक connfd)
-अणु
-	uपूर्णांक16_t code = OP_UNSPEC;
-	पूर्णांक ret;
-	पूर्णांक status;
+static int recv_pdu(int connfd)
+{
+	uint16_t code = OP_UNSPEC;
+	int ret;
+	int status;
 
 	ret = usbip_net_recv_op_common(connfd, &code, &status);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dbg("could not receive opcode: %#0x", code);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	ret = usbip_refresh_device_list(driver);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dbg("could not refresh device list: %d", ret);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	info("received request: %#0x(%d)", code, connfd);
-	चयन (code) अणु
-	हाल OP_REQ_DEVLIST:
+	switch (code) {
+	case OP_REQ_DEVLIST:
 		ret = recv_request_devlist(connfd);
-		अवरोध;
-	हाल OP_REQ_IMPORT:
+		break;
+	case OP_REQ_IMPORT:
 		ret = recv_request_import(connfd);
-		अवरोध;
-	हाल OP_REQ_DEVINFO:
-	हाल OP_REQ_CRYPKEY:
-	शेष:
+		break;
+	case OP_REQ_DEVINFO:
+	case OP_REQ_CRYPKEY:
+	default:
 		err("received an unknown opcode: %#0x", code);
 		ret = -1;
-	पूर्ण
+	}
 
-	अगर (ret == 0)
+	if (ret == 0)
 		info("request %#0x(%d): complete", code, connfd);
-	अन्यथा
+	else
 		info("request %#0x(%d): failed", code, connfd);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित HAVE_LIBWRAP
-अटल पूर्णांक tcpd_auth(पूर्णांक connfd)
-अणु
-	काष्ठा request_info request;
-	पूर्णांक rc;
+#ifdef HAVE_LIBWRAP
+static int tcpd_auth(int connfd)
+{
+	struct request_info request;
+	int rc;
 
-	request_init(&request, RQ_DAEMON, PROGNAME, RQ_खाता, connfd, 0);
+	request_init(&request, RQ_DAEMON, PROGNAME, RQ_FILE, connfd, 0);
 	fromhost(&request);
 	rc = hosts_access(&request);
-	अगर (rc == 0)
-		वापस -1;
+	if (rc == 0)
+		return -1;
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल पूर्णांक करो_accept(पूर्णांक listenfd)
-अणु
-	पूर्णांक connfd;
-	काष्ठा sockaddr_storage ss;
-	socklen_t len = माप(ss);
-	अक्षर host[NI_MAXHOST], port[NI_MAXSERV];
-	पूर्णांक rc;
+static int do_accept(int listenfd)
+{
+	int connfd;
+	struct sockaddr_storage ss;
+	socklen_t len = sizeof(ss);
+	char host[NI_MAXHOST], port[NI_MAXSERV];
+	int rc;
 
-	स_रखो(&ss, 0, माप(ss));
+	memset(&ss, 0, sizeof(ss));
 
-	connfd = accept(listenfd, (काष्ठा sockaddr *)&ss, &len);
-	अगर (connfd < 0) अणु
+	connfd = accept(listenfd, (struct sockaddr *)&ss, &len);
+	if (connfd < 0) {
 		err("failed to accept connection");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	rc = getnameinfo((काष्ठा sockaddr *)&ss, len, host, माप(host),
-			 port, माप(port), NI_NUMERICHOST | NI_NUMERICSERV);
-	अगर (rc)
-		err("getnameinfo: %s", gai_म_त्रुटि(rc));
+	rc = getnameinfo((struct sockaddr *)&ss, len, host, sizeof(host),
+			 port, sizeof(port), NI_NUMERICHOST | NI_NUMERICSERV);
+	if (rc)
+		err("getnameinfo: %s", gai_strerror(rc));
 
-#अगर_घोषित HAVE_LIBWRAP
+#ifdef HAVE_LIBWRAP
 	rc = tcpd_auth(connfd);
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		info("denied access from %s", host);
-		बंद(connfd);
-		वापस -1;
-	पूर्ण
-#पूर्ण_अगर
+		close(connfd);
+		return -1;
+	}
+#endif
 	info("connection from %s:%s", host, port);
 
-	वापस connfd;
-पूर्ण
+	return connfd;
+}
 
-पूर्णांक process_request(पूर्णांक listenfd)
-अणु
+int process_request(int listenfd)
+{
 	pid_t childpid;
-	पूर्णांक connfd;
+	int connfd;
 
-	connfd = करो_accept(listenfd);
-	अगर (connfd < 0)
-		वापस -1;
-	childpid = विभाजन();
-	अगर (childpid == 0) अणु
-		बंद(listenfd);
+	connfd = do_accept(listenfd);
+	if (connfd < 0)
+		return -1;
+	childpid = fork();
+	if (childpid == 0) {
+		close(listenfd);
 		recv_pdu(connfd);
-		निकास(0);
-	पूर्ण
-	बंद(connfd);
-	वापस 0;
-पूर्ण
+		exit(0);
+	}
+	close(connfd);
+	return 0;
+}
 
-अटल व्योम addrinfo_to_text(काष्ठा addrinfo *ai, अक्षर buf[],
-			     स्थिर माप_प्रकार buf_size)
-अणु
-	अक्षर hbuf[NI_MAXHOST];
-	अक्षर sbuf[NI_MAXSERV];
-	पूर्णांक rc;
+static void addrinfo_to_text(struct addrinfo *ai, char buf[],
+			     const size_t buf_size)
+{
+	char hbuf[NI_MAXHOST];
+	char sbuf[NI_MAXSERV];
+	int rc;
 
 	buf[0] = '\0';
 
-	rc = getnameinfo(ai->ai_addr, ai->ai_addrlen, hbuf, माप(hbuf),
-			 sbuf, माप(sbuf), NI_NUMERICHOST | NI_NUMERICSERV);
-	अगर (rc)
-		err("getnameinfo: %s", gai_म_त्रुटि(rc));
+	rc = getnameinfo(ai->ai_addr, ai->ai_addrlen, hbuf, sizeof(hbuf),
+			 sbuf, sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV);
+	if (rc)
+		err("getnameinfo: %s", gai_strerror(rc));
 
-	snम_लिखो(buf, buf_size, "%s:%s", hbuf, sbuf);
-पूर्ण
+	snprintf(buf, buf_size, "%s:%s", hbuf, sbuf);
+}
 
-अटल पूर्णांक listen_all_addrinfo(काष्ठा addrinfo *ai_head, पूर्णांक sockfdlist[],
-			     पूर्णांक maxsockfd)
-अणु
-	काष्ठा addrinfo *ai;
-	पूर्णांक ret, nsockfd = 0;
-	स्थिर माप_प्रकार ai_buf_size = NI_MAXHOST + NI_MAXSERV + 2;
-	अक्षर ai_buf[ai_buf_size];
+static int listen_all_addrinfo(struct addrinfo *ai_head, int sockfdlist[],
+			     int maxsockfd)
+{
+	struct addrinfo *ai;
+	int ret, nsockfd = 0;
+	const size_t ai_buf_size = NI_MAXHOST + NI_MAXSERV + 2;
+	char ai_buf[ai_buf_size];
 
-	क्रम (ai = ai_head; ai && nsockfd < maxsockfd; ai = ai->ai_next) अणु
-		पूर्णांक sock;
+	for (ai = ai_head; ai && nsockfd < maxsockfd; ai = ai->ai_next) {
+		int sock;
 
 		addrinfo_to_text(ai, ai_buf, ai_buf_size);
 		dbg("opening %s", ai_buf);
 		sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-		अगर (sock < 0) अणु
+		if (sock < 0) {
 			err("socket: %s: %d (%s)",
-			    ai_buf, त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
-			जारी;
-		पूर्ण
+			    ai_buf, errno, strerror(errno));
+			continue;
+		}
 
 		usbip_net_set_reuseaddr(sock);
 		usbip_net_set_nodelay(sock);
-		/* We use seperate sockets क्रम IPv4 and IPv6
-		 * (see करो_standalone_mode()) */
+		/* We use seperate sockets for IPv4 and IPv6
+		 * (see do_standalone_mode()) */
 		usbip_net_set_v6only(sock);
 
 		ret = bind(sock, ai->ai_addr, ai->ai_addrlen);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			err("bind: %s: %d (%s)",
-			    ai_buf, त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
-			बंद(sock);
-			जारी;
-		पूर्ण
+			    ai_buf, errno, strerror(errno));
+			close(sock);
+			continue;
+		}
 
 		ret = listen(sock, SOMAXCONN);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			err("listen: %s: %d (%s)",
-			    ai_buf, त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
-			बंद(sock);
-			जारी;
-		पूर्ण
+			    ai_buf, errno, strerror(errno));
+			close(sock);
+			continue;
+		}
 
 		info("listening on %s", ai_buf);
 		sockfdlist[nsockfd++] = sock;
-	पूर्ण
+	}
 
-	वापस nsockfd;
-पूर्ण
+	return nsockfd;
+}
 
-अटल काष्ठा addrinfo *करो_getaddrinfo(अक्षर *host, पूर्णांक ai_family)
-अणु
-	काष्ठा addrinfo hपूर्णांकs, *ai_head;
-	पूर्णांक rc;
+static struct addrinfo *do_getaddrinfo(char *host, int ai_family)
+{
+	struct addrinfo hints, *ai_head;
+	int rc;
 
-	स_रखो(&hपूर्णांकs, 0, माप(hपूर्णांकs));
-	hपूर्णांकs.ai_family   = ai_family;
-	hपूर्णांकs.ai_socktype = SOCK_STREAM;
-	hपूर्णांकs.ai_flags    = AI_PASSIVE;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family   = ai_family;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags    = AI_PASSIVE;
 
-	rc = getaddrinfo(host, usbip_port_string, &hपूर्णांकs, &ai_head);
-	अगर (rc) अणु
+	rc = getaddrinfo(host, usbip_port_string, &hints, &ai_head);
+	if (rc) {
 		err("failed to get a network address %s: %s", usbip_port_string,
-		    gai_म_त्रुटि(rc));
-		वापस शून्य;
-	पूर्ण
+		    gai_strerror(rc));
+		return NULL;
+	}
 
-	वापस ai_head;
-पूर्ण
+	return ai_head;
+}
 
-अटल व्योम संकेत_handler(पूर्णांक i)
-अणु
-	dbg("received '%s' signal", strसंकेत(i));
-पूर्ण
+static void signal_handler(int i)
+{
+	dbg("received '%s' signal", strsignal(i));
+}
 
-अटल व्योम set_संकेत(व्योम)
-अणु
-	काष्ठा sigaction act;
+static void set_signal(void)
+{
+	struct sigaction act;
 
-	स_रखो(&act, 0, माप(act));
-	act.sa_handler = संकेत_handler;
+	memset(&act, 0, sizeof(act));
+	act.sa_handler = signal_handler;
 	sigemptyset(&act.sa_mask);
-	sigaction(संक_इति, &act, शून्य);
-	sigaction(संक_विघ्न, &act, शून्य);
-	act.sa_handler = संक_छोड़ो;
-	sigaction(SIGCHLD, &act, शून्य);
-पूर्ण
+	sigaction(SIGTERM, &act, NULL);
+	sigaction(SIGINT, &act, NULL);
+	act.sa_handler = SIG_IGN;
+	sigaction(SIGCHLD, &act, NULL);
+}
 
-अटल स्थिर अक्षर *pid_file;
+static const char *pid_file;
 
-अटल व्योम ग_लिखो_pid_file(व्योम)
-अणु
-	अगर (pid_file) अणु
+static void write_pid_file(void)
+{
+	if (pid_file) {
 		dbg("creating pid file %s", pid_file);
-		खाता *fp;
+		FILE *fp;
 
-		fp = ख_खोलो(pid_file, "w");
-		अगर (!fp) अणु
+		fp = fopen(pid_file, "w");
+		if (!fp) {
 			err("pid_file: %s: %d (%s)",
-			    pid_file, त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
-			वापस;
-		पूर्ण
-		ख_लिखो(fp, "%d\n", getpid());
-		ख_बंद(fp);
-	पूर्ण
-पूर्ण
+			    pid_file, errno, strerror(errno));
+			return;
+		}
+		fprintf(fp, "%d\n", getpid());
+		fclose(fp);
+	}
+}
 
-अटल व्योम हटाओ_pid_file(व्योम)
-अणु
-	अगर (pid_file) अणु
+static void remove_pid_file(void)
+{
+	if (pid_file) {
 		dbg("removing pid file %s", pid_file);
 		unlink(pid_file);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक करो_standalone_mode(पूर्णांक daemonize, पूर्णांक ipv4, पूर्णांक ipv6)
-अणु
-	काष्ठा addrinfo *ai_head;
-	पूर्णांक sockfdlist[MAXSOCKFD];
-	पूर्णांक nsockfd, family;
-	पूर्णांक i, terminate;
-	काष्ठा pollfd *fds;
-	काष्ठा बारpec समयout;
+static int do_standalone_mode(int daemonize, int ipv4, int ipv6)
+{
+	struct addrinfo *ai_head;
+	int sockfdlist[MAXSOCKFD];
+	int nsockfd, family;
+	int i, terminate;
+	struct pollfd *fds;
+	struct timespec timeout;
 	sigset_t sigmask;
 
-	अगर (usbip_driver_खोलो(driver))
-		वापस -1;
+	if (usbip_driver_open(driver))
+		return -1;
 
-	अगर (daemonize) अणु
-		अगर (daemon(0, 0) < 0) अणु
-			err("daemonizing failed: %s", म_त्रुटि(त्रुटि_सं));
-			usbip_driver_बंद(driver);
-			वापस -1;
-		पूर्ण
+	if (daemonize) {
+		if (daemon(0, 0) < 0) {
+			err("daemonizing failed: %s", strerror(errno));
+			usbip_driver_close(driver);
+			return -1;
+		}
 		umask(0);
 		usbip_use_syslog = 1;
-	पूर्ण
-	set_संकेत();
-	ग_लिखो_pid_file();
+	}
+	set_signal();
+	write_pid_file();
 
 	info("starting " PROGNAME " (%s)", usbip_version_string);
 
 	/*
-	 * To suppress warnings on प्रणालीs with bindv6only disabled
-	 * (शेष), we use seperate sockets क्रम IPv6 and IPv4 and set
+	 * To suppress warnings on systems with bindv6only disabled
+	 * (default), we use seperate sockets for IPv6 and IPv4 and set
 	 * IPV6_V6ONLY on the IPv6 sockets.
 	 */
-	अगर (ipv4 && ipv6)
+	if (ipv4 && ipv6)
 		family = AF_UNSPEC;
-	अन्यथा अगर (ipv4)
+	else if (ipv4)
 		family = AF_INET;
-	अन्यथा
+	else
 		family = AF_INET6;
 
-	ai_head = करो_getaddrinfo(शून्य, family);
-	अगर (!ai_head) अणु
-		usbip_driver_बंद(driver);
-		वापस -1;
-	पूर्ण
+	ai_head = do_getaddrinfo(NULL, family);
+	if (!ai_head) {
+		usbip_driver_close(driver);
+		return -1;
+	}
 	nsockfd = listen_all_addrinfo(ai_head, sockfdlist,
-		माप(sockfdlist) / माप(*sockfdlist));
-	मुक्तaddrinfo(ai_head);
-	अगर (nsockfd <= 0) अणु
+		sizeof(sockfdlist) / sizeof(*sockfdlist));
+	freeaddrinfo(ai_head);
+	if (nsockfd <= 0) {
 		err("failed to open a listening socket");
-		usbip_driver_बंद(driver);
-		वापस -1;
-	पूर्ण
+		usbip_driver_close(driver);
+		return -1;
+	}
 
 	dbg("listening on %d address%s", nsockfd, (nsockfd == 1) ? "" : "es");
 
-	fds = सुस्मृति(nsockfd, माप(काष्ठा pollfd));
-	क्रम (i = 0; i < nsockfd; i++) अणु
+	fds = calloc(nsockfd, sizeof(struct pollfd));
+	for (i = 0; i < nsockfd; i++) {
 		fds[i].fd = sockfdlist[i];
 		fds[i].events = POLLIN;
-	पूर्ण
-	समयout.tv_sec = MAIN_LOOP_TIMEOUT;
-	समयout.tv_nsec = 0;
+	}
+	timeout.tv_sec = MAIN_LOOP_TIMEOUT;
+	timeout.tv_nsec = 0;
 
 	sigfillset(&sigmask);
-	sigdअन्यथाt(&sigmask, संक_इति);
-	sigdअन्यथाt(&sigmask, संक_विघ्न);
+	sigdelset(&sigmask, SIGTERM);
+	sigdelset(&sigmask, SIGINT);
 
 	terminate = 0;
-	जबतक (!terminate) अणु
-		पूर्णांक r;
+	while (!terminate) {
+		int r;
 
-		r = ppoll(fds, nsockfd, &समयout, &sigmask);
-		अगर (r < 0) अणु
-			dbg("%s", म_त्रुटि(त्रुटि_सं));
+		r = ppoll(fds, nsockfd, &timeout, &sigmask);
+		if (r < 0) {
+			dbg("%s", strerror(errno));
 			terminate = 1;
-		पूर्ण अन्यथा अगर (r) अणु
-			क्रम (i = 0; i < nsockfd; i++) अणु
-				अगर (fds[i].revents & POLLIN) अणु
+		} else if (r) {
+			for (i = 0; i < nsockfd; i++) {
+				if (fds[i].revents & POLLIN) {
 					dbg("read event on fd[%d]=%d",
 					    i, sockfdlist[i]);
 					process_request(sockfdlist[i]);
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				}
+			}
+		} else {
 			dbg("heartbeat timeout on ppoll()");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	info("shutting down " PROGNAME);
-	मुक्त(fds);
-	usbip_driver_बंद(driver);
+	free(fds);
+	usbip_driver_close(driver);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	अटल स्थिर काष्ठा option दीर्घopts[] = अणु
-		अणु "ipv4",     no_argument,       शून्य, '4' पूर्ण,
-		अणु "ipv6",     no_argument,       शून्य, '6' पूर्ण,
-		अणु "daemon",   no_argument,       शून्य, 'D' पूर्ण,
-		अणु "daemon",   no_argument,       शून्य, 'D' पूर्ण,
-		अणु "debug",    no_argument,       शून्य, 'd' पूर्ण,
-		अणु "device",   no_argument,       शून्य, 'e' पूर्ण,
-		अणु "pid",      optional_argument, शून्य, 'P' पूर्ण,
-		अणु "tcp-port", required_argument, शून्य, 't' पूर्ण,
-		अणु "help",     no_argument,       शून्य, 'h' पूर्ण,
-		अणु "version",  no_argument,       शून्य, 'v' पूर्ण,
-		अणु शून्य,	      0,                 शून्य,  0  पूर्ण
-	पूर्ण;
+int main(int argc, char *argv[])
+{
+	static const struct option longopts[] = {
+		{ "ipv4",     no_argument,       NULL, '4' },
+		{ "ipv6",     no_argument,       NULL, '6' },
+		{ "daemon",   no_argument,       NULL, 'D' },
+		{ "daemon",   no_argument,       NULL, 'D' },
+		{ "debug",    no_argument,       NULL, 'd' },
+		{ "device",   no_argument,       NULL, 'e' },
+		{ "pid",      optional_argument, NULL, 'P' },
+		{ "tcp-port", required_argument, NULL, 't' },
+		{ "help",     no_argument,       NULL, 'h' },
+		{ "version",  no_argument,       NULL, 'v' },
+		{ NULL,	      0,                 NULL,  0  }
+	};
 
-	क्रमागत अणु
+	enum {
 		cmd_standalone_mode = 1,
 		cmd_help,
 		cmd_version
-	पूर्ण cmd;
+	} cmd;
 
-	पूर्णांक daemonize = 0;
-	पूर्णांक ipv4 = 0, ipv6 = 0;
-	पूर्णांक opt, rc = -1;
+	int daemonize = 0;
+	int ipv4 = 0, ipv6 = 0;
+	int opt, rc = -1;
 
-	pid_file = शून्य;
+	pid_file = NULL;
 
-	usbip_use_मानक_त्रुटि = 1;
+	usbip_use_stderr = 1;
 	usbip_use_syslog = 0;
 
-	अगर (geteuid() != 0)
+	if (geteuid() != 0)
 		err("not running as root?");
 
 	cmd = cmd_standalone_mode;
 	driver = &host_driver;
-	क्रम (;;) अणु
-		opt = getopt_दीर्घ(argc, argv, "46DdeP::t:hv", दीर्घopts, शून्य);
+	for (;;) {
+		opt = getopt_long(argc, argv, "46DdeP::t:hv", longopts, NULL);
 
-		अगर (opt == -1)
-			अवरोध;
+		if (opt == -1)
+			break;
 
-		चयन (opt) अणु
-		हाल '4':
+		switch (opt) {
+		case '4':
 			ipv4 = 1;
-			अवरोध;
-		हाल '6':
+			break;
+		case '6':
 			ipv6 = 1;
-			अवरोध;
-		हाल 'D':
+			break;
+		case 'D':
 			daemonize = 1;
-			अवरोध;
-		हाल 'd':
+			break;
+		case 'd':
 			usbip_use_debug = 1;
-			अवरोध;
-		हाल 'h':
+			break;
+		case 'h':
 			cmd = cmd_help;
-			अवरोध;
-		हाल 'P':
-			pid_file = optarg ? optarg : DEFAULT_PID_खाता;
-			अवरोध;
-		हाल 't':
+			break;
+		case 'P':
+			pid_file = optarg ? optarg : DEFAULT_PID_FILE;
+			break;
+		case 't':
 			usbip_setup_port_number(optarg);
-			अवरोध;
-		हाल 'v':
+			break;
+		case 'v':
 			cmd = cmd_version;
-			अवरोध;
-		हाल 'e':
+			break;
+		case 'e':
 			driver = &device_driver;
-			अवरोध;
-		हाल '?':
+			break;
+		case '?':
 			usbipd_help();
-		शेष:
-			जाओ err_out;
-		पूर्ण
-	पूर्ण
+		default:
+			goto err_out;
+		}
+	}
 
-	अगर (!ipv4 && !ipv6)
+	if (!ipv4 && !ipv6)
 		ipv4 = ipv6 = 1;
 
-	चयन (cmd) अणु
-	हाल cmd_standalone_mode:
-		rc = करो_standalone_mode(daemonize, ipv4, ipv6);
-		हटाओ_pid_file();
-		अवरोध;
-	हाल cmd_version:
-		म_लिखो(PROGNAME " (%s)\n", usbip_version_string);
+	switch (cmd) {
+	case cmd_standalone_mode:
+		rc = do_standalone_mode(daemonize, ipv4, ipv6);
+		remove_pid_file();
+		break;
+	case cmd_version:
+		printf(PROGNAME " (%s)\n", usbip_version_string);
 		rc = 0;
-		अवरोध;
-	हाल cmd_help:
+		break;
+	case cmd_help:
 		usbipd_help();
 		rc = 0;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		usbipd_help();
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
 err_out:
-	वापस (rc > -1 ? निकास_सफल : निकास_त्रुटि);
-पूर्ण
+	return (rc > -1 ? EXIT_SUCCESS : EXIT_FAILURE);
+}

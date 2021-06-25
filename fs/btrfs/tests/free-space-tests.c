@@ -1,880 +1,879 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2013 Fusion IO.  All rights reserved.
  */
 
-#समावेश <linux/slab.h>
-#समावेश "btrfs-tests.h"
-#समावेश "../ctree.h"
-#समावेश "../disk-io.h"
-#समावेश "../free-space-cache.h"
-#समावेश "../block-group.h"
+#include <linux/slab.h>
+#include "btrfs-tests.h"
+#include "../ctree.h"
+#include "../disk-io.h"
+#include "../free-space-cache.h"
+#include "../block-group.h"
 
-#घोषणा BITS_PER_BITMAP		(PAGE_SIZE * 8UL)
+#define BITS_PER_BITMAP		(PAGE_SIZE * 8UL)
 
 /*
- * This test just करोes basic sanity checking, making sure we can add an extent
- * entry and हटाओ space from either end and the middle, and make sure we can
- * हटाओ space that covers adjacent extent entries.
+ * This test just does basic sanity checking, making sure we can add an extent
+ * entry and remove space from either end and the middle, and make sure we can
+ * remove space that covers adjacent extent entries.
  */
-अटल पूर्णांक test_extents(काष्ठा btrfs_block_group *cache)
-अणु
-	पूर्णांक ret = 0;
+static int test_extents(struct btrfs_block_group *cache)
+{
+	int ret = 0;
 
 	test_msg("running extent only tests");
 
-	/* First just make sure we can हटाओ an entire entry */
-	ret = btrfs_add_मुक्त_space(cache, 0, SZ_4M);
-	अगर (ret) अणु
+	/* First just make sure we can remove an entire entry */
+	ret = btrfs_add_free_space(cache, 0, SZ_4M);
+	if (ret) {
 		test_err("error adding initial extents %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = btrfs_हटाओ_मुक्त_space(cache, 0, SZ_4M);
-	अगर (ret) अणु
+	ret = btrfs_remove_free_space(cache, 0, SZ_4M);
+	if (ret) {
 		test_err("error removing extent %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (test_check_exists(cache, 0, SZ_4M)) अणु
+	if (test_check_exists(cache, 0, SZ_4M)) {
 		test_err("full remove left some lingering space");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	/* Ok edge and middle हालs now */
-	ret = btrfs_add_मुक्त_space(cache, 0, SZ_4M);
-	अगर (ret) अणु
+	/* Ok edge and middle cases now */
+	ret = btrfs_add_free_space(cache, 0, SZ_4M);
+	if (ret) {
 		test_err("error adding half extent %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = btrfs_हटाओ_मुक्त_space(cache, 3 * SZ_1M, SZ_1M);
-	अगर (ret) अणु
+	ret = btrfs_remove_free_space(cache, 3 * SZ_1M, SZ_1M);
+	if (ret) {
 		test_err("error removing tail end %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = btrfs_हटाओ_मुक्त_space(cache, 0, SZ_1M);
-	अगर (ret) अणु
+	ret = btrfs_remove_free_space(cache, 0, SZ_1M);
+	if (ret) {
 		test_err("error removing front end %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = btrfs_हटाओ_मुक्त_space(cache, SZ_2M, 4096);
-	अगर (ret) अणु
+	ret = btrfs_remove_free_space(cache, SZ_2M, 4096);
+	if (ret) {
 		test_err("error removing middle piece %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (test_check_exists(cache, 0, SZ_1M)) अणु
+	if (test_check_exists(cache, 0, SZ_1M)) {
 		test_err("still have space at the front");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (test_check_exists(cache, SZ_2M, 4096)) अणु
+	if (test_check_exists(cache, SZ_2M, 4096)) {
 		test_err("still have space in the middle");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (test_check_exists(cache, 3 * SZ_1M, SZ_1M)) अणु
+	if (test_check_exists(cache, 3 * SZ_1M, SZ_1M)) {
 		test_err("still have space at the end");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	/* Cleanup */
-	__btrfs_हटाओ_मुक्त_space_cache(cache->मुक्त_space_ctl);
+	__btrfs_remove_free_space_cache(cache->free_space_ctl);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक test_biपंचांगaps(काष्ठा btrfs_block_group *cache, u32 sectorsize)
-अणु
-	u64 next_biपंचांगap_offset;
-	पूर्णांक ret;
+static int test_bitmaps(struct btrfs_block_group *cache, u32 sectorsize)
+{
+	u64 next_bitmap_offset;
+	int ret;
 
 	test_msg("running bitmap only tests");
 
-	ret = test_add_मुक्त_space_entry(cache, 0, SZ_4M, 1);
-	अगर (ret) अणु
+	ret = test_add_free_space_entry(cache, 0, SZ_4M, 1);
+	if (ret) {
 		test_err("couldn't create a bitmap entry %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = btrfs_हटाओ_मुक्त_space(cache, 0, SZ_4M);
-	अगर (ret) अणु
+	ret = btrfs_remove_free_space(cache, 0, SZ_4M);
+	if (ret) {
 		test_err("error removing bitmap full range %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (test_check_exists(cache, 0, SZ_4M)) अणु
+	if (test_check_exists(cache, 0, SZ_4M)) {
 		test_err("left some space in bitmap");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	ret = test_add_मुक्त_space_entry(cache, 0, SZ_4M, 1);
-	अगर (ret) अणु
+	ret = test_add_free_space_entry(cache, 0, SZ_4M, 1);
+	if (ret) {
 		test_err("couldn't add to our bitmap entry %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = btrfs_हटाओ_मुक्त_space(cache, SZ_1M, SZ_2M);
-	अगर (ret) अणु
+	ret = btrfs_remove_free_space(cache, SZ_1M, SZ_2M);
+	if (ret) {
 		test_err("couldn't remove middle chunk %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * The first biपंचांगap we have starts at offset 0 so the next one is just
-	 * at the end of the first biपंचांगap.
+	 * The first bitmap we have starts at offset 0 so the next one is just
+	 * at the end of the first bitmap.
 	 */
-	next_biपंचांगap_offset = (u64)(BITS_PER_BITMAP * sectorsize);
+	next_bitmap_offset = (u64)(BITS_PER_BITMAP * sectorsize);
 
-	/* Test a bit straddling two biपंचांगaps */
-	ret = test_add_मुक्त_space_entry(cache, next_biपंचांगap_offset - SZ_2M,
+	/* Test a bit straddling two bitmaps */
+	ret = test_add_free_space_entry(cache, next_bitmap_offset - SZ_2M,
 					SZ_4M, 1);
-	अगर (ret) अणु
+	if (ret) {
 		test_err("couldn't add space that straddles two bitmaps %d",
 				ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = btrfs_हटाओ_मुक्त_space(cache, next_biपंचांगap_offset - SZ_1M, SZ_2M);
-	अगर (ret) अणु
+	ret = btrfs_remove_free_space(cache, next_bitmap_offset - SZ_1M, SZ_2M);
+	if (ret) {
 		test_err("couldn't remove overlapping space %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (test_check_exists(cache, next_biपंचांगap_offset - SZ_1M, SZ_2M)) अणु
+	if (test_check_exists(cache, next_bitmap_offset - SZ_1M, SZ_2M)) {
 		test_err("left some space when removing overlapping");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	__btrfs_हटाओ_मुक्त_space_cache(cache->मुक्त_space_ctl);
+	__btrfs_remove_free_space_cache(cache->free_space_ctl);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* This is the high grade jackassery */
-अटल पूर्णांक test_biपंचांगaps_and_extents(काष्ठा btrfs_block_group *cache,
+static int test_bitmaps_and_extents(struct btrfs_block_group *cache,
 				    u32 sectorsize)
-अणु
-	u64 biपंचांगap_offset = (u64)(BITS_PER_BITMAP * sectorsize);
-	पूर्णांक ret;
+{
+	u64 bitmap_offset = (u64)(BITS_PER_BITMAP * sectorsize);
+	int ret;
 
 	test_msg("running bitmap and extent tests");
 
 	/*
-	 * First let's करो something simple, an extent at the same offset as the
-	 * biपंचांगap, but the मुक्त space completely in the extent and then
-	 * completely in the biपंचांगap.
+	 * First let's do something simple, an extent at the same offset as the
+	 * bitmap, but the free space completely in the extent and then
+	 * completely in the bitmap.
 	 */
-	ret = test_add_मुक्त_space_entry(cache, SZ_4M, SZ_1M, 1);
-	अगर (ret) अणु
+	ret = test_add_free_space_entry(cache, SZ_4M, SZ_1M, 1);
+	if (ret) {
 		test_err("couldn't create bitmap entry %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = test_add_मुक्त_space_entry(cache, 0, SZ_1M, 0);
-	अगर (ret) अणु
+	ret = test_add_free_space_entry(cache, 0, SZ_1M, 0);
+	if (ret) {
 		test_err("couldn't add extent entry %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = btrfs_हटाओ_मुक्त_space(cache, 0, SZ_1M);
-	अगर (ret) अणु
+	ret = btrfs_remove_free_space(cache, 0, SZ_1M);
+	if (ret) {
 		test_err("couldn't remove extent entry %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (test_check_exists(cache, 0, SZ_1M)) अणु
+	if (test_check_exists(cache, 0, SZ_1M)) {
 		test_err("left remnants after our remove");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	/* Now to add back the extent entry and हटाओ from the biपंचांगap */
-	ret = test_add_मुक्त_space_entry(cache, 0, SZ_1M, 0);
-	अगर (ret) अणु
+	/* Now to add back the extent entry and remove from the bitmap */
+	ret = test_add_free_space_entry(cache, 0, SZ_1M, 0);
+	if (ret) {
 		test_err("couldn't re-add extent entry %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = btrfs_हटाओ_मुक्त_space(cache, SZ_4M, SZ_1M);
-	अगर (ret) अणु
+	ret = btrfs_remove_free_space(cache, SZ_4M, SZ_1M);
+	if (ret) {
 		test_err("couldn't remove from bitmap %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (test_check_exists(cache, SZ_4M, SZ_1M)) अणु
+	if (test_check_exists(cache, SZ_4M, SZ_1M)) {
 		test_err("left remnants in the bitmap");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	/*
-	 * Ok so a little more evil, extent entry and biपंचांगap at the same offset,
+	 * Ok so a little more evil, extent entry and bitmap at the same offset,
 	 * removing an overlapping chunk.
 	 */
-	ret = test_add_मुक्त_space_entry(cache, SZ_1M, SZ_4M, 1);
-	अगर (ret) अणु
+	ret = test_add_free_space_entry(cache, SZ_1M, SZ_4M, 1);
+	if (ret) {
 		test_err("couldn't add to a bitmap %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = btrfs_हटाओ_मुक्त_space(cache, SZ_512K, 3 * SZ_1M);
-	अगर (ret) अणु
+	ret = btrfs_remove_free_space(cache, SZ_512K, 3 * SZ_1M);
+	if (ret) {
 		test_err("couldn't remove overlapping space %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (test_check_exists(cache, SZ_512K, 3 * SZ_1M)) अणु
+	if (test_check_exists(cache, SZ_512K, 3 * SZ_1M)) {
 		test_err("left over pieces after removing overlapping");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	__btrfs_हटाओ_मुक्त_space_cache(cache->मुक्त_space_ctl);
+	__btrfs_remove_free_space_cache(cache->free_space_ctl);
 
-	/* Now with the extent entry offset पूर्णांकo the biपंचांगap */
-	ret = test_add_मुक्त_space_entry(cache, SZ_4M, SZ_4M, 1);
-	अगर (ret) अणु
+	/* Now with the extent entry offset into the bitmap */
+	ret = test_add_free_space_entry(cache, SZ_4M, SZ_4M, 1);
+	if (ret) {
 		test_err("couldn't add space to the bitmap %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = test_add_मुक्त_space_entry(cache, SZ_2M, SZ_2M, 0);
-	अगर (ret) अणु
+	ret = test_add_free_space_entry(cache, SZ_2M, SZ_2M, 0);
+	if (ret) {
 		test_err("couldn't add extent to the cache %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = btrfs_हटाओ_मुक्त_space(cache, 3 * SZ_1M, SZ_4M);
-	अगर (ret) अणु
+	ret = btrfs_remove_free_space(cache, 3 * SZ_1M, SZ_4M);
+	if (ret) {
 		test_err("problem removing overlapping space %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (test_check_exists(cache, 3 * SZ_1M, SZ_4M)) अणु
+	if (test_check_exists(cache, 3 * SZ_1M, SZ_4M)) {
 		test_err("left something behind when removing space");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	/*
-	 * This has blown up in the past, the extent entry starts beक्रमe the
-	 * biपंचांगap entry, but we're trying to हटाओ an offset that falls
-	 * completely within the biपंचांगap range and is in both the extent entry
-	 * and the biपंचांगap entry, looks like this
+	 * This has blown up in the past, the extent entry starts before the
+	 * bitmap entry, but we're trying to remove an offset that falls
+	 * completely within the bitmap range and is in both the extent entry
+	 * and the bitmap entry, looks like this
 	 *
 	 *   [ extent ]
-	 *      [ biपंचांगap ]
+	 *      [ bitmap ]
 	 *        [ del ]
 	 */
-	__btrfs_हटाओ_मुक्त_space_cache(cache->मुक्त_space_ctl);
-	ret = test_add_मुक्त_space_entry(cache, biपंचांगap_offset + SZ_4M, SZ_4M, 1);
-	अगर (ret) अणु
+	__btrfs_remove_free_space_cache(cache->free_space_ctl);
+	ret = test_add_free_space_entry(cache, bitmap_offset + SZ_4M, SZ_4M, 1);
+	if (ret) {
 		test_err("couldn't add bitmap %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = test_add_मुक्त_space_entry(cache, biपंचांगap_offset - SZ_1M,
+	ret = test_add_free_space_entry(cache, bitmap_offset - SZ_1M,
 					5 * SZ_1M, 0);
-	अगर (ret) अणु
+	if (ret) {
 		test_err("couldn't add extent entry %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = btrfs_हटाओ_मुक्त_space(cache, biपंचांगap_offset + SZ_1M, 5 * SZ_1M);
-	अगर (ret) अणु
+	ret = btrfs_remove_free_space(cache, bitmap_offset + SZ_1M, 5 * SZ_1M);
+	if (ret) {
 		test_err("failed to free our space %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (test_check_exists(cache, biपंचांगap_offset + SZ_1M, 5 * SZ_1M)) अणु
+	if (test_check_exists(cache, bitmap_offset + SZ_1M, 5 * SZ_1M)) {
 		test_err("left stuff over");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	__btrfs_हटाओ_मुक्त_space_cache(cache->मुक्त_space_ctl);
+	__btrfs_remove_free_space_cache(cache->free_space_ctl);
 
 	/*
-	 * This blew up beक्रमe, we have part of the मुक्त space in a biपंचांगap and
+	 * This blew up before, we have part of the free space in a bitmap and
 	 * then the entirety of the rest of the space in an extent.  This used
-	 * to वापस -EAGAIN back from btrfs_हटाओ_extent, make sure this
-	 * करोesn't happen.
+	 * to return -EAGAIN back from btrfs_remove_extent, make sure this
+	 * doesn't happen.
 	 */
-	ret = test_add_मुक्त_space_entry(cache, SZ_1M, SZ_2M, 1);
-	अगर (ret) अणु
+	ret = test_add_free_space_entry(cache, SZ_1M, SZ_2M, 1);
+	if (ret) {
 		test_err("couldn't add bitmap entry %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = test_add_मुक्त_space_entry(cache, 3 * SZ_1M, SZ_1M, 0);
-	अगर (ret) अणु
+	ret = test_add_free_space_entry(cache, 3 * SZ_1M, SZ_1M, 0);
+	if (ret) {
 		test_err("couldn't add extent entry %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = btrfs_हटाओ_मुक्त_space(cache, SZ_1M, 3 * SZ_1M);
-	अगर (ret) अणु
+	ret = btrfs_remove_free_space(cache, SZ_1M, 3 * SZ_1M);
+	if (ret) {
 		test_err("error removing bitmap and extent overlapping %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	__btrfs_हटाओ_मुक्त_space_cache(cache->मुक्त_space_ctl);
-	वापस 0;
-पूर्ण
+	__btrfs_remove_free_space_cache(cache->free_space_ctl);
+	return 0;
+}
 
-/* Used by test_steal_space_from_biपंचांगap_to_extent(). */
-अटल bool test_use_biपंचांगap(काष्ठा btrfs_मुक्त_space_ctl *ctl,
-			    काष्ठा btrfs_मुक्त_space *info)
-अणु
-	वापस ctl->मुक्त_extents > 0;
-पूर्ण
+/* Used by test_steal_space_from_bitmap_to_extent(). */
+static bool test_use_bitmap(struct btrfs_free_space_ctl *ctl,
+			    struct btrfs_free_space *info)
+{
+	return ctl->free_extents > 0;
+}
 
-/* Used by test_steal_space_from_biपंचांगap_to_extent(). */
-अटल पूर्णांक
-check_num_extents_and_biपंचांगaps(स्थिर काष्ठा btrfs_block_group *cache,
-			      स्थिर पूर्णांक num_extents,
-			      स्थिर पूर्णांक num_biपंचांगaps)
-अणु
-	अगर (cache->मुक्त_space_ctl->मुक्त_extents != num_extents) अणु
+/* Used by test_steal_space_from_bitmap_to_extent(). */
+static int
+check_num_extents_and_bitmaps(const struct btrfs_block_group *cache,
+			      const int num_extents,
+			      const int num_bitmaps)
+{
+	if (cache->free_space_ctl->free_extents != num_extents) {
 		test_err(
 		"incorrect # of extent entries in the cache: %d, expected %d",
-			 cache->मुक्त_space_ctl->मुक्त_extents, num_extents);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (cache->मुक्त_space_ctl->total_biपंचांगaps != num_biपंचांगaps) अणु
+			 cache->free_space_ctl->free_extents, num_extents);
+		return -EINVAL;
+	}
+	if (cache->free_space_ctl->total_bitmaps != num_bitmaps) {
 		test_err(
 		"incorrect # of extent entries in the cache: %d, expected %d",
-			 cache->मुक्त_space_ctl->total_biपंचांगaps, num_biपंचांगaps);
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			 cache->free_space_ctl->total_bitmaps, num_bitmaps);
+		return -EINVAL;
+	}
+	return 0;
+}
 
-/* Used by test_steal_space_from_biपंचांगap_to_extent(). */
-अटल पूर्णांक check_cache_empty(काष्ठा btrfs_block_group *cache)
-अणु
+/* Used by test_steal_space_from_bitmap_to_extent(). */
+static int check_cache_empty(struct btrfs_block_group *cache)
+{
 	u64 offset;
 	u64 max_extent_size;
 
 	/*
-	 * Now lets confirm that there's असलolutely no मुक्त space left to
+	 * Now lets confirm that there's absolutely no free space left to
 	 * allocate.
 	 */
-	अगर (cache->मुक्त_space_ctl->मुक्त_space != 0) अणु
+	if (cache->free_space_ctl->free_space != 0) {
 		test_err("cache free space is not 0");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* And any allocation request, no matter how small, should fail now. */
-	offset = btrfs_find_space_क्रम_alloc(cache, 0, 4096, 0,
+	offset = btrfs_find_space_for_alloc(cache, 0, 4096, 0,
 					    &max_extent_size);
-	अगर (offset != 0) अणु
+	if (offset != 0) {
 		test_err("space allocation did not fail, returned offset: %llu",
 			 offset);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* And no extent nor biपंचांगap entries in the cache anymore. */
-	वापस check_num_extents_and_biपंचांगaps(cache, 0, 0);
-पूर्ण
+	/* And no extent nor bitmap entries in the cache anymore. */
+	return check_num_extents_and_bitmaps(cache, 0, 0);
+}
 
 /*
- * Beक्रमe we were able to steal मुक्त space from a biपंचांगap entry to an extent
- * entry, we could end up with 2 entries representing a contiguous मुक्त space.
- * One would be an extent entry and the other a biपंचांगap entry. Since in order
- * to allocate space to a caller we use only 1 entry, we couldn't वापस that
- * whole range to the caller अगर it was requested. This क्रमced the caller to
- * either assume ENOSPC or perक्रमm several smaller space allocations, which
- * wasn't optimal as they could be spपढ़ो all over the block group जबतक under
+ * Before we were able to steal free space from a bitmap entry to an extent
+ * entry, we could end up with 2 entries representing a contiguous free space.
+ * One would be an extent entry and the other a bitmap entry. Since in order
+ * to allocate space to a caller we use only 1 entry, we couldn't return that
+ * whole range to the caller if it was requested. This forced the caller to
+ * either assume ENOSPC or perform several smaller space allocations, which
+ * wasn't optimal as they could be spread all over the block group while under
  * concurrency (extra overhead and fragmentation).
  *
  * This stealing approach is beneficial, since we always prefer to allocate
- * from extent entries, both क्रम clustered and non-clustered allocation
+ * from extent entries, both for clustered and non-clustered allocation
  * requests.
  */
-अटल पूर्णांक
-test_steal_space_from_biपंचांगap_to_extent(काष्ठा btrfs_block_group *cache,
+static int
+test_steal_space_from_bitmap_to_extent(struct btrfs_block_group *cache,
 				       u32 sectorsize)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 	u64 offset;
 	u64 max_extent_size;
-	स्थिर काष्ठा btrfs_मुक्त_space_op test_मुक्त_space_ops = अणु
-		.use_biपंचांगap = test_use_biपंचांगap,
-	पूर्ण;
-	स्थिर काष्ठा btrfs_मुक्त_space_op *orig_मुक्त_space_ops;
+	const struct btrfs_free_space_op test_free_space_ops = {
+		.use_bitmap = test_use_bitmap,
+	};
+	const struct btrfs_free_space_op *orig_free_space_ops;
 
 	test_msg("running space stealing from bitmap to extent tests");
 
 	/*
 	 * For this test, we want to ensure we end up with an extent entry
-	 * immediately adjacent to a biपंचांगap entry, where the biपंचांगap starts
+	 * immediately adjacent to a bitmap entry, where the bitmap starts
 	 * at an offset where the extent entry ends. We keep adding and
-	 * removing मुक्त space to reach पूर्णांकo this state, but to get there
-	 * we need to reach a poपूर्णांक where marking new मुक्त space करोesn't
+	 * removing free space to reach into this state, but to get there
+	 * we need to reach a point where marking new free space doesn't
 	 * result in adding new extent entries or merging the new space
 	 * with existing extent entries - the space ends up being marked
-	 * in an existing biपंचांगap that covers the new मुक्त space range.
+	 * in an existing bitmap that covers the new free space range.
 	 *
 	 * To get there, we need to reach the threshold defined set at
-	 * cache->मुक्त_space_ctl->extents_thresh, which currently is
-	 * 256 extents on a x86_64 प्रणाली at least, and a few other
-	 * conditions (check मुक्त_space_cache.c). Instead of making the
-	 * test much दीर्घer and complicated, use a "use_bitmap" operation
-	 * that क्रमces use of biपंचांगaps as soon as we have at least 1
+	 * cache->free_space_ctl->extents_thresh, which currently is
+	 * 256 extents on a x86_64 system at least, and a few other
+	 * conditions (check free_space_cache.c). Instead of making the
+	 * test much longer and complicated, use a "use_bitmap" operation
+	 * that forces use of bitmaps as soon as we have at least 1
 	 * extent entry.
 	 */
-	orig_मुक्त_space_ops = cache->मुक्त_space_ctl->op;
-	cache->मुक्त_space_ctl->op = &test_मुक्त_space_ops;
+	orig_free_space_ops = cache->free_space_ctl->op;
+	cache->free_space_ctl->op = &test_free_space_ops;
 
 	/*
-	 * Extent entry covering मुक्त space range [128Mb - 256Kb, 128Mb - 128Kb[
+	 * Extent entry covering free space range [128Mb - 256Kb, 128Mb - 128Kb[
 	 */
-	ret = test_add_मुक्त_space_entry(cache, SZ_128M - SZ_256K, SZ_128K, 0);
-	अगर (ret) अणु
+	ret = test_add_free_space_entry(cache, SZ_128M - SZ_256K, SZ_128K, 0);
+	if (ret) {
 		test_err("couldn't add extent entry %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Biपंचांगap entry covering मुक्त space range [128Mb + 512Kb, 256Mb[ */
-	ret = test_add_मुक्त_space_entry(cache, SZ_128M + SZ_512K,
+	/* Bitmap entry covering free space range [128Mb + 512Kb, 256Mb[ */
+	ret = test_add_free_space_entry(cache, SZ_128M + SZ_512K,
 					SZ_128M - SZ_512K, 1);
-	अगर (ret) अणु
+	if (ret) {
 		test_err("couldn't add bitmap entry %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = check_num_extents_and_biपंचांगaps(cache, 2, 1);
-	अगर (ret)
-		वापस ret;
+	ret = check_num_extents_and_bitmaps(cache, 2, 1);
+	if (ret)
+		return ret;
 
 	/*
-	 * Now make only the first 256Kb of the biपंचांगap marked as मुक्त, so that
-	 * we end up with only the following ranges marked as मुक्त space:
+	 * Now make only the first 256Kb of the bitmap marked as free, so that
+	 * we end up with only the following ranges marked as free space:
 	 *
 	 * [128Mb - 256Kb, 128Mb - 128Kb[
 	 * [128Mb + 512Kb, 128Mb + 768Kb[
 	 */
-	ret = btrfs_हटाओ_मुक्त_space(cache,
+	ret = btrfs_remove_free_space(cache,
 				      SZ_128M + 768 * SZ_1K,
 				      SZ_128M - 768 * SZ_1K);
-	अगर (ret) अणु
+	if (ret) {
 		test_err("failed to free part of bitmap space %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Confirm that only those 2 ranges are marked as मुक्त. */
-	अगर (!test_check_exists(cache, SZ_128M - SZ_256K, SZ_128K)) अणु
+	/* Confirm that only those 2 ranges are marked as free. */
+	if (!test_check_exists(cache, SZ_128M - SZ_256K, SZ_128K)) {
 		test_err("free space range missing");
-		वापस -ENOENT;
-	पूर्ण
-	अगर (!test_check_exists(cache, SZ_128M + SZ_512K, SZ_256K)) अणु
+		return -ENOENT;
+	}
+	if (!test_check_exists(cache, SZ_128M + SZ_512K, SZ_256K)) {
 		test_err("free space range missing");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	/*
-	 * Confirm that the biपंचांगap range [128Mb + 768Kb, 256Mb[ isn't marked
-	 * as मुक्त anymore.
+	 * Confirm that the bitmap range [128Mb + 768Kb, 256Mb[ isn't marked
+	 * as free anymore.
 	 */
-	अगर (test_check_exists(cache, SZ_128M + 768 * SZ_1K,
-			      SZ_128M - 768 * SZ_1K)) अणु
+	if (test_check_exists(cache, SZ_128M + 768 * SZ_1K,
+			      SZ_128M - 768 * SZ_1K)) {
 		test_err("bitmap region not removed from space cache");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
 	 * Confirm that the region [128Mb + 256Kb, 128Mb + 512Kb[, which is
-	 * covered by the biपंचांगap, isn't marked as मुक्त.
+	 * covered by the bitmap, isn't marked as free.
 	 */
-	अगर (test_check_exists(cache, SZ_128M + SZ_256K, SZ_256K)) अणु
+	if (test_check_exists(cache, SZ_128M + SZ_256K, SZ_256K)) {
 		test_err("invalid bitmap region marked as free");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
 	 * Confirm that the region [128Mb, 128Mb + 256Kb[, which is covered
-	 * by the biपंचांगap too, isn't marked as मुक्त either.
+	 * by the bitmap too, isn't marked as free either.
 	 */
-	अगर (test_check_exists(cache, SZ_128M, SZ_256K)) अणु
+	if (test_check_exists(cache, SZ_128M, SZ_256K)) {
 		test_err("invalid bitmap region marked as free");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * Now lets mark the region [128Mb, 128Mb + 512Kb[ as मुक्त too. But,
-	 * lets make sure the मुक्त space cache marks it as मुक्त in the biपंचांगap,
-	 * and करोesn't insert a new extent entry to represent this region.
+	 * Now lets mark the region [128Mb, 128Mb + 512Kb[ as free too. But,
+	 * lets make sure the free space cache marks it as free in the bitmap,
+	 * and doesn't insert a new extent entry to represent this region.
 	 */
-	ret = btrfs_add_मुक्त_space(cache, SZ_128M, SZ_512K);
-	अगर (ret) अणु
+	ret = btrfs_add_free_space(cache, SZ_128M, SZ_512K);
+	if (ret) {
 		test_err("error adding free space: %d", ret);
-		वापस ret;
-	पूर्ण
-	/* Confirm the region is marked as मुक्त. */
-	अगर (!test_check_exists(cache, SZ_128M, SZ_512K)) अणु
+		return ret;
+	}
+	/* Confirm the region is marked as free. */
+	if (!test_check_exists(cache, SZ_128M, SZ_512K)) {
 		test_err("bitmap region not marked as free");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	/*
-	 * Confirm that no new extent entries or biपंचांगap entries were added to
-	 * the cache after adding that मुक्त space region.
+	 * Confirm that no new extent entries or bitmap entries were added to
+	 * the cache after adding that free space region.
 	 */
-	ret = check_num_extents_and_biपंचांगaps(cache, 2, 1);
-	अगर (ret)
-		वापस ret;
+	ret = check_num_extents_and_bitmaps(cache, 2, 1);
+	if (ret)
+		return ret;
 
 	/*
-	 * Now lets add a small मुक्त space region to the right of the previous
-	 * one, which is not contiguous with it and is part of the biपंचांगap too.
-	 * The goal is to test that the biपंचांगap entry space stealing करोesn't
+	 * Now lets add a small free space region to the right of the previous
+	 * one, which is not contiguous with it and is part of the bitmap too.
+	 * The goal is to test that the bitmap entry space stealing doesn't
 	 * steal this space region.
 	 */
-	ret = btrfs_add_मुक्त_space(cache, SZ_128M + SZ_16M, sectorsize);
-	अगर (ret) अणु
+	ret = btrfs_add_free_space(cache, SZ_128M + SZ_16M, sectorsize);
+	if (ret) {
 		test_err("error adding free space: %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * Confirm that no new extent entries or biपंचांगap entries were added to
-	 * the cache after adding that मुक्त space region.
+	 * Confirm that no new extent entries or bitmap entries were added to
+	 * the cache after adding that free space region.
 	 */
-	ret = check_num_extents_and_biपंचांगaps(cache, 2, 1);
-	अगर (ret)
-		वापस ret;
+	ret = check_num_extents_and_bitmaps(cache, 2, 1);
+	if (ret)
+		return ret;
 
 	/*
-	 * Now mark the region [128Mb - 128Kb, 128Mb[ as मुक्त too. This will
+	 * Now mark the region [128Mb - 128Kb, 128Mb[ as free too. This will
 	 * expand the range covered by the existing extent entry that represents
-	 * the मुक्त space [128Mb - 256Kb, 128Mb - 128Kb[.
+	 * the free space [128Mb - 256Kb, 128Mb - 128Kb[.
 	 */
-	ret = btrfs_add_मुक्त_space(cache, SZ_128M - SZ_128K, SZ_128K);
-	अगर (ret) अणु
+	ret = btrfs_add_free_space(cache, SZ_128M - SZ_128K, SZ_128K);
+	if (ret) {
 		test_err("error adding free space: %d", ret);
-		वापस ret;
-	पूर्ण
-	/* Confirm the region is marked as मुक्त. */
-	अगर (!test_check_exists(cache, SZ_128M - SZ_128K, SZ_128K)) अणु
+		return ret;
+	}
+	/* Confirm the region is marked as free. */
+	if (!test_check_exists(cache, SZ_128M - SZ_128K, SZ_128K)) {
 		test_err("extent region not marked as free");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	/*
-	 * Confirm that our extent entry didn't stole all मुक्त space from the
-	 * biपंचांगap, because of the small 4Kb मुक्त space region.
+	 * Confirm that our extent entry didn't stole all free space from the
+	 * bitmap, because of the small 4Kb free space region.
 	 */
-	ret = check_num_extents_and_biपंचांगaps(cache, 2, 1);
-	अगर (ret)
-		वापस ret;
+	ret = check_num_extents_and_bitmaps(cache, 2, 1);
+	if (ret)
+		return ret;
 
 	/*
-	 * So now we have the range [128Mb - 256Kb, 128Mb + 768Kb[ as मुक्त
-	 * space. Without stealing biपंचांगap मुक्त space पूर्णांकo extent entry space,
-	 * we would have all this मुक्त space represented by 2 entries in the
+	 * So now we have the range [128Mb - 256Kb, 128Mb + 768Kb[ as free
+	 * space. Without stealing bitmap free space into extent entry space,
+	 * we would have all this free space represented by 2 entries in the
 	 * cache:
 	 *
 	 * extent entry covering range: [128Mb - 256Kb, 128Mb[
-	 * biपंचांगap entry covering range: [128Mb, 128Mb + 768Kb[
+	 * bitmap entry covering range: [128Mb, 128Mb + 768Kb[
 	 *
-	 * Attempting to allocate the whole मुक्त space (1Mb) would fail, because
+	 * Attempting to allocate the whole free space (1Mb) would fail, because
 	 * we can't allocate from multiple entries.
-	 * With the biपंचांगap मुक्त space stealing, we get a single extent entry
-	 * that represents the 1Mb मुक्त space, and thereक्रमe we're able to
-	 * allocate the whole मुक्त space at once.
+	 * With the bitmap free space stealing, we get a single extent entry
+	 * that represents the 1Mb free space, and therefore we're able to
+	 * allocate the whole free space at once.
 	 */
-	अगर (!test_check_exists(cache, SZ_128M - SZ_256K, SZ_1M)) अणु
+	if (!test_check_exists(cache, SZ_128M - SZ_256K, SZ_1M)) {
 		test_err("expected region not marked as free");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	अगर (cache->मुक्त_space_ctl->मुक्त_space != (SZ_1M + sectorsize)) अणु
+	if (cache->free_space_ctl->free_space != (SZ_1M + sectorsize)) {
 		test_err("cache free space is not 1Mb + %u", sectorsize);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	offset = btrfs_find_space_क्रम_alloc(cache,
+	offset = btrfs_find_space_for_alloc(cache,
 					    0, SZ_1M, 0,
 					    &max_extent_size);
-	अगर (offset != (SZ_128M - SZ_256K)) अणु
+	if (offset != (SZ_128M - SZ_256K)) {
 		test_err(
 	"failed to allocate 1Mb from space cache, returned offset is: %llu",
 			 offset);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * All that reमुख्यs is a sectorsize मुक्त space region in a biपंचांगap.
+	 * All that remains is a sectorsize free space region in a bitmap.
 	 * Confirm.
 	 */
-	ret = check_num_extents_and_biपंचांगaps(cache, 1, 1);
-	अगर (ret)
-		वापस ret;
+	ret = check_num_extents_and_bitmaps(cache, 1, 1);
+	if (ret)
+		return ret;
 
-	अगर (cache->मुक्त_space_ctl->मुक्त_space != sectorsize) अणु
+	if (cache->free_space_ctl->free_space != sectorsize) {
 		test_err("cache free space is not %u", sectorsize);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	offset = btrfs_find_space_क्रम_alloc(cache,
+	offset = btrfs_find_space_for_alloc(cache,
 					    0, sectorsize, 0,
 					    &max_extent_size);
-	अगर (offset != (SZ_128M + SZ_16M)) अणु
+	if (offset != (SZ_128M + SZ_16M)) {
 		test_err("failed to allocate %u, returned offset : %llu",
 			 sectorsize, offset);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = check_cache_empty(cache);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	__btrfs_हटाओ_मुक्त_space_cache(cache->मुक्त_space_ctl);
+	__btrfs_remove_free_space_cache(cache->free_space_ctl);
 
 	/*
 	 * Now test a similar scenario, but where our extent entry is located
-	 * to the right of the biपंचांगap entry, so that we can check that stealing
-	 * space from a biपंचांगap to the front of an extent entry works.
+	 * to the right of the bitmap entry, so that we can check that stealing
+	 * space from a bitmap to the front of an extent entry works.
 	 */
 
 	/*
-	 * Extent entry covering मुक्त space range [128Mb + 128Kb, 128Mb + 256Kb[
+	 * Extent entry covering free space range [128Mb + 128Kb, 128Mb + 256Kb[
 	 */
-	ret = test_add_मुक्त_space_entry(cache, SZ_128M + SZ_128K, SZ_128K, 0);
-	अगर (ret) अणु
+	ret = test_add_free_space_entry(cache, SZ_128M + SZ_128K, SZ_128K, 0);
+	if (ret) {
 		test_err("couldn't add extent entry %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Biपंचांगap entry covering मुक्त space range [0, 128Mb - 512Kb[ */
-	ret = test_add_मुक्त_space_entry(cache, 0, SZ_128M - SZ_512K, 1);
-	अगर (ret) अणु
+	/* Bitmap entry covering free space range [0, 128Mb - 512Kb[ */
+	ret = test_add_free_space_entry(cache, 0, SZ_128M - SZ_512K, 1);
+	if (ret) {
 		test_err("couldn't add bitmap entry %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = check_num_extents_and_biपंचांगaps(cache, 2, 1);
-	अगर (ret)
-		वापस ret;
+	ret = check_num_extents_and_bitmaps(cache, 2, 1);
+	if (ret)
+		return ret;
 
 	/*
-	 * Now make only the last 256Kb of the biपंचांगap marked as मुक्त, so that
-	 * we end up with only the following ranges marked as मुक्त space:
+	 * Now make only the last 256Kb of the bitmap marked as free, so that
+	 * we end up with only the following ranges marked as free space:
 	 *
 	 * [128Mb + 128b, 128Mb + 256Kb[
 	 * [128Mb - 768Kb, 128Mb - 512Kb[
 	 */
-	ret = btrfs_हटाओ_मुक्त_space(cache, 0, SZ_128M - 768 * SZ_1K);
-	अगर (ret) अणु
+	ret = btrfs_remove_free_space(cache, 0, SZ_128M - 768 * SZ_1K);
+	if (ret) {
 		test_err("failed to free part of bitmap space %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Confirm that only those 2 ranges are marked as मुक्त. */
-	अगर (!test_check_exists(cache, SZ_128M + SZ_128K, SZ_128K)) अणु
+	/* Confirm that only those 2 ranges are marked as free. */
+	if (!test_check_exists(cache, SZ_128M + SZ_128K, SZ_128K)) {
 		test_err("free space range missing");
-		वापस -ENOENT;
-	पूर्ण
-	अगर (!test_check_exists(cache, SZ_128M - 768 * SZ_1K, SZ_256K)) अणु
+		return -ENOENT;
+	}
+	if (!test_check_exists(cache, SZ_128M - 768 * SZ_1K, SZ_256K)) {
 		test_err("free space range missing");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	/*
-	 * Confirm that the biपंचांगap range [0, 128Mb - 768Kb[ isn't marked
-	 * as मुक्त anymore.
+	 * Confirm that the bitmap range [0, 128Mb - 768Kb[ isn't marked
+	 * as free anymore.
 	 */
-	अगर (test_check_exists(cache, 0, SZ_128M - 768 * SZ_1K)) अणु
+	if (test_check_exists(cache, 0, SZ_128M - 768 * SZ_1K)) {
 		test_err("bitmap region not removed from space cache");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
 	 * Confirm that the region [128Mb - 512Kb, 128Mb[, which is
-	 * covered by the biपंचांगap, isn't marked as मुक्त.
+	 * covered by the bitmap, isn't marked as free.
 	 */
-	अगर (test_check_exists(cache, SZ_128M - SZ_512K, SZ_512K)) अणु
+	if (test_check_exists(cache, SZ_128M - SZ_512K, SZ_512K)) {
 		test_err("invalid bitmap region marked as free");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * Now lets mark the region [128Mb - 512Kb, 128Mb[ as मुक्त too. But,
-	 * lets make sure the मुक्त space cache marks it as मुक्त in the biपंचांगap,
-	 * and करोesn't insert a new extent entry to represent this region.
+	 * Now lets mark the region [128Mb - 512Kb, 128Mb[ as free too. But,
+	 * lets make sure the free space cache marks it as free in the bitmap,
+	 * and doesn't insert a new extent entry to represent this region.
 	 */
-	ret = btrfs_add_मुक्त_space(cache, SZ_128M - SZ_512K, SZ_512K);
-	अगर (ret) अणु
+	ret = btrfs_add_free_space(cache, SZ_128M - SZ_512K, SZ_512K);
+	if (ret) {
 		test_err("error adding free space: %d", ret);
-		वापस ret;
-	पूर्ण
-	/* Confirm the region is marked as मुक्त. */
-	अगर (!test_check_exists(cache, SZ_128M - SZ_512K, SZ_512K)) अणु
+		return ret;
+	}
+	/* Confirm the region is marked as free. */
+	if (!test_check_exists(cache, SZ_128M - SZ_512K, SZ_512K)) {
 		test_err("bitmap region not marked as free");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	/*
-	 * Confirm that no new extent entries or biपंचांगap entries were added to
-	 * the cache after adding that मुक्त space region.
+	 * Confirm that no new extent entries or bitmap entries were added to
+	 * the cache after adding that free space region.
 	 */
-	ret = check_num_extents_and_biपंचांगaps(cache, 2, 1);
-	अगर (ret)
-		वापस ret;
+	ret = check_num_extents_and_bitmaps(cache, 2, 1);
+	if (ret)
+		return ret;
 
 	/*
-	 * Now lets add a small मुक्त space region to the left of the previous
-	 * one, which is not contiguous with it and is part of the biपंचांगap too.
-	 * The goal is to test that the biपंचांगap entry space stealing करोesn't
+	 * Now lets add a small free space region to the left of the previous
+	 * one, which is not contiguous with it and is part of the bitmap too.
+	 * The goal is to test that the bitmap entry space stealing doesn't
 	 * steal this space region.
 	 */
-	ret = btrfs_add_मुक्त_space(cache, SZ_32M, 2 * sectorsize);
-	अगर (ret) अणु
+	ret = btrfs_add_free_space(cache, SZ_32M, 2 * sectorsize);
+	if (ret) {
 		test_err("error adding free space: %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * Now mark the region [128Mb, 128Mb + 128Kb[ as मुक्त too. This will
+	 * Now mark the region [128Mb, 128Mb + 128Kb[ as free too. This will
 	 * expand the range covered by the existing extent entry that represents
-	 * the मुक्त space [128Mb + 128Kb, 128Mb + 256Kb[.
+	 * the free space [128Mb + 128Kb, 128Mb + 256Kb[.
 	 */
-	ret = btrfs_add_मुक्त_space(cache, SZ_128M, SZ_128K);
-	अगर (ret) अणु
+	ret = btrfs_add_free_space(cache, SZ_128M, SZ_128K);
+	if (ret) {
 		test_err("error adding free space: %d", ret);
-		वापस ret;
-	पूर्ण
-	/* Confirm the region is marked as मुक्त. */
-	अगर (!test_check_exists(cache, SZ_128M, SZ_128K)) अणु
+		return ret;
+	}
+	/* Confirm the region is marked as free. */
+	if (!test_check_exists(cache, SZ_128M, SZ_128K)) {
 		test_err("extent region not marked as free");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	/*
-	 * Confirm that our extent entry didn't stole all मुक्त space from the
-	 * biपंचांगap, because of the small 2 * sectorsize मुक्त space region.
+	 * Confirm that our extent entry didn't stole all free space from the
+	 * bitmap, because of the small 2 * sectorsize free space region.
 	 */
-	ret = check_num_extents_and_biपंचांगaps(cache, 2, 1);
-	अगर (ret)
-		वापस ret;
+	ret = check_num_extents_and_bitmaps(cache, 2, 1);
+	if (ret)
+		return ret;
 
 	/*
-	 * So now we have the range [128Mb - 768Kb, 128Mb + 256Kb[ as मुक्त
-	 * space. Without stealing biपंचांगap मुक्त space पूर्णांकo extent entry space,
-	 * we would have all this मुक्त space represented by 2 entries in the
+	 * So now we have the range [128Mb - 768Kb, 128Mb + 256Kb[ as free
+	 * space. Without stealing bitmap free space into extent entry space,
+	 * we would have all this free space represented by 2 entries in the
 	 * cache:
 	 *
 	 * extent entry covering range: [128Mb, 128Mb + 256Kb[
-	 * biपंचांगap entry covering range: [128Mb - 768Kb, 128Mb[
+	 * bitmap entry covering range: [128Mb - 768Kb, 128Mb[
 	 *
-	 * Attempting to allocate the whole मुक्त space (1Mb) would fail, because
+	 * Attempting to allocate the whole free space (1Mb) would fail, because
 	 * we can't allocate from multiple entries.
-	 * With the biपंचांगap मुक्त space stealing, we get a single extent entry
-	 * that represents the 1Mb मुक्त space, and thereक्रमe we're able to
-	 * allocate the whole मुक्त space at once.
+	 * With the bitmap free space stealing, we get a single extent entry
+	 * that represents the 1Mb free space, and therefore we're able to
+	 * allocate the whole free space at once.
 	 */
-	अगर (!test_check_exists(cache, SZ_128M - 768 * SZ_1K, SZ_1M)) अणु
+	if (!test_check_exists(cache, SZ_128M - 768 * SZ_1K, SZ_1M)) {
 		test_err("expected region not marked as free");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	अगर (cache->मुक्त_space_ctl->मुक्त_space != (SZ_1M + 2 * sectorsize)) अणु
+	if (cache->free_space_ctl->free_space != (SZ_1M + 2 * sectorsize)) {
 		test_err("cache free space is not 1Mb + %u", 2 * sectorsize);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	offset = btrfs_find_space_क्रम_alloc(cache, 0, SZ_1M, 0,
+	offset = btrfs_find_space_for_alloc(cache, 0, SZ_1M, 0,
 					    &max_extent_size);
-	अगर (offset != (SZ_128M - 768 * SZ_1K)) अणु
+	if (offset != (SZ_128M - 768 * SZ_1K)) {
 		test_err(
 	"failed to allocate 1Mb from space cache, returned offset is: %llu",
 			 offset);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * All that reमुख्यs is 2 * sectorsize मुक्त space region
-	 * in a biपंचांगap. Confirm.
+	 * All that remains is 2 * sectorsize free space region
+	 * in a bitmap. Confirm.
 	 */
-	ret = check_num_extents_and_biपंचांगaps(cache, 1, 1);
-	अगर (ret)
-		वापस ret;
+	ret = check_num_extents_and_bitmaps(cache, 1, 1);
+	if (ret)
+		return ret;
 
-	अगर (cache->मुक्त_space_ctl->मुक्त_space != 2 * sectorsize) अणु
+	if (cache->free_space_ctl->free_space != 2 * sectorsize) {
 		test_err("cache free space is not %u", 2 * sectorsize);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	offset = btrfs_find_space_क्रम_alloc(cache,
+	offset = btrfs_find_space_for_alloc(cache,
 					    0, 2 * sectorsize, 0,
 					    &max_extent_size);
-	अगर (offset != SZ_32M) अणु
+	if (offset != SZ_32M) {
 		test_err("failed to allocate %u, offset: %llu",
 			 2 * sectorsize, offset);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = check_cache_empty(cache);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	cache->मुक्त_space_ctl->op = orig_मुक्त_space_ops;
-	__btrfs_हटाओ_मुक्त_space_cache(cache->मुक्त_space_ctl);
+	cache->free_space_ctl->op = orig_free_space_ops;
+	__btrfs_remove_free_space_cache(cache->free_space_ctl);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक btrfs_test_मुक्त_space_cache(u32 sectorsize, u32 nodesize)
-अणु
-	काष्ठा btrfs_fs_info *fs_info;
-	काष्ठा btrfs_block_group *cache;
-	काष्ठा btrfs_root *root = शून्य;
-	पूर्णांक ret = -ENOMEM;
+int btrfs_test_free_space_cache(u32 sectorsize, u32 nodesize)
+{
+	struct btrfs_fs_info *fs_info;
+	struct btrfs_block_group *cache;
+	struct btrfs_root *root = NULL;
+	int ret = -ENOMEM;
 
 	test_msg("running btrfs free space cache tests");
 	fs_info = btrfs_alloc_dummy_fs_info(nodesize, sectorsize);
-	अगर (!fs_info) अणु
+	if (!fs_info) {
 		test_std_err(TEST_ALLOC_FS_INFO);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/*
-	 * For ppc64 (with 64k page size), bytes per biपंचांगap might be
-	 * larger than 1G.  To make biपंचांगap test available in ppc64,
-	 * alloc dummy block group whose size cross biपंचांगaps.
+	 * For ppc64 (with 64k page size), bytes per bitmap might be
+	 * larger than 1G.  To make bitmap test available in ppc64,
+	 * alloc dummy block group whose size cross bitmaps.
 	 */
 	cache = btrfs_alloc_dummy_block_group(fs_info,
 				      BITS_PER_BITMAP * sectorsize + PAGE_SIZE);
-	अगर (!cache) अणु
+	if (!cache) {
 		test_std_err(TEST_ALLOC_BLOCK_GROUP);
-		btrfs_मुक्त_dummy_fs_info(fs_info);
-		वापस 0;
-	पूर्ण
+		btrfs_free_dummy_fs_info(fs_info);
+		return 0;
+	}
 
 	root = btrfs_alloc_dummy_root(fs_info);
-	अगर (IS_ERR(root)) अणु
+	if (IS_ERR(root)) {
 		test_std_err(TEST_ALLOC_ROOT);
 		ret = PTR_ERR(root);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	root->fs_info->extent_root = root;
 
 	ret = test_extents(cache);
-	अगर (ret)
-		जाओ out;
-	ret = test_biपंचांगaps(cache, sectorsize);
-	अगर (ret)
-		जाओ out;
-	ret = test_biपंचांगaps_and_extents(cache, sectorsize);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
+	ret = test_bitmaps(cache, sectorsize);
+	if (ret)
+		goto out;
+	ret = test_bitmaps_and_extents(cache, sectorsize);
+	if (ret)
+		goto out;
 
-	ret = test_steal_space_from_biपंचांगap_to_extent(cache, sectorsize);
+	ret = test_steal_space_from_bitmap_to_extent(cache, sectorsize);
 out:
-	btrfs_मुक्त_dummy_block_group(cache);
-	btrfs_मुक्त_dummy_root(root);
-	btrfs_मुक्त_dummy_fs_info(fs_info);
-	वापस ret;
-पूर्ण
+	btrfs_free_dummy_block_group(cache);
+	btrfs_free_dummy_root(root);
+	btrfs_free_dummy_fs_info(fs_info);
+	return ret;
+}

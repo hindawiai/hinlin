@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-1.0+
+// SPDX-License-Identifier: GPL-1.0+
 /*
  * n_tty.c --- implements the N_TTY line discipline.
  *
@@ -8,348 +7,348 @@
  * processing has changed so much that it's hardly recognizable,
  * anyway...)
  *
- * Note that the खोलो routine क्रम N_TTY is guaranteed never to वापस
+ * Note that the open routine for N_TTY is guaranteed never to return
  * an error.  This is because Linux will fall back to setting a line
- * to N_TTY अगर it can not चयन to any other line discipline.
+ * to N_TTY if it can not switch to any other line discipline.
  *
- * Written by Theoकरोre Ts'o, Copyright 1994.
+ * Written by Theodore Ts'o, Copyright 1994.
  *
  * This file also contains code originally written by Linus Torvalds,
  * Copyright 1991, 1992, 1993, and by Julian Cowley, Copyright 1994.
  *
- * Reduced memory usage क्रम older ARM प्रणालीs  - Russell King.
+ * Reduced memory usage for older ARM systems  - Russell King.
  *
  * 2000/01/20   Fixed SMP locking on put_tty_queue using bits of
- *		the patch by Andrew J. Kroll <ag784@मुक्तnet.buffalo.edu>
+ *		the patch by Andrew J. Kroll <ag784@freenet.buffalo.edu>
  *		who actually finally proved there really was a race.
  *
  * 2002/03/18   Implemented n_tty_wakeup to send SIGIO POLL_OUTs to
- *		रुकोing writing processes-Sapan Bhatia <sapan@corewars.org>.
- *		Also fixed a bug in BLOCKING mode where n_tty_ग_लिखो वापसs
+ *		waiting writing processes-Sapan Bhatia <sapan@corewars.org>.
+ *		Also fixed a bug in BLOCKING mode where n_tty_write returns
  *		EAGAIN
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/major.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/audit.h>
-#समावेश <linux/file.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/module.h>
-#समावेश <linux/ratelimit.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश "tty.h"
+#include <linux/types.h>
+#include <linux/major.h>
+#include <linux/errno.h>
+#include <linux/signal.h>
+#include <linux/fcntl.h>
+#include <linux/sched.h>
+#include <linux/interrupt.h>
+#include <linux/tty.h>
+#include <linux/timer.h>
+#include <linux/ctype.h>
+#include <linux/mm.h>
+#include <linux/string.h>
+#include <linux/slab.h>
+#include <linux/poll.h>
+#include <linux/bitops.h>
+#include <linux/audit.h>
+#include <linux/file.h>
+#include <linux/uaccess.h>
+#include <linux/module.h>
+#include <linux/ratelimit.h>
+#include <linux/vmalloc.h>
+#include "tty.h"
 
 /*
- * Until this number of अक्षरacters is queued in the xmit buffer, select will
- * वापस "we have room for writes".
+ * Until this number of characters is queued in the xmit buffer, select will
+ * return "we have room for writes".
  */
-#घोषणा WAKEUP_CHARS 256
+#define WAKEUP_CHARS 256
 
 /*
- * This defines the low- and high-watermarks क्रम throttling and
- * unthrottling the TTY driver.  These watermarks are used क्रम
- * controlling the space in the पढ़ो buffer.
+ * This defines the low- and high-watermarks for throttling and
+ * unthrottling the TTY driver.  These watermarks are used for
+ * controlling the space in the read buffer.
  */
-#घोषणा TTY_THRESHOLD_THROTTLE		128 /* now based on reमुख्यing room */
-#घोषणा TTY_THRESHOLD_UNTHROTTLE	128
+#define TTY_THRESHOLD_THROTTLE		128 /* now based on remaining room */
+#define TTY_THRESHOLD_UNTHROTTLE	128
 
 /*
  * Special byte codes used in the echo buffer to represent operations
- * or special handling of अक्षरacters.  Bytes in the echo buffer that
- * are not part of such special blocks are treated as normal अक्षरacter
+ * or special handling of characters.  Bytes in the echo buffer that
+ * are not part of such special blocks are treated as normal character
  * codes.
  */
-#घोषणा ECHO_OP_START 0xff
-#घोषणा ECHO_OP_MOVE_BACK_COL 0x80
-#घोषणा ECHO_OP_SET_CANON_COL 0x81
-#घोषणा ECHO_OP_ERASE_TAB 0x82
+#define ECHO_OP_START 0xff
+#define ECHO_OP_MOVE_BACK_COL 0x80
+#define ECHO_OP_SET_CANON_COL 0x81
+#define ECHO_OP_ERASE_TAB 0x82
 
-#घोषणा ECHO_COMMIT_WATERMARK	256
-#घोषणा ECHO_BLOCK		256
-#घोषणा ECHO_DISCARD_WATERMARK	N_TTY_BUF_SIZE - (ECHO_BLOCK + 32)
+#define ECHO_COMMIT_WATERMARK	256
+#define ECHO_BLOCK		256
+#define ECHO_DISCARD_WATERMARK	N_TTY_BUF_SIZE - (ECHO_BLOCK + 32)
 
 
-#अघोषित N_TTY_TRACE
-#अगर_घोषित N_TTY_TRACE
-# define n_tty_trace(f, args...)	trace_prपूर्णांकk(f, ##args)
-#अन्यथा
-# define n_tty_trace(f, args...)	no_prपूर्णांकk(f, ##args)
-#पूर्ण_अगर
+#undef N_TTY_TRACE
+#ifdef N_TTY_TRACE
+# define n_tty_trace(f, args...)	trace_printk(f, ##args)
+#else
+# define n_tty_trace(f, args...)	no_printk(f, ##args)
+#endif
 
-काष्ठा n_tty_data अणु
+struct n_tty_data {
 	/* producer-published */
-	माप_प्रकार पढ़ो_head;
-	माप_प्रकार commit_head;
-	माप_प्रकार canon_head;
-	माप_प्रकार echo_head;
-	माप_प्रकार echo_commit;
-	माप_प्रकार echo_mark;
-	DECLARE_BITMAP(अक्षर_map, 256);
+	size_t read_head;
+	size_t commit_head;
+	size_t canon_head;
+	size_t echo_head;
+	size_t echo_commit;
+	size_t echo_mark;
+	DECLARE_BITMAP(char_map, 256);
 
-	/* निजी to n_tty_receive_overrun (single-thपढ़ोed) */
-	अचिन्हित दीर्घ overrun_समय;
-	पूर्णांक num_overrun;
+	/* private to n_tty_receive_overrun (single-threaded) */
+	unsigned long overrun_time;
+	int num_overrun;
 
 	/* non-atomic */
 	bool no_room;
 
 	/* must hold exclusive termios_rwsem to reset these */
-	अचिन्हित अक्षर lnext:1, erasing:1, raw:1, real_raw:1, icanon:1;
-	अचिन्हित अक्षर push:1;
+	unsigned char lnext:1, erasing:1, raw:1, real_raw:1, icanon:1;
+	unsigned char push:1;
 
 	/* shared by producer and consumer */
-	अक्षर पढ़ो_buf[N_TTY_BUF_SIZE];
-	DECLARE_BITMAP(पढ़ो_flags, N_TTY_BUF_SIZE);
-	अचिन्हित अक्षर echo_buf[N_TTY_BUF_SIZE];
+	char read_buf[N_TTY_BUF_SIZE];
+	DECLARE_BITMAP(read_flags, N_TTY_BUF_SIZE);
+	unsigned char echo_buf[N_TTY_BUF_SIZE];
 
 	/* consumer-published */
-	माप_प्रकार पढ़ो_tail;
-	माप_प्रकार line_start;
+	size_t read_tail;
+	size_t line_start;
 
-	/* रक्षित by output lock */
-	अचिन्हित पूर्णांक column;
-	अचिन्हित पूर्णांक canon_column;
-	माप_प्रकार echo_tail;
+	/* protected by output lock */
+	unsigned int column;
+	unsigned int canon_column;
+	size_t echo_tail;
 
-	काष्ठा mutex atomic_पढ़ो_lock;
-	काष्ठा mutex output_lock;
-पूर्ण;
+	struct mutex atomic_read_lock;
+	struct mutex output_lock;
+};
 
-#घोषणा MASK(x) ((x) & (N_TTY_BUF_SIZE - 1))
+#define MASK(x) ((x) & (N_TTY_BUF_SIZE - 1))
 
-अटल अंतरभूत माप_प्रकार पढ़ो_cnt(काष्ठा n_tty_data *ldata)
-अणु
-	वापस ldata->पढ़ो_head - ldata->पढ़ो_tail;
-पूर्ण
+static inline size_t read_cnt(struct n_tty_data *ldata)
+{
+	return ldata->read_head - ldata->read_tail;
+}
 
-अटल अंतरभूत अचिन्हित अक्षर पढ़ो_buf(काष्ठा n_tty_data *ldata, माप_प्रकार i)
-अणु
-	वापस ldata->पढ़ो_buf[i & (N_TTY_BUF_SIZE - 1)];
-पूर्ण
+static inline unsigned char read_buf(struct n_tty_data *ldata, size_t i)
+{
+	return ldata->read_buf[i & (N_TTY_BUF_SIZE - 1)];
+}
 
-अटल अंतरभूत अचिन्हित अक्षर *पढ़ो_buf_addr(काष्ठा n_tty_data *ldata, माप_प्रकार i)
-अणु
-	वापस &ldata->पढ़ो_buf[i & (N_TTY_BUF_SIZE - 1)];
-पूर्ण
+static inline unsigned char *read_buf_addr(struct n_tty_data *ldata, size_t i)
+{
+	return &ldata->read_buf[i & (N_TTY_BUF_SIZE - 1)];
+}
 
-अटल अंतरभूत अचिन्हित अक्षर echo_buf(काष्ठा n_tty_data *ldata, माप_प्रकार i)
-अणु
+static inline unsigned char echo_buf(struct n_tty_data *ldata, size_t i)
+{
 	smp_rmb(); /* Matches smp_wmb() in add_echo_byte(). */
-	वापस ldata->echo_buf[i & (N_TTY_BUF_SIZE - 1)];
-पूर्ण
+	return ldata->echo_buf[i & (N_TTY_BUF_SIZE - 1)];
+}
 
-अटल अंतरभूत अचिन्हित अक्षर *echo_buf_addr(काष्ठा n_tty_data *ldata, माप_प्रकार i)
-अणु
-	वापस &ldata->echo_buf[i & (N_TTY_BUF_SIZE - 1)];
-पूर्ण
+static inline unsigned char *echo_buf_addr(struct n_tty_data *ldata, size_t i)
+{
+	return &ldata->echo_buf[i & (N_TTY_BUF_SIZE - 1)];
+}
 
 /* If we are not echoing the data, perhaps this is a secret so erase it */
-अटल व्योम zero_buffer(काष्ठा tty_काष्ठा *tty, u8 *buffer, पूर्णांक size)
-अणु
+static void zero_buffer(struct tty_struct *tty, u8 *buffer, int size)
+{
 	bool icanon = !!L_ICANON(tty);
 	bool no_echo = !L_ECHO(tty);
 
-	अगर (icanon && no_echo)
-		स_रखो(buffer, 0x00, size);
-पूर्ण
+	if (icanon && no_echo)
+		memset(buffer, 0x00, size);
+}
 
-अटल व्योम tty_copy(काष्ठा tty_काष्ठा *tty, व्योम *to, माप_प्रकार tail, माप_प्रकार n)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
-	माप_प्रकार size = N_TTY_BUF_SIZE - tail;
-	व्योम *from = पढ़ो_buf_addr(ldata, tail);
+static void tty_copy(struct tty_struct *tty, void *to, size_t tail, size_t n)
+{
+	struct n_tty_data *ldata = tty->disc_data;
+	size_t size = N_TTY_BUF_SIZE - tail;
+	void *from = read_buf_addr(ldata, tail);
 
-	अगर (n > size) अणु
+	if (n > size) {
 		tty_audit_add_data(tty, from, size);
-		स_नकल(to, from, size);
+		memcpy(to, from, size);
 		zero_buffer(tty, from, size);
 		to += size;
 		n -= size;
-		from = ldata->पढ़ो_buf;
-	पूर्ण
+		from = ldata->read_buf;
+	}
 
 	tty_audit_add_data(tty, from, n);
-	स_नकल(to, from, n);
+	memcpy(to, from, n);
 	zero_buffer(tty, from, n);
-पूर्ण
+}
 
 /**
- *	n_tty_kick_worker - start input worker (अगर required)
+ *	n_tty_kick_worker - start input worker (if required)
  *	@tty: terminal
  *
- *	Re-schedules the flip buffer work अगर it may have stopped
+ *	Re-schedules the flip buffer work if it may have stopped
  *
  *	Caller holds exclusive termios_rwsem
  *	   or
- *	n_tty_पढ़ो()/consumer path:
+ *	n_tty_read()/consumer path:
  *		holds non-exclusive termios_rwsem
  */
 
-अटल व्योम n_tty_kick_worker(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
+static void n_tty_kick_worker(struct tty_struct *tty)
+{
+	struct n_tty_data *ldata = tty->disc_data;
 
 	/* Did the input worker stop? Restart it */
-	अगर (unlikely(ldata->no_room)) अणु
+	if (unlikely(ldata->no_room)) {
 		ldata->no_room = 0;
 
-		WARN_RATELIMIT(tty->port->itty == शून्य,
+		WARN_RATELIMIT(tty->port->itty == NULL,
 				"scheduling with invalid itty\n");
-		/* see अगर ldisc has been समाप्तed - अगर so, this means that
+		/* see if ldisc has been killed - if so, this means that
 		 * even though the ldisc has been halted and ->buf.work
 		 * cancelled, ->buf.work is about to be rescheduled
 		 */
 		WARN_RATELIMIT(test_bit(TTY_LDISC_HALTED, &tty->flags),
 			       "scheduling buffer work for halted ldisc\n");
 		tty_buffer_restart_work(tty->port);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल sमाप_प्रकार अक्षरs_in_buffer(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
-	sमाप_प्रकार n = 0;
+static ssize_t chars_in_buffer(struct tty_struct *tty)
+{
+	struct n_tty_data *ldata = tty->disc_data;
+	ssize_t n = 0;
 
-	अगर (!ldata->icanon)
-		n = ldata->commit_head - ldata->पढ़ो_tail;
-	अन्यथा
-		n = ldata->canon_head - ldata->पढ़ो_tail;
-	वापस n;
-पूर्ण
+	if (!ldata->icanon)
+		n = ldata->commit_head - ldata->read_tail;
+	else
+		n = ldata->canon_head - ldata->read_tail;
+	return n;
+}
 
 /**
- *	n_tty_ग_लिखो_wakeup	-	asynchronous I/O notअगरier
+ *	n_tty_write_wakeup	-	asynchronous I/O notifier
  *	@tty: tty device
  *
- *	Required क्रम the ptys, serial driver etc. since processes
+ *	Required for the ptys, serial driver etc. since processes
  *	that attach themselves to the master and rely on ASYNC
  *	IO must be woken up
  */
 
-अटल व्योम n_tty_ग_लिखो_wakeup(काष्ठा tty_काष्ठा *tty)
-अणु
+static void n_tty_write_wakeup(struct tty_struct *tty)
+{
 	clear_bit(TTY_DO_WRITE_WAKEUP, &tty->flags);
-	समाप्त_fasync(&tty->fasync, SIGIO, POLL_OUT);
-पूर्ण
+	kill_fasync(&tty->fasync, SIGIO, POLL_OUT);
+}
 
-अटल व्योम n_tty_check_throttle(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
+static void n_tty_check_throttle(struct tty_struct *tty)
+{
+	struct n_tty_data *ldata = tty->disc_data;
 
 	/*
-	 * Check the reमुख्यing room क्रम the input canonicalization
-	 * mode.  We करोn't want to throttle the driver if we're in
-	 * canonical mode and करोn't have a newline yet!
+	 * Check the remaining room for the input canonicalization
+	 * mode.  We don't want to throttle the driver if we're in
+	 * canonical mode and don't have a newline yet!
 	 */
-	अगर (ldata->icanon && ldata->canon_head == ldata->पढ़ो_tail)
-		वापस;
+	if (ldata->icanon && ldata->canon_head == ldata->read_tail)
+		return;
 
-	जबतक (1) अणु
-		पूर्णांक throttled;
+	while (1) {
+		int throttled;
 		tty_set_flow_change(tty, TTY_THROTTLE_SAFE);
-		अगर (N_TTY_BUF_SIZE - पढ़ो_cnt(ldata) >= TTY_THRESHOLD_THROTTLE)
-			अवरोध;
+		if (N_TTY_BUF_SIZE - read_cnt(ldata) >= TTY_THRESHOLD_THROTTLE)
+			break;
 		throttled = tty_throttle_safe(tty);
-		अगर (!throttled)
-			अवरोध;
-	पूर्ण
+		if (!throttled)
+			break;
+	}
 	__tty_set_flow_change(tty, 0);
-पूर्ण
+}
 
-अटल व्योम n_tty_check_unthrottle(काष्ठा tty_काष्ठा *tty)
-अणु
-	अगर (tty->driver->type == TTY_DRIVER_TYPE_PTY) अणु
-		अगर (अक्षरs_in_buffer(tty) > TTY_THRESHOLD_UNTHROTTLE)
-			वापस;
+static void n_tty_check_unthrottle(struct tty_struct *tty)
+{
+	if (tty->driver->type == TTY_DRIVER_TYPE_PTY) {
+		if (chars_in_buffer(tty) > TTY_THRESHOLD_UNTHROTTLE)
+			return;
 		n_tty_kick_worker(tty);
 		tty_wakeup(tty->link);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* If there is enough space in the पढ़ो buffer now, let the
-	 * low-level driver know. We use अक्षरs_in_buffer() to
+	/* If there is enough space in the read buffer now, let the
+	 * low-level driver know. We use chars_in_buffer() to
 	 * check the buffer, as it now knows about canonical mode.
-	 * Otherwise, अगर the driver is throttled and the line is
-	 * दीर्घer than TTY_THRESHOLD_UNTHROTTLE in canonical mode,
-	 * we won't get any more अक्षरacters.
+	 * Otherwise, if the driver is throttled and the line is
+	 * longer than TTY_THRESHOLD_UNTHROTTLE in canonical mode,
+	 * we won't get any more characters.
 	 */
 
-	जबतक (1) अणु
-		पूर्णांक unthrottled;
+	while (1) {
+		int unthrottled;
 		tty_set_flow_change(tty, TTY_UNTHROTTLE_SAFE);
-		अगर (अक्षरs_in_buffer(tty) > TTY_THRESHOLD_UNTHROTTLE)
-			अवरोध;
+		if (chars_in_buffer(tty) > TTY_THRESHOLD_UNTHROTTLE)
+			break;
 		n_tty_kick_worker(tty);
 		unthrottled = tty_unthrottle_safe(tty);
-		अगर (!unthrottled)
-			अवरोध;
-	पूर्ण
+		if (!unthrottled)
+			break;
+	}
 	__tty_set_flow_change(tty, 0);
-पूर्ण
+}
 
 /**
- *	put_tty_queue		-	add अक्षरacter to tty
- *	@c: अक्षरacter
+ *	put_tty_queue		-	add character to tty
+ *	@c: character
  *	@ldata: n_tty data
  *
- *	Add a अक्षरacter to the tty पढ़ो_buf queue.
+ *	Add a character to the tty read_buf queue.
  *
  *	n_tty_receive_buf()/producer path:
  *		caller holds non-exclusive termios_rwsem
  */
 
-अटल अंतरभूत व्योम put_tty_queue(अचिन्हित अक्षर c, काष्ठा n_tty_data *ldata)
-अणु
-	*पढ़ो_buf_addr(ldata, ldata->पढ़ो_head) = c;
-	ldata->पढ़ो_head++;
-पूर्ण
+static inline void put_tty_queue(unsigned char c, struct n_tty_data *ldata)
+{
+	*read_buf_addr(ldata, ldata->read_head) = c;
+	ldata->read_head++;
+}
 
 /**
  *	reset_buffer_flags	-	reset buffer state
  *	@ldata: line disc data to reset
  *
- *	Reset the पढ़ो buffer counters and clear the flags.
- *	Called from n_tty_खोलो() and n_tty_flush_buffer().
+ *	Reset the read buffer counters and clear the flags.
+ *	Called from n_tty_open() and n_tty_flush_buffer().
  *
  *	Locking: caller holds exclusive termios_rwsem
  *		 (or locking is not required)
  */
 
-अटल व्योम reset_buffer_flags(काष्ठा n_tty_data *ldata)
-अणु
-	ldata->पढ़ो_head = ldata->canon_head = ldata->पढ़ो_tail = 0;
+static void reset_buffer_flags(struct n_tty_data *ldata)
+{
+	ldata->read_head = ldata->canon_head = ldata->read_tail = 0;
 	ldata->commit_head = 0;
 	ldata->line_start = 0;
 
 	ldata->erasing = 0;
-	biपंचांगap_zero(ldata->पढ़ो_flags, N_TTY_BUF_SIZE);
+	bitmap_zero(ldata->read_flags, N_TTY_BUF_SIZE);
 	ldata->push = 0;
-पूर्ण
+}
 
-अटल व्योम n_tty_packet_mode_flush(काष्ठा tty_काष्ठा *tty)
-अणु
-	अचिन्हित दीर्घ flags;
+static void n_tty_packet_mode_flush(struct tty_struct *tty)
+{
+	unsigned long flags;
 
-	अगर (tty->link->packet) अणु
+	if (tty->link->packet) {
 		spin_lock_irqsave(&tty->ctrl_lock, flags);
 		tty->ctrl_status |= TIOCPKT_FLUSHREAD;
 		spin_unlock_irqrestore(&tty->ctrl_lock, flags);
-		wake_up_पूर्णांकerruptible(&tty->link->पढ़ो_रुको);
-	पूर्ण
-पूर्ण
+		wake_up_interruptible(&tty->link->read_wait);
+	}
+}
 
 /**
  *	n_tty_flush_buffer	-	clean input queue
@@ -357,491 +356,491 @@
  *
  *	Flush the input buffer. Called when the tty layer wants the
  *	buffer flushed (eg at hangup) or when the N_TTY line discipline
- *	पूर्णांकernally has to clean the pending queue (क्रम example some संकेतs).
+ *	internally has to clean the pending queue (for example some signals).
  *
- *	Holds termios_rwsem to exclude producer/consumer जबतक
+ *	Holds termios_rwsem to exclude producer/consumer while
  *	buffer indices are reset.
  *
  *	Locking: ctrl_lock, exclusive termios_rwsem
  */
 
-अटल व्योम n_tty_flush_buffer(काष्ठा tty_काष्ठा *tty)
-अणु
-	करोwn_ग_लिखो(&tty->termios_rwsem);
+static void n_tty_flush_buffer(struct tty_struct *tty)
+{
+	down_write(&tty->termios_rwsem);
 	reset_buffer_flags(tty->disc_data);
 	n_tty_kick_worker(tty);
 
-	अगर (tty->link)
+	if (tty->link)
 		n_tty_packet_mode_flush(tty);
-	up_ग_लिखो(&tty->termios_rwsem);
-पूर्ण
+	up_write(&tty->termios_rwsem);
+}
 
 /**
  *	is_utf8_continuation	-	utf8 multibyte check
  *	@c: byte to check
  *
- *	Returns true अगर the utf8 अक्षरacter 'c' is a multibyte continuation
- *	अक्षरacter. We use this to correctly compute the on screen size
- *	of the अक्षरacter when prपूर्णांकing
+ *	Returns true if the utf8 character 'c' is a multibyte continuation
+ *	character. We use this to correctly compute the on screen size
+ *	of the character when printing
  */
 
-अटल अंतरभूत पूर्णांक is_utf8_continuation(अचिन्हित अक्षर c)
-अणु
-	वापस (c & 0xc0) == 0x80;
-पूर्ण
+static inline int is_utf8_continuation(unsigned char c)
+{
+	return (c & 0xc0) == 0x80;
+}
 
 /**
  *	is_continuation		-	multibyte check
  *	@c: byte to check
  *	@tty: terminal device
  *
- *	Returns true अगर the utf8 अक्षरacter 'c' is a multibyte continuation
- *	अक्षरacter and the terminal is in unicode mode.
+ *	Returns true if the utf8 character 'c' is a multibyte continuation
+ *	character and the terminal is in unicode mode.
  */
 
-अटल अंतरभूत पूर्णांक is_continuation(अचिन्हित अक्षर c, काष्ठा tty_काष्ठा *tty)
-अणु
-	वापस I_IUTF8(tty) && is_utf8_continuation(c);
-पूर्ण
+static inline int is_continuation(unsigned char c, struct tty_struct *tty)
+{
+	return I_IUTF8(tty) && is_utf8_continuation(c);
+}
 
 /**
- *	करो_output_अक्षर			-	output one अक्षरacter
- *	@c: अक्षरacter (or partial unicode symbol)
+ *	do_output_char			-	output one character
+ *	@c: character (or partial unicode symbol)
  *	@tty: terminal device
- *	@space: space available in tty driver ग_लिखो buffer
+ *	@space: space available in tty driver write buffer
  *
- *	This is a helper function that handles one output अक्षरacter
- *	(including special अक्षरacters like TAB, CR, LF, etc.),
- *	करोing OPOST processing and putting the results in the
- *	tty driver's ग_लिखो buffer.
+ *	This is a helper function that handles one output character
+ *	(including special characters like TAB, CR, LF, etc.),
+ *	doing OPOST processing and putting the results in the
+ *	tty driver's write buffer.
  *
  *	Note that Linux currently ignores TABDLY, CRDLY, VTDLY, FFDLY
  *	and NLDLY.  They simply aren't relevant in the world today.
  *	If you ever need them, add them here.
  *
- *	Returns the number of bytes of buffer space used or -1 अगर
+ *	Returns the number of bytes of buffer space used or -1 if
  *	no space left.
  *
  *	Locking: should be called under the output_lock to protect
  *		 the column state and space left in the buffer
  */
 
-अटल पूर्णांक करो_output_अक्षर(अचिन्हित अक्षर c, काष्ठा tty_काष्ठा *tty, पूर्णांक space)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
-	पूर्णांक	spaces;
+static int do_output_char(unsigned char c, struct tty_struct *tty, int space)
+{
+	struct n_tty_data *ldata = tty->disc_data;
+	int	spaces;
 
-	अगर (!space)
-		वापस -1;
+	if (!space)
+		return -1;
 
-	चयन (c) अणु
-	हाल '\n':
-		अगर (O_ONLRET(tty))
+	switch (c) {
+	case '\n':
+		if (O_ONLRET(tty))
 			ldata->column = 0;
-		अगर (O_ONLCR(tty)) अणु
-			अगर (space < 2)
-				वापस -1;
+		if (O_ONLCR(tty)) {
+			if (space < 2)
+				return -1;
 			ldata->canon_column = ldata->column = 0;
-			tty->ops->ग_लिखो(tty, "\r\n", 2);
-			वापस 2;
-		पूर्ण
+			tty->ops->write(tty, "\r\n", 2);
+			return 2;
+		}
 		ldata->canon_column = ldata->column;
-		अवरोध;
-	हाल '\r':
-		अगर (O_ONOCR(tty) && ldata->column == 0)
-			वापस 0;
-		अगर (O_OCRNL(tty)) अणु
+		break;
+	case '\r':
+		if (O_ONOCR(tty) && ldata->column == 0)
+			return 0;
+		if (O_OCRNL(tty)) {
 			c = '\n';
-			अगर (O_ONLRET(tty))
+			if (O_ONLRET(tty))
 				ldata->canon_column = ldata->column = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ldata->canon_column = ldata->column = 0;
-		अवरोध;
-	हाल '\t':
+		break;
+	case '\t':
 		spaces = 8 - (ldata->column & 7);
-		अगर (O_TABDLY(tty) == XTABS) अणु
-			अगर (space < spaces)
-				वापस -1;
+		if (O_TABDLY(tty) == XTABS) {
+			if (space < spaces)
+				return -1;
 			ldata->column += spaces;
-			tty->ops->ग_लिखो(tty, "        ", spaces);
-			वापस spaces;
-		पूर्ण
+			tty->ops->write(tty, "        ", spaces);
+			return spaces;
+		}
 		ldata->column += spaces;
-		अवरोध;
-	हाल '\b':
-		अगर (ldata->column > 0)
+		break;
+	case '\b':
+		if (ldata->column > 0)
 			ldata->column--;
-		अवरोध;
-	शेष:
-		अगर (!है_नियंत्रण(c)) अणु
-			अगर (O_OLCUC(tty))
-				c = बड़े(c);
-			अगर (!is_continuation(c, tty))
+		break;
+	default:
+		if (!iscntrl(c)) {
+			if (O_OLCUC(tty))
+				c = toupper(c);
+			if (!is_continuation(c, tty))
 				ldata->column++;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	}
 
-	tty_put_अक्षर(tty, c);
-	वापस 1;
-पूर्ण
+	tty_put_char(tty, c);
+	return 1;
+}
 
 /**
  *	process_output			-	output post processor
- *	@c: अक्षरacter (or partial unicode symbol)
+ *	@c: character (or partial unicode symbol)
  *	@tty: terminal device
  *
- *	Output one अक्षरacter with OPOST processing.
- *	Returns -1 when the output device is full and the अक्षरacter
+ *	Output one character with OPOST processing.
+ *	Returns -1 when the output device is full and the character
  *	must be retried.
  *
  *	Locking: output_lock to protect column state and space left
- *		 (also, this is called from n_tty_ग_लिखो under the
- *		  tty layer ग_लिखो lock)
+ *		 (also, this is called from n_tty_write under the
+ *		  tty layer write lock)
  */
 
-अटल पूर्णांक process_output(अचिन्हित अक्षर c, काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
-	पूर्णांक	space, retval;
+static int process_output(unsigned char c, struct tty_struct *tty)
+{
+	struct n_tty_data *ldata = tty->disc_data;
+	int	space, retval;
 
 	mutex_lock(&ldata->output_lock);
 
-	space = tty_ग_लिखो_room(tty);
-	retval = करो_output_अक्षर(c, tty, space);
+	space = tty_write_room(tty);
+	retval = do_output_char(c, tty, space);
 
 	mutex_unlock(&ldata->output_lock);
-	अगर (retval < 0)
-		वापस -1;
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (retval < 0)
+		return -1;
+	else
+		return 0;
+}
 
 /**
  *	process_output_block		-	block post processor
  *	@tty: terminal device
- *	@buf: अक्षरacter buffer
+ *	@buf: character buffer
  *	@nr: number of bytes to output
  *
- *	Output a block of अक्षरacters with OPOST processing.
- *	Returns the number of अक्षरacters output.
+ *	Output a block of characters with OPOST processing.
+ *	Returns the number of characters output.
  *
- *	This path is used to speed up block console ग_लिखोs, among other
+ *	This path is used to speed up block console writes, among other
  *	things when processing blocks of output data. It handles only
- *	the simple हालs normally found and helps to generate blocks of
- *	symbols क्रम the console driver and thus improve perक्रमmance.
+ *	the simple cases normally found and helps to generate blocks of
+ *	symbols for the console driver and thus improve performance.
  *
  *	Locking: output_lock to protect column state and space left
- *		 (also, this is called from n_tty_ग_लिखो under the
- *		  tty layer ग_लिखो lock)
+ *		 (also, this is called from n_tty_write under the
+ *		  tty layer write lock)
  */
 
-अटल sमाप_प्रकार process_output_block(काष्ठा tty_काष्ठा *tty,
-				    स्थिर अचिन्हित अक्षर *buf, अचिन्हित पूर्णांक nr)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
-	पूर्णांक	space;
-	पूर्णांक	i;
-	स्थिर अचिन्हित अक्षर *cp;
+static ssize_t process_output_block(struct tty_struct *tty,
+				    const unsigned char *buf, unsigned int nr)
+{
+	struct n_tty_data *ldata = tty->disc_data;
+	int	space;
+	int	i;
+	const unsigned char *cp;
 
 	mutex_lock(&ldata->output_lock);
 
-	space = tty_ग_लिखो_room(tty);
-	अगर (space <= 0) अणु
+	space = tty_write_room(tty);
+	if (space <= 0) {
 		mutex_unlock(&ldata->output_lock);
-		वापस space;
-	पूर्ण
-	अगर (nr > space)
+		return space;
+	}
+	if (nr > space)
 		nr = space;
 
-	क्रम (i = 0, cp = buf; i < nr; i++, cp++) अणु
-		अचिन्हित अक्षर c = *cp;
+	for (i = 0, cp = buf; i < nr; i++, cp++) {
+		unsigned char c = *cp;
 
-		चयन (c) अणु
-		हाल '\n':
-			अगर (O_ONLRET(tty))
+		switch (c) {
+		case '\n':
+			if (O_ONLRET(tty))
 				ldata->column = 0;
-			अगर (O_ONLCR(tty))
-				जाओ अवरोध_out;
+			if (O_ONLCR(tty))
+				goto break_out;
 			ldata->canon_column = ldata->column;
-			अवरोध;
-		हाल '\r':
-			अगर (O_ONOCR(tty) && ldata->column == 0)
-				जाओ अवरोध_out;
-			अगर (O_OCRNL(tty))
-				जाओ अवरोध_out;
+			break;
+		case '\r':
+			if (O_ONOCR(tty) && ldata->column == 0)
+				goto break_out;
+			if (O_OCRNL(tty))
+				goto break_out;
 			ldata->canon_column = ldata->column = 0;
-			अवरोध;
-		हाल '\t':
-			जाओ अवरोध_out;
-		हाल '\b':
-			अगर (ldata->column > 0)
+			break;
+		case '\t':
+			goto break_out;
+		case '\b':
+			if (ldata->column > 0)
 				ldata->column--;
-			अवरोध;
-		शेष:
-			अगर (!है_नियंत्रण(c)) अणु
-				अगर (O_OLCUC(tty))
-					जाओ अवरोध_out;
-				अगर (!is_continuation(c, tty))
+			break;
+		default:
+			if (!iscntrl(c)) {
+				if (O_OLCUC(tty))
+					goto break_out;
+				if (!is_continuation(c, tty))
 					ldata->column++;
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
-अवरोध_out:
-	i = tty->ops->ग_लिखो(tty, buf, i);
+			}
+			break;
+		}
+	}
+break_out:
+	i = tty->ops->write(tty, buf, i);
 
 	mutex_unlock(&ldata->output_lock);
-	वापस i;
-पूर्ण
+	return i;
+}
 
 /**
- *	process_echoes	-	ग_लिखो pending echo अक्षरacters
+ *	process_echoes	-	write pending echo characters
  *	@tty: terminal device
  *
  *	Write previously buffered echo (and other ldisc-generated)
- *	अक्षरacters to the tty.
+ *	characters to the tty.
  *
  *	Characters generated by the ldisc (including echoes) need to
- *	be buffered because the driver's ग_लिखो buffer can fill during
+ *	be buffered because the driver's write buffer can fill during
  *	heavy program output.  Echoing straight to the driver will
- *	often fail under these conditions, causing lost अक्षरacters and
- *	resulting mismatches of ldisc state inक्रमmation.
+ *	often fail under these conditions, causing lost characters and
+ *	resulting mismatches of ldisc state information.
  *
- *	Since the ldisc state must represent the अक्षरacters actually sent
- *	to the driver at the समय of the ग_लिखो, operations like certain
+ *	Since the ldisc state must represent the characters actually sent
+ *	to the driver at the time of the write, operations like certain
  *	changes in column state are also saved in the buffer and executed
  *	here.
  *
- *	A circular fअगरo buffer is used so that the most recent अक्षरacters
- *	are prioritized.  Also, when control अक्षरacters are echoed with a
+ *	A circular fifo buffer is used so that the most recent characters
+ *	are prioritized.  Also, when control characters are echoed with a
  *	prefixed "^", the pair is treated atomically and thus not separated.
  *
  *	Locking: callers must hold output_lock
  */
 
-अटल माप_प्रकार __process_echoes(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
-	पूर्णांक	space, old_space;
-	माप_प्रकार tail;
-	अचिन्हित अक्षर c;
+static size_t __process_echoes(struct tty_struct *tty)
+{
+	struct n_tty_data *ldata = tty->disc_data;
+	int	space, old_space;
+	size_t tail;
+	unsigned char c;
 
-	old_space = space = tty_ग_लिखो_room(tty);
+	old_space = space = tty_write_room(tty);
 
 	tail = ldata->echo_tail;
-	जबतक (MASK(ldata->echo_commit) != MASK(tail)) अणु
+	while (MASK(ldata->echo_commit) != MASK(tail)) {
 		c = echo_buf(ldata, tail);
-		अगर (c == ECHO_OP_START) अणु
-			अचिन्हित अक्षर op;
-			पूर्णांक no_space_left = 0;
+		if (c == ECHO_OP_START) {
+			unsigned char op;
+			int no_space_left = 0;
 
 			/*
 			 * Since add_echo_byte() is called without holding
 			 * output_lock, we might see only portion of multi-byte
 			 * operation.
 			 */
-			अगर (MASK(ldata->echo_commit) == MASK(tail + 1))
-				जाओ not_yet_stored;
+			if (MASK(ldata->echo_commit) == MASK(tail + 1))
+				goto not_yet_stored;
 			/*
 			 * If the buffer byte is the start of a multi-byte
 			 * operation, get the next byte, which is either the
-			 * op code or a control अक्षरacter value.
+			 * op code or a control character value.
 			 */
 			op = echo_buf(ldata, tail + 1);
 
-			चयन (op) अणु
-			हाल ECHO_OP_ERASE_TAB: अणु
-				अचिन्हित पूर्णांक num_अक्षरs, num_bs;
+			switch (op) {
+			case ECHO_OP_ERASE_TAB: {
+				unsigned int num_chars, num_bs;
 
-				अगर (MASK(ldata->echo_commit) == MASK(tail + 2))
-					जाओ not_yet_stored;
-				num_अक्षरs = echo_buf(ldata, tail + 2);
+				if (MASK(ldata->echo_commit) == MASK(tail + 2))
+					goto not_yet_stored;
+				num_chars = echo_buf(ldata, tail + 2);
 
 				/*
 				 * Determine how many columns to go back
 				 * in order to erase the tab.
 				 * This depends on the number of columns
-				 * used by other अक्षरacters within the tab
+				 * used by other characters within the tab
 				 * area.  If this (modulo 8) count is from
 				 * the start of input rather than from a
 				 * previous tab, we offset by canon column.
 				 * Otherwise, tab spacing is normal.
 				 */
-				अगर (!(num_अक्षरs & 0x80))
-					num_अक्षरs += ldata->canon_column;
-				num_bs = 8 - (num_अक्षरs & 7);
+				if (!(num_chars & 0x80))
+					num_chars += ldata->canon_column;
+				num_bs = 8 - (num_chars & 7);
 
-				अगर (num_bs > space) अणु
+				if (num_bs > space) {
 					no_space_left = 1;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 				space -= num_bs;
-				जबतक (num_bs--) अणु
-					tty_put_अक्षर(tty, '\b');
-					अगर (ldata->column > 0)
+				while (num_bs--) {
+					tty_put_char(tty, '\b');
+					if (ldata->column > 0)
 						ldata->column--;
-				पूर्ण
+				}
 				tail += 3;
-				अवरोध;
-			पूर्ण
-			हाल ECHO_OP_SET_CANON_COL:
+				break;
+			}
+			case ECHO_OP_SET_CANON_COL:
 				ldata->canon_column = ldata->column;
 				tail += 2;
-				अवरोध;
+				break;
 
-			हाल ECHO_OP_MOVE_BACK_COL:
-				अगर (ldata->column > 0)
+			case ECHO_OP_MOVE_BACK_COL:
+				if (ldata->column > 0)
 					ldata->column--;
 				tail += 2;
-				अवरोध;
+				break;
 
-			हाल ECHO_OP_START:
+			case ECHO_OP_START:
 				/* This is an escaped echo op start code */
-				अगर (!space) अणु
+				if (!space) {
 					no_space_left = 1;
-					अवरोध;
-				पूर्ण
-				tty_put_अक्षर(tty, ECHO_OP_START);
+					break;
+				}
+				tty_put_char(tty, ECHO_OP_START);
 				ldata->column++;
 				space--;
 				tail += 2;
-				अवरोध;
+				break;
 
-			शेष:
+			default:
 				/*
 				 * If the op is not a special byte code,
-				 * it is a ctrl अक्षर tagged to be echoed
+				 * it is a ctrl char tagged to be echoed
 				 * as "^X" (where X is the letter
-				 * representing the control अक्षर).
+				 * representing the control char).
 				 * Note that we must ensure there is
-				 * enough space क्रम the whole ctrl pair.
+				 * enough space for the whole ctrl pair.
 				 *
 				 */
-				अगर (space < 2) अणु
+				if (space < 2) {
 					no_space_left = 1;
-					अवरोध;
-				पूर्ण
-				tty_put_अक्षर(tty, '^');
-				tty_put_अक्षर(tty, op ^ 0100);
+					break;
+				}
+				tty_put_char(tty, '^');
+				tty_put_char(tty, op ^ 0100);
 				ldata->column += 2;
 				space -= 2;
 				tail += 2;
-			पूर्ण
+			}
 
-			अगर (no_space_left)
-				अवरोध;
-		पूर्ण अन्यथा अणु
-			अगर (O_OPOST(tty)) अणु
-				पूर्णांक retval = करो_output_अक्षर(c, tty, space);
-				अगर (retval < 0)
-					अवरोध;
+			if (no_space_left)
+				break;
+		} else {
+			if (O_OPOST(tty)) {
+				int retval = do_output_char(c, tty, space);
+				if (retval < 0)
+					break;
 				space -= retval;
-			पूर्ण अन्यथा अणु
-				अगर (!space)
-					अवरोध;
-				tty_put_अक्षर(tty, c);
+			} else {
+				if (!space)
+					break;
+				tty_put_char(tty, c);
 				space -= 1;
-			पूर्ण
+			}
 			tail += 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* If the echo buffer is nearly full (so that the possibility exists
-	 * of echo overrun beक्रमe the next commit), then discard enough
+	 * of echo overrun before the next commit), then discard enough
 	 * data at the tail to prevent a subsequent overrun */
-	जबतक (ldata->echo_commit > tail &&
-	       ldata->echo_commit - tail >= ECHO_DISCARD_WATERMARK) अणु
-		अगर (echo_buf(ldata, tail) == ECHO_OP_START) अणु
-			अगर (echo_buf(ldata, tail + 1) == ECHO_OP_ERASE_TAB)
+	while (ldata->echo_commit > tail &&
+	       ldata->echo_commit - tail >= ECHO_DISCARD_WATERMARK) {
+		if (echo_buf(ldata, tail) == ECHO_OP_START) {
+			if (echo_buf(ldata, tail + 1) == ECHO_OP_ERASE_TAB)
 				tail += 3;
-			अन्यथा
+			else
 				tail += 2;
-		पूर्ण अन्यथा
+		} else
 			tail++;
-	पूर्ण
+	}
 
  not_yet_stored:
 	ldata->echo_tail = tail;
-	वापस old_space - space;
-पूर्ण
+	return old_space - space;
+}
 
-अटल व्योम commit_echoes(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
-	माप_प्रकार nr, old, echoed;
-	माप_प्रकार head;
+static void commit_echoes(struct tty_struct *tty)
+{
+	struct n_tty_data *ldata = tty->disc_data;
+	size_t nr, old, echoed;
+	size_t head;
 
 	mutex_lock(&ldata->output_lock);
 	head = ldata->echo_head;
 	ldata->echo_mark = head;
 	old = ldata->echo_commit - ldata->echo_tail;
 
-	/* Process committed echoes अगर the accumulated # of bytes
-	 * is over the threshold (and try again each समय another
+	/* Process committed echoes if the accumulated # of bytes
+	 * is over the threshold (and try again each time another
 	 * block is accumulated) */
 	nr = head - ldata->echo_tail;
-	अगर (nr < ECHO_COMMIT_WATERMARK ||
-	    (nr % ECHO_BLOCK > old % ECHO_BLOCK)) अणु
+	if (nr < ECHO_COMMIT_WATERMARK ||
+	    (nr % ECHO_BLOCK > old % ECHO_BLOCK)) {
 		mutex_unlock(&ldata->output_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ldata->echo_commit = head;
 	echoed = __process_echoes(tty);
 	mutex_unlock(&ldata->output_lock);
 
-	अगर (echoed && tty->ops->flush_अक्षरs)
-		tty->ops->flush_अक्षरs(tty);
-पूर्ण
+	if (echoed && tty->ops->flush_chars)
+		tty->ops->flush_chars(tty);
+}
 
-अटल व्योम process_echoes(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
-	माप_प्रकार echoed;
+static void process_echoes(struct tty_struct *tty)
+{
+	struct n_tty_data *ldata = tty->disc_data;
+	size_t echoed;
 
-	अगर (ldata->echo_mark == ldata->echo_tail)
-		वापस;
+	if (ldata->echo_mark == ldata->echo_tail)
+		return;
 
 	mutex_lock(&ldata->output_lock);
 	ldata->echo_commit = ldata->echo_mark;
 	echoed = __process_echoes(tty);
 	mutex_unlock(&ldata->output_lock);
 
-	अगर (echoed && tty->ops->flush_अक्षरs)
-		tty->ops->flush_अक्षरs(tty);
-पूर्ण
+	if (echoed && tty->ops->flush_chars)
+		tty->ops->flush_chars(tty);
+}
 
 /* NB: echo_mark and echo_head should be equivalent here */
-अटल व्योम flush_echoes(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
+static void flush_echoes(struct tty_struct *tty)
+{
+	struct n_tty_data *ldata = tty->disc_data;
 
-	अगर ((!L_ECHO(tty) && !L_ECHONL(tty)) ||
+	if ((!L_ECHO(tty) && !L_ECHONL(tty)) ||
 	    ldata->echo_commit == ldata->echo_head)
-		वापस;
+		return;
 
 	mutex_lock(&ldata->output_lock);
 	ldata->echo_commit = ldata->echo_head;
 	__process_echoes(tty);
 	mutex_unlock(&ldata->output_lock);
-पूर्ण
+}
 
 /**
  *	add_echo_byte	-	add a byte to the echo buffer
  *	@c: unicode byte to echo
  *	@ldata: n_tty data
  *
- *	Add a अक्षरacter or operation byte to the echo buffer.
+ *	Add a character or operation byte to the echo buffer.
  */
 
-अटल अंतरभूत व्योम add_echo_byte(अचिन्हित अक्षर c, काष्ठा n_tty_data *ldata)
-अणु
+static inline void add_echo_byte(unsigned char c, struct n_tty_data *ldata)
+{
 	*echo_buf_addr(ldata, ldata->echo_head) = c;
 	smp_wmb(); /* Matches smp_rmb() in echo_buf(). */
 	ldata->echo_head++;
-पूर्ण
+}
 
 /**
  *	echo_move_back_col	-	add operation to move back a column
@@ -850,11 +849,11 @@
  *	Add an operation to the echo buffer to move back one column.
  */
 
-अटल व्योम echo_move_back_col(काष्ठा n_tty_data *ldata)
-अणु
+static void echo_move_back_col(struct n_tty_data *ldata)
+{
 	add_echo_byte(ECHO_OP_START, ldata);
 	add_echo_byte(ECHO_OP_MOVE_BACK_COL, ldata);
-पूर्ण
+}
 
 /**
  *	echo_set_canon_col	-	add operation to set the canon column
@@ -864,269 +863,269 @@
  *	to the current column.
  */
 
-अटल व्योम echo_set_canon_col(काष्ठा n_tty_data *ldata)
-अणु
+static void echo_set_canon_col(struct n_tty_data *ldata)
+{
 	add_echo_byte(ECHO_OP_START, ldata);
 	add_echo_byte(ECHO_OP_SET_CANON_COL, ldata);
-पूर्ण
+}
 
 /**
  *	echo_erase_tab	-	add operation to erase a tab
- *	@num_अक्षरs: number of अक्षरacter columns alपढ़ोy used
- *	@after_tab: true अगर num_अक्षरs starts after a previous tab
+ *	@num_chars: number of character columns already used
+ *	@after_tab: true if num_chars starts after a previous tab
  *	@ldata: n_tty data
  *
  *	Add an operation to the echo buffer to erase a tab.
  *
- *	Called by the eraser function, which knows how many अक्षरacter
+ *	Called by the eraser function, which knows how many character
  *	columns have been used since either a previous tab or the start
- *	of input.  This inक्रमmation will be used later, aदीर्घ with
- *	canon column (अगर applicable), to go back the correct number
+ *	of input.  This information will be used later, along with
+ *	canon column (if applicable), to go back the correct number
  *	of columns.
  */
 
-अटल व्योम echo_erase_tab(अचिन्हित पूर्णांक num_अक्षरs, पूर्णांक after_tab,
-			   काष्ठा n_tty_data *ldata)
-अणु
+static void echo_erase_tab(unsigned int num_chars, int after_tab,
+			   struct n_tty_data *ldata)
+{
 	add_echo_byte(ECHO_OP_START, ldata);
 	add_echo_byte(ECHO_OP_ERASE_TAB, ldata);
 
 	/* We only need to know this modulo 8 (tab spacing) */
-	num_अक्षरs &= 7;
+	num_chars &= 7;
 
-	/* Set the high bit as a flag अगर num_अक्षरs is after a previous tab */
-	अगर (after_tab)
-		num_अक्षरs |= 0x80;
+	/* Set the high bit as a flag if num_chars is after a previous tab */
+	if (after_tab)
+		num_chars |= 0x80;
 
-	add_echo_byte(num_अक्षरs, ldata);
-पूर्ण
+	add_echo_byte(num_chars, ldata);
+}
 
 /**
- *	echo_अक्षर_raw	-	echo a अक्षरacter raw
+ *	echo_char_raw	-	echo a character raw
  *	@c: unicode byte to echo
  *	@ldata: line disc data
  *
  *	Echo user input back onto the screen. This must be called only when
  *	L_ECHO(tty) is true. Called from the driver receive_buf path.
  *
- *	This variant करोes not treat control अक्षरacters specially.
+ *	This variant does not treat control characters specially.
  */
 
-अटल व्योम echo_अक्षर_raw(अचिन्हित अक्षर c, काष्ठा n_tty_data *ldata)
-अणु
-	अगर (c == ECHO_OP_START) अणु
+static void echo_char_raw(unsigned char c, struct n_tty_data *ldata)
+{
+	if (c == ECHO_OP_START) {
 		add_echo_byte(ECHO_OP_START, ldata);
 		add_echo_byte(ECHO_OP_START, ldata);
-	पूर्ण अन्यथा अणु
+	} else {
 		add_echo_byte(c, ldata);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- *	echo_अक्षर	-	echo a अक्षरacter
+ *	echo_char	-	echo a character
  *	@c: unicode byte to echo
  *	@tty: terminal device
  *
  *	Echo user input back onto the screen. This must be called only when
  *	L_ECHO(tty) is true. Called from the driver receive_buf path.
  *
- *	This variant tags control अक्षरacters to be echoed as "^X"
- *	(where X is the letter representing the control अक्षर).
+ *	This variant tags control characters to be echoed as "^X"
+ *	(where X is the letter representing the control char).
  */
 
-अटल व्योम echo_अक्षर(अचिन्हित अक्षर c, काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
+static void echo_char(unsigned char c, struct tty_struct *tty)
+{
+	struct n_tty_data *ldata = tty->disc_data;
 
-	अगर (c == ECHO_OP_START) अणु
+	if (c == ECHO_OP_START) {
 		add_echo_byte(ECHO_OP_START, ldata);
 		add_echo_byte(ECHO_OP_START, ldata);
-	पूर्ण अन्यथा अणु
-		अगर (L_ECHOCTL(tty) && है_नियंत्रण(c) && c != '\t')
+	} else {
+		if (L_ECHOCTL(tty) && iscntrl(c) && c != '\t')
 			add_echo_byte(ECHO_OP_START, ldata);
 		add_echo_byte(c, ldata);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  *	finish_erasing		-	complete erase
  *	@ldata: n_tty data
  */
 
-अटल अंतरभूत व्योम finish_erasing(काष्ठा n_tty_data *ldata)
-अणु
-	अगर (ldata->erasing) अणु
-		echo_अक्षर_raw('/', ldata);
+static inline void finish_erasing(struct n_tty_data *ldata)
+{
+	if (ldata->erasing) {
+		echo_char_raw('/', ldata);
 		ldata->erasing = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  *	eraser		-	handle erase function
- *	@c: अक्षरacter input
+ *	@c: character input
  *	@tty: terminal device
  *
- *	Perक्रमm erase and necessary output when an erase अक्षरacter is
- *	present in the stream from the driver layer. Handles the complनिकासies
+ *	Perform erase and necessary output when an erase character is
+ *	present in the stream from the driver layer. Handles the complexities
  *	of UTF-8 multibyte symbols.
  *
  *	n_tty_receive_buf()/producer path:
  *		caller holds non-exclusive termios_rwsem
  */
 
-अटल व्योम eraser(अचिन्हित अक्षर c, काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
-	क्रमागत अणु ERASE, WERASE, KILL पूर्ण समाप्त_type;
-	माप_प्रकार head;
-	माप_प्रकार cnt;
-	पूर्णांक seen_alnums;
+static void eraser(unsigned char c, struct tty_struct *tty)
+{
+	struct n_tty_data *ldata = tty->disc_data;
+	enum { ERASE, WERASE, KILL } kill_type;
+	size_t head;
+	size_t cnt;
+	int seen_alnums;
 
-	अगर (ldata->पढ़ो_head == ldata->canon_head) अणु
-		/* process_output('\a', tty); */ /* what करो you think? */
-		वापस;
-	पूर्ण
-	अगर (c == ERASE_CHAR(tty))
-		समाप्त_type = ERASE;
-	अन्यथा अगर (c == WERASE_CHAR(tty))
-		समाप्त_type = WERASE;
-	अन्यथा अणु
-		अगर (!L_ECHO(tty)) अणु
-			ldata->पढ़ो_head = ldata->canon_head;
-			वापस;
-		पूर्ण
-		अगर (!L_ECHOK(tty) || !L_ECHOKE(tty) || !L_ECHOE(tty)) अणु
-			ldata->पढ़ो_head = ldata->canon_head;
+	if (ldata->read_head == ldata->canon_head) {
+		/* process_output('\a', tty); */ /* what do you think? */
+		return;
+	}
+	if (c == ERASE_CHAR(tty))
+		kill_type = ERASE;
+	else if (c == WERASE_CHAR(tty))
+		kill_type = WERASE;
+	else {
+		if (!L_ECHO(tty)) {
+			ldata->read_head = ldata->canon_head;
+			return;
+		}
+		if (!L_ECHOK(tty) || !L_ECHOKE(tty) || !L_ECHOE(tty)) {
+			ldata->read_head = ldata->canon_head;
 			finish_erasing(ldata);
-			echo_अक्षर(KILL_CHAR(tty), tty);
-			/* Add a newline अगर ECHOK is on and ECHOKE is off. */
-			अगर (L_ECHOK(tty))
-				echo_अक्षर_raw('\n', ldata);
-			वापस;
-		पूर्ण
-		समाप्त_type = KILL;
-	पूर्ण
+			echo_char(KILL_CHAR(tty), tty);
+			/* Add a newline if ECHOK is on and ECHOKE is off. */
+			if (L_ECHOK(tty))
+				echo_char_raw('\n', ldata);
+			return;
+		}
+		kill_type = KILL;
+	}
 
 	seen_alnums = 0;
-	जबतक (MASK(ldata->पढ़ो_head) != MASK(ldata->canon_head)) अणु
-		head = ldata->पढ़ो_head;
+	while (MASK(ldata->read_head) != MASK(ldata->canon_head)) {
+		head = ldata->read_head;
 
-		/* erase a single possibly multibyte अक्षरacter */
-		करो अणु
+		/* erase a single possibly multibyte character */
+		do {
 			head--;
-			c = पढ़ो_buf(ldata, head);
-		पूर्ण जबतक (is_continuation(c, tty) &&
+			c = read_buf(ldata, head);
+		} while (is_continuation(c, tty) &&
 			 MASK(head) != MASK(ldata->canon_head));
 
-		/* करो not partially erase */
-		अगर (is_continuation(c, tty))
-			अवरोध;
+		/* do not partially erase */
+		if (is_continuation(c, tty))
+			break;
 
-		अगर (समाप्त_type == WERASE) अणु
+		if (kill_type == WERASE) {
 			/* Equivalent to BSD's ALTWERASE. */
-			अगर (है_अक्षर_अंक(c) || c == '_')
+			if (isalnum(c) || c == '_')
 				seen_alnums++;
-			अन्यथा अगर (seen_alnums)
-				अवरोध;
-		पूर्ण
-		cnt = ldata->पढ़ो_head - head;
-		ldata->पढ़ो_head = head;
-		अगर (L_ECHO(tty)) अणु
-			अगर (L_ECHOPRT(tty)) अणु
-				अगर (!ldata->erasing) अणु
-					echo_अक्षर_raw('\\', ldata);
+			else if (seen_alnums)
+				break;
+		}
+		cnt = ldata->read_head - head;
+		ldata->read_head = head;
+		if (L_ECHO(tty)) {
+			if (L_ECHOPRT(tty)) {
+				if (!ldata->erasing) {
+					echo_char_raw('\\', ldata);
 					ldata->erasing = 1;
-				पूर्ण
-				/* अगर cnt > 1, output a multi-byte अक्षरacter */
-				echo_अक्षर(c, tty);
-				जबतक (--cnt > 0) अणु
+				}
+				/* if cnt > 1, output a multi-byte character */
+				echo_char(c, tty);
+				while (--cnt > 0) {
 					head++;
-					echo_अक्षर_raw(पढ़ो_buf(ldata, head), ldata);
+					echo_char_raw(read_buf(ldata, head), ldata);
 					echo_move_back_col(ldata);
-				पूर्ण
-			पूर्ण अन्यथा अगर (समाप्त_type == ERASE && !L_ECHOE(tty)) अणु
-				echo_अक्षर(ERASE_CHAR(tty), tty);
-			पूर्ण अन्यथा अगर (c == '\t') अणु
-				अचिन्हित पूर्णांक num_अक्षरs = 0;
-				पूर्णांक after_tab = 0;
-				माप_प्रकार tail = ldata->पढ़ो_head;
+				}
+			} else if (kill_type == ERASE && !L_ECHOE(tty)) {
+				echo_char(ERASE_CHAR(tty), tty);
+			} else if (c == '\t') {
+				unsigned int num_chars = 0;
+				int after_tab = 0;
+				size_t tail = ldata->read_head;
 
 				/*
-				 * Count the columns used क्रम अक्षरacters
+				 * Count the columns used for characters
 				 * since the start of input or after a
 				 * previous tab.
 				 * This info is used to go back the correct
 				 * number of columns.
 				 */
-				जबतक (MASK(tail) != MASK(ldata->canon_head)) अणु
+				while (MASK(tail) != MASK(ldata->canon_head)) {
 					tail--;
-					c = पढ़ो_buf(ldata, tail);
-					अगर (c == '\t') अणु
+					c = read_buf(ldata, tail);
+					if (c == '\t') {
 						after_tab = 1;
-						अवरोध;
-					पूर्ण अन्यथा अगर (है_नियंत्रण(c)) अणु
-						अगर (L_ECHOCTL(tty))
-							num_अक्षरs += 2;
-					पूर्ण अन्यथा अगर (!is_continuation(c, tty)) अणु
-						num_अक्षरs++;
-					पूर्ण
-				पूर्ण
-				echo_erase_tab(num_अक्षरs, after_tab, ldata);
-			पूर्ण अन्यथा अणु
-				अगर (है_नियंत्रण(c) && L_ECHOCTL(tty)) अणु
-					echo_अक्षर_raw('\b', ldata);
-					echo_अक्षर_raw(' ', ldata);
-					echo_अक्षर_raw('\b', ldata);
-				पूर्ण
-				अगर (!है_नियंत्रण(c) || L_ECHOCTL(tty)) अणु
-					echo_अक्षर_raw('\b', ldata);
-					echo_अक्षर_raw(' ', ldata);
-					echo_अक्षर_raw('\b', ldata);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-		अगर (समाप्त_type == ERASE)
-			अवरोध;
-	पूर्ण
-	अगर (ldata->पढ़ो_head == ldata->canon_head && L_ECHO(tty))
+						break;
+					} else if (iscntrl(c)) {
+						if (L_ECHOCTL(tty))
+							num_chars += 2;
+					} else if (!is_continuation(c, tty)) {
+						num_chars++;
+					}
+				}
+				echo_erase_tab(num_chars, after_tab, ldata);
+			} else {
+				if (iscntrl(c) && L_ECHOCTL(tty)) {
+					echo_char_raw('\b', ldata);
+					echo_char_raw(' ', ldata);
+					echo_char_raw('\b', ldata);
+				}
+				if (!iscntrl(c) || L_ECHOCTL(tty)) {
+					echo_char_raw('\b', ldata);
+					echo_char_raw(' ', ldata);
+					echo_char_raw('\b', ldata);
+				}
+			}
+		}
+		if (kill_type == ERASE)
+			break;
+	}
+	if (ldata->read_head == ldata->canon_head && L_ECHO(tty))
 		finish_erasing(ldata);
-पूर्ण
+}
 
 /**
  *	isig		-	handle the ISIG optio
- *	@sig: संकेत
+ *	@sig: signal
  *	@tty: terminal
  *
- *	Called when a संकेत is being sent due to terminal input.
+ *	Called when a signal is being sent due to terminal input.
  *	Called from the driver receive_buf path so serialized.
  *
- *	Perक्रमms input and output flush अगर !NOFLSH. In this context, the echo
- *	buffer is 'output'. The संकेत is processed first to alert any current
- *	पढ़ोers or ग_लिखोrs to disजारी and निकास their i/o loops.
+ *	Performs input and output flush if !NOFLSH. In this context, the echo
+ *	buffer is 'output'. The signal is processed first to alert any current
+ *	readers or writers to discontinue and exit their i/o loops.
  *
  *	Locking: ctrl_lock
  */
 
-अटल व्योम __isig(पूर्णांक sig, काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा pid *tty_pgrp = tty_get_pgrp(tty);
-	अगर (tty_pgrp) अणु
-		समाप्त_pgrp(tty_pgrp, sig, 1);
+static void __isig(int sig, struct tty_struct *tty)
+{
+	struct pid *tty_pgrp = tty_get_pgrp(tty);
+	if (tty_pgrp) {
+		kill_pgrp(tty_pgrp, sig, 1);
 		put_pid(tty_pgrp);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम isig(पूर्णांक sig, काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
+static void isig(int sig, struct tty_struct *tty)
+{
+	struct n_tty_data *ldata = tty->disc_data;
 
-	अगर (L_NOFLSH(tty)) अणु
-		/* संकेत only */
+	if (L_NOFLSH(tty)) {
+		/* signal only */
 		__isig(sig, tty);
 
-	पूर्ण अन्यथा अणु /* संकेत and flush */
-		up_पढ़ो(&tty->termios_rwsem);
-		करोwn_ग_लिखो(&tty->termios_rwsem);
+	} else { /* signal and flush */
+		up_read(&tty->termios_rwsem);
+		down_write(&tty->termios_rwsem);
 
 		__isig(sig, tty);
 
@@ -1142,44 +1141,44 @@
 		/* clear input buffer */
 		reset_buffer_flags(tty->disc_data);
 
-		/* notअगरy pty master of flush */
-		अगर (tty->link)
+		/* notify pty master of flush */
+		if (tty->link)
 			n_tty_packet_mode_flush(tty);
 
-		up_ग_लिखो(&tty->termios_rwsem);
-		करोwn_पढ़ो(&tty->termios_rwsem);
-	पूर्ण
-पूर्ण
+		up_write(&tty->termios_rwsem);
+		down_read(&tty->termios_rwsem);
+	}
+}
 
 /**
- *	n_tty_receive_अवरोध	-	handle अवरोध
+ *	n_tty_receive_break	-	handle break
  *	@tty: terminal
  *
- *	An RS232 अवरोध event has been hit in the incoming bitstream. This
+ *	An RS232 break event has been hit in the incoming bitstream. This
  *	can cause a variety of events depending upon the termios settings.
  *
  *	n_tty_receive_buf()/producer path:
  *		caller holds non-exclusive termios_rwsem
  *
- *	Note: may get exclusive termios_rwsem अगर flushing input buffer
+ *	Note: may get exclusive termios_rwsem if flushing input buffer
  */
 
-अटल व्योम n_tty_receive_अवरोध(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
+static void n_tty_receive_break(struct tty_struct *tty)
+{
+	struct n_tty_data *ldata = tty->disc_data;
 
-	अगर (I_IGNBRK(tty))
-		वापस;
-	अगर (I_BRKINT(tty)) अणु
-		isig(संक_विघ्न, tty);
-		वापस;
-	पूर्ण
-	अगर (I_PARMRK(tty)) अणु
+	if (I_IGNBRK(tty))
+		return;
+	if (I_BRKINT(tty)) {
+		isig(SIGINT, tty);
+		return;
+	}
+	if (I_PARMRK(tty)) {
 		put_tty_queue('\377', ldata);
 		put_tty_queue('\0', ldata);
-	पूर्ण
+	}
 	put_tty_queue('\0', ldata);
-पूर्ण
+}
 
 /**
  *	n_tty_receive_overrun	-	handle overrun reporting
@@ -1187,594 +1186,594 @@
  *
  *	Data arrived faster than we could process it. While the tty
  *	driver has flagged this the bits that were missed are gone
- *	क्रमever.
+ *	forever.
  *
- *	Called from the receive_buf path so single thपढ़ोed. Does not
- *	need locking as num_overrun and overrun_समय are function
- *	निजी.
+ *	Called from the receive_buf path so single threaded. Does not
+ *	need locking as num_overrun and overrun_time are function
+ *	private.
  */
 
-अटल व्योम n_tty_receive_overrun(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
+static void n_tty_receive_overrun(struct tty_struct *tty)
+{
+	struct n_tty_data *ldata = tty->disc_data;
 
 	ldata->num_overrun++;
-	अगर (समय_after(jअगरfies, ldata->overrun_समय + HZ) ||
-			समय_after(ldata->overrun_समय, jअगरfies)) अणु
+	if (time_after(jiffies, ldata->overrun_time + HZ) ||
+			time_after(ldata->overrun_time, jiffies)) {
 		tty_warn(tty, "%d input overrun(s)\n", ldata->num_overrun);
-		ldata->overrun_समय = jअगरfies;
+		ldata->overrun_time = jiffies;
 		ldata->num_overrun = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- *	n_tty_receive_parity_error	-	error notअगरier
+ *	n_tty_receive_parity_error	-	error notifier
  *	@tty: terminal device
- *	@c: अक्षरacter
+ *	@c: character
  *
  *	Process a parity error and queue the right data to indicate
- *	the error हाल अगर necessary.
+ *	the error case if necessary.
  *
  *	n_tty_receive_buf()/producer path:
  *		caller holds non-exclusive termios_rwsem
  */
-अटल व्योम n_tty_receive_parity_error(काष्ठा tty_काष्ठा *tty, अचिन्हित अक्षर c)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
+static void n_tty_receive_parity_error(struct tty_struct *tty, unsigned char c)
+{
+	struct n_tty_data *ldata = tty->disc_data;
 
-	अगर (I_INPCK(tty)) अणु
-		अगर (I_IGNPAR(tty))
-			वापस;
-		अगर (I_PARMRK(tty)) अणु
+	if (I_INPCK(tty)) {
+		if (I_IGNPAR(tty))
+			return;
+		if (I_PARMRK(tty)) {
 			put_tty_queue('\377', ldata);
 			put_tty_queue('\0', ldata);
 			put_tty_queue(c, ldata);
-		पूर्ण अन्यथा
+		} else
 			put_tty_queue('\0', ldata);
-	पूर्ण अन्यथा
+	} else
 		put_tty_queue(c, ldata);
-पूर्ण
+}
 
-अटल व्योम
-n_tty_receive_संकेत_अक्षर(काष्ठा tty_काष्ठा *tty, पूर्णांक संकेत, अचिन्हित अक्षर c)
-अणु
-	isig(संकेत, tty);
-	अगर (I_IXON(tty))
+static void
+n_tty_receive_signal_char(struct tty_struct *tty, int signal, unsigned char c)
+{
+	isig(signal, tty);
+	if (I_IXON(tty))
 		start_tty(tty);
-	अगर (L_ECHO(tty)) अणु
-		echo_अक्षर(c, tty);
+	if (L_ECHO(tty)) {
+		echo_char(c, tty);
 		commit_echoes(tty);
-	पूर्ण अन्यथा
+	} else
 		process_echoes(tty);
-	वापस;
-पूर्ण
+	return;
+}
 
 /**
- *	n_tty_receive_अक्षर	-	perक्रमm processing
+ *	n_tty_receive_char	-	perform processing
  *	@tty: terminal device
- *	@c: अक्षरacter
+ *	@c: character
  *
- *	Process an inभागidual अक्षरacter of input received from the driver.
- *	This is serialized with respect to itself by the rules क्रम the
+ *	Process an individual character of input received from the driver.
+ *	This is serialized with respect to itself by the rules for the
  *	driver above.
  *
  *	n_tty_receive_buf()/producer path:
  *		caller holds non-exclusive termios_rwsem
- *		publishes canon_head अगर canonical mode is active
+ *		publishes canon_head if canonical mode is active
  *
- *	Returns 1 अगर LNEXT was received, अन्यथा वापसs 0
+ *	Returns 1 if LNEXT was received, else returns 0
  */
 
-अटल पूर्णांक
-n_tty_receive_अक्षर_special(काष्ठा tty_काष्ठा *tty, अचिन्हित अक्षर c)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
+static int
+n_tty_receive_char_special(struct tty_struct *tty, unsigned char c)
+{
+	struct n_tty_data *ldata = tty->disc_data;
 
-	अगर (I_IXON(tty)) अणु
-		अगर (c == START_CHAR(tty)) अणु
+	if (I_IXON(tty)) {
+		if (c == START_CHAR(tty)) {
 			start_tty(tty);
 			process_echoes(tty);
-			वापस 0;
-		पूर्ण
-		अगर (c == STOP_CHAR(tty)) अणु
+			return 0;
+		}
+		if (c == STOP_CHAR(tty)) {
 			stop_tty(tty);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	अगर (L_ISIG(tty)) अणु
-		अगर (c == INTR_CHAR(tty)) अणु
-			n_tty_receive_संकेत_अक्षर(tty, संक_विघ्न, c);
-			वापस 0;
-		पूर्ण अन्यथा अगर (c == QUIT_CHAR(tty)) अणु
-			n_tty_receive_संकेत_अक्षर(tty, SIGQUIT, c);
-			वापस 0;
-		पूर्ण अन्यथा अगर (c == SUSP_CHAR(tty)) अणु
-			n_tty_receive_संकेत_अक्षर(tty, SIGTSTP, c);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+	if (L_ISIG(tty)) {
+		if (c == INTR_CHAR(tty)) {
+			n_tty_receive_signal_char(tty, SIGINT, c);
+			return 0;
+		} else if (c == QUIT_CHAR(tty)) {
+			n_tty_receive_signal_char(tty, SIGQUIT, c);
+			return 0;
+		} else if (c == SUSP_CHAR(tty)) {
+			n_tty_receive_signal_char(tty, SIGTSTP, c);
+			return 0;
+		}
+	}
 
-	अगर (tty->stopped && !tty->flow_stopped && I_IXON(tty) && I_IXANY(tty)) अणु
+	if (tty->stopped && !tty->flow_stopped && I_IXON(tty) && I_IXANY(tty)) {
 		start_tty(tty);
 		process_echoes(tty);
-	पूर्ण
+	}
 
-	अगर (c == '\r') अणु
-		अगर (I_IGNCR(tty))
-			वापस 0;
-		अगर (I_ICRNL(tty))
+	if (c == '\r') {
+		if (I_IGNCR(tty))
+			return 0;
+		if (I_ICRNL(tty))
 			c = '\n';
-	पूर्ण अन्यथा अगर (c == '\n' && I_INLCR(tty))
+	} else if (c == '\n' && I_INLCR(tty))
 		c = '\r';
 
-	अगर (ldata->icanon) अणु
-		अगर (c == ERASE_CHAR(tty) || c == KILL_CHAR(tty) ||
-		    (c == WERASE_CHAR(tty) && L_IEXTEN(tty))) अणु
+	if (ldata->icanon) {
+		if (c == ERASE_CHAR(tty) || c == KILL_CHAR(tty) ||
+		    (c == WERASE_CHAR(tty) && L_IEXTEN(tty))) {
 			eraser(c, tty);
 			commit_echoes(tty);
-			वापस 0;
-		पूर्ण
-		अगर (c == LNEXT_CHAR(tty) && L_IEXTEN(tty)) अणु
+			return 0;
+		}
+		if (c == LNEXT_CHAR(tty) && L_IEXTEN(tty)) {
 			ldata->lnext = 1;
-			अगर (L_ECHO(tty)) अणु
+			if (L_ECHO(tty)) {
 				finish_erasing(ldata);
-				अगर (L_ECHOCTL(tty)) अणु
-					echo_अक्षर_raw('^', ldata);
-					echo_अक्षर_raw('\b', ldata);
+				if (L_ECHOCTL(tty)) {
+					echo_char_raw('^', ldata);
+					echo_char_raw('\b', ldata);
 					commit_echoes(tty);
-				पूर्ण
-			पूर्ण
-			वापस 1;
-		पूर्ण
-		अगर (c == REPRINT_CHAR(tty) && L_ECHO(tty) && L_IEXTEN(tty)) अणु
-			माप_प्रकार tail = ldata->canon_head;
+				}
+			}
+			return 1;
+		}
+		if (c == REPRINT_CHAR(tty) && L_ECHO(tty) && L_IEXTEN(tty)) {
+			size_t tail = ldata->canon_head;
 
 			finish_erasing(ldata);
-			echo_अक्षर(c, tty);
-			echo_अक्षर_raw('\n', ldata);
-			जबतक (MASK(tail) != MASK(ldata->पढ़ो_head)) अणु
-				echo_अक्षर(पढ़ो_buf(ldata, tail), tty);
+			echo_char(c, tty);
+			echo_char_raw('\n', ldata);
+			while (MASK(tail) != MASK(ldata->read_head)) {
+				echo_char(read_buf(ldata, tail), tty);
 				tail++;
-			पूर्ण
+			}
 			commit_echoes(tty);
-			वापस 0;
-		पूर्ण
-		अगर (c == '\n') अणु
-			अगर (L_ECHO(tty) || L_ECHONL(tty)) अणु
-				echo_अक्षर_raw('\n', ldata);
+			return 0;
+		}
+		if (c == '\n') {
+			if (L_ECHO(tty) || L_ECHONL(tty)) {
+				echo_char_raw('\n', ldata);
 				commit_echoes(tty);
-			पूर्ण
-			जाओ handle_newline;
-		पूर्ण
-		अगर (c == खातापूर्ण_CHAR(tty)) अणु
+			}
+			goto handle_newline;
+		}
+		if (c == EOF_CHAR(tty)) {
 			c = __DISABLED_CHAR;
-			जाओ handle_newline;
-		पूर्ण
-		अगर ((c == EOL_CHAR(tty)) ||
-		    (c == EOL2_CHAR(tty) && L_IEXTEN(tty))) अणु
+			goto handle_newline;
+		}
+		if ((c == EOL_CHAR(tty)) ||
+		    (c == EOL2_CHAR(tty) && L_IEXTEN(tty))) {
 			/*
 			 * XXX are EOL_CHAR and EOL2_CHAR echoed?!?
 			 */
-			अगर (L_ECHO(tty)) अणु
-				/* Record the column of first canon अक्षर. */
-				अगर (ldata->canon_head == ldata->पढ़ो_head)
+			if (L_ECHO(tty)) {
+				/* Record the column of first canon char. */
+				if (ldata->canon_head == ldata->read_head)
 					echo_set_canon_col(ldata);
-				echo_अक्षर(c, tty);
+				echo_char(c, tty);
 				commit_echoes(tty);
-			पूर्ण
+			}
 			/*
-			 * XXX करोes PARMRK करोubling happen क्रम
+			 * XXX does PARMRK doubling happen for
 			 * EOL_CHAR and EOL2_CHAR?
 			 */
-			अगर (c == (अचिन्हित अक्षर) '\377' && I_PARMRK(tty))
+			if (c == (unsigned char) '\377' && I_PARMRK(tty))
 				put_tty_queue(c, ldata);
 
 handle_newline:
-			set_bit(ldata->पढ़ो_head & (N_TTY_BUF_SIZE - 1), ldata->पढ़ो_flags);
+			set_bit(ldata->read_head & (N_TTY_BUF_SIZE - 1), ldata->read_flags);
 			put_tty_queue(c, ldata);
-			smp_store_release(&ldata->canon_head, ldata->पढ़ो_head);
-			समाप्त_fasync(&tty->fasync, SIGIO, POLL_IN);
-			wake_up_पूर्णांकerruptible_poll(&tty->पढ़ो_रुको, EPOLLIN);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			smp_store_release(&ldata->canon_head, ldata->read_head);
+			kill_fasync(&tty->fasync, SIGIO, POLL_IN);
+			wake_up_interruptible_poll(&tty->read_wait, EPOLLIN);
+			return 0;
+		}
+	}
 
-	अगर (L_ECHO(tty)) अणु
+	if (L_ECHO(tty)) {
 		finish_erasing(ldata);
-		अगर (c == '\n')
-			echo_अक्षर_raw('\n', ldata);
-		अन्यथा अणु
-			/* Record the column of first canon अक्षर. */
-			अगर (ldata->canon_head == ldata->पढ़ो_head)
+		if (c == '\n')
+			echo_char_raw('\n', ldata);
+		else {
+			/* Record the column of first canon char. */
+			if (ldata->canon_head == ldata->read_head)
 				echo_set_canon_col(ldata);
-			echo_अक्षर(c, tty);
-		पूर्ण
+			echo_char(c, tty);
+		}
 		commit_echoes(tty);
-	पूर्ण
+	}
 
-	/* PARMRK करोubling check */
-	अगर (c == (अचिन्हित अक्षर) '\377' && I_PARMRK(tty))
+	/* PARMRK doubling check */
+	if (c == (unsigned char) '\377' && I_PARMRK(tty))
 		put_tty_queue(c, ldata);
 
 	put_tty_queue(c, ldata);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम
-n_tty_receive_अक्षर_अंतरभूत(काष्ठा tty_काष्ठा *tty, अचिन्हित अक्षर c)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
+static inline void
+n_tty_receive_char_inline(struct tty_struct *tty, unsigned char c)
+{
+	struct n_tty_data *ldata = tty->disc_data;
 
-	अगर (tty->stopped && !tty->flow_stopped && I_IXON(tty) && I_IXANY(tty)) अणु
+	if (tty->stopped && !tty->flow_stopped && I_IXON(tty) && I_IXANY(tty)) {
 		start_tty(tty);
 		process_echoes(tty);
-	पूर्ण
-	अगर (L_ECHO(tty)) अणु
+	}
+	if (L_ECHO(tty)) {
 		finish_erasing(ldata);
-		/* Record the column of first canon अक्षर. */
-		अगर (ldata->canon_head == ldata->पढ़ो_head)
+		/* Record the column of first canon char. */
+		if (ldata->canon_head == ldata->read_head)
 			echo_set_canon_col(ldata);
-		echo_अक्षर(c, tty);
+		echo_char(c, tty);
 		commit_echoes(tty);
-	पूर्ण
-	/* PARMRK करोubling check */
-	अगर (c == (अचिन्हित अक्षर) '\377' && I_PARMRK(tty))
+	}
+	/* PARMRK doubling check */
+	if (c == (unsigned char) '\377' && I_PARMRK(tty))
 		put_tty_queue(c, ldata);
 	put_tty_queue(c, ldata);
-पूर्ण
+}
 
-अटल व्योम n_tty_receive_अक्षर(काष्ठा tty_काष्ठा *tty, अचिन्हित अक्षर c)
-अणु
-	n_tty_receive_अक्षर_अंतरभूत(tty, c);
-पूर्ण
+static void n_tty_receive_char(struct tty_struct *tty, unsigned char c)
+{
+	n_tty_receive_char_inline(tty, c);
+}
 
-अटल अंतरभूत व्योम
-n_tty_receive_अक्षर_fast(काष्ठा tty_काष्ठा *tty, अचिन्हित अक्षर c)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
+static inline void
+n_tty_receive_char_fast(struct tty_struct *tty, unsigned char c)
+{
+	struct n_tty_data *ldata = tty->disc_data;
 
-	अगर (tty->stopped && !tty->flow_stopped && I_IXON(tty) && I_IXANY(tty)) अणु
+	if (tty->stopped && !tty->flow_stopped && I_IXON(tty) && I_IXANY(tty)) {
 		start_tty(tty);
 		process_echoes(tty);
-	पूर्ण
-	अगर (L_ECHO(tty)) अणु
+	}
+	if (L_ECHO(tty)) {
 		finish_erasing(ldata);
-		/* Record the column of first canon अक्षर. */
-		अगर (ldata->canon_head == ldata->पढ़ो_head)
+		/* Record the column of first canon char. */
+		if (ldata->canon_head == ldata->read_head)
 			echo_set_canon_col(ldata);
-		echo_अक्षर(c, tty);
+		echo_char(c, tty);
 		commit_echoes(tty);
-	पूर्ण
+	}
 	put_tty_queue(c, ldata);
-पूर्ण
+}
 
-अटल व्योम n_tty_receive_अक्षर_closing(काष्ठा tty_काष्ठा *tty, अचिन्हित अक्षर c)
-अणु
-	अगर (I_ISTRIP(tty))
+static void n_tty_receive_char_closing(struct tty_struct *tty, unsigned char c)
+{
+	if (I_ISTRIP(tty))
 		c &= 0x7f;
-	अगर (I_IUCLC(tty) && L_IEXTEN(tty))
-		c = छोटे(c);
+	if (I_IUCLC(tty) && L_IEXTEN(tty))
+		c = tolower(c);
 
-	अगर (I_IXON(tty)) अणु
-		अगर (c == STOP_CHAR(tty))
+	if (I_IXON(tty)) {
+		if (c == STOP_CHAR(tty))
 			stop_tty(tty);
-		अन्यथा अगर (c == START_CHAR(tty) ||
+		else if (c == START_CHAR(tty) ||
 			 (tty->stopped && !tty->flow_stopped && I_IXANY(tty) &&
 			  c != INTR_CHAR(tty) && c != QUIT_CHAR(tty) &&
-			  c != SUSP_CHAR(tty))) अणु
+			  c != SUSP_CHAR(tty))) {
 			start_tty(tty);
 			process_echoes(tty);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम
-n_tty_receive_अक्षर_flagged(काष्ठा tty_काष्ठा *tty, अचिन्हित अक्षर c, अक्षर flag)
-अणु
-	चयन (flag) अणु
-	हाल TTY_BREAK:
-		n_tty_receive_अवरोध(tty);
-		अवरोध;
-	हाल TTY_PARITY:
-	हाल TTY_FRAME:
+static void
+n_tty_receive_char_flagged(struct tty_struct *tty, unsigned char c, char flag)
+{
+	switch (flag) {
+	case TTY_BREAK:
+		n_tty_receive_break(tty);
+		break;
+	case TTY_PARITY:
+	case TTY_FRAME:
 		n_tty_receive_parity_error(tty, c);
-		अवरोध;
-	हाल TTY_OVERRUN:
+		break;
+	case TTY_OVERRUN:
 		n_tty_receive_overrun(tty);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		tty_err(tty, "unknown flag %d\n", flag);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम
-n_tty_receive_अक्षर_lnext(काष्ठा tty_काष्ठा *tty, अचिन्हित अक्षर c, अक्षर flag)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
+static void
+n_tty_receive_char_lnext(struct tty_struct *tty, unsigned char c, char flag)
+{
+	struct n_tty_data *ldata = tty->disc_data;
 
 	ldata->lnext = 0;
-	अगर (likely(flag == TTY_NORMAL)) अणु
-		अगर (I_ISTRIP(tty))
+	if (likely(flag == TTY_NORMAL)) {
+		if (I_ISTRIP(tty))
 			c &= 0x7f;
-		अगर (I_IUCLC(tty) && L_IEXTEN(tty))
-			c = छोटे(c);
-		n_tty_receive_अक्षर(tty, c);
-	पूर्ण अन्यथा
-		n_tty_receive_अक्षर_flagged(tty, c, flag);
-पूर्ण
+		if (I_IUCLC(tty) && L_IEXTEN(tty))
+			c = tolower(c);
+		n_tty_receive_char(tty, c);
+	} else
+		n_tty_receive_char_flagged(tty, c, flag);
+}
 
-अटल व्योम
-n_tty_receive_buf_real_raw(काष्ठा tty_काष्ठा *tty, स्थिर अचिन्हित अक्षर *cp,
-			   अक्षर *fp, पूर्णांक count)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
-	माप_प्रकार n, head;
+static void
+n_tty_receive_buf_real_raw(struct tty_struct *tty, const unsigned char *cp,
+			   char *fp, int count)
+{
+	struct n_tty_data *ldata = tty->disc_data;
+	size_t n, head;
 
-	head = ldata->पढ़ो_head & (N_TTY_BUF_SIZE - 1);
-	n = min_t(माप_प्रकार, count, N_TTY_BUF_SIZE - head);
-	स_नकल(पढ़ो_buf_addr(ldata, head), cp, n);
-	ldata->पढ़ो_head += n;
+	head = ldata->read_head & (N_TTY_BUF_SIZE - 1);
+	n = min_t(size_t, count, N_TTY_BUF_SIZE - head);
+	memcpy(read_buf_addr(ldata, head), cp, n);
+	ldata->read_head += n;
 	cp += n;
 	count -= n;
 
-	head = ldata->पढ़ो_head & (N_TTY_BUF_SIZE - 1);
-	n = min_t(माप_प्रकार, count, N_TTY_BUF_SIZE - head);
-	स_नकल(पढ़ो_buf_addr(ldata, head), cp, n);
-	ldata->पढ़ो_head += n;
-पूर्ण
+	head = ldata->read_head & (N_TTY_BUF_SIZE - 1);
+	n = min_t(size_t, count, N_TTY_BUF_SIZE - head);
+	memcpy(read_buf_addr(ldata, head), cp, n);
+	ldata->read_head += n;
+}
 
-अटल व्योम
-n_tty_receive_buf_raw(काष्ठा tty_काष्ठा *tty, स्थिर अचिन्हित अक्षर *cp,
-		      अक्षर *fp, पूर्णांक count)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
-	अक्षर flag = TTY_NORMAL;
+static void
+n_tty_receive_buf_raw(struct tty_struct *tty, const unsigned char *cp,
+		      char *fp, int count)
+{
+	struct n_tty_data *ldata = tty->disc_data;
+	char flag = TTY_NORMAL;
 
-	जबतक (count--) अणु
-		अगर (fp)
+	while (count--) {
+		if (fp)
 			flag = *fp++;
-		अगर (likely(flag == TTY_NORMAL))
+		if (likely(flag == TTY_NORMAL))
 			put_tty_queue(*cp++, ldata);
-		अन्यथा
-			n_tty_receive_अक्षर_flagged(tty, *cp++, flag);
-	पूर्ण
-पूर्ण
+		else
+			n_tty_receive_char_flagged(tty, *cp++, flag);
+	}
+}
 
-अटल व्योम
-n_tty_receive_buf_closing(काष्ठा tty_काष्ठा *tty, स्थिर अचिन्हित अक्षर *cp,
-			  अक्षर *fp, पूर्णांक count)
-अणु
-	अक्षर flag = TTY_NORMAL;
+static void
+n_tty_receive_buf_closing(struct tty_struct *tty, const unsigned char *cp,
+			  char *fp, int count)
+{
+	char flag = TTY_NORMAL;
 
-	जबतक (count--) अणु
-		अगर (fp)
+	while (count--) {
+		if (fp)
 			flag = *fp++;
-		अगर (likely(flag == TTY_NORMAL))
-			n_tty_receive_अक्षर_closing(tty, *cp++);
-	पूर्ण
-पूर्ण
+		if (likely(flag == TTY_NORMAL))
+			n_tty_receive_char_closing(tty, *cp++);
+	}
+}
 
-अटल व्योम
-n_tty_receive_buf_standard(काष्ठा tty_काष्ठा *tty, स्थिर अचिन्हित अक्षर *cp,
-			  अक्षर *fp, पूर्णांक count)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
-	अक्षर flag = TTY_NORMAL;
+static void
+n_tty_receive_buf_standard(struct tty_struct *tty, const unsigned char *cp,
+			  char *fp, int count)
+{
+	struct n_tty_data *ldata = tty->disc_data;
+	char flag = TTY_NORMAL;
 
-	जबतक (count--) अणु
-		अगर (fp)
+	while (count--) {
+		if (fp)
 			flag = *fp++;
-		अगर (likely(flag == TTY_NORMAL)) अणु
-			अचिन्हित अक्षर c = *cp++;
+		if (likely(flag == TTY_NORMAL)) {
+			unsigned char c = *cp++;
 
-			अगर (I_ISTRIP(tty))
+			if (I_ISTRIP(tty))
 				c &= 0x7f;
-			अगर (I_IUCLC(tty) && L_IEXTEN(tty))
-				c = छोटे(c);
-			अगर (L_EXTPROC(tty)) अणु
+			if (I_IUCLC(tty) && L_IEXTEN(tty))
+				c = tolower(c);
+			if (L_EXTPROC(tty)) {
 				put_tty_queue(c, ldata);
-				जारी;
-			पूर्ण
-			अगर (!test_bit(c, ldata->अक्षर_map))
-				n_tty_receive_अक्षर_अंतरभूत(tty, c);
-			अन्यथा अगर (n_tty_receive_अक्षर_special(tty, c) && count) अणु
-				अगर (fp)
+				continue;
+			}
+			if (!test_bit(c, ldata->char_map))
+				n_tty_receive_char_inline(tty, c);
+			else if (n_tty_receive_char_special(tty, c) && count) {
+				if (fp)
 					flag = *fp++;
-				n_tty_receive_अक्षर_lnext(tty, *cp++, flag);
+				n_tty_receive_char_lnext(tty, *cp++, flag);
 				count--;
-			पूर्ण
-		पूर्ण अन्यथा
-			n_tty_receive_अक्षर_flagged(tty, *cp++, flag);
-	पूर्ण
-पूर्ण
+			}
+		} else
+			n_tty_receive_char_flagged(tty, *cp++, flag);
+	}
+}
 
-अटल व्योम
-n_tty_receive_buf_fast(काष्ठा tty_काष्ठा *tty, स्थिर अचिन्हित अक्षर *cp,
-		       अक्षर *fp, पूर्णांक count)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
-	अक्षर flag = TTY_NORMAL;
+static void
+n_tty_receive_buf_fast(struct tty_struct *tty, const unsigned char *cp,
+		       char *fp, int count)
+{
+	struct n_tty_data *ldata = tty->disc_data;
+	char flag = TTY_NORMAL;
 
-	जबतक (count--) अणु
-		अगर (fp)
+	while (count--) {
+		if (fp)
 			flag = *fp++;
-		अगर (likely(flag == TTY_NORMAL)) अणु
-			अचिन्हित अक्षर c = *cp++;
+		if (likely(flag == TTY_NORMAL)) {
+			unsigned char c = *cp++;
 
-			अगर (!test_bit(c, ldata->अक्षर_map))
-				n_tty_receive_अक्षर_fast(tty, c);
-			अन्यथा अगर (n_tty_receive_अक्षर_special(tty, c) && count) अणु
-				अगर (fp)
+			if (!test_bit(c, ldata->char_map))
+				n_tty_receive_char_fast(tty, c);
+			else if (n_tty_receive_char_special(tty, c) && count) {
+				if (fp)
 					flag = *fp++;
-				n_tty_receive_अक्षर_lnext(tty, *cp++, flag);
+				n_tty_receive_char_lnext(tty, *cp++, flag);
 				count--;
-			पूर्ण
-		पूर्ण अन्यथा
-			n_tty_receive_अक्षर_flagged(tty, *cp++, flag);
-	पूर्ण
-पूर्ण
+			}
+		} else
+			n_tty_receive_char_flagged(tty, *cp++, flag);
+	}
+}
 
-अटल व्योम __receive_buf(काष्ठा tty_काष्ठा *tty, स्थिर अचिन्हित अक्षर *cp,
-			  अक्षर *fp, पूर्णांक count)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
+static void __receive_buf(struct tty_struct *tty, const unsigned char *cp,
+			  char *fp, int count)
+{
+	struct n_tty_data *ldata = tty->disc_data;
 	bool preops = I_ISTRIP(tty) || (I_IUCLC(tty) && L_IEXTEN(tty));
 
-	अगर (ldata->real_raw)
+	if (ldata->real_raw)
 		n_tty_receive_buf_real_raw(tty, cp, fp, count);
-	अन्यथा अगर (ldata->raw || (L_EXTPROC(tty) && !preops))
+	else if (ldata->raw || (L_EXTPROC(tty) && !preops))
 		n_tty_receive_buf_raw(tty, cp, fp, count);
-	अन्यथा अगर (tty->closing && !L_EXTPROC(tty))
+	else if (tty->closing && !L_EXTPROC(tty))
 		n_tty_receive_buf_closing(tty, cp, fp, count);
-	अन्यथा अणु
-		अगर (ldata->lnext) अणु
-			अक्षर flag = TTY_NORMAL;
+	else {
+		if (ldata->lnext) {
+			char flag = TTY_NORMAL;
 
-			अगर (fp)
+			if (fp)
 				flag = *fp++;
-			n_tty_receive_अक्षर_lnext(tty, *cp++, flag);
+			n_tty_receive_char_lnext(tty, *cp++, flag);
 			count--;
-		पूर्ण
+		}
 
-		अगर (!preops && !I_PARMRK(tty))
+		if (!preops && !I_PARMRK(tty))
 			n_tty_receive_buf_fast(tty, cp, fp, count);
-		अन्यथा
+		else
 			n_tty_receive_buf_standard(tty, cp, fp, count);
 
 		flush_echoes(tty);
-		अगर (tty->ops->flush_अक्षरs)
-			tty->ops->flush_अक्षरs(tty);
-	पूर्ण
+		if (tty->ops->flush_chars)
+			tty->ops->flush_chars(tty);
+	}
 
-	अगर (ldata->icanon && !L_EXTPROC(tty))
-		वापस;
+	if (ldata->icanon && !L_EXTPROC(tty))
+		return;
 
-	/* publish पढ़ो_head to consumer */
-	smp_store_release(&ldata->commit_head, ldata->पढ़ो_head);
+	/* publish read_head to consumer */
+	smp_store_release(&ldata->commit_head, ldata->read_head);
 
-	अगर (पढ़ो_cnt(ldata)) अणु
-		समाप्त_fasync(&tty->fasync, SIGIO, POLL_IN);
-		wake_up_पूर्णांकerruptible_poll(&tty->पढ़ो_रुको, EPOLLIN);
-	पूर्ण
-पूर्ण
+	if (read_cnt(ldata)) {
+		kill_fasync(&tty->fasync, SIGIO, POLL_IN);
+		wake_up_interruptible_poll(&tty->read_wait, EPOLLIN);
+	}
+}
 
 /**
  *	n_tty_receive_buf_common	-	process input
  *	@tty: device to receive input
- *	@cp: input अक्षरs
- *	@fp: flags क्रम each अक्षर (अगर शून्य, all अक्षरs are TTY_NORMAL)
- *	@count: number of input अक्षरs in @cp
+ *	@cp: input chars
+ *	@fp: flags for each char (if NULL, all chars are TTY_NORMAL)
+ *	@count: number of input chars in @cp
  *	@flow: enable flow control
  *
- *	Called by the terminal driver when a block of अक्षरacters has
+ *	Called by the terminal driver when a block of characters has
  *	been received. This function must be called from soft contexts
- *	not from पूर्णांकerrupt context. The driver is responsible क्रम making
- *	calls one at a समय and in order (or using flush_to_ldisc)
+ *	not from interrupt context. The driver is responsible for making
+ *	calls one at a time and in order (or using flush_to_ldisc)
  *
- *	Returns the # of input अक्षरs from @cp which were processed.
+ *	Returns the # of input chars from @cp which were processed.
  *
- *	In canonical mode, the maximum line length is 4096 अक्षरs (including
- *	the line termination अक्षर); lines दीर्घer than 4096 अक्षरs are
- *	truncated. After 4095 अक्षरs, input data is still processed but
+ *	In canonical mode, the maximum line length is 4096 chars (including
+ *	the line termination char); lines longer than 4096 chars are
+ *	truncated. After 4095 chars, input data is still processed but
  *	not stored. Overflow processing ensures the tty can always
- *	receive more input until at least one line can be पढ़ो.
+ *	receive more input until at least one line can be read.
  *
- *	In non-canonical mode, the पढ़ो buffer will only accept 4095 अक्षरs;
- *	this provides the necessary space क्रम a newline अक्षर अगर the input
- *	mode is चयनed to canonical.
+ *	In non-canonical mode, the read buffer will only accept 4095 chars;
+ *	this provides the necessary space for a newline char if the input
+ *	mode is switched to canonical.
  *
- *	Note it is possible क्रम the पढ़ो buffer to _contain_ 4096 अक्षरs
- *	in non-canonical mode: the पढ़ो buffer could alपढ़ोy contain the
- *	maximum canon line of 4096 अक्षरs when the mode is चयनed to
+ *	Note it is possible for the read buffer to _contain_ 4096 chars
+ *	in non-canonical mode: the read buffer could already contain the
+ *	maximum canon line of 4096 chars when the mode is switched to
  *	non-canonical.
  *
  *	n_tty_receive_buf()/producer path:
  *		claims non-exclusive termios_rwsem
  *		publishes commit_head or canon_head
  */
-अटल पूर्णांक
-n_tty_receive_buf_common(काष्ठा tty_काष्ठा *tty, स्थिर अचिन्हित अक्षर *cp,
-			 अक्षर *fp, पूर्णांक count, पूर्णांक flow)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
-	पूर्णांक room, n, rcvd = 0, overflow;
+static int
+n_tty_receive_buf_common(struct tty_struct *tty, const unsigned char *cp,
+			 char *fp, int count, int flow)
+{
+	struct n_tty_data *ldata = tty->disc_data;
+	int room, n, rcvd = 0, overflow;
 
-	करोwn_पढ़ो(&tty->termios_rwsem);
+	down_read(&tty->termios_rwsem);
 
-	करो अणु
+	do {
 		/*
-		 * When PARMRK is set, each input अक्षर may take up to 3 अक्षरs
-		 * in the पढ़ो buf; reduce the buffer space avail by 3x
+		 * When PARMRK is set, each input char may take up to 3 chars
+		 * in the read buf; reduce the buffer space avail by 3x
 		 *
-		 * If we are करोing input canonicalization, and there are no
-		 * pending newlines, let अक्षरacters through without limit, so
-		 * that erase अक्षरacters will be handled.  Other excess
-		 * अक्षरacters will be beeped.
+		 * If we are doing input canonicalization, and there are no
+		 * pending newlines, let characters through without limit, so
+		 * that erase characters will be handled.  Other excess
+		 * characters will be beeped.
 		 *
-		 * paired with store in *_copy_from_पढ़ो_buf() -- guarantees
-		 * the consumer has loaded the data in पढ़ो_buf up to the new
-		 * पढ़ो_tail (so this producer will not overग_लिखो unपढ़ो data)
+		 * paired with store in *_copy_from_read_buf() -- guarantees
+		 * the consumer has loaded the data in read_buf up to the new
+		 * read_tail (so this producer will not overwrite unread data)
 		 */
-		माप_प्रकार tail = smp_load_acquire(&ldata->पढ़ो_tail);
+		size_t tail = smp_load_acquire(&ldata->read_tail);
 
-		room = N_TTY_BUF_SIZE - (ldata->पढ़ो_head - tail);
-		अगर (I_PARMRK(tty))
+		room = N_TTY_BUF_SIZE - (ldata->read_head - tail);
+		if (I_PARMRK(tty))
 			room = (room + 2) / 3;
 		room--;
-		अगर (room <= 0) अणु
+		if (room <= 0) {
 			overflow = ldata->icanon && ldata->canon_head == tail;
-			अगर (overflow && room < 0)
-				ldata->पढ़ो_head--;
+			if (overflow && room < 0)
+				ldata->read_head--;
 			room = overflow;
 			ldata->no_room = flow && !room;
-		पूर्ण अन्यथा
+		} else
 			overflow = 0;
 
 		n = min(count, room);
-		अगर (!n)
-			अवरोध;
+		if (!n)
+			break;
 
-		/* ignore parity errors अगर handling overflow */
-		अगर (!overflow || !fp || *fp != TTY_PARITY)
+		/* ignore parity errors if handling overflow */
+		if (!overflow || !fp || *fp != TTY_PARITY)
 			__receive_buf(tty, cp, fp, n);
 
 		cp += n;
-		अगर (fp)
+		if (fp)
 			fp += n;
 		count -= n;
 		rcvd += n;
-	पूर्ण जबतक (!test_bit(TTY_LDISC_CHANGING, &tty->flags));
+	} while (!test_bit(TTY_LDISC_CHANGING, &tty->flags));
 
 	tty->receive_room = room;
 
-	/* Unthrottle अगर handling overflow on pty */
-	अगर (tty->driver->type == TTY_DRIVER_TYPE_PTY) अणु
-		अगर (overflow) अणु
+	/* Unthrottle if handling overflow on pty */
+	if (tty->driver->type == TTY_DRIVER_TYPE_PTY) {
+		if (overflow) {
 			tty_set_flow_change(tty, TTY_UNTHROTTLE_SAFE);
 			tty_unthrottle_safe(tty);
 			__tty_set_flow_change(tty, 0);
-		पूर्ण
-	पूर्ण अन्यथा
+		}
+	} else
 		n_tty_check_throttle(tty);
 
-	up_पढ़ो(&tty->termios_rwsem);
+	up_read(&tty->termios_rwsem);
 
-	वापस rcvd;
-पूर्ण
+	return rcvd;
+}
 
-अटल व्योम n_tty_receive_buf(काष्ठा tty_काष्ठा *tty, स्थिर अचिन्हित अक्षर *cp,
-			      अक्षर *fp, पूर्णांक count)
-अणु
+static void n_tty_receive_buf(struct tty_struct *tty, const unsigned char *cp,
+			      char *fp, int count)
+{
 	n_tty_receive_buf_common(tty, cp, fp, count, 0);
-पूर्ण
+}
 
-अटल पूर्णांक n_tty_receive_buf2(काष्ठा tty_काष्ठा *tty, स्थिर अचिन्हित अक्षर *cp,
-			      अक्षर *fp, पूर्णांक count)
-अणु
-	वापस n_tty_receive_buf_common(tty, cp, fp, count, 1);
-पूर्ण
+static int n_tty_receive_buf2(struct tty_struct *tty, const unsigned char *cp,
+			      char *fp, int count)
+{
+	return n_tty_receive_buf_common(tty, cp, fp, count, 1);
+}
 
 /**
  *	n_tty_set_termios	-	termios data changed
@@ -1783,279 +1782,279 @@ n_tty_receive_buf_common(काष्ठा tty_काष्ठा *tty, स्�
  *
  *	Called by the tty layer when the user changes termios flags so
  *	that the line discipline can plan ahead. This function cannot sleep
- *	and is रक्षित from re-entry by the tty layer. The user is
+ *	and is protected from re-entry by the tty layer. The user is
  *	guaranteed that this function will not be re-entered or in progress
- *	when the ldisc is बंदd.
+ *	when the ldisc is closed.
  *
  *	Locking: Caller holds tty->termios_rwsem
  */
 
-अटल व्योम n_tty_set_termios(काष्ठा tty_काष्ठा *tty, काष्ठा ktermios *old)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
+static void n_tty_set_termios(struct tty_struct *tty, struct ktermios *old)
+{
+	struct n_tty_data *ldata = tty->disc_data;
 
-	अगर (!old || (old->c_lflag ^ tty->termios.c_lflag) & (ICANON | EXTPROC)) अणु
-		biपंचांगap_zero(ldata->पढ़ो_flags, N_TTY_BUF_SIZE);
-		ldata->line_start = ldata->पढ़ो_tail;
-		अगर (!L_ICANON(tty) || !पढ़ो_cnt(ldata)) अणु
-			ldata->canon_head = ldata->पढ़ो_tail;
+	if (!old || (old->c_lflag ^ tty->termios.c_lflag) & (ICANON | EXTPROC)) {
+		bitmap_zero(ldata->read_flags, N_TTY_BUF_SIZE);
+		ldata->line_start = ldata->read_tail;
+		if (!L_ICANON(tty) || !read_cnt(ldata)) {
+			ldata->canon_head = ldata->read_tail;
 			ldata->push = 0;
-		पूर्ण अन्यथा अणु
-			set_bit((ldata->पढ़ो_head - 1) & (N_TTY_BUF_SIZE - 1),
-				ldata->पढ़ो_flags);
-			ldata->canon_head = ldata->पढ़ो_head;
+		} else {
+			set_bit((ldata->read_head - 1) & (N_TTY_BUF_SIZE - 1),
+				ldata->read_flags);
+			ldata->canon_head = ldata->read_head;
 			ldata->push = 1;
-		पूर्ण
-		ldata->commit_head = ldata->पढ़ो_head;
+		}
+		ldata->commit_head = ldata->read_head;
 		ldata->erasing = 0;
 		ldata->lnext = 0;
-	पूर्ण
+	}
 
 	ldata->icanon = (L_ICANON(tty) != 0);
 
-	अगर (I_ISTRIP(tty) || I_IUCLC(tty) || I_IGNCR(tty) ||
+	if (I_ISTRIP(tty) || I_IUCLC(tty) || I_IGNCR(tty) ||
 	    I_ICRNL(tty) || I_INLCR(tty) || L_ICANON(tty) ||
 	    I_IXON(tty) || L_ISIG(tty) || L_ECHO(tty) ||
-	    I_PARMRK(tty)) अणु
-		biपंचांगap_zero(ldata->अक्षर_map, 256);
+	    I_PARMRK(tty)) {
+		bitmap_zero(ldata->char_map, 256);
 
-		अगर (I_IGNCR(tty) || I_ICRNL(tty))
-			set_bit('\r', ldata->अक्षर_map);
-		अगर (I_INLCR(tty))
-			set_bit('\n', ldata->अक्षर_map);
+		if (I_IGNCR(tty) || I_ICRNL(tty))
+			set_bit('\r', ldata->char_map);
+		if (I_INLCR(tty))
+			set_bit('\n', ldata->char_map);
 
-		अगर (L_ICANON(tty)) अणु
-			set_bit(ERASE_CHAR(tty), ldata->अक्षर_map);
-			set_bit(KILL_CHAR(tty), ldata->अक्षर_map);
-			set_bit(खातापूर्ण_CHAR(tty), ldata->अक्षर_map);
-			set_bit('\n', ldata->अक्षर_map);
-			set_bit(EOL_CHAR(tty), ldata->अक्षर_map);
-			अगर (L_IEXTEN(tty)) अणु
-				set_bit(WERASE_CHAR(tty), ldata->अक्षर_map);
-				set_bit(LNEXT_CHAR(tty), ldata->अक्षर_map);
-				set_bit(EOL2_CHAR(tty), ldata->अक्षर_map);
-				अगर (L_ECHO(tty))
+		if (L_ICANON(tty)) {
+			set_bit(ERASE_CHAR(tty), ldata->char_map);
+			set_bit(KILL_CHAR(tty), ldata->char_map);
+			set_bit(EOF_CHAR(tty), ldata->char_map);
+			set_bit('\n', ldata->char_map);
+			set_bit(EOL_CHAR(tty), ldata->char_map);
+			if (L_IEXTEN(tty)) {
+				set_bit(WERASE_CHAR(tty), ldata->char_map);
+				set_bit(LNEXT_CHAR(tty), ldata->char_map);
+				set_bit(EOL2_CHAR(tty), ldata->char_map);
+				if (L_ECHO(tty))
 					set_bit(REPRINT_CHAR(tty),
-						ldata->अक्षर_map);
-			पूर्ण
-		पूर्ण
-		अगर (I_IXON(tty)) अणु
-			set_bit(START_CHAR(tty), ldata->अक्षर_map);
-			set_bit(STOP_CHAR(tty), ldata->अक्षर_map);
-		पूर्ण
-		अगर (L_ISIG(tty)) अणु
-			set_bit(INTR_CHAR(tty), ldata->अक्षर_map);
-			set_bit(QUIT_CHAR(tty), ldata->अक्षर_map);
-			set_bit(SUSP_CHAR(tty), ldata->अक्षर_map);
-		पूर्ण
-		clear_bit(__DISABLED_CHAR, ldata->अक्षर_map);
+						ldata->char_map);
+			}
+		}
+		if (I_IXON(tty)) {
+			set_bit(START_CHAR(tty), ldata->char_map);
+			set_bit(STOP_CHAR(tty), ldata->char_map);
+		}
+		if (L_ISIG(tty)) {
+			set_bit(INTR_CHAR(tty), ldata->char_map);
+			set_bit(QUIT_CHAR(tty), ldata->char_map);
+			set_bit(SUSP_CHAR(tty), ldata->char_map);
+		}
+		clear_bit(__DISABLED_CHAR, ldata->char_map);
 		ldata->raw = 0;
 		ldata->real_raw = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		ldata->raw = 1;
-		अगर ((I_IGNBRK(tty) || (!I_BRKINT(tty) && !I_PARMRK(tty))) &&
+		if ((I_IGNBRK(tty) || (!I_BRKINT(tty) && !I_PARMRK(tty))) &&
 		    (I_IGNPAR(tty) || !I_INPCK(tty)) &&
 		    (tty->driver->flags & TTY_DRIVER_REAL_RAW))
 			ldata->real_raw = 1;
-		अन्यथा
+		else
 			ldata->real_raw = 0;
-	पूर्ण
+	}
 	/*
 	 * Fix tty hang when I_IXON(tty) is cleared, but the tty
-	 * been stopped by STOP_CHAR(tty) beक्रमe it.
+	 * been stopped by STOP_CHAR(tty) before it.
 	 */
-	अगर (!I_IXON(tty) && old && (old->c_अगरlag & IXON) && !tty->flow_stopped) अणु
+	if (!I_IXON(tty) && old && (old->c_iflag & IXON) && !tty->flow_stopped) {
 		start_tty(tty);
 		process_echoes(tty);
-	पूर्ण
+	}
 
-	/* The termios change make the tty पढ़ोy क्रम I/O */
-	wake_up_पूर्णांकerruptible(&tty->ग_लिखो_रुको);
-	wake_up_पूर्णांकerruptible(&tty->पढ़ो_रुको);
-पूर्ण
+	/* The termios change make the tty ready for I/O */
+	wake_up_interruptible(&tty->write_wait);
+	wake_up_interruptible(&tty->read_wait);
+}
 
 /**
- *	n_tty_बंद		-	बंद the ldisc क्रम this tty
+ *	n_tty_close		-	close the ldisc for this tty
  *	@tty: device
  *
  *	Called from the terminal layer when this line discipline is
- *	being shut करोwn, either because of a बंद or becsuse of a
- *	discipline change. The function will not be called जबतक other
+ *	being shut down, either because of a close or becsuse of a
+ *	discipline change. The function will not be called while other
  *	ldisc methods are in progress.
  */
 
-अटल व्योम n_tty_बंद(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
+static void n_tty_close(struct tty_struct *tty)
+{
+	struct n_tty_data *ldata = tty->disc_data;
 
-	अगर (tty->link)
+	if (tty->link)
 		n_tty_packet_mode_flush(tty);
 
-	करोwn_ग_लिखो(&tty->termios_rwsem);
-	vमुक्त(ldata);
-	tty->disc_data = शून्य;
-	up_ग_लिखो(&tty->termios_rwsem);
-पूर्ण
+	down_write(&tty->termios_rwsem);
+	vfree(ldata);
+	tty->disc_data = NULL;
+	up_write(&tty->termios_rwsem);
+}
 
 /**
- *	n_tty_खोलो		-	खोलो an ldisc
- *	@tty: terminal to खोलो
+ *	n_tty_open		-	open an ldisc
+ *	@tty: terminal to open
  *
  *	Called when this line discipline is being attached to the
  *	terminal device. Can sleep. Called serialized so that no
- *	other events will occur in parallel. No further खोलो will occur
- *	until a बंद.
+ *	other events will occur in parallel. No further open will occur
+ *	until a close.
  */
 
-अटल पूर्णांक n_tty_खोलो(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा n_tty_data *ldata;
+static int n_tty_open(struct tty_struct *tty)
+{
+	struct n_tty_data *ldata;
 
-	/* Currently a दो_स्मृति failure here can panic */
-	ldata = vzalloc(माप(*ldata));
-	अगर (!ldata)
-		वापस -ENOMEM;
+	/* Currently a malloc failure here can panic */
+	ldata = vzalloc(sizeof(*ldata));
+	if (!ldata)
+		return -ENOMEM;
 
-	ldata->overrun_समय = jअगरfies;
-	mutex_init(&ldata->atomic_पढ़ो_lock);
+	ldata->overrun_time = jiffies;
+	mutex_init(&ldata->atomic_read_lock);
 	mutex_init(&ldata->output_lock);
 
 	tty->disc_data = ldata;
 	tty->closing = 0;
 	/* indicate buffer work may resume */
 	clear_bit(TTY_LDISC_HALTED, &tty->flags);
-	n_tty_set_termios(tty, शून्य);
+	n_tty_set_termios(tty, NULL);
 	tty_unthrottle(tty);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक input_available_p(काष्ठा tty_काष्ठा *tty, पूर्णांक poll)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
-	पूर्णांक amt = poll && !TIME_CHAR(tty) && MIN_CHAR(tty) ? MIN_CHAR(tty) : 1;
+static inline int input_available_p(struct tty_struct *tty, int poll)
+{
+	struct n_tty_data *ldata = tty->disc_data;
+	int amt = poll && !TIME_CHAR(tty) && MIN_CHAR(tty) ? MIN_CHAR(tty) : 1;
 
-	अगर (ldata->icanon && !L_EXTPROC(tty))
-		वापस ldata->canon_head != ldata->पढ़ो_tail;
-	अन्यथा
-		वापस ldata->commit_head - ldata->पढ़ो_tail >= amt;
-पूर्ण
+	if (ldata->icanon && !L_EXTPROC(tty))
+		return ldata->canon_head != ldata->read_tail;
+	else
+		return ldata->commit_head - ldata->read_tail >= amt;
+}
 
 /**
- *	copy_from_पढ़ो_buf	-	copy पढ़ो data directly
+ *	copy_from_read_buf	-	copy read data directly
  *	@tty: terminal device
  *	@kbp: data
  *	@nr: size of data
  *
- *	Helper function to speed up n_tty_पढ़ो.  It is only called when
- *	ICANON is off; it copies अक्षरacters straight from the tty queue.
+ *	Helper function to speed up n_tty_read.  It is only called when
+ *	ICANON is off; it copies characters straight from the tty queue.
  *
- *	Called under the ldata->atomic_पढ़ो_lock sem
+ *	Called under the ldata->atomic_read_lock sem
  *
- *	Returns true अगर it successfully copied data, but there is still
+ *	Returns true if it successfully copied data, but there is still
  *	more data to be had.
  *
- *	n_tty_पढ़ो()/consumer path:
+ *	n_tty_read()/consumer path:
  *		caller holds non-exclusive termios_rwsem
- *		पढ़ो_tail published
+ *		read_tail published
  */
 
-अटल bool copy_from_पढ़ो_buf(काष्ठा tty_काष्ठा *tty,
-				      अचिन्हित अक्षर **kbp,
-				      माप_प्रकार *nr)
+static bool copy_from_read_buf(struct tty_struct *tty,
+				      unsigned char **kbp,
+				      size_t *nr)
 
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
-	माप_प्रकार n;
+{
+	struct n_tty_data *ldata = tty->disc_data;
+	size_t n;
 	bool is_eof;
-	माप_प्रकार head = smp_load_acquire(&ldata->commit_head);
-	माप_प्रकार tail = ldata->पढ़ो_tail & (N_TTY_BUF_SIZE - 1);
+	size_t head = smp_load_acquire(&ldata->commit_head);
+	size_t tail = ldata->read_tail & (N_TTY_BUF_SIZE - 1);
 
-	n = min(head - ldata->पढ़ो_tail, N_TTY_BUF_SIZE - tail);
+	n = min(head - ldata->read_tail, N_TTY_BUF_SIZE - tail);
 	n = min(*nr, n);
-	अगर (n) अणु
-		अचिन्हित अक्षर *from = पढ़ो_buf_addr(ldata, tail);
-		स_नकल(*kbp, from, n);
-		is_eof = n == 1 && *from == खातापूर्ण_CHAR(tty);
+	if (n) {
+		unsigned char *from = read_buf_addr(ldata, tail);
+		memcpy(*kbp, from, n);
+		is_eof = n == 1 && *from == EOF_CHAR(tty);
 		tty_audit_add_data(tty, from, n);
 		zero_buffer(tty, from, n);
-		smp_store_release(&ldata->पढ़ो_tail, ldata->पढ़ो_tail + n);
-		/* Turn single खातापूर्ण पूर्णांकo zero-length पढ़ो */
-		अगर (L_EXTPROC(tty) && ldata->icanon && is_eof &&
-		    (head == ldata->पढ़ो_tail))
-			वापस false;
+		smp_store_release(&ldata->read_tail, ldata->read_tail + n);
+		/* Turn single EOF into zero-length read */
+		if (L_EXTPROC(tty) && ldata->icanon && is_eof &&
+		    (head == ldata->read_tail))
+			return false;
 		*kbp += n;
 		*nr -= n;
 
 		/* If we have more to copy, let the caller know */
-		वापस head != ldata->पढ़ो_tail;
-	पूर्ण
-	वापस false;
-पूर्ण
+		return head != ldata->read_tail;
+	}
+	return false;
+}
 
 /**
- *	canon_copy_from_पढ़ो_buf	-	copy पढ़ो data in canonical mode
+ *	canon_copy_from_read_buf	-	copy read data in canonical mode
  *	@tty: terminal device
  *	@kbp: data
  *	@nr: size of data
  *
- *	Helper function क्रम n_tty_पढ़ो.  It is only called when ICANON is on;
+ *	Helper function for n_tty_read.  It is only called when ICANON is on;
  *	it copies one line of input up to and including the line-delimiting
- *	अक्षरacter पूर्णांकo the result buffer.
+ *	character into the result buffer.
  *
  *	NB: When termios is changed from non-canonical to canonical mode and
- *	the पढ़ो buffer contains data, n_tty_set_termios() simulates an खातापूर्ण
- *	push (as अगर C-d were input) _without_ the DISABLED_CHAR in the buffer.
- *	This causes data alपढ़ोy processed as input to be immediately available
+ *	the read buffer contains data, n_tty_set_termios() simulates an EOF
+ *	push (as if C-d were input) _without_ the DISABLED_CHAR in the buffer.
+ *	This causes data already processed as input to be immediately available
  *	as input although a newline has not been received.
  *
- *	Called under the atomic_पढ़ो_lock mutex
+ *	Called under the atomic_read_lock mutex
  *
- *	n_tty_पढ़ो()/consumer path:
+ *	n_tty_read()/consumer path:
  *		caller holds non-exclusive termios_rwsem
- *		पढ़ो_tail published
+ *		read_tail published
  */
 
-अटल bool canon_copy_from_पढ़ो_buf(काष्ठा tty_काष्ठा *tty,
-				     अचिन्हित अक्षर **kbp,
-				     माप_प्रकार *nr)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
-	माप_प्रकार n, size, more, c;
-	माप_प्रकार eol;
-	माप_प्रकार tail, canon_head;
-	पूर्णांक found = 0;
+static bool canon_copy_from_read_buf(struct tty_struct *tty,
+				     unsigned char **kbp,
+				     size_t *nr)
+{
+	struct n_tty_data *ldata = tty->disc_data;
+	size_t n, size, more, c;
+	size_t eol;
+	size_t tail, canon_head;
+	int found = 0;
 
-	/* N.B. aव्योम overrun अगर nr == 0 */
-	अगर (!*nr)
-		वापस false;
+	/* N.B. avoid overrun if nr == 0 */
+	if (!*nr)
+		return false;
 
 	canon_head = smp_load_acquire(&ldata->canon_head);
-	n = min(*nr + 1, canon_head - ldata->पढ़ो_tail);
+	n = min(*nr + 1, canon_head - ldata->read_tail);
 
-	tail = ldata->पढ़ो_tail & (N_TTY_BUF_SIZE - 1);
-	size = min_t(माप_प्रकार, tail + n, N_TTY_BUF_SIZE);
+	tail = ldata->read_tail & (N_TTY_BUF_SIZE - 1);
+	size = min_t(size_t, tail + n, N_TTY_BUF_SIZE);
 
 	n_tty_trace("%s: nr:%zu tail:%zu n:%zu size:%zu\n",
 		    __func__, *nr, tail, n, size);
 
-	eol = find_next_bit(ldata->पढ़ो_flags, size, tail);
+	eol = find_next_bit(ldata->read_flags, size, tail);
 	more = n - (size - tail);
-	अगर (eol == N_TTY_BUF_SIZE && more) अणु
+	if (eol == N_TTY_BUF_SIZE && more) {
 		/* scan wrapped without finding set bit */
-		eol = find_next_bit(ldata->पढ़ो_flags, more, 0);
+		eol = find_next_bit(ldata->read_flags, more, 0);
 		found = eol != more;
-	पूर्ण अन्यथा
+	} else
 		found = eol != size;
 
 	n = eol - tail;
-	अगर (n > N_TTY_BUF_SIZE)
+	if (n > N_TTY_BUF_SIZE)
 		n += N_TTY_BUF_SIZE;
 	c = n + found;
 
-	अगर (!found || पढ़ो_buf(ldata, eol) != __DISABLED_CHAR) अणु
+	if (!found || read_buf(ldata, eol) != __DISABLED_CHAR) {
 		c = min(*nr, c);
 		n = c;
-	पूर्ण
+	}
 
 	n_tty_trace("%s: eol:%zu found:%d n:%zu c:%zu tail:%zu more:%zu\n",
 		    __func__, eol, found, n, c, tail, more);
@@ -2064,251 +2063,251 @@ n_tty_receive_buf_common(काष्ठा tty_काष्ठा *tty, स्�
 	*kbp += n;
 	*nr -= n;
 
-	अगर (found)
-		clear_bit(eol, ldata->पढ़ो_flags);
-	smp_store_release(&ldata->पढ़ो_tail, ldata->पढ़ो_tail + c);
+	if (found)
+		clear_bit(eol, ldata->read_flags);
+	smp_store_release(&ldata->read_tail, ldata->read_tail + c);
 
-	अगर (found) अणु
-		अगर (!ldata->push)
-			ldata->line_start = ldata->पढ़ो_tail;
-		अन्यथा
+	if (found) {
+		if (!ldata->push)
+			ldata->line_start = ldata->read_tail;
+		else
 			ldata->push = 0;
 		tty_audit_push();
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	/* No EOL found - करो a continuation retry अगर there is more data */
-	वापस ldata->पढ़ो_tail != canon_head;
-पूर्ण
+	/* No EOL found - do a continuation retry if there is more data */
+	return ldata->read_tail != canon_head;
+}
 
 /**
  *	job_control		-	check job control
  *	@tty: tty
  *	@file: file handle
  *
- *	Perक्रमm job control management checks on this file/tty descriptor
- *	and अगर appropriate send any needed संकेतs and वापस a negative
- *	error code अगर action should be taken.
+ *	Perform job control management checks on this file/tty descriptor
+ *	and if appropriate send any needed signals and return a negative
+ *	error code if action should be taken.
  *
- *	Locking: redirected ग_लिखो test is safe
- *		 current->संकेत->tty check is safe
+ *	Locking: redirected write test is safe
+ *		 current->signal->tty check is safe
  *		 ctrl_lock to safely reference tty->pgrp
  */
 
-अटल पूर्णांक job_control(काष्ठा tty_काष्ठा *tty, काष्ठा file *file)
-अणु
-	/* Job control check -- must be करोne at start and after
+static int job_control(struct tty_struct *tty, struct file *file)
+{
+	/* Job control check -- must be done at start and after
 	   every sleep (POSIX.1 7.1.1.4). */
-	/* NOTE: not yet करोne after every sleep pending a thorough
+	/* NOTE: not yet done after every sleep pending a thorough
 	   check of the logic of this change. -- jlc */
-	/* करोn't stop on /dev/console */
-	अगर (file->f_op->ग_लिखो_iter == redirected_tty_ग_लिखो)
-		वापस 0;
+	/* don't stop on /dev/console */
+	if (file->f_op->write_iter == redirected_tty_write)
+		return 0;
 
-	वापस __tty_check_change(tty, SIGTTIN);
-पूर्ण
+	return __tty_check_change(tty, SIGTTIN);
+}
 
 
 /**
- *	n_tty_पढ़ो		-	पढ़ो function क्रम tty
+ *	n_tty_read		-	read function for tty
  *	@tty: tty device
  *	@file: file object
- *	@buf: userspace buffer poपूर्णांकer
+ *	@buf: userspace buffer pointer
  *	@nr: size of I/O
  *
- *	Perक्रमm पढ़ोs क्रम the line discipline. We are guaranteed that the
- *	line discipline will not be बंदd under us but we may get multiple
- *	parallel पढ़ोers and must handle this ourselves. We may also get
+ *	Perform reads for the line discipline. We are guaranteed that the
+ *	line discipline will not be closed under us but we may get multiple
+ *	parallel readers and must handle this ourselves. We may also get
  *	a hangup. Always called in user context, may sleep.
  *
  *	This code must be sure never to sleep through a hangup.
  *
- *	n_tty_पढ़ो()/consumer path:
+ *	n_tty_read()/consumer path:
  *		claims non-exclusive termios_rwsem
- *		publishes पढ़ो_tail
+ *		publishes read_tail
  */
 
-अटल sमाप_प्रकार n_tty_पढ़ो(काष्ठा tty_काष्ठा *tty, काष्ठा file *file,
-			  अचिन्हित अक्षर *kbuf, माप_प्रकार nr,
-			  व्योम **cookie, अचिन्हित दीर्घ offset)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
-	अचिन्हित अक्षर *kb = kbuf;
-	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
-	पूर्णांक c;
-	पूर्णांक minimum, समय;
-	sमाप_प्रकार retval = 0;
-	दीर्घ समयout;
-	पूर्णांक packet;
-	माप_प्रकार tail;
+static ssize_t n_tty_read(struct tty_struct *tty, struct file *file,
+			  unsigned char *kbuf, size_t nr,
+			  void **cookie, unsigned long offset)
+{
+	struct n_tty_data *ldata = tty->disc_data;
+	unsigned char *kb = kbuf;
+	DEFINE_WAIT_FUNC(wait, woken_wake_function);
+	int c;
+	int minimum, time;
+	ssize_t retval = 0;
+	long timeout;
+	int packet;
+	size_t tail;
 
 	/*
-	 * Is this a continuation of a पढ़ो started earler?
+	 * Is this a continuation of a read started earler?
 	 *
-	 * If so, we still hold the atomic_पढ़ो_lock and the
-	 * termios_rwsem, and can just जारी to copy data.
+	 * If so, we still hold the atomic_read_lock and the
+	 * termios_rwsem, and can just continue to copy data.
 	 */
-	अगर (*cookie) अणु
-		अगर (ldata->icanon && !L_EXTPROC(tty)) अणु
-			अगर (canon_copy_from_पढ़ो_buf(tty, &kb, &nr))
-				वापस kb - kbuf;
-		पूर्ण अन्यथा अणु
-			अगर (copy_from_पढ़ो_buf(tty, &kb, &nr))
-				वापस kb - kbuf;
-		पूर्ण
+	if (*cookie) {
+		if (ldata->icanon && !L_EXTPROC(tty)) {
+			if (canon_copy_from_read_buf(tty, &kb, &nr))
+				return kb - kbuf;
+		} else {
+			if (copy_from_read_buf(tty, &kb, &nr))
+				return kb - kbuf;
+		}
 
 		/* No more data - release locks and stop retries */
 		n_tty_kick_worker(tty);
 		n_tty_check_unthrottle(tty);
-		up_पढ़ो(&tty->termios_rwsem);
-		mutex_unlock(&ldata->atomic_पढ़ो_lock);
-		*cookie = शून्य;
-		वापस kb - kbuf;
-	पूर्ण
+		up_read(&tty->termios_rwsem);
+		mutex_unlock(&ldata->atomic_read_lock);
+		*cookie = NULL;
+		return kb - kbuf;
+	}
 
 	c = job_control(tty, file);
-	अगर (c < 0)
-		वापस c;
+	if (c < 0)
+		return c;
 
 	/*
-	 *	Internal serialization of पढ़ोs.
+	 *	Internal serialization of reads.
 	 */
-	अगर (file->f_flags & O_NONBLOCK) अणु
-		अगर (!mutex_trylock(&ldata->atomic_पढ़ो_lock))
-			वापस -EAGAIN;
-	पूर्ण अन्यथा अणु
-		अगर (mutex_lock_पूर्णांकerruptible(&ldata->atomic_पढ़ो_lock))
-			वापस -ERESTARTSYS;
-	पूर्ण
+	if (file->f_flags & O_NONBLOCK) {
+		if (!mutex_trylock(&ldata->atomic_read_lock))
+			return -EAGAIN;
+	} else {
+		if (mutex_lock_interruptible(&ldata->atomic_read_lock))
+			return -ERESTARTSYS;
+	}
 
-	करोwn_पढ़ो(&tty->termios_rwsem);
+	down_read(&tty->termios_rwsem);
 
-	minimum = समय = 0;
-	समयout = MAX_SCHEDULE_TIMEOUT;
-	अगर (!ldata->icanon) अणु
+	minimum = time = 0;
+	timeout = MAX_SCHEDULE_TIMEOUT;
+	if (!ldata->icanon) {
 		minimum = MIN_CHAR(tty);
-		अगर (minimum) अणु
-			समय = (HZ / 10) * TIME_CHAR(tty);
-		पूर्ण अन्यथा अणु
-			समयout = (HZ / 10) * TIME_CHAR(tty);
+		if (minimum) {
+			time = (HZ / 10) * TIME_CHAR(tty);
+		} else {
+			timeout = (HZ / 10) * TIME_CHAR(tty);
 			minimum = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	packet = tty->packet;
-	tail = ldata->पढ़ो_tail;
+	tail = ldata->read_tail;
 
-	add_रुको_queue(&tty->पढ़ो_रुको, &रुको);
-	जबतक (nr) अणु
-		/* First test क्रम status change. */
-		अगर (packet && tty->link->ctrl_status) अणु
-			अचिन्हित अक्षर cs;
-			अगर (kb != kbuf)
-				अवरोध;
+	add_wait_queue(&tty->read_wait, &wait);
+	while (nr) {
+		/* First test for status change. */
+		if (packet && tty->link->ctrl_status) {
+			unsigned char cs;
+			if (kb != kbuf)
+				break;
 			spin_lock_irq(&tty->link->ctrl_lock);
 			cs = tty->link->ctrl_status;
 			tty->link->ctrl_status = 0;
 			spin_unlock_irq(&tty->link->ctrl_lock);
 			*kb++ = cs;
 			nr--;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (!input_available_p(tty, 0)) अणु
-			up_पढ़ो(&tty->termios_rwsem);
+		if (!input_available_p(tty, 0)) {
+			up_read(&tty->termios_rwsem);
 			tty_buffer_flush_work(tty->port);
-			करोwn_पढ़ो(&tty->termios_rwsem);
-			अगर (!input_available_p(tty, 0)) अणु
-				अगर (test_bit(TTY_OTHER_CLOSED, &tty->flags)) अणु
+			down_read(&tty->termios_rwsem);
+			if (!input_available_p(tty, 0)) {
+				if (test_bit(TTY_OTHER_CLOSED, &tty->flags)) {
 					retval = -EIO;
-					अवरोध;
-				पूर्ण
-				अगर (tty_hung_up_p(file))
-					अवरोध;
+					break;
+				}
+				if (tty_hung_up_p(file))
+					break;
 				/*
-				 * Abort पढ़ोers क्रम ttys which never actually
+				 * Abort readers for ttys which never actually
 				 * get hung up.  See __tty_hangup().
 				 */
-				अगर (test_bit(TTY_HUPPING, &tty->flags))
-					अवरोध;
-				अगर (!समयout)
-					अवरोध;
-				अगर (tty_io_nonblock(tty, file)) अणु
+				if (test_bit(TTY_HUPPING, &tty->flags))
+					break;
+				if (!timeout)
+					break;
+				if (tty_io_nonblock(tty, file)) {
 					retval = -EAGAIN;
-					अवरोध;
-				पूर्ण
-				अगर (संकेत_pending(current)) अणु
+					break;
+				}
+				if (signal_pending(current)) {
 					retval = -ERESTARTSYS;
-					अवरोध;
-				पूर्ण
-				up_पढ़ो(&tty->termios_rwsem);
+					break;
+				}
+				up_read(&tty->termios_rwsem);
 
-				समयout = रुको_woken(&रुको, TASK_INTERRUPTIBLE,
-						समयout);
+				timeout = wait_woken(&wait, TASK_INTERRUPTIBLE,
+						timeout);
 
-				करोwn_पढ़ो(&tty->termios_rwsem);
-				जारी;
-			पूर्ण
-		पूर्ण
+				down_read(&tty->termios_rwsem);
+				continue;
+			}
+		}
 
-		अगर (ldata->icanon && !L_EXTPROC(tty)) अणु
-			अगर (canon_copy_from_पढ़ो_buf(tty, &kb, &nr))
-				जाओ more_to_be_पढ़ो;
-		पूर्ण अन्यथा अणु
+		if (ldata->icanon && !L_EXTPROC(tty)) {
+			if (canon_copy_from_read_buf(tty, &kb, &nr))
+				goto more_to_be_read;
+		} else {
 			/* Deal with packet mode. */
-			अगर (packet && kb == kbuf) अणु
+			if (packet && kb == kbuf) {
 				*kb++ = TIOCPKT_DATA;
 				nr--;
-			पूर्ण
+			}
 
 			/*
-			 * Copy data, and अगर there is more to be had
-			 * and we have nothing more to रुको क्रम, then
-			 * let's mark us क्रम retries.
+			 * Copy data, and if there is more to be had
+			 * and we have nothing more to wait for, then
+			 * let's mark us for retries.
 			 *
-			 * NOTE! We वापस here with both the termios_sem
-			 * and atomic_पढ़ो_lock still held, the retries
-			 * will release them when करोne.
+			 * NOTE! We return here with both the termios_sem
+			 * and atomic_read_lock still held, the retries
+			 * will release them when done.
 			 */
-			अगर (copy_from_पढ़ो_buf(tty, &kb, &nr) && kb - kbuf >= minimum) अणु
-more_to_be_पढ़ो:
-				हटाओ_रुको_queue(&tty->पढ़ो_रुको, &रुको);
+			if (copy_from_read_buf(tty, &kb, &nr) && kb - kbuf >= minimum) {
+more_to_be_read:
+				remove_wait_queue(&tty->read_wait, &wait);
 				*cookie = cookie;
-				वापस kb - kbuf;
-			पूर्ण
-		पूर्ण
+				return kb - kbuf;
+			}
+		}
 
 		n_tty_check_unthrottle(tty);
 
-		अगर (kb - kbuf >= minimum)
-			अवरोध;
-		अगर (समय)
-			समयout = समय;
-	पूर्ण
-	अगर (tail != ldata->पढ़ो_tail)
+		if (kb - kbuf >= minimum)
+			break;
+		if (time)
+			timeout = time;
+	}
+	if (tail != ldata->read_tail)
 		n_tty_kick_worker(tty);
-	up_पढ़ो(&tty->termios_rwsem);
+	up_read(&tty->termios_rwsem);
 
-	हटाओ_रुको_queue(&tty->पढ़ो_रुको, &रुको);
-	mutex_unlock(&ldata->atomic_पढ़ो_lock);
+	remove_wait_queue(&tty->read_wait, &wait);
+	mutex_unlock(&ldata->atomic_read_lock);
 
-	अगर (kb - kbuf)
+	if (kb - kbuf)
 		retval = kb - kbuf;
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /**
- *	n_tty_ग_लिखो		-	ग_लिखो function क्रम tty
+ *	n_tty_write		-	write function for tty
  *	@tty: tty device
  *	@file: file object
- *	@buf: userspace buffer poपूर्णांकer
+ *	@buf: userspace buffer pointer
  *	@nr: size of I/O
  *
  *	Write function of the terminal device.  This is serialized with
- *	respect to other ग_लिखो callers but not to termios changes, पढ़ोs
- *	and other such events.  Since the receive code will echo अक्षरacters,
- *	thus calling driver ग_लिखो methods, the output_lock is used in
+ *	respect to other write callers but not to termios changes, reads
+ *	and other such events.  Since the receive code will echo characters,
+ *	thus calling driver write methods, the output_lock is used in
  *	the output processing functions called here as well as in the
  *	echo processing function to protect the column state and space
  *	left in the buffer.
@@ -2320,207 +2319,207 @@ more_to_be_पढ़ो:
  *		  lock themselves)
  */
 
-अटल sमाप_प्रकार n_tty_ग_लिखो(काष्ठा tty_काष्ठा *tty, काष्ठा file *file,
-			   स्थिर अचिन्हित अक्षर *buf, माप_प्रकार nr)
-अणु
-	स्थिर अचिन्हित अक्षर *b = buf;
-	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
-	पूर्णांक c;
-	sमाप_प्रकार retval = 0;
+static ssize_t n_tty_write(struct tty_struct *tty, struct file *file,
+			   const unsigned char *buf, size_t nr)
+{
+	const unsigned char *b = buf;
+	DEFINE_WAIT_FUNC(wait, woken_wake_function);
+	int c;
+	ssize_t retval = 0;
 
-	/* Job control check -- must be करोne at start (POSIX.1 7.1.1.4). */
-	अगर (L_TOSTOP(tty) && file->f_op->ग_लिखो_iter != redirected_tty_ग_लिखो) अणु
+	/* Job control check -- must be done at start (POSIX.1 7.1.1.4). */
+	if (L_TOSTOP(tty) && file->f_op->write_iter != redirected_tty_write) {
 		retval = tty_check_change(tty);
-		अगर (retval)
-			वापस retval;
-	पूर्ण
+		if (retval)
+			return retval;
+	}
 
-	करोwn_पढ़ो(&tty->termios_rwsem);
+	down_read(&tty->termios_rwsem);
 
-	/* Write out any echoed अक्षरacters that are still pending */
+	/* Write out any echoed characters that are still pending */
 	process_echoes(tty);
 
-	add_रुको_queue(&tty->ग_लिखो_रुको, &रुको);
-	जबतक (1) अणु
-		अगर (संकेत_pending(current)) अणु
+	add_wait_queue(&tty->write_wait, &wait);
+	while (1) {
+		if (signal_pending(current)) {
 			retval = -ERESTARTSYS;
-			अवरोध;
-		पूर्ण
-		अगर (tty_hung_up_p(file) || (tty->link && !tty->link->count)) अणु
+			break;
+		}
+		if (tty_hung_up_p(file) || (tty->link && !tty->link->count)) {
 			retval = -EIO;
-			अवरोध;
-		पूर्ण
-		अगर (O_OPOST(tty)) अणु
-			जबतक (nr > 0) अणु
-				sमाप_प्रकार num = process_output_block(tty, b, nr);
-				अगर (num < 0) अणु
-					अगर (num == -EAGAIN)
-						अवरोध;
+			break;
+		}
+		if (O_OPOST(tty)) {
+			while (nr > 0) {
+				ssize_t num = process_output_block(tty, b, nr);
+				if (num < 0) {
+					if (num == -EAGAIN)
+						break;
 					retval = num;
-					जाओ अवरोध_out;
-				पूर्ण
+					goto break_out;
+				}
 				b += num;
 				nr -= num;
-				अगर (nr == 0)
-					अवरोध;
+				if (nr == 0)
+					break;
 				c = *b;
-				अगर (process_output(c, tty) < 0)
-					अवरोध;
+				if (process_output(c, tty) < 0)
+					break;
 				b++; nr--;
-			पूर्ण
-			अगर (tty->ops->flush_अक्षरs)
-				tty->ops->flush_अक्षरs(tty);
-		पूर्ण अन्यथा अणु
-			काष्ठा n_tty_data *ldata = tty->disc_data;
+			}
+			if (tty->ops->flush_chars)
+				tty->ops->flush_chars(tty);
+		} else {
+			struct n_tty_data *ldata = tty->disc_data;
 
-			जबतक (nr > 0) अणु
+			while (nr > 0) {
 				mutex_lock(&ldata->output_lock);
-				c = tty->ops->ग_लिखो(tty, b, nr);
+				c = tty->ops->write(tty, b, nr);
 				mutex_unlock(&ldata->output_lock);
-				अगर (c < 0) अणु
+				if (c < 0) {
 					retval = c;
-					जाओ अवरोध_out;
-				पूर्ण
-				अगर (!c)
-					अवरोध;
+					goto break_out;
+				}
+				if (!c)
+					break;
 				b += c;
 				nr -= c;
-			पूर्ण
-		पूर्ण
-		अगर (!nr)
-			अवरोध;
-		अगर (tty_io_nonblock(tty, file)) अणु
+			}
+		}
+		if (!nr)
+			break;
+		if (tty_io_nonblock(tty, file)) {
 			retval = -EAGAIN;
-			अवरोध;
-		पूर्ण
-		up_पढ़ो(&tty->termios_rwsem);
+			break;
+		}
+		up_read(&tty->termios_rwsem);
 
-		रुको_woken(&रुको, TASK_INTERRUPTIBLE, MAX_SCHEDULE_TIMEOUT);
+		wait_woken(&wait, TASK_INTERRUPTIBLE, MAX_SCHEDULE_TIMEOUT);
 
-		करोwn_पढ़ो(&tty->termios_rwsem);
-	पूर्ण
-अवरोध_out:
-	हटाओ_रुको_queue(&tty->ग_लिखो_रुको, &रुको);
-	अगर (nr && tty->fasync)
+		down_read(&tty->termios_rwsem);
+	}
+break_out:
+	remove_wait_queue(&tty->write_wait, &wait);
+	if (nr && tty->fasync)
 		set_bit(TTY_DO_WRITE_WAKEUP, &tty->flags);
-	up_पढ़ो(&tty->termios_rwsem);
-	वापस (b - buf) ? b - buf : retval;
-पूर्ण
+	up_read(&tty->termios_rwsem);
+	return (b - buf) ? b - buf : retval;
+}
 
 /**
- *	n_tty_poll		-	poll method क्रम N_TTY
+ *	n_tty_poll		-	poll method for N_TTY
  *	@tty: terminal device
  *	@file: file accessing it
- *	@रुको: poll table
+ *	@wait: poll table
  *
- *	Called when the line discipline is asked to poll() क्रम data or
- *	क्रम special events. This code is not serialized with respect to
- *	other events save खोलो/बंद.
+ *	Called when the line discipline is asked to poll() for data or
+ *	for special events. This code is not serialized with respect to
+ *	other events save open/close.
  *
  *	This code must be sure never to sleep through a hangup.
  *	Called without the kernel lock held - fine
  */
 
-अटल __poll_t n_tty_poll(काष्ठा tty_काष्ठा *tty, काष्ठा file *file,
-							poll_table *रुको)
-अणु
+static __poll_t n_tty_poll(struct tty_struct *tty, struct file *file,
+							poll_table *wait)
+{
 	__poll_t mask = 0;
 
-	poll_रुको(file, &tty->पढ़ो_रुको, रुको);
-	poll_रुको(file, &tty->ग_लिखो_रुको, रुको);
-	अगर (input_available_p(tty, 1))
+	poll_wait(file, &tty->read_wait, wait);
+	poll_wait(file, &tty->write_wait, wait);
+	if (input_available_p(tty, 1))
 		mask |= EPOLLIN | EPOLLRDNORM;
-	अन्यथा अणु
+	else {
 		tty_buffer_flush_work(tty->port);
-		अगर (input_available_p(tty, 1))
+		if (input_available_p(tty, 1))
 			mask |= EPOLLIN | EPOLLRDNORM;
-	पूर्ण
-	अगर (tty->packet && tty->link->ctrl_status)
+	}
+	if (tty->packet && tty->link->ctrl_status)
 		mask |= EPOLLPRI | EPOLLIN | EPOLLRDNORM;
-	अगर (test_bit(TTY_OTHER_CLOSED, &tty->flags))
+	if (test_bit(TTY_OTHER_CLOSED, &tty->flags))
 		mask |= EPOLLHUP;
-	अगर (tty_hung_up_p(file))
+	if (tty_hung_up_p(file))
 		mask |= EPOLLHUP;
-	अगर (tty->ops->ग_लिखो && !tty_is_ग_लिखोlocked(tty) &&
-			tty_अक्षरs_in_buffer(tty) < WAKEUP_CHARS &&
-			tty_ग_लिखो_room(tty) > 0)
+	if (tty->ops->write && !tty_is_writelocked(tty) &&
+			tty_chars_in_buffer(tty) < WAKEUP_CHARS &&
+			tty_write_room(tty) > 0)
 		mask |= EPOLLOUT | EPOLLWRNORM;
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल अचिन्हित दीर्घ inq_canon(काष्ठा n_tty_data *ldata)
-अणु
-	माप_प्रकार nr, head, tail;
+static unsigned long inq_canon(struct n_tty_data *ldata)
+{
+	size_t nr, head, tail;
 
-	अगर (ldata->canon_head == ldata->पढ़ो_tail)
-		वापस 0;
+	if (ldata->canon_head == ldata->read_tail)
+		return 0;
 	head = ldata->canon_head;
-	tail = ldata->पढ़ो_tail;
+	tail = ldata->read_tail;
 	nr = head - tail;
-	/* Skip खातापूर्ण-अक्षरs.. */
-	जबतक (MASK(head) != MASK(tail)) अणु
-		अगर (test_bit(tail & (N_TTY_BUF_SIZE - 1), ldata->पढ़ो_flags) &&
-		    पढ़ो_buf(ldata, tail) == __DISABLED_CHAR)
+	/* Skip EOF-chars.. */
+	while (MASK(head) != MASK(tail)) {
+		if (test_bit(tail & (N_TTY_BUF_SIZE - 1), ldata->read_flags) &&
+		    read_buf(ldata, tail) == __DISABLED_CHAR)
 			nr--;
 		tail++;
-	पूर्ण
-	वापस nr;
-पूर्ण
+	}
+	return nr;
+}
 
-अटल पूर्णांक n_tty_ioctl(काष्ठा tty_काष्ठा *tty, काष्ठा file *file,
-		       अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा n_tty_data *ldata = tty->disc_data;
-	पूर्णांक retval;
+static int n_tty_ioctl(struct tty_struct *tty, struct file *file,
+		       unsigned int cmd, unsigned long arg)
+{
+	struct n_tty_data *ldata = tty->disc_data;
+	int retval;
 
-	चयन (cmd) अणु
-	हाल TIOCOUTQ:
-		वापस put_user(tty_अक्षरs_in_buffer(tty), (पूर्णांक __user *) arg);
-	हाल TIOCINQ:
-		करोwn_ग_लिखो(&tty->termios_rwsem);
-		अगर (L_ICANON(tty) && !L_EXTPROC(tty))
+	switch (cmd) {
+	case TIOCOUTQ:
+		return put_user(tty_chars_in_buffer(tty), (int __user *) arg);
+	case TIOCINQ:
+		down_write(&tty->termios_rwsem);
+		if (L_ICANON(tty) && !L_EXTPROC(tty))
 			retval = inq_canon(ldata);
-		अन्यथा
-			retval = पढ़ो_cnt(ldata);
-		up_ग_लिखो(&tty->termios_rwsem);
-		वापस put_user(retval, (अचिन्हित पूर्णांक __user *) arg);
-	शेष:
-		वापस n_tty_ioctl_helper(tty, file, cmd, arg);
-	पूर्ण
-पूर्ण
+		else
+			retval = read_cnt(ldata);
+		up_write(&tty->termios_rwsem);
+		return put_user(retval, (unsigned int __user *) arg);
+	default:
+		return n_tty_ioctl_helper(tty, file, cmd, arg);
+	}
+}
 
-अटल काष्ठा tty_ldisc_ops n_tty_ops = अणु
+static struct tty_ldisc_ops n_tty_ops = {
 	.owner		 = THIS_MODULE,
 	.name            = "n_tty",
-	.खोलो            = n_tty_खोलो,
-	.बंद           = n_tty_बंद,
+	.open            = n_tty_open,
+	.close           = n_tty_close,
 	.flush_buffer    = n_tty_flush_buffer,
-	.पढ़ो            = n_tty_पढ़ो,
-	.ग_लिखो           = n_tty_ग_लिखो,
+	.read            = n_tty_read,
+	.write           = n_tty_write,
 	.ioctl           = n_tty_ioctl,
 	.set_termios     = n_tty_set_termios,
 	.poll            = n_tty_poll,
 	.receive_buf     = n_tty_receive_buf,
-	.ग_लिखो_wakeup    = n_tty_ग_लिखो_wakeup,
+	.write_wakeup    = n_tty_write_wakeup,
 	.receive_buf2	 = n_tty_receive_buf2,
-पूर्ण;
+};
 
 /**
  *	n_tty_inherit_ops	-	inherit N_TTY methods
- *	@ops: काष्ठा tty_ldisc_ops where to save N_TTY methods
+ *	@ops: struct tty_ldisc_ops where to save N_TTY methods
  *
  *	Enables a 'subclass' line discipline to 'inherit' N_TTY methods.
  */
 
-व्योम n_tty_inherit_ops(काष्ठा tty_ldisc_ops *ops)
-अणु
+void n_tty_inherit_ops(struct tty_ldisc_ops *ops)
+{
 	*ops = n_tty_ops;
-	ops->owner = शून्य;
+	ops->owner = NULL;
 	ops->refcount = ops->flags = 0;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(n_tty_inherit_ops);
 
-व्योम __init n_tty_init(व्योम)
-अणु
-	tty_रेजिस्टर_ldisc(N_TTY, &n_tty_ops);
-पूर्ण
+void __init n_tty_init(void)
+{
+	tty_register_ldisc(N_TTY, &n_tty_ops);
+}

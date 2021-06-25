@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
   File: linux/xattr.h
 
@@ -9,120 +8,120 @@
   Copyright (c) 2001-2002 Silicon Graphics, Inc.  All Rights Reserved.
   Copyright (c) 2004 Red Hat, Inc., James Morris <jmorris@redhat.com>
 */
-#अगर_अघोषित _LINUX_XATTR_H
-#घोषणा _LINUX_XATTR_H
+#ifndef _LINUX_XATTR_H
+#define _LINUX_XATTR_H
 
 
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/user_namespace.h>
-#समावेश <uapi/linux/xattr.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/spinlock.h>
+#include <linux/mm.h>
+#include <linux/user_namespace.h>
+#include <uapi/linux/xattr.h>
 
-काष्ठा inode;
-काष्ठा dentry;
+struct inode;
+struct dentry;
 
 /*
- * काष्ठा xattr_handler: When @name is set, match attributes with exactly that
+ * struct xattr_handler: When @name is set, match attributes with exactly that
  * name.  When @prefix is set instead, match attributes with that prefix and
  * with a non-empty suffix.
  */
-काष्ठा xattr_handler अणु
-	स्थिर अक्षर *name;
-	स्थिर अक्षर *prefix;
-	पूर्णांक flags;      /* fs निजी flags */
-	bool (*list)(काष्ठा dentry *dentry);
-	पूर्णांक (*get)(स्थिर काष्ठा xattr_handler *, काष्ठा dentry *dentry,
-		   काष्ठा inode *inode, स्थिर अक्षर *name, व्योम *buffer,
-		   माप_प्रकार size);
-	पूर्णांक (*set)(स्थिर काष्ठा xattr_handler *,
-		   काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
-		   काष्ठा inode *inode, स्थिर अक्षर *name, स्थिर व्योम *buffer,
-		   माप_प्रकार size, पूर्णांक flags);
-पूर्ण;
+struct xattr_handler {
+	const char *name;
+	const char *prefix;
+	int flags;      /* fs private flags */
+	bool (*list)(struct dentry *dentry);
+	int (*get)(const struct xattr_handler *, struct dentry *dentry,
+		   struct inode *inode, const char *name, void *buffer,
+		   size_t size);
+	int (*set)(const struct xattr_handler *,
+		   struct user_namespace *mnt_userns, struct dentry *dentry,
+		   struct inode *inode, const char *name, const void *buffer,
+		   size_t size, int flags);
+};
 
-स्थिर अक्षर *xattr_full_name(स्थिर काष्ठा xattr_handler *, स्थिर अक्षर *);
+const char *xattr_full_name(const struct xattr_handler *, const char *);
 
-काष्ठा xattr अणु
-	स्थिर अक्षर *name;
-	व्योम *value;
-	माप_प्रकार value_len;
-पूर्ण;
+struct xattr {
+	const char *name;
+	void *value;
+	size_t value_len;
+};
 
-sमाप_प्रकार __vfs_getxattr(काष्ठा dentry *, काष्ठा inode *, स्थिर अक्षर *, व्योम *, माप_प्रकार);
-sमाप_प्रकार vfs_getxattr(काष्ठा user_namespace *, काष्ठा dentry *, स्थिर अक्षर *,
-		     व्योम *, माप_प्रकार);
-sमाप_प्रकार vfs_listxattr(काष्ठा dentry *d, अक्षर *list, माप_प्रकार size);
-पूर्णांक __vfs_setxattr(काष्ठा user_namespace *, काष्ठा dentry *, काष्ठा inode *,
-		   स्थिर अक्षर *, स्थिर व्योम *, माप_प्रकार, पूर्णांक);
-पूर्णांक __vfs_setxattr_noperm(काष्ठा user_namespace *, काष्ठा dentry *,
-			  स्थिर अक्षर *, स्थिर व्योम *, माप_प्रकार, पूर्णांक);
-पूर्णांक __vfs_setxattr_locked(काष्ठा user_namespace *, काष्ठा dentry *,
-			  स्थिर अक्षर *, स्थिर व्योम *, माप_प्रकार, पूर्णांक,
-			  काष्ठा inode **);
-पूर्णांक vfs_setxattr(काष्ठा user_namespace *, काष्ठा dentry *, स्थिर अक्षर *,
-		 स्थिर व्योम *, माप_प्रकार, पूर्णांक);
-पूर्णांक __vfs_हटाओxattr(काष्ठा user_namespace *, काष्ठा dentry *, स्थिर अक्षर *);
-पूर्णांक __vfs_हटाओxattr_locked(काष्ठा user_namespace *, काष्ठा dentry *,
-			     स्थिर अक्षर *, काष्ठा inode **);
-पूर्णांक vfs_हटाओxattr(काष्ठा user_namespace *, काष्ठा dentry *, स्थिर अक्षर *);
+ssize_t __vfs_getxattr(struct dentry *, struct inode *, const char *, void *, size_t);
+ssize_t vfs_getxattr(struct user_namespace *, struct dentry *, const char *,
+		     void *, size_t);
+ssize_t vfs_listxattr(struct dentry *d, char *list, size_t size);
+int __vfs_setxattr(struct user_namespace *, struct dentry *, struct inode *,
+		   const char *, const void *, size_t, int);
+int __vfs_setxattr_noperm(struct user_namespace *, struct dentry *,
+			  const char *, const void *, size_t, int);
+int __vfs_setxattr_locked(struct user_namespace *, struct dentry *,
+			  const char *, const void *, size_t, int,
+			  struct inode **);
+int vfs_setxattr(struct user_namespace *, struct dentry *, const char *,
+		 const void *, size_t, int);
+int __vfs_removexattr(struct user_namespace *, struct dentry *, const char *);
+int __vfs_removexattr_locked(struct user_namespace *, struct dentry *,
+			     const char *, struct inode **);
+int vfs_removexattr(struct user_namespace *, struct dentry *, const char *);
 
-sमाप_प्रकार generic_listxattr(काष्ठा dentry *dentry, अक्षर *buffer, माप_प्रकार buffer_size);
-sमाप_प्रकार vfs_getxattr_alloc(काष्ठा user_namespace *mnt_userns,
-			   काष्ठा dentry *dentry, स्थिर अक्षर *name,
-			   अक्षर **xattr_value, माप_प्रकार size, gfp_t flags);
+ssize_t generic_listxattr(struct dentry *dentry, char *buffer, size_t buffer_size);
+ssize_t vfs_getxattr_alloc(struct user_namespace *mnt_userns,
+			   struct dentry *dentry, const char *name,
+			   char **xattr_value, size_t size, gfp_t flags);
 
-पूर्णांक xattr_supported_namespace(काष्ठा inode *inode, स्थिर अक्षर *prefix);
+int xattr_supported_namespace(struct inode *inode, const char *prefix);
 
-अटल अंतरभूत स्थिर अक्षर *xattr_prefix(स्थिर काष्ठा xattr_handler *handler)
-अणु
-	वापस handler->prefix ?: handler->name;
-पूर्ण
+static inline const char *xattr_prefix(const struct xattr_handler *handler)
+{
+	return handler->prefix ?: handler->name;
+}
 
-काष्ठा simple_xattrs अणु
-	काष्ठा list_head head;
+struct simple_xattrs {
+	struct list_head head;
 	spinlock_t lock;
-पूर्ण;
+};
 
-काष्ठा simple_xattr अणु
-	काष्ठा list_head list;
-	अक्षर *name;
-	माप_प्रकार size;
-	अक्षर value[];
-पूर्ण;
+struct simple_xattr {
+	struct list_head list;
+	char *name;
+	size_t size;
+	char value[];
+};
 
 /*
- * initialize the simple_xattrs काष्ठाure
+ * initialize the simple_xattrs structure
  */
-अटल अंतरभूत व्योम simple_xattrs_init(काष्ठा simple_xattrs *xattrs)
-अणु
+static inline void simple_xattrs_init(struct simple_xattrs *xattrs)
+{
 	INIT_LIST_HEAD(&xattrs->head);
 	spin_lock_init(&xattrs->lock);
-पूर्ण
+}
 
 /*
- * मुक्त all the xattrs
+ * free all the xattrs
  */
-अटल अंतरभूत व्योम simple_xattrs_मुक्त(काष्ठा simple_xattrs *xattrs)
-अणु
-	काष्ठा simple_xattr *xattr, *node;
+static inline void simple_xattrs_free(struct simple_xattrs *xattrs)
+{
+	struct simple_xattr *xattr, *node;
 
-	list_क्रम_each_entry_safe(xattr, node, &xattrs->head, list) अणु
-		kमुक्त(xattr->name);
-		kvमुक्त(xattr);
-	पूर्ण
-पूर्ण
+	list_for_each_entry_safe(xattr, node, &xattrs->head, list) {
+		kfree(xattr->name);
+		kvfree(xattr);
+	}
+}
 
-काष्ठा simple_xattr *simple_xattr_alloc(स्थिर व्योम *value, माप_प्रकार size);
-पूर्णांक simple_xattr_get(काष्ठा simple_xattrs *xattrs, स्थिर अक्षर *name,
-		     व्योम *buffer, माप_प्रकार size);
-पूर्णांक simple_xattr_set(काष्ठा simple_xattrs *xattrs, स्थिर अक्षर *name,
-		     स्थिर व्योम *value, माप_प्रकार size, पूर्णांक flags,
-		     sमाप_प्रकार *हटाओd_size);
-sमाप_प्रकार simple_xattr_list(काष्ठा inode *inode, काष्ठा simple_xattrs *xattrs, अक्षर *buffer,
-			  माप_प्रकार size);
-व्योम simple_xattr_list_add(काष्ठा simple_xattrs *xattrs,
-			   काष्ठा simple_xattr *new_xattr);
+struct simple_xattr *simple_xattr_alloc(const void *value, size_t size);
+int simple_xattr_get(struct simple_xattrs *xattrs, const char *name,
+		     void *buffer, size_t size);
+int simple_xattr_set(struct simple_xattrs *xattrs, const char *name,
+		     const void *value, size_t size, int flags,
+		     ssize_t *removed_size);
+ssize_t simple_xattr_list(struct inode *inode, struct simple_xattrs *xattrs, char *buffer,
+			  size_t size);
+void simple_xattr_list_add(struct simple_xattrs *xattrs,
+			   struct simple_xattr *new_xattr);
 
-#पूर्ण_अगर	/* _LINUX_XATTR_H */
+#endif	/* _LINUX_XATTR_H */

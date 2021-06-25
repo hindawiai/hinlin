@@ -1,8 +1,7 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_POWERPC_SHMPARAM_H
-#घोषणा _ASM_POWERPC_SHMPARAM_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_POWERPC_SHMPARAM_H
+#define _ASM_POWERPC_SHMPARAM_H
 
-#घोषणा	SHMLBA PAGE_SIZE		 /* attach addr a multiple of this */
+#define	SHMLBA PAGE_SIZE		 /* attach addr a multiple of this */
 
-#पूर्ण_अगर	/* _ASM_POWERPC_SHMPARAM_H */
+#endif	/* _ASM_POWERPC_SHMPARAM_H */

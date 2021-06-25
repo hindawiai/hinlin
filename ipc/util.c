@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * linux/ipc/util.c
  * Copyright (C) 1992 Krishna Balasubramanian
@@ -8,112 +7,112 @@
  *            get BSD style process accounting right.
  *            Occurs in several places in the IPC code.
  *            Chris Evans, <chris@ferret.lmh.ox.ac.uk>
- * Nov 1999 - ipc helper functions, unअगरied SMP locking
- *	      Manfred Spraul <manfred@colorfullअगरe.com>
- * Oct 2002 - One lock per IPC id. RCU ipc_मुक्त क्रम lock-मुक्त grow_ary().
+ * Nov 1999 - ipc helper functions, unified SMP locking
+ *	      Manfred Spraul <manfred@colorfullife.com>
+ * Oct 2002 - One lock per IPC id. RCU ipc_free for lock-free grow_ary().
  *            Mingming Cao <cmm@us.ibm.com>
- * Mar 2006 - support क्रम audit of ipc object properties
+ * Mar 2006 - support for audit of ipc object properties
  *            Dustin Kirkland <dustin.kirkland@us.ibm.com>
  * Jun 2006 - namespaces ssupport
  *            OpenVZ, SWsoft Inc.
- *            Pavel Emelianov <xemul@खोलोvz.org>
+ *            Pavel Emelianov <xemul@openvz.org>
  *
  * General sysv ipc locking scheme:
- *	rcu_पढ़ो_lock()
+ *	rcu_read_lock()
  *          obtain the ipc object (kern_ipc_perm) by looking up the id in an idr
  *	    tree.
- *	    - perक्रमm initial checks (capabilities, auditing and permission,
+ *	    - perform initial checks (capabilities, auditing and permission,
  *	      etc).
- *	    - perक्रमm पढ़ो-only operations, such as INFO command, that
- *	      करो not demand atomicity
+ *	    - perform read-only operations, such as INFO command, that
+ *	      do not demand atomicity
  *	      acquire the ipc lock (kern_ipc_perm.lock) through
  *	      ipc_lock_object()
- *		- perक्रमm पढ़ो-only operations that demand atomicity,
+ *		- perform read-only operations that demand atomicity,
  *		  such as STAT command.
- *		- perक्रमm data updates, such as SET, RMID commands and
- *		  mechanism-specअगरic operations (semop/semसमयकरोp,
+ *		- perform data updates, such as SET, RMID commands and
+ *		  mechanism-specific operations (semop/semtimedop,
  *		  msgsnd/msgrcv, shmat/shmdt).
  *	    drop the ipc lock, through ipc_unlock_object().
- *	rcu_पढ़ो_unlock()
+ *	rcu_read_unlock()
  *
  *  The ids->rwsem must be taken when:
  *	- creating, removing and iterating the existing entries in ipc
- *	  identअगरier sets.
+ *	  identifier sets.
  *	- iterating through files under /proc/sysvipc/
  *
- *  Note that sems have a special fast path that aव्योमs kern_ipc_perm.lock -
+ *  Note that sems have a special fast path that avoids kern_ipc_perm.lock -
  *  see sem_lock().
  */
 
-#समावेश <linux/mm.h>
-#समावेश <linux/shm.h>
-#समावेश <linux/init.h>
-#समावेश <linux/msg.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/capability.h>
-#समावेश <linux/highuid.h>
-#समावेश <linux/security.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/audit.h>
-#समावेश <linux/nsproxy.h>
-#समावेश <linux/rwsem.h>
-#समावेश <linux/memory.h>
-#समावेश <linux/ipc_namespace.h>
-#समावेश <linux/rhashtable.h>
+#include <linux/mm.h>
+#include <linux/shm.h>
+#include <linux/init.h>
+#include <linux/msg.h>
+#include <linux/vmalloc.h>
+#include <linux/slab.h>
+#include <linux/notifier.h>
+#include <linux/capability.h>
+#include <linux/highuid.h>
+#include <linux/security.h>
+#include <linux/rcupdate.h>
+#include <linux/workqueue.h>
+#include <linux/seq_file.h>
+#include <linux/proc_fs.h>
+#include <linux/audit.h>
+#include <linux/nsproxy.h>
+#include <linux/rwsem.h>
+#include <linux/memory.h>
+#include <linux/ipc_namespace.h>
+#include <linux/rhashtable.h>
 
-#समावेश <यंत्र/unistd.h>
+#include <asm/unistd.h>
 
-#समावेश "util.h"
+#include "util.h"
 
-काष्ठा ipc_proc_अगरace अणु
-	स्थिर अक्षर *path;
-	स्थिर अक्षर *header;
-	पूर्णांक ids;
-	पूर्णांक (*show)(काष्ठा seq_file *, व्योम *);
-पूर्ण;
+struct ipc_proc_iface {
+	const char *path;
+	const char *header;
+	int ids;
+	int (*show)(struct seq_file *, void *);
+};
 
 /**
- * ipc_init - initialise ipc subप्रणाली
+ * ipc_init - initialise ipc subsystem
  *
  * The various sysv ipc resources (semaphores, messages and shared
  * memory) are initialised.
  *
- * A callback routine is रेजिस्टरed पूर्णांकo the memory hotplug notअगरier
+ * A callback routine is registered into the memory hotplug notifier
  * chain: since msgmni scales to lowmem this callback routine will be
- * called upon successful memory add / हटाओ to recompute msmgni.
+ * called upon successful memory add / remove to recompute msmgni.
  */
-अटल पूर्णांक __init ipc_init(व्योम)
-अणु
-	proc_सूची_गढ़ो("sysvipc", शून्य);
+static int __init ipc_init(void)
+{
+	proc_mkdir("sysvipc", NULL);
 	sem_init();
 	msg_init();
 	shm_init();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 device_initcall(ipc_init);
 
-अटल स्थिर काष्ठा rhashtable_params ipc_kht_params = अणु
-	.head_offset		= दुरत्व(काष्ठा kern_ipc_perm, khtnode),
-	.key_offset		= दुरत्व(काष्ठा kern_ipc_perm, key),
-	.key_len		= माप_field(काष्ठा kern_ipc_perm, key),
-	.स्वतःmatic_shrinking	= true,
-पूर्ण;
+static const struct rhashtable_params ipc_kht_params = {
+	.head_offset		= offsetof(struct kern_ipc_perm, khtnode),
+	.key_offset		= offsetof(struct kern_ipc_perm, key),
+	.key_len		= sizeof_field(struct kern_ipc_perm, key),
+	.automatic_shrinking	= true,
+};
 
 /**
- * ipc_init_ids	- initialise ipc identअगरiers
- * @ids: ipc identअगरier set
+ * ipc_init_ids	- initialise ipc identifiers
+ * @ids: ipc identifier set
  *
- * Set up the sequence range to use क्रम the ipc identअगरier range (limited
+ * Set up the sequence range to use for the ipc identifier range (limited
  * below ipc_mni) then initialise the keys hashtable and ids idr.
  */
-व्योम ipc_init_ids(काष्ठा ipc_ids *ids)
-अणु
+void ipc_init_ids(struct ipc_ids *ids)
+{
 	ids->in_use = 0;
 	ids->seq = 0;
 	init_rwsem(&ids->rwsem);
@@ -121,179 +120,179 @@ device_initcall(ipc_init);
 	idr_init(&ids->ipcs_idr);
 	ids->max_idx = -1;
 	ids->last_idx = -1;
-#अगर_घोषित CONFIG_CHECKPOINT_RESTORE
+#ifdef CONFIG_CHECKPOINT_RESTORE
 	ids->next_id = -1;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-#अगर_घोषित CONFIG_PROC_FS
-अटल स्थिर काष्ठा proc_ops sysvipc_proc_ops;
+#ifdef CONFIG_PROC_FS
+static const struct proc_ops sysvipc_proc_ops;
 /**
- * ipc_init_proc_पूर्णांकerface -  create a proc पूर्णांकerface क्रम sysipc types using a seq_file पूर्णांकerface.
+ * ipc_init_proc_interface -  create a proc interface for sysipc types using a seq_file interface.
  * @path: Path in procfs
- * @header: Banner to be prपूर्णांकed at the beginning of the file.
+ * @header: Banner to be printed at the beginning of the file.
  * @ids: ipc id table to iterate.
  * @show: show routine.
  */
-व्योम __init ipc_init_proc_पूर्णांकerface(स्थिर अक्षर *path, स्थिर अक्षर *header,
-		पूर्णांक ids, पूर्णांक (*show)(काष्ठा seq_file *, व्योम *))
-अणु
-	काष्ठा proc_dir_entry *pde;
-	काष्ठा ipc_proc_अगरace *अगरace;
+void __init ipc_init_proc_interface(const char *path, const char *header,
+		int ids, int (*show)(struct seq_file *, void *))
+{
+	struct proc_dir_entry *pde;
+	struct ipc_proc_iface *iface;
 
-	अगरace = kदो_स्मृति(माप(*अगरace), GFP_KERNEL);
-	अगर (!अगरace)
-		वापस;
-	अगरace->path	= path;
-	अगरace->header	= header;
-	अगरace->ids	= ids;
-	अगरace->show	= show;
+	iface = kmalloc(sizeof(*iface), GFP_KERNEL);
+	if (!iface)
+		return;
+	iface->path	= path;
+	iface->header	= header;
+	iface->ids	= ids;
+	iface->show	= show;
 
 	pde = proc_create_data(path,
-			       S_IRUGO,        /* world पढ़ोable */
-			       शून्य,           /* parent dir */
+			       S_IRUGO,        /* world readable */
+			       NULL,           /* parent dir */
 			       &sysvipc_proc_ops,
-			       अगरace);
-	अगर (!pde)
-		kमुक्त(अगरace);
-पूर्ण
-#पूर्ण_अगर
+			       iface);
+	if (!pde)
+		kfree(iface);
+}
+#endif
 
 /**
- * ipc_findkey	- find a key in an ipc identअगरier set
- * @ids: ipc identअगरier set
+ * ipc_findkey	- find a key in an ipc identifier set
+ * @ids: ipc identifier set
  * @key: key to find
  *
- * Returns the locked poपूर्णांकer to the ipc काष्ठाure अगर found or शून्य
- * otherwise. If key is found ipc poपूर्णांकs to the owning ipc काष्ठाure
+ * Returns the locked pointer to the ipc structure if found or NULL
+ * otherwise. If key is found ipc points to the owning ipc structure
  *
- * Called with ग_लिखोr ipc_ids.rwsem held.
+ * Called with writer ipc_ids.rwsem held.
  */
-अटल काष्ठा kern_ipc_perm *ipc_findkey(काष्ठा ipc_ids *ids, key_t key)
-अणु
-	काष्ठा kern_ipc_perm *ipcp;
+static struct kern_ipc_perm *ipc_findkey(struct ipc_ids *ids, key_t key)
+{
+	struct kern_ipc_perm *ipcp;
 
 	ipcp = rhashtable_lookup_fast(&ids->key_ht, &key,
 					      ipc_kht_params);
-	अगर (!ipcp)
-		वापस शून्य;
+	if (!ipcp)
+		return NULL;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	ipc_lock_object(ipcp);
-	वापस ipcp;
-पूर्ण
+	return ipcp;
+}
 
 /*
- * Insert new IPC object पूर्णांकo idr tree, and set sequence number and id
+ * Insert new IPC object into idr tree, and set sequence number and id
  * in the correct order.
  * Especially:
- * - the sequence number must be set beक्रमe inserting the object पूर्णांकo the idr,
+ * - the sequence number must be set before inserting the object into the idr,
  *   because the sequence number is accessed without a lock.
- * - the id can/must be set after inserting the object पूर्णांकo the idr.
- *   All accesses must be करोne after getting kern_ipc_perm.lock.
+ * - the id can/must be set after inserting the object into the idr.
+ *   All accesses must be done after getting kern_ipc_perm.lock.
  *
  * The caller must own kern_ipc_perm.lock.of the new object.
- * On error, the function वापसs a (negative) error code.
+ * On error, the function returns a (negative) error code.
  *
  * To conserve sequence number space, especially with extended ipc_mni,
- * the sequence number is incremented only when the वापसed ID is less than
+ * the sequence number is incremented only when the returned ID is less than
  * the last one.
  */
-अटल अंतरभूत पूर्णांक ipc_idr_alloc(काष्ठा ipc_ids *ids, काष्ठा kern_ipc_perm *new)
-अणु
-	पूर्णांक idx, next_id = -1;
+static inline int ipc_idr_alloc(struct ipc_ids *ids, struct kern_ipc_perm *new)
+{
+	int idx, next_id = -1;
 
-#अगर_घोषित CONFIG_CHECKPOINT_RESTORE
+#ifdef CONFIG_CHECKPOINT_RESTORE
 	next_id = ids->next_id;
 	ids->next_id = -1;
-#पूर्ण_अगर
+#endif
 
 	/*
-	 * As soon as a new object is inserted पूर्णांकo the idr,
+	 * As soon as a new object is inserted into the idr,
 	 * ipc_obtain_object_idr() or ipc_obtain_object_check() can find it,
-	 * and the lockless preparations क्रम ipc operations can start.
+	 * and the lockless preparations for ipc operations can start.
 	 * This means especially: permission checks, audit calls, allocation
-	 * of unकरो काष्ठाures, ...
+	 * of undo structures, ...
 	 *
-	 * Thus the object must be fully initialized, and अगर something fails,
-	 * then the full tear-करोwn sequence must be followed.
+	 * Thus the object must be fully initialized, and if something fails,
+	 * then the full tear-down sequence must be followed.
 	 * (i.e.: set new->deleted, reduce refcount, call_rcu())
 	 */
 
-	अगर (next_id < 0) अणु /* !CHECKPOINT_RESTORE or next_id is unset */
-		पूर्णांक max_idx;
+	if (next_id < 0) { /* !CHECKPOINT_RESTORE or next_id is unset */
+		int max_idx;
 
 		max_idx = max(ids->in_use*3/2, ipc_min_cycle);
 		max_idx = min(max_idx, ipc_mni);
 
-		/* allocate the idx, with a शून्य काष्ठा kern_ipc_perm */
-		idx = idr_alloc_cyclic(&ids->ipcs_idr, शून्य, 0, max_idx,
+		/* allocate the idx, with a NULL struct kern_ipc_perm */
+		idx = idr_alloc_cyclic(&ids->ipcs_idr, NULL, 0, max_idx,
 					GFP_NOWAIT);
 
-		अगर (idx >= 0) अणु
+		if (idx >= 0) {
 			/*
 			 * idx got allocated successfully.
 			 * Now calculate the sequence number and set the
-			 * poपूर्णांकer क्रम real.
+			 * pointer for real.
 			 */
-			अगर (idx <= ids->last_idx) अणु
+			if (idx <= ids->last_idx) {
 				ids->seq++;
-				अगर (ids->seq >= ipcid_seq_max())
+				if (ids->seq >= ipcid_seq_max())
 					ids->seq = 0;
-			पूर्ण
+			}
 			ids->last_idx = idx;
 
 			new->seq = ids->seq;
-			/* no need क्रम smp_wmb(), this is करोne
+			/* no need for smp_wmb(), this is done
 			 * inside idr_replace, as part of
-			 * rcu_assign_poपूर्णांकer
+			 * rcu_assign_pointer
 			 */
 			idr_replace(&ids->ipcs_idr, new, idx);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		new->seq = ipcid_to_seqx(next_id);
 		idx = idr_alloc(&ids->ipcs_idr, new, ipcid_to_idx(next_id),
 				0, GFP_NOWAIT);
-	पूर्ण
-	अगर (idx >= 0)
-		new->id = (new->seq << ipcmni_seq_shअगरt()) + idx;
-	वापस idx;
-पूर्ण
+	}
+	if (idx >= 0)
+		new->id = (new->seq << ipcmni_seq_shift()) + idx;
+	return idx;
+}
 
 /**
- * ipc_addid - add an ipc identअगरier
- * @ids: ipc identअगरier set
+ * ipc_addid - add an ipc identifier
+ * @ids: ipc identifier set
  * @new: new ipc permission set
- * @limit: limit क्रम the number of used ids
+ * @limit: limit for the number of used ids
  *
  * Add an entry 'new' to the ipc ids idr. The permissions object is
- * initialised and the first मुक्त entry is set up and the index asचिन्हित
- * is वापसed. The 'new' entry is वापसed in a locked state on success.
+ * initialised and the first free entry is set up and the index assigned
+ * is returned. The 'new' entry is returned in a locked state on success.
  *
- * On failure the entry is not locked and a negative err-code is वापसed.
- * The caller must use ipc_rcu_putref() to मुक्त the identअगरier.
+ * On failure the entry is not locked and a negative err-code is returned.
+ * The caller must use ipc_rcu_putref() to free the identifier.
  *
- * Called with ग_लिखोr ipc_ids.rwsem held.
+ * Called with writer ipc_ids.rwsem held.
  */
-पूर्णांक ipc_addid(काष्ठा ipc_ids *ids, काष्ठा kern_ipc_perm *new, पूर्णांक limit)
-अणु
+int ipc_addid(struct ipc_ids *ids, struct kern_ipc_perm *new, int limit)
+{
 	kuid_t euid;
 	kgid_t egid;
-	पूर्णांक idx, err;
+	int idx, err;
 
 	/* 1) Initialize the refcount so that ipc_rcu_putref works */
 	refcount_set(&new->refcount, 1);
 
-	अगर (limit > ipc_mni)
+	if (limit > ipc_mni)
 		limit = ipc_mni;
 
-	अगर (ids->in_use >= limit)
-		वापस -ENOSPC;
+	if (ids->in_use >= limit)
+		return -ENOSPC;
 
 	idr_preload(GFP_KERNEL);
 
 	spin_lock_init(&new->lock);
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	spin_lock(&new->lock);
 
 	current_euid_egid(&euid, &egid);
@@ -305,206 +304,206 @@ device_initcall(ipc_init);
 	idx = ipc_idr_alloc(ids, new);
 	idr_preload_end();
 
-	अगर (idx >= 0 && new->key != IPC_PRIVATE) अणु
+	if (idx >= 0 && new->key != IPC_PRIVATE) {
 		err = rhashtable_insert_fast(&ids->key_ht, &new->khtnode,
 					     ipc_kht_params);
-		अगर (err < 0) अणु
-			idr_हटाओ(&ids->ipcs_idr, idx);
+		if (err < 0) {
+			idr_remove(&ids->ipcs_idr, idx);
 			idx = err;
-		पूर्ण
-	पूर्ण
-	अगर (idx < 0) अणु
+		}
+	}
+	if (idx < 0) {
 		new->deleted = true;
 		spin_unlock(&new->lock);
-		rcu_पढ़ो_unlock();
-		वापस idx;
-	पूर्ण
+		rcu_read_unlock();
+		return idx;
+	}
 
 	ids->in_use++;
-	अगर (idx > ids->max_idx)
+	if (idx > ids->max_idx)
 		ids->max_idx = idx;
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
 /**
  * ipcget_new -	create a new ipc object
  * @ns: ipc namespace
- * @ids: ipc identअगरier set
+ * @ids: ipc identifier set
  * @ops: the actual creation routine to call
  * @params: its parameters
  *
  * This routine is called by sys_msgget, sys_semget() and sys_shmget()
  * when the key is IPC_PRIVATE.
  */
-अटल पूर्णांक ipcget_new(काष्ठा ipc_namespace *ns, काष्ठा ipc_ids *ids,
-		स्थिर काष्ठा ipc_ops *ops, काष्ठा ipc_params *params)
-अणु
-	पूर्णांक err;
+static int ipcget_new(struct ipc_namespace *ns, struct ipc_ids *ids,
+		const struct ipc_ops *ops, struct ipc_params *params)
+{
+	int err;
 
-	करोwn_ग_लिखो(&ids->rwsem);
+	down_write(&ids->rwsem);
 	err = ops->getnew(ns, params);
-	up_ग_लिखो(&ids->rwsem);
-	वापस err;
-पूर्ण
+	up_write(&ids->rwsem);
+	return err;
+}
 
 /**
- * ipc_check_perms - check security and permissions क्रम an ipc object
+ * ipc_check_perms - check security and permissions for an ipc object
  * @ns: ipc namespace
  * @ipcp: ipc permission set
  * @ops: the actual security routine to call
  * @params: its parameters
  *
  * This routine is called by sys_msgget(), sys_semget() and sys_shmget()
- * when the key is not IPC_PRIVATE and that key alपढ़ोy exists in the
+ * when the key is not IPC_PRIVATE and that key already exists in the
  * ds IDR.
  *
- * On success, the ipc id is वापसed.
+ * On success, the ipc id is returned.
  *
  * It is called with ipc_ids.rwsem and ipcp->lock held.
  */
-अटल पूर्णांक ipc_check_perms(काष्ठा ipc_namespace *ns,
-			   काष्ठा kern_ipc_perm *ipcp,
-			   स्थिर काष्ठा ipc_ops *ops,
-			   काष्ठा ipc_params *params)
-अणु
-	पूर्णांक err;
+static int ipc_check_perms(struct ipc_namespace *ns,
+			   struct kern_ipc_perm *ipcp,
+			   const struct ipc_ops *ops,
+			   struct ipc_params *params)
+{
+	int err;
 
-	अगर (ipcperms(ns, ipcp, params->flg))
+	if (ipcperms(ns, ipcp, params->flg))
 		err = -EACCES;
-	अन्यथा अणु
+	else {
 		err = ops->associate(ipcp, params->flg);
-		अगर (!err)
+		if (!err)
 			err = ipcp->id;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * ipcget_खुला - get an ipc object or create a new one
+ * ipcget_public - get an ipc object or create a new one
  * @ns: ipc namespace
- * @ids: ipc identअगरier set
+ * @ids: ipc identifier set
  * @ops: the actual creation routine to call
  * @params: its parameters
  *
  * This routine is called by sys_msgget, sys_semget() and sys_shmget()
  * when the key is not IPC_PRIVATE.
- * It adds a new entry अगर the key is not found and करोes some permission
- * / security checkings अगर the key is found.
+ * It adds a new entry if the key is not found and does some permission
+ * / security checkings if the key is found.
  *
- * On success, the ipc id is वापसed.
+ * On success, the ipc id is returned.
  */
-अटल पूर्णांक ipcget_खुला(काष्ठा ipc_namespace *ns, काष्ठा ipc_ids *ids,
-		स्थिर काष्ठा ipc_ops *ops, काष्ठा ipc_params *params)
-अणु
-	काष्ठा kern_ipc_perm *ipcp;
-	पूर्णांक flg = params->flg;
-	पूर्णांक err;
+static int ipcget_public(struct ipc_namespace *ns, struct ipc_ids *ids,
+		const struct ipc_ops *ops, struct ipc_params *params)
+{
+	struct kern_ipc_perm *ipcp;
+	int flg = params->flg;
+	int err;
 
 	/*
-	 * Take the lock as a ग_लिखोr since we are potentially going to add
-	 * a new entry + पढ़ो locks are not "upgradable"
+	 * Take the lock as a writer since we are potentially going to add
+	 * a new entry + read locks are not "upgradable"
 	 */
-	करोwn_ग_लिखो(&ids->rwsem);
+	down_write(&ids->rwsem);
 	ipcp = ipc_findkey(ids, params->key);
-	अगर (ipcp == शून्य) अणु
+	if (ipcp == NULL) {
 		/* key not used */
-		अगर (!(flg & IPC_CREAT))
+		if (!(flg & IPC_CREAT))
 			err = -ENOENT;
-		अन्यथा
+		else
 			err = ops->getnew(ns, params);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* ipc object has been locked by ipc_findkey() */
 
-		अगर (flg & IPC_CREAT && flg & IPC_EXCL)
+		if (flg & IPC_CREAT && flg & IPC_EXCL)
 			err = -EEXIST;
-		अन्यथा अणु
+		else {
 			err = 0;
-			अगर (ops->more_checks)
+			if (ops->more_checks)
 				err = ops->more_checks(ipcp, params);
-			अगर (!err)
+			if (!err)
 				/*
-				 * ipc_check_perms वापसs the IPC id on
+				 * ipc_check_perms returns the IPC id on
 				 * success
 				 */
 				err = ipc_check_perms(ns, ipcp, ops, params);
-		पूर्ण
+		}
 		ipc_unlock(ipcp);
-	पूर्ण
-	up_ग_लिखो(&ids->rwsem);
+	}
+	up_write(&ids->rwsem);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * ipc_kht_हटाओ - हटाओ an ipc from the key hashtable
- * @ids: ipc identअगरier set
- * @ipcp: ipc perm काष्ठाure containing the key to हटाओ
+ * ipc_kht_remove - remove an ipc from the key hashtable
+ * @ids: ipc identifier set
+ * @ipcp: ipc perm structure containing the key to remove
  *
- * ipc_ids.rwsem (as a ग_लिखोr) and the spinlock क्रम this ID are held
- * beक्रमe this function is called, and reमुख्य locked on the निकास.
+ * ipc_ids.rwsem (as a writer) and the spinlock for this ID are held
+ * before this function is called, and remain locked on the exit.
  */
-अटल व्योम ipc_kht_हटाओ(काष्ठा ipc_ids *ids, काष्ठा kern_ipc_perm *ipcp)
-अणु
-	अगर (ipcp->key != IPC_PRIVATE)
-		rhashtable_हटाओ_fast(&ids->key_ht, &ipcp->khtnode,
+static void ipc_kht_remove(struct ipc_ids *ids, struct kern_ipc_perm *ipcp)
+{
+	if (ipcp->key != IPC_PRIVATE)
+		rhashtable_remove_fast(&ids->key_ht, &ipcp->khtnode,
 				       ipc_kht_params);
-पूर्ण
+}
 
 /**
- * ipc_rmid - हटाओ an ipc identअगरier
- * @ids: ipc identअगरier set
- * @ipcp: ipc perm काष्ठाure containing the identअगरier to हटाओ
+ * ipc_rmid - remove an ipc identifier
+ * @ids: ipc identifier set
+ * @ipcp: ipc perm structure containing the identifier to remove
  *
- * ipc_ids.rwsem (as a ग_लिखोr) and the spinlock क्रम this ID are held
- * beक्रमe this function is called, and reमुख्य locked on the निकास.
+ * ipc_ids.rwsem (as a writer) and the spinlock for this ID are held
+ * before this function is called, and remain locked on the exit.
  */
-व्योम ipc_rmid(काष्ठा ipc_ids *ids, काष्ठा kern_ipc_perm *ipcp)
-अणु
-	पूर्णांक idx = ipcid_to_idx(ipcp->id);
+void ipc_rmid(struct ipc_ids *ids, struct kern_ipc_perm *ipcp)
+{
+	int idx = ipcid_to_idx(ipcp->id);
 
-	idr_हटाओ(&ids->ipcs_idr, idx);
-	ipc_kht_हटाओ(ids, ipcp);
+	idr_remove(&ids->ipcs_idr, idx);
+	ipc_kht_remove(ids, ipcp);
 	ids->in_use--;
 	ipcp->deleted = true;
 
-	अगर (unlikely(idx == ids->max_idx)) अणु
-		करो अणु
+	if (unlikely(idx == ids->max_idx)) {
+		do {
 			idx--;
-			अगर (idx == -1)
-				अवरोध;
-		पूर्ण जबतक (!idr_find(&ids->ipcs_idr, idx));
+			if (idx == -1)
+				break;
+		} while (!idr_find(&ids->ipcs_idr, idx));
 		ids->max_idx = idx;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * ipc_set_key_निजी - चयन the key of an existing ipc to IPC_PRIVATE
- * @ids: ipc identअगरier set
- * @ipcp: ipc perm काष्ठाure containing the key to modअगरy
+ * ipc_set_key_private - switch the key of an existing ipc to IPC_PRIVATE
+ * @ids: ipc identifier set
+ * @ipcp: ipc perm structure containing the key to modify
  *
- * ipc_ids.rwsem (as a ग_लिखोr) and the spinlock क्रम this ID are held
- * beक्रमe this function is called, and reमुख्य locked on the निकास.
+ * ipc_ids.rwsem (as a writer) and the spinlock for this ID are held
+ * before this function is called, and remain locked on the exit.
  */
-व्योम ipc_set_key_निजी(काष्ठा ipc_ids *ids, काष्ठा kern_ipc_perm *ipcp)
-अणु
-	ipc_kht_हटाओ(ids, ipcp);
+void ipc_set_key_private(struct ipc_ids *ids, struct kern_ipc_perm *ipcp)
+{
+	ipc_kht_remove(ids, ipcp);
 	ipcp->key = IPC_PRIVATE;
-पूर्ण
+}
 
-bool ipc_rcu_getref(काष्ठा kern_ipc_perm *ptr)
-अणु
-	वापस refcount_inc_not_zero(&ptr->refcount);
-पूर्ण
+bool ipc_rcu_getref(struct kern_ipc_perm *ptr)
+{
+	return refcount_inc_not_zero(&ptr->refcount);
+}
 
-व्योम ipc_rcu_putref(काष्ठा kern_ipc_perm *ptr,
-			व्योम (*func)(काष्ठा rcu_head *head))
-अणु
-	अगर (!refcount_dec_and_test(&ptr->refcount))
-		वापस;
+void ipc_rcu_putref(struct kern_ipc_perm *ptr,
+			void (*func)(struct rcu_head *head))
+{
+	if (!refcount_dec_and_test(&ptr->refcount))
+		return;
 
 	call_rcu(&ptr->rcu, func);
-पूर्ण
+}
 
 /**
  * ipcperms - check ipc permissions
@@ -512,35 +511,35 @@ bool ipc_rcu_getref(काष्ठा kern_ipc_perm *ptr)
  * @ipcp: ipc permission set
  * @flag: desired permission set
  *
- * Check user, group, other permissions क्रम access
- * to ipc resources. वापस 0 अगर allowed
+ * Check user, group, other permissions for access
+ * to ipc resources. return 0 if allowed
  *
- * @flag will most probably be 0 or ``S_...UGO`` from <linux/स्थिति.स>
+ * @flag will most probably be 0 or ``S_...UGO`` from <linux/stat.h>
  */
-पूर्णांक ipcperms(काष्ठा ipc_namespace *ns, काष्ठा kern_ipc_perm *ipcp, लघु flag)
-अणु
+int ipcperms(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp, short flag)
+{
 	kuid_t euid = current_euid();
-	पूर्णांक requested_mode, granted_mode;
+	int requested_mode, granted_mode;
 
 	audit_ipc_obj(ipcp);
 	requested_mode = (flag >> 6) | (flag >> 3) | flag;
 	granted_mode = ipcp->mode;
-	अगर (uid_eq(euid, ipcp->cuid) ||
+	if (uid_eq(euid, ipcp->cuid) ||
 	    uid_eq(euid, ipcp->uid))
 		granted_mode >>= 6;
-	अन्यथा अगर (in_group_p(ipcp->cgid) || in_group_p(ipcp->gid))
+	else if (in_group_p(ipcp->cgid) || in_group_p(ipcp->gid))
 		granted_mode >>= 3;
 	/* is there some bit set in requested_mode but not in granted_mode? */
-	अगर ((requested_mode & ~granted_mode & 0007) &&
+	if ((requested_mode & ~granted_mode & 0007) &&
 	    !ns_capable(ns->user_ns, CAP_IPC_OWNER))
-		वापस -1;
+		return -1;
 
-	वापस security_ipc_permission(ipcp, flag);
-पूर्ण
+	return security_ipc_permission(ipcp, flag);
+}
 
 /*
- * Functions to convert between the kern_ipc_perm काष्ठाure and the
- * old/new ipc_perm काष्ठाures
+ * Functions to convert between the kern_ipc_perm structure and the
+ * old/new ipc_perm structures
  */
 
 /**
@@ -548,11 +547,11 @@ bool ipc_rcu_getref(काष्ठा kern_ipc_perm *ptr)
  * @in: kernel permissions
  * @out: new style ipc permissions
  *
- * Turn the kernel object @in पूर्णांकo a set of permissions descriptions
- * क्रम वापसing to userspace (@out).
+ * Turn the kernel object @in into a set of permissions descriptions
+ * for returning to userspace (@out).
  */
-व्योम kernel_to_ipc64_perm(काष्ठा kern_ipc_perm *in, काष्ठा ipc64_perm *out)
-अणु
+void kernel_to_ipc64_perm(struct kern_ipc_perm *in, struct ipc64_perm *out)
+{
 	out->key	= in->key;
 	out->uid	= from_kuid_munged(current_user_ns(), in->uid);
 	out->gid	= from_kgid_munged(current_user_ns(), in->gid);
@@ -560,18 +559,18 @@ bool ipc_rcu_getref(काष्ठा kern_ipc_perm *ptr)
 	out->cgid	= from_kgid_munged(current_user_ns(), in->cgid);
 	out->mode	= in->mode;
 	out->seq	= in->seq;
-पूर्ण
+}
 
 /**
  * ipc64_perm_to_ipc_perm - convert new ipc permissions to old
  * @in: new style ipc permissions
  * @out: old style ipc permissions
  *
- * Turn the new style permissions object @in पूर्णांकo a compatibility
- * object and store it पूर्णांकo the @out poपूर्णांकer.
+ * Turn the new style permissions object @in into a compatibility
+ * object and store it into the @out pointer.
  */
-व्योम ipc64_perm_to_ipc_perm(काष्ठा ipc64_perm *in, काष्ठा ipc_perm *out)
-अणु
+void ipc64_perm_to_ipc_perm(struct ipc64_perm *in, struct ipc_perm *out)
+{
 	out->key	= in->key;
 	SET_UID(out->uid, in->uid);
 	SET_GID(out->gid, in->gid);
@@ -579,317 +578,317 @@ bool ipc_rcu_getref(काष्ठा kern_ipc_perm *ptr)
 	SET_GID(out->cgid, in->cgid);
 	out->mode	= in->mode;
 	out->seq	= in->seq;
-पूर्ण
+}
 
 /**
  * ipc_obtain_object_idr
- * @ids: ipc identअगरier set
- * @id: ipc id to look क्रम
+ * @ids: ipc identifier set
+ * @id: ipc id to look for
  *
- * Look क्रम an id in the ipc ids idr and वापस associated ipc object.
+ * Look for an id in the ipc ids idr and return associated ipc object.
  *
  * Call inside the RCU critical section.
- * The ipc object is *not* locked on निकास.
+ * The ipc object is *not* locked on exit.
  */
-काष्ठा kern_ipc_perm *ipc_obtain_object_idr(काष्ठा ipc_ids *ids, पूर्णांक id)
-अणु
-	काष्ठा kern_ipc_perm *out;
-	पूर्णांक idx = ipcid_to_idx(id);
+struct kern_ipc_perm *ipc_obtain_object_idr(struct ipc_ids *ids, int id)
+{
+	struct kern_ipc_perm *out;
+	int idx = ipcid_to_idx(id);
 
 	out = idr_find(&ids->ipcs_idr, idx);
-	अगर (!out)
-		वापस ERR_PTR(-EINVAL);
+	if (!out)
+		return ERR_PTR(-EINVAL);
 
-	वापस out;
-पूर्ण
+	return out;
+}
 
 /**
  * ipc_obtain_object_check
- * @ids: ipc identअगरier set
- * @id: ipc id to look क्रम
+ * @ids: ipc identifier set
+ * @id: ipc id to look for
  *
  * Similar to ipc_obtain_object_idr() but also checks the ipc object
  * sequence number.
  *
  * Call inside the RCU critical section.
- * The ipc object is *not* locked on निकास.
+ * The ipc object is *not* locked on exit.
  */
-काष्ठा kern_ipc_perm *ipc_obtain_object_check(काष्ठा ipc_ids *ids, पूर्णांक id)
-अणु
-	काष्ठा kern_ipc_perm *out = ipc_obtain_object_idr(ids, id);
+struct kern_ipc_perm *ipc_obtain_object_check(struct ipc_ids *ids, int id)
+{
+	struct kern_ipc_perm *out = ipc_obtain_object_idr(ids, id);
 
-	अगर (IS_ERR(out))
-		जाओ out;
+	if (IS_ERR(out))
+		goto out;
 
-	अगर (ipc_checkid(out, id))
-		वापस ERR_PTR(-EINVAL);
+	if (ipc_checkid(out, id))
+		return ERR_PTR(-EINVAL);
 out:
-	वापस out;
-पूर्ण
+	return out;
+}
 
 /**
  * ipcget - Common sys_*get() code
  * @ns: namespace
- * @ids: ipc identअगरier set
+ * @ids: ipc identifier set
  * @ops: operations to be called on ipc object creation, permission checks
  *       and further checks
  * @params: the parameters needed by the previous operations.
  *
  * Common routine called by sys_msgget(), sys_semget() and sys_shmget().
  */
-पूर्णांक ipcget(काष्ठा ipc_namespace *ns, काष्ठा ipc_ids *ids,
-			स्थिर काष्ठा ipc_ops *ops, काष्ठा ipc_params *params)
-अणु
-	अगर (params->key == IPC_PRIVATE)
-		वापस ipcget_new(ns, ids, ops, params);
-	अन्यथा
-		वापस ipcget_खुला(ns, ids, ops, params);
-पूर्ण
+int ipcget(struct ipc_namespace *ns, struct ipc_ids *ids,
+			const struct ipc_ops *ops, struct ipc_params *params)
+{
+	if (params->key == IPC_PRIVATE)
+		return ipcget_new(ns, ids, ops, params);
+	else
+		return ipcget_public(ns, ids, ops, params);
+}
 
 /**
  * ipc_update_perm - update the permissions of an ipc object
  * @in:  the permission given as input.
  * @out: the permission of the ipc to set.
  */
-पूर्णांक ipc_update_perm(काष्ठा ipc64_perm *in, काष्ठा kern_ipc_perm *out)
-अणु
+int ipc_update_perm(struct ipc64_perm *in, struct kern_ipc_perm *out)
+{
 	kuid_t uid = make_kuid(current_user_ns(), in->uid);
 	kgid_t gid = make_kgid(current_user_ns(), in->gid);
-	अगर (!uid_valid(uid) || !gid_valid(gid))
-		वापस -EINVAL;
+	if (!uid_valid(uid) || !gid_valid(gid))
+		return -EINVAL;
 
 	out->uid = uid;
 	out->gid = gid;
 	out->mode = (out->mode & ~S_IRWXUGO)
 		| (in->mode & S_IRWXUGO);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * ipcctl_obtain_check - retrieve an ipc object and check permissions
  * @ns:  ipc namespace
- * @ids:  the table of ids where to look क्रम the ipc
+ * @ids:  the table of ids where to look for the ipc
  * @id:   the id of the ipc to retrieve
  * @cmd:  the cmd to check
  * @perm: the permission to set
  * @extra_perm: one extra permission parameter used by msq
  *
- * This function करोes some common audit and permissions check क्रम some IPC_XXX
- * cmd and is called from semctl_करोwn, shmctl_करोwn and msgctl_करोwn.
+ * This function does some common audit and permissions check for some IPC_XXX
+ * cmd and is called from semctl_down, shmctl_down and msgctl_down.
  *
  * It:
  *   - retrieves the ipc object with the given id in the given table.
- *   - perक्रमms some audit and permission check, depending on the given cmd
- *   - वापसs a poपूर्णांकer to the ipc object or otherwise, the corresponding
+ *   - performs some audit and permission check, depending on the given cmd
+ *   - returns a pointer to the ipc object or otherwise, the corresponding
  *     error.
  *
- * Call holding the both the rwsem and the rcu पढ़ो lock.
+ * Call holding the both the rwsem and the rcu read lock.
  */
-काष्ठा kern_ipc_perm *ipcctl_obtain_check(काष्ठा ipc_namespace *ns,
-					काष्ठा ipc_ids *ids, पूर्णांक id, पूर्णांक cmd,
-					काष्ठा ipc64_perm *perm, पूर्णांक extra_perm)
-अणु
+struct kern_ipc_perm *ipcctl_obtain_check(struct ipc_namespace *ns,
+					struct ipc_ids *ids, int id, int cmd,
+					struct ipc64_perm *perm, int extra_perm)
+{
 	kuid_t euid;
-	पूर्णांक err = -EPERM;
-	काष्ठा kern_ipc_perm *ipcp;
+	int err = -EPERM;
+	struct kern_ipc_perm *ipcp;
 
 	ipcp = ipc_obtain_object_check(ids, id);
-	अगर (IS_ERR(ipcp)) अणु
+	if (IS_ERR(ipcp)) {
 		err = PTR_ERR(ipcp);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	audit_ipc_obj(ipcp);
-	अगर (cmd == IPC_SET)
+	if (cmd == IPC_SET)
 		audit_ipc_set_perm(extra_perm, perm->uid,
 				   perm->gid, perm->mode);
 
 	euid = current_euid();
-	अगर (uid_eq(euid, ipcp->cuid) || uid_eq(euid, ipcp->uid)  ||
+	if (uid_eq(euid, ipcp->cuid) || uid_eq(euid, ipcp->uid)  ||
 	    ns_capable(ns->user_ns, CAP_SYS_ADMIN))
-		वापस ipcp; /* successful lookup */
+		return ipcp; /* successful lookup */
 err:
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-#अगर_घोषित CONFIG_ARCH_WANT_IPC_PARSE_VERSION
+#ifdef CONFIG_ARCH_WANT_IPC_PARSE_VERSION
 
 
 /**
  * ipc_parse_version - ipc call version
- * @cmd: poपूर्णांकer to command
+ * @cmd: pointer to command
  *
- * Return IPC_64 क्रम new style IPC and IPC_OLD क्रम old style IPC.
- * The @cmd value is turned from an encoding command and version पूर्णांकo
+ * Return IPC_64 for new style IPC and IPC_OLD for old style IPC.
+ * The @cmd value is turned from an encoding command and version into
  * just the command code.
  */
-पूर्णांक ipc_parse_version(पूर्णांक *cmd)
-अणु
-	अगर (*cmd & IPC_64) अणु
+int ipc_parse_version(int *cmd)
+{
+	if (*cmd & IPC_64) {
 		*cmd ^= IPC_64;
-		वापस IPC_64;
-	पूर्ण अन्यथा अणु
-		वापस IPC_OLD;
-	पूर्ण
-पूर्ण
+		return IPC_64;
+	} else {
+		return IPC_OLD;
+	}
+}
 
-#पूर्ण_अगर /* CONFIG_ARCH_WANT_IPC_PARSE_VERSION */
+#endif /* CONFIG_ARCH_WANT_IPC_PARSE_VERSION */
 
-#अगर_घोषित CONFIG_PROC_FS
-काष्ठा ipc_proc_iter अणु
-	काष्ठा ipc_namespace *ns;
-	काष्ठा pid_namespace *pid_ns;
-	काष्ठा ipc_proc_अगरace *अगरace;
-पूर्ण;
+#ifdef CONFIG_PROC_FS
+struct ipc_proc_iter {
+	struct ipc_namespace *ns;
+	struct pid_namespace *pid_ns;
+	struct ipc_proc_iface *iface;
+};
 
-काष्ठा pid_namespace *ipc_seq_pid_ns(काष्ठा seq_file *s)
-अणु
-	काष्ठा ipc_proc_iter *iter = s->निजी;
-	वापस iter->pid_ns;
-पूर्ण
+struct pid_namespace *ipc_seq_pid_ns(struct seq_file *s)
+{
+	struct ipc_proc_iter *iter = s->private;
+	return iter->pid_ns;
+}
 
 /*
- * This routine locks the ipc काष्ठाure found at least at position pos.
+ * This routine locks the ipc structure found at least at position pos.
  */
-अटल काष्ठा kern_ipc_perm *sysvipc_find_ipc(काष्ठा ipc_ids *ids, loff_t pos,
+static struct kern_ipc_perm *sysvipc_find_ipc(struct ipc_ids *ids, loff_t pos,
 					      loff_t *new_pos)
-अणु
-	काष्ठा kern_ipc_perm *ipc;
-	पूर्णांक total, id;
+{
+	struct kern_ipc_perm *ipc;
+	int total, id;
 
 	total = 0;
-	क्रम (id = 0; id < pos && total < ids->in_use; id++) अणु
+	for (id = 0; id < pos && total < ids->in_use; id++) {
 		ipc = idr_find(&ids->ipcs_idr, id);
-		अगर (ipc != शून्य)
+		if (ipc != NULL)
 			total++;
-	पूर्ण
+	}
 
-	ipc = शून्य;
-	अगर (total >= ids->in_use)
-		जाओ out;
+	ipc = NULL;
+	if (total >= ids->in_use)
+		goto out;
 
-	क्रम (; pos < ipc_mni; pos++) अणु
+	for (; pos < ipc_mni; pos++) {
 		ipc = idr_find(&ids->ipcs_idr, pos);
-		अगर (ipc != शून्य) अणु
-			rcu_पढ़ो_lock();
+		if (ipc != NULL) {
+			rcu_read_lock();
 			ipc_lock_object(ipc);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 out:
 	*new_pos = pos + 1;
-	वापस ipc;
-पूर्ण
+	return ipc;
+}
 
-अटल व्योम *sysvipc_proc_next(काष्ठा seq_file *s, व्योम *it, loff_t *pos)
-अणु
-	काष्ठा ipc_proc_iter *iter = s->निजी;
-	काष्ठा ipc_proc_अगरace *अगरace = iter->अगरace;
-	काष्ठा kern_ipc_perm *ipc = it;
+static void *sysvipc_proc_next(struct seq_file *s, void *it, loff_t *pos)
+{
+	struct ipc_proc_iter *iter = s->private;
+	struct ipc_proc_iface *iface = iter->iface;
+	struct kern_ipc_perm *ipc = it;
 
-	/* If we had an ipc id locked beक्रमe, unlock it */
-	अगर (ipc && ipc != SEQ_START_TOKEN)
+	/* If we had an ipc id locked before, unlock it */
+	if (ipc && ipc != SEQ_START_TOKEN)
 		ipc_unlock(ipc);
 
-	वापस sysvipc_find_ipc(&iter->ns->ids[अगरace->ids], *pos, pos);
-पूर्ण
+	return sysvipc_find_ipc(&iter->ns->ids[iface->ids], *pos, pos);
+}
 
 /*
  * File positions: pos 0 -> header, pos n -> ipc id = n - 1.
- * SeqFile iterator: iterator value locked ipc poपूर्णांकer or SEQ_TOKEN_START.
+ * SeqFile iterator: iterator value locked ipc pointer or SEQ_TOKEN_START.
  */
-अटल व्योम *sysvipc_proc_start(काष्ठा seq_file *s, loff_t *pos)
-अणु
-	काष्ठा ipc_proc_iter *iter = s->निजी;
-	काष्ठा ipc_proc_अगरace *अगरace = iter->अगरace;
-	काष्ठा ipc_ids *ids;
+static void *sysvipc_proc_start(struct seq_file *s, loff_t *pos)
+{
+	struct ipc_proc_iter *iter = s->private;
+	struct ipc_proc_iface *iface = iter->iface;
+	struct ipc_ids *ids;
 
-	ids = &iter->ns->ids[अगरace->ids];
+	ids = &iter->ns->ids[iface->ids];
 
 	/*
 	 * Take the lock - this will be released by the corresponding
 	 * call to stop().
 	 */
-	करोwn_पढ़ो(&ids->rwsem);
+	down_read(&ids->rwsem);
 
 	/* pos < 0 is invalid */
-	अगर (*pos < 0)
-		वापस शून्य;
+	if (*pos < 0)
+		return NULL;
 
 	/* pos == 0 means header */
-	अगर (*pos == 0)
-		वापस SEQ_START_TOKEN;
+	if (*pos == 0)
+		return SEQ_START_TOKEN;
 
 	/* Find the (pos-1)th ipc */
-	वापस sysvipc_find_ipc(ids, *pos - 1, pos);
-पूर्ण
+	return sysvipc_find_ipc(ids, *pos - 1, pos);
+}
 
-अटल व्योम sysvipc_proc_stop(काष्ठा seq_file *s, व्योम *it)
-अणु
-	काष्ठा kern_ipc_perm *ipc = it;
-	काष्ठा ipc_proc_iter *iter = s->निजी;
-	काष्ठा ipc_proc_अगरace *अगरace = iter->अगरace;
-	काष्ठा ipc_ids *ids;
+static void sysvipc_proc_stop(struct seq_file *s, void *it)
+{
+	struct kern_ipc_perm *ipc = it;
+	struct ipc_proc_iter *iter = s->private;
+	struct ipc_proc_iface *iface = iter->iface;
+	struct ipc_ids *ids;
 
-	/* If we had a locked काष्ठाure, release it */
-	अगर (ipc && ipc != SEQ_START_TOKEN)
+	/* If we had a locked structure, release it */
+	if (ipc && ipc != SEQ_START_TOKEN)
 		ipc_unlock(ipc);
 
-	ids = &iter->ns->ids[अगरace->ids];
+	ids = &iter->ns->ids[iface->ids];
 	/* Release the lock we took in start() */
-	up_पढ़ो(&ids->rwsem);
-पूर्ण
+	up_read(&ids->rwsem);
+}
 
-अटल पूर्णांक sysvipc_proc_show(काष्ठा seq_file *s, व्योम *it)
-अणु
-	काष्ठा ipc_proc_iter *iter = s->निजी;
-	काष्ठा ipc_proc_अगरace *अगरace = iter->अगरace;
+static int sysvipc_proc_show(struct seq_file *s, void *it)
+{
+	struct ipc_proc_iter *iter = s->private;
+	struct ipc_proc_iface *iface = iter->iface;
 
-	अगर (it == SEQ_START_TOKEN) अणु
-		seq_माला_दो(s, अगरace->header);
-		वापस 0;
-	पूर्ण
+	if (it == SEQ_START_TOKEN) {
+		seq_puts(s, iface->header);
+		return 0;
+	}
 
-	वापस अगरace->show(s, it);
-पूर्ण
+	return iface->show(s, it);
+}
 
-अटल स्थिर काष्ठा seq_operations sysvipc_proc_seqops = अणु
+static const struct seq_operations sysvipc_proc_seqops = {
 	.start = sysvipc_proc_start,
 	.stop  = sysvipc_proc_stop,
 	.next  = sysvipc_proc_next,
 	.show  = sysvipc_proc_show,
-पूर्ण;
+};
 
-अटल पूर्णांक sysvipc_proc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा ipc_proc_iter *iter;
+static int sysvipc_proc_open(struct inode *inode, struct file *file)
+{
+	struct ipc_proc_iter *iter;
 
-	iter = __seq_खोलो_निजी(file, &sysvipc_proc_seqops, माप(*iter));
-	अगर (!iter)
-		वापस -ENOMEM;
+	iter = __seq_open_private(file, &sysvipc_proc_seqops, sizeof(*iter));
+	if (!iter)
+		return -ENOMEM;
 
-	iter->अगरace = PDE_DATA(inode);
+	iter->iface = PDE_DATA(inode);
 	iter->ns    = get_ipc_ns(current->nsproxy->ipc_ns);
 	iter->pid_ns = get_pid_ns(task_active_pid_ns(current));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sysvipc_proc_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा seq_file *seq = file->निजी_data;
-	काष्ठा ipc_proc_iter *iter = seq->निजी;
+static int sysvipc_proc_release(struct inode *inode, struct file *file)
+{
+	struct seq_file *seq = file->private_data;
+	struct ipc_proc_iter *iter = seq->private;
 	put_ipc_ns(iter->ns);
 	put_pid_ns(iter->pid_ns);
-	वापस seq_release_निजी(inode, file);
-पूर्ण
+	return seq_release_private(inode, file);
+}
 
-अटल स्थिर काष्ठा proc_ops sysvipc_proc_ops = अणु
+static const struct proc_ops sysvipc_proc_ops = {
 	.proc_flags	= PROC_ENTRY_PERMANENT,
-	.proc_खोलो	= sysvipc_proc_खोलो,
-	.proc_पढ़ो	= seq_पढ़ो,
+	.proc_open	= sysvipc_proc_open,
+	.proc_read	= seq_read,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= sysvipc_proc_release,
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_PROC_FS */
+};
+#endif /* CONFIG_PROC_FS */

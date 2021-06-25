@@ -1,64 +1,63 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Driver क्रम Richtek RT9455WSC battery अक्षरger.
+ * Driver for Richtek RT9455WSC battery charger.
  *
  * Copyright (C) 2015 Intel Corporation
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/usb/phy.h>
-#समावेश <linux/regmap.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/delay.h>
+#include <linux/of_irq.h>
+#include <linux/of_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/power_supply.h>
+#include <linux/i2c.h>
+#include <linux/acpi.h>
+#include <linux/usb/phy.h>
+#include <linux/regmap.h>
 
-#घोषणा RT9455_MANUFACTURER			"Richtek"
-#घोषणा RT9455_MODEL_NAME			"RT9455"
-#घोषणा RT9455_DRIVER_NAME			"rt9455-charger"
+#define RT9455_MANUFACTURER			"Richtek"
+#define RT9455_MODEL_NAME			"RT9455"
+#define RT9455_DRIVER_NAME			"rt9455-charger"
 
-#घोषणा RT9455_IRQ_NAME				"interrupt"
+#define RT9455_IRQ_NAME				"interrupt"
 
-#घोषणा RT9455_PWR_RDY_DELAY			1 /* 1 second */
-#घोषणा RT9455_MAX_CHARGING_TIME		21600 /* 6 hrs */
-#घोषणा RT9455_BATT_PRESENCE_DELAY		60 /* 60 seconds */
+#define RT9455_PWR_RDY_DELAY			1 /* 1 second */
+#define RT9455_MAX_CHARGING_TIME		21600 /* 6 hrs */
+#define RT9455_BATT_PRESENCE_DELAY		60 /* 60 seconds */
 
-#घोषणा RT9455_CHARGE_MODE			0x00
-#घोषणा RT9455_BOOST_MODE			0x01
+#define RT9455_CHARGE_MODE			0x00
+#define RT9455_BOOST_MODE			0x01
 
-#घोषणा RT9455_FAULT				0x03
+#define RT9455_FAULT				0x03
 
-#घोषणा RT9455_IAICR_100MA			0x00
-#घोषणा RT9455_IAICR_500MA			0x01
-#घोषणा RT9455_IAICR_NO_LIMIT			0x03
+#define RT9455_IAICR_100MA			0x00
+#define RT9455_IAICR_500MA			0x01
+#define RT9455_IAICR_NO_LIMIT			0x03
 
-#घोषणा RT9455_CHARGE_DISABLE			0x00
-#घोषणा RT9455_CHARGE_ENABLE			0x01
+#define RT9455_CHARGE_DISABLE			0x00
+#define RT9455_CHARGE_ENABLE			0x01
 
-#घोषणा RT9455_PWR_FAULT			0x00
-#घोषणा RT9455_PWR_GOOD				0x01
+#define RT9455_PWR_FAULT			0x00
+#define RT9455_PWR_GOOD				0x01
 
-#घोषणा RT9455_REG_CTRL1			0x00 /* CTRL1 reg address */
-#घोषणा RT9455_REG_CTRL2			0x01 /* CTRL2 reg address */
-#घोषणा RT9455_REG_CTRL3			0x02 /* CTRL3 reg address */
-#घोषणा RT9455_REG_DEV_ID			0x03 /* DEV_ID reg address */
-#घोषणा RT9455_REG_CTRL4			0x04 /* CTRL4 reg address */
-#घोषणा RT9455_REG_CTRL5			0x05 /* CTRL5 reg address */
-#घोषणा RT9455_REG_CTRL6			0x06 /* CTRL6 reg address */
-#घोषणा RT9455_REG_CTRL7			0x07 /* CTRL7 reg address */
-#घोषणा RT9455_REG_IRQ1				0x08 /* IRQ1 reg address */
-#घोषणा RT9455_REG_IRQ2				0x09 /* IRQ2 reg address */
-#घोषणा RT9455_REG_IRQ3				0x0A /* IRQ3 reg address */
-#घोषणा RT9455_REG_MASK1			0x0B /* MASK1 reg address */
-#घोषणा RT9455_REG_MASK2			0x0C /* MASK2 reg address */
-#घोषणा RT9455_REG_MASK3			0x0D /* MASK3 reg address */
+#define RT9455_REG_CTRL1			0x00 /* CTRL1 reg address */
+#define RT9455_REG_CTRL2			0x01 /* CTRL2 reg address */
+#define RT9455_REG_CTRL3			0x02 /* CTRL3 reg address */
+#define RT9455_REG_DEV_ID			0x03 /* DEV_ID reg address */
+#define RT9455_REG_CTRL4			0x04 /* CTRL4 reg address */
+#define RT9455_REG_CTRL5			0x05 /* CTRL5 reg address */
+#define RT9455_REG_CTRL6			0x06 /* CTRL6 reg address */
+#define RT9455_REG_CTRL7			0x07 /* CTRL7 reg address */
+#define RT9455_REG_IRQ1				0x08 /* IRQ1 reg address */
+#define RT9455_REG_IRQ2				0x09 /* IRQ2 reg address */
+#define RT9455_REG_IRQ3				0x0A /* IRQ3 reg address */
+#define RT9455_REG_MASK1			0x0B /* MASK1 reg address */
+#define RT9455_REG_MASK2			0x0C /* MASK2 reg address */
+#define RT9455_REG_MASK3			0x0D /* MASK3 reg address */
 
-क्रमागत rt9455_fields अणु
+enum rt9455_fields {
 	F_STAT, F_BOOST, F_PWR_RDY, F_OTG_PIN_POLARITY, /* CTRL1 reg fields */
 
 	F_IAICR, F_TE_SHDN_EN, F_HIGHER_OCP, F_TE, F_IAICR_INT, F_HIZ,
@@ -91,9 +90,9 @@
 	F_BSTVINOVIM, F_BSTOLIM, F_BSTLOWVIM, F_BST32SIM, /* MASK3 reg fields */
 
 	F_MAX_FIELDS
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा reg_field rt9455_reg_fields[] = अणु
+static const struct reg_field rt9455_reg_fields[] = {
 	[F_STAT]		= REG_FIELD(RT9455_REG_CTRL1, 4, 5),
 	[F_BOOST]		= REG_FIELD(RT9455_REG_CTRL1, 3, 3),
 	[F_PWR_RDY]		= REG_FIELD(RT9455_REG_CTRL1, 2, 2),
@@ -162,28 +161,28 @@
 	[F_BSTOLIM]		= REG_FIELD(RT9455_REG_MASK3, 6, 6),
 	[F_BSTLOWVIM]		= REG_FIELD(RT9455_REG_MASK3, 5, 5),
 	[F_BST32SIM]		= REG_FIELD(RT9455_REG_MASK3, 3, 3),
-पूर्ण;
+};
 
-#घोषणा GET_MASK(fid)	(BIT(rt9455_reg_fields[fid].msb + 1) - \
+#define GET_MASK(fid)	(BIT(rt9455_reg_fields[fid].msb + 1) - \
 			 BIT(rt9455_reg_fields[fid].lsb))
 
 /*
- * Each array initialised below shows the possible real-world values क्रम a
- * group of bits beदीर्घing to RT9455 रेजिस्टरs. The arrays are sorted in
+ * Each array initialised below shows the possible real-world values for a
+ * group of bits belonging to RT9455 registers. The arrays are sorted in
  * ascending order. The index of each real-world value represents the value
- * that is encoded in the group of bits beदीर्घing to RT9455 रेजिस्टरs.
+ * that is encoded in the group of bits belonging to RT9455 registers.
  */
 /* REG06[6:4] (ICHRG) in uAh */
-अटल स्थिर पूर्णांक rt9455_ichrg_values[] = अणु
+static const int rt9455_ichrg_values[] = {
 	 500000,  650000,  800000,  950000, 1100000, 1250000, 1400000, 1550000
-पूर्ण;
+};
 
 /*
- * When the अक्षरger is in अक्षरge mode, REG02[7:2] represent battery regulation
+ * When the charger is in charge mode, REG02[7:2] represent battery regulation
  * voltage.
  */
 /* REG02[7:2] (VOREG) in uV */
-अटल स्थिर पूर्णांक rt9455_voreg_values[] = अणु
+static const int rt9455_voreg_values[] = {
 	3500000, 3520000, 3540000, 3560000, 3580000, 3600000, 3620000, 3640000,
 	3660000, 3680000, 3700000, 3720000, 3740000, 3760000, 3780000, 3800000,
 	3820000, 3840000, 3860000, 3880000, 3900000, 3920000, 3940000, 3960000,
@@ -192,14 +191,14 @@
 	4300000, 4330000, 4350000, 4370000, 4390000, 4410000, 4430000, 4450000,
 	4450000, 4450000, 4450000, 4450000, 4450000, 4450000, 4450000, 4450000,
 	4450000, 4450000, 4450000, 4450000, 4450000, 4450000, 4450000, 4450000
-पूर्ण;
+};
 
 /*
- * When the अक्षरger is in boost mode, REG02[7:2] represent boost output
+ * When the charger is in boost mode, REG02[7:2] represent boost output
  * voltage.
  */
 /* REG02[7:2] (Boost output voltage) in uV */
-अटल स्थिर पूर्णांक rt9455_boost_voltage_values[] = अणु
+static const int rt9455_boost_voltage_values[] = {
 	4425000, 4450000, 4475000, 4500000, 4525000, 4550000, 4575000, 4600000,
 	4625000, 4650000, 4675000, 4700000, 4725000, 4750000, 4775000, 4800000,
 	4825000, 4850000, 4875000, 4900000, 4925000, 4950000, 4975000, 5000000,
@@ -208,130 +207,130 @@
 	5425000, 5450000, 5475000, 5500000, 5525000, 5550000, 5575000, 5600000,
 	5600000, 5600000, 5600000, 5600000, 5600000, 5600000, 5600000, 5600000,
 	5600000, 5600000, 5600000, 5600000, 5600000, 5600000, 5600000, 5600000,
-पूर्ण;
+};
 
 /* REG07[3:0] (VMREG) in uV */
-अटल स्थिर पूर्णांक rt9455_vmreg_values[] = अणु
+static const int rt9455_vmreg_values[] = {
 	4200000, 4220000, 4240000, 4260000, 4280000, 4300000, 4320000, 4340000,
 	4360000, 4380000, 4400000, 4430000, 4450000, 4450000, 4450000, 4450000
-पूर्ण;
+};
 
 /* REG05[5:4] (IEOC_PERCENTAGE) */
-अटल स्थिर पूर्णांक rt9455_ieoc_percentage_values[] = अणु
+static const int rt9455_ieoc_percentage_values[] = {
 	10, 30, 20, 30
-पूर्ण;
+};
 
 /* REG05[1:0] (MIVR) in uV */
-अटल स्थिर पूर्णांक rt9455_mivr_values[] = अणु
+static const int rt9455_mivr_values[] = {
 	4000000, 4250000, 4500000, 5000000
-पूर्ण;
+};
 
 /* REG05[1:0] (IAICR) in uA */
-अटल स्थिर पूर्णांक rt9455_iaicr_values[] = अणु
+static const int rt9455_iaicr_values[] = {
 	100000, 500000, 1000000, 2000000
-पूर्ण;
+};
 
-काष्ठा rt9455_info अणु
-	काष्ठा i2c_client		*client;
-	काष्ठा regmap			*regmap;
-	काष्ठा regmap_field		*regmap_fields[F_MAX_FIELDS];
-	काष्ठा घातer_supply		*अक्षरger;
-#अगर IS_ENABLED(CONFIG_USB_PHY)
-	काष्ठा usb_phy			*usb_phy;
-	काष्ठा notअगरier_block		nb;
-#पूर्ण_अगर
-	काष्ठा delayed_work		pwr_rdy_work;
-	काष्ठा delayed_work		max_अक्षरging_समय_work;
-	काष्ठा delayed_work		batt_presence_work;
+struct rt9455_info {
+	struct i2c_client		*client;
+	struct regmap			*regmap;
+	struct regmap_field		*regmap_fields[F_MAX_FIELDS];
+	struct power_supply		*charger;
+#if IS_ENABLED(CONFIG_USB_PHY)
+	struct usb_phy			*usb_phy;
+	struct notifier_block		nb;
+#endif
+	struct delayed_work		pwr_rdy_work;
+	struct delayed_work		max_charging_time_work;
+	struct delayed_work		batt_presence_work;
 	u32				voreg;
 	u32				boost_voltage;
-पूर्ण;
+};
 
 /*
  * Iterate through each element of the 'tbl' array until an element whose value
  * is greater than v is found. Return the index of the respective element,
- * or the index of the last element in the array, अगर no such element is found.
+ * or the index of the last element in the array, if no such element is found.
  */
-अटल अचिन्हित पूर्णांक rt9455_find_idx(स्थिर पूर्णांक tbl[], पूर्णांक tbl_size, पूर्णांक v)
-अणु
-	पूर्णांक i;
+static unsigned int rt9455_find_idx(const int tbl[], int tbl_size, int v)
+{
+	int i;
 
 	/*
 	 * No need to iterate until the last index in the table because
-	 * अगर no element greater than v is found in the table,
-	 * or अगर only the last element is greater than v,
-	 * function वापसs the index of the last element.
+	 * if no element greater than v is found in the table,
+	 * or if only the last element is greater than v,
+	 * function returns the index of the last element.
 	 */
-	क्रम (i = 0; i < tbl_size - 1; i++)
-		अगर (v <= tbl[i])
-			वापस i;
+	for (i = 0; i < tbl_size - 1; i++)
+		if (v <= tbl[i])
+			return i;
 
-	वापस (tbl_size - 1);
-पूर्ण
+	return (tbl_size - 1);
+}
 
-अटल पूर्णांक rt9455_get_field_val(काष्ठा rt9455_info *info,
-				क्रमागत rt9455_fields field,
-				स्थिर पूर्णांक tbl[], पूर्णांक tbl_size, पूर्णांक *val)
-अणु
-	अचिन्हित पूर्णांक v;
-	पूर्णांक ret;
+static int rt9455_get_field_val(struct rt9455_info *info,
+				enum rt9455_fields field,
+				const int tbl[], int tbl_size, int *val)
+{
+	unsigned int v;
+	int ret;
 
-	ret = regmap_field_पढ़ो(info->regmap_fields[field], &v);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_field_read(info->regmap_fields[field], &v);
+	if (ret)
+		return ret;
 
 	v = (v >= tbl_size) ? (tbl_size - 1) : v;
 	*val = tbl[v];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rt9455_set_field_val(काष्ठा rt9455_info *info,
-				क्रमागत rt9455_fields field,
-				स्थिर पूर्णांक tbl[], पूर्णांक tbl_size, पूर्णांक val)
-अणु
-	अचिन्हित पूर्णांक idx = rt9455_find_idx(tbl, tbl_size, val);
+static int rt9455_set_field_val(struct rt9455_info *info,
+				enum rt9455_fields field,
+				const int tbl[], int tbl_size, int val)
+{
+	unsigned int idx = rt9455_find_idx(tbl, tbl_size, val);
 
-	वापस regmap_field_ग_लिखो(info->regmap_fields[field], idx);
-पूर्ण
+	return regmap_field_write(info->regmap_fields[field], idx);
+}
 
-अटल पूर्णांक rt9455_रेजिस्टर_reset(काष्ठा rt9455_info *info)
-अणु
-	काष्ठा device *dev = &info->client->dev;
-	अचिन्हित पूर्णांक v;
-	पूर्णांक ret, limit = 100;
+static int rt9455_register_reset(struct rt9455_info *info)
+{
+	struct device *dev = &info->client->dev;
+	unsigned int v;
+	int ret, limit = 100;
 
-	ret = regmap_field_ग_लिखो(info->regmap_fields[F_RST], 0x01);
-	अगर (ret) अणु
+	ret = regmap_field_write(info->regmap_fields[F_RST], 0x01);
+	if (ret) {
 		dev_err(dev, "Failed to set RST bit\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
 	 * To make sure that reset operation has finished, loop until RST bit
 	 * is set to 0.
 	 */
-	करो अणु
-		ret = regmap_field_पढ़ो(info->regmap_fields[F_RST], &v);
-		अगर (ret) अणु
+	do {
+		ret = regmap_field_read(info->regmap_fields[F_RST], &v);
+		if (ret) {
 			dev_err(dev, "Failed to read RST bit\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		अगर (!v)
-			अवरोध;
+		if (!v)
+			break;
 
 		usleep_range(10, 100);
-	पूर्ण जबतक (--limit);
+	} while (--limit);
 
-	अगर (!limit)
-		वापस -EIO;
+	if (!limit)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Charger घातer supply property routines */
-अटल क्रमागत घातer_supply_property rt9455_अक्षरger_properties[] = अणु
+/* Charger power supply property routines */
+static enum power_supply_property rt9455_charger_properties[] = {
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_HEALTH,
 	POWER_SUPPLY_PROP_PRESENT,
@@ -344,392 +343,392 @@
 	POWER_SUPPLY_PROP_CHARGE_TERM_CURRENT,
 	POWER_SUPPLY_PROP_MODEL_NAME,
 	POWER_SUPPLY_PROP_MANUFACTURER,
-पूर्ण;
+};
 
-अटल अक्षर *rt9455_अक्षरger_supplied_to[] = अणु
+static char *rt9455_charger_supplied_to[] = {
 	"main-battery",
-पूर्ण;
+};
 
-अटल पूर्णांक rt9455_अक्षरger_get_status(काष्ठा rt9455_info *info,
-				     जोड़ घातer_supply_propval *val)
-अणु
-	अचिन्हित पूर्णांक v, pwr_rdy;
-	पूर्णांक ret;
+static int rt9455_charger_get_status(struct rt9455_info *info,
+				     union power_supply_propval *val)
+{
+	unsigned int v, pwr_rdy;
+	int ret;
 
-	ret = regmap_field_पढ़ो(info->regmap_fields[F_PWR_RDY],
+	ret = regmap_field_read(info->regmap_fields[F_PWR_RDY],
 				&pwr_rdy);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&info->client->dev, "Failed to read PWR_RDY bit\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * If PWR_RDY bit is unset, the battery is disअक्षरging. Otherwise,
+	 * If PWR_RDY bit is unset, the battery is discharging. Otherwise,
 	 * STAT bits value must be checked.
 	 */
-	अगर (!pwr_rdy) अणु
-		val->पूर्णांकval = POWER_SUPPLY_STATUS_DISCHARGING;
-		वापस 0;
-	पूर्ण
+	if (!pwr_rdy) {
+		val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
+		return 0;
+	}
 
-	ret = regmap_field_पढ़ो(info->regmap_fields[F_STAT], &v);
-	अगर (ret) अणु
+	ret = regmap_field_read(info->regmap_fields[F_STAT], &v);
+	if (ret) {
 		dev_err(&info->client->dev, "Failed to read STAT bits\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	चयन (v) अणु
-	हाल 0:
+	switch (v) {
+	case 0:
 		/*
-		 * If PWR_RDY bit is set, but STAT bits value is 0, the अक्षरger
-		 * may be in one of the following हालs:
+		 * If PWR_RDY bit is set, but STAT bits value is 0, the charger
+		 * may be in one of the following cases:
 		 * 1. CHG_EN bit is 0.
 		 * 2. CHG_EN bit is 1 but the battery is not connected.
-		 * In any of these हालs, POWER_SUPPLY_STATUS_NOT_CHARGING is
-		 * वापसed.
+		 * In any of these cases, POWER_SUPPLY_STATUS_NOT_CHARGING is
+		 * returned.
 		 */
-		val->पूर्णांकval = POWER_SUPPLY_STATUS_NOT_CHARGING;
-		वापस 0;
-	हाल 1:
-		val->पूर्णांकval = POWER_SUPPLY_STATUS_CHARGING;
-		वापस 0;
-	हाल 2:
-		val->पूर्णांकval = POWER_SUPPLY_STATUS_FULL;
-		वापस 0;
-	शेष:
-		val->पूर्णांकval = POWER_SUPPLY_STATUS_UNKNOWN;
-		वापस 0;
-	पूर्ण
-पूर्ण
+		val->intval = POWER_SUPPLY_STATUS_NOT_CHARGING;
+		return 0;
+	case 1:
+		val->intval = POWER_SUPPLY_STATUS_CHARGING;
+		return 0;
+	case 2:
+		val->intval = POWER_SUPPLY_STATUS_FULL;
+		return 0;
+	default:
+		val->intval = POWER_SUPPLY_STATUS_UNKNOWN;
+		return 0;
+	}
+}
 
-अटल पूर्णांक rt9455_अक्षरger_get_health(काष्ठा rt9455_info *info,
-				     जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा device *dev = &info->client->dev;
-	अचिन्हित पूर्णांक v;
-	पूर्णांक ret;
+static int rt9455_charger_get_health(struct rt9455_info *info,
+				     union power_supply_propval *val)
+{
+	struct device *dev = &info->client->dev;
+	unsigned int v;
+	int ret;
 
-	val->पूर्णांकval = POWER_SUPPLY_HEALTH_GOOD;
+	val->intval = POWER_SUPPLY_HEALTH_GOOD;
 
-	ret = regmap_पढ़ो(info->regmap, RT9455_REG_IRQ1, &v);
-	अगर (ret) अणु
+	ret = regmap_read(info->regmap, RT9455_REG_IRQ1, &v);
+	if (ret) {
 		dev_err(dev, "Failed to read IRQ1 register\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (v & GET_MASK(F_TSDI)) अणु
-		val->पूर्णांकval = POWER_SUPPLY_HEALTH_OVERHEAT;
-		वापस 0;
-	पूर्ण
-	अगर (v & GET_MASK(F_VINOVPI)) अणु
-		val->पूर्णांकval = POWER_SUPPLY_HEALTH_OVERVOLTAGE;
-		वापस 0;
-	पूर्ण
-	अगर (v & GET_MASK(F_BATAB)) अणु
-		val->पूर्णांकval = POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
-		वापस 0;
-	पूर्ण
+	if (v & GET_MASK(F_TSDI)) {
+		val->intval = POWER_SUPPLY_HEALTH_OVERHEAT;
+		return 0;
+	}
+	if (v & GET_MASK(F_VINOVPI)) {
+		val->intval = POWER_SUPPLY_HEALTH_OVERVOLTAGE;
+		return 0;
+	}
+	if (v & GET_MASK(F_BATAB)) {
+		val->intval = POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
+		return 0;
+	}
 
-	ret = regmap_पढ़ो(info->regmap, RT9455_REG_IRQ2, &v);
-	अगर (ret) अणु
+	ret = regmap_read(info->regmap, RT9455_REG_IRQ2, &v);
+	if (ret) {
 		dev_err(dev, "Failed to read IRQ2 register\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (v & GET_MASK(F_CHBATOVI)) अणु
-		val->पूर्णांकval = POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
-		वापस 0;
-	पूर्ण
-	अगर (v & GET_MASK(F_CH32MI)) अणु
-		val->पूर्णांकval = POWER_SUPPLY_HEALTH_SAFETY_TIMER_EXPIRE;
-		वापस 0;
-	पूर्ण
+	if (v & GET_MASK(F_CHBATOVI)) {
+		val->intval = POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
+		return 0;
+	}
+	if (v & GET_MASK(F_CH32MI)) {
+		val->intval = POWER_SUPPLY_HEALTH_SAFETY_TIMER_EXPIRE;
+		return 0;
+	}
 
-	ret = regmap_पढ़ो(info->regmap, RT9455_REG_IRQ3, &v);
-	अगर (ret) अणु
+	ret = regmap_read(info->regmap, RT9455_REG_IRQ3, &v);
+	if (ret) {
 		dev_err(dev, "Failed to read IRQ3 register\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (v & GET_MASK(F_BSTBUSOVI)) अणु
-		val->पूर्णांकval = POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
-		वापस 0;
-	पूर्ण
-	अगर (v & GET_MASK(F_BSTOLI)) अणु
-		val->पूर्णांकval = POWER_SUPPLY_HEALTH_OVERVOLTAGE;
-		वापस 0;
-	पूर्ण
-	अगर (v & GET_MASK(F_BSTLOWVI)) अणु
-		val->पूर्णांकval = POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
-		वापस 0;
-	पूर्ण
-	अगर (v & GET_MASK(F_BST32SI)) अणु
-		val->पूर्णांकval = POWER_SUPPLY_HEALTH_SAFETY_TIMER_EXPIRE;
-		वापस 0;
-	पूर्ण
+	if (v & GET_MASK(F_BSTBUSOVI)) {
+		val->intval = POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
+		return 0;
+	}
+	if (v & GET_MASK(F_BSTOLI)) {
+		val->intval = POWER_SUPPLY_HEALTH_OVERVOLTAGE;
+		return 0;
+	}
+	if (v & GET_MASK(F_BSTLOWVI)) {
+		val->intval = POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
+		return 0;
+	}
+	if (v & GET_MASK(F_BST32SI)) {
+		val->intval = POWER_SUPPLY_HEALTH_SAFETY_TIMER_EXPIRE;
+		return 0;
+	}
 
-	ret = regmap_field_पढ़ो(info->regmap_fields[F_STAT], &v);
-	अगर (ret) अणु
+	ret = regmap_field_read(info->regmap_fields[F_STAT], &v);
+	if (ret) {
 		dev_err(dev, "Failed to read STAT bits\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (v == RT9455_FAULT) अणु
-		val->पूर्णांकval = POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
-		वापस 0;
-	पूर्ण
+	if (v == RT9455_FAULT) {
+		val->intval = POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
+		return 0;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rt9455_अक्षरger_get_battery_presence(काष्ठा rt9455_info *info,
-					       जोड़ घातer_supply_propval *val)
-अणु
-	अचिन्हित पूर्णांक v;
-	पूर्णांक ret;
+static int rt9455_charger_get_battery_presence(struct rt9455_info *info,
+					       union power_supply_propval *val)
+{
+	unsigned int v;
+	int ret;
 
-	ret = regmap_field_पढ़ो(info->regmap_fields[F_BATAB], &v);
-	अगर (ret) अणु
+	ret = regmap_field_read(info->regmap_fields[F_BATAB], &v);
+	if (ret) {
 		dev_err(&info->client->dev, "Failed to read BATAB bit\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
 	 * Since BATAB is 1 when battery is NOT present and 0 otherwise,
-	 * !BATAB is वापसed.
+	 * !BATAB is returned.
 	 */
-	val->पूर्णांकval = !v;
+	val->intval = !v;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rt9455_अक्षरger_get_online(काष्ठा rt9455_info *info,
-				     जोड़ घातer_supply_propval *val)
-अणु
-	अचिन्हित पूर्णांक v;
-	पूर्णांक ret;
+static int rt9455_charger_get_online(struct rt9455_info *info,
+				     union power_supply_propval *val)
+{
+	unsigned int v;
+	int ret;
 
-	ret = regmap_field_पढ़ो(info->regmap_fields[F_PWR_RDY], &v);
-	अगर (ret) अणु
+	ret = regmap_field_read(info->regmap_fields[F_PWR_RDY], &v);
+	if (ret) {
 		dev_err(&info->client->dev, "Failed to read PWR_RDY bit\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	val->पूर्णांकval = (पूर्णांक)v;
+	val->intval = (int)v;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rt9455_अक्षरger_get_current(काष्ठा rt9455_info *info,
-				      जोड़ घातer_supply_propval *val)
-अणु
-	पूर्णांक curr;
-	पूर्णांक ret;
+static int rt9455_charger_get_current(struct rt9455_info *info,
+				      union power_supply_propval *val)
+{
+	int curr;
+	int ret;
 
 	ret = rt9455_get_field_val(info, F_ICHRG,
 				   rt9455_ichrg_values,
 				   ARRAY_SIZE(rt9455_ichrg_values),
 				   &curr);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&info->client->dev, "Failed to read ICHRG value\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	val->पूर्णांकval = curr;
+	val->intval = curr;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rt9455_अक्षरger_get_current_max(काष्ठा rt9455_info *info,
-					  जोड़ घातer_supply_propval *val)
-अणु
-	पूर्णांक idx = ARRAY_SIZE(rt9455_ichrg_values) - 1;
+static int rt9455_charger_get_current_max(struct rt9455_info *info,
+					  union power_supply_propval *val)
+{
+	int idx = ARRAY_SIZE(rt9455_ichrg_values) - 1;
 
-	val->पूर्णांकval = rt9455_ichrg_values[idx];
+	val->intval = rt9455_ichrg_values[idx];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rt9455_अक्षरger_get_voltage(काष्ठा rt9455_info *info,
-				      जोड़ घातer_supply_propval *val)
-अणु
-	पूर्णांक voltage;
-	पूर्णांक ret;
+static int rt9455_charger_get_voltage(struct rt9455_info *info,
+				      union power_supply_propval *val)
+{
+	int voltage;
+	int ret;
 
 	ret = rt9455_get_field_val(info, F_VOREG,
 				   rt9455_voreg_values,
 				   ARRAY_SIZE(rt9455_voreg_values),
 				   &voltage);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&info->client->dev, "Failed to read VOREG value\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	val->पूर्णांकval = voltage;
+	val->intval = voltage;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rt9455_अक्षरger_get_voltage_max(काष्ठा rt9455_info *info,
-					  जोड़ घातer_supply_propval *val)
-अणु
-	पूर्णांक idx = ARRAY_SIZE(rt9455_vmreg_values) - 1;
+static int rt9455_charger_get_voltage_max(struct rt9455_info *info,
+					  union power_supply_propval *val)
+{
+	int idx = ARRAY_SIZE(rt9455_vmreg_values) - 1;
 
-	val->पूर्णांकval = rt9455_vmreg_values[idx];
+	val->intval = rt9455_vmreg_values[idx];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rt9455_अक्षरger_get_term_current(काष्ठा rt9455_info *info,
-					   जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा device *dev = &info->client->dev;
-	पूर्णांक ichrg, ieoc_percentage, ret;
+static int rt9455_charger_get_term_current(struct rt9455_info *info,
+					   union power_supply_propval *val)
+{
+	struct device *dev = &info->client->dev;
+	int ichrg, ieoc_percentage, ret;
 
 	ret = rt9455_get_field_val(info, F_ICHRG,
 				   rt9455_ichrg_values,
 				   ARRAY_SIZE(rt9455_ichrg_values),
 				   &ichrg);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to read ICHRG value\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = rt9455_get_field_val(info, F_IEOC_PERCENTAGE,
 				   rt9455_ieoc_percentage_values,
 				   ARRAY_SIZE(rt9455_ieoc_percentage_values),
 				   &ieoc_percentage);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to read IEOC value\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	val->पूर्णांकval = ichrg * ieoc_percentage / 100;
+	val->intval = ichrg * ieoc_percentage / 100;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rt9455_अक्षरger_get_property(काष्ठा घातer_supply *psy,
-				       क्रमागत घातer_supply_property psp,
-				       जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा rt9455_info *info = घातer_supply_get_drvdata(psy);
+static int rt9455_charger_get_property(struct power_supply *psy,
+				       enum power_supply_property psp,
+				       union power_supply_propval *val)
+{
+	struct rt9455_info *info = power_supply_get_drvdata(psy);
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_STATUS:
-		वापस rt9455_अक्षरger_get_status(info, val);
-	हाल POWER_SUPPLY_PROP_HEALTH:
-		वापस rt9455_अक्षरger_get_health(info, val);
-	हाल POWER_SUPPLY_PROP_PRESENT:
-		वापस rt9455_अक्षरger_get_battery_presence(info, val);
-	हाल POWER_SUPPLY_PROP_ONLINE:
-		वापस rt9455_अक्षरger_get_online(info, val);
-	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
-		वापस rt9455_अक्षरger_get_current(info, val);
-	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX:
-		वापस rt9455_अक्षरger_get_current_max(info, val);
-	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
-		वापस rt9455_अक्षरger_get_voltage(info, val);
-	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX:
-		वापस rt9455_अक्षरger_get_voltage_max(info, val);
-	हाल POWER_SUPPLY_PROP_SCOPE:
-		val->पूर्णांकval = POWER_SUPPLY_SCOPE_SYSTEM;
-		वापस 0;
-	हाल POWER_SUPPLY_PROP_CHARGE_TERM_CURRENT:
-		वापस rt9455_अक्षरger_get_term_current(info, val);
-	हाल POWER_SUPPLY_PROP_MODEL_NAME:
+	switch (psp) {
+	case POWER_SUPPLY_PROP_STATUS:
+		return rt9455_charger_get_status(info, val);
+	case POWER_SUPPLY_PROP_HEALTH:
+		return rt9455_charger_get_health(info, val);
+	case POWER_SUPPLY_PROP_PRESENT:
+		return rt9455_charger_get_battery_presence(info, val);
+	case POWER_SUPPLY_PROP_ONLINE:
+		return rt9455_charger_get_online(info, val);
+	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
+		return rt9455_charger_get_current(info, val);
+	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX:
+		return rt9455_charger_get_current_max(info, val);
+	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
+		return rt9455_charger_get_voltage(info, val);
+	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX:
+		return rt9455_charger_get_voltage_max(info, val);
+	case POWER_SUPPLY_PROP_SCOPE:
+		val->intval = POWER_SUPPLY_SCOPE_SYSTEM;
+		return 0;
+	case POWER_SUPPLY_PROP_CHARGE_TERM_CURRENT:
+		return rt9455_charger_get_term_current(info, val);
+	case POWER_SUPPLY_PROP_MODEL_NAME:
 		val->strval = RT9455_MODEL_NAME;
-		वापस 0;
-	हाल POWER_SUPPLY_PROP_MANUFACTURER:
+		return 0;
+	case POWER_SUPPLY_PROP_MANUFACTURER:
 		val->strval = RT9455_MANUFACTURER;
-		वापस 0;
-	शेष:
-		वापस -ENODATA;
-	पूर्ण
-पूर्ण
+		return 0;
+	default:
+		return -ENODATA;
+	}
+}
 
-अटल पूर्णांक rt9455_hw_init(काष्ठा rt9455_info *info, u32 ichrg,
+static int rt9455_hw_init(struct rt9455_info *info, u32 ichrg,
 			  u32 ieoc_percentage,
 			  u32 mivr, u32 iaicr)
-अणु
-	काष्ठा device *dev = &info->client->dev;
-	पूर्णांक idx, ret;
+{
+	struct device *dev = &info->client->dev;
+	int idx, ret;
 
-	ret = rt9455_रेजिस्टर_reset(info);
-	अगर (ret) अणु
+	ret = rt9455_register_reset(info);
+	if (ret) {
 		dev_err(dev, "Power On Reset failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Set TE bit in order to enable end of अक्षरge detection */
-	ret = regmap_field_ग_लिखो(info->regmap_fields[F_TE], 1);
-	अगर (ret) अणु
+	/* Set TE bit in order to enable end of charge detection */
+	ret = regmap_field_write(info->regmap_fields[F_TE], 1);
+	if (ret) {
 		dev_err(dev, "Failed to set TE bit\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Set TE_SHDN_EN bit in order to enable end of अक्षरge detection */
-	ret = regmap_field_ग_लिखो(info->regmap_fields[F_TE_SHDN_EN], 1);
-	अगर (ret) अणु
+	/* Set TE_SHDN_EN bit in order to enable end of charge detection */
+	ret = regmap_field_write(info->regmap_fields[F_TE_SHDN_EN], 1);
+	if (ret) {
 		dev_err(dev, "Failed to set TE_SHDN_EN bit\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
 	 * Set BATD_EN bit in order to enable battery detection
-	 * when अक्षरging is करोne
+	 * when charging is done
 	 */
-	ret = regmap_field_ग_लिखो(info->regmap_fields[F_BATD_EN], 1);
-	अगर (ret) अणु
+	ret = regmap_field_write(info->regmap_fields[F_BATD_EN], 1);
+	if (ret) {
 		dev_err(dev, "Failed to set BATD_EN bit\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * Disable Safety Timer. In अक्षरge mode, this समयr terminates अक्षरging
-	 * अगर no पढ़ो or ग_लिखो via I2C is करोne within 32 minutes. This समयr
-	 * aव्योमs overअक्षरging the baterry when the OS is not loaded and the
-	 * अक्षरger is connected to a घातer source.
-	 * In boost mode, this समयr triggers BST32SI पूर्णांकerrupt अगर no पढ़ो or
-	 * ग_लिखो via I2C is करोne within 32 seconds.
-	 * When the OS is loaded and the अक्षरger driver is inserted, it is used
-	 * delayed_work, named max_अक्षरging_समय_work, to aव्योम overअक्षरging
+	 * Disable Safety Timer. In charge mode, this timer terminates charging
+	 * if no read or write via I2C is done within 32 minutes. This timer
+	 * avoids overcharging the baterry when the OS is not loaded and the
+	 * charger is connected to a power source.
+	 * In boost mode, this timer triggers BST32SI interrupt if no read or
+	 * write via I2C is done within 32 seconds.
+	 * When the OS is loaded and the charger driver is inserted, it is used
+	 * delayed_work, named max_charging_time_work, to avoid overcharging
 	 * the battery.
 	 */
-	ret = regmap_field_ग_लिखो(info->regmap_fields[F_TMR_EN], 0x00);
-	अगर (ret) अणु
+	ret = regmap_field_write(info->regmap_fields[F_TMR_EN], 0x00);
+	if (ret) {
 		dev_err(dev, "Failed to disable Safety Timer\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Set ICHRG to value retrieved from device-specअगरic data */
+	/* Set ICHRG to value retrieved from device-specific data */
 	ret = rt9455_set_field_val(info, F_ICHRG,
 				   rt9455_ichrg_values,
 				   ARRAY_SIZE(rt9455_ichrg_values), ichrg);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to set ICHRG value\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Set IEOC Percentage to value retrieved from device-specअगरic data */
+	/* Set IEOC Percentage to value retrieved from device-specific data */
 	ret = rt9455_set_field_val(info, F_IEOC_PERCENTAGE,
 				   rt9455_ieoc_percentage_values,
 				   ARRAY_SIZE(rt9455_ieoc_percentage_values),
 				   ieoc_percentage);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to set IEOC Percentage value\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Set VOREG to value retrieved from device-specअगरic data */
+	/* Set VOREG to value retrieved from device-specific data */
 	ret = rt9455_set_field_val(info, F_VOREG,
 				   rt9455_voreg_values,
 				   ARRAY_SIZE(rt9455_voreg_values),
 				   info->voreg);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to set VOREG value\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Set VMREG value to maximum (4.45V). */
 	idx = ARRAY_SIZE(rt9455_vmreg_values) - 1;
@@ -737,1019 +736,1019 @@
 				   rt9455_vmreg_values,
 				   ARRAY_SIZE(rt9455_vmreg_values),
 				   rt9455_vmreg_values[idx]);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to set VMREG value\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * Set MIVR to value retrieved from device-specअगरic data.
-	 * If no value is specअगरied, शेष value क्रम MIVR is 4.5V.
+	 * Set MIVR to value retrieved from device-specific data.
+	 * If no value is specified, default value for MIVR is 4.5V.
 	 */
-	अगर (mivr == -1)
+	if (mivr == -1)
 		mivr = 4500000;
 
 	ret = rt9455_set_field_val(info, F_MIVR,
 				   rt9455_mivr_values,
 				   ARRAY_SIZE(rt9455_mivr_values), mivr);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to set MIVR value\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * Set IAICR to value retrieved from device-specअगरic data.
-	 * If no value is specअगरied, शेष value क्रम IAICR is 500 mA.
+	 * Set IAICR to value retrieved from device-specific data.
+	 * If no value is specified, default value for IAICR is 500 mA.
 	 */
-	अगर (iaicr == -1)
+	if (iaicr == -1)
 		iaicr = 500000;
 
 	ret = rt9455_set_field_val(info, F_IAICR,
 				   rt9455_iaicr_values,
 				   ARRAY_SIZE(rt9455_iaicr_values), iaicr);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to set IAICR value\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
 	 * Set IAICR_INT bit so that IAICR value is determined by IAICR bits
 	 * and not by OTG pin.
 	 */
-	ret = regmap_field_ग_लिखो(info->regmap_fields[F_IAICR_INT], 0x01);
-	अगर (ret) अणु
+	ret = regmap_field_write(info->regmap_fields[F_IAICR_INT], 0x01);
+	if (ret) {
 		dev_err(dev, "Failed to set IAICR_INT bit\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * Disable CHMIVRI पूर्णांकerrupt. Because the driver sets MIVR value,
+	 * Disable CHMIVRI interrupt. Because the driver sets MIVR value,
 	 * CHMIVRI is triggered, but there is no action to be taken by the
 	 * driver when CHMIVRI is triggered.
 	 */
-	ret = regmap_field_ग_लिखो(info->regmap_fields[F_CHMIVRIM], 0x01);
-	अगर (ret) अणु
+	ret = regmap_field_write(info->regmap_fields[F_CHMIVRIM], 0x01);
+	if (ret) {
 		dev_err(dev, "Failed to mask CHMIVRI interrupt\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर IS_ENABLED(CONFIG_USB_PHY)
+#if IS_ENABLED(CONFIG_USB_PHY)
 /*
- * Beक्रमe setting the अक्षरger पूर्णांकo boost mode, boost output voltage is
- * set. This is needed because boost output voltage may dअगरfer from battery
+ * Before setting the charger into boost mode, boost output voltage is
+ * set. This is needed because boost output voltage may differ from battery
  * regulation voltage. F_VOREG bits represent either battery regulation voltage
- * or boost output voltage, depending on the mode the अक्षरger is. Both battery
- * regulation voltage and boost output voltage are पढ़ो from DT/ACPI during
+ * or boost output voltage, depending on the mode the charger is. Both battery
+ * regulation voltage and boost output voltage are read from DT/ACPI during
  * probe.
  */
-अटल पूर्णांक rt9455_set_boost_voltage_beक्रमe_boost_mode(काष्ठा rt9455_info *info)
-अणु
-	काष्ठा device *dev = &info->client->dev;
-	पूर्णांक ret;
+static int rt9455_set_boost_voltage_before_boost_mode(struct rt9455_info *info)
+{
+	struct device *dev = &info->client->dev;
+	int ret;
 
 	ret = rt9455_set_field_val(info, F_VOREG,
 				   rt9455_boost_voltage_values,
 				   ARRAY_SIZE(rt9455_boost_voltage_values),
 				   info->boost_voltage);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to set boost output voltage value\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
 /*
- * Beक्रमe setting the अक्षरger पूर्णांकo अक्षरge mode, battery regulation voltage is
- * set. This is needed because boost output voltage may dअगरfer from battery
+ * Before setting the charger into charge mode, battery regulation voltage is
+ * set. This is needed because boost output voltage may differ from battery
  * regulation voltage. F_VOREG bits represent either battery regulation voltage
- * or boost output voltage, depending on the mode the अक्षरger is. Both battery
- * regulation voltage and boost output voltage are पढ़ो from DT/ACPI during
+ * or boost output voltage, depending on the mode the charger is. Both battery
+ * regulation voltage and boost output voltage are read from DT/ACPI during
  * probe.
  */
-अटल पूर्णांक rt9455_set_voreg_beक्रमe_अक्षरge_mode(काष्ठा rt9455_info *info)
-अणु
-	काष्ठा device *dev = &info->client->dev;
-	पूर्णांक ret;
+static int rt9455_set_voreg_before_charge_mode(struct rt9455_info *info)
+{
+	struct device *dev = &info->client->dev;
+	int ret;
 
 	ret = rt9455_set_field_val(info, F_VOREG,
 				   rt9455_voreg_values,
 				   ARRAY_SIZE(rt9455_voreg_values),
 				   info->voreg);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to set VOREG value\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rt9455_irq_handler_check_irq1_रेजिस्टर(काष्ठा rt9455_info *info,
-						  bool *_is_battery_असलent,
+static int rt9455_irq_handler_check_irq1_register(struct rt9455_info *info,
+						  bool *_is_battery_absent,
 						  bool *_alert_userspace)
-अणु
-	अचिन्हित पूर्णांक irq1, mask1, mask2;
-	काष्ठा device *dev = &info->client->dev;
-	bool is_battery_असलent = false;
+{
+	unsigned int irq1, mask1, mask2;
+	struct device *dev = &info->client->dev;
+	bool is_battery_absent = false;
 	bool alert_userspace = false;
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_पढ़ो(info->regmap, RT9455_REG_IRQ1, &irq1);
-	अगर (ret) अणु
+	ret = regmap_read(info->regmap, RT9455_REG_IRQ1, &irq1);
+	if (ret) {
 		dev_err(dev, "Failed to read IRQ1 register\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = regmap_पढ़ो(info->regmap, RT9455_REG_MASK1, &mask1);
-	अगर (ret) अणु
+	ret = regmap_read(info->regmap, RT9455_REG_MASK1, &mask1);
+	if (ret) {
 		dev_err(dev, "Failed to read MASK1 register\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (irq1 & GET_MASK(F_TSDI)) अणु
+	if (irq1 & GET_MASK(F_TSDI)) {
 		dev_err(dev, "Thermal shutdown fault occurred\n");
 		alert_userspace = true;
-	पूर्ण
+	}
 
-	अगर (irq1 & GET_MASK(F_VINOVPI)) अणु
+	if (irq1 & GET_MASK(F_VINOVPI)) {
 		dev_err(dev, "Overvoltage input occurred\n");
 		alert_userspace = true;
-	पूर्ण
+	}
 
-	अगर (irq1 & GET_MASK(F_BATAB)) अणु
+	if (irq1 & GET_MASK(F_BATAB)) {
 		dev_err(dev, "Battery absence occurred\n");
-		is_battery_असलent = true;
+		is_battery_absent = true;
 		alert_userspace = true;
 
-		अगर ((mask1 & GET_MASK(F_BATABM)) == 0) अणु
-			ret = regmap_field_ग_लिखो(info->regmap_fields[F_BATABM],
+		if ((mask1 & GET_MASK(F_BATABM)) == 0) {
+			ret = regmap_field_write(info->regmap_fields[F_BATABM],
 						 0x01);
-			अगर (ret) अणु
+			if (ret) {
 				dev_err(dev, "Failed to mask BATAB interrupt\n");
-				वापस ret;
-			पूर्ण
-		पूर्ण
+				return ret;
+			}
+		}
 
-		ret = regmap_पढ़ो(info->regmap, RT9455_REG_MASK2, &mask2);
-		अगर (ret) अणु
+		ret = regmap_read(info->regmap, RT9455_REG_MASK2, &mask2);
+		if (ret) {
 			dev_err(dev, "Failed to read MASK2 register\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		अगर (mask2 & GET_MASK(F_CHTERMIM)) अणु
-			ret = regmap_field_ग_लिखो(
+		if (mask2 & GET_MASK(F_CHTERMIM)) {
+			ret = regmap_field_write(
 				info->regmap_fields[F_CHTERMIM], 0x00);
-			अगर (ret) अणु
+			if (ret) {
 				dev_err(dev, "Failed to unmask CHTERMI interrupt\n");
-				वापस ret;
-			पूर्ण
-		पूर्ण
+				return ret;
+			}
+		}
 
-		अगर (mask2 & GET_MASK(F_CHRCHGIM)) अणु
-			ret = regmap_field_ग_लिखो(
+		if (mask2 & GET_MASK(F_CHRCHGIM)) {
+			ret = regmap_field_write(
 				info->regmap_fields[F_CHRCHGIM], 0x00);
-			अगर (ret) अणु
+			if (ret) {
 				dev_err(dev, "Failed to unmask CHRCHGI interrupt\n");
-				वापस ret;
-			पूर्ण
-		पूर्ण
+				return ret;
+			}
+		}
 
 		/*
-		 * When the battery is असलent, max_अक्षरging_समय_work is
-		 * cancelled, since no अक्षरging is करोne.
+		 * When the battery is absent, max_charging_time_work is
+		 * cancelled, since no charging is done.
 		 */
-		cancel_delayed_work_sync(&info->max_अक्षरging_समय_work);
+		cancel_delayed_work_sync(&info->max_charging_time_work);
 		/*
-		 * Since no पूर्णांकerrupt is triggered when the battery is
-		 * reconnected, max_अक्षरging_समय_work is not rescheduled.
-		 * Thereक्रमe, batt_presence_work is scheduled to check whether
-		 * the battery is still असलent or not.
+		 * Since no interrupt is triggered when the battery is
+		 * reconnected, max_charging_time_work is not rescheduled.
+		 * Therefore, batt_presence_work is scheduled to check whether
+		 * the battery is still absent or not.
 		 */
-		queue_delayed_work(प्रणाली_घातer_efficient_wq,
+		queue_delayed_work(system_power_efficient_wq,
 				   &info->batt_presence_work,
 				   RT9455_BATT_PRESENCE_DELAY * HZ);
-	पूर्ण
+	}
 
-	*_is_battery_असलent = is_battery_असलent;
+	*_is_battery_absent = is_battery_absent;
 
-	अगर (alert_userspace)
+	if (alert_userspace)
 		*_alert_userspace = alert_userspace;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rt9455_irq_handler_check_irq2_रेजिस्टर(काष्ठा rt9455_info *info,
-						  bool is_battery_असलent,
+static int rt9455_irq_handler_check_irq2_register(struct rt9455_info *info,
+						  bool is_battery_absent,
 						  bool *_alert_userspace)
-अणु
-	अचिन्हित पूर्णांक irq2, mask2;
-	काष्ठा device *dev = &info->client->dev;
+{
+	unsigned int irq2, mask2;
+	struct device *dev = &info->client->dev;
 	bool alert_userspace = false;
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_पढ़ो(info->regmap, RT9455_REG_IRQ2, &irq2);
-	अगर (ret) अणु
+	ret = regmap_read(info->regmap, RT9455_REG_IRQ2, &irq2);
+	if (ret) {
 		dev_err(dev, "Failed to read IRQ2 register\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = regmap_पढ़ो(info->regmap, RT9455_REG_MASK2, &mask2);
-	अगर (ret) अणु
+	ret = regmap_read(info->regmap, RT9455_REG_MASK2, &mask2);
+	if (ret) {
 		dev_err(dev, "Failed to read MASK2 register\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (irq2 & GET_MASK(F_CHRVPI)) अणु
+	if (irq2 & GET_MASK(F_CHRVPI)) {
 		dev_dbg(dev, "Charger fault occurred\n");
 		/*
-		 * CHRVPI bit is set in 2 हालs:
-		 * 1. when the घातer source is connected to the अक्षरger.
-		 * 2. when the घातer source is disconnected from the अक्षरger.
-		 * To identअगरy the हाल, PWR_RDY bit is checked. Because
-		 * PWR_RDY bit is set / cleared after CHRVPI पूर्णांकerrupt is
-		 * triggered, it is used delayed_work to later पढ़ो PWR_RDY bit.
-		 * Also, करो not set to true alert_userspace, because there is no
-		 * need to notअगरy userspace when CHRVPI पूर्णांकerrupt has occurred.
-		 * Userspace will be notअगरied after PWR_RDY bit is पढ़ो.
+		 * CHRVPI bit is set in 2 cases:
+		 * 1. when the power source is connected to the charger.
+		 * 2. when the power source is disconnected from the charger.
+		 * To identify the case, PWR_RDY bit is checked. Because
+		 * PWR_RDY bit is set / cleared after CHRVPI interrupt is
+		 * triggered, it is used delayed_work to later read PWR_RDY bit.
+		 * Also, do not set to true alert_userspace, because there is no
+		 * need to notify userspace when CHRVPI interrupt has occurred.
+		 * Userspace will be notified after PWR_RDY bit is read.
 		 */
-		queue_delayed_work(प्रणाली_घातer_efficient_wq,
+		queue_delayed_work(system_power_efficient_wq,
 				   &info->pwr_rdy_work,
 				   RT9455_PWR_RDY_DELAY * HZ);
-	पूर्ण
-	अगर (irq2 & GET_MASK(F_CHBATOVI)) अणु
+	}
+	if (irq2 & GET_MASK(F_CHBATOVI)) {
 		dev_err(dev, "Battery OVP occurred\n");
 		alert_userspace = true;
-	पूर्ण
-	अगर (irq2 & GET_MASK(F_CHTERMI)) अणु
+	}
+	if (irq2 & GET_MASK(F_CHTERMI)) {
 		dev_dbg(dev, "Charge terminated\n");
-		अगर (!is_battery_असलent) अणु
-			अगर ((mask2 & GET_MASK(F_CHTERMIM)) == 0) अणु
-				ret = regmap_field_ग_लिखो(
+		if (!is_battery_absent) {
+			if ((mask2 & GET_MASK(F_CHTERMIM)) == 0) {
+				ret = regmap_field_write(
 					info->regmap_fields[F_CHTERMIM], 0x01);
-				अगर (ret) अणु
+				if (ret) {
 					dev_err(dev, "Failed to mask CHTERMI interrupt\n");
-					वापस ret;
-				पूर्ण
+					return ret;
+				}
 				/*
 				 * Update MASK2 value, since CHTERMIM bit is
 				 * set.
 				 */
 				mask2 = mask2 | GET_MASK(F_CHTERMIM);
-			पूर्ण
-			cancel_delayed_work_sync(&info->max_अक्षरging_समय_work);
+			}
+			cancel_delayed_work_sync(&info->max_charging_time_work);
 			alert_userspace = true;
-		पूर्ण
-	पूर्ण
-	अगर (irq2 & GET_MASK(F_CHRCHGI)) अणु
+		}
+	}
+	if (irq2 & GET_MASK(F_CHRCHGI)) {
 		dev_dbg(dev, "Recharge request\n");
-		ret = regmap_field_ग_लिखो(info->regmap_fields[F_CHG_EN],
+		ret = regmap_field_write(info->regmap_fields[F_CHG_EN],
 					 RT9455_CHARGE_ENABLE);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "Failed to enable charging\n");
-			वापस ret;
-		पूर्ण
-		अगर (mask2 & GET_MASK(F_CHTERMIM)) अणु
-			ret = regmap_field_ग_लिखो(
+			return ret;
+		}
+		if (mask2 & GET_MASK(F_CHTERMIM)) {
+			ret = regmap_field_write(
 				info->regmap_fields[F_CHTERMIM], 0x00);
-			अगर (ret) अणु
+			if (ret) {
 				dev_err(dev, "Failed to unmask CHTERMI interrupt\n");
-				वापस ret;
-			पूर्ण
+				return ret;
+			}
 			/* Update MASK2 value, since CHTERMIM bit is cleared. */
 			mask2 = mask2 & ~GET_MASK(F_CHTERMIM);
-		पूर्ण
-		अगर (!is_battery_असलent) अणु
+		}
+		if (!is_battery_absent) {
 			/*
-			 * No need to check whether the अक्षरger is connected to
-			 * घातer source when CHRCHGI is received, since CHRCHGI
-			 * is not triggered अगर the अक्षरger is not connected to
-			 * the घातer source.
+			 * No need to check whether the charger is connected to
+			 * power source when CHRCHGI is received, since CHRCHGI
+			 * is not triggered if the charger is not connected to
+			 * the power source.
 			 */
-			queue_delayed_work(प्रणाली_घातer_efficient_wq,
-					   &info->max_अक्षरging_समय_work,
+			queue_delayed_work(system_power_efficient_wq,
+					   &info->max_charging_time_work,
 					   RT9455_MAX_CHARGING_TIME * HZ);
 			alert_userspace = true;
-		पूर्ण
-	पूर्ण
-	अगर (irq2 & GET_MASK(F_CH32MI)) अणु
+		}
+	}
+	if (irq2 & GET_MASK(F_CH32MI)) {
 		dev_err(dev, "Charger fault. 32 mins timeout occurred\n");
 		alert_userspace = true;
-	पूर्ण
-	अगर (irq2 & GET_MASK(F_CHTREGI)) अणु
+	}
+	if (irq2 & GET_MASK(F_CHTREGI)) {
 		dev_warn(dev,
 			 "Charger warning. Thermal regulation loop active\n");
 		alert_userspace = true;
-	पूर्ण
-	अगर (irq2 & GET_MASK(F_CHMIVRI)) अणु
+	}
+	if (irq2 & GET_MASK(F_CHMIVRI)) {
 		dev_dbg(dev,
 			"Charger warning. Input voltage MIVR loop active\n");
-	पूर्ण
+	}
 
-	अगर (alert_userspace)
+	if (alert_userspace)
 		*_alert_userspace = alert_userspace;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rt9455_irq_handler_check_irq3_रेजिस्टर(काष्ठा rt9455_info *info,
+static int rt9455_irq_handler_check_irq3_register(struct rt9455_info *info,
 						  bool *_alert_userspace)
-अणु
-	अचिन्हित पूर्णांक irq3, mask3;
-	काष्ठा device *dev = &info->client->dev;
+{
+	unsigned int irq3, mask3;
+	struct device *dev = &info->client->dev;
 	bool alert_userspace = false;
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_पढ़ो(info->regmap, RT9455_REG_IRQ3, &irq3);
-	अगर (ret) अणु
+	ret = regmap_read(info->regmap, RT9455_REG_IRQ3, &irq3);
+	if (ret) {
 		dev_err(dev, "Failed to read IRQ3 register\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = regmap_पढ़ो(info->regmap, RT9455_REG_MASK3, &mask3);
-	अगर (ret) अणु
+	ret = regmap_read(info->regmap, RT9455_REG_MASK3, &mask3);
+	if (ret) {
 		dev_err(dev, "Failed to read MASK3 register\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (irq3 & GET_MASK(F_BSTBUSOVI)) अणु
+	if (irq3 & GET_MASK(F_BSTBUSOVI)) {
 		dev_err(dev, "Boost fault. Overvoltage input occurred\n");
 		alert_userspace = true;
-	पूर्ण
-	अगर (irq3 & GET_MASK(F_BSTOLI)) अणु
+	}
+	if (irq3 & GET_MASK(F_BSTOLI)) {
 		dev_err(dev, "Boost fault. Overload\n");
 		alert_userspace = true;
-	पूर्ण
-	अगर (irq3 & GET_MASK(F_BSTLOWVI)) अणु
+	}
+	if (irq3 & GET_MASK(F_BSTLOWVI)) {
 		dev_err(dev, "Boost fault. Battery voltage too low\n");
 		alert_userspace = true;
-	पूर्ण
-	अगर (irq3 & GET_MASK(F_BST32SI)) अणु
+	}
+	if (irq3 & GET_MASK(F_BST32SI)) {
 		dev_err(dev, "Boost fault. 32 seconds timeout occurred.\n");
 		alert_userspace = true;
-	पूर्ण
+	}
 
-	अगर (alert_userspace) अणु
+	if (alert_userspace) {
 		dev_info(dev, "Boost fault occurred, therefore the charger goes into charge mode\n");
-		ret = rt9455_set_voreg_beक्रमe_अक्षरge_mode(info);
-		अगर (ret) अणु
+		ret = rt9455_set_voreg_before_charge_mode(info);
+		if (ret) {
 			dev_err(dev, "Failed to set VOREG before entering charge mode\n");
-			वापस ret;
-		पूर्ण
-		ret = regmap_field_ग_लिखो(info->regmap_fields[F_OPA_MODE],
+			return ret;
+		}
+		ret = regmap_field_write(info->regmap_fields[F_OPA_MODE],
 					 RT9455_CHARGE_MODE);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "Failed to set charger in charge mode\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		*_alert_userspace = alert_userspace;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t rt9455_irq_handler_thपढ़ो(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा rt9455_info *info = data;
-	काष्ठा device *dev;
+static irqreturn_t rt9455_irq_handler_thread(int irq, void *data)
+{
+	struct rt9455_info *info = data;
+	struct device *dev;
 	bool alert_userspace = false;
-	bool is_battery_असलent = false;
-	अचिन्हित पूर्णांक status;
-	पूर्णांक ret;
+	bool is_battery_absent = false;
+	unsigned int status;
+	int ret;
 
-	अगर (!info)
-		वापस IRQ_NONE;
+	if (!info)
+		return IRQ_NONE;
 
 	dev = &info->client->dev;
 
-	अगर (irq != info->client->irq) अणु
+	if (irq != info->client->irq) {
 		dev_err(dev, "Interrupt is not for RT9455 charger\n");
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	ret = regmap_field_पढ़ो(info->regmap_fields[F_STAT], &status);
-	अगर (ret) अणु
+	ret = regmap_field_read(info->regmap_fields[F_STAT], &status);
+	if (ret) {
 		dev_err(dev, "Failed to read STAT bits\n");
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 	dev_dbg(dev, "Charger status is %d\n", status);
 
 	/*
-	 * Each function that processes an IRQ रेजिस्टर receives as output
-	 * parameter alert_userspace poपूर्णांकer. alert_userspace is set to true
-	 * in such a function only अगर an पूर्णांकerrupt has occurred in the
-	 * respective पूर्णांकerrupt रेजिस्टर. This way, it is aव्योमed the following
-	 * हाल: पूर्णांकerrupt occurs only in IRQ1 रेजिस्टर,
-	 * rt9455_irq_handler_check_irq1_रेजिस्टर() function sets to true
-	 * alert_userspace, but rt9455_irq_handler_check_irq2_रेजिस्टर()
-	 * and rt9455_irq_handler_check_irq3_रेजिस्टर() functions set to false
-	 * alert_userspace and घातer_supply_changed() is never called.
+	 * Each function that processes an IRQ register receives as output
+	 * parameter alert_userspace pointer. alert_userspace is set to true
+	 * in such a function only if an interrupt has occurred in the
+	 * respective interrupt register. This way, it is avoided the following
+	 * case: interrupt occurs only in IRQ1 register,
+	 * rt9455_irq_handler_check_irq1_register() function sets to true
+	 * alert_userspace, but rt9455_irq_handler_check_irq2_register()
+	 * and rt9455_irq_handler_check_irq3_register() functions set to false
+	 * alert_userspace and power_supply_changed() is never called.
 	 */
-	ret = rt9455_irq_handler_check_irq1_रेजिस्टर(info, &is_battery_असलent,
+	ret = rt9455_irq_handler_check_irq1_register(info, &is_battery_absent,
 						     &alert_userspace);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to handle IRQ1 register\n");
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
-	ret = rt9455_irq_handler_check_irq2_रेजिस्टर(info, is_battery_असलent,
+	ret = rt9455_irq_handler_check_irq2_register(info, is_battery_absent,
 						     &alert_userspace);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to handle IRQ2 register\n");
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
-	ret = rt9455_irq_handler_check_irq3_रेजिस्टर(info, &alert_userspace);
-	अगर (ret) अणु
+	ret = rt9455_irq_handler_check_irq3_register(info, &alert_userspace);
+	if (ret) {
 		dev_err(dev, "Failed to handle IRQ3 register\n");
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
-	अगर (alert_userspace) अणु
+	if (alert_userspace) {
 		/*
-		 * Someबार, an पूर्णांकerrupt occurs जबतक rt9455_probe() function
-		 * is executing and घातer_supply_रेजिस्टर() is not yet called.
-		 * Do not call घातer_supply_changed() in this हाल.
+		 * Sometimes, an interrupt occurs while rt9455_probe() function
+		 * is executing and power_supply_register() is not yet called.
+		 * Do not call power_supply_changed() in this case.
 		 */
-		अगर (info->अक्षरger)
-			घातer_supply_changed(info->अक्षरger);
-	पूर्ण
+		if (info->charger)
+			power_supply_changed(info->charger);
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक rt9455_discover_अक्षरger(काष्ठा rt9455_info *info, u32 *ichrg,
+static int rt9455_discover_charger(struct rt9455_info *info, u32 *ichrg,
 				   u32 *ieoc_percentage,
 				   u32 *mivr, u32 *iaicr)
-अणु
-	काष्ठा device *dev = &info->client->dev;
-	पूर्णांक ret;
+{
+	struct device *dev = &info->client->dev;
+	int ret;
 
-	अगर (!dev->of_node && !ACPI_HANDLE(dev)) अणु
+	if (!dev->of_node && !ACPI_HANDLE(dev)) {
 		dev_err(dev, "No support for either device tree or ACPI\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	/*
 	 * ICHRG, IEOC_PERCENTAGE, VOREG and boost output voltage are mandatory
 	 * parameters.
 	 */
-	ret = device_property_पढ़ो_u32(dev, "richtek,output-charge-current",
+	ret = device_property_read_u32(dev, "richtek,output-charge-current",
 				       ichrg);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Error: missing \"output-charge-current\" property\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = device_property_पढ़ो_u32(dev, "richtek,end-of-charge-percentage",
+	ret = device_property_read_u32(dev, "richtek,end-of-charge-percentage",
 				       ieoc_percentage);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Error: missing \"end-of-charge-percentage\" property\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = device_property_पढ़ो_u32(dev,
+	ret = device_property_read_u32(dev,
 				       "richtek,battery-regulation-voltage",
 				       &info->voreg);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Error: missing \"battery-regulation-voltage\" property\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = device_property_पढ़ो_u32(dev, "richtek,boost-output-voltage",
+	ret = device_property_read_u32(dev, "richtek,boost-output-voltage",
 				       &info->boost_voltage);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Error: missing \"boost-output-voltage\" property\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * MIVR and IAICR are optional parameters. Do not वापस error अगर one of
-	 * them is not present in ACPI table or device tree specअगरication.
+	 * MIVR and IAICR are optional parameters. Do not return error if one of
+	 * them is not present in ACPI table or device tree specification.
 	 */
-	device_property_पढ़ो_u32(dev, "richtek,min-input-voltage-regulation",
+	device_property_read_u32(dev, "richtek,min-input-voltage-regulation",
 				 mivr);
-	device_property_पढ़ो_u32(dev, "richtek,avg-input-current-regulation",
+	device_property_read_u32(dev, "richtek,avg-input-current-regulation",
 				 iaicr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर IS_ENABLED(CONFIG_USB_PHY)
-अटल पूर्णांक rt9455_usb_event_none(काष्ठा rt9455_info *info,
+#if IS_ENABLED(CONFIG_USB_PHY)
+static int rt9455_usb_event_none(struct rt9455_info *info,
 				 u8 opa_mode, u8 iaicr)
-अणु
-	काष्ठा device *dev = &info->client->dev;
-	पूर्णांक ret;
+{
+	struct device *dev = &info->client->dev;
+	int ret;
 
-	अगर (opa_mode == RT9455_BOOST_MODE) अणु
-		ret = rt9455_set_voreg_beक्रमe_अक्षरge_mode(info);
-		अगर (ret) अणु
+	if (opa_mode == RT9455_BOOST_MODE) {
+		ret = rt9455_set_voreg_before_charge_mode(info);
+		if (ret) {
 			dev_err(dev, "Failed to set VOREG before entering charge mode\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		/*
-		 * If the अक्षरger is in boost mode, and it has received
-		 * USB_EVENT_NONE, this means the consumer device घातered by the
-		 * अक्षरger is not connected anymore.
-		 * In this हाल, the अक्षरger goes पूर्णांकo अक्षरge mode.
+		 * If the charger is in boost mode, and it has received
+		 * USB_EVENT_NONE, this means the consumer device powered by the
+		 * charger is not connected anymore.
+		 * In this case, the charger goes into charge mode.
 		 */
 		dev_dbg(dev, "USB_EVENT_NONE received, therefore the charger goes into charge mode\n");
-		ret = regmap_field_ग_लिखो(info->regmap_fields[F_OPA_MODE],
+		ret = regmap_field_write(info->regmap_fields[F_OPA_MODE],
 					 RT9455_CHARGE_MODE);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "Failed to set charger in charge mode\n");
-			वापस NOTIFY_DONE;
-		पूर्ण
-	पूर्ण
+			return NOTIFY_DONE;
+		}
+	}
 
 	dev_dbg(dev, "USB_EVENT_NONE received, therefore IAICR is set to its minimum value\n");
-	अगर (iaicr != RT9455_IAICR_100MA) अणु
-		ret = regmap_field_ग_लिखो(info->regmap_fields[F_IAICR],
+	if (iaicr != RT9455_IAICR_100MA) {
+		ret = regmap_field_write(info->regmap_fields[F_IAICR],
 					 RT9455_IAICR_100MA);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "Failed to set IAICR value\n");
-			वापस NOTIFY_DONE;
-		पूर्ण
-	पूर्ण
+			return NOTIFY_DONE;
+		}
+	}
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
-अटल पूर्णांक rt9455_usb_event_vbus(काष्ठा rt9455_info *info,
+static int rt9455_usb_event_vbus(struct rt9455_info *info,
 				 u8 opa_mode, u8 iaicr)
-अणु
-	काष्ठा device *dev = &info->client->dev;
-	पूर्णांक ret;
+{
+	struct device *dev = &info->client->dev;
+	int ret;
 
-	अगर (opa_mode == RT9455_BOOST_MODE) अणु
-		ret = rt9455_set_voreg_beक्रमe_अक्षरge_mode(info);
-		अगर (ret) अणु
+	if (opa_mode == RT9455_BOOST_MODE) {
+		ret = rt9455_set_voreg_before_charge_mode(info);
+		if (ret) {
 			dev_err(dev, "Failed to set VOREG before entering charge mode\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		/*
-		 * If the अक्षरger is in boost mode, and it has received
-		 * USB_EVENT_VBUS, this means the consumer device घातered by the
-		 * अक्षरger is not connected anymore.
-		 * In this हाल, the अक्षरger goes पूर्णांकo अक्षरge mode.
+		 * If the charger is in boost mode, and it has received
+		 * USB_EVENT_VBUS, this means the consumer device powered by the
+		 * charger is not connected anymore.
+		 * In this case, the charger goes into charge mode.
 		 */
 		dev_dbg(dev, "USB_EVENT_VBUS received, therefore the charger goes into charge mode\n");
-		ret = regmap_field_ग_लिखो(info->regmap_fields[F_OPA_MODE],
+		ret = regmap_field_write(info->regmap_fields[F_OPA_MODE],
 					 RT9455_CHARGE_MODE);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "Failed to set charger in charge mode\n");
-			वापस NOTIFY_DONE;
-		पूर्ण
-	पूर्ण
+			return NOTIFY_DONE;
+		}
+	}
 
 	dev_dbg(dev, "USB_EVENT_VBUS received, therefore IAICR is set to 500 mA\n");
-	अगर (iaicr != RT9455_IAICR_500MA) अणु
-		ret = regmap_field_ग_लिखो(info->regmap_fields[F_IAICR],
+	if (iaicr != RT9455_IAICR_500MA) {
+		ret = regmap_field_write(info->regmap_fields[F_IAICR],
 					 RT9455_IAICR_500MA);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "Failed to set IAICR value\n");
-			वापस NOTIFY_DONE;
-		पूर्ण
-	पूर्ण
+			return NOTIFY_DONE;
+		}
+	}
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
-अटल पूर्णांक rt9455_usb_event_id(काष्ठा rt9455_info *info,
+static int rt9455_usb_event_id(struct rt9455_info *info,
 			       u8 opa_mode, u8 iaicr)
-अणु
-	काष्ठा device *dev = &info->client->dev;
-	पूर्णांक ret;
+{
+	struct device *dev = &info->client->dev;
+	int ret;
 
-	अगर (opa_mode == RT9455_CHARGE_MODE) अणु
-		ret = rt9455_set_boost_voltage_beक्रमe_boost_mode(info);
-		अगर (ret) अणु
+	if (opa_mode == RT9455_CHARGE_MODE) {
+		ret = rt9455_set_boost_voltage_before_boost_mode(info);
+		if (ret) {
 			dev_err(dev, "Failed to set boost output voltage before entering boost mode\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		/*
-		 * If the अक्षरger is in अक्षरge mode, and it has received
+		 * If the charger is in charge mode, and it has received
 		 * USB_EVENT_ID, this means a consumer device is connected and
-		 * it should be घातered by the अक्षरger.
-		 * In this हाल, the अक्षरger goes पूर्णांकo boost mode.
+		 * it should be powered by the charger.
+		 * In this case, the charger goes into boost mode.
 		 */
 		dev_dbg(dev, "USB_EVENT_ID received, therefore the charger goes into boost mode\n");
-		ret = regmap_field_ग_लिखो(info->regmap_fields[F_OPA_MODE],
+		ret = regmap_field_write(info->regmap_fields[F_OPA_MODE],
 					 RT9455_BOOST_MODE);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "Failed to set charger in boost mode\n");
-			वापस NOTIFY_DONE;
-		पूर्ण
-	पूर्ण
+			return NOTIFY_DONE;
+		}
+	}
 
 	dev_dbg(dev, "USB_EVENT_ID received, therefore IAICR is set to its minimum value\n");
-	अगर (iaicr != RT9455_IAICR_100MA) अणु
-		ret = regmap_field_ग_लिखो(info->regmap_fields[F_IAICR],
+	if (iaicr != RT9455_IAICR_100MA) {
+		ret = regmap_field_write(info->regmap_fields[F_IAICR],
 					 RT9455_IAICR_100MA);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "Failed to set IAICR value\n");
-			वापस NOTIFY_DONE;
-		पूर्ण
-	पूर्ण
+			return NOTIFY_DONE;
+		}
+	}
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
-अटल पूर्णांक rt9455_usb_event_अक्षरger(काष्ठा rt9455_info *info,
+static int rt9455_usb_event_charger(struct rt9455_info *info,
 				    u8 opa_mode, u8 iaicr)
-अणु
-	काष्ठा device *dev = &info->client->dev;
-	पूर्णांक ret;
+{
+	struct device *dev = &info->client->dev;
+	int ret;
 
-	अगर (opa_mode == RT9455_BOOST_MODE) अणु
-		ret = rt9455_set_voreg_beक्रमe_अक्षरge_mode(info);
-		अगर (ret) अणु
+	if (opa_mode == RT9455_BOOST_MODE) {
+		ret = rt9455_set_voreg_before_charge_mode(info);
+		if (ret) {
 			dev_err(dev, "Failed to set VOREG before entering charge mode\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		/*
-		 * If the अक्षरger is in boost mode, and it has received
-		 * USB_EVENT_CHARGER, this means the consumer device घातered by
-		 * the अक्षरger is not connected anymore.
-		 * In this हाल, the अक्षरger goes पूर्णांकo अक्षरge mode.
+		 * If the charger is in boost mode, and it has received
+		 * USB_EVENT_CHARGER, this means the consumer device powered by
+		 * the charger is not connected anymore.
+		 * In this case, the charger goes into charge mode.
 		 */
 		dev_dbg(dev, "USB_EVENT_CHARGER received, therefore the charger goes into charge mode\n");
-		ret = regmap_field_ग_लिखो(info->regmap_fields[F_OPA_MODE],
+		ret = regmap_field_write(info->regmap_fields[F_OPA_MODE],
 					 RT9455_CHARGE_MODE);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "Failed to set charger in charge mode\n");
-			वापस NOTIFY_DONE;
-		पूर्ण
-	पूर्ण
+			return NOTIFY_DONE;
+		}
+	}
 
 	dev_dbg(dev, "USB_EVENT_CHARGER received, therefore IAICR is set to no current limit\n");
-	अगर (iaicr != RT9455_IAICR_NO_LIMIT) अणु
-		ret = regmap_field_ग_लिखो(info->regmap_fields[F_IAICR],
+	if (iaicr != RT9455_IAICR_NO_LIMIT) {
+		ret = regmap_field_write(info->regmap_fields[F_IAICR],
 					 RT9455_IAICR_NO_LIMIT);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "Failed to set IAICR value\n");
-			वापस NOTIFY_DONE;
-		पूर्ण
-	पूर्ण
+			return NOTIFY_DONE;
+		}
+	}
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
-अटल पूर्णांक rt9455_usb_event(काष्ठा notअगरier_block *nb,
-			    अचिन्हित दीर्घ event, व्योम *घातer)
-अणु
-	काष्ठा rt9455_info *info = container_of(nb, काष्ठा rt9455_info, nb);
-	काष्ठा device *dev = &info->client->dev;
-	अचिन्हित पूर्णांक opa_mode, iaicr;
-	पूर्णांक ret;
+static int rt9455_usb_event(struct notifier_block *nb,
+			    unsigned long event, void *power)
+{
+	struct rt9455_info *info = container_of(nb, struct rt9455_info, nb);
+	struct device *dev = &info->client->dev;
+	unsigned int opa_mode, iaicr;
+	int ret;
 
 	/*
-	 * Determine whether the अक्षरger is in अक्षरge mode
+	 * Determine whether the charger is in charge mode
 	 * or in boost mode.
 	 */
-	ret = regmap_field_पढ़ो(info->regmap_fields[F_OPA_MODE],
+	ret = regmap_field_read(info->regmap_fields[F_OPA_MODE],
 				&opa_mode);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to read OPA_MODE value\n");
-		वापस NOTIFY_DONE;
-	पूर्ण
+		return NOTIFY_DONE;
+	}
 
-	ret = regmap_field_पढ़ो(info->regmap_fields[F_IAICR],
+	ret = regmap_field_read(info->regmap_fields[F_IAICR],
 				&iaicr);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to read IAICR value\n");
-		वापस NOTIFY_DONE;
-	पूर्ण
+		return NOTIFY_DONE;
+	}
 
 	dev_dbg(dev, "Received USB event %lu\n", event);
-	चयन (event) अणु
-	हाल USB_EVENT_NONE:
-		वापस rt9455_usb_event_none(info, opa_mode, iaicr);
-	हाल USB_EVENT_VBUS:
-		वापस rt9455_usb_event_vbus(info, opa_mode, iaicr);
-	हाल USB_EVENT_ID:
-		वापस rt9455_usb_event_id(info, opa_mode, iaicr);
-	हाल USB_EVENT_CHARGER:
-		वापस rt9455_usb_event_अक्षरger(info, opa_mode, iaicr);
-	शेष:
+	switch (event) {
+	case USB_EVENT_NONE:
+		return rt9455_usb_event_none(info, opa_mode, iaicr);
+	case USB_EVENT_VBUS:
+		return rt9455_usb_event_vbus(info, opa_mode, iaicr);
+	case USB_EVENT_ID:
+		return rt9455_usb_event_id(info, opa_mode, iaicr);
+	case USB_EVENT_CHARGER:
+		return rt9455_usb_event_charger(info, opa_mode, iaicr);
+	default:
 		dev_err(dev, "Unknown USB event\n");
-	पूर्ण
-	वापस NOTIFY_DONE;
-पूर्ण
-#पूर्ण_अगर
+	}
+	return NOTIFY_DONE;
+}
+#endif
 
-अटल व्योम rt9455_pwr_rdy_work_callback(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा rt9455_info *info = container_of(work, काष्ठा rt9455_info,
+static void rt9455_pwr_rdy_work_callback(struct work_struct *work)
+{
+	struct rt9455_info *info = container_of(work, struct rt9455_info,
 						pwr_rdy_work.work);
-	काष्ठा device *dev = &info->client->dev;
-	अचिन्हित पूर्णांक pwr_rdy;
-	पूर्णांक ret;
+	struct device *dev = &info->client->dev;
+	unsigned int pwr_rdy;
+	int ret;
 
-	ret = regmap_field_पढ़ो(info->regmap_fields[F_PWR_RDY], &pwr_rdy);
-	अगर (ret) अणु
+	ret = regmap_field_read(info->regmap_fields[F_PWR_RDY], &pwr_rdy);
+	if (ret) {
 		dev_err(dev, "Failed to read PWR_RDY bit\n");
-		वापस;
-	पूर्ण
-	चयन (pwr_rdy) अणु
-	हाल RT9455_PWR_FAULT:
+		return;
+	}
+	switch (pwr_rdy) {
+	case RT9455_PWR_FAULT:
 		dev_dbg(dev, "Charger disconnected from power source\n");
-		cancel_delayed_work_sync(&info->max_अक्षरging_समय_work);
-		अवरोध;
-	हाल RT9455_PWR_GOOD:
+		cancel_delayed_work_sync(&info->max_charging_time_work);
+		break;
+	case RT9455_PWR_GOOD:
 		dev_dbg(dev, "Charger connected to power source\n");
-		ret = regmap_field_ग_लिखो(info->regmap_fields[F_CHG_EN],
+		ret = regmap_field_write(info->regmap_fields[F_CHG_EN],
 					 RT9455_CHARGE_ENABLE);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "Failed to enable charging\n");
-			वापस;
-		पूर्ण
-		queue_delayed_work(प्रणाली_घातer_efficient_wq,
-				   &info->max_अक्षरging_समय_work,
+			return;
+		}
+		queue_delayed_work(system_power_efficient_wq,
+				   &info->max_charging_time_work,
 				   RT9455_MAX_CHARGING_TIME * HZ);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	/*
-	 * Notअगरy userspace that the अक्षरger has been either connected to or
-	 * disconnected from the घातer source.
+	 * Notify userspace that the charger has been either connected to or
+	 * disconnected from the power source.
 	 */
-	घातer_supply_changed(info->अक्षरger);
-पूर्ण
+	power_supply_changed(info->charger);
+}
 
-अटल व्योम rt9455_max_अक्षरging_समय_work_callback(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा rt9455_info *info = container_of(work, काष्ठा rt9455_info,
-						max_अक्षरging_समय_work.work);
-	काष्ठा device *dev = &info->client->dev;
-	पूर्णांक ret;
+static void rt9455_max_charging_time_work_callback(struct work_struct *work)
+{
+	struct rt9455_info *info = container_of(work, struct rt9455_info,
+						max_charging_time_work.work);
+	struct device *dev = &info->client->dev;
+	int ret;
 
 	dev_err(dev, "Battery has been charging for at least 6 hours and is not yet fully charged. Battery is dead, therefore charging is disabled.\n");
-	ret = regmap_field_ग_लिखो(info->regmap_fields[F_CHG_EN],
+	ret = regmap_field_write(info->regmap_fields[F_CHG_EN],
 				 RT9455_CHARGE_DISABLE);
-	अगर (ret)
+	if (ret)
 		dev_err(dev, "Failed to disable charging\n");
-पूर्ण
+}
 
-अटल व्योम rt9455_batt_presence_work_callback(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा rt9455_info *info = container_of(work, काष्ठा rt9455_info,
+static void rt9455_batt_presence_work_callback(struct work_struct *work)
+{
+	struct rt9455_info *info = container_of(work, struct rt9455_info,
 						batt_presence_work.work);
-	काष्ठा device *dev = &info->client->dev;
-	अचिन्हित पूर्णांक irq1, mask1;
-	पूर्णांक ret;
+	struct device *dev = &info->client->dev;
+	unsigned int irq1, mask1;
+	int ret;
 
-	ret = regmap_पढ़ो(info->regmap, RT9455_REG_IRQ1, &irq1);
-	अगर (ret) अणु
+	ret = regmap_read(info->regmap, RT9455_REG_IRQ1, &irq1);
+	if (ret) {
 		dev_err(dev, "Failed to read IRQ1 register\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * If the battery is still असलent, batt_presence_work is rescheduled.
-	 * Otherwise, max_अक्षरging_समय is scheduled.
+	 * If the battery is still absent, batt_presence_work is rescheduled.
+	 * Otherwise, max_charging_time is scheduled.
 	 */
-	अगर (irq1 & GET_MASK(F_BATAB)) अणु
-		queue_delayed_work(प्रणाली_घातer_efficient_wq,
+	if (irq1 & GET_MASK(F_BATAB)) {
+		queue_delayed_work(system_power_efficient_wq,
 				   &info->batt_presence_work,
 				   RT9455_BATT_PRESENCE_DELAY * HZ);
-	पूर्ण अन्यथा अणु
-		queue_delayed_work(प्रणाली_घातer_efficient_wq,
-				   &info->max_अक्षरging_समय_work,
+	} else {
+		queue_delayed_work(system_power_efficient_wq,
+				   &info->max_charging_time_work,
 				   RT9455_MAX_CHARGING_TIME * HZ);
 
-		ret = regmap_पढ़ो(info->regmap, RT9455_REG_MASK1, &mask1);
-		अगर (ret) अणु
+		ret = regmap_read(info->regmap, RT9455_REG_MASK1, &mask1);
+		if (ret) {
 			dev_err(dev, "Failed to read MASK1 register\n");
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		अगर (mask1 & GET_MASK(F_BATABM)) अणु
-			ret = regmap_field_ग_लिखो(info->regmap_fields[F_BATABM],
+		if (mask1 & GET_MASK(F_BATABM)) {
+			ret = regmap_field_write(info->regmap_fields[F_BATABM],
 						 0x00);
-			अगर (ret)
+			if (ret)
 				dev_err(dev, "Failed to unmask BATAB interrupt\n");
-		पूर्ण
+		}
 		/*
-		 * Notअगरy userspace that the battery is now connected to the
-		 * अक्षरger.
+		 * Notify userspace that the battery is now connected to the
+		 * charger.
 		 */
-		घातer_supply_changed(info->अक्षरger);
-	पूर्ण
-पूर्ण
+		power_supply_changed(info->charger);
+	}
+}
 
-अटल स्थिर काष्ठा घातer_supply_desc rt9455_अक्षरger_desc = अणु
+static const struct power_supply_desc rt9455_charger_desc = {
 	.name			= RT9455_DRIVER_NAME,
 	.type			= POWER_SUPPLY_TYPE_USB,
-	.properties		= rt9455_अक्षरger_properties,
-	.num_properties		= ARRAY_SIZE(rt9455_अक्षरger_properties),
-	.get_property		= rt9455_अक्षरger_get_property,
-पूर्ण;
+	.properties		= rt9455_charger_properties,
+	.num_properties		= ARRAY_SIZE(rt9455_charger_properties),
+	.get_property		= rt9455_charger_get_property,
+};
 
-अटल bool rt9455_is_ग_लिखोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल RT9455_REG_DEV_ID:
-	हाल RT9455_REG_IRQ1:
-	हाल RT9455_REG_IRQ2:
-	हाल RT9455_REG_IRQ3:
-		वापस false;
-	शेष:
-		वापस true;
-	पूर्ण
-पूर्ण
+static bool rt9455_is_writeable_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case RT9455_REG_DEV_ID:
+	case RT9455_REG_IRQ1:
+	case RT9455_REG_IRQ2:
+	case RT9455_REG_IRQ3:
+		return false;
+	default:
+		return true;
+	}
+}
 
-अटल bool rt9455_is_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल RT9455_REG_DEV_ID:
-	हाल RT9455_REG_CTRL5:
-	हाल RT9455_REG_CTRL6:
-		वापस false;
-	शेष:
-		वापस true;
-	पूर्ण
-पूर्ण
+static bool rt9455_is_volatile_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case RT9455_REG_DEV_ID:
+	case RT9455_REG_CTRL5:
+	case RT9455_REG_CTRL6:
+		return false;
+	default:
+		return true;
+	}
+}
 
-अटल स्थिर काष्ठा regmap_config rt9455_regmap_config = अणु
+static const struct regmap_config rt9455_regmap_config = {
 	.reg_bits	= 8,
 	.val_bits	= 8,
-	.ग_लिखोable_reg	= rt9455_is_ग_लिखोable_reg,
-	.अस्थिर_reg	= rt9455_is_अस्थिर_reg,
-	.max_रेजिस्टर	= RT9455_REG_MASK3,
+	.writeable_reg	= rt9455_is_writeable_reg,
+	.volatile_reg	= rt9455_is_volatile_reg,
+	.max_register	= RT9455_REG_MASK3,
 	.cache_type	= REGCACHE_RBTREE,
-पूर्ण;
+};
 
-अटल पूर्णांक rt9455_probe(काष्ठा i2c_client *client,
-			स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा i2c_adapter *adapter = client->adapter;
-	काष्ठा device *dev = &client->dev;
-	काष्ठा rt9455_info *info;
-	काष्ठा घातer_supply_config rt9455_अक्षरger_config = अणुपूर्ण;
+static int rt9455_probe(struct i2c_client *client,
+			const struct i2c_device_id *id)
+{
+	struct i2c_adapter *adapter = client->adapter;
+	struct device *dev = &client->dev;
+	struct rt9455_info *info;
+	struct power_supply_config rt9455_charger_config = {};
 	/*
-	 * Mandatory device-specअगरic data values. Also, VOREG and boost output
+	 * Mandatory device-specific data values. Also, VOREG and boost output
 	 * voltage are mandatory values, but they are stored in rt9455_info
-	 * काष्ठाure.
+	 * structure.
 	 */
 	u32 ichrg, ieoc_percentage;
-	/* Optional device-specअगरic data values. */
+	/* Optional device-specific data values. */
 	u32 mivr = -1, iaicr = -1;
-	पूर्णांक i, ret;
+	int i, ret;
 
-	अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA)) अणु
+	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA)) {
 		dev_err(dev, "No support for SMBUS_BYTE_DATA\n");
-		वापस -ENODEV;
-	पूर्ण
-	info = devm_kzalloc(dev, माप(*info), GFP_KERNEL);
-	अगर (!info)
-		वापस -ENOMEM;
+		return -ENODEV;
+	}
+	info = devm_kzalloc(dev, sizeof(*info), GFP_KERNEL);
+	if (!info)
+		return -ENOMEM;
 
 	info->client = client;
 	i2c_set_clientdata(client, info);
 
 	info->regmap = devm_regmap_init_i2c(client,
 					    &rt9455_regmap_config);
-	अगर (IS_ERR(info->regmap)) अणु
+	if (IS_ERR(info->regmap)) {
 		dev_err(dev, "Failed to initialize register map\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	क्रम (i = 0; i < F_MAX_FIELDS; i++) अणु
+	for (i = 0; i < F_MAX_FIELDS; i++) {
 		info->regmap_fields[i] =
 			devm_regmap_field_alloc(dev, info->regmap,
 						rt9455_reg_fields[i]);
-		अगर (IS_ERR(info->regmap_fields[i])) अणु
+		if (IS_ERR(info->regmap_fields[i])) {
 			dev_err(dev,
 				"Failed to allocate regmap field = %d\n", i);
-			वापस PTR_ERR(info->regmap_fields[i]);
-		पूर्ण
-	पूर्ण
+			return PTR_ERR(info->regmap_fields[i]);
+		}
+	}
 
-	ret = rt9455_discover_अक्षरger(info, &ichrg, &ieoc_percentage,
+	ret = rt9455_discover_charger(info, &ichrg, &ieoc_percentage,
 				      &mivr, &iaicr);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to discover charger\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-#अगर IS_ENABLED(CONFIG_USB_PHY)
+#if IS_ENABLED(CONFIG_USB_PHY)
 	info->usb_phy = devm_usb_get_phy(dev, USB_PHY_TYPE_USB2);
-	अगर (IS_ERR(info->usb_phy)) अणु
+	if (IS_ERR(info->usb_phy)) {
 		dev_err(dev, "Failed to get USB transceiver\n");
-	पूर्ण अन्यथा अणु
-		info->nb.notअगरier_call = rt9455_usb_event;
-		ret = usb_रेजिस्टर_notअगरier(info->usb_phy, &info->nb);
-		अगर (ret) अणु
+	} else {
+		info->nb.notifier_call = rt9455_usb_event;
+		ret = usb_register_notifier(info->usb_phy, &info->nb);
+		if (ret) {
 			dev_err(dev, "Failed to register USB notifier\n");
 			/*
-			 * If usb_रेजिस्टर_notअगरier() fails, set notअगरier_call
-			 * to शून्य, to aव्योम calling usb_unरेजिस्टर_notअगरier().
+			 * If usb_register_notifier() fails, set notifier_call
+			 * to NULL, to avoid calling usb_unregister_notifier().
 			 */
-			info->nb.notअगरier_call = शून्य;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+			info->nb.notifier_call = NULL;
+		}
+	}
+#endif
 
 	INIT_DEFERRABLE_WORK(&info->pwr_rdy_work, rt9455_pwr_rdy_work_callback);
-	INIT_DEFERRABLE_WORK(&info->max_अक्षरging_समय_work,
-			     rt9455_max_अक्षरging_समय_work_callback);
+	INIT_DEFERRABLE_WORK(&info->max_charging_time_work,
+			     rt9455_max_charging_time_work_callback);
 	INIT_DEFERRABLE_WORK(&info->batt_presence_work,
 			     rt9455_batt_presence_work_callback);
 
-	rt9455_अक्षरger_config.of_node		= dev->of_node;
-	rt9455_अक्षरger_config.drv_data		= info;
-	rt9455_अक्षरger_config.supplied_to	= rt9455_अक्षरger_supplied_to;
-	rt9455_अक्षरger_config.num_supplicants	=
-					ARRAY_SIZE(rt9455_अक्षरger_supplied_to);
-	ret = devm_request_thपढ़ोed_irq(dev, client->irq, शून्य,
-					rt9455_irq_handler_thपढ़ो,
+	rt9455_charger_config.of_node		= dev->of_node;
+	rt9455_charger_config.drv_data		= info;
+	rt9455_charger_config.supplied_to	= rt9455_charger_supplied_to;
+	rt9455_charger_config.num_supplicants	=
+					ARRAY_SIZE(rt9455_charger_supplied_to);
+	ret = devm_request_threaded_irq(dev, client->irq, NULL,
+					rt9455_irq_handler_thread,
 					IRQF_TRIGGER_LOW | IRQF_ONESHOT,
 					RT9455_DRIVER_NAME, info);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to register IRQ handler\n");
-		जाओ put_usb_notअगरier;
-	पूर्ण
+		goto put_usb_notifier;
+	}
 
 	ret = rt9455_hw_init(info, ichrg, ieoc_percentage, mivr, iaicr);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to set charger to its default values\n");
-		जाओ put_usb_notअगरier;
-	पूर्ण
+		goto put_usb_notifier;
+	}
 
-	info->अक्षरger = devm_घातer_supply_रेजिस्टर(dev, &rt9455_अक्षरger_desc,
-						   &rt9455_अक्षरger_config);
-	अगर (IS_ERR(info->अक्षरger)) अणु
+	info->charger = devm_power_supply_register(dev, &rt9455_charger_desc,
+						   &rt9455_charger_config);
+	if (IS_ERR(info->charger)) {
 		dev_err(dev, "Failed to register charger\n");
-		ret = PTR_ERR(info->अक्षरger);
-		जाओ put_usb_notअगरier;
-	पूर्ण
+		ret = PTR_ERR(info->charger);
+		goto put_usb_notifier;
+	}
 
-	वापस 0;
+	return 0;
 
-put_usb_notअगरier:
-#अगर IS_ENABLED(CONFIG_USB_PHY)
-	अगर (info->nb.notअगरier_call)  अणु
-		usb_unरेजिस्टर_notअगरier(info->usb_phy, &info->nb);
-		info->nb.notअगरier_call = शून्य;
-	पूर्ण
-#पूर्ण_अगर
-	वापस ret;
-पूर्ण
+put_usb_notifier:
+#if IS_ENABLED(CONFIG_USB_PHY)
+	if (info->nb.notifier_call)  {
+		usb_unregister_notifier(info->usb_phy, &info->nb);
+		info->nb.notifier_call = NULL;
+	}
+#endif
+	return ret;
+}
 
-अटल पूर्णांक rt9455_हटाओ(काष्ठा i2c_client *client)
-अणु
-	पूर्णांक ret;
-	काष्ठा rt9455_info *info = i2c_get_clientdata(client);
+static int rt9455_remove(struct i2c_client *client)
+{
+	int ret;
+	struct rt9455_info *info = i2c_get_clientdata(client);
 
-	ret = rt9455_रेजिस्टर_reset(info);
-	अगर (ret)
+	ret = rt9455_register_reset(info);
+	if (ret)
 		dev_err(&info->client->dev, "Failed to set charger to its default values\n");
 
-#अगर IS_ENABLED(CONFIG_USB_PHY)
-	अगर (info->nb.notअगरier_call)
-		usb_unरेजिस्टर_notअगरier(info->usb_phy, &info->nb);
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_USB_PHY)
+	if (info->nb.notifier_call)
+		usb_unregister_notifier(info->usb_phy, &info->nb);
+#endif
 
 	cancel_delayed_work_sync(&info->pwr_rdy_work);
-	cancel_delayed_work_sync(&info->max_अक्षरging_समय_work);
+	cancel_delayed_work_sync(&info->max_charging_time_work);
 	cancel_delayed_work_sync(&info->batt_presence_work);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा i2c_device_id rt9455_i2c_id_table[] = अणु
-	अणु RT9455_DRIVER_NAME, 0 पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct i2c_device_id rt9455_i2c_id_table[] = {
+	{ RT9455_DRIVER_NAME, 0 },
+	{ },
+};
 MODULE_DEVICE_TABLE(i2c, rt9455_i2c_id_table);
 
-अटल स्थिर काष्ठा of_device_id rt9455_of_match[] = अणु
-	अणु .compatible = "richtek,rt9455", पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id rt9455_of_match[] = {
+	{ .compatible = "richtek,rt9455", },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, rt9455_of_match);
 
-#अगर_घोषित CONFIG_ACPI
-अटल स्थिर काष्ठा acpi_device_id rt9455_i2c_acpi_match[] = अणु
-	अणु "RT945500", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+#ifdef CONFIG_ACPI
+static const struct acpi_device_id rt9455_i2c_acpi_match[] = {
+	{ "RT945500", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(acpi, rt9455_i2c_acpi_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा i2c_driver rt9455_driver = अणु
+static struct i2c_driver rt9455_driver = {
 	.probe		= rt9455_probe,
-	.हटाओ		= rt9455_हटाओ,
+	.remove		= rt9455_remove,
 	.id_table	= rt9455_i2c_id_table,
-	.driver = अणु
+	.driver = {
 		.name		= RT9455_DRIVER_NAME,
 		.of_match_table	= of_match_ptr(rt9455_of_match),
 		.acpi_match_table = ACPI_PTR(rt9455_i2c_acpi_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 module_i2c_driver(rt9455_driver);
 
 MODULE_LICENSE("GPL");

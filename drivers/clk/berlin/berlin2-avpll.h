@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2014 Marvell Technology Group Ltd.
  *
  * Sebastian Hesselbarth <sebastian.hesselbarth@gmail.com>
- * Alexandre Belloni <alexandre.belloni@मुक्त-electrons.com>
+ * Alexandre Belloni <alexandre.belloni@free-electrons.com>
  */
-#अगर_अघोषित __BERLIN2_AVPLL_H
-#घोषणा __BERLIN2_AVPLL_H
+#ifndef __BERLIN2_AVPLL_H
+#define __BERLIN2_AVPLL_H
 
-#घोषणा BERLIN2_AVPLL_BIT_QUIRK		BIT(0)
-#घोषणा BERLIN2_AVPLL_SCRAMBLE_QUIRK	BIT(1)
+#define BERLIN2_AVPLL_BIT_QUIRK		BIT(0)
+#define BERLIN2_AVPLL_SCRAMBLE_QUIRK	BIT(1)
 
-पूर्णांक berlin2_avpll_vco_रेजिस्टर(व्योम __iomem *base, स्थिर अक्षर *name,
-	   स्थिर अक्षर *parent_name, u8 vco_flags, अचिन्हित दीर्घ flags);
+int berlin2_avpll_vco_register(void __iomem *base, const char *name,
+	   const char *parent_name, u8 vco_flags, unsigned long flags);
 
-पूर्णांक berlin2_avpll_channel_रेजिस्टर(व्योम __iomem *base, स्थिर अक्षर *name,
-		       u8 index, स्थिर अक्षर *parent_name, u8 ch_flags,
-		       अचिन्हित दीर्घ flags);
+int berlin2_avpll_channel_register(void __iomem *base, const char *name,
+		       u8 index, const char *parent_name, u8 ch_flags,
+		       unsigned long flags);
 
-#पूर्ण_अगर /* __BERLIN2_AVPLL_H */
+#endif /* __BERLIN2_AVPLL_H */

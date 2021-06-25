@@ -1,44 +1,43 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-#अगर_अघोषित _LINUX_IO_URING_H
-#घोषणा _LINUX_IO_URING_H
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#ifndef _LINUX_IO_URING_H
+#define _LINUX_IO_URING_H
 
-#समावेश <linux/sched.h>
-#समावेश <linux/xarray.h>
+#include <linux/sched.h>
+#include <linux/xarray.h>
 
-#अगर defined(CONFIG_IO_URING)
-काष्ठा sock *io_uring_get_socket(काष्ठा file *file);
-व्योम __io_uring_cancel(काष्ठा files_काष्ठा *files);
-व्योम __io_uring_मुक्त(काष्ठा task_काष्ठा *tsk);
+#if defined(CONFIG_IO_URING)
+struct sock *io_uring_get_socket(struct file *file);
+void __io_uring_cancel(struct files_struct *files);
+void __io_uring_free(struct task_struct *tsk);
 
-अटल अंतरभूत व्योम io_uring_files_cancel(काष्ठा files_काष्ठा *files)
-अणु
-	अगर (current->io_uring)
+static inline void io_uring_files_cancel(struct files_struct *files)
+{
+	if (current->io_uring)
 		__io_uring_cancel(files);
-पूर्ण
-अटल अंतरभूत व्योम io_uring_task_cancel(व्योम)
-अणु
-	वापस io_uring_files_cancel(शून्य);
-पूर्ण
-अटल अंतरभूत व्योम io_uring_मुक्त(काष्ठा task_काष्ठा *tsk)
-अणु
-	अगर (tsk->io_uring)
-		__io_uring_मुक्त(tsk);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत काष्ठा sock *io_uring_get_socket(काष्ठा file *file)
-अणु
-	वापस शून्य;
-पूर्ण
-अटल अंतरभूत व्योम io_uring_task_cancel(व्योम)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम io_uring_files_cancel(काष्ठा files_काष्ठा *files)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम io_uring_मुक्त(काष्ठा task_काष्ठा *tsk)
-अणु
-पूर्ण
-#पूर्ण_अगर
+}
+static inline void io_uring_task_cancel(void)
+{
+	return io_uring_files_cancel(NULL);
+}
+static inline void io_uring_free(struct task_struct *tsk)
+{
+	if (tsk->io_uring)
+		__io_uring_free(tsk);
+}
+#else
+static inline struct sock *io_uring_get_socket(struct file *file)
+{
+	return NULL;
+}
+static inline void io_uring_task_cancel(void)
+{
+}
+static inline void io_uring_files_cancel(struct files_struct *files)
+{
+}
+static inline void io_uring_free(struct task_struct *tsk)
+{
+}
+#endif
 
-#पूर्ण_अगर
+#endif

@@ -1,38 +1,37 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2010-2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#समावेश "assert_support.h"
-#समावेश "gp_device.h"
+#include "assert_support.h"
+#include "gp_device.h"
 
-#अगर_अघोषित __INLINE_GP_DEVICE__
-#समावेश "gp_device_private.h"
-#पूर्ण_अगर /* __INLINE_GP_DEVICE__ */
+#ifndef __INLINE_GP_DEVICE__
+#include "gp_device_private.h"
+#endif /* __INLINE_GP_DEVICE__ */
 
-व्योम gp_device_get_state(
-    स्थिर gp_device_ID_t		ID,
+void gp_device_get_state(
+    const gp_device_ID_t		ID,
     gp_device_state_t			*state)
-अणु
-	निश्चित(ID < N_GP_DEVICE_ID);
-	निश्चित(state);
+{
+	assert(ID < N_GP_DEVICE_ID);
+	assert(state);
 
 	state->syncgen_enable = gp_device_reg_load(ID,
 				_REG_GP_SYNCGEN_ENABLE_ADDR);
-	state->syncgen_मुक्त_running = gp_device_reg_load(ID,
+	state->syncgen_free_running = gp_device_reg_load(ID,
 				      _REG_GP_SYNCGEN_FREE_RUNNING_ADDR);
-	state->syncgen_छोड़ो = gp_device_reg_load(ID,
+	state->syncgen_pause = gp_device_reg_load(ID,
 			       _REG_GP_SYNCGEN_PAUSE_ADDR);
 	state->nr_frames = gp_device_reg_load(ID,
 					      _REG_GP_NR_FRAMES_ADDR);
@@ -49,7 +48,7 @@
 	state->isel_sof = gp_device_reg_load(ID,
 					     _REG_GP_ISEL_SOF_ADDR);
 	state->isel_eof = gp_device_reg_load(ID,
-					     _REG_GP_ISEL_खातापूर्ण_ADDR);
+					     _REG_GP_ISEL_EOF_ADDR);
 	state->isel_sol = gp_device_reg_load(ID,
 					     _REG_GP_ISEL_SOL_ADDR);
 	state->isel_eol = gp_device_reg_load(ID,
@@ -106,5 +105,5 @@
 				   _REG_GP_SYNCGEN_FRAME_CNT_ADDR);
 	state->soft_reset = gp_device_reg_load(ID,
 					       _REG_GP_SOFT_RESET_ADDR);
-	वापस;
-पूर्ण
+	return;
+}

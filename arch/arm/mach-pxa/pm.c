@@ -1,118 +1,117 @@
-<शैली गुरु>
 /*
  * PXA250/210 Power Management Routines
  *
- * Original code क्रम the SA11x0:
- * Copyright (c) 2001 Clअगरf Brake <cbrake@accelent.com>
+ * Original code for the SA11x0:
+ * Copyright (c) 2001 Cliff Brake <cbrake@accelent.com>
  *
- * Modअगरied क्रम the PXA250 by Nicolas Pitre:
+ * Modified for the PXA250 by Nicolas Pitre:
  * Copyright (c) 2002 Monta Vista Software, Inc.
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License.
  */
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/suspend.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/slab.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/suspend.h>
+#include <linux/errno.h>
+#include <linux/slab.h>
 
-#समावेश "pm.h"
+#include "pm.h"
 
-काष्ठा pxa_cpu_pm_fns *pxa_cpu_pm_fns;
-अटल अचिन्हित दीर्घ *sleep_save;
+struct pxa_cpu_pm_fns *pxa_cpu_pm_fns;
+static unsigned long *sleep_save;
 
-पूर्णांक pxa_pm_enter(suspend_state_t state)
-अणु
-	अचिन्हित दीर्घ sleep_save_checksum = 0, checksum = 0;
-	पूर्णांक i;
+int pxa_pm_enter(suspend_state_t state)
+{
+	unsigned long sleep_save_checksum = 0, checksum = 0;
+	int i;
 
-#अगर_घोषित CONFIG_IWMMXT
-	/* क्रमce any iWMMXt context to ram **/
-	अगर (elf_hwcap & HWCAP_IWMMXT)
-		iwmmxt_task_disable(शून्य);
-#पूर्ण_अगर
+#ifdef CONFIG_IWMMXT
+	/* force any iWMMXt context to ram **/
+	if (elf_hwcap & HWCAP_IWMMXT)
+		iwmmxt_task_disable(NULL);
+#endif
 
-	/* skip रेजिस्टरs saving क्रम standby */
-	अगर (state != PM_SUSPEND_STANDBY && pxa_cpu_pm_fns->save) अणु
+	/* skip registers saving for standby */
+	if (state != PM_SUSPEND_STANDBY && pxa_cpu_pm_fns->save) {
 		pxa_cpu_pm_fns->save(sleep_save);
-		/* beक्रमe sleeping, calculate and save a checksum */
-		क्रम (i = 0; i < pxa_cpu_pm_fns->save_count - 1; i++)
+		/* before sleeping, calculate and save a checksum */
+		for (i = 0; i < pxa_cpu_pm_fns->save_count - 1; i++)
 			sleep_save_checksum += sleep_save[i];
-	पूर्ण
+	}
 
 	/* *** go zzz *** */
 	pxa_cpu_pm_fns->enter(state);
 
-	अगर (state != PM_SUSPEND_STANDBY && pxa_cpu_pm_fns->restore) अणु
+	if (state != PM_SUSPEND_STANDBY && pxa_cpu_pm_fns->restore) {
 		/* after sleeping, validate the checksum */
-		क्रम (i = 0; i < pxa_cpu_pm_fns->save_count - 1; i++)
+		for (i = 0; i < pxa_cpu_pm_fns->save_count - 1; i++)
 			checksum += sleep_save[i];
 
-		/* अगर invalid, display message and रुको क्रम a hardware reset */
-		अगर (checksum != sleep_save_checksum) अणु
+		/* if invalid, display message and wait for a hardware reset */
+		if (checksum != sleep_save_checksum) {
 
 			lubbock_set_hexled(0xbadbadc5);
 
-			जबतक (1)
+			while (1)
 				pxa_cpu_pm_fns->enter(state);
-		पूर्ण
+		}
 		pxa_cpu_pm_fns->restore(sleep_save);
-	पूर्ण
+	}
 
 	pr_debug("*** made it back from resume\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 EXPORT_SYMBOL_GPL(pxa_pm_enter);
 
-अटल पूर्णांक pxa_pm_valid(suspend_state_t state)
-अणु
-	अगर (pxa_cpu_pm_fns)
-		वापस pxa_cpu_pm_fns->valid(state);
+static int pxa_pm_valid(suspend_state_t state)
+{
+	if (pxa_cpu_pm_fns)
+		return pxa_cpu_pm_fns->valid(state);
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-पूर्णांक pxa_pm_prepare(व्योम)
-अणु
-	पूर्णांक ret = 0;
+int pxa_pm_prepare(void)
+{
+	int ret = 0;
 
-	अगर (pxa_cpu_pm_fns && pxa_cpu_pm_fns->prepare)
+	if (pxa_cpu_pm_fns && pxa_cpu_pm_fns->prepare)
 		ret = pxa_cpu_pm_fns->prepare();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम pxa_pm_finish(व्योम)
-अणु
-	अगर (pxa_cpu_pm_fns && pxa_cpu_pm_fns->finish)
+void pxa_pm_finish(void)
+{
+	if (pxa_cpu_pm_fns && pxa_cpu_pm_fns->finish)
 		pxa_cpu_pm_fns->finish();
-पूर्ण
+}
 
-अटल स्थिर काष्ठा platक्रमm_suspend_ops pxa_pm_ops = अणु
+static const struct platform_suspend_ops pxa_pm_ops = {
 	.valid		= pxa_pm_valid,
 	.enter		= pxa_pm_enter,
 	.prepare	= pxa_pm_prepare,
 	.finish		= pxa_pm_finish,
-पूर्ण;
+};
 
-अटल पूर्णांक __init pxa_pm_init(व्योम)
-अणु
-	अगर (!pxa_cpu_pm_fns) अणु
-		prपूर्णांकk(KERN_ERR "no valid pxa_cpu_pm_fns defined\n");
-		वापस -EINVAL;
-	पूर्ण
+static int __init pxa_pm_init(void)
+{
+	if (!pxa_cpu_pm_fns) {
+		printk(KERN_ERR "no valid pxa_cpu_pm_fns defined\n");
+		return -EINVAL;
+	}
 
-	sleep_save = kदो_स्मृति_array(pxa_cpu_pm_fns->save_count,
-				   माप(*sleep_save),
+	sleep_save = kmalloc_array(pxa_cpu_pm_fns->save_count,
+				   sizeof(*sleep_save),
 				   GFP_KERNEL);
-	अगर (!sleep_save)
-		वापस -ENOMEM;
+	if (!sleep_save)
+		return -ENOMEM;
 
 	suspend_set_ops(&pxa_pm_ops);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 device_initcall(pxa_pm_init);

@@ -1,19 +1,18 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Driver क्रम Future Doमुख्य TMC-16x0 and TMC-3260 SCSI host adapters
+ * Driver for Future Domain TMC-16x0 and TMC-3260 SCSI host adapters
  * Copyright 2019 Ondrej Zary
  *
  * Original driver by
  * Rickard E. Faith, faith@cs.unc.edu
  *
- * Future Doमुख्य BIOS versions supported क्रम स्वतःdetect:
+ * Future Domain BIOS versions supported for autodetect:
  *    2.0, 3.0, 3.2, 3.4 (1.0), 3.5 (2.0), 3.6, 3.61
  * Chips supported:
  *    TMC-1800, TMC-18C50, TMC-18C30, TMC-36C70
  * Boards supported:
- *    Future Doमुख्य TMC-1650, TMC-1660, TMC-1670, TMC-1680, TMC-1610M/MER/MEX
- *    Future Doमुख्य TMC-3260 (PCI)
+ *    Future Domain TMC-1650, TMC-1660, TMC-1670, TMC-1680, TMC-1610M/MER/MEX
+ *    Future Domain TMC-3260 (PCI)
  *    Quantum ISA-200S, ISA-250MG
  *    Adaptec AHA-2920A (PCI) [BUT *NOT* AHA-2920C -- use aic7xxx instead]
  *    IBM ?
@@ -21,43 +20,43 @@
  * NOTE:
  *
  * The Adaptec AHA-2920C has an Adaptec AIC-7850 chip on it.
- * Use the aic7xxx driver क्रम this board.
+ * Use the aic7xxx driver for this board.
  *
- * The Adaptec AHA-2920A has a Future Doमुख्य chip on it, so this is the right
- * driver क्रम that card.  Unक्रमtunately, the boxes will probably just say
- * "2920", so you'll have to look on the card क्रम a Future Doमुख्य logo, or a
+ * The Adaptec AHA-2920A has a Future Domain chip on it, so this is the right
+ * driver for that card.  Unfortunately, the boxes will probably just say
+ * "2920", so you'll have to look on the card for a Future Domain logo, or a
  * letter after the 2920.
  *
- * If you have a TMC-8xx or TMC-9xx board, then this is not the driver क्रम
+ * If you have a TMC-8xx or TMC-9xx board, then this is not the driver for
  * your board.
  *
  * DESCRIPTION:
  *
- * This is the Linux low-level SCSI driver क्रम Future Doमुख्य TMC-1660/1680
+ * This is the Linux low-level SCSI driver for Future Domain TMC-1660/1680
  * TMC-1650/1670, and TMC-3260 SCSI host adapters.  The 1650 and 1670 have a
- * 25-pin बाह्यal connector, whereas the 1660 and 1680 have a SCSI-2 50-pin
- * high-density बाह्यal connector.  The 1670 and 1680 have floppy disk
+ * 25-pin external connector, whereas the 1660 and 1680 have a SCSI-2 50-pin
+ * high-density external connector.  The 1670 and 1680 have floppy disk
  * controllers built in.  The TMC-3260 is a PCI bus card.
  *
- * Future Doमुख्य's older boards are based on the TMC-1800 chip, and this
- * driver was originally written क्रम a TMC-1680 board with the TMC-1800 chip.
+ * Future Domain's older boards are based on the TMC-1800 chip, and this
+ * driver was originally written for a TMC-1680 board with the TMC-1800 chip.
  * More recently, boards are being produced with the TMC-18C50 and TMC-18C30
  * chips.
  *
- * Please note that the drive ordering that Future Doमुख्य implemented in BIOS
+ * Please note that the drive ordering that Future Domain implemented in BIOS
  * versions 3.4 and 3.5 is the opposite of the order (currently) used by the
  * rest of the SCSI industry.
  *
  *
  * REFERENCES USED:
  *
- * "TMC-1800 SCSI Chip Specification (FDC-1800T)", Future Doमुख्य Corporation,
+ * "TMC-1800 SCSI Chip Specification (FDC-1800T)", Future Domain Corporation,
  * 1990.
  *
- * "Technical Reference Manual: 18C50 SCSI Host Adapter Chip", Future Doमुख्य
+ * "Technical Reference Manual: 18C50 SCSI Host Adapter Chip", Future Domain
  * Corporation, January 1992.
  *
- * "LXT SCSI Products: Specअगरications and OEM Technical Manual (Revision
+ * "LXT SCSI Products: Specifications and OEM Technical Manual (Revision
  * B/September 1991)", Maxtor Corporation, 1991.
  *
  * "7213S product Manual (Revision P3)", Maxtor Corporation, 1992.
@@ -66,120 +65,120 @@
  * Interface - 2 (SCSI-2)", Global Engineering Documents. (X3T9.2/86-109,
  * revision 10h, October 17, 1991)
  *
- * Private communications, Drew Eckhardt (drew@cs.coloraकरो.edu) and Eric
+ * Private communications, Drew Eckhardt (drew@cs.colorado.edu) and Eric
  * Youngdale (ericy@cais.com), 1992.
  *
- * Private communication, Tuong Le (Future Doमुख्य Engineering deparपंचांगent),
- * 1994. (Disk geometry computations क्रम Future Doमुख्य BIOS version 3.4, and
+ * Private communication, Tuong Le (Future Domain Engineering department),
+ * 1994. (Disk geometry computations for Future Domain BIOS version 3.4, and
  * TMC-18C30 detection.)
  *
  * Hogan, Thom. The Programmer's PC Sourcebook. Microsoft Press, 1988. Page
  * 60 (2.39: Disk Partition Table Layout).
  *
- * "18C30 Technical Reference Manual", Future Doमुख्य Corporation, 1993, page
+ * "18C30 Technical Reference Manual", Future Domain Corporation, 1993, page
  * 6-1.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/workqueue.h>
-#समावेश <scsi/scsicam.h>
-#समावेश <scsi/scsi_cmnd.h>
-#समावेश <scsi/scsi_device.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश "fdomain.h"
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/delay.h>
+#include <linux/pci.h>
+#include <linux/workqueue.h>
+#include <scsi/scsicam.h>
+#include <scsi/scsi_cmnd.h>
+#include <scsi/scsi_device.h>
+#include <scsi/scsi_host.h>
+#include "fdomain.h"
 
 /*
  * FIFO_COUNT: The host adapter has an 8K cache (host adapters based on the
  * 18C30 chip have a 2k cache).  When this many 512 byte blocks are filled by
- * the SCSI device, an पूर्णांकerrupt will be उठाओd.  Thereक्रमe, this could be as
+ * the SCSI device, an interrupt will be raised.  Therefore, this could be as
  * low as 0, or as high as 16.  Note, however, that values which are too high
- * or too low seem to prevent any पूर्णांकerrupts from occurring, and thereby lock
+ * or too low seem to prevent any interrupts from occurring, and thereby lock
  * up the machine.
  */
-#घोषणा FIFO_COUNT	2	/* Number of 512 byte blocks beक्रमe INTR */
-#घोषणा PARITY_MASK	ACTL_PAREN	/* Parity enabled, 0 = disabled */
+#define FIFO_COUNT	2	/* Number of 512 byte blocks before INTR */
+#define PARITY_MASK	ACTL_PAREN	/* Parity enabled, 0 = disabled */
 
-क्रमागत chip_type अणु
+enum chip_type {
 	unknown		= 0x00,
-	पंचांगc1800		= 0x01,
-	पंचांगc18c50	= 0x02,
-	पंचांगc18c30	= 0x03,
-पूर्ण;
+	tmc1800		= 0x01,
+	tmc18c50	= 0x02,
+	tmc18c30	= 0x03,
+};
 
-काष्ठा fकरोमुख्य अणु
-	पूर्णांक base;
-	काष्ठा scsi_cmnd *cur_cmd;
-	क्रमागत chip_type chip;
-	काष्ठा work_काष्ठा work;
-पूर्ण;
+struct fdomain {
+	int base;
+	struct scsi_cmnd *cur_cmd;
+	enum chip_type chip;
+	struct work_struct work;
+};
 
-अटल अंतरभूत व्योम fकरोमुख्य_make_bus_idle(काष्ठा fकरोमुख्य *fd)
-अणु
+static inline void fdomain_make_bus_idle(struct fdomain *fd)
+{
 	outb(0, fd->base + REG_BCTL);
 	outb(0, fd->base + REG_MCTL);
-	अगर (fd->chip == पंचांगc18c50 || fd->chip == पंचांगc18c30)
-		/* Clear क्रमced पूर्णांकr. */
+	if (fd->chip == tmc18c50 || fd->chip == tmc18c30)
+		/* Clear forced intr. */
 		outb(ACTL_RESET | ACTL_CLRFIRQ | PARITY_MASK,
 		     fd->base + REG_ACTL);
-	अन्यथा
+	else
 		outb(ACTL_RESET | PARITY_MASK, fd->base + REG_ACTL);
-पूर्ण
+}
 
-अटल क्रमागत chip_type fकरोमुख्य_identअगरy(पूर्णांक port)
-अणु
+static enum chip_type fdomain_identify(int port)
+{
 	u16 id = inb(port + REG_ID_LSB) | inb(port + REG_ID_MSB) << 8;
 
-	चयन (id) अणु
-	हाल 0x6127:
-		वापस पंचांगc1800;
-	हाल 0x60e9: /* 18c50 or 18c30 */
-		अवरोध;
-	शेष:
-		वापस unknown;
-	पूर्ण
+	switch (id) {
+	case 0x6127:
+		return tmc1800;
+	case 0x60e9: /* 18c50 or 18c30 */
+		break;
+	default:
+		return unknown;
+	}
 
 	/* Try to toggle 32-bit mode. This only works on an 18c30 chip. */
 	outb(CFG2_32BIT, port + REG_CFG2);
-	अगर ((inb(port + REG_CFG2) & CFG2_32BIT)) अणु
+	if ((inb(port + REG_CFG2) & CFG2_32BIT)) {
 		outb(0, port + REG_CFG2);
-		अगर ((inb(port + REG_CFG2) & CFG2_32BIT) == 0)
-			वापस पंचांगc18c30;
-	पूर्ण
+		if ((inb(port + REG_CFG2) & CFG2_32BIT) == 0)
+			return tmc18c30;
+	}
 	/* If that failed, we are an 18c50. */
-	वापस पंचांगc18c50;
-पूर्ण
+	return tmc18c50;
+}
 
-अटल पूर्णांक fकरोमुख्य_test_loopback(पूर्णांक base)
-अणु
-	पूर्णांक i;
+static int fdomain_test_loopback(int base)
+{
+	int i;
 
-	क्रम (i = 0; i < 255; i++) अणु
+	for (i = 0; i < 255; i++) {
 		outb(i, base + REG_LOOPBACK);
-		अगर (inb(base + REG_LOOPBACK) != i)
-			वापस 1;
-	पूर्ण
+		if (inb(base + REG_LOOPBACK) != i)
+			return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम fकरोमुख्य_reset(पूर्णांक base)
-अणु
+static void fdomain_reset(int base)
+{
 	outb(BCTL_RST, base + REG_BCTL);
 	mdelay(20);
 	outb(0, base + REG_BCTL);
 	mdelay(1150);
 	outb(0, base + REG_MCTL);
 	outb(PARITY_MASK, base + REG_ACTL);
-पूर्ण
+}
 
-अटल पूर्णांक fकरोमुख्य_select(काष्ठा Scsi_Host *sh, पूर्णांक target)
-अणु
-	पूर्णांक status;
-	अचिन्हित दीर्घ समयout;
-	काष्ठा fकरोमुख्य *fd = shost_priv(sh);
+static int fdomain_select(struct Scsi_Host *sh, int target)
+{
+	int status;
+	unsigned long timeout;
+	struct fdomain *fd = shost_priv(sh);
 
 	outb(BCTL_BUSEN | BCTL_SEL, fd->base + REG_BCTL);
 	outb(BIT(sh->this_id) | BIT(target), fd->base + REG_SCSI_DATA_NOACK);
@@ -187,96 +186,96 @@
 	/* Stop arbitration and enable parity */
 	outb(PARITY_MASK, fd->base + REG_ACTL);
 
-	समयout = 350;	/* 350 msec */
+	timeout = 350;	/* 350 msec */
 
-	करो अणु
+	do {
 		status = inb(fd->base + REG_BSTAT);
-		अगर (status & BSTAT_BSY) अणु
+		if (status & BSTAT_BSY) {
 			/* Enable SCSI Bus */
 			/* (on error, should make bus idle with 0) */
 			outb(BCTL_BUSEN, fd->base + REG_BCTL);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		mdelay(1);
-	पूर्ण जबतक (--समयout);
-	fकरोमुख्य_make_bus_idle(fd);
-	वापस 1;
-पूर्ण
+	} while (--timeout);
+	fdomain_make_bus_idle(fd);
+	return 1;
+}
 
-अटल व्योम fकरोमुख्य_finish_cmd(काष्ठा fकरोमुख्य *fd, पूर्णांक result)
-अणु
+static void fdomain_finish_cmd(struct fdomain *fd, int result)
+{
 	outb(0, fd->base + REG_ICTL);
-	fकरोमुख्य_make_bus_idle(fd);
+	fdomain_make_bus_idle(fd);
 	fd->cur_cmd->result = result;
-	fd->cur_cmd->scsi_करोne(fd->cur_cmd);
-	fd->cur_cmd = शून्य;
-पूर्ण
+	fd->cur_cmd->scsi_done(fd->cur_cmd);
+	fd->cur_cmd = NULL;
+}
 
-अटल व्योम fकरोमुख्य_पढ़ो_data(काष्ठा scsi_cmnd *cmd)
-अणु
-	काष्ठा fकरोमुख्य *fd = shost_priv(cmd->device->host);
-	अचिन्हित अक्षर *virt, *ptr;
-	माप_प्रकार offset, len;
+static void fdomain_read_data(struct scsi_cmnd *cmd)
+{
+	struct fdomain *fd = shost_priv(cmd->device->host);
+	unsigned char *virt, *ptr;
+	size_t offset, len;
 
-	जबतक ((len = inw(fd->base + REG_FIFO_COUNT)) > 0) अणु
+	while ((len = inw(fd->base + REG_FIFO_COUNT)) > 0) {
 		offset = scsi_bufflen(cmd) - scsi_get_resid(cmd);
 		virt = scsi_kmap_atomic_sg(scsi_sglist(cmd), scsi_sg_count(cmd),
 					   &offset, &len);
 		ptr = virt + offset;
-		अगर (len & 1)
+		if (len & 1)
 			*ptr++ = inb(fd->base + REG_FIFO);
-		अगर (len > 1)
+		if (len > 1)
 			insw(fd->base + REG_FIFO, ptr, len >> 1);
 		scsi_set_resid(cmd, scsi_get_resid(cmd) - len);
 		scsi_kunmap_atomic_sg(virt);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम fकरोमुख्य_ग_लिखो_data(काष्ठा scsi_cmnd *cmd)
-अणु
-	काष्ठा fकरोमुख्य *fd = shost_priv(cmd->device->host);
-	/* 8k FIFO क्रम pre-पंचांगc18c30 chips, 2k FIFO क्रम पंचांगc18c30 */
-	पूर्णांक FIFO_Size = fd->chip == पंचांगc18c30 ? 0x800 : 0x2000;
-	अचिन्हित अक्षर *virt, *ptr;
-	माप_प्रकार offset, len;
+static void fdomain_write_data(struct scsi_cmnd *cmd)
+{
+	struct fdomain *fd = shost_priv(cmd->device->host);
+	/* 8k FIFO for pre-tmc18c30 chips, 2k FIFO for tmc18c30 */
+	int FIFO_Size = fd->chip == tmc18c30 ? 0x800 : 0x2000;
+	unsigned char *virt, *ptr;
+	size_t offset, len;
 
-	जबतक ((len = FIFO_Size - inw(fd->base + REG_FIFO_COUNT)) > 512) अणु
+	while ((len = FIFO_Size - inw(fd->base + REG_FIFO_COUNT)) > 512) {
 		offset = scsi_bufflen(cmd) - scsi_get_resid(cmd);
-		अगर (len + offset > scsi_bufflen(cmd)) अणु
+		if (len + offset > scsi_bufflen(cmd)) {
 			len = scsi_bufflen(cmd) - offset;
-			अगर (len == 0)
-				अवरोध;
-		पूर्ण
+			if (len == 0)
+				break;
+		}
 		virt = scsi_kmap_atomic_sg(scsi_sglist(cmd), scsi_sg_count(cmd),
 					   &offset, &len);
 		ptr = virt + offset;
-		अगर (len & 1)
+		if (len & 1)
 			outb(*ptr++, fd->base + REG_FIFO);
-		अगर (len > 1)
+		if (len > 1)
 			outsw(fd->base + REG_FIFO, ptr, len >> 1);
 		scsi_set_resid(cmd, scsi_get_resid(cmd) - len);
 		scsi_kunmap_atomic_sg(virt);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम fकरोमुख्य_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा fकरोमुख्य *fd = container_of(work, काष्ठा fकरोमुख्य, work);
-	काष्ठा Scsi_Host *sh = container_of((व्योम *)fd, काष्ठा Scsi_Host,
+static void fdomain_work(struct work_struct *work)
+{
+	struct fdomain *fd = container_of(work, struct fdomain, work);
+	struct Scsi_Host *sh = container_of((void *)fd, struct Scsi_Host,
 					    hostdata);
-	काष्ठा scsi_cmnd *cmd = fd->cur_cmd;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक status;
-	पूर्णांक करोne = 0;
+	struct scsi_cmnd *cmd = fd->cur_cmd;
+	unsigned long flags;
+	int status;
+	int done = 0;
 
 	spin_lock_irqsave(sh->host_lock, flags);
 
-	अगर (cmd->SCp.phase & in_arbitration) अणु
+	if (cmd->SCp.phase & in_arbitration) {
 		status = inb(fd->base + REG_ASTAT);
-		अगर (!(status & ASTAT_ARB)) अणु
-			fकरोमुख्य_finish_cmd(fd, DID_BUS_BUSY << 16);
-			जाओ out;
-		पूर्ण
+		if (!(status & ASTAT_ARB)) {
+			fdomain_finish_cmd(fd, DID_BUS_BUSY << 16);
+			goto out;
+		}
 		cmd->SCp.phase = in_selection;
 
 		outb(ICTL_SEL | FIFO_COUNT, fd->base + REG_ICTL);
@@ -285,120 +284,120 @@
 		     fd->base + REG_SCSI_DATA_NOACK);
 		/* Stop arbitration and enable parity */
 		outb(ACTL_IRQEN | PARITY_MASK, fd->base + REG_ACTL);
-		जाओ out;
-	पूर्ण अन्यथा अगर (cmd->SCp.phase & in_selection) अणु
+		goto out;
+	} else if (cmd->SCp.phase & in_selection) {
 		status = inb(fd->base + REG_BSTAT);
-		अगर (!(status & BSTAT_BSY)) अणु
-			/* Try again, क्रम slow devices */
-			अगर (fकरोमुख्य_select(cmd->device->host, scmd_id(cmd))) अणु
-				fकरोमुख्य_finish_cmd(fd, DID_NO_CONNECT << 16);
-				जाओ out;
-			पूर्ण
+		if (!(status & BSTAT_BSY)) {
+			/* Try again, for slow devices */
+			if (fdomain_select(cmd->device->host, scmd_id(cmd))) {
+				fdomain_finish_cmd(fd, DID_NO_CONNECT << 16);
+				goto out;
+			}
 			/* Stop arbitration and enable parity */
 			outb(ACTL_IRQEN | PARITY_MASK, fd->base + REG_ACTL);
-		पूर्ण
+		}
 		cmd->SCp.phase = in_other;
 		outb(ICTL_FIFO | ICTL_REQ | FIFO_COUNT, fd->base + REG_ICTL);
 		outb(BCTL_BUSEN, fd->base + REG_BCTL);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* cur_cmd->SCp.phase == in_other: this is the body of the routine */
 	status = inb(fd->base + REG_BSTAT);
 
-	अगर (status & BSTAT_REQ) अणु
-		चयन (status & (BSTAT_MSG | BSTAT_CMD | BSTAT_IO)) अणु
-		हाल BSTAT_CMD:	/* COMMAND OUT */
+	if (status & BSTAT_REQ) {
+		switch (status & (BSTAT_MSG | BSTAT_CMD | BSTAT_IO)) {
+		case BSTAT_CMD:	/* COMMAND OUT */
 			outb(cmd->cmnd[cmd->SCp.sent_command++],
 			     fd->base + REG_SCSI_DATA);
-			अवरोध;
-		हाल 0:	/* DATA OUT -- पंचांगc18c50/पंचांगc18c30 only */
-			अगर (fd->chip != पंचांगc1800 && !cmd->SCp.have_data_in) अणु
+			break;
+		case 0:	/* DATA OUT -- tmc18c50/tmc18c30 only */
+			if (fd->chip != tmc1800 && !cmd->SCp.have_data_in) {
 				cmd->SCp.have_data_in = -1;
 				outb(ACTL_IRQEN | ACTL_FIFOWR | ACTL_FIFOEN |
 				     PARITY_MASK, fd->base + REG_ACTL);
-			पूर्ण
-			अवरोध;
-		हाल BSTAT_IO:	/* DATA IN -- पंचांगc18c50/पंचांगc18c30 only */
-			अगर (fd->chip != पंचांगc1800 && !cmd->SCp.have_data_in) अणु
+			}
+			break;
+		case BSTAT_IO:	/* DATA IN -- tmc18c50/tmc18c30 only */
+			if (fd->chip != tmc1800 && !cmd->SCp.have_data_in) {
 				cmd->SCp.have_data_in = 1;
 				outb(ACTL_IRQEN | ACTL_FIFOEN | PARITY_MASK,
 				     fd->base + REG_ACTL);
-			पूर्ण
-			अवरोध;
-		हाल BSTAT_CMD | BSTAT_IO:	/* STATUS IN */
+			}
+			break;
+		case BSTAT_CMD | BSTAT_IO:	/* STATUS IN */
 			cmd->SCp.Status = inb(fd->base + REG_SCSI_DATA);
-			अवरोध;
-		हाल BSTAT_MSG | BSTAT_CMD:	/* MESSAGE OUT */
+			break;
+		case BSTAT_MSG | BSTAT_CMD:	/* MESSAGE OUT */
 			outb(MESSAGE_REJECT, fd->base + REG_SCSI_DATA);
-			अवरोध;
-		हाल BSTAT_MSG | BSTAT_CMD | BSTAT_IO:	/* MESSAGE IN */
+			break;
+		case BSTAT_MSG | BSTAT_CMD | BSTAT_IO:	/* MESSAGE IN */
 			cmd->SCp.Message = inb(fd->base + REG_SCSI_DATA);
-			अगर (!cmd->SCp.Message)
-				++करोne;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			if (!cmd->SCp.Message)
+				++done;
+			break;
+		}
+	}
 
-	अगर (fd->chip == पंचांगc1800 && !cmd->SCp.have_data_in &&
-	    cmd->SCp.sent_command >= cmd->cmd_len) अणु
-		अगर (cmd->sc_data_direction == DMA_TO_DEVICE) अणु
+	if (fd->chip == tmc1800 && !cmd->SCp.have_data_in &&
+	    cmd->SCp.sent_command >= cmd->cmd_len) {
+		if (cmd->sc_data_direction == DMA_TO_DEVICE) {
 			cmd->SCp.have_data_in = -1;
 			outb(ACTL_IRQEN | ACTL_FIFOWR | ACTL_FIFOEN |
 			     PARITY_MASK, fd->base + REG_ACTL);
-		पूर्ण अन्यथा अणु
+		} else {
 			cmd->SCp.have_data_in = 1;
 			outb(ACTL_IRQEN | ACTL_FIFOEN | PARITY_MASK,
 			     fd->base + REG_ACTL);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (cmd->SCp.have_data_in == -1) /* DATA OUT */
-		fकरोमुख्य_ग_लिखो_data(cmd);
+	if (cmd->SCp.have_data_in == -1) /* DATA OUT */
+		fdomain_write_data(cmd);
 
-	अगर (cmd->SCp.have_data_in == 1) /* DATA IN */
-		fकरोमुख्य_पढ़ो_data(cmd);
+	if (cmd->SCp.have_data_in == 1) /* DATA IN */
+		fdomain_read_data(cmd);
 
-	अगर (करोne) अणु
-		fकरोमुख्य_finish_cmd(fd, (cmd->SCp.Status & 0xff) |
+	if (done) {
+		fdomain_finish_cmd(fd, (cmd->SCp.Status & 0xff) |
 				   ((cmd->SCp.Message & 0xff) << 8) |
 				   (DID_OK << 16));
-	पूर्ण अन्यथा अणु
-		अगर (cmd->SCp.phase & disconnect) अणु
+	} else {
+		if (cmd->SCp.phase & disconnect) {
 			outb(ICTL_FIFO | ICTL_SEL | ICTL_REQ | FIFO_COUNT,
 			     fd->base + REG_ICTL);
 			outb(0, fd->base + REG_BCTL);
-		पूर्ण अन्यथा
+		} else
 			outb(ICTL_FIFO | ICTL_REQ | FIFO_COUNT,
 			     fd->base + REG_ICTL);
-	पूर्ण
+	}
 out:
 	spin_unlock_irqrestore(sh->host_lock, flags);
-पूर्ण
+}
 
-अटल irqवापस_t fकरोमुख्य_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा fकरोमुख्य *fd = dev_id;
+static irqreturn_t fdomain_irq(int irq, void *dev_id)
+{
+	struct fdomain *fd = dev_id;
 
 	/* Is it our IRQ? */
-	अगर ((inb(fd->base + REG_ASTAT) & ASTAT_IRQ) == 0)
-		वापस IRQ_NONE;
+	if ((inb(fd->base + REG_ASTAT) & ASTAT_IRQ) == 0)
+		return IRQ_NONE;
 
 	outb(0, fd->base + REG_ICTL);
 
-	/* We usually have one spurious पूर्णांकerrupt after each command. */
-	अगर (!fd->cur_cmd)	/* Spurious पूर्णांकerrupt */
-		वापस IRQ_NONE;
+	/* We usually have one spurious interrupt after each command. */
+	if (!fd->cur_cmd)	/* Spurious interrupt */
+		return IRQ_NONE;
 
 	schedule_work(&fd->work);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक fकरोमुख्य_queue(काष्ठा Scsi_Host *sh, काष्ठा scsi_cmnd *cmd)
-अणु
-	काष्ठा fकरोमुख्य *fd = shost_priv(cmd->device->host);
-	अचिन्हित दीर्घ flags;
+static int fdomain_queue(struct Scsi_Host *sh, struct scsi_cmnd *cmd)
+{
+	struct fdomain *fd = shost_priv(cmd->device->host);
+	unsigned long flags;
 
 	cmd->SCp.Status		= 0;
 	cmd->SCp.Message	= 0;
@@ -411,7 +410,7 @@ out:
 
 	fd->cur_cmd = cmd;
 
-	fकरोमुख्य_make_bus_idle(fd);
+	fdomain_make_bus_idle(fd);
 
 	/* Start arbitration */
 	outb(0, fd->base + REG_ICTL);
@@ -424,114 +423,114 @@ out:
 
 	spin_unlock_irqrestore(sh->host_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fकरोमुख्य_पात(काष्ठा scsi_cmnd *cmd)
-अणु
-	काष्ठा Scsi_Host *sh = cmd->device->host;
-	काष्ठा fकरोमुख्य *fd = shost_priv(sh);
-	अचिन्हित दीर्घ flags;
+static int fdomain_abort(struct scsi_cmnd *cmd)
+{
+	struct Scsi_Host *sh = cmd->device->host;
+	struct fdomain *fd = shost_priv(sh);
+	unsigned long flags;
 
-	अगर (!fd->cur_cmd)
-		वापस FAILED;
+	if (!fd->cur_cmd)
+		return FAILED;
 
 	spin_lock_irqsave(sh->host_lock, flags);
 
-	fकरोमुख्य_make_bus_idle(fd);
-	fd->cur_cmd->SCp.phase |= पातed;
+	fdomain_make_bus_idle(fd);
+	fd->cur_cmd->SCp.phase |= aborted;
 	fd->cur_cmd->result = DID_ABORT << 16;
 
-	/* Aborts are not करोne well. . . */
-	fकरोमुख्य_finish_cmd(fd, DID_ABORT << 16);
+	/* Aborts are not done well. . . */
+	fdomain_finish_cmd(fd, DID_ABORT << 16);
 	spin_unlock_irqrestore(sh->host_lock, flags);
-	वापस SUCCESS;
-पूर्ण
+	return SUCCESS;
+}
 
-अटल पूर्णांक fकरोमुख्य_host_reset(काष्ठा scsi_cmnd *cmd)
-अणु
-	काष्ठा Scsi_Host *sh = cmd->device->host;
-	काष्ठा fकरोमुख्य *fd = shost_priv(sh);
-	अचिन्हित दीर्घ flags;
+static int fdomain_host_reset(struct scsi_cmnd *cmd)
+{
+	struct Scsi_Host *sh = cmd->device->host;
+	struct fdomain *fd = shost_priv(sh);
+	unsigned long flags;
 
 	spin_lock_irqsave(sh->host_lock, flags);
-	fकरोमुख्य_reset(fd->base);
+	fdomain_reset(fd->base);
 	spin_unlock_irqrestore(sh->host_lock, flags);
-	वापस SUCCESS;
-पूर्ण
+	return SUCCESS;
+}
 
-अटल पूर्णांक fकरोमुख्य_biosparam(काष्ठा scsi_device *sdev,
-			     काष्ठा block_device *bdev,	sector_t capacity,
-			     पूर्णांक geom[])
-अणु
-	अचिन्हित अक्षर *p = scsi_bios_ptable(bdev);
+static int fdomain_biosparam(struct scsi_device *sdev,
+			     struct block_device *bdev,	sector_t capacity,
+			     int geom[])
+{
+	unsigned char *p = scsi_bios_ptable(bdev);
 
-	अगर (p && p[65] == 0xaa && p[64] == 0x55 /* Partition table valid */
-	    && p[4]) अणु	 /* Partition type */
+	if (p && p[65] == 0xaa && p[64] == 0x55 /* Partition table valid */
+	    && p[4]) {	 /* Partition type */
 		geom[0] = p[5] + 1;	/* heads */
 		geom[1] = p[6] & 0x3f;	/* sectors */
-	पूर्ण अन्यथा अणु
-		अगर (capacity >= 0x7e0000) अणु
+	} else {
+		if (capacity >= 0x7e0000) {
 			geom[0] = 255;	/* heads */
 			geom[1] = 63;	/* sectors */
-		पूर्ण अन्यथा अगर (capacity >= 0x200000) अणु
+		} else if (capacity >= 0x200000) {
 			geom[0] = 128;	/* heads */
 			geom[1] = 63;	/* sectors */
-		पूर्ण अन्यथा अणु
+		} else {
 			geom[0] = 64;	/* heads */
 			geom[1] = 32;	/* sectors */
-		पूर्ण
-	पूर्ण
-	geom[2] = sector_भाग(capacity, geom[0] * geom[1]);
-	kमुक्त(p);
+		}
+	}
+	geom[2] = sector_div(capacity, geom[0] * geom[1]);
+	kfree(p);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा scsi_host_ढाँचा fकरोमुख्य_ढाँचा = अणु
+static struct scsi_host_template fdomain_template = {
 	.module			= THIS_MODULE,
 	.name			= "Future Domain TMC-16x0",
 	.proc_name		= "fdomain",
-	.queuecommand		= fकरोमुख्य_queue,
-	.eh_पात_handler	= fकरोमुख्य_पात,
-	.eh_host_reset_handler	= fकरोमुख्य_host_reset,
-	.bios_param		= fकरोमुख्य_biosparam,
+	.queuecommand		= fdomain_queue,
+	.eh_abort_handler	= fdomain_abort,
+	.eh_host_reset_handler	= fdomain_host_reset,
+	.bios_param		= fdomain_biosparam,
 	.can_queue		= 1,
 	.this_id		= 7,
 	.sg_tablesize		= 64,
 	.dma_boundary		= PAGE_SIZE - 1,
-पूर्ण;
+};
 
-काष्ठा Scsi_Host *fकरोमुख्य_create(पूर्णांक base, पूर्णांक irq, पूर्णांक this_id,
-				 काष्ठा device *dev)
-अणु
-	काष्ठा Scsi_Host *sh;
-	काष्ठा fकरोमुख्य *fd;
-	क्रमागत chip_type chip;
-	अटल स्थिर अक्षर * स्थिर chip_names[] = अणु
+struct Scsi_Host *fdomain_create(int base, int irq, int this_id,
+				 struct device *dev)
+{
+	struct Scsi_Host *sh;
+	struct fdomain *fd;
+	enum chip_type chip;
+	static const char * const chip_names[] = {
 		"Unknown", "TMC-1800", "TMC-18C50", "TMC-18C30"
-	पूर्ण;
-	अचिन्हित दीर्घ irq_flags = 0;
+	};
+	unsigned long irq_flags = 0;
 
-	chip = fकरोमुख्य_identअगरy(base);
-	अगर (!chip)
-		वापस शून्य;
+	chip = fdomain_identify(base);
+	if (!chip)
+		return NULL;
 
-	fकरोमुख्य_reset(base);
+	fdomain_reset(base);
 
-	अगर (fकरोमुख्य_test_loopback(base))
-		वापस शून्य;
+	if (fdomain_test_loopback(base))
+		return NULL;
 
-	अगर (!irq) अणु
+	if (!irq) {
 		dev_err(dev, "card has no IRQ assigned");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	sh = scsi_host_alloc(&fकरोमुख्य_ढाँचा, माप(काष्ठा fकरोमुख्य));
-	अगर (!sh)
-		वापस शून्य;
+	sh = scsi_host_alloc(&fdomain_template, sizeof(struct fdomain));
+	if (!sh)
+		return NULL;
 
-	अगर (this_id)
+	if (this_id)
 		sh->this_id = this_id & 0x07;
 
 	sh->irq = irq;
@@ -541,57 +540,57 @@ out:
 	fd = shost_priv(sh);
 	fd->base = base;
 	fd->chip = chip;
-	INIT_WORK(&fd->work, fकरोमुख्य_work);
+	INIT_WORK(&fd->work, fdomain_work);
 
-	अगर (dev_is_pci(dev) || !म_भेद(dev->bus->name, "pcmcia"))
+	if (dev_is_pci(dev) || !strcmp(dev->bus->name, "pcmcia"))
 		irq_flags = IRQF_SHARED;
 
-	अगर (request_irq(irq, fकरोमुख्य_irq, irq_flags, "fdomain", fd))
-		जाओ fail_put;
+	if (request_irq(irq, fdomain_irq, irq_flags, "fdomain", fd))
+		goto fail_put;
 
-	shost_prपूर्णांकk(KERN_INFO, sh, "%s chip at 0x%x irq %d SCSI ID %d\n",
+	shost_printk(KERN_INFO, sh, "%s chip at 0x%x irq %d SCSI ID %d\n",
 		     dev_is_pci(dev) ? "TMC-36C70 (PCI bus)" : chip_names[chip],
 		     base, irq, sh->this_id);
 
-	अगर (scsi_add_host(sh, dev))
-		जाओ fail_मुक्त_irq;
+	if (scsi_add_host(sh, dev))
+		goto fail_free_irq;
 
 	scsi_scan_host(sh);
 
-	वापस sh;
+	return sh;
 
-fail_मुक्त_irq:
-	मुक्त_irq(irq, fd);
+fail_free_irq:
+	free_irq(irq, fd);
 fail_put:
 	scsi_host_put(sh);
-	वापस शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(fकरोमुख्य_create);
+	return NULL;
+}
+EXPORT_SYMBOL_GPL(fdomain_create);
 
-पूर्णांक fकरोमुख्य_destroy(काष्ठा Scsi_Host *sh)
-अणु
-	काष्ठा fकरोमुख्य *fd = shost_priv(sh);
+int fdomain_destroy(struct Scsi_Host *sh)
+{
+	struct fdomain *fd = shost_priv(sh);
 
 	cancel_work_sync(&fd->work);
-	scsi_हटाओ_host(sh);
-	अगर (sh->irq)
-		मुक्त_irq(sh->irq, fd);
+	scsi_remove_host(sh);
+	if (sh->irq)
+		free_irq(sh->irq, fd);
 	scsi_host_put(sh);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(fकरोमुख्य_destroy);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(fdomain_destroy);
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक fकरोमुख्य_resume(काष्ठा device *dev)
-अणु
-	काष्ठा fकरोमुख्य *fd = shost_priv(dev_get_drvdata(dev));
+#ifdef CONFIG_PM_SLEEP
+static int fdomain_resume(struct device *dev)
+{
+	struct fdomain *fd = shost_priv(dev_get_drvdata(dev));
 
-	fकरोमुख्य_reset(fd->base);
-	वापस 0;
-पूर्ण
+	fdomain_reset(fd->base);
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(fकरोमुख्य_pm_ops, शून्य, fकरोमुख्य_resume);
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+static SIMPLE_DEV_PM_OPS(fdomain_pm_ops, NULL, fdomain_resume);
+#endif /* CONFIG_PM_SLEEP */
 
 MODULE_AUTHOR("Ondrej Zary, Rickard E. Faith");
 MODULE_DESCRIPTION("Future Domain TMC-16x0/TMC-3260 SCSI driver");

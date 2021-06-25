@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *    standard tape device functions क्रम ibm tapes.
+ *    standard tape device functions for ibm tapes.
  *
  *  S390 and zSeries version
  *    Copyright IBM Corp. 2001, 2002
@@ -12,716 +11,716 @@
  *		 Stefan Bader <shbader@de.ibm.com>
  */
 
-#घोषणा KMSG_COMPONENT "tape"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "tape"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/bपन.स>
-#समावेश <linux/समयr.h>
+#include <linux/stddef.h>
+#include <linux/kernel.h>
+#include <linux/bio.h>
+#include <linux/timer.h>
 
-#समावेश <यंत्र/types.h>
-#समावेश <यंत्र/idals.h>
-#समावेश <यंत्र/ebcdic.h>
-#समावेश <यंत्र/tape390.h>
+#include <asm/types.h>
+#include <asm/idals.h>
+#include <asm/ebcdic.h>
+#include <asm/tape390.h>
 
-#घोषणा TAPE_DBF_AREA	tape_core_dbf
+#define TAPE_DBF_AREA	tape_core_dbf
 
-#समावेश "tape.h"
-#समावेश "tape_std.h"
+#include "tape.h"
+#include "tape_std.h"
 
 /*
  * tape_std_assign
  */
-अटल व्योम
-tape_std_assign_समयout(काष्ठा समयr_list *t)
-अणु
-	काष्ठा tape_request *	request = from_समयr(request, t, समयr);
-	काष्ठा tape_device *	device = request->device;
-	पूर्णांक rc;
+static void
+tape_std_assign_timeout(struct timer_list *t)
+{
+	struct tape_request *	request = from_timer(request, t, timer);
+	struct tape_device *	device = request->device;
+	int rc;
 
 	BUG_ON(!device);
 
 	DBF_EVENT(3, "%08x: Assignment timeout. Device busy.\n",
 			device->cdev_id);
 	rc = tape_cancel_io(device, request);
-	अगर(rc)
+	if(rc)
 		DBF_EVENT(3, "(%08x): Assign timeout: Cancel failed with rc = "
 			  "%i\n", device->cdev_id, rc);
-पूर्ण
+}
 
-पूर्णांक
-tape_std_assign(काष्ठा tape_device *device)
-अणु
-	पूर्णांक                  rc;
-	काष्ठा समयr_list    समयout;
-	काष्ठा tape_request *request;
+int
+tape_std_assign(struct tape_device *device)
+{
+	int                  rc;
+	struct timer_list    timeout;
+	struct tape_request *request;
 
 	request = tape_alloc_request(2, 11);
-	अगर (IS_ERR(request))
-		वापस PTR_ERR(request);
+	if (IS_ERR(request))
+		return PTR_ERR(request);
 
 	request->op = TO_ASSIGN;
 	tape_ccw_cc(request->cpaddr, ASSIGN, 11, request->cpdata);
-	tape_ccw_end(request->cpaddr + 1, NOP, 0, शून्य);
+	tape_ccw_end(request->cpaddr + 1, NOP, 0, NULL);
 
 	/*
-	 * The assign command someबार blocks अगर the device is asचिन्हित
-	 * to another host (actually this shouldn't happen but it करोes).
-	 * So we set up a समयout क्रम this call.
+	 * The assign command sometimes blocks if the device is assigned
+	 * to another host (actually this shouldn't happen but it does).
+	 * So we set up a timeout for this call.
 	 */
-	समयr_setup(&request->समयr, tape_std_assign_समयout, 0);
-	mod_समयr(&समयout, jअगरfies + 2 * HZ);
+	timer_setup(&request->timer, tape_std_assign_timeout, 0);
+	mod_timer(&timeout, jiffies + 2 * HZ);
 
-	rc = tape_करो_io_पूर्णांकerruptible(device, request);
+	rc = tape_do_io_interruptible(device, request);
 
-	del_समयr_sync(&request->समयr);
+	del_timer_sync(&request->timer);
 
-	अगर (rc != 0) अणु
+	if (rc != 0) {
 		DBF_EVENT(3, "%08x: assign failed - device might be busy\n",
 			device->cdev_id);
-	पूर्ण अन्यथा अणु
+	} else {
 		DBF_EVENT(3, "%08x: Tape assigned\n", device->cdev_id);
-	पूर्ण
-	tape_मुक्त_request(request);
-	वापस rc;
-पूर्ण
+	}
+	tape_free_request(request);
+	return rc;
+}
 
 /*
  * tape_std_unassign
  */
-पूर्णांक
-tape_std_unassign (काष्ठा tape_device *device)
-अणु
-	पूर्णांक                  rc;
-	काष्ठा tape_request *request;
+int
+tape_std_unassign (struct tape_device *device)
+{
+	int                  rc;
+	struct tape_request *request;
 
-	अगर (device->tape_state == TS_NOT_OPER) अणु
+	if (device->tape_state == TS_NOT_OPER) {
 		DBF_EVENT(3, "(%08x): Can't unassign device\n",
 			device->cdev_id);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	request = tape_alloc_request(2, 11);
-	अगर (IS_ERR(request))
-		वापस PTR_ERR(request);
+	if (IS_ERR(request))
+		return PTR_ERR(request);
 
 	request->op = TO_UNASSIGN;
 	tape_ccw_cc(request->cpaddr, UNASSIGN, 11, request->cpdata);
-	tape_ccw_end(request->cpaddr + 1, NOP, 0, शून्य);
+	tape_ccw_end(request->cpaddr + 1, NOP, 0, NULL);
 
-	अगर ((rc = tape_करो_io(device, request)) != 0) अणु
+	if ((rc = tape_do_io(device, request)) != 0) {
 		DBF_EVENT(3, "%08x: Unassign failed\n", device->cdev_id);
-	पूर्ण अन्यथा अणु
+	} else {
 		DBF_EVENT(3, "%08x: Tape unassigned\n", device->cdev_id);
-	पूर्ण
-	tape_मुक्त_request(request);
-	वापस rc;
-पूर्ण
+	}
+	tape_free_request(request);
+	return rc;
+}
 
 /*
  * TAPE390_DISPLAY: Show a string on the tape display.
  */
-पूर्णांक
-tape_std_display(काष्ठा tape_device *device, काष्ठा display_काष्ठा *disp)
-अणु
-	काष्ठा tape_request *request;
-	पूर्णांक rc;
+int
+tape_std_display(struct tape_device *device, struct display_struct *disp)
+{
+	struct tape_request *request;
+	int rc;
 
 	request = tape_alloc_request(2, 17);
-	अगर (IS_ERR(request)) अणु
+	if (IS_ERR(request)) {
 		DBF_EVENT(3, "TAPE: load display failed\n");
-		वापस PTR_ERR(request);
-	पूर्ण
+		return PTR_ERR(request);
+	}
 	request->op = TO_DIS;
 
-	*(अचिन्हित अक्षर *) request->cpdata = disp->cntrl;
+	*(unsigned char *) request->cpdata = disp->cntrl;
 	DBF_EVENT(5, "TAPE: display cntrl=%04x\n", disp->cntrl);
-	स_नकल(((अचिन्हित अक्षर *) request->cpdata) + 1, disp->message1, 8);
-	स_नकल(((अचिन्हित अक्षर *) request->cpdata) + 9, disp->message2, 8);
-	ASCEBC(((अचिन्हित अक्षर*) request->cpdata) + 1, 16);
+	memcpy(((unsigned char *) request->cpdata) + 1, disp->message1, 8);
+	memcpy(((unsigned char *) request->cpdata) + 9, disp->message2, 8);
+	ASCEBC(((unsigned char*) request->cpdata) + 1, 16);
 
 	tape_ccw_cc(request->cpaddr, LOAD_DISPLAY, 17, request->cpdata);
-	tape_ccw_end(request->cpaddr + 1, NOP, 0, शून्य);
+	tape_ccw_end(request->cpaddr + 1, NOP, 0, NULL);
 
-	rc = tape_करो_io_पूर्णांकerruptible(device, request);
-	tape_मुक्त_request(request);
-	वापस rc;
-पूर्ण
+	rc = tape_do_io_interruptible(device, request);
+	tape_free_request(request);
+	return rc;
+}
 
 /*
  * Read block id.
  */
-पूर्णांक
-tape_std_पढ़ो_block_id(काष्ठा tape_device *device, __u64 *id)
-अणु
-	काष्ठा tape_request *request;
-	पूर्णांक rc;
+int
+tape_std_read_block_id(struct tape_device *device, __u64 *id)
+{
+	struct tape_request *request;
+	int rc;
 
 	request = tape_alloc_request(3, 8);
-	अगर (IS_ERR(request))
-		वापस PTR_ERR(request);
+	if (IS_ERR(request))
+		return PTR_ERR(request);
 	request->op = TO_RBI;
 	/* setup ccws */
 	tape_ccw_cc(request->cpaddr, MODE_SET_DB, 1, device->modeset_byte);
 	tape_ccw_cc(request->cpaddr + 1, READ_BLOCK_ID, 8, request->cpdata);
-	tape_ccw_end(request->cpaddr + 2, NOP, 0, शून्य);
+	tape_ccw_end(request->cpaddr + 2, NOP, 0, NULL);
 	/* execute it */
-	rc = tape_करो_io(device, request);
-	अगर (rc == 0)
-		/* Get result from पढ़ो buffer. */
+	rc = tape_do_io(device, request);
+	if (rc == 0)
+		/* Get result from read buffer. */
 		*id = *(__u64 *) request->cpdata;
-	tape_मुक्त_request(request);
-	वापस rc;
-पूर्ण
+	tape_free_request(request);
+	return rc;
+}
 
-पूर्णांक
-tape_std_terminate_ग_लिखो(काष्ठा tape_device *device)
-अणु
-	पूर्णांक rc;
+int
+tape_std_terminate_write(struct tape_device *device)
+{
+	int rc;
 
-	अगर(device->required_tapemarks == 0)
-		वापस 0;
+	if(device->required_tapemarks == 0)
+		return 0;
 
 	DBF_LH(5, "tape%d: terminate write %dxEOF\n", device->first_minor,
 		device->required_tapemarks);
 
-	rc = tape_mtop(device, MTWखातापूर्ण, device->required_tapemarks);
-	अगर (rc)
-		वापस rc;
+	rc = tape_mtop(device, MTWEOF, device->required_tapemarks);
+	if (rc)
+		return rc;
 
 	device->required_tapemarks = 0;
-	वापस tape_mtop(device, MTBSR, 1);
-पूर्ण
+	return tape_mtop(device, MTBSR, 1);
+}
 
 /*
  * MTLOAD: Loads the tape.
- * The शेष implementation just रुको until the tape medium state changes
+ * The default implementation just wait until the tape medium state changes
  * to MS_LOADED.
  */
-पूर्णांक
-tape_std_mtload(काष्ठा tape_device *device, पूर्णांक count)
-अणु
-	वापस रुको_event_पूर्णांकerruptible(device->state_change_wq,
+int
+tape_std_mtload(struct tape_device *device, int count)
+{
+	return wait_event_interruptible(device->state_change_wq,
 		(device->medium_state == MS_LOADED));
-पूर्ण
+}
 
 /*
  * MTSETBLK: Set block size.
  */
-पूर्णांक
-tape_std_mtsetblk(काष्ठा tape_device *device, पूर्णांक count)
-अणु
-	काष्ठा idal_buffer *new;
+int
+tape_std_mtsetblk(struct tape_device *device, int count)
+{
+	struct idal_buffer *new;
 
 	DBF_LH(6, "tape_std_mtsetblk(%d)\n", count);
-	अगर (count <= 0) अणु
+	if (count <= 0) {
 		/*
-		 * Just set block_size to 0. tapeअक्षर_पढ़ो/tapeअक्षर_ग_लिखो
-		 * will पुनः_स्मृति the idal buffer अगर a bigger one than the
+		 * Just set block_size to 0. tapechar_read/tapechar_write
+		 * will realloc the idal buffer if a bigger one than the
 		 * current is needed.
 		 */
-		device->अक्षर_data.block_size = 0;
-		वापस 0;
-	पूर्ण
-	अगर (device->अक्षर_data.idal_buf != शून्य &&
-	    device->अक्षर_data.idal_buf->size == count)
-		/* We alपढ़ोy have a idal buffer of that size. */
-		वापस 0;
+		device->char_data.block_size = 0;
+		return 0;
+	}
+	if (device->char_data.idal_buf != NULL &&
+	    device->char_data.idal_buf->size == count)
+		/* We already have a idal buffer of that size. */
+		return 0;
 
-	अगर (count > MAX_BLOCKSIZE) अणु
+	if (count > MAX_BLOCKSIZE) {
 		DBF_EVENT(3, "Invalid block size (%d > %d) given.\n",
 			count, MAX_BLOCKSIZE);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Allocate a new idal buffer. */
 	new = idal_buffer_alloc(count, 0);
-	अगर (IS_ERR(new))
-		वापस -ENOMEM;
-	अगर (device->अक्षर_data.idal_buf != शून्य)
-		idal_buffer_मुक्त(device->अक्षर_data.idal_buf);
-	device->अक्षर_data.idal_buf = new;
-	device->अक्षर_data.block_size = count;
+	if (IS_ERR(new))
+		return -ENOMEM;
+	if (device->char_data.idal_buf != NULL)
+		idal_buffer_free(device->char_data.idal_buf);
+	device->char_data.idal_buf = new;
+	device->char_data.block_size = count;
 
-	DBF_LH(6, "new blocksize is %d\n", device->अक्षर_data.block_size);
+	DBF_LH(6, "new blocksize is %d\n", device->char_data.block_size);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * MTRESET: Set block size to 0.
  */
-पूर्णांक
-tape_std_mtreset(काष्ठा tape_device *device, पूर्णांक count)
-अणु
+int
+tape_std_mtreset(struct tape_device *device, int count)
+{
 	DBF_EVENT(6, "TCHAR:devreset:\n");
-	device->अक्षर_data.block_size = 0;
-	वापस 0;
-पूर्ण
+	device->char_data.block_size = 0;
+	return 0;
+}
 
 /*
  * MTFSF: Forward space over 'count' file marks. The tape is positioned
  * at the EOT (End of Tape) side of the file mark.
  */
-पूर्णांक
-tape_std_mtfsf(काष्ठा tape_device *device, पूर्णांक mt_count)
-अणु
-	काष्ठा tape_request *request;
-	काष्ठा ccw1 *ccw;
+int
+tape_std_mtfsf(struct tape_device *device, int mt_count)
+{
+	struct tape_request *request;
+	struct ccw1 *ccw;
 
 	request = tape_alloc_request(mt_count + 2, 0);
-	अगर (IS_ERR(request))
-		वापस PTR_ERR(request);
+	if (IS_ERR(request))
+		return PTR_ERR(request);
 	request->op = TO_FSF;
 	/* setup ccws */
 	ccw = tape_ccw_cc(request->cpaddr, MODE_SET_DB, 1,
 			  device->modeset_byte);
-	ccw = tape_ccw_repeat(ccw, FORSPACEखाता, mt_count);
-	ccw = tape_ccw_end(ccw, NOP, 0, शून्य);
+	ccw = tape_ccw_repeat(ccw, FORSPACEFILE, mt_count);
+	ccw = tape_ccw_end(ccw, NOP, 0, NULL);
 
 	/* execute it */
-	वापस tape_करो_io_मुक्त(device, request);
-पूर्ण
+	return tape_do_io_free(device, request);
+}
 
 /*
  * MTFSR: Forward space over 'count' tape blocks (blocksize is set
  * via MTSETBLK.
  */
-पूर्णांक
-tape_std_mtfsr(काष्ठा tape_device *device, पूर्णांक mt_count)
-अणु
-	काष्ठा tape_request *request;
-	काष्ठा ccw1 *ccw;
-	पूर्णांक rc;
+int
+tape_std_mtfsr(struct tape_device *device, int mt_count)
+{
+	struct tape_request *request;
+	struct ccw1 *ccw;
+	int rc;
 
 	request = tape_alloc_request(mt_count + 2, 0);
-	अगर (IS_ERR(request))
-		वापस PTR_ERR(request);
+	if (IS_ERR(request))
+		return PTR_ERR(request);
 	request->op = TO_FSB;
 	/* setup ccws */
 	ccw = tape_ccw_cc(request->cpaddr, MODE_SET_DB, 1,
 			  device->modeset_byte);
 	ccw = tape_ccw_repeat(ccw, FORSPACEBLOCK, mt_count);
-	ccw = tape_ccw_end(ccw, NOP, 0, शून्य);
+	ccw = tape_ccw_end(ccw, NOP, 0, NULL);
 
 	/* execute it */
-	rc = tape_करो_io(device, request);
-	अगर (rc == 0 && request->rescnt > 0) अणु
+	rc = tape_do_io(device, request);
+	if (rc == 0 && request->rescnt > 0) {
 		DBF_LH(3, "FSR over tapemark\n");
 		rc = 1;
-	पूर्ण
-	tape_मुक्त_request(request);
+	}
+	tape_free_request(request);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * MTBSR: Backward space over 'count' tape blocks.
  * (blocksize is set via MTSETBLK.
  */
-पूर्णांक
-tape_std_mtbsr(काष्ठा tape_device *device, पूर्णांक mt_count)
-अणु
-	काष्ठा tape_request *request;
-	काष्ठा ccw1 *ccw;
-	पूर्णांक rc;
+int
+tape_std_mtbsr(struct tape_device *device, int mt_count)
+{
+	struct tape_request *request;
+	struct ccw1 *ccw;
+	int rc;
 
 	request = tape_alloc_request(mt_count + 2, 0);
-	अगर (IS_ERR(request))
-		वापस PTR_ERR(request);
+	if (IS_ERR(request))
+		return PTR_ERR(request);
 	request->op = TO_BSB;
 	/* setup ccws */
 	ccw = tape_ccw_cc(request->cpaddr, MODE_SET_DB, 1,
 			  device->modeset_byte);
 	ccw = tape_ccw_repeat(ccw, BACKSPACEBLOCK, mt_count);
-	ccw = tape_ccw_end(ccw, NOP, 0, शून्य);
+	ccw = tape_ccw_end(ccw, NOP, 0, NULL);
 
 	/* execute it */
-	rc = tape_करो_io(device, request);
-	अगर (rc == 0 && request->rescnt > 0) अणु
+	rc = tape_do_io(device, request);
+	if (rc == 0 && request->rescnt > 0) {
 		DBF_LH(3, "BSR over tapemark\n");
 		rc = 1;
-	पूर्ण
-	tape_मुक्त_request(request);
+	}
+	tape_free_request(request);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * MTWखातापूर्ण: Write 'count' file marks at the current position.
+ * MTWEOF: Write 'count' file marks at the current position.
  */
-पूर्णांक
-tape_std_mtweof(काष्ठा tape_device *device, पूर्णांक mt_count)
-अणु
-	काष्ठा tape_request *request;
-	काष्ठा ccw1 *ccw;
+int
+tape_std_mtweof(struct tape_device *device, int mt_count)
+{
+	struct tape_request *request;
+	struct ccw1 *ccw;
 
 	request = tape_alloc_request(mt_count + 2, 0);
-	अगर (IS_ERR(request))
-		वापस PTR_ERR(request);
+	if (IS_ERR(request))
+		return PTR_ERR(request);
 	request->op = TO_WTM;
 	/* setup ccws */
 	ccw = tape_ccw_cc(request->cpaddr, MODE_SET_DB, 1,
 			  device->modeset_byte);
 	ccw = tape_ccw_repeat(ccw, WRITETAPEMARK, mt_count);
-	ccw = tape_ccw_end(ccw, NOP, 0, शून्य);
+	ccw = tape_ccw_end(ccw, NOP, 0, NULL);
 
 	/* execute it */
-	वापस tape_करो_io_मुक्त(device, request);
-पूर्ण
+	return tape_do_io_free(device, request);
+}
 
 /*
  * MTBSFM: Backward space over 'count' file marks.
  * The tape is positioned at the BOT (Begin Of Tape) side of the
  * last skipped file mark.
  */
-पूर्णांक
-tape_std_mtbsfm(काष्ठा tape_device *device, पूर्णांक mt_count)
-अणु
-	काष्ठा tape_request *request;
-	काष्ठा ccw1 *ccw;
+int
+tape_std_mtbsfm(struct tape_device *device, int mt_count)
+{
+	struct tape_request *request;
+	struct ccw1 *ccw;
 
 	request = tape_alloc_request(mt_count + 2, 0);
-	अगर (IS_ERR(request))
-		वापस PTR_ERR(request);
+	if (IS_ERR(request))
+		return PTR_ERR(request);
 	request->op = TO_BSF;
 	/* setup ccws */
 	ccw = tape_ccw_cc(request->cpaddr, MODE_SET_DB, 1,
 			  device->modeset_byte);
-	ccw = tape_ccw_repeat(ccw, BACKSPACEखाता, mt_count);
-	ccw = tape_ccw_end(ccw, NOP, 0, शून्य);
+	ccw = tape_ccw_repeat(ccw, BACKSPACEFILE, mt_count);
+	ccw = tape_ccw_end(ccw, NOP, 0, NULL);
 
 	/* execute it */
-	वापस tape_करो_io_मुक्त(device, request);
-पूर्ण
+	return tape_do_io_free(device, request);
+}
 
 /*
  * MTBSF: Backward space over 'count' file marks. The tape is positioned at
  * the EOT (End of Tape) side of the last skipped file mark.
  */
-पूर्णांक
-tape_std_mtbsf(काष्ठा tape_device *device, पूर्णांक mt_count)
-अणु
-	काष्ठा tape_request *request;
-	काष्ठा ccw1 *ccw;
-	पूर्णांक rc;
+int
+tape_std_mtbsf(struct tape_device *device, int mt_count)
+{
+	struct tape_request *request;
+	struct ccw1 *ccw;
+	int rc;
 
 	request = tape_alloc_request(mt_count + 2, 0);
-	अगर (IS_ERR(request))
-		वापस PTR_ERR(request);
+	if (IS_ERR(request))
+		return PTR_ERR(request);
 	request->op = TO_BSF;
 	/* setup ccws */
 	ccw = tape_ccw_cc(request->cpaddr, MODE_SET_DB, 1,
 			  device->modeset_byte);
-	ccw = tape_ccw_repeat(ccw, BACKSPACEखाता, mt_count);
-	ccw = tape_ccw_end(ccw, NOP, 0, शून्य);
+	ccw = tape_ccw_repeat(ccw, BACKSPACEFILE, mt_count);
+	ccw = tape_ccw_end(ccw, NOP, 0, NULL);
 	/* execute it */
-	rc = tape_करो_io_मुक्त(device, request);
-	अगर (rc == 0) अणु
+	rc = tape_do_io_free(device, request);
+	if (rc == 0) {
 		rc = tape_mtop(device, MTFSR, 1);
-		अगर (rc > 0)
+		if (rc > 0)
 			rc = 0;
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
 /*
  * MTFSFM: Forward space over 'count' file marks.
  * The tape is positioned at the BOT (Begin Of Tape) side
  * of the last skipped file mark.
  */
-पूर्णांक
-tape_std_mtfsfm(काष्ठा tape_device *device, पूर्णांक mt_count)
-अणु
-	काष्ठा tape_request *request;
-	काष्ठा ccw1 *ccw;
-	पूर्णांक rc;
+int
+tape_std_mtfsfm(struct tape_device *device, int mt_count)
+{
+	struct tape_request *request;
+	struct ccw1 *ccw;
+	int rc;
 
 	request = tape_alloc_request(mt_count + 2, 0);
-	अगर (IS_ERR(request))
-		वापस PTR_ERR(request);
+	if (IS_ERR(request))
+		return PTR_ERR(request);
 	request->op = TO_FSF;
 	/* setup ccws */
 	ccw = tape_ccw_cc(request->cpaddr, MODE_SET_DB, 1,
 			  device->modeset_byte);
-	ccw = tape_ccw_repeat(ccw, FORSPACEखाता, mt_count);
-	ccw = tape_ccw_end(ccw, NOP, 0, शून्य);
+	ccw = tape_ccw_repeat(ccw, FORSPACEFILE, mt_count);
+	ccw = tape_ccw_end(ccw, NOP, 0, NULL);
 	/* execute it */
-	rc = tape_करो_io_मुक्त(device, request);
-	अगर (rc == 0) अणु
+	rc = tape_do_io_free(device, request);
+	if (rc == 0) {
 		rc = tape_mtop(device, MTBSR, 1);
-		अगर (rc > 0)
+		if (rc > 0)
 			rc = 0;
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * MTREW: Rewind the tape.
  */
-पूर्णांक
-tape_std_mtrew(काष्ठा tape_device *device, पूर्णांक mt_count)
-अणु
-	काष्ठा tape_request *request;
+int
+tape_std_mtrew(struct tape_device *device, int mt_count)
+{
+	struct tape_request *request;
 
 	request = tape_alloc_request(3, 0);
-	अगर (IS_ERR(request))
-		वापस PTR_ERR(request);
+	if (IS_ERR(request))
+		return PTR_ERR(request);
 	request->op = TO_REW;
 	/* setup ccws */
 	tape_ccw_cc(request->cpaddr, MODE_SET_DB, 1,
 		    device->modeset_byte);
-	tape_ccw_cc(request->cpaddr + 1, REWIND, 0, शून्य);
-	tape_ccw_end(request->cpaddr + 2, NOP, 0, शून्य);
+	tape_ccw_cc(request->cpaddr + 1, REWIND, 0, NULL);
+	tape_ccw_end(request->cpaddr + 2, NOP, 0, NULL);
 
 	/* execute it */
-	वापस tape_करो_io_मुक्त(device, request);
-पूर्ण
+	return tape_do_io_free(device, request);
+}
 
 /*
  * MTOFFL: Rewind the tape and put the drive off-line.
  * Implement 'rewind unload'
  */
-पूर्णांक
-tape_std_mtoffl(काष्ठा tape_device *device, पूर्णांक mt_count)
-अणु
-	काष्ठा tape_request *request;
+int
+tape_std_mtoffl(struct tape_device *device, int mt_count)
+{
+	struct tape_request *request;
 
 	request = tape_alloc_request(3, 0);
-	अगर (IS_ERR(request))
-		वापस PTR_ERR(request);
+	if (IS_ERR(request))
+		return PTR_ERR(request);
 	request->op = TO_RUN;
 	/* setup ccws */
 	tape_ccw_cc(request->cpaddr, MODE_SET_DB, 1, device->modeset_byte);
-	tape_ccw_cc(request->cpaddr + 1, REWIND_UNLOAD, 0, शून्य);
-	tape_ccw_end(request->cpaddr + 2, NOP, 0, शून्य);
+	tape_ccw_cc(request->cpaddr + 1, REWIND_UNLOAD, 0, NULL);
+	tape_ccw_end(request->cpaddr + 2, NOP, 0, NULL);
 
 	/* execute it */
-	वापस tape_करो_io_मुक्त(device, request);
-पूर्ण
+	return tape_do_io_free(device, request);
+}
 
 /*
  * MTNOP: 'No operation'.
  */
-पूर्णांक
-tape_std_mtnop(काष्ठा tape_device *device, पूर्णांक mt_count)
-अणु
-	काष्ठा tape_request *request;
+int
+tape_std_mtnop(struct tape_device *device, int mt_count)
+{
+	struct tape_request *request;
 
 	request = tape_alloc_request(2, 0);
-	अगर (IS_ERR(request))
-		वापस PTR_ERR(request);
+	if (IS_ERR(request))
+		return PTR_ERR(request);
 	request->op = TO_NOP;
 	/* setup ccws */
 	tape_ccw_cc(request->cpaddr, MODE_SET_DB, 1, device->modeset_byte);
-	tape_ccw_end(request->cpaddr + 1, NOP, 0, शून्य);
+	tape_ccw_end(request->cpaddr + 1, NOP, 0, NULL);
 	/* execute it */
-	वापस tape_करो_io_मुक्त(device, request);
-पूर्ण
+	return tape_do_io_free(device, request);
+}
 
 /*
- * MTEOM: positions at the end of the portion of the tape alपढ़ोy used
- * क्रम recordind data. MTEOM positions after the last file mark, पढ़ोy क्रम
+ * MTEOM: positions at the end of the portion of the tape already used
+ * for recordind data. MTEOM positions after the last file mark, ready for
  * appending another file.
  */
-पूर्णांक
-tape_std_mteom(काष्ठा tape_device *device, पूर्णांक mt_count)
-अणु
-	पूर्णांक rc;
+int
+tape_std_mteom(struct tape_device *device, int mt_count)
+{
+	int rc;
 
 	/*
-	 * Seek from the beginning of tape (शुरुआत).
+	 * Seek from the beginning of tape (rewind).
 	 */
-	अगर ((rc = tape_mtop(device, MTREW, 1)) < 0)
-		वापस rc;
+	if ((rc = tape_mtop(device, MTREW, 1)) < 0)
+		return rc;
 
 	/*
 	 * The logical end of volume is given by two sewuential tapemarks.
-	 * Look क्रम this by skipping to the next file (over one tapemark)
-	 * and then test क्रम another one (fsr वापसs 1 अगर a tapemark was
+	 * Look for this by skipping to the next file (over one tapemark)
+	 * and then test for another one (fsr returns 1 if a tapemark was
 	 * encountered).
 	 */
-	करो अणु
-		अगर ((rc = tape_mtop(device, MTFSF, 1)) < 0)
-			वापस rc;
-		अगर ((rc = tape_mtop(device, MTFSR, 1)) < 0)
-			वापस rc;
-	पूर्ण जबतक (rc == 0);
+	do {
+		if ((rc = tape_mtop(device, MTFSF, 1)) < 0)
+			return rc;
+		if ((rc = tape_mtop(device, MTFSR, 1)) < 0)
+			return rc;
+	} while (rc == 0);
 
-	वापस tape_mtop(device, MTBSR, 1);
-पूर्ण
+	return tape_mtop(device, MTBSR, 1);
+}
 
 /*
- * MTRETEN: Retension the tape, i.e. क्रमward space to end of tape and शुरुआत.
+ * MTRETEN: Retension the tape, i.e. forward space to end of tape and rewind.
  */
-पूर्णांक
-tape_std_mtreten(काष्ठा tape_device *device, पूर्णांक mt_count)
-अणु
-	काष्ठा tape_request *request;
+int
+tape_std_mtreten(struct tape_device *device, int mt_count)
+{
+	struct tape_request *request;
 
 	request = tape_alloc_request(4, 0);
-	अगर (IS_ERR(request))
-		वापस PTR_ERR(request);
+	if (IS_ERR(request))
+		return PTR_ERR(request);
 	request->op = TO_FSF;
 	/* setup ccws */
 	tape_ccw_cc(request->cpaddr, MODE_SET_DB, 1, device->modeset_byte);
-	tape_ccw_cc(request->cpaddr + 1,FORSPACEखाता, 0, शून्य);
-	tape_ccw_cc(request->cpaddr + 2, NOP, 0, शून्य);
+	tape_ccw_cc(request->cpaddr + 1,FORSPACEFILE, 0, NULL);
+	tape_ccw_cc(request->cpaddr + 2, NOP, 0, NULL);
 	tape_ccw_end(request->cpaddr + 3, CCW_CMD_TIC, 0, request->cpaddr);
-	/* execute it, MTRETEN rc माला_लो ignored */
-	tape_करो_io_पूर्णांकerruptible(device, request);
-	tape_मुक्त_request(request);
-	वापस tape_mtop(device, MTREW, 1);
-पूर्ण
+	/* execute it, MTRETEN rc gets ignored */
+	tape_do_io_interruptible(device, request);
+	tape_free_request(request);
+	return tape_mtop(device, MTREW, 1);
+}
 
 /*
  * MTERASE: erases the tape.
  */
-पूर्णांक
-tape_std_mterase(काष्ठा tape_device *device, पूर्णांक mt_count)
-अणु
-	काष्ठा tape_request *request;
+int
+tape_std_mterase(struct tape_device *device, int mt_count)
+{
+	struct tape_request *request;
 
 	request = tape_alloc_request(6, 0);
-	अगर (IS_ERR(request))
-		वापस PTR_ERR(request);
+	if (IS_ERR(request))
+		return PTR_ERR(request);
 	request->op = TO_DSE;
 	/* setup ccws */
 	tape_ccw_cc(request->cpaddr, MODE_SET_DB, 1, device->modeset_byte);
-	tape_ccw_cc(request->cpaddr + 1, REWIND, 0, शून्य);
-	tape_ccw_cc(request->cpaddr + 2, ERASE_GAP, 0, शून्य);
-	tape_ccw_cc(request->cpaddr + 3, DATA_SEC_ERASE, 0, शून्य);
-	tape_ccw_cc(request->cpaddr + 4, REWIND, 0, शून्य);
-	tape_ccw_end(request->cpaddr + 5, NOP, 0, शून्य);
+	tape_ccw_cc(request->cpaddr + 1, REWIND, 0, NULL);
+	tape_ccw_cc(request->cpaddr + 2, ERASE_GAP, 0, NULL);
+	tape_ccw_cc(request->cpaddr + 3, DATA_SEC_ERASE, 0, NULL);
+	tape_ccw_cc(request->cpaddr + 4, REWIND, 0, NULL);
+	tape_ccw_end(request->cpaddr + 5, NOP, 0, NULL);
 
 	/* execute it */
-	वापस tape_करो_io_मुक्त(device, request);
-पूर्ण
+	return tape_do_io_free(device, request);
+}
 
 /*
  * MTUNLOAD: Rewind the tape and unload it.
  */
-पूर्णांक
-tape_std_mtunload(काष्ठा tape_device *device, पूर्णांक mt_count)
-अणु
-	वापस tape_mtop(device, MTOFFL, mt_count);
-पूर्ण
+int
+tape_std_mtunload(struct tape_device *device, int mt_count)
+{
+	return tape_mtop(device, MTOFFL, mt_count);
+}
 
 /*
  * MTCOMPRESSION: used to enable compression.
  * Sets the IDRC on/off.
  */
-पूर्णांक
-tape_std_mtcompression(काष्ठा tape_device *device, पूर्णांक mt_count)
-अणु
-	काष्ठा tape_request *request;
+int
+tape_std_mtcompression(struct tape_device *device, int mt_count)
+{
+	struct tape_request *request;
 
-	अगर (mt_count < 0 || mt_count > 1) अणु
+	if (mt_count < 0 || mt_count > 1) {
 		DBF_EXCEPTION(6, "xcom parm\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	request = tape_alloc_request(2, 0);
-	अगर (IS_ERR(request))
-		वापस PTR_ERR(request);
+	if (IS_ERR(request))
+		return PTR_ERR(request);
 	request->op = TO_NOP;
 	/* setup ccws */
-	अगर (mt_count == 0)
+	if (mt_count == 0)
 		*device->modeset_byte &= ~0x08;
-	अन्यथा
+	else
 		*device->modeset_byte |= 0x08;
 	tape_ccw_cc(request->cpaddr, MODE_SET_DB, 1, device->modeset_byte);
-	tape_ccw_end(request->cpaddr + 1, NOP, 0, शून्य);
+	tape_ccw_end(request->cpaddr + 1, NOP, 0, NULL);
 	/* execute it */
-	वापस tape_करो_io_मुक्त(device, request);
-पूर्ण
+	return tape_do_io_free(device, request);
+}
 
 /*
  * Read Block
  */
-काष्ठा tape_request *
-tape_std_पढ़ो_block(काष्ठा tape_device *device, माप_प्रकार count)
-अणु
-	काष्ठा tape_request *request;
+struct tape_request *
+tape_std_read_block(struct tape_device *device, size_t count)
+{
+	struct tape_request *request;
 
 	/*
-	 * We have to alloc 4 ccws in order to be able to transक्रमm request
-	 * पूर्णांकo a पढ़ो backward request in error हाल.
+	 * We have to alloc 4 ccws in order to be able to transform request
+	 * into a read backward request in error case.
 	 */
 	request = tape_alloc_request(4, 0);
-	अगर (IS_ERR(request)) अणु
+	if (IS_ERR(request)) {
 		DBF_EXCEPTION(6, "xrbl fail");
-		वापस request;
-	पूर्ण
+		return request;
+	}
 	request->op = TO_RFO;
 	tape_ccw_cc(request->cpaddr, MODE_SET_DB, 1, device->modeset_byte);
 	tape_ccw_end_idal(request->cpaddr + 1, READ_FORWARD,
-			  device->अक्षर_data.idal_buf);
+			  device->char_data.idal_buf);
 	DBF_EVENT(6, "xrbl ccwg\n");
-	वापस request;
-पूर्ण
+	return request;
+}
 
 /*
- * Read Block backward transक्रमmation function.
+ * Read Block backward transformation function.
  */
-व्योम
-tape_std_पढ़ो_backward(काष्ठा tape_device *device, काष्ठा tape_request *request)
-अणु
+void
+tape_std_read_backward(struct tape_device *device, struct tape_request *request)
+{
 	/*
-	 * We have allocated 4 ccws in tape_std_पढ़ो, so we can now
-	 * transक्रमm the request to a पढ़ो backward, followed by a
-	 * क्रमward space block.
+	 * We have allocated 4 ccws in tape_std_read, so we can now
+	 * transform the request to a read backward, followed by a
+	 * forward space block.
 	 */
 	request->op = TO_RBA;
 	tape_ccw_cc(request->cpaddr, MODE_SET_DB, 1, device->modeset_byte);
 	tape_ccw_cc_idal(request->cpaddr + 1, READ_BACKWARD,
-			 device->अक्षर_data.idal_buf);
-	tape_ccw_cc(request->cpaddr + 2, FORSPACEBLOCK, 0, शून्य);
-	tape_ccw_end(request->cpaddr + 3, NOP, 0, शून्य);
-	DBF_EVENT(6, "xrop ccwg");पूर्ण
+			 device->char_data.idal_buf);
+	tape_ccw_cc(request->cpaddr + 2, FORSPACEBLOCK, 0, NULL);
+	tape_ccw_end(request->cpaddr + 3, NOP, 0, NULL);
+	DBF_EVENT(6, "xrop ccwg");}
 
 /*
  * Write Block
  */
-काष्ठा tape_request *
-tape_std_ग_लिखो_block(काष्ठा tape_device *device, माप_प्रकार count)
-अणु
-	काष्ठा tape_request *request;
+struct tape_request *
+tape_std_write_block(struct tape_device *device, size_t count)
+{
+	struct tape_request *request;
 
 	request = tape_alloc_request(2, 0);
-	अगर (IS_ERR(request)) अणु
+	if (IS_ERR(request)) {
 		DBF_EXCEPTION(6, "xwbl fail\n");
-		वापस request;
-	पूर्ण
+		return request;
+	}
 	request->op = TO_WRI;
 	tape_ccw_cc(request->cpaddr, MODE_SET_DB, 1, device->modeset_byte);
 	tape_ccw_end_idal(request->cpaddr + 1, WRITE_CMD,
-			  device->अक्षर_data.idal_buf);
+			  device->char_data.idal_buf);
 	DBF_EVENT(6, "xwbl ccwg\n");
-	वापस request;
-पूर्ण
+	return request;
+}
 
 /*
- * This routine is called by frontend after an ENOSP on ग_लिखो
+ * This routine is called by frontend after an ENOSP on write
  */
-व्योम
-tape_std_process_eov(काष्ठा tape_device *device)
-अणु
+void
+tape_std_process_eov(struct tape_device *device)
+{
 	/*
 	 * End of volume: We have to backspace the last written record, then
-	 * we TRY to ग_लिखो a tapemark and then backspace over the written TM
+	 * we TRY to write a tapemark and then backspace over the written TM
 	 */
-	अगर (tape_mtop(device, MTBSR, 1) == 0 &&
-	    tape_mtop(device, MTWखातापूर्ण, 1) == 0) अणु
+	if (tape_mtop(device, MTBSR, 1) == 0 &&
+	    tape_mtop(device, MTWEOF, 1) == 0) {
 		tape_mtop(device, MTBSR, 1);
-	पूर्ण
-पूर्ण
+	}
+}
 
 EXPORT_SYMBOL(tape_std_assign);
 EXPORT_SYMBOL(tape_std_unassign);
 EXPORT_SYMBOL(tape_std_display);
-EXPORT_SYMBOL(tape_std_पढ़ो_block_id);
+EXPORT_SYMBOL(tape_std_read_block_id);
 EXPORT_SYMBOL(tape_std_mtload);
 EXPORT_SYMBOL(tape_std_mtsetblk);
 EXPORT_SYMBOL(tape_std_mtreset);
@@ -740,7 +739,7 @@ EXPORT_SYMBOL(tape_std_mtreten);
 EXPORT_SYMBOL(tape_std_mterase);
 EXPORT_SYMBOL(tape_std_mtunload);
 EXPORT_SYMBOL(tape_std_mtcompression);
-EXPORT_SYMBOL(tape_std_पढ़ो_block);
-EXPORT_SYMBOL(tape_std_पढ़ो_backward);
-EXPORT_SYMBOL(tape_std_ग_लिखो_block);
+EXPORT_SYMBOL(tape_std_read_block);
+EXPORT_SYMBOL(tape_std_read_backward);
+EXPORT_SYMBOL(tape_std_write_block);
 EXPORT_SYMBOL(tape_std_process_eov);

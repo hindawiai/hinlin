@@ -1,310 +1,309 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <byteswap.h>
-#समावेश <elf.h>
-#समावेश <endian.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <stdbool.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sys/mman.h>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <unistd.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <byteswap.h>
+#include <elf.h>
+#include <endian.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <inttypes.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
-#अगर_घोषित be32toh
-/* If libc provides leअणु16,32,64पूर्णtoh() then we'll use them */
-#या_अगर BYTE_ORDER == LITTLE_ENDIAN
+#ifdef be32toh
+/* If libc provides le{16,32,64}toh() then we'll use them */
+#elif BYTE_ORDER == LITTLE_ENDIAN
 # define le16toh(x)	(x)
 # define le32toh(x)	(x)
 # define le64toh(x)	(x)
-#या_अगर BYTE_ORDER == BIG_ENDIAN
+#elif BYTE_ORDER == BIG_ENDIAN
 # define le16toh(x)	bswap_16(x)
 # define le32toh(x)	bswap_32(x)
 # define le64toh(x)	bswap_64(x)
-#पूर्ण_अगर
+#endif
 
-/* MIPS opcodes, in bits 31:26 of an inकाष्ठाion */
-#घोषणा OP_SPECIAL	0x00
-#घोषणा OP_REGIMM	0x01
-#घोषणा OP_BEQ		0x04
-#घोषणा OP_BNE		0x05
-#घोषणा OP_BLEZ		0x06
-#घोषणा OP_BGTZ		0x07
-#घोषणा OP_BEQL		0x14
-#घोषणा OP_BNEL		0x15
-#घोषणा OP_BLEZL	0x16
-#घोषणा OP_BGTZL	0x17
-#घोषणा OP_LL		0x30
-#घोषणा OP_LLD		0x34
-#घोषणा OP_SC		0x38
-#घोषणा OP_SCD		0x3c
+/* MIPS opcodes, in bits 31:26 of an instruction */
+#define OP_SPECIAL	0x00
+#define OP_REGIMM	0x01
+#define OP_BEQ		0x04
+#define OP_BNE		0x05
+#define OP_BLEZ		0x06
+#define OP_BGTZ		0x07
+#define OP_BEQL		0x14
+#define OP_BNEL		0x15
+#define OP_BLEZL	0x16
+#define OP_BGTZL	0x17
+#define OP_LL		0x30
+#define OP_LLD		0x34
+#define OP_SC		0x38
+#define OP_SCD		0x3c
 
-/* Bits 20:16 of OP_REGIMM inकाष्ठाions */
-#घोषणा REGIMM_BLTZ	0x00
-#घोषणा REGIMM_BGEZ	0x01
-#घोषणा REGIMM_BLTZL	0x02
-#घोषणा REGIMM_BGEZL	0x03
-#घोषणा REGIMM_BLTZAL	0x10
-#घोषणा REGIMM_BGEZAL	0x11
-#घोषणा REGIMM_BLTZALL	0x12
-#घोषणा REGIMM_BGEZALL	0x13
+/* Bits 20:16 of OP_REGIMM instructions */
+#define REGIMM_BLTZ	0x00
+#define REGIMM_BGEZ	0x01
+#define REGIMM_BLTZL	0x02
+#define REGIMM_BGEZL	0x03
+#define REGIMM_BLTZAL	0x10
+#define REGIMM_BGEZAL	0x11
+#define REGIMM_BLTZALL	0x12
+#define REGIMM_BGEZALL	0x13
 
-/* Bits 5:0 of OP_SPECIAL inकाष्ठाions */
-#घोषणा SPECIAL_SYNC	0x0f
+/* Bits 5:0 of OP_SPECIAL instructions */
+#define SPECIAL_SYNC	0x0f
 
-अटल व्योम usage(खाता *f)
-अणु
-	ख_लिखो(f, "Usage: loongson3-llsc-check /path/to/vmlinux\n");
-पूर्ण
+static void usage(FILE *f)
+{
+	fprintf(f, "Usage: loongson3-llsc-check /path/to/vmlinux\n");
+}
 
-अटल पूर्णांक se16(uपूर्णांक16_t x)
-अणु
-	वापस (पूर्णांक16_t)x;
-पूर्ण
+static int se16(uint16_t x)
+{
+	return (int16_t)x;
+}
 
-अटल bool is_ll(uपूर्णांक32_t insn)
-अणु
-	चयन (insn >> 26) अणु
-	हाल OP_LL:
-	हाल OP_LLD:
-		वापस true;
+static bool is_ll(uint32_t insn)
+{
+	switch (insn >> 26) {
+	case OP_LL:
+	case OP_LLD:
+		return true;
 
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+	default:
+		return false;
+	}
+}
 
-अटल bool is_sc(uपूर्णांक32_t insn)
-अणु
-	चयन (insn >> 26) अणु
-	हाल OP_SC:
-	हाल OP_SCD:
-		वापस true;
+static bool is_sc(uint32_t insn)
+{
+	switch (insn >> 26) {
+	case OP_SC:
+	case OP_SCD:
+		return true;
 
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+	default:
+		return false;
+	}
+}
 
-अटल bool is_sync(uपूर्णांक32_t insn)
-अणु
+static bool is_sync(uint32_t insn)
+{
 	/* Bits 31:11 should all be zeroes */
-	अगर (insn >> 11)
-		वापस false;
+	if (insn >> 11)
+		return false;
 
-	/* Bits 5:0 specअगरy the SYNC special encoding */
-	अगर ((insn & 0x3f) != SPECIAL_SYNC)
-		वापस false;
+	/* Bits 5:0 specify the SYNC special encoding */
+	if ((insn & 0x3f) != SPECIAL_SYNC)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool is_branch(uपूर्णांक32_t insn, पूर्णांक *off)
-अणु
-	चयन (insn >> 26) अणु
-	हाल OP_BEQ:
-	हाल OP_BEQL:
-	हाल OP_BNE:
-	हाल OP_BNEL:
-	हाल OP_BGTZ:
-	हाल OP_BGTZL:
-	हाल OP_BLEZ:
-	हाल OP_BLEZL:
+static bool is_branch(uint32_t insn, int *off)
+{
+	switch (insn >> 26) {
+	case OP_BEQ:
+	case OP_BEQL:
+	case OP_BNE:
+	case OP_BNEL:
+	case OP_BGTZ:
+	case OP_BGTZL:
+	case OP_BLEZ:
+	case OP_BLEZL:
 		*off = se16(insn) + 1;
-		वापस true;
+		return true;
 
-	हाल OP_REGIMM:
-		चयन ((insn >> 16) & 0x1f) अणु
-		हाल REGIMM_BGEZ:
-		हाल REGIMM_BGEZL:
-		हाल REGIMM_BGEZAL:
-		हाल REGIMM_BGEZALL:
-		हाल REGIMM_BLTZ:
-		हाल REGIMM_BLTZL:
-		हाल REGIMM_BLTZAL:
-		हाल REGIMM_BLTZALL:
+	case OP_REGIMM:
+		switch ((insn >> 16) & 0x1f) {
+		case REGIMM_BGEZ:
+		case REGIMM_BGEZL:
+		case REGIMM_BGEZAL:
+		case REGIMM_BGEZALL:
+		case REGIMM_BLTZ:
+		case REGIMM_BLTZL:
+		case REGIMM_BLTZAL:
+		case REGIMM_BLTZALL:
 			*off = se16(insn) + 1;
-			वापस true;
+			return true;
 
-		शेष:
-			वापस false;
-		पूर्ण
+		default:
+			return false;
+		}
 
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+	default:
+		return false;
+	}
+}
 
-अटल पूर्णांक check_ll(uपूर्णांक64_t pc, uपूर्णांक32_t *code, माप_प्रकार sz)
-अणु
-	sमाप_प्रकार i, max, sc_pos;
-	पूर्णांक off;
+static int check_ll(uint64_t pc, uint32_t *code, size_t sz)
+{
+	ssize_t i, max, sc_pos;
+	int off;
 
 	/*
-	 * Every LL must be preceded by a sync inकाष्ठाion in order to ensure
-	 * that inकाष्ठाion reordering करोesn't allow a prior memory access to
+	 * Every LL must be preceded by a sync instruction in order to ensure
+	 * that instruction reordering doesn't allow a prior memory access to
 	 * execute after the LL & cause erroneous results.
 	 */
-	अगर (!is_sync(le32toh(code[-1]))) अणु
-		ख_लिखो(मानक_त्रुटि, "%" PRIx64 ": LL not preceded by sync\n", pc);
-		वापस -EINVAL;
-	पूर्ण
+	if (!is_sync(le32toh(code[-1]))) {
+		fprintf(stderr, "%" PRIx64 ": LL not preceded by sync\n", pc);
+		return -EINVAL;
+	}
 
-	/* Find the matching SC inकाष्ठाion */
+	/* Find the matching SC instruction */
 	max = sz / 4;
-	क्रम (sc_pos = 0; sc_pos < max; sc_pos++) अणु
-		अगर (is_sc(le32toh(code[sc_pos])))
-			अवरोध;
-	पूर्ण
-	अगर (sc_pos >= max) अणु
-		ख_लिखो(मानक_त्रुटि, "%" PRIx64 ": LL has no matching SC\n", pc);
-		वापस -EINVAL;
-	पूर्ण
+	for (sc_pos = 0; sc_pos < max; sc_pos++) {
+		if (is_sc(le32toh(code[sc_pos])))
+			break;
+	}
+	if (sc_pos >= max) {
+		fprintf(stderr, "%" PRIx64 ": LL has no matching SC\n", pc);
+		return -EINVAL;
+	}
 
 	/*
-	 * Check branches within the LL/SC loop target sync inकाष्ठाions,
+	 * Check branches within the LL/SC loop target sync instructions,
 	 * ensuring that speculative execution can't generate memory accesses
-	 * due to inकाष्ठाions outside of the loop.
+	 * due to instructions outside of the loop.
 	 */
-	क्रम (i = 0; i < sc_pos; i++) अणु
-		अगर (!is_branch(le32toh(code[i]), &off))
-			जारी;
+	for (i = 0; i < sc_pos; i++) {
+		if (!is_branch(le32toh(code[i]), &off))
+			continue;
 
 		/*
-		 * If the branch target is within the LL/SC loop then we करोn't
+		 * If the branch target is within the LL/SC loop then we don't
 		 * need to worry about it.
 		 */
-		अगर ((off >= -i) && (off <= sc_pos))
-			जारी;
+		if ((off >= -i) && (off <= sc_pos))
+			continue;
 
-		/* If the branch tarमाला_लो a sync inकाष्ठाion we're all good... */
-		अगर (is_sync(le32toh(code[i + off])))
-			जारी;
+		/* If the branch targets a sync instruction we're all good... */
+		if (is_sync(le32toh(code[i + off])))
+			continue;
 
-		/* ...but अगर not, we have a problem */
-		ख_लिखो(मानक_त्रुटि, "%" PRIx64 ": Branch target not a sync\n",
+		/* ...but if not, we have a problem */
+		fprintf(stderr, "%" PRIx64 ": Branch target not a sync\n",
 			pc + (i * 4));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक check_code(uपूर्णांक64_t pc, uपूर्णांक32_t *code, माप_प्रकार sz)
-अणु
-	पूर्णांक err = 0;
+static int check_code(uint64_t pc, uint32_t *code, size_t sz)
+{
+	int err = 0;
 
-	अगर (sz % 4) अणु
-		ख_लिखो(मानक_त्रुटि, "%" PRIx64 ": Section size not a multiple of 4\n",
+	if (sz % 4) {
+		fprintf(stderr, "%" PRIx64 ": Section size not a multiple of 4\n",
 			pc);
 		err = -EINVAL;
 		sz -= (sz % 4);
-	पूर्ण
+	}
 
-	अगर (is_ll(le32toh(code[0]))) अणु
-		ख_लिखो(मानक_त्रुटि, "%" PRIx64 ": First instruction in section is an LL\n",
+	if (is_ll(le32toh(code[0]))) {
+		fprintf(stderr, "%" PRIx64 ": First instruction in section is an LL\n",
 			pc);
 		err = -EINVAL;
-	पूर्ण
+	}
 
-#घोषणा advance() (	\
+#define advance() (	\
 	code++,		\
 	pc += 4,	\
 	sz -= 4		\
 )
 
 	/*
-	 * Skip the first inकाष्ठाionm allowing check_ll to look backwards
+	 * Skip the first instructionm allowing check_ll to look backwards
 	 * unconditionally.
 	 */
 	advance();
 
-	/* Now scan through the code looking क्रम LL inकाष्ठाions */
-	क्रम (; sz; advance()) अणु
-		अगर (is_ll(le32toh(code[0])))
+	/* Now scan through the code looking for LL instructions */
+	for (; sz; advance()) {
+		if (is_ll(le32toh(code[0])))
 			err |= check_ll(pc, code, sz);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	पूर्णांक vmlinux_fd, status, err, i;
-	स्थिर अक्षर *vmlinux_path;
-	काष्ठा stat st;
+int main(int argc, char *argv[])
+{
+	int vmlinux_fd, status, err, i;
+	const char *vmlinux_path;
+	struct stat st;
 	Elf64_Ehdr *eh;
 	Elf64_Shdr *sh;
-	व्योम *vmlinux;
+	void *vmlinux;
 
-	status = निकास_त्रुटि;
+	status = EXIT_FAILURE;
 
-	अगर (argc < 2) अणु
-		usage(मानक_त्रुटि);
-		जाओ out_ret;
-	पूर्ण
+	if (argc < 2) {
+		usage(stderr);
+		goto out_ret;
+	}
 
 	vmlinux_path = argv[1];
-	vmlinux_fd = खोलो(vmlinux_path, O_RDONLY);
-	अगर (vmlinux_fd == -1) अणु
-		लिखो_त्रुटि("Unable to open vmlinux");
-		जाओ out_ret;
-	पूर्ण
+	vmlinux_fd = open(vmlinux_path, O_RDONLY);
+	if (vmlinux_fd == -1) {
+		perror("Unable to open vmlinux");
+		goto out_ret;
+	}
 
-	err = ख_स्थिति(vmlinux_fd, &st);
-	अगर (err) अणु
-		लिखो_त्रुटि("Unable to stat vmlinux");
-		जाओ out_बंद;
-	पूर्ण
+	err = fstat(vmlinux_fd, &st);
+	if (err) {
+		perror("Unable to stat vmlinux");
+		goto out_close;
+	}
 
-	vmlinux = mmap(शून्य, st.st_size, PROT_READ, MAP_PRIVATE, vmlinux_fd, 0);
-	अगर (vmlinux == MAP_FAILED) अणु
-		लिखो_त्रुटि("Unable to mmap vmlinux");
-		जाओ out_बंद;
-	पूर्ण
+	vmlinux = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, vmlinux_fd, 0);
+	if (vmlinux == MAP_FAILED) {
+		perror("Unable to mmap vmlinux");
+		goto out_close;
+	}
 
 	eh = vmlinux;
-	अगर (स_भेद(eh->e_ident, ELFMAG, SELFMAG)) अणु
-		ख_लिखो(मानक_त्रुटि, "vmlinux is not an ELF?\n");
-		जाओ out_munmap;
-	पूर्ण
+	if (memcmp(eh->e_ident, ELFMAG, SELFMAG)) {
+		fprintf(stderr, "vmlinux is not an ELF?\n");
+		goto out_munmap;
+	}
 
-	अगर (eh->e_ident[EI_CLASS] != ELFCLASS64) अणु
-		ख_लिखो(मानक_त्रुटि, "vmlinux is not 64b?\n");
-		जाओ out_munmap;
-	पूर्ण
+	if (eh->e_ident[EI_CLASS] != ELFCLASS64) {
+		fprintf(stderr, "vmlinux is not 64b?\n");
+		goto out_munmap;
+	}
 
-	अगर (eh->e_ident[EI_DATA] != ELFDATA2LSB) अणु
-		ख_लिखो(मानक_त्रुटि, "vmlinux is not little endian?\n");
-		जाओ out_munmap;
-	पूर्ण
+	if (eh->e_ident[EI_DATA] != ELFDATA2LSB) {
+		fprintf(stderr, "vmlinux is not little endian?\n");
+		goto out_munmap;
+	}
 
-	क्रम (i = 0; i < le16toh(eh->e_shnum); i++) अणु
+	for (i = 0; i < le16toh(eh->e_shnum); i++) {
 		sh = vmlinux + le64toh(eh->e_shoff) + (i * le16toh(eh->e_shentsize));
 
-		अगर (sh->sh_type != SHT_PROGBITS)
-			जारी;
-		अगर (!(sh->sh_flags & SHF_EXECINSTR))
-			जारी;
+		if (sh->sh_type != SHT_PROGBITS)
+			continue;
+		if (!(sh->sh_flags & SHF_EXECINSTR))
+			continue;
 
 		err = check_code(le64toh(sh->sh_addr),
 				 vmlinux + le64toh(sh->sh_offset),
 				 le64toh(sh->sh_size));
-		अगर (err)
-			जाओ out_munmap;
-	पूर्ण
+		if (err)
+			goto out_munmap;
+	}
 
-	status = निकास_सफल;
+	status = EXIT_SUCCESS;
 out_munmap:
 	munmap(vmlinux, st.st_size);
-out_बंद:
-	बंद(vmlinux_fd);
+out_close:
+	close(vmlinux_fd);
 out_ret:
-	ख_लिखो(मानक_निकास, "loongson3-llsc-check returns %s\n",
+	fprintf(stdout, "loongson3-llsc-check returns %s\n",
 		status ? "failure" : "success");
-	वापस status;
-पूर्ण
+	return status;
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Implementation of HKDF ("HMAC-based Extract-and-Expand Key Derivation
  * Function"), aka RFC 5869.  See also the original paper (Krawczyk 2010):
@@ -10,10 +9,10 @@
  * Copyright 2019 Google LLC
  */
 
-#समावेश <crypto/hash.h>
-#समावेश <crypto/sha2.h>
+#include <crypto/hash.h>
+#include <crypto/sha2.h>
 
-#समावेश "fscrypt_private.h"
+#include "fscrypt_private.h"
 
 /*
  * HKDF supports any unkeyed cryptographic hash algorithm, but fscrypt uses
@@ -21,158 +20,158 @@
  * a 64-byte digest, deriving an AES-256-XTS key preserves all 64 bytes of
  * entropy from the master key and requires only one iteration of HKDF-Expand.
  */
-#घोषणा HKDF_HMAC_ALG		"hmac(sha512)"
-#घोषणा HKDF_HASHLEN		SHA512_DIGEST_SIZE
+#define HKDF_HMAC_ALG		"hmac(sha512)"
+#define HKDF_HASHLEN		SHA512_DIGEST_SIZE
 
 /*
  * HKDF consists of two steps:
  *
- * 1. HKDF-Extract: extract a pseuकरोअक्रमom key of length HKDF_HASHLEN bytes from
+ * 1. HKDF-Extract: extract a pseudorandom key of length HKDF_HASHLEN bytes from
  *    the input keying material and optional salt.
- * 2. HKDF-Expand: expand the pseuकरोअक्रमom key पूर्णांकo output keying material of
- *    any length, parameterized by an application-specअगरic info string.
+ * 2. HKDF-Expand: expand the pseudorandom key into output keying material of
+ *    any length, parameterized by an application-specific info string.
  *
- * HKDF-Extract can be skipped अगर the input is alपढ़ोy a pseuकरोअक्रमom key of
+ * HKDF-Extract can be skipped if the input is already a pseudorandom key of
  * length HKDF_HASHLEN bytes.  However, cipher modes other than AES-256-XTS take
- * लघुer keys, and we करोn't want to क्रमce users of those modes to provide
- * unnecessarily दीर्घ master keys.  Thus fscrypt still करोes HKDF-Extract.  No
- * salt is used, since fscrypt master keys should alपढ़ोy be pseuकरोअक्रमom and
- * there's no way to persist a अक्रमom salt per master key from kernel mode.
+ * shorter keys, and we don't want to force users of those modes to provide
+ * unnecessarily long master keys.  Thus fscrypt still does HKDF-Extract.  No
+ * salt is used, since fscrypt master keys should already be pseudorandom and
+ * there's no way to persist a random salt per master key from kernel mode.
  */
 
 /* HKDF-Extract (RFC 5869 section 2.2), unsalted */
-अटल पूर्णांक hkdf_extract(काष्ठा crypto_shash *hmac_tfm, स्थिर u8 *ikm,
-			अचिन्हित पूर्णांक ikmlen, u8 prk[HKDF_HASHLEN])
-अणु
-	अटल स्थिर u8 शेष_salt[HKDF_HASHLEN];
-	पूर्णांक err;
+static int hkdf_extract(struct crypto_shash *hmac_tfm, const u8 *ikm,
+			unsigned int ikmlen, u8 prk[HKDF_HASHLEN])
+{
+	static const u8 default_salt[HKDF_HASHLEN];
+	int err;
 
-	err = crypto_shash_setkey(hmac_tfm, शेष_salt, HKDF_HASHLEN);
-	अगर (err)
-		वापस err;
+	err = crypto_shash_setkey(hmac_tfm, default_salt, HKDF_HASHLEN);
+	if (err)
+		return err;
 
-	वापस crypto_shash_tfm_digest(hmac_tfm, ikm, ikmlen, prk);
-पूर्ण
+	return crypto_shash_tfm_digest(hmac_tfm, ikm, ikmlen, prk);
+}
 
 /*
  * Compute HKDF-Extract using the given master key as the input keying material,
- * and prepare an HMAC transक्रमm object keyed by the resulting pseuकरोअक्रमom key.
+ * and prepare an HMAC transform object keyed by the resulting pseudorandom key.
  *
- * Afterwards, the keyed HMAC transक्रमm object can be used क्रम HKDF-Expand many
- * बार without having to recompute HKDF-Extract each समय.
+ * Afterwards, the keyed HMAC transform object can be used for HKDF-Expand many
+ * times without having to recompute HKDF-Extract each time.
  */
-पूर्णांक fscrypt_init_hkdf(काष्ठा fscrypt_hkdf *hkdf, स्थिर u8 *master_key,
-		      अचिन्हित पूर्णांक master_key_size)
-अणु
-	काष्ठा crypto_shash *hmac_tfm;
+int fscrypt_init_hkdf(struct fscrypt_hkdf *hkdf, const u8 *master_key,
+		      unsigned int master_key_size)
+{
+	struct crypto_shash *hmac_tfm;
 	u8 prk[HKDF_HASHLEN];
-	पूर्णांक err;
+	int err;
 
 	hmac_tfm = crypto_alloc_shash(HKDF_HMAC_ALG, 0, 0);
-	अगर (IS_ERR(hmac_tfm)) अणु
-		fscrypt_err(शून्य, "Error allocating " HKDF_HMAC_ALG ": %ld",
+	if (IS_ERR(hmac_tfm)) {
+		fscrypt_err(NULL, "Error allocating " HKDF_HMAC_ALG ": %ld",
 			    PTR_ERR(hmac_tfm));
-		वापस PTR_ERR(hmac_tfm);
-	पूर्ण
+		return PTR_ERR(hmac_tfm);
+	}
 
-	अगर (WARN_ON(crypto_shash_digestsize(hmac_tfm) != माप(prk))) अणु
+	if (WARN_ON(crypto_shash_digestsize(hmac_tfm) != sizeof(prk))) {
 		err = -EINVAL;
-		जाओ err_मुक्त_tfm;
-	पूर्ण
+		goto err_free_tfm;
+	}
 
 	err = hkdf_extract(hmac_tfm, master_key, master_key_size, prk);
-	अगर (err)
-		जाओ err_मुक्त_tfm;
+	if (err)
+		goto err_free_tfm;
 
-	err = crypto_shash_setkey(hmac_tfm, prk, माप(prk));
-	अगर (err)
-		जाओ err_मुक्त_tfm;
+	err = crypto_shash_setkey(hmac_tfm, prk, sizeof(prk));
+	if (err)
+		goto err_free_tfm;
 
 	hkdf->hmac_tfm = hmac_tfm;
-	जाओ out;
+	goto out;
 
-err_मुक्त_tfm:
-	crypto_मुक्त_shash(hmac_tfm);
+err_free_tfm:
+	crypto_free_shash(hmac_tfm);
 out:
-	memzero_explicit(prk, माप(prk));
-	वापस err;
-पूर्ण
+	memzero_explicit(prk, sizeof(prk));
+	return err;
+}
 
 /*
- * HKDF-Expand (RFC 5869 section 2.3).  This expands the pseuकरोअक्रमom key, which
- * was alपढ़ोy keyed पूर्णांकo 'hkdf->hmac_tfm' by fscrypt_init_hkdf(), into 'okmlen'
- * bytes of output keying material parameterized by the application-specअगरic
+ * HKDF-Expand (RFC 5869 section 2.3).  This expands the pseudorandom key, which
+ * was already keyed into 'hkdf->hmac_tfm' by fscrypt_init_hkdf(), into 'okmlen'
+ * bytes of output keying material parameterized by the application-specific
  * 'info' of length 'infolen' bytes, prefixed by "fscrypt\0" and the 'context'
- * byte.  This is thपढ़ो-safe and may be called by multiple thपढ़ोs in parallel.
+ * byte.  This is thread-safe and may be called by multiple threads in parallel.
  *
  * ('context' isn't part of the HKDF specification; it's just a prefix fscrypt
- * adds to its application-specअगरic info strings to guarantee that it करोesn't
- * accidentally repeat an info string when using HKDF क्रम dअगरferent purposes.)
+ * adds to its application-specific info strings to guarantee that it doesn't
+ * accidentally repeat an info string when using HKDF for different purposes.)
  */
-पूर्णांक fscrypt_hkdf_expand(स्थिर काष्ठा fscrypt_hkdf *hkdf, u8 context,
-			स्थिर u8 *info, अचिन्हित पूर्णांक infolen,
-			u8 *okm, अचिन्हित पूर्णांक okmlen)
-अणु
+int fscrypt_hkdf_expand(const struct fscrypt_hkdf *hkdf, u8 context,
+			const u8 *info, unsigned int infolen,
+			u8 *okm, unsigned int okmlen)
+{
 	SHASH_DESC_ON_STACK(desc, hkdf->hmac_tfm);
 	u8 prefix[9];
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
-	स्थिर u8 *prev = शून्य;
+	unsigned int i;
+	int err;
+	const u8 *prev = NULL;
 	u8 counter = 1;
-	u8 पंचांगp[HKDF_HASHLEN];
+	u8 tmp[HKDF_HASHLEN];
 
-	अगर (WARN_ON(okmlen > 255 * HKDF_HASHLEN))
-		वापस -EINVAL;
+	if (WARN_ON(okmlen > 255 * HKDF_HASHLEN))
+		return -EINVAL;
 
 	desc->tfm = hkdf->hmac_tfm;
 
-	स_नकल(prefix, "fscrypt\0", 8);
+	memcpy(prefix, "fscrypt\0", 8);
 	prefix[8] = context;
 
-	क्रम (i = 0; i < okmlen; i += HKDF_HASHLEN) अणु
+	for (i = 0; i < okmlen; i += HKDF_HASHLEN) {
 
 		err = crypto_shash_init(desc);
-		अगर (err)
-			जाओ out;
+		if (err)
+			goto out;
 
-		अगर (prev) अणु
+		if (prev) {
 			err = crypto_shash_update(desc, prev, HKDF_HASHLEN);
-			अगर (err)
-				जाओ out;
-		पूर्ण
+			if (err)
+				goto out;
+		}
 
-		err = crypto_shash_update(desc, prefix, माप(prefix));
-		अगर (err)
-			जाओ out;
+		err = crypto_shash_update(desc, prefix, sizeof(prefix));
+		if (err)
+			goto out;
 
 		err = crypto_shash_update(desc, info, infolen);
-		अगर (err)
-			जाओ out;
+		if (err)
+			goto out;
 
-		BUILD_BUG_ON(माप(counter) != 1);
-		अगर (okmlen - i < HKDF_HASHLEN) अणु
-			err = crypto_shash_finup(desc, &counter, 1, पंचांगp);
-			अगर (err)
-				जाओ out;
-			स_नकल(&okm[i], पंचांगp, okmlen - i);
-			memzero_explicit(पंचांगp, माप(पंचांगp));
-		पूर्ण अन्यथा अणु
+		BUILD_BUG_ON(sizeof(counter) != 1);
+		if (okmlen - i < HKDF_HASHLEN) {
+			err = crypto_shash_finup(desc, &counter, 1, tmp);
+			if (err)
+				goto out;
+			memcpy(&okm[i], tmp, okmlen - i);
+			memzero_explicit(tmp, sizeof(tmp));
+		} else {
 			err = crypto_shash_finup(desc, &counter, 1, &okm[i]);
-			अगर (err)
-				जाओ out;
-		पूर्ण
+			if (err)
+				goto out;
+		}
 		counter++;
 		prev = &okm[i];
-	पूर्ण
+	}
 	err = 0;
 out:
-	अगर (unlikely(err))
-		memzero_explicit(okm, okmlen); /* so caller करोesn't need to */
+	if (unlikely(err))
+		memzero_explicit(okm, okmlen); /* so caller doesn't need to */
 	shash_desc_zero(desc);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम fscrypt_destroy_hkdf(काष्ठा fscrypt_hkdf *hkdf)
-अणु
-	crypto_मुक्त_shash(hkdf->hmac_tfm);
-पूर्ण
+void fscrypt_destroy_hkdf(struct fscrypt_hkdf *hkdf)
+{
+	crypto_free_shash(hkdf->hmac_tfm);
+}

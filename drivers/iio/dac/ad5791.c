@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * AD5760, AD5780, AD5781, AD5790, AD5791 Voltage Output Digital to Analog
  * Converter
@@ -7,130 +6,130 @@
  * Copyright 2011 Analog Devices Inc.
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/device.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/module.h>
-#समावेश <linux/bitops.h>
+#include <linux/interrupt.h>
+#include <linux/fs.h>
+#include <linux/device.h>
+#include <linux/kernel.h>
+#include <linux/spi/spi.h>
+#include <linux/slab.h>
+#include <linux/sysfs.h>
+#include <linux/regulator/consumer.h>
+#include <linux/module.h>
+#include <linux/bitops.h>
 
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
-#समावेश <linux/iio/dac/ad5791.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
+#include <linux/iio/dac/ad5791.h>
 
-#घोषणा AD5791_DAC_MASK			GENMASK(19, 0)
+#define AD5791_DAC_MASK			GENMASK(19, 0)
 
-#घोषणा AD5791_CMD_READ			BIT(23)
-#घोषणा AD5791_CMD_WRITE		0
-#घोषणा AD5791_ADDR(addr)		((addr) << 20)
+#define AD5791_CMD_READ			BIT(23)
+#define AD5791_CMD_WRITE		0
+#define AD5791_ADDR(addr)		((addr) << 20)
 
 /* Registers */
-#घोषणा AD5791_ADDR_NOOP		0
-#घोषणा AD5791_ADDR_DAC0		1
-#घोषणा AD5791_ADDR_CTRL		2
-#घोषणा AD5791_ADDR_CLRCODE		3
-#घोषणा AD5791_ADDR_SW_CTRL		4
+#define AD5791_ADDR_NOOP		0
+#define AD5791_ADDR_DAC0		1
+#define AD5791_ADDR_CTRL		2
+#define AD5791_ADDR_CLRCODE		3
+#define AD5791_ADDR_SW_CTRL		4
 
 /* Control Register */
-#घोषणा AD5791_CTRL_RBUF		BIT(1)
-#घोषणा AD5791_CTRL_OPGND		BIT(2)
-#घोषणा AD5791_CTRL_DACTRI		BIT(3)
-#घोषणा AD5791_CTRL_BIN2SC		BIT(4)
-#घोषणा AD5791_CTRL_SDODIS		BIT(5)
-#घोषणा AD5761_CTRL_LINCOMP(x)		((x) << 6)
+#define AD5791_CTRL_RBUF		BIT(1)
+#define AD5791_CTRL_OPGND		BIT(2)
+#define AD5791_CTRL_DACTRI		BIT(3)
+#define AD5791_CTRL_BIN2SC		BIT(4)
+#define AD5791_CTRL_SDODIS		BIT(5)
+#define AD5761_CTRL_LINCOMP(x)		((x) << 6)
 
-#घोषणा AD5791_LINCOMP_0_10		0
-#घोषणा AD5791_LINCOMP_10_12		1
-#घोषणा AD5791_LINCOMP_12_16		2
-#घोषणा AD5791_LINCOMP_16_19		3
-#घोषणा AD5791_LINCOMP_19_20		12
+#define AD5791_LINCOMP_0_10		0
+#define AD5791_LINCOMP_10_12		1
+#define AD5791_LINCOMP_12_16		2
+#define AD5791_LINCOMP_16_19		3
+#define AD5791_LINCOMP_19_20		12
 
-#घोषणा AD5780_LINCOMP_0_10		0
-#घोषणा AD5780_LINCOMP_10_20		12
+#define AD5780_LINCOMP_0_10		0
+#define AD5780_LINCOMP_10_20		12
 
 /* Software Control Register */
-#घोषणा AD5791_SWCTRL_LDAC		BIT(0)
-#घोषणा AD5791_SWCTRL_CLR		BIT(1)
-#घोषणा AD5791_SWCTRL_RESET		BIT(2)
+#define AD5791_SWCTRL_LDAC		BIT(0)
+#define AD5791_SWCTRL_CLR		BIT(1)
+#define AD5791_SWCTRL_RESET		BIT(2)
 
-#घोषणा AD5791_DAC_PWRDN_6K		0
-#घोषणा AD5791_DAC_PWRDN_3STATE		1
+#define AD5791_DAC_PWRDN_6K		0
+#define AD5791_DAC_PWRDN_3STATE		1
 
 /**
- * काष्ठा ad5791_chip_info - chip specअगरic inक्रमmation
- * @get_lin_comp:	function poपूर्णांकer to the device specअगरic function
+ * struct ad5791_chip_info - chip specific information
+ * @get_lin_comp:	function pointer to the device specific function
  */
 
-काष्ठा ad5791_chip_info अणु
-	पूर्णांक (*get_lin_comp)	(अचिन्हित पूर्णांक span);
-पूर्ण;
+struct ad5791_chip_info {
+	int (*get_lin_comp)	(unsigned int span);
+};
 
 /**
- * काष्ठा ad5791_state - driver instance specअगरic data
+ * struct ad5791_state - driver instance specific data
  * @spi:			spi_device
  * @reg_vdd:		positive supply regulator
  * @reg_vss:		negative supply regulator
- * @chip_info:		chip model specअगरic स्थिरants
+ * @chip_info:		chip model specific constants
  * @vref_mv:		actual reference voltage used
  * @vref_neg_mv:	voltage of the negative supply
- * @ctrl:		control रेजिस्टर cache
- * @pwr_करोwn_mode:	current घातer करोwn mode
- * @pwr_करोwn:		true अगर device is घातered करोwn
+ * @ctrl:		control register cache
+ * @pwr_down_mode:	current power down mode
+ * @pwr_down:		true if device is powered down
  * @data:		spi transfer buffers
  */
-काष्ठा ad5791_state अणु
-	काष्ठा spi_device		*spi;
-	काष्ठा regulator		*reg_vdd;
-	काष्ठा regulator		*reg_vss;
-	स्थिर काष्ठा ad5791_chip_info	*chip_info;
-	अचिन्हित लघु			vref_mv;
-	अचिन्हित पूर्णांक			vref_neg_mv;
-	अचिन्हित			ctrl;
-	अचिन्हित			pwr_करोwn_mode;
-	bool				pwr_करोwn;
+struct ad5791_state {
+	struct spi_device		*spi;
+	struct regulator		*reg_vdd;
+	struct regulator		*reg_vss;
+	const struct ad5791_chip_info	*chip_info;
+	unsigned short			vref_mv;
+	unsigned int			vref_neg_mv;
+	unsigned			ctrl;
+	unsigned			pwr_down_mode;
+	bool				pwr_down;
 
-	जोड़ अणु
+	union {
 		__be32 d32;
 		u8 d8[4];
-	पूर्ण data[3] ____cacheline_aligned;
-पूर्ण;
+	} data[3] ____cacheline_aligned;
+};
 
-क्रमागत ad5791_supported_device_ids अणु
+enum ad5791_supported_device_ids {
 	ID_AD5760,
 	ID_AD5780,
 	ID_AD5781,
 	ID_AD5791,
-पूर्ण;
+};
 
-अटल पूर्णांक ad5791_spi_ग_लिखो(काष्ठा ad5791_state *st, u8 addr, u32 val)
-अणु
+static int ad5791_spi_write(struct ad5791_state *st, u8 addr, u32 val)
+{
 	st->data[0].d32 = cpu_to_be32(AD5791_CMD_WRITE |
 			      AD5791_ADDR(addr) |
 			      (val & AD5791_DAC_MASK));
 
-	वापस spi_ग_लिखो(st->spi, &st->data[0].d8[1], 3);
-पूर्ण
+	return spi_write(st->spi, &st->data[0].d8[1], 3);
+}
 
-अटल पूर्णांक ad5791_spi_पढ़ो(काष्ठा ad5791_state *st, u8 addr, u32 *val)
-अणु
-	पूर्णांक ret;
-	काष्ठा spi_transfer xfers[] = अणु
-		अणु
+static int ad5791_spi_read(struct ad5791_state *st, u8 addr, u32 *val)
+{
+	int ret;
+	struct spi_transfer xfers[] = {
+		{
 			.tx_buf = &st->data[0].d8[1],
 			.bits_per_word = 8,
 			.len = 3,
 			.cs_change = 1,
-		पूर्ण, अणु
+		}, {
 			.tx_buf = &st->data[1].d8[1],
 			.rx_buf = &st->data[2].d8[1],
 			.bits_per_word = 8,
 			.len = 3,
-		पूर्ण,
-	पूर्ण;
+		},
+	};
 
 	st->data[0].d32 = cpu_to_be32(AD5791_CMD_READ |
 			      AD5791_ADDR(addr));
@@ -140,157 +139,157 @@
 
 	*val = be32_to_cpu(st->data[2].d32);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर अक्षर * स्थिर ad5791_घातerकरोwn_modes[] = अणु
+static const char * const ad5791_powerdown_modes[] = {
 	"6kohm_to_gnd",
 	"three_state",
-पूर्ण;
+};
 
-अटल पूर्णांक ad5791_get_घातerकरोwn_mode(काष्ठा iio_dev *indio_dev,
-	स्थिर काष्ठा iio_chan_spec *chan)
-अणु
-	काष्ठा ad5791_state *st = iio_priv(indio_dev);
+static int ad5791_get_powerdown_mode(struct iio_dev *indio_dev,
+	const struct iio_chan_spec *chan)
+{
+	struct ad5791_state *st = iio_priv(indio_dev);
 
-	वापस st->pwr_करोwn_mode;
-पूर्ण
+	return st->pwr_down_mode;
+}
 
-अटल पूर्णांक ad5791_set_घातerकरोwn_mode(काष्ठा iio_dev *indio_dev,
-	स्थिर काष्ठा iio_chan_spec *chan, अचिन्हित पूर्णांक mode)
-अणु
-	काष्ठा ad5791_state *st = iio_priv(indio_dev);
+static int ad5791_set_powerdown_mode(struct iio_dev *indio_dev,
+	const struct iio_chan_spec *chan, unsigned int mode)
+{
+	struct ad5791_state *st = iio_priv(indio_dev);
 
-	st->pwr_करोwn_mode = mode;
+	st->pwr_down_mode = mode;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा iio_क्रमागत ad5791_घातerकरोwn_mode_क्रमागत = अणु
-	.items = ad5791_घातerकरोwn_modes,
-	.num_items = ARRAY_SIZE(ad5791_घातerकरोwn_modes),
-	.get = ad5791_get_घातerकरोwn_mode,
-	.set = ad5791_set_घातerकरोwn_mode,
-पूर्ण;
+static const struct iio_enum ad5791_powerdown_mode_enum = {
+	.items = ad5791_powerdown_modes,
+	.num_items = ARRAY_SIZE(ad5791_powerdown_modes),
+	.get = ad5791_get_powerdown_mode,
+	.set = ad5791_set_powerdown_mode,
+};
 
-अटल sमाप_प्रकार ad5791_पढ़ो_dac_घातerकरोwn(काष्ठा iio_dev *indio_dev,
-	uपूर्णांकptr_t निजी, स्थिर काष्ठा iio_chan_spec *chan, अक्षर *buf)
-अणु
-	काष्ठा ad5791_state *st = iio_priv(indio_dev);
+static ssize_t ad5791_read_dac_powerdown(struct iio_dev *indio_dev,
+	uintptr_t private, const struct iio_chan_spec *chan, char *buf)
+{
+	struct ad5791_state *st = iio_priv(indio_dev);
 
-	वापस sysfs_emit(buf, "%d\n", st->pwr_करोwn);
-पूर्ण
+	return sysfs_emit(buf, "%d\n", st->pwr_down);
+}
 
-अटल sमाप_प्रकार ad5791_ग_लिखो_dac_घातerकरोwn(काष्ठा iio_dev *indio_dev,
-	 uपूर्णांकptr_t निजी, स्थिर काष्ठा iio_chan_spec *chan, स्थिर अक्षर *buf,
-	 माप_प्रकार len)
-अणु
-	bool pwr_करोwn;
-	पूर्णांक ret;
-	काष्ठा ad5791_state *st = iio_priv(indio_dev);
+static ssize_t ad5791_write_dac_powerdown(struct iio_dev *indio_dev,
+	 uintptr_t private, const struct iio_chan_spec *chan, const char *buf,
+	 size_t len)
+{
+	bool pwr_down;
+	int ret;
+	struct ad5791_state *st = iio_priv(indio_dev);
 
-	ret = strtobool(buf, &pwr_करोwn);
-	अगर (ret)
-		वापस ret;
+	ret = strtobool(buf, &pwr_down);
+	if (ret)
+		return ret;
 
-	अगर (!pwr_करोwn) अणु
+	if (!pwr_down) {
 		st->ctrl &= ~(AD5791_CTRL_OPGND | AD5791_CTRL_DACTRI);
-	पूर्ण अन्यथा अणु
-		अगर (st->pwr_करोwn_mode == AD5791_DAC_PWRDN_6K)
+	} else {
+		if (st->pwr_down_mode == AD5791_DAC_PWRDN_6K)
 			st->ctrl |= AD5791_CTRL_OPGND;
-		अन्यथा अगर (st->pwr_करोwn_mode == AD5791_DAC_PWRDN_3STATE)
+		else if (st->pwr_down_mode == AD5791_DAC_PWRDN_3STATE)
 			st->ctrl |= AD5791_CTRL_DACTRI;
-	पूर्ण
-	st->pwr_करोwn = pwr_करोwn;
+	}
+	st->pwr_down = pwr_down;
 
-	ret = ad5791_spi_ग_लिखो(st, AD5791_ADDR_CTRL, st->ctrl);
+	ret = ad5791_spi_write(st, AD5791_ADDR_CTRL, st->ctrl);
 
-	वापस ret ? ret : len;
-पूर्ण
+	return ret ? ret : len;
+}
 
-अटल पूर्णांक ad5791_get_lin_comp(अचिन्हित पूर्णांक span)
-अणु
-	अगर (span <= 10000)
-		वापस AD5791_LINCOMP_0_10;
-	अन्यथा अगर (span <= 12000)
-		वापस AD5791_LINCOMP_10_12;
-	अन्यथा अगर (span <= 16000)
-		वापस AD5791_LINCOMP_12_16;
-	अन्यथा अगर (span <= 19000)
-		वापस AD5791_LINCOMP_16_19;
-	अन्यथा
-		वापस AD5791_LINCOMP_19_20;
-पूर्ण
+static int ad5791_get_lin_comp(unsigned int span)
+{
+	if (span <= 10000)
+		return AD5791_LINCOMP_0_10;
+	else if (span <= 12000)
+		return AD5791_LINCOMP_10_12;
+	else if (span <= 16000)
+		return AD5791_LINCOMP_12_16;
+	else if (span <= 19000)
+		return AD5791_LINCOMP_16_19;
+	else
+		return AD5791_LINCOMP_19_20;
+}
 
-अटल पूर्णांक ad5780_get_lin_comp(अचिन्हित पूर्णांक span)
-अणु
-	अगर (span <= 10000)
-		वापस AD5780_LINCOMP_0_10;
-	अन्यथा
-		वापस AD5780_LINCOMP_10_20;
-पूर्ण
-अटल स्थिर काष्ठा ad5791_chip_info ad5791_chip_info_tbl[] = अणु
-	[ID_AD5760] = अणु
+static int ad5780_get_lin_comp(unsigned int span)
+{
+	if (span <= 10000)
+		return AD5780_LINCOMP_0_10;
+	else
+		return AD5780_LINCOMP_10_20;
+}
+static const struct ad5791_chip_info ad5791_chip_info_tbl[] = {
+	[ID_AD5760] = {
 		.get_lin_comp = ad5780_get_lin_comp,
-	पूर्ण,
-	[ID_AD5780] = अणु
+	},
+	[ID_AD5780] = {
 		.get_lin_comp = ad5780_get_lin_comp,
-	पूर्ण,
-	[ID_AD5781] = अणु
+	},
+	[ID_AD5781] = {
 		.get_lin_comp = ad5791_get_lin_comp,
-	पूर्ण,
-	[ID_AD5791] = अणु
+	},
+	[ID_AD5791] = {
 		.get_lin_comp = ad5791_get_lin_comp,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक ad5791_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			   काष्ठा iio_chan_spec स्थिर *chan,
-			   पूर्णांक *val,
-			   पूर्णांक *val2,
-			   दीर्घ m)
-अणु
-	काष्ठा ad5791_state *st = iio_priv(indio_dev);
+static int ad5791_read_raw(struct iio_dev *indio_dev,
+			   struct iio_chan_spec const *chan,
+			   int *val,
+			   int *val2,
+			   long m)
+{
+	struct ad5791_state *st = iio_priv(indio_dev);
 	u64 val64;
-	पूर्णांक ret;
+	int ret;
 
-	चयन (m) अणु
-	हाल IIO_CHAN_INFO_RAW:
-		ret = ad5791_spi_पढ़ो(st, chan->address, val);
-		अगर (ret)
-			वापस ret;
+	switch (m) {
+	case IIO_CHAN_INFO_RAW:
+		ret = ad5791_spi_read(st, chan->address, val);
+		if (ret)
+			return ret;
 		*val &= AD5791_DAC_MASK;
-		*val >>= chan->scan_type.shअगरt;
-		वापस IIO_VAL_INT;
-	हाल IIO_CHAN_INFO_SCALE:
+		*val >>= chan->scan_type.shift;
+		return IIO_VAL_INT;
+	case IIO_CHAN_INFO_SCALE:
 		*val = st->vref_mv;
 		*val2 = (1 << chan->scan_type.realbits) - 1;
-		वापस IIO_VAL_FRACTIONAL;
-	हाल IIO_CHAN_INFO_OFFSET:
+		return IIO_VAL_FRACTIONAL;
+	case IIO_CHAN_INFO_OFFSET:
 		val64 = (((u64)st->vref_neg_mv) << chan->scan_type.realbits);
-		करो_भाग(val64, st->vref_mv);
+		do_div(val64, st->vref_mv);
 		*val = -val64;
-		वापस IIO_VAL_INT;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		return IIO_VAL_INT;
+	default:
+		return -EINVAL;
+	}
 
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_chan_spec_ext_info ad5791_ext_info[] = अणु
-	अणु
+static const struct iio_chan_spec_ext_info ad5791_ext_info[] = {
+	{
 		.name = "powerdown",
 		.shared = IIO_SHARED_BY_TYPE,
-		.पढ़ो = ad5791_पढ़ो_dac_घातerकरोwn,
-		.ग_लिखो = ad5791_ग_लिखो_dac_घातerकरोwn,
-	पूर्ण,
+		.read = ad5791_read_dac_powerdown,
+		.write = ad5791_write_dac_powerdown,
+	},
 	IIO_ENUM("powerdown_mode", IIO_SHARED_BY_TYPE,
-		 &ad5791_घातerकरोwn_mode_क्रमागत),
-	IIO_ENUM_AVAILABLE("powerdown_mode", &ad5791_घातerकरोwn_mode_क्रमागत),
-	अणु पूर्ण,
-पूर्ण;
+		 &ad5791_powerdown_mode_enum),
+	IIO_ENUM_AVAILABLE("powerdown_mode", &ad5791_powerdown_mode_enum),
+	{ },
+};
 
-#घोषणा AD5791_CHAN(bits, _shअगरt) अणु			\
+#define AD5791_CHAN(bits, _shift) {			\
 	.type = IIO_VOLTAGE,				\
 	.output = 1,					\
 	.indexed = 1,					\
@@ -299,100 +298,100 @@
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),	\
 	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE) |	\
 		BIT(IIO_CHAN_INFO_OFFSET),		\
-	.scan_type = अणु					\
+	.scan_type = {					\
 		.sign = 'u',				\
 		.realbits = (bits),			\
 		.storagebits = 24,			\
-		.shअगरt = (_shअगरt),			\
-	पूर्ण,						\
+		.shift = (_shift),			\
+	},						\
 	.ext_info = ad5791_ext_info,			\
-पूर्ण
+}
 
-अटल स्थिर काष्ठा iio_chan_spec ad5791_channels[] = अणु
+static const struct iio_chan_spec ad5791_channels[] = {
 	[ID_AD5760] = AD5791_CHAN(16, 4),
 	[ID_AD5780] = AD5791_CHAN(18, 2),
 	[ID_AD5781] = AD5791_CHAN(18, 2),
 	[ID_AD5791] = AD5791_CHAN(20, 0)
-पूर्ण;
+};
 
-अटल पूर्णांक ad5791_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
-			    काष्ठा iio_chan_spec स्थिर *chan,
-			    पूर्णांक val,
-			    पूर्णांक val2,
-			    दीर्घ mask)
-अणु
-	काष्ठा ad5791_state *st = iio_priv(indio_dev);
+static int ad5791_write_raw(struct iio_dev *indio_dev,
+			    struct iio_chan_spec const *chan,
+			    int val,
+			    int val2,
+			    long mask)
+{
+	struct ad5791_state *st = iio_priv(indio_dev);
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
 		val &= GENMASK(chan->scan_type.realbits - 1, 0);
-		val <<= chan->scan_type.shअगरt;
+		val <<= chan->scan_type.shift;
 
-		वापस ad5791_spi_ग_लिखो(st, chan->address, val);
+		return ad5791_spi_write(st, chan->address, val);
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल स्थिर काष्ठा iio_info ad5791_info = अणु
-	.पढ़ो_raw = &ad5791_पढ़ो_raw,
-	.ग_लिखो_raw = &ad5791_ग_लिखो_raw,
-पूर्ण;
+static const struct iio_info ad5791_info = {
+	.read_raw = &ad5791_read_raw,
+	.write_raw = &ad5791_write_raw,
+};
 
-अटल पूर्णांक ad5791_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा ad5791_platक्रमm_data *pdata = spi->dev.platक्रमm_data;
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा ad5791_state *st;
-	पूर्णांक ret, pos_voltage_uv = 0, neg_voltage_uv = 0;
+static int ad5791_probe(struct spi_device *spi)
+{
+	struct ad5791_platform_data *pdata = spi->dev.platform_data;
+	struct iio_dev *indio_dev;
+	struct ad5791_state *st;
+	int ret, pos_voltage_uv = 0, neg_voltage_uv = 0;
 
-	indio_dev = devm_iio_device_alloc(&spi->dev, माप(*st));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&spi->dev, sizeof(*st));
+	if (!indio_dev)
+		return -ENOMEM;
 	st = iio_priv(indio_dev);
 	st->reg_vdd = devm_regulator_get(&spi->dev, "vdd");
-	अगर (!IS_ERR(st->reg_vdd)) अणु
+	if (!IS_ERR(st->reg_vdd)) {
 		ret = regulator_enable(st->reg_vdd);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		ret = regulator_get_voltage(st->reg_vdd);
-		अगर (ret < 0)
-			जाओ error_disable_reg_pos;
+		if (ret < 0)
+			goto error_disable_reg_pos;
 
 		pos_voltage_uv = ret;
-	पूर्ण
+	}
 
 	st->reg_vss = devm_regulator_get(&spi->dev, "vss");
-	अगर (!IS_ERR(st->reg_vss)) अणु
+	if (!IS_ERR(st->reg_vss)) {
 		ret = regulator_enable(st->reg_vss);
-		अगर (ret)
-			जाओ error_disable_reg_pos;
+		if (ret)
+			goto error_disable_reg_pos;
 
 		ret = regulator_get_voltage(st->reg_vss);
-		अगर (ret < 0)
-			जाओ error_disable_reg_neg;
+		if (ret < 0)
+			goto error_disable_reg_neg;
 
 		neg_voltage_uv = ret;
-	पूर्ण
+	}
 
-	st->pwr_करोwn = true;
+	st->pwr_down = true;
 	st->spi = spi;
 
-	अगर (!IS_ERR(st->reg_vss) && !IS_ERR(st->reg_vdd)) अणु
+	if (!IS_ERR(st->reg_vss) && !IS_ERR(st->reg_vdd)) {
 		st->vref_mv = (pos_voltage_uv + neg_voltage_uv) / 1000;
 		st->vref_neg_mv = neg_voltage_uv / 1000;
-	पूर्ण अन्यथा अगर (pdata) अणु
+	} else if (pdata) {
 		st->vref_mv = pdata->vref_pos_mv + pdata->vref_neg_mv;
 		st->vref_neg_mv = pdata->vref_neg_mv;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_warn(&spi->dev, "reference voltage unspecified\n");
-	पूर्ण
+	}
 
-	ret = ad5791_spi_ग_लिखो(st, AD5791_ADDR_SW_CTRL, AD5791_SWCTRL_RESET);
-	अगर (ret)
-		जाओ error_disable_reg_neg;
+	ret = ad5791_spi_write(st, AD5791_ADDR_SW_CTRL, AD5791_SWCTRL_RESET);
+	if (ret)
+		goto error_disable_reg_neg;
 
 	st->chip_info =	&ad5791_chip_info_tbl[spi_get_device_id(spi)
 					      ->driver_data];
@@ -402,66 +401,66 @@
 		  | ((pdata && pdata->use_rbuf_gain2) ? 0 : AD5791_CTRL_RBUF) |
 		  AD5791_CTRL_BIN2SC;
 
-	ret = ad5791_spi_ग_लिखो(st, AD5791_ADDR_CTRL, st->ctrl |
+	ret = ad5791_spi_write(st, AD5791_ADDR_CTRL, st->ctrl |
 		AD5791_CTRL_OPGND | AD5791_CTRL_DACTRI);
-	अगर (ret)
-		जाओ error_disable_reg_neg;
+	if (ret)
+		goto error_disable_reg_neg;
 
 	spi_set_drvdata(spi, indio_dev);
 	indio_dev->info = &ad5791_info;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 	indio_dev->channels
 		= &ad5791_channels[spi_get_device_id(spi)->driver_data];
 	indio_dev->num_channels = 1;
 	indio_dev->name = spi_get_device_id(st->spi)->name;
-	ret = iio_device_रेजिस्टर(indio_dev);
-	अगर (ret)
-		जाओ error_disable_reg_neg;
+	ret = iio_device_register(indio_dev);
+	if (ret)
+		goto error_disable_reg_neg;
 
-	वापस 0;
+	return 0;
 
 error_disable_reg_neg:
-	अगर (!IS_ERR(st->reg_vss))
+	if (!IS_ERR(st->reg_vss))
 		regulator_disable(st->reg_vss);
 error_disable_reg_pos:
-	अगर (!IS_ERR(st->reg_vdd))
+	if (!IS_ERR(st->reg_vdd))
 		regulator_disable(st->reg_vdd);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ad5791_हटाओ(काष्ठा spi_device *spi)
-अणु
-	काष्ठा iio_dev *indio_dev = spi_get_drvdata(spi);
-	काष्ठा ad5791_state *st = iio_priv(indio_dev);
+static int ad5791_remove(struct spi_device *spi)
+{
+	struct iio_dev *indio_dev = spi_get_drvdata(spi);
+	struct ad5791_state *st = iio_priv(indio_dev);
 
-	iio_device_unरेजिस्टर(indio_dev);
-	अगर (!IS_ERR(st->reg_vdd))
+	iio_device_unregister(indio_dev);
+	if (!IS_ERR(st->reg_vdd))
 		regulator_disable(st->reg_vdd);
 
-	अगर (!IS_ERR(st->reg_vss))
+	if (!IS_ERR(st->reg_vss))
 		regulator_disable(st->reg_vss);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा spi_device_id ad5791_id[] = अणु
-	अणु"ad5760", ID_AD5760पूर्ण,
-	अणु"ad5780", ID_AD5780पूर्ण,
-	अणु"ad5781", ID_AD5781पूर्ण,
-	अणु"ad5790", ID_AD5791पूर्ण,
-	अणु"ad5791", ID_AD5791पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct spi_device_id ad5791_id[] = {
+	{"ad5760", ID_AD5760},
+	{"ad5780", ID_AD5780},
+	{"ad5781", ID_AD5781},
+	{"ad5790", ID_AD5791},
+	{"ad5791", ID_AD5791},
+	{}
+};
 MODULE_DEVICE_TABLE(spi, ad5791_id);
 
-अटल काष्ठा spi_driver ad5791_driver = अणु
-	.driver = अणु
+static struct spi_driver ad5791_driver = {
+	.driver = {
 		   .name = "ad5791",
-		   पूर्ण,
+		   },
 	.probe = ad5791_probe,
-	.हटाओ = ad5791_हटाओ,
+	.remove = ad5791_remove,
 	.id_table = ad5791_id,
-पूर्ण;
+};
 module_spi_driver(ad5791_driver);
 
 MODULE_AUTHOR("Michael Hennerich <michael.hennerich@analog.com>");

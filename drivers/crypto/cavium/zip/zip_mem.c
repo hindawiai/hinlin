@@ -1,4 +1,3 @@
-<शैली गुरु>
 /***********************license start************************************
  * Copyright (c) 2003-2017 Cavium, Inc.
  * All rights reserved.
@@ -8,23 +7,23 @@
  * This file is provided under the terms of the Cavium License (see below)
  * or under the terms of GNU General Public License, Version 2, as
  * published by the Free Software Foundation. When using or redistributing
- * this file, you may करो so under either license.
+ * this file, you may do so under either license.
  *
- * Cavium License:  Redistribution and use in source and binary क्रमms, with
- * or without modअगरication, are permitted provided that the following
+ * Cavium License:  Redistribution and use in source and binary forms, with
+ * or without modification, are permitted provided that the following
  * conditions are met:
  *
  *  * Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  *
- *  * Redistributions in binary क्रमm must reproduce the above
+ *  * Redistributions in binary form must reproduce the above
  *    copyright notice, this list of conditions and the following
- *    disclaimer in the करोcumentation and/or other materials provided
+ *    disclaimer in the documentation and/or other materials provided
  *    with the distribution.
  *
  *  * Neither the name of Cavium Inc. nor the names of its contributors may be
- *    used to enकरोrse or promote products derived from this software without
- *    specअगरic prior written permission.
+ *    used to endorse or promote products derived from this software without
+ *    specific prior written permission.
  *
  * This Software, including technical data, may be subject to U.S. export
  * control laws, including the U.S. Export Administration Act and its
@@ -44,72 +43,72 @@
  * WITH YOU.
  ***********************license end**************************************/
 
-#समावेश <linux/types.h>
-#समावेश <linux/vदो_स्मृति.h>
+#include <linux/types.h>
+#include <linux/vmalloc.h>
 
-#समावेश "common.h"
+#include "common.h"
 
 /**
- * zip_cmd_qbuf_alloc - Allocates a cmd buffer क्रम ZIP Inकाष्ठाion Queue
- * @zip: Poपूर्णांकer to zip device काष्ठाure
+ * zip_cmd_qbuf_alloc - Allocates a cmd buffer for ZIP Instruction Queue
+ * @zip: Pointer to zip device structure
  * @q:   Queue number to allocate bufffer to
- * Return: 0 अगर successful, -ENOMEM otherwise
+ * Return: 0 if successful, -ENOMEM otherwise
  */
-पूर्णांक zip_cmd_qbuf_alloc(काष्ठा zip_device *zip, पूर्णांक q)
-अणु
-	zip->iq[q].sw_head = (u64 *)__get_मुक्त_pages((GFP_KERNEL | GFP_DMA),
+int zip_cmd_qbuf_alloc(struct zip_device *zip, int q)
+{
+	zip->iq[q].sw_head = (u64 *)__get_free_pages((GFP_KERNEL | GFP_DMA),
 						get_order(ZIP_CMD_QBUF_SIZE));
 
-	अगर (!zip->iq[q].sw_head)
-		वापस -ENOMEM;
+	if (!zip->iq[q].sw_head)
+		return -ENOMEM;
 
-	स_रखो(zip->iq[q].sw_head, 0, ZIP_CMD_QBUF_SIZE);
+	memset(zip->iq[q].sw_head, 0, ZIP_CMD_QBUF_SIZE);
 
 	zip_dbg("cmd_qbuf_alloc[%d] Success : %p\n", q, zip->iq[q].sw_head);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * zip_cmd_qbuf_मुक्त - Frees the cmd Queue buffer
- * @zip: Poपूर्णांकer to zip device काष्ठाure
- * @q:   Queue number to मुक्त buffer of
+ * zip_cmd_qbuf_free - Frees the cmd Queue buffer
+ * @zip: Pointer to zip device structure
+ * @q:   Queue number to free buffer of
  */
-व्योम zip_cmd_qbuf_मुक्त(काष्ठा zip_device *zip, पूर्णांक q)
-अणु
+void zip_cmd_qbuf_free(struct zip_device *zip, int q)
+{
 	zip_dbg("Freeing cmd_qbuf 0x%lx\n", zip->iq[q].sw_tail);
 
-	मुक्त_pages((u64)zip->iq[q].sw_tail, get_order(ZIP_CMD_QBUF_SIZE));
-पूर्ण
+	free_pages((u64)zip->iq[q].sw_tail, get_order(ZIP_CMD_QBUF_SIZE));
+}
 
 /**
- * zip_data_buf_alloc - Allocates memory क्रम a data bufffer
+ * zip_data_buf_alloc - Allocates memory for a data bufffer
  * @size:   Size of the buffer to allocate
- * Returns: Poपूर्णांकer to the buffer allocated
+ * Returns: Pointer to the buffer allocated
  */
 u8 *zip_data_buf_alloc(u64 size)
-अणु
+{
 	u8 *ptr;
 
-	ptr = (u8 *)__get_मुक्त_pages((GFP_KERNEL | GFP_DMA),
+	ptr = (u8 *)__get_free_pages((GFP_KERNEL | GFP_DMA),
 					get_order(size));
 
-	अगर (!ptr)
-		वापस शून्य;
+	if (!ptr)
+		return NULL;
 
-	स_रखो(ptr, 0, size);
+	memset(ptr, 0, size);
 
 	zip_dbg("Data buffer allocation success\n");
-	वापस ptr;
-पूर्ण
+	return ptr;
+}
 
 /**
- * zip_data_buf_मुक्त - Frees the memory of a data buffer
- * @ptr:  Poपूर्णांकer to the buffer
+ * zip_data_buf_free - Frees the memory of a data buffer
+ * @ptr:  Pointer to the buffer
  * @size: Buffer size
  */
-व्योम zip_data_buf_मुक्त(u8 *ptr, u64 size)
-अणु
+void zip_data_buf_free(u8 *ptr, u64 size)
+{
 	zip_dbg("Freeing data buffer 0x%lx\n", ptr);
 
-	मुक्त_pages((u64)ptr, get_order(size));
-पूर्ण
+	free_pages((u64)ptr, get_order(size));
+}

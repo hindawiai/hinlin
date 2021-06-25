@@ -1,28 +1,27 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * thपढ़ो-stack.c: Synthesize a thपढ़ो's stack using call / वापस events
+ * thread-stack.c: Synthesize a thread's stack using call / return events
  * Copyright (c) 2014, Intel Corporation.
  */
 
-#समावेश <linux/rbtree.h>
-#समावेश <linux/list.h>
-#समावेश <linux/log2.h>
-#समावेश <linux/zभाग.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश "thread.h"
-#समावेश "event.h"
-#समावेश "machine.h"
-#समावेश "env.h"
-#समावेश "debug.h"
-#समावेश "symbol.h"
-#समावेश "comm.h"
-#समावेश "call-path.h"
-#समावेश "thread-stack.h"
+#include <linux/rbtree.h>
+#include <linux/list.h>
+#include <linux/log2.h>
+#include <linux/zalloc.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include "thread.h"
+#include "event.h"
+#include "machine.h"
+#include "env.h"
+#include "debug.h"
+#include "symbol.h"
+#include "comm.h"
+#include "call-path.h"
+#include "thread-stack.h"
 
-#घोषणा STACK_GROWTH 2048
+#define STACK_GROWTH 2048
 
 /*
  * State of retpoline detection.
@@ -31,362 +30,362 @@
  * X86_RETPOLINE_POSSIBLE: x86 retpoline possible
  * X86_RETPOLINE_DETECTED: x86 retpoline detected
  */
-क्रमागत retpoline_state_t अणु
+enum retpoline_state_t {
 	RETPOLINE_NONE,
 	X86_RETPOLINE_POSSIBLE,
 	X86_RETPOLINE_DETECTED,
-पूर्ण;
+};
 
 /**
- * काष्ठा thपढ़ो_stack_entry - thपढ़ो stack entry.
- * @ret_addr: वापस address
- * @बारtamp: बारtamp (अगर known)
- * @ref: बाह्यal reference (e.g. db_id of sample)
+ * struct thread_stack_entry - thread stack entry.
+ * @ret_addr: return address
+ * @timestamp: timestamp (if known)
+ * @ref: external reference (e.g. db_id of sample)
  * @branch_count: the branch count when the entry was created
- * @insn_count: the inकाष्ठाion count when the entry was created
+ * @insn_count: the instruction count when the entry was created
  * @cyc_count the cycle count when the entry was created
- * @db_id: id used क्रम db-export
+ * @db_id: id used for db-export
  * @cp: call path
  * @no_call: a 'call' was not seen
  * @trace_end: a 'call' but trace ended
- * @non_call: a branch but not a 'call' to the start of a dअगरferent symbol
+ * @non_call: a branch but not a 'call' to the start of a different symbol
  */
-काष्ठा thपढ़ो_stack_entry अणु
+struct thread_stack_entry {
 	u64 ret_addr;
-	u64 बारtamp;
+	u64 timestamp;
 	u64 ref;
 	u64 branch_count;
 	u64 insn_count;
 	u64 cyc_count;
 	u64 db_id;
-	काष्ठा call_path *cp;
+	struct call_path *cp;
 	bool no_call;
 	bool trace_end;
 	bool non_call;
-पूर्ण;
+};
 
 /**
- * काष्ठा thपढ़ो_stack - thपढ़ो stack स्थिरructed from 'call' and 'return'
+ * struct thread_stack - thread stack constructed from 'call' and 'return'
  *                       branch samples.
  * @stack: array that holds the stack
  * @cnt: number of entries in the stack
  * @sz: current maximum stack size
  * @trace_nr: current trace number
  * @branch_count: running branch count
- * @insn_count: running  inकाष्ठाion count
+ * @insn_count: running  instruction count
  * @cyc_count running  cycle count
  * @kernel_start: kernel start address
- * @last_समय: last बारtamp
- * @crp: call/वापस processor
+ * @last_time: last timestamp
+ * @crp: call/return processor
  * @comm: current comm
- * @arr_sz: size of array अगर this is the first element of an array
+ * @arr_sz: size of array if this is the first element of an array
  * @rstate: used to detect retpolines
  * @br_stack_rb: branch stack (ring buffer)
  * @br_stack_sz: maximum branch stack size
  * @br_stack_pos: current position in @br_stack_rb
  * @mispred_all: mark all branches as mispredicted
  */
-काष्ठा thपढ़ो_stack अणु
-	काष्ठा thपढ़ो_stack_entry *stack;
-	माप_प्रकार cnt;
-	माप_प्रकार sz;
+struct thread_stack {
+	struct thread_stack_entry *stack;
+	size_t cnt;
+	size_t sz;
 	u64 trace_nr;
 	u64 branch_count;
 	u64 insn_count;
 	u64 cyc_count;
 	u64 kernel_start;
-	u64 last_समय;
-	काष्ठा call_वापस_processor *crp;
-	काष्ठा comm *comm;
-	अचिन्हित पूर्णांक arr_sz;
-	क्रमागत retpoline_state_t rstate;
-	काष्ठा branch_stack *br_stack_rb;
-	अचिन्हित पूर्णांक br_stack_sz;
-	अचिन्हित पूर्णांक br_stack_pos;
+	u64 last_time;
+	struct call_return_processor *crp;
+	struct comm *comm;
+	unsigned int arr_sz;
+	enum retpoline_state_t rstate;
+	struct branch_stack *br_stack_rb;
+	unsigned int br_stack_sz;
+	unsigned int br_stack_pos;
 	bool mispred_all;
-पूर्ण;
+};
 
 /*
- * Assume pid == tid == 0 identअगरies the idle task as defined by
- * perf_session__रेजिस्टर_idle_thपढ़ो(). The idle task is really 1 task per cpu,
- * and thereक्रमe requires a stack क्रम each cpu.
+ * Assume pid == tid == 0 identifies the idle task as defined by
+ * perf_session__register_idle_thread(). The idle task is really 1 task per cpu,
+ * and therefore requires a stack for each cpu.
  */
-अटल अंतरभूत bool thपढ़ो_stack__per_cpu(काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	वापस !(thपढ़ो->tid || thपढ़ो->pid_);
-पूर्ण
+static inline bool thread_stack__per_cpu(struct thread *thread)
+{
+	return !(thread->tid || thread->pid_);
+}
 
-अटल पूर्णांक thपढ़ो_stack__grow(काष्ठा thपढ़ो_stack *ts)
-अणु
-	काष्ठा thपढ़ो_stack_entry *new_stack;
-	माप_प्रकार sz, new_sz;
+static int thread_stack__grow(struct thread_stack *ts)
+{
+	struct thread_stack_entry *new_stack;
+	size_t sz, new_sz;
 
 	new_sz = ts->sz + STACK_GROWTH;
-	sz = new_sz * माप(काष्ठा thपढ़ो_stack_entry);
+	sz = new_sz * sizeof(struct thread_stack_entry);
 
-	new_stack = पुनः_स्मृति(ts->stack, sz);
-	अगर (!new_stack)
-		वापस -ENOMEM;
+	new_stack = realloc(ts->stack, sz);
+	if (!new_stack)
+		return -ENOMEM;
 
 	ts->stack = new_stack;
 	ts->sz = new_sz;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक thपढ़ो_stack__init(काष्ठा thपढ़ो_stack *ts, काष्ठा thपढ़ो *thपढ़ो,
-			      काष्ठा call_वापस_processor *crp,
-			      bool callstack, अचिन्हित पूर्णांक br_stack_sz)
-अणु
-	पूर्णांक err;
+static int thread_stack__init(struct thread_stack *ts, struct thread *thread,
+			      struct call_return_processor *crp,
+			      bool callstack, unsigned int br_stack_sz)
+{
+	int err;
 
-	अगर (callstack) अणु
-		err = thपढ़ो_stack__grow(ts);
-		अगर (err)
-			वापस err;
-	पूर्ण
+	if (callstack) {
+		err = thread_stack__grow(ts);
+		if (err)
+			return err;
+	}
 
-	अगर (br_stack_sz) अणु
-		माप_प्रकार sz = माप(काष्ठा branch_stack);
+	if (br_stack_sz) {
+		size_t sz = sizeof(struct branch_stack);
 
-		sz += br_stack_sz * माप(काष्ठा branch_entry);
+		sz += br_stack_sz * sizeof(struct branch_entry);
 		ts->br_stack_rb = zalloc(sz);
-		अगर (!ts->br_stack_rb)
-			वापस -ENOMEM;
+		if (!ts->br_stack_rb)
+			return -ENOMEM;
 		ts->br_stack_sz = br_stack_sz;
-	पूर्ण
+	}
 
-	अगर (thपढ़ो->maps && thपढ़ो->maps->machine) अणु
-		काष्ठा machine *machine = thपढ़ो->maps->machine;
-		स्थिर अक्षर *arch = perf_env__arch(machine->env);
+	if (thread->maps && thread->maps->machine) {
+		struct machine *machine = thread->maps->machine;
+		const char *arch = perf_env__arch(machine->env);
 
 		ts->kernel_start = machine__kernel_start(machine);
-		अगर (!म_भेद(arch, "x86"))
+		if (!strcmp(arch, "x86"))
 			ts->rstate = X86_RETPOLINE_POSSIBLE;
-	पूर्ण अन्यथा अणु
+	} else {
 		ts->kernel_start = 1ULL << 63;
-	पूर्ण
+	}
 	ts->crp = crp;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा thपढ़ो_stack *thपढ़ो_stack__new(काष्ठा thपढ़ो *thपढ़ो, पूर्णांक cpu,
-					      काष्ठा call_वापस_processor *crp,
+static struct thread_stack *thread_stack__new(struct thread *thread, int cpu,
+					      struct call_return_processor *crp,
 					      bool callstack,
-					      अचिन्हित पूर्णांक br_stack_sz)
-अणु
-	काष्ठा thपढ़ो_stack *ts = thपढ़ो->ts, *new_ts;
-	अचिन्हित पूर्णांक old_sz = ts ? ts->arr_sz : 0;
-	अचिन्हित पूर्णांक new_sz = 1;
+					      unsigned int br_stack_sz)
+{
+	struct thread_stack *ts = thread->ts, *new_ts;
+	unsigned int old_sz = ts ? ts->arr_sz : 0;
+	unsigned int new_sz = 1;
 
-	अगर (thपढ़ो_stack__per_cpu(thपढ़ो) && cpu > 0)
-		new_sz = roundup_घात_of_two(cpu + 1);
+	if (thread_stack__per_cpu(thread) && cpu > 0)
+		new_sz = roundup_pow_of_two(cpu + 1);
 
-	अगर (!ts || new_sz > old_sz) अणु
-		new_ts = सुस्मृति(new_sz, माप(*ts));
-		अगर (!new_ts)
-			वापस शून्य;
-		अगर (ts)
-			स_नकल(new_ts, ts, old_sz * माप(*ts));
+	if (!ts || new_sz > old_sz) {
+		new_ts = calloc(new_sz, sizeof(*ts));
+		if (!new_ts)
+			return NULL;
+		if (ts)
+			memcpy(new_ts, ts, old_sz * sizeof(*ts));
 		new_ts->arr_sz = new_sz;
-		zमुक्त(&thपढ़ो->ts);
-		thपढ़ो->ts = new_ts;
+		zfree(&thread->ts);
+		thread->ts = new_ts;
 		ts = new_ts;
-	पूर्ण
+	}
 
-	अगर (thपढ़ो_stack__per_cpu(thपढ़ो) && cpu > 0 &&
-	    (अचिन्हित पूर्णांक)cpu < ts->arr_sz)
+	if (thread_stack__per_cpu(thread) && cpu > 0 &&
+	    (unsigned int)cpu < ts->arr_sz)
 		ts += cpu;
 
-	अगर (!ts->stack &&
-	    thपढ़ो_stack__init(ts, thपढ़ो, crp, callstack, br_stack_sz))
-		वापस शून्य;
+	if (!ts->stack &&
+	    thread_stack__init(ts, thread, crp, callstack, br_stack_sz))
+		return NULL;
 
-	वापस ts;
-पूर्ण
+	return ts;
+}
 
-अटल काष्ठा thपढ़ो_stack *thपढ़ो__cpu_stack(काष्ठा thपढ़ो *thपढ़ो, पूर्णांक cpu)
-अणु
-	काष्ठा thपढ़ो_stack *ts = thपढ़ो->ts;
+static struct thread_stack *thread__cpu_stack(struct thread *thread, int cpu)
+{
+	struct thread_stack *ts = thread->ts;
 
-	अगर (cpu < 0)
+	if (cpu < 0)
 		cpu = 0;
 
-	अगर (!ts || (अचिन्हित पूर्णांक)cpu >= ts->arr_sz)
-		वापस शून्य;
+	if (!ts || (unsigned int)cpu >= ts->arr_sz)
+		return NULL;
 
 	ts += cpu;
 
-	अगर (!ts->stack)
-		वापस शून्य;
+	if (!ts->stack)
+		return NULL;
 
-	वापस ts;
-पूर्ण
+	return ts;
+}
 
-अटल अंतरभूत काष्ठा thपढ़ो_stack *thपढ़ो__stack(काष्ठा thपढ़ो *thपढ़ो,
-						    पूर्णांक cpu)
-अणु
-	अगर (!thपढ़ो)
-		वापस शून्य;
+static inline struct thread_stack *thread__stack(struct thread *thread,
+						    int cpu)
+{
+	if (!thread)
+		return NULL;
 
-	अगर (thपढ़ो_stack__per_cpu(thपढ़ो))
-		वापस thपढ़ो__cpu_stack(thपढ़ो, cpu);
+	if (thread_stack__per_cpu(thread))
+		return thread__cpu_stack(thread, cpu);
 
-	वापस thपढ़ो->ts;
-पूर्ण
+	return thread->ts;
+}
 
-अटल पूर्णांक thपढ़ो_stack__push(काष्ठा thपढ़ो_stack *ts, u64 ret_addr,
+static int thread_stack__push(struct thread_stack *ts, u64 ret_addr,
 			      bool trace_end)
-अणु
-	पूर्णांक err = 0;
+{
+	int err = 0;
 
-	अगर (ts->cnt == ts->sz) अणु
-		err = thपढ़ो_stack__grow(ts);
-		अगर (err) अणु
+	if (ts->cnt == ts->sz) {
+		err = thread_stack__grow(ts);
+		if (err) {
 			pr_warning("Out of memory: discarding thread stack\n");
 			ts->cnt = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ts->stack[ts->cnt].trace_end = trace_end;
 	ts->stack[ts->cnt++].ret_addr = ret_addr;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम thपढ़ो_stack__pop(काष्ठा thपढ़ो_stack *ts, u64 ret_addr)
-अणु
-	माप_प्रकार i;
+static void thread_stack__pop(struct thread_stack *ts, u64 ret_addr)
+{
+	size_t i;
 
 	/*
-	 * In some हालs there may be functions which are not seen to वापस.
-	 * For example when बनाओ_लाँघ / दीर्घ_लाँघ has been used.  Or the perf context
-	 * चयन in the kernel which करोesn't stop and start tracing in exactly
-	 * the same code path.  When that happens the वापस address will be
-	 * further करोwn the stack.  If the वापस address is not found at all,
-	 * we assume the opposite (i.e. this is a वापस क्रम a call that wasn't
-	 * seen क्रम some reason) and leave the stack alone.
+	 * In some cases there may be functions which are not seen to return.
+	 * For example when setjmp / longjmp has been used.  Or the perf context
+	 * switch in the kernel which doesn't stop and start tracing in exactly
+	 * the same code path.  When that happens the return address will be
+	 * further down the stack.  If the return address is not found at all,
+	 * we assume the opposite (i.e. this is a return for a call that wasn't
+	 * seen for some reason) and leave the stack alone.
 	 */
-	क्रम (i = ts->cnt; i; ) अणु
-		अगर (ts->stack[--i].ret_addr == ret_addr) अणु
+	for (i = ts->cnt; i; ) {
+		if (ts->stack[--i].ret_addr == ret_addr) {
 			ts->cnt = i;
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			return;
+		}
+	}
+}
 
-अटल व्योम thपढ़ो_stack__pop_trace_end(काष्ठा thपढ़ो_stack *ts)
-अणु
-	माप_प्रकार i;
+static void thread_stack__pop_trace_end(struct thread_stack *ts)
+{
+	size_t i;
 
-	क्रम (i = ts->cnt; i; ) अणु
-		अगर (ts->stack[--i].trace_end)
+	for (i = ts->cnt; i; ) {
+		if (ts->stack[--i].trace_end)
 			ts->cnt = i;
-		अन्यथा
-			वापस;
-	पूर्ण
-पूर्ण
+		else
+			return;
+	}
+}
 
-अटल bool thपढ़ो_stack__in_kernel(काष्ठा thपढ़ो_stack *ts)
-अणु
-	अगर (!ts->cnt)
-		वापस false;
+static bool thread_stack__in_kernel(struct thread_stack *ts)
+{
+	if (!ts->cnt)
+		return false;
 
-	वापस ts->stack[ts->cnt - 1].cp->in_kernel;
-पूर्ण
+	return ts->stack[ts->cnt - 1].cp->in_kernel;
+}
 
-अटल पूर्णांक thपढ़ो_stack__call_वापस(काष्ठा thपढ़ो *thपढ़ो,
-				     काष्ठा thपढ़ो_stack *ts, माप_प्रकार idx,
-				     u64 बारtamp, u64 ref, bool no_वापस)
-अणु
-	काष्ठा call_वापस_processor *crp = ts->crp;
-	काष्ठा thपढ़ो_stack_entry *tse;
-	काष्ठा call_वापस cr = अणु
-		.thपढ़ो = thपढ़ो,
+static int thread_stack__call_return(struct thread *thread,
+				     struct thread_stack *ts, size_t idx,
+				     u64 timestamp, u64 ref, bool no_return)
+{
+	struct call_return_processor *crp = ts->crp;
+	struct thread_stack_entry *tse;
+	struct call_return cr = {
+		.thread = thread,
 		.comm = ts->comm,
 		.db_id = 0,
-	पूर्ण;
+	};
 	u64 *parent_db_id;
 
 	tse = &ts->stack[idx];
 	cr.cp = tse->cp;
-	cr.call_समय = tse->बारtamp;
-	cr.वापस_समय = बारtamp;
+	cr.call_time = tse->timestamp;
+	cr.return_time = timestamp;
 	cr.branch_count = ts->branch_count - tse->branch_count;
 	cr.insn_count = ts->insn_count - tse->insn_count;
 	cr.cyc_count = ts->cyc_count - tse->cyc_count;
 	cr.db_id = tse->db_id;
 	cr.call_ref = tse->ref;
-	cr.वापस_ref = ref;
-	अगर (tse->no_call)
+	cr.return_ref = ref;
+	if (tse->no_call)
 		cr.flags |= CALL_RETURN_NO_CALL;
-	अगर (no_वापस)
+	if (no_return)
 		cr.flags |= CALL_RETURN_NO_RETURN;
-	अगर (tse->non_call)
+	if (tse->non_call)
 		cr.flags |= CALL_RETURN_NON_CALL;
 
 	/*
-	 * The parent db_id must be asचिन्हित beक्रमe exporting the child. Note
-	 * it is not possible to export the parent first because its inक्रमmation
+	 * The parent db_id must be assigned before exporting the child. Note
+	 * it is not possible to export the parent first because its information
 	 * is not yet complete because its 'return' has not yet been processed.
 	 */
-	parent_db_id = idx ? &(tse - 1)->db_id : शून्य;
+	parent_db_id = idx ? &(tse - 1)->db_id : NULL;
 
-	वापस crp->process(&cr, parent_db_id, crp->data);
-पूर्ण
+	return crp->process(&cr, parent_db_id, crp->data);
+}
 
-अटल पूर्णांक __thपढ़ो_stack__flush(काष्ठा thपढ़ो *thपढ़ो, काष्ठा thपढ़ो_stack *ts)
-अणु
-	काष्ठा call_वापस_processor *crp = ts->crp;
-	पूर्णांक err;
+static int __thread_stack__flush(struct thread *thread, struct thread_stack *ts)
+{
+	struct call_return_processor *crp = ts->crp;
+	int err;
 
-	अगर (!crp) अणु
+	if (!crp) {
 		ts->cnt = 0;
 		ts->br_stack_pos = 0;
-		अगर (ts->br_stack_rb)
+		if (ts->br_stack_rb)
 			ts->br_stack_rb->nr = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	जबतक (ts->cnt) अणु
-		err = thपढ़ो_stack__call_वापस(thपढ़ो, ts, --ts->cnt,
-						ts->last_समय, 0, true);
-		अगर (err) अणु
+	while (ts->cnt) {
+		err = thread_stack__call_return(thread, ts, --ts->cnt,
+						ts->last_time, 0, true);
+		if (err) {
 			pr_err("Error flushing thread stack!\n");
 			ts->cnt = 0;
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक thपढ़ो_stack__flush(काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	काष्ठा thपढ़ो_stack *ts = thपढ़ो->ts;
-	अचिन्हित पूर्णांक pos;
-	पूर्णांक err = 0;
+int thread_stack__flush(struct thread *thread)
+{
+	struct thread_stack *ts = thread->ts;
+	unsigned int pos;
+	int err = 0;
 
-	अगर (ts) अणु
-		क्रम (pos = 0; pos < ts->arr_sz; pos++) अणु
-			पूर्णांक ret = __thपढ़ो_stack__flush(thपढ़ो, ts + pos);
+	if (ts) {
+		for (pos = 0; pos < ts->arr_sz; pos++) {
+			int ret = __thread_stack__flush(thread, ts + pos);
 
-			अगर (ret)
+			if (ret)
 				err = ret;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम thपढ़ो_stack__update_br_stack(काष्ठा thपढ़ो_stack *ts, u32 flags,
+static void thread_stack__update_br_stack(struct thread_stack *ts, u32 flags,
 					  u64 from_ip, u64 to_ip)
-अणु
-	काष्ठा branch_stack *bs = ts->br_stack_rb;
-	काष्ठा branch_entry *be;
+{
+	struct branch_stack *bs = ts->br_stack_rb;
+	struct branch_entry *be;
 
-	अगर (!ts->br_stack_pos)
+	if (!ts->br_stack_pos)
 		ts->br_stack_pos = ts->br_stack_sz;
 
 	ts->br_stack_pos -= 1;
@@ -395,304 +394,304 @@
 	be->from        = from_ip;
 	be->to          = to_ip;
 	be->flags.value = 0;
-	be->flags.पात = !!(flags & PERF_IP_FLAG_TX_ABORT);
+	be->flags.abort = !!(flags & PERF_IP_FLAG_TX_ABORT);
 	be->flags.in_tx = !!(flags & PERF_IP_FLAG_IN_TX);
-	/* No support क्रम mispredict */
+	/* No support for mispredict */
 	be->flags.mispred = ts->mispred_all;
 
-	अगर (bs->nr < ts->br_stack_sz)
+	if (bs->nr < ts->br_stack_sz)
 		bs->nr += 1;
-पूर्ण
+}
 
-पूर्णांक thपढ़ो_stack__event(काष्ठा thपढ़ो *thपढ़ो, पूर्णांक cpu, u32 flags, u64 from_ip,
+int thread_stack__event(struct thread *thread, int cpu, u32 flags, u64 from_ip,
 			u64 to_ip, u16 insn_len, u64 trace_nr, bool callstack,
-			अचिन्हित पूर्णांक br_stack_sz, bool mispred_all)
-अणु
-	काष्ठा thपढ़ो_stack *ts = thपढ़ो__stack(thपढ़ो, cpu);
+			unsigned int br_stack_sz, bool mispred_all)
+{
+	struct thread_stack *ts = thread__stack(thread, cpu);
 
-	अगर (!thपढ़ो)
-		वापस -EINVAL;
+	if (!thread)
+		return -EINVAL;
 
-	अगर (!ts) अणु
-		ts = thपढ़ो_stack__new(thपढ़ो, cpu, शून्य, callstack, br_stack_sz);
-		अगर (!ts) अणु
+	if (!ts) {
+		ts = thread_stack__new(thread, cpu, NULL, callstack, br_stack_sz);
+		if (!ts) {
 			pr_warning("Out of memory: no thread stack\n");
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 		ts->trace_nr = trace_nr;
 		ts->mispred_all = mispred_all;
-	पूर्ण
+	}
 
 	/*
-	 * When the trace is discontinuous, the trace_nr changes.  In that हाल
+	 * When the trace is discontinuous, the trace_nr changes.  In that case
 	 * the stack might be completely invalid.  Better to report nothing than
 	 * to report something misleading, so flush the stack.
 	 */
-	अगर (trace_nr != ts->trace_nr) अणु
-		अगर (ts->trace_nr)
-			__thपढ़ो_stack__flush(thपढ़ो, ts);
+	if (trace_nr != ts->trace_nr) {
+		if (ts->trace_nr)
+			__thread_stack__flush(thread, ts);
 		ts->trace_nr = trace_nr;
-	पूर्ण
+	}
 
-	अगर (br_stack_sz)
-		thपढ़ो_stack__update_br_stack(ts, flags, from_ip, to_ip);
+	if (br_stack_sz)
+		thread_stack__update_br_stack(ts, flags, from_ip, to_ip);
 
 	/*
-	 * Stop here अगर thपढ़ो_stack__process() is in use, or not recording call
+	 * Stop here if thread_stack__process() is in use, or not recording call
 	 * stack.
 	 */
-	अगर (ts->crp || !callstack)
-		वापस 0;
+	if (ts->crp || !callstack)
+		return 0;
 
-	अगर (flags & PERF_IP_FLAG_CALL) अणु
+	if (flags & PERF_IP_FLAG_CALL) {
 		u64 ret_addr;
 
-		अगर (!to_ip)
-			वापस 0;
+		if (!to_ip)
+			return 0;
 		ret_addr = from_ip + insn_len;
-		अगर (ret_addr == to_ip)
-			वापस 0; /* Zero-length calls are excluded */
-		वापस thपढ़ो_stack__push(ts, ret_addr,
+		if (ret_addr == to_ip)
+			return 0; /* Zero-length calls are excluded */
+		return thread_stack__push(ts, ret_addr,
 					  flags & PERF_IP_FLAG_TRACE_END);
-	पूर्ण अन्यथा अगर (flags & PERF_IP_FLAG_TRACE_BEGIN) अणु
+	} else if (flags & PERF_IP_FLAG_TRACE_BEGIN) {
 		/*
 		 * If the caller did not change the trace number (which would
 		 * have flushed the stack) then try to make sense of the stack.
-		 * Possibly, tracing began after वापसing to the current
-		 * address, so try to pop that. Also, करो not expect a call made
-		 * when the trace ended, to वापस, so pop that.
+		 * Possibly, tracing began after returning to the current
+		 * address, so try to pop that. Also, do not expect a call made
+		 * when the trace ended, to return, so pop that.
 		 */
-		thपढ़ो_stack__pop(ts, to_ip);
-		thपढ़ो_stack__pop_trace_end(ts);
-	पूर्ण अन्यथा अगर ((flags & PERF_IP_FLAG_RETURN) && from_ip) अणु
-		thपढ़ो_stack__pop(ts, to_ip);
-	पूर्ण
+		thread_stack__pop(ts, to_ip);
+		thread_stack__pop_trace_end(ts);
+	} else if ((flags & PERF_IP_FLAG_RETURN) && from_ip) {
+		thread_stack__pop(ts, to_ip);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम thपढ़ो_stack__set_trace_nr(काष्ठा thपढ़ो *thपढ़ो, पूर्णांक cpu, u64 trace_nr)
-अणु
-	काष्ठा thपढ़ो_stack *ts = thपढ़ो__stack(thपढ़ो, cpu);
+void thread_stack__set_trace_nr(struct thread *thread, int cpu, u64 trace_nr)
+{
+	struct thread_stack *ts = thread__stack(thread, cpu);
 
-	अगर (!ts)
-		वापस;
+	if (!ts)
+		return;
 
-	अगर (trace_nr != ts->trace_nr) अणु
-		अगर (ts->trace_nr)
-			__thपढ़ो_stack__flush(thपढ़ो, ts);
+	if (trace_nr != ts->trace_nr) {
+		if (ts->trace_nr)
+			__thread_stack__flush(thread, ts);
 		ts->trace_nr = trace_nr;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __thपढ़ो_stack__मुक्त(काष्ठा thपढ़ो *thपढ़ो, काष्ठा thपढ़ो_stack *ts)
-अणु
-	__thपढ़ो_stack__flush(thपढ़ो, ts);
-	zमुक्त(&ts->stack);
-	zमुक्त(&ts->br_stack_rb);
-पूर्ण
+static void __thread_stack__free(struct thread *thread, struct thread_stack *ts)
+{
+	__thread_stack__flush(thread, ts);
+	zfree(&ts->stack);
+	zfree(&ts->br_stack_rb);
+}
 
-अटल व्योम thपढ़ो_stack__reset(काष्ठा thपढ़ो *thपढ़ो, काष्ठा thपढ़ो_stack *ts)
-अणु
-	अचिन्हित पूर्णांक arr_sz = ts->arr_sz;
+static void thread_stack__reset(struct thread *thread, struct thread_stack *ts)
+{
+	unsigned int arr_sz = ts->arr_sz;
 
-	__thपढ़ो_stack__मुक्त(thपढ़ो, ts);
-	स_रखो(ts, 0, माप(*ts));
+	__thread_stack__free(thread, ts);
+	memset(ts, 0, sizeof(*ts));
 	ts->arr_sz = arr_sz;
-पूर्ण
+}
 
-व्योम thपढ़ो_stack__मुक्त(काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	काष्ठा thपढ़ो_stack *ts = thपढ़ो->ts;
-	अचिन्हित पूर्णांक pos;
+void thread_stack__free(struct thread *thread)
+{
+	struct thread_stack *ts = thread->ts;
+	unsigned int pos;
 
-	अगर (ts) अणु
-		क्रम (pos = 0; pos < ts->arr_sz; pos++)
-			__thपढ़ो_stack__मुक्त(thपढ़ो, ts + pos);
-		zमुक्त(&thपढ़ो->ts);
-	पूर्ण
-पूर्ण
+	if (ts) {
+		for (pos = 0; pos < ts->arr_sz; pos++)
+			__thread_stack__free(thread, ts + pos);
+		zfree(&thread->ts);
+	}
+}
 
-अटल अंतरभूत u64 callchain_context(u64 ip, u64 kernel_start)
-अणु
-	वापस ip < kernel_start ? PERF_CONTEXT_USER : PERF_CONTEXT_KERNEL;
-पूर्ण
+static inline u64 callchain_context(u64 ip, u64 kernel_start)
+{
+	return ip < kernel_start ? PERF_CONTEXT_USER : PERF_CONTEXT_KERNEL;
+}
 
-व्योम thपढ़ो_stack__sample(काष्ठा thपढ़ो *thपढ़ो, पूर्णांक cpu,
-			  काष्ठा ip_callchain *chain,
-			  माप_प्रकार sz, u64 ip, u64 kernel_start)
-अणु
-	काष्ठा thपढ़ो_stack *ts = thपढ़ो__stack(thपढ़ो, cpu);
+void thread_stack__sample(struct thread *thread, int cpu,
+			  struct ip_callchain *chain,
+			  size_t sz, u64 ip, u64 kernel_start)
+{
+	struct thread_stack *ts = thread__stack(thread, cpu);
 	u64 context = callchain_context(ip, kernel_start);
 	u64 last_context;
-	माप_प्रकार i, j;
+	size_t i, j;
 
-	अगर (sz < 2) अणु
+	if (sz < 2) {
 		chain->nr = 0;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	chain->ips[0] = context;
 	chain->ips[1] = ip;
 
-	अगर (!ts) अणु
+	if (!ts) {
 		chain->nr = 2;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	last_context = context;
 
-	क्रम (i = 2, j = 1; i < sz && j <= ts->cnt; i++, j++) अणु
+	for (i = 2, j = 1; i < sz && j <= ts->cnt; i++, j++) {
 		ip = ts->stack[ts->cnt - j].ret_addr;
 		context = callchain_context(ip, kernel_start);
-		अगर (context != last_context) अणु
-			अगर (i >= sz - 1)
-				अवरोध;
+		if (context != last_context) {
+			if (i >= sz - 1)
+				break;
 			chain->ips[i++] = context;
 			last_context = context;
-		पूर्ण
+		}
 		chain->ips[i] = ip;
-	पूर्ण
+	}
 
 	chain->nr = i;
-पूर्ण
+}
 
 /*
- * Hardware sample records, created some समय after the event occurred, need to
- * have subsequent addresses हटाओd from the call chain.
+ * Hardware sample records, created some time after the event occurred, need to
+ * have subsequent addresses removed from the call chain.
  */
-व्योम thपढ़ो_stack__sample_late(काष्ठा thपढ़ो *thपढ़ो, पूर्णांक cpu,
-			       काष्ठा ip_callchain *chain, माप_प्रकार sz,
+void thread_stack__sample_late(struct thread *thread, int cpu,
+			       struct ip_callchain *chain, size_t sz,
 			       u64 sample_ip, u64 kernel_start)
-अणु
-	काष्ठा thपढ़ो_stack *ts = thपढ़ो__stack(thपढ़ो, cpu);
+{
+	struct thread_stack *ts = thread__stack(thread, cpu);
 	u64 sample_context = callchain_context(sample_ip, kernel_start);
 	u64 last_context, context, ip;
-	माप_प्रकार nr = 0, j;
+	size_t nr = 0, j;
 
-	अगर (sz < 2) अणु
+	if (sz < 2) {
 		chain->nr = 0;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!ts)
-		जाओ out;
+	if (!ts)
+		goto out;
 
 	/*
 	 * When tracing kernel space, kernel addresses occur at the top of the
-	 * call chain after the event occurred but beक्रमe tracing stopped.
+	 * call chain after the event occurred but before tracing stopped.
 	 * Skip them.
 	 */
-	क्रम (j = 1; j <= ts->cnt; j++) अणु
+	for (j = 1; j <= ts->cnt; j++) {
 		ip = ts->stack[ts->cnt - j].ret_addr;
 		context = callchain_context(ip, kernel_start);
-		अगर (context == PERF_CONTEXT_USER ||
+		if (context == PERF_CONTEXT_USER ||
 		    (context == sample_context && ip == sample_ip))
-			अवरोध;
-	पूर्ण
+			break;
+	}
 
 	last_context = sample_ip; /* Use sample_ip as an invalid context */
 
-	क्रम (; nr < sz && j <= ts->cnt; nr++, j++) अणु
+	for (; nr < sz && j <= ts->cnt; nr++, j++) {
 		ip = ts->stack[ts->cnt - j].ret_addr;
 		context = callchain_context(ip, kernel_start);
-		अगर (context != last_context) अणु
-			अगर (nr >= sz - 1)
-				अवरोध;
+		if (context != last_context) {
+			if (nr >= sz - 1)
+				break;
 			chain->ips[nr++] = context;
 			last_context = context;
-		पूर्ण
+		}
 		chain->ips[nr] = ip;
-	पूर्ण
+	}
 out:
-	अगर (nr) अणु
+	if (nr) {
 		chain->nr = nr;
-	पूर्ण अन्यथा अणु
+	} else {
 		chain->ips[0] = sample_context;
 		chain->ips[1] = sample_ip;
 		chain->nr = 2;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम thपढ़ो_stack__br_sample(काष्ठा thपढ़ो *thपढ़ो, पूर्णांक cpu,
-			     काष्ठा branch_stack *dst, अचिन्हित पूर्णांक sz)
-अणु
-	काष्ठा thपढ़ो_stack *ts = thपढ़ो__stack(thपढ़ो, cpu);
-	स्थिर माप_प्रकार bsz = माप(काष्ठा branch_entry);
-	काष्ठा branch_stack *src;
-	काष्ठा branch_entry *be;
-	अचिन्हित पूर्णांक nr;
+void thread_stack__br_sample(struct thread *thread, int cpu,
+			     struct branch_stack *dst, unsigned int sz)
+{
+	struct thread_stack *ts = thread__stack(thread, cpu);
+	const size_t bsz = sizeof(struct branch_entry);
+	struct branch_stack *src;
+	struct branch_entry *be;
+	unsigned int nr;
 
 	dst->nr = 0;
 
-	अगर (!ts)
-		वापस;
+	if (!ts)
+		return;
 
 	src = ts->br_stack_rb;
-	अगर (!src->nr)
-		वापस;
+	if (!src->nr)
+		return;
 
-	dst->nr = min((अचिन्हित पूर्णांक)src->nr, sz);
+	dst->nr = min((unsigned int)src->nr, sz);
 
 	be = &dst->entries[0];
-	nr = min(ts->br_stack_sz - ts->br_stack_pos, (अचिन्हित पूर्णांक)dst->nr);
-	स_नकल(be, &src->entries[ts->br_stack_pos], bsz * nr);
+	nr = min(ts->br_stack_sz - ts->br_stack_pos, (unsigned int)dst->nr);
+	memcpy(be, &src->entries[ts->br_stack_pos], bsz * nr);
 
-	अगर (src->nr >= ts->br_stack_sz) अणु
+	if (src->nr >= ts->br_stack_sz) {
 		sz -= nr;
 		be = &dst->entries[nr];
 		nr = min(ts->br_stack_pos, sz);
-		स_नकल(be, &src->entries[0], bsz * ts->br_stack_pos);
-	पूर्ण
-पूर्ण
+		memcpy(be, &src->entries[0], bsz * ts->br_stack_pos);
+	}
+}
 
 /* Start of user space branch entries */
-अटल bool us_start(काष्ठा branch_entry *be, u64 kernel_start, bool *start)
-अणु
-	अगर (!*start)
+static bool us_start(struct branch_entry *be, u64 kernel_start, bool *start)
+{
+	if (!*start)
 		*start = be->to && be->to < kernel_start;
 
-	वापस *start;
-पूर्ण
+	return *start;
+}
 
 /*
  * Start of branch entries after the ip fell in between 2 branches, or user
  * space branch entries.
  */
-अटल bool ks_start(काष्ठा branch_entry *be, u64 sample_ip, u64 kernel_start,
-		     bool *start, काष्ठा branch_entry *nb)
-अणु
-	अगर (!*start) अणु
+static bool ks_start(struct branch_entry *be, u64 sample_ip, u64 kernel_start,
+		     bool *start, struct branch_entry *nb)
+{
+	if (!*start) {
 		*start = (nb && sample_ip >= be->to && sample_ip <= nb->from) ||
 			 be->from < kernel_start ||
 			 (be->to && be->to < kernel_start);
-	पूर्ण
+	}
 
-	वापस *start;
-पूर्ण
+	return *start;
+}
 
 /*
- * Hardware sample records, created some समय after the event occurred, need to
- * have subsequent addresses हटाओd from the branch stack.
+ * Hardware sample records, created some time after the event occurred, need to
+ * have subsequent addresses removed from the branch stack.
  */
-व्योम thपढ़ो_stack__br_sample_late(काष्ठा thपढ़ो *thपढ़ो, पूर्णांक cpu,
-				  काष्ठा branch_stack *dst, अचिन्हित पूर्णांक sz,
+void thread_stack__br_sample_late(struct thread *thread, int cpu,
+				  struct branch_stack *dst, unsigned int sz,
 				  u64 ip, u64 kernel_start)
-अणु
-	काष्ठा thपढ़ो_stack *ts = thपढ़ो__stack(thपढ़ो, cpu);
-	काष्ठा branch_entry *d, *s, *spos, *ssz;
-	काष्ठा branch_stack *src;
-	अचिन्हित पूर्णांक nr = 0;
+{
+	struct thread_stack *ts = thread__stack(thread, cpu);
+	struct branch_entry *d, *s, *spos, *ssz;
+	struct branch_stack *src;
+	unsigned int nr = 0;
 	bool start = false;
 
 	dst->nr = 0;
 
-	अगर (!ts)
-		वापस;
+	if (!ts)
+		return;
 
 	src = ts->br_stack_rb;
-	अगर (!src->nr)
-		वापस;
+	if (!src->nr)
+		return;
 
 	spos = &src->entries[ts->br_stack_pos];
 	ssz  = &src->entries[ts->br_stack_sz];
@@ -700,104 +699,104 @@ out:
 	d = &dst->entries[0];
 	s = spos;
 
-	अगर (ip < kernel_start) अणु
+	if (ip < kernel_start) {
 		/*
 		 * User space sample: start copying branch entries when the
 		 * branch is in user space.
 		 */
-		क्रम (s = spos; s < ssz && nr < sz; s++) अणु
-			अगर (us_start(s, kernel_start, &start)) अणु
+		for (s = spos; s < ssz && nr < sz; s++) {
+			if (us_start(s, kernel_start, &start)) {
 				*d++ = *s;
 				nr += 1;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (src->nr >= ts->br_stack_sz) अणु
-			क्रम (s = &src->entries[0]; s < spos && nr < sz; s++) अणु
-				अगर (us_start(s, kernel_start, &start)) अणु
+		if (src->nr >= ts->br_stack_sz) {
+			for (s = &src->entries[0]; s < spos && nr < sz; s++) {
+				if (us_start(s, kernel_start, &start)) {
 					*d++ = *s;
 					nr += 1;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		काष्ठा branch_entry *nb = शून्य;
+				}
+			}
+		}
+	} else {
+		struct branch_entry *nb = NULL;
 
 		/*
 		 * Kernel space sample: start copying branch entries when the ip
 		 * falls in between 2 branches (or the branch is in user space
 		 * because then the start must have been missed).
 		 */
-		क्रम (s = spos; s < ssz && nr < sz; s++) अणु
-			अगर (ks_start(s, ip, kernel_start, &start, nb)) अणु
+		for (s = spos; s < ssz && nr < sz; s++) {
+			if (ks_start(s, ip, kernel_start, &start, nb)) {
 				*d++ = *s;
 				nr += 1;
-			पूर्ण
+			}
 			nb = s;
-		पूर्ण
+		}
 
-		अगर (src->nr >= ts->br_stack_sz) अणु
-			क्रम (s = &src->entries[0]; s < spos && nr < sz; s++) अणु
-				अगर (ks_start(s, ip, kernel_start, &start, nb)) अणु
+		if (src->nr >= ts->br_stack_sz) {
+			for (s = &src->entries[0]; s < spos && nr < sz; s++) {
+				if (ks_start(s, ip, kernel_start, &start, nb)) {
 					*d++ = *s;
 					nr += 1;
-				पूर्ण
+				}
 				nb = s;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	dst->nr = nr;
-पूर्ण
+}
 
-काष्ठा call_वापस_processor *
-call_वापस_processor__new(पूर्णांक (*process)(काष्ठा call_वापस *cr, u64 *parent_db_id, व्योम *data),
-			   व्योम *data)
-अणु
-	काष्ठा call_वापस_processor *crp;
+struct call_return_processor *
+call_return_processor__new(int (*process)(struct call_return *cr, u64 *parent_db_id, void *data),
+			   void *data)
+{
+	struct call_return_processor *crp;
 
-	crp = zalloc(माप(काष्ठा call_वापस_processor));
-	अगर (!crp)
-		वापस शून्य;
+	crp = zalloc(sizeof(struct call_return_processor));
+	if (!crp)
+		return NULL;
 	crp->cpr = call_path_root__new();
-	अगर (!crp->cpr)
-		जाओ out_मुक्त;
+	if (!crp->cpr)
+		goto out_free;
 	crp->process = process;
 	crp->data = data;
-	वापस crp;
+	return crp;
 
-out_मुक्त:
-	मुक्त(crp);
-	वापस शून्य;
-पूर्ण
+out_free:
+	free(crp);
+	return NULL;
+}
 
-व्योम call_वापस_processor__मुक्त(काष्ठा call_वापस_processor *crp)
-अणु
-	अगर (crp) अणु
-		call_path_root__मुक्त(crp->cpr);
-		मुक्त(crp);
-	पूर्ण
-पूर्ण
+void call_return_processor__free(struct call_return_processor *crp)
+{
+	if (crp) {
+		call_path_root__free(crp->cpr);
+		free(crp);
+	}
+}
 
-अटल पूर्णांक thपढ़ो_stack__push_cp(काष्ठा thपढ़ो_stack *ts, u64 ret_addr,
-				 u64 बारtamp, u64 ref, काष्ठा call_path *cp,
+static int thread_stack__push_cp(struct thread_stack *ts, u64 ret_addr,
+				 u64 timestamp, u64 ref, struct call_path *cp,
 				 bool no_call, bool trace_end)
-अणु
-	काष्ठा thपढ़ो_stack_entry *tse;
-	पूर्णांक err;
+{
+	struct thread_stack_entry *tse;
+	int err;
 
-	अगर (!cp)
-		वापस -ENOMEM;
+	if (!cp)
+		return -ENOMEM;
 
-	अगर (ts->cnt == ts->sz) अणु
-		err = thपढ़ो_stack__grow(ts);
-		अगर (err)
-			वापस err;
-	पूर्ण
+	if (ts->cnt == ts->sz) {
+		err = thread_stack__grow(ts);
+		if (err)
+			return err;
+	}
 
 	tse = &ts->stack[ts->cnt++];
 	tse->ret_addr = ret_addr;
-	tse->बारtamp = बारtamp;
+	tse->timestamp = timestamp;
 	tse->ref = ref;
 	tse->branch_count = ts->branch_count;
 	tse->insn_count = ts->insn_count;
@@ -808,158 +807,158 @@ out_मुक्त:
 	tse->non_call = false;
 	tse->db_id = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक thपढ़ो_stack__pop_cp(काष्ठा thपढ़ो *thपढ़ो, काष्ठा thपढ़ो_stack *ts,
-				u64 ret_addr, u64 बारtamp, u64 ref,
-				काष्ठा symbol *sym)
-अणु
-	पूर्णांक err;
+static int thread_stack__pop_cp(struct thread *thread, struct thread_stack *ts,
+				u64 ret_addr, u64 timestamp, u64 ref,
+				struct symbol *sym)
+{
+	int err;
 
-	अगर (!ts->cnt)
-		वापस 1;
+	if (!ts->cnt)
+		return 1;
 
-	अगर (ts->cnt == 1) अणु
-		काष्ठा thपढ़ो_stack_entry *tse = &ts->stack[0];
+	if (ts->cnt == 1) {
+		struct thread_stack_entry *tse = &ts->stack[0];
 
-		अगर (tse->cp->sym == sym)
-			वापस thपढ़ो_stack__call_वापस(thपढ़ो, ts, --ts->cnt,
-							 बारtamp, ref, false);
-	पूर्ण
+		if (tse->cp->sym == sym)
+			return thread_stack__call_return(thread, ts, --ts->cnt,
+							 timestamp, ref, false);
+	}
 
-	अगर (ts->stack[ts->cnt - 1].ret_addr == ret_addr &&
-	    !ts->stack[ts->cnt - 1].non_call) अणु
-		वापस thपढ़ो_stack__call_वापस(thपढ़ो, ts, --ts->cnt,
-						 बारtamp, ref, false);
-	पूर्ण अन्यथा अणु
-		माप_प्रकार i = ts->cnt - 1;
+	if (ts->stack[ts->cnt - 1].ret_addr == ret_addr &&
+	    !ts->stack[ts->cnt - 1].non_call) {
+		return thread_stack__call_return(thread, ts, --ts->cnt,
+						 timestamp, ref, false);
+	} else {
+		size_t i = ts->cnt - 1;
 
-		जबतक (i--) अणु
-			अगर (ts->stack[i].ret_addr != ret_addr ||
+		while (i--) {
+			if (ts->stack[i].ret_addr != ret_addr ||
 			    ts->stack[i].non_call)
-				जारी;
+				continue;
 			i += 1;
-			जबतक (ts->cnt > i) अणु
-				err = thपढ़ो_stack__call_वापस(thपढ़ो, ts,
+			while (ts->cnt > i) {
+				err = thread_stack__call_return(thread, ts,
 								--ts->cnt,
-								बारtamp, ref,
+								timestamp, ref,
 								true);
-				अगर (err)
-					वापस err;
-			पूर्ण
-			वापस thपढ़ो_stack__call_वापस(thपढ़ो, ts, --ts->cnt,
-							 बारtamp, ref, false);
-		पूर्ण
-	पूर्ण
+				if (err)
+					return err;
+			}
+			return thread_stack__call_return(thread, ts, --ts->cnt,
+							 timestamp, ref, false);
+		}
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक thपढ़ो_stack__bottom(काष्ठा thपढ़ो_stack *ts,
-				काष्ठा perf_sample *sample,
-				काष्ठा addr_location *from_al,
-				काष्ठा addr_location *to_al, u64 ref)
-अणु
-	काष्ठा call_path_root *cpr = ts->crp->cpr;
-	काष्ठा call_path *cp;
-	काष्ठा symbol *sym;
+static int thread_stack__bottom(struct thread_stack *ts,
+				struct perf_sample *sample,
+				struct addr_location *from_al,
+				struct addr_location *to_al, u64 ref)
+{
+	struct call_path_root *cpr = ts->crp->cpr;
+	struct call_path *cp;
+	struct symbol *sym;
 	u64 ip;
 
-	अगर (sample->ip) अणु
+	if (sample->ip) {
 		ip = sample->ip;
 		sym = from_al->sym;
-	पूर्ण अन्यथा अगर (sample->addr) अणु
+	} else if (sample->addr) {
 		ip = sample->addr;
 		sym = to_al->sym;
-	पूर्ण अन्यथा अणु
-		वापस 0;
-	पूर्ण
+	} else {
+		return 0;
+	}
 
 	cp = call_path__findnew(cpr, &cpr->call_path, sym, ip,
 				ts->kernel_start);
 
-	वापस thपढ़ो_stack__push_cp(ts, ip, sample->समय, ref, cp,
+	return thread_stack__push_cp(ts, ip, sample->time, ref, cp,
 				     true, false);
-पूर्ण
+}
 
-अटल पूर्णांक thपढ़ो_stack__pop_ks(काष्ठा thपढ़ो *thपढ़ो, काष्ठा thपढ़ो_stack *ts,
-				काष्ठा perf_sample *sample, u64 ref)
-अणु
-	u64 पंचांग = sample->समय;
-	पूर्णांक err;
+static int thread_stack__pop_ks(struct thread *thread, struct thread_stack *ts,
+				struct perf_sample *sample, u64 ref)
+{
+	u64 tm = sample->time;
+	int err;
 
 	/* Return to userspace, so pop all kernel addresses */
-	जबतक (thपढ़ो_stack__in_kernel(ts)) अणु
-		err = thपढ़ो_stack__call_वापस(thपढ़ो, ts, --ts->cnt,
-						पंचांग, ref, true);
-		अगर (err)
-			वापस err;
-	पूर्ण
+	while (thread_stack__in_kernel(ts)) {
+		err = thread_stack__call_return(thread, ts, --ts->cnt,
+						tm, ref, true);
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक thपढ़ो_stack__no_call_वापस(काष्ठा thपढ़ो *thपढ़ो,
-					काष्ठा thपढ़ो_stack *ts,
-					काष्ठा perf_sample *sample,
-					काष्ठा addr_location *from_al,
-					काष्ठा addr_location *to_al, u64 ref)
-अणु
-	काष्ठा call_path_root *cpr = ts->crp->cpr;
-	काष्ठा call_path *root = &cpr->call_path;
-	काष्ठा symbol *fsym = from_al->sym;
-	काष्ठा symbol *tsym = to_al->sym;
-	काष्ठा call_path *cp, *parent;
+static int thread_stack__no_call_return(struct thread *thread,
+					struct thread_stack *ts,
+					struct perf_sample *sample,
+					struct addr_location *from_al,
+					struct addr_location *to_al, u64 ref)
+{
+	struct call_path_root *cpr = ts->crp->cpr;
+	struct call_path *root = &cpr->call_path;
+	struct symbol *fsym = from_al->sym;
+	struct symbol *tsym = to_al->sym;
+	struct call_path *cp, *parent;
 	u64 ks = ts->kernel_start;
 	u64 addr = sample->addr;
-	u64 पंचांग = sample->समय;
+	u64 tm = sample->time;
 	u64 ip = sample->ip;
-	पूर्णांक err;
+	int err;
 
-	अगर (ip >= ks && addr < ks) अणु
+	if (ip >= ks && addr < ks) {
 		/* Return to userspace, so pop all kernel addresses */
-		err = thपढ़ो_stack__pop_ks(thपढ़ो, ts, sample, ref);
-		अगर (err)
-			वापस err;
+		err = thread_stack__pop_ks(thread, ts, sample, ref);
+		if (err)
+			return err;
 
 		/* If the stack is empty, push the userspace address */
-		अगर (!ts->cnt) अणु
+		if (!ts->cnt) {
 			cp = call_path__findnew(cpr, root, tsym, addr, ks);
-			वापस thपढ़ो_stack__push_cp(ts, 0, पंचांग, ref, cp, true,
+			return thread_stack__push_cp(ts, 0, tm, ref, cp, true,
 						     false);
-		पूर्ण
-	पूर्ण अन्यथा अगर (thपढ़ो_stack__in_kernel(ts) && ip < ks) अणु
+		}
+	} else if (thread_stack__in_kernel(ts) && ip < ks) {
 		/* Return to userspace, so pop all kernel addresses */
-		err = thपढ़ो_stack__pop_ks(thपढ़ो, ts, sample, ref);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		err = thread_stack__pop_ks(thread, ts, sample, ref);
+		if (err)
+			return err;
+	}
 
-	अगर (ts->cnt)
+	if (ts->cnt)
 		parent = ts->stack[ts->cnt - 1].cp;
-	अन्यथा
+	else
 		parent = root;
 
-	अगर (parent->sym == from_al->sym) अणु
+	if (parent->sym == from_al->sym) {
 		/*
 		 * At the bottom of the stack, assume the missing 'call' was
-		 * beक्रमe the trace started. So, pop the current symbol and push
+		 * before the trace started. So, pop the current symbol and push
 		 * the 'to' symbol.
 		 */
-		अगर (ts->cnt == 1) अणु
-			err = thपढ़ो_stack__call_वापस(thपढ़ो, ts, --ts->cnt,
-							पंचांग, ref, false);
-			अगर (err)
-				वापस err;
-		पूर्ण
+		if (ts->cnt == 1) {
+			err = thread_stack__call_return(thread, ts, --ts->cnt,
+							tm, ref, false);
+			if (err)
+				return err;
+		}
 
-		अगर (!ts->cnt) अणु
+		if (!ts->cnt) {
 			cp = call_path__findnew(cpr, root, tsym, addr, ks);
 
-			वापस thपढ़ो_stack__push_cp(ts, addr, पंचांग, ref, cp,
+			return thread_stack__push_cp(ts, addr, tm, ref, cp,
 						     true, false);
-		पूर्ण
+		}
 
 		/*
 		 * Otherwise assume the 'return' is being used as a jump (e.g.
@@ -967,12 +966,12 @@ out_मुक्त:
 		 */
 		cp = call_path__findnew(cpr, parent, tsym, addr, ks);
 
-		err = thपढ़ो_stack__push_cp(ts, 0, पंचांग, ref, cp, true, false);
-		अगर (!err)
+		err = thread_stack__push_cp(ts, 0, tm, ref, cp, true, false);
+		if (!err)
 			ts->stack[ts->cnt - 1].non_call = true;
 
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/*
 	 * Assume 'parent' has not yet returned, so push 'to', and then push and
@@ -981,261 +980,261 @@ out_मुक्त:
 
 	cp = call_path__findnew(cpr, parent, tsym, addr, ks);
 
-	err = thपढ़ो_stack__push_cp(ts, addr, पंचांग, ref, cp, true, false);
-	अगर (err)
-		वापस err;
+	err = thread_stack__push_cp(ts, addr, tm, ref, cp, true, false);
+	if (err)
+		return err;
 
 	cp = call_path__findnew(cpr, cp, fsym, ip, ks);
 
-	err = thपढ़ो_stack__push_cp(ts, ip, पंचांग, ref, cp, true, false);
-	अगर (err)
-		वापस err;
+	err = thread_stack__push_cp(ts, ip, tm, ref, cp, true, false);
+	if (err)
+		return err;
 
-	वापस thपढ़ो_stack__call_वापस(thपढ़ो, ts, --ts->cnt, पंचांग, ref, false);
-पूर्ण
+	return thread_stack__call_return(thread, ts, --ts->cnt, tm, ref, false);
+}
 
-अटल पूर्णांक thपढ़ो_stack__trace_begin(काष्ठा thपढ़ो *thपढ़ो,
-				     काष्ठा thपढ़ो_stack *ts, u64 बारtamp,
+static int thread_stack__trace_begin(struct thread *thread,
+				     struct thread_stack *ts, u64 timestamp,
 				     u64 ref)
-अणु
-	काष्ठा thपढ़ो_stack_entry *tse;
-	पूर्णांक err;
+{
+	struct thread_stack_entry *tse;
+	int err;
 
-	अगर (!ts->cnt)
-		वापस 0;
+	if (!ts->cnt)
+		return 0;
 
 	/* Pop trace end */
 	tse = &ts->stack[ts->cnt - 1];
-	अगर (tse->trace_end) अणु
-		err = thपढ़ो_stack__call_वापस(thपढ़ो, ts, --ts->cnt,
-						बारtamp, ref, false);
-		अगर (err)
-			वापस err;
-	पूर्ण
+	if (tse->trace_end) {
+		err = thread_stack__call_return(thread, ts, --ts->cnt,
+						timestamp, ref, false);
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक thपढ़ो_stack__trace_end(काष्ठा thपढ़ो_stack *ts,
-				   काष्ठा perf_sample *sample, u64 ref)
-अणु
-	काष्ठा call_path_root *cpr = ts->crp->cpr;
-	काष्ठा call_path *cp;
+static int thread_stack__trace_end(struct thread_stack *ts,
+				   struct perf_sample *sample, u64 ref)
+{
+	struct call_path_root *cpr = ts->crp->cpr;
+	struct call_path *cp;
 	u64 ret_addr;
 
-	/* No poपूर्णांक having 'trace end' on the bottom of the stack */
-	अगर (!ts->cnt || (ts->cnt == 1 && ts->stack[0].ref == ref))
-		वापस 0;
+	/* No point having 'trace end' on the bottom of the stack */
+	if (!ts->cnt || (ts->cnt == 1 && ts->stack[0].ref == ref))
+		return 0;
 
-	cp = call_path__findnew(cpr, ts->stack[ts->cnt - 1].cp, शून्य, 0,
+	cp = call_path__findnew(cpr, ts->stack[ts->cnt - 1].cp, NULL, 0,
 				ts->kernel_start);
 
 	ret_addr = sample->ip + sample->insn_len;
 
-	वापस thपढ़ो_stack__push_cp(ts, ret_addr, sample->समय, ref, cp,
+	return thread_stack__push_cp(ts, ret_addr, sample->time, ref, cp,
 				     false, true);
-पूर्ण
+}
 
-अटल bool is_x86_retpoline(स्थिर अक्षर *name)
-अणु
-	स्थिर अक्षर *p = म_माला(name, "__x86_indirect_thunk_");
+static bool is_x86_retpoline(const char *name)
+{
+	const char *p = strstr(name, "__x86_indirect_thunk_");
 
-	वापस p == name || !म_भेद(name, "__indirect_thunk_start");
-पूर्ण
+	return p == name || !strcmp(name, "__indirect_thunk_start");
+}
 
 /*
- * x86 retpoline functions pollute the call graph. This function हटाओs them.
- * This करोes not handle function वापस thunks, nor is there any improvement
- * क्रम the handling of अंतरभूत thunks or बाह्य thunks.
+ * x86 retpoline functions pollute the call graph. This function removes them.
+ * This does not handle function return thunks, nor is there any improvement
+ * for the handling of inline thunks or extern thunks.
  */
-अटल पूर्णांक thपढ़ो_stack__x86_retpoline(काष्ठा thपढ़ो_stack *ts,
-				       काष्ठा perf_sample *sample,
-				       काष्ठा addr_location *to_al)
-अणु
-	काष्ठा thपढ़ो_stack_entry *tse = &ts->stack[ts->cnt - 1];
-	काष्ठा call_path_root *cpr = ts->crp->cpr;
-	काष्ठा symbol *sym = tse->cp->sym;
-	काष्ठा symbol *tsym = to_al->sym;
-	काष्ठा call_path *cp;
+static int thread_stack__x86_retpoline(struct thread_stack *ts,
+				       struct perf_sample *sample,
+				       struct addr_location *to_al)
+{
+	struct thread_stack_entry *tse = &ts->stack[ts->cnt - 1];
+	struct call_path_root *cpr = ts->crp->cpr;
+	struct symbol *sym = tse->cp->sym;
+	struct symbol *tsym = to_al->sym;
+	struct call_path *cp;
 
-	अगर (sym && is_x86_retpoline(sym->name)) अणु
+	if (sym && is_x86_retpoline(sym->name)) {
 		/*
 		 * This is a x86 retpoline fn. It pollutes the call graph by
-		 * showing up everywhere there is an indirect branch, but करोes
-		 * not itself mean anything. Here the top-of-stack is हटाओd,
-		 * by decrementing the stack count, and then further करोwn, the
+		 * showing up everywhere there is an indirect branch, but does
+		 * not itself mean anything. Here the top-of-stack is removed,
+		 * by decrementing the stack count, and then further down, the
 		 * resulting top-of-stack is replaced with the actual target.
-		 * The result is that the retpoline functions will no दीर्घer
+		 * The result is that the retpoline functions will no longer
 		 * appear in the call graph. Note this only affects the call
 		 * graph, since all the original branches are left unchanged.
 		 */
 		ts->cnt -= 1;
 		sym = ts->stack[ts->cnt - 2].cp->sym;
-		अगर (sym && sym == tsym && to_al->addr != tsym->start) अणु
+		if (sym && sym == tsym && to_al->addr != tsym->start) {
 			/*
 			 * Target is back to the middle of the symbol we came
-			 * from so assume it is an indirect jmp and क्रमget it
+			 * from so assume it is an indirect jmp and forget it
 			 * altogether.
 			 */
 			ts->cnt -= 1;
-			वापस 0;
-		पूर्ण
-	पूर्ण अन्यथा अगर (sym && sym == tsym) अणु
+			return 0;
+		}
+	} else if (sym && sym == tsym) {
 		/*
 		 * Target is back to the symbol we came from so assume it is an
-		 * indirect jmp and क्रमget it altogether.
+		 * indirect jmp and forget it altogether.
 		 */
 		ts->cnt -= 1;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	cp = call_path__findnew(cpr, ts->stack[ts->cnt - 2].cp, tsym,
 				sample->addr, ts->kernel_start);
-	अगर (!cp)
-		वापस -ENOMEM;
+	if (!cp)
+		return -ENOMEM;
 
 	/* Replace the top-of-stack with the actual target */
 	ts->stack[ts->cnt - 1].cp = cp;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक thपढ़ो_stack__process(काष्ठा thपढ़ो *thपढ़ो, काष्ठा comm *comm,
-			  काष्ठा perf_sample *sample,
-			  काष्ठा addr_location *from_al,
-			  काष्ठा addr_location *to_al, u64 ref,
-			  काष्ठा call_वापस_processor *crp)
-अणु
-	काष्ठा thपढ़ो_stack *ts = thपढ़ो__stack(thपढ़ो, sample->cpu);
-	क्रमागत retpoline_state_t rstate;
-	पूर्णांक err = 0;
+int thread_stack__process(struct thread *thread, struct comm *comm,
+			  struct perf_sample *sample,
+			  struct addr_location *from_al,
+			  struct addr_location *to_al, u64 ref,
+			  struct call_return_processor *crp)
+{
+	struct thread_stack *ts = thread__stack(thread, sample->cpu);
+	enum retpoline_state_t rstate;
+	int err = 0;
 
-	अगर (ts && !ts->crp) अणु
-		/* Supersede thपढ़ो_stack__event() */
-		thपढ़ो_stack__reset(thपढ़ो, ts);
-		ts = शून्य;
-	पूर्ण
+	if (ts && !ts->crp) {
+		/* Supersede thread_stack__event() */
+		thread_stack__reset(thread, ts);
+		ts = NULL;
+	}
 
-	अगर (!ts) अणु
-		ts = thपढ़ो_stack__new(thपढ़ो, sample->cpu, crp, true, 0);
-		अगर (!ts)
-			वापस -ENOMEM;
+	if (!ts) {
+		ts = thread_stack__new(thread, sample->cpu, crp, true, 0);
+		if (!ts)
+			return -ENOMEM;
 		ts->comm = comm;
-	पूर्ण
+	}
 
 	rstate = ts->rstate;
-	अगर (rstate == X86_RETPOLINE_DETECTED)
+	if (rstate == X86_RETPOLINE_DETECTED)
 		ts->rstate = X86_RETPOLINE_POSSIBLE;
 
 	/* Flush stack on exec */
-	अगर (ts->comm != comm && thपढ़ो->pid_ == thपढ़ो->tid) अणु
-		err = __thपढ़ो_stack__flush(thपढ़ो, ts);
-		अगर (err)
-			वापस err;
+	if (ts->comm != comm && thread->pid_ == thread->tid) {
+		err = __thread_stack__flush(thread, ts);
+		if (err)
+			return err;
 		ts->comm = comm;
-	पूर्ण
+	}
 
 	/* If the stack is empty, put the current symbol on the stack */
-	अगर (!ts->cnt) अणु
-		err = thपढ़ो_stack__bottom(ts, sample, from_al, to_al, ref);
-		अगर (err)
-			वापस err;
-	पूर्ण
+	if (!ts->cnt) {
+		err = thread_stack__bottom(ts, sample, from_al, to_al, ref);
+		if (err)
+			return err;
+	}
 
 	ts->branch_count += 1;
 	ts->insn_count += sample->insn_cnt;
 	ts->cyc_count += sample->cyc_cnt;
-	ts->last_समय = sample->समय;
+	ts->last_time = sample->time;
 
-	अगर (sample->flags & PERF_IP_FLAG_CALL) अणु
+	if (sample->flags & PERF_IP_FLAG_CALL) {
 		bool trace_end = sample->flags & PERF_IP_FLAG_TRACE_END;
-		काष्ठा call_path_root *cpr = ts->crp->cpr;
-		काष्ठा call_path *cp;
+		struct call_path_root *cpr = ts->crp->cpr;
+		struct call_path *cp;
 		u64 ret_addr;
 
-		अगर (!sample->ip || !sample->addr)
-			वापस 0;
+		if (!sample->ip || !sample->addr)
+			return 0;
 
 		ret_addr = sample->ip + sample->insn_len;
-		अगर (ret_addr == sample->addr)
-			वापस 0; /* Zero-length calls are excluded */
+		if (ret_addr == sample->addr)
+			return 0; /* Zero-length calls are excluded */
 
 		cp = call_path__findnew(cpr, ts->stack[ts->cnt - 1].cp,
 					to_al->sym, sample->addr,
 					ts->kernel_start);
-		err = thपढ़ो_stack__push_cp(ts, ret_addr, sample->समय, ref,
+		err = thread_stack__push_cp(ts, ret_addr, sample->time, ref,
 					    cp, false, trace_end);
 
 		/*
 		 * A call to the same symbol but not the start of the symbol,
 		 * may be the start of a x86 retpoline.
 		 */
-		अगर (!err && rstate == X86_RETPOLINE_POSSIBLE && to_al->sym &&
+		if (!err && rstate == X86_RETPOLINE_POSSIBLE && to_al->sym &&
 		    from_al->sym == to_al->sym &&
 		    to_al->addr != to_al->sym->start)
 			ts->rstate = X86_RETPOLINE_DETECTED;
 
-	पूर्ण अन्यथा अगर (sample->flags & PERF_IP_FLAG_RETURN) अणु
-		अगर (!sample->addr) अणु
-			u32 वापस_from_kernel = PERF_IP_FLAG_SYSCALLRET |
+	} else if (sample->flags & PERF_IP_FLAG_RETURN) {
+		if (!sample->addr) {
+			u32 return_from_kernel = PERF_IP_FLAG_SYSCALLRET |
 						 PERF_IP_FLAG_INTERRUPT;
 
-			अगर (!(sample->flags & वापस_from_kernel))
-				वापस 0;
+			if (!(sample->flags & return_from_kernel))
+				return 0;
 
 			/* Pop kernel stack */
-			वापस thपढ़ो_stack__pop_ks(thपढ़ो, ts, sample, ref);
-		पूर्ण
+			return thread_stack__pop_ks(thread, ts, sample, ref);
+		}
 
-		अगर (!sample->ip)
-			वापस 0;
+		if (!sample->ip)
+			return 0;
 
 		/* x86 retpoline 'return' doesn't match the stack */
-		अगर (rstate == X86_RETPOLINE_DETECTED && ts->cnt > 2 &&
+		if (rstate == X86_RETPOLINE_DETECTED && ts->cnt > 2 &&
 		    ts->stack[ts->cnt - 1].ret_addr != sample->addr)
-			वापस thपढ़ो_stack__x86_retpoline(ts, sample, to_al);
+			return thread_stack__x86_retpoline(ts, sample, to_al);
 
-		err = thपढ़ो_stack__pop_cp(thपढ़ो, ts, sample->addr,
-					   sample->समय, ref, from_al->sym);
-		अगर (err) अणु
-			अगर (err < 0)
-				वापस err;
-			err = thपढ़ो_stack__no_call_वापस(thपढ़ो, ts, sample,
+		err = thread_stack__pop_cp(thread, ts, sample->addr,
+					   sample->time, ref, from_al->sym);
+		if (err) {
+			if (err < 0)
+				return err;
+			err = thread_stack__no_call_return(thread, ts, sample,
 							   from_al, to_al, ref);
-		पूर्ण
-	पूर्ण अन्यथा अगर (sample->flags & PERF_IP_FLAG_TRACE_BEGIN) अणु
-		err = thपढ़ो_stack__trace_begin(thपढ़ो, ts, sample->समय, ref);
-	पूर्ण अन्यथा अगर (sample->flags & PERF_IP_FLAG_TRACE_END) अणु
-		err = thपढ़ो_stack__trace_end(ts, sample, ref);
-	पूर्ण अन्यथा अगर (sample->flags & PERF_IP_FLAG_BRANCH &&
+		}
+	} else if (sample->flags & PERF_IP_FLAG_TRACE_BEGIN) {
+		err = thread_stack__trace_begin(thread, ts, sample->time, ref);
+	} else if (sample->flags & PERF_IP_FLAG_TRACE_END) {
+		err = thread_stack__trace_end(ts, sample, ref);
+	} else if (sample->flags & PERF_IP_FLAG_BRANCH &&
 		   from_al->sym != to_al->sym && to_al->sym &&
-		   to_al->addr == to_al->sym->start) अणु
-		काष्ठा call_path_root *cpr = ts->crp->cpr;
-		काष्ठा call_path *cp;
+		   to_al->addr == to_al->sym->start) {
+		struct call_path_root *cpr = ts->crp->cpr;
+		struct call_path *cp;
 
 		/*
 		 * The compiler might optimize a call/ret combination by making
 		 * it a jmp. Make that visible by recording on the stack a
-		 * branch to the start of a dअगरferent symbol. Note, that means
+		 * branch to the start of a different symbol. Note, that means
 		 * when a ret pops the stack, all jmps must be popped off first.
 		 */
 		cp = call_path__findnew(cpr, ts->stack[ts->cnt - 1].cp,
 					to_al->sym, sample->addr,
 					ts->kernel_start);
-		err = thपढ़ो_stack__push_cp(ts, 0, sample->समय, ref, cp, false,
+		err = thread_stack__push_cp(ts, 0, sample->time, ref, cp, false,
 					    false);
-		अगर (!err)
+		if (!err)
 			ts->stack[ts->cnt - 1].non_call = true;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-माप_प्रकार thपढ़ो_stack__depth(काष्ठा thपढ़ो *thपढ़ो, पूर्णांक cpu)
-अणु
-	काष्ठा thपढ़ो_stack *ts = thपढ़ो__stack(thपढ़ो, cpu);
+size_t thread_stack__depth(struct thread *thread, int cpu)
+{
+	struct thread_stack *ts = thread__stack(thread, cpu);
 
-	अगर (!ts)
-		वापस 0;
-	वापस ts->cnt;
-पूर्ण
+	if (!ts)
+		return 0;
+	return ts->cnt;
+}

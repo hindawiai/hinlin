@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  *  linux/net/sunrpc/gss_krb5_seal.c
  *
@@ -14,19 +13,19 @@
 /*
  * Copyright 1993 by OpenVision Technologies, Inc.
  *
- * Permission to use, copy, modअगरy, distribute, and sell this software
- * and its करोcumentation क्रम any purpose is hereby granted without fee,
+ * Permission to use, copy, modify, distribute, and sell this software
+ * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appears in all copies and
  * that both that copyright notice and this permission notice appear in
- * supporting करोcumentation, and that the name of OpenVision not be used
- * in advertising or खुलाity pertaining to distribution of the software
- * without specअगरic, written prior permission. OpenVision makes no
- * representations about the suitability of this software क्रम any
+ * supporting documentation, and that the name of OpenVision not be used
+ * in advertising or publicity pertaining to distribution of the software
+ * without specific, written prior permission. OpenVision makes no
+ * representations about the suitability of this software for any
  * purpose.  It is provided "as is" without express or implied warranty.
  *
  * OPENVISION DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
  * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
- * EVENT SHALL OPENVISION BE LIABLE FOR ANY SPECIAL, INसूचीECT OR
+ * EVENT SHALL OPENVISION BE LIABLE FOR ANY SPECIAL, INDIRECT OR
  * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF
  * USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
  * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
@@ -39,19 +38,19 @@
  * All rights reserved.
  *
  * Export of this software from the United States of America may require
- * a specअगरic license from the United States Government.  It is the
+ * a specific license from the United States Government.  It is the
  * responsibility of any person or organization contemplating export to
- * obtain such a license beक्रमe exporting.
+ * obtain such a license before exporting.
  *
- * WITHIN THAT CONSTRAINT, permission to use, copy, modअगरy, and
- * distribute this software and its करोcumentation क्रम any purpose and
+ * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+ * distribute this software and its documentation for any purpose and
  * without fee is hereby granted, provided that the above copyright
  * notice appear in all copies and that both that copyright notice and
- * this permission notice appear in supporting करोcumentation, and that
- * the name of FundsXpress. not be used in advertising or खुलाity pertaining
- * to distribution of the software without specअगरic, written prior
+ * this permission notice appear in supporting documentation, and that
+ * the name of FundsXpress. not be used in advertising or publicity pertaining
+ * to distribution of the software without specific, written prior
  * permission.  FundsXpress makes no representations about the suitability of
- * this software क्रम any purpose.  It is provided "as is" without express
+ * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
@@ -59,53 +58,53 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/sunrpc/gss_krb5.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/crypto.h>
-#समावेश <linux/atomic.h>
+#include <linux/types.h>
+#include <linux/jiffies.h>
+#include <linux/sunrpc/gss_krb5.h>
+#include <linux/random.h>
+#include <linux/crypto.h>
+#include <linux/atomic.h>
 
-#अगर IS_ENABLED(CONFIG_SUNRPC_DEBUG)
+#if IS_ENABLED(CONFIG_SUNRPC_DEBUG)
 # define RPCDBG_FACILITY        RPCDBG_AUTH
-#पूर्ण_अगर
+#endif
 
-अटल व्योम *
-setup_token(काष्ठा krb5_ctx *ctx, काष्ठा xdr_netobj *token)
-अणु
+static void *
+setup_token(struct krb5_ctx *ctx, struct xdr_netobj *token)
+{
 	u16 *ptr;
-	व्योम *krb5_hdr;
-	पूर्णांक body_size = GSS_KRB5_TOK_HDR_LEN + ctx->gk5e->cksumlength;
+	void *krb5_hdr;
+	int body_size = GSS_KRB5_TOK_HDR_LEN + ctx->gk5e->cksumlength;
 
 	token->len = g_token_size(&ctx->mech_used, body_size);
 
 	ptr = (u16 *)token->data;
-	g_make_token_header(&ctx->mech_used, body_size, (अचिन्हित अक्षर **)&ptr);
+	g_make_token_header(&ctx->mech_used, body_size, (unsigned char **)&ptr);
 
 	/* ptr now at start of header described in rfc 1964, section 1.2.1: */
 	krb5_hdr = ptr;
 	*ptr++ = KG_TOK_MIC_MSG;
 	/*
-	 * संकेतg is stored as अगर it were converted from LE to host endian, even
+	 * signalg is stored as if it were converted from LE to host endian, even
 	 * though it's an opaque pair of bytes according to the RFC.
 	 */
-	*ptr++ = (__क्रमce u16)cpu_to_le16(ctx->gk5e->संकेतg);
+	*ptr++ = (__force u16)cpu_to_le16(ctx->gk5e->signalg);
 	*ptr++ = SEAL_ALG_NONE;
 	*ptr = 0xffff;
 
-	वापस krb5_hdr;
-पूर्ण
+	return krb5_hdr;
+}
 
-अटल व्योम *
-setup_token_v2(काष्ठा krb5_ctx *ctx, काष्ठा xdr_netobj *token)
-अणु
+static void *
+setup_token_v2(struct krb5_ctx *ctx, struct xdr_netobj *token)
+{
 	u16 *ptr;
-	व्योम *krb5_hdr;
+	void *krb5_hdr;
 	u8 *p, flags = 0x00;
 
-	अगर ((ctx->flags & KRB5_CTX_FLAG_INITIATOR) == 0)
+	if ((ctx->flags & KRB5_CTX_FLAG_INITIATOR) == 0)
 		flags |= 0x01;
-	अगर (ctx->flags & KRB5_CTX_FLAG_ACCEPTOR_SUBKEY)
+	if (ctx->flags & KRB5_CTX_FLAG_ACCEPTOR_SUBKEY)
 		flags |= 0x04;
 
 	/* Per rfc 4121, sec 4.2.6.1, there is no header,
@@ -121,103 +120,103 @@ setup_token_v2(काष्ठा krb5_ctx *ctx, काष्ठा xdr_netobj *
 	*ptr = 0xffff;
 
 	token->len = GSS_KRB5_TOK_HDR_LEN + ctx->gk5e->cksumlength;
-	वापस krb5_hdr;
-पूर्ण
+	return krb5_hdr;
+}
 
-अटल u32
-gss_get_mic_v1(काष्ठा krb5_ctx *ctx, काष्ठा xdr_buf *text,
-		काष्ठा xdr_netobj *token)
-अणु
-	अक्षर			cksumdata[GSS_KRB5_MAX_CKSUM_LEN];
-	काष्ठा xdr_netobj	md5cksum = अणु.len = माप(cksumdata),
-					    .data = cksumdataपूर्ण;
-	व्योम			*ptr;
-	समय64_t		now;
+static u32
+gss_get_mic_v1(struct krb5_ctx *ctx, struct xdr_buf *text,
+		struct xdr_netobj *token)
+{
+	char			cksumdata[GSS_KRB5_MAX_CKSUM_LEN];
+	struct xdr_netobj	md5cksum = {.len = sizeof(cksumdata),
+					    .data = cksumdata};
+	void			*ptr;
+	time64_t		now;
 	u32			seq_send;
 	u8			*cksumkey;
 
-	dprपूर्णांकk("RPC:       %s\n", __func__);
-	BUG_ON(ctx == शून्य);
+	dprintk("RPC:       %s\n", __func__);
+	BUG_ON(ctx == NULL);
 
-	now = kसमय_get_real_seconds();
+	now = ktime_get_real_seconds();
 
 	ptr = setup_token(ctx, token);
 
-	अगर (ctx->gk5e->keyed_cksum)
+	if (ctx->gk5e->keyed_cksum)
 		cksumkey = ctx->cksum;
-	अन्यथा
-		cksumkey = शून्य;
+	else
+		cksumkey = NULL;
 
-	अगर (make_checksum(ctx, ptr, 8, text, 0, cksumkey,
+	if (make_checksum(ctx, ptr, 8, text, 0, cksumkey,
 			  KG_USAGE_SIGN, &md5cksum))
-		वापस GSS_S_FAILURE;
+		return GSS_S_FAILURE;
 
-	स_नकल(ptr + GSS_KRB5_TOK_HDR_LEN, md5cksum.data, md5cksum.len);
+	memcpy(ptr + GSS_KRB5_TOK_HDR_LEN, md5cksum.data, md5cksum.len);
 
 	seq_send = atomic_fetch_inc(&ctx->seq_send);
 
-	अगर (krb5_make_seq_num(ctx, ctx->seq, ctx->initiate ? 0 : 0xff,
+	if (krb5_make_seq_num(ctx, ctx->seq, ctx->initiate ? 0 : 0xff,
 			      seq_send, ptr + GSS_KRB5_TOK_HDR_LEN, ptr + 8))
-		वापस GSS_S_FAILURE;
+		return GSS_S_FAILURE;
 
-	वापस (ctx->endसमय < now) ? GSS_S_CONTEXT_EXPIRED : GSS_S_COMPLETE;
-पूर्ण
+	return (ctx->endtime < now) ? GSS_S_CONTEXT_EXPIRED : GSS_S_COMPLETE;
+}
 
-अटल u32
-gss_get_mic_v2(काष्ठा krb5_ctx *ctx, काष्ठा xdr_buf *text,
-		काष्ठा xdr_netobj *token)
-अणु
-	अक्षर cksumdata[GSS_KRB5_MAX_CKSUM_LEN];
-	काष्ठा xdr_netobj cksumobj = अणु .len = माप(cksumdata),
-				       .data = cksumdataपूर्ण;
-	व्योम *krb5_hdr;
-	समय64_t now;
+static u32
+gss_get_mic_v2(struct krb5_ctx *ctx, struct xdr_buf *text,
+		struct xdr_netobj *token)
+{
+	char cksumdata[GSS_KRB5_MAX_CKSUM_LEN];
+	struct xdr_netobj cksumobj = { .len = sizeof(cksumdata),
+				       .data = cksumdata};
+	void *krb5_hdr;
+	time64_t now;
 	u8 *cksumkey;
-	अचिन्हित पूर्णांक cksum_usage;
+	unsigned int cksum_usage;
 	__be64 seq_send_be64;
 
-	dprपूर्णांकk("RPC:       %s\n", __func__);
+	dprintk("RPC:       %s\n", __func__);
 
 	krb5_hdr = setup_token_v2(ctx, token);
 
 	/* Set up the sequence number. Now 64-bits in clear
 	 * text and w/o direction indicator */
 	seq_send_be64 = cpu_to_be64(atomic64_fetch_inc(&ctx->seq_send64));
-	स_नकल(krb5_hdr + 8, (अक्षर *) &seq_send_be64, 8);
+	memcpy(krb5_hdr + 8, (char *) &seq_send_be64, 8);
 
-	अगर (ctx->initiate) अणु
+	if (ctx->initiate) {
 		cksumkey = ctx->initiator_sign;
 		cksum_usage = KG_USAGE_INITIATOR_SIGN;
-	पूर्ण अन्यथा अणु
+	} else {
 		cksumkey = ctx->acceptor_sign;
 		cksum_usage = KG_USAGE_ACCEPTOR_SIGN;
-	पूर्ण
+	}
 
-	अगर (make_checksum_v2(ctx, krb5_hdr, GSS_KRB5_TOK_HDR_LEN,
+	if (make_checksum_v2(ctx, krb5_hdr, GSS_KRB5_TOK_HDR_LEN,
 			     text, 0, cksumkey, cksum_usage, &cksumobj))
-		वापस GSS_S_FAILURE;
+		return GSS_S_FAILURE;
 
-	स_नकल(krb5_hdr + GSS_KRB5_TOK_HDR_LEN, cksumobj.data, cksumobj.len);
+	memcpy(krb5_hdr + GSS_KRB5_TOK_HDR_LEN, cksumobj.data, cksumobj.len);
 
-	now = kसमय_get_real_seconds();
+	now = ktime_get_real_seconds();
 
-	वापस (ctx->endसमय < now) ? GSS_S_CONTEXT_EXPIRED : GSS_S_COMPLETE;
-पूर्ण
+	return (ctx->endtime < now) ? GSS_S_CONTEXT_EXPIRED : GSS_S_COMPLETE;
+}
 
 u32
-gss_get_mic_kerberos(काष्ठा gss_ctx *gss_ctx, काष्ठा xdr_buf *text,
-		     काष्ठा xdr_netobj *token)
-अणु
-	काष्ठा krb5_ctx		*ctx = gss_ctx->पूर्णांकernal_ctx_id;
+gss_get_mic_kerberos(struct gss_ctx *gss_ctx, struct xdr_buf *text,
+		     struct xdr_netobj *token)
+{
+	struct krb5_ctx		*ctx = gss_ctx->internal_ctx_id;
 
-	चयन (ctx->enctype) अणु
-	शेष:
+	switch (ctx->enctype) {
+	default:
 		BUG();
-	हाल ENCTYPE_DES_CBC_RAW:
-	हाल ENCTYPE_DES3_CBC_RAW:
-		वापस gss_get_mic_v1(ctx, text, token);
-	हाल ENCTYPE_AES128_CTS_HMAC_SHA1_96:
-	हाल ENCTYPE_AES256_CTS_HMAC_SHA1_96:
-		वापस gss_get_mic_v2(ctx, text, token);
-	पूर्ण
-पूर्ण
+	case ENCTYPE_DES_CBC_RAW:
+	case ENCTYPE_DES3_CBC_RAW:
+		return gss_get_mic_v1(ctx, text, token);
+	case ENCTYPE_AES128_CTS_HMAC_SHA1_96:
+	case ENCTYPE_AES256_CTS_HMAC_SHA1_96:
+		return gss_get_mic_v2(ctx, text, token);
+	}
+}

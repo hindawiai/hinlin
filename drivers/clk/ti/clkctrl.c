@@ -1,313 +1,312 @@
-<शैली गुरु>
 /*
- * OMAP clkctrl घड़ी support
+ * OMAP clkctrl clock support
  *
  * Copyright (C) 2017 Texas Instruments, Inc.
  *
  * Tero Kristo <t-kristo@ti.com>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/clk/ti.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/समयkeeping.h>
-#समावेश "clock.h"
+#include <linux/clk-provider.h>
+#include <linux/slab.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/clk/ti.h>
+#include <linux/delay.h>
+#include <linux/timekeeping.h>
+#include "clock.h"
 
-#घोषणा NO_IDLEST			0
+#define NO_IDLEST			0
 
-#घोषणा OMAP4_MODULEMODE_MASK		0x3
+#define OMAP4_MODULEMODE_MASK		0x3
 
-#घोषणा MODULEMODE_HWCTRL		0x1
-#घोषणा MODULEMODE_SWCTRL		0x2
+#define MODULEMODE_HWCTRL		0x1
+#define MODULEMODE_SWCTRL		0x2
 
-#घोषणा OMAP4_IDLEST_MASK		(0x3 << 16)
-#घोषणा OMAP4_IDLEST_SHIFT		16
+#define OMAP4_IDLEST_MASK		(0x3 << 16)
+#define OMAP4_IDLEST_SHIFT		16
 
-#घोषणा OMAP4_STBYST_MASK		BIT(18)
-#घोषणा OMAP4_STBYST_SHIFT		18
+#define OMAP4_STBYST_MASK		BIT(18)
+#define OMAP4_STBYST_SHIFT		18
 
-#घोषणा CLKCTRL_IDLEST_FUNCTIONAL	0x0
-#घोषणा CLKCTRL_IDLEST_INTERFACE_IDLE	0x2
-#घोषणा CLKCTRL_IDLEST_DISABLED		0x3
+#define CLKCTRL_IDLEST_FUNCTIONAL	0x0
+#define CLKCTRL_IDLEST_INTERFACE_IDLE	0x2
+#define CLKCTRL_IDLEST_DISABLED		0x3
 
-/* These समयouts are in us */
-#घोषणा OMAP4_MAX_MODULE_READY_TIME	2000
-#घोषणा OMAP4_MAX_MODULE_DISABLE_TIME	5000
+/* These timeouts are in us */
+#define OMAP4_MAX_MODULE_READY_TIME	2000
+#define OMAP4_MAX_MODULE_DISABLE_TIME	5000
 
-अटल bool _early_समयout = true;
+static bool _early_timeout = true;
 
-काष्ठा omap_clkctrl_provider अणु
-	व्योम __iomem *base;
-	काष्ठा list_head घड़ीs;
-	अक्षर *clkdm_name;
-पूर्ण;
+struct omap_clkctrl_provider {
+	void __iomem *base;
+	struct list_head clocks;
+	char *clkdm_name;
+};
 
-काष्ठा omap_clkctrl_clk अणु
-	काष्ठा clk_hw *clk;
+struct omap_clkctrl_clk {
+	struct clk_hw *clk;
 	u16 reg_offset;
-	पूर्णांक bit_offset;
-	काष्ठा list_head node;
-पूर्ण;
+	int bit_offset;
+	struct list_head node;
+};
 
-जोड़ omap4_समयout अणु
+union omap4_timeout {
 	u32 cycles;
-	kसमय_प्रकार start;
-पूर्ण;
+	ktime_t start;
+};
 
-अटल स्थिर काष्ठा omap_clkctrl_data शेष_clkctrl_data[] __initस्थिर = अणु
-	अणु 0 पूर्ण,
-पूर्ण;
+static const struct omap_clkctrl_data default_clkctrl_data[] __initconst = {
+	{ 0 },
+};
 
-अटल u32 _omap4_idlest(u32 val)
-अणु
+static u32 _omap4_idlest(u32 val)
+{
 	val &= OMAP4_IDLEST_MASK;
 	val >>= OMAP4_IDLEST_SHIFT;
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल bool _omap4_is_idle(u32 val)
-अणु
+static bool _omap4_is_idle(u32 val)
+{
 	val = _omap4_idlest(val);
 
-	वापस val == CLKCTRL_IDLEST_DISABLED;
-पूर्ण
+	return val == CLKCTRL_IDLEST_DISABLED;
+}
 
-अटल bool _omap4_is_पढ़ोy(u32 val)
-अणु
+static bool _omap4_is_ready(u32 val)
+{
 	val = _omap4_idlest(val);
 
-	वापस val == CLKCTRL_IDLEST_FUNCTIONAL ||
+	return val == CLKCTRL_IDLEST_FUNCTIONAL ||
 	       val == CLKCTRL_IDLEST_INTERFACE_IDLE;
-पूर्ण
+}
 
-अटल bool _omap4_is_समयout(जोड़ omap4_समयout *समय, u32 समयout)
-अणु
+static bool _omap4_is_timeout(union omap4_timeout *time, u32 timeout)
+{
 	/*
-	 * There are two special हालs where kसमय_प्रकारo_ns() can't be
-	 * used to track the समयouts. First one is during early boot
-	 * when the समयrs haven't been initialized yet. The second
-	 * one is during suspend-resume cycle जबतक समयkeeping is
-	 * being suspended / resumed. Clocksource क्रम the प्रणाली
-	 * can be from a समयr that requires pm_runसमय access, which
-	 * will eventually bring us here with समयkeeping_suspended,
+	 * There are two special cases where ktime_to_ns() can't be
+	 * used to track the timeouts. First one is during early boot
+	 * when the timers haven't been initialized yet. The second
+	 * one is during suspend-resume cycle while timekeeping is
+	 * being suspended / resumed. Clocksource for the system
+	 * can be from a timer that requires pm_runtime access, which
+	 * will eventually bring us here with timekeeping_suspended,
 	 * during both suspend entry and resume paths. This happens
-	 * at least on am43xx platक्रमm. Account क्रम flakeyness
-	 * with udelay() by multiplying the समयout value by 2.
+	 * at least on am43xx platform. Account for flakeyness
+	 * with udelay() by multiplying the timeout value by 2.
 	 */
-	अगर (unlikely(_early_समयout || समयkeeping_suspended)) अणु
-		अगर (समय->cycles++ < समयout) अणु
+	if (unlikely(_early_timeout || timekeeping_suspended)) {
+		if (time->cycles++ < timeout) {
 			udelay(1 * 2);
-			वापस false;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (!kसमय_प्रकारo_ns(समय->start)) अणु
-			समय->start = kसमय_get();
-			वापस false;
-		पूर्ण
+			return false;
+		}
+	} else {
+		if (!ktime_to_ns(time->start)) {
+			time->start = ktime_get();
+			return false;
+		}
 
-		अगर (kसमय_us_delta(kसमय_get(), समय->start) < समयout) अणु
+		if (ktime_us_delta(ktime_get(), time->start) < timeout) {
 			cpu_relax();
-			वापस false;
-		पूर्ण
-	पूर्ण
+			return false;
+		}
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक __init _omap4_disable_early_समयout(व्योम)
-अणु
-	_early_समयout = false;
+static int __init _omap4_disable_early_timeout(void)
+{
+	_early_timeout = false;
 
-	वापस 0;
-पूर्ण
-arch_initcall(_omap4_disable_early_समयout);
+	return 0;
+}
+arch_initcall(_omap4_disable_early_timeout);
 
-अटल पूर्णांक _omap4_clkctrl_clk_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_hw_omap *clk = to_clk_hw_omap(hw);
+static int _omap4_clkctrl_clk_enable(struct clk_hw *hw)
+{
+	struct clk_hw_omap *clk = to_clk_hw_omap(hw);
 	u32 val;
-	पूर्णांक ret;
-	जोड़ omap4_समयout समयout = अणु 0 पूर्ण;
+	int ret;
+	union omap4_timeout timeout = { 0 };
 
-	अगर (clk->clkdm) अणु
+	if (clk->clkdm) {
 		ret = ti_clk_ll_ops->clkdm_clk_enable(clk->clkdm, hw->clk);
-		अगर (ret) अणु
+		if (ret) {
 			WARN(1,
 			     "%s: could not enable %s's clockdomain %s: %d\n",
 			     __func__, clk_hw_get_name(hw),
 			     clk->clkdm_name, ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	अगर (!clk->enable_bit)
-		वापस 0;
+	if (!clk->enable_bit)
+		return 0;
 
-	val = ti_clk_ll_ops->clk_पढ़ोl(&clk->enable_reg);
+	val = ti_clk_ll_ops->clk_readl(&clk->enable_reg);
 
 	val &= ~OMAP4_MODULEMODE_MASK;
 	val |= clk->enable_bit;
 
-	ti_clk_ll_ops->clk_ग_लिखोl(val, &clk->enable_reg);
+	ti_clk_ll_ops->clk_writel(val, &clk->enable_reg);
 
-	अगर (test_bit(NO_IDLEST, &clk->flags))
-		वापस 0;
+	if (test_bit(NO_IDLEST, &clk->flags))
+		return 0;
 
 	/* Wait until module is enabled */
-	जबतक (!_omap4_is_पढ़ोy(ti_clk_ll_ops->clk_पढ़ोl(&clk->enable_reg))) अणु
-		अगर (_omap4_is_समयout(&समयout, OMAP4_MAX_MODULE_READY_TIME)) अणु
+	while (!_omap4_is_ready(ti_clk_ll_ops->clk_readl(&clk->enable_reg))) {
+		if (_omap4_is_timeout(&timeout, OMAP4_MAX_MODULE_READY_TIME)) {
 			pr_err("%s: failed to enable\n", clk_hw_get_name(hw));
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण
+			return -EBUSY;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम _omap4_clkctrl_clk_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_hw_omap *clk = to_clk_hw_omap(hw);
+static void _omap4_clkctrl_clk_disable(struct clk_hw *hw)
+{
+	struct clk_hw_omap *clk = to_clk_hw_omap(hw);
 	u32 val;
-	जोड़ omap4_समयout समयout = अणु 0 पूर्ण;
+	union omap4_timeout timeout = { 0 };
 
-	अगर (!clk->enable_bit)
-		जाओ निकास;
+	if (!clk->enable_bit)
+		goto exit;
 
-	val = ti_clk_ll_ops->clk_पढ़ोl(&clk->enable_reg);
+	val = ti_clk_ll_ops->clk_readl(&clk->enable_reg);
 
 	val &= ~OMAP4_MODULEMODE_MASK;
 
-	ti_clk_ll_ops->clk_ग_लिखोl(val, &clk->enable_reg);
+	ti_clk_ll_ops->clk_writel(val, &clk->enable_reg);
 
-	अगर (test_bit(NO_IDLEST, &clk->flags))
-		जाओ निकास;
+	if (test_bit(NO_IDLEST, &clk->flags))
+		goto exit;
 
 	/* Wait until module is disabled */
-	जबतक (!_omap4_is_idle(ti_clk_ll_ops->clk_पढ़ोl(&clk->enable_reg))) अणु
-		अगर (_omap4_is_समयout(&समयout,
-				      OMAP4_MAX_MODULE_DISABLE_TIME)) अणु
+	while (!_omap4_is_idle(ti_clk_ll_ops->clk_readl(&clk->enable_reg))) {
+		if (_omap4_is_timeout(&timeout,
+				      OMAP4_MAX_MODULE_DISABLE_TIME)) {
 			pr_err("%s: failed to disable\n", clk_hw_get_name(hw));
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-निकास:
-	अगर (clk->clkdm)
+exit:
+	if (clk->clkdm)
 		ti_clk_ll_ops->clkdm_clk_disable(clk->clkdm, hw->clk);
-पूर्ण
+}
 
-अटल पूर्णांक _omap4_clkctrl_clk_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_hw_omap *clk = to_clk_hw_omap(hw);
+static int _omap4_clkctrl_clk_is_enabled(struct clk_hw *hw)
+{
+	struct clk_hw_omap *clk = to_clk_hw_omap(hw);
 	u32 val;
 
-	val = ti_clk_ll_ops->clk_पढ़ोl(&clk->enable_reg);
+	val = ti_clk_ll_ops->clk_readl(&clk->enable_reg);
 
-	अगर (val & clk->enable_bit)
-		वापस 1;
+	if (val & clk->enable_bit)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops omap4_clkctrl_clk_ops = अणु
+static const struct clk_ops omap4_clkctrl_clk_ops = {
 	.enable		= _omap4_clkctrl_clk_enable,
 	.disable	= _omap4_clkctrl_clk_disable,
 	.is_enabled	= _omap4_clkctrl_clk_is_enabled,
 	.init		= omap2_init_clk_clkdm,
-पूर्ण;
+};
 
-अटल काष्ठा clk_hw *_ti_omap4_clkctrl_xlate(काष्ठा of_phandle_args *clkspec,
-					      व्योम *data)
-अणु
-	काष्ठा omap_clkctrl_provider *provider = data;
-	काष्ठा omap_clkctrl_clk *entry;
+static struct clk_hw *_ti_omap4_clkctrl_xlate(struct of_phandle_args *clkspec,
+					      void *data)
+{
+	struct omap_clkctrl_provider *provider = data;
+	struct omap_clkctrl_clk *entry;
 	bool found = false;
 
-	अगर (clkspec->args_count != 2)
-		वापस ERR_PTR(-EINVAL);
+	if (clkspec->args_count != 2)
+		return ERR_PTR(-EINVAL);
 
 	pr_debug("%s: looking for %x:%x\n", __func__,
 		 clkspec->args[0], clkspec->args[1]);
 
-	list_क्रम_each_entry(entry, &provider->घड़ीs, node) अणु
-		अगर (entry->reg_offset == clkspec->args[0] &&
-		    entry->bit_offset == clkspec->args[1]) अणु
+	list_for_each_entry(entry, &provider->clocks, node) {
+		if (entry->reg_offset == clkspec->args[0] &&
+		    entry->bit_offset == clkspec->args[1]) {
 			found = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!found)
-		वापस ERR_PTR(-EINVAL);
+	if (!found)
+		return ERR_PTR(-EINVAL);
 
-	वापस entry->clk;
-पूर्ण
+	return entry->clk;
+}
 
-/* Get clkctrl घड़ी base name based on clkctrl_name or dts node */
-अटल स्थिर अक्षर * __init clkctrl_get_घड़ी_name(काष्ठा device_node *np,
-						  स्थिर अक्षर *clkctrl_name,
-						  पूर्णांक offset, पूर्णांक index,
+/* Get clkctrl clock base name based on clkctrl_name or dts node */
+static const char * __init clkctrl_get_clock_name(struct device_node *np,
+						  const char *clkctrl_name,
+						  int offset, int index,
 						  bool legacy_naming)
-अणु
-	अक्षर *घड़ी_name;
+{
+	char *clock_name;
 
 	/* l4per-clkctrl:1234:0 style naming based on clkctrl_name */
-	अगर (clkctrl_name && !legacy_naming) अणु
-		घड़ी_name = kaप्र_लिखो(GFP_KERNEL, "%s-clkctrl:%04x:%d",
+	if (clkctrl_name && !legacy_naming) {
+		clock_name = kasprintf(GFP_KERNEL, "%s-clkctrl:%04x:%d",
 				       clkctrl_name, offset, index);
-		strreplace(घड़ी_name, '_', '-');
+		strreplace(clock_name, '_', '-');
 
-		वापस घड़ी_name;
-	पूर्ण
+		return clock_name;
+	}
 
 	/* l4per:1234:0 old style naming based on clkctrl_name */
-	अगर (clkctrl_name)
-		वापस kaप्र_लिखो(GFP_KERNEL, "%s_cm:clk:%04x:%d",
+	if (clkctrl_name)
+		return kasprintf(GFP_KERNEL, "%s_cm:clk:%04x:%d",
 				 clkctrl_name, offset, index);
 
 	/* l4per_cm:1234:0 old style naming based on parent node name */
-	अगर (legacy_naming)
-		वापस kaप्र_लिखो(GFP_KERNEL, "%pOFn:clk:%04x:%d",
+	if (legacy_naming)
+		return kasprintf(GFP_KERNEL, "%pOFn:clk:%04x:%d",
 				 np->parent, offset, index);
 
 	/* l4per-clkctrl:1234:0 style naming based on node name */
-	वापस kaप्र_लिखो(GFP_KERNEL, "%pOFn:%04x:%d", np, offset, index);
-पूर्ण
+	return kasprintf(GFP_KERNEL, "%pOFn:%04x:%d", np, offset, index);
+}
 
-अटल पूर्णांक __init
-_ti_clkctrl_clk_रेजिस्टर(काष्ठा omap_clkctrl_provider *provider,
-			 काष्ठा device_node *node, काष्ठा clk_hw *clk_hw,
-			 u16 offset, u8 bit, स्थिर अक्षर * स्थिर *parents,
-			 पूर्णांक num_parents, स्थिर काष्ठा clk_ops *ops,
-			 स्थिर अक्षर *clkctrl_name)
-अणु
-	काष्ठा clk_init_data init = अणु शून्य पूर्ण;
-	काष्ठा clk *clk;
-	काष्ठा omap_clkctrl_clk *clkctrl_clk;
-	पूर्णांक ret = 0;
+static int __init
+_ti_clkctrl_clk_register(struct omap_clkctrl_provider *provider,
+			 struct device_node *node, struct clk_hw *clk_hw,
+			 u16 offset, u8 bit, const char * const *parents,
+			 int num_parents, const struct clk_ops *ops,
+			 const char *clkctrl_name)
+{
+	struct clk_init_data init = { NULL };
+	struct clk *clk;
+	struct omap_clkctrl_clk *clkctrl_clk;
+	int ret = 0;
 
-	init.name = clkctrl_get_घड़ी_name(node, clkctrl_name, offset, bit,
+	init.name = clkctrl_get_clock_name(node, clkctrl_name, offset, bit,
 					   ti_clk_get_features()->flags &
 					   TI_CLK_CLKCTRL_COMPAT);
 
-	clkctrl_clk = kzalloc(माप(*clkctrl_clk), GFP_KERNEL);
-	अगर (!init.name || !clkctrl_clk) अणु
+	clkctrl_clk = kzalloc(sizeof(*clkctrl_clk), GFP_KERNEL);
+	if (!init.name || !clkctrl_clk) {
 		ret = -ENOMEM;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	clk_hw->init = &init;
 	init.parent_names = parents;
@@ -315,441 +314,441 @@ _ti_clkctrl_clk_रेजिस्टर(काष्ठा omap_clkctrl_provide
 	init.ops = ops;
 	init.flags = 0;
 
-	clk = ti_clk_रेजिस्टर(शून्य, clk_hw, init.name);
-	अगर (IS_ERR_OR_शून्य(clk)) अणु
+	clk = ti_clk_register(NULL, clk_hw, init.name);
+	if (IS_ERR_OR_NULL(clk)) {
 		ret = -EINVAL;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	clkctrl_clk->reg_offset = offset;
 	clkctrl_clk->bit_offset = bit;
 	clkctrl_clk->clk = clk_hw;
 
-	list_add(&clkctrl_clk->node, &provider->घड़ीs);
+	list_add(&clkctrl_clk->node, &provider->clocks);
 
-	वापस 0;
+	return 0;
 
 cleanup:
-	kमुक्त(init.name);
-	kमुक्त(clkctrl_clk);
-	वापस ret;
-पूर्ण
+	kfree(init.name);
+	kfree(clkctrl_clk);
+	return ret;
+}
 
-अटल व्योम __init
-_ti_clkctrl_setup_gate(काष्ठा omap_clkctrl_provider *provider,
-		       काष्ठा device_node *node, u16 offset,
-		       स्थिर काष्ठा omap_clkctrl_bit_data *data,
-		       व्योम __iomem *reg, स्थिर अक्षर *clkctrl_name)
-अणु
-	काष्ठा clk_hw_omap *clk_hw;
+static void __init
+_ti_clkctrl_setup_gate(struct omap_clkctrl_provider *provider,
+		       struct device_node *node, u16 offset,
+		       const struct omap_clkctrl_bit_data *data,
+		       void __iomem *reg, const char *clkctrl_name)
+{
+	struct clk_hw_omap *clk_hw;
 
-	clk_hw = kzalloc(माप(*clk_hw), GFP_KERNEL);
-	अगर (!clk_hw)
-		वापस;
+	clk_hw = kzalloc(sizeof(*clk_hw), GFP_KERNEL);
+	if (!clk_hw)
+		return;
 
 	clk_hw->enable_bit = data->bit;
 	clk_hw->enable_reg.ptr = reg;
 
-	अगर (_ti_clkctrl_clk_रेजिस्टर(provider, node, &clk_hw->hw, offset,
+	if (_ti_clkctrl_clk_register(provider, node, &clk_hw->hw, offset,
 				     data->bit, data->parents, 1,
 				     &omap_gate_clk_ops, clkctrl_name))
-		kमुक्त(clk_hw);
-पूर्ण
+		kfree(clk_hw);
+}
 
-अटल व्योम __init
-_ti_clkctrl_setup_mux(काष्ठा omap_clkctrl_provider *provider,
-		      काष्ठा device_node *node, u16 offset,
-		      स्थिर काष्ठा omap_clkctrl_bit_data *data,
-		      व्योम __iomem *reg, स्थिर अक्षर *clkctrl_name)
-अणु
-	काष्ठा clk_omap_mux *mux;
-	पूर्णांक num_parents = 0;
-	स्थिर अक्षर * स्थिर *pname;
+static void __init
+_ti_clkctrl_setup_mux(struct omap_clkctrl_provider *provider,
+		      struct device_node *node, u16 offset,
+		      const struct omap_clkctrl_bit_data *data,
+		      void __iomem *reg, const char *clkctrl_name)
+{
+	struct clk_omap_mux *mux;
+	int num_parents = 0;
+	const char * const *pname;
 
-	mux = kzalloc(माप(*mux), GFP_KERNEL);
-	अगर (!mux)
-		वापस;
+	mux = kzalloc(sizeof(*mux), GFP_KERNEL);
+	if (!mux)
+		return;
 
 	pname = data->parents;
-	जबतक (*pname) अणु
+	while (*pname) {
 		num_parents++;
 		pname++;
-	पूर्ण
+	}
 
 	mux->mask = num_parents;
-	अगर (!(mux->flags & CLK_MUX_INDEX_ONE))
+	if (!(mux->flags & CLK_MUX_INDEX_ONE))
 		mux->mask--;
 
 	mux->mask = (1 << fls(mux->mask)) - 1;
 
-	mux->shअगरt = data->bit;
+	mux->shift = data->bit;
 	mux->reg.ptr = reg;
 
-	अगर (_ti_clkctrl_clk_रेजिस्टर(provider, node, &mux->hw, offset,
+	if (_ti_clkctrl_clk_register(provider, node, &mux->hw, offset,
 				     data->bit, data->parents, num_parents,
 				     &ti_clk_mux_ops, clkctrl_name))
-		kमुक्त(mux);
-पूर्ण
+		kfree(mux);
+}
 
-अटल व्योम __init
-_ti_clkctrl_setup_भाग(काष्ठा omap_clkctrl_provider *provider,
-		      काष्ठा device_node *node, u16 offset,
-		      स्थिर काष्ठा omap_clkctrl_bit_data *data,
-		      व्योम __iomem *reg, स्थिर अक्षर *clkctrl_name)
-अणु
-	काष्ठा clk_omap_भागider *भाग;
-	स्थिर काष्ठा omap_clkctrl_भाग_data *भाग_data = data->data;
-	u8 भाग_flags = 0;
+static void __init
+_ti_clkctrl_setup_div(struct omap_clkctrl_provider *provider,
+		      struct device_node *node, u16 offset,
+		      const struct omap_clkctrl_bit_data *data,
+		      void __iomem *reg, const char *clkctrl_name)
+{
+	struct clk_omap_divider *div;
+	const struct omap_clkctrl_div_data *div_data = data->data;
+	u8 div_flags = 0;
 
-	भाग = kzalloc(माप(*भाग), GFP_KERNEL);
-	अगर (!भाग)
-		वापस;
+	div = kzalloc(sizeof(*div), GFP_KERNEL);
+	if (!div)
+		return;
 
-	भाग->reg.ptr = reg;
-	भाग->shअगरt = data->bit;
-	भाग->flags = भाग_data->flags;
+	div->reg.ptr = reg;
+	div->shift = data->bit;
+	div->flags = div_data->flags;
 
-	अगर (भाग->flags & CLK_DIVIDER_POWER_OF_TWO)
-		भाग_flags |= CLKF_INDEX_POWER_OF_TWO;
+	if (div->flags & CLK_DIVIDER_POWER_OF_TWO)
+		div_flags |= CLKF_INDEX_POWER_OF_TWO;
 
-	अगर (ti_clk_parse_भागider_data((पूर्णांक *)भाग_data->भागiders, 0,
-				      भाग_data->max_भाग, भाग_flags,
-				      भाग)) अणु
+	if (ti_clk_parse_divider_data((int *)div_data->dividers, 0,
+				      div_data->max_div, div_flags,
+				      div)) {
 		pr_err("%s: Data parsing for %pOF:%04x:%d failed\n", __func__,
 		       node, offset, data->bit);
-		kमुक्त(भाग);
-		वापस;
-	पूर्ण
+		kfree(div);
+		return;
+	}
 
-	अगर (_ti_clkctrl_clk_रेजिस्टर(provider, node, &भाग->hw, offset,
+	if (_ti_clkctrl_clk_register(provider, node, &div->hw, offset,
 				     data->bit, data->parents, 1,
-				     &ti_clk_भागider_ops, clkctrl_name))
-		kमुक्त(भाग);
-पूर्ण
+				     &ti_clk_divider_ops, clkctrl_name))
+		kfree(div);
+}
 
-अटल व्योम __init
-_ti_clkctrl_setup_subclks(काष्ठा omap_clkctrl_provider *provider,
-			  काष्ठा device_node *node,
-			  स्थिर काष्ठा omap_clkctrl_reg_data *data,
-			  व्योम __iomem *reg, स्थिर अक्षर *clkctrl_name)
-अणु
-	स्थिर काष्ठा omap_clkctrl_bit_data *bits = data->bit_data;
+static void __init
+_ti_clkctrl_setup_subclks(struct omap_clkctrl_provider *provider,
+			  struct device_node *node,
+			  const struct omap_clkctrl_reg_data *data,
+			  void __iomem *reg, const char *clkctrl_name)
+{
+	const struct omap_clkctrl_bit_data *bits = data->bit_data;
 
-	अगर (!bits)
-		वापस;
+	if (!bits)
+		return;
 
-	जबतक (bits->bit) अणु
-		चयन (bits->type) अणु
-		हाल TI_CLK_GATE:
+	while (bits->bit) {
+		switch (bits->type) {
+		case TI_CLK_GATE:
 			_ti_clkctrl_setup_gate(provider, node, data->offset,
 					       bits, reg, clkctrl_name);
-			अवरोध;
+			break;
 
-		हाल TI_CLK_DIVIDER:
-			_ti_clkctrl_setup_भाग(provider, node, data->offset,
+		case TI_CLK_DIVIDER:
+			_ti_clkctrl_setup_div(provider, node, data->offset,
 					      bits, reg, clkctrl_name);
-			अवरोध;
+			break;
 
-		हाल TI_CLK_MUX:
+		case TI_CLK_MUX:
 			_ti_clkctrl_setup_mux(provider, node, data->offset,
 					      bits, reg, clkctrl_name);
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			pr_err("%s: bad subclk type: %d\n", __func__,
 			       bits->type);
-			वापस;
-		पूर्ण
+			return;
+		}
 		bits++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __init _clkctrl_add_provider(व्योम *data,
-					 काष्ठा device_node *np)
-अणु
+static void __init _clkctrl_add_provider(void *data,
+					 struct device_node *np)
+{
 	of_clk_add_hw_provider(np, _ti_omap4_clkctrl_xlate, data);
-पूर्ण
+}
 
-/* Get घड़ी name based on compatible string क्रम clkctrl */
-अटल अक्षर * __init clkctrl_get_name(काष्ठा device_node *np)
-अणु
-	काष्ठा property *prop;
-	स्थिर पूर्णांक prefix_len = 11;
-	स्थिर अक्षर *compat;
-	अक्षर *name;
+/* Get clock name based on compatible string for clkctrl */
+static char * __init clkctrl_get_name(struct device_node *np)
+{
+	struct property *prop;
+	const int prefix_len = 11;
+	const char *compat;
+	char *name;
 
-	of_property_क्रम_each_string(np, "compatible", prop, compat) अणु
-		अगर (!म_भेदन("ti,clkctrl-", compat, prefix_len)) अणु
-			/* Two letter minimum name length क्रम l3, l4 etc */
-			अगर (strnlen(compat + prefix_len, 16) < 2)
-				जारी;
-			name = kaप्र_लिखो(GFP_KERNEL, "%s", compat + prefix_len);
-			अगर (!name)
-				जारी;
+	of_property_for_each_string(np, "compatible", prop, compat) {
+		if (!strncmp("ti,clkctrl-", compat, prefix_len)) {
+			/* Two letter minimum name length for l3, l4 etc */
+			if (strnlen(compat + prefix_len, 16) < 2)
+				continue;
+			name = kasprintf(GFP_KERNEL, "%s", compat + prefix_len);
+			if (!name)
+				continue;
 			strreplace(name, '-', '_');
 
-			वापस name;
-		पूर्ण
-	पूर्ण
+			return name;
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम __init _ti_omap4_clkctrl_setup(काष्ठा device_node *node)
-अणु
-	काष्ठा omap_clkctrl_provider *provider;
-	स्थिर काष्ठा omap_clkctrl_data *data = शेष_clkctrl_data;
-	स्थिर काष्ठा omap_clkctrl_reg_data *reg_data;
-	काष्ठा clk_init_data init = अणु शून्य पूर्ण;
-	काष्ठा clk_hw_omap *hw;
-	काष्ठा clk *clk;
-	काष्ठा omap_clkctrl_clk *clkctrl_clk = शून्य;
-	स्थिर __be32 *addrp;
+static void __init _ti_omap4_clkctrl_setup(struct device_node *node)
+{
+	struct omap_clkctrl_provider *provider;
+	const struct omap_clkctrl_data *data = default_clkctrl_data;
+	const struct omap_clkctrl_reg_data *reg_data;
+	struct clk_init_data init = { NULL };
+	struct clk_hw_omap *hw;
+	struct clk *clk;
+	struct omap_clkctrl_clk *clkctrl_clk = NULL;
+	const __be32 *addrp;
 	bool legacy_naming;
-	अक्षर *clkctrl_name;
+	char *clkctrl_name;
 	u32 addr;
-	पूर्णांक ret;
-	अक्षर *c;
+	int ret;
+	char *c;
 	u16 soc_mask = 0;
 
-	अगर (!(ti_clk_get_features()->flags & TI_CLK_CLKCTRL_COMPAT) &&
+	if (!(ti_clk_get_features()->flags & TI_CLK_CLKCTRL_COMPAT) &&
 	    of_node_name_eq(node, "clk"))
 		ti_clk_features.flags |= TI_CLK_CLKCTRL_COMPAT;
 
-	addrp = of_get_address(node, 0, शून्य, शून्य);
+	addrp = of_get_address(node, 0, NULL, NULL);
 	addr = (u32)of_translate_address(node, addrp);
 
-#अगर_घोषित CONFIG_ARCH_OMAP4
-	अगर (of_machine_is_compatible("ti,omap4"))
+#ifdef CONFIG_ARCH_OMAP4
+	if (of_machine_is_compatible("ti,omap4"))
 		data = omap4_clkctrl_data;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_SOC_OMAP5
-	अगर (of_machine_is_compatible("ti,omap5"))
+#endif
+#ifdef CONFIG_SOC_OMAP5
+	if (of_machine_is_compatible("ti,omap5"))
 		data = omap5_clkctrl_data;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_SOC_DRA7XX
-	अगर (of_machine_is_compatible("ti,dra7")) अणु
-		अगर (ti_clk_get_features()->flags & TI_CLK_CLKCTRL_COMPAT)
+#endif
+#ifdef CONFIG_SOC_DRA7XX
+	if (of_machine_is_compatible("ti,dra7")) {
+		if (ti_clk_get_features()->flags & TI_CLK_CLKCTRL_COMPAT)
 			data = dra7_clkctrl_compat_data;
-		अन्यथा
+		else
 			data = dra7_clkctrl_data;
-	पूर्ण
+	}
 
-	अगर (of_machine_is_compatible("ti,dra72"))
+	if (of_machine_is_compatible("ti,dra72"))
 		soc_mask = CLKF_SOC_DRA72;
-	अगर (of_machine_is_compatible("ti,dra74"))
+	if (of_machine_is_compatible("ti,dra74"))
 		soc_mask = CLKF_SOC_DRA74;
-	अगर (of_machine_is_compatible("ti,dra76"))
+	if (of_machine_is_compatible("ti,dra76"))
 		soc_mask = CLKF_SOC_DRA76;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_SOC_AM33XX
-	अगर (of_machine_is_compatible("ti,am33xx")) अणु
-		अगर (ti_clk_get_features()->flags & TI_CLK_CLKCTRL_COMPAT)
+#endif
+#ifdef CONFIG_SOC_AM33XX
+	if (of_machine_is_compatible("ti,am33xx")) {
+		if (ti_clk_get_features()->flags & TI_CLK_CLKCTRL_COMPAT)
 			data = am3_clkctrl_compat_data;
-		अन्यथा
+		else
 			data = am3_clkctrl_data;
-	पूर्ण
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_SOC_AM43XX
-	अगर (of_machine_is_compatible("ti,am4372")) अणु
-		अगर (ti_clk_get_features()->flags & TI_CLK_CLKCTRL_COMPAT)
+	}
+#endif
+#ifdef CONFIG_SOC_AM43XX
+	if (of_machine_is_compatible("ti,am4372")) {
+		if (ti_clk_get_features()->flags & TI_CLK_CLKCTRL_COMPAT)
 			data = am4_clkctrl_compat_data;
-		अन्यथा
+		else
 			data = am4_clkctrl_data;
-	पूर्ण
+	}
 
-	अगर (of_machine_is_compatible("ti,am438x")) अणु
-		अगर (ti_clk_get_features()->flags & TI_CLK_CLKCTRL_COMPAT)
+	if (of_machine_is_compatible("ti,am438x")) {
+		if (ti_clk_get_features()->flags & TI_CLK_CLKCTRL_COMPAT)
 			data = am438x_clkctrl_compat_data;
-		अन्यथा
+		else
 			data = am438x_clkctrl_data;
-	पूर्ण
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_SOC_TI81XX
-	अगर (of_machine_is_compatible("ti,dm814"))
+	}
+#endif
+#ifdef CONFIG_SOC_TI81XX
+	if (of_machine_is_compatible("ti,dm814"))
 		data = dm814_clkctrl_data;
 
-	अगर (of_machine_is_compatible("ti,dm816"))
+	if (of_machine_is_compatible("ti,dm816"))
 		data = dm816_clkctrl_data;
-#पूर्ण_अगर
+#endif
 
-	अगर (ti_clk_get_features()->flags & TI_CLK_DEVICE_TYPE_GP)
+	if (ti_clk_get_features()->flags & TI_CLK_DEVICE_TYPE_GP)
 		soc_mask |= CLKF_SOC_NONSEC;
 
-	जबतक (data->addr) अणु
-		अगर (addr == data->addr)
-			अवरोध;
+	while (data->addr) {
+		if (addr == data->addr)
+			break;
 
 		data++;
-	पूर्ण
+	}
 
-	अगर (!data->addr) अणु
+	if (!data->addr) {
 		pr_err("%pOF not found from clkctrl data.\n", node);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	provider = kzalloc(माप(*provider), GFP_KERNEL);
-	अगर (!provider)
-		वापस;
+	provider = kzalloc(sizeof(*provider), GFP_KERNEL);
+	if (!provider)
+		return;
 
 	provider->base = of_iomap(node, 0);
 
 	legacy_naming = ti_clk_get_features()->flags & TI_CLK_CLKCTRL_COMPAT;
 	clkctrl_name = clkctrl_get_name(node);
-	अगर (clkctrl_name) अणु
-		provider->clkdm_name = kaप्र_लिखो(GFP_KERNEL,
+	if (clkctrl_name) {
+		provider->clkdm_name = kasprintf(GFP_KERNEL,
 						 "%s_clkdm", clkctrl_name);
-		जाओ clkdm_found;
-	पूर्ण
+		goto clkdm_found;
+	}
 
 	/*
-	 * The code below can be हटाओd when all clkctrl nodes use करोमुख्य
-	 * specअगरic compatible proprerty and standard घड़ी node naming
+	 * The code below can be removed when all clkctrl nodes use domain
+	 * specific compatible proprerty and standard clock node naming
 	 */
-	अगर (legacy_naming) अणु
-		provider->clkdm_name = kaप्र_लिखो(GFP_KERNEL, "%pOFnxxx", node->parent);
-		अगर (!provider->clkdm_name) अणु
-			kमुक्त(provider);
-			वापस;
-		पूर्ण
+	if (legacy_naming) {
+		provider->clkdm_name = kasprintf(GFP_KERNEL, "%pOFnxxx", node->parent);
+		if (!provider->clkdm_name) {
+			kfree(provider);
+			return;
+		}
 
 		/*
-		 * Create शेष clkdm name, replace _cm from end of parent
+		 * Create default clkdm name, replace _cm from end of parent
 		 * node name with _clkdm
 		 */
-		provider->clkdm_name[म_माप(provider->clkdm_name) - 2] = 0;
-	पूर्ण अन्यथा अणु
-		provider->clkdm_name = kaप्र_लिखो(GFP_KERNEL, "%pOFn", node);
-		अगर (!provider->clkdm_name) अणु
-			kमुक्त(provider);
-			वापस;
-		पूर्ण
+		provider->clkdm_name[strlen(provider->clkdm_name) - 2] = 0;
+	} else {
+		provider->clkdm_name = kasprintf(GFP_KERNEL, "%pOFn", node);
+		if (!provider->clkdm_name) {
+			kfree(provider);
+			return;
+		}
 
 		/*
-		 * Create शेष clkdm name, replace _clkctrl from end of
+		 * Create default clkdm name, replace _clkctrl from end of
 		 * node name with _clkdm
 		 */
-		provider->clkdm_name[म_माप(provider->clkdm_name) - 7] = 0;
-	पूर्ण
+		provider->clkdm_name[strlen(provider->clkdm_name) - 7] = 0;
+	}
 
-	म_जोड़ो(provider->clkdm_name, "clkdm");
+	strcat(provider->clkdm_name, "clkdm");
 
 	/* Replace any dash from the clkdm name with underscore */
 	c = provider->clkdm_name;
 
-	जबतक (*c) अणु
-		अगर (*c == '-')
+	while (*c) {
+		if (*c == '-')
 			*c = '_';
 		c++;
-	पूर्ण
+	}
 clkdm_found:
-	INIT_LIST_HEAD(&provider->घड़ीs);
+	INIT_LIST_HEAD(&provider->clocks);
 
-	/* Generate घड़ीs */
+	/* Generate clocks */
 	reg_data = data->regs;
 
-	जबतक (reg_data->parent) अणु
-		अगर ((reg_data->flags & CLKF_SOC_MASK) &&
-		    (reg_data->flags & soc_mask) == 0) अणु
+	while (reg_data->parent) {
+		if ((reg_data->flags & CLKF_SOC_MASK) &&
+		    (reg_data->flags & soc_mask) == 0) {
 			reg_data++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		hw = kzalloc(माप(*hw), GFP_KERNEL);
-		अगर (!hw)
-			वापस;
+		hw = kzalloc(sizeof(*hw), GFP_KERNEL);
+		if (!hw)
+			return;
 
 		hw->enable_reg.ptr = provider->base + reg_data->offset;
 
 		_ti_clkctrl_setup_subclks(provider, node, reg_data,
 					  hw->enable_reg.ptr, clkctrl_name);
 
-		अगर (reg_data->flags & CLKF_SW_SUP)
+		if (reg_data->flags & CLKF_SW_SUP)
 			hw->enable_bit = MODULEMODE_SWCTRL;
-		अगर (reg_data->flags & CLKF_HW_SUP)
+		if (reg_data->flags & CLKF_HW_SUP)
 			hw->enable_bit = MODULEMODE_HWCTRL;
-		अगर (reg_data->flags & CLKF_NO_IDLEST)
+		if (reg_data->flags & CLKF_NO_IDLEST)
 			set_bit(NO_IDLEST, &hw->flags);
 
-		अगर (reg_data->clkdm_name)
+		if (reg_data->clkdm_name)
 			hw->clkdm_name = reg_data->clkdm_name;
-		अन्यथा
+		else
 			hw->clkdm_name = provider->clkdm_name;
 
 		init.parent_names = &reg_data->parent;
 		init.num_parents = 1;
 		init.flags = 0;
-		अगर (reg_data->flags & CLKF_SET_RATE_PARENT)
+		if (reg_data->flags & CLKF_SET_RATE_PARENT)
 			init.flags |= CLK_SET_RATE_PARENT;
 
-		init.name = clkctrl_get_घड़ी_name(node, clkctrl_name,
+		init.name = clkctrl_get_clock_name(node, clkctrl_name,
 						   reg_data->offset, 0,
 						   legacy_naming);
-		अगर (!init.name)
-			जाओ cleanup;
+		if (!init.name)
+			goto cleanup;
 
-		clkctrl_clk = kzalloc(माप(*clkctrl_clk), GFP_KERNEL);
-		अगर (!clkctrl_clk)
-			जाओ cleanup;
+		clkctrl_clk = kzalloc(sizeof(*clkctrl_clk), GFP_KERNEL);
+		if (!clkctrl_clk)
+			goto cleanup;
 
 		init.ops = &omap4_clkctrl_clk_ops;
 		hw->hw.init = &init;
 
-		clk = ti_clk_रेजिस्टर_omap_hw(शून्य, &hw->hw, init.name);
-		अगर (IS_ERR_OR_शून्य(clk))
-			जाओ cleanup;
+		clk = ti_clk_register_omap_hw(NULL, &hw->hw, init.name);
+		if (IS_ERR_OR_NULL(clk))
+			goto cleanup;
 
 		clkctrl_clk->reg_offset = reg_data->offset;
 		clkctrl_clk->clk = &hw->hw;
 
-		list_add(&clkctrl_clk->node, &provider->घड़ीs);
+		list_add(&clkctrl_clk->node, &provider->clocks);
 
 		reg_data++;
-	पूर्ण
+	}
 
 	ret = of_clk_add_hw_provider(node, _ti_omap4_clkctrl_xlate, provider);
-	अगर (ret == -EPROBE_DEFER)
+	if (ret == -EPROBE_DEFER)
 		ti_clk_retry_init(node, provider, _clkctrl_add_provider);
 
-	kमुक्त(clkctrl_name);
+	kfree(clkctrl_name);
 
-	वापस;
+	return;
 
 cleanup:
-	kमुक्त(hw);
-	kमुक्त(init.name);
-	kमुक्त(clkctrl_name);
-	kमुक्त(clkctrl_clk);
-पूर्ण
-CLK_OF_DECLARE(ti_omap4_clkctrl_घड़ी, "ti,clkctrl",
+	kfree(hw);
+	kfree(init.name);
+	kfree(clkctrl_name);
+	kfree(clkctrl_clk);
+}
+CLK_OF_DECLARE(ti_omap4_clkctrl_clock, "ti,clkctrl",
 	       _ti_omap4_clkctrl_setup);
 
 /**
- * ti_clk_is_in_standby - Check अगर clkctrl घड़ी is in standby or not
- * @clk: घड़ी to check standby status क्रम
+ * ti_clk_is_in_standby - Check if clkctrl clock is in standby or not
+ * @clk: clock to check standby status for
  *
- * Finds whether the provided घड़ी is in standby mode or not. Returns
- * true अगर the provided घड़ी is a clkctrl type घड़ी and it is in standby,
+ * Finds whether the provided clock is in standby mode or not. Returns
+ * true if the provided clock is a clkctrl type clock and it is in standby,
  * false otherwise.
  */
-bool ti_clk_is_in_standby(काष्ठा clk *clk)
-अणु
-	काष्ठा clk_hw *hw;
-	काष्ठा clk_hw_omap *hwclk;
+bool ti_clk_is_in_standby(struct clk *clk)
+{
+	struct clk_hw *hw;
+	struct clk_hw_omap *hwclk;
 	u32 val;
 
 	hw = __clk_get_hw(clk);
 
-	अगर (!omap2_clk_is_hw_omap(hw))
-		वापस false;
+	if (!omap2_clk_is_hw_omap(hw))
+		return false;
 
 	hwclk = to_clk_hw_omap(hw);
 
-	val = ti_clk_ll_ops->clk_पढ़ोl(&hwclk->enable_reg);
+	val = ti_clk_ll_ops->clk_readl(&hwclk->enable_reg);
 
-	अगर (val & OMAP4_STBYST_MASK)
-		वापस true;
+	if (val & OMAP4_STBYST_MASK)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 EXPORT_SYMBOL_GPL(ti_clk_is_in_standby);

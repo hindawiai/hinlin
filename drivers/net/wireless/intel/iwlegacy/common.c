@@ -1,131 +1,130 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /******************************************************************************
  *
  * Copyright(c) 2008 - 2011 Intel Corporation. All rights reserved.
  *
- * Contact Inक्रमmation:
- *  Intel Linux Wireless <ilw@linux.पूर्णांकel.com>
+ * Contact Information:
+ *  Intel Linux Wireless <ilw@linux.intel.com>
  * Intel Corporation, 5200 N.E. Elam Young Parkway, Hillsboro, OR 97124-6497
  *****************************************************************************/
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/lockdep.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/skbuff.h>
-#समावेश <net/mac80211.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/etherdevice.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/lockdep.h>
+#include <linux/pci.h>
+#include <linux/dma-mapping.h>
+#include <linux/delay.h>
+#include <linux/skbuff.h>
+#include <net/mac80211.h>
 
-#समावेश "common.h"
+#include "common.h"
 
-पूर्णांक
-_il_poll_bit(काष्ठा il_priv *il, u32 addr, u32 bits, u32 mask, पूर्णांक समयout)
-अणु
-	स्थिर पूर्णांक पूर्णांकerval = 10; /* microseconds */
-	पूर्णांक t = 0;
+int
+_il_poll_bit(struct il_priv *il, u32 addr, u32 bits, u32 mask, int timeout)
+{
+	const int interval = 10; /* microseconds */
+	int t = 0;
 
-	करो अणु
-		अगर ((_il_rd(il, addr) & mask) == (bits & mask))
-			वापस t;
-		udelay(पूर्णांकerval);
-		t += पूर्णांकerval;
-	पूर्ण जबतक (t < समयout);
+	do {
+		if ((_il_rd(il, addr) & mask) == (bits & mask))
+			return t;
+		udelay(interval);
+		t += interval;
+	} while (t < timeout);
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 EXPORT_SYMBOL(_il_poll_bit);
 
-व्योम
-il_set_bit(काष्ठा il_priv *p, u32 r, u32 m)
-अणु
-	अचिन्हित दीर्घ reg_flags;
+void
+il_set_bit(struct il_priv *p, u32 r, u32 m)
+{
+	unsigned long reg_flags;
 
 	spin_lock_irqsave(&p->reg_lock, reg_flags);
 	_il_set_bit(p, r, m);
 	spin_unlock_irqrestore(&p->reg_lock, reg_flags);
-पूर्ण
+}
 EXPORT_SYMBOL(il_set_bit);
 
-व्योम
-il_clear_bit(काष्ठा il_priv *p, u32 r, u32 m)
-अणु
-	अचिन्हित दीर्घ reg_flags;
+void
+il_clear_bit(struct il_priv *p, u32 r, u32 m)
+{
+	unsigned long reg_flags;
 
 	spin_lock_irqsave(&p->reg_lock, reg_flags);
 	_il_clear_bit(p, r, m);
 	spin_unlock_irqrestore(&p->reg_lock, reg_flags);
-पूर्ण
+}
 EXPORT_SYMBOL(il_clear_bit);
 
 bool
-_il_grab_nic_access(काष्ठा il_priv *il)
-अणु
-	पूर्णांक ret;
+_il_grab_nic_access(struct il_priv *il)
+{
+	int ret;
 	u32 val;
 
 	/* this bit wakes up the NIC */
 	_il_set_bit(il, CSR_GP_CNTRL, CSR_GP_CNTRL_REG_FLAG_MAC_ACCESS_REQ);
 
 	/*
-	 * These bits say the device is running, and should keep running क्रम
-	 * at least a लघु जबतक (at least as दीर्घ as MAC_ACCESS_REQ stays 1),
-	 * but they करो not indicate that embedded SRAM is restored yet;
-	 * 3945 and 4965 have अस्थिर SRAM, and must save/restore contents
-	 * to/from host DRAM when sleeping/waking क्रम घातer-saving.
+	 * These bits say the device is running, and should keep running for
+	 * at least a short while (at least as long as MAC_ACCESS_REQ stays 1),
+	 * but they do not indicate that embedded SRAM is restored yet;
+	 * 3945 and 4965 have volatile SRAM, and must save/restore contents
+	 * to/from host DRAM when sleeping/waking for power-saving.
 	 * Each direction takes approximately 1/4 millisecond; with this
-	 * overhead, it's a good idea to grab and hold MAC_ACCESS_REQUEST अगर a
-	 * series of रेजिस्टर accesses are expected (e.g. पढ़ोing Event Log),
+	 * overhead, it's a good idea to grab and hold MAC_ACCESS_REQUEST if a
+	 * series of register accesses are expected (e.g. reading Event Log),
 	 * to keep device from sleeping.
 	 *
-	 * CSR_UCODE_DRV_GP1 रेजिस्टर bit MAC_SLEEP == 0 indicates that
-	 * SRAM is okay/restored.  We करोn't check that here because this call
-	 * is just क्रम hardware रेजिस्टर access; but GP1 MAC_SLEEP check is a
-	 * good idea beक्रमe accessing 3945/4965 SRAM (e.g. पढ़ोing Event Log).
+	 * CSR_UCODE_DRV_GP1 register bit MAC_SLEEP == 0 indicates that
+	 * SRAM is okay/restored.  We don't check that here because this call
+	 * is just for hardware register access; but GP1 MAC_SLEEP check is a
+	 * good idea before accessing 3945/4965 SRAM (e.g. reading Event Log).
 	 *
 	 */
 	ret =
 	    _il_poll_bit(il, CSR_GP_CNTRL, CSR_GP_CNTRL_REG_VAL_MAC_ACCESS_EN,
 			 (CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY |
 			  CSR_GP_CNTRL_REG_FLAG_GOING_TO_SLEEP), 15000);
-	अगर (unlikely(ret < 0)) अणु
+	if (unlikely(ret < 0)) {
 		val = _il_rd(il, CSR_GP_CNTRL);
 		WARN_ONCE(1, "Timeout waiting for ucode processor access "
 			     "(CSR_GP_CNTRL 0x%08x)\n", val);
 		_il_wr(il, CSR_RESET, CSR_RESET_REG_FLAG_FORCE_NMI);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL_GPL(_il_grab_nic_access);
 
-पूर्णांक
-il_poll_bit(काष्ठा il_priv *il, u32 addr, u32 mask, पूर्णांक समयout)
-अणु
-	स्थिर पूर्णांक पूर्णांकerval = 10; /* microseconds */
-	पूर्णांक t = 0;
+int
+il_poll_bit(struct il_priv *il, u32 addr, u32 mask, int timeout)
+{
+	const int interval = 10; /* microseconds */
+	int t = 0;
 
-	करो अणु
-		अगर ((il_rd(il, addr) & mask) == mask)
-			वापस t;
-		udelay(पूर्णांकerval);
-		t += पूर्णांकerval;
-	पूर्ण जबतक (t < समयout);
+	do {
+		if ((il_rd(il, addr) & mask) == mask)
+			return t;
+		udelay(interval);
+		t += interval;
+	} while (t < timeout);
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 EXPORT_SYMBOL(il_poll_bit);
 
 u32
-il_rd_prph(काष्ठा il_priv *il, u32 reg)
-अणु
-	अचिन्हित दीर्घ reg_flags;
+il_rd_prph(struct il_priv *il, u32 reg)
+{
+	unsigned long reg_flags;
 	u32 val;
 
 	spin_lock_irqsave(&il->reg_lock, reg_flags);
@@ -133,28 +132,28 @@ il_rd_prph(काष्ठा il_priv *il, u32 reg)
 	val = _il_rd_prph(il, reg);
 	_il_release_nic_access(il);
 	spin_unlock_irqrestore(&il->reg_lock, reg_flags);
-	वापस val;
-पूर्ण
+	return val;
+}
 EXPORT_SYMBOL(il_rd_prph);
 
-व्योम
-il_wr_prph(काष्ठा il_priv *il, u32 addr, u32 val)
-अणु
-	अचिन्हित दीर्घ reg_flags;
+void
+il_wr_prph(struct il_priv *il, u32 addr, u32 val)
+{
+	unsigned long reg_flags;
 
 	spin_lock_irqsave(&il->reg_lock, reg_flags);
-	अगर (likely(_il_grab_nic_access(il))) अणु
+	if (likely(_il_grab_nic_access(il))) {
 		_il_wr_prph(il, addr, val);
 		_il_release_nic_access(il);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&il->reg_lock, reg_flags);
-पूर्ण
+}
 EXPORT_SYMBOL(il_wr_prph);
 
 u32
-il_पढ़ो_targ_mem(काष्ठा il_priv *il, u32 addr)
-अणु
-	अचिन्हित दीर्घ reg_flags;
+il_read_targ_mem(struct il_priv *il, u32 addr)
+{
+	unsigned long reg_flags;
 	u32 value;
 
 	spin_lock_irqsave(&il->reg_lock, reg_flags);
@@ -165,29 +164,29 @@ il_पढ़ो_targ_mem(काष्ठा il_priv *il, u32 addr)
 
 	_il_release_nic_access(il);
 	spin_unlock_irqrestore(&il->reg_lock, reg_flags);
-	वापस value;
-पूर्ण
-EXPORT_SYMBOL(il_पढ़ो_targ_mem);
+	return value;
+}
+EXPORT_SYMBOL(il_read_targ_mem);
 
-व्योम
-il_ग_लिखो_targ_mem(काष्ठा il_priv *il, u32 addr, u32 val)
-अणु
-	अचिन्हित दीर्घ reg_flags;
+void
+il_write_targ_mem(struct il_priv *il, u32 addr, u32 val)
+{
+	unsigned long reg_flags;
 
 	spin_lock_irqsave(&il->reg_lock, reg_flags);
-	अगर (likely(_il_grab_nic_access(il))) अणु
+	if (likely(_il_grab_nic_access(il))) {
 		_il_wr(il, HBUS_TARG_MEM_WADDR, addr);
 		_il_wr(il, HBUS_TARG_MEM_WDAT, val);
 		_il_release_nic_access(il);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&il->reg_lock, reg_flags);
-पूर्ण
-EXPORT_SYMBOL(il_ग_लिखो_targ_mem);
+}
+EXPORT_SYMBOL(il_write_targ_mem);
 
-स्थिर अक्षर *
+const char *
 il_get_cmd_string(u8 cmd)
-अणु
-	चयन (cmd) अणु
+{
+	switch (cmd) {
 		IL_CMD(N_ALIVE);
 		IL_CMD(N_ERROR);
 		IL_CMD(C_RXON);
@@ -229,71 +228,71 @@ il_get_cmd_string(u8 cmd)
 		IL_CMD(N_RX_MPDU);
 		IL_CMD(N_RX);
 		IL_CMD(N_COMPRESSED_BA);
-	शेष:
-		वापस "UNKNOWN";
+	default:
+		return "UNKNOWN";
 
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(il_get_cmd_string);
 
-#घोषणा HOST_COMPLETE_TIMEOUT (HZ / 2)
+#define HOST_COMPLETE_TIMEOUT (HZ / 2)
 
-अटल व्योम
-il_generic_cmd_callback(काष्ठा il_priv *il, काष्ठा il_device_cmd *cmd,
-			काष्ठा il_rx_pkt *pkt)
-अणु
-	अगर (pkt->hdr.flags & IL_CMD_FAILED_MSK) अणु
+static void
+il_generic_cmd_callback(struct il_priv *il, struct il_device_cmd *cmd,
+			struct il_rx_pkt *pkt)
+{
+	if (pkt->hdr.flags & IL_CMD_FAILED_MSK) {
 		IL_ERR("Bad return from %s (0x%08X)\n",
 		       il_get_cmd_string(cmd->hdr.cmd), pkt->hdr.flags);
-		वापस;
-	पूर्ण
-#अगर_घोषित CONFIG_IWLEGACY_DEBUG
-	चयन (cmd->hdr.cmd) अणु
-	हाल C_TX_LINK_QUALITY_CMD:
-	हाल C_SENSITIVITY:
+		return;
+	}
+#ifdef CONFIG_IWLEGACY_DEBUG
+	switch (cmd->hdr.cmd) {
+	case C_TX_LINK_QUALITY_CMD:
+	case C_SENSITIVITY:
 		D_HC_DUMP("back from %s (0x%08X)\n",
 			  il_get_cmd_string(cmd->hdr.cmd), pkt->hdr.flags);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		D_HC("back from %s (0x%08X)\n", il_get_cmd_string(cmd->hdr.cmd),
 		     pkt->hdr.flags);
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+	}
+#endif
+}
 
-अटल पूर्णांक
-il_send_cmd_async(काष्ठा il_priv *il, काष्ठा il_host_cmd *cmd)
-अणु
-	पूर्णांक ret;
+static int
+il_send_cmd_async(struct il_priv *il, struct il_host_cmd *cmd)
+{
+	int ret;
 
 	BUG_ON(!(cmd->flags & CMD_ASYNC));
 
 	/* An asynchronous command can not expect an SKB to be set. */
 	BUG_ON(cmd->flags & CMD_WANT_SKB);
 
-	/* Assign a generic callback अगर one is not provided */
-	अगर (!cmd->callback)
+	/* Assign a generic callback if one is not provided */
+	if (!cmd->callback)
 		cmd->callback = il_generic_cmd_callback;
 
-	अगर (test_bit(S_EXIT_PENDING, &il->status))
-		वापस -EBUSY;
+	if (test_bit(S_EXIT_PENDING, &il->status))
+		return -EBUSY;
 
 	ret = il_enqueue_hcmd(il, cmd);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		IL_ERR("Error sending %s: enqueue_hcmd failed: %d\n",
 		       il_get_cmd_string(cmd->id), ret);
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret;
+	}
+	return 0;
+}
 
-पूर्णांक
-il_send_cmd_sync(काष्ठा il_priv *il, काष्ठा il_host_cmd *cmd)
-अणु
-	पूर्णांक cmd_idx;
-	पूर्णांक ret;
+int
+il_send_cmd_sync(struct il_priv *il, struct il_host_cmd *cmd)
+{
+	int cmd_idx;
+	int ret;
 
-	lockdep_निश्चित_held(&il->mutex);
+	lockdep_assert_held(&il->mutex);
 
 	BUG_ON(cmd->flags & CMD_ASYNC);
 
@@ -308,121 +307,121 @@ il_send_cmd_sync(काष्ठा il_priv *il, काष्ठा il_host_cmd 
 	       il_get_cmd_string(cmd->id));
 
 	cmd_idx = il_enqueue_hcmd(il, cmd);
-	अगर (cmd_idx < 0) अणु
+	if (cmd_idx < 0) {
 		ret = cmd_idx;
 		IL_ERR("Error sending %s: enqueue_hcmd failed: %d\n",
 		       il_get_cmd_string(cmd->id), ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = रुको_event_समयout(il->रुको_command_queue,
+	ret = wait_event_timeout(il->wait_command_queue,
 				 !test_bit(S_HCMD_ACTIVE, &il->status),
 				 HOST_COMPLETE_TIMEOUT);
-	अगर (!ret) अणु
-		अगर (test_bit(S_HCMD_ACTIVE, &il->status)) अणु
+	if (!ret) {
+		if (test_bit(S_HCMD_ACTIVE, &il->status)) {
 			IL_ERR("Error sending %s: time out after %dms.\n",
 			       il_get_cmd_string(cmd->id),
-			       jअगरfies_to_msecs(HOST_COMPLETE_TIMEOUT));
+			       jiffies_to_msecs(HOST_COMPLETE_TIMEOUT));
 
 			clear_bit(S_HCMD_ACTIVE, &il->status);
 			D_INFO("Clearing HCMD_ACTIVE for command %s\n",
 			       il_get_cmd_string(cmd->id));
 			ret = -ETIMEDOUT;
-			जाओ cancel;
-		पूर्ण
-	पूर्ण
+			goto cancel;
+		}
+	}
 
-	अगर (test_bit(S_RFKILL, &il->status)) अणु
+	if (test_bit(S_RFKILL, &il->status)) {
 		IL_ERR("Command %s aborted: RF KILL Switch\n",
 		       il_get_cmd_string(cmd->id));
 		ret = -ECANCELED;
-		जाओ fail;
-	पूर्ण
-	अगर (test_bit(S_FW_ERROR, &il->status)) अणु
+		goto fail;
+	}
+	if (test_bit(S_FW_ERROR, &il->status)) {
 		IL_ERR("Command %s failed: FW Error\n",
 		       il_get_cmd_string(cmd->id));
 		ret = -EIO;
-		जाओ fail;
-	पूर्ण
-	अगर ((cmd->flags & CMD_WANT_SKB) && !cmd->reply_page) अणु
+		goto fail;
+	}
+	if ((cmd->flags & CMD_WANT_SKB) && !cmd->reply_page) {
 		IL_ERR("Error: Response NULL in '%s'\n",
 		       il_get_cmd_string(cmd->id));
 		ret = -EIO;
-		जाओ cancel;
-	पूर्ण
+		goto cancel;
+	}
 
 	ret = 0;
-	जाओ out;
+	goto out;
 
 cancel:
-	अगर (cmd->flags & CMD_WANT_SKB) अणु
+	if (cmd->flags & CMD_WANT_SKB) {
 		/*
-		 * Cancel the CMD_WANT_SKB flag क्रम the cmd in the
-		 * TX cmd queue. Otherwise in हाल the cmd comes
+		 * Cancel the CMD_WANT_SKB flag for the cmd in the
+		 * TX cmd queue. Otherwise in case the cmd comes
 		 * in later, it will possibly set an invalid
 		 * address (cmd->meta.source).
 		 */
 		il->txq[il->cmd_queue].meta[cmd_idx].flags &= ~CMD_WANT_SKB;
-	पूर्ण
+	}
 fail:
-	अगर (cmd->reply_page) अणु
-		il_मुक्त_pages(il, cmd->reply_page);
+	if (cmd->reply_page) {
+		il_free_pages(il, cmd->reply_page);
 		cmd->reply_page = 0;
-	पूर्ण
+	}
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(il_send_cmd_sync);
 
-पूर्णांक
-il_send_cmd(काष्ठा il_priv *il, काष्ठा il_host_cmd *cmd)
-अणु
-	अगर (cmd->flags & CMD_ASYNC)
-		वापस il_send_cmd_async(il, cmd);
+int
+il_send_cmd(struct il_priv *il, struct il_host_cmd *cmd)
+{
+	if (cmd->flags & CMD_ASYNC)
+		return il_send_cmd_async(il, cmd);
 
-	वापस il_send_cmd_sync(il, cmd);
-पूर्ण
+	return il_send_cmd_sync(il, cmd);
+}
 EXPORT_SYMBOL(il_send_cmd);
 
-पूर्णांक
-il_send_cmd_pdu(काष्ठा il_priv *il, u8 id, u16 len, स्थिर व्योम *data)
-अणु
-	काष्ठा il_host_cmd cmd = अणु
+int
+il_send_cmd_pdu(struct il_priv *il, u8 id, u16 len, const void *data)
+{
+	struct il_host_cmd cmd = {
 		.id = id,
 		.len = len,
 		.data = data,
-	पूर्ण;
+	};
 
-	वापस il_send_cmd_sync(il, &cmd);
-पूर्ण
+	return il_send_cmd_sync(il, &cmd);
+}
 EXPORT_SYMBOL(il_send_cmd_pdu);
 
-पूर्णांक
-il_send_cmd_pdu_async(काष्ठा il_priv *il, u8 id, u16 len, स्थिर व्योम *data,
-		      व्योम (*callback) (काष्ठा il_priv *il,
-					काष्ठा il_device_cmd *cmd,
-					काष्ठा il_rx_pkt *pkt))
-अणु
-	काष्ठा il_host_cmd cmd = अणु
+int
+il_send_cmd_pdu_async(struct il_priv *il, u8 id, u16 len, const void *data,
+		      void (*callback) (struct il_priv *il,
+					struct il_device_cmd *cmd,
+					struct il_rx_pkt *pkt))
+{
+	struct il_host_cmd cmd = {
 		.id = id,
 		.len = len,
 		.data = data,
-	पूर्ण;
+	};
 
 	cmd.flags |= CMD_ASYNC;
 	cmd.callback = callback;
 
-	वापस il_send_cmd_async(il, &cmd);
-पूर्ण
+	return il_send_cmd_async(il, &cmd);
+}
 EXPORT_SYMBOL(il_send_cmd_pdu_async);
 
-/* शेष: IL_LED_BLINK(0) using blinking idx table */
-अटल पूर्णांक led_mode;
-module_param(led_mode, पूर्णांक, 0444);
+/* default: IL_LED_BLINK(0) using blinking idx table */
+static int led_mode;
+module_param(led_mode, int, 0444);
 MODULE_PARM_DESC(led_mode,
 		 "0=system default, " "1=On(RF On)/Off(RF Off), 2=blinking");
 
-/* Throughput		OFF समय(ms)	ON समय (ms)
+/* Throughput		OFF time(ms)	ON time (ms)
  *	>300			25		25
  *	>200 to 300		40		40
  *	>100 to 200		55		55
@@ -435,62 +434,62 @@ MODULE_PARM_DESC(led_mode,
  *	>0 to 1			167		167
  *	<=0					SOLID ON
  */
-अटल स्थिर काष्ठा ieee80211_tpt_blink il_blink[] = अणु
-	अणु.throughput = 0,		.blink_समय = 334पूर्ण,
-	अणु.throughput = 1 * 1024 - 1,	.blink_समय = 260पूर्ण,
-	अणु.throughput = 5 * 1024 - 1,	.blink_समय = 220पूर्ण,
-	अणु.throughput = 10 * 1024 - 1,	.blink_समय = 190पूर्ण,
-	अणु.throughput = 20 * 1024 - 1,	.blink_समय = 170पूर्ण,
-	अणु.throughput = 50 * 1024 - 1,	.blink_समय = 150पूर्ण,
-	अणु.throughput = 70 * 1024 - 1,	.blink_समय = 130पूर्ण,
-	अणु.throughput = 100 * 1024 - 1,	.blink_समय = 110पूर्ण,
-	अणु.throughput = 200 * 1024 - 1,	.blink_समय = 80पूर्ण,
-	अणु.throughput = 300 * 1024 - 1,	.blink_समय = 50पूर्ण,
-पूर्ण;
+static const struct ieee80211_tpt_blink il_blink[] = {
+	{.throughput = 0,		.blink_time = 334},
+	{.throughput = 1 * 1024 - 1,	.blink_time = 260},
+	{.throughput = 5 * 1024 - 1,	.blink_time = 220},
+	{.throughput = 10 * 1024 - 1,	.blink_time = 190},
+	{.throughput = 20 * 1024 - 1,	.blink_time = 170},
+	{.throughput = 50 * 1024 - 1,	.blink_time = 150},
+	{.throughput = 70 * 1024 - 1,	.blink_time = 130},
+	{.throughput = 100 * 1024 - 1,	.blink_time = 110},
+	{.throughput = 200 * 1024 - 1,	.blink_time = 80},
+	{.throughput = 300 * 1024 - 1,	.blink_time = 50},
+};
 
 /*
- * Adjust led blink rate to compensate on a MAC Clock dअगरference on every HW
+ * Adjust led blink rate to compensate on a MAC Clock difference on every HW
  * Led blink rate analysis showed an average deviation of 0% on 3945,
  * 5% on 4965 HW.
- * Need to compensate on the led on/off समय per HW according to the deviation
+ * Need to compensate on the led on/off time per HW according to the deviation
  * to achieve the desired led frequency
  * The calculation is: (100-averageDeviation)/100 * blinkTime
  * For code efficiency the calculation will be:
  *     compensation = (100 - averageDeviation) * 64 / 100
  *     NewBlinkTime = (compensation * BlinkTime) / 64
  */
-अटल अंतरभूत u8
-il_blink_compensation(काष्ठा il_priv *il, u8 समय, u16 compensation)
-अणु
-	अगर (!compensation) अणु
+static inline u8
+il_blink_compensation(struct il_priv *il, u8 time, u16 compensation)
+{
+	if (!compensation) {
 		IL_ERR("undefined blink compensation: "
 		       "use pre-defined blinking time\n");
-		वापस समय;
-	पूर्ण
+		return time;
+	}
 
-	वापस (u8) ((समय * compensation) >> 6);
-पूर्ण
+	return (u8) ((time * compensation) >> 6);
+}
 
 /* Set led pattern command */
-अटल पूर्णांक
-il_led_cmd(काष्ठा il_priv *il, अचिन्हित दीर्घ on, अचिन्हित दीर्घ off)
-अणु
-	काष्ठा il_led_cmd led_cmd = अणु
+static int
+il_led_cmd(struct il_priv *il, unsigned long on, unsigned long off)
+{
+	struct il_led_cmd led_cmd = {
 		.id = IL_LED_LINK,
-		.पूर्णांकerval = IL_DEF_LED_INTRVL
-	पूर्ण;
-	पूर्णांक ret;
+		.interval = IL_DEF_LED_INTRVL
+	};
+	int ret;
 
-	अगर (!test_bit(S_READY, &il->status))
-		वापस -EBUSY;
+	if (!test_bit(S_READY, &il->status))
+		return -EBUSY;
 
-	अगर (il->blink_on == on && il->blink_off == off)
-		वापस 0;
+	if (il->blink_on == on && il->blink_off == off)
+		return 0;
 
-	अगर (off == 0) अणु
+	if (off == 0) {
 		/* led is SOLID_ON */
 		on = IL_LED_SOLID;
-	पूर्ण
+	}
 
 	D_LED("Led blink time compensation=%u\n",
 	      il->cfg->led_compensation);
@@ -502,102 +501,102 @@ il_led_cmd(काष्ठा il_priv *il, अचिन्हित दीर्
 				  il->cfg->led_compensation);
 
 	ret = il->ops->send_led_cmd(il, &led_cmd);
-	अगर (!ret) अणु
+	if (!ret) {
 		il->blink_on = on;
 		il->blink_off = off;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल व्योम
-il_led_brightness_set(काष्ठा led_classdev *led_cdev,
-		      क्रमागत led_brightness brightness)
-अणु
-	काष्ठा il_priv *il = container_of(led_cdev, काष्ठा il_priv, led);
-	अचिन्हित दीर्घ on = 0;
+static void
+il_led_brightness_set(struct led_classdev *led_cdev,
+		      enum led_brightness brightness)
+{
+	struct il_priv *il = container_of(led_cdev, struct il_priv, led);
+	unsigned long on = 0;
 
-	अगर (brightness > 0)
+	if (brightness > 0)
 		on = IL_LED_SOLID;
 
 	il_led_cmd(il, on, 0);
-पूर्ण
+}
 
-अटल पूर्णांक
-il_led_blink_set(काष्ठा led_classdev *led_cdev, अचिन्हित दीर्घ *delay_on,
-		 अचिन्हित दीर्घ *delay_off)
-अणु
-	काष्ठा il_priv *il = container_of(led_cdev, काष्ठा il_priv, led);
+static int
+il_led_blink_set(struct led_classdev *led_cdev, unsigned long *delay_on,
+		 unsigned long *delay_off)
+{
+	struct il_priv *il = container_of(led_cdev, struct il_priv, led);
 
-	वापस il_led_cmd(il, *delay_on, *delay_off);
-पूर्ण
+	return il_led_cmd(il, *delay_on, *delay_off);
+}
 
-व्योम
-il_leds_init(काष्ठा il_priv *il)
-अणु
-	पूर्णांक mode = led_mode;
-	पूर्णांक ret;
+void
+il_leds_init(struct il_priv *il)
+{
+	int mode = led_mode;
+	int ret;
 
-	अगर (mode == IL_LED_DEFAULT)
+	if (mode == IL_LED_DEFAULT)
 		mode = il->cfg->led_mode;
 
 	il->led.name =
-	    kaप्र_लिखो(GFP_KERNEL, "%s-led", wiphy_name(il->hw->wiphy));
+	    kasprintf(GFP_KERNEL, "%s-led", wiphy_name(il->hw->wiphy));
 	il->led.brightness_set = il_led_brightness_set;
 	il->led.blink_set = il_led_blink_set;
 	il->led.max_brightness = 1;
 
-	चयन (mode) अणु
-	हाल IL_LED_DEFAULT:
+	switch (mode) {
+	case IL_LED_DEFAULT:
 		WARN_ON(1);
-		अवरोध;
-	हाल IL_LED_BLINK:
-		il->led.शेष_trigger =
+		break;
+	case IL_LED_BLINK:
+		il->led.default_trigger =
 		    ieee80211_create_tpt_led_trigger(il->hw,
 						     IEEE80211_TPT_LEDTRIG_FL_CONNECTED,
 						     il_blink,
 						     ARRAY_SIZE(il_blink));
-		अवरोध;
-	हाल IL_LED_RF_STATE:
-		il->led.शेष_trigger = ieee80211_get_radio_led_name(il->hw);
-		अवरोध;
-	पूर्ण
+		break;
+	case IL_LED_RF_STATE:
+		il->led.default_trigger = ieee80211_get_radio_led_name(il->hw);
+		break;
+	}
 
-	ret = led_classdev_रेजिस्टर(&il->pci_dev->dev, &il->led);
-	अगर (ret) अणु
-		kमुक्त(il->led.name);
-		वापस;
-	पूर्ण
+	ret = led_classdev_register(&il->pci_dev->dev, &il->led);
+	if (ret) {
+		kfree(il->led.name);
+		return;
+	}
 
-	il->led_रेजिस्टरed = true;
-पूर्ण
+	il->led_registered = true;
+}
 EXPORT_SYMBOL(il_leds_init);
 
-व्योम
-il_leds_निकास(काष्ठा il_priv *il)
-अणु
-	अगर (!il->led_रेजिस्टरed)
-		वापस;
+void
+il_leds_exit(struct il_priv *il)
+{
+	if (!il->led_registered)
+		return;
 
-	led_classdev_unरेजिस्टर(&il->led);
-	kमुक्त(il->led.name);
-पूर्ण
-EXPORT_SYMBOL(il_leds_निकास);
+	led_classdev_unregister(&il->led);
+	kfree(il->led.name);
+}
+EXPORT_SYMBOL(il_leds_exit);
 
 /************************** EEPROM BANDS ****************************
  *
  * The il_eeprom_band definitions below provide the mapping from the
- * EEPROM contents to the specअगरic channel number supported क्रम each
+ * EEPROM contents to the specific channel number supported for each
  * band.
  *
  * For example, il_priv->eeprom.band_3_channels[4] from the band_3
  * definition below maps to physical channel 42 in the 5.2GHz spectrum.
- * The specअगरic geography and calibration inक्रमmation क्रम that channel
+ * The specific geography and calibration information for that channel
  * is contained in the eeprom map itself.
  *
- * During init, we copy the eeprom inक्रमmation and channel map
- * inक्रमmation पूर्णांकo il->channel_info_24/52 and il->channel_map_24/52
+ * During init, we copy the eeprom information and channel map
+ * information into il->channel_info_24/52 and il->channel_map_24/52
  *
- * channel_map_24/52 provides the idx in the channel_info array क्रम a
+ * channel_map_24/52 provides the idx in the channel_info array for a
  * given channel.  We have to have two separate maps as there is channel
  * overlap with the 2.4GHz and 5.2GHz spectrum as seen in band_1 and
  * band_2
@@ -606,43 +605,43 @@ EXPORT_SYMBOL(il_leds_निकास);
  * is not supported by the hardware at all.
  *
  * A value of 0xfe in the channel_map indicates that the channel is not
- * valid क्रम Tx with the current hardware.  This means that
- * जबतक the प्रणाली can tune and receive on a given channel, it may not
+ * valid for Tx with the current hardware.  This means that
+ * while the system can tune and receive on a given channel, it may not
  * be able to associate or transmit any frames on that
- * channel.  There is no corresponding channel inक्रमmation क्रम that
+ * channel.  There is no corresponding channel information for that
  * entry.
  *
  *********************************************************************/
 
 /* 2.4 GHz */
-स्थिर u8 il_eeprom_band_1[14] = अणु
+const u8 il_eeprom_band_1[14] = {
 	1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
-पूर्ण;
+};
 
 /* 5.2 GHz bands */
-अटल स्थिर u8 il_eeprom_band_2[] = अणु	/* 4915-5080MHz */
+static const u8 il_eeprom_band_2[] = {	/* 4915-5080MHz */
 	183, 184, 185, 187, 188, 189, 192, 196, 7, 8, 11, 12, 16
-पूर्ण;
+};
 
-अटल स्थिर u8 il_eeprom_band_3[] = अणु	/* 5170-5320MHz */
+static const u8 il_eeprom_band_3[] = {	/* 5170-5320MHz */
 	34, 36, 38, 40, 42, 44, 46, 48, 52, 56, 60, 64
-पूर्ण;
+};
 
-अटल स्थिर u8 il_eeprom_band_4[] = अणु	/* 5500-5700MHz */
+static const u8 il_eeprom_band_4[] = {	/* 5500-5700MHz */
 	100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140
-पूर्ण;
+};
 
-अटल स्थिर u8 il_eeprom_band_5[] = अणु	/* 5725-5825MHz */
+static const u8 il_eeprom_band_5[] = {	/* 5725-5825MHz */
 	145, 149, 153, 157, 161, 165
-पूर्ण;
+};
 
-अटल स्थिर u8 il_eeprom_band_6[] = अणु	/* 2.4 ht40 channel */
+static const u8 il_eeprom_band_6[] = {	/* 2.4 ht40 channel */
 	1, 2, 3, 4, 5, 6, 7
-पूर्ण;
+};
 
-अटल स्थिर u8 il_eeprom_band_7[] = अणु	/* 5.2 ht40 channel */
+static const u8 il_eeprom_band_7[] = {	/* 5.2 ht40 channel */
 	36, 44, 52, 60, 100, 108, 116, 124, 132, 149, 157
-पूर्ण;
+};
 
 /******************************************************************************
  *
@@ -650,86 +649,86 @@ EXPORT_SYMBOL(il_leds_निकास);
  *
 ******************************************************************************/
 
-अटल पूर्णांक
-il_eeprom_verअगरy_signature(काष्ठा il_priv *il)
-अणु
+static int
+il_eeprom_verify_signature(struct il_priv *il)
+{
 	u32 gp = _il_rd(il, CSR_EEPROM_GP) & CSR_EEPROM_GP_VALID_MSK;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	D_EEPROM("EEPROM signature=0x%08x\n", gp);
-	चयन (gp) अणु
-	हाल CSR_EEPROM_GP_GOOD_SIG_EEP_LESS_THAN_4K:
-	हाल CSR_EEPROM_GP_GOOD_SIG_EEP_MORE_THAN_4K:
-		अवरोध;
-	शेष:
+	switch (gp) {
+	case CSR_EEPROM_GP_GOOD_SIG_EEP_LESS_THAN_4K:
+	case CSR_EEPROM_GP_GOOD_SIG_EEP_MORE_THAN_4K:
+		break;
+	default:
 		IL_ERR("bad EEPROM signature," "EEPROM_GP=0x%08x\n", gp);
 		ret = -ENOENT;
-		अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		break;
+	}
+	return ret;
+}
 
-स्थिर u8 *
-il_eeprom_query_addr(स्थिर काष्ठा il_priv *il, माप_प्रकार offset)
-अणु
+const u8 *
+il_eeprom_query_addr(const struct il_priv *il, size_t offset)
+{
 	BUG_ON(offset >= il->cfg->eeprom_size);
-	वापस &il->eeprom[offset];
-पूर्ण
+	return &il->eeprom[offset];
+}
 EXPORT_SYMBOL(il_eeprom_query_addr);
 
 u16
-il_eeprom_query16(स्थिर काष्ठा il_priv *il, माप_प्रकार offset)
-अणु
-	अगर (!il->eeprom)
-		वापस 0;
-	वापस (u16) il->eeprom[offset] | ((u16) il->eeprom[offset + 1] << 8);
-पूर्ण
+il_eeprom_query16(const struct il_priv *il, size_t offset)
+{
+	if (!il->eeprom)
+		return 0;
+	return (u16) il->eeprom[offset] | ((u16) il->eeprom[offset + 1] << 8);
+}
 EXPORT_SYMBOL(il_eeprom_query16);
 
 /*
- * il_eeprom_init - पढ़ो EEPROM contents
+ * il_eeprom_init - read EEPROM contents
  *
- * Load the EEPROM contents from adapter पूर्णांकo il->eeprom
+ * Load the EEPROM contents from adapter into il->eeprom
  *
  * NOTE:  This routine uses the non-debug IO access functions.
  */
-पूर्णांक
-il_eeprom_init(काष्ठा il_priv *il)
-अणु
+int
+il_eeprom_init(struct il_priv *il)
+{
 	__le16 *e;
 	u32 gp = _il_rd(il, CSR_EEPROM_GP);
-	पूर्णांक sz;
-	पूर्णांक ret;
-	पूर्णांक addr;
+	int sz;
+	int ret;
+	int addr;
 
 	/* allocate eeprom */
 	sz = il->cfg->eeprom_size;
 	D_EEPROM("NVM size = %d\n", sz);
 	il->eeprom = kzalloc(sz, GFP_KERNEL);
-	अगर (!il->eeprom)
-		वापस -ENOMEM;
+	if (!il->eeprom)
+		return -ENOMEM;
 
 	e = (__le16 *) il->eeprom;
 
 	il->ops->apm_init(il);
 
-	ret = il_eeprom_verअगरy_signature(il);
-	अगर (ret < 0) अणु
+	ret = il_eeprom_verify_signature(il);
+	if (ret < 0) {
 		IL_ERR("EEPROM not found, EEPROM_GP=0x%08x\n", gp);
 		ret = -ENOENT;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	/* Make sure driver (instead of uCode) is allowed to पढ़ो EEPROM */
+	/* Make sure driver (instead of uCode) is allowed to read EEPROM */
 	ret = il->ops->eeprom_acquire_semaphore(il);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		IL_ERR("Failed to acquire EEPROM semaphore.\n");
 		ret = -ENOENT;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/* eeprom is an array of 16bit values */
-	क्रम (addr = 0; addr < sz; addr += माप(u16)) अणु
+	for (addr = 0; addr < sz; addr += sizeof(u16)) {
 		u32 r;
 
 		_il_wr(il, CSR_EEPROM_REG,
@@ -740,120 +739,120 @@ il_eeprom_init(काष्ठा il_priv *il)
 				 CSR_EEPROM_REG_READ_VALID_MSK,
 				 CSR_EEPROM_REG_READ_VALID_MSK,
 				 IL_EEPROM_ACCESS_TIMEOUT);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			IL_ERR("Time out reading EEPROM[%d]\n", addr);
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 		r = _il_rd(il, CSR_EEPROM_REG);
 		e[addr / 2] = cpu_to_le16(r >> 16);
-	पूर्ण
+	}
 
 	D_EEPROM("NVM Type: %s, version: 0x%x\n", "EEPROM",
 		 il_eeprom_query16(il, EEPROM_VERSION));
 
 	ret = 0;
-करोne:
+done:
 	il->ops->eeprom_release_semaphore(il);
 
 err:
-	अगर (ret)
-		il_eeprom_मुक्त(il);
-	/* Reset chip to save घातer until we load uCode during "up". */
+	if (ret)
+		il_eeprom_free(il);
+	/* Reset chip to save power until we load uCode during "up". */
 	il_apm_stop(il);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(il_eeprom_init);
 
-व्योम
-il_eeprom_मुक्त(काष्ठा il_priv *il)
-अणु
-	kमुक्त(il->eeprom);
-	il->eeprom = शून्य;
-पूर्ण
-EXPORT_SYMBOL(il_eeprom_मुक्त);
+void
+il_eeprom_free(struct il_priv *il)
+{
+	kfree(il->eeprom);
+	il->eeprom = NULL;
+}
+EXPORT_SYMBOL(il_eeprom_free);
 
-अटल व्योम
-il_init_band_reference(स्थिर काष्ठा il_priv *il, पूर्णांक eep_band,
-		       पूर्णांक *eeprom_ch_count,
-		       स्थिर काष्ठा il_eeprom_channel **eeprom_ch_info,
-		       स्थिर u8 **eeprom_ch_idx)
-अणु
+static void
+il_init_band_reference(const struct il_priv *il, int eep_band,
+		       int *eeprom_ch_count,
+		       const struct il_eeprom_channel **eeprom_ch_info,
+		       const u8 **eeprom_ch_idx)
+{
 	u32 offset = il->cfg->regulatory_bands[eep_band - 1];
 
-	चयन (eep_band) अणु
-	हाल 1:		/* 2.4GHz band */
+	switch (eep_band) {
+	case 1:		/* 2.4GHz band */
 		*eeprom_ch_count = ARRAY_SIZE(il_eeprom_band_1);
 		*eeprom_ch_info =
-		    (काष्ठा il_eeprom_channel *)il_eeprom_query_addr(il,
+		    (struct il_eeprom_channel *)il_eeprom_query_addr(il,
 								     offset);
 		*eeprom_ch_idx = il_eeprom_band_1;
-		अवरोध;
-	हाल 2:		/* 4.9GHz band */
+		break;
+	case 2:		/* 4.9GHz band */
 		*eeprom_ch_count = ARRAY_SIZE(il_eeprom_band_2);
 		*eeprom_ch_info =
-		    (काष्ठा il_eeprom_channel *)il_eeprom_query_addr(il,
+		    (struct il_eeprom_channel *)il_eeprom_query_addr(il,
 								     offset);
 		*eeprom_ch_idx = il_eeprom_band_2;
-		अवरोध;
-	हाल 3:		/* 5.2GHz band */
+		break;
+	case 3:		/* 5.2GHz band */
 		*eeprom_ch_count = ARRAY_SIZE(il_eeprom_band_3);
 		*eeprom_ch_info =
-		    (काष्ठा il_eeprom_channel *)il_eeprom_query_addr(il,
+		    (struct il_eeprom_channel *)il_eeprom_query_addr(il,
 								     offset);
 		*eeprom_ch_idx = il_eeprom_band_3;
-		अवरोध;
-	हाल 4:		/* 5.5GHz band */
+		break;
+	case 4:		/* 5.5GHz band */
 		*eeprom_ch_count = ARRAY_SIZE(il_eeprom_band_4);
 		*eeprom_ch_info =
-		    (काष्ठा il_eeprom_channel *)il_eeprom_query_addr(il,
+		    (struct il_eeprom_channel *)il_eeprom_query_addr(il,
 								     offset);
 		*eeprom_ch_idx = il_eeprom_band_4;
-		अवरोध;
-	हाल 5:		/* 5.7GHz band */
+		break;
+	case 5:		/* 5.7GHz band */
 		*eeprom_ch_count = ARRAY_SIZE(il_eeprom_band_5);
 		*eeprom_ch_info =
-		    (काष्ठा il_eeprom_channel *)il_eeprom_query_addr(il,
+		    (struct il_eeprom_channel *)il_eeprom_query_addr(il,
 								     offset);
 		*eeprom_ch_idx = il_eeprom_band_5;
-		अवरोध;
-	हाल 6:		/* 2.4GHz ht40 channels */
+		break;
+	case 6:		/* 2.4GHz ht40 channels */
 		*eeprom_ch_count = ARRAY_SIZE(il_eeprom_band_6);
 		*eeprom_ch_info =
-		    (काष्ठा il_eeprom_channel *)il_eeprom_query_addr(il,
+		    (struct il_eeprom_channel *)il_eeprom_query_addr(il,
 								     offset);
 		*eeprom_ch_idx = il_eeprom_band_6;
-		अवरोध;
-	हाल 7:		/* 5 GHz ht40 channels */
+		break;
+	case 7:		/* 5 GHz ht40 channels */
 		*eeprom_ch_count = ARRAY_SIZE(il_eeprom_band_7);
 		*eeprom_ch_info =
-		    (काष्ठा il_eeprom_channel *)il_eeprom_query_addr(il,
+		    (struct il_eeprom_channel *)il_eeprom_query_addr(il,
 								     offset);
 		*eeprom_ch_idx = il_eeprom_band_7;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा CHECK_AND_PRINT(x) ((eeprom_ch->flags & EEPROM_CHANNEL_##x) \
+#define CHECK_AND_PRINT(x) ((eeprom_ch->flags & EEPROM_CHANNEL_##x) \
 			    ? # x " " : "")
 /*
- * il_mod_ht40_chan_info - Copy ht40 channel info पूर्णांकo driver's il.
+ * il_mod_ht40_chan_info - Copy ht40 channel info into driver's il.
  *
  * Does not set up a command, or touch hardware.
  */
-अटल पूर्णांक
-il_mod_ht40_chan_info(काष्ठा il_priv *il, क्रमागत nl80211_band band, u16 channel,
-		      स्थिर काष्ठा il_eeprom_channel *eeprom_ch,
+static int
+il_mod_ht40_chan_info(struct il_priv *il, enum nl80211_band band, u16 channel,
+		      const struct il_eeprom_channel *eeprom_ch,
 		      u8 clear_ht40_extension_channel)
-अणु
-	काष्ठा il_channel_info *ch_info;
+{
+	struct il_channel_info *ch_info;
 
 	ch_info =
-	    (काष्ठा il_channel_info *)il_get_channel_info(il, band, channel);
+	    (struct il_channel_info *)il_get_channel_info(il, band, channel);
 
-	अगर (!il_is_channel_valid(ch_info))
-		वापस -1;
+	if (!il_is_channel_valid(ch_info))
+		return -1;
 
 	D_EEPROM("HT40 Ch. %d [%sGHz] %s%s%s%s%s(0x%02x %ddBm):"
 		 " Ad-Hoc %ssupported\n", ch_info->channel,
@@ -861,39 +860,39 @@ il_mod_ht40_chan_info(काष्ठा il_priv *il, क्रमागत nl80
 		 CHECK_AND_PRINT(IBSS), CHECK_AND_PRINT(ACTIVE),
 		 CHECK_AND_PRINT(RADAR), CHECK_AND_PRINT(WIDE),
 		 CHECK_AND_PRINT(DFS), eeprom_ch->flags,
-		 eeprom_ch->max_घातer_avg,
+		 eeprom_ch->max_power_avg,
 		 ((eeprom_ch->flags & EEPROM_CHANNEL_IBSS) &&
 		  !(eeprom_ch->flags & EEPROM_CHANNEL_RADAR)) ? "" : "not ");
 
 	ch_info->ht40_eeprom = *eeprom_ch;
-	ch_info->ht40_max_घातer_avg = eeprom_ch->max_घातer_avg;
+	ch_info->ht40_max_power_avg = eeprom_ch->max_power_avg;
 	ch_info->ht40_flags = eeprom_ch->flags;
-	अगर (eeprom_ch->flags & EEPROM_CHANNEL_VALID)
+	if (eeprom_ch->flags & EEPROM_CHANNEL_VALID)
 		ch_info->ht40_extension_channel &=
 		    ~clear_ht40_extension_channel;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा CHECK_AND_PRINT_I(x) ((eeprom_ch_info[ch].flags & EEPROM_CHANNEL_##x) \
+#define CHECK_AND_PRINT_I(x) ((eeprom_ch_info[ch].flags & EEPROM_CHANNEL_##x) \
 			    ? # x " " : "")
 
 /*
- * il_init_channel_map - Set up driver's info क्रम all possible channels
+ * il_init_channel_map - Set up driver's info for all possible channels
  */
-पूर्णांक
-il_init_channel_map(काष्ठा il_priv *il)
-अणु
-	पूर्णांक eeprom_ch_count = 0;
-	स्थिर u8 *eeprom_ch_idx = शून्य;
-	स्थिर काष्ठा il_eeprom_channel *eeprom_ch_info = शून्य;
-	पूर्णांक band, ch;
-	काष्ठा il_channel_info *ch_info;
+int
+il_init_channel_map(struct il_priv *il)
+{
+	int eeprom_ch_count = 0;
+	const u8 *eeprom_ch_idx = NULL;
+	const struct il_eeprom_channel *eeprom_ch_info = NULL;
+	int band, ch;
+	struct il_channel_info *ch_info;
 
-	अगर (il->channel_count) अणु
+	if (il->channel_count) {
 		D_EEPROM("Channel map already initialized.\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	D_EEPROM("Initializing regulatory info from EEPROM\n");
 
@@ -905,58 +904,58 @@ il_init_channel_map(काष्ठा il_priv *il)
 	D_EEPROM("Parsing data for %d channels.\n", il->channel_count);
 
 	il->channel_info =
-	    kसुस्मृति(il->channel_count, माप(काष्ठा il_channel_info),
+	    kcalloc(il->channel_count, sizeof(struct il_channel_info),
 		    GFP_KERNEL);
-	अगर (!il->channel_info) अणु
+	if (!il->channel_info) {
 		IL_ERR("Could not allocate channel_info\n");
 		il->channel_count = 0;
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ch_info = il->channel_info;
 
 	/* Loop through the 5 EEPROM bands adding them in order to the
-	 * channel map we मुख्यtain (that contains additional inक्रमmation than
+	 * channel map we maintain (that contains additional information than
 	 * what just in the EEPROM) */
-	क्रम (band = 1; band <= 5; band++) अणु
+	for (band = 1; band <= 5; band++) {
 
 		il_init_band_reference(il, band, &eeprom_ch_count,
 				       &eeprom_ch_info, &eeprom_ch_idx);
 
 		/* Loop through each band adding each of the channels */
-		क्रम (ch = 0; ch < eeprom_ch_count; ch++) अणु
+		for (ch = 0; ch < eeprom_ch_count; ch++) {
 			ch_info->channel = eeprom_ch_idx[ch];
 			ch_info->band =
 			    (band ==
 			     1) ? NL80211_BAND_2GHZ : NL80211_BAND_5GHZ;
 
 			/* permanently store EEPROM's channel regulatory flags
-			 *   and max घातer in channel info database. */
+			 *   and max power in channel info database. */
 			ch_info->eeprom = eeprom_ch_info[ch];
 
-			/* Copy the run-समय flags so they are there even on
+			/* Copy the run-time flags so they are there even on
 			 * invalid channels */
 			ch_info->flags = eeprom_ch_info[ch].flags;
-			/* First ग_लिखो that ht40 is not enabled, and then enable
+			/* First write that ht40 is not enabled, and then enable
 			 * one by one */
 			ch_info->ht40_extension_channel =
 			    IEEE80211_CHAN_NO_HT40;
 
-			अगर (!(il_is_channel_valid(ch_info))) अणु
+			if (!(il_is_channel_valid(ch_info))) {
 				D_EEPROM("Ch. %d Flags %x [%sGHz] - "
 					 "No traffic\n", ch_info->channel,
 					 ch_info->flags,
 					 il_is_channel_a_band(ch_info) ? "5.2" :
 					 "2.4");
 				ch_info++;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			/* Initialize regulatory-based run-समय data */
-			ch_info->max_घातer_avg = ch_info->curr_txघात =
-			    eeprom_ch_info[ch].max_घातer_avg;
-			ch_info->scan_घातer = eeprom_ch_info[ch].max_घातer_avg;
-			ch_info->min_घातer = 0;
+			/* Initialize regulatory-based run-time data */
+			ch_info->max_power_avg = ch_info->curr_txpow =
+			    eeprom_ch_info[ch].max_power_avg;
+			ch_info->scan_power = eeprom_ch_info[ch].max_power_avg;
+			ch_info->min_power = 0;
 
 			D_EEPROM("Ch. %d [%sGHz] " "%s%s%s%s%s%s(0x%02x %ddBm):"
 				 " Ad-Hoc %ssupported\n", ch_info->channel,
@@ -968,7 +967,7 @@ il_init_channel_map(काष्ठा il_priv *il)
 				 CHECK_AND_PRINT_I(WIDE),
 				 CHECK_AND_PRINT_I(DFS),
 				 eeprom_ch_info[ch].flags,
-				 eeprom_ch_info[ch].max_घातer_avg,
+				 eeprom_ch_info[ch].max_power_avg,
 				 ((eeprom_ch_info[ch].
 				   flags & EEPROM_CHANNEL_IBSS) &&
 				  !(eeprom_ch_info[ch].
@@ -976,17 +975,17 @@ il_init_channel_map(काष्ठा il_priv *il)
 				 "not ");
 
 			ch_info++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Check अगर we करो have HT40 channels */
-	अगर (il->cfg->regulatory_bands[5] == EEPROM_REGULATORY_BAND_NO_HT40 &&
+	/* Check if we do have HT40 channels */
+	if (il->cfg->regulatory_bands[5] == EEPROM_REGULATORY_BAND_NO_HT40 &&
 	    il->cfg->regulatory_bands[6] == EEPROM_REGULATORY_BAND_NO_HT40)
-		वापस 0;
+		return 0;
 
-	/* Two additional EEPROM bands क्रम 2.4 and 5 GHz HT40 channels */
-	क्रम (band = 6; band <= 7; band++) अणु
-		क्रमागत nl80211_band ieeeband;
+	/* Two additional EEPROM bands for 2.4 and 5 GHz HT40 channels */
+	for (band = 6; band <= 7; band++) {
+		enum nl80211_band ieeeband;
 
 		il_init_band_reference(il, band, &eeprom_ch_count,
 				       &eeprom_ch_info, &eeprom_ch_idx);
@@ -996,486 +995,486 @@ il_init_channel_map(काष्ठा il_priv *il)
 		    (band == 6) ? NL80211_BAND_2GHZ : NL80211_BAND_5GHZ;
 
 		/* Loop through each band adding each of the channels */
-		क्रम (ch = 0; ch < eeprom_ch_count; ch++) अणु
-			/* Set up driver's info क्रम lower half */
+		for (ch = 0; ch < eeprom_ch_count; ch++) {
+			/* Set up driver's info for lower half */
 			il_mod_ht40_chan_info(il, ieeeband, eeprom_ch_idx[ch],
 					      &eeprom_ch_info[ch],
 					      IEEE80211_CHAN_NO_HT40PLUS);
 
-			/* Set up driver's info क्रम upper half */
+			/* Set up driver's info for upper half */
 			il_mod_ht40_chan_info(il, ieeeband,
 					      eeprom_ch_idx[ch] + 4,
 					      &eeprom_ch_info[ch],
 					      IEEE80211_CHAN_NO_HT40MINUS);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(il_init_channel_map);
 
 /*
- * il_मुक्त_channel_map - unकरो allocations in il_init_channel_map
+ * il_free_channel_map - undo allocations in il_init_channel_map
  */
-व्योम
-il_मुक्त_channel_map(काष्ठा il_priv *il)
-अणु
-	kमुक्त(il->channel_info);
+void
+il_free_channel_map(struct il_priv *il)
+{
+	kfree(il->channel_info);
 	il->channel_count = 0;
-पूर्ण
-EXPORT_SYMBOL(il_मुक्त_channel_map);
+}
+EXPORT_SYMBOL(il_free_channel_map);
 
 /*
  * il_get_channel_info - Find driver's ilate channel info
  *
  * Based on band and channel number.
  */
-स्थिर काष्ठा il_channel_info *
-il_get_channel_info(स्थिर काष्ठा il_priv *il, क्रमागत nl80211_band band,
+const struct il_channel_info *
+il_get_channel_info(const struct il_priv *il, enum nl80211_band band,
 		    u16 channel)
-अणु
-	पूर्णांक i;
+{
+	int i;
 
-	चयन (band) अणु
-	हाल NL80211_BAND_5GHZ:
-		क्रम (i = 14; i < il->channel_count; i++) अणु
-			अगर (il->channel_info[i].channel == channel)
-				वापस &il->channel_info[i];
-		पूर्ण
-		अवरोध;
-	हाल NL80211_BAND_2GHZ:
-		अगर (channel >= 1 && channel <= 14)
-			वापस &il->channel_info[channel - 1];
-		अवरोध;
-	शेष:
+	switch (band) {
+	case NL80211_BAND_5GHZ:
+		for (i = 14; i < il->channel_count; i++) {
+			if (il->channel_info[i].channel == channel)
+				return &il->channel_info[i];
+		}
+		break;
+	case NL80211_BAND_2GHZ:
+		if (channel >= 1 && channel <= 14)
+			return &il->channel_info[channel - 1];
+		break;
+	default:
 		BUG();
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL(il_get_channel_info);
 
 /*
- * Setting घातer level allows the card to go to sleep when not busy.
+ * Setting power level allows the card to go to sleep when not busy.
  *
  * We calculate a sleep command based on the required latency, which
  * we get from mac80211.
  */
 
-#घोषणा SLP_VEC(X0, X1, X2, X3, X4) अणु \
+#define SLP_VEC(X0, X1, X2, X3, X4) { \
 		cpu_to_le32(X0), \
 		cpu_to_le32(X1), \
 		cpu_to_le32(X2), \
 		cpu_to_le32(X3), \
 		cpu_to_le32(X4)  \
-पूर्ण
+}
 
-अटल व्योम
-il_build_घातertable_cmd(काष्ठा il_priv *il, काष्ठा il_घातertable_cmd *cmd)
-अणु
-	अटल स्थिर __le32 पूर्णांकerval[3][IL_POWER_VEC_SIZE] = अणु
+static void
+il_build_powertable_cmd(struct il_priv *il, struct il_powertable_cmd *cmd)
+{
+	static const __le32 interval[3][IL_POWER_VEC_SIZE] = {
 		SLP_VEC(2, 2, 4, 6, 0xFF),
 		SLP_VEC(2, 4, 7, 10, 10),
 		SLP_VEC(4, 7, 10, 10, 0xFF)
-	पूर्ण;
-	पूर्णांक i, dtim_period, no_dtim;
+	};
+	int i, dtim_period, no_dtim;
 	u32 max_sleep;
 	bool skip;
 
-	स_रखो(cmd, 0, माप(*cmd));
+	memset(cmd, 0, sizeof(*cmd));
 
-	अगर (il->घातer_data.pci_pm)
+	if (il->power_data.pci_pm)
 		cmd->flags |= IL_POWER_PCI_PM_MSK;
 
-	/* अगर no Power Save, we are करोne */
-	अगर (il->घातer_data.ps_disabled)
-		वापस;
+	/* if no Power Save, we are done */
+	if (il->power_data.ps_disabled)
+		return;
 
 	cmd->flags = IL_POWER_DRIVER_ALLOW_SLEEP_MSK;
 	cmd->keep_alive_seconds = 0;
 	cmd->debug_flags = 0;
-	cmd->rx_data_समयout = cpu_to_le32(25 * 1024);
-	cmd->tx_data_समयout = cpu_to_le32(25 * 1024);
+	cmd->rx_data_timeout = cpu_to_le32(25 * 1024);
+	cmd->tx_data_timeout = cpu_to_le32(25 * 1024);
 	cmd->keep_alive_beacons = 0;
 
-	dtim_period = il->vअगर ? il->vअगर->bss_conf.dtim_period : 0;
+	dtim_period = il->vif ? il->vif->bss_conf.dtim_period : 0;
 
-	अगर (dtim_period <= 2) अणु
-		स_नकल(cmd->sleep_पूर्णांकerval, पूर्णांकerval[0], माप(पूर्णांकerval[0]));
+	if (dtim_period <= 2) {
+		memcpy(cmd->sleep_interval, interval[0], sizeof(interval[0]));
 		no_dtim = 2;
-	पूर्ण अन्यथा अगर (dtim_period <= 10) अणु
-		स_नकल(cmd->sleep_पूर्णांकerval, पूर्णांकerval[1], माप(पूर्णांकerval[1]));
+	} else if (dtim_period <= 10) {
+		memcpy(cmd->sleep_interval, interval[1], sizeof(interval[1]));
 		no_dtim = 2;
-	पूर्ण अन्यथा अणु
-		स_नकल(cmd->sleep_पूर्णांकerval, पूर्णांकerval[2], माप(पूर्णांकerval[2]));
+	} else {
+		memcpy(cmd->sleep_interval, interval[2], sizeof(interval[2]));
 		no_dtim = 0;
-	पूर्ण
+	}
 
-	अगर (dtim_period == 0) अणु
+	if (dtim_period == 0) {
 		dtim_period = 1;
 		skip = false;
-	पूर्ण अन्यथा अणु
+	} else {
 		skip = !!no_dtim;
-	पूर्ण
+	}
 
-	अगर (skip) अणु
-		__le32 पंचांगp = cmd->sleep_पूर्णांकerval[IL_POWER_VEC_SIZE - 1];
+	if (skip) {
+		__le32 tmp = cmd->sleep_interval[IL_POWER_VEC_SIZE - 1];
 
-		max_sleep = le32_to_cpu(पंचांगp);
-		अगर (max_sleep == 0xFF)
+		max_sleep = le32_to_cpu(tmp);
+		if (max_sleep == 0xFF)
 			max_sleep = dtim_period * (skip + 1);
-		अन्यथा अगर (max_sleep >  dtim_period)
+		else if (max_sleep >  dtim_period)
 			max_sleep = (max_sleep / dtim_period) * dtim_period;
 		cmd->flags |= IL_POWER_SLEEP_OVER_DTIM_MSK;
-	पूर्ण अन्यथा अणु
+	} else {
 		max_sleep = dtim_period;
 		cmd->flags &= ~IL_POWER_SLEEP_OVER_DTIM_MSK;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < IL_POWER_VEC_SIZE; i++)
-		अगर (le32_to_cpu(cmd->sleep_पूर्णांकerval[i]) > max_sleep)
-			cmd->sleep_पूर्णांकerval[i] = cpu_to_le32(max_sleep);
-पूर्ण
+	for (i = 0; i < IL_POWER_VEC_SIZE; i++)
+		if (le32_to_cpu(cmd->sleep_interval[i]) > max_sleep)
+			cmd->sleep_interval[i] = cpu_to_le32(max_sleep);
+}
 
-अटल पूर्णांक
-il_set_घातer(काष्ठा il_priv *il, काष्ठा il_घातertable_cmd *cmd)
-अणु
+static int
+il_set_power(struct il_priv *il, struct il_powertable_cmd *cmd)
+{
 	D_POWER("Sending power/sleep command\n");
 	D_POWER("Flags value = 0x%08X\n", cmd->flags);
-	D_POWER("Tx timeout = %u\n", le32_to_cpu(cmd->tx_data_समयout));
-	D_POWER("Rx timeout = %u\n", le32_to_cpu(cmd->rx_data_समयout));
+	D_POWER("Tx timeout = %u\n", le32_to_cpu(cmd->tx_data_timeout));
+	D_POWER("Rx timeout = %u\n", le32_to_cpu(cmd->rx_data_timeout));
 	D_POWER("Sleep interval vector = { %d , %d , %d , %d , %d }\n",
-		le32_to_cpu(cmd->sleep_पूर्णांकerval[0]),
-		le32_to_cpu(cmd->sleep_पूर्णांकerval[1]),
-		le32_to_cpu(cmd->sleep_पूर्णांकerval[2]),
-		le32_to_cpu(cmd->sleep_पूर्णांकerval[3]),
-		le32_to_cpu(cmd->sleep_पूर्णांकerval[4]));
+		le32_to_cpu(cmd->sleep_interval[0]),
+		le32_to_cpu(cmd->sleep_interval[1]),
+		le32_to_cpu(cmd->sleep_interval[2]),
+		le32_to_cpu(cmd->sleep_interval[3]),
+		le32_to_cpu(cmd->sleep_interval[4]));
 
-	वापस il_send_cmd_pdu(il, C_POWER_TBL,
-			       माप(काष्ठा il_घातertable_cmd), cmd);
-पूर्ण
+	return il_send_cmd_pdu(il, C_POWER_TBL,
+			       sizeof(struct il_powertable_cmd), cmd);
+}
 
-अटल पूर्णांक
-il_घातer_set_mode(काष्ठा il_priv *il, काष्ठा il_घातertable_cmd *cmd, bool क्रमce)
-अणु
-	पूर्णांक ret;
+static int
+il_power_set_mode(struct il_priv *il, struct il_powertable_cmd *cmd, bool force)
+{
+	int ret;
 	bool update_chains;
 
-	lockdep_निश्चित_held(&il->mutex);
+	lockdep_assert_held(&il->mutex);
 
 	/* Don't update the RX chain when chain noise calibration is running */
 	update_chains = il->chain_noise_data.state == IL_CHAIN_NOISE_DONE ||
 	    il->chain_noise_data.state == IL_CHAIN_NOISE_ALIVE;
 
-	अगर (!स_भेद(&il->घातer_data.sleep_cmd, cmd, माप(*cmd)) && !क्रमce)
-		वापस 0;
+	if (!memcmp(&il->power_data.sleep_cmd, cmd, sizeof(*cmd)) && !force)
+		return 0;
 
-	अगर (!il_is_पढ़ोy_rf(il))
-		वापस -EIO;
+	if (!il_is_ready_rf(il))
+		return -EIO;
 
-	/* scan complete use sleep_घातer_next, need to be updated */
-	स_नकल(&il->घातer_data.sleep_cmd_next, cmd, माप(*cmd));
-	अगर (test_bit(S_SCANNING, &il->status) && !क्रमce) अणु
+	/* scan complete use sleep_power_next, need to be updated */
+	memcpy(&il->power_data.sleep_cmd_next, cmd, sizeof(*cmd));
+	if (test_bit(S_SCANNING, &il->status) && !force) {
 		D_INFO("Defer power set mode while scanning\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (cmd->flags & IL_POWER_DRIVER_ALLOW_SLEEP_MSK)
+	if (cmd->flags & IL_POWER_DRIVER_ALLOW_SLEEP_MSK)
 		set_bit(S_POWER_PMI, &il->status);
 
-	ret = il_set_घातer(il, cmd);
-	अगर (!ret) अणु
-		अगर (!(cmd->flags & IL_POWER_DRIVER_ALLOW_SLEEP_MSK))
+	ret = il_set_power(il, cmd);
+	if (!ret) {
+		if (!(cmd->flags & IL_POWER_DRIVER_ALLOW_SLEEP_MSK))
 			clear_bit(S_POWER_PMI, &il->status);
 
-		अगर (il->ops->update_chain_flags && update_chains)
+		if (il->ops->update_chain_flags && update_chains)
 			il->ops->update_chain_flags(il);
-		अन्यथा अगर (il->ops->update_chain_flags)
+		else if (il->ops->update_chain_flags)
 			D_POWER("Cannot update the power, chain noise "
 				"calibration running: %d\n",
 				il->chain_noise_data.state);
 
-		स_नकल(&il->घातer_data.sleep_cmd, cmd, माप(*cmd));
-	पूर्ण अन्यथा
+		memcpy(&il->power_data.sleep_cmd, cmd, sizeof(*cmd));
+	} else
 		IL_ERR("set power fail, ret = %d", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक
-il_घातer_update_mode(काष्ठा il_priv *il, bool क्रमce)
-अणु
-	काष्ठा il_घातertable_cmd cmd;
+int
+il_power_update_mode(struct il_priv *il, bool force)
+{
+	struct il_powertable_cmd cmd;
 
-	il_build_घातertable_cmd(il, &cmd);
+	il_build_powertable_cmd(il, &cmd);
 
-	वापस il_घातer_set_mode(il, &cmd, क्रमce);
-पूर्ण
-EXPORT_SYMBOL(il_घातer_update_mode);
+	return il_power_set_mode(il, &cmd, force);
+}
+EXPORT_SYMBOL(il_power_update_mode);
 
-/* initialize to शेष */
-व्योम
-il_घातer_initialize(काष्ठा il_priv *il)
-अणु
+/* initialize to default */
+void
+il_power_initialize(struct il_priv *il)
+{
 	u16 lctl;
 
-	pcie_capability_पढ़ो_word(il->pci_dev, PCI_EXP_LNKCTL, &lctl);
-	il->घातer_data.pci_pm = !(lctl & PCI_EXP_LNKCTL_ASPM_L0S);
+	pcie_capability_read_word(il->pci_dev, PCI_EXP_LNKCTL, &lctl);
+	il->power_data.pci_pm = !(lctl & PCI_EXP_LNKCTL_ASPM_L0S);
 
-	il->घातer_data.debug_sleep_level_override = -1;
+	il->power_data.debug_sleep_level_override = -1;
 
-	स_रखो(&il->घातer_data.sleep_cmd, 0, माप(il->घातer_data.sleep_cmd));
-पूर्ण
-EXPORT_SYMBOL(il_घातer_initialize);
+	memset(&il->power_data.sleep_cmd, 0, sizeof(il->power_data.sleep_cmd));
+}
+EXPORT_SYMBOL(il_power_initialize);
 
 /* For active scan, listen ACTIVE_DWELL_TIME (msec) on each channel after
- * sending probe req.  This should be set दीर्घ enough to hear probe responses
+ * sending probe req.  This should be set long enough to hear probe responses
  * from more than one AP.  */
-#घोषणा IL_ACTIVE_DWELL_TIME_24    (30)	/* all बार in msec */
-#घोषणा IL_ACTIVE_DWELL_TIME_52    (20)
+#define IL_ACTIVE_DWELL_TIME_24    (30)	/* all times in msec */
+#define IL_ACTIVE_DWELL_TIME_52    (20)
 
-#घोषणा IL_ACTIVE_DWELL_FACTOR_24GHZ (3)
-#घोषणा IL_ACTIVE_DWELL_FACTOR_52GHZ (2)
+#define IL_ACTIVE_DWELL_FACTOR_24GHZ (3)
+#define IL_ACTIVE_DWELL_FACTOR_52GHZ (2)
 
 /* For passive scan, listen PASSIVE_DWELL_TIME (msec) on each channel.
- * Must be set दीर्घer than active dwell समय.
- * For the most reliable scan, set > AP beacon पूर्णांकerval (typically 100msec). */
-#घोषणा IL_PASSIVE_DWELL_TIME_24   (20)	/* all बार in msec */
-#घोषणा IL_PASSIVE_DWELL_TIME_52   (10)
-#घोषणा IL_PASSIVE_DWELL_BASE      (100)
-#घोषणा IL_CHANNEL_TUNE_TIME       5
+ * Must be set longer than active dwell time.
+ * For the most reliable scan, set > AP beacon interval (typically 100msec). */
+#define IL_PASSIVE_DWELL_TIME_24   (20)	/* all times in msec */
+#define IL_PASSIVE_DWELL_TIME_52   (10)
+#define IL_PASSIVE_DWELL_BASE      (100)
+#define IL_CHANNEL_TUNE_TIME       5
 
-अटल पूर्णांक
-il_send_scan_पात(काष्ठा il_priv *il)
-अणु
-	पूर्णांक ret;
-	काष्ठा il_rx_pkt *pkt;
-	काष्ठा il_host_cmd cmd = अणु
+static int
+il_send_scan_abort(struct il_priv *il)
+{
+	int ret;
+	struct il_rx_pkt *pkt;
+	struct il_host_cmd cmd = {
 		.id = C_SCAN_ABORT,
 		.flags = CMD_WANT_SKB,
-	पूर्ण;
+	};
 
-	/* Exit instantly with error when device is not पढ़ोy
-	 * to receive scan पात command or it करोes not perक्रमm
+	/* Exit instantly with error when device is not ready
+	 * to receive scan abort command or it does not perform
 	 * hardware scan currently */
-	अगर (!test_bit(S_READY, &il->status) ||
+	if (!test_bit(S_READY, &il->status) ||
 	    !test_bit(S_GEO_CONFIGURED, &il->status) ||
 	    !test_bit(S_SCAN_HW, &il->status) ||
 	    test_bit(S_FW_ERROR, &il->status) ||
 	    test_bit(S_EXIT_PENDING, &il->status))
-		वापस -EIO;
+		return -EIO;
 
 	ret = il_send_cmd_sync(il, &cmd);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	pkt = (काष्ठा il_rx_pkt *)cmd.reply_page;
-	अगर (pkt->u.status != CAN_ABORT_STATUS) अणु
-		/* The scan पात will वापस 1 क्रम success or
-		 * 2 क्रम "failure".  A failure condition can be
+	pkt = (struct il_rx_pkt *)cmd.reply_page;
+	if (pkt->u.status != CAN_ABORT_STATUS) {
+		/* The scan abort will return 1 for success or
+		 * 2 for "failure".  A failure condition can be
 		 * due to simply not being in an active scan which
-		 * can occur अगर we send the scan पात beक्रमe we
-		 * the microcode has notअगरied us that a scan is
+		 * can occur if we send the scan abort before we
+		 * the microcode has notified us that a scan is
 		 * completed. */
 		D_SCAN("SCAN_ABORT ret %d.\n", pkt->u.status);
 		ret = -EIO;
-	पूर्ण
+	}
 
-	il_मुक्त_pages(il, cmd.reply_page);
-	वापस ret;
-पूर्ण
+	il_free_pages(il, cmd.reply_page);
+	return ret;
+}
 
-अटल व्योम
-il_complete_scan(काष्ठा il_priv *il, bool पातed)
-अणु
-	काष्ठा cfg80211_scan_info info = अणु
-		.पातed = पातed,
-	पूर्ण;
+static void
+il_complete_scan(struct il_priv *il, bool aborted)
+{
+	struct cfg80211_scan_info info = {
+		.aborted = aborted,
+	};
 
-	/* check अगर scan was requested from mac80211 */
-	अगर (il->scan_request) अणु
+	/* check if scan was requested from mac80211 */
+	if (il->scan_request) {
 		D_SCAN("Complete scan in mac80211\n");
 		ieee80211_scan_completed(il->hw, &info);
-	पूर्ण
+	}
 
-	il->scan_vअगर = शून्य;
-	il->scan_request = शून्य;
-पूर्ण
+	il->scan_vif = NULL;
+	il->scan_request = NULL;
+}
 
-व्योम
-il_क्रमce_scan_end(काष्ठा il_priv *il)
-अणु
-	lockdep_निश्चित_held(&il->mutex);
+void
+il_force_scan_end(struct il_priv *il)
+{
+	lockdep_assert_held(&il->mutex);
 
-	अगर (!test_bit(S_SCANNING, &il->status)) अणु
+	if (!test_bit(S_SCANNING, &il->status)) {
 		D_SCAN("Forcing scan end while not scanning\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	D_SCAN("Forcing scan end\n");
 	clear_bit(S_SCANNING, &il->status);
 	clear_bit(S_SCAN_HW, &il->status);
 	clear_bit(S_SCAN_ABORTING, &il->status);
 	il_complete_scan(il, true);
-पूर्ण
+}
 
-अटल व्योम
-il_करो_scan_पात(काष्ठा il_priv *il)
-अणु
-	पूर्णांक ret;
+static void
+il_do_scan_abort(struct il_priv *il)
+{
+	int ret;
 
-	lockdep_निश्चित_held(&il->mutex);
+	lockdep_assert_held(&il->mutex);
 
-	अगर (!test_bit(S_SCANNING, &il->status)) अणु
+	if (!test_bit(S_SCANNING, &il->status)) {
 		D_SCAN("Not performing scan to abort\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (test_and_set_bit(S_SCAN_ABORTING, &il->status)) अणु
+	if (test_and_set_bit(S_SCAN_ABORTING, &il->status)) {
 		D_SCAN("Scan abort in progress\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	ret = il_send_scan_पात(il);
-	अगर (ret) अणु
+	ret = il_send_scan_abort(il);
+	if (ret) {
 		D_SCAN("Send scan abort failed %d\n", ret);
-		il_क्रमce_scan_end(il);
-	पूर्ण अन्यथा
+		il_force_scan_end(il);
+	} else
 		D_SCAN("Successfully send scan abort\n");
-पूर्ण
+}
 
 /*
  * il_scan_cancel - Cancel any currently executing HW scan
  */
-पूर्णांक
-il_scan_cancel(काष्ठा il_priv *il)
-अणु
+int
+il_scan_cancel(struct il_priv *il)
+{
 	D_SCAN("Queuing abort scan\n");
-	queue_work(il->workqueue, &il->पात_scan);
-	वापस 0;
-पूर्ण
+	queue_work(il->workqueue, &il->abort_scan);
+	return 0;
+}
 EXPORT_SYMBOL(il_scan_cancel);
 
 /*
- * il_scan_cancel_समयout - Cancel any currently executing HW scan
- * @ms: amount of समय to रुको (in milliseconds) क्रम scan to पात
+ * il_scan_cancel_timeout - Cancel any currently executing HW scan
+ * @ms: amount of time to wait (in milliseconds) for scan to abort
  *
  */
-पूर्णांक
-il_scan_cancel_समयout(काष्ठा il_priv *il, अचिन्हित दीर्घ ms)
-अणु
-	अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(ms);
+int
+il_scan_cancel_timeout(struct il_priv *il, unsigned long ms)
+{
+	unsigned long timeout = jiffies + msecs_to_jiffies(ms);
 
-	lockdep_निश्चित_held(&il->mutex);
+	lockdep_assert_held(&il->mutex);
 
 	D_SCAN("Scan cancel timeout\n");
 
-	il_करो_scan_पात(il);
+	il_do_scan_abort(il);
 
-	जबतक (समय_beक्रमe_eq(jअगरfies, समयout)) अणु
-		अगर (!test_bit(S_SCAN_HW, &il->status))
-			अवरोध;
+	while (time_before_eq(jiffies, timeout)) {
+		if (!test_bit(S_SCAN_HW, &il->status))
+			break;
 		msleep(20);
-	पूर्ण
+	}
 
-	वापस test_bit(S_SCAN_HW, &il->status);
-पूर्ण
-EXPORT_SYMBOL(il_scan_cancel_समयout);
+	return test_bit(S_SCAN_HW, &il->status);
+}
+EXPORT_SYMBOL(il_scan_cancel_timeout);
 
 /* Service response to C_SCAN (0x80) */
-अटल व्योम
-il_hdl_scan(काष्ठा il_priv *il, काष्ठा il_rx_buf *rxb)
-अणु
-#अगर_घोषित CONFIG_IWLEGACY_DEBUG
-	काष्ठा il_rx_pkt *pkt = rxb_addr(rxb);
-	काष्ठा il_scanreq_notअगरication *notअगर =
-	    (काष्ठा il_scanreq_notअगरication *)pkt->u.raw;
+static void
+il_hdl_scan(struct il_priv *il, struct il_rx_buf *rxb)
+{
+#ifdef CONFIG_IWLEGACY_DEBUG
+	struct il_rx_pkt *pkt = rxb_addr(rxb);
+	struct il_scanreq_notification *notif =
+	    (struct il_scanreq_notification *)pkt->u.raw;
 
-	D_SCAN("Scan request status = 0x%x\n", notअगर->status);
-#पूर्ण_अगर
-पूर्ण
+	D_SCAN("Scan request status = 0x%x\n", notif->status);
+#endif
+}
 
 /* Service N_SCAN_START (0x82) */
-अटल व्योम
-il_hdl_scan_start(काष्ठा il_priv *il, काष्ठा il_rx_buf *rxb)
-अणु
-	काष्ठा il_rx_pkt *pkt = rxb_addr(rxb);
-	काष्ठा il_scanstart_notअगरication *notअगर =
-	    (काष्ठा il_scanstart_notअगरication *)pkt->u.raw;
-	il->scan_start_tsf = le32_to_cpu(notअगर->tsf_low);
+static void
+il_hdl_scan_start(struct il_priv *il, struct il_rx_buf *rxb)
+{
+	struct il_rx_pkt *pkt = rxb_addr(rxb);
+	struct il_scanstart_notification *notif =
+	    (struct il_scanstart_notification *)pkt->u.raw;
+	il->scan_start_tsf = le32_to_cpu(notif->tsf_low);
 	D_SCAN("Scan start: " "%d [802.11%s] "
-	       "(TSF: 0x%08X:%08X) - %d (beacon timer %u)\n", notअगर->channel,
-	       notअगर->band ? "bg" : "a", le32_to_cpu(notअगर->tsf_high),
-	       le32_to_cpu(notअगर->tsf_low), notअगर->status, notअगर->beacon_समयr);
-पूर्ण
+	       "(TSF: 0x%08X:%08X) - %d (beacon timer %u)\n", notif->channel,
+	       notif->band ? "bg" : "a", le32_to_cpu(notif->tsf_high),
+	       le32_to_cpu(notif->tsf_low), notif->status, notif->beacon_timer);
+}
 
 /* Service N_SCAN_RESULTS (0x83) */
-अटल व्योम
-il_hdl_scan_results(काष्ठा il_priv *il, काष्ठा il_rx_buf *rxb)
-अणु
-#अगर_घोषित CONFIG_IWLEGACY_DEBUG
-	काष्ठा il_rx_pkt *pkt = rxb_addr(rxb);
-	काष्ठा il_scanresults_notअगरication *notअगर =
-	    (काष्ठा il_scanresults_notअगरication *)pkt->u.raw;
+static void
+il_hdl_scan_results(struct il_priv *il, struct il_rx_buf *rxb)
+{
+#ifdef CONFIG_IWLEGACY_DEBUG
+	struct il_rx_pkt *pkt = rxb_addr(rxb);
+	struct il_scanresults_notification *notif =
+	    (struct il_scanresults_notification *)pkt->u.raw;
 
 	D_SCAN("Scan ch.res: " "%d [802.11%s] " "(TSF: 0x%08X:%08X) - %d "
-	       "elapsed=%lu usec\n", notअगर->channel, notअगर->band ? "bg" : "a",
-	       le32_to_cpu(notअगर->tsf_high), le32_to_cpu(notअगर->tsf_low),
-	       le32_to_cpu(notअगर->stats[0]),
-	       le32_to_cpu(notअगर->tsf_low) - il->scan_start_tsf);
-#पूर्ण_अगर
-पूर्ण
+	       "elapsed=%lu usec\n", notif->channel, notif->band ? "bg" : "a",
+	       le32_to_cpu(notif->tsf_high), le32_to_cpu(notif->tsf_low),
+	       le32_to_cpu(notif->stats[0]),
+	       le32_to_cpu(notif->tsf_low) - il->scan_start_tsf);
+#endif
+}
 
 /* Service N_SCAN_COMPLETE (0x84) */
-अटल व्योम
-il_hdl_scan_complete(काष्ठा il_priv *il, काष्ठा il_rx_buf *rxb)
-अणु
+static void
+il_hdl_scan_complete(struct il_priv *il, struct il_rx_buf *rxb)
+{
 
-	काष्ठा il_rx_pkt *pkt = rxb_addr(rxb);
-	काष्ठा il_scancomplete_notअगरication *scan_notअगर = (व्योम *)pkt->u.raw;
+	struct il_rx_pkt *pkt = rxb_addr(rxb);
+	struct il_scancomplete_notification *scan_notif = (void *)pkt->u.raw;
 
 	D_SCAN("Scan complete: %d channels (TSF 0x%08X:%08X) - %d\n",
-	       scan_notअगर->scanned_channels, scan_notअगर->tsf_low,
-	       scan_notअगर->tsf_high, scan_notअगर->status);
+	       scan_notif->scanned_channels, scan_notif->tsf_low,
+	       scan_notif->tsf_high, scan_notif->status);
 
-	/* The HW is no दीर्घer scanning */
+	/* The HW is no longer scanning */
 	clear_bit(S_SCAN_HW, &il->status);
 
 	D_SCAN("Scan on %sGHz took %dms\n",
 	       (il->scan_band == NL80211_BAND_2GHZ) ? "2.4" : "5.2",
-	       jअगरfies_to_msecs(jअगरfies - il->scan_start));
+	       jiffies_to_msecs(jiffies - il->scan_start));
 
 	queue_work(il->workqueue, &il->scan_completed);
-पूर्ण
+}
 
-व्योम
-il_setup_rx_scan_handlers(काष्ठा il_priv *il)
-अणु
+void
+il_setup_rx_scan_handlers(struct il_priv *il)
+{
 	/* scan handlers */
 	il->handlers[C_SCAN] = il_hdl_scan;
 	il->handlers[N_SCAN_START] = il_hdl_scan_start;
 	il->handlers[N_SCAN_RESULTS] = il_hdl_scan_results;
 	il->handlers[N_SCAN_COMPLETE] = il_hdl_scan_complete;
-पूर्ण
+}
 EXPORT_SYMBOL(il_setup_rx_scan_handlers);
 
 u16
-il_get_active_dwell_समय(काष्ठा il_priv *il, क्रमागत nl80211_band band,
+il_get_active_dwell_time(struct il_priv *il, enum nl80211_band band,
 			 u8 n_probes)
-अणु
-	अगर (band == NL80211_BAND_5GHZ)
-		वापस IL_ACTIVE_DWELL_TIME_52 +
+{
+	if (band == NL80211_BAND_5GHZ)
+		return IL_ACTIVE_DWELL_TIME_52 +
 		    IL_ACTIVE_DWELL_FACTOR_52GHZ * (n_probes + 1);
-	अन्यथा
-		वापस IL_ACTIVE_DWELL_TIME_24 +
+	else
+		return IL_ACTIVE_DWELL_TIME_24 +
 		    IL_ACTIVE_DWELL_FACTOR_24GHZ * (n_probes + 1);
-पूर्ण
-EXPORT_SYMBOL(il_get_active_dwell_समय);
+}
+EXPORT_SYMBOL(il_get_active_dwell_time);
 
 u16
-il_get_passive_dwell_समय(काष्ठा il_priv *il, क्रमागत nl80211_band band,
-			  काष्ठा ieee80211_vअगर *vअगर)
-अणु
+il_get_passive_dwell_time(struct il_priv *il, enum nl80211_band band,
+			  struct ieee80211_vif *vif)
+{
 	u16 value;
 
 	u16 passive =
@@ -1484,147 +1483,147 @@ il_get_passive_dwell_समय(काष्ठा il_priv *il, क्रमा�
 	    IL_PASSIVE_DWELL_TIME_24 : IL_PASSIVE_DWELL_BASE +
 	    IL_PASSIVE_DWELL_TIME_52;
 
-	अगर (il_is_any_associated(il)) अणु
+	if (il_is_any_associated(il)) {
 		/*
 		 * If we're associated, we clamp the maximum passive
-		 * dwell समय to be 98% of the smallest beacon पूर्णांकerval
-		 * (minus 2 * channel tune समय)
+		 * dwell time to be 98% of the smallest beacon interval
+		 * (minus 2 * channel tune time)
 		 */
-		value = il->vअगर ? il->vअगर->bss_conf.beacon_पूर्णांक : 0;
-		अगर (value > IL_PASSIVE_DWELL_BASE || !value)
+		value = il->vif ? il->vif->bss_conf.beacon_int : 0;
+		if (value > IL_PASSIVE_DWELL_BASE || !value)
 			value = IL_PASSIVE_DWELL_BASE;
 		value = (value * 98) / 100 - IL_CHANNEL_TUNE_TIME * 2;
 		passive = min(value, passive);
-	पूर्ण
+	}
 
-	वापस passive;
-पूर्ण
-EXPORT_SYMBOL(il_get_passive_dwell_समय);
+	return passive;
+}
+EXPORT_SYMBOL(il_get_passive_dwell_time);
 
-व्योम
-il_init_scan_params(काष्ठा il_priv *il)
-अणु
+void
+il_init_scan_params(struct il_priv *il)
+{
 	u8 ant_idx = fls(il->hw_params.valid_tx_ant) - 1;
-	अगर (!il->scan_tx_ant[NL80211_BAND_5GHZ])
+	if (!il->scan_tx_ant[NL80211_BAND_5GHZ])
 		il->scan_tx_ant[NL80211_BAND_5GHZ] = ant_idx;
-	अगर (!il->scan_tx_ant[NL80211_BAND_2GHZ])
+	if (!il->scan_tx_ant[NL80211_BAND_2GHZ])
 		il->scan_tx_ant[NL80211_BAND_2GHZ] = ant_idx;
-पूर्ण
+}
 EXPORT_SYMBOL(il_init_scan_params);
 
-अटल पूर्णांक
-il_scan_initiate(काष्ठा il_priv *il, काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	पूर्णांक ret;
+static int
+il_scan_initiate(struct il_priv *il, struct ieee80211_vif *vif)
+{
+	int ret;
 
-	lockdep_निश्चित_held(&il->mutex);
+	lockdep_assert_held(&il->mutex);
 
 	cancel_delayed_work(&il->scan_check);
 
-	अगर (!il_is_पढ़ोy_rf(il)) अणु
+	if (!il_is_ready_rf(il)) {
 		IL_WARN("Request scan called when driver not ready.\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (test_bit(S_SCAN_HW, &il->status)) अणु
+	if (test_bit(S_SCAN_HW, &il->status)) {
 		D_SCAN("Multiple concurrent scan requests in parallel.\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	अगर (test_bit(S_SCAN_ABORTING, &il->status)) अणु
+	if (test_bit(S_SCAN_ABORTING, &il->status)) {
 		D_SCAN("Scan request while abort pending.\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	D_SCAN("Starting scan...\n");
 
 	set_bit(S_SCANNING, &il->status);
-	il->scan_start = jअगरfies;
+	il->scan_start = jiffies;
 
-	ret = il->ops->request_scan(il, vअगर);
-	अगर (ret) अणु
+	ret = il->ops->request_scan(il, vif);
+	if (ret) {
 		clear_bit(S_SCANNING, &il->status);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	queue_delayed_work(il->workqueue, &il->scan_check,
 			   IL_SCAN_CHECK_WATCHDOG);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-il_mac_hw_scan(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
-	       काष्ठा ieee80211_scan_request *hw_req)
-अणु
-	काष्ठा cfg80211_scan_request *req = &hw_req->req;
-	काष्ठा il_priv *il = hw->priv;
-	पूर्णांक ret;
+int
+il_mac_hw_scan(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+	       struct ieee80211_scan_request *hw_req)
+{
+	struct cfg80211_scan_request *req = &hw_req->req;
+	struct il_priv *il = hw->priv;
+	int ret;
 
-	अगर (req->n_channels == 0) अणु
+	if (req->n_channels == 0) {
 		IL_ERR("Can not scan on no channels.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_lock(&il->mutex);
 	D_MAC80211("enter\n");
 
-	अगर (test_bit(S_SCANNING, &il->status)) अणु
+	if (test_bit(S_SCANNING, &il->status)) {
 		D_SCAN("Scan already in progress.\n");
 		ret = -EAGAIN;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	/* mac80211 will only ask क्रम one band at a समय */
+	/* mac80211 will only ask for one band at a time */
 	il->scan_request = req;
-	il->scan_vअगर = vअगर;
+	il->scan_vif = vif;
 	il->scan_band = req->channels[0]->band;
 
-	ret = il_scan_initiate(il, vअगर);
+	ret = il_scan_initiate(il, vif);
 
 out_unlock:
 	D_MAC80211("leave ret %d\n", ret);
 	mutex_unlock(&il->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(il_mac_hw_scan);
 
-अटल व्योम
-il_bg_scan_check(काष्ठा work_काष्ठा *data)
-अणु
-	काष्ठा il_priv *il =
-	    container_of(data, काष्ठा il_priv, scan_check.work);
+static void
+il_bg_scan_check(struct work_struct *data)
+{
+	struct il_priv *il =
+	    container_of(data, struct il_priv, scan_check.work);
 
 	D_SCAN("Scan check work\n");
 
-	/* Since we are here firmware करोes not finish scan and
-	 * most likely is in bad shape, so we करोn't bother to
-	 * send पात command, just क्रमce scan complete to mac80211 */
+	/* Since we are here firmware does not finish scan and
+	 * most likely is in bad shape, so we don't bother to
+	 * send abort command, just force scan complete to mac80211 */
 	mutex_lock(&il->mutex);
-	il_क्रमce_scan_end(il);
+	il_force_scan_end(il);
 	mutex_unlock(&il->mutex);
-पूर्ण
+}
 
 /*
- * il_fill_probe_req - fill in all required fields and IE क्रम probe request
+ * il_fill_probe_req - fill in all required fields and IE for probe request
  */
 u16
-il_fill_probe_req(काष्ठा il_priv *il, काष्ठा ieee80211_mgmt *frame,
-		  स्थिर u8 *ta, स्थिर u8 *ies, पूर्णांक ie_len, पूर्णांक left)
-अणु
-	पूर्णांक len = 0;
-	u8 *pos = शून्य;
+il_fill_probe_req(struct il_priv *il, struct ieee80211_mgmt *frame,
+		  const u8 *ta, const u8 *ies, int ie_len, int left)
+{
+	int len = 0;
+	u8 *pos = NULL;
 
-	/* Make sure there is enough space क्रम the probe request,
+	/* Make sure there is enough space for the probe request,
 	 * two mandatory IEs and the data */
 	left -= 24;
-	अगर (left < 0)
-		वापस 0;
+	if (left < 0)
+		return 0;
 
 	frame->frame_control = cpu_to_le16(IEEE80211_STYPE_PROBE_REQ);
 	eth_broadcast_addr(frame->da);
-	स_नकल(frame->sa, ta, ETH_ALEN);
+	memcpy(frame->sa, ta, ETH_ALEN);
 	eth_broadcast_addr(frame->bssid);
 	frame->seq_ctrl = 0;
 
@@ -1635,44 +1634,44 @@ il_fill_probe_req(काष्ठा il_priv *il, काष्ठा ieee80211_m
 
 	/* fill in our indirect SSID IE */
 	left -= 2;
-	अगर (left < 0)
-		वापस 0;
+	if (left < 0)
+		return 0;
 	*pos++ = WLAN_EID_SSID;
 	*pos++ = 0;
 
 	len += 2;
 
-	अगर (WARN_ON(left < ie_len))
-		वापस len;
+	if (WARN_ON(left < ie_len))
+		return len;
 
-	अगर (ies && ie_len) अणु
-		स_नकल(pos, ies, ie_len);
+	if (ies && ie_len) {
+		memcpy(pos, ies, ie_len);
 		len += ie_len;
-	पूर्ण
+	}
 
-	वापस (u16) len;
-पूर्ण
+	return (u16) len;
+}
 EXPORT_SYMBOL(il_fill_probe_req);
 
-अटल व्योम
-il_bg_पात_scan(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा il_priv *il = container_of(work, काष्ठा il_priv, पात_scan);
+static void
+il_bg_abort_scan(struct work_struct *work)
+{
+	struct il_priv *il = container_of(work, struct il_priv, abort_scan);
 
 	D_SCAN("Abort scan work\n");
 
-	/* We keep scan_check work queued in हाल when firmware will not
-	 * report back scan completed notअगरication */
+	/* We keep scan_check work queued in case when firmware will not
+	 * report back scan completed notification */
 	mutex_lock(&il->mutex);
-	il_scan_cancel_समयout(il, 200);
+	il_scan_cancel_timeout(il, 200);
 	mutex_unlock(&il->mutex);
-पूर्ण
+}
 
-अटल व्योम
-il_bg_scan_completed(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा il_priv *il = container_of(work, काष्ठा il_priv, scan_completed);
-	bool पातed;
+static void
+il_bg_scan_completed(struct work_struct *work)
+{
+	struct il_priv *il = container_of(work, struct il_priv, scan_completed);
+	bool aborted;
 
 	D_SCAN("Completed scan.\n");
 
@@ -1680,116 +1679,116 @@ il_bg_scan_completed(काष्ठा work_काष्ठा *work)
 
 	mutex_lock(&il->mutex);
 
-	पातed = test_and_clear_bit(S_SCAN_ABORTING, &il->status);
-	अगर (पातed)
+	aborted = test_and_clear_bit(S_SCAN_ABORTING, &il->status);
+	if (aborted)
 		D_SCAN("Aborted scan completed.\n");
 
-	अगर (!test_and_clear_bit(S_SCANNING, &il->status)) अणु
+	if (!test_and_clear_bit(S_SCANNING, &il->status)) {
 		D_SCAN("Scan already completed.\n");
-		जाओ out_settings;
-	पूर्ण
+		goto out_settings;
+	}
 
-	il_complete_scan(il, पातed);
+	il_complete_scan(il, aborted);
 
 out_settings:
 	/* Can we still talk to firmware ? */
-	अगर (!il_is_पढ़ोy_rf(il))
-		जाओ out;
+	if (!il_is_ready_rf(il))
+		goto out;
 
 	/*
-	 * We करो not commit घातer settings जबतक scan is pending,
-	 * करो it now अगर the settings changed.
+	 * We do not commit power settings while scan is pending,
+	 * do it now if the settings changed.
 	 */
-	il_घातer_set_mode(il, &il->घातer_data.sleep_cmd_next, false);
-	il_set_tx_घातer(il, il->tx_घातer_next, false);
+	il_power_set_mode(il, &il->power_data.sleep_cmd_next, false);
+	il_set_tx_power(il, il->tx_power_next, false);
 
 	il->ops->post_scan(il);
 
 out:
 	mutex_unlock(&il->mutex);
-पूर्ण
+}
 
-व्योम
-il_setup_scan_deferred_work(काष्ठा il_priv *il)
-अणु
+void
+il_setup_scan_deferred_work(struct il_priv *il)
+{
 	INIT_WORK(&il->scan_completed, il_bg_scan_completed);
-	INIT_WORK(&il->पात_scan, il_bg_पात_scan);
+	INIT_WORK(&il->abort_scan, il_bg_abort_scan);
 	INIT_DELAYED_WORK(&il->scan_check, il_bg_scan_check);
-पूर्ण
+}
 EXPORT_SYMBOL(il_setup_scan_deferred_work);
 
-व्योम
-il_cancel_scan_deferred_work(काष्ठा il_priv *il)
-अणु
-	cancel_work_sync(&il->पात_scan);
+void
+il_cancel_scan_deferred_work(struct il_priv *il)
+{
+	cancel_work_sync(&il->abort_scan);
 	cancel_work_sync(&il->scan_completed);
 
-	अगर (cancel_delayed_work_sync(&il->scan_check)) अणु
+	if (cancel_delayed_work_sync(&il->scan_check)) {
 		mutex_lock(&il->mutex);
-		il_क्रमce_scan_end(il);
+		il_force_scan_end(il);
 		mutex_unlock(&il->mutex);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(il_cancel_scan_deferred_work);
 
 /* il->sta_lock must be held */
-अटल व्योम
-il_sta_ucode_activate(काष्ठा il_priv *il, u8 sta_id)
-अणु
+static void
+il_sta_ucode_activate(struct il_priv *il, u8 sta_id)
+{
 
-	अगर (!(il->stations[sta_id].used & IL_STA_DRIVER_ACTIVE))
+	if (!(il->stations[sta_id].used & IL_STA_DRIVER_ACTIVE))
 		IL_ERR("ACTIVATE a non DRIVER active station id %u addr %pM\n",
 		       sta_id, il->stations[sta_id].sta.sta.addr);
 
-	अगर (il->stations[sta_id].used & IL_STA_UCODE_ACTIVE) अणु
+	if (il->stations[sta_id].used & IL_STA_UCODE_ACTIVE) {
 		D_ASSOC("STA id %u addr %pM already present"
 			" in uCode (according to driver)\n", sta_id,
 			il->stations[sta_id].sta.sta.addr);
-	पूर्ण अन्यथा अणु
+	} else {
 		il->stations[sta_id].used |= IL_STA_UCODE_ACTIVE;
 		D_ASSOC("Added STA id %u addr %pM to uCode\n", sta_id,
 			il->stations[sta_id].sta.sta.addr);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक
-il_process_add_sta_resp(काष्ठा il_priv *il, काष्ठा il_addsta_cmd *addsta,
-			काष्ठा il_rx_pkt *pkt, bool sync)
-अणु
+static int
+il_process_add_sta_resp(struct il_priv *il, struct il_addsta_cmd *addsta,
+			struct il_rx_pkt *pkt, bool sync)
+{
 	u8 sta_id = addsta->sta.sta_id;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = -EIO;
+	unsigned long flags;
+	int ret = -EIO;
 
-	अगर (pkt->hdr.flags & IL_CMD_FAILED_MSK) अणु
+	if (pkt->hdr.flags & IL_CMD_FAILED_MSK) {
 		IL_ERR("Bad return from C_ADD_STA (0x%08X)\n", pkt->hdr.flags);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	D_INFO("Processing response for adding station %u\n", sta_id);
 
 	spin_lock_irqsave(&il->sta_lock, flags);
 
-	चयन (pkt->u.add_sta.status) अणु
-	हाल ADD_STA_SUCCESS_MSK:
+	switch (pkt->u.add_sta.status) {
+	case ADD_STA_SUCCESS_MSK:
 		D_INFO("C_ADD_STA PASSED\n");
 		il_sta_ucode_activate(il, sta_id);
 		ret = 0;
-		अवरोध;
-	हाल ADD_STA_NO_ROOM_IN_TBL:
+		break;
+	case ADD_STA_NO_ROOM_IN_TBL:
 		IL_ERR("Adding station %d failed, no room in table.\n", sta_id);
-		अवरोध;
-	हाल ADD_STA_NO_BLOCK_ACK_RESOURCE:
+		break;
+	case ADD_STA_NO_BLOCK_ACK_RESOURCE:
 		IL_ERR("Adding station %d failed, no block ack resource.\n",
 		       sta_id);
-		अवरोध;
-	हाल ADD_STA_MODIFY_NON_EXIST_STA:
+		break;
+	case ADD_STA_MODIFY_NON_EXIST_STA:
 		IL_ERR("Attempting to modify non-existing station %d\n",
 		       sta_id);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		D_ASSOC("Received C_ADD_STA:(0x%08X)\n", pkt->u.add_sta.status);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	D_INFO("%s station id %u addr %pM\n",
 	       il->stations[sta_id].sta.mode ==
@@ -1800,7 +1799,7 @@ il_process_add_sta_resp(काष्ठा il_priv *il, काष्ठा il_ad
 	 * XXX: The MAC address in the command buffer is often changed from
 	 * the original sent to the device. That is, the MAC address
 	 * written to the command buffer often is not the same MAC address
-	 * पढ़ो from the command buffer when the command वापसs. This
+	 * read from the command buffer when the command returns. This
 	 * issue has not yet been resolved and this debugging is left to
 	 * observe the problem.
 	 */
@@ -1809,66 +1808,66 @@ il_process_add_sta_resp(काष्ठा il_priv *il, काष्ठा il_ad
 	       STA_CONTROL_MODIFY_MSK ? "Modified" : "Added", addsta->sta.addr);
 	spin_unlock_irqrestore(&il->sta_lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम
-il_add_sta_callback(काष्ठा il_priv *il, काष्ठा il_device_cmd *cmd,
-		    काष्ठा il_rx_pkt *pkt)
-अणु
-	काष्ठा il_addsta_cmd *addsta = (काष्ठा il_addsta_cmd *)cmd->cmd.payload;
+static void
+il_add_sta_callback(struct il_priv *il, struct il_device_cmd *cmd,
+		    struct il_rx_pkt *pkt)
+{
+	struct il_addsta_cmd *addsta = (struct il_addsta_cmd *)cmd->cmd.payload;
 
 	il_process_add_sta_resp(il, addsta, pkt, false);
 
-पूर्ण
+}
 
-पूर्णांक
-il_send_add_sta(काष्ठा il_priv *il, काष्ठा il_addsta_cmd *sta, u8 flags)
-अणु
-	काष्ठा il_rx_pkt *pkt = शून्य;
-	पूर्णांक ret = 0;
-	u8 data[माप(*sta)];
-	काष्ठा il_host_cmd cmd = अणु
+int
+il_send_add_sta(struct il_priv *il, struct il_addsta_cmd *sta, u8 flags)
+{
+	struct il_rx_pkt *pkt = NULL;
+	int ret = 0;
+	u8 data[sizeof(*sta)];
+	struct il_host_cmd cmd = {
 		.id = C_ADD_STA,
 		.flags = flags,
 		.data = data,
-	पूर्ण;
+	};
 	u8 sta_id __maybe_unused = sta->sta.sta_id;
 
 	D_INFO("Adding sta %u (%pM) %ssynchronously\n", sta_id, sta->sta.addr,
 	       flags & CMD_ASYNC ? "a" : "");
 
-	अगर (flags & CMD_ASYNC)
+	if (flags & CMD_ASYNC)
 		cmd.callback = il_add_sta_callback;
-	अन्यथा अणु
+	else {
 		cmd.flags |= CMD_WANT_SKB;
 		might_sleep();
-	पूर्ण
+	}
 
 	cmd.len = il->ops->build_addsta_hcmd(sta, data);
 	ret = il_send_cmd(il, &cmd);
-	अगर (ret)
-		वापस ret;
-	अगर (flags & CMD_ASYNC)
-		वापस 0;
+	if (ret)
+		return ret;
+	if (flags & CMD_ASYNC)
+		return 0;
 
-	pkt = (काष्ठा il_rx_pkt *)cmd.reply_page;
+	pkt = (struct il_rx_pkt *)cmd.reply_page;
 	ret = il_process_add_sta_resp(il, sta, pkt, true);
 
-	il_मुक्त_pages(il, cmd.reply_page);
+	il_free_pages(il, cmd.reply_page);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(il_send_add_sta);
 
-अटल व्योम
-il_set_ht_add_station(काष्ठा il_priv *il, u8 idx, काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा ieee80211_sta_ht_cap *sta_ht_inf = &sta->ht_cap;
+static void
+il_set_ht_add_station(struct il_priv *il, u8 idx, struct ieee80211_sta *sta)
+{
+	struct ieee80211_sta_ht_cap *sta_ht_inf = &sta->ht_cap;
 	__le32 sta_flags;
 
-	अगर (!sta || !sta_ht_inf->ht_supported)
-		जाओ करोne;
+	if (!sta || !sta_ht_inf->ht_supported)
+		goto done;
 
 	D_ASSOC("spatial multiplexing power save mode: %s\n",
 		(sta->smps_mode == IEEE80211_SMPS_STATIC) ? "static" :
@@ -1879,19 +1878,19 @@ il_set_ht_add_station(काष्ठा il_priv *il, u8 idx, काष्ठा
 
 	sta_flags &= ~(STA_FLG_RTS_MIMO_PROT_MSK | STA_FLG_MIMO_DIS_MSK);
 
-	चयन (sta->smps_mode) अणु
-	हाल IEEE80211_SMPS_STATIC:
+	switch (sta->smps_mode) {
+	case IEEE80211_SMPS_STATIC:
 		sta_flags |= STA_FLG_MIMO_DIS_MSK;
-		अवरोध;
-	हाल IEEE80211_SMPS_DYNAMIC:
+		break;
+	case IEEE80211_SMPS_DYNAMIC:
 		sta_flags |= STA_FLG_RTS_MIMO_PROT_MSK;
-		अवरोध;
-	हाल IEEE80211_SMPS_OFF:
-		अवरोध;
-	शेष:
+		break;
+	case IEEE80211_SMPS_OFF:
+		break;
+	default:
 		IL_WARN("Invalid MIMO PS mode %d\n", sta->smps_mode);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	sta_flags |=
 	    cpu_to_le32((u32) sta_ht_inf->
@@ -1901,71 +1900,71 @@ il_set_ht_add_station(काष्ठा il_priv *il, u8 idx, काष्ठा
 	    cpu_to_le32((u32) sta_ht_inf->
 			ampdu_density << STA_FLG_AGG_MPDU_DENSITY_POS);
 
-	अगर (il_is_ht40_tx_allowed(il, &sta->ht_cap))
+	if (il_is_ht40_tx_allowed(il, &sta->ht_cap))
 		sta_flags |= STA_FLG_HT40_EN_MSK;
-	अन्यथा
+	else
 		sta_flags &= ~STA_FLG_HT40_EN_MSK;
 
 	il->stations[idx].sta.station_flags = sta_flags;
-करोne:
-	वापस;
-पूर्ण
+done:
+	return;
+}
 
 /*
- * il_prep_station - Prepare station inक्रमmation क्रम addition
+ * il_prep_station - Prepare station information for addition
  *
  * should be called with sta_lock held
  */
 u8
-il_prep_station(काष्ठा il_priv *il, स्थिर u8 *addr, bool is_ap,
-		काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा il_station_entry *station;
-	पूर्णांक i;
+il_prep_station(struct il_priv *il, const u8 *addr, bool is_ap,
+		struct ieee80211_sta *sta)
+{
+	struct il_station_entry *station;
+	int i;
 	u8 sta_id = IL_INVALID_STATION;
 	u16 rate;
 
-	अगर (is_ap)
+	if (is_ap)
 		sta_id = IL_AP_ID;
-	अन्यथा अगर (is_broadcast_ether_addr(addr))
+	else if (is_broadcast_ether_addr(addr))
 		sta_id = il->hw_params.bcast_id;
-	अन्यथा
-		क्रम (i = IL_STA_ID; i < il->hw_params.max_stations; i++) अणु
-			अगर (ether_addr_equal(il->stations[i].sta.sta.addr,
-					     addr)) अणु
+	else
+		for (i = IL_STA_ID; i < il->hw_params.max_stations; i++) {
+			if (ether_addr_equal(il->stations[i].sta.sta.addr,
+					     addr)) {
 				sta_id = i;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			अगर (!il->stations[i].used &&
+			if (!il->stations[i].used &&
 			    sta_id == IL_INVALID_STATION)
 				sta_id = i;
-		पूर्ण
+		}
 
 	/*
 	 * These two conditions have the same outcome, but keep them
 	 * separate
 	 */
-	अगर (unlikely(sta_id == IL_INVALID_STATION))
-		वापस sta_id;
+	if (unlikely(sta_id == IL_INVALID_STATION))
+		return sta_id;
 
 	/*
 	 * uCode is not able to deal with multiple requests to add a
-	 * station. Keep track अगर one is in progress so that we करो not send
+	 * station. Keep track if one is in progress so that we do not send
 	 * another.
 	 */
-	अगर (il->stations[sta_id].used & IL_STA_UCODE_INPROGRESS) अणु
+	if (il->stations[sta_id].used & IL_STA_UCODE_INPROGRESS) {
 		D_INFO("STA %d already in process of being added.\n", sta_id);
-		वापस sta_id;
-	पूर्ण
+		return sta_id;
+	}
 
-	अगर ((il->stations[sta_id].used & IL_STA_DRIVER_ACTIVE) &&
+	if ((il->stations[sta_id].used & IL_STA_DRIVER_ACTIVE) &&
 	    (il->stations[sta_id].used & IL_STA_UCODE_ACTIVE) &&
-	    ether_addr_equal(il->stations[sta_id].sta.sta.addr, addr)) अणु
+	    ether_addr_equal(il->stations[sta_id].sta.sta.addr, addr)) {
 		D_ASSOC("STA %d (%pM) already added, not adding again.\n",
 			sta_id, addr);
-		वापस sta_id;
-	पूर्ण
+		return sta_id;
+	}
 
 	station = &il->stations[sta_id];
 	station->used = IL_STA_DRIVER_ACTIVE;
@@ -1973,207 +1972,207 @@ il_prep_station(काष्ठा il_priv *il, स्थिर u8 *addr, bool i
 	il->num_stations++;
 
 	/* Set up the C_ADD_STA command to send to device */
-	स_रखो(&station->sta, 0, माप(काष्ठा il_addsta_cmd));
-	स_नकल(station->sta.sta.addr, addr, ETH_ALEN);
+	memset(&station->sta, 0, sizeof(struct il_addsta_cmd));
+	memcpy(station->sta.sta.addr, addr, ETH_ALEN);
 	station->sta.mode = 0;
 	station->sta.sta.sta_id = sta_id;
 	station->sta.station_flags = 0;
 
 	/*
 	 * OK to call unconditionally, since local stations (IBSS BSSID
-	 * STA and broadcast STA) pass in a शून्य sta, and mac80211
-	 * करोesn't allow HT IBSS.
+	 * STA and broadcast STA) pass in a NULL sta, and mac80211
+	 * doesn't allow HT IBSS.
 	 */
 	il_set_ht_add_station(il, sta_id, sta);
 
 	/* 3945 only */
 	rate = (il->band == NL80211_BAND_5GHZ) ? RATE_6M_PLCP : RATE_1M_PLCP;
-	/* Turn on both antennas क्रम the station... */
+	/* Turn on both antennas for the station... */
 	station->sta.rate_n_flags = cpu_to_le16(rate | RATE_MCS_ANT_AB_MSK);
 
-	वापस sta_id;
+	return sta_id;
 
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(il_prep_station);
 
-#घोषणा STA_WAIT_TIMEOUT (HZ/2)
+#define STA_WAIT_TIMEOUT (HZ/2)
 
 /*
  * il_add_station_common -
  */
-पूर्णांक
-il_add_station_common(काष्ठा il_priv *il, स्थिर u8 *addr, bool is_ap,
-		      काष्ठा ieee80211_sta *sta, u8 *sta_id_r)
-अणु
-	अचिन्हित दीर्घ flags_spin;
-	पूर्णांक ret = 0;
+int
+il_add_station_common(struct il_priv *il, const u8 *addr, bool is_ap,
+		      struct ieee80211_sta *sta, u8 *sta_id_r)
+{
+	unsigned long flags_spin;
+	int ret = 0;
 	u8 sta_id;
-	काष्ठा il_addsta_cmd sta_cmd;
+	struct il_addsta_cmd sta_cmd;
 
 	*sta_id_r = 0;
 	spin_lock_irqsave(&il->sta_lock, flags_spin);
 	sta_id = il_prep_station(il, addr, is_ap, sta);
-	अगर (sta_id == IL_INVALID_STATION) अणु
+	if (sta_id == IL_INVALID_STATION) {
 		IL_ERR("Unable to prepare station %pM for addition\n", addr);
 		spin_unlock_irqrestore(&il->sta_lock, flags_spin);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
 	 * uCode is not able to deal with multiple requests to add a
-	 * station. Keep track अगर one is in progress so that we करो not send
+	 * station. Keep track if one is in progress so that we do not send
 	 * another.
 	 */
-	अगर (il->stations[sta_id].used & IL_STA_UCODE_INPROGRESS) अणु
+	if (il->stations[sta_id].used & IL_STA_UCODE_INPROGRESS) {
 		D_INFO("STA %d already in process of being added.\n", sta_id);
 		spin_unlock_irqrestore(&il->sta_lock, flags_spin);
-		वापस -EEXIST;
-	पूर्ण
+		return -EEXIST;
+	}
 
-	अगर ((il->stations[sta_id].used & IL_STA_DRIVER_ACTIVE) &&
-	    (il->stations[sta_id].used & IL_STA_UCODE_ACTIVE)) अणु
+	if ((il->stations[sta_id].used & IL_STA_DRIVER_ACTIVE) &&
+	    (il->stations[sta_id].used & IL_STA_UCODE_ACTIVE)) {
 		D_ASSOC("STA %d (%pM) already added, not adding again.\n",
 			sta_id, addr);
 		spin_unlock_irqrestore(&il->sta_lock, flags_spin);
-		वापस -EEXIST;
-	पूर्ण
+		return -EEXIST;
+	}
 
 	il->stations[sta_id].used |= IL_STA_UCODE_INPROGRESS;
-	स_नकल(&sta_cmd, &il->stations[sta_id].sta,
-	       माप(काष्ठा il_addsta_cmd));
+	memcpy(&sta_cmd, &il->stations[sta_id].sta,
+	       sizeof(struct il_addsta_cmd));
 	spin_unlock_irqrestore(&il->sta_lock, flags_spin);
 
 	/* Add station to device's station table */
 	ret = il_send_add_sta(il, &sta_cmd, CMD_SYNC);
-	अगर (ret) अणु
+	if (ret) {
 		spin_lock_irqsave(&il->sta_lock, flags_spin);
 		IL_ERR("Adding station %pM failed.\n",
 		       il->stations[sta_id].sta.sta.addr);
 		il->stations[sta_id].used &= ~IL_STA_DRIVER_ACTIVE;
 		il->stations[sta_id].used &= ~IL_STA_UCODE_INPROGRESS;
 		spin_unlock_irqrestore(&il->sta_lock, flags_spin);
-	पूर्ण
+	}
 	*sta_id_r = sta_id;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(il_add_station_common);
 
 /*
- * il_sta_ucode_deactivate - deactivate ucode status क्रम a station
+ * il_sta_ucode_deactivate - deactivate ucode status for a station
  *
  * il->sta_lock must be held
  */
-अटल व्योम
-il_sta_ucode_deactivate(काष्ठा il_priv *il, u8 sta_id)
-अणु
+static void
+il_sta_ucode_deactivate(struct il_priv *il, u8 sta_id)
+{
 	/* Ucode must be active and driver must be non active */
-	अगर ((il->stations[sta_id].
+	if ((il->stations[sta_id].
 	     used & (IL_STA_UCODE_ACTIVE | IL_STA_DRIVER_ACTIVE)) !=
 	    IL_STA_UCODE_ACTIVE)
 		IL_ERR("removed non active STA %u\n", sta_id);
 
 	il->stations[sta_id].used &= ~IL_STA_UCODE_ACTIVE;
 
-	स_रखो(&il->stations[sta_id], 0, माप(काष्ठा il_station_entry));
+	memset(&il->stations[sta_id], 0, sizeof(struct il_station_entry));
 	D_ASSOC("Removed STA %u\n", sta_id);
-पूर्ण
+}
 
-अटल पूर्णांक
-il_send_हटाओ_station(काष्ठा il_priv *il, स्थिर u8 * addr, पूर्णांक sta_id,
+static int
+il_send_remove_station(struct il_priv *il, const u8 * addr, int sta_id,
 		       bool temporary)
-अणु
-	काष्ठा il_rx_pkt *pkt;
-	पूर्णांक ret;
+{
+	struct il_rx_pkt *pkt;
+	int ret;
 
-	अचिन्हित दीर्घ flags_spin;
-	काष्ठा il_rem_sta_cmd rm_sta_cmd;
+	unsigned long flags_spin;
+	struct il_rem_sta_cmd rm_sta_cmd;
 
-	काष्ठा il_host_cmd cmd = अणु
+	struct il_host_cmd cmd = {
 		.id = C_REM_STA,
-		.len = माप(काष्ठा il_rem_sta_cmd),
+		.len = sizeof(struct il_rem_sta_cmd),
 		.flags = CMD_SYNC,
 		.data = &rm_sta_cmd,
-	पूर्ण;
+	};
 
-	स_रखो(&rm_sta_cmd, 0, माप(rm_sta_cmd));
+	memset(&rm_sta_cmd, 0, sizeof(rm_sta_cmd));
 	rm_sta_cmd.num_sta = 1;
-	स_नकल(&rm_sta_cmd.addr, addr, ETH_ALEN);
+	memcpy(&rm_sta_cmd.addr, addr, ETH_ALEN);
 
 	cmd.flags |= CMD_WANT_SKB;
 
 	ret = il_send_cmd(il, &cmd);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	pkt = (काष्ठा il_rx_pkt *)cmd.reply_page;
-	अगर (pkt->hdr.flags & IL_CMD_FAILED_MSK) अणु
+	pkt = (struct il_rx_pkt *)cmd.reply_page;
+	if (pkt->hdr.flags & IL_CMD_FAILED_MSK) {
 		IL_ERR("Bad return from C_REM_STA (0x%08X)\n", pkt->hdr.flags);
 		ret = -EIO;
-	पूर्ण
+	}
 
-	अगर (!ret) अणु
-		चयन (pkt->u.rem_sta.status) अणु
-		हाल REM_STA_SUCCESS_MSK:
-			अगर (!temporary) अणु
+	if (!ret) {
+		switch (pkt->u.rem_sta.status) {
+		case REM_STA_SUCCESS_MSK:
+			if (!temporary) {
 				spin_lock_irqsave(&il->sta_lock, flags_spin);
 				il_sta_ucode_deactivate(il, sta_id);
 				spin_unlock_irqrestore(&il->sta_lock,
 						       flags_spin);
-			पूर्ण
+			}
 			D_ASSOC("C_REM_STA PASSED\n");
-			अवरोध;
-		शेष:
+			break;
+		default:
 			ret = -EIO;
 			IL_ERR("C_REM_STA failed\n");
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	il_मुक्त_pages(il, cmd.reply_page);
+			break;
+		}
+	}
+	il_free_pages(il, cmd.reply_page);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * il_हटाओ_station - Remove driver's knowledge of station.
+ * il_remove_station - Remove driver's knowledge of station.
  */
-पूर्णांक
-il_हटाओ_station(काष्ठा il_priv *il, स्थिर u8 sta_id, स्थिर u8 * addr)
-अणु
-	अचिन्हित दीर्घ flags;
+int
+il_remove_station(struct il_priv *il, const u8 sta_id, const u8 * addr)
+{
+	unsigned long flags;
 
-	अगर (!il_is_पढ़ोy(il)) अणु
+	if (!il_is_ready(il)) {
 		D_INFO("Unable to remove station %pM, device not ready.\n",
 		       addr);
 		/*
-		 * It is typical क्रम stations to be हटाओd when we are
-		 * going करोwn. Return success since device will be करोwn
+		 * It is typical for stations to be removed when we are
+		 * going down. Return success since device will be down
 		 * soon anyway
 		 */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	D_ASSOC("Removing STA from driver:%d  %pM\n", sta_id, addr);
 
-	अगर (WARN_ON(sta_id == IL_INVALID_STATION))
-		वापस -EINVAL;
+	if (WARN_ON(sta_id == IL_INVALID_STATION))
+		return -EINVAL;
 
 	spin_lock_irqsave(&il->sta_lock, flags);
 
-	अगर (!(il->stations[sta_id].used & IL_STA_DRIVER_ACTIVE)) अणु
+	if (!(il->stations[sta_id].used & IL_STA_DRIVER_ACTIVE)) {
 		D_INFO("Removing %pM but non DRIVER active\n", addr);
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
-	अगर (!(il->stations[sta_id].used & IL_STA_UCODE_ACTIVE)) अणु
+	if (!(il->stations[sta_id].used & IL_STA_UCODE_ACTIVE)) {
 		D_INFO("Removing %pM but non UCODE active\n", addr);
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
-	अगर (il->stations[sta_id].used & IL_STA_LOCAL) अणु
-		kमुक्त(il->stations[sta_id].lq);
-		il->stations[sta_id].lq = शून्य;
-	पूर्ण
+	if (il->stations[sta_id].used & IL_STA_LOCAL) {
+		kfree(il->stations[sta_id].lq);
+		il->stations[sta_id].lq = NULL;
+	}
 
 	il->stations[sta_id].used &= ~IL_STA_DRIVER_ACTIVE;
 
@@ -2183,12 +2182,12 @@ il_हटाओ_station(काष्ठा il_priv *il, स्थिर u8 sta_i
 
 	spin_unlock_irqrestore(&il->sta_lock, flags);
 
-	वापस il_send_हटाओ_station(il, addr, sta_id, false);
+	return il_send_remove_station(il, addr, sta_id, false);
 out_err:
 	spin_unlock_irqrestore(&il->sta_lock, flags);
-	वापस -EINVAL;
-पूर्ण
-EXPORT_SYMBOL_GPL(il_हटाओ_station);
+	return -EINVAL;
+}
+EXPORT_SYMBOL_GPL(il_remove_station);
 
 /*
  * il_clear_ucode_stations - clear ucode station table bits
@@ -2198,28 +2197,28 @@ EXPORT_SYMBOL_GPL(il_हटाओ_station);
  * other than explicit station management would cause this in
  * the ucode, e.g. unassociated RXON.
  */
-व्योम
-il_clear_ucode_stations(काष्ठा il_priv *il)
-अणु
-	पूर्णांक i;
-	अचिन्हित दीर्घ flags_spin;
+void
+il_clear_ucode_stations(struct il_priv *il)
+{
+	int i;
+	unsigned long flags_spin;
 	bool cleared = false;
 
 	D_INFO("Clearing ucode stations in driver\n");
 
 	spin_lock_irqsave(&il->sta_lock, flags_spin);
-	क्रम (i = 0; i < il->hw_params.max_stations; i++) अणु
-		अगर (il->stations[i].used & IL_STA_UCODE_ACTIVE) अणु
+	for (i = 0; i < il->hw_params.max_stations; i++) {
+		if (il->stations[i].used & IL_STA_UCODE_ACTIVE) {
 			D_INFO("Clearing ucode active for station %d\n", i);
 			il->stations[i].used &= ~IL_STA_UCODE_ACTIVE;
 			cleared = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&il->sta_lock, flags_spin);
 
-	अगर (!cleared)
+	if (!cleared)
 		D_INFO("No active stations found to be cleared\n");
-पूर्ण
+}
 EXPORT_SYMBOL(il_clear_ucode_stations);
 
 /*
@@ -2230,48 +2229,48 @@ EXPORT_SYMBOL(il_clear_ucode_stations);
  *
  * Function sleeps.
  */
-व्योम
-il_restore_stations(काष्ठा il_priv *il)
-अणु
-	काष्ठा il_addsta_cmd sta_cmd;
-	काष्ठा il_link_quality_cmd lq;
-	अचिन्हित दीर्घ flags_spin;
-	पूर्णांक i;
+void
+il_restore_stations(struct il_priv *il)
+{
+	struct il_addsta_cmd sta_cmd;
+	struct il_link_quality_cmd lq;
+	unsigned long flags_spin;
+	int i;
 	bool found = false;
-	पूर्णांक ret;
+	int ret;
 	bool send_lq;
 
-	अगर (!il_is_पढ़ोy(il)) अणु
+	if (!il_is_ready(il)) {
 		D_INFO("Not ready yet, not restoring any stations.\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	D_ASSOC("Restoring all known stations ... start.\n");
 	spin_lock_irqsave(&il->sta_lock, flags_spin);
-	क्रम (i = 0; i < il->hw_params.max_stations; i++) अणु
-		अगर ((il->stations[i].used & IL_STA_DRIVER_ACTIVE) &&
-		    !(il->stations[i].used & IL_STA_UCODE_ACTIVE)) अणु
+	for (i = 0; i < il->hw_params.max_stations; i++) {
+		if ((il->stations[i].used & IL_STA_DRIVER_ACTIVE) &&
+		    !(il->stations[i].used & IL_STA_UCODE_ACTIVE)) {
 			D_ASSOC("Restoring sta %pM\n",
 				il->stations[i].sta.sta.addr);
 			il->stations[i].sta.mode = 0;
 			il->stations[i].used |= IL_STA_UCODE_INPROGRESS;
 			found = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (i = 0; i < il->hw_params.max_stations; i++) अणु
-		अगर ((il->stations[i].used & IL_STA_UCODE_INPROGRESS)) अणु
-			स_नकल(&sta_cmd, &il->stations[i].sta,
-			       माप(काष्ठा il_addsta_cmd));
+	for (i = 0; i < il->hw_params.max_stations; i++) {
+		if ((il->stations[i].used & IL_STA_UCODE_INPROGRESS)) {
+			memcpy(&sta_cmd, &il->stations[i].sta,
+			       sizeof(struct il_addsta_cmd));
 			send_lq = false;
-			अगर (il->stations[i].lq) अणु
-				स_नकल(&lq, il->stations[i].lq,
-				       माप(काष्ठा il_link_quality_cmd));
+			if (il->stations[i].lq) {
+				memcpy(&lq, il->stations[i].lq,
+				       sizeof(struct il_link_quality_cmd));
 				send_lq = true;
-			पूर्ण
+			}
 			spin_unlock_irqrestore(&il->sta_lock, flags_spin);
 			ret = il_send_add_sta(il, &sta_cmd, CMD_SYNC);
-			अगर (ret) अणु
+			if (ret) {
 				spin_lock_irqsave(&il->sta_lock, flags_spin);
 				IL_ERR("Adding station %pM failed.\n",
 				       il->stations[i].sta.sta.addr);
@@ -2280,108 +2279,108 @@ il_restore_stations(काष्ठा il_priv *il)
 				    ~IL_STA_UCODE_INPROGRESS;
 				spin_unlock_irqrestore(&il->sta_lock,
 						       flags_spin);
-			पूर्ण
+			}
 			/*
-			 * Rate scaling has alपढ़ोy been initialized, send
+			 * Rate scaling has already been initialized, send
 			 * current LQ command
 			 */
-			अगर (send_lq)
+			if (send_lq)
 				il_send_lq_cmd(il, &lq, CMD_SYNC, true);
 			spin_lock_irqsave(&il->sta_lock, flags_spin);
 			il->stations[i].used &= ~IL_STA_UCODE_INPROGRESS;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	spin_unlock_irqrestore(&il->sta_lock, flags_spin);
-	अगर (!found)
+	if (!found)
 		D_INFO("Restoring all known stations"
 		       " .... no stations to be restored.\n");
-	अन्यथा
+	else
 		D_INFO("Restoring all known stations" " .... complete.\n");
-पूर्ण
+}
 EXPORT_SYMBOL(il_restore_stations);
 
-पूर्णांक
-il_get_मुक्त_ucode_key_idx(काष्ठा il_priv *il)
-अणु
-	पूर्णांक i;
+int
+il_get_free_ucode_key_idx(struct il_priv *il)
+{
+	int i;
 
-	क्रम (i = 0; i < il->sta_key_max_num; i++)
-		अगर (!test_and_set_bit(i, &il->ucode_key_table))
-			वापस i;
+	for (i = 0; i < il->sta_key_max_num; i++)
+		if (!test_and_set_bit(i, &il->ucode_key_table))
+			return i;
 
-	वापस WEP_INVALID_OFFSET;
-पूर्ण
-EXPORT_SYMBOL(il_get_मुक्त_ucode_key_idx);
+	return WEP_INVALID_OFFSET;
+}
+EXPORT_SYMBOL(il_get_free_ucode_key_idx);
 
-व्योम
-il_dealloc_bcast_stations(काष्ठा il_priv *il)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+void
+il_dealloc_bcast_stations(struct il_priv *il)
+{
+	unsigned long flags;
+	int i;
 
 	spin_lock_irqsave(&il->sta_lock, flags);
-	क्रम (i = 0; i < il->hw_params.max_stations; i++) अणु
-		अगर (!(il->stations[i].used & IL_STA_BCAST))
-			जारी;
+	for (i = 0; i < il->hw_params.max_stations; i++) {
+		if (!(il->stations[i].used & IL_STA_BCAST))
+			continue;
 
 		il->stations[i].used &= ~IL_STA_UCODE_ACTIVE;
 		il->num_stations--;
 		BUG_ON(il->num_stations < 0);
-		kमुक्त(il->stations[i].lq);
-		il->stations[i].lq = शून्य;
-	पूर्ण
+		kfree(il->stations[i].lq);
+		il->stations[i].lq = NULL;
+	}
 	spin_unlock_irqrestore(&il->sta_lock, flags);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(il_dealloc_bcast_stations);
 
-#अगर_घोषित CONFIG_IWLEGACY_DEBUG
-अटल व्योम
-il_dump_lq_cmd(काष्ठा il_priv *il, काष्ठा il_link_quality_cmd *lq)
-अणु
-	पूर्णांक i;
+#ifdef CONFIG_IWLEGACY_DEBUG
+static void
+il_dump_lq_cmd(struct il_priv *il, struct il_link_quality_cmd *lq)
+{
+	int i;
 	D_RATE("lq station id 0x%x\n", lq->sta_id);
 	D_RATE("lq ant 0x%X 0x%X\n", lq->general_params.single_stream_ant_msk,
 	       lq->general_params.dual_stream_ant_msk);
 
-	क्रम (i = 0; i < LINK_QUAL_MAX_RETRY_NUM; i++)
+	for (i = 0; i < LINK_QUAL_MAX_RETRY_NUM; i++)
 		D_RATE("lq idx %d 0x%X\n", i, lq->rs_table[i].rate_n_flags);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम
-il_dump_lq_cmd(काष्ठा il_priv *il, काष्ठा il_link_quality_cmd *lq)
-अणु
-पूर्ण
-#पूर्ण_अगर
+}
+#else
+static inline void
+il_dump_lq_cmd(struct il_priv *il, struct il_link_quality_cmd *lq)
+{
+}
+#endif
 
 /*
- * il_is_lq_table_valid() - Test one aspect of LQ cmd क्रम validity
+ * il_is_lq_table_valid() - Test one aspect of LQ cmd for validity
  *
- * It someबार happens when a HT rate has been in use and we
+ * It sometimes happens when a HT rate has been in use and we
  * loose connectivity with AP then mac80211 will first tell us that the
- * current channel is not HT anymore beक्रमe removing the station. In such a
+ * current channel is not HT anymore before removing the station. In such a
  * scenario the RXON flags will be updated to indicate we are not
  * communicating HT anymore, but the LQ command may still contain HT rates.
- * Test क्रम this to prevent driver from sending LQ command between the समय
+ * Test for this to prevent driver from sending LQ command between the time
  * RXON flags are updated and when LQ command is updated.
  */
-अटल bool
-il_is_lq_table_valid(काष्ठा il_priv *il, काष्ठा il_link_quality_cmd *lq)
-अणु
-	पूर्णांक i;
+static bool
+il_is_lq_table_valid(struct il_priv *il, struct il_link_quality_cmd *lq)
+{
+	int i;
 
-	अगर (il->ht.enabled)
-		वापस true;
+	if (il->ht.enabled)
+		return true;
 
 	D_INFO("Channel %u is not an HT channel\n", il->active.channel);
-	क्रम (i = 0; i < LINK_QUAL_MAX_RETRY_NUM; i++) अणु
-		अगर (le32_to_cpu(lq->rs_table[i].rate_n_flags) & RATE_MCS_HT_MSK) अणु
+	for (i = 0; i < LINK_QUAL_MAX_RETRY_NUM; i++) {
+		if (le32_to_cpu(lq->rs_table[i].rate_n_flags) & RATE_MCS_HT_MSK) {
 			D_INFO("idx %d of LQ expects HT channel\n", i);
-			वापस false;
-		पूर्ण
-	पूर्ण
-	वापस true;
-पूर्ण
+			return false;
+		}
+	}
+	return true;
+}
 
 /*
  * il_send_lq_cmd() - Send link quality command
@@ -2389,137 +2388,137 @@ il_is_lq_table_valid(काष्ठा il_priv *il, काष्ठा il_link_
  *        after station has been added.
  *
  * The link quality command is sent as the last step of station creation.
- * This is the special हाल in which init is set and we call a callback in
- * this हाल to clear the state indicating that station creation is in
+ * This is the special case in which init is set and we call a callback in
+ * this case to clear the state indicating that station creation is in
  * progress.
  */
-पूर्णांक
-il_send_lq_cmd(काष्ठा il_priv *il, काष्ठा il_link_quality_cmd *lq,
+int
+il_send_lq_cmd(struct il_priv *il, struct il_link_quality_cmd *lq,
 	       u8 flags, bool init)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags_spin;
+{
+	int ret = 0;
+	unsigned long flags_spin;
 
-	काष्ठा il_host_cmd cmd = अणु
+	struct il_host_cmd cmd = {
 		.id = C_TX_LINK_QUALITY_CMD,
-		.len = माप(काष्ठा il_link_quality_cmd),
+		.len = sizeof(struct il_link_quality_cmd),
 		.flags = flags,
 		.data = lq,
-	पूर्ण;
+	};
 
-	अगर (WARN_ON(lq->sta_id == IL_INVALID_STATION))
-		वापस -EINVAL;
+	if (WARN_ON(lq->sta_id == IL_INVALID_STATION))
+		return -EINVAL;
 
 	spin_lock_irqsave(&il->sta_lock, flags_spin);
-	अगर (!(il->stations[lq->sta_id].used & IL_STA_DRIVER_ACTIVE)) अणु
+	if (!(il->stations[lq->sta_id].used & IL_STA_DRIVER_ACTIVE)) {
 		spin_unlock_irqrestore(&il->sta_lock, flags_spin);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	spin_unlock_irqrestore(&il->sta_lock, flags_spin);
 
 	il_dump_lq_cmd(il, lq);
 	BUG_ON(init && (cmd.flags & CMD_ASYNC));
 
-	अगर (il_is_lq_table_valid(il, lq))
+	if (il_is_lq_table_valid(il, lq))
 		ret = il_send_cmd(il, &cmd);
-	अन्यथा
+	else
 		ret = -EINVAL;
 
-	अगर (cmd.flags & CMD_ASYNC)
-		वापस ret;
+	if (cmd.flags & CMD_ASYNC)
+		return ret;
 
-	अगर (init) अणु
+	if (init) {
 		D_INFO("init LQ command complete,"
 		       " clearing sta addition status for sta %d\n",
 		       lq->sta_id);
 		spin_lock_irqsave(&il->sta_lock, flags_spin);
 		il->stations[lq->sta_id].used &= ~IL_STA_UCODE_INPROGRESS;
 		spin_unlock_irqrestore(&il->sta_lock, flags_spin);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 EXPORT_SYMBOL(il_send_lq_cmd);
 
-पूर्णांक
-il_mac_sta_हटाओ(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
-		  काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा il_priv *il = hw->priv;
-	काष्ठा il_station_priv_common *sta_common = (व्योम *)sta->drv_priv;
-	पूर्णांक ret;
+int
+il_mac_sta_remove(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+		  struct ieee80211_sta *sta)
+{
+	struct il_priv *il = hw->priv;
+	struct il_station_priv_common *sta_common = (void *)sta->drv_priv;
+	int ret;
 
 	mutex_lock(&il->mutex);
 	D_MAC80211("enter station %pM\n", sta->addr);
 
-	ret = il_हटाओ_station(il, sta_common->sta_id, sta->addr);
-	अगर (ret)
+	ret = il_remove_station(il, sta_common->sta_id, sta->addr);
+	if (ret)
 		IL_ERR("Error removing station %pM\n", sta->addr);
 
 	D_MAC80211("leave ret %d\n", ret);
 	mutex_unlock(&il->mutex);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(il_mac_sta_हटाओ);
+	return ret;
+}
+EXPORT_SYMBOL(il_mac_sta_remove);
 
 /************************** RX-FUNCTIONS ****************************/
 /*
  * Rx theory of operation
  *
  * Driver allocates a circular buffer of Receive Buffer Descriptors (RBDs),
- * each of which poपूर्णांक to Receive Buffers to be filled by the NIC.  These get
- * used not only क्रम Rx frames, but क्रम any command response or notअगरication
+ * each of which point to Receive Buffers to be filled by the NIC.  These get
+ * used not only for Rx frames, but for any command response or notification
  * from the NIC.  The driver and NIC manage the Rx buffers by means
- * of idxes पूर्णांकo the circular buffer.
+ * of idxes into the circular buffer.
  *
  * Rx Queue Indexes
- * The host/firmware share two idx रेजिस्टरs क्रम managing the Rx buffers.
+ * The host/firmware share two idx registers for managing the Rx buffers.
  *
  * The READ idx maps to the first position that the firmware may be writing
- * to -- the driver can पढ़ो up to (but not including) this position and get
+ * to -- the driver can read up to (but not including) this position and get
  * good data.
  * The READ idx is managed by the firmware once the card is enabled.
  *
- * The WRITE idx maps to the last position the driver has पढ़ो from -- the
+ * The WRITE idx maps to the last position the driver has read from -- the
  * position preceding WRITE is the last slot the firmware can place a packet.
  *
- * The queue is empty (no good data) अगर WRITE = READ - 1, and is full अगर
+ * The queue is empty (no good data) if WRITE = READ - 1, and is full if
  * WRITE = READ.
  *
  * During initialization, the host sets up the READ queue position to the first
  * IDX position, and WRITE to the last (READ - 1 wrapped)
  *
  * When the firmware places a packet in a buffer, it will advance the READ idx
- * and fire the RX पूर्णांकerrupt.  The driver can then query the READ idx and
- * process as many packets as possible, moving the WRITE idx क्रमward as it
+ * and fire the RX interrupt.  The driver can then query the READ idx and
+ * process as many packets as possible, moving the WRITE idx forward as it
  * resets the Rx queue buffers with new memory.
  *
  * The management in the driver is as follows:
- * + A list of pre-allocated SKBs is stored in iwl->rxq->rx_मुक्त.  When
- *   iwl->rxq->मुक्त_count drops to or below RX_LOW_WATERMARK, work is scheduled
- *   to replenish the iwl->rxq->rx_मुक्त.
- * + In il_rx_replenish (scheduled) अगर 'processed' != 'read' then the
+ * + A list of pre-allocated SKBs is stored in iwl->rxq->rx_free.  When
+ *   iwl->rxq->free_count drops to or below RX_LOW_WATERMARK, work is scheduled
+ *   to replenish the iwl->rxq->rx_free.
+ * + In il_rx_replenish (scheduled) if 'processed' != 'read' then the
  *   iwl->rxq is replenished and the READ IDX is updated (updating the
  *   'processed' and 'read' driver idxes as well)
  * + A received packet is processed and handed to the kernel network stack,
  *   detached from the iwl->rxq.  The driver 'processed' idx is updated.
- * + The Host/Firmware iwl->rxq is replenished at tasklet समय from the rx_मुक्त
- *   list. If there are no allocated buffers in iwl->rxq->rx_मुक्त, the READ
+ * + The Host/Firmware iwl->rxq is replenished at tasklet time from the rx_free
+ *   list. If there are no allocated buffers in iwl->rxq->rx_free, the READ
  *   IDX is not incremented and iwl->status(RX_STALLED) is set.  If there
- *   were enough मुक्त buffers and RX_STALLED is set it is cleared.
+ *   were enough free buffers and RX_STALLED is set it is cleared.
  *
  *
  * Driver sequence:
  *
- * il_rx_queue_alloc()   Allocates rx_मुक्त
- * il_rx_replenish()     Replenishes rx_मुक्त list from rx_used, and calls
+ * il_rx_queue_alloc()   Allocates rx_free
+ * il_rx_replenish()     Replenishes rx_free list from rx_used, and calls
  *                            il_rx_queue_restock
- * il_rx_queue_restock() Moves available buffers from rx_मुक्त पूर्णांकo Rx
- *                            queue, updates firmware poपूर्णांकers, and updates
- *                            the WRITE idx.  If insufficient rx_मुक्त buffers
+ * il_rx_queue_restock() Moves available buffers from rx_free into Rx
+ *                            queue, updates firmware pointers, and updates
+ *                            the WRITE idx.  If insufficient rx_free buffers
  *                            are available, schedules il_rx_replenish
  *
- * -- enable पूर्णांकerrupts --
+ * -- enable interrupts --
  * ISR - il_rx()         Detach il_rx_bufs from pool up to the
  *                            READ IDX, detaching the SKB from the pool.
  *                            Moves the packet buffer from queue to rx_used.
@@ -2530,354 +2529,354 @@ EXPORT_SYMBOL(il_mac_sta_हटाओ);
  */
 
 /*
- * il_rx_queue_space - Return number of मुक्त slots available in queue.
+ * il_rx_queue_space - Return number of free slots available in queue.
  */
-पूर्णांक
-il_rx_queue_space(स्थिर काष्ठा il_rx_queue *q)
-अणु
-	पूर्णांक s = q->पढ़ो - q->ग_लिखो;
-	अगर (s <= 0)
+int
+il_rx_queue_space(const struct il_rx_queue *q)
+{
+	int s = q->read - q->write;
+	if (s <= 0)
 		s += RX_QUEUE_SIZE;
 	/* keep some buffer to not confuse full and empty queue */
 	s -= 2;
-	अगर (s < 0)
+	if (s < 0)
 		s = 0;
-	वापस s;
-पूर्ण
+	return s;
+}
 EXPORT_SYMBOL(il_rx_queue_space);
 
 /*
- * il_rx_queue_update_ग_लिखो_ptr - Update the ग_लिखो poपूर्णांकer क्रम the RX queue
+ * il_rx_queue_update_write_ptr - Update the write pointer for the RX queue
  */
-व्योम
-il_rx_queue_update_ग_लिखो_ptr(काष्ठा il_priv *il, काष्ठा il_rx_queue *q)
-अणु
-	अचिन्हित दीर्घ flags;
+void
+il_rx_queue_update_write_ptr(struct il_priv *il, struct il_rx_queue *q)
+{
+	unsigned long flags;
 	u32 rx_wrt_ptr_reg = il->hw_params.rx_wrt_ptr_reg;
 	u32 reg;
 
 	spin_lock_irqsave(&q->lock, flags);
 
-	अगर (q->need_update == 0)
-		जाओ निकास_unlock;
+	if (q->need_update == 0)
+		goto exit_unlock;
 
-	/* If घातer-saving is in use, make sure device is awake */
-	अगर (test_bit(S_POWER_PMI, &il->status)) अणु
+	/* If power-saving is in use, make sure device is awake */
+	if (test_bit(S_POWER_PMI, &il->status)) {
 		reg = _il_rd(il, CSR_UCODE_DRV_GP1);
 
-		अगर (reg & CSR_UCODE_DRV_GP1_BIT_MAC_SLEEP) अणु
+		if (reg & CSR_UCODE_DRV_GP1_BIT_MAC_SLEEP) {
 			D_INFO("Rx queue requesting wakeup," " GP1 = 0x%x\n",
 			       reg);
 			il_set_bit(il, CSR_GP_CNTRL,
 				   CSR_GP_CNTRL_REG_FLAG_MAC_ACCESS_REQ);
-			जाओ निकास_unlock;
-		पूर्ण
+			goto exit_unlock;
+		}
 
-		q->ग_लिखो_actual = (q->ग_लिखो & ~0x7);
-		il_wr(il, rx_wrt_ptr_reg, q->ग_लिखो_actual);
+		q->write_actual = (q->write & ~0x7);
+		il_wr(il, rx_wrt_ptr_reg, q->write_actual);
 
 		/* Else device is assumed to be awake */
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Device expects a multiple of 8 */
-		q->ग_लिखो_actual = (q->ग_लिखो & ~0x7);
-		il_wr(il, rx_wrt_ptr_reg, q->ग_लिखो_actual);
-	पूर्ण
+		q->write_actual = (q->write & ~0x7);
+		il_wr(il, rx_wrt_ptr_reg, q->write_actual);
+	}
 
 	q->need_update = 0;
 
-निकास_unlock:
+exit_unlock:
 	spin_unlock_irqrestore(&q->lock, flags);
-पूर्ण
-EXPORT_SYMBOL(il_rx_queue_update_ग_लिखो_ptr);
+}
+EXPORT_SYMBOL(il_rx_queue_update_write_ptr);
 
-पूर्णांक
-il_rx_queue_alloc(काष्ठा il_priv *il)
-अणु
-	काष्ठा il_rx_queue *rxq = &il->rxq;
-	काष्ठा device *dev = &il->pci_dev->dev;
-	पूर्णांक i;
+int
+il_rx_queue_alloc(struct il_priv *il)
+{
+	struct il_rx_queue *rxq = &il->rxq;
+	struct device *dev = &il->pci_dev->dev;
+	int i;
 
 	spin_lock_init(&rxq->lock);
-	INIT_LIST_HEAD(&rxq->rx_मुक्त);
+	INIT_LIST_HEAD(&rxq->rx_free);
 	INIT_LIST_HEAD(&rxq->rx_used);
 
 	/* Alloc the circular buffer of Read Buffer Descriptors (RBDs) */
 	rxq->bd = dma_alloc_coherent(dev, 4 * RX_QUEUE_SIZE, &rxq->bd_dma,
 				     GFP_KERNEL);
-	अगर (!rxq->bd)
-		जाओ err_bd;
+	if (!rxq->bd)
+		goto err_bd;
 
-	rxq->rb_stts = dma_alloc_coherent(dev, माप(काष्ठा il_rb_status),
+	rxq->rb_stts = dma_alloc_coherent(dev, sizeof(struct il_rb_status),
 					  &rxq->rb_stts_dma, GFP_KERNEL);
-	अगर (!rxq->rb_stts)
-		जाओ err_rb;
+	if (!rxq->rb_stts)
+		goto err_rb;
 
 	/* Fill the rx_used queue with _all_ of the Rx buffers */
-	क्रम (i = 0; i < RX_FREE_BUFFERS + RX_QUEUE_SIZE; i++)
+	for (i = 0; i < RX_FREE_BUFFERS + RX_QUEUE_SIZE; i++)
 		list_add_tail(&rxq->pool[i].list, &rxq->rx_used);
 
 	/* Set us so that we have processed and used all buffers, but have
 	 * not restocked the Rx queue with fresh buffers */
-	rxq->पढ़ो = rxq->ग_लिखो = 0;
-	rxq->ग_लिखो_actual = 0;
-	rxq->मुक्त_count = 0;
+	rxq->read = rxq->write = 0;
+	rxq->write_actual = 0;
+	rxq->free_count = 0;
 	rxq->need_update = 0;
-	वापस 0;
+	return 0;
 
 err_rb:
-	dma_मुक्त_coherent(&il->pci_dev->dev, 4 * RX_QUEUE_SIZE, rxq->bd,
+	dma_free_coherent(&il->pci_dev->dev, 4 * RX_QUEUE_SIZE, rxq->bd,
 			  rxq->bd_dma);
 err_bd:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 EXPORT_SYMBOL(il_rx_queue_alloc);
 
-व्योम
-il_hdl_spectrum_measurement(काष्ठा il_priv *il, काष्ठा il_rx_buf *rxb)
-अणु
-	काष्ठा il_rx_pkt *pkt = rxb_addr(rxb);
-	काष्ठा il_spectrum_notअगरication *report = &(pkt->u.spectrum_notअगर);
+void
+il_hdl_spectrum_measurement(struct il_priv *il, struct il_rx_buf *rxb)
+{
+	struct il_rx_pkt *pkt = rxb_addr(rxb);
+	struct il_spectrum_notification *report = &(pkt->u.spectrum_notif);
 
-	अगर (!report->state) अणु
+	if (!report->state) {
 		D_11H("Spectrum Measure Notification: Start\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	स_नकल(&il->measure_report, report, माप(*report));
+	memcpy(&il->measure_report, report, sizeof(*report));
 	il->measurement_status |= MEASUREMENT_READY;
-पूर्ण
+}
 EXPORT_SYMBOL(il_hdl_spectrum_measurement);
 
 /*
- * वापसs non-zero अगर packet should be dropped
+ * returns non-zero if packet should be dropped
  */
-पूर्णांक
-il_set_decrypted_flag(काष्ठा il_priv *il, काष्ठा ieee80211_hdr *hdr,
-		      u32 decrypt_res, काष्ठा ieee80211_rx_status *stats)
-अणु
+int
+il_set_decrypted_flag(struct il_priv *il, struct ieee80211_hdr *hdr,
+		      u32 decrypt_res, struct ieee80211_rx_status *stats)
+{
 	u16 fc = le16_to_cpu(hdr->frame_control);
 
 	/*
 	 * All contexts have the same setting here due to it being
 	 * a module parameter, so OK to check any context.
 	 */
-	अगर (il->active.filter_flags & RXON_FILTER_DIS_DECRYPT_MSK)
-		वापस 0;
+	if (il->active.filter_flags & RXON_FILTER_DIS_DECRYPT_MSK)
+		return 0;
 
-	अगर (!(fc & IEEE80211_FCTL_PROTECTED))
-		वापस 0;
+	if (!(fc & IEEE80211_FCTL_PROTECTED))
+		return 0;
 
 	D_RX("decrypt_res:0x%x\n", decrypt_res);
-	चयन (decrypt_res & RX_RES_STATUS_SEC_TYPE_MSK) अणु
-	हाल RX_RES_STATUS_SEC_TYPE_TKIP:
+	switch (decrypt_res & RX_RES_STATUS_SEC_TYPE_MSK) {
+	case RX_RES_STATUS_SEC_TYPE_TKIP:
 		/* The uCode has got a bad phase 1 Key, pushes the packet.
-		 * Decryption will be करोne in SW. */
-		अगर ((decrypt_res & RX_RES_STATUS_DECRYPT_TYPE_MSK) ==
+		 * Decryption will be done in SW. */
+		if ((decrypt_res & RX_RES_STATUS_DECRYPT_TYPE_MSK) ==
 		    RX_RES_STATUS_BAD_KEY_TTAK)
-			अवरोध;
+			break;
 		fallthrough;
 
-	हाल RX_RES_STATUS_SEC_TYPE_WEP:
-		अगर ((decrypt_res & RX_RES_STATUS_DECRYPT_TYPE_MSK) ==
-		    RX_RES_STATUS_BAD_ICV_MIC) अणु
+	case RX_RES_STATUS_SEC_TYPE_WEP:
+		if ((decrypt_res & RX_RES_STATUS_DECRYPT_TYPE_MSK) ==
+		    RX_RES_STATUS_BAD_ICV_MIC) {
 			/* bad ICV, the packet is destroyed since the
 			 * decryption is inplace, drop it */
 			D_RX("Packet destroyed\n");
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 		fallthrough;
-	हाल RX_RES_STATUS_SEC_TYPE_CCMP:
-		अगर ((decrypt_res & RX_RES_STATUS_DECRYPT_TYPE_MSK) ==
-		    RX_RES_STATUS_DECRYPT_OK) अणु
+	case RX_RES_STATUS_SEC_TYPE_CCMP:
+		if ((decrypt_res & RX_RES_STATUS_DECRYPT_TYPE_MSK) ==
+		    RX_RES_STATUS_DECRYPT_OK) {
 			D_RX("hw decrypt successfully!!!\n");
 			stats->flag |= RX_FLAG_DECRYPTED;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	default:
+		break;
+	}
+	return 0;
+}
 EXPORT_SYMBOL(il_set_decrypted_flag);
 
 /*
- * il_txq_update_ग_लिखो_ptr - Send new ग_लिखो idx to hardware
+ * il_txq_update_write_ptr - Send new write idx to hardware
  */
-व्योम
-il_txq_update_ग_लिखो_ptr(काष्ठा il_priv *il, काष्ठा il_tx_queue *txq)
-अणु
+void
+il_txq_update_write_ptr(struct il_priv *il, struct il_tx_queue *txq)
+{
 	u32 reg = 0;
-	पूर्णांक txq_id = txq->q.id;
+	int txq_id = txq->q.id;
 
-	अगर (txq->need_update == 0)
-		वापस;
+	if (txq->need_update == 0)
+		return;
 
-	/* अगर we're trying to save घातer */
-	अगर (test_bit(S_POWER_PMI, &il->status)) अणु
-		/* wake up nic अगर it's घातered करोwn ...
-		 * uCode will wake up, and पूर्णांकerrupt us again, so next
-		 * समय we'll skip this part. */
+	/* if we're trying to save power */
+	if (test_bit(S_POWER_PMI, &il->status)) {
+		/* wake up nic if it's powered down ...
+		 * uCode will wake up, and interrupt us again, so next
+		 * time we'll skip this part. */
 		reg = _il_rd(il, CSR_UCODE_DRV_GP1);
 
-		अगर (reg & CSR_UCODE_DRV_GP1_BIT_MAC_SLEEP) अणु
+		if (reg & CSR_UCODE_DRV_GP1_BIT_MAC_SLEEP) {
 			D_INFO("Tx queue %d requesting wakeup," " GP1 = 0x%x\n",
 			       txq_id, reg);
 			il_set_bit(il, CSR_GP_CNTRL,
 				   CSR_GP_CNTRL_REG_FLAG_MAC_ACCESS_REQ);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		il_wr(il, HBUS_TARG_WRPTR, txq->q.ग_लिखो_ptr | (txq_id << 8));
+		il_wr(il, HBUS_TARG_WRPTR, txq->q.write_ptr | (txq_id << 8));
 
 		/*
-		 * अन्यथा not in घातer-save mode,
+		 * else not in power-save mode,
 		 * uCode will never sleep when we're
 		 * trying to tx (during RFKILL, we're not trying to tx).
 		 */
-	पूर्ण अन्यथा
-		_il_wr(il, HBUS_TARG_WRPTR, txq->q.ग_लिखो_ptr | (txq_id << 8));
+	} else
+		_il_wr(il, HBUS_TARG_WRPTR, txq->q.write_ptr | (txq_id << 8));
 	txq->need_update = 0;
-पूर्ण
-EXPORT_SYMBOL(il_txq_update_ग_लिखो_ptr);
+}
+EXPORT_SYMBOL(il_txq_update_write_ptr);
 
 /*
- * il_tx_queue_unmap -  Unmap any reमुख्यing DMA mappings and मुक्त skb's
+ * il_tx_queue_unmap -  Unmap any remaining DMA mappings and free skb's
  */
-व्योम
-il_tx_queue_unmap(काष्ठा il_priv *il, पूर्णांक txq_id)
-अणु
-	काष्ठा il_tx_queue *txq = &il->txq[txq_id];
-	काष्ठा il_queue *q = &txq->q;
+void
+il_tx_queue_unmap(struct il_priv *il, int txq_id)
+{
+	struct il_tx_queue *txq = &il->txq[txq_id];
+	struct il_queue *q = &txq->q;
 
-	अगर (q->n_bd == 0)
-		वापस;
+	if (q->n_bd == 0)
+		return;
 
-	जबतक (q->ग_लिखो_ptr != q->पढ़ो_ptr) अणु
-		il->ops->txq_मुक्त_tfd(il, txq);
-		q->पढ़ो_ptr = il_queue_inc_wrap(q->पढ़ो_ptr, q->n_bd);
-	पूर्ण
-पूर्ण
+	while (q->write_ptr != q->read_ptr) {
+		il->ops->txq_free_tfd(il, txq);
+		q->read_ptr = il_queue_inc_wrap(q->read_ptr, q->n_bd);
+	}
+}
 EXPORT_SYMBOL(il_tx_queue_unmap);
 
 /*
- * il_tx_queue_मुक्त - Deallocate DMA queue.
+ * il_tx_queue_free - Deallocate DMA queue.
  * @txq: Transmit queue to deallocate.
  *
  * Empty queue by removing and destroying all BD's.
  * Free all buffers.
- * 0-fill, but करो not मुक्त "txq" descriptor काष्ठाure.
+ * 0-fill, but do not free "txq" descriptor structure.
  */
-व्योम
-il_tx_queue_मुक्त(काष्ठा il_priv *il, पूर्णांक txq_id)
-अणु
-	काष्ठा il_tx_queue *txq = &il->txq[txq_id];
-	काष्ठा device *dev = &il->pci_dev->dev;
-	पूर्णांक i;
+void
+il_tx_queue_free(struct il_priv *il, int txq_id)
+{
+	struct il_tx_queue *txq = &il->txq[txq_id];
+	struct device *dev = &il->pci_dev->dev;
+	int i;
 
 	il_tx_queue_unmap(il, txq_id);
 
 	/* De-alloc array of command/tx buffers */
-	अगर (txq->cmd) अणु
-		क्रम (i = 0; i < TFD_TX_CMD_SLOTS; i++)
-			kमुक्त(txq->cmd[i]);
-	पूर्ण
+	if (txq->cmd) {
+		for (i = 0; i < TFD_TX_CMD_SLOTS; i++)
+			kfree(txq->cmd[i]);
+	}
 
 	/* De-alloc circular buffer of TFDs */
-	अगर (txq->q.n_bd)
-		dma_मुक्त_coherent(dev, il->hw_params.tfd_size * txq->q.n_bd,
+	if (txq->q.n_bd)
+		dma_free_coherent(dev, il->hw_params.tfd_size * txq->q.n_bd,
 				  txq->tfds, txq->q.dma_addr);
 
 	/* De-alloc array of per-TFD driver data */
-	kमुक्त(txq->skbs);
-	txq->skbs = शून्य;
+	kfree(txq->skbs);
+	txq->skbs = NULL;
 
 	/* deallocate arrays */
-	kमुक्त(txq->cmd);
-	kमुक्त(txq->meta);
-	txq->cmd = शून्य;
-	txq->meta = शून्य;
+	kfree(txq->cmd);
+	kfree(txq->meta);
+	txq->cmd = NULL;
+	txq->meta = NULL;
 
-	/* 0-fill queue descriptor काष्ठाure */
-	स_रखो(txq, 0, माप(*txq));
-पूर्ण
-EXPORT_SYMBOL(il_tx_queue_मुक्त);
+	/* 0-fill queue descriptor structure */
+	memset(txq, 0, sizeof(*txq));
+}
+EXPORT_SYMBOL(il_tx_queue_free);
 
 /*
- * il_cmd_queue_unmap - Unmap any reमुख्यing DMA mappings from command queue
+ * il_cmd_queue_unmap - Unmap any remaining DMA mappings from command queue
  */
-व्योम
-il_cmd_queue_unmap(काष्ठा il_priv *il)
-अणु
-	काष्ठा il_tx_queue *txq = &il->txq[il->cmd_queue];
-	काष्ठा il_queue *q = &txq->q;
-	पूर्णांक i;
+void
+il_cmd_queue_unmap(struct il_priv *il)
+{
+	struct il_tx_queue *txq = &il->txq[il->cmd_queue];
+	struct il_queue *q = &txq->q;
+	int i;
 
-	अगर (q->n_bd == 0)
-		वापस;
+	if (q->n_bd == 0)
+		return;
 
-	जबतक (q->पढ़ो_ptr != q->ग_लिखो_ptr) अणु
-		i = il_get_cmd_idx(q, q->पढ़ो_ptr, 0);
+	while (q->read_ptr != q->write_ptr) {
+		i = il_get_cmd_idx(q, q->read_ptr, 0);
 
-		अगर (txq->meta[i].flags & CMD_MAPPED) अणु
+		if (txq->meta[i].flags & CMD_MAPPED) {
 			pci_unmap_single(il->pci_dev,
 					 dma_unmap_addr(&txq->meta[i], mapping),
 					 dma_unmap_len(&txq->meta[i], len),
-					 PCI_DMA_BIसूचीECTIONAL);
+					 PCI_DMA_BIDIRECTIONAL);
 			txq->meta[i].flags = 0;
-		पूर्ण
+		}
 
-		q->पढ़ो_ptr = il_queue_inc_wrap(q->पढ़ो_ptr, q->n_bd);
-	पूर्ण
+		q->read_ptr = il_queue_inc_wrap(q->read_ptr, q->n_bd);
+	}
 
 	i = q->n_win;
-	अगर (txq->meta[i].flags & CMD_MAPPED) अणु
+	if (txq->meta[i].flags & CMD_MAPPED) {
 		pci_unmap_single(il->pci_dev,
 				 dma_unmap_addr(&txq->meta[i], mapping),
 				 dma_unmap_len(&txq->meta[i], len),
-				 PCI_DMA_BIसूचीECTIONAL);
+				 PCI_DMA_BIDIRECTIONAL);
 		txq->meta[i].flags = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(il_cmd_queue_unmap);
 
 /*
- * il_cmd_queue_मुक्त - Deallocate DMA queue.
+ * il_cmd_queue_free - Deallocate DMA queue.
  *
  * Empty queue by removing and destroying all BD's.
  * Free all buffers.
- * 0-fill, but करो not मुक्त "txq" descriptor काष्ठाure.
+ * 0-fill, but do not free "txq" descriptor structure.
  */
-व्योम
-il_cmd_queue_मुक्त(काष्ठा il_priv *il)
-अणु
-	काष्ठा il_tx_queue *txq = &il->txq[il->cmd_queue];
-	काष्ठा device *dev = &il->pci_dev->dev;
-	पूर्णांक i;
+void
+il_cmd_queue_free(struct il_priv *il)
+{
+	struct il_tx_queue *txq = &il->txq[il->cmd_queue];
+	struct device *dev = &il->pci_dev->dev;
+	int i;
 
 	il_cmd_queue_unmap(il);
 
 	/* De-alloc array of command/tx buffers */
-	अगर (txq->cmd) अणु
-		क्रम (i = 0; i <= TFD_CMD_SLOTS; i++)
-			kमुक्त(txq->cmd[i]);
-	पूर्ण
+	if (txq->cmd) {
+		for (i = 0; i <= TFD_CMD_SLOTS; i++)
+			kfree(txq->cmd[i]);
+	}
 
 	/* De-alloc circular buffer of TFDs */
-	अगर (txq->q.n_bd)
-		dma_मुक्त_coherent(dev, il->hw_params.tfd_size * txq->q.n_bd,
+	if (txq->q.n_bd)
+		dma_free_coherent(dev, il->hw_params.tfd_size * txq->q.n_bd,
 				  txq->tfds, txq->q.dma_addr);
 
 	/* deallocate arrays */
-	kमुक्त(txq->cmd);
-	kमुक्त(txq->meta);
-	txq->cmd = शून्य;
-	txq->meta = शून्य;
+	kfree(txq->cmd);
+	kfree(txq->meta);
+	txq->cmd = NULL;
+	txq->meta = NULL;
 
-	/* 0-fill queue descriptor काष्ठाure */
-	स_रखो(txq, 0, माप(*txq));
-पूर्ण
-EXPORT_SYMBOL(il_cmd_queue_मुक्त);
+	/* 0-fill queue descriptor structure */
+	memset(txq, 0, sizeof(*txq));
+}
+EXPORT_SYMBOL(il_cmd_queue_free);
 
 /*************** DMA-QUEUE-GENERAL-FUNCTIONS  *****
  * DMA services
@@ -2885,174 +2884,174 @@ EXPORT_SYMBOL(il_cmd_queue_मुक्त);
  * Theory of operation
  *
  * A Tx or Rx queue resides in host DRAM, and is comprised of a circular buffer
- * of buffer descriptors, each of which poपूर्णांकs to one or more data buffers क्रम
- * the device to पढ़ो from or fill.  Driver and device exchange status of each
- * queue via "read" and "write" poपूर्णांकers.  Driver keeps minimum of 2 empty
+ * of buffer descriptors, each of which points to one or more data buffers for
+ * the device to read from or fill.  Driver and device exchange status of each
+ * queue via "read" and "write" pointers.  Driver keeps minimum of 2 empty
  * entries in each circular buffer, to protect against confusing empty and full
  * queue states.
  *
- * The device पढ़ोs or ग_लिखोs the data in the queues via the device's several
+ * The device reads or writes the data in the queues via the device's several
  * DMA/FIFO channels.  Each queue is mapped to a single DMA channel.
  *
  * For Tx queue, there are low mark and high mark limits. If, after queuing
- * the packet क्रम Tx, मुक्त space become < low mark, Tx queue stopped. When
- * reclaiming packets (on 'tx करोne IRQ), अगर मुक्त space become > high mark,
+ * the packet for Tx, free space become < low mark, Tx queue stopped. When
+ * reclaiming packets (on 'tx done IRQ), if free space become > high mark,
  * Tx queue resumed.
  *
  * See more detailed info in 4965.h.
  ***************************************************/
 
-पूर्णांक
-il_queue_space(स्थिर काष्ठा il_queue *q)
-अणु
-	पूर्णांक s = q->पढ़ो_ptr - q->ग_लिखो_ptr;
+int
+il_queue_space(const struct il_queue *q)
+{
+	int s = q->read_ptr - q->write_ptr;
 
-	अगर (q->पढ़ो_ptr > q->ग_लिखो_ptr)
+	if (q->read_ptr > q->write_ptr)
 		s -= q->n_bd;
 
-	अगर (s <= 0)
+	if (s <= 0)
 		s += q->n_win;
 	/* keep some reserve to not confuse empty and full situations */
 	s -= 2;
-	अगर (s < 0)
+	if (s < 0)
 		s = 0;
-	वापस s;
-पूर्ण
+	return s;
+}
 EXPORT_SYMBOL(il_queue_space);
 
 
 /*
- * il_queue_init - Initialize queue's high/low-water and पढ़ो/ग_लिखो idxes
+ * il_queue_init - Initialize queue's high/low-water and read/write idxes
  */
-अटल पूर्णांक
-il_queue_init(काष्ठा il_priv *il, काष्ठा il_queue *q, पूर्णांक slots, u32 id)
-अणु
+static int
+il_queue_init(struct il_priv *il, struct il_queue *q, int slots, u32 id)
+{
 	/*
-	 * TFD_QUEUE_SIZE_MAX must be घातer-of-two size, otherwise
+	 * TFD_QUEUE_SIZE_MAX must be power-of-two size, otherwise
 	 * il_queue_inc_wrap and il_queue_dec_wrap are broken.
 	 */
 	BUILD_BUG_ON(TFD_QUEUE_SIZE_MAX & (TFD_QUEUE_SIZE_MAX - 1));
-	/* FIXME: हटाओ q->n_bd */
+	/* FIXME: remove q->n_bd */
 	q->n_bd = TFD_QUEUE_SIZE_MAX;
 
 	q->n_win = slots;
 	q->id = id;
 
-	/* slots_must be घातer-of-two size, otherwise
+	/* slots_must be power-of-two size, otherwise
 	 * il_get_cmd_idx is broken. */
-	BUG_ON(!is_घातer_of_2(slots));
+	BUG_ON(!is_power_of_2(slots));
 
 	q->low_mark = q->n_win / 4;
-	अगर (q->low_mark < 4)
+	if (q->low_mark < 4)
 		q->low_mark = 4;
 
 	q->high_mark = q->n_win / 8;
-	अगर (q->high_mark < 2)
+	if (q->high_mark < 2)
 		q->high_mark = 2;
 
-	q->ग_लिखो_ptr = q->पढ़ो_ptr = 0;
+	q->write_ptr = q->read_ptr = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * il_tx_queue_alloc - Alloc driver data and TFD CB क्रम one Tx/cmd queue
+ * il_tx_queue_alloc - Alloc driver data and TFD CB for one Tx/cmd queue
  */
-अटल पूर्णांक
-il_tx_queue_alloc(काष्ठा il_priv *il, काष्ठा il_tx_queue *txq, u32 id)
-अणु
-	काष्ठा device *dev = &il->pci_dev->dev;
-	माप_प्रकार tfd_sz = il->hw_params.tfd_size * TFD_QUEUE_SIZE_MAX;
+static int
+il_tx_queue_alloc(struct il_priv *il, struct il_tx_queue *txq, u32 id)
+{
+	struct device *dev = &il->pci_dev->dev;
+	size_t tfd_sz = il->hw_params.tfd_size * TFD_QUEUE_SIZE_MAX;
 
-	/* Driver ilate data, only क्रम Tx (not command) queues,
+	/* Driver ilate data, only for Tx (not command) queues,
 	 * not shared with device. */
-	अगर (id != il->cmd_queue) अणु
-		txq->skbs = kसुस्मृति(TFD_QUEUE_SIZE_MAX,
-				    माप(काष्ठा sk_buff *),
+	if (id != il->cmd_queue) {
+		txq->skbs = kcalloc(TFD_QUEUE_SIZE_MAX,
+				    sizeof(struct sk_buff *),
 				    GFP_KERNEL);
-		अगर (!txq->skbs) अणु
+		if (!txq->skbs) {
 			IL_ERR("Fail to alloc skbs\n");
-			जाओ error;
-		पूर्ण
-	पूर्ण अन्यथा
-		txq->skbs = शून्य;
+			goto error;
+		}
+	} else
+		txq->skbs = NULL;
 
 	/* Circular buffer of transmit frame descriptors (TFDs),
 	 * shared with device */
 	txq->tfds =
 	    dma_alloc_coherent(dev, tfd_sz, &txq->q.dma_addr, GFP_KERNEL);
-	अगर (!txq->tfds)
-		जाओ error;
+	if (!txq->tfds)
+		goto error;
 
 	txq->q.id = id;
 
-	वापस 0;
+	return 0;
 
 error:
-	kमुक्त(txq->skbs);
-	txq->skbs = शून्य;
+	kfree(txq->skbs);
+	txq->skbs = NULL;
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
 /*
  * il_tx_queue_init - Allocate and initialize one tx/cmd queue
  */
-पूर्णांक
-il_tx_queue_init(काष्ठा il_priv *il, u32 txq_id)
-अणु
-	पूर्णांक i, len, ret;
-	पूर्णांक slots, actual_slots;
-	काष्ठा il_tx_queue *txq = &il->txq[txq_id];
+int
+il_tx_queue_init(struct il_priv *il, u32 txq_id)
+{
+	int i, len, ret;
+	int slots, actual_slots;
+	struct il_tx_queue *txq = &il->txq[txq_id];
 
 	/*
-	 * Alloc buffer array क्रम commands (Tx or other types of commands).
+	 * Alloc buffer array for commands (Tx or other types of commands).
 	 * For the command queue (#4/#9), allocate command space + one big
-	 * command क्रम scan, since scan command is very huge; the प्रणाली will
-	 * not have two scans at the same समय, so only one is needed.
+	 * command for scan, since scan command is very huge; the system will
+	 * not have two scans at the same time, so only one is needed.
 	 * For normal Tx queues (all other queues), no super-size command
 	 * space is needed.
 	 */
-	अगर (txq_id == il->cmd_queue) अणु
+	if (txq_id == il->cmd_queue) {
 		slots = TFD_CMD_SLOTS;
 		actual_slots = slots + 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		slots = TFD_TX_CMD_SLOTS;
 		actual_slots = slots;
-	पूर्ण
+	}
 
 	txq->meta =
-	    kसुस्मृति(actual_slots, माप(काष्ठा il_cmd_meta), GFP_KERNEL);
+	    kcalloc(actual_slots, sizeof(struct il_cmd_meta), GFP_KERNEL);
 	txq->cmd =
-	    kसुस्मृति(actual_slots, माप(काष्ठा il_device_cmd *), GFP_KERNEL);
+	    kcalloc(actual_slots, sizeof(struct il_device_cmd *), GFP_KERNEL);
 
-	अगर (!txq->meta || !txq->cmd)
-		जाओ out_मुक्त_arrays;
+	if (!txq->meta || !txq->cmd)
+		goto out_free_arrays;
 
-	len = माप(काष्ठा il_device_cmd);
-	क्रम (i = 0; i < actual_slots; i++) अणु
-		/* only happens क्रम cmd queue */
-		अगर (i == slots)
+	len = sizeof(struct il_device_cmd);
+	for (i = 0; i < actual_slots; i++) {
+		/* only happens for cmd queue */
+		if (i == slots)
 			len = IL_MAX_CMD_SIZE;
 
-		txq->cmd[i] = kदो_स्मृति(len, GFP_KERNEL);
-		अगर (!txq->cmd[i])
-			जाओ err;
-	पूर्ण
+		txq->cmd[i] = kmalloc(len, GFP_KERNEL);
+		if (!txq->cmd[i])
+			goto err;
+	}
 
 	/* Alloc driver data array and TFD circular buffer */
 	ret = il_tx_queue_alloc(il, txq, txq_id);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	txq->need_update = 0;
 
 	/*
-	 * For the शेष queues 0-3, set up the swq_id
-	 * alपढ़ोy -- all others need to get one later
-	 * (अगर they need one at all).
+	 * For the default queues 0-3, set up the swq_id
+	 * already -- all others need to get one later
+	 * (if they need one at all).
 	 */
-	अगर (txq_id < 4)
+	if (txq_id < 4)
 		il_set_swq_id(txq, txq_id, txq_id);
 
 	/* Initialize queue's high/low-water marks, and head/tail idxes */
@@ -3061,35 +3060,35 @@ il_tx_queue_init(काष्ठा il_priv *il, u32 txq_id)
 	/* Tell device where to find queue */
 	il->ops->txq_init(il, txq);
 
-	वापस 0;
+	return 0;
 err:
-	क्रम (i = 0; i < actual_slots; i++)
-		kमुक्त(txq->cmd[i]);
-out_मुक्त_arrays:
-	kमुक्त(txq->meta);
-	txq->meta = शून्य;
-	kमुक्त(txq->cmd);
-	txq->cmd = शून्य;
+	for (i = 0; i < actual_slots; i++)
+		kfree(txq->cmd[i]);
+out_free_arrays:
+	kfree(txq->meta);
+	txq->meta = NULL;
+	kfree(txq->cmd);
+	txq->cmd = NULL;
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 EXPORT_SYMBOL(il_tx_queue_init);
 
-व्योम
-il_tx_queue_reset(काष्ठा il_priv *il, u32 txq_id)
-अणु
-	पूर्णांक slots, actual_slots;
-	काष्ठा il_tx_queue *txq = &il->txq[txq_id];
+void
+il_tx_queue_reset(struct il_priv *il, u32 txq_id)
+{
+	int slots, actual_slots;
+	struct il_tx_queue *txq = &il->txq[txq_id];
 
-	अगर (txq_id == il->cmd_queue) अणु
+	if (txq_id == il->cmd_queue) {
 		slots = TFD_CMD_SLOTS;
 		actual_slots = TFD_CMD_SLOTS + 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		slots = TFD_TX_CMD_SLOTS;
 		actual_slots = TFD_TX_CMD_SLOTS;
-	पूर्ण
+	}
 
-	स_रखो(txq->meta, 0, माप(काष्ठा il_cmd_meta) * actual_slots);
+	memset(txq->meta, 0, sizeof(struct il_cmd_meta) * actual_slots);
 	txq->need_update = 0;
 
 	/* Initialize queue's high/low-water marks, and head/tail idxes */
@@ -3097,234 +3096,234 @@ il_tx_queue_reset(काष्ठा il_priv *il, u32 txq_id)
 
 	/* Tell device where to find queue */
 	il->ops->txq_init(il, txq);
-पूर्ण
+}
 EXPORT_SYMBOL(il_tx_queue_reset);
 
 /*************** HOST COMMAND QUEUE FUNCTIONS   *****/
 
 /*
  * il_enqueue_hcmd - enqueue a uCode command
- * @il: device ilate data poपूर्णांक
- * @cmd: a poपूर्णांक to the ucode command काष्ठाure
+ * @il: device ilate data point
+ * @cmd: a point to the ucode command structure
  *
- * The function वापसs < 0 values to indicate the operation is
+ * The function returns < 0 values to indicate the operation is
  * failed. On success, it turns the idx (> 0) of command in the
  * command queue.
  */
-पूर्णांक
-il_enqueue_hcmd(काष्ठा il_priv *il, काष्ठा il_host_cmd *cmd)
-अणु
-	काष्ठा il_tx_queue *txq = &il->txq[il->cmd_queue];
-	काष्ठा il_queue *q = &txq->q;
-	काष्ठा il_device_cmd *out_cmd;
-	काष्ठा il_cmd_meta *out_meta;
+int
+il_enqueue_hcmd(struct il_priv *il, struct il_host_cmd *cmd)
+{
+	struct il_tx_queue *txq = &il->txq[il->cmd_queue];
+	struct il_queue *q = &txq->q;
+	struct il_device_cmd *out_cmd;
+	struct il_cmd_meta *out_meta;
 	dma_addr_t phys_addr;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 	u32 idx;
 	u16 fix_size;
 
 	cmd->len = il->ops->get_hcmd_size(cmd->id, cmd->len);
-	fix_size = (u16) (cmd->len + माप(out_cmd->hdr));
+	fix_size = (u16) (cmd->len + sizeof(out_cmd->hdr));
 
-	/* If any of the command काष्ठाures end up being larger than
+	/* If any of the command structures end up being larger than
 	 * the TFD_MAX_PAYLOAD_SIZE, and it sent as a 'small' command then
 	 * we will need to increase the size of the TFD entries
-	 * Also, check to see अगर command buffer should not exceed the size
+	 * Also, check to see if command buffer should not exceed the size
 	 * of device_cmd and max_cmd_size. */
 	BUG_ON((fix_size > TFD_MAX_PAYLOAD_SIZE) &&
 	       !(cmd->flags & CMD_SIZE_HUGE));
 	BUG_ON(fix_size > IL_MAX_CMD_SIZE);
 
-	अगर (il_is_rfसमाप्त(il) || il_is_ctसमाप्त(il)) अणु
+	if (il_is_rfkill(il) || il_is_ctkill(il)) {
 		IL_WARN("Not sending command - %s KILL\n",
-			il_is_rfसमाप्त(il) ? "RF" : "CT");
-		वापस -EIO;
-	पूर्ण
+			il_is_rfkill(il) ? "RF" : "CT");
+		return -EIO;
+	}
 
 	spin_lock_irqsave(&il->hcmd_lock, flags);
 
-	अगर (il_queue_space(q) < ((cmd->flags & CMD_ASYNC) ? 2 : 1)) अणु
+	if (il_queue_space(q) < ((cmd->flags & CMD_ASYNC) ? 2 : 1)) {
 		spin_unlock_irqrestore(&il->hcmd_lock, flags);
 
 		IL_ERR("Restarting adapter due to command queue full\n");
 		queue_work(il->workqueue, &il->restart);
-		वापस -ENOSPC;
-	पूर्ण
+		return -ENOSPC;
+	}
 
-	idx = il_get_cmd_idx(q, q->ग_लिखो_ptr, cmd->flags & CMD_SIZE_HUGE);
+	idx = il_get_cmd_idx(q, q->write_ptr, cmd->flags & CMD_SIZE_HUGE);
 	out_cmd = txq->cmd[idx];
 	out_meta = &txq->meta[idx];
 
-	अगर (WARN_ON(out_meta->flags & CMD_MAPPED)) अणु
+	if (WARN_ON(out_meta->flags & CMD_MAPPED)) {
 		spin_unlock_irqrestore(&il->hcmd_lock, flags);
-		वापस -ENOSPC;
-	पूर्ण
+		return -ENOSPC;
+	}
 
-	स_रखो(out_meta, 0, माप(*out_meta));	/* re-initialize to शून्य */
+	memset(out_meta, 0, sizeof(*out_meta));	/* re-initialize to NULL */
 	out_meta->flags = cmd->flags | CMD_MAPPED;
-	अगर (cmd->flags & CMD_WANT_SKB)
+	if (cmd->flags & CMD_WANT_SKB)
 		out_meta->source = cmd;
-	अगर (cmd->flags & CMD_ASYNC)
+	if (cmd->flags & CMD_ASYNC)
 		out_meta->callback = cmd->callback;
 
 	out_cmd->hdr.cmd = cmd->id;
-	स_नकल(&out_cmd->cmd.payload, cmd->data, cmd->len);
+	memcpy(&out_cmd->cmd.payload, cmd->data, cmd->len);
 
-	/* At this poपूर्णांक, the out_cmd now has all of the incoming cmd
-	 * inक्रमmation */
+	/* At this point, the out_cmd now has all of the incoming cmd
+	 * information */
 
 	out_cmd->hdr.flags = 0;
 	out_cmd->hdr.sequence =
-	    cpu_to_le16(QUEUE_TO_SEQ(il->cmd_queue) | IDX_TO_SEQ(q->ग_लिखो_ptr));
-	अगर (cmd->flags & CMD_SIZE_HUGE)
+	    cpu_to_le16(QUEUE_TO_SEQ(il->cmd_queue) | IDX_TO_SEQ(q->write_ptr));
+	if (cmd->flags & CMD_SIZE_HUGE)
 		out_cmd->hdr.sequence |= SEQ_HUGE_FRAME;
 
-#अगर_घोषित CONFIG_IWLEGACY_DEBUG
-	चयन (out_cmd->hdr.cmd) अणु
-	हाल C_TX_LINK_QUALITY_CMD:
-	हाल C_SENSITIVITY:
+#ifdef CONFIG_IWLEGACY_DEBUG
+	switch (out_cmd->hdr.cmd) {
+	case C_TX_LINK_QUALITY_CMD:
+	case C_SENSITIVITY:
 		D_HC_DUMP("Sending command %s (#%x), seq: 0x%04X, "
 			  "%d bytes at %d[%d]:%d\n",
 			  il_get_cmd_string(out_cmd->hdr.cmd), out_cmd->hdr.cmd,
 			  le16_to_cpu(out_cmd->hdr.sequence), fix_size,
-			  q->ग_लिखो_ptr, idx, il->cmd_queue);
-		अवरोध;
-	शेष:
+			  q->write_ptr, idx, il->cmd_queue);
+		break;
+	default:
 		D_HC("Sending command %s (#%x), seq: 0x%04X, "
 		     "%d bytes at %d[%d]:%d\n",
 		     il_get_cmd_string(out_cmd->hdr.cmd), out_cmd->hdr.cmd,
-		     le16_to_cpu(out_cmd->hdr.sequence), fix_size, q->ग_लिखो_ptr,
+		     le16_to_cpu(out_cmd->hdr.sequence), fix_size, q->write_ptr,
 		     idx, il->cmd_queue);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
 	phys_addr =
 	    pci_map_single(il->pci_dev, &out_cmd->hdr, fix_size,
-			   PCI_DMA_BIसूचीECTIONAL);
-	अगर (unlikely(pci_dma_mapping_error(il->pci_dev, phys_addr))) अणु
+			   PCI_DMA_BIDIRECTIONAL);
+	if (unlikely(pci_dma_mapping_error(il->pci_dev, phys_addr))) {
 		idx = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	dma_unmap_addr_set(out_meta, mapping, phys_addr);
 	dma_unmap_len_set(out_meta, len, fix_size);
 
 	txq->need_update = 1;
 
-	अगर (il->ops->txq_update_byte_cnt_tbl)
+	if (il->ops->txq_update_byte_cnt_tbl)
 		/* Set up entry in queue's byte count circular buffer */
 		il->ops->txq_update_byte_cnt_tbl(il, txq, 0);
 
 	il->ops->txq_attach_buf_to_tfd(il, txq, phys_addr, fix_size, 1,
 					    U32_PAD(cmd->len));
 
-	/* Increment and update queue's ग_लिखो idx */
-	q->ग_लिखो_ptr = il_queue_inc_wrap(q->ग_लिखो_ptr, q->n_bd);
-	il_txq_update_ग_लिखो_ptr(il, txq);
+	/* Increment and update queue's write idx */
+	q->write_ptr = il_queue_inc_wrap(q->write_ptr, q->n_bd);
+	il_txq_update_write_ptr(il, txq);
 
 out:
 	spin_unlock_irqrestore(&il->hcmd_lock, flags);
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
 /*
- * il_hcmd_queue_reclaim - Reclaim TX command queue entries alपढ़ोy Tx'd
+ * il_hcmd_queue_reclaim - Reclaim TX command queue entries already Tx'd
  *
  * When FW advances 'R' idx, all entries between old and new 'R' idx
- * need to be reclaimed. As result, some मुक्त space क्रमms.  If there is
- * enough मुक्त space (> low mark), wake the stack that feeds us.
+ * need to be reclaimed. As result, some free space forms.  If there is
+ * enough free space (> low mark), wake the stack that feeds us.
  */
-अटल व्योम
-il_hcmd_queue_reclaim(काष्ठा il_priv *il, पूर्णांक txq_id, पूर्णांक idx, पूर्णांक cmd_idx)
-अणु
-	काष्ठा il_tx_queue *txq = &il->txq[txq_id];
-	काष्ठा il_queue *q = &txq->q;
-	पूर्णांक nमुक्तd = 0;
+static void
+il_hcmd_queue_reclaim(struct il_priv *il, int txq_id, int idx, int cmd_idx)
+{
+	struct il_tx_queue *txq = &il->txq[txq_id];
+	struct il_queue *q = &txq->q;
+	int nfreed = 0;
 
-	अगर (idx >= q->n_bd || il_queue_used(q, idx) == 0) अणु
+	if (idx >= q->n_bd || il_queue_used(q, idx) == 0) {
 		IL_ERR("Read idx for DMA queue txq id (%d), idx %d, "
 		       "is out of range [0-%d] %d %d.\n", txq_id, idx, q->n_bd,
-		       q->ग_लिखो_ptr, q->पढ़ो_ptr);
-		वापस;
-	पूर्ण
+		       q->write_ptr, q->read_ptr);
+		return;
+	}
 
-	क्रम (idx = il_queue_inc_wrap(idx, q->n_bd); q->पढ़ो_ptr != idx;
-	     q->पढ़ो_ptr = il_queue_inc_wrap(q->पढ़ो_ptr, q->n_bd)) अणु
+	for (idx = il_queue_inc_wrap(idx, q->n_bd); q->read_ptr != idx;
+	     q->read_ptr = il_queue_inc_wrap(q->read_ptr, q->n_bd)) {
 
-		अगर (nमुक्तd++ > 0) अणु
+		if (nfreed++ > 0) {
 			IL_ERR("HCMD skipped: idx (%d) %d %d\n", idx,
-			       q->ग_लिखो_ptr, q->पढ़ो_ptr);
+			       q->write_ptr, q->read_ptr);
 			queue_work(il->workqueue, &il->restart);
-		पूर्ण
+		}
 
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * il_tx_cmd_complete - Pull unused buffers off the queue and reclaim them
  * @rxb: Rx buffer to reclaim
  *
  * If an Rx buffer has an async callback associated with it the callback
- * will be executed.  The attached skb (अगर present) will only be मुक्तd
- * अगर the callback वापसs 1
+ * will be executed.  The attached skb (if present) will only be freed
+ * if the callback returns 1
  */
-व्योम
-il_tx_cmd_complete(काष्ठा il_priv *il, काष्ठा il_rx_buf *rxb)
-अणु
-	काष्ठा il_rx_pkt *pkt = rxb_addr(rxb);
+void
+il_tx_cmd_complete(struct il_priv *il, struct il_rx_buf *rxb)
+{
+	struct il_rx_pkt *pkt = rxb_addr(rxb);
 	u16 sequence = le16_to_cpu(pkt->hdr.sequence);
-	पूर्णांक txq_id = SEQ_TO_QUEUE(sequence);
-	पूर्णांक idx = SEQ_TO_IDX(sequence);
-	पूर्णांक cmd_idx;
+	int txq_id = SEQ_TO_QUEUE(sequence);
+	int idx = SEQ_TO_IDX(sequence);
+	int cmd_idx;
 	bool huge = !!(pkt->hdr.sequence & SEQ_HUGE_FRAME);
-	काष्ठा il_device_cmd *cmd;
-	काष्ठा il_cmd_meta *meta;
-	काष्ठा il_tx_queue *txq = &il->txq[il->cmd_queue];
-	अचिन्हित दीर्घ flags;
+	struct il_device_cmd *cmd;
+	struct il_cmd_meta *meta;
+	struct il_tx_queue *txq = &il->txq[il->cmd_queue];
+	unsigned long flags;
 
 	/* If a Tx command is being handled and it isn't in the actual
-	 * command queue then there a command routing bug has been पूर्णांकroduced
+	 * command queue then there a command routing bug has been introduced
 	 * in the queue management code. */
-	अगर (WARN
+	if (WARN
 	    (txq_id != il->cmd_queue,
 	     "wrong command queue %d (should be %d), sequence 0x%X readp=%d writep=%d\n",
-	     txq_id, il->cmd_queue, sequence, il->txq[il->cmd_queue].q.पढ़ो_ptr,
-	     il->txq[il->cmd_queue].q.ग_लिखो_ptr)) अणु
-		il_prपूर्णांक_hex_error(il, pkt, 32);
-		वापस;
-	पूर्ण
+	     txq_id, il->cmd_queue, sequence, il->txq[il->cmd_queue].q.read_ptr,
+	     il->txq[il->cmd_queue].q.write_ptr)) {
+		il_print_hex_error(il, pkt, 32);
+		return;
+	}
 
 	cmd_idx = il_get_cmd_idx(&txq->q, idx, huge);
 	cmd = txq->cmd[cmd_idx];
 	meta = &txq->meta[cmd_idx];
 
-	txq->समय_stamp = jअगरfies;
+	txq->time_stamp = jiffies;
 
 	pci_unmap_single(il->pci_dev, dma_unmap_addr(meta, mapping),
-			 dma_unmap_len(meta, len), PCI_DMA_BIसूचीECTIONAL);
+			 dma_unmap_len(meta, len), PCI_DMA_BIDIRECTIONAL);
 
-	/* Input error checking is करोne when commands are added to queue. */
-	अगर (meta->flags & CMD_WANT_SKB) अणु
-		meta->source->reply_page = (अचिन्हित दीर्घ)rxb_addr(rxb);
-		rxb->page = शून्य;
-	पूर्ण अन्यथा अगर (meta->callback)
+	/* Input error checking is done when commands are added to queue. */
+	if (meta->flags & CMD_WANT_SKB) {
+		meta->source->reply_page = (unsigned long)rxb_addr(rxb);
+		rxb->page = NULL;
+	} else if (meta->callback)
 		meta->callback(il, cmd, pkt);
 
 	spin_lock_irqsave(&il->hcmd_lock, flags);
 
 	il_hcmd_queue_reclaim(il, txq_id, idx, cmd_idx);
 
-	अगर (!(meta->flags & CMD_ASYNC)) अणु
+	if (!(meta->flags & CMD_ASYNC)) {
 		clear_bit(S_HCMD_ACTIVE, &il->status);
 		D_INFO("Clearing HCMD_ACTIVE for command %s\n",
 		       il_get_cmd_string(cmd->hdr.cmd));
-		wake_up(&il->रुको_command_queue);
-	पूर्ण
+		wake_up(&il->wait_command_queue);
+	}
 
 	/* Mark as unmapped */
 	meta->flags = 0;
 
 	spin_unlock_irqrestore(&il->hcmd_lock, flags);
-पूर्ण
+}
 EXPORT_SYMBOL(il_tx_cmd_complete);
 
 MODULE_DESCRIPTION("iwl-legacy: common functions for 3945 and 4965");
@@ -3333,66 +3332,66 @@ MODULE_AUTHOR(DRV_COPYRIGHT " " DRV_AUTHOR);
 MODULE_LICENSE("GPL");
 
 /*
- * set bt_coex_active to true, uCode will करो समाप्त/defer
- * every समय the priority line is निश्चितed (BT is sending संकेतs on the
+ * set bt_coex_active to true, uCode will do kill/defer
+ * every time the priority line is asserted (BT is sending signals on the
  * priority line in the PCIx).
  * set bt_coex_active to false, uCode will ignore the BT activity and
- * perक्रमm the normal operation
+ * perform the normal operation
  *
- * User might experience transmit issue on some platक्रमm due to WiFi/BT
+ * User might experience transmit issue on some platform due to WiFi/BT
  * co-exist problem. The possible behaviors are:
  *   Able to scan and finding all the available AP
  *   Not able to associate with any AP
- * On those platक्रमms, WiFi communication can be restored by set
+ * On those platforms, WiFi communication can be restored by set
  * "bt_coex_active" module parameter to "false"
  *
- * शेष: bt_coex_active = true (BT_COEX_ENABLE)
+ * default: bt_coex_active = true (BT_COEX_ENABLE)
  */
-अटल bool bt_coex_active = true;
+static bool bt_coex_active = true;
 module_param(bt_coex_active, bool, 0444);
 MODULE_PARM_DESC(bt_coex_active, "enable wifi/bluetooth co-exist");
 
 u32 il_debug_level;
 EXPORT_SYMBOL(il_debug_level);
 
-स्थिर u8 il_bcast_addr[ETH_ALEN] = अणु 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF पूर्ण;
+const u8 il_bcast_addr[ETH_ALEN] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 EXPORT_SYMBOL(il_bcast_addr);
 
-#घोषणा MAX_BIT_RATE_40_MHZ 150	/* Mbps */
-#घोषणा MAX_BIT_RATE_20_MHZ 72	/* Mbps */
-अटल व्योम
-il_init_ht_hw_capab(स्थिर काष्ठा il_priv *il,
-		    काष्ठा ieee80211_sta_ht_cap *ht_info,
-		    क्रमागत nl80211_band band)
-अणु
+#define MAX_BIT_RATE_40_MHZ 150	/* Mbps */
+#define MAX_BIT_RATE_20_MHZ 72	/* Mbps */
+static void
+il_init_ht_hw_capab(const struct il_priv *il,
+		    struct ieee80211_sta_ht_cap *ht_info,
+		    enum nl80211_band band)
+{
 	u16 max_bit_rate = 0;
 	u8 rx_chains_num = il->hw_params.rx_chains_num;
 	u8 tx_chains_num = il->hw_params.tx_chains_num;
 
 	ht_info->cap = 0;
-	स_रखो(&ht_info->mcs, 0, माप(ht_info->mcs));
+	memset(&ht_info->mcs, 0, sizeof(ht_info->mcs));
 
 	ht_info->ht_supported = true;
 
 	ht_info->cap |= IEEE80211_HT_CAP_SGI_20;
 	max_bit_rate = MAX_BIT_RATE_20_MHZ;
-	अगर (il->hw_params.ht40_channel & BIT(band)) अणु
+	if (il->hw_params.ht40_channel & BIT(band)) {
 		ht_info->cap |= IEEE80211_HT_CAP_SUP_WIDTH_20_40;
 		ht_info->cap |= IEEE80211_HT_CAP_SGI_40;
 		ht_info->mcs.rx_mask[4] = 0x01;
 		max_bit_rate = MAX_BIT_RATE_40_MHZ;
-	पूर्ण
+	}
 
-	अगर (il->cfg->mod_params->amsdu_size_8K)
+	if (il->cfg->mod_params->amsdu_size_8K)
 		ht_info->cap |= IEEE80211_HT_CAP_MAX_AMSDU;
 
 	ht_info->ampdu_factor = CFG_HT_RX_AMPDU_FACTOR_DEF;
 	ht_info->ampdu_density = CFG_HT_MPDU_DENSITY_DEF;
 
 	ht_info->mcs.rx_mask[0] = 0xFF;
-	अगर (rx_chains_num >= 2)
+	if (rx_chains_num >= 2)
 		ht_info->mcs.rx_mask[1] = 0xFF;
-	अगर (rx_chains_num >= 3)
+	if (rx_chains_num >= 3)
 		ht_info->mcs.rx_mask[2] = 0xFF;
 
 	/* Highest supported Rx data rate */
@@ -3402,48 +3401,48 @@ il_init_ht_hw_capab(स्थिर काष्ठा il_priv *il,
 
 	/* Tx MCS capabilities */
 	ht_info->mcs.tx_params = IEEE80211_HT_MCS_TX_DEFINED;
-	अगर (tx_chains_num != rx_chains_num) अणु
+	if (tx_chains_num != rx_chains_num) {
 		ht_info->mcs.tx_params |= IEEE80211_HT_MCS_TX_RX_DIFF;
 		ht_info->mcs.tx_params |=
 		    ((tx_chains_num -
 		      1) << IEEE80211_HT_MCS_TX_MAX_STREAMS_SHIFT);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * il_init_geos - Initialize mac80211's geo/channel info based from eeprom
  */
-पूर्णांक
-il_init_geos(काष्ठा il_priv *il)
-अणु
-	काष्ठा il_channel_info *ch;
-	काष्ठा ieee80211_supported_band *sband;
-	काष्ठा ieee80211_channel *channels;
-	काष्ठा ieee80211_channel *geo_ch;
-	काष्ठा ieee80211_rate *rates;
-	पूर्णांक i = 0;
-	s8 max_tx_घातer = 0;
+int
+il_init_geos(struct il_priv *il)
+{
+	struct il_channel_info *ch;
+	struct ieee80211_supported_band *sband;
+	struct ieee80211_channel *channels;
+	struct ieee80211_channel *geo_ch;
+	struct ieee80211_rate *rates;
+	int i = 0;
+	s8 max_tx_power = 0;
 
-	अगर (il->bands[NL80211_BAND_2GHZ].n_bitrates ||
-	    il->bands[NL80211_BAND_5GHZ].n_bitrates) अणु
+	if (il->bands[NL80211_BAND_2GHZ].n_bitrates ||
+	    il->bands[NL80211_BAND_5GHZ].n_bitrates) {
 		D_INFO("Geography modes already initialized.\n");
 		set_bit(S_GEO_CONFIGURED, &il->status);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	channels =
-	    kसुस्मृति(il->channel_count, माप(काष्ठा ieee80211_channel),
+	    kcalloc(il->channel_count, sizeof(struct ieee80211_channel),
 		    GFP_KERNEL);
-	अगर (!channels)
-		वापस -ENOMEM;
+	if (!channels)
+		return -ENOMEM;
 
 	rates =
-	    kzalloc((माप(काष्ठा ieee80211_rate) * RATE_COUNT_LEGACY),
+	    kzalloc((sizeof(struct ieee80211_rate) * RATE_COUNT_LEGACY),
 		    GFP_KERNEL);
-	अगर (!rates) अणु
-		kमुक्त(channels);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!rates) {
+		kfree(channels);
+		return -ENOMEM;
+	}
 
 	/* 5.2GHz channels start after the 2.4GHz channels */
 	sband = &il->bands[NL80211_BAND_5GHZ];
@@ -3452,7 +3451,7 @@ il_init_geos(काष्ठा il_priv *il)
 	sband->bitrates = &rates[IL_FIRST_OFDM_RATE];
 	sband->n_bitrates = RATE_COUNT_LEGACY - IL_FIRST_OFDM_RATE;
 
-	अगर (il->cfg->sku & IL_SKU_N)
+	if (il->cfg->sku & IL_SKU_N)
 		il_init_ht_hw_capab(il, &sband->ht_cap, NL80211_BAND_5GHZ);
 
 	sband = &il->bands[NL80211_BAND_2GHZ];
@@ -3461,17 +3460,17 @@ il_init_geos(काष्ठा il_priv *il)
 	sband->bitrates = rates;
 	sband->n_bitrates = RATE_COUNT_LEGACY;
 
-	अगर (il->cfg->sku & IL_SKU_N)
+	if (il->cfg->sku & IL_SKU_N)
 		il_init_ht_hw_capab(il, &sband->ht_cap, NL80211_BAND_2GHZ);
 
 	il->ieee_channels = channels;
 	il->ieee_rates = rates;
 
-	क्रम (i = 0; i < il->channel_count; i++) अणु
+	for (i = 0; i < il->channel_count; i++) {
 		ch = &il->channel_info[i];
 
-		अगर (!il_is_channel_valid(ch))
-			जारी;
+		if (!il_is_channel_valid(ch))
+			continue;
 
 		sband = &il->bands[ch->band];
 
@@ -3479,27 +3478,27 @@ il_init_geos(काष्ठा il_priv *il)
 
 		geo_ch->center_freq =
 		    ieee80211_channel_to_frequency(ch->channel, ch->band);
-		geo_ch->max_घातer = ch->max_घातer_avg;
+		geo_ch->max_power = ch->max_power_avg;
 		geo_ch->max_antenna_gain = 0xff;
 		geo_ch->hw_value = ch->channel;
 
-		अगर (il_is_channel_valid(ch)) अणु
-			अगर (!(ch->flags & EEPROM_CHANNEL_IBSS))
+		if (il_is_channel_valid(ch)) {
+			if (!(ch->flags & EEPROM_CHANNEL_IBSS))
 				geo_ch->flags |= IEEE80211_CHAN_NO_IR;
 
-			अगर (!(ch->flags & EEPROM_CHANNEL_ACTIVE))
+			if (!(ch->flags & EEPROM_CHANNEL_ACTIVE))
 				geo_ch->flags |= IEEE80211_CHAN_NO_IR;
 
-			अगर (ch->flags & EEPROM_CHANNEL_RADAR)
+			if (ch->flags & EEPROM_CHANNEL_RADAR)
 				geo_ch->flags |= IEEE80211_CHAN_RADAR;
 
 			geo_ch->flags |= ch->ht40_extension_channel;
 
-			अगर (ch->max_घातer_avg > max_tx_घातer)
-				max_tx_घातer = ch->max_घातer_avg;
-		पूर्ण अन्यथा अणु
+			if (ch->max_power_avg > max_tx_power)
+				max_tx_power = ch->max_power_avg;
+		} else {
 			geo_ch->flags |= IEEE80211_CHAN_DISABLED;
-		पूर्ण
+		}
 
 		D_INFO("Channel %d Freq=%d[%sGHz] %s flag=0x%X\n", ch->channel,
 		       geo_ch->center_freq,
@@ -3507,19 +3506,19 @@ il_init_geos(काष्ठा il_priv *il)
 		       geo_ch->
 		       flags & IEEE80211_CHAN_DISABLED ? "restricted" : "valid",
 		       geo_ch->flags);
-	पूर्ण
+	}
 
-	il->tx_घातer_device_lmt = max_tx_घातer;
-	il->tx_घातer_user_lmt = max_tx_घातer;
-	il->tx_घातer_next = max_tx_घातer;
+	il->tx_power_device_lmt = max_tx_power;
+	il->tx_power_user_lmt = max_tx_power;
+	il->tx_power_next = max_tx_power;
 
-	अगर (il->bands[NL80211_BAND_5GHZ].n_channels == 0 &&
-	    (il->cfg->sku & IL_SKU_A)) अणु
+	if (il->bands[NL80211_BAND_5GHZ].n_channels == 0 &&
+	    (il->cfg->sku & IL_SKU_A)) {
 		IL_INFO("Incorrectly detected BG card as ABG. "
 			"Please send your PCI ID 0x%04X:0x%04X to maintainer.\n",
-			il->pci_dev->device, il->pci_dev->subप्रणाली_device);
+			il->pci_dev->device, il->pci_dev->subsystem_device);
 		il->cfg->sku &= ~IL_SKU_A;
-	पूर्ण
+	}
 
 	IL_INFO("Tunable channels: %d 802.11bg, %d 802.11a channels\n",
 		il->bands[NL80211_BAND_2GHZ].n_channels,
@@ -3527,86 +3526,86 @@ il_init_geos(काष्ठा il_priv *il)
 
 	set_bit(S_GEO_CONFIGURED, &il->status);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(il_init_geos);
 
 /*
- * il_मुक्त_geos - unकरो allocations in il_init_geos
+ * il_free_geos - undo allocations in il_init_geos
  */
-व्योम
-il_मुक्त_geos(काष्ठा il_priv *il)
-अणु
-	kमुक्त(il->ieee_channels);
-	kमुक्त(il->ieee_rates);
+void
+il_free_geos(struct il_priv *il)
+{
+	kfree(il->ieee_channels);
+	kfree(il->ieee_rates);
 	clear_bit(S_GEO_CONFIGURED, &il->status);
-पूर्ण
-EXPORT_SYMBOL(il_मुक्त_geos);
+}
+EXPORT_SYMBOL(il_free_geos);
 
-अटल bool
-il_is_channel_extension(काष्ठा il_priv *il, क्रमागत nl80211_band band,
+static bool
+il_is_channel_extension(struct il_priv *il, enum nl80211_band band,
 			u16 channel, u8 extension_chan_offset)
-अणु
-	स्थिर काष्ठा il_channel_info *ch_info;
+{
+	const struct il_channel_info *ch_info;
 
 	ch_info = il_get_channel_info(il, band, channel);
-	अगर (!il_is_channel_valid(ch_info))
-		वापस false;
+	if (!il_is_channel_valid(ch_info))
+		return false;
 
-	अगर (extension_chan_offset == IEEE80211_HT_PARAM_CHA_SEC_ABOVE)
-		वापस !(ch_info->
+	if (extension_chan_offset == IEEE80211_HT_PARAM_CHA_SEC_ABOVE)
+		return !(ch_info->
 			 ht40_extension_channel & IEEE80211_CHAN_NO_HT40PLUS);
-	अन्यथा अगर (extension_chan_offset == IEEE80211_HT_PARAM_CHA_SEC_BELOW)
-		वापस !(ch_info->
+	else if (extension_chan_offset == IEEE80211_HT_PARAM_CHA_SEC_BELOW)
+		return !(ch_info->
 			 ht40_extension_channel & IEEE80211_CHAN_NO_HT40MINUS);
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 bool
-il_is_ht40_tx_allowed(काष्ठा il_priv *il, काष्ठा ieee80211_sta_ht_cap *ht_cap)
-अणु
-	अगर (!il->ht.enabled || !il->ht.is_40mhz)
-		वापस false;
+il_is_ht40_tx_allowed(struct il_priv *il, struct ieee80211_sta_ht_cap *ht_cap)
+{
+	if (!il->ht.enabled || !il->ht.is_40mhz)
+		return false;
 
 	/*
-	 * We करो not check क्रम IEEE80211_HT_CAP_SUP_WIDTH_20_40
-	 * the bit will not set अगर it is pure 40MHz हाल
+	 * We do not check for IEEE80211_HT_CAP_SUP_WIDTH_20_40
+	 * the bit will not set if it is pure 40MHz case
 	 */
-	अगर (ht_cap && !ht_cap->ht_supported)
-		वापस false;
+	if (ht_cap && !ht_cap->ht_supported)
+		return false;
 
-#अगर_घोषित CONFIG_IWLEGACY_DEBUGFS
-	अगर (il->disable_ht40)
-		वापस false;
-#पूर्ण_अगर
+#ifdef CONFIG_IWLEGACY_DEBUGFS
+	if (il->disable_ht40)
+		return false;
+#endif
 
-	वापस il_is_channel_extension(il, il->band,
+	return il_is_channel_extension(il, il->band,
 				       le16_to_cpu(il->staging.channel),
 				       il->ht.extension_chan_offset);
-पूर्ण
+}
 EXPORT_SYMBOL(il_is_ht40_tx_allowed);
 
-अटल u16 noअंतरभूत
-il_adjust_beacon_पूर्णांकerval(u16 beacon_val, u16 max_beacon_val)
-अणु
+static u16 noinline
+il_adjust_beacon_interval(u16 beacon_val, u16 max_beacon_val)
+{
 	u16 new_val;
 	u16 beacon_factor;
 
 	/*
-	 * If mac80211 hasn't given us a beacon पूर्णांकerval, program
-	 * the शेष पूर्णांकo the device.
+	 * If mac80211 hasn't given us a beacon interval, program
+	 * the default into the device.
 	 */
-	अगर (!beacon_val)
-		वापस DEFAULT_BEACON_INTERVAL;
+	if (!beacon_val)
+		return DEFAULT_BEACON_INTERVAL;
 
 	/*
-	 * If the beacon पूर्णांकerval we obtained from the peer
+	 * If the beacon interval we obtained from the peer
 	 * is too large, we'll have to wake up more often
-	 * (and in IBSS हाल, we'll beacon too much)
+	 * (and in IBSS case, we'll beacon too much)
 	 *
-	 * For example, अगर max_beacon_val is 4096, and the
-	 * requested beacon पूर्णांकerval is 7000, we'll have to
+	 * For example, if max_beacon_val is 4096, and the
+	 * requested beacon interval is 7000, we'll have to
 	 * use 3500 to be able to wake up on the beacons.
 	 *
 	 * This could badly influence beacon detection stats.
@@ -3615,174 +3614,174 @@ il_adjust_beacon_पूर्णांकerval(u16 beacon_val, u16 max_beacon_va
 	beacon_factor = (beacon_val + max_beacon_val) / max_beacon_val;
 	new_val = beacon_val / beacon_factor;
 
-	अगर (!new_val)
+	if (!new_val)
 		new_val = max_beacon_val;
 
-	वापस new_val;
-पूर्ण
+	return new_val;
+}
 
-पूर्णांक
-il_send_rxon_timing(काष्ठा il_priv *il)
-अणु
+int
+il_send_rxon_timing(struct il_priv *il)
+{
 	u64 tsf;
-	s32 पूर्णांकerval_पंचांग, rem;
-	काष्ठा ieee80211_conf *conf = शून्य;
-	u16 beacon_पूर्णांक;
-	काष्ठा ieee80211_vअगर *vअगर = il->vअगर;
+	s32 interval_tm, rem;
+	struct ieee80211_conf *conf = NULL;
+	u16 beacon_int;
+	struct ieee80211_vif *vif = il->vif;
 
 	conf = &il->hw->conf;
 
-	lockdep_निश्चित_held(&il->mutex);
+	lockdep_assert_held(&il->mutex);
 
-	स_रखो(&il->timing, 0, माप(काष्ठा il_rxon_समय_cmd));
+	memset(&il->timing, 0, sizeof(struct il_rxon_time_cmd));
 
-	il->timing.बारtamp = cpu_to_le64(il->बारtamp);
-	il->timing.listen_पूर्णांकerval = cpu_to_le16(conf->listen_पूर्णांकerval);
+	il->timing.timestamp = cpu_to_le64(il->timestamp);
+	il->timing.listen_interval = cpu_to_le16(conf->listen_interval);
 
-	beacon_पूर्णांक = vअगर ? vअगर->bss_conf.beacon_पूर्णांक : 0;
+	beacon_int = vif ? vif->bss_conf.beacon_int : 0;
 
 	/*
 	 * TODO: For IBSS we need to get atim_win from mac80211,
-	 *       क्रम now just always use 0
+	 *       for now just always use 0
 	 */
 	il->timing.atim_win = 0;
 
-	beacon_पूर्णांक =
-	    il_adjust_beacon_पूर्णांकerval(beacon_पूर्णांक,
+	beacon_int =
+	    il_adjust_beacon_interval(beacon_int,
 				      il->hw_params.max_beacon_itrvl *
 				      TIME_UNIT);
-	il->timing.beacon_पूर्णांकerval = cpu_to_le16(beacon_पूर्णांक);
+	il->timing.beacon_interval = cpu_to_le16(beacon_int);
 
-	tsf = il->बारtamp;	/* tsf is modअगरed by करो_भाग: copy it */
-	पूर्णांकerval_पंचांग = beacon_पूर्णांक * TIME_UNIT;
-	rem = करो_भाग(tsf, पूर्णांकerval_पंचांग);
-	il->timing.beacon_init_val = cpu_to_le32(पूर्णांकerval_पंचांग - rem);
+	tsf = il->timestamp;	/* tsf is modifed by do_div: copy it */
+	interval_tm = beacon_int * TIME_UNIT;
+	rem = do_div(tsf, interval_tm);
+	il->timing.beacon_init_val = cpu_to_le32(interval_tm - rem);
 
-	il->timing.dtim_period = vअगर ? (vअगर->bss_conf.dtim_period ? : 1) : 1;
+	il->timing.dtim_period = vif ? (vif->bss_conf.dtim_period ? : 1) : 1;
 
 	D_ASSOC("beacon interval %d beacon timer %d beacon tim %d\n",
-		le16_to_cpu(il->timing.beacon_पूर्णांकerval),
+		le16_to_cpu(il->timing.beacon_interval),
 		le32_to_cpu(il->timing.beacon_init_val),
 		le16_to_cpu(il->timing.atim_win));
 
-	वापस il_send_cmd_pdu(il, C_RXON_TIMING, माप(il->timing),
+	return il_send_cmd_pdu(il, C_RXON_TIMING, sizeof(il->timing),
 			       &il->timing);
-पूर्ण
+}
 EXPORT_SYMBOL(il_send_rxon_timing);
 
-व्योम
-il_set_rxon_hwcrypto(काष्ठा il_priv *il, पूर्णांक hw_decrypt)
-अणु
-	काष्ठा il_rxon_cmd *rxon = &il->staging;
+void
+il_set_rxon_hwcrypto(struct il_priv *il, int hw_decrypt)
+{
+	struct il_rxon_cmd *rxon = &il->staging;
 
-	अगर (hw_decrypt)
+	if (hw_decrypt)
 		rxon->filter_flags &= ~RXON_FILTER_DIS_DECRYPT_MSK;
-	अन्यथा
+	else
 		rxon->filter_flags |= RXON_FILTER_DIS_DECRYPT_MSK;
 
-पूर्ण
+}
 EXPORT_SYMBOL(il_set_rxon_hwcrypto);
 
-/* validate RXON काष्ठाure is valid */
-पूर्णांक
-il_check_rxon_cmd(काष्ठा il_priv *il)
-अणु
-	काष्ठा il_rxon_cmd *rxon = &il->staging;
+/* validate RXON structure is valid */
+int
+il_check_rxon_cmd(struct il_priv *il)
+{
+	struct il_rxon_cmd *rxon = &il->staging;
 	bool error = false;
 
-	अगर (rxon->flags & RXON_FLG_BAND_24G_MSK) अणु
-		अगर (rxon->flags & RXON_FLG_TGJ_NARROW_BAND_MSK) अणु
+	if (rxon->flags & RXON_FLG_BAND_24G_MSK) {
+		if (rxon->flags & RXON_FLG_TGJ_NARROW_BAND_MSK) {
 			IL_WARN("check 2.4G: wrong narrow\n");
 			error = true;
-		पूर्ण
-		अगर (rxon->flags & RXON_FLG_RADAR_DETECT_MSK) अणु
+		}
+		if (rxon->flags & RXON_FLG_RADAR_DETECT_MSK) {
 			IL_WARN("check 2.4G: wrong radar\n");
 			error = true;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (!(rxon->flags & RXON_FLG_SHORT_SLOT_MSK)) अणु
+		}
+	} else {
+		if (!(rxon->flags & RXON_FLG_SHORT_SLOT_MSK)) {
 			IL_WARN("check 5.2G: not short slot!\n");
 			error = true;
-		पूर्ण
-		अगर (rxon->flags & RXON_FLG_CCK_MSK) अणु
+		}
+		if (rxon->flags & RXON_FLG_CCK_MSK) {
 			IL_WARN("check 5.2G: CCK!\n");
 			error = true;
-		पूर्ण
-	पूर्ण
-	अगर ((rxon->node_addr[0] | rxon->bssid_addr[0]) & 0x1) अणु
+		}
+	}
+	if ((rxon->node_addr[0] | rxon->bssid_addr[0]) & 0x1) {
 		IL_WARN("mac/bssid mcast!\n");
 		error = true;
-	पूर्ण
+	}
 
 	/* make sure basic rates 6Mbps and 1Mbps are supported */
-	अगर ((rxon->ofdm_basic_rates & RATE_6M_MASK) == 0 &&
-	    (rxon->cck_basic_rates & RATE_1M_MASK) == 0) अणु
+	if ((rxon->ofdm_basic_rates & RATE_6M_MASK) == 0 &&
+	    (rxon->cck_basic_rates & RATE_1M_MASK) == 0) {
 		IL_WARN("neither 1 nor 6 are basic\n");
 		error = true;
-	पूर्ण
+	}
 
-	अगर (le16_to_cpu(rxon->assoc_id) > 2007) अणु
+	if (le16_to_cpu(rxon->assoc_id) > 2007) {
 		IL_WARN("aid > 2007\n");
 		error = true;
-	पूर्ण
+	}
 
-	अगर ((rxon->flags & (RXON_FLG_CCK_MSK | RXON_FLG_SHORT_SLOT_MSK)) ==
-	    (RXON_FLG_CCK_MSK | RXON_FLG_SHORT_SLOT_MSK)) अणु
+	if ((rxon->flags & (RXON_FLG_CCK_MSK | RXON_FLG_SHORT_SLOT_MSK)) ==
+	    (RXON_FLG_CCK_MSK | RXON_FLG_SHORT_SLOT_MSK)) {
 		IL_WARN("CCK and short slot\n");
 		error = true;
-	पूर्ण
+	}
 
-	अगर ((rxon->flags & (RXON_FLG_CCK_MSK | RXON_FLG_AUTO_DETECT_MSK)) ==
-	    (RXON_FLG_CCK_MSK | RXON_FLG_AUTO_DETECT_MSK)) अणु
+	if ((rxon->flags & (RXON_FLG_CCK_MSK | RXON_FLG_AUTO_DETECT_MSK)) ==
+	    (RXON_FLG_CCK_MSK | RXON_FLG_AUTO_DETECT_MSK)) {
 		IL_WARN("CCK and auto detect");
 		error = true;
-	पूर्ण
+	}
 
-	अगर ((rxon->
+	if ((rxon->
 	     flags & (RXON_FLG_AUTO_DETECT_MSK | RXON_FLG_TGG_PROTECT_MSK)) ==
-	    RXON_FLG_TGG_PROTECT_MSK) अणु
+	    RXON_FLG_TGG_PROTECT_MSK) {
 		IL_WARN("TGg but no auto-detect\n");
 		error = true;
-	पूर्ण
+	}
 
-	अगर (error)
+	if (error)
 		IL_WARN("Tuning to channel %d\n", le16_to_cpu(rxon->channel));
 
-	अगर (error) अणु
+	if (error) {
 		IL_ERR("Invalid RXON\n");
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 EXPORT_SYMBOL(il_check_rxon_cmd);
 
 /*
- * il_full_rxon_required - check अगर full RXON (vs RXON_ASSOC) cmd is needed
+ * il_full_rxon_required - check if full RXON (vs RXON_ASSOC) cmd is needed
  * @il: staging_rxon is compared to active_rxon
  *
- * If the RXON काष्ठाure is changing enough to require a new tune,
- * or is clearing the RXON_FILTER_ASSOC_MSK, then वापस 1 to indicate that
+ * If the RXON structure is changing enough to require a new tune,
+ * or is clearing the RXON_FILTER_ASSOC_MSK, then return 1 to indicate that
  * a new tune (full RXON command, rather than RXON_ASSOC cmd) is required.
  */
-पूर्णांक
-il_full_rxon_required(काष्ठा il_priv *il)
-अणु
-	स्थिर काष्ठा il_rxon_cmd *staging = &il->staging;
-	स्थिर काष्ठा il_rxon_cmd *active = &il->active;
+int
+il_full_rxon_required(struct il_priv *il)
+{
+	const struct il_rxon_cmd *staging = &il->staging;
+	const struct il_rxon_cmd *active = &il->active;
 
-#घोषणा CHK(cond)							\
-	अगर ((cond)) अणु							\
+#define CHK(cond)							\
+	if ((cond)) {							\
 		D_INFO("need full RXON - " #cond "\n");	\
-		वापस 1;						\
-	पूर्ण
+		return 1;						\
+	}
 
-#घोषणा CHK_NEQ(c1, c2)						\
-	अगर ((c1) != (c2)) अणु					\
+#define CHK_NEQ(c1, c2)						\
+	if ((c1) != (c2)) {					\
 		D_INFO("need full RXON - "	\
 			       #c1 " != " #c2 " - %d != %d\n",	\
 			       (c1), (c2));			\
-		वापस 1;					\
-	पूर्ण
+		return 1;					\
+	}
 
 	/* These items are only settable from the full RXON command */
 	CHK(!il_is_associated(il));
@@ -3803,240 +3802,240 @@ il_full_rxon_required(काष्ठा il_priv *il)
 	 * be updated with the RXON_ASSOC command -- however only some
 	 * flag transitions are allowed using RXON_ASSOC */
 
-	/* Check अगर we are not चयनing bands */
+	/* Check if we are not switching bands */
 	CHK_NEQ(staging->flags & RXON_FLG_BAND_24G_MSK,
 		active->flags & RXON_FLG_BAND_24G_MSK);
 
-	/* Check अगर we are चयनing association toggle */
+	/* Check if we are switching association toggle */
 	CHK_NEQ(staging->filter_flags & RXON_FILTER_ASSOC_MSK,
 		active->filter_flags & RXON_FILTER_ASSOC_MSK);
 
-#अघोषित CHK
-#अघोषित CHK_NEQ
+#undef CHK
+#undef CHK_NEQ
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(il_full_rxon_required);
 
 u8
-il_get_lowest_plcp(काष्ठा il_priv *il)
-अणु
+il_get_lowest_plcp(struct il_priv *il)
+{
 	/*
 	 * Assign the lowest rate -- should really get this from
 	 * the beacon skb from mac80211.
 	 */
-	अगर (il->staging.flags & RXON_FLG_BAND_24G_MSK)
-		वापस RATE_1M_PLCP;
-	अन्यथा
-		वापस RATE_6M_PLCP;
-पूर्ण
+	if (il->staging.flags & RXON_FLG_BAND_24G_MSK)
+		return RATE_1M_PLCP;
+	else
+		return RATE_6M_PLCP;
+}
 EXPORT_SYMBOL(il_get_lowest_plcp);
 
-अटल व्योम
-_il_set_rxon_ht(काष्ठा il_priv *il, काष्ठा il_ht_config *ht_conf)
-अणु
-	काष्ठा il_rxon_cmd *rxon = &il->staging;
+static void
+_il_set_rxon_ht(struct il_priv *il, struct il_ht_config *ht_conf)
+{
+	struct il_rxon_cmd *rxon = &il->staging;
 
-	अगर (!il->ht.enabled) अणु
+	if (!il->ht.enabled) {
 		rxon->flags &=
 		    ~(RXON_FLG_CHANNEL_MODE_MSK |
 		      RXON_FLG_CTRL_CHANNEL_LOC_HI_MSK | RXON_FLG_HT40_PROT_MSK
 		      | RXON_FLG_HT_PROT_MSK);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	rxon->flags |=
 	    cpu_to_le32(il->ht.protection << RXON_FLG_HT_OPERATING_MODE_POS);
 
 	/* Set up channel bandwidth:
-	 * 20 MHz only, 20/40 mixed or pure 40 अगर ht40 ok */
-	/* clear the HT channel mode beक्रमe set the mode */
+	 * 20 MHz only, 20/40 mixed or pure 40 if ht40 ok */
+	/* clear the HT channel mode before set the mode */
 	rxon->flags &=
 	    ~(RXON_FLG_CHANNEL_MODE_MSK | RXON_FLG_CTRL_CHANNEL_LOC_HI_MSK);
-	अगर (il_is_ht40_tx_allowed(il, शून्य)) अणु
+	if (il_is_ht40_tx_allowed(il, NULL)) {
 		/* pure ht40 */
-		अगर (il->ht.protection == IEEE80211_HT_OP_MODE_PROTECTION_20MHZ) अणु
+		if (il->ht.protection == IEEE80211_HT_OP_MODE_PROTECTION_20MHZ) {
 			rxon->flags |= RXON_FLG_CHANNEL_MODE_PURE_40;
 			/* Note: control channel is opposite of extension channel */
-			चयन (il->ht.extension_chan_offset) अणु
-			हाल IEEE80211_HT_PARAM_CHA_SEC_ABOVE:
+			switch (il->ht.extension_chan_offset) {
+			case IEEE80211_HT_PARAM_CHA_SEC_ABOVE:
 				rxon->flags &=
 				    ~RXON_FLG_CTRL_CHANNEL_LOC_HI_MSK;
-				अवरोध;
-			हाल IEEE80211_HT_PARAM_CHA_SEC_BELOW:
+				break;
+			case IEEE80211_HT_PARAM_CHA_SEC_BELOW:
 				rxon->flags |= RXON_FLG_CTRL_CHANNEL_LOC_HI_MSK;
-				अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				break;
+			}
+		} else {
 			/* Note: control channel is opposite of extension channel */
-			चयन (il->ht.extension_chan_offset) अणु
-			हाल IEEE80211_HT_PARAM_CHA_SEC_ABOVE:
+			switch (il->ht.extension_chan_offset) {
+			case IEEE80211_HT_PARAM_CHA_SEC_ABOVE:
 				rxon->flags &=
 				    ~(RXON_FLG_CTRL_CHANNEL_LOC_HI_MSK);
 				rxon->flags |= RXON_FLG_CHANNEL_MODE_MIXED;
-				अवरोध;
-			हाल IEEE80211_HT_PARAM_CHA_SEC_BELOW:
+				break;
+			case IEEE80211_HT_PARAM_CHA_SEC_BELOW:
 				rxon->flags |= RXON_FLG_CTRL_CHANNEL_LOC_HI_MSK;
 				rxon->flags |= RXON_FLG_CHANNEL_MODE_MIXED;
-				अवरोध;
-			हाल IEEE80211_HT_PARAM_CHA_SEC_NONE:
-			शेष:
-				/* channel location only valid अगर in Mixed mode */
+				break;
+			case IEEE80211_HT_PARAM_CHA_SEC_NONE:
+			default:
+				/* channel location only valid if in Mixed mode */
 				IL_ERR("invalid extension channel offset\n");
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+				break;
+			}
+		}
+	} else {
 		rxon->flags |= RXON_FLG_CHANNEL_MODE_LEGACY;
-	पूर्ण
+	}
 
-	अगर (il->ops->set_rxon_chain)
+	if (il->ops->set_rxon_chain)
 		il->ops->set_rxon_chain(il);
 
 	D_ASSOC("rxon flags 0x%X operation mode :0x%X "
 		"extension channel offset 0x%x\n", le32_to_cpu(rxon->flags),
 		il->ht.protection, il->ht.extension_chan_offset);
-पूर्ण
+}
 
-व्योम
-il_set_rxon_ht(काष्ठा il_priv *il, काष्ठा il_ht_config *ht_conf)
-अणु
+void
+il_set_rxon_ht(struct il_priv *il, struct il_ht_config *ht_conf)
+{
 	_il_set_rxon_ht(il, ht_conf);
-पूर्ण
+}
 EXPORT_SYMBOL(il_set_rxon_ht);
 
-/* Return valid, unused, channel क्रम a passive scan to reset the RF */
+/* Return valid, unused, channel for a passive scan to reset the RF */
 u8
-il_get_single_channel_number(काष्ठा il_priv *il, क्रमागत nl80211_band band)
-अणु
-	स्थिर काष्ठा il_channel_info *ch_info;
-	पूर्णांक i;
+il_get_single_channel_number(struct il_priv *il, enum nl80211_band band)
+{
+	const struct il_channel_info *ch_info;
+	int i;
 	u8 channel = 0;
 	u8 min, max;
 
-	अगर (band == NL80211_BAND_5GHZ) अणु
+	if (band == NL80211_BAND_5GHZ) {
 		min = 14;
 		max = il->channel_count;
-	पूर्ण अन्यथा अणु
+	} else {
 		min = 0;
 		max = 14;
-	पूर्ण
+	}
 
-	क्रम (i = min; i < max; i++) अणु
+	for (i = min; i < max; i++) {
 		channel = il->channel_info[i].channel;
-		अगर (channel == le16_to_cpu(il->staging.channel))
-			जारी;
+		if (channel == le16_to_cpu(il->staging.channel))
+			continue;
 
 		ch_info = il_get_channel_info(il, band, channel);
-		अगर (il_is_channel_valid(ch_info))
-			अवरोध;
-	पूर्ण
+		if (il_is_channel_valid(ch_info))
+			break;
+	}
 
-	वापस channel;
-पूर्ण
+	return channel;
+}
 EXPORT_SYMBOL(il_get_single_channel_number);
 
 /*
  * il_set_rxon_channel - Set the band and channel values in staging RXON
- * @ch: requested channel as a poपूर्णांकer to काष्ठा ieee80211_channel
+ * @ch: requested channel as a pointer to struct ieee80211_channel
 
  * NOTE:  Does not commit to the hardware; it sets appropriate bit fields
- * in the staging RXON flag काष्ठाure based on the ch->band
+ * in the staging RXON flag structure based on the ch->band
  */
-पूर्णांक
-il_set_rxon_channel(काष्ठा il_priv *il, काष्ठा ieee80211_channel *ch)
-अणु
-	क्रमागत nl80211_band band = ch->band;
+int
+il_set_rxon_channel(struct il_priv *il, struct ieee80211_channel *ch)
+{
+	enum nl80211_band band = ch->band;
 	u16 channel = ch->hw_value;
 
-	अगर (le16_to_cpu(il->staging.channel) == channel && il->band == band)
-		वापस 0;
+	if (le16_to_cpu(il->staging.channel) == channel && il->band == band)
+		return 0;
 
 	il->staging.channel = cpu_to_le16(channel);
-	अगर (band == NL80211_BAND_5GHZ)
+	if (band == NL80211_BAND_5GHZ)
 		il->staging.flags &= ~RXON_FLG_BAND_24G_MSK;
-	अन्यथा
+	else
 		il->staging.flags |= RXON_FLG_BAND_24G_MSK;
 
 	il->band = band;
 
 	D_INFO("Staging channel set to %d [%d]\n", channel, band);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(il_set_rxon_channel);
 
-व्योम
-il_set_flags_क्रम_band(काष्ठा il_priv *il, क्रमागत nl80211_band band,
-		      काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	अगर (band == NL80211_BAND_5GHZ) अणु
+void
+il_set_flags_for_band(struct il_priv *il, enum nl80211_band band,
+		      struct ieee80211_vif *vif)
+{
+	if (band == NL80211_BAND_5GHZ) {
 		il->staging.flags &=
 		    ~(RXON_FLG_BAND_24G_MSK | RXON_FLG_AUTO_DETECT_MSK |
 		      RXON_FLG_CCK_MSK);
 		il->staging.flags |= RXON_FLG_SHORT_SLOT_MSK;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Copied from il_post_associate() */
-		अगर (vअगर && vअगर->bss_conf.use_लघु_slot)
+		if (vif && vif->bss_conf.use_short_slot)
 			il->staging.flags |= RXON_FLG_SHORT_SLOT_MSK;
-		अन्यथा
+		else
 			il->staging.flags &= ~RXON_FLG_SHORT_SLOT_MSK;
 
 		il->staging.flags |= RXON_FLG_BAND_24G_MSK;
 		il->staging.flags |= RXON_FLG_AUTO_DETECT_MSK;
 		il->staging.flags &= ~RXON_FLG_CCK_MSK;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(il_set_flags_क्रम_band);
+	}
+}
+EXPORT_SYMBOL(il_set_flags_for_band);
 
 /*
- * initialize rxon काष्ठाure with शेष values from eeprom
+ * initialize rxon structure with default values from eeprom
  */
-व्योम
-il_connection_init_rx_config(काष्ठा il_priv *il)
-अणु
-	स्थिर काष्ठा il_channel_info *ch_info;
+void
+il_connection_init_rx_config(struct il_priv *il)
+{
+	const struct il_channel_info *ch_info;
 
-	स_रखो(&il->staging, 0, माप(il->staging));
+	memset(&il->staging, 0, sizeof(il->staging));
 
-	चयन (il->iw_mode) अणु
-	हाल NL80211_IFTYPE_UNSPECIFIED:
+	switch (il->iw_mode) {
+	case NL80211_IFTYPE_UNSPECIFIED:
 		il->staging.dev_type = RXON_DEV_TYPE_ESS;
-		अवरोध;
-	हाल NL80211_IFTYPE_STATION:
+		break;
+	case NL80211_IFTYPE_STATION:
 		il->staging.dev_type = RXON_DEV_TYPE_ESS;
 		il->staging.filter_flags = RXON_FILTER_ACCEPT_GRP_MSK;
-		अवरोध;
-	हाल NL80211_IFTYPE_ADHOC:
+		break;
+	case NL80211_IFTYPE_ADHOC:
 		il->staging.dev_type = RXON_DEV_TYPE_IBSS;
 		il->staging.flags = RXON_FLG_SHORT_PREAMBLE_MSK;
 		il->staging.filter_flags =
 		    RXON_FILTER_BCON_AWARE_MSK | RXON_FILTER_ACCEPT_GRP_MSK;
-		अवरोध;
-	शेष:
-		IL_ERR("Unsupported interface type %d\n", il->vअगर->type);
-		वापस;
-	पूर्ण
+		break;
+	default:
+		IL_ERR("Unsupported interface type %d\n", il->vif->type);
+		return;
+	}
 
-#अगर 0
-	/* TODO:  Figure out when लघु_preamble would be set and cache from
+#if 0
+	/* TODO:  Figure out when short_preamble would be set and cache from
 	 * that */
-	अगर (!hw_to_local(il->hw)->लघु_preamble)
+	if (!hw_to_local(il->hw)->short_preamble)
 		il->staging.flags &= ~RXON_FLG_SHORT_PREAMBLE_MSK;
-	अन्यथा
+	else
 		il->staging.flags |= RXON_FLG_SHORT_PREAMBLE_MSK;
-#पूर्ण_अगर
+#endif
 
 	ch_info =
 	    il_get_channel_info(il, il->band, le16_to_cpu(il->active.channel));
 
-	अगर (!ch_info)
+	if (!ch_info)
 		ch_info = &il->channel_info[0];
 
 	il->staging.channel = cpu_to_le16(ch_info->channel);
 	il->band = ch_info->band;
 
-	il_set_flags_क्रम_band(il, il->band, il->vअगर);
+	il_set_flags_for_band(il, il->band, il->vif);
 
 	il->staging.ofdm_basic_rates =
 	    (IL_OFDM_RATES_MASK >> IL_FIRST_OFDM_RATE) & 0xFF;
@@ -4046,34 +4045,34 @@ il_connection_init_rx_config(काष्ठा il_priv *il)
 	/* clear both MIX and PURE40 mode flag */
 	il->staging.flags &=
 	    ~(RXON_FLG_CHANNEL_MODE_MIXED | RXON_FLG_CHANNEL_MODE_PURE_40);
-	अगर (il->vअगर)
-		स_नकल(il->staging.node_addr, il->vअगर->addr, ETH_ALEN);
+	if (il->vif)
+		memcpy(il->staging.node_addr, il->vif->addr, ETH_ALEN);
 
 	il->staging.ofdm_ht_single_stream_basic_rates = 0xff;
 	il->staging.ofdm_ht_dual_stream_basic_rates = 0xff;
-पूर्ण
+}
 EXPORT_SYMBOL(il_connection_init_rx_config);
 
-व्योम
-il_set_rate(काष्ठा il_priv *il)
-अणु
-	स्थिर काष्ठा ieee80211_supported_band *hw = शून्य;
-	काष्ठा ieee80211_rate *rate;
-	पूर्णांक i;
+void
+il_set_rate(struct il_priv *il)
+{
+	const struct ieee80211_supported_band *hw = NULL;
+	struct ieee80211_rate *rate;
+	int i;
 
 	hw = il_get_hw_mode(il, il->band);
-	अगर (!hw) अणु
+	if (!hw) {
 		IL_ERR("Failed to set rate: unable to get hw mode\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	il->active_rate = 0;
 
-	क्रम (i = 0; i < hw->n_bitrates; i++) अणु
+	for (i = 0; i < hw->n_bitrates; i++) {
 		rate = &(hw->bitrates[i]);
-		अगर (rate->hw_value < RATE_COUNT_LEGACY)
+		if (rate->hw_value < RATE_COUNT_LEGACY)
 			il->active_rate |= (1 << rate->hw_value);
-	पूर्ण
+	}
 
 	D_RATE("Set active_rate = %0x\n", il->active_rate);
 
@@ -4082,51 +4081,51 @@ il_set_rate(काष्ठा il_priv *il)
 
 	il->staging.ofdm_basic_rates =
 	    (IL_OFDM_BASIC_RATES_MASK >> IL_FIRST_OFDM_RATE) & 0xFF;
-पूर्ण
+}
 EXPORT_SYMBOL(il_set_rate);
 
-व्योम
-il_chचयन_करोne(काष्ठा il_priv *il, bool is_success)
-अणु
-	अगर (test_bit(S_EXIT_PENDING, &il->status))
-		वापस;
+void
+il_chswitch_done(struct il_priv *il, bool is_success)
+{
+	if (test_bit(S_EXIT_PENDING, &il->status))
+		return;
 
-	अगर (test_and_clear_bit(S_CHANNEL_SWITCH_PENDING, &il->status))
-		ieee80211_chचयन_करोne(il->vअगर, is_success);
-पूर्ण
-EXPORT_SYMBOL(il_chचयन_करोne);
+	if (test_and_clear_bit(S_CHANNEL_SWITCH_PENDING, &il->status))
+		ieee80211_chswitch_done(il->vif, is_success);
+}
+EXPORT_SYMBOL(il_chswitch_done);
 
-व्योम
-il_hdl_csa(काष्ठा il_priv *il, काष्ठा il_rx_buf *rxb)
-अणु
-	काष्ठा il_rx_pkt *pkt = rxb_addr(rxb);
-	काष्ठा il_csa_notअगरication *csa = &(pkt->u.csa_notअगर);
-	काष्ठा il_rxon_cmd *rxon = (व्योम *)&il->active;
+void
+il_hdl_csa(struct il_priv *il, struct il_rx_buf *rxb)
+{
+	struct il_rx_pkt *pkt = rxb_addr(rxb);
+	struct il_csa_notification *csa = &(pkt->u.csa_notif);
+	struct il_rxon_cmd *rxon = (void *)&il->active;
 
-	अगर (!test_bit(S_CHANNEL_SWITCH_PENDING, &il->status))
-		वापस;
+	if (!test_bit(S_CHANNEL_SWITCH_PENDING, &il->status))
+		return;
 
-	अगर (!le32_to_cpu(csa->status) && csa->channel == il->चयन_channel) अणु
+	if (!le32_to_cpu(csa->status) && csa->channel == il->switch_channel) {
 		rxon->channel = csa->channel;
 		il->staging.channel = csa->channel;
 		D_11H("CSA notif: channel %d\n", le16_to_cpu(csa->channel));
-		il_chचयन_करोne(il, true);
-	पूर्ण अन्यथा अणु
+		il_chswitch_done(il, true);
+	} else {
 		IL_ERR("CSA notif (fail) : channel %d\n",
 		       le16_to_cpu(csa->channel));
-		il_chचयन_करोne(il, false);
-	पूर्ण
-पूर्ण
+		il_chswitch_done(il, false);
+	}
+}
 EXPORT_SYMBOL(il_hdl_csa);
 
-#अगर_घोषित CONFIG_IWLEGACY_DEBUG
-व्योम
-il_prपूर्णांक_rx_config_cmd(काष्ठा il_priv *il)
-अणु
-	काष्ठा il_rxon_cmd *rxon = &il->staging;
+#ifdef CONFIG_IWLEGACY_DEBUG
+void
+il_print_rx_config_cmd(struct il_priv *il)
+{
+	struct il_rxon_cmd *rxon = &il->staging;
 
 	D_RADIO("RX CONFIG:\n");
-	il_prपूर्णांक_hex_dump(il, IL_DL_RADIO, (u8 *) rxon, माप(*rxon));
+	il_print_hex_dump(il, IL_DL_RADIO, (u8 *) rxon, sizeof(*rxon));
 	D_RADIO("u16 channel: 0x%x\n", le16_to_cpu(rxon->channel));
 	D_RADIO("u32 flags: 0x%08X\n", le32_to_cpu(rxon->flags));
 	D_RADIO("u32 filter_flags: 0x%08x\n", le32_to_cpu(rxon->filter_flags));
@@ -4136,16 +4135,16 @@ il_prपूर्णांक_rx_config_cmd(काष्ठा il_priv *il)
 	D_RADIO("u8[6] node_addr: %pM\n", rxon->node_addr);
 	D_RADIO("u8[6] bssid_addr: %pM\n", rxon->bssid_addr);
 	D_RADIO("u16 assoc_id: 0x%x\n", le16_to_cpu(rxon->assoc_id));
-पूर्ण
-EXPORT_SYMBOL(il_prपूर्णांक_rx_config_cmd);
-#पूर्ण_अगर
+}
+EXPORT_SYMBOL(il_print_rx_config_cmd);
+#endif
 /*
- * il_irq_handle_error - called क्रम HW or SW error पूर्णांकerrupt from card
+ * il_irq_handle_error - called for HW or SW error interrupt from card
  */
-व्योम
-il_irq_handle_error(काष्ठा il_priv *il)
-अणु
-	/* Set the FW error flag -- cleared on il_करोwn */
+void
+il_irq_handle_error(struct il_priv *il)
+{
+	/* Set the FW error flag -- cleared on il_down */
 	set_bit(S_FW_ERROR, &il->status);
 
 	/* Cancel currently queued command. */
@@ -4154,33 +4153,33 @@ il_irq_handle_error(काष्ठा il_priv *il)
 	IL_ERR("Loaded firmware version: %s\n", il->hw->wiphy->fw_version);
 
 	il->ops->dump_nic_error_log(il);
-	अगर (il->ops->dump_fh)
-		il->ops->dump_fh(il, शून्य, false);
-#अगर_घोषित CONFIG_IWLEGACY_DEBUG
-	अगर (il_get_debug_level(il) & IL_DL_FW_ERRORS)
-		il_prपूर्णांक_rx_config_cmd(il);
-#पूर्ण_अगर
+	if (il->ops->dump_fh)
+		il->ops->dump_fh(il, NULL, false);
+#ifdef CONFIG_IWLEGACY_DEBUG
+	if (il_get_debug_level(il) & IL_DL_FW_ERRORS)
+		il_print_rx_config_cmd(il);
+#endif
 
-	wake_up(&il->रुको_command_queue);
+	wake_up(&il->wait_command_queue);
 
 	/* Keep the restart process from trying to send host
 	 * commands by clearing the INIT status bit */
 	clear_bit(S_READY, &il->status);
 
-	अगर (!test_bit(S_EXIT_PENDING, &il->status)) अणु
+	if (!test_bit(S_EXIT_PENDING, &il->status)) {
 		IL_DBG(IL_DL_FW_ERRORS,
 		       "Restarting adapter due to uCode error.\n");
 
-		अगर (il->cfg->mod_params->restart_fw)
+		if (il->cfg->mod_params->restart_fw)
 			queue_work(il->workqueue, &il->restart);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(il_irq_handle_error);
 
-अटल पूर्णांक
-_il_apm_stop_master(काष्ठा il_priv *il)
-अणु
-	पूर्णांक ret = 0;
+static int
+_il_apm_stop_master(struct il_priv *il)
+{
+	int ret = 0;
 
 	/* stop device's busmaster DMA activity */
 	_il_set_bit(il, CSR_RESET, CSR_RESET_REG_FLAG_STOP_MASTER);
@@ -4188,18 +4187,18 @@ _il_apm_stop_master(काष्ठा il_priv *il)
 	ret =
 	    _il_poll_bit(il, CSR_RESET, CSR_RESET_REG_FLAG_MASTER_DISABLED,
 			 CSR_RESET_REG_FLAG_MASTER_DISABLED, 100);
-	अगर (ret < 0)
+	if (ret < 0)
 		IL_WARN("Master Disable Timed Out, 100 usec\n");
 
 	D_INFO("stop master\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम
-_il_apm_stop(काष्ठा il_priv *il)
-अणु
-	lockdep_निश्चित_held(&il->reg_lock);
+void
+_il_apm_stop(struct il_priv *il)
+{
+	lockdep_assert_held(&il->reg_lock);
 
 	D_INFO("Stop card, put in low power state\n");
 
@@ -4213,123 +4212,123 @@ _il_apm_stop(काष्ठा il_priv *il)
 
 	/*
 	 * Clear "initialization complete" bit to move adapter from
-	 * D0A* (घातered-up Active) --> D0U* (Uninitialized) state.
+	 * D0A* (powered-up Active) --> D0U* (Uninitialized) state.
 	 */
 	_il_clear_bit(il, CSR_GP_CNTRL, CSR_GP_CNTRL_REG_FLAG_INIT_DONE);
-पूर्ण
+}
 EXPORT_SYMBOL(_il_apm_stop);
 
-व्योम
-il_apm_stop(काष्ठा il_priv *il)
-अणु
-	अचिन्हित दीर्घ flags;
+void
+il_apm_stop(struct il_priv *il)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&il->reg_lock, flags);
 	_il_apm_stop(il);
 	spin_unlock_irqrestore(&il->reg_lock, flags);
-पूर्ण
+}
 EXPORT_SYMBOL(il_apm_stop);
 
 /*
  * Start up NIC's basic functionality after it has been reset
- * (e.g. after platक्रमm boot, or shutकरोwn via il_apm_stop())
- * NOTE:  This करोes not load uCode nor start the embedded processor
+ * (e.g. after platform boot, or shutdown via il_apm_stop())
+ * NOTE:  This does not load uCode nor start the embedded processor
  */
-पूर्णांक
-il_apm_init(काष्ठा il_priv *il)
-अणु
-	पूर्णांक ret = 0;
+int
+il_apm_init(struct il_priv *il)
+{
+	int ret = 0;
 	u16 lctl;
 
 	D_INFO("Init card's basic functions\n");
 
 	/*
 	 * Use "set_bit" below rather than "write", to preserve any hardware
-	 * bits alपढ़ोy set by शेष after reset.
+	 * bits already set by default after reset.
 	 */
 
-	/* Disable L0S निकास समयr (platक्रमm NMI Work/Around) */
+	/* Disable L0S exit timer (platform NMI Work/Around) */
 	il_set_bit(il, CSR_GIO_CHICKEN_BITS,
 		   CSR_GIO_CHICKEN_BITS_REG_BIT_DIS_L0S_EXIT_TIMER);
 
 	/*
 	 * Disable L0s without affecting L1;
-	 *  करोn't रुको क्रम ICH L0s (ICH bug W/A)
+	 *  don't wait for ICH L0s (ICH bug W/A)
 	 */
 	il_set_bit(il, CSR_GIO_CHICKEN_BITS,
 		   CSR_GIO_CHICKEN_BITS_REG_BIT_L1A_NO_L0S_RX);
 
-	/* Set FH रुको threshold to maximum (HW error during stress W/A) */
+	/* Set FH wait threshold to maximum (HW error during stress W/A) */
 	il_set_bit(il, CSR_DBG_HPET_MEM_REG, CSR_DBG_HPET_MEM_REG_VAL);
 
 	/*
-	 * Enable HAP INTA (पूर्णांकerrupt from management bus) to
+	 * Enable HAP INTA (interrupt from management bus) to
 	 * wake device's PCI Express link L1a -> L0s
-	 * NOTE:  This is no-op क्रम 3945 (non-existent bit)
+	 * NOTE:  This is no-op for 3945 (non-existent bit)
 	 */
 	il_set_bit(il, CSR_HW_IF_CONFIG_REG,
 		   CSR_HW_IF_CONFIG_REG_BIT_HAP_WAKE_L1A);
 
 	/*
-	 * HW bug W/A क्रम instability in PCIe bus L0->L0S->L1 transition.
-	 * Check अगर BIOS (or OS) enabled L1-ASPM on this device.
+	 * HW bug W/A for instability in PCIe bus L0->L0S->L1 transition.
+	 * Check if BIOS (or OS) enabled L1-ASPM on this device.
 	 * If so (likely), disable L0S, so device moves directly L0->L1;
-	 *    costs negligible amount of घातer savings.
+	 *    costs negligible amount of power savings.
 	 * If not (unlikely), enable L0S, so there is at least some
-	 *    घातer savings, even without L1.
+	 *    power savings, even without L1.
 	 */
-	अगर (il->cfg->set_l0s) अणु
-		ret = pcie_capability_पढ़ो_word(il->pci_dev, PCI_EXP_LNKCTL, &lctl);
-		अगर (!ret && (lctl & PCI_EXP_LNKCTL_ASPM_L1)) अणु
+	if (il->cfg->set_l0s) {
+		ret = pcie_capability_read_word(il->pci_dev, PCI_EXP_LNKCTL, &lctl);
+		if (!ret && (lctl & PCI_EXP_LNKCTL_ASPM_L1)) {
 			/* L1-ASPM enabled; disable(!) L0S  */
 			il_set_bit(il, CSR_GIO_REG,
 				   CSR_GIO_REG_VAL_L0S_ENABLED);
 			D_POWER("L1 Enabled; Disabling L0S\n");
-		पूर्ण अन्यथा अणु
+		} else {
 			/* L1-ASPM disabled; enable(!) L0S */
 			il_clear_bit(il, CSR_GIO_REG,
 				     CSR_GIO_REG_VAL_L0S_ENABLED);
 			D_POWER("L1 Disabled; Enabling L0S\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Configure analog phase-lock-loop beक्रमe activating to D0A */
-	अगर (il->cfg->pll_cfg_val)
+	/* Configure analog phase-lock-loop before activating to D0A */
+	if (il->cfg->pll_cfg_val)
 		il_set_bit(il, CSR_ANA_PLL_CFG,
 			   il->cfg->pll_cfg_val);
 
 	/*
 	 * Set "initialization complete" bit to move adapter from
-	 * D0U* --> D0A* (घातered-up active) state.
+	 * D0U* --> D0A* (powered-up active) state.
 	 */
 	il_set_bit(il, CSR_GP_CNTRL, CSR_GP_CNTRL_REG_FLAG_INIT_DONE);
 
 	/*
-	 * Wait क्रम घड़ी stabilization; once stabilized, access to
-	 * device-पूर्णांकernal resources is supported, e.g. il_wr_prph()
+	 * Wait for clock stabilization; once stabilized, access to
+	 * device-internal resources is supported, e.g. il_wr_prph()
 	 * and accesses to uCode SRAM.
 	 */
 	ret =
 	    _il_poll_bit(il, CSR_GP_CNTRL,
 			 CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY,
 			 CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY, 25000);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		D_INFO("Failed to init the card\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * Enable DMA and BSM (अगर used) घड़ीs, रुको क्रम them to stabilize.
+	 * Enable DMA and BSM (if used) clocks, wait for them to stabilize.
 	 * BSM (Boostrap State Machine) is only in 3945 and 4965.
 	 *
-	 * Write to "CLK_EN_REG"; "1" bits enable घड़ीs, जबतक "0" bits
-	 * करो not disable घड़ीs.  This preserves any hardware bits alपढ़ोy
-	 * set by शेष in "CLK_CTRL_REG" after reset.
+	 * Write to "CLK_EN_REG"; "1" bits enable clocks, while "0" bits
+	 * do not disable clocks.  This preserves any hardware bits already
+	 * set by default in "CLK_CTRL_REG" after reset.
 	 */
-	अगर (il->cfg->use_bsm)
+	if (il->cfg->use_bsm)
 		il_wr_prph(il, APMG_CLK_EN_REG,
 			   APMG_CLK_VAL_DMA_CLK_RQT | APMG_CLK_VAL_BSM_CLK_RQT);
-	अन्यथा
+	else
 		il_wr_prph(il, APMG_CLK_EN_REG, APMG_CLK_VAL_DMA_CLK_RQT);
 	udelay(20);
 
@@ -4338,132 +4337,132 @@ il_apm_init(काष्ठा il_priv *il)
 			 APMG_PCIDEV_STT_VAL_L1_ACT_DIS);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(il_apm_init);
 
-पूर्णांक
-il_set_tx_घातer(काष्ठा il_priv *il, s8 tx_घातer, bool क्रमce)
-अणु
-	पूर्णांक ret;
-	s8 prev_tx_घातer;
+int
+il_set_tx_power(struct il_priv *il, s8 tx_power, bool force)
+{
+	int ret;
+	s8 prev_tx_power;
 	bool defer;
 
-	lockdep_निश्चित_held(&il->mutex);
+	lockdep_assert_held(&il->mutex);
 
-	अगर (il->tx_घातer_user_lmt == tx_घातer && !क्रमce)
-		वापस 0;
+	if (il->tx_power_user_lmt == tx_power && !force)
+		return 0;
 
-	अगर (!il->ops->send_tx_घातer)
-		वापस -EOPNOTSUPP;
+	if (!il->ops->send_tx_power)
+		return -EOPNOTSUPP;
 
 	/* 0 dBm mean 1 milliwatt */
-	अगर (tx_घातer < 0) अणु
-		IL_WARN("Requested user TXPOWER %d below 1 mW.\n", tx_घातer);
-		वापस -EINVAL;
-	पूर्ण
+	if (tx_power < 0) {
+		IL_WARN("Requested user TXPOWER %d below 1 mW.\n", tx_power);
+		return -EINVAL;
+	}
 
-	अगर (tx_घातer > il->tx_घातer_device_lmt) अणु
+	if (tx_power > il->tx_power_device_lmt) {
 		IL_WARN("Requested user TXPOWER %d above upper limit %d.\n",
-			tx_घातer, il->tx_घातer_device_lmt);
-		वापस -EINVAL;
-	पूर्ण
+			tx_power, il->tx_power_device_lmt);
+		return -EINVAL;
+	}
 
-	अगर (!il_is_पढ़ोy_rf(il))
-		वापस -EIO;
+	if (!il_is_ready_rf(il))
+		return -EIO;
 
-	/* scan complete and commit_rxon use tx_घातer_next value,
-	 * it always need to be updated क्रम newest request */
-	il->tx_घातer_next = tx_घातer;
+	/* scan complete and commit_rxon use tx_power_next value,
+	 * it always need to be updated for newest request */
+	il->tx_power_next = tx_power;
 
-	/* करो not set tx घातer when scanning or channel changing */
+	/* do not set tx power when scanning or channel changing */
 	defer = test_bit(S_SCANNING, &il->status) ||
-	    स_भेद(&il->active, &il->staging, माप(il->staging));
-	अगर (defer && !क्रमce) अणु
+	    memcmp(&il->active, &il->staging, sizeof(il->staging));
+	if (defer && !force) {
 		D_INFO("Deferring tx power set\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	prev_tx_घातer = il->tx_घातer_user_lmt;
-	il->tx_घातer_user_lmt = tx_घातer;
+	prev_tx_power = il->tx_power_user_lmt;
+	il->tx_power_user_lmt = tx_power;
 
-	ret = il->ops->send_tx_घातer(il);
+	ret = il->ops->send_tx_power(il);
 
-	/* अगर fail to set tx_घातer, restore the orig. tx घातer */
-	अगर (ret) अणु
-		il->tx_घातer_user_lmt = prev_tx_घातer;
-		il->tx_घातer_next = prev_tx_घातer;
-	पूर्ण
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(il_set_tx_घातer);
+	/* if fail to set tx_power, restore the orig. tx power */
+	if (ret) {
+		il->tx_power_user_lmt = prev_tx_power;
+		il->tx_power_next = prev_tx_power;
+	}
+	return ret;
+}
+EXPORT_SYMBOL(il_set_tx_power);
 
-व्योम
-il_send_bt_config(काष्ठा il_priv *il)
-अणु
-	काष्ठा il_bt_cmd bt_cmd = अणु
-		.lead_समय = BT_LEAD_TIME_DEF,
-		.max_समाप्त = BT_MAX_KILL_DEF,
-		.समाप्त_ack_mask = 0,
-		.समाप्त_cts_mask = 0,
-	पूर्ण;
+void
+il_send_bt_config(struct il_priv *il)
+{
+	struct il_bt_cmd bt_cmd = {
+		.lead_time = BT_LEAD_TIME_DEF,
+		.max_kill = BT_MAX_KILL_DEF,
+		.kill_ack_mask = 0,
+		.kill_cts_mask = 0,
+	};
 
-	अगर (!bt_coex_active)
+	if (!bt_coex_active)
 		bt_cmd.flags = BT_COEX_DISABLE;
-	अन्यथा
+	else
 		bt_cmd.flags = BT_COEX_ENABLE;
 
 	D_INFO("BT coex %s\n",
 	       (bt_cmd.flags == BT_COEX_DISABLE) ? "disable" : "active");
 
-	अगर (il_send_cmd_pdu(il, C_BT_CONFIG, माप(काष्ठा il_bt_cmd), &bt_cmd))
+	if (il_send_cmd_pdu(il, C_BT_CONFIG, sizeof(struct il_bt_cmd), &bt_cmd))
 		IL_ERR("failed to send BT Coex Config\n");
-पूर्ण
+}
 EXPORT_SYMBOL(il_send_bt_config);
 
-पूर्णांक
-il_send_stats_request(काष्ठा il_priv *il, u8 flags, bool clear)
-अणु
-	काष्ठा il_stats_cmd stats_cmd = अणु
+int
+il_send_stats_request(struct il_priv *il, u8 flags, bool clear)
+{
+	struct il_stats_cmd stats_cmd = {
 		.configuration_flags = clear ? IL_STATS_CONF_CLEAR_STATS : 0,
-	पूर्ण;
+	};
 
-	अगर (flags & CMD_ASYNC)
-		वापस il_send_cmd_pdu_async(il, C_STATS, माप(काष्ठा il_stats_cmd),
-					     &stats_cmd, शून्य);
-	अन्यथा
-		वापस il_send_cmd_pdu(il, C_STATS, माप(काष्ठा il_stats_cmd),
+	if (flags & CMD_ASYNC)
+		return il_send_cmd_pdu_async(il, C_STATS, sizeof(struct il_stats_cmd),
+					     &stats_cmd, NULL);
+	else
+		return il_send_cmd_pdu(il, C_STATS, sizeof(struct il_stats_cmd),
 				       &stats_cmd);
-पूर्ण
+}
 EXPORT_SYMBOL(il_send_stats_request);
 
-व्योम
-il_hdl_pm_sleep(काष्ठा il_priv *il, काष्ठा il_rx_buf *rxb)
-अणु
-#अगर_घोषित CONFIG_IWLEGACY_DEBUG
-	काष्ठा il_rx_pkt *pkt = rxb_addr(rxb);
-	काष्ठा il_sleep_notअगरication *sleep = &(pkt->u.sleep_notअगर);
+void
+il_hdl_pm_sleep(struct il_priv *il, struct il_rx_buf *rxb)
+{
+#ifdef CONFIG_IWLEGACY_DEBUG
+	struct il_rx_pkt *pkt = rxb_addr(rxb);
+	struct il_sleep_notification *sleep = &(pkt->u.sleep_notif);
 	D_RX("sleep mode: %d, src: %d\n",
 	     sleep->pm_sleep_mode, sleep->pm_wakeup_src);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 EXPORT_SYMBOL(il_hdl_pm_sleep);
 
-व्योम
-il_hdl_pm_debug_stats(काष्ठा il_priv *il, काष्ठा il_rx_buf *rxb)
-अणु
-	काष्ठा il_rx_pkt *pkt = rxb_addr(rxb);
+void
+il_hdl_pm_debug_stats(struct il_priv *il, struct il_rx_buf *rxb)
+{
+	struct il_rx_pkt *pkt = rxb_addr(rxb);
 	u32 len = le32_to_cpu(pkt->len_n_flags) & IL_RX_FRAME_SIZE_MSK;
 	D_RADIO("Dumping %d bytes of unhandled notification for %s:\n", len,
 		il_get_cmd_string(pkt->hdr.cmd));
-	il_prपूर्णांक_hex_dump(il, IL_DL_RADIO, pkt->u.raw, len);
-पूर्ण
+	il_print_hex_dump(il, IL_DL_RADIO, pkt->u.raw, len);
+}
 EXPORT_SYMBOL(il_hdl_pm_debug_stats);
 
-व्योम
-il_hdl_error(काष्ठा il_priv *il, काष्ठा il_rx_buf *rxb)
-अणु
-	काष्ठा il_rx_pkt *pkt = rxb_addr(rxb);
+void
+il_hdl_error(struct il_priv *il, struct il_rx_buf *rxb)
+{
+	struct il_rx_pkt *pkt = rxb_addr(rxb);
 
 	IL_ERR("Error Reply type 0x%08X cmd %s (0x%02X) "
 	       "seq 0x%04X ser 0x%08X\n",
@@ -4472,34 +4471,34 @@ il_hdl_error(काष्ठा il_priv *il, काष्ठा il_rx_buf *rxb)
 	       pkt->u.err_resp.cmd_id,
 	       le16_to_cpu(pkt->u.err_resp.bad_cmd_seq_num),
 	       le32_to_cpu(pkt->u.err_resp.error_info));
-पूर्ण
+}
 EXPORT_SYMBOL(il_hdl_error);
 
-व्योम
-il_clear_isr_stats(काष्ठा il_priv *il)
-अणु
-	स_रखो(&il->isr_stats, 0, माप(il->isr_stats));
-पूर्ण
+void
+il_clear_isr_stats(struct il_priv *il)
+{
+	memset(&il->isr_stats, 0, sizeof(il->isr_stats));
+}
 
-पूर्णांक
-il_mac_conf_tx(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर, u16 queue,
-	       स्थिर काष्ठा ieee80211_tx_queue_params *params)
-अणु
-	काष्ठा il_priv *il = hw->priv;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक q;
+int
+il_mac_conf_tx(struct ieee80211_hw *hw, struct ieee80211_vif *vif, u16 queue,
+	       const struct ieee80211_tx_queue_params *params)
+{
+	struct il_priv *il = hw->priv;
+	unsigned long flags;
+	int q;
 
 	D_MAC80211("enter\n");
 
-	अगर (!il_is_पढ़ोy_rf(il)) अणु
+	if (!il_is_ready_rf(il)) {
 		D_MAC80211("leave - RF not ready\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (queue >= AC_NUM) अणु
+	if (queue >= AC_NUM) {
 		D_MAC80211("leave - queue >= AC_NUM %d\n", queue);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	q = AC_NUM - 1 - queue;
 
@@ -4509,7 +4508,7 @@ il_mac_conf_tx(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211
 	    cpu_to_le16(params->cw_min);
 	il->qos_data.def_qos_parm.ac[q].cw_max =
 	    cpu_to_le16(params->cw_max);
-	il->qos_data.def_qos_parm.ac[q].aअगरsn = params->aअगरs;
+	il->qos_data.def_qos_parm.ac[q].aifsn = params->aifs;
 	il->qos_data.def_qos_parm.ac[q].edca_txop =
 	    cpu_to_le16((params->txop * 32));
 
@@ -4518,180 +4517,180 @@ il_mac_conf_tx(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211
 	spin_unlock_irqrestore(&il->lock, flags);
 
 	D_MAC80211("leave\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(il_mac_conf_tx);
 
-पूर्णांक
-il_mac_tx_last_beacon(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा il_priv *il = hw->priv;
-	पूर्णांक ret;
+int
+il_mac_tx_last_beacon(struct ieee80211_hw *hw)
+{
+	struct il_priv *il = hw->priv;
+	int ret;
 
 	D_MAC80211("enter\n");
 
 	ret = (il->ibss_manager == IL_IBSS_MANAGER);
 
 	D_MAC80211("leave ret %d\n", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(il_mac_tx_last_beacon);
 
-अटल पूर्णांक
-il_set_mode(काष्ठा il_priv *il)
-अणु
+static int
+il_set_mode(struct il_priv *il)
+{
 	il_connection_init_rx_config(il);
 
-	अगर (il->ops->set_rxon_chain)
+	if (il->ops->set_rxon_chain)
 		il->ops->set_rxon_chain(il);
 
-	वापस il_commit_rxon(il);
-पूर्ण
+	return il_commit_rxon(il);
+}
 
-पूर्णांक
-il_mac_add_पूर्णांकerface(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा il_priv *il = hw->priv;
-	पूर्णांक err;
+int
+il_mac_add_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
+{
+	struct il_priv *il = hw->priv;
+	int err;
 	bool reset;
 
 	mutex_lock(&il->mutex);
-	D_MAC80211("enter: type %d, addr %pM\n", vअगर->type, vअगर->addr);
+	D_MAC80211("enter: type %d, addr %pM\n", vif->type, vif->addr);
 
-	अगर (!il_is_पढ़ोy_rf(il)) अणु
+	if (!il_is_ready_rf(il)) {
 		IL_WARN("Try to add interface when device not ready\n");
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * We करो not support multiple भव पूर्णांकerfaces, but on hardware reset
-	 * we have to add the same पूर्णांकerface again.
+	 * We do not support multiple virtual interfaces, but on hardware reset
+	 * we have to add the same interface again.
 	 */
-	reset = (il->vअगर == vअगर);
-	अगर (il->vअगर && !reset) अणु
+	reset = (il->vif == vif);
+	if (il->vif && !reset) {
 		err = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	il->vअगर = vअगर;
-	il->iw_mode = vअगर->type;
+	il->vif = vif;
+	il->iw_mode = vif->type;
 
 	err = il_set_mode(il);
-	अगर (err) अणु
-		IL_WARN("Fail to set mode %d\n", vअगर->type);
-		अगर (!reset) अणु
-			il->vअगर = शून्य;
+	if (err) {
+		IL_WARN("Fail to set mode %d\n", vif->type);
+		if (!reset) {
+			il->vif = NULL;
 			il->iw_mode = NL80211_IFTYPE_STATION;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 out:
 	D_MAC80211("leave err %d\n", err);
 	mutex_unlock(&il->mutex);
 
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL(il_mac_add_पूर्णांकerface);
+	return err;
+}
+EXPORT_SYMBOL(il_mac_add_interface);
 
-अटल व्योम
-il_tearकरोwn_पूर्णांकerface(काष्ठा il_priv *il, काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	lockdep_निश्चित_held(&il->mutex);
+static void
+il_teardown_interface(struct il_priv *il, struct ieee80211_vif *vif)
+{
+	lockdep_assert_held(&il->mutex);
 
-	अगर (il->scan_vअगर == vअगर) अणु
-		il_scan_cancel_समयout(il, 200);
-		il_क्रमce_scan_end(il);
-	पूर्ण
+	if (il->scan_vif == vif) {
+		il_scan_cancel_timeout(il, 200);
+		il_force_scan_end(il);
+	}
 
 	il_set_mode(il);
-पूर्ण
+}
 
-व्योम
-il_mac_हटाओ_पूर्णांकerface(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा il_priv *il = hw->priv;
+void
+il_mac_remove_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
+{
+	struct il_priv *il = hw->priv;
 
 	mutex_lock(&il->mutex);
-	D_MAC80211("enter: type %d, addr %pM\n", vअगर->type, vअगर->addr);
+	D_MAC80211("enter: type %d, addr %pM\n", vif->type, vif->addr);
 
-	WARN_ON(il->vअगर != vअगर);
-	il->vअगर = शून्य;
+	WARN_ON(il->vif != vif);
+	il->vif = NULL;
 	il->iw_mode = NL80211_IFTYPE_UNSPECIFIED;
-	il_tearकरोwn_पूर्णांकerface(il, vअगर);
+	il_teardown_interface(il, vif);
 	eth_zero_addr(il->bssid);
 
 	D_MAC80211("leave\n");
 	mutex_unlock(&il->mutex);
-पूर्ण
-EXPORT_SYMBOL(il_mac_हटाओ_पूर्णांकerface);
+}
+EXPORT_SYMBOL(il_mac_remove_interface);
 
-पूर्णांक
-il_alloc_txq_mem(काष्ठा il_priv *il)
-अणु
-	अगर (!il->txq)
+int
+il_alloc_txq_mem(struct il_priv *il)
+{
+	if (!il->txq)
 		il->txq =
-		    kसुस्मृति(il->cfg->num_of_queues,
-			    माप(काष्ठा il_tx_queue),
+		    kcalloc(il->cfg->num_of_queues,
+			    sizeof(struct il_tx_queue),
 			    GFP_KERNEL);
-	अगर (!il->txq) अणु
+	if (!il->txq) {
 		IL_ERR("Not enough memory for txq\n");
-		वापस -ENOMEM;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ENOMEM;
+	}
+	return 0;
+}
 EXPORT_SYMBOL(il_alloc_txq_mem);
 
-व्योम
-il_मुक्त_txq_mem(काष्ठा il_priv *il)
-अणु
-	kमुक्त(il->txq);
-	il->txq = शून्य;
-पूर्ण
-EXPORT_SYMBOL(il_मुक्त_txq_mem);
+void
+il_free_txq_mem(struct il_priv *il)
+{
+	kfree(il->txq);
+	il->txq = NULL;
+}
+EXPORT_SYMBOL(il_free_txq_mem);
 
-पूर्णांक
-il_क्रमce_reset(काष्ठा il_priv *il, bool बाह्यal)
-अणु
-	काष्ठा il_क्रमce_reset *क्रमce_reset;
+int
+il_force_reset(struct il_priv *il, bool external)
+{
+	struct il_force_reset *force_reset;
 
-	अगर (test_bit(S_EXIT_PENDING, &il->status))
-		वापस -EINVAL;
+	if (test_bit(S_EXIT_PENDING, &il->status))
+		return -EINVAL;
 
-	क्रमce_reset = &il->क्रमce_reset;
-	क्रमce_reset->reset_request_count++;
-	अगर (!बाह्यal) अणु
-		अगर (क्रमce_reset->last_क्रमce_reset_jअगरfies &&
-		    समय_after(क्रमce_reset->last_क्रमce_reset_jअगरfies +
-			       क्रमce_reset->reset_duration, jअगरfies)) अणु
+	force_reset = &il->force_reset;
+	force_reset->reset_request_count++;
+	if (!external) {
+		if (force_reset->last_force_reset_jiffies &&
+		    time_after(force_reset->last_force_reset_jiffies +
+			       force_reset->reset_duration, jiffies)) {
 			D_INFO("force reset rejected\n");
-			क्रमce_reset->reset_reject_count++;
-			वापस -EAGAIN;
-		पूर्ण
-	पूर्ण
-	क्रमce_reset->reset_success_count++;
-	क्रमce_reset->last_क्रमce_reset_jअगरfies = jअगरfies;
+			force_reset->reset_reject_count++;
+			return -EAGAIN;
+		}
+	}
+	force_reset->reset_success_count++;
+	force_reset->last_force_reset_jiffies = jiffies;
 
 	/*
-	 * अगर the request is from बाह्यal(ex: debugfs),
-	 * then always perक्रमm the request in regardless the module
+	 * if the request is from external(ex: debugfs),
+	 * then always perform the request in regardless the module
 	 * parameter setting
-	 * अगर the request is from पूर्णांकernal (uCode error or driver
+	 * if the request is from internal (uCode error or driver
 	 * detect failure), then fw_restart module parameter
-	 * need to be check beक्रमe perक्रमming firmware reload
+	 * need to be check before performing firmware reload
 	 */
 
-	अगर (!बाह्यal && !il->cfg->mod_params->restart_fw) अणु
+	if (!external && !il->cfg->mod_params->restart_fw) {
 		D_INFO("Cancel firmware reload based on "
 		       "module parameter setting\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	IL_ERR("On demand firmware reload\n");
 
-	/* Set the FW error flag -- cleared on il_करोwn */
+	/* Set the FW error flag -- cleared on il_down */
 	set_bit(S_FW_ERROR, &il->status);
-	wake_up(&il->रुको_command_queue);
+	wake_up(&il->wait_command_queue);
 	/*
 	 * Keep the restart process from trying to send host
 	 * commands by clearing the INIT status bit
@@ -4699,246 +4698,246 @@ il_क्रमce_reset(काष्ठा il_priv *il, bool बाह्यal)
 	clear_bit(S_READY, &il->status);
 	queue_work(il->workqueue, &il->restart);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(il_क्रमce_reset);
+	return 0;
+}
+EXPORT_SYMBOL(il_force_reset);
 
-पूर्णांक
-il_mac_change_पूर्णांकerface(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
-			क्रमागत nl80211_अगरtype newtype, bool newp2p)
-अणु
-	काष्ठा il_priv *il = hw->priv;
-	पूर्णांक err;
+int
+il_mac_change_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+			enum nl80211_iftype newtype, bool newp2p)
+{
+	struct il_priv *il = hw->priv;
+	int err;
 
 	mutex_lock(&il->mutex);
 	D_MAC80211("enter: type %d, addr %pM newtype %d newp2p %d\n",
-		    vअगर->type, vअगर->addr, newtype, newp2p);
+		    vif->type, vif->addr, newtype, newp2p);
 
-	अगर (newp2p) अणु
+	if (newp2p) {
 		err = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!il->vअगर || !il_is_पढ़ोy_rf(il)) अणु
+	if (!il->vif || !il_is_ready_rf(il)) {
 		/*
-		 * Huh? But रुको ... this can maybe happen when
+		 * Huh? But wait ... this can maybe happen when
 		 * we're in the middle of a firmware restart!
 		 */
 		err = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* success */
-	vअगर->type = newtype;
-	vअगर->p2p = false;
+	vif->type = newtype;
+	vif->p2p = false;
 	il->iw_mode = newtype;
-	il_tearकरोwn_पूर्णांकerface(il, vअगर);
+	il_teardown_interface(il, vif);
 	err = 0;
 
 out:
 	D_MAC80211("leave err %d\n", err);
 	mutex_unlock(&il->mutex);
 
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL(il_mac_change_पूर्णांकerface);
+	return err;
+}
+EXPORT_SYMBOL(il_mac_change_interface);
 
-व्योम il_mac_flush(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
+void il_mac_flush(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 		  u32 queues, bool drop)
-अणु
-	काष्ठा il_priv *il = hw->priv;
-	अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(500);
-	पूर्णांक i;
+{
+	struct il_priv *il = hw->priv;
+	unsigned long timeout = jiffies + msecs_to_jiffies(500);
+	int i;
 
 	mutex_lock(&il->mutex);
 	D_MAC80211("enter\n");
 
-	अगर (il->txq == शून्य)
-		जाओ out;
+	if (il->txq == NULL)
+		goto out;
 
-	क्रम (i = 0; i < il->hw_params.max_txq_num; i++) अणु
-		काष्ठा il_queue *q;
+	for (i = 0; i < il->hw_params.max_txq_num; i++) {
+		struct il_queue *q;
 
-		अगर (i == il->cmd_queue)
-			जारी;
+		if (i == il->cmd_queue)
+			continue;
 
 		q = &il->txq[i].q;
-		अगर (q->पढ़ो_ptr == q->ग_लिखो_ptr)
-			जारी;
+		if (q->read_ptr == q->write_ptr)
+			continue;
 
-		अगर (समय_after(jअगरfies, समयout)) अणु
+		if (time_after(jiffies, timeout)) {
 			IL_ERR("Failed to flush queue %d\n", q->id);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		msleep(20);
-	पूर्ण
+	}
 out:
 	D_MAC80211("leave\n");
 	mutex_unlock(&il->mutex);
-पूर्ण
+}
 EXPORT_SYMBOL(il_mac_flush);
 
 /*
- * On every watchकरोg tick we check (latest) समय stamp. If it करोes not
- * change during समयout period and queue is not empty we reset firmware.
+ * On every watchdog tick we check (latest) time stamp. If it does not
+ * change during timeout period and queue is not empty we reset firmware.
  */
-अटल पूर्णांक
-il_check_stuck_queue(काष्ठा il_priv *il, पूर्णांक cnt)
-अणु
-	काष्ठा il_tx_queue *txq = &il->txq[cnt];
-	काष्ठा il_queue *q = &txq->q;
-	अचिन्हित दीर्घ समयout;
-	अचिन्हित दीर्घ now = jअगरfies;
-	पूर्णांक ret;
+static int
+il_check_stuck_queue(struct il_priv *il, int cnt)
+{
+	struct il_tx_queue *txq = &il->txq[cnt];
+	struct il_queue *q = &txq->q;
+	unsigned long timeout;
+	unsigned long now = jiffies;
+	int ret;
 
-	अगर (q->पढ़ो_ptr == q->ग_लिखो_ptr) अणु
-		txq->समय_stamp = now;
-		वापस 0;
-	पूर्ण
+	if (q->read_ptr == q->write_ptr) {
+		txq->time_stamp = now;
+		return 0;
+	}
 
-	समयout =
-	    txq->समय_stamp +
-	    msecs_to_jअगरfies(il->cfg->wd_समयout);
+	timeout =
+	    txq->time_stamp +
+	    msecs_to_jiffies(il->cfg->wd_timeout);
 
-	अगर (समय_after(now, समयout)) अणु
+	if (time_after(now, timeout)) {
 		IL_ERR("Queue %d stuck for %u ms.\n", q->id,
-		       jअगरfies_to_msecs(now - txq->समय_stamp));
-		ret = il_क्रमce_reset(il, false);
-		वापस (ret == -EAGAIN) ? 0 : 1;
-	पूर्ण
+		       jiffies_to_msecs(now - txq->time_stamp));
+		ret = il_force_reset(il, false);
+		return (ret == -EAGAIN) ? 0 : 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Making watchकरोg tick be a quarter of समयout assure we will
- * discover the queue hung between समयout and 1.25*समयout
+ * Making watchdog tick be a quarter of timeout assure we will
+ * discover the queue hung between timeout and 1.25*timeout
  */
-#घोषणा IL_WD_TICK(समयout) ((समयout) / 4)
+#define IL_WD_TICK(timeout) ((timeout) / 4)
 
 /*
- * Watchकरोg समयr callback, we check each tx queue क्रम stuck, अगर अगर hung
- * we reset the firmware. If everything is fine just rearm the समयr.
+ * Watchdog timer callback, we check each tx queue for stuck, if if hung
+ * we reset the firmware. If everything is fine just rearm the timer.
  */
-व्योम
-il_bg_watchकरोg(काष्ठा समयr_list *t)
-अणु
-	काष्ठा il_priv *il = from_समयr(il, t, watchकरोg);
-	पूर्णांक cnt;
-	अचिन्हित दीर्घ समयout;
+void
+il_bg_watchdog(struct timer_list *t)
+{
+	struct il_priv *il = from_timer(il, t, watchdog);
+	int cnt;
+	unsigned long timeout;
 
-	अगर (test_bit(S_EXIT_PENDING, &il->status))
-		वापस;
+	if (test_bit(S_EXIT_PENDING, &il->status))
+		return;
 
-	समयout = il->cfg->wd_समयout;
-	अगर (समयout == 0)
-		वापस;
+	timeout = il->cfg->wd_timeout;
+	if (timeout == 0)
+		return;
 
-	/* monitor and check क्रम stuck cmd queue */
-	अगर (il_check_stuck_queue(il, il->cmd_queue))
-		वापस;
+	/* monitor and check for stuck cmd queue */
+	if (il_check_stuck_queue(il, il->cmd_queue))
+		return;
 
-	/* monitor and check क्रम other stuck queues */
-	क्रम (cnt = 0; cnt < il->hw_params.max_txq_num; cnt++) अणु
-		/* skip as we alपढ़ोy checked the command queue */
-		अगर (cnt == il->cmd_queue)
-			जारी;
-		अगर (il_check_stuck_queue(il, cnt))
-			वापस;
-	पूर्ण
+	/* monitor and check for other stuck queues */
+	for (cnt = 0; cnt < il->hw_params.max_txq_num; cnt++) {
+		/* skip as we already checked the command queue */
+		if (cnt == il->cmd_queue)
+			continue;
+		if (il_check_stuck_queue(il, cnt))
+			return;
+	}
 
-	mod_समयr(&il->watchकरोg,
-		  jअगरfies + msecs_to_jअगरfies(IL_WD_TICK(समयout)));
-पूर्ण
-EXPORT_SYMBOL(il_bg_watchकरोg);
+	mod_timer(&il->watchdog,
+		  jiffies + msecs_to_jiffies(IL_WD_TICK(timeout)));
+}
+EXPORT_SYMBOL(il_bg_watchdog);
 
-व्योम
-il_setup_watchकरोg(काष्ठा il_priv *il)
-अणु
-	अचिन्हित पूर्णांक समयout = il->cfg->wd_समयout;
+void
+il_setup_watchdog(struct il_priv *il)
+{
+	unsigned int timeout = il->cfg->wd_timeout;
 
-	अगर (समयout)
-		mod_समयr(&il->watchकरोg,
-			  jअगरfies + msecs_to_jअगरfies(IL_WD_TICK(समयout)));
-	अन्यथा
-		del_समयr(&il->watchकरोg);
-पूर्ण
-EXPORT_SYMBOL(il_setup_watchकरोg);
+	if (timeout)
+		mod_timer(&il->watchdog,
+			  jiffies + msecs_to_jiffies(IL_WD_TICK(timeout)));
+	else
+		del_timer(&il->watchdog);
+}
+EXPORT_SYMBOL(il_setup_watchdog);
 
 /*
- * extended beacon समय क्रमmat
- * समय in usec will be changed पूर्णांकo a 32-bit value in extended:पूर्णांकernal क्रमmat
+ * extended beacon time format
+ * time in usec will be changed into a 32-bit value in extended:internal format
  * the extended part is the beacon counts
- * the पूर्णांकernal part is the समय in usec within one beacon पूर्णांकerval
+ * the internal part is the time in usec within one beacon interval
  */
 u32
-il_usecs_to_beacons(काष्ठा il_priv *il, u32 usec, u32 beacon_पूर्णांकerval)
-अणु
+il_usecs_to_beacons(struct il_priv *il, u32 usec, u32 beacon_interval)
+{
 	u32 quot;
 	u32 rem;
-	u32 पूर्णांकerval = beacon_पूर्णांकerval * TIME_UNIT;
+	u32 interval = beacon_interval * TIME_UNIT;
 
-	अगर (!पूर्णांकerval || !usec)
-		वापस 0;
+	if (!interval || !usec)
+		return 0;
 
 	quot =
 	    (usec /
-	     पूर्णांकerval) & (il_beacon_समय_mask_high(il,
+	     interval) & (il_beacon_time_mask_high(il,
 						   il->hw_params.
-						   beacon_समय_प्रकारsf_bits) >> il->
-			  hw_params.beacon_समय_प्रकारsf_bits);
+						   beacon_time_tsf_bits) >> il->
+			  hw_params.beacon_time_tsf_bits);
 	rem =
-	    (usec % पूर्णांकerval) & il_beacon_समय_mask_low(il,
+	    (usec % interval) & il_beacon_time_mask_low(il,
 							il->hw_params.
-							beacon_समय_प्रकारsf_bits);
+							beacon_time_tsf_bits);
 
-	वापस (quot << il->hw_params.beacon_समय_प्रकारsf_bits) + rem;
-पूर्ण
+	return (quot << il->hw_params.beacon_time_tsf_bits) + rem;
+}
 EXPORT_SYMBOL(il_usecs_to_beacons);
 
 /* base is usually what we get from ucode with each received frame,
- * the same as HW समयr counter counting करोwn
+ * the same as HW timer counter counting down
  */
 __le32
-il_add_beacon_समय(काष्ठा il_priv *il, u32 base, u32 adकरोn,
-		   u32 beacon_पूर्णांकerval)
-अणु
-	u32 base_low = base & il_beacon_समय_mask_low(il,
+il_add_beacon_time(struct il_priv *il, u32 base, u32 addon,
+		   u32 beacon_interval)
+{
+	u32 base_low = base & il_beacon_time_mask_low(il,
 						      il->hw_params.
-						      beacon_समय_प्रकारsf_bits);
-	u32 adकरोn_low = adकरोn & il_beacon_समय_mask_low(il,
+						      beacon_time_tsf_bits);
+	u32 addon_low = addon & il_beacon_time_mask_low(il,
 							il->hw_params.
-							beacon_समय_प्रकारsf_bits);
-	u32 पूर्णांकerval = beacon_पूर्णांकerval * TIME_UNIT;
-	u32 res = (base & il_beacon_समय_mask_high(il,
+							beacon_time_tsf_bits);
+	u32 interval = beacon_interval * TIME_UNIT;
+	u32 res = (base & il_beacon_time_mask_high(il,
 						   il->hw_params.
-						   beacon_समय_प्रकारsf_bits)) +
-	    (adकरोn & il_beacon_समय_mask_high(il,
+						   beacon_time_tsf_bits)) +
+	    (addon & il_beacon_time_mask_high(il,
 					      il->hw_params.
-					      beacon_समय_प्रकारsf_bits));
+					      beacon_time_tsf_bits));
 
-	अगर (base_low > adकरोn_low)
-		res += base_low - adकरोn_low;
-	अन्यथा अगर (base_low < adकरोn_low) अणु
-		res += पूर्णांकerval + base_low - adकरोn_low;
-		res += (1 << il->hw_params.beacon_समय_प्रकारsf_bits);
-	पूर्ण अन्यथा
-		res += (1 << il->hw_params.beacon_समय_प्रकारsf_bits);
+	if (base_low > addon_low)
+		res += base_low - addon_low;
+	else if (base_low < addon_low) {
+		res += interval + base_low - addon_low;
+		res += (1 << il->hw_params.beacon_time_tsf_bits);
+	} else
+		res += (1 << il->hw_params.beacon_time_tsf_bits);
 
-	वापस cpu_to_le32(res);
-पूर्ण
-EXPORT_SYMBOL(il_add_beacon_समय);
+	return cpu_to_le32(res);
+}
+EXPORT_SYMBOL(il_add_beacon_time);
 
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 
-अटल पूर्णांक
-il_pci_suspend(काष्ठा device *device)
-अणु
-	काष्ठा il_priv *il = dev_get_drvdata(device);
+static int
+il_pci_suspend(struct device *device)
+{
+	struct il_priv *il = dev_get_drvdata(device);
 
 	/*
-	 * This function is called when प्रणाली goes पूर्णांकo suspend state
+	 * This function is called when system goes into suspend state
 	 * mac80211 will call il_mac_stop() from the mac80211 suspend function
 	 * first but since il_mac_stop() has no knowledge of who the caller is,
 	 * it will not call apm_ops.stop() to stop the DMA operation.
@@ -4946,151 +4945,151 @@ il_pci_suspend(काष्ठा device *device)
 	 */
 	il_apm_stop(il);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-il_pci_resume(काष्ठा device *device)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(device);
-	काष्ठा il_priv *il = pci_get_drvdata(pdev);
-	bool hw_rfसमाप्त = false;
+static int
+il_pci_resume(struct device *device)
+{
+	struct pci_dev *pdev = to_pci_dev(device);
+	struct il_priv *il = pci_get_drvdata(pdev);
+	bool hw_rfkill = false;
 
 	/*
-	 * We disable the RETRY_TIMEOUT रेजिस्टर (0x41) to keep
-	 * PCI Tx retries from पूर्णांकerfering with C3 CPU state.
+	 * We disable the RETRY_TIMEOUT register (0x41) to keep
+	 * PCI Tx retries from interfering with C3 CPU state.
 	 */
-	pci_ग_लिखो_config_byte(pdev, PCI_CFG_RETRY_TIMEOUT, 0x00);
+	pci_write_config_byte(pdev, PCI_CFG_RETRY_TIMEOUT, 0x00);
 
-	il_enable_पूर्णांकerrupts(il);
+	il_enable_interrupts(il);
 
-	अगर (!(_il_rd(il, CSR_GP_CNTRL) & CSR_GP_CNTRL_REG_FLAG_HW_RF_KILL_SW))
-		hw_rfसमाप्त = true;
+	if (!(_il_rd(il, CSR_GP_CNTRL) & CSR_GP_CNTRL_REG_FLAG_HW_RF_KILL_SW))
+		hw_rfkill = true;
 
-	अगर (hw_rfसमाप्त)
+	if (hw_rfkill)
 		set_bit(S_RFKILL, &il->status);
-	अन्यथा
+	else
 		clear_bit(S_RFKILL, &il->status);
 
-	wiphy_rfसमाप्त_set_hw_state(il->hw->wiphy, hw_rfसमाप्त);
+	wiphy_rfkill_set_hw_state(il->hw->wiphy, hw_rfkill);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 SIMPLE_DEV_PM_OPS(il_pm_ops, il_pci_suspend, il_pci_resume);
 EXPORT_SYMBOL(il_pm_ops);
 
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+#endif /* CONFIG_PM_SLEEP */
 
-अटल व्योम
-il_update_qos(काष्ठा il_priv *il)
-अणु
-	अगर (test_bit(S_EXIT_PENDING, &il->status))
-		वापस;
+static void
+il_update_qos(struct il_priv *il)
+{
+	if (test_bit(S_EXIT_PENDING, &il->status))
+		return;
 
 	il->qos_data.def_qos_parm.qos_flags = 0;
 
-	अगर (il->qos_data.qos_active)
+	if (il->qos_data.qos_active)
 		il->qos_data.def_qos_parm.qos_flags |=
 		    QOS_PARAM_FLG_UPDATE_EDCA_MSK;
 
-	अगर (il->ht.enabled)
+	if (il->ht.enabled)
 		il->qos_data.def_qos_parm.qos_flags |= QOS_PARAM_FLG_TGN_MSK;
 
 	D_QOS("send QoS cmd with Qos active=%d FLAGS=0x%X\n",
 	      il->qos_data.qos_active, il->qos_data.def_qos_parm.qos_flags);
 
-	il_send_cmd_pdu_async(il, C_QOS_PARAM, माप(काष्ठा il_qosparam_cmd),
-			      &il->qos_data.def_qos_parm, शून्य);
-पूर्ण
+	il_send_cmd_pdu_async(il, C_QOS_PARAM, sizeof(struct il_qosparam_cmd),
+			      &il->qos_data.def_qos_parm, NULL);
+}
 
 /*
  * il_mac_config - mac80211 config callback
  */
-पूर्णांक
-il_mac_config(काष्ठा ieee80211_hw *hw, u32 changed)
-अणु
-	काष्ठा il_priv *il = hw->priv;
-	स्थिर काष्ठा il_channel_info *ch_info;
-	काष्ठा ieee80211_conf *conf = &hw->conf;
-	काष्ठा ieee80211_channel *channel = conf->chandef.chan;
-	काष्ठा il_ht_config *ht_conf = &il->current_ht_config;
-	अचिन्हित दीर्घ flags = 0;
-	पूर्णांक ret = 0;
+int
+il_mac_config(struct ieee80211_hw *hw, u32 changed)
+{
+	struct il_priv *il = hw->priv;
+	const struct il_channel_info *ch_info;
+	struct ieee80211_conf *conf = &hw->conf;
+	struct ieee80211_channel *channel = conf->chandef.chan;
+	struct il_ht_config *ht_conf = &il->current_ht_config;
+	unsigned long flags = 0;
+	int ret = 0;
 	u16 ch;
-	पूर्णांक scan_active = 0;
+	int scan_active = 0;
 	bool ht_changed = false;
 
 	mutex_lock(&il->mutex);
 	D_MAC80211("enter: channel %d changed 0x%X\n", channel->hw_value,
 		   changed);
 
-	अगर (unlikely(test_bit(S_SCANNING, &il->status))) अणु
+	if (unlikely(test_bit(S_SCANNING, &il->status))) {
 		scan_active = 1;
 		D_MAC80211("scan active\n");
-	पूर्ण
+	}
 
-	अगर (changed &
-	    (IEEE80211_CONF_CHANGE_SMPS | IEEE80211_CONF_CHANGE_CHANNEL)) अणु
-		/* mac80211 uses अटल क्रम non-HT which is what we want */
+	if (changed &
+	    (IEEE80211_CONF_CHANGE_SMPS | IEEE80211_CONF_CHANGE_CHANNEL)) {
+		/* mac80211 uses static for non-HT which is what we want */
 		il->current_ht_config.smps = conf->smps_mode;
 
 		/*
 		 * Recalculate chain counts.
 		 *
 		 * If monitor mode is enabled then mac80211 will
-		 * set up the SM PS mode to OFF अगर an HT channel is
+		 * set up the SM PS mode to OFF if an HT channel is
 		 * configured.
 		 */
-		अगर (il->ops->set_rxon_chain)
+		if (il->ops->set_rxon_chain)
 			il->ops->set_rxon_chain(il);
-	पूर्ण
+	}
 
 	/* during scanning mac80211 will delay channel setting until
 	 * scan finish with changed = 0
 	 */
-	अगर (!changed || (changed & IEEE80211_CONF_CHANGE_CHANNEL)) अणु
+	if (!changed || (changed & IEEE80211_CONF_CHANGE_CHANNEL)) {
 
-		अगर (scan_active)
-			जाओ set_ch_out;
+		if (scan_active)
+			goto set_ch_out;
 
 		ch = channel->hw_value;
 		ch_info = il_get_channel_info(il, channel->band, ch);
-		अगर (!il_is_channel_valid(ch_info)) अणु
+		if (!il_is_channel_valid(ch_info)) {
 			D_MAC80211("leave - invalid channel\n");
 			ret = -EINVAL;
-			जाओ set_ch_out;
-		पूर्ण
+			goto set_ch_out;
+		}
 
-		अगर (il->iw_mode == NL80211_IFTYPE_ADHOC &&
-		    !il_is_channel_ibss(ch_info)) अणु
+		if (il->iw_mode == NL80211_IFTYPE_ADHOC &&
+		    !il_is_channel_ibss(ch_info)) {
 			D_MAC80211("leave - not IBSS channel\n");
 			ret = -EINVAL;
-			जाओ set_ch_out;
-		पूर्ण
+			goto set_ch_out;
+		}
 
 		spin_lock_irqsave(&il->lock, flags);
 
 		/* Configure HT40 channels */
-		अगर (il->ht.enabled != conf_is_ht(conf)) अणु
+		if (il->ht.enabled != conf_is_ht(conf)) {
 			il->ht.enabled = conf_is_ht(conf);
 			ht_changed = true;
-		पूर्ण
-		अगर (il->ht.enabled) अणु
-			अगर (conf_is_ht40_minus(conf)) अणु
+		}
+		if (il->ht.enabled) {
+			if (conf_is_ht40_minus(conf)) {
 				il->ht.extension_chan_offset =
 				    IEEE80211_HT_PARAM_CHA_SEC_BELOW;
 				il->ht.is_40mhz = true;
-			पूर्ण अन्यथा अगर (conf_is_ht40_plus(conf)) अणु
+			} else if (conf_is_ht40_plus(conf)) {
 				il->ht.extension_chan_offset =
 				    IEEE80211_HT_PARAM_CHA_SEC_ABOVE;
 				il->ht.is_40mhz = true;
-			पूर्ण अन्यथा अणु
+			} else {
 				il->ht.extension_chan_offset =
 				    IEEE80211_HT_PARAM_CHA_SEC_NONE;
 				il->ht.is_40mhz = false;
-			पूर्ण
-		पूर्ण अन्यथा
+			}
+		} else
 			il->ht.is_40mhz = false;
 
 		/*
@@ -5099,94 +5098,94 @@ il_mac_config(काष्ठा ieee80211_hw *hw, u32 changed)
 		 */
 		il->ht.protection = IEEE80211_HT_OP_MODE_PROTECTION_NONE;
 
-		/* अगर we are चयनing from ht to 2.4 clear flags
-		 * from any ht related info since 2.4 करोes not
+		/* if we are switching from ht to 2.4 clear flags
+		 * from any ht related info since 2.4 does not
 		 * support ht */
-		अगर ((le16_to_cpu(il->staging.channel) != ch))
+		if ((le16_to_cpu(il->staging.channel) != ch))
 			il->staging.flags = 0;
 
 		il_set_rxon_channel(il, channel);
 		il_set_rxon_ht(il, ht_conf);
 
-		il_set_flags_क्रम_band(il, channel->band, il->vअगर);
+		il_set_flags_for_band(il, channel->band, il->vif);
 
 		spin_unlock_irqrestore(&il->lock, flags);
 
-		अगर (il->ops->update_bcast_stations)
+		if (il->ops->update_bcast_stations)
 			ret = il->ops->update_bcast_stations(il);
 
 set_ch_out:
-		/* The list of supported rates and rate mask can be dअगरferent
-		 * क्रम each band; since the band may have changed, reset
+		/* The list of supported rates and rate mask can be different
+		 * for each band; since the band may have changed, reset
 		 * the rate mask to what mac80211 lists */
 		il_set_rate(il);
-	पूर्ण
+	}
 
-	अगर (changed & (IEEE80211_CONF_CHANGE_PS | IEEE80211_CONF_CHANGE_IDLE)) अणु
-		il->घातer_data.ps_disabled = !(conf->flags & IEEE80211_CONF_PS);
-		अगर (!il->घातer_data.ps_disabled)
+	if (changed & (IEEE80211_CONF_CHANGE_PS | IEEE80211_CONF_CHANGE_IDLE)) {
+		il->power_data.ps_disabled = !(conf->flags & IEEE80211_CONF_PS);
+		if (!il->power_data.ps_disabled)
 			IL_WARN_ONCE("Enabling power save might cause firmware crashes\n");
-		ret = il_घातer_update_mode(il, false);
-		अगर (ret)
+		ret = il_power_update_mode(il, false);
+		if (ret)
 			D_MAC80211("Error setting sleep level\n");
-	पूर्ण
+	}
 
-	अगर (changed & IEEE80211_CONF_CHANGE_POWER) अणु
-		D_MAC80211("TX Power old=%d new=%d\n", il->tx_घातer_user_lmt,
-			   conf->घातer_level);
+	if (changed & IEEE80211_CONF_CHANGE_POWER) {
+		D_MAC80211("TX Power old=%d new=%d\n", il->tx_power_user_lmt,
+			   conf->power_level);
 
-		il_set_tx_घातer(il, conf->घातer_level, false);
-	पूर्ण
+		il_set_tx_power(il, conf->power_level, false);
+	}
 
-	अगर (!il_is_पढ़ोy(il)) अणु
+	if (!il_is_ready(il)) {
 		D_MAC80211("leave - not ready\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (scan_active)
-		जाओ out;
+	if (scan_active)
+		goto out;
 
-	अगर (स_भेद(&il->active, &il->staging, माप(il->staging)))
+	if (memcmp(&il->active, &il->staging, sizeof(il->staging)))
 		il_commit_rxon(il);
-	अन्यथा
+	else
 		D_INFO("Not re-sending same RXON configuration.\n");
-	अगर (ht_changed)
+	if (ht_changed)
 		il_update_qos(il);
 
 out:
 	D_MAC80211("leave ret %d\n", ret);
 	mutex_unlock(&il->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(il_mac_config);
 
-व्योम
-il_mac_reset_tsf(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा il_priv *il = hw->priv;
-	अचिन्हित दीर्घ flags;
+void
+il_mac_reset_tsf(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
+{
+	struct il_priv *il = hw->priv;
+	unsigned long flags;
 
 	mutex_lock(&il->mutex);
-	D_MAC80211("enter: type %d, addr %pM\n", vअगर->type, vअगर->addr);
+	D_MAC80211("enter: type %d, addr %pM\n", vif->type, vif->addr);
 
 	spin_lock_irqsave(&il->lock, flags);
 
-	स_रखो(&il->current_ht_config, 0, माप(काष्ठा il_ht_config));
+	memset(&il->current_ht_config, 0, sizeof(struct il_ht_config));
 
 	/* new association get rid of ibss beacon skb */
-	dev_kमुक्त_skb(il->beacon_skb);
-	il->beacon_skb = शून्य;
-	il->बारtamp = 0;
+	dev_kfree_skb(il->beacon_skb);
+	il->beacon_skb = NULL;
+	il->timestamp = 0;
 
 	spin_unlock_irqrestore(&il->lock, flags);
 
-	il_scan_cancel_समयout(il, 100);
-	अगर (!il_is_पढ़ोy_rf(il)) अणु
+	il_scan_cancel_timeout(il, 100);
+	if (!il_is_ready_rf(il)) {
 		D_MAC80211("leave - not ready\n");
 		mutex_unlock(&il->mutex);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* we are restarting association process */
 	il->staging.filter_flags &= ~RXON_FILTER_ASSOC_MSK;
@@ -5196,20 +5195,20 @@ il_mac_reset_tsf(काष्ठा ieee80211_hw *hw, काष्ठा ieee802
 
 	D_MAC80211("leave\n");
 	mutex_unlock(&il->mutex);
-पूर्ण
+}
 EXPORT_SYMBOL(il_mac_reset_tsf);
 
-अटल व्योम
-il_ht_conf(काष्ठा il_priv *il, काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा il_ht_config *ht_conf = &il->current_ht_config;
-	काष्ठा ieee80211_sta *sta;
-	काष्ठा ieee80211_bss_conf *bss_conf = &vअगर->bss_conf;
+static void
+il_ht_conf(struct il_priv *il, struct ieee80211_vif *vif)
+{
+	struct il_ht_config *ht_conf = &il->current_ht_config;
+	struct ieee80211_sta *sta;
+	struct ieee80211_bss_conf *bss_conf = &vif->bss_conf;
 
 	D_ASSOC("enter:\n");
 
-	अगर (!il->ht.enabled)
-		वापस;
+	if (!il->ht.enabled)
+		return;
 
 	il->ht.protection =
 	    bss_conf->ht_operation_mode & IEEE80211_HT_OP_MODE_PROTECTION;
@@ -5219,13 +5218,13 @@ il_ht_conf(काष्ठा il_priv *il, काष्ठा ieee80211_vअग�
 
 	ht_conf->single_chain_sufficient = false;
 
-	चयन (vअगर->type) अणु
-	हाल NL80211_IFTYPE_STATION:
-		rcu_पढ़ो_lock();
-		sta = ieee80211_find_sta(vअगर, bss_conf->bssid);
-		अगर (sta) अणु
-			काष्ठा ieee80211_sta_ht_cap *ht_cap = &sta->ht_cap;
-			पूर्णांक maxstreams;
+	switch (vif->type) {
+	case NL80211_IFTYPE_STATION:
+		rcu_read_lock();
+		sta = ieee80211_find_sta(vif, bss_conf->bssid);
+		if (sta) {
+			struct ieee80211_sta_ht_cap *ht_cap = &sta->ht_cap;
+			int maxstreams;
 
 			maxstreams =
 			    (ht_cap->mcs.
@@ -5233,337 +5232,337 @@ il_ht_conf(काष्ठा il_priv *il, काष्ठा ieee80211_vअग�
 			    >> IEEE80211_HT_MCS_TX_MAX_STREAMS_SHIFT;
 			maxstreams += 1;
 
-			अगर (ht_cap->mcs.rx_mask[1] == 0 &&
+			if (ht_cap->mcs.rx_mask[1] == 0 &&
 			    ht_cap->mcs.rx_mask[2] == 0)
 				ht_conf->single_chain_sufficient = true;
-			अगर (maxstreams <= 1)
+			if (maxstreams <= 1)
 				ht_conf->single_chain_sufficient = true;
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * If at all, this can only happen through a race
-			 * when the AP disconnects us जबतक we're still
-			 * setting up the connection, in that हाल mac80211
+			 * when the AP disconnects us while we're still
+			 * setting up the connection, in that case mac80211
 			 * will soon tell us about that.
 			 */
 			ht_conf->single_chain_sufficient = true;
-		पूर्ण
-		rcu_पढ़ो_unlock();
-		अवरोध;
-	हाल NL80211_IFTYPE_ADHOC:
+		}
+		rcu_read_unlock();
+		break;
+	case NL80211_IFTYPE_ADHOC:
 		ht_conf->single_chain_sufficient = true;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
 	D_ASSOC("leave\n");
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-il_set_no_assoc(काष्ठा il_priv *il, काष्ठा ieee80211_vअगर *vअगर)
-अणु
+static inline void
+il_set_no_assoc(struct il_priv *il, struct ieee80211_vif *vif)
+{
 	/*
-	 * inक्रमm the ucode that there is no दीर्घer an
+	 * inform the ucode that there is no longer an
 	 * association and that no more packets should be
 	 * sent
 	 */
 	il->staging.filter_flags &= ~RXON_FILTER_ASSOC_MSK;
 	il->staging.assoc_id = 0;
 	il_commit_rxon(il);
-पूर्ण
+}
 
-अटल व्योम
-il_beacon_update(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा il_priv *il = hw->priv;
-	अचिन्हित दीर्घ flags;
-	__le64 बारtamp;
-	काष्ठा sk_buff *skb = ieee80211_beacon_get(hw, vअगर);
+static void
+il_beacon_update(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
+{
+	struct il_priv *il = hw->priv;
+	unsigned long flags;
+	__le64 timestamp;
+	struct sk_buff *skb = ieee80211_beacon_get(hw, vif);
 
-	अगर (!skb)
-		वापस;
+	if (!skb)
+		return;
 
 	D_MAC80211("enter\n");
 
-	lockdep_निश्चित_held(&il->mutex);
+	lockdep_assert_held(&il->mutex);
 
-	अगर (!il->beacon_enabled) अणु
+	if (!il->beacon_enabled) {
 		IL_ERR("update beacon with no beaconing enabled\n");
-		dev_kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+		dev_kfree_skb(skb);
+		return;
+	}
 
 	spin_lock_irqsave(&il->lock, flags);
-	dev_kमुक्त_skb(il->beacon_skb);
+	dev_kfree_skb(il->beacon_skb);
 	il->beacon_skb = skb;
 
-	बारtamp = ((काष्ठा ieee80211_mgmt *)skb->data)->u.beacon.बारtamp;
-	il->बारtamp = le64_to_cpu(बारtamp);
+	timestamp = ((struct ieee80211_mgmt *)skb->data)->u.beacon.timestamp;
+	il->timestamp = le64_to_cpu(timestamp);
 
 	D_MAC80211("leave\n");
 	spin_unlock_irqrestore(&il->lock, flags);
 
-	अगर (!il_is_पढ़ोy_rf(il)) अणु
+	if (!il_is_ready_rf(il)) {
 		D_MAC80211("leave - RF not ready\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	il->ops->post_associate(il);
-पूर्ण
+}
 
-व्योम
-il_mac_bss_info_changed(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
-			काष्ठा ieee80211_bss_conf *bss_conf, u32 changes)
-अणु
-	काष्ठा il_priv *il = hw->priv;
-	पूर्णांक ret;
+void
+il_mac_bss_info_changed(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+			struct ieee80211_bss_conf *bss_conf, u32 changes)
+{
+	struct il_priv *il = hw->priv;
+	int ret;
 
 	mutex_lock(&il->mutex);
 	D_MAC80211("enter: changes 0x%x\n", changes);
 
-	अगर (!il_is_alive(il)) अणु
+	if (!il_is_alive(il)) {
 		D_MAC80211("leave - not alive\n");
 		mutex_unlock(&il->mutex);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (changes & BSS_CHANGED_QOS) अणु
-		अचिन्हित दीर्घ flags;
+	if (changes & BSS_CHANGED_QOS) {
+		unsigned long flags;
 
 		spin_lock_irqsave(&il->lock, flags);
 		il->qos_data.qos_active = bss_conf->qos;
 		il_update_qos(il);
 		spin_unlock_irqrestore(&il->lock, flags);
-	पूर्ण
+	}
 
-	अगर (changes & BSS_CHANGED_BEACON_ENABLED) अणु
-		/* FIXME: can we हटाओ beacon_enabled ? */
-		अगर (vअगर->bss_conf.enable_beacon)
+	if (changes & BSS_CHANGED_BEACON_ENABLED) {
+		/* FIXME: can we remove beacon_enabled ? */
+		if (vif->bss_conf.enable_beacon)
 			il->beacon_enabled = true;
-		अन्यथा
+		else
 			il->beacon_enabled = false;
-	पूर्ण
+	}
 
-	अगर (changes & BSS_CHANGED_BSSID) अणु
+	if (changes & BSS_CHANGED_BSSID) {
 		D_MAC80211("BSSID %pM\n", bss_conf->bssid);
 
 		/*
-		 * On passive channel we रुको with blocked queues to see अगर
+		 * On passive channel we wait with blocked queues to see if
 		 * there is traffic on that channel. If no frame will be
 		 * received (what is very unlikely since scan detects AP on
 		 * that channel, but theoretically possible), mac80211 associate
-		 * procedure will समय out and mac80211 will call us with शून्य
+		 * procedure will time out and mac80211 will call us with NULL
 		 * bssid. We have to unblock queues on such condition.
 		 */
-		अगर (is_zero_ether_addr(bss_conf->bssid))
+		if (is_zero_ether_addr(bss_conf->bssid))
 			il_wake_queues_by_reason(il, IL_STOP_REASON_PASSIVE);
 
 		/*
 		 * If there is currently a HW scan going on in the background,
-		 * then we need to cancel it, otherwise someबार we are not
+		 * then we need to cancel it, otherwise sometimes we are not
 		 * able to authenticate (FIXME: why ?)
 		 */
-		अगर (il_scan_cancel_समयout(il, 100)) अणु
+		if (il_scan_cancel_timeout(il, 100)) {
 			D_MAC80211("leave - scan abort failed\n");
 			mutex_unlock(&il->mutex);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		/* mac80211 only sets assoc when in STATION mode */
-		स_नकल(il->staging.bssid_addr, bss_conf->bssid, ETH_ALEN);
+		memcpy(il->staging.bssid_addr, bss_conf->bssid, ETH_ALEN);
 
 		/* FIXME: currently needed in a few places */
-		स_नकल(il->bssid, bss_conf->bssid, ETH_ALEN);
-	पूर्ण
+		memcpy(il->bssid, bss_conf->bssid, ETH_ALEN);
+	}
 
 	/*
-	 * This needs to be after setting the BSSID in हाल
-	 * mac80211 decides to करो both changes at once because
+	 * This needs to be after setting the BSSID in case
+	 * mac80211 decides to do both changes at once because
 	 * it will invoke post_associate.
 	 */
-	अगर (vअगर->type == NL80211_IFTYPE_ADHOC && (changes & BSS_CHANGED_BEACON))
-		il_beacon_update(hw, vअगर);
+	if (vif->type == NL80211_IFTYPE_ADHOC && (changes & BSS_CHANGED_BEACON))
+		il_beacon_update(hw, vif);
 
-	अगर (changes & BSS_CHANGED_ERP_PREAMBLE) अणु
-		D_MAC80211("ERP_PREAMBLE %d\n", bss_conf->use_लघु_preamble);
-		अगर (bss_conf->use_लघु_preamble)
+	if (changes & BSS_CHANGED_ERP_PREAMBLE) {
+		D_MAC80211("ERP_PREAMBLE %d\n", bss_conf->use_short_preamble);
+		if (bss_conf->use_short_preamble)
 			il->staging.flags |= RXON_FLG_SHORT_PREAMBLE_MSK;
-		अन्यथा
+		else
 			il->staging.flags &= ~RXON_FLG_SHORT_PREAMBLE_MSK;
-	पूर्ण
+	}
 
-	अगर (changes & BSS_CHANGED_ERP_CTS_PROT) अणु
+	if (changes & BSS_CHANGED_ERP_CTS_PROT) {
 		D_MAC80211("ERP_CTS %d\n", bss_conf->use_cts_prot);
-		अगर (bss_conf->use_cts_prot && il->band != NL80211_BAND_5GHZ)
+		if (bss_conf->use_cts_prot && il->band != NL80211_BAND_5GHZ)
 			il->staging.flags |= RXON_FLG_TGG_PROTECT_MSK;
-		अन्यथा
+		else
 			il->staging.flags &= ~RXON_FLG_TGG_PROTECT_MSK;
-		अगर (bss_conf->use_cts_prot)
+		if (bss_conf->use_cts_prot)
 			il->staging.flags |= RXON_FLG_SELF_CTS_EN;
-		अन्यथा
+		else
 			il->staging.flags &= ~RXON_FLG_SELF_CTS_EN;
-	पूर्ण
+	}
 
-	अगर (changes & BSS_CHANGED_BASIC_RATES) अणु
-		/* XXX use this inक्रमmation
+	if (changes & BSS_CHANGED_BASIC_RATES) {
+		/* XXX use this information
 		 *
-		 * To करो that, हटाओ code from il_set_rate() and put something
+		 * To do that, remove code from il_set_rate() and put something
 		 * like this here:
 		 *
-		 अगर (A-band)
+		 if (A-band)
 		 il->staging.ofdm_basic_rates =
 		 bss_conf->basic_rates;
-		 अन्यथा
+		 else
 		 il->staging.ofdm_basic_rates =
 		 bss_conf->basic_rates >> 4;
 		 il->staging.cck_basic_rates =
 		 bss_conf->basic_rates & 0xF;
 		 */
-	पूर्ण
+	}
 
-	अगर (changes & BSS_CHANGED_HT) अणु
-		il_ht_conf(il, vअगर);
+	if (changes & BSS_CHANGED_HT) {
+		il_ht_conf(il, vif);
 
-		अगर (il->ops->set_rxon_chain)
+		if (il->ops->set_rxon_chain)
 			il->ops->set_rxon_chain(il);
-	पूर्ण
+	}
 
-	अगर (changes & BSS_CHANGED_ASSOC) अणु
+	if (changes & BSS_CHANGED_ASSOC) {
 		D_MAC80211("ASSOC %d\n", bss_conf->assoc);
-		अगर (bss_conf->assoc) अणु
-			il->बारtamp = bss_conf->sync_tsf;
+		if (bss_conf->assoc) {
+			il->timestamp = bss_conf->sync_tsf;
 
-			अगर (!il_is_rfसमाप्त(il))
+			if (!il_is_rfkill(il))
 				il->ops->post_associate(il);
-		पूर्ण अन्यथा
-			il_set_no_assoc(il, vअगर);
-	पूर्ण
+		} else
+			il_set_no_assoc(il, vif);
+	}
 
-	अगर (changes && il_is_associated(il) && bss_conf->aid) अणु
+	if (changes && il_is_associated(il) && bss_conf->aid) {
 		D_MAC80211("Changes (%#x) while associated\n", changes);
 		ret = il_send_rxon_assoc(il);
-		अगर (!ret) अणु
+		if (!ret) {
 			/* Sync active_rxon with latest change. */
-			स_नकल((व्योम *)&il->active, &il->staging,
-			       माप(काष्ठा il_rxon_cmd));
-		पूर्ण
-	पूर्ण
+			memcpy((void *)&il->active, &il->staging,
+			       sizeof(struct il_rxon_cmd));
+		}
+	}
 
-	अगर (changes & BSS_CHANGED_BEACON_ENABLED) अणु
-		अगर (vअगर->bss_conf.enable_beacon) अणु
-			स_नकल(il->staging.bssid_addr, bss_conf->bssid,
+	if (changes & BSS_CHANGED_BEACON_ENABLED) {
+		if (vif->bss_conf.enable_beacon) {
+			memcpy(il->staging.bssid_addr, bss_conf->bssid,
 			       ETH_ALEN);
-			स_नकल(il->bssid, bss_conf->bssid, ETH_ALEN);
+			memcpy(il->bssid, bss_conf->bssid, ETH_ALEN);
 			il->ops->config_ap(il);
-		पूर्ण अन्यथा
-			il_set_no_assoc(il, vअगर);
-	पूर्ण
+		} else
+			il_set_no_assoc(il, vif);
+	}
 
-	अगर (changes & BSS_CHANGED_IBSS) अणु
-		ret = il->ops->manage_ibss_station(il, vअगर,
+	if (changes & BSS_CHANGED_IBSS) {
+		ret = il->ops->manage_ibss_station(il, vif,
 						   bss_conf->ibss_joined);
-		अगर (ret)
+		if (ret)
 			IL_ERR("failed to %s IBSS station %pM\n",
 			       bss_conf->ibss_joined ? "add" : "remove",
 			       bss_conf->bssid);
-	पूर्ण
+	}
 
 	D_MAC80211("leave\n");
 	mutex_unlock(&il->mutex);
-पूर्ण
+}
 EXPORT_SYMBOL(il_mac_bss_info_changed);
 
-irqवापस_t
-il_isr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा il_priv *il = data;
-	u32 पूर्णांकa, पूर्णांकa_mask;
-	u32 पूर्णांकa_fh;
-	अचिन्हित दीर्घ flags;
-	अगर (!il)
-		वापस IRQ_NONE;
+irqreturn_t
+il_isr(int irq, void *data)
+{
+	struct il_priv *il = data;
+	u32 inta, inta_mask;
+	u32 inta_fh;
+	unsigned long flags;
+	if (!il)
+		return IRQ_NONE;
 
 	spin_lock_irqsave(&il->lock, flags);
 
-	/* Disable (but करोn't clear!) पूर्णांकerrupts here to aव्योम
-	 *    back-to-back ISRs and sporadic पूर्णांकerrupts from our NIC.
-	 * If we have something to service, the tasklet will re-enable पूर्णांकs.
-	 * If we *करोn't* have something, we'll re-enable beक्रमe leaving here. */
-	पूर्णांकa_mask = _il_rd(il, CSR_INT_MASK);	/* just क्रम debug */
+	/* Disable (but don't clear!) interrupts here to avoid
+	 *    back-to-back ISRs and sporadic interrupts from our NIC.
+	 * If we have something to service, the tasklet will re-enable ints.
+	 * If we *don't* have something, we'll re-enable before leaving here. */
+	inta_mask = _il_rd(il, CSR_INT_MASK);	/* just for debug */
 	_il_wr(il, CSR_INT_MASK, 0x00000000);
 
-	/* Discover which पूर्णांकerrupts are active/pending */
-	पूर्णांकa = _il_rd(il, CSR_INT);
-	पूर्णांकa_fh = _il_rd(il, CSR_FH_INT_STATUS);
+	/* Discover which interrupts are active/pending */
+	inta = _il_rd(il, CSR_INT);
+	inta_fh = _il_rd(il, CSR_FH_INT_STATUS);
 
-	/* Ignore पूर्णांकerrupt अगर there's nothing in NIC to service.
+	/* Ignore interrupt if there's nothing in NIC to service.
 	 * This may be due to IRQ shared with another device,
-	 * or due to sporadic पूर्णांकerrupts thrown from our NIC. */
-	अगर (!पूर्णांकa && !पूर्णांकa_fh) अणु
+	 * or due to sporadic interrupts thrown from our NIC. */
+	if (!inta && !inta_fh) {
 		D_ISR("Ignore interrupt, inta == 0, inta_fh == 0\n");
-		जाओ none;
-	पूर्ण
+		goto none;
+	}
 
-	अगर (पूर्णांकa == 0xFFFFFFFF || (पूर्णांकa & 0xFFFFFFF0) == 0xa5a5a5a0) अणु
-		/* Hardware disappeared. It might have alपढ़ोy उठाओd
-		 * an पूर्णांकerrupt */
-		IL_WARN("HARDWARE GONE?? INTA == 0x%08x\n", पूर्णांकa);
-		जाओ unplugged;
-	पूर्ण
+	if (inta == 0xFFFFFFFF || (inta & 0xFFFFFFF0) == 0xa5a5a5a0) {
+		/* Hardware disappeared. It might have already raised
+		 * an interrupt */
+		IL_WARN("HARDWARE GONE?? INTA == 0x%08x\n", inta);
+		goto unplugged;
+	}
 
-	D_ISR("ISR inta 0x%08x, enabled 0x%08x, fh 0x%08x\n", पूर्णांकa, पूर्णांकa_mask,
-	      पूर्णांकa_fh);
+	D_ISR("ISR inta 0x%08x, enabled 0x%08x, fh 0x%08x\n", inta, inta_mask,
+	      inta_fh);
 
-	पूर्णांकa &= ~CSR_INT_BIT_SCD;
+	inta &= ~CSR_INT_BIT_SCD;
 
-	/* il_irq_tasklet() will service पूर्णांकerrupts and re-enable them */
-	अगर (likely(पूर्णांकa || पूर्णांकa_fh))
+	/* il_irq_tasklet() will service interrupts and re-enable them */
+	if (likely(inta || inta_fh))
 		tasklet_schedule(&il->irq_tasklet);
 
 unplugged:
 	spin_unlock_irqrestore(&il->lock, flags);
-	वापस IRQ_HANDLED;
+	return IRQ_HANDLED;
 
 none:
-	/* re-enable पूर्णांकerrupts here since we करोn't have anything to service. */
-	/* only Re-enable अगर disabled by irq */
-	अगर (test_bit(S_INT_ENABLED, &il->status))
-		il_enable_पूर्णांकerrupts(il);
+	/* re-enable interrupts here since we don't have anything to service. */
+	/* only Re-enable if disabled by irq */
+	if (test_bit(S_INT_ENABLED, &il->status))
+		il_enable_interrupts(il);
 	spin_unlock_irqrestore(&il->lock, flags);
-	वापस IRQ_NONE;
-पूर्ण
+	return IRQ_NONE;
+}
 EXPORT_SYMBOL(il_isr);
 
 /*
  *  il_tx_cmd_protection: Set rts/cts. 3945 and 4965 only share this
  *  function.
  */
-व्योम
-il_tx_cmd_protection(काष्ठा il_priv *il, काष्ठा ieee80211_tx_info *info,
+void
+il_tx_cmd_protection(struct il_priv *il, struct ieee80211_tx_info *info,
 		     __le16 fc, __le32 *tx_flags)
-अणु
-	अगर (info->control.rates[0].flags & IEEE80211_TX_RC_USE_RTS_CTS) अणु
+{
+	if (info->control.rates[0].flags & IEEE80211_TX_RC_USE_RTS_CTS) {
 		*tx_flags |= TX_CMD_FLG_RTS_MSK;
 		*tx_flags &= ~TX_CMD_FLG_CTS_MSK;
 		*tx_flags |= TX_CMD_FLG_FULL_TXOP_PROT_MSK;
 
-		अगर (!ieee80211_is_mgmt(fc))
-			वापस;
+		if (!ieee80211_is_mgmt(fc))
+			return;
 
-		चयन (fc & cpu_to_le16(IEEE80211_FCTL_STYPE)) अणु
-		हाल cpu_to_le16(IEEE80211_STYPE_AUTH):
-		हाल cpu_to_le16(IEEE80211_STYPE_DEAUTH):
-		हाल cpu_to_le16(IEEE80211_STYPE_ASSOC_REQ):
-		हाल cpu_to_le16(IEEE80211_STYPE_REASSOC_REQ):
+		switch (fc & cpu_to_le16(IEEE80211_FCTL_STYPE)) {
+		case cpu_to_le16(IEEE80211_STYPE_AUTH):
+		case cpu_to_le16(IEEE80211_STYPE_DEAUTH):
+		case cpu_to_le16(IEEE80211_STYPE_ASSOC_REQ):
+		case cpu_to_le16(IEEE80211_STYPE_REASSOC_REQ):
 			*tx_flags &= ~TX_CMD_FLG_RTS_MSK;
 			*tx_flags |= TX_CMD_FLG_CTS_MSK;
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अगर (info->control.rates[0].
-		   flags & IEEE80211_TX_RC_USE_CTS_PROTECT) अणु
+			break;
+		}
+	} else if (info->control.rates[0].
+		   flags & IEEE80211_TX_RC_USE_CTS_PROTECT) {
 		*tx_flags &= ~TX_CMD_FLG_RTS_MSK;
 		*tx_flags |= TX_CMD_FLG_CTS_MSK;
 		*tx_flags |= TX_CMD_FLG_FULL_TXOP_PROT_MSK;
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(il_tx_cmd_protection);

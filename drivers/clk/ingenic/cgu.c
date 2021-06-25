@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Ingenic SoC CGU driver
  *
@@ -7,275 +6,275 @@
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/clkdev.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/math64.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/समय.स>
+#include <linux/bitops.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include <linux/clkdev.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/iopoll.h>
+#include <linux/math64.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/time.h>
 
-#समावेश "cgu.h"
+#include "cgu.h"
 
-#घोषणा MHZ (1000 * 1000)
+#define MHZ (1000 * 1000)
 
-अटल अंतरभूत स्थिर काष्ठा ingenic_cgu_clk_info *
-to_clk_info(काष्ठा ingenic_clk *clk)
-अणु
-	वापस &clk->cgu->घड़ी_info[clk->idx];
-पूर्ण
+static inline const struct ingenic_cgu_clk_info *
+to_clk_info(struct ingenic_clk *clk)
+{
+	return &clk->cgu->clock_info[clk->idx];
+}
 
 /**
- * ingenic_cgu_gate_get() - get the value of घड़ी gate रेजिस्टर bit
- * @cgu: reference to the CGU whose रेजिस्टरs should be पढ़ो
- * @info: info काष्ठा describing the gate bit
+ * ingenic_cgu_gate_get() - get the value of clock gate register bit
+ * @cgu: reference to the CGU whose registers should be read
+ * @info: info struct describing the gate bit
  *
- * Retrieves the state of the घड़ी gate bit described by info. The
+ * Retrieves the state of the clock gate bit described by info. The
  * caller must hold cgu->lock.
  *
- * Return: true अगर the gate bit is set, अन्यथा false.
+ * Return: true if the gate bit is set, else false.
  */
-अटल अंतरभूत bool
-ingenic_cgu_gate_get(काष्ठा ingenic_cgu *cgu,
-		     स्थिर काष्ठा ingenic_cgu_gate_info *info)
-अणु
-	वापस !!(पढ़ोl(cgu->base + info->reg) & BIT(info->bit))
+static inline bool
+ingenic_cgu_gate_get(struct ingenic_cgu *cgu,
+		     const struct ingenic_cgu_gate_info *info)
+{
+	return !!(readl(cgu->base + info->reg) & BIT(info->bit))
 		^ info->clear_to_gate;
-पूर्ण
+}
 
 /**
- * ingenic_cgu_gate_set() - set the value of घड़ी gate रेजिस्टर bit
- * @cgu: reference to the CGU whose रेजिस्टरs should be modअगरied
- * @info: info काष्ठा describing the gate bit
- * @val: non-zero to gate a घड़ी, otherwise zero
+ * ingenic_cgu_gate_set() - set the value of clock gate register bit
+ * @cgu: reference to the CGU whose registers should be modified
+ * @info: info struct describing the gate bit
+ * @val: non-zero to gate a clock, otherwise zero
  *
- * Sets the given gate bit in order to gate or ungate a घड़ी.
+ * Sets the given gate bit in order to gate or ungate a clock.
  *
  * The caller must hold cgu->lock.
  */
-अटल अंतरभूत व्योम
-ingenic_cgu_gate_set(काष्ठा ingenic_cgu *cgu,
-		     स्थिर काष्ठा ingenic_cgu_gate_info *info, bool val)
-अणु
-	u32 clkgr = पढ़ोl(cgu->base + info->reg);
+static inline void
+ingenic_cgu_gate_set(struct ingenic_cgu *cgu,
+		     const struct ingenic_cgu_gate_info *info, bool val)
+{
+	u32 clkgr = readl(cgu->base + info->reg);
 
-	अगर (val ^ info->clear_to_gate)
+	if (val ^ info->clear_to_gate)
 		clkgr |= BIT(info->bit);
-	अन्यथा
+	else
 		clkgr &= ~BIT(info->bit);
 
-	ग_लिखोl(clkgr, cgu->base + info->reg);
-पूर्ण
+	writel(clkgr, cgu->base + info->reg);
+}
 
 /*
  * PLL operations
  */
 
-अटल अचिन्हित दीर्घ
-ingenic_pll_recalc_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
-	स्थिर काष्ठा ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
-	काष्ठा ingenic_cgu *cgu = ingenic_clk->cgu;
-	स्थिर काष्ठा ingenic_cgu_pll_info *pll_info;
-	अचिन्हित m, n, od_enc, od;
+static unsigned long
+ingenic_pll_recalc_rate(struct clk_hw *hw, unsigned long parent_rate)
+{
+	struct ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
+	const struct ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
+	struct ingenic_cgu *cgu = ingenic_clk->cgu;
+	const struct ingenic_cgu_pll_info *pll_info;
+	unsigned m, n, od_enc, od;
 	bool bypass;
 	u32 ctl;
 
 	BUG_ON(clk_info->type != CGU_CLK_PLL);
 	pll_info = &clk_info->pll;
 
-	ctl = पढ़ोl(cgu->base + pll_info->reg);
+	ctl = readl(cgu->base + pll_info->reg);
 
-	m = (ctl >> pll_info->m_shअगरt) & GENMASK(pll_info->m_bits - 1, 0);
+	m = (ctl >> pll_info->m_shift) & GENMASK(pll_info->m_bits - 1, 0);
 	m += pll_info->m_offset;
-	n = (ctl >> pll_info->n_shअगरt) & GENMASK(pll_info->n_bits - 1, 0);
+	n = (ctl >> pll_info->n_shift) & GENMASK(pll_info->n_bits - 1, 0);
 	n += pll_info->n_offset;
-	od_enc = ctl >> pll_info->od_shअगरt;
+	od_enc = ctl >> pll_info->od_shift;
 	od_enc &= GENMASK(pll_info->od_bits - 1, 0);
 
-	ctl = पढ़ोl(cgu->base + pll_info->bypass_reg);
+	ctl = readl(cgu->base + pll_info->bypass_reg);
 
 	bypass = !pll_info->no_bypass_bit &&
 		 !!(ctl & BIT(pll_info->bypass_bit));
 
-	अगर (bypass)
-		वापस parent_rate;
+	if (bypass)
+		return parent_rate;
 
-	क्रम (od = 0; od < pll_info->od_max; od++) अणु
-		अगर (pll_info->od_encoding[od] == od_enc)
-			अवरोध;
-	पूर्ण
+	for (od = 0; od < pll_info->od_max; od++) {
+		if (pll_info->od_encoding[od] == od_enc)
+			break;
+	}
 	BUG_ON(od == pll_info->od_max);
 	od++;
 
-	वापस भाग_u64((u64)parent_rate * m * pll_info->rate_multiplier,
+	return div_u64((u64)parent_rate * m * pll_info->rate_multiplier,
 		n * od);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ
-ingenic_pll_calc(स्थिर काष्ठा ingenic_cgu_clk_info *clk_info,
-		 अचिन्हित दीर्घ rate, अचिन्हित दीर्घ parent_rate,
-		 अचिन्हित *pm, अचिन्हित *pn, अचिन्हित *pod)
-अणु
-	स्थिर काष्ठा ingenic_cgu_pll_info *pll_info;
-	अचिन्हित m, n, od;
+static unsigned long
+ingenic_pll_calc(const struct ingenic_cgu_clk_info *clk_info,
+		 unsigned long rate, unsigned long parent_rate,
+		 unsigned *pm, unsigned *pn, unsigned *pod)
+{
+	const struct ingenic_cgu_pll_info *pll_info;
+	unsigned m, n, od;
 
 	pll_info = &clk_info->pll;
 	od = 1;
 
 	/*
-	 * The frequency after the input भागider must be between 10 and 50 MHz.
-	 * The highest भागider yields the best resolution.
+	 * The frequency after the input divider must be between 10 and 50 MHz.
+	 * The highest divider yields the best resolution.
 	 */
 	n = parent_rate / (10 * MHZ);
-	n = min_t(अचिन्हित, n, 1 << clk_info->pll.n_bits);
-	n = max_t(अचिन्हित, n, pll_info->n_offset);
+	n = min_t(unsigned, n, 1 << clk_info->pll.n_bits);
+	n = max_t(unsigned, n, pll_info->n_offset);
 
 	m = (rate / MHZ) * od * n / (parent_rate / MHZ);
-	m = min_t(अचिन्हित, m, 1 << clk_info->pll.m_bits);
-	m = max_t(अचिन्हित, m, pll_info->m_offset);
+	m = min_t(unsigned, m, 1 << clk_info->pll.m_bits);
+	m = max_t(unsigned, m, pll_info->m_offset);
 
-	अगर (pm)
+	if (pm)
 		*pm = m;
-	अगर (pn)
+	if (pn)
 		*pn = n;
-	अगर (pod)
+	if (pod)
 		*pod = od;
 
-	वापस भाग_u64((u64)parent_rate * m * pll_info->rate_multiplier,
+	return div_u64((u64)parent_rate * m * pll_info->rate_multiplier,
 		n * od);
-पूर्ण
+}
 
-अटल दीर्घ
-ingenic_pll_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ req_rate,
-		       अचिन्हित दीर्घ *prate)
-अणु
-	काष्ठा ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
-	स्थिर काष्ठा ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
+static long
+ingenic_pll_round_rate(struct clk_hw *hw, unsigned long req_rate,
+		       unsigned long *prate)
+{
+	struct ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
+	const struct ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
 
-	वापस ingenic_pll_calc(clk_info, req_rate, *prate, शून्य, शून्य, शून्य);
-पूर्ण
+	return ingenic_pll_calc(clk_info, req_rate, *prate, NULL, NULL, NULL);
+}
 
-अटल अंतरभूत पूर्णांक ingenic_pll_check_stable(काष्ठा ingenic_cgu *cgu,
-					   स्थिर काष्ठा ingenic_cgu_pll_info *pll_info)
-अणु
+static inline int ingenic_pll_check_stable(struct ingenic_cgu *cgu,
+					   const struct ingenic_cgu_pll_info *pll_info)
+{
 	u32 ctl;
 
-	वापस पढ़ोl_poll_समयout(cgu->base + pll_info->reg, ctl,
+	return readl_poll_timeout(cgu->base + pll_info->reg, ctl,
 				  ctl & BIT(pll_info->stable_bit),
 				  0, 100 * USEC_PER_MSEC);
-पूर्ण
+}
 
-अटल पूर्णांक
-ingenic_pll_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ req_rate,
-		     अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
-	काष्ठा ingenic_cgu *cgu = ingenic_clk->cgu;
-	स्थिर काष्ठा ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
-	स्थिर काष्ठा ingenic_cgu_pll_info *pll_info = &clk_info->pll;
-	अचिन्हित दीर्घ rate, flags;
-	अचिन्हित पूर्णांक m, n, od;
-	पूर्णांक ret = 0;
+static int
+ingenic_pll_set_rate(struct clk_hw *hw, unsigned long req_rate,
+		     unsigned long parent_rate)
+{
+	struct ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
+	struct ingenic_cgu *cgu = ingenic_clk->cgu;
+	const struct ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
+	const struct ingenic_cgu_pll_info *pll_info = &clk_info->pll;
+	unsigned long rate, flags;
+	unsigned int m, n, od;
+	int ret = 0;
 	u32 ctl;
 
 	rate = ingenic_pll_calc(clk_info, req_rate, parent_rate,
 			       &m, &n, &od);
-	अगर (rate != req_rate)
+	if (rate != req_rate)
 		pr_info("ingenic-cgu: request '%s' rate %luHz, actual %luHz\n",
 			clk_info->name, req_rate, rate);
 
 	spin_lock_irqsave(&cgu->lock, flags);
-	ctl = पढ़ोl(cgu->base + pll_info->reg);
+	ctl = readl(cgu->base + pll_info->reg);
 
-	ctl &= ~(GENMASK(pll_info->m_bits - 1, 0) << pll_info->m_shअगरt);
-	ctl |= (m - pll_info->m_offset) << pll_info->m_shअगरt;
+	ctl &= ~(GENMASK(pll_info->m_bits - 1, 0) << pll_info->m_shift);
+	ctl |= (m - pll_info->m_offset) << pll_info->m_shift;
 
-	ctl &= ~(GENMASK(pll_info->n_bits - 1, 0) << pll_info->n_shअगरt);
-	ctl |= (n - pll_info->n_offset) << pll_info->n_shअगरt;
+	ctl &= ~(GENMASK(pll_info->n_bits - 1, 0) << pll_info->n_shift);
+	ctl |= (n - pll_info->n_offset) << pll_info->n_shift;
 
-	ctl &= ~(GENMASK(pll_info->od_bits - 1, 0) << pll_info->od_shअगरt);
-	ctl |= pll_info->od_encoding[od - 1] << pll_info->od_shअगरt;
+	ctl &= ~(GENMASK(pll_info->od_bits - 1, 0) << pll_info->od_shift);
+	ctl |= pll_info->od_encoding[od - 1] << pll_info->od_shift;
 
-	ग_लिखोl(ctl, cgu->base + pll_info->reg);
+	writel(ctl, cgu->base + pll_info->reg);
 
-	/* If the PLL is enabled, verअगरy that it's stable */
-	अगर (ctl & BIT(pll_info->enable_bit))
+	/* If the PLL is enabled, verify that it's stable */
+	if (ctl & BIT(pll_info->enable_bit))
 		ret = ingenic_pll_check_stable(cgu, pll_info);
 
 	spin_unlock_irqrestore(&cgu->lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ingenic_pll_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
-	काष्ठा ingenic_cgu *cgu = ingenic_clk->cgu;
-	स्थिर काष्ठा ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
-	स्थिर काष्ठा ingenic_cgu_pll_info *pll_info = &clk_info->pll;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int ingenic_pll_enable(struct clk_hw *hw)
+{
+	struct ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
+	struct ingenic_cgu *cgu = ingenic_clk->cgu;
+	const struct ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
+	const struct ingenic_cgu_pll_info *pll_info = &clk_info->pll;
+	unsigned long flags;
+	int ret;
 	u32 ctl;
 
 	spin_lock_irqsave(&cgu->lock, flags);
-	ctl = पढ़ोl(cgu->base + pll_info->bypass_reg);
+	ctl = readl(cgu->base + pll_info->bypass_reg);
 
 	ctl &= ~BIT(pll_info->bypass_bit);
 
-	ग_लिखोl(ctl, cgu->base + pll_info->bypass_reg);
+	writel(ctl, cgu->base + pll_info->bypass_reg);
 
-	ctl = पढ़ोl(cgu->base + pll_info->reg);
+	ctl = readl(cgu->base + pll_info->reg);
 
 	ctl |= BIT(pll_info->enable_bit);
 
-	ग_लिखोl(ctl, cgu->base + pll_info->reg);
+	writel(ctl, cgu->base + pll_info->reg);
 
 	ret = ingenic_pll_check_stable(cgu, pll_info);
 	spin_unlock_irqrestore(&cgu->lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ingenic_pll_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
-	काष्ठा ingenic_cgu *cgu = ingenic_clk->cgu;
-	स्थिर काष्ठा ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
-	स्थिर काष्ठा ingenic_cgu_pll_info *pll_info = &clk_info->pll;
-	अचिन्हित दीर्घ flags;
+static void ingenic_pll_disable(struct clk_hw *hw)
+{
+	struct ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
+	struct ingenic_cgu *cgu = ingenic_clk->cgu;
+	const struct ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
+	const struct ingenic_cgu_pll_info *pll_info = &clk_info->pll;
+	unsigned long flags;
 	u32 ctl;
 
 	spin_lock_irqsave(&cgu->lock, flags);
-	ctl = पढ़ोl(cgu->base + pll_info->reg);
+	ctl = readl(cgu->base + pll_info->reg);
 
 	ctl &= ~BIT(pll_info->enable_bit);
 
-	ग_लिखोl(ctl, cgu->base + pll_info->reg);
+	writel(ctl, cgu->base + pll_info->reg);
 	spin_unlock_irqrestore(&cgu->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक ingenic_pll_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
-	काष्ठा ingenic_cgu *cgu = ingenic_clk->cgu;
-	स्थिर काष्ठा ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
-	स्थिर काष्ठा ingenic_cgu_pll_info *pll_info = &clk_info->pll;
+static int ingenic_pll_is_enabled(struct clk_hw *hw)
+{
+	struct ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
+	struct ingenic_cgu *cgu = ingenic_clk->cgu;
+	const struct ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
+	const struct ingenic_cgu_pll_info *pll_info = &clk_info->pll;
 	u32 ctl;
 
-	ctl = पढ़ोl(cgu->base + pll_info->reg);
+	ctl = readl(cgu->base + pll_info->reg);
 
-	वापस !!(ctl & BIT(pll_info->enable_bit));
-पूर्ण
+	return !!(ctl & BIT(pll_info->enable_bit));
+}
 
-अटल स्थिर काष्ठा clk_ops ingenic_pll_ops = अणु
+static const struct clk_ops ingenic_pll_ops = {
 	.recalc_rate = ingenic_pll_recalc_rate,
 	.round_rate = ingenic_pll_round_rate,
 	.set_rate = ingenic_pll_set_rate,
@@ -283,294 +282,294 @@ ingenic_pll_set_rate(काष्ठा clk_hw *hw, अचिन्हित द
 	.enable = ingenic_pll_enable,
 	.disable = ingenic_pll_disable,
 	.is_enabled = ingenic_pll_is_enabled,
-पूर्ण;
+};
 
 /*
- * Operations क्रम all non-PLL घड़ीs
+ * Operations for all non-PLL clocks
  */
 
-अटल u8 ingenic_clk_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
-	स्थिर काष्ठा ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
-	काष्ठा ingenic_cgu *cgu = ingenic_clk->cgu;
+static u8 ingenic_clk_get_parent(struct clk_hw *hw)
+{
+	struct ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
+	const struct ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
+	struct ingenic_cgu *cgu = ingenic_clk->cgu;
 	u32 reg;
 	u8 i, hw_idx, idx = 0;
 
-	अगर (clk_info->type & CGU_CLK_MUX) अणु
-		reg = पढ़ोl(cgu->base + clk_info->mux.reg);
-		hw_idx = (reg >> clk_info->mux.shअगरt) &
+	if (clk_info->type & CGU_CLK_MUX) {
+		reg = readl(cgu->base + clk_info->mux.reg);
+		hw_idx = (reg >> clk_info->mux.shift) &
 			 GENMASK(clk_info->mux.bits - 1, 0);
 
 		/*
 		 * Convert the hardware index to the parent index by skipping
 		 * over any -1's in the parents array.
 		 */
-		क्रम (i = 0; i < hw_idx; i++) अणु
-			अगर (clk_info->parents[i] != -1)
+		for (i = 0; i < hw_idx; i++) {
+			if (clk_info->parents[i] != -1)
 				idx++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल पूर्णांक ingenic_clk_set_parent(काष्ठा clk_hw *hw, u8 idx)
-अणु
-	काष्ठा ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
-	स्थिर काष्ठा ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
-	काष्ठा ingenic_cgu *cgu = ingenic_clk->cgu;
-	अचिन्हित दीर्घ flags;
+static int ingenic_clk_set_parent(struct clk_hw *hw, u8 idx)
+{
+	struct ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
+	const struct ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
+	struct ingenic_cgu *cgu = ingenic_clk->cgu;
+	unsigned long flags;
 	u8 curr_idx, hw_idx, num_poss;
 	u32 reg, mask;
 
-	अगर (clk_info->type & CGU_CLK_MUX) अणु
+	if (clk_info->type & CGU_CLK_MUX) {
 		/*
 		 * Convert the parent index to the hardware index by adding
-		 * 1 क्रम any -1 in the parents array preceding the given
+		 * 1 for any -1 in the parents array preceding the given
 		 * index. That is, we want the index of idx'th entry in
-		 * clk_info->parents which करोes not equal -1.
+		 * clk_info->parents which does not equal -1.
 		 */
 		hw_idx = curr_idx = 0;
 		num_poss = 1 << clk_info->mux.bits;
-		क्रम (; hw_idx < num_poss; hw_idx++) अणु
-			अगर (clk_info->parents[hw_idx] == -1)
-				जारी;
-			अगर (curr_idx == idx)
-				अवरोध;
+		for (; hw_idx < num_poss; hw_idx++) {
+			if (clk_info->parents[hw_idx] == -1)
+				continue;
+			if (curr_idx == idx)
+				break;
 			curr_idx++;
-		पूर्ण
+		}
 
 		/* idx should always be a valid parent */
 		BUG_ON(curr_idx != idx);
 
 		mask = GENMASK(clk_info->mux.bits - 1, 0);
-		mask <<= clk_info->mux.shअगरt;
+		mask <<= clk_info->mux.shift;
 
 		spin_lock_irqsave(&cgu->lock, flags);
 
-		/* ग_लिखो the रेजिस्टर */
-		reg = पढ़ोl(cgu->base + clk_info->mux.reg);
+		/* write the register */
+		reg = readl(cgu->base + clk_info->mux.reg);
 		reg &= ~mask;
-		reg |= hw_idx << clk_info->mux.shअगरt;
-		ग_लिखोl(reg, cgu->base + clk_info->mux.reg);
+		reg |= hw_idx << clk_info->mux.shift;
+		writel(reg, cgu->base + clk_info->mux.reg);
 
 		spin_unlock_irqrestore(&cgu->lock, flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस idx ? -EINVAL : 0;
-पूर्ण
+	return idx ? -EINVAL : 0;
+}
 
-अटल अचिन्हित दीर्घ
-ingenic_clk_recalc_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
-	स्थिर काष्ठा ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
-	काष्ठा ingenic_cgu *cgu = ingenic_clk->cgu;
-	अचिन्हित दीर्घ rate = parent_rate;
-	u32 भाग_reg, भाग;
+static unsigned long
+ingenic_clk_recalc_rate(struct clk_hw *hw, unsigned long parent_rate)
+{
+	struct ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
+	const struct ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
+	struct ingenic_cgu *cgu = ingenic_clk->cgu;
+	unsigned long rate = parent_rate;
+	u32 div_reg, div;
 
-	अगर (clk_info->type & CGU_CLK_DIV) अणु
-		भाग_reg = पढ़ोl(cgu->base + clk_info->भाग.reg);
-		भाग = (भाग_reg >> clk_info->भाग.shअगरt) &
-		      GENMASK(clk_info->भाग.bits - 1, 0);
+	if (clk_info->type & CGU_CLK_DIV) {
+		div_reg = readl(cgu->base + clk_info->div.reg);
+		div = (div_reg >> clk_info->div.shift) &
+		      GENMASK(clk_info->div.bits - 1, 0);
 
-		अगर (clk_info->भाग.भाग_प्रकारable)
-			भाग = clk_info->भाग.भाग_प्रकारable[भाग];
-		अन्यथा
-			भाग = (भाग + 1) * clk_info->भाग.भाग;
+		if (clk_info->div.div_table)
+			div = clk_info->div.div_table[div];
+		else
+			div = (div + 1) * clk_info->div.div;
 
-		rate /= भाग;
-	पूर्ण अन्यथा अगर (clk_info->type & CGU_CLK_FIXDIV) अणु
-		rate /= clk_info->fixभाग.भाग;
-	पूर्ण
+		rate /= div;
+	} else if (clk_info->type & CGU_CLK_FIXDIV) {
+		rate /= clk_info->fixdiv.div;
+	}
 
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
-अटल अचिन्हित पूर्णांक
-ingenic_clk_calc_hw_भाग(स्थिर काष्ठा ingenic_cgu_clk_info *clk_info,
-			अचिन्हित पूर्णांक भाग)
-अणु
-	अचिन्हित पूर्णांक i, best_i = 0, best = (अचिन्हित पूर्णांक)-1;
+static unsigned int
+ingenic_clk_calc_hw_div(const struct ingenic_cgu_clk_info *clk_info,
+			unsigned int div)
+{
+	unsigned int i, best_i = 0, best = (unsigned int)-1;
 
-	क्रम (i = 0; i < (1 << clk_info->भाग.bits)
-				&& clk_info->भाग.भाग_प्रकारable[i]; i++) अणु
-		अगर (clk_info->भाग.भाग_प्रकारable[i] >= भाग &&
-		    clk_info->भाग.भाग_प्रकारable[i] < best) अणु
-			best = clk_info->भाग.भाग_प्रकारable[i];
+	for (i = 0; i < (1 << clk_info->div.bits)
+				&& clk_info->div.div_table[i]; i++) {
+		if (clk_info->div.div_table[i] >= div &&
+		    clk_info->div.div_table[i] < best) {
+			best = clk_info->div.div_table[i];
 			best_i = i;
 
-			अगर (भाग == best)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (div == best)
+				break;
+		}
+	}
 
-	वापस best_i;
-पूर्ण
+	return best_i;
+}
 
-अटल अचिन्हित
-ingenic_clk_calc_भाग(स्थिर काष्ठा ingenic_cgu_clk_info *clk_info,
-		     अचिन्हित दीर्घ parent_rate, अचिन्हित दीर्घ req_rate)
-अणु
-	अचिन्हित पूर्णांक भाग, hw_भाग;
+static unsigned
+ingenic_clk_calc_div(const struct ingenic_cgu_clk_info *clk_info,
+		     unsigned long parent_rate, unsigned long req_rate)
+{
+	unsigned int div, hw_div;
 
-	/* calculate the भागide */
-	भाग = DIV_ROUND_UP(parent_rate, req_rate);
+	/* calculate the divide */
+	div = DIV_ROUND_UP(parent_rate, req_rate);
 
-	अगर (clk_info->भाग.भाग_प्रकारable) अणु
-		hw_भाग = ingenic_clk_calc_hw_भाग(clk_info, भाग);
+	if (clk_info->div.div_table) {
+		hw_div = ingenic_clk_calc_hw_div(clk_info, div);
 
-		वापस clk_info->भाग.भाग_प्रकारable[hw_भाग];
-	पूर्ण
+		return clk_info->div.div_table[hw_div];
+	}
 
-	/* Impose hardware स्थिरraपूर्णांकs */
-	भाग = min_t(अचिन्हित, भाग, 1 << clk_info->भाग.bits);
-	भाग = max_t(अचिन्हित, भाग, 1);
+	/* Impose hardware constraints */
+	div = min_t(unsigned, div, 1 << clk_info->div.bits);
+	div = max_t(unsigned, div, 1);
 
 	/*
-	 * If the भागider value itself must be भागided beक्रमe being written to
-	 * the भागider रेजिस्टर, we must ensure we करोn't have any bits set that
-	 * would be lost as a result of करोing so.
+	 * If the divider value itself must be divided before being written to
+	 * the divider register, we must ensure we don't have any bits set that
+	 * would be lost as a result of doing so.
 	 */
-	भाग /= clk_info->भाग.भाग;
-	भाग *= clk_info->भाग.भाग;
+	div /= clk_info->div.div;
+	div *= clk_info->div.div;
 
-	वापस भाग;
-पूर्ण
+	return div;
+}
 
-अटल दीर्घ
-ingenic_clk_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ req_rate,
-		       अचिन्हित दीर्घ *parent_rate)
-अणु
-	काष्ठा ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
-	स्थिर काष्ठा ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
-	अचिन्हित पूर्णांक भाग = 1;
+static long
+ingenic_clk_round_rate(struct clk_hw *hw, unsigned long req_rate,
+		       unsigned long *parent_rate)
+{
+	struct ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
+	const struct ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
+	unsigned int div = 1;
 
-	अगर (clk_info->type & CGU_CLK_DIV)
-		भाग = ingenic_clk_calc_भाग(clk_info, *parent_rate, req_rate);
-	अन्यथा अगर (clk_info->type & CGU_CLK_FIXDIV)
-		भाग = clk_info->fixभाग.भाग;
-	अन्यथा अगर (clk_hw_can_set_rate_parent(hw))
+	if (clk_info->type & CGU_CLK_DIV)
+		div = ingenic_clk_calc_div(clk_info, *parent_rate, req_rate);
+	else if (clk_info->type & CGU_CLK_FIXDIV)
+		div = clk_info->fixdiv.div;
+	else if (clk_hw_can_set_rate_parent(hw))
 		*parent_rate = req_rate;
 
-	वापस DIV_ROUND_UP(*parent_rate, भाग);
-पूर्ण
+	return DIV_ROUND_UP(*parent_rate, div);
+}
 
-अटल अंतरभूत पूर्णांक ingenic_clk_check_stable(काष्ठा ingenic_cgu *cgu,
-					   स्थिर काष्ठा ingenic_cgu_clk_info *clk_info)
-अणु
+static inline int ingenic_clk_check_stable(struct ingenic_cgu *cgu,
+					   const struct ingenic_cgu_clk_info *clk_info)
+{
 	u32 reg;
 
-	वापस पढ़ोl_poll_समयout(cgu->base + clk_info->भाग.reg, reg,
-				  !(reg & BIT(clk_info->भाग.busy_bit)),
+	return readl_poll_timeout(cgu->base + clk_info->div.reg, reg,
+				  !(reg & BIT(clk_info->div.busy_bit)),
 				  0, 100 * USEC_PER_MSEC);
-पूर्ण
+}
 
-अटल पूर्णांक
-ingenic_clk_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ req_rate,
-		     अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
-	स्थिर काष्ठा ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
-	काष्ठा ingenic_cgu *cgu = ingenic_clk->cgu;
-	अचिन्हित दीर्घ rate, flags;
-	अचिन्हित पूर्णांक hw_भाग, भाग;
+static int
+ingenic_clk_set_rate(struct clk_hw *hw, unsigned long req_rate,
+		     unsigned long parent_rate)
+{
+	struct ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
+	const struct ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
+	struct ingenic_cgu *cgu = ingenic_clk->cgu;
+	unsigned long rate, flags;
+	unsigned int hw_div, div;
 	u32 reg, mask;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (clk_info->type & CGU_CLK_DIV) अणु
-		भाग = ingenic_clk_calc_भाग(clk_info, parent_rate, req_rate);
-		rate = DIV_ROUND_UP(parent_rate, भाग);
+	if (clk_info->type & CGU_CLK_DIV) {
+		div = ingenic_clk_calc_div(clk_info, parent_rate, req_rate);
+		rate = DIV_ROUND_UP(parent_rate, div);
 
-		अगर (rate != req_rate)
-			वापस -EINVAL;
+		if (rate != req_rate)
+			return -EINVAL;
 
-		अगर (clk_info->भाग.भाग_प्रकारable)
-			hw_भाग = ingenic_clk_calc_hw_भाग(clk_info, भाग);
-		अन्यथा
-			hw_भाग = ((भाग / clk_info->भाग.भाग) - 1);
+		if (clk_info->div.div_table)
+			hw_div = ingenic_clk_calc_hw_div(clk_info, div);
+		else
+			hw_div = ((div / clk_info->div.div) - 1);
 
 		spin_lock_irqsave(&cgu->lock, flags);
-		reg = पढ़ोl(cgu->base + clk_info->भाग.reg);
+		reg = readl(cgu->base + clk_info->div.reg);
 
-		/* update the भागide */
-		mask = GENMASK(clk_info->भाग.bits - 1, 0);
-		reg &= ~(mask << clk_info->भाग.shअगरt);
-		reg |= hw_भाग << clk_info->भाग.shअगरt;
+		/* update the divide */
+		mask = GENMASK(clk_info->div.bits - 1, 0);
+		reg &= ~(mask << clk_info->div.shift);
+		reg |= hw_div << clk_info->div.shift;
 
 		/* clear the stop bit */
-		अगर (clk_info->भाग.stop_bit != -1)
-			reg &= ~BIT(clk_info->भाग.stop_bit);
+		if (clk_info->div.stop_bit != -1)
+			reg &= ~BIT(clk_info->div.stop_bit);
 
 		/* set the change enable bit */
-		अगर (clk_info->भाग.ce_bit != -1)
-			reg |= BIT(clk_info->भाग.ce_bit);
+		if (clk_info->div.ce_bit != -1)
+			reg |= BIT(clk_info->div.ce_bit);
 
 		/* update the hardware */
-		ग_लिखोl(reg, cgu->base + clk_info->भाग.reg);
+		writel(reg, cgu->base + clk_info->div.reg);
 
-		/* रुको क्रम the change to take effect */
-		अगर (clk_info->भाग.busy_bit != -1)
+		/* wait for the change to take effect */
+		if (clk_info->div.busy_bit != -1)
 			ret = ingenic_clk_check_stable(cgu, clk_info);
 
 		spin_unlock_irqrestore(&cgu->lock, flags);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक ingenic_clk_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
-	स्थिर काष्ठा ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
-	काष्ठा ingenic_cgu *cgu = ingenic_clk->cgu;
-	अचिन्हित दीर्घ flags;
+static int ingenic_clk_enable(struct clk_hw *hw)
+{
+	struct ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
+	const struct ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
+	struct ingenic_cgu *cgu = ingenic_clk->cgu;
+	unsigned long flags;
 
-	अगर (clk_info->type & CGU_CLK_GATE) अणु
-		/* ungate the घड़ी */
+	if (clk_info->type & CGU_CLK_GATE) {
+		/* ungate the clock */
 		spin_lock_irqsave(&cgu->lock, flags);
 		ingenic_cgu_gate_set(cgu, &clk_info->gate, false);
 		spin_unlock_irqrestore(&cgu->lock, flags);
 
-		अगर (clk_info->gate.delay_us)
+		if (clk_info->gate.delay_us)
 			udelay(clk_info->gate.delay_us);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ingenic_clk_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
-	स्थिर काष्ठा ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
-	काष्ठा ingenic_cgu *cgu = ingenic_clk->cgu;
-	अचिन्हित दीर्घ flags;
+static void ingenic_clk_disable(struct clk_hw *hw)
+{
+	struct ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
+	const struct ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
+	struct ingenic_cgu *cgu = ingenic_clk->cgu;
+	unsigned long flags;
 
-	अगर (clk_info->type & CGU_CLK_GATE) अणु
-		/* gate the घड़ी */
+	if (clk_info->type & CGU_CLK_GATE) {
+		/* gate the clock */
 		spin_lock_irqsave(&cgu->lock, flags);
 		ingenic_cgu_gate_set(cgu, &clk_info->gate, true);
 		spin_unlock_irqrestore(&cgu->lock, flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ingenic_clk_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
-	स्थिर काष्ठा ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
-	काष्ठा ingenic_cgu *cgu = ingenic_clk->cgu;
-	पूर्णांक enabled = 1;
+static int ingenic_clk_is_enabled(struct clk_hw *hw)
+{
+	struct ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
+	const struct ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
+	struct ingenic_cgu *cgu = ingenic_clk->cgu;
+	int enabled = 1;
 
-	अगर (clk_info->type & CGU_CLK_GATE)
+	if (clk_info->type & CGU_CLK_GATE)
 		enabled = !ingenic_cgu_gate_get(cgu, &clk_info->gate);
 
-	वापस enabled;
-पूर्ण
+	return enabled;
+}
 
-अटल स्थिर काष्ठा clk_ops ingenic_clk_ops = अणु
+static const struct clk_ops ingenic_clk_ops = {
 	.get_parent = ingenic_clk_get_parent,
 	.set_parent = ingenic_clk_set_parent,
 
@@ -581,52 +580,52 @@ ingenic_clk_set_rate(काष्ठा clk_hw *hw, अचिन्हित द
 	.enable = ingenic_clk_enable,
 	.disable = ingenic_clk_disable,
 	.is_enabled = ingenic_clk_is_enabled,
-पूर्ण;
+};
 
 /*
  * Setup functions.
  */
 
-अटल पूर्णांक ingenic_रेजिस्टर_घड़ी(काष्ठा ingenic_cgu *cgu, अचिन्हित idx)
-अणु
-	स्थिर काष्ठा ingenic_cgu_clk_info *clk_info = &cgu->घड़ी_info[idx];
-	काष्ठा clk_init_data clk_init;
-	काष्ठा ingenic_clk *ingenic_clk = शून्य;
-	काष्ठा clk *clk, *parent;
-	स्थिर अक्षर *parent_names[4];
-	अचिन्हित caps, i, num_possible;
-	पूर्णांक err = -EINVAL;
+static int ingenic_register_clock(struct ingenic_cgu *cgu, unsigned idx)
+{
+	const struct ingenic_cgu_clk_info *clk_info = &cgu->clock_info[idx];
+	struct clk_init_data clk_init;
+	struct ingenic_clk *ingenic_clk = NULL;
+	struct clk *clk, *parent;
+	const char *parent_names[4];
+	unsigned caps, i, num_possible;
+	int err = -EINVAL;
 
 	BUILD_BUG_ON(ARRAY_SIZE(clk_info->parents) > ARRAY_SIZE(parent_names));
 
-	अगर (clk_info->type == CGU_CLK_EXT) अणु
+	if (clk_info->type == CGU_CLK_EXT) {
 		clk = of_clk_get_by_name(cgu->np, clk_info->name);
-		अगर (IS_ERR(clk)) अणु
+		if (IS_ERR(clk)) {
 			pr_err("%s: no external clock '%s' provided\n",
 			       __func__, clk_info->name);
 			err = -ENODEV;
-			जाओ out;
-		पूर्ण
-		err = clk_रेजिस्टर_clkdev(clk, clk_info->name, शून्य);
-		अगर (err) अणु
+			goto out;
+		}
+		err = clk_register_clkdev(clk, clk_info->name, NULL);
+		if (err) {
 			clk_put(clk);
-			जाओ out;
-		पूर्ण
-		cgu->घड़ीs.clks[idx] = clk;
-		वापस 0;
-	पूर्ण
+			goto out;
+		}
+		cgu->clocks.clks[idx] = clk;
+		return 0;
+	}
 
-	अगर (!clk_info->type) अणु
+	if (!clk_info->type) {
 		pr_err("%s: no clock type specified for '%s'\n", __func__,
 		       clk_info->name);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ingenic_clk = kzalloc(माप(*ingenic_clk), GFP_KERNEL);
-	अगर (!ingenic_clk) अणु
+	ingenic_clk = kzalloc(sizeof(*ingenic_clk), GFP_KERNEL);
+	if (!ingenic_clk) {
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ingenic_clk->hw.init = &clk_init;
 	ingenic_clk->cgu = cgu;
@@ -638,163 +637,163 @@ ingenic_clk_set_rate(काष्ठा clk_hw *hw, अचिन्हित द
 
 	caps = clk_info->type;
 
-	अगर (caps & CGU_CLK_DIV) अणु
+	if (caps & CGU_CLK_DIV) {
 		caps &= ~CGU_CLK_DIV;
-	पूर्ण अन्यथा अगर (!(caps & CGU_CLK_CUSTOM)) अणु
-		/* pass rate changes to the parent घड़ी */
+	} else if (!(caps & CGU_CLK_CUSTOM)) {
+		/* pass rate changes to the parent clock */
 		clk_init.flags |= CLK_SET_RATE_PARENT;
-	पूर्ण
+	}
 
-	अगर (caps & (CGU_CLK_MUX | CGU_CLK_CUSTOM)) अणु
+	if (caps & (CGU_CLK_MUX | CGU_CLK_CUSTOM)) {
 		clk_init.num_parents = 0;
 
-		अगर (caps & CGU_CLK_MUX)
+		if (caps & CGU_CLK_MUX)
 			num_possible = 1 << clk_info->mux.bits;
-		अन्यथा
+		else
 			num_possible = ARRAY_SIZE(clk_info->parents);
 
-		क्रम (i = 0; i < num_possible; i++) अणु
-			अगर (clk_info->parents[i] == -1)
-				जारी;
+		for (i = 0; i < num_possible; i++) {
+			if (clk_info->parents[i] == -1)
+				continue;
 
-			parent = cgu->घड़ीs.clks[clk_info->parents[i]];
+			parent = cgu->clocks.clks[clk_info->parents[i]];
 			parent_names[clk_init.num_parents] =
 				__clk_get_name(parent);
 			clk_init.num_parents++;
-		पूर्ण
+		}
 
 		BUG_ON(!clk_init.num_parents);
 		BUG_ON(clk_init.num_parents > ARRAY_SIZE(parent_names));
-	पूर्ण अन्यथा अणु
+	} else {
 		BUG_ON(clk_info->parents[0] == -1);
 		clk_init.num_parents = 1;
-		parent = cgu->घड़ीs.clks[clk_info->parents[0]];
+		parent = cgu->clocks.clks[clk_info->parents[0]];
 		parent_names[0] = __clk_get_name(parent);
-	पूर्ण
+	}
 
-	अगर (caps & CGU_CLK_CUSTOM) अणु
+	if (caps & CGU_CLK_CUSTOM) {
 		clk_init.ops = clk_info->custom.clk_ops;
 
 		caps &= ~CGU_CLK_CUSTOM;
 
-		अगर (caps) अणु
+		if (caps) {
 			pr_err("%s: custom clock may not be combined with type 0x%x\n",
 			       __func__, caps);
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अगर (caps & CGU_CLK_PLL) अणु
+			goto out;
+		}
+	} else if (caps & CGU_CLK_PLL) {
 		clk_init.ops = &ingenic_pll_ops;
 
 		caps &= ~CGU_CLK_PLL;
 
-		अगर (caps) अणु
+		if (caps) {
 			pr_err("%s: PLL may not be combined with type 0x%x\n",
 			       __func__, caps);
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto out;
+		}
+	} else {
 		clk_init.ops = &ingenic_clk_ops;
-	पूर्ण
+	}
 
-	/* nothing to करो क्रम gates or fixed भागiders */
+	/* nothing to do for gates or fixed dividers */
 	caps &= ~(CGU_CLK_GATE | CGU_CLK_FIXDIV);
 
-	अगर (caps & CGU_CLK_MUX) अणु
-		अगर (!(caps & CGU_CLK_MUX_GLITCHFREE))
+	if (caps & CGU_CLK_MUX) {
+		if (!(caps & CGU_CLK_MUX_GLITCHFREE))
 			clk_init.flags |= CLK_SET_PARENT_GATE;
 
 		caps &= ~(CGU_CLK_MUX | CGU_CLK_MUX_GLITCHFREE);
-	पूर्ण
+	}
 
-	अगर (caps) अणु
+	if (caps) {
 		pr_err("%s: unknown clock type 0x%x\n", __func__, caps);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	clk = clk_रेजिस्टर(शून्य, &ingenic_clk->hw);
-	अगर (IS_ERR(clk)) अणु
+	clk = clk_register(NULL, &ingenic_clk->hw);
+	if (IS_ERR(clk)) {
 		pr_err("%s: failed to register clock '%s'\n", __func__,
 		       clk_info->name);
 		err = PTR_ERR(clk);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	err = clk_रेजिस्टर_clkdev(clk, clk_info->name, शून्य);
-	अगर (err)
-		जाओ out;
+	err = clk_register_clkdev(clk, clk_info->name, NULL);
+	if (err)
+		goto out;
 
-	cgu->घड़ीs.clks[idx] = clk;
+	cgu->clocks.clks[idx] = clk;
 out:
-	अगर (err)
-		kमुक्त(ingenic_clk);
-	वापस err;
-पूर्ण
+	if (err)
+		kfree(ingenic_clk);
+	return err;
+}
 
-काष्ठा ingenic_cgu *
-ingenic_cgu_new(स्थिर काष्ठा ingenic_cgu_clk_info *घड़ी_info,
-		अचिन्हित num_घड़ीs, काष्ठा device_node *np)
-अणु
-	काष्ठा ingenic_cgu *cgu;
+struct ingenic_cgu *
+ingenic_cgu_new(const struct ingenic_cgu_clk_info *clock_info,
+		unsigned num_clocks, struct device_node *np)
+{
+	struct ingenic_cgu *cgu;
 
-	cgu = kzalloc(माप(*cgu), GFP_KERNEL);
-	अगर (!cgu)
-		जाओ err_out;
+	cgu = kzalloc(sizeof(*cgu), GFP_KERNEL);
+	if (!cgu)
+		goto err_out;
 
 	cgu->base = of_iomap(np, 0);
-	अगर (!cgu->base) अणु
+	if (!cgu->base) {
 		pr_err("%s: failed to map CGU registers\n", __func__);
-		जाओ err_out_मुक्त;
-	पूर्ण
+		goto err_out_free;
+	}
 
 	cgu->np = np;
-	cgu->घड़ी_info = घड़ी_info;
-	cgu->घड़ीs.clk_num = num_घड़ीs;
+	cgu->clock_info = clock_info;
+	cgu->clocks.clk_num = num_clocks;
 
 	spin_lock_init(&cgu->lock);
 
-	वापस cgu;
+	return cgu;
 
-err_out_मुक्त:
-	kमुक्त(cgu);
+err_out_free:
+	kfree(cgu);
 err_out:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-पूर्णांक ingenic_cgu_रेजिस्टर_घड़ीs(काष्ठा ingenic_cgu *cgu)
-अणु
-	अचिन्हित i;
-	पूर्णांक err;
+int ingenic_cgu_register_clocks(struct ingenic_cgu *cgu)
+{
+	unsigned i;
+	int err;
 
-	cgu->घड़ीs.clks = kसुस्मृति(cgu->घड़ीs.clk_num, माप(काष्ठा clk *),
+	cgu->clocks.clks = kcalloc(cgu->clocks.clk_num, sizeof(struct clk *),
 				   GFP_KERNEL);
-	अगर (!cgu->घड़ीs.clks) अणु
+	if (!cgu->clocks.clks) {
 		err = -ENOMEM;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
-	क्रम (i = 0; i < cgu->घड़ीs.clk_num; i++) अणु
-		err = ingenic_रेजिस्टर_घड़ी(cgu, i);
-		अगर (err)
-			जाओ err_out_unरेजिस्टर;
-	पूर्ण
+	for (i = 0; i < cgu->clocks.clk_num; i++) {
+		err = ingenic_register_clock(cgu, i);
+		if (err)
+			goto err_out_unregister;
+	}
 
 	err = of_clk_add_provider(cgu->np, of_clk_src_onecell_get,
-				  &cgu->घड़ीs);
-	अगर (err)
-		जाओ err_out_unरेजिस्टर;
+				  &cgu->clocks);
+	if (err)
+		goto err_out_unregister;
 
-	वापस 0;
+	return 0;
 
-err_out_unरेजिस्टर:
-	क्रम (i = 0; i < cgu->घड़ीs.clk_num; i++) अणु
-		अगर (!cgu->घड़ीs.clks[i])
-			जारी;
-		अगर (cgu->घड़ी_info[i].type & CGU_CLK_EXT)
-			clk_put(cgu->घड़ीs.clks[i]);
-		अन्यथा
-			clk_unरेजिस्टर(cgu->घड़ीs.clks[i]);
-	पूर्ण
-	kमुक्त(cgu->घड़ीs.clks);
+err_out_unregister:
+	for (i = 0; i < cgu->clocks.clk_num; i++) {
+		if (!cgu->clocks.clks[i])
+			continue;
+		if (cgu->clock_info[i].type & CGU_CLK_EXT)
+			clk_put(cgu->clocks.clks[i]);
+		else
+			clk_unregister(cgu->clocks.clks[i]);
+	}
+	kfree(cgu->clocks.clks);
 err_out:
-	वापस err;
-पूर्ण
+	return err;
+}

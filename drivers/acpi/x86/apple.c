@@ -1,110 +1,109 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * apple.c - Apple ACPI quirks
  * Copyright (C) 2017 Lukas Wunner <lukas@wunner.de>
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/platक्रमm_data/x86/apple.h>
-#समावेश <linux/uuid.h>
+#include <linux/acpi.h>
+#include <linux/bitmap.h>
+#include <linux/platform_data/x86/apple.h>
+#include <linux/uuid.h>
 
 /* Apple _DSM device properties GUID */
-अटल स्थिर guid_t apple_prp_guid =
+static const guid_t apple_prp_guid =
 	GUID_INIT(0xa0b5b7c6, 0x1318, 0x441c,
 		  0xb0, 0xc9, 0xfe, 0x69, 0x5e, 0xaf, 0x94, 0x9b);
 
 /**
  * acpi_extract_apple_properties - retrieve and convert Apple _DSM properties
- * @adev: ACPI device क्रम which to retrieve the properties
+ * @adev: ACPI device for which to retrieve the properties
  *
  * Invoke Apple's custom _DSM once to check the protocol version and once more
  * to retrieve the properties.  They are marshalled up in a single package as
  * alternating key/value elements, unlike _DSD which stores them as a package
- * of 2-element packages.  Convert to _DSD क्रमmat and make them available under
+ * of 2-element packages.  Convert to _DSD format and make them available under
  * the primary fwnode.
  */
-व्योम acpi_extract_apple_properties(काष्ठा acpi_device *adev)
-अणु
-	अचिन्हित पूर्णांक i, j = 0, newsize = 0, numprops, numvalid;
-	जोड़ acpi_object *props, *newprops;
-	अचिन्हित दीर्घ *valid = शून्य;
-	व्योम *मुक्त_space;
+void acpi_extract_apple_properties(struct acpi_device *adev)
+{
+	unsigned int i, j = 0, newsize = 0, numprops, numvalid;
+	union acpi_object *props, *newprops;
+	unsigned long *valid = NULL;
+	void *free_space;
 
-	अगर (!x86_apple_machine)
-		वापस;
+	if (!x86_apple_machine)
+		return;
 
 	props = acpi_evaluate_dsm_typed(adev->handle, &apple_prp_guid, 1, 0,
-					शून्य, ACPI_TYPE_BUFFER);
-	अगर (!props)
-		वापस;
+					NULL, ACPI_TYPE_BUFFER);
+	if (!props)
+		return;
 
-	अगर (!props->buffer.length)
-		जाओ out_मुक्त;
+	if (!props->buffer.length)
+		goto out_free;
 
-	अगर (props->buffer.poपूर्णांकer[0] != 3) अणु
+	if (props->buffer.pointer[0] != 3) {
 		acpi_handle_info(adev->handle, FW_INFO
 				 "unsupported properties version %*ph\n",
-				 props->buffer.length, props->buffer.poपूर्णांकer);
-		जाओ out_मुक्त;
-	पूर्ण
+				 props->buffer.length, props->buffer.pointer);
+		goto out_free;
+	}
 
 	ACPI_FREE(props);
 	props = acpi_evaluate_dsm_typed(adev->handle, &apple_prp_guid, 1, 1,
-					शून्य, ACPI_TYPE_PACKAGE);
-	अगर (!props)
-		वापस;
+					NULL, ACPI_TYPE_PACKAGE);
+	if (!props)
+		return;
 
 	numprops = props->package.count / 2;
-	अगर (!numprops)
-		जाओ out_मुक्त;
+	if (!numprops)
+		goto out_free;
 
-	valid = biपंचांगap_zalloc(numprops, GFP_KERNEL);
-	अगर (!valid)
-		जाओ out_मुक्त;
+	valid = bitmap_zalloc(numprops, GFP_KERNEL);
+	if (!valid)
+		goto out_free;
 
 	/* newsize = key length + value length of each tuple */
-	क्रम (i = 0; i < numprops; i++) अणु
-		जोड़ acpi_object *key = &props->package.elements[i * 2];
-		जोड़ acpi_object *val = &props->package.elements[i * 2 + 1];
+	for (i = 0; i < numprops; i++) {
+		union acpi_object *key = &props->package.elements[i * 2];
+		union acpi_object *val = &props->package.elements[i * 2 + 1];
 
-		अगर ( key->type != ACPI_TYPE_STRING ||
+		if ( key->type != ACPI_TYPE_STRING ||
 		    (val->type != ACPI_TYPE_INTEGER &&
 		     val->type != ACPI_TYPE_BUFFER))
-			जारी; /* skip invalid properties */
+			continue; /* skip invalid properties */
 
 		__set_bit(i, valid);
 		newsize += key->string.length + 1;
-		अगर ( val->type == ACPI_TYPE_BUFFER)
+		if ( val->type == ACPI_TYPE_BUFFER)
 			newsize += val->buffer.length;
-	पूर्ण
+	}
 
-	numvalid = biपंचांगap_weight(valid, numprops);
-	अगर (numprops > numvalid)
+	numvalid = bitmap_weight(valid, numprops);
+	if (numprops > numvalid)
 		acpi_handle_info(adev->handle, FW_INFO
 				 "skipped %u properties: wrong type\n",
 				 numprops - numvalid);
-	अगर (numvalid == 0)
-		जाओ out_मुक्त;
+	if (numvalid == 0)
+		goto out_free;
 
-	/* newsize += top-level package + 3 objects क्रम each key/value tuple */
-	newsize	+= (1 + 3 * numvalid) * माप(जोड़ acpi_object);
+	/* newsize += top-level package + 3 objects for each key/value tuple */
+	newsize	+= (1 + 3 * numvalid) * sizeof(union acpi_object);
 	newprops = ACPI_ALLOCATE_ZEROED(newsize);
-	अगर (!newprops)
-		जाओ out_मुक्त;
+	if (!newprops)
+		goto out_free;
 
 	/* layout: top-level package | packages | key/value tuples | strings */
 	newprops->type = ACPI_TYPE_PACKAGE;
 	newprops->package.count = numvalid;
 	newprops->package.elements = &newprops[1];
-	मुक्त_space = &newprops[1 + 3 * numvalid];
+	free_space = &newprops[1 + 3 * numvalid];
 
-	क्रम_each_set_bit(i, valid, numprops) अणु
-		जोड़ acpi_object *key = &props->package.elements[i * 2];
-		जोड़ acpi_object *val = &props->package.elements[i * 2 + 1];
-		अचिन्हित पूर्णांक k = 1 + numvalid + j * 2; /* index पूर्णांकo newprops */
-		अचिन्हित पूर्णांक v = k + 1;
+	for_each_set_bit(i, valid, numprops) {
+		union acpi_object *key = &props->package.elements[i * 2];
+		union acpi_object *val = &props->package.elements[i * 2 + 1];
+		unsigned int k = 1 + numvalid + j * 2; /* index into newprops */
+		unsigned int v = k + 1;
 
 		newprops[1 + j].type = ACPI_TYPE_PACKAGE;
 		newprops[1 + j].package.count = 2;
@@ -112,28 +111,28 @@
 
 		newprops[k].type = ACPI_TYPE_STRING;
 		newprops[k].string.length = key->string.length;
-		newprops[k].string.poपूर्णांकer = मुक्त_space;
-		स_नकल(मुक्त_space, key->string.poपूर्णांकer, key->string.length);
-		मुक्त_space += key->string.length + 1;
+		newprops[k].string.pointer = free_space;
+		memcpy(free_space, key->string.pointer, key->string.length);
+		free_space += key->string.length + 1;
 
 		newprops[v].type = val->type;
-		अगर (val->type == ACPI_TYPE_INTEGER) अणु
-			newprops[v].पूर्णांकeger.value = val->पूर्णांकeger.value;
-		पूर्ण अन्यथा अणु
+		if (val->type == ACPI_TYPE_INTEGER) {
+			newprops[v].integer.value = val->integer.value;
+		} else {
 			newprops[v].buffer.length = val->buffer.length;
-			newprops[v].buffer.poपूर्णांकer = मुक्त_space;
-			स_नकल(मुक्त_space, val->buffer.poपूर्णांकer,
+			newprops[v].buffer.pointer = free_space;
+			memcpy(free_space, val->buffer.pointer,
 			       val->buffer.length);
-			मुक्त_space += val->buffer.length;
-		पूर्ण
+			free_space += val->buffer.length;
+		}
 		j++; /* count valid properties */
-	पूर्ण
-	WARN_ON(मुक्त_space != (व्योम *)newprops + newsize);
+	}
+	WARN_ON(free_space != (void *)newprops + newsize);
 
-	adev->data.poपूर्णांकer = newprops;
+	adev->data.pointer = newprops;
 	acpi_data_add_props(&adev->data, &apple_prp_guid, newprops);
 
-out_मुक्त:
+out_free:
 	ACPI_FREE(props);
-	biपंचांगap_मुक्त(valid);
-पूर्ण
+	bitmap_free(valid);
+}

@@ -1,210 +1,209 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Clkout driver क्रम Rockchip RK808
+ * Clkout driver for Rockchip RK808
  *
  * Copyright (c) 2014, Fuzhou Rockchip Electronics Co., Ltd
  *
  * Author:Chris Zhong <zyw@rock-chips.com>
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mfd/rk808.h>
-#समावेश <linux/i2c.h>
+#include <linux/clk-provider.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/platform_device.h>
+#include <linux/mfd/rk808.h>
+#include <linux/i2c.h>
 
-काष्ठा rk808_clkout अणु
-	काष्ठा rk808 *rk808;
-	काष्ठा clk_hw		clkout1_hw;
-	काष्ठा clk_hw		clkout2_hw;
-पूर्ण;
+struct rk808_clkout {
+	struct rk808 *rk808;
+	struct clk_hw		clkout1_hw;
+	struct clk_hw		clkout2_hw;
+};
 
-अटल अचिन्हित दीर्घ rk808_clkout_recalc_rate(काष्ठा clk_hw *hw,
-					      अचिन्हित दीर्घ parent_rate)
-अणु
-	वापस 32768;
-पूर्ण
+static unsigned long rk808_clkout_recalc_rate(struct clk_hw *hw,
+					      unsigned long parent_rate)
+{
+	return 32768;
+}
 
-अटल पूर्णांक rk808_clkout2_enable(काष्ठा clk_hw *hw, bool enable)
-अणु
-	काष्ठा rk808_clkout *rk808_clkout = container_of(hw,
-							 काष्ठा rk808_clkout,
+static int rk808_clkout2_enable(struct clk_hw *hw, bool enable)
+{
+	struct rk808_clkout *rk808_clkout = container_of(hw,
+							 struct rk808_clkout,
 							 clkout2_hw);
-	काष्ठा rk808 *rk808 = rk808_clkout->rk808;
+	struct rk808 *rk808 = rk808_clkout->rk808;
 
-	वापस regmap_update_bits(rk808->regmap, RK808_CLK32OUT_REG,
+	return regmap_update_bits(rk808->regmap, RK808_CLK32OUT_REG,
 				  CLK32KOUT2_EN, enable ? CLK32KOUT2_EN : 0);
-पूर्ण
+}
 
-अटल पूर्णांक rk808_clkout2_prepare(काष्ठा clk_hw *hw)
-अणु
-	वापस rk808_clkout2_enable(hw, true);
-पूर्ण
+static int rk808_clkout2_prepare(struct clk_hw *hw)
+{
+	return rk808_clkout2_enable(hw, true);
+}
 
-अटल व्योम rk808_clkout2_unprepare(काष्ठा clk_hw *hw)
-अणु
+static void rk808_clkout2_unprepare(struct clk_hw *hw)
+{
 	rk808_clkout2_enable(hw, false);
-पूर्ण
+}
 
-अटल पूर्णांक rk808_clkout2_is_prepared(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा rk808_clkout *rk808_clkout = container_of(hw,
-							 काष्ठा rk808_clkout,
+static int rk808_clkout2_is_prepared(struct clk_hw *hw)
+{
+	struct rk808_clkout *rk808_clkout = container_of(hw,
+							 struct rk808_clkout,
 							 clkout2_hw);
-	काष्ठा rk808 *rk808 = rk808_clkout->rk808;
-	uपूर्णांक32_t val;
+	struct rk808 *rk808 = rk808_clkout->rk808;
+	uint32_t val;
 
-	पूर्णांक ret = regmap_पढ़ो(rk808->regmap, RK808_CLK32OUT_REG, &val);
+	int ret = regmap_read(rk808->regmap, RK808_CLK32OUT_REG, &val);
 
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस (val & CLK32KOUT2_EN) ? 1 : 0;
-पूर्ण
+	return (val & CLK32KOUT2_EN) ? 1 : 0;
+}
 
-अटल स्थिर काष्ठा clk_ops rk808_clkout1_ops = अणु
+static const struct clk_ops rk808_clkout1_ops = {
 	.recalc_rate = rk808_clkout_recalc_rate,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा clk_ops rk808_clkout2_ops = अणु
+static const struct clk_ops rk808_clkout2_ops = {
 	.prepare = rk808_clkout2_prepare,
 	.unprepare = rk808_clkout2_unprepare,
 	.is_prepared = rk808_clkout2_is_prepared,
 	.recalc_rate = rk808_clkout_recalc_rate,
-पूर्ण;
+};
 
-अटल काष्ठा clk_hw *
-of_clk_rk808_get(काष्ठा of_phandle_args *clkspec, व्योम *data)
-अणु
-	काष्ठा rk808_clkout *rk808_clkout = data;
-	अचिन्हित पूर्णांक idx = clkspec->args[0];
+static struct clk_hw *
+of_clk_rk808_get(struct of_phandle_args *clkspec, void *data)
+{
+	struct rk808_clkout *rk808_clkout = data;
+	unsigned int idx = clkspec->args[0];
 
-	अगर (idx >= 2) अणु
+	if (idx >= 2) {
 		pr_err("%s: invalid index %u\n", __func__, idx);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	वापस idx ? &rk808_clkout->clkout2_hw : &rk808_clkout->clkout1_hw;
-पूर्ण
+	return idx ? &rk808_clkout->clkout2_hw : &rk808_clkout->clkout1_hw;
+}
 
-अटल पूर्णांक rk817_clkout2_enable(काष्ठा clk_hw *hw, bool enable)
-अणु
-	काष्ठा rk808_clkout *rk808_clkout = container_of(hw,
-							 काष्ठा rk808_clkout,
+static int rk817_clkout2_enable(struct clk_hw *hw, bool enable)
+{
+	struct rk808_clkout *rk808_clkout = container_of(hw,
+							 struct rk808_clkout,
 							 clkout2_hw);
-	काष्ठा rk808 *rk808 = rk808_clkout->rk808;
+	struct rk808 *rk808 = rk808_clkout->rk808;
 
-	वापस regmap_update_bits(rk808->regmap, RK817_SYS_CFG(1),
+	return regmap_update_bits(rk808->regmap, RK817_SYS_CFG(1),
 				  RK817_CLK32KOUT2_EN,
 				  enable ? RK817_CLK32KOUT2_EN : 0);
-पूर्ण
+}
 
-अटल पूर्णांक rk817_clkout2_prepare(काष्ठा clk_hw *hw)
-अणु
-	वापस rk817_clkout2_enable(hw, true);
-पूर्ण
+static int rk817_clkout2_prepare(struct clk_hw *hw)
+{
+	return rk817_clkout2_enable(hw, true);
+}
 
-अटल व्योम rk817_clkout2_unprepare(काष्ठा clk_hw *hw)
-अणु
+static void rk817_clkout2_unprepare(struct clk_hw *hw)
+{
 	rk817_clkout2_enable(hw, false);
-पूर्ण
+}
 
-अटल पूर्णांक rk817_clkout2_is_prepared(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा rk808_clkout *rk808_clkout = container_of(hw,
-							 काष्ठा rk808_clkout,
+static int rk817_clkout2_is_prepared(struct clk_hw *hw)
+{
+	struct rk808_clkout *rk808_clkout = container_of(hw,
+							 struct rk808_clkout,
 							 clkout2_hw);
-	काष्ठा rk808 *rk808 = rk808_clkout->rk808;
-	अचिन्हित पूर्णांक val;
+	struct rk808 *rk808 = rk808_clkout->rk808;
+	unsigned int val;
 
-	पूर्णांक ret = regmap_पढ़ो(rk808->regmap, RK817_SYS_CFG(1), &val);
+	int ret = regmap_read(rk808->regmap, RK817_SYS_CFG(1), &val);
 
-	अगर (ret < 0)
-		वापस 0;
+	if (ret < 0)
+		return 0;
 
-	वापस (val & RK817_CLK32KOUT2_EN) ? 1 : 0;
-पूर्ण
+	return (val & RK817_CLK32KOUT2_EN) ? 1 : 0;
+}
 
-अटल स्थिर काष्ठा clk_ops rk817_clkout2_ops = अणु
+static const struct clk_ops rk817_clkout2_ops = {
 	.prepare = rk817_clkout2_prepare,
 	.unprepare = rk817_clkout2_unprepare,
 	.is_prepared = rk817_clkout2_is_prepared,
 	.recalc_rate = rk808_clkout_recalc_rate,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा clk_ops *rkpmic_get_ops(दीर्घ variant)
-अणु
-	चयन (variant) अणु
-	हाल RK809_ID:
-	हाल RK817_ID:
-		वापस &rk817_clkout2_ops;
+static const struct clk_ops *rkpmic_get_ops(long variant)
+{
+	switch (variant) {
+	case RK809_ID:
+	case RK817_ID:
+		return &rk817_clkout2_ops;
 	/*
-	 * For the शेष हाल, it match the following PMIC type.
+	 * For the default case, it match the following PMIC type.
 	 * RK805_ID
 	 * RK808_ID
 	 * RK818_ID
 	 */
-	शेष:
-		वापस &rk808_clkout2_ops;
-	पूर्ण
-पूर्ण
+	default:
+		return &rk808_clkout2_ops;
+	}
+}
 
-अटल पूर्णांक rk808_clkout_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा rk808 *rk808 = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा i2c_client *client = rk808->i2c;
-	काष्ठा device_node *node = client->dev.of_node;
-	काष्ठा clk_init_data init = अणुपूर्ण;
-	काष्ठा rk808_clkout *rk808_clkout;
-	पूर्णांक ret;
+static int rk808_clkout_probe(struct platform_device *pdev)
+{
+	struct rk808 *rk808 = dev_get_drvdata(pdev->dev.parent);
+	struct i2c_client *client = rk808->i2c;
+	struct device_node *node = client->dev.of_node;
+	struct clk_init_data init = {};
+	struct rk808_clkout *rk808_clkout;
+	int ret;
 
 	rk808_clkout = devm_kzalloc(&client->dev,
-				    माप(*rk808_clkout), GFP_KERNEL);
-	अगर (!rk808_clkout)
-		वापस -ENOMEM;
+				    sizeof(*rk808_clkout), GFP_KERNEL);
+	if (!rk808_clkout)
+		return -ENOMEM;
 
 	rk808_clkout->rk808 = rk808;
 
-	init.parent_names = शून्य;
+	init.parent_names = NULL;
 	init.num_parents = 0;
 	init.name = "rk808-clkout1";
 	init.ops = &rk808_clkout1_ops;
 	rk808_clkout->clkout1_hw.init = &init;
 
-	/* optional override of the घड़ीname */
-	of_property_पढ़ो_string_index(node, "clock-output-names",
+	/* optional override of the clockname */
+	of_property_read_string_index(node, "clock-output-names",
 				      0, &init.name);
 
-	ret = devm_clk_hw_रेजिस्टर(&client->dev, &rk808_clkout->clkout1_hw);
-	अगर (ret)
-		वापस ret;
+	ret = devm_clk_hw_register(&client->dev, &rk808_clkout->clkout1_hw);
+	if (ret)
+		return ret;
 
 	init.name = "rk808-clkout2";
 	init.ops = rkpmic_get_ops(rk808->variant);
 	rk808_clkout->clkout2_hw.init = &init;
 
-	/* optional override of the घड़ीname */
-	of_property_पढ़ो_string_index(node, "clock-output-names",
+	/* optional override of the clockname */
+	of_property_read_string_index(node, "clock-output-names",
 				      1, &init.name);
 
-	ret = devm_clk_hw_रेजिस्टर(&client->dev, &rk808_clkout->clkout2_hw);
-	अगर (ret)
-		वापस ret;
+	ret = devm_clk_hw_register(&client->dev, &rk808_clkout->clkout2_hw);
+	if (ret)
+		return ret;
 
-	वापस devm_of_clk_add_hw_provider(&pdev->dev, of_clk_rk808_get,
+	return devm_of_clk_add_hw_provider(&pdev->dev, of_clk_rk808_get,
 					   rk808_clkout);
-पूर्ण
+}
 
-अटल काष्ठा platक्रमm_driver rk808_clkout_driver = अणु
+static struct platform_driver rk808_clkout_driver = {
 	.probe = rk808_clkout_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "rk808-clkout",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(rk808_clkout_driver);
+module_platform_driver(rk808_clkout_driver);
 
 MODULE_DESCRIPTION("Clkout driver for the rk808 series PMICs");
 MODULE_AUTHOR("Chris Zhong <zyw@rock-chips.com>");

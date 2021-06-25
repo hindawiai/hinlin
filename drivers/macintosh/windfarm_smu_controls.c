@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Windfarm PowerMac thermal control. SMU based controls
  *
@@ -7,320 +6,320 @@
  *                    <benh@kernel.crashing.org>
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/completion.h>
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/sections.h>
-#समावेश <यंत्र/smu.h>
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/wait.h>
+#include <linux/completion.h>
+#include <asm/prom.h>
+#include <asm/machdep.h>
+#include <asm/io.h>
+#include <asm/sections.h>
+#include <asm/smu.h>
 
-#समावेश "windfarm.h"
+#include "windfarm.h"
 
-#घोषणा VERSION "0.4"
+#define VERSION "0.4"
 
-#अघोषित DEBUG
+#undef DEBUG
 
-#अगर_घोषित DEBUG
-#घोषणा DBG(args...)	prपूर्णांकk(args)
-#अन्यथा
-#घोषणा DBG(args...)	करो अणु पूर्ण जबतक(0)
-#पूर्ण_अगर
+#ifdef DEBUG
+#define DBG(args...)	printk(args)
+#else
+#define DBG(args...)	do { } while(0)
+#endif
 
-अटल पूर्णांक smu_supports_new_fans_ops = 1;
+static int smu_supports_new_fans_ops = 1;
 
 /*
  * SMU fans control object
  */
 
-अटल LIST_HEAD(smu_fans);
+static LIST_HEAD(smu_fans);
 
-काष्ठा smu_fan_control अणु
-	काष्ठा list_head	link;
-	पूर्णांक    			fan_type;	/* 0 = rpm, 1 = pwm */
+struct smu_fan_control {
+	struct list_head	link;
+	int    			fan_type;	/* 0 = rpm, 1 = pwm */
 	u32			reg;		/* index in SMU */
 	s32			value;		/* current value */
 	s32			min, max;	/* min/max values */
-	काष्ठा wf_control	ctrl;
-पूर्ण;
-#घोषणा to_smu_fan(c) container_of(c, काष्ठा smu_fan_control, ctrl)
+	struct wf_control	ctrl;
+};
+#define to_smu_fan(c) container_of(c, struct smu_fan_control, ctrl)
 
-अटल पूर्णांक smu_set_fan(पूर्णांक pwm, u8 id, u16 value)
-अणु
-	काष्ठा smu_cmd cmd;
+static int smu_set_fan(int pwm, u8 id, u16 value)
+{
+	struct smu_cmd cmd;
 	u8 buffer[16];
 	DECLARE_COMPLETION_ONSTACK(comp);
-	पूर्णांक rc;
+	int rc;
 
-	/* Fill SMU command काष्ठाure */
+	/* Fill SMU command structure */
 	cmd.cmd = SMU_CMD_FAN_COMMAND;
 
 	/* The SMU has an "old" and a "new" way of setting the fan speed
-	 * Unक्रमtunately, I found no reliable way to know which one works
+	 * Unfortunately, I found no reliable way to know which one works
 	 * on a given machine model. After some investigations it appears
-	 * that MacOS X just tries the new one, and अगर it fails fallbacks
+	 * that MacOS X just tries the new one, and if it fails fallbacks
 	 * to the old ones ... Ugh.
 	 */
  retry:
-	अगर (smu_supports_new_fans_ops) अणु
+	if (smu_supports_new_fans_ops) {
 		buffer[0] = 0x30;
 		buffer[1] = id;
 		*((u16 *)(&buffer[2])) = value;
 		cmd.data_len = 4;
-	पूर्ण अन्यथा अणु
-		अगर (id > 7)
-			वापस -EINVAL;
+	} else {
+		if (id > 7)
+			return -EINVAL;
 		/* Fill argument buffer */
-		स_रखो(buffer, 0, 16);
+		memset(buffer, 0, 16);
 		buffer[0] = pwm ? 0x10 : 0x00;
 		buffer[1] = 0x01 << id;
 		*((u16 *)&buffer[2 + id * 2]) = value;
 		cmd.data_len = 14;
-	पूर्ण
+	}
 
 	cmd.reply_len = 16;
 	cmd.data_buf = cmd.reply_buf = buffer;
 	cmd.status = 0;
-	cmd.करोne = smu_करोne_complete;
+	cmd.done = smu_done_complete;
 	cmd.misc = &comp;
 
 	rc = smu_queue_cmd(&cmd);
-	अगर (rc)
-		वापस rc;
-	रुको_क्रम_completion(&comp);
+	if (rc)
+		return rc;
+	wait_for_completion(&comp);
 
 	/* Handle fallback (see comment above) */
-	अगर (cmd.status != 0 && smu_supports_new_fans_ops) अणु
-		prपूर्णांकk(KERN_WARNING "windfarm: SMU failed new fan command "
+	if (cmd.status != 0 && smu_supports_new_fans_ops) {
+		printk(KERN_WARNING "windfarm: SMU failed new fan command "
 		       "falling back to old method\n");
 		smu_supports_new_fans_ops = 0;
-		जाओ retry;
-	पूर्ण
+		goto retry;
+	}
 
-	वापस cmd.status;
-पूर्ण
+	return cmd.status;
+}
 
-अटल व्योम smu_fan_release(काष्ठा wf_control *ct)
-अणु
-	काष्ठा smu_fan_control *fct = to_smu_fan(ct);
+static void smu_fan_release(struct wf_control *ct)
+{
+	struct smu_fan_control *fct = to_smu_fan(ct);
 
-	kमुक्त(fct);
-पूर्ण
+	kfree(fct);
+}
 
-अटल पूर्णांक smu_fan_set(काष्ठा wf_control *ct, s32 value)
-अणु
-	काष्ठा smu_fan_control *fct = to_smu_fan(ct);
+static int smu_fan_set(struct wf_control *ct, s32 value)
+{
+	struct smu_fan_control *fct = to_smu_fan(ct);
 
-	अगर (value < fct->min)
+	if (value < fct->min)
 		value = fct->min;
-	अगर (value > fct->max)
+	if (value > fct->max)
 		value = fct->max;
 	fct->value = value;
 
-	वापस smu_set_fan(fct->fan_type, fct->reg, value);
-पूर्ण
+	return smu_set_fan(fct->fan_type, fct->reg, value);
+}
 
-अटल पूर्णांक smu_fan_get(काष्ठा wf_control *ct, s32 *value)
-अणु
-	काष्ठा smu_fan_control *fct = to_smu_fan(ct);
-	*value = fct->value; /* toकरो: पढ़ो from SMU */
-	वापस 0;
-पूर्ण
+static int smu_fan_get(struct wf_control *ct, s32 *value)
+{
+	struct smu_fan_control *fct = to_smu_fan(ct);
+	*value = fct->value; /* todo: read from SMU */
+	return 0;
+}
 
-अटल s32 smu_fan_min(काष्ठा wf_control *ct)
-अणु
-	काष्ठा smu_fan_control *fct = to_smu_fan(ct);
-	वापस fct->min;
-पूर्ण
+static s32 smu_fan_min(struct wf_control *ct)
+{
+	struct smu_fan_control *fct = to_smu_fan(ct);
+	return fct->min;
+}
 
-अटल s32 smu_fan_max(काष्ठा wf_control *ct)
-अणु
-	काष्ठा smu_fan_control *fct = to_smu_fan(ct);
-	वापस fct->max;
-पूर्ण
+static s32 smu_fan_max(struct wf_control *ct)
+{
+	struct smu_fan_control *fct = to_smu_fan(ct);
+	return fct->max;
+}
 
-अटल स्थिर काष्ठा wf_control_ops smu_fan_ops = अणु
+static const struct wf_control_ops smu_fan_ops = {
 	.set_value	= smu_fan_set,
 	.get_value	= smu_fan_get,
 	.get_min	= smu_fan_min,
 	.get_max	= smu_fan_max,
 	.release	= smu_fan_release,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल काष्ठा smu_fan_control *smu_fan_create(काष्ठा device_node *node,
-					      पूर्णांक pwm_fan)
-अणु
-	काष्ठा smu_fan_control *fct;
-	स्थिर s32 *v;
-	स्थिर u32 *reg;
-	स्थिर अक्षर *l;
+static struct smu_fan_control *smu_fan_create(struct device_node *node,
+					      int pwm_fan)
+{
+	struct smu_fan_control *fct;
+	const s32 *v;
+	const u32 *reg;
+	const char *l;
 
-	fct = kदो_स्मृति(माप(काष्ठा smu_fan_control), GFP_KERNEL);
-	अगर (fct == शून्य)
-		वापस शून्य;
+	fct = kmalloc(sizeof(struct smu_fan_control), GFP_KERNEL);
+	if (fct == NULL)
+		return NULL;
 	fct->ctrl.ops = &smu_fan_ops;
-	l = of_get_property(node, "location", शून्य);
-	अगर (l == शून्य)
-		जाओ fail;
+	l = of_get_property(node, "location", NULL);
+	if (l == NULL)
+		goto fail;
 
 	fct->fan_type = pwm_fan;
 	fct->ctrl.type = pwm_fan ? WF_CONTROL_PWM_FAN : WF_CONTROL_RPM_FAN;
 
-	/* We use the name & location here the same way we करो क्रम SMU sensors,
+	/* We use the name & location here the same way we do for SMU sensors,
 	 * see the comment in windfarm_smu_sensors.c. The locations are a bit
 	 * less consistent here between the iMac and the desktop models, but
-	 * that is good enough क्रम our needs क्रम now at least.
+	 * that is good enough for our needs for now at least.
 	 *
-	 * One problem though is that Apple seem to be inconsistent with हाल
-	 * and the kernel करोesn't have strहालcmp =P
+	 * One problem though is that Apple seem to be inconsistent with case
+	 * and the kernel doesn't have strcasecmp =P
 	 */
 
-	fct->ctrl.name = शून्य;
+	fct->ctrl.name = NULL;
 
 	/* Names used on desktop models */
-	अगर (!म_भेद(l, "Rear Fan 0") || !म_भेद(l, "Rear Fan") ||
-	    !म_भेद(l, "Rear fan 0") || !म_भेद(l, "Rear fan") ||
-	    !म_भेद(l, "CPU A EXHAUST"))
+	if (!strcmp(l, "Rear Fan 0") || !strcmp(l, "Rear Fan") ||
+	    !strcmp(l, "Rear fan 0") || !strcmp(l, "Rear fan") ||
+	    !strcmp(l, "CPU A EXHAUST"))
 		fct->ctrl.name = "cpu-rear-fan-0";
-	अन्यथा अगर (!म_भेद(l, "Rear Fan 1") || !म_भेद(l, "Rear fan 1") ||
-		 !म_भेद(l, "CPU B EXHAUST"))
+	else if (!strcmp(l, "Rear Fan 1") || !strcmp(l, "Rear fan 1") ||
+		 !strcmp(l, "CPU B EXHAUST"))
 		fct->ctrl.name = "cpu-rear-fan-1";
-	अन्यथा अगर (!म_भेद(l, "Front Fan 0") || !म_भेद(l, "Front Fan") ||
-		 !म_भेद(l, "Front fan 0") || !म_भेद(l, "Front fan") ||
-		 !म_भेद(l, "CPU A INTAKE"))
+	else if (!strcmp(l, "Front Fan 0") || !strcmp(l, "Front Fan") ||
+		 !strcmp(l, "Front fan 0") || !strcmp(l, "Front fan") ||
+		 !strcmp(l, "CPU A INTAKE"))
 		fct->ctrl.name = "cpu-front-fan-0";
-	अन्यथा अगर (!म_भेद(l, "Front Fan 1") || !म_भेद(l, "Front fan 1") ||
-		 !म_भेद(l, "CPU B INTAKE"))
+	else if (!strcmp(l, "Front Fan 1") || !strcmp(l, "Front fan 1") ||
+		 !strcmp(l, "CPU B INTAKE"))
 		fct->ctrl.name = "cpu-front-fan-1";
-	अन्यथा अगर (!म_भेद(l, "CPU A PUMP"))
+	else if (!strcmp(l, "CPU A PUMP"))
 		fct->ctrl.name = "cpu-pump-0";
-	अन्यथा अगर (!म_भेद(l, "CPU B PUMP"))
+	else if (!strcmp(l, "CPU B PUMP"))
 		fct->ctrl.name = "cpu-pump-1";
-	अन्यथा अगर (!म_भेद(l, "Slots Fan") || !म_भेद(l, "Slots fan") ||
-		 !म_भेद(l, "EXPANSION SLOTS INTAKE"))
+	else if (!strcmp(l, "Slots Fan") || !strcmp(l, "Slots fan") ||
+		 !strcmp(l, "EXPANSION SLOTS INTAKE"))
 		fct->ctrl.name = "slots-fan";
-	अन्यथा अगर (!म_भेद(l, "Drive Bay") || !म_भेद(l, "Drive bay") ||
-		 !म_भेद(l, "DRIVE BAY A INTAKE"))
+	else if (!strcmp(l, "Drive Bay") || !strcmp(l, "Drive bay") ||
+		 !strcmp(l, "DRIVE BAY A INTAKE"))
 		fct->ctrl.name = "drive-bay-fan";
-	अन्यथा अगर (!म_भेद(l, "BACKSIDE"))
+	else if (!strcmp(l, "BACKSIDE"))
 		fct->ctrl.name = "backside-fan";
 
 	/* Names used on iMac models */
-	अगर (!म_भेद(l, "System Fan") || !म_भेद(l, "System fan"))
+	if (!strcmp(l, "System Fan") || !strcmp(l, "System fan"))
 		fct->ctrl.name = "system-fan";
-	अन्यथा अगर (!म_भेद(l, "CPU Fan") || !म_भेद(l, "CPU fan"))
+	else if (!strcmp(l, "CPU Fan") || !strcmp(l, "CPU fan"))
 		fct->ctrl.name = "cpu-fan";
-	अन्यथा अगर (!म_भेद(l, "Hard Drive") || !म_भेद(l, "Hard drive"))
+	else if (!strcmp(l, "Hard Drive") || !strcmp(l, "Hard drive"))
 		fct->ctrl.name = "drive-bay-fan";
-	अन्यथा अगर (!म_भेद(l, "HDD Fan")) /* seen on iMac G5 iSight */
+	else if (!strcmp(l, "HDD Fan")) /* seen on iMac G5 iSight */
 		fct->ctrl.name = "hard-drive-fan";
-	अन्यथा अगर (!म_भेद(l, "ODD Fan")) /* same */
+	else if (!strcmp(l, "ODD Fan")) /* same */
 		fct->ctrl.name = "optical-drive-fan";
 
 	/* Unrecognized fan, bail out */
-	अगर (fct->ctrl.name == शून्य)
-		जाओ fail;
+	if (fct->ctrl.name == NULL)
+		goto fail;
 
 	/* Get min & max values*/
-	v = of_get_property(node, "min-value", शून्य);
-	अगर (v == शून्य)
-		जाओ fail;
+	v = of_get_property(node, "min-value", NULL);
+	if (v == NULL)
+		goto fail;
 	fct->min = *v;
-	v = of_get_property(node, "max-value", शून्य);
-	अगर (v == शून्य)
-		जाओ fail;
+	v = of_get_property(node, "max-value", NULL);
+	if (v == NULL)
+		goto fail;
 	fct->max = *v;
 
 	/* Get "reg" value */
-	reg = of_get_property(node, "reg", शून्य);
-	अगर (reg == शून्य)
-		जाओ fail;
+	reg = of_get_property(node, "reg", NULL);
+	if (reg == NULL)
+		goto fail;
 	fct->reg = *reg;
 
-	अगर (wf_रेजिस्टर_control(&fct->ctrl))
-		जाओ fail;
+	if (wf_register_control(&fct->ctrl))
+		goto fail;
 
-	वापस fct;
+	return fct;
  fail:
-	kमुक्त(fct);
-	वापस शून्य;
-पूर्ण
+	kfree(fct);
+	return NULL;
+}
 
 
-अटल पूर्णांक __init smu_controls_init(व्योम)
-अणु
-	काष्ठा device_node *smu, *fans, *fan;
+static int __init smu_controls_init(void)
+{
+	struct device_node *smu, *fans, *fan;
 
-	अगर (!smu_present())
-		वापस -ENODEV;
+	if (!smu_present())
+		return -ENODEV;
 
-	smu = of_find_node_by_type(शून्य, "smu");
-	अगर (smu == शून्य)
-		वापस -ENODEV;
+	smu = of_find_node_by_type(NULL, "smu");
+	if (smu == NULL)
+		return -ENODEV;
 
-	/* Look क्रम RPM fans */
-	क्रम (fans = शून्य; (fans = of_get_next_child(smu, fans)) != शून्य;)
-		अगर (of_node_name_eq(fans, "rpm-fans") ||
+	/* Look for RPM fans */
+	for (fans = NULL; (fans = of_get_next_child(smu, fans)) != NULL;)
+		if (of_node_name_eq(fans, "rpm-fans") ||
 		    of_device_is_compatible(fans, "smu-rpm-fans"))
-			अवरोध;
-	क्रम (fan = शून्य;
-	     fans && (fan = of_get_next_child(fans, fan)) != शून्य;) अणु
-		काष्ठा smu_fan_control *fct;
+			break;
+	for (fan = NULL;
+	     fans && (fan = of_get_next_child(fans, fan)) != NULL;) {
+		struct smu_fan_control *fct;
 
 		fct = smu_fan_create(fan, 0);
-		अगर (fct == शून्य) अणु
-			prपूर्णांकk(KERN_WARNING "windfarm: Failed to create SMU "
+		if (fct == NULL) {
+			printk(KERN_WARNING "windfarm: Failed to create SMU "
 			       "RPM fan %pOFn\n", fan);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		list_add(&fct->link, &smu_fans);
-	पूर्ण
+	}
 	of_node_put(fans);
 
 
-	/* Look क्रम PWM fans */
-	क्रम (fans = शून्य; (fans = of_get_next_child(smu, fans)) != शून्य;)
-		अगर (of_node_name_eq(fans, "pwm-fans"))
-			अवरोध;
-	क्रम (fan = शून्य;
-	     fans && (fan = of_get_next_child(fans, fan)) != शून्य;) अणु
-		काष्ठा smu_fan_control *fct;
+	/* Look for PWM fans */
+	for (fans = NULL; (fans = of_get_next_child(smu, fans)) != NULL;)
+		if (of_node_name_eq(fans, "pwm-fans"))
+			break;
+	for (fan = NULL;
+	     fans && (fan = of_get_next_child(fans, fan)) != NULL;) {
+		struct smu_fan_control *fct;
 
 		fct = smu_fan_create(fan, 1);
-		अगर (fct == शून्य) अणु
-			prपूर्णांकk(KERN_WARNING "windfarm: Failed to create SMU "
+		if (fct == NULL) {
+			printk(KERN_WARNING "windfarm: Failed to create SMU "
 			       "PWM fan %pOFn\n", fan);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		list_add(&fct->link, &smu_fans);
-	पूर्ण
+	}
 	of_node_put(fans);
 	of_node_put(smu);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास smu_controls_निकास(व्योम)
-अणु
-	काष्ठा smu_fan_control *fct;
+static void __exit smu_controls_exit(void)
+{
+	struct smu_fan_control *fct;
 
-	जबतक (!list_empty(&smu_fans)) अणु
-		fct = list_entry(smu_fans.next, काष्ठा smu_fan_control, link);
+	while (!list_empty(&smu_fans)) {
+		fct = list_entry(smu_fans.next, struct smu_fan_control, link);
 		list_del(&fct->link);
-		wf_unरेजिस्टर_control(&fct->ctrl);
-	पूर्ण
-पूर्ण
+		wf_unregister_control(&fct->ctrl);
+	}
+}
 
 
 module_init(smu_controls_init);
-module_निकास(smu_controls_निकास);
+module_exit(smu_controls_exit);
 
 MODULE_AUTHOR("Benjamin Herrenschmidt <benh@kernel.crashing.org>");
 MODULE_DESCRIPTION("SMU control objects for PowerMacs thermal control");

@@ -1,221 +1,220 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * i2sbus driver
  *
  * Copyright 2006-2008 Johannes Berg <johannes@sipsolutions.net>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/pci.h>
+#include <linux/interrupt.h>
+#include <linux/dma-mapping.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
 
-#समावेश <sound/core.h>
+#include <sound/core.h>
 
-#समावेश <यंत्र/macपन.स>
-#समावेश <यंत्र/dbdma.h>
+#include <asm/macio.h>
+#include <asm/dbdma.h>
 
-#समावेश "../soundbus.h"
-#समावेश "i2sbus.h"
+#include "../soundbus.h"
+#include "i2sbus.h"
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Johannes Berg <johannes@sipsolutions.net>");
 MODULE_DESCRIPTION("Apple Soundbus: I2S support");
 
-अटल पूर्णांक क्रमce;
-module_param(क्रमce, पूर्णांक, 0444);
-MODULE_PARM_DESC(क्रमce, "Force loading i2sbus even when"
+static int force;
+module_param(force, int, 0444);
+MODULE_PARM_DESC(force, "Force loading i2sbus even when"
 			" no layout-id property is present");
 
-अटल स्थिर काष्ठा of_device_id i2sbus_match[] = अणु
-	अणु .name = "i2s" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id i2sbus_match[] = {
+	{ .name = "i2s" },
+	{ }
+};
 
 MODULE_DEVICE_TABLE(of, i2sbus_match);
 
-अटल पूर्णांक alloc_dbdma_descriptor_ring(काष्ठा i2sbus_dev *i2sdev,
-				       काष्ठा dbdma_command_mem *r,
-				       पूर्णांक numcmds)
-अणु
-	/* one more क्रम rounding, one क्रम branch back, one क्रम stop command */
-	r->size = (numcmds + 3) * माप(काष्ठा dbdma_cmd);
-	/* We use the PCI APIs क्रम now until the generic one माला_लो fixed
-	 * enough or until we get some macio-specअगरic versions
+static int alloc_dbdma_descriptor_ring(struct i2sbus_dev *i2sdev,
+				       struct dbdma_command_mem *r,
+				       int numcmds)
+{
+	/* one more for rounding, one for branch back, one for stop command */
+	r->size = (numcmds + 3) * sizeof(struct dbdma_cmd);
+	/* We use the PCI APIs for now until the generic one gets fixed
+	 * enough or until we get some macio-specific versions
 	 */
 	r->space = dma_alloc_coherent(&macio_get_pci_dev(i2sdev->macio)->dev,
 				      r->size, &r->bus_addr, GFP_KERNEL);
-	अगर (!r->space)
-		वापस -ENOMEM;
+	if (!r->space)
+		return -ENOMEM;
 
-	r->cmds = (व्योम*)DBDMA_ALIGN(r->space);
+	r->cmds = (void*)DBDMA_ALIGN(r->space);
 	r->bus_cmd_start = r->bus_addr +
-			   (dma_addr_t)((अक्षर*)r->cmds - (अक्षर*)r->space);
+			   (dma_addr_t)((char*)r->cmds - (char*)r->space);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम मुक्त_dbdma_descriptor_ring(काष्ठा i2sbus_dev *i2sdev,
-				       काष्ठा dbdma_command_mem *r)
-अणु
-	अगर (!r->space) वापस;
+static void free_dbdma_descriptor_ring(struct i2sbus_dev *i2sdev,
+				       struct dbdma_command_mem *r)
+{
+	if (!r->space) return;
 
-	dma_मुक्त_coherent(&macio_get_pci_dev(i2sdev->macio)->dev,
+	dma_free_coherent(&macio_get_pci_dev(i2sdev->macio)->dev,
 			    r->size, r->space, r->bus_addr);
-पूर्ण
+}
 
-अटल व्योम i2sbus_release_dev(काष्ठा device *dev)
-अणु
-	काष्ठा i2sbus_dev *i2sdev;
-	पूर्णांक i;
+static void i2sbus_release_dev(struct device *dev)
+{
+	struct i2sbus_dev *i2sdev;
+	int i;
 
-	i2sdev = container_of(dev, काष्ठा i2sbus_dev, sound.ofdev.dev);
-	iounmap(i2sdev->पूर्णांकfregs);
+	i2sdev = container_of(dev, struct i2sbus_dev, sound.ofdev.dev);
+	iounmap(i2sdev->intfregs);
 	iounmap(i2sdev->out.dbdma);
 	iounmap(i2sdev->in.dbdma);
-	क्रम (i = aoa_resource_i2smmio; i <= aoa_resource_rxdbdma; i++)
-		release_and_मुक्त_resource(i2sdev->allocated_resource[i]);
-	मुक्त_dbdma_descriptor_ring(i2sdev, &i2sdev->out.dbdma_ring);
-	मुक्त_dbdma_descriptor_ring(i2sdev, &i2sdev->in.dbdma_ring);
-	क्रम (i = aoa_resource_i2smmio; i <= aoa_resource_rxdbdma; i++)
-		मुक्त_irq(i2sdev->पूर्णांकerrupts[i], i2sdev);
-	i2sbus_control_हटाओ_dev(i2sdev->control, i2sdev);
+	for (i = aoa_resource_i2smmio; i <= aoa_resource_rxdbdma; i++)
+		release_and_free_resource(i2sdev->allocated_resource[i]);
+	free_dbdma_descriptor_ring(i2sdev, &i2sdev->out.dbdma_ring);
+	free_dbdma_descriptor_ring(i2sdev, &i2sdev->in.dbdma_ring);
+	for (i = aoa_resource_i2smmio; i <= aoa_resource_rxdbdma; i++)
+		free_irq(i2sdev->interrupts[i], i2sdev);
+	i2sbus_control_remove_dev(i2sdev->control, i2sdev);
 	mutex_destroy(&i2sdev->lock);
-	kमुक्त(i2sdev);
-पूर्ण
+	kfree(i2sdev);
+}
 
-अटल irqवापस_t i2sbus_bus_पूर्णांकr(पूर्णांक irq, व्योम *devid)
-अणु
-	काष्ठा i2sbus_dev *dev = devid;
-	u32 पूर्णांकreg;
+static irqreturn_t i2sbus_bus_intr(int irq, void *devid)
+{
+	struct i2sbus_dev *dev = devid;
+	u32 intreg;
 
 	spin_lock(&dev->low_lock);
-	पूर्णांकreg = in_le32(&dev->पूर्णांकfregs->पूर्णांकr_ctl);
+	intreg = in_le32(&dev->intfregs->intr_ctl);
 
-	/* acknowledge पूर्णांकerrupt reasons */
-	out_le32(&dev->पूर्णांकfregs->पूर्णांकr_ctl, पूर्णांकreg);
+	/* acknowledge interrupt reasons */
+	out_le32(&dev->intfregs->intr_ctl, intreg);
 
 	spin_unlock(&dev->low_lock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 
 /*
  * XXX FIXME: We test the layout_id's here to get the proper way of
- * mapping in various रेजिस्टरs, thanks to bugs in Apple device-trees.
+ * mapping in various registers, thanks to bugs in Apple device-trees.
  * We could instead key off the machine model and the name of the i2s
- * node (i2s-a). This we'll करो when we move it all to macio_asic.c
- * and have that export items क्रम each sub-node too.
+ * node (i2s-a). This we'll do when we move it all to macio_asic.c
+ * and have that export items for each sub-node too.
  */
-अटल पूर्णांक i2sbus_get_and_fixup_rsrc(काष्ठा device_node *np, पूर्णांक index,
-				     पूर्णांक layout, काष्ठा resource *res)
-अणु
-	काष्ठा device_node *parent;
-	पूर्णांक pindex, rc = -ENXIO;
-	स्थिर u32 *reg;
+static int i2sbus_get_and_fixup_rsrc(struct device_node *np, int index,
+				     int layout, struct resource *res)
+{
+	struct device_node *parent;
+	int pindex, rc = -ENXIO;
+	const u32 *reg;
 
 	/* Machines with layout 76 and 36 (K2 based) have a weird device
-	 * tree what we need to special हाल.
+	 * tree what we need to special case.
 	 * Normal machines just fetch the resource from the i2s-X node.
-	 * Darwin further भागides normal machines पूर्णांकo old and new layouts
-	 * with a subtely dअगरferent code path but that करोesn't seem necessary
+	 * Darwin further divides normal machines into old and new layouts
+	 * with a subtely different code path but that doesn't seem necessary
 	 * in practice, they just bloated it. In addition, even on our K2
-	 * हाल the i2s-modem node, अगर we ever want to handle it, uses the
+	 * case the i2s-modem node, if we ever want to handle it, uses the
 	 * normal layout
 	 */
-	अगर (layout != 76 && layout != 36)
-		वापस of_address_to_resource(np, index, res);
+	if (layout != 76 && layout != 36)
+		return of_address_to_resource(np, index, res);
 
 	parent = of_get_parent(np);
 	pindex = (index == aoa_resource_i2smmio) ? 0 : 1;
 	rc = of_address_to_resource(parent, pindex, res);
-	अगर (rc)
-		जाओ bail;
-	reg = of_get_property(np, "reg", शून्य);
-	अगर (reg == शून्य) अणु
+	if (rc)
+		goto bail;
+	reg = of_get_property(np, "reg", NULL);
+	if (reg == NULL) {
 		rc = -ENXIO;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 	res->start += reg[index * 2];
 	res->end = res->start + reg[index * 2 + 1] - 1;
  bail:
 	of_node_put(parent);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /* FIXME: look at device node refcounting */
-अटल पूर्णांक i2sbus_add_dev(काष्ठा macio_dev *macio,
-			  काष्ठा i2sbus_control *control,
-			  काष्ठा device_node *np)
-अणु
-	काष्ठा i2sbus_dev *dev;
-	काष्ठा device_node *child, *sound = शून्य;
-	काष्ठा resource *r;
-	पूर्णांक i, layout = 0, rlen, ok = क्रमce;
-	अक्षर node_name[6];
-	अटल स्थिर अक्षर *rnames[] = अणु "i2sbus: %pOFn (control)",
+static int i2sbus_add_dev(struct macio_dev *macio,
+			  struct i2sbus_control *control,
+			  struct device_node *np)
+{
+	struct i2sbus_dev *dev;
+	struct device_node *child, *sound = NULL;
+	struct resource *r;
+	int i, layout = 0, rlen, ok = force;
+	char node_name[6];
+	static const char *rnames[] = { "i2sbus: %pOFn (control)",
 					"i2sbus: %pOFn (tx)",
-					"i2sbus: %pOFn (rx)" पूर्ण;
-	अटल स्थिर irq_handler_t पूर्णांकs[] = अणु
-		i2sbus_bus_पूर्णांकr,
-		i2sbus_tx_पूर्णांकr,
-		i2sbus_rx_पूर्णांकr
-	पूर्ण;
+					"i2sbus: %pOFn (rx)" };
+	static const irq_handler_t ints[] = {
+		i2sbus_bus_intr,
+		i2sbus_tx_intr,
+		i2sbus_rx_intr
+	};
 
-	अगर (snम_लिखो(node_name, माप(node_name), "%pOFn", np) != 5)
-		वापस 0;
-	अगर (म_भेदन(node_name, "i2s-", 4))
-		वापस 0;
+	if (snprintf(node_name, sizeof(node_name), "%pOFn", np) != 5)
+		return 0;
+	if (strncmp(node_name, "i2s-", 4))
+		return 0;
 
-	dev = kzalloc(माप(काष्ठा i2sbus_dev), GFP_KERNEL);
-	अगर (!dev)
-		वापस 0;
+	dev = kzalloc(sizeof(struct i2sbus_dev), GFP_KERNEL);
+	if (!dev)
+		return 0;
 
 	i = 0;
-	क्रम_each_child_of_node(np, child) अणु
-		अगर (of_node_name_eq(child, "sound")) अणु
+	for_each_child_of_node(np, child) {
+		if (of_node_name_eq(child, "sound")) {
 			i++;
 			sound = child;
-		पूर्ण
-	पूर्ण
-	अगर (i == 1) अणु
-		स्थिर u32 *id = of_get_property(sound, "layout-id", शून्य);
+		}
+	}
+	if (i == 1) {
+		const u32 *id = of_get_property(sound, "layout-id", NULL);
 
-		अगर (id) अणु
+		if (id) {
 			layout = *id;
-			snम_लिखो(dev->sound.modalias, 32,
+			snprintf(dev->sound.modalias, 32,
 				 "sound-layout-%d", layout);
 			ok = 1;
-		पूर्ण अन्यथा अणु
-			id = of_get_property(sound, "device-id", शून्य);
+		} else {
+			id = of_get_property(sound, "device-id", NULL);
 			/*
 			 * We probably cannot handle all device-id machines,
-			 * so restrict to those we करो handle क्रम now.
+			 * so restrict to those we do handle for now.
 			 */
-			अगर (id && (*id == 22 || *id == 14 || *id == 35 ||
-				   *id == 31 || *id == 44)) अणु
-				snम_लिखो(dev->sound.modalias, 32,
+			if (id && (*id == 22 || *id == 14 || *id == 35 ||
+				   *id == 31 || *id == 44)) {
+				snprintf(dev->sound.modalias, 32,
 					 "aoa-device-id-%d", *id);
 				ok = 1;
 				layout = -1;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	/* क्रम the समय being, until we can handle non-layout-id
-	 * things in some fabric, refuse to attach अगर there is no
-	 * layout-id property or we haven't been क्रमced to attach.
+			}
+		}
+	}
+	/* for the time being, until we can handle non-layout-id
+	 * things in some fabric, refuse to attach if there is no
+	 * layout-id property or we haven't been forced to attach.
 	 * When there are two i2s busses and only one has a layout-id,
 	 * then this depends on the order, but that isn't important
-	 * either as the second one in that हाल is just a modem. */
-	अगर (!ok) अणु
-		kमुक्त(dev);
-		वापस -ENODEV;
-	पूर्ण
+	 * either as the second one in that case is just a modem. */
+	if (!ok) {
+		kfree(dev);
+		return -ENODEV;
+	}
 
 	mutex_init(&dev->lock);
 	spin_lock_init(&dev->low_lock);
@@ -232,224 +231,224 @@ MODULE_DEVICE_TABLE(of, i2sbus_match);
 	dev->bus_number = node_name[4] - 'a';
 	INIT_LIST_HEAD(&dev->sound.codec_list);
 
-	क्रम (i = aoa_resource_i2smmio; i <= aoa_resource_rxdbdma; i++) अणु
-		dev->पूर्णांकerrupts[i] = -1;
-		snम_लिखो(dev->rnames[i], माप(dev->rnames[i]),
+	for (i = aoa_resource_i2smmio; i <= aoa_resource_rxdbdma; i++) {
+		dev->interrupts[i] = -1;
+		snprintf(dev->rnames[i], sizeof(dev->rnames[i]),
 			 rnames[i], np);
-	पूर्ण
-	क्रम (i = aoa_resource_i2smmio; i <= aoa_resource_rxdbdma; i++) अणु
-		पूर्णांक irq = irq_of_parse_and_map(np, i);
-		अगर (request_irq(irq, पूर्णांकs[i], 0, dev->rnames[i], dev))
-			जाओ err;
-		dev->पूर्णांकerrupts[i] = irq;
-	पूर्ण
+	}
+	for (i = aoa_resource_i2smmio; i <= aoa_resource_rxdbdma; i++) {
+		int irq = irq_of_parse_and_map(np, i);
+		if (request_irq(irq, ints[i], 0, dev->rnames[i], dev))
+			goto err;
+		dev->interrupts[i] = irq;
+	}
 
 
 	/* Resource handling is problematic as some device-trees contain
 	 * useless crap (ugh ugh ugh). We work around that here by calling
-	 * specअगरic functions क्रम calculating the appropriate resources.
+	 * specific functions for calculating the appropriate resources.
 	 *
-	 * This will all be moved to macio_asic.c at one poपूर्णांक
+	 * This will all be moved to macio_asic.c at one point
 	 */
-	क्रम (i = aoa_resource_i2smmio; i <= aoa_resource_rxdbdma; i++) अणु
-		अगर (i2sbus_get_and_fixup_rsrc(np,i,layout,&dev->resources[i]))
-			जाओ err;
+	for (i = aoa_resource_i2smmio; i <= aoa_resource_rxdbdma; i++) {
+		if (i2sbus_get_and_fixup_rsrc(np,i,layout,&dev->resources[i]))
+			goto err;
 		/* If only we could use our resource dev->resources[i]...
-		 * but request_resource करोesn't know about parents and
+		 * but request_resource doesn't know about parents and
 		 * contained resources...
 		 */
 		dev->allocated_resource[i] =
 			request_mem_region(dev->resources[i].start,
 					   resource_size(&dev->resources[i]),
 					   dev->rnames[i]);
-		अगर (!dev->allocated_resource[i]) अणु
-			prपूर्णांकk(KERN_ERR "i2sbus: failed to claim resource %d!\n", i);
-			जाओ err;
-		पूर्ण
-	पूर्ण
+		if (!dev->allocated_resource[i]) {
+			printk(KERN_ERR "i2sbus: failed to claim resource %d!\n", i);
+			goto err;
+		}
+	}
 
 	r = &dev->resources[aoa_resource_i2smmio];
 	rlen = resource_size(r);
-	अगर (rlen < माप(काष्ठा i2s_पूर्णांकerface_regs))
-		जाओ err;
-	dev->पूर्णांकfregs = ioremap(r->start, rlen);
+	if (rlen < sizeof(struct i2s_interface_regs))
+		goto err;
+	dev->intfregs = ioremap(r->start, rlen);
 
 	r = &dev->resources[aoa_resource_txdbdma];
 	rlen = resource_size(r);
-	अगर (rlen < माप(काष्ठा dbdma_regs))
-		जाओ err;
+	if (rlen < sizeof(struct dbdma_regs))
+		goto err;
 	dev->out.dbdma = ioremap(r->start, rlen);
 
 	r = &dev->resources[aoa_resource_rxdbdma];
 	rlen = resource_size(r);
-	अगर (rlen < माप(काष्ठा dbdma_regs))
-		जाओ err;
+	if (rlen < sizeof(struct dbdma_regs))
+		goto err;
 	dev->in.dbdma = ioremap(r->start, rlen);
 
-	अगर (!dev->पूर्णांकfregs || !dev->out.dbdma || !dev->in.dbdma)
-		जाओ err;
+	if (!dev->intfregs || !dev->out.dbdma || !dev->in.dbdma)
+		goto err;
 
-	अगर (alloc_dbdma_descriptor_ring(dev, &dev->out.dbdma_ring,
+	if (alloc_dbdma_descriptor_ring(dev, &dev->out.dbdma_ring,
 					MAX_DBDMA_COMMANDS))
-		जाओ err;
-	अगर (alloc_dbdma_descriptor_ring(dev, &dev->in.dbdma_ring,
+		goto err;
+	if (alloc_dbdma_descriptor_ring(dev, &dev->in.dbdma_ring,
 					MAX_DBDMA_COMMANDS))
-		जाओ err;
+		goto err;
 
-	अगर (i2sbus_control_add_dev(dev->control, dev)) अणु
-		prपूर्णांकk(KERN_ERR "i2sbus: control layer didn't like bus\n");
-		जाओ err;
-	पूर्ण
+	if (i2sbus_control_add_dev(dev->control, dev)) {
+		printk(KERN_ERR "i2sbus: control layer didn't like bus\n");
+		goto err;
+	}
 
-	अगर (soundbus_add_one(&dev->sound)) अणु
-		prपूर्णांकk(KERN_DEBUG "i2sbus: device registration error!\n");
-		जाओ err;
-	पूर्ण
+	if (soundbus_add_one(&dev->sound)) {
+		printk(KERN_DEBUG "i2sbus: device registration error!\n");
+		goto err;
+	}
 
 	/* enable this cell */
 	i2sbus_control_cell(dev->control, dev, 1);
 	i2sbus_control_enable(dev->control, dev);
-	i2sbus_control_घड़ी(dev->control, dev, 1);
+	i2sbus_control_clock(dev->control, dev, 1);
 
-	वापस 1;
+	return 1;
  err:
-	क्रम (i=0;i<3;i++)
-		अगर (dev->पूर्णांकerrupts[i] != -1)
-			मुक्त_irq(dev->पूर्णांकerrupts[i], dev);
-	मुक्त_dbdma_descriptor_ring(dev, &dev->out.dbdma_ring);
-	मुक्त_dbdma_descriptor_ring(dev, &dev->in.dbdma_ring);
-	iounmap(dev->पूर्णांकfregs);
+	for (i=0;i<3;i++)
+		if (dev->interrupts[i] != -1)
+			free_irq(dev->interrupts[i], dev);
+	free_dbdma_descriptor_ring(dev, &dev->out.dbdma_ring);
+	free_dbdma_descriptor_ring(dev, &dev->in.dbdma_ring);
+	iounmap(dev->intfregs);
 	iounmap(dev->out.dbdma);
 	iounmap(dev->in.dbdma);
-	क्रम (i=0;i<3;i++)
-		release_and_मुक्त_resource(dev->allocated_resource[i]);
+	for (i=0;i<3;i++)
+		release_and_free_resource(dev->allocated_resource[i]);
 	mutex_destroy(&dev->lock);
-	kमुक्त(dev);
-	वापस 0;
-पूर्ण
+	kfree(dev);
+	return 0;
+}
 
-अटल पूर्णांक i2sbus_probe(काष्ठा macio_dev* dev, स्थिर काष्ठा of_device_id *match)
-अणु
-	काष्ठा device_node *np = शून्य;
-	पूर्णांक got = 0, err;
-	काष्ठा i2sbus_control *control = शून्य;
+static int i2sbus_probe(struct macio_dev* dev, const struct of_device_id *match)
+{
+	struct device_node *np = NULL;
+	int got = 0, err;
+	struct i2sbus_control *control = NULL;
 
 	err = i2sbus_control_init(dev, &control);
-	अगर (err)
-		वापस err;
-	अगर (!control) अणु
-		prपूर्णांकk(KERN_ERR "i2sbus_control_init API breakage\n");
-		वापस -ENODEV;
-	पूर्ण
+	if (err)
+		return err;
+	if (!control) {
+		printk(KERN_ERR "i2sbus_control_init API breakage\n");
+		return -ENODEV;
+	}
 
-	जबतक ((np = of_get_next_child(dev->ofdev.dev.of_node, np))) अणु
-		अगर (of_device_is_compatible(np, "i2sbus") ||
-		    of_device_is_compatible(np, "i2s-modem")) अणु
+	while ((np = of_get_next_child(dev->ofdev.dev.of_node, np))) {
+		if (of_device_is_compatible(np, "i2sbus") ||
+		    of_device_is_compatible(np, "i2s-modem")) {
 			got += i2sbus_add_dev(dev, control, np);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!got) अणु
+	if (!got) {
 		/* found none, clean up */
 		i2sbus_control_destroy(control);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	dev_set_drvdata(&dev->ofdev.dev, control);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक i2sbus_हटाओ(काष्ठा macio_dev* dev)
-अणु
-	काष्ठा i2sbus_control *control = dev_get_drvdata(&dev->ofdev.dev);
-	काष्ठा i2sbus_dev *i2sdev, *पंचांगp;
+static int i2sbus_remove(struct macio_dev* dev)
+{
+	struct i2sbus_control *control = dev_get_drvdata(&dev->ofdev.dev);
+	struct i2sbus_dev *i2sdev, *tmp;
 
-	list_क्रम_each_entry_safe(i2sdev, पंचांगp, &control->list, item)
-		soundbus_हटाओ_one(&i2sdev->sound);
+	list_for_each_entry_safe(i2sdev, tmp, &control->list, item)
+		soundbus_remove_one(&i2sdev->sound);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक i2sbus_suspend(काष्ठा macio_dev* dev, pm_message_t state)
-अणु
-	काष्ठा i2sbus_control *control = dev_get_drvdata(&dev->ofdev.dev);
-	काष्ठा codec_info_item *cii;
-	काष्ठा i2sbus_dev* i2sdev;
-	पूर्णांक err, ret = 0;
+#ifdef CONFIG_PM
+static int i2sbus_suspend(struct macio_dev* dev, pm_message_t state)
+{
+	struct i2sbus_control *control = dev_get_drvdata(&dev->ofdev.dev);
+	struct codec_info_item *cii;
+	struct i2sbus_dev* i2sdev;
+	int err, ret = 0;
 
-	list_क्रम_each_entry(i2sdev, &control->list, item) अणु
-		/* Notअगरy codecs */
-		list_क्रम_each_entry(cii, &i2sdev->sound.codec_list, list) अणु
+	list_for_each_entry(i2sdev, &control->list, item) {
+		/* Notify codecs */
+		list_for_each_entry(cii, &i2sdev->sound.codec_list, list) {
 			err = 0;
-			अगर (cii->codec->suspend)
+			if (cii->codec->suspend)
 				err = cii->codec->suspend(cii, state);
-			अगर (err)
+			if (err)
 				ret = err;
-		पूर्ण
+		}
 
-		/* रुको until streams are stopped */
-		i2sbus_रुको_क्रम_stop_both(i2sdev);
-	पूर्ण
+		/* wait until streams are stopped */
+		i2sbus_wait_for_stop_both(i2sdev);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक i2sbus_resume(काष्ठा macio_dev* dev)
-अणु
-	काष्ठा i2sbus_control *control = dev_get_drvdata(&dev->ofdev.dev);
-	काष्ठा codec_info_item *cii;
-	काष्ठा i2sbus_dev* i2sdev;
-	पूर्णांक err, ret = 0;
+static int i2sbus_resume(struct macio_dev* dev)
+{
+	struct i2sbus_control *control = dev_get_drvdata(&dev->ofdev.dev);
+	struct codec_info_item *cii;
+	struct i2sbus_dev* i2sdev;
+	int err, ret = 0;
 
-	list_क्रम_each_entry(i2sdev, &control->list, item) अणु
-		/* reset i2s bus क्रमmat etc. */
+	list_for_each_entry(i2sdev, &control->list, item) {
+		/* reset i2s bus format etc. */
 		i2sbus_pcm_prepare_both(i2sdev);
 
-		/* Notअगरy codecs so they can re-initialize */
-		list_क्रम_each_entry(cii, &i2sdev->sound.codec_list, list) अणु
+		/* Notify codecs so they can re-initialize */
+		list_for_each_entry(cii, &i2sdev->sound.codec_list, list) {
 			err = 0;
-			अगर (cii->codec->resume)
+			if (cii->codec->resume)
 				err = cii->codec->resume(cii);
-			अगर (err)
+			if (err)
 				ret = err;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PM */
+	return ret;
+}
+#endif /* CONFIG_PM */
 
-अटल पूर्णांक i2sbus_shutकरोwn(काष्ठा macio_dev* dev)
-अणु
-	वापस 0;
-पूर्ण
+static int i2sbus_shutdown(struct macio_dev* dev)
+{
+	return 0;
+}
 
-अटल काष्ठा macio_driver i2sbus_drv = अणु
-	.driver = अणु
+static struct macio_driver i2sbus_drv = {
+	.driver = {
 		.name = "soundbus-i2s",
 		.owner = THIS_MODULE,
 		.of_match_table = i2sbus_match,
-	पूर्ण,
+	},
 	.probe = i2sbus_probe,
-	.हटाओ = i2sbus_हटाओ,
-#अगर_घोषित CONFIG_PM
+	.remove = i2sbus_remove,
+#ifdef CONFIG_PM
 	.suspend = i2sbus_suspend,
 	.resume = i2sbus_resume,
-#पूर्ण_अगर
-	.shutकरोwn = i2sbus_shutकरोwn,
-पूर्ण;
+#endif
+	.shutdown = i2sbus_shutdown,
+};
 
-अटल पूर्णांक __init soundbus_i2sbus_init(व्योम)
-अणु
-	वापस macio_रेजिस्टर_driver(&i2sbus_drv);
-पूर्ण
+static int __init soundbus_i2sbus_init(void)
+{
+	return macio_register_driver(&i2sbus_drv);
+}
 
-अटल व्योम __निकास soundbus_i2sbus_निकास(व्योम)
-अणु
-	macio_unरेजिस्टर_driver(&i2sbus_drv);
-पूर्ण
+static void __exit soundbus_i2sbus_exit(void)
+{
+	macio_unregister_driver(&i2sbus_drv);
+}
 
 module_init(soundbus_i2sbus_init);
-module_निकास(soundbus_i2sbus_निकास);
+module_exit(soundbus_i2sbus_exit);

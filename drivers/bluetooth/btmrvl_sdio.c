@@ -1,151 +1,150 @@
-<शैली गुरु>
 /**
- * Marvell BT-over-SDIO driver: SDIO पूर्णांकerface related functions.
+ * Marvell BT-over-SDIO driver: SDIO interface related functions.
  *
  * Copyright (C) 2009, Marvell International Ltd.
  *
  * This software file (the "File") is distributed by Marvell International
  * Ltd. under the terms of the GNU General Public License Version 2, June 1991
- * (the "License").  You may use, redistribute and/or modअगरy this File in
+ * (the "License").  You may use, redistribute and/or modify this File in
  * accordance with the terms and conditions of the License, a copy of which
  * is available by writing to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fअगरth Floor, Boston, MA 02110-1301 USA or on the
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA or on the
  * worldwide web at http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
  *
  *
- * THE खाता IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
+ * THE FILE IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE
  * ARE EXPRESSLY DISCLAIMED.  The License provides additional details about
  * this warranty disclaimer.
  **/
 
-#समावेश <linux/firmware.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/suspend.h>
+#include <linux/firmware.h>
+#include <linux/slab.h>
+#include <linux/suspend.h>
 
-#समावेश <linux/mmc/sdio_ids.h>
-#समावेश <linux/mmc/sdio_func.h>
-#समावेश <linux/module.h>
-#समावेश <linux/devcoredump.h>
+#include <linux/mmc/sdio_ids.h>
+#include <linux/mmc/sdio_func.h>
+#include <linux/module.h>
+#include <linux/devcoredump.h>
 
-#समावेश <net/bluetooth/bluetooth.h>
-#समावेश <net/bluetooth/hci_core.h>
+#include <net/bluetooth/bluetooth.h>
+#include <net/bluetooth/hci_core.h>
 
-#समावेश "btmrvl_drv.h"
-#समावेश "btmrvl_sdio.h"
+#include "btmrvl_drv.h"
+#include "btmrvl_sdio.h"
 
-#घोषणा VERSION "1.0"
+#define VERSION "1.0"
 
-अटल काष्ठा memory_type_mapping mem_type_mapping_tbl[] = अणु
-	अणु"ITCM", शून्य, 0, 0xF0पूर्ण,
-	अणु"DTCM", शून्य, 0, 0xF1पूर्ण,
-	अणु"SQRAM", शून्य, 0, 0xF2पूर्ण,
-	अणु"APU", शून्य, 0, 0xF3पूर्ण,
-	अणु"CIU", शून्य, 0, 0xF4पूर्ण,
-	अणु"ICU", शून्य, 0, 0xF5पूर्ण,
-	अणु"MAC", शून्य, 0, 0xF6पूर्ण,
-	अणु"EXT7", शून्य, 0, 0xF7पूर्ण,
-	अणु"EXT8", शून्य, 0, 0xF8पूर्ण,
-	अणु"EXT9", शून्य, 0, 0xF9पूर्ण,
-	अणु"EXT10", शून्य, 0, 0xFAपूर्ण,
-	अणु"EXT11", शून्य, 0, 0xFBपूर्ण,
-	अणु"EXT12", शून्य, 0, 0xFCपूर्ण,
-	अणु"EXT13", शून्य, 0, 0xFDपूर्ण,
-	अणु"EXTLAST", शून्य, 0, 0xFEपूर्ण,
-पूर्ण;
+static struct memory_type_mapping mem_type_mapping_tbl[] = {
+	{"ITCM", NULL, 0, 0xF0},
+	{"DTCM", NULL, 0, 0xF1},
+	{"SQRAM", NULL, 0, 0xF2},
+	{"APU", NULL, 0, 0xF3},
+	{"CIU", NULL, 0, 0xF4},
+	{"ICU", NULL, 0, 0xF5},
+	{"MAC", NULL, 0, 0xF6},
+	{"EXT7", NULL, 0, 0xF7},
+	{"EXT8", NULL, 0, 0xF8},
+	{"EXT9", NULL, 0, 0xF9},
+	{"EXT10", NULL, 0, 0xFA},
+	{"EXT11", NULL, 0, 0xFB},
+	{"EXT12", NULL, 0, 0xFC},
+	{"EXT13", NULL, 0, 0xFD},
+	{"EXTLAST", NULL, 0, 0xFE},
+};
 
-अटल स्थिर काष्ठा of_device_id bपंचांगrvl_sdio_of_match_table[] = अणु
-	अणु .compatible = "marvell,sd8897-bt" पूर्ण,
-	अणु .compatible = "marvell,sd8997-bt" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id btmrvl_sdio_of_match_table[] = {
+	{ .compatible = "marvell,sd8897-bt" },
+	{ .compatible = "marvell,sd8997-bt" },
+	{ }
+};
 
-अटल irqवापस_t bपंचांगrvl_wake_irq_bt(पूर्णांक irq, व्योम *priv)
-अणु
-	काष्ठा bपंचांगrvl_sdio_card *card = priv;
-	काष्ठा device *dev = &card->func->dev;
-	काष्ठा bपंचांगrvl_plt_wake_cfg *cfg = card->plt_wake_cfg;
+static irqreturn_t btmrvl_wake_irq_bt(int irq, void *priv)
+{
+	struct btmrvl_sdio_card *card = priv;
+	struct device *dev = &card->func->dev;
+	struct btmrvl_plt_wake_cfg *cfg = card->plt_wake_cfg;
 
 	dev_info(dev, "wake by bt\n");
 	cfg->wake_by_bt = true;
 	disable_irq_nosync(irq);
 
 	pm_wakeup_event(dev, 0);
-	pm_प्रणाली_wakeup();
+	pm_system_wakeup();
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /* This function parses device tree node using mmc subnode devicetree API.
  * The device node is saved in card->plt_of_node.
- * If the device tree node exists and includes पूर्णांकerrupts attributes, this
- * function will request platक्रमm specअगरic wakeup पूर्णांकerrupt.
+ * If the device tree node exists and includes interrupts attributes, this
+ * function will request platform specific wakeup interrupt.
  */
-अटल पूर्णांक bपंचांगrvl_sdio_probe_of(काष्ठा device *dev,
-				काष्ठा bपंचांगrvl_sdio_card *card)
-अणु
-	काष्ठा bपंचांगrvl_plt_wake_cfg *cfg;
-	पूर्णांक ret;
+static int btmrvl_sdio_probe_of(struct device *dev,
+				struct btmrvl_sdio_card *card)
+{
+	struct btmrvl_plt_wake_cfg *cfg;
+	int ret;
 
-	अगर (!dev->of_node ||
-	    !of_match_node(bपंचांगrvl_sdio_of_match_table, dev->of_node)) अणु
+	if (!dev->of_node ||
+	    !of_match_node(btmrvl_sdio_of_match_table, dev->of_node)) {
 		dev_info(dev, "sdio device tree data not available\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	card->plt_of_node = dev->of_node;
 
-	card->plt_wake_cfg = devm_kzalloc(dev, माप(*card->plt_wake_cfg),
+	card->plt_wake_cfg = devm_kzalloc(dev, sizeof(*card->plt_wake_cfg),
 					  GFP_KERNEL);
 	cfg = card->plt_wake_cfg;
-	अगर (cfg && card->plt_of_node) अणु
+	if (cfg && card->plt_of_node) {
 		cfg->irq_bt = irq_of_parse_and_map(card->plt_of_node, 0);
-		अगर (!cfg->irq_bt) अणु
+		if (!cfg->irq_bt) {
 			dev_err(dev, "fail to parse irq_bt from device tree\n");
 			cfg->irq_bt = -1;
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = devm_request_irq(dev, cfg->irq_bt,
-					       bपंचांगrvl_wake_irq_bt,
+					       btmrvl_wake_irq_bt,
 					       0, "bt_wake", card);
-			अगर (ret) अणु
+			if (ret) {
 				dev_err(dev,
 					"Failed to request irq_bt %d (%d)\n",
 					cfg->irq_bt, ret);
-			पूर्ण
+			}
 
-			/* Configure wakeup (enabled by शेष) */
+			/* Configure wakeup (enabled by default) */
 			device_init_wakeup(dev, true);
 			disable_irq(cfg->irq_bt);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* The bपंचांगrvl_sdio_हटाओ() callback function is called
- * when user हटाओs this module from kernel space or ejects
- * the card from the slot. The driver handles these 2 हालs
- * dअगरferently.
+/* The btmrvl_sdio_remove() callback function is called
+ * when user removes this module from kernel space or ejects
+ * the card from the slot. The driver handles these 2 cases
+ * differently.
  * If the user is removing the module, a MODULE_SHUTDOWN_REQ
- * command is sent to firmware and पूर्णांकerrupt will be disabled.
- * If the card is हटाओd, there is no need to send command
- * or disable पूर्णांकerrupt.
+ * command is sent to firmware and interrupt will be disabled.
+ * If the card is removed, there is no need to send command
+ * or disable interrupt.
  *
  * The variable 'user_rmmod' is used to distinguish these two
- * scenarios. This flag is initialized as FALSE in हाल the card
- * is हटाओd, and will be set to TRUE क्रम module removal when
- * module_निकास function is called.
+ * scenarios. This flag is initialized as FALSE in case the card
+ * is removed, and will be set to TRUE for module removal when
+ * module_exit function is called.
  */
-अटल u8 user_rmmod;
-अटल u8 sdio_ireg;
+static u8 user_rmmod;
+static u8 sdio_ireg;
 
-अटल स्थिर काष्ठा bपंचांगrvl_sdio_card_reg bपंचांगrvl_reg_8688 = अणु
+static const struct btmrvl_sdio_card_reg btmrvl_reg_8688 = {
 	.cfg = 0x03,
-	.host_पूर्णांक_mask = 0x04,
-	.host_पूर्णांकstatus = 0x05,
+	.host_int_mask = 0x04,
+	.host_intstatus = 0x05,
 	.card_status = 0x20,
-	.sq_पढ़ो_base_addr_a0 = 0x10,
-	.sq_पढ़ो_base_addr_a1 = 0x11,
+	.sq_read_base_addr_a0 = 0x10,
+	.sq_read_base_addr_a1 = 0x11,
 	.card_fw_status0 = 0x40,
 	.card_fw_status1 = 0x41,
 	.card_rx_len = 0x42,
@@ -153,15 +152,15 @@
 	.io_port_0 = 0x00,
 	.io_port_1 = 0x01,
 	.io_port_2 = 0x02,
-	.पूर्णांक_पढ़ो_to_clear = false,
-पूर्ण;
-अटल स्थिर काष्ठा bपंचांगrvl_sdio_card_reg bपंचांगrvl_reg_87xx = अणु
+	.int_read_to_clear = false,
+};
+static const struct btmrvl_sdio_card_reg btmrvl_reg_87xx = {
 	.cfg = 0x00,
-	.host_पूर्णांक_mask = 0x02,
-	.host_पूर्णांकstatus = 0x03,
+	.host_int_mask = 0x02,
+	.host_intstatus = 0x03,
 	.card_status = 0x30,
-	.sq_पढ़ो_base_addr_a0 = 0x40,
-	.sq_पढ़ो_base_addr_a1 = 0x41,
+	.sq_read_base_addr_a0 = 0x40,
+	.sq_read_base_addr_a1 = 0x41,
 	.card_revision = 0x5c,
 	.card_fw_status0 = 0x60,
 	.card_fw_status1 = 0x61,
@@ -170,16 +169,16 @@
 	.io_port_0 = 0x78,
 	.io_port_1 = 0x79,
 	.io_port_2 = 0x7a,
-	.पूर्णांक_पढ़ो_to_clear = false,
-पूर्ण;
+	.int_read_to_clear = false,
+};
 
-अटल स्थिर काष्ठा bपंचांगrvl_sdio_card_reg bपंचांगrvl_reg_8887 = अणु
+static const struct btmrvl_sdio_card_reg btmrvl_reg_8887 = {
 	.cfg = 0x00,
-	.host_पूर्णांक_mask = 0x08,
-	.host_पूर्णांकstatus = 0x0C,
+	.host_int_mask = 0x08,
+	.host_intstatus = 0x0C,
 	.card_status = 0x5C,
-	.sq_पढ़ो_base_addr_a0 = 0x6C,
-	.sq_पढ़ो_base_addr_a1 = 0x6D,
+	.sq_read_base_addr_a0 = 0x6C,
+	.sq_read_base_addr_a1 = 0x6D,
 	.card_revision = 0xC8,
 	.card_fw_status0 = 0x88,
 	.card_fw_status1 = 0x89,
@@ -188,18 +187,18 @@
 	.io_port_0 = 0xE4,
 	.io_port_1 = 0xE5,
 	.io_port_2 = 0xE6,
-	.पूर्णांक_पढ़ो_to_clear = true,
-	.host_पूर्णांक_rsr = 0x04,
+	.int_read_to_clear = true,
+	.host_int_rsr = 0x04,
 	.card_misc_cfg = 0xD8,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा bपंचांगrvl_sdio_card_reg bपंचांगrvl_reg_8897 = अणु
+static const struct btmrvl_sdio_card_reg btmrvl_reg_8897 = {
 	.cfg = 0x00,
-	.host_पूर्णांक_mask = 0x02,
-	.host_पूर्णांकstatus = 0x03,
+	.host_int_mask = 0x02,
+	.host_intstatus = 0x03,
 	.card_status = 0x50,
-	.sq_पढ़ो_base_addr_a0 = 0x60,
-	.sq_पढ़ो_base_addr_a1 = 0x61,
+	.sq_read_base_addr_a0 = 0x60,
+	.sq_read_base_addr_a1 = 0x61,
 	.card_revision = 0xbc,
 	.card_fw_status0 = 0xc0,
 	.card_fw_status1 = 0xc1,
@@ -208,21 +207,21 @@
 	.io_port_0 = 0xd8,
 	.io_port_1 = 0xd9,
 	.io_port_2 = 0xda,
-	.पूर्णांक_पढ़ो_to_clear = true,
-	.host_पूर्णांक_rsr = 0x01,
+	.int_read_to_clear = true,
+	.host_int_rsr = 0x01,
 	.card_misc_cfg = 0xcc,
 	.fw_dump_ctrl = 0xe2,
 	.fw_dump_start = 0xe3,
 	.fw_dump_end = 0xea,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा bपंचांगrvl_sdio_card_reg bपंचांगrvl_reg_89xx = अणु
+static const struct btmrvl_sdio_card_reg btmrvl_reg_89xx = {
 	.cfg = 0x00,
-	.host_पूर्णांक_mask = 0x08,
-	.host_पूर्णांकstatus = 0x0c,
+	.host_int_mask = 0x08,
+	.host_intstatus = 0x0c,
 	.card_status = 0x5c,
-	.sq_पढ़ो_base_addr_a0 = 0xf8,
-	.sq_पढ़ो_base_addr_a1 = 0xf9,
+	.sq_read_base_addr_a0 = 0xf8,
+	.sq_read_base_addr_a1 = 0xf9,
 	.card_revision = 0xc8,
 	.card_fw_status0 = 0xe8,
 	.card_fw_status1 = 0xe9,
@@ -231,264 +230,264 @@
 	.io_port_0 = 0xe4,
 	.io_port_1 = 0xe5,
 	.io_port_2 = 0xe6,
-	.पूर्णांक_पढ़ो_to_clear = true,
-	.host_पूर्णांक_rsr = 0x04,
+	.int_read_to_clear = true,
+	.host_int_rsr = 0x04,
 	.card_misc_cfg = 0xd8,
 	.fw_dump_ctrl = 0xf0,
 	.fw_dump_start = 0xf1,
 	.fw_dump_end = 0xf8,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा bपंचांगrvl_sdio_device bपंचांगrvl_sdio_sd8688 = अणु
+static const struct btmrvl_sdio_device btmrvl_sdio_sd8688 = {
 	.helper		= "mrvl/sd8688_helper.bin",
 	.firmware	= "mrvl/sd8688.bin",
-	.reg		= &bपंचांगrvl_reg_8688,
+	.reg		= &btmrvl_reg_8688,
 	.support_pscan_win_report = false,
 	.sd_blksz_fw_dl	= 64,
 	.supports_fw_dump = false,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा bपंचांगrvl_sdio_device bपंचांगrvl_sdio_sd8787 = अणु
-	.helper		= शून्य,
+static const struct btmrvl_sdio_device btmrvl_sdio_sd8787 = {
+	.helper		= NULL,
 	.firmware	= "mrvl/sd8787_uapsta.bin",
-	.reg		= &bपंचांगrvl_reg_87xx,
+	.reg		= &btmrvl_reg_87xx,
 	.support_pscan_win_report = false,
 	.sd_blksz_fw_dl	= 256,
 	.supports_fw_dump = false,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा bपंचांगrvl_sdio_device bपंचांगrvl_sdio_sd8797 = अणु
-	.helper		= शून्य,
+static const struct btmrvl_sdio_device btmrvl_sdio_sd8797 = {
+	.helper		= NULL,
 	.firmware	= "mrvl/sd8797_uapsta.bin",
-	.reg		= &bपंचांगrvl_reg_87xx,
+	.reg		= &btmrvl_reg_87xx,
 	.support_pscan_win_report = false,
 	.sd_blksz_fw_dl	= 256,
 	.supports_fw_dump = false,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा bपंचांगrvl_sdio_device bपंचांगrvl_sdio_sd8887 = अणु
-	.helper		= शून्य,
+static const struct btmrvl_sdio_device btmrvl_sdio_sd8887 = {
+	.helper		= NULL,
 	.firmware	= "mrvl/sd8887_uapsta.bin",
-	.reg		= &bपंचांगrvl_reg_8887,
+	.reg		= &btmrvl_reg_8887,
 	.support_pscan_win_report = true,
 	.sd_blksz_fw_dl	= 256,
 	.supports_fw_dump = false,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा bपंचांगrvl_sdio_device bपंचांगrvl_sdio_sd8897 = अणु
-	.helper		= शून्य,
+static const struct btmrvl_sdio_device btmrvl_sdio_sd8897 = {
+	.helper		= NULL,
 	.firmware	= "mrvl/sd8897_uapsta.bin",
-	.reg		= &bपंचांगrvl_reg_8897,
+	.reg		= &btmrvl_reg_8897,
 	.support_pscan_win_report = true,
 	.sd_blksz_fw_dl	= 256,
 	.supports_fw_dump = true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा bपंचांगrvl_sdio_device bपंचांगrvl_sdio_sd8977 = अणु
-	.helper         = शून्य,
+static const struct btmrvl_sdio_device btmrvl_sdio_sd8977 = {
+	.helper         = NULL,
 	.firmware       = "mrvl/sdsd8977_combo_v2.bin",
-	.reg            = &bपंचांगrvl_reg_89xx,
+	.reg            = &btmrvl_reg_89xx,
 	.support_pscan_win_report = true,
 	.sd_blksz_fw_dl = 256,
 	.supports_fw_dump = true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा bपंचांगrvl_sdio_device bपंचांगrvl_sdio_sd8987 = अणु
-	.helper		= शून्य,
+static const struct btmrvl_sdio_device btmrvl_sdio_sd8987 = {
+	.helper		= NULL,
 	.firmware	= "mrvl/sd8987_uapsta.bin",
-	.reg		= &bपंचांगrvl_reg_89xx,
+	.reg		= &btmrvl_reg_89xx,
 	.support_pscan_win_report = true,
 	.sd_blksz_fw_dl	= 256,
 	.supports_fw_dump = true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा bपंचांगrvl_sdio_device bपंचांगrvl_sdio_sd8997 = अणु
-	.helper         = शून्य,
+static const struct btmrvl_sdio_device btmrvl_sdio_sd8997 = {
+	.helper         = NULL,
 	.firmware       = "mrvl/sdsd8997_combo_v4.bin",
-	.reg            = &bपंचांगrvl_reg_89xx,
+	.reg            = &btmrvl_reg_89xx,
 	.support_pscan_win_report = true,
 	.sd_blksz_fw_dl = 256,
 	.supports_fw_dump = true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sdio_device_id bपंचांगrvl_sdio_ids[] = अणु
+static const struct sdio_device_id btmrvl_sdio_ids[] = {
 	/* Marvell SD8688 Bluetooth device */
-	अणु SDIO_DEVICE(SDIO_VENDOR_ID_MARVELL, SDIO_DEVICE_ID_MARVELL_8688_BT),
-			.driver_data = (अचिन्हित दीर्घ)&bपंचांगrvl_sdio_sd8688 पूर्ण,
+	{ SDIO_DEVICE(SDIO_VENDOR_ID_MARVELL, SDIO_DEVICE_ID_MARVELL_8688_BT),
+			.driver_data = (unsigned long)&btmrvl_sdio_sd8688 },
 	/* Marvell SD8787 Bluetooth device */
-	अणु SDIO_DEVICE(SDIO_VENDOR_ID_MARVELL, SDIO_DEVICE_ID_MARVELL_8787_BT),
-			.driver_data = (अचिन्हित दीर्घ)&bपंचांगrvl_sdio_sd8787 पूर्ण,
+	{ SDIO_DEVICE(SDIO_VENDOR_ID_MARVELL, SDIO_DEVICE_ID_MARVELL_8787_BT),
+			.driver_data = (unsigned long)&btmrvl_sdio_sd8787 },
 	/* Marvell SD8787 Bluetooth AMP device */
-	अणु SDIO_DEVICE(SDIO_VENDOR_ID_MARVELL, SDIO_DEVICE_ID_MARVELL_8787_BT_AMP),
-			.driver_data = (अचिन्हित दीर्घ)&bपंचांगrvl_sdio_sd8787 पूर्ण,
+	{ SDIO_DEVICE(SDIO_VENDOR_ID_MARVELL, SDIO_DEVICE_ID_MARVELL_8787_BT_AMP),
+			.driver_data = (unsigned long)&btmrvl_sdio_sd8787 },
 	/* Marvell SD8797 Bluetooth device */
-	अणु SDIO_DEVICE(SDIO_VENDOR_ID_MARVELL, SDIO_DEVICE_ID_MARVELL_8797_BT),
-			.driver_data = (अचिन्हित दीर्घ)&bपंचांगrvl_sdio_sd8797 पूर्ण,
+	{ SDIO_DEVICE(SDIO_VENDOR_ID_MARVELL, SDIO_DEVICE_ID_MARVELL_8797_BT),
+			.driver_data = (unsigned long)&btmrvl_sdio_sd8797 },
 	/* Marvell SD8887 Bluetooth device */
-	अणु SDIO_DEVICE(SDIO_VENDOR_ID_MARVELL, SDIO_DEVICE_ID_MARVELL_8887_BT),
-			.driver_data = (अचिन्हित दीर्घ)&bपंचांगrvl_sdio_sd8887 पूर्ण,
+	{ SDIO_DEVICE(SDIO_VENDOR_ID_MARVELL, SDIO_DEVICE_ID_MARVELL_8887_BT),
+			.driver_data = (unsigned long)&btmrvl_sdio_sd8887 },
 	/* Marvell SD8897 Bluetooth device */
-	अणु SDIO_DEVICE(SDIO_VENDOR_ID_MARVELL, SDIO_DEVICE_ID_MARVELL_8897_BT),
-			.driver_data = (अचिन्हित दीर्घ)&bपंचांगrvl_sdio_sd8897 पूर्ण,
+	{ SDIO_DEVICE(SDIO_VENDOR_ID_MARVELL, SDIO_DEVICE_ID_MARVELL_8897_BT),
+			.driver_data = (unsigned long)&btmrvl_sdio_sd8897 },
 	/* Marvell SD8977 Bluetooth device */
-	अणु SDIO_DEVICE(SDIO_VENDOR_ID_MARVELL, SDIO_DEVICE_ID_MARVELL_8977_BT),
-			.driver_data = (अचिन्हित दीर्घ)&bपंचांगrvl_sdio_sd8977 पूर्ण,
+	{ SDIO_DEVICE(SDIO_VENDOR_ID_MARVELL, SDIO_DEVICE_ID_MARVELL_8977_BT),
+			.driver_data = (unsigned long)&btmrvl_sdio_sd8977 },
 	/* Marvell SD8987 Bluetooth device */
-	अणु SDIO_DEVICE(SDIO_VENDOR_ID_MARVELL, SDIO_DEVICE_ID_MARVELL_8987_BT),
-			.driver_data = (अचिन्हित दीर्घ)&bपंचांगrvl_sdio_sd8987 पूर्ण,
+	{ SDIO_DEVICE(SDIO_VENDOR_ID_MARVELL, SDIO_DEVICE_ID_MARVELL_8987_BT),
+			.driver_data = (unsigned long)&btmrvl_sdio_sd8987 },
 	/* Marvell SD8997 Bluetooth device */
-	अणु SDIO_DEVICE(SDIO_VENDOR_ID_MARVELL, SDIO_DEVICE_ID_MARVELL_8997_BT),
-			.driver_data = (अचिन्हित दीर्घ)&bपंचांगrvl_sdio_sd8997 पूर्ण,
+	{ SDIO_DEVICE(SDIO_VENDOR_ID_MARVELL, SDIO_DEVICE_ID_MARVELL_8997_BT),
+			.driver_data = (unsigned long)&btmrvl_sdio_sd8997 },
 
-	अणु पूर्ण	/* Terminating entry */
-पूर्ण;
+	{ }	/* Terminating entry */
+};
 
-MODULE_DEVICE_TABLE(sdio, bपंचांगrvl_sdio_ids);
+MODULE_DEVICE_TABLE(sdio, btmrvl_sdio_ids);
 
-अटल पूर्णांक bपंचांगrvl_sdio_get_rx_unit(काष्ठा bपंचांगrvl_sdio_card *card)
-अणु
+static int btmrvl_sdio_get_rx_unit(struct btmrvl_sdio_card *card)
+{
 	u8 reg;
-	पूर्णांक ret;
+	int ret;
 
-	reg = sdio_पढ़ोb(card->func, card->reg->card_rx_unit, &ret);
-	अगर (!ret)
+	reg = sdio_readb(card->func, card->reg->card_rx_unit, &ret);
+	if (!ret)
 		card->rx_unit = reg;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bपंचांगrvl_sdio_पढ़ो_fw_status(काष्ठा bपंचांगrvl_sdio_card *card, u16 *dat)
-अणु
+static int btmrvl_sdio_read_fw_status(struct btmrvl_sdio_card *card, u16 *dat)
+{
 	u8 fws0, fws1;
-	पूर्णांक ret;
+	int ret;
 
 	*dat = 0;
 
-	fws0 = sdio_पढ़ोb(card->func, card->reg->card_fw_status0, &ret);
-	अगर (ret)
-		वापस -EIO;
+	fws0 = sdio_readb(card->func, card->reg->card_fw_status0, &ret);
+	if (ret)
+		return -EIO;
 
-	fws1 = sdio_पढ़ोb(card->func, card->reg->card_fw_status1, &ret);
-	अगर (ret)
-		वापस -EIO;
+	fws1 = sdio_readb(card->func, card->reg->card_fw_status1, &ret);
+	if (ret)
+		return -EIO;
 
 	*dat = (((u16) fws1) << 8) | fws0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bपंचांगrvl_sdio_पढ़ो_rx_len(काष्ठा bपंचांगrvl_sdio_card *card, u16 *dat)
-अणु
+static int btmrvl_sdio_read_rx_len(struct btmrvl_sdio_card *card, u16 *dat)
+{
 	u8 reg;
-	पूर्णांक ret;
+	int ret;
 
-	reg = sdio_पढ़ोb(card->func, card->reg->card_rx_len, &ret);
-	अगर (!ret)
+	reg = sdio_readb(card->func, card->reg->card_rx_len, &ret);
+	if (!ret)
 		*dat = (u16) reg << card->rx_unit;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bपंचांगrvl_sdio_enable_host_पूर्णांक_mask(काष्ठा bपंचांगrvl_sdio_card *card,
+static int btmrvl_sdio_enable_host_int_mask(struct btmrvl_sdio_card *card,
 								u8 mask)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
-	sdio_ग_लिखोb(card->func, mask, card->reg->host_पूर्णांक_mask, &ret);
-	अगर (ret) अणु
+	sdio_writeb(card->func, mask, card->reg->host_int_mask, &ret);
+	if (ret) {
 		BT_ERR("Unable to enable the host interrupt!");
 		ret = -EIO;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bपंचांगrvl_sdio_disable_host_पूर्णांक_mask(काष्ठा bपंचांगrvl_sdio_card *card,
+static int btmrvl_sdio_disable_host_int_mask(struct btmrvl_sdio_card *card,
 								u8 mask)
-अणु
-	u8 host_पूर्णांक_mask;
-	पूर्णांक ret;
+{
+	u8 host_int_mask;
+	int ret;
 
-	host_पूर्णांक_mask = sdio_पढ़ोb(card->func, card->reg->host_पूर्णांक_mask, &ret);
-	अगर (ret)
-		वापस -EIO;
+	host_int_mask = sdio_readb(card->func, card->reg->host_int_mask, &ret);
+	if (ret)
+		return -EIO;
 
-	host_पूर्णांक_mask &= ~mask;
+	host_int_mask &= ~mask;
 
-	sdio_ग_लिखोb(card->func, host_पूर्णांक_mask, card->reg->host_पूर्णांक_mask, &ret);
-	अगर (ret < 0) अणु
+	sdio_writeb(card->func, host_int_mask, card->reg->host_int_mask, &ret);
+	if (ret < 0) {
 		BT_ERR("Unable to disable the host interrupt!");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bपंचांगrvl_sdio_poll_card_status(काष्ठा bपंचांगrvl_sdio_card *card, u8 bits)
-अणु
-	अचिन्हित पूर्णांक tries;
+static int btmrvl_sdio_poll_card_status(struct btmrvl_sdio_card *card, u8 bits)
+{
+	unsigned int tries;
 	u8 status;
-	पूर्णांक ret;
+	int ret;
 
-	क्रम (tries = 0; tries < MAX_POLL_TRIES * 1000; tries++) अणु
-		status = sdio_पढ़ोb(card->func, card->reg->card_status,	&ret);
-		अगर (ret)
-			जाओ failed;
-		अगर ((status & bits) == bits)
-			वापस ret;
+	for (tries = 0; tries < MAX_POLL_TRIES * 1000; tries++) {
+		status = sdio_readb(card->func, card->reg->card_status,	&ret);
+		if (ret)
+			goto failed;
+		if ((status & bits) == bits)
+			return ret;
 
 		udelay(1);
-	पूर्ण
+	}
 
 	ret = -ETIMEDOUT;
 
 failed:
 	BT_ERR("FAILED! ret=%d", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bपंचांगrvl_sdio_verअगरy_fw_करोwnload(काष्ठा bपंचांगrvl_sdio_card *card,
-								पूर्णांक pollnum)
-अणु
+static int btmrvl_sdio_verify_fw_download(struct btmrvl_sdio_card *card,
+								int pollnum)
+{
 	u16 firmwarestat;
-	पूर्णांक tries, ret;
+	int tries, ret;
 
-	 /* Wait क्रम firmware to become पढ़ोy */
-	क्रम (tries = 0; tries < pollnum; tries++) अणु
+	 /* Wait for firmware to become ready */
+	for (tries = 0; tries < pollnum; tries++) {
 		sdio_claim_host(card->func);
-		ret = bपंचांगrvl_sdio_पढ़ो_fw_status(card, &firmwarestat);
+		ret = btmrvl_sdio_read_fw_status(card, &firmwarestat);
 		sdio_release_host(card->func);
-		अगर (ret < 0)
-			जारी;
+		if (ret < 0)
+			continue;
 
-		अगर (firmwarestat == FIRMWARE_READY)
-			वापस 0;
+		if (firmwarestat == FIRMWARE_READY)
+			return 0;
 
 		msleep(100);
-	पूर्ण
+	}
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल पूर्णांक bपंचांगrvl_sdio_करोwnload_helper(काष्ठा bपंचांगrvl_sdio_card *card)
-अणु
-	स्थिर काष्ठा firmware *fw_helper = शून्य;
-	स्थिर u8 *helper = शून्य;
-	पूर्णांक ret;
-	व्योम *पंचांगphlprbuf = शून्य;
-	पूर्णांक पंचांगphlprbufsz, hlprblknow, helperlen;
+static int btmrvl_sdio_download_helper(struct btmrvl_sdio_card *card)
+{
+	const struct firmware *fw_helper = NULL;
+	const u8 *helper = NULL;
+	int ret;
+	void *tmphlprbuf = NULL;
+	int tmphlprbufsz, hlprblknow, helperlen;
 	u8 *helperbuf;
 	u32 tx_len;
 
 	ret = request_firmware(&fw_helper, card->helper,
 						&card->func->dev);
-	अगर ((ret < 0) || !fw_helper) अणु
+	if ((ret < 0) || !fw_helper) {
 		BT_ERR("request_firmware(helper) failed, error code = %d",
 									ret);
 		ret = -ENOENT;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	helper = fw_helper->data;
 	helperlen = fw_helper->size;
@@ -496,37 +495,37 @@ failed:
 	BT_DBG("Downloading helper image (%d bytes), block size %d bytes",
 						helperlen, SDIO_BLOCK_SIZE);
 
-	पंचांगphlprbufsz = ALIGN_SZ(BTM_UPLD_SIZE, BTSDIO_DMA_ALIGN);
+	tmphlprbufsz = ALIGN_SZ(BTM_UPLD_SIZE, BTSDIO_DMA_ALIGN);
 
-	पंचांगphlprbuf = kzalloc(पंचांगphlprbufsz, GFP_KERNEL);
-	अगर (!पंचांगphlprbuf) अणु
+	tmphlprbuf = kzalloc(tmphlprbufsz, GFP_KERNEL);
+	if (!tmphlprbuf) {
 		BT_ERR("Unable to allocate buffer for helper."
 			" Terminating download");
 		ret = -ENOMEM;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	helperbuf = (u8 *) ALIGN_ADDR(पंचांगphlprbuf, BTSDIO_DMA_ALIGN);
+	helperbuf = (u8 *) ALIGN_ADDR(tmphlprbuf, BTSDIO_DMA_ALIGN);
 
-	/* Perक्रमm helper data transfer */
+	/* Perform helper data transfer */
 	tx_len = (FIRMWARE_TRANSFER_NBLOCK * SDIO_BLOCK_SIZE)
 			- SDIO_HEADER_LEN;
 	hlprblknow = 0;
 
-	करो अणु
-		ret = bपंचांगrvl_sdio_poll_card_status(card,
+	do {
+		ret = btmrvl_sdio_poll_card_status(card,
 					    CARD_IO_READY | DN_LD_CARD_RDY);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			BT_ERR("Helper download poll status timeout @ %d",
 				hlprblknow);
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 
-		/* Check अगर there is more data? */
-		अगर (hlprblknow >= helperlen)
-			अवरोध;
+		/* Check if there is more data? */
+		if (hlprblknow >= helperlen)
+			break;
 
-		अगर (helperlen - hlprblknow < tx_len)
+		if (helperlen - hlprblknow < tx_len)
 			tx_len = helperlen - hlprblknow;
 
 		/* Little-endian */
@@ -535,311 +534,311 @@ failed:
 		helperbuf[2] = ((tx_len & 0x00ff0000) >> 16);
 		helperbuf[3] = ((tx_len & 0xff000000) >> 24);
 
-		स_नकल(&helperbuf[SDIO_HEADER_LEN], &helper[hlprblknow],
+		memcpy(&helperbuf[SDIO_HEADER_LEN], &helper[hlprblknow],
 				tx_len);
 
 		/* Now send the data */
-		ret = sdio_ग_लिखोsb(card->func, card->ioport, helperbuf,
+		ret = sdio_writesb(card->func, card->ioport, helperbuf,
 				FIRMWARE_TRANSFER_NBLOCK * SDIO_BLOCK_SIZE);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			BT_ERR("IO error during helper download @ %d",
 				hlprblknow);
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 
 		hlprblknow += tx_len;
-	पूर्ण जबतक (true);
+	} while (true);
 
 	BT_DBG("Transferring helper image EOF block");
 
-	स_रखो(helperbuf, 0x0, SDIO_BLOCK_SIZE);
+	memset(helperbuf, 0x0, SDIO_BLOCK_SIZE);
 
-	ret = sdio_ग_लिखोsb(card->func, card->ioport, helperbuf,
+	ret = sdio_writesb(card->func, card->ioport, helperbuf,
 							SDIO_BLOCK_SIZE);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		BT_ERR("IO error in writing helper image EOF block");
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	ret = 0;
 
-करोne:
-	kमुक्त(पंचांगphlprbuf);
+done:
+	kfree(tmphlprbuf);
 	release_firmware(fw_helper);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bपंचांगrvl_sdio_करोwnload_fw_w_helper(काष्ठा bपंचांगrvl_sdio_card *card)
-अणु
-	स्थिर काष्ठा firmware *fw_firmware = शून्य;
-	स्थिर u8 *firmware = शून्य;
-	पूर्णांक firmwarelen, पंचांगpfwbufsz, ret;
-	अचिन्हित पूर्णांक tries, offset;
+static int btmrvl_sdio_download_fw_w_helper(struct btmrvl_sdio_card *card)
+{
+	const struct firmware *fw_firmware = NULL;
+	const u8 *firmware = NULL;
+	int firmwarelen, tmpfwbufsz, ret;
+	unsigned int tries, offset;
 	u8 base0, base1;
-	व्योम *पंचांगpfwbuf = शून्य;
+	void *tmpfwbuf = NULL;
 	u8 *fwbuf;
 	u16 len, blksz_dl = card->sd_blksz_fw_dl;
-	पूर्णांक txlen = 0, tx_blocks = 0, count = 0;
+	int txlen = 0, tx_blocks = 0, count = 0;
 
 	ret = request_firmware(&fw_firmware, card->firmware,
 							&card->func->dev);
-	अगर ((ret < 0) || !fw_firmware) अणु
+	if ((ret < 0) || !fw_firmware) {
 		BT_ERR("request_firmware(firmware) failed, error code = %d",
 									ret);
 		ret = -ENOENT;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	firmware = fw_firmware->data;
 	firmwarelen = fw_firmware->size;
 
 	BT_DBG("Downloading FW image (%d bytes)", firmwarelen);
 
-	पंचांगpfwbufsz = ALIGN_SZ(BTM_UPLD_SIZE, BTSDIO_DMA_ALIGN);
-	पंचांगpfwbuf = kzalloc(पंचांगpfwbufsz, GFP_KERNEL);
-	अगर (!पंचांगpfwbuf) अणु
+	tmpfwbufsz = ALIGN_SZ(BTM_UPLD_SIZE, BTSDIO_DMA_ALIGN);
+	tmpfwbuf = kzalloc(tmpfwbufsz, GFP_KERNEL);
+	if (!tmpfwbuf) {
 		BT_ERR("Unable to allocate buffer for firmware."
 		       " Terminating download");
 		ret = -ENOMEM;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* Ensure aligned firmware buffer */
-	fwbuf = (u8 *) ALIGN_ADDR(पंचांगpfwbuf, BTSDIO_DMA_ALIGN);
+	fwbuf = (u8 *) ALIGN_ADDR(tmpfwbuf, BTSDIO_DMA_ALIGN);
 
-	/* Perक्रमm firmware data transfer */
+	/* Perform firmware data transfer */
 	offset = 0;
-	करो अणु
-		ret = bपंचांगrvl_sdio_poll_card_status(card,
+	do {
+		ret = btmrvl_sdio_poll_card_status(card,
 					CARD_IO_READY | DN_LD_CARD_RDY);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			BT_ERR("FW download with helper poll status"
 						" timeout @ %d", offset);
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 
-		/* Check अगर there is more data ? */
-		अगर (offset >= firmwarelen)
-			अवरोध;
+		/* Check if there is more data ? */
+		if (offset >= firmwarelen)
+			break;
 
-		क्रम (tries = 0; tries < MAX_POLL_TRIES; tries++) अणु
-			base0 = sdio_पढ़ोb(card->func,
-					card->reg->sq_पढ़ो_base_addr_a0, &ret);
-			अगर (ret) अणु
+		for (tries = 0; tries < MAX_POLL_TRIES; tries++) {
+			base0 = sdio_readb(card->func,
+					card->reg->sq_read_base_addr_a0, &ret);
+			if (ret) {
 				BT_ERR("BASE0 register read failed:"
 					" base0 = 0x%04X(%d)."
 					" Terminating download",
 					base0, base0);
 				ret = -EIO;
-				जाओ करोne;
-			पूर्ण
-			base1 = sdio_पढ़ोb(card->func,
-					card->reg->sq_पढ़ो_base_addr_a1, &ret);
-			अगर (ret) अणु
+				goto done;
+			}
+			base1 = sdio_readb(card->func,
+					card->reg->sq_read_base_addr_a1, &ret);
+			if (ret) {
 				BT_ERR("BASE1 register read failed:"
 					" base1 = 0x%04X(%d)."
 					" Terminating download",
 					base1, base1);
 				ret = -EIO;
-				जाओ करोne;
-			पूर्ण
+				goto done;
+			}
 
 			len = (((u16) base1) << 8) | base0;
-			अगर (len)
-				अवरोध;
+			if (len)
+				break;
 
 			udelay(10);
-		पूर्ण
+		}
 
-		अगर (!len)
-			अवरोध;
-		अन्यथा अगर (len > BTM_UPLD_SIZE) अणु
+		if (!len)
+			break;
+		else if (len > BTM_UPLD_SIZE) {
 			BT_ERR("FW download failure @%d, invalid length %d",
 								offset, len);
 			ret = -EINVAL;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 
 		txlen = len;
 
-		अगर (len & BIT(0)) अणु
+		if (len & BIT(0)) {
 			count++;
-			अगर (count > MAX_WRITE_IOMEM_RETRY) अणु
+			if (count > MAX_WRITE_IOMEM_RETRY) {
 				BT_ERR("FW download failure @%d, "
 					"over max retry count", offset);
 				ret = -EIO;
-				जाओ करोne;
-			पूर्ण
+				goto done;
+			}
 			BT_ERR("FW CRC error indicated by the helper: "
 				"len = 0x%04X, txlen = %d", len, txlen);
 			len &= ~BIT(0);
 			/* Set txlen to 0 so as to resend from same offset */
 			txlen = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			count = 0;
 
 			/* Last block ? */
-			अगर (firmwarelen - offset < txlen)
+			if (firmwarelen - offset < txlen)
 				txlen = firmwarelen - offset;
 
 			tx_blocks = DIV_ROUND_UP(txlen, blksz_dl);
 
-			स_नकल(fwbuf, &firmware[offset], txlen);
-		पूर्ण
+			memcpy(fwbuf, &firmware[offset], txlen);
+		}
 
-		ret = sdio_ग_लिखोsb(card->func, card->ioport, fwbuf,
+		ret = sdio_writesb(card->func, card->ioport, fwbuf,
 						tx_blocks * blksz_dl);
 
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			BT_ERR("FW download, writesb(%d) failed @%d",
 							count, offset);
-			sdio_ग_लिखोb(card->func, HOST_CMD53_FIN,
+			sdio_writeb(card->func, HOST_CMD53_FIN,
 						card->reg->cfg, &ret);
-			अगर (ret)
+			if (ret)
 				BT_ERR("writeb failed (CFG)");
-		पूर्ण
+		}
 
 		offset += txlen;
-	पूर्ण जबतक (true);
+	} while (true);
 
 	BT_INFO("FW download over, size %d bytes", offset);
 
 	ret = 0;
 
-करोne:
-	kमुक्त(पंचांगpfwbuf);
+done:
+	kfree(tmpfwbuf);
 	release_firmware(fw_firmware);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bपंचांगrvl_sdio_card_to_host(काष्ठा bपंचांगrvl_निजी *priv)
-अणु
+static int btmrvl_sdio_card_to_host(struct btmrvl_private *priv)
+{
 	u16 buf_len = 0;
-	पूर्णांक ret, num_blocks, blksz;
-	काष्ठा sk_buff *skb = शून्य;
+	int ret, num_blocks, blksz;
+	struct sk_buff *skb = NULL;
 	u32 type;
 	u8 *payload;
-	काष्ठा hci_dev *hdev = priv->bपंचांगrvl_dev.hcidev;
-	काष्ठा bपंचांगrvl_sdio_card *card = priv->bपंचांगrvl_dev.card;
+	struct hci_dev *hdev = priv->btmrvl_dev.hcidev;
+	struct btmrvl_sdio_card *card = priv->btmrvl_dev.card;
 
-	अगर (!card || !card->func) अणु
+	if (!card || !card->func) {
 		BT_ERR("card or function is NULL!");
 		ret = -EINVAL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	/* Read the length of data to be transferred */
-	ret = bपंचांगrvl_sdio_पढ़ो_rx_len(card, &buf_len);
-	अगर (ret < 0) अणु
+	ret = btmrvl_sdio_read_rx_len(card, &buf_len);
+	if (ret < 0) {
 		BT_ERR("read rx_len failed");
 		ret = -EIO;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	blksz = SDIO_BLOCK_SIZE;
 	num_blocks = DIV_ROUND_UP(buf_len, blksz);
 
-	अगर (buf_len <= SDIO_HEADER_LEN
-	    || (num_blocks * blksz) > ALLOC_BUF_SIZE) अणु
+	if (buf_len <= SDIO_HEADER_LEN
+	    || (num_blocks * blksz) > ALLOC_BUF_SIZE) {
 		BT_ERR("invalid packet length: %d", buf_len);
 		ret = -EINVAL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	/* Allocate buffer */
 	skb = bt_skb_alloc(num_blocks * blksz + BTSDIO_DMA_ALIGN, GFP_KERNEL);
-	अगर (!skb) अणु
+	if (!skb) {
 		BT_ERR("No free skb");
 		ret = -ENOMEM;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर ((अचिन्हित दीर्घ) skb->data & (BTSDIO_DMA_ALIGN - 1)) अणु
-		skb_put(skb, (अचिन्हित दीर्घ) skb->data &
+	if ((unsigned long) skb->data & (BTSDIO_DMA_ALIGN - 1)) {
+		skb_put(skb, (unsigned long) skb->data &
 					(BTSDIO_DMA_ALIGN - 1));
-		skb_pull(skb, (अचिन्हित दीर्घ) skb->data &
+		skb_pull(skb, (unsigned long) skb->data &
 					(BTSDIO_DMA_ALIGN - 1));
-	पूर्ण
+	}
 
 	payload = skb->data;
 
-	ret = sdio_पढ़ोsb(card->func, payload, card->ioport,
+	ret = sdio_readsb(card->func, payload, card->ioport,
 			  num_blocks * blksz);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		BT_ERR("readsb failed: %d", ret);
 		ret = -EIO;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	/* This is SDIO specअगरic header length: byte[2][1][0], type: byte[3]
-	 * (HCI_COMMAND = 1, ACL_DATA = 2, SCO_DATA = 3, 0xFE = Venकरोr)
+	/* This is SDIO specific header length: byte[2][1][0], type: byte[3]
+	 * (HCI_COMMAND = 1, ACL_DATA = 2, SCO_DATA = 3, 0xFE = Vendor)
 	 */
 
 	buf_len = payload[0];
 	buf_len |= payload[1] << 8;
 	buf_len |= payload[2] << 16;
 
-	अगर (buf_len > blksz * num_blocks) अणु
+	if (buf_len > blksz * num_blocks) {
 		BT_ERR("Skip incorrect packet: hdrlen %d buffer %d",
 		       buf_len, blksz * num_blocks);
 		ret = -EIO;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	type = payload[3];
 
-	चयन (type) अणु
-	हाल HCI_ACLDATA_PKT:
-	हाल HCI_SCODATA_PKT:
-	हाल HCI_EVENT_PKT:
+	switch (type) {
+	case HCI_ACLDATA_PKT:
+	case HCI_SCODATA_PKT:
+	case HCI_EVENT_PKT:
 		hci_skb_pkt_type(skb) = type;
 		skb_put(skb, buf_len);
 		skb_pull(skb, SDIO_HEADER_LEN);
 
-		अगर (type == HCI_EVENT_PKT) अणु
-			अगर (bपंचांगrvl_check_evtpkt(priv, skb))
+		if (type == HCI_EVENT_PKT) {
+			if (btmrvl_check_evtpkt(priv, skb))
 				hci_recv_frame(hdev, skb);
-		पूर्ण अन्यथा अणु
+		} else {
 			hci_recv_frame(hdev, skb);
-		पूर्ण
+		}
 
 		hdev->stat.byte_rx += buf_len;
-		अवरोध;
+		break;
 
-	हाल MRVL_VENDOR_PKT:
+	case MRVL_VENDOR_PKT:
 		hci_skb_pkt_type(skb) = HCI_VENDOR_PKT;
 		skb_put(skb, buf_len);
 		skb_pull(skb, SDIO_HEADER_LEN);
 
-		अगर (bपंचांगrvl_process_event(priv, skb))
+		if (btmrvl_process_event(priv, skb))
 			hci_recv_frame(hdev, skb);
 
 		hdev->stat.byte_rx += buf_len;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		BT_ERR("Unknown packet type:%d", type);
 		BT_ERR("hex: %*ph", blksz * num_blocks, payload);
 
-		kमुक्त_skb(skb);
-		skb = शून्य;
-		अवरोध;
-	पूर्ण
+		kfree_skb(skb);
+		skb = NULL;
+		break;
+	}
 
-निकास:
-	अगर (ret) अणु
+exit:
+	if (ret) {
 		hdev->stat.err_rx++;
-		kमुक्त_skb(skb);
-	पूर्ण
+		kfree_skb(skb);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bपंचांगrvl_sdio_process_पूर्णांक_status(काष्ठा bपंचांगrvl_निजी *priv)
-अणु
-	uदीर्घ flags;
+static int btmrvl_sdio_process_int_status(struct btmrvl_private *priv)
+{
+	ulong flags;
 	u8 ireg;
-	काष्ठा bपंचांगrvl_sdio_card *card = priv->bपंचांगrvl_dev.card;
+	struct btmrvl_sdio_card *card = priv->btmrvl_dev.card;
 
 	spin_lock_irqsave(&priv->driver_lock, flags);
 	ireg = sdio_ireg;
@@ -847,196 +846,196 @@ failed:
 	spin_unlock_irqrestore(&priv->driver_lock, flags);
 
 	sdio_claim_host(card->func);
-	अगर (ireg & DN_LD_HOST_INT_STATUS) अणु
-		अगर (priv->bपंचांगrvl_dev.tx_dnld_rdy)
+	if (ireg & DN_LD_HOST_INT_STATUS) {
+		if (priv->btmrvl_dev.tx_dnld_rdy)
 			BT_DBG("tx_done already received: "
 				" int_status=0x%x", ireg);
-		अन्यथा
-			priv->bपंचांगrvl_dev.tx_dnld_rdy = true;
-	पूर्ण
+		else
+			priv->btmrvl_dev.tx_dnld_rdy = true;
+	}
 
-	अगर (ireg & UP_LD_HOST_INT_STATUS)
-		bपंचांगrvl_sdio_card_to_host(priv);
+	if (ireg & UP_LD_HOST_INT_STATUS)
+		btmrvl_sdio_card_to_host(priv);
 
 	sdio_release_host(card->func);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bपंचांगrvl_sdio_पढ़ो_to_clear(काष्ठा bपंचांगrvl_sdio_card *card, u8 *ireg)
-अणु
-	काष्ठा bपंचांगrvl_adapter *adapter = card->priv->adapter;
-	पूर्णांक ret;
+static int btmrvl_sdio_read_to_clear(struct btmrvl_sdio_card *card, u8 *ireg)
+{
+	struct btmrvl_adapter *adapter = card->priv->adapter;
+	int ret;
 
-	ret = sdio_पढ़ोsb(card->func, adapter->hw_regs, 0, SDIO_BLOCK_SIZE);
-	अगर (ret) अणु
+	ret = sdio_readsb(card->func, adapter->hw_regs, 0, SDIO_BLOCK_SIZE);
+	if (ret) {
 		BT_ERR("sdio_readsb: read int hw_regs failed: %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	*ireg = adapter->hw_regs[card->reg->host_पूर्णांकstatus];
-	BT_DBG("hw_regs[%#x]=%#x", card->reg->host_पूर्णांकstatus, *ireg);
+	*ireg = adapter->hw_regs[card->reg->host_intstatus];
+	BT_DBG("hw_regs[%#x]=%#x", card->reg->host_intstatus, *ireg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bपंचांगrvl_sdio_ग_लिखो_to_clear(काष्ठा bपंचांगrvl_sdio_card *card, u8 *ireg)
-अणु
-	पूर्णांक ret;
+static int btmrvl_sdio_write_to_clear(struct btmrvl_sdio_card *card, u8 *ireg)
+{
+	int ret;
 
-	*ireg = sdio_पढ़ोb(card->func, card->reg->host_पूर्णांकstatus, &ret);
-	अगर (ret) अणु
+	*ireg = sdio_readb(card->func, card->reg->host_intstatus, &ret);
+	if (ret) {
 		BT_ERR("sdio_readb: read int status failed: %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (*ireg) अणु
+	if (*ireg) {
 		/*
 		 * DN_LD_HOST_INT_STATUS and/or UP_LD_HOST_INT_STATUS
-		 * Clear the पूर्णांकerrupt status रेजिस्टर and re-enable the
-		 * पूर्णांकerrupt.
+		 * Clear the interrupt status register and re-enable the
+		 * interrupt.
 		 */
 		BT_DBG("int_status = 0x%x", *ireg);
 
-		sdio_ग_लिखोb(card->func, ~(*ireg) & (DN_LD_HOST_INT_STATUS |
+		sdio_writeb(card->func, ~(*ireg) & (DN_LD_HOST_INT_STATUS |
 						    UP_LD_HOST_INT_STATUS),
-			    card->reg->host_पूर्णांकstatus, &ret);
-		अगर (ret) अणु
+			    card->reg->host_intstatus, &ret);
+		if (ret) {
 			BT_ERR("sdio_writeb: clear int status failed: %d", ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम bपंचांगrvl_sdio_पूर्णांकerrupt(काष्ठा sdio_func *func)
-अणु
-	काष्ठा bपंचांगrvl_निजी *priv;
-	काष्ठा bपंचांगrvl_sdio_card *card;
-	uदीर्घ flags;
+static void btmrvl_sdio_interrupt(struct sdio_func *func)
+{
+	struct btmrvl_private *priv;
+	struct btmrvl_sdio_card *card;
+	ulong flags;
 	u8 ireg = 0;
-	पूर्णांक ret;
+	int ret;
 
 	card = sdio_get_drvdata(func);
-	अगर (!card || !card->priv) अणु
+	if (!card || !card->priv) {
 		BT_ERR("sbi_interrupt(%p) card or priv is NULL, card=%p",
 		       func, card);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	priv = card->priv;
 
-	अगर (priv->surprise_हटाओd)
-		वापस;
+	if (priv->surprise_removed)
+		return;
 
-	अगर (card->reg->पूर्णांक_पढ़ो_to_clear)
-		ret = bपंचांगrvl_sdio_पढ़ो_to_clear(card, &ireg);
-	अन्यथा
-		ret = bपंचांगrvl_sdio_ग_लिखो_to_clear(card, &ireg);
+	if (card->reg->int_read_to_clear)
+		ret = btmrvl_sdio_read_to_clear(card, &ireg);
+	else
+		ret = btmrvl_sdio_write_to_clear(card, &ireg);
 
-	अगर (ret)
-		वापस;
+	if (ret)
+		return;
 
 	spin_lock_irqsave(&priv->driver_lock, flags);
 	sdio_ireg |= ireg;
 	spin_unlock_irqrestore(&priv->driver_lock, flags);
 
-	bपंचांगrvl_पूर्णांकerrupt(priv);
-पूर्ण
+	btmrvl_interrupt(priv);
+}
 
-अटल पूर्णांक bपंचांगrvl_sdio_रेजिस्टर_dev(काष्ठा bपंचांगrvl_sdio_card *card)
-अणु
-	काष्ठा sdio_func *func;
+static int btmrvl_sdio_register_dev(struct btmrvl_sdio_card *card)
+{
+	struct sdio_func *func;
 	u8 reg;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!card || !card->func) अणु
+	if (!card || !card->func) {
 		BT_ERR("Error: card or function is NULL!");
 		ret = -EINVAL;
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	func = card->func;
 
 	sdio_claim_host(func);
 
 	ret = sdio_enable_func(func);
-	अगर (ret) अणु
+	if (ret) {
 		BT_ERR("sdio_enable_func() failed: ret=%d", ret);
 		ret = -EIO;
-		जाओ release_host;
-	पूर्ण
+		goto release_host;
+	}
 
-	ret = sdio_claim_irq(func, bपंचांगrvl_sdio_पूर्णांकerrupt);
-	अगर (ret) अणु
+	ret = sdio_claim_irq(func, btmrvl_sdio_interrupt);
+	if (ret) {
 		BT_ERR("sdio_claim_irq failed: ret=%d", ret);
 		ret = -EIO;
-		जाओ disable_func;
-	पूर्ण
+		goto disable_func;
+	}
 
 	ret = sdio_set_block_size(card->func, SDIO_BLOCK_SIZE);
-	अगर (ret) अणु
+	if (ret) {
 		BT_ERR("cannot set SDIO block size");
 		ret = -EIO;
-		जाओ release_irq;
-	पूर्ण
+		goto release_irq;
+	}
 
-	reg = sdio_पढ़ोb(func, card->reg->io_port_0, &ret);
-	अगर (ret < 0) अणु
+	reg = sdio_readb(func, card->reg->io_port_0, &ret);
+	if (ret < 0) {
 		ret = -EIO;
-		जाओ release_irq;
-	पूर्ण
+		goto release_irq;
+	}
 
 	card->ioport = reg;
 
-	reg = sdio_पढ़ोb(func, card->reg->io_port_1, &ret);
-	अगर (ret < 0) अणु
+	reg = sdio_readb(func, card->reg->io_port_1, &ret);
+	if (ret < 0) {
 		ret = -EIO;
-		जाओ release_irq;
-	पूर्ण
+		goto release_irq;
+	}
 
 	card->ioport |= (reg << 8);
 
-	reg = sdio_पढ़ोb(func, card->reg->io_port_2, &ret);
-	अगर (ret < 0) अणु
+	reg = sdio_readb(func, card->reg->io_port_2, &ret);
+	if (ret < 0) {
 		ret = -EIO;
-		जाओ release_irq;
-	पूर्ण
+		goto release_irq;
+	}
 
 	card->ioport |= (reg << 16);
 
 	BT_DBG("SDIO FUNC%d IO port: 0x%x", func->num, card->ioport);
 
-	अगर (card->reg->पूर्णांक_पढ़ो_to_clear) अणु
-		reg = sdio_पढ़ोb(func, card->reg->host_पूर्णांक_rsr, &ret);
-		अगर (ret < 0) अणु
+	if (card->reg->int_read_to_clear) {
+		reg = sdio_readb(func, card->reg->host_int_rsr, &ret);
+		if (ret < 0) {
 			ret = -EIO;
-			जाओ release_irq;
-		पूर्ण
-		sdio_ग_लिखोb(func, reg | 0x3f, card->reg->host_पूर्णांक_rsr, &ret);
-		अगर (ret < 0) अणु
+			goto release_irq;
+		}
+		sdio_writeb(func, reg | 0x3f, card->reg->host_int_rsr, &ret);
+		if (ret < 0) {
 			ret = -EIO;
-			जाओ release_irq;
-		पूर्ण
+			goto release_irq;
+		}
 
-		reg = sdio_पढ़ोb(func, card->reg->card_misc_cfg, &ret);
-		अगर (ret < 0) अणु
+		reg = sdio_readb(func, card->reg->card_misc_cfg, &ret);
+		if (ret < 0) {
 			ret = -EIO;
-			जाओ release_irq;
-		पूर्ण
-		sdio_ग_लिखोb(func, reg | 0x10, card->reg->card_misc_cfg, &ret);
-		अगर (ret < 0) अणु
+			goto release_irq;
+		}
+		sdio_writeb(func, reg | 0x10, card->reg->card_misc_cfg, &ret);
+		if (ret < 0) {
 			ret = -EIO;
-			जाओ release_irq;
-		पूर्ण
-	पूर्ण
+			goto release_irq;
+		}
+	}
 
 	sdio_set_drvdata(func, card);
 
 	sdio_release_host(func);
 
-	वापस 0;
+	return 0;
 
 release_irq:
 	sdio_release_irq(func);
@@ -1048,740 +1047,740 @@ release_host:
 	sdio_release_host(func);
 
 failed:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bपंचांगrvl_sdio_unरेजिस्टर_dev(काष्ठा bपंचांगrvl_sdio_card *card)
-अणु
-	अगर (card && card->func) अणु
+static int btmrvl_sdio_unregister_dev(struct btmrvl_sdio_card *card)
+{
+	if (card && card->func) {
 		sdio_claim_host(card->func);
 		sdio_release_irq(card->func);
 		sdio_disable_func(card->func);
 		sdio_release_host(card->func);
-		sdio_set_drvdata(card->func, शून्य);
-	पूर्ण
+		sdio_set_drvdata(card->func, NULL);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bपंचांगrvl_sdio_enable_host_पूर्णांक(काष्ठा bपंचांगrvl_sdio_card *card)
-अणु
-	पूर्णांक ret;
+static int btmrvl_sdio_enable_host_int(struct btmrvl_sdio_card *card)
+{
+	int ret;
 
-	अगर (!card || !card->func)
-		वापस -EINVAL;
-
-	sdio_claim_host(card->func);
-
-	ret = bपंचांगrvl_sdio_enable_host_पूर्णांक_mask(card, HIM_ENABLE);
-
-	bपंचांगrvl_sdio_get_rx_unit(card);
-
-	sdio_release_host(card->func);
-
-	वापस ret;
-पूर्ण
-
-अटल पूर्णांक bपंचांगrvl_sdio_disable_host_पूर्णांक(काष्ठा bपंचांगrvl_sdio_card *card)
-अणु
-	पूर्णांक ret;
-
-	अगर (!card || !card->func)
-		वापस -EINVAL;
+	if (!card || !card->func)
+		return -EINVAL;
 
 	sdio_claim_host(card->func);
 
-	ret = bपंचांगrvl_sdio_disable_host_पूर्णांक_mask(card, HIM_DISABLE);
+	ret = btmrvl_sdio_enable_host_int_mask(card, HIM_ENABLE);
+
+	btmrvl_sdio_get_rx_unit(card);
 
 	sdio_release_host(card->func);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bपंचांगrvl_sdio_host_to_card(काष्ठा bपंचांगrvl_निजी *priv,
+static int btmrvl_sdio_disable_host_int(struct btmrvl_sdio_card *card)
+{
+	int ret;
+
+	if (!card || !card->func)
+		return -EINVAL;
+
+	sdio_claim_host(card->func);
+
+	ret = btmrvl_sdio_disable_host_int_mask(card, HIM_DISABLE);
+
+	sdio_release_host(card->func);
+
+	return ret;
+}
+
+static int btmrvl_sdio_host_to_card(struct btmrvl_private *priv,
 				u8 *payload, u16 nb)
-अणु
-	काष्ठा bपंचांगrvl_sdio_card *card = priv->bपंचांगrvl_dev.card;
-	पूर्णांक ret = 0;
-	पूर्णांक blksz;
-	पूर्णांक i = 0;
-	u8 *buf = शून्य;
-	व्योम *पंचांगpbuf = शून्य;
-	पूर्णांक पंचांगpbufsz;
+{
+	struct btmrvl_sdio_card *card = priv->btmrvl_dev.card;
+	int ret = 0;
+	int blksz;
+	int i = 0;
+	u8 *buf = NULL;
+	void *tmpbuf = NULL;
+	int tmpbufsz;
 
-	अगर (!card || !card->func) अणु
+	if (!card || !card->func) {
 		BT_ERR("card or function is NULL!");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	blksz = DIV_ROUND_UP(nb, SDIO_BLOCK_SIZE) * SDIO_BLOCK_SIZE;
 
 	buf = payload;
-	अगर ((अचिन्हित दीर्घ) payload & (BTSDIO_DMA_ALIGN - 1) ||
-	    nb < blksz) अणु
-		पंचांगpbufsz = ALIGN_SZ(blksz, BTSDIO_DMA_ALIGN) +
+	if ((unsigned long) payload & (BTSDIO_DMA_ALIGN - 1) ||
+	    nb < blksz) {
+		tmpbufsz = ALIGN_SZ(blksz, BTSDIO_DMA_ALIGN) +
 			   BTSDIO_DMA_ALIGN;
-		पंचांगpbuf = kzalloc(पंचांगpbufsz, GFP_KERNEL);
-		अगर (!पंचांगpbuf)
-			वापस -ENOMEM;
-		buf = (u8 *) ALIGN_ADDR(पंचांगpbuf, BTSDIO_DMA_ALIGN);
-		स_नकल(buf, payload, nb);
-	पूर्ण
+		tmpbuf = kzalloc(tmpbufsz, GFP_KERNEL);
+		if (!tmpbuf)
+			return -ENOMEM;
+		buf = (u8 *) ALIGN_ADDR(tmpbuf, BTSDIO_DMA_ALIGN);
+		memcpy(buf, payload, nb);
+	}
 
 	sdio_claim_host(card->func);
 
-	करो अणु
+	do {
 		/* Transfer data to card */
-		ret = sdio_ग_लिखोsb(card->func, card->ioport, buf,
+		ret = sdio_writesb(card->func, card->ioport, buf,
 				   blksz);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			i++;
 			BT_ERR("i=%d writesb failed: %d", i, ret);
 			BT_ERR("hex: %*ph", nb, payload);
 			ret = -EIO;
-			अगर (i > MAX_WRITE_IOMEM_RETRY)
-				जाओ निकास;
-		पूर्ण
-	पूर्ण जबतक (ret);
+			if (i > MAX_WRITE_IOMEM_RETRY)
+				goto exit;
+		}
+	} while (ret);
 
-	priv->bपंचांगrvl_dev.tx_dnld_rdy = false;
+	priv->btmrvl_dev.tx_dnld_rdy = false;
 
-निकास:
+exit:
 	sdio_release_host(card->func);
-	kमुक्त(पंचांगpbuf);
+	kfree(tmpbuf);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bपंचांगrvl_sdio_करोwnload_fw(काष्ठा bपंचांगrvl_sdio_card *card)
-अणु
-	पूर्णांक ret;
+static int btmrvl_sdio_download_fw(struct btmrvl_sdio_card *card)
+{
+	int ret;
 	u8 fws0;
-	पूर्णांक pollnum = MAX_POLL_TRIES;
+	int pollnum = MAX_POLL_TRIES;
 
-	अगर (!card || !card->func) अणु
+	if (!card || !card->func) {
 		BT_ERR("card or function is NULL!");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!bपंचांगrvl_sdio_verअगरy_fw_करोwnload(card, 1)) अणु
+	if (!btmrvl_sdio_verify_fw_download(card, 1)) {
 		BT_DBG("Firmware already downloaded!");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	sdio_claim_host(card->func);
 
-	/* Check अगर other function driver is करोwnloading the firmware */
-	fws0 = sdio_पढ़ोb(card->func, card->reg->card_fw_status0, &ret);
-	अगर (ret) अणु
+	/* Check if other function driver is downloading the firmware */
+	fws0 = sdio_readb(card->func, card->reg->card_fw_status0, &ret);
+	if (ret) {
 		BT_ERR("Failed to read FW downloading status!");
 		ret = -EIO;
-		जाओ करोne;
-	पूर्ण
-	अगर (fws0) अणु
+		goto done;
+	}
+	if (fws0) {
 		BT_DBG("BT not the winner (%#x). Skip FW downloading", fws0);
 
-		/* Give other function more समय to करोwnload the firmware */
+		/* Give other function more time to download the firmware */
 		pollnum *= 10;
-	पूर्ण अन्यथा अणु
-		अगर (card->helper) अणु
-			ret = bपंचांगrvl_sdio_करोwnload_helper(card);
-			अगर (ret) अणु
+	} else {
+		if (card->helper) {
+			ret = btmrvl_sdio_download_helper(card);
+			if (ret) {
 				BT_ERR("Failed to download helper!");
 				ret = -EIO;
-				जाओ करोne;
-			पूर्ण
-		पूर्ण
+				goto done;
+			}
+		}
 
-		अगर (bपंचांगrvl_sdio_करोwnload_fw_w_helper(card)) अणु
+		if (btmrvl_sdio_download_fw_w_helper(card)) {
 			BT_ERR("Failed to download firmware!");
 			ret = -EIO;
-			जाओ करोne;
-		पूर्ण
-	पूर्ण
+			goto done;
+		}
+	}
 
 	/*
 	 * winner or not, with this test the FW synchronizes when the
-	 * module can जारी its initialization
+	 * module can continue its initialization
 	 */
-	अगर (bपंचांगrvl_sdio_verअगरy_fw_करोwnload(card, pollnum)) अणु
+	if (btmrvl_sdio_verify_fw_download(card, pollnum)) {
 		BT_ERR("FW failed to be active in time!");
 		ret = -ETIMEDOUT;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	sdio_release_host(card->func);
 
-	वापस 0;
+	return 0;
 
-करोne:
+done:
 	sdio_release_host(card->func);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bपंचांगrvl_sdio_wakeup_fw(काष्ठा bपंचांगrvl_निजी *priv)
-अणु
-	काष्ठा bपंचांगrvl_sdio_card *card = priv->bपंचांगrvl_dev.card;
-	पूर्णांक ret = 0;
+static int btmrvl_sdio_wakeup_fw(struct btmrvl_private *priv)
+{
+	struct btmrvl_sdio_card *card = priv->btmrvl_dev.card;
+	int ret = 0;
 
-	अगर (!card || !card->func) अणु
+	if (!card || !card->func) {
 		BT_ERR("card or function is NULL!");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	sdio_claim_host(card->func);
 
-	sdio_ग_लिखोb(card->func, HOST_POWER_UP, card->reg->cfg, &ret);
+	sdio_writeb(card->func, HOST_POWER_UP, card->reg->cfg, &ret);
 
 	sdio_release_host(card->func);
 
 	BT_DBG("wake up firmware");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम bपंचांगrvl_sdio_dump_regs(काष्ठा bपंचांगrvl_निजी *priv)
-अणु
-	काष्ठा bपंचांगrvl_sdio_card *card = priv->bपंचांगrvl_dev.card;
-	पूर्णांक ret = 0;
-	अचिन्हित पूर्णांक reg, reg_start, reg_end;
-	अक्षर buf[256], *ptr;
+static void btmrvl_sdio_dump_regs(struct btmrvl_private *priv)
+{
+	struct btmrvl_sdio_card *card = priv->btmrvl_dev.card;
+	int ret = 0;
+	unsigned int reg, reg_start, reg_end;
+	char buf[256], *ptr;
 	u8 loop, func, data;
-	पूर्णांक MAX_LOOP = 2;
+	int MAX_LOOP = 2;
 
-	bपंचांगrvl_sdio_wakeup_fw(priv);
+	btmrvl_sdio_wakeup_fw(priv);
 	sdio_claim_host(card->func);
 
-	क्रम (loop = 0; loop < MAX_LOOP; loop++) अणु
-		स_रखो(buf, 0, माप(buf));
+	for (loop = 0; loop < MAX_LOOP; loop++) {
+		memset(buf, 0, sizeof(buf));
 		ptr = buf;
 
-		अगर (loop == 0) अणु
-			/* Read the रेजिस्टरs of SDIO function0 */
+		if (loop == 0) {
+			/* Read the registers of SDIO function0 */
 			func = loop;
 			reg_start = 0;
 			reg_end = 9;
-		पूर्ण अन्यथा अणु
+		} else {
 			func = 2;
 			reg_start = 0;
 			reg_end = 0x09;
-		पूर्ण
+		}
 
-		ptr += प्र_लिखो(ptr, "SDIO Func%d (%#x-%#x): ",
+		ptr += sprintf(ptr, "SDIO Func%d (%#x-%#x): ",
 			       func, reg_start, reg_end);
-		क्रम (reg = reg_start; reg <= reg_end; reg++) अणु
-			अगर (func == 0)
-				data = sdio_f0_पढ़ोb(card->func, reg, &ret);
-			अन्यथा
-				data = sdio_पढ़ोb(card->func, reg, &ret);
+		for (reg = reg_start; reg <= reg_end; reg++) {
+			if (func == 0)
+				data = sdio_f0_readb(card->func, reg, &ret);
+			else
+				data = sdio_readb(card->func, reg, &ret);
 
-			अगर (!ret) अणु
-				ptr += प्र_लिखो(ptr, "%02x ", data);
-			पूर्ण अन्यथा अणु
-				ptr += प्र_लिखो(ptr, "ERR");
-				अवरोध;
-			पूर्ण
-		पूर्ण
+			if (!ret) {
+				ptr += sprintf(ptr, "%02x ", data);
+			} else {
+				ptr += sprintf(ptr, "ERR");
+				break;
+			}
+		}
 
 		BT_INFO("%s", buf);
-	पूर्ण
+	}
 
 	sdio_release_host(card->func);
-पूर्ण
+}
 
-/* This function पढ़ो/ग_लिखो firmware */
-अटल क्रमागत
-rdwr_status bपंचांगrvl_sdio_rdwr_firmware(काष्ठा bपंचांगrvl_निजी *priv,
-				      u8 करोneflag)
-अणु
-	काष्ठा bपंचांगrvl_sdio_card *card = priv->bपंचांगrvl_dev.card;
-	पूर्णांक ret, tries;
+/* This function read/write firmware */
+static enum
+rdwr_status btmrvl_sdio_rdwr_firmware(struct btmrvl_private *priv,
+				      u8 doneflag)
+{
+	struct btmrvl_sdio_card *card = priv->btmrvl_dev.card;
+	int ret, tries;
 	u8 ctrl_data = 0;
 
-	sdio_ग_लिखोb(card->func, FW_DUMP_HOST_READY, card->reg->fw_dump_ctrl,
+	sdio_writeb(card->func, FW_DUMP_HOST_READY, card->reg->fw_dump_ctrl,
 		    &ret);
 
-	अगर (ret) अणु
+	if (ret) {
 		BT_ERR("SDIO write err");
-		वापस RDWR_STATUS_FAILURE;
-	पूर्ण
+		return RDWR_STATUS_FAILURE;
+	}
 
-	क्रम (tries = 0; tries < MAX_POLL_TRIES; tries++) अणु
-		ctrl_data = sdio_पढ़ोb(card->func, card->reg->fw_dump_ctrl,
+	for (tries = 0; tries < MAX_POLL_TRIES; tries++) {
+		ctrl_data = sdio_readb(card->func, card->reg->fw_dump_ctrl,
 				       &ret);
 
-		अगर (ret) अणु
+		if (ret) {
 			BT_ERR("SDIO read err");
-			वापस RDWR_STATUS_FAILURE;
-		पूर्ण
+			return RDWR_STATUS_FAILURE;
+		}
 
-		अगर (ctrl_data == FW_DUMP_DONE)
-			अवरोध;
-		अगर (करोneflag && ctrl_data == करोneflag)
-			वापस RDWR_STATUS_DONE;
-		अगर (ctrl_data != FW_DUMP_HOST_READY) अणु
+		if (ctrl_data == FW_DUMP_DONE)
+			break;
+		if (doneflag && ctrl_data == doneflag)
+			return RDWR_STATUS_DONE;
+		if (ctrl_data != FW_DUMP_HOST_READY) {
 			BT_INFO("The ctrl reg was changed, re-try again!");
-			sdio_ग_लिखोb(card->func, FW_DUMP_HOST_READY,
+			sdio_writeb(card->func, FW_DUMP_HOST_READY,
 				    card->reg->fw_dump_ctrl, &ret);
-			अगर (ret) अणु
+			if (ret) {
 				BT_ERR("SDIO write err");
-				वापस RDWR_STATUS_FAILURE;
-			पूर्ण
-		पूर्ण
+				return RDWR_STATUS_FAILURE;
+			}
+		}
 		usleep_range(100, 200);
-	पूर्ण
+	}
 
-	अगर (ctrl_data == FW_DUMP_HOST_READY) अणु
+	if (ctrl_data == FW_DUMP_HOST_READY) {
 		BT_ERR("Fail to pull ctrl_data");
-		वापस RDWR_STATUS_FAILURE;
-	पूर्ण
+		return RDWR_STATUS_FAILURE;
+	}
 
-	वापस RDWR_STATUS_SUCCESS;
-पूर्ण
+	return RDWR_STATUS_SUCCESS;
+}
 
-/* This function dump sdio रेजिस्टर and memory data */
-अटल व्योम bपंचांगrvl_sdio_coredump(काष्ठा device *dev)
-अणु
-	काष्ठा sdio_func *func = dev_to_sdio_func(dev);
-	काष्ठा bपंचांगrvl_sdio_card *card;
-	काष्ठा bपंचांगrvl_निजी *priv;
-	पूर्णांक ret = 0;
-	अचिन्हित पूर्णांक reg, reg_start, reg_end;
-	क्रमागत rdwr_status stat;
+/* This function dump sdio register and memory data */
+static void btmrvl_sdio_coredump(struct device *dev)
+{
+	struct sdio_func *func = dev_to_sdio_func(dev);
+	struct btmrvl_sdio_card *card;
+	struct btmrvl_private *priv;
+	int ret = 0;
+	unsigned int reg, reg_start, reg_end;
+	enum rdwr_status stat;
 	u8 *dbg_ptr, *end_ptr, *fw_dump_data, *fw_dump_ptr;
-	u8 dump_num = 0, idx, i, पढ़ो_reg, करोneflag = 0;
+	u8 dump_num = 0, idx, i, read_reg, doneflag = 0;
 	u32 memory_size, fw_dump_len = 0;
 
 	card = sdio_get_drvdata(func);
 	priv = card->priv;
 
-	/* dump sdio रेजिस्टर first */
-	bपंचांगrvl_sdio_dump_regs(priv);
+	/* dump sdio register first */
+	btmrvl_sdio_dump_regs(priv);
 
-	अगर (!card->supports_fw_dump) अणु
+	if (!card->supports_fw_dump) {
 		BT_ERR("Firmware dump not supported for this card!");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	क्रम (idx = 0; idx < ARRAY_SIZE(mem_type_mapping_tbl); idx++) अणु
-		काष्ठा memory_type_mapping *entry = &mem_type_mapping_tbl[idx];
+	for (idx = 0; idx < ARRAY_SIZE(mem_type_mapping_tbl); idx++) {
+		struct memory_type_mapping *entry = &mem_type_mapping_tbl[idx];
 
-		अगर (entry->mem_ptr) अणु
-			vमुक्त(entry->mem_ptr);
-			entry->mem_ptr = शून्य;
-		पूर्ण
+		if (entry->mem_ptr) {
+			vfree(entry->mem_ptr);
+			entry->mem_ptr = NULL;
+		}
 		entry->mem_size = 0;
-	पूर्ण
+	}
 
-	bपंचांगrvl_sdio_wakeup_fw(priv);
+	btmrvl_sdio_wakeup_fw(priv);
 	sdio_claim_host(card->func);
 
 	BT_INFO("== btmrvl firmware dump start ==");
 
-	stat = bपंचांगrvl_sdio_rdwr_firmware(priv, करोneflag);
-	अगर (stat == RDWR_STATUS_FAILURE)
-		जाओ करोne;
+	stat = btmrvl_sdio_rdwr_firmware(priv, doneflag);
+	if (stat == RDWR_STATUS_FAILURE)
+		goto done;
 
 	reg = card->reg->fw_dump_start;
 	/* Read the number of the memories which will dump */
-	dump_num = sdio_पढ़ोb(card->func, reg, &ret);
+	dump_num = sdio_readb(card->func, reg, &ret);
 
-	अगर (ret) अणु
+	if (ret) {
 		BT_ERR("SDIO read memory length err");
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* Read the length of every memory which will dump */
-	क्रम (idx = 0; idx < dump_num; idx++) अणु
-		काष्ठा memory_type_mapping *entry = &mem_type_mapping_tbl[idx];
+	for (idx = 0; idx < dump_num; idx++) {
+		struct memory_type_mapping *entry = &mem_type_mapping_tbl[idx];
 
-		stat = bपंचांगrvl_sdio_rdwr_firmware(priv, करोneflag);
-		अगर (stat == RDWR_STATUS_FAILURE)
-			जाओ करोne;
+		stat = btmrvl_sdio_rdwr_firmware(priv, doneflag);
+		if (stat == RDWR_STATUS_FAILURE)
+			goto done;
 
 		memory_size = 0;
 		reg = card->reg->fw_dump_start;
-		क्रम (i = 0; i < 4; i++) अणु
-			पढ़ो_reg = sdio_पढ़ोb(card->func, reg, &ret);
-			अगर (ret) अणु
+		for (i = 0; i < 4; i++) {
+			read_reg = sdio_readb(card->func, reg, &ret);
+			if (ret) {
 				BT_ERR("SDIO read err");
-				जाओ करोne;
-			पूर्ण
-			memory_size |= (पढ़ो_reg << i*8);
+				goto done;
+			}
+			memory_size |= (read_reg << i*8);
 			reg++;
-		पूर्ण
+		}
 
-		अगर (memory_size == 0) अणु
+		if (memory_size == 0) {
 			BT_INFO("Firmware dump finished!");
-			sdio_ग_लिखोb(card->func, FW_DUMP_READ_DONE,
+			sdio_writeb(card->func, FW_DUMP_READ_DONE,
 				    card->reg->fw_dump_ctrl, &ret);
-			अगर (ret) अणु
+			if (ret) {
 				BT_ERR("SDIO Write MEMDUMP_FINISH ERR");
-				जाओ करोne;
-			पूर्ण
-			अवरोध;
-		पूर्ण
+				goto done;
+			}
+			break;
+		}
 
 		BT_INFO("%s_SIZE=0x%x", entry->mem_name, memory_size);
 		entry->mem_ptr = vzalloc(memory_size + 1);
 		entry->mem_size = memory_size;
-		अगर (!entry->mem_ptr) अणु
+		if (!entry->mem_ptr) {
 			BT_ERR("Vzalloc %s failed", entry->mem_name);
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 
-		fw_dump_len += (म_माप("========Start dump ") +
-				म_माप(entry->mem_name) +
-				म_माप("========\n") +
+		fw_dump_len += (strlen("========Start dump ") +
+				strlen(entry->mem_name) +
+				strlen("========\n") +
 				(memory_size + 1) +
-				म_माप("\n========End dump========\n"));
+				strlen("\n========End dump========\n"));
 
 		dbg_ptr = entry->mem_ptr;
 		end_ptr = dbg_ptr + memory_size;
 
-		करोneflag = entry->करोne_flag;
+		doneflag = entry->done_flag;
 		BT_INFO("Start %s output, please wait...",
 			entry->mem_name);
 
-		करो अणु
-			stat = bपंचांगrvl_sdio_rdwr_firmware(priv, करोneflag);
-			अगर (stat == RDWR_STATUS_FAILURE)
-				जाओ करोne;
+		do {
+			stat = btmrvl_sdio_rdwr_firmware(priv, doneflag);
+			if (stat == RDWR_STATUS_FAILURE)
+				goto done;
 
 			reg_start = card->reg->fw_dump_start;
 			reg_end = card->reg->fw_dump_end;
-			क्रम (reg = reg_start; reg <= reg_end; reg++) अणु
-				*dbg_ptr = sdio_पढ़ोb(card->func, reg, &ret);
-				अगर (ret) अणु
+			for (reg = reg_start; reg <= reg_end; reg++) {
+				*dbg_ptr = sdio_readb(card->func, reg, &ret);
+				if (ret) {
 					BT_ERR("SDIO read err");
-					जाओ करोne;
-				पूर्ण
-				अगर (dbg_ptr < end_ptr)
+					goto done;
+				}
+				if (dbg_ptr < end_ptr)
 					dbg_ptr++;
-				अन्यथा
+				else
 					BT_ERR("Allocated buffer not enough");
-			पूर्ण
+			}
 
-			अगर (stat != RDWR_STATUS_DONE) अणु
-				जारी;
-			पूर्ण अन्यथा अणु
+			if (stat != RDWR_STATUS_DONE) {
+				continue;
+			} else {
 				BT_INFO("%s done: size=0x%tx",
 					entry->mem_name,
 					dbg_ptr - entry->mem_ptr);
-				अवरोध;
-			पूर्ण
-		पूर्ण जबतक (1);
-	पूर्ण
+				break;
+			}
+		} while (1);
+	}
 
 	BT_INFO("== btmrvl firmware dump end ==");
 
-करोne:
+done:
 	sdio_release_host(card->func);
 
-	अगर (fw_dump_len == 0)
-		वापस;
+	if (fw_dump_len == 0)
+		return;
 
 	fw_dump_data = vzalloc(fw_dump_len+1);
-	अगर (!fw_dump_data) अणु
+	if (!fw_dump_data) {
 		BT_ERR("Vzalloc fw_dump_data fail!");
-		वापस;
-	पूर्ण
+		return;
+	}
 	fw_dump_ptr = fw_dump_data;
 
-	/* Dump all the memory data पूर्णांकo single file, a userspace script will
+	/* Dump all the memory data into single file, a userspace script will
 	 * be used to split all the memory data to multiple files
 	 */
 	BT_INFO("== btmrvl firmware dump to /sys/class/devcoredump start");
-	क्रम (idx = 0; idx < dump_num; idx++) अणु
-		काष्ठा memory_type_mapping *entry = &mem_type_mapping_tbl[idx];
+	for (idx = 0; idx < dump_num; idx++) {
+		struct memory_type_mapping *entry = &mem_type_mapping_tbl[idx];
 
-		अगर (entry->mem_ptr) अणु
-			म_नकल(fw_dump_ptr, "========Start dump ");
-			fw_dump_ptr += म_माप("========Start dump ");
+		if (entry->mem_ptr) {
+			strcpy(fw_dump_ptr, "========Start dump ");
+			fw_dump_ptr += strlen("========Start dump ");
 
-			म_नकल(fw_dump_ptr, entry->mem_name);
-			fw_dump_ptr += म_माप(entry->mem_name);
+			strcpy(fw_dump_ptr, entry->mem_name);
+			fw_dump_ptr += strlen(entry->mem_name);
 
-			म_नकल(fw_dump_ptr, "========\n");
-			fw_dump_ptr += म_माप("========\n");
+			strcpy(fw_dump_ptr, "========\n");
+			fw_dump_ptr += strlen("========\n");
 
-			स_नकल(fw_dump_ptr, entry->mem_ptr, entry->mem_size);
+			memcpy(fw_dump_ptr, entry->mem_ptr, entry->mem_size);
 			fw_dump_ptr += entry->mem_size;
 
-			म_नकल(fw_dump_ptr, "\n========End dump========\n");
-			fw_dump_ptr += म_माप("\n========End dump========\n");
+			strcpy(fw_dump_ptr, "\n========End dump========\n");
+			fw_dump_ptr += strlen("\n========End dump========\n");
 
-			vमुक्त(mem_type_mapping_tbl[idx].mem_ptr);
-			mem_type_mapping_tbl[idx].mem_ptr = शून्य;
-		पूर्ण
-	पूर्ण
+			vfree(mem_type_mapping_tbl[idx].mem_ptr);
+			mem_type_mapping_tbl[idx].mem_ptr = NULL;
+		}
+	}
 
-	/* fw_dump_data will be मुक्त in device coredump release function
+	/* fw_dump_data will be free in device coredump release function
 	 * after 5 min
 	 */
 	dev_coredumpv(&card->func->dev, fw_dump_data, fw_dump_len, GFP_KERNEL);
 	BT_INFO("== btmrvl firmware dump to /sys/class/devcoredump end");
-पूर्ण
+}
 
-अटल पूर्णांक bपंचांगrvl_sdio_probe(काष्ठा sdio_func *func,
-					स्थिर काष्ठा sdio_device_id *id)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा bपंचांगrvl_निजी *priv = शून्य;
-	काष्ठा bपंचांगrvl_sdio_card *card = शून्य;
+static int btmrvl_sdio_probe(struct sdio_func *func,
+					const struct sdio_device_id *id)
+{
+	int ret = 0;
+	struct btmrvl_private *priv = NULL;
+	struct btmrvl_sdio_card *card = NULL;
 
 	BT_INFO("vendor=0x%x, device=0x%x, class=%d, fn=%d",
-			id->venकरोr, id->device, id->class, func->num);
+			id->vendor, id->device, id->class, func->num);
 
-	card = devm_kzalloc(&func->dev, माप(*card), GFP_KERNEL);
-	अगर (!card)
-		वापस -ENOMEM;
+	card = devm_kzalloc(&func->dev, sizeof(*card), GFP_KERNEL);
+	if (!card)
+		return -ENOMEM;
 
 	card->func = func;
 
-	अगर (id->driver_data) अणु
-		काष्ठा bपंचांगrvl_sdio_device *data = (व्योम *) id->driver_data;
+	if (id->driver_data) {
+		struct btmrvl_sdio_device *data = (void *) id->driver_data;
 		card->helper = data->helper;
 		card->firmware = data->firmware;
 		card->reg = data->reg;
 		card->sd_blksz_fw_dl = data->sd_blksz_fw_dl;
 		card->support_pscan_win_report = data->support_pscan_win_report;
 		card->supports_fw_dump = data->supports_fw_dump;
-	पूर्ण
+	}
 
-	अगर (bपंचांगrvl_sdio_रेजिस्टर_dev(card) < 0) अणु
+	if (btmrvl_sdio_register_dev(card) < 0) {
 		BT_ERR("Failed to register BT device!");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* Disable the पूर्णांकerrupts on the card */
-	bपंचांगrvl_sdio_disable_host_पूर्णांक(card);
+	/* Disable the interrupts on the card */
+	btmrvl_sdio_disable_host_int(card);
 
-	अगर (bपंचांगrvl_sdio_करोwnload_fw(card)) अणु
+	if (btmrvl_sdio_download_fw(card)) {
 		BT_ERR("Downloading firmware failed!");
 		ret = -ENODEV;
-		जाओ unreg_dev;
-	पूर्ण
+		goto unreg_dev;
+	}
 
-	bपंचांगrvl_sdio_enable_host_पूर्णांक(card);
+	btmrvl_sdio_enable_host_int(card);
 
-	/* Device tree node parsing and platक्रमm specअगरic configuration*/
-	bपंचांगrvl_sdio_probe_of(&func->dev, card);
+	/* Device tree node parsing and platform specific configuration*/
+	btmrvl_sdio_probe_of(&func->dev, card);
 
-	priv = bपंचांगrvl_add_card(card);
-	अगर (!priv) अणु
+	priv = btmrvl_add_card(card);
+	if (!priv) {
 		BT_ERR("Initializing card failed!");
 		ret = -ENODEV;
-		जाओ disable_host_पूर्णांक;
-	पूर्ण
+		goto disable_host_int;
+	}
 
 	card->priv = priv;
 
-	/* Initialize the पूर्णांकerface specअगरic function poपूर्णांकers */
-	priv->hw_host_to_card = bपंचांगrvl_sdio_host_to_card;
-	priv->hw_wakeup_firmware = bपंचांगrvl_sdio_wakeup_fw;
-	priv->hw_process_पूर्णांक_status = bपंचांगrvl_sdio_process_पूर्णांक_status;
+	/* Initialize the interface specific function pointers */
+	priv->hw_host_to_card = btmrvl_sdio_host_to_card;
+	priv->hw_wakeup_firmware = btmrvl_sdio_wakeup_fw;
+	priv->hw_process_int_status = btmrvl_sdio_process_int_status;
 
-	अगर (bपंचांगrvl_रेजिस्टर_hdev(priv)) अणु
+	if (btmrvl_register_hdev(priv)) {
 		BT_ERR("Register hdev failed!");
 		ret = -ENODEV;
-		जाओ disable_host_पूर्णांक;
-	पूर्ण
+		goto disable_host_int;
+	}
 
-	वापस 0;
+	return 0;
 
-disable_host_पूर्णांक:
-	bपंचांगrvl_sdio_disable_host_पूर्णांक(card);
+disable_host_int:
+	btmrvl_sdio_disable_host_int(card);
 unreg_dev:
-	bपंचांगrvl_sdio_unरेजिस्टर_dev(card);
-	वापस ret;
-पूर्ण
+	btmrvl_sdio_unregister_dev(card);
+	return ret;
+}
 
-अटल व्योम bपंचांगrvl_sdio_हटाओ(काष्ठा sdio_func *func)
-अणु
-	काष्ठा bपंचांगrvl_sdio_card *card;
+static void btmrvl_sdio_remove(struct sdio_func *func)
+{
+	struct btmrvl_sdio_card *card;
 
-	अगर (func) अणु
+	if (func) {
 		card = sdio_get_drvdata(func);
-		अगर (card) अणु
-			/* Send SHUTDOWN command & disable पूर्णांकerrupt
-			 * अगर user हटाओs the module.
+		if (card) {
+			/* Send SHUTDOWN command & disable interrupt
+			 * if user removes the module.
 			 */
-			अगर (user_rmmod) अणु
-				bपंचांगrvl_send_module_cfg_cmd(card->priv,
+			if (user_rmmod) {
+				btmrvl_send_module_cfg_cmd(card->priv,
 							MODULE_SHUTDOWN_REQ);
-				bपंचांगrvl_sdio_disable_host_पूर्णांक(card);
-			पूर्ण
+				btmrvl_sdio_disable_host_int(card);
+			}
 
 			BT_DBG("unregister dev");
-			card->priv->surprise_हटाओd = true;
-			bपंचांगrvl_sdio_unरेजिस्टर_dev(card);
-			bपंचांगrvl_हटाओ_card(card->priv);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			card->priv->surprise_removed = true;
+			btmrvl_sdio_unregister_dev(card);
+			btmrvl_remove_card(card->priv);
+		}
+	}
+}
 
-अटल पूर्णांक bपंचांगrvl_sdio_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा sdio_func *func = dev_to_sdio_func(dev);
-	काष्ठा bपंचांगrvl_sdio_card *card;
-	काष्ठा bपंचांगrvl_निजी *priv;
+static int btmrvl_sdio_suspend(struct device *dev)
+{
+	struct sdio_func *func = dev_to_sdio_func(dev);
+	struct btmrvl_sdio_card *card;
+	struct btmrvl_private *priv;
 	mmc_pm_flag_t pm_flags;
-	काष्ठा hci_dev *hcidev;
+	struct hci_dev *hcidev;
 
-	अगर (func) अणु
+	if (func) {
 		pm_flags = sdio_get_host_pm_caps(func);
 		BT_DBG("%s: suspend: PM flags = 0x%x", sdio_func_id(func),
 		       pm_flags);
-		अगर (!(pm_flags & MMC_PM_KEEP_POWER)) अणु
+		if (!(pm_flags & MMC_PM_KEEP_POWER)) {
 			BT_ERR("%s: cannot remain alive while suspended",
 			       sdio_func_id(func));
-			वापस -ENOSYS;
-		पूर्ण
+			return -ENOSYS;
+		}
 		card = sdio_get_drvdata(func);
-		अगर (!card || !card->priv) अणु
+		if (!card || !card->priv) {
 			BT_ERR("card or priv structure is not valid");
-			वापस 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return 0;
+		}
+	} else {
 		BT_ERR("sdio_func is not specified");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Enable platक्रमm specअगरic wakeup पूर्णांकerrupt */
-	अगर (card->plt_wake_cfg && card->plt_wake_cfg->irq_bt >= 0 &&
-	    device_may_wakeup(dev)) अणु
+	/* Enable platform specific wakeup interrupt */
+	if (card->plt_wake_cfg && card->plt_wake_cfg->irq_bt >= 0 &&
+	    device_may_wakeup(dev)) {
 		card->plt_wake_cfg->wake_by_bt = false;
 		enable_irq(card->plt_wake_cfg->irq_bt);
 		enable_irq_wake(card->plt_wake_cfg->irq_bt);
-	पूर्ण
+	}
 
 	priv = card->priv;
 	priv->adapter->is_suspending = true;
-	hcidev = priv->bपंचांगrvl_dev.hcidev;
+	hcidev = priv->btmrvl_dev.hcidev;
 	BT_DBG("%s: SDIO suspend", hcidev->name);
 	hci_suspend_dev(hcidev);
 
-	अगर (priv->adapter->hs_state != HS_ACTIVATED) अणु
-		अगर (bपंचांगrvl_enable_hs(priv)) अणु
+	if (priv->adapter->hs_state != HS_ACTIVATED) {
+		if (btmrvl_enable_hs(priv)) {
 			BT_ERR("HS not activated, suspend failed!");
-			/* Disable platक्रमm specअगरic wakeup पूर्णांकerrupt */
-			अगर (card->plt_wake_cfg &&
+			/* Disable platform specific wakeup interrupt */
+			if (card->plt_wake_cfg &&
 			    card->plt_wake_cfg->irq_bt >= 0 &&
-			    device_may_wakeup(dev)) अणु
+			    device_may_wakeup(dev)) {
 				disable_irq_wake(card->plt_wake_cfg->irq_bt);
 				disable_irq(card->plt_wake_cfg->irq_bt);
-			पूर्ण
+			}
 
 			priv->adapter->is_suspending = false;
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण
+			return -EBUSY;
+		}
+	}
 
 	priv->adapter->is_suspending = false;
 	priv->adapter->is_suspended = true;
 
-	/* We will keep the घातer when hs enabled successfully */
-	अगर (priv->adapter->hs_state == HS_ACTIVATED) अणु
+	/* We will keep the power when hs enabled successfully */
+	if (priv->adapter->hs_state == HS_ACTIVATED) {
 		BT_DBG("suspend with MMC_PM_KEEP_POWER");
-		वापस sdio_set_host_pm_flags(func, MMC_PM_KEEP_POWER);
-	पूर्ण
+		return sdio_set_host_pm_flags(func, MMC_PM_KEEP_POWER);
+	}
 
 	BT_DBG("suspend without MMC_PM_KEEP_POWER");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bपंचांगrvl_sdio_resume(काष्ठा device *dev)
-अणु
-	काष्ठा sdio_func *func = dev_to_sdio_func(dev);
-	काष्ठा bपंचांगrvl_sdio_card *card;
-	काष्ठा bपंचांगrvl_निजी *priv;
+static int btmrvl_sdio_resume(struct device *dev)
+{
+	struct sdio_func *func = dev_to_sdio_func(dev);
+	struct btmrvl_sdio_card *card;
+	struct btmrvl_private *priv;
 	mmc_pm_flag_t pm_flags;
-	काष्ठा hci_dev *hcidev;
+	struct hci_dev *hcidev;
 
-	अगर (func) अणु
+	if (func) {
 		pm_flags = sdio_get_host_pm_caps(func);
 		BT_DBG("%s: resume: PM flags = 0x%x", sdio_func_id(func),
 		       pm_flags);
 		card = sdio_get_drvdata(func);
-		अगर (!card || !card->priv) अणु
+		if (!card || !card->priv) {
 			BT_ERR("card or priv structure is not valid");
-			वापस 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return 0;
+		}
+	} else {
 		BT_ERR("sdio_func is not specified");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	priv = card->priv;
 
-	अगर (!priv->adapter->is_suspended) अणु
+	if (!priv->adapter->is_suspended) {
 		BT_DBG("device already resumed");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	priv->hw_wakeup_firmware(priv);
 	priv->adapter->hs_state = HS_DEACTIVATED;
-	hcidev = priv->bपंचांगrvl_dev.hcidev;
+	hcidev = priv->btmrvl_dev.hcidev;
 	BT_DBG("%s: HS DEACTIVATED in resume!", hcidev->name);
 	priv->adapter->is_suspended = false;
 	BT_DBG("%s: SDIO resume", hcidev->name);
 	hci_resume_dev(hcidev);
 
-	/* Disable platक्रमm specअगरic wakeup पूर्णांकerrupt */
-	अगर (card->plt_wake_cfg && card->plt_wake_cfg->irq_bt >= 0 &&
-	    device_may_wakeup(dev)) अणु
+	/* Disable platform specific wakeup interrupt */
+	if (card->plt_wake_cfg && card->plt_wake_cfg->irq_bt >= 0 &&
+	    device_may_wakeup(dev)) {
 		disable_irq_wake(card->plt_wake_cfg->irq_bt);
 		disable_irq(card->plt_wake_cfg->irq_bt);
-		अगर (card->plt_wake_cfg->wake_by_bt)
-			/* Unकरो our disable, since पूर्णांकerrupt handler alपढ़ोy
+		if (card->plt_wake_cfg->wake_by_bt)
+			/* Undo our disable, since interrupt handler already
 			 * did this.
 			 */
 			enable_irq(card->plt_wake_cfg->irq_bt);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops bपंचांगrvl_sdio_pm_ops = अणु
-	.suspend	= bपंचांगrvl_sdio_suspend,
-	.resume		= bपंचांगrvl_sdio_resume,
-पूर्ण;
+static const struct dev_pm_ops btmrvl_sdio_pm_ops = {
+	.suspend	= btmrvl_sdio_suspend,
+	.resume		= btmrvl_sdio_resume,
+};
 
-अटल काष्ठा sdio_driver bt_mrvl_sdio = अणु
+static struct sdio_driver bt_mrvl_sdio = {
 	.name		= "btmrvl_sdio",
-	.id_table	= bपंचांगrvl_sdio_ids,
-	.probe		= bपंचांगrvl_sdio_probe,
-	.हटाओ		= bपंचांगrvl_sdio_हटाओ,
-	.drv = अणु
+	.id_table	= btmrvl_sdio_ids,
+	.probe		= btmrvl_sdio_probe,
+	.remove		= btmrvl_sdio_remove,
+	.drv = {
 		.owner = THIS_MODULE,
-		.coredump = bपंचांगrvl_sdio_coredump,
-		.pm = &bपंचांगrvl_sdio_pm_ops,
-	पूर्ण
-पूर्ण;
+		.coredump = btmrvl_sdio_coredump,
+		.pm = &btmrvl_sdio_pm_ops,
+	}
+};
 
-अटल पूर्णांक __init bपंचांगrvl_sdio_init_module(व्योम)
-अणु
-	अगर (sdio_रेजिस्टर_driver(&bt_mrvl_sdio) != 0) अणु
+static int __init btmrvl_sdio_init_module(void)
+{
+	if (sdio_register_driver(&bt_mrvl_sdio) != 0) {
 		BT_ERR("SDIO Driver Registration Failed");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* Clear the flag in हाल user हटाओs the card. */
+	/* Clear the flag in case user removes the card. */
 	user_rmmod = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास bपंचांगrvl_sdio_निकास_module(व्योम)
-अणु
+static void __exit btmrvl_sdio_exit_module(void)
+{
 	/* Set the flag as user is removing this module. */
 	user_rmmod = 1;
 
-	sdio_unरेजिस्टर_driver(&bt_mrvl_sdio);
-पूर्ण
+	sdio_unregister_driver(&bt_mrvl_sdio);
+}
 
-module_init(bपंचांगrvl_sdio_init_module);
-module_निकास(bपंचांगrvl_sdio_निकास_module);
+module_init(btmrvl_sdio_init_module);
+module_exit(btmrvl_sdio_exit_module);
 
 MODULE_AUTHOR("Marvell International Ltd.");
 MODULE_DESCRIPTION("Marvell BT-over-SDIO driver ver " VERSION);

@@ -1,41 +1,40 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright तऊ 2018-2020 Intel Corporation
+ * Copyright © 2018-2020 Intel Corporation
  */
 
-#समावेश <drm/drm_atomic.h>
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_crtc.h>
-#समावेश <drm/drm_crtc_helper.h>
-#समावेश <drm/drm_fb_cma_helper.h>
-#समावेश <drm/drm_fb_helper.h>
-#समावेश <drm/drm_fourcc.h>
-#समावेश <drm/drm_gem_cma_helper.h>
-#समावेश <drm/drm_managed.h>
-#समावेश <drm/drm_plane_helper.h>
+#include <drm/drm_atomic.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_crtc_helper.h>
+#include <drm/drm_fb_cma_helper.h>
+#include <drm/drm_fb_helper.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_gem_cma_helper.h>
+#include <drm/drm_managed.h>
+#include <drm/drm_plane_helper.h>
 
-#समावेश "kmb_drv.h"
-#समावेश "kmb_plane.h"
-#समावेश "kmb_regs.h"
+#include "kmb_drv.h"
+#include "kmb_plane.h"
+#include "kmb_regs.h"
 
-स्थिर u32 layer_irqs[] = अणु
+const u32 layer_irqs[] = {
 	LCD_INT_VL0,
 	LCD_INT_VL1,
 	LCD_INT_GL0,
 	LCD_INT_GL1
-पूर्ण;
+};
 
 /* Conversion (yuv->rgb) matrix from myriadx */
-अटल स्थिर u32 csc_coef_lcd[] = अणु
+static const u32 csc_coef_lcd[] = {
 	1024, 0, 1436,
 	1024, -352, -731,
 	1024, 1814, 0,
 	-179, 125, -226
-पूर्ण;
+};
 
-/* Graphics layer (layers 2 & 3) क्रमmats, only packed क्रमmats  are supported */
-अटल स्थिर u32 kmb_क्रमmats_g[] = अणु
+/* Graphics layer (layers 2 & 3) formats, only packed formats  are supported */
+static const u32 kmb_formats_g[] = {
 	DRM_FORMAT_RGB332,
 	DRM_FORMAT_XRGB4444, DRM_FORMAT_XBGR4444,
 	DRM_FORMAT_ARGB4444, DRM_FORMAT_ABGR4444,
@@ -45,11 +44,11 @@
 	DRM_FORMAT_RGB888, DRM_FORMAT_BGR888,
 	DRM_FORMAT_XRGB8888, DRM_FORMAT_XBGR8888,
 	DRM_FORMAT_ARGB8888, DRM_FORMAT_ABGR8888,
-पूर्ण;
+};
 
-/* Video layer ( 0 & 1) क्रमmats, packed and planar क्रमmats are supported */
-अटल स्थिर u32 kmb_क्रमmats_v[] = अणु
-	/* packed क्रमmats */
+/* Video layer ( 0 & 1) formats, packed and planar formats are supported */
+static const u32 kmb_formats_v[] = {
+	/* packed formats */
 	DRM_FORMAT_RGB332,
 	DRM_FORMAT_XRGB4444, DRM_FORMAT_XBGR4444,
 	DRM_FORMAT_ARGB4444, DRM_FORMAT_ABGR4444,
@@ -59,263 +58,263 @@
 	DRM_FORMAT_RGB888, DRM_FORMAT_BGR888,
 	DRM_FORMAT_XRGB8888, DRM_FORMAT_XBGR8888,
 	DRM_FORMAT_ARGB8888, DRM_FORMAT_ABGR8888,
-	/*planar क्रमmats */
+	/*planar formats */
 	DRM_FORMAT_YUV420, DRM_FORMAT_YVU420,
 	DRM_FORMAT_YUV422, DRM_FORMAT_YVU422,
 	DRM_FORMAT_YUV444, DRM_FORMAT_YVU444,
 	DRM_FORMAT_NV12, DRM_FORMAT_NV21,
-पूर्ण;
+};
 
-अटल अचिन्हित पूर्णांक check_pixel_क्रमmat(काष्ठा drm_plane *plane, u32 क्रमmat)
-अणु
-	पूर्णांक i;
+static unsigned int check_pixel_format(struct drm_plane *plane, u32 format)
+{
+	int i;
 
-	क्रम (i = 0; i < plane->क्रमmat_count; i++) अणु
-		अगर (plane->क्रमmat_types[i] == क्रमmat)
-			वापस 0;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	for (i = 0; i < plane->format_count; i++) {
+		if (plane->format_types[i] == format)
+			return 0;
+	}
+	return -EINVAL;
+}
 
-अटल पूर्णांक kmb_plane_atomic_check(काष्ठा drm_plane *plane,
-				  काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *new_plane_state = drm_atomic_get_new_plane_state(state,
+static int kmb_plane_atomic_check(struct drm_plane *plane,
+				  struct drm_atomic_state *state)
+{
+	struct drm_plane_state *new_plane_state = drm_atomic_get_new_plane_state(state,
 										 plane);
-	काष्ठा drm_framebuffer *fb;
-	पूर्णांक ret;
-	काष्ठा drm_crtc_state *crtc_state;
+	struct drm_framebuffer *fb;
+	int ret;
+	struct drm_crtc_state *crtc_state;
 	bool can_position;
 
 	fb = new_plane_state->fb;
-	अगर (!fb || !new_plane_state->crtc)
-		वापस 0;
+	if (!fb || !new_plane_state->crtc)
+		return 0;
 
-	ret = check_pixel_क्रमmat(plane, fb->क्रमmat->क्रमmat);
-	अगर (ret)
-		वापस ret;
+	ret = check_pixel_format(plane, fb->format->format);
+	if (ret)
+		return ret;
 
-	अगर (new_plane_state->crtc_w > KMB_MAX_WIDTH || new_plane_state->crtc_h > KMB_MAX_HEIGHT)
-		वापस -EINVAL;
-	अगर (new_plane_state->crtc_w < KMB_MIN_WIDTH || new_plane_state->crtc_h < KMB_MIN_HEIGHT)
-		वापस -EINVAL;
+	if (new_plane_state->crtc_w > KMB_MAX_WIDTH || new_plane_state->crtc_h > KMB_MAX_HEIGHT)
+		return -EINVAL;
+	if (new_plane_state->crtc_w < KMB_MIN_WIDTH || new_plane_state->crtc_h < KMB_MIN_HEIGHT)
+		return -EINVAL;
 	can_position = (plane->type == DRM_PLANE_TYPE_OVERLAY);
 	crtc_state =
 		drm_atomic_get_existing_crtc_state(state,
 						   new_plane_state->crtc);
-	वापस drm_atomic_helper_check_plane_state(new_plane_state,
+	return drm_atomic_helper_check_plane_state(new_plane_state,
 						   crtc_state,
 						   DRM_PLANE_HELPER_NO_SCALING,
 						   DRM_PLANE_HELPER_NO_SCALING,
 						   can_position, true);
-पूर्ण
+}
 
-अटल व्योम kmb_plane_atomic_disable(काष्ठा drm_plane *plane,
-				     काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा kmb_plane *kmb_plane = to_kmb_plane(plane);
-	पूर्णांक plane_id = kmb_plane->id;
-	काष्ठा kmb_drm_निजी *kmb;
+static void kmb_plane_atomic_disable(struct drm_plane *plane,
+				     struct drm_atomic_state *state)
+{
+	struct kmb_plane *kmb_plane = to_kmb_plane(plane);
+	int plane_id = kmb_plane->id;
+	struct kmb_drm_private *kmb;
 
 	kmb = to_kmb(plane->dev);
 
-	अगर (WARN_ON(plane_id >= KMB_MAX_PLANES))
-		वापस;
+	if (WARN_ON(plane_id >= KMB_MAX_PLANES))
+		return;
 
-	चयन (plane_id) अणु
-	हाल LAYER_0:
+	switch (plane_id) {
+	case LAYER_0:
 		kmb->plane_status[plane_id].ctrl = LCD_CTRL_VL1_ENABLE;
-		अवरोध;
-	हाल LAYER_1:
+		break;
+	case LAYER_1:
 		kmb->plane_status[plane_id].ctrl = LCD_CTRL_VL2_ENABLE;
-		अवरोध;
-	हाल LAYER_2:
+		break;
+	case LAYER_2:
 		kmb->plane_status[plane_id].ctrl = LCD_CTRL_GL1_ENABLE;
-		अवरोध;
-	हाल LAYER_3:
+		break;
+	case LAYER_3:
 		kmb->plane_status[plane_id].ctrl = LCD_CTRL_GL2_ENABLE;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	kmb->plane_status[plane_id].disable = true;
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक get_pixel_क्रमmat(u32 क्रमmat)
-अणु
-	अचिन्हित पूर्णांक val = 0;
+static unsigned int get_pixel_format(u32 format)
+{
+	unsigned int val = 0;
 
-	चयन (क्रमmat) अणु
-		/* planar क्रमmats */
-	हाल DRM_FORMAT_YUV444:
+	switch (format) {
+		/* planar formats */
+	case DRM_FORMAT_YUV444:
 		val = LCD_LAYER_FORMAT_YCBCR444PLAN | LCD_LAYER_PLANAR_STORAGE;
-		अवरोध;
-	हाल DRM_FORMAT_YVU444:
+		break;
+	case DRM_FORMAT_YVU444:
 		val = LCD_LAYER_FORMAT_YCBCR444PLAN | LCD_LAYER_PLANAR_STORAGE
 		    | LCD_LAYER_CRCB_ORDER;
-		अवरोध;
-	हाल DRM_FORMAT_YUV422:
+		break;
+	case DRM_FORMAT_YUV422:
 		val = LCD_LAYER_FORMAT_YCBCR422PLAN | LCD_LAYER_PLANAR_STORAGE;
-		अवरोध;
-	हाल DRM_FORMAT_YVU422:
+		break;
+	case DRM_FORMAT_YVU422:
 		val = LCD_LAYER_FORMAT_YCBCR422PLAN | LCD_LAYER_PLANAR_STORAGE
 		    | LCD_LAYER_CRCB_ORDER;
-		अवरोध;
-	हाल DRM_FORMAT_YUV420:
+		break;
+	case DRM_FORMAT_YUV420:
 		val = LCD_LAYER_FORMAT_YCBCR420PLAN | LCD_LAYER_PLANAR_STORAGE;
-		अवरोध;
-	हाल DRM_FORMAT_YVU420:
+		break;
+	case DRM_FORMAT_YVU420:
 		val = LCD_LAYER_FORMAT_YCBCR420PLAN | LCD_LAYER_PLANAR_STORAGE
 		    | LCD_LAYER_CRCB_ORDER;
-		अवरोध;
-	हाल DRM_FORMAT_NV12:
+		break;
+	case DRM_FORMAT_NV12:
 		val = LCD_LAYER_FORMAT_NV12 | LCD_LAYER_PLANAR_STORAGE;
-		अवरोध;
-	हाल DRM_FORMAT_NV21:
+		break;
+	case DRM_FORMAT_NV21:
 		val = LCD_LAYER_FORMAT_NV12 | LCD_LAYER_PLANAR_STORAGE
 		    | LCD_LAYER_CRCB_ORDER;
-		अवरोध;
-		/* packed क्रमmats */
+		break;
+		/* packed formats */
 		/* looks hw requires B & G to be swapped when RGB */
-	हाल DRM_FORMAT_RGB332:
+	case DRM_FORMAT_RGB332:
 		val = LCD_LAYER_FORMAT_RGB332 | LCD_LAYER_BGR_ORDER;
-		अवरोध;
-	हाल DRM_FORMAT_XBGR4444:
+		break;
+	case DRM_FORMAT_XBGR4444:
 		val = LCD_LAYER_FORMAT_RGBX4444;
-		अवरोध;
-	हाल DRM_FORMAT_ARGB4444:
+		break;
+	case DRM_FORMAT_ARGB4444:
 		val = LCD_LAYER_FORMAT_RGBA4444 | LCD_LAYER_BGR_ORDER;
-		अवरोध;
-	हाल DRM_FORMAT_ABGR4444:
+		break;
+	case DRM_FORMAT_ABGR4444:
 		val = LCD_LAYER_FORMAT_RGBA4444;
-		अवरोध;
-	हाल DRM_FORMAT_XRGB1555:
+		break;
+	case DRM_FORMAT_XRGB1555:
 		val = LCD_LAYER_FORMAT_XRGB1555 | LCD_LAYER_BGR_ORDER;
-		अवरोध;
-	हाल DRM_FORMAT_XBGR1555:
+		break;
+	case DRM_FORMAT_XBGR1555:
 		val = LCD_LAYER_FORMAT_XRGB1555;
-		अवरोध;
-	हाल DRM_FORMAT_ARGB1555:
+		break;
+	case DRM_FORMAT_ARGB1555:
 		val = LCD_LAYER_FORMAT_RGBA1555 | LCD_LAYER_BGR_ORDER;
-		अवरोध;
-	हाल DRM_FORMAT_ABGR1555:
+		break;
+	case DRM_FORMAT_ABGR1555:
 		val = LCD_LAYER_FORMAT_RGBA1555;
-		अवरोध;
-	हाल DRM_FORMAT_RGB565:
+		break;
+	case DRM_FORMAT_RGB565:
 		val = LCD_LAYER_FORMAT_RGB565 | LCD_LAYER_BGR_ORDER;
-		अवरोध;
-	हाल DRM_FORMAT_BGR565:
+		break;
+	case DRM_FORMAT_BGR565:
 		val = LCD_LAYER_FORMAT_RGB565;
-		अवरोध;
-	हाल DRM_FORMAT_RGB888:
+		break;
+	case DRM_FORMAT_RGB888:
 		val = LCD_LAYER_FORMAT_RGB888 | LCD_LAYER_BGR_ORDER;
-		अवरोध;
-	हाल DRM_FORMAT_BGR888:
+		break;
+	case DRM_FORMAT_BGR888:
 		val = LCD_LAYER_FORMAT_RGB888;
-		अवरोध;
-	हाल DRM_FORMAT_XRGB8888:
+		break;
+	case DRM_FORMAT_XRGB8888:
 		val = LCD_LAYER_FORMAT_RGBX8888 | LCD_LAYER_BGR_ORDER;
-		अवरोध;
-	हाल DRM_FORMAT_XBGR8888:
+		break;
+	case DRM_FORMAT_XBGR8888:
 		val = LCD_LAYER_FORMAT_RGBX8888;
-		अवरोध;
-	हाल DRM_FORMAT_ARGB8888:
+		break;
+	case DRM_FORMAT_ARGB8888:
 		val = LCD_LAYER_FORMAT_RGBA8888 | LCD_LAYER_BGR_ORDER;
-		अवरोध;
-	हाल DRM_FORMAT_ABGR8888:
+		break;
+	case DRM_FORMAT_ABGR8888:
 		val = LCD_LAYER_FORMAT_RGBA8888;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	DRM_INFO_ONCE("%s : %d format=0x%x val=0x%x\n",
-		      __func__, __LINE__, क्रमmat, val);
-	वापस val;
-पूर्ण
+		      __func__, __LINE__, format, val);
+	return val;
+}
 
-अटल अचिन्हित पूर्णांक get_bits_per_pixel(स्थिर काष्ठा drm_क्रमmat_info *क्रमmat)
-अणु
+static unsigned int get_bits_per_pixel(const struct drm_format_info *format)
+{
 	u32 bpp = 0;
-	अचिन्हित पूर्णांक val = 0;
+	unsigned int val = 0;
 
-	अगर (क्रमmat->num_planes > 1) अणु
+	if (format->num_planes > 1) {
 		val = LCD_LAYER_8BPP;
-		वापस val;
-	पूर्ण
+		return val;
+	}
 
-	bpp += 8 * क्रमmat->cpp[0];
+	bpp += 8 * format->cpp[0];
 
-	चयन (bpp) अणु
-	हाल 8:
+	switch (bpp) {
+	case 8:
 		val = LCD_LAYER_8BPP;
-		अवरोध;
-	हाल 16:
+		break;
+	case 16:
 		val = LCD_LAYER_16BPP;
-		अवरोध;
-	हाल 24:
+		break;
+	case 24:
 		val = LCD_LAYER_24BPP;
-		अवरोध;
-	हाल 32:
+		break;
+	case 32:
 		val = LCD_LAYER_32BPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	DRM_DEBUG("bpp=%d val=0x%x\n", bpp, val);
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल व्योम config_csc(काष्ठा kmb_drm_निजी *kmb, पूर्णांक plane_id)
-अणु
+static void config_csc(struct kmb_drm_private *kmb, int plane_id)
+{
 	/* YUV to RGB conversion using the fixed matrix csc_coef_lcd */
-	kmb_ग_लिखो_lcd(kmb, LCD_LAYERn_CSC_COEFF11(plane_id), csc_coef_lcd[0]);
-	kmb_ग_लिखो_lcd(kmb, LCD_LAYERn_CSC_COEFF12(plane_id), csc_coef_lcd[1]);
-	kmb_ग_लिखो_lcd(kmb, LCD_LAYERn_CSC_COEFF13(plane_id), csc_coef_lcd[2]);
-	kmb_ग_लिखो_lcd(kmb, LCD_LAYERn_CSC_COEFF21(plane_id), csc_coef_lcd[3]);
-	kmb_ग_लिखो_lcd(kmb, LCD_LAYERn_CSC_COEFF22(plane_id), csc_coef_lcd[4]);
-	kmb_ग_लिखो_lcd(kmb, LCD_LAYERn_CSC_COEFF23(plane_id), csc_coef_lcd[5]);
-	kmb_ग_लिखो_lcd(kmb, LCD_LAYERn_CSC_COEFF31(plane_id), csc_coef_lcd[6]);
-	kmb_ग_लिखो_lcd(kmb, LCD_LAYERn_CSC_COEFF32(plane_id), csc_coef_lcd[7]);
-	kmb_ग_लिखो_lcd(kmb, LCD_LAYERn_CSC_COEFF33(plane_id), csc_coef_lcd[8]);
-	kmb_ग_लिखो_lcd(kmb, LCD_LAYERn_CSC_OFF1(plane_id), csc_coef_lcd[9]);
-	kmb_ग_लिखो_lcd(kmb, LCD_LAYERn_CSC_OFF2(plane_id), csc_coef_lcd[10]);
-	kmb_ग_लिखो_lcd(kmb, LCD_LAYERn_CSC_OFF3(plane_id), csc_coef_lcd[11]);
-पूर्ण
+	kmb_write_lcd(kmb, LCD_LAYERn_CSC_COEFF11(plane_id), csc_coef_lcd[0]);
+	kmb_write_lcd(kmb, LCD_LAYERn_CSC_COEFF12(plane_id), csc_coef_lcd[1]);
+	kmb_write_lcd(kmb, LCD_LAYERn_CSC_COEFF13(plane_id), csc_coef_lcd[2]);
+	kmb_write_lcd(kmb, LCD_LAYERn_CSC_COEFF21(plane_id), csc_coef_lcd[3]);
+	kmb_write_lcd(kmb, LCD_LAYERn_CSC_COEFF22(plane_id), csc_coef_lcd[4]);
+	kmb_write_lcd(kmb, LCD_LAYERn_CSC_COEFF23(plane_id), csc_coef_lcd[5]);
+	kmb_write_lcd(kmb, LCD_LAYERn_CSC_COEFF31(plane_id), csc_coef_lcd[6]);
+	kmb_write_lcd(kmb, LCD_LAYERn_CSC_COEFF32(plane_id), csc_coef_lcd[7]);
+	kmb_write_lcd(kmb, LCD_LAYERn_CSC_COEFF33(plane_id), csc_coef_lcd[8]);
+	kmb_write_lcd(kmb, LCD_LAYERn_CSC_OFF1(plane_id), csc_coef_lcd[9]);
+	kmb_write_lcd(kmb, LCD_LAYERn_CSC_OFF2(plane_id), csc_coef_lcd[10]);
+	kmb_write_lcd(kmb, LCD_LAYERn_CSC_OFF3(plane_id), csc_coef_lcd[11]);
+}
 
-अटल व्योम kmb_plane_atomic_update(काष्ठा drm_plane *plane,
-				    काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *old_plane_state = drm_atomic_get_old_plane_state(state,
+static void kmb_plane_atomic_update(struct drm_plane *plane,
+				    struct drm_atomic_state *state)
+{
+	struct drm_plane_state *old_plane_state = drm_atomic_get_old_plane_state(state,
 										 plane);
-	काष्ठा drm_plane_state *new_plane_state = drm_atomic_get_new_plane_state(state,
+	struct drm_plane_state *new_plane_state = drm_atomic_get_new_plane_state(state,
 										 plane);
-	काष्ठा drm_framebuffer *fb;
-	काष्ठा kmb_drm_निजी *kmb;
-	अचिन्हित पूर्णांक width;
-	अचिन्हित पूर्णांक height;
-	अचिन्हित पूर्णांक dma_len;
-	काष्ठा kmb_plane *kmb_plane;
-	अचिन्हित पूर्णांक dma_cfg;
-	अचिन्हित पूर्णांक ctrl = 0, val = 0, out_क्रमmat = 0;
-	अचिन्हित पूर्णांक src_w, src_h, crtc_x, crtc_y;
-	अचिन्हित अक्षर plane_id;
-	पूर्णांक num_planes;
-	अटल dma_addr_t addr[MAX_SUB_PLANES];
+	struct drm_framebuffer *fb;
+	struct kmb_drm_private *kmb;
+	unsigned int width;
+	unsigned int height;
+	unsigned int dma_len;
+	struct kmb_plane *kmb_plane;
+	unsigned int dma_cfg;
+	unsigned int ctrl = 0, val = 0, out_format = 0;
+	unsigned int src_w, src_h, crtc_x, crtc_y;
+	unsigned char plane_id;
+	int num_planes;
+	static dma_addr_t addr[MAX_SUB_PLANES];
 
-	अगर (!plane || !new_plane_state || !old_plane_state)
-		वापस;
+	if (!plane || !new_plane_state || !old_plane_state)
+		return;
 
 	fb = new_plane_state->fb;
-	अगर (!fb)
-		वापस;
-	num_planes = fb->क्रमmat->num_planes;
+	if (!fb)
+		return;
+	num_planes = fb->format->num_planes;
 	kmb_plane = to_kmb_plane(plane);
 	plane_id = kmb_plane->id;
 
 	kmb = to_kmb(plane->dev);
 
 	spin_lock_irq(&kmb->irq_lock);
-	अगर (kmb->kmb_under_flow || kmb->kmb_flush_करोne) अणु
+	if (kmb->kmb_under_flow || kmb->kmb_flush_done) {
 		spin_unlock_irq(&kmb->irq_lock);
 		drm_dbg(&kmb->drm, "plane_update:underflow!!!! returning");
-		वापस;
-	पूर्ण
+		return;
+	}
 	spin_unlock_irq(&kmb->irq_lock);
 
 	src_w = (new_plane_state->src_w >> 16);
@@ -325,210 +324,210 @@
 
 	drm_dbg(&kmb->drm,
 		"src_w=%d src_h=%d, fb->format->format=0x%x fb->flags=0x%x\n",
-		  src_w, src_h, fb->क्रमmat->क्रमmat, fb->flags);
+		  src_w, src_h, fb->format->format, fb->flags);
 
 	width = fb->width;
 	height = fb->height;
-	dma_len = (width * height * fb->क्रमmat->cpp[0]);
+	dma_len = (width * height * fb->format->cpp[0]);
 	drm_dbg(&kmb->drm, "dma_len=%d ", dma_len);
-	kmb_ग_लिखो_lcd(kmb, LCD_LAYERn_DMA_LEN(plane_id), dma_len);
-	kmb_ग_लिखो_lcd(kmb, LCD_LAYERn_DMA_LEN_SHADOW(plane_id), dma_len);
-	kmb_ग_लिखो_lcd(kmb, LCD_LAYERn_DMA_LINE_VSTRIDE(plane_id),
+	kmb_write_lcd(kmb, LCD_LAYERn_DMA_LEN(plane_id), dma_len);
+	kmb_write_lcd(kmb, LCD_LAYERn_DMA_LEN_SHADOW(plane_id), dma_len);
+	kmb_write_lcd(kmb, LCD_LAYERn_DMA_LINE_VSTRIDE(plane_id),
 		      fb->pitches[0]);
-	kmb_ग_लिखो_lcd(kmb, LCD_LAYERn_DMA_LINE_WIDTH(plane_id),
-		      (width * fb->क्रमmat->cpp[0]));
+	kmb_write_lcd(kmb, LCD_LAYERn_DMA_LINE_WIDTH(plane_id),
+		      (width * fb->format->cpp[0]));
 
 	addr[Y_PLANE] = drm_fb_cma_get_gem_addr(fb, new_plane_state, 0);
-	kmb_ग_लिखो_lcd(kmb, LCD_LAYERn_DMA_START_ADDR(plane_id),
+	kmb_write_lcd(kmb, LCD_LAYERn_DMA_START_ADDR(plane_id),
 		      addr[Y_PLANE] + fb->offsets[0]);
-	val = get_pixel_क्रमmat(fb->क्रमmat->क्रमmat);
-	val |= get_bits_per_pixel(fb->क्रमmat);
-	/* Program Cb/Cr क्रम planar क्रमmats */
-	अगर (num_planes > 1) अणु
-		kmb_ग_लिखो_lcd(kmb, LCD_LAYERn_DMA_CB_LINE_VSTRIDE(plane_id),
-			      width * fb->क्रमmat->cpp[0]);
-		kmb_ग_लिखो_lcd(kmb, LCD_LAYERn_DMA_CB_LINE_WIDTH(plane_id),
-			      (width * fb->क्रमmat->cpp[0]));
+	val = get_pixel_format(fb->format->format);
+	val |= get_bits_per_pixel(fb->format);
+	/* Program Cb/Cr for planar formats */
+	if (num_planes > 1) {
+		kmb_write_lcd(kmb, LCD_LAYERn_DMA_CB_LINE_VSTRIDE(plane_id),
+			      width * fb->format->cpp[0]);
+		kmb_write_lcd(kmb, LCD_LAYERn_DMA_CB_LINE_WIDTH(plane_id),
+			      (width * fb->format->cpp[0]));
 
 		addr[U_PLANE] = drm_fb_cma_get_gem_addr(fb, new_plane_state,
 							U_PLANE);
-		/* check अगर Cb/Cr is swapped*/
-		अगर (num_planes == 3 && (val & LCD_LAYER_CRCB_ORDER))
-			kmb_ग_लिखो_lcd(kmb,
+		/* check if Cb/Cr is swapped*/
+		if (num_planes == 3 && (val & LCD_LAYER_CRCB_ORDER))
+			kmb_write_lcd(kmb,
 				      LCD_LAYERn_DMA_START_CR_ADR(plane_id),
 					addr[U_PLANE]);
-		अन्यथा
-			kmb_ग_लिखो_lcd(kmb,
+		else
+			kmb_write_lcd(kmb,
 				      LCD_LAYERn_DMA_START_CB_ADR(plane_id),
 					addr[U_PLANE]);
 
-		अगर (num_planes == 3) अणु
-			kmb_ग_लिखो_lcd(kmb,
+		if (num_planes == 3) {
+			kmb_write_lcd(kmb,
 				      LCD_LAYERn_DMA_CR_LINE_VSTRIDE(plane_id),
-				      ((width) * fb->क्रमmat->cpp[0]));
+				      ((width) * fb->format->cpp[0]));
 
-			kmb_ग_लिखो_lcd(kmb,
+			kmb_write_lcd(kmb,
 				      LCD_LAYERn_DMA_CR_LINE_WIDTH(plane_id),
-				      ((width) * fb->क्रमmat->cpp[0]));
+				      ((width) * fb->format->cpp[0]));
 
 			addr[V_PLANE] = drm_fb_cma_get_gem_addr(fb,
 								new_plane_state,
 								V_PLANE);
 
-			/* check अगर Cb/Cr is swapped*/
-			अगर (val & LCD_LAYER_CRCB_ORDER)
-				kmb_ग_लिखो_lcd(kmb,
+			/* check if Cb/Cr is swapped*/
+			if (val & LCD_LAYER_CRCB_ORDER)
+				kmb_write_lcd(kmb,
 					      LCD_LAYERn_DMA_START_CB_ADR(plane_id),
 					      addr[V_PLANE]);
-			अन्यथा
-				kmb_ग_लिखो_lcd(kmb,
+			else
+				kmb_write_lcd(kmb,
 					      LCD_LAYERn_DMA_START_CR_ADR(plane_id),
 					      addr[V_PLANE]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	kmb_ग_लिखो_lcd(kmb, LCD_LAYERn_WIDTH(plane_id), src_w - 1);
-	kmb_ग_लिखो_lcd(kmb, LCD_LAYERn_HEIGHT(plane_id), src_h - 1);
-	kmb_ग_लिखो_lcd(kmb, LCD_LAYERn_COL_START(plane_id), crtc_x);
-	kmb_ग_लिखो_lcd(kmb, LCD_LAYERn_ROW_START(plane_id), crtc_y);
+	kmb_write_lcd(kmb, LCD_LAYERn_WIDTH(plane_id), src_w - 1);
+	kmb_write_lcd(kmb, LCD_LAYERn_HEIGHT(plane_id), src_h - 1);
+	kmb_write_lcd(kmb, LCD_LAYERn_COL_START(plane_id), crtc_x);
+	kmb_write_lcd(kmb, LCD_LAYERn_ROW_START(plane_id), crtc_y);
 
 	val |= LCD_LAYER_FIFO_100;
 
-	अगर (val & LCD_LAYER_PLANAR_STORAGE) अणु
+	if (val & LCD_LAYER_PLANAR_STORAGE) {
 		val |= LCD_LAYER_CSC_EN;
 
-		/* Enable CSC अगर input is planar and output is RGB */
+		/* Enable CSC if input is planar and output is RGB */
 		config_csc(kmb, plane_id);
-	पूर्ण
+	}
 
-	kmb_ग_लिखो_lcd(kmb, LCD_LAYERn_CFG(plane_id), val);
+	kmb_write_lcd(kmb, LCD_LAYERn_CFG(plane_id), val);
 
-	चयन (plane_id) अणु
-	हाल LAYER_0:
+	switch (plane_id) {
+	case LAYER_0:
 		ctrl = LCD_CTRL_VL1_ENABLE;
-		अवरोध;
-	हाल LAYER_1:
+		break;
+	case LAYER_1:
 		ctrl = LCD_CTRL_VL2_ENABLE;
-		अवरोध;
-	हाल LAYER_2:
+		break;
+	case LAYER_2:
 		ctrl = LCD_CTRL_GL1_ENABLE;
-		अवरोध;
-	हाल LAYER_3:
+		break;
+	case LAYER_3:
 		ctrl = LCD_CTRL_GL2_ENABLE;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	ctrl |= LCD_CTRL_PROGRESSIVE | LCD_CTRL_TIM_GEN_ENABLE
 	    | LCD_CTRL_CONTINUOUS | LCD_CTRL_OUTPUT_ENABLED;
 
 	/* LCD is connected to MIPI on kmb
-	 * Thereक्रमe this bit is required क्रम DSI Tx
+	 * Therefore this bit is required for DSI Tx
 	 */
 	ctrl |= LCD_CTRL_VHSYNC_IDLE_LVL;
 
-	kmb_set_biपंचांगask_lcd(kmb, LCD_CONTROL, ctrl);
+	kmb_set_bitmask_lcd(kmb, LCD_CONTROL, ctrl);
 
-	/* FIXME no करोc on how to set output क्रमmat,these values are
+	/* FIXME no doc on how to set output format,these values are
 	 * taken from the Myriadx tests
 	 */
-	out_क्रमmat |= LCD_OUTF_FORMAT_RGB888;
+	out_format |= LCD_OUTF_FORMAT_RGB888;
 
-	/* Leave RGB order,conversion mode and clip mode to शेष */
-	/* करो not पूर्णांकerleave RGB channels क्रम mipi Tx compatibility */
-	out_क्रमmat |= LCD_OUTF_MIPI_RGB_MODE;
-	kmb_ग_लिखो_lcd(kmb, LCD_OUT_FORMAT_CFG, out_क्रमmat);
+	/* Leave RGB order,conversion mode and clip mode to default */
+	/* do not interleave RGB channels for mipi Tx compatibility */
+	out_format |= LCD_OUTF_MIPI_RGB_MODE;
+	kmb_write_lcd(kmb, LCD_OUT_FORMAT_CFG, out_format);
 
 	dma_cfg = LCD_DMA_LAYER_ENABLE | LCD_DMA_LAYER_VSTRIDE_EN |
 	    LCD_DMA_LAYER_CONT_UPDATE | LCD_DMA_LAYER_AXI_BURST_16;
 
 	/* Enable DMA */
-	kmb_ग_लिखो_lcd(kmb, LCD_LAYERn_DMA_CFG(plane_id), dma_cfg);
+	kmb_write_lcd(kmb, LCD_LAYERn_DMA_CFG(plane_id), dma_cfg);
 	drm_dbg(&kmb->drm, "dma_cfg=0x%x LCD_DMA_CFG=0x%x\n", dma_cfg,
-		kmb_पढ़ो_lcd(kmb, LCD_LAYERn_DMA_CFG(plane_id)));
+		kmb_read_lcd(kmb, LCD_LAYERn_DMA_CFG(plane_id)));
 
-	kmb_set_biपंचांगask_lcd(kmb, LCD_INT_CLEAR, LCD_INT_खातापूर्ण |
+	kmb_set_bitmask_lcd(kmb, LCD_INT_CLEAR, LCD_INT_EOF |
 			LCD_INT_DMA_ERR);
-	kmb_set_biपंचांगask_lcd(kmb, LCD_INT_ENABLE, LCD_INT_खातापूर्ण |
+	kmb_set_bitmask_lcd(kmb, LCD_INT_ENABLE, LCD_INT_EOF |
 			LCD_INT_DMA_ERR);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा drm_plane_helper_funcs kmb_plane_helper_funcs = अणु
+static const struct drm_plane_helper_funcs kmb_plane_helper_funcs = {
 	.atomic_check = kmb_plane_atomic_check,
 	.atomic_update = kmb_plane_atomic_update,
 	.atomic_disable = kmb_plane_atomic_disable
-पूर्ण;
+};
 
-व्योम kmb_plane_destroy(काष्ठा drm_plane *plane)
-अणु
-	काष्ठा kmb_plane *kmb_plane = to_kmb_plane(plane);
+void kmb_plane_destroy(struct drm_plane *plane)
+{
+	struct kmb_plane *kmb_plane = to_kmb_plane(plane);
 
 	drm_plane_cleanup(plane);
-	kमुक्त(kmb_plane);
-पूर्ण
+	kfree(kmb_plane);
+}
 
-अटल स्थिर काष्ठा drm_plane_funcs kmb_plane_funcs = अणु
+static const struct drm_plane_funcs kmb_plane_funcs = {
 	.update_plane = drm_atomic_helper_update_plane,
 	.disable_plane = drm_atomic_helper_disable_plane,
 	.destroy = kmb_plane_destroy,
 	.reset = drm_atomic_helper_plane_reset,
 	.atomic_duplicate_state = drm_atomic_helper_plane_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_plane_destroy_state,
-पूर्ण;
+};
 
-काष्ठा kmb_plane *kmb_plane_init(काष्ठा drm_device *drm)
-अणु
-	काष्ठा kmb_drm_निजी *kmb = to_kmb(drm);
-	काष्ठा kmb_plane *plane = शून्य;
-	काष्ठा kmb_plane *primary = शून्य;
-	पूर्णांक i = 0;
-	पूर्णांक ret = 0;
-	क्रमागत drm_plane_type plane_type;
-	स्थिर u32 *plane_क्रमmats;
-	पूर्णांक num_plane_क्रमmats;
+struct kmb_plane *kmb_plane_init(struct drm_device *drm)
+{
+	struct kmb_drm_private *kmb = to_kmb(drm);
+	struct kmb_plane *plane = NULL;
+	struct kmb_plane *primary = NULL;
+	int i = 0;
+	int ret = 0;
+	enum drm_plane_type plane_type;
+	const u32 *plane_formats;
+	int num_plane_formats;
 
-	क्रम (i = 0; i < KMB_MAX_PLANES; i++) अणु
-		plane = drmm_kzalloc(drm, माप(*plane), GFP_KERNEL);
+	for (i = 0; i < KMB_MAX_PLANES; i++) {
+		plane = drmm_kzalloc(drm, sizeof(*plane), GFP_KERNEL);
 
-		अगर (!plane) अणु
+		if (!plane) {
 			drm_err(drm, "Failed to allocate plane\n");
-			वापस ERR_PTR(-ENOMEM);
-		पूर्ण
+			return ERR_PTR(-ENOMEM);
+		}
 
 		plane_type = (i == 0) ? DRM_PLANE_TYPE_PRIMARY :
 		    DRM_PLANE_TYPE_OVERLAY;
-		अगर (i < 2) अणु
-			plane_क्रमmats = kmb_क्रमmats_v;
-			num_plane_क्रमmats = ARRAY_SIZE(kmb_क्रमmats_v);
-		पूर्ण अन्यथा अणु
-			plane_क्रमmats = kmb_क्रमmats_g;
-			num_plane_क्रमmats = ARRAY_SIZE(kmb_क्रमmats_g);
-		पूर्ण
+		if (i < 2) {
+			plane_formats = kmb_formats_v;
+			num_plane_formats = ARRAY_SIZE(kmb_formats_v);
+		} else {
+			plane_formats = kmb_formats_g;
+			num_plane_formats = ARRAY_SIZE(kmb_formats_g);
+		}
 
 		ret = drm_universal_plane_init(drm, &plane->base_plane,
 					       POSSIBLE_CRTCS, &kmb_plane_funcs,
-					       plane_क्रमmats, num_plane_क्रमmats,
-					       शून्य, plane_type, "plane %d", i);
-		अगर (ret < 0) अणु
+					       plane_formats, num_plane_formats,
+					       NULL, plane_type, "plane %d", i);
+		if (ret < 0) {
 			drm_err(drm, "drm_universal_plane_init failed (ret=%d)",
 				ret);
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 		drm_dbg(drm, "%s : %d i=%d type=%d",
 			__func__, __LINE__,
 			  i, plane_type);
 		drm_plane_helper_add(&plane->base_plane,
 				     &kmb_plane_helper_funcs);
-		अगर (plane_type == DRM_PLANE_TYPE_PRIMARY) अणु
+		if (plane_type == DRM_PLANE_TYPE_PRIMARY) {
 			primary = plane;
 			kmb->plane = plane;
-		पूर्ण
+		}
 		drm_dbg(drm, "%s : %d primary=%p\n", __func__, __LINE__,
 			&primary->base_plane);
 		plane->id = i;
-	पूर्ण
+	}
 
-	वापस primary;
+	return primary;
 cleanup:
-	drmm_kमुक्त(drm, plane);
-	वापस ERR_PTR(ret);
-पूर्ण
+	drmm_kfree(drm, plane);
+	return ERR_PTR(ret);
+}

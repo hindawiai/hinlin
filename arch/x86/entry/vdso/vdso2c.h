@@ -1,123 +1,122 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * This file is included twice from vdso2c.c.  It generates code क्रम 32-bit
- * and 64-bit vDSOs.  We need both क्रम 64-bit builds, since 32-bit vDSOs
- * are built क्रम 32-bit userspace.
+ * This file is included twice from vdso2c.c.  It generates code for 32-bit
+ * and 64-bit vDSOs.  We need both for 64-bit builds, since 32-bit vDSOs
+ * are built for 32-bit userspace.
  */
 
-अटल व्योम BITSFUNC(copy)(खाता *outfile, स्थिर अचिन्हित अक्षर *data, माप_प्रकार len)
-अणु
-	माप_प्रकार i;
+static void BITSFUNC(copy)(FILE *outfile, const unsigned char *data, size_t len)
+{
+	size_t i;
 
-	क्रम (i = 0; i < len; i++) अणु
-		अगर (i % 10 == 0)
-			ख_लिखो(outfile, "\n\t");
-		ख_लिखो(outfile, "0x%02X, ", (पूर्णांक)(data)[i]);
-	पूर्ण
-पूर्ण
+	for (i = 0; i < len; i++) {
+		if (i % 10 == 0)
+			fprintf(outfile, "\n\t");
+		fprintf(outfile, "0x%02X, ", (int)(data)[i]);
+	}
+}
 
 
 /*
- * Extract a section from the input data पूर्णांकo a standalone blob.  Used to
+ * Extract a section from the input data into a standalone blob.  Used to
  * capture kernel-only data that needs to persist indefinitely, e.g. the
  * exception fixup tables, but only in the kernel, i.e. the section can
  * be stripped from the final vDSO image.
  */
-अटल व्योम BITSFUNC(extract)(स्थिर अचिन्हित अक्षर *data, माप_प्रकार data_len,
-			      खाता *outfile, ELF(Shdr) *sec, स्थिर अक्षर *name)
-अणु
-	अचिन्हित दीर्घ offset;
-	माप_प्रकार len;
+static void BITSFUNC(extract)(const unsigned char *data, size_t data_len,
+			      FILE *outfile, ELF(Shdr) *sec, const char *name)
+{
+	unsigned long offset;
+	size_t len;
 
-	offset = (अचिन्हित दीर्घ)GET_LE(&sec->sh_offset);
-	len = (माप_प्रकार)GET_LE(&sec->sh_size);
+	offset = (unsigned long)GET_LE(&sec->sh_offset);
+	len = (size_t)GET_LE(&sec->sh_size);
 
-	अगर (offset + len > data_len)
+	if (offset + len > data_len)
 		fail("section to extract overruns input data");
 
-	ख_लिखो(outfile, "static const unsigned char %s[%zu] = {", name, len);
+	fprintf(outfile, "static const unsigned char %s[%zu] = {", name, len);
 	BITSFUNC(copy)(outfile, data + offset, len);
-	ख_लिखो(outfile, "\n};\n\n");
-पूर्ण
+	fprintf(outfile, "\n};\n\n");
+}
 
-अटल व्योम BITSFUNC(go)(व्योम *raw_addr, माप_प्रकार raw_len,
-			 व्योम *stripped_addr, माप_प्रकार stripped_len,
-			 खाता *outfile, स्थिर अक्षर *image_name)
-अणु
-	पूर्णांक found_load = 0;
-	अचिन्हित दीर्घ load_size = -1;  /* Work around bogus warning */
-	अचिन्हित दीर्घ mapping_size;
+static void BITSFUNC(go)(void *raw_addr, size_t raw_len,
+			 void *stripped_addr, size_t stripped_len,
+			 FILE *outfile, const char *image_name)
+{
+	int found_load = 0;
+	unsigned long load_size = -1;  /* Work around bogus warning */
+	unsigned long mapping_size;
 	ELF(Ehdr) *hdr = (ELF(Ehdr) *)raw_addr;
-	अचिन्हित दीर्घ i, syms_nr;
-	ELF(Shdr) *symtab_hdr = शून्य, *strtab_hdr, *secstrings_hdr,
-		*alt_sec = शून्य, *extable_sec = शून्य;
+	unsigned long i, syms_nr;
+	ELF(Shdr) *symtab_hdr = NULL, *strtab_hdr, *secstrings_hdr,
+		*alt_sec = NULL, *extable_sec = NULL;
 	ELF(Dyn) *dyn = 0, *dyn_end = 0;
-	स्थिर अक्षर *secstrings;
-	INT_BITS syms[NSYMS] = अणुपूर्ण;
+	const char *secstrings;
+	INT_BITS syms[NSYMS] = {};
 
 	ELF(Phdr) *pt = (ELF(Phdr) *)(raw_addr + GET_LE(&hdr->e_phoff));
 
-	अगर (GET_LE(&hdr->e_type) != ET_DYN)
+	if (GET_LE(&hdr->e_type) != ET_DYN)
 		fail("input is not a shared object\n");
 
 	/* Walk the segment table. */
-	क्रम (i = 0; i < GET_LE(&hdr->e_phnum); i++) अणु
-		अगर (GET_LE(&pt[i].p_type) == PT_LOAD) अणु
-			अगर (found_load)
+	for (i = 0; i < GET_LE(&hdr->e_phnum); i++) {
+		if (GET_LE(&pt[i].p_type) == PT_LOAD) {
+			if (found_load)
 				fail("multiple PT_LOAD segs\n");
 
-			अगर (GET_LE(&pt[i].p_offset) != 0 ||
+			if (GET_LE(&pt[i].p_offset) != 0 ||
 			    GET_LE(&pt[i].p_vaddr) != 0)
 				fail("PT_LOAD in wrong place\n");
 
-			अगर (GET_LE(&pt[i].p_memsz) != GET_LE(&pt[i].p_filesz))
+			if (GET_LE(&pt[i].p_memsz) != GET_LE(&pt[i].p_filesz))
 				fail("cannot handle memsz != filesz\n");
 
 			load_size = GET_LE(&pt[i].p_memsz);
 			found_load = 1;
-		पूर्ण अन्यथा अगर (GET_LE(&pt[i].p_type) == PT_DYNAMIC) अणु
+		} else if (GET_LE(&pt[i].p_type) == PT_DYNAMIC) {
 			dyn = raw_addr + GET_LE(&pt[i].p_offset);
 			dyn_end = raw_addr + GET_LE(&pt[i].p_offset) +
 				GET_LE(&pt[i].p_memsz);
-		पूर्ण
-	पूर्ण
-	अगर (!found_load)
+		}
+	}
+	if (!found_load)
 		fail("no PT_LOAD seg\n");
 
-	अगर (stripped_len < load_size)
+	if (stripped_len < load_size)
 		fail("stripped input is too short\n");
 
-	अगर (!dyn)
+	if (!dyn)
 		fail("input has no PT_DYNAMIC section -- your toolchain is buggy\n");
 
 	/* Walk the dynamic table */
-	क्रम (i = 0; dyn + i < dyn_end &&
-		     GET_LE(&dyn[i].d_tag) != DT_शून्य; i++) अणु
+	for (i = 0; dyn + i < dyn_end &&
+		     GET_LE(&dyn[i].d_tag) != DT_NULL; i++) {
 		typeof(dyn[i].d_tag) tag = GET_LE(&dyn[i].d_tag);
-		अगर (tag == DT_REL || tag == DT_RELSZ || tag == DT_RELA ||
+		if (tag == DT_REL || tag == DT_RELSZ || tag == DT_RELA ||
 		    tag == DT_RELENT || tag == DT_TEXTREL)
 			fail("vdso image contains dynamic relocations\n");
-	पूर्ण
+	}
 
 	/* Walk the section table */
 	secstrings_hdr = raw_addr + GET_LE(&hdr->e_shoff) +
 		GET_LE(&hdr->e_shentsize)*GET_LE(&hdr->e_shstrndx);
 	secstrings = raw_addr + GET_LE(&secstrings_hdr->sh_offset);
-	क्रम (i = 0; i < GET_LE(&hdr->e_shnum); i++) अणु
+	for (i = 0; i < GET_LE(&hdr->e_shnum); i++) {
 		ELF(Shdr) *sh = raw_addr + GET_LE(&hdr->e_shoff) +
 			GET_LE(&hdr->e_shentsize) * i;
-		अगर (GET_LE(&sh->sh_type) == SHT_SYMTAB)
+		if (GET_LE(&sh->sh_type) == SHT_SYMTAB)
 			symtab_hdr = sh;
 
-		अगर (!म_भेद(secstrings + GET_LE(&sh->sh_name),
+		if (!strcmp(secstrings + GET_LE(&sh->sh_name),
 			    ".altinstructions"))
 			alt_sec = sh;
-		अगर (!म_भेद(secstrings + GET_LE(&sh->sh_name), "__ex_table"))
+		if (!strcmp(secstrings + GET_LE(&sh->sh_name), "__ex_table"))
 			extable_sec = sh;
-	पूर्ण
+	}
 
-	अगर (!symtab_hdr)
+	if (!symtab_hdr)
 		fail("no symbol table\n");
 
 	strtab_hdr = raw_addr + GET_LE(&hdr->e_shoff) +
@@ -125,99 +124,99 @@
 
 	syms_nr = GET_LE(&symtab_hdr->sh_size) / GET_LE(&symtab_hdr->sh_entsize);
 	/* Walk the symbol table */
-	क्रम (i = 0; i < syms_nr; i++) अणु
-		अचिन्हित पूर्णांक k;
+	for (i = 0; i < syms_nr; i++) {
+		unsigned int k;
 		ELF(Sym) *sym = raw_addr + GET_LE(&symtab_hdr->sh_offset) +
 			GET_LE(&symtab_hdr->sh_entsize) * i;
-		स्थिर अक्षर *sym_name = raw_addr +
+		const char *sym_name = raw_addr +
 				       GET_LE(&strtab_hdr->sh_offset) +
 				       GET_LE(&sym->st_name);
 
-		क्रम (k = 0; k < NSYMS; k++) अणु
-			अगर (!म_भेद(sym_name, required_syms[k].name)) अणु
-				अगर (syms[k]) अणु
+		for (k = 0; k < NSYMS; k++) {
+			if (!strcmp(sym_name, required_syms[k].name)) {
+				if (syms[k]) {
 					fail("duplicate symbol %s\n",
 					     required_syms[k].name);
-				पूर्ण
+				}
 
 				/*
 				 * Careful: we use negative addresses, but
-				 * st_value is अचिन्हित, so we rely
-				 * on syms[k] being a चिन्हित type of the
+				 * st_value is unsigned, so we rely
+				 * on syms[k] being a signed type of the
 				 * correct width.
 				 */
 				syms[k] = GET_LE(&sym->st_value);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	/* Validate mapping addresses. */
-	क्रम (i = 0; i < माप(special_pages) / माप(special_pages[0]); i++) अणु
+	for (i = 0; i < sizeof(special_pages) / sizeof(special_pages[0]); i++) {
 		INT_BITS symval = syms[special_pages[i]];
 
-		अगर (!symval)
-			जारी;  /* The mapping isn't used; ignore it. */
+		if (!symval)
+			continue;  /* The mapping isn't used; ignore it. */
 
-		अगर (symval % 4096)
+		if (symval % 4096)
 			fail("%s must be a multiple of 4096\n",
 			     required_syms[i].name);
-		अगर (symval + 4096 < syms[sym_vvar_start])
+		if (symval + 4096 < syms[sym_vvar_start])
 			fail("%s underruns vvar_start\n",
 			     required_syms[i].name);
-		अगर (symval + 4096 > 0)
+		if (symval + 4096 > 0)
 			fail("%s is on the wrong side of the vdso text\n",
 			     required_syms[i].name);
-	पूर्ण
-	अगर (syms[sym_vvar_start] % 4096)
+	}
+	if (syms[sym_vvar_start] % 4096)
 		fail("vvar_begin must be a multiple of 4096\n");
 
-	अगर (!image_name) अणु
-		ख_डालो(stripped_addr, stripped_len, 1, outfile);
-		वापस;
-	पूर्ण
+	if (!image_name) {
+		fwrite(stripped_addr, stripped_len, 1, outfile);
+		return;
+	}
 
 	mapping_size = (stripped_len + 4095) / 4096 * 4096;
 
-	ख_लिखो(outfile, "/* AUTOMATICALLY GENERATED -- DO NOT EDIT */\n\n");
-	ख_लिखो(outfile, "#include <linux/linkage.h>\n");
-	ख_लिखो(outfile, "#include <asm/page_types.h>\n");
-	ख_लिखो(outfile, "#include <asm/vdso.h>\n");
-	ख_लिखो(outfile, "\n");
-	ख_लिखो(outfile,
+	fprintf(outfile, "/* AUTOMATICALLY GENERATED -- DO NOT EDIT */\n\n");
+	fprintf(outfile, "#include <linux/linkage.h>\n");
+	fprintf(outfile, "#include <asm/page_types.h>\n");
+	fprintf(outfile, "#include <asm/vdso.h>\n");
+	fprintf(outfile, "\n");
+	fprintf(outfile,
 		"static unsigned char raw_data[%lu] __ro_after_init __aligned(PAGE_SIZE) = {",
 		mapping_size);
-	क्रम (i = 0; i < stripped_len; i++) अणु
-		अगर (i % 10 == 0)
-			ख_लिखो(outfile, "\n\t");
-		ख_लिखो(outfile, "0x%02X, ",
-			(पूर्णांक)((अचिन्हित अक्षर *)stripped_addr)[i]);
-	पूर्ण
-	ख_लिखो(outfile, "\n};\n\n");
-	अगर (extable_sec)
+	for (i = 0; i < stripped_len; i++) {
+		if (i % 10 == 0)
+			fprintf(outfile, "\n\t");
+		fprintf(outfile, "0x%02X, ",
+			(int)((unsigned char *)stripped_addr)[i]);
+	}
+	fprintf(outfile, "\n};\n\n");
+	if (extable_sec)
 		BITSFUNC(extract)(raw_addr, raw_len, outfile,
 				  extable_sec, "extable");
 
-	ख_लिखो(outfile, "const struct vdso_image %s = {\n", image_name);
-	ख_लिखो(outfile, "\t.data = raw_data,\n");
-	ख_लिखो(outfile, "\t.size = %lu,\n", mapping_size);
-	अगर (alt_sec) अणु
-		ख_लिखो(outfile, "\t.alt = %lu,\n",
-			(अचिन्हित दीर्घ)GET_LE(&alt_sec->sh_offset));
-		ख_लिखो(outfile, "\t.alt_len = %lu,\n",
-			(अचिन्हित दीर्घ)GET_LE(&alt_sec->sh_size));
-	पूर्ण
-	अगर (extable_sec) अणु
-		ख_लिखो(outfile, "\t.extable_base = %lu,\n",
-			(अचिन्हित दीर्घ)GET_LE(&extable_sec->sh_offset));
-		ख_लिखो(outfile, "\t.extable_len = %lu,\n",
-			(अचिन्हित दीर्घ)GET_LE(&extable_sec->sh_size));
-		ख_लिखो(outfile, "\t.extable = extable,\n");
-	पूर्ण
+	fprintf(outfile, "const struct vdso_image %s = {\n", image_name);
+	fprintf(outfile, "\t.data = raw_data,\n");
+	fprintf(outfile, "\t.size = %lu,\n", mapping_size);
+	if (alt_sec) {
+		fprintf(outfile, "\t.alt = %lu,\n",
+			(unsigned long)GET_LE(&alt_sec->sh_offset));
+		fprintf(outfile, "\t.alt_len = %lu,\n",
+			(unsigned long)GET_LE(&alt_sec->sh_size));
+	}
+	if (extable_sec) {
+		fprintf(outfile, "\t.extable_base = %lu,\n",
+			(unsigned long)GET_LE(&extable_sec->sh_offset));
+		fprintf(outfile, "\t.extable_len = %lu,\n",
+			(unsigned long)GET_LE(&extable_sec->sh_size));
+		fprintf(outfile, "\t.extable = extable,\n");
+	}
 
-	क्रम (i = 0; i < NSYMS; i++) अणु
-		अगर (required_syms[i].export && syms[i])
-			ख_लिखो(outfile, "\t.sym_%s = %" PRIi64 ",\n",
-				required_syms[i].name, (पूर्णांक64_t)syms[i]);
-	पूर्ण
-	ख_लिखो(outfile, "};\n");
-पूर्ण
+	for (i = 0; i < NSYMS; i++) {
+		if (required_syms[i].export && syms[i])
+			fprintf(outfile, "\t.sym_%s = %" PRIi64 ",\n",
+				required_syms[i].name, (int64_t)syms[i]);
+	}
+	fprintf(outfile, "};\n");
+}

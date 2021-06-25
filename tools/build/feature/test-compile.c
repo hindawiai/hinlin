@@ -1,8 +1,7 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <मानकपन.स>
-पूर्णांक मुख्य(व्योम)
-अणु
-	म_लिखो("Hello World!\n");
-	वापस 0;
-पूर्ण
+// SPDX-License-Identifier: GPL-2.0
+#include <stdio.h>
+int main(void)
+{
+	printf("Hello World!\n");
+	return 0;
+}

@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Linux Kernel Dump Test Module क्रम testing kernel crashes conditions:
- * induces प्रणाली failures at predefined crashpoपूर्णांकs and under predefined
+ * Linux Kernel Dump Test Module for testing kernel crashes conditions:
+ * induces system failures at predefined crashpoints and under predefined
  * operational conditions in order to evaluate the reliability of kernel
- * sanity checking and crash dumps obtained using dअगरferent dumping
+ * sanity checking and crash dumps obtained using different dumping
  * solutions.
  *
  * Copyright (C) IBM Corporation, 2006
@@ -12,70 +11,70 @@
  * Author: Ankita Garg <ankita@in.ibm.com>
  *
  * It is adapted from the Linux Kernel Dump Test Tool by
- * Fernanकरो Luis Vazquez Cao <http://lkdtt.sourceक्रमge.net>
+ * Fernando Luis Vazquez Cao <http://lkdtt.sourceforge.net>
  *
  * Debugfs support added by Simon Kagstrom <simon.kagstrom@netinsight.net>
  *
- * See Documentation/fault-injection/provoke-crashes.rst क्रम inकाष्ठाions
+ * See Documentation/fault-injection/provoke-crashes.rst for instructions
  */
-#समावेश "lkdtm.h"
-#समावेश <linux/fs.h>
-#समावेश <linux/module.h>
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/kprobes.h>
-#समावेश <linux/list.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/debugfs.h>
+#include "lkdtm.h"
+#include <linux/fs.h>
+#include <linux/module.h>
+#include <linux/buffer_head.h>
+#include <linux/kprobes.h>
+#include <linux/list.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/debugfs.h>
 
-#घोषणा DEFAULT_COUNT 10
+#define DEFAULT_COUNT 10
 
-अटल पूर्णांक lkdपंचांग_debugfs_खोलो(काष्ठा inode *inode, काष्ठा file *file);
-अटल sमाप_प्रकार lkdपंचांग_debugfs_पढ़ो(काष्ठा file *f, अक्षर __user *user_buf,
-		माप_प्रकार count, loff_t *off);
-अटल sमाप_प्रकार direct_entry(काष्ठा file *f, स्थिर अक्षर __user *user_buf,
-			    माप_प्रकार count, loff_t *off);
+static int lkdtm_debugfs_open(struct inode *inode, struct file *file);
+static ssize_t lkdtm_debugfs_read(struct file *f, char __user *user_buf,
+		size_t count, loff_t *off);
+static ssize_t direct_entry(struct file *f, const char __user *user_buf,
+			    size_t count, loff_t *off);
 
-#अगर_घोषित CONFIG_KPROBES
-अटल पूर्णांक lkdपंचांग_kprobe_handler(काष्ठा kprobe *kp, काष्ठा pt_regs *regs);
-अटल sमाप_प्रकार lkdपंचांग_debugfs_entry(काष्ठा file *f,
-				   स्थिर अक्षर __user *user_buf,
-				   माप_प्रकार count, loff_t *off);
+#ifdef CONFIG_KPROBES
+static int lkdtm_kprobe_handler(struct kprobe *kp, struct pt_regs *regs);
+static ssize_t lkdtm_debugfs_entry(struct file *f,
+				   const char __user *user_buf,
+				   size_t count, loff_t *off);
 # define CRASHPOINT_KPROBE(_symbol)				\
-		.kprobe = अणु					\
+		.kprobe = {					\
 			.symbol_name = (_symbol),		\
-			.pre_handler = lkdपंचांग_kprobe_handler,	\
-		पूर्ण,
+			.pre_handler = lkdtm_kprobe_handler,	\
+		},
 # define CRASHPOINT_WRITE(_symbol)				\
-		(_symbol) ? lkdपंचांग_debugfs_entry : direct_entry
-#अन्यथा
+		(_symbol) ? lkdtm_debugfs_entry : direct_entry
+#else
 # define CRASHPOINT_KPROBE(_symbol)
 # define CRASHPOINT_WRITE(_symbol)		direct_entry
-#पूर्ण_अगर
+#endif
 
-/* Crash poपूर्णांकs */
-काष्ठा crashpoपूर्णांक अणु
-	स्थिर अक्षर *name;
-	स्थिर काष्ठा file_operations fops;
-	काष्ठा kprobe kprobe;
-पूर्ण;
+/* Crash points */
+struct crashpoint {
+	const char *name;
+	const struct file_operations fops;
+	struct kprobe kprobe;
+};
 
-#घोषणा CRASHPOINT(_name, _symbol)				\
-	अणु							\
+#define CRASHPOINT(_name, _symbol)				\
+	{							\
 		.name = _name,					\
-		.fops = अणु					\
-			.पढ़ो	= lkdपंचांग_debugfs_पढ़ो,		\
+		.fops = {					\
+			.read	= lkdtm_debugfs_read,		\
 			.llseek	= generic_file_llseek,		\
-			.खोलो	= lkdपंचांग_debugfs_खोलो,		\
-			.ग_लिखो	= CRASHPOINT_WRITE(_symbol)	\
-		पूर्ण,						\
+			.open	= lkdtm_debugfs_open,		\
+			.write	= CRASHPOINT_WRITE(_symbol)	\
+		},						\
 		CRASHPOINT_KPROBE(_symbol)			\
-	पूर्ण
+	}
 
-/* Define the possible places where we can trigger a crash poपूर्णांक. */
-अटल काष्ठा crashpoपूर्णांक crashpoपूर्णांकs[] = अणु
-	CRASHPOINT("DIRECT",		 शून्य),
-#अगर_घोषित CONFIG_KPROBES
+/* Define the possible places where we can trigger a crash point. */
+static struct crashpoint crashpoints[] = {
+	CRASHPOINT("DIRECT",		 NULL),
+#ifdef CONFIG_KPROBES
 	CRASHPOINT("INT_HARDWARE_ENTRY", "do_IRQ"),
 	CRASHPOINT("INT_HW_IRQ_EN",	 "handle_irq_event"),
 	CRASHPOINT("INT_TASKLET_ENTRY",	 "tasklet_action"),
@@ -84,24 +83,24 @@
 	CRASHPOINT("TIMERADD",		 "hrtimer_start"),
 	CRASHPOINT("SCSI_DISPATCH_CMD",	 "scsi_dispatch_cmd"),
 	CRASHPOINT("IDE_CORE_CP",	 "generic_ide_ioctl"),
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
 
 /* Crash types. */
-काष्ठा crashtype अणु
-	स्थिर अक्षर *name;
-	व्योम (*func)(व्योम);
-पूर्ण;
+struct crashtype {
+	const char *name;
+	void (*func)(void);
+};
 
-#घोषणा CRASHTYPE(_name)			\
-	अणु					\
-		.name = __stringअगरy(_name),	\
-		.func = lkdपंचांग_ ## _name,	\
-	पूर्ण
+#define CRASHTYPE(_name)			\
+	{					\
+		.name = __stringify(_name),	\
+		.func = lkdtm_ ## _name,	\
+	}
 
 /* Define the possible types of crashes that can be triggered. */
-अटल स्थिर काष्ठा crashtype crashtypes[] = अणु
+static const struct crashtype crashtypes[] = {
 	CRASHTYPE(PANIC),
 	CRASHTYPE(BUG),
 	CRASHTYPE(WARNING),
@@ -142,9 +141,9 @@
 	CRASHTYPE(EXEC_VMALLOC),
 	CRASHTYPE(EXEC_RODATA),
 	CRASHTYPE(EXEC_USERSPACE),
-	CRASHTYPE(EXEC_शून्य),
+	CRASHTYPE(EXEC_NULL),
 	CRASHTYPE(ACCESS_USERSPACE),
-	CRASHTYPE(ACCESS_शून्य),
+	CRASHTYPE(ACCESS_NULL),
 	CRASHTYPE(WRITE_RO),
 	CRASHTYPE(WRITE_RO_AFTER_INIT),
 	CRASHTYPE(WRITE_KERN),
@@ -178,322 +177,322 @@
 	CRASHTYPE(STACKLEAK_ERASING),
 	CRASHTYPE(CFI_FORWARD_PROTO),
 	CRASHTYPE(FORTIFIED_STRSCPY),
-#अगर_घोषित CONFIG_X86_32
+#ifdef CONFIG_X86_32
 	CRASHTYPE(DOUBLE_FAULT),
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PPC_BOOK3S_64
+#endif
+#ifdef CONFIG_PPC_BOOK3S_64
 	CRASHTYPE(PPC_SLB_MULTIHIT),
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
 
 /* Global kprobe entry and crashtype. */
-अटल काष्ठा kprobe *lkdपंचांग_kprobe;
-अटल काष्ठा crashpoपूर्णांक *lkdपंचांग_crashpoपूर्णांक;
-अटल स्थिर काष्ठा crashtype *lkdपंचांग_crashtype;
+static struct kprobe *lkdtm_kprobe;
+static struct crashpoint *lkdtm_crashpoint;
+static const struct crashtype *lkdtm_crashtype;
 
 /* Module parameters */
-अटल पूर्णांक recur_count = -1;
-module_param(recur_count, पूर्णांक, 0644);
+static int recur_count = -1;
+module_param(recur_count, int, 0644);
 MODULE_PARM_DESC(recur_count, " Recursion level for the stack overflow test");
 
-अटल अक्षर* cpoपूर्णांक_name;
-module_param(cpoपूर्णांक_name, अक्षरp, 0444);
-MODULE_PARM_DESC(cpoपूर्णांक_name, " Crash Point, where kernel is to be crashed");
+static char* cpoint_name;
+module_param(cpoint_name, charp, 0444);
+MODULE_PARM_DESC(cpoint_name, " Crash Point, where kernel is to be crashed");
 
-अटल अक्षर* cpoपूर्णांक_type;
-module_param(cpoपूर्णांक_type, अक्षरp, 0444);
-MODULE_PARM_DESC(cpoपूर्णांक_type, " Crash Point Type, action to be taken on "\
+static char* cpoint_type;
+module_param(cpoint_type, charp, 0444);
+MODULE_PARM_DESC(cpoint_type, " Crash Point Type, action to be taken on "\
 				"hitting the crash point");
 
-अटल पूर्णांक cpoपूर्णांक_count = DEFAULT_COUNT;
-module_param(cpoपूर्णांक_count, पूर्णांक, 0644);
-MODULE_PARM_DESC(cpoपूर्णांक_count, " Crash Point Count, number of times the "\
+static int cpoint_count = DEFAULT_COUNT;
+module_param(cpoint_count, int, 0644);
+MODULE_PARM_DESC(cpoint_count, " Crash Point Count, number of times the "\
 				"crash point is to be hit to trigger action");
 
 
-/* Return the crashtype number or शून्य अगर the name is invalid */
-अटल स्थिर काष्ठा crashtype *find_crashtype(स्थिर अक्षर *name)
-अणु
-	पूर्णांक i;
+/* Return the crashtype number or NULL if the name is invalid */
+static const struct crashtype *find_crashtype(const char *name)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(crashtypes); i++) अणु
-		अगर (!म_भेद(name, crashtypes[i].name))
-			वापस &crashtypes[i];
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(crashtypes); i++) {
+		if (!strcmp(name, crashtypes[i].name))
+			return &crashtypes[i];
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
- * This is क्रमced noअंतरभूत just so it distinctly shows up in the stackdump
- * which makes validation of expected lkdपंचांग crashes easier.
+ * This is forced noinline just so it distinctly shows up in the stackdump
+ * which makes validation of expected lkdtm crashes easier.
  */
-अटल noअंतरभूत व्योम lkdपंचांग_करो_action(स्थिर काष्ठा crashtype *crashtype)
-अणु
-	अगर (WARN_ON(!crashtype || !crashtype->func))
-		वापस;
+static noinline void lkdtm_do_action(const struct crashtype *crashtype)
+{
+	if (WARN_ON(!crashtype || !crashtype->func))
+		return;
 	crashtype->func();
-पूर्ण
+}
 
-अटल पूर्णांक lkdपंचांग_रेजिस्टर_cpoपूर्णांक(काष्ठा crashpoपूर्णांक *crashpoपूर्णांक,
-				 स्थिर काष्ठा crashtype *crashtype)
-अणु
-	पूर्णांक ret;
+static int lkdtm_register_cpoint(struct crashpoint *crashpoint,
+				 const struct crashtype *crashtype)
+{
+	int ret;
 
-	/* If this करोesn't have a symbol, just call immediately. */
-	अगर (!crashpoपूर्णांक->kprobe.symbol_name) अणु
-		lkdपंचांग_करो_action(crashtype);
-		वापस 0;
-	पूर्ण
+	/* If this doesn't have a symbol, just call immediately. */
+	if (!crashpoint->kprobe.symbol_name) {
+		lkdtm_do_action(crashtype);
+		return 0;
+	}
 
-	अगर (lkdपंचांग_kprobe != शून्य)
-		unरेजिस्टर_kprobe(lkdपंचांग_kprobe);
+	if (lkdtm_kprobe != NULL)
+		unregister_kprobe(lkdtm_kprobe);
 
-	lkdपंचांग_crashpoपूर्णांक = crashpoपूर्णांक;
-	lkdपंचांग_crashtype = crashtype;
-	lkdपंचांग_kprobe = &crashpoपूर्णांक->kprobe;
-	ret = रेजिस्टर_kprobe(lkdपंचांग_kprobe);
-	अगर (ret < 0) अणु
+	lkdtm_crashpoint = crashpoint;
+	lkdtm_crashtype = crashtype;
+	lkdtm_kprobe = &crashpoint->kprobe;
+	ret = register_kprobe(lkdtm_kprobe);
+	if (ret < 0) {
 		pr_info("Couldn't register kprobe %s\n",
-			crashpoपूर्णांक->kprobe.symbol_name);
-		lkdपंचांग_kprobe = शून्य;
-		lkdपंचांग_crashpoपूर्णांक = शून्य;
-		lkdपंचांग_crashtype = शून्य;
-	पूर्ण
+			crashpoint->kprobe.symbol_name);
+		lkdtm_kprobe = NULL;
+		lkdtm_crashpoint = NULL;
+		lkdtm_crashtype = NULL;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_KPROBES
+#ifdef CONFIG_KPROBES
 /* Global crash counter and spinlock. */
-अटल पूर्णांक crash_count = DEFAULT_COUNT;
-अटल DEFINE_SPINLOCK(crash_count_lock);
+static int crash_count = DEFAULT_COUNT;
+static DEFINE_SPINLOCK(crash_count_lock);
 
-/* Called by kprobe entry poपूर्णांकs. */
-अटल पूर्णांक lkdपंचांग_kprobe_handler(काष्ठा kprobe *kp, काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ flags;
-	bool करो_it = false;
+/* Called by kprobe entry points. */
+static int lkdtm_kprobe_handler(struct kprobe *kp, struct pt_regs *regs)
+{
+	unsigned long flags;
+	bool do_it = false;
 
-	अगर (WARN_ON(!lkdपंचांग_crashpoपूर्णांक || !lkdपंचांग_crashtype))
-		वापस 0;
+	if (WARN_ON(!lkdtm_crashpoint || !lkdtm_crashtype))
+		return 0;
 
 	spin_lock_irqsave(&crash_count_lock, flags);
 	crash_count--;
 	pr_info("Crash point %s of type %s hit, trigger in %d rounds\n",
-		lkdपंचांग_crashpoपूर्णांक->name, lkdपंचांग_crashtype->name, crash_count);
+		lkdtm_crashpoint->name, lkdtm_crashtype->name, crash_count);
 
-	अगर (crash_count == 0) अणु
-		करो_it = true;
-		crash_count = cpoपूर्णांक_count;
-	पूर्ण
+	if (crash_count == 0) {
+		do_it = true;
+		crash_count = cpoint_count;
+	}
 	spin_unlock_irqrestore(&crash_count_lock, flags);
 
-	अगर (करो_it)
-		lkdपंचांग_करो_action(lkdपंचांग_crashtype);
+	if (do_it)
+		lkdtm_do_action(lkdtm_crashtype);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार lkdपंचांग_debugfs_entry(काष्ठा file *f,
-				   स्थिर अक्षर __user *user_buf,
-				   माप_प्रकार count, loff_t *off)
-अणु
-	काष्ठा crashpoपूर्णांक *crashpoपूर्णांक = file_inode(f)->i_निजी;
-	स्थिर काष्ठा crashtype *crashtype = शून्य;
-	अक्षर *buf;
-	पूर्णांक err;
+static ssize_t lkdtm_debugfs_entry(struct file *f,
+				   const char __user *user_buf,
+				   size_t count, loff_t *off)
+{
+	struct crashpoint *crashpoint = file_inode(f)->i_private;
+	const struct crashtype *crashtype = NULL;
+	char *buf;
+	int err;
 
-	अगर (count >= PAGE_SIZE)
-		वापस -EINVAL;
+	if (count >= PAGE_SIZE)
+		return -EINVAL;
 
-	buf = (अक्षर *)__get_मुक्त_page(GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
-	अगर (copy_from_user(buf, user_buf, count)) अणु
-		मुक्त_page((अचिन्हित दीर्घ) buf);
-		वापस -EFAULT;
-	पूर्ण
-	/* शून्य-terminate and हटाओ enter */
+	buf = (char *)__get_free_page(GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
+	if (copy_from_user(buf, user_buf, count)) {
+		free_page((unsigned long) buf);
+		return -EFAULT;
+	}
+	/* NULL-terminate and remove enter */
 	buf[count] = '\0';
 	strim(buf);
 
 	crashtype = find_crashtype(buf);
-	मुक्त_page((अचिन्हित दीर्घ)buf);
+	free_page((unsigned long)buf);
 
-	अगर (!crashtype)
-		वापस -EINVAL;
+	if (!crashtype)
+		return -EINVAL;
 
-	err = lkdपंचांग_रेजिस्टर_cpoपूर्णांक(crashpoपूर्णांक, crashtype);
-	अगर (err < 0)
-		वापस err;
+	err = lkdtm_register_cpoint(crashpoint, crashtype);
+	if (err < 0)
+		return err;
 
 	*off += count;
 
-	वापस count;
-पूर्ण
-#पूर्ण_अगर
+	return count;
+}
+#endif
 
-/* Generic पढ़ो callback that just prपूर्णांकs out the available crash types */
-अटल sमाप_प्रकार lkdपंचांग_debugfs_पढ़ो(काष्ठा file *f, अक्षर __user *user_buf,
-		माप_प्रकार count, loff_t *off)
-अणु
-	अक्षर *buf;
-	पूर्णांक i, n, out;
+/* Generic read callback that just prints out the available crash types */
+static ssize_t lkdtm_debugfs_read(struct file *f, char __user *user_buf,
+		size_t count, loff_t *off)
+{
+	char *buf;
+	int i, n, out;
 
-	buf = (अक्षर *)__get_मुक्त_page(GFP_KERNEL);
-	अगर (buf == शून्य)
-		वापस -ENOMEM;
+	buf = (char *)__get_free_page(GFP_KERNEL);
+	if (buf == NULL)
+		return -ENOMEM;
 
-	n = scnम_लिखो(buf, PAGE_SIZE, "Available crash types:\n");
-	क्रम (i = 0; i < ARRAY_SIZE(crashtypes); i++) अणु
-		n += scnम_लिखो(buf + n, PAGE_SIZE - n, "%s\n",
+	n = scnprintf(buf, PAGE_SIZE, "Available crash types:\n");
+	for (i = 0; i < ARRAY_SIZE(crashtypes); i++) {
+		n += scnprintf(buf + n, PAGE_SIZE - n, "%s\n",
 			      crashtypes[i].name);
-	पूर्ण
+	}
 	buf[n] = '\0';
 
-	out = simple_पढ़ो_from_buffer(user_buf, count, off,
+	out = simple_read_from_buffer(user_buf, count, off,
 				      buf, n);
-	मुक्त_page((अचिन्हित दीर्घ) buf);
+	free_page((unsigned long) buf);
 
-	वापस out;
-पूर्ण
+	return out;
+}
 
-अटल पूर्णांक lkdपंचांग_debugfs_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस 0;
-पूर्ण
+static int lkdtm_debugfs_open(struct inode *inode, struct file *file)
+{
+	return 0;
+}
 
 /* Special entry to just crash directly. Available without KPROBEs */
-अटल sमाप_प्रकार direct_entry(काष्ठा file *f, स्थिर अक्षर __user *user_buf,
-		माप_प्रकार count, loff_t *off)
-अणु
-	स्थिर काष्ठा crashtype *crashtype;
-	अक्षर *buf;
+static ssize_t direct_entry(struct file *f, const char __user *user_buf,
+		size_t count, loff_t *off)
+{
+	const struct crashtype *crashtype;
+	char *buf;
 
-	अगर (count >= PAGE_SIZE)
-		वापस -EINVAL;
-	अगर (count < 1)
-		वापस -EINVAL;
+	if (count >= PAGE_SIZE)
+		return -EINVAL;
+	if (count < 1)
+		return -EINVAL;
 
-	buf = (अक्षर *)__get_मुक्त_page(GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
-	अगर (copy_from_user(buf, user_buf, count)) अणु
-		मुक्त_page((अचिन्हित दीर्घ) buf);
-		वापस -EFAULT;
-	पूर्ण
-	/* शून्य-terminate and हटाओ enter */
+	buf = (char *)__get_free_page(GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
+	if (copy_from_user(buf, user_buf, count)) {
+		free_page((unsigned long) buf);
+		return -EFAULT;
+	}
+	/* NULL-terminate and remove enter */
 	buf[count] = '\0';
 	strim(buf);
 
 	crashtype = find_crashtype(buf);
-	मुक्त_page((अचिन्हित दीर्घ) buf);
-	अगर (!crashtype)
-		वापस -EINVAL;
+	free_page((unsigned long) buf);
+	if (!crashtype)
+		return -EINVAL;
 
 	pr_info("Performing direct entry %s\n", crashtype->name);
-	lkdपंचांग_करो_action(crashtype);
+	lkdtm_do_action(crashtype);
 	*off += count;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल काष्ठा dentry *lkdपंचांग_debugfs_root;
+static struct dentry *lkdtm_debugfs_root;
 
-अटल पूर्णांक __init lkdपंचांग_module_init(व्योम)
-अणु
-	काष्ठा crashpoपूर्णांक *crashpoपूर्णांक = शून्य;
-	स्थिर काष्ठा crashtype *crashtype = शून्य;
-	पूर्णांक ret;
-	पूर्णांक i;
+static int __init lkdtm_module_init(void)
+{
+	struct crashpoint *crashpoint = NULL;
+	const struct crashtype *crashtype = NULL;
+	int ret;
+	int i;
 
 	/* Neither or both of these need to be set */
-	अगर ((cpoपूर्णांक_type || cpoपूर्णांक_name) && !(cpoपूर्णांक_type && cpoपूर्णांक_name)) अणु
+	if ((cpoint_type || cpoint_name) && !(cpoint_type && cpoint_name)) {
 		pr_err("Need both cpoint_type and cpoint_name or neither\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (cpoपूर्णांक_type) अणु
-		crashtype = find_crashtype(cpoपूर्णांक_type);
-		अगर (!crashtype) अणु
-			pr_err("Unknown crashtype '%s'\n", cpoपूर्णांक_type);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+	if (cpoint_type) {
+		crashtype = find_crashtype(cpoint_type);
+		if (!crashtype) {
+			pr_err("Unknown crashtype '%s'\n", cpoint_type);
+			return -EINVAL;
+		}
+	}
 
-	अगर (cpoपूर्णांक_name) अणु
-		क्रम (i = 0; i < ARRAY_SIZE(crashpoपूर्णांकs); i++) अणु
-			अगर (!म_भेद(cpoपूर्णांक_name, crashpoपूर्णांकs[i].name))
-				crashpoपूर्णांक = &crashpoपूर्णांकs[i];
-		पूर्ण
+	if (cpoint_name) {
+		for (i = 0; i < ARRAY_SIZE(crashpoints); i++) {
+			if (!strcmp(cpoint_name, crashpoints[i].name))
+				crashpoint = &crashpoints[i];
+		}
 
-		/* Refuse unknown crashpoपूर्णांकs. */
-		अगर (!crashpoपूर्णांक) अणु
-			pr_err("Invalid crashpoint %s\n", cpoपूर्णांक_name);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+		/* Refuse unknown crashpoints. */
+		if (!crashpoint) {
+			pr_err("Invalid crashpoint %s\n", cpoint_name);
+			return -EINVAL;
+		}
+	}
 
-#अगर_घोषित CONFIG_KPROBES
+#ifdef CONFIG_KPROBES
 	/* Set crash count. */
-	crash_count = cpoपूर्णांक_count;
-#पूर्ण_अगर
+	crash_count = cpoint_count;
+#endif
 
-	/* Handle test-specअगरic initialization. */
-	lkdपंचांग_bugs_init(&recur_count);
-	lkdपंचांग_perms_init();
-	lkdपंचांग_usercopy_init();
-	lkdपंचांग_heap_init();
+	/* Handle test-specific initialization. */
+	lkdtm_bugs_init(&recur_count);
+	lkdtm_perms_init();
+	lkdtm_usercopy_init();
+	lkdtm_heap_init();
 
-	/* Register debugfs पूर्णांकerface */
-	lkdपंचांग_debugfs_root = debugfs_create_dir("provoke-crash", शून्य);
+	/* Register debugfs interface */
+	lkdtm_debugfs_root = debugfs_create_dir("provoke-crash", NULL);
 
 	/* Install debugfs trigger files. */
-	क्रम (i = 0; i < ARRAY_SIZE(crashpoपूर्णांकs); i++) अणु
-		काष्ठा crashpoपूर्णांक *cur = &crashpoपूर्णांकs[i];
+	for (i = 0; i < ARRAY_SIZE(crashpoints); i++) {
+		struct crashpoint *cur = &crashpoints[i];
 
-		debugfs_create_file(cur->name, 0644, lkdपंचांग_debugfs_root, cur,
+		debugfs_create_file(cur->name, 0644, lkdtm_debugfs_root, cur,
 				    &cur->fops);
-	पूर्ण
+	}
 
-	/* Install crashpoपूर्णांक अगर one was selected. */
-	अगर (crashpoपूर्णांक) अणु
-		ret = lkdपंचांग_रेजिस्टर_cpoपूर्णांक(crashpoपूर्णांक, crashtype);
-		अगर (ret < 0) अणु
-			pr_info("Invalid crashpoint %s\n", crashpoपूर्णांक->name);
-			जाओ out_err;
-		पूर्ण
+	/* Install crashpoint if one was selected. */
+	if (crashpoint) {
+		ret = lkdtm_register_cpoint(crashpoint, crashtype);
+		if (ret < 0) {
+			pr_info("Invalid crashpoint %s\n", crashpoint->name);
+			goto out_err;
+		}
 		pr_info("Crash point %s of type %s registered\n",
-			crashpoपूर्णांक->name, cpoपूर्णांक_type);
-	पूर्ण अन्यथा अणु
+			crashpoint->name, cpoint_type);
+	} else {
 		pr_info("No crash points registered, enable through debugfs\n");
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 out_err:
-	debugfs_हटाओ_recursive(lkdपंचांग_debugfs_root);
-	वापस ret;
-पूर्ण
+	debugfs_remove_recursive(lkdtm_debugfs_root);
+	return ret;
+}
 
-अटल व्योम __निकास lkdपंचांग_module_निकास(व्योम)
-अणु
-	debugfs_हटाओ_recursive(lkdपंचांग_debugfs_root);
+static void __exit lkdtm_module_exit(void)
+{
+	debugfs_remove_recursive(lkdtm_debugfs_root);
 
-	/* Handle test-specअगरic clean-up. */
-	lkdपंचांग_heap_निकास();
-	lkdपंचांग_usercopy_निकास();
+	/* Handle test-specific clean-up. */
+	lkdtm_heap_exit();
+	lkdtm_usercopy_exit();
 
-	अगर (lkdपंचांग_kprobe != शून्य)
-		unरेजिस्टर_kprobe(lkdपंचांग_kprobe);
+	if (lkdtm_kprobe != NULL)
+		unregister_kprobe(lkdtm_kprobe);
 
 	pr_info("Crash point unregistered\n");
-पूर्ण
+}
 
-module_init(lkdपंचांग_module_init);
-module_निकास(lkdपंचांग_module_निकास);
+module_init(lkdtm_module_init);
+module_exit(lkdtm_module_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Kernel crash testing module");

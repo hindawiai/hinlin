@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_ALPHA_PARAM_H
-#घोषणा _ASM_ALPHA_PARAM_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_ALPHA_PARAM_H
+#define _ASM_ALPHA_PARAM_H
 
-#समावेश <uapi/यंत्र/param.h>
+#include <uapi/asm/param.h>
 
 # undef HZ
 # define HZ		CONFIG_HZ
 # define USER_HZ	1024
-# define CLOCKS_PER_SEC	USER_HZ	/* frequency at which बार() counts */
+# define CLOCKS_PER_SEC	USER_HZ	/* frequency at which times() counts */
 
-#पूर्ण_अगर /* _ASM_ALPHA_PARAM_H */
+#endif /* _ASM_ALPHA_PARAM_H */

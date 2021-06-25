@@ -1,235 +1,234 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Driver क्रम the VIA Chrome पूर्णांकegrated camera controller.
+ * Driver for the VIA Chrome integrated camera controller.
  *
  * Copyright 2009,2010 Jonathan Corbet <corbet@lwn.net>
  *
  * This work was supported by the One Laptop Per Child project
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/list.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/videodev2.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-ioctl.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-event.h>
-#समावेश <media/v4l2-image-sizes.h>
-#समावेश <media/i2c/ov7670.h>
-#समावेश <media/videobuf2-dma-sg.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/pm_qos.h>
-#समावेश <linux/via-core.h>
-#समावेश <linux/via-gpपन.स>
-#समावेश <linux/via_i2c.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/list.h>
+#include <linux/pci.h>
+#include <linux/gpio.h>
+#include <linux/interrupt.h>
+#include <linux/platform_device.h>
+#include <linux/videodev2.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-ioctl.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-event.h>
+#include <media/v4l2-image-sizes.h>
+#include <media/i2c/ov7670.h>
+#include <media/videobuf2-dma-sg.h>
+#include <linux/delay.h>
+#include <linux/dma-mapping.h>
+#include <linux/pm_qos.h>
+#include <linux/via-core.h>
+#include <linux/via-gpio.h>
+#include <linux/via_i2c.h>
 
-#अगर_घोषित CONFIG_X86
-#समावेश <यंत्र/olpc.h>
-#अन्यथा
-#घोषणा machine_is_olpc(x) 0
-#पूर्ण_अगर
+#ifdef CONFIG_X86
+#include <asm/olpc.h>
+#else
+#define machine_is_olpc(x) 0
+#endif
 
-#समावेश "via-camera.h"
+#include "via-camera.h"
 
 MODULE_ALIAS("platform:viafb-camera");
 MODULE_AUTHOR("Jonathan Corbet <corbet@lwn.net>");
 MODULE_DESCRIPTION("VIA framebuffer-based camera controller driver");
 MODULE_LICENSE("GPL");
 
-अटल bool flip_image;
+static bool flip_image;
 module_param(flip_image, bool, 0444);
 MODULE_PARM_DESC(flip_image,
 		"If set, the sensor will be instructed to flip the image vertically.");
 
-अटल bool override_serial;
+static bool override_serial;
 module_param(override_serial, bool, 0444);
 MODULE_PARM_DESC(override_serial,
 		"The camera driver will normally refuse to load if the XO 1.5 serial port is enabled.  Set this option to force-enable the camera.");
 
 /*
- * The काष्ठाure describing our camera.
+ * The structure describing our camera.
  */
-क्रमागत viacam_opstate अणु S_IDLE = 0, S_RUNNING = 1 पूर्ण;
+enum viacam_opstate { S_IDLE = 0, S_RUNNING = 1 };
 
-काष्ठा via_camera अणु
-	काष्ठा v4l2_device v4l2_dev;
-	काष्ठा v4l2_ctrl_handler ctrl_handler;
-	काष्ठा video_device vdev;
-	काष्ठा v4l2_subdev *sensor;
-	काष्ठा platक्रमm_device *platdev;
-	काष्ठा viafb_dev *viadev;
-	काष्ठा mutex lock;
-	क्रमागत viacam_opstate opstate;
-	अचिन्हित दीर्घ flags;
-	काष्ठा pm_qos_request qos_request;
+struct via_camera {
+	struct v4l2_device v4l2_dev;
+	struct v4l2_ctrl_handler ctrl_handler;
+	struct video_device vdev;
+	struct v4l2_subdev *sensor;
+	struct platform_device *platdev;
+	struct viafb_dev *viadev;
+	struct mutex lock;
+	enum viacam_opstate opstate;
+	unsigned long flags;
+	struct pm_qos_request qos_request;
 	/*
-	 * GPIO info क्रम घातer/reset management
+	 * GPIO info for power/reset management
 	 */
-	पूर्णांक घातer_gpio;
-	पूर्णांक reset_gpio;
+	int power_gpio;
+	int reset_gpio;
 	/*
 	 * I/O memory stuff.
 	 */
-	व्योम __iomem *mmio;	/* Where the रेजिस्टरs live */
-	व्योम __iomem *fbmem;	/* Frame buffer memory */
+	void __iomem *mmio;	/* Where the registers live */
+	void __iomem *fbmem;	/* Frame buffer memory */
 	u32 fb_offset;		/* Reserved memory offset (FB) */
 	/*
 	 * Capture buffers and related.	 The controller supports
 	 * up to three, so that's what we have here.  These buffers
-	 * live in frame buffer memory, so we करोn't call them "DMA".
+	 * live in frame buffer memory, so we don't call them "DMA".
 	 */
-	अचिन्हित पूर्णांक cb_offsets[3];	/* offsets पूर्णांकo fb mem */
+	unsigned int cb_offsets[3];	/* offsets into fb mem */
 	u8 __iomem *cb_addrs[3];	/* Kernel-space addresses */
-	पूर्णांक n_cap_bufs;			/* How many are we using? */
-	काष्ठा vb2_queue vq;
-	काष्ठा list_head buffer_queue;
+	int n_cap_bufs;			/* How many are we using? */
+	struct vb2_queue vq;
+	struct list_head buffer_queue;
 	u32 sequence;
 	/*
-	 * Video क्रमmat inक्रमmation.  sensor_क्रमmat is kept in a क्रमm
+	 * Video format information.  sensor_format is kept in a form
 	 * that we can use to pass to the sensor.  We always run the
 	 * sensor in VGA resolution, though, and let the controller
-	 * करोwnscale things अगर need be.	 So we keep the "real*
+	 * downscale things if need be.	 So we keep the "real*
 	 * dimensions separately.
 	 */
-	काष्ठा v4l2_pix_क्रमmat sensor_क्रमmat;
-	काष्ठा v4l2_pix_क्रमmat user_क्रमmat;
+	struct v4l2_pix_format sensor_format;
+	struct v4l2_pix_format user_format;
 	u32 mbus_code;
-पूर्ण;
+};
 
-/* buffer क्रम one video frame */
-काष्ठा via_buffer अणु
+/* buffer for one video frame */
+struct via_buffer {
 	/* common v4l buffer stuff -- must be first */
-	काष्ठा vb2_v4l2_buffer		vbuf;
-	काष्ठा list_head		queue;
-पूर्ण;
+	struct vb2_v4l2_buffer		vbuf;
+	struct list_head		queue;
+};
 
 /*
  * Yes, this is a hack, but there's only going to be one of these
- * on any प्रणाली we know of.
+ * on any system we know of.
  */
-अटल काष्ठा via_camera *via_cam_info;
+static struct via_camera *via_cam_info;
 
 /*
  * Flag values, manipulated with bitops
  */
-#घोषणा CF_DMA_ACTIVE	 0	/* A frame is incoming */
-#घोषणा CF_CONFIG_NEEDED 1	/* Must configure hardware */
+#define CF_DMA_ACTIVE	 0	/* A frame is incoming */
+#define CF_CONFIG_NEEDED 1	/* Must configure hardware */
 
 
 /*
  * Nasty ugly v4l2 boilerplate.
  */
-#घोषणा sensor_call(cam, optype, func, args...) \
+#define sensor_call(cam, optype, func, args...) \
 	v4l2_subdev_call(cam->sensor, optype, func, ##args)
 
 /*
  * Debugging and related.
  */
-#घोषणा cam_err(cam, fmt, arg...) \
+#define cam_err(cam, fmt, arg...) \
 	dev_err(&(cam)->platdev->dev, fmt, ##arg);
-#घोषणा cam_warn(cam, fmt, arg...) \
+#define cam_warn(cam, fmt, arg...) \
 	dev_warn(&(cam)->platdev->dev, fmt, ##arg);
-#घोषणा cam_dbg(cam, fmt, arg...) \
+#define cam_dbg(cam, fmt, arg...) \
 	dev_dbg(&(cam)->platdev->dev, fmt, ##arg);
 
 /*
  * Format handling.  This is ripped almost directly from Hans's changes
- * to cafe_ccic.c.  It's a little unक्रमtunate; until this change, we
- * didn't need to know anything about the क्रमmat except its byte depth;
- * now this inक्रमmation must be managed at this level too.
+ * to cafe_ccic.c.  It's a little unfortunate; until this change, we
+ * didn't need to know anything about the format except its byte depth;
+ * now this information must be managed at this level too.
  */
-अटल काष्ठा via_क्रमmat अणु
-	__u32 pixelक्रमmat;
-	पूर्णांक bpp;   /* Bytes per pixel */
+static struct via_format {
+	__u32 pixelformat;
+	int bpp;   /* Bytes per pixel */
 	u32 mbus_code;
-पूर्ण via_क्रमmats[] = अणु
-	अणु
-		.pixelक्रमmat	= V4L2_PIX_FMT_YUYV,
+} via_formats[] = {
+	{
+		.pixelformat	= V4L2_PIX_FMT_YUYV,
 		.mbus_code	= MEDIA_BUS_FMT_YUYV8_2X8,
 		.bpp		= 2,
-	पूर्ण,
-	/* RGB444 and Bayer should be करोable, but have never been
-	   tested with this driver. RGB565 seems to work at the शेष
+	},
+	/* RGB444 and Bayer should be doable, but have never been
+	   tested with this driver. RGB565 seems to work at the default
 	   resolution, but results in color corruption when being scaled by
 	   viacam_set_scaled(), and is disabled as a result. */
-पूर्ण;
-#घोषणा N_VIA_FMTS ARRAY_SIZE(via_क्रमmats)
+};
+#define N_VIA_FMTS ARRAY_SIZE(via_formats)
 
-अटल काष्ठा via_क्रमmat *via_find_क्रमmat(u32 pixelक्रमmat)
-अणु
-	अचिन्हित i;
+static struct via_format *via_find_format(u32 pixelformat)
+{
+	unsigned i;
 
-	क्रम (i = 0; i < N_VIA_FMTS; i++)
-		अगर (via_क्रमmats[i].pixelक्रमmat == pixelक्रमmat)
-			वापस via_क्रमmats + i;
-	/* Not found? Then वापस the first क्रमmat. */
-	वापस via_क्रमmats;
-पूर्ण
+	for (i = 0; i < N_VIA_FMTS; i++)
+		if (via_formats[i].pixelformat == pixelformat)
+			return via_formats + i;
+	/* Not found? Then return the first format. */
+	return via_formats;
+}
 
 
 /*--------------------------------------------------------------------------*/
 /*
- * Sensor घातer/reset management.  This piece is OLPC-specअगरic क्रम
- * sure; other configurations will have things connected dअगरferently.
+ * Sensor power/reset management.  This piece is OLPC-specific for
+ * sure; other configurations will have things connected differently.
  */
-अटल पूर्णांक via_sensor_घातer_setup(काष्ठा via_camera *cam)
-अणु
-	पूर्णांक ret;
+static int via_sensor_power_setup(struct via_camera *cam)
+{
+	int ret;
 
-	cam->घातer_gpio = viafb_gpio_lookup("VGPIO3");
+	cam->power_gpio = viafb_gpio_lookup("VGPIO3");
 	cam->reset_gpio = viafb_gpio_lookup("VGPIO2");
-	अगर (!gpio_is_valid(cam->घातer_gpio) || !gpio_is_valid(cam->reset_gpio)) अणु
+	if (!gpio_is_valid(cam->power_gpio) || !gpio_is_valid(cam->reset_gpio)) {
 		dev_err(&cam->platdev->dev, "Unable to find GPIO lines\n");
-		वापस -EINVAL;
-	पूर्ण
-	ret = gpio_request(cam->घातer_gpio, "viafb-camera");
-	अगर (ret) अणु
+		return -EINVAL;
+	}
+	ret = gpio_request(cam->power_gpio, "viafb-camera");
+	if (ret) {
 		dev_err(&cam->platdev->dev, "Unable to request power GPIO\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	ret = gpio_request(cam->reset_gpio, "viafb-camera");
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&cam->platdev->dev, "Unable to request reset GPIO\n");
-		gpio_मुक्त(cam->घातer_gpio);
-		वापस ret;
-	पूर्ण
-	gpio_direction_output(cam->घातer_gpio, 0);
+		gpio_free(cam->power_gpio);
+		return ret;
+	}
+	gpio_direction_output(cam->power_gpio, 0);
 	gpio_direction_output(cam->reset_gpio, 0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Power up the sensor and perक्रमm the reset dance.
+ * Power up the sensor and perform the reset dance.
  */
-अटल व्योम via_sensor_घातer_up(काष्ठा via_camera *cam)
-अणु
-	gpio_set_value(cam->घातer_gpio, 1);
+static void via_sensor_power_up(struct via_camera *cam)
+{
+	gpio_set_value(cam->power_gpio, 1);
 	gpio_set_value(cam->reset_gpio, 0);
 	msleep(20);  /* Probably excessive */
 	gpio_set_value(cam->reset_gpio, 1);
 	msleep(20);
-पूर्ण
+}
 
-अटल व्योम via_sensor_घातer_करोwn(काष्ठा via_camera *cam)
-अणु
-	gpio_set_value(cam->घातer_gpio, 0);
+static void via_sensor_power_down(struct via_camera *cam)
+{
+	gpio_set_value(cam->power_gpio, 0);
 	gpio_set_value(cam->reset_gpio, 0);
-पूर्ण
+}
 
 
-अटल व्योम via_sensor_घातer_release(काष्ठा via_camera *cam)
-अणु
-	via_sensor_घातer_करोwn(cam);
-	gpio_मुक्त(cam->घातer_gpio);
-	gpio_मुक्त(cam->reset_gpio);
-पूर्ण
+static void via_sensor_power_release(struct via_camera *cam)
+{
+	via_sensor_power_down(cam);
+	gpio_free(cam->power_gpio);
+	gpio_free(cam->reset_gpio);
+}
 
 /* --------------------------------------------------------------------------*/
 /* Sensor ops */
@@ -237,166 +236,166 @@ MODULE_PARM_DESC(override_serial,
 /*
  * Manage the ov7670 "flip" bit, which needs special help.
  */
-अटल पूर्णांक viacam_set_flip(काष्ठा via_camera *cam)
-अणु
-	काष्ठा v4l2_control ctrl;
+static int viacam_set_flip(struct via_camera *cam)
+{
+	struct v4l2_control ctrl;
 
-	स_रखो(&ctrl, 0, माप(ctrl));
+	memset(&ctrl, 0, sizeof(ctrl));
 	ctrl.id = V4L2_CID_VFLIP;
 	ctrl.value = flip_image;
-	वापस v4l2_s_ctrl(शून्य, cam->sensor->ctrl_handler, &ctrl);
-पूर्ण
+	return v4l2_s_ctrl(NULL, cam->sensor->ctrl_handler, &ctrl);
+}
 
 /*
  * Configure the sensor.  It's up to the caller to ensure
  * that the camera is in the correct operating state.
  */
-अटल पूर्णांक viacam_configure_sensor(काष्ठा via_camera *cam)
-अणु
-	काष्ठा v4l2_subdev_क्रमmat क्रमmat = अणु
+static int viacam_configure_sensor(struct via_camera *cam)
+{
+	struct v4l2_subdev_format format = {
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
-	v4l2_fill_mbus_क्रमmat(&क्रमmat.क्रमmat, &cam->sensor_क्रमmat, cam->mbus_code);
+	v4l2_fill_mbus_format(&format.format, &cam->sensor_format, cam->mbus_code);
 	ret = sensor_call(cam, core, init, 0);
-	अगर (ret == 0)
-		ret = sensor_call(cam, pad, set_fmt, शून्य, &क्रमmat);
+	if (ret == 0)
+		ret = sensor_call(cam, pad, set_fmt, NULL, &format);
 	/*
-	 * OV7670 करोes weird things अगर flip is set *beक्रमe* क्रमmat...
+	 * OV7670 does weird things if flip is set *before* format...
 	 */
-	अगर (ret == 0)
+	if (ret == 0)
 		ret = viacam_set_flip(cam);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
 
 /* --------------------------------------------------------------------------*/
 /*
- * Some simple रेजिस्टर accessors; they assume that the lock is held.
+ * Some simple register accessors; they assume that the lock is held.
  *
  * Should we want to support the second capture engine, we could
- * hide the रेजिस्टर dअगरference by adding 0x1000 to रेजिस्टरs in the
+ * hide the register difference by adding 0x1000 to registers in the
  * 0x300-350 range.
  */
-अटल अंतरभूत व्योम viacam_ग_लिखो_reg(काष्ठा via_camera *cam,
-		पूर्णांक reg, पूर्णांक value)
-अणु
-	ioग_लिखो32(value, cam->mmio + reg);
-पूर्ण
+static inline void viacam_write_reg(struct via_camera *cam,
+		int reg, int value)
+{
+	iowrite32(value, cam->mmio + reg);
+}
 
-अटल अंतरभूत पूर्णांक viacam_पढ़ो_reg(काष्ठा via_camera *cam, पूर्णांक reg)
-अणु
-	वापस ioपढ़ो32(cam->mmio + reg);
-पूर्ण
+static inline int viacam_read_reg(struct via_camera *cam, int reg)
+{
+	return ioread32(cam->mmio + reg);
+}
 
-अटल अंतरभूत व्योम viacam_ग_लिखो_reg_mask(काष्ठा via_camera *cam,
-		पूर्णांक reg, पूर्णांक value, पूर्णांक mask)
-अणु
-	पूर्णांक पंचांगp = viacam_पढ़ो_reg(cam, reg);
+static inline void viacam_write_reg_mask(struct via_camera *cam,
+		int reg, int value, int mask)
+{
+	int tmp = viacam_read_reg(cam, reg);
 
-	पंचांगp = (पंचांगp & ~mask) | (value & mask);
-	viacam_ग_लिखो_reg(cam, reg, पंचांगp);
-पूर्ण
+	tmp = (tmp & ~mask) | (value & mask);
+	viacam_write_reg(cam, reg, tmp);
+}
 
 
 /* --------------------------------------------------------------------------*/
 /* Interrupt management and handling */
 
-अटल irqवापस_t viacam_quick_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा via_camera *cam = data;
-	irqवापस_t ret = IRQ_NONE;
-	पूर्णांक icv;
+static irqreturn_t viacam_quick_irq(int irq, void *data)
+{
+	struct via_camera *cam = data;
+	irqreturn_t ret = IRQ_NONE;
+	int icv;
 
 	/*
-	 * All we करो here is to clear the पूर्णांकerrupts and tell
-	 * the handler thपढ़ो to wake up.
+	 * All we do here is to clear the interrupts and tell
+	 * the handler thread to wake up.
 	 */
 	spin_lock(&cam->viadev->reg_lock);
-	icv = viacam_पढ़ो_reg(cam, VCR_INTCTRL);
-	अगर (icv & VCR_IC_EAV) अणु
+	icv = viacam_read_reg(cam, VCR_INTCTRL);
+	if (icv & VCR_IC_EAV) {
 		icv |= VCR_IC_EAV|VCR_IC_EVBI|VCR_IC_FFULL;
-		viacam_ग_लिखो_reg(cam, VCR_INTCTRL, icv);
+		viacam_write_reg(cam, VCR_INTCTRL, icv);
 		ret = IRQ_WAKE_THREAD;
-	पूर्ण
+	}
 	spin_unlock(&cam->viadev->reg_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Find the next buffer which has somebody रुकोing on it.
+ * Find the next buffer which has somebody waiting on it.
  */
-अटल काष्ठा via_buffer *viacam_next_buffer(काष्ठा via_camera *cam)
-अणु
-	अगर (cam->opstate != S_RUNNING)
-		वापस शून्य;
-	अगर (list_empty(&cam->buffer_queue))
-		वापस शून्य;
-	वापस list_entry(cam->buffer_queue.next, काष्ठा via_buffer, queue);
-पूर्ण
+static struct via_buffer *viacam_next_buffer(struct via_camera *cam)
+{
+	if (cam->opstate != S_RUNNING)
+		return NULL;
+	if (list_empty(&cam->buffer_queue))
+		return NULL;
+	return list_entry(cam->buffer_queue.next, struct via_buffer, queue);
+}
 
 /*
- * The thपढ़ोed IRQ handler.
+ * The threaded IRQ handler.
  */
-अटल irqवापस_t viacam_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा via_camera *cam = data;
-	काष्ठा via_buffer *vb;
-	पूर्णांक bufn;
-	काष्ठा sg_table *sgt;
+static irqreturn_t viacam_irq(int irq, void *data)
+{
+	struct via_camera *cam = data;
+	struct via_buffer *vb;
+	int bufn;
+	struct sg_table *sgt;
 
 	mutex_lock(&cam->lock);
 	/*
-	 * If there is no place to put the data frame, करोn't bother
-	 * with anything अन्यथा.
+	 * If there is no place to put the data frame, don't bother
+	 * with anything else.
 	 */
 	vb = viacam_next_buffer(cam);
-	अगर (vb == शून्य)
-		जाओ करोne;
+	if (vb == NULL)
+		goto done;
 	/*
 	 * Figure out which buffer we just completed.
 	 */
-	bufn = (viacam_पढ़ो_reg(cam, VCR_INTCTRL) & VCR_IC_ACTBUF) >> 3;
+	bufn = (viacam_read_reg(cam, VCR_INTCTRL) & VCR_IC_ACTBUF) >> 3;
 	bufn -= 1;
-	अगर (bufn < 0)
+	if (bufn < 0)
 		bufn = cam->n_cap_bufs - 1;
 	/*
-	 * Copy over the data and let any रुकोers know.
+	 * Copy over the data and let any waiters know.
 	 */
 	sgt = vb2_dma_sg_plane_desc(&vb->vbuf.vb2_buf, 0);
-	vb->vbuf.vb2_buf.बारtamp = kसमय_get_ns();
+	vb->vbuf.vb2_buf.timestamp = ktime_get_ns();
 	viafb_dma_copy_out_sg(cam->cb_offsets[bufn], sgt->sgl, sgt->nents);
 	vb->vbuf.sequence = cam->sequence++;
 	vb->vbuf.field = V4L2_FIELD_NONE;
 	list_del(&vb->queue);
-	vb2_buffer_करोne(&vb->vbuf.vb2_buf, VB2_BUF_STATE_DONE);
-करोne:
+	vb2_buffer_done(&vb->vbuf.vb2_buf, VB2_BUF_STATE_DONE);
+done:
 	mutex_unlock(&cam->lock);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 
 /*
- * These functions must mess around with the general पूर्णांकerrupt
- * control रेजिस्टर, which is relevant to much more than just the
- * camera.  Nothing अन्यथा uses पूर्णांकerrupts, though, as of this writing.
+ * These functions must mess around with the general interrupt
+ * control register, which is relevant to much more than just the
+ * camera.  Nothing else uses interrupts, though, as of this writing.
  * Should that situation change, we'll have to improve support at
  * the via-core level.
  */
-अटल व्योम viacam_पूर्णांक_enable(काष्ठा via_camera *cam)
-अणु
-	viacam_ग_लिखो_reg(cam, VCR_INTCTRL,
+static void viacam_int_enable(struct via_camera *cam)
+{
+	viacam_write_reg(cam, VCR_INTCTRL,
 			VCR_IC_INTEN|VCR_IC_EAV|VCR_IC_EVBI|VCR_IC_FFULL);
 	viafb_irq_enable(VDE_I_C0AVEN);
-पूर्ण
+}
 
-अटल व्योम viacam_पूर्णांक_disable(काष्ठा via_camera *cam)
-अणु
+static void viacam_int_disable(struct via_camera *cam)
+{
 	viafb_irq_disable(VDE_I_C0AVEN);
-	viacam_ग_लिखो_reg(cam, VCR_INTCTRL, 0);
-पूर्ण
+	viacam_write_reg(cam, VCR_INTCTRL, 0);
+}
 
 
 
@@ -406,105 +405,105 @@ MODULE_PARM_DESC(override_serial,
 /*
  * Set up our capture buffers in framebuffer memory.
  */
-अटल पूर्णांक viacam_ctlr_cbufs(काष्ठा via_camera *cam)
-अणु
-	पूर्णांक nbuf = cam->viadev->camera_fbmem_size/cam->sensor_क्रमmat.sizeimage;
-	पूर्णांक i;
-	अचिन्हित पूर्णांक offset;
+static int viacam_ctlr_cbufs(struct via_camera *cam)
+{
+	int nbuf = cam->viadev->camera_fbmem_size/cam->sensor_format.sizeimage;
+	int i;
+	unsigned int offset;
 
 	/*
 	 * See how many buffers we can work with.
 	 */
-	अगर (nbuf >= 3) अणु
+	if (nbuf >= 3) {
 		cam->n_cap_bufs = 3;
-		viacam_ग_लिखो_reg_mask(cam, VCR_CAPINTC, VCR_CI_3BUFS,
+		viacam_write_reg_mask(cam, VCR_CAPINTC, VCR_CI_3BUFS,
 				VCR_CI_3BUFS);
-	पूर्ण अन्यथा अगर (nbuf == 2) अणु
+	} else if (nbuf == 2) {
 		cam->n_cap_bufs = 2;
-		viacam_ग_लिखो_reg_mask(cam, VCR_CAPINTC, 0, VCR_CI_3BUFS);
-	पूर्ण अन्यथा अणु
+		viacam_write_reg_mask(cam, VCR_CAPINTC, 0, VCR_CI_3BUFS);
+	} else {
 		cam_warn(cam, "Insufficient frame buffer memory\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	/*
 	 * Set them up.
 	 */
 	offset = cam->fb_offset;
-	क्रम (i = 0; i < cam->n_cap_bufs; i++) अणु
+	for (i = 0; i < cam->n_cap_bufs; i++) {
 		cam->cb_offsets[i] = offset;
 		cam->cb_addrs[i] = cam->fbmem + offset;
-		viacam_ग_लिखो_reg(cam, VCR_VBUF1 + i*4, offset & VCR_VBUF_MASK);
-		offset += cam->sensor_क्रमmat.sizeimage;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		viacam_write_reg(cam, VCR_VBUF1 + i*4, offset & VCR_VBUF_MASK);
+		offset += cam->sensor_format.sizeimage;
+	}
+	return 0;
+}
 
 /*
- * Set the scaling रेजिस्टर क्रम करोwnscaling the image.
+ * Set the scaling register for downscaling the image.
  *
- * This रेजिस्टर works like this...  Vertical scaling is enabled
- * by bit 26; अगर that bit is set, करोwnscaling is controlled by the
- * value in bits 16:25.	 Those bits are भागided by 1024 to get
+ * This register works like this...  Vertical scaling is enabled
+ * by bit 26; if that bit is set, downscaling is controlled by the
+ * value in bits 16:25.	 Those bits are divided by 1024 to get
  * the scaling factor; setting just bit 25 thus cuts the height
  * in half.
  *
  * Horizontal scaling works about the same, but it's enabled by
  * bit 11, with bits 0:10 giving the numerator of a fraction
- * (over 2048) क्रम the scaling value.
+ * (over 2048) for the scaling value.
  *
- * This function is naive in that, अगर the user departs from
+ * This function is naive in that, if the user departs from
  * the 3x4 VGA scaling factor, the image will distort.	We
- * could work around that अगर it really seemed important.
+ * could work around that if it really seemed important.
  */
-अटल व्योम viacam_set_scale(काष्ठा via_camera *cam)
-अणु
-	अचिन्हित पूर्णांक avscale;
-	पूर्णांक sf;
+static void viacam_set_scale(struct via_camera *cam)
+{
+	unsigned int avscale;
+	int sf;
 
-	अगर (cam->user_क्रमmat.width == VGA_WIDTH)
+	if (cam->user_format.width == VGA_WIDTH)
 		avscale = 0;
-	अन्यथा अणु
-		sf = (cam->user_क्रमmat.width*2048)/VGA_WIDTH;
+	else {
+		sf = (cam->user_format.width*2048)/VGA_WIDTH;
 		avscale = VCR_AVS_HEN | sf;
-	पूर्ण
-	अगर (cam->user_क्रमmat.height < VGA_HEIGHT) अणु
-		sf = (1024*cam->user_क्रमmat.height)/VGA_HEIGHT;
+	}
+	if (cam->user_format.height < VGA_HEIGHT) {
+		sf = (1024*cam->user_format.height)/VGA_HEIGHT;
 		avscale |= VCR_AVS_VEN | (sf << 16);
-	पूर्ण
-	viacam_ग_लिखो_reg(cam, VCR_AVSCALE, avscale);
-पूर्ण
+	}
+	viacam_write_reg(cam, VCR_AVSCALE, avscale);
+}
 
 
 /*
- * Configure image-related inक्रमmation पूर्णांकo the capture engine.
+ * Configure image-related information into the capture engine.
  */
-अटल व्योम viacam_ctlr_image(काष्ठा via_camera *cam)
-अणु
-	पूर्णांक cicreg;
+static void viacam_ctlr_image(struct via_camera *cam)
+{
+	int cicreg;
 
 	/*
-	 * Disable घड़ी beक्रमe messing with stuff - from the via
+	 * Disable clock before messing with stuff - from the via
 	 * sample driver.
 	 */
-	viacam_ग_लिखो_reg(cam, VCR_CAPINTC, ~(VCR_CI_ENABLE|VCR_CI_CLKEN));
+	viacam_write_reg(cam, VCR_CAPINTC, ~(VCR_CI_ENABLE|VCR_CI_CLKEN));
 	/*
-	 * Set up the controller क्रम VGA resolution, modulo magic
+	 * Set up the controller for VGA resolution, modulo magic
 	 * offsets from the via sample driver.
 	 */
-	viacam_ग_लिखो_reg(cam, VCR_HORRANGE, 0x06200120);
-	viacam_ग_लिखो_reg(cam, VCR_VERTRANGE, 0x01de0000);
+	viacam_write_reg(cam, VCR_HORRANGE, 0x06200120);
+	viacam_write_reg(cam, VCR_VERTRANGE, 0x01de0000);
 	viacam_set_scale(cam);
 	/*
 	 * Image size info.
 	 */
-	viacam_ग_लिखो_reg(cam, VCR_MAXDATA,
-			(cam->sensor_क्रमmat.height << 16) |
-			(cam->sensor_क्रमmat.bytesperline >> 3));
-	viacam_ग_लिखो_reg(cam, VCR_MAXVBI, 0);
-	viacam_ग_लिखो_reg(cam, VCR_VSTRIDE,
-			cam->user_क्रमmat.bytesperline & VCR_VS_STRIDE);
+	viacam_write_reg(cam, VCR_MAXDATA,
+			(cam->sensor_format.height << 16) |
+			(cam->sensor_format.bytesperline >> 3));
+	viacam_write_reg(cam, VCR_MAXVBI, 0);
+	viacam_write_reg(cam, VCR_VSTRIDE,
+			cam->user_format.bytesperline & VCR_VS_STRIDE);
 	/*
-	 * Set up the capture पूर्णांकerface control रेजिस्टर,
+	 * Set up the capture interface control register,
 	 * everything but the "go" bit.
 	 *
 	 * The FIFO threshold is a bit of a magic number; 8 is what
@@ -512,321 +511,321 @@ MODULE_PARM_DESC(override_serial,
 	 */
 	cicreg = VCR_CI_CLKEN |
 		0x08000000 |		/* FIFO threshold */
-		VCR_CI_FLDINV |		/* OLPC-specअगरic? */
-		VCR_CI_VREFINV |	/* OLPC-specअगरic? */
+		VCR_CI_FLDINV |		/* OLPC-specific? */
+		VCR_CI_VREFINV |	/* OLPC-specific? */
 		VCR_CI_DIBOTH |		/* Capture both fields */
 		VCR_CI_CCIR601_8;
-	अगर (cam->n_cap_bufs == 3)
+	if (cam->n_cap_bufs == 3)
 		cicreg |= VCR_CI_3BUFS;
 	/*
-	 * YUV क्रमmats need dअगरferent byte swapping than RGB.
+	 * YUV formats need different byte swapping than RGB.
 	 */
-	अगर (cam->user_क्रमmat.pixelक्रमmat == V4L2_PIX_FMT_YUYV)
+	if (cam->user_format.pixelformat == V4L2_PIX_FMT_YUYV)
 		cicreg |= VCR_CI_YUYV;
-	अन्यथा
+	else
 		cicreg |= VCR_CI_UYVY;
-	viacam_ग_लिखो_reg(cam, VCR_CAPINTC, cicreg);
-पूर्ण
+	viacam_write_reg(cam, VCR_CAPINTC, cicreg);
+}
 
 
-अटल पूर्णांक viacam_config_controller(काष्ठा via_camera *cam)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+static int viacam_config_controller(struct via_camera *cam)
+{
+	int ret;
+	unsigned long flags;
 
 	spin_lock_irqsave(&cam->viadev->reg_lock, flags);
 	ret = viacam_ctlr_cbufs(cam);
-	अगर (!ret)
+	if (!ret)
 		viacam_ctlr_image(cam);
 	spin_unlock_irqrestore(&cam->viadev->reg_lock, flags);
 	clear_bit(CF_CONFIG_NEEDED, &cam->flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Make it start grabbing data.
  */
-अटल व्योम viacam_start_engine(काष्ठा via_camera *cam)
-अणु
+static void viacam_start_engine(struct via_camera *cam)
+{
 	spin_lock_irq(&cam->viadev->reg_lock);
-	viacam_ग_लिखो_reg_mask(cam, VCR_CAPINTC, VCR_CI_ENABLE, VCR_CI_ENABLE);
-	viacam_पूर्णांक_enable(cam);
-	(व्योम) viacam_पढ़ो_reg(cam, VCR_CAPINTC); /* Force post */
+	viacam_write_reg_mask(cam, VCR_CAPINTC, VCR_CI_ENABLE, VCR_CI_ENABLE);
+	viacam_int_enable(cam);
+	(void) viacam_read_reg(cam, VCR_CAPINTC); /* Force post */
 	cam->opstate = S_RUNNING;
 	spin_unlock_irq(&cam->viadev->reg_lock);
-पूर्ण
+}
 
 
-अटल व्योम viacam_stop_engine(काष्ठा via_camera *cam)
-अणु
+static void viacam_stop_engine(struct via_camera *cam)
+{
 	spin_lock_irq(&cam->viadev->reg_lock);
-	viacam_पूर्णांक_disable(cam);
-	viacam_ग_लिखो_reg_mask(cam, VCR_CAPINTC, 0, VCR_CI_ENABLE);
-	(व्योम) viacam_पढ़ो_reg(cam, VCR_CAPINTC); /* Force post */
+	viacam_int_disable(cam);
+	viacam_write_reg_mask(cam, VCR_CAPINTC, 0, VCR_CI_ENABLE);
+	(void) viacam_read_reg(cam, VCR_CAPINTC); /* Force post */
 	cam->opstate = S_IDLE;
 	spin_unlock_irq(&cam->viadev->reg_lock);
-पूर्ण
+}
 
 
 /* --------------------------------------------------------------------------*/
 /* vb2 callback ops */
 
-अटल काष्ठा via_buffer *vb2_to_via_buffer(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+static struct via_buffer *vb2_to_via_buffer(struct vb2_buffer *vb)
+{
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
 
-	वापस container_of(vbuf, काष्ठा via_buffer, vbuf);
-पूर्ण
+	return container_of(vbuf, struct via_buffer, vbuf);
+}
 
-अटल व्योम viacam_vb2_queue(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा via_camera *cam = vb2_get_drv_priv(vb->vb2_queue);
-	काष्ठा via_buffer *via = vb2_to_via_buffer(vb);
+static void viacam_vb2_queue(struct vb2_buffer *vb)
+{
+	struct via_camera *cam = vb2_get_drv_priv(vb->vb2_queue);
+	struct via_buffer *via = vb2_to_via_buffer(vb);
 
 	list_add_tail(&via->queue, &cam->buffer_queue);
-पूर्ण
+}
 
-अटल पूर्णांक viacam_vb2_prepare(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा via_camera *cam = vb2_get_drv_priv(vb->vb2_queue);
+static int viacam_vb2_prepare(struct vb2_buffer *vb)
+{
+	struct via_camera *cam = vb2_get_drv_priv(vb->vb2_queue);
 
-	अगर (vb2_plane_size(vb, 0) < cam->user_क्रमmat.sizeimage) अणु
+	if (vb2_plane_size(vb, 0) < cam->user_format.sizeimage) {
 		cam_dbg(cam,
 			"Plane size too small (%lu < %u)\n",
 			vb2_plane_size(vb, 0),
-			cam->user_क्रमmat.sizeimage);
-		वापस -EINVAL;
-	पूर्ण
+			cam->user_format.sizeimage);
+		return -EINVAL;
+	}
 
-	vb2_set_plane_payload(vb, 0, cam->user_क्रमmat.sizeimage);
+	vb2_set_plane_payload(vb, 0, cam->user_format.sizeimage);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक viacam_vb2_queue_setup(काष्ठा vb2_queue *vq,
-				  अचिन्हित पूर्णांक *nbufs,
-				  अचिन्हित पूर्णांक *num_planes, अचिन्हित पूर्णांक sizes[],
-				  काष्ठा device *alloc_devs[])
-अणु
-	काष्ठा via_camera *cam = vb2_get_drv_priv(vq);
-	पूर्णांक size = cam->user_क्रमmat.sizeimage;
+static int viacam_vb2_queue_setup(struct vb2_queue *vq,
+				  unsigned int *nbufs,
+				  unsigned int *num_planes, unsigned int sizes[],
+				  struct device *alloc_devs[])
+{
+	struct via_camera *cam = vb2_get_drv_priv(vq);
+	int size = cam->user_format.sizeimage;
 
-	अगर (*num_planes)
-		वापस sizes[0] < size ? -EINVAL : 0;
+	if (*num_planes)
+		return sizes[0] < size ? -EINVAL : 0;
 
 	*num_planes = 1;
 	sizes[0] = size;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक viacam_vb2_start_streaming(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा via_camera *cam = vb2_get_drv_priv(vq);
-	काष्ठा via_buffer *buf, *पंचांगp;
-	पूर्णांक ret = 0;
+static int viacam_vb2_start_streaming(struct vb2_queue *vq, unsigned int count)
+{
+	struct via_camera *cam = vb2_get_drv_priv(vq);
+	struct via_buffer *buf, *tmp;
+	int ret = 0;
 
-	अगर (cam->opstate != S_IDLE) अणु
+	if (cam->opstate != S_IDLE) {
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	/*
-	 * Configure things अगर need be.
+	 * Configure things if need be.
 	 */
-	अगर (test_bit(CF_CONFIG_NEEDED, &cam->flags)) अणु
+	if (test_bit(CF_CONFIG_NEEDED, &cam->flags)) {
 		ret = viacam_configure_sensor(cam);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 		ret = viacam_config_controller(cam);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 	cam->sequence = 0;
 	/*
-	 * If the CPU goes पूर्णांकo C3, the DMA transfer माला_लो corrupted and
+	 * If the CPU goes into C3, the DMA transfer gets corrupted and
 	 * users start filing unsightly bug reports.  Put in a "latency"
 	 * requirement which will keep the CPU out of the deeper sleep
 	 * states.
 	 */
 	cpu_latency_qos_add_request(&cam->qos_request, 50);
 	viacam_start_engine(cam);
-	वापस 0;
+	return 0;
 out:
-	list_क्रम_each_entry_safe(buf, पंचांगp, &cam->buffer_queue, queue) अणु
+	list_for_each_entry_safe(buf, tmp, &cam->buffer_queue, queue) {
 		list_del(&buf->queue);
-		vb2_buffer_करोne(&buf->vbuf.vb2_buf, VB2_BUF_STATE_QUEUED);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		vb2_buffer_done(&buf->vbuf.vb2_buf, VB2_BUF_STATE_QUEUED);
+	}
+	return ret;
+}
 
-अटल व्योम viacam_vb2_stop_streaming(काष्ठा vb2_queue *vq)
-अणु
-	काष्ठा via_camera *cam = vb2_get_drv_priv(vq);
-	काष्ठा via_buffer *buf, *पंचांगp;
+static void viacam_vb2_stop_streaming(struct vb2_queue *vq)
+{
+	struct via_camera *cam = vb2_get_drv_priv(vq);
+	struct via_buffer *buf, *tmp;
 
-	cpu_latency_qos_हटाओ_request(&cam->qos_request);
+	cpu_latency_qos_remove_request(&cam->qos_request);
 	viacam_stop_engine(cam);
 
-	list_क्रम_each_entry_safe(buf, पंचांगp, &cam->buffer_queue, queue) अणु
+	list_for_each_entry_safe(buf, tmp, &cam->buffer_queue, queue) {
 		list_del(&buf->queue);
-		vb2_buffer_करोne(&buf->vbuf.vb2_buf, VB2_BUF_STATE_ERROR);
-	पूर्ण
-पूर्ण
+		vb2_buffer_done(&buf->vbuf.vb2_buf, VB2_BUF_STATE_ERROR);
+	}
+}
 
-अटल स्थिर काष्ठा vb2_ops viacam_vb2_ops = अणु
+static const struct vb2_ops viacam_vb2_ops = {
 	.queue_setup		= viacam_vb2_queue_setup,
 	.buf_queue		= viacam_vb2_queue,
 	.buf_prepare		= viacam_vb2_prepare,
 	.start_streaming	= viacam_vb2_start_streaming,
 	.stop_streaming		= viacam_vb2_stop_streaming,
-	.रुको_prepare		= vb2_ops_रुको_prepare,
-	.रुको_finish		= vb2_ops_रुको_finish,
-पूर्ण;
+	.wait_prepare		= vb2_ops_wait_prepare,
+	.wait_finish		= vb2_ops_wait_finish,
+};
 
 /* --------------------------------------------------------------------------*/
 /* File operations */
 
-अटल पूर्णांक viacam_खोलो(काष्ठा file *filp)
-अणु
-	काष्ठा via_camera *cam = video_drvdata(filp);
-	पूर्णांक ret;
+static int viacam_open(struct file *filp)
+{
+	struct via_camera *cam = video_drvdata(filp);
+	int ret;
 
 	/*
 	 * Note the new user.  If this is the first one, we'll also
-	 * need to घातer up the sensor.
+	 * need to power up the sensor.
 	 */
 	mutex_lock(&cam->lock);
-	ret = v4l2_fh_खोलो(filp);
-	अगर (ret)
-		जाओ out;
-	अगर (v4l2_fh_is_singular_file(filp)) अणु
+	ret = v4l2_fh_open(filp);
+	if (ret)
+		goto out;
+	if (v4l2_fh_is_singular_file(filp)) {
 		ret = viafb_request_dma();
 
-		अगर (ret) अणु
+		if (ret) {
 			v4l2_fh_release(filp);
-			जाओ out;
-		पूर्ण
-		via_sensor_घातer_up(cam);
+			goto out;
+		}
+		via_sensor_power_up(cam);
 		set_bit(CF_CONFIG_NEEDED, &cam->flags);
-	पूर्ण
+	}
 out:
 	mutex_unlock(&cam->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक viacam_release(काष्ठा file *filp)
-अणु
-	काष्ठा via_camera *cam = video_drvdata(filp);
-	bool last_खोलो;
+static int viacam_release(struct file *filp)
+{
+	struct via_camera *cam = video_drvdata(filp);
+	bool last_open;
 
 	mutex_lock(&cam->lock);
-	last_खोलो = v4l2_fh_is_singular_file(filp);
-	_vb2_fop_release(filp, शून्य);
+	last_open = v4l2_fh_is_singular_file(filp);
+	_vb2_fop_release(filp, NULL);
 	/*
 	 * Last one out needs to turn out the lights.
 	 */
-	अगर (last_खोलो) अणु
-		via_sensor_घातer_करोwn(cam);
+	if (last_open) {
+		via_sensor_power_down(cam);
 		viafb_release_dma();
-	पूर्ण
+	}
 	mutex_unlock(&cam->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_file_operations viacam_fops = अणु
+static const struct v4l2_file_operations viacam_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= viacam_खोलो,
+	.open		= viacam_open,
 	.release	= viacam_release,
-	.पढ़ो		= vb2_fop_पढ़ो,
+	.read		= vb2_fop_read,
 	.poll		= vb2_fop_poll,
 	.mmap		= vb2_fop_mmap,
 	.unlocked_ioctl = video_ioctl2,
-पूर्ण;
+};
 
 /*----------------------------------------------------------------------------*/
 /*
- * The दीर्घ list of v4l2 ioctl ops
+ * The long list of v4l2 ioctl ops
  */
 
 /*
  * Only one input.
  */
-अटल पूर्णांक viacam_क्रमागत_input(काष्ठा file *filp, व्योम *priv,
-		काष्ठा v4l2_input *input)
-अणु
-	अगर (input->index != 0)
-		वापस -EINVAL;
+static int viacam_enum_input(struct file *filp, void *priv,
+		struct v4l2_input *input)
+{
+	if (input->index != 0)
+		return -EINVAL;
 
 	input->type = V4L2_INPUT_TYPE_CAMERA;
-	strscpy(input->name, "Camera", माप(input->name));
-	वापस 0;
-पूर्ण
+	strscpy(input->name, "Camera", sizeof(input->name));
+	return 0;
+}
 
-अटल पूर्णांक viacam_g_input(काष्ठा file *filp, व्योम *priv, अचिन्हित पूर्णांक *i)
-अणु
+static int viacam_g_input(struct file *filp, void *priv, unsigned int *i)
+{
 	*i = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक viacam_s_input(काष्ठा file *filp, व्योम *priv, अचिन्हित पूर्णांक i)
-अणु
-	अगर (i != 0)
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+static int viacam_s_input(struct file *filp, void *priv, unsigned int i)
+{
+	if (i != 0)
+		return -EINVAL;
+	return 0;
+}
 
 /*
- * Video क्रमmat stuff.	Here is our शेष क्रमmat until
+ * Video format stuff.	Here is our default format until
  * user space messes with things.
  */
-अटल स्थिर काष्ठा v4l2_pix_क्रमmat viacam_def_pix_क्रमmat = अणु
+static const struct v4l2_pix_format viacam_def_pix_format = {
 	.width		= VGA_WIDTH,
 	.height		= VGA_HEIGHT,
-	.pixelक्रमmat	= V4L2_PIX_FMT_YUYV,
+	.pixelformat	= V4L2_PIX_FMT_YUYV,
 	.field		= V4L2_FIELD_NONE,
 	.bytesperline	= VGA_WIDTH * 2,
 	.sizeimage	= VGA_WIDTH * VGA_HEIGHT * 2,
 	.colorspace	= V4L2_COLORSPACE_SRGB,
-पूर्ण;
+};
 
-अटल स्थिर u32 via_def_mbus_code = MEDIA_BUS_FMT_YUYV8_2X8;
+static const u32 via_def_mbus_code = MEDIA_BUS_FMT_YUYV8_2X8;
 
-अटल पूर्णांक viacam_क्रमागत_fmt_vid_cap(काष्ठा file *filp, व्योम *priv,
-		काष्ठा v4l2_fmtdesc *fmt)
-अणु
-	अगर (fmt->index >= N_VIA_FMTS)
-		वापस -EINVAL;
-	fmt->pixelक्रमmat = via_क्रमmats[fmt->index].pixelक्रमmat;
-	वापस 0;
-पूर्ण
+static int viacam_enum_fmt_vid_cap(struct file *filp, void *priv,
+		struct v4l2_fmtdesc *fmt)
+{
+	if (fmt->index >= N_VIA_FMTS)
+		return -EINVAL;
+	fmt->pixelformat = via_formats[fmt->index].pixelformat;
+	return 0;
+}
 
 /*
- * Figure out proper image dimensions, but always क्रमce the
+ * Figure out proper image dimensions, but always force the
  * sensor to VGA.
  */
-अटल व्योम viacam_fmt_pre(काष्ठा v4l2_pix_क्रमmat *userfmt,
-		काष्ठा v4l2_pix_क्रमmat *sensorfmt)
-अणु
+static void viacam_fmt_pre(struct v4l2_pix_format *userfmt,
+		struct v4l2_pix_format *sensorfmt)
+{
 	*sensorfmt = *userfmt;
-	अगर (userfmt->width < QCIF_WIDTH || userfmt->height < QCIF_HEIGHT) अणु
+	if (userfmt->width < QCIF_WIDTH || userfmt->height < QCIF_HEIGHT) {
 		userfmt->width = QCIF_WIDTH;
 		userfmt->height = QCIF_HEIGHT;
-	पूर्ण
-	अगर (userfmt->width > VGA_WIDTH || userfmt->height > VGA_HEIGHT) अणु
+	}
+	if (userfmt->width > VGA_WIDTH || userfmt->height > VGA_HEIGHT) {
 		userfmt->width = VGA_WIDTH;
 		userfmt->height = VGA_HEIGHT;
-	पूर्ण
+	}
 	sensorfmt->width = VGA_WIDTH;
 	sensorfmt->height = VGA_HEIGHT;
-पूर्ण
+}
 
-अटल व्योम viacam_fmt_post(काष्ठा v4l2_pix_क्रमmat *userfmt,
-		काष्ठा v4l2_pix_क्रमmat *sensorfmt)
-अणु
-	काष्ठा via_क्रमmat *f = via_find_क्रमmat(userfmt->pixelक्रमmat);
+static void viacam_fmt_post(struct v4l2_pix_format *userfmt,
+		struct v4l2_pix_format *sensorfmt)
+{
+	struct via_format *f = via_find_format(userfmt->pixelformat);
 
 	sensorfmt->bytesperline = sensorfmt->width * f->bpp;
 	sensorfmt->sizeimage = sensorfmt->height * sensorfmt->bytesperline;
-	userfmt->pixelक्रमmat = sensorfmt->pixelक्रमmat;
+	userfmt->pixelformat = sensorfmt->pixelformat;
 	userfmt->field = sensorfmt->field;
 	userfmt->bytesperline = 2 * userfmt->width;
 	userfmt->sizeimage = userfmt->bytesperline * userfmt->height;
@@ -834,168 +833,168 @@ out:
 	userfmt->ycbcr_enc = sensorfmt->ycbcr_enc;
 	userfmt->quantization = sensorfmt->quantization;
 	userfmt->xfer_func = sensorfmt->xfer_func;
-पूर्ण
+}
 
 
 /*
- * The real work of figuring out a workable क्रमmat.
+ * The real work of figuring out a workable format.
  */
-अटल पूर्णांक viacam_करो_try_fmt(काष्ठा via_camera *cam,
-		काष्ठा v4l2_pix_क्रमmat *upix, काष्ठा v4l2_pix_क्रमmat *spix)
-अणु
-	पूर्णांक ret;
-	काष्ठा v4l2_subdev_pad_config pad_cfg;
-	काष्ठा v4l2_subdev_क्रमmat क्रमmat = अणु
+static int viacam_do_try_fmt(struct via_camera *cam,
+		struct v4l2_pix_format *upix, struct v4l2_pix_format *spix)
+{
+	int ret;
+	struct v4l2_subdev_pad_config pad_cfg;
+	struct v4l2_subdev_format format = {
 		.which = V4L2_SUBDEV_FORMAT_TRY,
-	पूर्ण;
-	काष्ठा via_क्रमmat *f = via_find_क्रमmat(upix->pixelक्रमmat);
+	};
+	struct via_format *f = via_find_format(upix->pixelformat);
 
-	upix->pixelक्रमmat = f->pixelक्रमmat;
+	upix->pixelformat = f->pixelformat;
 	viacam_fmt_pre(upix, spix);
-	v4l2_fill_mbus_क्रमmat(&क्रमmat.क्रमmat, spix, f->mbus_code);
-	ret = sensor_call(cam, pad, set_fmt, &pad_cfg, &क्रमmat);
-	v4l2_fill_pix_क्रमmat(spix, &क्रमmat.क्रमmat);
+	v4l2_fill_mbus_format(&format.format, spix, f->mbus_code);
+	ret = sensor_call(cam, pad, set_fmt, &pad_cfg, &format);
+	v4l2_fill_pix_format(spix, &format.format);
 	viacam_fmt_post(upix, spix);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
 
-अटल पूर्णांक viacam_try_fmt_vid_cap(काष्ठा file *filp, व्योम *priv,
-		काष्ठा v4l2_क्रमmat *fmt)
-अणु
-	काष्ठा via_camera *cam = video_drvdata(filp);
-	काष्ठा v4l2_क्रमmat sfmt;
+static int viacam_try_fmt_vid_cap(struct file *filp, void *priv,
+		struct v4l2_format *fmt)
+{
+	struct via_camera *cam = video_drvdata(filp);
+	struct v4l2_format sfmt;
 
-	वापस viacam_करो_try_fmt(cam, &fmt->fmt.pix, &sfmt.fmt.pix);
-पूर्ण
+	return viacam_do_try_fmt(cam, &fmt->fmt.pix, &sfmt.fmt.pix);
+}
 
 
-अटल पूर्णांक viacam_g_fmt_vid_cap(काष्ठा file *filp, व्योम *priv,
-		काष्ठा v4l2_क्रमmat *fmt)
-अणु
-	काष्ठा via_camera *cam = video_drvdata(filp);
+static int viacam_g_fmt_vid_cap(struct file *filp, void *priv,
+		struct v4l2_format *fmt)
+{
+	struct via_camera *cam = video_drvdata(filp);
 
-	fmt->fmt.pix = cam->user_क्रमmat;
-	वापस 0;
-पूर्ण
+	fmt->fmt.pix = cam->user_format;
+	return 0;
+}
 
-अटल पूर्णांक viacam_s_fmt_vid_cap(काष्ठा file *filp, व्योम *priv,
-		काष्ठा v4l2_क्रमmat *fmt)
-अणु
-	काष्ठा via_camera *cam = video_drvdata(filp);
-	पूर्णांक ret;
-	काष्ठा v4l2_क्रमmat sfmt;
-	काष्ठा via_क्रमmat *f = via_find_क्रमmat(fmt->fmt.pix.pixelक्रमmat);
+static int viacam_s_fmt_vid_cap(struct file *filp, void *priv,
+		struct v4l2_format *fmt)
+{
+	struct via_camera *cam = video_drvdata(filp);
+	int ret;
+	struct v4l2_format sfmt;
+	struct via_format *f = via_find_format(fmt->fmt.pix.pixelformat);
 
 	/*
 	 * Camera must be idle or we can't mess with the
 	 * video setup.
 	 */
-	अगर (cam->opstate != S_IDLE)
-		वापस -EBUSY;
+	if (cam->opstate != S_IDLE)
+		return -EBUSY;
 	/*
 	 * Let the sensor code look over and tweak the
-	 * requested क्रमmatting.
+	 * requested formatting.
 	 */
-	ret = viacam_करो_try_fmt(cam, &fmt->fmt.pix, &sfmt.fmt.pix);
-	अगर (ret)
-		वापस ret;
+	ret = viacam_do_try_fmt(cam, &fmt->fmt.pix, &sfmt.fmt.pix);
+	if (ret)
+		return ret;
 	/*
-	 * OK, let's commit to the new क्रमmat.
+	 * OK, let's commit to the new format.
 	 */
-	cam->user_क्रमmat = fmt->fmt.pix;
-	cam->sensor_क्रमmat = sfmt.fmt.pix;
+	cam->user_format = fmt->fmt.pix;
+	cam->sensor_format = sfmt.fmt.pix;
 	cam->mbus_code = f->mbus_code;
 	ret = viacam_configure_sensor(cam);
-	अगर (!ret)
+	if (!ret)
 		ret = viacam_config_controller(cam);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक viacam_querycap(काष्ठा file *filp, व्योम *priv,
-		काष्ठा v4l2_capability *cap)
-अणु
-	strscpy(cap->driver, "via-camera", माप(cap->driver));
-	strscpy(cap->card, "via-camera", माप(cap->card));
-	strscpy(cap->bus_info, "platform:via-camera", माप(cap->bus_info));
-	वापस 0;
-पूर्ण
+static int viacam_querycap(struct file *filp, void *priv,
+		struct v4l2_capability *cap)
+{
+	strscpy(cap->driver, "via-camera", sizeof(cap->driver));
+	strscpy(cap->card, "via-camera", sizeof(cap->card));
+	strscpy(cap->bus_info, "platform:via-camera", sizeof(cap->bus_info));
+	return 0;
+}
 
 /* G/S_PARM */
 
-अटल पूर्णांक viacam_g_parm(काष्ठा file *filp, व्योम *priv,
-		काष्ठा v4l2_streamparm *parm)
-अणु
-	काष्ठा via_camera *cam = video_drvdata(filp);
+static int viacam_g_parm(struct file *filp, void *priv,
+		struct v4l2_streamparm *parm)
+{
+	struct via_camera *cam = video_drvdata(filp);
 
-	वापस v4l2_g_parm_cap(video_devdata(filp), cam->sensor, parm);
-पूर्ण
+	return v4l2_g_parm_cap(video_devdata(filp), cam->sensor, parm);
+}
 
-अटल पूर्णांक viacam_s_parm(काष्ठा file *filp, व्योम *priv,
-		काष्ठा v4l2_streamparm *parm)
-अणु
-	काष्ठा via_camera *cam = video_drvdata(filp);
+static int viacam_s_parm(struct file *filp, void *priv,
+		struct v4l2_streamparm *parm)
+{
+	struct via_camera *cam = video_drvdata(filp);
 
-	वापस v4l2_s_parm_cap(video_devdata(filp), cam->sensor, parm);
-पूर्ण
+	return v4l2_s_parm_cap(video_devdata(filp), cam->sensor, parm);
+}
 
-अटल पूर्णांक viacam_क्रमागत_framesizes(काष्ठा file *filp, व्योम *priv,
-		काष्ठा v4l2_frmsizeक्रमागत *sizes)
-अणु
-	अचिन्हित पूर्णांक i;
+static int viacam_enum_framesizes(struct file *filp, void *priv,
+		struct v4l2_frmsizeenum *sizes)
+{
+	unsigned int i;
 
-	अगर (sizes->index != 0)
-		वापस -EINVAL;
-	क्रम (i = 0; i < N_VIA_FMTS; i++)
-		अगर (sizes->pixel_क्रमmat == via_क्रमmats[i].pixelक्रमmat)
-			अवरोध;
-	अगर (i >= N_VIA_FMTS)
-		वापस -EINVAL;
+	if (sizes->index != 0)
+		return -EINVAL;
+	for (i = 0; i < N_VIA_FMTS; i++)
+		if (sizes->pixel_format == via_formats[i].pixelformat)
+			break;
+	if (i >= N_VIA_FMTS)
+		return -EINVAL;
 	sizes->type = V4L2_FRMSIZE_TYPE_CONTINUOUS;
 	sizes->stepwise.min_width = QCIF_WIDTH;
 	sizes->stepwise.min_height = QCIF_HEIGHT;
 	sizes->stepwise.max_width = VGA_WIDTH;
 	sizes->stepwise.max_height = VGA_HEIGHT;
 	sizes->stepwise.step_width = sizes->stepwise.step_height = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक viacam_क्रमागत_frameपूर्णांकervals(काष्ठा file *filp, व्योम *priv,
-		काष्ठा v4l2_frmivalक्रमागत *पूर्णांकerval)
-अणु
-	काष्ठा via_camera *cam = video_drvdata(filp);
-	काष्ठा v4l2_subdev_frame_पूर्णांकerval_क्रमागत fie = अणु
-		.index = पूर्णांकerval->index,
+static int viacam_enum_frameintervals(struct file *filp, void *priv,
+		struct v4l2_frmivalenum *interval)
+{
+	struct via_camera *cam = video_drvdata(filp);
+	struct v4l2_subdev_frame_interval_enum fie = {
+		.index = interval->index,
 		.code = cam->mbus_code,
-		.width = cam->sensor_क्रमmat.width,
-		.height = cam->sensor_क्रमmat.height,
+		.width = cam->sensor_format.width,
+		.height = cam->sensor_format.height,
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
-	पूर्ण;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+	};
+	unsigned int i;
+	int ret;
 
-	क्रम (i = 0; i < N_VIA_FMTS; i++)
-		अगर (पूर्णांकerval->pixel_क्रमmat == via_क्रमmats[i].pixelक्रमmat)
-			अवरोध;
-	अगर (i >= N_VIA_FMTS)
-		वापस -EINVAL;
-	अगर (पूर्णांकerval->width < QCIF_WIDTH || पूर्णांकerval->width > VGA_WIDTH ||
-	    पूर्णांकerval->height < QCIF_HEIGHT || पूर्णांकerval->height > VGA_HEIGHT)
-		वापस -EINVAL;
-	ret = sensor_call(cam, pad, क्रमागत_frame_पूर्णांकerval, शून्य, &fie);
-	अगर (ret)
-		वापस ret;
-	पूर्णांकerval->type = V4L2_FRMIVAL_TYPE_DISCRETE;
-	पूर्णांकerval->discrete = fie.पूर्णांकerval;
-	वापस 0;
-पूर्ण
+	for (i = 0; i < N_VIA_FMTS; i++)
+		if (interval->pixel_format == via_formats[i].pixelformat)
+			break;
+	if (i >= N_VIA_FMTS)
+		return -EINVAL;
+	if (interval->width < QCIF_WIDTH || interval->width > VGA_WIDTH ||
+	    interval->height < QCIF_HEIGHT || interval->height > VGA_HEIGHT)
+		return -EINVAL;
+	ret = sensor_call(cam, pad, enum_frame_interval, NULL, &fie);
+	if (ret)
+		return ret;
+	interval->type = V4L2_FRMIVAL_TYPE_DISCRETE;
+	interval->discrete = fie.interval;
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_ioctl_ops viacam_ioctl_ops = अणु
-	.vidioc_क्रमागत_input	= viacam_क्रमागत_input,
+static const struct v4l2_ioctl_ops viacam_ioctl_ops = {
+	.vidioc_enum_input	= viacam_enum_input,
 	.vidioc_g_input		= viacam_g_input,
 	.vidioc_s_input		= viacam_s_input,
-	.vidioc_क्रमागत_fmt_vid_cap = viacam_क्रमागत_fmt_vid_cap,
+	.vidioc_enum_fmt_vid_cap = viacam_enum_fmt_vid_cap,
 	.vidioc_try_fmt_vid_cap = viacam_try_fmt_vid_cap,
 	.vidioc_g_fmt_vid_cap	= viacam_g_fmt_vid_cap,
 	.vidioc_s_fmt_vid_cap	= viacam_s_fmt_vid_cap,
@@ -1011,79 +1010,79 @@ out:
 	.vidioc_streamoff	= vb2_ioctl_streamoff,
 	.vidioc_g_parm		= viacam_g_parm,
 	.vidioc_s_parm		= viacam_s_parm,
-	.vidioc_क्रमागत_framesizes = viacam_क्रमागत_framesizes,
-	.vidioc_क्रमागत_frameपूर्णांकervals = viacam_क्रमागत_frameपूर्णांकervals,
+	.vidioc_enum_framesizes = viacam_enum_framesizes,
+	.vidioc_enum_frameintervals = viacam_enum_frameintervals,
 	.vidioc_subscribe_event		= v4l2_ctrl_subscribe_event,
 	.vidioc_unsubscribe_event	= v4l2_event_unsubscribe,
-पूर्ण;
+};
 
 /*----------------------------------------------------------------------------*/
 
 /*
  * Power management.
  */
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 
-अटल पूर्णांक viacam_suspend(व्योम *priv)
-अणु
-	काष्ठा via_camera *cam = priv;
-	क्रमागत viacam_opstate state = cam->opstate;
+static int viacam_suspend(void *priv)
+{
+	struct via_camera *cam = priv;
+	enum viacam_opstate state = cam->opstate;
 
-	अगर (cam->opstate != S_IDLE) अणु
+	if (cam->opstate != S_IDLE) {
 		viacam_stop_engine(cam);
 		cam->opstate = state; /* So resume restarts */
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक viacam_resume(व्योम *priv)
-अणु
-	काष्ठा via_camera *cam = priv;
-	पूर्णांक ret = 0;
+static int viacam_resume(void *priv)
+{
+	struct via_camera *cam = priv;
+	int ret = 0;
 
 	/*
 	 * Get back to a reasonable operating state.
 	 */
-	via_ग_लिखो_reg_mask(VIASR, 0x78, 0, 0x80);
-	via_ग_लिखो_reg_mask(VIASR, 0x1e, 0xc0, 0xc0);
-	viacam_पूर्णांक_disable(cam);
+	via_write_reg_mask(VIASR, 0x78, 0, 0x80);
+	via_write_reg_mask(VIASR, 0x1e, 0xc0, 0xc0);
+	viacam_int_disable(cam);
 	set_bit(CF_CONFIG_NEEDED, &cam->flags);
 	/*
-	 * Make sure the sensor's घातer state is correct
+	 * Make sure the sensor's power state is correct
 	 */
-	अगर (!list_empty(&cam->vdev.fh_list))
-		via_sensor_घातer_up(cam);
-	अन्यथा
-		via_sensor_घातer_करोwn(cam);
+	if (!list_empty(&cam->vdev.fh_list))
+		via_sensor_power_up(cam);
+	else
+		via_sensor_power_down(cam);
 	/*
 	 * If it was operating, try to restart it.
 	 */
-	अगर (cam->opstate != S_IDLE) अणु
+	if (cam->opstate != S_IDLE) {
 		mutex_lock(&cam->lock);
 		ret = viacam_configure_sensor(cam);
-		अगर (!ret)
+		if (!ret)
 			ret = viacam_config_controller(cam);
 		mutex_unlock(&cam->lock);
-		अगर (!ret)
+		if (!ret)
 			viacam_start_engine(cam);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा viafb_pm_hooks viacam_pm_hooks = अणु
+static struct viafb_pm_hooks viacam_pm_hooks = {
 	.suspend = viacam_suspend,
 	.resume = viacam_resume
-पूर्ण;
+};
 
-#पूर्ण_अगर /* CONFIG_PM */
+#endif /* CONFIG_PM */
 
 /*
  * Setup stuff.
  */
 
-अटल स्थिर काष्ठा video_device viacam_v4l_ढाँचा = अणु
+static const struct video_device viacam_v4l_template = {
 	.name		= "via-camera",
 	.minor		= -1,
 	.fops		= &viacam_fops,
@@ -1091,98 +1090,98 @@ out:
 	.release	= video_device_release_empty, /* Check this */
 	.device_caps	= V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_READWRITE |
 			  V4L2_CAP_STREAMING,
-पूर्ण;
+};
 
 /*
  * The OLPC folks put the serial port on the same pin as
- * the camera.	They also get grumpy अगर we अवरोध the
+ * the camera.	They also get grumpy if we break the
  * serial port and keep them from using it.  So we have
  * to check the serial enable bit and not step on it.
  */
-#घोषणा VIACAM_SERIAL_DEVFN 0x88
-#घोषणा VIACAM_SERIAL_CREG 0x46
-#घोषणा VIACAM_SERIAL_BIT 0x40
+#define VIACAM_SERIAL_DEVFN 0x88
+#define VIACAM_SERIAL_CREG 0x46
+#define VIACAM_SERIAL_BIT 0x40
 
-अटल bool viacam_serial_is_enabled(व्योम)
-अणु
-	काष्ठा pci_bus *pbus = pci_find_bus(0, 0);
+static bool viacam_serial_is_enabled(void)
+{
+	struct pci_bus *pbus = pci_find_bus(0, 0);
 	u8 cbyte;
 
-	अगर (!pbus)
-		वापस false;
-	pci_bus_पढ़ो_config_byte(pbus, VIACAM_SERIAL_DEVFN,
+	if (!pbus)
+		return false;
+	pci_bus_read_config_byte(pbus, VIACAM_SERIAL_DEVFN,
 			VIACAM_SERIAL_CREG, &cbyte);
-	अगर ((cbyte & VIACAM_SERIAL_BIT) == 0)
-		वापस false; /* Not enabled */
-	अगर (!override_serial) अणु
-		prपूर्णांकk(KERN_NOTICE "Via camera: serial port is enabled, " \
+	if ((cbyte & VIACAM_SERIAL_BIT) == 0)
+		return false; /* Not enabled */
+	if (!override_serial) {
+		printk(KERN_NOTICE "Via camera: serial port is enabled, " \
 				"refusing to load.\n");
-		prपूर्णांकk(KERN_NOTICE "Specify override_serial=1 to force " \
+		printk(KERN_NOTICE "Specify override_serial=1 to force " \
 				"module loading.\n");
-		वापस true;
-	पूर्ण
-	prपूर्णांकk(KERN_NOTICE "Via camera: overriding serial port\n");
-	pci_bus_ग_लिखो_config_byte(pbus, VIACAM_SERIAL_DEVFN,
+		return true;
+	}
+	printk(KERN_NOTICE "Via camera: overriding serial port\n");
+	pci_bus_write_config_byte(pbus, VIACAM_SERIAL_DEVFN,
 			VIACAM_SERIAL_CREG, cbyte & ~VIACAM_SERIAL_BIT);
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल काष्ठा ov7670_config sensor_cfg = अणु
-	/* The XO-1.5 (only known user) घड़ीs the camera at 90MHz. */
-	.घड़ी_speed = 90,
-पूर्ण;
+static struct ov7670_config sensor_cfg = {
+	/* The XO-1.5 (only known user) clocks the camera at 90MHz. */
+	.clock_speed = 90,
+};
 
-अटल पूर्णांक viacam_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret;
-	काष्ठा i2c_adapter *sensor_adapter;
-	काष्ठा viafb_dev *viadev = pdev->dev.platक्रमm_data;
-	काष्ठा vb2_queue *vq;
-	काष्ठा i2c_board_info ov7670_info = अणु
+static int viacam_probe(struct platform_device *pdev)
+{
+	int ret;
+	struct i2c_adapter *sensor_adapter;
+	struct viafb_dev *viadev = pdev->dev.platform_data;
+	struct vb2_queue *vq;
+	struct i2c_board_info ov7670_info = {
 		.type = "ov7670",
 		.addr = 0x42 >> 1,
-		.platक्रमm_data = &sensor_cfg,
-	पूर्ण;
+		.platform_data = &sensor_cfg,
+	};
 
 	/*
 	 * Note that there are actually two capture channels on
-	 * the device.	We only deal with one क्रम now.	That
-	 * is encoded here; nothing अन्यथा assumes it's dealing with
+	 * the device.	We only deal with one for now.	That
+	 * is encoded here; nothing else assumes it's dealing with
 	 * a unique capture device.
 	 */
-	काष्ठा via_camera *cam;
+	struct via_camera *cam;
 
 	/*
-	 * Ensure that frame buffer memory has been set aside क्रम
+	 * Ensure that frame buffer memory has been set aside for
 	 * this purpose.  As an arbitrary limit, refuse to work
 	 * with less than two frames of VGA 16-bit data.
 	 *
 	 * If we ever support the second port, we'll need to set
 	 * aside more memory.
 	 */
-	अगर (viadev->camera_fbmem_size < (VGA_HEIGHT*VGA_WIDTH*4)) अणु
-		prपूर्णांकk(KERN_ERR "viacam: insufficient FB memory reserved\n");
-		वापस -ENOMEM;
-	पूर्ण
-	अगर (viadev->engine_mmio == शून्य) अणु
-		prपूर्णांकk(KERN_ERR "viacam: No I/O memory, so no pictures\n");
-		वापस -ENOMEM;
-	पूर्ण
+	if (viadev->camera_fbmem_size < (VGA_HEIGHT*VGA_WIDTH*4)) {
+		printk(KERN_ERR "viacam: insufficient FB memory reserved\n");
+		return -ENOMEM;
+	}
+	if (viadev->engine_mmio == NULL) {
+		printk(KERN_ERR "viacam: No I/O memory, so no pictures\n");
+		return -ENOMEM;
+	}
 
-	अगर (machine_is_olpc() && viacam_serial_is_enabled())
-		वापस -EBUSY;
+	if (machine_is_olpc() && viacam_serial_is_enabled())
+		return -EBUSY;
 
 	/*
-	 * Basic काष्ठाure initialization.
+	 * Basic structure initialization.
 	 */
-	cam = kzalloc (माप(काष्ठा via_camera), GFP_KERNEL);
-	अगर (cam == शून्य)
-		वापस -ENOMEM;
+	cam = kzalloc (sizeof(struct via_camera), GFP_KERNEL);
+	if (cam == NULL)
+		return -ENOMEM;
 	via_cam_info = cam;
 	cam->platdev = pdev;
 	cam->viadev = viadev;
 	cam->opstate = S_IDLE;
-	cam->user_क्रमmat = cam->sensor_क्रमmat = viacam_def_pix_क्रमmat;
+	cam->user_format = cam->sensor_format = viacam_def_pix_format;
 	mutex_init(&cam->lock);
 	INIT_LIST_HEAD(&cam->buffer_queue);
 	cam->mmio = viadev->engine_mmio;
@@ -1193,61 +1192,61 @@ out:
 	/*
 	 * Tell V4L that we exist.
 	 */
-	ret = v4l2_device_रेजिस्टर(&pdev->dev, &cam->v4l2_dev);
-	अगर (ret) अणु
+	ret = v4l2_device_register(&pdev->dev, &cam->v4l2_dev);
+	if (ret) {
 		dev_err(&pdev->dev, "Unable to register v4l2 device\n");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 	ret = v4l2_ctrl_handler_init(&cam->ctrl_handler, 10);
-	अगर (ret)
-		जाओ out_unरेजिस्टर;
+	if (ret)
+		goto out_unregister;
 	cam->v4l2_dev.ctrl_handler = &cam->ctrl_handler;
 	/*
-	 * Convince the प्रणाली that we can करो DMA.
+	 * Convince the system that we can do DMA.
 	 */
 	pdev->dev.dma_mask = &viadev->pdev->dma_mask;
 	dma_set_mask(&pdev->dev, 0xffffffff);
 	/*
-	 * Fire up the capture port.  The ग_लिखो to 0x78 looks purely
-	 * OLPCish; any प्रणाली will need to tweak 0x1e.
+	 * Fire up the capture port.  The write to 0x78 looks purely
+	 * OLPCish; any system will need to tweak 0x1e.
 	 */
-	via_ग_लिखो_reg_mask(VIASR, 0x78, 0, 0x80);
-	via_ग_लिखो_reg_mask(VIASR, 0x1e, 0xc0, 0xc0);
+	via_write_reg_mask(VIASR, 0x78, 0, 0x80);
+	via_write_reg_mask(VIASR, 0x1e, 0xc0, 0xc0);
 	/*
-	 * Get the sensor घातered up.
+	 * Get the sensor powered up.
 	 */
-	ret = via_sensor_घातer_setup(cam);
-	अगर (ret)
-		जाओ out_ctrl_hdl_मुक्त;
-	via_sensor_घातer_up(cam);
+	ret = via_sensor_power_setup(cam);
+	if (ret)
+		goto out_ctrl_hdl_free;
+	via_sensor_power_up(cam);
 
 	/*
-	 * See अगर we can't find it on the bus.	The VIA_PORT_31 assumption
-	 * is OLPC-specअगरic.  0x42 assumption is ov7670-specअगरic.
+	 * See if we can't find it on the bus.	The VIA_PORT_31 assumption
+	 * is OLPC-specific.  0x42 assumption is ov7670-specific.
 	 */
 	sensor_adapter = viafb_find_i2c_adapter(VIA_PORT_31);
 	cam->sensor = v4l2_i2c_new_subdev_board(&cam->v4l2_dev, sensor_adapter,
-			&ov7670_info, शून्य);
-	अगर (cam->sensor == शून्य) अणु
+			&ov7670_info, NULL);
+	if (cam->sensor == NULL) {
 		dev_err(&pdev->dev, "Unable to find the sensor!\n");
 		ret = -ENODEV;
-		जाओ out_घातer_करोwn;
-	पूर्ण
+		goto out_power_down;
+	}
 	/*
 	 * Get the IRQ.
 	 */
-	viacam_पूर्णांक_disable(cam);
-	ret = request_thपढ़ोed_irq(viadev->pdev->irq, viacam_quick_irq,
+	viacam_int_disable(cam);
+	ret = request_threaded_irq(viadev->pdev->irq, viacam_quick_irq,
 			viacam_irq, IRQF_SHARED, "via-camera", cam);
-	अगर (ret)
-		जाओ out_घातer_करोwn;
+	if (ret)
+		goto out_power_down;
 
 	vq = &cam->vq;
 	vq->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	vq->io_modes = VB2_MMAP | VB2_USERPTR | VB2_DMABUF | VB2_READ;
 	vq->drv_priv = cam;
-	vq->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
-	vq->buf_काष्ठा_size = माप(काष्ठा via_buffer);
+	vq->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+	vq->buf_struct_size = sizeof(struct via_buffer);
 	vq->dev = cam->v4l2_dev.dev;
 
 	vq->ops = &viacam_vb2_ops;
@@ -1258,64 +1257,64 @@ out:
 	/*
 	 * Tell V4l2 that we exist.
 	 */
-	cam->vdev = viacam_v4l_ढाँचा;
+	cam->vdev = viacam_v4l_template;
 	cam->vdev.v4l2_dev = &cam->v4l2_dev;
 	cam->vdev.lock = &cam->lock;
 	cam->vdev.queue = vq;
 	video_set_drvdata(&cam->vdev, cam);
-	ret = video_रेजिस्टर_device(&cam->vdev, VFL_TYPE_VIDEO, -1);
-	अगर (ret)
-		जाओ out_irq;
+	ret = video_register_device(&cam->vdev, VFL_TYPE_VIDEO, -1);
+	if (ret)
+		goto out_irq;
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 	/*
-	 * Hook पूर्णांकo PM events
+	 * Hook into PM events
 	 */
-	viacam_pm_hooks.निजी = cam;
-	viafb_pm_रेजिस्टर(&viacam_pm_hooks);
-#पूर्ण_अगर
+	viacam_pm_hooks.private = cam;
+	viafb_pm_register(&viacam_pm_hooks);
+#endif
 
-	/* Power the sensor करोwn until somebody खोलोs the device */
-	via_sensor_घातer_करोwn(cam);
-	वापस 0;
+	/* Power the sensor down until somebody opens the device */
+	via_sensor_power_down(cam);
+	return 0;
 
 out_irq:
-	मुक्त_irq(viadev->pdev->irq, cam);
-out_घातer_करोwn:
-	via_sensor_घातer_release(cam);
-out_ctrl_hdl_मुक्त:
-	v4l2_ctrl_handler_मुक्त(&cam->ctrl_handler);
-out_unरेजिस्टर:
-	v4l2_device_unरेजिस्टर(&cam->v4l2_dev);
-out_मुक्त:
-	kमुक्त(cam);
-	वापस ret;
-पूर्ण
+	free_irq(viadev->pdev->irq, cam);
+out_power_down:
+	via_sensor_power_release(cam);
+out_ctrl_hdl_free:
+	v4l2_ctrl_handler_free(&cam->ctrl_handler);
+out_unregister:
+	v4l2_device_unregister(&cam->v4l2_dev);
+out_free:
+	kfree(cam);
+	return ret;
+}
 
-अटल पूर्णांक viacam_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा via_camera *cam = via_cam_info;
-	काष्ठा viafb_dev *viadev = pdev->dev.platक्रमm_data;
+static int viacam_remove(struct platform_device *pdev)
+{
+	struct via_camera *cam = via_cam_info;
+	struct viafb_dev *viadev = pdev->dev.platform_data;
 
-	video_unरेजिस्टर_device(&cam->vdev);
-	v4l2_device_unरेजिस्टर(&cam->v4l2_dev);
-#अगर_घोषित CONFIG_PM
-	viafb_pm_unरेजिस्टर(&viacam_pm_hooks);
-#पूर्ण_अगर
-	मुक्त_irq(viadev->pdev->irq, cam);
-	via_sensor_घातer_release(cam);
-	v4l2_ctrl_handler_मुक्त(&cam->ctrl_handler);
-	kमुक्त(cam);
-	via_cam_info = शून्य;
-	वापस 0;
-पूर्ण
+	video_unregister_device(&cam->vdev);
+	v4l2_device_unregister(&cam->v4l2_dev);
+#ifdef CONFIG_PM
+	viafb_pm_unregister(&viacam_pm_hooks);
+#endif
+	free_irq(viadev->pdev->irq, cam);
+	via_sensor_power_release(cam);
+	v4l2_ctrl_handler_free(&cam->ctrl_handler);
+	kfree(cam);
+	via_cam_info = NULL;
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver viacam_driver = अणु
-	.driver = अणु
+static struct platform_driver viacam_driver = {
+	.driver = {
 		.name = "viafb-camera",
-	पूर्ण,
+	},
 	.probe = viacam_probe,
-	.हटाओ = viacam_हटाओ,
-पूर्ण;
+	.remove = viacam_remove,
+};
 
-module_platक्रमm_driver(viacam_driver);
+module_platform_driver(viacam_driver);

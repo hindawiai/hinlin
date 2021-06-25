@@ -1,207 +1,206 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2016, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#अगर_अघोषित __SOC_TEGRA_BPMP_H
-#घोषणा __SOC_TEGRA_BPMP_H
+#ifndef __SOC_TEGRA_BPMP_H
+#define __SOC_TEGRA_BPMP_H
 
-#समावेश <linux/mailbox_client.h>
-#समावेश <linux/pm_करोमुख्य.h>
-#समावेश <linux/reset-controller.h>
-#समावेश <linux/semaphore.h>
-#समावेश <linux/types.h>
+#include <linux/mailbox_client.h>
+#include <linux/pm_domain.h>
+#include <linux/reset-controller.h>
+#include <linux/semaphore.h>
+#include <linux/types.h>
 
-#समावेश <soc/tegra/bpmp-abi.h>
+#include <soc/tegra/bpmp-abi.h>
 
-काष्ठा tegra_bpmp_clk;
-काष्ठा tegra_bpmp_ops;
+struct tegra_bpmp_clk;
+struct tegra_bpmp_ops;
 
-काष्ठा tegra_bpmp_soc अणु
-	काष्ठा अणु
-		काष्ठा अणु
-			अचिन्हित पूर्णांक offset;
-			अचिन्हित पूर्णांक count;
-			अचिन्हित पूर्णांक समयout;
-		पूर्ण cpu_tx, thपढ़ो, cpu_rx;
-	पूर्ण channels;
+struct tegra_bpmp_soc {
+	struct {
+		struct {
+			unsigned int offset;
+			unsigned int count;
+			unsigned int timeout;
+		} cpu_tx, thread, cpu_rx;
+	} channels;
 
-	स्थिर काष्ठा tegra_bpmp_ops *ops;
-	अचिन्हित पूर्णांक num_resets;
-पूर्ण;
+	const struct tegra_bpmp_ops *ops;
+	unsigned int num_resets;
+};
 
-काष्ठा tegra_bpmp_mb_data अणु
+struct tegra_bpmp_mb_data {
 	u32 code;
 	u32 flags;
 	u8 data[MSG_DATA_MIN_SZ];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा tegra_bpmp_channel अणु
-	काष्ठा tegra_bpmp *bpmp;
-	काष्ठा tegra_bpmp_mb_data *ib;
-	काष्ठा tegra_bpmp_mb_data *ob;
-	काष्ठा completion completion;
-	काष्ठा tegra_ivc *ivc;
-	अचिन्हित पूर्णांक index;
-पूर्ण;
+struct tegra_bpmp_channel {
+	struct tegra_bpmp *bpmp;
+	struct tegra_bpmp_mb_data *ib;
+	struct tegra_bpmp_mb_data *ob;
+	struct completion completion;
+	struct tegra_ivc *ivc;
+	unsigned int index;
+};
 
-प्रकार व्योम (*tegra_bpmp_mrq_handler_t)(अचिन्हित पूर्णांक mrq,
-					 काष्ठा tegra_bpmp_channel *channel,
-					 व्योम *data);
+typedef void (*tegra_bpmp_mrq_handler_t)(unsigned int mrq,
+					 struct tegra_bpmp_channel *channel,
+					 void *data);
 
-काष्ठा tegra_bpmp_mrq अणु
-	काष्ठा list_head list;
-	अचिन्हित पूर्णांक mrq;
+struct tegra_bpmp_mrq {
+	struct list_head list;
+	unsigned int mrq;
 	tegra_bpmp_mrq_handler_t handler;
-	व्योम *data;
-पूर्ण;
+	void *data;
+};
 
-काष्ठा tegra_bpmp अणु
-	स्थिर काष्ठा tegra_bpmp_soc *soc;
-	काष्ठा device *dev;
-	व्योम *priv;
+struct tegra_bpmp {
+	const struct tegra_bpmp_soc *soc;
+	struct device *dev;
+	void *priv;
 
-	काष्ठा अणु
-		काष्ठा mbox_client client;
-		काष्ठा mbox_chan *channel;
-	पूर्ण mbox;
+	struct {
+		struct mbox_client client;
+		struct mbox_chan *channel;
+	} mbox;
 
 	spinlock_t atomic_tx_lock;
-	काष्ठा tegra_bpmp_channel *tx_channel, *rx_channel, *thपढ़ोed_channels;
+	struct tegra_bpmp_channel *tx_channel, *rx_channel, *threaded_channels;
 
-	काष्ठा अणु
-		अचिन्हित दीर्घ *allocated;
-		अचिन्हित दीर्घ *busy;
-		अचिन्हित पूर्णांक count;
-		काष्ठा semaphore lock;
-	पूर्ण thपढ़ोed;
+	struct {
+		unsigned long *allocated;
+		unsigned long *busy;
+		unsigned int count;
+		struct semaphore lock;
+	} threaded;
 
-	काष्ठा list_head mrqs;
+	struct list_head mrqs;
 	spinlock_t lock;
 
-	काष्ठा tegra_bpmp_clk **घड़ीs;
-	अचिन्हित पूर्णांक num_घड़ीs;
+	struct tegra_bpmp_clk **clocks;
+	unsigned int num_clocks;
 
-	काष्ठा reset_controller_dev rstc;
+	struct reset_controller_dev rstc;
 
-	काष्ठा genpd_onecell_data genpd;
+	struct genpd_onecell_data genpd;
 
-#अगर_घोषित CONFIG_DEBUG_FS
-	काष्ठा dentry *debugfs_mirror;
-#पूर्ण_अगर
-पूर्ण;
+#ifdef CONFIG_DEBUG_FS
+	struct dentry *debugfs_mirror;
+#endif
+};
 
-काष्ठा tegra_bpmp_message अणु
-	अचिन्हित पूर्णांक mrq;
+struct tegra_bpmp_message {
+	unsigned int mrq;
 
-	काष्ठा अणु
-		स्थिर व्योम *data;
-		माप_प्रकार size;
-	पूर्ण tx;
+	struct {
+		const void *data;
+		size_t size;
+	} tx;
 
-	काष्ठा अणु
-		व्योम *data;
-		माप_प्रकार size;
-		पूर्णांक ret;
-	पूर्ण rx;
-पूर्ण;
+	struct {
+		void *data;
+		size_t size;
+		int ret;
+	} rx;
+};
 
-#अगर IS_ENABLED(CONFIG_TEGRA_BPMP)
-काष्ठा tegra_bpmp *tegra_bpmp_get(काष्ठा device *dev);
-व्योम tegra_bpmp_put(काष्ठा tegra_bpmp *bpmp);
-पूर्णांक tegra_bpmp_transfer_atomic(काष्ठा tegra_bpmp *bpmp,
-			       काष्ठा tegra_bpmp_message *msg);
-पूर्णांक tegra_bpmp_transfer(काष्ठा tegra_bpmp *bpmp,
-			काष्ठा tegra_bpmp_message *msg);
-व्योम tegra_bpmp_mrq_वापस(काष्ठा tegra_bpmp_channel *channel, पूर्णांक code,
-			   स्थिर व्योम *data, माप_प्रकार size);
+#if IS_ENABLED(CONFIG_TEGRA_BPMP)
+struct tegra_bpmp *tegra_bpmp_get(struct device *dev);
+void tegra_bpmp_put(struct tegra_bpmp *bpmp);
+int tegra_bpmp_transfer_atomic(struct tegra_bpmp *bpmp,
+			       struct tegra_bpmp_message *msg);
+int tegra_bpmp_transfer(struct tegra_bpmp *bpmp,
+			struct tegra_bpmp_message *msg);
+void tegra_bpmp_mrq_return(struct tegra_bpmp_channel *channel, int code,
+			   const void *data, size_t size);
 
-पूर्णांक tegra_bpmp_request_mrq(काष्ठा tegra_bpmp *bpmp, अचिन्हित पूर्णांक mrq,
-			   tegra_bpmp_mrq_handler_t handler, व्योम *data);
-व्योम tegra_bpmp_मुक्त_mrq(काष्ठा tegra_bpmp *bpmp, अचिन्हित पूर्णांक mrq,
-			 व्योम *data);
-bool tegra_bpmp_mrq_is_supported(काष्ठा tegra_bpmp *bpmp, अचिन्हित पूर्णांक mrq);
-#अन्यथा
-अटल अंतरभूत काष्ठा tegra_bpmp *tegra_bpmp_get(काष्ठा device *dev)
-अणु
-	वापस ERR_PTR(-ENOTSUPP);
-पूर्ण
-अटल अंतरभूत व्योम tegra_bpmp_put(काष्ठा tegra_bpmp *bpmp)
-अणु
-पूर्ण
-अटल अंतरभूत पूर्णांक tegra_bpmp_transfer_atomic(काष्ठा tegra_bpmp *bpmp,
-					     काष्ठा tegra_bpmp_message *msg)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
-अटल अंतरभूत पूर्णांक tegra_bpmp_transfer(काष्ठा tegra_bpmp *bpmp,
-				      काष्ठा tegra_bpmp_message *msg)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
-अटल अंतरभूत व्योम tegra_bpmp_mrq_वापस(काष्ठा tegra_bpmp_channel *channel,
-					 पूर्णांक code, स्थिर व्योम *data,
-					 माप_प्रकार size)
-अणु
-पूर्ण
+int tegra_bpmp_request_mrq(struct tegra_bpmp *bpmp, unsigned int mrq,
+			   tegra_bpmp_mrq_handler_t handler, void *data);
+void tegra_bpmp_free_mrq(struct tegra_bpmp *bpmp, unsigned int mrq,
+			 void *data);
+bool tegra_bpmp_mrq_is_supported(struct tegra_bpmp *bpmp, unsigned int mrq);
+#else
+static inline struct tegra_bpmp *tegra_bpmp_get(struct device *dev)
+{
+	return ERR_PTR(-ENOTSUPP);
+}
+static inline void tegra_bpmp_put(struct tegra_bpmp *bpmp)
+{
+}
+static inline int tegra_bpmp_transfer_atomic(struct tegra_bpmp *bpmp,
+					     struct tegra_bpmp_message *msg)
+{
+	return -ENOTSUPP;
+}
+static inline int tegra_bpmp_transfer(struct tegra_bpmp *bpmp,
+				      struct tegra_bpmp_message *msg)
+{
+	return -ENOTSUPP;
+}
+static inline void tegra_bpmp_mrq_return(struct tegra_bpmp_channel *channel,
+					 int code, const void *data,
+					 size_t size)
+{
+}
 
-अटल अंतरभूत पूर्णांक tegra_bpmp_request_mrq(काष्ठा tegra_bpmp *bpmp,
-					 अचिन्हित पूर्णांक mrq,
+static inline int tegra_bpmp_request_mrq(struct tegra_bpmp *bpmp,
+					 unsigned int mrq,
 					 tegra_bpmp_mrq_handler_t handler,
-					 व्योम *data)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
-अटल अंतरभूत व्योम tegra_bpmp_मुक्त_mrq(काष्ठा tegra_bpmp *bpmp,
-				       अचिन्हित पूर्णांक mrq, व्योम *data)
-अणु
-पूर्ण
+					 void *data)
+{
+	return -ENOTSUPP;
+}
+static inline void tegra_bpmp_free_mrq(struct tegra_bpmp *bpmp,
+				       unsigned int mrq, void *data)
+{
+}
 
-अटल अंतरभूत bool tegra_bpmp_mrq_is_supported(काष्ठा tegra_bpmp *bpmp,
-					      अचिन्हित पूर्णांक mrq)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर
+static inline bool tegra_bpmp_mrq_is_supported(struct tegra_bpmp *bpmp,
+					      unsigned int mrq)
+{
+	return false;
+}
+#endif
 
-व्योम tegra_bpmp_handle_rx(काष्ठा tegra_bpmp *bpmp);
+void tegra_bpmp_handle_rx(struct tegra_bpmp *bpmp);
 
-#अगर IS_ENABLED(CONFIG_CLK_TEGRA_BPMP)
-पूर्णांक tegra_bpmp_init_घड़ीs(काष्ठा tegra_bpmp *bpmp);
-#अन्यथा
-अटल अंतरभूत पूर्णांक tegra_bpmp_init_घड़ीs(काष्ठा tegra_bpmp *bpmp)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_CLK_TEGRA_BPMP)
+int tegra_bpmp_init_clocks(struct tegra_bpmp *bpmp);
+#else
+static inline int tegra_bpmp_init_clocks(struct tegra_bpmp *bpmp)
+{
+	return 0;
+}
+#endif
 
-#अगर IS_ENABLED(CONFIG_RESET_TEGRA_BPMP)
-पूर्णांक tegra_bpmp_init_resets(काष्ठा tegra_bpmp *bpmp);
-#अन्यथा
-अटल अंतरभूत पूर्णांक tegra_bpmp_init_resets(काष्ठा tegra_bpmp *bpmp)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_RESET_TEGRA_BPMP)
+int tegra_bpmp_init_resets(struct tegra_bpmp *bpmp);
+#else
+static inline int tegra_bpmp_init_resets(struct tegra_bpmp *bpmp)
+{
+	return 0;
+}
+#endif
 
-#अगर IS_ENABLED(CONFIG_SOC_TEGRA_POWERGATE_BPMP)
-पूर्णांक tegra_bpmp_init_घातergates(काष्ठा tegra_bpmp *bpmp);
-#अन्यथा
-अटल अंतरभूत पूर्णांक tegra_bpmp_init_घातergates(काष्ठा tegra_bpmp *bpmp)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_SOC_TEGRA_POWERGATE_BPMP)
+int tegra_bpmp_init_powergates(struct tegra_bpmp *bpmp);
+#else
+static inline int tegra_bpmp_init_powergates(struct tegra_bpmp *bpmp)
+{
+	return 0;
+}
+#endif
 
-#अगर IS_ENABLED(CONFIG_DEBUG_FS)
-पूर्णांक tegra_bpmp_init_debugfs(काष्ठा tegra_bpmp *bpmp);
-#अन्यथा
-अटल अंतरभूत पूर्णांक tegra_bpmp_init_debugfs(काष्ठा tegra_bpmp *bpmp)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_DEBUG_FS)
+int tegra_bpmp_init_debugfs(struct tegra_bpmp *bpmp);
+#else
+static inline int tegra_bpmp_init_debugfs(struct tegra_bpmp *bpmp)
+{
+	return 0;
+}
+#endif
 
 
-#पूर्ण_अगर /* __SOC_TEGRA_BPMP_H */
+#endif /* __SOC_TEGRA_BPMP_H */

@@ -1,340 +1,339 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  *  S390 version
  *    Copyright IBM Corp. 1999
- *    Author(s): Harपंचांगut Penner (hp@de.ibm.com),
+ *    Author(s): Hartmut Penner (hp@de.ibm.com),
  *               Martin Schwidefsky (schwidefsky@de.ibm.com)
  *
  *  Derived from "include/asm-i386/processor.h"
  *    Copyright (C) 1994, Linus Torvalds
  */
 
-#अगर_अघोषित __ASM_S390_PROCESSOR_H
-#घोषणा __ASM_S390_PROCESSOR_H
+#ifndef __ASM_S390_PROCESSOR_H
+#define __ASM_S390_PROCESSOR_H
 
-#समावेश <linux/bits.h>
+#include <linux/bits.h>
 
-#घोषणा CIF_NOHZ_DELAY		2	/* delay HZ disable क्रम a tick */
-#घोषणा CIF_FPU			3	/* restore FPU रेजिस्टरs */
-#घोषणा CIF_ENABLED_WAIT	5	/* in enabled रुको state */
-#घोषणा CIF_MCCK_GUEST		6	/* machine check happening in guest */
-#घोषणा CIF_DEDICATED_CPU	7	/* this CPU is dedicated */
+#define CIF_NOHZ_DELAY		2	/* delay HZ disable for a tick */
+#define CIF_FPU			3	/* restore FPU registers */
+#define CIF_ENABLED_WAIT	5	/* in enabled wait state */
+#define CIF_MCCK_GUEST		6	/* machine check happening in guest */
+#define CIF_DEDICATED_CPU	7	/* this CPU is dedicated */
 
-#घोषणा _CIF_NOHZ_DELAY		BIT(CIF_NOHZ_DELAY)
-#घोषणा _CIF_FPU		BIT(CIF_FPU)
-#घोषणा _CIF_ENABLED_WAIT	BIT(CIF_ENABLED_WAIT)
-#घोषणा _CIF_MCCK_GUEST		BIT(CIF_MCCK_GUEST)
-#घोषणा _CIF_DEDICATED_CPU	BIT(CIF_DEDICATED_CPU)
+#define _CIF_NOHZ_DELAY		BIT(CIF_NOHZ_DELAY)
+#define _CIF_FPU		BIT(CIF_FPU)
+#define _CIF_ENABLED_WAIT	BIT(CIF_ENABLED_WAIT)
+#define _CIF_MCCK_GUEST		BIT(CIF_MCCK_GUEST)
+#define _CIF_DEDICATED_CPU	BIT(CIF_DEDICATED_CPU)
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#समावेश <linux/cpumask.h>
-#समावेश <linux/linkage.h>
-#समावेश <linux/irqflags.h>
-#समावेश <यंत्र/cpu.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/runसमय_instr.h>
-#समावेश <यंत्र/fpu/types.h>
-#समावेश <यंत्र/fpu/पूर्णांकernal.h>
-#समावेश <यंत्र/irqflags.h>
+#include <linux/cpumask.h>
+#include <linux/linkage.h>
+#include <linux/irqflags.h>
+#include <asm/cpu.h>
+#include <asm/page.h>
+#include <asm/ptrace.h>
+#include <asm/setup.h>
+#include <asm/runtime_instr.h>
+#include <asm/fpu/types.h>
+#include <asm/fpu/internal.h>
+#include <asm/irqflags.h>
 
-प्रकार दीर्घ (*sys_call_ptr_t)(काष्ठा pt_regs *regs);
+typedef long (*sys_call_ptr_t)(struct pt_regs *regs);
 
-अटल अंतरभूत व्योम set_cpu_flag(पूर्णांक flag)
-अणु
+static inline void set_cpu_flag(int flag)
+{
 	S390_lowcore.cpu_flags |= (1UL << flag);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम clear_cpu_flag(पूर्णांक flag)
-अणु
+static inline void clear_cpu_flag(int flag)
+{
 	S390_lowcore.cpu_flags &= ~(1UL << flag);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक test_cpu_flag(पूर्णांक flag)
-अणु
-	वापस !!(S390_lowcore.cpu_flags & (1UL << flag));
-पूर्ण
+static inline int test_cpu_flag(int flag)
+{
+	return !!(S390_lowcore.cpu_flags & (1UL << flag));
+}
 
 /*
  * Test CIF flag of another CPU. The caller needs to ensure that
  * CPU hotplug can not happen, e.g. by disabling preemption.
  */
-अटल अंतरभूत पूर्णांक test_cpu_flag_of(पूर्णांक flag, पूर्णांक cpu)
-अणु
-	काष्ठा lowcore *lc = lowcore_ptr[cpu];
-	वापस !!(lc->cpu_flags & (1UL << flag));
-पूर्ण
+static inline int test_cpu_flag_of(int flag, int cpu)
+{
+	struct lowcore *lc = lowcore_ptr[cpu];
+	return !!(lc->cpu_flags & (1UL << flag));
+}
 
-#घोषणा arch_needs_cpu() test_cpu_flag(CIF_NOHZ_DELAY)
+#define arch_needs_cpu() test_cpu_flag(CIF_NOHZ_DELAY)
 
-अटल अंतरभूत व्योम get_cpu_id(काष्ठा cpuid *ptr)
-अणु
-	यंत्र अस्थिर("stidp %0" : "=Q" (*ptr));
-पूर्ण
+static inline void get_cpu_id(struct cpuid *ptr)
+{
+	asm volatile("stidp %0" : "=Q" (*ptr));
+}
 
-व्योम s390_adjust_jअगरfies(व्योम);
-व्योम s390_update_cpu_mhz(व्योम);
-व्योम cpu_detect_mhz_feature(व्योम);
+void s390_adjust_jiffies(void);
+void s390_update_cpu_mhz(void);
+void cpu_detect_mhz_feature(void);
 
-बाह्य स्थिर काष्ठा seq_operations cpuinfo_op;
-बाह्य व्योम execve_tail(व्योम);
-बाह्य व्योम __bpon(व्योम);
+extern const struct seq_operations cpuinfo_op;
+extern void execve_tail(void);
+extern void __bpon(void);
 
 /*
- * User space process size: 2GB क्रम 31 bit, 4TB or 8PT क्रम 64 bit.
+ * User space process size: 2GB for 31 bit, 4TB or 8PT for 64 bit.
  */
 
-#घोषणा TASK_SIZE_OF(tsk)	(test_tsk_thपढ़ो_flag(tsk, TIF_31BIT) ? \
+#define TASK_SIZE_OF(tsk)	(test_tsk_thread_flag(tsk, TIF_31BIT) ? \
 					_REGION3_SIZE : TASK_SIZE_MAX)
-#घोषणा TASK_UNMAPPED_BASE	(test_thपढ़ो_flag(TIF_31BIT) ? \
+#define TASK_UNMAPPED_BASE	(test_thread_flag(TIF_31BIT) ? \
 					(_REGION3_SIZE >> 1) : (_REGION2_SIZE >> 1))
-#घोषणा TASK_SIZE		TASK_SIZE_OF(current)
-#घोषणा TASK_SIZE_MAX		(-PAGE_SIZE)
+#define TASK_SIZE		TASK_SIZE_OF(current)
+#define TASK_SIZE_MAX		(-PAGE_SIZE)
 
-#घोषणा STACK_TOP		(test_thपढ़ो_flag(TIF_31BIT) ? \
+#define STACK_TOP		(test_thread_flag(TIF_31BIT) ? \
 					_REGION3_SIZE : _REGION2_SIZE)
-#घोषणा STACK_TOP_MAX		_REGION2_SIZE
+#define STACK_TOP_MAX		_REGION2_SIZE
 
-#घोषणा HAVE_ARCH_PICK_MMAP_LAYOUT
+#define HAVE_ARCH_PICK_MMAP_LAYOUT
 
 /*
- * Thपढ़ो काष्ठाure
+ * Thread structure
  */
-काष्ठा thपढ़ो_काष्ठा अणु
-	अचिन्हित पूर्णांक  acrs[NUM_ACRS];
-	अचिन्हित दीर्घ ksp;			/* kernel stack poपूर्णांकer */
-	अचिन्हित दीर्घ user_समयr;		/* task cpuसमय in user space */
-	अचिन्हित दीर्घ guest_समयr;		/* task cpuसमय in kvm guest */
-	अचिन्हित दीर्घ प्रणाली_समयr;		/* task cpuसमय in kernel space */
-	अचिन्हित दीर्घ hardirq_समयr;		/* task cpuसमय in hardirq context */
-	अचिन्हित दीर्घ softirq_समयr;		/* task cpuसमय in softirq context */
-	स्थिर sys_call_ptr_t *sys_call_table;	/* प्रणाली call table address */
-	अचिन्हित दीर्घ gmap_addr;		/* address of last gmap fault. */
-	अचिन्हित पूर्णांक gmap_ग_लिखो_flag;		/* gmap fault ग_लिखो indication */
-	अचिन्हित पूर्णांक gmap_पूर्णांक_code;		/* पूर्णांक code of last gmap fault */
-	अचिन्हित पूर्णांक gmap_pfault;		/* संकेत of a pending guest pfault */
+struct thread_struct {
+	unsigned int  acrs[NUM_ACRS];
+	unsigned long ksp;			/* kernel stack pointer */
+	unsigned long user_timer;		/* task cputime in user space */
+	unsigned long guest_timer;		/* task cputime in kvm guest */
+	unsigned long system_timer;		/* task cputime in kernel space */
+	unsigned long hardirq_timer;		/* task cputime in hardirq context */
+	unsigned long softirq_timer;		/* task cputime in softirq context */
+	const sys_call_ptr_t *sys_call_table;	/* system call table address */
+	unsigned long gmap_addr;		/* address of last gmap fault. */
+	unsigned int gmap_write_flag;		/* gmap fault write indication */
+	unsigned int gmap_int_code;		/* int code of last gmap fault */
+	unsigned int gmap_pfault;		/* signal of a pending guest pfault */
 
-	/* Per-thपढ़ो inक्रमmation related to debugging */
-	काष्ठा per_regs per_user;		/* User specअगरied PER रेजिस्टरs */
-	काष्ठा per_event per_event;		/* Cause of the last PER trap */
-	अचिन्हित दीर्घ per_flags;		/* Flags to control debug behavior */
-	अचिन्हित पूर्णांक प्रणाली_call;		/* प्रणाली call number in संकेत */
-	अचिन्हित दीर्घ last_अवरोध;		/* last अवरोधing-event-address. */
-	/* pfault_रुको is used to block the process on a pfault event */
-	अचिन्हित दीर्घ pfault_रुको;
-	काष्ठा list_head list;
-	/* cpu runसमय instrumentation */
-	काष्ठा runसमय_instr_cb *ri_cb;
-	काष्ठा gs_cb *gs_cb;			/* Current guarded storage cb */
-	काष्ठा gs_cb *gs_bc_cb;			/* Broadcast guarded storage cb */
-	अचिन्हित अक्षर trap_tdb[256];		/* Transaction पात diagnose block */
+	/* Per-thread information related to debugging */
+	struct per_regs per_user;		/* User specified PER registers */
+	struct per_event per_event;		/* Cause of the last PER trap */
+	unsigned long per_flags;		/* Flags to control debug behavior */
+	unsigned int system_call;		/* system call number in signal */
+	unsigned long last_break;		/* last breaking-event-address. */
+	/* pfault_wait is used to block the process on a pfault event */
+	unsigned long pfault_wait;
+	struct list_head list;
+	/* cpu runtime instrumentation */
+	struct runtime_instr_cb *ri_cb;
+	struct gs_cb *gs_cb;			/* Current guarded storage cb */
+	struct gs_cb *gs_bc_cb;			/* Broadcast guarded storage cb */
+	unsigned char trap_tdb[256];		/* Transaction abort diagnose block */
 	/*
 	 * Warning: 'fpu' is dynamically-sized. It *MUST* be at
 	 * the end.
 	 */
-	काष्ठा fpu fpu;			/* FP and VX रेजिस्टर save area */
-पूर्ण;
+	struct fpu fpu;			/* FP and VX register save area */
+};
 
 /* Flag to disable transactions. */
-#घोषणा PER_FLAG_NO_TE			1UL
-/* Flag to enable अक्रमom transaction पातs. */
-#घोषणा PER_FLAG_TE_ABORT_RAND		2UL
-/* Flag to specअगरy अक्रमom transaction पात mode:
- * - पात each transaction at a अक्रमom inकाष्ठाion beक्रमe TEND अगर set.
- * - पात अक्रमom transactions at a अक्रमom inकाष्ठाion अगर cleared.
+#define PER_FLAG_NO_TE			1UL
+/* Flag to enable random transaction aborts. */
+#define PER_FLAG_TE_ABORT_RAND		2UL
+/* Flag to specify random transaction abort mode:
+ * - abort each transaction at a random instruction before TEND if set.
+ * - abort random transactions at a random instruction if cleared.
  */
-#घोषणा PER_FLAG_TE_ABORT_RAND_TEND	4UL
+#define PER_FLAG_TE_ABORT_RAND_TEND	4UL
 
-प्रकार काष्ठा thपढ़ो_काष्ठा thपढ़ो_काष्ठा;
+typedef struct thread_struct thread_struct;
 
-#घोषणा ARCH_MIN_TASKALIGN	8
+#define ARCH_MIN_TASKALIGN	8
 
-#घोषणा INIT_THREAD अणु							\
-	.ksp = माप(init_stack) + (अचिन्हित दीर्घ) &init_stack,	\
-	.fpu.regs = (व्योम *) init_task.thपढ़ो.fpu.fprs,			\
-	.last_अवरोध = 1,						\
-पूर्ण
+#define INIT_THREAD {							\
+	.ksp = sizeof(init_stack) + (unsigned long) &init_stack,	\
+	.fpu.regs = (void *) init_task.thread.fpu.fprs,			\
+	.last_break = 1,						\
+}
 
 /*
- * Do necessary setup to start up a new thपढ़ो.
+ * Do necessary setup to start up a new thread.
  */
-#घोषणा start_thपढ़ो(regs, new_psw, new_stackp) करो अणु			\
+#define start_thread(regs, new_psw, new_stackp) do {			\
 	regs->psw.mask	= PSW_USER_BITS | PSW_MASK_EA | PSW_MASK_BA;	\
 	regs->psw.addr	= new_psw;					\
 	regs->gprs[15]	= new_stackp;					\
 	execve_tail();							\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा start_thपढ़ो31(regs, new_psw, new_stackp) करो अणु			\
+#define start_thread31(regs, new_psw, new_stackp) do {			\
 	regs->psw.mask	= PSW_USER_BITS | PSW_MASK_BA;			\
 	regs->psw.addr	= new_psw;					\
 	regs->gprs[15]	= new_stackp;					\
 	execve_tail();							\
-पूर्ण जबतक (0)
+} while (0)
 
 /* Forward declaration, a strange C thing */
-काष्ठा task_काष्ठा;
-काष्ठा mm_काष्ठा;
-काष्ठा seq_file;
-काष्ठा pt_regs;
+struct task_struct;
+struct mm_struct;
+struct seq_file;
+struct pt_regs;
 
-व्योम show_रेजिस्टरs(काष्ठा pt_regs *regs);
-व्योम show_cacheinfo(काष्ठा seq_file *m);
+void show_registers(struct pt_regs *regs);
+void show_cacheinfo(struct seq_file *m);
 
-/* Free all resources held by a thपढ़ो. */
-अटल अंतरभूत व्योम release_thपढ़ो(काष्ठा task_काष्ठा *tsk) अणु पूर्ण
+/* Free all resources held by a thread. */
+static inline void release_thread(struct task_struct *tsk) { }
 
 /* Free guarded storage control block */
-व्योम guarded_storage_release(काष्ठा task_काष्ठा *tsk);
-व्योम gs_load_bc_cb(काष्ठा pt_regs *regs);
+void guarded_storage_release(struct task_struct *tsk);
+void gs_load_bc_cb(struct pt_regs *regs);
 
-अचिन्हित दीर्घ get_wchan(काष्ठा task_काष्ठा *p);
-#घोषणा task_pt_regs(tsk) ((काष्ठा pt_regs *) \
+unsigned long get_wchan(struct task_struct *p);
+#define task_pt_regs(tsk) ((struct pt_regs *) \
         (task_stack_page(tsk) + THREAD_SIZE) - 1)
-#घोषणा KSTK_EIP(tsk)	(task_pt_regs(tsk)->psw.addr)
-#घोषणा KSTK_ESP(tsk)	(task_pt_regs(tsk)->gprs[15])
+#define KSTK_EIP(tsk)	(task_pt_regs(tsk)->psw.addr)
+#define KSTK_ESP(tsk)	(task_pt_regs(tsk)->gprs[15])
 
-/* Has task runसमय instrumentation enabled ? */
-#घोषणा is_ri_task(tsk) (!!(tsk)->thपढ़ो.ri_cb)
+/* Has task runtime instrumentation enabled ? */
+#define is_ri_task(tsk) (!!(tsk)->thread.ri_cb)
 
-अटल __always_अंतरभूत अचिन्हित दीर्घ current_stack_poपूर्णांकer(व्योम)
-अणु
-	अचिन्हित दीर्घ sp;
+static __always_inline unsigned long current_stack_pointer(void)
+{
+	unsigned long sp;
 
-	यंत्र अस्थिर("la %0,0(15)" : "=a" (sp));
-	वापस sp;
-पूर्ण
+	asm volatile("la %0,0(15)" : "=a" (sp));
+	return sp;
+}
 
-अटल __no_kasan_or_अंतरभूत अचिन्हित लघु stap(व्योम)
-अणु
-	अचिन्हित लघु cpu_address;
+static __no_kasan_or_inline unsigned short stap(void)
+{
+	unsigned short cpu_address;
 
-	यंत्र अस्थिर("stap %0" : "=Q" (cpu_address));
-	वापस cpu_address;
-पूर्ण
+	asm volatile("stap %0" : "=Q" (cpu_address));
+	return cpu_address;
+}
 
-#घोषणा cpu_relax() barrier()
+#define cpu_relax() barrier()
 
-#घोषणा ECAG_CACHE_ATTRIBUTE	0
-#घोषणा ECAG_CPU_ATTRIBUTE	1
+#define ECAG_CACHE_ATTRIBUTE	0
+#define ECAG_CPU_ATTRIBUTE	1
 
-अटल अंतरभूत अचिन्हित दीर्घ __ecag(अचिन्हित पूर्णांक asi, अचिन्हित अक्षर parm)
-अणु
-	अचिन्हित दीर्घ val;
+static inline unsigned long __ecag(unsigned int asi, unsigned char parm)
+{
+	unsigned long val;
 
-	यंत्र अस्थिर(".insn	rsy,0xeb000000004c,%0,0,0(%1)" /* ecag */
+	asm volatile(".insn	rsy,0xeb000000004c,%0,0,0(%1)" /* ecag */
 		     : "=d" (val) : "a" (asi << 8 | parm));
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल अंतरभूत व्योम psw_set_key(अचिन्हित पूर्णांक key)
-अणु
-	यंत्र अस्थिर("spka 0(%0)" : : "d" (key));
-पूर्ण
-
-/*
- * Set PSW to specअगरied value.
- */
-अटल अंतरभूत व्योम __load_psw(psw_t psw)
-अणु
-	यंत्र अस्थिर("lpswe %0" : : "Q" (psw) : "cc");
-पूर्ण
+static inline void psw_set_key(unsigned int key)
+{
+	asm volatile("spka 0(%0)" : : "d" (key));
+}
 
 /*
- * Set PSW mask to specअगरied value, जबतक leaving the
- * PSW addr poपूर्णांकing to the next inकाष्ठाion.
+ * Set PSW to specified value.
  */
-अटल __no_kasan_or_अंतरभूत व्योम __load_psw_mask(अचिन्हित दीर्घ mask)
-अणु
-	अचिन्हित दीर्घ addr;
+static inline void __load_psw(psw_t psw)
+{
+	asm volatile("lpswe %0" : : "Q" (psw) : "cc");
+}
+
+/*
+ * Set PSW mask to specified value, while leaving the
+ * PSW addr pointing to the next instruction.
+ */
+static __no_kasan_or_inline void __load_psw_mask(unsigned long mask)
+{
+	unsigned long addr;
 	psw_t psw;
 
 	psw.mask = mask;
 
-	यंत्र अस्थिर(
+	asm volatile(
 		"	larl	%0,1f\n"
 		"	stg	%0,%1\n"
 		"	lpswe	%2\n"
 		"1:"
 		: "=&d" (addr), "=Q" (psw.addr) : "Q" (psw) : "memory", "cc");
-पूर्ण
+}
 
 /*
  * Extract current PSW mask
  */
-अटल अंतरभूत अचिन्हित दीर्घ __extract_psw(व्योम)
-अणु
-	अचिन्हित पूर्णांक reg1, reg2;
+static inline unsigned long __extract_psw(void)
+{
+	unsigned int reg1, reg2;
 
-	यंत्र अस्थिर("epsw %0,%1" : "=d" (reg1), "=a" (reg2));
-	वापस (((अचिन्हित दीर्घ) reg1) << 32) | ((अचिन्हित दीर्घ) reg2);
-पूर्ण
+	asm volatile("epsw %0,%1" : "=d" (reg1), "=a" (reg2));
+	return (((unsigned long) reg1) << 32) | ((unsigned long) reg2);
+}
 
-अटल अंतरभूत व्योम local_mcck_enable(व्योम)
-अणु
+static inline void local_mcck_enable(void)
+{
 	__load_psw_mask(__extract_psw() | PSW_MASK_MCHECK);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम local_mcck_disable(व्योम)
-अणु
+static inline void local_mcck_disable(void)
+{
 	__load_psw_mask(__extract_psw() & ~PSW_MASK_MCHECK);
-पूर्ण
+}
 
 /*
- * Rewind PSW inकाष्ठाion address by specअगरied number of bytes.
+ * Rewind PSW instruction address by specified number of bytes.
  */
-अटल अंतरभूत अचिन्हित दीर्घ __शुरुआत_psw(psw_t psw, अचिन्हित दीर्घ ilc)
-अणु
-	अचिन्हित दीर्घ mask;
+static inline unsigned long __rewind_psw(psw_t psw, unsigned long ilc)
+{
+	unsigned long mask;
 
 	mask = (psw.mask & PSW_MASK_EA) ? -1UL :
 	       (psw.mask & PSW_MASK_BA) ? (1UL << 31) - 1 :
 					  (1UL << 24) - 1;
-	वापस (psw.addr - ilc) & mask;
-पूर्ण
+	return (psw.addr - ilc) & mask;
+}
 
 /*
- * Function to drop a processor पूर्णांकo disabled रुको state
+ * Function to drop a processor into disabled wait state
  */
-अटल __always_अंतरभूत व्योम __noवापस disabled_रुको(व्योम)
-अणु
+static __always_inline void __noreturn disabled_wait(void)
+{
 	psw_t psw;
 
 	psw.mask = PSW_MASK_BASE | PSW_MASK_WAIT | PSW_MASK_BA | PSW_MASK_EA;
 	psw.addr = _THIS_IP_;
 	__load_psw(psw);
-	जबतक (1);
-पूर्ण
+	while (1);
+}
 
 /*
  * Basic Program Check Handler.
  */
-बाह्य व्योम s390_base_pgm_handler(व्योम);
-बाह्य व्योम (*s390_base_pgm_handler_fn)(व्योम);
+extern void s390_base_pgm_handler(void);
+extern void (*s390_base_pgm_handler_fn)(void);
 
-#घोषणा ARCH_LOW_ADDRESS_LIMIT	0x7fffffffUL
+#define ARCH_LOW_ADDRESS_LIMIT	0x7fffffffUL
 
-बाह्य पूर्णांक स_नकल_real(व्योम *, व्योम *, माप_प्रकार);
-बाह्य व्योम स_नकल_असलolute(व्योम *, व्योम *, माप_प्रकार);
+extern int memcpy_real(void *, void *, size_t);
+extern void memcpy_absolute(void *, void *, size_t);
 
-#घोषणा mem_assign_असलolute(dest, val) करो अणु			\
-	__typeof__(dest) __पंचांगp = (val);				\
+#define mem_assign_absolute(dest, val) do {			\
+	__typeof__(dest) __tmp = (val);				\
 								\
-	BUILD_BUG_ON(माप(__पंचांगp) != माप(val));		\
-	स_नकल_असलolute(&(dest), &__पंचांगp, माप(__पंचांगp));	\
-पूर्ण जबतक (0)
+	BUILD_BUG_ON(sizeof(__tmp) != sizeof(val));		\
+	memcpy_absolute(&(dest), &__tmp, sizeof(__tmp));	\
+} while (0)
 
-बाह्य पूर्णांक s390_isolate_bp(व्योम);
-बाह्य पूर्णांक s390_isolate_bp_guest(व्योम);
+extern int s390_isolate_bp(void);
+extern int s390_isolate_bp_guest(void);
 
-अटल __always_अंतरभूत bool regs_irqs_disabled(काष्ठा pt_regs *regs)
-अणु
-	वापस arch_irqs_disabled_flags(regs->psw.mask);
-पूर्ण
+static __always_inline bool regs_irqs_disabled(struct pt_regs *regs)
+{
+	return arch_irqs_disabled_flags(regs->psw.mask);
+}
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
+#endif /* __ASSEMBLY__ */
 
-#पूर्ण_अगर /* __ASM_S390_PROCESSOR_H */
+#endif /* __ASM_S390_PROCESSOR_H */

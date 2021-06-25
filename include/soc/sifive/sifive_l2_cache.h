@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * SiFive L2 Cache Controller header file
  *
  */
 
-#अगर_अघोषित __SOC_SIFIVE_L2_CACHE_H
-#घोषणा __SOC_SIFIVE_L2_CACHE_H
+#ifndef __SOC_SIFIVE_L2_CACHE_H
+#define __SOC_SIFIVE_L2_CACHE_H
 
-बाह्य पूर्णांक रेजिस्टर_sअगरive_l2_error_notअगरier(काष्ठा notअगरier_block *nb);
-बाह्य पूर्णांक unरेजिस्टर_sअगरive_l2_error_notअगरier(काष्ठा notअगरier_block *nb);
+extern int register_sifive_l2_error_notifier(struct notifier_block *nb);
+extern int unregister_sifive_l2_error_notifier(struct notifier_block *nb);
 
-#घोषणा SIFIVE_L2_ERR_TYPE_CE 0
-#घोषणा SIFIVE_L2_ERR_TYPE_UE 1
+#define SIFIVE_L2_ERR_TYPE_CE 0
+#define SIFIVE_L2_ERR_TYPE_UE 1
 
-#पूर्ण_अगर /* __SOC_SIFIVE_L2_CACHE_H */
+#endif /* __SOC_SIFIVE_L2_CACHE_H */

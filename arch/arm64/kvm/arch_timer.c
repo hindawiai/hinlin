@@ -1,1262 +1,1261 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2012 ARM Ltd.
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  */
 
-#समावेश <linux/cpu.h>
-#समावेश <linux/kvm.h>
-#समावेश <linux/kvm_host.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/uaccess.h>
+#include <linux/cpu.h>
+#include <linux/kvm.h>
+#include <linux/kvm_host.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/uaccess.h>
 
-#समावेश <घड़ीsource/arm_arch_समयr.h>
-#समावेश <यंत्र/arch_समयr.h>
-#समावेश <यंत्र/kvm_emulate.h>
-#समावेश <यंत्र/kvm_hyp.h>
+#include <clocksource/arm_arch_timer.h>
+#include <asm/arch_timer.h>
+#include <asm/kvm_emulate.h>
+#include <asm/kvm_hyp.h>
 
-#समावेश <kvm/arm_vgic.h>
-#समावेश <kvm/arm_arch_समयr.h>
+#include <kvm/arm_vgic.h>
+#include <kvm/arm_arch_timer.h>
 
-#समावेश "trace.h"
+#include "trace.h"
 
-अटल काष्ठा समयcounter *समयcounter;
-अटल अचिन्हित पूर्णांक host_vसमयr_irq;
-अटल अचिन्हित पूर्णांक host_pसमयr_irq;
-अटल u32 host_vसमयr_irq_flags;
-अटल u32 host_pसमयr_irq_flags;
+static struct timecounter *timecounter;
+static unsigned int host_vtimer_irq;
+static unsigned int host_ptimer_irq;
+static u32 host_vtimer_irq_flags;
+static u32 host_ptimer_irq_flags;
 
-अटल DEFINE_STATIC_KEY_FALSE(has_gic_active_state);
+static DEFINE_STATIC_KEY_FALSE(has_gic_active_state);
 
-अटल स्थिर काष्ठा kvm_irq_level शेष_pसमयr_irq = अणु
+static const struct kvm_irq_level default_ptimer_irq = {
 	.irq	= 30,
 	.level	= 1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kvm_irq_level शेष_vसमयr_irq = अणु
+static const struct kvm_irq_level default_vtimer_irq = {
 	.irq	= 27,
 	.level	= 1,
-पूर्ण;
+};
 
-अटल bool kvm_समयr_irq_can_fire(काष्ठा arch_समयr_context *समयr_ctx);
-अटल व्योम kvm_समयr_update_irq(काष्ठा kvm_vcpu *vcpu, bool new_level,
-				 काष्ठा arch_समयr_context *समयr_ctx);
-अटल bool kvm_समयr_should_fire(काष्ठा arch_समयr_context *समयr_ctx);
-अटल व्योम kvm_arm_समयr_ग_लिखो(काष्ठा kvm_vcpu *vcpu,
-				काष्ठा arch_समयr_context *समयr,
-				क्रमागत kvm_arch_समयr_regs treg,
+static bool kvm_timer_irq_can_fire(struct arch_timer_context *timer_ctx);
+static void kvm_timer_update_irq(struct kvm_vcpu *vcpu, bool new_level,
+				 struct arch_timer_context *timer_ctx);
+static bool kvm_timer_should_fire(struct arch_timer_context *timer_ctx);
+static void kvm_arm_timer_write(struct kvm_vcpu *vcpu,
+				struct arch_timer_context *timer,
+				enum kvm_arch_timer_regs treg,
 				u64 val);
-अटल u64 kvm_arm_समयr_पढ़ो(काष्ठा kvm_vcpu *vcpu,
-			      काष्ठा arch_समयr_context *समयr,
-			      क्रमागत kvm_arch_समयr_regs treg);
+static u64 kvm_arm_timer_read(struct kvm_vcpu *vcpu,
+			      struct arch_timer_context *timer,
+			      enum kvm_arch_timer_regs treg);
 
-u32 समयr_get_ctl(काष्ठा arch_समयr_context *ctxt)
-अणु
-	काष्ठा kvm_vcpu *vcpu = ctxt->vcpu;
+u32 timer_get_ctl(struct arch_timer_context *ctxt)
+{
+	struct kvm_vcpu *vcpu = ctxt->vcpu;
 
-	चयन(arch_समयr_ctx_index(ctxt)) अणु
-	हाल TIMER_VTIMER:
-		वापस __vcpu_sys_reg(vcpu, CNTV_CTL_EL0);
-	हाल TIMER_PTIMER:
-		वापस __vcpu_sys_reg(vcpu, CNTP_CTL_EL0);
-	शेष:
+	switch(arch_timer_ctx_index(ctxt)) {
+	case TIMER_VTIMER:
+		return __vcpu_sys_reg(vcpu, CNTV_CTL_EL0);
+	case TIMER_PTIMER:
+		return __vcpu_sys_reg(vcpu, CNTP_CTL_EL0);
+	default:
 		WARN_ON(1);
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 
-u64 समयr_get_cval(काष्ठा arch_समयr_context *ctxt)
-अणु
-	काष्ठा kvm_vcpu *vcpu = ctxt->vcpu;
+u64 timer_get_cval(struct arch_timer_context *ctxt)
+{
+	struct kvm_vcpu *vcpu = ctxt->vcpu;
 
-	चयन(arch_समयr_ctx_index(ctxt)) अणु
-	हाल TIMER_VTIMER:
-		वापस __vcpu_sys_reg(vcpu, CNTV_CVAL_EL0);
-	हाल TIMER_PTIMER:
-		वापस __vcpu_sys_reg(vcpu, CNTP_CVAL_EL0);
-	शेष:
+	switch(arch_timer_ctx_index(ctxt)) {
+	case TIMER_VTIMER:
+		return __vcpu_sys_reg(vcpu, CNTV_CVAL_EL0);
+	case TIMER_PTIMER:
+		return __vcpu_sys_reg(vcpu, CNTP_CVAL_EL0);
+	default:
 		WARN_ON(1);
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 
-अटल u64 समयr_get_offset(काष्ठा arch_समयr_context *ctxt)
-अणु
-	काष्ठा kvm_vcpu *vcpu = ctxt->vcpu;
+static u64 timer_get_offset(struct arch_timer_context *ctxt)
+{
+	struct kvm_vcpu *vcpu = ctxt->vcpu;
 
-	चयन(arch_समयr_ctx_index(ctxt)) अणु
-	हाल TIMER_VTIMER:
-		वापस __vcpu_sys_reg(vcpu, CNTVOFF_EL2);
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+	switch(arch_timer_ctx_index(ctxt)) {
+	case TIMER_VTIMER:
+		return __vcpu_sys_reg(vcpu, CNTVOFF_EL2);
+	default:
+		return 0;
+	}
+}
 
-अटल व्योम समयr_set_ctl(काष्ठा arch_समयr_context *ctxt, u32 ctl)
-अणु
-	काष्ठा kvm_vcpu *vcpu = ctxt->vcpu;
+static void timer_set_ctl(struct arch_timer_context *ctxt, u32 ctl)
+{
+	struct kvm_vcpu *vcpu = ctxt->vcpu;
 
-	चयन(arch_समयr_ctx_index(ctxt)) अणु
-	हाल TIMER_VTIMER:
+	switch(arch_timer_ctx_index(ctxt)) {
+	case TIMER_VTIMER:
 		__vcpu_sys_reg(vcpu, CNTV_CTL_EL0) = ctl;
-		अवरोध;
-	हाल TIMER_PTIMER:
+		break;
+	case TIMER_PTIMER:
 		__vcpu_sys_reg(vcpu, CNTP_CTL_EL0) = ctl;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON(1);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम समयr_set_cval(काष्ठा arch_समयr_context *ctxt, u64 cval)
-अणु
-	काष्ठा kvm_vcpu *vcpu = ctxt->vcpu;
+static void timer_set_cval(struct arch_timer_context *ctxt, u64 cval)
+{
+	struct kvm_vcpu *vcpu = ctxt->vcpu;
 
-	चयन(arch_समयr_ctx_index(ctxt)) अणु
-	हाल TIMER_VTIMER:
+	switch(arch_timer_ctx_index(ctxt)) {
+	case TIMER_VTIMER:
 		__vcpu_sys_reg(vcpu, CNTV_CVAL_EL0) = cval;
-		अवरोध;
-	हाल TIMER_PTIMER:
+		break;
+	case TIMER_PTIMER:
 		__vcpu_sys_reg(vcpu, CNTP_CVAL_EL0) = cval;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON(1);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम समयr_set_offset(काष्ठा arch_समयr_context *ctxt, u64 offset)
-अणु
-	काष्ठा kvm_vcpu *vcpu = ctxt->vcpu;
+static void timer_set_offset(struct arch_timer_context *ctxt, u64 offset)
+{
+	struct kvm_vcpu *vcpu = ctxt->vcpu;
 
-	चयन(arch_समयr_ctx_index(ctxt)) अणु
-	हाल TIMER_VTIMER:
+	switch(arch_timer_ctx_index(ctxt)) {
+	case TIMER_VTIMER:
 		__vcpu_sys_reg(vcpu, CNTVOFF_EL2) = offset;
-		अवरोध;
-	शेष:
-		WARN(offset, "timer %ld\n", arch_समयr_ctx_index(ctxt));
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		WARN(offset, "timer %ld\n", arch_timer_ctx_index(ctxt));
+	}
+}
 
-u64 kvm_phys_समयr_पढ़ो(व्योम)
-अणु
-	वापस समयcounter->cc->पढ़ो(समयcounter->cc);
-पूर्ण
+u64 kvm_phys_timer_read(void)
+{
+	return timecounter->cc->read(timecounter->cc);
+}
 
-अटल व्योम get_समयr_map(काष्ठा kvm_vcpu *vcpu, काष्ठा समयr_map *map)
-अणु
-	अगर (has_vhe()) अणु
-		map->direct_vसमयr = vcpu_vसमयr(vcpu);
-		map->direct_pसमयr = vcpu_pसमयr(vcpu);
-		map->emul_pसमयr = शून्य;
-	पूर्ण अन्यथा अणु
-		map->direct_vसमयr = vcpu_vसमयr(vcpu);
-		map->direct_pसमयr = शून्य;
-		map->emul_pसमयr = vcpu_pसमयr(vcpu);
-	पूर्ण
+static void get_timer_map(struct kvm_vcpu *vcpu, struct timer_map *map)
+{
+	if (has_vhe()) {
+		map->direct_vtimer = vcpu_vtimer(vcpu);
+		map->direct_ptimer = vcpu_ptimer(vcpu);
+		map->emul_ptimer = NULL;
+	} else {
+		map->direct_vtimer = vcpu_vtimer(vcpu);
+		map->direct_ptimer = NULL;
+		map->emul_ptimer = vcpu_ptimer(vcpu);
+	}
 
-	trace_kvm_get_समयr_map(vcpu->vcpu_id, map);
-पूर्ण
+	trace_kvm_get_timer_map(vcpu->vcpu_id, map);
+}
 
-अटल अंतरभूत bool userspace_irqchip(काष्ठा kvm *kvm)
-अणु
-	वापस अटल_branch_unlikely(&userspace_irqchip_in_use) &&
+static inline bool userspace_irqchip(struct kvm *kvm)
+{
+	return static_branch_unlikely(&userspace_irqchip_in_use) &&
 		unlikely(!irqchip_in_kernel(kvm));
-पूर्ण
+}
 
-अटल व्योम soft_समयr_start(काष्ठा hrसमयr *hrt, u64 ns)
-अणु
-	hrसमयr_start(hrt, kसमय_add_ns(kसमय_get(), ns),
+static void soft_timer_start(struct hrtimer *hrt, u64 ns)
+{
+	hrtimer_start(hrt, ktime_add_ns(ktime_get(), ns),
 		      HRTIMER_MODE_ABS_HARD);
-पूर्ण
+}
 
-अटल व्योम soft_समयr_cancel(काष्ठा hrसमयr *hrt)
-अणु
-	hrसमयr_cancel(hrt);
-पूर्ण
+static void soft_timer_cancel(struct hrtimer *hrt)
+{
+	hrtimer_cancel(hrt);
+}
 
-अटल irqवापस_t kvm_arch_समयr_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा kvm_vcpu *vcpu = *(काष्ठा kvm_vcpu **)dev_id;
-	काष्ठा arch_समयr_context *ctx;
-	काष्ठा समयr_map map;
+static irqreturn_t kvm_arch_timer_handler(int irq, void *dev_id)
+{
+	struct kvm_vcpu *vcpu = *(struct kvm_vcpu **)dev_id;
+	struct arch_timer_context *ctx;
+	struct timer_map map;
 
 	/*
-	 * We may see a समयr पूर्णांकerrupt after vcpu_put() has been called which
-	 * sets the CPU's vcpu poपूर्णांकer to शून्य, because even though the समयr
-	 * has been disabled in समयr_save_state(), the hardware पूर्णांकerrupt
-	 * संकेत may not have been retired from the पूर्णांकerrupt controller yet.
+	 * We may see a timer interrupt after vcpu_put() has been called which
+	 * sets the CPU's vcpu pointer to NULL, because even though the timer
+	 * has been disabled in timer_save_state(), the hardware interrupt
+	 * signal may not have been retired from the interrupt controller yet.
 	 */
-	अगर (!vcpu)
-		वापस IRQ_HANDLED;
+	if (!vcpu)
+		return IRQ_HANDLED;
 
-	get_समयr_map(vcpu, &map);
+	get_timer_map(vcpu, &map);
 
-	अगर (irq == host_vसमयr_irq)
-		ctx = map.direct_vसमयr;
-	अन्यथा
-		ctx = map.direct_pसमयr;
+	if (irq == host_vtimer_irq)
+		ctx = map.direct_vtimer;
+	else
+		ctx = map.direct_ptimer;
 
-	अगर (kvm_समयr_should_fire(ctx))
-		kvm_समयr_update_irq(vcpu, true, ctx);
+	if (kvm_timer_should_fire(ctx))
+		kvm_timer_update_irq(vcpu, true, ctx);
 
-	अगर (userspace_irqchip(vcpu->kvm) &&
-	    !अटल_branch_unlikely(&has_gic_active_state))
-		disable_percpu_irq(host_vसमयr_irq);
+	if (userspace_irqchip(vcpu->kvm) &&
+	    !static_branch_unlikely(&has_gic_active_state))
+		disable_percpu_irq(host_vtimer_irq);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल u64 kvm_समयr_compute_delta(काष्ठा arch_समयr_context *समयr_ctx)
-अणु
+static u64 kvm_timer_compute_delta(struct arch_timer_context *timer_ctx)
+{
 	u64 cval, now;
 
-	cval = समयr_get_cval(समयr_ctx);
-	now = kvm_phys_समयr_पढ़ो() - समयr_get_offset(समयr_ctx);
+	cval = timer_get_cval(timer_ctx);
+	now = kvm_phys_timer_read() - timer_get_offset(timer_ctx);
 
-	अगर (now < cval) अणु
+	if (now < cval) {
 		u64 ns;
 
-		ns = cyclecounter_cyc2ns(समयcounter->cc,
+		ns = cyclecounter_cyc2ns(timecounter->cc,
 					 cval - now,
-					 समयcounter->mask,
-					 &समयcounter->frac);
-		वापस ns;
-	पूर्ण
+					 timecounter->mask,
+					 &timecounter->frac);
+		return ns;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool kvm_समयr_irq_can_fire(काष्ठा arch_समयr_context *समयr_ctx)
-अणु
-	WARN_ON(समयr_ctx && समयr_ctx->loaded);
-	वापस समयr_ctx &&
-		((समयr_get_ctl(समयr_ctx) &
+static bool kvm_timer_irq_can_fire(struct arch_timer_context *timer_ctx)
+{
+	WARN_ON(timer_ctx && timer_ctx->loaded);
+	return timer_ctx &&
+		((timer_get_ctl(timer_ctx) &
 		  (ARCH_TIMER_CTRL_IT_MASK | ARCH_TIMER_CTRL_ENABLE)) == ARCH_TIMER_CTRL_ENABLE);
-पूर्ण
+}
 
 /*
- * Returns the earliest expiration समय in ns among guest समयrs.
- * Note that it will वापस 0 अगर none of समयrs can fire.
+ * Returns the earliest expiration time in ns among guest timers.
+ * Note that it will return 0 if none of timers can fire.
  */
-अटल u64 kvm_समयr_earliest_exp(काष्ठा kvm_vcpu *vcpu)
-अणु
-	u64 min_delta = ULदीर्घ_उच्च;
-	पूर्णांक i;
+static u64 kvm_timer_earliest_exp(struct kvm_vcpu *vcpu)
+{
+	u64 min_delta = ULLONG_MAX;
+	int i;
 
-	क्रम (i = 0; i < NR_KVM_TIMERS; i++) अणु
-		काष्ठा arch_समयr_context *ctx = &vcpu->arch.समयr_cpu.समयrs[i];
+	for (i = 0; i < NR_KVM_TIMERS; i++) {
+		struct arch_timer_context *ctx = &vcpu->arch.timer_cpu.timers[i];
 
 		WARN(ctx->loaded, "timer %d loaded\n", i);
-		अगर (kvm_समयr_irq_can_fire(ctx))
-			min_delta = min(min_delta, kvm_समयr_compute_delta(ctx));
-	पूर्ण
+		if (kvm_timer_irq_can_fire(ctx))
+			min_delta = min(min_delta, kvm_timer_compute_delta(ctx));
+	}
 
-	/* If none of समयrs can fire, then वापस 0 */
-	अगर (min_delta == ULदीर्घ_उच्च)
-		वापस 0;
+	/* If none of timers can fire, then return 0 */
+	if (min_delta == ULLONG_MAX)
+		return 0;
 
-	वापस min_delta;
-पूर्ण
+	return min_delta;
+}
 
-अटल क्रमागत hrसमयr_restart kvm_bg_समयr_expire(काष्ठा hrसमयr *hrt)
-अणु
-	काष्ठा arch_समयr_cpu *समयr;
-	काष्ठा kvm_vcpu *vcpu;
+static enum hrtimer_restart kvm_bg_timer_expire(struct hrtimer *hrt)
+{
+	struct arch_timer_cpu *timer;
+	struct kvm_vcpu *vcpu;
 	u64 ns;
 
-	समयr = container_of(hrt, काष्ठा arch_समयr_cpu, bg_समयr);
-	vcpu = container_of(समयr, काष्ठा kvm_vcpu, arch.समयr_cpu);
+	timer = container_of(hrt, struct arch_timer_cpu, bg_timer);
+	vcpu = container_of(timer, struct kvm_vcpu, arch.timer_cpu);
 
 	/*
-	 * Check that the समयr has really expired from the guest's
-	 * PoV (NTP on the host may have क्रमced it to expire
-	 * early). If we should have slept दीर्घer, restart it.
+	 * Check that the timer has really expired from the guest's
+	 * PoV (NTP on the host may have forced it to expire
+	 * early). If we should have slept longer, restart it.
 	 */
-	ns = kvm_समयr_earliest_exp(vcpu);
-	अगर (unlikely(ns)) अणु
-		hrसमयr_क्रमward_now(hrt, ns_to_kसमय(ns));
-		वापस HRTIMER_RESTART;
-	पूर्ण
+	ns = kvm_timer_earliest_exp(vcpu);
+	if (unlikely(ns)) {
+		hrtimer_forward_now(hrt, ns_to_ktime(ns));
+		return HRTIMER_RESTART;
+	}
 
 	kvm_vcpu_wake_up(vcpu);
-	वापस HRTIMER_NORESTART;
-पूर्ण
+	return HRTIMER_NORESTART;
+}
 
-अटल क्रमागत hrसमयr_restart kvm_hrसमयr_expire(काष्ठा hrसमयr *hrt)
-अणु
-	काष्ठा arch_समयr_context *ctx;
-	काष्ठा kvm_vcpu *vcpu;
+static enum hrtimer_restart kvm_hrtimer_expire(struct hrtimer *hrt)
+{
+	struct arch_timer_context *ctx;
+	struct kvm_vcpu *vcpu;
 	u64 ns;
 
-	ctx = container_of(hrt, काष्ठा arch_समयr_context, hrसमयr);
+	ctx = container_of(hrt, struct arch_timer_context, hrtimer);
 	vcpu = ctx->vcpu;
 
-	trace_kvm_समयr_hrसमयr_expire(ctx);
+	trace_kvm_timer_hrtimer_expire(ctx);
 
 	/*
-	 * Check that the समयr has really expired from the guest's
-	 * PoV (NTP on the host may have क्रमced it to expire
-	 * early). If not पढ़ोy, schedule क्रम a later समय.
+	 * Check that the timer has really expired from the guest's
+	 * PoV (NTP on the host may have forced it to expire
+	 * early). If not ready, schedule for a later time.
 	 */
-	ns = kvm_समयr_compute_delta(ctx);
-	अगर (unlikely(ns)) अणु
-		hrसमयr_क्रमward_now(hrt, ns_to_kसमय(ns));
-		वापस HRTIMER_RESTART;
-	पूर्ण
+	ns = kvm_timer_compute_delta(ctx);
+	if (unlikely(ns)) {
+		hrtimer_forward_now(hrt, ns_to_ktime(ns));
+		return HRTIMER_RESTART;
+	}
 
-	kvm_समयr_update_irq(vcpu, true, ctx);
-	वापस HRTIMER_NORESTART;
-पूर्ण
+	kvm_timer_update_irq(vcpu, true, ctx);
+	return HRTIMER_NORESTART;
+}
 
-अटल bool kvm_समयr_should_fire(काष्ठा arch_समयr_context *समयr_ctx)
-अणु
-	क्रमागत kvm_arch_समयrs index;
+static bool kvm_timer_should_fire(struct arch_timer_context *timer_ctx)
+{
+	enum kvm_arch_timers index;
 	u64 cval, now;
 
-	अगर (!समयr_ctx)
-		वापस false;
+	if (!timer_ctx)
+		return false;
 
-	index = arch_समयr_ctx_index(समयr_ctx);
+	index = arch_timer_ctx_index(timer_ctx);
 
-	अगर (समयr_ctx->loaded) अणु
+	if (timer_ctx->loaded) {
 		u32 cnt_ctl = 0;
 
-		चयन (index) अणु
-		हाल TIMER_VTIMER:
-			cnt_ctl = पढ़ो_sysreg_el0(SYS_CNTV_CTL);
-			अवरोध;
-		हाल TIMER_PTIMER:
-			cnt_ctl = पढ़ो_sysreg_el0(SYS_CNTP_CTL);
-			अवरोध;
-		हाल NR_KVM_TIMERS:
+		switch (index) {
+		case TIMER_VTIMER:
+			cnt_ctl = read_sysreg_el0(SYS_CNTV_CTL);
+			break;
+		case TIMER_PTIMER:
+			cnt_ctl = read_sysreg_el0(SYS_CNTP_CTL);
+			break;
+		case NR_KVM_TIMERS:
 			/* GCC is braindead */
 			cnt_ctl = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		वापस  (cnt_ctl & ARCH_TIMER_CTRL_ENABLE) &&
+		return  (cnt_ctl & ARCH_TIMER_CTRL_ENABLE) &&
 		        (cnt_ctl & ARCH_TIMER_CTRL_IT_STAT) &&
 		       !(cnt_ctl & ARCH_TIMER_CTRL_IT_MASK);
-	पूर्ण
+	}
 
-	अगर (!kvm_समयr_irq_can_fire(समयr_ctx))
-		वापस false;
+	if (!kvm_timer_irq_can_fire(timer_ctx))
+		return false;
 
-	cval = समयr_get_cval(समयr_ctx);
-	now = kvm_phys_समयr_पढ़ो() - समयr_get_offset(समयr_ctx);
+	cval = timer_get_cval(timer_ctx);
+	now = kvm_phys_timer_read() - timer_get_offset(timer_ctx);
 
-	वापस cval <= now;
-पूर्ण
+	return cval <= now;
+}
 
-bool kvm_समयr_is_pending(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा समयr_map map;
+bool kvm_timer_is_pending(struct kvm_vcpu *vcpu)
+{
+	struct timer_map map;
 
-	get_समयr_map(vcpu, &map);
+	get_timer_map(vcpu, &map);
 
-	वापस kvm_समयr_should_fire(map.direct_vसमयr) ||
-	       kvm_समयr_should_fire(map.direct_pसमयr) ||
-	       kvm_समयr_should_fire(map.emul_pसमयr);
-पूर्ण
+	return kvm_timer_should_fire(map.direct_vtimer) ||
+	       kvm_timer_should_fire(map.direct_ptimer) ||
+	       kvm_timer_should_fire(map.emul_ptimer);
+}
 
 /*
- * Reflect the समयr output level पूर्णांकo the kvm_run काष्ठाure
+ * Reflect the timer output level into the kvm_run structure
  */
-व्योम kvm_समयr_update_run(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा arch_समयr_context *vसमयr = vcpu_vसमयr(vcpu);
-	काष्ठा arch_समयr_context *pसमयr = vcpu_pसमयr(vcpu);
-	काष्ठा kvm_sync_regs *regs = &vcpu->run->s.regs;
+void kvm_timer_update_run(struct kvm_vcpu *vcpu)
+{
+	struct arch_timer_context *vtimer = vcpu_vtimer(vcpu);
+	struct arch_timer_context *ptimer = vcpu_ptimer(vcpu);
+	struct kvm_sync_regs *regs = &vcpu->run->s.regs;
 
-	/* Populate the device biपंचांगap with the समयr states */
+	/* Populate the device bitmap with the timer states */
 	regs->device_irq_level &= ~(KVM_ARM_DEV_EL1_VTIMER |
 				    KVM_ARM_DEV_EL1_PTIMER);
-	अगर (kvm_समयr_should_fire(vसमयr))
+	if (kvm_timer_should_fire(vtimer))
 		regs->device_irq_level |= KVM_ARM_DEV_EL1_VTIMER;
-	अगर (kvm_समयr_should_fire(pसमयr))
+	if (kvm_timer_should_fire(ptimer))
 		regs->device_irq_level |= KVM_ARM_DEV_EL1_PTIMER;
-पूर्ण
+}
 
-अटल व्योम kvm_समयr_update_irq(काष्ठा kvm_vcpu *vcpu, bool new_level,
-				 काष्ठा arch_समयr_context *समयr_ctx)
-अणु
-	पूर्णांक ret;
+static void kvm_timer_update_irq(struct kvm_vcpu *vcpu, bool new_level,
+				 struct arch_timer_context *timer_ctx)
+{
+	int ret;
 
-	समयr_ctx->irq.level = new_level;
-	trace_kvm_समयr_update_irq(vcpu->vcpu_id, समयr_ctx->irq.irq,
-				   समयr_ctx->irq.level);
+	timer_ctx->irq.level = new_level;
+	trace_kvm_timer_update_irq(vcpu->vcpu_id, timer_ctx->irq.irq,
+				   timer_ctx->irq.level);
 
-	अगर (!userspace_irqchip(vcpu->kvm)) अणु
+	if (!userspace_irqchip(vcpu->kvm)) {
 		ret = kvm_vgic_inject_irq(vcpu->kvm, vcpu->vcpu_id,
-					  समयr_ctx->irq.irq,
-					  समयr_ctx->irq.level,
-					  समयr_ctx);
+					  timer_ctx->irq.irq,
+					  timer_ctx->irq.level,
+					  timer_ctx);
 		WARN_ON(ret);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Only called क्रम a fully emulated समयr */
-अटल व्योम समयr_emulate(काष्ठा arch_समयr_context *ctx)
-अणु
-	bool should_fire = kvm_समयr_should_fire(ctx);
+/* Only called for a fully emulated timer */
+static void timer_emulate(struct arch_timer_context *ctx)
+{
+	bool should_fire = kvm_timer_should_fire(ctx);
 
-	trace_kvm_समयr_emulate(ctx, should_fire);
+	trace_kvm_timer_emulate(ctx, should_fire);
 
-	अगर (should_fire != ctx->irq.level) अणु
-		kvm_समयr_update_irq(ctx->vcpu, should_fire, ctx);
-		वापस;
-	पूर्ण
+	if (should_fire != ctx->irq.level) {
+		kvm_timer_update_irq(ctx->vcpu, should_fire, ctx);
+		return;
+	}
 
 	/*
-	 * If the समयr can fire now, we करोn't need to have a soft समयr
-	 * scheduled क्रम the future.  If the समयr cannot fire at all,
-	 * then we also करोn't need a soft समयr.
+	 * If the timer can fire now, we don't need to have a soft timer
+	 * scheduled for the future.  If the timer cannot fire at all,
+	 * then we also don't need a soft timer.
 	 */
-	अगर (!kvm_समयr_irq_can_fire(ctx)) अणु
-		soft_समयr_cancel(&ctx->hrसमयr);
-		वापस;
-	पूर्ण
+	if (!kvm_timer_irq_can_fire(ctx)) {
+		soft_timer_cancel(&ctx->hrtimer);
+		return;
+	}
 
-	soft_समयr_start(&ctx->hrसमयr, kvm_समयr_compute_delta(ctx));
-पूर्ण
+	soft_timer_start(&ctx->hrtimer, kvm_timer_compute_delta(ctx));
+}
 
-अटल व्योम समयr_save_state(काष्ठा arch_समयr_context *ctx)
-अणु
-	काष्ठा arch_समयr_cpu *समयr = vcpu_समयr(ctx->vcpu);
-	क्रमागत kvm_arch_समयrs index = arch_समयr_ctx_index(ctx);
-	अचिन्हित दीर्घ flags;
+static void timer_save_state(struct arch_timer_context *ctx)
+{
+	struct arch_timer_cpu *timer = vcpu_timer(ctx->vcpu);
+	enum kvm_arch_timers index = arch_timer_ctx_index(ctx);
+	unsigned long flags;
 
-	अगर (!समयr->enabled)
-		वापस;
+	if (!timer->enabled)
+		return;
 
 	local_irq_save(flags);
 
-	अगर (!ctx->loaded)
-		जाओ out;
+	if (!ctx->loaded)
+		goto out;
 
-	चयन (index) अणु
-	हाल TIMER_VTIMER:
-		समयr_set_ctl(ctx, पढ़ो_sysreg_el0(SYS_CNTV_CTL));
-		समयr_set_cval(ctx, पढ़ो_sysreg_el0(SYS_CNTV_CVAL));
+	switch (index) {
+	case TIMER_VTIMER:
+		timer_set_ctl(ctx, read_sysreg_el0(SYS_CNTV_CTL));
+		timer_set_cval(ctx, read_sysreg_el0(SYS_CNTV_CVAL));
 
-		/* Disable the समयr */
-		ग_लिखो_sysreg_el0(0, SYS_CNTV_CTL);
+		/* Disable the timer */
+		write_sysreg_el0(0, SYS_CNTV_CTL);
 		isb();
 
-		अवरोध;
-	हाल TIMER_PTIMER:
-		समयr_set_ctl(ctx, पढ़ो_sysreg_el0(SYS_CNTP_CTL));
-		समयr_set_cval(ctx, पढ़ो_sysreg_el0(SYS_CNTP_CVAL));
+		break;
+	case TIMER_PTIMER:
+		timer_set_ctl(ctx, read_sysreg_el0(SYS_CNTP_CTL));
+		timer_set_cval(ctx, read_sysreg_el0(SYS_CNTP_CVAL));
 
-		/* Disable the समयr */
-		ग_लिखो_sysreg_el0(0, SYS_CNTP_CTL);
+		/* Disable the timer */
+		write_sysreg_el0(0, SYS_CNTP_CTL);
 		isb();
 
-		अवरोध;
-	हाल NR_KVM_TIMERS:
+		break;
+	case NR_KVM_TIMERS:
 		BUG();
-	पूर्ण
+	}
 
-	trace_kvm_समयr_save_state(ctx);
+	trace_kvm_timer_save_state(ctx);
 
 	ctx->loaded = false;
 out:
 	local_irq_restore(flags);
-पूर्ण
+}
 
 /*
- * Schedule the background समयr beक्रमe calling kvm_vcpu_block, so that this
- * thपढ़ो is हटाओd from its रुकोqueue and made runnable when there's a समयr
- * पूर्णांकerrupt to handle.
+ * Schedule the background timer before calling kvm_vcpu_block, so that this
+ * thread is removed from its waitqueue and made runnable when there's a timer
+ * interrupt to handle.
  */
-अटल व्योम kvm_समयr_blocking(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा arch_समयr_cpu *समयr = vcpu_समयr(vcpu);
-	काष्ठा समयr_map map;
+static void kvm_timer_blocking(struct kvm_vcpu *vcpu)
+{
+	struct arch_timer_cpu *timer = vcpu_timer(vcpu);
+	struct timer_map map;
 
-	get_समयr_map(vcpu, &map);
-
-	/*
-	 * If no समयrs are capable of raising पूर्णांकerrupts (disabled or
-	 * masked), then there's no more work क्रम us to करो.
-	 */
-	अगर (!kvm_समयr_irq_can_fire(map.direct_vसमयr) &&
-	    !kvm_समयr_irq_can_fire(map.direct_pसमयr) &&
-	    !kvm_समयr_irq_can_fire(map.emul_pसमयr))
-		वापस;
+	get_timer_map(vcpu, &map);
 
 	/*
-	 * At least one guest समय will expire. Schedule a background समयr.
-	 * Set the earliest expiration समय among the guest समयrs.
+	 * If no timers are capable of raising interrupts (disabled or
+	 * masked), then there's no more work for us to do.
 	 */
-	soft_समयr_start(&समयr->bg_समयr, kvm_समयr_earliest_exp(vcpu));
-पूर्ण
+	if (!kvm_timer_irq_can_fire(map.direct_vtimer) &&
+	    !kvm_timer_irq_can_fire(map.direct_ptimer) &&
+	    !kvm_timer_irq_can_fire(map.emul_ptimer))
+		return;
 
-अटल व्योम kvm_समयr_unblocking(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा arch_समयr_cpu *समयr = vcpu_समयr(vcpu);
+	/*
+	 * At least one guest time will expire. Schedule a background timer.
+	 * Set the earliest expiration time among the guest timers.
+	 */
+	soft_timer_start(&timer->bg_timer, kvm_timer_earliest_exp(vcpu));
+}
 
-	soft_समयr_cancel(&समयr->bg_समयr);
-पूर्ण
+static void kvm_timer_unblocking(struct kvm_vcpu *vcpu)
+{
+	struct arch_timer_cpu *timer = vcpu_timer(vcpu);
 
-अटल व्योम समयr_restore_state(काष्ठा arch_समयr_context *ctx)
-अणु
-	काष्ठा arch_समयr_cpu *समयr = vcpu_समयr(ctx->vcpu);
-	क्रमागत kvm_arch_समयrs index = arch_समयr_ctx_index(ctx);
-	अचिन्हित दीर्घ flags;
+	soft_timer_cancel(&timer->bg_timer);
+}
 
-	अगर (!समयr->enabled)
-		वापस;
+static void timer_restore_state(struct arch_timer_context *ctx)
+{
+	struct arch_timer_cpu *timer = vcpu_timer(ctx->vcpu);
+	enum kvm_arch_timers index = arch_timer_ctx_index(ctx);
+	unsigned long flags;
+
+	if (!timer->enabled)
+		return;
 
 	local_irq_save(flags);
 
-	अगर (ctx->loaded)
-		जाओ out;
+	if (ctx->loaded)
+		goto out;
 
-	चयन (index) अणु
-	हाल TIMER_VTIMER:
-		ग_लिखो_sysreg_el0(समयr_get_cval(ctx), SYS_CNTV_CVAL);
+	switch (index) {
+	case TIMER_VTIMER:
+		write_sysreg_el0(timer_get_cval(ctx), SYS_CNTV_CVAL);
 		isb();
-		ग_लिखो_sysreg_el0(समयr_get_ctl(ctx), SYS_CNTV_CTL);
-		अवरोध;
-	हाल TIMER_PTIMER:
-		ग_लिखो_sysreg_el0(समयr_get_cval(ctx), SYS_CNTP_CVAL);
+		write_sysreg_el0(timer_get_ctl(ctx), SYS_CNTV_CTL);
+		break;
+	case TIMER_PTIMER:
+		write_sysreg_el0(timer_get_cval(ctx), SYS_CNTP_CVAL);
 		isb();
-		ग_लिखो_sysreg_el0(समयr_get_ctl(ctx), SYS_CNTP_CTL);
-		अवरोध;
-	हाल NR_KVM_TIMERS:
+		write_sysreg_el0(timer_get_ctl(ctx), SYS_CNTP_CTL);
+		break;
+	case NR_KVM_TIMERS:
 		BUG();
-	पूर्ण
+	}
 
-	trace_kvm_समयr_restore_state(ctx);
+	trace_kvm_timer_restore_state(ctx);
 
 	ctx->loaded = true;
 out:
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल व्योम set_cntvoff(u64 cntvoff)
-अणु
-	kvm_call_hyp(__kvm_समयr_set_cntvoff, cntvoff);
-पूर्ण
+static void set_cntvoff(u64 cntvoff)
+{
+	kvm_call_hyp(__kvm_timer_set_cntvoff, cntvoff);
+}
 
-अटल अंतरभूत व्योम set_समयr_irq_phys_active(काष्ठा arch_समयr_context *ctx, bool active)
-अणु
-	पूर्णांक r;
-	r = irq_set_irqchip_state(ctx->host_समयr_irq, IRQCHIP_STATE_ACTIVE, active);
+static inline void set_timer_irq_phys_active(struct arch_timer_context *ctx, bool active)
+{
+	int r;
+	r = irq_set_irqchip_state(ctx->host_timer_irq, IRQCHIP_STATE_ACTIVE, active);
 	WARN_ON(r);
-पूर्ण
+}
 
-अटल व्योम kvm_समयr_vcpu_load_gic(काष्ठा arch_समयr_context *ctx)
-अणु
-	काष्ठा kvm_vcpu *vcpu = ctx->vcpu;
+static void kvm_timer_vcpu_load_gic(struct arch_timer_context *ctx)
+{
+	struct kvm_vcpu *vcpu = ctx->vcpu;
 	bool phys_active = false;
 
 	/*
-	 * Update the समयr output so that it is likely to match the
-	 * state we're about to restore. If the समयr expires between
-	 * this poपूर्णांक and the रेजिस्टर restoration, we'll take the
-	 * पूर्णांकerrupt anyway.
+	 * Update the timer output so that it is likely to match the
+	 * state we're about to restore. If the timer expires between
+	 * this point and the register restoration, we'll take the
+	 * interrupt anyway.
 	 */
-	kvm_समयr_update_irq(ctx->vcpu, kvm_समयr_should_fire(ctx), ctx);
+	kvm_timer_update_irq(ctx->vcpu, kvm_timer_should_fire(ctx), ctx);
 
-	अगर (irqchip_in_kernel(vcpu->kvm))
+	if (irqchip_in_kernel(vcpu->kvm))
 		phys_active = kvm_vgic_map_is_active(vcpu, ctx->irq.irq);
 
 	phys_active |= ctx->irq.level;
 
-	set_समयr_irq_phys_active(ctx, phys_active);
-पूर्ण
+	set_timer_irq_phys_active(ctx, phys_active);
+}
 
-अटल व्योम kvm_समयr_vcpu_load_nogic(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा arch_समयr_context *vसमयr = vcpu_vसमयr(vcpu);
-
-	/*
-	 * Update the समयr output so that it is likely to match the
-	 * state we're about to restore. If the समयr expires between
-	 * this poपूर्णांक and the रेजिस्टर restoration, we'll take the
-	 * पूर्णांकerrupt anyway.
-	 */
-	kvm_समयr_update_irq(vcpu, kvm_समयr_should_fire(vसमयr), vसमयr);
+static void kvm_timer_vcpu_load_nogic(struct kvm_vcpu *vcpu)
+{
+	struct arch_timer_context *vtimer = vcpu_vtimer(vcpu);
 
 	/*
-	 * When using a userspace irqchip with the architected समयrs and a
-	 * host पूर्णांकerrupt controller that करोesn't support an active state, we
-	 * must still prevent continuously निकासing from the guest, and
-	 * thereक्रमe mask the physical पूर्णांकerrupt by disabling it on the host
-	 * पूर्णांकerrupt controller when the भव level is high, such that the
-	 * guest can make क्रमward progress.  Once we detect the output level
-	 * being de-निश्चितed, we unmask the पूर्णांकerrupt again so that we निकास
-	 * from the guest when the समयr fires.
+	 * Update the timer output so that it is likely to match the
+	 * state we're about to restore. If the timer expires between
+	 * this point and the register restoration, we'll take the
+	 * interrupt anyway.
 	 */
-	अगर (vसमयr->irq.level)
-		disable_percpu_irq(host_vसमयr_irq);
-	अन्यथा
-		enable_percpu_irq(host_vसमयr_irq, host_vसमयr_irq_flags);
-पूर्ण
+	kvm_timer_update_irq(vcpu, kvm_timer_should_fire(vtimer), vtimer);
 
-व्योम kvm_समयr_vcpu_load(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा arch_समयr_cpu *समयr = vcpu_समयr(vcpu);
-	काष्ठा समयr_map map;
+	/*
+	 * When using a userspace irqchip with the architected timers and a
+	 * host interrupt controller that doesn't support an active state, we
+	 * must still prevent continuously exiting from the guest, and
+	 * therefore mask the physical interrupt by disabling it on the host
+	 * interrupt controller when the virtual level is high, such that the
+	 * guest can make forward progress.  Once we detect the output level
+	 * being de-asserted, we unmask the interrupt again so that we exit
+	 * from the guest when the timer fires.
+	 */
+	if (vtimer->irq.level)
+		disable_percpu_irq(host_vtimer_irq);
+	else
+		enable_percpu_irq(host_vtimer_irq, host_vtimer_irq_flags);
+}
 
-	अगर (unlikely(!समयr->enabled))
-		वापस;
+void kvm_timer_vcpu_load(struct kvm_vcpu *vcpu)
+{
+	struct arch_timer_cpu *timer = vcpu_timer(vcpu);
+	struct timer_map map;
 
-	get_समयr_map(vcpu, &map);
+	if (unlikely(!timer->enabled))
+		return;
 
-	अगर (अटल_branch_likely(&has_gic_active_state)) अणु
-		kvm_समयr_vcpu_load_gic(map.direct_vसमयr);
-		अगर (map.direct_pसमयr)
-			kvm_समयr_vcpu_load_gic(map.direct_pसमयr);
-	पूर्ण अन्यथा अणु
-		kvm_समयr_vcpu_load_nogic(vcpu);
-	पूर्ण
+	get_timer_map(vcpu, &map);
 
-	set_cntvoff(समयr_get_offset(map.direct_vसमयr));
+	if (static_branch_likely(&has_gic_active_state)) {
+		kvm_timer_vcpu_load_gic(map.direct_vtimer);
+		if (map.direct_ptimer)
+			kvm_timer_vcpu_load_gic(map.direct_ptimer);
+	} else {
+		kvm_timer_vcpu_load_nogic(vcpu);
+	}
 
-	kvm_समयr_unblocking(vcpu);
+	set_cntvoff(timer_get_offset(map.direct_vtimer));
 
-	समयr_restore_state(map.direct_vसमयr);
-	अगर (map.direct_pसमयr)
-		समयr_restore_state(map.direct_pसमयr);
+	kvm_timer_unblocking(vcpu);
 
-	अगर (map.emul_pसमयr)
-		समयr_emulate(map.emul_pसमयr);
-पूर्ण
+	timer_restore_state(map.direct_vtimer);
+	if (map.direct_ptimer)
+		timer_restore_state(map.direct_ptimer);
 
-bool kvm_समयr_should_notअगरy_user(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा arch_समयr_context *vसमयr = vcpu_vसमयr(vcpu);
-	काष्ठा arch_समयr_context *pसमयr = vcpu_pसमयr(vcpu);
-	काष्ठा kvm_sync_regs *sregs = &vcpu->run->s.regs;
+	if (map.emul_ptimer)
+		timer_emulate(map.emul_ptimer);
+}
+
+bool kvm_timer_should_notify_user(struct kvm_vcpu *vcpu)
+{
+	struct arch_timer_context *vtimer = vcpu_vtimer(vcpu);
+	struct arch_timer_context *ptimer = vcpu_ptimer(vcpu);
+	struct kvm_sync_regs *sregs = &vcpu->run->s.regs;
 	bool vlevel, plevel;
 
-	अगर (likely(irqchip_in_kernel(vcpu->kvm)))
-		वापस false;
+	if (likely(irqchip_in_kernel(vcpu->kvm)))
+		return false;
 
 	vlevel = sregs->device_irq_level & KVM_ARM_DEV_EL1_VTIMER;
 	plevel = sregs->device_irq_level & KVM_ARM_DEV_EL1_PTIMER;
 
-	वापस kvm_समयr_should_fire(vसमयr) != vlevel ||
-	       kvm_समयr_should_fire(pसमयr) != plevel;
-पूर्ण
+	return kvm_timer_should_fire(vtimer) != vlevel ||
+	       kvm_timer_should_fire(ptimer) != plevel;
+}
 
-व्योम kvm_समयr_vcpu_put(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा arch_समयr_cpu *समयr = vcpu_समयr(vcpu);
-	काष्ठा समयr_map map;
-	काष्ठा rcuरुको *रुको = kvm_arch_vcpu_get_रुको(vcpu);
+void kvm_timer_vcpu_put(struct kvm_vcpu *vcpu)
+{
+	struct arch_timer_cpu *timer = vcpu_timer(vcpu);
+	struct timer_map map;
+	struct rcuwait *wait = kvm_arch_vcpu_get_wait(vcpu);
 
-	अगर (unlikely(!समयr->enabled))
-		वापस;
+	if (unlikely(!timer->enabled))
+		return;
 
-	get_समयr_map(vcpu, &map);
+	get_timer_map(vcpu, &map);
 
-	समयr_save_state(map.direct_vसमयr);
-	अगर (map.direct_pसमयr)
-		समयr_save_state(map.direct_pसमयr);
+	timer_save_state(map.direct_vtimer);
+	if (map.direct_ptimer)
+		timer_save_state(map.direct_ptimer);
 
 	/*
-	 * Cancel soft समयr emulation, because the only हाल where we
+	 * Cancel soft timer emulation, because the only case where we
 	 * need it after a vcpu_put is in the context of a sleeping VCPU, and
-	 * in that हाल we alपढ़ोy factor in the deadline क्रम the physical
-	 * समयr when scheduling the bg_समयr.
+	 * in that case we already factor in the deadline for the physical
+	 * timer when scheduling the bg_timer.
 	 *
-	 * In any हाल, we re-schedule the hrसमयr क्रम the physical समयr when
-	 * coming back to the VCPU thपढ़ो in kvm_समयr_vcpu_load().
+	 * In any case, we re-schedule the hrtimer for the physical timer when
+	 * coming back to the VCPU thread in kvm_timer_vcpu_load().
 	 */
-	अगर (map.emul_pसमयr)
-		soft_समयr_cancel(&map.emul_pसमयr->hrसमयr);
+	if (map.emul_ptimer)
+		soft_timer_cancel(&map.emul_ptimer->hrtimer);
 
-	अगर (rcuरुको_active(रुको))
-		kvm_समयr_blocking(vcpu);
+	if (rcuwait_active(wait))
+		kvm_timer_blocking(vcpu);
 
 	/*
 	 * The kernel may decide to run userspace after calling vcpu_put, so
-	 * we reset cntvoff to 0 to ensure a consistent पढ़ो between user
-	 * accesses to the भव counter and kernel access to the physical
-	 * counter of non-VHE हाल. For VHE, the भव counter uses a fixed
-	 * भव offset of zero, so no need to zero CNTVOFF_EL2 रेजिस्टर.
+	 * we reset cntvoff to 0 to ensure a consistent read between user
+	 * accesses to the virtual counter and kernel access to the physical
+	 * counter of non-VHE case. For VHE, the virtual counter uses a fixed
+	 * virtual offset of zero, so no need to zero CNTVOFF_EL2 register.
 	 */
 	set_cntvoff(0);
-पूर्ण
+}
 
 /*
- * With a userspace irqchip we have to check अगर the guest de-निश्चितed the
- * समयr and अगर so, unmask the समयr irq संकेत on the host पूर्णांकerrupt
- * controller to ensure that we see future समयr संकेतs.
+ * With a userspace irqchip we have to check if the guest de-asserted the
+ * timer and if so, unmask the timer irq signal on the host interrupt
+ * controller to ensure that we see future timer signals.
  */
-अटल व्योम unmask_vसमयr_irq_user(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा arch_समयr_context *vसमयr = vcpu_vसमयr(vcpu);
+static void unmask_vtimer_irq_user(struct kvm_vcpu *vcpu)
+{
+	struct arch_timer_context *vtimer = vcpu_vtimer(vcpu);
 
-	अगर (!kvm_समयr_should_fire(vसमयr)) अणु
-		kvm_समयr_update_irq(vcpu, false, vसमयr);
-		अगर (अटल_branch_likely(&has_gic_active_state))
-			set_समयr_irq_phys_active(vसमयr, false);
-		अन्यथा
-			enable_percpu_irq(host_vसमयr_irq, host_vसमयr_irq_flags);
-	पूर्ण
-पूर्ण
+	if (!kvm_timer_should_fire(vtimer)) {
+		kvm_timer_update_irq(vcpu, false, vtimer);
+		if (static_branch_likely(&has_gic_active_state))
+			set_timer_irq_phys_active(vtimer, false);
+		else
+			enable_percpu_irq(host_vtimer_irq, host_vtimer_irq_flags);
+	}
+}
 
-व्योम kvm_समयr_sync_user(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा arch_समयr_cpu *समयr = vcpu_समयr(vcpu);
+void kvm_timer_sync_user(struct kvm_vcpu *vcpu)
+{
+	struct arch_timer_cpu *timer = vcpu_timer(vcpu);
 
-	अगर (unlikely(!समयr->enabled))
-		वापस;
+	if (unlikely(!timer->enabled))
+		return;
 
-	अगर (unlikely(!irqchip_in_kernel(vcpu->kvm)))
-		unmask_vसमयr_irq_user(vcpu);
-पूर्ण
+	if (unlikely(!irqchip_in_kernel(vcpu->kvm)))
+		unmask_vtimer_irq_user(vcpu);
+}
 
-पूर्णांक kvm_समयr_vcpu_reset(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा arch_समयr_cpu *समयr = vcpu_समयr(vcpu);
-	काष्ठा समयr_map map;
+int kvm_timer_vcpu_reset(struct kvm_vcpu *vcpu)
+{
+	struct arch_timer_cpu *timer = vcpu_timer(vcpu);
+	struct timer_map map;
 
-	get_समयr_map(vcpu, &map);
+	get_timer_map(vcpu, &map);
 
 	/*
-	 * The bits in CNTV_CTL are architecturally reset to UNKNOWN क्रम ARMv8
-	 * and to 0 क्रम ARMv7.  We provide an implementation that always
-	 * resets the समयr to be disabled and unmasked and is compliant with
+	 * The bits in CNTV_CTL are architecturally reset to UNKNOWN for ARMv8
+	 * and to 0 for ARMv7.  We provide an implementation that always
+	 * resets the timer to be disabled and unmasked and is compliant with
 	 * the ARMv7 architecture.
 	 */
-	समयr_set_ctl(vcpu_vसमयr(vcpu), 0);
-	समयr_set_ctl(vcpu_pसमयr(vcpu), 0);
+	timer_set_ctl(vcpu_vtimer(vcpu), 0);
+	timer_set_ctl(vcpu_ptimer(vcpu), 0);
 
-	अगर (समयr->enabled) अणु
-		kvm_समयr_update_irq(vcpu, false, vcpu_vसमयr(vcpu));
-		kvm_समयr_update_irq(vcpu, false, vcpu_pसमयr(vcpu));
+	if (timer->enabled) {
+		kvm_timer_update_irq(vcpu, false, vcpu_vtimer(vcpu));
+		kvm_timer_update_irq(vcpu, false, vcpu_ptimer(vcpu));
 
-		अगर (irqchip_in_kernel(vcpu->kvm)) अणु
-			kvm_vgic_reset_mapped_irq(vcpu, map.direct_vसमयr->irq.irq);
-			अगर (map.direct_pसमयr)
-				kvm_vgic_reset_mapped_irq(vcpu, map.direct_pसमयr->irq.irq);
-		पूर्ण
-	पूर्ण
+		if (irqchip_in_kernel(vcpu->kvm)) {
+			kvm_vgic_reset_mapped_irq(vcpu, map.direct_vtimer->irq.irq);
+			if (map.direct_ptimer)
+				kvm_vgic_reset_mapped_irq(vcpu, map.direct_ptimer->irq.irq);
+		}
+	}
 
-	अगर (map.emul_pसमयr)
-		soft_समयr_cancel(&map.emul_pसमयr->hrसमयr);
+	if (map.emul_ptimer)
+		soft_timer_cancel(&map.emul_ptimer->hrtimer);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Make the updates of cntvoff क्रम all vसमयr contexts atomic */
-अटल व्योम update_vसमयr_cntvoff(काष्ठा kvm_vcpu *vcpu, u64 cntvoff)
-अणु
-	पूर्णांक i;
-	काष्ठा kvm *kvm = vcpu->kvm;
-	काष्ठा kvm_vcpu *पंचांगp;
+/* Make the updates of cntvoff for all vtimer contexts atomic */
+static void update_vtimer_cntvoff(struct kvm_vcpu *vcpu, u64 cntvoff)
+{
+	int i;
+	struct kvm *kvm = vcpu->kvm;
+	struct kvm_vcpu *tmp;
 
 	mutex_lock(&kvm->lock);
-	kvm_क्रम_each_vcpu(i, पंचांगp, kvm)
-		समयr_set_offset(vcpu_vसमयr(पंचांगp), cntvoff);
+	kvm_for_each_vcpu(i, tmp, kvm)
+		timer_set_offset(vcpu_vtimer(tmp), cntvoff);
 
 	/*
 	 * When called from the vcpu create path, the CPU being created is not
 	 * included in the loop above, so we just set it here as well.
 	 */
-	समयr_set_offset(vcpu_vसमयr(vcpu), cntvoff);
+	timer_set_offset(vcpu_vtimer(vcpu), cntvoff);
 	mutex_unlock(&kvm->lock);
-पूर्ण
+}
 
-व्योम kvm_समयr_vcpu_init(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा arch_समयr_cpu *समयr = vcpu_समयr(vcpu);
-	काष्ठा arch_समयr_context *vसमयr = vcpu_vसमयr(vcpu);
-	काष्ठा arch_समयr_context *pसमयr = vcpu_pसमयr(vcpu);
+void kvm_timer_vcpu_init(struct kvm_vcpu *vcpu)
+{
+	struct arch_timer_cpu *timer = vcpu_timer(vcpu);
+	struct arch_timer_context *vtimer = vcpu_vtimer(vcpu);
+	struct arch_timer_context *ptimer = vcpu_ptimer(vcpu);
 
-	vसमयr->vcpu = vcpu;
-	pसमयr->vcpu = vcpu;
+	vtimer->vcpu = vcpu;
+	ptimer->vcpu = vcpu;
 
-	/* Synchronize cntvoff across all vसमयrs of a VM. */
-	update_vसमयr_cntvoff(vcpu, kvm_phys_समयr_पढ़ो());
-	समयr_set_offset(pसमयr, 0);
+	/* Synchronize cntvoff across all vtimers of a VM. */
+	update_vtimer_cntvoff(vcpu, kvm_phys_timer_read());
+	timer_set_offset(ptimer, 0);
 
-	hrसमयr_init(&समयr->bg_समयr, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_HARD);
-	समयr->bg_समयr.function = kvm_bg_समयr_expire;
+	hrtimer_init(&timer->bg_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_HARD);
+	timer->bg_timer.function = kvm_bg_timer_expire;
 
-	hrसमयr_init(&vसमयr->hrसमयr, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_HARD);
-	hrसमयr_init(&pसमयr->hrसमयr, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_HARD);
-	vसमयr->hrसमयr.function = kvm_hrसमयr_expire;
-	pसमयr->hrसमयr.function = kvm_hrसमयr_expire;
+	hrtimer_init(&vtimer->hrtimer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_HARD);
+	hrtimer_init(&ptimer->hrtimer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_HARD);
+	vtimer->hrtimer.function = kvm_hrtimer_expire;
+	ptimer->hrtimer.function = kvm_hrtimer_expire;
 
-	vसमयr->irq.irq = शेष_vसमयr_irq.irq;
-	pसमयr->irq.irq = शेष_pसमयr_irq.irq;
+	vtimer->irq.irq = default_vtimer_irq.irq;
+	ptimer->irq.irq = default_ptimer_irq.irq;
 
-	vसमयr->host_समयr_irq = host_vसमयr_irq;
-	pसमयr->host_समयr_irq = host_pसमयr_irq;
+	vtimer->host_timer_irq = host_vtimer_irq;
+	ptimer->host_timer_irq = host_ptimer_irq;
 
-	vसमयr->host_समयr_irq_flags = host_vसमयr_irq_flags;
-	pसमयr->host_समयr_irq_flags = host_pसमयr_irq_flags;
-पूर्ण
+	vtimer->host_timer_irq_flags = host_vtimer_irq_flags;
+	ptimer->host_timer_irq_flags = host_ptimer_irq_flags;
+}
 
-अटल व्योम kvm_समयr_init_पूर्णांकerrupt(व्योम *info)
-अणु
-	enable_percpu_irq(host_vसमयr_irq, host_vसमयr_irq_flags);
-	enable_percpu_irq(host_pसमयr_irq, host_pसमयr_irq_flags);
-पूर्ण
+static void kvm_timer_init_interrupt(void *info)
+{
+	enable_percpu_irq(host_vtimer_irq, host_vtimer_irq_flags);
+	enable_percpu_irq(host_ptimer_irq, host_ptimer_irq_flags);
+}
 
-पूर्णांक kvm_arm_समयr_set_reg(काष्ठा kvm_vcpu *vcpu, u64 regid, u64 value)
-अणु
-	काष्ठा arch_समयr_context *समयr;
+int kvm_arm_timer_set_reg(struct kvm_vcpu *vcpu, u64 regid, u64 value)
+{
+	struct arch_timer_context *timer;
 
-	चयन (regid) अणु
-	हाल KVM_REG_ARM_TIMER_CTL:
-		समयr = vcpu_vसमयr(vcpu);
-		kvm_arm_समयr_ग_लिखो(vcpu, समयr, TIMER_REG_CTL, value);
-		अवरोध;
-	हाल KVM_REG_ARM_TIMER_CNT:
-		समयr = vcpu_vसमयr(vcpu);
-		update_vसमयr_cntvoff(vcpu, kvm_phys_समयr_पढ़ो() - value);
-		अवरोध;
-	हाल KVM_REG_ARM_TIMER_CVAL:
-		समयr = vcpu_vसमयr(vcpu);
-		kvm_arm_समयr_ग_लिखो(vcpu, समयr, TIMER_REG_CVAL, value);
-		अवरोध;
-	हाल KVM_REG_ARM_PTIMER_CTL:
-		समयr = vcpu_pसमयr(vcpu);
-		kvm_arm_समयr_ग_लिखो(vcpu, समयr, TIMER_REG_CTL, value);
-		अवरोध;
-	हाल KVM_REG_ARM_PTIMER_CVAL:
-		समयr = vcpu_pसमयr(vcpu);
-		kvm_arm_समयr_ग_लिखो(vcpu, समयr, TIMER_REG_CVAL, value);
-		अवरोध;
+	switch (regid) {
+	case KVM_REG_ARM_TIMER_CTL:
+		timer = vcpu_vtimer(vcpu);
+		kvm_arm_timer_write(vcpu, timer, TIMER_REG_CTL, value);
+		break;
+	case KVM_REG_ARM_TIMER_CNT:
+		timer = vcpu_vtimer(vcpu);
+		update_vtimer_cntvoff(vcpu, kvm_phys_timer_read() - value);
+		break;
+	case KVM_REG_ARM_TIMER_CVAL:
+		timer = vcpu_vtimer(vcpu);
+		kvm_arm_timer_write(vcpu, timer, TIMER_REG_CVAL, value);
+		break;
+	case KVM_REG_ARM_PTIMER_CTL:
+		timer = vcpu_ptimer(vcpu);
+		kvm_arm_timer_write(vcpu, timer, TIMER_REG_CTL, value);
+		break;
+	case KVM_REG_ARM_PTIMER_CVAL:
+		timer = vcpu_ptimer(vcpu);
+		kvm_arm_timer_write(vcpu, timer, TIMER_REG_CVAL, value);
+		break;
 
-	शेष:
-		वापस -1;
-	पूर्ण
+	default:
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u64 पढ़ो_समयr_ctl(काष्ठा arch_समयr_context *समयr)
-अणु
+static u64 read_timer_ctl(struct arch_timer_context *timer)
+{
 	/*
-	 * Set ISTATUS bit अगर it's expired.
+	 * Set ISTATUS bit if it's expired.
 	 * Note that according to ARMv8 ARM Issue A.k, ISTATUS bit is
 	 * UNKNOWN when ENABLE bit is 0, so we chose to set ISTATUS bit
-	 * regardless of ENABLE bit क्रम our implementation convenience.
+	 * regardless of ENABLE bit for our implementation convenience.
 	 */
-	u32 ctl = समयr_get_ctl(समयr);
+	u32 ctl = timer_get_ctl(timer);
 
-	अगर (!kvm_समयr_compute_delta(समयr))
+	if (!kvm_timer_compute_delta(timer))
 		ctl |= ARCH_TIMER_CTRL_IT_STAT;
 
-	वापस ctl;
-पूर्ण
+	return ctl;
+}
 
-u64 kvm_arm_समयr_get_reg(काष्ठा kvm_vcpu *vcpu, u64 regid)
-अणु
-	चयन (regid) अणु
-	हाल KVM_REG_ARM_TIMER_CTL:
-		वापस kvm_arm_समयr_पढ़ो(vcpu,
-					  vcpu_vसमयr(vcpu), TIMER_REG_CTL);
-	हाल KVM_REG_ARM_TIMER_CNT:
-		वापस kvm_arm_समयr_पढ़ो(vcpu,
-					  vcpu_vसमयr(vcpu), TIMER_REG_CNT);
-	हाल KVM_REG_ARM_TIMER_CVAL:
-		वापस kvm_arm_समयr_पढ़ो(vcpu,
-					  vcpu_vसमयr(vcpu), TIMER_REG_CVAL);
-	हाल KVM_REG_ARM_PTIMER_CTL:
-		वापस kvm_arm_समयr_पढ़ो(vcpu,
-					  vcpu_pसमयr(vcpu), TIMER_REG_CTL);
-	हाल KVM_REG_ARM_PTIMER_CNT:
-		वापस kvm_arm_समयr_पढ़ो(vcpu,
-					  vcpu_pसमयr(vcpu), TIMER_REG_CNT);
-	हाल KVM_REG_ARM_PTIMER_CVAL:
-		वापस kvm_arm_समयr_पढ़ो(vcpu,
-					  vcpu_pसमयr(vcpu), TIMER_REG_CVAL);
-	पूर्ण
-	वापस (u64)-1;
-पूर्ण
+u64 kvm_arm_timer_get_reg(struct kvm_vcpu *vcpu, u64 regid)
+{
+	switch (regid) {
+	case KVM_REG_ARM_TIMER_CTL:
+		return kvm_arm_timer_read(vcpu,
+					  vcpu_vtimer(vcpu), TIMER_REG_CTL);
+	case KVM_REG_ARM_TIMER_CNT:
+		return kvm_arm_timer_read(vcpu,
+					  vcpu_vtimer(vcpu), TIMER_REG_CNT);
+	case KVM_REG_ARM_TIMER_CVAL:
+		return kvm_arm_timer_read(vcpu,
+					  vcpu_vtimer(vcpu), TIMER_REG_CVAL);
+	case KVM_REG_ARM_PTIMER_CTL:
+		return kvm_arm_timer_read(vcpu,
+					  vcpu_ptimer(vcpu), TIMER_REG_CTL);
+	case KVM_REG_ARM_PTIMER_CNT:
+		return kvm_arm_timer_read(vcpu,
+					  vcpu_ptimer(vcpu), TIMER_REG_CNT);
+	case KVM_REG_ARM_PTIMER_CVAL:
+		return kvm_arm_timer_read(vcpu,
+					  vcpu_ptimer(vcpu), TIMER_REG_CVAL);
+	}
+	return (u64)-1;
+}
 
-अटल u64 kvm_arm_समयr_पढ़ो(काष्ठा kvm_vcpu *vcpu,
-			      काष्ठा arch_समयr_context *समयr,
-			      क्रमागत kvm_arch_समयr_regs treg)
-अणु
+static u64 kvm_arm_timer_read(struct kvm_vcpu *vcpu,
+			      struct arch_timer_context *timer,
+			      enum kvm_arch_timer_regs treg)
+{
 	u64 val;
 
-	चयन (treg) अणु
-	हाल TIMER_REG_TVAL:
-		val = समयr_get_cval(समयr) - kvm_phys_समयr_पढ़ो() + समयr_get_offset(समयr);
+	switch (treg) {
+	case TIMER_REG_TVAL:
+		val = timer_get_cval(timer) - kvm_phys_timer_read() + timer_get_offset(timer);
 		val = lower_32_bits(val);
-		अवरोध;
+		break;
 
-	हाल TIMER_REG_CTL:
-		val = पढ़ो_समयr_ctl(समयr);
-		अवरोध;
+	case TIMER_REG_CTL:
+		val = read_timer_ctl(timer);
+		break;
 
-	हाल TIMER_REG_CVAL:
-		val = समयr_get_cval(समयr);
-		अवरोध;
+	case TIMER_REG_CVAL:
+		val = timer_get_cval(timer);
+		break;
 
-	हाल TIMER_REG_CNT:
-		val = kvm_phys_समयr_पढ़ो() - समयr_get_offset(समयr);
-		अवरोध;
+	case TIMER_REG_CNT:
+		val = kvm_phys_timer_read() - timer_get_offset(timer);
+		break;
 
-	शेष:
+	default:
 		BUG();
-	पूर्ण
+	}
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-u64 kvm_arm_समयr_पढ़ो_sysreg(काष्ठा kvm_vcpu *vcpu,
-			      क्रमागत kvm_arch_समयrs पंचांगr,
-			      क्रमागत kvm_arch_समयr_regs treg)
-अणु
+u64 kvm_arm_timer_read_sysreg(struct kvm_vcpu *vcpu,
+			      enum kvm_arch_timers tmr,
+			      enum kvm_arch_timer_regs treg)
+{
 	u64 val;
 
 	preempt_disable();
-	kvm_समयr_vcpu_put(vcpu);
+	kvm_timer_vcpu_put(vcpu);
 
-	val = kvm_arm_समयr_पढ़ो(vcpu, vcpu_get_समयr(vcpu, पंचांगr), treg);
+	val = kvm_arm_timer_read(vcpu, vcpu_get_timer(vcpu, tmr), treg);
 
-	kvm_समयr_vcpu_load(vcpu);
+	kvm_timer_vcpu_load(vcpu);
 	preempt_enable();
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल व्योम kvm_arm_समयr_ग_लिखो(काष्ठा kvm_vcpu *vcpu,
-				काष्ठा arch_समयr_context *समयr,
-				क्रमागत kvm_arch_समयr_regs treg,
+static void kvm_arm_timer_write(struct kvm_vcpu *vcpu,
+				struct arch_timer_context *timer,
+				enum kvm_arch_timer_regs treg,
 				u64 val)
-अणु
-	चयन (treg) अणु
-	हाल TIMER_REG_TVAL:
-		समयr_set_cval(समयr, kvm_phys_समयr_पढ़ो() - समयr_get_offset(समयr) + (s32)val);
-		अवरोध;
+{
+	switch (treg) {
+	case TIMER_REG_TVAL:
+		timer_set_cval(timer, kvm_phys_timer_read() - timer_get_offset(timer) + (s32)val);
+		break;
 
-	हाल TIMER_REG_CTL:
-		समयr_set_ctl(समयr, val & ~ARCH_TIMER_CTRL_IT_STAT);
-		अवरोध;
+	case TIMER_REG_CTL:
+		timer_set_ctl(timer, val & ~ARCH_TIMER_CTRL_IT_STAT);
+		break;
 
-	हाल TIMER_REG_CVAL:
-		समयr_set_cval(समयr, val);
-		अवरोध;
+	case TIMER_REG_CVAL:
+		timer_set_cval(timer, val);
+		break;
 
-	शेष:
+	default:
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम kvm_arm_समयr_ग_लिखो_sysreg(काष्ठा kvm_vcpu *vcpu,
-				क्रमागत kvm_arch_समयrs पंचांगr,
-				क्रमागत kvm_arch_समयr_regs treg,
+void kvm_arm_timer_write_sysreg(struct kvm_vcpu *vcpu,
+				enum kvm_arch_timers tmr,
+				enum kvm_arch_timer_regs treg,
 				u64 val)
-अणु
+{
 	preempt_disable();
-	kvm_समयr_vcpu_put(vcpu);
+	kvm_timer_vcpu_put(vcpu);
 
-	kvm_arm_समयr_ग_लिखो(vcpu, vcpu_get_समयr(vcpu, पंचांगr), treg, val);
+	kvm_arm_timer_write(vcpu, vcpu_get_timer(vcpu, tmr), treg, val);
 
-	kvm_समयr_vcpu_load(vcpu);
+	kvm_timer_vcpu_load(vcpu);
 	preempt_enable();
-पूर्ण
+}
 
-अटल पूर्णांक kvm_समयr_starting_cpu(अचिन्हित पूर्णांक cpu)
-अणु
-	kvm_समयr_init_पूर्णांकerrupt(शून्य);
-	वापस 0;
-पूर्ण
+static int kvm_timer_starting_cpu(unsigned int cpu)
+{
+	kvm_timer_init_interrupt(NULL);
+	return 0;
+}
 
-अटल पूर्णांक kvm_समयr_dying_cpu(अचिन्हित पूर्णांक cpu)
-अणु
-	disable_percpu_irq(host_vसमयr_irq);
-	वापस 0;
-पूर्ण
+static int kvm_timer_dying_cpu(unsigned int cpu)
+{
+	disable_percpu_irq(host_vtimer_irq);
+	return 0;
+}
 
-पूर्णांक kvm_समयr_hyp_init(bool has_gic)
-अणु
-	काष्ठा arch_समयr_kvm_info *info;
-	पूर्णांक err;
+int kvm_timer_hyp_init(bool has_gic)
+{
+	struct arch_timer_kvm_info *info;
+	int err;
 
-	info = arch_समयr_get_kvm_info();
-	समयcounter = &info->समयcounter;
+	info = arch_timer_get_kvm_info();
+	timecounter = &info->timecounter;
 
-	अगर (!समयcounter->cc) अणु
+	if (!timecounter->cc) {
 		kvm_err("kvm_arch_timer: uninitialized timecounter\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* First, करो the भव EL1 समयr irq */
+	/* First, do the virtual EL1 timer irq */
 
-	अगर (info->भव_irq <= 0) अणु
+	if (info->virtual_irq <= 0) {
 		kvm_err("kvm_arch_timer: invalid virtual timer IRQ: %d\n",
-			info->भव_irq);
-		वापस -ENODEV;
-	पूर्ण
-	host_vसमयr_irq = info->भव_irq;
+			info->virtual_irq);
+		return -ENODEV;
+	}
+	host_vtimer_irq = info->virtual_irq;
 
-	host_vसमयr_irq_flags = irq_get_trigger_type(host_vसमयr_irq);
-	अगर (host_vसमयr_irq_flags != IRQF_TRIGGER_HIGH &&
-	    host_vसमयr_irq_flags != IRQF_TRIGGER_LOW) अणु
+	host_vtimer_irq_flags = irq_get_trigger_type(host_vtimer_irq);
+	if (host_vtimer_irq_flags != IRQF_TRIGGER_HIGH &&
+	    host_vtimer_irq_flags != IRQF_TRIGGER_LOW) {
 		kvm_err("Invalid trigger for vtimer IRQ%d, assuming level low\n",
-			host_vसमयr_irq);
-		host_vसमयr_irq_flags = IRQF_TRIGGER_LOW;
-	पूर्ण
+			host_vtimer_irq);
+		host_vtimer_irq_flags = IRQF_TRIGGER_LOW;
+	}
 
-	err = request_percpu_irq(host_vसमयr_irq, kvm_arch_समयr_handler,
+	err = request_percpu_irq(host_vtimer_irq, kvm_arch_timer_handler,
 				 "kvm guest vtimer", kvm_get_running_vcpus());
-	अगर (err) अणु
+	if (err) {
 		kvm_err("kvm_arch_timer: can't request vtimer interrupt %d (%d)\n",
-			host_vसमयr_irq, err);
-		वापस err;
-	पूर्ण
+			host_vtimer_irq, err);
+		return err;
+	}
 
-	अगर (has_gic) अणु
-		err = irq_set_vcpu_affinity(host_vसमयr_irq,
+	if (has_gic) {
+		err = irq_set_vcpu_affinity(host_vtimer_irq,
 					    kvm_get_running_vcpus());
-		अगर (err) अणु
+		if (err) {
 			kvm_err("kvm_arch_timer: error setting vcpu affinity\n");
-			जाओ out_मुक्त_irq;
-		पूर्ण
+			goto out_free_irq;
+		}
 
-		अटल_branch_enable(&has_gic_active_state);
-	पूर्ण
+		static_branch_enable(&has_gic_active_state);
+	}
 
-	kvm_debug("virtual timer IRQ%d\n", host_vसमयr_irq);
+	kvm_debug("virtual timer IRQ%d\n", host_vtimer_irq);
 
-	/* Now let's करो the physical EL1 समयr irq */
+	/* Now let's do the physical EL1 timer irq */
 
-	अगर (info->physical_irq > 0) अणु
-		host_pसमयr_irq = info->physical_irq;
-		host_pसमयr_irq_flags = irq_get_trigger_type(host_pसमयr_irq);
-		अगर (host_pसमयr_irq_flags != IRQF_TRIGGER_HIGH &&
-		    host_pसमयr_irq_flags != IRQF_TRIGGER_LOW) अणु
+	if (info->physical_irq > 0) {
+		host_ptimer_irq = info->physical_irq;
+		host_ptimer_irq_flags = irq_get_trigger_type(host_ptimer_irq);
+		if (host_ptimer_irq_flags != IRQF_TRIGGER_HIGH &&
+		    host_ptimer_irq_flags != IRQF_TRIGGER_LOW) {
 			kvm_err("Invalid trigger for ptimer IRQ%d, assuming level low\n",
-				host_pसमयr_irq);
-			host_pसमयr_irq_flags = IRQF_TRIGGER_LOW;
-		पूर्ण
+				host_ptimer_irq);
+			host_ptimer_irq_flags = IRQF_TRIGGER_LOW;
+		}
 
-		err = request_percpu_irq(host_pसमयr_irq, kvm_arch_समयr_handler,
+		err = request_percpu_irq(host_ptimer_irq, kvm_arch_timer_handler,
 					 "kvm guest ptimer", kvm_get_running_vcpus());
-		अगर (err) अणु
+		if (err) {
 			kvm_err("kvm_arch_timer: can't request ptimer interrupt %d (%d)\n",
-				host_pसमयr_irq, err);
-			वापस err;
-		पूर्ण
+				host_ptimer_irq, err);
+			return err;
+		}
 
-		अगर (has_gic) अणु
-			err = irq_set_vcpu_affinity(host_pसमयr_irq,
+		if (has_gic) {
+			err = irq_set_vcpu_affinity(host_ptimer_irq,
 						    kvm_get_running_vcpus());
-			अगर (err) अणु
+			if (err) {
 				kvm_err("kvm_arch_timer: error setting vcpu affinity\n");
-				जाओ out_मुक्त_irq;
-			पूर्ण
-		पूर्ण
+				goto out_free_irq;
+			}
+		}
 
-		kvm_debug("physical timer IRQ%d\n", host_pसमयr_irq);
-	पूर्ण अन्यथा अगर (has_vhe()) अणु
+		kvm_debug("physical timer IRQ%d\n", host_ptimer_irq);
+	} else if (has_vhe()) {
 		kvm_err("kvm_arch_timer: invalid physical timer IRQ: %d\n",
 			info->physical_irq);
 		err = -ENODEV;
-		जाओ out_मुक्त_irq;
-	पूर्ण
+		goto out_free_irq;
+	}
 
 	cpuhp_setup_state(CPUHP_AP_KVM_ARM_TIMER_STARTING,
-			  "kvm/arm/timer:starting", kvm_समयr_starting_cpu,
-			  kvm_समयr_dying_cpu);
-	वापस 0;
-out_मुक्त_irq:
-	मुक्त_percpu_irq(host_vसमयr_irq, kvm_get_running_vcpus());
-	वापस err;
-पूर्ण
+			  "kvm/arm/timer:starting", kvm_timer_starting_cpu,
+			  kvm_timer_dying_cpu);
+	return 0;
+out_free_irq:
+	free_percpu_irq(host_vtimer_irq, kvm_get_running_vcpus());
+	return err;
+}
 
-व्योम kvm_समयr_vcpu_terminate(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा arch_समयr_cpu *समयr = vcpu_समयr(vcpu);
+void kvm_timer_vcpu_terminate(struct kvm_vcpu *vcpu)
+{
+	struct arch_timer_cpu *timer = vcpu_timer(vcpu);
 
-	soft_समयr_cancel(&समयr->bg_समयr);
-पूर्ण
+	soft_timer_cancel(&timer->bg_timer);
+}
 
-अटल bool समयr_irqs_are_valid(काष्ठा kvm_vcpu *vcpu)
-अणु
-	पूर्णांक vसमयr_irq, pसमयr_irq;
-	पूर्णांक i, ret;
+static bool timer_irqs_are_valid(struct kvm_vcpu *vcpu)
+{
+	int vtimer_irq, ptimer_irq;
+	int i, ret;
 
-	vसमयr_irq = vcpu_vसमयr(vcpu)->irq.irq;
-	ret = kvm_vgic_set_owner(vcpu, vसमयr_irq, vcpu_vसमयr(vcpu));
-	अगर (ret)
-		वापस false;
+	vtimer_irq = vcpu_vtimer(vcpu)->irq.irq;
+	ret = kvm_vgic_set_owner(vcpu, vtimer_irq, vcpu_vtimer(vcpu));
+	if (ret)
+		return false;
 
-	pसमयr_irq = vcpu_pसमयr(vcpu)->irq.irq;
-	ret = kvm_vgic_set_owner(vcpu, pसमयr_irq, vcpu_pसमयr(vcpu));
-	अगर (ret)
-		वापस false;
+	ptimer_irq = vcpu_ptimer(vcpu)->irq.irq;
+	ret = kvm_vgic_set_owner(vcpu, ptimer_irq, vcpu_ptimer(vcpu));
+	if (ret)
+		return false;
 
-	kvm_क्रम_each_vcpu(i, vcpu, vcpu->kvm) अणु
-		अगर (vcpu_vसमयr(vcpu)->irq.irq != vसमयr_irq ||
-		    vcpu_pसमयr(vcpu)->irq.irq != pसमयr_irq)
-			वापस false;
-	पूर्ण
+	kvm_for_each_vcpu(i, vcpu, vcpu->kvm) {
+		if (vcpu_vtimer(vcpu)->irq.irq != vtimer_irq ||
+		    vcpu_ptimer(vcpu)->irq.irq != ptimer_irq)
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-bool kvm_arch_समयr_get_input_level(पूर्णांक vपूर्णांकid)
-अणु
-	काष्ठा kvm_vcpu *vcpu = kvm_get_running_vcpu();
-	काष्ठा arch_समयr_context *समयr;
+bool kvm_arch_timer_get_input_level(int vintid)
+{
+	struct kvm_vcpu *vcpu = kvm_get_running_vcpu();
+	struct arch_timer_context *timer;
 
-	अगर (vपूर्णांकid == vcpu_vसमयr(vcpu)->irq.irq)
-		समयr = vcpu_vसमयr(vcpu);
-	अन्यथा अगर (vपूर्णांकid == vcpu_pसमयr(vcpu)->irq.irq)
-		समयr = vcpu_pसमयr(vcpu);
-	अन्यथा
+	if (vintid == vcpu_vtimer(vcpu)->irq.irq)
+		timer = vcpu_vtimer(vcpu);
+	else if (vintid == vcpu_ptimer(vcpu)->irq.irq)
+		timer = vcpu_ptimer(vcpu);
+	else
 		BUG();
 
-	वापस kvm_समयr_should_fire(समयr);
-पूर्ण
+	return kvm_timer_should_fire(timer);
+}
 
-पूर्णांक kvm_समयr_enable(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा arch_समयr_cpu *समयr = vcpu_समयr(vcpu);
-	काष्ठा समयr_map map;
-	पूर्णांक ret;
+int kvm_timer_enable(struct kvm_vcpu *vcpu)
+{
+	struct arch_timer_cpu *timer = vcpu_timer(vcpu);
+	struct timer_map map;
+	int ret;
 
-	अगर (समयr->enabled)
-		वापस 0;
+	if (timer->enabled)
+		return 0;
 
-	/* Without a VGIC we करो not map भव IRQs to physical IRQs */
-	अगर (!irqchip_in_kernel(vcpu->kvm))
-		जाओ no_vgic;
+	/* Without a VGIC we do not map virtual IRQs to physical IRQs */
+	if (!irqchip_in_kernel(vcpu->kvm))
+		goto no_vgic;
 
 	/*
 	 * At this stage, we have the guarantee that the vgic is both
 	 * available and initialized.
 	 */
-	अगर (!समयr_irqs_are_valid(vcpu)) अणु
+	if (!timer_irqs_are_valid(vcpu)) {
 		kvm_debug("incorrectly configured timer irqs\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	get_समयr_map(vcpu, &map);
+	get_timer_map(vcpu, &map);
 
 	ret = kvm_vgic_map_phys_irq(vcpu,
-				    map.direct_vसमयr->host_समयr_irq,
-				    map.direct_vसमयr->irq.irq,
-				    kvm_arch_समयr_get_input_level);
-	अगर (ret)
-		वापस ret;
+				    map.direct_vtimer->host_timer_irq,
+				    map.direct_vtimer->irq.irq,
+				    kvm_arch_timer_get_input_level);
+	if (ret)
+		return ret;
 
-	अगर (map.direct_pसमयr) अणु
+	if (map.direct_ptimer) {
 		ret = kvm_vgic_map_phys_irq(vcpu,
-					    map.direct_pसमयr->host_समयr_irq,
-					    map.direct_pसमयr->irq.irq,
-					    kvm_arch_समयr_get_input_level);
-	पूर्ण
+					    map.direct_ptimer->host_timer_irq,
+					    map.direct_ptimer->irq.irq,
+					    kvm_arch_timer_get_input_level);
+	}
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 no_vgic:
-	समयr->enabled = 1;
-	वापस 0;
-पूर्ण
+	timer->enabled = 1;
+	return 0;
+}
 
 /*
- * On VHE प्रणाली, we only need to configure the EL2 समयr trap रेजिस्टर once,
- * not क्रम every world चयन.
+ * On VHE system, we only need to configure the EL2 timer trap register once,
+ * not for every world switch.
  * The host kernel runs at EL2 with HCR_EL2.TGE == 1,
- * and this makes those bits have no effect क्रम the host kernel execution.
+ * and this makes those bits have no effect for the host kernel execution.
  */
-व्योम kvm_समयr_init_vhe(व्योम)
-अणु
-	/* When HCR_EL2.E2H ==1, EL1PCEN and EL1PCTEN are shअगरted by 10 */
-	u32 cnthctl_shअगरt = 10;
+void kvm_timer_init_vhe(void)
+{
+	/* When HCR_EL2.E2H ==1, EL1PCEN and EL1PCTEN are shifted by 10 */
+	u32 cnthctl_shift = 10;
 	u64 val;
 
 	/*
-	 * VHE प्रणालीs allow the guest direct access to the EL1 physical
-	 * समयr/counter.
+	 * VHE systems allow the guest direct access to the EL1 physical
+	 * timer/counter.
 	 */
-	val = पढ़ो_sysreg(cnthctl_el2);
-	val |= (CNTHCTL_EL1PCEN << cnthctl_shअगरt);
-	val |= (CNTHCTL_EL1PCTEN << cnthctl_shअगरt);
-	ग_लिखो_sysreg(val, cnthctl_el2);
-पूर्ण
+	val = read_sysreg(cnthctl_el2);
+	val |= (CNTHCTL_EL1PCEN << cnthctl_shift);
+	val |= (CNTHCTL_EL1PCTEN << cnthctl_shift);
+	write_sysreg(val, cnthctl_el2);
+}
 
-अटल व्योम set_समयr_irqs(काष्ठा kvm *kvm, पूर्णांक vसमयr_irq, पूर्णांक pसमयr_irq)
-अणु
-	काष्ठा kvm_vcpu *vcpu;
-	पूर्णांक i;
+static void set_timer_irqs(struct kvm *kvm, int vtimer_irq, int ptimer_irq)
+{
+	struct kvm_vcpu *vcpu;
+	int i;
 
-	kvm_क्रम_each_vcpu(i, vcpu, kvm) अणु
-		vcpu_vसमयr(vcpu)->irq.irq = vसमयr_irq;
-		vcpu_pसमयr(vcpu)->irq.irq = pसमयr_irq;
-	पूर्ण
-पूर्ण
+	kvm_for_each_vcpu(i, vcpu, kvm) {
+		vcpu_vtimer(vcpu)->irq.irq = vtimer_irq;
+		vcpu_ptimer(vcpu)->irq.irq = ptimer_irq;
+	}
+}
 
-पूर्णांक kvm_arm_समयr_set_attr(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_device_attr *attr)
-अणु
-	पूर्णांक __user *uaddr = (पूर्णांक __user *)(दीर्घ)attr->addr;
-	काष्ठा arch_समयr_context *vसमयr = vcpu_vसमयr(vcpu);
-	काष्ठा arch_समयr_context *pसमयr = vcpu_pसमयr(vcpu);
-	पूर्णांक irq;
+int kvm_arm_timer_set_attr(struct kvm_vcpu *vcpu, struct kvm_device_attr *attr)
+{
+	int __user *uaddr = (int __user *)(long)attr->addr;
+	struct arch_timer_context *vtimer = vcpu_vtimer(vcpu);
+	struct arch_timer_context *ptimer = vcpu_ptimer(vcpu);
+	int irq;
 
-	अगर (!irqchip_in_kernel(vcpu->kvm))
-		वापस -EINVAL;
+	if (!irqchip_in_kernel(vcpu->kvm))
+		return -EINVAL;
 
-	अगर (get_user(irq, uaddr))
-		वापस -EFAULT;
+	if (get_user(irq, uaddr))
+		return -EFAULT;
 
-	अगर (!(irq_is_ppi(irq)))
-		वापस -EINVAL;
+	if (!(irq_is_ppi(irq)))
+		return -EINVAL;
 
-	अगर (vcpu->arch.समयr_cpu.enabled)
-		वापस -EBUSY;
+	if (vcpu->arch.timer_cpu.enabled)
+		return -EBUSY;
 
-	चयन (attr->attr) अणु
-	हाल KVM_ARM_VCPU_TIMER_IRQ_VTIMER:
-		set_समयr_irqs(vcpu->kvm, irq, pसमयr->irq.irq);
-		अवरोध;
-	हाल KVM_ARM_VCPU_TIMER_IRQ_PTIMER:
-		set_समयr_irqs(vcpu->kvm, vसमयr->irq.irq, irq);
-		अवरोध;
-	शेष:
-		वापस -ENXIO;
-	पूर्ण
+	switch (attr->attr) {
+	case KVM_ARM_VCPU_TIMER_IRQ_VTIMER:
+		set_timer_irqs(vcpu->kvm, irq, ptimer->irq.irq);
+		break;
+	case KVM_ARM_VCPU_TIMER_IRQ_PTIMER:
+		set_timer_irqs(vcpu->kvm, vtimer->irq.irq, irq);
+		break;
+	default:
+		return -ENXIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक kvm_arm_समयr_get_attr(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_device_attr *attr)
-अणु
-	पूर्णांक __user *uaddr = (पूर्णांक __user *)(दीर्घ)attr->addr;
-	काष्ठा arch_समयr_context *समयr;
-	पूर्णांक irq;
+int kvm_arm_timer_get_attr(struct kvm_vcpu *vcpu, struct kvm_device_attr *attr)
+{
+	int __user *uaddr = (int __user *)(long)attr->addr;
+	struct arch_timer_context *timer;
+	int irq;
 
-	चयन (attr->attr) अणु
-	हाल KVM_ARM_VCPU_TIMER_IRQ_VTIMER:
-		समयr = vcpu_vसमयr(vcpu);
-		अवरोध;
-	हाल KVM_ARM_VCPU_TIMER_IRQ_PTIMER:
-		समयr = vcpu_pसमयr(vcpu);
-		अवरोध;
-	शेष:
-		वापस -ENXIO;
-	पूर्ण
+	switch (attr->attr) {
+	case KVM_ARM_VCPU_TIMER_IRQ_VTIMER:
+		timer = vcpu_vtimer(vcpu);
+		break;
+	case KVM_ARM_VCPU_TIMER_IRQ_PTIMER:
+		timer = vcpu_ptimer(vcpu);
+		break;
+	default:
+		return -ENXIO;
+	}
 
-	irq = समयr->irq.irq;
-	वापस put_user(irq, uaddr);
-पूर्ण
+	irq = timer->irq.irq;
+	return put_user(irq, uaddr);
+}
 
-पूर्णांक kvm_arm_समयr_has_attr(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_device_attr *attr)
-अणु
-	चयन (attr->attr) अणु
-	हाल KVM_ARM_VCPU_TIMER_IRQ_VTIMER:
-	हाल KVM_ARM_VCPU_TIMER_IRQ_PTIMER:
-		वापस 0;
-	पूर्ण
+int kvm_arm_timer_has_attr(struct kvm_vcpu *vcpu, struct kvm_device_attr *attr)
+{
+	switch (attr->attr) {
+	case KVM_ARM_VCPU_TIMER_IRQ_VTIMER:
+	case KVM_ARM_VCPU_TIMER_IRQ_PTIMER:
+		return 0;
+	}
 
-	वापस -ENXIO;
-पूर्ण
+	return -ENXIO;
+}

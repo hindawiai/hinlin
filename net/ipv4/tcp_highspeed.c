@@ -1,126 +1,125 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Sally Floyd's High Speed TCP (RFC 3649) congestion control
  *
- * See https://www.icir.org/floyd/hstcp.hपंचांगl
+ * See https://www.icir.org/floyd/hstcp.html
  *
  * John Heffner <jheffner@psc.edu>
  */
 
-#समावेश <linux/module.h>
-#समावेश <net/tcp.h>
+#include <linux/module.h>
+#include <net/tcp.h>
 
 /* From AIMD tables from RFC 3649 appendix B,
- * with fixed-poपूर्णांक MD scaled <<8.
+ * with fixed-point MD scaled <<8.
  */
-अटल स्थिर काष्ठा hstcp_aimd_val अणु
-	अचिन्हित पूर्णांक cwnd;
-	अचिन्हित पूर्णांक md;
-पूर्ण hstcp_aimd_vals[] = अणु
-	अणु     38,  128, /*  0.50 */ पूर्ण,
-	अणु    118,  112, /*  0.44 */ पूर्ण,
-	अणु    221,  104, /*  0.41 */ पूर्ण,
-	अणु    347,   98, /*  0.38 */ पूर्ण,
-	अणु    495,   93, /*  0.37 */ पूर्ण,
-	अणु    663,   89, /*  0.35 */ पूर्ण,
-	अणु    851,   86, /*  0.34 */ पूर्ण,
-	अणु   1058,   83, /*  0.33 */ पूर्ण,
-	अणु   1284,   81, /*  0.32 */ पूर्ण,
-	अणु   1529,   78, /*  0.31 */ पूर्ण,
-	अणु   1793,   76, /*  0.30 */ पूर्ण,
-	अणु   2076,   74, /*  0.29 */ पूर्ण,
-	अणु   2378,   72, /*  0.28 */ पूर्ण,
-	अणु   2699,   71, /*  0.28 */ पूर्ण,
-	अणु   3039,   69, /*  0.27 */ पूर्ण,
-	अणु   3399,   68, /*  0.27 */ पूर्ण,
-	अणु   3778,   66, /*  0.26 */ पूर्ण,
-	अणु   4177,   65, /*  0.26 */ पूर्ण,
-	अणु   4596,   64, /*  0.25 */ पूर्ण,
-	अणु   5036,   62, /*  0.25 */ पूर्ण,
-	अणु   5497,   61, /*  0.24 */ पूर्ण,
-	अणु   5979,   60, /*  0.24 */ पूर्ण,
-	अणु   6483,   59, /*  0.23 */ पूर्ण,
-	अणु   7009,   58, /*  0.23 */ पूर्ण,
-	अणु   7558,   57, /*  0.22 */ पूर्ण,
-	अणु   8130,   56, /*  0.22 */ पूर्ण,
-	अणु   8726,   55, /*  0.22 */ पूर्ण,
-	अणु   9346,   54, /*  0.21 */ पूर्ण,
-	अणु   9991,   53, /*  0.21 */ पूर्ण,
-	अणु  10661,   52, /*  0.21 */ पूर्ण,
-	अणु  11358,   52, /*  0.20 */ पूर्ण,
-	अणु  12082,   51, /*  0.20 */ पूर्ण,
-	अणु  12834,   50, /*  0.20 */ पूर्ण,
-	अणु  13614,   49, /*  0.19 */ पूर्ण,
-	अणु  14424,   48, /*  0.19 */ पूर्ण,
-	अणु  15265,   48, /*  0.19 */ पूर्ण,
-	अणु  16137,   47, /*  0.19 */ पूर्ण,
-	अणु  17042,   46, /*  0.18 */ पूर्ण,
-	अणु  17981,   45, /*  0.18 */ पूर्ण,
-	अणु  18955,   45, /*  0.18 */ पूर्ण,
-	अणु  19965,   44, /*  0.17 */ पूर्ण,
-	अणु  21013,   43, /*  0.17 */ पूर्ण,
-	अणु  22101,   43, /*  0.17 */ पूर्ण,
-	अणु  23230,   42, /*  0.17 */ पूर्ण,
-	अणु  24402,   41, /*  0.16 */ पूर्ण,
-	अणु  25618,   41, /*  0.16 */ पूर्ण,
-	अणु  26881,   40, /*  0.16 */ पूर्ण,
-	अणु  28193,   39, /*  0.16 */ पूर्ण,
-	अणु  29557,   39, /*  0.15 */ पूर्ण,
-	अणु  30975,   38, /*  0.15 */ पूर्ण,
-	अणु  32450,   38, /*  0.15 */ पूर्ण,
-	अणु  33986,   37, /*  0.15 */ पूर्ण,
-	अणु  35586,   36, /*  0.14 */ पूर्ण,
-	अणु  37253,   36, /*  0.14 */ पूर्ण,
-	अणु  38992,   35, /*  0.14 */ पूर्ण,
-	अणु  40808,   35, /*  0.14 */ पूर्ण,
-	अणु  42707,   34, /*  0.13 */ पूर्ण,
-	अणु  44694,   33, /*  0.13 */ पूर्ण,
-	अणु  46776,   33, /*  0.13 */ पूर्ण,
-	अणु  48961,   32, /*  0.13 */ पूर्ण,
-	अणु  51258,   32, /*  0.13 */ पूर्ण,
-	अणु  53677,   31, /*  0.12 */ पूर्ण,
-	अणु  56230,   30, /*  0.12 */ पूर्ण,
-	अणु  58932,   30, /*  0.12 */ पूर्ण,
-	अणु  61799,   29, /*  0.12 */ पूर्ण,
-	अणु  64851,   28, /*  0.11 */ पूर्ण,
-	अणु  68113,   28, /*  0.11 */ पूर्ण,
-	अणु  71617,   27, /*  0.11 */ पूर्ण,
-	अणु  75401,   26, /*  0.10 */ पूर्ण,
-	अणु  79517,   26, /*  0.10 */ पूर्ण,
-	अणु  84035,   25, /*  0.10 */ पूर्ण,
-	अणु  89053,   24, /*  0.10 */ पूर्ण,
-पूर्ण;
+static const struct hstcp_aimd_val {
+	unsigned int cwnd;
+	unsigned int md;
+} hstcp_aimd_vals[] = {
+	{     38,  128, /*  0.50 */ },
+	{    118,  112, /*  0.44 */ },
+	{    221,  104, /*  0.41 */ },
+	{    347,   98, /*  0.38 */ },
+	{    495,   93, /*  0.37 */ },
+	{    663,   89, /*  0.35 */ },
+	{    851,   86, /*  0.34 */ },
+	{   1058,   83, /*  0.33 */ },
+	{   1284,   81, /*  0.32 */ },
+	{   1529,   78, /*  0.31 */ },
+	{   1793,   76, /*  0.30 */ },
+	{   2076,   74, /*  0.29 */ },
+	{   2378,   72, /*  0.28 */ },
+	{   2699,   71, /*  0.28 */ },
+	{   3039,   69, /*  0.27 */ },
+	{   3399,   68, /*  0.27 */ },
+	{   3778,   66, /*  0.26 */ },
+	{   4177,   65, /*  0.26 */ },
+	{   4596,   64, /*  0.25 */ },
+	{   5036,   62, /*  0.25 */ },
+	{   5497,   61, /*  0.24 */ },
+	{   5979,   60, /*  0.24 */ },
+	{   6483,   59, /*  0.23 */ },
+	{   7009,   58, /*  0.23 */ },
+	{   7558,   57, /*  0.22 */ },
+	{   8130,   56, /*  0.22 */ },
+	{   8726,   55, /*  0.22 */ },
+	{   9346,   54, /*  0.21 */ },
+	{   9991,   53, /*  0.21 */ },
+	{  10661,   52, /*  0.21 */ },
+	{  11358,   52, /*  0.20 */ },
+	{  12082,   51, /*  0.20 */ },
+	{  12834,   50, /*  0.20 */ },
+	{  13614,   49, /*  0.19 */ },
+	{  14424,   48, /*  0.19 */ },
+	{  15265,   48, /*  0.19 */ },
+	{  16137,   47, /*  0.19 */ },
+	{  17042,   46, /*  0.18 */ },
+	{  17981,   45, /*  0.18 */ },
+	{  18955,   45, /*  0.18 */ },
+	{  19965,   44, /*  0.17 */ },
+	{  21013,   43, /*  0.17 */ },
+	{  22101,   43, /*  0.17 */ },
+	{  23230,   42, /*  0.17 */ },
+	{  24402,   41, /*  0.16 */ },
+	{  25618,   41, /*  0.16 */ },
+	{  26881,   40, /*  0.16 */ },
+	{  28193,   39, /*  0.16 */ },
+	{  29557,   39, /*  0.15 */ },
+	{  30975,   38, /*  0.15 */ },
+	{  32450,   38, /*  0.15 */ },
+	{  33986,   37, /*  0.15 */ },
+	{  35586,   36, /*  0.14 */ },
+	{  37253,   36, /*  0.14 */ },
+	{  38992,   35, /*  0.14 */ },
+	{  40808,   35, /*  0.14 */ },
+	{  42707,   34, /*  0.13 */ },
+	{  44694,   33, /*  0.13 */ },
+	{  46776,   33, /*  0.13 */ },
+	{  48961,   32, /*  0.13 */ },
+	{  51258,   32, /*  0.13 */ },
+	{  53677,   31, /*  0.12 */ },
+	{  56230,   30, /*  0.12 */ },
+	{  58932,   30, /*  0.12 */ },
+	{  61799,   29, /*  0.12 */ },
+	{  64851,   28, /*  0.11 */ },
+	{  68113,   28, /*  0.11 */ },
+	{  71617,   27, /*  0.11 */ },
+	{  75401,   26, /*  0.10 */ },
+	{  79517,   26, /*  0.10 */ },
+	{  84035,   25, /*  0.10 */ },
+	{  89053,   24, /*  0.10 */ },
+};
 
-#घोषणा HSTCP_AIMD_MAX	ARRAY_SIZE(hstcp_aimd_vals)
+#define HSTCP_AIMD_MAX	ARRAY_SIZE(hstcp_aimd_vals)
 
-काष्ठा hstcp अणु
+struct hstcp {
 	u32	ai;
-पूर्ण;
+};
 
-अटल व्योम hstcp_init(काष्ठा sock *sk)
-अणु
-	काष्ठा tcp_sock *tp = tcp_sk(sk);
-	काष्ठा hstcp *ca = inet_csk_ca(sk);
+static void hstcp_init(struct sock *sk)
+{
+	struct tcp_sock *tp = tcp_sk(sk);
+	struct hstcp *ca = inet_csk_ca(sk);
 
 	ca->ai = 0;
 
 	/* Ensure the MD arithmetic works.  This is somewhat pedantic,
-	 * since I करोn't think we will see a cwnd this large. :) */
+	 * since I don't think we will see a cwnd this large. :) */
 	tp->snd_cwnd_clamp = min_t(u32, tp->snd_cwnd_clamp, 0xffffffff/128);
-पूर्ण
+}
 
-अटल व्योम hstcp_cong_aव्योम(काष्ठा sock *sk, u32 ack, u32 acked)
-अणु
-	काष्ठा tcp_sock *tp = tcp_sk(sk);
-	काष्ठा hstcp *ca = inet_csk_ca(sk);
+static void hstcp_cong_avoid(struct sock *sk, u32 ack, u32 acked)
+{
+	struct tcp_sock *tp = tcp_sk(sk);
+	struct hstcp *ca = inet_csk_ca(sk);
 
-	अगर (!tcp_is_cwnd_limited(sk))
-		वापस;
+	if (!tcp_is_cwnd_limited(sk))
+		return;
 
-	अगर (tcp_in_slow_start(tp))
+	if (tcp_in_slow_start(tp))
 		tcp_slow_start(tp, acked);
-	अन्यथा अणु
+	else {
 		/* Update AIMD parameters.
 		 *
 		 * We want to guarantee that:
@@ -128,59 +127,59 @@
 		 *     snd_cwnd <=
 		 *     hstcp_aimd_vals[ca->ai].cwnd
 		 */
-		अगर (tp->snd_cwnd > hstcp_aimd_vals[ca->ai].cwnd) अणु
-			जबतक (tp->snd_cwnd > hstcp_aimd_vals[ca->ai].cwnd &&
+		if (tp->snd_cwnd > hstcp_aimd_vals[ca->ai].cwnd) {
+			while (tp->snd_cwnd > hstcp_aimd_vals[ca->ai].cwnd &&
 			       ca->ai < HSTCP_AIMD_MAX - 1)
 				ca->ai++;
-		पूर्ण अन्यथा अगर (ca->ai && tp->snd_cwnd <= hstcp_aimd_vals[ca->ai-1].cwnd) अणु
-			जबतक (ca->ai && tp->snd_cwnd <= hstcp_aimd_vals[ca->ai-1].cwnd)
+		} else if (ca->ai && tp->snd_cwnd <= hstcp_aimd_vals[ca->ai-1].cwnd) {
+			while (ca->ai && tp->snd_cwnd <= hstcp_aimd_vals[ca->ai-1].cwnd)
 				ca->ai--;
-		पूर्ण
+		}
 
 		/* Do additive increase */
-		अगर (tp->snd_cwnd < tp->snd_cwnd_clamp) अणु
+		if (tp->snd_cwnd < tp->snd_cwnd_clamp) {
 			/* cwnd = cwnd + a(w) / cwnd */
 			tp->snd_cwnd_cnt += ca->ai + 1;
-			अगर (tp->snd_cwnd_cnt >= tp->snd_cwnd) अणु
+			if (tp->snd_cwnd_cnt >= tp->snd_cwnd) {
 				tp->snd_cwnd_cnt -= tp->snd_cwnd;
 				tp->snd_cwnd++;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल u32 hstcp_ssthresh(काष्ठा sock *sk)
-अणु
-	स्थिर काष्ठा tcp_sock *tp = tcp_sk(sk);
-	काष्ठा hstcp *ca = inet_csk_ca(sk);
+static u32 hstcp_ssthresh(struct sock *sk)
+{
+	const struct tcp_sock *tp = tcp_sk(sk);
+	struct hstcp *ca = inet_csk_ca(sk);
 
 	/* Do multiplicative decrease */
-	वापस max(tp->snd_cwnd - ((tp->snd_cwnd * hstcp_aimd_vals[ca->ai].md) >> 8), 2U);
-पूर्ण
+	return max(tp->snd_cwnd - ((tp->snd_cwnd * hstcp_aimd_vals[ca->ai].md) >> 8), 2U);
+}
 
-अटल काष्ठा tcp_congestion_ops tcp_highspeed __पढ़ो_mostly = अणु
+static struct tcp_congestion_ops tcp_highspeed __read_mostly = {
 	.init		= hstcp_init,
 	.ssthresh	= hstcp_ssthresh,
-	.unकरो_cwnd	= tcp_reno_unकरो_cwnd,
-	.cong_aव्योम	= hstcp_cong_aव्योम,
+	.undo_cwnd	= tcp_reno_undo_cwnd,
+	.cong_avoid	= hstcp_cong_avoid,
 
 	.owner		= THIS_MODULE,
 	.name		= "highspeed"
-पूर्ण;
+};
 
-अटल पूर्णांक __init hstcp_रेजिस्टर(व्योम)
-अणु
-	BUILD_BUG_ON(माप(काष्ठा hstcp) > ICSK_CA_PRIV_SIZE);
-	वापस tcp_रेजिस्टर_congestion_control(&tcp_highspeed);
-पूर्ण
+static int __init hstcp_register(void)
+{
+	BUILD_BUG_ON(sizeof(struct hstcp) > ICSK_CA_PRIV_SIZE);
+	return tcp_register_congestion_control(&tcp_highspeed);
+}
 
-अटल व्योम __निकास hstcp_unरेजिस्टर(व्योम)
-अणु
-	tcp_unरेजिस्टर_congestion_control(&tcp_highspeed);
-पूर्ण
+static void __exit hstcp_unregister(void)
+{
+	tcp_unregister_congestion_control(&tcp_highspeed);
+}
 
-module_init(hstcp_रेजिस्टर);
-module_निकास(hstcp_unरेजिस्टर);
+module_init(hstcp_register);
+module_exit(hstcp_unregister);
 
 MODULE_AUTHOR("John Heffner");
 MODULE_LICENSE("GPL");

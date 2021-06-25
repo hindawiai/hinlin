@@ -1,18 +1,17 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
 *
 * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
 *
 ******************************************************************************/
 
-#समावेश <linux/kernel.h>
-#समावेश "odm_precomp.h"
+#include <linux/kernel.h>
+#include "odm_precomp.h"
 
-अटल bool CheckPositive(
-	काष्ठा dm_odm_t *pDM_Odm, स्थिर u32 Condition1, स्थिर u32 Condition2
+static bool CheckPositive(
+	struct dm_odm_t *pDM_Odm, const u32 Condition1, const u32 Condition2
 )
-अणु
+{
 	u8 _BoardType =
 			((pDM_Odm->BoardType & BIT4) >> 4) << 0 | /*  _GLNA */
 			((pDM_Odm->BoardType & BIT3) >> 3) << 1 | /*  _GPA */
@@ -23,7 +22,7 @@
 	u32 cond1 = Condition1, cond2 = Condition2;
 	u32 driver1 =
 		pDM_Odm->CutVersion << 24 |
-		pDM_Odm->SupportPlatक्रमm << 16 |
+		pDM_Odm->SupportPlatform << 16 |
 		pDM_Odm->PackageType << 12 |
 		pDM_Odm->SupportInterface << 8 |
 		_BoardType;
@@ -61,7 +60,7 @@
 		ODM_DBG_TRACE,
 		(
 			"	(Platform, Interface) = (0x%X, 0x%X)\n",
-			pDM_Odm->SupportPlatक्रमm,
+			pDM_Odm->SupportPlatform,
 			pDM_Odm->SupportInterface
 		)
 	);
@@ -77,62 +76,62 @@
 	);
 
 	/*  Value Defined Check =============== */
-	/* QFN Type [15:12] and Cut Version [27:24] need to करो value check */
+	/* QFN Type [15:12] and Cut Version [27:24] need to do value check */
 
-	अगर (
+	if (
 		((cond1 & 0x0000F000) != 0) &&
 		((cond1 & 0x0000F000) != (driver1 & 0x0000F000))
 	)
-		वापस false;
+		return false;
 
-	अगर (
+	if (
 		((cond1 & 0x0F000000) != 0) &&
 		((cond1 & 0x0F000000) != (driver1 & 0x0F000000))
 	)
-		वापस false;
+		return false;
 
 	/*  Bit Defined Check ================ */
-	/*  We करोn't care [31:28] and [23:20] */
+	/*  We don't care [31:28] and [23:20] */
 	cond1   &= 0x000F0FFF;
 	driver1 &= 0x000F0FFF;
 
-	अगर ((cond1 & driver1) == cond1) अणु
+	if ((cond1 & driver1) == cond1) {
 		u32 bitMask = 0;
 
-		अगर ((cond1 & 0x0F) == 0) /*  BoardType is DONTCARE */
-			वापस true;
+		if ((cond1 & 0x0F) == 0) /*  BoardType is DONTCARE */
+			return true;
 
-		अगर ((cond1 & BIT0) != 0) /* GLNA */
+		if ((cond1 & BIT0) != 0) /* GLNA */
 			bitMask |= 0x000000FF;
-		अगर ((cond1 & BIT1) != 0) /* GPA */
+		if ((cond1 & BIT1) != 0) /* GPA */
 			bitMask |= 0x0000FF00;
-		अगर ((cond1 & BIT2) != 0) /* ALNA */
+		if ((cond1 & BIT2) != 0) /* ALNA */
 			bitMask |= 0x00FF0000;
-		अगर ((cond1 & BIT3) != 0) /* APA */
+		if ((cond1 & BIT3) != 0) /* APA */
 			bitMask |= 0xFF000000;
 
 		/*  BoardType of each RF path is matched */
-		अगर ((cond2 & bitMask) == (driver2 & bitMask))
-			वापस true;
+		if ((cond2 & bitMask) == (driver2 & bitMask))
+			return true;
 
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool CheckNegative(
-	काष्ठा dm_odm_t *pDM_Odm, स्थिर u32  Condition1, स्थिर u32 Condition2
+static bool CheckNegative(
+	struct dm_odm_t *pDM_Odm, const u32  Condition1, const u32 Condition2
 )
-अणु
-	वापस true;
-पूर्ण
+{
+	return true;
+}
 
 /******************************************************************************
 *                           RadioA.TXT
 ******************************************************************************/
 
-अटल u32 Array_MP_8723B_RadioA[] = अणु
+static u32 Array_MP_8723B_RadioA[] = {
 		0x000, 0x00010000,
 		0x0B0, 0x000DFFE0,
 		0x0FE, 0x00000000,
@@ -258,10 +257,10 @@
 		0x076, 0x00000032,
 		0x001, 0x00000780,
 
-पूर्ण;
+};
 
-व्योम ODM_ReadAndConfig_MP_8723B_RadioA(काष्ठा dm_odm_t *pDM_Odm)
-अणु
+void ODM_ReadAndConfig_MP_8723B_RadioA(struct dm_odm_t *pDM_Odm)
+{
 	u32 i = 0;
 	u32 ArrayLen = ARRAY_SIZE(Array_MP_8723B_RadioA);
 	u32 *Array = Array_MP_8723B_RadioA;
@@ -273,157 +272,157 @@
 		("===> ODM_ReadAndConfig_MP_8723B_RadioA\n")
 	);
 
-	क्रम (i = 0; i < ArrayLen; i += 2) अणु
+	for (i = 0; i < ArrayLen; i += 2) {
 		u32 v1 = Array[i];
 		u32 v2 = Array[i+1];
 
-		/*  This (offset, data) pair करोesn't care the condition. */
-		अगर (v1 < 0x40000000) अणु
+		/*  This (offset, data) pair doesn't care the condition. */
+		if (v1 < 0x40000000) {
 			odm_ConfigRF_RadioA_8723B(pDM_Odm, v1, v2);
-			जारी;
-		पूर्ण अन्यथा अणु
+			continue;
+		} else {
 			/*  This line is the beginning of branch. */
 			bool bMatched = true;
 			u8  cCond  = (u8)((v1 & (BIT29|BIT28)) >> 28);
 
-			अगर (cCond == COND_ELSE) अणु /*  ELSE, ENDIF */
+			if (cCond == COND_ELSE) { /*  ELSE, ENDIF */
 				bMatched = true;
 				READ_NEXT_PAIR(v1, v2, i);
-			पूर्ण अन्यथा अगर (!CheckPositive(pDM_Odm, v1, v2)) अणु
+			} else if (!CheckPositive(pDM_Odm, v1, v2)) {
 				bMatched = false;
 				READ_NEXT_PAIR(v1, v2, i);
 				READ_NEXT_PAIR(v1, v2, i);
-			पूर्ण अन्यथा अणु
+			} else {
 				READ_NEXT_PAIR(v1, v2, i);
-				अगर (!CheckNegative(pDM_Odm, v1, v2))
+				if (!CheckNegative(pDM_Odm, v1, v2))
 					bMatched = false;
-				अन्यथा
+				else
 					bMatched = true;
 				READ_NEXT_PAIR(v1, v2, i);
-			पूर्ण
+			}
 
-			अगर (!bMatched) अणु
+			if (!bMatched) {
 				/*  Condition isn't matched.
 				*   Discard the following (offset, data) pairs.
 				*/
-				जबतक (v1 < 0x40000000 && i < ArrayLen-2)
+				while (v1 < 0x40000000 && i < ArrayLen-2)
 					READ_NEXT_PAIR(v1, v2, i);
 
-				i -= 2; /*  prevent from क्रम-loop += 2 */
-			पूर्ण अन्यथा अणु
-				/*  Configure matched pairs and skip to end of अगर-अन्यथा. */
-				जबतक (v1 < 0x40000000 && i < ArrayLen-2) अणु
+				i -= 2; /*  prevent from for-loop += 2 */
+			} else {
+				/*  Configure matched pairs and skip to end of if-else. */
+				while (v1 < 0x40000000 && i < ArrayLen-2) {
 					odm_ConfigRF_RadioA_8723B(pDM_Odm, v1, v2);
 					READ_NEXT_PAIR(v1, v2, i);
-				पूर्ण
+				}
 
-				/*  Keeps पढ़ोing until ENDIF. */
+				/*  Keeps reading until ENDIF. */
 				cCond = (u8)((v1 & (BIT29|BIT28)) >> 28);
-				जबतक (cCond != COND_ENDIF && i < ArrayLen-2) अणु
+				while (cCond != COND_ENDIF && i < ArrayLen-2) {
 					READ_NEXT_PAIR(v1, v2, i);
 					cCond = (u8)((v1 & (BIT29|BIT28)) >> 28);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+				}
+			}
+		}
+	}
+}
 
 /******************************************************************************
 *                           TxPowerTrack_SDIO.TXT
 ******************************************************************************/
 
-अटल u8 gDeltaSwingTableIdx_MP_5GB_N_TxPowerTrack_SDIO_8723B[][DELTA_SWINGIDX_SIZE] = अणु
-	अणु
+static u8 gDeltaSwingTableIdx_MP_5GB_N_TxPowerTrack_SDIO_8723B[][DELTA_SWINGIDX_SIZE] = {
+	{
 		0, 1, 1, 2, 2, 3, 4, 5, 5, 6,  6,  7,  7,  8,  8,  9,
 		9, 10, 11, 12, 12, 13, 13, 14, 14, 14, 14, 14, 14, 14
-	पूर्ण,
-	अणु
+	},
+	{
 		0, 1, 2, 3, 3, 4, 5, 6, 6, 7,  7,  8,  8,  9,  9, 10,
 		10, 11, 11, 12, 12, 13, 13, 14, 14, 14, 14, 14, 14, 14
-	पूर्ण,
-	अणु
+	},
+	{
 		0, 1, 2, 3, 3, 4, 5, 6, 6, 7,  7,  8,  8,  9,  9, 10,
 		10, 11, 11, 12, 12, 13, 13, 14, 14, 14, 14, 14, 14, 14
-	पूर्ण,
-पूर्ण;
-अटल u8 gDeltaSwingTableIdx_MP_5GB_P_TxPowerTrack_SDIO_8723B[][DELTA_SWINGIDX_SIZE] = अणु
-	अणु
+	},
+};
+static u8 gDeltaSwingTableIdx_MP_5GB_P_TxPowerTrack_SDIO_8723B[][DELTA_SWINGIDX_SIZE] = {
+	{
 		0, 1, 2, 3, 3, 4, 5, 6, 6, 7,  8,  9,  9, 10, 11, 12,
 		12, 13, 14, 15, 15, 16, 16, 17, 17, 18, 19, 20, 20, 20
-	पूर्ण,
-	अणु
+	},
+	{
 		0, 1, 2, 3, 3, 4, 5, 6, 6, 7,  8,  9,  9, 10, 11, 12,
 		12, 13, 14, 15, 15, 16, 17, 18, 18, 19, 19, 20, 20, 20
-	पूर्ण,
-	अणु
+	},
+	{
 		0, 1, 2, 3, 3, 4, 5, 6, 6, 7,  8,  9,  9, 10, 11, 12,
 		12, 13, 14, 15, 15, 16, 17, 18, 18, 19, 20, 21, 21, 21
-	पूर्ण,
-पूर्ण;
-अटल u8 gDeltaSwingTableIdx_MP_5GA_N_TxPowerTrack_SDIO_8723B[][DELTA_SWINGIDX_SIZE] = अणु
-	अणु
+	},
+};
+static u8 gDeltaSwingTableIdx_MP_5GA_N_TxPowerTrack_SDIO_8723B[][DELTA_SWINGIDX_SIZE] = {
+	{
 		0, 1, 2, 3, 3, 4, 4, 5, 5, 6,  7,  8,  8,  9,  9, 10,
 		10, 11, 11, 12, 12, 13, 13, 14, 14, 14, 14, 14, 14, 14
-	पूर्ण,
-	अणु
+	},
+	{
 		0, 1, 2, 3, 3, 4, 5, 6, 6, 6,  7,  7,  8,  8,  9, 10,
 		11, 11, 12, 13, 13, 14, 15, 16, 16, 16, 16, 16, 16, 16
-	पूर्ण,
-	अणु
+	},
+	{
 		0, 1, 2, 3, 3, 4, 5, 6, 6, 7,  8,  9,  9, 10, 10, 11,
 		11, 12, 13, 14, 14, 15, 15, 16, 16, 16, 16, 16, 16, 16
-	पूर्ण,
-पूर्ण;
-अटल u8 gDeltaSwingTableIdx_MP_5GA_P_TxPowerTrack_SDIO_8723B[][DELTA_SWINGIDX_SIZE] = अणु
-	अणु
+	},
+};
+static u8 gDeltaSwingTableIdx_MP_5GA_P_TxPowerTrack_SDIO_8723B[][DELTA_SWINGIDX_SIZE] = {
+	{
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	पूर्ण,
-	अणु
+	},
+	{
 		0, 1, 2, 3, 3, 4, 5, 6, 6, 7,  8,  9,  9, 10, 11, 12,
 		12, 13, 14, 15, 15, 16, 17, 18, 18, 19, 20, 21, 21, 21
-	पूर्ण,
-	अणु
+	},
+	{
 		0, 1, 2, 3, 3, 4, 5, 6, 6, 7,  8,  9,  9, 10, 11, 12,
 		12, 13, 14, 15, 15, 16, 17, 18, 18, 19, 20, 21, 21, 21
-	पूर्ण,
-पूर्ण;
-अटल u8 gDeltaSwingTableIdx_MP_2GB_N_TxPowerTrack_SDIO_8723B[] = अणु
+	},
+};
+static u8 gDeltaSwingTableIdx_MP_2GB_N_TxPowerTrack_SDIO_8723B[] = {
 	0, 0, 1, 2, 2, 2, 3, 3, 3, 4,  5,  5,  6,  6, 6,  6,
 	7,  7,  7, 8,  8,  9,  9, 10, 10, 11, 12, 13, 14, 15
-पूर्ण;
-अटल u8 gDeltaSwingTableIdx_MP_2GB_P_TxPowerTrack_SDIO_8723B[] = अणु
+};
+static u8 gDeltaSwingTableIdx_MP_2GB_P_TxPowerTrack_SDIO_8723B[] = {
 	0, 0, 1, 2, 2, 3, 3, 4, 5, 5,  6,  6,  7,  7,  8,  8,
 	9,  9, 10, 10, 10, 11, 11, 12, 12, 13, 13, 14, 15, 15
-पूर्ण;
-अटल u8 gDeltaSwingTableIdx_MP_2GA_N_TxPowerTrack_SDIO_8723B[] = अणु
+};
+static u8 gDeltaSwingTableIdx_MP_2GA_N_TxPowerTrack_SDIO_8723B[] = {
 	0, 0, 1, 2, 2, 2, 3, 3, 3, 4,  5,  5,  6,  6,  6,  6,
 	7,  7,  7,  8,  8,  9,  9, 10, 10, 11, 12, 13, 14, 15
-पूर्ण;
-अटल u8 gDeltaSwingTableIdx_MP_2GA_P_TxPowerTrack_SDIO_8723B[] = अणु
+};
+static u8 gDeltaSwingTableIdx_MP_2GA_P_TxPowerTrack_SDIO_8723B[] = {
 	0, 0, 1, 2, 2, 3, 3, 4, 5, 5,  6,  6,  7,  7,  8,  8,
 	9,  9, 10, 10, 10, 11, 11, 12, 12, 13, 13, 14, 15, 15
-पूर्ण;
-अटल u8 gDeltaSwingTableIdx_MP_2GCCKB_N_TxPowerTrack_SDIO_8723B[] = अणु
+};
+static u8 gDeltaSwingTableIdx_MP_2GCCKB_N_TxPowerTrack_SDIO_8723B[] = {
 	0, 0, 1, 2, 2, 3, 3, 4, 4, 5,  6,  6,  7,  7,  7,  8,
 	8,  8,  9,  9,  9, 10, 10, 11, 11, 12, 12, 13, 14, 15
-पूर्ण;
-अटल u8 gDeltaSwingTableIdx_MP_2GCCKB_P_TxPowerTrack_SDIO_8723B[] = अणु
+};
+static u8 gDeltaSwingTableIdx_MP_2GCCKB_P_TxPowerTrack_SDIO_8723B[] = {
 	0, 0, 1, 2, 2, 2, 3, 3, 3, 4,  5,  5,  6,  6,  7,  7,
 	8,  8,  9,  9,  9, 10, 10, 11, 11, 12, 12, 13, 14, 15
-पूर्ण;
-अटल u8 gDeltaSwingTableIdx_MP_2GCCKA_N_TxPowerTrack_SDIO_8723B[] = अणु
+};
+static u8 gDeltaSwingTableIdx_MP_2GCCKA_N_TxPowerTrack_SDIO_8723B[] = {
 	0, 0, 1, 2, 2, 3, 3, 4, 4, 5,  6,  6,  7,  7,  7,  8,
 	8,  8,  9,  9,  9, 10, 10, 11, 11, 12, 12, 13, 14, 15
-पूर्ण;
-अटल u8 gDeltaSwingTableIdx_MP_2GCCKA_P_TxPowerTrack_SDIO_8723B[] = अणु
+};
+static u8 gDeltaSwingTableIdx_MP_2GCCKA_P_TxPowerTrack_SDIO_8723B[] = {
 	0, 0, 1, 2, 2, 2, 3, 3, 3, 4,  5,  5,  6,  6,  7,  7,
 	8,  8,  9,  9,  9, 10, 10, 11, 11, 12, 12, 13, 14, 15
-पूर्ण;
+};
 
-व्योम ODM_ReadAndConfig_MP_8723B_TxPowerTrack_SDIO(काष्ठा dm_odm_t *pDM_Odm)
-अणु
-	काष्ठा odm_rf_cal_t *pRFCalibrateInfo = &pDM_Odm->RFCalibrateInfo;
+void ODM_ReadAndConfig_MP_8723B_TxPowerTrack_SDIO(struct dm_odm_t *pDM_Odm)
+{
+	struct odm_rf_cal_t *pRFCalibrateInfo = &pDM_Odm->RFCalibrateInfo;
 
 	ODM_RT_TRACE(
 		pDM_Odm,
@@ -433,75 +432,75 @@
 	);
 
 
-	स_नकल(
+	memcpy(
 		pRFCalibrateInfo->DeltaSwingTableIdx_2GA_P,
 		gDeltaSwingTableIdx_MP_2GA_P_TxPowerTrack_SDIO_8723B,
 		DELTA_SWINGIDX_SIZE
 	);
-	स_नकल(
+	memcpy(
 		pRFCalibrateInfo->DeltaSwingTableIdx_2GA_N,
 		gDeltaSwingTableIdx_MP_2GA_N_TxPowerTrack_SDIO_8723B,
 		DELTA_SWINGIDX_SIZE
 	);
-	स_नकल(
+	memcpy(
 		pRFCalibrateInfo->DeltaSwingTableIdx_2GB_P,
 		gDeltaSwingTableIdx_MP_2GB_P_TxPowerTrack_SDIO_8723B,
 		DELTA_SWINGIDX_SIZE
 	);
-	स_नकल(
+	memcpy(
 		pRFCalibrateInfo->DeltaSwingTableIdx_2GB_N,
 		gDeltaSwingTableIdx_MP_2GB_N_TxPowerTrack_SDIO_8723B,
 		DELTA_SWINGIDX_SIZE
 	);
 
-	स_नकल(
+	memcpy(
 		pRFCalibrateInfo->DeltaSwingTableIdx_2GCCKA_P,
 		gDeltaSwingTableIdx_MP_2GCCKA_P_TxPowerTrack_SDIO_8723B,
 		DELTA_SWINGIDX_SIZE
 	);
-	स_नकल(
+	memcpy(
 		pRFCalibrateInfo->DeltaSwingTableIdx_2GCCKA_N,
 		gDeltaSwingTableIdx_MP_2GCCKA_N_TxPowerTrack_SDIO_8723B,
 		DELTA_SWINGIDX_SIZE
 	);
-	स_नकल(
+	memcpy(
 		pRFCalibrateInfo->DeltaSwingTableIdx_2GCCKB_P,
 		gDeltaSwingTableIdx_MP_2GCCKB_P_TxPowerTrack_SDIO_8723B,
 		DELTA_SWINGIDX_SIZE
 	);
-	स_नकल(
+	memcpy(
 		pRFCalibrateInfo->DeltaSwingTableIdx_2GCCKB_N,
 		gDeltaSwingTableIdx_MP_2GCCKB_N_TxPowerTrack_SDIO_8723B,
 		DELTA_SWINGIDX_SIZE
 	);
 
-	स_नकल(
+	memcpy(
 		pRFCalibrateInfo->DeltaSwingTableIdx_5GA_P,
 		gDeltaSwingTableIdx_MP_5GA_P_TxPowerTrack_SDIO_8723B,
 		DELTA_SWINGIDX_SIZE*3
 	);
-	स_नकल(
+	memcpy(
 		pRFCalibrateInfo->DeltaSwingTableIdx_5GA_N,
 		gDeltaSwingTableIdx_MP_5GA_N_TxPowerTrack_SDIO_8723B,
 		DELTA_SWINGIDX_SIZE*3
 	);
-	स_नकल(
+	memcpy(
 		pRFCalibrateInfo->DeltaSwingTableIdx_5GB_P,
 		gDeltaSwingTableIdx_MP_5GB_P_TxPowerTrack_SDIO_8723B,
 		DELTA_SWINGIDX_SIZE*3
 	);
-	स_नकल(
+	memcpy(
 		pRFCalibrateInfo->DeltaSwingTableIdx_5GB_N,
 		gDeltaSwingTableIdx_MP_5GB_N_TxPowerTrack_SDIO_8723B,
 		DELTA_SWINGIDX_SIZE*3
 	);
-पूर्ण
+}
 
 /******************************************************************************
 *                           TXPWR_LMT.TXT
 ******************************************************************************/
 
-अटल u8 *Array_MP_8723B_TXPWR_LMT[] = अणु
+static u8 *Array_MP_8723B_TXPWR_LMT[] = {
 	"FCC", "2.4G", "20M", "CCK", "1T", "01", "32",
 	"ETSI", "2.4G", "20M", "CCK", "1T", "01", "32",
 	"MKK", "2.4G", "20M", "CCK", "1T", "01", "32",
@@ -754,10 +753,10 @@
 	"FCC", "2.4G", "40M", "HT", "2T", "14", "63",
 	"ETSI", "2.4G", "40M", "HT", "2T", "14", "63",
 	"MKK", "2.4G", "40M", "HT", "2T", "14", "63"
-पूर्ण;
+};
 
-व्योम ODM_ReadAndConfig_MP_8723B_TXPWR_LMT(काष्ठा dm_odm_t *pDM_Odm)
-अणु
+void ODM_ReadAndConfig_MP_8723B_TXPWR_LMT(struct dm_odm_t *pDM_Odm)
+{
 	u32 i = 0;
 	u8 **Array = Array_MP_8723B_TXPWR_LMT;
 
@@ -768,7 +767,7 @@
 		("===> ODM_ReadAndConfig_MP_8723B_TXPWR_LMT\n")
 	);
 
-	क्रम (i = 0; i < ARRAY_SIZE(Array_MP_8723B_TXPWR_LMT); i += 7) अणु
+	for (i = 0; i < ARRAY_SIZE(Array_MP_8723B_TXPWR_LMT); i += 7) {
 		u8 *regulation = Array[i];
 		u8 *band = Array[i+1];
 		u8 *bandwidth = Array[i+2];
@@ -787,5 +786,5 @@
 			chnl,
 			val
 		);
-	पूर्ण
-पूर्ण
+	}
+}

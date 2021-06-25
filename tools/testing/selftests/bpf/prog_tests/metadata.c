@@ -1,142 +1,141 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 
 /*
  * Copyright 2020 Google LLC.
  */
 
-#समावेश <test_progs.h>
-#समावेश <cgroup_helpers.h>
-#समावेश <network_helpers.h>
+#include <test_progs.h>
+#include <cgroup_helpers.h>
+#include <network_helpers.h>
 
-#समावेश "metadata_unused.skel.h"
-#समावेश "metadata_used.skel.h"
+#include "metadata_unused.skel.h"
+#include "metadata_used.skel.h"
 
-अटल पूर्णांक duration;
+static int duration;
 
-अटल पूर्णांक prog_holds_map(पूर्णांक prog_fd, पूर्णांक map_fd)
-अणु
-	काष्ठा bpf_prog_info prog_info = अणुपूर्ण;
-	काष्ठा bpf_prog_info map_info = अणुपूर्ण;
+static int prog_holds_map(int prog_fd, int map_fd)
+{
+	struct bpf_prog_info prog_info = {};
+	struct bpf_prog_info map_info = {};
 	__u32 prog_info_len;
 	__u32 map_info_len;
 	__u32 *map_ids;
-	पूर्णांक nr_maps;
-	पूर्णांक ret;
-	पूर्णांक i;
+	int nr_maps;
+	int ret;
+	int i;
 
-	map_info_len = माप(map_info);
+	map_info_len = sizeof(map_info);
 	ret = bpf_obj_get_info_by_fd(map_fd, &map_info, &map_info_len);
-	अगर (ret)
-		वापस -त्रुटि_सं;
+	if (ret)
+		return -errno;
 
-	prog_info_len = माप(prog_info);
+	prog_info_len = sizeof(prog_info);
 	ret = bpf_obj_get_info_by_fd(prog_fd, &prog_info, &prog_info_len);
-	अगर (ret)
-		वापस -त्रुटि_सं;
+	if (ret)
+		return -errno;
 
-	map_ids = सुस्मृति(prog_info.nr_map_ids, माप(__u32));
-	अगर (!map_ids)
-		वापस -ENOMEM;
+	map_ids = calloc(prog_info.nr_map_ids, sizeof(__u32));
+	if (!map_ids)
+		return -ENOMEM;
 
 	nr_maps = prog_info.nr_map_ids;
-	स_रखो(&prog_info, 0, माप(prog_info));
+	memset(&prog_info, 0, sizeof(prog_info));
 	prog_info.nr_map_ids = nr_maps;
 	prog_info.map_ids = ptr_to_u64(map_ids);
-	prog_info_len = माप(prog_info);
+	prog_info_len = sizeof(prog_info);
 
 	ret = bpf_obj_get_info_by_fd(prog_fd, &prog_info, &prog_info_len);
-	अगर (ret) अणु
-		ret = -त्रुटि_सं;
-		जाओ मुक्त_map_ids;
-	पूर्ण
+	if (ret) {
+		ret = -errno;
+		goto free_map_ids;
+	}
 
 	ret = -ENOENT;
-	क्रम (i = 0; i < prog_info.nr_map_ids; i++) अणु
-		अगर (map_ids[i] == map_info.id) अणु
+	for (i = 0; i < prog_info.nr_map_ids; i++) {
+		if (map_ids[i] == map_info.id) {
 			ret = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-मुक्त_map_ids:
-	मुक्त(map_ids);
-	वापस ret;
-पूर्ण
+free_map_ids:
+	free(map_ids);
+	return ret;
+}
 
-अटल व्योम test_metadata_unused(व्योम)
-अणु
-	काष्ठा metadata_unused *obj;
-	पूर्णांक err;
+static void test_metadata_unused(void)
+{
+	struct metadata_unused *obj;
+	int err;
 
-	obj = metadata_unused__खोलो_and_load();
-	अगर (CHECK(!obj, "skel-load", "errno %d", त्रुटि_सं))
-		वापस;
+	obj = metadata_unused__open_and_load();
+	if (CHECK(!obj, "skel-load", "errno %d", errno))
+		return;
 
 	err = prog_holds_map(bpf_program__fd(obj->progs.prog),
 			     bpf_map__fd(obj->maps.rodata));
-	अगर (CHECK(err, "prog-holds-rodata", "errno: %d", err))
-		वापस;
+	if (CHECK(err, "prog-holds-rodata", "errno: %d", err))
+		return;
 
 	/* Assert that we can access the metadata in skel and the values are
 	 * what we expect.
 	 */
-	अगर (CHECK(म_भेदन(obj->rodata->bpf_metadata_a, "foo",
-			  माप(obj->rodata->bpf_metadata_a)),
+	if (CHECK(strncmp(obj->rodata->bpf_metadata_a, "foo",
+			  sizeof(obj->rodata->bpf_metadata_a)),
 		  "bpf_metadata_a", "expected \"foo\", value differ"))
-		जाओ बंद_bpf_object;
-	अगर (CHECK(obj->rodata->bpf_metadata_b != 1, "bpf_metadata_b",
+		goto close_bpf_object;
+	if (CHECK(obj->rodata->bpf_metadata_b != 1, "bpf_metadata_b",
 		  "expected 1, got %d", obj->rodata->bpf_metadata_b))
-		जाओ बंद_bpf_object;
+		goto close_bpf_object;
 
 	/* Assert that binding metadata map to prog again succeeds. */
 	err = bpf_prog_bind_map(bpf_program__fd(obj->progs.prog),
-				bpf_map__fd(obj->maps.rodata), शून्य);
-	CHECK(err, "rebind_map", "errno %d, expected 0", त्रुटि_सं);
+				bpf_map__fd(obj->maps.rodata), NULL);
+	CHECK(err, "rebind_map", "errno %d, expected 0", errno);
 
-बंद_bpf_object:
+close_bpf_object:
 	metadata_unused__destroy(obj);
-पूर्ण
+}
 
-अटल व्योम test_metadata_used(व्योम)
-अणु
-	काष्ठा metadata_used *obj;
-	पूर्णांक err;
+static void test_metadata_used(void)
+{
+	struct metadata_used *obj;
+	int err;
 
-	obj = metadata_used__खोलो_and_load();
-	अगर (CHECK(!obj, "skel-load", "errno %d", त्रुटि_सं))
-		वापस;
+	obj = metadata_used__open_and_load();
+	if (CHECK(!obj, "skel-load", "errno %d", errno))
+		return;
 
 	err = prog_holds_map(bpf_program__fd(obj->progs.prog),
 			     bpf_map__fd(obj->maps.rodata));
-	अगर (CHECK(err, "prog-holds-rodata", "errno: %d", err))
-		वापस;
+	if (CHECK(err, "prog-holds-rodata", "errno: %d", err))
+		return;
 
 	/* Assert that we can access the metadata in skel and the values are
 	 * what we expect.
 	 */
-	अगर (CHECK(म_भेदन(obj->rodata->bpf_metadata_a, "bar",
-			  माप(obj->rodata->bpf_metadata_a)),
+	if (CHECK(strncmp(obj->rodata->bpf_metadata_a, "bar",
+			  sizeof(obj->rodata->bpf_metadata_a)),
 		  "metadata_a", "expected \"bar\", value differ"))
-		जाओ बंद_bpf_object;
-	अगर (CHECK(obj->rodata->bpf_metadata_b != 2, "metadata_b",
+		goto close_bpf_object;
+	if (CHECK(obj->rodata->bpf_metadata_b != 2, "metadata_b",
 		  "expected 2, got %d", obj->rodata->bpf_metadata_b))
-		जाओ बंद_bpf_object;
+		goto close_bpf_object;
 
 	/* Assert that binding metadata map to prog again succeeds. */
 	err = bpf_prog_bind_map(bpf_program__fd(obj->progs.prog),
-				bpf_map__fd(obj->maps.rodata), शून्य);
-	CHECK(err, "rebind_map", "errno %d, expected 0", त्रुटि_सं);
+				bpf_map__fd(obj->maps.rodata), NULL);
+	CHECK(err, "rebind_map", "errno %d, expected 0", errno);
 
-बंद_bpf_object:
+close_bpf_object:
 	metadata_used__destroy(obj);
-पूर्ण
+}
 
-व्योम test_metadata(व्योम)
-अणु
-	अगर (test__start_subtest("unused"))
+void test_metadata(void)
+{
+	if (test__start_subtest("unused"))
 		test_metadata_unused();
 
-	अगर (test__start_subtest("used"))
+	if (test__start_subtest("used"))
 		test_metadata_used();
-पूर्ण
+}

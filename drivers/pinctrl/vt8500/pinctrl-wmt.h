@@ -1,39 +1,38 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Pinctrl driver क्रम the Wondermedia SoC's
+ * Pinctrl driver for the Wondermedia SoC's
  *
  * Copyright (c) 2013 Tony Prisk <linux@prisktech.co.nz>
  */
 
-#समावेश <linux/gpio/driver.h>
+#include <linux/gpio/driver.h>
 
-/* VT8500 has no enable रेजिस्टर in the extgpio bank. */
-#घोषणा NO_REG	0xFFFF
+/* VT8500 has no enable register in the extgpio bank. */
+#define NO_REG	0xFFFF
 
-#घोषणा WMT_PINCTRL_BANK(__en, __dir, __करोut, __din, __pen, __pcfg)	\
-अणु									\
+#define WMT_PINCTRL_BANK(__en, __dir, __dout, __din, __pen, __pcfg)	\
+{									\
 	.reg_en		= __en,						\
 	.reg_dir	= __dir,					\
-	.reg_data_out	= __करोut,					\
+	.reg_data_out	= __dout,					\
 	.reg_data_in	= __din,					\
 	.reg_pull_en	= __pen,					\
 	.reg_pull_cfg	= __pcfg,					\
-पूर्ण
+}
 
-/* Encode/decode the bank/bit pairs पूर्णांकo a pin value */
-#घोषणा WMT_PIN(__bank, __offset)	((__bank << 5) | __offset)
-#घोषणा WMT_BANK_FROM_PIN(__pin)	(__pin >> 5)
-#घोषणा WMT_BIT_FROM_PIN(__pin)		(__pin & 0x1f)
+/* Encode/decode the bank/bit pairs into a pin value */
+#define WMT_PIN(__bank, __offset)	((__bank << 5) | __offset)
+#define WMT_BANK_FROM_PIN(__pin)	(__pin >> 5)
+#define WMT_BIT_FROM_PIN(__pin)		(__pin & 0x1f)
 
-#घोषणा WMT_GROUP(__name, __data)		\
-अणु						\
+#define WMT_GROUP(__name, __data)		\
+{						\
 	.name = __name,				\
 	.pins = __data,				\
 	.npins = ARRAY_SIZE(__data),		\
-पूर्ण
+}
 
-काष्ठा wmt_pinctrl_bank_रेजिस्टरs अणु
+struct wmt_pinctrl_bank_registers {
 	u32	reg_en;
 	u32	reg_dir;
 	u32	reg_data_out;
@@ -41,31 +40,31 @@
 
 	u32	reg_pull_en;
 	u32	reg_pull_cfg;
-पूर्ण;
+};
 
-काष्ठा wmt_pinctrl_group अणु
-	स्थिर अक्षर *name;
-	स्थिर अचिन्हित पूर्णांक *pins;
-	स्थिर अचिन्हित npins;
-पूर्ण;
+struct wmt_pinctrl_group {
+	const char *name;
+	const unsigned int *pins;
+	const unsigned npins;
+};
 
-काष्ठा wmt_pinctrl_data अणु
-	काष्ठा device *dev;
-	काष्ठा pinctrl_dev *pctl_dev;
+struct wmt_pinctrl_data {
+	struct device *dev;
+	struct pinctrl_dev *pctl_dev;
 
-	/* must be initialized beक्रमe calling wmt_pinctrl_probe */
-	व्योम __iomem *base;
-	स्थिर काष्ठा wmt_pinctrl_bank_रेजिस्टरs *banks;
-	स्थिर काष्ठा pinctrl_pin_desc *pins;
-	स्थिर अक्षर * स्थिर *groups;
+	/* must be initialized before calling wmt_pinctrl_probe */
+	void __iomem *base;
+	const struct wmt_pinctrl_bank_registers *banks;
+	const struct pinctrl_pin_desc *pins;
+	const char * const *groups;
 
 	u32 nbanks;
 	u32 npins;
 	u32 ngroups;
 
-	काष्ठा gpio_chip gpio_chip;
-	काष्ठा pinctrl_gpio_range gpio_range;
-पूर्ण;
+	struct gpio_chip gpio_chip;
+	struct pinctrl_gpio_range gpio_range;
+};
 
-पूर्णांक wmt_pinctrl_probe(काष्ठा platक्रमm_device *pdev,
-		      काष्ठा wmt_pinctrl_data *data);
+int wmt_pinctrl_probe(struct platform_device *pdev,
+		      struct wmt_pinctrl_data *data);

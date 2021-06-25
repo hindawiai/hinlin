@@ -1,130 +1,129 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 ARM Ltd.
  */
-#अगर_अघोषित __ASM_CACHE_H
-#घोषणा __ASM_CACHE_H
+#ifndef __ASM_CACHE_H
+#define __ASM_CACHE_H
 
-#समावेश <यंत्र/cputype.h>
+#include <asm/cputype.h>
 
-#घोषणा CTR_L1IP_SHIFT		14
-#घोषणा CTR_L1IP_MASK		3
-#घोषणा CTR_DMINLINE_SHIFT	16
-#घोषणा CTR_IMINLINE_SHIFT	0
-#घोषणा CTR_IMINLINE_MASK	0xf
-#घोषणा CTR_ERG_SHIFT		20
-#घोषणा CTR_CWG_SHIFT		24
-#घोषणा CTR_CWG_MASK		15
-#घोषणा CTR_IDC_SHIFT		28
-#घोषणा CTR_DIC_SHIFT		29
+#define CTR_L1IP_SHIFT		14
+#define CTR_L1IP_MASK		3
+#define CTR_DMINLINE_SHIFT	16
+#define CTR_IMINLINE_SHIFT	0
+#define CTR_IMINLINE_MASK	0xf
+#define CTR_ERG_SHIFT		20
+#define CTR_CWG_SHIFT		24
+#define CTR_CWG_MASK		15
+#define CTR_IDC_SHIFT		28
+#define CTR_DIC_SHIFT		29
 
-#घोषणा CTR_CACHE_MINLINE_MASK	\
+#define CTR_CACHE_MINLINE_MASK	\
 	(0xf << CTR_DMINLINE_SHIFT | CTR_IMINLINE_MASK << CTR_IMINLINE_SHIFT)
 
-#घोषणा CTR_L1IP(ctr)		(((ctr) >> CTR_L1IP_SHIFT) & CTR_L1IP_MASK)
+#define CTR_L1IP(ctr)		(((ctr) >> CTR_L1IP_SHIFT) & CTR_L1IP_MASK)
 
-#घोषणा ICACHE_POLICY_VPIPT	0
-#घोषणा ICACHE_POLICY_RESERVED	1
-#घोषणा ICACHE_POLICY_VIPT	2
-#घोषणा ICACHE_POLICY_PIPT	3
+#define ICACHE_POLICY_VPIPT	0
+#define ICACHE_POLICY_RESERVED	1
+#define ICACHE_POLICY_VIPT	2
+#define ICACHE_POLICY_PIPT	3
 
-#घोषणा L1_CACHE_SHIFT		(6)
-#घोषणा L1_CACHE_BYTES		(1 << L1_CACHE_SHIFT)
+#define L1_CACHE_SHIFT		(6)
+#define L1_CACHE_BYTES		(1 << L1_CACHE_SHIFT)
 
 
-#घोषणा CLIDR_LOUU_SHIFT	27
-#घोषणा CLIDR_LOC_SHIFT		24
-#घोषणा CLIDR_LOUIS_SHIFT	21
+#define CLIDR_LOUU_SHIFT	27
+#define CLIDR_LOC_SHIFT		24
+#define CLIDR_LOUIS_SHIFT	21
 
-#घोषणा CLIDR_LOUU(clidr)	(((clidr) >> CLIDR_LOUU_SHIFT) & 0x7)
-#घोषणा CLIDR_LOC(clidr)	(((clidr) >> CLIDR_LOC_SHIFT) & 0x7)
-#घोषणा CLIDR_LOUIS(clidr)	(((clidr) >> CLIDR_LOUIS_SHIFT) & 0x7)
+#define CLIDR_LOUU(clidr)	(((clidr) >> CLIDR_LOUU_SHIFT) & 0x7)
+#define CLIDR_LOC(clidr)	(((clidr) >> CLIDR_LOC_SHIFT) & 0x7)
+#define CLIDR_LOUIS(clidr)	(((clidr) >> CLIDR_LOUIS_SHIFT) & 0x7)
 
 /*
- * Memory वापसed by kदो_स्मृति() may be used क्रम DMA, so we must make
+ * Memory returned by kmalloc() may be used for DMA, so we must make
  * sure that all such allocations are cache aligned. Otherwise,
- * unrelated code may cause parts of the buffer to be पढ़ो पूर्णांकo the
- * cache beक्रमe the transfer is करोne, causing old data to be seen by
+ * unrelated code may cause parts of the buffer to be read into the
+ * cache before the transfer is done, causing old data to be seen by
  * the CPU.
  */
-#घोषणा ARCH_DMA_MINALIGN	(128)
+#define ARCH_DMA_MINALIGN	(128)
 
-#अगर_घोषित CONFIG_KASAN_SW_TAGS
-#घोषणा ARCH_SLAB_MINALIGN	(1ULL << KASAN_SHADOW_SCALE_SHIFT)
-#या_अगर defined(CONFIG_KASAN_HW_TAGS)
-#घोषणा ARCH_SLAB_MINALIGN	MTE_GRANULE_SIZE
-#पूर्ण_अगर
+#ifdef CONFIG_KASAN_SW_TAGS
+#define ARCH_SLAB_MINALIGN	(1ULL << KASAN_SHADOW_SCALE_SHIFT)
+#elif defined(CONFIG_KASAN_HW_TAGS)
+#define ARCH_SLAB_MINALIGN	MTE_GRANULE_SIZE
+#endif
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#समावेश <linux/bitops.h>
+#include <linux/bitops.h>
 
-#घोषणा ICACHEF_ALIASING	0
-#घोषणा ICACHEF_VPIPT		1
-बाह्य अचिन्हित दीर्घ __icache_flags;
+#define ICACHEF_ALIASING	0
+#define ICACHEF_VPIPT		1
+extern unsigned long __icache_flags;
 
 /*
  * Whilst the D-side always behaves as PIPT on AArch64, aliasing is
  * permitted in the I-cache.
  */
-अटल अंतरभूत पूर्णांक icache_is_aliasing(व्योम)
-अणु
-	वापस test_bit(ICACHEF_ALIASING, &__icache_flags);
-पूर्ण
+static inline int icache_is_aliasing(void)
+{
+	return test_bit(ICACHEF_ALIASING, &__icache_flags);
+}
 
-अटल __always_अंतरभूत पूर्णांक icache_is_vpipt(व्योम)
-अणु
-	वापस test_bit(ICACHEF_VPIPT, &__icache_flags);
-पूर्ण
+static __always_inline int icache_is_vpipt(void)
+{
+	return test_bit(ICACHEF_VPIPT, &__icache_flags);
+}
 
-अटल अंतरभूत u32 cache_type_cwg(व्योम)
-अणु
-	वापस (पढ़ो_cpuid_cachetype() >> CTR_CWG_SHIFT) & CTR_CWG_MASK;
-पूर्ण
+static inline u32 cache_type_cwg(void)
+{
+	return (read_cpuid_cachetype() >> CTR_CWG_SHIFT) & CTR_CWG_MASK;
+}
 
-#घोषणा __पढ़ो_mostly __section(".data..read_mostly")
+#define __read_mostly __section(".data..read_mostly")
 
-अटल अंतरभूत पूर्णांक cache_line_size_of_cpu(व्योम)
-अणु
+static inline int cache_line_size_of_cpu(void)
+{
 	u32 cwg = cache_type_cwg();
 
-	वापस cwg ? 4 << cwg : ARCH_DMA_MINALIGN;
-पूर्ण
+	return cwg ? 4 << cwg : ARCH_DMA_MINALIGN;
+}
 
-पूर्णांक cache_line_size(व्योम);
+int cache_line_size(void);
 
 /*
  * Read the effective value of CTR_EL0.
  *
- * According to ARM ARM क्रम ARMv8-A (ARM DDI 0487C.a),
+ * According to ARM ARM for ARMv8-A (ARM DDI 0487C.a),
  * section D10.2.33 "CTR_EL0, Cache Type Register" :
  *
- * CTR_EL0.IDC reports the data cache clean requirements क्रम
- * inकाष्ठाion to data coherence.
+ * CTR_EL0.IDC reports the data cache clean requirements for
+ * instruction to data coherence.
  *
  *  0 - dcache clean to PoU is required unless :
  *     (CLIDR_EL1.LoC == 0) || (CLIDR_EL1.LoUIS == 0 && CLIDR_EL1.LoUU == 0)
- *  1 - dcache clean to PoU is not required क्रम i-to-d coherence.
+ *  1 - dcache clean to PoU is not required for i-to-d coherence.
  *
  * This routine provides the CTR_EL0 with the IDC field updated to the
  * effective state.
  */
-अटल अंतरभूत u32 __attribute_स्थिर__ पढ़ो_cpuid_effective_cachetype(व्योम)
-अणु
-	u32 ctr = पढ़ो_cpuid_cachetype();
+static inline u32 __attribute_const__ read_cpuid_effective_cachetype(void)
+{
+	u32 ctr = read_cpuid_cachetype();
 
-	अगर (!(ctr & BIT(CTR_IDC_SHIFT))) अणु
-		u64 clidr = पढ़ो_sysreg(clidr_el1);
+	if (!(ctr & BIT(CTR_IDC_SHIFT))) {
+		u64 clidr = read_sysreg(clidr_el1);
 
-		अगर (CLIDR_LOC(clidr) == 0 ||
+		if (CLIDR_LOC(clidr) == 0 ||
 		    (CLIDR_LOUIS(clidr) == 0 && CLIDR_LOUU(clidr) == 0))
 			ctr |= BIT(CTR_IDC_SHIFT);
-	पूर्ण
+	}
 
-	वापस ctr;
-पूर्ण
+	return ctr;
+}
 
-#पूर्ण_अगर	/* __ASSEMBLY__ */
+#endif	/* __ASSEMBLY__ */
 
-#पूर्ण_अगर
+#endif

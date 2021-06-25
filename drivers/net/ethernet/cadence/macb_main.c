@@ -1,103 +1,102 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Cadence MACB/GEM Ethernet Controller driver
  *
- * Copyright (C) 2004-2006 Aपंचांगel Corporation
+ * Copyright (C) 2004-2006 Atmel Corporation
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#समावेश <linux/clk.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/circ_buf.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/phylink.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/of_mdपन.स>
-#समावेश <linux/of_net.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/udp.h>
-#समावेश <linux/tcp.h>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश "macb.h"
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include <linux/crc32.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/circ_buf.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/gpio.h>
+#include <linux/gpio/consumer.h>
+#include <linux/interrupt.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/dma-mapping.h>
+#include <linux/platform_device.h>
+#include <linux/phylink.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_gpio.h>
+#include <linux/of_mdio.h>
+#include <linux/of_net.h>
+#include <linux/ip.h>
+#include <linux/udp.h>
+#include <linux/tcp.h>
+#include <linux/iopoll.h>
+#include <linux/pm_runtime.h>
+#include "macb.h"
 
-/* This काष्ठाure is only used क्रम MACB on SiFive FU540 devices */
-काष्ठा sअगरive_fu540_macb_mgmt अणु
-	व्योम __iomem *reg;
-	अचिन्हित दीर्घ rate;
-	काष्ठा clk_hw hw;
-पूर्ण;
+/* This structure is only used for MACB on SiFive FU540 devices */
+struct sifive_fu540_macb_mgmt {
+	void __iomem *reg;
+	unsigned long rate;
+	struct clk_hw hw;
+};
 
-#घोषणा MACB_RX_BUFFER_SIZE	128
-#घोषणा RX_BUFFER_MULTIPLE	64  /* bytes */
+#define MACB_RX_BUFFER_SIZE	128
+#define RX_BUFFER_MULTIPLE	64  /* bytes */
 
-#घोषणा DEFAULT_RX_RING_SIZE	512 /* must be घातer of 2 */
-#घोषणा MIN_RX_RING_SIZE	64
-#घोषणा MAX_RX_RING_SIZE	8192
-#घोषणा RX_RING_BYTES(bp)	(macb_dma_desc_get_size(bp)	\
+#define DEFAULT_RX_RING_SIZE	512 /* must be power of 2 */
+#define MIN_RX_RING_SIZE	64
+#define MAX_RX_RING_SIZE	8192
+#define RX_RING_BYTES(bp)	(macb_dma_desc_get_size(bp)	\
 				 * (bp)->rx_ring_size)
 
-#घोषणा DEFAULT_TX_RING_SIZE	512 /* must be घातer of 2 */
-#घोषणा MIN_TX_RING_SIZE	64
-#घोषणा MAX_TX_RING_SIZE	4096
-#घोषणा TX_RING_BYTES(bp)	(macb_dma_desc_get_size(bp)	\
+#define DEFAULT_TX_RING_SIZE	512 /* must be power of 2 */
+#define MIN_TX_RING_SIZE	64
+#define MAX_TX_RING_SIZE	4096
+#define TX_RING_BYTES(bp)	(macb_dma_desc_get_size(bp)	\
 				 * (bp)->tx_ring_size)
 
 /* level of occupied TX descriptors under which we wake up TX process */
-#घोषणा MACB_TX_WAKEUP_THRESH(bp)	(3 * (bp)->tx_ring_size / 4)
+#define MACB_TX_WAKEUP_THRESH(bp)	(3 * (bp)->tx_ring_size / 4)
 
-#घोषणा MACB_RX_INT_FLAGS	(MACB_BIT(RCOMP) | MACB_BIT(ISR_ROVR))
-#घोषणा MACB_TX_ERR_FLAGS	(MACB_BIT(ISR_TUND)			\
+#define MACB_RX_INT_FLAGS	(MACB_BIT(RCOMP) | MACB_BIT(ISR_ROVR))
+#define MACB_TX_ERR_FLAGS	(MACB_BIT(ISR_TUND)			\
 					| MACB_BIT(ISR_RLE)		\
 					| MACB_BIT(TXERR))
-#घोषणा MACB_TX_INT_FLAGS	(MACB_TX_ERR_FLAGS | MACB_BIT(TCOMP)	\
+#define MACB_TX_INT_FLAGS	(MACB_TX_ERR_FLAGS | MACB_BIT(TCOMP)	\
 					| MACB_BIT(TXUBR))
 
 /* Max length of transmit frame must be a multiple of 8 bytes */
-#घोषणा MACB_TX_LEN_ALIGN	8
-#घोषणा MACB_MAX_TX_LEN		((अचिन्हित पूर्णांक)((1 << MACB_TX_FRMLEN_SIZE) - 1) & ~((अचिन्हित पूर्णांक)(MACB_TX_LEN_ALIGN - 1)))
-/* Limit maximum TX length as per Cadence TSO errata. This is to aव्योम a
+#define MACB_TX_LEN_ALIGN	8
+#define MACB_MAX_TX_LEN		((unsigned int)((1 << MACB_TX_FRMLEN_SIZE) - 1) & ~((unsigned int)(MACB_TX_LEN_ALIGN - 1)))
+/* Limit maximum TX length as per Cadence TSO errata. This is to avoid a
  * false amba_error in TX path from the DMA assuming there is not enough
  * space in the SRAM (16KB) even when there is.
  */
-#घोषणा GEM_MAX_TX_LEN		(अचिन्हित पूर्णांक)(0x3FC0)
+#define GEM_MAX_TX_LEN		(unsigned int)(0x3FC0)
 
-#घोषणा GEM_MTU_MIN_SIZE	ETH_MIN_MTU
-#घोषणा MACB_NETIF_LSO		NETIF_F_TSO
+#define GEM_MTU_MIN_SIZE	ETH_MIN_MTU
+#define MACB_NETIF_LSO		NETIF_F_TSO
 
-#घोषणा MACB_WOL_HAS_MAGIC_PACKET	(0x1 << 0)
-#घोषणा MACB_WOL_ENABLED		(0x1 << 1)
+#define MACB_WOL_HAS_MAGIC_PACKET	(0x1 << 0)
+#define MACB_WOL_ENABLED		(0x1 << 1)
 
-#घोषणा HS_SPEED_10000M			4
-#घोषणा MACB_SERDES_RATE_10G		1
+#define HS_SPEED_10000M			4
+#define MACB_SERDES_RATE_10G		1
 
-/* Graceful stop समयouts in us. We should allow up to
- * 1 frame समय (10 Mbits/s, full-duplex, ignoring collisions)
+/* Graceful stop timeouts in us. We should allow up to
+ * 1 frame time (10 Mbits/s, full-duplex, ignoring collisions)
  */
-#घोषणा MACB_HALT_TIMEOUT	1230
+#define MACB_HALT_TIMEOUT	1230
 
-#घोषणा MACB_PM_TIMEOUT  100 /* ms */
+#define MACB_PM_TIMEOUT  100 /* ms */
 
-#घोषणा MACB_MDIO_TIMEOUT	1000000 /* in usecs */
+#define MACB_MDIO_TIMEOUT	1000000 /* in usecs */
 
-/* DMA buffer descriptor might be dअगरferent size
+/* DMA buffer descriptor might be different size
  * depends on hardware configuration:
  *
  * 1. dma address width 32 bits:
@@ -110,201 +109,201 @@
  *    word 3: upper 32 bit address of Data Buffer
  *    word 4: unused
  *
- * 3. dma address width 32 bits with hardware बारtamping:
+ * 3. dma address width 32 bits with hardware timestamping:
  *    word 1: 32 bit address of Data Buffer
  *    word 2: control
- *    word 3: बारtamp word 1
- *    word 4: बारtamp word 2
+ *    word 3: timestamp word 1
+ *    word 4: timestamp word 2
  *
- * 4. dma address width 64 bits with hardware बारtamping:
+ * 4. dma address width 64 bits with hardware timestamping:
  *    word 1: 32 bit address of Data Buffer
  *    word 2: control
  *    word 3: upper 32 bit address of Data Buffer
  *    word 4: unused
- *    word 5: बारtamp word 1
- *    word 6: बारtamp word 2
+ *    word 5: timestamp word 1
+ *    word 6: timestamp word 2
  */
-अटल अचिन्हित पूर्णांक macb_dma_desc_get_size(काष्ठा macb *bp)
-अणु
-#अगर_घोषित MACB_EXT_DESC
-	अचिन्हित पूर्णांक desc_size;
+static unsigned int macb_dma_desc_get_size(struct macb *bp)
+{
+#ifdef MACB_EXT_DESC
+	unsigned int desc_size;
 
-	चयन (bp->hw_dma_cap) अणु
-	हाल HW_DMA_CAP_64B:
-		desc_size = माप(काष्ठा macb_dma_desc)
-			+ माप(काष्ठा macb_dma_desc_64);
-		अवरोध;
-	हाल HW_DMA_CAP_PTP:
-		desc_size = माप(काष्ठा macb_dma_desc)
-			+ माप(काष्ठा macb_dma_desc_ptp);
-		अवरोध;
-	हाल HW_DMA_CAP_64B_PTP:
-		desc_size = माप(काष्ठा macb_dma_desc)
-			+ माप(काष्ठा macb_dma_desc_64)
-			+ माप(काष्ठा macb_dma_desc_ptp);
-		अवरोध;
-	शेष:
-		desc_size = माप(काष्ठा macb_dma_desc);
-	पूर्ण
-	वापस desc_size;
-#पूर्ण_अगर
-	वापस माप(काष्ठा macb_dma_desc);
-पूर्ण
+	switch (bp->hw_dma_cap) {
+	case HW_DMA_CAP_64B:
+		desc_size = sizeof(struct macb_dma_desc)
+			+ sizeof(struct macb_dma_desc_64);
+		break;
+	case HW_DMA_CAP_PTP:
+		desc_size = sizeof(struct macb_dma_desc)
+			+ sizeof(struct macb_dma_desc_ptp);
+		break;
+	case HW_DMA_CAP_64B_PTP:
+		desc_size = sizeof(struct macb_dma_desc)
+			+ sizeof(struct macb_dma_desc_64)
+			+ sizeof(struct macb_dma_desc_ptp);
+		break;
+	default:
+		desc_size = sizeof(struct macb_dma_desc);
+	}
+	return desc_size;
+#endif
+	return sizeof(struct macb_dma_desc);
+}
 
-अटल अचिन्हित पूर्णांक macb_adj_dma_desc_idx(काष्ठा macb *bp, अचिन्हित पूर्णांक desc_idx)
-अणु
-#अगर_घोषित MACB_EXT_DESC
-	चयन (bp->hw_dma_cap) अणु
-	हाल HW_DMA_CAP_64B:
-	हाल HW_DMA_CAP_PTP:
+static unsigned int macb_adj_dma_desc_idx(struct macb *bp, unsigned int desc_idx)
+{
+#ifdef MACB_EXT_DESC
+	switch (bp->hw_dma_cap) {
+	case HW_DMA_CAP_64B:
+	case HW_DMA_CAP_PTP:
 		desc_idx <<= 1;
-		अवरोध;
-	हाल HW_DMA_CAP_64B_PTP:
+		break;
+	case HW_DMA_CAP_64B_PTP:
 		desc_idx *= 3;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-#पूर्ण_अगर
-	वापस desc_idx;
-पूर्ण
+		break;
+	default:
+		break;
+	}
+#endif
+	return desc_idx;
+}
 
-#अगर_घोषित CONFIG_ARCH_DMA_ADDR_T_64BIT
-अटल काष्ठा macb_dma_desc_64 *macb_64b_desc(काष्ठा macb *bp, काष्ठा macb_dma_desc *desc)
-अणु
-	वापस (काष्ठा macb_dma_desc_64 *)((व्योम *)desc
-		+ माप(काष्ठा macb_dma_desc));
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
+static struct macb_dma_desc_64 *macb_64b_desc(struct macb *bp, struct macb_dma_desc *desc)
+{
+	return (struct macb_dma_desc_64 *)((void *)desc
+		+ sizeof(struct macb_dma_desc));
+}
+#endif
 
 /* Ring buffer accessors */
-अटल अचिन्हित पूर्णांक macb_tx_ring_wrap(काष्ठा macb *bp, अचिन्हित पूर्णांक index)
-अणु
-	वापस index & (bp->tx_ring_size - 1);
-पूर्ण
+static unsigned int macb_tx_ring_wrap(struct macb *bp, unsigned int index)
+{
+	return index & (bp->tx_ring_size - 1);
+}
 
-अटल काष्ठा macb_dma_desc *macb_tx_desc(काष्ठा macb_queue *queue,
-					  अचिन्हित पूर्णांक index)
-अणु
+static struct macb_dma_desc *macb_tx_desc(struct macb_queue *queue,
+					  unsigned int index)
+{
 	index = macb_tx_ring_wrap(queue->bp, index);
 	index = macb_adj_dma_desc_idx(queue->bp, index);
-	वापस &queue->tx_ring[index];
-पूर्ण
+	return &queue->tx_ring[index];
+}
 
-अटल काष्ठा macb_tx_skb *macb_tx_skb(काष्ठा macb_queue *queue,
-				       अचिन्हित पूर्णांक index)
-अणु
-	वापस &queue->tx_skb[macb_tx_ring_wrap(queue->bp, index)];
-पूर्ण
+static struct macb_tx_skb *macb_tx_skb(struct macb_queue *queue,
+				       unsigned int index)
+{
+	return &queue->tx_skb[macb_tx_ring_wrap(queue->bp, index)];
+}
 
-अटल dma_addr_t macb_tx_dma(काष्ठा macb_queue *queue, अचिन्हित पूर्णांक index)
-अणु
+static dma_addr_t macb_tx_dma(struct macb_queue *queue, unsigned int index)
+{
 	dma_addr_t offset;
 
 	offset = macb_tx_ring_wrap(queue->bp, index) *
 			macb_dma_desc_get_size(queue->bp);
 
-	वापस queue->tx_ring_dma + offset;
-पूर्ण
+	return queue->tx_ring_dma + offset;
+}
 
-अटल अचिन्हित पूर्णांक macb_rx_ring_wrap(काष्ठा macb *bp, अचिन्हित पूर्णांक index)
-अणु
-	वापस index & (bp->rx_ring_size - 1);
-पूर्ण
+static unsigned int macb_rx_ring_wrap(struct macb *bp, unsigned int index)
+{
+	return index & (bp->rx_ring_size - 1);
+}
 
-अटल काष्ठा macb_dma_desc *macb_rx_desc(काष्ठा macb_queue *queue, अचिन्हित पूर्णांक index)
-अणु
+static struct macb_dma_desc *macb_rx_desc(struct macb_queue *queue, unsigned int index)
+{
 	index = macb_rx_ring_wrap(queue->bp, index);
 	index = macb_adj_dma_desc_idx(queue->bp, index);
-	वापस &queue->rx_ring[index];
-पूर्ण
+	return &queue->rx_ring[index];
+}
 
-अटल व्योम *macb_rx_buffer(काष्ठा macb_queue *queue, अचिन्हित पूर्णांक index)
-अणु
-	वापस queue->rx_buffers + queue->bp->rx_buffer_size *
+static void *macb_rx_buffer(struct macb_queue *queue, unsigned int index)
+{
+	return queue->rx_buffers + queue->bp->rx_buffer_size *
 	       macb_rx_ring_wrap(queue->bp, index);
-पूर्ण
+}
 
 /* I/O accessors */
-अटल u32 hw_पढ़ोl_native(काष्ठा macb *bp, पूर्णांक offset)
-अणु
-	वापस __raw_पढ़ोl(bp->regs + offset);
-पूर्ण
+static u32 hw_readl_native(struct macb *bp, int offset)
+{
+	return __raw_readl(bp->regs + offset);
+}
 
-अटल व्योम hw_ग_लिखोl_native(काष्ठा macb *bp, पूर्णांक offset, u32 value)
-अणु
-	__raw_ग_लिखोl(value, bp->regs + offset);
-पूर्ण
+static void hw_writel_native(struct macb *bp, int offset, u32 value)
+{
+	__raw_writel(value, bp->regs + offset);
+}
 
-अटल u32 hw_पढ़ोl(काष्ठा macb *bp, पूर्णांक offset)
-अणु
-	वापस पढ़ोl_relaxed(bp->regs + offset);
-पूर्ण
+static u32 hw_readl(struct macb *bp, int offset)
+{
+	return readl_relaxed(bp->regs + offset);
+}
 
-अटल व्योम hw_ग_लिखोl(काष्ठा macb *bp, पूर्णांक offset, u32 value)
-अणु
-	ग_लिखोl_relaxed(value, bp->regs + offset);
-पूर्ण
+static void hw_writel(struct macb *bp, int offset, u32 value)
+{
+	writel_relaxed(value, bp->regs + offset);
+}
 
-/* Find the CPU endianness by using the loopback bit of NCR रेजिस्टर. When the
- * CPU is in big endian we need to program swapped mode क्रम management
+/* Find the CPU endianness by using the loopback bit of NCR register. When the
+ * CPU is in big endian we need to program swapped mode for management
  * descriptor access.
  */
-अटल bool hw_is_native_io(व्योम __iomem *addr)
-अणु
+static bool hw_is_native_io(void __iomem *addr)
+{
 	u32 value = MACB_BIT(LLB);
 
-	__raw_ग_लिखोl(value, addr + MACB_NCR);
-	value = __raw_पढ़ोl(addr + MACB_NCR);
+	__raw_writel(value, addr + MACB_NCR);
+	value = __raw_readl(addr + MACB_NCR);
 
 	/* Write 0 back to disable everything */
-	__raw_ग_लिखोl(0, addr + MACB_NCR);
+	__raw_writel(0, addr + MACB_NCR);
 
-	वापस value == MACB_BIT(LLB);
-पूर्ण
+	return value == MACB_BIT(LLB);
+}
 
-अटल bool hw_is_gem(व्योम __iomem *addr, bool native_io)
-अणु
+static bool hw_is_gem(void __iomem *addr, bool native_io)
+{
 	u32 id;
 
-	अगर (native_io)
-		id = __raw_पढ़ोl(addr + MACB_MID);
-	अन्यथा
-		id = पढ़ोl_relaxed(addr + MACB_MID);
+	if (native_io)
+		id = __raw_readl(addr + MACB_MID);
+	else
+		id = readl_relaxed(addr + MACB_MID);
 
-	वापस MACB_BFEXT(IDNUM, id) >= 0x2;
-पूर्ण
+	return MACB_BFEXT(IDNUM, id) >= 0x2;
+}
 
-अटल व्योम macb_set_hwaddr(काष्ठा macb *bp)
-अणु
+static void macb_set_hwaddr(struct macb *bp)
+{
 	u32 bottom;
 	u16 top;
 
 	bottom = cpu_to_le32(*((u32 *)bp->dev->dev_addr));
-	macb_or_gem_ग_लिखोl(bp, SA1B, bottom);
+	macb_or_gem_writel(bp, SA1B, bottom);
 	top = cpu_to_le16(*((u16 *)(bp->dev->dev_addr + 4)));
-	macb_or_gem_ग_लिखोl(bp, SA1T, top);
+	macb_or_gem_writel(bp, SA1T, top);
 
-	/* Clear unused address रेजिस्टर sets */
-	macb_or_gem_ग_लिखोl(bp, SA2B, 0);
-	macb_or_gem_ग_लिखोl(bp, SA2T, 0);
-	macb_or_gem_ग_लिखोl(bp, SA3B, 0);
-	macb_or_gem_ग_लिखोl(bp, SA3T, 0);
-	macb_or_gem_ग_लिखोl(bp, SA4B, 0);
-	macb_or_gem_ग_लिखोl(bp, SA4T, 0);
-पूर्ण
+	/* Clear unused address register sets */
+	macb_or_gem_writel(bp, SA2B, 0);
+	macb_or_gem_writel(bp, SA2T, 0);
+	macb_or_gem_writel(bp, SA3B, 0);
+	macb_or_gem_writel(bp, SA3T, 0);
+	macb_or_gem_writel(bp, SA4B, 0);
+	macb_or_gem_writel(bp, SA4T, 0);
+}
 
-अटल व्योम macb_get_hwaddr(काष्ठा macb *bp)
-अणु
+static void macb_get_hwaddr(struct macb *bp)
+{
 	u32 bottom;
 	u16 top;
 	u8 addr[6];
-	पूर्णांक i;
+	int i;
 
-	/* Check all 4 address रेजिस्टर क्रम valid address */
-	क्रम (i = 0; i < 4; i++) अणु
-		bottom = macb_or_gem_पढ़ोl(bp, SA1B + i * 8);
-		top = macb_or_gem_पढ़ोl(bp, SA1T + i * 8);
+	/* Check all 4 address register for valid address */
+	for (i = 0; i < 4; i++) {
+		bottom = macb_or_gem_readl(bp, SA1B + i * 8);
+		top = macb_or_gem_readl(bp, SA1T + i * 8);
 
 		addr[0] = bottom & 0xff;
 		addr[1] = (bottom >> 8) & 0xff;
@@ -313,241 +312,241 @@
 		addr[4] = top & 0xff;
 		addr[5] = (top >> 8) & 0xff;
 
-		अगर (is_valid_ether_addr(addr)) अणु
-			स_नकल(bp->dev->dev_addr, addr, माप(addr));
-			वापस;
-		पूर्ण
-	पूर्ण
+		if (is_valid_ether_addr(addr)) {
+			memcpy(bp->dev->dev_addr, addr, sizeof(addr));
+			return;
+		}
+	}
 
 	dev_info(&bp->pdev->dev, "invalid hw address, using random\n");
-	eth_hw_addr_अक्रमom(bp->dev);
-पूर्ण
+	eth_hw_addr_random(bp->dev);
+}
 
-अटल पूर्णांक macb_mdio_रुको_क्रम_idle(काष्ठा macb *bp)
-अणु
+static int macb_mdio_wait_for_idle(struct macb *bp)
+{
 	u32 val;
 
-	वापस पढ़ोx_poll_समयout(MACB_READ_NSR, bp, val, val & MACB_BIT(IDLE),
+	return readx_poll_timeout(MACB_READ_NSR, bp, val, val & MACB_BIT(IDLE),
 				  1, MACB_MDIO_TIMEOUT);
-पूर्ण
+}
 
-अटल पूर्णांक macb_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक mii_id, पूर्णांक regnum)
-अणु
-	काष्ठा macb *bp = bus->priv;
-	पूर्णांक status;
+static int macb_mdio_read(struct mii_bus *bus, int mii_id, int regnum)
+{
+	struct macb *bp = bus->priv;
+	int status;
 
-	status = pm_runसमय_get_sync(&bp->pdev->dev);
-	अगर (status < 0) अणु
-		pm_runसमय_put_noidle(&bp->pdev->dev);
-		जाओ mdio_pm_निकास;
-	पूर्ण
+	status = pm_runtime_get_sync(&bp->pdev->dev);
+	if (status < 0) {
+		pm_runtime_put_noidle(&bp->pdev->dev);
+		goto mdio_pm_exit;
+	}
 
-	status = macb_mdio_रुको_क्रम_idle(bp);
-	अगर (status < 0)
-		जाओ mdio_पढ़ो_निकास;
+	status = macb_mdio_wait_for_idle(bp);
+	if (status < 0)
+		goto mdio_read_exit;
 
-	अगर (regnum & MII_ADDR_C45) अणु
-		macb_ग_लिखोl(bp, MAN, (MACB_BF(SOF, MACB_MAN_C45_SOF)
+	if (regnum & MII_ADDR_C45) {
+		macb_writel(bp, MAN, (MACB_BF(SOF, MACB_MAN_C45_SOF)
 			    | MACB_BF(RW, MACB_MAN_C45_ADDR)
 			    | MACB_BF(PHYA, mii_id)
 			    | MACB_BF(REGA, (regnum >> 16) & 0x1F)
 			    | MACB_BF(DATA, regnum & 0xFFFF)
 			    | MACB_BF(CODE, MACB_MAN_C45_CODE)));
 
-		status = macb_mdio_रुको_क्रम_idle(bp);
-		अगर (status < 0)
-			जाओ mdio_पढ़ो_निकास;
+		status = macb_mdio_wait_for_idle(bp);
+		if (status < 0)
+			goto mdio_read_exit;
 
-		macb_ग_लिखोl(bp, MAN, (MACB_BF(SOF, MACB_MAN_C45_SOF)
+		macb_writel(bp, MAN, (MACB_BF(SOF, MACB_MAN_C45_SOF)
 			    | MACB_BF(RW, MACB_MAN_C45_READ)
 			    | MACB_BF(PHYA, mii_id)
 			    | MACB_BF(REGA, (regnum >> 16) & 0x1F)
 			    | MACB_BF(CODE, MACB_MAN_C45_CODE)));
-	पूर्ण अन्यथा अणु
-		macb_ग_लिखोl(bp, MAN, (MACB_BF(SOF, MACB_MAN_C22_SOF)
+	} else {
+		macb_writel(bp, MAN, (MACB_BF(SOF, MACB_MAN_C22_SOF)
 				| MACB_BF(RW, MACB_MAN_C22_READ)
 				| MACB_BF(PHYA, mii_id)
 				| MACB_BF(REGA, regnum)
 				| MACB_BF(CODE, MACB_MAN_C22_CODE)));
-	पूर्ण
+	}
 
-	status = macb_mdio_रुको_क्रम_idle(bp);
-	अगर (status < 0)
-		जाओ mdio_पढ़ो_निकास;
+	status = macb_mdio_wait_for_idle(bp);
+	if (status < 0)
+		goto mdio_read_exit;
 
-	status = MACB_BFEXT(DATA, macb_पढ़ोl(bp, MAN));
+	status = MACB_BFEXT(DATA, macb_readl(bp, MAN));
 
-mdio_पढ़ो_निकास:
-	pm_runसमय_mark_last_busy(&bp->pdev->dev);
-	pm_runसमय_put_स्वतःsuspend(&bp->pdev->dev);
-mdio_pm_निकास:
-	वापस status;
-पूर्ण
+mdio_read_exit:
+	pm_runtime_mark_last_busy(&bp->pdev->dev);
+	pm_runtime_put_autosuspend(&bp->pdev->dev);
+mdio_pm_exit:
+	return status;
+}
 
-अटल पूर्णांक macb_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक mii_id, पूर्णांक regnum,
+static int macb_mdio_write(struct mii_bus *bus, int mii_id, int regnum,
 			   u16 value)
-अणु
-	काष्ठा macb *bp = bus->priv;
-	पूर्णांक status;
+{
+	struct macb *bp = bus->priv;
+	int status;
 
-	status = pm_runसमय_get_sync(&bp->pdev->dev);
-	अगर (status < 0) अणु
-		pm_runसमय_put_noidle(&bp->pdev->dev);
-		जाओ mdio_pm_निकास;
-	पूर्ण
+	status = pm_runtime_get_sync(&bp->pdev->dev);
+	if (status < 0) {
+		pm_runtime_put_noidle(&bp->pdev->dev);
+		goto mdio_pm_exit;
+	}
 
-	status = macb_mdio_रुको_क्रम_idle(bp);
-	अगर (status < 0)
-		जाओ mdio_ग_लिखो_निकास;
+	status = macb_mdio_wait_for_idle(bp);
+	if (status < 0)
+		goto mdio_write_exit;
 
-	अगर (regnum & MII_ADDR_C45) अणु
-		macb_ग_लिखोl(bp, MAN, (MACB_BF(SOF, MACB_MAN_C45_SOF)
+	if (regnum & MII_ADDR_C45) {
+		macb_writel(bp, MAN, (MACB_BF(SOF, MACB_MAN_C45_SOF)
 			    | MACB_BF(RW, MACB_MAN_C45_ADDR)
 			    | MACB_BF(PHYA, mii_id)
 			    | MACB_BF(REGA, (regnum >> 16) & 0x1F)
 			    | MACB_BF(DATA, regnum & 0xFFFF)
 			    | MACB_BF(CODE, MACB_MAN_C45_CODE)));
 
-		status = macb_mdio_रुको_क्रम_idle(bp);
-		अगर (status < 0)
-			जाओ mdio_ग_लिखो_निकास;
+		status = macb_mdio_wait_for_idle(bp);
+		if (status < 0)
+			goto mdio_write_exit;
 
-		macb_ग_लिखोl(bp, MAN, (MACB_BF(SOF, MACB_MAN_C45_SOF)
+		macb_writel(bp, MAN, (MACB_BF(SOF, MACB_MAN_C45_SOF)
 			    | MACB_BF(RW, MACB_MAN_C45_WRITE)
 			    | MACB_BF(PHYA, mii_id)
 			    | MACB_BF(REGA, (regnum >> 16) & 0x1F)
 			    | MACB_BF(CODE, MACB_MAN_C45_CODE)
 			    | MACB_BF(DATA, value)));
-	पूर्ण अन्यथा अणु
-		macb_ग_लिखोl(bp, MAN, (MACB_BF(SOF, MACB_MAN_C22_SOF)
+	} else {
+		macb_writel(bp, MAN, (MACB_BF(SOF, MACB_MAN_C22_SOF)
 				| MACB_BF(RW, MACB_MAN_C22_WRITE)
 				| MACB_BF(PHYA, mii_id)
 				| MACB_BF(REGA, regnum)
 				| MACB_BF(CODE, MACB_MAN_C22_CODE)
 				| MACB_BF(DATA, value)));
-	पूर्ण
+	}
 
-	status = macb_mdio_रुको_क्रम_idle(bp);
-	अगर (status < 0)
-		जाओ mdio_ग_लिखो_निकास;
+	status = macb_mdio_wait_for_idle(bp);
+	if (status < 0)
+		goto mdio_write_exit;
 
-mdio_ग_लिखो_निकास:
-	pm_runसमय_mark_last_busy(&bp->pdev->dev);
-	pm_runसमय_put_स्वतःsuspend(&bp->pdev->dev);
-mdio_pm_निकास:
-	वापस status;
-पूर्ण
+mdio_write_exit:
+	pm_runtime_mark_last_busy(&bp->pdev->dev);
+	pm_runtime_put_autosuspend(&bp->pdev->dev);
+mdio_pm_exit:
+	return status;
+}
 
-अटल व्योम macb_init_buffers(काष्ठा macb *bp)
-अणु
-	काष्ठा macb_queue *queue;
-	अचिन्हित पूर्णांक q;
+static void macb_init_buffers(struct macb *bp)
+{
+	struct macb_queue *queue;
+	unsigned int q;
 
-	क्रम (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue) अणु
-		queue_ग_लिखोl(queue, RBQP, lower_32_bits(queue->rx_ring_dma));
-#अगर_घोषित CONFIG_ARCH_DMA_ADDR_T_64BIT
-		अगर (bp->hw_dma_cap & HW_DMA_CAP_64B)
-			queue_ग_लिखोl(queue, RBQPH,
+	for (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue) {
+		queue_writel(queue, RBQP, lower_32_bits(queue->rx_ring_dma));
+#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
+		if (bp->hw_dma_cap & HW_DMA_CAP_64B)
+			queue_writel(queue, RBQPH,
 				     upper_32_bits(queue->rx_ring_dma));
-#पूर्ण_अगर
-		queue_ग_लिखोl(queue, TBQP, lower_32_bits(queue->tx_ring_dma));
-#अगर_घोषित CONFIG_ARCH_DMA_ADDR_T_64BIT
-		अगर (bp->hw_dma_cap & HW_DMA_CAP_64B)
-			queue_ग_लिखोl(queue, TBQPH,
+#endif
+		queue_writel(queue, TBQP, lower_32_bits(queue->tx_ring_dma));
+#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
+		if (bp->hw_dma_cap & HW_DMA_CAP_64B)
+			queue_writel(queue, TBQPH,
 				     upper_32_bits(queue->tx_ring_dma));
-#पूर्ण_अगर
-	पूर्ण
-पूर्ण
+#endif
+	}
+}
 
 /**
- * macb_set_tx_clk() - Set a घड़ी to a new frequency
- * @bp:		poपूर्णांकer to काष्ठा macb
+ * macb_set_tx_clk() - Set a clock to a new frequency
+ * @bp:		pointer to struct macb
  * @speed:	New frequency in Hz
  */
-अटल व्योम macb_set_tx_clk(काष्ठा macb *bp, पूर्णांक speed)
-अणु
-	दीर्घ ferr, rate, rate_rounded;
+static void macb_set_tx_clk(struct macb *bp, int speed)
+{
+	long ferr, rate, rate_rounded;
 
-	अगर (!bp->tx_clk || (bp->caps & MACB_CAPS_CLK_HW_CHG))
-		वापस;
+	if (!bp->tx_clk || (bp->caps & MACB_CAPS_CLK_HW_CHG))
+		return;
 
-	/* In हाल of MII the PHY is the घड़ी master */
-	अगर (bp->phy_पूर्णांकerface == PHY_INTERFACE_MODE_MII)
-		वापस;
+	/* In case of MII the PHY is the clock master */
+	if (bp->phy_interface == PHY_INTERFACE_MODE_MII)
+		return;
 
-	चयन (speed) अणु
-	हाल SPEED_10:
+	switch (speed) {
+	case SPEED_10:
 		rate = 2500000;
-		अवरोध;
-	हाल SPEED_100:
+		break;
+	case SPEED_100:
 		rate = 25000000;
-		अवरोध;
-	हाल SPEED_1000:
+		break;
+	case SPEED_1000:
 		rate = 125000000;
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 
 	rate_rounded = clk_round_rate(bp->tx_clk, rate);
-	अगर (rate_rounded < 0)
-		वापस;
+	if (rate_rounded < 0)
+		return;
 
-	/* RGMII allows 50 ppm frequency error. Test and warn अगर this limit
+	/* RGMII allows 50 ppm frequency error. Test and warn if this limit
 	 * is not satisfied.
 	 */
-	ferr = असल(rate_rounded - rate);
+	ferr = abs(rate_rounded - rate);
 	ferr = DIV_ROUND_UP(ferr, rate / 100000);
-	अगर (ferr > 5)
+	if (ferr > 5)
 		netdev_warn(bp->dev,
 			    "unable to generate target frequency: %ld Hz\n",
 			    rate);
 
-	अगर (clk_set_rate(bp->tx_clk, rate_rounded))
+	if (clk_set_rate(bp->tx_clk, rate_rounded))
 		netdev_err(bp->dev, "adjusting tx_clk failed.\n");
-पूर्ण
+}
 
-अटल व्योम macb_validate(काष्ठा phylink_config *config,
-			  अचिन्हित दीर्घ *supported,
-			  काष्ठा phylink_link_state *state)
-अणु
-	काष्ठा net_device *ndev = to_net_dev(config->dev);
-	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = अणु 0, पूर्ण;
-	काष्ठा macb *bp = netdev_priv(ndev);
+static void macb_validate(struct phylink_config *config,
+			  unsigned long *supported,
+			  struct phylink_link_state *state)
+{
+	struct net_device *ndev = to_net_dev(config->dev);
+	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = { 0, };
+	struct macb *bp = netdev_priv(ndev);
 
 	/* We only support MII, RMII, GMII, RGMII & SGMII. */
-	अगर (state->पूर्णांकerface != PHY_INTERFACE_MODE_NA &&
-	    state->पूर्णांकerface != PHY_INTERFACE_MODE_MII &&
-	    state->पूर्णांकerface != PHY_INTERFACE_MODE_RMII &&
-	    state->पूर्णांकerface != PHY_INTERFACE_MODE_GMII &&
-	    state->पूर्णांकerface != PHY_INTERFACE_MODE_SGMII &&
-	    state->पूर्णांकerface != PHY_INTERFACE_MODE_10GBASER &&
-	    !phy_पूर्णांकerface_mode_is_rgmii(state->पूर्णांकerface)) अणु
-		biपंचांगap_zero(supported, __ETHTOOL_LINK_MODE_MASK_NBITS);
-		वापस;
-	पूर्ण
+	if (state->interface != PHY_INTERFACE_MODE_NA &&
+	    state->interface != PHY_INTERFACE_MODE_MII &&
+	    state->interface != PHY_INTERFACE_MODE_RMII &&
+	    state->interface != PHY_INTERFACE_MODE_GMII &&
+	    state->interface != PHY_INTERFACE_MODE_SGMII &&
+	    state->interface != PHY_INTERFACE_MODE_10GBASER &&
+	    !phy_interface_mode_is_rgmii(state->interface)) {
+		bitmap_zero(supported, __ETHTOOL_LINK_MODE_MASK_NBITS);
+		return;
+	}
 
-	अगर (!macb_is_gem(bp) &&
-	    (state->पूर्णांकerface == PHY_INTERFACE_MODE_GMII ||
-	     phy_पूर्णांकerface_mode_is_rgmii(state->पूर्णांकerface))) अणु
-		biपंचांगap_zero(supported, __ETHTOOL_LINK_MODE_MASK_NBITS);
-		वापस;
-	पूर्ण
+	if (!macb_is_gem(bp) &&
+	    (state->interface == PHY_INTERFACE_MODE_GMII ||
+	     phy_interface_mode_is_rgmii(state->interface))) {
+		bitmap_zero(supported, __ETHTOOL_LINK_MODE_MASK_NBITS);
+		return;
+	}
 
-	अगर (state->पूर्णांकerface == PHY_INTERFACE_MODE_10GBASER &&
+	if (state->interface == PHY_INTERFACE_MODE_10GBASER &&
 	    !(bp->caps & MACB_CAPS_HIGH_SPEED &&
-	      bp->caps & MACB_CAPS_PCS)) अणु
-		biपंचांगap_zero(supported, __ETHTOOL_LINK_MODE_MASK_NBITS);
-		वापस;
-	पूर्ण
+	      bp->caps & MACB_CAPS_PCS)) {
+		bitmap_zero(supported, __ETHTOOL_LINK_MODE_MASK_NBITS);
+		return;
+	}
 
 	phylink_set_port_modes(mask);
 	phylink_set(mask, Autoneg);
 	phylink_set(mask, Asym_Pause);
 
-	अगर (bp->caps & MACB_CAPS_GIGABIT_MODE_AVAILABLE &&
-	    (state->पूर्णांकerface == PHY_INTERFACE_MODE_NA ||
-	     state->पूर्णांकerface == PHY_INTERFACE_MODE_10GBASER)) अणु
+	if (bp->caps & MACB_CAPS_GIGABIT_MODE_AVAILABLE &&
+	    (state->interface == PHY_INTERFACE_MODE_NA ||
+	     state->interface == PHY_INTERFACE_MODE_10GBASER)) {
 		phylink_set(mask, 10000baseCR_Full);
 		phylink_set(mask, 10000baseER_Full);
 		phylink_set(mask, 10000baseKR_Full);
@@ -555,535 +554,535 @@ mdio_pm_निकास:
 		phylink_set(mask, 10000baseLRM_Full);
 		phylink_set(mask, 10000baseSR_Full);
 		phylink_set(mask, 10000baseT_Full);
-		अगर (state->पूर्णांकerface != PHY_INTERFACE_MODE_NA)
-			जाओ out;
-	पूर्ण
+		if (state->interface != PHY_INTERFACE_MODE_NA)
+			goto out;
+	}
 
 	phylink_set(mask, 10baseT_Half);
 	phylink_set(mask, 10baseT_Full);
 	phylink_set(mask, 100baseT_Half);
 	phylink_set(mask, 100baseT_Full);
 
-	अगर (bp->caps & MACB_CAPS_GIGABIT_MODE_AVAILABLE &&
-	    (state->पूर्णांकerface == PHY_INTERFACE_MODE_NA ||
-	     state->पूर्णांकerface == PHY_INTERFACE_MODE_GMII ||
-	     state->पूर्णांकerface == PHY_INTERFACE_MODE_SGMII ||
-	     phy_पूर्णांकerface_mode_is_rgmii(state->पूर्णांकerface))) अणु
+	if (bp->caps & MACB_CAPS_GIGABIT_MODE_AVAILABLE &&
+	    (state->interface == PHY_INTERFACE_MODE_NA ||
+	     state->interface == PHY_INTERFACE_MODE_GMII ||
+	     state->interface == PHY_INTERFACE_MODE_SGMII ||
+	     phy_interface_mode_is_rgmii(state->interface))) {
 		phylink_set(mask, 1000baseT_Full);
 		phylink_set(mask, 1000baseX_Full);
 
-		अगर (!(bp->caps & MACB_CAPS_NO_GIGABIT_HALF))
+		if (!(bp->caps & MACB_CAPS_NO_GIGABIT_HALF))
 			phylink_set(mask, 1000baseT_Half);
-	पूर्ण
+	}
 out:
-	biपंचांगap_and(supported, supported, mask, __ETHTOOL_LINK_MODE_MASK_NBITS);
-	biपंचांगap_and(state->advertising, state->advertising, mask,
+	bitmap_and(supported, supported, mask, __ETHTOOL_LINK_MODE_MASK_NBITS);
+	bitmap_and(state->advertising, state->advertising, mask,
 		   __ETHTOOL_LINK_MODE_MASK_NBITS);
-पूर्ण
+}
 
-अटल व्योम macb_usx_pcs_link_up(काष्ठा phylink_pcs *pcs, अचिन्हित पूर्णांक mode,
-				 phy_पूर्णांकerface_t पूर्णांकerface, पूर्णांक speed,
-				 पूर्णांक duplex)
-अणु
-	काष्ठा macb *bp = container_of(pcs, काष्ठा macb, phylink_pcs);
+static void macb_usx_pcs_link_up(struct phylink_pcs *pcs, unsigned int mode,
+				 phy_interface_t interface, int speed,
+				 int duplex)
+{
+	struct macb *bp = container_of(pcs, struct macb, phylink_pcs);
 	u32 config;
 
-	config = gem_पढ़ोl(bp, USX_CONTROL);
+	config = gem_readl(bp, USX_CONTROL);
 	config = GEM_BFINS(SERDES_RATE, MACB_SERDES_RATE_10G, config);
 	config = GEM_BFINS(USX_CTRL_SPEED, HS_SPEED_10000M, config);
 	config &= ~(GEM_BIT(TX_SCR_BYPASS) | GEM_BIT(RX_SCR_BYPASS));
 	config |= GEM_BIT(TX_EN);
-	gem_ग_लिखोl(bp, USX_CONTROL, config);
-पूर्ण
+	gem_writel(bp, USX_CONTROL, config);
+}
 
-अटल व्योम macb_usx_pcs_get_state(काष्ठा phylink_pcs *pcs,
-				   काष्ठा phylink_link_state *state)
-अणु
-	काष्ठा macb *bp = container_of(pcs, काष्ठा macb, phylink_pcs);
+static void macb_usx_pcs_get_state(struct phylink_pcs *pcs,
+				   struct phylink_link_state *state)
+{
+	struct macb *bp = container_of(pcs, struct macb, phylink_pcs);
 	u32 val;
 
 	state->speed = SPEED_10000;
 	state->duplex = 1;
 	state->an_complete = 1;
 
-	val = gem_पढ़ोl(bp, USX_STATUS);
+	val = gem_readl(bp, USX_STATUS);
 	state->link = !!(val & GEM_BIT(USX_BLOCK_LOCK));
-	val = gem_पढ़ोl(bp, NCFGR);
-	अगर (val & GEM_BIT(PAE))
-		state->छोड़ो = MLO_PAUSE_RX;
-पूर्ण
+	val = gem_readl(bp, NCFGR);
+	if (val & GEM_BIT(PAE))
+		state->pause = MLO_PAUSE_RX;
+}
 
-अटल पूर्णांक macb_usx_pcs_config(काष्ठा phylink_pcs *pcs,
-			       अचिन्हित पूर्णांक mode,
-			       phy_पूर्णांकerface_t पूर्णांकerface,
-			       स्थिर अचिन्हित दीर्घ *advertising,
-			       bool permit_छोड़ो_to_mac)
-अणु
-	काष्ठा macb *bp = container_of(pcs, काष्ठा macb, phylink_pcs);
+static int macb_usx_pcs_config(struct phylink_pcs *pcs,
+			       unsigned int mode,
+			       phy_interface_t interface,
+			       const unsigned long *advertising,
+			       bool permit_pause_to_mac)
+{
+	struct macb *bp = container_of(pcs, struct macb, phylink_pcs);
 
-	gem_ग_लिखोl(bp, USX_CONTROL, gem_पढ़ोl(bp, USX_CONTROL) |
+	gem_writel(bp, USX_CONTROL, gem_readl(bp, USX_CONTROL) |
 		   GEM_BIT(SIGNAL_OK));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम macb_pcs_get_state(काष्ठा phylink_pcs *pcs,
-			       काष्ठा phylink_link_state *state)
-अणु
+static void macb_pcs_get_state(struct phylink_pcs *pcs,
+			       struct phylink_link_state *state)
+{
 	state->link = 0;
-पूर्ण
+}
 
-अटल व्योम macb_pcs_an_restart(काष्ठा phylink_pcs *pcs)
-अणु
+static void macb_pcs_an_restart(struct phylink_pcs *pcs)
+{
 	/* Not supported */
-पूर्ण
+}
 
-अटल पूर्णांक macb_pcs_config(काष्ठा phylink_pcs *pcs,
-			   अचिन्हित पूर्णांक mode,
-			   phy_पूर्णांकerface_t पूर्णांकerface,
-			   स्थिर अचिन्हित दीर्घ *advertising,
-			   bool permit_छोड़ो_to_mac)
-अणु
-	वापस 0;
-पूर्ण
+static int macb_pcs_config(struct phylink_pcs *pcs,
+			   unsigned int mode,
+			   phy_interface_t interface,
+			   const unsigned long *advertising,
+			   bool permit_pause_to_mac)
+{
+	return 0;
+}
 
-अटल स्थिर काष्ठा phylink_pcs_ops macb_phylink_usx_pcs_ops = अणु
+static const struct phylink_pcs_ops macb_phylink_usx_pcs_ops = {
 	.pcs_get_state = macb_usx_pcs_get_state,
 	.pcs_config = macb_usx_pcs_config,
 	.pcs_link_up = macb_usx_pcs_link_up,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा phylink_pcs_ops macb_phylink_pcs_ops = अणु
+static const struct phylink_pcs_ops macb_phylink_pcs_ops = {
 	.pcs_get_state = macb_pcs_get_state,
 	.pcs_an_restart = macb_pcs_an_restart,
 	.pcs_config = macb_pcs_config,
-पूर्ण;
+};
 
-अटल व्योम macb_mac_config(काष्ठा phylink_config *config, अचिन्हित पूर्णांक mode,
-			    स्थिर काष्ठा phylink_link_state *state)
-अणु
-	काष्ठा net_device *ndev = to_net_dev(config->dev);
-	काष्ठा macb *bp = netdev_priv(ndev);
-	अचिन्हित दीर्घ flags;
+static void macb_mac_config(struct phylink_config *config, unsigned int mode,
+			    const struct phylink_link_state *state)
+{
+	struct net_device *ndev = to_net_dev(config->dev);
+	struct macb *bp = netdev_priv(ndev);
+	unsigned long flags;
 	u32 old_ctrl, ctrl;
 	u32 old_ncr, ncr;
 
 	spin_lock_irqsave(&bp->lock, flags);
 
-	old_ctrl = ctrl = macb_or_gem_पढ़ोl(bp, NCFGR);
-	old_ncr = ncr = macb_or_gem_पढ़ोl(bp, NCR);
+	old_ctrl = ctrl = macb_or_gem_readl(bp, NCFGR);
+	old_ncr = ncr = macb_or_gem_readl(bp, NCR);
 
-	अगर (bp->caps & MACB_CAPS_MACB_IS_EMAC) अणु
-		अगर (state->पूर्णांकerface == PHY_INTERFACE_MODE_RMII)
+	if (bp->caps & MACB_CAPS_MACB_IS_EMAC) {
+		if (state->interface == PHY_INTERFACE_MODE_RMII)
 			ctrl |= MACB_BIT(RM9200_RMII);
-	पूर्ण अन्यथा अगर (macb_is_gem(bp)) अणु
+	} else if (macb_is_gem(bp)) {
 		ctrl &= ~(GEM_BIT(SGMIIEN) | GEM_BIT(PCSSEL));
 		ncr &= ~GEM_BIT(ENABLE_HS_MAC);
 
-		अगर (state->पूर्णांकerface == PHY_INTERFACE_MODE_SGMII) अणु
+		if (state->interface == PHY_INTERFACE_MODE_SGMII) {
 			ctrl |= GEM_BIT(SGMIIEN) | GEM_BIT(PCSSEL);
-		पूर्ण अन्यथा अगर (state->पूर्णांकerface == PHY_INTERFACE_MODE_10GBASER) अणु
+		} else if (state->interface == PHY_INTERFACE_MODE_10GBASER) {
 			ctrl |= GEM_BIT(PCSSEL);
 			ncr |= GEM_BIT(ENABLE_HS_MAC);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Apply the new configuration, अगर any */
-	अगर (old_ctrl ^ ctrl)
-		macb_or_gem_ग_लिखोl(bp, NCFGR, ctrl);
+	/* Apply the new configuration, if any */
+	if (old_ctrl ^ ctrl)
+		macb_or_gem_writel(bp, NCFGR, ctrl);
 
-	अगर (old_ncr ^ ncr)
-		macb_or_gem_ग_लिखोl(bp, NCR, ncr);
+	if (old_ncr ^ ncr)
+		macb_or_gem_writel(bp, NCR, ncr);
 
-	/* Disable AN क्रम SGMII fixed link configuration, enable otherwise.
+	/* Disable AN for SGMII fixed link configuration, enable otherwise.
 	 * Must be written after PCSSEL is set in NCFGR,
-	 * otherwise ग_लिखोs will not take effect.
+	 * otherwise writes will not take effect.
 	 */
-	अगर (macb_is_gem(bp) && state->पूर्णांकerface == PHY_INTERFACE_MODE_SGMII) अणु
+	if (macb_is_gem(bp) && state->interface == PHY_INTERFACE_MODE_SGMII) {
 		u32 pcsctrl, old_pcsctrl;
 
-		old_pcsctrl = gem_पढ़ोl(bp, PCSCNTRL);
-		अगर (mode == MLO_AN_FIXED)
+		old_pcsctrl = gem_readl(bp, PCSCNTRL);
+		if (mode == MLO_AN_FIXED)
 			pcsctrl = old_pcsctrl & ~GEM_BIT(PCSAUTONEG);
-		अन्यथा
+		else
 			pcsctrl = old_pcsctrl | GEM_BIT(PCSAUTONEG);
-		अगर (old_pcsctrl != pcsctrl)
-			gem_ग_लिखोl(bp, PCSCNTRL, pcsctrl);
-	पूर्ण
+		if (old_pcsctrl != pcsctrl)
+			gem_writel(bp, PCSCNTRL, pcsctrl);
+	}
 
 	spin_unlock_irqrestore(&bp->lock, flags);
-पूर्ण
+}
 
-अटल व्योम macb_mac_link_करोwn(काष्ठा phylink_config *config, अचिन्हित पूर्णांक mode,
-			       phy_पूर्णांकerface_t पूर्णांकerface)
-अणु
-	काष्ठा net_device *ndev = to_net_dev(config->dev);
-	काष्ठा macb *bp = netdev_priv(ndev);
-	काष्ठा macb_queue *queue;
-	अचिन्हित पूर्णांक q;
+static void macb_mac_link_down(struct phylink_config *config, unsigned int mode,
+			       phy_interface_t interface)
+{
+	struct net_device *ndev = to_net_dev(config->dev);
+	struct macb *bp = netdev_priv(ndev);
+	struct macb_queue *queue;
+	unsigned int q;
 	u32 ctrl;
 
-	अगर (!(bp->caps & MACB_CAPS_MACB_IS_EMAC))
-		क्रम (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue)
-			queue_ग_लिखोl(queue, IDR,
-				     bp->rx_पूर्णांकr_mask | MACB_TX_INT_FLAGS | MACB_BIT(HRESP));
+	if (!(bp->caps & MACB_CAPS_MACB_IS_EMAC))
+		for (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue)
+			queue_writel(queue, IDR,
+				     bp->rx_intr_mask | MACB_TX_INT_FLAGS | MACB_BIT(HRESP));
 
 	/* Disable Rx and Tx */
-	ctrl = macb_पढ़ोl(bp, NCR) & ~(MACB_BIT(RE) | MACB_BIT(TE));
-	macb_ग_लिखोl(bp, NCR, ctrl);
+	ctrl = macb_readl(bp, NCR) & ~(MACB_BIT(RE) | MACB_BIT(TE));
+	macb_writel(bp, NCR, ctrl);
 
-	netअगर_tx_stop_all_queues(ndev);
-पूर्ण
+	netif_tx_stop_all_queues(ndev);
+}
 
-अटल व्योम macb_mac_link_up(काष्ठा phylink_config *config,
-			     काष्ठा phy_device *phy,
-			     अचिन्हित पूर्णांक mode, phy_पूर्णांकerface_t पूर्णांकerface,
-			     पूर्णांक speed, पूर्णांक duplex,
-			     bool tx_छोड़ो, bool rx_छोड़ो)
-अणु
-	काष्ठा net_device *ndev = to_net_dev(config->dev);
-	काष्ठा macb *bp = netdev_priv(ndev);
-	काष्ठा macb_queue *queue;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक q;
+static void macb_mac_link_up(struct phylink_config *config,
+			     struct phy_device *phy,
+			     unsigned int mode, phy_interface_t interface,
+			     int speed, int duplex,
+			     bool tx_pause, bool rx_pause)
+{
+	struct net_device *ndev = to_net_dev(config->dev);
+	struct macb *bp = netdev_priv(ndev);
+	struct macb_queue *queue;
+	unsigned long flags;
+	unsigned int q;
 	u32 ctrl;
 
 	spin_lock_irqsave(&bp->lock, flags);
 
-	ctrl = macb_or_gem_पढ़ोl(bp, NCFGR);
+	ctrl = macb_or_gem_readl(bp, NCFGR);
 
 	ctrl &= ~(MACB_BIT(SPD) | MACB_BIT(FD));
 
-	अगर (speed == SPEED_100)
+	if (speed == SPEED_100)
 		ctrl |= MACB_BIT(SPD);
 
-	अगर (duplex)
+	if (duplex)
 		ctrl |= MACB_BIT(FD);
 
-	अगर (!(bp->caps & MACB_CAPS_MACB_IS_EMAC)) अणु
+	if (!(bp->caps & MACB_CAPS_MACB_IS_EMAC)) {
 		ctrl &= ~MACB_BIT(PAE);
-		अगर (macb_is_gem(bp)) अणु
+		if (macb_is_gem(bp)) {
 			ctrl &= ~GEM_BIT(GBE);
 
-			अगर (speed == SPEED_1000)
+			if (speed == SPEED_1000)
 				ctrl |= GEM_BIT(GBE);
-		पूर्ण
+		}
 
-		अगर (rx_छोड़ो)
+		if (rx_pause)
 			ctrl |= MACB_BIT(PAE);
 
 		macb_set_tx_clk(bp, speed);
 
-		/* Initialize rings & buffers as clearing MACB_BIT(TE) in link करोwn
-		 * cleared the pipeline and control रेजिस्टरs.
+		/* Initialize rings & buffers as clearing MACB_BIT(TE) in link down
+		 * cleared the pipeline and control registers.
 		 */
 		bp->macbgem_ops.mog_init_rings(bp);
 		macb_init_buffers(bp);
 
-		क्रम (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue)
-			queue_ग_लिखोl(queue, IER,
-				     bp->rx_पूर्णांकr_mask | MACB_TX_INT_FLAGS | MACB_BIT(HRESP));
-	पूर्ण
+		for (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue)
+			queue_writel(queue, IER,
+				     bp->rx_intr_mask | MACB_TX_INT_FLAGS | MACB_BIT(HRESP));
+	}
 
-	macb_or_gem_ग_लिखोl(bp, NCFGR, ctrl);
+	macb_or_gem_writel(bp, NCFGR, ctrl);
 
-	अगर (bp->phy_पूर्णांकerface == PHY_INTERFACE_MODE_10GBASER)
-		gem_ग_लिखोl(bp, HS_MAC_CONFIG, GEM_BFINS(HS_MAC_SPEED, HS_SPEED_10000M,
-							gem_पढ़ोl(bp, HS_MAC_CONFIG)));
+	if (bp->phy_interface == PHY_INTERFACE_MODE_10GBASER)
+		gem_writel(bp, HS_MAC_CONFIG, GEM_BFINS(HS_MAC_SPEED, HS_SPEED_10000M,
+							gem_readl(bp, HS_MAC_CONFIG)));
 
 	spin_unlock_irqrestore(&bp->lock, flags);
 
 	/* Enable Rx and Tx */
-	macb_ग_लिखोl(bp, NCR, macb_पढ़ोl(bp, NCR) | MACB_BIT(RE) | MACB_BIT(TE));
+	macb_writel(bp, NCR, macb_readl(bp, NCR) | MACB_BIT(RE) | MACB_BIT(TE));
 
-	netअगर_tx_wake_all_queues(ndev);
-पूर्ण
+	netif_tx_wake_all_queues(ndev);
+}
 
-अटल पूर्णांक macb_mac_prepare(काष्ठा phylink_config *config, अचिन्हित पूर्णांक mode,
-			    phy_पूर्णांकerface_t पूर्णांकerface)
-अणु
-	काष्ठा net_device *ndev = to_net_dev(config->dev);
-	काष्ठा macb *bp = netdev_priv(ndev);
+static int macb_mac_prepare(struct phylink_config *config, unsigned int mode,
+			    phy_interface_t interface)
+{
+	struct net_device *ndev = to_net_dev(config->dev);
+	struct macb *bp = netdev_priv(ndev);
 
-	अगर (पूर्णांकerface == PHY_INTERFACE_MODE_10GBASER)
+	if (interface == PHY_INTERFACE_MODE_10GBASER)
 		bp->phylink_pcs.ops = &macb_phylink_usx_pcs_ops;
-	अन्यथा अगर (पूर्णांकerface == PHY_INTERFACE_MODE_SGMII)
+	else if (interface == PHY_INTERFACE_MODE_SGMII)
 		bp->phylink_pcs.ops = &macb_phylink_pcs_ops;
-	अन्यथा
-		bp->phylink_pcs.ops = शून्य;
+	else
+		bp->phylink_pcs.ops = NULL;
 
-	अगर (bp->phylink_pcs.ops)
+	if (bp->phylink_pcs.ops)
 		phylink_set_pcs(bp->phylink, &bp->phylink_pcs);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा phylink_mac_ops macb_phylink_ops = अणु
+static const struct phylink_mac_ops macb_phylink_ops = {
 	.validate = macb_validate,
 	.mac_prepare = macb_mac_prepare,
 	.mac_config = macb_mac_config,
-	.mac_link_करोwn = macb_mac_link_करोwn,
+	.mac_link_down = macb_mac_link_down,
 	.mac_link_up = macb_mac_link_up,
-पूर्ण;
+};
 
-अटल bool macb_phy_handle_exists(काष्ठा device_node *dn)
-अणु
+static bool macb_phy_handle_exists(struct device_node *dn)
+{
 	dn = of_parse_phandle(dn, "phy-handle", 0);
 	of_node_put(dn);
-	वापस dn != शून्य;
-पूर्ण
+	return dn != NULL;
+}
 
-अटल पूर्णांक macb_phylink_connect(काष्ठा macb *bp)
-अणु
-	काष्ठा device_node *dn = bp->pdev->dev.of_node;
-	काष्ठा net_device *dev = bp->dev;
-	काष्ठा phy_device *phydev;
-	पूर्णांक ret;
+static int macb_phylink_connect(struct macb *bp)
+{
+	struct device_node *dn = bp->pdev->dev.of_node;
+	struct net_device *dev = bp->dev;
+	struct phy_device *phydev;
+	int ret;
 
-	अगर (dn)
+	if (dn)
 		ret = phylink_of_phy_connect(bp->phylink, dn, 0);
 
-	अगर (!dn || (ret && !macb_phy_handle_exists(dn))) अणु
+	if (!dn || (ret && !macb_phy_handle_exists(dn))) {
 		phydev = phy_find_first(bp->mii_bus);
-		अगर (!phydev) अणु
+		if (!phydev) {
 			netdev_err(dev, "no PHY found\n");
-			वापस -ENXIO;
-		पूर्ण
+			return -ENXIO;
+		}
 
 		/* attach the mac to the phy */
 		ret = phylink_connect_phy(bp->phylink, phydev);
-	पूर्ण
+	}
 
-	अगर (ret) अणु
+	if (ret) {
 		netdev_err(dev, "Could not attach PHY (%d)\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	phylink_start(bp->phylink);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम macb_get_pcs_fixed_state(काष्ठा phylink_config *config,
-				     काष्ठा phylink_link_state *state)
-अणु
-	काष्ठा net_device *ndev = to_net_dev(config->dev);
-	काष्ठा macb *bp = netdev_priv(ndev);
+static void macb_get_pcs_fixed_state(struct phylink_config *config,
+				     struct phylink_link_state *state)
+{
+	struct net_device *ndev = to_net_dev(config->dev);
+	struct macb *bp = netdev_priv(ndev);
 
-	state->link = (macb_पढ़ोl(bp, NSR) & MACB_BIT(NSR_LINK)) != 0;
-पूर्ण
+	state->link = (macb_readl(bp, NSR) & MACB_BIT(NSR_LINK)) != 0;
+}
 
 /* based on au1000_eth. c*/
-अटल पूर्णांक macb_mii_probe(काष्ठा net_device *dev)
-अणु
-	काष्ठा macb *bp = netdev_priv(dev);
+static int macb_mii_probe(struct net_device *dev)
+{
+	struct macb *bp = netdev_priv(dev);
 
 	bp->phylink_config.dev = &dev->dev;
 	bp->phylink_config.type = PHYLINK_NETDEV;
 
-	अगर (bp->phy_पूर्णांकerface == PHY_INTERFACE_MODE_SGMII) अणु
+	if (bp->phy_interface == PHY_INTERFACE_MODE_SGMII) {
 		bp->phylink_config.poll_fixed_state = true;
 		bp->phylink_config.get_fixed_state = macb_get_pcs_fixed_state;
-	पूर्ण
+	}
 
 	bp->phylink = phylink_create(&bp->phylink_config, bp->pdev->dev.fwnode,
-				     bp->phy_पूर्णांकerface, &macb_phylink_ops);
-	अगर (IS_ERR(bp->phylink)) अणु
+				     bp->phy_interface, &macb_phylink_ops);
+	if (IS_ERR(bp->phylink)) {
 		netdev_err(dev, "Could not create a phylink instance (%ld)\n",
 			   PTR_ERR(bp->phylink));
-		वापस PTR_ERR(bp->phylink);
-	पूर्ण
+		return PTR_ERR(bp->phylink);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक macb_mdiobus_रेजिस्टर(काष्ठा macb *bp)
-अणु
-	काष्ठा device_node *child, *np = bp->pdev->dev.of_node;
+static int macb_mdiobus_register(struct macb *bp)
+{
+	struct device_node *child, *np = bp->pdev->dev.of_node;
 
-	अगर (of_phy_is_fixed_link(np))
-		वापस mdiobus_रेजिस्टर(bp->mii_bus);
+	if (of_phy_is_fixed_link(np))
+		return mdiobus_register(bp->mii_bus);
 
-	/* Only create the PHY from the device tree अगर at least one PHY is
-	 * described. Otherwise scan the entire MDIO bus. We करो this to support
+	/* Only create the PHY from the device tree if at least one PHY is
+	 * described. Otherwise scan the entire MDIO bus. We do this to support
 	 * old device tree that did not follow the best practices and did not
 	 * describe their network PHYs.
 	 */
-	क्रम_each_available_child_of_node(np, child)
-		अगर (of_mdiobus_child_is_phy(child)) अणु
+	for_each_available_child_of_node(np, child)
+		if (of_mdiobus_child_is_phy(child)) {
 			/* The loop increments the child refcount,
-			 * decrement it beक्रमe वापसing.
+			 * decrement it before returning.
 			 */
 			of_node_put(child);
 
-			वापस of_mdiobus_रेजिस्टर(bp->mii_bus, np);
-		पूर्ण
+			return of_mdiobus_register(bp->mii_bus, np);
+		}
 
-	वापस mdiobus_रेजिस्टर(bp->mii_bus);
-पूर्ण
+	return mdiobus_register(bp->mii_bus);
+}
 
-अटल पूर्णांक macb_mii_init(काष्ठा macb *bp)
-अणु
-	पूर्णांक err = -ENXIO;
+static int macb_mii_init(struct macb *bp)
+{
+	int err = -ENXIO;
 
 	/* Enable management port */
-	macb_ग_लिखोl(bp, NCR, MACB_BIT(MPE));
+	macb_writel(bp, NCR, MACB_BIT(MPE));
 
 	bp->mii_bus = mdiobus_alloc();
-	अगर (!bp->mii_bus) अणु
+	if (!bp->mii_bus) {
 		err = -ENOMEM;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
 	bp->mii_bus->name = "MACB_mii_bus";
-	bp->mii_bus->पढ़ो = &macb_mdio_पढ़ो;
-	bp->mii_bus->ग_लिखो = &macb_mdio_ग_लिखो;
-	snम_लिखो(bp->mii_bus->id, MII_BUS_ID_SIZE, "%s-%x",
+	bp->mii_bus->read = &macb_mdio_read;
+	bp->mii_bus->write = &macb_mdio_write;
+	snprintf(bp->mii_bus->id, MII_BUS_ID_SIZE, "%s-%x",
 		 bp->pdev->name, bp->pdev->id);
 	bp->mii_bus->priv = bp;
 	bp->mii_bus->parent = &bp->pdev->dev;
 
 	dev_set_drvdata(&bp->dev->dev, bp->mii_bus);
 
-	err = macb_mdiobus_रेजिस्टर(bp);
-	अगर (err)
-		जाओ err_out_मुक्त_mdiobus;
+	err = macb_mdiobus_register(bp);
+	if (err)
+		goto err_out_free_mdiobus;
 
 	err = macb_mii_probe(bp->dev);
-	अगर (err)
-		जाओ err_out_unरेजिस्टर_bus;
+	if (err)
+		goto err_out_unregister_bus;
 
-	वापस 0;
+	return 0;
 
-err_out_unरेजिस्टर_bus:
-	mdiobus_unरेजिस्टर(bp->mii_bus);
-err_out_मुक्त_mdiobus:
-	mdiobus_मुक्त(bp->mii_bus);
+err_out_unregister_bus:
+	mdiobus_unregister(bp->mii_bus);
+err_out_free_mdiobus:
+	mdiobus_free(bp->mii_bus);
 err_out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम macb_update_stats(काष्ठा macb *bp)
-अणु
-	u32 *p = &bp->hw_stats.macb.rx_छोड़ो_frames;
-	u32 *end = &bp->hw_stats.macb.tx_छोड़ो_frames + 1;
-	पूर्णांक offset = MACB_PFR;
+static void macb_update_stats(struct macb *bp)
+{
+	u32 *p = &bp->hw_stats.macb.rx_pause_frames;
+	u32 *end = &bp->hw_stats.macb.tx_pause_frames + 1;
+	int offset = MACB_PFR;
 
-	WARN_ON((अचिन्हित दीर्घ)(end - p - 1) != (MACB_TPF - MACB_PFR) / 4);
+	WARN_ON((unsigned long)(end - p - 1) != (MACB_TPF - MACB_PFR) / 4);
 
-	क्रम (; p < end; p++, offset += 4)
-		*p += bp->macb_reg_पढ़ोl(bp, offset);
-पूर्ण
+	for (; p < end; p++, offset += 4)
+		*p += bp->macb_reg_readl(bp, offset);
+}
 
-अटल पूर्णांक macb_halt_tx(काष्ठा macb *bp)
-अणु
-	अचिन्हित दीर्घ	halt_समय, समयout;
+static int macb_halt_tx(struct macb *bp)
+{
+	unsigned long	halt_time, timeout;
 	u32		status;
 
-	macb_ग_लिखोl(bp, NCR, macb_पढ़ोl(bp, NCR) | MACB_BIT(THALT));
+	macb_writel(bp, NCR, macb_readl(bp, NCR) | MACB_BIT(THALT));
 
-	समयout = jअगरfies + usecs_to_jअगरfies(MACB_HALT_TIMEOUT);
-	करो अणु
-		halt_समय = jअगरfies;
-		status = macb_पढ़ोl(bp, TSR);
-		अगर (!(status & MACB_BIT(TGO)))
-			वापस 0;
+	timeout = jiffies + usecs_to_jiffies(MACB_HALT_TIMEOUT);
+	do {
+		halt_time = jiffies;
+		status = macb_readl(bp, TSR);
+		if (!(status & MACB_BIT(TGO)))
+			return 0;
 
 		udelay(250);
-	पूर्ण जबतक (समय_beक्रमe(halt_समय, समयout));
+	} while (time_before(halt_time, timeout));
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल व्योम macb_tx_unmap(काष्ठा macb *bp, काष्ठा macb_tx_skb *tx_skb)
-अणु
-	अगर (tx_skb->mapping) अणु
-		अगर (tx_skb->mapped_as_page)
+static void macb_tx_unmap(struct macb *bp, struct macb_tx_skb *tx_skb)
+{
+	if (tx_skb->mapping) {
+		if (tx_skb->mapped_as_page)
 			dma_unmap_page(&bp->pdev->dev, tx_skb->mapping,
 				       tx_skb->size, DMA_TO_DEVICE);
-		अन्यथा
+		else
 			dma_unmap_single(&bp->pdev->dev, tx_skb->mapping,
 					 tx_skb->size, DMA_TO_DEVICE);
 		tx_skb->mapping = 0;
-	पूर्ण
+	}
 
-	अगर (tx_skb->skb) अणु
-		dev_kमुक्त_skb_any(tx_skb->skb);
-		tx_skb->skb = शून्य;
-	पूर्ण
-पूर्ण
+	if (tx_skb->skb) {
+		dev_kfree_skb_any(tx_skb->skb);
+		tx_skb->skb = NULL;
+	}
+}
 
-अटल व्योम macb_set_addr(काष्ठा macb *bp, काष्ठा macb_dma_desc *desc, dma_addr_t addr)
-अणु
-#अगर_घोषित CONFIG_ARCH_DMA_ADDR_T_64BIT
-	काष्ठा macb_dma_desc_64 *desc_64;
+static void macb_set_addr(struct macb *bp, struct macb_dma_desc *desc, dma_addr_t addr)
+{
+#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
+	struct macb_dma_desc_64 *desc_64;
 
-	अगर (bp->hw_dma_cap & HW_DMA_CAP_64B) अणु
+	if (bp->hw_dma_cap & HW_DMA_CAP_64B) {
 		desc_64 = macb_64b_desc(bp, desc);
 		desc_64->addrh = upper_32_bits(addr);
 		/* The low bits of RX address contain the RX_USED bit, clearing
 		 * of which allows packet RX. Make sure the high bits are also
-		 * visible to HW at that poपूर्णांक.
+		 * visible to HW at that point.
 		 */
 		dma_wmb();
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 	desc->addr = lower_32_bits(addr);
-पूर्ण
+}
 
-अटल dma_addr_t macb_get_addr(काष्ठा macb *bp, काष्ठा macb_dma_desc *desc)
-अणु
+static dma_addr_t macb_get_addr(struct macb *bp, struct macb_dma_desc *desc)
+{
 	dma_addr_t addr = 0;
-#अगर_घोषित CONFIG_ARCH_DMA_ADDR_T_64BIT
-	काष्ठा macb_dma_desc_64 *desc_64;
+#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
+	struct macb_dma_desc_64 *desc_64;
 
-	अगर (bp->hw_dma_cap & HW_DMA_CAP_64B) अणु
+	if (bp->hw_dma_cap & HW_DMA_CAP_64B) {
 		desc_64 = macb_64b_desc(bp, desc);
 		addr = ((u64)(desc_64->addrh) << 32);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 	addr |= MACB_BF(RX_WADDR, MACB_BFEXT(RX_WADDR, desc->addr));
-	वापस addr;
-पूर्ण
+	return addr;
+}
 
-अटल व्योम macb_tx_error_task(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा macb_queue	*queue = container_of(work, काष्ठा macb_queue,
+static void macb_tx_error_task(struct work_struct *work)
+{
+	struct macb_queue	*queue = container_of(work, struct macb_queue,
 						      tx_error_task);
-	काष्ठा macb		*bp = queue->bp;
-	काष्ठा macb_tx_skb	*tx_skb;
-	काष्ठा macb_dma_desc	*desc;
-	काष्ठा sk_buff		*skb;
-	अचिन्हित पूर्णांक		tail;
-	अचिन्हित दीर्घ		flags;
+	struct macb		*bp = queue->bp;
+	struct macb_tx_skb	*tx_skb;
+	struct macb_dma_desc	*desc;
+	struct sk_buff		*skb;
+	unsigned int		tail;
+	unsigned long		flags;
 
 	netdev_vdbg(bp->dev, "macb_tx_error_task: q = %u, t = %u, h = %u\n",
-		    (अचिन्हित पूर्णांक)(queue - bp->queues),
+		    (unsigned int)(queue - bp->queues),
 		    queue->tx_tail, queue->tx_head);
 
 	/* Prevent the queue IRQ handlers from running: each of them may call
-	 * macb_tx_पूर्णांकerrupt(), which in turn may call netअगर_wake_subqueue().
-	 * As explained below, we have to halt the transmission beक्रमe updating
-	 * TBQP रेजिस्टरs so we call netअगर_tx_stop_all_queues() to notअगरy the
+	 * macb_tx_interrupt(), which in turn may call netif_wake_subqueue().
+	 * As explained below, we have to halt the transmission before updating
+	 * TBQP registers so we call netif_tx_stop_all_queues() to notify the
 	 * network engine about the macb/gem being halted.
 	 */
 	spin_lock_irqsave(&bp->lock, flags);
 
 	/* Make sure nobody is trying to queue up new packets */
-	netअगर_tx_stop_all_queues(bp->dev);
+	netif_tx_stop_all_queues(bp->dev);
 
 	/* Stop transmission now
-	 * (in हाल we have just queued new packets)
-	 * macb/gem must be halted to ग_लिखो TBQP रेजिस्टर
+	 * (in case we have just queued new packets)
+	 * macb/gem must be halted to write TBQP register
 	 */
-	अगर (macb_halt_tx(bp))
-		/* Just complain क्रम now, reinitializing TX path can be good */
+	if (macb_halt_tx(bp))
+		/* Just complain for now, reinitializing TX path can be good */
 		netdev_err(bp->dev, "BUG: halt tx timed out\n");
 
 	/* Treat frames in TX queue including the ones that caused the error.
 	 * Free transmit buffers in upper layer.
 	 */
-	क्रम (tail = queue->tx_tail; tail != queue->tx_head; tail++) अणु
+	for (tail = queue->tx_tail; tail != queue->tx_head; tail++) {
 		u32	ctrl;
 
 		desc = macb_tx_desc(queue, tail);
@@ -1091,19 +1090,19 @@ err_out:
 		tx_skb = macb_tx_skb(queue, tail);
 		skb = tx_skb->skb;
 
-		अगर (ctrl & MACB_BIT(TX_USED)) अणु
-			/* skb is set क्रम the last buffer of the frame */
-			जबतक (!skb) अणु
+		if (ctrl & MACB_BIT(TX_USED)) {
+			/* skb is set for the last buffer of the frame */
+			while (!skb) {
 				macb_tx_unmap(bp, tx_skb);
 				tail++;
 				tx_skb = macb_tx_skb(queue, tail);
 				skb = tx_skb->skb;
-			पूर्ण
+			}
 
 			/* ctrl still refers to the first buffer descriptor
 			 * since it's the only one written back by the hardware
 			 */
-			अगर (!(ctrl & MACB_BIT(TX_BUF_EXHAUSTED))) अणु
+			if (!(ctrl & MACB_BIT(TX_BUF_EXHAUSTED))) {
 				netdev_vdbg(bp->dev, "txerr skb %u (data %p) TX complete\n",
 					    macb_tx_ring_wrap(bp, tail),
 					    skb->data);
@@ -1111,21 +1110,21 @@ err_out:
 				queue->stats.tx_packets++;
 				bp->dev->stats.tx_bytes += skb->len;
 				queue->stats.tx_bytes += skb->len;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			/* "Buffers exhausted mid-frame" errors may only happen
-			 * अगर the driver is buggy, so complain loudly about
+			 * if the driver is buggy, so complain loudly about
 			 * those. Statistics are updated by hardware.
 			 */
-			अगर (ctrl & MACB_BIT(TX_BUF_EXHAUSTED))
+			if (ctrl & MACB_BIT(TX_BUF_EXHAUSTED))
 				netdev_err(bp->dev,
 					   "BUG: TX buffers exhausted mid-frame\n");
 
 			desc->ctrl = ctrl | MACB_BIT(TX_USED);
-		पूर्ण
+		}
 
 		macb_tx_unmap(bp, tx_skb);
-	पूर्ण
+	}
 
 	/* Set end of TX queue */
 	desc = macb_tx_desc(queue, 0);
@@ -1136,48 +1135,48 @@ err_out:
 	wmb();
 
 	/* Reinitialize the TX desc queue */
-	queue_ग_लिखोl(queue, TBQP, lower_32_bits(queue->tx_ring_dma));
-#अगर_घोषित CONFIG_ARCH_DMA_ADDR_T_64BIT
-	अगर (bp->hw_dma_cap & HW_DMA_CAP_64B)
-		queue_ग_लिखोl(queue, TBQPH, upper_32_bits(queue->tx_ring_dma));
-#पूर्ण_अगर
+	queue_writel(queue, TBQP, lower_32_bits(queue->tx_ring_dma));
+#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
+	if (bp->hw_dma_cap & HW_DMA_CAP_64B)
+		queue_writel(queue, TBQPH, upper_32_bits(queue->tx_ring_dma));
+#endif
 	/* Make TX ring reflect state of hardware */
 	queue->tx_head = 0;
 	queue->tx_tail = 0;
 
-	/* Housework beक्रमe enabling TX IRQ */
-	macb_ग_लिखोl(bp, TSR, macb_पढ़ोl(bp, TSR));
-	queue_ग_लिखोl(queue, IER, MACB_TX_INT_FLAGS);
+	/* Housework before enabling TX IRQ */
+	macb_writel(bp, TSR, macb_readl(bp, TSR));
+	queue_writel(queue, IER, MACB_TX_INT_FLAGS);
 
-	/* Now we are पढ़ोy to start transmission again */
-	netअगर_tx_start_all_queues(bp->dev);
-	macb_ग_लिखोl(bp, NCR, macb_पढ़ोl(bp, NCR) | MACB_BIT(TSTART));
+	/* Now we are ready to start transmission again */
+	netif_tx_start_all_queues(bp->dev);
+	macb_writel(bp, NCR, macb_readl(bp, NCR) | MACB_BIT(TSTART));
 
 	spin_unlock_irqrestore(&bp->lock, flags);
-पूर्ण
+}
 
-अटल व्योम macb_tx_पूर्णांकerrupt(काष्ठा macb_queue *queue)
-अणु
-	अचिन्हित पूर्णांक tail;
-	अचिन्हित पूर्णांक head;
+static void macb_tx_interrupt(struct macb_queue *queue)
+{
+	unsigned int tail;
+	unsigned int head;
 	u32 status;
-	काष्ठा macb *bp = queue->bp;
+	struct macb *bp = queue->bp;
 	u16 queue_index = queue - bp->queues;
 
-	status = macb_पढ़ोl(bp, TSR);
-	macb_ग_लिखोl(bp, TSR, status);
+	status = macb_readl(bp, TSR);
+	macb_writel(bp, TSR, status);
 
-	अगर (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
-		queue_ग_लिखोl(queue, ISR, MACB_BIT(TCOMP));
+	if (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
+		queue_writel(queue, ISR, MACB_BIT(TCOMP));
 
 	netdev_vdbg(bp->dev, "macb_tx_interrupt status = 0x%03lx\n",
-		    (अचिन्हित दीर्घ)status);
+		    (unsigned long)status);
 
 	head = queue->tx_head;
-	क्रम (tail = queue->tx_tail; tail != head; tail++) अणु
-		काष्ठा macb_tx_skb	*tx_skb;
-		काष्ठा sk_buff		*skb;
-		काष्ठा macb_dma_desc	*desc;
+	for (tail = queue->tx_tail; tail != head; tail++) {
+		struct macb_tx_skb	*tx_skb;
+		struct sk_buff		*skb;
+		struct macb_dma_desc	*desc;
 		u32			ctrl;
 
 		desc = macb_tx_desc(queue, tail);
@@ -1190,24 +1189,24 @@ err_out:
 		/* TX_USED bit is only set by hardware on the very first buffer
 		 * descriptor of the transmitted frame.
 		 */
-		अगर (!(ctrl & MACB_BIT(TX_USED)))
-			अवरोध;
+		if (!(ctrl & MACB_BIT(TX_USED)))
+			break;
 
 		/* Process all buffers of the current transmitted frame */
-		क्रम (;; tail++) अणु
+		for (;; tail++) {
 			tx_skb = macb_tx_skb(queue, tail);
 			skb = tx_skb->skb;
 
-			/* First, update TX stats अगर needed */
-			अगर (skb) अणु
-				अगर (unlikely(skb_shinfo(skb)->tx_flags &
+			/* First, update TX stats if needed */
+			if (skb) {
+				if (unlikely(skb_shinfo(skb)->tx_flags &
 					     SKBTX_HW_TSTAMP) &&
-				    gem_ptp_करो_txstamp(queue, skb, desc) == 0) अणु
-					/* skb now beदीर्घs to बारtamp buffer
-					 * and will be हटाओd later
+				    gem_ptp_do_txstamp(queue, skb, desc) == 0) {
+					/* skb now belongs to timestamp buffer
+					 * and will be removed later
 					 */
-					tx_skb->skb = शून्य;
-				पूर्ण
+					tx_skb->skb = NULL;
+				}
 				netdev_vdbg(bp->dev, "skb %u (data %p) TX complete\n",
 					    macb_tx_ring_wrap(bp, tail),
 					    skb->data);
@@ -1215,37 +1214,37 @@ err_out:
 				queue->stats.tx_packets++;
 				bp->dev->stats.tx_bytes += skb->len;
 				queue->stats.tx_bytes += skb->len;
-			पूर्ण
+			}
 
 			/* Now we can safely release resources */
 			macb_tx_unmap(bp, tx_skb);
 
-			/* skb is set only क्रम the last buffer of the frame.
-			 * WARNING: at this poपूर्णांक skb has been मुक्तd by
+			/* skb is set only for the last buffer of the frame.
+			 * WARNING: at this point skb has been freed by
 			 * macb_tx_unmap().
 			 */
-			अगर (skb)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (skb)
+				break;
+		}
+	}
 
 	queue->tx_tail = tail;
-	अगर (__netअगर_subqueue_stopped(bp->dev, queue_index) &&
+	if (__netif_subqueue_stopped(bp->dev, queue_index) &&
 	    CIRC_CNT(queue->tx_head, queue->tx_tail,
 		     bp->tx_ring_size) <= MACB_TX_WAKEUP_THRESH(bp))
-		netअगर_wake_subqueue(bp->dev, queue_index);
-पूर्ण
+		netif_wake_subqueue(bp->dev, queue_index);
+}
 
-अटल व्योम gem_rx_refill(काष्ठा macb_queue *queue)
-अणु
-	अचिन्हित पूर्णांक		entry;
-	काष्ठा sk_buff		*skb;
+static void gem_rx_refill(struct macb_queue *queue)
+{
+	unsigned int		entry;
+	struct sk_buff		*skb;
 	dma_addr_t		paddr;
-	काष्ठा macb *bp = queue->bp;
-	काष्ठा macb_dma_desc *desc;
+	struct macb *bp = queue->bp;
+	struct macb_dma_desc *desc;
 
-	जबतक (CIRC_SPACE(queue->rx_prepared_head, queue->rx_tail,
-			bp->rx_ring_size) > 0) अणु
+	while (CIRC_SPACE(queue->rx_prepared_head, queue->rx_tail,
+			bp->rx_ring_size) > 0) {
 		entry = macb_rx_ring_wrap(bp, queue->rx_prepared_head);
 
 		/* Make hw descriptor updates visible to CPU */
@@ -1254,83 +1253,83 @@ err_out:
 		queue->rx_prepared_head++;
 		desc = macb_rx_desc(queue, entry);
 
-		अगर (!queue->rx_skbuff[entry]) अणु
-			/* allocate sk_buff क्रम this मुक्त entry in ring */
+		if (!queue->rx_skbuff[entry]) {
+			/* allocate sk_buff for this free entry in ring */
 			skb = netdev_alloc_skb(bp->dev, bp->rx_buffer_size);
-			अगर (unlikely(!skb)) अणु
+			if (unlikely(!skb)) {
 				netdev_err(bp->dev,
 					   "Unable to allocate sk_buff\n");
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			/* now fill corresponding descriptor entry */
 			paddr = dma_map_single(&bp->pdev->dev, skb->data,
 					       bp->rx_buffer_size,
 					       DMA_FROM_DEVICE);
-			अगर (dma_mapping_error(&bp->pdev->dev, paddr)) अणु
-				dev_kमुक्त_skb(skb);
-				अवरोध;
-			पूर्ण
+			if (dma_mapping_error(&bp->pdev->dev, paddr)) {
+				dev_kfree_skb(skb);
+				break;
+			}
 
 			queue->rx_skbuff[entry] = skb;
 
-			अगर (entry == bp->rx_ring_size - 1)
+			if (entry == bp->rx_ring_size - 1)
 				paddr |= MACB_BIT(RX_WRAP);
 			desc->ctrl = 0;
 			/* Setting addr clears RX_USED and allows reception,
-			 * make sure ctrl is cleared first to aव्योम a race.
+			 * make sure ctrl is cleared first to avoid a race.
 			 */
 			dma_wmb();
 			macb_set_addr(bp, desc, paddr);
 
 			/* properly align Ethernet header */
 			skb_reserve(skb, NET_IP_ALIGN);
-		पूर्ण अन्यथा अणु
+		} else {
 			desc->ctrl = 0;
 			dma_wmb();
 			desc->addr &= ~MACB_BIT(RX_USED);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Make descriptor updates visible to hardware */
 	wmb();
 
 	netdev_vdbg(bp->dev, "rx ring: queue: %p, prepared head %d, tail %d\n",
 			queue, queue->rx_prepared_head, queue->rx_tail);
-पूर्ण
+}
 
 /* Mark DMA descriptors from begin up to and not including end as unused */
-अटल व्योम discard_partial_frame(काष्ठा macb_queue *queue, अचिन्हित पूर्णांक begin,
-				  अचिन्हित पूर्णांक end)
-अणु
-	अचिन्हित पूर्णांक frag;
+static void discard_partial_frame(struct macb_queue *queue, unsigned int begin,
+				  unsigned int end)
+{
+	unsigned int frag;
 
-	क्रम (frag = begin; frag != end; frag++) अणु
-		काष्ठा macb_dma_desc *desc = macb_rx_desc(queue, frag);
+	for (frag = begin; frag != end; frag++) {
+		struct macb_dma_desc *desc = macb_rx_desc(queue, frag);
 
 		desc->addr &= ~MACB_BIT(RX_USED);
-	पूर्ण
+	}
 
 	/* Make descriptor updates visible to hardware */
 	wmb();
 
-	/* When this happens, the hardware stats रेजिस्टरs क्रम
-	 * whatever caused this is updated, so we करोn't have to record
+	/* When this happens, the hardware stats registers for
+	 * whatever caused this is updated, so we don't have to record
 	 * anything.
 	 */
-पूर्ण
+}
 
-अटल पूर्णांक gem_rx(काष्ठा macb_queue *queue, काष्ठा napi_काष्ठा *napi,
-		  पूर्णांक budget)
-अणु
-	काष्ठा macb *bp = queue->bp;
-	अचिन्हित पूर्णांक		len;
-	अचिन्हित पूर्णांक		entry;
-	काष्ठा sk_buff		*skb;
-	काष्ठा macb_dma_desc	*desc;
-	पूर्णांक			count = 0;
+static int gem_rx(struct macb_queue *queue, struct napi_struct *napi,
+		  int budget)
+{
+	struct macb *bp = queue->bp;
+	unsigned int		len;
+	unsigned int		entry;
+	struct sk_buff		*skb;
+	struct macb_dma_desc	*desc;
+	int			count = 0;
 
-	जबतक (count < budget) अणु
+	while (count < budget) {
 		u32 ctrl;
 		dma_addr_t addr;
 		bool rxused;
@@ -1344,8 +1343,8 @@ err_out:
 		rxused = (desc->addr & MACB_BIT(RX_USED)) ? true : false;
 		addr = macb_get_addr(bp, desc);
 
-		अगर (!rxused)
-			अवरोध;
+		if (!rxused)
+			break;
 
 		/* Ensure ctrl is at least as up-to-date as rxused */
 		dma_rmb();
@@ -1355,23 +1354,23 @@ err_out:
 		queue->rx_tail++;
 		count++;
 
-		अगर (!(ctrl & MACB_BIT(RX_SOF) && ctrl & MACB_BIT(RX_खातापूर्ण))) अणु
+		if (!(ctrl & MACB_BIT(RX_SOF) && ctrl & MACB_BIT(RX_EOF))) {
 			netdev_err(bp->dev,
 				   "not whole frame pointed by descriptor\n");
 			bp->dev->stats.rx_dropped++;
 			queue->stats.rx_dropped++;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		skb = queue->rx_skbuff[entry];
-		अगर (unlikely(!skb)) अणु
+		if (unlikely(!skb)) {
 			netdev_err(bp->dev,
 				   "inconsistent Rx descriptor chain\n");
 			bp->dev->stats.rx_dropped++;
 			queue->stats.rx_dropped++;
-			अवरोध;
-		पूर्ण
-		/* now everything is पढ़ोy क्रम receiving packet */
-		queue->rx_skbuff[entry] = शून्य;
+			break;
+		}
+		/* now everything is ready for receiving packet */
+		queue->rx_skbuff[entry] = NULL;
 		len = ctrl & bp->rx_frm_len_mask;
 
 		netdev_vdbg(bp->dev, "gem_rx %u (len %u)\n", entry, len);
@@ -1381,8 +1380,8 @@ err_out:
 				 bp->rx_buffer_size, DMA_FROM_DEVICE);
 
 		skb->protocol = eth_type_trans(skb, bp->dev);
-		skb_checksum_none_निश्चित(skb);
-		अगर (bp->dev->features & NETIF_F_RXCSUM &&
+		skb_checksum_none_assert(skb);
+		if (bp->dev->features & NETIF_F_RXCSUM &&
 		    !(bp->dev->flags & IFF_PROMISC) &&
 		    GEM_BFEXT(RX_CSUM, ctrl) & GEM_RX_CSUM_CHECKED_MASK)
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
@@ -1392,34 +1391,34 @@ err_out:
 		bp->dev->stats.rx_bytes += skb->len;
 		queue->stats.rx_bytes += skb->len;
 
-		gem_ptp_करो_rxstamp(bp, skb, desc);
+		gem_ptp_do_rxstamp(bp, skb, desc);
 
-#अगर defined(DEBUG) && defined(VERBOSE_DEBUG)
+#if defined(DEBUG) && defined(VERBOSE_DEBUG)
 		netdev_vdbg(bp->dev, "received skb of length %u, csum: %08x\n",
 			    skb->len, skb->csum);
-		prपूर्णांक_hex_dump(KERN_DEBUG, " mac: ", DUMP_PREFIX_ADDRESS, 16, 1,
+		print_hex_dump(KERN_DEBUG, " mac: ", DUMP_PREFIX_ADDRESS, 16, 1,
 			       skb_mac_header(skb), 16, true);
-		prपूर्णांक_hex_dump(KERN_DEBUG, "data: ", DUMP_PREFIX_ADDRESS, 16, 1,
+		print_hex_dump(KERN_DEBUG, "data: ", DUMP_PREFIX_ADDRESS, 16, 1,
 			       skb->data, 32, true);
-#पूर्ण_अगर
+#endif
 
 		napi_gro_receive(napi, skb);
-	पूर्ण
+	}
 
 	gem_rx_refill(queue);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक macb_rx_frame(काष्ठा macb_queue *queue, काष्ठा napi_काष्ठा *napi,
-			 अचिन्हित पूर्णांक first_frag, अचिन्हित पूर्णांक last_frag)
-अणु
-	अचिन्हित पूर्णांक len;
-	अचिन्हित पूर्णांक frag;
-	अचिन्हित पूर्णांक offset;
-	काष्ठा sk_buff *skb;
-	काष्ठा macb_dma_desc *desc;
-	काष्ठा macb *bp = queue->bp;
+static int macb_rx_frame(struct macb_queue *queue, struct napi_struct *napi,
+			 unsigned int first_frag, unsigned int last_frag)
+{
+	unsigned int len;
+	unsigned int frag;
+	unsigned int offset;
+	struct sk_buff *skb;
+	struct macb_dma_desc *desc;
+	struct macb *bp = queue->bp;
 
 	desc = macb_rx_desc(queue, last_frag);
 	len = desc->ctrl & bp->rx_frm_len_mask;
@@ -1428,45 +1427,45 @@ err_out:
 		macb_rx_ring_wrap(bp, first_frag),
 		macb_rx_ring_wrap(bp, last_frag), len);
 
-	/* The ethernet header starts NET_IP_ALIGN bytes पूर्णांकo the
+	/* The ethernet header starts NET_IP_ALIGN bytes into the
 	 * first buffer. Since the header is 14 bytes, this makes the
 	 * payload word-aligned.
 	 *
 	 * Instead of calling skb_reserve(NET_IP_ALIGN), we just copy
-	 * the two padding bytes पूर्णांकo the skb so that we aव्योम hitting
-	 * the slowpath in स_नकल(), and pull them off afterwards.
+	 * the two padding bytes into the skb so that we avoid hitting
+	 * the slowpath in memcpy(), and pull them off afterwards.
 	 */
 	skb = netdev_alloc_skb(bp->dev, len + NET_IP_ALIGN);
-	अगर (!skb) अणु
+	if (!skb) {
 		bp->dev->stats.rx_dropped++;
-		क्रम (frag = first_frag; ; frag++) अणु
+		for (frag = first_frag; ; frag++) {
 			desc = macb_rx_desc(queue, frag);
 			desc->addr &= ~MACB_BIT(RX_USED);
-			अगर (frag == last_frag)
-				अवरोध;
-		पूर्ण
+			if (frag == last_frag)
+				break;
+		}
 
 		/* Make descriptor updates visible to hardware */
 		wmb();
 
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	offset = 0;
 	len += NET_IP_ALIGN;
-	skb_checksum_none_निश्चित(skb);
+	skb_checksum_none_assert(skb);
 	skb_put(skb, len);
 
-	क्रम (frag = first_frag; ; frag++) अणु
-		अचिन्हित पूर्णांक frag_len = bp->rx_buffer_size;
+	for (frag = first_frag; ; frag++) {
+		unsigned int frag_len = bp->rx_buffer_size;
 
-		अगर (offset + frag_len > len) अणु
-			अगर (unlikely(frag != last_frag)) अणु
-				dev_kमुक्त_skb_any(skb);
-				वापस -1;
-			पूर्ण
+		if (offset + frag_len > len) {
+			if (unlikely(frag != last_frag)) {
+				dev_kfree_skb_any(skb);
+				return -1;
+			}
 			frag_len = len - offset;
-		पूर्ण
+		}
 		skb_copy_to_linear_data_offset(skb, offset,
 					       macb_rx_buffer(queue, frag),
 					       frag_len);
@@ -1474,9 +1473,9 @@ err_out:
 		desc = macb_rx_desc(queue, frag);
 		desc->addr &= ~MACB_BIT(RX_USED);
 
-		अगर (frag == last_frag)
-			अवरोध;
-	पूर्ण
+		if (frag == last_frag)
+			break;
+	}
 
 	/* Make descriptor updates visible to hardware */
 	wmb();
@@ -1490,399 +1489,399 @@ err_out:
 		    skb->len, skb->csum);
 	napi_gro_receive(napi, skb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम macb_init_rx_ring(काष्ठा macb_queue *queue)
-अणु
-	काष्ठा macb *bp = queue->bp;
+static inline void macb_init_rx_ring(struct macb_queue *queue)
+{
+	struct macb *bp = queue->bp;
 	dma_addr_t addr;
-	काष्ठा macb_dma_desc *desc = शून्य;
-	पूर्णांक i;
+	struct macb_dma_desc *desc = NULL;
+	int i;
 
 	addr = queue->rx_buffers_dma;
-	क्रम (i = 0; i < bp->rx_ring_size; i++) अणु
+	for (i = 0; i < bp->rx_ring_size; i++) {
 		desc = macb_rx_desc(queue, i);
 		macb_set_addr(bp, desc, addr);
 		desc->ctrl = 0;
 		addr += bp->rx_buffer_size;
-	पूर्ण
+	}
 	desc->addr |= MACB_BIT(RX_WRAP);
 	queue->rx_tail = 0;
-पूर्ण
+}
 
-अटल पूर्णांक macb_rx(काष्ठा macb_queue *queue, काष्ठा napi_काष्ठा *napi,
-		   पूर्णांक budget)
-अणु
-	काष्ठा macb *bp = queue->bp;
+static int macb_rx(struct macb_queue *queue, struct napi_struct *napi,
+		   int budget)
+{
+	struct macb *bp = queue->bp;
 	bool reset_rx_queue = false;
-	पूर्णांक received = 0;
-	अचिन्हित पूर्णांक tail;
-	पूर्णांक first_frag = -1;
+	int received = 0;
+	unsigned int tail;
+	int first_frag = -1;
 
-	क्रम (tail = queue->rx_tail; budget > 0; tail++) अणु
-		काष्ठा macb_dma_desc *desc = macb_rx_desc(queue, tail);
+	for (tail = queue->rx_tail; budget > 0; tail++) {
+		struct macb_dma_desc *desc = macb_rx_desc(queue, tail);
 		u32 ctrl;
 
 		/* Make hw descriptor updates visible to CPU */
 		rmb();
 
-		अगर (!(desc->addr & MACB_BIT(RX_USED)))
-			अवरोध;
+		if (!(desc->addr & MACB_BIT(RX_USED)))
+			break;
 
 		/* Ensure ctrl is at least as up-to-date as addr */
 		dma_rmb();
 
 		ctrl = desc->ctrl;
 
-		अगर (ctrl & MACB_BIT(RX_SOF)) अणु
-			अगर (first_frag != -1)
+		if (ctrl & MACB_BIT(RX_SOF)) {
+			if (first_frag != -1)
 				discard_partial_frame(queue, first_frag, tail);
 			first_frag = tail;
-		पूर्ण
+		}
 
-		अगर (ctrl & MACB_BIT(RX_खातापूर्ण)) अणु
-			पूर्णांक dropped;
+		if (ctrl & MACB_BIT(RX_EOF)) {
+			int dropped;
 
-			अगर (unlikely(first_frag == -1)) अणु
+			if (unlikely(first_frag == -1)) {
 				reset_rx_queue = true;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			dropped = macb_rx_frame(queue, napi, first_frag, tail);
 			first_frag = -1;
-			अगर (unlikely(dropped < 0)) अणु
+			if (unlikely(dropped < 0)) {
 				reset_rx_queue = true;
-				जारी;
-			पूर्ण
-			अगर (!dropped) अणु
+				continue;
+			}
+			if (!dropped) {
 				received++;
 				budget--;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (unlikely(reset_rx_queue)) अणु
-		अचिन्हित दीर्घ flags;
+	if (unlikely(reset_rx_queue)) {
+		unsigned long flags;
 		u32 ctrl;
 
 		netdev_err(bp->dev, "RX queue corruption: reset it\n");
 
 		spin_lock_irqsave(&bp->lock, flags);
 
-		ctrl = macb_पढ़ोl(bp, NCR);
-		macb_ग_लिखोl(bp, NCR, ctrl & ~MACB_BIT(RE));
+		ctrl = macb_readl(bp, NCR);
+		macb_writel(bp, NCR, ctrl & ~MACB_BIT(RE));
 
 		macb_init_rx_ring(queue);
-		queue_ग_लिखोl(queue, RBQP, queue->rx_ring_dma);
+		queue_writel(queue, RBQP, queue->rx_ring_dma);
 
-		macb_ग_लिखोl(bp, NCR, ctrl | MACB_BIT(RE));
+		macb_writel(bp, NCR, ctrl | MACB_BIT(RE));
 
 		spin_unlock_irqrestore(&bp->lock, flags);
-		वापस received;
-	पूर्ण
+		return received;
+	}
 
-	अगर (first_frag != -1)
+	if (first_frag != -1)
 		queue->rx_tail = first_frag;
-	अन्यथा
+	else
 		queue->rx_tail = tail;
 
-	वापस received;
-पूर्ण
+	return received;
+}
 
-अटल पूर्णांक macb_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
-अणु
-	काष्ठा macb_queue *queue = container_of(napi, काष्ठा macb_queue, napi);
-	काष्ठा macb *bp = queue->bp;
-	पूर्णांक work_करोne;
+static int macb_poll(struct napi_struct *napi, int budget)
+{
+	struct macb_queue *queue = container_of(napi, struct macb_queue, napi);
+	struct macb *bp = queue->bp;
+	int work_done;
 	u32 status;
 
-	status = macb_पढ़ोl(bp, RSR);
-	macb_ग_लिखोl(bp, RSR, status);
+	status = macb_readl(bp, RSR);
+	macb_writel(bp, RSR, status);
 
 	netdev_vdbg(bp->dev, "poll: status = %08lx, budget = %d\n",
-		    (अचिन्हित दीर्घ)status, budget);
+		    (unsigned long)status, budget);
 
-	work_करोne = bp->macbgem_ops.mog_rx(queue, napi, budget);
-	अगर (work_करोne < budget) अणु
-		napi_complete_करोne(napi, work_करोne);
+	work_done = bp->macbgem_ops.mog_rx(queue, napi, budget);
+	if (work_done < budget) {
+		napi_complete_done(napi, work_done);
 
-		/* Packets received जबतक पूर्णांकerrupts were disabled */
-		status = macb_पढ़ोl(bp, RSR);
-		अगर (status) अणु
-			अगर (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
-				queue_ग_लिखोl(queue, ISR, MACB_BIT(RCOMP));
+		/* Packets received while interrupts were disabled */
+		status = macb_readl(bp, RSR);
+		if (status) {
+			if (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
+				queue_writel(queue, ISR, MACB_BIT(RCOMP));
 			napi_reschedule(napi);
-		पूर्ण अन्यथा अणु
-			queue_ग_लिखोl(queue, IER, bp->rx_पूर्णांकr_mask);
-		पूर्ण
-	पूर्ण
+		} else {
+			queue_writel(queue, IER, bp->rx_intr_mask);
+		}
+	}
 
 	/* TODO: Handle errors */
 
-	वापस work_करोne;
-पूर्ण
+	return work_done;
+}
 
-अटल व्योम macb_hresp_error_task(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा macb *bp = from_tasklet(bp, t, hresp_err_tasklet);
-	काष्ठा net_device *dev = bp->dev;
-	काष्ठा macb_queue *queue;
-	अचिन्हित पूर्णांक q;
+static void macb_hresp_error_task(struct tasklet_struct *t)
+{
+	struct macb *bp = from_tasklet(bp, t, hresp_err_tasklet);
+	struct net_device *dev = bp->dev;
+	struct macb_queue *queue;
+	unsigned int q;
 	u32 ctrl;
 
-	क्रम (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue) अणु
-		queue_ग_लिखोl(queue, IDR, bp->rx_पूर्णांकr_mask |
+	for (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue) {
+		queue_writel(queue, IDR, bp->rx_intr_mask |
 					 MACB_TX_INT_FLAGS |
 					 MACB_BIT(HRESP));
-	पूर्ण
-	ctrl = macb_पढ़ोl(bp, NCR);
+	}
+	ctrl = macb_readl(bp, NCR);
 	ctrl &= ~(MACB_BIT(RE) | MACB_BIT(TE));
-	macb_ग_लिखोl(bp, NCR, ctrl);
+	macb_writel(bp, NCR, ctrl);
 
-	netअगर_tx_stop_all_queues(dev);
-	netअगर_carrier_off(dev);
+	netif_tx_stop_all_queues(dev);
+	netif_carrier_off(dev);
 
 	bp->macbgem_ops.mog_init_rings(bp);
 
 	/* Initialize TX and RX buffers */
 	macb_init_buffers(bp);
 
-	/* Enable पूर्णांकerrupts */
-	क्रम (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue)
-		queue_ग_लिखोl(queue, IER,
-			     bp->rx_पूर्णांकr_mask |
+	/* Enable interrupts */
+	for (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue)
+		queue_writel(queue, IER,
+			     bp->rx_intr_mask |
 			     MACB_TX_INT_FLAGS |
 			     MACB_BIT(HRESP));
 
 	ctrl |= MACB_BIT(RE) | MACB_BIT(TE);
-	macb_ग_लिखोl(bp, NCR, ctrl);
+	macb_writel(bp, NCR, ctrl);
 
-	netअगर_carrier_on(dev);
-	netअगर_tx_start_all_queues(dev);
-पूर्ण
+	netif_carrier_on(dev);
+	netif_tx_start_all_queues(dev);
+}
 
-अटल व्योम macb_tx_restart(काष्ठा macb_queue *queue)
-अणु
-	अचिन्हित पूर्णांक head = queue->tx_head;
-	अचिन्हित पूर्णांक tail = queue->tx_tail;
-	काष्ठा macb *bp = queue->bp;
+static void macb_tx_restart(struct macb_queue *queue)
+{
+	unsigned int head = queue->tx_head;
+	unsigned int tail = queue->tx_tail;
+	struct macb *bp = queue->bp;
 
-	अगर (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
-		queue_ग_लिखोl(queue, ISR, MACB_BIT(TXUBR));
+	if (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
+		queue_writel(queue, ISR, MACB_BIT(TXUBR));
 
-	अगर (head == tail)
-		वापस;
+	if (head == tail)
+		return;
 
-	macb_ग_लिखोl(bp, NCR, macb_पढ़ोl(bp, NCR) | MACB_BIT(TSTART));
-पूर्ण
+	macb_writel(bp, NCR, macb_readl(bp, NCR) | MACB_BIT(TSTART));
+}
 
-अटल irqवापस_t macb_wol_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा macb_queue *queue = dev_id;
-	काष्ठा macb *bp = queue->bp;
+static irqreturn_t macb_wol_interrupt(int irq, void *dev_id)
+{
+	struct macb_queue *queue = dev_id;
+	struct macb *bp = queue->bp;
 	u32 status;
 
-	status = queue_पढ़ोl(queue, ISR);
+	status = queue_readl(queue, ISR);
 
-	अगर (unlikely(!status))
-		वापस IRQ_NONE;
+	if (unlikely(!status))
+		return IRQ_NONE;
 
 	spin_lock(&bp->lock);
 
-	अगर (status & MACB_BIT(WOL)) अणु
-		queue_ग_लिखोl(queue, IDR, MACB_BIT(WOL));
-		macb_ग_लिखोl(bp, WOL, 0);
+	if (status & MACB_BIT(WOL)) {
+		queue_writel(queue, IDR, MACB_BIT(WOL));
+		macb_writel(bp, WOL, 0);
 		netdev_vdbg(bp->dev, "MACB WoL: queue = %u, isr = 0x%08lx\n",
-			    (अचिन्हित पूर्णांक)(queue - bp->queues),
-			    (अचिन्हित दीर्घ)status);
-		अगर (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
-			queue_ग_लिखोl(queue, ISR, MACB_BIT(WOL));
+			    (unsigned int)(queue - bp->queues),
+			    (unsigned long)status);
+		if (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
+			queue_writel(queue, ISR, MACB_BIT(WOL));
 		pm_wakeup_event(&bp->pdev->dev, 0);
-	पूर्ण
+	}
 
 	spin_unlock(&bp->lock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t gem_wol_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा macb_queue *queue = dev_id;
-	काष्ठा macb *bp = queue->bp;
+static irqreturn_t gem_wol_interrupt(int irq, void *dev_id)
+{
+	struct macb_queue *queue = dev_id;
+	struct macb *bp = queue->bp;
 	u32 status;
 
-	status = queue_पढ़ोl(queue, ISR);
+	status = queue_readl(queue, ISR);
 
-	अगर (unlikely(!status))
-		वापस IRQ_NONE;
+	if (unlikely(!status))
+		return IRQ_NONE;
 
 	spin_lock(&bp->lock);
 
-	अगर (status & GEM_BIT(WOL)) अणु
-		queue_ग_लिखोl(queue, IDR, GEM_BIT(WOL));
-		gem_ग_लिखोl(bp, WOL, 0);
+	if (status & GEM_BIT(WOL)) {
+		queue_writel(queue, IDR, GEM_BIT(WOL));
+		gem_writel(bp, WOL, 0);
 		netdev_vdbg(bp->dev, "GEM WoL: queue = %u, isr = 0x%08lx\n",
-			    (अचिन्हित पूर्णांक)(queue - bp->queues),
-			    (अचिन्हित दीर्घ)status);
-		अगर (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
-			queue_ग_लिखोl(queue, ISR, GEM_BIT(WOL));
+			    (unsigned int)(queue - bp->queues),
+			    (unsigned long)status);
+		if (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
+			queue_writel(queue, ISR, GEM_BIT(WOL));
 		pm_wakeup_event(&bp->pdev->dev, 0);
-	पूर्ण
+	}
 
 	spin_unlock(&bp->lock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t macb_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा macb_queue *queue = dev_id;
-	काष्ठा macb *bp = queue->bp;
-	काष्ठा net_device *dev = bp->dev;
+static irqreturn_t macb_interrupt(int irq, void *dev_id)
+{
+	struct macb_queue *queue = dev_id;
+	struct macb *bp = queue->bp;
+	struct net_device *dev = bp->dev;
 	u32 status, ctrl;
 
-	status = queue_पढ़ोl(queue, ISR);
+	status = queue_readl(queue, ISR);
 
-	अगर (unlikely(!status))
-		वापस IRQ_NONE;
+	if (unlikely(!status))
+		return IRQ_NONE;
 
 	spin_lock(&bp->lock);
 
-	जबतक (status) अणु
-		/* बंद possible race with dev_बंद */
-		अगर (unlikely(!netअगर_running(dev))) अणु
-			queue_ग_लिखोl(queue, IDR, -1);
-			अगर (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
-				queue_ग_लिखोl(queue, ISR, -1);
-			अवरोध;
-		पूर्ण
+	while (status) {
+		/* close possible race with dev_close */
+		if (unlikely(!netif_running(dev))) {
+			queue_writel(queue, IDR, -1);
+			if (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
+				queue_writel(queue, ISR, -1);
+			break;
+		}
 
 		netdev_vdbg(bp->dev, "queue = %u, isr = 0x%08lx\n",
-			    (अचिन्हित पूर्णांक)(queue - bp->queues),
-			    (अचिन्हित दीर्घ)status);
+			    (unsigned int)(queue - bp->queues),
+			    (unsigned long)status);
 
-		अगर (status & bp->rx_पूर्णांकr_mask) अणु
-			/* There's no poपूर्णांक taking any more पूर्णांकerrupts
+		if (status & bp->rx_intr_mask) {
+			/* There's no point taking any more interrupts
 			 * until we have processed the buffers. The
-			 * scheduling call may fail अगर the poll routine
-			 * is alपढ़ोy scheduled, so disable पूर्णांकerrupts
+			 * scheduling call may fail if the poll routine
+			 * is already scheduled, so disable interrupts
 			 * now.
 			 */
-			queue_ग_लिखोl(queue, IDR, bp->rx_पूर्णांकr_mask);
-			अगर (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
-				queue_ग_लिखोl(queue, ISR, MACB_BIT(RCOMP));
+			queue_writel(queue, IDR, bp->rx_intr_mask);
+			if (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
+				queue_writel(queue, ISR, MACB_BIT(RCOMP));
 
-			अगर (napi_schedule_prep(&queue->napi)) अणु
+			if (napi_schedule_prep(&queue->napi)) {
 				netdev_vdbg(bp->dev, "scheduling RX softirq\n");
 				__napi_schedule(&queue->napi);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (unlikely(status & (MACB_TX_ERR_FLAGS))) अणु
-			queue_ग_लिखोl(queue, IDR, MACB_TX_INT_FLAGS);
+		if (unlikely(status & (MACB_TX_ERR_FLAGS))) {
+			queue_writel(queue, IDR, MACB_TX_INT_FLAGS);
 			schedule_work(&queue->tx_error_task);
 
-			अगर (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
-				queue_ग_लिखोl(queue, ISR, MACB_TX_ERR_FLAGS);
+			if (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
+				queue_writel(queue, ISR, MACB_TX_ERR_FLAGS);
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (status & MACB_BIT(TCOMP))
-			macb_tx_पूर्णांकerrupt(queue);
+		if (status & MACB_BIT(TCOMP))
+			macb_tx_interrupt(queue);
 
-		अगर (status & MACB_BIT(TXUBR))
+		if (status & MACB_BIT(TXUBR))
 			macb_tx_restart(queue);
 
 		/* Link change detection isn't possible with RMII, so we'll
-		 * add that अगर/when we get our hands on a full-blown MII PHY.
+		 * add that if/when we get our hands on a full-blown MII PHY.
 		 */
 
 		/* There is a hardware issue under heavy load where DMA can
 		 * stop, this causes endless "used buffer descriptor read"
-		 * पूर्णांकerrupts but it can be cleared by re-enabling RX. See
+		 * interrupts but it can be cleared by re-enabling RX. See
 		 * the at91rm9200 manual, section 41.3.1 or the Zynq manual
-		 * section 16.7.4 क्रम details. RXUBR is only enabled क्रम
+		 * section 16.7.4 for details. RXUBR is only enabled for
 		 * these two versions.
 		 */
-		अगर (status & MACB_BIT(RXUBR)) अणु
-			ctrl = macb_पढ़ोl(bp, NCR);
-			macb_ग_लिखोl(bp, NCR, ctrl & ~MACB_BIT(RE));
+		if (status & MACB_BIT(RXUBR)) {
+			ctrl = macb_readl(bp, NCR);
+			macb_writel(bp, NCR, ctrl & ~MACB_BIT(RE));
 			wmb();
-			macb_ग_लिखोl(bp, NCR, ctrl | MACB_BIT(RE));
+			macb_writel(bp, NCR, ctrl | MACB_BIT(RE));
 
-			अगर (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
-				queue_ग_लिखोl(queue, ISR, MACB_BIT(RXUBR));
-		पूर्ण
+			if (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
+				queue_writel(queue, ISR, MACB_BIT(RXUBR));
+		}
 
-		अगर (status & MACB_BIT(ISR_ROVR)) अणु
+		if (status & MACB_BIT(ISR_ROVR)) {
 			/* We missed at least one packet */
-			अगर (macb_is_gem(bp))
+			if (macb_is_gem(bp))
 				bp->hw_stats.gem.rx_overruns++;
-			अन्यथा
+			else
 				bp->hw_stats.macb.rx_overruns++;
 
-			अगर (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
-				queue_ग_लिखोl(queue, ISR, MACB_BIT(ISR_ROVR));
-		पूर्ण
+			if (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
+				queue_writel(queue, ISR, MACB_BIT(ISR_ROVR));
+		}
 
-		अगर (status & MACB_BIT(HRESP)) अणु
+		if (status & MACB_BIT(HRESP)) {
 			tasklet_schedule(&bp->hresp_err_tasklet);
 			netdev_err(dev, "DMA bus error: HRESP not OK\n");
 
-			अगर (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
-				queue_ग_लिखोl(queue, ISR, MACB_BIT(HRESP));
-		पूर्ण
-		status = queue_पढ़ोl(queue, ISR);
-	पूर्ण
+			if (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
+				queue_writel(queue, ISR, MACB_BIT(HRESP));
+		}
+		status = queue_readl(queue, ISR);
+	}
 
 	spin_unlock(&bp->lock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+#ifdef CONFIG_NET_POLL_CONTROLLER
 /* Polling receive - used by netconsole and other diagnostic tools
- * to allow network i/o with पूर्णांकerrupts disabled.
+ * to allow network i/o with interrupts disabled.
  */
-अटल व्योम macb_poll_controller(काष्ठा net_device *dev)
-अणु
-	काष्ठा macb *bp = netdev_priv(dev);
-	काष्ठा macb_queue *queue;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक q;
+static void macb_poll_controller(struct net_device *dev)
+{
+	struct macb *bp = netdev_priv(dev);
+	struct macb_queue *queue;
+	unsigned long flags;
+	unsigned int q;
 
 	local_irq_save(flags);
-	क्रम (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue)
-		macb_पूर्णांकerrupt(dev->irq, queue);
+	for (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue)
+		macb_interrupt(dev->irq, queue);
 	local_irq_restore(flags);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल अचिन्हित पूर्णांक macb_tx_map(काष्ठा macb *bp,
-				काष्ठा macb_queue *queue,
-				काष्ठा sk_buff *skb,
-				अचिन्हित पूर्णांक hdrlen)
-अणु
+static unsigned int macb_tx_map(struct macb *bp,
+				struct macb_queue *queue,
+				struct sk_buff *skb,
+				unsigned int hdrlen)
+{
 	dma_addr_t mapping;
-	अचिन्हित पूर्णांक len, entry, i, tx_head = queue->tx_head;
-	काष्ठा macb_tx_skb *tx_skb = शून्य;
-	काष्ठा macb_dma_desc *desc;
-	अचिन्हित पूर्णांक offset, size, count = 0;
-	अचिन्हित पूर्णांक f, nr_frags = skb_shinfo(skb)->nr_frags;
-	अचिन्हित पूर्णांक eof = 1, mss_mfs = 0;
+	unsigned int len, entry, i, tx_head = queue->tx_head;
+	struct macb_tx_skb *tx_skb = NULL;
+	struct macb_dma_desc *desc;
+	unsigned int offset, size, count = 0;
+	unsigned int f, nr_frags = skb_shinfo(skb)->nr_frags;
+	unsigned int eof = 1, mss_mfs = 0;
 	u32 ctrl, lso_ctrl = 0, seq_ctrl = 0;
 
 	/* LSO */
-	अगर (skb_shinfo(skb)->gso_size != 0) अणु
-		अगर (ip_hdr(skb)->protocol == IPPROTO_UDP)
+	if (skb_shinfo(skb)->gso_size != 0) {
+		if (ip_hdr(skb)->protocol == IPPROTO_UDP)
 			/* UDP - UFO */
 			lso_ctrl = MACB_LSO_UFO_ENABLE;
-		अन्यथा
+		else
 			/* TCP - TSO */
 			lso_ctrl = MACB_LSO_TSO_ENABLE;
-	पूर्ण
+	}
 
 	/* First, map non-paged data */
 	len = skb_headlen(skb);
@@ -1891,18 +1890,18 @@ err_out:
 	size = hdrlen;
 
 	offset = 0;
-	जबतक (len) अणु
+	while (len) {
 		entry = macb_tx_ring_wrap(bp, tx_head);
 		tx_skb = &queue->tx_skb[entry];
 
 		mapping = dma_map_single(&bp->pdev->dev,
 					 skb->data + offset,
 					 size, DMA_TO_DEVICE);
-		अगर (dma_mapping_error(&bp->pdev->dev, mapping))
-			जाओ dma_error;
+		if (dma_mapping_error(&bp->pdev->dev, mapping))
+			goto dma_error;
 
 		/* Save info to properly release resources */
-		tx_skb->skb = शून्य;
+		tx_skb->skb = NULL;
 		tx_skb->mapping = mapping;
 		tx_skb->size = size;
 		tx_skb->mapped_as_page = false;
@@ -1913,26 +1912,26 @@ err_out:
 		tx_head++;
 
 		size = min(len, bp->max_tx_length);
-	पूर्ण
+	}
 
 	/* Then, map paged data from fragments */
-	क्रम (f = 0; f < nr_frags; f++) अणु
-		स्थिर skb_frag_t *frag = &skb_shinfo(skb)->frags[f];
+	for (f = 0; f < nr_frags; f++) {
+		const skb_frag_t *frag = &skb_shinfo(skb)->frags[f];
 
 		len = skb_frag_size(frag);
 		offset = 0;
-		जबतक (len) अणु
+		while (len) {
 			size = min(len, bp->max_tx_length);
 			entry = macb_tx_ring_wrap(bp, tx_head);
 			tx_skb = &queue->tx_skb[entry];
 
 			mapping = skb_frag_dma_map(&bp->pdev->dev, frag,
 						   offset, size, DMA_TO_DEVICE);
-			अगर (dma_mapping_error(&bp->pdev->dev, mapping))
-				जाओ dma_error;
+			if (dma_mapping_error(&bp->pdev->dev, mapping))
+				goto dma_error;
 
 			/* Save info to properly release resources */
-			tx_skb->skb = शून्य;
+			tx_skb->skb = NULL;
 			tx_skb->mapping = mapping;
 			tx_skb->size = size;
 			tx_skb->mapped_as_page = true;
@@ -1941,20 +1940,20 @@ err_out:
 			offset += size;
 			count++;
 			tx_head++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Should never happen */
-	अगर (unlikely(!tx_skb)) अणु
+	if (unlikely(!tx_skb)) {
 		netdev_err(bp->dev, "BUG! empty skb!\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* This is the last buffer of the frame: save socket buffer */
 	tx_skb->skb = skb;
 
 	/* Update TX ring: update buffer descriptors in reverse order
-	 * to aव्योम race condition
+	 * to avoid race condition
 	 */
 
 	/* Set 'TX_USED' bit in buffer descriptor at tx_head position
@@ -1966,43 +1965,43 @@ err_out:
 	desc = macb_tx_desc(queue, entry);
 	desc->ctrl = ctrl;
 
-	अगर (lso_ctrl) अणु
-		अगर (lso_ctrl == MACB_LSO_UFO_ENABLE)
+	if (lso_ctrl) {
+		if (lso_ctrl == MACB_LSO_UFO_ENABLE)
 			/* include header and FCS in value given to h/w */
 			mss_mfs = skb_shinfo(skb)->gso_size +
 					skb_transport_offset(skb) +
 					ETH_FCS_LEN;
-		अन्यथा /* TSO */ अणु
+		else /* TSO */ {
 			mss_mfs = skb_shinfo(skb)->gso_size;
 			/* TCP Sequence Number Source Select
-			 * can be set only क्रम TSO
+			 * can be set only for TSO
 			 */
 			seq_ctrl = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	करो अणु
+	do {
 		i--;
 		entry = macb_tx_ring_wrap(bp, i);
 		tx_skb = &queue->tx_skb[entry];
 		desc = macb_tx_desc(queue, entry);
 
 		ctrl = (u32)tx_skb->size;
-		अगर (eof) अणु
+		if (eof) {
 			ctrl |= MACB_BIT(TX_LAST);
 			eof = 0;
-		पूर्ण
-		अगर (unlikely(entry == (bp->tx_ring_size - 1)))
+		}
+		if (unlikely(entry == (bp->tx_ring_size - 1)))
 			ctrl |= MACB_BIT(TX_WRAP);
 
 		/* First descriptor is header descriptor */
-		अगर (i == queue->tx_head) अणु
+		if (i == queue->tx_head) {
 			ctrl |= MACB_BF(TX_LSO, lso_ctrl);
 			ctrl |= MACB_BF(TX_TCP_SEQ_SRC, seq_ctrl);
-			अगर ((bp->dev->features & NETIF_F_HW_CSUM) &&
+			if ((bp->dev->features & NETIF_F_HW_CSUM) &&
 			    skb->ip_summed != CHECKSUM_PARTIAL && !lso_ctrl)
 				ctrl |= MACB_BIT(TX_NOCRC);
-		पूर्ण अन्यथा
+		} else
 			/* Only set MSS/MFS on payload descriptors
 			 * (second or later descriptor)
 			 */
@@ -2010,41 +2009,41 @@ err_out:
 
 		/* Set TX buffer descriptor */
 		macb_set_addr(bp, desc, tx_skb->mapping);
-		/* desc->addr must be visible to hardware beक्रमe clearing
+		/* desc->addr must be visible to hardware before clearing
 		 * 'TX_USED' bit in desc->ctrl.
 		 */
 		wmb();
 		desc->ctrl = ctrl;
-	पूर्ण जबतक (i != queue->tx_head);
+	} while (i != queue->tx_head);
 
 	queue->tx_head = tx_head;
 
-	वापस count;
+	return count;
 
 dma_error:
 	netdev_err(bp->dev, "TX DMA map failed\n");
 
-	क्रम (i = queue->tx_head; i != tx_head; i++) अणु
+	for (i = queue->tx_head; i != tx_head; i++) {
 		tx_skb = macb_tx_skb(queue, i);
 
 		macb_tx_unmap(bp, tx_skb);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल netdev_features_t macb_features_check(काष्ठा sk_buff *skb,
-					     काष्ठा net_device *dev,
+static netdev_features_t macb_features_check(struct sk_buff *skb,
+					     struct net_device *dev,
 					     netdev_features_t features)
-अणु
-	अचिन्हित पूर्णांक nr_frags, f;
-	अचिन्हित पूर्णांक hdrlen;
+{
+	unsigned int nr_frags, f;
+	unsigned int hdrlen;
 
 	/* Validate LSO compatibility */
 
 	/* there is only one buffer or protocol is not UDP */
-	अगर (!skb_is_nonlinear(skb) || (ip_hdr(skb)->protocol != IPPROTO_UDP))
-		वापस features;
+	if (!skb_is_nonlinear(skb) || (ip_hdr(skb)->protocol != IPPROTO_UDP))
+		return features;
 
 	/* length of header */
 	hdrlen = skb_transport_offset(skb);
@@ -2053,82 +2052,82 @@ dma_error:
 	 * When software supplies two or more payload buffers all payload buffers
 	 * apart from the last must be a multiple of 8 bytes in size.
 	 */
-	अगर (!IS_ALIGNED(skb_headlen(skb) - hdrlen, MACB_TX_LEN_ALIGN))
-		वापस features & ~MACB_NETIF_LSO;
+	if (!IS_ALIGNED(skb_headlen(skb) - hdrlen, MACB_TX_LEN_ALIGN))
+		return features & ~MACB_NETIF_LSO;
 
 	nr_frags = skb_shinfo(skb)->nr_frags;
 	/* No need to check last fragment */
 	nr_frags--;
-	क्रम (f = 0; f < nr_frags; f++) अणु
-		स्थिर skb_frag_t *frag = &skb_shinfo(skb)->frags[f];
+	for (f = 0; f < nr_frags; f++) {
+		const skb_frag_t *frag = &skb_shinfo(skb)->frags[f];
 
-		अगर (!IS_ALIGNED(skb_frag_size(frag), MACB_TX_LEN_ALIGN))
-			वापस features & ~MACB_NETIF_LSO;
-	पूर्ण
-	वापस features;
-पूर्ण
+		if (!IS_ALIGNED(skb_frag_size(frag), MACB_TX_LEN_ALIGN))
+			return features & ~MACB_NETIF_LSO;
+	}
+	return features;
+}
 
-अटल अंतरभूत पूर्णांक macb_clear_csum(काष्ठा sk_buff *skb)
-अणु
-	/* no change क्रम packets without checksum offloading */
-	अगर (skb->ip_summed != CHECKSUM_PARTIAL)
-		वापस 0;
+static inline int macb_clear_csum(struct sk_buff *skb)
+{
+	/* no change for packets without checksum offloading */
+	if (skb->ip_summed != CHECKSUM_PARTIAL)
+		return 0;
 
-	/* make sure we can modअगरy the header */
-	अगर (unlikely(skb_cow_head(skb, 0)))
-		वापस -1;
+	/* make sure we can modify the header */
+	if (unlikely(skb_cow_head(skb, 0)))
+		return -1;
 
 	/* initialize checksum field
-	 * This is required - at least क्रम Zynq, which otherwise calculates
-	 * wrong UDP header checksums क्रम UDP packets with UDP data len <=2
+	 * This is required - at least for Zynq, which otherwise calculates
+	 * wrong UDP header checksums for UDP packets with UDP data len <=2
 	 */
 	*(__sum16 *)(skb_checksum_start(skb) + skb->csum_offset) = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक macb_pad_and_fcs(काष्ठा sk_buff **skb, काष्ठा net_device *ndev)
-अणु
+static int macb_pad_and_fcs(struct sk_buff **skb, struct net_device *ndev)
+{
 	bool cloned = skb_cloned(*skb) || skb_header_cloned(*skb) ||
 		      skb_is_nonlinear(*skb);
-	पूर्णांक padlen = ETH_ZLEN - (*skb)->len;
-	पूर्णांक headroom = skb_headroom(*skb);
-	पूर्णांक tailroom = skb_tailroom(*skb);
-	काष्ठा sk_buff *nskb;
+	int padlen = ETH_ZLEN - (*skb)->len;
+	int headroom = skb_headroom(*skb);
+	int tailroom = skb_tailroom(*skb);
+	struct sk_buff *nskb;
 	u32 fcs;
 
-	अगर (!(ndev->features & NETIF_F_HW_CSUM) ||
+	if (!(ndev->features & NETIF_F_HW_CSUM) ||
 	    !((*skb)->ip_summed != CHECKSUM_PARTIAL) ||
-	    skb_shinfo(*skb)->gso_size)	/* Not available क्रम GSO */
-		वापस 0;
+	    skb_shinfo(*skb)->gso_size)	/* Not available for GSO */
+		return 0;
 
-	अगर (padlen <= 0) अणु
+	if (padlen <= 0) {
 		/* FCS could be appeded to tailroom. */
-		अगर (tailroom >= ETH_FCS_LEN)
-			जाओ add_fcs;
+		if (tailroom >= ETH_FCS_LEN)
+			goto add_fcs;
 		/* FCS could be appeded by moving data to headroom. */
-		अन्यथा अगर (!cloned && headroom + tailroom >= ETH_FCS_LEN)
+		else if (!cloned && headroom + tailroom >= ETH_FCS_LEN)
 			padlen = 0;
-		/* No room क्रम FCS, need to पुनः_स्मृतिate skb. */
-		अन्यथा
+		/* No room for FCS, need to reallocate skb. */
+		else
 			padlen = ETH_FCS_LEN;
-	पूर्ण अन्यथा अणु
-		/* Add room क्रम FCS. */
+	} else {
+		/* Add room for FCS. */
 		padlen += ETH_FCS_LEN;
-	पूर्ण
+	}
 
-	अगर (!cloned && headroom + tailroom >= padlen) अणु
-		(*skb)->data = स_हटाओ((*skb)->head, (*skb)->data, (*skb)->len);
-		skb_set_tail_poपूर्णांकer(*skb, (*skb)->len);
-	पूर्ण अन्यथा अणु
+	if (!cloned && headroom + tailroom >= padlen) {
+		(*skb)->data = memmove((*skb)->head, (*skb)->data, (*skb)->len);
+		skb_set_tail_pointer(*skb, (*skb)->len);
+	} else {
 		nskb = skb_copy_expand(*skb, 0, padlen, GFP_ATOMIC);
-		अगर (!nskb)
-			वापस -ENOMEM;
+		if (!nskb)
+			return -ENOMEM;
 
 		dev_consume_skb_any(*skb);
 		*skb = nskb;
-	पूर्ण
+	}
 
-	अगर (padlen > ETH_FCS_LEN)
+	if (padlen > ETH_FCS_LEN)
 		skb_put_zero(*skb, padlen - ETH_FCS_LEN);
 
 add_fcs:
@@ -2141,286 +2140,286 @@ add_fcs:
 	skb_put_u8(*skb, (fcs >> 16)	& 0xff);
 	skb_put_u8(*skb, (fcs >> 24)	& 0xff);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल netdev_tx_t macb_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
+static netdev_tx_t macb_start_xmit(struct sk_buff *skb, struct net_device *dev)
+{
 	u16 queue_index = skb_get_queue_mapping(skb);
-	काष्ठा macb *bp = netdev_priv(dev);
-	काष्ठा macb_queue *queue = &bp->queues[queue_index];
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक desc_cnt, nr_frags, frag_size, f;
-	अचिन्हित पूर्णांक hdrlen;
+	struct macb *bp = netdev_priv(dev);
+	struct macb_queue *queue = &bp->queues[queue_index];
+	unsigned long flags;
+	unsigned int desc_cnt, nr_frags, frag_size, f;
+	unsigned int hdrlen;
 	bool is_lso;
 	netdev_tx_t ret = NETDEV_TX_OK;
 
-	अगर (macb_clear_csum(skb)) अणु
-		dev_kमुक्त_skb_any(skb);
-		वापस ret;
-	पूर्ण
+	if (macb_clear_csum(skb)) {
+		dev_kfree_skb_any(skb);
+		return ret;
+	}
 
-	अगर (macb_pad_and_fcs(&skb, dev)) अणु
-		dev_kमुक्त_skb_any(skb);
-		वापस ret;
-	पूर्ण
+	if (macb_pad_and_fcs(&skb, dev)) {
+		dev_kfree_skb_any(skb);
+		return ret;
+	}
 
 	is_lso = (skb_shinfo(skb)->gso_size != 0);
 
-	अगर (is_lso) अणु
+	if (is_lso) {
 		/* length of headers */
-		अगर (ip_hdr(skb)->protocol == IPPROTO_UDP)
-			/* only queue eth + ip headers separately क्रम UDP */
+		if (ip_hdr(skb)->protocol == IPPROTO_UDP)
+			/* only queue eth + ip headers separately for UDP */
 			hdrlen = skb_transport_offset(skb);
-		अन्यथा
+		else
 			hdrlen = skb_transport_offset(skb) + tcp_hdrlen(skb);
-		अगर (skb_headlen(skb) < hdrlen) अणु
+		if (skb_headlen(skb) < hdrlen) {
 			netdev_err(bp->dev, "Error - LSO headers fragmented!!!\n");
-			/* अगर this is required, would need to copy to single buffer */
-			वापस NETDEV_TX_BUSY;
-		पूर्ण
-	पूर्ण अन्यथा
+			/* if this is required, would need to copy to single buffer */
+			return NETDEV_TX_BUSY;
+		}
+	} else
 		hdrlen = min(skb_headlen(skb), bp->max_tx_length);
 
-#अगर defined(DEBUG) && defined(VERBOSE_DEBUG)
+#if defined(DEBUG) && defined(VERBOSE_DEBUG)
 	netdev_vdbg(bp->dev,
 		    "start_xmit: queue %hu len %u head %p data %p tail %p end %p\n",
 		    queue_index, skb->len, skb->head, skb->data,
-		    skb_tail_poपूर्णांकer(skb), skb_end_poपूर्णांकer(skb));
-	prपूर्णांक_hex_dump(KERN_DEBUG, "data: ", DUMP_PREFIX_OFFSET, 16, 1,
+		    skb_tail_pointer(skb), skb_end_pointer(skb));
+	print_hex_dump(KERN_DEBUG, "data: ", DUMP_PREFIX_OFFSET, 16, 1,
 		       skb->data, 16, true);
-#पूर्ण_अगर
+#endif
 
 	/* Count how many TX buffer descriptors are needed to send this
 	 * socket buffer: skb fragments of jumbo frames may need to be
-	 * split पूर्णांकo many buffer descriptors.
+	 * split into many buffer descriptors.
 	 */
-	अगर (is_lso && (skb_headlen(skb) > hdrlen))
-		/* extra header descriptor अगर also payload in first buffer */
+	if (is_lso && (skb_headlen(skb) > hdrlen))
+		/* extra header descriptor if also payload in first buffer */
 		desc_cnt = DIV_ROUND_UP((skb_headlen(skb) - hdrlen), bp->max_tx_length) + 1;
-	अन्यथा
+	else
 		desc_cnt = DIV_ROUND_UP(skb_headlen(skb), bp->max_tx_length);
 	nr_frags = skb_shinfo(skb)->nr_frags;
-	क्रम (f = 0; f < nr_frags; f++) अणु
+	for (f = 0; f < nr_frags; f++) {
 		frag_size = skb_frag_size(&skb_shinfo(skb)->frags[f]);
 		desc_cnt += DIV_ROUND_UP(frag_size, bp->max_tx_length);
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&bp->lock, flags);
 
 	/* This is a hard error, log it. */
-	अगर (CIRC_SPACE(queue->tx_head, queue->tx_tail,
-		       bp->tx_ring_size) < desc_cnt) अणु
-		netअगर_stop_subqueue(dev, queue_index);
+	if (CIRC_SPACE(queue->tx_head, queue->tx_tail,
+		       bp->tx_ring_size) < desc_cnt) {
+		netif_stop_subqueue(dev, queue_index);
 		spin_unlock_irqrestore(&bp->lock, flags);
 		netdev_dbg(bp->dev, "tx_head = %u, tx_tail = %u\n",
 			   queue->tx_head, queue->tx_tail);
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		return NETDEV_TX_BUSY;
+	}
 
-	/* Map socket buffer क्रम DMA transfer */
-	अगर (!macb_tx_map(bp, queue, skb, hdrlen)) अणु
-		dev_kमुक्त_skb_any(skb);
-		जाओ unlock;
-	पूर्ण
+	/* Map socket buffer for DMA transfer */
+	if (!macb_tx_map(bp, queue, skb, hdrlen)) {
+		dev_kfree_skb_any(skb);
+		goto unlock;
+	}
 
 	/* Make newly initialized descriptor visible to hardware */
 	wmb();
-	skb_tx_बारtamp(skb);
+	skb_tx_timestamp(skb);
 
-	macb_ग_लिखोl(bp, NCR, macb_पढ़ोl(bp, NCR) | MACB_BIT(TSTART));
+	macb_writel(bp, NCR, macb_readl(bp, NCR) | MACB_BIT(TSTART));
 
-	अगर (CIRC_SPACE(queue->tx_head, queue->tx_tail, bp->tx_ring_size) < 1)
-		netअगर_stop_subqueue(dev, queue_index);
+	if (CIRC_SPACE(queue->tx_head, queue->tx_tail, bp->tx_ring_size) < 1)
+		netif_stop_subqueue(dev, queue_index);
 
 unlock:
 	spin_unlock_irqrestore(&bp->lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम macb_init_rx_buffer_size(काष्ठा macb *bp, माप_प्रकार size)
-अणु
-	अगर (!macb_is_gem(bp)) अणु
+static void macb_init_rx_buffer_size(struct macb *bp, size_t size)
+{
+	if (!macb_is_gem(bp)) {
 		bp->rx_buffer_size = MACB_RX_BUFFER_SIZE;
-	पूर्ण अन्यथा अणु
+	} else {
 		bp->rx_buffer_size = size;
 
-		अगर (bp->rx_buffer_size % RX_BUFFER_MULTIPLE) अणु
+		if (bp->rx_buffer_size % RX_BUFFER_MULTIPLE) {
 			netdev_dbg(bp->dev,
 				   "RX buffer must be multiple of %d bytes, expanding\n",
 				   RX_BUFFER_MULTIPLE);
 			bp->rx_buffer_size =
 				roundup(bp->rx_buffer_size, RX_BUFFER_MULTIPLE);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	netdev_dbg(bp->dev, "mtu [%u] rx_buffer_size [%zu]\n",
 		   bp->dev->mtu, bp->rx_buffer_size);
-पूर्ण
+}
 
-अटल व्योम gem_मुक्त_rx_buffers(काष्ठा macb *bp)
-अणु
-	काष्ठा sk_buff		*skb;
-	काष्ठा macb_dma_desc	*desc;
-	काष्ठा macb_queue *queue;
+static void gem_free_rx_buffers(struct macb *bp)
+{
+	struct sk_buff		*skb;
+	struct macb_dma_desc	*desc;
+	struct macb_queue *queue;
 	dma_addr_t		addr;
-	अचिन्हित पूर्णांक q;
-	पूर्णांक i;
+	unsigned int q;
+	int i;
 
-	क्रम (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue) अणु
-		अगर (!queue->rx_skbuff)
-			जारी;
+	for (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue) {
+		if (!queue->rx_skbuff)
+			continue;
 
-		क्रम (i = 0; i < bp->rx_ring_size; i++) अणु
+		for (i = 0; i < bp->rx_ring_size; i++) {
 			skb = queue->rx_skbuff[i];
 
-			अगर (!skb)
-				जारी;
+			if (!skb)
+				continue;
 
 			desc = macb_rx_desc(queue, i);
 			addr = macb_get_addr(bp, desc);
 
 			dma_unmap_single(&bp->pdev->dev, addr, bp->rx_buffer_size,
 					DMA_FROM_DEVICE);
-			dev_kमुक्त_skb_any(skb);
-			skb = शून्य;
-		पूर्ण
+			dev_kfree_skb_any(skb);
+			skb = NULL;
+		}
 
-		kमुक्त(queue->rx_skbuff);
-		queue->rx_skbuff = शून्य;
-	पूर्ण
-पूर्ण
+		kfree(queue->rx_skbuff);
+		queue->rx_skbuff = NULL;
+	}
+}
 
-अटल व्योम macb_मुक्त_rx_buffers(काष्ठा macb *bp)
-अणु
-	काष्ठा macb_queue *queue = &bp->queues[0];
+static void macb_free_rx_buffers(struct macb *bp)
+{
+	struct macb_queue *queue = &bp->queues[0];
 
-	अगर (queue->rx_buffers) अणु
-		dma_मुक्त_coherent(&bp->pdev->dev,
+	if (queue->rx_buffers) {
+		dma_free_coherent(&bp->pdev->dev,
 				  bp->rx_ring_size * bp->rx_buffer_size,
 				  queue->rx_buffers, queue->rx_buffers_dma);
-		queue->rx_buffers = शून्य;
-	पूर्ण
-पूर्ण
+		queue->rx_buffers = NULL;
+	}
+}
 
-अटल व्योम macb_मुक्त_consistent(काष्ठा macb *bp)
-अणु
-	काष्ठा macb_queue *queue;
-	अचिन्हित पूर्णांक q;
-	पूर्णांक size;
+static void macb_free_consistent(struct macb *bp)
+{
+	struct macb_queue *queue;
+	unsigned int q;
+	int size;
 
-	bp->macbgem_ops.mog_मुक्त_rx_buffers(bp);
+	bp->macbgem_ops.mog_free_rx_buffers(bp);
 
-	क्रम (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue) अणु
-		kमुक्त(queue->tx_skb);
-		queue->tx_skb = शून्य;
-		अगर (queue->tx_ring) अणु
+	for (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue) {
+		kfree(queue->tx_skb);
+		queue->tx_skb = NULL;
+		if (queue->tx_ring) {
 			size = TX_RING_BYTES(bp) + bp->tx_bd_rd_prefetch;
-			dma_मुक्त_coherent(&bp->pdev->dev, size,
+			dma_free_coherent(&bp->pdev->dev, size,
 					  queue->tx_ring, queue->tx_ring_dma);
-			queue->tx_ring = शून्य;
-		पूर्ण
-		अगर (queue->rx_ring) अणु
+			queue->tx_ring = NULL;
+		}
+		if (queue->rx_ring) {
 			size = RX_RING_BYTES(bp) + bp->rx_bd_rd_prefetch;
-			dma_मुक्त_coherent(&bp->pdev->dev, size,
+			dma_free_coherent(&bp->pdev->dev, size,
 					  queue->rx_ring, queue->rx_ring_dma);
-			queue->rx_ring = शून्य;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			queue->rx_ring = NULL;
+		}
+	}
+}
 
-अटल पूर्णांक gem_alloc_rx_buffers(काष्ठा macb *bp)
-अणु
-	काष्ठा macb_queue *queue;
-	अचिन्हित पूर्णांक q;
-	पूर्णांक size;
+static int gem_alloc_rx_buffers(struct macb *bp)
+{
+	struct macb_queue *queue;
+	unsigned int q;
+	int size;
 
-	क्रम (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue) अणु
-		size = bp->rx_ring_size * माप(काष्ठा sk_buff *);
+	for (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue) {
+		size = bp->rx_ring_size * sizeof(struct sk_buff *);
 		queue->rx_skbuff = kzalloc(size, GFP_KERNEL);
-		अगर (!queue->rx_skbuff)
-			वापस -ENOMEM;
-		अन्यथा
+		if (!queue->rx_skbuff)
+			return -ENOMEM;
+		else
 			netdev_dbg(bp->dev,
 				   "Allocated %d RX struct sk_buff entries at %p\n",
 				   bp->rx_ring_size, queue->rx_skbuff);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक macb_alloc_rx_buffers(काष्ठा macb *bp)
-अणु
-	काष्ठा macb_queue *queue = &bp->queues[0];
-	पूर्णांक size;
+static int macb_alloc_rx_buffers(struct macb *bp)
+{
+	struct macb_queue *queue = &bp->queues[0];
+	int size;
 
 	size = bp->rx_ring_size * bp->rx_buffer_size;
 	queue->rx_buffers = dma_alloc_coherent(&bp->pdev->dev, size,
 					    &queue->rx_buffers_dma, GFP_KERNEL);
-	अगर (!queue->rx_buffers)
-		वापस -ENOMEM;
+	if (!queue->rx_buffers)
+		return -ENOMEM;
 
 	netdev_dbg(bp->dev,
 		   "Allocated RX buffers of %d bytes at %08lx (mapped %p)\n",
-		   size, (अचिन्हित दीर्घ)queue->rx_buffers_dma, queue->rx_buffers);
-	वापस 0;
-पूर्ण
+		   size, (unsigned long)queue->rx_buffers_dma, queue->rx_buffers);
+	return 0;
+}
 
-अटल पूर्णांक macb_alloc_consistent(काष्ठा macb *bp)
-अणु
-	काष्ठा macb_queue *queue;
-	अचिन्हित पूर्णांक q;
-	पूर्णांक size;
+static int macb_alloc_consistent(struct macb *bp)
+{
+	struct macb_queue *queue;
+	unsigned int q;
+	int size;
 
-	क्रम (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue) अणु
+	for (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue) {
 		size = TX_RING_BYTES(bp) + bp->tx_bd_rd_prefetch;
 		queue->tx_ring = dma_alloc_coherent(&bp->pdev->dev, size,
 						    &queue->tx_ring_dma,
 						    GFP_KERNEL);
-		अगर (!queue->tx_ring)
-			जाओ out_err;
+		if (!queue->tx_ring)
+			goto out_err;
 		netdev_dbg(bp->dev,
 			   "Allocated TX ring for queue %u of %d bytes at %08lx (mapped %p)\n",
-			   q, size, (अचिन्हित दीर्घ)queue->tx_ring_dma,
+			   q, size, (unsigned long)queue->tx_ring_dma,
 			   queue->tx_ring);
 
-		size = bp->tx_ring_size * माप(काष्ठा macb_tx_skb);
-		queue->tx_skb = kदो_स्मृति(size, GFP_KERNEL);
-		अगर (!queue->tx_skb)
-			जाओ out_err;
+		size = bp->tx_ring_size * sizeof(struct macb_tx_skb);
+		queue->tx_skb = kmalloc(size, GFP_KERNEL);
+		if (!queue->tx_skb)
+			goto out_err;
 
 		size = RX_RING_BYTES(bp) + bp->rx_bd_rd_prefetch;
 		queue->rx_ring = dma_alloc_coherent(&bp->pdev->dev, size,
 						 &queue->rx_ring_dma, GFP_KERNEL);
-		अगर (!queue->rx_ring)
-			जाओ out_err;
+		if (!queue->rx_ring)
+			goto out_err;
 		netdev_dbg(bp->dev,
 			   "Allocated RX ring of %d bytes at %08lx (mapped %p)\n",
-			   size, (अचिन्हित दीर्घ)queue->rx_ring_dma, queue->rx_ring);
-	पूर्ण
-	अगर (bp->macbgem_ops.mog_alloc_rx_buffers(bp))
-		जाओ out_err;
+			   size, (unsigned long)queue->rx_ring_dma, queue->rx_ring);
+	}
+	if (bp->macbgem_ops.mog_alloc_rx_buffers(bp))
+		goto out_err;
 
-	वापस 0;
+	return 0;
 
 out_err:
-	macb_मुक्त_consistent(bp);
-	वापस -ENOMEM;
-पूर्ण
+	macb_free_consistent(bp);
+	return -ENOMEM;
+}
 
-अटल व्योम gem_init_rings(काष्ठा macb *bp)
-अणु
-	काष्ठा macb_queue *queue;
-	काष्ठा macb_dma_desc *desc = शून्य;
-	अचिन्हित पूर्णांक q;
-	पूर्णांक i;
+static void gem_init_rings(struct macb *bp)
+{
+	struct macb_queue *queue;
+	struct macb_dma_desc *desc = NULL;
+	unsigned int q;
+	int i;
 
-	क्रम (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue) अणु
-		क्रम (i = 0; i < bp->tx_ring_size; i++) अणु
+	for (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue) {
+		for (i = 0; i < bp->tx_ring_size; i++) {
 			desc = macb_tx_desc(queue, i);
 			macb_set_addr(bp, desc, 0);
 			desc->ctrl = MACB_BIT(TX_USED);
-		पूर्ण
+		}
 		desc->ctrl |= MACB_BIT(TX_WRAP);
 		queue->tx_head = 0;
 		queue->tx_tail = 0;
@@ -2429,210 +2428,210 @@ out_err:
 		queue->rx_prepared_head = 0;
 
 		gem_rx_refill(queue);
-	पूर्ण
+	}
 
-पूर्ण
+}
 
-अटल व्योम macb_init_rings(काष्ठा macb *bp)
-अणु
-	पूर्णांक i;
-	काष्ठा macb_dma_desc *desc = शून्य;
+static void macb_init_rings(struct macb *bp)
+{
+	int i;
+	struct macb_dma_desc *desc = NULL;
 
 	macb_init_rx_ring(&bp->queues[0]);
 
-	क्रम (i = 0; i < bp->tx_ring_size; i++) अणु
+	for (i = 0; i < bp->tx_ring_size; i++) {
 		desc = macb_tx_desc(&bp->queues[0], i);
 		macb_set_addr(bp, desc, 0);
 		desc->ctrl = MACB_BIT(TX_USED);
-	पूर्ण
+	}
 	bp->queues[0].tx_head = 0;
 	bp->queues[0].tx_tail = 0;
 	desc->ctrl |= MACB_BIT(TX_WRAP);
-पूर्ण
+}
 
-अटल व्योम macb_reset_hw(काष्ठा macb *bp)
-अणु
-	काष्ठा macb_queue *queue;
-	अचिन्हित पूर्णांक q;
-	u32 ctrl = macb_पढ़ोl(bp, NCR);
+static void macb_reset_hw(struct macb *bp)
+{
+	struct macb_queue *queue;
+	unsigned int q;
+	u32 ctrl = macb_readl(bp, NCR);
 
 	/* Disable RX and TX (XXX: Should we halt the transmission
 	 * more gracefully?)
 	 */
 	ctrl &= ~(MACB_BIT(RE) | MACB_BIT(TE));
 
-	/* Clear the stats रेजिस्टरs (XXX: Update stats first?) */
+	/* Clear the stats registers (XXX: Update stats first?) */
 	ctrl |= MACB_BIT(CLRSTAT);
 
-	macb_ग_लिखोl(bp, NCR, ctrl);
+	macb_writel(bp, NCR, ctrl);
 
 	/* Clear all status flags */
-	macb_ग_लिखोl(bp, TSR, -1);
-	macb_ग_लिखोl(bp, RSR, -1);
+	macb_writel(bp, TSR, -1);
+	macb_writel(bp, RSR, -1);
 
-	/* Disable all पूर्णांकerrupts */
-	क्रम (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue) अणु
-		queue_ग_लिखोl(queue, IDR, -1);
-		queue_पढ़ोl(queue, ISR);
-		अगर (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
-			queue_ग_लिखोl(queue, ISR, -1);
-	पूर्ण
-पूर्ण
+	/* Disable all interrupts */
+	for (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue) {
+		queue_writel(queue, IDR, -1);
+		queue_readl(queue, ISR);
+		if (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
+			queue_writel(queue, ISR, -1);
+	}
+}
 
-अटल u32 gem_mdc_clk_भाग(काष्ठा macb *bp)
-अणु
+static u32 gem_mdc_clk_div(struct macb *bp)
+{
 	u32 config;
-	अचिन्हित दीर्घ pclk_hz = clk_get_rate(bp->pclk);
+	unsigned long pclk_hz = clk_get_rate(bp->pclk);
 
-	अगर (pclk_hz <= 20000000)
+	if (pclk_hz <= 20000000)
 		config = GEM_BF(CLK, GEM_CLK_DIV8);
-	अन्यथा अगर (pclk_hz <= 40000000)
+	else if (pclk_hz <= 40000000)
 		config = GEM_BF(CLK, GEM_CLK_DIV16);
-	अन्यथा अगर (pclk_hz <= 80000000)
+	else if (pclk_hz <= 80000000)
 		config = GEM_BF(CLK, GEM_CLK_DIV32);
-	अन्यथा अगर (pclk_hz <= 120000000)
+	else if (pclk_hz <= 120000000)
 		config = GEM_BF(CLK, GEM_CLK_DIV48);
-	अन्यथा अगर (pclk_hz <= 160000000)
+	else if (pclk_hz <= 160000000)
 		config = GEM_BF(CLK, GEM_CLK_DIV64);
-	अन्यथा
+	else
 		config = GEM_BF(CLK, GEM_CLK_DIV96);
 
-	वापस config;
-पूर्ण
+	return config;
+}
 
-अटल u32 macb_mdc_clk_भाग(काष्ठा macb *bp)
-अणु
+static u32 macb_mdc_clk_div(struct macb *bp)
+{
 	u32 config;
-	अचिन्हित दीर्घ pclk_hz;
+	unsigned long pclk_hz;
 
-	अगर (macb_is_gem(bp))
-		वापस gem_mdc_clk_भाग(bp);
+	if (macb_is_gem(bp))
+		return gem_mdc_clk_div(bp);
 
 	pclk_hz = clk_get_rate(bp->pclk);
-	अगर (pclk_hz <= 20000000)
+	if (pclk_hz <= 20000000)
 		config = MACB_BF(CLK, MACB_CLK_DIV8);
-	अन्यथा अगर (pclk_hz <= 40000000)
+	else if (pclk_hz <= 40000000)
 		config = MACB_BF(CLK, MACB_CLK_DIV16);
-	अन्यथा अगर (pclk_hz <= 80000000)
+	else if (pclk_hz <= 80000000)
 		config = MACB_BF(CLK, MACB_CLK_DIV32);
-	अन्यथा
+	else
 		config = MACB_BF(CLK, MACB_CLK_DIV64);
 
-	वापस config;
-पूर्ण
+	return config;
+}
 
-/* Get the DMA bus width field of the network configuration रेजिस्टर that we
+/* Get the DMA bus width field of the network configuration register that we
  * should program.  We find the width from decoding the design configuration
- * रेजिस्टर to find the maximum supported data bus width.
+ * register to find the maximum supported data bus width.
  */
-अटल u32 macb_dbw(काष्ठा macb *bp)
-अणु
-	अगर (!macb_is_gem(bp))
-		वापस 0;
+static u32 macb_dbw(struct macb *bp)
+{
+	if (!macb_is_gem(bp))
+		return 0;
 
-	चयन (GEM_BFEXT(DBWDEF, gem_पढ़ोl(bp, DCFG1))) अणु
-	हाल 4:
-		वापस GEM_BF(DBW, GEM_DBW128);
-	हाल 2:
-		वापस GEM_BF(DBW, GEM_DBW64);
-	हाल 1:
-	शेष:
-		वापस GEM_BF(DBW, GEM_DBW32);
-	पूर्ण
-पूर्ण
+	switch (GEM_BFEXT(DBWDEF, gem_readl(bp, DCFG1))) {
+	case 4:
+		return GEM_BF(DBW, GEM_DBW128);
+	case 2:
+		return GEM_BF(DBW, GEM_DBW64);
+	case 1:
+	default:
+		return GEM_BF(DBW, GEM_DBW32);
+	}
+}
 
 /* Configure the receive DMA engine
  * - use the correct receive buffer size
- * - set best burst length क्रम DMA operations
- *   (अगर not supported by FIFO, it will fallback to शेष)
+ * - set best burst length for DMA operations
+ *   (if not supported by FIFO, it will fallback to default)
  * - set both rx/tx packet buffers to full memory size
- * These are configurable parameters क्रम GEM.
+ * These are configurable parameters for GEM.
  */
-अटल व्योम macb_configure_dma(काष्ठा macb *bp)
-अणु
-	काष्ठा macb_queue *queue;
+static void macb_configure_dma(struct macb *bp)
+{
+	struct macb_queue *queue;
 	u32 buffer_size;
-	अचिन्हित पूर्णांक q;
+	unsigned int q;
 	u32 dmacfg;
 
 	buffer_size = bp->rx_buffer_size / RX_BUFFER_MULTIPLE;
-	अगर (macb_is_gem(bp)) अणु
-		dmacfg = gem_पढ़ोl(bp, DMACFG) & ~GEM_BF(RXBS, -1L);
-		क्रम (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue) अणु
-			अगर (q)
-				queue_ग_लिखोl(queue, RBQS, buffer_size);
-			अन्यथा
+	if (macb_is_gem(bp)) {
+		dmacfg = gem_readl(bp, DMACFG) & ~GEM_BF(RXBS, -1L);
+		for (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue) {
+			if (q)
+				queue_writel(queue, RBQS, buffer_size);
+			else
 				dmacfg |= GEM_BF(RXBS, buffer_size);
-		पूर्ण
-		अगर (bp->dma_burst_length)
+		}
+		if (bp->dma_burst_length)
 			dmacfg = GEM_BFINS(FBLDO, bp->dma_burst_length, dmacfg);
 		dmacfg |= GEM_BIT(TXPBMS) | GEM_BF(RXBMS, -1L);
 		dmacfg &= ~GEM_BIT(ENDIA_PKT);
 
-		अगर (bp->native_io)
+		if (bp->native_io)
 			dmacfg &= ~GEM_BIT(ENDIA_DESC);
-		अन्यथा
+		else
 			dmacfg |= GEM_BIT(ENDIA_DESC); /* CPU in big endian */
 
-		अगर (bp->dev->features & NETIF_F_HW_CSUM)
+		if (bp->dev->features & NETIF_F_HW_CSUM)
 			dmacfg |= GEM_BIT(TXCOEN);
-		अन्यथा
+		else
 			dmacfg &= ~GEM_BIT(TXCOEN);
 
 		dmacfg &= ~GEM_BIT(ADDR64);
-#अगर_घोषित CONFIG_ARCH_DMA_ADDR_T_64BIT
-		अगर (bp->hw_dma_cap & HW_DMA_CAP_64B)
+#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
+		if (bp->hw_dma_cap & HW_DMA_CAP_64B)
 			dmacfg |= GEM_BIT(ADDR64);
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_MACB_USE_HWSTAMP
-		अगर (bp->hw_dma_cap & HW_DMA_CAP_PTP)
+#endif
+#ifdef CONFIG_MACB_USE_HWSTAMP
+		if (bp->hw_dma_cap & HW_DMA_CAP_PTP)
 			dmacfg |= GEM_BIT(RXEXT) | GEM_BIT(TXEXT);
-#पूर्ण_अगर
+#endif
 		netdev_dbg(bp->dev, "Cadence configure DMA with 0x%08x\n",
 			   dmacfg);
-		gem_ग_लिखोl(bp, DMACFG, dmacfg);
-	पूर्ण
-पूर्ण
+		gem_writel(bp, DMACFG, dmacfg);
+	}
+}
 
-अटल व्योम macb_init_hw(काष्ठा macb *bp)
-अणु
+static void macb_init_hw(struct macb *bp)
+{
 	u32 config;
 
 	macb_reset_hw(bp);
 	macb_set_hwaddr(bp);
 
-	config = macb_mdc_clk_भाग(bp);
+	config = macb_mdc_clk_div(bp);
 	config |= MACB_BF(RBOF, NET_IP_ALIGN);	/* Make eth data aligned */
 	config |= MACB_BIT(DRFCS);		/* Discard Rx FCS */
-	अगर (bp->caps & MACB_CAPS_JUMBO)
+	if (bp->caps & MACB_CAPS_JUMBO)
 		config |= MACB_BIT(JFRAME);	/* Enable jumbo frames */
-	अन्यथा
+	else
 		config |= MACB_BIT(BIG);	/* Receive oversized frames */
-	अगर (bp->dev->flags & IFF_PROMISC)
+	if (bp->dev->flags & IFF_PROMISC)
 		config |= MACB_BIT(CAF);	/* Copy All Frames */
-	अन्यथा अगर (macb_is_gem(bp) && bp->dev->features & NETIF_F_RXCSUM)
+	else if (macb_is_gem(bp) && bp->dev->features & NETIF_F_RXCSUM)
 		config |= GEM_BIT(RXCOEN);
-	अगर (!(bp->dev->flags & IFF_BROADCAST))
+	if (!(bp->dev->flags & IFF_BROADCAST))
 		config |= MACB_BIT(NBC);	/* No BroadCast */
 	config |= macb_dbw(bp);
-	macb_ग_लिखोl(bp, NCFGR, config);
-	अगर ((bp->caps & MACB_CAPS_JUMBO) && bp->jumbo_max_len)
-		gem_ग_लिखोl(bp, JML, bp->jumbo_max_len);
+	macb_writel(bp, NCFGR, config);
+	if ((bp->caps & MACB_CAPS_JUMBO) && bp->jumbo_max_len)
+		gem_writel(bp, JML, bp->jumbo_max_len);
 	bp->rx_frm_len_mask = MACB_RX_FRMLEN_MASK;
-	अगर (bp->caps & MACB_CAPS_JUMBO)
+	if (bp->caps & MACB_CAPS_JUMBO)
 		bp->rx_frm_len_mask = MACB_RX_JFRMLEN_MASK;
 
 	macb_configure_dma(bp);
-पूर्ण
+}
 
-/* The hash address रेजिस्टर is 64 bits दीर्घ and takes up two
- * locations in the memory map.  The least signअगरicant bits are stored
- * in EMAC_HSL and the most signअगरicant bits in EMAC_HSH.
+/* The hash address register is 64 bits long and takes up two
+ * locations in the memory map.  The least significant bits are stored
+ * in EMAC_HSL and the most significant bits in EMAC_HSH.
  *
  * The unicast hash enable and the multicast hash enable bits in the
- * network configuration रेजिस्टर enable the reception of hash matched
- * frames. The destination address is reduced to a 6 bit index पूर्णांकo
- * the 64 bit hash रेजिस्टर using the following hash function.  The
+ * network configuration register enable the reception of hash matched
+ * frames. The destination address is reduced to a 6 bit index into
+ * the 64 bit hash register using the following hash function.  The
  * hash function is an exclusive or of every sixth bit of the
  * destination address.
  *
@@ -2643,167 +2642,167 @@ out_err:
  * hi[1] = da[1] ^ da[07] ^ da[13] ^ da[19] ^ da[25] ^ da[31] ^ da[37] ^ da[43]
  * hi[0] = da[0] ^ da[06] ^ da[12] ^ da[18] ^ da[24] ^ da[30] ^ da[36] ^ da[42]
  *
- * da[0] represents the least signअगरicant bit of the first byte
+ * da[0] represents the least significant bit of the first byte
  * received, that is, the multicast/unicast indicator, and da[47]
- * represents the most signअगरicant bit of the last byte received.  If
- * the hash index, hi[n], poपूर्णांकs to a bit that is set in the hash
- * रेजिस्टर then the frame will be matched according to whether the
- * frame is multicast or unicast.  A multicast match will be संकेतled
- * अगर the multicast hash enable bit is set, da[0] is 1 and the hash
- * index poपूर्णांकs to a bit set in the hash रेजिस्टर.  A unicast match
- * will be संकेतled अगर the unicast hash enable bit is set, da[0] is 0
- * and the hash index poपूर्णांकs to a bit set in the hash रेजिस्टर.  To
- * receive all multicast frames, the hash रेजिस्टर should be set with
+ * represents the most significant bit of the last byte received.  If
+ * the hash index, hi[n], points to a bit that is set in the hash
+ * register then the frame will be matched according to whether the
+ * frame is multicast or unicast.  A multicast match will be signalled
+ * if the multicast hash enable bit is set, da[0] is 1 and the hash
+ * index points to a bit set in the hash register.  A unicast match
+ * will be signalled if the unicast hash enable bit is set, da[0] is 0
+ * and the hash index points to a bit set in the hash register.  To
+ * receive all multicast frames, the hash register should be set with
  * all ones and the multicast hash enable bit should be set in the
- * network configuration रेजिस्टर.
+ * network configuration register.
  */
 
-अटल अंतरभूत पूर्णांक hash_bit_value(पूर्णांक bitnr, __u8 *addr)
-अणु
-	अगर (addr[bitnr / 8] & (1 << (bitnr % 8)))
-		वापस 1;
-	वापस 0;
-पूर्ण
+static inline int hash_bit_value(int bitnr, __u8 *addr)
+{
+	if (addr[bitnr / 8] & (1 << (bitnr % 8)))
+		return 1;
+	return 0;
+}
 
-/* Return the hash index value क्रम the specअगरied address. */
-अटल पूर्णांक hash_get_index(__u8 *addr)
-अणु
-	पूर्णांक i, j, bitval;
-	पूर्णांक hash_index = 0;
+/* Return the hash index value for the specified address. */
+static int hash_get_index(__u8 *addr)
+{
+	int i, j, bitval;
+	int hash_index = 0;
 
-	क्रम (j = 0; j < 6; j++) अणु
-		क्रम (i = 0, bitval = 0; i < 8; i++)
+	for (j = 0; j < 6; j++) {
+		for (i = 0, bitval = 0; i < 8; i++)
 			bitval ^= hash_bit_value(i * 6 + j, addr);
 
 		hash_index |= (bitval << j);
-	पूर्ण
+	}
 
-	वापस hash_index;
-पूर्ण
+	return hash_index;
+}
 
-/* Add multicast addresses to the पूर्णांकernal multicast-hash table. */
-अटल व्योम macb_sethashtable(काष्ठा net_device *dev)
-अणु
-	काष्ठा netdev_hw_addr *ha;
-	अचिन्हित दीर्घ mc_filter[2];
-	अचिन्हित पूर्णांक bitnr;
-	काष्ठा macb *bp = netdev_priv(dev);
+/* Add multicast addresses to the internal multicast-hash table. */
+static void macb_sethashtable(struct net_device *dev)
+{
+	struct netdev_hw_addr *ha;
+	unsigned long mc_filter[2];
+	unsigned int bitnr;
+	struct macb *bp = netdev_priv(dev);
 
 	mc_filter[0] = 0;
 	mc_filter[1] = 0;
 
-	netdev_क्रम_each_mc_addr(ha, dev) अणु
+	netdev_for_each_mc_addr(ha, dev) {
 		bitnr = hash_get_index(ha->addr);
 		mc_filter[bitnr >> 5] |= 1 << (bitnr & 31);
-	पूर्ण
+	}
 
-	macb_or_gem_ग_लिखोl(bp, HRB, mc_filter[0]);
-	macb_or_gem_ग_लिखोl(bp, HRT, mc_filter[1]);
-पूर्ण
+	macb_or_gem_writel(bp, HRB, mc_filter[0]);
+	macb_or_gem_writel(bp, HRT, mc_filter[1]);
+}
 
 /* Enable/Disable promiscuous and multicast modes. */
-अटल व्योम macb_set_rx_mode(काष्ठा net_device *dev)
-अणु
-	अचिन्हित दीर्घ cfg;
-	काष्ठा macb *bp = netdev_priv(dev);
+static void macb_set_rx_mode(struct net_device *dev)
+{
+	unsigned long cfg;
+	struct macb *bp = netdev_priv(dev);
 
-	cfg = macb_पढ़ोl(bp, NCFGR);
+	cfg = macb_readl(bp, NCFGR);
 
-	अगर (dev->flags & IFF_PROMISC) अणु
+	if (dev->flags & IFF_PROMISC) {
 		/* Enable promiscuous mode */
 		cfg |= MACB_BIT(CAF);
 
 		/* Disable RX checksum offload */
-		अगर (macb_is_gem(bp))
+		if (macb_is_gem(bp))
 			cfg &= ~GEM_BIT(RXCOEN);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Disable promiscuous mode */
 		cfg &= ~MACB_BIT(CAF);
 
-		/* Enable RX checksum offload only अगर requested */
-		अगर (macb_is_gem(bp) && dev->features & NETIF_F_RXCSUM)
+		/* Enable RX checksum offload only if requested */
+		if (macb_is_gem(bp) && dev->features & NETIF_F_RXCSUM)
 			cfg |= GEM_BIT(RXCOEN);
-	पूर्ण
+	}
 
-	अगर (dev->flags & IFF_ALLMULTI) अणु
+	if (dev->flags & IFF_ALLMULTI) {
 		/* Enable all multicast mode */
-		macb_or_gem_ग_लिखोl(bp, HRB, -1);
-		macb_or_gem_ग_लिखोl(bp, HRT, -1);
+		macb_or_gem_writel(bp, HRB, -1);
+		macb_or_gem_writel(bp, HRT, -1);
 		cfg |= MACB_BIT(NCFGR_MTI);
-	पूर्ण अन्यथा अगर (!netdev_mc_empty(dev)) अणु
-		/* Enable specअगरic multicasts */
+	} else if (!netdev_mc_empty(dev)) {
+		/* Enable specific multicasts */
 		macb_sethashtable(dev);
 		cfg |= MACB_BIT(NCFGR_MTI);
-	पूर्ण अन्यथा अगर (dev->flags & (~IFF_ALLMULTI)) अणु
+	} else if (dev->flags & (~IFF_ALLMULTI)) {
 		/* Disable all multicast mode */
-		macb_or_gem_ग_लिखोl(bp, HRB, 0);
-		macb_or_gem_ग_लिखोl(bp, HRT, 0);
+		macb_or_gem_writel(bp, HRB, 0);
+		macb_or_gem_writel(bp, HRT, 0);
 		cfg &= ~MACB_BIT(NCFGR_MTI);
-	पूर्ण
+	}
 
-	macb_ग_लिखोl(bp, NCFGR, cfg);
-पूर्ण
+	macb_writel(bp, NCFGR, cfg);
+}
 
-अटल पूर्णांक macb_खोलो(काष्ठा net_device *dev)
-अणु
-	माप_प्रकार bufsz = dev->mtu + ETH_HLEN + ETH_FCS_LEN + NET_IP_ALIGN;
-	काष्ठा macb *bp = netdev_priv(dev);
-	काष्ठा macb_queue *queue;
-	अचिन्हित पूर्णांक q;
-	पूर्णांक err;
+static int macb_open(struct net_device *dev)
+{
+	size_t bufsz = dev->mtu + ETH_HLEN + ETH_FCS_LEN + NET_IP_ALIGN;
+	struct macb *bp = netdev_priv(dev);
+	struct macb_queue *queue;
+	unsigned int q;
+	int err;
 
 	netdev_dbg(bp->dev, "open\n");
 
-	err = pm_runसमय_get_sync(&bp->pdev->dev);
-	अगर (err < 0)
-		जाओ pm_निकास;
+	err = pm_runtime_get_sync(&bp->pdev->dev);
+	if (err < 0)
+		goto pm_exit;
 
 	/* RX buffers initialization */
 	macb_init_rx_buffer_size(bp, bufsz);
 
 	err = macb_alloc_consistent(bp);
-	अगर (err) अणु
+	if (err) {
 		netdev_err(dev, "Unable to allocate DMA memory (error %d)\n",
 			   err);
-		जाओ pm_निकास;
-	पूर्ण
+		goto pm_exit;
+	}
 
-	क्रम (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue)
+	for (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue)
 		napi_enable(&queue->napi);
 
 	macb_init_hw(bp);
 
 	err = macb_phylink_connect(bp);
-	अगर (err)
-		जाओ reset_hw;
+	if (err)
+		goto reset_hw;
 
-	netअगर_tx_start_all_queues(dev);
+	netif_tx_start_all_queues(dev);
 
-	अगर (bp->ptp_info)
+	if (bp->ptp_info)
 		bp->ptp_info->ptp_init(dev);
 
-	वापस 0;
+	return 0;
 
 reset_hw:
 	macb_reset_hw(bp);
-	क्रम (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue)
+	for (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue)
 		napi_disable(&queue->napi);
-	macb_मुक्त_consistent(bp);
-pm_निकास:
-	pm_runसमय_put_sync(&bp->pdev->dev);
-	वापस err;
-पूर्ण
+	macb_free_consistent(bp);
+pm_exit:
+	pm_runtime_put_sync(&bp->pdev->dev);
+	return err;
+}
 
-अटल पूर्णांक macb_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा macb *bp = netdev_priv(dev);
-	काष्ठा macb_queue *queue;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक q;
+static int macb_close(struct net_device *dev)
+{
+	struct macb *bp = netdev_priv(dev);
+	struct macb_queue *queue;
+	unsigned long flags;
+	unsigned int q;
 
-	netअगर_tx_stop_all_queues(dev);
+	netif_tx_stop_all_queues(dev);
 
-	क्रम (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue)
+	for (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue)
 		napi_disable(&queue->napi);
 
 	phylink_stop(bp->phylink);
@@ -2811,65 +2810,65 @@ pm_निकास:
 
 	spin_lock_irqsave(&bp->lock, flags);
 	macb_reset_hw(bp);
-	netअगर_carrier_off(dev);
+	netif_carrier_off(dev);
 	spin_unlock_irqrestore(&bp->lock, flags);
 
-	macb_मुक्त_consistent(bp);
+	macb_free_consistent(bp);
 
-	अगर (bp->ptp_info)
-		bp->ptp_info->ptp_हटाओ(dev);
+	if (bp->ptp_info)
+		bp->ptp_info->ptp_remove(dev);
 
-	pm_runसमय_put(&bp->pdev->dev);
+	pm_runtime_put(&bp->pdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक macb_change_mtu(काष्ठा net_device *dev, पूर्णांक new_mtu)
-अणु
-	अगर (netअगर_running(dev))
-		वापस -EBUSY;
+static int macb_change_mtu(struct net_device *dev, int new_mtu)
+{
+	if (netif_running(dev))
+		return -EBUSY;
 
 	dev->mtu = new_mtu;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम gem_update_stats(काष्ठा macb *bp)
-अणु
-	काष्ठा macb_queue *queue;
-	अचिन्हित पूर्णांक i, q, idx;
-	अचिन्हित दीर्घ *stat;
+static void gem_update_stats(struct macb *bp)
+{
+	struct macb_queue *queue;
+	unsigned int i, q, idx;
+	unsigned long *stat;
 
 	u32 *p = &bp->hw_stats.gem.tx_octets_31_0;
 
-	क्रम (i = 0; i < GEM_STATS_LEN; ++i, ++p) अणु
+	for (i = 0; i < GEM_STATS_LEN; ++i, ++p) {
 		u32 offset = gem_statistics[i].offset;
-		u64 val = bp->macb_reg_पढ़ोl(bp, offset);
+		u64 val = bp->macb_reg_readl(bp, offset);
 
 		bp->ethtool_stats[i] += val;
 		*p += val;
 
-		अगर (offset == GEM_OCTTXL || offset == GEM_OCTRXL) अणु
+		if (offset == GEM_OCTTXL || offset == GEM_OCTRXL) {
 			/* Add GEM_OCTTXH, GEM_OCTRXH */
-			val = bp->macb_reg_पढ़ोl(bp, offset + 4);
+			val = bp->macb_reg_readl(bp, offset + 4);
 			bp->ethtool_stats[i] += ((u64)val) << 32;
 			*(++p) += val;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	idx = GEM_STATS_LEN;
-	क्रम (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue)
-		क्रम (i = 0, stat = &queue->stats.first; i < QUEUE_STATS_LEN; ++i, ++stat)
+	for (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue)
+		for (i = 0, stat = &queue->stats.first; i < QUEUE_STATS_LEN; ++i, ++stat)
 			bp->ethtool_stats[idx++] = *stat;
-पूर्ण
+}
 
-अटल काष्ठा net_device_stats *gem_get_stats(काष्ठा macb *bp)
-अणु
-	काष्ठा gem_stats *hwstat = &bp->hw_stats.gem;
-	काष्ठा net_device_stats *nstat = &bp->dev->stats;
+static struct net_device_stats *gem_get_stats(struct macb *bp)
+{
+	struct gem_stats *hwstat = &bp->hw_stats.gem;
+	struct net_device_stats *nstat = &bp->dev->stats;
 
-	अगर (!netअगर_running(bp->dev))
-		वापस nstat;
+	if (!netif_running(bp->dev))
+		return nstat;
 
 	gem_update_stats(bp);
 
@@ -2896,75 +2895,75 @@ pm_निकास:
 	nstat->rx_over_errors = hwstat->rx_resource_errors;
 	nstat->rx_crc_errors = hwstat->rx_frame_check_sequence_errors;
 	nstat->rx_frame_errors = hwstat->rx_alignment_errors;
-	nstat->rx_fअगरo_errors = hwstat->rx_overruns;
-	nstat->tx_पातed_errors = hwstat->tx_excessive_collisions;
+	nstat->rx_fifo_errors = hwstat->rx_overruns;
+	nstat->tx_aborted_errors = hwstat->tx_excessive_collisions;
 	nstat->tx_carrier_errors = hwstat->tx_carrier_sense_errors;
-	nstat->tx_fअगरo_errors = hwstat->tx_underrun;
+	nstat->tx_fifo_errors = hwstat->tx_underrun;
 
-	वापस nstat;
-पूर्ण
+	return nstat;
+}
 
-अटल व्योम gem_get_ethtool_stats(काष्ठा net_device *dev,
-				  काष्ठा ethtool_stats *stats, u64 *data)
-अणु
-	काष्ठा macb *bp;
+static void gem_get_ethtool_stats(struct net_device *dev,
+				  struct ethtool_stats *stats, u64 *data)
+{
+	struct macb *bp;
 
 	bp = netdev_priv(dev);
 	gem_update_stats(bp);
-	स_नकल(data, &bp->ethtool_stats, माप(u64)
+	memcpy(data, &bp->ethtool_stats, sizeof(u64)
 			* (GEM_STATS_LEN + QUEUE_STATS_LEN * MACB_MAX_QUEUES));
-पूर्ण
+}
 
-अटल पूर्णांक gem_get_sset_count(काष्ठा net_device *dev, पूर्णांक sset)
-अणु
-	काष्ठा macb *bp = netdev_priv(dev);
+static int gem_get_sset_count(struct net_device *dev, int sset)
+{
+	struct macb *bp = netdev_priv(dev);
 
-	चयन (sset) अणु
-	हाल ETH_SS_STATS:
-		वापस GEM_STATS_LEN + bp->num_queues * QUEUE_STATS_LEN;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+	switch (sset) {
+	case ETH_SS_STATS:
+		return GEM_STATS_LEN + bp->num_queues * QUEUE_STATS_LEN;
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल व्योम gem_get_ethtool_strings(काष्ठा net_device *dev, u32 sset, u8 *p)
-अणु
-	अक्षर stat_string[ETH_GSTRING_LEN];
-	काष्ठा macb *bp = netdev_priv(dev);
-	काष्ठा macb_queue *queue;
-	अचिन्हित पूर्णांक i;
-	अचिन्हित पूर्णांक q;
+static void gem_get_ethtool_strings(struct net_device *dev, u32 sset, u8 *p)
+{
+	char stat_string[ETH_GSTRING_LEN];
+	struct macb *bp = netdev_priv(dev);
+	struct macb_queue *queue;
+	unsigned int i;
+	unsigned int q;
 
-	चयन (sset) अणु
-	हाल ETH_SS_STATS:
-		क्रम (i = 0; i < GEM_STATS_LEN; i++, p += ETH_GSTRING_LEN)
-			स_नकल(p, gem_statistics[i].stat_string,
+	switch (sset) {
+	case ETH_SS_STATS:
+		for (i = 0; i < GEM_STATS_LEN; i++, p += ETH_GSTRING_LEN)
+			memcpy(p, gem_statistics[i].stat_string,
 			       ETH_GSTRING_LEN);
 
-		क्रम (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue) अणु
-			क्रम (i = 0; i < QUEUE_STATS_LEN; i++, p += ETH_GSTRING_LEN) अणु
-				snम_लिखो(stat_string, ETH_GSTRING_LEN, "q%d_%s",
+		for (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue) {
+			for (i = 0; i < QUEUE_STATS_LEN; i++, p += ETH_GSTRING_LEN) {
+				snprintf(stat_string, ETH_GSTRING_LEN, "q%d_%s",
 						q, queue_statistics[i].stat_string);
-				स_नकल(p, stat_string, ETH_GSTRING_LEN);
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	पूर्ण
-पूर्ण
+				memcpy(p, stat_string, ETH_GSTRING_LEN);
+			}
+		}
+		break;
+	}
+}
 
-अटल काष्ठा net_device_stats *macb_get_stats(काष्ठा net_device *dev)
-अणु
-	काष्ठा macb *bp = netdev_priv(dev);
-	काष्ठा net_device_stats *nstat = &bp->dev->stats;
-	काष्ठा macb_stats *hwstat = &bp->hw_stats.macb;
+static struct net_device_stats *macb_get_stats(struct net_device *dev)
+{
+	struct macb *bp = netdev_priv(dev);
+	struct net_device_stats *nstat = &bp->dev->stats;
+	struct macb_stats *hwstat = &bp->hw_stats.macb;
 
-	अगर (macb_is_gem(bp))
-		वापस gem_get_stats(bp);
+	if (macb_is_gem(bp))
+		return gem_get_stats(bp);
 
-	/* पढ़ो stats from hardware */
+	/* read stats from hardware */
 	macb_update_stats(bp);
 
-	/* Convert HW stats पूर्णांकo netdevice stats */
+	/* Convert HW stats into netdevice stats */
 	nstat->rx_errors = (hwstat->rx_fcs_errors +
 			    hwstat->rx_align_errors +
 			    hwstat->rx_resource_errors +
@@ -2989,194 +2988,194 @@ pm_निकास:
 				   hwstat->rx_overruns;
 	nstat->rx_crc_errors = hwstat->rx_fcs_errors;
 	nstat->rx_frame_errors = hwstat->rx_align_errors;
-	nstat->rx_fअगरo_errors = hwstat->rx_overruns;
-	/* XXX: What करोes "missed" mean? */
-	nstat->tx_पातed_errors = hwstat->tx_excessive_cols;
+	nstat->rx_fifo_errors = hwstat->rx_overruns;
+	/* XXX: What does "missed" mean? */
+	nstat->tx_aborted_errors = hwstat->tx_excessive_cols;
 	nstat->tx_carrier_errors = hwstat->tx_carrier_errors;
-	nstat->tx_fअगरo_errors = hwstat->tx_underruns;
-	/* Don't know about heartbeat or winकरोw errors... */
+	nstat->tx_fifo_errors = hwstat->tx_underruns;
+	/* Don't know about heartbeat or window errors... */
 
-	वापस nstat;
-पूर्ण
+	return nstat;
+}
 
-अटल पूर्णांक macb_get_regs_len(काष्ठा net_device *netdev)
-अणु
-	वापस MACB_GREGS_NBR * माप(u32);
-पूर्ण
+static int macb_get_regs_len(struct net_device *netdev)
+{
+	return MACB_GREGS_NBR * sizeof(u32);
+}
 
-अटल व्योम macb_get_regs(काष्ठा net_device *dev, काष्ठा ethtool_regs *regs,
-			  व्योम *p)
-अणु
-	काष्ठा macb *bp = netdev_priv(dev);
-	अचिन्हित पूर्णांक tail, head;
+static void macb_get_regs(struct net_device *dev, struct ethtool_regs *regs,
+			  void *p)
+{
+	struct macb *bp = netdev_priv(dev);
+	unsigned int tail, head;
 	u32 *regs_buff = p;
 
-	regs->version = (macb_पढ़ोl(bp, MID) & ((1 << MACB_REV_SIZE) - 1))
+	regs->version = (macb_readl(bp, MID) & ((1 << MACB_REV_SIZE) - 1))
 			| MACB_GREGS_VERSION;
 
 	tail = macb_tx_ring_wrap(bp, bp->queues[0].tx_tail);
 	head = macb_tx_ring_wrap(bp, bp->queues[0].tx_head);
 
-	regs_buff[0]  = macb_पढ़ोl(bp, NCR);
-	regs_buff[1]  = macb_or_gem_पढ़ोl(bp, NCFGR);
-	regs_buff[2]  = macb_पढ़ोl(bp, NSR);
-	regs_buff[3]  = macb_पढ़ोl(bp, TSR);
-	regs_buff[4]  = macb_पढ़ोl(bp, RBQP);
-	regs_buff[5]  = macb_पढ़ोl(bp, TBQP);
-	regs_buff[6]  = macb_पढ़ोl(bp, RSR);
-	regs_buff[7]  = macb_पढ़ोl(bp, IMR);
+	regs_buff[0]  = macb_readl(bp, NCR);
+	regs_buff[1]  = macb_or_gem_readl(bp, NCFGR);
+	regs_buff[2]  = macb_readl(bp, NSR);
+	regs_buff[3]  = macb_readl(bp, TSR);
+	regs_buff[4]  = macb_readl(bp, RBQP);
+	regs_buff[5]  = macb_readl(bp, TBQP);
+	regs_buff[6]  = macb_readl(bp, RSR);
+	regs_buff[7]  = macb_readl(bp, IMR);
 
 	regs_buff[8]  = tail;
 	regs_buff[9]  = head;
 	regs_buff[10] = macb_tx_dma(&bp->queues[0], tail);
 	regs_buff[11] = macb_tx_dma(&bp->queues[0], head);
 
-	अगर (!(bp->caps & MACB_CAPS_USRIO_DISABLED))
-		regs_buff[12] = macb_or_gem_पढ़ोl(bp, USRIO);
-	अगर (macb_is_gem(bp))
-		regs_buff[13] = gem_पढ़ोl(bp, DMACFG);
-पूर्ण
+	if (!(bp->caps & MACB_CAPS_USRIO_DISABLED))
+		regs_buff[12] = macb_or_gem_readl(bp, USRIO);
+	if (macb_is_gem(bp))
+		regs_buff[13] = gem_readl(bp, DMACFG);
+}
 
-अटल व्योम macb_get_wol(काष्ठा net_device *netdev, काष्ठा ethtool_wolinfo *wol)
-अणु
-	काष्ठा macb *bp = netdev_priv(netdev);
+static void macb_get_wol(struct net_device *netdev, struct ethtool_wolinfo *wol)
+{
+	struct macb *bp = netdev_priv(netdev);
 
-	अगर (bp->wol & MACB_WOL_HAS_MAGIC_PACKET) अणु
+	if (bp->wol & MACB_WOL_HAS_MAGIC_PACKET) {
 		phylink_ethtool_get_wol(bp->phylink, wol);
 		wol->supported |= WAKE_MAGIC;
 
-		अगर (bp->wol & MACB_WOL_ENABLED)
+		if (bp->wol & MACB_WOL_ENABLED)
 			wol->wolopts |= WAKE_MAGIC;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक macb_set_wol(काष्ठा net_device *netdev, काष्ठा ethtool_wolinfo *wol)
-अणु
-	काष्ठा macb *bp = netdev_priv(netdev);
-	पूर्णांक ret;
+static int macb_set_wol(struct net_device *netdev, struct ethtool_wolinfo *wol)
+{
+	struct macb *bp = netdev_priv(netdev);
+	int ret;
 
 	/* Pass the order to phylink layer */
 	ret = phylink_ethtool_set_wol(bp->phylink, wol);
-	/* Don't manage WoL on MAC अगर handled by the PHY
-	 * or अगर there's a failure in talking to the PHY
+	/* Don't manage WoL on MAC if handled by the PHY
+	 * or if there's a failure in talking to the PHY
 	 */
-	अगर (!ret || ret != -EOPNOTSUPP)
-		वापस ret;
+	if (!ret || ret != -EOPNOTSUPP)
+		return ret;
 
-	अगर (!(bp->wol & MACB_WOL_HAS_MAGIC_PACKET) ||
+	if (!(bp->wol & MACB_WOL_HAS_MAGIC_PACKET) ||
 	    (wol->wolopts & ~WAKE_MAGIC))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	अगर (wol->wolopts & WAKE_MAGIC)
+	if (wol->wolopts & WAKE_MAGIC)
 		bp->wol |= MACB_WOL_ENABLED;
-	अन्यथा
+	else
 		bp->wol &= ~MACB_WOL_ENABLED;
 
 	device_set_wakeup_enable(&bp->pdev->dev, bp->wol & MACB_WOL_ENABLED);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक macb_get_link_ksettings(काष्ठा net_device *netdev,
-				   काष्ठा ethtool_link_ksettings *kset)
-अणु
-	काष्ठा macb *bp = netdev_priv(netdev);
+static int macb_get_link_ksettings(struct net_device *netdev,
+				   struct ethtool_link_ksettings *kset)
+{
+	struct macb *bp = netdev_priv(netdev);
 
-	वापस phylink_ethtool_ksettings_get(bp->phylink, kset);
-पूर्ण
+	return phylink_ethtool_ksettings_get(bp->phylink, kset);
+}
 
-अटल पूर्णांक macb_set_link_ksettings(काष्ठा net_device *netdev,
-				   स्थिर काष्ठा ethtool_link_ksettings *kset)
-अणु
-	काष्ठा macb *bp = netdev_priv(netdev);
+static int macb_set_link_ksettings(struct net_device *netdev,
+				   const struct ethtool_link_ksettings *kset)
+{
+	struct macb *bp = netdev_priv(netdev);
 
-	वापस phylink_ethtool_ksettings_set(bp->phylink, kset);
-पूर्ण
+	return phylink_ethtool_ksettings_set(bp->phylink, kset);
+}
 
-अटल व्योम macb_get_ringparam(काष्ठा net_device *netdev,
-			       काष्ठा ethtool_ringparam *ring)
-अणु
-	काष्ठा macb *bp = netdev_priv(netdev);
+static void macb_get_ringparam(struct net_device *netdev,
+			       struct ethtool_ringparam *ring)
+{
+	struct macb *bp = netdev_priv(netdev);
 
 	ring->rx_max_pending = MAX_RX_RING_SIZE;
 	ring->tx_max_pending = MAX_TX_RING_SIZE;
 
 	ring->rx_pending = bp->rx_ring_size;
 	ring->tx_pending = bp->tx_ring_size;
-पूर्ण
+}
 
-अटल पूर्णांक macb_set_ringparam(काष्ठा net_device *netdev,
-			      काष्ठा ethtool_ringparam *ring)
-अणु
-	काष्ठा macb *bp = netdev_priv(netdev);
+static int macb_set_ringparam(struct net_device *netdev,
+			      struct ethtool_ringparam *ring)
+{
+	struct macb *bp = netdev_priv(netdev);
 	u32 new_rx_size, new_tx_size;
-	अचिन्हित पूर्णांक reset = 0;
+	unsigned int reset = 0;
 
-	अगर ((ring->rx_mini_pending) || (ring->rx_jumbo_pending))
-		वापस -EINVAL;
+	if ((ring->rx_mini_pending) || (ring->rx_jumbo_pending))
+		return -EINVAL;
 
 	new_rx_size = clamp_t(u32, ring->rx_pending,
 			      MIN_RX_RING_SIZE, MAX_RX_RING_SIZE);
-	new_rx_size = roundup_घात_of_two(new_rx_size);
+	new_rx_size = roundup_pow_of_two(new_rx_size);
 
 	new_tx_size = clamp_t(u32, ring->tx_pending,
 			      MIN_TX_RING_SIZE, MAX_TX_RING_SIZE);
-	new_tx_size = roundup_घात_of_two(new_tx_size);
+	new_tx_size = roundup_pow_of_two(new_tx_size);
 
-	अगर ((new_tx_size == bp->tx_ring_size) &&
-	    (new_rx_size == bp->rx_ring_size)) अणु
-		/* nothing to करो */
-		वापस 0;
-	पूर्ण
+	if ((new_tx_size == bp->tx_ring_size) &&
+	    (new_rx_size == bp->rx_ring_size)) {
+		/* nothing to do */
+		return 0;
+	}
 
-	अगर (netअगर_running(bp->dev)) अणु
+	if (netif_running(bp->dev)) {
 		reset = 1;
-		macb_बंद(bp->dev);
-	पूर्ण
+		macb_close(bp->dev);
+	}
 
 	bp->rx_ring_size = new_rx_size;
 	bp->tx_ring_size = new_tx_size;
 
-	अगर (reset)
-		macb_खोलो(bp->dev);
+	if (reset)
+		macb_open(bp->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_MACB_USE_HWSTAMP
-अटल अचिन्हित पूर्णांक gem_get_tsu_rate(काष्ठा macb *bp)
-अणु
-	काष्ठा clk *tsu_clk;
-	अचिन्हित पूर्णांक tsu_rate;
+#ifdef CONFIG_MACB_USE_HWSTAMP
+static unsigned int gem_get_tsu_rate(struct macb *bp)
+{
+	struct clk *tsu_clk;
+	unsigned int tsu_rate;
 
 	tsu_clk = devm_clk_get(&bp->pdev->dev, "tsu_clk");
-	अगर (!IS_ERR(tsu_clk))
+	if (!IS_ERR(tsu_clk))
 		tsu_rate = clk_get_rate(tsu_clk);
 	/* try pclk instead */
-	अन्यथा अगर (!IS_ERR(bp->pclk)) अणु
+	else if (!IS_ERR(bp->pclk)) {
 		tsu_clk = bp->pclk;
 		tsu_rate = clk_get_rate(tsu_clk);
-	पूर्ण अन्यथा
-		वापस -ENOTSUPP;
-	वापस tsu_rate;
-पूर्ण
+	} else
+		return -ENOTSUPP;
+	return tsu_rate;
+}
 
-अटल s32 gem_get_ptp_max_adj(व्योम)
-अणु
-	वापस 64000000;
-पूर्ण
+static s32 gem_get_ptp_max_adj(void)
+{
+	return 64000000;
+}
 
-अटल पूर्णांक gem_get_ts_info(काष्ठा net_device *dev,
-			   काष्ठा ethtool_ts_info *info)
-अणु
-	काष्ठा macb *bp = netdev_priv(dev);
+static int gem_get_ts_info(struct net_device *dev,
+			   struct ethtool_ts_info *info)
+{
+	struct macb *bp = netdev_priv(dev);
 
-	अगर ((bp->hw_dma_cap & HW_DMA_CAP_PTP) == 0) अणु
+	if ((bp->hw_dma_cap & HW_DMA_CAP_PTP) == 0) {
 		ethtool_op_get_ts_info(dev, info);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	info->so_बारtamping =
+	info->so_timestamping =
 		SOF_TIMESTAMPING_TX_SOFTWARE |
 		SOF_TIMESTAMPING_RX_SOFTWARE |
 		SOF_TIMESTAMPING_SOFTWARE |
@@ -3191,96 +3190,96 @@ pm_निकास:
 		(1 << HWTSTAMP_FILTER_NONE) |
 		(1 << HWTSTAMP_FILTER_ALL);
 
-	info->phc_index = bp->ptp_घड़ी ? ptp_घड़ी_index(bp->ptp_घड़ी) : -1;
+	info->phc_index = bp->ptp_clock ? ptp_clock_index(bp->ptp_clock) : -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा macb_ptp_info gem_ptp_info = अणु
+static struct macb_ptp_info gem_ptp_info = {
 	.ptp_init	 = gem_ptp_init,
-	.ptp_हटाओ	 = gem_ptp_हटाओ,
+	.ptp_remove	 = gem_ptp_remove,
 	.get_ptp_max_adj = gem_get_ptp_max_adj,
 	.get_tsu_rate	 = gem_get_tsu_rate,
 	.get_ts_info	 = gem_get_ts_info,
 	.get_hwtst	 = gem_get_hwtst,
 	.set_hwtst	 = gem_set_hwtst,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल पूर्णांक macb_get_ts_info(काष्ठा net_device *netdev,
-			    काष्ठा ethtool_ts_info *info)
-अणु
-	काष्ठा macb *bp = netdev_priv(netdev);
+static int macb_get_ts_info(struct net_device *netdev,
+			    struct ethtool_ts_info *info)
+{
+	struct macb *bp = netdev_priv(netdev);
 
-	अगर (bp->ptp_info)
-		वापस bp->ptp_info->get_ts_info(netdev, info);
+	if (bp->ptp_info)
+		return bp->ptp_info->get_ts_info(netdev, info);
 
-	वापस ethtool_op_get_ts_info(netdev, info);
-पूर्ण
+	return ethtool_op_get_ts_info(netdev, info);
+}
 
-अटल व्योम gem_enable_flow_filters(काष्ठा macb *bp, bool enable)
-अणु
-	काष्ठा net_device *netdev = bp->dev;
-	काष्ठा ethtool_rx_fs_item *item;
+static void gem_enable_flow_filters(struct macb *bp, bool enable)
+{
+	struct net_device *netdev = bp->dev;
+	struct ethtool_rx_fs_item *item;
 	u32 t2_scr;
-	पूर्णांक num_t2_scr;
+	int num_t2_scr;
 
-	अगर (!(netdev->features & NETIF_F_NTUPLE))
-		वापस;
+	if (!(netdev->features & NETIF_F_NTUPLE))
+		return;
 
-	num_t2_scr = GEM_BFEXT(T2SCR, gem_पढ़ोl(bp, DCFG8));
+	num_t2_scr = GEM_BFEXT(T2SCR, gem_readl(bp, DCFG8));
 
-	list_क्रम_each_entry(item, &bp->rx_fs_list.list, list) अणु
-		काष्ठा ethtool_rx_flow_spec *fs = &item->fs;
-		काष्ठा ethtool_tcpip4_spec *tp4sp_m;
+	list_for_each_entry(item, &bp->rx_fs_list.list, list) {
+		struct ethtool_rx_flow_spec *fs = &item->fs;
+		struct ethtool_tcpip4_spec *tp4sp_m;
 
-		अगर (fs->location >= num_t2_scr)
-			जारी;
+		if (fs->location >= num_t2_scr)
+			continue;
 
-		t2_scr = gem_पढ़ोl_n(bp, SCRT2, fs->location);
+		t2_scr = gem_readl_n(bp, SCRT2, fs->location);
 
-		/* enable/disable screener regs क्रम the flow entry */
+		/* enable/disable screener regs for the flow entry */
 		t2_scr = GEM_BFINS(ETHTEN, enable, t2_scr);
 
 		/* only enable fields with no masking */
 		tp4sp_m = &(fs->m_u.tcp_ip4_spec);
 
-		अगर (enable && (tp4sp_m->ip4src == 0xFFFFFFFF))
+		if (enable && (tp4sp_m->ip4src == 0xFFFFFFFF))
 			t2_scr = GEM_BFINS(CMPAEN, 1, t2_scr);
-		अन्यथा
+		else
 			t2_scr = GEM_BFINS(CMPAEN, 0, t2_scr);
 
-		अगर (enable && (tp4sp_m->ip4dst == 0xFFFFFFFF))
+		if (enable && (tp4sp_m->ip4dst == 0xFFFFFFFF))
 			t2_scr = GEM_BFINS(CMPBEN, 1, t2_scr);
-		अन्यथा
+		else
 			t2_scr = GEM_BFINS(CMPBEN, 0, t2_scr);
 
-		अगर (enable && ((tp4sp_m->psrc == 0xFFFF) || (tp4sp_m->pdst == 0xFFFF)))
+		if (enable && ((tp4sp_m->psrc == 0xFFFF) || (tp4sp_m->pdst == 0xFFFF)))
 			t2_scr = GEM_BFINS(CMPCEN, 1, t2_scr);
-		अन्यथा
+		else
 			t2_scr = GEM_BFINS(CMPCEN, 0, t2_scr);
 
-		gem_ग_लिखोl_n(bp, SCRT2, fs->location, t2_scr);
-	पूर्ण
-पूर्ण
+		gem_writel_n(bp, SCRT2, fs->location, t2_scr);
+	}
+}
 
-अटल व्योम gem_prog_cmp_regs(काष्ठा macb *bp, काष्ठा ethtool_rx_flow_spec *fs)
-अणु
-	काष्ठा ethtool_tcpip4_spec *tp4sp_v, *tp4sp_m;
-	uपूर्णांक16_t index = fs->location;
+static void gem_prog_cmp_regs(struct macb *bp, struct ethtool_rx_flow_spec *fs)
+{
+	struct ethtool_tcpip4_spec *tp4sp_v, *tp4sp_m;
+	uint16_t index = fs->location;
 	u32 w0, w1, t2_scr;
 	bool cmp_a = false;
 	bool cmp_b = false;
 	bool cmp_c = false;
 
-	अगर (!macb_is_gem(bp))
-		वापस;
+	if (!macb_is_gem(bp))
+		return;
 
 	tp4sp_v = &(fs->h_u.tcp_ip4_spec);
 	tp4sp_m = &(fs->m_u.tcp_ip4_spec);
 
-	/* ignore field अगर any masking set */
-	अगर (tp4sp_m->ip4src == 0xFFFFFFFF) अणु
+	/* ignore field if any masking set */
+	if (tp4sp_m->ip4src == 0xFFFFFFFF) {
 		/* 1st compare reg - IP source address */
 		w0 = 0;
 		w1 = 0;
@@ -3288,13 +3287,13 @@ pm_निकास:
 		w1 = GEM_BFINS(T2DISMSK, 1, w1); /* 32-bit compare */
 		w1 = GEM_BFINS(T2CMPOFST, GEM_T2COMPOFST_ETYPE, w1);
 		w1 = GEM_BFINS(T2OFST, ETYPE_SRCIP_OFFSET, w1);
-		gem_ग_लिखोl_n(bp, T2CMPW0, T2CMP_OFST(GEM_IP4SRC_CMP(index)), w0);
-		gem_ग_लिखोl_n(bp, T2CMPW1, T2CMP_OFST(GEM_IP4SRC_CMP(index)), w1);
+		gem_writel_n(bp, T2CMPW0, T2CMP_OFST(GEM_IP4SRC_CMP(index)), w0);
+		gem_writel_n(bp, T2CMPW1, T2CMP_OFST(GEM_IP4SRC_CMP(index)), w1);
 		cmp_a = true;
-	पूर्ण
+	}
 
-	/* ignore field अगर any masking set */
-	अगर (tp4sp_m->ip4dst == 0xFFFFFFFF) अणु
+	/* ignore field if any masking set */
+	if (tp4sp_m->ip4dst == 0xFFFFFFFF) {
 		/* 2nd compare reg - IP destination address */
 		w0 = 0;
 		w1 = 0;
@@ -3302,69 +3301,69 @@ pm_निकास:
 		w1 = GEM_BFINS(T2DISMSK, 1, w1); /* 32-bit compare */
 		w1 = GEM_BFINS(T2CMPOFST, GEM_T2COMPOFST_ETYPE, w1);
 		w1 = GEM_BFINS(T2OFST, ETYPE_DSTIP_OFFSET, w1);
-		gem_ग_लिखोl_n(bp, T2CMPW0, T2CMP_OFST(GEM_IP4DST_CMP(index)), w0);
-		gem_ग_लिखोl_n(bp, T2CMPW1, T2CMP_OFST(GEM_IP4DST_CMP(index)), w1);
+		gem_writel_n(bp, T2CMPW0, T2CMP_OFST(GEM_IP4DST_CMP(index)), w0);
+		gem_writel_n(bp, T2CMPW1, T2CMP_OFST(GEM_IP4DST_CMP(index)), w1);
 		cmp_b = true;
-	पूर्ण
+	}
 
-	/* ignore both port fields अगर masking set in both */
-	अगर ((tp4sp_m->psrc == 0xFFFF) || (tp4sp_m->pdst == 0xFFFF)) अणु
+	/* ignore both port fields if masking set in both */
+	if ((tp4sp_m->psrc == 0xFFFF) || (tp4sp_m->pdst == 0xFFFF)) {
 		/* 3rd compare reg - source port, destination port */
 		w0 = 0;
 		w1 = 0;
 		w1 = GEM_BFINS(T2CMPOFST, GEM_T2COMPOFST_IPHDR, w1);
-		अगर (tp4sp_m->psrc == tp4sp_m->pdst) अणु
+		if (tp4sp_m->psrc == tp4sp_m->pdst) {
 			w0 = GEM_BFINS(T2MASK, tp4sp_v->psrc, w0);
 			w0 = GEM_BFINS(T2CMP, tp4sp_v->pdst, w0);
 			w1 = GEM_BFINS(T2DISMSK, 1, w1); /* 32-bit compare */
 			w1 = GEM_BFINS(T2OFST, IPHDR_SRCPORT_OFFSET, w1);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* only one port definition */
 			w1 = GEM_BFINS(T2DISMSK, 0, w1); /* 16-bit compare */
 			w0 = GEM_BFINS(T2MASK, 0xFFFF, w0);
-			अगर (tp4sp_m->psrc == 0xFFFF) अणु /* src port */
+			if (tp4sp_m->psrc == 0xFFFF) { /* src port */
 				w0 = GEM_BFINS(T2CMP, tp4sp_v->psrc, w0);
 				w1 = GEM_BFINS(T2OFST, IPHDR_SRCPORT_OFFSET, w1);
-			पूर्ण अन्यथा अणु /* dst port */
+			} else { /* dst port */
 				w0 = GEM_BFINS(T2CMP, tp4sp_v->pdst, w0);
 				w1 = GEM_BFINS(T2OFST, IPHDR_DSTPORT_OFFSET, w1);
-			पूर्ण
-		पूर्ण
-		gem_ग_लिखोl_n(bp, T2CMPW0, T2CMP_OFST(GEM_PORT_CMP(index)), w0);
-		gem_ग_लिखोl_n(bp, T2CMPW1, T2CMP_OFST(GEM_PORT_CMP(index)), w1);
+			}
+		}
+		gem_writel_n(bp, T2CMPW0, T2CMP_OFST(GEM_PORT_CMP(index)), w0);
+		gem_writel_n(bp, T2CMPW1, T2CMP_OFST(GEM_PORT_CMP(index)), w1);
 		cmp_c = true;
-	पूर्ण
+	}
 
 	t2_scr = 0;
 	t2_scr = GEM_BFINS(QUEUE, (fs->ring_cookie) & 0xFF, t2_scr);
 	t2_scr = GEM_BFINS(ETHT2IDX, SCRT2_ETHT, t2_scr);
-	अगर (cmp_a)
+	if (cmp_a)
 		t2_scr = GEM_BFINS(CMPA, GEM_IP4SRC_CMP(index), t2_scr);
-	अगर (cmp_b)
+	if (cmp_b)
 		t2_scr = GEM_BFINS(CMPB, GEM_IP4DST_CMP(index), t2_scr);
-	अगर (cmp_c)
+	if (cmp_c)
 		t2_scr = GEM_BFINS(CMPC, GEM_PORT_CMP(index), t2_scr);
-	gem_ग_लिखोl_n(bp, SCRT2, index, t2_scr);
-पूर्ण
+	gem_writel_n(bp, SCRT2, index, t2_scr);
+}
 
-अटल पूर्णांक gem_add_flow_filter(काष्ठा net_device *netdev,
-		काष्ठा ethtool_rxnfc *cmd)
-अणु
-	काष्ठा macb *bp = netdev_priv(netdev);
-	काष्ठा ethtool_rx_flow_spec *fs = &cmd->fs;
-	काष्ठा ethtool_rx_fs_item *item, *newfs;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = -EINVAL;
+static int gem_add_flow_filter(struct net_device *netdev,
+		struct ethtool_rxnfc *cmd)
+{
+	struct macb *bp = netdev_priv(netdev);
+	struct ethtool_rx_flow_spec *fs = &cmd->fs;
+	struct ethtool_rx_fs_item *item, *newfs;
+	unsigned long flags;
+	int ret = -EINVAL;
 	bool added = false;
 
-	newfs = kदो_स्मृति(माप(*newfs), GFP_KERNEL);
-	अगर (newfs == शून्य)
-		वापस -ENOMEM;
-	स_नकल(&newfs->fs, fs, माप(newfs->fs));
+	newfs = kmalloc(sizeof(*newfs), GFP_KERNEL);
+	if (newfs == NULL)
+		return -ENOMEM;
+	memcpy(&newfs->fs, fs, sizeof(newfs->fs));
 
 	netdev_dbg(netdev,
 			"Adding flow filter entry,type=%u,queue=%u,loc=%u,src=%08X,dst=%08X,ps=%u,pd=%u\n",
-			fs->flow_type, (पूर्णांक)fs->ring_cookie, fs->location,
+			fs->flow_type, (int)fs->ring_cookie, fs->location,
 			htonl(fs->h_u.tcp_ip4_spec.ip4src),
 			htonl(fs->h_u.tcp_ip4_spec.ip4dst),
 			htons(fs->h_u.tcp_ip4_spec.psrc), htons(fs->h_u.tcp_ip4_spec.pdst));
@@ -3372,160 +3371,160 @@ pm_निकास:
 	spin_lock_irqsave(&bp->rx_fs_lock, flags);
 
 	/* find correct place to add in list */
-	list_क्रम_each_entry(item, &bp->rx_fs_list.list, list) अणु
-		अगर (item->fs.location > newfs->fs.location) अणु
+	list_for_each_entry(item, &bp->rx_fs_list.list, list) {
+		if (item->fs.location > newfs->fs.location) {
 			list_add_tail(&newfs->list, &item->list);
 			added = true;
-			अवरोध;
-		पूर्ण अन्यथा अगर (item->fs.location == fs->location) अणु
+			break;
+		} else if (item->fs.location == fs->location) {
 			netdev_err(netdev, "Rule not added: location %d not free!\n",
 					fs->location);
 			ret = -EBUSY;
-			जाओ err;
-		पूर्ण
-	पूर्ण
-	अगर (!added)
+			goto err;
+		}
+	}
+	if (!added)
 		list_add_tail(&newfs->list, &bp->rx_fs_list.list);
 
 	gem_prog_cmp_regs(bp, fs);
 	bp->rx_fs_list.count++;
-	/* enable filtering अगर NTUPLE on */
+	/* enable filtering if NTUPLE on */
 	gem_enable_flow_filters(bp, 1);
 
 	spin_unlock_irqrestore(&bp->rx_fs_lock, flags);
-	वापस 0;
+	return 0;
 
 err:
 	spin_unlock_irqrestore(&bp->rx_fs_lock, flags);
-	kमुक्त(newfs);
-	वापस ret;
-पूर्ण
+	kfree(newfs);
+	return ret;
+}
 
-अटल पूर्णांक gem_del_flow_filter(काष्ठा net_device *netdev,
-		काष्ठा ethtool_rxnfc *cmd)
-अणु
-	काष्ठा macb *bp = netdev_priv(netdev);
-	काष्ठा ethtool_rx_fs_item *item;
-	काष्ठा ethtool_rx_flow_spec *fs;
-	अचिन्हित दीर्घ flags;
+static int gem_del_flow_filter(struct net_device *netdev,
+		struct ethtool_rxnfc *cmd)
+{
+	struct macb *bp = netdev_priv(netdev);
+	struct ethtool_rx_fs_item *item;
+	struct ethtool_rx_flow_spec *fs;
+	unsigned long flags;
 
 	spin_lock_irqsave(&bp->rx_fs_lock, flags);
 
-	list_क्रम_each_entry(item, &bp->rx_fs_list.list, list) अणु
-		अगर (item->fs.location == cmd->fs.location) अणु
-			/* disable screener regs क्रम the flow entry */
+	list_for_each_entry(item, &bp->rx_fs_list.list, list) {
+		if (item->fs.location == cmd->fs.location) {
+			/* disable screener regs for the flow entry */
 			fs = &(item->fs);
 			netdev_dbg(netdev,
 					"Deleting flow filter entry,type=%u,queue=%u,loc=%u,src=%08X,dst=%08X,ps=%u,pd=%u\n",
-					fs->flow_type, (पूर्णांक)fs->ring_cookie, fs->location,
+					fs->flow_type, (int)fs->ring_cookie, fs->location,
 					htonl(fs->h_u.tcp_ip4_spec.ip4src),
 					htonl(fs->h_u.tcp_ip4_spec.ip4dst),
 					htons(fs->h_u.tcp_ip4_spec.psrc),
 					htons(fs->h_u.tcp_ip4_spec.pdst));
 
-			gem_ग_लिखोl_n(bp, SCRT2, fs->location, 0);
+			gem_writel_n(bp, SCRT2, fs->location, 0);
 
 			list_del(&item->list);
 			bp->rx_fs_list.count--;
 			spin_unlock_irqrestore(&bp->rx_fs_lock, flags);
-			kमुक्त(item);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			kfree(item);
+			return 0;
+		}
+	}
 
 	spin_unlock_irqrestore(&bp->rx_fs_lock, flags);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक gem_get_flow_entry(काष्ठा net_device *netdev,
-		काष्ठा ethtool_rxnfc *cmd)
-अणु
-	काष्ठा macb *bp = netdev_priv(netdev);
-	काष्ठा ethtool_rx_fs_item *item;
+static int gem_get_flow_entry(struct net_device *netdev,
+		struct ethtool_rxnfc *cmd)
+{
+	struct macb *bp = netdev_priv(netdev);
+	struct ethtool_rx_fs_item *item;
 
-	list_क्रम_each_entry(item, &bp->rx_fs_list.list, list) अणु
-		अगर (item->fs.location == cmd->fs.location) अणु
-			स_नकल(&cmd->fs, &item->fs, माप(cmd->fs));
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	list_for_each_entry(item, &bp->rx_fs_list.list, list) {
+		if (item->fs.location == cmd->fs.location) {
+			memcpy(&cmd->fs, &item->fs, sizeof(cmd->fs));
+			return 0;
+		}
+	}
+	return -EINVAL;
+}
 
-अटल पूर्णांक gem_get_all_flow_entries(काष्ठा net_device *netdev,
-		काष्ठा ethtool_rxnfc *cmd, u32 *rule_locs)
-अणु
-	काष्ठा macb *bp = netdev_priv(netdev);
-	काष्ठा ethtool_rx_fs_item *item;
-	uपूर्णांक32_t cnt = 0;
+static int gem_get_all_flow_entries(struct net_device *netdev,
+		struct ethtool_rxnfc *cmd, u32 *rule_locs)
+{
+	struct macb *bp = netdev_priv(netdev);
+	struct ethtool_rx_fs_item *item;
+	uint32_t cnt = 0;
 
-	list_क्रम_each_entry(item, &bp->rx_fs_list.list, list) अणु
-		अगर (cnt == cmd->rule_cnt)
-			वापस -EMSGSIZE;
+	list_for_each_entry(item, &bp->rx_fs_list.list, list) {
+		if (cnt == cmd->rule_cnt)
+			return -EMSGSIZE;
 		rule_locs[cnt] = item->fs.location;
 		cnt++;
-	पूर्ण
+	}
 	cmd->data = bp->max_tuples;
 	cmd->rule_cnt = cnt;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gem_get_rxnfc(काष्ठा net_device *netdev, काष्ठा ethtool_rxnfc *cmd,
+static int gem_get_rxnfc(struct net_device *netdev, struct ethtool_rxnfc *cmd,
 		u32 *rule_locs)
-अणु
-	काष्ठा macb *bp = netdev_priv(netdev);
-	पूर्णांक ret = 0;
+{
+	struct macb *bp = netdev_priv(netdev);
+	int ret = 0;
 
-	चयन (cmd->cmd) अणु
-	हाल ETHTOOL_GRXRINGS:
+	switch (cmd->cmd) {
+	case ETHTOOL_GRXRINGS:
 		cmd->data = bp->num_queues;
-		अवरोध;
-	हाल ETHTOOL_GRXCLSRLCNT:
+		break;
+	case ETHTOOL_GRXCLSRLCNT:
 		cmd->rule_cnt = bp->rx_fs_list.count;
-		अवरोध;
-	हाल ETHTOOL_GRXCLSRULE:
+		break;
+	case ETHTOOL_GRXCLSRULE:
 		ret = gem_get_flow_entry(netdev, cmd);
-		अवरोध;
-	हाल ETHTOOL_GRXCLSRLALL:
+		break;
+	case ETHTOOL_GRXCLSRLALL:
 		ret = gem_get_all_flow_entries(netdev, cmd, rule_locs);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		netdev_err(netdev,
 			  "Command parameter %d is not supported\n", cmd->cmd);
 		ret = -EOPNOTSUPP;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक gem_set_rxnfc(काष्ठा net_device *netdev, काष्ठा ethtool_rxnfc *cmd)
-अणु
-	काष्ठा macb *bp = netdev_priv(netdev);
-	पूर्णांक ret;
+static int gem_set_rxnfc(struct net_device *netdev, struct ethtool_rxnfc *cmd)
+{
+	struct macb *bp = netdev_priv(netdev);
+	int ret;
 
-	चयन (cmd->cmd) अणु
-	हाल ETHTOOL_SRXCLSRLINS:
-		अगर ((cmd->fs.location >= bp->max_tuples)
-				|| (cmd->fs.ring_cookie >= bp->num_queues)) अणु
+	switch (cmd->cmd) {
+	case ETHTOOL_SRXCLSRLINS:
+		if ((cmd->fs.location >= bp->max_tuples)
+				|| (cmd->fs.ring_cookie >= bp->num_queues)) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ret = gem_add_flow_filter(netdev, cmd);
-		अवरोध;
-	हाल ETHTOOL_SRXCLSRLDEL:
+		break;
+	case ETHTOOL_SRXCLSRLDEL:
 		ret = gem_del_flow_filter(netdev, cmd);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		netdev_err(netdev,
 			  "Command parameter %d is not supported\n", cmd->cmd);
 		ret = -EOPNOTSUPP;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा ethtool_ops macb_ethtool_ops = अणु
+static const struct ethtool_ops macb_ethtool_ops = {
 	.get_regs_len		= macb_get_regs_len,
 	.get_regs		= macb_get_regs,
 	.get_link		= ethtool_op_get_link,
@@ -3536,9 +3535,9 @@ err:
 	.set_link_ksettings     = macb_set_link_ksettings,
 	.get_ringparam		= macb_get_ringparam,
 	.set_ringparam		= macb_set_ringparam,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ethtool_ops gem_ethtool_ops = अणु
+static const struct ethtool_ops gem_ethtool_ops = {
 	.get_regs_len		= macb_get_regs_len,
 	.get_regs		= macb_get_regs,
 	.get_wol		= macb_get_wol,
@@ -3554,97 +3553,97 @@ err:
 	.set_ringparam		= macb_set_ringparam,
 	.get_rxnfc			= gem_get_rxnfc,
 	.set_rxnfc			= gem_set_rxnfc,
-पूर्ण;
+};
 
-अटल पूर्णांक macb_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd)
-अणु
-	काष्ठा macb *bp = netdev_priv(dev);
+static int macb_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
+{
+	struct macb *bp = netdev_priv(dev);
 
-	अगर (!netअगर_running(dev))
-		वापस -EINVAL;
+	if (!netif_running(dev))
+		return -EINVAL;
 
-	अगर (bp->ptp_info) अणु
-		चयन (cmd) अणु
-		हाल SIOCSHWTSTAMP:
-			वापस bp->ptp_info->set_hwtst(dev, rq, cmd);
-		हाल SIOCGHWTSTAMP:
-			वापस bp->ptp_info->get_hwtst(dev, rq);
-		पूर्ण
-	पूर्ण
+	if (bp->ptp_info) {
+		switch (cmd) {
+		case SIOCSHWTSTAMP:
+			return bp->ptp_info->set_hwtst(dev, rq, cmd);
+		case SIOCGHWTSTAMP:
+			return bp->ptp_info->get_hwtst(dev, rq);
+		}
+	}
 
-	वापस phylink_mii_ioctl(bp->phylink, rq, cmd);
-पूर्ण
+	return phylink_mii_ioctl(bp->phylink, rq, cmd);
+}
 
-अटल अंतरभूत व्योम macb_set_txcsum_feature(काष्ठा macb *bp,
+static inline void macb_set_txcsum_feature(struct macb *bp,
 					   netdev_features_t features)
-अणु
+{
 	u32 val;
 
-	अगर (!macb_is_gem(bp))
-		वापस;
+	if (!macb_is_gem(bp))
+		return;
 
-	val = gem_पढ़ोl(bp, DMACFG);
-	अगर (features & NETIF_F_HW_CSUM)
+	val = gem_readl(bp, DMACFG);
+	if (features & NETIF_F_HW_CSUM)
 		val |= GEM_BIT(TXCOEN);
-	अन्यथा
+	else
 		val &= ~GEM_BIT(TXCOEN);
 
-	gem_ग_लिखोl(bp, DMACFG, val);
-पूर्ण
+	gem_writel(bp, DMACFG, val);
+}
 
-अटल अंतरभूत व्योम macb_set_rxcsum_feature(काष्ठा macb *bp,
+static inline void macb_set_rxcsum_feature(struct macb *bp,
 					   netdev_features_t features)
-अणु
-	काष्ठा net_device *netdev = bp->dev;
+{
+	struct net_device *netdev = bp->dev;
 	u32 val;
 
-	अगर (!macb_is_gem(bp))
-		वापस;
+	if (!macb_is_gem(bp))
+		return;
 
-	val = gem_पढ़ोl(bp, NCFGR);
-	अगर ((features & NETIF_F_RXCSUM) && !(netdev->flags & IFF_PROMISC))
+	val = gem_readl(bp, NCFGR);
+	if ((features & NETIF_F_RXCSUM) && !(netdev->flags & IFF_PROMISC))
 		val |= GEM_BIT(RXCOEN);
-	अन्यथा
+	else
 		val &= ~GEM_BIT(RXCOEN);
 
-	gem_ग_लिखोl(bp, NCFGR, val);
-पूर्ण
+	gem_writel(bp, NCFGR, val);
+}
 
-अटल अंतरभूत व्योम macb_set_rxflow_feature(काष्ठा macb *bp,
+static inline void macb_set_rxflow_feature(struct macb *bp,
 					   netdev_features_t features)
-अणु
-	अगर (!macb_is_gem(bp))
-		वापस;
+{
+	if (!macb_is_gem(bp))
+		return;
 
 	gem_enable_flow_filters(bp, !!(features & NETIF_F_NTUPLE));
-पूर्ण
+}
 
-अटल पूर्णांक macb_set_features(काष्ठा net_device *netdev,
+static int macb_set_features(struct net_device *netdev,
 			     netdev_features_t features)
-अणु
-	काष्ठा macb *bp = netdev_priv(netdev);
+{
+	struct macb *bp = netdev_priv(netdev);
 	netdev_features_t changed = features ^ netdev->features;
 
 	/* TX checksum offload */
-	अगर (changed & NETIF_F_HW_CSUM)
+	if (changed & NETIF_F_HW_CSUM)
 		macb_set_txcsum_feature(bp, features);
 
 	/* RX checksum offload */
-	अगर (changed & NETIF_F_RXCSUM)
+	if (changed & NETIF_F_RXCSUM)
 		macb_set_rxcsum_feature(bp, features);
 
 	/* RX Flow Filters */
-	अगर (changed & NETIF_F_NTUPLE)
+	if (changed & NETIF_F_NTUPLE)
 		macb_set_rxflow_feature(bp, features);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम macb_restore_features(काष्ठा macb *bp)
-अणु
-	काष्ठा net_device *netdev = bp->dev;
+static void macb_restore_features(struct macb *bp)
+{
+	struct net_device *netdev = bp->dev;
 	netdev_features_t features = netdev->features;
-	काष्ठा ethtool_rx_fs_item *item;
+	struct ethtool_rx_fs_item *item;
 
 	/* TX checksum offload */
 	macb_set_txcsum_feature(bp, features);
@@ -3653,175 +3652,175 @@ err:
 	macb_set_rxcsum_feature(bp, features);
 
 	/* RX Flow Filters */
-	list_क्रम_each_entry(item, &bp->rx_fs_list.list, list)
+	list_for_each_entry(item, &bp->rx_fs_list.list, list)
 		gem_prog_cmp_regs(bp, &item->fs);
 
 	macb_set_rxflow_feature(bp, features);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा net_device_ops macb_netdev_ops = अणु
-	.nकरो_खोलो		= macb_खोलो,
-	.nकरो_stop		= macb_बंद,
-	.nकरो_start_xmit		= macb_start_xmit,
-	.nकरो_set_rx_mode	= macb_set_rx_mode,
-	.nकरो_get_stats		= macb_get_stats,
-	.nकरो_करो_ioctl		= macb_ioctl,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_change_mtu		= macb_change_mtu,
-	.nकरो_set_mac_address	= eth_mac_addr,
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
-	.nकरो_poll_controller	= macb_poll_controller,
-#पूर्ण_अगर
-	.nकरो_set_features	= macb_set_features,
-	.nकरो_features_check	= macb_features_check,
-पूर्ण;
+static const struct net_device_ops macb_netdev_ops = {
+	.ndo_open		= macb_open,
+	.ndo_stop		= macb_close,
+	.ndo_start_xmit		= macb_start_xmit,
+	.ndo_set_rx_mode	= macb_set_rx_mode,
+	.ndo_get_stats		= macb_get_stats,
+	.ndo_do_ioctl		= macb_ioctl,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_change_mtu		= macb_change_mtu,
+	.ndo_set_mac_address	= eth_mac_addr,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller	= macb_poll_controller,
+#endif
+	.ndo_set_features	= macb_set_features,
+	.ndo_features_check	= macb_features_check,
+};
 
 /* Configure peripheral capabilities according to device tree
- * and पूर्णांकegration options used
+ * and integration options used
  */
-अटल व्योम macb_configure_caps(काष्ठा macb *bp,
-				स्थिर काष्ठा macb_config *dt_conf)
-अणु
+static void macb_configure_caps(struct macb *bp,
+				const struct macb_config *dt_conf)
+{
 	u32 dcfg;
 
-	अगर (dt_conf)
+	if (dt_conf)
 		bp->caps = dt_conf->caps;
 
-	अगर (hw_is_gem(bp->regs, bp->native_io)) अणु
+	if (hw_is_gem(bp->regs, bp->native_io)) {
 		bp->caps |= MACB_CAPS_MACB_IS_GEM;
 
-		dcfg = gem_पढ़ोl(bp, DCFG1);
-		अगर (GEM_BFEXT(IRQCOR, dcfg) == 0)
+		dcfg = gem_readl(bp, DCFG1);
+		if (GEM_BFEXT(IRQCOR, dcfg) == 0)
 			bp->caps |= MACB_CAPS_ISR_CLEAR_ON_WRITE;
-		अगर (GEM_BFEXT(NO_PCS, dcfg) == 0)
+		if (GEM_BFEXT(NO_PCS, dcfg) == 0)
 			bp->caps |= MACB_CAPS_PCS;
-		dcfg = gem_पढ़ोl(bp, DCFG12);
-		अगर (GEM_BFEXT(HIGH_SPEED, dcfg) == 1)
+		dcfg = gem_readl(bp, DCFG12);
+		if (GEM_BFEXT(HIGH_SPEED, dcfg) == 1)
 			bp->caps |= MACB_CAPS_HIGH_SPEED;
-		dcfg = gem_पढ़ोl(bp, DCFG2);
-		अगर ((dcfg & (GEM_BIT(RX_PKT_BUFF) | GEM_BIT(TX_PKT_BUFF))) == 0)
+		dcfg = gem_readl(bp, DCFG2);
+		if ((dcfg & (GEM_BIT(RX_PKT_BUFF) | GEM_BIT(TX_PKT_BUFF))) == 0)
 			bp->caps |= MACB_CAPS_FIFO_MODE;
-#अगर_घोषित CONFIG_MACB_USE_HWSTAMP
-		अगर (gem_has_ptp(bp)) अणु
-			अगर (!GEM_BFEXT(TSU, gem_पढ़ोl(bp, DCFG5)))
+#ifdef CONFIG_MACB_USE_HWSTAMP
+		if (gem_has_ptp(bp)) {
+			if (!GEM_BFEXT(TSU, gem_readl(bp, DCFG5)))
 				dev_err(&bp->pdev->dev,
 					"GEM doesn't support hardware ptp.\n");
-			अन्यथा अणु
+			else {
 				bp->hw_dma_cap |= HW_DMA_CAP_PTP;
 				bp->ptp_info = &gem_ptp_info;
-			पूर्ण
-		पूर्ण
-#पूर्ण_अगर
-	पूर्ण
+			}
+		}
+#endif
+	}
 
 	dev_dbg(&bp->pdev->dev, "Cadence caps 0x%08x\n", bp->caps);
-पूर्ण
+}
 
-अटल व्योम macb_probe_queues(व्योम __iomem *mem,
+static void macb_probe_queues(void __iomem *mem,
 			      bool native_io,
-			      अचिन्हित पूर्णांक *queue_mask,
-			      अचिन्हित पूर्णांक *num_queues)
-अणु
+			      unsigned int *queue_mask,
+			      unsigned int *num_queues)
+{
 	*queue_mask = 0x1;
 	*num_queues = 1;
 
 	/* is it macb or gem ?
 	 *
-	 * We need to पढ़ो directly from the hardware here because
-	 * we are early in the probe process and करोn't have the
+	 * We need to read directly from the hardware here because
+	 * we are early in the probe process and don't have the
 	 * MACB_CAPS_MACB_IS_GEM flag positioned
 	 */
-	अगर (!hw_is_gem(mem, native_io))
-		वापस;
+	if (!hw_is_gem(mem, native_io))
+		return;
 
 	/* bit 0 is never set but queue 0 always exists */
-	*queue_mask |= पढ़ोl_relaxed(mem + GEM_DCFG6) & 0xff;
+	*queue_mask |= readl_relaxed(mem + GEM_DCFG6) & 0xff;
 	*num_queues = hweight32(*queue_mask);
-पूर्ण
+}
 
-अटल व्योम macb_clks_disable(काष्ठा clk *pclk, काष्ठा clk *hclk, काष्ठा clk *tx_clk,
-			      काष्ठा clk *rx_clk, काष्ठा clk *tsu_clk)
-अणु
-	काष्ठा clk_bulk_data clks[] = अणु
-		अणु .clk = tsu_clk, पूर्ण,
-		अणु .clk = rx_clk, पूर्ण,
-		अणु .clk = pclk, पूर्ण,
-		अणु .clk = hclk, पूर्ण,
-		अणु .clk = tx_clk पूर्ण,
-	पूर्ण;
+static void macb_clks_disable(struct clk *pclk, struct clk *hclk, struct clk *tx_clk,
+			      struct clk *rx_clk, struct clk *tsu_clk)
+{
+	struct clk_bulk_data clks[] = {
+		{ .clk = tsu_clk, },
+		{ .clk = rx_clk, },
+		{ .clk = pclk, },
+		{ .clk = hclk, },
+		{ .clk = tx_clk },
+	};
 
 	clk_bulk_disable_unprepare(ARRAY_SIZE(clks), clks);
-पूर्ण
+}
 
-अटल पूर्णांक macb_clk_init(काष्ठा platक्रमm_device *pdev, काष्ठा clk **pclk,
-			 काष्ठा clk **hclk, काष्ठा clk **tx_clk,
-			 काष्ठा clk **rx_clk, काष्ठा clk **tsu_clk)
-अणु
-	काष्ठा macb_platक्रमm_data *pdata;
-	पूर्णांक err;
+static int macb_clk_init(struct platform_device *pdev, struct clk **pclk,
+			 struct clk **hclk, struct clk **tx_clk,
+			 struct clk **rx_clk, struct clk **tsu_clk)
+{
+	struct macb_platform_data *pdata;
+	int err;
 
 	pdata = dev_get_platdata(&pdev->dev);
-	अगर (pdata) अणु
+	if (pdata) {
 		*pclk = pdata->pclk;
 		*hclk = pdata->hclk;
-	पूर्ण अन्यथा अणु
+	} else {
 		*pclk = devm_clk_get(&pdev->dev, "pclk");
 		*hclk = devm_clk_get(&pdev->dev, "hclk");
-	पूर्ण
+	}
 
-	अगर (IS_ERR_OR_शून्य(*pclk))
-		वापस dev_err_probe(&pdev->dev,
+	if (IS_ERR_OR_NULL(*pclk))
+		return dev_err_probe(&pdev->dev,
 				     IS_ERR(*pclk) ? PTR_ERR(*pclk) : -ENODEV,
 				     "failed to get pclk\n");
 
-	अगर (IS_ERR_OR_शून्य(*hclk))
-		वापस dev_err_probe(&pdev->dev,
+	if (IS_ERR_OR_NULL(*hclk))
+		return dev_err_probe(&pdev->dev,
 				     IS_ERR(*hclk) ? PTR_ERR(*hclk) : -ENODEV,
 				     "failed to get hclk\n");
 
 	*tx_clk = devm_clk_get_optional(&pdev->dev, "tx_clk");
-	अगर (IS_ERR(*tx_clk))
-		वापस PTR_ERR(*tx_clk);
+	if (IS_ERR(*tx_clk))
+		return PTR_ERR(*tx_clk);
 
 	*rx_clk = devm_clk_get_optional(&pdev->dev, "rx_clk");
-	अगर (IS_ERR(*rx_clk))
-		वापस PTR_ERR(*rx_clk);
+	if (IS_ERR(*rx_clk))
+		return PTR_ERR(*rx_clk);
 
 	*tsu_clk = devm_clk_get_optional(&pdev->dev, "tsu_clk");
-	अगर (IS_ERR(*tsu_clk))
-		वापस PTR_ERR(*tsu_clk);
+	if (IS_ERR(*tsu_clk))
+		return PTR_ERR(*tsu_clk);
 
 	err = clk_prepare_enable(*pclk);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "failed to enable pclk (%d)\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = clk_prepare_enable(*hclk);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "failed to enable hclk (%d)\n", err);
-		जाओ err_disable_pclk;
-	पूर्ण
+		goto err_disable_pclk;
+	}
 
 	err = clk_prepare_enable(*tx_clk);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "failed to enable tx_clk (%d)\n", err);
-		जाओ err_disable_hclk;
-	पूर्ण
+		goto err_disable_hclk;
+	}
 
 	err = clk_prepare_enable(*rx_clk);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "failed to enable rx_clk (%d)\n", err);
-		जाओ err_disable_txclk;
-	पूर्ण
+		goto err_disable_txclk;
+	}
 
 	err = clk_prepare_enable(*tsu_clk);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "failed to enable tsu_clk (%d)\n", err);
-		जाओ err_disable_rxclk;
-	पूर्ण
+		goto err_disable_rxclk;
+	}
 
-	वापस 0;
+	return 0;
 
 err_disable_rxclk:
 	clk_disable_unprepare(*rx_clk);
@@ -3835,33 +3834,33 @@ err_disable_hclk:
 err_disable_pclk:
 	clk_disable_unprepare(*pclk);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक macb_init(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *dev = platक्रमm_get_drvdata(pdev);
-	अचिन्हित पूर्णांक hw_q, q;
-	काष्ठा macb *bp = netdev_priv(dev);
-	काष्ठा macb_queue *queue;
-	पूर्णांक err;
+static int macb_init(struct platform_device *pdev)
+{
+	struct net_device *dev = platform_get_drvdata(pdev);
+	unsigned int hw_q, q;
+	struct macb *bp = netdev_priv(dev);
+	struct macb_queue *queue;
+	int err;
 	u32 val, reg;
 
 	bp->tx_ring_size = DEFAULT_TX_RING_SIZE;
 	bp->rx_ring_size = DEFAULT_RX_RING_SIZE;
 
-	/* set the queue रेजिस्टर mapping once क्रम all: queue0 has a special
-	 * रेजिस्टर mapping but we करोn't want to test the queue index then
-	 * compute the corresponding रेजिस्टर offset at run समय.
+	/* set the queue register mapping once for all: queue0 has a special
+	 * register mapping but we don't want to test the queue index then
+	 * compute the corresponding register offset at run time.
 	 */
-	क्रम (hw_q = 0, q = 0; hw_q < MACB_MAX_QUEUES; ++hw_q) अणु
-		अगर (!(bp->queue_mask & (1 << hw_q)))
-			जारी;
+	for (hw_q = 0, q = 0; hw_q < MACB_MAX_QUEUES; ++hw_q) {
+		if (!(bp->queue_mask & (1 << hw_q)))
+			continue;
 
 		queue = &bp->queues[q];
 		queue->bp = bp;
-		netअगर_napi_add(dev, &queue->napi, macb_poll, NAPI_POLL_WEIGHT);
-		अगर (hw_q) अणु
+		netif_napi_add(dev, &queue->napi, macb_poll, NAPI_POLL_WEIGHT);
+		if (hw_q) {
 			queue->ISR  = GEM_ISR(hw_q - 1);
 			queue->IER  = GEM_IER(hw_q - 1);
 			queue->IDR  = GEM_IDR(hw_q - 1);
@@ -3869,77 +3868,77 @@ err_disable_pclk:
 			queue->TBQP = GEM_TBQP(hw_q - 1);
 			queue->RBQP = GEM_RBQP(hw_q - 1);
 			queue->RBQS = GEM_RBQS(hw_q - 1);
-#अगर_घोषित CONFIG_ARCH_DMA_ADDR_T_64BIT
-			अगर (bp->hw_dma_cap & HW_DMA_CAP_64B) अणु
+#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
+			if (bp->hw_dma_cap & HW_DMA_CAP_64B) {
 				queue->TBQPH = GEM_TBQPH(hw_q - 1);
 				queue->RBQPH = GEM_RBQPH(hw_q - 1);
-			पूर्ण
-#पूर्ण_अगर
-		पूर्ण अन्यथा अणु
-			/* queue0 uses legacy रेजिस्टरs */
+			}
+#endif
+		} else {
+			/* queue0 uses legacy registers */
 			queue->ISR  = MACB_ISR;
 			queue->IER  = MACB_IER;
 			queue->IDR  = MACB_IDR;
 			queue->IMR  = MACB_IMR;
 			queue->TBQP = MACB_TBQP;
 			queue->RBQP = MACB_RBQP;
-#अगर_घोषित CONFIG_ARCH_DMA_ADDR_T_64BIT
-			अगर (bp->hw_dma_cap & HW_DMA_CAP_64B) अणु
+#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
+			if (bp->hw_dma_cap & HW_DMA_CAP_64B) {
 				queue->TBQPH = MACB_TBQPH;
 				queue->RBQPH = MACB_RBQPH;
-			पूर्ण
-#पूर्ण_अगर
-		पूर्ण
+			}
+#endif
+		}
 
 		/* get irq: here we use the linux queue index, not the hardware
 		 * queue index. the queue irq definitions in the device tree
-		 * must हटाओ the optional gaps that could exist in the
+		 * must remove the optional gaps that could exist in the
 		 * hardware queue mask.
 		 */
-		queue->irq = platक्रमm_get_irq(pdev, q);
-		err = devm_request_irq(&pdev->dev, queue->irq, macb_पूर्णांकerrupt,
+		queue->irq = platform_get_irq(pdev, q);
+		err = devm_request_irq(&pdev->dev, queue->irq, macb_interrupt,
 				       IRQF_SHARED, dev->name, queue);
-		अगर (err) अणु
+		if (err) {
 			dev_err(&pdev->dev,
 				"Unable to request IRQ %d (error %d)\n",
 				queue->irq, err);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
 		INIT_WORK(&queue->tx_error_task, macb_tx_error_task);
 		q++;
-	पूर्ण
+	}
 
 	dev->netdev_ops = &macb_netdev_ops;
 
 	/* setup appropriated routines according to adapter type */
-	अगर (macb_is_gem(bp)) अणु
+	if (macb_is_gem(bp)) {
 		bp->max_tx_length = GEM_MAX_TX_LEN;
 		bp->macbgem_ops.mog_alloc_rx_buffers = gem_alloc_rx_buffers;
-		bp->macbgem_ops.mog_मुक्त_rx_buffers = gem_मुक्त_rx_buffers;
+		bp->macbgem_ops.mog_free_rx_buffers = gem_free_rx_buffers;
 		bp->macbgem_ops.mog_init_rings = gem_init_rings;
 		bp->macbgem_ops.mog_rx = gem_rx;
 		dev->ethtool_ops = &gem_ethtool_ops;
-	पूर्ण अन्यथा अणु
+	} else {
 		bp->max_tx_length = MACB_MAX_TX_LEN;
 		bp->macbgem_ops.mog_alloc_rx_buffers = macb_alloc_rx_buffers;
-		bp->macbgem_ops.mog_मुक्त_rx_buffers = macb_मुक्त_rx_buffers;
+		bp->macbgem_ops.mog_free_rx_buffers = macb_free_rx_buffers;
 		bp->macbgem_ops.mog_init_rings = macb_init_rings;
 		bp->macbgem_ops.mog_rx = macb_rx;
 		dev->ethtool_ops = &macb_ethtool_ops;
-	पूर्ण
+	}
 
 	/* Set features */
 	dev->hw_features = NETIF_F_SG;
 
 	/* Check LSO capability */
-	अगर (GEM_BFEXT(PBUF_LSO, gem_पढ़ोl(bp, DCFG6)))
+	if (GEM_BFEXT(PBUF_LSO, gem_readl(bp, DCFG6)))
 		dev->hw_features |= MACB_NETIF_LSO;
 
 	/* Checksum offload is only available on gem with packet buffer */
-	अगर (macb_is_gem(bp) && !(bp->caps & MACB_CAPS_FIFO_MODE))
+	if (macb_is_gem(bp) && !(bp->caps & MACB_CAPS_FIFO_MODE))
 		dev->hw_features |= NETIF_F_HW_CSUM | NETIF_F_RXCSUM;
-	अगर (bp->caps & MACB_CAPS_SG_DISABLED)
+	if (bp->caps & MACB_CAPS_SG_DISABLED)
 		dev->hw_features &= ~NETIF_F_SG;
 	dev->features = dev->hw_features;
 
@@ -3947,135 +3946,135 @@ err_disable_pclk:
 	 * Max Rx flows set by availability of screeners & compare regs:
 	 * each 4-tuple define requires 1 T2 screener reg + 3 compare regs
 	 */
-	reg = gem_पढ़ोl(bp, DCFG8);
+	reg = gem_readl(bp, DCFG8);
 	bp->max_tuples = min((GEM_BFEXT(SCR2CMP, reg) / 3),
 			GEM_BFEXT(T2SCR, reg));
 	INIT_LIST_HEAD(&bp->rx_fs_list.list);
-	अगर (bp->max_tuples > 0) अणु
+	if (bp->max_tuples > 0) {
 		/* also needs one ethtype match to check IPv4 */
-		अगर (GEM_BFEXT(SCR2ETH, reg) > 0) अणु
+		if (GEM_BFEXT(SCR2ETH, reg) > 0) {
 			/* program this reg now */
 			reg = 0;
-			reg = GEM_BFINS(ETHTCMP, (uपूर्णांक16_t)ETH_P_IP, reg);
-			gem_ग_लिखोl_n(bp, ETHT, SCRT2_ETHT, reg);
-			/* Filtering is supported in hw but करोn't enable it in kernel now */
+			reg = GEM_BFINS(ETHTCMP, (uint16_t)ETH_P_IP, reg);
+			gem_writel_n(bp, ETHT, SCRT2_ETHT, reg);
+			/* Filtering is supported in hw but don't enable it in kernel now */
 			dev->hw_features |= NETIF_F_NTUPLE;
 			/* init Rx flow definitions */
 			bp->rx_fs_list.count = 0;
 			spin_lock_init(&bp->rx_fs_lock);
-		पूर्ण अन्यथा
+		} else
 			bp->max_tuples = 0;
-	पूर्ण
+	}
 
-	अगर (!(bp->caps & MACB_CAPS_USRIO_DISABLED)) अणु
+	if (!(bp->caps & MACB_CAPS_USRIO_DISABLED)) {
 		val = 0;
-		अगर (phy_पूर्णांकerface_mode_is_rgmii(bp->phy_पूर्णांकerface))
+		if (phy_interface_mode_is_rgmii(bp->phy_interface))
 			val = bp->usrio->rgmii;
-		अन्यथा अगर (bp->phy_पूर्णांकerface == PHY_INTERFACE_MODE_RMII &&
+		else if (bp->phy_interface == PHY_INTERFACE_MODE_RMII &&
 			 (bp->caps & MACB_CAPS_USRIO_DEFAULT_IS_MII_GMII))
 			val = bp->usrio->rmii;
-		अन्यथा अगर (!(bp->caps & MACB_CAPS_USRIO_DEFAULT_IS_MII_GMII))
+		else if (!(bp->caps & MACB_CAPS_USRIO_DEFAULT_IS_MII_GMII))
 			val = bp->usrio->mii;
 
-		अगर (bp->caps & MACB_CAPS_USRIO_HAS_CLKEN)
+		if (bp->caps & MACB_CAPS_USRIO_HAS_CLKEN)
 			val |= bp->usrio->refclk;
 
-		macb_or_gem_ग_लिखोl(bp, USRIO, val);
-	पूर्ण
+		macb_or_gem_writel(bp, USRIO, val);
+	}
 
-	/* Set MII management घड़ी भागider */
-	val = macb_mdc_clk_भाग(bp);
+	/* Set MII management clock divider */
+	val = macb_mdc_clk_div(bp);
 	val |= macb_dbw(bp);
-	अगर (bp->phy_पूर्णांकerface == PHY_INTERFACE_MODE_SGMII)
+	if (bp->phy_interface == PHY_INTERFACE_MODE_SGMII)
 		val |= GEM_BIT(SGMIIEN) | GEM_BIT(PCSSEL);
-	macb_ग_लिखोl(bp, NCFGR, val);
+	macb_writel(bp, NCFGR, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा macb_usrio_config macb_शेष_usrio = अणु
+static const struct macb_usrio_config macb_default_usrio = {
 	.mii = MACB_BIT(MII),
 	.rmii = MACB_BIT(RMII),
 	.rgmii = GEM_BIT(RGMII),
 	.refclk = MACB_BIT(CLKEN),
-पूर्ण;
+};
 
-#अगर defined(CONFIG_OF)
+#if defined(CONFIG_OF)
 /* 1518 rounded up */
-#घोषणा AT91ETHER_MAX_RBUFF_SZ	0x600
+#define AT91ETHER_MAX_RBUFF_SZ	0x600
 /* max number of receive buffers */
-#घोषणा AT91ETHER_MAX_RX_DESCR	9
+#define AT91ETHER_MAX_RX_DESCR	9
 
-अटल काष्ठा sअगरive_fu540_macb_mgmt *mgmt;
+static struct sifive_fu540_macb_mgmt *mgmt;
 
-अटल पूर्णांक at91ether_alloc_coherent(काष्ठा macb *lp)
-अणु
-	काष्ठा macb_queue *q = &lp->queues[0];
+static int at91ether_alloc_coherent(struct macb *lp)
+{
+	struct macb_queue *q = &lp->queues[0];
 
 	q->rx_ring = dma_alloc_coherent(&lp->pdev->dev,
 					 (AT91ETHER_MAX_RX_DESCR *
 					  macb_dma_desc_get_size(lp)),
 					 &q->rx_ring_dma, GFP_KERNEL);
-	अगर (!q->rx_ring)
-		वापस -ENOMEM;
+	if (!q->rx_ring)
+		return -ENOMEM;
 
 	q->rx_buffers = dma_alloc_coherent(&lp->pdev->dev,
 					    AT91ETHER_MAX_RX_DESCR *
 					    AT91ETHER_MAX_RBUFF_SZ,
 					    &q->rx_buffers_dma, GFP_KERNEL);
-	अगर (!q->rx_buffers) अणु
-		dma_मुक्त_coherent(&lp->pdev->dev,
+	if (!q->rx_buffers) {
+		dma_free_coherent(&lp->pdev->dev,
 				  AT91ETHER_MAX_RX_DESCR *
 				  macb_dma_desc_get_size(lp),
 				  q->rx_ring, q->rx_ring_dma);
-		q->rx_ring = शून्य;
-		वापस -ENOMEM;
-	पूर्ण
+		q->rx_ring = NULL;
+		return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम at91ether_मुक्त_coherent(काष्ठा macb *lp)
-अणु
-	काष्ठा macb_queue *q = &lp->queues[0];
+static void at91ether_free_coherent(struct macb *lp)
+{
+	struct macb_queue *q = &lp->queues[0];
 
-	अगर (q->rx_ring) अणु
-		dma_मुक्त_coherent(&lp->pdev->dev,
+	if (q->rx_ring) {
+		dma_free_coherent(&lp->pdev->dev,
 				  AT91ETHER_MAX_RX_DESCR *
 				  macb_dma_desc_get_size(lp),
 				  q->rx_ring, q->rx_ring_dma);
-		q->rx_ring = शून्य;
-	पूर्ण
+		q->rx_ring = NULL;
+	}
 
-	अगर (q->rx_buffers) अणु
-		dma_मुक्त_coherent(&lp->pdev->dev,
+	if (q->rx_buffers) {
+		dma_free_coherent(&lp->pdev->dev,
 				  AT91ETHER_MAX_RX_DESCR *
 				  AT91ETHER_MAX_RBUFF_SZ,
 				  q->rx_buffers, q->rx_buffers_dma);
-		q->rx_buffers = शून्य;
-	पूर्ण
-पूर्ण
+		q->rx_buffers = NULL;
+	}
+}
 
-/* Initialize and start the Receiver and Transmit subप्रणालीs */
-अटल पूर्णांक at91ether_start(काष्ठा macb *lp)
-अणु
-	काष्ठा macb_queue *q = &lp->queues[0];
-	काष्ठा macb_dma_desc *desc;
+/* Initialize and start the Receiver and Transmit subsystems */
+static int at91ether_start(struct macb *lp)
+{
+	struct macb_queue *q = &lp->queues[0];
+	struct macb_dma_desc *desc;
 	dma_addr_t addr;
 	u32 ctl;
-	पूर्णांक i, ret;
+	int i, ret;
 
 	ret = at91ether_alloc_coherent(lp);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	addr = q->rx_buffers_dma;
-	क्रम (i = 0; i < AT91ETHER_MAX_RX_DESCR; i++) अणु
+	for (i = 0; i < AT91ETHER_MAX_RX_DESCR; i++) {
 		desc = macb_rx_desc(q, i);
 		macb_set_addr(lp, desc, addr);
 		desc->ctrl = 0;
 		addr += AT91ETHER_MAX_RBUFF_SZ;
-	पूर्ण
+	}
 
 	/* Set the Wrap bit on the last descriptor */
 	desc->addr |= MACB_BIT(RX_WRAP);
@@ -4083,15 +4082,15 @@ err_disable_pclk:
 	/* Reset buffer index */
 	q->rx_tail = 0;
 
-	/* Program address of descriptor list in Rx Buffer Queue रेजिस्टर */
-	macb_ग_लिखोl(lp, RBQP, q->rx_ring_dma);
+	/* Program address of descriptor list in Rx Buffer Queue register */
+	macb_writel(lp, RBQP, q->rx_ring_dma);
 
 	/* Enable Receive and Transmit */
-	ctl = macb_पढ़ोl(lp, NCR);
-	macb_ग_लिखोl(lp, NCR, ctl | MACB_BIT(RE) | MACB_BIT(TE));
+	ctl = macb_readl(lp, NCR);
+	macb_writel(lp, NCR, ctl | MACB_BIT(RE) | MACB_BIT(TE));
 
-	/* Enable MAC पूर्णांकerrupts */
-	macb_ग_लिखोl(lp, IER, MACB_BIT(RCOMP)	|
+	/* Enable MAC interrupts */
+	macb_writel(lp, IER, MACB_BIT(RCOMP)	|
 			     MACB_BIT(RXUBR)	|
 			     MACB_BIT(ISR_TUND)	|
 			     MACB_BIT(ISR_RLE)	|
@@ -4099,15 +4098,15 @@ err_disable_pclk:
 			     MACB_BIT(ISR_ROVR)	|
 			     MACB_BIT(HRESP));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम at91ether_stop(काष्ठा macb *lp)
-अणु
+static void at91ether_stop(struct macb *lp)
+{
 	u32 ctl;
 
-	/* Disable MAC पूर्णांकerrupts */
-	macb_ग_लिखोl(lp, IDR, MACB_BIT(RCOMP)	|
+	/* Disable MAC interrupts */
+	macb_writel(lp, IDR, MACB_BIT(RCOMP)	|
 			     MACB_BIT(RXUBR)	|
 			     MACB_BIT(ISR_TUND)	|
 			     MACB_BIT(ISR_RLE)	|
@@ -4116,334 +4115,334 @@ err_disable_pclk:
 			     MACB_BIT(HRESP));
 
 	/* Disable Receiver and Transmitter */
-	ctl = macb_पढ़ोl(lp, NCR);
-	macb_ग_लिखोl(lp, NCR, ctl & ~(MACB_BIT(TE) | MACB_BIT(RE)));
+	ctl = macb_readl(lp, NCR);
+	macb_writel(lp, NCR, ctl & ~(MACB_BIT(TE) | MACB_BIT(RE)));
 
 	/* Free resources. */
-	at91ether_मुक्त_coherent(lp);
-पूर्ण
+	at91ether_free_coherent(lp);
+}
 
-/* Open the ethernet पूर्णांकerface */
-अटल पूर्णांक at91ether_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा macb *lp = netdev_priv(dev);
+/* Open the ethernet interface */
+static int at91ether_open(struct net_device *dev)
+{
+	struct macb *lp = netdev_priv(dev);
 	u32 ctl;
-	पूर्णांक ret;
+	int ret;
 
-	ret = pm_runसमय_get_sync(&lp->pdev->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(&lp->pdev->dev);
-		वापस ret;
-	पूर्ण
+	ret = pm_runtime_get_sync(&lp->pdev->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(&lp->pdev->dev);
+		return ret;
+	}
 
-	/* Clear पूर्णांकernal statistics */
-	ctl = macb_पढ़ोl(lp, NCR);
-	macb_ग_लिखोl(lp, NCR, ctl | MACB_BIT(CLRSTAT));
+	/* Clear internal statistics */
+	ctl = macb_readl(lp, NCR);
+	macb_writel(lp, NCR, ctl | MACB_BIT(CLRSTAT));
 
 	macb_set_hwaddr(lp);
 
 	ret = at91ether_start(lp);
-	अगर (ret)
-		जाओ pm_निकास;
+	if (ret)
+		goto pm_exit;
 
 	ret = macb_phylink_connect(lp);
-	अगर (ret)
-		जाओ stop;
+	if (ret)
+		goto stop;
 
-	netअगर_start_queue(dev);
+	netif_start_queue(dev);
 
-	वापस 0;
+	return 0;
 
 stop:
 	at91ether_stop(lp);
-pm_निकास:
-	pm_runसमय_put_sync(&lp->pdev->dev);
-	वापस ret;
-पूर्ण
+pm_exit:
+	pm_runtime_put_sync(&lp->pdev->dev);
+	return ret;
+}
 
-/* Close the पूर्णांकerface */
-अटल पूर्णांक at91ether_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा macb *lp = netdev_priv(dev);
+/* Close the interface */
+static int at91ether_close(struct net_device *dev)
+{
+	struct macb *lp = netdev_priv(dev);
 
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 
 	phylink_stop(lp->phylink);
 	phylink_disconnect_phy(lp->phylink);
 
 	at91ether_stop(lp);
 
-	वापस pm_runसमय_put(&lp->pdev->dev);
-पूर्ण
+	return pm_runtime_put(&lp->pdev->dev);
+}
 
 /* Transmit packet */
-अटल netdev_tx_t at91ether_start_xmit(काष्ठा sk_buff *skb,
-					काष्ठा net_device *dev)
-अणु
-	काष्ठा macb *lp = netdev_priv(dev);
+static netdev_tx_t at91ether_start_xmit(struct sk_buff *skb,
+					struct net_device *dev)
+{
+	struct macb *lp = netdev_priv(dev);
 
-	अगर (macb_पढ़ोl(lp, TSR) & MACB_BIT(RM9200_BNQ)) अणु
-		पूर्णांक desc = 0;
+	if (macb_readl(lp, TSR) & MACB_BIT(RM9200_BNQ)) {
+		int desc = 0;
 
-		netअगर_stop_queue(dev);
+		netif_stop_queue(dev);
 
-		/* Store packet inक्रमmation (to मुक्त when Tx completed) */
+		/* Store packet information (to free when Tx completed) */
 		lp->rm9200_txq[desc].skb = skb;
 		lp->rm9200_txq[desc].size = skb->len;
 		lp->rm9200_txq[desc].mapping = dma_map_single(&lp->pdev->dev, skb->data,
 							      skb->len, DMA_TO_DEVICE);
-		अगर (dma_mapping_error(&lp->pdev->dev, lp->rm9200_txq[desc].mapping)) अणु
-			dev_kमुक्त_skb_any(skb);
+		if (dma_mapping_error(&lp->pdev->dev, lp->rm9200_txq[desc].mapping)) {
+			dev_kfree_skb_any(skb);
 			dev->stats.tx_dropped++;
 			netdev_err(dev, "%s: DMA mapping error\n", __func__);
-			वापस NETDEV_TX_OK;
-		पूर्ण
+			return NETDEV_TX_OK;
+		}
 
-		/* Set address of the data in the Transmit Address रेजिस्टर */
-		macb_ग_लिखोl(lp, TAR, lp->rm9200_txq[desc].mapping);
-		/* Set length of the packet in the Transmit Control रेजिस्टर */
-		macb_ग_लिखोl(lp, TCR, skb->len);
+		/* Set address of the data in the Transmit Address register */
+		macb_writel(lp, TAR, lp->rm9200_txq[desc].mapping);
+		/* Set length of the packet in the Transmit Control register */
+		macb_writel(lp, TCR, skb->len);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		netdev_err(dev, "%s called, but device is busy!\n", __func__);
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		return NETDEV_TX_BUSY;
+	}
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
 /* Extract received frame from buffer descriptors and sent to upper layers.
- * (Called from पूर्णांकerrupt context)
+ * (Called from interrupt context)
  */
-अटल व्योम at91ether_rx(काष्ठा net_device *dev)
-अणु
-	काष्ठा macb *lp = netdev_priv(dev);
-	काष्ठा macb_queue *q = &lp->queues[0];
-	काष्ठा macb_dma_desc *desc;
-	अचिन्हित अक्षर *p_recv;
-	काष्ठा sk_buff *skb;
-	अचिन्हित पूर्णांक pktlen;
+static void at91ether_rx(struct net_device *dev)
+{
+	struct macb *lp = netdev_priv(dev);
+	struct macb_queue *q = &lp->queues[0];
+	struct macb_dma_desc *desc;
+	unsigned char *p_recv;
+	struct sk_buff *skb;
+	unsigned int pktlen;
 
 	desc = macb_rx_desc(q, q->rx_tail);
-	जबतक (desc->addr & MACB_BIT(RX_USED)) अणु
+	while (desc->addr & MACB_BIT(RX_USED)) {
 		p_recv = q->rx_buffers + q->rx_tail * AT91ETHER_MAX_RBUFF_SZ;
 		pktlen = MACB_BF(RX_FRMLEN, desc->ctrl);
 		skb = netdev_alloc_skb(dev, pktlen + 2);
-		अगर (skb) अणु
+		if (skb) {
 			skb_reserve(skb, 2);
 			skb_put_data(skb, p_recv, pktlen);
 
 			skb->protocol = eth_type_trans(skb, dev);
 			dev->stats.rx_packets++;
 			dev->stats.rx_bytes += pktlen;
-			netअगर_rx(skb);
-		पूर्ण अन्यथा अणु
+			netif_rx(skb);
+		} else {
 			dev->stats.rx_dropped++;
-		पूर्ण
+		}
 
-		अगर (desc->ctrl & MACB_BIT(RX_MHASH_MATCH))
+		if (desc->ctrl & MACB_BIT(RX_MHASH_MATCH))
 			dev->stats.multicast++;
 
 		/* reset ownership bit */
 		desc->addr &= ~MACB_BIT(RX_USED);
 
 		/* wrap after last buffer */
-		अगर (q->rx_tail == AT91ETHER_MAX_RX_DESCR - 1)
+		if (q->rx_tail == AT91ETHER_MAX_RX_DESCR - 1)
 			q->rx_tail = 0;
-		अन्यथा
+		else
 			q->rx_tail++;
 
 		desc = macb_rx_desc(q, q->rx_tail);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* MAC पूर्णांकerrupt handler */
-अटल irqवापस_t at91ether_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा net_device *dev = dev_id;
-	काष्ठा macb *lp = netdev_priv(dev);
-	u32 पूर्णांकstatus, ctl;
-	अचिन्हित पूर्णांक desc;
+/* MAC interrupt handler */
+static irqreturn_t at91ether_interrupt(int irq, void *dev_id)
+{
+	struct net_device *dev = dev_id;
+	struct macb *lp = netdev_priv(dev);
+	u32 intstatus, ctl;
+	unsigned int desc;
 
-	/* MAC Interrupt Status रेजिस्टर indicates what पूर्णांकerrupts are pending.
-	 * It is स्वतःmatically cleared once पढ़ो.
+	/* MAC Interrupt Status register indicates what interrupts are pending.
+	 * It is automatically cleared once read.
 	 */
-	पूर्णांकstatus = macb_पढ़ोl(lp, ISR);
+	intstatus = macb_readl(lp, ISR);
 
 	/* Receive complete */
-	अगर (पूर्णांकstatus & MACB_BIT(RCOMP))
+	if (intstatus & MACB_BIT(RCOMP))
 		at91ether_rx(dev);
 
 	/* Transmit complete */
-	अगर (पूर्णांकstatus & MACB_BIT(TCOMP)) अणु
-		/* The TCOM bit is set even अगर the transmission failed */
-		अगर (पूर्णांकstatus & (MACB_BIT(ISR_TUND) | MACB_BIT(ISR_RLE)))
+	if (intstatus & MACB_BIT(TCOMP)) {
+		/* The TCOM bit is set even if the transmission failed */
+		if (intstatus & (MACB_BIT(ISR_TUND) | MACB_BIT(ISR_RLE)))
 			dev->stats.tx_errors++;
 
 		desc = 0;
-		अगर (lp->rm9200_txq[desc].skb) अणु
+		if (lp->rm9200_txq[desc].skb) {
 			dev_consume_skb_irq(lp->rm9200_txq[desc].skb);
-			lp->rm9200_txq[desc].skb = शून्य;
+			lp->rm9200_txq[desc].skb = NULL;
 			dma_unmap_single(&lp->pdev->dev, lp->rm9200_txq[desc].mapping,
 					 lp->rm9200_txq[desc].size, DMA_TO_DEVICE);
 			dev->stats.tx_packets++;
 			dev->stats.tx_bytes += lp->rm9200_txq[desc].size;
-		पूर्ण
-		netअगर_wake_queue(dev);
-	पूर्ण
+		}
+		netif_wake_queue(dev);
+	}
 
-	/* Work-around क्रम EMAC Errata section 41.3.1 */
-	अगर (पूर्णांकstatus & MACB_BIT(RXUBR)) अणु
-		ctl = macb_पढ़ोl(lp, NCR);
-		macb_ग_लिखोl(lp, NCR, ctl & ~MACB_BIT(RE));
+	/* Work-around for EMAC Errata section 41.3.1 */
+	if (intstatus & MACB_BIT(RXUBR)) {
+		ctl = macb_readl(lp, NCR);
+		macb_writel(lp, NCR, ctl & ~MACB_BIT(RE));
 		wmb();
-		macb_ग_लिखोl(lp, NCR, ctl | MACB_BIT(RE));
-	पूर्ण
+		macb_writel(lp, NCR, ctl | MACB_BIT(RE));
+	}
 
-	अगर (पूर्णांकstatus & MACB_BIT(ISR_ROVR))
+	if (intstatus & MACB_BIT(ISR_ROVR))
 		netdev_err(dev, "ROVR error\n");
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
-अटल व्योम at91ether_poll_controller(काष्ठा net_device *dev)
-अणु
-	अचिन्हित दीर्घ flags;
+#ifdef CONFIG_NET_POLL_CONTROLLER
+static void at91ether_poll_controller(struct net_device *dev)
+{
+	unsigned long flags;
 
 	local_irq_save(flags);
-	at91ether_पूर्णांकerrupt(dev->irq, dev);
+	at91ether_interrupt(dev->irq, dev);
 	local_irq_restore(flags);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल स्थिर काष्ठा net_device_ops at91ether_netdev_ops = अणु
-	.nकरो_खोलो		= at91ether_खोलो,
-	.nकरो_stop		= at91ether_बंद,
-	.nकरो_start_xmit		= at91ether_start_xmit,
-	.nकरो_get_stats		= macb_get_stats,
-	.nकरो_set_rx_mode	= macb_set_rx_mode,
-	.nकरो_set_mac_address	= eth_mac_addr,
-	.nकरो_करो_ioctl		= macb_ioctl,
-	.nकरो_validate_addr	= eth_validate_addr,
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
-	.nकरो_poll_controller	= at91ether_poll_controller,
-#पूर्ण_अगर
-पूर्ण;
+static const struct net_device_ops at91ether_netdev_ops = {
+	.ndo_open		= at91ether_open,
+	.ndo_stop		= at91ether_close,
+	.ndo_start_xmit		= at91ether_start_xmit,
+	.ndo_get_stats		= macb_get_stats,
+	.ndo_set_rx_mode	= macb_set_rx_mode,
+	.ndo_set_mac_address	= eth_mac_addr,
+	.ndo_do_ioctl		= macb_ioctl,
+	.ndo_validate_addr	= eth_validate_addr,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller	= at91ether_poll_controller,
+#endif
+};
 
-अटल पूर्णांक at91ether_clk_init(काष्ठा platक्रमm_device *pdev, काष्ठा clk **pclk,
-			      काष्ठा clk **hclk, काष्ठा clk **tx_clk,
-			      काष्ठा clk **rx_clk, काष्ठा clk **tsu_clk)
-अणु
-	पूर्णांक err;
+static int at91ether_clk_init(struct platform_device *pdev, struct clk **pclk,
+			      struct clk **hclk, struct clk **tx_clk,
+			      struct clk **rx_clk, struct clk **tsu_clk)
+{
+	int err;
 
-	*hclk = शून्य;
-	*tx_clk = शून्य;
-	*rx_clk = शून्य;
-	*tsu_clk = शून्य;
+	*hclk = NULL;
+	*tx_clk = NULL;
+	*rx_clk = NULL;
+	*tsu_clk = NULL;
 
 	*pclk = devm_clk_get(&pdev->dev, "ether_clk");
-	अगर (IS_ERR(*pclk))
-		वापस PTR_ERR(*pclk);
+	if (IS_ERR(*pclk))
+		return PTR_ERR(*pclk);
 
 	err = clk_prepare_enable(*pclk);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "failed to enable pclk (%d)\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक at91ether_init(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *dev = platक्रमm_get_drvdata(pdev);
-	काष्ठा macb *bp = netdev_priv(dev);
-	पूर्णांक err;
+static int at91ether_init(struct platform_device *pdev)
+{
+	struct net_device *dev = platform_get_drvdata(pdev);
+	struct macb *bp = netdev_priv(dev);
+	int err;
 
 	bp->queues[0].bp = bp;
 
 	dev->netdev_ops = &at91ether_netdev_ops;
 	dev->ethtool_ops = &macb_ethtool_ops;
 
-	err = devm_request_irq(&pdev->dev, dev->irq, at91ether_पूर्णांकerrupt,
+	err = devm_request_irq(&pdev->dev, dev->irq, at91ether_interrupt,
 			       0, dev->name, dev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	macb_ग_लिखोl(bp, NCR, 0);
+	macb_writel(bp, NCR, 0);
 
-	macb_ग_लिखोl(bp, NCFGR, MACB_BF(CLK, MACB_CLK_DIV32) | MACB_BIT(BIG));
+	macb_writel(bp, NCFGR, MACB_BF(CLK, MACB_CLK_DIV32) | MACB_BIT(BIG));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ fu540_macb_tx_recalc_rate(काष्ठा clk_hw *hw,
-					       अचिन्हित दीर्घ parent_rate)
-अणु
-	वापस mgmt->rate;
-पूर्ण
+static unsigned long fu540_macb_tx_recalc_rate(struct clk_hw *hw,
+					       unsigned long parent_rate)
+{
+	return mgmt->rate;
+}
 
-अटल दीर्घ fu540_macb_tx_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				     अचिन्हित दीर्घ *parent_rate)
-अणु
-	अगर (WARN_ON(rate < 2500000))
-		वापस 2500000;
-	अन्यथा अगर (rate == 2500000)
-		वापस 2500000;
-	अन्यथा अगर (WARN_ON(rate < 13750000))
-		वापस 2500000;
-	अन्यथा अगर (WARN_ON(rate < 25000000))
-		वापस 25000000;
-	अन्यथा अगर (rate == 25000000)
-		वापस 25000000;
-	अन्यथा अगर (WARN_ON(rate < 75000000))
-		वापस 25000000;
-	अन्यथा अगर (WARN_ON(rate < 125000000))
-		वापस 125000000;
-	अन्यथा अगर (rate == 125000000)
-		वापस 125000000;
+static long fu540_macb_tx_round_rate(struct clk_hw *hw, unsigned long rate,
+				     unsigned long *parent_rate)
+{
+	if (WARN_ON(rate < 2500000))
+		return 2500000;
+	else if (rate == 2500000)
+		return 2500000;
+	else if (WARN_ON(rate < 13750000))
+		return 2500000;
+	else if (WARN_ON(rate < 25000000))
+		return 25000000;
+	else if (rate == 25000000)
+		return 25000000;
+	else if (WARN_ON(rate < 75000000))
+		return 25000000;
+	else if (WARN_ON(rate < 125000000))
+		return 125000000;
+	else if (rate == 125000000)
+		return 125000000;
 
 	WARN_ON(rate > 125000000);
 
-	वापस 125000000;
-पूर्ण
+	return 125000000;
+}
 
-अटल पूर्णांक fu540_macb_tx_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				  अचिन्हित दीर्घ parent_rate)
-अणु
+static int fu540_macb_tx_set_rate(struct clk_hw *hw, unsigned long rate,
+				  unsigned long parent_rate)
+{
 	rate = fu540_macb_tx_round_rate(hw, rate, &parent_rate);
-	अगर (rate != 125000000)
-		ioग_लिखो32(1, mgmt->reg);
-	अन्यथा
-		ioग_लिखो32(0, mgmt->reg);
+	if (rate != 125000000)
+		iowrite32(1, mgmt->reg);
+	else
+		iowrite32(0, mgmt->reg);
 	mgmt->rate = rate;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops fu540_c000_ops = अणु
+static const struct clk_ops fu540_c000_ops = {
 	.recalc_rate = fu540_macb_tx_recalc_rate,
 	.round_rate = fu540_macb_tx_round_rate,
 	.set_rate = fu540_macb_tx_set_rate,
-पूर्ण;
+};
 
-अटल पूर्णांक fu540_c000_clk_init(काष्ठा platक्रमm_device *pdev, काष्ठा clk **pclk,
-			       काष्ठा clk **hclk, काष्ठा clk **tx_clk,
-			       काष्ठा clk **rx_clk, काष्ठा clk **tsu_clk)
-अणु
-	काष्ठा clk_init_data init;
-	पूर्णांक err = 0;
+static int fu540_c000_clk_init(struct platform_device *pdev, struct clk **pclk,
+			       struct clk **hclk, struct clk **tx_clk,
+			       struct clk **rx_clk, struct clk **tsu_clk)
+{
+	struct clk_init_data init;
+	int err = 0;
 
 	err = macb_clk_init(pdev, pclk, hclk, tx_clk, rx_clk, tsu_clk);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	mgmt = devm_kzalloc(&pdev->dev, माप(*mgmt), GFP_KERNEL);
-	अगर (!mgmt) अणु
+	mgmt = devm_kzalloc(&pdev->dev, sizeof(*mgmt), GFP_KERNEL);
+	if (!mgmt) {
 		err = -ENOMEM;
-		जाओ err_disable_clks;
-	पूर्ण
+		goto err_disable_clks;
+	}
 
 	init.name = "sifive-gemgxl-mgmt";
 	init.ops = &fu540_c000_ops;
@@ -4453,120 +4452,120 @@ pm_निकास:
 	mgmt->rate = 0;
 	mgmt->hw.init = &init;
 
-	*tx_clk = devm_clk_रेजिस्टर(&pdev->dev, &mgmt->hw);
-	अगर (IS_ERR(*tx_clk)) अणु
+	*tx_clk = devm_clk_register(&pdev->dev, &mgmt->hw);
+	if (IS_ERR(*tx_clk)) {
 		err = PTR_ERR(*tx_clk);
-		जाओ err_disable_clks;
-	पूर्ण
+		goto err_disable_clks;
+	}
 
 	err = clk_prepare_enable(*tx_clk);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "failed to enable tx_clk (%u)\n", err);
-		*tx_clk = शून्य;
-		जाओ err_disable_clks;
-	पूर्ण अन्यथा अणु
+		*tx_clk = NULL;
+		goto err_disable_clks;
+	} else {
 		dev_info(&pdev->dev, "Registered clk switch '%s'\n", init.name);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err_disable_clks:
 	macb_clks_disable(*pclk, *hclk, *tx_clk, *rx_clk, *tsu_clk);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक fu540_c000_init(काष्ठा platक्रमm_device *pdev)
-अणु
-	mgmt->reg = devm_platक्रमm_ioremap_resource(pdev, 1);
-	अगर (IS_ERR(mgmt->reg))
-		वापस PTR_ERR(mgmt->reg);
+static int fu540_c000_init(struct platform_device *pdev)
+{
+	mgmt->reg = devm_platform_ioremap_resource(pdev, 1);
+	if (IS_ERR(mgmt->reg))
+		return PTR_ERR(mgmt->reg);
 
-	वापस macb_init(pdev);
-पूर्ण
+	return macb_init(pdev);
+}
 
-अटल स्थिर काष्ठा macb_usrio_config sama7g5_usrio = अणु
+static const struct macb_usrio_config sama7g5_usrio = {
 	.mii = 0,
 	.rmii = 1,
 	.rgmii = 2,
 	.refclk = BIT(2),
 	.hdfctlen = BIT(6),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा macb_config fu540_c000_config = अणु
+static const struct macb_config fu540_c000_config = {
 	.caps = MACB_CAPS_GIGABIT_MODE_AVAILABLE | MACB_CAPS_JUMBO |
 		MACB_CAPS_GEM_HAS_PTP,
 	.dma_burst_length = 16,
 	.clk_init = fu540_c000_clk_init,
 	.init = fu540_c000_init,
 	.jumbo_max_len = 10240,
-	.usrio = &macb_शेष_usrio,
-पूर्ण;
+	.usrio = &macb_default_usrio,
+};
 
-अटल स्थिर काष्ठा macb_config at91sam9260_config = अणु
+static const struct macb_config at91sam9260_config = {
 	.caps = MACB_CAPS_USRIO_HAS_CLKEN | MACB_CAPS_USRIO_DEFAULT_IS_MII_GMII,
 	.clk_init = macb_clk_init,
 	.init = macb_init,
-	.usrio = &macb_शेष_usrio,
-पूर्ण;
+	.usrio = &macb_default_usrio,
+};
 
-अटल स्थिर काष्ठा macb_config sama5d3macb_config = अणु
+static const struct macb_config sama5d3macb_config = {
 	.caps = MACB_CAPS_SG_DISABLED
 	      | MACB_CAPS_USRIO_HAS_CLKEN | MACB_CAPS_USRIO_DEFAULT_IS_MII_GMII,
 	.clk_init = macb_clk_init,
 	.init = macb_init,
-	.usrio = &macb_शेष_usrio,
-पूर्ण;
+	.usrio = &macb_default_usrio,
+};
 
-अटल स्थिर काष्ठा macb_config pc302gem_config = अणु
+static const struct macb_config pc302gem_config = {
 	.caps = MACB_CAPS_SG_DISABLED | MACB_CAPS_GIGABIT_MODE_AVAILABLE,
 	.dma_burst_length = 16,
 	.clk_init = macb_clk_init,
 	.init = macb_init,
-	.usrio = &macb_शेष_usrio,
-पूर्ण;
+	.usrio = &macb_default_usrio,
+};
 
-अटल स्थिर काष्ठा macb_config sama5d2_config = अणु
+static const struct macb_config sama5d2_config = {
 	.caps = MACB_CAPS_USRIO_DEFAULT_IS_MII_GMII,
 	.dma_burst_length = 16,
 	.clk_init = macb_clk_init,
 	.init = macb_init,
-	.usrio = &macb_शेष_usrio,
-पूर्ण;
+	.usrio = &macb_default_usrio,
+};
 
-अटल स्थिर काष्ठा macb_config sama5d3_config = अणु
+static const struct macb_config sama5d3_config = {
 	.caps = MACB_CAPS_SG_DISABLED | MACB_CAPS_GIGABIT_MODE_AVAILABLE
 	      | MACB_CAPS_USRIO_DEFAULT_IS_MII_GMII | MACB_CAPS_JUMBO,
 	.dma_burst_length = 16,
 	.clk_init = macb_clk_init,
 	.init = macb_init,
 	.jumbo_max_len = 10240,
-	.usrio = &macb_शेष_usrio,
-पूर्ण;
+	.usrio = &macb_default_usrio,
+};
 
-अटल स्थिर काष्ठा macb_config sama5d4_config = अणु
+static const struct macb_config sama5d4_config = {
 	.caps = MACB_CAPS_USRIO_DEFAULT_IS_MII_GMII,
 	.dma_burst_length = 4,
 	.clk_init = macb_clk_init,
 	.init = macb_init,
-	.usrio = &macb_शेष_usrio,
-पूर्ण;
+	.usrio = &macb_default_usrio,
+};
 
-अटल स्थिर काष्ठा macb_config emac_config = अणु
+static const struct macb_config emac_config = {
 	.caps = MACB_CAPS_NEEDS_RSTONUBR | MACB_CAPS_MACB_IS_EMAC,
 	.clk_init = at91ether_clk_init,
 	.init = at91ether_init,
-	.usrio = &macb_शेष_usrio,
-पूर्ण;
+	.usrio = &macb_default_usrio,
+};
 
-अटल स्थिर काष्ठा macb_config np4_config = अणु
+static const struct macb_config np4_config = {
 	.caps = MACB_CAPS_USRIO_DISABLED,
 	.clk_init = macb_clk_init,
 	.init = macb_init,
-	.usrio = &macb_शेष_usrio,
-पूर्ण;
+	.usrio = &macb_default_usrio,
+};
 
-अटल स्थिर काष्ठा macb_config zynqmp_config = अणु
+static const struct macb_config zynqmp_config = {
 	.caps = MACB_CAPS_GIGABIT_MODE_AVAILABLE |
 			MACB_CAPS_JUMBO |
 			MACB_CAPS_GEM_HAS_PTP | MACB_CAPS_BD_RD_PREFETCH,
@@ -4574,121 +4573,121 @@ err_disable_clks:
 	.clk_init = macb_clk_init,
 	.init = macb_init,
 	.jumbo_max_len = 10240,
-	.usrio = &macb_शेष_usrio,
-पूर्ण;
+	.usrio = &macb_default_usrio,
+};
 
-अटल स्थिर काष्ठा macb_config zynq_config = अणु
+static const struct macb_config zynq_config = {
 	.caps = MACB_CAPS_GIGABIT_MODE_AVAILABLE | MACB_CAPS_NO_GIGABIT_HALF |
 		MACB_CAPS_NEEDS_RSTONUBR,
 	.dma_burst_length = 16,
 	.clk_init = macb_clk_init,
 	.init = macb_init,
-	.usrio = &macb_शेष_usrio,
-पूर्ण;
+	.usrio = &macb_default_usrio,
+};
 
-अटल स्थिर काष्ठा macb_config sama7g5_gem_config = अणु
+static const struct macb_config sama7g5_gem_config = {
 	.caps = MACB_CAPS_GIGABIT_MODE_AVAILABLE | MACB_CAPS_CLK_HW_CHG,
 	.dma_burst_length = 16,
 	.clk_init = macb_clk_init,
 	.init = macb_init,
 	.usrio = &sama7g5_usrio,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा macb_config sama7g5_emac_config = अणु
+static const struct macb_config sama7g5_emac_config = {
 	.caps = MACB_CAPS_USRIO_DEFAULT_IS_MII_GMII | MACB_CAPS_USRIO_HAS_CLKEN,
 	.dma_burst_length = 16,
 	.clk_init = macb_clk_init,
 	.init = macb_init,
 	.usrio = &sama7g5_usrio,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id macb_dt_ids[] = अणु
-	अणु .compatible = "cdns,at32ap7000-macb" पूर्ण,
-	अणु .compatible = "cdns,at91sam9260-macb", .data = &at91sam9260_config पूर्ण,
-	अणु .compatible = "cdns,macb" पूर्ण,
-	अणु .compatible = "cdns,np4-macb", .data = &np4_config पूर्ण,
-	अणु .compatible = "cdns,pc302-gem", .data = &pc302gem_config पूर्ण,
-	अणु .compatible = "cdns,gem", .data = &pc302gem_config पूर्ण,
-	अणु .compatible = "cdns,sam9x60-macb", .data = &at91sam9260_config पूर्ण,
-	अणु .compatible = "atmel,sama5d2-gem", .data = &sama5d2_config पूर्ण,
-	अणु .compatible = "atmel,sama5d3-gem", .data = &sama5d3_config पूर्ण,
-	अणु .compatible = "atmel,sama5d3-macb", .data = &sama5d3macb_config पूर्ण,
-	अणु .compatible = "atmel,sama5d4-gem", .data = &sama5d4_config पूर्ण,
-	अणु .compatible = "cdns,at91rm9200-emac", .data = &emac_config पूर्ण,
-	अणु .compatible = "cdns,emac", .data = &emac_config पूर्ण,
-	अणु .compatible = "cdns,zynqmp-gem", .data = &zynqmp_configपूर्ण,
-	अणु .compatible = "cdns,zynq-gem", .data = &zynq_config पूर्ण,
-	अणु .compatible = "sifive,fu540-c000-gem", .data = &fu540_c000_config पूर्ण,
-	अणु .compatible = "microchip,sama7g5-gem", .data = &sama7g5_gem_config पूर्ण,
-	अणु .compatible = "microchip,sama7g5-emac", .data = &sama7g5_emac_config पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id macb_dt_ids[] = {
+	{ .compatible = "cdns,at32ap7000-macb" },
+	{ .compatible = "cdns,at91sam9260-macb", .data = &at91sam9260_config },
+	{ .compatible = "cdns,macb" },
+	{ .compatible = "cdns,np4-macb", .data = &np4_config },
+	{ .compatible = "cdns,pc302-gem", .data = &pc302gem_config },
+	{ .compatible = "cdns,gem", .data = &pc302gem_config },
+	{ .compatible = "cdns,sam9x60-macb", .data = &at91sam9260_config },
+	{ .compatible = "atmel,sama5d2-gem", .data = &sama5d2_config },
+	{ .compatible = "atmel,sama5d3-gem", .data = &sama5d3_config },
+	{ .compatible = "atmel,sama5d3-macb", .data = &sama5d3macb_config },
+	{ .compatible = "atmel,sama5d4-gem", .data = &sama5d4_config },
+	{ .compatible = "cdns,at91rm9200-emac", .data = &emac_config },
+	{ .compatible = "cdns,emac", .data = &emac_config },
+	{ .compatible = "cdns,zynqmp-gem", .data = &zynqmp_config},
+	{ .compatible = "cdns,zynq-gem", .data = &zynq_config },
+	{ .compatible = "sifive,fu540-c000-gem", .data = &fu540_c000_config },
+	{ .compatible = "microchip,sama7g5-gem", .data = &sama7g5_gem_config },
+	{ .compatible = "microchip,sama7g5-emac", .data = &sama7g5_emac_config },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, macb_dt_ids);
-#पूर्ण_अगर /* CONFIG_OF */
+#endif /* CONFIG_OF */
 
-अटल स्थिर काष्ठा macb_config शेष_gem_config = अणु
+static const struct macb_config default_gem_config = {
 	.caps = MACB_CAPS_GIGABIT_MODE_AVAILABLE |
 			MACB_CAPS_JUMBO |
 			MACB_CAPS_GEM_HAS_PTP,
 	.dma_burst_length = 16,
 	.clk_init = macb_clk_init,
 	.init = macb_init,
-	.usrio = &macb_शेष_usrio,
+	.usrio = &macb_default_usrio,
 	.jumbo_max_len = 10240,
-पूर्ण;
+};
 
-अटल पूर्णांक macb_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा macb_config *macb_config = &शेष_gem_config;
-	पूर्णांक (*clk_init)(काष्ठा platक्रमm_device *, काष्ठा clk **,
-			काष्ठा clk **, काष्ठा clk **,  काष्ठा clk **,
-			काष्ठा clk **) = macb_config->clk_init;
-	पूर्णांक (*init)(काष्ठा platक्रमm_device *) = macb_config->init;
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा clk *pclk, *hclk = शून्य, *tx_clk = शून्य, *rx_clk = शून्य;
-	काष्ठा clk *tsu_clk = शून्य;
-	अचिन्हित पूर्णांक queue_mask, num_queues;
+static int macb_probe(struct platform_device *pdev)
+{
+	const struct macb_config *macb_config = &default_gem_config;
+	int (*clk_init)(struct platform_device *, struct clk **,
+			struct clk **, struct clk **,  struct clk **,
+			struct clk **) = macb_config->clk_init;
+	int (*init)(struct platform_device *) = macb_config->init;
+	struct device_node *np = pdev->dev.of_node;
+	struct clk *pclk, *hclk = NULL, *tx_clk = NULL, *rx_clk = NULL;
+	struct clk *tsu_clk = NULL;
+	unsigned int queue_mask, num_queues;
 	bool native_io;
-	phy_पूर्णांकerface_t पूर्णांकerface;
-	काष्ठा net_device *dev;
-	काष्ठा resource *regs;
-	व्योम __iomem *mem;
-	काष्ठा macb *bp;
-	पूर्णांक err, val;
+	phy_interface_t interface;
+	struct net_device *dev;
+	struct resource *regs;
+	void __iomem *mem;
+	struct macb *bp;
+	int err, val;
 
-	regs = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	regs = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	mem = devm_ioremap_resource(&pdev->dev, regs);
-	अगर (IS_ERR(mem))
-		वापस PTR_ERR(mem);
+	if (IS_ERR(mem))
+		return PTR_ERR(mem);
 
-	अगर (np) अणु
-		स्थिर काष्ठा of_device_id *match;
+	if (np) {
+		const struct of_device_id *match;
 
 		match = of_match_node(macb_dt_ids, np);
-		अगर (match && match->data) अणु
+		if (match && match->data) {
 			macb_config = match->data;
 			clk_init = macb_config->clk_init;
 			init = macb_config->init;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	err = clk_init(pdev, &pclk, &hclk, &tx_clk, &rx_clk, &tsu_clk);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	pm_runसमय_set_स्वतःsuspend_delay(&pdev->dev, MACB_PM_TIMEOUT);
-	pm_runसमय_use_स्वतःsuspend(&pdev->dev);
-	pm_runसमय_get_noresume(&pdev->dev);
-	pm_runसमय_set_active(&pdev->dev);
-	pm_runसमय_enable(&pdev->dev);
+	pm_runtime_set_autosuspend_delay(&pdev->dev, MACB_PM_TIMEOUT);
+	pm_runtime_use_autosuspend(&pdev->dev);
+	pm_runtime_get_noresume(&pdev->dev);
+	pm_runtime_set_active(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 	native_io = hw_is_native_io(mem);
 
 	macb_probe_queues(mem, native_io, &queue_mask, &num_queues);
-	dev = alloc_etherdev_mq(माप(*bp), num_queues);
-	अगर (!dev) अणु
+	dev = alloc_etherdev_mq(sizeof(*bp), num_queues);
+	if (!dev) {
 		err = -ENOMEM;
-		जाओ err_disable_घड़ीs;
-	पूर्ण
+		goto err_disable_clocks;
+	}
 
 	dev->base_addr = regs->start;
 
@@ -4699,27 +4698,27 @@ MODULE_DEVICE_TABLE(of, macb_dt_ids);
 	bp->dev = dev;
 	bp->regs = mem;
 	bp->native_io = native_io;
-	अगर (native_io) अणु
-		bp->macb_reg_पढ़ोl = hw_पढ़ोl_native;
-		bp->macb_reg_ग_लिखोl = hw_ग_लिखोl_native;
-	पूर्ण अन्यथा अणु
-		bp->macb_reg_पढ़ोl = hw_पढ़ोl;
-		bp->macb_reg_ग_लिखोl = hw_ग_लिखोl;
-	पूर्ण
+	if (native_io) {
+		bp->macb_reg_readl = hw_readl_native;
+		bp->macb_reg_writel = hw_writel_native;
+	} else {
+		bp->macb_reg_readl = hw_readl;
+		bp->macb_reg_writel = hw_writel;
+	}
 	bp->num_queues = num_queues;
 	bp->queue_mask = queue_mask;
-	अगर (macb_config)
+	if (macb_config)
 		bp->dma_burst_length = macb_config->dma_burst_length;
 	bp->pclk = pclk;
 	bp->hclk = hclk;
 	bp->tx_clk = tx_clk;
 	bp->rx_clk = rx_clk;
 	bp->tsu_clk = tsu_clk;
-	अगर (macb_config)
+	if (macb_config)
 		bp->jumbo_max_len = macb_config->jumbo_max_len;
 
 	bp->wol = 0;
-	अगर (of_get_property(np, "magic-packet", शून्य))
+	if (of_get_property(np, "magic-packet", NULL))
 		bp->wol |= MACB_WOL_HAS_MAGIC_PACKET;
 	device_set_wakeup_capable(&pdev->dev, bp->wol & MACB_WOL_HAS_MAGIC_PACKET);
 
@@ -4730,278 +4729,278 @@ MODULE_DEVICE_TABLE(of, macb_dt_ids);
 	/* setup capabilities */
 	macb_configure_caps(bp, macb_config);
 
-#अगर_घोषित CONFIG_ARCH_DMA_ADDR_T_64BIT
-	अगर (GEM_BFEXT(DAW64, gem_पढ़ोl(bp, DCFG6))) अणु
+#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
+	if (GEM_BFEXT(DAW64, gem_readl(bp, DCFG6))) {
 		dma_set_mask(&pdev->dev, DMA_BIT_MASK(44));
 		bp->hw_dma_cap |= HW_DMA_CAP_64B;
-	पूर्ण
-#पूर्ण_अगर
-	platक्रमm_set_drvdata(pdev, dev);
+	}
+#endif
+	platform_set_drvdata(pdev, dev);
 
-	dev->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (dev->irq < 0) अणु
+	dev->irq = platform_get_irq(pdev, 0);
+	if (dev->irq < 0) {
 		err = dev->irq;
-		जाओ err_out_मुक्त_netdev;
-	पूर्ण
+		goto err_out_free_netdev;
+	}
 
 	/* MTU range: 68 - 1500 or 10240 */
 	dev->min_mtu = GEM_MTU_MIN_SIZE;
-	अगर (bp->caps & MACB_CAPS_JUMBO)
-		dev->max_mtu = gem_पढ़ोl(bp, JML) - ETH_HLEN - ETH_FCS_LEN;
-	अन्यथा
+	if (bp->caps & MACB_CAPS_JUMBO)
+		dev->max_mtu = gem_readl(bp, JML) - ETH_HLEN - ETH_FCS_LEN;
+	else
 		dev->max_mtu = ETH_DATA_LEN;
 
-	अगर (bp->caps & MACB_CAPS_BD_RD_PREFETCH) अणु
-		val = GEM_BFEXT(RXBD_RDBUFF, gem_पढ़ोl(bp, DCFG10));
-		अगर (val)
+	if (bp->caps & MACB_CAPS_BD_RD_PREFETCH) {
+		val = GEM_BFEXT(RXBD_RDBUFF, gem_readl(bp, DCFG10));
+		if (val)
 			bp->rx_bd_rd_prefetch = (2 << (val - 1)) *
 						macb_dma_desc_get_size(bp);
 
-		val = GEM_BFEXT(TXBD_RDBUFF, gem_पढ़ोl(bp, DCFG10));
-		अगर (val)
+		val = GEM_BFEXT(TXBD_RDBUFF, gem_readl(bp, DCFG10));
+		if (val)
 			bp->tx_bd_rd_prefetch = (2 << (val - 1)) *
 						macb_dma_desc_get_size(bp);
-	पूर्ण
+	}
 
-	bp->rx_पूर्णांकr_mask = MACB_RX_INT_FLAGS;
-	अगर (bp->caps & MACB_CAPS_NEEDS_RSTONUBR)
-		bp->rx_पूर्णांकr_mask |= MACB_BIT(RXUBR);
+	bp->rx_intr_mask = MACB_RX_INT_FLAGS;
+	if (bp->caps & MACB_CAPS_NEEDS_RSTONUBR)
+		bp->rx_intr_mask |= MACB_BIT(RXUBR);
 
 	err = of_get_mac_address(np, bp->dev->dev_addr);
-	अगर (err == -EPROBE_DEFER)
-		जाओ err_out_मुक्त_netdev;
-	अन्यथा अगर (err)
+	if (err == -EPROBE_DEFER)
+		goto err_out_free_netdev;
+	else if (err)
 		macb_get_hwaddr(bp);
 
-	err = of_get_phy_mode(np, &पूर्णांकerface);
-	अगर (err)
-		/* not found in DT, MII by शेष */
-		bp->phy_पूर्णांकerface = PHY_INTERFACE_MODE_MII;
-	अन्यथा
-		bp->phy_पूर्णांकerface = पूर्णांकerface;
+	err = of_get_phy_mode(np, &interface);
+	if (err)
+		/* not found in DT, MII by default */
+		bp->phy_interface = PHY_INTERFACE_MODE_MII;
+	else
+		bp->phy_interface = interface;
 
-	/* IP specअगरic init */
+	/* IP specific init */
 	err = init(pdev);
-	अगर (err)
-		जाओ err_out_मुक्त_netdev;
+	if (err)
+		goto err_out_free_netdev;
 
 	err = macb_mii_init(bp);
-	अगर (err)
-		जाओ err_out_मुक्त_netdev;
+	if (err)
+		goto err_out_free_netdev;
 
-	netअगर_carrier_off(dev);
+	netif_carrier_off(dev);
 
-	err = रेजिस्टर_netdev(dev);
-	अगर (err) अणु
+	err = register_netdev(dev);
+	if (err) {
 		dev_err(&pdev->dev, "Cannot register net device, aborting.\n");
-		जाओ err_out_unरेजिस्टर_mdio;
-	पूर्ण
+		goto err_out_unregister_mdio;
+	}
 
 	tasklet_setup(&bp->hresp_err_tasklet, macb_hresp_error_task);
 
 	netdev_info(dev, "Cadence %s rev 0x%08x at 0x%08lx irq %d (%pM)\n",
-		    macb_is_gem(bp) ? "GEM" : "MACB", macb_पढ़ोl(bp, MID),
+		    macb_is_gem(bp) ? "GEM" : "MACB", macb_readl(bp, MID),
 		    dev->base_addr, dev->irq, dev->dev_addr);
 
-	pm_runसमय_mark_last_busy(&bp->pdev->dev);
-	pm_runसमय_put_स्वतःsuspend(&bp->pdev->dev);
+	pm_runtime_mark_last_busy(&bp->pdev->dev);
+	pm_runtime_put_autosuspend(&bp->pdev->dev);
 
-	वापस 0;
+	return 0;
 
-err_out_unरेजिस्टर_mdio:
-	mdiobus_unरेजिस्टर(bp->mii_bus);
-	mdiobus_मुक्त(bp->mii_bus);
+err_out_unregister_mdio:
+	mdiobus_unregister(bp->mii_bus);
+	mdiobus_free(bp->mii_bus);
 
-err_out_मुक्त_netdev:
-	मुक्त_netdev(dev);
+err_out_free_netdev:
+	free_netdev(dev);
 
-err_disable_घड़ीs:
+err_disable_clocks:
 	macb_clks_disable(pclk, hclk, tx_clk, rx_clk, tsu_clk);
-	pm_runसमय_disable(&pdev->dev);
-	pm_runसमय_set_suspended(&pdev->dev);
-	pm_runसमय_करोnt_use_स्वतःsuspend(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
+	pm_runtime_set_suspended(&pdev->dev);
+	pm_runtime_dont_use_autosuspend(&pdev->dev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक macb_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा macb *bp;
+static int macb_remove(struct platform_device *pdev)
+{
+	struct net_device *dev;
+	struct macb *bp;
 
-	dev = platक्रमm_get_drvdata(pdev);
+	dev = platform_get_drvdata(pdev);
 
-	अगर (dev) अणु
+	if (dev) {
 		bp = netdev_priv(dev);
-		mdiobus_unरेजिस्टर(bp->mii_bus);
-		mdiobus_मुक्त(bp->mii_bus);
+		mdiobus_unregister(bp->mii_bus);
+		mdiobus_free(bp->mii_bus);
 
-		unरेजिस्टर_netdev(dev);
-		tasklet_समाप्त(&bp->hresp_err_tasklet);
-		pm_runसमय_disable(&pdev->dev);
-		pm_runसमय_करोnt_use_स्वतःsuspend(&pdev->dev);
-		अगर (!pm_runसमय_suspended(&pdev->dev)) अणु
+		unregister_netdev(dev);
+		tasklet_kill(&bp->hresp_err_tasklet);
+		pm_runtime_disable(&pdev->dev);
+		pm_runtime_dont_use_autosuspend(&pdev->dev);
+		if (!pm_runtime_suspended(&pdev->dev)) {
 			macb_clks_disable(bp->pclk, bp->hclk, bp->tx_clk,
 					  bp->rx_clk, bp->tsu_clk);
-			pm_runसमय_set_suspended(&pdev->dev);
-		पूर्ण
+			pm_runtime_set_suspended(&pdev->dev);
+		}
 		phylink_destroy(bp->phylink);
-		मुक्त_netdev(dev);
-	पूर्ण
+		free_netdev(dev);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused macb_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा net_device *netdev = dev_get_drvdata(dev);
-	काष्ठा macb *bp = netdev_priv(netdev);
-	काष्ठा macb_queue *queue;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक q;
-	पूर्णांक err;
+static int __maybe_unused macb_suspend(struct device *dev)
+{
+	struct net_device *netdev = dev_get_drvdata(dev);
+	struct macb *bp = netdev_priv(netdev);
+	struct macb_queue *queue;
+	unsigned long flags;
+	unsigned int q;
+	int err;
 
-	अगर (!netअगर_running(netdev))
-		वापस 0;
+	if (!netif_running(netdev))
+		return 0;
 
-	अगर (bp->wol & MACB_WOL_ENABLED) अणु
+	if (bp->wol & MACB_WOL_ENABLED) {
 		spin_lock_irqsave(&bp->lock, flags);
 		/* Flush all status bits */
-		macb_ग_लिखोl(bp, TSR, -1);
-		macb_ग_लिखोl(bp, RSR, -1);
-		क्रम (q = 0, queue = bp->queues; q < bp->num_queues;
-		     ++q, ++queue) अणु
-			/* Disable all पूर्णांकerrupts */
-			queue_ग_लिखोl(queue, IDR, -1);
-			queue_पढ़ोl(queue, ISR);
-			अगर (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
-				queue_ग_लिखोl(queue, ISR, -1);
-		पूर्ण
-		/* Change पूर्णांकerrupt handler and
+		macb_writel(bp, TSR, -1);
+		macb_writel(bp, RSR, -1);
+		for (q = 0, queue = bp->queues; q < bp->num_queues;
+		     ++q, ++queue) {
+			/* Disable all interrupts */
+			queue_writel(queue, IDR, -1);
+			queue_readl(queue, ISR);
+			if (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
+				queue_writel(queue, ISR, -1);
+		}
+		/* Change interrupt handler and
 		 * Enable WoL IRQ on queue 0
 		 */
-		devm_मुक्त_irq(dev, bp->queues[0].irq, bp->queues);
-		अगर (macb_is_gem(bp)) अणु
-			err = devm_request_irq(dev, bp->queues[0].irq, gem_wol_पूर्णांकerrupt,
+		devm_free_irq(dev, bp->queues[0].irq, bp->queues);
+		if (macb_is_gem(bp)) {
+			err = devm_request_irq(dev, bp->queues[0].irq, gem_wol_interrupt,
 					       IRQF_SHARED, netdev->name, bp->queues);
-			अगर (err) अणु
+			if (err) {
 				dev_err(dev,
 					"Unable to request IRQ %d (error %d)\n",
 					bp->queues[0].irq, err);
 				spin_unlock_irqrestore(&bp->lock, flags);
-				वापस err;
-			पूर्ण
-			queue_ग_लिखोl(bp->queues, IER, GEM_BIT(WOL));
-			gem_ग_लिखोl(bp, WOL, MACB_BIT(MAG));
-		पूर्ण अन्यथा अणु
-			err = devm_request_irq(dev, bp->queues[0].irq, macb_wol_पूर्णांकerrupt,
+				return err;
+			}
+			queue_writel(bp->queues, IER, GEM_BIT(WOL));
+			gem_writel(bp, WOL, MACB_BIT(MAG));
+		} else {
+			err = devm_request_irq(dev, bp->queues[0].irq, macb_wol_interrupt,
 					       IRQF_SHARED, netdev->name, bp->queues);
-			अगर (err) अणु
+			if (err) {
 				dev_err(dev,
 					"Unable to request IRQ %d (error %d)\n",
 					bp->queues[0].irq, err);
 				spin_unlock_irqrestore(&bp->lock, flags);
-				वापस err;
-			पूर्ण
-			queue_ग_लिखोl(bp->queues, IER, MACB_BIT(WOL));
-			macb_ग_लिखोl(bp, WOL, MACB_BIT(MAG));
-		पूर्ण
+				return err;
+			}
+			queue_writel(bp->queues, IER, MACB_BIT(WOL));
+			macb_writel(bp, WOL, MACB_BIT(MAG));
+		}
 		spin_unlock_irqrestore(&bp->lock, flags);
 
 		enable_irq_wake(bp->queues[0].irq);
-	पूर्ण
+	}
 
-	netअगर_device_detach(netdev);
-	क्रम (q = 0, queue = bp->queues; q < bp->num_queues;
+	netif_device_detach(netdev);
+	for (q = 0, queue = bp->queues; q < bp->num_queues;
 	     ++q, ++queue)
 		napi_disable(&queue->napi);
 
-	अगर (!(bp->wol & MACB_WOL_ENABLED)) अणु
+	if (!(bp->wol & MACB_WOL_ENABLED)) {
 		rtnl_lock();
 		phylink_stop(bp->phylink);
 		rtnl_unlock();
 		spin_lock_irqsave(&bp->lock, flags);
 		macb_reset_hw(bp);
 		spin_unlock_irqrestore(&bp->lock, flags);
-	पूर्ण
+	}
 
-	अगर (!(bp->caps & MACB_CAPS_USRIO_DISABLED))
-		bp->pm_data.usrio = macb_or_gem_पढ़ोl(bp, USRIO);
+	if (!(bp->caps & MACB_CAPS_USRIO_DISABLED))
+		bp->pm_data.usrio = macb_or_gem_readl(bp, USRIO);
 
-	अगर (netdev->hw_features & NETIF_F_NTUPLE)
-		bp->pm_data.scrt2 = gem_पढ़ोl_n(bp, ETHT, SCRT2_ETHT);
+	if (netdev->hw_features & NETIF_F_NTUPLE)
+		bp->pm_data.scrt2 = gem_readl_n(bp, ETHT, SCRT2_ETHT);
 
-	अगर (bp->ptp_info)
-		bp->ptp_info->ptp_हटाओ(netdev);
-	अगर (!device_may_wakeup(dev))
-		pm_runसमय_क्रमce_suspend(dev);
+	if (bp->ptp_info)
+		bp->ptp_info->ptp_remove(netdev);
+	if (!device_may_wakeup(dev))
+		pm_runtime_force_suspend(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused macb_resume(काष्ठा device *dev)
-अणु
-	काष्ठा net_device *netdev = dev_get_drvdata(dev);
-	काष्ठा macb *bp = netdev_priv(netdev);
-	काष्ठा macb_queue *queue;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक q;
-	पूर्णांक err;
+static int __maybe_unused macb_resume(struct device *dev)
+{
+	struct net_device *netdev = dev_get_drvdata(dev);
+	struct macb *bp = netdev_priv(netdev);
+	struct macb_queue *queue;
+	unsigned long flags;
+	unsigned int q;
+	int err;
 
-	अगर (!netअगर_running(netdev))
-		वापस 0;
+	if (!netif_running(netdev))
+		return 0;
 
-	अगर (!device_may_wakeup(dev))
-		pm_runसमय_क्रमce_resume(dev);
+	if (!device_may_wakeup(dev))
+		pm_runtime_force_resume(dev);
 
-	अगर (bp->wol & MACB_WOL_ENABLED) अणु
+	if (bp->wol & MACB_WOL_ENABLED) {
 		spin_lock_irqsave(&bp->lock, flags);
 		/* Disable WoL */
-		अगर (macb_is_gem(bp)) अणु
-			queue_ग_लिखोl(bp->queues, IDR, GEM_BIT(WOL));
-			gem_ग_लिखोl(bp, WOL, 0);
-		पूर्ण अन्यथा अणु
-			queue_ग_लिखोl(bp->queues, IDR, MACB_BIT(WOL));
-			macb_ग_लिखोl(bp, WOL, 0);
-		पूर्ण
+		if (macb_is_gem(bp)) {
+			queue_writel(bp->queues, IDR, GEM_BIT(WOL));
+			gem_writel(bp, WOL, 0);
+		} else {
+			queue_writel(bp->queues, IDR, MACB_BIT(WOL));
+			macb_writel(bp, WOL, 0);
+		}
 		/* Clear ISR on queue 0 */
-		queue_पढ़ोl(bp->queues, ISR);
-		अगर (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
-			queue_ग_लिखोl(bp->queues, ISR, -1);
-		/* Replace पूर्णांकerrupt handler on queue 0 */
-		devm_मुक्त_irq(dev, bp->queues[0].irq, bp->queues);
-		err = devm_request_irq(dev, bp->queues[0].irq, macb_पूर्णांकerrupt,
+		queue_readl(bp->queues, ISR);
+		if (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
+			queue_writel(bp->queues, ISR, -1);
+		/* Replace interrupt handler on queue 0 */
+		devm_free_irq(dev, bp->queues[0].irq, bp->queues);
+		err = devm_request_irq(dev, bp->queues[0].irq, macb_interrupt,
 				       IRQF_SHARED, netdev->name, bp->queues);
-		अगर (err) अणु
+		if (err) {
 			dev_err(dev,
 				"Unable to request IRQ %d (error %d)\n",
 				bp->queues[0].irq, err);
 			spin_unlock_irqrestore(&bp->lock, flags);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 		spin_unlock_irqrestore(&bp->lock, flags);
 
 		disable_irq_wake(bp->queues[0].irq);
 
-		/* Now make sure we disable phy beक्रमe moving
+		/* Now make sure we disable phy before moving
 		 * to common restore path
 		 */
 		rtnl_lock();
 		phylink_stop(bp->phylink);
 		rtnl_unlock();
-	पूर्ण
+	}
 
-	क्रम (q = 0, queue = bp->queues; q < bp->num_queues;
+	for (q = 0, queue = bp->queues; q < bp->num_queues;
 	     ++q, ++queue)
 		napi_enable(&queue->napi);
 
-	अगर (netdev->hw_features & NETIF_F_NTUPLE)
-		gem_ग_लिखोl_n(bp, ETHT, SCRT2_ETHT, bp->pm_data.scrt2);
+	if (netdev->hw_features & NETIF_F_NTUPLE)
+		gem_writel_n(bp, ETHT, SCRT2_ETHT, bp->pm_data.scrt2);
 
-	अगर (!(bp->caps & MACB_CAPS_USRIO_DISABLED))
-		macb_or_gem_ग_लिखोl(bp, USRIO, bp->pm_data.usrio);
+	if (!(bp->caps & MACB_CAPS_USRIO_DISABLED))
+		macb_or_gem_writel(bp, USRIO, bp->pm_data.usrio);
 
-	macb_ग_लिखोl(bp, NCR, MACB_BIT(MPE));
+	macb_writel(bp, NCR, MACB_BIT(MPE));
 	macb_init_hw(bp);
 	macb_set_rx_mode(netdev);
 	macb_restore_features(bp);
@@ -5009,58 +5008,58 @@ err_disable_घड़ीs:
 	phylink_start(bp->phylink);
 	rtnl_unlock();
 
-	netअगर_device_attach(netdev);
-	अगर (bp->ptp_info)
+	netif_device_attach(netdev);
+	if (bp->ptp_info)
 		bp->ptp_info->ptp_init(netdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused macb_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा net_device *netdev = dev_get_drvdata(dev);
-	काष्ठा macb *bp = netdev_priv(netdev);
+static int __maybe_unused macb_runtime_suspend(struct device *dev)
+{
+	struct net_device *netdev = dev_get_drvdata(dev);
+	struct macb *bp = netdev_priv(netdev);
 
-	अगर (!(device_may_wakeup(dev)))
+	if (!(device_may_wakeup(dev)))
 		macb_clks_disable(bp->pclk, bp->hclk, bp->tx_clk, bp->rx_clk, bp->tsu_clk);
-	अन्यथा
-		macb_clks_disable(शून्य, शून्य, शून्य, शून्य, bp->tsu_clk);
+	else
+		macb_clks_disable(NULL, NULL, NULL, NULL, bp->tsu_clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused macb_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा net_device *netdev = dev_get_drvdata(dev);
-	काष्ठा macb *bp = netdev_priv(netdev);
+static int __maybe_unused macb_runtime_resume(struct device *dev)
+{
+	struct net_device *netdev = dev_get_drvdata(dev);
+	struct macb *bp = netdev_priv(netdev);
 
-	अगर (!(device_may_wakeup(dev))) अणु
+	if (!(device_may_wakeup(dev))) {
 		clk_prepare_enable(bp->pclk);
 		clk_prepare_enable(bp->hclk);
 		clk_prepare_enable(bp->tx_clk);
 		clk_prepare_enable(bp->rx_clk);
-	पूर्ण
+	}
 	clk_prepare_enable(bp->tsu_clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops macb_pm_ops = अणु
+static const struct dev_pm_ops macb_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(macb_suspend, macb_resume)
-	SET_RUNTIME_PM_OPS(macb_runसमय_suspend, macb_runसमय_resume, शून्य)
-पूर्ण;
+	SET_RUNTIME_PM_OPS(macb_runtime_suspend, macb_runtime_resume, NULL)
+};
 
-अटल काष्ठा platक्रमm_driver macb_driver = अणु
+static struct platform_driver macb_driver = {
 	.probe		= macb_probe,
-	.हटाओ		= macb_हटाओ,
-	.driver		= अणु
+	.remove		= macb_remove,
+	.driver		= {
 		.name		= "macb",
 		.of_match_table	= of_match_ptr(macb_dt_ids),
 		.pm	= &macb_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(macb_driver);
+module_platform_driver(macb_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Cadence MACB/GEM Ethernet driver");

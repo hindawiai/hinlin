@@ -1,72 +1,71 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2001-2003 Patrick Mochel <mochel@osdl.org>
- * Copyright (c) 2004-2009 Greg Kroah-Harपंचांगan <gregkh@suse.de>
+ * Copyright (c) 2004-2009 Greg Kroah-Hartman <gregkh@suse.de>
  * Copyright (c) 2008-2012 Novell Inc.
- * Copyright (c) 2012-2019 Greg Kroah-Harपंचांगan <gregkh@linuxfoundation.org>
+ * Copyright (c) 2012-2019 Greg Kroah-Hartman <gregkh@linuxfoundation.org>
  * Copyright (c) 2012-2019 Linux Foundation
  *
- * Core driver model functions and काष्ठाures that should not be
+ * Core driver model functions and structures that should not be
  * shared outside of the drivers/base/ directory.
  *
  */
-#समावेश <linux/notअगरier.h>
+#include <linux/notifier.h>
 
 /**
- * काष्ठा subsys_निजी - काष्ठाure to hold the निजी to the driver core portions of the bus_type/class काष्ठाure.
+ * struct subsys_private - structure to hold the private to the driver core portions of the bus_type/class structure.
  *
- * @subsys - the काष्ठा kset that defines this subप्रणाली
- * @devices_kset - the subप्रणाली's 'devices' directory
- * @पूर्णांकerfaces - list of subप्रणाली पूर्णांकerfaces associated
- * @mutex - protect the devices, and पूर्णांकerfaces lists.
+ * @subsys - the struct kset that defines this subsystem
+ * @devices_kset - the subsystem's 'devices' directory
+ * @interfaces - list of subsystem interfaces associated
+ * @mutex - protect the devices, and interfaces lists.
  *
  * @drivers_kset - the list of drivers associated
  * @klist_devices - the klist to iterate over the @devices_kset
  * @klist_drivers - the klist to iterate over the @drivers_kset
- * @bus_notअगरier - the bus notअगरier list क्रम anything that cares about things
+ * @bus_notifier - the bus notifier list for anything that cares about things
  *                 on this bus.
- * @bus - poपूर्णांकer back to the काष्ठा bus_type that this काष्ठाure is associated
+ * @bus - pointer back to the struct bus_type that this structure is associated
  *        with.
  *
  * @glue_dirs - "glue" directory to put in-between the parent device to
- *              aव्योम namespace conflicts
- * @class - poपूर्णांकer back to the काष्ठा class that this काष्ठाure is associated
+ *              avoid namespace conflicts
+ * @class - pointer back to the struct class that this structure is associated
  *          with.
  *
- * This काष्ठाure is the one that is the actual kobject allowing काष्ठा
- * bus_type/class to be अटलally allocated safely.  Nothing outside of the
+ * This structure is the one that is the actual kobject allowing struct
+ * bus_type/class to be statically allocated safely.  Nothing outside of the
  * driver core should ever touch these fields.
  */
-काष्ठा subsys_निजी अणु
-	काष्ठा kset subsys;
-	काष्ठा kset *devices_kset;
-	काष्ठा list_head पूर्णांकerfaces;
-	काष्ठा mutex mutex;
+struct subsys_private {
+	struct kset subsys;
+	struct kset *devices_kset;
+	struct list_head interfaces;
+	struct mutex mutex;
 
-	काष्ठा kset *drivers_kset;
-	काष्ठा klist klist_devices;
-	काष्ठा klist klist_drivers;
-	काष्ठा blocking_notअगरier_head bus_notअगरier;
-	अचिन्हित पूर्णांक drivers_स्वतःprobe:1;
-	काष्ठा bus_type *bus;
+	struct kset *drivers_kset;
+	struct klist klist_devices;
+	struct klist klist_drivers;
+	struct blocking_notifier_head bus_notifier;
+	unsigned int drivers_autoprobe:1;
+	struct bus_type *bus;
 
-	काष्ठा kset glue_dirs;
-	काष्ठा class *class;
-पूर्ण;
-#घोषणा to_subsys_निजी(obj) container_of(obj, काष्ठा subsys_निजी, subsys.kobj)
+	struct kset glue_dirs;
+	struct class *class;
+};
+#define to_subsys_private(obj) container_of(obj, struct subsys_private, subsys.kobj)
 
-काष्ठा driver_निजी अणु
-	काष्ठा kobject kobj;
-	काष्ठा klist klist_devices;
-	काष्ठा klist_node knode_bus;
-	काष्ठा module_kobject *mkobj;
-	काष्ठा device_driver *driver;
-पूर्ण;
-#घोषणा to_driver(obj) container_of(obj, काष्ठा driver_निजी, kobj)
+struct driver_private {
+	struct kobject kobj;
+	struct klist klist_devices;
+	struct klist_node knode_bus;
+	struct module_kobject *mkobj;
+	struct device_driver *driver;
+};
+#define to_driver(obj) container_of(obj, struct driver_private, kobj)
 
 /**
- * काष्ठा device_निजी - काष्ठाure to hold the निजी to the driver core portions of the device काष्ठाure.
+ * struct device_private - structure to hold the private to the driver core portions of the device structure.
  *
  * @klist_children - klist containing all children of this device
  * @knode_parent - node in sibling list
@@ -77,130 +76,130 @@
  *	binding of drivers which were unable to get all the resources needed by
  *	the device; typically because it depends on another driver getting
  *	probed first.
- * @async_driver - poपूर्णांकer to device driver aरुकोing probe via async_probe
- * @device - poपूर्णांकer back to the काष्ठा device that this काष्ठाure is
+ * @async_driver - pointer to device driver awaiting probe via async_probe
+ * @device - pointer back to the struct device that this structure is
  * associated with.
  * @dead - This device is currently either in the process of or has been
- *	हटाओd from the प्रणाली. Any asynchronous events scheduled क्रम this
- *	device should निकास without taking any action.
+ *	removed from the system. Any asynchronous events scheduled for this
+ *	device should exit without taking any action.
  *
  * Nothing outside of the driver core should ever touch these fields.
  */
-काष्ठा device_निजी अणु
-	काष्ठा klist klist_children;
-	काष्ठा klist_node knode_parent;
-	काष्ठा klist_node knode_driver;
-	काष्ठा klist_node knode_bus;
-	काष्ठा klist_node knode_class;
-	काष्ठा list_head deferred_probe;
-	काष्ठा device_driver *async_driver;
-	अक्षर *deferred_probe_reason;
-	काष्ठा device *device;
+struct device_private {
+	struct klist klist_children;
+	struct klist_node knode_parent;
+	struct klist_node knode_driver;
+	struct klist_node knode_bus;
+	struct klist_node knode_class;
+	struct list_head deferred_probe;
+	struct device_driver *async_driver;
+	char *deferred_probe_reason;
+	struct device *device;
 	u8 dead:1;
-पूर्ण;
-#घोषणा to_device_निजी_parent(obj)	\
-	container_of(obj, काष्ठा device_निजी, knode_parent)
-#घोषणा to_device_निजी_driver(obj)	\
-	container_of(obj, काष्ठा device_निजी, knode_driver)
-#घोषणा to_device_निजी_bus(obj)	\
-	container_of(obj, काष्ठा device_निजी, knode_bus)
-#घोषणा to_device_निजी_class(obj)	\
-	container_of(obj, काष्ठा device_निजी, knode_class)
+};
+#define to_device_private_parent(obj)	\
+	container_of(obj, struct device_private, knode_parent)
+#define to_device_private_driver(obj)	\
+	container_of(obj, struct device_private, knode_driver)
+#define to_device_private_bus(obj)	\
+	container_of(obj, struct device_private, knode_bus)
+#define to_device_private_class(obj)	\
+	container_of(obj, struct device_private, knode_class)
 
 /* initialisation functions */
-बाह्य पूर्णांक devices_init(व्योम);
-बाह्य पूर्णांक buses_init(व्योम);
-बाह्य पूर्णांक classes_init(व्योम);
-बाह्य पूर्णांक firmware_init(व्योम);
-#अगर_घोषित CONFIG_SYS_HYPERVISOR
-बाह्य पूर्णांक hypervisor_init(व्योम);
-#अन्यथा
-अटल अंतरभूत पूर्णांक hypervisor_init(व्योम) अणु वापस 0; पूर्ण
-#पूर्ण_अगर
-बाह्य पूर्णांक platक्रमm_bus_init(व्योम);
-बाह्य व्योम cpu_dev_init(व्योम);
-बाह्य व्योम container_dev_init(व्योम);
-#अगर_घोषित CONFIG_AUXILIARY_BUS
-बाह्य व्योम auxiliary_bus_init(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम auxiliary_bus_init(व्योम) अणु पूर्ण
-#पूर्ण_अगर
+extern int devices_init(void);
+extern int buses_init(void);
+extern int classes_init(void);
+extern int firmware_init(void);
+#ifdef CONFIG_SYS_HYPERVISOR
+extern int hypervisor_init(void);
+#else
+static inline int hypervisor_init(void) { return 0; }
+#endif
+extern int platform_bus_init(void);
+extern void cpu_dev_init(void);
+extern void container_dev_init(void);
+#ifdef CONFIG_AUXILIARY_BUS
+extern void auxiliary_bus_init(void);
+#else
+static inline void auxiliary_bus_init(void) { }
+#endif
 
-काष्ठा kobject *भव_device_parent(काष्ठा device *dev);
+struct kobject *virtual_device_parent(struct device *dev);
 
-बाह्य पूर्णांक bus_add_device(काष्ठा device *dev);
-बाह्य व्योम bus_probe_device(काष्ठा device *dev);
-बाह्य व्योम bus_हटाओ_device(काष्ठा device *dev);
+extern int bus_add_device(struct device *dev);
+extern void bus_probe_device(struct device *dev);
+extern void bus_remove_device(struct device *dev);
 
-बाह्य पूर्णांक bus_add_driver(काष्ठा device_driver *drv);
-बाह्य व्योम bus_हटाओ_driver(काष्ठा device_driver *drv);
-बाह्य व्योम device_release_driver_पूर्णांकernal(काष्ठा device *dev,
-					   काष्ठा device_driver *drv,
-					   काष्ठा device *parent);
+extern int bus_add_driver(struct device_driver *drv);
+extern void bus_remove_driver(struct device_driver *drv);
+extern void device_release_driver_internal(struct device *dev,
+					   struct device_driver *drv,
+					   struct device *parent);
 
-बाह्य व्योम driver_detach(काष्ठा device_driver *drv);
-बाह्य व्योम driver_deferred_probe_del(काष्ठा device *dev);
-बाह्य व्योम device_set_deferred_probe_reason(स्थिर काष्ठा device *dev,
-					     काष्ठा va_क्रमmat *vaf);
-अटल अंतरभूत पूर्णांक driver_match_device(काष्ठा device_driver *drv,
-				      काष्ठा device *dev)
-अणु
-	वापस drv->bus->match ? drv->bus->match(dev, drv) : 1;
-पूर्ण
-बाह्य bool driver_allows_async_probing(काष्ठा device_driver *drv);
+extern void driver_detach(struct device_driver *drv);
+extern void driver_deferred_probe_del(struct device *dev);
+extern void device_set_deferred_probe_reason(const struct device *dev,
+					     struct va_format *vaf);
+static inline int driver_match_device(struct device_driver *drv,
+				      struct device *dev)
+{
+	return drv->bus->match ? drv->bus->match(dev, drv) : 1;
+}
+extern bool driver_allows_async_probing(struct device_driver *drv);
 
-बाह्य पूर्णांक driver_add_groups(काष्ठा device_driver *drv,
-			     स्थिर काष्ठा attribute_group **groups);
-बाह्य व्योम driver_हटाओ_groups(काष्ठा device_driver *drv,
-				 स्थिर काष्ठा attribute_group **groups);
-पूर्णांक device_driver_attach(काष्ठा device_driver *drv, काष्ठा device *dev);
-व्योम device_driver_detach(काष्ठा device *dev);
+extern int driver_add_groups(struct device_driver *drv,
+			     const struct attribute_group **groups);
+extern void driver_remove_groups(struct device_driver *drv,
+				 const struct attribute_group **groups);
+int device_driver_attach(struct device_driver *drv, struct device *dev);
+void device_driver_detach(struct device *dev);
 
-बाह्य अक्षर *make_class_name(स्थिर अक्षर *name, काष्ठा kobject *kobj);
+extern char *make_class_name(const char *name, struct kobject *kobj);
 
-बाह्य पूर्णांक devres_release_all(काष्ठा device *dev);
-बाह्य व्योम device_block_probing(व्योम);
-बाह्य व्योम device_unblock_probing(व्योम);
+extern int devres_release_all(struct device *dev);
+extern void device_block_probing(void);
+extern void device_unblock_probing(void);
 
 /* /sys/devices directory */
-बाह्य काष्ठा kset *devices_kset;
-बाह्य व्योम devices_kset_move_last(काष्ठा device *dev);
+extern struct kset *devices_kset;
+extern void devices_kset_move_last(struct device *dev);
 
-#अगर defined(CONFIG_MODULES) && defined(CONFIG_SYSFS)
-बाह्य व्योम module_add_driver(काष्ठा module *mod, काष्ठा device_driver *drv);
-बाह्य व्योम module_हटाओ_driver(काष्ठा device_driver *drv);
-#अन्यथा
-अटल अंतरभूत व्योम module_add_driver(काष्ठा module *mod,
-				     काष्ठा device_driver *drv) अणु पूर्ण
-अटल अंतरभूत व्योम module_हटाओ_driver(काष्ठा device_driver *drv) अणु पूर्ण
-#पूर्ण_अगर
+#if defined(CONFIG_MODULES) && defined(CONFIG_SYSFS)
+extern void module_add_driver(struct module *mod, struct device_driver *drv);
+extern void module_remove_driver(struct device_driver *drv);
+#else
+static inline void module_add_driver(struct module *mod,
+				     struct device_driver *drv) { }
+static inline void module_remove_driver(struct device_driver *drv) { }
+#endif
 
-#अगर_घोषित CONFIG_DEVTMPFS
-बाह्य पूर्णांक devपंचांगpfs_init(व्योम);
-#अन्यथा
-अटल अंतरभूत पूर्णांक devपंचांगpfs_init(व्योम) अणु वापस 0; पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_DEVTMPFS
+extern int devtmpfs_init(void);
+#else
+static inline int devtmpfs_init(void) { return 0; }
+#endif
 
 /* Device links support */
-बाह्य पूर्णांक device_links_पढ़ो_lock(व्योम);
-बाह्य व्योम device_links_पढ़ो_unlock(पूर्णांक idx);
-बाह्य पूर्णांक device_links_पढ़ो_lock_held(व्योम);
-बाह्य पूर्णांक device_links_check_suppliers(काष्ठा device *dev);
-बाह्य व्योम device_links_क्रमce_bind(काष्ठा device *dev);
-बाह्य व्योम device_links_driver_bound(काष्ठा device *dev);
-बाह्य व्योम device_links_driver_cleanup(काष्ठा device *dev);
-बाह्य व्योम device_links_no_driver(काष्ठा device *dev);
-बाह्य bool device_links_busy(काष्ठा device *dev);
-बाह्य व्योम device_links_unbind_consumers(काष्ठा device *dev);
-बाह्य व्योम fw_devlink_drivers_करोne(व्योम);
+extern int device_links_read_lock(void);
+extern void device_links_read_unlock(int idx);
+extern int device_links_read_lock_held(void);
+extern int device_links_check_suppliers(struct device *dev);
+extern void device_links_force_bind(struct device *dev);
+extern void device_links_driver_bound(struct device *dev);
+extern void device_links_driver_cleanup(struct device *dev);
+extern void device_links_no_driver(struct device *dev);
+extern bool device_links_busy(struct device *dev);
+extern void device_links_unbind_consumers(struct device *dev);
+extern void fw_devlink_drivers_done(void);
 
 /* device pm support */
-व्योम device_pm_move_to_tail(काष्ठा device *dev);
+void device_pm_move_to_tail(struct device *dev);
 
-#अगर_घोषित CONFIG_DEVTMPFS
-पूर्णांक devपंचांगpfs_create_node(काष्ठा device *dev);
-पूर्णांक devपंचांगpfs_delete_node(काष्ठा device *dev);
-#अन्यथा
-अटल अंतरभूत पूर्णांक devपंचांगpfs_create_node(काष्ठा device *dev) अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक devपंचांगpfs_delete_node(काष्ठा device *dev) अणु वापस 0; पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_DEVTMPFS
+int devtmpfs_create_node(struct device *dev);
+int devtmpfs_delete_node(struct device *dev);
+#else
+static inline int devtmpfs_create_node(struct device *dev) { return 0; }
+static inline int devtmpfs_delete_node(struct device *dev) { return 0; }
+#endif

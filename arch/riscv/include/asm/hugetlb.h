@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_RISCV_HUGETLB_H
-#घोषणा _ASM_RISCV_HUGETLB_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_RISCV_HUGETLB_H
+#define _ASM_RISCV_HUGETLB_H
 
-#समावेश <यंत्र-generic/hugetlb.h>
-#समावेश <यंत्र/page.h>
+#include <asm-generic/hugetlb.h>
+#include <asm/page.h>
 
-#पूर्ण_अगर /* _ASM_RISCV_HUGETLB_H */
+#endif /* _ASM_RISCV_HUGETLB_H */

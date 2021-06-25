@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * linux/fs/ext2/namei.c
  *
- * Reग_लिखो to pagecache. Almost all code had been changed, so blame me
- * अगर the things go wrong. Please, send bug reports to
+ * Rewrite to pagecache. Almost all code had been changed, so blame me
+ * if the things go wrong. Please, send bug reports to
  * viro@parcelfarce.linux.theplanet.co.uk
  *
  * Stuff here is basically a glue between the VFS and generic UNIXish
- * fileप्रणाली that keeps everything in pagecache. All knowledge of the
+ * filesystem that keeps everything in pagecache. All knowledge of the
  * directory layout is in fs/ext2/dir.c - it turned out to be easily separatable
  * and it's easier to debug that way. In principle we might want to
- * generalize that a bit and turn it पूर्णांकo a library. Or not.
+ * generalize that a bit and turn it into a library. Or not.
  *
- * The only non-अटल object here is ext2_dir_inode_operations.
+ * The only non-static object here is ext2_dir_inode_operations.
  *
- * TODO: get rid of kmap() use, add पढ़ोahead.
+ * TODO: get rid of kmap() use, add readahead.
  *
  * Copyright (C) 1992, 1993, 1994, 1995
  * Remy Card (card@masi.ibp.fr)
- * Laborम_से_पre MASI - Institut Blaise Pascal
+ * Laboratoire MASI - Institut Blaise Pascal
  * Universite Pierre et Marie Curie (Paris VI)
  *
  *  from
@@ -28,244 +27,244 @@
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  *
- *  Big-endian to little-endian byte-swapping/biपंचांगaps by
+ *  Big-endian to little-endian byte-swapping/bitmaps by
  *        David S. Miller (davem@caip.rutgers.edu), 1995
  */
 
-#समावेश <linux/pagemap.h>
-#समावेश <linux/quotaops.h>
-#समावेश "ext2.h"
-#समावेश "xattr.h"
-#समावेश "acl.h"
+#include <linux/pagemap.h>
+#include <linux/quotaops.h>
+#include "ext2.h"
+#include "xattr.h"
+#include "acl.h"
 
-अटल अंतरभूत पूर्णांक ext2_add_nondir(काष्ठा dentry *dentry, काष्ठा inode *inode)
-अणु
-	पूर्णांक err = ext2_add_link(dentry, inode);
-	अगर (!err) अणु
+static inline int ext2_add_nondir(struct dentry *dentry, struct inode *inode)
+{
+	int err = ext2_add_link(dentry, inode);
+	if (!err) {
 		d_instantiate_new(dentry, inode);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	inode_dec_link_count(inode);
 	discard_new_inode(inode);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
  * Methods themselves.
  */
 
-अटल काष्ठा dentry *ext2_lookup(काष्ठा inode * dir, काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा inode * inode;
+static struct dentry *ext2_lookup(struct inode * dir, struct dentry *dentry, unsigned int flags)
+{
+	struct inode * inode;
 	ino_t ino;
-	पूर्णांक res;
+	int res;
 	
-	अगर (dentry->d_name.len > EXT2_NAME_LEN)
-		वापस ERR_PTR(-ENAMETOOLONG);
+	if (dentry->d_name.len > EXT2_NAME_LEN)
+		return ERR_PTR(-ENAMETOOLONG);
 
 	res = ext2_inode_by_name(dir, &dentry->d_name, &ino);
-	अगर (res) अणु
-		अगर (res != -ENOENT)
-			वापस ERR_PTR(res);
-		inode = शून्य;
-	पूर्ण अन्यथा अणु
+	if (res) {
+		if (res != -ENOENT)
+			return ERR_PTR(res);
+		inode = NULL;
+	} else {
 		inode = ext2_iget(dir->i_sb, ino);
-		अगर (inode == ERR_PTR(-ESTALE)) अणु
+		if (inode == ERR_PTR(-ESTALE)) {
 			ext2_error(dir->i_sb, __func__,
 					"deleted inode referenced: %lu",
-					(अचिन्हित दीर्घ) ino);
-			वापस ERR_PTR(-EIO);
-		पूर्ण
-	पूर्ण
-	वापस d_splice_alias(inode, dentry);
-पूर्ण
+					(unsigned long) ino);
+			return ERR_PTR(-EIO);
+		}
+	}
+	return d_splice_alias(inode, dentry);
+}
 
-काष्ठा dentry *ext2_get_parent(काष्ठा dentry *child)
-अणु
+struct dentry *ext2_get_parent(struct dentry *child)
+{
 	ino_t ino;
-	पूर्णांक res;
+	int res;
 
-	res = ext2_inode_by_name(d_inode(child), &करोtकरोt_name, &ino);
-	अगर (res)
-		वापस ERR_PTR(res);
+	res = ext2_inode_by_name(d_inode(child), &dotdot_name, &ino);
+	if (res)
+		return ERR_PTR(res);
 
-	वापस d_obtain_alias(ext2_iget(child->d_sb, ino));
-पूर्ण 
+	return d_obtain_alias(ext2_iget(child->d_sb, ino));
+} 
 
 /*
- * By the समय this is called, we alपढ़ोy have created
- * the directory cache entry क्रम the new file, but it
+ * By the time this is called, we already have created
+ * the directory cache entry for the new file, but it
  * is so far negative - it has no inode.
  *
- * If the create succeeds, we fill in the inode inक्रमmation
+ * If the create succeeds, we fill in the inode information
  * with d_instantiate(). 
  */
-अटल पूर्णांक ext2_create (काष्ठा user_namespace * mnt_userns,
-			काष्ठा inode * dir, काष्ठा dentry * dentry,
+static int ext2_create (struct user_namespace * mnt_userns,
+			struct inode * dir, struct dentry * dentry,
 			umode_t mode, bool excl)
-अणु
-	काष्ठा inode *inode;
-	पूर्णांक err;
+{
+	struct inode *inode;
+	int err;
 
 	err = dquot_initialize(dir);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	inode = ext2_new_inode(dir, mode, &dentry->d_name);
-	अगर (IS_ERR(inode))
-		वापस PTR_ERR(inode);
+	if (IS_ERR(inode))
+		return PTR_ERR(inode);
 
 	ext2_set_file_ops(inode);
 	mark_inode_dirty(inode);
-	वापस ext2_add_nondir(dentry, inode);
-पूर्ण
+	return ext2_add_nondir(dentry, inode);
+}
 
-अटल पूर्णांक ext2_क्षणिक_ख(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
-			काष्ठा dentry *dentry, umode_t mode)
-अणु
-	काष्ठा inode *inode = ext2_new_inode(dir, mode, शून्य);
-	अगर (IS_ERR(inode))
-		वापस PTR_ERR(inode);
+static int ext2_tmpfile(struct user_namespace *mnt_userns, struct inode *dir,
+			struct dentry *dentry, umode_t mode)
+{
+	struct inode *inode = ext2_new_inode(dir, mode, NULL);
+	if (IS_ERR(inode))
+		return PTR_ERR(inode);
 
 	ext2_set_file_ops(inode);
 	mark_inode_dirty(inode);
-	d_क्षणिक_ख(dentry, inode);
+	d_tmpfile(dentry, inode);
 	unlock_new_inode(inode);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ext2_mknod (काष्ठा user_namespace * mnt_userns, काष्ठा inode * dir,
-	काष्ठा dentry *dentry, umode_t mode, dev_t rdev)
-अणु
-	काष्ठा inode * inode;
-	पूर्णांक err;
+static int ext2_mknod (struct user_namespace * mnt_userns, struct inode * dir,
+	struct dentry *dentry, umode_t mode, dev_t rdev)
+{
+	struct inode * inode;
+	int err;
 
 	err = dquot_initialize(dir);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	inode = ext2_new_inode (dir, mode, &dentry->d_name);
 	err = PTR_ERR(inode);
-	अगर (!IS_ERR(inode)) अणु
+	if (!IS_ERR(inode)) {
 		init_special_inode(inode, inode->i_mode, rdev);
 		inode->i_op = &ext2_special_inode_operations;
 		mark_inode_dirty(inode);
 		err = ext2_add_nondir(dentry, inode);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल पूर्णांक ext2_symlink (काष्ठा user_namespace * mnt_userns, काष्ठा inode * dir,
-	काष्ठा dentry * dentry, स्थिर अक्षर * symname)
-अणु
-	काष्ठा super_block * sb = dir->i_sb;
-	पूर्णांक err = -ENAMETOOLONG;
-	अचिन्हित l = म_माप(symname)+1;
-	काष्ठा inode * inode;
+static int ext2_symlink (struct user_namespace * mnt_userns, struct inode * dir,
+	struct dentry * dentry, const char * symname)
+{
+	struct super_block * sb = dir->i_sb;
+	int err = -ENAMETOOLONG;
+	unsigned l = strlen(symname)+1;
+	struct inode * inode;
 
-	अगर (l > sb->s_blocksize)
-		जाओ out;
+	if (l > sb->s_blocksize)
+		goto out;
 
 	err = dquot_initialize(dir);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	inode = ext2_new_inode (dir, S_IFLNK | S_IRWXUGO, &dentry->d_name);
 	err = PTR_ERR(inode);
-	अगर (IS_ERR(inode))
-		जाओ out;
+	if (IS_ERR(inode))
+		goto out;
 
-	अगर (l > माप (EXT2_I(inode)->i_data)) अणु
+	if (l > sizeof (EXT2_I(inode)->i_data)) {
 		/* slow symlink */
 		inode->i_op = &ext2_symlink_inode_operations;
 		inode_nohighmem(inode);
-		अगर (test_opt(inode->i_sb, NOBH))
+		if (test_opt(inode->i_sb, NOBH))
 			inode->i_mapping->a_ops = &ext2_nobh_aops;
-		अन्यथा
+		else
 			inode->i_mapping->a_ops = &ext2_aops;
 		err = page_symlink(inode, symname, l);
-		अगर (err)
-			जाओ out_fail;
-	पूर्ण अन्यथा अणु
+		if (err)
+			goto out_fail;
+	} else {
 		/* fast symlink */
 		inode->i_op = &ext2_fast_symlink_inode_operations;
-		inode->i_link = (अक्षर*)EXT2_I(inode)->i_data;
-		स_नकल(inode->i_link, symname, l);
+		inode->i_link = (char*)EXT2_I(inode)->i_data;
+		memcpy(inode->i_link, symname, l);
 		inode->i_size = l-1;
-	पूर्ण
+	}
 	mark_inode_dirty(inode);
 
 	err = ext2_add_nondir(dentry, inode);
 out:
-	वापस err;
+	return err;
 
 out_fail:
 	inode_dec_link_count(inode);
 	discard_new_inode(inode);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-अटल पूर्णांक ext2_link (काष्ठा dentry * old_dentry, काष्ठा inode * dir,
-	काष्ठा dentry *dentry)
-अणु
-	काष्ठा inode *inode = d_inode(old_dentry);
-	पूर्णांक err;
+static int ext2_link (struct dentry * old_dentry, struct inode * dir,
+	struct dentry *dentry)
+{
+	struct inode *inode = d_inode(old_dentry);
+	int err;
 
 	err = dquot_initialize(dir);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	inode->i_स_समय = current_समय(inode);
+	inode->i_ctime = current_time(inode);
 	inode_inc_link_count(inode);
 	ihold(inode);
 
 	err = ext2_add_link(dentry, inode);
-	अगर (!err) अणु
+	if (!err) {
 		d_instantiate(dentry, inode);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	inode_dec_link_count(inode);
 	iput(inode);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ext2_सूची_गढ़ो(काष्ठा user_namespace * mnt_userns,
-	काष्ठा inode * dir, काष्ठा dentry * dentry, umode_t mode)
-अणु
-	काष्ठा inode * inode;
-	पूर्णांक err;
+static int ext2_mkdir(struct user_namespace * mnt_userns,
+	struct inode * dir, struct dentry * dentry, umode_t mode)
+{
+	struct inode * inode;
+	int err;
 
 	err = dquot_initialize(dir);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	inode_inc_link_count(dir);
 
-	inode = ext2_new_inode(dir, S_IFसूची | mode, &dentry->d_name);
+	inode = ext2_new_inode(dir, S_IFDIR | mode, &dentry->d_name);
 	err = PTR_ERR(inode);
-	अगर (IS_ERR(inode))
-		जाओ out_dir;
+	if (IS_ERR(inode))
+		goto out_dir;
 
 	inode->i_op = &ext2_dir_inode_operations;
 	inode->i_fop = &ext2_dir_operations;
-	अगर (test_opt(inode->i_sb, NOBH))
+	if (test_opt(inode->i_sb, NOBH))
 		inode->i_mapping->a_ops = &ext2_nobh_aops;
-	अन्यथा
+	else
 		inode->i_mapping->a_ops = &ext2_aops;
 
 	inode_inc_link_count(inode);
 
 	err = ext2_make_empty(inode, dir);
-	अगर (err)
-		जाओ out_fail;
+	if (err)
+		goto out_fail;
 
 	err = ext2_add_link(dentry, inode);
-	अगर (err)
-		जाओ out_fail;
+	if (err)
+		goto out_fail;
 
 	d_instantiate_new(dentry, inode);
 out:
-	वापस err;
+	return err;
 
 out_fail:
 	inode_dec_link_count(inode);
@@ -273,178 +272,178 @@ out_fail:
 	discard_new_inode(inode);
 out_dir:
 	inode_dec_link_count(dir);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-अटल पूर्णांक ext2_unlink(काष्ठा inode * dir, काष्ठा dentry *dentry)
-अणु
-	काष्ठा inode * inode = d_inode(dentry);
-	काष्ठा ext2_dir_entry_2 * de;
-	काष्ठा page * page;
-	व्योम *page_addr;
-	पूर्णांक err;
+static int ext2_unlink(struct inode * dir, struct dentry *dentry)
+{
+	struct inode * inode = d_inode(dentry);
+	struct ext2_dir_entry_2 * de;
+	struct page * page;
+	void *page_addr;
+	int err;
 
 	err = dquot_initialize(dir);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	de = ext2_find_entry(dir, &dentry->d_name, &page, &page_addr);
-	अगर (IS_ERR(de)) अणु
+	if (IS_ERR(de)) {
 		err = PTR_ERR(de);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = ext2_delete_entry (de, page);
 	ext2_put_page(page, page_addr);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	inode->i_स_समय = dir->i_स_समय;
+	inode->i_ctime = dir->i_ctime;
 	inode_dec_link_count(inode);
 	err = 0;
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ext2_सूची_हटाओ (काष्ठा inode * dir, काष्ठा dentry *dentry)
-अणु
-	काष्ठा inode * inode = d_inode(dentry);
-	पूर्णांक err = -ENOTEMPTY;
+static int ext2_rmdir (struct inode * dir, struct dentry *dentry)
+{
+	struct inode * inode = d_inode(dentry);
+	int err = -ENOTEMPTY;
 
-	अगर (ext2_empty_dir(inode)) अणु
+	if (ext2_empty_dir(inode)) {
 		err = ext2_unlink(dir, dentry);
-		अगर (!err) अणु
+		if (!err) {
 			inode->i_size = 0;
 			inode_dec_link_count(inode);
 			inode_dec_link_count(dir);
-		पूर्ण
-	पूर्ण
-	वापस err;
-पूर्ण
+		}
+	}
+	return err;
+}
 
-अटल पूर्णांक ext2_नाम (काष्ठा user_namespace * mnt_userns,
-			काष्ठा inode * old_dir, काष्ठा dentry * old_dentry,
-			काष्ठा inode * new_dir, काष्ठा dentry * new_dentry,
-			अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा inode * old_inode = d_inode(old_dentry);
-	काष्ठा inode * new_inode = d_inode(new_dentry);
-	काष्ठा page * dir_page = शून्य;
-	व्योम *dir_page_addr;
-	काष्ठा ext2_dir_entry_2 * dir_de = शून्य;
-	काष्ठा page * old_page;
-	व्योम *old_page_addr;
-	काष्ठा ext2_dir_entry_2 * old_de;
-	पूर्णांक err;
+static int ext2_rename (struct user_namespace * mnt_userns,
+			struct inode * old_dir, struct dentry * old_dentry,
+			struct inode * new_dir, struct dentry * new_dentry,
+			unsigned int flags)
+{
+	struct inode * old_inode = d_inode(old_dentry);
+	struct inode * new_inode = d_inode(new_dentry);
+	struct page * dir_page = NULL;
+	void *dir_page_addr;
+	struct ext2_dir_entry_2 * dir_de = NULL;
+	struct page * old_page;
+	void *old_page_addr;
+	struct ext2_dir_entry_2 * old_de;
+	int err;
 
-	अगर (flags & ~RENAME_NOREPLACE)
-		वापस -EINVAL;
+	if (flags & ~RENAME_NOREPLACE)
+		return -EINVAL;
 
 	err = dquot_initialize(old_dir);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	err = dquot_initialize(new_dir);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	old_de = ext2_find_entry(old_dir, &old_dentry->d_name, &old_page,
 				 &old_page_addr);
-	अगर (IS_ERR(old_de)) अणु
+	if (IS_ERR(old_de)) {
 		err = PTR_ERR(old_de);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (S_ISसूची(old_inode->i_mode)) अणु
+	if (S_ISDIR(old_inode->i_mode)) {
 		err = -EIO;
-		dir_de = ext2_करोtकरोt(old_inode, &dir_page, &dir_page_addr);
-		अगर (!dir_de)
-			जाओ out_old;
-	पूर्ण
+		dir_de = ext2_dotdot(old_inode, &dir_page, &dir_page_addr);
+		if (!dir_de)
+			goto out_old;
+	}
 
-	अगर (new_inode) अणु
-		व्योम *page_addr;
-		काष्ठा page *new_page;
-		काष्ठा ext2_dir_entry_2 *new_de;
+	if (new_inode) {
+		void *page_addr;
+		struct page *new_page;
+		struct ext2_dir_entry_2 *new_de;
 
 		err = -ENOTEMPTY;
-		अगर (dir_de && !ext2_empty_dir (new_inode))
-			जाओ out_dir;
+		if (dir_de && !ext2_empty_dir (new_inode))
+			goto out_dir;
 
 		new_de = ext2_find_entry(new_dir, &new_dentry->d_name,
 					 &new_page, &page_addr);
-		अगर (IS_ERR(new_de)) अणु
+		if (IS_ERR(new_de)) {
 			err = PTR_ERR(new_de);
-			जाओ out_dir;
-		पूर्ण
+			goto out_dir;
+		}
 		ext2_set_link(new_dir, new_de, new_page, page_addr, old_inode, 1);
 		ext2_put_page(new_page, page_addr);
-		new_inode->i_स_समय = current_समय(new_inode);
-		अगर (dir_de)
+		new_inode->i_ctime = current_time(new_inode);
+		if (dir_de)
 			drop_nlink(new_inode);
 		inode_dec_link_count(new_inode);
-	पूर्ण अन्यथा अणु
+	} else {
 		err = ext2_add_link(new_dentry, old_inode);
-		अगर (err)
-			जाओ out_dir;
-		अगर (dir_de)
+		if (err)
+			goto out_dir;
+		if (dir_de)
 			inode_inc_link_count(new_dir);
-	पूर्ण
+	}
 
 	/*
-	 * Like most other Unix प्रणालीs, set the स_समय क्रम inodes on a
- 	 * नाम.
+	 * Like most other Unix systems, set the ctime for inodes on a
+ 	 * rename.
 	 */
-	old_inode->i_स_समय = current_समय(old_inode);
+	old_inode->i_ctime = current_time(old_inode);
 	mark_inode_dirty(old_inode);
 
 	ext2_delete_entry(old_de, old_page);
 
-	अगर (dir_de) अणु
-		अगर (old_dir != new_dir)
+	if (dir_de) {
+		if (old_dir != new_dir)
 			ext2_set_link(old_inode, dir_de, dir_page,
 				      dir_page_addr, new_dir, 0);
 
 		ext2_put_page(dir_page, dir_page_addr);
 		inode_dec_link_count(old_dir);
-	पूर्ण
+	}
 
 	ext2_put_page(old_page, old_page_addr);
-	वापस 0;
+	return 0;
 
 out_dir:
-	अगर (dir_de)
+	if (dir_de)
 		ext2_put_page(dir_page, dir_page_addr);
 out_old:
 	ext2_put_page(old_page, old_page_addr);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-स्थिर काष्ठा inode_operations ext2_dir_inode_operations = अणु
+const struct inode_operations ext2_dir_inode_operations = {
 	.create		= ext2_create,
 	.lookup		= ext2_lookup,
 	.link		= ext2_link,
 	.unlink		= ext2_unlink,
 	.symlink	= ext2_symlink,
-	.सूची_गढ़ो		= ext2_सूची_गढ़ो,
-	.सूची_हटाओ		= ext2_सूची_हटाओ,
+	.mkdir		= ext2_mkdir,
+	.rmdir		= ext2_rmdir,
 	.mknod		= ext2_mknod,
-	.नाम		= ext2_नाम,
+	.rename		= ext2_rename,
 	.listxattr	= ext2_listxattr,
 	.getattr	= ext2_getattr,
 	.setattr	= ext2_setattr,
 	.get_acl	= ext2_get_acl,
 	.set_acl	= ext2_set_acl,
-	.क्षणिक_ख	= ext2_क्षणिक_ख,
+	.tmpfile	= ext2_tmpfile,
 	.fileattr_get	= ext2_fileattr_get,
 	.fileattr_set	= ext2_fileattr_set,
-पूर्ण;
+};
 
-स्थिर काष्ठा inode_operations ext2_special_inode_operations = अणु
+const struct inode_operations ext2_special_inode_operations = {
 	.listxattr	= ext2_listxattr,
 	.getattr	= ext2_getattr,
 	.setattr	= ext2_setattr,
 	.get_acl	= ext2_get_acl,
 	.set_acl	= ext2_set_acl,
-पूर्ण;
+};

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/drivers/pcmcia/pxa2xx_lubbock.c
  *
@@ -9,42 +8,42 @@
  *
  * Originally based upon linux/drivers/pcmcia/sa1100_neponset.c
  *
- * Lubbock PCMCIA specअगरic routines.
+ * Lubbock PCMCIA specific routines.
  */
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/device.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/delay.h>
 
-#समावेश <mach/hardware.h>
-#समावेश <यंत्र/hardware/sa1111.h>
-#समावेश <यंत्र/mach-types.h>
+#include <mach/hardware.h>
+#include <asm/hardware/sa1111.h>
+#include <asm/mach-types.h>
 
-#समावेश "sa1111_generic.h"
-#समावेश "max1600.h"
+#include "sa1111_generic.h"
+#include "max1600.h"
 
-अटल पूर्णांक lubbock_pcmcia_hw_init(काष्ठा soc_pcmcia_socket *skt)
-अणु
-	काष्ठा max1600 *m;
-	पूर्णांक ret;
+static int lubbock_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
+{
+	struct max1600 *m;
+	int ret;
 
 	ret = max1600_init(skt->socket.dev.parent, &m,
 			   skt->nr ? MAX1600_CHAN_B : MAX1600_CHAN_A,
 			   MAX1600_CODE_HIGH);
-	अगर (ret == 0)
+	if (ret == 0)
 		skt->driver_data = m;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-lubbock_pcmcia_configure_socket(काष्ठा soc_pcmcia_socket *skt,
-				स्थिर socket_state_t *state)
-अणु
-	काष्ठा max1600 *m = skt->driver_data;
-	पूर्णांक ret = 0;
+static int
+lubbock_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
+				const socket_state_t *state)
+{
+	struct max1600 *m = skt->driver_data;
+	int ret = 0;
 
 	/* Lubbock uses the Maxim MAX1602, with the following connections:
 	 *
@@ -77,39 +76,39 @@ lubbock_pcmcia_configure_socket(काष्ठा soc_pcmcia_socket *skt,
 	 */
 
  again:
-	चयन (skt->nr) अणु
-	हाल 0:
-	हाल 1:
-		अवरोध;
+	switch (skt->nr) {
+	case 0:
+	case 1:
+		break;
 
-	शेष:
+	default:
 		ret = -1;
-	पूर्ण
+	}
 
-	अगर (ret == 0)
+	if (ret == 0)
 		ret = sa1111_pcmcia_configure_socket(skt, state);
-	अगर (ret == 0)
+	if (ret == 0)
 		ret = max1600_configure(m, state->Vcc, state->Vpp);
 
-#अगर 1
-	अगर (ret == 0 && state->Vcc == 33) अणु
-		काष्ठा pcmcia_state new_state;
+#if 1
+	if (ret == 0 && state->Vcc == 33) {
+		struct pcmcia_state new_state;
 
 		/*
 		 * HACK ALERT:
-		 * We can't sense the voltage properly on Lubbock beक्रमe
-		 * actually applying some घातer to the socket (catch 22).
+		 * We can't sense the voltage properly on Lubbock before
+		 * actually applying some power to the socket (catch 22).
 		 * Resense the socket Voltage Sense pins after applying
-		 * socket घातer.
+		 * socket power.
 		 *
-		 * Note: It takes about 2.5ms क्रम the MAX1602 VCC output
+		 * Note: It takes about 2.5ms for the MAX1602 VCC output
 		 * to rise.
 		 */
 		mdelay(3);
 
 		sa1111_pcmcia_socket_state(skt, &new_state);
 
-		अगर (!new_state.vs_3v && !new_state.vs_Xv) अणु
+		if (!new_state.vs_3v && !new_state.vs_Xv) {
 			/*
 			 * Switch to 5V,  Configure socket with 5V voltage
 			 */
@@ -121,37 +120,37 @@ lubbock_pcmcia_configure_socket(काष्ठा soc_pcmcia_socket *skt,
 			mdelay(100);
 
 			/*
-			 * We need to hack around the स्थिर qualअगरier as
+			 * We need to hack around the const qualifier as
 			 * well to keep this ugly workaround localized and
-			 * not क्रमce it to the rest of the code. Barf bags
+			 * not force it to the rest of the code. Barf bags
 			 * available in the seat pocket in front of you!
 			 */
 			((socket_state_t *)state)->Vcc = 50;
 			((socket_state_t *)state)->Vpp = 50;
-			जाओ again;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+			goto again;
+		}
+	}
+#endif
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा pcmcia_low_level lubbock_pcmcia_ops = अणु
+static struct pcmcia_low_level lubbock_pcmcia_ops = {
 	.owner			= THIS_MODULE,
 	.hw_init		= lubbock_pcmcia_hw_init,
 	.configure_socket	= lubbock_pcmcia_configure_socket,
 	.first			= 0,
 	.nr			= 2,
-पूर्ण;
+};
 
-#समावेश "pxa2xx_base.h"
+#include "pxa2xx_base.h"
 
-पूर्णांक pcmcia_lubbock_init(काष्ठा sa1111_dev *sadev)
-अणु
+int pcmcia_lubbock_init(struct sa1111_dev *sadev)
+{
 	pxa2xx_drv_pcmcia_ops(&lubbock_pcmcia_ops);
 	pxa2xx_configure_sockets(&sadev->dev, &lubbock_pcmcia_ops);
-	वापस sa1111_pcmcia_add(sadev, &lubbock_pcmcia_ops,
+	return sa1111_pcmcia_add(sadev, &lubbock_pcmcia_ops,
 				 pxa2xx_drv_pcmcia_add_one);
-पूर्ण
+}
 
 MODULE_LICENSE("GPL");

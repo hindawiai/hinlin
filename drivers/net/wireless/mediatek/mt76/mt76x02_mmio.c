@@ -1,36 +1,35 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  * Copyright (C) 2018 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/irq.h>
+#include <linux/kernel.h>
+#include <linux/irq.h>
 
-#समावेश "mt76x02.h"
-#समावेश "mt76x02_mcu.h"
-#समावेश "trace.h"
+#include "mt76x02.h"
+#include "mt76x02_mcu.h"
+#include "trace.h"
 
-अटल व्योम mt76x02_pre_tbtt_tasklet(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा mt76x02_dev *dev = from_tasklet(dev, t, mt76.pre_tbtt_tasklet);
-	काष्ठा mt76_dev *mdev = &dev->mt76;
-	काष्ठा mt76_queue *q = dev->mphy.q_tx[MT_TXQ_PSD];
-	काष्ठा beacon_bc_data data = अणुपूर्ण;
-	काष्ठा sk_buff *skb;
-	पूर्णांक i;
+static void mt76x02_pre_tbtt_tasklet(struct tasklet_struct *t)
+{
+	struct mt76x02_dev *dev = from_tasklet(dev, t, mt76.pre_tbtt_tasklet);
+	struct mt76_dev *mdev = &dev->mt76;
+	struct mt76_queue *q = dev->mphy.q_tx[MT_TXQ_PSD];
+	struct beacon_bc_data data = {};
+	struct sk_buff *skb;
+	int i;
 
-	अगर (mt76_hw(dev)->conf.flags & IEEE80211_CONF_OFFCHANNEL)
-		वापस;
+	if (mt76_hw(dev)->conf.flags & IEEE80211_CONF_OFFCHANNEL)
+		return;
 
-	mt76x02_resync_beacon_समयr(dev);
+	mt76x02_resync_beacon_timer(dev);
 
 	/* Prevent corrupt transmissions during update */
 	mt76_set(dev, MT_BCN_BYPASS_MASK, 0xffff);
 	dev->beacon_data_count = 0;
 
-	ieee80211_iterate_active_पूर्णांकerfaces_atomic(mt76_hw(dev),
+	ieee80211_iterate_active_interfaces_atomic(mt76_hw(dev),
 		IEEE80211_IFACE_ITER_RESUME_ALL,
 		mt76x02_update_beacon_iter, dev);
 
@@ -39,61 +38,61 @@
 
 	mt76_csa_check(mdev);
 
-	अगर (mdev->csa_complete)
-		वापस;
+	if (mdev->csa_complete)
+		return;
 
 	mt76x02_enqueue_buffered_bc(dev, &data, 8);
 
-	अगर (!skb_queue_len(&data.q))
-		वापस;
+	if (!skb_queue_len(&data.q))
+		return;
 
-	क्रम (i = 0; i < ARRAY_SIZE(data.tail); i++) अणु
-		अगर (!data.tail[i])
-			जारी;
+	for (i = 0; i < ARRAY_SIZE(data.tail); i++) {
+		if (!data.tail[i])
+			continue;
 
 		mt76_skb_set_moredata(data.tail[i], false);
-	पूर्ण
+	}
 
 	spin_lock_bh(&q->lock);
-	जबतक ((skb = __skb_dequeue(&data.q)) != शून्य) अणु
-		काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-		काष्ठा ieee80211_vअगर *vअगर = info->control.vअगर;
-		काष्ठा mt76x02_vअगर *mvअगर = (काष्ठा mt76x02_vअगर *)vअगर->drv_priv;
+	while ((skb = __skb_dequeue(&data.q)) != NULL) {
+		struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+		struct ieee80211_vif *vif = info->control.vif;
+		struct mt76x02_vif *mvif = (struct mt76x02_vif *)vif->drv_priv;
 
-		mt76_tx_queue_skb(dev, q, skb, &mvअगर->group_wcid, शून्य);
-	पूर्ण
+		mt76_tx_queue_skb(dev, q, skb, &mvif->group_wcid, NULL);
+	}
 	spin_unlock_bh(&q->lock);
-पूर्ण
+}
 
-अटल व्योम mt76x02e_pre_tbtt_enable(काष्ठा mt76x02_dev *dev, bool en)
-अणु
-	अगर (en)
+static void mt76x02e_pre_tbtt_enable(struct mt76x02_dev *dev, bool en)
+{
+	if (en)
 		tasklet_enable(&dev->mt76.pre_tbtt_tasklet);
-	अन्यथा
+	else
 		tasklet_disable(&dev->mt76.pre_tbtt_tasklet);
-पूर्ण
+}
 
-अटल व्योम mt76x02e_beacon_enable(काष्ठा mt76x02_dev *dev, bool en)
-अणु
+static void mt76x02e_beacon_enable(struct mt76x02_dev *dev, bool en)
+{
 	mt76_rmw_field(dev, MT_INT_TIMER_EN, MT_INT_TIMER_EN_PRE_TBTT_EN, en);
-	अगर (en)
+	if (en)
 		mt76x02_irq_enable(dev, MT_INT_PRE_TBTT | MT_INT_TBTT);
-	अन्यथा
+	else
 		mt76x02_irq_disable(dev, MT_INT_PRE_TBTT | MT_INT_TBTT);
-पूर्ण
+}
 
-व्योम mt76x02e_init_beacon_config(काष्ठा mt76x02_dev *dev)
-अणु
-	अटल स्थिर काष्ठा mt76x02_beacon_ops beacon_ops = अणु
+void mt76x02e_init_beacon_config(struct mt76x02_dev *dev)
+{
+	static const struct mt76x02_beacon_ops beacon_ops = {
 		.nslots = 8,
 		.slot_size = 1024,
 		.pre_tbtt_enable = mt76x02e_pre_tbtt_enable,
 		.beacon_enable = mt76x02e_beacon_enable,
-	पूर्ण;
+	};
 
 	dev->beacon_ops = &beacon_ops;
 
-	/* Fire a pre-TBTT पूर्णांकerrupt 8 ms beक्रमe TBTT */
+	/* Fire a pre-TBTT interrupt 8 ms before TBTT */
 	mt76_rmw_field(dev, MT_INT_TIMER_CFG, MT_INT_TIMER_CFG_PRE_TBTT,
 		       8 << 4);
 	mt76_rmw_field(dev, MT_INT_TIMER_CFG, MT_INT_TIMER_CFG_GP_TIMER,
@@ -101,111 +100,111 @@
 	mt76_wr(dev, MT_INT_TIMER_EN, 0);
 
 	mt76x02_init_beacon_config(dev);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(mt76x02e_init_beacon_config);
 
-अटल पूर्णांक
-mt76x02_init_rx_queue(काष्ठा mt76x02_dev *dev, काष्ठा mt76_queue *q,
-		      पूर्णांक idx, पूर्णांक n_desc, पूर्णांक bufsize)
-अणु
-	पूर्णांक err;
+static int
+mt76x02_init_rx_queue(struct mt76x02_dev *dev, struct mt76_queue *q,
+		      int idx, int n_desc, int bufsize)
+{
+	int err;
 
 	err = mt76_queue_alloc(dev, q, idx, n_desc, bufsize,
 			       MT_RX_RING_BASE);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	mt76x02_irq_enable(dev, MT_INT_RX_DONE(idx));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mt76x02_process_tx_status_fअगरo(काष्ठा mt76x02_dev *dev)
-अणु
-	काष्ठा mt76x02_tx_status stat;
+static void mt76x02_process_tx_status_fifo(struct mt76x02_dev *dev)
+{
+	struct mt76x02_tx_status stat;
 	u8 update = 1;
 
-	जबतक (kfअगरo_get(&dev->txstatus_fअगरo, &stat))
+	while (kfifo_get(&dev->txstatus_fifo, &stat))
 		mt76x02_send_tx_status(dev, &stat, &update);
-पूर्ण
+}
 
-अटल व्योम mt76x02_tx_worker(काष्ठा mt76_worker *w)
-अणु
-	काष्ठा mt76x02_dev *dev;
+static void mt76x02_tx_worker(struct mt76_worker *w)
+{
+	struct mt76x02_dev *dev;
 
-	dev = container_of(w, काष्ठा mt76x02_dev, mt76.tx_worker);
+	dev = container_of(w, struct mt76x02_dev, mt76.tx_worker);
 
 	mt76x02_mac_poll_tx_status(dev, false);
-	mt76x02_process_tx_status_fअगरo(dev);
+	mt76x02_process_tx_status_fifo(dev);
 
 	mt76_txq_schedule_all(&dev->mphy);
-पूर्ण
+}
 
-अटल पूर्णांक mt76x02_poll_tx(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
-अणु
-	काष्ठा mt76x02_dev *dev = container_of(napi, काष्ठा mt76x02_dev,
+static int mt76x02_poll_tx(struct napi_struct *napi, int budget)
+{
+	struct mt76x02_dev *dev = container_of(napi, struct mt76x02_dev,
 					       mt76.tx_napi);
-	पूर्णांक i;
+	int i;
 
 	mt76x02_mac_poll_tx_status(dev, false);
 
 	mt76_queue_tx_cleanup(dev, dev->mt76.q_mcu[MT_MCUQ_WM], false);
-	क्रम (i = MT_TXQ_PSD; i >= 0; i--)
+	for (i = MT_TXQ_PSD; i >= 0; i--)
 		mt76_queue_tx_cleanup(dev, dev->mphy.q_tx[i], false);
 
-	अगर (napi_complete_करोne(napi, 0))
+	if (napi_complete_done(napi, 0))
 		mt76x02_irq_enable(dev, MT_INT_TX_DONE_ALL);
 
 	mt76_queue_tx_cleanup(dev, dev->mt76.q_mcu[MT_MCUQ_WM], false);
-	क्रम (i = MT_TXQ_PSD; i >= 0; i--)
+	for (i = MT_TXQ_PSD; i >= 0; i--)
 		mt76_queue_tx_cleanup(dev, dev->mphy.q_tx[i], false);
 
 	mt76_worker_schedule(&dev->mt76.tx_worker);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mt76x02_dma_init(काष्ठा mt76x02_dev *dev)
-अणु
-	काष्ठा mt76_txwi_cache __maybe_unused *t;
-	पूर्णांक i, ret, fअगरo_size;
-	काष्ठा mt76_queue *q;
-	व्योम *status_fअगरo;
+int mt76x02_dma_init(struct mt76x02_dev *dev)
+{
+	struct mt76_txwi_cache __maybe_unused *t;
+	int i, ret, fifo_size;
+	struct mt76_queue *q;
+	void *status_fifo;
 
-	BUILD_BUG_ON(माप(काष्ठा mt76x02_rxwi) > MT_RX_HEADROOM);
+	BUILD_BUG_ON(sizeof(struct mt76x02_rxwi) > MT_RX_HEADROOM);
 
-	fअगरo_size = roundup_घात_of_two(32 * माप(काष्ठा mt76x02_tx_status));
-	status_fअगरo = devm_kzalloc(dev->mt76.dev, fअगरo_size, GFP_KERNEL);
-	अगर (!status_fअगरo)
-		वापस -ENOMEM;
+	fifo_size = roundup_pow_of_two(32 * sizeof(struct mt76x02_tx_status));
+	status_fifo = devm_kzalloc(dev->mt76.dev, fifo_size, GFP_KERNEL);
+	if (!status_fifo)
+		return -ENOMEM;
 
 	dev->mt76.tx_worker.fn = mt76x02_tx_worker;
 	tasklet_setup(&dev->mt76.pre_tbtt_tasklet, mt76x02_pre_tbtt_tasklet);
 
-	spin_lock_init(&dev->txstatus_fअगरo_lock);
-	kfअगरo_init(&dev->txstatus_fअगरo, status_fअगरo, fअगरo_size);
+	spin_lock_init(&dev->txstatus_fifo_lock);
+	kfifo_init(&dev->txstatus_fifo, status_fifo, fifo_size);
 
 	mt76_dma_attach(&dev->mt76);
 
 	mt76_wr(dev, MT_WPDMA_RST_IDX, ~0);
 
-	क्रम (i = 0; i < IEEE80211_NUM_ACS; i++) अणु
+	for (i = 0; i < IEEE80211_NUM_ACS; i++) {
 		ret = mt76_init_tx_queue(&dev->mphy, i, mt76_ac_to_hwq(i),
 					 MT76x02_TX_RING_SIZE,
 					 MT_TX_RING_BASE);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	ret = mt76_init_tx_queue(&dev->mphy, MT_TXQ_PSD, MT_TX_HW_QUEUE_MGMT,
 				 MT76x02_PSD_RING_SIZE, MT_TX_RING_BASE);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = mt76_init_mcu_queue(&dev->mt76, MT_MCUQ_WM, MT_TX_HW_QUEUE_MCU,
 				  MT_MCU_RING_SIZE, MT_TX_RING_BASE);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mt76x02_irq_enable(dev,
 			   MT_INT_TX_DONE(IEEE80211_AC_VO) |
@@ -217,93 +216,93 @@ mt76x02_init_rx_queue(काष्ठा mt76x02_dev *dev, काष्ठा mt
 
 	ret = mt76x02_init_rx_queue(dev, &dev->mt76.q_rx[MT_RXQ_MCU], 1,
 				    MT_MCU_RING_SIZE, MT_RX_BUF_SIZE);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	q = &dev->mt76.q_rx[MT_RXQ_MAIN];
-	q->buf_offset = MT_RX_HEADROOM - माप(काष्ठा mt76x02_rxwi);
+	q->buf_offset = MT_RX_HEADROOM - sizeof(struct mt76x02_rxwi);
 	ret = mt76x02_init_rx_queue(dev, q, 0, MT76X02_RX_RING_SIZE,
 				    MT_RX_BUF_SIZE);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = mt76_init_queues(dev, mt76_dma_rx_poll);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	netअगर_tx_napi_add(&dev->mt76.tx_napi_dev, &dev->mt76.tx_napi,
+	netif_tx_napi_add(&dev->mt76.tx_napi_dev, &dev->mt76.tx_napi,
 			  mt76x02_poll_tx, NAPI_POLL_WEIGHT);
 	napi_enable(&dev->mt76.tx_napi);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(mt76x02_dma_init);
 
-व्योम mt76x02_rx_poll_complete(काष्ठा mt76_dev *mdev, क्रमागत mt76_rxq_id q)
-अणु
-	काष्ठा mt76x02_dev *dev;
+void mt76x02_rx_poll_complete(struct mt76_dev *mdev, enum mt76_rxq_id q)
+{
+	struct mt76x02_dev *dev;
 
-	dev = container_of(mdev, काष्ठा mt76x02_dev, mt76);
+	dev = container_of(mdev, struct mt76x02_dev, mt76);
 	mt76x02_irq_enable(dev, MT_INT_RX_DONE(q));
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(mt76x02_rx_poll_complete);
 
-irqवापस_t mt76x02_irq_handler(पूर्णांक irq, व्योम *dev_instance)
-अणु
-	काष्ठा mt76x02_dev *dev = dev_instance;
-	u32 पूर्णांकr, mask;
+irqreturn_t mt76x02_irq_handler(int irq, void *dev_instance)
+{
+	struct mt76x02_dev *dev = dev_instance;
+	u32 intr, mask;
 
-	पूर्णांकr = mt76_rr(dev, MT_INT_SOURCE_CSR);
-	पूर्णांकr &= dev->mt76.mmio.irqmask;
-	mt76_wr(dev, MT_INT_SOURCE_CSR, पूर्णांकr);
+	intr = mt76_rr(dev, MT_INT_SOURCE_CSR);
+	intr &= dev->mt76.mmio.irqmask;
+	mt76_wr(dev, MT_INT_SOURCE_CSR, intr);
 
-	अगर (!test_bit(MT76_STATE_INITIALIZED, &dev->mphy.state))
-		वापस IRQ_NONE;
+	if (!test_bit(MT76_STATE_INITIALIZED, &dev->mphy.state))
+		return IRQ_NONE;
 
-	trace_dev_irq(&dev->mt76, पूर्णांकr, dev->mt76.mmio.irqmask);
+	trace_dev_irq(&dev->mt76, intr, dev->mt76.mmio.irqmask);
 
-	mask = पूर्णांकr & (MT_INT_RX_DONE_ALL | MT_INT_GPTIMER);
-	अगर (पूर्णांकr & (MT_INT_TX_DONE_ALL | MT_INT_TX_STAT))
+	mask = intr & (MT_INT_RX_DONE_ALL | MT_INT_GPTIMER);
+	if (intr & (MT_INT_TX_DONE_ALL | MT_INT_TX_STAT))
 		mask |= MT_INT_TX_DONE_ALL;
 
 	mt76x02_irq_disable(dev, mask);
 
-	अगर (पूर्णांकr & MT_INT_RX_DONE(0))
+	if (intr & MT_INT_RX_DONE(0))
 		napi_schedule(&dev->mt76.napi[0]);
 
-	अगर (पूर्णांकr & MT_INT_RX_DONE(1))
+	if (intr & MT_INT_RX_DONE(1))
 		napi_schedule(&dev->mt76.napi[1]);
 
-	अगर (पूर्णांकr & MT_INT_PRE_TBTT)
+	if (intr & MT_INT_PRE_TBTT)
 		tasklet_schedule(&dev->mt76.pre_tbtt_tasklet);
 
 	/* send buffered multicast frames now */
-	अगर (पूर्णांकr & MT_INT_TBTT) अणु
-		अगर (dev->mt76.csa_complete)
+	if (intr & MT_INT_TBTT) {
+		if (dev->mt76.csa_complete)
 			mt76_csa_finish(&dev->mt76);
-		अन्यथा
+		else
 			mt76_queue_kick(dev, dev->mphy.q_tx[MT_TXQ_PSD]);
-	पूर्ण
+	}
 
-	अगर (पूर्णांकr & MT_INT_TX_STAT)
+	if (intr & MT_INT_TX_STAT)
 		mt76x02_mac_poll_tx_status(dev, true);
 
-	अगर (पूर्णांकr & (MT_INT_TX_STAT | MT_INT_TX_DONE_ALL))
+	if (intr & (MT_INT_TX_STAT | MT_INT_TX_DONE_ALL))
 		napi_schedule(&dev->mt76.tx_napi);
 
-	अगर (पूर्णांकr & MT_INT_GPTIMER)
+	if (intr & MT_INT_GPTIMER)
 		tasklet_schedule(&dev->dfs_pd.dfs_tasklet);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 EXPORT_SYMBOL_GPL(mt76x02_irq_handler);
 
-अटल व्योम mt76x02_dma_enable(काष्ठा mt76x02_dev *dev)
-अणु
+static void mt76x02_dma_enable(struct mt76x02_dev *dev)
+{
 	u32 val;
 
 	mt76_wr(dev, MT_MAC_SYS_CTRL, MT_MAC_SYS_CTRL_ENABLE_TX);
-	mt76x02_रुको_क्रम_wpdma(&dev->mt76, 1000);
+	mt76x02_wait_for_wpdma(&dev->mt76, 1000);
 	usleep_range(50, 100);
 
 	val = FIELD_PREP(MT_WPDMA_GLO_CFG_DMA_BURST_SIZE, 3) |
@@ -312,10 +311,10 @@ EXPORT_SYMBOL_GPL(mt76x02_irq_handler);
 	mt76_set(dev, MT_WPDMA_GLO_CFG, val);
 	mt76_clear(dev, MT_WPDMA_GLO_CFG,
 		   MT_WPDMA_GLO_CFG_TX_WRITEBACK_DONE);
-पूर्ण
+}
 
-व्योम mt76x02_dma_disable(काष्ठा mt76x02_dev *dev)
-अणु
+void mt76x02_dma_disable(struct mt76x02_dev *dev)
+{
 	u32 val = mt76_rr(dev, MT_WPDMA_GLO_CFG);
 
 	val &= MT_WPDMA_GLO_CFG_DMA_BURST_SIZE |
@@ -323,11 +322,11 @@ EXPORT_SYMBOL_GPL(mt76x02_irq_handler);
 	       MT_WPDMA_GLO_CFG_HDR_SEG_LEN;
 	val |= MT_WPDMA_GLO_CFG_TX_WRITEBACK_DONE;
 	mt76_wr(dev, MT_WPDMA_GLO_CFG, val);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(mt76x02_dma_disable);
 
-व्योम mt76x02_mac_start(काष्ठा mt76x02_dev *dev)
-अणु
+void mt76x02_mac_start(struct mt76x02_dev *dev)
+{
 	mt76x02_mac_reset_counters(dev);
 	mt76x02_dma_enable(dev);
 	mt76_wr(dev, MT_RX_FILTR_CFG, dev->mt76.rxfilter);
@@ -337,95 +336,95 @@ EXPORT_SYMBOL_GPL(mt76x02_dma_disable);
 	mt76x02_irq_enable(dev,
 			   MT_INT_RX_DONE_ALL | MT_INT_TX_DONE_ALL |
 			   MT_INT_TX_STAT);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(mt76x02_mac_start);
 
-अटल bool mt76x02_tx_hang(काष्ठा mt76x02_dev *dev)
-अणु
+static bool mt76x02_tx_hang(struct mt76x02_dev *dev)
+{
 	u32 dma_idx, prev_dma_idx;
-	काष्ठा mt76_queue *q;
-	पूर्णांक i;
+	struct mt76_queue *q;
+	int i;
 
-	क्रम (i = 0; i < 4; i++) अणु
+	for (i = 0; i < 4; i++) {
 		q = dev->mphy.q_tx[i];
 
-		अगर (!q->queued)
-			जारी;
+		if (!q->queued)
+			continue;
 
 		prev_dma_idx = dev->mt76.tx_dma_idx[i];
-		dma_idx = पढ़ोl(&q->regs->dma_idx);
+		dma_idx = readl(&q->regs->dma_idx);
 		dev->mt76.tx_dma_idx[i] = dma_idx;
 
-		अगर (prev_dma_idx == dma_idx)
-			अवरोध;
-	पूर्ण
+		if (prev_dma_idx == dma_idx)
+			break;
+	}
 
-	वापस i < 4;
-पूर्ण
+	return i < 4;
+}
 
-अटल व्योम mt76x02_key_sync(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
-			     काष्ठा ieee80211_sta *sta,
-			     काष्ठा ieee80211_key_conf *key, व्योम *data)
-अणु
-	काष्ठा mt76x02_dev *dev = hw->priv;
-	काष्ठा mt76_wcid *wcid;
+static void mt76x02_key_sync(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+			     struct ieee80211_sta *sta,
+			     struct ieee80211_key_conf *key, void *data)
+{
+	struct mt76x02_dev *dev = hw->priv;
+	struct mt76_wcid *wcid;
 
-	अगर (!sta)
-		वापस;
+	if (!sta)
+		return;
 
-	wcid = (काष्ठा mt76_wcid *)sta->drv_priv;
+	wcid = (struct mt76_wcid *)sta->drv_priv;
 
-	अगर (wcid->hw_key_idx != key->keyidx || wcid->sw_iv)
-		वापस;
+	if (wcid->hw_key_idx != key->keyidx || wcid->sw_iv)
+		return;
 
 	mt76x02_mac_wcid_sync_pn(dev, wcid->idx, key);
-पूर्ण
+}
 
-अटल व्योम mt76x02_reset_state(काष्ठा mt76x02_dev *dev)
-अणु
-	पूर्णांक i;
+static void mt76x02_reset_state(struct mt76x02_dev *dev)
+{
+	int i;
 
-	lockdep_निश्चित_held(&dev->mt76.mutex);
+	lockdep_assert_held(&dev->mt76.mutex);
 
 	clear_bit(MT76_STATE_RUNNING, &dev->mphy.state);
 
-	rcu_पढ़ो_lock();
-	ieee80211_iter_keys_rcu(dev->mt76.hw, शून्य, mt76x02_key_sync, शून्य);
-	rcu_पढ़ो_unlock();
+	rcu_read_lock();
+	ieee80211_iter_keys_rcu(dev->mt76.hw, NULL, mt76x02_key_sync, NULL);
+	rcu_read_unlock();
 
-	क्रम (i = 0; i < MT76x02_N_WCIDS; i++) अणु
-		काष्ठा ieee80211_sta *sta;
-		काष्ठा ieee80211_vअगर *vअगर;
-		काष्ठा mt76x02_sta *msta;
-		काष्ठा mt76_wcid *wcid;
-		व्योम *priv;
+	for (i = 0; i < MT76x02_N_WCIDS; i++) {
+		struct ieee80211_sta *sta;
+		struct ieee80211_vif *vif;
+		struct mt76x02_sta *msta;
+		struct mt76_wcid *wcid;
+		void *priv;
 
-		wcid = rcu_dereference_रक्षित(dev->mt76.wcid[i],
+		wcid = rcu_dereference_protected(dev->mt76.wcid[i],
 					lockdep_is_held(&dev->mt76.mutex));
-		अगर (!wcid)
-			जारी;
+		if (!wcid)
+			continue;
 
-		rcu_assign_poपूर्णांकer(dev->mt76.wcid[i], शून्य);
+		rcu_assign_pointer(dev->mt76.wcid[i], NULL);
 
-		priv = msta = container_of(wcid, काष्ठा mt76x02_sta, wcid);
-		sta = container_of(priv, काष्ठा ieee80211_sta, drv_priv);
+		priv = msta = container_of(wcid, struct mt76x02_sta, wcid);
+		sta = container_of(priv, struct ieee80211_sta, drv_priv);
 
-		priv = msta->vअगर;
-		vअगर = container_of(priv, काष्ठा ieee80211_vअगर, drv_priv);
+		priv = msta->vif;
+		vif = container_of(priv, struct ieee80211_vif, drv_priv);
 
-		__mt76_sta_हटाओ(&dev->mt76, vअगर, sta);
-		स_रखो(msta, 0, माप(*msta));
-	पूर्ण
+		__mt76_sta_remove(&dev->mt76, vif, sta);
+		memset(msta, 0, sizeof(*msta));
+	}
 
-	dev->mt76.vअगर_mask = 0;
+	dev->mt76.vif_mask = 0;
 	dev->mt76.beacon_mask = 0;
-पूर्ण
+}
 
-अटल व्योम mt76x02_watchकरोg_reset(काष्ठा mt76x02_dev *dev)
-अणु
+static void mt76x02_watchdog_reset(struct mt76x02_dev *dev)
+{
 	u32 mask = dev->mt76.mmio.irqmask;
 	bool restart = dev->mt76.mcu_ops->mcu_restart;
-	पूर्णांक i;
+	int i;
 
 	ieee80211_stop_queues(dev->mt76.hw);
 	set_bit(MT76_RESET, &dev->mphy.state);
@@ -434,24 +433,24 @@ EXPORT_SYMBOL_GPL(mt76x02_mac_start);
 	mt76_worker_disable(&dev->mt76.tx_worker);
 	napi_disable(&dev->mt76.tx_napi);
 
-	mt76_क्रम_each_q_rx(&dev->mt76, i) अणु
+	mt76_for_each_q_rx(&dev->mt76, i) {
 		napi_disable(&dev->mt76.napi[i]);
-	पूर्ण
+	}
 
 	mutex_lock(&dev->mt76.mutex);
 
-	dev->mcu_समयout = 0;
-	अगर (restart)
+	dev->mcu_timeout = 0;
+	if (restart)
 		mt76x02_reset_state(dev);
 
-	अगर (dev->mt76.beacon_mask)
+	if (dev->mt76.beacon_mask)
 		mt76_clear(dev, MT_BEACON_TIME_CFG,
 			   MT_BEACON_TIME_CFG_BEACON_TX |
 			   MT_BEACON_TIME_CFG_TBTT_EN);
 
 	mt76x02_irq_disable(dev, mask);
 
-	/* perक्रमm device reset */
+	/* perform device reset */
 	mt76_clear(dev, MT_TXOP_CTRL_CFG, MT_TXOP_ED_CCA_EN);
 	mt76_wr(dev, MT_MAC_SYS_CTRL, 0);
 	mt76_clear(dev, MT_WPDMA_GLO_CFG,
@@ -462,25 +461,25 @@ EXPORT_SYMBOL_GPL(mt76x02_mac_start);
 	/* let fw reset DMA */
 	mt76_set(dev, 0x734, 0x3);
 
-	अगर (restart)
+	if (restart)
 		mt76_mcu_restart(dev);
 
 	mt76_queue_tx_cleanup(dev, dev->mt76.q_mcu[MT_MCUQ_WM], true);
-	क्रम (i = 0; i < __MT_TXQ_MAX; i++)
+	for (i = 0; i < __MT_TXQ_MAX; i++)
 		mt76_queue_tx_cleanup(dev, dev->mphy.q_tx[i], true);
 
-	mt76_क्रम_each_q_rx(&dev->mt76, i) अणु
+	mt76_for_each_q_rx(&dev->mt76, i) {
 		mt76_queue_rx_reset(dev, i);
-	पूर्ण
+	}
 
-	mt76_tx_status_check(&dev->mt76, शून्य, true);
+	mt76_tx_status_check(&dev->mt76, NULL, true);
 
 	mt76x02_mac_start(dev);
 
-	अगर (dev->ed_monitor)
+	if (dev->ed_monitor)
 		mt76_set(dev, MT_TXOP_CTRL_CFG, MT_TXOP_ED_CCA_EN);
 
-	अगर (dev->mt76.beacon_mask && !restart)
+	if (dev->mt76.beacon_mask && !restart)
 		mt76_set(dev, MT_BEACON_TIME_CFG,
 			 MT_BEACON_TIME_CFG_BEACON_TX |
 			 MT_BEACON_TIME_CFG_TBTT_EN);
@@ -497,66 +496,66 @@ EXPORT_SYMBOL_GPL(mt76x02_mac_start);
 
 	tasklet_enable(&dev->mt76.pre_tbtt_tasklet);
 
-	mt76_क्रम_each_q_rx(&dev->mt76, i) अणु
+	mt76_for_each_q_rx(&dev->mt76, i) {
 		napi_enable(&dev->mt76.napi[i]);
 		napi_schedule(&dev->mt76.napi[i]);
-	पूर्ण
+	}
 
-	अगर (restart) अणु
+	if (restart) {
 		set_bit(MT76_RESTART, &dev->mphy.state);
 		mt76x02_mcu_function_select(dev, Q_SELECT, 1);
 		ieee80211_restart_hw(dev->mt76.hw);
-	पूर्ण अन्यथा अणु
+	} else {
 		ieee80211_wake_queues(dev->mt76.hw);
 		mt76_txq_schedule_all(&dev->mphy);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम mt76x02_reconfig_complete(काष्ठा ieee80211_hw *hw,
-			       क्रमागत ieee80211_reconfig_type reconfig_type)
-अणु
-	काष्ठा mt76x02_dev *dev = hw->priv;
+void mt76x02_reconfig_complete(struct ieee80211_hw *hw,
+			       enum ieee80211_reconfig_type reconfig_type)
+{
+	struct mt76x02_dev *dev = hw->priv;
 
-	अगर (reconfig_type != IEEE80211_RECONFIG_TYPE_RESTART)
-		वापस;
+	if (reconfig_type != IEEE80211_RECONFIG_TYPE_RESTART)
+		return;
 
 	clear_bit(MT76_RESTART, &dev->mphy.state);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(mt76x02_reconfig_complete);
 
-अटल व्योम mt76x02_check_tx_hang(काष्ठा mt76x02_dev *dev)
-अणु
-	अगर (test_bit(MT76_RESTART, &dev->mphy.state))
-		वापस;
+static void mt76x02_check_tx_hang(struct mt76x02_dev *dev)
+{
+	if (test_bit(MT76_RESTART, &dev->mphy.state))
+		return;
 
-	अगर (mt76x02_tx_hang(dev)) अणु
-		अगर (++dev->tx_hang_check >= MT_TX_HANG_TH)
-			जाओ restart;
-	पूर्ण अन्यथा अणु
+	if (mt76x02_tx_hang(dev)) {
+		if (++dev->tx_hang_check >= MT_TX_HANG_TH)
+			goto restart;
+	} else {
 		dev->tx_hang_check = 0;
-	पूर्ण
+	}
 
-	अगर (dev->mcu_समयout)
-		जाओ restart;
+	if (dev->mcu_timeout)
+		goto restart;
 
-	वापस;
+	return;
 
 restart:
-	mt76x02_watchकरोg_reset(dev);
+	mt76x02_watchdog_reset(dev);
 
 	dev->tx_hang_reset++;
 	dev->tx_hang_check = 0;
-	स_रखो(dev->mt76.tx_dma_idx, 0xff,
-	       माप(dev->mt76.tx_dma_idx));
-पूर्ण
+	memset(dev->mt76.tx_dma_idx, 0xff,
+	       sizeof(dev->mt76.tx_dma_idx));
+}
 
-व्योम mt76x02_wdt_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा mt76x02_dev *dev = container_of(work, काष्ठा mt76x02_dev,
+void mt76x02_wdt_work(struct work_struct *work)
+{
+	struct mt76x02_dev *dev = container_of(work, struct mt76x02_dev,
 					       wdt_work.work);
 
 	mt76x02_check_tx_hang(dev);
 
 	ieee80211_queue_delayed_work(mt76_hw(dev), &dev->wdt_work,
 				     MT_WATCHDOG_TIME);
-पूर्ण
+}

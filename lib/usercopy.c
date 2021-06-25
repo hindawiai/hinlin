@@ -1,50 +1,49 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/bitops.h>
-#समावेश <linux/fault-inject-usercopy.h>
-#समावेश <linux/instrumented.h>
-#समावेश <linux/uaccess.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/bitops.h>
+#include <linux/fault-inject-usercopy.h>
+#include <linux/instrumented.h>
+#include <linux/uaccess.h>
 
 /* out-of-line parts */
 
-#अगर_अघोषित INLINE_COPY_FROM_USER
-अचिन्हित दीर्घ _copy_from_user(व्योम *to, स्थिर व्योम __user *from, अचिन्हित दीर्घ n)
-अणु
-	अचिन्हित दीर्घ res = n;
+#ifndef INLINE_COPY_FROM_USER
+unsigned long _copy_from_user(void *to, const void __user *from, unsigned long n)
+{
+	unsigned long res = n;
 	might_fault();
-	अगर (!should_fail_usercopy() && likely(access_ok(from, n))) अणु
+	if (!should_fail_usercopy() && likely(access_ok(from, n))) {
 		instrument_copy_from_user(to, from, n);
 		res = raw_copy_from_user(to, from, n);
-	पूर्ण
-	अगर (unlikely(res))
-		स_रखो(to + (n - res), 0, res);
-	वापस res;
-पूर्ण
+	}
+	if (unlikely(res))
+		memset(to + (n - res), 0, res);
+	return res;
+}
 EXPORT_SYMBOL(_copy_from_user);
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित INLINE_COPY_TO_USER
-अचिन्हित दीर्घ _copy_to_user(व्योम __user *to, स्थिर व्योम *from, अचिन्हित दीर्घ n)
-अणु
+#ifndef INLINE_COPY_TO_USER
+unsigned long _copy_to_user(void __user *to, const void *from, unsigned long n)
+{
 	might_fault();
-	अगर (should_fail_usercopy())
-		वापस n;
-	अगर (likely(access_ok(to, n))) अणु
+	if (should_fail_usercopy())
+		return n;
+	if (likely(access_ok(to, n))) {
 		instrument_copy_to_user(to, from, n);
 		n = raw_copy_to_user(to, from, n);
-	पूर्ण
-	वापस n;
-पूर्ण
+	}
+	return n;
+}
 EXPORT_SYMBOL(_copy_to_user);
-#पूर्ण_अगर
+#endif
 
 /**
- * check_zeroed_user: check अगर a userspace buffer only contains zero bytes
+ * check_zeroed_user: check if a userspace buffer only contains zero bytes
  * @from: Source address, in userspace.
  * @size: Size of buffer.
  *
- * This is effectively लघुhand क्रम "memchr_inv(from, 0, size) == NULL" क्रम
- * userspace addresses (and is more efficient because we करोn't care where the
+ * This is effectively shorthand for "memchr_inv(from, 0, size) == NULL" for
+ * userspace addresses (and is more efficient because we don't care where the
  * first non-zero byte is).
  *
  * Returns:
@@ -52,42 +51,42 @@ EXPORT_SYMBOL(_copy_to_user);
  *  * 1: The buffer was full of zero bytes.
  *  * -EFAULT: access to userspace failed.
  */
-पूर्णांक check_zeroed_user(स्थिर व्योम __user *from, माप_प्रकार size)
-अणु
-	अचिन्हित दीर्घ val;
-	uपूर्णांकptr_t align = (uपूर्णांकptr_t) from % माप(अचिन्हित दीर्घ);
+int check_zeroed_user(const void __user *from, size_t size)
+{
+	unsigned long val;
+	uintptr_t align = (uintptr_t) from % sizeof(unsigned long);
 
-	अगर (unlikely(size == 0))
-		वापस 1;
+	if (unlikely(size == 0))
+		return 1;
 
 	from -= align;
 	size += align;
 
-	अगर (!user_पढ़ो_access_begin(from, size))
-		वापस -EFAULT;
+	if (!user_read_access_begin(from, size))
+		return -EFAULT;
 
-	unsafe_get_user(val, (अचिन्हित दीर्घ __user *) from, err_fault);
-	अगर (align)
+	unsafe_get_user(val, (unsigned long __user *) from, err_fault);
+	if (align)
 		val &= ~aligned_byte_mask(align);
 
-	जबतक (size > माप(अचिन्हित दीर्घ)) अणु
-		अगर (unlikely(val))
-			जाओ करोne;
+	while (size > sizeof(unsigned long)) {
+		if (unlikely(val))
+			goto done;
 
-		from += माप(अचिन्हित दीर्घ);
-		size -= माप(अचिन्हित दीर्घ);
+		from += sizeof(unsigned long);
+		size -= sizeof(unsigned long);
 
-		unsafe_get_user(val, (अचिन्हित दीर्घ __user *) from, err_fault);
-	पूर्ण
+		unsafe_get_user(val, (unsigned long __user *) from, err_fault);
+	}
 
-	अगर (size < माप(अचिन्हित दीर्घ))
+	if (size < sizeof(unsigned long))
 		val &= aligned_byte_mask(size);
 
-करोne:
-	user_पढ़ो_access_end();
-	वापस (val == 0);
+done:
+	user_read_access_end();
+	return (val == 0);
 err_fault:
-	user_पढ़ो_access_end();
-	वापस -EFAULT;
-पूर्ण
+	user_read_access_end();
+	return -EFAULT;
+}
 EXPORT_SYMBOL(check_zeroed_user);

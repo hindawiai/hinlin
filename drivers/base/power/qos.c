@@ -1,770 +1,769 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Devices PM QoS स्थिरraपूर्णांकs management
+ * Devices PM QoS constraints management
  *
  * Copyright (C) 2011 Texas Instruments, Inc.
  *
- * This module exposes the पूर्णांकerface to kernel space क्रम specअगरying
- * per-device PM QoS dependencies. It provides infraकाष्ठाure क्रम registration
+ * This module exposes the interface to kernel space for specifying
+ * per-device PM QoS dependencies. It provides infrastructure for registration
  * of:
  *
- * Dependents on a QoS value : रेजिस्टर requests
- * Watchers of QoS value : get notअगरied when target QoS value changes
+ * Dependents on a QoS value : register requests
+ * Watchers of QoS value : get notified when target QoS value changes
  *
- * This QoS design is best efक्रमt based. Dependents रेजिस्टर their QoS needs.
- * Watchers रेजिस्टर to keep track of the current QoS needs of the प्रणाली.
- * Watchers can रेजिस्टर a per-device notअगरication callback using the
- * dev_pm_qos_*_notअगरier API. The notअगरication chain data is stored in the
- * per-device स्थिरraपूर्णांक data काष्ठा.
+ * This QoS design is best effort based. Dependents register their QoS needs.
+ * Watchers register to keep track of the current QoS needs of the system.
+ * Watchers can register a per-device notification callback using the
+ * dev_pm_qos_*_notifier API. The notification chain data is stored in the
+ * per-device constraint data struct.
  *
- * Note about the per-device स्थिरraपूर्णांक data काष्ठा allocation:
- * . The per-device स्थिरraपूर्णांकs data काष्ठा ptr is stored पूर्णांकo the device
+ * Note about the per-device constraint data struct allocation:
+ * . The per-device constraints data struct ptr is stored into the device
  *    dev_pm_info.
- * . To minimize the data usage by the per-device स्थिरraपूर्णांकs, the data काष्ठा
+ * . To minimize the data usage by the per-device constraints, the data struct
  *   is only allocated at the first call to dev_pm_qos_add_request.
- * . The data is later मुक्त'd when the device is हटाओd from the प्रणाली.
- *  . A global mutex protects the स्थिरraपूर्णांकs users from the data being
- *     allocated and मुक्त'd.
+ * . The data is later free'd when the device is removed from the system.
+ *  . A global mutex protects the constraints users from the data being
+ *     allocated and free'd.
  */
 
-#समावेश <linux/pm_qos.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/device.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/export.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/err.h>
-#समावेश <trace/events/घातer.h>
+#include <linux/pm_qos.h>
+#include <linux/spinlock.h>
+#include <linux/slab.h>
+#include <linux/device.h>
+#include <linux/mutex.h>
+#include <linux/export.h>
+#include <linux/pm_runtime.h>
+#include <linux/err.h>
+#include <trace/events/power.h>
 
-#समावेश "power.h"
+#include "power.h"
 
-अटल DEFINE_MUTEX(dev_pm_qos_mtx);
-अटल DEFINE_MUTEX(dev_pm_qos_sysfs_mtx);
+static DEFINE_MUTEX(dev_pm_qos_mtx);
+static DEFINE_MUTEX(dev_pm_qos_sysfs_mtx);
 
 /**
- * __dev_pm_qos_flags - Check PM QoS flags क्रम a given device.
- * @dev: Device to check the PM QoS flags क्रम.
+ * __dev_pm_qos_flags - Check PM QoS flags for a given device.
+ * @dev: Device to check the PM QoS flags for.
  * @mask: Flags to check against.
  *
- * This routine must be called with dev->घातer.lock held.
+ * This routine must be called with dev->power.lock held.
  */
-क्रमागत pm_qos_flags_status __dev_pm_qos_flags(काष्ठा device *dev, s32 mask)
-अणु
-	काष्ठा dev_pm_qos *qos = dev->घातer.qos;
-	काष्ठा pm_qos_flags *pqf;
+enum pm_qos_flags_status __dev_pm_qos_flags(struct device *dev, s32 mask)
+{
+	struct dev_pm_qos *qos = dev->power.qos;
+	struct pm_qos_flags *pqf;
 	s32 val;
 
-	lockdep_निश्चित_held(&dev->घातer.lock);
+	lockdep_assert_held(&dev->power.lock);
 
-	अगर (IS_ERR_OR_शून्य(qos))
-		वापस PM_QOS_FLAGS_UNDEFINED;
+	if (IS_ERR_OR_NULL(qos))
+		return PM_QOS_FLAGS_UNDEFINED;
 
 	pqf = &qos->flags;
-	अगर (list_empty(&pqf->list))
-		वापस PM_QOS_FLAGS_UNDEFINED;
+	if (list_empty(&pqf->list))
+		return PM_QOS_FLAGS_UNDEFINED;
 
 	val = pqf->effective_flags & mask;
-	अगर (val)
-		वापस (val == mask) ? PM_QOS_FLAGS_ALL : PM_QOS_FLAGS_SOME;
+	if (val)
+		return (val == mask) ? PM_QOS_FLAGS_ALL : PM_QOS_FLAGS_SOME;
 
-	वापस PM_QOS_FLAGS_NONE;
-पूर्ण
+	return PM_QOS_FLAGS_NONE;
+}
 
 /**
- * dev_pm_qos_flags - Check PM QoS flags क्रम a given device (locked).
- * @dev: Device to check the PM QoS flags क्रम.
+ * dev_pm_qos_flags - Check PM QoS flags for a given device (locked).
+ * @dev: Device to check the PM QoS flags for.
  * @mask: Flags to check against.
  */
-क्रमागत pm_qos_flags_status dev_pm_qos_flags(काष्ठा device *dev, s32 mask)
-अणु
-	अचिन्हित दीर्घ irqflags;
-	क्रमागत pm_qos_flags_status ret;
+enum pm_qos_flags_status dev_pm_qos_flags(struct device *dev, s32 mask)
+{
+	unsigned long irqflags;
+	enum pm_qos_flags_status ret;
 
-	spin_lock_irqsave(&dev->घातer.lock, irqflags);
+	spin_lock_irqsave(&dev->power.lock, irqflags);
 	ret = __dev_pm_qos_flags(dev, mask);
-	spin_unlock_irqrestore(&dev->घातer.lock, irqflags);
+	spin_unlock_irqrestore(&dev->power.lock, irqflags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(dev_pm_qos_flags);
 
 /**
- * __dev_pm_qos_resume_latency - Get resume latency स्थिरraपूर्णांक क्रम a given device.
- * @dev: Device to get the PM QoS स्थिरraपूर्णांक value क्रम.
+ * __dev_pm_qos_resume_latency - Get resume latency constraint for a given device.
+ * @dev: Device to get the PM QoS constraint value for.
  *
- * This routine must be called with dev->घातer.lock held.
+ * This routine must be called with dev->power.lock held.
  */
-s32 __dev_pm_qos_resume_latency(काष्ठा device *dev)
-अणु
-	lockdep_निश्चित_held(&dev->घातer.lock);
+s32 __dev_pm_qos_resume_latency(struct device *dev)
+{
+	lockdep_assert_held(&dev->power.lock);
 
-	वापस dev_pm_qos_raw_resume_latency(dev);
-पूर्ण
+	return dev_pm_qos_raw_resume_latency(dev);
+}
 
 /**
- * dev_pm_qos_पढ़ो_value - Get PM QoS स्थिरraपूर्णांक क्रम a given device (locked).
- * @dev: Device to get the PM QoS स्थिरraपूर्णांक value क्रम.
+ * dev_pm_qos_read_value - Get PM QoS constraint for a given device (locked).
+ * @dev: Device to get the PM QoS constraint value for.
  * @type: QoS request type.
  */
-s32 dev_pm_qos_पढ़ो_value(काष्ठा device *dev, क्रमागत dev_pm_qos_req_type type)
-अणु
-	काष्ठा dev_pm_qos *qos = dev->घातer.qos;
-	अचिन्हित दीर्घ flags;
+s32 dev_pm_qos_read_value(struct device *dev, enum dev_pm_qos_req_type type)
+{
+	struct dev_pm_qos *qos = dev->power.qos;
+	unsigned long flags;
 	s32 ret;
 
-	spin_lock_irqsave(&dev->घातer.lock, flags);
+	spin_lock_irqsave(&dev->power.lock, flags);
 
-	चयन (type) अणु
-	हाल DEV_PM_QOS_RESUME_LATENCY:
-		ret = IS_ERR_OR_शून्य(qos) ? PM_QOS_RESUME_LATENCY_NO_CONSTRAINT
-			: pm_qos_पढ़ो_value(&qos->resume_latency);
-		अवरोध;
-	हाल DEV_PM_QOS_MIN_FREQUENCY:
-		ret = IS_ERR_OR_शून्य(qos) ? PM_QOS_MIN_FREQUENCY_DEFAULT_VALUE
-			: freq_qos_पढ़ो_value(&qos->freq, FREQ_QOS_MIN);
-		अवरोध;
-	हाल DEV_PM_QOS_MAX_FREQUENCY:
-		ret = IS_ERR_OR_शून्य(qos) ? PM_QOS_MAX_FREQUENCY_DEFAULT_VALUE
-			: freq_qos_पढ़ो_value(&qos->freq, FREQ_QOS_MAX);
-		अवरोध;
-	शेष:
+	switch (type) {
+	case DEV_PM_QOS_RESUME_LATENCY:
+		ret = IS_ERR_OR_NULL(qos) ? PM_QOS_RESUME_LATENCY_NO_CONSTRAINT
+			: pm_qos_read_value(&qos->resume_latency);
+		break;
+	case DEV_PM_QOS_MIN_FREQUENCY:
+		ret = IS_ERR_OR_NULL(qos) ? PM_QOS_MIN_FREQUENCY_DEFAULT_VALUE
+			: freq_qos_read_value(&qos->freq, FREQ_QOS_MIN);
+		break;
+	case DEV_PM_QOS_MAX_FREQUENCY:
+		ret = IS_ERR_OR_NULL(qos) ? PM_QOS_MAX_FREQUENCY_DEFAULT_VALUE
+			: freq_qos_read_value(&qos->freq, FREQ_QOS_MAX);
+		break;
+	default:
 		WARN_ON(1);
 		ret = 0;
-	पूर्ण
+	}
 
-	spin_unlock_irqrestore(&dev->घातer.lock, flags);
+	spin_unlock_irqrestore(&dev->power.lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * apply_स्थिरraपूर्णांक - Add/modअगरy/हटाओ device PM QoS request.
- * @req: Constraपूर्णांक request to apply
- * @action: Action to perक्रमm (add/update/हटाओ).
+ * apply_constraint - Add/modify/remove device PM QoS request.
+ * @req: Constraint request to apply
+ * @action: Action to perform (add/update/remove).
  * @value: Value to assign to the QoS request.
  *
- * Internal function to update the स्थिरraपूर्णांकs list using the PM QoS core
- * code and अगर needed call the per-device callbacks.
+ * Internal function to update the constraints list using the PM QoS core
+ * code and if needed call the per-device callbacks.
  */
-अटल पूर्णांक apply_स्थिरraपूर्णांक(काष्ठा dev_pm_qos_request *req,
-			    क्रमागत pm_qos_req_action action, s32 value)
-अणु
-	काष्ठा dev_pm_qos *qos = req->dev->घातer.qos;
-	पूर्णांक ret;
+static int apply_constraint(struct dev_pm_qos_request *req,
+			    enum pm_qos_req_action action, s32 value)
+{
+	struct dev_pm_qos *qos = req->dev->power.qos;
+	int ret;
 
-	चयन(req->type) अणु
-	हाल DEV_PM_QOS_RESUME_LATENCY:
-		अगर (WARN_ON(action != PM_QOS_REMOVE_REQ && value < 0))
+	switch(req->type) {
+	case DEV_PM_QOS_RESUME_LATENCY:
+		if (WARN_ON(action != PM_QOS_REMOVE_REQ && value < 0))
 			value = 0;
 
 		ret = pm_qos_update_target(&qos->resume_latency,
 					   &req->data.pnode, action, value);
-		अवरोध;
-	हाल DEV_PM_QOS_LATENCY_TOLERANCE:
+		break;
+	case DEV_PM_QOS_LATENCY_TOLERANCE:
 		ret = pm_qos_update_target(&qos->latency_tolerance,
 					   &req->data.pnode, action, value);
-		अगर (ret) अणु
-			value = pm_qos_पढ़ो_value(&qos->latency_tolerance);
-			req->dev->घातer.set_latency_tolerance(req->dev, value);
-		पूर्ण
-		अवरोध;
-	हाल DEV_PM_QOS_MIN_FREQUENCY:
-	हाल DEV_PM_QOS_MAX_FREQUENCY:
+		if (ret) {
+			value = pm_qos_read_value(&qos->latency_tolerance);
+			req->dev->power.set_latency_tolerance(req->dev, value);
+		}
+		break;
+	case DEV_PM_QOS_MIN_FREQUENCY:
+	case DEV_PM_QOS_MAX_FREQUENCY:
 		ret = freq_qos_apply(&req->data.freq, action, value);
-		अवरोध;
-	हाल DEV_PM_QOS_FLAGS:
+		break;
+	case DEV_PM_QOS_FLAGS:
 		ret = pm_qos_update_flags(&qos->flags, &req->data.flr,
 					  action, value);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * dev_pm_qos_स्थिरraपूर्णांकs_allocate
- * @dev: device to allocate data क्रम
+ * dev_pm_qos_constraints_allocate
+ * @dev: device to allocate data for
  *
- * Called at the first call to add_request, क्रम स्थिरraपूर्णांक data allocation
+ * Called at the first call to add_request, for constraint data allocation
  * Must be called with the dev_pm_qos_mtx mutex held
  */
-अटल पूर्णांक dev_pm_qos_स्थिरraपूर्णांकs_allocate(काष्ठा device *dev)
-अणु
-	काष्ठा dev_pm_qos *qos;
-	काष्ठा pm_qos_स्थिरraपूर्णांकs *c;
-	काष्ठा blocking_notअगरier_head *n;
+static int dev_pm_qos_constraints_allocate(struct device *dev)
+{
+	struct dev_pm_qos *qos;
+	struct pm_qos_constraints *c;
+	struct blocking_notifier_head *n;
 
-	qos = kzalloc(माप(*qos), GFP_KERNEL);
-	अगर (!qos)
-		वापस -ENOMEM;
+	qos = kzalloc(sizeof(*qos), GFP_KERNEL);
+	if (!qos)
+		return -ENOMEM;
 
-	n = kzalloc(3 * माप(*n), GFP_KERNEL);
-	अगर (!n) अणु
-		kमुक्त(qos);
-		वापस -ENOMEM;
-	पूर्ण
+	n = kzalloc(3 * sizeof(*n), GFP_KERNEL);
+	if (!n) {
+		kfree(qos);
+		return -ENOMEM;
+	}
 
 	c = &qos->resume_latency;
 	plist_head_init(&c->list);
 	c->target_value = PM_QOS_RESUME_LATENCY_DEFAULT_VALUE;
-	c->शेष_value = PM_QOS_RESUME_LATENCY_DEFAULT_VALUE;
-	c->no_स्थिरraपूर्णांक_value = PM_QOS_RESUME_LATENCY_NO_CONSTRAINT;
+	c->default_value = PM_QOS_RESUME_LATENCY_DEFAULT_VALUE;
+	c->no_constraint_value = PM_QOS_RESUME_LATENCY_NO_CONSTRAINT;
 	c->type = PM_QOS_MIN;
-	c->notअगरiers = n;
+	c->notifiers = n;
 	BLOCKING_INIT_NOTIFIER_HEAD(n);
 
 	c = &qos->latency_tolerance;
 	plist_head_init(&c->list);
 	c->target_value = PM_QOS_LATENCY_TOLERANCE_DEFAULT_VALUE;
-	c->शेष_value = PM_QOS_LATENCY_TOLERANCE_DEFAULT_VALUE;
-	c->no_स्थिरraपूर्णांक_value = PM_QOS_LATENCY_TOLERANCE_NO_CONSTRAINT;
+	c->default_value = PM_QOS_LATENCY_TOLERANCE_DEFAULT_VALUE;
+	c->no_constraint_value = PM_QOS_LATENCY_TOLERANCE_NO_CONSTRAINT;
 	c->type = PM_QOS_MIN;
 
-	freq_स्थिरraपूर्णांकs_init(&qos->freq);
+	freq_constraints_init(&qos->freq);
 
 	INIT_LIST_HEAD(&qos->flags.list);
 
-	spin_lock_irq(&dev->घातer.lock);
-	dev->घातer.qos = qos;
-	spin_unlock_irq(&dev->घातer.lock);
+	spin_lock_irq(&dev->power.lock);
+	dev->power.qos = qos;
+	spin_unlock_irq(&dev->power.lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __dev_pm_qos_hide_latency_limit(काष्ठा device *dev);
-अटल व्योम __dev_pm_qos_hide_flags(काष्ठा device *dev);
+static void __dev_pm_qos_hide_latency_limit(struct device *dev);
+static void __dev_pm_qos_hide_flags(struct device *dev);
 
 /**
- * dev_pm_qos_स्थिरraपूर्णांकs_destroy
+ * dev_pm_qos_constraints_destroy
  * @dev: target device
  *
- * Called from the device PM subप्रणाली on device removal under device_pm_lock().
+ * Called from the device PM subsystem on device removal under device_pm_lock().
  */
-व्योम dev_pm_qos_स्थिरraपूर्णांकs_destroy(काष्ठा device *dev)
-अणु
-	काष्ठा dev_pm_qos *qos;
-	काष्ठा dev_pm_qos_request *req, *पंचांगp;
-	काष्ठा pm_qos_स्थिरraपूर्णांकs *c;
-	काष्ठा pm_qos_flags *f;
+void dev_pm_qos_constraints_destroy(struct device *dev)
+{
+	struct dev_pm_qos *qos;
+	struct dev_pm_qos_request *req, *tmp;
+	struct pm_qos_constraints *c;
+	struct pm_qos_flags *f;
 
 	mutex_lock(&dev_pm_qos_sysfs_mtx);
 
 	/*
 	 * If the device's PM QoS resume latency limit or PM QoS flags have been
-	 * exposed to user space, they have to be hidden at this poपूर्णांक.
+	 * exposed to user space, they have to be hidden at this point.
 	 */
-	pm_qos_sysfs_हटाओ_resume_latency(dev);
-	pm_qos_sysfs_हटाओ_flags(dev);
+	pm_qos_sysfs_remove_resume_latency(dev);
+	pm_qos_sysfs_remove_flags(dev);
 
 	mutex_lock(&dev_pm_qos_mtx);
 
 	__dev_pm_qos_hide_latency_limit(dev);
 	__dev_pm_qos_hide_flags(dev);
 
-	qos = dev->घातer.qos;
-	अगर (!qos)
-		जाओ out;
+	qos = dev->power.qos;
+	if (!qos)
+		goto out;
 
-	/* Flush the स्थिरraपूर्णांकs lists क्रम the device. */
+	/* Flush the constraints lists for the device. */
 	c = &qos->resume_latency;
-	plist_क्रम_each_entry_safe(req, पंचांगp, &c->list, data.pnode) अणु
+	plist_for_each_entry_safe(req, tmp, &c->list, data.pnode) {
 		/*
-		 * Update स्थिरraपूर्णांकs list and call the notअगरication
-		 * callbacks अगर needed
+		 * Update constraints list and call the notification
+		 * callbacks if needed
 		 */
-		apply_स्थिरraपूर्णांक(req, PM_QOS_REMOVE_REQ, PM_QOS_DEFAULT_VALUE);
-		स_रखो(req, 0, माप(*req));
-	पूर्ण
+		apply_constraint(req, PM_QOS_REMOVE_REQ, PM_QOS_DEFAULT_VALUE);
+		memset(req, 0, sizeof(*req));
+	}
 
 	c = &qos->latency_tolerance;
-	plist_क्रम_each_entry_safe(req, पंचांगp, &c->list, data.pnode) अणु
-		apply_स्थिरraपूर्णांक(req, PM_QOS_REMOVE_REQ, PM_QOS_DEFAULT_VALUE);
-		स_रखो(req, 0, माप(*req));
-	पूर्ण
+	plist_for_each_entry_safe(req, tmp, &c->list, data.pnode) {
+		apply_constraint(req, PM_QOS_REMOVE_REQ, PM_QOS_DEFAULT_VALUE);
+		memset(req, 0, sizeof(*req));
+	}
 
 	c = &qos->freq.min_freq;
-	plist_क्रम_each_entry_safe(req, पंचांगp, &c->list, data.freq.pnode) अणु
-		apply_स्थिरraपूर्णांक(req, PM_QOS_REMOVE_REQ,
+	plist_for_each_entry_safe(req, tmp, &c->list, data.freq.pnode) {
+		apply_constraint(req, PM_QOS_REMOVE_REQ,
 				 PM_QOS_MIN_FREQUENCY_DEFAULT_VALUE);
-		स_रखो(req, 0, माप(*req));
-	पूर्ण
+		memset(req, 0, sizeof(*req));
+	}
 
 	c = &qos->freq.max_freq;
-	plist_क्रम_each_entry_safe(req, पंचांगp, &c->list, data.freq.pnode) अणु
-		apply_स्थिरraपूर्णांक(req, PM_QOS_REMOVE_REQ,
+	plist_for_each_entry_safe(req, tmp, &c->list, data.freq.pnode) {
+		apply_constraint(req, PM_QOS_REMOVE_REQ,
 				 PM_QOS_MAX_FREQUENCY_DEFAULT_VALUE);
-		स_रखो(req, 0, माप(*req));
-	पूर्ण
+		memset(req, 0, sizeof(*req));
+	}
 
 	f = &qos->flags;
-	list_क्रम_each_entry_safe(req, पंचांगp, &f->list, data.flr.node) अणु
-		apply_स्थिरraपूर्णांक(req, PM_QOS_REMOVE_REQ, PM_QOS_DEFAULT_VALUE);
-		स_रखो(req, 0, माप(*req));
-	पूर्ण
+	list_for_each_entry_safe(req, tmp, &f->list, data.flr.node) {
+		apply_constraint(req, PM_QOS_REMOVE_REQ, PM_QOS_DEFAULT_VALUE);
+		memset(req, 0, sizeof(*req));
+	}
 
-	spin_lock_irq(&dev->घातer.lock);
-	dev->घातer.qos = ERR_PTR(-ENODEV);
-	spin_unlock_irq(&dev->घातer.lock);
+	spin_lock_irq(&dev->power.lock);
+	dev->power.qos = ERR_PTR(-ENODEV);
+	spin_unlock_irq(&dev->power.lock);
 
-	kमुक्त(qos->resume_latency.notअगरiers);
-	kमुक्त(qos);
+	kfree(qos->resume_latency.notifiers);
+	kfree(qos);
 
  out:
 	mutex_unlock(&dev_pm_qos_mtx);
 
 	mutex_unlock(&dev_pm_qos_sysfs_mtx);
-पूर्ण
+}
 
-अटल bool dev_pm_qos_invalid_req_type(काष्ठा device *dev,
-					क्रमागत dev_pm_qos_req_type type)
-अणु
-	वापस type == DEV_PM_QOS_LATENCY_TOLERANCE &&
-	       !dev->घातer.set_latency_tolerance;
-पूर्ण
+static bool dev_pm_qos_invalid_req_type(struct device *dev,
+					enum dev_pm_qos_req_type type)
+{
+	return type == DEV_PM_QOS_LATENCY_TOLERANCE &&
+	       !dev->power.set_latency_tolerance;
+}
 
-अटल पूर्णांक __dev_pm_qos_add_request(काष्ठा device *dev,
-				    काष्ठा dev_pm_qos_request *req,
-				    क्रमागत dev_pm_qos_req_type type, s32 value)
-अणु
-	पूर्णांक ret = 0;
+static int __dev_pm_qos_add_request(struct device *dev,
+				    struct dev_pm_qos_request *req,
+				    enum dev_pm_qos_req_type type, s32 value)
+{
+	int ret = 0;
 
-	अगर (!dev || !req || dev_pm_qos_invalid_req_type(dev, type))
-		वापस -EINVAL;
+	if (!dev || !req || dev_pm_qos_invalid_req_type(dev, type))
+		return -EINVAL;
 
-	अगर (WARN(dev_pm_qos_request_active(req),
+	if (WARN(dev_pm_qos_request_active(req),
 		 "%s() called for already added request\n", __func__))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (IS_ERR(dev->घातer.qos))
+	if (IS_ERR(dev->power.qos))
 		ret = -ENODEV;
-	अन्यथा अगर (!dev->घातer.qos)
-		ret = dev_pm_qos_स्थिरraपूर्णांकs_allocate(dev);
+	else if (!dev->power.qos)
+		ret = dev_pm_qos_constraints_allocate(dev);
 
 	trace_dev_pm_qos_add_request(dev_name(dev), type, value);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	req->dev = dev;
 	req->type = type;
-	अगर (req->type == DEV_PM_QOS_MIN_FREQUENCY)
-		ret = freq_qos_add_request(&dev->घातer.qos->freq,
+	if (req->type == DEV_PM_QOS_MIN_FREQUENCY)
+		ret = freq_qos_add_request(&dev->power.qos->freq,
 					   &req->data.freq,
 					   FREQ_QOS_MIN, value);
-	अन्यथा अगर (req->type == DEV_PM_QOS_MAX_FREQUENCY)
-		ret = freq_qos_add_request(&dev->घातer.qos->freq,
+	else if (req->type == DEV_PM_QOS_MAX_FREQUENCY)
+		ret = freq_qos_add_request(&dev->power.qos->freq,
 					   &req->data.freq,
 					   FREQ_QOS_MAX, value);
-	अन्यथा
-		ret = apply_स्थिरraपूर्णांक(req, PM_QOS_ADD_REQ, value);
+	else
+		ret = apply_constraint(req, PM_QOS_ADD_REQ, value);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * dev_pm_qos_add_request - inserts new qos request पूर्णांकo the list
- * @dev: target device क्रम the स्थिरraपूर्णांक
- * @req: poपूर्णांकer to a pपुनः_स्मृतिated handle
+ * dev_pm_qos_add_request - inserts new qos request into the list
+ * @dev: target device for the constraint
+ * @req: pointer to a preallocated handle
  * @type: type of the request
  * @value: defines the qos request
  *
- * This function inserts a new entry in the device स्थिरraपूर्णांकs list of
- * requested qos perक्रमmance अक्षरacteristics. It recomputes the aggregate
+ * This function inserts a new entry in the device constraints list of
+ * requested qos performance characteristics. It recomputes the aggregate
  * QoS expectations of parameters and initializes the dev_pm_qos_request
- * handle.  Caller needs to save this handle क्रम later use in updates and
+ * handle.  Caller needs to save this handle for later use in updates and
  * removal.
  *
- * Returns 1 अगर the aggregated स्थिरraपूर्णांक value has changed,
- * 0 अगर the aggregated स्थिरraपूर्णांक value has not changed,
- * -EINVAL in हाल of wrong parameters, -ENOMEM अगर there's not enough memory
- * to allocate क्रम data काष्ठाures, -ENODEV अगर the device has just been हटाओd
- * from the प्रणाली.
+ * Returns 1 if the aggregated constraint value has changed,
+ * 0 if the aggregated constraint value has not changed,
+ * -EINVAL in case of wrong parameters, -ENOMEM if there's not enough memory
+ * to allocate for data structures, -ENODEV if the device has just been removed
+ * from the system.
  *
- * Callers should ensure that the target device is not RPM_SUSPENDED beक्रमe
- * using this function क्रम requests of type DEV_PM_QOS_FLAGS.
+ * Callers should ensure that the target device is not RPM_SUSPENDED before
+ * using this function for requests of type DEV_PM_QOS_FLAGS.
  */
-पूर्णांक dev_pm_qos_add_request(काष्ठा device *dev, काष्ठा dev_pm_qos_request *req,
-			   क्रमागत dev_pm_qos_req_type type, s32 value)
-अणु
-	पूर्णांक ret;
+int dev_pm_qos_add_request(struct device *dev, struct dev_pm_qos_request *req,
+			   enum dev_pm_qos_req_type type, s32 value)
+{
+	int ret;
 
 	mutex_lock(&dev_pm_qos_mtx);
 	ret = __dev_pm_qos_add_request(dev, req, type, value);
 	mutex_unlock(&dev_pm_qos_mtx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(dev_pm_qos_add_request);
 
 /**
- * __dev_pm_qos_update_request - Modअगरy an existing device PM QoS request.
- * @req : PM QoS request to modअगरy.
+ * __dev_pm_qos_update_request - Modify an existing device PM QoS request.
+ * @req : PM QoS request to modify.
  * @new_value: New value to request.
  */
-अटल पूर्णांक __dev_pm_qos_update_request(काष्ठा dev_pm_qos_request *req,
+static int __dev_pm_qos_update_request(struct dev_pm_qos_request *req,
 				       s32 new_value)
-अणु
+{
 	s32 curr_value;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (!req) /*guard against callers passing in null */
-		वापस -EINVAL;
+	if (!req) /*guard against callers passing in null */
+		return -EINVAL;
 
-	अगर (WARN(!dev_pm_qos_request_active(req),
+	if (WARN(!dev_pm_qos_request_active(req),
 		 "%s() called for unknown object\n", __func__))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (IS_ERR_OR_शून्य(req->dev->घातer.qos))
-		वापस -ENODEV;
+	if (IS_ERR_OR_NULL(req->dev->power.qos))
+		return -ENODEV;
 
-	चयन(req->type) अणु
-	हाल DEV_PM_QOS_RESUME_LATENCY:
-	हाल DEV_PM_QOS_LATENCY_TOLERANCE:
+	switch(req->type) {
+	case DEV_PM_QOS_RESUME_LATENCY:
+	case DEV_PM_QOS_LATENCY_TOLERANCE:
 		curr_value = req->data.pnode.prio;
-		अवरोध;
-	हाल DEV_PM_QOS_MIN_FREQUENCY:
-	हाल DEV_PM_QOS_MAX_FREQUENCY:
+		break;
+	case DEV_PM_QOS_MIN_FREQUENCY:
+	case DEV_PM_QOS_MAX_FREQUENCY:
 		curr_value = req->data.freq.pnode.prio;
-		अवरोध;
-	हाल DEV_PM_QOS_FLAGS:
+		break;
+	case DEV_PM_QOS_FLAGS:
 		curr_value = req->data.flr.flags;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	trace_dev_pm_qos_update_request(dev_name(req->dev), req->type,
 					new_value);
-	अगर (curr_value != new_value)
-		ret = apply_स्थिरraपूर्णांक(req, PM_QOS_UPDATE_REQ, new_value);
+	if (curr_value != new_value)
+		ret = apply_constraint(req, PM_QOS_UPDATE_REQ, new_value);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * dev_pm_qos_update_request - modअगरies an existing qos request
+ * dev_pm_qos_update_request - modifies an existing qos request
  * @req : handle to list element holding a dev_pm_qos request to use
  * @new_value: defines the qos request
  *
- * Updates an existing dev PM qos request aदीर्घ with updating the
+ * Updates an existing dev PM qos request along with updating the
  * target value.
  *
  * Attempts are made to make this code callable on hot code paths.
  *
- * Returns 1 अगर the aggregated स्थिरraपूर्णांक value has changed,
- * 0 अगर the aggregated स्थिरraपूर्णांक value has not changed,
- * -EINVAL in हाल of wrong parameters, -ENODEV अगर the device has been
- * हटाओd from the प्रणाली
+ * Returns 1 if the aggregated constraint value has changed,
+ * 0 if the aggregated constraint value has not changed,
+ * -EINVAL in case of wrong parameters, -ENODEV if the device has been
+ * removed from the system
  *
- * Callers should ensure that the target device is not RPM_SUSPENDED beक्रमe
- * using this function क्रम requests of type DEV_PM_QOS_FLAGS.
+ * Callers should ensure that the target device is not RPM_SUSPENDED before
+ * using this function for requests of type DEV_PM_QOS_FLAGS.
  */
-पूर्णांक dev_pm_qos_update_request(काष्ठा dev_pm_qos_request *req, s32 new_value)
-अणु
-	पूर्णांक ret;
+int dev_pm_qos_update_request(struct dev_pm_qos_request *req, s32 new_value)
+{
+	int ret;
 
 	mutex_lock(&dev_pm_qos_mtx);
 	ret = __dev_pm_qos_update_request(req, new_value);
 	mutex_unlock(&dev_pm_qos_mtx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(dev_pm_qos_update_request);
 
-अटल पूर्णांक __dev_pm_qos_हटाओ_request(काष्ठा dev_pm_qos_request *req)
-अणु
-	पूर्णांक ret;
+static int __dev_pm_qos_remove_request(struct dev_pm_qos_request *req)
+{
+	int ret;
 
-	अगर (!req) /*guard against callers passing in null */
-		वापस -EINVAL;
+	if (!req) /*guard against callers passing in null */
+		return -EINVAL;
 
-	अगर (WARN(!dev_pm_qos_request_active(req),
+	if (WARN(!dev_pm_qos_request_active(req),
 		 "%s() called for unknown object\n", __func__))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (IS_ERR_OR_शून्य(req->dev->घातer.qos))
-		वापस -ENODEV;
+	if (IS_ERR_OR_NULL(req->dev->power.qos))
+		return -ENODEV;
 
-	trace_dev_pm_qos_हटाओ_request(dev_name(req->dev), req->type,
+	trace_dev_pm_qos_remove_request(dev_name(req->dev), req->type,
 					PM_QOS_DEFAULT_VALUE);
-	ret = apply_स्थिरraपूर्णांक(req, PM_QOS_REMOVE_REQ, PM_QOS_DEFAULT_VALUE);
-	स_रखो(req, 0, माप(*req));
-	वापस ret;
-पूर्ण
+	ret = apply_constraint(req, PM_QOS_REMOVE_REQ, PM_QOS_DEFAULT_VALUE);
+	memset(req, 0, sizeof(*req));
+	return ret;
+}
 
 /**
- * dev_pm_qos_हटाओ_request - modअगरies an existing qos request
+ * dev_pm_qos_remove_request - modifies an existing qos request
  * @req: handle to request list element
  *
- * Will हटाओ pm qos request from the list of स्थिरraपूर्णांकs and
+ * Will remove pm qos request from the list of constraints and
  * recompute the current target value. Call this on slow code paths.
  *
- * Returns 1 अगर the aggregated स्थिरraपूर्णांक value has changed,
- * 0 अगर the aggregated स्थिरraपूर्णांक value has not changed,
- * -EINVAL in हाल of wrong parameters, -ENODEV अगर the device has been
- * हटाओd from the प्रणाली
+ * Returns 1 if the aggregated constraint value has changed,
+ * 0 if the aggregated constraint value has not changed,
+ * -EINVAL in case of wrong parameters, -ENODEV if the device has been
+ * removed from the system
  *
- * Callers should ensure that the target device is not RPM_SUSPENDED beक्रमe
- * using this function क्रम requests of type DEV_PM_QOS_FLAGS.
+ * Callers should ensure that the target device is not RPM_SUSPENDED before
+ * using this function for requests of type DEV_PM_QOS_FLAGS.
  */
-पूर्णांक dev_pm_qos_हटाओ_request(काष्ठा dev_pm_qos_request *req)
-अणु
-	पूर्णांक ret;
+int dev_pm_qos_remove_request(struct dev_pm_qos_request *req)
+{
+	int ret;
 
 	mutex_lock(&dev_pm_qos_mtx);
-	ret = __dev_pm_qos_हटाओ_request(req);
+	ret = __dev_pm_qos_remove_request(req);
 	mutex_unlock(&dev_pm_qos_mtx);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(dev_pm_qos_हटाओ_request);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(dev_pm_qos_remove_request);
 
 /**
- * dev_pm_qos_add_notअगरier - sets notअगरication entry क्रम changes to target value
- * of per-device PM QoS स्थिरraपूर्णांकs
+ * dev_pm_qos_add_notifier - sets notification entry for changes to target value
+ * of per-device PM QoS constraints
  *
- * @dev: target device क्रम the स्थिरraपूर्णांक
- * @notअगरier: notअगरier block managed by caller.
+ * @dev: target device for the constraint
+ * @notifier: notifier block managed by caller.
  * @type: request type.
  *
- * Will रेजिस्टर the notअगरier पूर्णांकo a notअगरication chain that माला_लो called
- * upon changes to the target value क्रम the device.
+ * Will register the notifier into a notification chain that gets called
+ * upon changes to the target value for the device.
  *
  * If the device's constraints object doesn't exist when this routine is called,
- * it will be created (or error code will be वापसed अगर that fails).
+ * it will be created (or error code will be returned if that fails).
  */
-पूर्णांक dev_pm_qos_add_notअगरier(काष्ठा device *dev, काष्ठा notअगरier_block *notअगरier,
-			    क्रमागत dev_pm_qos_req_type type)
-अणु
-	पूर्णांक ret = 0;
+int dev_pm_qos_add_notifier(struct device *dev, struct notifier_block *notifier,
+			    enum dev_pm_qos_req_type type)
+{
+	int ret = 0;
 
 	mutex_lock(&dev_pm_qos_mtx);
 
-	अगर (IS_ERR(dev->घातer.qos))
+	if (IS_ERR(dev->power.qos))
 		ret = -ENODEV;
-	अन्यथा अगर (!dev->घातer.qos)
-		ret = dev_pm_qos_स्थिरraपूर्णांकs_allocate(dev);
+	else if (!dev->power.qos)
+		ret = dev_pm_qos_constraints_allocate(dev);
 
-	अगर (ret)
-		जाओ unlock;
+	if (ret)
+		goto unlock;
 
-	चयन (type) अणु
-	हाल DEV_PM_QOS_RESUME_LATENCY:
-		ret = blocking_notअगरier_chain_रेजिस्टर(dev->घातer.qos->resume_latency.notअगरiers,
-						       notअगरier);
-		अवरोध;
-	हाल DEV_PM_QOS_MIN_FREQUENCY:
-		ret = freq_qos_add_notअगरier(&dev->घातer.qos->freq,
-					    FREQ_QOS_MIN, notअगरier);
-		अवरोध;
-	हाल DEV_PM_QOS_MAX_FREQUENCY:
-		ret = freq_qos_add_notअगरier(&dev->घातer.qos->freq,
-					    FREQ_QOS_MAX, notअगरier);
-		अवरोध;
-	शेष:
+	switch (type) {
+	case DEV_PM_QOS_RESUME_LATENCY:
+		ret = blocking_notifier_chain_register(dev->power.qos->resume_latency.notifiers,
+						       notifier);
+		break;
+	case DEV_PM_QOS_MIN_FREQUENCY:
+		ret = freq_qos_add_notifier(&dev->power.qos->freq,
+					    FREQ_QOS_MIN, notifier);
+		break;
+	case DEV_PM_QOS_MAX_FREQUENCY:
+		ret = freq_qos_add_notifier(&dev->power.qos->freq,
+					    FREQ_QOS_MAX, notifier);
+		break;
+	default:
 		WARN_ON(1);
 		ret = -EINVAL;
-	पूर्ण
+	}
 
 unlock:
 	mutex_unlock(&dev_pm_qos_mtx);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(dev_pm_qos_add_notअगरier);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(dev_pm_qos_add_notifier);
 
 /**
- * dev_pm_qos_हटाओ_notअगरier - deletes notअगरication क्रम changes to target value
- * of per-device PM QoS स्थिरraपूर्णांकs
+ * dev_pm_qos_remove_notifier - deletes notification for changes to target value
+ * of per-device PM QoS constraints
  *
- * @dev: target device क्रम the स्थिरraपूर्णांक
- * @notअगरier: notअगरier block to be हटाओd.
+ * @dev: target device for the constraint
+ * @notifier: notifier block to be removed.
  * @type: request type.
  *
- * Will हटाओ the notअगरier from the notअगरication chain that माला_लो called
+ * Will remove the notifier from the notification chain that gets called
  * upon changes to the target value.
  */
-पूर्णांक dev_pm_qos_हटाओ_notअगरier(काष्ठा device *dev,
-			       काष्ठा notअगरier_block *notअगरier,
-			       क्रमागत dev_pm_qos_req_type type)
-अणु
-	पूर्णांक ret = 0;
+int dev_pm_qos_remove_notifier(struct device *dev,
+			       struct notifier_block *notifier,
+			       enum dev_pm_qos_req_type type)
+{
+	int ret = 0;
 
 	mutex_lock(&dev_pm_qos_mtx);
 
-	/* Silently वापस अगर the स्थिरraपूर्णांकs object is not present. */
-	अगर (IS_ERR_OR_शून्य(dev->घातer.qos))
-		जाओ unlock;
+	/* Silently return if the constraints object is not present. */
+	if (IS_ERR_OR_NULL(dev->power.qos))
+		goto unlock;
 
-	चयन (type) अणु
-	हाल DEV_PM_QOS_RESUME_LATENCY:
-		ret = blocking_notअगरier_chain_unरेजिस्टर(dev->घातer.qos->resume_latency.notअगरiers,
-							 notअगरier);
-		अवरोध;
-	हाल DEV_PM_QOS_MIN_FREQUENCY:
-		ret = freq_qos_हटाओ_notअगरier(&dev->घातer.qos->freq,
-					       FREQ_QOS_MIN, notअगरier);
-		अवरोध;
-	हाल DEV_PM_QOS_MAX_FREQUENCY:
-		ret = freq_qos_हटाओ_notअगरier(&dev->घातer.qos->freq,
-					       FREQ_QOS_MAX, notअगरier);
-		अवरोध;
-	शेष:
+	switch (type) {
+	case DEV_PM_QOS_RESUME_LATENCY:
+		ret = blocking_notifier_chain_unregister(dev->power.qos->resume_latency.notifiers,
+							 notifier);
+		break;
+	case DEV_PM_QOS_MIN_FREQUENCY:
+		ret = freq_qos_remove_notifier(&dev->power.qos->freq,
+					       FREQ_QOS_MIN, notifier);
+		break;
+	case DEV_PM_QOS_MAX_FREQUENCY:
+		ret = freq_qos_remove_notifier(&dev->power.qos->freq,
+					       FREQ_QOS_MAX, notifier);
+		break;
+	default:
 		WARN_ON(1);
 		ret = -EINVAL;
-	पूर्ण
+	}
 
 unlock:
 	mutex_unlock(&dev_pm_qos_mtx);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(dev_pm_qos_हटाओ_notअगरier);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(dev_pm_qos_remove_notifier);
 
 /**
- * dev_pm_qos_add_ancestor_request - Add PM QoS request क्रम device's ancestor.
- * @dev: Device whose ancestor to add the request क्रम.
- * @req: Poपूर्णांकer to the pपुनः_स्मृतिated handle.
+ * dev_pm_qos_add_ancestor_request - Add PM QoS request for device's ancestor.
+ * @dev: Device whose ancestor to add the request for.
+ * @req: Pointer to the preallocated handle.
  * @type: Type of the request.
- * @value: Constraपूर्णांक latency value.
+ * @value: Constraint latency value.
  */
-पूर्णांक dev_pm_qos_add_ancestor_request(काष्ठा device *dev,
-				    काष्ठा dev_pm_qos_request *req,
-				    क्रमागत dev_pm_qos_req_type type, s32 value)
-अणु
-	काष्ठा device *ancestor = dev->parent;
-	पूर्णांक ret = -ENODEV;
+int dev_pm_qos_add_ancestor_request(struct device *dev,
+				    struct dev_pm_qos_request *req,
+				    enum dev_pm_qos_req_type type, s32 value)
+{
+	struct device *ancestor = dev->parent;
+	int ret = -ENODEV;
 
-	चयन (type) अणु
-	हाल DEV_PM_QOS_RESUME_LATENCY:
-		जबतक (ancestor && !ancestor->घातer.ignore_children)
+	switch (type) {
+	case DEV_PM_QOS_RESUME_LATENCY:
+		while (ancestor && !ancestor->power.ignore_children)
 			ancestor = ancestor->parent;
 
-		अवरोध;
-	हाल DEV_PM_QOS_LATENCY_TOLERANCE:
-		जबतक (ancestor && !ancestor->घातer.set_latency_tolerance)
+		break;
+	case DEV_PM_QOS_LATENCY_TOLERANCE:
+		while (ancestor && !ancestor->power.set_latency_tolerance)
 			ancestor = ancestor->parent;
 
-		अवरोध;
-	शेष:
-		ancestor = शून्य;
-	पूर्ण
-	अगर (ancestor)
+		break;
+	default:
+		ancestor = NULL;
+	}
+	if (ancestor)
 		ret = dev_pm_qos_add_request(ancestor, req, type, value);
 
-	अगर (ret < 0)
-		req->dev = शून्य;
+	if (ret < 0)
+		req->dev = NULL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(dev_pm_qos_add_ancestor_request);
 
-अटल व्योम __dev_pm_qos_drop_user_request(काष्ठा device *dev,
-					   क्रमागत dev_pm_qos_req_type type)
-अणु
-	काष्ठा dev_pm_qos_request *req = शून्य;
+static void __dev_pm_qos_drop_user_request(struct device *dev,
+					   enum dev_pm_qos_req_type type)
+{
+	struct dev_pm_qos_request *req = NULL;
 
-	चयन(type) अणु
-	हाल DEV_PM_QOS_RESUME_LATENCY:
-		req = dev->घातer.qos->resume_latency_req;
-		dev->घातer.qos->resume_latency_req = शून्य;
-		अवरोध;
-	हाल DEV_PM_QOS_LATENCY_TOLERANCE:
-		req = dev->घातer.qos->latency_tolerance_req;
-		dev->घातer.qos->latency_tolerance_req = शून्य;
-		अवरोध;
-	हाल DEV_PM_QOS_FLAGS:
-		req = dev->घातer.qos->flags_req;
-		dev->घातer.qos->flags_req = शून्य;
-		अवरोध;
-	शेष:
+	switch(type) {
+	case DEV_PM_QOS_RESUME_LATENCY:
+		req = dev->power.qos->resume_latency_req;
+		dev->power.qos->resume_latency_req = NULL;
+		break;
+	case DEV_PM_QOS_LATENCY_TOLERANCE:
+		req = dev->power.qos->latency_tolerance_req;
+		dev->power.qos->latency_tolerance_req = NULL;
+		break;
+	case DEV_PM_QOS_FLAGS:
+		req = dev->power.qos->flags_req;
+		dev->power.qos->flags_req = NULL;
+		break;
+	default:
 		WARN_ON(1);
-		वापस;
-	पूर्ण
-	__dev_pm_qos_हटाओ_request(req);
-	kमुक्त(req);
-पूर्ण
+		return;
+	}
+	__dev_pm_qos_remove_request(req);
+	kfree(req);
+}
 
-अटल व्योम dev_pm_qos_drop_user_request(काष्ठा device *dev,
-					 क्रमागत dev_pm_qos_req_type type)
-अणु
+static void dev_pm_qos_drop_user_request(struct device *dev,
+					 enum dev_pm_qos_req_type type)
+{
 	mutex_lock(&dev_pm_qos_mtx);
 	__dev_pm_qos_drop_user_request(dev, type);
 	mutex_unlock(&dev_pm_qos_mtx);
-पूर्ण
+}
 
 /**
  * dev_pm_qos_expose_latency_limit - Expose PM QoS latency limit to user space.
  * @dev: Device whose PM QoS latency limit is to be exposed to user space.
  * @value: Initial value of the latency limit.
  */
-पूर्णांक dev_pm_qos_expose_latency_limit(काष्ठा device *dev, s32 value)
-अणु
-	काष्ठा dev_pm_qos_request *req;
-	पूर्णांक ret;
+int dev_pm_qos_expose_latency_limit(struct device *dev, s32 value)
+{
+	struct dev_pm_qos_request *req;
+	int ret;
 
-	अगर (!device_is_रेजिस्टरed(dev) || value < 0)
-		वापस -EINVAL;
+	if (!device_is_registered(dev) || value < 0)
+		return -EINVAL;
 
-	req = kzalloc(माप(*req), GFP_KERNEL);
-	अगर (!req)
-		वापस -ENOMEM;
+	req = kzalloc(sizeof(*req), GFP_KERNEL);
+	if (!req)
+		return -ENOMEM;
 
 	ret = dev_pm_qos_add_request(dev, req, DEV_PM_QOS_RESUME_LATENCY, value);
-	अगर (ret < 0) अणु
-		kमुक्त(req);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		kfree(req);
+		return ret;
+	}
 
 	mutex_lock(&dev_pm_qos_sysfs_mtx);
 
 	mutex_lock(&dev_pm_qos_mtx);
 
-	अगर (IS_ERR_OR_शून्य(dev->घातer.qos))
+	if (IS_ERR_OR_NULL(dev->power.qos))
 		ret = -ENODEV;
-	अन्यथा अगर (dev->घातer.qos->resume_latency_req)
+	else if (dev->power.qos->resume_latency_req)
 		ret = -EEXIST;
 
-	अगर (ret < 0) अणु
-		__dev_pm_qos_हटाओ_request(req);
-		kमुक्त(req);
+	if (ret < 0) {
+		__dev_pm_qos_remove_request(req);
+		kfree(req);
 		mutex_unlock(&dev_pm_qos_mtx);
-		जाओ out;
-	पूर्ण
-	dev->घातer.qos->resume_latency_req = req;
+		goto out;
+	}
+	dev->power.qos->resume_latency_req = req;
 
 	mutex_unlock(&dev_pm_qos_mtx);
 
 	ret = pm_qos_sysfs_add_resume_latency(dev);
-	अगर (ret)
+	if (ret)
 		dev_pm_qos_drop_user_request(dev, DEV_PM_QOS_RESUME_LATENCY);
 
  out:
 	mutex_unlock(&dev_pm_qos_sysfs_mtx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(dev_pm_qos_expose_latency_limit);
 
-अटल व्योम __dev_pm_qos_hide_latency_limit(काष्ठा device *dev)
-अणु
-	अगर (!IS_ERR_OR_शून्य(dev->घातer.qos) && dev->घातer.qos->resume_latency_req)
+static void __dev_pm_qos_hide_latency_limit(struct device *dev)
+{
+	if (!IS_ERR_OR_NULL(dev->power.qos) && dev->power.qos->resume_latency_req)
 		__dev_pm_qos_drop_user_request(dev, DEV_PM_QOS_RESUME_LATENCY);
-पूर्ण
+}
 
 /**
  * dev_pm_qos_hide_latency_limit - Hide PM QoS latency limit from user space.
  * @dev: Device whose PM QoS latency limit is to be hidden from user space.
  */
-व्योम dev_pm_qos_hide_latency_limit(काष्ठा device *dev)
-अणु
+void dev_pm_qos_hide_latency_limit(struct device *dev)
+{
 	mutex_lock(&dev_pm_qos_sysfs_mtx);
 
-	pm_qos_sysfs_हटाओ_resume_latency(dev);
+	pm_qos_sysfs_remove_resume_latency(dev);
 
 	mutex_lock(&dev_pm_qos_mtx);
 	__dev_pm_qos_hide_latency_limit(dev);
 	mutex_unlock(&dev_pm_qos_mtx);
 
 	mutex_unlock(&dev_pm_qos_sysfs_mtx);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(dev_pm_qos_hide_latency_limit);
 
 /**
@@ -772,212 +771,212 @@ EXPORT_SYMBOL_GPL(dev_pm_qos_hide_latency_limit);
  * @dev: Device whose PM QoS flags are to be exposed to user space.
  * @val: Initial values of the flags.
  */
-पूर्णांक dev_pm_qos_expose_flags(काष्ठा device *dev, s32 val)
-अणु
-	काष्ठा dev_pm_qos_request *req;
-	पूर्णांक ret;
+int dev_pm_qos_expose_flags(struct device *dev, s32 val)
+{
+	struct dev_pm_qos_request *req;
+	int ret;
 
-	अगर (!device_is_रेजिस्टरed(dev))
-		वापस -EINVAL;
+	if (!device_is_registered(dev))
+		return -EINVAL;
 
-	req = kzalloc(माप(*req), GFP_KERNEL);
-	अगर (!req)
-		वापस -ENOMEM;
+	req = kzalloc(sizeof(*req), GFP_KERNEL);
+	if (!req)
+		return -ENOMEM;
 
 	ret = dev_pm_qos_add_request(dev, req, DEV_PM_QOS_FLAGS, val);
-	अगर (ret < 0) अणु
-		kमुक्त(req);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		kfree(req);
+		return ret;
+	}
 
-	pm_runसमय_get_sync(dev);
+	pm_runtime_get_sync(dev);
 	mutex_lock(&dev_pm_qos_sysfs_mtx);
 
 	mutex_lock(&dev_pm_qos_mtx);
 
-	अगर (IS_ERR_OR_शून्य(dev->घातer.qos))
+	if (IS_ERR_OR_NULL(dev->power.qos))
 		ret = -ENODEV;
-	अन्यथा अगर (dev->घातer.qos->flags_req)
+	else if (dev->power.qos->flags_req)
 		ret = -EEXIST;
 
-	अगर (ret < 0) अणु
-		__dev_pm_qos_हटाओ_request(req);
-		kमुक्त(req);
+	if (ret < 0) {
+		__dev_pm_qos_remove_request(req);
+		kfree(req);
 		mutex_unlock(&dev_pm_qos_mtx);
-		जाओ out;
-	पूर्ण
-	dev->घातer.qos->flags_req = req;
+		goto out;
+	}
+	dev->power.qos->flags_req = req;
 
 	mutex_unlock(&dev_pm_qos_mtx);
 
 	ret = pm_qos_sysfs_add_flags(dev);
-	अगर (ret)
+	if (ret)
 		dev_pm_qos_drop_user_request(dev, DEV_PM_QOS_FLAGS);
 
  out:
 	mutex_unlock(&dev_pm_qos_sysfs_mtx);
-	pm_runसमय_put(dev);
-	वापस ret;
-पूर्ण
+	pm_runtime_put(dev);
+	return ret;
+}
 EXPORT_SYMBOL_GPL(dev_pm_qos_expose_flags);
 
-अटल व्योम __dev_pm_qos_hide_flags(काष्ठा device *dev)
-अणु
-	अगर (!IS_ERR_OR_शून्य(dev->घातer.qos) && dev->घातer.qos->flags_req)
+static void __dev_pm_qos_hide_flags(struct device *dev)
+{
+	if (!IS_ERR_OR_NULL(dev->power.qos) && dev->power.qos->flags_req)
 		__dev_pm_qos_drop_user_request(dev, DEV_PM_QOS_FLAGS);
-पूर्ण
+}
 
 /**
  * dev_pm_qos_hide_flags - Hide PM QoS flags of a device from user space.
  * @dev: Device whose PM QoS flags are to be hidden from user space.
  */
-व्योम dev_pm_qos_hide_flags(काष्ठा device *dev)
-अणु
-	pm_runसमय_get_sync(dev);
+void dev_pm_qos_hide_flags(struct device *dev)
+{
+	pm_runtime_get_sync(dev);
 	mutex_lock(&dev_pm_qos_sysfs_mtx);
 
-	pm_qos_sysfs_हटाओ_flags(dev);
+	pm_qos_sysfs_remove_flags(dev);
 
 	mutex_lock(&dev_pm_qos_mtx);
 	__dev_pm_qos_hide_flags(dev);
 	mutex_unlock(&dev_pm_qos_mtx);
 
 	mutex_unlock(&dev_pm_qos_sysfs_mtx);
-	pm_runसमय_put(dev);
-पूर्ण
+	pm_runtime_put(dev);
+}
 EXPORT_SYMBOL_GPL(dev_pm_qos_hide_flags);
 
 /**
  * dev_pm_qos_update_flags - Update PM QoS flags request owned by user space.
- * @dev: Device to update the PM QoS flags request क्रम.
+ * @dev: Device to update the PM QoS flags request for.
  * @mask: Flags to set/clear.
  * @set: Whether to set or clear the flags (true means set).
  */
-पूर्णांक dev_pm_qos_update_flags(काष्ठा device *dev, s32 mask, bool set)
-अणु
+int dev_pm_qos_update_flags(struct device *dev, s32 mask, bool set)
+{
 	s32 value;
-	पूर्णांक ret;
+	int ret;
 
-	pm_runसमय_get_sync(dev);
+	pm_runtime_get_sync(dev);
 	mutex_lock(&dev_pm_qos_mtx);
 
-	अगर (IS_ERR_OR_शून्य(dev->घातer.qos) || !dev->घातer.qos->flags_req) अणु
+	if (IS_ERR_OR_NULL(dev->power.qos) || !dev->power.qos->flags_req) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	value = dev_pm_qos_requested_flags(dev);
-	अगर (set)
+	if (set)
 		value |= mask;
-	अन्यथा
+	else
 		value &= ~mask;
 
-	ret = __dev_pm_qos_update_request(dev->घातer.qos->flags_req, value);
+	ret = __dev_pm_qos_update_request(dev->power.qos->flags_req, value);
 
  out:
 	mutex_unlock(&dev_pm_qos_mtx);
-	pm_runसमय_put(dev);
-	वापस ret;
-पूर्ण
+	pm_runtime_put(dev);
+	return ret;
+}
 
 /**
  * dev_pm_qos_get_user_latency_tolerance - Get user space latency tolerance.
- * @dev: Device to obtain the user space latency tolerance क्रम.
+ * @dev: Device to obtain the user space latency tolerance for.
  */
-s32 dev_pm_qos_get_user_latency_tolerance(काष्ठा device *dev)
-अणु
+s32 dev_pm_qos_get_user_latency_tolerance(struct device *dev)
+{
 	s32 ret;
 
 	mutex_lock(&dev_pm_qos_mtx);
-	ret = IS_ERR_OR_शून्य(dev->घातer.qos)
-		|| !dev->घातer.qos->latency_tolerance_req ?
+	ret = IS_ERR_OR_NULL(dev->power.qos)
+		|| !dev->power.qos->latency_tolerance_req ?
 			PM_QOS_LATENCY_TOLERANCE_NO_CONSTRAINT :
-			dev->घातer.qos->latency_tolerance_req->data.pnode.prio;
+			dev->power.qos->latency_tolerance_req->data.pnode.prio;
 	mutex_unlock(&dev_pm_qos_mtx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * dev_pm_qos_update_user_latency_tolerance - Update user space latency tolerance.
- * @dev: Device to update the user space latency tolerance क्रम.
- * @val: New user space latency tolerance क्रम @dev (negative values disable).
+ * @dev: Device to update the user space latency tolerance for.
+ * @val: New user space latency tolerance for @dev (negative values disable).
  */
-पूर्णांक dev_pm_qos_update_user_latency_tolerance(काष्ठा device *dev, s32 val)
-अणु
-	पूर्णांक ret;
+int dev_pm_qos_update_user_latency_tolerance(struct device *dev, s32 val)
+{
+	int ret;
 
 	mutex_lock(&dev_pm_qos_mtx);
 
-	अगर (IS_ERR_OR_शून्य(dev->घातer.qos)
-	    || !dev->घातer.qos->latency_tolerance_req) अणु
-		काष्ठा dev_pm_qos_request *req;
+	if (IS_ERR_OR_NULL(dev->power.qos)
+	    || !dev->power.qos->latency_tolerance_req) {
+		struct dev_pm_qos_request *req;
 
-		अगर (val < 0) अणु
-			अगर (val == PM_QOS_LATENCY_TOLERANCE_NO_CONSTRAINT)
+		if (val < 0) {
+			if (val == PM_QOS_LATENCY_TOLERANCE_NO_CONSTRAINT)
 				ret = 0;
-			अन्यथा
+			else
 				ret = -EINVAL;
-			जाओ out;
-		पूर्ण
-		req = kzalloc(माप(*req), GFP_KERNEL);
-		अगर (!req) अणु
+			goto out;
+		}
+		req = kzalloc(sizeof(*req), GFP_KERNEL);
+		if (!req) {
 			ret = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		ret = __dev_pm_qos_add_request(dev, req, DEV_PM_QOS_LATENCY_TOLERANCE, val);
-		अगर (ret < 0) अणु
-			kमुक्त(req);
-			जाओ out;
-		पूर्ण
-		dev->घातer.qos->latency_tolerance_req = req;
-	पूर्ण अन्यथा अणु
-		अगर (val < 0) अणु
+		if (ret < 0) {
+			kfree(req);
+			goto out;
+		}
+		dev->power.qos->latency_tolerance_req = req;
+	} else {
+		if (val < 0) {
 			__dev_pm_qos_drop_user_request(dev, DEV_PM_QOS_LATENCY_TOLERANCE);
 			ret = 0;
-		पूर्ण अन्यथा अणु
-			ret = __dev_pm_qos_update_request(dev->घातer.qos->latency_tolerance_req, val);
-		पूर्ण
-	पूर्ण
+		} else {
+			ret = __dev_pm_qos_update_request(dev->power.qos->latency_tolerance_req, val);
+		}
+	}
 
  out:
 	mutex_unlock(&dev_pm_qos_mtx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(dev_pm_qos_update_user_latency_tolerance);
 
 /**
  * dev_pm_qos_expose_latency_tolerance - Expose latency tolerance to userspace
  * @dev: Device whose latency tolerance to expose
  */
-पूर्णांक dev_pm_qos_expose_latency_tolerance(काष्ठा device *dev)
-अणु
-	पूर्णांक ret;
+int dev_pm_qos_expose_latency_tolerance(struct device *dev)
+{
+	int ret;
 
-	अगर (!dev->घातer.set_latency_tolerance)
-		वापस -EINVAL;
+	if (!dev->power.set_latency_tolerance)
+		return -EINVAL;
 
 	mutex_lock(&dev_pm_qos_sysfs_mtx);
 	ret = pm_qos_sysfs_add_latency_tolerance(dev);
 	mutex_unlock(&dev_pm_qos_sysfs_mtx);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(dev_pm_qos_expose_latency_tolerance);
 
 /**
  * dev_pm_qos_hide_latency_tolerance - Hide latency tolerance from userspace
  * @dev: Device whose latency tolerance to hide
  */
-व्योम dev_pm_qos_hide_latency_tolerance(काष्ठा device *dev)
-अणु
+void dev_pm_qos_hide_latency_tolerance(struct device *dev)
+{
 	mutex_lock(&dev_pm_qos_sysfs_mtx);
-	pm_qos_sysfs_हटाओ_latency_tolerance(dev);
+	pm_qos_sysfs_remove_latency_tolerance(dev);
 	mutex_unlock(&dev_pm_qos_sysfs_mtx);
 
 	/* Remove the request from user space now */
-	pm_runसमय_get_sync(dev);
+	pm_runtime_get_sync(dev);
 	dev_pm_qos_update_user_latency_tolerance(dev,
 		PM_QOS_LATENCY_TOLERANCE_NO_CONSTRAINT);
-	pm_runसमय_put(dev);
-पूर्ण
+	pm_runtime_put(dev);
+}
 EXPORT_SYMBOL_GPL(dev_pm_qos_hide_latency_tolerance);

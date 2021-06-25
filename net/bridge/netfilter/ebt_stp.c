@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  ebt_stp
  *
  *	Authors:
- *	Bart De Schuymer <bdschuym@panकरोra.be>
+ *	Bart De Schuymer <bdschuym@pandora.be>
  *	Stephen Hemminger <shemminger@osdl.org>
  *
  *  July, 2003
  */
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/module.h>
-#समावेश <linux/netfilter/x_tables.h>
-#समावेश <linux/netfilter_bridge/ebtables.h>
-#समावेश <linux/netfilter_bridge/ebt_stp.h>
+#include <linux/etherdevice.h>
+#include <linux/module.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter_bridge/ebtables.h>
+#include <linux/netfilter_bridge/ebt_stp.h>
 
-#घोषणा BPDU_TYPE_CONFIG 0
+#define BPDU_TYPE_CONFIG 0
 
-काष्ठा stp_header अणु
+struct stp_header {
 	u8 dsap;
 	u8 ssap;
 	u8 ctrl;
 	u8 pid;
 	u8 vers;
 	u8 type;
-पूर्ण;
+};
 
-काष्ठा stp_config_pdu अणु
+struct stp_config_pdu {
 	u8 flags;
 	u8 root[8];
 	u8 root_cost[4];
@@ -34,162 +33,162 @@
 	u8 port[2];
 	u8 msg_age[2];
 	u8 max_age[2];
-	u8 hello_समय[2];
-	u8 क्रमward_delay[2];
-पूर्ण;
+	u8 hello_time[2];
+	u8 forward_delay[2];
+};
 
-#घोषणा NR16(p) (p[0] << 8 | p[1])
-#घोषणा NR32(p) ((p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3])
+#define NR16(p) (p[0] << 8 | p[1])
+#define NR32(p) ((p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3])
 
-अटल bool ebt_filter_config(स्थिर काष्ठा ebt_stp_info *info,
-			      स्थिर काष्ठा stp_config_pdu *stpc)
-अणु
-	स्थिर काष्ठा ebt_stp_config_info *c;
+static bool ebt_filter_config(const struct ebt_stp_info *info,
+			      const struct stp_config_pdu *stpc)
+{
+	const struct ebt_stp_config_info *c;
 	u16 v16;
 	u32 v32;
 
 	c = &info->config;
-	अगर ((info->biपंचांगask & EBT_STP_FLAGS) &&
+	if ((info->bitmask & EBT_STP_FLAGS) &&
 	    NF_INVF(info, EBT_STP_FLAGS, c->flags != stpc->flags))
-		वापस false;
-	अगर (info->biपंचांगask & EBT_STP_ROOTPRIO) अणु
+		return false;
+	if (info->bitmask & EBT_STP_ROOTPRIO) {
 		v16 = NR16(stpc->root);
-		अगर (NF_INVF(info, EBT_STP_ROOTPRIO,
+		if (NF_INVF(info, EBT_STP_ROOTPRIO,
 			    v16 < c->root_priol || v16 > c->root_priou))
-			वापस false;
-	पूर्ण
-	अगर (info->biपंचांगask & EBT_STP_ROOTADDR) अणु
-		अगर (NF_INVF(info, EBT_STP_ROOTADDR,
+			return false;
+	}
+	if (info->bitmask & EBT_STP_ROOTADDR) {
+		if (NF_INVF(info, EBT_STP_ROOTADDR,
 			    !ether_addr_equal_masked(&stpc->root[2],
 						     c->root_addr,
 						     c->root_addrmsk)))
-			वापस false;
-	पूर्ण
-	अगर (info->biपंचांगask & EBT_STP_ROOTCOST) अणु
+			return false;
+	}
+	if (info->bitmask & EBT_STP_ROOTCOST) {
 		v32 = NR32(stpc->root_cost);
-		अगर (NF_INVF(info, EBT_STP_ROOTCOST,
+		if (NF_INVF(info, EBT_STP_ROOTCOST,
 			    v32 < c->root_costl || v32 > c->root_costu))
-			वापस false;
-	पूर्ण
-	अगर (info->biपंचांगask & EBT_STP_SENDERPRIO) अणु
+			return false;
+	}
+	if (info->bitmask & EBT_STP_SENDERPRIO) {
 		v16 = NR16(stpc->sender);
-		अगर (NF_INVF(info, EBT_STP_SENDERPRIO,
+		if (NF_INVF(info, EBT_STP_SENDERPRIO,
 			    v16 < c->sender_priol || v16 > c->sender_priou))
-			वापस false;
-	पूर्ण
-	अगर (info->biपंचांगask & EBT_STP_SENDERADDR) अणु
-		अगर (NF_INVF(info, EBT_STP_SENDERADDR,
+			return false;
+	}
+	if (info->bitmask & EBT_STP_SENDERADDR) {
+		if (NF_INVF(info, EBT_STP_SENDERADDR,
 			    !ether_addr_equal_masked(&stpc->sender[2],
 						     c->sender_addr,
 						     c->sender_addrmsk)))
-			वापस false;
-	पूर्ण
-	अगर (info->biपंचांगask & EBT_STP_PORT) अणु
+			return false;
+	}
+	if (info->bitmask & EBT_STP_PORT) {
 		v16 = NR16(stpc->port);
-		अगर (NF_INVF(info, EBT_STP_PORT,
+		if (NF_INVF(info, EBT_STP_PORT,
 			    v16 < c->portl || v16 > c->portu))
-			वापस false;
-	पूर्ण
-	अगर (info->biपंचांगask & EBT_STP_MSGAGE) अणु
+			return false;
+	}
+	if (info->bitmask & EBT_STP_MSGAGE) {
 		v16 = NR16(stpc->msg_age);
-		अगर (NF_INVF(info, EBT_STP_MSGAGE,
+		if (NF_INVF(info, EBT_STP_MSGAGE,
 			    v16 < c->msg_agel || v16 > c->msg_ageu))
-			वापस false;
-	पूर्ण
-	अगर (info->biपंचांगask & EBT_STP_MAXAGE) अणु
+			return false;
+	}
+	if (info->bitmask & EBT_STP_MAXAGE) {
 		v16 = NR16(stpc->max_age);
-		अगर (NF_INVF(info, EBT_STP_MAXAGE,
+		if (NF_INVF(info, EBT_STP_MAXAGE,
 			    v16 < c->max_agel || v16 > c->max_ageu))
-			वापस false;
-	पूर्ण
-	अगर (info->biपंचांगask & EBT_STP_HELLOTIME) अणु
-		v16 = NR16(stpc->hello_समय);
-		अगर (NF_INVF(info, EBT_STP_HELLOTIME,
-			    v16 < c->hello_समयl || v16 > c->hello_समयu))
-			वापस false;
-	पूर्ण
-	अगर (info->biपंचांगask & EBT_STP_FWDD) अणु
-		v16 = NR16(stpc->क्रमward_delay);
-		अगर (NF_INVF(info, EBT_STP_FWDD,
-			    v16 < c->क्रमward_delayl || v16 > c->क्रमward_delayu))
-			वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+			return false;
+	}
+	if (info->bitmask & EBT_STP_HELLOTIME) {
+		v16 = NR16(stpc->hello_time);
+		if (NF_INVF(info, EBT_STP_HELLOTIME,
+			    v16 < c->hello_timel || v16 > c->hello_timeu))
+			return false;
+	}
+	if (info->bitmask & EBT_STP_FWDD) {
+		v16 = NR16(stpc->forward_delay);
+		if (NF_INVF(info, EBT_STP_FWDD,
+			    v16 < c->forward_delayl || v16 > c->forward_delayu))
+			return false;
+	}
+	return true;
+}
 
-अटल bool
-ebt_stp_mt(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा ebt_stp_info *info = par->matchinfo;
-	स्थिर काष्ठा stp_header *sp;
-	काष्ठा stp_header _stph;
-	स्थिर u8 header[6] = अणु0x42, 0x42, 0x03, 0x00, 0x00, 0x00पूर्ण;
+static bool
+ebt_stp_mt(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	const struct ebt_stp_info *info = par->matchinfo;
+	const struct stp_header *sp;
+	struct stp_header _stph;
+	const u8 header[6] = {0x42, 0x42, 0x03, 0x00, 0x00, 0x00};
 
-	sp = skb_header_poपूर्णांकer(skb, 0, माप(_stph), &_stph);
-	अगर (sp == शून्य)
-		वापस false;
+	sp = skb_header_pointer(skb, 0, sizeof(_stph), &_stph);
+	if (sp == NULL)
+		return false;
 
 	/* The stp code only considers these */
-	अगर (स_भेद(sp, header, माप(header)))
-		वापस false;
+	if (memcmp(sp, header, sizeof(header)))
+		return false;
 
-	अगर ((info->biपंचांगask & EBT_STP_TYPE) &&
+	if ((info->bitmask & EBT_STP_TYPE) &&
 	    NF_INVF(info, EBT_STP_TYPE, info->type != sp->type))
-		वापस false;
+		return false;
 
-	अगर (sp->type == BPDU_TYPE_CONFIG &&
-	    info->biपंचांगask & EBT_STP_CONFIG_MASK) अणु
-		स्थिर काष्ठा stp_config_pdu *st;
-		काष्ठा stp_config_pdu _stpc;
+	if (sp->type == BPDU_TYPE_CONFIG &&
+	    info->bitmask & EBT_STP_CONFIG_MASK) {
+		const struct stp_config_pdu *st;
+		struct stp_config_pdu _stpc;
 
-		st = skb_header_poपूर्णांकer(skb, माप(_stph),
-					माप(_stpc), &_stpc);
-		अगर (st == शून्य)
-			वापस false;
-		वापस ebt_filter_config(info, st);
-	पूर्ण
-	वापस true;
-पूर्ण
+		st = skb_header_pointer(skb, sizeof(_stph),
+					sizeof(_stpc), &_stpc);
+		if (st == NULL)
+			return false;
+		return ebt_filter_config(info, st);
+	}
+	return true;
+}
 
-अटल पूर्णांक ebt_stp_mt_check(स्थिर काष्ठा xt_mtchk_param *par)
-अणु
-	स्थिर काष्ठा ebt_stp_info *info = par->matchinfo;
-	स्थिर काष्ठा ebt_entry *e = par->entryinfo;
+static int ebt_stp_mt_check(const struct xt_mtchk_param *par)
+{
+	const struct ebt_stp_info *info = par->matchinfo;
+	const struct ebt_entry *e = par->entryinfo;
 
-	अगर (info->biपंचांगask & ~EBT_STP_MASK || info->invflags & ~EBT_STP_MASK ||
-	    !(info->biपंचांगask & EBT_STP_MASK))
-		वापस -EINVAL;
+	if (info->bitmask & ~EBT_STP_MASK || info->invflags & ~EBT_STP_MASK ||
+	    !(info->bitmask & EBT_STP_MASK))
+		return -EINVAL;
 	/* Make sure the match only receives stp frames */
-	अगर (!par->nft_compat &&
-	    (!ether_addr_equal(e->desपंचांगac, eth_stp_addr) ||
-	     !(e->biपंचांगask & EBT_DESTMAC) ||
-	     !is_broadcast_ether_addr(e->desपंचांगsk)))
-		वापस -EINVAL;
+	if (!par->nft_compat &&
+	    (!ether_addr_equal(e->destmac, eth_stp_addr) ||
+	     !(e->bitmask & EBT_DESTMAC) ||
+	     !is_broadcast_ether_addr(e->destmsk)))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा xt_match ebt_stp_mt_reg __पढ़ो_mostly = अणु
+static struct xt_match ebt_stp_mt_reg __read_mostly = {
 	.name		= "stp",
 	.revision	= 0,
 	.family		= NFPROTO_BRIDGE,
 	.match		= ebt_stp_mt,
 	.checkentry	= ebt_stp_mt_check,
-	.matchsize	= माप(काष्ठा ebt_stp_info),
+	.matchsize	= sizeof(struct ebt_stp_info),
 	.me		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init ebt_stp_init(व्योम)
-अणु
-	वापस xt_रेजिस्टर_match(&ebt_stp_mt_reg);
-पूर्ण
+static int __init ebt_stp_init(void)
+{
+	return xt_register_match(&ebt_stp_mt_reg);
+}
 
-अटल व्योम __निकास ebt_stp_fini(व्योम)
-अणु
-	xt_unरेजिस्टर_match(&ebt_stp_mt_reg);
-पूर्ण
+static void __exit ebt_stp_fini(void)
+{
+	xt_unregister_match(&ebt_stp_mt_reg);
+}
 
 module_init(ebt_stp_init);
-module_निकास(ebt_stp_fini);
+module_exit(ebt_stp_fini);
 MODULE_DESCRIPTION("Ebtables: Spanning Tree Protocol packet match");
 MODULE_LICENSE("GPL");

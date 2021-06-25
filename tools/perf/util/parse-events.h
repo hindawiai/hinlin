@@ -1,72 +1,71 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PERF_PARSE_EVENTS_H
-#घोषणा __PERF_PARSE_EVENTS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PERF_PARSE_EVENTS_H
+#define __PERF_PARSE_EVENTS_H
 /*
  * Parse symbolic events/counts passed in as options:
  */
 
-#समावेश <linux/list.h>
-#समावेश <stdbool.h>
-#समावेश <linux/types.h>
-#समावेश <linux/perf_event.h>
-#समावेश <माला.स>
+#include <linux/list.h>
+#include <stdbool.h>
+#include <linux/types.h>
+#include <linux/perf_event.h>
+#include <string.h>
 
-काष्ठा list_head;
-काष्ठा evsel;
-काष्ठा evlist;
-काष्ठा parse_events_error;
+struct list_head;
+struct evsel;
+struct evlist;
+struct parse_events_error;
 
-काष्ठा option;
-काष्ठा perf_pmu;
+struct option;
+struct perf_pmu;
 
-काष्ठा tracepoपूर्णांक_path अणु
-	अक्षर *प्रणाली;
-	अक्षर *name;
-	काष्ठा tracepoपूर्णांक_path *next;
-पूर्ण;
+struct tracepoint_path {
+	char *system;
+	char *name;
+	struct tracepoint_path *next;
+};
 
-काष्ठा tracepoपूर्णांक_path *tracepoपूर्णांक_id_to_path(u64 config);
-काष्ठा tracepoपूर्णांक_path *tracepoपूर्णांक_name_to_path(स्थिर अक्षर *name);
-bool have_tracepoपूर्णांकs(काष्ठा list_head *evlist);
+struct tracepoint_path *tracepoint_id_to_path(u64 config);
+struct tracepoint_path *tracepoint_name_to_path(const char *name);
+bool have_tracepoints(struct list_head *evlist);
 
-स्थिर अक्षर *event_type(पूर्णांक type);
+const char *event_type(int type);
 
-पूर्णांक parse_events_option(स्थिर काष्ठा option *opt, स्थिर अक्षर *str, पूर्णांक unset);
-पूर्णांक parse_events_option_new_evlist(स्थिर काष्ठा option *opt, स्थिर अक्षर *str, पूर्णांक unset);
-पूर्णांक __parse_events(काष्ठा evlist *evlist, स्थिर अक्षर *str, काष्ठा parse_events_error *error,
-		   काष्ठा perf_pmu *fake_pmu);
+int parse_events_option(const struct option *opt, const char *str, int unset);
+int parse_events_option_new_evlist(const struct option *opt, const char *str, int unset);
+int __parse_events(struct evlist *evlist, const char *str, struct parse_events_error *error,
+		   struct perf_pmu *fake_pmu);
 
-अटल अंतरभूत पूर्णांक parse_events(काष्ठा evlist *evlist, स्थिर अक्षर *str,
-			       काष्ठा parse_events_error *err)
-अणु
-	वापस __parse_events(evlist, str, err, शून्य);
-पूर्ण
+static inline int parse_events(struct evlist *evlist, const char *str,
+			       struct parse_events_error *err)
+{
+	return __parse_events(evlist, str, err, NULL);
+}
 
-पूर्णांक parse_events_terms(काष्ठा list_head *terms, स्थिर अक्षर *str);
-पूर्णांक parse_filter(स्थिर काष्ठा option *opt, स्थिर अक्षर *str, पूर्णांक unset);
-पूर्णांक exclude_perf(स्थिर काष्ठा option *opt, स्थिर अक्षर *arg, पूर्णांक unset);
+int parse_events_terms(struct list_head *terms, const char *str);
+int parse_filter(const struct option *opt, const char *str, int unset);
+int exclude_perf(const struct option *opt, const char *arg, int unset);
 
-#घोषणा EVENTS_HELP_MAX (128*1024)
+#define EVENTS_HELP_MAX (128*1024)
 
-क्रमागत perf_pmu_event_symbol_type अणु
+enum perf_pmu_event_symbol_type {
 	PMU_EVENT_SYMBOL_ERR,		/* not a PMU EVENT */
 	PMU_EVENT_SYMBOL,		/* normal style PMU event */
 	PMU_EVENT_SYMBOL_PREFIX,	/* prefix of pre-suf style event */
 	PMU_EVENT_SYMBOL_SUFFIX,	/* suffix of pre-suf style event */
-पूर्ण;
+};
 
-काष्ठा perf_pmu_event_symbol अणु
-	अक्षर	*symbol;
-	क्रमागत perf_pmu_event_symbol_type	type;
-पूर्ण;
+struct perf_pmu_event_symbol {
+	char	*symbol;
+	enum perf_pmu_event_symbol_type	type;
+};
 
-क्रमागत अणु
+enum {
 	PARSE_EVENTS__TERM_TYPE_NUM,
 	PARSE_EVENTS__TERM_TYPE_STR,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	PARSE_EVENTS__TERM_TYPE_USER,
 	PARSE_EVENTS__TERM_TYPE_CONFIG,
 	PARSE_EVENTS__TERM_TYPE_CONFIG1,
@@ -89,186 +88,186 @@ bool have_tracepoपूर्णांकs(काष्ठा list_head *evlist)
 	PARSE_EVENTS__TERM_TYPE_AUX_OUTPUT,
 	PARSE_EVENTS__TERM_TYPE_AUX_SAMPLE_SIZE,
 	__PARSE_EVENTS__TERM_TYPE_NR,
-पूर्ण;
+};
 
-काष्ठा parse_events_array अणु
-	माप_प्रकार nr_ranges;
-	काष्ठा अणु
-		अचिन्हित पूर्णांक start;
-		माप_प्रकार length;
-	पूर्ण *ranges;
-पूर्ण;
+struct parse_events_array {
+	size_t nr_ranges;
+	struct {
+		unsigned int start;
+		size_t length;
+	} *ranges;
+};
 
-काष्ठा parse_events_term अणु
-	अक्षर *config;
-	काष्ठा parse_events_array array;
-	जोड़ अणु
-		अक्षर *str;
+struct parse_events_term {
+	char *config;
+	struct parse_events_array array;
+	union {
+		char *str;
 		u64  num;
-	पूर्ण val;
-	पूर्णांक type_val;
-	पूर्णांक type_term;
-	काष्ठा list_head list;
+	} val;
+	int type_val;
+	int type_term;
+	struct list_head list;
 	bool used;
 	bool no_value;
 
-	/* error string indexes क्रम within parsed string */
-	पूर्णांक err_term;
-	पूर्णांक err_val;
+	/* error string indexes for within parsed string */
+	int err_term;
+	int err_val;
 
 	/* Coming from implicit alias */
 	bool weak;
-पूर्ण;
+};
 
-काष्ठा parse_events_error अणु
-	पूर्णांक   num_errors;       /* number of errors encountered */
-	पूर्णांक   idx;	/* index in the parsed string */
-	अक्षर *str;      /* string to display at the index */
-	अक्षर *help;	/* optional help string */
-	पूर्णांक   first_idx;/* as above, but क्रम the first encountered error */
-	अक्षर *first_str;
-	अक्षर *first_help;
-पूर्ण;
+struct parse_events_error {
+	int   num_errors;       /* number of errors encountered */
+	int   idx;	/* index in the parsed string */
+	char *str;      /* string to display at the index */
+	char *help;	/* optional help string */
+	int   first_idx;/* as above, but for the first encountered error */
+	char *first_str;
+	char *first_help;
+};
 
-काष्ठा parse_events_state अणु
-	काष्ठा list_head	   list;
-	पूर्णांक			   idx;
-	पूर्णांक			   nr_groups;
-	काष्ठा parse_events_error *error;
-	काष्ठा evlist		  *evlist;
-	काष्ठा list_head	  *terms;
-	पूर्णांक			   stoken;
-	काष्ठा perf_pmu		  *fake_pmu;
-	अक्षर			  *hybrid_pmu_name;
-पूर्ण;
+struct parse_events_state {
+	struct list_head	   list;
+	int			   idx;
+	int			   nr_groups;
+	struct parse_events_error *error;
+	struct evlist		  *evlist;
+	struct list_head	  *terms;
+	int			   stoken;
+	struct perf_pmu		  *fake_pmu;
+	char			  *hybrid_pmu_name;
+};
 
-व्योम parse_events__handle_error(काष्ठा parse_events_error *err, पूर्णांक idx,
-				अक्षर *str, अक्षर *help);
-व्योम parse_events__shrink_config_terms(व्योम);
-पूर्णांक parse_events__is_hardcoded_term(काष्ठा parse_events_term *term);
-पूर्णांक parse_events_term__num(काष्ठा parse_events_term **term,
-			   पूर्णांक type_term, अक्षर *config, u64 num,
+void parse_events__handle_error(struct parse_events_error *err, int idx,
+				char *str, char *help);
+void parse_events__shrink_config_terms(void);
+int parse_events__is_hardcoded_term(struct parse_events_term *term);
+int parse_events_term__num(struct parse_events_term **term,
+			   int type_term, char *config, u64 num,
 			   bool novalue,
-			   व्योम *loc_term, व्योम *loc_val);
-पूर्णांक parse_events_term__str(काष्ठा parse_events_term **term,
-			   पूर्णांक type_term, अक्षर *config, अक्षर *str,
-			   व्योम *loc_term, व्योम *loc_val);
-पूर्णांक parse_events_term__sym_hw(काष्ठा parse_events_term **term,
-			      अक्षर *config, अचिन्हित idx);
-पूर्णांक parse_events_term__clone(काष्ठा parse_events_term **new,
-			     काष्ठा parse_events_term *term);
-व्योम parse_events_term__delete(काष्ठा parse_events_term *term);
-व्योम parse_events_terms__delete(काष्ठा list_head *terms);
-व्योम parse_events_terms__purge(काष्ठा list_head *terms);
-व्योम parse_events__clear_array(काष्ठा parse_events_array *a);
-पूर्णांक parse_events__modअगरier_event(काष्ठा list_head *list, अक्षर *str, bool add);
-पूर्णांक parse_events__modअगरier_group(काष्ठा list_head *list, अक्षर *event_mod);
-पूर्णांक parse_events_name(काष्ठा list_head *list, अक्षर *name);
-पूर्णांक parse_events_add_tracepoपूर्णांक(काष्ठा list_head *list, पूर्णांक *idx,
-				स्थिर अक्षर *sys, स्थिर अक्षर *event,
-				काष्ठा parse_events_error *error,
-				काष्ठा list_head *head_config);
-पूर्णांक parse_events_load_bpf(काष्ठा parse_events_state *parse_state,
-			  काष्ठा list_head *list,
-			  अक्षर *bpf_file_name,
+			   void *loc_term, void *loc_val);
+int parse_events_term__str(struct parse_events_term **term,
+			   int type_term, char *config, char *str,
+			   void *loc_term, void *loc_val);
+int parse_events_term__sym_hw(struct parse_events_term **term,
+			      char *config, unsigned idx);
+int parse_events_term__clone(struct parse_events_term **new,
+			     struct parse_events_term *term);
+void parse_events_term__delete(struct parse_events_term *term);
+void parse_events_terms__delete(struct list_head *terms);
+void parse_events_terms__purge(struct list_head *terms);
+void parse_events__clear_array(struct parse_events_array *a);
+int parse_events__modifier_event(struct list_head *list, char *str, bool add);
+int parse_events__modifier_group(struct list_head *list, char *event_mod);
+int parse_events_name(struct list_head *list, char *name);
+int parse_events_add_tracepoint(struct list_head *list, int *idx,
+				const char *sys, const char *event,
+				struct parse_events_error *error,
+				struct list_head *head_config);
+int parse_events_load_bpf(struct parse_events_state *parse_state,
+			  struct list_head *list,
+			  char *bpf_file_name,
 			  bool source,
-			  काष्ठा list_head *head_config);
-/* Provide this function क्रम perf test */
-काष्ठा bpf_object;
-पूर्णांक parse_events_load_bpf_obj(काष्ठा parse_events_state *parse_state,
-			      काष्ठा list_head *list,
-			      काष्ठा bpf_object *obj,
-			      काष्ठा list_head *head_config);
-पूर्णांक parse_events_add_numeric(काष्ठा parse_events_state *parse_state,
-			     काष्ठा list_head *list,
+			  struct list_head *head_config);
+/* Provide this function for perf test */
+struct bpf_object;
+int parse_events_load_bpf_obj(struct parse_events_state *parse_state,
+			      struct list_head *list,
+			      struct bpf_object *obj,
+			      struct list_head *head_config);
+int parse_events_add_numeric(struct parse_events_state *parse_state,
+			     struct list_head *list,
 			     u32 type, u64 config,
-			     काष्ठा list_head *head_config);
-क्रमागत perf_tool_event;
-पूर्णांक parse_events_add_tool(काष्ठा parse_events_state *parse_state,
-			  काष्ठा list_head *list,
-			  क्रमागत perf_tool_event tool_event);
-पूर्णांक parse_events_add_cache(काष्ठा list_head *list, पूर्णांक *idx,
-			   अक्षर *type, अक्षर *op_result1, अक्षर *op_result2,
-			   काष्ठा parse_events_error *error,
-			   काष्ठा list_head *head_config,
-			   काष्ठा parse_events_state *parse_state);
-पूर्णांक parse_events_add_अवरोधpoपूर्णांक(काष्ठा list_head *list, पूर्णांक *idx,
-				u64 addr, अक्षर *type, u64 len);
-पूर्णांक parse_events_add_pmu(काष्ठा parse_events_state *parse_state,
-			 काष्ठा list_head *list, अक्षर *name,
-			 काष्ठा list_head *head_config,
-			 bool स्वतः_merge_stats,
+			     struct list_head *head_config);
+enum perf_tool_event;
+int parse_events_add_tool(struct parse_events_state *parse_state,
+			  struct list_head *list,
+			  enum perf_tool_event tool_event);
+int parse_events_add_cache(struct list_head *list, int *idx,
+			   char *type, char *op_result1, char *op_result2,
+			   struct parse_events_error *error,
+			   struct list_head *head_config,
+			   struct parse_events_state *parse_state);
+int parse_events_add_breakpoint(struct list_head *list, int *idx,
+				u64 addr, char *type, u64 len);
+int parse_events_add_pmu(struct parse_events_state *parse_state,
+			 struct list_head *list, char *name,
+			 struct list_head *head_config,
+			 bool auto_merge_stats,
 			 bool use_alias);
 
-काष्ठा evsel *parse_events__add_event(पूर्णांक idx, काष्ठा perf_event_attr *attr,
-					अक्षर *name, काष्ठा perf_pmu *pmu);
+struct evsel *parse_events__add_event(int idx, struct perf_event_attr *attr,
+					char *name, struct perf_pmu *pmu);
 
-पूर्णांक parse_events_multi_pmu_add(काष्ठा parse_events_state *parse_state,
-			       अक्षर *str,
-			       काष्ठा list_head **listp);
+int parse_events_multi_pmu_add(struct parse_events_state *parse_state,
+			       char *str,
+			       struct list_head **listp);
 
-पूर्णांक parse_events_copy_term_list(काष्ठा list_head *old,
-				 काष्ठा list_head **new);
+int parse_events_copy_term_list(struct list_head *old,
+				 struct list_head **new);
 
-क्रमागत perf_pmu_event_symbol_type
-perf_pmu__parse_check(स्थिर अक्षर *name);
-व्योम parse_events__set_leader(अक्षर *name, काष्ठा list_head *list,
-			      काष्ठा parse_events_state *parse_state);
-व्योम parse_events_update_lists(काष्ठा list_head *list_event,
-			       काष्ठा list_head *list_all);
-व्योम parse_events_evlist_error(काष्ठा parse_events_state *parse_state,
-			       पूर्णांक idx, स्थिर अक्षर *str);
+enum perf_pmu_event_symbol_type
+perf_pmu__parse_check(const char *name);
+void parse_events__set_leader(char *name, struct list_head *list,
+			      struct parse_events_state *parse_state);
+void parse_events_update_lists(struct list_head *list_event,
+			       struct list_head *list_all);
+void parse_events_evlist_error(struct parse_events_state *parse_state,
+			       int idx, const char *str);
 
-व्योम prपूर्णांक_events(स्थिर अक्षर *event_glob, bool name_only, bool quiet,
-		  bool दीर्घ_desc, bool details_flag, bool deprecated);
+void print_events(const char *event_glob, bool name_only, bool quiet,
+		  bool long_desc, bool details_flag, bool deprecated);
 
-काष्ठा event_symbol अणु
-	स्थिर अक्षर	*symbol;
-	स्थिर अक्षर	*alias;
-पूर्ण;
-बाह्य काष्ठा event_symbol event_symbols_hw[];
-बाह्य काष्ठा event_symbol event_symbols_sw[];
-व्योम prपूर्णांक_symbol_events(स्थिर अक्षर *event_glob, अचिन्हित type,
-				काष्ठा event_symbol *syms, अचिन्हित max,
+struct event_symbol {
+	const char	*symbol;
+	const char	*alias;
+};
+extern struct event_symbol event_symbols_hw[];
+extern struct event_symbol event_symbols_sw[];
+void print_symbol_events(const char *event_glob, unsigned type,
+				struct event_symbol *syms, unsigned max,
 				bool name_only);
-व्योम prपूर्णांक_tool_events(स्थिर अक्षर *event_glob, bool name_only);
-व्योम prपूर्णांक_tracepoपूर्णांक_events(स्थिर अक्षर *subsys_glob, स्थिर अक्षर *event_glob,
+void print_tool_events(const char *event_glob, bool name_only);
+void print_tracepoint_events(const char *subsys_glob, const char *event_glob,
 			     bool name_only);
-पूर्णांक prपूर्णांक_hwcache_events(स्थिर अक्षर *event_glob, bool name_only);
-व्योम prपूर्णांक_sdt_events(स्थिर अक्षर *subsys_glob, स्थिर अक्षर *event_glob,
+int print_hwcache_events(const char *event_glob, bool name_only);
+void print_sdt_events(const char *subsys_glob, const char *event_glob,
 		      bool name_only);
-पूर्णांक is_valid_tracepoपूर्णांक(स्थिर अक्षर *event_string);
+int is_valid_tracepoint(const char *event_string);
 
-पूर्णांक valid_event_mount(स्थिर अक्षर *eventfs);
-अक्षर *parse_events_क्रमmats_error_string(अक्षर *additional_terms);
+int valid_event_mount(const char *eventfs);
+char *parse_events_formats_error_string(char *additional_terms);
 
-व्योम parse_events_prपूर्णांक_error(काष्ठा parse_events_error *err,
-			      स्थिर अक्षर *event);
+void parse_events_print_error(struct parse_events_error *err,
+			      const char *event);
 
-#अगर_घोषित HAVE_LIBELF_SUPPORT
+#ifdef HAVE_LIBELF_SUPPORT
 /*
- * If the probe poपूर्णांक starts with '%',
+ * If the probe point starts with '%',
  * or starts with "sdt_" and has a ':' but no '=',
- * then it should be a SDT/cached probe poपूर्णांक.
+ * then it should be a SDT/cached probe point.
  */
-अटल अंतरभूत bool is_sdt_event(अक्षर *str)
-अणु
-	वापस (str[0] == '%' ||
-		(!म_भेदन(str, "sdt_", 4) &&
-		 !!म_अक्षर(str, ':') && !strchr(str, '=')));
-पूर्ण
-#अन्यथा
-अटल अंतरभूत bool is_sdt_event(अक्षर *str __maybe_unused)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर /* HAVE_LIBELF_SUPPORT */
+static inline bool is_sdt_event(char *str)
+{
+	return (str[0] == '%' ||
+		(!strncmp(str, "sdt_", 4) &&
+		 !!strchr(str, ':') && !strchr(str, '=')));
+}
+#else
+static inline bool is_sdt_event(char *str __maybe_unused)
+{
+	return false;
+}
+#endif /* HAVE_LIBELF_SUPPORT */
 
-पूर्णांक perf_pmu__test_parse_init(व्योम);
+int perf_pmu__test_parse_init(void);
 
-काष्ठा evsel *parse_events__add_event_hybrid(काष्ठा list_head *list, पूर्णांक *idx,
-					     काष्ठा perf_event_attr *attr,
-					     अक्षर *name, काष्ठा perf_pmu *pmu,
-					     काष्ठा list_head *config_terms);
+struct evsel *parse_events__add_event_hybrid(struct list_head *list, int *idx,
+					     struct perf_event_attr *attr,
+					     char *name, struct perf_pmu *pmu,
+					     struct list_head *config_terms);
 
-#पूर्ण_अगर /* __PERF_PARSE_EVENTS_H */
+#endif /* __PERF_PARSE_EVENTS_H */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  hp_accel.c - Interface between LIS3LV02DL driver and HP ACPI BIOS
  *
@@ -8,161 +7,161 @@
  *  Copyright (C) 2008-2009 Pavel Machek
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/मुक्तzer.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/i8042.h>
-#समावेश <linux/serपन.स>
-#समावेश "../../misc/lis3lv02d/lis3lv02d.h"
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/dmi.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/platform_device.h>
+#include <linux/interrupt.h>
+#include <linux/delay.h>
+#include <linux/wait.h>
+#include <linux/poll.h>
+#include <linux/freezer.h>
+#include <linux/uaccess.h>
+#include <linux/leds.h>
+#include <linux/atomic.h>
+#include <linux/acpi.h>
+#include <linux/i8042.h>
+#include <linux/serio.h>
+#include "../../misc/lis3lv02d/lis3lv02d.h"
 
-#घोषणा DRIVER_NAME     "hp_accel"
-#घोषणा ACPI_MDPS_CLASS "accelerometer"
+#define DRIVER_NAME     "hp_accel"
+#define ACPI_MDPS_CLASS "accelerometer"
 
-/* Delayed LEDs infraकाष्ठाure ------------------------------------ */
+/* Delayed LEDs infrastructure ------------------------------------ */
 
 /* Special LED class that can defer work */
-काष्ठा delayed_led_classdev अणु
-	काष्ठा led_classdev led_classdev;
-	काष्ठा work_काष्ठा work;
-	क्रमागत led_brightness new_brightness;
+struct delayed_led_classdev {
+	struct led_classdev led_classdev;
+	struct work_struct work;
+	enum led_brightness new_brightness;
 
-	अचिन्हित पूर्णांक led;		/* For driver */
-	व्योम (*set_brightness)(काष्ठा delayed_led_classdev *data, क्रमागत led_brightness value);
-पूर्ण;
+	unsigned int led;		/* For driver */
+	void (*set_brightness)(struct delayed_led_classdev *data, enum led_brightness value);
+};
 
-अटल अंतरभूत व्योम delayed_set_status_worker(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_led_classdev *data =
-			container_of(work, काष्ठा delayed_led_classdev, work);
+static inline void delayed_set_status_worker(struct work_struct *work)
+{
+	struct delayed_led_classdev *data =
+			container_of(work, struct delayed_led_classdev, work);
 
 	data->set_brightness(data, data->new_brightness);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम delayed_sysfs_set(काष्ठा led_classdev *led_cdev,
-			      क्रमागत led_brightness brightness)
-अणु
-	काष्ठा delayed_led_classdev *data = container_of(led_cdev,
-			     काष्ठा delayed_led_classdev, led_classdev);
+static inline void delayed_sysfs_set(struct led_classdev *led_cdev,
+			      enum led_brightness brightness)
+{
+	struct delayed_led_classdev *data = container_of(led_cdev,
+			     struct delayed_led_classdev, led_classdev);
 	data->new_brightness = brightness;
 	schedule_work(&data->work);
-पूर्ण
+}
 
-/* HP-specअगरic accelerometer driver ------------------------------------ */
+/* HP-specific accelerometer driver ------------------------------------ */
 
 /* e0 25, e0 26, e0 27, e0 28 are scan codes that the accelerometer with acpi id
  * HPQ6000 sends through the keyboard bus */
-#घोषणा ACCEL_1 0x25
-#घोषणा ACCEL_2 0x26
-#घोषणा ACCEL_3 0x27
-#घोषणा ACCEL_4 0x28
+#define ACCEL_1 0x25
+#define ACCEL_2 0x26
+#define ACCEL_3 0x27
+#define ACCEL_4 0x28
 
-/* For स्वतःmatic insertion of the module */
-अटल स्थिर काष्ठा acpi_device_id lis3lv02d_device_ids[] = अणु
-	अणु"HPQ0004", 0पूर्ण, /* HP Mobile Data Protection System PNP */
-	अणु"HPQ6000", 0पूर्ण, /* HP Mobile Data Protection System PNP */
-	अणु"HPQ6007", 0पूर्ण, /* HP Mobile Data Protection System PNP */
-	अणु"", 0पूर्ण,
-पूर्ण;
+/* For automatic insertion of the module */
+static const struct acpi_device_id lis3lv02d_device_ids[] = {
+	{"HPQ0004", 0}, /* HP Mobile Data Protection System PNP */
+	{"HPQ6000", 0}, /* HP Mobile Data Protection System PNP */
+	{"HPQ6007", 0}, /* HP Mobile Data Protection System PNP */
+	{"", 0},
+};
 MODULE_DEVICE_TABLE(acpi, lis3lv02d_device_ids);
 
 
 /**
  * lis3lv02d_acpi_init - ACPI _INI method: initialize the device.
- * @lis3: poपूर्णांकer to the device काष्ठा
+ * @lis3: pointer to the device struct
  *
  * Returns 0 on success.
  */
-अटल पूर्णांक lis3lv02d_acpi_init(काष्ठा lis3lv02d *lis3)
-अणु
-	काष्ठा acpi_device *dev = lis3->bus_priv;
-	अगर (!lis3->init_required)
-		वापस 0;
+static int lis3lv02d_acpi_init(struct lis3lv02d *lis3)
+{
+	struct acpi_device *dev = lis3->bus_priv;
+	if (!lis3->init_required)
+		return 0;
 
-	अगर (acpi_evaluate_object(dev->handle, METHOD_NAME__INI,
-				 शून्य, शून्य) != AE_OK)
-		वापस -EINVAL;
+	if (acpi_evaluate_object(dev->handle, METHOD_NAME__INI,
+				 NULL, NULL) != AE_OK)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * lis3lv02d_acpi_पढ़ो - ACPI ALRD method: पढ़ो a रेजिस्टर
- * @lis3: poपूर्णांकer to the device काष्ठा
- * @reg:    the रेजिस्टर to पढ़ो
+ * lis3lv02d_acpi_read - ACPI ALRD method: read a register
+ * @lis3: pointer to the device struct
+ * @reg:    the register to read
  * @ret:    result of the operation
  *
  * Returns 0 on success.
  */
-अटल पूर्णांक lis3lv02d_acpi_पढ़ो(काष्ठा lis3lv02d *lis3, पूर्णांक reg, u8 *ret)
-अणु
-	काष्ठा acpi_device *dev = lis3->bus_priv;
-	जोड़ acpi_object arg0 = अणु ACPI_TYPE_INTEGER पूर्ण;
-	काष्ठा acpi_object_list args = अणु 1, &arg0 पूर्ण;
-	अचिन्हित दीर्घ दीर्घ lret;
+static int lis3lv02d_acpi_read(struct lis3lv02d *lis3, int reg, u8 *ret)
+{
+	struct acpi_device *dev = lis3->bus_priv;
+	union acpi_object arg0 = { ACPI_TYPE_INTEGER };
+	struct acpi_object_list args = { 1, &arg0 };
+	unsigned long long lret;
 	acpi_status status;
 
-	arg0.पूर्णांकeger.value = reg;
+	arg0.integer.value = reg;
 
-	status = acpi_evaluate_पूर्णांकeger(dev->handle, "ALRD", &args, &lret);
-	अगर (ACPI_FAILURE(status))
-		वापस -EINVAL;
+	status = acpi_evaluate_integer(dev->handle, "ALRD", &args, &lret);
+	if (ACPI_FAILURE(status))
+		return -EINVAL;
 	*ret = lret;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * lis3lv02d_acpi_ग_लिखो - ACPI ALWR method: ग_लिखो to a रेजिस्टर
- * @lis3: poपूर्णांकer to the device काष्ठा
- * @reg:    the रेजिस्टर to ग_लिखो to
- * @val:    the value to ग_लिखो
+ * lis3lv02d_acpi_write - ACPI ALWR method: write to a register
+ * @lis3: pointer to the device struct
+ * @reg:    the register to write to
+ * @val:    the value to write
  *
  * Returns 0 on success.
  */
-अटल पूर्णांक lis3lv02d_acpi_ग_लिखो(काष्ठा lis3lv02d *lis3, पूर्णांक reg, u8 val)
-अणु
-	काष्ठा acpi_device *dev = lis3->bus_priv;
-	अचिन्हित दीर्घ दीर्घ ret; /* Not used when writting */
-	जोड़ acpi_object in_obj[2];
-	काष्ठा acpi_object_list args = अणु 2, in_obj पूर्ण;
+static int lis3lv02d_acpi_write(struct lis3lv02d *lis3, int reg, u8 val)
+{
+	struct acpi_device *dev = lis3->bus_priv;
+	unsigned long long ret; /* Not used when writting */
+	union acpi_object in_obj[2];
+	struct acpi_object_list args = { 2, in_obj };
 
 	in_obj[0].type          = ACPI_TYPE_INTEGER;
-	in_obj[0].पूर्णांकeger.value = reg;
+	in_obj[0].integer.value = reg;
 	in_obj[1].type          = ACPI_TYPE_INTEGER;
-	in_obj[1].पूर्णांकeger.value = val;
+	in_obj[1].integer.value = val;
 
-	अगर (acpi_evaluate_पूर्णांकeger(dev->handle, "ALWR", &args, &ret) != AE_OK)
-		वापस -EINVAL;
+	if (acpi_evaluate_integer(dev->handle, "ALWR", &args, &ret) != AE_OK)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lis3lv02d_dmi_matched(स्थिर काष्ठा dmi_प्रणाली_id *dmi)
-अणु
-	lis3_dev.ac = *((जोड़ axis_conversion *)dmi->driver_data);
+static int lis3lv02d_dmi_matched(const struct dmi_system_id *dmi)
+{
+	lis3_dev.ac = *((union axis_conversion *)dmi->driver_data);
 	pr_info("hardware type %s found\n", dmi->ident);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-/* Represents, क्रम each axis seen by userspace, the corresponding hw axis (+1).
+/* Represents, for each axis seen by userspace, the corresponding hw axis (+1).
  * If the value is negative, the opposite of the hw value is used. */
-#घोषणा DEFINE_CONV(name, x, y, z)			      \
-	अटल जोड़ axis_conversion lis3lv02d_axis_##name = \
-		अणु .as_array = अणु x, y, z पूर्ण पूर्ण
+#define DEFINE_CONV(name, x, y, z)			      \
+	static union axis_conversion lis3lv02d_axis_##name = \
+		{ .as_array = { x, y, z } }
 DEFINE_CONV(normal, 1, 2, 3);
 DEFINE_CONV(y_inverted, 1, -2, 3);
 DEFINE_CONV(x_inverted, -1, 2, 3);
@@ -175,27 +174,27 @@ DEFINE_CONV(xy_swap_inverted, -2, -1, 3);
 DEFINE_CONV(xy_rotated_right, 2, -1, 3);
 DEFINE_CONV(xy_swap_yz_inverted, 2, -1, -3);
 
-#घोषणा AXIS_DMI_MATCH(_ident, _name, _axis) अणु		\
+#define AXIS_DMI_MATCH(_ident, _name, _axis) {		\
 	.ident = _ident,				\
 	.callback = lis3lv02d_dmi_matched,		\
-	.matches = अणु					\
+	.matches = {					\
 		DMI_MATCH(DMI_PRODUCT_NAME, _name)	\
-	पूर्ण,						\
+	},						\
 	.driver_data = &lis3lv02d_axis_##_axis		\
-पूर्ण
+}
 
-#घोषणा AXIS_DMI_MATCH2(_ident, _class1, _name1,	\
+#define AXIS_DMI_MATCH2(_ident, _class1, _name1,	\
 				_class2, _name2,	\
-				_axis) अणु		\
+				_axis) {		\
 	.ident = _ident,				\
 	.callback = lis3lv02d_dmi_matched,		\
-	.matches = अणु					\
+	.matches = {					\
 		DMI_MATCH(DMI_##_class1, _name1),	\
 		DMI_MATCH(DMI_##_class2, _name2),	\
-	पूर्ण,						\
+	},						\
 	.driver_data = &lis3lv02d_axis_##_axis		\
-पूर्ण
-अटल स्थिर काष्ठा dmi_प्रणाली_id lis3lv02d_dmi_ids[] = अणु
+}
+static const struct dmi_system_id lis3lv02d_dmi_ids[] = {
 	/* product names are truncated to match all kinds of a same model */
 	AXIS_DMI_MATCH("NC64x0", "HP Compaq nc64", x_inverted),
 	AXIS_DMI_MATCH("NC84x0", "HP Compaq nc84", z_inverted),
@@ -246,7 +245,7 @@ DEFINE_CONV(xy_swap_yz_inverted, 2, -1, -3);
 	AXIS_DMI_MATCH("HPZBook15", "HP ZBook 15", x_inverted),
 	AXIS_DMI_MATCH("HPZBook17G5", "HP ZBook 17 G5", x_inverted),
 	AXIS_DMI_MATCH("HPZBook17", "HP ZBook 17", xy_swap_yz_inverted),
-	अणु शून्य, पूर्ण
+	{ NULL, }
 /* Laptop models without axis info (yet):
  * "NC6910" "HP Compaq 6910"
  * "NC2400" "HP Compaq nc2400"
@@ -254,197 +253,197 @@ DEFINE_CONV(xy_swap_yz_inverted, 2, -1, -3);
  * "NX6325" "HP Compaq nx6325"
  * "NC4400" "HP Compaq nc4400"
  */
-पूर्ण;
+};
 
-अटल व्योम hpled_set(काष्ठा delayed_led_classdev *led_cdev, क्रमागत led_brightness value)
-अणु
-	काष्ठा acpi_device *dev = lis3_dev.bus_priv;
-	अचिन्हित दीर्घ दीर्घ ret; /* Not used when writing */
-	जोड़ acpi_object in_obj[1];
-	काष्ठा acpi_object_list args = अणु 1, in_obj पूर्ण;
+static void hpled_set(struct delayed_led_classdev *led_cdev, enum led_brightness value)
+{
+	struct acpi_device *dev = lis3_dev.bus_priv;
+	unsigned long long ret; /* Not used when writing */
+	union acpi_object in_obj[1];
+	struct acpi_object_list args = { 1, in_obj };
 
 	in_obj[0].type          = ACPI_TYPE_INTEGER;
-	in_obj[0].पूर्णांकeger.value = !!value;
+	in_obj[0].integer.value = !!value;
 
-	acpi_evaluate_पूर्णांकeger(dev->handle, "ALED", &args, &ret);
-पूर्ण
+	acpi_evaluate_integer(dev->handle, "ALED", &args, &ret);
+}
 
-अटल काष्ठा delayed_led_classdev hpled_led = अणु
-	.led_classdev = अणु
+static struct delayed_led_classdev hpled_led = {
+	.led_classdev = {
 		.name			= "hp::hddprotect",
-		.शेष_trigger	= "none",
+		.default_trigger	= "none",
 		.brightness_set		= delayed_sysfs_set,
 		.flags                  = LED_CORE_SUSPENDRESUME,
-	पूर्ण,
+	},
 	.set_brightness = hpled_set,
-पूर्ण;
+};
 
-अटल acpi_status
-lis3lv02d_get_resource(काष्ठा acpi_resource *resource, व्योम *context)
-अणु
-	अगर (resource->type == ACPI_RESOURCE_TYPE_EXTENDED_IRQ) अणु
-		काष्ठा acpi_resource_extended_irq *irq;
+static acpi_status
+lis3lv02d_get_resource(struct acpi_resource *resource, void *context)
+{
+	if (resource->type == ACPI_RESOURCE_TYPE_EXTENDED_IRQ) {
+		struct acpi_resource_extended_irq *irq;
 		u32 *device_irq = context;
 
 		irq = &resource->data.extended_irq;
-		*device_irq = irq->पूर्णांकerrupts[0];
-	पूर्ण
+		*device_irq = irq->interrupts[0];
+	}
 
-	वापस AE_OK;
-पूर्ण
+	return AE_OK;
+}
 
-अटल व्योम lis3lv02d_क्रमागत_resources(काष्ठा acpi_device *device)
-अणु
+static void lis3lv02d_enum_resources(struct acpi_device *device)
+{
 	acpi_status status;
 
 	status = acpi_walk_resources(device->handle, METHOD_NAME__CRS,
 					lis3lv02d_get_resource, &lis3_dev.irq);
-	अगर (ACPI_FAILURE(status))
-		prपूर्णांकk(KERN_DEBUG DRIVER_NAME ": Error getting resources\n");
-पूर्ण
+	if (ACPI_FAILURE(status))
+		printk(KERN_DEBUG DRIVER_NAME ": Error getting resources\n");
+}
 
-अटल bool hp_accel_i8042_filter(अचिन्हित अक्षर data, अचिन्हित अक्षर str,
-				  काष्ठा serio *port)
-अणु
-	अटल bool extended;
+static bool hp_accel_i8042_filter(unsigned char data, unsigned char str,
+				  struct serio *port)
+{
+	static bool extended;
 
-	अगर (str & I8042_STR_AUXDATA)
-		वापस false;
+	if (str & I8042_STR_AUXDATA)
+		return false;
 
-	अगर (data == 0xe0) अणु
+	if (data == 0xe0) {
 		extended = true;
-		वापस true;
-	पूर्ण अन्यथा अगर (unlikely(extended)) अणु
+		return true;
+	} else if (unlikely(extended)) {
 		extended = false;
 
-		चयन (data) अणु
-		हाल ACCEL_1:
-		हाल ACCEL_2:
-		हाल ACCEL_3:
-		हाल ACCEL_4:
-			वापस true;
-		शेष:
-			serio_पूर्णांकerrupt(port, 0xe0, 0);
-			वापस false;
-		पूर्ण
-	पूर्ण
+		switch (data) {
+		case ACCEL_1:
+		case ACCEL_2:
+		case ACCEL_3:
+		case ACCEL_4:
+			return true;
+		default:
+			serio_interrupt(port, 0xe0, 0);
+			return false;
+		}
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक lis3lv02d_add(काष्ठा acpi_device *device)
-अणु
-	पूर्णांक ret;
+static int lis3lv02d_add(struct acpi_device *device)
+{
+	int ret;
 
-	अगर (!device)
-		वापस -EINVAL;
+	if (!device)
+		return -EINVAL;
 
 	lis3_dev.bus_priv = device;
 	lis3_dev.init = lis3lv02d_acpi_init;
-	lis3_dev.पढ़ो = lis3lv02d_acpi_पढ़ो;
-	lis3_dev.ग_लिखो = lis3lv02d_acpi_ग_लिखो;
-	म_नकल(acpi_device_name(device), DRIVER_NAME);
-	म_नकल(acpi_device_class(device), ACPI_MDPS_CLASS);
+	lis3_dev.read = lis3lv02d_acpi_read;
+	lis3_dev.write = lis3lv02d_acpi_write;
+	strcpy(acpi_device_name(device), DRIVER_NAME);
+	strcpy(acpi_device_class(device), ACPI_MDPS_CLASS);
 	device->driver_data = &lis3_dev;
 
 	/* obtain IRQ number of our device from ACPI */
-	lis3lv02d_क्रमागत_resources(device);
+	lis3lv02d_enum_resources(device);
 
 	/* If possible use a "standard" axes order */
-	अगर (lis3_dev.ac.x && lis3_dev.ac.y && lis3_dev.ac.z) अणु
+	if (lis3_dev.ac.x && lis3_dev.ac.y && lis3_dev.ac.z) {
 		pr_info("Using custom axes %d,%d,%d\n",
 			lis3_dev.ac.x, lis3_dev.ac.y, lis3_dev.ac.z);
-	पूर्ण अन्यथा अगर (dmi_check_प्रणाली(lis3lv02d_dmi_ids) == 0) अणु
+	} else if (dmi_check_system(lis3lv02d_dmi_ids) == 0) {
 		pr_info("laptop model unknown, using default axes configuration\n");
 		lis3_dev.ac = lis3lv02d_axis_normal;
-	पूर्ण
+	}
 
-	/* call the core layer करो its init */
+	/* call the core layer do its init */
 	lis3_dev.init_required = true;
 	ret = lis3lv02d_init_device(&lis3_dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* filter to हटाओ HPQ6000 accelerometer data
+	/* filter to remove HPQ6000 accelerometer data
 	 * from keyboard bus stream */
-	अगर (म_माला(dev_name(&device->dev), "HPQ6000"))
+	if (strstr(dev_name(&device->dev), "HPQ6000"))
 		i8042_install_filter(hp_accel_i8042_filter);
 
 	INIT_WORK(&hpled_led.work, delayed_set_status_worker);
-	ret = led_classdev_रेजिस्टर(शून्य, &hpled_led.led_classdev);
-	अगर (ret) अणु
+	ret = led_classdev_register(NULL, &hpled_led.led_classdev);
+	if (ret) {
 		lis3lv02d_joystick_disable(&lis3_dev);
-		lis3lv02d_घातeroff(&lis3_dev);
+		lis3lv02d_poweroff(&lis3_dev);
 		flush_work(&hpled_led.work);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक lis3lv02d_हटाओ(काष्ठा acpi_device *device)
-अणु
-	अगर (!device)
-		वापस -EINVAL;
+static int lis3lv02d_remove(struct acpi_device *device)
+{
+	if (!device)
+		return -EINVAL;
 
-	i8042_हटाओ_filter(hp_accel_i8042_filter);
+	i8042_remove_filter(hp_accel_i8042_filter);
 	lis3lv02d_joystick_disable(&lis3_dev);
-	lis3lv02d_घातeroff(&lis3_dev);
+	lis3lv02d_poweroff(&lis3_dev);
 
-	led_classdev_unरेजिस्टर(&hpled_led.led_classdev);
+	led_classdev_unregister(&hpled_led.led_classdev);
 	flush_work(&hpled_led.work);
 
-	वापस lis3lv02d_हटाओ_fs(&lis3_dev);
-पूर्ण
+	return lis3lv02d_remove_fs(&lis3_dev);
+}
 
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक lis3lv02d_suspend(काष्ठा device *dev)
-अणु
+#ifdef CONFIG_PM_SLEEP
+static int lis3lv02d_suspend(struct device *dev)
+{
 	/* make sure the device is off when we suspend */
-	lis3lv02d_घातeroff(&lis3_dev);
-	वापस 0;
-पूर्ण
+	lis3lv02d_poweroff(&lis3_dev);
+	return 0;
+}
 
-अटल पूर्णांक lis3lv02d_resume(काष्ठा device *dev)
-अणु
+static int lis3lv02d_resume(struct device *dev)
+{
 	lis3_dev.init_required = false;
-	lis3lv02d_घातeron(&lis3_dev);
-	वापस 0;
-पूर्ण
+	lis3lv02d_poweron(&lis3_dev);
+	return 0;
+}
 
-अटल पूर्णांक lis3lv02d_restore(काष्ठा device *dev)
-अणु
+static int lis3lv02d_restore(struct device *dev)
+{
 	lis3_dev.init_required = true;
-	lis3lv02d_घातeron(&lis3_dev);
-	वापस 0;
-पूर्ण
+	lis3lv02d_poweron(&lis3_dev);
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops hp_accel_pm = अणु
+static const struct dev_pm_ops hp_accel_pm = {
 	.suspend = lis3lv02d_suspend,
 	.resume = lis3lv02d_resume,
-	.मुक्तze = lis3lv02d_suspend,
+	.freeze = lis3lv02d_suspend,
 	.thaw = lis3lv02d_resume,
-	.घातeroff = lis3lv02d_suspend,
+	.poweroff = lis3lv02d_suspend,
 	.restore = lis3lv02d_restore,
-पूर्ण;
+};
 
-#घोषणा HP_ACCEL_PM (&hp_accel_pm)
-#अन्यथा
-#घोषणा HP_ACCEL_PM शून्य
-#पूर्ण_अगर
+#define HP_ACCEL_PM (&hp_accel_pm)
+#else
+#define HP_ACCEL_PM NULL
+#endif
 
 /* For the HP MDPS aka 3D Driveguard */
-अटल काष्ठा acpi_driver lis3lv02d_driver = अणु
+static struct acpi_driver lis3lv02d_driver = {
 	.name  = DRIVER_NAME,
 	.class = ACPI_MDPS_CLASS,
 	.ids   = lis3lv02d_device_ids,
-	.ops = अणु
+	.ops = {
 		.add     = lis3lv02d_add,
-		.हटाओ  = lis3lv02d_हटाओ,
-	पूर्ण,
+		.remove  = lis3lv02d_remove,
+	},
 	.drv.pm = HP_ACCEL_PM,
-पूर्ण;
+};
 module_acpi_driver(lis3lv02d_driver);
 
 MODULE_DESCRIPTION("Glue between LIS3LV02Dx and HP ACPI BIOS and support for disk protection LED.");

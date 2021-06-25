@@ -1,579 +1,578 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#घोषणा dev_fmt(fmt) "mtdoops-pstore: " fmt
+#define dev_fmt(fmt) "mtdoops-pstore: " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pstore_blk.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pstore_blk.h>
+#include <linux/mtd/mtd.h>
+#include <linux/bitops.h>
+#include <linux/slab.h>
 
-अटल काष्ठा mtdpstore_context अणु
-	पूर्णांक index;
-	काष्ठा pstore_blk_config info;
-	काष्ठा pstore_device_info dev;
-	काष्ठा mtd_info *mtd;
-	अचिन्हित दीर्घ *rmmap;		/* हटाओd bit map */
-	अचिन्हित दीर्घ *usedmap;		/* used bit map */
+static struct mtdpstore_context {
+	int index;
+	struct pstore_blk_config info;
+	struct pstore_device_info dev;
+	struct mtd_info *mtd;
+	unsigned long *rmmap;		/* removed bit map */
+	unsigned long *usedmap;		/* used bit map */
 	/*
-	 * used क्रम panic ग_लिखो
-	 * As there are no block_isbad क्रम panic हाल, we should keep this
-	 * status beक्रमe panic to ensure panic_ग_लिखो not failed.
+	 * used for panic write
+	 * As there are no block_isbad for panic case, we should keep this
+	 * status before panic to ensure panic_write not failed.
 	 */
-	अचिन्हित दीर्घ *badmap;		/* bad block bit map */
-पूर्ण oops_cxt;
+	unsigned long *badmap;		/* bad block bit map */
+} oops_cxt;
 
-अटल पूर्णांक mtdpstore_block_isbad(काष्ठा mtdpstore_context *cxt, loff_t off)
-अणु
-	पूर्णांक ret;
-	काष्ठा mtd_info *mtd = cxt->mtd;
+static int mtdpstore_block_isbad(struct mtdpstore_context *cxt, loff_t off)
+{
+	int ret;
+	struct mtd_info *mtd = cxt->mtd;
 	u64 blknum;
 
 	off = ALIGN_DOWN(off, mtd->erasesize);
-	blknum = भाग_u64(off, mtd->erasesize);
+	blknum = div_u64(off, mtd->erasesize);
 
-	अगर (test_bit(blknum, cxt->badmap))
-		वापस true;
+	if (test_bit(blknum, cxt->badmap))
+		return true;
 	ret = mtd_block_isbad(mtd, off);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&mtd->dev, "mtd_block_isbad failed, aborting\n");
-		वापस ret;
-	पूर्ण अन्यथा अगर (ret > 0) अणु
+		return ret;
+	} else if (ret > 0) {
 		set_bit(blknum, cxt->badmap);
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		return true;
+	}
+	return false;
+}
 
-अटल अंतरभूत पूर्णांक mtdpstore_panic_block_isbad(काष्ठा mtdpstore_context *cxt,
+static inline int mtdpstore_panic_block_isbad(struct mtdpstore_context *cxt,
 		loff_t off)
-अणु
-	काष्ठा mtd_info *mtd = cxt->mtd;
+{
+	struct mtd_info *mtd = cxt->mtd;
 	u64 blknum;
 
 	off = ALIGN_DOWN(off, mtd->erasesize);
-	blknum = भाग_u64(off, mtd->erasesize);
-	वापस test_bit(blknum, cxt->badmap);
-पूर्ण
+	blknum = div_u64(off, mtd->erasesize);
+	return test_bit(blknum, cxt->badmap);
+}
 
-अटल अंतरभूत व्योम mtdpstore_mark_used(काष्ठा mtdpstore_context *cxt,
+static inline void mtdpstore_mark_used(struct mtdpstore_context *cxt,
 		loff_t off)
-अणु
-	काष्ठा mtd_info *mtd = cxt->mtd;
-	u64 zonक्रमागत = भाग_u64(off, cxt->info.kmsg_size);
+{
+	struct mtd_info *mtd = cxt->mtd;
+	u64 zonenum = div_u64(off, cxt->info.kmsg_size);
 
-	dev_dbg(&mtd->dev, "mark zone %llu used\n", zonक्रमागत);
-	set_bit(zonक्रमागत, cxt->usedmap);
-पूर्ण
+	dev_dbg(&mtd->dev, "mark zone %llu used\n", zonenum);
+	set_bit(zonenum, cxt->usedmap);
+}
 
-अटल अंतरभूत व्योम mtdpstore_mark_unused(काष्ठा mtdpstore_context *cxt,
+static inline void mtdpstore_mark_unused(struct mtdpstore_context *cxt,
 		loff_t off)
-अणु
-	काष्ठा mtd_info *mtd = cxt->mtd;
-	u64 zonक्रमागत = भाग_u64(off, cxt->info.kmsg_size);
+{
+	struct mtd_info *mtd = cxt->mtd;
+	u64 zonenum = div_u64(off, cxt->info.kmsg_size);
 
-	dev_dbg(&mtd->dev, "mark zone %llu unused\n", zonक्रमागत);
-	clear_bit(zonक्रमागत, cxt->usedmap);
-पूर्ण
+	dev_dbg(&mtd->dev, "mark zone %llu unused\n", zonenum);
+	clear_bit(zonenum, cxt->usedmap);
+}
 
-अटल अंतरभूत व्योम mtdpstore_block_mark_unused(काष्ठा mtdpstore_context *cxt,
+static inline void mtdpstore_block_mark_unused(struct mtdpstore_context *cxt,
 		loff_t off)
-अणु
-	काष्ठा mtd_info *mtd = cxt->mtd;
+{
+	struct mtd_info *mtd = cxt->mtd;
 	u32 zonecnt = mtd->erasesize / cxt->info.kmsg_size;
-	u64 zonक्रमागत;
+	u64 zonenum;
 
 	off = ALIGN_DOWN(off, mtd->erasesize);
-	zonक्रमागत = भाग_u64(off, cxt->info.kmsg_size);
-	जबतक (zonecnt > 0) अणु
-		dev_dbg(&mtd->dev, "mark zone %llu unused\n", zonक्रमागत);
-		clear_bit(zonक्रमागत, cxt->usedmap);
-		zonक्रमागत++;
+	zonenum = div_u64(off, cxt->info.kmsg_size);
+	while (zonecnt > 0) {
+		dev_dbg(&mtd->dev, "mark zone %llu unused\n", zonenum);
+		clear_bit(zonenum, cxt->usedmap);
+		zonenum++;
 		zonecnt--;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत पूर्णांक mtdpstore_is_used(काष्ठा mtdpstore_context *cxt, loff_t off)
-अणु
-	u64 zonक्रमागत = भाग_u64(off, cxt->info.kmsg_size);
-	u64 blknum = भाग_u64(off, cxt->mtd->erasesize);
+static inline int mtdpstore_is_used(struct mtdpstore_context *cxt, loff_t off)
+{
+	u64 zonenum = div_u64(off, cxt->info.kmsg_size);
+	u64 blknum = div_u64(off, cxt->mtd->erasesize);
 
-	अगर (test_bit(blknum, cxt->badmap))
-		वापस true;
-	वापस test_bit(zonक्रमागत, cxt->usedmap);
-पूर्ण
+	if (test_bit(blknum, cxt->badmap))
+		return true;
+	return test_bit(zonenum, cxt->usedmap);
+}
 
-अटल पूर्णांक mtdpstore_block_is_used(काष्ठा mtdpstore_context *cxt,
+static int mtdpstore_block_is_used(struct mtdpstore_context *cxt,
 		loff_t off)
-अणु
-	काष्ठा mtd_info *mtd = cxt->mtd;
+{
+	struct mtd_info *mtd = cxt->mtd;
 	u32 zonecnt = mtd->erasesize / cxt->info.kmsg_size;
-	u64 zonक्रमागत;
+	u64 zonenum;
 
 	off = ALIGN_DOWN(off, mtd->erasesize);
-	zonक्रमागत = भाग_u64(off, cxt->info.kmsg_size);
-	जबतक (zonecnt > 0) अणु
-		अगर (test_bit(zonक्रमागत, cxt->usedmap))
-			वापस true;
-		zonक्रमागत++;
+	zonenum = div_u64(off, cxt->info.kmsg_size);
+	while (zonecnt > 0) {
+		if (test_bit(zonenum, cxt->usedmap))
+			return true;
+		zonenum++;
 		zonecnt--;
-	पूर्ण
-	वापस false;
-पूर्ण
+	}
+	return false;
+}
 
-अटल पूर्णांक mtdpstore_is_empty(काष्ठा mtdpstore_context *cxt, अक्षर *buf,
-		माप_प्रकार size)
-अणु
-	काष्ठा mtd_info *mtd = cxt->mtd;
-	माप_प्रकार sz;
-	पूर्णांक i;
+static int mtdpstore_is_empty(struct mtdpstore_context *cxt, char *buf,
+		size_t size)
+{
+	struct mtd_info *mtd = cxt->mtd;
+	size_t sz;
+	int i;
 
-	sz = min_t(uपूर्णांक32_t, size, mtd->ग_लिखोsize / 4);
-	क्रम (i = 0; i < sz; i++) अणु
-		अगर (buf[i] != (अक्षर)0xFF)
-			वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+	sz = min_t(uint32_t, size, mtd->writesize / 4);
+	for (i = 0; i < sz; i++) {
+		if (buf[i] != (char)0xFF)
+			return false;
+	}
+	return true;
+}
 
-अटल व्योम mtdpstore_mark_हटाओd(काष्ठा mtdpstore_context *cxt, loff_t off)
-अणु
-	काष्ठा mtd_info *mtd = cxt->mtd;
-	u64 zonक्रमागत = भाग_u64(off, cxt->info.kmsg_size);
+static void mtdpstore_mark_removed(struct mtdpstore_context *cxt, loff_t off)
+{
+	struct mtd_info *mtd = cxt->mtd;
+	u64 zonenum = div_u64(off, cxt->info.kmsg_size);
 
-	dev_dbg(&mtd->dev, "mark zone %llu removed\n", zonक्रमागत);
-	set_bit(zonक्रमागत, cxt->rmmap);
-पूर्ण
+	dev_dbg(&mtd->dev, "mark zone %llu removed\n", zonenum);
+	set_bit(zonenum, cxt->rmmap);
+}
 
-अटल व्योम mtdpstore_block_clear_हटाओd(काष्ठा mtdpstore_context *cxt,
+static void mtdpstore_block_clear_removed(struct mtdpstore_context *cxt,
 		loff_t off)
-अणु
-	काष्ठा mtd_info *mtd = cxt->mtd;
+{
+	struct mtd_info *mtd = cxt->mtd;
 	u32 zonecnt = mtd->erasesize / cxt->info.kmsg_size;
-	u64 zonक्रमागत;
+	u64 zonenum;
 
 	off = ALIGN_DOWN(off, mtd->erasesize);
-	zonक्रमागत = भाग_u64(off, cxt->info.kmsg_size);
-	जबतक (zonecnt > 0) अणु
-		clear_bit(zonक्रमागत, cxt->rmmap);
-		zonक्रमागत++;
+	zonenum = div_u64(off, cxt->info.kmsg_size);
+	while (zonecnt > 0) {
+		clear_bit(zonenum, cxt->rmmap);
+		zonenum++;
 		zonecnt--;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक mtdpstore_block_is_हटाओd(काष्ठा mtdpstore_context *cxt,
+static int mtdpstore_block_is_removed(struct mtdpstore_context *cxt,
 		loff_t off)
-अणु
-	काष्ठा mtd_info *mtd = cxt->mtd;
+{
+	struct mtd_info *mtd = cxt->mtd;
 	u32 zonecnt = mtd->erasesize / cxt->info.kmsg_size;
-	u64 zonक्रमागत;
+	u64 zonenum;
 
 	off = ALIGN_DOWN(off, mtd->erasesize);
-	zonक्रमागत = भाग_u64(off, cxt->info.kmsg_size);
-	जबतक (zonecnt > 0) अणु
-		अगर (test_bit(zonक्रमागत, cxt->rmmap))
-			वापस true;
-		zonक्रमागत++;
+	zonenum = div_u64(off, cxt->info.kmsg_size);
+	while (zonecnt > 0) {
+		if (test_bit(zonenum, cxt->rmmap))
+			return true;
+		zonenum++;
 		zonecnt--;
-	पूर्ण
-	वापस false;
-पूर्ण
+	}
+	return false;
+}
 
-अटल पूर्णांक mtdpstore_erase_करो(काष्ठा mtdpstore_context *cxt, loff_t off)
-अणु
-	काष्ठा mtd_info *mtd = cxt->mtd;
-	काष्ठा erase_info erase;
-	पूर्णांक ret;
+static int mtdpstore_erase_do(struct mtdpstore_context *cxt, loff_t off)
+{
+	struct mtd_info *mtd = cxt->mtd;
+	struct erase_info erase;
+	int ret;
 
 	off = ALIGN_DOWN(off, cxt->mtd->erasesize);
 	dev_dbg(&mtd->dev, "try to erase off 0x%llx\n", off);
 	erase.len = cxt->mtd->erasesize;
 	erase.addr = off;
 	ret = mtd_erase(cxt->mtd, &erase);
-	अगर (!ret)
-		mtdpstore_block_clear_हटाओd(cxt, off);
-	अन्यथा
+	if (!ret)
+		mtdpstore_block_clear_removed(cxt, off);
+	else
 		dev_err(&mtd->dev, "erase of region [0x%llx, 0x%llx] on \"%s\" failed\n",
-		       (अचिन्हित दीर्घ दीर्घ)erase.addr,
-		       (अचिन्हित दीर्घ दीर्घ)erase.len, cxt->info.device);
-	वापस ret;
-पूर्ण
+		       (unsigned long long)erase.addr,
+		       (unsigned long long)erase.len, cxt->info.device);
+	return ret;
+}
 
 /*
- * called जबतक removing file
+ * called while removing file
  *
- * Aव्योमing over erasing, करो erase block only when the whole block is unused.
- * If the block contains valid log, करो erase lazily on flush_हटाओd() when
- * unरेजिस्टर.
+ * Avoiding over erasing, do erase block only when the whole block is unused.
+ * If the block contains valid log, do erase lazily on flush_removed() when
+ * unregister.
  */
-अटल sमाप_प्रकार mtdpstore_erase(माप_प्रकार size, loff_t off)
-अणु
-	काष्ठा mtdpstore_context *cxt = &oops_cxt;
+static ssize_t mtdpstore_erase(size_t size, loff_t off)
+{
+	struct mtdpstore_context *cxt = &oops_cxt;
 
-	अगर (mtdpstore_block_isbad(cxt, off))
-		वापस -EIO;
+	if (mtdpstore_block_isbad(cxt, off))
+		return -EIO;
 
 	mtdpstore_mark_unused(cxt, off);
 
-	/* If the block still has valid data, mtdpstore करो erase lazily */
-	अगर (likely(mtdpstore_block_is_used(cxt, off))) अणु
-		mtdpstore_mark_हटाओd(cxt, off);
-		वापस 0;
-	पूर्ण
+	/* If the block still has valid data, mtdpstore do erase lazily */
+	if (likely(mtdpstore_block_is_used(cxt, off))) {
+		mtdpstore_mark_removed(cxt, off);
+		return 0;
+	}
 
 	/* all zones are unused, erase it */
-	वापस mtdpstore_erase_करो(cxt, off);
-पूर्ण
+	return mtdpstore_erase_do(cxt, off);
+}
 
 /*
- * What is security क्रम mtdpstore?
- * As there is no erase क्रम panic हाल, we should ensure at least one zone
- * is writable. Otherwise, panic ग_लिखो will fail.
- * If zone is used, ग_लिखो operation will वापस -ENOMSG, which means that
- * pstore/blk will try one by one until माला_लो an empty zone. So, it is not
+ * What is security for mtdpstore?
+ * As there is no erase for panic case, we should ensure at least one zone
+ * is writable. Otherwise, panic write will fail.
+ * If zone is used, write operation will return -ENOMSG, which means that
+ * pstore/blk will try one by one until gets an empty zone. So, it is not
  * needed to ensure the next zone is empty, but at least one.
  */
-अटल पूर्णांक mtdpstore_security(काष्ठा mtdpstore_context *cxt, loff_t off)
-अणु
-	पूर्णांक ret = 0, i;
-	काष्ठा mtd_info *mtd = cxt->mtd;
-	u32 zonक्रमागत = (u32)भाग_u64(off, cxt->info.kmsg_size);
-	u32 zonecnt = (u32)भाग_u64(cxt->mtd->size, cxt->info.kmsg_size);
-	u32 blkcnt = (u32)भाग_u64(cxt->mtd->size, cxt->mtd->erasesize);
+static int mtdpstore_security(struct mtdpstore_context *cxt, loff_t off)
+{
+	int ret = 0, i;
+	struct mtd_info *mtd = cxt->mtd;
+	u32 zonenum = (u32)div_u64(off, cxt->info.kmsg_size);
+	u32 zonecnt = (u32)div_u64(cxt->mtd->size, cxt->info.kmsg_size);
+	u32 blkcnt = (u32)div_u64(cxt->mtd->size, cxt->mtd->erasesize);
 	u32 erasesize = cxt->mtd->erasesize;
 
-	क्रम (i = 0; i < zonecnt; i++) अणु
-		u32 num = (zonक्रमागत + i) % zonecnt;
+	for (i = 0; i < zonecnt; i++) {
+		u32 num = (zonenum + i) % zonecnt;
 
 		/* found empty zone */
-		अगर (!test_bit(num, cxt->usedmap))
-			वापस 0;
-	पूर्ण
+		if (!test_bit(num, cxt->usedmap))
+			return 0;
+	}
 
-	/* If there is no any empty zone, we have no way but to करो erase */
-	जबतक (blkcnt--) अणु
-		भाग64_u64_rem(off + erasesize, cxt->mtd->size, (u64 *)&off);
+	/* If there is no any empty zone, we have no way but to do erase */
+	while (blkcnt--) {
+		div64_u64_rem(off + erasesize, cxt->mtd->size, (u64 *)&off);
 
-		अगर (mtdpstore_block_isbad(cxt, off))
-			जारी;
+		if (mtdpstore_block_isbad(cxt, off))
+			continue;
 
-		ret = mtdpstore_erase_करो(cxt, off);
-		अगर (!ret) अणु
+		ret = mtdpstore_erase_do(cxt, off);
+		if (!ret) {
 			mtdpstore_block_mark_unused(cxt, off);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (ret)
+	if (ret)
 		dev_err(&mtd->dev, "all blocks bad!\n");
 	dev_dbg(&mtd->dev, "end security\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार mtdpstore_ग_लिखो(स्थिर अक्षर *buf, माप_प्रकार size, loff_t off)
-अणु
-	काष्ठा mtdpstore_context *cxt = &oops_cxt;
-	काष्ठा mtd_info *mtd = cxt->mtd;
-	माप_प्रकार retlen;
-	पूर्णांक ret;
+static ssize_t mtdpstore_write(const char *buf, size_t size, loff_t off)
+{
+	struct mtdpstore_context *cxt = &oops_cxt;
+	struct mtd_info *mtd = cxt->mtd;
+	size_t retlen;
+	int ret;
 
-	अगर (mtdpstore_block_isbad(cxt, off))
-		वापस -ENOMSG;
+	if (mtdpstore_block_isbad(cxt, off))
+		return -ENOMSG;
 
 	/* zone is used, please try next one */
-	अगर (mtdpstore_is_used(cxt, off))
-		वापस -ENOMSG;
+	if (mtdpstore_is_used(cxt, off))
+		return -ENOMSG;
 
 	dev_dbg(&mtd->dev, "try to write off 0x%llx size %zu\n", off, size);
-	ret = mtd_ग_लिखो(cxt->mtd, off, size, &retlen, (u_अक्षर *)buf);
-	अगर (ret < 0 || retlen != size) अणु
+	ret = mtd_write(cxt->mtd, off, size, &retlen, (u_char *)buf);
+	if (ret < 0 || retlen != size) {
 		dev_err(&mtd->dev, "write failure at %lld (%zu of %zu written), err %d\n",
 				off, retlen, size, ret);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	mtdpstore_mark_used(cxt, off);
 
 	mtdpstore_security(cxt, off);
-	वापस retlen;
-पूर्ण
+	return retlen;
+}
 
-अटल अंतरभूत bool mtdpstore_is_io_error(पूर्णांक ret)
-अणु
-	वापस ret < 0 && !mtd_is_bitflip(ret) && !mtd_is_eccerr(ret);
-पूर्ण
+static inline bool mtdpstore_is_io_error(int ret)
+{
+	return ret < 0 && !mtd_is_bitflip(ret) && !mtd_is_eccerr(ret);
+}
 
 /*
- * All zones will be पढ़ो as pstore/blk will पढ़ो zone one by one when करो
+ * All zones will be read as pstore/blk will read zone one by one when do
  * recover.
  */
-अटल sमाप_प्रकार mtdpstore_पढ़ो(अक्षर *buf, माप_प्रकार size, loff_t off)
-अणु
-	काष्ठा mtdpstore_context *cxt = &oops_cxt;
-	काष्ठा mtd_info *mtd = cxt->mtd;
-	माप_प्रकार retlen, करोne;
-	पूर्णांक ret;
+static ssize_t mtdpstore_read(char *buf, size_t size, loff_t off)
+{
+	struct mtdpstore_context *cxt = &oops_cxt;
+	struct mtd_info *mtd = cxt->mtd;
+	size_t retlen, done;
+	int ret;
 
-	अगर (mtdpstore_block_isbad(cxt, off))
-		वापस -ENOMSG;
+	if (mtdpstore_block_isbad(cxt, off))
+		return -ENOMSG;
 
 	dev_dbg(&mtd->dev, "try to read off 0x%llx size %zu\n", off, size);
-	क्रम (करोne = 0, retlen = 0; करोne < size; करोne += retlen) अणु
+	for (done = 0, retlen = 0; done < size; done += retlen) {
 		retlen = 0;
 
-		ret = mtd_पढ़ो(cxt->mtd, off + करोne, size - करोne, &retlen,
-				(u_अक्षर *)buf + करोne);
-		अगर (mtdpstore_is_io_error(ret)) अणु
+		ret = mtd_read(cxt->mtd, off + done, size - done, &retlen,
+				(u_char *)buf + done);
+		if (mtdpstore_is_io_error(ret)) {
 			dev_err(&mtd->dev, "read failure at %lld (%zu of %zu read), err %d\n",
-					off + करोne, retlen, size - करोne, ret);
+					off + done, retlen, size - done, ret);
 			/* the zone may be broken, try next one */
-			वापस -ENOMSG;
-		पूर्ण
+			return -ENOMSG;
+		}
 
 		/*
 		 * ECC error. The impact on log data is so small. Maybe we can
-		 * still पढ़ो it and try to understand. So mtdpstore just hands
-		 * over what it माला_लो and user can judge whether the data is
+		 * still read it and try to understand. So mtdpstore just hands
+		 * over what it gets and user can judge whether the data is
 		 * valid or not.
 		 */
-		अगर (mtd_is_eccerr(ret)) अणु
+		if (mtd_is_eccerr(ret)) {
 			dev_err(&mtd->dev, "ecc error at %lld (%zu of %zu read), err %d\n",
-					off + करोne, retlen, size - करोne, ret);
+					off + done, retlen, size - done, ret);
 			/* driver may not set retlen when ecc error */
-			retlen = retlen == 0 ? size - करोne : retlen;
-		पूर्ण
-	पूर्ण
+			retlen = retlen == 0 ? size - done : retlen;
+		}
+	}
 
-	अगर (mtdpstore_is_empty(cxt, buf, size))
+	if (mtdpstore_is_empty(cxt, buf, size))
 		mtdpstore_mark_unused(cxt, off);
-	अन्यथा
+	else
 		mtdpstore_mark_used(cxt, off);
 
 	mtdpstore_security(cxt, off);
-	वापस retlen;
-पूर्ण
+	return retlen;
+}
 
-अटल sमाप_प्रकार mtdpstore_panic_ग_लिखो(स्थिर अक्षर *buf, माप_प्रकार size, loff_t off)
-अणु
-	काष्ठा mtdpstore_context *cxt = &oops_cxt;
-	काष्ठा mtd_info *mtd = cxt->mtd;
-	माप_प्रकार retlen;
-	पूर्णांक ret;
+static ssize_t mtdpstore_panic_write(const char *buf, size_t size, loff_t off)
+{
+	struct mtdpstore_context *cxt = &oops_cxt;
+	struct mtd_info *mtd = cxt->mtd;
+	size_t retlen;
+	int ret;
 
-	अगर (mtdpstore_panic_block_isbad(cxt, off))
-		वापस -ENOMSG;
+	if (mtdpstore_panic_block_isbad(cxt, off))
+		return -ENOMSG;
 
 	/* zone is used, please try next one */
-	अगर (mtdpstore_is_used(cxt, off))
-		वापस -ENOMSG;
+	if (mtdpstore_is_used(cxt, off))
+		return -ENOMSG;
 
-	ret = mtd_panic_ग_लिखो(cxt->mtd, off, size, &retlen, (u_अक्षर *)buf);
-	अगर (ret < 0 || size != retlen) अणु
+	ret = mtd_panic_write(cxt->mtd, off, size, &retlen, (u_char *)buf);
+	if (ret < 0 || size != retlen) {
 		dev_err(&mtd->dev, "panic write failure at %lld (%zu of %zu read), err %d\n",
 				off, retlen, size, ret);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	mtdpstore_mark_used(cxt, off);
 
-	वापस retlen;
-पूर्ण
+	return retlen;
+}
 
-अटल व्योम mtdpstore_notअगरy_add(काष्ठा mtd_info *mtd)
-अणु
-	पूर्णांक ret;
-	काष्ठा mtdpstore_context *cxt = &oops_cxt;
-	काष्ठा pstore_blk_config *info = &cxt->info;
-	अचिन्हित दीर्घ दीर्घcnt;
+static void mtdpstore_notify_add(struct mtd_info *mtd)
+{
+	int ret;
+	struct mtdpstore_context *cxt = &oops_cxt;
+	struct pstore_blk_config *info = &cxt->info;
+	unsigned long longcnt;
 
-	अगर (!म_भेद(mtd->name, info->device))
+	if (!strcmp(mtd->name, info->device))
 		cxt->index = mtd->index;
 
-	अगर (mtd->index != cxt->index || cxt->index < 0)
-		वापस;
+	if (mtd->index != cxt->index || cxt->index < 0)
+		return;
 
 	dev_dbg(&mtd->dev, "found matching MTD device %s\n", mtd->name);
 
-	अगर (mtd->size < info->kmsg_size * 2) अणु
+	if (mtd->size < info->kmsg_size * 2) {
 		dev_err(&mtd->dev, "MTD partition %d not big enough\n",
 				mtd->index);
-		वापस;
-	पूर्ण
+		return;
+	}
 	/*
 	 * kmsg_size must be aligned to 4096 Bytes, which is limited by
-	 * psblk. The शेष value of kmsg_size is 64KB. If kmsg_size
+	 * psblk. The default value of kmsg_size is 64KB. If kmsg_size
 	 * is larger than erasesize, some errors will occur since mtdpsotre
-	 * is deचिन्हित on it.
+	 * is designed on it.
 	 */
-	अगर (mtd->erasesize < info->kmsg_size) अणु
+	if (mtd->erasesize < info->kmsg_size) {
 		dev_err(&mtd->dev, "eraseblock size of MTD partition %d too small\n",
 				mtd->index);
-		वापस;
-	पूर्ण
-	अगर (unlikely(info->kmsg_size % mtd->ग_लिखोsize)) अणु
+		return;
+	}
+	if (unlikely(info->kmsg_size % mtd->writesize)) {
 		dev_err(&mtd->dev, "record size %lu KB must align to write size %d KB\n",
 				info->kmsg_size / 1024,
-				mtd->ग_लिखोsize / 1024);
-		वापस;
-	पूर्ण
+				mtd->writesize / 1024);
+		return;
+	}
 
-	दीर्घcnt = BITS_TO_LONGS(भाग_u64(mtd->size, info->kmsg_size));
-	cxt->rmmap = kसुस्मृति(दीर्घcnt, माप(दीर्घ), GFP_KERNEL);
-	cxt->usedmap = kसुस्मृति(दीर्घcnt, माप(दीर्घ), GFP_KERNEL);
+	longcnt = BITS_TO_LONGS(div_u64(mtd->size, info->kmsg_size));
+	cxt->rmmap = kcalloc(longcnt, sizeof(long), GFP_KERNEL);
+	cxt->usedmap = kcalloc(longcnt, sizeof(long), GFP_KERNEL);
 
-	दीर्घcnt = BITS_TO_LONGS(भाग_u64(mtd->size, mtd->erasesize));
-	cxt->badmap = kसुस्मृति(दीर्घcnt, माप(दीर्घ), GFP_KERNEL);
+	longcnt = BITS_TO_LONGS(div_u64(mtd->size, mtd->erasesize));
+	cxt->badmap = kcalloc(longcnt, sizeof(long), GFP_KERNEL);
 
 	cxt->dev.total_size = mtd->size;
 	/* just support dmesg right now */
 	cxt->dev.flags = PSTORE_FLAGS_DMESG;
-	cxt->dev.पढ़ो = mtdpstore_पढ़ो;
-	cxt->dev.ग_लिखो = mtdpstore_ग_लिखो;
+	cxt->dev.read = mtdpstore_read;
+	cxt->dev.write = mtdpstore_write;
 	cxt->dev.erase = mtdpstore_erase;
-	cxt->dev.panic_ग_लिखो = mtdpstore_panic_ग_लिखो;
+	cxt->dev.panic_write = mtdpstore_panic_write;
 
-	ret = रेजिस्टर_pstore_device(&cxt->dev);
-	अगर (ret) अणु
+	ret = register_pstore_device(&cxt->dev);
+	if (ret) {
 		dev_err(&mtd->dev, "mtd%d register to psblk failed\n",
 				mtd->index);
-		वापस;
-	पूर्ण
+		return;
+	}
 	cxt->mtd = mtd;
 	dev_info(&mtd->dev, "Attached to MTD device %d\n", mtd->index);
-पूर्ण
+}
 
-अटल पूर्णांक mtdpstore_flush_हटाओd_करो(काष्ठा mtdpstore_context *cxt,
-		loff_t off, माप_प्रकार size)
-अणु
-	काष्ठा mtd_info *mtd = cxt->mtd;
-	u_अक्षर *buf;
-	पूर्णांक ret;
-	माप_प्रकार retlen;
-	काष्ठा erase_info erase;
+static int mtdpstore_flush_removed_do(struct mtdpstore_context *cxt,
+		loff_t off, size_t size)
+{
+	struct mtd_info *mtd = cxt->mtd;
+	u_char *buf;
+	int ret;
+	size_t retlen;
+	struct erase_info erase;
 
-	buf = kदो_स्मृति(mtd->erasesize, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc(mtd->erasesize, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
-	/* 1st. पढ़ो to cache */
-	ret = mtd_पढ़ो(mtd, off, mtd->erasesize, &retlen, buf);
-	अगर (mtdpstore_is_io_error(ret))
-		जाओ मुक्त;
+	/* 1st. read to cache */
+	ret = mtd_read(mtd, off, mtd->erasesize, &retlen, buf);
+	if (mtdpstore_is_io_error(ret))
+		goto free;
 
 	/* 2nd. erase block */
 	erase.len = mtd->erasesize;
 	erase.addr = off;
 	ret = mtd_erase(mtd, &erase);
-	अगर (ret)
-		जाओ मुक्त;
+	if (ret)
+		goto free;
 
-	/* 3rd. ग_लिखो back */
-	जबतक (size) अणु
-		अचिन्हित पूर्णांक zonesize = cxt->info.kmsg_size;
+	/* 3rd. write back */
+	while (size) {
+		unsigned int zonesize = cxt->info.kmsg_size;
 
-		/* there is valid data on block, ग_लिखो back */
-		अगर (mtdpstore_is_used(cxt, off)) अणु
-			ret = mtd_ग_लिखो(mtd, off, zonesize, &retlen, buf);
-			अगर (ret)
+		/* there is valid data on block, write back */
+		if (mtdpstore_is_used(cxt, off)) {
+			ret = mtd_write(mtd, off, zonesize, &retlen, buf);
+			if (ret)
 				dev_err(&mtd->dev, "write failure at %lld (%zu of %u written), err %d\n",
 						off, retlen, zonesize, ret);
-		पूर्ण
+		}
 
 		off += zonesize;
-		size -= min_t(अचिन्हित पूर्णांक, zonesize, size);
-	पूर्ण
+		size -= min_t(unsigned int, zonesize, size);
+	}
 
-मुक्त:
-	kमुक्त(buf);
-	वापस ret;
-पूर्ण
+free:
+	kfree(buf);
+	return ret;
+}
 
 /*
- * What करोes mtdpstore_flush_हटाओd() करो?
- * When user हटाओ any log file on pstore fileप्रणाली, mtdpstore should करो
- * something to ensure log file हटाओd. If the whole block is no दीर्घer used,
- * it's nice to erase the block. However अगर the block still contains valid log,
- * what mtdpstore can करो is to erase and ग_लिखो the valid log back.
+ * What does mtdpstore_flush_removed() do?
+ * When user remove any log file on pstore filesystem, mtdpstore should do
+ * something to ensure log file removed. If the whole block is no longer used,
+ * it's nice to erase the block. However if the block still contains valid log,
+ * what mtdpstore can do is to erase and write the valid log back.
  */
-अटल पूर्णांक mtdpstore_flush_हटाओd(काष्ठा mtdpstore_context *cxt)
-अणु
-	काष्ठा mtd_info *mtd = cxt->mtd;
-	पूर्णांक ret;
+static int mtdpstore_flush_removed(struct mtdpstore_context *cxt)
+{
+	struct mtd_info *mtd = cxt->mtd;
+	int ret;
 	loff_t off;
-	u32 blkcnt = (u32)भाग_u64(mtd->size, mtd->erasesize);
+	u32 blkcnt = (u32)div_u64(mtd->size, mtd->erasesize);
 
-	क्रम (off = 0; blkcnt > 0; blkcnt--, off += mtd->erasesize) अणु
+	for (off = 0; blkcnt > 0; blkcnt--, off += mtd->erasesize) {
 		ret = mtdpstore_block_isbad(cxt, off);
-		अगर (ret)
-			जारी;
+		if (ret)
+			continue;
 
-		ret = mtdpstore_block_is_हटाओd(cxt, off);
-		अगर (!ret)
-			जारी;
+		ret = mtdpstore_block_is_removed(cxt, off);
+		if (!ret)
+			continue;
 
-		ret = mtdpstore_flush_हटाओd_करो(cxt, off, mtd->erasesize);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		ret = mtdpstore_flush_removed_do(cxt, off, mtd->erasesize);
+		if (ret)
+			return ret;
+	}
+	return 0;
+}
 
-अटल व्योम mtdpstore_notअगरy_हटाओ(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा mtdpstore_context *cxt = &oops_cxt;
+static void mtdpstore_notify_remove(struct mtd_info *mtd)
+{
+	struct mtdpstore_context *cxt = &oops_cxt;
 
-	अगर (mtd->index != cxt->index || cxt->index < 0)
-		वापस;
+	if (mtd->index != cxt->index || cxt->index < 0)
+		return;
 
-	mtdpstore_flush_हटाओd(cxt);
+	mtdpstore_flush_removed(cxt);
 
-	unरेजिस्टर_pstore_device(&cxt->dev);
-	kमुक्त(cxt->badmap);
-	kमुक्त(cxt->usedmap);
-	kमुक्त(cxt->rmmap);
-	cxt->mtd = शून्य;
+	unregister_pstore_device(&cxt->dev);
+	kfree(cxt->badmap);
+	kfree(cxt->usedmap);
+	kfree(cxt->rmmap);
+	cxt->mtd = NULL;
 	cxt->index = -1;
-पूर्ण
+}
 
-अटल काष्ठा mtd_notअगरier mtdpstore_notअगरier = अणु
-	.add	= mtdpstore_notअगरy_add,
-	.हटाओ	= mtdpstore_notअगरy_हटाओ,
-पूर्ण;
+static struct mtd_notifier mtdpstore_notifier = {
+	.add	= mtdpstore_notify_add,
+	.remove	= mtdpstore_notify_remove,
+};
 
-अटल पूर्णांक __init mtdpstore_init(व्योम)
-अणु
-	पूर्णांक ret;
-	काष्ठा mtdpstore_context *cxt = &oops_cxt;
-	काष्ठा pstore_blk_config *info = &cxt->info;
+static int __init mtdpstore_init(void)
+{
+	int ret;
+	struct mtdpstore_context *cxt = &oops_cxt;
+	struct pstore_blk_config *info = &cxt->info;
 
 	ret = pstore_blk_get_config(info);
-	अगर (unlikely(ret))
-		वापस ret;
+	if (unlikely(ret))
+		return ret;
 
-	अगर (म_माप(info->device) == 0) अणु
+	if (strlen(info->device) == 0) {
 		pr_err("mtd device must be supplied (device name is empty)\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (!info->kmsg_size) अणु
+		return -EINVAL;
+	}
+	if (!info->kmsg_size) {
 		pr_err("no backend enabled (kmsg_size is 0)\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Setup the MTD device to use */
-	ret = kstrtoपूर्णांक((अक्षर *)info->device, 0, &cxt->index);
-	अगर (ret)
+	ret = kstrtoint((char *)info->device, 0, &cxt->index);
+	if (ret)
 		cxt->index = -1;
 
-	रेजिस्टर_mtd_user(&mtdpstore_notअगरier);
-	वापस 0;
-पूर्ण
+	register_mtd_user(&mtdpstore_notifier);
+	return 0;
+}
 module_init(mtdpstore_init);
 
-अटल व्योम __निकास mtdpstore_निकास(व्योम)
-अणु
-	unरेजिस्टर_mtd_user(&mtdpstore_notअगरier);
-पूर्ण
-module_निकास(mtdpstore_निकास);
+static void __exit mtdpstore_exit(void)
+{
+	unregister_mtd_user(&mtdpstore_notifier);
+}
+module_exit(mtdpstore_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("WeiXiong Liao <liaoweixiong@allwinnertech.com>");

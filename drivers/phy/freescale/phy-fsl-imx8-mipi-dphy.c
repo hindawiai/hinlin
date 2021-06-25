@@ -1,89 +1,88 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2017,2018 NXP
  * Copyright 2019 Purism SPC
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/phy/phy.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
+#include <linux/phy/phy.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
 
-/* DPHY रेजिस्टरs */
-#घोषणा DPHY_PD_DPHY			0x00
-#घोषणा DPHY_M_PRG_HS_PREPARE		0x04
-#घोषणा DPHY_MC_PRG_HS_PREPARE		0x08
-#घोषणा DPHY_M_PRG_HS_ZERO		0x0c
-#घोषणा DPHY_MC_PRG_HS_ZERO		0x10
-#घोषणा DPHY_M_PRG_HS_TRAIL		0x14
-#घोषणा DPHY_MC_PRG_HS_TRAIL		0x18
-#घोषणा DPHY_PD_PLL			0x1c
-#घोषणा DPHY_TST			0x20
-#घोषणा DPHY_CN				0x24
-#घोषणा DPHY_CM				0x28
-#घोषणा DPHY_CO				0x2c
-#घोषणा DPHY_LOCK			0x30
-#घोषणा DPHY_LOCK_BYP			0x34
-#घोषणा DPHY_REG_BYPASS_PLL		0x4C
+/* DPHY registers */
+#define DPHY_PD_DPHY			0x00
+#define DPHY_M_PRG_HS_PREPARE		0x04
+#define DPHY_MC_PRG_HS_PREPARE		0x08
+#define DPHY_M_PRG_HS_ZERO		0x0c
+#define DPHY_MC_PRG_HS_ZERO		0x10
+#define DPHY_M_PRG_HS_TRAIL		0x14
+#define DPHY_MC_PRG_HS_TRAIL		0x18
+#define DPHY_PD_PLL			0x1c
+#define DPHY_TST			0x20
+#define DPHY_CN				0x24
+#define DPHY_CM				0x28
+#define DPHY_CO				0x2c
+#define DPHY_LOCK			0x30
+#define DPHY_LOCK_BYP			0x34
+#define DPHY_REG_BYPASS_PLL		0x4C
 
-#घोषणा MBPS(x) ((x) * 1000000)
+#define MBPS(x) ((x) * 1000000)
 
-#घोषणा DATA_RATE_MAX_SPEED MBPS(1500)
-#घोषणा DATA_RATE_MIN_SPEED MBPS(80)
+#define DATA_RATE_MAX_SPEED MBPS(1500)
+#define DATA_RATE_MIN_SPEED MBPS(80)
 
-#घोषणा PLL_LOCK_SLEEP 10
-#घोषणा PLL_LOCK_TIMEOUT 1000
+#define PLL_LOCK_SLEEP 10
+#define PLL_LOCK_TIMEOUT 1000
 
-#घोषणा CN_BUF	0xcb7a89c0
-#घोषणा CO_BUF	0x63
-#घोषणा CM(x)	(				  \
+#define CN_BUF	0xcb7a89c0
+#define CO_BUF	0x63
+#define CM(x)	(				  \
 		((x) <	32) ? 0xe0 | ((x) - 16) : \
 		((x) <	64) ? 0xc0 | ((x) - 32) : \
 		((x) < 128) ? 0x80 | ((x) - 64) : \
 		((x) - 128))
-#घोषणा CN(x)	(((x) == 1) ? 0x1f : (((CN_BUF) >> ((x) - 1)) & 0x1f))
-#घोषणा CO(x)	((CO_BUF) >> (8 - (x)) & 0x03)
+#define CN(x)	(((x) == 1) ? 0x1f : (((CN_BUF) >> ((x) - 1)) & 0x1f))
+#define CO(x)	((CO_BUF) >> (8 - (x)) & 0x03)
 
-/* PHY घातer on is active low */
-#घोषणा PWR_ON	0
-#घोषणा PWR_OFF	1
+/* PHY power on is active low */
+#define PWR_ON	0
+#define PWR_OFF	1
 
-क्रमागत mixel_dphy_devtype अणु
+enum mixel_dphy_devtype {
 	MIXEL_IMX8MQ,
-पूर्ण;
+};
 
-काष्ठा mixel_dphy_devdata अणु
+struct mixel_dphy_devdata {
 	u8 reg_tx_rcal;
-	u8 reg_स्वतः_pd_en;
+	u8 reg_auto_pd_en;
 	u8 reg_rxlprp;
 	u8 reg_rxcdrp;
 	u8 reg_rxhs_settle;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mixel_dphy_devdata mixel_dphy_devdata[] = अणु
-	[MIXEL_IMX8MQ] = अणु
+static const struct mixel_dphy_devdata mixel_dphy_devdata[] = {
+	[MIXEL_IMX8MQ] = {
 		.reg_tx_rcal = 0x38,
-		.reg_स्वतः_pd_en = 0x3c,
+		.reg_auto_pd_en = 0x3c,
 		.reg_rxlprp = 0x40,
 		.reg_rxcdrp = 0x44,
 		.reg_rxhs_settle = 0x48,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा mixel_dphy_cfg अणु
+struct mixel_dphy_cfg {
 	/* DPHY PLL parameters */
 	u32 cm;
 	u32 cn;
 	u32 co;
-	/* DPHY रेजिस्टर values */
+	/* DPHY register values */
 	u8 mc_prg_hs_prepare;
 	u8 m_prg_hs_prepare;
 	u8 mc_prg_hs_zero;
@@ -91,190 +90,190 @@
 	u8 mc_prg_hs_trail;
 	u8 m_prg_hs_trail;
 	u8 rxhs_settle;
-पूर्ण;
+};
 
-काष्ठा mixel_dphy_priv अणु
-	काष्ठा mixel_dphy_cfg cfg;
-	काष्ठा regmap *regmap;
-	काष्ठा clk *phy_ref_clk;
-	स्थिर काष्ठा mixel_dphy_devdata *devdata;
-पूर्ण;
+struct mixel_dphy_priv {
+	struct mixel_dphy_cfg cfg;
+	struct regmap *regmap;
+	struct clk *phy_ref_clk;
+	const struct mixel_dphy_devdata *devdata;
+};
 
-अटल स्थिर काष्ठा regmap_config mixel_dphy_regmap_config = अणु
+static const struct regmap_config mixel_dphy_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 32,
 	.reg_stride = 4,
-	.max_रेजिस्टर = DPHY_REG_BYPASS_PLL,
+	.max_register = DPHY_REG_BYPASS_PLL,
 	.name = "mipi-dphy",
-पूर्ण;
+};
 
-अटल पूर्णांक phy_ग_लिखो(काष्ठा phy *phy, u32 value, अचिन्हित पूर्णांक reg)
-अणु
-	काष्ठा mixel_dphy_priv *priv = phy_get_drvdata(phy);
-	पूर्णांक ret;
+static int phy_write(struct phy *phy, u32 value, unsigned int reg)
+{
+	struct mixel_dphy_priv *priv = phy_get_drvdata(phy);
+	int ret;
 
-	ret = regmap_ग_लिखो(priv->regmap, reg, value);
-	अगर (ret < 0)
+	ret = regmap_write(priv->regmap, reg, value);
+	if (ret < 0)
 		dev_err(&phy->dev, "Failed to write DPHY reg %d: %d\n", reg,
 			ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Find a ratio बंद to the desired one using जारीd fraction
+ * Find a ratio close to the desired one using continued fraction
  * approximation ending either at exact match or maximum allowed
  * nominator, denominator.
  */
-अटल व्योम get_best_ratio(u32 *pnum, u32 *pdenom, u32 max_n, u32 max_d)
-अणु
+static void get_best_ratio(u32 *pnum, u32 *pdenom, u32 max_n, u32 max_d)
+{
 	u32 a = *pnum;
 	u32 b = *pdenom;
 	u32 c;
-	u32 n[] = अणु0, 1पूर्ण;
-	u32 d[] = अणु1, 0पूर्ण;
+	u32 n[] = {0, 1};
+	u32 d[] = {1, 0};
 	u32 whole;
-	अचिन्हित पूर्णांक i = 1;
+	unsigned int i = 1;
 
-	जबतक (b) अणु
+	while (b) {
 		i ^= 1;
 		whole = a / b;
 		n[i] += (n[i ^ 1] * whole);
 		d[i] += (d[i ^ 1] * whole);
-		अगर ((n[i] > max_n) || (d[i] > max_d)) अणु
+		if ((n[i] > max_n) || (d[i] > max_d)) {
 			i ^= 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		c = a - (b * whole);
 		a = b;
 		b = c;
-	पूर्ण
+	}
 	*pnum = n[i];
 	*pdenom = d[i];
-पूर्ण
+}
 
-अटल पूर्णांक mixel_dphy_config_from_opts(काष्ठा phy *phy,
-	       काष्ठा phy_configure_opts_mipi_dphy *dphy_opts,
-	       काष्ठा mixel_dphy_cfg *cfg)
-अणु
-	काष्ठा mixel_dphy_priv *priv = dev_get_drvdata(phy->dev.parent);
-	अचिन्हित दीर्घ ref_clk = clk_get_rate(priv->phy_ref_clk);
+static int mixel_dphy_config_from_opts(struct phy *phy,
+	       struct phy_configure_opts_mipi_dphy *dphy_opts,
+	       struct mixel_dphy_cfg *cfg)
+{
+	struct mixel_dphy_priv *priv = dev_get_drvdata(phy->dev.parent);
+	unsigned long ref_clk = clk_get_rate(priv->phy_ref_clk);
 	u32 lp_t, numerator, denominator;
-	अचिन्हित दीर्घ दीर्घ पंचांगp;
+	unsigned long long tmp;
 	u32 n;
-	पूर्णांक i;
+	int i;
 
-	अगर (dphy_opts->hs_clk_rate > DATA_RATE_MAX_SPEED ||
+	if (dphy_opts->hs_clk_rate > DATA_RATE_MAX_SPEED ||
 	    dphy_opts->hs_clk_rate < DATA_RATE_MIN_SPEED)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	numerator = dphy_opts->hs_clk_rate;
 	denominator = ref_clk;
 	get_best_ratio(&numerator, &denominator, 255, 256);
-	अगर (!numerator || !denominator) अणु
+	if (!numerator || !denominator) {
 		dev_err(&phy->dev, "Invalid %d/%d for %ld/%ld\n",
 			numerator, denominator,
 			dphy_opts->hs_clk_rate, ref_clk);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	जबतक ((numerator < 16) && (denominator <= 128)) अणु
+	while ((numerator < 16) && (denominator <= 128)) {
 		numerator <<= 1;
 		denominator <<= 1;
-	पूर्ण
+	}
 	/*
 	 * CM ranges between 16 and 255
 	 * CN ranges between 1 and 32
-	 * CO is घातer of 2: 1, 2, 4, 8
+	 * CO is power of 2: 1, 2, 4, 8
 	 */
 	i = __ffs(denominator);
-	अगर (i > 3)
+	if (i > 3)
 		i = 3;
 	cfg->cn = denominator >> i;
 	cfg->co = 1 << i;
 	cfg->cm = numerator;
 
-	अगर (cfg->cm < 16 || cfg->cm > 255 ||
+	if (cfg->cm < 16 || cfg->cm > 255 ||
 	    cfg->cn < 1 || cfg->cn > 32 ||
-	    cfg->co < 1 || cfg->co > 8) अणु
+	    cfg->co < 1 || cfg->co > 8) {
 		dev_err(&phy->dev, "Invalid CM/CN/CO values: %u/%u/%u\n",
 			cfg->cm, cfg->cn, cfg->co);
 		dev_err(&phy->dev, "for hs_clk/ref_clk=%ld/%ld ~ %d/%d\n",
 			dphy_opts->hs_clk_rate, ref_clk,
 			numerator, denominator);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	dev_dbg(&phy->dev, "hs_clk/ref_clk=%ld/%ld ~ %d/%d\n",
 		dphy_opts->hs_clk_rate, ref_clk, numerator, denominator);
 
-	/* LP घड़ी period */
-	पंचांगp = 1000000000000LL;
-	करो_भाग(पंचांगp, dphy_opts->lp_clk_rate); /* ps */
-	अगर (पंचांगp > अच_दीर्घ_उच्च)
-		वापस -EINVAL;
+	/* LP clock period */
+	tmp = 1000000000000LL;
+	do_div(tmp, dphy_opts->lp_clk_rate); /* ps */
+	if (tmp > ULONG_MAX)
+		return -EINVAL;
 
-	lp_t = पंचांगp;
+	lp_t = tmp;
 	dev_dbg(&phy->dev, "LP clock %lu, period: %u ps\n",
 		dphy_opts->lp_clk_rate, lp_t);
 
-	/* hs_prepare: in lp घड़ी periods */
-	अगर (2 * dphy_opts->hs_prepare > 5 * lp_t) अणु
+	/* hs_prepare: in lp clock periods */
+	if (2 * dphy_opts->hs_prepare > 5 * lp_t) {
 		dev_err(&phy->dev,
 			"hs_prepare (%u) > 2.5 * lp clock period (%u)\n",
 			dphy_opts->hs_prepare, lp_t);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	/* 00: lp_t, 01: 1.5 * lp_t, 10: 2 * lp_t, 11: 2.5 * lp_t */
-	अगर (dphy_opts->hs_prepare < lp_t) अणु
+	if (dphy_opts->hs_prepare < lp_t) {
 		n = 0;
-	पूर्ण अन्यथा अणु
-		पंचांगp = 2 * (dphy_opts->hs_prepare - lp_t);
-		करो_भाग(पंचांगp, lp_t);
-		n = पंचांगp;
-	पूर्ण
+	} else {
+		tmp = 2 * (dphy_opts->hs_prepare - lp_t);
+		do_div(tmp, lp_t);
+		n = tmp;
+	}
 	cfg->m_prg_hs_prepare = n;
 
-	/* clk_prepare: in lp घड़ी periods */
-	अगर (2 * dphy_opts->clk_prepare > 3 * lp_t) अणु
+	/* clk_prepare: in lp clock periods */
+	if (2 * dphy_opts->clk_prepare > 3 * lp_t) {
 		dev_err(&phy->dev,
 			"clk_prepare (%u) > 1.5 * lp clock period (%u)\n",
 			dphy_opts->clk_prepare, lp_t);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	/* 00: lp_t, 01: 1.5 * lp_t */
 	cfg->mc_prg_hs_prepare = dphy_opts->clk_prepare > lp_t ? 1 : 0;
 
-	/* hs_zero: क्रमmula from NXP BSP */
+	/* hs_zero: formula from NXP BSP */
 	n = (144 * (dphy_opts->hs_clk_rate / 1000000) - 47500) / 10000;
 	cfg->m_prg_hs_zero = n < 1 ? 1 : n;
 
-	/* clk_zero: क्रमmula from NXP BSP */
+	/* clk_zero: formula from NXP BSP */
 	n = (34 * (dphy_opts->hs_clk_rate / 1000000) - 2500) / 1000;
 	cfg->mc_prg_hs_zero = n < 1 ? 1 : n;
 
-	/* clk_trail, hs_trail: क्रमmula from NXP BSP */
+	/* clk_trail, hs_trail: formula from NXP BSP */
 	n = (103 * (dphy_opts->hs_clk_rate / 1000000) + 10000) / 10000;
-	अगर (n > 15)
+	if (n > 15)
 		n = 15;
-	अगर (n < 1)
+	if (n < 1)
 		n = 1;
 	cfg->m_prg_hs_trail = n;
 	cfg->mc_prg_hs_trail = n;
 
-	/* rxhs_settle: क्रमmula from NXP BSP */
-	अगर (dphy_opts->hs_clk_rate < MBPS(80))
+	/* rxhs_settle: formula from NXP BSP */
+	if (dphy_opts->hs_clk_rate < MBPS(80))
 		cfg->rxhs_settle = 0x0d;
-	अन्यथा अगर (dphy_opts->hs_clk_rate < MBPS(90))
+	else if (dphy_opts->hs_clk_rate < MBPS(90))
 		cfg->rxhs_settle = 0x0c;
-	अन्यथा अगर (dphy_opts->hs_clk_rate < MBPS(125))
+	else if (dphy_opts->hs_clk_rate < MBPS(125))
 		cfg->rxhs_settle = 0x0b;
-	अन्यथा अगर (dphy_opts->hs_clk_rate < MBPS(150))
+	else if (dphy_opts->hs_clk_rate < MBPS(150))
 		cfg->rxhs_settle = 0x0a;
-	अन्यथा अगर (dphy_opts->hs_clk_rate < MBPS(225))
+	else if (dphy_opts->hs_clk_rate < MBPS(225))
 		cfg->rxhs_settle = 0x09;
-	अन्यथा अगर (dphy_opts->hs_clk_rate < MBPS(500))
+	else if (dphy_opts->hs_clk_rate < MBPS(500))
 		cfg->rxhs_settle = 0x08;
-	अन्यथा
+	else
 		cfg->rxhs_settle = 0x07;
 
 	dev_dbg(&phy->dev, "phy_config: %u %u %u %u %u %u %u\n",
@@ -283,213 +282,213 @@
 		cfg->m_prg_hs_trail, cfg->mc_prg_hs_trail,
 		cfg->rxhs_settle);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mixel_phy_set_hs_timings(काष्ठा phy *phy)
-अणु
-	काष्ठा mixel_dphy_priv *priv = phy_get_drvdata(phy);
+static void mixel_phy_set_hs_timings(struct phy *phy)
+{
+	struct mixel_dphy_priv *priv = phy_get_drvdata(phy);
 
-	phy_ग_लिखो(phy, priv->cfg.m_prg_hs_prepare, DPHY_M_PRG_HS_PREPARE);
-	phy_ग_लिखो(phy, priv->cfg.mc_prg_hs_prepare, DPHY_MC_PRG_HS_PREPARE);
-	phy_ग_लिखो(phy, priv->cfg.m_prg_hs_zero, DPHY_M_PRG_HS_ZERO);
-	phy_ग_लिखो(phy, priv->cfg.mc_prg_hs_zero, DPHY_MC_PRG_HS_ZERO);
-	phy_ग_लिखो(phy, priv->cfg.m_prg_hs_trail, DPHY_M_PRG_HS_TRAIL);
-	phy_ग_लिखो(phy, priv->cfg.mc_prg_hs_trail, DPHY_MC_PRG_HS_TRAIL);
-	phy_ग_लिखो(phy, priv->cfg.rxhs_settle, priv->devdata->reg_rxhs_settle);
-पूर्ण
+	phy_write(phy, priv->cfg.m_prg_hs_prepare, DPHY_M_PRG_HS_PREPARE);
+	phy_write(phy, priv->cfg.mc_prg_hs_prepare, DPHY_MC_PRG_HS_PREPARE);
+	phy_write(phy, priv->cfg.m_prg_hs_zero, DPHY_M_PRG_HS_ZERO);
+	phy_write(phy, priv->cfg.mc_prg_hs_zero, DPHY_MC_PRG_HS_ZERO);
+	phy_write(phy, priv->cfg.m_prg_hs_trail, DPHY_M_PRG_HS_TRAIL);
+	phy_write(phy, priv->cfg.mc_prg_hs_trail, DPHY_MC_PRG_HS_TRAIL);
+	phy_write(phy, priv->cfg.rxhs_settle, priv->devdata->reg_rxhs_settle);
+}
 
-अटल पूर्णांक mixel_dphy_set_pll_params(काष्ठा phy *phy)
-अणु
-	काष्ठा mixel_dphy_priv *priv = dev_get_drvdata(phy->dev.parent);
+static int mixel_dphy_set_pll_params(struct phy *phy)
+{
+	struct mixel_dphy_priv *priv = dev_get_drvdata(phy->dev.parent);
 
-	अगर (priv->cfg.cm < 16 || priv->cfg.cm > 255 ||
+	if (priv->cfg.cm < 16 || priv->cfg.cm > 255 ||
 	    priv->cfg.cn < 1 || priv->cfg.cn > 32 ||
-	    priv->cfg.co < 1 || priv->cfg.co > 8) अणु
+	    priv->cfg.co < 1 || priv->cfg.co > 8) {
 		dev_err(&phy->dev, "Invalid CM/CN/CO values! (%u/%u/%u)\n",
 			priv->cfg.cm, priv->cfg.cn, priv->cfg.co);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	dev_dbg(&phy->dev, "Using CM:%u CN:%u CO:%u\n",
 		priv->cfg.cm, priv->cfg.cn, priv->cfg.co);
-	phy_ग_लिखो(phy, CM(priv->cfg.cm), DPHY_CM);
-	phy_ग_लिखो(phy, CN(priv->cfg.cn), DPHY_CN);
-	phy_ग_लिखो(phy, CO(priv->cfg.co), DPHY_CO);
-	वापस 0;
-पूर्ण
+	phy_write(phy, CM(priv->cfg.cm), DPHY_CM);
+	phy_write(phy, CN(priv->cfg.cn), DPHY_CN);
+	phy_write(phy, CO(priv->cfg.co), DPHY_CO);
+	return 0;
+}
 
-अटल पूर्णांक mixel_dphy_configure(काष्ठा phy *phy, जोड़ phy_configure_opts *opts)
-अणु
-	काष्ठा mixel_dphy_priv *priv = phy_get_drvdata(phy);
-	काष्ठा mixel_dphy_cfg cfg = अणु 0 पूर्ण;
-	पूर्णांक ret;
+static int mixel_dphy_configure(struct phy *phy, union phy_configure_opts *opts)
+{
+	struct mixel_dphy_priv *priv = phy_get_drvdata(phy);
+	struct mixel_dphy_cfg cfg = { 0 };
+	int ret;
 
 	ret = mixel_dphy_config_from_opts(phy, &opts->mipi_dphy, &cfg);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Update the configuration */
-	स_नकल(&priv->cfg, &cfg, माप(काष्ठा mixel_dphy_cfg));
+	memcpy(&priv->cfg, &cfg, sizeof(struct mixel_dphy_cfg));
 
-	phy_ग_लिखो(phy, 0x00, DPHY_LOCK_BYP);
-	phy_ग_लिखो(phy, 0x01, priv->devdata->reg_tx_rcal);
-	phy_ग_लिखो(phy, 0x00, priv->devdata->reg_स्वतः_pd_en);
-	phy_ग_लिखो(phy, 0x02, priv->devdata->reg_rxlprp);
-	phy_ग_लिखो(phy, 0x02, priv->devdata->reg_rxcdrp);
-	phy_ग_लिखो(phy, 0x25, DPHY_TST);
+	phy_write(phy, 0x00, DPHY_LOCK_BYP);
+	phy_write(phy, 0x01, priv->devdata->reg_tx_rcal);
+	phy_write(phy, 0x00, priv->devdata->reg_auto_pd_en);
+	phy_write(phy, 0x02, priv->devdata->reg_rxlprp);
+	phy_write(phy, 0x02, priv->devdata->reg_rxcdrp);
+	phy_write(phy, 0x25, DPHY_TST);
 
 	mixel_phy_set_hs_timings(phy);
 	ret = mixel_dphy_set_pll_params(phy);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mixel_dphy_validate(काष्ठा phy *phy, क्रमागत phy_mode mode, पूर्णांक submode,
-			       जोड़ phy_configure_opts *opts)
-अणु
-	काष्ठा mixel_dphy_cfg cfg = अणु 0 पूर्ण;
+static int mixel_dphy_validate(struct phy *phy, enum phy_mode mode, int submode,
+			       union phy_configure_opts *opts)
+{
+	struct mixel_dphy_cfg cfg = { 0 };
 
-	अगर (mode != PHY_MODE_MIPI_DPHY)
-		वापस -EINVAL;
+	if (mode != PHY_MODE_MIPI_DPHY)
+		return -EINVAL;
 
-	वापस mixel_dphy_config_from_opts(phy, &opts->mipi_dphy, &cfg);
-पूर्ण
+	return mixel_dphy_config_from_opts(phy, &opts->mipi_dphy, &cfg);
+}
 
-अटल पूर्णांक mixel_dphy_init(काष्ठा phy *phy)
-अणु
-	phy_ग_लिखो(phy, PWR_OFF, DPHY_PD_PLL);
-	phy_ग_लिखो(phy, PWR_OFF, DPHY_PD_DPHY);
+static int mixel_dphy_init(struct phy *phy)
+{
+	phy_write(phy, PWR_OFF, DPHY_PD_PLL);
+	phy_write(phy, PWR_OFF, DPHY_PD_DPHY);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mixel_dphy_निकास(काष्ठा phy *phy)
-अणु
-	phy_ग_लिखो(phy, 0, DPHY_CM);
-	phy_ग_लिखो(phy, 0, DPHY_CN);
-	phy_ग_लिखो(phy, 0, DPHY_CO);
+static int mixel_dphy_exit(struct phy *phy)
+{
+	phy_write(phy, 0, DPHY_CM);
+	phy_write(phy, 0, DPHY_CN);
+	phy_write(phy, 0, DPHY_CO);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mixel_dphy_घातer_on(काष्ठा phy *phy)
-अणु
-	काष्ठा mixel_dphy_priv *priv = phy_get_drvdata(phy);
+static int mixel_dphy_power_on(struct phy *phy)
+{
+	struct mixel_dphy_priv *priv = phy_get_drvdata(phy);
 	u32 locked;
-	पूर्णांक ret;
+	int ret;
 
 	ret = clk_prepare_enable(priv->phy_ref_clk);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	phy_ग_लिखो(phy, PWR_ON, DPHY_PD_PLL);
-	ret = regmap_पढ़ो_poll_समयout(priv->regmap, DPHY_LOCK, locked,
+	phy_write(phy, PWR_ON, DPHY_PD_PLL);
+	ret = regmap_read_poll_timeout(priv->regmap, DPHY_LOCK, locked,
 				       locked, PLL_LOCK_SLEEP,
 				       PLL_LOCK_TIMEOUT);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&phy->dev, "Could not get DPHY lock (%d)!\n", ret);
-		जाओ घड़ी_disable;
-	पूर्ण
-	phy_ग_लिखो(phy, PWR_ON, DPHY_PD_DPHY);
+		goto clock_disable;
+	}
+	phy_write(phy, PWR_ON, DPHY_PD_DPHY);
 
-	वापस 0;
-घड़ी_disable:
+	return 0;
+clock_disable:
 	clk_disable_unprepare(priv->phy_ref_clk);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mixel_dphy_घातer_off(काष्ठा phy *phy)
-अणु
-	काष्ठा mixel_dphy_priv *priv = phy_get_drvdata(phy);
+static int mixel_dphy_power_off(struct phy *phy)
+{
+	struct mixel_dphy_priv *priv = phy_get_drvdata(phy);
 
-	phy_ग_लिखो(phy, PWR_OFF, DPHY_PD_PLL);
-	phy_ग_लिखो(phy, PWR_OFF, DPHY_PD_DPHY);
+	phy_write(phy, PWR_OFF, DPHY_PD_PLL);
+	phy_write(phy, PWR_OFF, DPHY_PD_DPHY);
 
 	clk_disable_unprepare(priv->phy_ref_clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा phy_ops mixel_dphy_phy_ops = अणु
+static const struct phy_ops mixel_dphy_phy_ops = {
 	.init = mixel_dphy_init,
-	.निकास = mixel_dphy_निकास,
-	.घातer_on = mixel_dphy_घातer_on,
-	.घातer_off = mixel_dphy_घातer_off,
+	.exit = mixel_dphy_exit,
+	.power_on = mixel_dphy_power_on,
+	.power_off = mixel_dphy_power_off,
 	.configure = mixel_dphy_configure,
 	.validate = mixel_dphy_validate,
 	.owner = THIS_MODULE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id mixel_dphy_of_match[] = अणु
-	अणु .compatible = "fsl,imx8mq-mipi-dphy",
-	  .data = &mixel_dphy_devdata[MIXEL_IMX8MQ] पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+static const struct of_device_id mixel_dphy_of_match[] = {
+	{ .compatible = "fsl,imx8mq-mipi-dphy",
+	  .data = &mixel_dphy_devdata[MIXEL_IMX8MQ] },
+	{ /* sentinel */ },
+};
 MODULE_DEVICE_TABLE(of, mixel_dphy_of_match);
 
-अटल पूर्णांक mixel_dphy_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा phy_provider *phy_provider;
-	काष्ठा mixel_dphy_priv *priv;
-	काष्ठा phy *phy;
-	व्योम __iomem *base;
+static int mixel_dphy_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *np = dev->of_node;
+	struct phy_provider *phy_provider;
+	struct mixel_dphy_priv *priv;
+	struct phy *phy;
+	void __iomem *base;
 
-	अगर (!np)
-		वापस -ENODEV;
+	if (!np)
+		return -ENODEV;
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->devdata = of_device_get_match_data(&pdev->dev);
-	अगर (!priv->devdata)
-		वापस -EINVAL;
+	if (!priv->devdata)
+		return -EINVAL;
 
-	base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(base))
-		वापस PTR_ERR(base);
+	base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(base))
+		return PTR_ERR(base);
 
 	priv->regmap = devm_regmap_init_mmio(&pdev->dev, base,
 					     &mixel_dphy_regmap_config);
-	अगर (IS_ERR(priv->regmap)) अणु
+	if (IS_ERR(priv->regmap)) {
 		dev_err(dev, "Couldn't create the DPHY regmap\n");
-		वापस PTR_ERR(priv->regmap);
-	पूर्ण
+		return PTR_ERR(priv->regmap);
+	}
 
 	priv->phy_ref_clk = devm_clk_get(&pdev->dev, "phy_ref");
-	अगर (IS_ERR(priv->phy_ref_clk)) अणु
+	if (IS_ERR(priv->phy_ref_clk)) {
 		dev_err(dev, "No phy_ref clock found\n");
-		वापस PTR_ERR(priv->phy_ref_clk);
-	पूर्ण
+		return PTR_ERR(priv->phy_ref_clk);
+	}
 	dev_dbg(dev, "phy_ref clock rate: %lu\n",
 		clk_get_rate(priv->phy_ref_clk));
 
 	dev_set_drvdata(dev, priv);
 
 	phy = devm_phy_create(dev, np, &mixel_dphy_phy_ops);
-	अगर (IS_ERR(phy)) अणु
+	if (IS_ERR(phy)) {
 		dev_err(dev, "Failed to create phy %ld\n", PTR_ERR(phy));
-		वापस PTR_ERR(phy);
-	पूर्ण
+		return PTR_ERR(phy);
+	}
 	phy_set_drvdata(phy, priv);
 
-	phy_provider = devm_of_phy_provider_रेजिस्टर(dev, of_phy_simple_xlate);
+	phy_provider = devm_of_phy_provider_register(dev, of_phy_simple_xlate);
 
-	वापस PTR_ERR_OR_ZERO(phy_provider);
-पूर्ण
+	return PTR_ERR_OR_ZERO(phy_provider);
+}
 
-अटल काष्ठा platक्रमm_driver mixel_dphy_driver = अणु
+static struct platform_driver mixel_dphy_driver = {
 	.probe	= mixel_dphy_probe,
-	.driver = अणु
+	.driver = {
 		.name = "mixel-mipi-dphy",
 		.of_match_table	= mixel_dphy_of_match,
-	पूर्ण
-पूर्ण;
-module_platक्रमm_driver(mixel_dphy_driver);
+	}
+};
+module_platform_driver(mixel_dphy_driver);
 
 MODULE_AUTHOR("NXP Semiconductor");
 MODULE_DESCRIPTION("Mixel MIPI-DSI PHY driver");

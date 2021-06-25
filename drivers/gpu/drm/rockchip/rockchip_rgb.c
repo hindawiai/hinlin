@@ -1,166 +1,165 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) Fuzhou Rockchip Electronics Co.Ltd
  * Author:
  *      Sandy Huang <hjc@rock-chips.com>
  */
 
-#समावेश <linux/component.h>
-#समावेश <linux/of_graph.h>
+#include <linux/component.h>
+#include <linux/of_graph.h>
 
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_bridge.h>
-#समावेश <drm/drm_dp_helper.h>
-#समावेश <drm/drm_of.h>
-#समावेश <drm/drm_panel.h>
-#समावेश <drm/drm_probe_helper.h>
-#समावेश <drm/drm_simple_kms_helper.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_bridge.h>
+#include <drm/drm_dp_helper.h>
+#include <drm/drm_of.h>
+#include <drm/drm_panel.h>
+#include <drm/drm_probe_helper.h>
+#include <drm/drm_simple_kms_helper.h>
 
-#समावेश "rockchip_drm_drv.h"
-#समावेश "rockchip_drm_vop.h"
-#समावेश "rockchip_rgb.h"
+#include "rockchip_drm_drv.h"
+#include "rockchip_drm_vop.h"
+#include "rockchip_rgb.h"
 
-#घोषणा encoder_to_rgb(c) container_of(c, काष्ठा rockchip_rgb, encoder)
+#define encoder_to_rgb(c) container_of(c, struct rockchip_rgb, encoder)
 
-काष्ठा rockchip_rgb अणु
-	काष्ठा device *dev;
-	काष्ठा drm_device *drm_dev;
-	काष्ठा drm_bridge *bridge;
-	काष्ठा drm_encoder encoder;
-	पूर्णांक output_mode;
-पूर्ण;
+struct rockchip_rgb {
+	struct device *dev;
+	struct drm_device *drm_dev;
+	struct drm_bridge *bridge;
+	struct drm_encoder encoder;
+	int output_mode;
+};
 
-अटल पूर्णांक
-rockchip_rgb_encoder_atomic_check(काष्ठा drm_encoder *encoder,
-				   काष्ठा drm_crtc_state *crtc_state,
-				   काष्ठा drm_connector_state *conn_state)
-अणु
-	काष्ठा rockchip_crtc_state *s = to_rockchip_crtc_state(crtc_state);
-	काष्ठा drm_connector *connector = conn_state->connector;
-	काष्ठा drm_display_info *info = &connector->display_info;
-	u32 bus_क्रमmat;
+static int
+rockchip_rgb_encoder_atomic_check(struct drm_encoder *encoder,
+				   struct drm_crtc_state *crtc_state,
+				   struct drm_connector_state *conn_state)
+{
+	struct rockchip_crtc_state *s = to_rockchip_crtc_state(crtc_state);
+	struct drm_connector *connector = conn_state->connector;
+	struct drm_display_info *info = &connector->display_info;
+	u32 bus_format;
 
-	अगर (info->num_bus_क्रमmats)
-		bus_क्रमmat = info->bus_क्रमmats[0];
-	अन्यथा
-		bus_क्रमmat = MEDIA_BUS_FMT_RGB888_1X24;
+	if (info->num_bus_formats)
+		bus_format = info->bus_formats[0];
+	else
+		bus_format = MEDIA_BUS_FMT_RGB888_1X24;
 
-	चयन (bus_क्रमmat) अणु
-	हाल MEDIA_BUS_FMT_RGB666_1X18:
+	switch (bus_format) {
+	case MEDIA_BUS_FMT_RGB666_1X18:
 		s->output_mode = ROCKCHIP_OUT_MODE_P666;
-		अवरोध;
-	हाल MEDIA_BUS_FMT_RGB565_1X16:
+		break;
+	case MEDIA_BUS_FMT_RGB565_1X16:
 		s->output_mode = ROCKCHIP_OUT_MODE_P565;
-		अवरोध;
-	हाल MEDIA_BUS_FMT_RGB888_1X24:
-	हाल MEDIA_BUS_FMT_RGB666_1X24_CPADHI:
-	शेष:
+		break;
+	case MEDIA_BUS_FMT_RGB888_1X24:
+	case MEDIA_BUS_FMT_RGB666_1X24_CPADHI:
+	default:
 		s->output_mode = ROCKCHIP_OUT_MODE_P888;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	s->output_type = DRM_MODE_CONNECTOR_LVDS;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर
-काष्ठा drm_encoder_helper_funcs rockchip_rgb_encoder_helper_funcs = अणु
+static const
+struct drm_encoder_helper_funcs rockchip_rgb_encoder_helper_funcs = {
 	.atomic_check = rockchip_rgb_encoder_atomic_check,
-पूर्ण;
+};
 
-काष्ठा rockchip_rgb *rockchip_rgb_init(काष्ठा device *dev,
-				       काष्ठा drm_crtc *crtc,
-				       काष्ठा drm_device *drm_dev)
-अणु
-	काष्ठा rockchip_rgb *rgb;
-	काष्ठा drm_encoder *encoder;
-	काष्ठा device_node *port, *endpoपूर्णांक;
-	u32 endpoपूर्णांक_id;
-	पूर्णांक ret = 0, child_count = 0;
-	काष्ठा drm_panel *panel;
-	काष्ठा drm_bridge *bridge;
+struct rockchip_rgb *rockchip_rgb_init(struct device *dev,
+				       struct drm_crtc *crtc,
+				       struct drm_device *drm_dev)
+{
+	struct rockchip_rgb *rgb;
+	struct drm_encoder *encoder;
+	struct device_node *port, *endpoint;
+	u32 endpoint_id;
+	int ret = 0, child_count = 0;
+	struct drm_panel *panel;
+	struct drm_bridge *bridge;
 
-	rgb = devm_kzalloc(dev, माप(*rgb), GFP_KERNEL);
-	अगर (!rgb)
-		वापस ERR_PTR(-ENOMEM);
+	rgb = devm_kzalloc(dev, sizeof(*rgb), GFP_KERNEL);
+	if (!rgb)
+		return ERR_PTR(-ENOMEM);
 
 	rgb->dev = dev;
 	rgb->drm_dev = drm_dev;
 
 	port = of_graph_get_port_by_id(dev->of_node, 0);
-	अगर (!port)
-		वापस ERR_PTR(-EINVAL);
+	if (!port)
+		return ERR_PTR(-EINVAL);
 
-	क्रम_each_child_of_node(port, endpoपूर्णांक) अणु
-		अगर (of_property_पढ़ो_u32(endpoपूर्णांक, "reg", &endpoपूर्णांक_id))
-			endpoपूर्णांक_id = 0;
+	for_each_child_of_node(port, endpoint) {
+		if (of_property_read_u32(endpoint, "reg", &endpoint_id))
+			endpoint_id = 0;
 
-		/* अगर subdriver (> 0) or error हाल (< 0), ignore entry */
-		अगर (rockchip_drm_endpoपूर्णांक_is_subdriver(endpoपूर्णांक) != 0)
-			जारी;
+		/* if subdriver (> 0) or error case (< 0), ignore entry */
+		if (rockchip_drm_endpoint_is_subdriver(endpoint) != 0)
+			continue;
 
 		child_count++;
-		ret = drm_of_find_panel_or_bridge(dev->of_node, 0, endpoपूर्णांक_id,
+		ret = drm_of_find_panel_or_bridge(dev->of_node, 0, endpoint_id,
 						  &panel, &bridge);
-		अगर (!ret) अणु
-			of_node_put(endpoपूर्णांक);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		if (!ret) {
+			of_node_put(endpoint);
+			break;
+		}
+	}
 
 	of_node_put(port);
 
-	/* अगर the rgb output is not connected to anything, just वापस */
-	अगर (!child_count)
-		वापस शून्य;
+	/* if the rgb output is not connected to anything, just return */
+	if (!child_count)
+		return NULL;
 
-	अगर (ret < 0) अणु
-		अगर (ret != -EPROBE_DEFER)
+	if (ret < 0) {
+		if (ret != -EPROBE_DEFER)
 			DRM_DEV_ERROR(dev, "failed to find panel or bridge %d\n", ret);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		return ERR_PTR(ret);
+	}
 
 	encoder = &rgb->encoder;
 	encoder->possible_crtcs = drm_crtc_mask(crtc);
 
 	ret = drm_simple_encoder_init(drm_dev, encoder, DRM_MODE_ENCODER_NONE);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		DRM_DEV_ERROR(drm_dev->dev,
 			      "failed to initialize encoder: %d\n", ret);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		return ERR_PTR(ret);
+	}
 
 	drm_encoder_helper_add(encoder, &rockchip_rgb_encoder_helper_funcs);
 
-	अगर (panel) अणु
+	if (panel) {
 		bridge = drm_panel_bridge_add_typed(panel,
 						    DRM_MODE_CONNECTOR_LVDS);
-		अगर (IS_ERR(bridge))
-			वापस ERR_CAST(bridge);
-	पूर्ण
+		if (IS_ERR(bridge))
+			return ERR_CAST(bridge);
+	}
 
 	rgb->bridge = bridge;
 
-	ret = drm_bridge_attach(encoder, rgb->bridge, शून्य, 0);
-	अगर (ret) अणु
+	ret = drm_bridge_attach(encoder, rgb->bridge, NULL, 0);
+	if (ret) {
 		DRM_DEV_ERROR(drm_dev->dev,
 			      "failed to attach bridge: %d\n", ret);
-		जाओ err_मुक्त_encoder;
-	पूर्ण
+		goto err_free_encoder;
+	}
 
-	वापस rgb;
+	return rgb;
 
-err_मुक्त_encoder:
+err_free_encoder:
 	drm_encoder_cleanup(encoder);
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 EXPORT_SYMBOL_GPL(rockchip_rgb_init);
 
-व्योम rockchip_rgb_fini(काष्ठा rockchip_rgb *rgb)
-अणु
-	drm_panel_bridge_हटाओ(rgb->bridge);
+void rockchip_rgb_fini(struct rockchip_rgb *rgb)
+{
+	drm_panel_bridge_remove(rgb->bridge);
 	drm_encoder_cleanup(&rgb->encoder);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(rockchip_rgb_fini);

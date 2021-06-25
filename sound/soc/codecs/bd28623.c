@@ -1,175 +1,174 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
-// ROHM BD28623MUV class D speaker amplअगरier codec driver.
+// ROHM BD28623MUV class D speaker amplifier codec driver.
 //
 // Copyright (c) 2018 Socionext Inc.
 
-#समावेश <linux/delay.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/soc.h>
+#include <linux/delay.h>
+#include <linux/gpio/consumer.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/regulator/consumer.h>
+#include <sound/pcm.h>
+#include <sound/soc.h>
 
-#घोषणा BD28623_NUM_SUPPLIES    3
+#define BD28623_NUM_SUPPLIES    3
 
-अटल स्थिर अक्षर *स्थिर bd28623_supply_names[BD28623_NUM_SUPPLIES] = अणु
+static const char *const bd28623_supply_names[BD28623_NUM_SUPPLIES] = {
 	"VCCA",
 	"VCCP1",
 	"VCCP2",
-पूर्ण;
+};
 
-काष्ठा bd28623_priv अणु
-	काष्ठा device *dev;
-	काष्ठा regulator_bulk_data supplies[BD28623_NUM_SUPPLIES];
-	काष्ठा gpio_desc *reset_gpio;
-	काष्ठा gpio_desc *mute_gpio;
+struct bd28623_priv {
+	struct device *dev;
+	struct regulator_bulk_data supplies[BD28623_NUM_SUPPLIES];
+	struct gpio_desc *reset_gpio;
+	struct gpio_desc *mute_gpio;
 
-	पूर्णांक चयन_spk;
-पूर्ण;
+	int switch_spk;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget bd28623_widमाला_लो[] = अणु
+static const struct snd_soc_dapm_widget bd28623_widgets[] = {
 	SND_SOC_DAPM_DAC("DAC", "Playback", SND_SOC_NOPM, 0, 0),
 	SND_SOC_DAPM_OUTPUT("OUT1P"),
 	SND_SOC_DAPM_OUTPUT("OUT1N"),
 	SND_SOC_DAPM_OUTPUT("OUT2P"),
 	SND_SOC_DAPM_OUTPUT("OUT2N"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route bd28623_routes[] = अणु
-	अणु "OUT1P", शून्य, "DAC" पूर्ण,
-	अणु "OUT1N", शून्य, "DAC" पूर्ण,
-	अणु "OUT2P", शून्य, "DAC" पूर्ण,
-	अणु "OUT2N", शून्य, "DAC" पूर्ण,
-पूर्ण;
+static const struct snd_soc_dapm_route bd28623_routes[] = {
+	{ "OUT1P", NULL, "DAC" },
+	{ "OUT1N", NULL, "DAC" },
+	{ "OUT2P", NULL, "DAC" },
+	{ "OUT2N", NULL, "DAC" },
+};
 
-अटल पूर्णांक bd28623_घातer_on(काष्ठा bd28623_priv *bd)
-अणु
-	पूर्णांक ret;
+static int bd28623_power_on(struct bd28623_priv *bd)
+{
+	int ret;
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(bd->supplies), bd->supplies);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(bd->dev, "Failed to enable supplies: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	gpiod_set_value_cansleep(bd->reset_gpio, 0);
 	usleep_range(300000, 400000);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम bd28623_घातer_off(काष्ठा bd28623_priv *bd)
-अणु
+static void bd28623_power_off(struct bd28623_priv *bd)
+{
 	gpiod_set_value_cansleep(bd->reset_gpio, 1);
 
 	regulator_bulk_disable(ARRAY_SIZE(bd->supplies), bd->supplies);
-पूर्ण
+}
 
-अटल पूर्णांक bd28623_get_चयन_spk(काष्ठा snd_kcontrol *kcontrol,
-				  काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component =
+static int bd28623_get_switch_spk(struct snd_kcontrol *kcontrol,
+				  struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
 		snd_soc_kcontrol_component(kcontrol);
-	काष्ठा bd28623_priv *bd = snd_soc_component_get_drvdata(component);
+	struct bd28623_priv *bd = snd_soc_component_get_drvdata(component);
 
-	ucontrol->value.पूर्णांकeger.value[0] = bd->चयन_spk;
+	ucontrol->value.integer.value[0] = bd->switch_spk;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bd28623_set_चयन_spk(काष्ठा snd_kcontrol *kcontrol,
-				  काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component =
+static int bd28623_set_switch_spk(struct snd_kcontrol *kcontrol,
+				  struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
 		snd_soc_kcontrol_component(kcontrol);
-	काष्ठा bd28623_priv *bd = snd_soc_component_get_drvdata(component);
+	struct bd28623_priv *bd = snd_soc_component_get_drvdata(component);
 
-	अगर (bd->चयन_spk == ucontrol->value.पूर्णांकeger.value[0])
-		वापस 0;
+	if (bd->switch_spk == ucontrol->value.integer.value[0])
+		return 0;
 
-	bd->चयन_spk = ucontrol->value.पूर्णांकeger.value[0];
+	bd->switch_spk = ucontrol->value.integer.value[0];
 
-	gpiod_set_value_cansleep(bd->mute_gpio, bd->चयन_spk ? 0 : 1);
+	gpiod_set_value_cansleep(bd->mute_gpio, bd->switch_spk ? 0 : 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new bd28623_controls[] = अणु
+static const struct snd_kcontrol_new bd28623_controls[] = {
 	SOC_SINGLE_BOOL_EXT("Speaker Switch", 0,
-			    bd28623_get_चयन_spk, bd28623_set_चयन_spk),
-पूर्ण;
+			    bd28623_get_switch_spk, bd28623_set_switch_spk),
+};
 
-अटल पूर्णांक bd28623_codec_probe(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा bd28623_priv *bd = snd_soc_component_get_drvdata(component);
-	पूर्णांक ret;
+static int bd28623_codec_probe(struct snd_soc_component *component)
+{
+	struct bd28623_priv *bd = snd_soc_component_get_drvdata(component);
+	int ret;
 
-	bd->चयन_spk = 1;
+	bd->switch_spk = 1;
 
-	ret = bd28623_घातer_on(bd);
-	अगर (ret)
-		वापस ret;
+	ret = bd28623_power_on(bd);
+	if (ret)
+		return ret;
 
-	gpiod_set_value_cansleep(bd->mute_gpio, bd->चयन_spk ? 0 : 1);
+	gpiod_set_value_cansleep(bd->mute_gpio, bd->switch_spk ? 0 : 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम bd28623_codec_हटाओ(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा bd28623_priv *bd = snd_soc_component_get_drvdata(component);
+static void bd28623_codec_remove(struct snd_soc_component *component)
+{
+	struct bd28623_priv *bd = snd_soc_component_get_drvdata(component);
 
-	bd28623_घातer_off(bd);
-पूर्ण
+	bd28623_power_off(bd);
+}
 
-अटल पूर्णांक bd28623_codec_suspend(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा bd28623_priv *bd = snd_soc_component_get_drvdata(component);
+static int bd28623_codec_suspend(struct snd_soc_component *component)
+{
+	struct bd28623_priv *bd = snd_soc_component_get_drvdata(component);
 
-	bd28623_घातer_off(bd);
+	bd28623_power_off(bd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bd28623_codec_resume(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा bd28623_priv *bd = snd_soc_component_get_drvdata(component);
-	पूर्णांक ret;
+static int bd28623_codec_resume(struct snd_soc_component *component)
+{
+	struct bd28623_priv *bd = snd_soc_component_get_drvdata(component);
+	int ret;
 
-	ret = bd28623_घातer_on(bd);
-	अगर (ret)
-		वापस ret;
+	ret = bd28623_power_on(bd);
+	if (ret)
+		return ret;
 
-	gpiod_set_value_cansleep(bd->mute_gpio, bd->चयन_spk ? 0 : 1);
+	gpiod_set_value_cansleep(bd->mute_gpio, bd->switch_spk ? 0 : 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_component_driver soc_codec_bd = अणु
+static const struct snd_soc_component_driver soc_codec_bd = {
 	.probe			= bd28623_codec_probe,
-	.हटाओ			= bd28623_codec_हटाओ,
+	.remove			= bd28623_codec_remove,
 	.suspend		= bd28623_codec_suspend,
 	.resume			= bd28623_codec_resume,
-	.dapm_widमाला_लो		= bd28623_widमाला_लो,
-	.num_dapm_widमाला_लो	= ARRAY_SIZE(bd28623_widमाला_लो),
+	.dapm_widgets		= bd28623_widgets,
+	.num_dapm_widgets	= ARRAY_SIZE(bd28623_widgets),
 	.dapm_routes		= bd28623_routes,
 	.num_dapm_routes	= ARRAY_SIZE(bd28623_routes),
 	.controls		= bd28623_controls,
 	.num_controls		= ARRAY_SIZE(bd28623_controls),
 	.idle_bias_on		= 1,
-	.use_pmकरोwn_समय	= 1,
+	.use_pmdown_time	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-पूर्ण;
+};
 
-अटल काष्ठा snd_soc_dai_driver soc_dai_bd = अणु
+static struct snd_soc_dai_driver soc_dai_bd = {
 	.name     = "bd28623-speaker",
-	.playback = अणु
+	.playback = {
 		.stream_name  = "Playback",
-		.क्रमmats      = SNDRV_PCM_FMTBIT_S32_LE |
+		.formats      = SNDRV_PCM_FMTBIT_S32_LE |
 				SNDRV_PCM_FMTBIT_S24_LE |
 				SNDRV_PCM_FMTBIT_S16_LE,
 		.rates        = SNDRV_PCM_RATE_48000 |
@@ -177,66 +176,66 @@
 				SNDRV_PCM_RATE_32000,
 		.channels_min = 2,
 		.channels_max = 2,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक bd28623_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा bd28623_priv *bd;
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक i, ret;
+static int bd28623_probe(struct platform_device *pdev)
+{
+	struct bd28623_priv *bd;
+	struct device *dev = &pdev->dev;
+	int i, ret;
 
-	bd = devm_kzalloc(&pdev->dev, माप(काष्ठा bd28623_priv), GFP_KERNEL);
-	अगर (!bd)
-		वापस -ENOMEM;
+	bd = devm_kzalloc(&pdev->dev, sizeof(struct bd28623_priv), GFP_KERNEL);
+	if (!bd)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < ARRAY_SIZE(bd->supplies); i++)
+	for (i = 0; i < ARRAY_SIZE(bd->supplies); i++)
 		bd->supplies[i].supply = bd28623_supply_names[i];
 
 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(bd->supplies),
 				      bd->supplies);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to get supplies: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	bd->reset_gpio = devm_gpiod_get_optional(dev, "reset",
 						 GPIOD_OUT_HIGH);
-	अगर (IS_ERR(bd->reset_gpio)) अणु
+	if (IS_ERR(bd->reset_gpio)) {
 		dev_err(dev, "Failed to request reset_gpio: %ld\n",
 			PTR_ERR(bd->reset_gpio));
-		वापस PTR_ERR(bd->reset_gpio);
-	पूर्ण
+		return PTR_ERR(bd->reset_gpio);
+	}
 
 	bd->mute_gpio = devm_gpiod_get_optional(dev, "mute",
 						GPIOD_OUT_HIGH);
-	अगर (IS_ERR(bd->mute_gpio)) अणु
+	if (IS_ERR(bd->mute_gpio)) {
 		dev_err(dev, "Failed to request mute_gpio: %ld\n",
 			PTR_ERR(bd->mute_gpio));
-		वापस PTR_ERR(bd->mute_gpio);
-	पूर्ण
+		return PTR_ERR(bd->mute_gpio);
+	}
 
-	platक्रमm_set_drvdata(pdev, bd);
+	platform_set_drvdata(pdev, bd);
 	bd->dev = dev;
 
-	वापस devm_snd_soc_रेजिस्टर_component(dev, &soc_codec_bd,
+	return devm_snd_soc_register_component(dev, &soc_codec_bd,
 					       &soc_dai_bd, 1);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा of_device_id bd28623_of_match[] __maybe_unused = अणु
-	अणु .compatible = "rohm,bd28623", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id bd28623_of_match[] __maybe_unused = {
+	{ .compatible = "rohm,bd28623", },
+	{}
+};
 MODULE_DEVICE_TABLE(of, bd28623_of_match);
 
-अटल काष्ठा platक्रमm_driver bd28623_codec_driver = अणु
-	.driver = अणु
+static struct platform_driver bd28623_codec_driver = {
+	.driver = {
 		.name = "bd28623",
 		.of_match_table = of_match_ptr(bd28623_of_match),
-	पूर्ण,
+	},
 	.probe  = bd28623_probe,
-पूर्ण;
-module_platक्रमm_driver(bd28623_codec_driver);
+};
+module_platform_driver(bd28623_codec_driver);
 
 MODULE_AUTHOR("Katsuhiro Suzuki <suzuki.katsuhiro@socionext.com>");
 MODULE_DESCRIPTION("ROHM BD28623 speaker amplifier driver");

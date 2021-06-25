@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *  jmb38x_ms.c - JMicron jmb38x MemoryStick card पढ़ोer
+ *  jmb38x_ms.c - JMicron jmb38x MemoryStick card reader
  *
  *  Copyright (C) 2008 Alex Dubov <oakad@yahoo.com>
  */
 
-#समावेश <linux/spinlock.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/memstick.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
+#include <linux/spinlock.h>
+#include <linux/interrupt.h>
+#include <linux/pci.h>
+#include <linux/dma-mapping.h>
+#include <linux/delay.h>
+#include <linux/highmem.h>
+#include <linux/memstick.h>
+#include <linux/slab.h>
+#include <linux/module.h>
 
-#घोषणा DRIVER_NAME "jmb38x_ms"
+#define DRIVER_NAME "jmb38x_ms"
 
-अटल bool no_dma;
+static bool no_dma;
 module_param(no_dma, bool, 0644);
 
-क्रमागत अणु
+enum {
 	DMA_ADDRESS       = 0x00,
 	BLOCK             = 0x04,
 	DMA_CONTROL       = 0x08,
@@ -43,281 +42,281 @@ module_param(no_dma, bool, 0644);
 	CLOCK_CONTROL     = 0x48,
 	LED_CONTROL       = 0x4c,
 	VERSION           = 0x50
-पूर्ण;
+};
 
-काष्ठा jmb38x_ms_host अणु
-	काष्ठा jmb38x_ms        *chip;
-	व्योम __iomem            *addr;
+struct jmb38x_ms_host {
+	struct jmb38x_ms        *chip;
+	void __iomem            *addr;
 	spinlock_t              lock;
-	काष्ठा tasklet_काष्ठा   notअगरy;
-	पूर्णांक                     id;
-	अक्षर                    host_id[32];
-	पूर्णांक                     irq;
-	अचिन्हित पूर्णांक            block_pos;
-	अचिन्हित दीर्घ           समयout_jअगरfies;
-	काष्ठा समयr_list       समयr;
-	काष्ठा memstick_host	*msh;
-	काष्ठा memstick_request *req;
-	अचिन्हित अक्षर           cmd_flags;
-	अचिन्हित अक्षर           io_pos;
-	अचिन्हित अक्षर           अगरmode;
-	अचिन्हित पूर्णांक            io_word[2];
-पूर्ण;
+	struct tasklet_struct   notify;
+	int                     id;
+	char                    host_id[32];
+	int                     irq;
+	unsigned int            block_pos;
+	unsigned long           timeout_jiffies;
+	struct timer_list       timer;
+	struct memstick_host	*msh;
+	struct memstick_request *req;
+	unsigned char           cmd_flags;
+	unsigned char           io_pos;
+	unsigned char           ifmode;
+	unsigned int            io_word[2];
+};
 
-काष्ठा jmb38x_ms अणु
-	काष्ठा pci_dev        *pdev;
-	पूर्णांक                   host_cnt;
-	काष्ठा memstick_host  *hosts[];
-पूर्ण;
+struct jmb38x_ms {
+	struct pci_dev        *pdev;
+	int                   host_cnt;
+	struct memstick_host  *hosts[];
+};
 
-#घोषणा BLOCK_COUNT_MASK       0xffff0000
-#घोषणा BLOCK_SIZE_MASK        0x00000fff
+#define BLOCK_COUNT_MASK       0xffff0000
+#define BLOCK_SIZE_MASK        0x00000fff
 
-#घोषणा DMA_CONTROL_ENABLE     0x00000001
+#define DMA_CONTROL_ENABLE     0x00000001
 
-#घोषणा TPC_DATA_SEL           0x00008000
-#घोषणा TPC_सूची                0x00004000
-#घोषणा TPC_WAIT_INT           0x00002000
-#घोषणा TPC_GET_INT            0x00000800
-#घोषणा TPC_CODE_SZ_MASK       0x00000700
-#घोषणा TPC_DATA_SZ_MASK       0x00000007
+#define TPC_DATA_SEL           0x00008000
+#define TPC_DIR                0x00004000
+#define TPC_WAIT_INT           0x00002000
+#define TPC_GET_INT            0x00000800
+#define TPC_CODE_SZ_MASK       0x00000700
+#define TPC_DATA_SZ_MASK       0x00000007
 
-#घोषणा HOST_CONTROL_TDELAY_EN 0x00040000
-#घोषणा HOST_CONTROL_HW_OC_P   0x00010000
-#घोषणा HOST_CONTROL_RESET_REQ 0x00008000
-#घोषणा HOST_CONTROL_REI       0x00004000
-#घोषणा HOST_CONTROL_LED       0x00000400
-#घोषणा HOST_CONTROL_FAST_CLK  0x00000200
-#घोषणा HOST_CONTROL_RESET     0x00000100
-#घोषणा HOST_CONTROL_POWER_EN  0x00000080
-#घोषणा HOST_CONTROL_CLOCK_EN  0x00000040
-#घोषणा HOST_CONTROL_REO       0x00000008
-#घोषणा HOST_CONTROL_IF_SHIFT  4
+#define HOST_CONTROL_TDELAY_EN 0x00040000
+#define HOST_CONTROL_HW_OC_P   0x00010000
+#define HOST_CONTROL_RESET_REQ 0x00008000
+#define HOST_CONTROL_REI       0x00004000
+#define HOST_CONTROL_LED       0x00000400
+#define HOST_CONTROL_FAST_CLK  0x00000200
+#define HOST_CONTROL_RESET     0x00000100
+#define HOST_CONTROL_POWER_EN  0x00000080
+#define HOST_CONTROL_CLOCK_EN  0x00000040
+#define HOST_CONTROL_REO       0x00000008
+#define HOST_CONTROL_IF_SHIFT  4
 
-#घोषणा HOST_CONTROL_IF_SERIAL 0x0
-#घोषणा HOST_CONTROL_IF_PAR4   0x1
-#घोषणा HOST_CONTROL_IF_PAR8   0x3
+#define HOST_CONTROL_IF_SERIAL 0x0
+#define HOST_CONTROL_IF_PAR4   0x1
+#define HOST_CONTROL_IF_PAR8   0x3
 
-#घोषणा STATUS_BUSY             0x00080000
-#घोषणा STATUS_MS_DAT7          0x00040000
-#घोषणा STATUS_MS_DAT6          0x00020000
-#घोषणा STATUS_MS_DAT5          0x00010000
-#घोषणा STATUS_MS_DAT4          0x00008000
-#घोषणा STATUS_MS_DAT3          0x00004000
-#घोषणा STATUS_MS_DAT2          0x00002000
-#घोषणा STATUS_MS_DAT1          0x00001000
-#घोषणा STATUS_MS_DAT0          0x00000800
-#घोषणा STATUS_HAS_MEDIA        0x00000400
-#घोषणा STATUS_FIFO_EMPTY       0x00000200
-#घोषणा STATUS_FIFO_FULL        0x00000100
-#घोषणा STATUS_MS_CED           0x00000080
-#घोषणा STATUS_MS_ERR           0x00000040
-#घोषणा STATUS_MS_BRQ           0x00000020
-#घोषणा STATUS_MS_CNK           0x00000001
+#define STATUS_BUSY             0x00080000
+#define STATUS_MS_DAT7          0x00040000
+#define STATUS_MS_DAT6          0x00020000
+#define STATUS_MS_DAT5          0x00010000
+#define STATUS_MS_DAT4          0x00008000
+#define STATUS_MS_DAT3          0x00004000
+#define STATUS_MS_DAT2          0x00002000
+#define STATUS_MS_DAT1          0x00001000
+#define STATUS_MS_DAT0          0x00000800
+#define STATUS_HAS_MEDIA        0x00000400
+#define STATUS_FIFO_EMPTY       0x00000200
+#define STATUS_FIFO_FULL        0x00000100
+#define STATUS_MS_CED           0x00000080
+#define STATUS_MS_ERR           0x00000040
+#define STATUS_MS_BRQ           0x00000020
+#define STATUS_MS_CNK           0x00000001
 
-#घोषणा INT_STATUS_TPC_ERR      0x00080000
-#घोषणा INT_STATUS_CRC_ERR      0x00040000
-#घोषणा INT_STATUS_TIMER_TO     0x00020000
-#घोषणा INT_STATUS_HSK_TO       0x00010000
-#घोषणा INT_STATUS_ANY_ERR      0x00008000
-#घोषणा INT_STATUS_FIFO_WRDY    0x00000080
-#घोषणा INT_STATUS_FIFO_RRDY    0x00000040
-#घोषणा INT_STATUS_MEDIA_OUT    0x00000010
-#घोषणा INT_STATUS_MEDIA_IN     0x00000008
-#घोषणा INT_STATUS_DMA_BOUNDARY 0x00000004
-#घोषणा INT_STATUS_EOTRAN       0x00000002
-#घोषणा INT_STATUS_EOTPC        0x00000001
+#define INT_STATUS_TPC_ERR      0x00080000
+#define INT_STATUS_CRC_ERR      0x00040000
+#define INT_STATUS_TIMER_TO     0x00020000
+#define INT_STATUS_HSK_TO       0x00010000
+#define INT_STATUS_ANY_ERR      0x00008000
+#define INT_STATUS_FIFO_WRDY    0x00000080
+#define INT_STATUS_FIFO_RRDY    0x00000040
+#define INT_STATUS_MEDIA_OUT    0x00000010
+#define INT_STATUS_MEDIA_IN     0x00000008
+#define INT_STATUS_DMA_BOUNDARY 0x00000004
+#define INT_STATUS_EOTRAN       0x00000002
+#define INT_STATUS_EOTPC        0x00000001
 
-#घोषणा INT_STATUS_ALL          0x000f801f
+#define INT_STATUS_ALL          0x000f801f
 
-#घोषणा PAD_OUTPUT_ENABLE_MS  0x0F3F
+#define PAD_OUTPUT_ENABLE_MS  0x0F3F
 
-#घोषणा PAD_PU_PD_OFF         0x7FFF0000
-#घोषणा PAD_PU_PD_ON_MS_SOCK0 0x5f8f0000
-#घोषणा PAD_PU_PD_ON_MS_SOCK1 0x0f0f0000
+#define PAD_PU_PD_OFF         0x7FFF0000
+#define PAD_PU_PD_ON_MS_SOCK0 0x5f8f0000
+#define PAD_PU_PD_ON_MS_SOCK1 0x0f0f0000
 
-#घोषणा CLOCK_CONTROL_BY_MMIO 0x00000008
-#घोषणा CLOCK_CONTROL_40MHZ   0x00000001
-#घोषणा CLOCK_CONTROL_50MHZ   0x00000002
-#घोषणा CLOCK_CONTROL_60MHZ   0x00000010
-#घोषणा CLOCK_CONTROL_62_5MHZ 0x00000004
-#घोषणा CLOCK_CONTROL_OFF     0x00000000
+#define CLOCK_CONTROL_BY_MMIO 0x00000008
+#define CLOCK_CONTROL_40MHZ   0x00000001
+#define CLOCK_CONTROL_50MHZ   0x00000002
+#define CLOCK_CONTROL_60MHZ   0x00000010
+#define CLOCK_CONTROL_62_5MHZ 0x00000004
+#define CLOCK_CONTROL_OFF     0x00000000
 
-#घोषणा PCI_CTL_CLOCK_DLY_ADDR   0x000000b0
+#define PCI_CTL_CLOCK_DLY_ADDR   0x000000b0
 
-क्रमागत अणु
+enum {
 	CMD_READY    = 0x01,
 	FIFO_READY   = 0x02,
 	REG_DATA     = 0x04,
 	DMA_DATA     = 0x08
-पूर्ण;
+};
 
-अटल अचिन्हित पूर्णांक jmb38x_ms_पढ़ो_data(काष्ठा jmb38x_ms_host *host,
-					अचिन्हित अक्षर *buf, अचिन्हित पूर्णांक length)
-अणु
-	अचिन्हित पूर्णांक off = 0;
+static unsigned int jmb38x_ms_read_data(struct jmb38x_ms_host *host,
+					unsigned char *buf, unsigned int length)
+{
+	unsigned int off = 0;
 
-	जबतक (host->io_pos && length) अणु
+	while (host->io_pos && length) {
 		buf[off++] = host->io_word[0] & 0xff;
 		host->io_word[0] >>= 8;
 		length--;
 		host->io_pos--;
-	पूर्ण
+	}
 
-	अगर (!length)
-		वापस off;
+	if (!length)
+		return off;
 
-	जबतक (!(STATUS_FIFO_EMPTY & पढ़ोl(host->addr + STATUS))) अणु
-		अगर (length < 4)
-			अवरोध;
-		*(अचिन्हित पूर्णांक *)(buf + off) = __raw_पढ़ोl(host->addr + DATA);
+	while (!(STATUS_FIFO_EMPTY & readl(host->addr + STATUS))) {
+		if (length < 4)
+			break;
+		*(unsigned int *)(buf + off) = __raw_readl(host->addr + DATA);
 		length -= 4;
 		off += 4;
-	पूर्ण
+	}
 
-	अगर (length
-	    && !(STATUS_FIFO_EMPTY & पढ़ोl(host->addr + STATUS))) अणु
-		host->io_word[0] = पढ़ोl(host->addr + DATA);
-		क्रम (host->io_pos = 4; host->io_pos; --host->io_pos) अणु
+	if (length
+	    && !(STATUS_FIFO_EMPTY & readl(host->addr + STATUS))) {
+		host->io_word[0] = readl(host->addr + DATA);
+		for (host->io_pos = 4; host->io_pos; --host->io_pos) {
 			buf[off++] = host->io_word[0] & 0xff;
 			host->io_word[0] >>= 8;
 			length--;
-			अगर (!length)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (!length)
+				break;
+		}
+	}
 
-	वापस off;
-पूर्ण
+	return off;
+}
 
-अटल अचिन्हित पूर्णांक jmb38x_ms_पढ़ो_reg_data(काष्ठा jmb38x_ms_host *host,
-					    अचिन्हित अक्षर *buf,
-					    अचिन्हित पूर्णांक length)
-अणु
-	अचिन्हित पूर्णांक off = 0;
+static unsigned int jmb38x_ms_read_reg_data(struct jmb38x_ms_host *host,
+					    unsigned char *buf,
+					    unsigned int length)
+{
+	unsigned int off = 0;
 
-	जबतक (host->io_pos > 4 && length) अणु
+	while (host->io_pos > 4 && length) {
 		buf[off++] = host->io_word[0] & 0xff;
 		host->io_word[0] >>= 8;
 		length--;
 		host->io_pos--;
-	पूर्ण
+	}
 
-	अगर (!length)
-		वापस off;
+	if (!length)
+		return off;
 
-	जबतक (host->io_pos && length) अणु
+	while (host->io_pos && length) {
 		buf[off++] = host->io_word[1] & 0xff;
 		host->io_word[1] >>= 8;
 		length--;
 		host->io_pos--;
-	पूर्ण
+	}
 
-	वापस off;
-पूर्ण
+	return off;
+}
 
-अटल अचिन्हित पूर्णांक jmb38x_ms_ग_लिखो_data(काष्ठा jmb38x_ms_host *host,
-					 अचिन्हित अक्षर *buf,
-					 अचिन्हित पूर्णांक length)
-अणु
-	अचिन्हित पूर्णांक off = 0;
+static unsigned int jmb38x_ms_write_data(struct jmb38x_ms_host *host,
+					 unsigned char *buf,
+					 unsigned int length)
+{
+	unsigned int off = 0;
 
-	अगर (host->io_pos) अणु
-		जबतक (host->io_pos < 4 && length) अणु
+	if (host->io_pos) {
+		while (host->io_pos < 4 && length) {
 			host->io_word[0] |=  buf[off++] << (host->io_pos * 8);
 			host->io_pos++;
 			length--;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (host->io_pos == 4
-	    && !(STATUS_FIFO_FULL & पढ़ोl(host->addr + STATUS))) अणु
-		ग_लिखोl(host->io_word[0], host->addr + DATA);
+	if (host->io_pos == 4
+	    && !(STATUS_FIFO_FULL & readl(host->addr + STATUS))) {
+		writel(host->io_word[0], host->addr + DATA);
 		host->io_pos = 0;
 		host->io_word[0] = 0;
-	पूर्ण अन्यथा अगर (host->io_pos) अणु
-		वापस off;
-	पूर्ण
+	} else if (host->io_pos) {
+		return off;
+	}
 
-	अगर (!length)
-		वापस off;
+	if (!length)
+		return off;
 
-	जबतक (!(STATUS_FIFO_FULL & पढ़ोl(host->addr + STATUS))) अणु
-		अगर (length < 4)
-			अवरोध;
+	while (!(STATUS_FIFO_FULL & readl(host->addr + STATUS))) {
+		if (length < 4)
+			break;
 
-		__raw_ग_लिखोl(*(अचिन्हित पूर्णांक *)(buf + off),
+		__raw_writel(*(unsigned int *)(buf + off),
 			     host->addr + DATA);
 		length -= 4;
 		off += 4;
-	पूर्ण
+	}
 
-	चयन (length) अणु
-	हाल 3:
+	switch (length) {
+	case 3:
 		host->io_word[0] |= buf[off + 2] << 16;
 		host->io_pos++;
 		fallthrough;
-	हाल 2:
+	case 2:
 		host->io_word[0] |= buf[off + 1] << 8;
 		host->io_pos++;
 		fallthrough;
-	हाल 1:
+	case 1:
 		host->io_word[0] |= buf[off];
 		host->io_pos++;
-	पूर्ण
+	}
 
 	off += host->io_pos;
 
-	वापस off;
-पूर्ण
+	return off;
+}
 
-अटल अचिन्हित पूर्णांक jmb38x_ms_ग_लिखो_reg_data(काष्ठा jmb38x_ms_host *host,
-					     अचिन्हित अक्षर *buf,
-					     अचिन्हित पूर्णांक length)
-अणु
-	अचिन्हित पूर्णांक off = 0;
+static unsigned int jmb38x_ms_write_reg_data(struct jmb38x_ms_host *host,
+					     unsigned char *buf,
+					     unsigned int length)
+{
+	unsigned int off = 0;
 
-	जबतक (host->io_pos < 4 && length) अणु
+	while (host->io_pos < 4 && length) {
 		host->io_word[0] &= ~(0xff << (host->io_pos * 8));
 		host->io_word[0] |=  buf[off++] << (host->io_pos * 8);
 		host->io_pos++;
 		length--;
-	पूर्ण
+	}
 
-	अगर (!length)
-		वापस off;
+	if (!length)
+		return off;
 
-	जबतक (host->io_pos < 8 && length) अणु
+	while (host->io_pos < 8 && length) {
 		host->io_word[1] &= ~(0xff << (host->io_pos * 8));
 		host->io_word[1] |=  buf[off++] << (host->io_pos * 8);
 		host->io_pos++;
 		length--;
-	पूर्ण
+	}
 
-	वापस off;
-पूर्ण
+	return off;
+}
 
-अटल पूर्णांक jmb38x_ms_transfer_data(काष्ठा jmb38x_ms_host *host)
-अणु
-	अचिन्हित पूर्णांक length;
-	अचिन्हित पूर्णांक off;
-	अचिन्हित पूर्णांक t_size, p_cnt;
-	अचिन्हित अक्षर *buf;
-	काष्ठा page *pg;
-	अचिन्हित दीर्घ flags = 0;
+static int jmb38x_ms_transfer_data(struct jmb38x_ms_host *host)
+{
+	unsigned int length;
+	unsigned int off;
+	unsigned int t_size, p_cnt;
+	unsigned char *buf;
+	struct page *pg;
+	unsigned long flags = 0;
 
-	अगर (host->req->दीर्घ_data) अणु
+	if (host->req->long_data) {
 		length = host->req->sg.length - host->block_pos;
 		off = host->req->sg.offset + host->block_pos;
-	पूर्ण अन्यथा अणु
+	} else {
 		length = host->req->data_len - host->block_pos;
 		off = 0;
-	पूर्ण
+	}
 
-	जबतक (length) अणु
-		अचिन्हित पूर्णांक p_off;
+	while (length) {
+		unsigned int p_off;
 
-		अगर (host->req->दीर्घ_data) अणु
+		if (host->req->long_data) {
 			pg = nth_page(sg_page(&host->req->sg),
 				      off >> PAGE_SHIFT);
 			p_off = offset_in_page(off);
@@ -326,58 +325,58 @@ module_param(no_dma, bool, 0644);
 
 			local_irq_save(flags);
 			buf = kmap_atomic(pg) + p_off;
-		पूर्ण अन्यथा अणु
+		} else {
 			buf = host->req->data + host->block_pos;
 			p_cnt = host->req->data_len - host->block_pos;
-		पूर्ण
+		}
 
-		अगर (host->req->data_dir == WRITE)
+		if (host->req->data_dir == WRITE)
 			t_size = !(host->cmd_flags & REG_DATA)
-				 ? jmb38x_ms_ग_लिखो_data(host, buf, p_cnt)
-				 : jmb38x_ms_ग_लिखो_reg_data(host, buf, p_cnt);
-		अन्यथा
+				 ? jmb38x_ms_write_data(host, buf, p_cnt)
+				 : jmb38x_ms_write_reg_data(host, buf, p_cnt);
+		else
 			t_size = !(host->cmd_flags & REG_DATA)
-				 ? jmb38x_ms_पढ़ो_data(host, buf, p_cnt)
-				 : jmb38x_ms_पढ़ो_reg_data(host, buf, p_cnt);
+				 ? jmb38x_ms_read_data(host, buf, p_cnt)
+				 : jmb38x_ms_read_reg_data(host, buf, p_cnt);
 
-		अगर (host->req->दीर्घ_data) अणु
+		if (host->req->long_data) {
 			kunmap_atomic(buf - p_off);
 			local_irq_restore(flags);
-		पूर्ण
+		}
 
-		अगर (!t_size)
-			अवरोध;
+		if (!t_size)
+			break;
 		host->block_pos += t_size;
 		length -= t_size;
 		off += t_size;
-	पूर्ण
+	}
 
-	अगर (!length && host->req->data_dir == WRITE) अणु
-		अगर (host->cmd_flags & REG_DATA) अणु
-			ग_लिखोl(host->io_word[0], host->addr + TPC_P0);
-			ग_लिखोl(host->io_word[1], host->addr + TPC_P1);
-		पूर्ण अन्यथा अगर (host->io_pos) अणु
-			ग_लिखोl(host->io_word[0], host->addr + DATA);
-		पूर्ण
-	पूर्ण
+	if (!length && host->req->data_dir == WRITE) {
+		if (host->cmd_flags & REG_DATA) {
+			writel(host->io_word[0], host->addr + TPC_P0);
+			writel(host->io_word[1], host->addr + TPC_P1);
+		} else if (host->io_pos) {
+			writel(host->io_word[0], host->addr + DATA);
+		}
+	}
 
-	वापस length;
-पूर्ण
+	return length;
+}
 
-अटल पूर्णांक jmb38x_ms_issue_cmd(काष्ठा memstick_host *msh)
-अणु
-	काष्ठा jmb38x_ms_host *host = memstick_priv(msh);
-	अचिन्हित पूर्णांक data_len, cmd, t_val;
+static int jmb38x_ms_issue_cmd(struct memstick_host *msh)
+{
+	struct jmb38x_ms_host *host = memstick_priv(msh);
+	unsigned int data_len, cmd, t_val;
 
-	अगर (!(STATUS_HAS_MEDIA & पढ़ोl(host->addr + STATUS))) अणु
+	if (!(STATUS_HAS_MEDIA & readl(host->addr + STATUS))) {
 		dev_dbg(&msh->dev, "no media status\n");
 		host->req->error = -ETIME;
-		वापस host->req->error;
-	पूर्ण
+		return host->req->error;
+	}
 
-	dev_dbg(&msh->dev, "control %08x\n", पढ़ोl(host->addr + HOST_CONTROL));
-	dev_dbg(&msh->dev, "status %08x\n", पढ़ोl(host->addr + INT_STATUS));
-	dev_dbg(&msh->dev, "hstatus %08x\n", पढ़ोl(host->addr + STATUS));
+	dev_dbg(&msh->dev, "control %08x\n", readl(host->addr + HOST_CONTROL));
+	dev_dbg(&msh->dev, "status %08x\n", readl(host->addr + INT_STATUS));
+	dev_dbg(&msh->dev, "hstatus %08x\n", readl(host->addr + STATUS));
 
 	host->cmd_flags = 0;
 	host->block_pos = 0;
@@ -388,330 +387,330 @@ module_param(no_dma, bool, 0644);
 	cmd = host->req->tpc << 16;
 	cmd |= TPC_DATA_SEL;
 
-	अगर (host->req->data_dir == READ)
-		cmd |= TPC_सूची;
+	if (host->req->data_dir == READ)
+		cmd |= TPC_DIR;
 
-	अगर (host->req->need_card_पूर्णांक) अणु
-		अगर (host->अगरmode == MEMSTICK_SERIAL)
+	if (host->req->need_card_int) {
+		if (host->ifmode == MEMSTICK_SERIAL)
 			cmd |= TPC_GET_INT;
-		अन्यथा
+		else
 			cmd |= TPC_WAIT_INT;
-	पूर्ण
+	}
 
-	अगर (!no_dma)
+	if (!no_dma)
 		host->cmd_flags |= DMA_DATA;
 
-	अगर (host->req->दीर्घ_data) अणु
+	if (host->req->long_data) {
 		data_len = host->req->sg.length;
-	पूर्ण अन्यथा अणु
+	} else {
 		data_len = host->req->data_len;
 		host->cmd_flags &= ~DMA_DATA;
-	पूर्ण
+	}
 
-	अगर (data_len <= 8) अणु
+	if (data_len <= 8) {
 		cmd &= ~(TPC_DATA_SEL | 0xf);
 		host->cmd_flags |= REG_DATA;
 		cmd |= data_len & 0xf;
 		host->cmd_flags &= ~DMA_DATA;
-	पूर्ण
+	}
 
-	अगर (host->cmd_flags & DMA_DATA) अणु
-		अगर (1 != dma_map_sg(&host->chip->pdev->dev, &host->req->sg, 1,
+	if (host->cmd_flags & DMA_DATA) {
+		if (1 != dma_map_sg(&host->chip->pdev->dev, &host->req->sg, 1,
 				    host->req->data_dir == READ
 				    ? DMA_FROM_DEVICE
-				    : DMA_TO_DEVICE)) अणु
+				    : DMA_TO_DEVICE)) {
 			host->req->error = -ENOMEM;
-			वापस host->req->error;
-		पूर्ण
+			return host->req->error;
+		}
 		data_len = sg_dma_len(&host->req->sg);
-		ग_लिखोl(sg_dma_address(&host->req->sg),
+		writel(sg_dma_address(&host->req->sg),
 		       host->addr + DMA_ADDRESS);
-		ग_लिखोl(((1 << 16) & BLOCK_COUNT_MASK)
+		writel(((1 << 16) & BLOCK_COUNT_MASK)
 		       | (data_len & BLOCK_SIZE_MASK),
 		       host->addr + BLOCK);
-		ग_लिखोl(DMA_CONTROL_ENABLE, host->addr + DMA_CONTROL);
-	पूर्ण अन्यथा अगर (!(host->cmd_flags & REG_DATA)) अणु
-		ग_लिखोl(((1 << 16) & BLOCK_COUNT_MASK)
+		writel(DMA_CONTROL_ENABLE, host->addr + DMA_CONTROL);
+	} else if (!(host->cmd_flags & REG_DATA)) {
+		writel(((1 << 16) & BLOCK_COUNT_MASK)
 		       | (data_len & BLOCK_SIZE_MASK),
 		       host->addr + BLOCK);
-		t_val = पढ़ोl(host->addr + INT_STATUS_ENABLE);
+		t_val = readl(host->addr + INT_STATUS_ENABLE);
 		t_val |= host->req->data_dir == READ
 			 ? INT_STATUS_FIFO_RRDY
 			 : INT_STATUS_FIFO_WRDY;
 
-		ग_लिखोl(t_val, host->addr + INT_STATUS_ENABLE);
-		ग_लिखोl(t_val, host->addr + INT_SIGNAL_ENABLE);
-	पूर्ण अन्यथा अणु
+		writel(t_val, host->addr + INT_STATUS_ENABLE);
+		writel(t_val, host->addr + INT_SIGNAL_ENABLE);
+	} else {
 		cmd &= ~(TPC_DATA_SEL | 0xf);
 		host->cmd_flags |= REG_DATA;
 		cmd |= data_len & 0xf;
 
-		अगर (host->req->data_dir == WRITE) अणु
+		if (host->req->data_dir == WRITE) {
 			jmb38x_ms_transfer_data(host);
-			ग_लिखोl(host->io_word[0], host->addr + TPC_P0);
-			ग_लिखोl(host->io_word[1], host->addr + TPC_P1);
-		पूर्ण
-	पूर्ण
+			writel(host->io_word[0], host->addr + TPC_P0);
+			writel(host->io_word[1], host->addr + TPC_P1);
+		}
+	}
 
-	mod_समयr(&host->समयr, jअगरfies + host->समयout_jअगरfies);
-	ग_लिखोl(HOST_CONTROL_LED | पढ़ोl(host->addr + HOST_CONTROL),
+	mod_timer(&host->timer, jiffies + host->timeout_jiffies);
+	writel(HOST_CONTROL_LED | readl(host->addr + HOST_CONTROL),
 	       host->addr + HOST_CONTROL);
 	host->req->error = 0;
 
-	ग_लिखोl(cmd, host->addr + TPC);
+	writel(cmd, host->addr + TPC);
 	dev_dbg(&msh->dev, "executing TPC %08x, len %x\n", cmd, data_len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम jmb38x_ms_complete_cmd(काष्ठा memstick_host *msh, पूर्णांक last)
-अणु
-	काष्ठा jmb38x_ms_host *host = memstick_priv(msh);
-	अचिन्हित पूर्णांक t_val = 0;
-	पूर्णांक rc;
+static void jmb38x_ms_complete_cmd(struct memstick_host *msh, int last)
+{
+	struct jmb38x_ms_host *host = memstick_priv(msh);
+	unsigned int t_val = 0;
+	int rc;
 
-	del_समयr(&host->समयr);
+	del_timer(&host->timer);
 
 	dev_dbg(&msh->dev, "c control %08x\n",
-		पढ़ोl(host->addr + HOST_CONTROL));
+		readl(host->addr + HOST_CONTROL));
 	dev_dbg(&msh->dev, "c status %08x\n",
-		पढ़ोl(host->addr + INT_STATUS));
-	dev_dbg(&msh->dev, "c hstatus %08x\n", पढ़ोl(host->addr + STATUS));
+		readl(host->addr + INT_STATUS));
+	dev_dbg(&msh->dev, "c hstatus %08x\n", readl(host->addr + STATUS));
 
-	host->req->पूर्णांक_reg = पढ़ोl(host->addr + STATUS) & 0xff;
+	host->req->int_reg = readl(host->addr + STATUS) & 0xff;
 
-	ग_लिखोl(0, host->addr + BLOCK);
-	ग_लिखोl(0, host->addr + DMA_CONTROL);
+	writel(0, host->addr + BLOCK);
+	writel(0, host->addr + DMA_CONTROL);
 
-	अगर (host->cmd_flags & DMA_DATA) अणु
+	if (host->cmd_flags & DMA_DATA) {
 		dma_unmap_sg(&host->chip->pdev->dev, &host->req->sg, 1,
 			     host->req->data_dir == READ
 			     ? DMA_FROM_DEVICE : DMA_TO_DEVICE);
-	पूर्ण अन्यथा अणु
-		t_val = पढ़ोl(host->addr + INT_STATUS_ENABLE);
-		अगर (host->req->data_dir == READ)
+	} else {
+		t_val = readl(host->addr + INT_STATUS_ENABLE);
+		if (host->req->data_dir == READ)
 			t_val &= ~INT_STATUS_FIFO_RRDY;
-		अन्यथा
+		else
 			t_val &= ~INT_STATUS_FIFO_WRDY;
 
-		ग_लिखोl(t_val, host->addr + INT_STATUS_ENABLE);
-		ग_लिखोl(t_val, host->addr + INT_SIGNAL_ENABLE);
-	पूर्ण
+		writel(t_val, host->addr + INT_STATUS_ENABLE);
+		writel(t_val, host->addr + INT_SIGNAL_ENABLE);
+	}
 
-	ग_लिखोl((~HOST_CONTROL_LED) & पढ़ोl(host->addr + HOST_CONTROL),
+	writel((~HOST_CONTROL_LED) & readl(host->addr + HOST_CONTROL),
 	       host->addr + HOST_CONTROL);
 
-	अगर (!last) अणु
-		करो अणु
+	if (!last) {
+		do {
 			rc = memstick_next_req(msh, &host->req);
-		पूर्ण जबतक (!rc && jmb38x_ms_issue_cmd(msh));
-	पूर्ण अन्यथा अणु
-		करो अणु
+		} while (!rc && jmb38x_ms_issue_cmd(msh));
+	} else {
+		do {
 			rc = memstick_next_req(msh, &host->req);
-			अगर (!rc)
+			if (!rc)
 				host->req->error = -ETIME;
-		पूर्ण जबतक (!rc);
-	पूर्ण
-पूर्ण
+		} while (!rc);
+	}
+}
 
-अटल irqवापस_t jmb38x_ms_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा memstick_host *msh = dev_id;
-	काष्ठा jmb38x_ms_host *host = memstick_priv(msh);
-	अचिन्हित पूर्णांक irq_status;
+static irqreturn_t jmb38x_ms_isr(int irq, void *dev_id)
+{
+	struct memstick_host *msh = dev_id;
+	struct jmb38x_ms_host *host = memstick_priv(msh);
+	unsigned int irq_status;
 
 	spin_lock(&host->lock);
-	irq_status = पढ़ोl(host->addr + INT_STATUS);
+	irq_status = readl(host->addr + INT_STATUS);
 	dev_dbg(&host->chip->pdev->dev, "irq_status = %08x\n", irq_status);
-	अगर (irq_status == 0 || irq_status == (~0)) अणु
+	if (irq_status == 0 || irq_status == (~0)) {
 		spin_unlock(&host->lock);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	अगर (host->req) अणु
-		अगर (irq_status & INT_STATUS_ANY_ERR) अणु
-			अगर (irq_status & INT_STATUS_CRC_ERR)
+	if (host->req) {
+		if (irq_status & INT_STATUS_ANY_ERR) {
+			if (irq_status & INT_STATUS_CRC_ERR)
 				host->req->error = -EILSEQ;
-			अन्यथा अगर (irq_status & INT_STATUS_TPC_ERR) अणु
+			else if (irq_status & INT_STATUS_TPC_ERR) {
 				dev_dbg(&host->chip->pdev->dev, "TPC_ERR\n");
 				jmb38x_ms_complete_cmd(msh, 0);
-			पूर्ण अन्यथा
+			} else
 				host->req->error = -ETIME;
-		पूर्ण अन्यथा अणु
-			अगर (host->cmd_flags & DMA_DATA) अणु
-				अगर (irq_status & INT_STATUS_EOTRAN)
+		} else {
+			if (host->cmd_flags & DMA_DATA) {
+				if (irq_status & INT_STATUS_EOTRAN)
 					host->cmd_flags |= FIFO_READY;
-			पूर्ण अन्यथा अणु
-				अगर (irq_status & (INT_STATUS_FIFO_RRDY
+			} else {
+				if (irq_status & (INT_STATUS_FIFO_RRDY
 						  | INT_STATUS_FIFO_WRDY))
 					jmb38x_ms_transfer_data(host);
 
-				अगर (irq_status & INT_STATUS_EOTRAN) अणु
+				if (irq_status & INT_STATUS_EOTRAN) {
 					jmb38x_ms_transfer_data(host);
 					host->cmd_flags |= FIFO_READY;
-				पूर्ण
-			पूर्ण
+				}
+			}
 
-			अगर (irq_status & INT_STATUS_EOTPC) अणु
+			if (irq_status & INT_STATUS_EOTPC) {
 				host->cmd_flags |= CMD_READY;
-				अगर (host->cmd_flags & REG_DATA) अणु
-					अगर (host->req->data_dir == READ) अणु
+				if (host->cmd_flags & REG_DATA) {
+					if (host->req->data_dir == READ) {
 						host->io_word[0]
-							= पढ़ोl(host->addr
+							= readl(host->addr
 								+ TPC_P0);
 						host->io_word[1]
-							= पढ़ोl(host->addr
+							= readl(host->addr
 								+ TPC_P1);
 						host->io_pos = 8;
 
 						jmb38x_ms_transfer_data(host);
-					पूर्ण
+					}
 					host->cmd_flags |= FIFO_READY;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				}
+			}
+		}
+	}
 
-	अगर (irq_status & (INT_STATUS_MEDIA_IN | INT_STATUS_MEDIA_OUT)) अणु
+	if (irq_status & (INT_STATUS_MEDIA_IN | INT_STATUS_MEDIA_OUT)) {
 		dev_dbg(&host->chip->pdev->dev, "media changed\n");
 		memstick_detect_change(msh);
-	पूर्ण
+	}
 
-	ग_लिखोl(irq_status, host->addr + INT_STATUS);
+	writel(irq_status, host->addr + INT_STATUS);
 
-	अगर (host->req
+	if (host->req
 	    && (((host->cmd_flags & CMD_READY)
 		 && (host->cmd_flags & FIFO_READY))
 		|| host->req->error))
 		jmb38x_ms_complete_cmd(msh, 0);
 
 	spin_unlock(&host->lock);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम jmb38x_ms_पात(काष्ठा समयr_list *t)
-अणु
-	काष्ठा jmb38x_ms_host *host = from_समयr(host, t, समयr);
-	काष्ठा memstick_host *msh = host->msh;
-	अचिन्हित दीर्घ flags;
+static void jmb38x_ms_abort(struct timer_list *t)
+{
+	struct jmb38x_ms_host *host = from_timer(host, t, timer);
+	struct memstick_host *msh = host->msh;
+	unsigned long flags;
 
 	dev_dbg(&host->chip->pdev->dev, "abort\n");
 	spin_lock_irqsave(&host->lock, flags);
-	अगर (host->req) अणु
+	if (host->req) {
 		host->req->error = -ETIME;
 		jmb38x_ms_complete_cmd(msh, 0);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&host->lock, flags);
-पूर्ण
+}
 
-अटल व्योम jmb38x_ms_req_tasklet(अचिन्हित दीर्घ data)
-अणु
-	काष्ठा memstick_host *msh = (काष्ठा memstick_host *)data;
-	काष्ठा jmb38x_ms_host *host = memstick_priv(msh);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc;
+static void jmb38x_ms_req_tasklet(unsigned long data)
+{
+	struct memstick_host *msh = (struct memstick_host *)data;
+	struct jmb38x_ms_host *host = memstick_priv(msh);
+	unsigned long flags;
+	int rc;
 
 	spin_lock_irqsave(&host->lock, flags);
-	अगर (!host->req) अणु
-		करो अणु
+	if (!host->req) {
+		do {
 			rc = memstick_next_req(msh, &host->req);
 			dev_dbg(&host->chip->pdev->dev, "tasklet req %d\n", rc);
-		पूर्ण जबतक (!rc && jmb38x_ms_issue_cmd(msh));
-	पूर्ण
+		} while (!rc && jmb38x_ms_issue_cmd(msh));
+	}
 	spin_unlock_irqrestore(&host->lock, flags);
-पूर्ण
+}
 
-अटल व्योम jmb38x_ms_dummy_submit(काष्ठा memstick_host *msh)
-अणु
-	वापस;
-पूर्ण
+static void jmb38x_ms_dummy_submit(struct memstick_host *msh)
+{
+	return;
+}
 
-अटल व्योम jmb38x_ms_submit_req(काष्ठा memstick_host *msh)
-अणु
-	काष्ठा jmb38x_ms_host *host = memstick_priv(msh);
+static void jmb38x_ms_submit_req(struct memstick_host *msh)
+{
+	struct jmb38x_ms_host *host = memstick_priv(msh);
 
-	tasklet_schedule(&host->notअगरy);
-पूर्ण
+	tasklet_schedule(&host->notify);
+}
 
-अटल पूर्णांक jmb38x_ms_reset(काष्ठा jmb38x_ms_host *host)
-अणु
-	पूर्णांक cnt;
+static int jmb38x_ms_reset(struct jmb38x_ms_host *host)
+{
+	int cnt;
 
-	ग_लिखोl(HOST_CONTROL_RESET_REQ | HOST_CONTROL_CLOCK_EN
-	       | पढ़ोl(host->addr + HOST_CONTROL),
+	writel(HOST_CONTROL_RESET_REQ | HOST_CONTROL_CLOCK_EN
+	       | readl(host->addr + HOST_CONTROL),
 	       host->addr + HOST_CONTROL);
 
-	क्रम (cnt = 0; cnt < 20; ++cnt) अणु
-		अगर (!(HOST_CONTROL_RESET_REQ
-		      & पढ़ोl(host->addr + HOST_CONTROL)))
-			जाओ reset_next;
+	for (cnt = 0; cnt < 20; ++cnt) {
+		if (!(HOST_CONTROL_RESET_REQ
+		      & readl(host->addr + HOST_CONTROL)))
+			goto reset_next;
 
 		ndelay(20);
-	पूर्ण
+	}
 	dev_dbg(&host->chip->pdev->dev, "reset_req timeout\n");
 
 reset_next:
-	ग_लिखोl(HOST_CONTROL_RESET | HOST_CONTROL_CLOCK_EN
-	       | पढ़ोl(host->addr + HOST_CONTROL),
+	writel(HOST_CONTROL_RESET | HOST_CONTROL_CLOCK_EN
+	       | readl(host->addr + HOST_CONTROL),
 	       host->addr + HOST_CONTROL);
 
-	क्रम (cnt = 0; cnt < 20; ++cnt) अणु
-		अगर (!(HOST_CONTROL_RESET
-		      & पढ़ोl(host->addr + HOST_CONTROL)))
-			जाओ reset_ok;
+	for (cnt = 0; cnt < 20; ++cnt) {
+		if (!(HOST_CONTROL_RESET
+		      & readl(host->addr + HOST_CONTROL)))
+			goto reset_ok;
 
 		ndelay(20);
-	पूर्ण
+	}
 	dev_dbg(&host->chip->pdev->dev, "reset timeout\n");
-	वापस -EIO;
+	return -EIO;
 
 reset_ok:
-	ग_लिखोl(INT_STATUS_ALL, host->addr + INT_SIGNAL_ENABLE);
-	ग_लिखोl(INT_STATUS_ALL, host->addr + INT_STATUS_ENABLE);
-	वापस 0;
-पूर्ण
+	writel(INT_STATUS_ALL, host->addr + INT_SIGNAL_ENABLE);
+	writel(INT_STATUS_ALL, host->addr + INT_STATUS_ENABLE);
+	return 0;
+}
 
-अटल पूर्णांक jmb38x_ms_set_param(काष्ठा memstick_host *msh,
-			       क्रमागत memstick_param param,
-			       पूर्णांक value)
-अणु
-	काष्ठा jmb38x_ms_host *host = memstick_priv(msh);
-	अचिन्हित पूर्णांक host_ctl = पढ़ोl(host->addr + HOST_CONTROL);
-	अचिन्हित पूर्णांक घड़ी_ctl = CLOCK_CONTROL_BY_MMIO, घड़ी_delay = 0;
-	पूर्णांक rc = 0;
+static int jmb38x_ms_set_param(struct memstick_host *msh,
+			       enum memstick_param param,
+			       int value)
+{
+	struct jmb38x_ms_host *host = memstick_priv(msh);
+	unsigned int host_ctl = readl(host->addr + HOST_CONTROL);
+	unsigned int clock_ctl = CLOCK_CONTROL_BY_MMIO, clock_delay = 0;
+	int rc = 0;
 
-	चयन (param) अणु
-	हाल MEMSTICK_POWER:
-		अगर (value == MEMSTICK_POWER_ON) अणु
+	switch (param) {
+	case MEMSTICK_POWER:
+		if (value == MEMSTICK_POWER_ON) {
 			rc = jmb38x_ms_reset(host);
-			अगर (rc)
-				वापस rc;
+			if (rc)
+				return rc;
 
 			host_ctl = 7;
 			host_ctl |= HOST_CONTROL_POWER_EN
 				 | HOST_CONTROL_CLOCK_EN;
-			ग_लिखोl(host_ctl, host->addr + HOST_CONTROL);
+			writel(host_ctl, host->addr + HOST_CONTROL);
 
-			ग_लिखोl(host->id ? PAD_PU_PD_ON_MS_SOCK1
+			writel(host->id ? PAD_PU_PD_ON_MS_SOCK1
 					: PAD_PU_PD_ON_MS_SOCK0,
 			       host->addr + PAD_PU_PD);
 
-			ग_लिखोl(PAD_OUTPUT_ENABLE_MS,
+			writel(PAD_OUTPUT_ENABLE_MS,
 			       host->addr + PAD_OUTPUT_ENABLE);
 
 			msleep(10);
 			dev_dbg(&host->chip->pdev->dev, "power on\n");
-		पूर्ण अन्यथा अगर (value == MEMSTICK_POWER_OFF) अणु
+		} else if (value == MEMSTICK_POWER_OFF) {
 			host_ctl &= ~(HOST_CONTROL_POWER_EN
 				      | HOST_CONTROL_CLOCK_EN);
-			ग_लिखोl(host_ctl, host->addr +  HOST_CONTROL);
-			ग_लिखोl(0, host->addr + PAD_OUTPUT_ENABLE);
-			ग_लिखोl(PAD_PU_PD_OFF, host->addr + PAD_PU_PD);
+			writel(host_ctl, host->addr +  HOST_CONTROL);
+			writel(0, host->addr + PAD_OUTPUT_ENABLE);
+			writel(PAD_PU_PD_OFF, host->addr + PAD_PU_PD);
 			dev_dbg(&host->chip->pdev->dev, "power off\n");
-		पूर्ण अन्यथा
-			वापस -EINVAL;
-		अवरोध;
-	हाल MEMSTICK_INTERFACE:
+		} else
+			return -EINVAL;
+		break;
+	case MEMSTICK_INTERFACE:
 		dev_dbg(&host->chip->pdev->dev,
 			"Set Host Interface Mode to %d\n", value);
 		host_ctl &= ~(HOST_CONTROL_FAST_CLK | HOST_CONTROL_REI |
@@ -719,310 +718,310 @@ reset_ok:
 		host_ctl |= HOST_CONTROL_TDELAY_EN | HOST_CONTROL_HW_OC_P;
 		host_ctl &= ~(3 << HOST_CONTROL_IF_SHIFT);
 
-		अगर (value == MEMSTICK_SERIAL) अणु
+		if (value == MEMSTICK_SERIAL) {
 			host_ctl |= HOST_CONTROL_IF_SERIAL
 				    << HOST_CONTROL_IF_SHIFT;
 			host_ctl |= HOST_CONTROL_REI;
-			घड़ी_ctl |= CLOCK_CONTROL_40MHZ;
-			घड़ी_delay = 0;
-		पूर्ण अन्यथा अगर (value == MEMSTICK_PAR4) अणु
+			clock_ctl |= CLOCK_CONTROL_40MHZ;
+			clock_delay = 0;
+		} else if (value == MEMSTICK_PAR4) {
 			host_ctl |= HOST_CONTROL_FAST_CLK;
 			host_ctl |= HOST_CONTROL_IF_PAR4
 				    << HOST_CONTROL_IF_SHIFT;
 			host_ctl |= HOST_CONTROL_REO;
-			घड़ी_ctl |= CLOCK_CONTROL_40MHZ;
-			घड़ी_delay = 4;
-		पूर्ण अन्यथा अगर (value == MEMSTICK_PAR8) अणु
+			clock_ctl |= CLOCK_CONTROL_40MHZ;
+			clock_delay = 4;
+		} else if (value == MEMSTICK_PAR8) {
 			host_ctl |= HOST_CONTROL_FAST_CLK;
 			host_ctl |= HOST_CONTROL_IF_PAR8
 				    << HOST_CONTROL_IF_SHIFT;
-			घड़ी_ctl |= CLOCK_CONTROL_50MHZ;
-			घड़ी_delay = 0;
-		पूर्ण अन्यथा
-			वापस -EINVAL;
+			clock_ctl |= CLOCK_CONTROL_50MHZ;
+			clock_delay = 0;
+		} else
+			return -EINVAL;
 
-		ग_लिखोl(host_ctl, host->addr + HOST_CONTROL);
-		ग_लिखोl(CLOCK_CONTROL_OFF, host->addr + CLOCK_CONTROL);
-		ग_लिखोl(घड़ी_ctl, host->addr + CLOCK_CONTROL);
-		pci_ग_लिखो_config_byte(host->chip->pdev,
+		writel(host_ctl, host->addr + HOST_CONTROL);
+		writel(CLOCK_CONTROL_OFF, host->addr + CLOCK_CONTROL);
+		writel(clock_ctl, host->addr + CLOCK_CONTROL);
+		pci_write_config_byte(host->chip->pdev,
 				      PCI_CTL_CLOCK_DLY_ADDR + 1,
-				      घड़ी_delay);
-		host->अगरmode = value;
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+				      clock_delay);
+		host->ifmode = value;
+		break;
+	}
+	return 0;
+}
 
-#घोषणा PCI_PMOS0_CONTROL		0xae
-#घोषणा  PMOS0_ENABLE			0x01
-#घोषणा  PMOS0_OVERCURRENT_LEVEL_2_4V	0x06
-#घोषणा  PMOS0_EN_OVERCURRENT_DEBOUNCE	0x40
-#घोषणा  PMOS0_SW_LED_POLARITY_ENABLE	0x80
-#घोषणा  PMOS0_ACTIVE_BITS (PMOS0_ENABLE | PMOS0_EN_OVERCURRENT_DEBOUNCE | \
+#define PCI_PMOS0_CONTROL		0xae
+#define  PMOS0_ENABLE			0x01
+#define  PMOS0_OVERCURRENT_LEVEL_2_4V	0x06
+#define  PMOS0_EN_OVERCURRENT_DEBOUNCE	0x40
+#define  PMOS0_SW_LED_POLARITY_ENABLE	0x80
+#define  PMOS0_ACTIVE_BITS (PMOS0_ENABLE | PMOS0_EN_OVERCURRENT_DEBOUNCE | \
 			    PMOS0_OVERCURRENT_LEVEL_2_4V)
-#घोषणा PCI_PMOS1_CONTROL		0xbd
-#घोषणा  PMOS1_ACTIVE_BITS		0x4a
-#घोषणा PCI_CLOCK_CTL			0xb9
+#define PCI_PMOS1_CONTROL		0xbd
+#define  PMOS1_ACTIVE_BITS		0x4a
+#define PCI_CLOCK_CTL			0xb9
 
-अटल पूर्णांक jmb38x_ms_pmos(काष्ठा pci_dev *pdev, पूर्णांक flag)
-अणु
-	अचिन्हित अक्षर val;
+static int jmb38x_ms_pmos(struct pci_dev *pdev, int flag)
+{
+	unsigned char val;
 
-	pci_पढ़ो_config_byte(pdev, PCI_PMOS0_CONTROL, &val);
-	अगर (flag)
+	pci_read_config_byte(pdev, PCI_PMOS0_CONTROL, &val);
+	if (flag)
 		val |= PMOS0_ACTIVE_BITS;
-	अन्यथा
+	else
 		val &= ~PMOS0_ACTIVE_BITS;
-	pci_ग_लिखो_config_byte(pdev, PCI_PMOS0_CONTROL, val);
+	pci_write_config_byte(pdev, PCI_PMOS0_CONTROL, val);
 	dev_dbg(&pdev->dev, "JMB38x: set PMOS0 val 0x%x\n", val);
 
-	अगर (pci_resource_flags(pdev, 1)) अणु
-		pci_पढ़ो_config_byte(pdev, PCI_PMOS1_CONTROL, &val);
-		अगर (flag)
+	if (pci_resource_flags(pdev, 1)) {
+		pci_read_config_byte(pdev, PCI_PMOS1_CONTROL, &val);
+		if (flag)
 			val |= PMOS1_ACTIVE_BITS;
-		अन्यथा
+		else
 			val &= ~PMOS1_ACTIVE_BITS;
-		pci_ग_लिखो_config_byte(pdev, PCI_PMOS1_CONTROL, val);
+		pci_write_config_byte(pdev, PCI_PMOS1_CONTROL, val);
 		dev_dbg(&pdev->dev, "JMB38x: set PMOS1 val 0x%x\n", val);
-	पूर्ण
+	}
 
-	pci_पढ़ो_config_byte(pdev, PCI_CLOCK_CTL, &val);
-	pci_ग_लिखो_config_byte(pdev, PCI_CLOCK_CTL, val & ~0x0f);
-	pci_ग_लिखो_config_byte(pdev, PCI_CLOCK_CTL, val | 0x01);
+	pci_read_config_byte(pdev, PCI_CLOCK_CTL, &val);
+	pci_write_config_byte(pdev, PCI_CLOCK_CTL, val & ~0x0f);
+	pci_write_config_byte(pdev, PCI_CLOCK_CTL, val | 0x01);
 	dev_dbg(&pdev->dev, "Clock Control by PCI config is disabled!\n");
 
-        वापस 0;
-पूर्ण
+        return 0;
+}
 
-अटल पूर्णांक __maybe_unused jmb38x_ms_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा jmb38x_ms *jm = dev_get_drvdata(dev);
+static int __maybe_unused jmb38x_ms_suspend(struct device *dev)
+{
+	struct jmb38x_ms *jm = dev_get_drvdata(dev);
 
-	पूर्णांक cnt;
+	int cnt;
 
-	क्रम (cnt = 0; cnt < jm->host_cnt; ++cnt) अणु
-		अगर (!jm->hosts[cnt])
-			अवरोध;
+	for (cnt = 0; cnt < jm->host_cnt; ++cnt) {
+		if (!jm->hosts[cnt])
+			break;
 		memstick_suspend_host(jm->hosts[cnt]);
-	पूर्ण
+	}
 
 	device_wakeup_disable(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused jmb38x_ms_resume(काष्ठा device *dev)
-अणु
-	काष्ठा jmb38x_ms *jm = dev_get_drvdata(dev);
-	पूर्णांक rc;
+static int __maybe_unused jmb38x_ms_resume(struct device *dev)
+{
+	struct jmb38x_ms *jm = dev_get_drvdata(dev);
+	int rc;
 
 	jmb38x_ms_pmos(to_pci_dev(dev), 1);
 
-	क्रम (rc = 0; rc < jm->host_cnt; ++rc) अणु
-		अगर (!jm->hosts[rc])
-			अवरोध;
+	for (rc = 0; rc < jm->host_cnt; ++rc) {
+		if (!jm->hosts[rc])
+			break;
 		memstick_resume_host(jm->hosts[rc]);
 		memstick_detect_change(jm->hosts[rc]);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक jmb38x_ms_count_slots(काष्ठा pci_dev *pdev)
-अणु
-	पूर्णांक cnt, rc = 0;
+static int jmb38x_ms_count_slots(struct pci_dev *pdev)
+{
+	int cnt, rc = 0;
 
-	क्रम (cnt = 0; cnt < PCI_STD_NUM_BARS; ++cnt) अणु
-		अगर (!(IORESOURCE_MEM & pci_resource_flags(pdev, cnt)))
-			अवरोध;
+	for (cnt = 0; cnt < PCI_STD_NUM_BARS; ++cnt) {
+		if (!(IORESOURCE_MEM & pci_resource_flags(pdev, cnt)))
+			break;
 
-		अगर (256 != pci_resource_len(pdev, cnt))
-			अवरोध;
+		if (256 != pci_resource_len(pdev, cnt))
+			break;
 
 		++rc;
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
-अटल काष्ठा memstick_host *jmb38x_ms_alloc_host(काष्ठा jmb38x_ms *jm, पूर्णांक cnt)
-अणु
-	काष्ठा memstick_host *msh;
-	काष्ठा jmb38x_ms_host *host;
+static struct memstick_host *jmb38x_ms_alloc_host(struct jmb38x_ms *jm, int cnt)
+{
+	struct memstick_host *msh;
+	struct jmb38x_ms_host *host;
 
-	msh = memstick_alloc_host(माप(काष्ठा jmb38x_ms_host),
+	msh = memstick_alloc_host(sizeof(struct jmb38x_ms_host),
 				  &jm->pdev->dev);
-	अगर (!msh)
-		वापस शून्य;
+	if (!msh)
+		return NULL;
 
 	host = memstick_priv(msh);
 	host->msh = msh;
 	host->chip = jm;
 	host->addr = ioremap(pci_resource_start(jm->pdev, cnt),
 			     pci_resource_len(jm->pdev, cnt));
-	अगर (!host->addr)
-		जाओ err_out_मुक्त;
+	if (!host->addr)
+		goto err_out_free;
 
 	spin_lock_init(&host->lock);
 	host->id = cnt;
-	snम_लिखो(host->host_id, माप(host->host_id), DRIVER_NAME ":slot%d",
+	snprintf(host->host_id, sizeof(host->host_id), DRIVER_NAME ":slot%d",
 		 host->id);
 	host->irq = jm->pdev->irq;
-	host->समयout_jअगरfies = msecs_to_jअगरfies(1000);
+	host->timeout_jiffies = msecs_to_jiffies(1000);
 
-	tasklet_init(&host->notअगरy, jmb38x_ms_req_tasklet, (अचिन्हित दीर्घ)msh);
+	tasklet_init(&host->notify, jmb38x_ms_req_tasklet, (unsigned long)msh);
 	msh->request = jmb38x_ms_submit_req;
 	msh->set_param = jmb38x_ms_set_param;
 
 	msh->caps = MEMSTICK_CAP_PAR4 | MEMSTICK_CAP_PAR8;
 
-	समयr_setup(&host->समयr, jmb38x_ms_पात, 0);
+	timer_setup(&host->timer, jmb38x_ms_abort, 0);
 
-	अगर (!request_irq(host->irq, jmb38x_ms_isr, IRQF_SHARED, host->host_id,
+	if (!request_irq(host->irq, jmb38x_ms_isr, IRQF_SHARED, host->host_id,
 			 msh))
-		वापस msh;
+		return msh;
 
 	iounmap(host->addr);
-err_out_मुक्त:
-	kमुक्त(msh);
-	वापस शून्य;
-पूर्ण
+err_out_free:
+	kfree(msh);
+	return NULL;
+}
 
-अटल व्योम jmb38x_ms_मुक्त_host(काष्ठा memstick_host *msh)
-अणु
-	काष्ठा jmb38x_ms_host *host = memstick_priv(msh);
+static void jmb38x_ms_free_host(struct memstick_host *msh)
+{
+	struct jmb38x_ms_host *host = memstick_priv(msh);
 
-	मुक्त_irq(host->irq, msh);
+	free_irq(host->irq, msh);
 	iounmap(host->addr);
-	memstick_मुक्त_host(msh);
-पूर्ण
+	memstick_free_host(msh);
+}
 
-अटल पूर्णांक jmb38x_ms_probe(काष्ठा pci_dev *pdev,
-			   स्थिर काष्ठा pci_device_id *dev_id)
-अणु
-	काष्ठा jmb38x_ms *jm;
-	पूर्णांक pci_dev_busy = 0;
-	पूर्णांक rc, cnt;
+static int jmb38x_ms_probe(struct pci_dev *pdev,
+			   const struct pci_device_id *dev_id)
+{
+	struct jmb38x_ms *jm;
+	int pci_dev_busy = 0;
+	int rc, cnt;
 
 	rc = dma_set_mask(&pdev->dev, DMA_BIT_MASK(32));
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	rc = pci_enable_device(pdev);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	pci_set_master(pdev);
 
 	rc = pci_request_regions(pdev, DRIVER_NAME);
-	अगर (rc) अणु
+	if (rc) {
 		pci_dev_busy = 1;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
 	jmb38x_ms_pmos(pdev, 1);
 
 	cnt = jmb38x_ms_count_slots(pdev);
-	अगर (!cnt) अणु
+	if (!cnt) {
 		rc = -ENODEV;
 		pci_dev_busy = 1;
-		जाओ err_out_पूर्णांक;
-	पूर्ण
+		goto err_out_int;
+	}
 
-	jm = kzalloc(माप(काष्ठा jmb38x_ms)
-		     + cnt * माप(काष्ठा memstick_host *), GFP_KERNEL);
-	अगर (!jm) अणु
+	jm = kzalloc(sizeof(struct jmb38x_ms)
+		     + cnt * sizeof(struct memstick_host *), GFP_KERNEL);
+	if (!jm) {
 		rc = -ENOMEM;
-		जाओ err_out_पूर्णांक;
-	पूर्ण
+		goto err_out_int;
+	}
 
 	jm->pdev = pdev;
 	jm->host_cnt = cnt;
 	pci_set_drvdata(pdev, jm);
 
-	क्रम (cnt = 0; cnt < jm->host_cnt; ++cnt) अणु
+	for (cnt = 0; cnt < jm->host_cnt; ++cnt) {
 		jm->hosts[cnt] = jmb38x_ms_alloc_host(jm, cnt);
-		अगर (!jm->hosts[cnt])
-			अवरोध;
+		if (!jm->hosts[cnt])
+			break;
 
 		rc = memstick_add_host(jm->hosts[cnt]);
 
-		अगर (rc) अणु
-			jmb38x_ms_मुक्त_host(jm->hosts[cnt]);
-			jm->hosts[cnt] = शून्य;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		if (rc) {
+			jmb38x_ms_free_host(jm->hosts[cnt]);
+			jm->hosts[cnt] = NULL;
+			break;
+		}
+	}
 
-	अगर (cnt)
-		वापस 0;
+	if (cnt)
+		return 0;
 
 	rc = -ENODEV;
 
-	pci_set_drvdata(pdev, शून्य);
-	kमुक्त(jm);
-err_out_पूर्णांक:
+	pci_set_drvdata(pdev, NULL);
+	kfree(jm);
+err_out_int:
 	pci_release_regions(pdev);
 err_out:
-	अगर (!pci_dev_busy)
+	if (!pci_dev_busy)
 		pci_disable_device(pdev);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम jmb38x_ms_हटाओ(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा jmb38x_ms *jm = pci_get_drvdata(dev);
-	काष्ठा jmb38x_ms_host *host;
-	पूर्णांक cnt;
-	अचिन्हित दीर्घ flags;
+static void jmb38x_ms_remove(struct pci_dev *dev)
+{
+	struct jmb38x_ms *jm = pci_get_drvdata(dev);
+	struct jmb38x_ms_host *host;
+	int cnt;
+	unsigned long flags;
 
-	क्रम (cnt = 0; cnt < jm->host_cnt; ++cnt) अणु
-		अगर (!jm->hosts[cnt])
-			अवरोध;
+	for (cnt = 0; cnt < jm->host_cnt; ++cnt) {
+		if (!jm->hosts[cnt])
+			break;
 
 		host = memstick_priv(jm->hosts[cnt]);
 
 		jm->hosts[cnt]->request = jmb38x_ms_dummy_submit;
-		tasklet_समाप्त(&host->notअगरy);
-		ग_लिखोl(0, host->addr + INT_SIGNAL_ENABLE);
-		ग_लिखोl(0, host->addr + INT_STATUS_ENABLE);
+		tasklet_kill(&host->notify);
+		writel(0, host->addr + INT_SIGNAL_ENABLE);
+		writel(0, host->addr + INT_STATUS_ENABLE);
 		dev_dbg(&jm->pdev->dev, "interrupts off\n");
 		spin_lock_irqsave(&host->lock, flags);
-		अगर (host->req) अणु
+		if (host->req) {
 			host->req->error = -ETIME;
 			jmb38x_ms_complete_cmd(jm->hosts[cnt], 1);
-		पूर्ण
+		}
 		spin_unlock_irqrestore(&host->lock, flags);
 
-		memstick_हटाओ_host(jm->hosts[cnt]);
+		memstick_remove_host(jm->hosts[cnt]);
 		dev_dbg(&jm->pdev->dev, "host removed\n");
 
-		jmb38x_ms_मुक्त_host(jm->hosts[cnt]);
-	पूर्ण
+		jmb38x_ms_free_host(jm->hosts[cnt]);
+	}
 
 	jmb38x_ms_pmos(dev, 0);
 
-	pci_set_drvdata(dev, शून्य);
+	pci_set_drvdata(dev, NULL);
 	pci_release_regions(dev);
 	pci_disable_device(dev);
-	kमुक्त(jm);
-पूर्ण
+	kfree(jm);
+}
 
-अटल काष्ठा pci_device_id jmb38x_ms_id_tbl [] = अणु
-	अणु PCI_VDEVICE(JMICRON, PCI_DEVICE_ID_JMICRON_JMB38X_MS) पूर्ण,
-	अणु PCI_VDEVICE(JMICRON, PCI_DEVICE_ID_JMICRON_JMB385_MS) पूर्ण,
-	अणु PCI_VDEVICE(JMICRON, PCI_DEVICE_ID_JMICRON_JMB390_MS) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static struct pci_device_id jmb38x_ms_id_tbl [] = {
+	{ PCI_VDEVICE(JMICRON, PCI_DEVICE_ID_JMICRON_JMB38X_MS) },
+	{ PCI_VDEVICE(JMICRON, PCI_DEVICE_ID_JMICRON_JMB385_MS) },
+	{ PCI_VDEVICE(JMICRON, PCI_DEVICE_ID_JMICRON_JMB390_MS) },
+	{ }
+};
 
-अटल SIMPLE_DEV_PM_OPS(jmb38x_ms_pm_ops, jmb38x_ms_suspend, jmb38x_ms_resume);
+static SIMPLE_DEV_PM_OPS(jmb38x_ms_pm_ops, jmb38x_ms_suspend, jmb38x_ms_resume);
 
-अटल काष्ठा pci_driver jmb38x_ms_driver = अणु
+static struct pci_driver jmb38x_ms_driver = {
 	.name = DRIVER_NAME,
 	.id_table = jmb38x_ms_id_tbl,
 	.probe = jmb38x_ms_probe,
-	.हटाओ = jmb38x_ms_हटाओ,
+	.remove = jmb38x_ms_remove,
 	.driver.pm = &jmb38x_ms_pm_ops,
-पूर्ण;
+};
 
 module_pci_driver(jmb38x_ms_driver);
 

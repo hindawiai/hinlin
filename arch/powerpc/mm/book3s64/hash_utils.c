@@ -1,13 +1,12 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * PowerPC64 port by Mike Corrigan and Dave Engebretsen
- *   अणुmikejc|engebretपूर्ण@us.ibm.com
+ *   {mikejc|engebret}@us.ibm.com
  *
  *    Copyright (c) 2000 Mike Corrigan <mikejc@us.ibm.com>
  *
  * SMP scalability work:
- *    Copyright (C) 2001 Anton Blanअक्षरd <anton@au.ibm.com>, IBM
+ *    Copyright (C) 2001 Anton Blanchard <anton@au.ibm.com>, IBM
  *
  *    Module name: htab.c
  *
@@ -15,77 +14,77 @@
  *      PowerPC Hashed Page Table functions
  */
 
-#अघोषित DEBUG
-#अघोषित DEBUG_LOW
+#undef DEBUG
+#undef DEBUG_LOW
 
-#घोषणा pr_fmt(fmt) "hash-mmu: " fmt
-#समावेश <linux/spinlock.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/sysctl.h>
-#समावेश <linux/export.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/cache.h>
-#समावेश <linux/init.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/memblock.h>
-#समावेश <linux/context_tracking.h>
-#समावेश <linux/libfdt.h>
-#समावेश <linux/pkeys.h>
-#समावेश <linux/hugetlb.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/pgtable.h>
+#define pr_fmt(fmt) "hash-mmu: " fmt
+#include <linux/spinlock.h>
+#include <linux/errno.h>
+#include <linux/sched/mm.h>
+#include <linux/proc_fs.h>
+#include <linux/stat.h>
+#include <linux/sysctl.h>
+#include <linux/export.h>
+#include <linux/ctype.h>
+#include <linux/cache.h>
+#include <linux/init.h>
+#include <linux/signal.h>
+#include <linux/memblock.h>
+#include <linux/context_tracking.h>
+#include <linux/libfdt.h>
+#include <linux/pkeys.h>
+#include <linux/hugetlb.h>
+#include <linux/cpu.h>
+#include <linux/pgtable.h>
 
-#समावेश <यंत्र/debugfs.h>
-#समावेश <यंत्र/पूर्णांकerrupt.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/mmu.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/types.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/eeh.h>
-#समावेश <यंत्र/tlb.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/cputable.h>
-#समावेश <यंत्र/sections.h>
-#समावेश <यंत्र/copro.h>
-#समावेश <यंत्र/udbg.h>
-#समावेश <यंत्र/code-patching.h>
-#समावेश <यंत्र/fadump.h>
-#समावेश <यंत्र/firmware.h>
-#समावेश <यंत्र/पंचांग.h>
-#समावेश <यंत्र/trace.h>
-#समावेश <यंत्र/ps3.h>
-#समावेश <यंत्र/pte-walk.h>
-#समावेश <यंत्र/यंत्र-prototypes.h>
-#समावेश <यंत्र/ultravisor.h>
+#include <asm/debugfs.h>
+#include <asm/interrupt.h>
+#include <asm/processor.h>
+#include <asm/mmu.h>
+#include <asm/mmu_context.h>
+#include <asm/page.h>
+#include <asm/types.h>
+#include <linux/uaccess.h>
+#include <asm/machdep.h>
+#include <asm/prom.h>
+#include <asm/io.h>
+#include <asm/eeh.h>
+#include <asm/tlb.h>
+#include <asm/cacheflush.h>
+#include <asm/cputable.h>
+#include <asm/sections.h>
+#include <asm/copro.h>
+#include <asm/udbg.h>
+#include <asm/code-patching.h>
+#include <asm/fadump.h>
+#include <asm/firmware.h>
+#include <asm/tm.h>
+#include <asm/trace.h>
+#include <asm/ps3.h>
+#include <asm/pte-walk.h>
+#include <asm/asm-prototypes.h>
+#include <asm/ultravisor.h>
 
-#समावेश <mm/mmu_decl.h>
+#include <mm/mmu_decl.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
 
-#अगर_घोषित DEBUG
-#घोषणा DBG(fmt...) udbg_म_लिखो(fmt)
-#अन्यथा
-#घोषणा DBG(fmt...)
-#पूर्ण_अगर
+#ifdef DEBUG
+#define DBG(fmt...) udbg_printf(fmt)
+#else
+#define DBG(fmt...)
+#endif
 
-#अगर_घोषित DEBUG_LOW
-#घोषणा DBG_LOW(fmt...) udbg_म_लिखो(fmt)
-#अन्यथा
-#घोषणा DBG_LOW(fmt...)
-#पूर्ण_अगर
+#ifdef DEBUG_LOW
+#define DBG_LOW(fmt...) udbg_printf(fmt)
+#else
+#define DBG_LOW(fmt...)
+#endif
 
-#घोषणा KB (1024)
-#घोषणा MB (1024*KB)
-#घोषणा GB (1024L*MB)
+#define KB (1024)
+#define MB (1024*KB)
+#define GB (1024L*MB)
 
 /*
  * Note:  pte   --> Linux PTE
@@ -93,46 +92,46 @@
  *
  * Execution context:
  *   htab_initialize is called with the MMU off (of course), but
- *   the kernel has been copied करोwn to zero so it can directly
- *   reference global data.  At this poपूर्णांक it is very dअगरficult
- *   to prपूर्णांक debug info.
+ *   the kernel has been copied down to zero so it can directly
+ *   reference global data.  At this point it is very difficult
+ *   to print debug info.
  *
  */
 
-अटल अचिन्हित दीर्घ _SDR1;
-काष्ठा mmu_psize_def mmu_psize_defs[MMU_PAGE_COUNT];
+static unsigned long _SDR1;
+struct mmu_psize_def mmu_psize_defs[MMU_PAGE_COUNT];
 EXPORT_SYMBOL_GPL(mmu_psize_defs);
 
 u8 hpte_page_sizes[1 << LP_BITS];
 EXPORT_SYMBOL_GPL(hpte_page_sizes);
 
-काष्ठा hash_pte *htab_address;
-अचिन्हित दीर्घ htab_size_bytes;
-अचिन्हित दीर्घ htab_hash_mask;
+struct hash_pte *htab_address;
+unsigned long htab_size_bytes;
+unsigned long htab_hash_mask;
 EXPORT_SYMBOL_GPL(htab_hash_mask);
-पूर्णांक mmu_linear_psize = MMU_PAGE_4K;
+int mmu_linear_psize = MMU_PAGE_4K;
 EXPORT_SYMBOL_GPL(mmu_linear_psize);
-पूर्णांक mmu_भव_psize = MMU_PAGE_4K;
-पूर्णांक mmu_vदो_स्मृति_psize = MMU_PAGE_4K;
-EXPORT_SYMBOL_GPL(mmu_vदो_स्मृति_psize);
-#अगर_घोषित CONFIG_SPARSEMEM_VMEMMAP
-पूर्णांक mmu_vmemmap_psize = MMU_PAGE_4K;
-#पूर्ण_अगर
-पूर्णांक mmu_io_psize = MMU_PAGE_4K;
-पूर्णांक mmu_kernel_ssize = MMU_SEGSIZE_256M;
+int mmu_virtual_psize = MMU_PAGE_4K;
+int mmu_vmalloc_psize = MMU_PAGE_4K;
+EXPORT_SYMBOL_GPL(mmu_vmalloc_psize);
+#ifdef CONFIG_SPARSEMEM_VMEMMAP
+int mmu_vmemmap_psize = MMU_PAGE_4K;
+#endif
+int mmu_io_psize = MMU_PAGE_4K;
+int mmu_kernel_ssize = MMU_SEGSIZE_256M;
 EXPORT_SYMBOL_GPL(mmu_kernel_ssize);
-पूर्णांक mmu_highuser_ssize = MMU_SEGSIZE_256M;
+int mmu_highuser_ssize = MMU_SEGSIZE_256M;
 u16 mmu_slb_size = 64;
 EXPORT_SYMBOL_GPL(mmu_slb_size);
-#अगर_घोषित CONFIG_PPC_64K_PAGES
-पूर्णांक mmu_ci_restrictions;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_DEBUG_PAGEALLOC
-अटल u8 *linear_map_hash_slots;
-अटल अचिन्हित दीर्घ linear_map_hash_count;
-अटल DEFINE_SPINLOCK(linear_map_hash_lock);
-#पूर्ण_अगर /* CONFIG_DEBUG_PAGEALLOC */
-काष्ठा mmu_hash_ops mmu_hash_ops;
+#ifdef CONFIG_PPC_64K_PAGES
+int mmu_ci_restrictions;
+#endif
+#ifdef CONFIG_DEBUG_PAGEALLOC
+static u8 *linear_map_hash_slots;
+static unsigned long linear_map_hash_count;
+static DEFINE_SPINLOCK(linear_map_hash_lock);
+#endif /* CONFIG_DEBUG_PAGEALLOC */
+struct mmu_hash_ops mmu_hash_ops;
 EXPORT_SYMBOL(mmu_hash_ops);
 
 /*
@@ -143,120 +142,120 @@ EXPORT_SYMBOL(mmu_hash_ops);
 /*
  * Fallback (4k pages only)
  */
-अटल काष्ठा mmu_psize_def mmu_psize_शेषs[] = अणु
-	[MMU_PAGE_4K] = अणु
-		.shअगरt	= 12,
+static struct mmu_psize_def mmu_psize_defaults[] = {
+	[MMU_PAGE_4K] = {
+		.shift	= 12,
 		.sllp	= 0,
-		.penc   = अणु[MMU_PAGE_4K] = 0, [1 ... MMU_PAGE_COUNT - 1] = -1पूर्ण,
+		.penc   = {[MMU_PAGE_4K] = 0, [1 ... MMU_PAGE_COUNT - 1] = -1},
 		.avpnm	= 0,
 		.tlbiel = 0,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * POWER4, GPUL, POWER5
  *
- * Support क्रम 16Mb large pages
+ * Support for 16Mb large pages
  */
-अटल काष्ठा mmu_psize_def mmu_psize_शेषs_gp[] = अणु
-	[MMU_PAGE_4K] = अणु
-		.shअगरt	= 12,
+static struct mmu_psize_def mmu_psize_defaults_gp[] = {
+	[MMU_PAGE_4K] = {
+		.shift	= 12,
 		.sllp	= 0,
-		.penc   = अणु[MMU_PAGE_4K] = 0, [1 ... MMU_PAGE_COUNT - 1] = -1पूर्ण,
+		.penc   = {[MMU_PAGE_4K] = 0, [1 ... MMU_PAGE_COUNT - 1] = -1},
 		.avpnm	= 0,
 		.tlbiel = 1,
-	पूर्ण,
-	[MMU_PAGE_16M] = अणु
-		.shअगरt	= 24,
+	},
+	[MMU_PAGE_16M] = {
+		.shift	= 24,
 		.sllp	= SLB_VSID_L,
-		.penc   = अणु[0 ... MMU_PAGE_16M - 1] = -1, [MMU_PAGE_16M] = 0,
-			    [MMU_PAGE_16M + 1 ... MMU_PAGE_COUNT - 1] = -1 पूर्ण,
+		.penc   = {[0 ... MMU_PAGE_16M - 1] = -1, [MMU_PAGE_16M] = 0,
+			    [MMU_PAGE_16M + 1 ... MMU_PAGE_COUNT - 1] = -1 },
 		.avpnm	= 0x1UL,
 		.tlbiel = 0,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * 'R' and 'C' update notes:
  *  - Under pHyp or KVM, the updatepp path will not set C, thus it *will*
- *     create ग_लिखोable HPTEs without C set, because the hcall H_PROTECT
- *     that we use in that हाल will not update C
- *  - The above is however not a problem, because we also करोn't करो that
+ *     create writeable HPTEs without C set, because the hcall H_PROTECT
+ *     that we use in that case will not update C
+ *  - The above is however not a problem, because we also don't do that
  *     fancy "no flush" variant of eviction and we use H_REMOVE which will
- *     करो the right thing and thus we करोn't have the race I described earlier
+ *     do the right thing and thus we don't have the race I described earlier
  *
- *    - Under bare metal,  we करो have the race, so we need R and C set
+ *    - Under bare metal,  we do have the race, so we need R and C set
  *    - We make sure R is always set and never lost
- *    - C is _PAGE_सूचीTY, and *should* always be set क्रम a ग_लिखोable mapping
+ *    - C is _PAGE_DIRTY, and *should* always be set for a writeable mapping
  */
-अचिन्हित दीर्घ htab_convert_pte_flags(अचिन्हित दीर्घ pteflags, अचिन्हित दीर्घ flags)
-अणु
-	अचिन्हित दीर्घ rflags = 0;
+unsigned long htab_convert_pte_flags(unsigned long pteflags, unsigned long flags)
+{
+	unsigned long rflags = 0;
 
 	/* _PAGE_EXEC -> NOEXEC */
-	अगर ((pteflags & _PAGE_EXEC) == 0)
+	if ((pteflags & _PAGE_EXEC) == 0)
 		rflags |= HPTE_R_N;
 	/*
 	 * PPP bits:
-	 * Linux uses slb key 0 क्रम kernel and 1 क्रम user.
+	 * Linux uses slb key 0 for kernel and 1 for user.
 	 * kernel RW areas are mapped with PPP=0b000
-	 * User area is mapped with PPP=0b010 क्रम पढ़ो/ग_लिखो
-	 * or PPP=0b011 क्रम पढ़ो-only (including ग_लिखोable but clean pages).
+	 * User area is mapped with PPP=0b010 for read/write
+	 * or PPP=0b011 for read-only (including writeable but clean pages).
 	 */
-	अगर (pteflags & _PAGE_PRIVILEGED) अणु
+	if (pteflags & _PAGE_PRIVILEGED) {
 		/*
-		 * Kernel पढ़ो only mapped with ppp bits 0b110
+		 * Kernel read only mapped with ppp bits 0b110
 		 */
-		अगर (!(pteflags & _PAGE_WRITE)) अणु
-			अगर (mmu_has_feature(MMU_FTR_KERNEL_RO))
+		if (!(pteflags & _PAGE_WRITE)) {
+			if (mmu_has_feature(MMU_FTR_KERNEL_RO))
 				rflags |= (HPTE_R_PP0 | 0x2);
-			अन्यथा
+			else
 				rflags |= 0x3;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (pteflags & _PAGE_RWX)
+		}
+	} else {
+		if (pteflags & _PAGE_RWX)
 			rflags |= 0x2;
-		अगर (!((pteflags & _PAGE_WRITE) && (pteflags & _PAGE_सूचीTY)))
+		if (!((pteflags & _PAGE_WRITE) && (pteflags & _PAGE_DIRTY)))
 			rflags |= 0x1;
-	पूर्ण
+	}
 	/*
 	 * We can't allow hardware to update hpte bits. Hence always
-	 * set 'R' bit and set 'C' अगर it is a ग_लिखो fault
+	 * set 'R' bit and set 'C' if it is a write fault
 	 */
 	rflags |=  HPTE_R_R;
 
-	अगर (pteflags & _PAGE_सूचीTY)
+	if (pteflags & _PAGE_DIRTY)
 		rflags |= HPTE_R_C;
 	/*
 	 * Add in WIG bits
 	 */
 
-	अगर ((pteflags & _PAGE_CACHE_CTL) == _PAGE_TOLERANT)
+	if ((pteflags & _PAGE_CACHE_CTL) == _PAGE_TOLERANT)
 		rflags |= HPTE_R_I;
-	अन्यथा अगर ((pteflags & _PAGE_CACHE_CTL) == _PAGE_NON_IDEMPOTENT)
+	else if ((pteflags & _PAGE_CACHE_CTL) == _PAGE_NON_IDEMPOTENT)
 		rflags |= (HPTE_R_I | HPTE_R_G);
-	अन्यथा अगर ((pteflags & _PAGE_CACHE_CTL) == _PAGE_SAO)
+	else if ((pteflags & _PAGE_CACHE_CTL) == _PAGE_SAO)
 		rflags |= (HPTE_R_W | HPTE_R_I | HPTE_R_M);
-	अन्यथा
+	else
 		/*
-		 * Add memory coherence अगर cache inhibited is not set
+		 * Add memory coherence if cache inhibited is not set
 		 */
 		rflags |= HPTE_R_M;
 
 	rflags |= pte_to_hpte_pkey_bits(pteflags, flags);
-	वापस rflags;
-पूर्ण
+	return rflags;
+}
 
-पूर्णांक htab_bolt_mapping(अचिन्हित दीर्घ vstart, अचिन्हित दीर्घ vend,
-		      अचिन्हित दीर्घ pstart, अचिन्हित दीर्घ prot,
-		      पूर्णांक psize, पूर्णांक ssize)
-अणु
-	अचिन्हित दीर्घ vaddr, paddr;
-	अचिन्हित पूर्णांक step, shअगरt;
-	पूर्णांक ret = 0;
+int htab_bolt_mapping(unsigned long vstart, unsigned long vend,
+		      unsigned long pstart, unsigned long prot,
+		      int psize, int ssize)
+{
+	unsigned long vaddr, paddr;
+	unsigned int step, shift;
+	int ret = 0;
 
-	shअगरt = mmu_psize_defs[psize].shअगरt;
-	step = 1 << shअगरt;
+	shift = mmu_psize_defs[psize].shift;
+	step = 1 << shift;
 
 	prot = htab_convert_pte_flags(prot, HPTE_USE_KERNEL_KEY);
 
@@ -268,37 +267,37 @@ EXPORT_SYMBOL(mmu_hash_ops);
 	paddr = ALIGN(pstart, step);
 	vend  = ALIGN_DOWN(vend, step);
 
-	क्रम (; vaddr < vend; vaddr += step, paddr += step) अणु
-		अचिन्हित दीर्घ hash, hpteg;
-		अचिन्हित दीर्घ vsid = get_kernel_vsid(vaddr, ssize);
-		अचिन्हित दीर्घ vpn  = hpt_vpn(vaddr, vsid, ssize);
-		अचिन्हित दीर्घ tprot = prot;
+	for (; vaddr < vend; vaddr += step, paddr += step) {
+		unsigned long hash, hpteg;
+		unsigned long vsid = get_kernel_vsid(vaddr, ssize);
+		unsigned long vpn  = hpt_vpn(vaddr, vsid, ssize);
+		unsigned long tprot = prot;
 		bool secondary_hash = false;
 
 		/*
-		 * If we hit a bad address वापस error.
+		 * If we hit a bad address return error.
 		 */
-		अगर (!vsid)
-			वापस -1;
+		if (!vsid)
+			return -1;
 		/* Make kernel text executable */
-		अगर (overlaps_kernel_text(vaddr, vaddr + step))
+		if (overlaps_kernel_text(vaddr, vaddr + step))
 			tprot &= ~HPTE_R_N;
 
 		/*
-		 * If relocatable, check अगर it overlaps पूर्णांकerrupt vectors that
-		 * are copied करोwn to real 0. For relocatable kernel
-		 * (e.g. kdump हाल) we copy पूर्णांकerrupt vectors करोwn to real
+		 * If relocatable, check if it overlaps interrupt vectors that
+		 * are copied down to real 0. For relocatable kernel
+		 * (e.g. kdump case) we copy interrupt vectors down to real
 		 * address 0. Mark that region as executable. This is
-		 * because on p8 प्रणाली with relocation on exception feature
-		 * enabled, exceptions are उठाओd with MMU (IR=DR=1) ON. Hence
-		 * in order to execute the पूर्णांकerrupt handlers in भव
+		 * because on p8 system with relocation on exception feature
+		 * enabled, exceptions are raised with MMU (IR=DR=1) ON. Hence
+		 * in order to execute the interrupt handlers in virtual
 		 * mode the vector region need to be marked as executable.
 		 */
-		अगर ((PHYSICAL_START > MEMORY_START) &&
-			overlaps_पूर्णांकerrupt_vector_text(vaddr, vaddr + step))
+		if ((PHYSICAL_START > MEMORY_START) &&
+			overlaps_interrupt_vector_text(vaddr, vaddr + step))
 				tprot &= ~HPTE_R_N;
 
-		hash = hpt_hash(vpn, shअगरt, ssize);
+		hash = hpt_hash(vpn, shift, ssize);
 		hpteg = ((hash & htab_hash_mask) * HPTES_PER_GROUP);
 
 		BUG_ON(!mmu_hash_ops.hpte_insert);
@@ -306,333 +305,333 @@ repeat:
 		ret = mmu_hash_ops.hpte_insert(hpteg, vpn, paddr, tprot,
 					       HPTE_V_BOLTED, psize, psize,
 					       ssize);
-		अगर (ret == -1) अणु
+		if (ret == -1) {
 			/*
 			 * Try to to keep bolted entries in primary.
 			 * Remove non bolted entries and try insert again
 			 */
-			ret = mmu_hash_ops.hpte_हटाओ(hpteg);
-			अगर (ret != -1)
+			ret = mmu_hash_ops.hpte_remove(hpteg);
+			if (ret != -1)
 				ret = mmu_hash_ops.hpte_insert(hpteg, vpn, paddr, tprot,
 							       HPTE_V_BOLTED, psize, psize,
 							       ssize);
-			अगर (ret == -1 && !secondary_hash) अणु
+			if (ret == -1 && !secondary_hash) {
 				secondary_hash = true;
 				hpteg = ((~hash & htab_hash_mask) * HPTES_PER_GROUP);
-				जाओ repeat;
-			पूर्ण
-		पूर्ण
+				goto repeat;
+			}
+		}
 
-		अगर (ret < 0)
-			अवरोध;
+		if (ret < 0)
+			break;
 
 		cond_resched();
-#अगर_घोषित CONFIG_DEBUG_PAGEALLOC
-		अगर (debug_pagealloc_enabled() &&
+#ifdef CONFIG_DEBUG_PAGEALLOC
+		if (debug_pagealloc_enabled() &&
 			(paddr >> PAGE_SHIFT) < linear_map_hash_count)
 			linear_map_hash_slots[paddr >> PAGE_SHIFT] = ret | 0x80;
-#पूर्ण_अगर /* CONFIG_DEBUG_PAGEALLOC */
-	पूर्ण
-	वापस ret < 0 ? ret : 0;
-पूर्ण
+#endif /* CONFIG_DEBUG_PAGEALLOC */
+	}
+	return ret < 0 ? ret : 0;
+}
 
-पूर्णांक htab_हटाओ_mapping(अचिन्हित दीर्घ vstart, अचिन्हित दीर्घ vend,
-		      पूर्णांक psize, पूर्णांक ssize)
-अणु
-	अचिन्हित दीर्घ vaddr, समय_limit;
-	अचिन्हित पूर्णांक step, shअगरt;
-	पूर्णांक rc;
-	पूर्णांक ret = 0;
+int htab_remove_mapping(unsigned long vstart, unsigned long vend,
+		      int psize, int ssize)
+{
+	unsigned long vaddr, time_limit;
+	unsigned int step, shift;
+	int rc;
+	int ret = 0;
 
-	shअगरt = mmu_psize_defs[psize].shअगरt;
-	step = 1 << shअगरt;
+	shift = mmu_psize_defs[psize].shift;
+	step = 1 << shift;
 
-	अगर (!mmu_hash_ops.hpte_हटाओbolted)
-		वापस -ENODEV;
+	if (!mmu_hash_ops.hpte_removebolted)
+		return -ENODEV;
 
-	/* Unmap the full range specअगरicied */
+	/* Unmap the full range specificied */
 	vaddr = ALIGN_DOWN(vstart, step);
-	समय_limit = jअगरfies + HZ;
+	time_limit = jiffies + HZ;
 
-	क्रम (;vaddr < vend; vaddr += step) अणु
-		rc = mmu_hash_ops.hpte_हटाओbolted(vaddr, psize, ssize);
+	for (;vaddr < vend; vaddr += step) {
+		rc = mmu_hash_ops.hpte_removebolted(vaddr, psize, ssize);
 
 		/*
-		 * For large number of mappings पूर्णांकroduce a cond_resched()
+		 * For large number of mappings introduce a cond_resched()
 		 * to prevent softlockup warnings.
 		 */
-		अगर (समय_after(jअगरfies, समय_limit)) अणु
+		if (time_after(jiffies, time_limit)) {
 			cond_resched();
-			समय_limit = jअगरfies + HZ;
-		पूर्ण
-		अगर (rc == -ENOENT) अणु
+			time_limit = jiffies + HZ;
+		}
+		if (rc == -ENOENT) {
 			ret = -ENOENT;
-			जारी;
-		पूर्ण
-		अगर (rc < 0)
-			वापस rc;
-	पूर्ण
+			continue;
+		}
+		if (rc < 0)
+			return rc;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool disable_1tb_segments = false;
+static bool disable_1tb_segments = false;
 
-अटल पूर्णांक __init parse_disable_1tb_segments(अक्षर *p)
-अणु
+static int __init parse_disable_1tb_segments(char *p)
+{
 	disable_1tb_segments = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_param("disable_1tb_segments", parse_disable_1tb_segments);
 
-अटल पूर्णांक __init htab_dt_scan_seg_sizes(अचिन्हित दीर्घ node,
-					 स्थिर अक्षर *uname, पूर्णांक depth,
-					 व्योम *data)
-अणु
-	स्थिर अक्षर *type = of_get_flat_dt_prop(node, "device_type", शून्य);
-	स्थिर __be32 *prop;
-	पूर्णांक size = 0;
+static int __init htab_dt_scan_seg_sizes(unsigned long node,
+					 const char *uname, int depth,
+					 void *data)
+{
+	const char *type = of_get_flat_dt_prop(node, "device_type", NULL);
+	const __be32 *prop;
+	int size = 0;
 
 	/* We are scanning "cpu" nodes only */
-	अगर (type == शून्य || म_भेद(type, "cpu") != 0)
-		वापस 0;
+	if (type == NULL || strcmp(type, "cpu") != 0)
+		return 0;
 
 	prop = of_get_flat_dt_prop(node, "ibm,processor-segment-sizes", &size);
-	अगर (prop == शून्य)
-		वापस 0;
-	क्रम (; size >= 4; size -= 4, ++prop) अणु
-		अगर (be32_to_cpu(prop[0]) == 40) अणु
+	if (prop == NULL)
+		return 0;
+	for (; size >= 4; size -= 4, ++prop) {
+		if (be32_to_cpu(prop[0]) == 40) {
 			DBG("1T segment support detected\n");
 
-			अगर (disable_1tb_segments) अणु
+			if (disable_1tb_segments) {
 				DBG("1T segments disabled by command line\n");
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			cur_cpu_spec->mmu_features |= MMU_FTR_1T_SEGMENT;
-			वापस 1;
-		पूर्ण
-	पूर्ण
+			return 1;
+		}
+	}
 	cur_cpu_spec->mmu_features &= ~MMU_FTR_NO_SLBIE_B;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init get_idx_from_shअगरt(अचिन्हित पूर्णांक shअगरt)
-अणु
-	पूर्णांक idx = -1;
+static int __init get_idx_from_shift(unsigned int shift)
+{
+	int idx = -1;
 
-	चयन (shअगरt) अणु
-	हाल 0xc:
+	switch (shift) {
+	case 0xc:
 		idx = MMU_PAGE_4K;
-		अवरोध;
-	हाल 0x10:
+		break;
+	case 0x10:
 		idx = MMU_PAGE_64K;
-		अवरोध;
-	हाल 0x14:
+		break;
+	case 0x14:
 		idx = MMU_PAGE_1M;
-		अवरोध;
-	हाल 0x18:
+		break;
+	case 0x18:
 		idx = MMU_PAGE_16M;
-		अवरोध;
-	हाल 0x22:
+		break;
+	case 0x22:
 		idx = MMU_PAGE_16G;
-		अवरोध;
-	पूर्ण
-	वापस idx;
-पूर्ण
+		break;
+	}
+	return idx;
+}
 
-अटल पूर्णांक __init htab_dt_scan_page_sizes(अचिन्हित दीर्घ node,
-					  स्थिर अक्षर *uname, पूर्णांक depth,
-					  व्योम *data)
-अणु
-	स्थिर अक्षर *type = of_get_flat_dt_prop(node, "device_type", शून्य);
-	स्थिर __be32 *prop;
-	पूर्णांक size = 0;
+static int __init htab_dt_scan_page_sizes(unsigned long node,
+					  const char *uname, int depth,
+					  void *data)
+{
+	const char *type = of_get_flat_dt_prop(node, "device_type", NULL);
+	const __be32 *prop;
+	int size = 0;
 
 	/* We are scanning "cpu" nodes only */
-	अगर (type == शून्य || म_भेद(type, "cpu") != 0)
-		वापस 0;
+	if (type == NULL || strcmp(type, "cpu") != 0)
+		return 0;
 
 	prop = of_get_flat_dt_prop(node, "ibm,segment-page-sizes", &size);
-	अगर (!prop)
-		वापस 0;
+	if (!prop)
+		return 0;
 
 	pr_info("Page sizes from device-tree:\n");
 	size /= 4;
 	cur_cpu_spec->mmu_features &= ~(MMU_FTR_16M_PAGE);
-	जबतक(size > 0) अणु
-		अचिन्हित पूर्णांक base_shअगरt = be32_to_cpu(prop[0]);
-		अचिन्हित पूर्णांक slbenc = be32_to_cpu(prop[1]);
-		अचिन्हित पूर्णांक lpnum = be32_to_cpu(prop[2]);
-		काष्ठा mmu_psize_def *def;
-		पूर्णांक idx, base_idx;
+	while(size > 0) {
+		unsigned int base_shift = be32_to_cpu(prop[0]);
+		unsigned int slbenc = be32_to_cpu(prop[1]);
+		unsigned int lpnum = be32_to_cpu(prop[2]);
+		struct mmu_psize_def *def;
+		int idx, base_idx;
 
 		size -= 3; prop += 3;
-		base_idx = get_idx_from_shअगरt(base_shअगरt);
-		अगर (base_idx < 0) अणु
+		base_idx = get_idx_from_shift(base_shift);
+		if (base_idx < 0) {
 			/* skip the pte encoding also */
 			prop += lpnum * 2; size -= lpnum * 2;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		def = &mmu_psize_defs[base_idx];
-		अगर (base_idx == MMU_PAGE_16M)
+		if (base_idx == MMU_PAGE_16M)
 			cur_cpu_spec->mmu_features |= MMU_FTR_16M_PAGE;
 
-		def->shअगरt = base_shअगरt;
-		अगर (base_shअगरt <= 23)
+		def->shift = base_shift;
+		if (base_shift <= 23)
 			def->avpnm = 0;
-		अन्यथा
-			def->avpnm = (1 << (base_shअगरt - 23)) - 1;
+		else
+			def->avpnm = (1 << (base_shift - 23)) - 1;
 		def->sllp = slbenc;
 		/*
-		 * We करोn't know for sure what's up with tlbiel, so
-		 * क्रम now we only set it क्रम 4K and 64K pages
+		 * We don't know for sure what's up with tlbiel, so
+		 * for now we only set it for 4K and 64K pages
 		 */
-		अगर (base_idx == MMU_PAGE_4K || base_idx == MMU_PAGE_64K)
+		if (base_idx == MMU_PAGE_4K || base_idx == MMU_PAGE_64K)
 			def->tlbiel = 1;
-		अन्यथा
+		else
 			def->tlbiel = 0;
 
-		जबतक (size > 0 && lpnum) अणु
-			अचिन्हित पूर्णांक shअगरt = be32_to_cpu(prop[0]);
-			पूर्णांक penc  = be32_to_cpu(prop[1]);
+		while (size > 0 && lpnum) {
+			unsigned int shift = be32_to_cpu(prop[0]);
+			int penc  = be32_to_cpu(prop[1]);
 
 			prop += 2; size -= 2;
 			lpnum--;
 
-			idx = get_idx_from_shअगरt(shअगरt);
-			अगर (idx < 0)
-				जारी;
+			idx = get_idx_from_shift(shift);
+			if (idx < 0)
+				continue;
 
-			अगर (penc == -1)
+			if (penc == -1)
 				pr_err("Invalid penc for base_shift=%d "
-				       "shift=%d\n", base_shअगरt, shअगरt);
+				       "shift=%d\n", base_shift, shift);
 
 			def->penc[idx] = penc;
 			pr_info("base_shift=%d: shift=%d, sllp=0x%04lx,"
 				" avpnm=0x%08lx, tlbiel=%d, penc=%d\n",
-				base_shअगरt, shअगरt, def->sllp,
+				base_shift, shift, def->sllp,
 				def->avpnm, def->tlbiel, def->penc[idx]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-#अगर_घोषित CONFIG_HUGETLB_PAGE
+#ifdef CONFIG_HUGETLB_PAGE
 /*
- * Scan क्रम 16G memory blocks that have been set aside क्रम huge pages
- * and reserve those blocks क्रम 16G huge pages.
+ * Scan for 16G memory blocks that have been set aside for huge pages
+ * and reserve those blocks for 16G huge pages.
  */
-अटल पूर्णांक __init htab_dt_scan_hugepage_blocks(अचिन्हित दीर्घ node,
-					स्थिर अक्षर *uname, पूर्णांक depth,
-					व्योम *data) अणु
-	स्थिर अक्षर *type = of_get_flat_dt_prop(node, "device_type", शून्य);
-	स्थिर __be64 *addr_prop;
-	स्थिर __be32 *page_count_prop;
-	अचिन्हित पूर्णांक expected_pages;
-	दीर्घ अचिन्हित पूर्णांक phys_addr;
-	दीर्घ अचिन्हित पूर्णांक block_size;
+static int __init htab_dt_scan_hugepage_blocks(unsigned long node,
+					const char *uname, int depth,
+					void *data) {
+	const char *type = of_get_flat_dt_prop(node, "device_type", NULL);
+	const __be64 *addr_prop;
+	const __be32 *page_count_prop;
+	unsigned int expected_pages;
+	long unsigned int phys_addr;
+	long unsigned int block_size;
 
 	/* We are scanning "memory" nodes only */
-	अगर (type == शून्य || म_भेद(type, "memory") != 0)
-		वापस 0;
+	if (type == NULL || strcmp(type, "memory") != 0)
+		return 0;
 
 	/*
-	 * This property is the log base 2 of the number of भव pages that
+	 * This property is the log base 2 of the number of virtual pages that
 	 * will represent this memory block.
 	 */
-	page_count_prop = of_get_flat_dt_prop(node, "ibm,expected#pages", शून्य);
-	अगर (page_count_prop == शून्य)
-		वापस 0;
+	page_count_prop = of_get_flat_dt_prop(node, "ibm,expected#pages", NULL);
+	if (page_count_prop == NULL)
+		return 0;
 	expected_pages = (1 << be32_to_cpu(page_count_prop[0]));
-	addr_prop = of_get_flat_dt_prop(node, "reg", शून्य);
-	अगर (addr_prop == शून्य)
-		वापस 0;
+	addr_prop = of_get_flat_dt_prop(node, "reg", NULL);
+	if (addr_prop == NULL)
+		return 0;
 	phys_addr = be64_to_cpu(addr_prop[0]);
 	block_size = be64_to_cpu(addr_prop[1]);
-	अगर (block_size != (16 * GB))
-		वापस 0;
-	prपूर्णांकk(KERN_INFO "Huge page(16GB) memory: "
+	if (block_size != (16 * GB))
+		return 0;
+	printk(KERN_INFO "Huge page(16GB) memory: "
 			"addr = 0x%lX size = 0x%lX pages = %d\n",
 			phys_addr, block_size, expected_pages);
-	अगर (phys_addr + block_size * expected_pages <= memblock_end_of_DRAM()) अणु
+	if (phys_addr + block_size * expected_pages <= memblock_end_of_DRAM()) {
 		memblock_reserve(phys_addr, block_size * expected_pages);
 		pseries_add_gpage(phys_addr, block_size, expected_pages);
-	पूर्ण
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_HUGETLB_PAGE */
+	}
+	return 0;
+}
+#endif /* CONFIG_HUGETLB_PAGE */
 
-अटल व्योम mmu_psize_set_शेष_penc(व्योम)
-अणु
-	पूर्णांक bpsize, apsize;
-	क्रम (bpsize = 0; bpsize < MMU_PAGE_COUNT; bpsize++)
-		क्रम (apsize = 0; apsize < MMU_PAGE_COUNT; apsize++)
+static void mmu_psize_set_default_penc(void)
+{
+	int bpsize, apsize;
+	for (bpsize = 0; bpsize < MMU_PAGE_COUNT; bpsize++)
+		for (apsize = 0; apsize < MMU_PAGE_COUNT; apsize++)
 			mmu_psize_defs[bpsize].penc[apsize] = -1;
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PPC_64K_PAGES
+#ifdef CONFIG_PPC_64K_PAGES
 
-अटल bool might_have_hea(व्योम)
-अणु
+static bool might_have_hea(void)
+{
 	/*
 	 * The HEA ethernet adapter requires awareness of the
 	 * GX bus. Without that awareness we can easily assume
 	 * we will never see an HEA ethernet device.
 	 */
-#अगर_घोषित CONFIG_IBMEBUS
-	वापस !cpu_has_feature(CPU_FTR_ARCH_207S) &&
+#ifdef CONFIG_IBMEBUS
+	return !cpu_has_feature(CPU_FTR_ARCH_207S) &&
 		firmware_has_feature(FW_FEATURE_SPLPAR);
-#अन्यथा
-	वापस false;
-#पूर्ण_अगर
-पूर्ण
+#else
+	return false;
+#endif
+}
 
-#पूर्ण_अगर /* #अगर_घोषित CONFIG_PPC_64K_PAGES */
+#endif /* #ifdef CONFIG_PPC_64K_PAGES */
 
-अटल व्योम __init htab_scan_page_sizes(व्योम)
-अणु
-	पूर्णांक rc;
+static void __init htab_scan_page_sizes(void)
+{
+	int rc;
 
 	/* se the invalid penc to -1 */
-	mmu_psize_set_शेष_penc();
+	mmu_psize_set_default_penc();
 
 	/* Default to 4K pages only */
-	स_नकल(mmu_psize_defs, mmu_psize_शेषs,
-	       माप(mmu_psize_शेषs));
+	memcpy(mmu_psize_defs, mmu_psize_defaults,
+	       sizeof(mmu_psize_defaults));
 
 	/*
 	 * Try to find the available page sizes in the device-tree
 	 */
-	rc = of_scan_flat_dt(htab_dt_scan_page_sizes, शून्य);
-	अगर (rc == 0 && early_mmu_has_feature(MMU_FTR_16M_PAGE)) अणु
+	rc = of_scan_flat_dt(htab_dt_scan_page_sizes, NULL);
+	if (rc == 0 && early_mmu_has_feature(MMU_FTR_16M_PAGE)) {
 		/*
 		 * Nothing in the device-tree, but the CPU supports 16M pages,
-		 * so let's fallback on a known size list क्रम 16M capable CPUs.
+		 * so let's fallback on a known size list for 16M capable CPUs.
 		 */
-		स_नकल(mmu_psize_defs, mmu_psize_शेषs_gp,
-		       माप(mmu_psize_शेषs_gp));
-	पूर्ण
+		memcpy(mmu_psize_defs, mmu_psize_defaults_gp,
+		       sizeof(mmu_psize_defaults_gp));
+	}
 
-#अगर_घोषित CONFIG_HUGETLB_PAGE
-	अगर (!hugetlb_disabled && !early_radix_enabled() ) अणु
-		/* Reserve 16G huge page memory sections क्रम huge pages */
-		of_scan_flat_dt(htab_dt_scan_hugepage_blocks, शून्य);
-	पूर्ण
-#पूर्ण_अगर /* CONFIG_HUGETLB_PAGE */
-पूर्ण
+#ifdef CONFIG_HUGETLB_PAGE
+	if (!hugetlb_disabled && !early_radix_enabled() ) {
+		/* Reserve 16G huge page memory sections for huge pages */
+		of_scan_flat_dt(htab_dt_scan_hugepage_blocks, NULL);
+	}
+#endif /* CONFIG_HUGETLB_PAGE */
+}
 
 /*
  * Fill in the hpte_page_sizes[] array.
- * We go through the mmu_psize_defs[] array looking क्रम all the
+ * We go through the mmu_psize_defs[] array looking for all the
  * supported base/actual page size combinations.  Each combination
  * has a unique pagesize encoding (penc) value in the low bits of
  * the LP field of the HPTE.  For actual page sizes less than 1MB,
- * some of the upper LP bits are used क्रम RPN bits, meaning that
+ * some of the upper LP bits are used for RPN bits, meaning that
  * we need to fill in several entries in hpte_page_sizes[].
  *
- * In diagrammatic क्रमm, with r = RPN bits and z = page size bits:
+ * In diagrammatic form, with r = RPN bits and z = page size bits:
  *        PTE LP     actual page size
  *    rrrr rrrz		>=8KB
  *    rrrr rrzz		>=16KB
@@ -640,265 +639,265 @@ early_param("disable_1tb_segments", parse_disable_1tb_segments);
  *    rrrr zzzz		>=64KB
  *    ...
  *
- * The zzzz bits are implementation-specअगरic but are chosen so that
- * no encoding क्रम a larger page size uses the same value in its
- * low-order N bits as the encoding क्रम the 2^(12+N) byte page size
- * (अगर it exists).
+ * The zzzz bits are implementation-specific but are chosen so that
+ * no encoding for a larger page size uses the same value in its
+ * low-order N bits as the encoding for the 2^(12+N) byte page size
+ * (if it exists).
  */
-अटल व्योम init_hpte_page_sizes(व्योम)
-अणु
-	दीर्घ पूर्णांक ap, bp;
-	दीर्घ पूर्णांक shअगरt, penc;
+static void init_hpte_page_sizes(void)
+{
+	long int ap, bp;
+	long int shift, penc;
 
-	क्रम (bp = 0; bp < MMU_PAGE_COUNT; ++bp) अणु
-		अगर (!mmu_psize_defs[bp].shअगरt)
-			जारी;	/* not a supported page size */
-		क्रम (ap = bp; ap < MMU_PAGE_COUNT; ++ap) अणु
+	for (bp = 0; bp < MMU_PAGE_COUNT; ++bp) {
+		if (!mmu_psize_defs[bp].shift)
+			continue;	/* not a supported page size */
+		for (ap = bp; ap < MMU_PAGE_COUNT; ++ap) {
 			penc = mmu_psize_defs[bp].penc[ap];
-			अगर (penc == -1 || !mmu_psize_defs[ap].shअगरt)
-				जारी;
-			shअगरt = mmu_psize_defs[ap].shअगरt - LP_SHIFT;
-			अगर (shअगरt <= 0)
-				जारी;	/* should never happen */
+			if (penc == -1 || !mmu_psize_defs[ap].shift)
+				continue;
+			shift = mmu_psize_defs[ap].shift - LP_SHIFT;
+			if (shift <= 0)
+				continue;	/* should never happen */
 			/*
 			 * For page sizes less than 1MB, this loop
-			 * replicates the entry क्रम all possible values
+			 * replicates the entry for all possible values
 			 * of the rrrr bits.
 			 */
-			जबतक (penc < (1 << LP_BITS)) अणु
+			while (penc < (1 << LP_BITS)) {
 				hpte_page_sizes[penc] = (ap << 4) | bp;
-				penc += 1 << shअगरt;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+				penc += 1 << shift;
+			}
+		}
+	}
+}
 
-अटल व्योम __init htab_init_page_sizes(व्योम)
-अणु
+static void __init htab_init_page_sizes(void)
+{
 	bool aligned = true;
 	init_hpte_page_sizes();
 
-	अगर (!debug_pagealloc_enabled()) अणु
+	if (!debug_pagealloc_enabled()) {
 		/*
-		 * Pick a size क्रम the linear mapping. Currently, we only
-		 * support 16M, 1M and 4K which is the शेष
+		 * Pick a size for the linear mapping. Currently, we only
+		 * support 16M, 1M and 4K which is the default
 		 */
-		अगर (IS_ENABLED(CONFIG_STRICT_KERNEL_RWX) &&
-		    (अचिन्हित दीर्घ)_stext % 0x1000000) अणु
-			अगर (mmu_psize_defs[MMU_PAGE_16M].shअगरt)
+		if (IS_ENABLED(CONFIG_STRICT_KERNEL_RWX) &&
+		    (unsigned long)_stext % 0x1000000) {
+			if (mmu_psize_defs[MMU_PAGE_16M].shift)
 				pr_warn("Kernel not 16M aligned, disabling 16M linear map alignment\n");
 			aligned = false;
-		पूर्ण
+		}
 
-		अगर (mmu_psize_defs[MMU_PAGE_16M].shअगरt && aligned)
+		if (mmu_psize_defs[MMU_PAGE_16M].shift && aligned)
 			mmu_linear_psize = MMU_PAGE_16M;
-		अन्यथा अगर (mmu_psize_defs[MMU_PAGE_1M].shअगरt)
+		else if (mmu_psize_defs[MMU_PAGE_1M].shift)
 			mmu_linear_psize = MMU_PAGE_1M;
-	पूर्ण
+	}
 
-#अगर_घोषित CONFIG_PPC_64K_PAGES
+#ifdef CONFIG_PPC_64K_PAGES
 	/*
-	 * Pick a size क्रम the ordinary pages. Default is 4K, we support
-	 * 64K क्रम user mappings and vदो_स्मृति अगर supported by the processor.
-	 * We only use 64k क्रम ioremap अगर the processor
+	 * Pick a size for the ordinary pages. Default is 4K, we support
+	 * 64K for user mappings and vmalloc if supported by the processor.
+	 * We only use 64k for ioremap if the processor
 	 * (and firmware) support cache-inhibited large pages.
 	 * If not, we use 4k and set mmu_ci_restrictions so that
-	 * hash_page knows to चयन processes that use cache-inhibited
+	 * hash_page knows to switch processes that use cache-inhibited
 	 * mappings to 4k pages.
 	 */
-	अगर (mmu_psize_defs[MMU_PAGE_64K].shअगरt) अणु
-		mmu_भव_psize = MMU_PAGE_64K;
-		mmu_vदो_स्मृति_psize = MMU_PAGE_64K;
-		अगर (mmu_linear_psize == MMU_PAGE_4K)
+	if (mmu_psize_defs[MMU_PAGE_64K].shift) {
+		mmu_virtual_psize = MMU_PAGE_64K;
+		mmu_vmalloc_psize = MMU_PAGE_64K;
+		if (mmu_linear_psize == MMU_PAGE_4K)
 			mmu_linear_psize = MMU_PAGE_64K;
-		अगर (mmu_has_feature(MMU_FTR_CI_LARGE_PAGE)) अणु
+		if (mmu_has_feature(MMU_FTR_CI_LARGE_PAGE)) {
 			/*
-			 * When running on pSeries using 64k pages क्रम ioremap
-			 * would stop us accessing the HEA ethernet. So अगर we
+			 * When running on pSeries using 64k pages for ioremap
+			 * would stop us accessing the HEA ethernet. So if we
 			 * have the chance of ever seeing one, stay at 4k.
 			 */
-			अगर (!might_have_hea())
+			if (!might_have_hea())
 				mmu_io_psize = MMU_PAGE_64K;
-		पूर्ण अन्यथा
+		} else
 			mmu_ci_restrictions = 1;
-	पूर्ण
-#पूर्ण_अगर /* CONFIG_PPC_64K_PAGES */
+	}
+#endif /* CONFIG_PPC_64K_PAGES */
 
-#अगर_घोषित CONFIG_SPARSEMEM_VMEMMAP
+#ifdef CONFIG_SPARSEMEM_VMEMMAP
 	/*
-	 * We try to use 16M pages क्रम vmemmap अगर that is supported
+	 * We try to use 16M pages for vmemmap if that is supported
 	 * and we have at least 1G of RAM at boot
 	 */
-	अगर (mmu_psize_defs[MMU_PAGE_16M].shअगरt &&
+	if (mmu_psize_defs[MMU_PAGE_16M].shift &&
 	    memblock_phys_mem_size() >= 0x40000000)
 		mmu_vmemmap_psize = MMU_PAGE_16M;
-	अन्यथा
-		mmu_vmemmap_psize = mmu_भव_psize;
-#पूर्ण_अगर /* CONFIG_SPARSEMEM_VMEMMAP */
+	else
+		mmu_vmemmap_psize = mmu_virtual_psize;
+#endif /* CONFIG_SPARSEMEM_VMEMMAP */
 
-	prपूर्णांकk(KERN_DEBUG "Page orders: linear mapping = %d, "
+	printk(KERN_DEBUG "Page orders: linear mapping = %d, "
 	       "virtual = %d, io = %d"
-#अगर_घोषित CONFIG_SPARSEMEM_VMEMMAP
+#ifdef CONFIG_SPARSEMEM_VMEMMAP
 	       ", vmemmap = %d"
-#पूर्ण_अगर
+#endif
 	       "\n",
-	       mmu_psize_defs[mmu_linear_psize].shअगरt,
-	       mmu_psize_defs[mmu_भव_psize].shअगरt,
-	       mmu_psize_defs[mmu_io_psize].shअगरt
-#अगर_घोषित CONFIG_SPARSEMEM_VMEMMAP
-	       ,mmu_psize_defs[mmu_vmemmap_psize].shअगरt
-#पूर्ण_अगर
+	       mmu_psize_defs[mmu_linear_psize].shift,
+	       mmu_psize_defs[mmu_virtual_psize].shift,
+	       mmu_psize_defs[mmu_io_psize].shift
+#ifdef CONFIG_SPARSEMEM_VMEMMAP
+	       ,mmu_psize_defs[mmu_vmemmap_psize].shift
+#endif
 	       );
-पूर्ण
+}
 
-अटल पूर्णांक __init htab_dt_scan_pftsize(अचिन्हित दीर्घ node,
-				       स्थिर अक्षर *uname, पूर्णांक depth,
-				       व्योम *data)
-अणु
-	स्थिर अक्षर *type = of_get_flat_dt_prop(node, "device_type", शून्य);
-	स्थिर __be32 *prop;
+static int __init htab_dt_scan_pftsize(unsigned long node,
+				       const char *uname, int depth,
+				       void *data)
+{
+	const char *type = of_get_flat_dt_prop(node, "device_type", NULL);
+	const __be32 *prop;
 
 	/* We are scanning "cpu" nodes only */
-	अगर (type == शून्य || म_भेद(type, "cpu") != 0)
-		वापस 0;
+	if (type == NULL || strcmp(type, "cpu") != 0)
+		return 0;
 
-	prop = of_get_flat_dt_prop(node, "ibm,pft-size", शून्य);
-	अगर (prop != शून्य) अणु
+	prop = of_get_flat_dt_prop(node, "ibm,pft-size", NULL);
+	if (prop != NULL) {
 		/* pft_size[0] is the NUMA CEC cookie */
 		ppc64_pft_size = be32_to_cpu(prop[1]);
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 1;
+	}
+	return 0;
+}
 
-अचिन्हित htab_shअगरt_क्रम_mem_size(अचिन्हित दीर्घ mem_size)
-अणु
-	अचिन्हित memshअगरt = __ilog2(mem_size);
-	अचिन्हित pshअगरt = mmu_psize_defs[mmu_भव_psize].shअगरt;
-	अचिन्हित pteg_shअगरt;
+unsigned htab_shift_for_mem_size(unsigned long mem_size)
+{
+	unsigned memshift = __ilog2(mem_size);
+	unsigned pshift = mmu_psize_defs[mmu_virtual_psize].shift;
+	unsigned pteg_shift;
 
-	/* round mem_size up to next घातer of 2 */
-	अगर ((1UL << memshअगरt) < mem_size)
-		memshअगरt += 1;
+	/* round mem_size up to next power of 2 */
+	if ((1UL << memshift) < mem_size)
+		memshift += 1;
 
-	/* aim क्रम 2 pages / pteg */
-	pteg_shअगरt = memshअगरt - (pshअगरt + 1);
+	/* aim for 2 pages / pteg */
+	pteg_shift = memshift - (pshift + 1);
 
 	/*
 	 * 2^11 PTEGS of 128 bytes each, ie. 2^18 bytes is the minimum htab
 	 * size permitted by the architecture.
 	 */
-	वापस max(pteg_shअगरt + 7, 18U);
-पूर्ण
+	return max(pteg_shift + 7, 18U);
+}
 
-अटल अचिन्हित दीर्घ __init htab_get_table_size(व्योम)
-अणु
+static unsigned long __init htab_get_table_size(void)
+{
 	/*
-	 * If hash size isn't alपढ़ोy provided by the platक्रमm, we try to
+	 * If hash size isn't already provided by the platform, we try to
 	 * retrieve it from the device-tree. If it's not there neither, we
 	 * calculate it now based on the total RAM size
 	 */
-	अगर (ppc64_pft_size == 0)
-		of_scan_flat_dt(htab_dt_scan_pftsize, शून्य);
-	अगर (ppc64_pft_size)
-		वापस 1UL << ppc64_pft_size;
+	if (ppc64_pft_size == 0)
+		of_scan_flat_dt(htab_dt_scan_pftsize, NULL);
+	if (ppc64_pft_size)
+		return 1UL << ppc64_pft_size;
 
-	वापस 1UL << htab_shअगरt_क्रम_mem_size(memblock_phys_mem_size());
-पूर्ण
+	return 1UL << htab_shift_for_mem_size(memblock_phys_mem_size());
+}
 
-#अगर_घोषित CONFIG_MEMORY_HOTPLUG
-अटल पूर्णांक resize_hpt_क्रम_hotplug(अचिन्हित दीर्घ new_mem_size)
-अणु
-	अचिन्हित target_hpt_shअगरt;
+#ifdef CONFIG_MEMORY_HOTPLUG
+static int resize_hpt_for_hotplug(unsigned long new_mem_size)
+{
+	unsigned target_hpt_shift;
 
-	अगर (!mmu_hash_ops.resize_hpt)
-		वापस 0;
+	if (!mmu_hash_ops.resize_hpt)
+		return 0;
 
-	target_hpt_shअगरt = htab_shअगरt_क्रम_mem_size(new_mem_size);
+	target_hpt_shift = htab_shift_for_mem_size(new_mem_size);
 
 	/*
-	 * To aव्योम lots of HPT resizes अगर memory size is fluctuating
+	 * To avoid lots of HPT resizes if memory size is fluctuating
 	 * across a boundary, we deliberately have some hysterisis
-	 * here: we immediately increase the HPT size अगर the target
-	 * shअगरt exceeds the current shअगरt, but we won't attempt to
-	 * reduce unless the target shअगरt is at least 2 below the
-	 * current shअगरt
+	 * here: we immediately increase the HPT size if the target
+	 * shift exceeds the current shift, but we won't attempt to
+	 * reduce unless the target shift is at least 2 below the
+	 * current shift
 	 */
-	अगर (target_hpt_shअगरt > ppc64_pft_size ||
-	    target_hpt_shअगरt < ppc64_pft_size - 1)
-		वापस mmu_hash_ops.resize_hpt(target_hpt_shअगरt);
+	if (target_hpt_shift > ppc64_pft_size ||
+	    target_hpt_shift < ppc64_pft_size - 1)
+		return mmu_hash_ops.resize_hpt(target_hpt_shift);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hash__create_section_mapping(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end,
-				 पूर्णांक nid, pgprot_t prot)
-अणु
-	पूर्णांक rc;
+int hash__create_section_mapping(unsigned long start, unsigned long end,
+				 int nid, pgprot_t prot)
+{
+	int rc;
 
-	अगर (end >= H_VMALLOC_START) अणु
+	if (end >= H_VMALLOC_START) {
 		pr_warn("Outside the supported range\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	resize_hpt_क्रम_hotplug(memblock_phys_mem_size());
+	resize_hpt_for_hotplug(memblock_phys_mem_size());
 
 	rc = htab_bolt_mapping(start, end, __pa(start),
 			       pgprot_val(prot), mmu_linear_psize,
 			       mmu_kernel_ssize);
 
-	अगर (rc < 0) अणु
-		पूर्णांक rc2 = htab_हटाओ_mapping(start, end, mmu_linear_psize,
+	if (rc < 0) {
+		int rc2 = htab_remove_mapping(start, end, mmu_linear_psize,
 					      mmu_kernel_ssize);
 		BUG_ON(rc2 && (rc2 != -ENOENT));
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
-पूर्णांक hash__हटाओ_section_mapping(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-	पूर्णांक rc = htab_हटाओ_mapping(start, end, mmu_linear_psize,
+int hash__remove_section_mapping(unsigned long start, unsigned long end)
+{
+	int rc = htab_remove_mapping(start, end, mmu_linear_psize,
 				     mmu_kernel_ssize);
 
-	अगर (resize_hpt_क्रम_hotplug(memblock_phys_mem_size()) == -ENOSPC)
+	if (resize_hpt_for_hotplug(memblock_phys_mem_size()) == -ENOSPC)
 		pr_warn("Hash collision while resizing HPT\n");
 
-	वापस rc;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_MEMORY_HOTPLUG */
+	return rc;
+}
+#endif /* CONFIG_MEMORY_HOTPLUG */
 
-अटल व्योम __init hash_init_partition_table(phys_addr_t hash_table,
-					     अचिन्हित दीर्घ htab_size)
-अणु
+static void __init hash_init_partition_table(phys_addr_t hash_table,
+					     unsigned long htab_size)
+{
 	mmu_partition_table_init();
 
 	/*
-	 * PS field (VRMA page size) is not used क्रम LPID 0, hence set to 0.
+	 * PS field (VRMA page size) is not used for LPID 0, hence set to 0.
 	 * For now, UPRT is 0 and we have no segment table.
 	 */
 	htab_size =  __ilog2(htab_size) - 18;
 	mmu_partition_table_set_entry(0, hash_table | htab_size, 0, false);
 	pr_info("Partition table %p\n", partition_tb);
-पूर्ण
+}
 
-अटल व्योम __init htab_initialize(व्योम)
-अणु
-	अचिन्हित दीर्घ table;
-	अचिन्हित दीर्घ pteg_count;
-	अचिन्हित दीर्घ prot;
+static void __init htab_initialize(void)
+{
+	unsigned long table;
+	unsigned long pteg_count;
+	unsigned long prot;
 	phys_addr_t base = 0, size = 0, end;
 	u64 i;
 
 	DBG(" -> htab_initialize()\n");
 
-	अगर (mmu_has_feature(MMU_FTR_1T_SEGMENT)) अणु
+	if (mmu_has_feature(MMU_FTR_1T_SEGMENT)) {
 		mmu_kernel_ssize = MMU_SEGSIZE_1T;
 		mmu_highuser_ssize = MMU_SEGSIZE_1T;
-		prपूर्णांकk(KERN_INFO "Using 1TB segments\n");
-	पूर्ण
+		printk(KERN_INFO "Using 1TB segments\n");
+	}
 
-	अगर (stress_slb_enabled)
-		अटल_branch_enable(&stress_slb_key);
+	if (stress_slb_enabled)
+		static_branch_enable(&stress_slb_key);
 
 	/*
 	 * Calculate the required size of the htab.  We want the number of
@@ -909,40 +908,40 @@ early_param("disable_1tb_segments", parse_disable_1tb_segments);
 
 	htab_hash_mask = pteg_count - 1;
 
-	अगर (firmware_has_feature(FW_FEATURE_LPAR) ||
-	    firmware_has_feature(FW_FEATURE_PS3_LV1)) अणु
+	if (firmware_has_feature(FW_FEATURE_LPAR) ||
+	    firmware_has_feature(FW_FEATURE_PS3_LV1)) {
 		/* Using a hypervisor which owns the htab */
-		htab_address = शून्य;
+		htab_address = NULL;
 		_SDR1 = 0;
-#अगर_घोषित CONFIG_FA_DUMP
+#ifdef CONFIG_FA_DUMP
 		/*
 		 * If firmware assisted dump is active firmware preserves
-		 * the contents of htab aदीर्घ with entire partition memory.
-		 * Clear the htab अगर firmware assisted dump is active so
-		 * that we करोnt end up using old mappings.
+		 * the contents of htab along with entire partition memory.
+		 * Clear the htab if firmware assisted dump is active so
+		 * that we dont end up using old mappings.
 		 */
-		अगर (is_fadump_active() && mmu_hash_ops.hpte_clear_all)
+		if (is_fadump_active() && mmu_hash_ops.hpte_clear_all)
 			mmu_hash_ops.hpte_clear_all();
-#पूर्ण_अगर
-	पूर्ण अन्यथा अणु
-		अचिन्हित दीर्घ limit = MEMBLOCK_ALLOC_ANYWHERE;
+#endif
+	} else {
+		unsigned long limit = MEMBLOCK_ALLOC_ANYWHERE;
 
-#अगर_घोषित CONFIG_PPC_CELL
+#ifdef CONFIG_PPC_CELL
 		/*
-		 * Cell may require the hash table करोwn low when using the
+		 * Cell may require the hash table down low when using the
 		 * Axon IOMMU in order to fit the dynamic region over it, see
 		 * comments in cell/iommu.c
 		 */
-		अगर (fdt_subnode_offset(initial_boot_params, 0, "axon") > 0) अणु
+		if (fdt_subnode_offset(initial_boot_params, 0, "axon") > 0) {
 			limit = 0x80000000;
 			pr_info("Hash table forced below 2G for Axon IOMMU\n");
-		पूर्ण
-#पूर्ण_अगर /* CONFIG_PPC_CELL */
+		}
+#endif /* CONFIG_PPC_CELL */
 
 		table = memblock_phys_alloc_range(htab_size_bytes,
 						  htab_size_bytes,
 						  0, limit);
-		अगर (!table)
+		if (!table)
 			panic("ERROR: Failed to allocate %pa bytes below %pa\n",
 			      &htab_size_bytes, &limit);
 
@@ -951,92 +950,92 @@ early_param("disable_1tb_segments", parse_disable_1tb_segments);
 
 		htab_address = __va(table);
 
-		/* htab असलolute addr + encoded htअसलize */
+		/* htab absolute addr + encoded htabsize */
 		_SDR1 = table + __ilog2(htab_size_bytes) - 18;
 
 		/* Initialize the HPT with no entries */
-		स_रखो((व्योम *)table, 0, htab_size_bytes);
+		memset((void *)table, 0, htab_size_bytes);
 
-		अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+		if (!cpu_has_feature(CPU_FTR_ARCH_300))
 			/* Set SDR1 */
 			mtspr(SPRN_SDR1, _SDR1);
-		अन्यथा
+		else
 			hash_init_partition_table(table, htab_size_bytes);
-	पूर्ण
+	}
 
 	prot = pgprot_val(PAGE_KERNEL);
 
-#अगर_घोषित CONFIG_DEBUG_PAGEALLOC
-	अगर (debug_pagealloc_enabled()) अणु
+#ifdef CONFIG_DEBUG_PAGEALLOC
+	if (debug_pagealloc_enabled()) {
 		linear_map_hash_count = memblock_end_of_DRAM() >> PAGE_SHIFT;
 		linear_map_hash_slots = memblock_alloc_try_nid(
 				linear_map_hash_count, 1, MEMBLOCK_LOW_LIMIT,
 				ppc64_rma_size,	NUMA_NO_NODE);
-		अगर (!linear_map_hash_slots)
+		if (!linear_map_hash_slots)
 			panic("%s: Failed to allocate %lu bytes max_addr=%pa\n",
 			      __func__, linear_map_hash_count, &ppc64_rma_size);
-	पूर्ण
-#पूर्ण_अगर /* CONFIG_DEBUG_PAGEALLOC */
+	}
+#endif /* CONFIG_DEBUG_PAGEALLOC */
 
 	/* create bolted the linear mapping in the hash table */
-	क्रम_each_mem_range(i, &base, &end) अणु
+	for_each_mem_range(i, &base, &end) {
 		size = end - base;
-		base = (अचिन्हित दीर्घ)__va(base);
+		base = (unsigned long)__va(base);
 
 		DBG("creating mapping for region: %lx..%lx (prot: %lx)\n",
 		    base, size, prot);
 
-		अगर ((base + size) >= H_VMALLOC_START) अणु
+		if ((base + size) >= H_VMALLOC_START) {
 			pr_warn("Outside the supported range\n");
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		BUG_ON(htab_bolt_mapping(base, base + size, __pa(base),
 				prot, mmu_linear_psize, mmu_kernel_ssize));
-	पूर्ण
+	}
 	memblock_set_current_limit(MEMBLOCK_ALLOC_ANYWHERE);
 
 	/*
 	 * If we have a memory_limit and we've allocated TCEs then we need to
 	 * explicitly map the TCE area at the top of RAM. We also cope with the
-	 * हाल that the TCEs start below memory_limit.
+	 * case that the TCEs start below memory_limit.
 	 * tce_alloc_start/end are 16MB aligned so the mapping should work
-	 * क्रम either 4K or 16MB pages.
+	 * for either 4K or 16MB pages.
 	 */
-	अगर (tce_alloc_start) अणु
-		tce_alloc_start = (अचिन्हित दीर्घ)__va(tce_alloc_start);
-		tce_alloc_end = (अचिन्हित दीर्घ)__va(tce_alloc_end);
+	if (tce_alloc_start) {
+		tce_alloc_start = (unsigned long)__va(tce_alloc_start);
+		tce_alloc_end = (unsigned long)__va(tce_alloc_end);
 
-		अगर (base + size >= tce_alloc_start)
+		if (base + size >= tce_alloc_start)
 			tce_alloc_start = base + size + 1;
 
 		BUG_ON(htab_bolt_mapping(tce_alloc_start, tce_alloc_end,
 					 __pa(tce_alloc_start), prot,
 					 mmu_linear_psize, mmu_kernel_ssize));
-	पूर्ण
+	}
 
 
 	DBG(" <- htab_initialize()\n");
-पूर्ण
-#अघोषित KB
-#अघोषित MB
+}
+#undef KB
+#undef MB
 
-व्योम __init hash__early_init_devtree(व्योम)
-अणु
+void __init hash__early_init_devtree(void)
+{
 	/* Initialize segment sizes */
-	of_scan_flat_dt(htab_dt_scan_seg_sizes, शून्य);
+	of_scan_flat_dt(htab_dt_scan_seg_sizes, NULL);
 
 	/* Initialize page sizes */
 	htab_scan_page_sizes();
-पूर्ण
+}
 
-अटल काष्ठा hash_mm_context init_hash_mm_context;
-व्योम __init hash__early_init_mmu(व्योम)
-अणु
-#अगर_अघोषित CONFIG_PPC_64K_PAGES
+static struct hash_mm_context init_hash_mm_context;
+void __init hash__early_init_mmu(void)
+{
+#ifndef CONFIG_PPC_64K_PAGES
 	/*
-	 * We have code in __hash_page_4K() and अन्यथाwhere, which assumes it can
-	 * करो the following:
+	 * We have code in __hash_page_4K() and elsewhere, which assumes it can
+	 * do the following:
 	 *   new_pte |= (slot << H_PAGE_F_GIX_SHIFT) & (H_PAGE_F_SECOND | H_PAGE_F_GIX);
 	 *
 	 * Where the slot number is between 0-15, and values of 8-15 indicate
@@ -1046,7 +1045,7 @@ early_param("disable_1tb_segments", parse_disable_1tb_segments);
 	 * with a BUILD_BUG_ON().
 	 */
 	BUILD_BUG_ON(H_PAGE_F_SECOND != (1ul  << (H_PAGE_F_GIX_SHIFT + 3)));
-#पूर्ण_अगर /* CONFIG_PPC_64K_PAGES */
+#endif /* CONFIG_PPC_64K_PAGES */
 
 	htab_init_page_sizes();
 
@@ -1054,9 +1053,9 @@ early_param("disable_1tb_segments", parse_disable_1tb_segments);
 	 * initialize page table size
 	 */
 	__pte_frag_nr = H_PTE_FRAG_NR;
-	__pte_frag_size_shअगरt = H_PTE_FRAG_SIZE_SHIFT;
+	__pte_frag_size_shift = H_PTE_FRAG_SIZE_SHIFT;
 	__pmd_frag_nr = H_PMD_FRAG_NR;
-	__pmd_frag_size_shअगरt = H_PMD_FRAG_SIZE_SHIFT;
+	__pmd_frag_size_shift = H_PMD_FRAG_SIZE_SHIFT;
 
 	__pte_index_size = H_PTE_INDEX_SIZE;
 	__pmd_index_size = H_PMD_INDEX_SIZE;
@@ -1068,7 +1067,7 @@ early_param("disable_1tb_segments", parse_disable_1tb_segments);
 	__pud_table_size = H_PUD_TABLE_SIZE;
 	__pgd_table_size = H_PGD_TABLE_SIZE;
 	/*
-	 * 4k use hugepd क्रमmat, so क्रम hash set then to
+	 * 4k use hugepd format, so for hash set then to
 	 * zero
 	 */
 	__pmd_val_bits = HASH_PMD_VAL_BITS;
@@ -1076,31 +1075,31 @@ early_param("disable_1tb_segments", parse_disable_1tb_segments);
 	__pgd_val_bits = HASH_PGD_VAL_BITS;
 
 	__kernel_virt_start = H_KERN_VIRT_START;
-	__vदो_स्मृति_start = H_VMALLOC_START;
-	__vदो_स्मृति_end = H_VMALLOC_END;
+	__vmalloc_start = H_VMALLOC_START;
+	__vmalloc_end = H_VMALLOC_END;
 	__kernel_io_start = H_KERN_IO_START;
 	__kernel_io_end = H_KERN_IO_END;
-	vmemmap = (काष्ठा page *)H_VMEMMAP_START;
+	vmemmap = (struct page *)H_VMEMMAP_START;
 	ioremap_bot = IOREMAP_BASE;
 
-#अगर_घोषित CONFIG_PCI
+#ifdef CONFIG_PCI
 	pci_io_base = ISA_IO_BASE;
-#पूर्ण_अगर
+#endif
 
 	/* Select appropriate backend */
-	अगर (firmware_has_feature(FW_FEATURE_PS3_LV1))
+	if (firmware_has_feature(FW_FEATURE_PS3_LV1))
 		ps3_early_mm_init();
-	अन्यथा अगर (firmware_has_feature(FW_FEATURE_LPAR))
+	else if (firmware_has_feature(FW_FEATURE_LPAR))
 		hpte_init_pseries();
-	अन्यथा अगर (IS_ENABLED(CONFIG_PPC_NATIVE))
+	else if (IS_ENABLED(CONFIG_PPC_NATIVE))
 		hpte_init_native();
 
-	अगर (!mmu_hash_ops.hpte_insert)
+	if (!mmu_hash_ops.hpte_insert)
 		panic("hash__early_init_mmu: No MMU hash ops defined!\n");
 
 	/*
 	 * Initialize the MMU Hash table and create the linear mapping
-	 * of memory. Has to be करोne beक्रमe SLB initialization as this is
+	 * of memory. Has to be done before SLB initialization as this is
 	 * currently where the page size encoding is obtained.
 	 */
 	htab_initialize();
@@ -1112,182 +1111,182 @@ early_param("disable_1tb_segments", parse_disable_1tb_segments);
 	/* Initialize SLB management */
 	slb_initialize();
 
-	अगर (cpu_has_feature(CPU_FTR_ARCH_206)
+	if (cpu_has_feature(CPU_FTR_ARCH_206)
 			&& cpu_has_feature(CPU_FTR_HVMODE))
 		tlbiel_all();
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_SMP
-व्योम hash__early_init_mmu_secondary(व्योम)
-अणु
-	/* Initialize hash table क्रम that CPU */
-	अगर (!firmware_has_feature(FW_FEATURE_LPAR)) अणु
+#ifdef CONFIG_SMP
+void hash__early_init_mmu_secondary(void)
+{
+	/* Initialize hash table for that CPU */
+	if (!firmware_has_feature(FW_FEATURE_LPAR)) {
 
-		अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+		if (!cpu_has_feature(CPU_FTR_ARCH_300))
 			mtspr(SPRN_SDR1, _SDR1);
-		अन्यथा
+		else
 			set_ptcr_when_no_uv(__pa(partition_tb) |
 					    (PATB_SIZE_SHIFT - 12));
-	पूर्ण
+	}
 	/* Initialize SLB */
 	slb_initialize();
 
-	अगर (cpu_has_feature(CPU_FTR_ARCH_206)
+	if (cpu_has_feature(CPU_FTR_ARCH_206)
 			&& cpu_has_feature(CPU_FTR_HVMODE))
 		tlbiel_all();
 
-#अगर_घोषित CONFIG_PPC_MEM_KEYS
-	अगर (mmu_has_feature(MMU_FTR_PKEY))
-		mtspr(SPRN_UAMOR, शेष_uamor);
-#पूर्ण_अगर
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SMP */
+#ifdef CONFIG_PPC_MEM_KEYS
+	if (mmu_has_feature(MMU_FTR_PKEY))
+		mtspr(SPRN_UAMOR, default_uamor);
+#endif
+}
+#endif /* CONFIG_SMP */
 
 /*
- * Called by यंत्र hashtable.S क्रम करोing lazy icache flush
+ * Called by asm hashtable.S for doing lazy icache flush
  */
-अचिन्हित पूर्णांक hash_page_करो_lazy_icache(अचिन्हित पूर्णांक pp, pte_t pte, पूर्णांक trap)
-अणु
-	काष्ठा page *page;
+unsigned int hash_page_do_lazy_icache(unsigned int pp, pte_t pte, int trap)
+{
+	struct page *page;
 
-	अगर (!pfn_valid(pte_pfn(pte)))
-		वापस pp;
+	if (!pfn_valid(pte_pfn(pte)))
+		return pp;
 
 	page = pte_page(pte);
 
 	/* page is dirty */
-	अगर (!test_bit(PG_dcache_clean, &page->flags) && !PageReserved(page)) अणु
-		अगर (trap == INTERRUPT_INST_STORAGE) अणु
+	if (!test_bit(PG_dcache_clean, &page->flags) && !PageReserved(page)) {
+		if (trap == INTERRUPT_INST_STORAGE) {
 			flush_dcache_icache_page(page);
 			set_bit(PG_dcache_clean, &page->flags);
-		पूर्ण अन्यथा
+		} else
 			pp |= HPTE_R_N;
-	पूर्ण
-	वापस pp;
-पूर्ण
+	}
+	return pp;
+}
 
-#अगर_घोषित CONFIG_PPC_MM_SLICES
-अटल अचिन्हित पूर्णांक get_paca_psize(अचिन्हित दीर्घ addr)
-अणु
-	अचिन्हित अक्षर *psizes;
-	अचिन्हित दीर्घ index, mask_index;
+#ifdef CONFIG_PPC_MM_SLICES
+static unsigned int get_paca_psize(unsigned long addr)
+{
+	unsigned char *psizes;
+	unsigned long index, mask_index;
 
-	अगर (addr < SLICE_LOW_TOP) अणु
+	if (addr < SLICE_LOW_TOP) {
 		psizes = get_paca()->mm_ctx_low_slices_psize;
 		index = GET_LOW_SLICE_INDEX(addr);
-	पूर्ण अन्यथा अणु
+	} else {
 		psizes = get_paca()->mm_ctx_high_slices_psize;
 		index = GET_HIGH_SLICE_INDEX(addr);
-	पूर्ण
+	}
 	mask_index = index & 0x1;
-	वापस (psizes[index >> 1] >> (mask_index * 4)) & 0xF;
-पूर्ण
+	return (psizes[index >> 1] >> (mask_index * 4)) & 0xF;
+}
 
-#अन्यथा
-अचिन्हित पूर्णांक get_paca_psize(अचिन्हित दीर्घ addr)
-अणु
-	वापस get_paca()->mm_ctx_user_psize;
-पूर्ण
-#पूर्ण_अगर
+#else
+unsigned int get_paca_psize(unsigned long addr)
+{
+	return get_paca()->mm_ctx_user_psize;
+}
+#endif
 
 /*
  * Demote a segment to using 4k pages.
  * For now this makes the whole process use 4k pages.
  */
-#अगर_घोषित CONFIG_PPC_64K_PAGES
-व्योम demote_segment_4k(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr)
-अणु
-	अगर (get_slice_psize(mm, addr) == MMU_PAGE_4K)
-		वापस;
+#ifdef CONFIG_PPC_64K_PAGES
+void demote_segment_4k(struct mm_struct *mm, unsigned long addr)
+{
+	if (get_slice_psize(mm, addr) == MMU_PAGE_4K)
+		return;
 	slice_set_range_psize(mm, addr, 1, MMU_PAGE_4K);
 	copro_flush_all_slbs(mm);
-	अगर ((get_paca_psize(addr) != MMU_PAGE_4K) && (current->mm == mm)) अणु
+	if ((get_paca_psize(addr) != MMU_PAGE_4K) && (current->mm == mm)) {
 
 		copy_mm_to_paca(mm);
 		slb_flush_and_restore_bolted();
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PPC_64K_PAGES */
+	}
+}
+#endif /* CONFIG_PPC_64K_PAGES */
 
-#अगर_घोषित CONFIG_PPC_SUBPAGE_PROT
+#ifdef CONFIG_PPC_SUBPAGE_PROT
 /*
- * This looks up a 2-bit protection code क्रम a 4k subpage of a 64k page.
- * Userspace sets the subpage permissions using the subpage_prot प्रणाली call.
+ * This looks up a 2-bit protection code for a 4k subpage of a 64k page.
+ * Userspace sets the subpage permissions using the subpage_prot system call.
  *
- * Result is 0: full permissions, _PAGE_RW: पढ़ो-only,
+ * Result is 0: full permissions, _PAGE_RW: read-only,
  * _PAGE_RWX: no access.
  */
-अटल पूर्णांक subpage_protection(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ ea)
-अणु
-	काष्ठा subpage_prot_table *spt = mm_ctx_subpage_prot(&mm->context);
+static int subpage_protection(struct mm_struct *mm, unsigned long ea)
+{
+	struct subpage_prot_table *spt = mm_ctx_subpage_prot(&mm->context);
 	u32 spp = 0;
 	u32 **sbpm, *sbpp;
 
-	अगर (!spt)
-		वापस 0;
+	if (!spt)
+		return 0;
 
-	अगर (ea >= spt->maxaddr)
-		वापस 0;
-	अगर (ea < 0x100000000UL) अणु
+	if (ea >= spt->maxaddr)
+		return 0;
+	if (ea < 0x100000000UL) {
 		/* addresses below 4GB use spt->low_prot */
 		sbpm = spt->low_prot;
-	पूर्ण अन्यथा अणु
+	} else {
 		sbpm = spt->protptrs[ea >> SBP_L3_SHIFT];
-		अगर (!sbpm)
-			वापस 0;
-	पूर्ण
+		if (!sbpm)
+			return 0;
+	}
 	sbpp = sbpm[(ea >> SBP_L2_SHIFT) & (SBP_L2_COUNT - 1)];
-	अगर (!sbpp)
-		वापस 0;
+	if (!sbpp)
+		return 0;
 	spp = sbpp[(ea >> PAGE_SHIFT) & (SBP_L1_COUNT - 1)];
 
-	/* extract 2-bit bitfield क्रम this 4k subpage */
+	/* extract 2-bit bitfield for this 4k subpage */
 	spp >>= 30 - 2 * ((ea >> 12) & 0xf);
 
 	/*
 	 * 0 -> full premission
 	 * 1 -> Read only
 	 * 2 -> no access.
-	 * We वापस the flag that need to be cleared.
+	 * We return the flag that need to be cleared.
 	 */
 	spp = ((spp & 2) ? _PAGE_RWX : 0) | ((spp & 1) ? _PAGE_WRITE : 0);
-	वापस spp;
-पूर्ण
+	return spp;
+}
 
-#अन्यथा /* CONFIG_PPC_SUBPAGE_PROT */
-अटल अंतरभूत पूर्णांक subpage_protection(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ ea)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+#else /* CONFIG_PPC_SUBPAGE_PROT */
+static inline int subpage_protection(struct mm_struct *mm, unsigned long ea)
+{
+	return 0;
+}
+#endif
 
-व्योम hash_failure_debug(अचिन्हित दीर्घ ea, अचिन्हित दीर्घ access,
-			अचिन्हित दीर्घ vsid, अचिन्हित दीर्घ trap,
-			पूर्णांक ssize, पूर्णांक psize, पूर्णांक lpsize, अचिन्हित दीर्घ pte)
-अणु
-	अगर (!prपूर्णांकk_ratelimit())
-		वापस;
+void hash_failure_debug(unsigned long ea, unsigned long access,
+			unsigned long vsid, unsigned long trap,
+			int ssize, int psize, int lpsize, unsigned long pte)
+{
+	if (!printk_ratelimit())
+		return;
 	pr_info("mm: Hashing failure ! EA=0x%lx access=0x%lx current=%s\n",
 		ea, access, current->comm);
 	pr_info("    trap=0x%lx vsid=0x%lx ssize=%d base psize=%d psize %d pte=0x%lx\n",
 		trap, vsid, ssize, psize, lpsize, pte);
-पूर्ण
+}
 
-अटल व्योम check_paca_psize(अचिन्हित दीर्घ ea, काष्ठा mm_काष्ठा *mm,
-			     पूर्णांक psize, bool user_region)
-अणु
-	अगर (user_region) अणु
-		अगर (psize != get_paca_psize(ea)) अणु
+static void check_paca_psize(unsigned long ea, struct mm_struct *mm,
+			     int psize, bool user_region)
+{
+	if (user_region) {
+		if (psize != get_paca_psize(ea)) {
 			copy_mm_to_paca(mm);
 			slb_flush_and_restore_bolted();
-		पूर्ण
-	पूर्ण अन्यथा अगर (get_paca()->vदो_स्मृति_sllp !=
-		   mmu_psize_defs[mmu_vदो_स्मृति_psize].sllp) अणु
-		get_paca()->vदो_स्मृति_sllp =
-			mmu_psize_defs[mmu_vदो_स्मृति_psize].sllp;
-		slb_vदो_स्मृति_update();
-	पूर्ण
-पूर्ण
+		}
+	} else if (get_paca()->vmalloc_sllp !=
+		   mmu_psize_defs[mmu_vmalloc_psize].sllp) {
+		get_paca()->vmalloc_sllp =
+			mmu_psize_defs[mmu_vmalloc_psize].sllp;
+		slb_vmalloc_update();
+	}
+}
 
 /*
  * Result code is:
@@ -1296,102 +1295,102 @@ early_param("disable_1tb_segments", parse_disable_1tb_segments);
  * -1 - critical hash insertion error
  * -2 - access not permitted by subpage protection mechanism
  */
-पूर्णांक hash_page_mm(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ ea,
-		 अचिन्हित दीर्घ access, अचिन्हित दीर्घ trap,
-		 अचिन्हित दीर्घ flags)
-अणु
+int hash_page_mm(struct mm_struct *mm, unsigned long ea,
+		 unsigned long access, unsigned long trap,
+		 unsigned long flags)
+{
 	bool is_thp;
 	pgd_t *pgdir;
-	अचिन्हित दीर्घ vsid;
+	unsigned long vsid;
 	pte_t *ptep;
-	अचिन्हित hugeshअगरt;
-	पूर्णांक rc, user_region = 0;
-	पूर्णांक psize, ssize;
+	unsigned hugeshift;
+	int rc, user_region = 0;
+	int psize, ssize;
 
 	DBG_LOW("hash_page(ea=%016lx, access=%lx, trap=%lx\n",
 		ea, access, trap);
 	trace_hash_fault(ea, access, trap);
 
 	/* Get region & vsid */
-	चयन (get_region_id(ea)) अणु
-	हाल USER_REGION_ID:
+	switch (get_region_id(ea)) {
+	case USER_REGION_ID:
 		user_region = 1;
-		अगर (! mm) अणु
+		if (! mm) {
 			DBG_LOW(" user region with no mm !\n");
 			rc = 1;
-			जाओ bail;
-		पूर्ण
+			goto bail;
+		}
 		psize = get_slice_psize(mm, ea);
 		ssize = user_segment_size(ea);
 		vsid = get_user_vsid(&mm->context, ea, ssize);
-		अवरोध;
-	हाल VMALLOC_REGION_ID:
+		break;
+	case VMALLOC_REGION_ID:
 		vsid = get_kernel_vsid(ea, mmu_kernel_ssize);
-		psize = mmu_vदो_स्मृति_psize;
+		psize = mmu_vmalloc_psize;
 		ssize = mmu_kernel_ssize;
 		flags |= HPTE_USE_KERNEL_KEY;
-		अवरोध;
+		break;
 
-	हाल IO_REGION_ID:
+	case IO_REGION_ID:
 		vsid = get_kernel_vsid(ea, mmu_kernel_ssize);
 		psize = mmu_io_psize;
 		ssize = mmu_kernel_ssize;
 		flags |= HPTE_USE_KERNEL_KEY;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/*
 		 * Not a valid range
-		 * Send the problem up to करो_page_fault()
+		 * Send the problem up to do_page_fault()
 		 */
 		rc = 1;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 	DBG_LOW(" mm=%p, mm->pgdir=%p, vsid=%016lx\n", mm, mm->pgd, vsid);
 
 	/* Bad address. */
-	अगर (!vsid) अणु
+	if (!vsid) {
 		DBG_LOW("Bad address!\n");
 		rc = 1;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 	/* Get pgdir */
 	pgdir = mm->pgd;
-	अगर (pgdir == शून्य) अणु
+	if (pgdir == NULL) {
 		rc = 1;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 	/* Check CPU locality */
-	अगर (user_region && mm_is_thपढ़ो_local(mm))
+	if (user_region && mm_is_thread_local(mm))
 		flags |= HPTE_LOCAL_UPDATE;
 
-#अगर_अघोषित CONFIG_PPC_64K_PAGES
+#ifndef CONFIG_PPC_64K_PAGES
 	/*
 	 * If we use 4K pages and our psize is not 4K, then we might
 	 * be hitting a special driver mapping, and need to align the
-	 * address beक्रमe we fetch the PTE.
+	 * address before we fetch the PTE.
 	 *
-	 * It could also be a hugepage mapping, in which हाल this is
+	 * It could also be a hugepage mapping, in which case this is
 	 * not necessary, but it's not harmful, either.
 	 */
-	अगर (psize != MMU_PAGE_4K)
-		ea &= ~((1ul << mmu_psize_defs[psize].shअगरt) - 1);
-#पूर्ण_अगर /* CONFIG_PPC_64K_PAGES */
+	if (psize != MMU_PAGE_4K)
+		ea &= ~((1ul << mmu_psize_defs[psize].shift) - 1);
+#endif /* CONFIG_PPC_64K_PAGES */
 
 	/* Get PTE and page size from page tables */
-	ptep = find_linux_pte(pgdir, ea, &is_thp, &hugeshअगरt);
-	अगर (ptep == शून्य || !pte_present(*ptep)) अणु
+	ptep = find_linux_pte(pgdir, ea, &is_thp, &hugeshift);
+	if (ptep == NULL || !pte_present(*ptep)) {
 		DBG_LOW(" no PTE !\n");
 		rc = 1;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 	/*
 	 * Add _PAGE_PRESENT to the required access perm. If there are parallel
 	 * updates to the pte that can possibly clear _PAGE_PTE, catch that too.
 	 *
-	 * We can safely use the वापस pte address in rest of the function
-	 * because we करो set H_PAGE_BUSY which prevents further updates to pte
+	 * We can safely use the return pte address in rest of the function
+	 * because we do set H_PAGE_BUSY which prevents further updates to pte
 	 * from generic code.
 	 */
 	access |= _PAGE_PRESENT | _PAGE_PTE;
@@ -1400,150 +1399,150 @@ early_param("disable_1tb_segments", parse_disable_1tb_segments);
 	 * Pre-check access permissions (will be re-checked atomically
 	 * in __hash_page_XX but this pre-check is a fast path
 	 */
-	अगर (!check_pte_access(access, pte_val(*ptep))) अणु
+	if (!check_pte_access(access, pte_val(*ptep))) {
 		DBG_LOW(" no access !\n");
 		rc = 1;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
-	अगर (hugeshअगरt) अणु
-		अगर (is_thp)
+	if (hugeshift) {
+		if (is_thp)
 			rc = __hash_page_thp(ea, access, vsid, (pmd_t *)ptep,
 					     trap, flags, ssize, psize);
-#अगर_घोषित CONFIG_HUGETLB_PAGE
-		अन्यथा
+#ifdef CONFIG_HUGETLB_PAGE
+		else
 			rc = __hash_page_huge(ea, access, vsid, ptep, trap,
-					      flags, ssize, hugeshअगरt, psize);
-#अन्यथा
-		अन्यथा अणु
+					      flags, ssize, hugeshift, psize);
+#else
+		else {
 			/*
-			 * अगर we have hugeshअगरt, and is not transhuge with
+			 * if we have hugeshift, and is not transhuge with
 			 * hugetlb disabled, something is really wrong.
 			 */
 			rc = 1;
 			WARN_ON(1);
-		पूर्ण
-#पूर्ण_अगर
-		अगर (current->mm == mm)
+		}
+#endif
+		if (current->mm == mm)
 			check_paca_psize(ea, mm, psize, user_region);
 
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
-#अगर_अघोषित CONFIG_PPC_64K_PAGES
+#ifndef CONFIG_PPC_64K_PAGES
 	DBG_LOW(" i-pte: %016lx\n", pte_val(*ptep));
-#अन्यथा
+#else
 	DBG_LOW(" i-pte: %016lx %016lx\n", pte_val(*ptep),
 		pte_val(*(ptep + PTRS_PER_PTE)));
-#पूर्ण_अगर
+#endif
 	/* Do actual hashing */
-#अगर_घोषित CONFIG_PPC_64K_PAGES
+#ifdef CONFIG_PPC_64K_PAGES
 	/* If H_PAGE_4K_PFN is set, make sure this is a 4k segment */
-	अगर ((pte_val(*ptep) & H_PAGE_4K_PFN) && psize == MMU_PAGE_64K) अणु
+	if ((pte_val(*ptep) & H_PAGE_4K_PFN) && psize == MMU_PAGE_64K) {
 		demote_segment_4k(mm, ea);
 		psize = MMU_PAGE_4K;
-	पूर्ण
+	}
 
 	/*
 	 * If this PTE is non-cacheable and we have restrictions on
-	 * using non cacheable large pages, then we चयन to 4k
+	 * using non cacheable large pages, then we switch to 4k
 	 */
-	अगर (mmu_ci_restrictions && psize == MMU_PAGE_64K && pte_ci(*ptep)) अणु
-		अगर (user_region) अणु
+	if (mmu_ci_restrictions && psize == MMU_PAGE_64K && pte_ci(*ptep)) {
+		if (user_region) {
 			demote_segment_4k(mm, ea);
 			psize = MMU_PAGE_4K;
-		पूर्ण अन्यथा अगर (ea < VMALLOC_END) अणु
+		} else if (ea < VMALLOC_END) {
 			/*
 			 * some driver did a non-cacheable mapping
-			 * in vदो_स्मृति space, so चयन vदो_स्मृति
+			 * in vmalloc space, so switch vmalloc
 			 * to 4k pages
 			 */
-			prपूर्णांकk(KERN_ALERT "Reducing vmalloc segment "
+			printk(KERN_ALERT "Reducing vmalloc segment "
 			       "to 4kB pages because of "
 			       "non-cacheable mapping\n");
-			psize = mmu_vदो_स्मृति_psize = MMU_PAGE_4K;
+			psize = mmu_vmalloc_psize = MMU_PAGE_4K;
 			copro_flush_all_slbs(mm);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-#पूर्ण_अगर /* CONFIG_PPC_64K_PAGES */
+#endif /* CONFIG_PPC_64K_PAGES */
 
-	अगर (current->mm == mm)
+	if (current->mm == mm)
 		check_paca_psize(ea, mm, psize, user_region);
 
-#अगर_घोषित CONFIG_PPC_64K_PAGES
-	अगर (psize == MMU_PAGE_64K)
+#ifdef CONFIG_PPC_64K_PAGES
+	if (psize == MMU_PAGE_64K)
 		rc = __hash_page_64K(ea, access, vsid, ptep, trap,
 				     flags, ssize);
-	अन्यथा
-#पूर्ण_अगर /* CONFIG_PPC_64K_PAGES */
-	अणु
-		पूर्णांक spp = subpage_protection(mm, ea);
-		अगर (access & spp)
+	else
+#endif /* CONFIG_PPC_64K_PAGES */
+	{
+		int spp = subpage_protection(mm, ea);
+		if (access & spp)
 			rc = -2;
-		अन्यथा
+		else
 			rc = __hash_page_4K(ea, access, vsid, ptep, trap,
 					    flags, ssize, spp);
-	पूर्ण
+	}
 
 	/*
-	 * Dump some info in हाल of hash insertion failure, they should
-	 * never happen so it is really useful to know अगर/when they करो
+	 * Dump some info in case of hash insertion failure, they should
+	 * never happen so it is really useful to know if/when they do
 	 */
-	अगर (rc == -1)
+	if (rc == -1)
 		hash_failure_debug(ea, access, vsid, trap, ssize, psize,
 				   psize, pte_val(*ptep));
-#अगर_अघोषित CONFIG_PPC_64K_PAGES
+#ifndef CONFIG_PPC_64K_PAGES
 	DBG_LOW(" o-pte: %016lx\n", pte_val(*ptep));
-#अन्यथा
+#else
 	DBG_LOW(" o-pte: %016lx %016lx\n", pte_val(*ptep),
 		pte_val(*(ptep + PTRS_PER_PTE)));
-#पूर्ण_अगर
+#endif
 	DBG_LOW(" -> rc=%d\n", rc);
 
 bail:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(hash_page_mm);
 
-पूर्णांक hash_page(अचिन्हित दीर्घ ea, अचिन्हित दीर्घ access, अचिन्हित दीर्घ trap,
-	      अचिन्हित दीर्घ dsisr)
-अणु
-	अचिन्हित दीर्घ flags = 0;
-	काष्ठा mm_काष्ठा *mm = current->mm;
+int hash_page(unsigned long ea, unsigned long access, unsigned long trap,
+	      unsigned long dsisr)
+{
+	unsigned long flags = 0;
+	struct mm_struct *mm = current->mm;
 
-	अगर ((get_region_id(ea) == VMALLOC_REGION_ID) ||
+	if ((get_region_id(ea) == VMALLOC_REGION_ID) ||
 	    (get_region_id(ea) == IO_REGION_ID))
 		mm = &init_mm;
 
-	अगर (dsisr & DSISR_NOHPTE)
+	if (dsisr & DSISR_NOHPTE)
 		flags |= HPTE_NOHPTE_UPDATE;
 
-	वापस hash_page_mm(mm, ea, access, trap, flags);
-पूर्ण
+	return hash_page_mm(mm, ea, access, trap, flags);
+}
 EXPORT_SYMBOL_GPL(hash_page);
 
-DECLARE_INTERRUPT_HANDLER_RET(__करो_hash_fault);
-DEFINE_INTERRUPT_HANDLER_RET(__करो_hash_fault)
-अणु
-	अचिन्हित दीर्घ ea = regs->dar;
-	अचिन्हित दीर्घ dsisr = regs->dsisr;
-	अचिन्हित दीर्घ access = _PAGE_PRESENT | _PAGE_READ;
-	अचिन्हित दीर्घ flags = 0;
-	काष्ठा mm_काष्ठा *mm;
-	अचिन्हित पूर्णांक region_id;
-	दीर्घ err;
+DECLARE_INTERRUPT_HANDLER_RET(__do_hash_fault);
+DEFINE_INTERRUPT_HANDLER_RET(__do_hash_fault)
+{
+	unsigned long ea = regs->dar;
+	unsigned long dsisr = regs->dsisr;
+	unsigned long access = _PAGE_PRESENT | _PAGE_READ;
+	unsigned long flags = 0;
+	struct mm_struct *mm;
+	unsigned int region_id;
+	long err;
 
 	region_id = get_region_id(ea);
-	अगर ((region_id == VMALLOC_REGION_ID) || (region_id == IO_REGION_ID))
+	if ((region_id == VMALLOC_REGION_ID) || (region_id == IO_REGION_ID))
 		mm = &init_mm;
-	अन्यथा
+	else
 		mm = current->mm;
 
-	अगर (dsisr & DSISR_NOHPTE)
+	if (dsisr & DSISR_NOHPTE)
 		flags |= HPTE_NOHPTE_UPDATE;
 
-	अगर (dsisr & DSISR_ISSTORE)
+	if (dsisr & DSISR_ISSTORE)
 		access |= _PAGE_WRITE;
 	/*
 	 * We set _PAGE_PRIVILEGED only when
@@ -1554,410 +1553,410 @@ DEFINE_INTERRUPT_HANDLER_RET(__करो_hash_fault)
 	 * 2) user space access kernel space.
 	 */
 	access |= _PAGE_PRIVILEGED;
-	अगर (user_mode(regs) || (region_id == USER_REGION_ID))
+	if (user_mode(regs) || (region_id == USER_REGION_ID))
 		access &= ~_PAGE_PRIVILEGED;
 
-	अगर (TRAP(regs) == INTERRUPT_INST_STORAGE)
+	if (TRAP(regs) == INTERRUPT_INST_STORAGE)
 		access |= _PAGE_EXEC;
 
 	err = hash_page_mm(mm, ea, access, TRAP(regs), flags);
-	अगर (unlikely(err < 0)) अणु
+	if (unlikely(err < 0)) {
 		// failed to instert a hash PTE due to an hypervisor error
-		अगर (user_mode(regs)) अणु
-			अगर (IS_ENABLED(CONFIG_PPC_SUBPAGE_PROT) && err == -2)
-				_exception(संक_अंश, regs, SEGV_ACCERR, ea);
-			अन्यथा
+		if (user_mode(regs)) {
+			if (IS_ENABLED(CONFIG_PPC_SUBPAGE_PROT) && err == -2)
+				_exception(SIGSEGV, regs, SEGV_ACCERR, ea);
+			else
 				_exception(SIGBUS, regs, BUS_ADRERR, ea);
-		पूर्ण अन्यथा अणु
+		} else {
 			bad_page_fault(regs, SIGBUS);
-		पूर्ण
+		}
 		err = 0;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * The _RAW पूर्णांकerrupt entry checks क्रम the in_nmi() हाल beक्रमe
+ * The _RAW interrupt entry checks for the in_nmi() case before
  * running the full handler.
  */
-DEFINE_INTERRUPT_HANDLER_RAW(करो_hash_fault)
-अणु
-	अचिन्हित दीर्घ dsisr = regs->dsisr;
+DEFINE_INTERRUPT_HANDLER_RAW(do_hash_fault)
+{
+	unsigned long dsisr = regs->dsisr;
 
-	अगर (unlikely(dsisr & (DSISR_BAD_FAULT_64S | DSISR_KEYFAULT))) अणु
-		hash__करो_page_fault(regs);
-		वापस 0;
-	पूर्ण
+	if (unlikely(dsisr & (DSISR_BAD_FAULT_64S | DSISR_KEYFAULT))) {
+		hash__do_page_fault(regs);
+		return 0;
+	}
 
 	/*
-	 * If we are in an "NMI" (e.g., an पूर्णांकerrupt when soft-disabled), then
-	 * करोn't call hash_page, just fail the fault. This is required to
+	 * If we are in an "NMI" (e.g., an interrupt when soft-disabled), then
+	 * don't call hash_page, just fail the fault. This is required to
 	 * prevent re-entrancy problems in the hash code, namely perf
-	 * पूर्णांकerrupts hitting जबतक something holds H_PAGE_BUSY, and taking a
+	 * interrupts hitting while something holds H_PAGE_BUSY, and taking a
 	 * hash fault. See the comment in hash_preload().
 	 *
-	 * We come here as a result of a DSI at a poपूर्णांक where we करोn't want
+	 * We come here as a result of a DSI at a point where we don't want
 	 * to call hash_page, such as when we are accessing memory (possibly
-	 * user memory) inside a PMU पूर्णांकerrupt that occurred जबतक पूर्णांकerrupts
-	 * were soft-disabled.  We want to invoke the exception handler क्रम
-	 * the access, or panic अगर there isn't a handler.
+	 * user memory) inside a PMU interrupt that occurred while interrupts
+	 * were soft-disabled.  We want to invoke the exception handler for
+	 * the access, or panic if there isn't a handler.
 	 */
-	अगर (unlikely(in_nmi())) अणु
-		करो_bad_page_fault_segv(regs);
-		वापस 0;
-	पूर्ण
+	if (unlikely(in_nmi())) {
+		do_bad_page_fault_segv(regs);
+		return 0;
+	}
 
-	अगर (__करो_hash_fault(regs))
-		hash__करो_page_fault(regs);
+	if (__do_hash_fault(regs))
+		hash__do_page_fault(regs);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PPC_MM_SLICES
-अटल bool should_hash_preload(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ ea)
-अणु
-	पूर्णांक psize = get_slice_psize(mm, ea);
+#ifdef CONFIG_PPC_MM_SLICES
+static bool should_hash_preload(struct mm_struct *mm, unsigned long ea)
+{
+	int psize = get_slice_psize(mm, ea);
 
-	/* We only prefault standard pages क्रम now */
-	अगर (unlikely(psize != mm_ctx_user_psize(&mm->context)))
-		वापस false;
+	/* We only prefault standard pages for now */
+	if (unlikely(psize != mm_ctx_user_psize(&mm->context)))
+		return false;
 
 	/*
-	 * Don't prefault अगर subpage protection is enabled क्रम the EA.
+	 * Don't prefault if subpage protection is enabled for the EA.
 	 */
-	अगर (unlikely((psize == MMU_PAGE_4K) && subpage_protection(mm, ea)))
-		वापस false;
+	if (unlikely((psize == MMU_PAGE_4K) && subpage_protection(mm, ea)))
+		return false;
 
-	वापस true;
-पूर्ण
-#अन्यथा
-अटल bool should_hash_preload(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ ea)
-अणु
-	वापस true;
-पूर्ण
-#पूर्ण_अगर
+	return true;
+}
+#else
+static bool should_hash_preload(struct mm_struct *mm, unsigned long ea)
+{
+	return true;
+}
+#endif
 
-अटल व्योम hash_preload(काष्ठा mm_काष्ठा *mm, pte_t *ptep, अचिन्हित दीर्घ ea,
-			 bool is_exec, अचिन्हित दीर्घ trap)
-अणु
-	अचिन्हित दीर्घ vsid;
+static void hash_preload(struct mm_struct *mm, pte_t *ptep, unsigned long ea,
+			 bool is_exec, unsigned long trap)
+{
+	unsigned long vsid;
 	pgd_t *pgdir;
-	पूर्णांक rc, ssize, update_flags = 0;
-	अचिन्हित दीर्घ access = _PAGE_PRESENT | _PAGE_READ | (is_exec ? _PAGE_EXEC : 0);
-	अचिन्हित दीर्घ flags;
+	int rc, ssize, update_flags = 0;
+	unsigned long access = _PAGE_PRESENT | _PAGE_READ | (is_exec ? _PAGE_EXEC : 0);
+	unsigned long flags;
 
 	BUG_ON(get_region_id(ea) != USER_REGION_ID);
 
-	अगर (!should_hash_preload(mm, ea))
-		वापस;
+	if (!should_hash_preload(mm, ea))
+		return;
 
 	DBG_LOW("hash_preload(mm=%p, mm->pgdir=%p, ea=%016lx, access=%lx,"
 		" trap=%lx\n", mm, mm->pgd, ea, access, trap);
 
-	/* Get Linux PTE अगर available */
+	/* Get Linux PTE if available */
 	pgdir = mm->pgd;
-	अगर (pgdir == शून्य)
-		वापस;
+	if (pgdir == NULL)
+		return;
 
 	/* Get VSID */
 	ssize = user_segment_size(ea);
 	vsid = get_user_vsid(&mm->context, ea, ssize);
-	अगर (!vsid)
-		वापस;
+	if (!vsid)
+		return;
 
-#अगर_घोषित CONFIG_PPC_64K_PAGES
+#ifdef CONFIG_PPC_64K_PAGES
 	/* If either H_PAGE_4K_PFN or cache inhibited is set (and we are on
-	 * a 64K kernel), then we करोn't preload, hash_page() will take
+	 * a 64K kernel), then we don't preload, hash_page() will take
 	 * care of it once we actually try to access the page.
-	 * That way we करोn't have to duplicate all of the logic क्रम segment
+	 * That way we don't have to duplicate all of the logic for segment
 	 * page size demotion here
 	 * Called with  PTL held, hence can be sure the value won't change in
 	 * between.
 	 */
-	अगर ((pte_val(*ptep) & H_PAGE_4K_PFN) || pte_ci(*ptep))
-		वापस;
-#पूर्ण_अगर /* CONFIG_PPC_64K_PAGES */
+	if ((pte_val(*ptep) & H_PAGE_4K_PFN) || pte_ci(*ptep))
+		return;
+#endif /* CONFIG_PPC_64K_PAGES */
 
 	/*
-	 * __hash_page_* must run with पूर्णांकerrupts off, as it sets the
-	 * H_PAGE_BUSY bit. It's possible क्रम perf पूर्णांकerrupts to hit at any
-	 * समय and may take a hash fault पढ़ोing the user stack, see
-	 * पढ़ो_user_stack_slow() in the घातerpc/perf code.
+	 * __hash_page_* must run with interrupts off, as it sets the
+	 * H_PAGE_BUSY bit. It's possible for perf interrupts to hit at any
+	 * time and may take a hash fault reading the user stack, see
+	 * read_user_stack_slow() in the powerpc/perf code.
 	 *
 	 * If that takes a hash fault on the same page as we lock here, it
 	 * will bail out when seeing H_PAGE_BUSY set, and retry the access
 	 * leading to an infinite loop.
 	 *
-	 * Disabling पूर्णांकerrupts here करोes not prevent perf पूर्णांकerrupts, but it
+	 * Disabling interrupts here does not prevent perf interrupts, but it
 	 * will prevent them taking hash faults (see the NMI test in
-	 * करो_hash_page), then पढ़ो_user_stack's copy_from_user_nofault will
-	 * fail and perf will fall back to पढ़ो_user_stack_slow(), which
+	 * do_hash_page), then read_user_stack's copy_from_user_nofault will
+	 * fail and perf will fall back to read_user_stack_slow(), which
 	 * walks the Linux page tables.
 	 *
-	 * Interrupts must also be off क्रम the duration of the
-	 * mm_is_thपढ़ो_local test and update, to prevent preempt running the
-	 * mm on another CPU (XXX: this may be racy vs kthपढ़ो_use_mm).
+	 * Interrupts must also be off for the duration of the
+	 * mm_is_thread_local test and update, to prevent preempt running the
+	 * mm on another CPU (XXX: this may be racy vs kthread_use_mm).
 	 */
 	local_irq_save(flags);
 
 	/* Is that local to this CPU ? */
-	अगर (mm_is_thपढ़ो_local(mm))
+	if (mm_is_thread_local(mm))
 		update_flags |= HPTE_LOCAL_UPDATE;
 
 	/* Hash it in */
-#अगर_घोषित CONFIG_PPC_64K_PAGES
-	अगर (mm_ctx_user_psize(&mm->context) == MMU_PAGE_64K)
+#ifdef CONFIG_PPC_64K_PAGES
+	if (mm_ctx_user_psize(&mm->context) == MMU_PAGE_64K)
 		rc = __hash_page_64K(ea, access, vsid, ptep, trap,
 				     update_flags, ssize);
-	अन्यथा
-#पूर्ण_अगर /* CONFIG_PPC_64K_PAGES */
+	else
+#endif /* CONFIG_PPC_64K_PAGES */
 		rc = __hash_page_4K(ea, access, vsid, ptep, trap, update_flags,
 				    ssize, subpage_protection(mm, ea));
 
-	/* Dump some info in हाल of hash insertion failure, they should
-	 * never happen so it is really useful to know अगर/when they करो
+	/* Dump some info in case of hash insertion failure, they should
+	 * never happen so it is really useful to know if/when they do
 	 */
-	अगर (rc == -1)
+	if (rc == -1)
 		hash_failure_debug(ea, access, vsid, trap, ssize,
 				   mm_ctx_user_psize(&mm->context),
 				   mm_ctx_user_psize(&mm->context),
 				   pte_val(*ptep));
 
 	local_irq_restore(flags);
-पूर्ण
+}
 
 /*
  * This is called at the end of handling a user page fault, when the
  * fault has been handled by updating a PTE in the linux page tables.
- * We use it to preload an HPTE पूर्णांकo the hash table corresponding to
+ * We use it to preload an HPTE into the hash table corresponding to
  * the updated linux PTE.
  *
  * This must always be called with the pte lock held.
  */
-व्योम update_mmu_cache(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address,
+void update_mmu_cache(struct vm_area_struct *vma, unsigned long address,
 		      pte_t *ptep)
-अणु
+{
 	/*
-	 * We करोn't need to worry about _PAGE_PRESENT here because we are
+	 * We don't need to worry about _PAGE_PRESENT here because we are
 	 * called with either mm->page_table_lock held or ptl lock held
 	 */
-	अचिन्हित दीर्घ trap;
+	unsigned long trap;
 	bool is_exec;
 
-	अगर (radix_enabled())
-		वापस;
+	if (radix_enabled())
+		return;
 
-	/* We only want HPTEs क्रम linux PTEs that have _PAGE_ACCESSED set */
-	अगर (!pte_young(*ptep) || address >= TASK_SIZE)
-		वापस;
+	/* We only want HPTEs for linux PTEs that have _PAGE_ACCESSED set */
+	if (!pte_young(*ptep) || address >= TASK_SIZE)
+		return;
 
 	/*
-	 * We try to figure out अगर we are coming from an inकाष्ठाion
-	 * access fault and pass that करोwn to __hash_page so we aव्योम
-	 * द्विगुन-faulting on execution of fresh text. We have to test
-	 * क्रम regs शून्य since init will get here first thing at boot.
+	 * We try to figure out if we are coming from an instruction
+	 * access fault and pass that down to __hash_page so we avoid
+	 * double-faulting on execution of fresh text. We have to test
+	 * for regs NULL since init will get here first thing at boot.
 	 *
-	 * We also aव्योम filling the hash अगर not coming from a fault.
+	 * We also avoid filling the hash if not coming from a fault.
 	 */
 
-	trap = current->thपढ़ो.regs ? TRAP(current->thपढ़ो.regs) : 0UL;
-	चयन (trap) अणु
-	हाल 0x300:
+	trap = current->thread.regs ? TRAP(current->thread.regs) : 0UL;
+	switch (trap) {
+	case 0x300:
 		is_exec = false;
-		अवरोध;
-	हाल 0x400:
+		break;
+	case 0x400:
 		is_exec = true;
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 
 	hash_preload(vma->vm_mm, ptep, address, is_exec, trap);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PPC_TRANSACTIONAL_MEM
-अटल अंतरभूत व्योम पंचांग_flush_hash_page(पूर्णांक local)
-अणु
+#ifdef CONFIG_PPC_TRANSACTIONAL_MEM
+static inline void tm_flush_hash_page(int local)
+{
 	/*
-	 * Transactions are not पातed by tlbiel, only tlbie. Without, syncing a
+	 * Transactions are not aborted by tlbiel, only tlbie. Without, syncing a
 	 * page back to a block device w/PIO could pick up transactional data
-	 * (bad!) so we क्रमce an पात here. Beक्रमe the sync the page will be
-	 * made पढ़ो-only, which will flush_hash_page. BIG ISSUE here: अगर the
+	 * (bad!) so we force an abort here. Before the sync the page will be
+	 * made read-only, which will flush_hash_page. BIG ISSUE here: if the
 	 * kernel uses a page from userspace without unmapping it first, it may
 	 * see the speculated version.
 	 */
-	अगर (local && cpu_has_feature(CPU_FTR_TM) && current->thपढ़ो.regs &&
-	    MSR_TM_ACTIVE(current->thपढ़ो.regs->msr)) अणु
-		पंचांग_enable();
-		पंचांग_पात(TM_CAUSE_TLBI);
-	पूर्ण
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम पंचांग_flush_hash_page(पूर्णांक local)
-अणु
-पूर्ण
-#पूर्ण_अगर
+	if (local && cpu_has_feature(CPU_FTR_TM) && current->thread.regs &&
+	    MSR_TM_ACTIVE(current->thread.regs->msr)) {
+		tm_enable();
+		tm_abort(TM_CAUSE_TLBI);
+	}
+}
+#else
+static inline void tm_flush_hash_page(int local)
+{
+}
+#endif
 
 /*
  * Return the global hash slot, corresponding to the given PTE, which contains
  * the HPTE.
  */
-अचिन्हित दीर्घ pte_get_hash_gslot(अचिन्हित दीर्घ vpn, अचिन्हित दीर्घ shअगरt,
-		पूर्णांक ssize, real_pte_t rpte, अचिन्हित पूर्णांक subpg_index)
-अणु
-	अचिन्हित दीर्घ hash, gslot, hidx;
+unsigned long pte_get_hash_gslot(unsigned long vpn, unsigned long shift,
+		int ssize, real_pte_t rpte, unsigned int subpg_index)
+{
+	unsigned long hash, gslot, hidx;
 
-	hash = hpt_hash(vpn, shअगरt, ssize);
+	hash = hpt_hash(vpn, shift, ssize);
 	hidx = __rpte_to_hidx(rpte, subpg_index);
-	अगर (hidx & _PTEIDX_SECONDARY)
+	if (hidx & _PTEIDX_SECONDARY)
 		hash = ~hash;
 	gslot = (hash & htab_hash_mask) * HPTES_PER_GROUP;
 	gslot += hidx & _PTEIDX_GROUP_IX;
-	वापस gslot;
-पूर्ण
+	return gslot;
+}
 
-व्योम flush_hash_page(अचिन्हित दीर्घ vpn, real_pte_t pte, पूर्णांक psize, पूर्णांक ssize,
-		     अचिन्हित दीर्घ flags)
-अणु
-	अचिन्हित दीर्घ index, shअगरt, gslot;
-	पूर्णांक local = flags & HPTE_LOCAL_UPDATE;
+void flush_hash_page(unsigned long vpn, real_pte_t pte, int psize, int ssize,
+		     unsigned long flags)
+{
+	unsigned long index, shift, gslot;
+	int local = flags & HPTE_LOCAL_UPDATE;
 
 	DBG_LOW("flush_hash_page(vpn=%016lx)\n", vpn);
-	pte_iterate_hashed_subpages(pte, psize, vpn, index, shअगरt) अणु
-		gslot = pte_get_hash_gslot(vpn, shअगरt, ssize, pte, index);
+	pte_iterate_hashed_subpages(pte, psize, vpn, index, shift) {
+		gslot = pte_get_hash_gslot(vpn, shift, ssize, pte, index);
 		DBG_LOW(" sub %ld: gslot=%lx\n", index, gslot);
 		/*
-		 * We use same base page size and actual psize, because we करोn't
-		 * use these functions क्रम hugepage
+		 * We use same base page size and actual psize, because we don't
+		 * use these functions for hugepage
 		 */
 		mmu_hash_ops.hpte_invalidate(gslot, vpn, psize, psize,
 					     ssize, local);
-	पूर्ण pte_iterate_hashed_end();
+	} pte_iterate_hashed_end();
 
-	पंचांग_flush_hash_page(local);
-पूर्ण
+	tm_flush_hash_page(local);
+}
 
-#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
-व्योम flush_hash_hugepage(अचिन्हित दीर्घ vsid, अचिन्हित दीर्घ addr,
-			 pmd_t *pmdp, अचिन्हित पूर्णांक psize, पूर्णांक ssize,
-			 अचिन्हित दीर्घ flags)
-अणु
-	पूर्णांक i, max_hpte_count, valid;
-	अचिन्हित दीर्घ s_addr;
-	अचिन्हित अक्षर *hpte_slot_array;
-	अचिन्हित दीर्घ hidx, shअगरt, vpn, hash, slot;
-	पूर्णांक local = flags & HPTE_LOCAL_UPDATE;
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+void flush_hash_hugepage(unsigned long vsid, unsigned long addr,
+			 pmd_t *pmdp, unsigned int psize, int ssize,
+			 unsigned long flags)
+{
+	int i, max_hpte_count, valid;
+	unsigned long s_addr;
+	unsigned char *hpte_slot_array;
+	unsigned long hidx, shift, vpn, hash, slot;
+	int local = flags & HPTE_LOCAL_UPDATE;
 
 	s_addr = addr & HPAGE_PMD_MASK;
 	hpte_slot_array = get_hpte_slot_array(pmdp);
 	/*
-	 * IF we try to करो a HUGE PTE update after a withdraw is करोne.
-	 * we will find the below शून्य. This happens when we करो
+	 * IF we try to do a HUGE PTE update after a withdraw is done.
+	 * we will find the below NULL. This happens when we do
 	 * split_huge_pmd
 	 */
-	अगर (!hpte_slot_array)
-		वापस;
+	if (!hpte_slot_array)
+		return;
 
-	अगर (mmu_hash_ops.hugepage_invalidate) अणु
+	if (mmu_hash_ops.hugepage_invalidate) {
 		mmu_hash_ops.hugepage_invalidate(vsid, s_addr, hpte_slot_array,
 						 psize, ssize, local);
-		जाओ पंचांग_पात;
-	पूर्ण
+		goto tm_abort;
+	}
 	/*
 	 * No bluk hpte removal support, invalidate each entry
 	 */
-	shअगरt = mmu_psize_defs[psize].shअगरt;
-	max_hpte_count = HPAGE_PMD_SIZE >> shअगरt;
-	क्रम (i = 0; i < max_hpte_count; i++) अणु
+	shift = mmu_psize_defs[psize].shift;
+	max_hpte_count = HPAGE_PMD_SIZE >> shift;
+	for (i = 0; i < max_hpte_count; i++) {
 		/*
 		 * 8 bits per each hpte entries
 		 * 000| [ secondary group (one bit) | hidx (3 bits) | valid bit]
 		 */
 		valid = hpte_valid(hpte_slot_array, i);
-		अगर (!valid)
-			जारी;
+		if (!valid)
+			continue;
 		hidx =  hpte_hash_index(hpte_slot_array, i);
 
 		/* get the vpn */
-		addr = s_addr + (i * (1ul << shअगरt));
+		addr = s_addr + (i * (1ul << shift));
 		vpn = hpt_vpn(addr, vsid, ssize);
-		hash = hpt_hash(vpn, shअगरt, ssize);
-		अगर (hidx & _PTEIDX_SECONDARY)
+		hash = hpt_hash(vpn, shift, ssize);
+		if (hidx & _PTEIDX_SECONDARY)
 			hash = ~hash;
 
 		slot = (hash & htab_hash_mask) * HPTES_PER_GROUP;
 		slot += hidx & _PTEIDX_GROUP_IX;
 		mmu_hash_ops.hpte_invalidate(slot, vpn, psize,
 					     MMU_PAGE_16M, ssize, local);
-	पूर्ण
-पंचांग_पात:
-	पंचांग_flush_hash_page(local);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_TRANSPARENT_HUGEPAGE */
+	}
+tm_abort:
+	tm_flush_hash_page(local);
+}
+#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
 
-व्योम flush_hash_range(अचिन्हित दीर्घ number, पूर्णांक local)
-अणु
-	अगर (mmu_hash_ops.flush_hash_range)
+void flush_hash_range(unsigned long number, int local)
+{
+	if (mmu_hash_ops.flush_hash_range)
 		mmu_hash_ops.flush_hash_range(number, local);
-	अन्यथा अणु
-		पूर्णांक i;
-		काष्ठा ppc64_tlb_batch *batch =
+	else {
+		int i;
+		struct ppc64_tlb_batch *batch =
 			this_cpu_ptr(&ppc64_tlb_batch);
 
-		क्रम (i = 0; i < number; i++)
+		for (i = 0; i < number; i++)
 			flush_hash_page(batch->vpn[i], batch->pte[i],
 					batch->psize, batch->ssize, local);
-	पूर्ण
-पूर्ण
+	}
+}
 
-दीर्घ hpte_insert_repeating(अचिन्हित दीर्घ hash, अचिन्हित दीर्घ vpn,
-			   अचिन्हित दीर्घ pa, अचिन्हित दीर्घ rflags,
-			   अचिन्हित दीर्घ vflags, पूर्णांक psize, पूर्णांक ssize)
-अणु
-	अचिन्हित दीर्घ hpte_group;
-	दीर्घ slot;
+long hpte_insert_repeating(unsigned long hash, unsigned long vpn,
+			   unsigned long pa, unsigned long rflags,
+			   unsigned long vflags, int psize, int ssize)
+{
+	unsigned long hpte_group;
+	long slot;
 
 repeat:
 	hpte_group = (hash & htab_hash_mask) * HPTES_PER_GROUP;
 
-	/* Insert पूर्णांकo the hash table, primary slot */
+	/* Insert into the hash table, primary slot */
 	slot = mmu_hash_ops.hpte_insert(hpte_group, vpn, pa, rflags, vflags,
 					psize, psize, ssize);
 
 	/* Primary is full, try the secondary */
-	अगर (unlikely(slot == -1)) अणु
+	if (unlikely(slot == -1)) {
 		hpte_group = (~hash & htab_hash_mask) * HPTES_PER_GROUP;
 		slot = mmu_hash_ops.hpte_insert(hpte_group, vpn, pa, rflags,
 						vflags | HPTE_V_SECONDARY,
 						psize, psize, ssize);
-		अगर (slot == -1) अणु
-			अगर (mftb() & 0x1)
+		if (slot == -1) {
+			if (mftb() & 0x1)
 				hpte_group = (hash & htab_hash_mask) *
 						HPTES_PER_GROUP;
 
-			mmu_hash_ops.hpte_हटाओ(hpte_group);
-			जाओ repeat;
-		पूर्ण
-	पूर्ण
+			mmu_hash_ops.hpte_remove(hpte_group);
+			goto repeat;
+		}
+	}
 
-	वापस slot;
-पूर्ण
+	return slot;
+}
 
-#अगर_घोषित CONFIG_DEBUG_PAGEALLOC
-अटल व्योम kernel_map_linear_page(अचिन्हित दीर्घ vaddr, अचिन्हित दीर्घ lmi)
-अणु
-	अचिन्हित दीर्घ hash;
-	अचिन्हित दीर्घ vsid = get_kernel_vsid(vaddr, mmu_kernel_ssize);
-	अचिन्हित दीर्घ vpn = hpt_vpn(vaddr, vsid, mmu_kernel_ssize);
-	अचिन्हित दीर्घ mode = htab_convert_pte_flags(pgprot_val(PAGE_KERNEL), HPTE_USE_KERNEL_KEY);
-	दीर्घ ret;
+#ifdef CONFIG_DEBUG_PAGEALLOC
+static void kernel_map_linear_page(unsigned long vaddr, unsigned long lmi)
+{
+	unsigned long hash;
+	unsigned long vsid = get_kernel_vsid(vaddr, mmu_kernel_ssize);
+	unsigned long vpn = hpt_vpn(vaddr, vsid, mmu_kernel_ssize);
+	unsigned long mode = htab_convert_pte_flags(pgprot_val(PAGE_KERNEL), HPTE_USE_KERNEL_KEY);
+	long ret;
 
 	hash = hpt_hash(vpn, PAGE_SHIFT, mmu_kernel_ssize);
 
-	/* Don't create HPTE entries क्रम bad address */
-	अगर (!vsid)
-		वापस;
+	/* Don't create HPTE entries for bad address */
+	if (!vsid)
+		return;
 
 	ret = hpte_insert_repeating(hash, vpn, __pa(vaddr), mode,
 				    HPTE_V_BOLTED,
@@ -1968,13 +1967,13 @@ repeat:
 	BUG_ON(linear_map_hash_slots[lmi] & 0x80);
 	linear_map_hash_slots[lmi] = ret | 0x80;
 	spin_unlock(&linear_map_hash_lock);
-पूर्ण
+}
 
-अटल व्योम kernel_unmap_linear_page(अचिन्हित दीर्घ vaddr, अचिन्हित दीर्घ lmi)
-अणु
-	अचिन्हित दीर्घ hash, hidx, slot;
-	अचिन्हित दीर्घ vsid = get_kernel_vsid(vaddr, mmu_kernel_ssize);
-	अचिन्हित दीर्घ vpn = hpt_vpn(vaddr, vsid, mmu_kernel_ssize);
+static void kernel_unmap_linear_page(unsigned long vaddr, unsigned long lmi)
+{
+	unsigned long hash, hidx, slot;
+	unsigned long vsid = get_kernel_vsid(vaddr, mmu_kernel_ssize);
+	unsigned long vpn = hpt_vpn(vaddr, vsid, mmu_kernel_ssize);
 
 	hash = hpt_hash(vpn, PAGE_SHIFT, mmu_kernel_ssize);
 	spin_lock(&linear_map_hash_lock);
@@ -1982,110 +1981,110 @@ repeat:
 	hidx = linear_map_hash_slots[lmi] & 0x7f;
 	linear_map_hash_slots[lmi] = 0;
 	spin_unlock(&linear_map_hash_lock);
-	अगर (hidx & _PTEIDX_SECONDARY)
+	if (hidx & _PTEIDX_SECONDARY)
 		hash = ~hash;
 	slot = (hash & htab_hash_mask) * HPTES_PER_GROUP;
 	slot += hidx & _PTEIDX_GROUP_IX;
 	mmu_hash_ops.hpte_invalidate(slot, vpn, mmu_linear_psize,
 				     mmu_linear_psize,
 				     mmu_kernel_ssize, 0);
-पूर्ण
+}
 
-व्योम __kernel_map_pages(काष्ठा page *page, पूर्णांक numpages, पूर्णांक enable)
-अणु
-	अचिन्हित दीर्घ flags, vaddr, lmi;
-	पूर्णांक i;
+void __kernel_map_pages(struct page *page, int numpages, int enable)
+{
+	unsigned long flags, vaddr, lmi;
+	int i;
 
 	local_irq_save(flags);
-	क्रम (i = 0; i < numpages; i++, page++) अणु
-		vaddr = (अचिन्हित दीर्घ)page_address(page);
+	for (i = 0; i < numpages; i++, page++) {
+		vaddr = (unsigned long)page_address(page);
 		lmi = __pa(vaddr) >> PAGE_SHIFT;
-		अगर (lmi >= linear_map_hash_count)
-			जारी;
-		अगर (enable)
+		if (lmi >= linear_map_hash_count)
+			continue;
+		if (enable)
 			kernel_map_linear_page(vaddr, lmi);
-		अन्यथा
+		else
 			kernel_unmap_linear_page(vaddr, lmi);
-	पूर्ण
+	}
 	local_irq_restore(flags);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_DEBUG_PAGEALLOC */
+}
+#endif /* CONFIG_DEBUG_PAGEALLOC */
 
-व्योम hash__setup_initial_memory_limit(phys_addr_t first_memblock_base,
+void hash__setup_initial_memory_limit(phys_addr_t first_memblock_base,
 				phys_addr_t first_memblock_size)
-अणु
+{
 	/*
-	 * We करोn't currently support the first MEMBLOCK not mapping 0
+	 * We don't currently support the first MEMBLOCK not mapping 0
 	 * physical on those processors
 	 */
 	BUG_ON(first_memblock_base != 0);
 
 	/*
-	 * On भवized प्रणालीs the first entry is our RMA region aka VRMA,
-	 * non-भवized 64-bit hash MMU प्रणालीs करोn't have a limitation
+	 * On virtualized systems the first entry is our RMA region aka VRMA,
+	 * non-virtualized 64-bit hash MMU systems don't have a limitation
 	 * on real mode access.
 	 *
-	 * For guests on platक्रमms beक्रमe POWER9, we clamp the it limit to 1G
-	 * to aव्योम some funky things such as RTAS bugs etc...
+	 * For guests on platforms before POWER9, we clamp the it limit to 1G
+	 * to avoid some funky things such as RTAS bugs etc...
 	 *
-	 * On POWER9 we limit to 1TB in हाल the host erroneously told us that
+	 * On POWER9 we limit to 1TB in case the host erroneously told us that
 	 * the RMA was >1TB. Effective address bits 0:23 are treated as zero
 	 * (meaning the access is aliased to zero i.e. addr = addr % 1TB)
-	 * क्रम भव real mode addressing and so it करोesn't make sense to
+	 * for virtual real mode addressing and so it doesn't make sense to
 	 * have an area larger than 1TB as it can't be addressed.
 	 */
-	अगर (!early_cpu_has_feature(CPU_FTR_HVMODE)) अणु
+	if (!early_cpu_has_feature(CPU_FTR_HVMODE)) {
 		ppc64_rma_size = first_memblock_size;
-		अगर (!early_cpu_has_feature(CPU_FTR_ARCH_300))
+		if (!early_cpu_has_feature(CPU_FTR_ARCH_300))
 			ppc64_rma_size = min_t(u64, ppc64_rma_size, 0x40000000);
-		अन्यथा
+		else
 			ppc64_rma_size = min_t(u64, ppc64_rma_size,
 					       1UL << SID_SHIFT_1T);
 
 		/* Finally limit subsequent allocations */
 		memblock_set_current_limit(ppc64_rma_size);
-	पूर्ण अन्यथा अणु
-		ppc64_rma_size = अच_दीर्घ_उच्च;
-	पूर्ण
-पूर्ण
+	} else {
+		ppc64_rma_size = ULONG_MAX;
+	}
+}
 
-#अगर_घोषित CONFIG_DEBUG_FS
+#ifdef CONFIG_DEBUG_FS
 
-अटल पूर्णांक hpt_order_get(व्योम *data, u64 *val)
-अणु
+static int hpt_order_get(void *data, u64 *val)
+{
 	*val = ppc64_pft_size;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hpt_order_set(व्योम *data, u64 val)
-अणु
-	पूर्णांक ret;
+static int hpt_order_set(void *data, u64 val)
+{
+	int ret;
 
-	अगर (!mmu_hash_ops.resize_hpt)
-		वापस -ENODEV;
+	if (!mmu_hash_ops.resize_hpt)
+		return -ENODEV;
 
-	cpus_पढ़ो_lock();
+	cpus_read_lock();
 	ret = mmu_hash_ops.resize_hpt(val);
-	cpus_पढ़ो_unlock();
+	cpus_read_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 DEFINE_DEBUGFS_ATTRIBUTE(fops_hpt_order, hpt_order_get, hpt_order_set, "%llu\n");
 
-अटल पूर्णांक __init hash64_debugfs(व्योम)
-अणु
-	debugfs_create_file("hpt_order", 0600, घातerpc_debugfs_root, शून्य,
+static int __init hash64_debugfs(void)
+{
+	debugfs_create_file("hpt_order", 0600, powerpc_debugfs_root, NULL,
 			    &fops_hpt_order);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 machine_device_initcall(pseries, hash64_debugfs);
-#पूर्ण_अगर /* CONFIG_DEBUG_FS */
+#endif /* CONFIG_DEBUG_FS */
 
-व्योम __init prपूर्णांक_प्रणाली_hash_info(व्योम)
-अणु
+void __init print_system_hash_info(void)
+{
 	pr_info("ppc64_pft_size    = 0x%llx\n", ppc64_pft_size);
 
-	अगर (htab_hash_mask)
+	if (htab_hash_mask)
 		pr_info("htab_hash_mask    = 0x%lx\n", htab_hash_mask);
-पूर्ण
+}

@@ -1,273 +1,272 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * OLPC serio driver क्रम multiplexed input from Marvell MMP security processor
+ * OLPC serio driver for multiplexed input from Marvell MMP security processor
  *
  * Copyright (C) 2011-2013 One Laptop Per Child
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/serपन.स>
-#समावेश <linux/err.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/delay.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/serio.h>
+#include <linux/err.h>
+#include <linux/platform_device.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/slab.h>
+#include <linux/delay.h>
 
 /*
- * The OLPC XO-1.75 and XO-4 laptops करो not have a hardware PS/2 controller.
+ * The OLPC XO-1.75 and XO-4 laptops do not have a hardware PS/2 controller.
  * Instead, the OLPC firmware runs a bit-banging PS/2 implementation on an
  * otherwise-unused slow processor which is included in the Marvell MMP2/MMP3
  * SoC, known as the "Security Processor" (SP) or "Wireless Trusted Module"
- * (WTM). This firmware then reports its results via the WTM रेजिस्टरs,
- * which we पढ़ो from the Application Processor (AP, i.e. मुख्य CPU) in this
+ * (WTM). This firmware then reports its results via the WTM registers,
+ * which we read from the Application Processor (AP, i.e. main CPU) in this
  * driver.
  *
  * On the hardware side we have a PS/2 mouse and an AT keyboard, the data
- * is multiplexed through this प्रणाली. We create a serio port क्रम each one,
+ * is multiplexed through this system. We create a serio port for each one,
  * and demultiplex the data accordingly.
  */
 
-/* WTM रेजिस्टर offsets */
-#घोषणा SECURE_PROCESSOR_COMMAND	0x40
-#घोषणा COMMAND_RETURN_STATUS		0x80
-#घोषणा COMMAND_FIFO_STATUS		0xc4
-#घोषणा PJ_RST_INTERRUPT		0xc8
-#घोषणा PJ_INTERRUPT_MASK		0xcc
+/* WTM register offsets */
+#define SECURE_PROCESSOR_COMMAND	0x40
+#define COMMAND_RETURN_STATUS		0x80
+#define COMMAND_FIFO_STATUS		0xc4
+#define PJ_RST_INTERRUPT		0xc8
+#define PJ_INTERRUPT_MASK		0xcc
 
 /*
  * The upper byte of SECURE_PROCESSOR_COMMAND and COMMAND_RETURN_STATUS is
- * used to identअगरy which port (device) is being talked to. The lower byte
+ * used to identify which port (device) is being talked to. The lower byte
  * is the data being sent/received.
  */
-#घोषणा PORT_MASK	0xff00
-#घोषणा DATA_MASK	0x00ff
-#घोषणा PORT_SHIFT	8
-#घोषणा KEYBOARD_PORT	0
-#घोषणा TOUCHPAD_PORT	1
+#define PORT_MASK	0xff00
+#define DATA_MASK	0x00ff
+#define PORT_SHIFT	8
+#define KEYBOARD_PORT	0
+#define TOUCHPAD_PORT	1
 
 /* COMMAND_FIFO_STATUS */
-#घोषणा CMD_CNTR_MASK		0x7 /* Number of pending/unprocessed commands */
-#घोषणा MAX_PENDING_CMDS	4   /* from device specs */
+#define CMD_CNTR_MASK		0x7 /* Number of pending/unprocessed commands */
+#define MAX_PENDING_CMDS	4   /* from device specs */
 
 /* PJ_RST_INTERRUPT */
-#घोषणा SP_COMMAND_COMPLETE_RESET	0x1
+#define SP_COMMAND_COMPLETE_RESET	0x1
 
 /* PJ_INTERRUPT_MASK */
-#घोषणा INT_0	(1 << 0)
+#define INT_0	(1 << 0)
 
 /* COMMAND_FIFO_STATUS */
-#घोषणा CMD_STS_MASK	0x100
+#define CMD_STS_MASK	0x100
 
-काष्ठा olpc_apsp अणु
-	काष्ठा device *dev;
-	काष्ठा serio *kbio;
-	काष्ठा serio *padio;
-	व्योम __iomem *base;
-	पूर्णांक खोलो_count;
-	पूर्णांक irq;
-पूर्ण;
+struct olpc_apsp {
+	struct device *dev;
+	struct serio *kbio;
+	struct serio *padio;
+	void __iomem *base;
+	int open_count;
+	int irq;
+};
 
-अटल पूर्णांक olpc_apsp_ग_लिखो(काष्ठा serio *port, अचिन्हित अक्षर val)
-अणु
-	काष्ठा olpc_apsp *priv = port->port_data;
-	अचिन्हित पूर्णांक i;
+static int olpc_apsp_write(struct serio *port, unsigned char val)
+{
+	struct olpc_apsp *priv = port->port_data;
+	unsigned int i;
 	u32 which = 0;
 
-	अगर (port == priv->padio)
+	if (port == priv->padio)
 		which = TOUCHPAD_PORT << PORT_SHIFT;
-	अन्यथा
+	else
 		which = KEYBOARD_PORT << PORT_SHIFT;
 
 	dev_dbg(priv->dev, "olpc_apsp_write which=%x val=%x\n", which, val);
-	क्रम (i = 0; i < 50; i++) अणु
-		u32 sts = पढ़ोl(priv->base + COMMAND_FIFO_STATUS);
-		अगर ((sts & CMD_CNTR_MASK) < MAX_PENDING_CMDS) अणु
-			ग_लिखोl(which | val,
+	for (i = 0; i < 50; i++) {
+		u32 sts = readl(priv->base + COMMAND_FIFO_STATUS);
+		if ((sts & CMD_CNTR_MASK) < MAX_PENDING_CMDS) {
+			writel(which | val,
 			       priv->base + SECURE_PROCESSOR_COMMAND);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		/* SP busy. This has not been seen in practice. */
 		mdelay(1);
-	पूर्ण
+	}
 
 	dev_dbg(priv->dev, "olpc_apsp_write timeout, status=%x\n",
-		पढ़ोl(priv->base + COMMAND_FIFO_STATUS));
+		readl(priv->base + COMMAND_FIFO_STATUS));
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल irqवापस_t olpc_apsp_rx(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा olpc_apsp *priv = dev_id;
-	अचिन्हित पूर्णांक w, पंचांगp;
-	काष्ठा serio *serio;
+static irqreturn_t olpc_apsp_rx(int irq, void *dev_id)
+{
+	struct olpc_apsp *priv = dev_id;
+	unsigned int w, tmp;
+	struct serio *serio;
 
 	/*
-	 * Write 1 to PJ_RST_INTERRUPT to acknowledge and clear the पूर्णांकerrupt
+	 * Write 1 to PJ_RST_INTERRUPT to acknowledge and clear the interrupt
 	 * Write 0xff00 to SECURE_PROCESSOR_COMMAND.
 	 */
-	पंचांगp = पढ़ोl(priv->base + PJ_RST_INTERRUPT);
-	अगर (!(पंचांगp & SP_COMMAND_COMPLETE_RESET)) अणु
+	tmp = readl(priv->base + PJ_RST_INTERRUPT);
+	if (!(tmp & SP_COMMAND_COMPLETE_RESET)) {
 		dev_warn(priv->dev, "spurious interrupt?\n");
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	w = पढ़ोl(priv->base + COMMAND_RETURN_STATUS);
+	w = readl(priv->base + COMMAND_RETURN_STATUS);
 	dev_dbg(priv->dev, "olpc_apsp_rx %x\n", w);
 
-	अगर (w >> PORT_SHIFT == KEYBOARD_PORT)
+	if (w >> PORT_SHIFT == KEYBOARD_PORT)
 		serio = priv->kbio;
-	अन्यथा
+	else
 		serio = priv->padio;
 
-	serio_पूर्णांकerrupt(serio, w & DATA_MASK, 0);
+	serio_interrupt(serio, w & DATA_MASK, 0);
 
-	/* Ack and clear पूर्णांकerrupt */
-	ग_लिखोl(पंचांगp | SP_COMMAND_COMPLETE_RESET, priv->base + PJ_RST_INTERRUPT);
-	ग_लिखोl(PORT_MASK, priv->base + SECURE_PROCESSOR_COMMAND);
+	/* Ack and clear interrupt */
+	writel(tmp | SP_COMMAND_COMPLETE_RESET, priv->base + PJ_RST_INTERRUPT);
+	writel(PORT_MASK, priv->base + SECURE_PROCESSOR_COMMAND);
 
 	pm_wakeup_event(priv->dev, 1000);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक olpc_apsp_खोलो(काष्ठा serio *port)
-अणु
-	काष्ठा olpc_apsp *priv = port->port_data;
-	अचिन्हित पूर्णांक पंचांगp;
-	अचिन्हित दीर्घ l;
+static int olpc_apsp_open(struct serio *port)
+{
+	struct olpc_apsp *priv = port->port_data;
+	unsigned int tmp;
+	unsigned long l;
 
-	अगर (priv->खोलो_count++ == 0) अणु
-		l = पढ़ोl(priv->base + COMMAND_FIFO_STATUS);
-		अगर (!(l & CMD_STS_MASK)) अणु
+	if (priv->open_count++ == 0) {
+		l = readl(priv->base + COMMAND_FIFO_STATUS);
+		if (!(l & CMD_STS_MASK)) {
 			dev_err(priv->dev, "SP cannot accept commands.\n");
-			वापस -EIO;
-		पूर्ण
+			return -EIO;
+		}
 
-		/* Enable पूर्णांकerrupt 0 by clearing its bit */
-		पंचांगp = पढ़ोl(priv->base + PJ_INTERRUPT_MASK);
-		ग_लिखोl(पंचांगp & ~INT_0, priv->base + PJ_INTERRUPT_MASK);
-	पूर्ण
+		/* Enable interrupt 0 by clearing its bit */
+		tmp = readl(priv->base + PJ_INTERRUPT_MASK);
+		writel(tmp & ~INT_0, priv->base + PJ_INTERRUPT_MASK);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम olpc_apsp_बंद(काष्ठा serio *port)
-अणु
-	काष्ठा olpc_apsp *priv = port->port_data;
-	अचिन्हित पूर्णांक पंचांगp;
+static void olpc_apsp_close(struct serio *port)
+{
+	struct olpc_apsp *priv = port->port_data;
+	unsigned int tmp;
 
-	अगर (--priv->खोलो_count == 0) अणु
-		/* Disable पूर्णांकerrupt 0 */
-		पंचांगp = पढ़ोl(priv->base + PJ_INTERRUPT_MASK);
-		ग_लिखोl(पंचांगp | INT_0, priv->base + PJ_INTERRUPT_MASK);
-	पूर्ण
-पूर्ण
+	if (--priv->open_count == 0) {
+		/* Disable interrupt 0 */
+		tmp = readl(priv->base + PJ_INTERRUPT_MASK);
+		writel(tmp | INT_0, priv->base + PJ_INTERRUPT_MASK);
+	}
+}
 
-अटल पूर्णांक olpc_apsp_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा serio *kb_serio, *pad_serio;
-	काष्ठा olpc_apsp *priv;
-	काष्ठा resource *res;
-	पूर्णांक error;
+static int olpc_apsp_probe(struct platform_device *pdev)
+{
+	struct serio *kb_serio, *pad_serio;
+	struct olpc_apsp *priv;
+	struct resource *res;
+	int error;
 
-	priv = devm_kzalloc(&pdev->dev, माप(काष्ठा olpc_apsp), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, sizeof(struct olpc_apsp), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->dev = &pdev->dev;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	priv->base = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(priv->base)) अणु
+	if (IS_ERR(priv->base)) {
 		dev_err(&pdev->dev, "Failed to map WTM registers\n");
-		वापस PTR_ERR(priv->base);
-	पूर्ण
+		return PTR_ERR(priv->base);
+	}
 
-	priv->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (priv->irq < 0)
-		वापस priv->irq;
+	priv->irq = platform_get_irq(pdev, 0);
+	if (priv->irq < 0)
+		return priv->irq;
 
 	/* KEYBOARD */
-	kb_serio = kzalloc(माप(काष्ठा serio), GFP_KERNEL);
-	अगर (!kb_serio)
-		वापस -ENOMEM;
+	kb_serio = kzalloc(sizeof(struct serio), GFP_KERNEL);
+	if (!kb_serio)
+		return -ENOMEM;
 	kb_serio->id.type	= SERIO_8042_XL;
-	kb_serio->ग_लिखो		= olpc_apsp_ग_लिखो;
-	kb_serio->खोलो		= olpc_apsp_खोलो;
-	kb_serio->बंद		= olpc_apsp_बंद;
+	kb_serio->write		= olpc_apsp_write;
+	kb_serio->open		= olpc_apsp_open;
+	kb_serio->close		= olpc_apsp_close;
 	kb_serio->port_data	= priv;
 	kb_serio->dev.parent	= &pdev->dev;
-	strlcpy(kb_serio->name, "sp keyboard", माप(kb_serio->name));
-	strlcpy(kb_serio->phys, "sp/serio0", माप(kb_serio->phys));
+	strlcpy(kb_serio->name, "sp keyboard", sizeof(kb_serio->name));
+	strlcpy(kb_serio->phys, "sp/serio0", sizeof(kb_serio->phys));
 	priv->kbio		= kb_serio;
-	serio_रेजिस्टर_port(kb_serio);
+	serio_register_port(kb_serio);
 
 	/* TOUCHPAD */
-	pad_serio = kzalloc(माप(काष्ठा serio), GFP_KERNEL);
-	अगर (!pad_serio) अणु
+	pad_serio = kzalloc(sizeof(struct serio), GFP_KERNEL);
+	if (!pad_serio) {
 		error = -ENOMEM;
-		जाओ err_pad;
-	पूर्ण
+		goto err_pad;
+	}
 	pad_serio->id.type	= SERIO_8042;
-	pad_serio->ग_लिखो	= olpc_apsp_ग_लिखो;
-	pad_serio->खोलो		= olpc_apsp_खोलो;
-	pad_serio->बंद	= olpc_apsp_बंद;
+	pad_serio->write	= olpc_apsp_write;
+	pad_serio->open		= olpc_apsp_open;
+	pad_serio->close	= olpc_apsp_close;
 	pad_serio->port_data	= priv;
 	pad_serio->dev.parent	= &pdev->dev;
-	strlcpy(pad_serio->name, "sp touchpad", माप(pad_serio->name));
-	strlcpy(pad_serio->phys, "sp/serio1", माप(pad_serio->phys));
+	strlcpy(pad_serio->name, "sp touchpad", sizeof(pad_serio->name));
+	strlcpy(pad_serio->phys, "sp/serio1", sizeof(pad_serio->phys));
 	priv->padio		= pad_serio;
-	serio_रेजिस्टर_port(pad_serio);
+	serio_register_port(pad_serio);
 
 	error = request_irq(priv->irq, olpc_apsp_rx, 0, "olpc-apsp", priv);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&pdev->dev, "Failed to request IRQ\n");
-		जाओ err_irq;
-	पूर्ण
+		goto err_irq;
+	}
 
 	device_init_wakeup(priv->dev, 1);
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 
 	dev_dbg(&pdev->dev, "probed successfully.\n");
-	वापस 0;
+	return 0;
 
 err_irq:
-	serio_unरेजिस्टर_port(pad_serio);
+	serio_unregister_port(pad_serio);
 err_pad:
-	serio_unरेजिस्टर_port(kb_serio);
-	वापस error;
-पूर्ण
+	serio_unregister_port(kb_serio);
+	return error;
+}
 
-अटल पूर्णांक olpc_apsp_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा olpc_apsp *priv = platक्रमm_get_drvdata(pdev);
+static int olpc_apsp_remove(struct platform_device *pdev)
+{
+	struct olpc_apsp *priv = platform_get_drvdata(pdev);
 
-	मुक्त_irq(priv->irq, priv);
+	free_irq(priv->irq, priv);
 
-	serio_unरेजिस्टर_port(priv->kbio);
-	serio_unरेजिस्टर_port(priv->padio);
+	serio_unregister_port(priv->kbio);
+	serio_unregister_port(priv->padio);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id olpc_apsp_dt_ids[] = अणु
-	अणु .compatible = "olpc,ap-sp", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id olpc_apsp_dt_ids[] = {
+	{ .compatible = "olpc,ap-sp", },
+	{}
+};
 MODULE_DEVICE_TABLE(of, olpc_apsp_dt_ids);
 
-अटल काष्ठा platक्रमm_driver olpc_apsp_driver = अणु
+static struct platform_driver olpc_apsp_driver = {
 	.probe		= olpc_apsp_probe,
-	.हटाओ		= olpc_apsp_हटाओ,
-	.driver		= अणु
+	.remove		= olpc_apsp_remove,
+	.driver		= {
 		.name	= "olpc-apsp",
 		.of_match_table = olpc_apsp_dt_ids,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 MODULE_DESCRIPTION("OLPC AP-SP serio driver");
 MODULE_LICENSE("GPL");
-module_platक्रमm_driver(olpc_apsp_driver);
+module_platform_driver(olpc_apsp_driver);

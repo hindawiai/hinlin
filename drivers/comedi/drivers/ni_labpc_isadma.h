@@ -1,44 +1,43 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * ni_labpc ISA DMA support.
  */
 
-#अगर_अघोषित _NI_LABPC_ISADMA_H
-#घोषणा _NI_LABPC_ISADMA_H
+#ifndef _NI_LABPC_ISADMA_H
+#define _NI_LABPC_ISADMA_H
 
-#अगर IS_ENABLED(CONFIG_COMEDI_NI_LABPC_ISADMA)
+#if IS_ENABLED(CONFIG_COMEDI_NI_LABPC_ISADMA)
 
-व्योम labpc_init_dma_chan(काष्ठा comedi_device *dev, अचिन्हित पूर्णांक dma_chan);
-व्योम labpc_मुक्त_dma_chan(काष्ठा comedi_device *dev);
-व्योम labpc_setup_dma(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s);
-व्योम labpc_drain_dma(काष्ठा comedi_device *dev);
-व्योम labpc_handle_dma_status(काष्ठा comedi_device *dev);
+void labpc_init_dma_chan(struct comedi_device *dev, unsigned int dma_chan);
+void labpc_free_dma_chan(struct comedi_device *dev);
+void labpc_setup_dma(struct comedi_device *dev, struct comedi_subdevice *s);
+void labpc_drain_dma(struct comedi_device *dev);
+void labpc_handle_dma_status(struct comedi_device *dev);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम labpc_init_dma_chan(काष्ठा comedi_device *dev,
-				       अचिन्हित पूर्णांक dma_chan)
-अणु
-पूर्ण
+static inline void labpc_init_dma_chan(struct comedi_device *dev,
+				       unsigned int dma_chan)
+{
+}
 
-अटल अंतरभूत व्योम labpc_मुक्त_dma_chan(काष्ठा comedi_device *dev)
-अणु
-पूर्ण
+static inline void labpc_free_dma_chan(struct comedi_device *dev)
+{
+}
 
-अटल अंतरभूत व्योम labpc_setup_dma(काष्ठा comedi_device *dev,
-				   काष्ठा comedi_subdevice *s)
-अणु
-पूर्ण
+static inline void labpc_setup_dma(struct comedi_device *dev,
+				   struct comedi_subdevice *s)
+{
+}
 
-अटल अंतरभूत व्योम labpc_drain_dma(काष्ठा comedi_device *dev)
-अणु
-पूर्ण
+static inline void labpc_drain_dma(struct comedi_device *dev)
+{
+}
 
-अटल अंतरभूत व्योम labpc_handle_dma_status(काष्ठा comedi_device *dev)
-अणु
-पूर्ण
+static inline void labpc_handle_dma_status(struct comedi_device *dev)
+{
+}
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर /* _NI_LABPC_ISADMA_H */
+#endif /* _NI_LABPC_ISADMA_H */

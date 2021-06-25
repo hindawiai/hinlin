@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * LCD Lowlevel Control Abstraction
  *
@@ -7,116 +6,116 @@
  *
  */
 
-#अगर_अघोषित _LINUX_LCD_H
-#घोषणा _LINUX_LCD_H
+#ifndef _LINUX_LCD_H
+#define _LINUX_LCD_H
 
-#समावेश <linux/device.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/fb.h>
+#include <linux/device.h>
+#include <linux/mutex.h>
+#include <linux/notifier.h>
+#include <linux/fb.h>
 
 /* Notes on locking:
  *
- * lcd_device->ops_lock is an पूर्णांकernal backlight lock protecting the ops
+ * lcd_device->ops_lock is an internal backlight lock protecting the ops
  * field and no code outside the core should need to touch it.
  *
- * Access to set_घातer() is serialised by the update_lock mutex since
+ * Access to set_power() is serialised by the update_lock mutex since
  * most drivers seem to need this and historically get it wrong.
  *
- * Most drivers करोn't need locking on their get_घातer() method.
- * If yours करोes, you need to implement it in the driver. You can use the
- * update_lock mutex अगर appropriate.
+ * Most drivers don't need locking on their get_power() method.
+ * If yours does, you need to implement it in the driver. You can use the
+ * update_lock mutex if appropriate.
  *
  * Any other use of the locks below is probably wrong.
  */
 
-काष्ठा lcd_device;
-काष्ठा fb_info;
+struct lcd_device;
+struct fb_info;
 
-काष्ठा lcd_properties अणु
-	/* The maximum value क्रम contrast (पढ़ो-only) */
-	पूर्णांक max_contrast;
-पूर्ण;
+struct lcd_properties {
+	/* The maximum value for contrast (read-only) */
+	int max_contrast;
+};
 
-काष्ठा lcd_ops अणु
-	/* Get the LCD panel घातer status (0: full on, 1..3: controller
-	   घातer on, flat panel घातer off, 4: full off), see FB_BLANK_XXX */
-	पूर्णांक (*get_घातer)(काष्ठा lcd_device *);
-	/* Enable or disable घातer to the LCD (0: on; 4: off, see FB_BLANK_XXX) */
-	पूर्णांक (*set_घातer)(काष्ठा lcd_device *, पूर्णांक घातer);
+struct lcd_ops {
+	/* Get the LCD panel power status (0: full on, 1..3: controller
+	   power on, flat panel power off, 4: full off), see FB_BLANK_XXX */
+	int (*get_power)(struct lcd_device *);
+	/* Enable or disable power to the LCD (0: on; 4: off, see FB_BLANK_XXX) */
+	int (*set_power)(struct lcd_device *, int power);
 	/* Get the current contrast setting (0-max_contrast) */
-	पूर्णांक (*get_contrast)(काष्ठा lcd_device *);
+	int (*get_contrast)(struct lcd_device *);
 	/* Set LCD panel contrast */
-        पूर्णांक (*set_contrast)(काष्ठा lcd_device *, पूर्णांक contrast);
+        int (*set_contrast)(struct lcd_device *, int contrast);
 	/* Set LCD panel mode (resolutions ...) */
-	पूर्णांक (*set_mode)(काष्ठा lcd_device *, काष्ठा fb_videomode *);
-	/* Check अगर given framebuffer device is the one LCD is bound to;
-	   वापस 0 अगर not, !=0 अगर it is. If शून्य, lcd always matches the fb. */
-	पूर्णांक (*check_fb)(काष्ठा lcd_device *, काष्ठा fb_info *);
-पूर्ण;
+	int (*set_mode)(struct lcd_device *, struct fb_videomode *);
+	/* Check if given framebuffer device is the one LCD is bound to;
+	   return 0 if not, !=0 if it is. If NULL, lcd always matches the fb. */
+	int (*check_fb)(struct lcd_device *, struct fb_info *);
+};
 
-काष्ठा lcd_device अणु
-	काष्ठा lcd_properties props;
-	/* This protects the 'ops' field. If 'ops' is शून्य, the driver that
-	   रेजिस्टरed this device has been unloaded, and अगर class_get_devdata()
-	   poपूर्णांकs to something in the body of that driver, it is also invalid. */
-	काष्ठा mutex ops_lock;
-	/* If this is शून्य, the backing module is unloaded */
-	काष्ठा lcd_ops *ops;
-	/* Serialise access to set_घातer method */
-	काष्ठा mutex update_lock;
-	/* The framebuffer notअगरier block */
-	काष्ठा notअगरier_block fb_notअगर;
+struct lcd_device {
+	struct lcd_properties props;
+	/* This protects the 'ops' field. If 'ops' is NULL, the driver that
+	   registered this device has been unloaded, and if class_get_devdata()
+	   points to something in the body of that driver, it is also invalid. */
+	struct mutex ops_lock;
+	/* If this is NULL, the backing module is unloaded */
+	struct lcd_ops *ops;
+	/* Serialise access to set_power method */
+	struct mutex update_lock;
+	/* The framebuffer notifier block */
+	struct notifier_block fb_notif;
 
-	काष्ठा device dev;
-पूर्ण;
+	struct device dev;
+};
 
-काष्ठा lcd_platक्रमm_data अणु
+struct lcd_platform_data {
 	/* reset lcd panel device. */
-	पूर्णांक (*reset)(काष्ठा lcd_device *ld);
-	/* on or off to lcd panel. अगर 'enable' is 0 then
-	   lcd घातer off and 1, lcd घातer on. */
-	पूर्णांक (*घातer_on)(काष्ठा lcd_device *ld, पूर्णांक enable);
+	int (*reset)(struct lcd_device *ld);
+	/* on or off to lcd panel. if 'enable' is 0 then
+	   lcd power off and 1, lcd power on. */
+	int (*power_on)(struct lcd_device *ld, int enable);
 
 	/* it indicates whether lcd panel was enabled
 	   from bootloader or not. */
-	पूर्णांक lcd_enabled;
-	/* it means delay क्रम stable समय when it becomes low to high
+	int lcd_enabled;
+	/* it means delay for stable time when it becomes low to high
 	   or high to low that is dependent on whether reset gpio is
 	   low active or high active. */
-	अचिन्हित पूर्णांक reset_delay;
-	/* stable समय needing to become lcd घातer on. */
-	अचिन्हित पूर्णांक घातer_on_delay;
-	/* stable समय needing to become lcd घातer off. */
-	अचिन्हित पूर्णांक घातer_off_delay;
+	unsigned int reset_delay;
+	/* stable time needing to become lcd power on. */
+	unsigned int power_on_delay;
+	/* stable time needing to become lcd power off. */
+	unsigned int power_off_delay;
 
-	/* it could be used क्रम any purpose. */
-	व्योम *pdata;
-पूर्ण;
+	/* it could be used for any purpose. */
+	void *pdata;
+};
 
-अटल अंतरभूत व्योम lcd_set_घातer(काष्ठा lcd_device *ld, पूर्णांक घातer)
-अणु
+static inline void lcd_set_power(struct lcd_device *ld, int power)
+{
 	mutex_lock(&ld->update_lock);
-	अगर (ld->ops && ld->ops->set_घातer)
-		ld->ops->set_घातer(ld, घातer);
+	if (ld->ops && ld->ops->set_power)
+		ld->ops->set_power(ld, power);
 	mutex_unlock(&ld->update_lock);
-पूर्ण
+}
 
-बाह्य काष्ठा lcd_device *lcd_device_रेजिस्टर(स्थिर अक्षर *name,
-	काष्ठा device *parent, व्योम *devdata, काष्ठा lcd_ops *ops);
-बाह्य काष्ठा lcd_device *devm_lcd_device_रेजिस्टर(काष्ठा device *dev,
-	स्थिर अक्षर *name, काष्ठा device *parent,
-	व्योम *devdata, काष्ठा lcd_ops *ops);
-बाह्य व्योम lcd_device_unरेजिस्टर(काष्ठा lcd_device *ld);
-बाह्य व्योम devm_lcd_device_unरेजिस्टर(काष्ठा device *dev,
-	काष्ठा lcd_device *ld);
+extern struct lcd_device *lcd_device_register(const char *name,
+	struct device *parent, void *devdata, struct lcd_ops *ops);
+extern struct lcd_device *devm_lcd_device_register(struct device *dev,
+	const char *name, struct device *parent,
+	void *devdata, struct lcd_ops *ops);
+extern void lcd_device_unregister(struct lcd_device *ld);
+extern void devm_lcd_device_unregister(struct device *dev,
+	struct lcd_device *ld);
 
-#घोषणा to_lcd_device(obj) container_of(obj, काष्ठा lcd_device, dev)
+#define to_lcd_device(obj) container_of(obj, struct lcd_device, dev)
 
-अटल अंतरभूत व्योम * lcd_get_data(काष्ठा lcd_device *ld_dev)
-अणु
-	वापस dev_get_drvdata(&ld_dev->dev);
-पूर्ण
+static inline void * lcd_get_data(struct lcd_device *ld_dev)
+{
+	return dev_get_drvdata(&ld_dev->dev);
+}
 
 
-#पूर्ण_अगर
+#endif

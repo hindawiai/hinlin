@@ -1,43 +1,42 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Abilis Systems Single DVB-T Receiver
  * Copyright (C) 2008 Pierrick Hascoet <pierrick.hascoet@abilis.com>
  */
-#अगर_अघोषित _AS10X_HANDLE_H
-#घोषणा _AS10X_HANDLE_H
-काष्ठा as10x_bus_adapter_t;
-काष्ठा as102_dev_t;
+#ifndef _AS10X_HANDLE_H
+#define _AS10X_HANDLE_H
+struct as10x_bus_adapter_t;
+struct as102_dev_t;
 
-#समावेश "as10x_cmd.h"
+#include "as10x_cmd.h"
 
-/* values क्रम "mode" field */
-#घोषणा REGMODE8	8
-#घोषणा REGMODE16	16
-#घोषणा REGMODE32	32
+/* values for "mode" field */
+#define REGMODE8	8
+#define REGMODE16	16
+#define REGMODE32	32
 
-काष्ठा as102_priv_ops_t अणु
-	पूर्णांक (*upload_fw_pkt)(काष्ठा as10x_bus_adapter_t *bus_adap,
-			      अचिन्हित अक्षर *buf, पूर्णांक buflen, पूर्णांक swap32);
+struct as102_priv_ops_t {
+	int (*upload_fw_pkt)(struct as10x_bus_adapter_t *bus_adap,
+			      unsigned char *buf, int buflen, int swap32);
 
-	पूर्णांक (*send_cmd)(काष्ठा as10x_bus_adapter_t *bus_adap,
-			 अचिन्हित अक्षर *buf, पूर्णांक buflen);
+	int (*send_cmd)(struct as10x_bus_adapter_t *bus_adap,
+			 unsigned char *buf, int buflen);
 
-	पूर्णांक (*xfer_cmd)(काष्ठा as10x_bus_adapter_t *bus_adap,
-			 अचिन्हित अक्षर *send_buf, पूर्णांक send_buf_len,
-			 अचिन्हित अक्षर *recv_buf, पूर्णांक recv_buf_len);
+	int (*xfer_cmd)(struct as10x_bus_adapter_t *bus_adap,
+			 unsigned char *send_buf, int send_buf_len,
+			 unsigned char *recv_buf, int recv_buf_len);
 
-	पूर्णांक (*start_stream)(काष्ठा as102_dev_t *dev);
-	व्योम (*stop_stream)(काष्ठा as102_dev_t *dev);
+	int (*start_stream)(struct as102_dev_t *dev);
+	void (*stop_stream)(struct as102_dev_t *dev);
 
-	पूर्णांक (*reset_target)(काष्ठा as10x_bus_adapter_t *bus_adap);
+	int (*reset_target)(struct as10x_bus_adapter_t *bus_adap);
 
-	पूर्णांक (*पढ़ो_ग_लिखो)(काष्ठा as10x_bus_adapter_t *bus_adap, uपूर्णांक8_t mode,
-			  uपूर्णांक32_t rd_addr, uपूर्णांक16_t rd_len,
-			  uपूर्णांक32_t wr_addr, uपूर्णांक16_t wr_len);
+	int (*read_write)(struct as10x_bus_adapter_t *bus_adap, uint8_t mode,
+			  uint32_t rd_addr, uint16_t rd_len,
+			  uint32_t wr_addr, uint16_t wr_len);
 
-	पूर्णांक (*as102_पढ़ो_ep2)(काष्ठा as10x_bus_adapter_t *bus_adap,
-			       अचिन्हित अक्षर *recv_buf,
-			       पूर्णांक recv_buf_len);
-पूर्ण;
-#पूर्ण_अगर
+	int (*as102_read_ep2)(struct as10x_bus_adapter_t *bus_adap,
+			       unsigned char *recv_buf,
+			       int recv_buf_len);
+};
+#endif

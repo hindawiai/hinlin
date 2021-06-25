@@ -1,6 +1,5 @@
-<शैली गुरु>
-बाह्य पूर्णांक __भागsi3(पूर्णांक, पूर्णांक);
-बाह्य पूर्णांक __modsi3(पूर्णांक, पूर्णांक);
-बाह्य पूर्णांक __mulsi3(पूर्णांक, पूर्णांक);
-बाह्य अचिन्हित पूर्णांक __uभागsi3(अचिन्हित पूर्णांक, अचिन्हित पूर्णांक);
-बाह्य अचिन्हित पूर्णांक __umodsi3(अचिन्हित पूर्णांक, अचिन्हित पूर्णांक);
+extern int __divsi3(int, int);
+extern int __modsi3(int, int);
+extern int __mulsi3(int, int);
+extern unsigned int __udivsi3(unsigned int, unsigned int);
+extern unsigned int __umodsi3(unsigned int, unsigned int);

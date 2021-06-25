@@ -1,12 +1,11 @@
-<शैली गुरु>
-#अगर_अघोषित __NVIF_IF000B_H__
-#घोषणा __NVIF_IF000B_H__
-#समावेश "if000a.h"
+#ifndef __NVIF_IF000B_H__
+#define __NVIF_IF000B_H__
+#include "if000a.h"
 
-काष्ठा nv04_mem_vn अणु
+struct nv04_mem_vn {
 	/* nvkm_mem_vX ... */
-पूर्ण;
+};
 
-काष्ठा nv04_mem_map_vn अणु
-पूर्ण;
-#पूर्ण_अगर
+struct nv04_mem_map_vn {
+};
+#endif

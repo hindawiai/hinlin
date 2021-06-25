@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2014 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,56 +21,56 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "pad.h"
-#समावेश "aux.h"
-#समावेश "bus.h"
+#include "pad.h"
+#include "aux.h"
+#include "bus.h"
 
-अटल व्योम
-gm200_i2c_pad_mode(काष्ठा nvkm_i2c_pad *pad, क्रमागत nvkm_i2c_pad_mode mode)
-अणु
-	काष्ठा nvkm_subdev *subdev = &pad->i2c->subdev;
-	काष्ठा nvkm_device *device = subdev->device;
-	स्थिर u32 base = (pad->id - NVKM_I2C_PAD_HYBRID(0)) * 0x50;
+static void
+gm200_i2c_pad_mode(struct nvkm_i2c_pad *pad, enum nvkm_i2c_pad_mode mode)
+{
+	struct nvkm_subdev *subdev = &pad->i2c->subdev;
+	struct nvkm_device *device = subdev->device;
+	const u32 base = (pad->id - NVKM_I2C_PAD_HYBRID(0)) * 0x50;
 
-	चयन (mode) अणु
-	हाल NVKM_I2C_PAD_OFF:
+	switch (mode) {
+	case NVKM_I2C_PAD_OFF:
 		nvkm_mask(device, 0x00d97c + base, 0x00000001, 0x00000001);
-		अवरोध;
-	हाल NVKM_I2C_PAD_I2C:
+		break;
+	case NVKM_I2C_PAD_I2C:
 		nvkm_mask(device, 0x00d970 + base, 0x0000c003, 0x0000c001);
 		nvkm_mask(device, 0x00d97c + base, 0x00000001, 0x00000000);
-		अवरोध;
-	हाल NVKM_I2C_PAD_AUX:
+		break;
+	case NVKM_I2C_PAD_AUX:
 		nvkm_mask(device, 0x00d970 + base, 0x0000c003, 0x00000002);
 		nvkm_mask(device, 0x00d97c + base, 0x00000001, 0x00000000);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON(1);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल स्थिर काष्ठा nvkm_i2c_pad_func
-gm200_i2c_pad_s_func = अणु
+static const struct nvkm_i2c_pad_func
+gm200_i2c_pad_s_func = {
 	.bus_new_4 = gf119_i2c_bus_new,
 	.aux_new_6 = gm200_i2c_aux_new,
 	.mode = gm200_i2c_pad_mode,
-पूर्ण;
+};
 
-पूर्णांक
-gm200_i2c_pad_s_new(काष्ठा nvkm_i2c *i2c, पूर्णांक id, काष्ठा nvkm_i2c_pad **ppad)
-अणु
-	वापस nvkm_i2c_pad_new_(&gm200_i2c_pad_s_func, i2c, id, ppad);
-पूर्ण
+int
+gm200_i2c_pad_s_new(struct nvkm_i2c *i2c, int id, struct nvkm_i2c_pad **ppad)
+{
+	return nvkm_i2c_pad_new_(&gm200_i2c_pad_s_func, i2c, id, ppad);
+}
 
-अटल स्थिर काष्ठा nvkm_i2c_pad_func
-gm200_i2c_pad_x_func = अणु
+static const struct nvkm_i2c_pad_func
+gm200_i2c_pad_x_func = {
 	.bus_new_4 = gf119_i2c_bus_new,
 	.aux_new_6 = gm200_i2c_aux_new,
-पूर्ण;
+};
 
-पूर्णांक
-gm200_i2c_pad_x_new(काष्ठा nvkm_i2c *i2c, पूर्णांक id, काष्ठा nvkm_i2c_pad **ppad)
-अणु
-	वापस nvkm_i2c_pad_new_(&gm200_i2c_pad_x_func, i2c, id, ppad);
-पूर्ण
+int
+gm200_i2c_pad_x_new(struct nvkm_i2c *i2c, int id, struct nvkm_i2c_pad **ppad)
+{
+	return nvkm_i2c_pad_new_(&gm200_i2c_pad_x_func, i2c, id, ppad);
+}

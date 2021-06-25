@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * arch/um/drivers/mmapper_kern.c
  *
@@ -11,125 +10,125 @@
  *
  */
 
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/types.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/init.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mm.h>
+#include <linux/stddef.h>
+#include <linux/types.h>
+#include <linux/fs.h>
+#include <linux/init.h>
+#include <linux/miscdevice.h>
+#include <linux/module.h>
+#include <linux/mm.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <mem_user.h>
+#include <linux/uaccess.h>
+#include <mem_user.h>
 
-/* These are set in mmapper_init, which is called at boot समय */
-अटल अचिन्हित दीर्घ mmapper_size;
-अटल अचिन्हित दीर्घ p_buf;
-अटल अक्षर *v_buf;
+/* These are set in mmapper_init, which is called at boot time */
+static unsigned long mmapper_size;
+static unsigned long p_buf;
+static char *v_buf;
 
-अटल sमाप_प्रकार mmapper_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count,
+static ssize_t mmapper_read(struct file *file, char __user *buf, size_t count,
 			    loff_t *ppos)
-अणु
-	वापस simple_पढ़ो_from_buffer(buf, count, ppos, v_buf, mmapper_size);
-पूर्ण
+{
+	return simple_read_from_buffer(buf, count, ppos, v_buf, mmapper_size);
+}
 
-अटल sमाप_प्रकार mmapper_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-			     माप_प्रकार count, loff_t *ppos)
-अणु
-	अगर (*ppos > mmapper_size)
-		वापस -EINVAL;
+static ssize_t mmapper_write(struct file *file, const char __user *buf,
+			     size_t count, loff_t *ppos)
+{
+	if (*ppos > mmapper_size)
+		return -EINVAL;
 
-	वापस simple_ग_लिखो_to_buffer(v_buf, mmapper_size, ppos, buf, count);
-पूर्ण
+	return simple_write_to_buffer(v_buf, mmapper_size, ppos, buf, count);
+}
 
-अटल दीर्घ mmapper_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	वापस -ENOIOCTLCMD;
-पूर्ण
+static long mmapper_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	return -ENOIOCTLCMD;
+}
 
-अटल पूर्णांक mmapper_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	पूर्णांक ret = -EINVAL;
-	पूर्णांक size;
+static int mmapper_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	int ret = -EINVAL;
+	int size;
 
-	अगर (vma->vm_pgoff != 0)
-		जाओ out;
+	if (vma->vm_pgoff != 0)
+		goto out;
 
 	size = vma->vm_end - vma->vm_start;
-	अगर (size > mmapper_size)
-		वापस -EFAULT;
+	if (size > mmapper_size)
+		return -EFAULT;
 
 	/*
 	 * XXX A comment above remap_pfn_range says it should only be
 	 * called when the mm semaphore is held
 	 */
-	अगर (remap_pfn_range(vma, vma->vm_start, p_buf >> PAGE_SHIFT, size,
+	if (remap_pfn_range(vma, vma->vm_start, p_buf >> PAGE_SHIFT, size,
 			    vma->vm_page_prot))
-		जाओ out;
+		goto out;
 	ret = 0;
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mmapper_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस 0;
-पूर्ण
+static int mmapper_open(struct inode *inode, struct file *file)
+{
+	return 0;
+}
 
-अटल पूर्णांक mmapper_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस 0;
-पूर्ण
+static int mmapper_release(struct inode *inode, struct file *file)
+{
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations mmapper_fops = अणु
+static const struct file_operations mmapper_fops = {
 	.owner		= THIS_MODULE,
-	.पढ़ो		= mmapper_पढ़ो,
-	.ग_लिखो		= mmapper_ग_लिखो,
+	.read		= mmapper_read,
+	.write		= mmapper_write,
 	.unlocked_ioctl	= mmapper_ioctl,
 	.mmap		= mmapper_mmap,
-	.खोलो		= mmapper_खोलो,
+	.open		= mmapper_open,
 	.release	= mmapper_release,
-	.llseek		= शेष_llseek,
-पूर्ण;
+	.llseek		= default_llseek,
+};
 
 /*
- * No locking needed - only used (and modअगरied) by below initcall and निकासcall.
+ * No locking needed - only used (and modified) by below initcall and exitcall.
  */
-अटल काष्ठा miscdevice mmapper_dev = अणु
+static struct miscdevice mmapper_dev = {
 	.minor		= MISC_DYNAMIC_MINOR,
 	.name		= "mmapper",
 	.fops		= &mmapper_fops
-पूर्ण;
+};
 
-अटल पूर्णांक __init mmapper_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init mmapper_init(void)
+{
+	int err;
 
-	prपूर्णांकk(KERN_INFO "Mapper v0.1\n");
+	printk(KERN_INFO "Mapper v0.1\n");
 
-	v_buf = (अक्षर *) find_iomem("mmapper", &mmapper_size);
-	अगर (mmapper_size == 0) अणु
-		prपूर्णांकk(KERN_ERR "mmapper_init - find_iomem failed\n");
-		वापस -ENODEV;
-	पूर्ण
+	v_buf = (char *) find_iomem("mmapper", &mmapper_size);
+	if (mmapper_size == 0) {
+		printk(KERN_ERR "mmapper_init - find_iomem failed\n");
+		return -ENODEV;
+	}
 	p_buf = __pa(v_buf);
 
-	err = misc_रेजिस्टर(&mmapper_dev);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "mmapper - misc_register failed, err = %d\n",
+	err = misc_register(&mmapper_dev);
+	if (err) {
+		printk(KERN_ERR "mmapper - misc_register failed, err = %d\n",
 		       err);
-		वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return err;
+	}
+	return 0;
+}
 
-अटल व्योम mmapper_निकास(व्योम)
-अणु
-	misc_deरेजिस्टर(&mmapper_dev);
-पूर्ण
+static void mmapper_exit(void)
+{
+	misc_deregister(&mmapper_dev);
+}
 
 module_init(mmapper_init);
-module_निकास(mmapper_निकास);
+module_exit(mmapper_exit);
 
 MODULE_AUTHOR("Greg Lonnon <glonnon@ridgerun.com>");
 MODULE_DESCRIPTION("DSPLinux simulator mmapper driver");

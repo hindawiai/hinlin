@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Pinctrl driver क्रम Rockchip SoCs
+ * Pinctrl driver for Rockchip SoCs
  *
- * Copyright (c) 2013 MunकरोReader S.L.
+ * Copyright (c) 2013 MundoReader S.L.
  * Author: Heiko Stuebner <heiko@sntech.de>
  *
  * With some ideas taken from pinctrl-samsung:
@@ -16,44 +15,44 @@
  * Copyright (C) 2011-2012 Jean-Christophe PLAGNIOL-VILLARD <plagnioj@jcrosoft.com>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/bitops.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/pinctrl/machine.h>
-#समावेश <linux/pinctrl/pinconf.h>
-#समावेश <linux/pinctrl/pinctrl.h>
-#समावेश <linux/pinctrl/pinmux.h>
-#समावेश <linux/pinctrl/pinconf-generic.h>
-#समावेश <linux/irqchip/chained_irq.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <dt-bindings/pinctrl/rockchip.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/io.h>
+#include <linux/bitops.h>
+#include <linux/gpio/driver.h>
+#include <linux/of_device.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/pinctrl/machine.h>
+#include <linux/pinctrl/pinconf.h>
+#include <linux/pinctrl/pinctrl.h>
+#include <linux/pinctrl/pinmux.h>
+#include <linux/pinctrl/pinconf-generic.h>
+#include <linux/irqchip/chained_irq.h>
+#include <linux/clk.h>
+#include <linux/regmap.h>
+#include <linux/mfd/syscon.h>
+#include <dt-bindings/pinctrl/rockchip.h>
 
-#समावेश "core.h"
-#समावेश "pinconf.h"
+#include "core.h"
+#include "pinconf.h"
 
-/* GPIO control रेजिस्टरs */
-#घोषणा GPIO_SWPORT_DR		0x00
-#घोषणा GPIO_SWPORT_DDR		0x04
-#घोषणा GPIO_INTEN		0x30
-#घोषणा GPIO_INTMASK		0x34
-#घोषणा GPIO_INTTYPE_LEVEL	0x38
-#घोषणा GPIO_INT_POLARITY	0x3c
-#घोषणा GPIO_INT_STATUS		0x40
-#घोषणा GPIO_INT_RAWSTATUS	0x44
-#घोषणा GPIO_DEBOUNCE		0x48
-#घोषणा GPIO_PORTS_EOI		0x4c
-#घोषणा GPIO_EXT_PORT		0x50
-#घोषणा GPIO_LS_SYNC		0x60
+/* GPIO control registers */
+#define GPIO_SWPORT_DR		0x00
+#define GPIO_SWPORT_DDR		0x04
+#define GPIO_INTEN		0x30
+#define GPIO_INTMASK		0x34
+#define GPIO_INTTYPE_LEVEL	0x38
+#define GPIO_INT_POLARITY	0x3c
+#define GPIO_INT_STATUS		0x40
+#define GPIO_INT_RAWSTATUS	0x44
+#define GPIO_DEBOUNCE		0x48
+#define GPIO_PORTS_EOI		0x4c
+#define GPIO_EXT_PORT		0x50
+#define GPIO_LS_SYNC		0x60
 
-क्रमागत rockchip_pinctrl_type अणु
+enum rockchip_pinctrl_type {
 	PX30,
 	RV1108,
 	RK2928,
@@ -65,496 +64,496 @@
 	RK3368,
 	RK3399,
 	RK3568,
-पूर्ण;
+};
 
 
 /**
- * Generate a biपंचांगask क्रम setting a value (v) with a ग_लिखो mask bit in hiword
- * रेजिस्टर 31:16 area.
+ * Generate a bitmask for setting a value (v) with a write mask bit in hiword
+ * register 31:16 area.
  */
-#घोषणा WRITE_MASK_VAL(h, l, v) \
+#define WRITE_MASK_VAL(h, l, v) \
 	(GENMASK(((h) + 16), ((l) + 16)) | (((v) << (l)) & GENMASK((h), (l))))
 
 /*
- * Encode variants of iomux रेजिस्टरs पूर्णांकo a type variable
+ * Encode variants of iomux registers into a type variable
  */
-#घोषणा IOMUX_GPIO_ONLY		BIT(0)
-#घोषणा IOMUX_WIDTH_4BIT	BIT(1)
-#घोषणा IOMUX_SOURCE_PMU	BIT(2)
-#घोषणा IOMUX_UNROUTED		BIT(3)
-#घोषणा IOMUX_WIDTH_3BIT	BIT(4)
-#घोषणा IOMUX_WIDTH_2BIT	BIT(5)
+#define IOMUX_GPIO_ONLY		BIT(0)
+#define IOMUX_WIDTH_4BIT	BIT(1)
+#define IOMUX_SOURCE_PMU	BIT(2)
+#define IOMUX_UNROUTED		BIT(3)
+#define IOMUX_WIDTH_3BIT	BIT(4)
+#define IOMUX_WIDTH_2BIT	BIT(5)
 
 /**
- * काष्ठा rockchip_iomux
- * @type: iomux variant using IOMUX_* स्थिरants
- * @offset: अगर initialized to -1 it will be स्वतःcalculated, by specअगरying
+ * struct rockchip_iomux
+ * @type: iomux variant using IOMUX_* constants
+ * @offset: if initialized to -1 it will be autocalculated, by specifying
  *	    an initial offset value the relevant source offset can be reset
- *	    to a new value क्रम स्वतःcalculating the following iomux रेजिस्टरs.
+ *	    to a new value for autocalculating the following iomux registers.
  */
-काष्ठा rockchip_iomux अणु
-	पूर्णांक				type;
-	पूर्णांक				offset;
-पूर्ण;
+struct rockchip_iomux {
+	int				type;
+	int				offset;
+};
 
 /*
- * क्रमागत type index corresponding to rockchip_perpin_drv_list arrays index.
+ * enum type index corresponding to rockchip_perpin_drv_list arrays index.
  */
-क्रमागत rockchip_pin_drv_type अणु
+enum rockchip_pin_drv_type {
 	DRV_TYPE_IO_DEFAULT = 0,
 	DRV_TYPE_IO_1V8_OR_3V0,
 	DRV_TYPE_IO_1V8_ONLY,
 	DRV_TYPE_IO_1V8_3V0_AUTO,
 	DRV_TYPE_IO_3V3_ONLY,
 	DRV_TYPE_MAX
-पूर्ण;
+};
 
 /*
- * क्रमागत type index corresponding to rockchip_pull_list arrays index.
+ * enum type index corresponding to rockchip_pull_list arrays index.
  */
-क्रमागत rockchip_pin_pull_type अणु
+enum rockchip_pin_pull_type {
 	PULL_TYPE_IO_DEFAULT = 0,
 	PULL_TYPE_IO_1V8_ONLY,
 	PULL_TYPE_MAX
-पूर्ण;
+};
 
 /**
- * काष्ठा rockchip_drv
+ * struct rockchip_drv
  * @drv_type: drive strength variant using rockchip_perpin_drv_type
- * @offset: अगर initialized to -1 it will be स्वतःcalculated, by specअगरying
+ * @offset: if initialized to -1 it will be autocalculated, by specifying
  *	    an initial offset value the relevant source offset can be reset
- *	    to a new value क्रम स्वतःcalculating the following drive strength
- *	    रेजिस्टरs. अगर used chips own cal_drv func instead to calculate
- *	    रेजिस्टरs offset, the variant could be ignored.
+ *	    to a new value for autocalculating the following drive strength
+ *	    registers. if used chips own cal_drv func instead to calculate
+ *	    registers offset, the variant could be ignored.
  */
-काष्ठा rockchip_drv अणु
-	क्रमागत rockchip_pin_drv_type	drv_type;
-	पूर्णांक				offset;
-पूर्ण;
+struct rockchip_drv {
+	enum rockchip_pin_drv_type	drv_type;
+	int				offset;
+};
 
 /**
- * काष्ठा rockchip_pin_bank
- * @reg_base: रेजिस्टर base of the gpio bank
- * @regmap_pull: optional separate रेजिस्टर क्रम additional pull settings
- * @clk: घड़ी of the gpio bank
- * @irq: पूर्णांकerrupt of the gpio bank
- * @saved_masks: Saved content of GPIO_INTEN at suspend समय.
+ * struct rockchip_pin_bank
+ * @reg_base: register base of the gpio bank
+ * @regmap_pull: optional separate register for additional pull settings
+ * @clk: clock of the gpio bank
+ * @irq: interrupt of the gpio bank
+ * @saved_masks: Saved content of GPIO_INTEN at suspend time.
  * @pin_base: first pin number
  * @nr_pins: number of pins in this bank
  * @name: name of the bank
- * @bank_num: number of the bank, to account क्रम holes
+ * @bank_num: number of the bank, to account for holes
  * @iomux: array describing the 4 iomux sources of the bank
  * @drv: array describing the 4 drive strength sources of the bank
  * @pull_type: array describing the 4 pull type sources of the bank
- * @valid: is all necessary inक्रमmation present
+ * @valid: is all necessary information present
  * @of_node: dt node of this bank
  * @drvdata: common pinctrl basedata
- * @करोमुख्य: irqकरोमुख्य of the gpio bank
+ * @domain: irqdomain of the gpio bank
  * @gpio_chip: gpiolib chip
  * @grange: gpio range
- * @slock: spinlock क्रम the gpio bank
+ * @slock: spinlock for the gpio bank
  * @toggle_edge_mode: bit mask to toggle (falling/rising) edge mode
  * @recalced_mask: bit mask to indicate a need to recalulate the mask
  * @route_mask: bits describing the routing pins of per bank
  */
-काष्ठा rockchip_pin_bank अणु
-	व्योम __iomem			*reg_base;
-	काष्ठा regmap			*regmap_pull;
-	काष्ठा clk			*clk;
-	पूर्णांक				irq;
+struct rockchip_pin_bank {
+	void __iomem			*reg_base;
+	struct regmap			*regmap_pull;
+	struct clk			*clk;
+	int				irq;
 	u32				saved_masks;
 	u32				pin_base;
 	u8				nr_pins;
-	अक्षर				*name;
+	char				*name;
 	u8				bank_num;
-	काष्ठा rockchip_iomux		iomux[4];
-	काष्ठा rockchip_drv		drv[4];
-	क्रमागत rockchip_pin_pull_type	pull_type[4];
+	struct rockchip_iomux		iomux[4];
+	struct rockchip_drv		drv[4];
+	enum rockchip_pin_pull_type	pull_type[4];
 	bool				valid;
-	काष्ठा device_node		*of_node;
-	काष्ठा rockchip_pinctrl		*drvdata;
-	काष्ठा irq_करोमुख्य		*करोमुख्य;
-	काष्ठा gpio_chip		gpio_chip;
-	काष्ठा pinctrl_gpio_range	grange;
+	struct device_node		*of_node;
+	struct rockchip_pinctrl		*drvdata;
+	struct irq_domain		*domain;
+	struct gpio_chip		gpio_chip;
+	struct pinctrl_gpio_range	grange;
 	raw_spinlock_t			slock;
 	u32				toggle_edge_mode;
 	u32				recalced_mask;
 	u32				route_mask;
-पूर्ण;
+};
 
-#घोषणा PIN_BANK(id, pins, label)			\
-	अणु						\
+#define PIN_BANK(id, pins, label)			\
+	{						\
 		.bank_num	= id,			\
 		.nr_pins	= pins,			\
 		.name		= label,		\
-		.iomux		= अणु			\
-			अणु .offset = -1 पूर्ण,		\
-			अणु .offset = -1 पूर्ण,		\
-			अणु .offset = -1 पूर्ण,		\
-			अणु .offset = -1 पूर्ण,		\
-		पूर्ण,					\
-	पूर्ण
+		.iomux		= {			\
+			{ .offset = -1 },		\
+			{ .offset = -1 },		\
+			{ .offset = -1 },		\
+			{ .offset = -1 },		\
+		},					\
+	}
 
-#घोषणा PIN_BANK_IOMUX_FLAGS(id, pins, label, iom0, iom1, iom2, iom3)	\
-	अणु								\
+#define PIN_BANK_IOMUX_FLAGS(id, pins, label, iom0, iom1, iom2, iom3)	\
+	{								\
 		.bank_num	= id,					\
 		.nr_pins	= pins,					\
 		.name		= label,				\
-		.iomux		= अणु					\
-			अणु .type = iom0, .offset = -1 पूर्ण,			\
-			अणु .type = iom1, .offset = -1 पूर्ण,			\
-			अणु .type = iom2, .offset = -1 पूर्ण,			\
-			अणु .type = iom3, .offset = -1 पूर्ण,			\
-		पूर्ण,							\
-	पूर्ण
+		.iomux		= {					\
+			{ .type = iom0, .offset = -1 },			\
+			{ .type = iom1, .offset = -1 },			\
+			{ .type = iom2, .offset = -1 },			\
+			{ .type = iom3, .offset = -1 },			\
+		},							\
+	}
 
-#घोषणा PIN_BANK_DRV_FLAGS(id, pins, label, type0, type1, type2, type3) \
-	अणु								\
+#define PIN_BANK_DRV_FLAGS(id, pins, label, type0, type1, type2, type3) \
+	{								\
 		.bank_num	= id,					\
 		.nr_pins	= pins,					\
 		.name		= label,				\
-		.iomux		= अणु					\
-			अणु .offset = -1 पूर्ण,				\
-			अणु .offset = -1 पूर्ण,				\
-			अणु .offset = -1 पूर्ण,				\
-			अणु .offset = -1 पूर्ण,				\
-		पूर्ण,							\
-		.drv		= अणु					\
-			अणु .drv_type = type0, .offset = -1 पूर्ण,		\
-			अणु .drv_type = type1, .offset = -1 पूर्ण,		\
-			अणु .drv_type = type2, .offset = -1 पूर्ण,		\
-			अणु .drv_type = type3, .offset = -1 पूर्ण,		\
-		पूर्ण,							\
-	पूर्ण
+		.iomux		= {					\
+			{ .offset = -1 },				\
+			{ .offset = -1 },				\
+			{ .offset = -1 },				\
+			{ .offset = -1 },				\
+		},							\
+		.drv		= {					\
+			{ .drv_type = type0, .offset = -1 },		\
+			{ .drv_type = type1, .offset = -1 },		\
+			{ .drv_type = type2, .offset = -1 },		\
+			{ .drv_type = type3, .offset = -1 },		\
+		},							\
+	}
 
-#घोषणा PIN_BANK_DRV_FLAGS_PULL_FLAGS(id, pins, label, drv0, drv1,	\
+#define PIN_BANK_DRV_FLAGS_PULL_FLAGS(id, pins, label, drv0, drv1,	\
 				      drv2, drv3, pull0, pull1,		\
 				      pull2, pull3)			\
-	अणु								\
+	{								\
 		.bank_num	= id,					\
 		.nr_pins	= pins,					\
 		.name		= label,				\
-		.iomux		= अणु					\
-			अणु .offset = -1 पूर्ण,				\
-			अणु .offset = -1 पूर्ण,				\
-			अणु .offset = -1 पूर्ण,				\
-			अणु .offset = -1 पूर्ण,				\
-		पूर्ण,							\
-		.drv		= अणु					\
-			अणु .drv_type = drv0, .offset = -1 पूर्ण,		\
-			अणु .drv_type = drv1, .offset = -1 पूर्ण,		\
-			अणु .drv_type = drv2, .offset = -1 पूर्ण,		\
-			अणु .drv_type = drv3, .offset = -1 पूर्ण,		\
-		पूर्ण,							\
+		.iomux		= {					\
+			{ .offset = -1 },				\
+			{ .offset = -1 },				\
+			{ .offset = -1 },				\
+			{ .offset = -1 },				\
+		},							\
+		.drv		= {					\
+			{ .drv_type = drv0, .offset = -1 },		\
+			{ .drv_type = drv1, .offset = -1 },		\
+			{ .drv_type = drv2, .offset = -1 },		\
+			{ .drv_type = drv3, .offset = -1 },		\
+		},							\
 		.pull_type[0] = pull0,					\
 		.pull_type[1] = pull1,					\
 		.pull_type[2] = pull2,					\
 		.pull_type[3] = pull3,					\
-	पूर्ण
+	}
 
-#घोषणा PIN_BANK_IOMUX_DRV_FLAGS_OFFSET(id, pins, label, iom0, iom1,	\
+#define PIN_BANK_IOMUX_DRV_FLAGS_OFFSET(id, pins, label, iom0, iom1,	\
 					iom2, iom3, drv0, drv1, drv2,	\
 					drv3, offset0, offset1,		\
 					offset2, offset3)		\
-	अणु								\
+	{								\
 		.bank_num	= id,					\
 		.nr_pins	= pins,					\
 		.name		= label,				\
-		.iomux		= अणु					\
-			अणु .type = iom0, .offset = -1 पूर्ण,			\
-			अणु .type = iom1, .offset = -1 पूर्ण,			\
-			अणु .type = iom2, .offset = -1 पूर्ण,			\
-			अणु .type = iom3, .offset = -1 पूर्ण,			\
-		पूर्ण,							\
-		.drv		= अणु					\
-			अणु .drv_type = drv0, .offset = offset0 पूर्ण,	\
-			अणु .drv_type = drv1, .offset = offset1 पूर्ण,	\
-			अणु .drv_type = drv2, .offset = offset2 पूर्ण,	\
-			अणु .drv_type = drv3, .offset = offset3 पूर्ण,	\
-		पूर्ण,							\
-	पूर्ण
+		.iomux		= {					\
+			{ .type = iom0, .offset = -1 },			\
+			{ .type = iom1, .offset = -1 },			\
+			{ .type = iom2, .offset = -1 },			\
+			{ .type = iom3, .offset = -1 },			\
+		},							\
+		.drv		= {					\
+			{ .drv_type = drv0, .offset = offset0 },	\
+			{ .drv_type = drv1, .offset = offset1 },	\
+			{ .drv_type = drv2, .offset = offset2 },	\
+			{ .drv_type = drv3, .offset = offset3 },	\
+		},							\
+	}
 
-#घोषणा PIN_BANK_IOMUX_FLAGS_DRV_FLAGS_OFFSET_PULL_FLAGS(id, pins,	\
+#define PIN_BANK_IOMUX_FLAGS_DRV_FLAGS_OFFSET_PULL_FLAGS(id, pins,	\
 					      label, iom0, iom1, iom2,  \
 					      iom3, drv0, drv1, drv2,   \
 					      drv3, offset0, offset1,   \
 					      offset2, offset3, pull0,  \
 					      pull1, pull2, pull3)	\
-	अणु								\
+	{								\
 		.bank_num	= id,					\
 		.nr_pins	= pins,					\
 		.name		= label,				\
-		.iomux		= अणु					\
-			अणु .type = iom0, .offset = -1 पूर्ण,			\
-			अणु .type = iom1, .offset = -1 पूर्ण,			\
-			अणु .type = iom2, .offset = -1 पूर्ण,			\
-			अणु .type = iom3, .offset = -1 पूर्ण,			\
-		पूर्ण,							\
-		.drv		= अणु					\
-			अणु .drv_type = drv0, .offset = offset0 पूर्ण,	\
-			अणु .drv_type = drv1, .offset = offset1 पूर्ण,	\
-			अणु .drv_type = drv2, .offset = offset2 पूर्ण,	\
-			अणु .drv_type = drv3, .offset = offset3 पूर्ण,	\
-		पूर्ण,							\
+		.iomux		= {					\
+			{ .type = iom0, .offset = -1 },			\
+			{ .type = iom1, .offset = -1 },			\
+			{ .type = iom2, .offset = -1 },			\
+			{ .type = iom3, .offset = -1 },			\
+		},							\
+		.drv		= {					\
+			{ .drv_type = drv0, .offset = offset0 },	\
+			{ .drv_type = drv1, .offset = offset1 },	\
+			{ .drv_type = drv2, .offset = offset2 },	\
+			{ .drv_type = drv3, .offset = offset3 },	\
+		},							\
 		.pull_type[0] = pull0,					\
 		.pull_type[1] = pull1,					\
 		.pull_type[2] = pull2,					\
 		.pull_type[3] = pull3,					\
-	पूर्ण
+	}
 
-#घोषणा PIN_BANK_MUX_ROUTE_FLAGS(ID, PIN, FUNC, REG, VAL, FLAG)		\
-	अणु								\
+#define PIN_BANK_MUX_ROUTE_FLAGS(ID, PIN, FUNC, REG, VAL, FLAG)		\
+	{								\
 		.bank_num	= ID,					\
 		.pin		= PIN,					\
 		.func		= FUNC,					\
 		.route_offset	= REG,					\
 		.route_val	= VAL,					\
 		.route_location	= FLAG,					\
-	पूर्ण
+	}
 
-#घोषणा RK_MUXROUTE_SAME(ID, PIN, FUNC, REG, VAL)	\
+#define RK_MUXROUTE_SAME(ID, PIN, FUNC, REG, VAL)	\
 	PIN_BANK_MUX_ROUTE_FLAGS(ID, PIN, FUNC, REG, VAL, ROCKCHIP_ROUTE_SAME)
 
-#घोषणा RK_MUXROUTE_GRF(ID, PIN, FUNC, REG, VAL)	\
+#define RK_MUXROUTE_GRF(ID, PIN, FUNC, REG, VAL)	\
 	PIN_BANK_MUX_ROUTE_FLAGS(ID, PIN, FUNC, REG, VAL, ROCKCHIP_ROUTE_GRF)
 
-#घोषणा RK_MUXROUTE_PMU(ID, PIN, FUNC, REG, VAL)	\
+#define RK_MUXROUTE_PMU(ID, PIN, FUNC, REG, VAL)	\
 	PIN_BANK_MUX_ROUTE_FLAGS(ID, PIN, FUNC, REG, VAL, ROCKCHIP_ROUTE_PMU)
 
 /**
- * काष्ठा rockchip_mux_recalced_data: represent a pin iomux data.
+ * struct rockchip_mux_recalced_data: represent a pin iomux data.
  * @num: bank number.
  * @pin: pin number.
- * @bit: index at रेजिस्टर.
- * @reg: रेजिस्टर offset.
+ * @bit: index at register.
+ * @reg: register offset.
  * @mask: mask bit
  */
-काष्ठा rockchip_mux_recalced_data अणु
+struct rockchip_mux_recalced_data {
 	u8 num;
 	u8 pin;
 	u32 reg;
 	u8 bit;
 	u8 mask;
-पूर्ण;
+};
 
-क्रमागत rockchip_mux_route_location अणु
+enum rockchip_mux_route_location {
 	ROCKCHIP_ROUTE_SAME = 0,
 	ROCKCHIP_ROUTE_PMU,
 	ROCKCHIP_ROUTE_GRF,
-पूर्ण;
+};
 
 /**
- * काष्ठा rockchip_mux_recalced_data: represent a pin iomux data.
+ * struct rockchip_mux_recalced_data: represent a pin iomux data.
  * @bank_num: bank number.
- * @pin: index at रेजिस्टर or used to calc index.
+ * @pin: index at register or used to calc index.
  * @func: the min pin.
  * @route_location: the mux route location (same, pmu, grf).
  * @route_offset: the max pin.
- * @route_val: the रेजिस्टर offset.
+ * @route_val: the register offset.
  */
-काष्ठा rockchip_mux_route_data अणु
+struct rockchip_mux_route_data {
 	u8 bank_num;
 	u8 pin;
 	u8 func;
-	क्रमागत rockchip_mux_route_location route_location;
+	enum rockchip_mux_route_location route_location;
 	u32 route_offset;
 	u32 route_val;
-पूर्ण;
+};
 
-काष्ठा rockchip_pin_ctrl अणु
-	काष्ठा rockchip_pin_bank	*pin_banks;
+struct rockchip_pin_ctrl {
+	struct rockchip_pin_bank	*pin_banks;
 	u32				nr_banks;
 	u32				nr_pins;
-	अक्षर				*label;
-	क्रमागत rockchip_pinctrl_type	type;
-	पूर्णांक				grf_mux_offset;
-	पूर्णांक				pmu_mux_offset;
-	पूर्णांक				grf_drv_offset;
-	पूर्णांक				pmu_drv_offset;
-	काष्ठा rockchip_mux_recalced_data *iomux_recalced;
+	char				*label;
+	enum rockchip_pinctrl_type	type;
+	int				grf_mux_offset;
+	int				pmu_mux_offset;
+	int				grf_drv_offset;
+	int				pmu_drv_offset;
+	struct rockchip_mux_recalced_data *iomux_recalced;
 	u32				niomux_recalced;
-	काष्ठा rockchip_mux_route_data *iomux_routes;
+	struct rockchip_mux_route_data *iomux_routes;
 	u32				niomux_routes;
 
-	व्योम	(*pull_calc_reg)(काष्ठा rockchip_pin_bank *bank,
-				    पूर्णांक pin_num, काष्ठा regmap **regmap,
-				    पूर्णांक *reg, u8 *bit);
-	व्योम	(*drv_calc_reg)(काष्ठा rockchip_pin_bank *bank,
-				    पूर्णांक pin_num, काष्ठा regmap **regmap,
-				    पूर्णांक *reg, u8 *bit);
-	पूर्णांक	(*schmitt_calc_reg)(काष्ठा rockchip_pin_bank *bank,
-				    पूर्णांक pin_num, काष्ठा regmap **regmap,
-				    पूर्णांक *reg, u8 *bit);
-पूर्ण;
+	void	(*pull_calc_reg)(struct rockchip_pin_bank *bank,
+				    int pin_num, struct regmap **regmap,
+				    int *reg, u8 *bit);
+	void	(*drv_calc_reg)(struct rockchip_pin_bank *bank,
+				    int pin_num, struct regmap **regmap,
+				    int *reg, u8 *bit);
+	int	(*schmitt_calc_reg)(struct rockchip_pin_bank *bank,
+				    int pin_num, struct regmap **regmap,
+				    int *reg, u8 *bit);
+};
 
-काष्ठा rockchip_pin_config अणु
-	अचिन्हित पूर्णांक		func;
-	अचिन्हित दीर्घ		*configs;
-	अचिन्हित पूर्णांक		nconfigs;
-पूर्ण;
+struct rockchip_pin_config {
+	unsigned int		func;
+	unsigned long		*configs;
+	unsigned int		nconfigs;
+};
 
 /**
- * काष्ठा rockchip_pin_group: represent group of pins of a pinmux function.
+ * struct rockchip_pin_group: represent group of pins of a pinmux function.
  * @name: name of the pin group, used to lookup the group.
  * @pins: the pins included in this group.
  * @npins: number of pins included in this group.
  * @data: local pin configuration
  */
-काष्ठा rockchip_pin_group अणु
-	स्थिर अक्षर			*name;
-	अचिन्हित पूर्णांक			npins;
-	अचिन्हित पूर्णांक			*pins;
-	काष्ठा rockchip_pin_config	*data;
-पूर्ण;
+struct rockchip_pin_group {
+	const char			*name;
+	unsigned int			npins;
+	unsigned int			*pins;
+	struct rockchip_pin_config	*data;
+};
 
 /**
- * काष्ठा rockchip_pmx_func: represent a pin function.
+ * struct rockchip_pmx_func: represent a pin function.
  * @name: name of the pin function, used to lookup the function.
  * @groups: one or more names of pin groups that provide this function.
  * @ngroups: number of groups included in @groups.
  */
-काष्ठा rockchip_pmx_func अणु
-	स्थिर अक्षर		*name;
-	स्थिर अक्षर		**groups;
+struct rockchip_pmx_func {
+	const char		*name;
+	const char		**groups;
 	u8			ngroups;
-पूर्ण;
+};
 
-काष्ठा rockchip_pinctrl अणु
-	काष्ठा regmap			*regmap_base;
-	पूर्णांक				reg_size;
-	काष्ठा regmap			*regmap_pull;
-	काष्ठा regmap			*regmap_pmu;
-	काष्ठा device			*dev;
-	काष्ठा rockchip_pin_ctrl	*ctrl;
-	काष्ठा pinctrl_desc		pctl;
-	काष्ठा pinctrl_dev		*pctl_dev;
-	काष्ठा rockchip_pin_group	*groups;
-	अचिन्हित पूर्णांक			ngroups;
-	काष्ठा rockchip_pmx_func	*functions;
-	अचिन्हित पूर्णांक			nfunctions;
-पूर्ण;
+struct rockchip_pinctrl {
+	struct regmap			*regmap_base;
+	int				reg_size;
+	struct regmap			*regmap_pull;
+	struct regmap			*regmap_pmu;
+	struct device			*dev;
+	struct rockchip_pin_ctrl	*ctrl;
+	struct pinctrl_desc		pctl;
+	struct pinctrl_dev		*pctl_dev;
+	struct rockchip_pin_group	*groups;
+	unsigned int			ngroups;
+	struct rockchip_pmx_func	*functions;
+	unsigned int			nfunctions;
+};
 
-अटल काष्ठा regmap_config rockchip_regmap_config = अणु
+static struct regmap_config rockchip_regmap_config = {
 	.reg_bits = 32,
 	.val_bits = 32,
 	.reg_stride = 4,
-पूर्ण;
+};
 
-अटल अंतरभूत स्थिर काष्ठा rockchip_pin_group *pinctrl_name_to_group(
-					स्थिर काष्ठा rockchip_pinctrl *info,
-					स्थिर अक्षर *name)
-अणु
-	पूर्णांक i;
+static inline const struct rockchip_pin_group *pinctrl_name_to_group(
+					const struct rockchip_pinctrl *info,
+					const char *name)
+{
+	int i;
 
-	क्रम (i = 0; i < info->ngroups; i++) अणु
-		अगर (!म_भेद(info->groups[i].name, name))
-			वापस &info->groups[i];
-	पूर्ण
+	for (i = 0; i < info->ngroups; i++) {
+		if (!strcmp(info->groups[i].name, name))
+			return &info->groups[i];
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
  * given a pin number that is local to a pin controller, find out the pin bank
- * and the रेजिस्टर base of the pin bank.
+ * and the register base of the pin bank.
  */
-अटल काष्ठा rockchip_pin_bank *pin_to_bank(काष्ठा rockchip_pinctrl *info,
-								अचिन्हित pin)
-अणु
-	काष्ठा rockchip_pin_bank *b = info->ctrl->pin_banks;
+static struct rockchip_pin_bank *pin_to_bank(struct rockchip_pinctrl *info,
+								unsigned pin)
+{
+	struct rockchip_pin_bank *b = info->ctrl->pin_banks;
 
-	जबतक (pin >= (b->pin_base + b->nr_pins))
+	while (pin >= (b->pin_base + b->nr_pins))
 		b++;
 
-	वापस b;
-पूर्ण
+	return b;
+}
 
-अटल काष्ठा rockchip_pin_bank *bank_num_to_bank(
-					काष्ठा rockchip_pinctrl *info,
-					अचिन्हित num)
-अणु
-	काष्ठा rockchip_pin_bank *b = info->ctrl->pin_banks;
-	पूर्णांक i;
+static struct rockchip_pin_bank *bank_num_to_bank(
+					struct rockchip_pinctrl *info,
+					unsigned num)
+{
+	struct rockchip_pin_bank *b = info->ctrl->pin_banks;
+	int i;
 
-	क्रम (i = 0; i < info->ctrl->nr_banks; i++, b++) अणु
-		अगर (b->bank_num == num)
-			वापस b;
-	पूर्ण
+	for (i = 0; i < info->ctrl->nr_banks; i++, b++) {
+		if (b->bank_num == num)
+			return b;
+	}
 
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
+	return ERR_PTR(-EINVAL);
+}
 
 /*
  * Pinctrl_ops handling
  */
 
-अटल पूर्णांक rockchip_get_groups_count(काष्ठा pinctrl_dev *pctldev)
-अणु
-	काष्ठा rockchip_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+static int rockchip_get_groups_count(struct pinctrl_dev *pctldev)
+{
+	struct rockchip_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस info->ngroups;
-पूर्ण
+	return info->ngroups;
+}
 
-अटल स्थिर अक्षर *rockchip_get_group_name(काष्ठा pinctrl_dev *pctldev,
-							अचिन्हित selector)
-अणु
-	काष्ठा rockchip_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+static const char *rockchip_get_group_name(struct pinctrl_dev *pctldev,
+							unsigned selector)
+{
+	struct rockchip_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस info->groups[selector].name;
-पूर्ण
+	return info->groups[selector].name;
+}
 
-अटल पूर्णांक rockchip_get_group_pins(काष्ठा pinctrl_dev *pctldev,
-				      अचिन्हित selector, स्थिर अचिन्हित **pins,
-				      अचिन्हित *npins)
-अणु
-	काष्ठा rockchip_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+static int rockchip_get_group_pins(struct pinctrl_dev *pctldev,
+				      unsigned selector, const unsigned **pins,
+				      unsigned *npins)
+{
+	struct rockchip_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
 
-	अगर (selector >= info->ngroups)
-		वापस -EINVAL;
+	if (selector >= info->ngroups)
+		return -EINVAL;
 
 	*pins = info->groups[selector].pins;
 	*npins = info->groups[selector].npins;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rockchip_dt_node_to_map(काष्ठा pinctrl_dev *pctldev,
-				 काष्ठा device_node *np,
-				 काष्ठा pinctrl_map **map, अचिन्हित *num_maps)
-अणु
-	काष्ठा rockchip_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
-	स्थिर काष्ठा rockchip_pin_group *grp;
-	काष्ठा pinctrl_map *new_map;
-	काष्ठा device_node *parent;
-	पूर्णांक map_num = 1;
-	पूर्णांक i;
+static int rockchip_dt_node_to_map(struct pinctrl_dev *pctldev,
+				 struct device_node *np,
+				 struct pinctrl_map **map, unsigned *num_maps)
+{
+	struct rockchip_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+	const struct rockchip_pin_group *grp;
+	struct pinctrl_map *new_map;
+	struct device_node *parent;
+	int map_num = 1;
+	int i;
 
 	/*
-	 * first find the group of this node and check अगर we need to create
-	 * config maps क्रम pins
+	 * first find the group of this node and check if we need to create
+	 * config maps for pins
 	 */
 	grp = pinctrl_name_to_group(info, np->name);
-	अगर (!grp) अणु
+	if (!grp) {
 		dev_err(info->dev, "unable to find group for node %pOFn\n",
 			np);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	map_num += grp->npins;
 
-	new_map = kसुस्मृति(map_num, माप(*new_map), GFP_KERNEL);
-	अगर (!new_map)
-		वापस -ENOMEM;
+	new_map = kcalloc(map_num, sizeof(*new_map), GFP_KERNEL);
+	if (!new_map)
+		return -ENOMEM;
 
 	*map = new_map;
 	*num_maps = map_num;
 
 	/* create mux map */
 	parent = of_get_parent(np);
-	अगर (!parent) अणु
-		kमुक्त(new_map);
-		वापस -EINVAL;
-	पूर्ण
+	if (!parent) {
+		kfree(new_map);
+		return -EINVAL;
+	}
 	new_map[0].type = PIN_MAP_TYPE_MUX_GROUP;
 	new_map[0].data.mux.function = parent->name;
 	new_map[0].data.mux.group = np->name;
@@ -562,287 +561,287 @@
 
 	/* create config map */
 	new_map++;
-	क्रम (i = 0; i < grp->npins; i++) अणु
+	for (i = 0; i < grp->npins; i++) {
 		new_map[i].type = PIN_MAP_TYPE_CONFIGS_PIN;
 		new_map[i].data.configs.group_or_pin =
 				pin_get_name(pctldev, grp->pins[i]);
 		new_map[i].data.configs.configs = grp->data[i].configs;
 		new_map[i].data.configs.num_configs = grp->data[i].nconfigs;
-	पूर्ण
+	}
 
 	dev_dbg(pctldev->dev, "maps: function %s group %s num %d\n",
 		(*map)->data.mux.function, (*map)->data.mux.group, map_num);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम rockchip_dt_मुक्त_map(काष्ठा pinctrl_dev *pctldev,
-				    काष्ठा pinctrl_map *map, अचिन्हित num_maps)
-अणु
-	kमुक्त(map);
-पूर्ण
+static void rockchip_dt_free_map(struct pinctrl_dev *pctldev,
+				    struct pinctrl_map *map, unsigned num_maps)
+{
+	kfree(map);
+}
 
-अटल स्थिर काष्ठा pinctrl_ops rockchip_pctrl_ops = अणु
+static const struct pinctrl_ops rockchip_pctrl_ops = {
 	.get_groups_count	= rockchip_get_groups_count,
 	.get_group_name		= rockchip_get_group_name,
 	.get_group_pins		= rockchip_get_group_pins,
 	.dt_node_to_map		= rockchip_dt_node_to_map,
-	.dt_मुक्त_map		= rockchip_dt_मुक्त_map,
-पूर्ण;
+	.dt_free_map		= rockchip_dt_free_map,
+};
 
 /*
  * Hardware access
  */
 
-अटल काष्ठा rockchip_mux_recalced_data rv1108_mux_recalced_data[] = अणु
-	अणु
+static struct rockchip_mux_recalced_data rv1108_mux_recalced_data[] = {
+	{
 		.num = 1,
 		.pin = 0,
 		.reg = 0x418,
 		.bit = 0,
 		.mask = 0x3
-	पूर्ण, अणु
+	}, {
 		.num = 1,
 		.pin = 1,
 		.reg = 0x418,
 		.bit = 2,
 		.mask = 0x3
-	पूर्ण, अणु
+	}, {
 		.num = 1,
 		.pin = 2,
 		.reg = 0x418,
 		.bit = 4,
 		.mask = 0x3
-	पूर्ण, अणु
+	}, {
 		.num = 1,
 		.pin = 3,
 		.reg = 0x418,
 		.bit = 6,
 		.mask = 0x3
-	पूर्ण, अणु
+	}, {
 		.num = 1,
 		.pin = 4,
 		.reg = 0x418,
 		.bit = 8,
 		.mask = 0x3
-	पूर्ण, अणु
+	}, {
 		.num = 1,
 		.pin = 5,
 		.reg = 0x418,
 		.bit = 10,
 		.mask = 0x3
-	पूर्ण, अणु
+	}, {
 		.num = 1,
 		.pin = 6,
 		.reg = 0x418,
 		.bit = 12,
 		.mask = 0x3
-	पूर्ण, अणु
+	}, {
 		.num = 1,
 		.pin = 7,
 		.reg = 0x418,
 		.bit = 14,
 		.mask = 0x3
-	पूर्ण, अणु
+	}, {
 		.num = 1,
 		.pin = 8,
 		.reg = 0x41c,
 		.bit = 0,
 		.mask = 0x3
-	पूर्ण, अणु
+	}, {
 		.num = 1,
 		.pin = 9,
 		.reg = 0x41c,
 		.bit = 2,
 		.mask = 0x3
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल  काष्ठा rockchip_mux_recalced_data rk3128_mux_recalced_data[] = अणु
-	अणु
+static  struct rockchip_mux_recalced_data rk3128_mux_recalced_data[] = {
+	{
 		.num = 2,
 		.pin = 20,
 		.reg = 0xe8,
 		.bit = 0,
 		.mask = 0x7
-	पूर्ण, अणु
+	}, {
 		.num = 2,
 		.pin = 21,
 		.reg = 0xe8,
 		.bit = 4,
 		.mask = 0x7
-	पूर्ण, अणु
+	}, {
 		.num = 2,
 		.pin = 22,
 		.reg = 0xe8,
 		.bit = 8,
 		.mask = 0x7
-	पूर्ण, अणु
+	}, {
 		.num = 2,
 		.pin = 23,
 		.reg = 0xe8,
 		.bit = 12,
 		.mask = 0x7
-	पूर्ण, अणु
+	}, {
 		.num = 2,
 		.pin = 24,
 		.reg = 0xd4,
 		.bit = 12,
 		.mask = 0x7
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा rockchip_mux_recalced_data rk3308_mux_recalced_data[] = अणु
-	अणु
+static struct rockchip_mux_recalced_data rk3308_mux_recalced_data[] = {
+	{
 		.num = 1,
 		.pin = 14,
 		.reg = 0x28,
 		.bit = 12,
 		.mask = 0xf
-	पूर्ण, अणु
+	}, {
 		.num = 1,
 		.pin = 15,
 		.reg = 0x2c,
 		.bit = 0,
 		.mask = 0x3
-	पूर्ण, अणु
+	}, {
 		.num = 1,
 		.pin = 18,
 		.reg = 0x30,
 		.bit = 4,
 		.mask = 0xf
-	पूर्ण, अणु
+	}, {
 		.num = 1,
 		.pin = 19,
 		.reg = 0x30,
 		.bit = 8,
 		.mask = 0xf
-	पूर्ण, अणु
+	}, {
 		.num = 1,
 		.pin = 20,
 		.reg = 0x30,
 		.bit = 12,
 		.mask = 0xf
-	पूर्ण, अणु
+	}, {
 		.num = 1,
 		.pin = 21,
 		.reg = 0x34,
 		.bit = 0,
 		.mask = 0xf
-	पूर्ण, अणु
+	}, {
 		.num = 1,
 		.pin = 22,
 		.reg = 0x34,
 		.bit = 4,
 		.mask = 0xf
-	पूर्ण, अणु
+	}, {
 		.num = 1,
 		.pin = 23,
 		.reg = 0x34,
 		.bit = 8,
 		.mask = 0xf
-	पूर्ण, अणु
+	}, {
 		.num = 3,
 		.pin = 12,
 		.reg = 0x68,
 		.bit = 8,
 		.mask = 0xf
-	पूर्ण, अणु
+	}, {
 		.num = 3,
 		.pin = 13,
 		.reg = 0x68,
 		.bit = 12,
 		.mask = 0xf
-	पूर्ण, अणु
+	}, {
 		.num = 2,
 		.pin = 2,
 		.reg = 0x608,
 		.bit = 0,
 		.mask = 0x7
-	पूर्ण, अणु
+	}, {
 		.num = 2,
 		.pin = 3,
 		.reg = 0x608,
 		.bit = 4,
 		.mask = 0x7
-	पूर्ण, अणु
+	}, {
 		.num = 2,
 		.pin = 16,
 		.reg = 0x610,
 		.bit = 8,
 		.mask = 0x7
-	पूर्ण, अणु
+	}, {
 		.num = 3,
 		.pin = 10,
 		.reg = 0x610,
 		.bit = 0,
 		.mask = 0x7
-	पूर्ण, अणु
+	}, {
 		.num = 3,
 		.pin = 11,
 		.reg = 0x610,
 		.bit = 4,
 		.mask = 0x7
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा rockchip_mux_recalced_data rk3328_mux_recalced_data[] = अणु
-	अणु
+static struct rockchip_mux_recalced_data rk3328_mux_recalced_data[] = {
+	{
 		.num = 2,
 		.pin = 12,
 		.reg = 0x24,
 		.bit = 8,
 		.mask = 0x3
-	पूर्ण, अणु
+	}, {
 		.num = 2,
 		.pin = 15,
 		.reg = 0x28,
 		.bit = 0,
 		.mask = 0x7
-	पूर्ण, अणु
+	}, {
 		.num = 2,
 		.pin = 23,
 		.reg = 0x30,
 		.bit = 14,
 		.mask = 0x3
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल व्योम rockchip_get_recalced_mux(काष्ठा rockchip_pin_bank *bank, पूर्णांक pin,
-				      पूर्णांक *reg, u8 *bit, पूर्णांक *mask)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
-	काष्ठा rockchip_pin_ctrl *ctrl = info->ctrl;
-	काष्ठा rockchip_mux_recalced_data *data;
-	पूर्णांक i;
+static void rockchip_get_recalced_mux(struct rockchip_pin_bank *bank, int pin,
+				      int *reg, u8 *bit, int *mask)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
+	struct rockchip_pin_ctrl *ctrl = info->ctrl;
+	struct rockchip_mux_recalced_data *data;
+	int i;
 
-	क्रम (i = 0; i < ctrl->niomux_recalced; i++) अणु
+	for (i = 0; i < ctrl->niomux_recalced; i++) {
 		data = &ctrl->iomux_recalced[i];
-		अगर (data->num == bank->bank_num &&
+		if (data->num == bank->bank_num &&
 		    data->pin == pin)
-			अवरोध;
-	पूर्ण
+			break;
+	}
 
-	अगर (i >= ctrl->niomux_recalced)
-		वापस;
+	if (i >= ctrl->niomux_recalced)
+		return;
 
 	*reg = data->reg;
 	*mask = data->mask;
 	*bit = data->bit;
-पूर्ण
+}
 
-अटल काष्ठा rockchip_mux_route_data px30_mux_route_data[] = अणु
-	RK_MUXROUTE_SAME(2, RK_PA0, 1, 0x184, BIT(16 + 7)), /* cअगर-d2m0 */
-	RK_MUXROUTE_SAME(3, RK_PA3, 3, 0x184, BIT(16 + 7) | BIT(7)), /* cअगर-d2m1 */
+static struct rockchip_mux_route_data px30_mux_route_data[] = {
+	RK_MUXROUTE_SAME(2, RK_PA0, 1, 0x184, BIT(16 + 7)), /* cif-d2m0 */
+	RK_MUXROUTE_SAME(3, RK_PA3, 3, 0x184, BIT(16 + 7) | BIT(7)), /* cif-d2m1 */
 	RK_MUXROUTE_SAME(3, RK_PC6, 2, 0x184, BIT(16 + 8)), /* pdm-m0 */
 	RK_MUXROUTE_SAME(2, RK_PC6, 1, 0x184, BIT(16 + 8) | BIT(8)), /* pdm-m1 */
 	RK_MUXROUTE_SAME(1, RK_PD3, 2, 0x184, BIT(16 + 10)), /* uart2-rxm0 */
 	RK_MUXROUTE_SAME(2, RK_PB6, 2, 0x184, BIT(16 + 10) | BIT(10)), /* uart2-rxm1 */
 	RK_MUXROUTE_SAME(0, RK_PC1, 2, 0x184, BIT(16 + 9)), /* uart3-rxm0 */
 	RK_MUXROUTE_SAME(1, RK_PB7, 2, 0x184, BIT(16 + 9) | BIT(9)), /* uart3-rxm1 */
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_mux_route_data rk3128_mux_route_data[] = अणु
+static struct rockchip_mux_route_data rk3128_mux_route_data[] = {
 	RK_MUXROUTE_SAME(1, RK_PB2, 1, 0x144, BIT(16 + 3) | BIT(16 + 4)), /* spi-0 */
 	RK_MUXROUTE_SAME(1, RK_PD3, 3, 0x144, BIT(16 + 3) | BIT(16 + 4) | BIT(3)), /* spi-1 */
 	RK_MUXROUTE_SAME(0, RK_PB5, 2, 0x144, BIT(16 + 3) | BIT(16 + 4) | BIT(4)), /* spi-2 */
@@ -850,14 +849,14 @@
 	RK_MUXROUTE_SAME(0, RK_PB6, 1, 0x144, BIT(16 + 5) | BIT(5)), /* i2s-1 */
 	RK_MUXROUTE_SAME(1, RK_PC6, 2, 0x144, BIT(16 + 6)), /* emmc-0 */
 	RK_MUXROUTE_SAME(2, RK_PA4, 2, 0x144, BIT(16 + 6) | BIT(6)), /* emmc-1 */
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_mux_route_data rk3188_mux_route_data[] = अणु
+static struct rockchip_mux_route_data rk3188_mux_route_data[] = {
 	RK_MUXROUTE_SAME(0, RK_PD0, 1, 0xa0, BIT(16 + 11)), /* non-iomuxed emmc/flash pins on flash-dqs */
 	RK_MUXROUTE_SAME(0, RK_PD0, 2, 0xa0, BIT(16 + 11) | BIT(11)), /* non-iomuxed emmc/flash pins on emmc-clk */
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_mux_route_data rk3228_mux_route_data[] = अणु
+static struct rockchip_mux_route_data rk3228_mux_route_data[] = {
 	RK_MUXROUTE_SAME(0, RK_PD2, 1, 0x50, BIT(16)), /* pwm0-0 */
 	RK_MUXROUTE_SAME(3, RK_PC5, 1, 0x50, BIT(16) | BIT(0)), /* pwm0-1 */
 	RK_MUXROUTE_SAME(0, RK_PD3, 1, 0x50, BIT(16 + 1)), /* pwm1-0 */
@@ -876,14 +875,14 @@
 	RK_MUXROUTE_SAME(1, RK_PB2, 2, 0x50, BIT(16 + 8) | BIT(8)), /* uart2-1_rx */
 	RK_MUXROUTE_SAME(1, RK_PB2, 1, 0x50, BIT(16 + 11)), /* uart1-0_rx */
 	RK_MUXROUTE_SAME(3, RK_PB5, 1, 0x50, BIT(16 + 11) | BIT(11)), /* uart1-1_rx */
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_mux_route_data rk3288_mux_route_data[] = अणु
+static struct rockchip_mux_route_data rk3288_mux_route_data[] = {
 	RK_MUXROUTE_SAME(7, RK_PC0, 2, 0x264, BIT(16 + 12) | BIT(12)), /* edphdmi_cecinoutt1 */
 	RK_MUXROUTE_SAME(7, RK_PC7, 4, 0x264, BIT(16 + 12)), /* edphdmi_cecinout */
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_mux_route_data rk3308_mux_route_data[] = अणु
+static struct rockchip_mux_route_data rk3308_mux_route_data[] = {
 	RK_MUXROUTE_SAME(0, RK_PC3, 1, 0x314, BIT(16 + 0) | BIT(0)), /* rtc_clk */
 	RK_MUXROUTE_SAME(1, RK_PC6, 2, 0x314, BIT(16 + 2) | BIT(16 + 3)), /* uart2_rxm0 */
 	RK_MUXROUTE_SAME(4, RK_PD2, 2, 0x314, BIT(16 + 2) | BIT(16 + 3) | BIT(2)), /* uart2_rxm1 */
@@ -910,9 +909,9 @@
 	RK_MUXROUTE_SAME(4, RK_PA2, 2, 0x314, BIT(16 + 14) | BIT(14)), /* mac_rxd0_m1 */
 	RK_MUXROUTE_SAME(3, RK_PB4, 4, 0x314, BIT(16 + 15)), /* uart3_rx */
 	RK_MUXROUTE_SAME(0, RK_PC1, 3, 0x314, BIT(16 + 15) | BIT(15)), /* uart3_rx_m1 */
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_mux_route_data rk3328_mux_route_data[] = अणु
+static struct rockchip_mux_route_data rk3328_mux_route_data[] = {
 	RK_MUXROUTE_SAME(1, RK_PA1, 2, 0x50, BIT(16) | BIT(16 + 1)), /* uart2dbg_rxm0 */
 	RK_MUXROUTE_SAME(2, RK_PA1, 1, 0x50, BIT(16) | BIT(16 + 1) | BIT(0)), /* uart2dbg_rxm1 */
 	RK_MUXROUTE_SAME(1, RK_PB3, 2, 0x50, BIT(16 + 2) | BIT(2)), /* gmac-m1_rxd0 */
@@ -924,18 +923,18 @@
 	RK_MUXROUTE_SAME(3, RK_PA2, 6, 0x50, BIT(16 + 6) | BIT(6)), /* i2s2_sdim1 */
 	RK_MUXROUTE_SAME(2, RK_PC6, 3, 0x50, BIT(16 + 7) | BIT(7)), /* card_iom1 */
 	RK_MUXROUTE_SAME(2, RK_PC0, 3, 0x50, BIT(16 + 8) | BIT(8)), /* tsp_d5m1 */
-	RK_MUXROUTE_SAME(2, RK_PC0, 4, 0x50, BIT(16 + 9) | BIT(9)), /* cअगर_data5m1 */
-पूर्ण;
+	RK_MUXROUTE_SAME(2, RK_PC0, 4, 0x50, BIT(16 + 9) | BIT(9)), /* cif_data5m1 */
+};
 
-अटल काष्ठा rockchip_mux_route_data rk3399_mux_route_data[] = अणु
+static struct rockchip_mux_route_data rk3399_mux_route_data[] = {
 	RK_MUXROUTE_SAME(4, RK_PB0, 2, 0xe21c, BIT(16 + 10) | BIT(16 + 11)), /* uart2dbga_rx */
 	RK_MUXROUTE_SAME(4, RK_PC0, 2, 0xe21c, BIT(16 + 10) | BIT(16 + 11) | BIT(10)), /* uart2dbgb_rx */
 	RK_MUXROUTE_SAME(4, RK_PC3, 1, 0xe21c, BIT(16 + 10) | BIT(16 + 11) | BIT(11)), /* uart2dbgc_rx */
 	RK_MUXROUTE_SAME(2, RK_PD2, 2, 0xe21c, BIT(16 + 14)), /* pcie_clkreqn */
 	RK_MUXROUTE_SAME(4, RK_PD0, 1, 0xe21c, BIT(16 + 14) | BIT(14)), /* pcie_clkreqnb */
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_mux_route_data rk3568_mux_route_data[] = अणु
+static struct rockchip_mux_route_data rk3568_mux_route_data[] = {
 	RK_MUXROUTE_PMU(0, RK_PB7, 1, 0x0110, WRITE_MASK_VAL(1, 0, 0)), /* PWM0 IO mux M0 */
 	RK_MUXROUTE_PMU(0, RK_PC7, 2, 0x0110, WRITE_MASK_VAL(1, 0, 1)), /* PWM0 IO mux M1 */
 	RK_MUXROUTE_PMU(0, RK_PC0, 1, 0x0110, WRITE_MASK_VAL(3, 2, 0)), /* PWM1 IO mux M0 */
@@ -1029,137 +1028,137 @@
 	RK_MUXROUTE_PMU(0, RK_PA6, 2, 0x0314, WRITE_MASK_VAL(7, 6, 0)), /* PCIE30X2 IO mux M0 */
 	RK_MUXROUTE_GRF(2, RK_PD4, 4, 0x0314, WRITE_MASK_VAL(7, 6, 1)), /* PCIE30X2 IO mux M1 */
 	RK_MUXROUTE_GRF(4, RK_PC2, 4, 0x0314, WRITE_MASK_VAL(7, 6, 2)), /* PCIE30X2 IO mux M2 */
-पूर्ण;
+};
 
-अटल bool rockchip_get_mux_route(काष्ठा rockchip_pin_bank *bank, पूर्णांक pin,
-				   पूर्णांक mux, u32 *loc, u32 *reg, u32 *value)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
-	काष्ठा rockchip_pin_ctrl *ctrl = info->ctrl;
-	काष्ठा rockchip_mux_route_data *data;
-	पूर्णांक i;
+static bool rockchip_get_mux_route(struct rockchip_pin_bank *bank, int pin,
+				   int mux, u32 *loc, u32 *reg, u32 *value)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
+	struct rockchip_pin_ctrl *ctrl = info->ctrl;
+	struct rockchip_mux_route_data *data;
+	int i;
 
-	क्रम (i = 0; i < ctrl->niomux_routes; i++) अणु
+	for (i = 0; i < ctrl->niomux_routes; i++) {
 		data = &ctrl->iomux_routes[i];
-		अगर ((data->bank_num == bank->bank_num) &&
+		if ((data->bank_num == bank->bank_num) &&
 		    (data->pin == pin) && (data->func == mux))
-			अवरोध;
-	पूर्ण
+			break;
+	}
 
-	अगर (i >= ctrl->niomux_routes)
-		वापस false;
+	if (i >= ctrl->niomux_routes)
+		return false;
 
 	*loc = data->route_location;
 	*reg = data->route_offset;
 	*value = data->route_val;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक rockchip_get_mux(काष्ठा rockchip_pin_bank *bank, पूर्णांक pin)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
-	पूर्णांक iomux_num = (pin / 8);
-	काष्ठा regmap *regmap;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक reg, ret, mask, mux_type;
+static int rockchip_get_mux(struct rockchip_pin_bank *bank, int pin)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
+	int iomux_num = (pin / 8);
+	struct regmap *regmap;
+	unsigned int val;
+	int reg, ret, mask, mux_type;
 	u8 bit;
 
-	अगर (iomux_num > 3)
-		वापस -EINVAL;
+	if (iomux_num > 3)
+		return -EINVAL;
 
-	अगर (bank->iomux[iomux_num].type & IOMUX_UNROUTED) अणु
+	if (bank->iomux[iomux_num].type & IOMUX_UNROUTED) {
 		dev_err(info->dev, "pin %d is unrouted\n", pin);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (bank->iomux[iomux_num].type & IOMUX_GPIO_ONLY)
-		वापस RK_FUNC_GPIO;
+	if (bank->iomux[iomux_num].type & IOMUX_GPIO_ONLY)
+		return RK_FUNC_GPIO;
 
 	regmap = (bank->iomux[iomux_num].type & IOMUX_SOURCE_PMU)
 				? info->regmap_pmu : info->regmap_base;
 
-	/* get basic quadrupel of mux रेजिस्टरs and the correct reg inside */
+	/* get basic quadrupel of mux registers and the correct reg inside */
 	mux_type = bank->iomux[iomux_num].type;
 	reg = bank->iomux[iomux_num].offset;
-	अगर (mux_type & IOMUX_WIDTH_4BIT) अणु
-		अगर ((pin % 8) >= 4)
+	if (mux_type & IOMUX_WIDTH_4BIT) {
+		if ((pin % 8) >= 4)
 			reg += 0x4;
 		bit = (pin % 4) * 4;
 		mask = 0xf;
-	पूर्ण अन्यथा अगर (mux_type & IOMUX_WIDTH_3BIT) अणु
-		अगर ((pin % 8) >= 5)
+	} else if (mux_type & IOMUX_WIDTH_3BIT) {
+		if ((pin % 8) >= 5)
 			reg += 0x4;
 		bit = (pin % 8 % 5) * 3;
 		mask = 0x7;
-	पूर्ण अन्यथा अणु
+	} else {
 		bit = (pin % 8) * 2;
 		mask = 0x3;
-	पूर्ण
+	}
 
-	अगर (bank->recalced_mask & BIT(pin))
+	if (bank->recalced_mask & BIT(pin))
 		rockchip_get_recalced_mux(bank, pin, &reg, &bit, &mask);
 
-	ret = regmap_पढ़ो(regmap, reg, &val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(regmap, reg, &val);
+	if (ret)
+		return ret;
 
-	वापस ((val >> bit) & mask);
-पूर्ण
+	return ((val >> bit) & mask);
+}
 
-अटल पूर्णांक rockchip_verअगरy_mux(काष्ठा rockchip_pin_bank *bank,
-			       पूर्णांक pin, पूर्णांक mux)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
-	पूर्णांक iomux_num = (pin / 8);
+static int rockchip_verify_mux(struct rockchip_pin_bank *bank,
+			       int pin, int mux)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
+	int iomux_num = (pin / 8);
 
-	अगर (iomux_num > 3)
-		वापस -EINVAL;
+	if (iomux_num > 3)
+		return -EINVAL;
 
-	अगर (bank->iomux[iomux_num].type & IOMUX_UNROUTED) अणु
+	if (bank->iomux[iomux_num].type & IOMUX_UNROUTED) {
 		dev_err(info->dev, "pin %d is unrouted\n", pin);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (bank->iomux[iomux_num].type & IOMUX_GPIO_ONLY) अणु
-		अगर (mux != RK_FUNC_GPIO) अणु
+	if (bank->iomux[iomux_num].type & IOMUX_GPIO_ONLY) {
+		if (mux != RK_FUNC_GPIO) {
 			dev_err(info->dev,
 				"pin %d only supports a gpio mux\n", pin);
-			वापस -ENOTSUPP;
-		पूर्ण
-	पूर्ण
+			return -ENOTSUPP;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Set a new mux function क्रम a pin.
+ * Set a new mux function for a pin.
  *
- * The रेजिस्टर is भागided पूर्णांकo the upper and lower 16 bit. When changing
- * a value, the previous रेजिस्टर value is not पढ़ो and changed. Instead
- * it seems the changed bits are marked in the upper 16 bit, जबतक the
- * changed value माला_लो set in the same offset in the lower 16 bit.
+ * The register is divided into the upper and lower 16 bit. When changing
+ * a value, the previous register value is not read and changed. Instead
+ * it seems the changed bits are marked in the upper 16 bit, while the
+ * changed value gets set in the same offset in the lower 16 bit.
  * All pin settings seem to be 2 bit wide in both the upper and lower
  * parts.
  * @bank: pin bank to change
  * @pin: pin to change
  * @mux: new mux function to set
  */
-अटल पूर्णांक rockchip_set_mux(काष्ठा rockchip_pin_bank *bank, पूर्णांक pin, पूर्णांक mux)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
-	पूर्णांक iomux_num = (pin / 8);
-	काष्ठा regmap *regmap;
-	पूर्णांक reg, ret, mask, mux_type;
+static int rockchip_set_mux(struct rockchip_pin_bank *bank, int pin, int mux)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
+	int iomux_num = (pin / 8);
+	struct regmap *regmap;
+	int reg, ret, mask, mux_type;
 	u8 bit;
 	u32 data, rmask, route_location, route_reg, route_val;
 
-	ret = rockchip_verअगरy_mux(bank, pin, mux);
-	अगर (ret < 0)
-		वापस ret;
+	ret = rockchip_verify_mux(bank, pin, mux);
+	if (ret < 0)
+		return ret;
 
-	अगर (bank->iomux[iomux_num].type & IOMUX_GPIO_ONLY)
-		वापस 0;
+	if (bank->iomux[iomux_num].type & IOMUX_GPIO_ONLY)
+		return 0;
 
 	dev_dbg(info->dev, "setting mux of GPIO%d-%d to %d\n",
 						bank->bank_num, pin, mux);
@@ -1167,245 +1166,245 @@
 	regmap = (bank->iomux[iomux_num].type & IOMUX_SOURCE_PMU)
 				? info->regmap_pmu : info->regmap_base;
 
-	/* get basic quadrupel of mux रेजिस्टरs and the correct reg inside */
+	/* get basic quadrupel of mux registers and the correct reg inside */
 	mux_type = bank->iomux[iomux_num].type;
 	reg = bank->iomux[iomux_num].offset;
-	अगर (mux_type & IOMUX_WIDTH_4BIT) अणु
-		अगर ((pin % 8) >= 4)
+	if (mux_type & IOMUX_WIDTH_4BIT) {
+		if ((pin % 8) >= 4)
 			reg += 0x4;
 		bit = (pin % 4) * 4;
 		mask = 0xf;
-	पूर्ण अन्यथा अगर (mux_type & IOMUX_WIDTH_3BIT) अणु
-		अगर ((pin % 8) >= 5)
+	} else if (mux_type & IOMUX_WIDTH_3BIT) {
+		if ((pin % 8) >= 5)
 			reg += 0x4;
 		bit = (pin % 8 % 5) * 3;
 		mask = 0x7;
-	पूर्ण अन्यथा अणु
+	} else {
 		bit = (pin % 8) * 2;
 		mask = 0x3;
-	पूर्ण
+	}
 
-	अगर (bank->recalced_mask & BIT(pin))
+	if (bank->recalced_mask & BIT(pin))
 		rockchip_get_recalced_mux(bank, pin, &reg, &bit, &mask);
 
-	अगर (bank->route_mask & BIT(pin)) अणु
-		अगर (rockchip_get_mux_route(bank, pin, mux, &route_location,
-					   &route_reg, &route_val)) अणु
-			काष्ठा regmap *route_regmap = regmap;
+	if (bank->route_mask & BIT(pin)) {
+		if (rockchip_get_mux_route(bank, pin, mux, &route_location,
+					   &route_reg, &route_val)) {
+			struct regmap *route_regmap = regmap;
 
 			/* handle special locations */
-			चयन (route_location) अणु
-			हाल ROCKCHIP_ROUTE_PMU:
+			switch (route_location) {
+			case ROCKCHIP_ROUTE_PMU:
 				route_regmap = info->regmap_pmu;
-				अवरोध;
-			हाल ROCKCHIP_ROUTE_GRF:
+				break;
+			case ROCKCHIP_ROUTE_GRF:
 				route_regmap = info->regmap_base;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			ret = regmap_ग_लिखो(route_regmap, route_reg, route_val);
-			अगर (ret)
-				वापस ret;
-		पूर्ण
-	पूर्ण
+			ret = regmap_write(route_regmap, route_reg, route_val);
+			if (ret)
+				return ret;
+		}
+	}
 
 	data = (mask << (bit + 16));
 	rmask = data | (data >> 16);
 	data |= (mux & mask) << bit;
 	ret = regmap_update_bits(regmap, reg, rmask, data);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा PX30_PULL_PMU_OFFSET		0x10
-#घोषणा PX30_PULL_GRF_OFFSET		0x60
-#घोषणा PX30_PULL_BITS_PER_PIN		2
-#घोषणा PX30_PULL_PINS_PER_REG		8
-#घोषणा PX30_PULL_BANK_STRIDE		16
+#define PX30_PULL_PMU_OFFSET		0x10
+#define PX30_PULL_GRF_OFFSET		0x60
+#define PX30_PULL_BITS_PER_PIN		2
+#define PX30_PULL_PINS_PER_REG		8
+#define PX30_PULL_BANK_STRIDE		16
 
-अटल व्योम px30_calc_pull_reg_and_bit(काष्ठा rockchip_pin_bank *bank,
-				       पूर्णांक pin_num, काष्ठा regmap **regmap,
-				       पूर्णांक *reg, u8 *bit)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
+static void px30_calc_pull_reg_and_bit(struct rockchip_pin_bank *bank,
+				       int pin_num, struct regmap **regmap,
+				       int *reg, u8 *bit)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
 
 	/* The first 32 pins of the first bank are located in PMU */
-	अगर (bank->bank_num == 0) अणु
+	if (bank->bank_num == 0) {
 		*regmap = info->regmap_pmu;
 		*reg = PX30_PULL_PMU_OFFSET;
-	पूर्ण अन्यथा अणु
+	} else {
 		*regmap = info->regmap_base;
 		*reg = PX30_PULL_GRF_OFFSET;
 
 		/* correct the offset, as we're starting with the 2nd bank */
 		*reg -= 0x10;
 		*reg += bank->bank_num * PX30_PULL_BANK_STRIDE;
-	पूर्ण
+	}
 
 	*reg += ((pin_num / PX30_PULL_PINS_PER_REG) * 4);
 	*bit = (pin_num % PX30_PULL_PINS_PER_REG);
 	*bit *= PX30_PULL_BITS_PER_PIN;
-पूर्ण
+}
 
-#घोषणा PX30_DRV_PMU_OFFSET		0x20
-#घोषणा PX30_DRV_GRF_OFFSET		0xf0
-#घोषणा PX30_DRV_BITS_PER_PIN		2
-#घोषणा PX30_DRV_PINS_PER_REG		8
-#घोषणा PX30_DRV_BANK_STRIDE		16
+#define PX30_DRV_PMU_OFFSET		0x20
+#define PX30_DRV_GRF_OFFSET		0xf0
+#define PX30_DRV_BITS_PER_PIN		2
+#define PX30_DRV_PINS_PER_REG		8
+#define PX30_DRV_BANK_STRIDE		16
 
-अटल व्योम px30_calc_drv_reg_and_bit(काष्ठा rockchip_pin_bank *bank,
-				      पूर्णांक pin_num, काष्ठा regmap **regmap,
-				      पूर्णांक *reg, u8 *bit)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
+static void px30_calc_drv_reg_and_bit(struct rockchip_pin_bank *bank,
+				      int pin_num, struct regmap **regmap,
+				      int *reg, u8 *bit)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
 
 	/* The first 32 pins of the first bank are located in PMU */
-	अगर (bank->bank_num == 0) अणु
+	if (bank->bank_num == 0) {
 		*regmap = info->regmap_pmu;
 		*reg = PX30_DRV_PMU_OFFSET;
-	पूर्ण अन्यथा अणु
+	} else {
 		*regmap = info->regmap_base;
 		*reg = PX30_DRV_GRF_OFFSET;
 
 		/* correct the offset, as we're starting with the 2nd bank */
 		*reg -= 0x10;
 		*reg += bank->bank_num * PX30_DRV_BANK_STRIDE;
-	पूर्ण
+	}
 
 	*reg += ((pin_num / PX30_DRV_PINS_PER_REG) * 4);
 	*bit = (pin_num % PX30_DRV_PINS_PER_REG);
 	*bit *= PX30_DRV_BITS_PER_PIN;
-पूर्ण
+}
 
-#घोषणा PX30_SCHMITT_PMU_OFFSET			0x38
-#घोषणा PX30_SCHMITT_GRF_OFFSET			0xc0
-#घोषणा PX30_SCHMITT_PINS_PER_PMU_REG		16
-#घोषणा PX30_SCHMITT_BANK_STRIDE		16
-#घोषणा PX30_SCHMITT_PINS_PER_GRF_REG		8
+#define PX30_SCHMITT_PMU_OFFSET			0x38
+#define PX30_SCHMITT_GRF_OFFSET			0xc0
+#define PX30_SCHMITT_PINS_PER_PMU_REG		16
+#define PX30_SCHMITT_BANK_STRIDE		16
+#define PX30_SCHMITT_PINS_PER_GRF_REG		8
 
-अटल पूर्णांक px30_calc_schmitt_reg_and_bit(काष्ठा rockchip_pin_bank *bank,
-					 पूर्णांक pin_num,
-					 काष्ठा regmap **regmap,
-					 पूर्णांक *reg, u8 *bit)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
-	पूर्णांक pins_per_reg;
+static int px30_calc_schmitt_reg_and_bit(struct rockchip_pin_bank *bank,
+					 int pin_num,
+					 struct regmap **regmap,
+					 int *reg, u8 *bit)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
+	int pins_per_reg;
 
-	अगर (bank->bank_num == 0) अणु
+	if (bank->bank_num == 0) {
 		*regmap = info->regmap_pmu;
 		*reg = PX30_SCHMITT_PMU_OFFSET;
 		pins_per_reg = PX30_SCHMITT_PINS_PER_PMU_REG;
-	पूर्ण अन्यथा अणु
+	} else {
 		*regmap = info->regmap_base;
 		*reg = PX30_SCHMITT_GRF_OFFSET;
 		pins_per_reg = PX30_SCHMITT_PINS_PER_GRF_REG;
 		*reg += (bank->bank_num  - 1) * PX30_SCHMITT_BANK_STRIDE;
-	पूर्ण
+	}
 
 	*reg += ((pin_num / pins_per_reg) * 4);
 	*bit = pin_num % pins_per_reg;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा RV1108_PULL_PMU_OFFSET		0x10
-#घोषणा RV1108_PULL_OFFSET		0x110
-#घोषणा RV1108_PULL_PINS_PER_REG	8
-#घोषणा RV1108_PULL_BITS_PER_PIN	2
-#घोषणा RV1108_PULL_BANK_STRIDE		16
+#define RV1108_PULL_PMU_OFFSET		0x10
+#define RV1108_PULL_OFFSET		0x110
+#define RV1108_PULL_PINS_PER_REG	8
+#define RV1108_PULL_BITS_PER_PIN	2
+#define RV1108_PULL_BANK_STRIDE		16
 
-अटल व्योम rv1108_calc_pull_reg_and_bit(काष्ठा rockchip_pin_bank *bank,
-					 पूर्णांक pin_num, काष्ठा regmap **regmap,
-					 पूर्णांक *reg, u8 *bit)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
+static void rv1108_calc_pull_reg_and_bit(struct rockchip_pin_bank *bank,
+					 int pin_num, struct regmap **regmap,
+					 int *reg, u8 *bit)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
 
 	/* The first 24 pins of the first bank are located in PMU */
-	अगर (bank->bank_num == 0) अणु
+	if (bank->bank_num == 0) {
 		*regmap = info->regmap_pmu;
 		*reg = RV1108_PULL_PMU_OFFSET;
-	पूर्ण अन्यथा अणु
+	} else {
 		*reg = RV1108_PULL_OFFSET;
 		*regmap = info->regmap_base;
 		/* correct the offset, as we're starting with the 2nd bank */
 		*reg -= 0x10;
 		*reg += bank->bank_num * RV1108_PULL_BANK_STRIDE;
-	पूर्ण
+	}
 
 	*reg += ((pin_num / RV1108_PULL_PINS_PER_REG) * 4);
 	*bit = (pin_num % RV1108_PULL_PINS_PER_REG);
 	*bit *= RV1108_PULL_BITS_PER_PIN;
-पूर्ण
+}
 
-#घोषणा RV1108_DRV_PMU_OFFSET		0x20
-#घोषणा RV1108_DRV_GRF_OFFSET		0x210
-#घोषणा RV1108_DRV_BITS_PER_PIN		2
-#घोषणा RV1108_DRV_PINS_PER_REG		8
-#घोषणा RV1108_DRV_BANK_STRIDE		16
+#define RV1108_DRV_PMU_OFFSET		0x20
+#define RV1108_DRV_GRF_OFFSET		0x210
+#define RV1108_DRV_BITS_PER_PIN		2
+#define RV1108_DRV_PINS_PER_REG		8
+#define RV1108_DRV_BANK_STRIDE		16
 
-अटल व्योम rv1108_calc_drv_reg_and_bit(काष्ठा rockchip_pin_bank *bank,
-					पूर्णांक pin_num, काष्ठा regmap **regmap,
-					पूर्णांक *reg, u8 *bit)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
+static void rv1108_calc_drv_reg_and_bit(struct rockchip_pin_bank *bank,
+					int pin_num, struct regmap **regmap,
+					int *reg, u8 *bit)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
 
 	/* The first 24 pins of the first bank are located in PMU */
-	अगर (bank->bank_num == 0) अणु
+	if (bank->bank_num == 0) {
 		*regmap = info->regmap_pmu;
 		*reg = RV1108_DRV_PMU_OFFSET;
-	पूर्ण अन्यथा अणु
+	} else {
 		*regmap = info->regmap_base;
 		*reg = RV1108_DRV_GRF_OFFSET;
 
 		/* correct the offset, as we're starting with the 2nd bank */
 		*reg -= 0x10;
 		*reg += bank->bank_num * RV1108_DRV_BANK_STRIDE;
-	पूर्ण
+	}
 
 	*reg += ((pin_num / RV1108_DRV_PINS_PER_REG) * 4);
 	*bit = pin_num % RV1108_DRV_PINS_PER_REG;
 	*bit *= RV1108_DRV_BITS_PER_PIN;
-पूर्ण
+}
 
-#घोषणा RV1108_SCHMITT_PMU_OFFSET		0x30
-#घोषणा RV1108_SCHMITT_GRF_OFFSET		0x388
-#घोषणा RV1108_SCHMITT_BANK_STRIDE		8
-#घोषणा RV1108_SCHMITT_PINS_PER_GRF_REG		16
-#घोषणा RV1108_SCHMITT_PINS_PER_PMU_REG		8
+#define RV1108_SCHMITT_PMU_OFFSET		0x30
+#define RV1108_SCHMITT_GRF_OFFSET		0x388
+#define RV1108_SCHMITT_BANK_STRIDE		8
+#define RV1108_SCHMITT_PINS_PER_GRF_REG		16
+#define RV1108_SCHMITT_PINS_PER_PMU_REG		8
 
-अटल पूर्णांक rv1108_calc_schmitt_reg_and_bit(काष्ठा rockchip_pin_bank *bank,
-					   पूर्णांक pin_num,
-					   काष्ठा regmap **regmap,
-					   पूर्णांक *reg, u8 *bit)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
-	पूर्णांक pins_per_reg;
+static int rv1108_calc_schmitt_reg_and_bit(struct rockchip_pin_bank *bank,
+					   int pin_num,
+					   struct regmap **regmap,
+					   int *reg, u8 *bit)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
+	int pins_per_reg;
 
-	अगर (bank->bank_num == 0) अणु
+	if (bank->bank_num == 0) {
 		*regmap = info->regmap_pmu;
 		*reg = RV1108_SCHMITT_PMU_OFFSET;
 		pins_per_reg = RV1108_SCHMITT_PINS_PER_PMU_REG;
-	पूर्ण अन्यथा अणु
+	} else {
 		*regmap = info->regmap_base;
 		*reg = RV1108_SCHMITT_GRF_OFFSET;
 		pins_per_reg = RV1108_SCHMITT_PINS_PER_GRF_REG;
 		*reg += (bank->bank_num  - 1) * RV1108_SCHMITT_BANK_STRIDE;
-	पूर्ण
+	}
 	*reg += ((pin_num / pins_per_reg) * 4);
 	*bit = pin_num % pins_per_reg;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा RK3308_SCHMITT_PINS_PER_REG		8
-#घोषणा RK3308_SCHMITT_BANK_STRIDE		16
-#घोषणा RK3308_SCHMITT_GRF_OFFSET		0x1a0
+#define RK3308_SCHMITT_PINS_PER_REG		8
+#define RK3308_SCHMITT_BANK_STRIDE		16
+#define RK3308_SCHMITT_GRF_OFFSET		0x1a0
 
-अटल पूर्णांक rk3308_calc_schmitt_reg_and_bit(काष्ठा rockchip_pin_bank *bank,
-				    पूर्णांक pin_num, काष्ठा regmap **regmap,
-				    पूर्णांक *reg, u8 *bit)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
+static int rk3308_calc_schmitt_reg_and_bit(struct rockchip_pin_bank *bank,
+				    int pin_num, struct regmap **regmap,
+				    int *reg, u8 *bit)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
 
 	*regmap = info->regmap_base;
 	*reg = RK3308_SCHMITT_GRF_OFFSET;
@@ -1414,18 +1413,18 @@
 	*reg += ((pin_num / RK3308_SCHMITT_PINS_PER_REG) * 4);
 	*bit = pin_num % RK3308_SCHMITT_PINS_PER_REG;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा RK2928_PULL_OFFSET		0x118
-#घोषणा RK2928_PULL_PINS_PER_REG	16
-#घोषणा RK2928_PULL_BANK_STRIDE		8
+#define RK2928_PULL_OFFSET		0x118
+#define RK2928_PULL_PINS_PER_REG	16
+#define RK2928_PULL_BANK_STRIDE		8
 
-अटल व्योम rk2928_calc_pull_reg_and_bit(काष्ठा rockchip_pin_bank *bank,
-				    पूर्णांक pin_num, काष्ठा regmap **regmap,
-				    पूर्णांक *reg, u8 *bit)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
+static void rk2928_calc_pull_reg_and_bit(struct rockchip_pin_bank *bank,
+				    int pin_num, struct regmap **regmap,
+				    int *reg, u8 *bit)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
 
 	*regmap = info->regmap_base;
 	*reg = RK2928_PULL_OFFSET;
@@ -1433,15 +1432,15 @@
 	*reg += (pin_num / RK2928_PULL_PINS_PER_REG) * 4;
 
 	*bit = pin_num % RK2928_PULL_PINS_PER_REG;
-पूर्ण;
+};
 
-#घोषणा RK3128_PULL_OFFSET	0x118
+#define RK3128_PULL_OFFSET	0x118
 
-अटल व्योम rk3128_calc_pull_reg_and_bit(काष्ठा rockchip_pin_bank *bank,
-					 पूर्णांक pin_num, काष्ठा regmap **regmap,
-					 पूर्णांक *reg, u8 *bit)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
+static void rk3128_calc_pull_reg_and_bit(struct rockchip_pin_bank *bank,
+					 int pin_num, struct regmap **regmap,
+					 int *reg, u8 *bit)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
 
 	*regmap = info->regmap_base;
 	*reg = RK3128_PULL_OFFSET;
@@ -1449,64 +1448,64 @@
 	*reg += ((pin_num / RK2928_PULL_PINS_PER_REG) * 4);
 
 	*bit = pin_num % RK2928_PULL_PINS_PER_REG;
-पूर्ण
+}
 
-#घोषणा RK3188_PULL_OFFSET		0x164
-#घोषणा RK3188_PULL_BITS_PER_PIN	2
-#घोषणा RK3188_PULL_PINS_PER_REG	8
-#घोषणा RK3188_PULL_BANK_STRIDE		16
-#घोषणा RK3188_PULL_PMU_OFFSET		0x64
+#define RK3188_PULL_OFFSET		0x164
+#define RK3188_PULL_BITS_PER_PIN	2
+#define RK3188_PULL_PINS_PER_REG	8
+#define RK3188_PULL_BANK_STRIDE		16
+#define RK3188_PULL_PMU_OFFSET		0x64
 
-अटल व्योम rk3188_calc_pull_reg_and_bit(काष्ठा rockchip_pin_bank *bank,
-				    पूर्णांक pin_num, काष्ठा regmap **regmap,
-				    पूर्णांक *reg, u8 *bit)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
+static void rk3188_calc_pull_reg_and_bit(struct rockchip_pin_bank *bank,
+				    int pin_num, struct regmap **regmap,
+				    int *reg, u8 *bit)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
 
-	/* The first 12 pins of the first bank are located अन्यथाwhere */
-	अगर (bank->bank_num == 0 && pin_num < 12) अणु
+	/* The first 12 pins of the first bank are located elsewhere */
+	if (bank->bank_num == 0 && pin_num < 12) {
 		*regmap = info->regmap_pmu ? info->regmap_pmu
 					   : bank->regmap_pull;
 		*reg = info->regmap_pmu ? RK3188_PULL_PMU_OFFSET : 0;
 		*reg += ((pin_num / RK3188_PULL_PINS_PER_REG) * 4);
 		*bit = pin_num % RK3188_PULL_PINS_PER_REG;
 		*bit *= RK3188_PULL_BITS_PER_PIN;
-	पूर्ण अन्यथा अणु
+	} else {
 		*regmap = info->regmap_pull ? info->regmap_pull
 					    : info->regmap_base;
 		*reg = info->regmap_pull ? 0 : RK3188_PULL_OFFSET;
 
-		/* correct the offset, as it is the 2nd pull रेजिस्टर */
+		/* correct the offset, as it is the 2nd pull register */
 		*reg -= 4;
 		*reg += bank->bank_num * RK3188_PULL_BANK_STRIDE;
 		*reg += ((pin_num / RK3188_PULL_PINS_PER_REG) * 4);
 
 		/*
-		 * The bits in these रेजिस्टरs have an inverse ordering
+		 * The bits in these registers have an inverse ordering
 		 * with the lowest pin being in bits 15:14 and the highest
 		 * pin in bits 1:0
 		 */
 		*bit = 7 - (pin_num % RK3188_PULL_PINS_PER_REG);
 		*bit *= RK3188_PULL_BITS_PER_PIN;
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा RK3288_PULL_OFFSET		0x140
-अटल व्योम rk3288_calc_pull_reg_and_bit(काष्ठा rockchip_pin_bank *bank,
-				    पूर्णांक pin_num, काष्ठा regmap **regmap,
-				    पूर्णांक *reg, u8 *bit)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
+#define RK3288_PULL_OFFSET		0x140
+static void rk3288_calc_pull_reg_and_bit(struct rockchip_pin_bank *bank,
+				    int pin_num, struct regmap **regmap,
+				    int *reg, u8 *bit)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
 
 	/* The first 24 pins of the first bank are located in PMU */
-	अगर (bank->bank_num == 0) अणु
+	if (bank->bank_num == 0) {
 		*regmap = info->regmap_pmu;
 		*reg = RK3188_PULL_PMU_OFFSET;
 
 		*reg += ((pin_num / RK3188_PULL_PINS_PER_REG) * 4);
 		*bit = pin_num % RK3188_PULL_PINS_PER_REG;
 		*bit *= RK3188_PULL_BITS_PER_PIN;
-	पूर्ण अन्यथा अणु
+	} else {
 		*regmap = info->regmap_base;
 		*reg = RK3288_PULL_OFFSET;
 
@@ -1517,30 +1516,30 @@
 
 		*bit = (pin_num % RK3188_PULL_PINS_PER_REG);
 		*bit *= RK3188_PULL_BITS_PER_PIN;
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा RK3288_DRV_PMU_OFFSET		0x70
-#घोषणा RK3288_DRV_GRF_OFFSET		0x1c0
-#घोषणा RK3288_DRV_BITS_PER_PIN		2
-#घोषणा RK3288_DRV_PINS_PER_REG		8
-#घोषणा RK3288_DRV_BANK_STRIDE		16
+#define RK3288_DRV_PMU_OFFSET		0x70
+#define RK3288_DRV_GRF_OFFSET		0x1c0
+#define RK3288_DRV_BITS_PER_PIN		2
+#define RK3288_DRV_PINS_PER_REG		8
+#define RK3288_DRV_BANK_STRIDE		16
 
-अटल व्योम rk3288_calc_drv_reg_and_bit(काष्ठा rockchip_pin_bank *bank,
-				    पूर्णांक pin_num, काष्ठा regmap **regmap,
-				    पूर्णांक *reg, u8 *bit)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
+static void rk3288_calc_drv_reg_and_bit(struct rockchip_pin_bank *bank,
+				    int pin_num, struct regmap **regmap,
+				    int *reg, u8 *bit)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
 
 	/* The first 24 pins of the first bank are located in PMU */
-	अगर (bank->bank_num == 0) अणु
+	if (bank->bank_num == 0) {
 		*regmap = info->regmap_pmu;
 		*reg = RK3288_DRV_PMU_OFFSET;
 
 		*reg += ((pin_num / RK3288_DRV_PINS_PER_REG) * 4);
 		*bit = pin_num % RK3288_DRV_PINS_PER_REG;
 		*bit *= RK3288_DRV_BITS_PER_PIN;
-	पूर्ण अन्यथा अणु
+	} else {
 		*regmap = info->regmap_base;
 		*reg = RK3288_DRV_GRF_OFFSET;
 
@@ -1551,16 +1550,16 @@
 
 		*bit = (pin_num % RK3288_DRV_PINS_PER_REG);
 		*bit *= RK3288_DRV_BITS_PER_PIN;
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा RK3228_PULL_OFFSET		0x100
+#define RK3228_PULL_OFFSET		0x100
 
-अटल व्योम rk3228_calc_pull_reg_and_bit(काष्ठा rockchip_pin_bank *bank,
-				    पूर्णांक pin_num, काष्ठा regmap **regmap,
-				    पूर्णांक *reg, u8 *bit)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
+static void rk3228_calc_pull_reg_and_bit(struct rockchip_pin_bank *bank,
+				    int pin_num, struct regmap **regmap,
+				    int *reg, u8 *bit)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
 
 	*regmap = info->regmap_base;
 	*reg = RK3228_PULL_OFFSET;
@@ -1569,15 +1568,15 @@
 
 	*bit = (pin_num % RK3188_PULL_PINS_PER_REG);
 	*bit *= RK3188_PULL_BITS_PER_PIN;
-पूर्ण
+}
 
-#घोषणा RK3228_DRV_GRF_OFFSET		0x200
+#define RK3228_DRV_GRF_OFFSET		0x200
 
-अटल व्योम rk3228_calc_drv_reg_and_bit(काष्ठा rockchip_pin_bank *bank,
-				    पूर्णांक pin_num, काष्ठा regmap **regmap,
-				    पूर्णांक *reg, u8 *bit)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
+static void rk3228_calc_drv_reg_and_bit(struct rockchip_pin_bank *bank,
+				    int pin_num, struct regmap **regmap,
+				    int *reg, u8 *bit)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
 
 	*regmap = info->regmap_base;
 	*reg = RK3228_DRV_GRF_OFFSET;
@@ -1586,15 +1585,15 @@
 
 	*bit = (pin_num % RK3288_DRV_PINS_PER_REG);
 	*bit *= RK3288_DRV_BITS_PER_PIN;
-पूर्ण
+}
 
-#घोषणा RK3308_PULL_OFFSET		0xa0
+#define RK3308_PULL_OFFSET		0xa0
 
-अटल व्योम rk3308_calc_pull_reg_and_bit(काष्ठा rockchip_pin_bank *bank,
-				    पूर्णांक pin_num, काष्ठा regmap **regmap,
-				    पूर्णांक *reg, u8 *bit)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
+static void rk3308_calc_pull_reg_and_bit(struct rockchip_pin_bank *bank,
+				    int pin_num, struct regmap **regmap,
+				    int *reg, u8 *bit)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
 
 	*regmap = info->regmap_base;
 	*reg = RK3308_PULL_OFFSET;
@@ -1603,15 +1602,15 @@
 
 	*bit = (pin_num % RK3188_PULL_PINS_PER_REG);
 	*bit *= RK3188_PULL_BITS_PER_PIN;
-पूर्ण
+}
 
-#घोषणा RK3308_DRV_GRF_OFFSET		0x100
+#define RK3308_DRV_GRF_OFFSET		0x100
 
-अटल व्योम rk3308_calc_drv_reg_and_bit(काष्ठा rockchip_pin_bank *bank,
-				    पूर्णांक pin_num, काष्ठा regmap **regmap,
-				    पूर्णांक *reg, u8 *bit)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
+static void rk3308_calc_drv_reg_and_bit(struct rockchip_pin_bank *bank,
+				    int pin_num, struct regmap **regmap,
+				    int *reg, u8 *bit)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
 
 	*regmap = info->regmap_base;
 	*reg = RK3308_DRV_GRF_OFFSET;
@@ -1620,26 +1619,26 @@
 
 	*bit = (pin_num % RK3288_DRV_PINS_PER_REG);
 	*bit *= RK3288_DRV_BITS_PER_PIN;
-पूर्ण
+}
 
-#घोषणा RK3368_PULL_GRF_OFFSET		0x100
-#घोषणा RK3368_PULL_PMU_OFFSET		0x10
+#define RK3368_PULL_GRF_OFFSET		0x100
+#define RK3368_PULL_PMU_OFFSET		0x10
 
-अटल व्योम rk3368_calc_pull_reg_and_bit(काष्ठा rockchip_pin_bank *bank,
-				    पूर्णांक pin_num, काष्ठा regmap **regmap,
-				    पूर्णांक *reg, u8 *bit)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
+static void rk3368_calc_pull_reg_and_bit(struct rockchip_pin_bank *bank,
+				    int pin_num, struct regmap **regmap,
+				    int *reg, u8 *bit)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
 
 	/* The first 32 pins of the first bank are located in PMU */
-	अगर (bank->bank_num == 0) अणु
+	if (bank->bank_num == 0) {
 		*regmap = info->regmap_pmu;
 		*reg = RK3368_PULL_PMU_OFFSET;
 
 		*reg += ((pin_num / RK3188_PULL_PINS_PER_REG) * 4);
 		*bit = pin_num % RK3188_PULL_PINS_PER_REG;
 		*bit *= RK3188_PULL_BITS_PER_PIN;
-	पूर्ण अन्यथा अणु
+	} else {
 		*regmap = info->regmap_base;
 		*reg = RK3368_PULL_GRF_OFFSET;
 
@@ -1650,27 +1649,27 @@
 
 		*bit = (pin_num % RK3188_PULL_PINS_PER_REG);
 		*bit *= RK3188_PULL_BITS_PER_PIN;
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा RK3368_DRV_PMU_OFFSET		0x20
-#घोषणा RK3368_DRV_GRF_OFFSET		0x200
+#define RK3368_DRV_PMU_OFFSET		0x20
+#define RK3368_DRV_GRF_OFFSET		0x200
 
-अटल व्योम rk3368_calc_drv_reg_and_bit(काष्ठा rockchip_pin_bank *bank,
-				    पूर्णांक pin_num, काष्ठा regmap **regmap,
-				    पूर्णांक *reg, u8 *bit)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
+static void rk3368_calc_drv_reg_and_bit(struct rockchip_pin_bank *bank,
+				    int pin_num, struct regmap **regmap,
+				    int *reg, u8 *bit)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
 
 	/* The first 32 pins of the first bank are located in PMU */
-	अगर (bank->bank_num == 0) अणु
+	if (bank->bank_num == 0) {
 		*regmap = info->regmap_pmu;
 		*reg = RK3368_DRV_PMU_OFFSET;
 
 		*reg += ((pin_num / RK3288_DRV_PINS_PER_REG) * 4);
 		*bit = pin_num % RK3288_DRV_PINS_PER_REG;
 		*bit *= RK3288_DRV_BITS_PER_PIN;
-	पूर्ण अन्यथा अणु
+	} else {
 		*regmap = info->regmap_base;
 		*reg = RK3368_DRV_GRF_OFFSET;
 
@@ -1681,21 +1680,21 @@
 
 		*bit = (pin_num % RK3288_DRV_PINS_PER_REG);
 		*bit *= RK3288_DRV_BITS_PER_PIN;
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा RK3399_PULL_GRF_OFFSET		0xe040
-#घोषणा RK3399_PULL_PMU_OFFSET		0x40
-#घोषणा RK3399_DRV_3BITS_PER_PIN	3
+#define RK3399_PULL_GRF_OFFSET		0xe040
+#define RK3399_PULL_PMU_OFFSET		0x40
+#define RK3399_DRV_3BITS_PER_PIN	3
 
-अटल व्योम rk3399_calc_pull_reg_and_bit(काष्ठा rockchip_pin_bank *bank,
-					 पूर्णांक pin_num, काष्ठा regmap **regmap,
-					 पूर्णांक *reg, u8 *bit)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
+static void rk3399_calc_pull_reg_and_bit(struct rockchip_pin_bank *bank,
+					 int pin_num, struct regmap **regmap,
+					 int *reg, u8 *bit)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
 
 	/* The bank0:16 and bank1:32 pins are located in PMU */
-	अगर ((bank->bank_num == 0) || (bank->bank_num == 1)) अणु
+	if ((bank->bank_num == 0) || (bank->bank_num == 1)) {
 		*regmap = info->regmap_pmu;
 		*reg = RK3399_PULL_PMU_OFFSET;
 
@@ -1704,7 +1703,7 @@
 		*reg += ((pin_num / RK3188_PULL_PINS_PER_REG) * 4);
 		*bit = pin_num % RK3188_PULL_PINS_PER_REG;
 		*bit *= RK3188_PULL_BITS_PER_PIN;
-	पूर्ण अन्यथा अणु
+	} else {
 		*regmap = info->regmap_base;
 		*reg = RK3399_PULL_GRF_OFFSET;
 
@@ -1715,43 +1714,43 @@
 
 		*bit = (pin_num % RK3188_PULL_PINS_PER_REG);
 		*bit *= RK3188_PULL_BITS_PER_PIN;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम rk3399_calc_drv_reg_and_bit(काष्ठा rockchip_pin_bank *bank,
-					पूर्णांक pin_num, काष्ठा regmap **regmap,
-					पूर्णांक *reg, u8 *bit)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
-	पूर्णांक drv_num = (pin_num / 8);
+static void rk3399_calc_drv_reg_and_bit(struct rockchip_pin_bank *bank,
+					int pin_num, struct regmap **regmap,
+					int *reg, u8 *bit)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
+	int drv_num = (pin_num / 8);
 
 	/*  The bank0:16 and bank1:32 pins are located in PMU */
-	अगर ((bank->bank_num == 0) || (bank->bank_num == 1))
+	if ((bank->bank_num == 0) || (bank->bank_num == 1))
 		*regmap = info->regmap_pmu;
-	अन्यथा
+	else
 		*regmap = info->regmap_base;
 
 	*reg = bank->drv[drv_num].offset;
-	अगर ((bank->drv[drv_num].drv_type == DRV_TYPE_IO_1V8_3V0_AUTO) ||
+	if ((bank->drv[drv_num].drv_type == DRV_TYPE_IO_1V8_3V0_AUTO) ||
 	    (bank->drv[drv_num].drv_type == DRV_TYPE_IO_3V3_ONLY))
 		*bit = (pin_num % 8) * 3;
-	अन्यथा
+	else
 		*bit = (pin_num % 8) * 2;
-पूर्ण
+}
 
-#घोषणा RK3568_PULL_PMU_OFFSET		0x20
-#घोषणा RK3568_PULL_GRF_OFFSET		0x80
-#घोषणा RK3568_PULL_BITS_PER_PIN	2
-#घोषणा RK3568_PULL_PINS_PER_REG	8
-#घोषणा RK3568_PULL_BANK_STRIDE		0x10
+#define RK3568_PULL_PMU_OFFSET		0x20
+#define RK3568_PULL_GRF_OFFSET		0x80
+#define RK3568_PULL_BITS_PER_PIN	2
+#define RK3568_PULL_PINS_PER_REG	8
+#define RK3568_PULL_BANK_STRIDE		0x10
 
-अटल व्योम rk3568_calc_pull_reg_and_bit(काष्ठा rockchip_pin_bank *bank,
-					 पूर्णांक pin_num, काष्ठा regmap **regmap,
-					 पूर्णांक *reg, u8 *bit)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
+static void rk3568_calc_pull_reg_and_bit(struct rockchip_pin_bank *bank,
+					 int pin_num, struct regmap **regmap,
+					 int *reg, u8 *bit)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
 
-	अगर (bank->bank_num == 0) अणु
+	if (bank->bank_num == 0) {
 		*regmap = info->regmap_pmu;
 		*reg = RK3568_PULL_PMU_OFFSET;
 		*reg += bank->bank_num * RK3568_PULL_BANK_STRIDE;
@@ -1759,7 +1758,7 @@
 
 		*bit = pin_num % RK3568_PULL_PINS_PER_REG;
 		*bit *= RK3568_PULL_BITS_PER_PIN;
-	पूर्ण अन्यथा अणु
+	} else {
 		*regmap = info->regmap_base;
 		*reg = RK3568_PULL_GRF_OFFSET;
 		*reg += (bank->bank_num - 1) * RK3568_PULL_BANK_STRIDE;
@@ -1767,30 +1766,30 @@
 
 		*bit = (pin_num % RK3568_PULL_PINS_PER_REG);
 		*bit *= RK3568_PULL_BITS_PER_PIN;
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा RK3568_DRV_PMU_OFFSET		0x70
-#घोषणा RK3568_DRV_GRF_OFFSET		0x200
-#घोषणा RK3568_DRV_BITS_PER_PIN		8
-#घोषणा RK3568_DRV_PINS_PER_REG		2
-#घोषणा RK3568_DRV_BANK_STRIDE		0x40
+#define RK3568_DRV_PMU_OFFSET		0x70
+#define RK3568_DRV_GRF_OFFSET		0x200
+#define RK3568_DRV_BITS_PER_PIN		8
+#define RK3568_DRV_PINS_PER_REG		2
+#define RK3568_DRV_BANK_STRIDE		0x40
 
-अटल व्योम rk3568_calc_drv_reg_and_bit(काष्ठा rockchip_pin_bank *bank,
-					पूर्णांक pin_num, काष्ठा regmap **regmap,
-					पूर्णांक *reg, u8 *bit)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
+static void rk3568_calc_drv_reg_and_bit(struct rockchip_pin_bank *bank,
+					int pin_num, struct regmap **regmap,
+					int *reg, u8 *bit)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
 
 	/* The first 32 pins of the first bank are located in PMU */
-	अगर (bank->bank_num == 0) अणु
+	if (bank->bank_num == 0) {
 		*regmap = info->regmap_pmu;
 		*reg = RK3568_DRV_PMU_OFFSET;
 		*reg += ((pin_num / RK3568_DRV_PINS_PER_REG) * 4);
 
 		*bit = pin_num % RK3568_DRV_PINS_PER_REG;
 		*bit *= RK3568_DRV_BITS_PER_PIN;
-	पूर्ण अन्यथा अणु
+	} else {
 		*regmap = info->regmap_base;
 		*reg = RK3568_DRV_GRF_OFFSET;
 		*reg += (bank->bank_num - 1) * RK3568_DRV_BANK_STRIDE;
@@ -1798,145 +1797,145 @@
 
 		*bit = (pin_num % RK3568_DRV_PINS_PER_REG);
 		*bit *= RK3568_DRV_BITS_PER_PIN;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक rockchip_perpin_drv_list[DRV_TYPE_MAX][8] = अणु
-	अणु 2, 4, 8, 12, -1, -1, -1, -1 पूर्ण,
-	अणु 3, 6, 9, 12, -1, -1, -1, -1 पूर्ण,
-	अणु 5, 10, 15, 20, -1, -1, -1, -1 पूर्ण,
-	अणु 4, 6, 8, 10, 12, 14, 16, 18 पूर्ण,
-	अणु 4, 7, 10, 13, 16, 19, 22, 26 पूर्ण
-पूर्ण;
+static int rockchip_perpin_drv_list[DRV_TYPE_MAX][8] = {
+	{ 2, 4, 8, 12, -1, -1, -1, -1 },
+	{ 3, 6, 9, 12, -1, -1, -1, -1 },
+	{ 5, 10, 15, 20, -1, -1, -1, -1 },
+	{ 4, 6, 8, 10, 12, 14, 16, 18 },
+	{ 4, 7, 10, 13, 16, 19, 22, 26 }
+};
 
-अटल पूर्णांक rockchip_get_drive_perpin(काष्ठा rockchip_pin_bank *bank,
-				     पूर्णांक pin_num)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
-	काष्ठा rockchip_pin_ctrl *ctrl = info->ctrl;
-	काष्ठा regmap *regmap;
-	पूर्णांक reg, ret;
+static int rockchip_get_drive_perpin(struct rockchip_pin_bank *bank,
+				     int pin_num)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
+	struct rockchip_pin_ctrl *ctrl = info->ctrl;
+	struct regmap *regmap;
+	int reg, ret;
 	u32 data, temp, rmask_bits;
 	u8 bit;
-	पूर्णांक drv_type = bank->drv[pin_num / 8].drv_type;
+	int drv_type = bank->drv[pin_num / 8].drv_type;
 
 	ctrl->drv_calc_reg(bank, pin_num, &regmap, &reg, &bit);
 
-	चयन (drv_type) अणु
-	हाल DRV_TYPE_IO_1V8_3V0_AUTO:
-	हाल DRV_TYPE_IO_3V3_ONLY:
+	switch (drv_type) {
+	case DRV_TYPE_IO_1V8_3V0_AUTO:
+	case DRV_TYPE_IO_3V3_ONLY:
 		rmask_bits = RK3399_DRV_3BITS_PER_PIN;
-		चयन (bit) अणु
-		हाल 0 ... 12:
-			/* regular हाल, nothing to करो */
-			अवरोध;
-		हाल 15:
+		switch (bit) {
+		case 0 ... 12:
+			/* regular case, nothing to do */
+			break;
+		case 15:
 			/*
 			 * drive-strength offset is special, as it is
-			 * spपढ़ो over 2 रेजिस्टरs
+			 * spread over 2 registers
 			 */
-			ret = regmap_पढ़ो(regmap, reg, &data);
-			अगर (ret)
-				वापस ret;
+			ret = regmap_read(regmap, reg, &data);
+			if (ret)
+				return ret;
 
-			ret = regmap_पढ़ो(regmap, reg + 0x4, &temp);
-			अगर (ret)
-				वापस ret;
+			ret = regmap_read(regmap, reg + 0x4, &temp);
+			if (ret)
+				return ret;
 
 			/*
 			 * the bit data[15] contains bit 0 of the value
-			 * जबतक temp[1:0] contains bits 2 and 1
+			 * while temp[1:0] contains bits 2 and 1
 			 */
 			data >>= 15;
 			temp &= 0x3;
 			temp <<= 1;
 			data |= temp;
 
-			वापस rockchip_perpin_drv_list[drv_type][data];
-		हाल 18 ... 21:
-			/* setting fully enबंदd in the second रेजिस्टर */
+			return rockchip_perpin_drv_list[drv_type][data];
+		case 18 ... 21:
+			/* setting fully enclosed in the second register */
 			reg += 4;
 			bit -= 16;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_err(info->dev, "unsupported bit: %d for pinctrl drive type: %d\n",
 				bit, drv_type);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अवरोध;
-	हाल DRV_TYPE_IO_DEFAULT:
-	हाल DRV_TYPE_IO_1V8_OR_3V0:
-	हाल DRV_TYPE_IO_1V8_ONLY:
+		break;
+	case DRV_TYPE_IO_DEFAULT:
+	case DRV_TYPE_IO_1V8_OR_3V0:
+	case DRV_TYPE_IO_1V8_ONLY:
 		rmask_bits = RK3288_DRV_BITS_PER_PIN;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(info->dev, "unsupported pinctrl drive type: %d\n",
 			drv_type);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = regmap_पढ़ो(regmap, reg, &data);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(regmap, reg, &data);
+	if (ret)
+		return ret;
 
 	data >>= bit;
 	data &= (1 << rmask_bits) - 1;
 
-	वापस rockchip_perpin_drv_list[drv_type][data];
-पूर्ण
+	return rockchip_perpin_drv_list[drv_type][data];
+}
 
-अटल पूर्णांक rockchip_set_drive_perpin(काष्ठा rockchip_pin_bank *bank,
-				     पूर्णांक pin_num, पूर्णांक strength)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
-	काष्ठा rockchip_pin_ctrl *ctrl = info->ctrl;
-	काष्ठा regmap *regmap;
-	पूर्णांक reg, ret, i;
+static int rockchip_set_drive_perpin(struct rockchip_pin_bank *bank,
+				     int pin_num, int strength)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
+	struct rockchip_pin_ctrl *ctrl = info->ctrl;
+	struct regmap *regmap;
+	int reg, ret, i;
 	u32 data, rmask, rmask_bits, temp;
 	u8 bit;
-	पूर्णांक drv_type = bank->drv[pin_num / 8].drv_type;
+	int drv_type = bank->drv[pin_num / 8].drv_type;
 
 	dev_dbg(info->dev, "setting drive of GPIO%d-%d to %d\n",
 		bank->bank_num, pin_num, strength);
 
 	ctrl->drv_calc_reg(bank, pin_num, &regmap, &reg, &bit);
-	अगर (ctrl->type == RK3568) अणु
+	if (ctrl->type == RK3568) {
 		rmask_bits = RK3568_DRV_BITS_PER_PIN;
 		ret = (1 << (strength + 1)) - 1;
-		जाओ config;
-	पूर्ण
+		goto config;
+	}
 
 	ret = -EINVAL;
-	क्रम (i = 0; i < ARRAY_SIZE(rockchip_perpin_drv_list[drv_type]); i++) अणु
-		अगर (rockchip_perpin_drv_list[drv_type][i] == strength) अणु
+	for (i = 0; i < ARRAY_SIZE(rockchip_perpin_drv_list[drv_type]); i++) {
+		if (rockchip_perpin_drv_list[drv_type][i] == strength) {
 			ret = i;
-			अवरोध;
-		पूर्ण अन्यथा अगर (rockchip_perpin_drv_list[drv_type][i] < 0) अणु
+			break;
+		} else if (rockchip_perpin_drv_list[drv_type][i] < 0) {
 			ret = rockchip_perpin_drv_list[drv_type][i];
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(info->dev, "unsupported driver strength %d\n",
 			strength);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	चयन (drv_type) अणु
-	हाल DRV_TYPE_IO_1V8_3V0_AUTO:
-	हाल DRV_TYPE_IO_3V3_ONLY:
+	switch (drv_type) {
+	case DRV_TYPE_IO_1V8_3V0_AUTO:
+	case DRV_TYPE_IO_3V3_ONLY:
 		rmask_bits = RK3399_DRV_3BITS_PER_PIN;
-		चयन (bit) अणु
-		हाल 0 ... 12:
-			/* regular हाल, nothing to करो */
-			अवरोध;
-		हाल 15:
+		switch (bit) {
+		case 0 ... 12:
+			/* regular case, nothing to do */
+			break;
+		case 15:
 			/*
-			 * drive-strength offset is special, as it is spपढ़ो
-			 * over 2 रेजिस्टरs, the bit data[15] contains bit 0
-			 * of the value जबतक temp[1:0] contains bits 2 and 1
+			 * drive-strength offset is special, as it is spread
+			 * over 2 registers, the bit data[15] contains bit 0
+			 * of the value while temp[1:0] contains bits 2 and 1
 			 */
 			data = (ret & 0x1) << 15;
 			temp = (ret >> 0x1) & 0x3;
@@ -1944,191 +1943,191 @@
 			rmask = BIT(15) | BIT(31);
 			data |= BIT(31);
 			ret = regmap_update_bits(regmap, reg, rmask, data);
-			अगर (ret)
-				वापस ret;
+			if (ret)
+				return ret;
 
 			rmask = 0x3 | (0x3 << 16);
 			temp |= (0x3 << 16);
 			reg += 0x4;
 			ret = regmap_update_bits(regmap, reg, rmask, temp);
 
-			वापस ret;
-		हाल 18 ... 21:
-			/* setting fully enबंदd in the second रेजिस्टर */
+			return ret;
+		case 18 ... 21:
+			/* setting fully enclosed in the second register */
 			reg += 4;
 			bit -= 16;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_err(info->dev, "unsupported bit: %d for pinctrl drive type: %d\n",
 				bit, drv_type);
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	हाल DRV_TYPE_IO_DEFAULT:
-	हाल DRV_TYPE_IO_1V8_OR_3V0:
-	हाल DRV_TYPE_IO_1V8_ONLY:
+			return -EINVAL;
+		}
+		break;
+	case DRV_TYPE_IO_DEFAULT:
+	case DRV_TYPE_IO_1V8_OR_3V0:
+	case DRV_TYPE_IO_1V8_ONLY:
 		rmask_bits = RK3288_DRV_BITS_PER_PIN;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(info->dev, "unsupported pinctrl drive type: %d\n",
 			drv_type);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 config:
-	/* enable the ग_लिखो to the equivalent lower bits */
+	/* enable the write to the equivalent lower bits */
 	data = ((1 << rmask_bits) - 1) << (bit + 16);
 	rmask = data | (data >> 16);
 	data |= (ret << bit);
 
 	ret = regmap_update_bits(regmap, reg, rmask, data);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rockchip_pull_list[PULL_TYPE_MAX][4] = अणु
-	अणु
+static int rockchip_pull_list[PULL_TYPE_MAX][4] = {
+	{
 		PIN_CONFIG_BIAS_DISABLE,
 		PIN_CONFIG_BIAS_PULL_UP,
 		PIN_CONFIG_BIAS_PULL_DOWN,
 		PIN_CONFIG_BIAS_BUS_HOLD
-	पूर्ण,
-	अणु
+	},
+	{
 		PIN_CONFIG_BIAS_DISABLE,
 		PIN_CONFIG_BIAS_PULL_DOWN,
 		PIN_CONFIG_BIAS_DISABLE,
 		PIN_CONFIG_BIAS_PULL_UP
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक rockchip_get_pull(काष्ठा rockchip_pin_bank *bank, पूर्णांक pin_num)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
-	काष्ठा rockchip_pin_ctrl *ctrl = info->ctrl;
-	काष्ठा regmap *regmap;
-	पूर्णांक reg, ret, pull_type;
+static int rockchip_get_pull(struct rockchip_pin_bank *bank, int pin_num)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
+	struct rockchip_pin_ctrl *ctrl = info->ctrl;
+	struct regmap *regmap;
+	int reg, ret, pull_type;
 	u8 bit;
 	u32 data;
 
-	/* rk3066b करोes support any pulls */
-	अगर (ctrl->type == RK3066B)
-		वापस PIN_CONFIG_BIAS_DISABLE;
+	/* rk3066b does support any pulls */
+	if (ctrl->type == RK3066B)
+		return PIN_CONFIG_BIAS_DISABLE;
 
 	ctrl->pull_calc_reg(bank, pin_num, &regmap, &reg, &bit);
 
-	ret = regmap_पढ़ो(regmap, reg, &data);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(regmap, reg, &data);
+	if (ret)
+		return ret;
 
-	चयन (ctrl->type) अणु
-	हाल RK2928:
-	हाल RK3128:
-		वापस !(data & BIT(bit))
+	switch (ctrl->type) {
+	case RK2928:
+	case RK3128:
+		return !(data & BIT(bit))
 				? PIN_CONFIG_BIAS_PULL_PIN_DEFAULT
 				: PIN_CONFIG_BIAS_DISABLE;
-	हाल PX30:
-	हाल RV1108:
-	हाल RK3188:
-	हाल RK3288:
-	हाल RK3308:
-	हाल RK3368:
-	हाल RK3399:
+	case PX30:
+	case RV1108:
+	case RK3188:
+	case RK3288:
+	case RK3308:
+	case RK3368:
+	case RK3399:
 		pull_type = bank->pull_type[pin_num / 8];
 		data >>= bit;
 		data &= (1 << RK3188_PULL_BITS_PER_PIN) - 1;
 
-		वापस rockchip_pull_list[pull_type][data];
-	शेष:
+		return rockchip_pull_list[pull_type][data];
+	default:
 		dev_err(info->dev, "unsupported pinctrl type\n");
-		वापस -EINVAL;
-	पूर्ण;
-पूर्ण
+		return -EINVAL;
+	};
+}
 
-अटल पूर्णांक rockchip_set_pull(काष्ठा rockchip_pin_bank *bank,
-					पूर्णांक pin_num, पूर्णांक pull)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
-	काष्ठा rockchip_pin_ctrl *ctrl = info->ctrl;
-	काष्ठा regmap *regmap;
-	पूर्णांक reg, ret, i, pull_type;
+static int rockchip_set_pull(struct rockchip_pin_bank *bank,
+					int pin_num, int pull)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
+	struct rockchip_pin_ctrl *ctrl = info->ctrl;
+	struct regmap *regmap;
+	int reg, ret, i, pull_type;
 	u8 bit;
 	u32 data, rmask;
 
 	dev_dbg(info->dev, "setting pull of GPIO%d-%d to %d\n",
 		 bank->bank_num, pin_num, pull);
 
-	/* rk3066b करोes support any pulls */
-	अगर (ctrl->type == RK3066B)
-		वापस pull ? -EINVAL : 0;
+	/* rk3066b does support any pulls */
+	if (ctrl->type == RK3066B)
+		return pull ? -EINVAL : 0;
 
 	ctrl->pull_calc_reg(bank, pin_num, &regmap, &reg, &bit);
 
-	चयन (ctrl->type) अणु
-	हाल RK2928:
-	हाल RK3128:
+	switch (ctrl->type) {
+	case RK2928:
+	case RK3128:
 		data = BIT(bit + 16);
-		अगर (pull == PIN_CONFIG_BIAS_DISABLE)
+		if (pull == PIN_CONFIG_BIAS_DISABLE)
 			data |= BIT(bit);
-		ret = regmap_ग_लिखो(regmap, reg, data);
-		अवरोध;
-	हाल PX30:
-	हाल RV1108:
-	हाल RK3188:
-	हाल RK3288:
-	हाल RK3308:
-	हाल RK3368:
-	हाल RK3399:
-	हाल RK3568:
+		ret = regmap_write(regmap, reg, data);
+		break;
+	case PX30:
+	case RV1108:
+	case RK3188:
+	case RK3288:
+	case RK3308:
+	case RK3368:
+	case RK3399:
+	case RK3568:
 		pull_type = bank->pull_type[pin_num / 8];
 		ret = -EINVAL;
-		क्रम (i = 0; i < ARRAY_SIZE(rockchip_pull_list[pull_type]);
-			i++) अणु
-			अगर (rockchip_pull_list[pull_type][i] == pull) अणु
+		for (i = 0; i < ARRAY_SIZE(rockchip_pull_list[pull_type]);
+			i++) {
+			if (rockchip_pull_list[pull_type][i] == pull) {
 				ret = i;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 		/*
-		 * In the TRM, pull-up being 1 क्रम everything except the GPIO0_D0-D6,
+		 * In the TRM, pull-up being 1 for everything except the GPIO0_D0-D6,
 		 * where that pull up value becomes 3.
 		 */
-		अगर (ctrl->type == RK3568 && bank->bank_num == 0 && pin_num >= 27 && pin_num <= 30) अणु
-			अगर (ret == 1)
+		if (ctrl->type == RK3568 && bank->bank_num == 0 && pin_num >= 27 && pin_num <= 30) {
+			if (ret == 1)
 				ret = 3;
-		पूर्ण
+		}
 
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(info->dev, "unsupported pull setting %d\n",
 				pull);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		/* enable the ग_लिखो to the equivalent lower bits */
+		/* enable the write to the equivalent lower bits */
 		data = ((1 << RK3188_PULL_BITS_PER_PIN) - 1) << (bit + 16);
 		rmask = data | (data >> 16);
 		data |= (ret << bit);
 
 		ret = regmap_update_bits(regmap, reg, rmask, data);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(info->dev, "unsupported pinctrl type\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा RK3328_SCHMITT_BITS_PER_PIN		1
-#घोषणा RK3328_SCHMITT_PINS_PER_REG		16
-#घोषणा RK3328_SCHMITT_BANK_STRIDE		8
-#घोषणा RK3328_SCHMITT_GRF_OFFSET		0x380
+#define RK3328_SCHMITT_BITS_PER_PIN		1
+#define RK3328_SCHMITT_PINS_PER_REG		16
+#define RK3328_SCHMITT_BANK_STRIDE		8
+#define RK3328_SCHMITT_GRF_OFFSET		0x380
 
-अटल पूर्णांक rk3328_calc_schmitt_reg_and_bit(काष्ठा rockchip_pin_bank *bank,
-					   पूर्णांक pin_num,
-					   काष्ठा regmap **regmap,
-					   पूर्णांक *reg, u8 *bit)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
+static int rk3328_calc_schmitt_reg_and_bit(struct rockchip_pin_bank *bank,
+					   int pin_num,
+					   struct regmap **regmap,
+					   int *reg, u8 *bit)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
 
 	*regmap = info->regmap_base;
 	*reg = RK3328_SCHMITT_GRF_OFFSET;
@@ -2137,73 +2136,73 @@ config:
 	*reg += ((pin_num / RK3328_SCHMITT_PINS_PER_REG) * 4);
 	*bit = pin_num % RK3328_SCHMITT_PINS_PER_REG;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा RK3568_SCHMITT_BITS_PER_PIN		2
-#घोषणा RK3568_SCHMITT_PINS_PER_REG		8
-#घोषणा RK3568_SCHMITT_BANK_STRIDE		0x10
-#घोषणा RK3568_SCHMITT_GRF_OFFSET		0xc0
-#घोषणा RK3568_SCHMITT_PMUGRF_OFFSET		0x30
+#define RK3568_SCHMITT_BITS_PER_PIN		2
+#define RK3568_SCHMITT_PINS_PER_REG		8
+#define RK3568_SCHMITT_BANK_STRIDE		0x10
+#define RK3568_SCHMITT_GRF_OFFSET		0xc0
+#define RK3568_SCHMITT_PMUGRF_OFFSET		0x30
 
-अटल पूर्णांक rk3568_calc_schmitt_reg_and_bit(काष्ठा rockchip_pin_bank *bank,
-					   पूर्णांक pin_num,
-					   काष्ठा regmap **regmap,
-					   पूर्णांक *reg, u8 *bit)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
+static int rk3568_calc_schmitt_reg_and_bit(struct rockchip_pin_bank *bank,
+					   int pin_num,
+					   struct regmap **regmap,
+					   int *reg, u8 *bit)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
 
-	अगर (bank->bank_num == 0) अणु
+	if (bank->bank_num == 0) {
 		*regmap = info->regmap_pmu;
 		*reg = RK3568_SCHMITT_PMUGRF_OFFSET;
-	पूर्ण अन्यथा अणु
+	} else {
 		*regmap = info->regmap_base;
 		*reg = RK3568_SCHMITT_GRF_OFFSET;
 		*reg += (bank->bank_num - 1) * RK3568_SCHMITT_BANK_STRIDE;
-	पूर्ण
+	}
 
 	*reg += ((pin_num / RK3568_SCHMITT_PINS_PER_REG) * 4);
 	*bit = pin_num % RK3568_SCHMITT_PINS_PER_REG;
 	*bit *= RK3568_SCHMITT_BITS_PER_PIN;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rockchip_get_schmitt(काष्ठा rockchip_pin_bank *bank, पूर्णांक pin_num)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
-	काष्ठा rockchip_pin_ctrl *ctrl = info->ctrl;
-	काष्ठा regmap *regmap;
-	पूर्णांक reg, ret;
+static int rockchip_get_schmitt(struct rockchip_pin_bank *bank, int pin_num)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
+	struct rockchip_pin_ctrl *ctrl = info->ctrl;
+	struct regmap *regmap;
+	int reg, ret;
 	u8 bit;
 	u32 data;
 
 	ret = ctrl->schmitt_calc_reg(bank, pin_num, &regmap, &reg, &bit);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = regmap_पढ़ो(regmap, reg, &data);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(regmap, reg, &data);
+	if (ret)
+		return ret;
 
 	data >>= bit;
-	चयन (ctrl->type) अणु
-	हाल RK3568:
-		वापस data & ((1 << RK3568_SCHMITT_BITS_PER_PIN) - 1);
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (ctrl->type) {
+	case RK3568:
+		return data & ((1 << RK3568_SCHMITT_BITS_PER_PIN) - 1);
+	default:
+		break;
+	}
 
-	वापस data & 0x1;
-पूर्ण
+	return data & 0x1;
+}
 
-अटल पूर्णांक rockchip_set_schmitt(काष्ठा rockchip_pin_bank *bank,
-				पूर्णांक pin_num, पूर्णांक enable)
-अणु
-	काष्ठा rockchip_pinctrl *info = bank->drvdata;
-	काष्ठा rockchip_pin_ctrl *ctrl = info->ctrl;
-	काष्ठा regmap *regmap;
-	पूर्णांक reg, ret;
+static int rockchip_set_schmitt(struct rockchip_pin_bank *bank,
+				int pin_num, int enable)
+{
+	struct rockchip_pinctrl *info = bank->drvdata;
+	struct rockchip_pin_ctrl *ctrl = info->ctrl;
+	struct regmap *regmap;
+	int reg, ret;
 	u8 bit;
 	u32 data, rmask;
 
@@ -2211,385 +2210,385 @@ config:
 		bank->bank_num, pin_num, enable);
 
 	ret = ctrl->schmitt_calc_reg(bank, pin_num, &regmap, &reg, &bit);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* enable the ग_लिखो to the equivalent lower bits */
-	चयन (ctrl->type) अणु
-	हाल RK3568:
+	/* enable the write to the equivalent lower bits */
+	switch (ctrl->type) {
+	case RK3568:
 		data = ((1 << RK3568_SCHMITT_BITS_PER_PIN) - 1) << (bit + 16);
 		rmask = data | (data >> 16);
 		data |= ((enable ? 0x2 : 0x1) << bit);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		data = BIT(bit + 16) | (enable << bit);
 		rmask = BIT(bit + 16) | BIT(bit);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस regmap_update_bits(regmap, reg, rmask, data);
-पूर्ण
+	return regmap_update_bits(regmap, reg, rmask, data);
+}
 
 /*
  * Pinmux_ops handling
  */
 
-अटल पूर्णांक rockchip_pmx_get_funcs_count(काष्ठा pinctrl_dev *pctldev)
-अणु
-	काष्ठा rockchip_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+static int rockchip_pmx_get_funcs_count(struct pinctrl_dev *pctldev)
+{
+	struct rockchip_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस info->nfunctions;
-पूर्ण
+	return info->nfunctions;
+}
 
-अटल स्थिर अक्षर *rockchip_pmx_get_func_name(काष्ठा pinctrl_dev *pctldev,
-					  अचिन्हित selector)
-अणु
-	काष्ठा rockchip_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+static const char *rockchip_pmx_get_func_name(struct pinctrl_dev *pctldev,
+					  unsigned selector)
+{
+	struct rockchip_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस info->functions[selector].name;
-पूर्ण
+	return info->functions[selector].name;
+}
 
-अटल पूर्णांक rockchip_pmx_get_groups(काष्ठा pinctrl_dev *pctldev,
-				अचिन्हित selector, स्थिर अक्षर * स्थिर **groups,
-				अचिन्हित * स्थिर num_groups)
-अणु
-	काष्ठा rockchip_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+static int rockchip_pmx_get_groups(struct pinctrl_dev *pctldev,
+				unsigned selector, const char * const **groups,
+				unsigned * const num_groups)
+{
+	struct rockchip_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
 
 	*groups = info->functions[selector].groups;
 	*num_groups = info->functions[selector].ngroups;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rockchip_pmx_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित selector,
-			    अचिन्हित group)
-अणु
-	काष्ठा rockchip_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
-	स्थिर अचिन्हित पूर्णांक *pins = info->groups[group].pins;
-	स्थिर काष्ठा rockchip_pin_config *data = info->groups[group].data;
-	काष्ठा rockchip_pin_bank *bank;
-	पूर्णांक cnt, ret = 0;
+static int rockchip_pmx_set(struct pinctrl_dev *pctldev, unsigned selector,
+			    unsigned group)
+{
+	struct rockchip_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+	const unsigned int *pins = info->groups[group].pins;
+	const struct rockchip_pin_config *data = info->groups[group].data;
+	struct rockchip_pin_bank *bank;
+	int cnt, ret = 0;
 
 	dev_dbg(info->dev, "enable function %s group %s\n",
 		info->functions[selector].name, info->groups[group].name);
 
 	/*
-	 * क्रम each pin in the pin group selected, program the corresponding
-	 * pin function number in the config रेजिस्टर.
+	 * for each pin in the pin group selected, program the corresponding
+	 * pin function number in the config register.
 	 */
-	क्रम (cnt = 0; cnt < info->groups[group].npins; cnt++) अणु
+	for (cnt = 0; cnt < info->groups[group].npins; cnt++) {
 		bank = pin_to_bank(info, pins[cnt]);
 		ret = rockchip_set_mux(bank, pins[cnt] - bank->pin_base,
 				       data[cnt].func);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+		if (ret)
+			break;
+	}
 
-	अगर (ret) अणु
-		/* revert the alपढ़ोy करोne pin settings */
-		क्रम (cnt--; cnt >= 0; cnt--)
+	if (ret) {
+		/* revert the already done pin settings */
+		for (cnt--; cnt >= 0; cnt--)
 			rockchip_set_mux(bank, pins[cnt] - bank->pin_base, 0);
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rockchip_gpio_get_direction(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा rockchip_pin_bank *bank = gpiochip_get_data(chip);
+static int rockchip_gpio_get_direction(struct gpio_chip *chip, unsigned offset)
+{
+	struct rockchip_pin_bank *bank = gpiochip_get_data(chip);
 	u32 data;
-	पूर्णांक ret;
+	int ret;
 
 	ret = clk_enable(bank->clk);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(bank->drvdata->dev,
 			"failed to enable clock for bank %s\n", bank->name);
-		वापस ret;
-	पूर्ण
-	data = पढ़ोl_relaxed(bank->reg_base + GPIO_SWPORT_DDR);
+		return ret;
+	}
+	data = readl_relaxed(bank->reg_base + GPIO_SWPORT_DDR);
 	clk_disable(bank->clk);
 
-	अगर (data & BIT(offset))
-		वापस GPIO_LINE_सूचीECTION_OUT;
+	if (data & BIT(offset))
+		return GPIO_LINE_DIRECTION_OUT;
 
-	वापस GPIO_LINE_सूचीECTION_IN;
-पूर्ण
+	return GPIO_LINE_DIRECTION_IN;
+}
 
 /*
  * The calls to gpio_direction_output() and gpio_direction_input()
- * leads to this function call (via the pinctrl_gpio_direction_अणुinput|outputपूर्ण()
- * function called from the gpiolib पूर्णांकerface).
+ * leads to this function call (via the pinctrl_gpio_direction_{input|output}()
+ * function called from the gpiolib interface).
  */
-अटल पूर्णांक _rockchip_pmx_gpio_set_direction(काष्ठा gpio_chip *chip,
-					    पूर्णांक pin, bool input)
-अणु
-	काष्ठा rockchip_pin_bank *bank;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+static int _rockchip_pmx_gpio_set_direction(struct gpio_chip *chip,
+					    int pin, bool input)
+{
+	struct rockchip_pin_bank *bank;
+	int ret;
+	unsigned long flags;
 	u32 data;
 
 	bank = gpiochip_get_data(chip);
 
 	ret = rockchip_set_mux(bank, pin, RK_FUNC_GPIO);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	clk_enable(bank->clk);
 	raw_spin_lock_irqsave(&bank->slock, flags);
 
-	data = पढ़ोl_relaxed(bank->reg_base + GPIO_SWPORT_DDR);
-	/* set bit to 1 क्रम output, 0 क्रम input */
-	अगर (!input)
+	data = readl_relaxed(bank->reg_base + GPIO_SWPORT_DDR);
+	/* set bit to 1 for output, 0 for input */
+	if (!input)
 		data |= BIT(pin);
-	अन्यथा
+	else
 		data &= ~BIT(pin);
-	ग_लिखोl_relaxed(data, bank->reg_base + GPIO_SWPORT_DDR);
+	writel_relaxed(data, bank->reg_base + GPIO_SWPORT_DDR);
 
 	raw_spin_unlock_irqrestore(&bank->slock, flags);
 	clk_disable(bank->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rockchip_pmx_gpio_set_direction(काष्ठा pinctrl_dev *pctldev,
-					      काष्ठा pinctrl_gpio_range *range,
-					      अचिन्हित offset, bool input)
-अणु
-	काष्ठा rockchip_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
-	काष्ठा gpio_chip *chip;
-	पूर्णांक pin;
+static int rockchip_pmx_gpio_set_direction(struct pinctrl_dev *pctldev,
+					      struct pinctrl_gpio_range *range,
+					      unsigned offset, bool input)
+{
+	struct rockchip_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+	struct gpio_chip *chip;
+	int pin;
 
 	chip = range->gc;
 	pin = offset - chip->base;
 	dev_dbg(info->dev, "gpio_direction for pin %u as %s-%d to %s\n",
 		 offset, range->name, pin, input ? "input" : "output");
 
-	वापस _rockchip_pmx_gpio_set_direction(chip, offset - chip->base,
+	return _rockchip_pmx_gpio_set_direction(chip, offset - chip->base,
 						input);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा pinmux_ops rockchip_pmx_ops = अणु
+static const struct pinmux_ops rockchip_pmx_ops = {
 	.get_functions_count	= rockchip_pmx_get_funcs_count,
 	.get_function_name	= rockchip_pmx_get_func_name,
 	.get_function_groups	= rockchip_pmx_get_groups,
 	.set_mux		= rockchip_pmx_set,
 	.gpio_set_direction	= rockchip_pmx_gpio_set_direction,
-पूर्ण;
+};
 
 /*
  * Pinconf_ops handling
  */
 
-अटल bool rockchip_pinconf_pull_valid(काष्ठा rockchip_pin_ctrl *ctrl,
-					क्रमागत pin_config_param pull)
-अणु
-	चयन (ctrl->type) अणु
-	हाल RK2928:
-	हाल RK3128:
-		वापस (pull == PIN_CONFIG_BIAS_PULL_PIN_DEFAULT ||
+static bool rockchip_pinconf_pull_valid(struct rockchip_pin_ctrl *ctrl,
+					enum pin_config_param pull)
+{
+	switch (ctrl->type) {
+	case RK2928:
+	case RK3128:
+		return (pull == PIN_CONFIG_BIAS_PULL_PIN_DEFAULT ||
 					pull == PIN_CONFIG_BIAS_DISABLE);
-	हाल RK3066B:
-		वापस pull ? false : true;
-	हाल PX30:
-	हाल RV1108:
-	हाल RK3188:
-	हाल RK3288:
-	हाल RK3308:
-	हाल RK3368:
-	हाल RK3399:
-	हाल RK3568:
-		वापस (pull != PIN_CONFIG_BIAS_PULL_PIN_DEFAULT);
-	पूर्ण
+	case RK3066B:
+		return pull ? false : true;
+	case PX30:
+	case RV1108:
+	case RK3188:
+	case RK3288:
+	case RK3308:
+	case RK3368:
+	case RK3399:
+	case RK3568:
+		return (pull != PIN_CONFIG_BIAS_PULL_PIN_DEFAULT);
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम rockchip_gpio_set(काष्ठा gpio_chip *gc, अचिन्हित offset, पूर्णांक value);
-अटल पूर्णांक rockchip_gpio_get(काष्ठा gpio_chip *gc, अचिन्हित offset);
+static void rockchip_gpio_set(struct gpio_chip *gc, unsigned offset, int value);
+static int rockchip_gpio_get(struct gpio_chip *gc, unsigned offset);
 
-/* set the pin config settings क्रम a specअगरied pin */
-अटल पूर्णांक rockchip_pinconf_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक pin,
-				अचिन्हित दीर्घ *configs, अचिन्हित num_configs)
-अणु
-	काष्ठा rockchip_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
-	काष्ठा rockchip_pin_bank *bank = pin_to_bank(info, pin);
-	क्रमागत pin_config_param param;
+/* set the pin config settings for a specified pin */
+static int rockchip_pinconf_set(struct pinctrl_dev *pctldev, unsigned int pin,
+				unsigned long *configs, unsigned num_configs)
+{
+	struct rockchip_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+	struct rockchip_pin_bank *bank = pin_to_bank(info, pin);
+	enum pin_config_param param;
 	u32 arg;
-	पूर्णांक i;
-	पूर्णांक rc;
+	int i;
+	int rc;
 
-	क्रम (i = 0; i < num_configs; i++) अणु
+	for (i = 0; i < num_configs; i++) {
 		param = pinconf_to_config_param(configs[i]);
 		arg = pinconf_to_config_argument(configs[i]);
 
-		चयन (param) अणु
-		हाल PIN_CONFIG_BIAS_DISABLE:
+		switch (param) {
+		case PIN_CONFIG_BIAS_DISABLE:
 			rc =  rockchip_set_pull(bank, pin - bank->pin_base,
 				param);
-			अगर (rc)
-				वापस rc;
-			अवरोध;
-		हाल PIN_CONFIG_BIAS_PULL_UP:
-		हाल PIN_CONFIG_BIAS_PULL_DOWN:
-		हाल PIN_CONFIG_BIAS_PULL_PIN_DEFAULT:
-		हाल PIN_CONFIG_BIAS_BUS_HOLD:
-			अगर (!rockchip_pinconf_pull_valid(info->ctrl, param))
-				वापस -ENOTSUPP;
+			if (rc)
+				return rc;
+			break;
+		case PIN_CONFIG_BIAS_PULL_UP:
+		case PIN_CONFIG_BIAS_PULL_DOWN:
+		case PIN_CONFIG_BIAS_PULL_PIN_DEFAULT:
+		case PIN_CONFIG_BIAS_BUS_HOLD:
+			if (!rockchip_pinconf_pull_valid(info->ctrl, param))
+				return -ENOTSUPP;
 
-			अगर (!arg)
-				वापस -EINVAL;
+			if (!arg)
+				return -EINVAL;
 
 			rc = rockchip_set_pull(bank, pin - bank->pin_base,
 				param);
-			अगर (rc)
-				वापस rc;
-			अवरोध;
-		हाल PIN_CONFIG_OUTPUT:
+			if (rc)
+				return rc;
+			break;
+		case PIN_CONFIG_OUTPUT:
 			rockchip_gpio_set(&bank->gpio_chip,
 					  pin - bank->pin_base, arg);
 			rc = _rockchip_pmx_gpio_set_direction(&bank->gpio_chip,
 					  pin - bank->pin_base, false);
-			अगर (rc)
-				वापस rc;
-			अवरोध;
-		हाल PIN_CONFIG_DRIVE_STRENGTH:
+			if (rc)
+				return rc;
+			break;
+		case PIN_CONFIG_DRIVE_STRENGTH:
 			/* rk3288 is the first with per-pin drive-strength */
-			अगर (!info->ctrl->drv_calc_reg)
-				वापस -ENOTSUPP;
+			if (!info->ctrl->drv_calc_reg)
+				return -ENOTSUPP;
 
 			rc = rockchip_set_drive_perpin(bank,
 						pin - bank->pin_base, arg);
-			अगर (rc < 0)
-				वापस rc;
-			अवरोध;
-		हाल PIN_CONFIG_INPUT_SCHMITT_ENABLE:
-			अगर (!info->ctrl->schmitt_calc_reg)
-				वापस -ENOTSUPP;
+			if (rc < 0)
+				return rc;
+			break;
+		case PIN_CONFIG_INPUT_SCHMITT_ENABLE:
+			if (!info->ctrl->schmitt_calc_reg)
+				return -ENOTSUPP;
 
 			rc = rockchip_set_schmitt(bank,
 						  pin - bank->pin_base, arg);
-			अगर (rc < 0)
-				वापस rc;
-			अवरोध;
-		शेष:
-			वापस -ENOTSUPP;
-			अवरोध;
-		पूर्ण
-	पूर्ण /* क्रम each config */
+			if (rc < 0)
+				return rc;
+			break;
+		default:
+			return -ENOTSUPP;
+			break;
+		}
+	} /* for each config */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* get the pin config settings क्रम a specअगरied pin */
-अटल पूर्णांक rockchip_pinconf_get(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक pin,
-							अचिन्हित दीर्घ *config)
-अणु
-	काष्ठा rockchip_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
-	काष्ठा rockchip_pin_bank *bank = pin_to_bank(info, pin);
-	क्रमागत pin_config_param param = pinconf_to_config_param(*config);
+/* get the pin config settings for a specified pin */
+static int rockchip_pinconf_get(struct pinctrl_dev *pctldev, unsigned int pin,
+							unsigned long *config)
+{
+	struct rockchip_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+	struct rockchip_pin_bank *bank = pin_to_bank(info, pin);
+	enum pin_config_param param = pinconf_to_config_param(*config);
 	u16 arg;
-	पूर्णांक rc;
+	int rc;
 
-	चयन (param) अणु
-	हाल PIN_CONFIG_BIAS_DISABLE:
-		अगर (rockchip_get_pull(bank, pin - bank->pin_base) != param)
-			वापस -EINVAL;
+	switch (param) {
+	case PIN_CONFIG_BIAS_DISABLE:
+		if (rockchip_get_pull(bank, pin - bank->pin_base) != param)
+			return -EINVAL;
 
 		arg = 0;
-		अवरोध;
-	हाल PIN_CONFIG_BIAS_PULL_UP:
-	हाल PIN_CONFIG_BIAS_PULL_DOWN:
-	हाल PIN_CONFIG_BIAS_PULL_PIN_DEFAULT:
-	हाल PIN_CONFIG_BIAS_BUS_HOLD:
-		अगर (!rockchip_pinconf_pull_valid(info->ctrl, param))
-			वापस -ENOTSUPP;
+		break;
+	case PIN_CONFIG_BIAS_PULL_UP:
+	case PIN_CONFIG_BIAS_PULL_DOWN:
+	case PIN_CONFIG_BIAS_PULL_PIN_DEFAULT:
+	case PIN_CONFIG_BIAS_BUS_HOLD:
+		if (!rockchip_pinconf_pull_valid(info->ctrl, param))
+			return -ENOTSUPP;
 
-		अगर (rockchip_get_pull(bank, pin - bank->pin_base) != param)
-			वापस -EINVAL;
+		if (rockchip_get_pull(bank, pin - bank->pin_base) != param)
+			return -EINVAL;
 
 		arg = 1;
-		अवरोध;
-	हाल PIN_CONFIG_OUTPUT:
+		break;
+	case PIN_CONFIG_OUTPUT:
 		rc = rockchip_get_mux(bank, pin - bank->pin_base);
-		अगर (rc != RK_FUNC_GPIO)
-			वापस -EINVAL;
+		if (rc != RK_FUNC_GPIO)
+			return -EINVAL;
 
 		rc = rockchip_gpio_get(&bank->gpio_chip, pin - bank->pin_base);
-		अगर (rc < 0)
-			वापस rc;
+		if (rc < 0)
+			return rc;
 
 		arg = rc ? 1 : 0;
-		अवरोध;
-	हाल PIN_CONFIG_DRIVE_STRENGTH:
+		break;
+	case PIN_CONFIG_DRIVE_STRENGTH:
 		/* rk3288 is the first with per-pin drive-strength */
-		अगर (!info->ctrl->drv_calc_reg)
-			वापस -ENOTSUPP;
+		if (!info->ctrl->drv_calc_reg)
+			return -ENOTSUPP;
 
 		rc = rockchip_get_drive_perpin(bank, pin - bank->pin_base);
-		अगर (rc < 0)
-			वापस rc;
+		if (rc < 0)
+			return rc;
 
 		arg = rc;
-		अवरोध;
-	हाल PIN_CONFIG_INPUT_SCHMITT_ENABLE:
-		अगर (!info->ctrl->schmitt_calc_reg)
-			वापस -ENOTSUPP;
+		break;
+	case PIN_CONFIG_INPUT_SCHMITT_ENABLE:
+		if (!info->ctrl->schmitt_calc_reg)
+			return -ENOTSUPP;
 
 		rc = rockchip_get_schmitt(bank, pin - bank->pin_base);
-		अगर (rc < 0)
-			वापस rc;
+		if (rc < 0)
+			return rc;
 
 		arg = rc;
-		अवरोध;
-	शेष:
-		वापस -ENOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		return -ENOTSUPP;
+		break;
+	}
 
 	*config = pinconf_to_config_packed(param, arg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा pinconf_ops rockchip_pinconf_ops = अणु
+static const struct pinconf_ops rockchip_pinconf_ops = {
 	.pin_config_get			= rockchip_pinconf_get,
 	.pin_config_set			= rockchip_pinconf_set,
 	.is_generic			= true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id rockchip_bank_match[] = अणु
-	अणु .compatible = "rockchip,gpio-bank" पूर्ण,
-	अणु .compatible = "rockchip,rk3188-gpio-bank0" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id rockchip_bank_match[] = {
+	{ .compatible = "rockchip,gpio-bank" },
+	{ .compatible = "rockchip,rk3188-gpio-bank0" },
+	{},
+};
 
-अटल व्योम rockchip_pinctrl_child_count(काष्ठा rockchip_pinctrl *info,
-						काष्ठा device_node *np)
-अणु
-	काष्ठा device_node *child;
+static void rockchip_pinctrl_child_count(struct rockchip_pinctrl *info,
+						struct device_node *np)
+{
+	struct device_node *child;
 
-	क्रम_each_child_of_node(np, child) अणु
-		अगर (of_match_node(rockchip_bank_match, child))
-			जारी;
+	for_each_child_of_node(np, child) {
+		if (of_match_node(rockchip_bank_match, child))
+			continue;
 
 		info->nfunctions++;
 		info->ngroups += of_get_child_count(child);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक rockchip_pinctrl_parse_groups(काष्ठा device_node *np,
-					      काष्ठा rockchip_pin_group *grp,
-					      काष्ठा rockchip_pinctrl *info,
+static int rockchip_pinctrl_parse_groups(struct device_node *np,
+					      struct rockchip_pin_group *grp,
+					      struct rockchip_pinctrl *info,
 					      u32 index)
-अणु
-	काष्ठा rockchip_pin_bank *bank;
-	पूर्णांक size;
-	स्थिर __be32 *list;
-	पूर्णांक num;
-	पूर्णांक i, j;
-	पूर्णांक ret;
+{
+	struct rockchip_pin_bank *bank;
+	int size;
+	const __be32 *list;
+	int num;
+	int i, j;
+	int ret;
 
 	dev_dbg(info->dev, "group(%d): %pOFn\n", index, np);
 
@@ -2597,63 +2596,63 @@ config:
 	grp->name = np->name;
 
 	/*
-	 * the binding क्रमmat is rockchip,pins = <bank pin mux CONFIG>,
-	 * करो sanity check and calculate pins number
+	 * the binding format is rockchip,pins = <bank pin mux CONFIG>,
+	 * do sanity check and calculate pins number
 	 */
 	list = of_get_property(np, "rockchip,pins", &size);
-	/* we करो not check वापस since it's safe node passed करोwn */
-	size /= माप(*list);
-	अगर (!size || size % 4) अणु
+	/* we do not check return since it's safe node passed down */
+	size /= sizeof(*list);
+	if (!size || size % 4) {
 		dev_err(info->dev, "wrong pins number or pins and configs should be by 4\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	grp->npins = size / 4;
 
-	grp->pins = devm_kसुस्मृति(info->dev, grp->npins, माप(अचिन्हित पूर्णांक),
+	grp->pins = devm_kcalloc(info->dev, grp->npins, sizeof(unsigned int),
 						GFP_KERNEL);
-	grp->data = devm_kसुस्मृति(info->dev,
+	grp->data = devm_kcalloc(info->dev,
 					grp->npins,
-					माप(काष्ठा rockchip_pin_config),
+					sizeof(struct rockchip_pin_config),
 					GFP_KERNEL);
-	अगर (!grp->pins || !grp->data)
-		वापस -ENOMEM;
+	if (!grp->pins || !grp->data)
+		return -ENOMEM;
 
-	क्रम (i = 0, j = 0; i < size; i += 4, j++) अणु
-		स्थिर __be32 *phandle;
-		काष्ठा device_node *np_config;
+	for (i = 0, j = 0; i < size; i += 4, j++) {
+		const __be32 *phandle;
+		struct device_node *np_config;
 
 		num = be32_to_cpu(*list++);
 		bank = bank_num_to_bank(info, num);
-		अगर (IS_ERR(bank))
-			वापस PTR_ERR(bank);
+		if (IS_ERR(bank))
+			return PTR_ERR(bank);
 
 		grp->pins[j] = bank->pin_base + be32_to_cpu(*list++);
 		grp->data[j].func = be32_to_cpu(*list++);
 
 		phandle = list++;
-		अगर (!phandle)
-			वापस -EINVAL;
+		if (!phandle)
+			return -EINVAL;
 
 		np_config = of_find_node_by_phandle(be32_to_cpup(phandle));
-		ret = pinconf_generic_parse_dt_config(np_config, शून्य,
+		ret = pinconf_generic_parse_dt_config(np_config, NULL,
 				&grp->data[j].configs, &grp->data[j].nconfigs);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rockchip_pinctrl_parse_functions(काष्ठा device_node *np,
-						काष्ठा rockchip_pinctrl *info,
+static int rockchip_pinctrl_parse_functions(struct device_node *np,
+						struct rockchip_pinctrl *info,
 						u32 index)
-अणु
-	काष्ठा device_node *child;
-	काष्ठा rockchip_pmx_func *func;
-	काष्ठा rockchip_pin_group *grp;
-	पूर्णांक ret;
-	अटल u32 grp_index;
+{
+	struct device_node *child;
+	struct rockchip_pmx_func *func;
+	struct rockchip_pin_group *grp;
+	int ret;
+	static u32 grp_index;
 	u32 i = 0;
 
 	dev_dbg(info->dev, "parse function(%d): %pOFn\n", index, np);
@@ -2663,80 +2662,80 @@ config:
 	/* Initialise function */
 	func->name = np->name;
 	func->ngroups = of_get_child_count(np);
-	अगर (func->ngroups <= 0)
-		वापस 0;
+	if (func->ngroups <= 0)
+		return 0;
 
-	func->groups = devm_kसुस्मृति(info->dev,
-			func->ngroups, माप(अक्षर *), GFP_KERNEL);
-	अगर (!func->groups)
-		वापस -ENOMEM;
+	func->groups = devm_kcalloc(info->dev,
+			func->ngroups, sizeof(char *), GFP_KERNEL);
+	if (!func->groups)
+		return -ENOMEM;
 
-	क्रम_each_child_of_node(np, child) अणु
+	for_each_child_of_node(np, child) {
 		func->groups[i] = child->name;
 		grp = &info->groups[grp_index++];
 		ret = rockchip_pinctrl_parse_groups(child, grp, info, i++);
-		अगर (ret) अणु
+		if (ret) {
 			of_node_put(child);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rockchip_pinctrl_parse_dt(काष्ठा platक्रमm_device *pdev,
-					      काष्ठा rockchip_pinctrl *info)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा device_node *child;
-	पूर्णांक ret;
-	पूर्णांक i;
+static int rockchip_pinctrl_parse_dt(struct platform_device *pdev,
+					      struct rockchip_pinctrl *info)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *np = dev->of_node;
+	struct device_node *child;
+	int ret;
+	int i;
 
 	rockchip_pinctrl_child_count(info, np);
 
 	dev_dbg(&pdev->dev, "nfunctions = %d\n", info->nfunctions);
 	dev_dbg(&pdev->dev, "ngroups = %d\n", info->ngroups);
 
-	info->functions = devm_kसुस्मृति(dev,
+	info->functions = devm_kcalloc(dev,
 					      info->nfunctions,
-					      माप(काष्ठा rockchip_pmx_func),
+					      sizeof(struct rockchip_pmx_func),
 					      GFP_KERNEL);
-	अगर (!info->functions)
-		वापस -ENOMEM;
+	if (!info->functions)
+		return -ENOMEM;
 
-	info->groups = devm_kसुस्मृति(dev,
+	info->groups = devm_kcalloc(dev,
 					    info->ngroups,
-					    माप(काष्ठा rockchip_pin_group),
+					    sizeof(struct rockchip_pin_group),
 					    GFP_KERNEL);
-	अगर (!info->groups)
-		वापस -ENOMEM;
+	if (!info->groups)
+		return -ENOMEM;
 
 	i = 0;
 
-	क्रम_each_child_of_node(np, child) अणु
-		अगर (of_match_node(rockchip_bank_match, child))
-			जारी;
+	for_each_child_of_node(np, child) {
+		if (of_match_node(rockchip_bank_match, child))
+			continue;
 
 		ret = rockchip_pinctrl_parse_functions(child, info, i++);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&pdev->dev, "failed to parse function\n");
 			of_node_put(child);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rockchip_pinctrl_रेजिस्टर(काष्ठा platक्रमm_device *pdev,
-					काष्ठा rockchip_pinctrl *info)
-अणु
-	काष्ठा pinctrl_desc *ctrldesc = &info->pctl;
-	काष्ठा pinctrl_pin_desc *pindesc, *pdesc;
-	काष्ठा rockchip_pin_bank *pin_bank;
-	पूर्णांक pin, bank, ret;
-	पूर्णांक k;
+static int rockchip_pinctrl_register(struct platform_device *pdev,
+					struct rockchip_pinctrl *info)
+{
+	struct pinctrl_desc *ctrldesc = &info->pctl;
+	struct pinctrl_pin_desc *pindesc, *pdesc;
+	struct rockchip_pin_bank *pin_bank;
+	int pin, bank, ret;
+	int k;
 
 	ctrldesc->name = "rockchip-pinctrl";
 	ctrldesc->owner = THIS_MODULE;
@@ -2744,37 +2743,37 @@ config:
 	ctrldesc->pmxops = &rockchip_pmx_ops;
 	ctrldesc->confops = &rockchip_pinconf_ops;
 
-	pindesc = devm_kसुस्मृति(&pdev->dev,
-			       info->ctrl->nr_pins, माप(*pindesc),
+	pindesc = devm_kcalloc(&pdev->dev,
+			       info->ctrl->nr_pins, sizeof(*pindesc),
 			       GFP_KERNEL);
-	अगर (!pindesc)
-		वापस -ENOMEM;
+	if (!pindesc)
+		return -ENOMEM;
 
 	ctrldesc->pins = pindesc;
 	ctrldesc->npins = info->ctrl->nr_pins;
 
 	pdesc = pindesc;
-	क्रम (bank = 0 , k = 0; bank < info->ctrl->nr_banks; bank++) अणु
+	for (bank = 0 , k = 0; bank < info->ctrl->nr_banks; bank++) {
 		pin_bank = &info->ctrl->pin_banks[bank];
-		क्रम (pin = 0; pin < pin_bank->nr_pins; pin++, k++) अणु
+		for (pin = 0; pin < pin_bank->nr_pins; pin++, k++) {
 			pdesc->number = k;
-			pdesc->name = kaप्र_लिखो(GFP_KERNEL, "%s-%d",
+			pdesc->name = kasprintf(GFP_KERNEL, "%s-%d",
 						pin_bank->name, pin);
 			pdesc++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ret = rockchip_pinctrl_parse_dt(pdev, info);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	info->pctl_dev = devm_pinctrl_रेजिस्टर(&pdev->dev, ctrldesc, info);
-	अगर (IS_ERR(info->pctl_dev)) अणु
+	info->pctl_dev = devm_pinctrl_register(&pdev->dev, ctrldesc, info);
+	if (IS_ERR(info->pctl_dev)) {
 		dev_err(&pdev->dev, "could not register pinctrl driver\n");
-		वापस PTR_ERR(info->pctl_dev);
-	पूर्ण
+		return PTR_ERR(info->pctl_dev);
+	}
 
-	क्रम (bank = 0; bank < info->ctrl->nr_banks; ++bank) अणु
+	for (bank = 0; bank < info->ctrl->nr_banks; ++bank) {
 		pin_bank = &info->ctrl->pin_banks[bank];
 		pin_bank->grange.name = pin_bank->name;
 		pin_bank->grange.id = bank;
@@ -2783,148 +2782,148 @@ config:
 		pin_bank->grange.npins = pin_bank->gpio_chip.ngpio;
 		pin_bank->grange.gc = &pin_bank->gpio_chip;
 		pinctrl_add_gpio_range(info->pctl_dev, &pin_bank->grange);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * GPIO handling
  */
 
-अटल व्योम rockchip_gpio_set(काष्ठा gpio_chip *gc, अचिन्हित offset, पूर्णांक value)
-अणु
-	काष्ठा rockchip_pin_bank *bank = gpiochip_get_data(gc);
-	व्योम __iomem *reg = bank->reg_base + GPIO_SWPORT_DR;
-	अचिन्हित दीर्घ flags;
+static void rockchip_gpio_set(struct gpio_chip *gc, unsigned offset, int value)
+{
+	struct rockchip_pin_bank *bank = gpiochip_get_data(gc);
+	void __iomem *reg = bank->reg_base + GPIO_SWPORT_DR;
+	unsigned long flags;
 	u32 data;
 
 	clk_enable(bank->clk);
 	raw_spin_lock_irqsave(&bank->slock, flags);
 
-	data = पढ़ोl(reg);
+	data = readl(reg);
 	data &= ~BIT(offset);
-	अगर (value)
+	if (value)
 		data |= BIT(offset);
-	ग_लिखोl(data, reg);
+	writel(data, reg);
 
 	raw_spin_unlock_irqrestore(&bank->slock, flags);
 	clk_disable(bank->clk);
-पूर्ण
+}
 
 /*
- * Returns the level of the pin क्रम input direction and setting of the DR
- * रेजिस्टर क्रम output gpios.
+ * Returns the level of the pin for input direction and setting of the DR
+ * register for output gpios.
  */
-अटल पूर्णांक rockchip_gpio_get(काष्ठा gpio_chip *gc, अचिन्हित offset)
-अणु
-	काष्ठा rockchip_pin_bank *bank = gpiochip_get_data(gc);
+static int rockchip_gpio_get(struct gpio_chip *gc, unsigned offset)
+{
+	struct rockchip_pin_bank *bank = gpiochip_get_data(gc);
 	u32 data;
 
 	clk_enable(bank->clk);
-	data = पढ़ोl(bank->reg_base + GPIO_EXT_PORT);
+	data = readl(bank->reg_base + GPIO_EXT_PORT);
 	clk_disable(bank->clk);
 	data >>= offset;
 	data &= 1;
-	वापस data;
-पूर्ण
+	return data;
+}
 
 /*
  * gpiolib gpio_direction_input callback function. The setting of the pin
- * mux function as 'gpio input' will be handled by the pinctrl subप्रणाली
- * पूर्णांकerface.
+ * mux function as 'gpio input' will be handled by the pinctrl subsystem
+ * interface.
  */
-अटल पूर्णांक rockchip_gpio_direction_input(काष्ठा gpio_chip *gc, अचिन्हित offset)
-अणु
-	वापस pinctrl_gpio_direction_input(gc->base + offset);
-पूर्ण
+static int rockchip_gpio_direction_input(struct gpio_chip *gc, unsigned offset)
+{
+	return pinctrl_gpio_direction_input(gc->base + offset);
+}
 
 /*
  * gpiolib gpio_direction_output callback function. The setting of the pin
- * mux function as 'gpio output' will be handled by the pinctrl subप्रणाली
- * पूर्णांकerface.
+ * mux function as 'gpio output' will be handled by the pinctrl subsystem
+ * interface.
  */
-अटल पूर्णांक rockchip_gpio_direction_output(काष्ठा gpio_chip *gc,
-					  अचिन्हित offset, पूर्णांक value)
-अणु
+static int rockchip_gpio_direction_output(struct gpio_chip *gc,
+					  unsigned offset, int value)
+{
 	rockchip_gpio_set(gc, offset, value);
-	वापस pinctrl_gpio_direction_output(gc->base + offset);
-पूर्ण
+	return pinctrl_gpio_direction_output(gc->base + offset);
+}
 
-अटल व्योम rockchip_gpio_set_debounce(काष्ठा gpio_chip *gc,
-				       अचिन्हित पूर्णांक offset, bool enable)
-अणु
-	काष्ठा rockchip_pin_bank *bank = gpiochip_get_data(gc);
-	व्योम __iomem *reg = bank->reg_base + GPIO_DEBOUNCE;
-	अचिन्हित दीर्घ flags;
+static void rockchip_gpio_set_debounce(struct gpio_chip *gc,
+				       unsigned int offset, bool enable)
+{
+	struct rockchip_pin_bank *bank = gpiochip_get_data(gc);
+	void __iomem *reg = bank->reg_base + GPIO_DEBOUNCE;
+	unsigned long flags;
 	u32 data;
 
 	clk_enable(bank->clk);
 	raw_spin_lock_irqsave(&bank->slock, flags);
 
-	data = पढ़ोl(reg);
-	अगर (enable)
+	data = readl(reg);
+	if (enable)
 		data |= BIT(offset);
-	अन्यथा
+	else
 		data &= ~BIT(offset);
-	ग_लिखोl(data, reg);
+	writel(data, reg);
 
 	raw_spin_unlock_irqrestore(&bank->slock, flags);
 	clk_disable(bank->clk);
-पूर्ण
+}
 
 /*
  * gpiolib set_config callback function. The setting of the pin
- * mux function as 'gpio output' will be handled by the pinctrl subप्रणाली
- * पूर्णांकerface.
+ * mux function as 'gpio output' will be handled by the pinctrl subsystem
+ * interface.
  */
-अटल पूर्णांक rockchip_gpio_set_config(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक offset,
-				  अचिन्हित दीर्घ config)
-अणु
-	क्रमागत pin_config_param param = pinconf_to_config_param(config);
+static int rockchip_gpio_set_config(struct gpio_chip *gc, unsigned int offset,
+				  unsigned long config)
+{
+	enum pin_config_param param = pinconf_to_config_param(config);
 
-	चयन (param) अणु
-	हाल PIN_CONFIG_INPUT_DEBOUNCE:
+	switch (param) {
+	case PIN_CONFIG_INPUT_DEBOUNCE:
 		rockchip_gpio_set_debounce(gc, offset, true);
 		/*
 		 * Rockchip's gpio could only support up to one period
-		 * of the debounce घड़ी(pclk), which is far away from
+		 * of the debounce clock(pclk), which is far away from
 		 * satisftying the requirement, as pclk is usually near
 		 * 100MHz shared by all peripherals. So the fact is it
 		 * has crippled debounce capability could only be useful
-		 * to prevent any spurious glitches from waking up the प्रणाली
-		 * अगर the gpio is conguired as wakeup पूर्णांकerrupt source. Let's
-		 * still वापस -ENOTSUPP as beक्रमe, to make sure the caller
+		 * to prevent any spurious glitches from waking up the system
+		 * if the gpio is conguired as wakeup interrupt source. Let's
+		 * still return -ENOTSUPP as before, to make sure the caller
 		 * of gpiod_set_debounce won't change its behaviour.
 		 */
-		वापस -ENOTSUPP;
-	शेष:
-		वापस -ENOTSUPP;
-	पूर्ण
-पूर्ण
+		return -ENOTSUPP;
+	default:
+		return -ENOTSUPP;
+	}
+}
 
 /*
  * gpiolib gpio_to_irq callback function. Creates a mapping between a GPIO pin
- * and a भव IRQ, अगर not alपढ़ोy present.
+ * and a virtual IRQ, if not already present.
  */
-अटल पूर्णांक rockchip_gpio_to_irq(काष्ठा gpio_chip *gc, अचिन्हित offset)
-अणु
-	काष्ठा rockchip_pin_bank *bank = gpiochip_get_data(gc);
-	अचिन्हित पूर्णांक virq;
+static int rockchip_gpio_to_irq(struct gpio_chip *gc, unsigned offset)
+{
+	struct rockchip_pin_bank *bank = gpiochip_get_data(gc);
+	unsigned int virq;
 
-	अगर (!bank->करोमुख्य)
-		वापस -ENXIO;
+	if (!bank->domain)
+		return -ENXIO;
 
 	clk_enable(bank->clk);
-	virq = irq_create_mapping(bank->करोमुख्य, offset);
+	virq = irq_create_mapping(bank->domain, offset);
 	clk_disable(bank->clk);
 
-	वापस (virq) ? : -ENXIO;
-पूर्ण
+	return (virq) ? : -ENXIO;
+}
 
-अटल स्थिर काष्ठा gpio_chip rockchip_gpiolib_chip = अणु
+static const struct gpio_chip rockchip_gpiolib_chip = {
 	.request = gpiochip_generic_request,
-	.मुक्त = gpiochip_generic_मुक्त,
+	.free = gpiochip_generic_free,
 	.set = rockchip_gpio_set,
 	.get = rockchip_gpio_get,
 	.get_direction	= rockchip_gpio_get_direction,
@@ -2933,247 +2932,247 @@ config:
 	.set_config = rockchip_gpio_set_config,
 	.to_irq = rockchip_gpio_to_irq,
 	.owner = THIS_MODULE,
-पूर्ण;
+};
 
 /*
  * Interrupt handling
  */
 
-अटल व्योम rockchip_irq_demux(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
-	काष्ठा rockchip_pin_bank *bank = irq_desc_get_handler_data(desc);
+static void rockchip_irq_demux(struct irq_desc *desc)
+{
+	struct irq_chip *chip = irq_desc_get_chip(desc);
+	struct rockchip_pin_bank *bank = irq_desc_get_handler_data(desc);
 	u32 pend;
 
 	dev_dbg(bank->drvdata->dev, "got irq for bank %s\n", bank->name);
 
 	chained_irq_enter(chip, desc);
 
-	pend = पढ़ोl_relaxed(bank->reg_base + GPIO_INT_STATUS);
+	pend = readl_relaxed(bank->reg_base + GPIO_INT_STATUS);
 
-	जबतक (pend) अणु
-		अचिन्हित पूर्णांक irq, virq;
+	while (pend) {
+		unsigned int irq, virq;
 
 		irq = __ffs(pend);
 		pend &= ~BIT(irq);
-		virq = irq_find_mapping(bank->करोमुख्य, irq);
+		virq = irq_find_mapping(bank->domain, irq);
 
-		अगर (!virq) अणु
+		if (!virq) {
 			dev_err(bank->drvdata->dev, "unmapped irq %d\n", irq);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		dev_dbg(bank->drvdata->dev, "handling irq %d\n", irq);
 
 		/*
 		 * Triggering IRQ on both rising and falling edge
-		 * needs manual पूर्णांकervention.
+		 * needs manual intervention.
 		 */
-		अगर (bank->toggle_edge_mode & BIT(irq)) अणु
+		if (bank->toggle_edge_mode & BIT(irq)) {
 			u32 data, data_old, polarity;
-			अचिन्हित दीर्घ flags;
+			unsigned long flags;
 
-			data = पढ़ोl_relaxed(bank->reg_base + GPIO_EXT_PORT);
-			करो अणु
+			data = readl_relaxed(bank->reg_base + GPIO_EXT_PORT);
+			do {
 				raw_spin_lock_irqsave(&bank->slock, flags);
 
-				polarity = पढ़ोl_relaxed(bank->reg_base +
+				polarity = readl_relaxed(bank->reg_base +
 							 GPIO_INT_POLARITY);
-				अगर (data & BIT(irq))
+				if (data & BIT(irq))
 					polarity &= ~BIT(irq);
-				अन्यथा
+				else
 					polarity |= BIT(irq);
-				ग_लिखोl(polarity,
+				writel(polarity,
 				       bank->reg_base + GPIO_INT_POLARITY);
 
 				raw_spin_unlock_irqrestore(&bank->slock, flags);
 
 				data_old = data;
-				data = पढ़ोl_relaxed(bank->reg_base +
+				data = readl_relaxed(bank->reg_base +
 						     GPIO_EXT_PORT);
-			पूर्ण जबतक ((data & BIT(irq)) != (data_old & BIT(irq)));
-		पूर्ण
+			} while ((data & BIT(irq)) != (data_old & BIT(irq)));
+		}
 
 		generic_handle_irq(virq);
-	पूर्ण
+	}
 
-	chained_irq_निकास(chip, desc);
-पूर्ण
+	chained_irq_exit(chip, desc);
+}
 
-अटल पूर्णांक rockchip_irq_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
-अणु
-	काष्ठा irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
-	काष्ठा rockchip_pin_bank *bank = gc->निजी;
+static int rockchip_irq_set_type(struct irq_data *d, unsigned int type)
+{
+	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
+	struct rockchip_pin_bank *bank = gc->private;
 	u32 mask = BIT(d->hwirq);
 	u32 polarity;
 	u32 level;
 	u32 data;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+	unsigned long flags;
+	int ret;
 
 	/* make sure the pin is configured as gpio input */
 	ret = rockchip_set_mux(bank, d->hwirq, RK_FUNC_GPIO);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	clk_enable(bank->clk);
 	raw_spin_lock_irqsave(&bank->slock, flags);
 
-	data = पढ़ोl_relaxed(bank->reg_base + GPIO_SWPORT_DDR);
+	data = readl_relaxed(bank->reg_base + GPIO_SWPORT_DDR);
 	data &= ~mask;
-	ग_लिखोl_relaxed(data, bank->reg_base + GPIO_SWPORT_DDR);
+	writel_relaxed(data, bank->reg_base + GPIO_SWPORT_DDR);
 
 	raw_spin_unlock_irqrestore(&bank->slock, flags);
 
-	अगर (type & IRQ_TYPE_EDGE_BOTH)
+	if (type & IRQ_TYPE_EDGE_BOTH)
 		irq_set_handler_locked(d, handle_edge_irq);
-	अन्यथा
+	else
 		irq_set_handler_locked(d, handle_level_irq);
 
 	raw_spin_lock_irqsave(&bank->slock, flags);
 	irq_gc_lock(gc);
 
-	level = पढ़ोl_relaxed(gc->reg_base + GPIO_INTTYPE_LEVEL);
-	polarity = पढ़ोl_relaxed(gc->reg_base + GPIO_INT_POLARITY);
+	level = readl_relaxed(gc->reg_base + GPIO_INTTYPE_LEVEL);
+	polarity = readl_relaxed(gc->reg_base + GPIO_INT_POLARITY);
 
-	चयन (type) अणु
-	हाल IRQ_TYPE_EDGE_BOTH:
+	switch (type) {
+	case IRQ_TYPE_EDGE_BOTH:
 		bank->toggle_edge_mode |= mask;
 		level |= mask;
 
 		/*
-		 * Determine gpio state. If 1 next पूर्णांकerrupt should be falling
+		 * Determine gpio state. If 1 next interrupt should be falling
 		 * otherwise rising.
 		 */
-		data = पढ़ोl(bank->reg_base + GPIO_EXT_PORT);
-		अगर (data & mask)
+		data = readl(bank->reg_base + GPIO_EXT_PORT);
+		if (data & mask)
 			polarity &= ~mask;
-		अन्यथा
+		else
 			polarity |= mask;
-		अवरोध;
-	हाल IRQ_TYPE_EDGE_RISING:
+		break;
+	case IRQ_TYPE_EDGE_RISING:
 		bank->toggle_edge_mode &= ~mask;
 		level |= mask;
 		polarity |= mask;
-		अवरोध;
-	हाल IRQ_TYPE_EDGE_FALLING:
+		break;
+	case IRQ_TYPE_EDGE_FALLING:
 		bank->toggle_edge_mode &= ~mask;
 		level |= mask;
 		polarity &= ~mask;
-		अवरोध;
-	हाल IRQ_TYPE_LEVEL_HIGH:
+		break;
+	case IRQ_TYPE_LEVEL_HIGH:
 		bank->toggle_edge_mode &= ~mask;
 		level &= ~mask;
 		polarity |= mask;
-		अवरोध;
-	हाल IRQ_TYPE_LEVEL_LOW:
+		break;
+	case IRQ_TYPE_LEVEL_LOW:
 		bank->toggle_edge_mode &= ~mask;
 		level &= ~mask;
 		polarity &= ~mask;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		irq_gc_unlock(gc);
 		raw_spin_unlock_irqrestore(&bank->slock, flags);
 		clk_disable(bank->clk);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ग_लिखोl_relaxed(level, gc->reg_base + GPIO_INTTYPE_LEVEL);
-	ग_लिखोl_relaxed(polarity, gc->reg_base + GPIO_INT_POLARITY);
+	writel_relaxed(level, gc->reg_base + GPIO_INTTYPE_LEVEL);
+	writel_relaxed(polarity, gc->reg_base + GPIO_INT_POLARITY);
 
 	irq_gc_unlock(gc);
 	raw_spin_unlock_irqrestore(&bank->slock, flags);
 	clk_disable(bank->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम rockchip_irq_suspend(काष्ठा irq_data *d)
-अणु
-	काष्ठा irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
-	काष्ठा rockchip_pin_bank *bank = gc->निजी;
-
-	clk_enable(bank->clk);
-	bank->saved_masks = irq_reg_पढ़ोl(gc, GPIO_INTMASK);
-	irq_reg_ग_लिखोl(gc, ~gc->wake_active, GPIO_INTMASK);
-	clk_disable(bank->clk);
-पूर्ण
-
-अटल व्योम rockchip_irq_resume(काष्ठा irq_data *d)
-अणु
-	काष्ठा irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
-	काष्ठा rockchip_pin_bank *bank = gc->निजी;
+static void rockchip_irq_suspend(struct irq_data *d)
+{
+	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
+	struct rockchip_pin_bank *bank = gc->private;
 
 	clk_enable(bank->clk);
-	irq_reg_ग_लिखोl(gc, bank->saved_masks, GPIO_INTMASK);
+	bank->saved_masks = irq_reg_readl(gc, GPIO_INTMASK);
+	irq_reg_writel(gc, ~gc->wake_active, GPIO_INTMASK);
 	clk_disable(bank->clk);
-पूर्ण
+}
 
-अटल व्योम rockchip_irq_enable(काष्ठा irq_data *d)
-अणु
-	काष्ठा irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
-	काष्ठा rockchip_pin_bank *bank = gc->निजी;
+static void rockchip_irq_resume(struct irq_data *d)
+{
+	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
+	struct rockchip_pin_bank *bank = gc->private;
+
+	clk_enable(bank->clk);
+	irq_reg_writel(gc, bank->saved_masks, GPIO_INTMASK);
+	clk_disable(bank->clk);
+}
+
+static void rockchip_irq_enable(struct irq_data *d)
+{
+	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
+	struct rockchip_pin_bank *bank = gc->private;
 
 	clk_enable(bank->clk);
 	irq_gc_mask_clr_bit(d);
-पूर्ण
+}
 
-अटल व्योम rockchip_irq_disable(काष्ठा irq_data *d)
-अणु
-	काष्ठा irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
-	काष्ठा rockchip_pin_bank *bank = gc->निजी;
+static void rockchip_irq_disable(struct irq_data *d)
+{
+	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
+	struct rockchip_pin_bank *bank = gc->private;
 
 	irq_gc_mask_set_bit(d);
 	clk_disable(bank->clk);
-पूर्ण
+}
 
-अटल पूर्णांक rockchip_पूर्णांकerrupts_रेजिस्टर(काष्ठा platक्रमm_device *pdev,
-						काष्ठा rockchip_pinctrl *info)
-अणु
-	काष्ठा rockchip_pin_ctrl *ctrl = info->ctrl;
-	काष्ठा rockchip_pin_bank *bank = ctrl->pin_banks;
-	अचिन्हित पूर्णांक clr = IRQ_NOREQUEST | IRQ_NOPROBE | IRQ_NOAUTOEN;
-	काष्ठा irq_chip_generic *gc;
-	पूर्णांक ret;
-	पूर्णांक i;
+static int rockchip_interrupts_register(struct platform_device *pdev,
+						struct rockchip_pinctrl *info)
+{
+	struct rockchip_pin_ctrl *ctrl = info->ctrl;
+	struct rockchip_pin_bank *bank = ctrl->pin_banks;
+	unsigned int clr = IRQ_NOREQUEST | IRQ_NOPROBE | IRQ_NOAUTOEN;
+	struct irq_chip_generic *gc;
+	int ret;
+	int i;
 
-	क्रम (i = 0; i < ctrl->nr_banks; ++i, ++bank) अणु
-		अगर (!bank->valid) अणु
+	for (i = 0; i < ctrl->nr_banks; ++i, ++bank) {
+		if (!bank->valid) {
 			dev_warn(&pdev->dev, "bank %s is not valid\n",
 				 bank->name);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		ret = clk_enable(bank->clk);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&pdev->dev, "failed to enable clock for bank %s\n",
 				bank->name);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		bank->करोमुख्य = irq_करोमुख्य_add_linear(bank->of_node, 32,
-						&irq_generic_chip_ops, शून्य);
-		अगर (!bank->करोमुख्य) अणु
+		bank->domain = irq_domain_add_linear(bank->of_node, 32,
+						&irq_generic_chip_ops, NULL);
+		if (!bank->domain) {
 			dev_warn(&pdev->dev, "could not initialize irq domain for bank %s\n",
 				 bank->name);
 			clk_disable(bank->clk);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		ret = irq_alloc_करोमुख्य_generic_chips(bank->करोमुख्य, 32, 1,
+		ret = irq_alloc_domain_generic_chips(bank->domain, 32, 1,
 					 "rockchip_gpio_irq", handle_level_irq,
 					 clr, 0, 0);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&pdev->dev, "could not alloc generic chips for bank %s\n",
 				bank->name);
-			irq_करोमुख्य_हटाओ(bank->करोमुख्य);
+			irq_domain_remove(bank->domain);
 			clk_disable(bank->clk);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		gc = irq_get_करोमुख्य_generic_chip(bank->करोमुख्य, 0);
+		gc = irq_get_domain_generic_chip(bank->domain, 0);
 		gc->reg_base = bank->reg_base;
-		gc->निजी = bank;
+		gc->private = bank;
 		gc->chip_types[0].regs.mask = GPIO_INTMASK;
 		gc->chip_types[0].regs.ack = GPIO_PORTS_EOI;
 		gc->chip_types[0].chip.irq_ack = irq_gc_ack_set_bit;
@@ -3188,38 +3187,38 @@ config:
 		gc->wake_enabled = IRQ_MSK(bank->nr_pins);
 
 		/*
-		 * Linux assumes that all पूर्णांकerrupts start out disabled/masked.
+		 * Linux assumes that all interrupts start out disabled/masked.
 		 * Our driver only uses the concept of masked and always keeps
-		 * things enabled, so क्रम us that's all masked and all enabled.
+		 * things enabled, so for us that's all masked and all enabled.
 		 */
-		ग_लिखोl_relaxed(0xffffffff, bank->reg_base + GPIO_INTMASK);
-		ग_लिखोl_relaxed(0xffffffff, bank->reg_base + GPIO_PORTS_EOI);
-		ग_लिखोl_relaxed(0xffffffff, bank->reg_base + GPIO_INTEN);
+		writel_relaxed(0xffffffff, bank->reg_base + GPIO_INTMASK);
+		writel_relaxed(0xffffffff, bank->reg_base + GPIO_PORTS_EOI);
+		writel_relaxed(0xffffffff, bank->reg_base + GPIO_INTEN);
 		gc->mask_cache = 0xffffffff;
 
 		irq_set_chained_handler_and_data(bank->irq,
 						 rockchip_irq_demux, bank);
 		clk_disable(bank->clk);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rockchip_gpiolib_रेजिस्टर(काष्ठा platक्रमm_device *pdev,
-						काष्ठा rockchip_pinctrl *info)
-अणु
-	काष्ठा rockchip_pin_ctrl *ctrl = info->ctrl;
-	काष्ठा rockchip_pin_bank *bank = ctrl->pin_banks;
-	काष्ठा gpio_chip *gc;
-	पूर्णांक ret;
-	पूर्णांक i;
+static int rockchip_gpiolib_register(struct platform_device *pdev,
+						struct rockchip_pinctrl *info)
+{
+	struct rockchip_pin_ctrl *ctrl = info->ctrl;
+	struct rockchip_pin_bank *bank = ctrl->pin_banks;
+	struct gpio_chip *gc;
+	int ret;
+	int i;
 
-	क्रम (i = 0; i < ctrl->nr_banks; ++i, ++bank) अणु
-		अगर (!bank->valid) अणु
+	for (i = 0; i < ctrl->nr_banks; ++i, ++bank) {
+		if (!bank->valid) {
 			dev_warn(&pdev->dev, "bank %s is not valid\n",
 				 bank->name);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		bank->gpio_chip = rockchip_gpiolib_chip;
 
@@ -3231,137 +3230,137 @@ config:
 		gc->label = bank->name;
 
 		ret = gpiochip_add_data(gc, bank);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&pdev->dev, "failed to register gpio_chip %s, error code: %d\n",
 							gc->label, ret);
-			जाओ fail;
-		पूर्ण
-	पूर्ण
+			goto fail;
+		}
+	}
 
-	rockchip_पूर्णांकerrupts_रेजिस्टर(pdev, info);
+	rockchip_interrupts_register(pdev, info);
 
-	वापस 0;
+	return 0;
 
 fail:
-	क्रम (--i, --bank; i >= 0; --i, --bank) अणु
-		अगर (!bank->valid)
-			जारी;
-		gpiochip_हटाओ(&bank->gpio_chip);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	for (--i, --bank; i >= 0; --i, --bank) {
+		if (!bank->valid)
+			continue;
+		gpiochip_remove(&bank->gpio_chip);
+	}
+	return ret;
+}
 
-अटल पूर्णांक rockchip_gpiolib_unरेजिस्टर(काष्ठा platक्रमm_device *pdev,
-						काष्ठा rockchip_pinctrl *info)
-अणु
-	काष्ठा rockchip_pin_ctrl *ctrl = info->ctrl;
-	काष्ठा rockchip_pin_bank *bank = ctrl->pin_banks;
-	पूर्णांक i;
+static int rockchip_gpiolib_unregister(struct platform_device *pdev,
+						struct rockchip_pinctrl *info)
+{
+	struct rockchip_pin_ctrl *ctrl = info->ctrl;
+	struct rockchip_pin_bank *bank = ctrl->pin_banks;
+	int i;
 
-	क्रम (i = 0; i < ctrl->nr_banks; ++i, ++bank) अणु
-		अगर (!bank->valid)
-			जारी;
-		gpiochip_हटाओ(&bank->gpio_chip);
-	पूर्ण
+	for (i = 0; i < ctrl->nr_banks; ++i, ++bank) {
+		if (!bank->valid)
+			continue;
+		gpiochip_remove(&bank->gpio_chip);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rockchip_get_bank_data(काष्ठा rockchip_pin_bank *bank,
-				  काष्ठा rockchip_pinctrl *info)
-अणु
-	काष्ठा resource res;
-	व्योम __iomem *base;
+static int rockchip_get_bank_data(struct rockchip_pin_bank *bank,
+				  struct rockchip_pinctrl *info)
+{
+	struct resource res;
+	void __iomem *base;
 
-	अगर (of_address_to_resource(bank->of_node, 0, &res)) अणु
+	if (of_address_to_resource(bank->of_node, 0, &res)) {
 		dev_err(info->dev, "cannot find IO resource for bank\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	bank->reg_base = devm_ioremap_resource(info->dev, &res);
-	अगर (IS_ERR(bank->reg_base))
-		वापस PTR_ERR(bank->reg_base);
+	if (IS_ERR(bank->reg_base))
+		return PTR_ERR(bank->reg_base);
 
 	/*
-	 * special हाल, where parts of the pull setting-रेजिस्टरs are
-	 * part of the PMU रेजिस्टर space
+	 * special case, where parts of the pull setting-registers are
+	 * part of the PMU register space
 	 */
-	अगर (of_device_is_compatible(bank->of_node,
-				    "rockchip,rk3188-gpio-bank0")) अणु
-		काष्ठा device_node *node;
+	if (of_device_is_compatible(bank->of_node,
+				    "rockchip,rk3188-gpio-bank0")) {
+		struct device_node *node;
 
 		node = of_parse_phandle(bank->of_node->parent,
 					"rockchip,pmu", 0);
-		अगर (!node) अणु
-			अगर (of_address_to_resource(bank->of_node, 1, &res)) अणु
+		if (!node) {
+			if (of_address_to_resource(bank->of_node, 1, &res)) {
 				dev_err(info->dev, "cannot find IO resource for bank\n");
-				वापस -ENOENT;
-			पूर्ण
+				return -ENOENT;
+			}
 
 			base = devm_ioremap_resource(info->dev, &res);
-			अगर (IS_ERR(base))
-				वापस PTR_ERR(base);
-			rockchip_regmap_config.max_रेजिस्टर =
+			if (IS_ERR(base))
+				return PTR_ERR(base);
+			rockchip_regmap_config.max_register =
 						    resource_size(&res) - 4;
 			rockchip_regmap_config.name =
 					    "rockchip,rk3188-gpio-bank0-pull";
 			bank->regmap_pull = devm_regmap_init_mmio(info->dev,
 						    base,
 						    &rockchip_regmap_config);
-		पूर्ण
+		}
 		of_node_put(node);
-	पूर्ण
+	}
 
 	bank->irq = irq_of_parse_and_map(bank->of_node, 0);
 
 	bank->clk = of_clk_get(bank->of_node, 0);
-	अगर (IS_ERR(bank->clk))
-		वापस PTR_ERR(bank->clk);
+	if (IS_ERR(bank->clk))
+		return PTR_ERR(bank->clk);
 
-	वापस clk_prepare(bank->clk);
-पूर्ण
+	return clk_prepare(bank->clk);
+}
 
-अटल स्थिर काष्ठा of_device_id rockchip_pinctrl_dt_match[];
+static const struct of_device_id rockchip_pinctrl_dt_match[];
 
-/* retrieve the soc specअगरic data */
-अटल काष्ठा rockchip_pin_ctrl *rockchip_pinctrl_get_soc_data(
-						काष्ठा rockchip_pinctrl *d,
-						काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा of_device_id *match;
-	काष्ठा device_node *node = pdev->dev.of_node;
-	काष्ठा device_node *np;
-	काष्ठा rockchip_pin_ctrl *ctrl;
-	काष्ठा rockchip_pin_bank *bank;
-	पूर्णांक grf_offs, pmu_offs, drv_grf_offs, drv_pmu_offs, i, j;
+/* retrieve the soc specific data */
+static struct rockchip_pin_ctrl *rockchip_pinctrl_get_soc_data(
+						struct rockchip_pinctrl *d,
+						struct platform_device *pdev)
+{
+	const struct of_device_id *match;
+	struct device_node *node = pdev->dev.of_node;
+	struct device_node *np;
+	struct rockchip_pin_ctrl *ctrl;
+	struct rockchip_pin_bank *bank;
+	int grf_offs, pmu_offs, drv_grf_offs, drv_pmu_offs, i, j;
 
 	match = of_match_node(rockchip_pinctrl_dt_match, node);
-	ctrl = (काष्ठा rockchip_pin_ctrl *)match->data;
+	ctrl = (struct rockchip_pin_ctrl *)match->data;
 
-	क्रम_each_child_of_node(node, np) अणु
-		अगर (!of_find_property(np, "gpio-controller", शून्य))
-			जारी;
+	for_each_child_of_node(node, np) {
+		if (!of_find_property(np, "gpio-controller", NULL))
+			continue;
 
 		bank = ctrl->pin_banks;
-		क्रम (i = 0; i < ctrl->nr_banks; ++i, ++bank) अणु
-			अगर (!म_भेद(bank->name, np->name)) अणु
+		for (i = 0; i < ctrl->nr_banks; ++i, ++bank) {
+			if (!strcmp(bank->name, np->name)) {
 				bank->of_node = np;
 
-				अगर (!rockchip_get_bank_data(bank, d))
+				if (!rockchip_get_bank_data(bank, d))
 					bank->valid = true;
 
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
 	grf_offs = ctrl->grf_mux_offset;
 	pmu_offs = ctrl->pmu_mux_offset;
 	drv_pmu_offs = ctrl->pmu_drv_offset;
 	drv_grf_offs = ctrl->grf_drv_offset;
 	bank = ctrl->pin_banks;
-	क्रम (i = 0; i < ctrl->nr_banks; ++i, ++bank) अणु
-		पूर्णांक bank_pins = 0;
+	for (i = 0; i < ctrl->nr_banks; ++i, ++bank) {
+		int bank_pins = 0;
 
 		raw_spin_lock_init(&bank->slock);
 		bank->drvdata = d;
@@ -3369,228 +3368,228 @@ fail:
 		ctrl->nr_pins += bank->nr_pins;
 
 		/* calculate iomux and drv offsets */
-		क्रम (j = 0; j < 4; j++) अणु
-			काष्ठा rockchip_iomux *iom = &bank->iomux[j];
-			काष्ठा rockchip_drv *drv = &bank->drv[j];
-			पूर्णांक inc;
+		for (j = 0; j < 4; j++) {
+			struct rockchip_iomux *iom = &bank->iomux[j];
+			struct rockchip_drv *drv = &bank->drv[j];
+			int inc;
 
-			अगर (bank_pins >= bank->nr_pins)
-				अवरोध;
+			if (bank_pins >= bank->nr_pins)
+				break;
 
 			/* preset iomux offset value, set new start value */
-			अगर (iom->offset >= 0) अणु
-				अगर (iom->type & IOMUX_SOURCE_PMU)
+			if (iom->offset >= 0) {
+				if (iom->type & IOMUX_SOURCE_PMU)
 					pmu_offs = iom->offset;
-				अन्यथा
+				else
 					grf_offs = iom->offset;
-			पूर्ण अन्यथा अणु /* set current iomux offset */
+			} else { /* set current iomux offset */
 				iom->offset = (iom->type & IOMUX_SOURCE_PMU) ?
 							pmu_offs : grf_offs;
-			पूर्ण
+			}
 
 			/* preset drv offset value, set new start value */
-			अगर (drv->offset >= 0) अणु
-				अगर (iom->type & IOMUX_SOURCE_PMU)
+			if (drv->offset >= 0) {
+				if (iom->type & IOMUX_SOURCE_PMU)
 					drv_pmu_offs = drv->offset;
-				अन्यथा
+				else
 					drv_grf_offs = drv->offset;
-			पूर्ण अन्यथा अणु /* set current drv offset */
+			} else { /* set current drv offset */
 				drv->offset = (iom->type & IOMUX_SOURCE_PMU) ?
 						drv_pmu_offs : drv_grf_offs;
-			पूर्ण
+			}
 
 			dev_dbg(d->dev, "bank %d, iomux %d has iom_offset 0x%x drv_offset 0x%x\n",
 				i, j, iom->offset, drv->offset);
 
 			/*
 			 * Increase offset according to iomux width.
-			 * 4bit iomux'es are spपढ़ो over two रेजिस्टरs.
+			 * 4bit iomux'es are spread over two registers.
 			 */
 			inc = (iom->type & (IOMUX_WIDTH_4BIT |
 					    IOMUX_WIDTH_3BIT |
 					    IOMUX_WIDTH_2BIT)) ? 8 : 4;
-			अगर (iom->type & IOMUX_SOURCE_PMU)
+			if (iom->type & IOMUX_SOURCE_PMU)
 				pmu_offs += inc;
-			अन्यथा
+			else
 				grf_offs += inc;
 
 			/*
 			 * Increase offset according to drv width.
-			 * 3bit drive-strenth'es are spपढ़ो over two रेजिस्टरs.
+			 * 3bit drive-strenth'es are spread over two registers.
 			 */
-			अगर ((drv->drv_type == DRV_TYPE_IO_1V8_3V0_AUTO) ||
+			if ((drv->drv_type == DRV_TYPE_IO_1V8_3V0_AUTO) ||
 			    (drv->drv_type == DRV_TYPE_IO_3V3_ONLY))
 				inc = 8;
-			अन्यथा
+			else
 				inc = 4;
 
-			अगर (iom->type & IOMUX_SOURCE_PMU)
+			if (iom->type & IOMUX_SOURCE_PMU)
 				drv_pmu_offs += inc;
-			अन्यथा
+			else
 				drv_grf_offs += inc;
 
 			bank_pins += 8;
-		पूर्ण
+		}
 
 		/* calculate the per-bank recalced_mask */
-		क्रम (j = 0; j < ctrl->niomux_recalced; j++) अणु
-			पूर्णांक pin = 0;
+		for (j = 0; j < ctrl->niomux_recalced; j++) {
+			int pin = 0;
 
-			अगर (ctrl->iomux_recalced[j].num == bank->bank_num) अणु
+			if (ctrl->iomux_recalced[j].num == bank->bank_num) {
 				pin = ctrl->iomux_recalced[j].pin;
 				bank->recalced_mask |= BIT(pin);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/* calculate the per-bank route_mask */
-		क्रम (j = 0; j < ctrl->niomux_routes; j++) अणु
-			पूर्णांक pin = 0;
+		for (j = 0; j < ctrl->niomux_routes; j++) {
+			int pin = 0;
 
-			अगर (ctrl->iomux_routes[j].bank_num == bank->bank_num) अणु
+			if (ctrl->iomux_routes[j].bank_num == bank->bank_num) {
 				pin = ctrl->iomux_routes[j].pin;
 				bank->route_mask |= BIT(pin);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	वापस ctrl;
-पूर्ण
+	return ctrl;
+}
 
-#घोषणा RK3288_GRF_GPIO6C_IOMUX		0x64
-#घोषणा GPIO6C6_SEL_WRITE_ENABLE	BIT(28)
+#define RK3288_GRF_GPIO6C_IOMUX		0x64
+#define GPIO6C6_SEL_WRITE_ENABLE	BIT(28)
 
-अटल u32 rk3288_grf_gpio6c_iomux;
+static u32 rk3288_grf_gpio6c_iomux;
 
-अटल पूर्णांक __maybe_unused rockchip_pinctrl_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा rockchip_pinctrl *info = dev_get_drvdata(dev);
-	पूर्णांक ret = pinctrl_क्रमce_sleep(info->pctl_dev);
+static int __maybe_unused rockchip_pinctrl_suspend(struct device *dev)
+{
+	struct rockchip_pinctrl *info = dev_get_drvdata(dev);
+	int ret = pinctrl_force_sleep(info->pctl_dev);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
-	 * RK3288 GPIO6_C6 mux would be modअगरied by Maskrom when resume, so save
+	 * RK3288 GPIO6_C6 mux would be modified by Maskrom when resume, so save
 	 * the setting here, and restore it at resume.
 	 */
-	अगर (info->ctrl->type == RK3288) अणु
-		ret = regmap_पढ़ो(info->regmap_base, RK3288_GRF_GPIO6C_IOMUX,
+	if (info->ctrl->type == RK3288) {
+		ret = regmap_read(info->regmap_base, RK3288_GRF_GPIO6C_IOMUX,
 				  &rk3288_grf_gpio6c_iomux);
-		अगर (ret) अणु
-			pinctrl_क्रमce_शेष(info->pctl_dev);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+		if (ret) {
+			pinctrl_force_default(info->pctl_dev);
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused rockchip_pinctrl_resume(काष्ठा device *dev)
-अणु
-	काष्ठा rockchip_pinctrl *info = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int __maybe_unused rockchip_pinctrl_resume(struct device *dev)
+{
+	struct rockchip_pinctrl *info = dev_get_drvdata(dev);
+	int ret;
 
-	अगर (info->ctrl->type == RK3288) अणु
-		ret = regmap_ग_लिखो(info->regmap_base, RK3288_GRF_GPIO6C_IOMUX,
+	if (info->ctrl->type == RK3288) {
+		ret = regmap_write(info->regmap_base, RK3288_GRF_GPIO6C_IOMUX,
 				   rk3288_grf_gpio6c_iomux |
 				   GPIO6C6_SEL_WRITE_ENABLE);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस pinctrl_क्रमce_शेष(info->pctl_dev);
-पूर्ण
+	return pinctrl_force_default(info->pctl_dev);
+}
 
-अटल SIMPLE_DEV_PM_OPS(rockchip_pinctrl_dev_pm_ops, rockchip_pinctrl_suspend,
+static SIMPLE_DEV_PM_OPS(rockchip_pinctrl_dev_pm_ops, rockchip_pinctrl_suspend,
 			 rockchip_pinctrl_resume);
 
-अटल पूर्णांक rockchip_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा rockchip_pinctrl *info;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा rockchip_pin_ctrl *ctrl;
-	काष्ठा device_node *np = pdev->dev.of_node, *node;
-	काष्ठा resource *res;
-	व्योम __iomem *base;
-	पूर्णांक ret;
+static int rockchip_pinctrl_probe(struct platform_device *pdev)
+{
+	struct rockchip_pinctrl *info;
+	struct device *dev = &pdev->dev;
+	struct rockchip_pin_ctrl *ctrl;
+	struct device_node *np = pdev->dev.of_node, *node;
+	struct resource *res;
+	void __iomem *base;
+	int ret;
 
-	अगर (!dev->of_node) अणु
+	if (!dev->of_node) {
 		dev_err(dev, "device tree node not found\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	info = devm_kzalloc(dev, माप(*info), GFP_KERNEL);
-	अगर (!info)
-		वापस -ENOMEM;
+	info = devm_kzalloc(dev, sizeof(*info), GFP_KERNEL);
+	if (!info)
+		return -ENOMEM;
 
 	info->dev = dev;
 
 	ctrl = rockchip_pinctrl_get_soc_data(info, pdev);
-	अगर (!ctrl) अणु
+	if (!ctrl) {
 		dev_err(dev, "driver data not available\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	info->ctrl = ctrl;
 
 	node = of_parse_phandle(np, "rockchip,grf", 0);
-	अगर (node) अणु
+	if (node) {
 		info->regmap_base = syscon_node_to_regmap(node);
-		अगर (IS_ERR(info->regmap_base))
-			वापस PTR_ERR(info->regmap_base);
-	पूर्ण अन्यथा अणु
-		res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+		if (IS_ERR(info->regmap_base))
+			return PTR_ERR(info->regmap_base);
+	} else {
+		res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 		base = devm_ioremap_resource(&pdev->dev, res);
-		अगर (IS_ERR(base))
-			वापस PTR_ERR(base);
+		if (IS_ERR(base))
+			return PTR_ERR(base);
 
-		rockchip_regmap_config.max_रेजिस्टर = resource_size(res) - 4;
+		rockchip_regmap_config.max_register = resource_size(res) - 4;
 		rockchip_regmap_config.name = "rockchip,pinctrl";
 		info->regmap_base = devm_regmap_init_mmio(&pdev->dev, base,
 						    &rockchip_regmap_config);
 
-		/* to check क्रम the old dt-bindings */
+		/* to check for the old dt-bindings */
 		info->reg_size = resource_size(res);
 
-		/* Honor the old binding, with pull रेजिस्टरs as 2nd resource */
-		अगर (ctrl->type == RK3188 && info->reg_size < 0x200) अणु
-			res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
+		/* Honor the old binding, with pull registers as 2nd resource */
+		if (ctrl->type == RK3188 && info->reg_size < 0x200) {
+			res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
 			base = devm_ioremap_resource(&pdev->dev, res);
-			अगर (IS_ERR(base))
-				वापस PTR_ERR(base);
+			if (IS_ERR(base))
+				return PTR_ERR(base);
 
-			rockchip_regmap_config.max_रेजिस्टर =
+			rockchip_regmap_config.max_register =
 							resource_size(res) - 4;
 			rockchip_regmap_config.name = "rockchip,pinctrl-pull";
 			info->regmap_pull = devm_regmap_init_mmio(&pdev->dev,
 						    base,
 						    &rockchip_regmap_config);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* try to find the optional reference to the pmu syscon */
 	node = of_parse_phandle(np, "rockchip,pmu", 0);
-	अगर (node) अणु
+	if (node) {
 		info->regmap_pmu = syscon_node_to_regmap(node);
-		अगर (IS_ERR(info->regmap_pmu))
-			वापस PTR_ERR(info->regmap_pmu);
-	पूर्ण
+		if (IS_ERR(info->regmap_pmu))
+			return PTR_ERR(info->regmap_pmu);
+	}
 
-	ret = rockchip_gpiolib_रेजिस्टर(pdev, info);
-	अगर (ret)
-		वापस ret;
+	ret = rockchip_gpiolib_register(pdev, info);
+	if (ret)
+		return ret;
 
-	ret = rockchip_pinctrl_रेजिस्टर(pdev, info);
-	अगर (ret) अणु
-		rockchip_gpiolib_unरेजिस्टर(pdev, info);
-		वापस ret;
-	पूर्ण
+	ret = rockchip_pinctrl_register(pdev, info);
+	if (ret) {
+		rockchip_gpiolib_unregister(pdev, info);
+		return ret;
+	}
 
-	platक्रमm_set_drvdata(pdev, info);
+	platform_set_drvdata(pdev, info);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा rockchip_pin_bank px30_pin_banks[] = अणु
+static struct rockchip_pin_bank px30_pin_banks[] = {
 	PIN_BANK_IOMUX_FLAGS(0, 32, "gpio0", IOMUX_SOURCE_PMU,
 					     IOMUX_SOURCE_PMU,
 					     IOMUX_SOURCE_PMU,
@@ -3611,9 +3610,9 @@ fail:
 					     IOMUX_WIDTH_4BIT,
 					     IOMUX_WIDTH_4BIT
 			    ),
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_ctrl px30_pin_ctrl = अणु
+static struct rockchip_pin_ctrl px30_pin_ctrl = {
 		.pin_banks		= px30_pin_banks,
 		.nr_banks		= ARRAY_SIZE(px30_pin_banks),
 		.label			= "PX30-GPIO",
@@ -3625,9 +3624,9 @@ fail:
 		.pull_calc_reg		= px30_calc_pull_reg_and_bit,
 		.drv_calc_reg		= px30_calc_drv_reg_and_bit,
 		.schmitt_calc_reg	= px30_calc_schmitt_reg_and_bit,
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_bank rv1108_pin_banks[] = अणु
+static struct rockchip_pin_bank rv1108_pin_banks[] = {
 	PIN_BANK_IOMUX_FLAGS(0, 32, "gpio0", IOMUX_SOURCE_PMU,
 					     IOMUX_SOURCE_PMU,
 					     IOMUX_SOURCE_PMU,
@@ -3635,9 +3634,9 @@ fail:
 	PIN_BANK_IOMUX_FLAGS(1, 32, "gpio1", 0, 0, 0, 0),
 	PIN_BANK_IOMUX_FLAGS(2, 32, "gpio2", 0, 0, 0, 0),
 	PIN_BANK_IOMUX_FLAGS(3, 32, "gpio3", 0, 0, 0, 0),
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_ctrl rv1108_pin_ctrl = अणु
+static struct rockchip_pin_ctrl rv1108_pin_ctrl = {
 	.pin_banks		= rv1108_pin_banks,
 	.nr_banks		= ARRAY_SIZE(rv1108_pin_banks),
 	.label			= "RV1108-GPIO",
@@ -3649,80 +3648,80 @@ fail:
 	.pull_calc_reg		= rv1108_calc_pull_reg_and_bit,
 	.drv_calc_reg		= rv1108_calc_drv_reg_and_bit,
 	.schmitt_calc_reg	= rv1108_calc_schmitt_reg_and_bit,
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_bank rk2928_pin_banks[] = अणु
+static struct rockchip_pin_bank rk2928_pin_banks[] = {
 	PIN_BANK(0, 32, "gpio0"),
 	PIN_BANK(1, 32, "gpio1"),
 	PIN_BANK(2, 32, "gpio2"),
 	PIN_BANK(3, 32, "gpio3"),
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_ctrl rk2928_pin_ctrl = अणु
+static struct rockchip_pin_ctrl rk2928_pin_ctrl = {
 		.pin_banks		= rk2928_pin_banks,
 		.nr_banks		= ARRAY_SIZE(rk2928_pin_banks),
 		.label			= "RK2928-GPIO",
 		.type			= RK2928,
 		.grf_mux_offset		= 0xa8,
 		.pull_calc_reg		= rk2928_calc_pull_reg_and_bit,
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_bank rk3036_pin_banks[] = अणु
+static struct rockchip_pin_bank rk3036_pin_banks[] = {
 	PIN_BANK(0, 32, "gpio0"),
 	PIN_BANK(1, 32, "gpio1"),
 	PIN_BANK(2, 32, "gpio2"),
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_ctrl rk3036_pin_ctrl = अणु
+static struct rockchip_pin_ctrl rk3036_pin_ctrl = {
 		.pin_banks		= rk3036_pin_banks,
 		.nr_banks		= ARRAY_SIZE(rk3036_pin_banks),
 		.label			= "RK3036-GPIO",
 		.type			= RK2928,
 		.grf_mux_offset		= 0xa8,
 		.pull_calc_reg		= rk2928_calc_pull_reg_and_bit,
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_bank rk3066a_pin_banks[] = अणु
+static struct rockchip_pin_bank rk3066a_pin_banks[] = {
 	PIN_BANK(0, 32, "gpio0"),
 	PIN_BANK(1, 32, "gpio1"),
 	PIN_BANK(2, 32, "gpio2"),
 	PIN_BANK(3, 32, "gpio3"),
 	PIN_BANK(4, 32, "gpio4"),
 	PIN_BANK(6, 16, "gpio6"),
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_ctrl rk3066a_pin_ctrl = अणु
+static struct rockchip_pin_ctrl rk3066a_pin_ctrl = {
 		.pin_banks		= rk3066a_pin_banks,
 		.nr_banks		= ARRAY_SIZE(rk3066a_pin_banks),
 		.label			= "RK3066a-GPIO",
 		.type			= RK2928,
 		.grf_mux_offset		= 0xa8,
 		.pull_calc_reg		= rk2928_calc_pull_reg_and_bit,
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_bank rk3066b_pin_banks[] = अणु
+static struct rockchip_pin_bank rk3066b_pin_banks[] = {
 	PIN_BANK(0, 32, "gpio0"),
 	PIN_BANK(1, 32, "gpio1"),
 	PIN_BANK(2, 32, "gpio2"),
 	PIN_BANK(3, 32, "gpio3"),
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_ctrl rk3066b_pin_ctrl = अणु
+static struct rockchip_pin_ctrl rk3066b_pin_ctrl = {
 		.pin_banks	= rk3066b_pin_banks,
 		.nr_banks	= ARRAY_SIZE(rk3066b_pin_banks),
 		.label		= "RK3066b-GPIO",
 		.type		= RK3066B,
 		.grf_mux_offset	= 0x60,
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_bank rk3128_pin_banks[] = अणु
+static struct rockchip_pin_bank rk3128_pin_banks[] = {
 	PIN_BANK(0, 32, "gpio0"),
 	PIN_BANK(1, 32, "gpio1"),
 	PIN_BANK(2, 32, "gpio2"),
 	PIN_BANK(3, 32, "gpio3"),
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_ctrl rk3128_pin_ctrl = अणु
+static struct rockchip_pin_ctrl rk3128_pin_ctrl = {
 		.pin_banks		= rk3128_pin_banks,
 		.nr_banks		= ARRAY_SIZE(rk3128_pin_banks),
 		.label			= "RK3128-GPIO",
@@ -3733,16 +3732,16 @@ fail:
 		.iomux_routes		= rk3128_mux_route_data,
 		.niomux_routes		= ARRAY_SIZE(rk3128_mux_route_data),
 		.pull_calc_reg		= rk3128_calc_pull_reg_and_bit,
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_bank rk3188_pin_banks[] = अणु
+static struct rockchip_pin_bank rk3188_pin_banks[] = {
 	PIN_BANK_IOMUX_FLAGS(0, 32, "gpio0", IOMUX_GPIO_ONLY, 0, 0, 0),
 	PIN_BANK(1, 32, "gpio1"),
 	PIN_BANK(2, 32, "gpio2"),
 	PIN_BANK(3, 32, "gpio3"),
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_ctrl rk3188_pin_ctrl = अणु
+static struct rockchip_pin_ctrl rk3188_pin_ctrl = {
 		.pin_banks		= rk3188_pin_banks,
 		.nr_banks		= ARRAY_SIZE(rk3188_pin_banks),
 		.label			= "RK3188-GPIO",
@@ -3751,16 +3750,16 @@ fail:
 		.iomux_routes		= rk3188_mux_route_data,
 		.niomux_routes		= ARRAY_SIZE(rk3188_mux_route_data),
 		.pull_calc_reg		= rk3188_calc_pull_reg_and_bit,
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_bank rk3228_pin_banks[] = अणु
+static struct rockchip_pin_bank rk3228_pin_banks[] = {
 	PIN_BANK(0, 32, "gpio0"),
 	PIN_BANK(1, 32, "gpio1"),
 	PIN_BANK(2, 32, "gpio2"),
 	PIN_BANK(3, 32, "gpio3"),
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_ctrl rk3228_pin_ctrl = अणु
+static struct rockchip_pin_ctrl rk3228_pin_ctrl = {
 		.pin_banks		= rk3228_pin_banks,
 		.nr_banks		= ARRAY_SIZE(rk3228_pin_banks),
 		.label			= "RK3228-GPIO",
@@ -3770,9 +3769,9 @@ fail:
 		.niomux_routes		= ARRAY_SIZE(rk3228_mux_route_data),
 		.pull_calc_reg		= rk3228_calc_pull_reg_and_bit,
 		.drv_calc_reg		= rk3228_calc_drv_reg_and_bit,
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_bank rk3288_pin_banks[] = अणु
+static struct rockchip_pin_bank rk3288_pin_banks[] = {
 	PIN_BANK_IOMUX_FLAGS(0, 24, "gpio0", IOMUX_SOURCE_PMU,
 					     IOMUX_SOURCE_PMU,
 					     IOMUX_SOURCE_PMU,
@@ -3802,9 +3801,9 @@ fail:
 					     IOMUX_UNROUTED
 			    ),
 	PIN_BANK(8, 16, "gpio8"),
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_ctrl rk3288_pin_ctrl = अणु
+static struct rockchip_pin_ctrl rk3288_pin_ctrl = {
 		.pin_banks		= rk3288_pin_banks,
 		.nr_banks		= ARRAY_SIZE(rk3288_pin_banks),
 		.label			= "RK3288-GPIO",
@@ -3815,9 +3814,9 @@ fail:
 		.niomux_routes		= ARRAY_SIZE(rk3288_mux_route_data),
 		.pull_calc_reg		= rk3288_calc_pull_reg_and_bit,
 		.drv_calc_reg		= rk3288_calc_drv_reg_and_bit,
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_bank rk3308_pin_banks[] = अणु
+static struct rockchip_pin_bank rk3308_pin_banks[] = {
 	PIN_BANK_IOMUX_FLAGS(0, 32, "gpio0", IOMUX_WIDTH_2BIT,
 					     IOMUX_WIDTH_2BIT,
 					     IOMUX_WIDTH_2BIT,
@@ -3838,9 +3837,9 @@ fail:
 					     IOMUX_WIDTH_2BIT,
 					     IOMUX_WIDTH_2BIT,
 					     IOMUX_WIDTH_2BIT),
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_ctrl rk3308_pin_ctrl = अणु
+static struct rockchip_pin_ctrl rk3308_pin_ctrl = {
 		.pin_banks		= rk3308_pin_banks,
 		.nr_banks		= ARRAY_SIZE(rk3308_pin_banks),
 		.label			= "RK3308-GPIO",
@@ -3853,9 +3852,9 @@ fail:
 		.pull_calc_reg		= rk3308_calc_pull_reg_and_bit,
 		.drv_calc_reg		= rk3308_calc_drv_reg_and_bit,
 		.schmitt_calc_reg	= rk3308_calc_schmitt_reg_and_bit,
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_bank rk3328_pin_banks[] = अणु
+static struct rockchip_pin_bank rk3328_pin_banks[] = {
 	PIN_BANK_IOMUX_FLAGS(0, 32, "gpio0", 0, 0, 0, 0),
 	PIN_BANK_IOMUX_FLAGS(1, 32, "gpio1", 0, 0, 0, 0),
 	PIN_BANK_IOMUX_FLAGS(2, 32, "gpio2", 0,
@@ -3867,9 +3866,9 @@ fail:
 			     IOMUX_WIDTH_3BIT,
 			     0,
 			     0),
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_ctrl rk3328_pin_ctrl = अणु
+static struct rockchip_pin_ctrl rk3328_pin_ctrl = {
 		.pin_banks		= rk3328_pin_banks,
 		.nr_banks		= ARRAY_SIZE(rk3328_pin_banks),
 		.label			= "RK3328-GPIO",
@@ -3882,9 +3881,9 @@ fail:
 		.pull_calc_reg		= rk3228_calc_pull_reg_and_bit,
 		.drv_calc_reg		= rk3228_calc_drv_reg_and_bit,
 		.schmitt_calc_reg	= rk3328_calc_schmitt_reg_and_bit,
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_bank rk3368_pin_banks[] = अणु
+static struct rockchip_pin_bank rk3368_pin_banks[] = {
 	PIN_BANK_IOMUX_FLAGS(0, 32, "gpio0", IOMUX_SOURCE_PMU,
 					     IOMUX_SOURCE_PMU,
 					     IOMUX_SOURCE_PMU,
@@ -3893,9 +3892,9 @@ fail:
 	PIN_BANK(1, 32, "gpio1"),
 	PIN_BANK(2, 32, "gpio2"),
 	PIN_BANK(3, 32, "gpio3"),
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_ctrl rk3368_pin_ctrl = अणु
+static struct rockchip_pin_ctrl rk3368_pin_ctrl = {
 		.pin_banks		= rk3368_pin_banks,
 		.nr_banks		= ARRAY_SIZE(rk3368_pin_banks),
 		.label			= "RK3368-GPIO",
@@ -3904,9 +3903,9 @@ fail:
 		.pmu_mux_offset		= 0x0,
 		.pull_calc_reg		= rk3368_calc_pull_reg_and_bit,
 		.drv_calc_reg		= rk3368_calc_drv_reg_and_bit,
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_bank rk3399_pin_banks[] = अणु
+static struct rockchip_pin_bank rk3399_pin_banks[] = {
 	PIN_BANK_IOMUX_FLAGS_DRV_FLAGS_OFFSET_PULL_FLAGS(0, 32, "gpio0",
 							 IOMUX_SOURCE_PMU,
 							 IOMUX_SOURCE_PMU,
@@ -3957,9 +3956,9 @@ fail:
 			   DRV_TYPE_IO_1V8_OR_3V0,
 			   DRV_TYPE_IO_1V8_OR_3V0
 			   ),
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_ctrl rk3399_pin_ctrl = अणु
+static struct rockchip_pin_ctrl rk3399_pin_ctrl = {
 		.pin_banks		= rk3399_pin_banks,
 		.nr_banks		= ARRAY_SIZE(rk3399_pin_banks),
 		.label			= "RK3399-GPIO",
@@ -3972,9 +3971,9 @@ fail:
 		.niomux_routes		= ARRAY_SIZE(rk3399_mux_route_data),
 		.pull_calc_reg		= rk3399_calc_pull_reg_and_bit,
 		.drv_calc_reg		= rk3399_calc_drv_reg_and_bit,
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_bank rk3568_pin_banks[] = अणु
+static struct rockchip_pin_bank rk3568_pin_banks[] = {
 	PIN_BANK_IOMUX_FLAGS(0, 32, "gpio0", IOMUX_SOURCE_PMU | IOMUX_WIDTH_4BIT,
 					     IOMUX_SOURCE_PMU | IOMUX_WIDTH_4BIT,
 					     IOMUX_SOURCE_PMU | IOMUX_WIDTH_4BIT,
@@ -3995,9 +3994,9 @@ fail:
 					     IOMUX_WIDTH_4BIT,
 					     IOMUX_WIDTH_4BIT,
 					     IOMUX_WIDTH_4BIT),
-पूर्ण;
+};
 
-अटल काष्ठा rockchip_pin_ctrl rk3568_pin_ctrl = अणु
+static struct rockchip_pin_ctrl rk3568_pin_ctrl = {
 	.pin_banks		= rk3568_pin_banks,
 	.nr_banks		= ARRAY_SIZE(rk3568_pin_banks),
 	.label			= "RK3568-GPIO",
@@ -4011,62 +4010,62 @@ fail:
 	.pull_calc_reg		= rk3568_calc_pull_reg_and_bit,
 	.drv_calc_reg		= rk3568_calc_drv_reg_and_bit,
 	.schmitt_calc_reg	= rk3568_calc_schmitt_reg_and_bit,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id rockchip_pinctrl_dt_match[] = अणु
-	अणु .compatible = "rockchip,px30-pinctrl",
-		.data = &px30_pin_ctrl पूर्ण,
-	अणु .compatible = "rockchip,rv1108-pinctrl",
-		.data = &rv1108_pin_ctrl पूर्ण,
-	अणु .compatible = "rockchip,rk2928-pinctrl",
-		.data = &rk2928_pin_ctrl पूर्ण,
-	अणु .compatible = "rockchip,rk3036-pinctrl",
-		.data = &rk3036_pin_ctrl पूर्ण,
-	अणु .compatible = "rockchip,rk3066a-pinctrl",
-		.data = &rk3066a_pin_ctrl पूर्ण,
-	अणु .compatible = "rockchip,rk3066b-pinctrl",
-		.data = &rk3066b_pin_ctrl पूर्ण,
-	अणु .compatible = "rockchip,rk3128-pinctrl",
-		.data = (व्योम *)&rk3128_pin_ctrl पूर्ण,
-	अणु .compatible = "rockchip,rk3188-pinctrl",
-		.data = &rk3188_pin_ctrl पूर्ण,
-	अणु .compatible = "rockchip,rk3228-pinctrl",
-		.data = &rk3228_pin_ctrl पूर्ण,
-	अणु .compatible = "rockchip,rk3288-pinctrl",
-		.data = &rk3288_pin_ctrl पूर्ण,
-	अणु .compatible = "rockchip,rk3308-pinctrl",
-		.data = &rk3308_pin_ctrl पूर्ण,
-	अणु .compatible = "rockchip,rk3328-pinctrl",
-		.data = &rk3328_pin_ctrl पूर्ण,
-	अणु .compatible = "rockchip,rk3368-pinctrl",
-		.data = &rk3368_pin_ctrl पूर्ण,
-	अणु .compatible = "rockchip,rk3399-pinctrl",
-		.data = &rk3399_pin_ctrl पूर्ण,
-	अणु .compatible = "rockchip,rk3568-pinctrl",
-		.data = &rk3568_pin_ctrl पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id rockchip_pinctrl_dt_match[] = {
+	{ .compatible = "rockchip,px30-pinctrl",
+		.data = &px30_pin_ctrl },
+	{ .compatible = "rockchip,rv1108-pinctrl",
+		.data = &rv1108_pin_ctrl },
+	{ .compatible = "rockchip,rk2928-pinctrl",
+		.data = &rk2928_pin_ctrl },
+	{ .compatible = "rockchip,rk3036-pinctrl",
+		.data = &rk3036_pin_ctrl },
+	{ .compatible = "rockchip,rk3066a-pinctrl",
+		.data = &rk3066a_pin_ctrl },
+	{ .compatible = "rockchip,rk3066b-pinctrl",
+		.data = &rk3066b_pin_ctrl },
+	{ .compatible = "rockchip,rk3128-pinctrl",
+		.data = (void *)&rk3128_pin_ctrl },
+	{ .compatible = "rockchip,rk3188-pinctrl",
+		.data = &rk3188_pin_ctrl },
+	{ .compatible = "rockchip,rk3228-pinctrl",
+		.data = &rk3228_pin_ctrl },
+	{ .compatible = "rockchip,rk3288-pinctrl",
+		.data = &rk3288_pin_ctrl },
+	{ .compatible = "rockchip,rk3308-pinctrl",
+		.data = &rk3308_pin_ctrl },
+	{ .compatible = "rockchip,rk3328-pinctrl",
+		.data = &rk3328_pin_ctrl },
+	{ .compatible = "rockchip,rk3368-pinctrl",
+		.data = &rk3368_pin_ctrl },
+	{ .compatible = "rockchip,rk3399-pinctrl",
+		.data = &rk3399_pin_ctrl },
+	{ .compatible = "rockchip,rk3568-pinctrl",
+		.data = &rk3568_pin_ctrl },
+	{},
+};
 
-अटल काष्ठा platक्रमm_driver rockchip_pinctrl_driver = अणु
+static struct platform_driver rockchip_pinctrl_driver = {
 	.probe		= rockchip_pinctrl_probe,
-	.driver = अणु
+	.driver = {
 		.name	= "rockchip-pinctrl",
 		.pm = &rockchip_pinctrl_dev_pm_ops,
 		.of_match_table = rockchip_pinctrl_dt_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init rockchip_pinctrl_drv_रेजिस्टर(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&rockchip_pinctrl_driver);
-पूर्ण
-postcore_initcall(rockchip_pinctrl_drv_रेजिस्टर);
+static int __init rockchip_pinctrl_drv_register(void)
+{
+	return platform_driver_register(&rockchip_pinctrl_driver);
+}
+postcore_initcall(rockchip_pinctrl_drv_register);
 
-अटल व्योम __निकास rockchip_pinctrl_drv_unरेजिस्टर(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&rockchip_pinctrl_driver);
-पूर्ण
-module_निकास(rockchip_pinctrl_drv_unरेजिस्टर);
+static void __exit rockchip_pinctrl_drv_unregister(void)
+{
+	platform_driver_unregister(&rockchip_pinctrl_driver);
+}
+module_exit(rockchip_pinctrl_drv_unregister);
 
 MODULE_DESCRIPTION("ROCKCHIP Pin Controller Driver");
 MODULE_LICENSE("GPL");

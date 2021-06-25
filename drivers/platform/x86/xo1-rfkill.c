@@ -1,79 +1,78 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Support क्रम rfसमाप्त through the OLPC XO-1 laptop embedded controller
+ * Support for rfkill through the OLPC XO-1 laptop embedded controller
  *
  * Copyright (C) 2010 One Laptop per Child
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/rfसमाप्त.h>
-#समावेश <linux/olpc-ec.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/rfkill.h>
+#include <linux/olpc-ec.h>
 
-अटल bool card_blocked;
+static bool card_blocked;
 
-अटल पूर्णांक rfसमाप्त_set_block(व्योम *data, bool blocked)
-अणु
-	अचिन्हित अक्षर cmd;
-	पूर्णांक r;
+static int rfkill_set_block(void *data, bool blocked)
+{
+	unsigned char cmd;
+	int r;
 
-	अगर (blocked == card_blocked)
-		वापस 0;
+	if (blocked == card_blocked)
+		return 0;
 
-	अगर (blocked)
+	if (blocked)
 		cmd = EC_WLAN_ENTER_RESET;
-	अन्यथा
+	else
 		cmd = EC_WLAN_LEAVE_RESET;
 
-	r = olpc_ec_cmd(cmd, शून्य, 0, शून्य, 0);
-	अगर (r == 0)
+	r = olpc_ec_cmd(cmd, NULL, 0, NULL, 0);
+	if (r == 0)
 		card_blocked = blocked;
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल स्थिर काष्ठा rfसमाप्त_ops rfसमाप्त_ops = अणु
-	.set_block = rfसमाप्त_set_block,
-पूर्ण;
+static const struct rfkill_ops rfkill_ops = {
+	.set_block = rfkill_set_block,
+};
 
-अटल पूर्णांक xo1_rfसमाप्त_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा rfसमाप्त *rfk;
-	पूर्णांक r;
+static int xo1_rfkill_probe(struct platform_device *pdev)
+{
+	struct rfkill *rfk;
+	int r;
 
-	rfk = rfसमाप्त_alloc(pdev->name, &pdev->dev, RFKILL_TYPE_WLAN,
-			   &rfसमाप्त_ops, शून्य);
-	अगर (!rfk)
-		वापस -ENOMEM;
+	rfk = rfkill_alloc(pdev->name, &pdev->dev, RFKILL_TYPE_WLAN,
+			   &rfkill_ops, NULL);
+	if (!rfk)
+		return -ENOMEM;
 
-	r = rfसमाप्त_रेजिस्टर(rfk);
-	अगर (r) अणु
-		rfसमाप्त_destroy(rfk);
-		वापस r;
-	पूर्ण
+	r = rfkill_register(rfk);
+	if (r) {
+		rfkill_destroy(rfk);
+		return r;
+	}
 
-	platक्रमm_set_drvdata(pdev, rfk);
-	वापस 0;
-पूर्ण
+	platform_set_drvdata(pdev, rfk);
+	return 0;
+}
 
-अटल पूर्णांक xo1_rfसमाप्त_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा rfसमाप्त *rfk = platक्रमm_get_drvdata(pdev);
-	rfसमाप्त_unरेजिस्टर(rfk);
-	rfसमाप्त_destroy(rfk);
-	वापस 0;
-पूर्ण
+static int xo1_rfkill_remove(struct platform_device *pdev)
+{
+	struct rfkill *rfk = platform_get_drvdata(pdev);
+	rfkill_unregister(rfk);
+	rfkill_destroy(rfk);
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver xo1_rfसमाप्त_driver = अणु
-	.driver = अणु
+static struct platform_driver xo1_rfkill_driver = {
+	.driver = {
 		.name = "xo1-rfkill",
-	पूर्ण,
-	.probe		= xo1_rfसमाप्त_probe,
-	.हटाओ		= xo1_rfसमाप्त_हटाओ,
-पूर्ण;
+	},
+	.probe		= xo1_rfkill_probe,
+	.remove		= xo1_rfkill_remove,
+};
 
-module_platक्रमm_driver(xo1_rfसमाप्त_driver);
+module_platform_driver(xo1_rfkill_driver);
 
 MODULE_AUTHOR("Daniel Drake <dsd@laptop.org>");
 MODULE_LICENSE("GPL");

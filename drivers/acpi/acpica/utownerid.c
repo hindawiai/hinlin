@@ -1,33 +1,32 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /*******************************************************************************
  *
- * Module Name: utownerid - Support क्रम Table/Method Owner IDs
+ * Module Name: utownerid - Support for Table/Method Owner IDs
  *
  ******************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acnamesp.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acnamesp.h"
 
-#घोषणा _COMPONENT          ACPI_UTILITIES
+#define _COMPONENT          ACPI_UTILITIES
 ACPI_MODULE_NAME("utownerid")
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_allocate_owner_id
  *
- * PARAMETERS:  owner_id        - Where the new owner ID is वापसed
+ * PARAMETERS:  owner_id        - Where the new owner ID is returned
  *
  * RETURN:      Status
  *
  * DESCRIPTION: Allocate a table or method owner ID. The owner ID is used to
  *              track objects created by the table or method, to be deleted
- *              when the method निकासs or the table is unloaded.
+ *              when the method exits or the table is unloaded.
  *
  ******************************************************************************/
 acpi_status acpi_ut_allocate_owner_id(acpi_owner_id *owner_id)
-अणु
+{
 	u32 i;
 	u32 j;
 	u32 k;
@@ -37,47 +36,47 @@ acpi_status acpi_ut_allocate_owner_id(acpi_owner_id *owner_id)
 
 	/* Guard against multiple allocations of ID to the same location */
 
-	अगर (*owner_id) अणु
+	if (*owner_id) {
 		ACPI_ERROR((AE_INFO,
 			    "Owner ID [0x%3.3X] already exists", *owner_id));
-		वापस_ACPI_STATUS(AE_ALREADY_EXISTS);
-	पूर्ण
+		return_ACPI_STATUS(AE_ALREADY_EXISTS);
+	}
 
-	/* Mutex क्रम the global ID mask */
+	/* Mutex for the global ID mask */
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_CACHES);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	/*
-	 * Find a मुक्त owner ID, cycle through all possible IDs on repeated
+	 * Find a free owner ID, cycle through all possible IDs on repeated
 	 * allocations. (ACPI_NUM_OWNERID_MASKS + 1) because first index
 	 * may have to be scanned twice.
 	 */
-	क्रम (i = 0, j = acpi_gbl_last_owner_id_index;
-	     i < (ACPI_NUM_OWNERID_MASKS + 1); i++, j++) अणु
-		अगर (j >= ACPI_NUM_OWNERID_MASKS) अणु
+	for (i = 0, j = acpi_gbl_last_owner_id_index;
+	     i < (ACPI_NUM_OWNERID_MASKS + 1); i++, j++) {
+		if (j >= ACPI_NUM_OWNERID_MASKS) {
 			j = 0;	/* Wraparound to start of mask array */
-		पूर्ण
+		}
 
-		क्रम (k = acpi_gbl_next_owner_id_offset; k < 32; k++) अणु
-			अगर (acpi_gbl_owner_id_mask[j] == ACPI_UINT32_MAX) अणु
+		for (k = acpi_gbl_next_owner_id_offset; k < 32; k++) {
+			if (acpi_gbl_owner_id_mask[j] == ACPI_UINT32_MAX) {
 
-				/* There are no मुक्त IDs in this mask */
+				/* There are no free IDs in this mask */
 
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			/*
-			 * Note: the u32 cast ensures that 1 is stored as a अचिन्हित
-			 * पूर्णांकeger. Omitting the cast may result in 1 being stored as an
-			 * पूर्णांक. Some compilers or runसमय error detection may flag this as
+			 * Note: the u32 cast ensures that 1 is stored as a unsigned
+			 * integer. Omitting the cast may result in 1 being stored as an
+			 * int. Some compilers or runtime error detection may flag this as
 			 * an error.
 			 */
-			अगर (!(acpi_gbl_owner_id_mask[j] & ((u32)1 << k))) अणु
+			if (!(acpi_gbl_owner_id_mask[j] & ((u32)1 << k))) {
 				/*
-				 * Found a मुक्त ID. The actual ID is the bit index plus one,
+				 * Found a free ID. The actual ID is the bit index plus one,
 				 * making zero an invalid Owner ID. Save this as the last ID
 				 * allocated and update the global ID mask.
 				 */
@@ -87,7 +86,7 @@ acpi_status acpi_ut_allocate_owner_id(acpi_owner_id *owner_id)
 				acpi_gbl_next_owner_id_offset = (u8)(k + 1);
 
 				/*
-				 * Conकाष्ठा encoded ID from the index and bit position
+				 * Construct encoded ID from the index and bit position
 				 *
 				 * Note: Last [j].k (bit 4095) is never used and is marked
 				 * permanently allocated (prevents +1 overflow)
@@ -97,13 +96,13 @@ acpi_status acpi_ut_allocate_owner_id(acpi_owner_id *owner_id)
 
 				ACPI_DEBUG_PRINT((ACPI_DB_VALUES,
 						  "Allocated OwnerId: 0x%3.3X\n",
-						  (अचिन्हित पूर्णांक)*owner_id));
-				जाओ निकास;
-			पूर्ण
-		पूर्ण
+						  (unsigned int)*owner_id));
+				goto exit;
+			}
+		}
 
 		acpi_gbl_next_owner_id_offset = 0;
-	पूर्ण
+	}
 
 	/*
 	 * All owner_ids have been allocated. This typically should
@@ -119,18 +118,18 @@ acpi_status acpi_ut_allocate_owner_id(acpi_owner_id *owner_id)
 	ACPI_ERROR((AE_INFO,
 		    "Could not allocate new OwnerId (4095 max), AE_OWNER_ID_LIMIT"));
 
-निकास:
-	(व्योम)acpi_ut_release_mutex(ACPI_MTX_CACHES);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+exit:
+	(void)acpi_ut_release_mutex(ACPI_MTX_CACHES);
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_release_owner_id
  *
- * PARAMETERS:  owner_id_ptr        - Poपूर्णांकer to a previously allocated owner_ID
+ * PARAMETERS:  owner_id_ptr        - Pointer to a previously allocated owner_ID
  *
- * RETURN:      None. No error is वापसed because we are either निकासing a
+ * RETURN:      None. No error is returned because we are either exiting a
  *              control method or unloading a table. Either way, we would
  *              ignore any error anyway.
  *
@@ -138,8 +137,8 @@ acpi_status acpi_ut_allocate_owner_id(acpi_owner_id *owner_id)
  *
  ******************************************************************************/
 
-व्योम acpi_ut_release_owner_id(acpi_owner_id *owner_id_ptr)
-अणु
+void acpi_ut_release_owner_id(acpi_owner_id *owner_id_ptr)
+{
 	acpi_owner_id owner_id = *owner_id_ptr;
 	acpi_status status;
 	u32 index;
@@ -153,17 +152,17 @@ acpi_status acpi_ut_allocate_owner_id(acpi_owner_id *owner_id)
 
 	/* Zero is not a valid owner_ID */
 
-	अगर (owner_id == 0) अणु
+	if (owner_id == 0) {
 		ACPI_ERROR((AE_INFO, "Invalid OwnerId: 0x%3.3X", owner_id));
-		वापस_VOID;
-	पूर्ण
+		return_VOID;
+	}
 
-	/* Mutex क्रम the global ID mask */
+	/* Mutex for the global ID mask */
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_CACHES);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_VOID;
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_VOID;
+	}
 
 	/* Normalize the ID to zero */
 
@@ -174,16 +173,16 @@ acpi_status acpi_ut_allocate_owner_id(acpi_owner_id *owner_id)
 	index = ACPI_DIV_32(owner_id);
 	bit = (u32)1 << ACPI_MOD_32(owner_id);
 
-	/* Free the owner ID only अगर it is valid */
+	/* Free the owner ID only if it is valid */
 
-	अगर (acpi_gbl_owner_id_mask[index] & bit) अणु
+	if (acpi_gbl_owner_id_mask[index] & bit) {
 		acpi_gbl_owner_id_mask[index] ^= bit;
-	पूर्ण अन्यथा अणु
+	} else {
 		ACPI_ERROR((AE_INFO,
 			    "Attempted release of non-allocated OwnerId: 0x%3.3X",
 			    owner_id + 1));
-	पूर्ण
+	}
 
-	(व्योम)acpi_ut_release_mutex(ACPI_MTX_CACHES);
-	वापस_VOID;
-पूर्ण
+	(void)acpi_ut_release_mutex(ACPI_MTX_CACHES);
+	return_VOID;
+}

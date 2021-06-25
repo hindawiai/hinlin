@@ -1,282 +1,281 @@
-<शैली गुरु>
 /*
- * Architecture specअगरic parts of the Floppy driver
+ * Architecture specific parts of the Floppy driver
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 1995
  */
-#अगर_अघोषित _ASM_X86_FLOPPY_H
-#घोषणा _ASM_X86_FLOPPY_H
+#ifndef _ASM_X86_FLOPPY_H
+#define _ASM_X86_FLOPPY_H
 
-#समावेश <linux/vदो_स्मृति.h>
+#include <linux/vmalloc.h>
 
 /*
  * The DMA channel used by the floppy controller cannot access data at
  * addresses >= 16MB
  *
  * Went back to the 1MB limit, as some people had problems with the floppy
- * driver otherwise. It करोesn't matter much क्रम perक्रमmance anyway, as most
+ * driver otherwise. It doesn't matter much for performance anyway, as most
  * floppy accesses go through the track buffer.
  */
-#घोषणा _CROSS_64KB(a, s, vdma)						\
+#define _CROSS_64KB(a, s, vdma)						\
 	(!(vdma) &&							\
-	 ((अचिन्हित दीर्घ)(a)/K_64 != ((अचिन्हित दीर्घ)(a) + (s) - 1) / K_64))
+	 ((unsigned long)(a)/K_64 != ((unsigned long)(a) + (s) - 1) / K_64))
 
-#घोषणा CROSS_64KB(a, s) _CROSS_64KB(a, s, use_भव_dma & 1)
-
-
-#घोषणा SW fd_routine[use_भव_dma & 1]
-#घोषणा CSW fd_routine[can_use_भव_dma & 1]
+#define CROSS_64KB(a, s) _CROSS_64KB(a, s, use_virtual_dma & 1)
 
 
-#घोषणा fd_inb(base, reg)		inb_p((base) + (reg))
-#घोषणा fd_outb(value, base, reg)	outb_p(value, (base) + (reg))
+#define SW fd_routine[use_virtual_dma & 1]
+#define CSW fd_routine[can_use_virtual_dma & 1]
 
-#घोषणा fd_request_dma()	CSW._request_dma(FLOPPY_DMA, "floppy")
-#घोषणा fd_मुक्त_dma()		CSW._मुक्त_dma(FLOPPY_DMA)
-#घोषणा fd_enable_irq()		enable_irq(FLOPPY_IRQ)
-#घोषणा fd_disable_irq()	disable_irq(FLOPPY_IRQ)
-#घोषणा fd_मुक्त_irq()		मुक्त_irq(FLOPPY_IRQ, शून्य)
-#घोषणा fd_get_dma_residue()	SW._get_dma_residue(FLOPPY_DMA)
-#घोषणा fd_dma_mem_alloc(size)	SW._dma_mem_alloc(size)
-#घोषणा fd_dma_setup(addr, size, mode, io) SW._dma_setup(addr, size, mode, io)
 
-#घोषणा FLOPPY_CAN_FALLBACK_ON_NODMA
+#define fd_inb(base, reg)		inb_p((base) + (reg))
+#define fd_outb(value, base, reg)	outb_p(value, (base) + (reg))
 
-अटल पूर्णांक भव_dma_count;
-अटल पूर्णांक भव_dma_residue;
-अटल अक्षर *भव_dma_addr;
-अटल पूर्णांक भव_dma_mode;
-अटल पूर्णांक करोing_pdma;
+#define fd_request_dma()	CSW._request_dma(FLOPPY_DMA, "floppy")
+#define fd_free_dma()		CSW._free_dma(FLOPPY_DMA)
+#define fd_enable_irq()		enable_irq(FLOPPY_IRQ)
+#define fd_disable_irq()	disable_irq(FLOPPY_IRQ)
+#define fd_free_irq()		free_irq(FLOPPY_IRQ, NULL)
+#define fd_get_dma_residue()	SW._get_dma_residue(FLOPPY_DMA)
+#define fd_dma_mem_alloc(size)	SW._dma_mem_alloc(size)
+#define fd_dma_setup(addr, size, mode, io) SW._dma_setup(addr, size, mode, io)
 
-अटल irqवापस_t floppy_hardपूर्णांक(पूर्णांक irq, व्योम *dev_id)
-अणु
-	अचिन्हित अक्षर st;
+#define FLOPPY_CAN_FALLBACK_ON_NODMA
 
-#अघोषित TRACE_FLPY_INT
+static int virtual_dma_count;
+static int virtual_dma_residue;
+static char *virtual_dma_addr;
+static int virtual_dma_mode;
+static int doing_pdma;
 
-#अगर_घोषित TRACE_FLPY_INT
-	अटल पूर्णांक calls;
-	अटल पूर्णांक bytes;
-	अटल पूर्णांक dma_रुको;
-#पूर्ण_अगर
-	अगर (!करोing_pdma)
-		वापस floppy_पूर्णांकerrupt(irq, dev_id);
+static irqreturn_t floppy_hardint(int irq, void *dev_id)
+{
+	unsigned char st;
 
-#अगर_घोषित TRACE_FLPY_INT
-	अगर (!calls)
-		bytes = भव_dma_count;
-#पूर्ण_अगर
+#undef TRACE_FLPY_INT
 
-	अणु
-		पूर्णांक lcount;
-		अक्षर *lptr;
+#ifdef TRACE_FLPY_INT
+	static int calls;
+	static int bytes;
+	static int dma_wait;
+#endif
+	if (!doing_pdma)
+		return floppy_interrupt(irq, dev_id);
 
-		क्रम (lcount = भव_dma_count, lptr = भव_dma_addr;
-		     lcount; lcount--, lptr++) अणु
-			st = inb(भव_dma_port + FD_STATUS);
+#ifdef TRACE_FLPY_INT
+	if (!calls)
+		bytes = virtual_dma_count;
+#endif
+
+	{
+		int lcount;
+		char *lptr;
+
+		for (lcount = virtual_dma_count, lptr = virtual_dma_addr;
+		     lcount; lcount--, lptr++) {
+			st = inb(virtual_dma_port + FD_STATUS);
 			st &= STATUS_DMA | STATUS_READY;
-			अगर (st != (STATUS_DMA | STATUS_READY))
-				अवरोध;
-			अगर (भव_dma_mode)
-				outb_p(*lptr, भव_dma_port + FD_DATA);
-			अन्यथा
-				*lptr = inb_p(भव_dma_port + FD_DATA);
-		पूर्ण
-		भव_dma_count = lcount;
-		भव_dma_addr = lptr;
-		st = inb(भव_dma_port + FD_STATUS);
-	पूर्ण
+			if (st != (STATUS_DMA | STATUS_READY))
+				break;
+			if (virtual_dma_mode)
+				outb_p(*lptr, virtual_dma_port + FD_DATA);
+			else
+				*lptr = inb_p(virtual_dma_port + FD_DATA);
+		}
+		virtual_dma_count = lcount;
+		virtual_dma_addr = lptr;
+		st = inb(virtual_dma_port + FD_STATUS);
+	}
 
-#अगर_घोषित TRACE_FLPY_INT
+#ifdef TRACE_FLPY_INT
 	calls++;
-#पूर्ण_अगर
-	अगर (st == STATUS_DMA)
-		वापस IRQ_HANDLED;
-	अगर (!(st & STATUS_DMA)) अणु
-		भव_dma_residue += भव_dma_count;
-		भव_dma_count = 0;
-#अगर_घोषित TRACE_FLPY_INT
-		prपूर्णांकk(KERN_DEBUG "count=%x, residue=%x calls=%d bytes=%d dma_wait=%d\n",
-		       भव_dma_count, भव_dma_residue, calls, bytes,
-		       dma_रुको);
+#endif
+	if (st == STATUS_DMA)
+		return IRQ_HANDLED;
+	if (!(st & STATUS_DMA)) {
+		virtual_dma_residue += virtual_dma_count;
+		virtual_dma_count = 0;
+#ifdef TRACE_FLPY_INT
+		printk(KERN_DEBUG "count=%x, residue=%x calls=%d bytes=%d dma_wait=%d\n",
+		       virtual_dma_count, virtual_dma_residue, calls, bytes,
+		       dma_wait);
 		calls = 0;
-		dma_रुको = 0;
-#पूर्ण_अगर
-		करोing_pdma = 0;
-		floppy_पूर्णांकerrupt(irq, dev_id);
-		वापस IRQ_HANDLED;
-	पूर्ण
-#अगर_घोषित TRACE_FLPY_INT
-	अगर (!भव_dma_count)
-		dma_रुको++;
-#पूर्ण_अगर
-	वापस IRQ_HANDLED;
-पूर्ण
+		dma_wait = 0;
+#endif
+		doing_pdma = 0;
+		floppy_interrupt(irq, dev_id);
+		return IRQ_HANDLED;
+	}
+#ifdef TRACE_FLPY_INT
+	if (!virtual_dma_count)
+		dma_wait++;
+#endif
+	return IRQ_HANDLED;
+}
 
-अटल व्योम fd_disable_dma(व्योम)
-अणु
-	अगर (!(can_use_भव_dma & 1))
+static void fd_disable_dma(void)
+{
+	if (!(can_use_virtual_dma & 1))
 		disable_dma(FLOPPY_DMA);
-	करोing_pdma = 0;
-	भव_dma_residue += भव_dma_count;
-	भव_dma_count = 0;
-पूर्ण
+	doing_pdma = 0;
+	virtual_dma_residue += virtual_dma_count;
+	virtual_dma_count = 0;
+}
 
-अटल पूर्णांक vdma_request_dma(अचिन्हित पूर्णांक dmanr, स्थिर अक्षर *device_id)
-अणु
-	वापस 0;
-पूर्ण
+static int vdma_request_dma(unsigned int dmanr, const char *device_id)
+{
+	return 0;
+}
 
-अटल व्योम vdma_nop(अचिन्हित पूर्णांक dummy)
-अणु
-पूर्ण
-
-
-अटल पूर्णांक vdma_get_dma_residue(अचिन्हित पूर्णांक dummy)
-अणु
-	वापस भव_dma_count + भव_dma_residue;
-पूर्ण
+static void vdma_nop(unsigned int dummy)
+{
+}
 
 
-अटल पूर्णांक fd_request_irq(व्योम)
-अणु
-	अगर (can_use_भव_dma)
-		वापस request_irq(FLOPPY_IRQ, floppy_hardपूर्णांक,
-				   0, "floppy", शून्य);
-	अन्यथा
-		वापस request_irq(FLOPPY_IRQ, floppy_पूर्णांकerrupt,
-				   0, "floppy", शून्य);
-पूर्ण
-
-अटल अचिन्हित दीर्घ dma_mem_alloc(अचिन्हित दीर्घ size)
-अणु
-	वापस __get_dma_pages(GFP_KERNEL|__GFP_NORETRY, get_order(size));
-पूर्ण
+static int vdma_get_dma_residue(unsigned int dummy)
+{
+	return virtual_dma_count + virtual_dma_residue;
+}
 
 
-अटल अचिन्हित दीर्घ vdma_mem_alloc(अचिन्हित दीर्घ size)
-अणु
-	वापस (अचिन्हित दीर्घ)vदो_स्मृति(size);
+static int fd_request_irq(void)
+{
+	if (can_use_virtual_dma)
+		return request_irq(FLOPPY_IRQ, floppy_hardint,
+				   0, "floppy", NULL);
+	else
+		return request_irq(FLOPPY_IRQ, floppy_interrupt,
+				   0, "floppy", NULL);
+}
 
-पूर्ण
+static unsigned long dma_mem_alloc(unsigned long size)
+{
+	return __get_dma_pages(GFP_KERNEL|__GFP_NORETRY, get_order(size));
+}
 
-#घोषणा nodma_mem_alloc(size) vdma_mem_alloc(size)
 
-अटल व्योम _fd_dma_mem_मुक्त(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ size)
-अणु
-	अगर ((अचिन्हित दीर्घ)addr >= (अचिन्हित दीर्घ)high_memory)
-		vमुक्त((व्योम *)addr);
-	अन्यथा
-		मुक्त_pages(addr, get_order(size));
-पूर्ण
+static unsigned long vdma_mem_alloc(unsigned long size)
+{
+	return (unsigned long)vmalloc(size);
 
-#घोषणा fd_dma_mem_मुक्त(addr, size)  _fd_dma_mem_मुक्त(addr, size)
+}
 
-अटल व्योम _fd_chose_dma_mode(अक्षर *addr, अचिन्हित दीर्घ size)
-अणु
-	अगर (can_use_भव_dma == 2) अणु
-		अगर ((अचिन्हित दीर्घ)addr >= (अचिन्हित दीर्घ)high_memory ||
+#define nodma_mem_alloc(size) vdma_mem_alloc(size)
+
+static void _fd_dma_mem_free(unsigned long addr, unsigned long size)
+{
+	if ((unsigned long)addr >= (unsigned long)high_memory)
+		vfree((void *)addr);
+	else
+		free_pages(addr, get_order(size));
+}
+
+#define fd_dma_mem_free(addr, size)  _fd_dma_mem_free(addr, size)
+
+static void _fd_chose_dma_mode(char *addr, unsigned long size)
+{
+	if (can_use_virtual_dma == 2) {
+		if ((unsigned long)addr >= (unsigned long)high_memory ||
 		    isa_virt_to_bus(addr) >= 0x1000000 ||
 		    _CROSS_64KB(addr, size, 0))
-			use_भव_dma = 1;
-		अन्यथा
-			use_भव_dma = 0;
-	पूर्ण अन्यथा अणु
-		use_भव_dma = can_use_भव_dma & 1;
-	पूर्ण
-पूर्ण
+			use_virtual_dma = 1;
+		else
+			use_virtual_dma = 0;
+	} else {
+		use_virtual_dma = can_use_virtual_dma & 1;
+	}
+}
 
-#घोषणा fd_chose_dma_mode(addr, size) _fd_chose_dma_mode(addr, size)
+#define fd_chose_dma_mode(addr, size) _fd_chose_dma_mode(addr, size)
 
 
-अटल पूर्णांक vdma_dma_setup(अक्षर *addr, अचिन्हित दीर्घ size, पूर्णांक mode, पूर्णांक io)
-अणु
-	करोing_pdma = 1;
-	भव_dma_port = io;
-	भव_dma_mode = (mode == DMA_MODE_WRITE);
-	भव_dma_addr = addr;
-	भव_dma_count = size;
-	भव_dma_residue = 0;
-	वापस 0;
-पूर्ण
+static int vdma_dma_setup(char *addr, unsigned long size, int mode, int io)
+{
+	doing_pdma = 1;
+	virtual_dma_port = io;
+	virtual_dma_mode = (mode == DMA_MODE_WRITE);
+	virtual_dma_addr = addr;
+	virtual_dma_count = size;
+	virtual_dma_residue = 0;
+	return 0;
+}
 
-अटल पूर्णांक hard_dma_setup(अक्षर *addr, अचिन्हित दीर्घ size, पूर्णांक mode, पूर्णांक io)
-अणु
-#अगर_घोषित FLOPPY_SANITY_CHECK
-	अगर (CROSS_64KB(addr, size)) अणु
-		prपूर्णांकk("DMA crossing 64-K boundary %p-%p\n", addr, addr+size);
-		वापस -1;
-	पूर्ण
-#पूर्ण_अगर
+static int hard_dma_setup(char *addr, unsigned long size, int mode, int io)
+{
+#ifdef FLOPPY_SANITY_CHECK
+	if (CROSS_64KB(addr, size)) {
+		printk("DMA crossing 64-K boundary %p-%p\n", addr, addr+size);
+		return -1;
+	}
+#endif
 	/* actual, physical DMA */
-	करोing_pdma = 0;
+	doing_pdma = 0;
 	clear_dma_ff(FLOPPY_DMA);
 	set_dma_mode(FLOPPY_DMA, mode);
 	set_dma_addr(FLOPPY_DMA, isa_virt_to_bus(addr));
 	set_dma_count(FLOPPY_DMA, size);
 	enable_dma(FLOPPY_DMA);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा fd_routine_l अणु
-	पूर्णांक (*_request_dma)(अचिन्हित पूर्णांक dmanr, स्थिर अक्षर *device_id);
-	व्योम (*_मुक्त_dma)(अचिन्हित पूर्णांक dmanr);
-	पूर्णांक (*_get_dma_residue)(अचिन्हित पूर्णांक dummy);
-	अचिन्हित दीर्घ (*_dma_mem_alloc)(अचिन्हित दीर्घ size);
-	पूर्णांक (*_dma_setup)(अक्षर *addr, अचिन्हित दीर्घ size, पूर्णांक mode, पूर्णांक io);
-पूर्ण fd_routine[] = अणु
-	अणु
+static struct fd_routine_l {
+	int (*_request_dma)(unsigned int dmanr, const char *device_id);
+	void (*_free_dma)(unsigned int dmanr);
+	int (*_get_dma_residue)(unsigned int dummy);
+	unsigned long (*_dma_mem_alloc)(unsigned long size);
+	int (*_dma_setup)(char *addr, unsigned long size, int mode, int io);
+} fd_routine[] = {
+	{
 		._request_dma		= request_dma,
-		._मुक्त_dma		= मुक्त_dma,
+		._free_dma		= free_dma,
 		._get_dma_residue	= get_dma_residue,
 		._dma_mem_alloc		= dma_mem_alloc,
 		._dma_setup		= hard_dma_setup
-	पूर्ण,
-	अणु
+	},
+	{
 		._request_dma		= vdma_request_dma,
-		._मुक्त_dma		= vdma_nop,
+		._free_dma		= vdma_nop,
 		._get_dma_residue	= vdma_get_dma_residue,
 		._dma_mem_alloc		= vdma_mem_alloc,
 		._dma_setup		= vdma_dma_setup
-	पूर्ण
-पूर्ण;
+	}
+};
 
 
-अटल पूर्णांक FDC1 = 0x3f0;
-अटल पूर्णांक FDC2 = -1;
+static int FDC1 = 0x3f0;
+static int FDC2 = -1;
 
 /*
  * Floppy types are stored in the rtc's CMOS RAM and so rtc_lock
- * is needed to prevent corrupted CMOS RAM in हाल "insmod floppy"
+ * is needed to prevent corrupted CMOS RAM in case "insmod floppy"
  * coincides with another rtc CMOS user.		Paul G.
  */
-#घोषणा FLOPPY0_TYPE					\
-(अणु							\
-	अचिन्हित दीर्घ flags;				\
-	अचिन्हित अक्षर val;				\
+#define FLOPPY0_TYPE					\
+({							\
+	unsigned long flags;				\
+	unsigned char val;				\
 	spin_lock_irqsave(&rtc_lock, flags);		\
 	val = (CMOS_READ(0x10) >> 4) & 15;		\
 	spin_unlock_irqrestore(&rtc_lock, flags);	\
 	val;						\
-पूर्ण)
+})
 
-#घोषणा FLOPPY1_TYPE					\
-(अणु							\
-	अचिन्हित दीर्घ flags;				\
-	अचिन्हित अक्षर val;				\
+#define FLOPPY1_TYPE					\
+({							\
+	unsigned long flags;				\
+	unsigned char val;				\
 	spin_lock_irqsave(&rtc_lock, flags);		\
 	val = CMOS_READ(0x10) & 15;			\
 	spin_unlock_irqrestore(&rtc_lock, flags);	\
 	val;						\
-पूर्ण)
+})
 
-#घोषणा N_FDC 2
-#घोषणा N_DRIVE 8
+#define N_FDC 2
+#define N_DRIVE 8
 
-#घोषणा EXTRA_FLOPPY_PARAMS
+#define EXTRA_FLOPPY_PARAMS
 
-#पूर्ण_अगर /* _ASM_X86_FLOPPY_H */
+#endif /* _ASM_X86_FLOPPY_H */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * bootstr.c:  Boot string/argument acquisition from the PROM.
  *
@@ -7,39 +6,39 @@
  * Copyright(C) 1996,1998 Jakub Jelinek (jj@sunsite.mff.cuni.cz)
  */
 
-#समावेश <linux/माला.स>
-#समावेश <linux/init.h>
-#समावेश <यंत्र/oplib.h>
+#include <linux/string.h>
+#include <linux/init.h>
+#include <asm/oplib.h>
 
 /* WARNING: The boot loader knows that these next three variables come one right
- *          after another in the .data section.  Do not move this stuff पूर्णांकo
- *          the .bss section or it will अवरोध things.
+ *          after another in the .data section.  Do not move this stuff into
+ *          the .bss section or it will break things.
  */
 
 /* We limit BARG_LEN to 1024 because this is the size of the
  * 'barg_out' command line buffer in the SILO bootloader.
  */
-#घोषणा BARG_LEN 1024
-काष्ठा अणु
-	पूर्णांक bootstr_len;
-	पूर्णांक bootstr_valid;
-	अक्षर bootstr_buf[BARG_LEN];
-पूर्ण bootstr_info = अणु
+#define BARG_LEN 1024
+struct {
+	int bootstr_len;
+	int bootstr_valid;
+	char bootstr_buf[BARG_LEN];
+} bootstr_info = {
 	.bootstr_len = BARG_LEN,
-#अगर_घोषित CONFIG_CMDLINE
+#ifdef CONFIG_CMDLINE
 	.bootstr_valid = 1,
 	.bootstr_buf = CONFIG_CMDLINE,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अक्षर * __init
-prom_getbootargs(व्योम)
-अणु
+char * __init
+prom_getbootargs(void)
+{
 	/* This check saves us from a panic when bootfd patches args. */
-	अगर (bootstr_info.bootstr_valid)
-		वापस bootstr_info.bootstr_buf;
-	prom_माला_लोtring(prom_chosen_node, "bootargs",
+	if (bootstr_info.bootstr_valid)
+		return bootstr_info.bootstr_buf;
+	prom_getstring(prom_chosen_node, "bootargs",
 		       bootstr_info.bootstr_buf, BARG_LEN);
 	bootstr_info.bootstr_valid = 1;
-	वापस bootstr_info.bootstr_buf;
-पूर्ण
+	return bootstr_info.bootstr_buf;
+}

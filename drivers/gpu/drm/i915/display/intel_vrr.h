@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित __INTEL_VRR_H__
-#घोषणा __INTEL_VRR_H__
+#ifndef __INTEL_VRR_H__
+#define __INTEL_VRR_H__
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा drm_connector;
-काष्ठा drm_connector_state;
-काष्ठा पूर्णांकel_atomic_state;
-काष्ठा पूर्णांकel_crtc;
-काष्ठा पूर्णांकel_crtc_state;
-काष्ठा पूर्णांकel_dp;
-काष्ठा पूर्णांकel_encoder;
+struct drm_connector;
+struct drm_connector_state;
+struct intel_atomic_state;
+struct intel_crtc;
+struct intel_crtc_state;
+struct intel_dp;
+struct intel_encoder;
 
-bool पूर्णांकel_vrr_is_capable(काष्ठा drm_connector *connector);
-व्योम पूर्णांकel_vrr_check_modeset(काष्ठा पूर्णांकel_atomic_state *state);
-व्योम पूर्णांकel_vrr_compute_config(काष्ठा पूर्णांकel_crtc_state *crtc_state,
-			      काष्ठा drm_connector_state *conn_state);
-व्योम पूर्णांकel_vrr_enable(काष्ठा पूर्णांकel_encoder *encoder,
-		      स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
-व्योम पूर्णांकel_vrr_send_push(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
-व्योम पूर्णांकel_vrr_disable(स्थिर काष्ठा पूर्णांकel_crtc_state *old_crtc_state);
-व्योम पूर्णांकel_vrr_get_config(काष्ठा पूर्णांकel_crtc *crtc,
-			  काष्ठा पूर्णांकel_crtc_state *crtc_state);
-पूर्णांक पूर्णांकel_vrr_vmax_vblank_start(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
-पूर्णांक पूर्णांकel_vrr_vmin_vblank_start(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+bool intel_vrr_is_capable(struct drm_connector *connector);
+void intel_vrr_check_modeset(struct intel_atomic_state *state);
+void intel_vrr_compute_config(struct intel_crtc_state *crtc_state,
+			      struct drm_connector_state *conn_state);
+void intel_vrr_enable(struct intel_encoder *encoder,
+		      const struct intel_crtc_state *crtc_state);
+void intel_vrr_send_push(const struct intel_crtc_state *crtc_state);
+void intel_vrr_disable(const struct intel_crtc_state *old_crtc_state);
+void intel_vrr_get_config(struct intel_crtc *crtc,
+			  struct intel_crtc_state *crtc_state);
+int intel_vrr_vmax_vblank_start(const struct intel_crtc_state *crtc_state);
+int intel_vrr_vmin_vblank_start(const struct intel_crtc_state *crtc_state);
 
-#पूर्ण_अगर /* __INTEL_VRR_H__ */
+#endif /* __INTEL_VRR_H__ */

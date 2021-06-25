@@ -1,50 +1,49 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (C) 2015 Aपंचांगel
+ * Copyright (C) 2015 Atmel
  *
- * Alexandre Belloni <alexandre.belloni@मुक्त-electrons.com
- * Boris Brezillon <boris.brezillon@मुक्त-electrons.com
+ * Alexandre Belloni <alexandre.belloni@free-electrons.com
+ * Boris Brezillon <boris.brezillon@free-electrons.com
  */
 
-#घोषणा pr_fmt(fmt)	"AT91: " fmt
+#define pr_fmt(fmt)	"AT91: " fmt
 
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sys_soc.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_platform.h>
+#include <linux/slab.h>
+#include <linux/sys_soc.h>
 
-#समावेश "soc.h"
+#include "soc.h"
 
-#घोषणा AT91_DBGU_CIDR			0x40
-#घोषणा AT91_DBGU_EXID			0x44
-#घोषणा AT91_CHIPID_CIDR		0x00
-#घोषणा AT91_CHIPID_EXID		0x04
-#घोषणा AT91_CIDR_VERSION(x, m)		((x) & (m))
-#घोषणा AT91_CIDR_VERSION_MASK		GENMASK(4, 0)
-#घोषणा AT91_CIDR_VERSION_MASK_SAMA7G5	GENMASK(3, 0)
-#घोषणा AT91_CIDR_EXT			BIT(31)
-#घोषणा AT91_CIDR_MATCH_MASK		GENMASK(30, 5)
-#घोषणा AT91_CIDR_MASK_SAMA7G5		GENMASK(27, 5)
+#define AT91_DBGU_CIDR			0x40
+#define AT91_DBGU_EXID			0x44
+#define AT91_CHIPID_CIDR		0x00
+#define AT91_CHIPID_EXID		0x04
+#define AT91_CIDR_VERSION(x, m)		((x) & (m))
+#define AT91_CIDR_VERSION_MASK		GENMASK(4, 0)
+#define AT91_CIDR_VERSION_MASK_SAMA7G5	GENMASK(3, 0)
+#define AT91_CIDR_EXT			BIT(31)
+#define AT91_CIDR_MATCH_MASK		GENMASK(30, 5)
+#define AT91_CIDR_MASK_SAMA7G5		GENMASK(27, 5)
 
-अटल स्थिर काष्ठा at91_soc socs[] __initस्थिर = अणु
-#अगर_घोषित CONFIG_SOC_AT91RM9200
+static const struct at91_soc socs[] __initconst = {
+#ifdef CONFIG_SOC_AT91RM9200
 	AT91_SOC(AT91RM9200_CIDR_MATCH, AT91_CIDR_MATCH_MASK,
 		 AT91_CIDR_VERSION_MASK, 0, "at91rm9200 BGA", "at91rm9200"),
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_SOC_AT91SAM9
+#endif
+#ifdef CONFIG_SOC_AT91SAM9
 	AT91_SOC(AT91SAM9260_CIDR_MATCH, AT91_CIDR_MATCH_MASK,
-		 AT91_CIDR_VERSION_MASK, 0, "at91sam9260", शून्य),
+		 AT91_CIDR_VERSION_MASK, 0, "at91sam9260", NULL),
 	AT91_SOC(AT91SAM9261_CIDR_MATCH, AT91_CIDR_MATCH_MASK,
-		 AT91_CIDR_VERSION_MASK, 0, "at91sam9261", शून्य),
+		 AT91_CIDR_VERSION_MASK, 0, "at91sam9261", NULL),
 	AT91_SOC(AT91SAM9263_CIDR_MATCH, AT91_CIDR_MATCH_MASK,
-		 AT91_CIDR_VERSION_MASK, 0, "at91sam9263", शून्य),
+		 AT91_CIDR_VERSION_MASK, 0, "at91sam9263", NULL),
 	AT91_SOC(AT91SAM9G20_CIDR_MATCH, AT91_CIDR_MATCH_MASK,
-		 AT91_CIDR_VERSION_MASK, 0, "at91sam9g20", शून्य),
+		 AT91_CIDR_VERSION_MASK, 0, "at91sam9g20", NULL),
 	AT91_SOC(AT91SAM9RL64_CIDR_MATCH, AT91_CIDR_MATCH_MASK,
-		 AT91_CIDR_VERSION_MASK, 0, "at91sam9rl64", शून्य),
+		 AT91_CIDR_VERSION_MASK, 0, "at91sam9rl64", NULL),
 	AT91_SOC(AT91SAM9G45_CIDR_MATCH, AT91_CIDR_MATCH_MASK,
 		 AT91_CIDR_VERSION_MASK, AT91SAM9M11_EXID_MATCH,
 		 "at91sam9m11", "at91sam9g45"),
@@ -87,8 +86,8 @@
 		 AT91_CIDR_VERSION_MASK, 0, "at91sam9xe256", "at91sam9xe256"),
 	AT91_SOC(AT91SAM9XE512_CIDR_MATCH, AT91_CIDR_MATCH_MASK,
 		 AT91_CIDR_VERSION_MASK, 0, "at91sam9xe512", "at91sam9xe512"),
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_SOC_SAM9X60
+#endif
+#ifdef CONFIG_SOC_SAM9X60
 	AT91_SOC(SAM9X60_CIDR_MATCH, AT91_CIDR_MATCH_MASK,
 		 AT91_CIDR_VERSION_MASK, SAM9X60_EXID_MATCH,
 		 "sam9x60", "sam9x60"),
@@ -101,8 +100,8 @@
 	AT91_SOC(SAM9X60_CIDR_MATCH, SAM9X60_D6K_EXID_MATCH,
 		 AT91_CIDR_VERSION_MASK, SAM9X60_EXID_MATCH,
 		 "sam9x60 8MiB SDRAM SiP", "sam9x60"),
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_SOC_SAMA5
+#endif
+#ifdef CONFIG_SOC_SAMA5
 	AT91_SOC(SAMA5D2_CIDR_MATCH, AT91_CIDR_MATCH_MASK,
 		 AT91_CIDR_VERSION_MASK, SAMA5D21CU_EXID_MATCH,
 		 "sama5d21", "sama5d2"),
@@ -184,8 +183,8 @@
 	AT91_SOC(SAMA5D4_CIDR_MATCH, AT91_CIDR_MATCH_MASK,
 		 AT91_CIDR_VERSION_MASK, SAMA5D44_EXID_MATCH,
 		 "sama5d44", "sama5d4"),
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_SOC_SAMV7
+#endif
+#ifdef CONFIG_SOC_SAMV7
 	AT91_SOC(SAME70Q21_CIDR_MATCH, AT91_CIDR_MATCH_MASK,
 		 AT91_CIDR_VERSION_MASK, SAME70Q21_EXID_MATCH,
 		 "same70q21", "same7"),
@@ -219,8 +218,8 @@
 	AT91_SOC(SAMV70Q19_CIDR_MATCH, AT91_CIDR_MATCH_MASK,
 		 AT91_CIDR_VERSION_MASK, SAMV70Q19_EXID_MATCH,
 		 "samv70q19", "samv7"),
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_SOC_SAMA7
+#endif
+#ifdef CONFIG_SOC_SAMA7
 	AT91_SOC(SAMA7G5_CIDR_MATCH, AT91_CIDR_MATCH_MASK,
 		 AT91_CIDR_VERSION_MASK_SAMA7G5, SAMA7G51_EXID_MATCH,
 		 "sama7g51", "sama7g5"),
@@ -233,145 +232,145 @@
 	AT91_SOC(SAMA7G5_CIDR_MATCH, AT91_CIDR_MATCH_MASK,
 		 AT91_CIDR_VERSION_MASK_SAMA7G5, SAMA7G54_EXID_MATCH,
 		 "sama7g54", "sama7g5"),
-#पूर्ण_अगर
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+#endif
+	{ /* sentinel */ },
+};
 
-अटल पूर्णांक __init at91_get_cidr_exid_from_dbgu(u32 *cidr, u32 *exid)
-अणु
-	काष्ठा device_node *np;
-	व्योम __iomem *regs;
+static int __init at91_get_cidr_exid_from_dbgu(u32 *cidr, u32 *exid)
+{
+	struct device_node *np;
+	void __iomem *regs;
 
-	np = of_find_compatible_node(शून्य, शून्य, "atmel,at91rm9200-dbgu");
-	अगर (!np)
-		np = of_find_compatible_node(शून्य, शून्य,
+	np = of_find_compatible_node(NULL, NULL, "atmel,at91rm9200-dbgu");
+	if (!np)
+		np = of_find_compatible_node(NULL, NULL,
 					     "atmel,at91sam9260-dbgu");
-	अगर (!np)
-		वापस -ENODEV;
+	if (!np)
+		return -ENODEV;
 
 	regs = of_iomap(np, 0);
 	of_node_put(np);
 
-	अगर (!regs) अणु
+	if (!regs) {
 		pr_warn("Could not map DBGU iomem range");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	*cidr = पढ़ोl(regs + AT91_DBGU_CIDR);
-	*exid = पढ़ोl(regs + AT91_DBGU_EXID);
+	*cidr = readl(regs + AT91_DBGU_CIDR);
+	*exid = readl(regs + AT91_DBGU_EXID);
 
 	iounmap(regs);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init at91_get_cidr_exid_from_chipid(u32 *cidr, u32 *exid)
-अणु
-	काष्ठा device_node *np;
-	व्योम __iomem *regs;
-	अटल स्थिर काष्ठा of_device_id chipids[] = अणु
-		अणु .compatible = "atmel,sama5d2-chipid" पूर्ण,
-		अणु .compatible = "microchip,sama7g5-chipid" पूर्ण,
-		अणु पूर्ण,
-	पूर्ण;
+static int __init at91_get_cidr_exid_from_chipid(u32 *cidr, u32 *exid)
+{
+	struct device_node *np;
+	void __iomem *regs;
+	static const struct of_device_id chipids[] = {
+		{ .compatible = "atmel,sama5d2-chipid" },
+		{ .compatible = "microchip,sama7g5-chipid" },
+		{ },
+	};
 
-	np = of_find_matching_node(शून्य, chipids);
-	अगर (!np)
-		वापस -ENODEV;
+	np = of_find_matching_node(NULL, chipids);
+	if (!np)
+		return -ENODEV;
 
 	regs = of_iomap(np, 0);
 	of_node_put(np);
 
-	अगर (!regs) अणु
+	if (!regs) {
 		pr_warn("Could not map DBGU iomem range");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	*cidr = पढ़ोl(regs + AT91_CHIPID_CIDR);
-	*exid = पढ़ोl(regs + AT91_CHIPID_EXID);
+	*cidr = readl(regs + AT91_CHIPID_CIDR);
+	*exid = readl(regs + AT91_CHIPID_EXID);
 
 	iounmap(regs);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा soc_device * __init at91_soc_init(स्थिर काष्ठा at91_soc *socs)
-अणु
-	काष्ठा soc_device_attribute *soc_dev_attr;
-	स्थिर काष्ठा at91_soc *soc;
-	काष्ठा soc_device *soc_dev;
+struct soc_device * __init at91_soc_init(const struct at91_soc *socs)
+{
+	struct soc_device_attribute *soc_dev_attr;
+	const struct at91_soc *soc;
+	struct soc_device *soc_dev;
 	u32 cidr, exid;
-	पूर्णांक ret;
+	int ret;
 
 	/*
-	 * With SAMA5D2 and later SoCs, CIDR and EXID रेजिस्टरs are no more
+	 * With SAMA5D2 and later SoCs, CIDR and EXID registers are no more
 	 * in the dbgu device but in the chipid device whose purpose is only
-	 * to expose these two रेजिस्टरs.
+	 * to expose these two registers.
 	 */
 	ret = at91_get_cidr_exid_from_dbgu(&cidr, &exid);
-	अगर (ret)
+	if (ret)
 		ret = at91_get_cidr_exid_from_chipid(&cidr, &exid);
-	अगर (ret) अणु
-		अगर (ret == -ENODEV)
+	if (ret) {
+		if (ret == -ENODEV)
 			pr_warn("Could not find identification node");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	क्रम (soc = socs; soc->name; soc++) अणु
-		अगर (soc->cidr_match != (cidr & soc->cidr_mask))
-			जारी;
+	for (soc = socs; soc->name; soc++) {
+		if (soc->cidr_match != (cidr & soc->cidr_mask))
+			continue;
 
-		अगर (!(cidr & AT91_CIDR_EXT) || soc->exid_match == exid)
-			अवरोध;
-	पूर्ण
+		if (!(cidr & AT91_CIDR_EXT) || soc->exid_match == exid)
+			break;
+	}
 
-	अगर (!soc->name) अणु
+	if (!soc->name) {
 		pr_warn("Could not find matching SoC description\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	soc_dev_attr = kzalloc(माप(*soc_dev_attr), GFP_KERNEL);
-	अगर (!soc_dev_attr)
-		वापस शून्य;
+	soc_dev_attr = kzalloc(sizeof(*soc_dev_attr), GFP_KERNEL);
+	if (!soc_dev_attr)
+		return NULL;
 
 	soc_dev_attr->family = soc->family;
 	soc_dev_attr->soc_id = soc->name;
-	soc_dev_attr->revision = kaप्र_लिखो(GFP_KERNEL, "%X",
+	soc_dev_attr->revision = kasprintf(GFP_KERNEL, "%X",
 					   AT91_CIDR_VERSION(cidr, soc->version_mask));
-	soc_dev = soc_device_रेजिस्टर(soc_dev_attr);
-	अगर (IS_ERR(soc_dev)) अणु
-		kमुक्त(soc_dev_attr->revision);
-		kमुक्त(soc_dev_attr);
+	soc_dev = soc_device_register(soc_dev_attr);
+	if (IS_ERR(soc_dev)) {
+		kfree(soc_dev_attr->revision);
+		kfree(soc_dev_attr);
 		pr_warn("Could not register SoC device\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (soc->family)
+	if (soc->family)
 		pr_info("Detected SoC family: %s\n", soc->family);
 	pr_info("Detected SoC: %s, revision %X\n", soc->name,
 		AT91_CIDR_VERSION(cidr, soc->version_mask));
 
-	वापस soc_dev;
-पूर्ण
+	return soc_dev;
+}
 
-अटल स्थिर काष्ठा of_device_id at91_soc_allowed_list[] __initस्थिर = अणु
-	अणु .compatible = "atmel,at91rm9200", पूर्ण,
-	अणु .compatible = "atmel,at91sam9", पूर्ण,
-	अणु .compatible = "atmel,sama5", पूर्ण,
-	अणु .compatible = "atmel,samv7", पूर्ण,
-	अणु .compatible = "microchip,sama7g5", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id at91_soc_allowed_list[] __initconst = {
+	{ .compatible = "atmel,at91rm9200", },
+	{ .compatible = "atmel,at91sam9", },
+	{ .compatible = "atmel,sama5", },
+	{ .compatible = "atmel,samv7", },
+	{ .compatible = "microchip,sama7g5", },
+	{ }
+};
 
-अटल पूर्णांक __init aपंचांगel_soc_device_init(व्योम)
-अणु
-	काष्ठा device_node *np = of_find_node_by_path("/");
+static int __init atmel_soc_device_init(void)
+{
+	struct device_node *np = of_find_node_by_path("/");
 
-	अगर (!of_match_node(at91_soc_allowed_list, np))
-		वापस 0;
+	if (!of_match_node(at91_soc_allowed_list, np))
+		return 0;
 
 	at91_soc_init(socs);
 
-	वापस 0;
-पूर्ण
-subsys_initcall(aपंचांगel_soc_device_init);
+	return 0;
+}
+subsys_initcall(atmel_soc_device_init);

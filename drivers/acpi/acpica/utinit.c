@@ -1,38 +1,37 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Module Name: utinit - Common ACPI subप्रणाली initialization
+ * Module Name: utinit - Common ACPI subsystem initialization
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acnamesp.h"
-#समावेश "acevents.h"
-#समावेश "actables.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acnamesp.h"
+#include "acevents.h"
+#include "actables.h"
 
-#घोषणा _COMPONENT          ACPI_UTILITIES
+#define _COMPONENT          ACPI_UTILITIES
 ACPI_MODULE_NAME("utinit")
 
 /* Local prototypes */
-अटल व्योम acpi_ut_terminate(व्योम);
+static void acpi_ut_terminate(void);
 
-#अगर (!ACPI_REDUCED_HARDWARE)
+#if (!ACPI_REDUCED_HARDWARE)
 
-अटल व्योम acpi_ut_मुक्त_gpe_lists(व्योम);
+static void acpi_ut_free_gpe_lists(void);
 
-#अन्यथा
+#else
 
-#घोषणा acpi_ut_मुक्त_gpe_lists()
-#पूर्ण_अगर				/* !ACPI_REDUCED_HARDWARE */
+#define acpi_ut_free_gpe_lists()
+#endif				/* !ACPI_REDUCED_HARDWARE */
 
-#अगर (!ACPI_REDUCED_HARDWARE)
+#if (!ACPI_REDUCED_HARDWARE)
 /******************************************************************************
  *
- * FUNCTION:    acpi_ut_मुक्त_gpe_lists
+ * FUNCTION:    acpi_ut_free_gpe_lists
  *
  * PARAMETERS:  none
  *
@@ -42,32 +41,32 @@ ACPI_MODULE_NAME("utinit")
  *
  ******************************************************************************/
 
-अटल व्योम acpi_ut_मुक्त_gpe_lists(व्योम)
-अणु
-	काष्ठा acpi_gpe_block_info *gpe_block;
-	काष्ठा acpi_gpe_block_info *next_gpe_block;
-	काष्ठा acpi_gpe_xrupt_info *gpe_xrupt_info;
-	काष्ठा acpi_gpe_xrupt_info *next_gpe_xrupt_info;
+static void acpi_ut_free_gpe_lists(void)
+{
+	struct acpi_gpe_block_info *gpe_block;
+	struct acpi_gpe_block_info *next_gpe_block;
+	struct acpi_gpe_xrupt_info *gpe_xrupt_info;
+	struct acpi_gpe_xrupt_info *next_gpe_xrupt_info;
 
-	/* Free global GPE blocks and related info काष्ठाures */
+	/* Free global GPE blocks and related info structures */
 
 	gpe_xrupt_info = acpi_gbl_gpe_xrupt_list_head;
-	जबतक (gpe_xrupt_info) अणु
+	while (gpe_xrupt_info) {
 		gpe_block = gpe_xrupt_info->gpe_block_list_head;
-		जबतक (gpe_block) अणु
+		while (gpe_block) {
 			next_gpe_block = gpe_block->next;
 			ACPI_FREE(gpe_block->event_info);
-			ACPI_FREE(gpe_block->रेजिस्टर_info);
+			ACPI_FREE(gpe_block->register_info);
 			ACPI_FREE(gpe_block);
 
 			gpe_block = next_gpe_block;
-		पूर्ण
+		}
 		next_gpe_xrupt_info = gpe_xrupt_info->next;
 		ACPI_FREE(gpe_xrupt_info);
 		gpe_xrupt_info = next_gpe_xrupt_info;
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर				/* !ACPI_REDUCED_HARDWARE */
+	}
+}
+#endif				/* !ACPI_REDUCED_HARDWARE */
 
 /*******************************************************************************
  *
@@ -77,14 +76,14 @@ ACPI_MODULE_NAME("utinit")
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Initialize ACPICA globals. All globals that require specअगरic
- *              initialization should be initialized here. This allows क्रम
+ * DESCRIPTION: Initialize ACPICA globals. All globals that require specific
+ *              initialization should be initialized here. This allows for
  *              a warm restart.
  *
  ******************************************************************************/
 
-acpi_status acpi_ut_init_globals(व्योम)
-अणु
+acpi_status acpi_ut_init_globals(void)
+{
 	acpi_status status;
 	u32 i;
 
@@ -93,27 +92,27 @@ acpi_status acpi_ut_init_globals(व्योम)
 	/* Create all memory caches */
 
 	status = acpi_ut_create_caches();
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	/* Address Range lists */
 
-	क्रम (i = 0; i < ACPI_ADDRESS_RANGE_MAX; i++) अणु
-		acpi_gbl_address_range_list[i] = शून्य;
-	पूर्ण
+	for (i = 0; i < ACPI_ADDRESS_RANGE_MAX; i++) {
+		acpi_gbl_address_range_list[i] = NULL;
+	}
 
 	/* Mutex locked flags */
 
-	क्रम (i = 0; i < ACPI_NUM_MUTEX; i++) अणु
-		acpi_gbl_mutex_info[i].mutex = शून्य;
-		acpi_gbl_mutex_info[i].thपढ़ो_id = ACPI_MUTEX_NOT_ACQUIRED;
+	for (i = 0; i < ACPI_NUM_MUTEX; i++) {
+		acpi_gbl_mutex_info[i].mutex = NULL;
+		acpi_gbl_mutex_info[i].thread_id = ACPI_MUTEX_NOT_ACQUIRED;
 		acpi_gbl_mutex_info[i].use_count = 0;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ACPI_NUM_OWNERID_MASKS; i++) अणु
+	for (i = 0; i < ACPI_NUM_OWNERID_MASKS; i++) {
 		acpi_gbl_owner_id_mask[i] = 0;
-	पूर्ण
+	}
 
 	/* Last owner_ID is never valid */
 
@@ -125,88 +124,88 @@ acpi_status acpi_ut_init_globals(व्योम)
 	acpi_sci_count = 0;
 	acpi_gpe_count = 0;
 
-	क्रम (i = 0; i < ACPI_NUM_FIXED_EVENTS; i++) अणु
+	for (i = 0; i < ACPI_NUM_FIXED_EVENTS; i++) {
 		acpi_fixed_event_count[i] = 0;
-	पूर्ण
+	}
 
-#अगर (!ACPI_REDUCED_HARDWARE)
+#if (!ACPI_REDUCED_HARDWARE)
 
 	/* GPE/SCI support */
 
 	acpi_gbl_all_gpes_initialized = FALSE;
-	acpi_gbl_gpe_xrupt_list_head = शून्य;
-	acpi_gbl_gpe_fadt_blocks[0] = शून्य;
-	acpi_gbl_gpe_fadt_blocks[1] = शून्य;
+	acpi_gbl_gpe_xrupt_list_head = NULL;
+	acpi_gbl_gpe_fadt_blocks[0] = NULL;
+	acpi_gbl_gpe_fadt_blocks[1] = NULL;
 	acpi_current_gpe_count = 0;
 
-	acpi_gbl_global_event_handler = शून्य;
-	acpi_gbl_sci_handler_list = शून्य;
+	acpi_gbl_global_event_handler = NULL;
+	acpi_gbl_sci_handler_list = NULL;
 
-#पूर्ण_अगर				/* !ACPI_REDUCED_HARDWARE */
+#endif				/* !ACPI_REDUCED_HARDWARE */
 
 	/* Global handlers */
 
-	acpi_gbl_global_notअगरy[0].handler = शून्य;
-	acpi_gbl_global_notअगरy[1].handler = शून्य;
-	acpi_gbl_exception_handler = शून्य;
-	acpi_gbl_init_handler = शून्य;
-	acpi_gbl_table_handler = शून्य;
-	acpi_gbl_पूर्णांकerface_handler = शून्य;
+	acpi_gbl_global_notify[0].handler = NULL;
+	acpi_gbl_global_notify[1].handler = NULL;
+	acpi_gbl_exception_handler = NULL;
+	acpi_gbl_init_handler = NULL;
+	acpi_gbl_table_handler = NULL;
+	acpi_gbl_interface_handler = NULL;
 
 	/* Global Lock support */
 
-	acpi_gbl_global_lock_semaphore = शून्य;
-	acpi_gbl_global_lock_mutex = शून्य;
+	acpi_gbl_global_lock_semaphore = NULL;
+	acpi_gbl_global_lock_mutex = NULL;
 	acpi_gbl_global_lock_acquired = FALSE;
 	acpi_gbl_global_lock_handle = 0;
 	acpi_gbl_global_lock_present = FALSE;
 
 	/* Miscellaneous variables */
 
-	acpi_gbl_DSDT = शून्य;
+	acpi_gbl_DSDT = NULL;
 	acpi_gbl_cm_single_step = FALSE;
-	acpi_gbl_shutकरोwn = FALSE;
+	acpi_gbl_shutdown = FALSE;
 	acpi_gbl_ns_lookup_count = 0;
 	acpi_gbl_ps_find_count = 0;
 	acpi_gbl_acpi_hardware_present = TRUE;
 	acpi_gbl_last_owner_id_index = 0;
 	acpi_gbl_next_owner_id_offset = 0;
 	acpi_gbl_debugger_configuration = DEBUGGER_THREADING;
-	acpi_gbl_osi_mutex = शून्य;
+	acpi_gbl_osi_mutex = NULL;
 
 	/* Hardware oriented */
 
 	acpi_gbl_events_initialized = FALSE;
-	acpi_gbl_प्रणाली_awake_and_running = TRUE;
+	acpi_gbl_system_awake_and_running = TRUE;
 
 	/* Namespace */
 
-	acpi_gbl_root_node = शून्य;
-	acpi_gbl_root_node_काष्ठा.name.पूर्णांकeger = ACPI_ROOT_NAME;
-	acpi_gbl_root_node_काष्ठा.descriptor_type = ACPI_DESC_TYPE_NAMED;
-	acpi_gbl_root_node_काष्ठा.type = ACPI_TYPE_DEVICE;
-	acpi_gbl_root_node_काष्ठा.parent = शून्य;
-	acpi_gbl_root_node_काष्ठा.child = शून्य;
-	acpi_gbl_root_node_काष्ठा.peer = शून्य;
-	acpi_gbl_root_node_काष्ठा.object = शून्य;
+	acpi_gbl_root_node = NULL;
+	acpi_gbl_root_node_struct.name.integer = ACPI_ROOT_NAME;
+	acpi_gbl_root_node_struct.descriptor_type = ACPI_DESC_TYPE_NAMED;
+	acpi_gbl_root_node_struct.type = ACPI_TYPE_DEVICE;
+	acpi_gbl_root_node_struct.parent = NULL;
+	acpi_gbl_root_node_struct.child = NULL;
+	acpi_gbl_root_node_struct.peer = NULL;
+	acpi_gbl_root_node_struct.object = NULL;
 
-#अगर_घोषित ACPI_DISASSEMBLER
-	acpi_gbl_बाह्यal_list = शून्य;
-	acpi_gbl_num_बाह्यal_methods = 0;
-	acpi_gbl_resolved_बाह्यal_methods = 0;
-#पूर्ण_अगर
+#ifdef ACPI_DISASSEMBLER
+	acpi_gbl_external_list = NULL;
+	acpi_gbl_num_external_methods = 0;
+	acpi_gbl_resolved_external_methods = 0;
+#endif
 
-#अगर_घोषित ACPI_DEBUG_OUTPUT
-	acpi_gbl_lowest_stack_poपूर्णांकer = ACPI_CAST_PTR(acpi_size, ACPI_SIZE_MAX);
-#पूर्ण_अगर
+#ifdef ACPI_DEBUG_OUTPUT
+	acpi_gbl_lowest_stack_pointer = ACPI_CAST_PTR(acpi_size, ACPI_SIZE_MAX);
+#endif
 
-#अगर_घोषित ACPI_DBG_TRACK_ALLOCATIONS
+#ifdef ACPI_DBG_TRACK_ALLOCATIONS
 	acpi_gbl_display_final_mem_stats = FALSE;
 	acpi_gbl_disable_mem_tracking = FALSE;
-#पूर्ण_अगर
+#endif
 
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_ACPI_STATUS(AE_OK);
+}
 
 /******************************************************************************
  *
@@ -220,55 +219,55 @@ acpi_status acpi_ut_init_globals(व्योम)
  *
  ******************************************************************************/
 
-अटल व्योम acpi_ut_terminate(व्योम)
-अणु
+static void acpi_ut_terminate(void)
+{
 	ACPI_FUNCTION_TRACE(ut_terminate);
 
-	acpi_ut_मुक्त_gpe_lists();
+	acpi_ut_free_gpe_lists();
 	acpi_ut_delete_address_lists();
-	वापस_VOID;
-पूर्ण
+	return_VOID;
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_subप्रणाली_shutकरोwn
+ * FUNCTION:    acpi_ut_subsystem_shutdown
  *
  * PARAMETERS:  None
  *
  * RETURN:      None
  *
- * DESCRIPTION: Shutकरोwn the various components. Do not delete the mutex
+ * DESCRIPTION: Shutdown the various components. Do not delete the mutex
  *              objects here, because the AML debugger may be still running.
  *
  ******************************************************************************/
 
-व्योम acpi_ut_subप्रणाली_shutकरोwn(व्योम)
-अणु
-	ACPI_FUNCTION_TRACE(ut_subप्रणाली_shutकरोwn);
+void acpi_ut_subsystem_shutdown(void)
+{
+	ACPI_FUNCTION_TRACE(ut_subsystem_shutdown);
 
-	/* Just निकास अगर subप्रणाली is alपढ़ोy shutकरोwn */
+	/* Just exit if subsystem is already shutdown */
 
-	अगर (acpi_gbl_shutकरोwn) अणु
+	if (acpi_gbl_shutdown) {
 		ACPI_ERROR((AE_INFO, "ACPI Subsystem is already terminated"));
-		वापस_VOID;
-	पूर्ण
+		return_VOID;
+	}
 
-	/* Subप्रणाली appears active, go ahead and shut it करोwn */
+	/* Subsystem appears active, go ahead and shut it down */
 
-	acpi_gbl_shutकरोwn = TRUE;
+	acpi_gbl_shutdown = TRUE;
 	acpi_gbl_startup_flags = 0;
 	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "Shutting down ACPI Subsystem\n"));
 
-#अगर_अघोषित ACPI_ASL_COMPILER
+#ifndef ACPI_ASL_COMPILER
 
 	/* Close the acpi_event Handling */
 
 	acpi_ev_terminate();
 
-	/* Delete any dynamic _OSI पूर्णांकerfaces */
+	/* Delete any dynamic _OSI interfaces */
 
-	acpi_ut_पूर्णांकerface_terminate();
-#पूर्ण_अगर
+	acpi_ut_interface_terminate();
+#endif
 
 	/* Close the Namespace */
 
@@ -284,6 +283,6 @@ acpi_status acpi_ut_init_globals(व्योम)
 
 	/* Purge the local caches */
 
-	(व्योम)acpi_ut_delete_caches();
-	वापस_VOID;
-पूर्ण
+	(void)acpi_ut_delete_caches();
+	return_VOID;
+}

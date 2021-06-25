@@ -1,140 +1,139 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित MFD_TMIO_H
-#घोषणा MFD_TMIO_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef MFD_TMIO_H
+#define MFD_TMIO_H
 
-#समावेश <linux/device.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/mmc/card.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
+#include <linux/device.h>
+#include <linux/fb.h>
+#include <linux/io.h>
+#include <linux/jiffies.h>
+#include <linux/mmc/card.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
 
-#घोषणा पंचांगio_ioपढ़ो8(addr) पढ़ोb(addr)
-#घोषणा पंचांगio_ioपढ़ो16(addr) पढ़ोw(addr)
-#घोषणा पंचांगio_ioपढ़ो16_rep(r, b, l) पढ़ोsw(r, b, l)
-#घोषणा पंचांगio_ioपढ़ो32(addr) \
-	(((u32)पढ़ोw((addr))) | (((u32)पढ़ोw((addr) + 2)) << 16))
+#define tmio_ioread8(addr) readb(addr)
+#define tmio_ioread16(addr) readw(addr)
+#define tmio_ioread16_rep(r, b, l) readsw(r, b, l)
+#define tmio_ioread32(addr) \
+	(((u32)readw((addr))) | (((u32)readw((addr) + 2)) << 16))
 
-#घोषणा पंचांगio_ioग_लिखो8(val, addr) ग_लिखोb((val), (addr))
-#घोषणा पंचांगio_ioग_लिखो16(val, addr) ग_लिखोw((val), (addr))
-#घोषणा पंचांगio_ioग_लिखो16_rep(r, b, l) ग_लिखोsw(r, b, l)
-#घोषणा पंचांगio_ioग_लिखो32(val, addr) \
-	करो अणु \
-		ग_लिखोw((val),       (addr)); \
-		ग_लिखोw((val) >> 16, (addr) + 2); \
-	पूर्ण जबतक (0)
+#define tmio_iowrite8(val, addr) writeb((val), (addr))
+#define tmio_iowrite16(val, addr) writew((val), (addr))
+#define tmio_iowrite16_rep(r, b, l) writesw(r, b, l)
+#define tmio_iowrite32(val, addr) \
+	do { \
+		writew((val),       (addr)); \
+		writew((val) >> 16, (addr) + 2); \
+	} while (0)
 
-#घोषणा sd_config_ग_लिखो8(base, shअगरt, reg, val) \
-	पंचांगio_ioग_लिखो8((val), (base) + ((reg) << (shअगरt)))
-#घोषणा sd_config_ग_लिखो16(base, shअगरt, reg, val) \
-	पंचांगio_ioग_लिखो16((val), (base) + ((reg) << (shअगरt)))
-#घोषणा sd_config_ग_लिखो32(base, shअगरt, reg, val) \
-	करो अणु \
-		पंचांगio_ioग_लिखो16((val), (base) + ((reg) << (shअगरt)));   \
-		पंचांगio_ioग_लिखो16((val) >> 16, (base) + ((reg + 2) << (shअगरt))); \
-	पूर्ण जबतक (0)
+#define sd_config_write8(base, shift, reg, val) \
+	tmio_iowrite8((val), (base) + ((reg) << (shift)))
+#define sd_config_write16(base, shift, reg, val) \
+	tmio_iowrite16((val), (base) + ((reg) << (shift)))
+#define sd_config_write32(base, shift, reg, val) \
+	do { \
+		tmio_iowrite16((val), (base) + ((reg) << (shift)));   \
+		tmio_iowrite16((val) >> 16, (base) + ((reg + 2) << (shift))); \
+	} while (0)
 
-/* पंचांगio MMC platक्रमm flags */
+/* tmio MMC platform flags */
 /*
  * Some controllers can support a 2-byte block size when the bus width
  * is configured in 4-bit mode.
  */
-#घोषणा TMIO_MMC_BLKSZ_2BYTES		BIT(1)
+#define TMIO_MMC_BLKSZ_2BYTES		BIT(1)
 /*
- * Some controllers can support SDIO IRQ संकेतling.
+ * Some controllers can support SDIO IRQ signalling.
  */
-#घोषणा TMIO_MMC_SDIO_IRQ		BIT(2)
+#define TMIO_MMC_SDIO_IRQ		BIT(2)
 
 /* Some features are only available or tested on R-Car Gen2 or later */
-#घोषणा TMIO_MMC_MIN_RCAR2		BIT(3)
+#define TMIO_MMC_MIN_RCAR2		BIT(3)
 
 /*
- * Some controllers require रुकोing क्रम the SD bus to become
- * idle beक्रमe writing to some रेजिस्टरs.
+ * Some controllers require waiting for the SD bus to become
+ * idle before writing to some registers.
  */
-#घोषणा TMIO_MMC_HAS_IDLE_WAIT		BIT(4)
+#define TMIO_MMC_HAS_IDLE_WAIT		BIT(4)
 
 /*
- * Use the busy समयout feature. Probably all TMIO versions support it. Yet,
- * we करोn't have करोcumentation क्रम old variants, so we enable only known good
- * variants with this flag. Can be हटाओd once all variants are known good.
+ * Use the busy timeout feature. Probably all TMIO versions support it. Yet,
+ * we don't have documentation for old variants, so we enable only known good
+ * variants with this flag. Can be removed once all variants are known good.
  */
-#घोषणा TMIO_MMC_USE_BUSY_TIMEOUT	BIT(5)
+#define TMIO_MMC_USE_BUSY_TIMEOUT	BIT(5)
 
 /*
- * Some controllers have CMD12 स्वतःmatically
- * issue/non-issue रेजिस्टर
+ * Some controllers have CMD12 automatically
+ * issue/non-issue register
  */
-#घोषणा TMIO_MMC_HAVE_CMD12_CTRL	BIT(7)
+#define TMIO_MMC_HAVE_CMD12_CTRL	BIT(7)
 
 /* Controller has some SDIO status bits which must be 1 */
-#घोषणा TMIO_MMC_SDIO_STATUS_SETBITS	BIT(8)
+#define TMIO_MMC_SDIO_STATUS_SETBITS	BIT(8)
 
 /*
- * Some controllers have a 32-bit wide data port रेजिस्टर
+ * Some controllers have a 32-bit wide data port register
  */
-#घोषणा TMIO_MMC_32BIT_DATA_PORT	BIT(9)
+#define TMIO_MMC_32BIT_DATA_PORT	BIT(9)
 
 /*
- * Some controllers allows to set SDx actual घड़ी
+ * Some controllers allows to set SDx actual clock
  */
-#घोषणा TMIO_MMC_CLK_ACTUAL		BIT(10)
+#define TMIO_MMC_CLK_ACTUAL		BIT(10)
 
 /* Some controllers have a CBSY bit */
-#घोषणा TMIO_MMC_HAVE_CBSY		BIT(11)
+#define TMIO_MMC_HAVE_CBSY		BIT(11)
 
-पूर्णांक पंचांगio_core_mmc_enable(व्योम __iomem *cnf, पूर्णांक shअगरt, अचिन्हित दीर्घ base);
-पूर्णांक पंचांगio_core_mmc_resume(व्योम __iomem *cnf, पूर्णांक shअगरt, अचिन्हित दीर्घ base);
-व्योम पंचांगio_core_mmc_pwr(व्योम __iomem *cnf, पूर्णांक shअगरt, पूर्णांक state);
-व्योम पंचांगio_core_mmc_clk_भाग(व्योम __iomem *cnf, पूर्णांक shअगरt, पूर्णांक state);
+int tmio_core_mmc_enable(void __iomem *cnf, int shift, unsigned long base);
+int tmio_core_mmc_resume(void __iomem *cnf, int shift, unsigned long base);
+void tmio_core_mmc_pwr(void __iomem *cnf, int shift, int state);
+void tmio_core_mmc_clk_div(void __iomem *cnf, int shift, int state);
 
-काष्ठा dma_chan;
+struct dma_chan;
 
 /*
- * data क्रम the MMC controller
+ * data for the MMC controller
  */
-काष्ठा पंचांगio_mmc_data अणु
-	व्योम				*chan_priv_tx;
-	व्योम				*chan_priv_rx;
-	अचिन्हित पूर्णांक			hclk;
-	अचिन्हित दीर्घ			capabilities;
-	अचिन्हित दीर्घ			capabilities2;
-	अचिन्हित दीर्घ			flags;
+struct tmio_mmc_data {
+	void				*chan_priv_tx;
+	void				*chan_priv_rx;
+	unsigned int			hclk;
+	unsigned long			capabilities;
+	unsigned long			capabilities2;
+	unsigned long			flags;
 	u32				ocr_mask;	/* available voltages */
-	पूर्णांक				alignment_shअगरt;
+	int				alignment_shift;
 	dma_addr_t			dma_rx_offset;
-	अचिन्हित पूर्णांक			max_blk_count;
-	अचिन्हित लघु			max_segs;
-	व्योम (*set_pwr)(काष्ठा platक्रमm_device *host, पूर्णांक state);
-	व्योम (*set_clk_भाग)(काष्ठा platक्रमm_device *host, पूर्णांक state);
-पूर्ण;
+	unsigned int			max_blk_count;
+	unsigned short			max_segs;
+	void (*set_pwr)(struct platform_device *host, int state);
+	void (*set_clk_div)(struct platform_device *host, int state);
+};
 
 /*
- * data क्रम the न_अंकD controller
+ * data for the NAND controller
  */
-काष्ठा पंचांगio_nand_data अणु
-	काष्ठा nand_bbt_descr	*badblock_pattern;
-	काष्ठा mtd_partition	*partition;
-	अचिन्हित पूर्णांक		num_partitions;
-	स्थिर अक्षर *स्थिर	*part_parsers;
-पूर्ण;
+struct tmio_nand_data {
+	struct nand_bbt_descr	*badblock_pattern;
+	struct mtd_partition	*partition;
+	unsigned int		num_partitions;
+	const char *const	*part_parsers;
+};
 
-#घोषणा FBIO_TMIO_ACC_WRITE	0x7C639300
-#घोषणा FBIO_TMIO_ACC_SYNC	0x7C639301
+#define FBIO_TMIO_ACC_WRITE	0x7C639300
+#define FBIO_TMIO_ACC_SYNC	0x7C639301
 
-काष्ठा पंचांगio_fb_data अणु
-	पूर्णांक			(*lcd_set_घातer)(काष्ठा platक्रमm_device *fb_dev,
+struct tmio_fb_data {
+	int			(*lcd_set_power)(struct platform_device *fb_dev,
 						 bool on);
-	पूर्णांक			(*lcd_mode)(काष्ठा platक्रमm_device *fb_dev,
-					    स्थिर काष्ठा fb_videomode *mode);
-	पूर्णांक			num_modes;
-	काष्ठा fb_videomode	*modes;
+	int			(*lcd_mode)(struct platform_device *fb_dev,
+					    const struct fb_videomode *mode);
+	int			num_modes;
+	struct fb_videomode	*modes;
 
 	/* in mm: size of screen */
-	पूर्णांक			height;
-	पूर्णांक			width;
-पूर्ण;
+	int			height;
+	int			width;
+};
 
-#पूर्ण_अगर
+#endif

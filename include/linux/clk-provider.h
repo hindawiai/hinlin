@@ -1,1460 +1,1459 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  *  Copyright (c) 2010-2011 Jeremy Kerr <jeremy.kerr@canonical.com>
  *  Copyright (C) 2011-2012 Linaro Ltd <mturquette@linaro.org>
  */
-#अगर_अघोषित __LINUX_CLK_PROVIDER_H
-#घोषणा __LINUX_CLK_PROVIDER_H
+#ifndef __LINUX_CLK_PROVIDER_H
+#define __LINUX_CLK_PROVIDER_H
 
-#समावेश <linux/of.h>
-#समावेश <linux/of_clk.h>
+#include <linux/of.h>
+#include <linux/of_clk.h>
 
 /*
- * flags used across common काष्ठा clk.  these flags should only affect the
- * top-level framework.  custom flags क्रम dealing with hardware specअगरics
- * beदीर्घ in काष्ठा clk_foo
+ * flags used across common struct clk.  these flags should only affect the
+ * top-level framework.  custom flags for dealing with hardware specifics
+ * belong in struct clk_foo
  *
  * Please update clk_flags[] in drivers/clk/clk.c when making changes here!
  */
-#घोषणा CLK_SET_RATE_GATE	BIT(0) /* must be gated across rate change */
-#घोषणा CLK_SET_PARENT_GATE	BIT(1) /* must be gated across re-parent */
-#घोषणा CLK_SET_RATE_PARENT	BIT(2) /* propagate rate change up one level */
-#घोषणा CLK_IGNORE_UNUSED	BIT(3) /* करो not gate even अगर unused */
+#define CLK_SET_RATE_GATE	BIT(0) /* must be gated across rate change */
+#define CLK_SET_PARENT_GATE	BIT(1) /* must be gated across re-parent */
+#define CLK_SET_RATE_PARENT	BIT(2) /* propagate rate change up one level */
+#define CLK_IGNORE_UNUSED	BIT(3) /* do not gate even if unused */
 				/* unused */
 				/* unused */
-#घोषणा CLK_GET_RATE_NOCACHE	BIT(6) /* करो not use the cached clk rate */
-#घोषणा CLK_SET_RATE_NO_REPARENT BIT(7) /* करोn't re-parent on rate change */
-#घोषणा CLK_GET_ACCURACY_NOCACHE BIT(8) /* करो not use the cached clk accuracy */
-#घोषणा CLK_RECALC_NEW_RATES	BIT(9) /* recalc rates after notअगरications */
-#घोषणा CLK_SET_RATE_UNGATE	BIT(10) /* घड़ी needs to run to set rate */
-#घोषणा CLK_IS_CRITICAL		BIT(11) /* करो not gate, ever */
+#define CLK_GET_RATE_NOCACHE	BIT(6) /* do not use the cached clk rate */
+#define CLK_SET_RATE_NO_REPARENT BIT(7) /* don't re-parent on rate change */
+#define CLK_GET_ACCURACY_NOCACHE BIT(8) /* do not use the cached clk accuracy */
+#define CLK_RECALC_NEW_RATES	BIT(9) /* recalc rates after notifications */
+#define CLK_SET_RATE_UNGATE	BIT(10) /* clock needs to run to set rate */
+#define CLK_IS_CRITICAL		BIT(11) /* do not gate, ever */
 /* parents need enable during gate/ungate, set rate and re-parent */
-#घोषणा CLK_OPS_PARENT_ENABLE	BIT(12)
-/* duty cycle call may be क्रमwarded to the parent घड़ी */
-#घोषणा CLK_DUTY_CYCLE_PARENT	BIT(13)
+#define CLK_OPS_PARENT_ENABLE	BIT(12)
+/* duty cycle call may be forwarded to the parent clock */
+#define CLK_DUTY_CYCLE_PARENT	BIT(13)
 
-काष्ठा clk;
-काष्ठा clk_hw;
-काष्ठा clk_core;
-काष्ठा dentry;
+struct clk;
+struct clk_hw;
+struct clk_core;
+struct dentry;
 
 /**
- * काष्ठा clk_rate_request - Structure encoding the clk स्थिरraपूर्णांकs that
- * a घड़ी user might require.
+ * struct clk_rate_request - Structure encoding the clk constraints that
+ * a clock user might require.
  *
- * @rate:		Requested घड़ी rate. This field will be adjusted by
- *			घड़ी drivers according to hardware capabilities.
+ * @rate:		Requested clock rate. This field will be adjusted by
+ *			clock drivers according to hardware capabilities.
  * @min_rate:		Minimum rate imposed by clk users.
  * @max_rate:		Maximum rate imposed by clk users.
  * @best_parent_rate:	The best parent rate a parent can provide to fulfill the
- *			requested स्थिरraपूर्णांकs.
- * @best_parent_hw:	The most appropriate parent घड़ी that fulfills the
- *			requested स्थिरraपूर्णांकs.
+ *			requested constraints.
+ * @best_parent_hw:	The most appropriate parent clock that fulfills the
+ *			requested constraints.
  *
  */
-काष्ठा clk_rate_request अणु
-	अचिन्हित दीर्घ rate;
-	अचिन्हित दीर्घ min_rate;
-	अचिन्हित दीर्घ max_rate;
-	अचिन्हित दीर्घ best_parent_rate;
-	काष्ठा clk_hw *best_parent_hw;
-पूर्ण;
+struct clk_rate_request {
+	unsigned long rate;
+	unsigned long min_rate;
+	unsigned long max_rate;
+	unsigned long best_parent_rate;
+	struct clk_hw *best_parent_hw;
+};
 
 /**
- * काष्ठा clk_duty - Struture encoding the duty cycle ratio of a घड़ी
+ * struct clk_duty - Struture encoding the duty cycle ratio of a clock
  *
  * @num:	Numerator of the duty cycle ratio
  * @den:	Denominator of the duty cycle ratio
  */
-काष्ठा clk_duty अणु
-	अचिन्हित पूर्णांक num;
-	अचिन्हित पूर्णांक den;
-पूर्ण;
+struct clk_duty {
+	unsigned int num;
+	unsigned int den;
+};
 
 /**
- * काष्ठा clk_ops -  Callback operations क्रम hardware घड़ीs; these are to
- * be provided by the घड़ी implementation, and will be called by drivers
+ * struct clk_ops -  Callback operations for hardware clocks; these are to
+ * be provided by the clock implementation, and will be called by drivers
  * through the clk_* api.
  *
- * @prepare:	Prepare the घड़ी क्रम enabling. This must not वापस until
- *		the घड़ी is fully prepared, and it's safe to call clk_enable.
- *		This callback is पूर्णांकended to allow घड़ी implementations to
- *		करो any initialisation that may sleep. Called with
+ * @prepare:	Prepare the clock for enabling. This must not return until
+ *		the clock is fully prepared, and it's safe to call clk_enable.
+ *		This callback is intended to allow clock implementations to
+ *		do any initialisation that may sleep. Called with
  *		prepare_lock held.
  *
- * @unprepare:	Release the घड़ी from its prepared state. This will typically
- *		unकरो any work करोne in the @prepare callback. Called with
+ * @unprepare:	Release the clock from its prepared state. This will typically
+ *		undo any work done in the @prepare callback. Called with
  *		prepare_lock held.
  *
- * @is_prepared: Queries the hardware to determine अगर the घड़ी is prepared.
- *		This function is allowed to sleep. Optional, अगर this op is not
+ * @is_prepared: Queries the hardware to determine if the clock is prepared.
+ *		This function is allowed to sleep. Optional, if this op is not
  *		set then the prepare count will be used.
  *
- * @unprepare_unused: Unprepare the घड़ी atomically.  Only called from
- *		clk_disable_unused क्रम prepare घड़ीs with special needs.
+ * @unprepare_unused: Unprepare the clock atomically.  Only called from
+ *		clk_disable_unused for prepare clocks with special needs.
  *		Called with prepare mutex held. This function may sleep.
  *
- * @enable:	Enable the घड़ी atomically. This must not वापस until the
- *		घड़ी is generating a valid घड़ी संकेत, usable by consumer
+ * @enable:	Enable the clock atomically. This must not return until the
+ *		clock is generating a valid clock signal, usable by consumer
  *		devices. Called with enable_lock held. This function must not
  *		sleep.
  *
- * @disable:	Disable the घड़ी atomically. Called with enable_lock held.
+ * @disable:	Disable the clock atomically. Called with enable_lock held.
  *		This function must not sleep.
  *
- * @is_enabled:	Queries the hardware to determine अगर the घड़ी is enabled.
- *		This function must not sleep. Optional, अगर this op is not
+ * @is_enabled:	Queries the hardware to determine if the clock is enabled.
+ *		This function must not sleep. Optional, if this op is not
  *		set then the enable count will be used.
  *
- * @disable_unused: Disable the घड़ी atomically.  Only called from
- *		clk_disable_unused क्रम gate घड़ीs with special needs.
+ * @disable_unused: Disable the clock atomically.  Only called from
+ *		clk_disable_unused for gate clocks with special needs.
  *		Called with enable_lock held.  This function must not
  *		sleep.
  *
- * @save_context: Save the context of the घड़ी in prepration क्रम घातeroff.
+ * @save_context: Save the context of the clock in prepration for poweroff.
  *
- * @restore_context: Restore the context of the घड़ी after a restoration
- *		of घातer.
+ * @restore_context: Restore the context of the clock after a restoration
+ *		of power.
  *
- * @recalc_rate	Recalculate the rate of this घड़ी, by querying hardware. The
+ * @recalc_rate	Recalculate the rate of this clock, by querying hardware. The
  *		parent rate is an input parameter.  It is up to the caller to
  *		ensure that the prepare_mutex is held across this call.
- *		Returns the calculated rate.  Optional, but recommended - अगर
- *		this op is not set then घड़ी rate will be initialized to 0.
+ *		Returns the calculated rate.  Optional, but recommended - if
+ *		this op is not set then clock rate will be initialized to 0.
  *
- * @round_rate:	Given a target rate as input, वापसs the बंदst rate actually
- *		supported by the घड़ी. The parent rate is an input/output
+ * @round_rate:	Given a target rate as input, returns the closest rate actually
+ *		supported by the clock. The parent rate is an input/output
  *		parameter.
  *
- * @determine_rate: Given a target rate as input, वापसs the बंदst rate
- *		actually supported by the घड़ी, and optionally the parent घड़ी
- *		that should be used to provide the घड़ी rate.
+ * @determine_rate: Given a target rate as input, returns the closest rate
+ *		actually supported by the clock, and optionally the parent clock
+ *		that should be used to provide the clock rate.
  *
- * @set_parent:	Change the input source of this घड़ी; क्रम घड़ीs with multiple
- *		possible parents specअगरy a new parent by passing in the index
+ * @set_parent:	Change the input source of this clock; for clocks with multiple
+ *		possible parents specify a new parent by passing in the index
  *		as a u8 corresponding to the parent in either the .parent_names
  *		or .parents arrays.  This function in affect translates an
- *		array index पूर्णांकo the value programmed पूर्णांकo the hardware.
+ *		array index into the value programmed into the hardware.
  *		Returns 0 on success, -EERROR otherwise.
  *
- * @get_parent:	Queries the hardware to determine the parent of a घड़ी.  The
- *		वापस value is a u8 which specअगरies the index corresponding to
- *		the parent घड़ी.  This index can be applied to either the
- *		.parent_names or .parents arrays.  In लघु, this function
- *		translates the parent value पढ़ो from hardware पूर्णांकo an array
- *		index.  Currently only called when the घड़ी is initialized by
- *		__clk_init.  This callback is mandatory क्रम घड़ीs with
- *		multiple parents.  It is optional (and unnecessary) क्रम घड़ीs
+ * @get_parent:	Queries the hardware to determine the parent of a clock.  The
+ *		return value is a u8 which specifies the index corresponding to
+ *		the parent clock.  This index can be applied to either the
+ *		.parent_names or .parents arrays.  In short, this function
+ *		translates the parent value read from hardware into an array
+ *		index.  Currently only called when the clock is initialized by
+ *		__clk_init.  This callback is mandatory for clocks with
+ *		multiple parents.  It is optional (and unnecessary) for clocks
  *		with 0 or 1 parents.
  *
- * @set_rate:	Change the rate of this घड़ी. The requested rate is specअगरied
- *		by the second argument, which should typically be the वापस
+ * @set_rate:	Change the rate of this clock. The requested rate is specified
+ *		by the second argument, which should typically be the return
  *		of .round_rate call.  The third argument gives the parent rate
- *		which is likely helpful क्रम most .set_rate implementation.
+ *		which is likely helpful for most .set_rate implementation.
  *		Returns 0 on success, -EERROR otherwise.
  *
- * @set_rate_and_parent: Change the rate and the parent of this घड़ी. The
- *		requested rate is specअगरied by the second argument, which
- *		should typically be the वापस of .round_rate call.  The
+ * @set_rate_and_parent: Change the rate and the parent of this clock. The
+ *		requested rate is specified by the second argument, which
+ *		should typically be the return of .round_rate call.  The
  *		third argument gives the parent rate which is likely helpful
- *		क्रम most .set_rate_and_parent implementation. The fourth
+ *		for most .set_rate_and_parent implementation. The fourth
  *		argument gives the parent index. This callback is optional (and
- *		unnecessary) क्रम घड़ीs with 0 or 1 parents as well as
- *		क्रम घड़ीs that can tolerate चयनing the rate and the parent
+ *		unnecessary) for clocks with 0 or 1 parents as well as
+ *		for clocks that can tolerate switching the rate and the parent
  *		separately via calls to .set_parent and .set_rate.
  *		Returns 0 on success, -EERROR otherwise.
  *
- * @recalc_accuracy: Recalculate the accuracy of this घड़ी. The घड़ी accuracy
+ * @recalc_accuracy: Recalculate the accuracy of this clock. The clock accuracy
  *		is expressed in ppb (parts per billion). The parent accuracy is
  *		an input parameter.
- *		Returns the calculated accuracy.  Optional - अगर	this op is not
- *		set then घड़ी accuracy will be initialized to parent accuracy
- *		or 0 (perfect घड़ी) अगर घड़ी has no parent.
+ *		Returns the calculated accuracy.  Optional - if	this op is not
+ *		set then clock accuracy will be initialized to parent accuracy
+ *		or 0 (perfect clock) if clock has no parent.
  *
- * @get_phase:	Queries the hardware to get the current phase of a घड़ी.
+ * @get_phase:	Queries the hardware to get the current phase of a clock.
  *		Returned values are 0-359 degrees on success, negative
  *		error codes on failure.
  *
- * @set_phase:	Shअगरt the phase this घड़ी संकेत in degrees specअगरied
- *		by the second argument. Valid values क्रम degrees are
+ * @set_phase:	Shift the phase this clock signal in degrees specified
+ *		by the second argument. Valid values for degrees are
  *		0-359. Return 0 on success, otherwise -EERROR.
  *
  * @get_duty_cycle: Queries the hardware to get the current duty cycle ratio
- *              of a घड़ी. Returned values denominator cannot be 0 and must be
+ *              of a clock. Returned values denominator cannot be 0 and must be
  *              superior or equal to the numerator.
  *
- * @set_duty_cycle: Apply the duty cycle ratio to this घड़ी संकेत specअगरied by
+ * @set_duty_cycle: Apply the duty cycle ratio to this clock signal specified by
  *              the numerator (2nd argurment) and denominator (3rd  argument).
  *              Argument must be a valid ratio (denominator > 0
  *              and >= numerator) Return 0 on success, otherwise -EERROR.
  *
- * @init:	Perक्रमm platक्रमm-specअगरic initialization magic.
- *		This is not used by any of the basic घड़ी types.
- *		This callback exist क्रम HW which needs to perक्रमm some
- *		initialisation magic क्रम CCF to get an accurate view of the
- *		घड़ी. It may also be used dynamic resource allocation is
- *		required. It shall not used to deal with घड़ी parameters,
+ * @init:	Perform platform-specific initialization magic.
+ *		This is not used by any of the basic clock types.
+ *		This callback exist for HW which needs to perform some
+ *		initialisation magic for CCF to get an accurate view of the
+ *		clock. It may also be used dynamic resource allocation is
+ *		required. It shall not used to deal with clock parameters,
  *		such as rate or parents.
  *		Returns 0 on success, -EERROR otherwise.
  *
  * @terminate:  Free any resource allocated by init.
  *
- * @debug_init:	Set up type-specअगरic debugfs entries क्रम this घड़ी.  This
- *		is called once, after the debugfs directory entry क्रम this
- *		घड़ी has been created.  The dentry poपूर्णांकer representing that
+ * @debug_init:	Set up type-specific debugfs entries for this clock.  This
+ *		is called once, after the debugfs directory entry for this
+ *		clock has been created.  The dentry pointer representing that
  *		directory is provided as an argument.  Called with
  *		prepare_lock held.  Returns 0 on success, -EERROR otherwise.
  *
  *
  * The clk_enable/clk_disable and clk_prepare/clk_unprepare pairs allow
  * implementations to split any work between atomic (enable) and sleepable
- * (prepare) contexts.  If enabling a घड़ी requires code that might sleep,
- * this must be करोne in clk_prepare.  Clock enable code that will never be
+ * (prepare) contexts.  If enabling a clock requires code that might sleep,
+ * this must be done in clk_prepare.  Clock enable code that will never be
  * called in a sleepable context may be implemented in clk_enable.
  *
- * Typically, drivers will call clk_prepare when a घड़ी may be needed later
- * (eg. when a device is खोलोed), and clk_enable when the घड़ी is actually
- * required (eg. from an पूर्णांकerrupt). Note that clk_prepare MUST have been
- * called beक्रमe clk_enable.
+ * Typically, drivers will call clk_prepare when a clock may be needed later
+ * (eg. when a device is opened), and clk_enable when the clock is actually
+ * required (eg. from an interrupt). Note that clk_prepare MUST have been
+ * called before clk_enable.
  */
-काष्ठा clk_ops अणु
-	पूर्णांक		(*prepare)(काष्ठा clk_hw *hw);
-	व्योम		(*unprepare)(काष्ठा clk_hw *hw);
-	पूर्णांक		(*is_prepared)(काष्ठा clk_hw *hw);
-	व्योम		(*unprepare_unused)(काष्ठा clk_hw *hw);
-	पूर्णांक		(*enable)(काष्ठा clk_hw *hw);
-	व्योम		(*disable)(काष्ठा clk_hw *hw);
-	पूर्णांक		(*is_enabled)(काष्ठा clk_hw *hw);
-	व्योम		(*disable_unused)(काष्ठा clk_hw *hw);
-	पूर्णांक		(*save_context)(काष्ठा clk_hw *hw);
-	व्योम		(*restore_context)(काष्ठा clk_hw *hw);
-	अचिन्हित दीर्घ	(*recalc_rate)(काष्ठा clk_hw *hw,
-					अचिन्हित दीर्घ parent_rate);
-	दीर्घ		(*round_rate)(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-					अचिन्हित दीर्घ *parent_rate);
-	पूर्णांक		(*determine_rate)(काष्ठा clk_hw *hw,
-					  काष्ठा clk_rate_request *req);
-	पूर्णांक		(*set_parent)(काष्ठा clk_hw *hw, u8 index);
-	u8		(*get_parent)(काष्ठा clk_hw *hw);
-	पूर्णांक		(*set_rate)(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				    अचिन्हित दीर्घ parent_rate);
-	पूर्णांक		(*set_rate_and_parent)(काष्ठा clk_hw *hw,
-				    अचिन्हित दीर्घ rate,
-				    अचिन्हित दीर्घ parent_rate, u8 index);
-	अचिन्हित दीर्घ	(*recalc_accuracy)(काष्ठा clk_hw *hw,
-					   अचिन्हित दीर्घ parent_accuracy);
-	पूर्णांक		(*get_phase)(काष्ठा clk_hw *hw);
-	पूर्णांक		(*set_phase)(काष्ठा clk_hw *hw, पूर्णांक degrees);
-	पूर्णांक		(*get_duty_cycle)(काष्ठा clk_hw *hw,
-					  काष्ठा clk_duty *duty);
-	पूर्णांक		(*set_duty_cycle)(काष्ठा clk_hw *hw,
-					  काष्ठा clk_duty *duty);
-	पूर्णांक		(*init)(काष्ठा clk_hw *hw);
-	व्योम		(*terminate)(काष्ठा clk_hw *hw);
-	व्योम		(*debug_init)(काष्ठा clk_hw *hw, काष्ठा dentry *dentry);
-पूर्ण;
+struct clk_ops {
+	int		(*prepare)(struct clk_hw *hw);
+	void		(*unprepare)(struct clk_hw *hw);
+	int		(*is_prepared)(struct clk_hw *hw);
+	void		(*unprepare_unused)(struct clk_hw *hw);
+	int		(*enable)(struct clk_hw *hw);
+	void		(*disable)(struct clk_hw *hw);
+	int		(*is_enabled)(struct clk_hw *hw);
+	void		(*disable_unused)(struct clk_hw *hw);
+	int		(*save_context)(struct clk_hw *hw);
+	void		(*restore_context)(struct clk_hw *hw);
+	unsigned long	(*recalc_rate)(struct clk_hw *hw,
+					unsigned long parent_rate);
+	long		(*round_rate)(struct clk_hw *hw, unsigned long rate,
+					unsigned long *parent_rate);
+	int		(*determine_rate)(struct clk_hw *hw,
+					  struct clk_rate_request *req);
+	int		(*set_parent)(struct clk_hw *hw, u8 index);
+	u8		(*get_parent)(struct clk_hw *hw);
+	int		(*set_rate)(struct clk_hw *hw, unsigned long rate,
+				    unsigned long parent_rate);
+	int		(*set_rate_and_parent)(struct clk_hw *hw,
+				    unsigned long rate,
+				    unsigned long parent_rate, u8 index);
+	unsigned long	(*recalc_accuracy)(struct clk_hw *hw,
+					   unsigned long parent_accuracy);
+	int		(*get_phase)(struct clk_hw *hw);
+	int		(*set_phase)(struct clk_hw *hw, int degrees);
+	int		(*get_duty_cycle)(struct clk_hw *hw,
+					  struct clk_duty *duty);
+	int		(*set_duty_cycle)(struct clk_hw *hw,
+					  struct clk_duty *duty);
+	int		(*init)(struct clk_hw *hw);
+	void		(*terminate)(struct clk_hw *hw);
+	void		(*debug_init)(struct clk_hw *hw, struct dentry *dentry);
+};
 
 /**
- * काष्ठा clk_parent_data - clk parent inक्रमmation
- * @hw: parent clk_hw poपूर्णांकer (used क्रम clk providers with पूर्णांकernal clks)
- * @fw_name: parent name local to provider रेजिस्टरing clk
+ * struct clk_parent_data - clk parent information
+ * @hw: parent clk_hw pointer (used for clk providers with internal clks)
+ * @fw_name: parent name local to provider registering clk
  * @name: globally unique parent name (used as a fallback)
- * @index: parent index local to provider रेजिस्टरing clk (अगर @fw_name असलent)
+ * @index: parent index local to provider registering clk (if @fw_name absent)
  */
-काष्ठा clk_parent_data अणु
-	स्थिर काष्ठा clk_hw	*hw;
-	स्थिर अक्षर		*fw_name;
-	स्थिर अक्षर		*name;
-	पूर्णांक			index;
-पूर्ण;
+struct clk_parent_data {
+	const struct clk_hw	*hw;
+	const char		*fw_name;
+	const char		*name;
+	int			index;
+};
 
 /**
- * काष्ठा clk_init_data - holds init data that's common to all घड़ीs and is
- * shared between the घड़ी provider and the common घड़ी framework.
+ * struct clk_init_data - holds init data that's common to all clocks and is
+ * shared between the clock provider and the common clock framework.
  *
- * @name: घड़ी name
- * @ops: operations this घड़ी supports
- * @parent_names: array of string names क्रम all possible parents
- * @parent_data: array of parent data क्रम all possible parents (when some
- *               parents are बाह्यal to the clk controller)
- * @parent_hws: array of poपूर्णांकers to all possible parents (when all parents
- *              are पूर्णांकernal to the clk controller)
+ * @name: clock name
+ * @ops: operations this clock supports
+ * @parent_names: array of string names for all possible parents
+ * @parent_data: array of parent data for all possible parents (when some
+ *               parents are external to the clk controller)
+ * @parent_hws: array of pointers to all possible parents (when all parents
+ *              are internal to the clk controller)
  * @num_parents: number of possible parents
- * @flags: framework-level hपूर्णांकs and quirks
+ * @flags: framework-level hints and quirks
  */
-काष्ठा clk_init_data अणु
-	स्थिर अक्षर		*name;
-	स्थिर काष्ठा clk_ops	*ops;
-	/* Only one of the following three should be asचिन्हित */
-	स्थिर अक्षर		* स्थिर *parent_names;
-	स्थिर काष्ठा clk_parent_data	*parent_data;
-	स्थिर काष्ठा clk_hw		**parent_hws;
+struct clk_init_data {
+	const char		*name;
+	const struct clk_ops	*ops;
+	/* Only one of the following three should be assigned */
+	const char		* const *parent_names;
+	const struct clk_parent_data	*parent_data;
+	const struct clk_hw		**parent_hws;
 	u8			num_parents;
-	अचिन्हित दीर्घ		flags;
-पूर्ण;
+	unsigned long		flags;
+};
 
 /**
- * काष्ठा clk_hw - handle क्रम traversing from a काष्ठा clk to its corresponding
- * hardware-specअगरic काष्ठाure.  काष्ठा clk_hw should be declared within काष्ठा
- * clk_foo and then referenced by the काष्ठा clk instance that uses काष्ठा
+ * struct clk_hw - handle for traversing from a struct clk to its corresponding
+ * hardware-specific structure.  struct clk_hw should be declared within struct
+ * clk_foo and then referenced by the struct clk instance that uses struct
  * clk_foo's clk_ops
  *
- * @core: poपूर्णांकer to the काष्ठा clk_core instance that poपूर्णांकs back to this
- * काष्ठा clk_hw instance
+ * @core: pointer to the struct clk_core instance that points back to this
+ * struct clk_hw instance
  *
- * @clk: poपूर्णांकer to the per-user काष्ठा clk instance that can be used to call
- * पूर्णांकo the clk API
+ * @clk: pointer to the per-user struct clk instance that can be used to call
+ * into the clk API
  *
- * @init: poपूर्णांकer to काष्ठा clk_init_data that contains the init data shared
- * with the common घड़ी framework. This poपूर्णांकer will be set to शून्य once
- * a clk_रेजिस्टर() variant is called on this clk_hw poपूर्णांकer.
+ * @init: pointer to struct clk_init_data that contains the init data shared
+ * with the common clock framework. This pointer will be set to NULL once
+ * a clk_register() variant is called on this clk_hw pointer.
  */
-काष्ठा clk_hw अणु
-	काष्ठा clk_core *core;
-	काष्ठा clk *clk;
-	स्थिर काष्ठा clk_init_data *init;
-पूर्ण;
+struct clk_hw {
+	struct clk_core *core;
+	struct clk *clk;
+	const struct clk_init_data *init;
+};
 
 /*
- * DOC: Basic घड़ी implementations common to many platक्रमms
+ * DOC: Basic clock implementations common to many platforms
  *
- * Each basic घड़ी hardware type is comprised of a काष्ठाure describing the
- * घड़ी hardware, implementations of the relevant callbacks in काष्ठा clk_ops,
- * unique flags क्रम that hardware type, a registration function and an
- * alternative macro क्रम अटल initialization
+ * Each basic clock hardware type is comprised of a structure describing the
+ * clock hardware, implementations of the relevant callbacks in struct clk_ops,
+ * unique flags for that hardware type, a registration function and an
+ * alternative macro for static initialization
  */
 
 /**
- * काष्ठा clk_fixed_rate - fixed-rate घड़ी
- * @hw:		handle between common and hardware-specअगरic पूर्णांकerfaces
- * @fixed_rate:	स्थिरant frequency of घड़ी
- * @fixed_accuracy: स्थिरant accuracy of घड़ी in ppb (parts per billion)
- * @flags:	hardware specअगरic flags
+ * struct clk_fixed_rate - fixed-rate clock
+ * @hw:		handle between common and hardware-specific interfaces
+ * @fixed_rate:	constant frequency of clock
+ * @fixed_accuracy: constant accuracy of clock in ppb (parts per billion)
+ * @flags:	hardware specific flags
  *
  * Flags:
  * * CLK_FIXED_RATE_PARENT_ACCURACY - Use the accuracy of the parent clk
  *                                    instead of what's set in @fixed_accuracy.
  */
-काष्ठा clk_fixed_rate अणु
-	काष्ठा		clk_hw hw;
-	अचिन्हित दीर्घ	fixed_rate;
-	अचिन्हित दीर्घ	fixed_accuracy;
-	अचिन्हित दीर्घ	flags;
-पूर्ण;
+struct clk_fixed_rate {
+	struct		clk_hw hw;
+	unsigned long	fixed_rate;
+	unsigned long	fixed_accuracy;
+	unsigned long	flags;
+};
 
-#घोषणा CLK_FIXED_RATE_PARENT_ACCURACY		BIT(0)
+#define CLK_FIXED_RATE_PARENT_ACCURACY		BIT(0)
 
-बाह्य स्थिर काष्ठा clk_ops clk_fixed_rate_ops;
-काष्ठा clk_hw *__clk_hw_रेजिस्टर_fixed_rate(काष्ठा device *dev,
-		काष्ठा device_node *np, स्थिर अक्षर *name,
-		स्थिर अक्षर *parent_name, स्थिर काष्ठा clk_hw *parent_hw,
-		स्थिर काष्ठा clk_parent_data *parent_data, अचिन्हित दीर्घ flags,
-		अचिन्हित दीर्घ fixed_rate, अचिन्हित दीर्घ fixed_accuracy,
-		अचिन्हित दीर्घ clk_fixed_flags);
-काष्ठा clk *clk_रेजिस्टर_fixed_rate(काष्ठा device *dev, स्थिर अक्षर *name,
-		स्थिर अक्षर *parent_name, अचिन्हित दीर्घ flags,
-		अचिन्हित दीर्घ fixed_rate);
+extern const struct clk_ops clk_fixed_rate_ops;
+struct clk_hw *__clk_hw_register_fixed_rate(struct device *dev,
+		struct device_node *np, const char *name,
+		const char *parent_name, const struct clk_hw *parent_hw,
+		const struct clk_parent_data *parent_data, unsigned long flags,
+		unsigned long fixed_rate, unsigned long fixed_accuracy,
+		unsigned long clk_fixed_flags);
+struct clk *clk_register_fixed_rate(struct device *dev, const char *name,
+		const char *parent_name, unsigned long flags,
+		unsigned long fixed_rate);
 /**
- * clk_hw_रेजिस्टर_fixed_rate - रेजिस्टर fixed-rate घड़ी with the घड़ी
+ * clk_hw_register_fixed_rate - register fixed-rate clock with the clock
  * framework
- * @dev: device that is रेजिस्टरing this घड़ी
- * @name: name of this घड़ी
- * @parent_name: name of घड़ी's parent
- * @flags: framework-specअगरic flags
- * @fixed_rate: non-adjustable घड़ी rate
+ * @dev: device that is registering this clock
+ * @name: name of this clock
+ * @parent_name: name of clock's parent
+ * @flags: framework-specific flags
+ * @fixed_rate: non-adjustable clock rate
  */
-#घोषणा clk_hw_रेजिस्टर_fixed_rate(dev, name, parent_name, flags, fixed_rate)  \
-	__clk_hw_रेजिस्टर_fixed_rate((dev), शून्य, (name), (parent_name), शून्य, \
-				     शून्य, (flags), (fixed_rate), 0, 0)
+#define clk_hw_register_fixed_rate(dev, name, parent_name, flags, fixed_rate)  \
+	__clk_hw_register_fixed_rate((dev), NULL, (name), (parent_name), NULL, \
+				     NULL, (flags), (fixed_rate), 0, 0)
 /**
- * clk_hw_रेजिस्टर_fixed_rate_parent_hw - रेजिस्टर fixed-rate घड़ी with
- * the घड़ी framework
- * @dev: device that is रेजिस्टरing this घड़ी
- * @name: name of this घड़ी
- * @parent_hw: poपूर्णांकer to parent clk
- * @flags: framework-specअगरic flags
- * @fixed_rate: non-adjustable घड़ी rate
+ * clk_hw_register_fixed_rate_parent_hw - register fixed-rate clock with
+ * the clock framework
+ * @dev: device that is registering this clock
+ * @name: name of this clock
+ * @parent_hw: pointer to parent clk
+ * @flags: framework-specific flags
+ * @fixed_rate: non-adjustable clock rate
  */
-#घोषणा clk_hw_रेजिस्टर_fixed_rate_parent_hw(dev, name, parent_hw, flags,     \
+#define clk_hw_register_fixed_rate_parent_hw(dev, name, parent_hw, flags,     \
 					     fixed_rate)		      \
-	__clk_hw_रेजिस्टर_fixed_rate((dev), शून्य, (name), शून्य, (parent_hw),  \
-				     शून्य, (flags), (fixed_rate), 0, 0)
+	__clk_hw_register_fixed_rate((dev), NULL, (name), NULL, (parent_hw),  \
+				     NULL, (flags), (fixed_rate), 0, 0)
 /**
- * clk_hw_रेजिस्टर_fixed_rate_parent_data - रेजिस्टर fixed-rate घड़ी with
- * the घड़ी framework
- * @dev: device that is रेजिस्टरing this घड़ी
- * @name: name of this घड़ी
+ * clk_hw_register_fixed_rate_parent_data - register fixed-rate clock with
+ * the clock framework
+ * @dev: device that is registering this clock
+ * @name: name of this clock
  * @parent_data: parent clk data
- * @flags: framework-specअगरic flags
- * @fixed_rate: non-adjustable घड़ी rate
+ * @flags: framework-specific flags
+ * @fixed_rate: non-adjustable clock rate
  */
-#घोषणा clk_hw_रेजिस्टर_fixed_rate_parent_data(dev, name, parent_hw, flags,   \
+#define clk_hw_register_fixed_rate_parent_data(dev, name, parent_hw, flags,   \
 					     fixed_rate)		      \
-	__clk_hw_रेजिस्टर_fixed_rate((dev), शून्य, (name), शून्य, शून्य,	      \
+	__clk_hw_register_fixed_rate((dev), NULL, (name), NULL, NULL,	      \
 				     (parent_data), (flags), (fixed_rate), 0, \
 				     0)
 /**
- * clk_hw_रेजिस्टर_fixed_rate_with_accuracy - रेजिस्टर fixed-rate घड़ी with
- * the घड़ी framework
- * @dev: device that is रेजिस्टरing this घड़ी
- * @name: name of this घड़ी
- * @parent_name: name of घड़ी's parent
- * @flags: framework-specअगरic flags
- * @fixed_rate: non-adjustable घड़ी rate
- * @fixed_accuracy: non-adjustable घड़ी accuracy
+ * clk_hw_register_fixed_rate_with_accuracy - register fixed-rate clock with
+ * the clock framework
+ * @dev: device that is registering this clock
+ * @name: name of this clock
+ * @parent_name: name of clock's parent
+ * @flags: framework-specific flags
+ * @fixed_rate: non-adjustable clock rate
+ * @fixed_accuracy: non-adjustable clock accuracy
  */
-#घोषणा clk_hw_रेजिस्टर_fixed_rate_with_accuracy(dev, name, parent_name,      \
+#define clk_hw_register_fixed_rate_with_accuracy(dev, name, parent_name,      \
 						 flags, fixed_rate,	      \
 						 fixed_accuracy)	      \
-	__clk_hw_रेजिस्टर_fixed_rate((dev), शून्य, (name), (parent_name),      \
-				     शून्य, शून्य, (flags), (fixed_rate),       \
+	__clk_hw_register_fixed_rate((dev), NULL, (name), (parent_name),      \
+				     NULL, NULL, (flags), (fixed_rate),       \
 				     (fixed_accuracy), 0)
 /**
- * clk_hw_रेजिस्टर_fixed_rate_with_accuracy_parent_hw - रेजिस्टर fixed-rate
- * घड़ी with the घड़ी framework
- * @dev: device that is रेजिस्टरing this घड़ी
- * @name: name of this घड़ी
- * @parent_hw: poपूर्णांकer to parent clk
- * @flags: framework-specअगरic flags
- * @fixed_rate: non-adjustable घड़ी rate
- * @fixed_accuracy: non-adjustable घड़ी accuracy
+ * clk_hw_register_fixed_rate_with_accuracy_parent_hw - register fixed-rate
+ * clock with the clock framework
+ * @dev: device that is registering this clock
+ * @name: name of this clock
+ * @parent_hw: pointer to parent clk
+ * @flags: framework-specific flags
+ * @fixed_rate: non-adjustable clock rate
+ * @fixed_accuracy: non-adjustable clock accuracy
  */
-#घोषणा clk_hw_रेजिस्टर_fixed_rate_with_accuracy_parent_hw(dev, name,	      \
+#define clk_hw_register_fixed_rate_with_accuracy_parent_hw(dev, name,	      \
 		parent_hw, flags, fixed_rate, fixed_accuracy)		      \
-	__clk_hw_रेजिस्टर_fixed_rate((dev), शून्य, (name), शून्य, (parent_hw)   \
-				     शून्य, शून्य, (flags), (fixed_rate),	      \
+	__clk_hw_register_fixed_rate((dev), NULL, (name), NULL, (parent_hw)   \
+				     NULL, NULL, (flags), (fixed_rate),	      \
 				     (fixed_accuracy), 0)
 /**
- * clk_hw_रेजिस्टर_fixed_rate_with_accuracy_parent_data - रेजिस्टर fixed-rate
- * घड़ी with the घड़ी framework
- * @dev: device that is रेजिस्टरing this घड़ी
- * @name: name of this घड़ी
- * @parent_name: name of घड़ी's parent
- * @flags: framework-specअगरic flags
- * @fixed_rate: non-adjustable घड़ी rate
- * @fixed_accuracy: non-adjustable घड़ी accuracy
+ * clk_hw_register_fixed_rate_with_accuracy_parent_data - register fixed-rate
+ * clock with the clock framework
+ * @dev: device that is registering this clock
+ * @name: name of this clock
+ * @parent_name: name of clock's parent
+ * @flags: framework-specific flags
+ * @fixed_rate: non-adjustable clock rate
+ * @fixed_accuracy: non-adjustable clock accuracy
  */
-#घोषणा clk_hw_रेजिस्टर_fixed_rate_with_accuracy_parent_data(dev, name,	      \
+#define clk_hw_register_fixed_rate_with_accuracy_parent_data(dev, name,	      \
 		parent_data, flags, fixed_rate, fixed_accuracy)		      \
-	__clk_hw_रेजिस्टर_fixed_rate((dev), शून्य, (name), शून्य, शून्य,	      \
-				     (parent_data), शून्य, (flags),	      \
+	__clk_hw_register_fixed_rate((dev), NULL, (name), NULL, NULL,	      \
+				     (parent_data), NULL, (flags),	      \
 				     (fixed_rate), (fixed_accuracy), 0)
 
-व्योम clk_unरेजिस्टर_fixed_rate(काष्ठा clk *clk);
-व्योम clk_hw_unरेजिस्टर_fixed_rate(काष्ठा clk_hw *hw);
+void clk_unregister_fixed_rate(struct clk *clk);
+void clk_hw_unregister_fixed_rate(struct clk_hw *hw);
 
-व्योम of_fixed_clk_setup(काष्ठा device_node *np);
+void of_fixed_clk_setup(struct device_node *np);
 
 /**
- * काष्ठा clk_gate - gating घड़ी
+ * struct clk_gate - gating clock
  *
- * @hw:		handle between common and hardware-specअगरic पूर्णांकerfaces
- * @reg:	रेजिस्टर controlling gate
+ * @hw:		handle between common and hardware-specific interfaces
+ * @reg:	register controlling gate
  * @bit_idx:	single bit controlling gate
- * @flags:	hardware-specअगरic flags
- * @lock:	रेजिस्टर lock
+ * @flags:	hardware-specific flags
+ * @lock:	register lock
  *
  * Clock which can gate its output.  Implements .enable & .disable
  *
  * Flags:
- * CLK_GATE_SET_TO_DISABLE - by शेष this घड़ी sets the bit at bit_idx to
- *	enable the घड़ी.  Setting this flag करोes the opposite: setting the bit
- *	disable the घड़ी and clearing it enables the घड़ी
+ * CLK_GATE_SET_TO_DISABLE - by default this clock sets the bit at bit_idx to
+ *	enable the clock.  Setting this flag does the opposite: setting the bit
+ *	disable the clock and clearing it enables the clock
  * CLK_GATE_HIWORD_MASK - The gate settings are only in lower 16-bit
- *	of this रेजिस्टर, and mask of gate bits are in higher 16-bit of this
- *	रेजिस्टर.  While setting the gate bits, higher 16-bit should also be
+ *	of this register, and mask of gate bits are in higher 16-bit of this
+ *	register.  While setting the gate bits, higher 16-bit should also be
  *	updated to indicate changing gate bits.
- * CLK_GATE_BIG_ENDIAN - by शेष little endian रेजिस्टर accesses are used क्रम
- *	the gate रेजिस्टर.  Setting this flag makes the रेजिस्टर accesses big
+ * CLK_GATE_BIG_ENDIAN - by default little endian register accesses are used for
+ *	the gate register.  Setting this flag makes the register accesses big
  *	endian.
  */
-काष्ठा clk_gate अणु
-	काष्ठा clk_hw hw;
-	व्योम __iomem	*reg;
+struct clk_gate {
+	struct clk_hw hw;
+	void __iomem	*reg;
 	u8		bit_idx;
 	u8		flags;
 	spinlock_t	*lock;
-पूर्ण;
+};
 
-#घोषणा to_clk_gate(_hw) container_of(_hw, काष्ठा clk_gate, hw)
+#define to_clk_gate(_hw) container_of(_hw, struct clk_gate, hw)
 
-#घोषणा CLK_GATE_SET_TO_DISABLE		BIT(0)
-#घोषणा CLK_GATE_HIWORD_MASK		BIT(1)
-#घोषणा CLK_GATE_BIG_ENDIAN		BIT(2)
+#define CLK_GATE_SET_TO_DISABLE		BIT(0)
+#define CLK_GATE_HIWORD_MASK		BIT(1)
+#define CLK_GATE_BIG_ENDIAN		BIT(2)
 
-बाह्य स्थिर काष्ठा clk_ops clk_gate_ops;
-काष्ठा clk_hw *__clk_hw_रेजिस्टर_gate(काष्ठा device *dev,
-		काष्ठा device_node *np, स्थिर अक्षर *name,
-		स्थिर अक्षर *parent_name, स्थिर काष्ठा clk_hw *parent_hw,
-		स्थिर काष्ठा clk_parent_data *parent_data,
-		अचिन्हित दीर्घ flags,
-		व्योम __iomem *reg, u8 bit_idx,
+extern const struct clk_ops clk_gate_ops;
+struct clk_hw *__clk_hw_register_gate(struct device *dev,
+		struct device_node *np, const char *name,
+		const char *parent_name, const struct clk_hw *parent_hw,
+		const struct clk_parent_data *parent_data,
+		unsigned long flags,
+		void __iomem *reg, u8 bit_idx,
 		u8 clk_gate_flags, spinlock_t *lock);
-काष्ठा clk *clk_रेजिस्टर_gate(काष्ठा device *dev, स्थिर अक्षर *name,
-		स्थिर अक्षर *parent_name, अचिन्हित दीर्घ flags,
-		व्योम __iomem *reg, u8 bit_idx,
+struct clk *clk_register_gate(struct device *dev, const char *name,
+		const char *parent_name, unsigned long flags,
+		void __iomem *reg, u8 bit_idx,
 		u8 clk_gate_flags, spinlock_t *lock);
 /**
- * clk_hw_रेजिस्टर_gate - रेजिस्टर a gate घड़ी with the घड़ी framework
- * @dev: device that is रेजिस्टरing this घड़ी
- * @name: name of this घड़ी
- * @parent_name: name of this घड़ी's parent
- * @flags: framework-specअगरic flags क्रम this घड़ी
- * @reg: रेजिस्टर address to control gating of this घड़ी
- * @bit_idx: which bit in the रेजिस्टर controls gating of this घड़ी
- * @clk_gate_flags: gate-specअगरic flags क्रम this घड़ी
- * @lock: shared रेजिस्टर lock क्रम this घड़ी
+ * clk_hw_register_gate - register a gate clock with the clock framework
+ * @dev: device that is registering this clock
+ * @name: name of this clock
+ * @parent_name: name of this clock's parent
+ * @flags: framework-specific flags for this clock
+ * @reg: register address to control gating of this clock
+ * @bit_idx: which bit in the register controls gating of this clock
+ * @clk_gate_flags: gate-specific flags for this clock
+ * @lock: shared register lock for this clock
  */
-#घोषणा clk_hw_रेजिस्टर_gate(dev, name, parent_name, flags, reg, bit_idx,     \
+#define clk_hw_register_gate(dev, name, parent_name, flags, reg, bit_idx,     \
 			     clk_gate_flags, lock)			      \
-	__clk_hw_रेजिस्टर_gate((dev), शून्य, (name), (parent_name), शून्य,      \
-			       शून्य, (flags), (reg), (bit_idx),		      \
+	__clk_hw_register_gate((dev), NULL, (name), (parent_name), NULL,      \
+			       NULL, (flags), (reg), (bit_idx),		      \
 			       (clk_gate_flags), (lock))
 /**
- * clk_hw_रेजिस्टर_gate_parent_hw - रेजिस्टर a gate घड़ी with the घड़ी
+ * clk_hw_register_gate_parent_hw - register a gate clock with the clock
  * framework
- * @dev: device that is रेजिस्टरing this घड़ी
- * @name: name of this घड़ी
- * @parent_hw: poपूर्णांकer to parent clk
- * @flags: framework-specअगरic flags क्रम this घड़ी
- * @reg: रेजिस्टर address to control gating of this घड़ी
- * @bit_idx: which bit in the रेजिस्टर controls gating of this घड़ी
- * @clk_gate_flags: gate-specअगरic flags क्रम this घड़ी
- * @lock: shared रेजिस्टर lock क्रम this घड़ी
+ * @dev: device that is registering this clock
+ * @name: name of this clock
+ * @parent_hw: pointer to parent clk
+ * @flags: framework-specific flags for this clock
+ * @reg: register address to control gating of this clock
+ * @bit_idx: which bit in the register controls gating of this clock
+ * @clk_gate_flags: gate-specific flags for this clock
+ * @lock: shared register lock for this clock
  */
-#घोषणा clk_hw_रेजिस्टर_gate_parent_hw(dev, name, parent_hw, flags, reg,      \
+#define clk_hw_register_gate_parent_hw(dev, name, parent_hw, flags, reg,      \
 				       bit_idx, clk_gate_flags, lock)	      \
-	__clk_hw_रेजिस्टर_gate((dev), शून्य, (name), शून्य, (parent_hw),        \
-			       शून्य, (flags), (reg), (bit_idx),		      \
+	__clk_hw_register_gate((dev), NULL, (name), NULL, (parent_hw),        \
+			       NULL, (flags), (reg), (bit_idx),		      \
 			       (clk_gate_flags), (lock))
 /**
- * clk_hw_रेजिस्टर_gate_parent_data - रेजिस्टर a gate घड़ी with the घड़ी
+ * clk_hw_register_gate_parent_data - register a gate clock with the clock
  * framework
- * @dev: device that is रेजिस्टरing this घड़ी
- * @name: name of this घड़ी
+ * @dev: device that is registering this clock
+ * @name: name of this clock
  * @parent_data: parent clk data
- * @flags: framework-specअगरic flags क्रम this घड़ी
- * @reg: रेजिस्टर address to control gating of this घड़ी
- * @bit_idx: which bit in the रेजिस्टर controls gating of this घड़ी
- * @clk_gate_flags: gate-specअगरic flags क्रम this घड़ी
- * @lock: shared रेजिस्टर lock क्रम this घड़ी
+ * @flags: framework-specific flags for this clock
+ * @reg: register address to control gating of this clock
+ * @bit_idx: which bit in the register controls gating of this clock
+ * @clk_gate_flags: gate-specific flags for this clock
+ * @lock: shared register lock for this clock
  */
-#घोषणा clk_hw_रेजिस्टर_gate_parent_data(dev, name, parent_data, flags, reg,  \
+#define clk_hw_register_gate_parent_data(dev, name, parent_data, flags, reg,  \
 				       bit_idx, clk_gate_flags, lock)	      \
-	__clk_hw_रेजिस्टर_gate((dev), शून्य, (name), शून्य, शून्य, (parent_data), \
+	__clk_hw_register_gate((dev), NULL, (name), NULL, NULL, (parent_data), \
 			       (flags), (reg), (bit_idx),		      \
 			       (clk_gate_flags), (lock))
-व्योम clk_unरेजिस्टर_gate(काष्ठा clk *clk);
-व्योम clk_hw_unरेजिस्टर_gate(काष्ठा clk_hw *hw);
-पूर्णांक clk_gate_is_enabled(काष्ठा clk_hw *hw);
+void clk_unregister_gate(struct clk *clk);
+void clk_hw_unregister_gate(struct clk_hw *hw);
+int clk_gate_is_enabled(struct clk_hw *hw);
 
-काष्ठा clk_भाग_प्रकारable अणु
-	अचिन्हित पूर्णांक	val;
-	अचिन्हित पूर्णांक	भाग;
-पूर्ण;
+struct clk_div_table {
+	unsigned int	val;
+	unsigned int	div;
+};
 
 /**
- * काष्ठा clk_भागider - adjustable भागider घड़ी
+ * struct clk_divider - adjustable divider clock
  *
- * @hw:		handle between common and hardware-specअगरic पूर्णांकerfaces
- * @reg:	रेजिस्टर containing the भागider
- * @shअगरt:	shअगरt to the भागider bit field
- * @width:	width of the भागider bit field
- * @table:	array of value/भागider pairs, last entry should have भाग = 0
- * @lock:	रेजिस्टर lock
+ * @hw:		handle between common and hardware-specific interfaces
+ * @reg:	register containing the divider
+ * @shift:	shift to the divider bit field
+ * @width:	width of the divider bit field
+ * @table:	array of value/divider pairs, last entry should have div = 0
+ * @lock:	register lock
  *
- * Clock with an adjustable भागider affecting its output frequency.  Implements
+ * Clock with an adjustable divider affecting its output frequency.  Implements
  * .recalc_rate, .set_rate and .round_rate
  *
  * Flags:
- * CLK_DIVIDER_ONE_BASED - by शेष the भागisor is the value पढ़ो from the
- *	रेजिस्टर plus one.  If CLK_DIVIDER_ONE_BASED is set then the भागider is
- *	the raw value पढ़ो from the रेजिस्टर, with the value of zero considered
+ * CLK_DIVIDER_ONE_BASED - by default the divisor is the value read from the
+ *	register plus one.  If CLK_DIVIDER_ONE_BASED is set then the divider is
+ *	the raw value read from the register, with the value of zero considered
  *	invalid, unless CLK_DIVIDER_ALLOW_ZERO is set.
- * CLK_DIVIDER_POWER_OF_TWO - घड़ी भागisor is 2 उठाओd to the value पढ़ो from
- *	the hardware रेजिस्टर
- * CLK_DIVIDER_ALLOW_ZERO - Allow zero भागisors.  For भागiders which have
- *	CLK_DIVIDER_ONE_BASED set, it is possible to end up with a zero भागisor.
- *	Some hardware implementations gracefully handle this हाल and allow a
- *	zero भागisor by not modअगरying their input घड़ी
- *	(भागide by one / bypass).
- * CLK_DIVIDER_HIWORD_MASK - The भागider settings are only in lower 16-bit
- *	of this रेजिस्टर, and mask of भागider bits are in higher 16-bit of this
- *	रेजिस्टर.  While setting the भागider bits, higher 16-bit should also be
- *	updated to indicate changing भागider bits.
- * CLK_DIVIDER_ROUND_CLOSEST - Makes the best calculated भागider to be rounded
- *	to the बंदst पूर्णांकeger instead of the up one.
- * CLK_DIVIDER_READ_ONLY - The भागider settings are preconfigured and should
- *	not be changed by the घड़ी framework.
- * CLK_DIVIDER_MAX_AT_ZERO - For भागiders which are like CLK_DIVIDER_ONE_BASED
- *	except when the value पढ़ो from the रेजिस्टर is zero, the भागisor is
+ * CLK_DIVIDER_POWER_OF_TWO - clock divisor is 2 raised to the value read from
+ *	the hardware register
+ * CLK_DIVIDER_ALLOW_ZERO - Allow zero divisors.  For dividers which have
+ *	CLK_DIVIDER_ONE_BASED set, it is possible to end up with a zero divisor.
+ *	Some hardware implementations gracefully handle this case and allow a
+ *	zero divisor by not modifying their input clock
+ *	(divide by one / bypass).
+ * CLK_DIVIDER_HIWORD_MASK - The divider settings are only in lower 16-bit
+ *	of this register, and mask of divider bits are in higher 16-bit of this
+ *	register.  While setting the divider bits, higher 16-bit should also be
+ *	updated to indicate changing divider bits.
+ * CLK_DIVIDER_ROUND_CLOSEST - Makes the best calculated divider to be rounded
+ *	to the closest integer instead of the up one.
+ * CLK_DIVIDER_READ_ONLY - The divider settings are preconfigured and should
+ *	not be changed by the clock framework.
+ * CLK_DIVIDER_MAX_AT_ZERO - For dividers which are like CLK_DIVIDER_ONE_BASED
+ *	except when the value read from the register is zero, the divisor is
  *	2^width of the field.
- * CLK_DIVIDER_BIG_ENDIAN - By शेष little endian रेजिस्टर accesses are used
- *	क्रम the भागider रेजिस्टर.  Setting this flag makes the रेजिस्टर accesses
+ * CLK_DIVIDER_BIG_ENDIAN - By default little endian register accesses are used
+ *	for the divider register.  Setting this flag makes the register accesses
  *	big endian.
  */
-काष्ठा clk_भागider अणु
-	काष्ठा clk_hw	hw;
-	व्योम __iomem	*reg;
-	u8		shअगरt;
+struct clk_divider {
+	struct clk_hw	hw;
+	void __iomem	*reg;
+	u8		shift;
 	u8		width;
 	u8		flags;
-	स्थिर काष्ठा clk_भाग_प्रकारable	*table;
+	const struct clk_div_table	*table;
 	spinlock_t	*lock;
-पूर्ण;
+};
 
-#घोषणा clk_भाग_mask(width)	((1 << (width)) - 1)
-#घोषणा to_clk_भागider(_hw) container_of(_hw, काष्ठा clk_भागider, hw)
+#define clk_div_mask(width)	((1 << (width)) - 1)
+#define to_clk_divider(_hw) container_of(_hw, struct clk_divider, hw)
 
-#घोषणा CLK_DIVIDER_ONE_BASED		BIT(0)
-#घोषणा CLK_DIVIDER_POWER_OF_TWO	BIT(1)
-#घोषणा CLK_DIVIDER_ALLOW_ZERO		BIT(2)
-#घोषणा CLK_DIVIDER_HIWORD_MASK		BIT(3)
-#घोषणा CLK_DIVIDER_ROUND_CLOSEST	BIT(4)
-#घोषणा CLK_DIVIDER_READ_ONLY		BIT(5)
-#घोषणा CLK_DIVIDER_MAX_AT_ZERO		BIT(6)
-#घोषणा CLK_DIVIDER_BIG_ENDIAN		BIT(7)
+#define CLK_DIVIDER_ONE_BASED		BIT(0)
+#define CLK_DIVIDER_POWER_OF_TWO	BIT(1)
+#define CLK_DIVIDER_ALLOW_ZERO		BIT(2)
+#define CLK_DIVIDER_HIWORD_MASK		BIT(3)
+#define CLK_DIVIDER_ROUND_CLOSEST	BIT(4)
+#define CLK_DIVIDER_READ_ONLY		BIT(5)
+#define CLK_DIVIDER_MAX_AT_ZERO		BIT(6)
+#define CLK_DIVIDER_BIG_ENDIAN		BIT(7)
 
-बाह्य स्थिर काष्ठा clk_ops clk_भागider_ops;
-बाह्य स्थिर काष्ठा clk_ops clk_भागider_ro_ops;
+extern const struct clk_ops clk_divider_ops;
+extern const struct clk_ops clk_divider_ro_ops;
 
-अचिन्हित दीर्घ भागider_recalc_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ parent_rate,
-		अचिन्हित पूर्णांक val, स्थिर काष्ठा clk_भाग_प्रकारable *table,
-		अचिन्हित दीर्घ flags, अचिन्हित दीर्घ width);
-दीर्घ भागider_round_rate_parent(काष्ठा clk_hw *hw, काष्ठा clk_hw *parent,
-			       अचिन्हित दीर्घ rate, अचिन्हित दीर्घ *prate,
-			       स्थिर काष्ठा clk_भाग_प्रकारable *table,
-			       u8 width, अचिन्हित दीर्घ flags);
-दीर्घ भागider_ro_round_rate_parent(काष्ठा clk_hw *hw, काष्ठा clk_hw *parent,
-				  अचिन्हित दीर्घ rate, अचिन्हित दीर्घ *prate,
-				  स्थिर काष्ठा clk_भाग_प्रकारable *table, u8 width,
-				  अचिन्हित दीर्घ flags, अचिन्हित पूर्णांक val);
-पूर्णांक भागider_get_val(अचिन्हित दीर्घ rate, अचिन्हित दीर्घ parent_rate,
-		स्थिर काष्ठा clk_भाग_प्रकारable *table, u8 width,
-		अचिन्हित दीर्घ flags);
+unsigned long divider_recalc_rate(struct clk_hw *hw, unsigned long parent_rate,
+		unsigned int val, const struct clk_div_table *table,
+		unsigned long flags, unsigned long width);
+long divider_round_rate_parent(struct clk_hw *hw, struct clk_hw *parent,
+			       unsigned long rate, unsigned long *prate,
+			       const struct clk_div_table *table,
+			       u8 width, unsigned long flags);
+long divider_ro_round_rate_parent(struct clk_hw *hw, struct clk_hw *parent,
+				  unsigned long rate, unsigned long *prate,
+				  const struct clk_div_table *table, u8 width,
+				  unsigned long flags, unsigned int val);
+int divider_get_val(unsigned long rate, unsigned long parent_rate,
+		const struct clk_div_table *table, u8 width,
+		unsigned long flags);
 
-काष्ठा clk_hw *__clk_hw_रेजिस्टर_भागider(काष्ठा device *dev,
-		काष्ठा device_node *np, स्थिर अक्षर *name,
-		स्थिर अक्षर *parent_name, स्थिर काष्ठा clk_hw *parent_hw,
-		स्थिर काष्ठा clk_parent_data *parent_data, अचिन्हित दीर्घ flags,
-		व्योम __iomem *reg, u8 shअगरt, u8 width, u8 clk_भागider_flags,
-		स्थिर काष्ठा clk_भाग_प्रकारable *table, spinlock_t *lock);
-काष्ठा clk_hw *__devm_clk_hw_रेजिस्टर_भागider(काष्ठा device *dev,
-		काष्ठा device_node *np, स्थिर अक्षर *name,
-		स्थिर अक्षर *parent_name, स्थिर काष्ठा clk_hw *parent_hw,
-		स्थिर काष्ठा clk_parent_data *parent_data, अचिन्हित दीर्घ flags,
-		व्योम __iomem *reg, u8 shअगरt, u8 width, u8 clk_भागider_flags,
-		स्थिर काष्ठा clk_भाग_प्रकारable *table, spinlock_t *lock);
-काष्ठा clk *clk_रेजिस्टर_भागider_table(काष्ठा device *dev, स्थिर अक्षर *name,
-		स्थिर अक्षर *parent_name, अचिन्हित दीर्घ flags,
-		व्योम __iomem *reg, u8 shअगरt, u8 width,
-		u8 clk_भागider_flags, स्थिर काष्ठा clk_भाग_प्रकारable *table,
+struct clk_hw *__clk_hw_register_divider(struct device *dev,
+		struct device_node *np, const char *name,
+		const char *parent_name, const struct clk_hw *parent_hw,
+		const struct clk_parent_data *parent_data, unsigned long flags,
+		void __iomem *reg, u8 shift, u8 width, u8 clk_divider_flags,
+		const struct clk_div_table *table, spinlock_t *lock);
+struct clk_hw *__devm_clk_hw_register_divider(struct device *dev,
+		struct device_node *np, const char *name,
+		const char *parent_name, const struct clk_hw *parent_hw,
+		const struct clk_parent_data *parent_data, unsigned long flags,
+		void __iomem *reg, u8 shift, u8 width, u8 clk_divider_flags,
+		const struct clk_div_table *table, spinlock_t *lock);
+struct clk *clk_register_divider_table(struct device *dev, const char *name,
+		const char *parent_name, unsigned long flags,
+		void __iomem *reg, u8 shift, u8 width,
+		u8 clk_divider_flags, const struct clk_div_table *table,
 		spinlock_t *lock);
 /**
- * clk_रेजिस्टर_भागider - रेजिस्टर a भागider घड़ी with the घड़ी framework
- * @dev: device रेजिस्टरing this घड़ी
- * @name: name of this घड़ी
- * @parent_name: name of घड़ी's parent
- * @flags: framework-specअगरic flags
- * @reg: रेजिस्टर address to adjust भागider
- * @shअगरt: number of bits to shअगरt the bitfield
+ * clk_register_divider - register a divider clock with the clock framework
+ * @dev: device registering this clock
+ * @name: name of this clock
+ * @parent_name: name of clock's parent
+ * @flags: framework-specific flags
+ * @reg: register address to adjust divider
+ * @shift: number of bits to shift the bitfield
  * @width: width of the bitfield
- * @clk_भागider_flags: भागider-specअगरic flags क्रम this घड़ी
- * @lock: shared रेजिस्टर lock क्रम this घड़ी
+ * @clk_divider_flags: divider-specific flags for this clock
+ * @lock: shared register lock for this clock
  */
-#घोषणा clk_रेजिस्टर_भागider(dev, name, parent_name, flags, reg, shअगरt, width, \
-			     clk_भागider_flags, lock)			       \
-	clk_रेजिस्टर_भागider_table((dev), (name), (parent_name), (flags),      \
-				   (reg), (shअगरt), (width),		       \
-				   (clk_भागider_flags), शून्य, (lock))
+#define clk_register_divider(dev, name, parent_name, flags, reg, shift, width, \
+			     clk_divider_flags, lock)			       \
+	clk_register_divider_table((dev), (name), (parent_name), (flags),      \
+				   (reg), (shift), (width),		       \
+				   (clk_divider_flags), NULL, (lock))
 /**
- * clk_hw_रेजिस्टर_भागider - रेजिस्टर a भागider घड़ी with the घड़ी framework
- * @dev: device रेजिस्टरing this घड़ी
- * @name: name of this घड़ी
- * @parent_name: name of घड़ी's parent
- * @flags: framework-specअगरic flags
- * @reg: रेजिस्टर address to adjust भागider
- * @shअगरt: number of bits to shअगरt the bitfield
+ * clk_hw_register_divider - register a divider clock with the clock framework
+ * @dev: device registering this clock
+ * @name: name of this clock
+ * @parent_name: name of clock's parent
+ * @flags: framework-specific flags
+ * @reg: register address to adjust divider
+ * @shift: number of bits to shift the bitfield
  * @width: width of the bitfield
- * @clk_भागider_flags: भागider-specअगरic flags क्रम this घड़ी
- * @lock: shared रेजिस्टर lock क्रम this घड़ी
+ * @clk_divider_flags: divider-specific flags for this clock
+ * @lock: shared register lock for this clock
  */
-#घोषणा clk_hw_रेजिस्टर_भागider(dev, name, parent_name, flags, reg, shअगरt,    \
-				width, clk_भागider_flags, lock)		      \
-	__clk_hw_रेजिस्टर_भागider((dev), शून्य, (name), (parent_name), शून्य,   \
-				  शून्य, (flags), (reg), (shअगरt), (width),     \
-				  (clk_भागider_flags), शून्य, (lock))
+#define clk_hw_register_divider(dev, name, parent_name, flags, reg, shift,    \
+				width, clk_divider_flags, lock)		      \
+	__clk_hw_register_divider((dev), NULL, (name), (parent_name), NULL,   \
+				  NULL, (flags), (reg), (shift), (width),     \
+				  (clk_divider_flags), NULL, (lock))
 /**
- * clk_hw_रेजिस्टर_भागider_parent_hw - रेजिस्टर a भागider घड़ी with the घड़ी
+ * clk_hw_register_divider_parent_hw - register a divider clock with the clock
  * framework
- * @dev: device रेजिस्टरing this घड़ी
- * @name: name of this घड़ी
- * @parent_hw: poपूर्णांकer to parent clk
- * @flags: framework-specअगरic flags
- * @reg: रेजिस्टर address to adjust भागider
- * @shअगरt: number of bits to shअगरt the bitfield
+ * @dev: device registering this clock
+ * @name: name of this clock
+ * @parent_hw: pointer to parent clk
+ * @flags: framework-specific flags
+ * @reg: register address to adjust divider
+ * @shift: number of bits to shift the bitfield
  * @width: width of the bitfield
- * @clk_भागider_flags: भागider-specअगरic flags क्रम this घड़ी
- * @lock: shared रेजिस्टर lock क्रम this घड़ी
+ * @clk_divider_flags: divider-specific flags for this clock
+ * @lock: shared register lock for this clock
  */
-#घोषणा clk_hw_रेजिस्टर_भागider_parent_hw(dev, name, parent_hw, flags, reg,   \
-					  shअगरt, width, clk_भागider_flags,    \
+#define clk_hw_register_divider_parent_hw(dev, name, parent_hw, flags, reg,   \
+					  shift, width, clk_divider_flags,    \
 					  lock)				      \
-	__clk_hw_रेजिस्टर_भागider((dev), शून्य, (name), शून्य, (parent_hw),     \
-				  शून्य, (flags), (reg), (shअगरt), (width),     \
-				  (clk_भागider_flags), शून्य, (lock))
+	__clk_hw_register_divider((dev), NULL, (name), NULL, (parent_hw),     \
+				  NULL, (flags), (reg), (shift), (width),     \
+				  (clk_divider_flags), NULL, (lock))
 /**
- * clk_hw_रेजिस्टर_भागider_parent_data - रेजिस्टर a भागider घड़ी with the घड़ी
+ * clk_hw_register_divider_parent_data - register a divider clock with the clock
  * framework
- * @dev: device रेजिस्टरing this घड़ी
- * @name: name of this घड़ी
+ * @dev: device registering this clock
+ * @name: name of this clock
  * @parent_data: parent clk data
- * @flags: framework-specअगरic flags
- * @reg: रेजिस्टर address to adjust भागider
- * @shअगरt: number of bits to shअगरt the bitfield
+ * @flags: framework-specific flags
+ * @reg: register address to adjust divider
+ * @shift: number of bits to shift the bitfield
  * @width: width of the bitfield
- * @clk_भागider_flags: भागider-specअगरic flags क्रम this घड़ी
- * @lock: shared रेजिस्टर lock क्रम this घड़ी
+ * @clk_divider_flags: divider-specific flags for this clock
+ * @lock: shared register lock for this clock
  */
-#घोषणा clk_hw_रेजिस्टर_भागider_parent_data(dev, name, parent_data, flags,    \
-					    reg, shअगरt, width,		      \
-					    clk_भागider_flags, lock)	      \
-	__clk_hw_रेजिस्टर_भागider((dev), शून्य, (name), शून्य, शून्य,	      \
-				  (parent_data), (flags), (reg), (shअगरt),     \
-				  (width), (clk_भागider_flags), शून्य, (lock))
+#define clk_hw_register_divider_parent_data(dev, name, parent_data, flags,    \
+					    reg, shift, width,		      \
+					    clk_divider_flags, lock)	      \
+	__clk_hw_register_divider((dev), NULL, (name), NULL, NULL,	      \
+				  (parent_data), (flags), (reg), (shift),     \
+				  (width), (clk_divider_flags), NULL, (lock))
 /**
- * clk_hw_रेजिस्टर_भागider_table - रेजिस्टर a table based भागider घड़ी with
- * the घड़ी framework
- * @dev: device रेजिस्टरing this घड़ी
- * @name: name of this घड़ी
- * @parent_name: name of घड़ी's parent
- * @flags: framework-specअगरic flags
- * @reg: रेजिस्टर address to adjust भागider
- * @shअगरt: number of bits to shअगरt the bitfield
+ * clk_hw_register_divider_table - register a table based divider clock with
+ * the clock framework
+ * @dev: device registering this clock
+ * @name: name of this clock
+ * @parent_name: name of clock's parent
+ * @flags: framework-specific flags
+ * @reg: register address to adjust divider
+ * @shift: number of bits to shift the bitfield
  * @width: width of the bitfield
- * @clk_भागider_flags: भागider-specअगरic flags क्रम this घड़ी
- * @table: array of भागider/value pairs ending with a भाग set to 0
- * @lock: shared रेजिस्टर lock क्रम this घड़ी
+ * @clk_divider_flags: divider-specific flags for this clock
+ * @table: array of divider/value pairs ending with a div set to 0
+ * @lock: shared register lock for this clock
  */
-#घोषणा clk_hw_रेजिस्टर_भागider_table(dev, name, parent_name, flags, reg,     \
-				      shअगरt, width, clk_भागider_flags, table, \
+#define clk_hw_register_divider_table(dev, name, parent_name, flags, reg,     \
+				      shift, width, clk_divider_flags, table, \
 				      lock)				      \
-	__clk_hw_रेजिस्टर_भागider((dev), शून्य, (name), (parent_name), शून्य,   \
-				  शून्य, (flags), (reg), (shअगरt), (width),     \
-				  (clk_भागider_flags), (table), (lock))
+	__clk_hw_register_divider((dev), NULL, (name), (parent_name), NULL,   \
+				  NULL, (flags), (reg), (shift), (width),     \
+				  (clk_divider_flags), (table), (lock))
 /**
- * clk_hw_रेजिस्टर_भागider_table_parent_hw - रेजिस्टर a table based भागider
- * घड़ी with the घड़ी framework
- * @dev: device रेजिस्टरing this घड़ी
- * @name: name of this घड़ी
- * @parent_hw: poपूर्णांकer to parent clk
- * @flags: framework-specअगरic flags
- * @reg: रेजिस्टर address to adjust भागider
- * @shअगरt: number of bits to shअगरt the bitfield
+ * clk_hw_register_divider_table_parent_hw - register a table based divider
+ * clock with the clock framework
+ * @dev: device registering this clock
+ * @name: name of this clock
+ * @parent_hw: pointer to parent clk
+ * @flags: framework-specific flags
+ * @reg: register address to adjust divider
+ * @shift: number of bits to shift the bitfield
  * @width: width of the bitfield
- * @clk_भागider_flags: भागider-specअगरic flags क्रम this घड़ी
- * @table: array of भागider/value pairs ending with a भाग set to 0
- * @lock: shared रेजिस्टर lock क्रम this घड़ी
+ * @clk_divider_flags: divider-specific flags for this clock
+ * @table: array of divider/value pairs ending with a div set to 0
+ * @lock: shared register lock for this clock
  */
-#घोषणा clk_hw_रेजिस्टर_भागider_table_parent_hw(dev, name, parent_hw, flags,  \
-						reg, shअगरt, width,	      \
-						clk_भागider_flags, table,     \
+#define clk_hw_register_divider_table_parent_hw(dev, name, parent_hw, flags,  \
+						reg, shift, width,	      \
+						clk_divider_flags, table,     \
 						lock)			      \
-	__clk_hw_रेजिस्टर_भागider((dev), शून्य, (name), शून्य, (parent_hw),     \
-				  शून्य, (flags), (reg), (shअगरt), (width),     \
-				  (clk_भागider_flags), (table), (lock))
+	__clk_hw_register_divider((dev), NULL, (name), NULL, (parent_hw),     \
+				  NULL, (flags), (reg), (shift), (width),     \
+				  (clk_divider_flags), (table), (lock))
 /**
- * clk_hw_रेजिस्टर_भागider_table_parent_data - रेजिस्टर a table based भागider
- * घड़ी with the घड़ी framework
- * @dev: device रेजिस्टरing this घड़ी
- * @name: name of this घड़ी
+ * clk_hw_register_divider_table_parent_data - register a table based divider
+ * clock with the clock framework
+ * @dev: device registering this clock
+ * @name: name of this clock
  * @parent_data: parent clk data
- * @flags: framework-specअगरic flags
- * @reg: रेजिस्टर address to adjust भागider
- * @shअगरt: number of bits to shअगरt the bitfield
+ * @flags: framework-specific flags
+ * @reg: register address to adjust divider
+ * @shift: number of bits to shift the bitfield
  * @width: width of the bitfield
- * @clk_भागider_flags: भागider-specअगरic flags क्रम this घड़ी
- * @table: array of भागider/value pairs ending with a भाग set to 0
- * @lock: shared रेजिस्टर lock क्रम this घड़ी
+ * @clk_divider_flags: divider-specific flags for this clock
+ * @table: array of divider/value pairs ending with a div set to 0
+ * @lock: shared register lock for this clock
  */
-#घोषणा clk_hw_रेजिस्टर_भागider_table_parent_data(dev, name, parent_data,     \
-						  flags, reg, shअगरt, width,   \
-						  clk_भागider_flags, table,   \
+#define clk_hw_register_divider_table_parent_data(dev, name, parent_data,     \
+						  flags, reg, shift, width,   \
+						  clk_divider_flags, table,   \
 						  lock)			      \
-	__clk_hw_रेजिस्टर_भागider((dev), शून्य, (name), शून्य, शून्य,	      \
-				  (parent_data), (flags), (reg), (shअगरt),     \
-				  (width), (clk_भागider_flags), (table),      \
+	__clk_hw_register_divider((dev), NULL, (name), NULL, NULL,	      \
+				  (parent_data), (flags), (reg), (shift),     \
+				  (width), (clk_divider_flags), (table),      \
 				  (lock))
 /**
- * devm_clk_hw_रेजिस्टर_भागider - रेजिस्टर a भागider घड़ी with the घड़ी framework
- * @dev: device रेजिस्टरing this घड़ी
- * @name: name of this घड़ी
- * @parent_name: name of घड़ी's parent
- * @flags: framework-specअगरic flags
- * @reg: रेजिस्टर address to adjust भागider
- * @shअगरt: number of bits to shअगरt the bitfield
+ * devm_clk_hw_register_divider - register a divider clock with the clock framework
+ * @dev: device registering this clock
+ * @name: name of this clock
+ * @parent_name: name of clock's parent
+ * @flags: framework-specific flags
+ * @reg: register address to adjust divider
+ * @shift: number of bits to shift the bitfield
  * @width: width of the bitfield
- * @clk_भागider_flags: भागider-specअगरic flags क्रम this घड़ी
- * @lock: shared रेजिस्टर lock क्रम this घड़ी
+ * @clk_divider_flags: divider-specific flags for this clock
+ * @lock: shared register lock for this clock
  */
-#घोषणा devm_clk_hw_रेजिस्टर_भागider(dev, name, parent_name, flags, reg, shअगरt,    \
-				width, clk_भागider_flags, lock)		      \
-	__devm_clk_hw_रेजिस्टर_भागider((dev), शून्य, (name), (parent_name), शून्य,   \
-				  शून्य, (flags), (reg), (shअगरt), (width),     \
-				  (clk_भागider_flags), शून्य, (lock))
+#define devm_clk_hw_register_divider(dev, name, parent_name, flags, reg, shift,    \
+				width, clk_divider_flags, lock)		      \
+	__devm_clk_hw_register_divider((dev), NULL, (name), (parent_name), NULL,   \
+				  NULL, (flags), (reg), (shift), (width),     \
+				  (clk_divider_flags), NULL, (lock))
 /**
- * devm_clk_hw_रेजिस्टर_भागider_table - रेजिस्टर a table based भागider घड़ी
- * with the घड़ी framework (devres variant)
- * @dev: device रेजिस्टरing this घड़ी
- * @name: name of this घड़ी
- * @parent_name: name of घड़ी's parent
- * @flags: framework-specअगरic flags
- * @reg: रेजिस्टर address to adjust भागider
- * @shअगरt: number of bits to shअगरt the bitfield
+ * devm_clk_hw_register_divider_table - register a table based divider clock
+ * with the clock framework (devres variant)
+ * @dev: device registering this clock
+ * @name: name of this clock
+ * @parent_name: name of clock's parent
+ * @flags: framework-specific flags
+ * @reg: register address to adjust divider
+ * @shift: number of bits to shift the bitfield
  * @width: width of the bitfield
- * @clk_भागider_flags: भागider-specअगरic flags क्रम this घड़ी
- * @table: array of भागider/value pairs ending with a भाग set to 0
- * @lock: shared रेजिस्टर lock क्रम this घड़ी
+ * @clk_divider_flags: divider-specific flags for this clock
+ * @table: array of divider/value pairs ending with a div set to 0
+ * @lock: shared register lock for this clock
  */
-#घोषणा devm_clk_hw_रेजिस्टर_भागider_table(dev, name, parent_name, flags,     \
-					   reg, shअगरt, width,		      \
-					   clk_भागider_flags, table, lock)    \
-	__devm_clk_hw_रेजिस्टर_भागider((dev), शून्य, (name), (parent_name),    \
-				       शून्य, शून्य, (flags), (reg), (shअगरt),   \
-				       (width), (clk_भागider_flags), (table), \
+#define devm_clk_hw_register_divider_table(dev, name, parent_name, flags,     \
+					   reg, shift, width,		      \
+					   clk_divider_flags, table, lock)    \
+	__devm_clk_hw_register_divider((dev), NULL, (name), (parent_name),    \
+				       NULL, NULL, (flags), (reg), (shift),   \
+				       (width), (clk_divider_flags), (table), \
 				       (lock))
 
-व्योम clk_unरेजिस्टर_भागider(काष्ठा clk *clk);
-व्योम clk_hw_unरेजिस्टर_भागider(काष्ठा clk_hw *hw);
+void clk_unregister_divider(struct clk *clk);
+void clk_hw_unregister_divider(struct clk_hw *hw);
 
 /**
- * काष्ठा clk_mux - multiplexer घड़ी
+ * struct clk_mux - multiplexer clock
  *
- * @hw:		handle between common and hardware-specअगरic पूर्णांकerfaces
- * @reg:	रेजिस्टर controlling multiplexer
- * @table:	array of रेजिस्टर values corresponding to the parent index
- * @shअगरt:	shअगरt to multiplexer bit field
+ * @hw:		handle between common and hardware-specific interfaces
+ * @reg:	register controlling multiplexer
+ * @table:	array of register values corresponding to the parent index
+ * @shift:	shift to multiplexer bit field
  * @mask:	mask of mutliplexer bit field
- * @flags:	hardware-specअगरic flags
- * @lock:	रेजिस्टर lock
+ * @flags:	hardware-specific flags
+ * @lock:	register lock
  *
  * Clock with multiple selectable parents.  Implements .get_parent, .set_parent
  * and .recalc_rate
  *
  * Flags:
- * CLK_MUX_INDEX_ONE - रेजिस्टर index starts at 1, not 0
- * CLK_MUX_INDEX_BIT - रेजिस्टर index is a single bit (घातer of two)
+ * CLK_MUX_INDEX_ONE - register index starts at 1, not 0
+ * CLK_MUX_INDEX_BIT - register index is a single bit (power of two)
  * CLK_MUX_HIWORD_MASK - The mux settings are only in lower 16-bit of this
- *	रेजिस्टर, and mask of mux bits are in higher 16-bit of this रेजिस्टर.
+ *	register, and mask of mux bits are in higher 16-bit of this register.
  *	While setting the mux bits, higher 16-bit should also be updated to
  *	indicate changing mux bits.
- * CLK_MUX_READ_ONLY - The mux रेजिस्टरs can't be written, only पढ़ो in the
+ * CLK_MUX_READ_ONLY - The mux registers can't be written, only read in the
  * 	.get_parent clk_op.
- * CLK_MUX_ROUND_CLOSEST - Use the parent rate that is बंदst to the desired
+ * CLK_MUX_ROUND_CLOSEST - Use the parent rate that is closest to the desired
  *	frequency.
- * CLK_MUX_BIG_ENDIAN - By शेष little endian रेजिस्टर accesses are used क्रम
- *	the mux रेजिस्टर.  Setting this flag makes the रेजिस्टर accesses big
+ * CLK_MUX_BIG_ENDIAN - By default little endian register accesses are used for
+ *	the mux register.  Setting this flag makes the register accesses big
  *	endian.
  */
-काष्ठा clk_mux अणु
-	काष्ठा clk_hw	hw;
-	व्योम __iomem	*reg;
+struct clk_mux {
+	struct clk_hw	hw;
+	void __iomem	*reg;
 	u32		*table;
 	u32		mask;
-	u8		shअगरt;
+	u8		shift;
 	u8		flags;
 	spinlock_t	*lock;
-पूर्ण;
+};
 
-#घोषणा to_clk_mux(_hw) container_of(_hw, काष्ठा clk_mux, hw)
+#define to_clk_mux(_hw) container_of(_hw, struct clk_mux, hw)
 
-#घोषणा CLK_MUX_INDEX_ONE		BIT(0)
-#घोषणा CLK_MUX_INDEX_BIT		BIT(1)
-#घोषणा CLK_MUX_HIWORD_MASK		BIT(2)
-#घोषणा CLK_MUX_READ_ONLY		BIT(3) /* mux can't be changed */
-#घोषणा CLK_MUX_ROUND_CLOSEST		BIT(4)
-#घोषणा CLK_MUX_BIG_ENDIAN		BIT(5)
+#define CLK_MUX_INDEX_ONE		BIT(0)
+#define CLK_MUX_INDEX_BIT		BIT(1)
+#define CLK_MUX_HIWORD_MASK		BIT(2)
+#define CLK_MUX_READ_ONLY		BIT(3) /* mux can't be changed */
+#define CLK_MUX_ROUND_CLOSEST		BIT(4)
+#define CLK_MUX_BIG_ENDIAN		BIT(5)
 
-बाह्य स्थिर काष्ठा clk_ops clk_mux_ops;
-बाह्य स्थिर काष्ठा clk_ops clk_mux_ro_ops;
+extern const struct clk_ops clk_mux_ops;
+extern const struct clk_ops clk_mux_ro_ops;
 
-काष्ठा clk_hw *__clk_hw_रेजिस्टर_mux(काष्ठा device *dev, काष्ठा device_node *np,
-		स्थिर अक्षर *name, u8 num_parents,
-		स्थिर अक्षर * स्थिर *parent_names,
-		स्थिर काष्ठा clk_hw **parent_hws,
-		स्थिर काष्ठा clk_parent_data *parent_data,
-		अचिन्हित दीर्घ flags, व्योम __iomem *reg, u8 shअगरt, u32 mask,
+struct clk_hw *__clk_hw_register_mux(struct device *dev, struct device_node *np,
+		const char *name, u8 num_parents,
+		const char * const *parent_names,
+		const struct clk_hw **parent_hws,
+		const struct clk_parent_data *parent_data,
+		unsigned long flags, void __iomem *reg, u8 shift, u32 mask,
 		u8 clk_mux_flags, u32 *table, spinlock_t *lock);
-काष्ठा clk_hw *__devm_clk_hw_रेजिस्टर_mux(काष्ठा device *dev, काष्ठा device_node *np,
-		स्थिर अक्षर *name, u8 num_parents,
-		स्थिर अक्षर * स्थिर *parent_names,
-		स्थिर काष्ठा clk_hw **parent_hws,
-		स्थिर काष्ठा clk_parent_data *parent_data,
-		अचिन्हित दीर्घ flags, व्योम __iomem *reg, u8 shअगरt, u32 mask,
+struct clk_hw *__devm_clk_hw_register_mux(struct device *dev, struct device_node *np,
+		const char *name, u8 num_parents,
+		const char * const *parent_names,
+		const struct clk_hw **parent_hws,
+		const struct clk_parent_data *parent_data,
+		unsigned long flags, void __iomem *reg, u8 shift, u32 mask,
 		u8 clk_mux_flags, u32 *table, spinlock_t *lock);
-काष्ठा clk *clk_रेजिस्टर_mux_table(काष्ठा device *dev, स्थिर अक्षर *name,
-		स्थिर अक्षर * स्थिर *parent_names, u8 num_parents,
-		अचिन्हित दीर्घ flags, व्योम __iomem *reg, u8 shअगरt, u32 mask,
+struct clk *clk_register_mux_table(struct device *dev, const char *name,
+		const char * const *parent_names, u8 num_parents,
+		unsigned long flags, void __iomem *reg, u8 shift, u32 mask,
 		u8 clk_mux_flags, u32 *table, spinlock_t *lock);
 
-#घोषणा clk_रेजिस्टर_mux(dev, name, parent_names, num_parents, flags, reg,    \
-			 shअगरt, width, clk_mux_flags, lock)		      \
-	clk_रेजिस्टर_mux_table((dev), (name), (parent_names), (num_parents),  \
-			       (flags), (reg), (shअगरt), BIT((width)) - 1,     \
-			       (clk_mux_flags), शून्य, (lock))
-#घोषणा clk_hw_रेजिस्टर_mux_table(dev, name, parent_names, num_parents,	      \
-				  flags, reg, shअगरt, mask, clk_mux_flags,     \
+#define clk_register_mux(dev, name, parent_names, num_parents, flags, reg,    \
+			 shift, width, clk_mux_flags, lock)		      \
+	clk_register_mux_table((dev), (name), (parent_names), (num_parents),  \
+			       (flags), (reg), (shift), BIT((width)) - 1,     \
+			       (clk_mux_flags), NULL, (lock))
+#define clk_hw_register_mux_table(dev, name, parent_names, num_parents,	      \
+				  flags, reg, shift, mask, clk_mux_flags,     \
 				  table, lock)				      \
-	__clk_hw_रेजिस्टर_mux((dev), शून्य, (name), (num_parents),	      \
-			      (parent_names), शून्य, शून्य, (flags), (reg),     \
-			      (shअगरt), (mask), (clk_mux_flags), (table),      \
+	__clk_hw_register_mux((dev), NULL, (name), (num_parents),	      \
+			      (parent_names), NULL, NULL, (flags), (reg),     \
+			      (shift), (mask), (clk_mux_flags), (table),      \
 			      (lock))
-#घोषणा clk_hw_रेजिस्टर_mux(dev, name, parent_names, num_parents, flags, reg, \
-			    shअगरt, width, clk_mux_flags, lock)		      \
-	__clk_hw_रेजिस्टर_mux((dev), शून्य, (name), (num_parents),	      \
-			      (parent_names), शून्य, शून्य, (flags), (reg),     \
-			      (shअगरt), BIT((width)) - 1, (clk_mux_flags),     \
-			      शून्य, (lock))
-#घोषणा clk_hw_रेजिस्टर_mux_hws(dev, name, parent_hws, num_parents, flags,    \
-				reg, shअगरt, width, clk_mux_flags, lock)	      \
-	__clk_hw_रेजिस्टर_mux((dev), शून्य, (name), (num_parents), शून्य,	      \
-			      (parent_hws), शून्य, (flags), (reg), (shअगरt),    \
-			      BIT((width)) - 1, (clk_mux_flags), शून्य, (lock))
-#घोषणा clk_hw_रेजिस्टर_mux_parent_data(dev, name, parent_data, num_parents,  \
-					flags, reg, shअगरt, width,	      \
+#define clk_hw_register_mux(dev, name, parent_names, num_parents, flags, reg, \
+			    shift, width, clk_mux_flags, lock)		      \
+	__clk_hw_register_mux((dev), NULL, (name), (num_parents),	      \
+			      (parent_names), NULL, NULL, (flags), (reg),     \
+			      (shift), BIT((width)) - 1, (clk_mux_flags),     \
+			      NULL, (lock))
+#define clk_hw_register_mux_hws(dev, name, parent_hws, num_parents, flags,    \
+				reg, shift, width, clk_mux_flags, lock)	      \
+	__clk_hw_register_mux((dev), NULL, (name), (num_parents), NULL,	      \
+			      (parent_hws), NULL, (flags), (reg), (shift),    \
+			      BIT((width)) - 1, (clk_mux_flags), NULL, (lock))
+#define clk_hw_register_mux_parent_data(dev, name, parent_data, num_parents,  \
+					flags, reg, shift, width,	      \
 					clk_mux_flags, lock)		      \
-	__clk_hw_रेजिस्टर_mux((dev), शून्य, (name), (num_parents), शून्य, शून्य, \
-			      (parent_data), (flags), (reg), (shअगरt),	      \
-			      BIT((width)) - 1, (clk_mux_flags), शून्य, (lock))
-#घोषणा devm_clk_hw_रेजिस्टर_mux(dev, name, parent_names, num_parents, flags, reg, \
-			    shअगरt, width, clk_mux_flags, lock)		      \
-	__devm_clk_hw_रेजिस्टर_mux((dev), शून्य, (name), (num_parents),	      \
-			      (parent_names), शून्य, शून्य, (flags), (reg),     \
-			      (shअगरt), BIT((width)) - 1, (clk_mux_flags),     \
-			      शून्य, (lock))
+	__clk_hw_register_mux((dev), NULL, (name), (num_parents), NULL, NULL, \
+			      (parent_data), (flags), (reg), (shift),	      \
+			      BIT((width)) - 1, (clk_mux_flags), NULL, (lock))
+#define devm_clk_hw_register_mux(dev, name, parent_names, num_parents, flags, reg, \
+			    shift, width, clk_mux_flags, lock)		      \
+	__devm_clk_hw_register_mux((dev), NULL, (name), (num_parents),	      \
+			      (parent_names), NULL, NULL, (flags), (reg),     \
+			      (shift), BIT((width)) - 1, (clk_mux_flags),     \
+			      NULL, (lock))
 
-पूर्णांक clk_mux_val_to_index(काष्ठा clk_hw *hw, u32 *table, अचिन्हित पूर्णांक flags,
-			 अचिन्हित पूर्णांक val);
-अचिन्हित पूर्णांक clk_mux_index_to_val(u32 *table, अचिन्हित पूर्णांक flags, u8 index);
+int clk_mux_val_to_index(struct clk_hw *hw, u32 *table, unsigned int flags,
+			 unsigned int val);
+unsigned int clk_mux_index_to_val(u32 *table, unsigned int flags, u8 index);
 
-व्योम clk_unरेजिस्टर_mux(काष्ठा clk *clk);
-व्योम clk_hw_unरेजिस्टर_mux(काष्ठा clk_hw *hw);
+void clk_unregister_mux(struct clk *clk);
+void clk_hw_unregister_mux(struct clk_hw *hw);
 
-व्योम of_fixed_factor_clk_setup(काष्ठा device_node *node);
+void of_fixed_factor_clk_setup(struct device_node *node);
 
 /**
- * काष्ठा clk_fixed_factor - fixed multiplier and भागider घड़ी
+ * struct clk_fixed_factor - fixed multiplier and divider clock
  *
- * @hw:		handle between common and hardware-specअगरic पूर्णांकerfaces
+ * @hw:		handle between common and hardware-specific interfaces
  * @mult:	multiplier
- * @भाग:	भागider
+ * @div:	divider
  *
- * Clock with a fixed multiplier and भागider. The output frequency is the
- * parent घड़ी rate भागided by भाग and multiplied by mult.
+ * Clock with a fixed multiplier and divider. The output frequency is the
+ * parent clock rate divided by div and multiplied by mult.
  * Implements .recalc_rate, .set_rate and .round_rate
  */
 
-काष्ठा clk_fixed_factor अणु
-	काष्ठा clk_hw	hw;
-	अचिन्हित पूर्णांक	mult;
-	अचिन्हित पूर्णांक	भाग;
-पूर्ण;
+struct clk_fixed_factor {
+	struct clk_hw	hw;
+	unsigned int	mult;
+	unsigned int	div;
+};
 
-#घोषणा to_clk_fixed_factor(_hw) container_of(_hw, काष्ठा clk_fixed_factor, hw)
+#define to_clk_fixed_factor(_hw) container_of(_hw, struct clk_fixed_factor, hw)
 
-बाह्य स्थिर काष्ठा clk_ops clk_fixed_factor_ops;
-काष्ठा clk *clk_रेजिस्टर_fixed_factor(काष्ठा device *dev, स्थिर अक्षर *name,
-		स्थिर अक्षर *parent_name, अचिन्हित दीर्घ flags,
-		अचिन्हित पूर्णांक mult, अचिन्हित पूर्णांक भाग);
-व्योम clk_unरेजिस्टर_fixed_factor(काष्ठा clk *clk);
-काष्ठा clk_hw *clk_hw_रेजिस्टर_fixed_factor(काष्ठा device *dev,
-		स्थिर अक्षर *name, स्थिर अक्षर *parent_name, अचिन्हित दीर्घ flags,
-		अचिन्हित पूर्णांक mult, अचिन्हित पूर्णांक भाग);
-व्योम clk_hw_unरेजिस्टर_fixed_factor(काष्ठा clk_hw *hw);
-काष्ठा clk_hw *devm_clk_hw_रेजिस्टर_fixed_factor(काष्ठा device *dev,
-		स्थिर अक्षर *name, स्थिर अक्षर *parent_name, अचिन्हित दीर्घ flags,
-		अचिन्हित पूर्णांक mult, अचिन्हित पूर्णांक भाग);
+extern const struct clk_ops clk_fixed_factor_ops;
+struct clk *clk_register_fixed_factor(struct device *dev, const char *name,
+		const char *parent_name, unsigned long flags,
+		unsigned int mult, unsigned int div);
+void clk_unregister_fixed_factor(struct clk *clk);
+struct clk_hw *clk_hw_register_fixed_factor(struct device *dev,
+		const char *name, const char *parent_name, unsigned long flags,
+		unsigned int mult, unsigned int div);
+void clk_hw_unregister_fixed_factor(struct clk_hw *hw);
+struct clk_hw *devm_clk_hw_register_fixed_factor(struct device *dev,
+		const char *name, const char *parent_name, unsigned long flags,
+		unsigned int mult, unsigned int div);
 /**
- * काष्ठा clk_fractional_भागider - adjustable fractional भागider घड़ी
+ * struct clk_fractional_divider - adjustable fractional divider clock
  *
- * @hw:		handle between common and hardware-specअगरic पूर्णांकerfaces
- * @reg:	रेजिस्टर containing the भागider
- * @mshअगरt:	shअगरt to the numerator bit field
+ * @hw:		handle between common and hardware-specific interfaces
+ * @reg:	register containing the divider
+ * @mshift:	shift to the numerator bit field
  * @mwidth:	width of the numerator bit field
- * @nshअगरt:	shअगरt to the denominator bit field
+ * @nshift:	shift to the denominator bit field
  * @nwidth:	width of the denominator bit field
- * @lock:	रेजिस्टर lock
+ * @lock:	register lock
  *
- * Clock with adjustable fractional भागider affecting its output frequency.
+ * Clock with adjustable fractional divider affecting its output frequency.
  *
  * Flags:
- * CLK_FRAC_DIVIDER_ZERO_BASED - by शेष the numerator and denominator
- *	is the value पढ़ो from the रेजिस्टर. If CLK_FRAC_DIVIDER_ZERO_BASED
- *	is set then the numerator and denominator are both the value पढ़ो
+ * CLK_FRAC_DIVIDER_ZERO_BASED - by default the numerator and denominator
+ *	is the value read from the register. If CLK_FRAC_DIVIDER_ZERO_BASED
+ *	is set then the numerator and denominator are both the value read
  *	plus one.
- * CLK_FRAC_DIVIDER_BIG_ENDIAN - By शेष little endian रेजिस्टर accesses are
- *	used क्रम the भागider रेजिस्टर.  Setting this flag makes the रेजिस्टर
+ * CLK_FRAC_DIVIDER_BIG_ENDIAN - By default little endian register accesses are
+ *	used for the divider register.  Setting this flag makes the register
  *	accesses big endian.
  */
-काष्ठा clk_fractional_भागider अणु
-	काष्ठा clk_hw	hw;
-	व्योम __iomem	*reg;
-	u8		mshअगरt;
+struct clk_fractional_divider {
+	struct clk_hw	hw;
+	void __iomem	*reg;
+	u8		mshift;
 	u8		mwidth;
 	u32		mmask;
-	u8		nshअगरt;
+	u8		nshift;
 	u8		nwidth;
 	u32		nmask;
 	u8		flags;
-	व्योम		(*approximation)(काष्ठा clk_hw *hw,
-				अचिन्हित दीर्घ rate, अचिन्हित दीर्घ *parent_rate,
-				अचिन्हित दीर्घ *m, अचिन्हित दीर्घ *n);
+	void		(*approximation)(struct clk_hw *hw,
+				unsigned long rate, unsigned long *parent_rate,
+				unsigned long *m, unsigned long *n);
 	spinlock_t	*lock;
-पूर्ण;
+};
 
-#घोषणा to_clk_fd(_hw) container_of(_hw, काष्ठा clk_fractional_भागider, hw)
+#define to_clk_fd(_hw) container_of(_hw, struct clk_fractional_divider, hw)
 
-#घोषणा CLK_FRAC_DIVIDER_ZERO_BASED		BIT(0)
-#घोषणा CLK_FRAC_DIVIDER_BIG_ENDIAN		BIT(1)
+#define CLK_FRAC_DIVIDER_ZERO_BASED		BIT(0)
+#define CLK_FRAC_DIVIDER_BIG_ENDIAN		BIT(1)
 
-बाह्य स्थिर काष्ठा clk_ops clk_fractional_भागider_ops;
-काष्ठा clk *clk_रेजिस्टर_fractional_भागider(काष्ठा device *dev,
-		स्थिर अक्षर *name, स्थिर अक्षर *parent_name, अचिन्हित दीर्घ flags,
-		व्योम __iomem *reg, u8 mshअगरt, u8 mwidth, u8 nshअगरt, u8 nwidth,
-		u8 clk_भागider_flags, spinlock_t *lock);
-काष्ठा clk_hw *clk_hw_रेजिस्टर_fractional_भागider(काष्ठा device *dev,
-		स्थिर अक्षर *name, स्थिर अक्षर *parent_name, अचिन्हित दीर्घ flags,
-		व्योम __iomem *reg, u8 mshअगरt, u8 mwidth, u8 nshअगरt, u8 nwidth,
-		u8 clk_भागider_flags, spinlock_t *lock);
-व्योम clk_hw_unरेजिस्टर_fractional_भागider(काष्ठा clk_hw *hw);
+extern const struct clk_ops clk_fractional_divider_ops;
+struct clk *clk_register_fractional_divider(struct device *dev,
+		const char *name, const char *parent_name, unsigned long flags,
+		void __iomem *reg, u8 mshift, u8 mwidth, u8 nshift, u8 nwidth,
+		u8 clk_divider_flags, spinlock_t *lock);
+struct clk_hw *clk_hw_register_fractional_divider(struct device *dev,
+		const char *name, const char *parent_name, unsigned long flags,
+		void __iomem *reg, u8 mshift, u8 mwidth, u8 nshift, u8 nwidth,
+		u8 clk_divider_flags, spinlock_t *lock);
+void clk_hw_unregister_fractional_divider(struct clk_hw *hw);
 
 /**
- * काष्ठा clk_multiplier - adjustable multiplier घड़ी
+ * struct clk_multiplier - adjustable multiplier clock
  *
- * @hw:		handle between common and hardware-specअगरic पूर्णांकerfaces
- * @reg:	रेजिस्टर containing the multiplier
- * @shअगरt:	shअगरt to the multiplier bit field
+ * @hw:		handle between common and hardware-specific interfaces
+ * @reg:	register containing the multiplier
+ * @shift:	shift to the multiplier bit field
  * @width:	width of the multiplier bit field
- * @lock:	रेजिस्टर lock
+ * @lock:	register lock
  *
  * Clock with an adjustable multiplier affecting its output frequency.
  * Implements .recalc_rate, .set_rate and .round_rate
  *
  * Flags:
- * CLK_MULTIPLIER_ZERO_BYPASS - By शेष, the multiplier is the value पढ़ो
- *	from the रेजिस्टर, with 0 being a valid value effectively
- *	zeroing the output घड़ी rate. If CLK_MULTIPLIER_ZERO_BYPASS is
+ * CLK_MULTIPLIER_ZERO_BYPASS - By default, the multiplier is the value read
+ *	from the register, with 0 being a valid value effectively
+ *	zeroing the output clock rate. If CLK_MULTIPLIER_ZERO_BYPASS is
  *	set, then a null multiplier will be considered as a bypass,
- *	leaving the parent rate unmodअगरied.
- * CLK_MULTIPLIER_ROUND_CLOSEST - Makes the best calculated भागider to be
- *	rounded to the बंदst पूर्णांकeger instead of the करोwn one.
- * CLK_MULTIPLIER_BIG_ENDIAN - By शेष little endian रेजिस्टर accesses are
- *	used क्रम the multiplier रेजिस्टर.  Setting this flag makes the रेजिस्टर
+ *	leaving the parent rate unmodified.
+ * CLK_MULTIPLIER_ROUND_CLOSEST - Makes the best calculated divider to be
+ *	rounded to the closest integer instead of the down one.
+ * CLK_MULTIPLIER_BIG_ENDIAN - By default little endian register accesses are
+ *	used for the multiplier register.  Setting this flag makes the register
  *	accesses big endian.
  */
-काष्ठा clk_multiplier अणु
-	काष्ठा clk_hw	hw;
-	व्योम __iomem	*reg;
-	u8		shअगरt;
+struct clk_multiplier {
+	struct clk_hw	hw;
+	void __iomem	*reg;
+	u8		shift;
 	u8		width;
 	u8		flags;
 	spinlock_t	*lock;
-पूर्ण;
+};
 
-#घोषणा to_clk_multiplier(_hw) container_of(_hw, काष्ठा clk_multiplier, hw)
+#define to_clk_multiplier(_hw) container_of(_hw, struct clk_multiplier, hw)
 
-#घोषणा CLK_MULTIPLIER_ZERO_BYPASS		BIT(0)
-#घोषणा CLK_MULTIPLIER_ROUND_CLOSEST	BIT(1)
-#घोषणा CLK_MULTIPLIER_BIG_ENDIAN		BIT(2)
+#define CLK_MULTIPLIER_ZERO_BYPASS		BIT(0)
+#define CLK_MULTIPLIER_ROUND_CLOSEST	BIT(1)
+#define CLK_MULTIPLIER_BIG_ENDIAN		BIT(2)
 
-बाह्य स्थिर काष्ठा clk_ops clk_multiplier_ops;
+extern const struct clk_ops clk_multiplier_ops;
 
 /***
- * काष्ठा clk_composite - aggregate घड़ी of mux, भागider and gate घड़ीs
+ * struct clk_composite - aggregate clock of mux, divider and gate clocks
  *
- * @hw:		handle between common and hardware-specअगरic पूर्णांकerfaces
- * @mux_hw:	handle between composite and hardware-specअगरic mux घड़ी
- * @rate_hw:	handle between composite and hardware-specअगरic rate घड़ी
- * @gate_hw:	handle between composite and hardware-specअगरic gate घड़ी
- * @mux_ops:	घड़ी ops क्रम mux
- * @rate_ops:	घड़ी ops क्रम rate
- * @gate_ops:	घड़ी ops क्रम gate
+ * @hw:		handle between common and hardware-specific interfaces
+ * @mux_hw:	handle between composite and hardware-specific mux clock
+ * @rate_hw:	handle between composite and hardware-specific rate clock
+ * @gate_hw:	handle between composite and hardware-specific gate clock
+ * @mux_ops:	clock ops for mux
+ * @rate_ops:	clock ops for rate
+ * @gate_ops:	clock ops for gate
  */
-काष्ठा clk_composite अणु
-	काष्ठा clk_hw	hw;
-	काष्ठा clk_ops	ops;
+struct clk_composite {
+	struct clk_hw	hw;
+	struct clk_ops	ops;
 
-	काष्ठा clk_hw	*mux_hw;
-	काष्ठा clk_hw	*rate_hw;
-	काष्ठा clk_hw	*gate_hw;
+	struct clk_hw	*mux_hw;
+	struct clk_hw	*rate_hw;
+	struct clk_hw	*gate_hw;
 
-	स्थिर काष्ठा clk_ops	*mux_ops;
-	स्थिर काष्ठा clk_ops	*rate_ops;
-	स्थिर काष्ठा clk_ops	*gate_ops;
-पूर्ण;
+	const struct clk_ops	*mux_ops;
+	const struct clk_ops	*rate_ops;
+	const struct clk_ops	*gate_ops;
+};
 
-#घोषणा to_clk_composite(_hw) container_of(_hw, काष्ठा clk_composite, hw)
+#define to_clk_composite(_hw) container_of(_hw, struct clk_composite, hw)
 
-काष्ठा clk *clk_रेजिस्टर_composite(काष्ठा device *dev, स्थिर अक्षर *name,
-		स्थिर अक्षर * स्थिर *parent_names, पूर्णांक num_parents,
-		काष्ठा clk_hw *mux_hw, स्थिर काष्ठा clk_ops *mux_ops,
-		काष्ठा clk_hw *rate_hw, स्थिर काष्ठा clk_ops *rate_ops,
-		काष्ठा clk_hw *gate_hw, स्थिर काष्ठा clk_ops *gate_ops,
-		अचिन्हित दीर्घ flags);
-काष्ठा clk *clk_रेजिस्टर_composite_pdata(काष्ठा device *dev, स्थिर अक्षर *name,
-		स्थिर काष्ठा clk_parent_data *parent_data, पूर्णांक num_parents,
-		काष्ठा clk_hw *mux_hw, स्थिर काष्ठा clk_ops *mux_ops,
-		काष्ठा clk_hw *rate_hw, स्थिर काष्ठा clk_ops *rate_ops,
-		काष्ठा clk_hw *gate_hw, स्थिर काष्ठा clk_ops *gate_ops,
-		अचिन्हित दीर्घ flags);
-व्योम clk_unरेजिस्टर_composite(काष्ठा clk *clk);
-काष्ठा clk_hw *clk_hw_रेजिस्टर_composite(काष्ठा device *dev, स्थिर अक्षर *name,
-		स्थिर अक्षर * स्थिर *parent_names, पूर्णांक num_parents,
-		काष्ठा clk_hw *mux_hw, स्थिर काष्ठा clk_ops *mux_ops,
-		काष्ठा clk_hw *rate_hw, स्थिर काष्ठा clk_ops *rate_ops,
-		काष्ठा clk_hw *gate_hw, स्थिर काष्ठा clk_ops *gate_ops,
-		अचिन्हित दीर्घ flags);
-काष्ठा clk_hw *clk_hw_रेजिस्टर_composite_pdata(काष्ठा device *dev,
-		स्थिर अक्षर *name,
-		स्थिर काष्ठा clk_parent_data *parent_data, पूर्णांक num_parents,
-		काष्ठा clk_hw *mux_hw, स्थिर काष्ठा clk_ops *mux_ops,
-		काष्ठा clk_hw *rate_hw, स्थिर काष्ठा clk_ops *rate_ops,
-		काष्ठा clk_hw *gate_hw, स्थिर काष्ठा clk_ops *gate_ops,
-		अचिन्हित दीर्घ flags);
-काष्ठा clk_hw *devm_clk_hw_रेजिस्टर_composite_pdata(काष्ठा device *dev,
-		स्थिर अक्षर *name, स्थिर काष्ठा clk_parent_data *parent_data,
-		पूर्णांक num_parents,
-		काष्ठा clk_hw *mux_hw, स्थिर काष्ठा clk_ops *mux_ops,
-		काष्ठा clk_hw *rate_hw, स्थिर काष्ठा clk_ops *rate_ops,
-		काष्ठा clk_hw *gate_hw, स्थिर काष्ठा clk_ops *gate_ops,
-		अचिन्हित दीर्घ flags);
-व्योम clk_hw_unरेजिस्टर_composite(काष्ठा clk_hw *hw);
+struct clk *clk_register_composite(struct device *dev, const char *name,
+		const char * const *parent_names, int num_parents,
+		struct clk_hw *mux_hw, const struct clk_ops *mux_ops,
+		struct clk_hw *rate_hw, const struct clk_ops *rate_ops,
+		struct clk_hw *gate_hw, const struct clk_ops *gate_ops,
+		unsigned long flags);
+struct clk *clk_register_composite_pdata(struct device *dev, const char *name,
+		const struct clk_parent_data *parent_data, int num_parents,
+		struct clk_hw *mux_hw, const struct clk_ops *mux_ops,
+		struct clk_hw *rate_hw, const struct clk_ops *rate_ops,
+		struct clk_hw *gate_hw, const struct clk_ops *gate_ops,
+		unsigned long flags);
+void clk_unregister_composite(struct clk *clk);
+struct clk_hw *clk_hw_register_composite(struct device *dev, const char *name,
+		const char * const *parent_names, int num_parents,
+		struct clk_hw *mux_hw, const struct clk_ops *mux_ops,
+		struct clk_hw *rate_hw, const struct clk_ops *rate_ops,
+		struct clk_hw *gate_hw, const struct clk_ops *gate_ops,
+		unsigned long flags);
+struct clk_hw *clk_hw_register_composite_pdata(struct device *dev,
+		const char *name,
+		const struct clk_parent_data *parent_data, int num_parents,
+		struct clk_hw *mux_hw, const struct clk_ops *mux_ops,
+		struct clk_hw *rate_hw, const struct clk_ops *rate_ops,
+		struct clk_hw *gate_hw, const struct clk_ops *gate_ops,
+		unsigned long flags);
+struct clk_hw *devm_clk_hw_register_composite_pdata(struct device *dev,
+		const char *name, const struct clk_parent_data *parent_data,
+		int num_parents,
+		struct clk_hw *mux_hw, const struct clk_ops *mux_ops,
+		struct clk_hw *rate_hw, const struct clk_ops *rate_ops,
+		struct clk_hw *gate_hw, const struct clk_ops *gate_ops,
+		unsigned long flags);
+void clk_hw_unregister_composite(struct clk_hw *hw);
 
-काष्ठा clk *clk_रेजिस्टर(काष्ठा device *dev, काष्ठा clk_hw *hw);
-काष्ठा clk *devm_clk_रेजिस्टर(काष्ठा device *dev, काष्ठा clk_hw *hw);
+struct clk *clk_register(struct device *dev, struct clk_hw *hw);
+struct clk *devm_clk_register(struct device *dev, struct clk_hw *hw);
 
-पूर्णांक __must_check clk_hw_रेजिस्टर(काष्ठा device *dev, काष्ठा clk_hw *hw);
-पूर्णांक __must_check devm_clk_hw_रेजिस्टर(काष्ठा device *dev, काष्ठा clk_hw *hw);
-पूर्णांक __must_check of_clk_hw_रेजिस्टर(काष्ठा device_node *node, काष्ठा clk_hw *hw);
+int __must_check clk_hw_register(struct device *dev, struct clk_hw *hw);
+int __must_check devm_clk_hw_register(struct device *dev, struct clk_hw *hw);
+int __must_check of_clk_hw_register(struct device_node *node, struct clk_hw *hw);
 
-व्योम clk_unरेजिस्टर(काष्ठा clk *clk);
-व्योम devm_clk_unरेजिस्टर(काष्ठा device *dev, काष्ठा clk *clk);
+void clk_unregister(struct clk *clk);
+void devm_clk_unregister(struct device *dev, struct clk *clk);
 
-व्योम clk_hw_unरेजिस्टर(काष्ठा clk_hw *hw);
-व्योम devm_clk_hw_unरेजिस्टर(काष्ठा device *dev, काष्ठा clk_hw *hw);
+void clk_hw_unregister(struct clk_hw *hw);
+void devm_clk_hw_unregister(struct device *dev, struct clk_hw *hw);
 
 /* helper functions */
-स्थिर अक्षर *__clk_get_name(स्थिर काष्ठा clk *clk);
-स्थिर अक्षर *clk_hw_get_name(स्थिर काष्ठा clk_hw *hw);
-#अगर_घोषित CONFIG_COMMON_CLK
-काष्ठा clk_hw *__clk_get_hw(काष्ठा clk *clk);
-#अन्यथा
-अटल अंतरभूत काष्ठा clk_hw *__clk_get_hw(काष्ठा clk *clk)
-अणु
-	वापस (काष्ठा clk_hw *)clk;
-पूर्ण
-#पूर्ण_अगर
+const char *__clk_get_name(const struct clk *clk);
+const char *clk_hw_get_name(const struct clk_hw *hw);
+#ifdef CONFIG_COMMON_CLK
+struct clk_hw *__clk_get_hw(struct clk *clk);
+#else
+static inline struct clk_hw *__clk_get_hw(struct clk *clk)
+{
+	return (struct clk_hw *)clk;
+}
+#endif
 
-काष्ठा clk *clk_hw_get_clk(काष्ठा clk_hw *hw, स्थिर अक्षर *con_id);
-काष्ठा clk *devm_clk_hw_get_clk(काष्ठा device *dev, काष्ठा clk_hw *hw,
-				स्थिर अक्षर *con_id);
+struct clk *clk_hw_get_clk(struct clk_hw *hw, const char *con_id);
+struct clk *devm_clk_hw_get_clk(struct device *dev, struct clk_hw *hw,
+				const char *con_id);
 
-अचिन्हित पूर्णांक clk_hw_get_num_parents(स्थिर काष्ठा clk_hw *hw);
-काष्ठा clk_hw *clk_hw_get_parent(स्थिर काष्ठा clk_hw *hw);
-काष्ठा clk_hw *clk_hw_get_parent_by_index(स्थिर काष्ठा clk_hw *hw,
-					  अचिन्हित पूर्णांक index);
-पूर्णांक clk_hw_get_parent_index(काष्ठा clk_hw *hw);
-पूर्णांक clk_hw_set_parent(काष्ठा clk_hw *hw, काष्ठा clk_hw *new_parent);
-अचिन्हित पूर्णांक __clk_get_enable_count(काष्ठा clk *clk);
-अचिन्हित दीर्घ clk_hw_get_rate(स्थिर काष्ठा clk_hw *hw);
-अचिन्हित दीर्घ clk_hw_get_flags(स्थिर काष्ठा clk_hw *hw);
-#घोषणा clk_hw_can_set_rate_parent(hw) \
+unsigned int clk_hw_get_num_parents(const struct clk_hw *hw);
+struct clk_hw *clk_hw_get_parent(const struct clk_hw *hw);
+struct clk_hw *clk_hw_get_parent_by_index(const struct clk_hw *hw,
+					  unsigned int index);
+int clk_hw_get_parent_index(struct clk_hw *hw);
+int clk_hw_set_parent(struct clk_hw *hw, struct clk_hw *new_parent);
+unsigned int __clk_get_enable_count(struct clk *clk);
+unsigned long clk_hw_get_rate(const struct clk_hw *hw);
+unsigned long clk_hw_get_flags(const struct clk_hw *hw);
+#define clk_hw_can_set_rate_parent(hw) \
 	(clk_hw_get_flags((hw)) & CLK_SET_RATE_PARENT)
 
-bool clk_hw_is_prepared(स्थिर काष्ठा clk_hw *hw);
-bool clk_hw_rate_is_रक्षित(स्थिर काष्ठा clk_hw *hw);
-bool clk_hw_is_enabled(स्थिर काष्ठा clk_hw *hw);
-bool __clk_is_enabled(काष्ठा clk *clk);
-काष्ठा clk *__clk_lookup(स्थिर अक्षर *name);
-पूर्णांक __clk_mux_determine_rate(काष्ठा clk_hw *hw,
-			     काष्ठा clk_rate_request *req);
-पूर्णांक __clk_determine_rate(काष्ठा clk_hw *core, काष्ठा clk_rate_request *req);
-पूर्णांक __clk_mux_determine_rate_बंदst(काष्ठा clk_hw *hw,
-				     काष्ठा clk_rate_request *req);
-पूर्णांक clk_mux_determine_rate_flags(काष्ठा clk_hw *hw,
-				 काष्ठा clk_rate_request *req,
-				 अचिन्हित दीर्घ flags);
-व्योम clk_hw_reparent(काष्ठा clk_hw *hw, काष्ठा clk_hw *new_parent);
-व्योम clk_hw_set_rate_range(काष्ठा clk_hw *hw, अचिन्हित दीर्घ min_rate,
-			   अचिन्हित दीर्घ max_rate);
+bool clk_hw_is_prepared(const struct clk_hw *hw);
+bool clk_hw_rate_is_protected(const struct clk_hw *hw);
+bool clk_hw_is_enabled(const struct clk_hw *hw);
+bool __clk_is_enabled(struct clk *clk);
+struct clk *__clk_lookup(const char *name);
+int __clk_mux_determine_rate(struct clk_hw *hw,
+			     struct clk_rate_request *req);
+int __clk_determine_rate(struct clk_hw *core, struct clk_rate_request *req);
+int __clk_mux_determine_rate_closest(struct clk_hw *hw,
+				     struct clk_rate_request *req);
+int clk_mux_determine_rate_flags(struct clk_hw *hw,
+				 struct clk_rate_request *req,
+				 unsigned long flags);
+void clk_hw_reparent(struct clk_hw *hw, struct clk_hw *new_parent);
+void clk_hw_set_rate_range(struct clk_hw *hw, unsigned long min_rate,
+			   unsigned long max_rate);
 
-अटल अंतरभूत व्योम __clk_hw_set_clk(काष्ठा clk_hw *dst, काष्ठा clk_hw *src)
-अणु
+static inline void __clk_hw_set_clk(struct clk_hw *dst, struct clk_hw *src)
+{
 	dst->clk = src->clk;
 	dst->core = src->core;
-पूर्ण
+}
 
-अटल अंतरभूत दीर्घ भागider_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				      अचिन्हित दीर्घ *prate,
-				      स्थिर काष्ठा clk_भाग_प्रकारable *table,
-				      u8 width, अचिन्हित दीर्घ flags)
-अणु
-	वापस भागider_round_rate_parent(hw, clk_hw_get_parent(hw),
+static inline long divider_round_rate(struct clk_hw *hw, unsigned long rate,
+				      unsigned long *prate,
+				      const struct clk_div_table *table,
+				      u8 width, unsigned long flags)
+{
+	return divider_round_rate_parent(hw, clk_hw_get_parent(hw),
 					 rate, prate, table, width, flags);
-पूर्ण
+}
 
-अटल अंतरभूत दीर्घ भागider_ro_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-					 अचिन्हित दीर्घ *prate,
-					 स्थिर काष्ठा clk_भाग_प्रकारable *table,
-					 u8 width, अचिन्हित दीर्घ flags,
-					 अचिन्हित पूर्णांक val)
-अणु
-	वापस भागider_ro_round_rate_parent(hw, clk_hw_get_parent(hw),
+static inline long divider_ro_round_rate(struct clk_hw *hw, unsigned long rate,
+					 unsigned long *prate,
+					 const struct clk_div_table *table,
+					 u8 width, unsigned long flags,
+					 unsigned int val)
+{
+	return divider_ro_round_rate_parent(hw, clk_hw_get_parent(hw),
 					    rate, prate, table, width, flags,
 					    val);
-पूर्ण
+}
 
 /*
- * FIXME घड़ी api without lock protection
+ * FIXME clock api without lock protection
  */
-अचिन्हित दीर्घ clk_hw_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate);
+unsigned long clk_hw_round_rate(struct clk_hw *hw, unsigned long rate);
 
-काष्ठा clk_onecell_data अणु
-	काष्ठा clk **clks;
-	अचिन्हित पूर्णांक clk_num;
-पूर्ण;
+struct clk_onecell_data {
+	struct clk **clks;
+	unsigned int clk_num;
+};
 
-काष्ठा clk_hw_onecell_data अणु
-	अचिन्हित पूर्णांक num;
-	काष्ठा clk_hw *hws[];
-पूर्ण;
+struct clk_hw_onecell_data {
+	unsigned int num;
+	struct clk_hw *hws[];
+};
 
-#घोषणा CLK_OF_DECLARE(name, compat, fn) OF_DECLARE_1(clk, name, compat, fn)
+#define CLK_OF_DECLARE(name, compat, fn) OF_DECLARE_1(clk, name, compat, fn)
 
 /*
  * Use this macro when you have a driver that requires two initialization
- * routines, one at of_clk_init(), and one at platक्रमm device probe
+ * routines, one at of_clk_init(), and one at platform device probe
  */
-#घोषणा CLK_OF_DECLARE_DRIVER(name, compat, fn) \
-	अटल व्योम __init name##_of_clk_init_driver(काष्ठा device_node *np) \
-	अणु								\
+#define CLK_OF_DECLARE_DRIVER(name, compat, fn) \
+	static void __init name##_of_clk_init_driver(struct device_node *np) \
+	{								\
 		of_node_clear_flag(np, OF_POPULATED);			\
 		fn(np);							\
-	पूर्ण								\
+	}								\
 	OF_DECLARE_1(clk, name, compat, name##_of_clk_init_driver)
 
-#घोषणा CLK_HW_INIT(_name, _parent, _ops, _flags)		\
-	(&(काष्ठा clk_init_data) अणु				\
+#define CLK_HW_INIT(_name, _parent, _ops, _flags)		\
+	(&(struct clk_init_data) {				\
 		.flags		= _flags,			\
 		.name		= _name,			\
-		.parent_names	= (स्थिर अक्षर *[]) अणु _parent पूर्ण,	\
+		.parent_names	= (const char *[]) { _parent },	\
 		.num_parents	= 1,				\
 		.ops		= _ops,				\
-	पूर्ण)
+	})
 
-#घोषणा CLK_HW_INIT_HW(_name, _parent, _ops, _flags)			\
-	(&(काष्ठा clk_init_data) अणु					\
+#define CLK_HW_INIT_HW(_name, _parent, _ops, _flags)			\
+	(&(struct clk_init_data) {					\
 		.flags		= _flags,				\
 		.name		= _name,				\
-		.parent_hws	= (स्थिर काष्ठा clk_hw*[]) अणु _parent पूर्ण,	\
+		.parent_hws	= (const struct clk_hw*[]) { _parent },	\
 		.num_parents	= 1,					\
 		.ops		= _ops,					\
-	पूर्ण)
+	})
 
 /*
- * This macro is पूर्णांकended क्रम drivers to be able to share the otherwise
- * inभागidual काष्ठा clk_hw[] compound literals created by the compiler
- * when using CLK_HW_INIT_HW. It करोes NOT support multiple parents.
+ * This macro is intended for drivers to be able to share the otherwise
+ * individual struct clk_hw[] compound literals created by the compiler
+ * when using CLK_HW_INIT_HW. It does NOT support multiple parents.
  */
-#घोषणा CLK_HW_INIT_HWS(_name, _parent, _ops, _flags)			\
-	(&(काष्ठा clk_init_data) अणु					\
+#define CLK_HW_INIT_HWS(_name, _parent, _ops, _flags)			\
+	(&(struct clk_init_data) {					\
 		.flags		= _flags,				\
 		.name		= _name,				\
 		.parent_hws	= _parent,				\
 		.num_parents	= 1,					\
 		.ops		= _ops,					\
-	पूर्ण)
+	})
 
-#घोषणा CLK_HW_INIT_FW_NAME(_name, _parent, _ops, _flags)		\
-	(&(काष्ठा clk_init_data) अणु					\
+#define CLK_HW_INIT_FW_NAME(_name, _parent, _ops, _flags)		\
+	(&(struct clk_init_data) {					\
 		.flags		= _flags,				\
 		.name		= _name,				\
-		.parent_data	= (स्थिर काष्ठा clk_parent_data[]) अणु	\
-					अणु .fw_name = _parent पूर्ण,		\
-				  पूर्ण,					\
+		.parent_data	= (const struct clk_parent_data[]) {	\
+					{ .fw_name = _parent },		\
+				  },					\
 		.num_parents	= 1,					\
 		.ops		= _ops,					\
-	पूर्ण)
+	})
 
-#घोषणा CLK_HW_INIT_PARENTS(_name, _parents, _ops, _flags)	\
-	(&(काष्ठा clk_init_data) अणु				\
+#define CLK_HW_INIT_PARENTS(_name, _parents, _ops, _flags)	\
+	(&(struct clk_init_data) {				\
 		.flags		= _flags,			\
 		.name		= _name,			\
 		.parent_names	= _parents,			\
 		.num_parents	= ARRAY_SIZE(_parents),		\
 		.ops		= _ops,				\
-	पूर्ण)
+	})
 
-#घोषणा CLK_HW_INIT_PARENTS_HW(_name, _parents, _ops, _flags)	\
-	(&(काष्ठा clk_init_data) अणु				\
+#define CLK_HW_INIT_PARENTS_HW(_name, _parents, _ops, _flags)	\
+	(&(struct clk_init_data) {				\
 		.flags		= _flags,			\
 		.name		= _name,			\
 		.parent_hws	= _parents,			\
 		.num_parents	= ARRAY_SIZE(_parents),		\
 		.ops		= _ops,				\
-	पूर्ण)
+	})
 
-#घोषणा CLK_HW_INIT_PARENTS_DATA(_name, _parents, _ops, _flags)	\
-	(&(काष्ठा clk_init_data) अणु				\
+#define CLK_HW_INIT_PARENTS_DATA(_name, _parents, _ops, _flags)	\
+	(&(struct clk_init_data) {				\
 		.flags		= _flags,			\
 		.name		= _name,			\
 		.parent_data	= _parents,			\
 		.num_parents	= ARRAY_SIZE(_parents),		\
 		.ops		= _ops,				\
-	पूर्ण)
+	})
 
-#घोषणा CLK_HW_INIT_NO_PARENT(_name, _ops, _flags)	\
-	(&(काष्ठा clk_init_data) अणु			\
+#define CLK_HW_INIT_NO_PARENT(_name, _ops, _flags)	\
+	(&(struct clk_init_data) {			\
 		.flags          = _flags,		\
 		.name           = _name,		\
-		.parent_names   = शून्य,			\
+		.parent_names   = NULL,			\
 		.num_parents    = 0,			\
 		.ops            = _ops,			\
-	पूर्ण)
+	})
 
-#घोषणा CLK_FIXED_FACTOR(_काष्ठा, _name, _parent,			\
-			_भाग, _mult, _flags)				\
-	काष्ठा clk_fixed_factor _काष्ठा = अणु				\
-		.भाग		= _भाग,					\
+#define CLK_FIXED_FACTOR(_struct, _name, _parent,			\
+			_div, _mult, _flags)				\
+	struct clk_fixed_factor _struct = {				\
+		.div		= _div,					\
 		.mult		= _mult,				\
 		.hw.init	= CLK_HW_INIT(_name,			\
 					      _parent,			\
 					      &clk_fixed_factor_ops,	\
 					      _flags),			\
-	पूर्ण
+	}
 
-#घोषणा CLK_FIXED_FACTOR_HW(_काष्ठा, _name, _parent,			\
-			    _भाग, _mult, _flags)			\
-	काष्ठा clk_fixed_factor _काष्ठा = अणु				\
-		.भाग		= _भाग,					\
+#define CLK_FIXED_FACTOR_HW(_struct, _name, _parent,			\
+			    _div, _mult, _flags)			\
+	struct clk_fixed_factor _struct = {				\
+		.div		= _div,					\
 		.mult		= _mult,				\
 		.hw.init	= CLK_HW_INIT_HW(_name,			\
 						 _parent,		\
 						 &clk_fixed_factor_ops,	\
 						 _flags),		\
-	पूर्ण
+	}
 
 /*
- * This macro allows the driver to reuse the _parent array क्रम multiple
+ * This macro allows the driver to reuse the _parent array for multiple
  * fixed factor clk declarations.
  */
-#घोषणा CLK_FIXED_FACTOR_HWS(_काष्ठा, _name, _parent,			\
-			     _भाग, _mult, _flags)			\
-	काष्ठा clk_fixed_factor _काष्ठा = अणु				\
-		.भाग		= _भाग,					\
+#define CLK_FIXED_FACTOR_HWS(_struct, _name, _parent,			\
+			     _div, _mult, _flags)			\
+	struct clk_fixed_factor _struct = {				\
+		.div		= _div,					\
 		.mult		= _mult,				\
 		.hw.init	= CLK_HW_INIT_HWS(_name,		\
 						  _parent,		\
 						  &clk_fixed_factor_ops, \
 						  _flags),	\
-	पूर्ण
+	}
 
-#घोषणा CLK_FIXED_FACTOR_FW_NAME(_काष्ठा, _name, _parent,		\
-				 _भाग, _mult, _flags)			\
-	काष्ठा clk_fixed_factor _काष्ठा = अणु				\
-		.भाग		= _भाग,					\
+#define CLK_FIXED_FACTOR_FW_NAME(_struct, _name, _parent,		\
+				 _div, _mult, _flags)			\
+	struct clk_fixed_factor _struct = {				\
+		.div		= _div,					\
 		.mult		= _mult,				\
 		.hw.init	= CLK_HW_INIT_FW_NAME(_name,		\
 						      _parent,		\
 						      &clk_fixed_factor_ops, \
 						      _flags),		\
-	पूर्ण
+	}
 
-#अगर_घोषित CONFIG_OF
-पूर्णांक of_clk_add_provider(काष्ठा device_node *np,
-			काष्ठा clk *(*clk_src_get)(काष्ठा of_phandle_args *args,
-						   व्योम *data),
-			व्योम *data);
-पूर्णांक of_clk_add_hw_provider(काष्ठा device_node *np,
-			   काष्ठा clk_hw *(*get)(काष्ठा of_phandle_args *clkspec,
-						 व्योम *data),
-			   व्योम *data);
-पूर्णांक devm_of_clk_add_hw_provider(काष्ठा device *dev,
-			   काष्ठा clk_hw *(*get)(काष्ठा of_phandle_args *clkspec,
-						 व्योम *data),
-			   व्योम *data);
-व्योम of_clk_del_provider(काष्ठा device_node *np);
-व्योम devm_of_clk_del_provider(काष्ठा device *dev);
-काष्ठा clk *of_clk_src_simple_get(काष्ठा of_phandle_args *clkspec,
-				  व्योम *data);
-काष्ठा clk_hw *of_clk_hw_simple_get(काष्ठा of_phandle_args *clkspec,
-				    व्योम *data);
-काष्ठा clk *of_clk_src_onecell_get(काष्ठा of_phandle_args *clkspec, व्योम *data);
-काष्ठा clk_hw *of_clk_hw_onecell_get(काष्ठा of_phandle_args *clkspec,
-				     व्योम *data);
-पूर्णांक of_clk_parent_fill(काष्ठा device_node *np, स्थिर अक्षर **parents,
-		       अचिन्हित पूर्णांक size);
-पूर्णांक of_clk_detect_critical(काष्ठा device_node *np, पूर्णांक index,
-			    अचिन्हित दीर्घ *flags);
+#ifdef CONFIG_OF
+int of_clk_add_provider(struct device_node *np,
+			struct clk *(*clk_src_get)(struct of_phandle_args *args,
+						   void *data),
+			void *data);
+int of_clk_add_hw_provider(struct device_node *np,
+			   struct clk_hw *(*get)(struct of_phandle_args *clkspec,
+						 void *data),
+			   void *data);
+int devm_of_clk_add_hw_provider(struct device *dev,
+			   struct clk_hw *(*get)(struct of_phandle_args *clkspec,
+						 void *data),
+			   void *data);
+void of_clk_del_provider(struct device_node *np);
+void devm_of_clk_del_provider(struct device *dev);
+struct clk *of_clk_src_simple_get(struct of_phandle_args *clkspec,
+				  void *data);
+struct clk_hw *of_clk_hw_simple_get(struct of_phandle_args *clkspec,
+				    void *data);
+struct clk *of_clk_src_onecell_get(struct of_phandle_args *clkspec, void *data);
+struct clk_hw *of_clk_hw_onecell_get(struct of_phandle_args *clkspec,
+				     void *data);
+int of_clk_parent_fill(struct device_node *np, const char **parents,
+		       unsigned int size);
+int of_clk_detect_critical(struct device_node *np, int index,
+			    unsigned long *flags);
 
-#अन्यथा /* !CONFIG_OF */
+#else /* !CONFIG_OF */
 
-अटल अंतरभूत पूर्णांक of_clk_add_provider(काष्ठा device_node *np,
-			काष्ठा clk *(*clk_src_get)(काष्ठा of_phandle_args *args,
-						   व्योम *data),
-			व्योम *data)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक of_clk_add_hw_provider(काष्ठा device_node *np,
-			काष्ठा clk_hw *(*get)(काष्ठा of_phandle_args *clkspec,
-					      व्योम *data),
-			व्योम *data)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक devm_of_clk_add_hw_provider(काष्ठा device *dev,
-			   काष्ठा clk_hw *(*get)(काष्ठा of_phandle_args *clkspec,
-						 व्योम *data),
-			   व्योम *data)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम of_clk_del_provider(काष्ठा device_node *np) अणुपूर्ण
-अटल अंतरभूत व्योम devm_of_clk_del_provider(काष्ठा device *dev) अणुपूर्ण
-अटल अंतरभूत काष्ठा clk *of_clk_src_simple_get(
-	काष्ठा of_phandle_args *clkspec, व्योम *data)
-अणु
-	वापस ERR_PTR(-ENOENT);
-पूर्ण
-अटल अंतरभूत काष्ठा clk_hw *
-of_clk_hw_simple_get(काष्ठा of_phandle_args *clkspec, व्योम *data)
-अणु
-	वापस ERR_PTR(-ENOENT);
-पूर्ण
-अटल अंतरभूत काष्ठा clk *of_clk_src_onecell_get(
-	काष्ठा of_phandle_args *clkspec, व्योम *data)
-अणु
-	वापस ERR_PTR(-ENOENT);
-पूर्ण
-अटल अंतरभूत काष्ठा clk_hw *
-of_clk_hw_onecell_get(काष्ठा of_phandle_args *clkspec, व्योम *data)
-अणु
-	वापस ERR_PTR(-ENOENT);
-पूर्ण
-अटल अंतरभूत पूर्णांक of_clk_parent_fill(काष्ठा device_node *np,
-				     स्थिर अक्षर **parents, अचिन्हित पूर्णांक size)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक of_clk_detect_critical(काष्ठा device_node *np, पूर्णांक index,
-					  अचिन्हित दीर्घ *flags)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_OF */
+static inline int of_clk_add_provider(struct device_node *np,
+			struct clk *(*clk_src_get)(struct of_phandle_args *args,
+						   void *data),
+			void *data)
+{
+	return 0;
+}
+static inline int of_clk_add_hw_provider(struct device_node *np,
+			struct clk_hw *(*get)(struct of_phandle_args *clkspec,
+					      void *data),
+			void *data)
+{
+	return 0;
+}
+static inline int devm_of_clk_add_hw_provider(struct device *dev,
+			   struct clk_hw *(*get)(struct of_phandle_args *clkspec,
+						 void *data),
+			   void *data)
+{
+	return 0;
+}
+static inline void of_clk_del_provider(struct device_node *np) {}
+static inline void devm_of_clk_del_provider(struct device *dev) {}
+static inline struct clk *of_clk_src_simple_get(
+	struct of_phandle_args *clkspec, void *data)
+{
+	return ERR_PTR(-ENOENT);
+}
+static inline struct clk_hw *
+of_clk_hw_simple_get(struct of_phandle_args *clkspec, void *data)
+{
+	return ERR_PTR(-ENOENT);
+}
+static inline struct clk *of_clk_src_onecell_get(
+	struct of_phandle_args *clkspec, void *data)
+{
+	return ERR_PTR(-ENOENT);
+}
+static inline struct clk_hw *
+of_clk_hw_onecell_get(struct of_phandle_args *clkspec, void *data)
+{
+	return ERR_PTR(-ENOENT);
+}
+static inline int of_clk_parent_fill(struct device_node *np,
+				     const char **parents, unsigned int size)
+{
+	return 0;
+}
+static inline int of_clk_detect_critical(struct device_node *np, int index,
+					  unsigned long *flags)
+{
+	return 0;
+}
+#endif /* CONFIG_OF */
 
-व्योम clk_gate_restore_context(काष्ठा clk_hw *hw);
+void clk_gate_restore_context(struct clk_hw *hw);
 
-#पूर्ण_अगर /* CLK_PROVIDER_H */
+#endif /* CLK_PROVIDER_H */

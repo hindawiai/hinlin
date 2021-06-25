@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2016 Trond Myklebust
  * Copyright (c) 2019 Jeff Layton
@@ -9,156 +8,156 @@
  * Heavily borrowed from equivalent code in fs/nfs/io.c
  */
 
-#समावेश <linux/ceph/ceph_debug.h>
+#include <linux/ceph/ceph_debug.h>
 
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/rwsem.h>
-#समावेश <linux/fs.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/rwsem.h>
+#include <linux/fs.h>
 
-#समावेश "super.h"
-#समावेश "io.h"
+#include "super.h"
+#include "io.h"
 
 /* Call with exclusively locked inode->i_rwsem */
-अटल व्योम ceph_block_o_direct(काष्ठा ceph_inode_info *ci, काष्ठा inode *inode)
-अणु
-	lockdep_निश्चित_held_ग_लिखो(&inode->i_rwsem);
+static void ceph_block_o_direct(struct ceph_inode_info *ci, struct inode *inode)
+{
+	lockdep_assert_held_write(&inode->i_rwsem);
 
-	अगर (READ_ONCE(ci->i_ceph_flags) & CEPH_I_OसूचीECT) अणु
+	if (READ_ONCE(ci->i_ceph_flags) & CEPH_I_ODIRECT) {
 		spin_lock(&ci->i_ceph_lock);
-		ci->i_ceph_flags &= ~CEPH_I_OसूचीECT;
+		ci->i_ceph_flags &= ~CEPH_I_ODIRECT;
 		spin_unlock(&ci->i_ceph_lock);
-		inode_dio_रुको(inode);
-	पूर्ण
-पूर्ण
+		inode_dio_wait(inode);
+	}
+}
 
 /**
- * ceph_start_io_पढ़ो - declare the file is being used क्रम buffered पढ़ोs
+ * ceph_start_io_read - declare the file is being used for buffered reads
  * @inode: file inode
  *
- * Declare that a buffered पढ़ो operation is about to start, and ensure
+ * Declare that a buffered read operation is about to start, and ensure
  * that we block all direct I/O.
- * On निकास, the function ensures that the CEPH_I_OसूचीECT flag is unset,
+ * On exit, the function ensures that the CEPH_I_ODIRECT flag is unset,
  * and holds a shared lock on inode->i_rwsem to ensure that the flag
  * cannot be changed.
- * In practice, this means that buffered पढ़ो operations are allowed to
+ * In practice, this means that buffered read operations are allowed to
  * execute in parallel, thanks to the shared lock, whereas direct I/O
- * operations need to रुको to grab an exclusive lock in order to set
- * CEPH_I_OसूचीECT.
- * Note that buffered ग_लिखोs and truncates both take a ग_लिखो lock on
- * inode->i_rwsem, meaning that those are serialised w.r.t. the पढ़ोs.
+ * operations need to wait to grab an exclusive lock in order to set
+ * CEPH_I_ODIRECT.
+ * Note that buffered writes and truncates both take a write lock on
+ * inode->i_rwsem, meaning that those are serialised w.r.t. the reads.
  */
-व्योम
-ceph_start_io_पढ़ो(काष्ठा inode *inode)
-अणु
-	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
+void
+ceph_start_io_read(struct inode *inode)
+{
+	struct ceph_inode_info *ci = ceph_inode(inode);
 
 	/* Be an optimist! */
-	करोwn_पढ़ो(&inode->i_rwsem);
-	अगर (!(READ_ONCE(ci->i_ceph_flags) & CEPH_I_OसूचीECT))
-		वापस;
-	up_पढ़ो(&inode->i_rwsem);
+	down_read(&inode->i_rwsem);
+	if (!(READ_ONCE(ci->i_ceph_flags) & CEPH_I_ODIRECT))
+		return;
+	up_read(&inode->i_rwsem);
 	/* Slow path.... */
-	करोwn_ग_लिखो(&inode->i_rwsem);
+	down_write(&inode->i_rwsem);
 	ceph_block_o_direct(ci, inode);
-	करोwngrade_ग_लिखो(&inode->i_rwsem);
-पूर्ण
+	downgrade_write(&inode->i_rwsem);
+}
 
 /**
- * ceph_end_io_पढ़ो - declare that the buffered पढ़ो operation is करोne
+ * ceph_end_io_read - declare that the buffered read operation is done
  * @inode: file inode
  *
- * Declare that a buffered पढ़ो operation is करोne, and release the shared
+ * Declare that a buffered read operation is done, and release the shared
  * lock on inode->i_rwsem.
  */
-व्योम
-ceph_end_io_पढ़ो(काष्ठा inode *inode)
-अणु
-	up_पढ़ो(&inode->i_rwsem);
-पूर्ण
+void
+ceph_end_io_read(struct inode *inode)
+{
+	up_read(&inode->i_rwsem);
+}
 
 /**
- * ceph_start_io_ग_लिखो - declare the file is being used क्रम buffered ग_लिखोs
+ * ceph_start_io_write - declare the file is being used for buffered writes
  * @inode: file inode
  *
- * Declare that a buffered ग_लिखो operation is about to start, and ensure
+ * Declare that a buffered write operation is about to start, and ensure
  * that we block all direct I/O.
  */
-व्योम
-ceph_start_io_ग_लिखो(काष्ठा inode *inode)
-अणु
-	करोwn_ग_लिखो(&inode->i_rwsem);
+void
+ceph_start_io_write(struct inode *inode)
+{
+	down_write(&inode->i_rwsem);
 	ceph_block_o_direct(ceph_inode(inode), inode);
-पूर्ण
+}
 
 /**
- * ceph_end_io_ग_लिखो - declare that the buffered ग_लिखो operation is करोne
+ * ceph_end_io_write - declare that the buffered write operation is done
  * @inode: file inode
  *
- * Declare that a buffered ग_लिखो operation is करोne, and release the
+ * Declare that a buffered write operation is done, and release the
  * lock on inode->i_rwsem.
  */
-व्योम
-ceph_end_io_ग_लिखो(काष्ठा inode *inode)
-अणु
-	up_ग_लिखो(&inode->i_rwsem);
-पूर्ण
+void
+ceph_end_io_write(struct inode *inode)
+{
+	up_write(&inode->i_rwsem);
+}
 
 /* Call with exclusively locked inode->i_rwsem */
-अटल व्योम ceph_block_buffered(काष्ठा ceph_inode_info *ci, काष्ठा inode *inode)
-अणु
-	lockdep_निश्चित_held_ग_लिखो(&inode->i_rwsem);
+static void ceph_block_buffered(struct ceph_inode_info *ci, struct inode *inode)
+{
+	lockdep_assert_held_write(&inode->i_rwsem);
 
-	अगर (!(READ_ONCE(ci->i_ceph_flags) & CEPH_I_OसूचीECT)) अणु
+	if (!(READ_ONCE(ci->i_ceph_flags) & CEPH_I_ODIRECT)) {
 		spin_lock(&ci->i_ceph_lock);
-		ci->i_ceph_flags |= CEPH_I_OसूचीECT;
+		ci->i_ceph_flags |= CEPH_I_ODIRECT;
 		spin_unlock(&ci->i_ceph_lock);
 		/* FIXME: unmap_mapping_range? */
-		filemap_ग_लिखो_and_रुको(inode->i_mapping);
-	पूर्ण
-पूर्ण
+		filemap_write_and_wait(inode->i_mapping);
+	}
+}
 
 /**
- * ceph_start_io_direct - declare the file is being used क्रम direct i/o
+ * ceph_start_io_direct - declare the file is being used for direct i/o
  * @inode: file inode
  *
  * Declare that a direct I/O operation is about to start, and ensure
  * that we block all buffered I/O.
- * On निकास, the function ensures that the CEPH_I_OसूचीECT flag is set,
+ * On exit, the function ensures that the CEPH_I_ODIRECT flag is set,
  * and holds a shared lock on inode->i_rwsem to ensure that the flag
  * cannot be changed.
  * In practice, this means that direct I/O operations are allowed to
  * execute in parallel, thanks to the shared lock, whereas buffered I/O
- * operations need to रुको to grab an exclusive lock in order to clear
- * CEPH_I_OसूचीECT.
- * Note that buffered ग_लिखोs and truncates both take a ग_लिखो lock on
- * inode->i_rwsem, meaning that those are serialised w.r.t. O_सूचीECT.
+ * operations need to wait to grab an exclusive lock in order to clear
+ * CEPH_I_ODIRECT.
+ * Note that buffered writes and truncates both take a write lock on
+ * inode->i_rwsem, meaning that those are serialised w.r.t. O_DIRECT.
  */
-व्योम
-ceph_start_io_direct(काष्ठा inode *inode)
-अणु
-	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
+void
+ceph_start_io_direct(struct inode *inode)
+{
+	struct ceph_inode_info *ci = ceph_inode(inode);
 
 	/* Be an optimist! */
-	करोwn_पढ़ो(&inode->i_rwsem);
-	अगर (READ_ONCE(ci->i_ceph_flags) & CEPH_I_OसूचीECT)
-		वापस;
-	up_पढ़ो(&inode->i_rwsem);
+	down_read(&inode->i_rwsem);
+	if (READ_ONCE(ci->i_ceph_flags) & CEPH_I_ODIRECT)
+		return;
+	up_read(&inode->i_rwsem);
 	/* Slow path.... */
-	करोwn_ग_लिखो(&inode->i_rwsem);
+	down_write(&inode->i_rwsem);
 	ceph_block_buffered(ci, inode);
-	करोwngrade_ग_लिखो(&inode->i_rwsem);
-पूर्ण
+	downgrade_write(&inode->i_rwsem);
+}
 
 /**
- * ceph_end_io_direct - declare that the direct i/o operation is करोne
+ * ceph_end_io_direct - declare that the direct i/o operation is done
  * @inode: file inode
  *
- * Declare that a direct I/O operation is करोne, and release the shared
+ * Declare that a direct I/O operation is done, and release the shared
  * lock on inode->i_rwsem.
  */
-व्योम
-ceph_end_io_direct(काष्ठा inode *inode)
-अणु
-	up_पढ़ो(&inode->i_rwsem);
-पूर्ण
+void
+ceph_end_io_direct(struct inode *inode)
+{
+	up_read(&inode->i_rwsem);
+}

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-16 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,27 +22,27 @@
  * Authors: AMD
  *
  */
-#समावेश "dm_services.h"
+#include "dm_services.h"
 
-#समावेश "dce/dce_11_0_d.h"
-#समावेश "dce/dce_11_0_sh_mask.h"
+#include "dce/dce_11_0_d.h"
+#include "dce/dce_11_0_sh_mask.h"
 /* TODO: this needs to be looked at, used by Stella's workaround*/
-#समावेश "gmc/gmc_8_2_d.h"
-#समावेश "gmc/gmc_8_2_sh_mask.h"
+#include "gmc/gmc_8_2_d.h"
+#include "gmc/gmc_8_2_sh_mask.h"
 
-#समावेश "include/logger_interface.h"
-#समावेश "inc/dce_calcs.h"
+#include "include/logger_interface.h"
+#include "inc/dce_calcs.h"
 
-#समावेश "dce/dce_mem_input.h"
-#समावेश "dce110_mem_input_v.h"
+#include "dce/dce_mem_input.h"
+#include "dce110_mem_input_v.h"
 
-अटल व्योम set_flip_control(
-	काष्ठा dce_mem_input *mem_input110,
+static void set_flip_control(
+	struct dce_mem_input *mem_input110,
 	bool immediate)
-अणु
-	uपूर्णांक32_t value = 0;
+{
+	uint32_t value = 0;
 
-	value = dm_पढ़ो_reg(
+	value = dm_read_reg(
 			mem_input110->base.ctx,
 			mmUNP_FLIP_CONTROL);
 
@@ -51,20 +50,20 @@
 			UNP_FLIP_CONTROL,
 			GRPH_SURFACE_UPDATE_PENDING_MODE);
 
-	dm_ग_लिखो_reg(
+	dm_write_reg(
 			mem_input110->base.ctx,
 			mmUNP_FLIP_CONTROL,
 			value);
-पूर्ण
+}
 
 /* chroma part */
-अटल व्योम program_pri_addr_c(
-	काष्ठा dce_mem_input *mem_input110,
+static void program_pri_addr_c(
+	struct dce_mem_input *mem_input110,
 	PHYSICAL_ADDRESS_LOC address)
-अणु
-	uपूर्णांक32_t value = 0;
-	uपूर्णांक32_t temp = 0;
-	/*high रेजिस्टर MUST be programmed first*/
+{
+	uint32_t value = 0;
+	uint32_t temp = 0;
+	/*high register MUST be programmed first*/
 	temp = address.high_part &
 UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_C__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_C_MASK;
 
@@ -72,7 +71,7 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_C__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_C_MAS
 		UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_C,
 		GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_C);
 
-	dm_ग_लिखो_reg(
+	dm_write_reg(
 		mem_input110->base.ctx,
 		mmUNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_C,
 		value);
@@ -86,21 +85,21 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_C__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_C_MAS
 		UNP_GRPH_PRIMARY_SURFACE_ADDRESS_C,
 		GRPH_PRIMARY_SURFACE_ADDRESS_C);
 
-	dm_ग_लिखो_reg(
+	dm_write_reg(
 		mem_input110->base.ctx,
 		mmUNP_GRPH_PRIMARY_SURFACE_ADDRESS_C,
 		value);
-पूर्ण
+}
 
 /* luma part */
-अटल व्योम program_pri_addr_l(
-	काष्ठा dce_mem_input *mem_input110,
+static void program_pri_addr_l(
+	struct dce_mem_input *mem_input110,
 	PHYSICAL_ADDRESS_LOC address)
-अणु
-	uपूर्णांक32_t value = 0;
-	uपूर्णांक32_t temp = 0;
+{
+	uint32_t value = 0;
+	uint32_t temp = 0;
 
-	/*high रेजिस्टर MUST be programmed first*/
+	/*high register MUST be programmed first*/
 	temp = address.high_part &
 UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MASK;
 
@@ -108,7 +107,7 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MAS
 		UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L,
 		GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L);
 
-	dm_ग_लिखो_reg(
+	dm_write_reg(
 		mem_input110->base.ctx,
 		mmUNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L,
 		value);
@@ -122,53 +121,53 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MAS
 		UNP_GRPH_PRIMARY_SURFACE_ADDRESS_L,
 		GRPH_PRIMARY_SURFACE_ADDRESS_L);
 
-	dm_ग_लिखो_reg(
+	dm_write_reg(
 		mem_input110->base.ctx,
 		mmUNP_GRPH_PRIMARY_SURFACE_ADDRESS_L,
 		value);
-पूर्ण
+}
 
-अटल व्योम program_addr(
-	काष्ठा dce_mem_input *mem_input110,
-	स्थिर काष्ठा dc_plane_address *addr)
-अणु
-	चयन (addr->type) अणु
-	हाल PLN_ADDR_TYPE_GRAPHICS:
+static void program_addr(
+	struct dce_mem_input *mem_input110,
+	const struct dc_plane_address *addr)
+{
+	switch (addr->type) {
+	case PLN_ADDR_TYPE_GRAPHICS:
 		program_pri_addr_l(
 			mem_input110,
 			addr->grph.addr);
-		अवरोध;
-	हाल PLN_ADDR_TYPE_VIDEO_PROGRESSIVE:
+		break;
+	case PLN_ADDR_TYPE_VIDEO_PROGRESSIVE:
 		program_pri_addr_c(
 			mem_input110,
 			addr->video_progressive.chroma_addr);
 		program_pri_addr_l(
 			mem_input110,
 			addr->video_progressive.luma_addr);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* not supported */
 		BREAK_TO_DEBUGGER();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम enable(काष्ठा dce_mem_input *mem_input110)
-अणु
-	uपूर्णांक32_t value = 0;
+static void enable(struct dce_mem_input *mem_input110)
+{
+	uint32_t value = 0;
 
-	value = dm_पढ़ो_reg(mem_input110->base.ctx, mmUNP_GRPH_ENABLE);
+	value = dm_read_reg(mem_input110->base.ctx, mmUNP_GRPH_ENABLE);
 	set_reg_field_value(value, 1, UNP_GRPH_ENABLE, GRPH_ENABLE);
-	dm_ग_लिखो_reg(mem_input110->base.ctx,
+	dm_write_reg(mem_input110->base.ctx,
 		mmUNP_GRPH_ENABLE,
 		value);
-पूर्ण
+}
 
-अटल व्योम program_tiling(
-	काष्ठा dce_mem_input *mem_input110,
-	स्थिर जोड़ dc_tiling_info *info,
-	स्थिर क्रमागत surface_pixel_क्रमmat pixel_क्रमmat)
-अणु
-	uपूर्णांक32_t value = 0;
+static void program_tiling(
+	struct dce_mem_input *mem_input110,
+	const union dc_tiling_info *info,
+	const enum surface_pixel_format pixel_format)
+{
+	uint32_t value = 0;
 
 	set_reg_field_value(value, info->gfx8.num_banks,
 		UNP_GRPH_CONTROL, GRPH_NUM_BANKS);
@@ -200,7 +199,7 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MAS
 	set_reg_field_value(value, 0,
 		UNP_GRPH_CONTROL, GRPH_Z);
 
-	dm_ग_लिखो_reg(
+	dm_write_reg(
 		mem_input110->base.ctx,
 		mmUNP_GRPH_CONTROL,
 		value);
@@ -222,22 +221,22 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MAS
 	set_reg_field_value(value, info->gfx8.tile_mode_c,
 		UNP_GRPH_CONTROL_C, GRPH_MICRO_TILE_MODE_C);
 
-	dm_ग_लिखो_reg(
+	dm_write_reg(
 		mem_input110->base.ctx,
 		mmUNP_GRPH_CONTROL_C,
 		value);
-पूर्ण
+}
 
-अटल व्योम program_size_and_rotation(
-	काष्ठा dce_mem_input *mem_input110,
-	क्रमागत dc_rotation_angle rotation,
-	स्थिर काष्ठा plane_size *plane_size)
-अणु
-	uपूर्णांक32_t value = 0;
-	काष्ठा plane_size local_size = *plane_size;
+static void program_size_and_rotation(
+	struct dce_mem_input *mem_input110,
+	enum dc_rotation_angle rotation,
+	const struct plane_size *plane_size)
+{
+	uint32_t value = 0;
+	struct plane_size local_size = *plane_size;
 
-	अगर (rotation == ROTATION_ANGLE_90 ||
-		rotation == ROTATION_ANGLE_270) अणु
+	if (rotation == ROTATION_ANGLE_90 ||
+		rotation == ROTATION_ANGLE_270) {
 
 		swap(local_size.surface_size.x,
 		     local_size.surface_size.y);
@@ -247,13 +246,13 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MAS
 		     local_size.chroma_size.y);
 		swap(local_size.chroma_size.width,
 		     local_size.chroma_size.height);
-	पूर्ण
+	}
 
 	value = 0;
 	set_reg_field_value(value, local_size.surface_pitch,
 			UNP_GRPH_PITCH_L, GRPH_PITCH_L);
 
-	dm_ग_लिखो_reg(
+	dm_write_reg(
 		mem_input110->base.ctx,
 		mmUNP_GRPH_PITCH_L,
 		value);
@@ -261,7 +260,7 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MAS
 	value = 0;
 	set_reg_field_value(value, local_size.chroma_pitch,
 			UNP_GRPH_PITCH_C, GRPH_PITCH_C);
-	dm_ग_लिखो_reg(
+	dm_write_reg(
 		mem_input110->base.ctx,
 		mmUNP_GRPH_PITCH_C,
 		value);
@@ -269,7 +268,7 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MAS
 	value = 0;
 	set_reg_field_value(value, 0,
 			UNP_GRPH_X_START_L, GRPH_X_START_L);
-	dm_ग_लिखो_reg(
+	dm_write_reg(
 		mem_input110->base.ctx,
 		mmUNP_GRPH_X_START_L,
 		value);
@@ -277,7 +276,7 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MAS
 	value = 0;
 	set_reg_field_value(value, 0,
 			UNP_GRPH_X_START_C, GRPH_X_START_C);
-	dm_ग_लिखो_reg(
+	dm_write_reg(
 		mem_input110->base.ctx,
 		mmUNP_GRPH_X_START_C,
 		value);
@@ -285,7 +284,7 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MAS
 	value = 0;
 	set_reg_field_value(value, 0,
 			UNP_GRPH_Y_START_L, GRPH_Y_START_L);
-	dm_ग_लिखो_reg(
+	dm_write_reg(
 		mem_input110->base.ctx,
 		mmUNP_GRPH_Y_START_L,
 		value);
@@ -293,7 +292,7 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MAS
 	value = 0;
 	set_reg_field_value(value, 0,
 			UNP_GRPH_Y_START_C, GRPH_Y_START_C);
-	dm_ग_लिखो_reg(
+	dm_write_reg(
 		mem_input110->base.ctx,
 		mmUNP_GRPH_Y_START_C,
 		value);
@@ -302,7 +301,7 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MAS
 	set_reg_field_value(value, local_size.surface_size.x +
 			local_size.surface_size.width,
 			UNP_GRPH_X_END_L, GRPH_X_END_L);
-	dm_ग_लिखो_reg(
+	dm_write_reg(
 		mem_input110->base.ctx,
 		mmUNP_GRPH_X_END_L,
 		value);
@@ -311,7 +310,7 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MAS
 	set_reg_field_value(value, local_size.chroma_size.x +
 			local_size.chroma_size.width,
 			UNP_GRPH_X_END_C, GRPH_X_END_C);
-	dm_ग_लिखो_reg(
+	dm_write_reg(
 		mem_input110->base.ctx,
 		mmUNP_GRPH_X_END_C,
 		value);
@@ -320,7 +319,7 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MAS
 	set_reg_field_value(value, local_size.surface_size.y +
 			local_size.surface_size.height,
 			UNP_GRPH_Y_END_L, GRPH_Y_END_L);
-	dm_ग_लिखो_reg(
+	dm_write_reg(
 		mem_input110->base.ctx,
 		mmUNP_GRPH_Y_END_L,
 		value);
@@ -329,81 +328,81 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MAS
 	set_reg_field_value(value, local_size.chroma_size.y +
 			local_size.chroma_size.height,
 			UNP_GRPH_Y_END_C, GRPH_Y_END_C);
-	dm_ग_लिखो_reg(
+	dm_write_reg(
 		mem_input110->base.ctx,
 		mmUNP_GRPH_Y_END_C,
 		value);
 
 	value = 0;
-	चयन (rotation) अणु
-	हाल ROTATION_ANGLE_90:
+	switch (rotation) {
+	case ROTATION_ANGLE_90:
 		set_reg_field_value(value, 3,
 			UNP_HW_ROTATION, ROTATION_ANGLE);
-		अवरोध;
-	हाल ROTATION_ANGLE_180:
+		break;
+	case ROTATION_ANGLE_180:
 		set_reg_field_value(value, 2,
 			UNP_HW_ROTATION, ROTATION_ANGLE);
-		अवरोध;
-	हाल ROTATION_ANGLE_270:
+		break;
+	case ROTATION_ANGLE_270:
 		set_reg_field_value(value, 1,
 			UNP_HW_ROTATION, ROTATION_ANGLE);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		set_reg_field_value(value, 0,
 			UNP_HW_ROTATION, ROTATION_ANGLE);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	dm_ग_लिखो_reg(
+	dm_write_reg(
 		mem_input110->base.ctx,
 		mmUNP_HW_ROTATION,
 		value);
-पूर्ण
+}
 
-अटल व्योम program_pixel_क्रमmat(
-	काष्ठा dce_mem_input *mem_input110,
-	क्रमागत surface_pixel_क्रमmat क्रमmat)
-अणु
-	अगर (क्रमmat < SURFACE_PIXEL_FORMAT_VIDEO_BEGIN) अणु
-		uपूर्णांक32_t value;
-		uपूर्णांक8_t grph_depth;
-		uपूर्णांक8_t grph_क्रमmat;
+static void program_pixel_format(
+	struct dce_mem_input *mem_input110,
+	enum surface_pixel_format format)
+{
+	if (format < SURFACE_PIXEL_FORMAT_VIDEO_BEGIN) {
+		uint32_t value;
+		uint8_t grph_depth;
+		uint8_t grph_format;
 
-		value =	dm_पढ़ो_reg(
+		value =	dm_read_reg(
 				mem_input110->base.ctx,
 				mmUNP_GRPH_CONTROL);
 
-		चयन (क्रमmat) अणु
-		हाल SURFACE_PIXEL_FORMAT_GRPH_PALETA_256_COLORS:
+		switch (format) {
+		case SURFACE_PIXEL_FORMAT_GRPH_PALETA_256_COLORS:
 			grph_depth = 0;
-			grph_क्रमmat = 0;
-			अवरोध;
-		हाल SURFACE_PIXEL_FORMAT_GRPH_RGB565:
+			grph_format = 0;
+			break;
+		case SURFACE_PIXEL_FORMAT_GRPH_RGB565:
 			grph_depth = 1;
-			grph_क्रमmat = 1;
-			अवरोध;
-		हाल SURFACE_PIXEL_FORMAT_GRPH_ARGB8888:
-		हाल SURFACE_PIXEL_FORMAT_GRPH_ABGR8888:
+			grph_format = 1;
+			break;
+		case SURFACE_PIXEL_FORMAT_GRPH_ARGB8888:
+		case SURFACE_PIXEL_FORMAT_GRPH_ABGR8888:
 			grph_depth = 2;
-			grph_क्रमmat = 0;
-			अवरोध;
-		हाल SURFACE_PIXEL_FORMAT_GRPH_ARGB2101010:
-		हाल SURFACE_PIXEL_FORMAT_GRPH_ABGR2101010:
-		हाल SURFACE_PIXEL_FORMAT_GRPH_ABGR2101010_XR_BIAS:
+			grph_format = 0;
+			break;
+		case SURFACE_PIXEL_FORMAT_GRPH_ARGB2101010:
+		case SURFACE_PIXEL_FORMAT_GRPH_ABGR2101010:
+		case SURFACE_PIXEL_FORMAT_GRPH_ABGR2101010_XR_BIAS:
 			grph_depth = 2;
-			grph_क्रमmat = 1;
-			अवरोध;
-		हाल SURFACE_PIXEL_FORMAT_GRPH_ARGB16161616:
-		हाल SURFACE_PIXEL_FORMAT_GRPH_ABGR16161616F:
-		हाल SURFACE_PIXEL_FORMAT_GRPH_ARGB16161616F:
+			grph_format = 1;
+			break;
+		case SURFACE_PIXEL_FORMAT_GRPH_ARGB16161616:
+		case SURFACE_PIXEL_FORMAT_GRPH_ABGR16161616F:
+		case SURFACE_PIXEL_FORMAT_GRPH_ARGB16161616F:
 			grph_depth = 3;
-			grph_क्रमmat = 0;
-			अवरोध;
-		शेष:
+			grph_format = 0;
+			break;
+		default:
 			grph_depth = 2;
-			grph_क्रमmat = 0;
-			अवरोध;
-		पूर्ण
+			grph_format = 0;
+			break;
+		}
 
 		set_reg_field_value(
 				value,
@@ -412,16 +411,16 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MAS
 				GRPH_DEPTH);
 		set_reg_field_value(
 				value,
-				grph_क्रमmat,
+				grph_format,
 				UNP_GRPH_CONTROL,
 				GRPH_FORMAT);
 
-		dm_ग_लिखो_reg(
+		dm_write_reg(
 				mem_input110->base.ctx,
 				mmUNP_GRPH_CONTROL,
 				value);
 
-		value =	dm_पढ़ो_reg(
+		value =	dm_read_reg(
 				mem_input110->base.ctx,
 				mmUNP_GRPH_CONTROL_EXP);
 
@@ -431,66 +430,66 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MAS
 				0,
 				UNP_GRPH_CONTROL_EXP,
 				VIDEO_FORMAT);
-		dm_ग_लिखो_reg(
+		dm_write_reg(
 				mem_input110->base.ctx,
 				mmUNP_GRPH_CONTROL_EXP,
 				value);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Video 422 and 420 needs UNP_GRPH_CONTROL_EXP programmed */
-		uपूर्णांक32_t value;
-		uपूर्णांक8_t video_क्रमmat;
+		uint32_t value;
+		uint8_t video_format;
 
-		value =	dm_पढ़ो_reg(
+		value =	dm_read_reg(
 				mem_input110->base.ctx,
 				mmUNP_GRPH_CONTROL_EXP);
 
-		चयन (क्रमmat) अणु
-		हाल SURFACE_PIXEL_FORMAT_VIDEO_420_YCbCr:
-			video_क्रमmat = 2;
-			अवरोध;
-		हाल SURFACE_PIXEL_FORMAT_VIDEO_420_YCrCb:
-			video_क्रमmat = 3;
-			अवरोध;
-		शेष:
-			video_क्रमmat = 0;
-			अवरोध;
-		पूर्ण
+		switch (format) {
+		case SURFACE_PIXEL_FORMAT_VIDEO_420_YCbCr:
+			video_format = 2;
+			break;
+		case SURFACE_PIXEL_FORMAT_VIDEO_420_YCrCb:
+			video_format = 3;
+			break;
+		default:
+			video_format = 0;
+			break;
+		}
 
 		set_reg_field_value(
 			value,
-			video_क्रमmat,
+			video_format,
 			UNP_GRPH_CONTROL_EXP,
 			VIDEO_FORMAT);
 
-		dm_ग_लिखो_reg(
+		dm_write_reg(
 			mem_input110->base.ctx,
 			mmUNP_GRPH_CONTROL_EXP,
 			value);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल bool dce_mem_input_v_is_surface_pending(काष्ठा mem_input *mem_input)
-अणु
-	काष्ठा dce_mem_input *mem_input110 = TO_DCE_MEM_INPUT(mem_input);
-	uपूर्णांक32_t value;
+static bool dce_mem_input_v_is_surface_pending(struct mem_input *mem_input)
+{
+	struct dce_mem_input *mem_input110 = TO_DCE_MEM_INPUT(mem_input);
+	uint32_t value;
 
-	value = dm_पढ़ो_reg(mem_input110->base.ctx, mmUNP_GRPH_UPDATE);
+	value = dm_read_reg(mem_input110->base.ctx, mmUNP_GRPH_UPDATE);
 
-	अगर (get_reg_field_value(value, UNP_GRPH_UPDATE,
+	if (get_reg_field_value(value, UNP_GRPH_UPDATE,
 			GRPH_SURFACE_UPDATE_PENDING))
-		वापस true;
+		return true;
 
 	mem_input->current_address = mem_input->request_address;
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool dce_mem_input_v_program_surface_flip_and_addr(
-	काष्ठा mem_input *mem_input,
-	स्थिर काष्ठा dc_plane_address *address,
+static bool dce_mem_input_v_program_surface_flip_and_addr(
+	struct mem_input *mem_input,
+	const struct dc_plane_address *address,
 	bool flip_immediate)
-अणु
-	काष्ठा dce_mem_input *mem_input110 = TO_DCE_MEM_INPUT(mem_input);
+{
+	struct dce_mem_input *mem_input110 = TO_DCE_MEM_INPUT(mem_input);
 
 	set_flip_control(mem_input110, flip_immediate);
 	program_addr(mem_input110,
@@ -498,180 +497,180 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MAS
 
 	mem_input->request_address = *address;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /* Scatter Gather param tables */
-अटल स्थिर अचिन्हित पूर्णांक dvmm_Hw_Setting_2DTiling[4][9] = अणु
-		अणु  8, 64, 64,  8,  8, 1, 4, 0, 0पूर्ण,
-		अणु 16, 64, 32,  8, 16, 1, 8, 0, 0पूर्ण,
-		अणु 32, 32, 32, 16, 16, 1, 8, 0, 0पूर्ण,
-		अणु 64,  8, 32, 16, 16, 1, 8, 0, 0पूर्ण, /* fake */
-पूर्ण;
+static const unsigned int dvmm_Hw_Setting_2DTiling[4][9] = {
+		{  8, 64, 64,  8,  8, 1, 4, 0, 0},
+		{ 16, 64, 32,  8, 16, 1, 8, 0, 0},
+		{ 32, 32, 32, 16, 16, 1, 8, 0, 0},
+		{ 64,  8, 32, 16, 16, 1, 8, 0, 0}, /* fake */
+};
 
-अटल स्थिर अचिन्हित पूर्णांक dvmm_Hw_Setting_1DTiling[4][9] = अणु
-		अणु  8, 512, 8, 1, 0, 1, 0, 0, 0पूर्ण,  /* 0 क्रम invalid */
-		अणु 16, 256, 8, 2, 0, 1, 0, 0, 0पूर्ण,
-		अणु 32, 128, 8, 4, 0, 1, 0, 0, 0पूर्ण,
-		अणु 64,  64, 8, 4, 0, 1, 0, 0, 0पूर्ण, /* fake */
-पूर्ण;
+static const unsigned int dvmm_Hw_Setting_1DTiling[4][9] = {
+		{  8, 512, 8, 1, 0, 1, 0, 0, 0},  /* 0 for invalid */
+		{ 16, 256, 8, 2, 0, 1, 0, 0, 0},
+		{ 32, 128, 8, 4, 0, 1, 0, 0, 0},
+		{ 64,  64, 8, 4, 0, 1, 0, 0, 0}, /* fake */
+};
 
-अटल स्थिर अचिन्हित पूर्णांक dvmm_Hw_Setting_Linear[4][9] = अणु
-		अणु  8, 4096, 1, 8, 0, 1, 0, 0, 0पूर्ण,
-		अणु 16, 2048, 1, 8, 0, 1, 0, 0, 0पूर्ण,
-		अणु 32, 1024, 1, 8, 0, 1, 0, 0, 0पूर्ण,
-		अणु 64,  512, 1, 8, 0, 1, 0, 0, 0पूर्ण, /* new क्रम 64bpp from HW */
-पूर्ण;
+static const unsigned int dvmm_Hw_Setting_Linear[4][9] = {
+		{  8, 4096, 1, 8, 0, 1, 0, 0, 0},
+		{ 16, 2048, 1, 8, 0, 1, 0, 0, 0},
+		{ 32, 1024, 1, 8, 0, 1, 0, 0, 0},
+		{ 64,  512, 1, 8, 0, 1, 0, 0, 0}, /* new for 64bpp from HW */
+};
 
 /* Helper to get table entry from surface info */
-अटल स्थिर अचिन्हित पूर्णांक *get_dvmm_hw_setting(
-		जोड़ dc_tiling_info *tiling_info,
-		क्रमागत surface_pixel_क्रमmat क्रमmat,
+static const unsigned int *get_dvmm_hw_setting(
+		union dc_tiling_info *tiling_info,
+		enum surface_pixel_format format,
 		bool chroma)
-अणु
-	क्रमागत bits_per_pixel अणु
+{
+	enum bits_per_pixel {
 		bpp_8 = 0,
 		bpp_16,
 		bpp_32,
 		bpp_64
-	पूर्ण bpp;
+	} bpp;
 
-	अगर (क्रमmat >= SURFACE_PIXEL_FORMAT_INVALID)
+	if (format >= SURFACE_PIXEL_FORMAT_INVALID)
 		bpp = bpp_32;
-	अन्यथा अगर (क्रमmat >= SURFACE_PIXEL_FORMAT_VIDEO_BEGIN)
+	else if (format >= SURFACE_PIXEL_FORMAT_VIDEO_BEGIN)
 		bpp = chroma ? bpp_16 : bpp_8;
-	अन्यथा
+	else
 		bpp = bpp_8;
 
-	चयन (tiling_info->gfx8.array_mode) अणु
-	हाल DC_ARRAY_1D_TILED_THIN1:
-	हाल DC_ARRAY_1D_TILED_THICK:
-	हाल DC_ARRAY_PRT_TILED_THIN1:
-		वापस dvmm_Hw_Setting_1DTiling[bpp];
-	हाल DC_ARRAY_2D_TILED_THIN1:
-	हाल DC_ARRAY_2D_TILED_THICK:
-	हाल DC_ARRAY_2D_TILED_X_THICK:
-	हाल DC_ARRAY_PRT_2D_TILED_THIN1:
-	हाल DC_ARRAY_PRT_2D_TILED_THICK:
-		वापस dvmm_Hw_Setting_2DTiling[bpp];
-	हाल DC_ARRAY_LINEAR_GENERAL:
-	हाल DC_ARRAY_LINEAR_ALLIGNED:
-		वापस dvmm_Hw_Setting_Linear[bpp];
-	शेष:
-		वापस dvmm_Hw_Setting_2DTiling[bpp];
-	पूर्ण
-पूर्ण
+	switch (tiling_info->gfx8.array_mode) {
+	case DC_ARRAY_1D_TILED_THIN1:
+	case DC_ARRAY_1D_TILED_THICK:
+	case DC_ARRAY_PRT_TILED_THIN1:
+		return dvmm_Hw_Setting_1DTiling[bpp];
+	case DC_ARRAY_2D_TILED_THIN1:
+	case DC_ARRAY_2D_TILED_THICK:
+	case DC_ARRAY_2D_TILED_X_THICK:
+	case DC_ARRAY_PRT_2D_TILED_THIN1:
+	case DC_ARRAY_PRT_2D_TILED_THICK:
+		return dvmm_Hw_Setting_2DTiling[bpp];
+	case DC_ARRAY_LINEAR_GENERAL:
+	case DC_ARRAY_LINEAR_ALLIGNED:
+		return dvmm_Hw_Setting_Linear[bpp];
+	default:
+		return dvmm_Hw_Setting_2DTiling[bpp];
+	}
+}
 
-अटल व्योम dce_mem_input_v_program_pte_vm(
-		काष्ठा mem_input *mem_input,
-		क्रमागत surface_pixel_क्रमmat क्रमmat,
-		जोड़ dc_tiling_info *tiling_info,
-		क्रमागत dc_rotation_angle rotation)
-अणु
-	काष्ठा dce_mem_input *mem_input110 = TO_DCE_MEM_INPUT(mem_input);
-	स्थिर अचिन्हित पूर्णांक *pte = get_dvmm_hw_setting(tiling_info, क्रमmat, false);
-	स्थिर अचिन्हित पूर्णांक *pte_chroma = get_dvmm_hw_setting(tiling_info, क्रमmat, true);
+static void dce_mem_input_v_program_pte_vm(
+		struct mem_input *mem_input,
+		enum surface_pixel_format format,
+		union dc_tiling_info *tiling_info,
+		enum dc_rotation_angle rotation)
+{
+	struct dce_mem_input *mem_input110 = TO_DCE_MEM_INPUT(mem_input);
+	const unsigned int *pte = get_dvmm_hw_setting(tiling_info, format, false);
+	const unsigned int *pte_chroma = get_dvmm_hw_setting(tiling_info, format, true);
 
-	अचिन्हित पूर्णांक page_width = 0;
-	अचिन्हित पूर्णांक page_height = 0;
-	अचिन्हित पूर्णांक page_width_chroma = 0;
-	अचिन्हित पूर्णांक page_height_chroma = 0;
-	अचिन्हित पूर्णांक temp_page_width = pte[1];
-	अचिन्हित पूर्णांक temp_page_height = pte[2];
-	अचिन्हित पूर्णांक min_pte_beक्रमe_flip = 0;
-	अचिन्हित पूर्णांक min_pte_beक्रमe_flip_chroma = 0;
-	uपूर्णांक32_t value = 0;
+	unsigned int page_width = 0;
+	unsigned int page_height = 0;
+	unsigned int page_width_chroma = 0;
+	unsigned int page_height_chroma = 0;
+	unsigned int temp_page_width = pte[1];
+	unsigned int temp_page_height = pte[2];
+	unsigned int min_pte_before_flip = 0;
+	unsigned int min_pte_before_flip_chroma = 0;
+	uint32_t value = 0;
 
-	जबतक ((temp_page_width >>= 1) != 0)
+	while ((temp_page_width >>= 1) != 0)
 		page_width++;
-	जबतक ((temp_page_height >>= 1) != 0)
+	while ((temp_page_height >>= 1) != 0)
 		page_height++;
 
 	temp_page_width = pte_chroma[1];
 	temp_page_height = pte_chroma[2];
-	जबतक ((temp_page_width >>= 1) != 0)
+	while ((temp_page_width >>= 1) != 0)
 		page_width_chroma++;
-	जबतक ((temp_page_height >>= 1) != 0)
+	while ((temp_page_height >>= 1) != 0)
 		page_height_chroma++;
 
-	चयन (rotation) अणु
-	हाल ROTATION_ANGLE_90:
-	हाल ROTATION_ANGLE_270:
-		min_pte_beक्रमe_flip = pte[4];
-		min_pte_beक्रमe_flip_chroma = pte_chroma[4];
-		अवरोध;
-	शेष:
-		min_pte_beक्रमe_flip = pte[3];
-		min_pte_beक्रमe_flip_chroma = pte_chroma[3];
-		अवरोध;
-	पूर्ण
+	switch (rotation) {
+	case ROTATION_ANGLE_90:
+	case ROTATION_ANGLE_270:
+		min_pte_before_flip = pte[4];
+		min_pte_before_flip_chroma = pte_chroma[4];
+		break;
+	default:
+		min_pte_before_flip = pte[3];
+		min_pte_before_flip_chroma = pte_chroma[3];
+		break;
+	}
 
-	value = dm_पढ़ो_reg(mem_input110->base.ctx, mmUNP_PIPE_OUTSTANDING_REQUEST_LIMIT);
+	value = dm_read_reg(mem_input110->base.ctx, mmUNP_PIPE_OUTSTANDING_REQUEST_LIMIT);
 	/* TODO: un-hardcode requestlimit */
 	set_reg_field_value(value, 0xff, UNP_PIPE_OUTSTANDING_REQUEST_LIMIT, UNP_PIPE_OUTSTANDING_REQUEST_LIMIT_L);
 	set_reg_field_value(value, 0xff, UNP_PIPE_OUTSTANDING_REQUEST_LIMIT, UNP_PIPE_OUTSTANDING_REQUEST_LIMIT_C);
-	dm_ग_लिखो_reg(mem_input110->base.ctx, mmUNP_PIPE_OUTSTANDING_REQUEST_LIMIT, value);
+	dm_write_reg(mem_input110->base.ctx, mmUNP_PIPE_OUTSTANDING_REQUEST_LIMIT, value);
 
-	value = dm_पढ़ो_reg(mem_input110->base.ctx, mmUNP_DVMM_PTE_CONTROL);
+	value = dm_read_reg(mem_input110->base.ctx, mmUNP_DVMM_PTE_CONTROL);
 	set_reg_field_value(value, page_width, UNP_DVMM_PTE_CONTROL, DVMM_PAGE_WIDTH);
 	set_reg_field_value(value, page_height, UNP_DVMM_PTE_CONTROL, DVMM_PAGE_HEIGHT);
-	set_reg_field_value(value, min_pte_beक्रमe_flip, UNP_DVMM_PTE_CONTROL, DVMM_MIN_PTE_BEFORE_FLIP);
-	dm_ग_लिखो_reg(mem_input110->base.ctx, mmUNP_DVMM_PTE_CONTROL, value);
+	set_reg_field_value(value, min_pte_before_flip, UNP_DVMM_PTE_CONTROL, DVMM_MIN_PTE_BEFORE_FLIP);
+	dm_write_reg(mem_input110->base.ctx, mmUNP_DVMM_PTE_CONTROL, value);
 
-	value = dm_पढ़ो_reg(mem_input110->base.ctx, mmUNP_DVMM_PTE_ARB_CONTROL);
+	value = dm_read_reg(mem_input110->base.ctx, mmUNP_DVMM_PTE_ARB_CONTROL);
 	set_reg_field_value(value, pte[5], UNP_DVMM_PTE_ARB_CONTROL, DVMM_PTE_REQ_PER_CHUNK);
 	set_reg_field_value(value, 0xff, UNP_DVMM_PTE_ARB_CONTROL, DVMM_MAX_PTE_REQ_OUTSTANDING);
-	dm_ग_लिखो_reg(mem_input110->base.ctx, mmUNP_DVMM_PTE_ARB_CONTROL, value);
+	dm_write_reg(mem_input110->base.ctx, mmUNP_DVMM_PTE_ARB_CONTROL, value);
 
-	value = dm_पढ़ो_reg(mem_input110->base.ctx, mmUNP_DVMM_PTE_CONTROL_C);
+	value = dm_read_reg(mem_input110->base.ctx, mmUNP_DVMM_PTE_CONTROL_C);
 	set_reg_field_value(value, page_width_chroma, UNP_DVMM_PTE_CONTROL_C, DVMM_PAGE_WIDTH_C);
 	set_reg_field_value(value, page_height_chroma, UNP_DVMM_PTE_CONTROL_C, DVMM_PAGE_HEIGHT_C);
-	set_reg_field_value(value, min_pte_beक्रमe_flip_chroma, UNP_DVMM_PTE_CONTROL_C, DVMM_MIN_PTE_BEFORE_FLIP_C);
-	dm_ग_लिखो_reg(mem_input110->base.ctx, mmUNP_DVMM_PTE_CONTROL_C, value);
+	set_reg_field_value(value, min_pte_before_flip_chroma, UNP_DVMM_PTE_CONTROL_C, DVMM_MIN_PTE_BEFORE_FLIP_C);
+	dm_write_reg(mem_input110->base.ctx, mmUNP_DVMM_PTE_CONTROL_C, value);
 
-	value = dm_पढ़ो_reg(mem_input110->base.ctx, mmUNP_DVMM_PTE_ARB_CONTROL_C);
+	value = dm_read_reg(mem_input110->base.ctx, mmUNP_DVMM_PTE_ARB_CONTROL_C);
 	set_reg_field_value(value, pte_chroma[5], UNP_DVMM_PTE_ARB_CONTROL_C, DVMM_PTE_REQ_PER_CHUNK_C);
 	set_reg_field_value(value, 0xff, UNP_DVMM_PTE_ARB_CONTROL_C, DVMM_MAX_PTE_REQ_OUTSTANDING_C);
-	dm_ग_लिखो_reg(mem_input110->base.ctx, mmUNP_DVMM_PTE_ARB_CONTROL_C, value);
-पूर्ण
+	dm_write_reg(mem_input110->base.ctx, mmUNP_DVMM_PTE_ARB_CONTROL_C, value);
+}
 
-अटल व्योम dce_mem_input_v_program_surface_config(
-	काष्ठा mem_input *mem_input,
-	क्रमागत surface_pixel_क्रमmat क्रमmat,
-	जोड़ dc_tiling_info *tiling_info,
-	काष्ठा plane_size *plane_size,
-	क्रमागत dc_rotation_angle rotation,
-	काष्ठा dc_plane_dcc_param *dcc,
+static void dce_mem_input_v_program_surface_config(
+	struct mem_input *mem_input,
+	enum surface_pixel_format format,
+	union dc_tiling_info *tiling_info,
+	struct plane_size *plane_size,
+	enum dc_rotation_angle rotation,
+	struct dc_plane_dcc_param *dcc,
 	bool horizotal_mirror)
-अणु
-	काष्ठा dce_mem_input *mem_input110 = TO_DCE_MEM_INPUT(mem_input);
+{
+	struct dce_mem_input *mem_input110 = TO_DCE_MEM_INPUT(mem_input);
 
 	enable(mem_input110);
-	program_tiling(mem_input110, tiling_info, क्रमmat);
+	program_tiling(mem_input110, tiling_info, format);
 	program_size_and_rotation(mem_input110, rotation, plane_size);
-	program_pixel_क्रमmat(mem_input110, क्रमmat);
-पूर्ण
+	program_pixel_format(mem_input110, format);
+}
 
-अटल व्योम program_urgency_watermark(
-	स्थिर काष्ठा dc_context *ctx,
-	स्थिर uपूर्णांक32_t urgency_addr,
-	स्थिर uपूर्णांक32_t wm_addr,
-	काष्ठा dce_watermarks marks_low,
-	uपूर्णांक32_t total_dest_line_समय_ns)
-अणु
-	/* रेजिस्टर value */
-	uपूर्णांक32_t urgency_cntl = 0;
-	uपूर्णांक32_t wm_mask_cntl = 0;
+static void program_urgency_watermark(
+	const struct dc_context *ctx,
+	const uint32_t urgency_addr,
+	const uint32_t wm_addr,
+	struct dce_watermarks marks_low,
+	uint32_t total_dest_line_time_ns)
+{
+	/* register value */
+	uint32_t urgency_cntl = 0;
+	uint32_t wm_mask_cntl = 0;
 
-	/*Write mask to enable पढ़ोing/writing of watermark set A*/
-	wm_mask_cntl = dm_पढ़ो_reg(ctx, wm_addr);
+	/*Write mask to enable reading/writing of watermark set A*/
+	wm_mask_cntl = dm_read_reg(ctx, wm_addr);
 	set_reg_field_value(wm_mask_cntl,
 			1,
 			DPGV0_WATERMARK_MASK_CONTROL,
 			URGENCY_WATERMARK_MASK);
-	dm_ग_लिखो_reg(ctx, wm_addr, wm_mask_cntl);
+	dm_write_reg(ctx, wm_addr, wm_mask_cntl);
 
-	urgency_cntl = dm_पढ़ो_reg(ctx, urgency_addr);
+	urgency_cntl = dm_read_reg(ctx, urgency_addr);
 
 	set_reg_field_value(
 		urgency_cntl,
@@ -681,20 +680,20 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MAS
 
 	set_reg_field_value(
 		urgency_cntl,
-		total_dest_line_समय_ns,
+		total_dest_line_time_ns,
 		DPGV0_PIPE_URGENCY_CONTROL,
 		URGENCY_HIGH_WATERMARK);
-	dm_ग_लिखो_reg(ctx, urgency_addr, urgency_cntl);
+	dm_write_reg(ctx, urgency_addr, urgency_cntl);
 
-	/*Write mask to enable पढ़ोing/writing of watermark set B*/
-	wm_mask_cntl = dm_पढ़ो_reg(ctx, wm_addr);
+	/*Write mask to enable reading/writing of watermark set B*/
+	wm_mask_cntl = dm_read_reg(ctx, wm_addr);
 	set_reg_field_value(wm_mask_cntl,
 			2,
 			DPGV0_WATERMARK_MASK_CONTROL,
 			URGENCY_WATERMARK_MASK);
-	dm_ग_लिखो_reg(ctx, wm_addr, wm_mask_cntl);
+	dm_write_reg(ctx, wm_addr, wm_mask_cntl);
 
-	urgency_cntl = dm_पढ़ो_reg(ctx, urgency_addr);
+	urgency_cntl = dm_read_reg(ctx, urgency_addr);
 
 	set_reg_field_value(urgency_cntl,
 		marks_low.b_mark,
@@ -702,71 +701,71 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MAS
 		URGENCY_LOW_WATERMARK);
 
 	set_reg_field_value(urgency_cntl,
-		total_dest_line_समय_ns,
+		total_dest_line_time_ns,
 		DPGV0_PIPE_URGENCY_CONTROL,
 		URGENCY_HIGH_WATERMARK);
 
-	dm_ग_लिखो_reg(ctx, urgency_addr, urgency_cntl);
-पूर्ण
+	dm_write_reg(ctx, urgency_addr, urgency_cntl);
+}
 
-अटल व्योम program_urgency_watermark_l(
-	स्थिर काष्ठा dc_context *ctx,
-	काष्ठा dce_watermarks marks_low,
-	uपूर्णांक32_t total_dest_line_समय_ns)
-अणु
+static void program_urgency_watermark_l(
+	const struct dc_context *ctx,
+	struct dce_watermarks marks_low,
+	uint32_t total_dest_line_time_ns)
+{
 	program_urgency_watermark(
 		ctx,
 		mmDPGV0_PIPE_URGENCY_CONTROL,
 		mmDPGV0_WATERMARK_MASK_CONTROL,
 		marks_low,
-		total_dest_line_समय_ns);
-पूर्ण
+		total_dest_line_time_ns);
+}
 
-अटल व्योम program_urgency_watermark_c(
-	स्थिर काष्ठा dc_context *ctx,
-	काष्ठा dce_watermarks marks_low,
-	uपूर्णांक32_t total_dest_line_समय_ns)
-अणु
+static void program_urgency_watermark_c(
+	const struct dc_context *ctx,
+	struct dce_watermarks marks_low,
+	uint32_t total_dest_line_time_ns)
+{
 	program_urgency_watermark(
 		ctx,
 		mmDPGV1_PIPE_URGENCY_CONTROL,
 		mmDPGV1_WATERMARK_MASK_CONTROL,
 		marks_low,
-		total_dest_line_समय_ns);
-पूर्ण
+		total_dest_line_time_ns);
+}
 
-अटल व्योम program_stutter_watermark(
-	स्थिर काष्ठा dc_context *ctx,
-	स्थिर uपूर्णांक32_t stutter_addr,
-	स्थिर uपूर्णांक32_t wm_addr,
-	काष्ठा dce_watermarks marks)
-अणु
-	/* रेजिस्टर value */
-	uपूर्णांक32_t stutter_cntl = 0;
-	uपूर्णांक32_t wm_mask_cntl = 0;
+static void program_stutter_watermark(
+	const struct dc_context *ctx,
+	const uint32_t stutter_addr,
+	const uint32_t wm_addr,
+	struct dce_watermarks marks)
+{
+	/* register value */
+	uint32_t stutter_cntl = 0;
+	uint32_t wm_mask_cntl = 0;
 
-	/*Write mask to enable पढ़ोing/writing of watermark set A*/
+	/*Write mask to enable reading/writing of watermark set A*/
 
-	wm_mask_cntl = dm_पढ़ो_reg(ctx, wm_addr);
+	wm_mask_cntl = dm_read_reg(ctx, wm_addr);
 	set_reg_field_value(wm_mask_cntl,
 		1,
 		DPGV0_WATERMARK_MASK_CONTROL,
 		STUTTER_EXIT_SELF_REFRESH_WATERMARK_MASK);
-	dm_ग_लिखो_reg(ctx, wm_addr, wm_mask_cntl);
+	dm_write_reg(ctx, wm_addr, wm_mask_cntl);
 
-	stutter_cntl = dm_पढ़ो_reg(ctx, stutter_addr);
+	stutter_cntl = dm_read_reg(ctx, stutter_addr);
 
-	अगर (ctx->dc->debug.disable_stutter) अणु
+	if (ctx->dc->debug.disable_stutter) {
 		set_reg_field_value(stutter_cntl,
 			0,
 			DPGV0_PIPE_STUTTER_CONTROL,
 			STUTTER_ENABLE);
-	पूर्ण अन्यथा अणु
+	} else {
 		set_reg_field_value(stutter_cntl,
 			1,
 			DPGV0_PIPE_STUTTER_CONTROL,
 			STUTTER_ENABLE);
-	पूर्ण
+	}
 
 	set_reg_field_value(stutter_cntl,
 		1,
@@ -778,65 +777,65 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MAS
 		marks.a_mark,
 		DPGV0_PIPE_STUTTER_CONTROL,
 		STUTTER_EXIT_SELF_REFRESH_WATERMARK);
-	dm_ग_लिखो_reg(ctx, stutter_addr, stutter_cntl);
+	dm_write_reg(ctx, stutter_addr, stutter_cntl);
 
-	/*Write mask to enable पढ़ोing/writing of watermark set B*/
-	wm_mask_cntl = dm_पढ़ो_reg(ctx, wm_addr);
+	/*Write mask to enable reading/writing of watermark set B*/
+	wm_mask_cntl = dm_read_reg(ctx, wm_addr);
 	set_reg_field_value(wm_mask_cntl,
 		2,
 		DPGV0_WATERMARK_MASK_CONTROL,
 		STUTTER_EXIT_SELF_REFRESH_WATERMARK_MASK);
-	dm_ग_लिखो_reg(ctx, wm_addr, wm_mask_cntl);
+	dm_write_reg(ctx, wm_addr, wm_mask_cntl);
 
-	stutter_cntl = dm_पढ़ो_reg(ctx, stutter_addr);
+	stutter_cntl = dm_read_reg(ctx, stutter_addr);
 	/*Write watermark set B*/
 	set_reg_field_value(stutter_cntl,
 		marks.b_mark,
 		DPGV0_PIPE_STUTTER_CONTROL,
 		STUTTER_EXIT_SELF_REFRESH_WATERMARK);
-	dm_ग_लिखो_reg(ctx, stutter_addr, stutter_cntl);
-पूर्ण
+	dm_write_reg(ctx, stutter_addr, stutter_cntl);
+}
 
-अटल व्योम program_stutter_watermark_l(
-	स्थिर काष्ठा dc_context *ctx,
-	काष्ठा dce_watermarks marks)
-अणु
+static void program_stutter_watermark_l(
+	const struct dc_context *ctx,
+	struct dce_watermarks marks)
+{
 	program_stutter_watermark(ctx,
 			mmDPGV0_PIPE_STUTTER_CONTROL,
 			mmDPGV0_WATERMARK_MASK_CONTROL,
 			marks);
-पूर्ण
+}
 
-अटल व्योम program_stutter_watermark_c(
-	स्थिर काष्ठा dc_context *ctx,
-	काष्ठा dce_watermarks marks)
-अणु
+static void program_stutter_watermark_c(
+	const struct dc_context *ctx,
+	struct dce_watermarks marks)
+{
 	program_stutter_watermark(ctx,
 			mmDPGV1_PIPE_STUTTER_CONTROL,
 			mmDPGV1_WATERMARK_MASK_CONTROL,
 			marks);
-पूर्ण
+}
 
-अटल व्योम program_nbp_watermark(
-	स्थिर काष्ठा dc_context *ctx,
-	स्थिर uपूर्णांक32_t wm_mask_ctrl_addr,
-	स्थिर uपूर्णांक32_t nbp_pstate_ctrl_addr,
-	काष्ठा dce_watermarks marks)
-अणु
-	uपूर्णांक32_t value;
+static void program_nbp_watermark(
+	const struct dc_context *ctx,
+	const uint32_t wm_mask_ctrl_addr,
+	const uint32_t nbp_pstate_ctrl_addr,
+	struct dce_watermarks marks)
+{
+	uint32_t value;
 
-	/* Write mask to enable पढ़ोing/writing of watermark set A */
+	/* Write mask to enable reading/writing of watermark set A */
 
-	value = dm_पढ़ो_reg(ctx, wm_mask_ctrl_addr);
+	value = dm_read_reg(ctx, wm_mask_ctrl_addr);
 
 	set_reg_field_value(
 		value,
 		1,
 		DPGV0_WATERMARK_MASK_CONTROL,
 		NB_PSTATE_CHANGE_WATERMARK_MASK);
-	dm_ग_लिखो_reg(ctx, wm_mask_ctrl_addr, value);
+	dm_write_reg(ctx, wm_mask_ctrl_addr, value);
 
-	value = dm_पढ़ो_reg(ctx, nbp_pstate_ctrl_addr);
+	value = dm_read_reg(ctx, nbp_pstate_ctrl_addr);
 
 	set_reg_field_value(
 		value,
@@ -853,27 +852,27 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MAS
 		1,
 		DPGV0_PIPE_NB_PSTATE_CHANGE_CONTROL,
 		NB_PSTATE_CHANGE_NOT_SELF_REFRESH_DURING_REQUEST);
-	dm_ग_लिखो_reg(ctx, nbp_pstate_ctrl_addr, value);
+	dm_write_reg(ctx, nbp_pstate_ctrl_addr, value);
 
 	/* Write watermark set A */
-	value = dm_पढ़ो_reg(ctx, nbp_pstate_ctrl_addr);
+	value = dm_read_reg(ctx, nbp_pstate_ctrl_addr);
 	set_reg_field_value(
 		value,
 		marks.a_mark,
 		DPGV0_PIPE_NB_PSTATE_CHANGE_CONTROL,
 		NB_PSTATE_CHANGE_WATERMARK);
-	dm_ग_लिखो_reg(ctx, nbp_pstate_ctrl_addr, value);
+	dm_write_reg(ctx, nbp_pstate_ctrl_addr, value);
 
-	/* Write mask to enable पढ़ोing/writing of watermark set B */
-	value = dm_पढ़ो_reg(ctx, wm_mask_ctrl_addr);
+	/* Write mask to enable reading/writing of watermark set B */
+	value = dm_read_reg(ctx, wm_mask_ctrl_addr);
 	set_reg_field_value(
 		value,
 		2,
 		DPGV0_WATERMARK_MASK_CONTROL,
 		NB_PSTATE_CHANGE_WATERMARK_MASK);
-	dm_ग_लिखो_reg(ctx, wm_mask_ctrl_addr, value);
+	dm_write_reg(ctx, wm_mask_ctrl_addr, value);
 
-	value = dm_पढ़ो_reg(ctx, nbp_pstate_ctrl_addr);
+	value = dm_read_reg(ctx, nbp_pstate_ctrl_addr);
 	set_reg_field_value(
 		value,
 		1,
@@ -889,50 +888,50 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MAS
 		1,
 		DPGV0_PIPE_NB_PSTATE_CHANGE_CONTROL,
 		NB_PSTATE_CHANGE_NOT_SELF_REFRESH_DURING_REQUEST);
-	dm_ग_लिखो_reg(ctx, nbp_pstate_ctrl_addr, value);
+	dm_write_reg(ctx, nbp_pstate_ctrl_addr, value);
 
 	/* Write watermark set B */
-	value = dm_पढ़ो_reg(ctx, nbp_pstate_ctrl_addr);
+	value = dm_read_reg(ctx, nbp_pstate_ctrl_addr);
 	set_reg_field_value(
 		value,
 		marks.b_mark,
 		DPGV0_PIPE_NB_PSTATE_CHANGE_CONTROL,
 		NB_PSTATE_CHANGE_WATERMARK);
-	dm_ग_लिखो_reg(ctx, nbp_pstate_ctrl_addr, value);
-पूर्ण
+	dm_write_reg(ctx, nbp_pstate_ctrl_addr, value);
+}
 
-अटल व्योम program_nbp_watermark_l(
-	स्थिर काष्ठा dc_context *ctx,
-	काष्ठा dce_watermarks marks)
-अणु
+static void program_nbp_watermark_l(
+	const struct dc_context *ctx,
+	struct dce_watermarks marks)
+{
 	program_nbp_watermark(ctx,
 			mmDPGV0_WATERMARK_MASK_CONTROL,
 			mmDPGV0_PIPE_NB_PSTATE_CHANGE_CONTROL,
 			marks);
-पूर्ण
+}
 
-अटल व्योम program_nbp_watermark_c(
-	स्थिर काष्ठा dc_context *ctx,
-	काष्ठा dce_watermarks marks)
-अणु
+static void program_nbp_watermark_c(
+	const struct dc_context *ctx,
+	struct dce_watermarks marks)
+{
 	program_nbp_watermark(ctx,
 			mmDPGV1_WATERMARK_MASK_CONTROL,
 			mmDPGV1_PIPE_NB_PSTATE_CHANGE_CONTROL,
 			marks);
-पूर्ण
+}
 
-अटल व्योम dce_mem_input_v_program_display_marks(
-	काष्ठा mem_input *mem_input,
-	काष्ठा dce_watermarks nbp,
-	काष्ठा dce_watermarks stutter,
-	काष्ठा dce_watermarks stutter_enter,
-	काष्ठा dce_watermarks urgent,
-	uपूर्णांक32_t total_dest_line_समय_ns)
-अणु
+static void dce_mem_input_v_program_display_marks(
+	struct mem_input *mem_input,
+	struct dce_watermarks nbp,
+	struct dce_watermarks stutter,
+	struct dce_watermarks stutter_enter,
+	struct dce_watermarks urgent,
+	uint32_t total_dest_line_time_ns)
+{
 	program_urgency_watermark_l(
 		mem_input->ctx,
 		urgent,
-		total_dest_line_समय_ns);
+		total_dest_line_time_ns);
 
 	program_nbp_watermark_l(
 		mem_input->ctx,
@@ -942,19 +941,19 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MAS
 		mem_input->ctx,
 		stutter);
 
-पूर्ण
+}
 
-अटल व्योम dce_mem_input_program_chroma_display_marks(
-	काष्ठा mem_input *mem_input,
-	काष्ठा dce_watermarks nbp,
-	काष्ठा dce_watermarks stutter,
-	काष्ठा dce_watermarks urgent,
-	uपूर्णांक32_t total_dest_line_समय_ns)
-अणु
+static void dce_mem_input_program_chroma_display_marks(
+	struct mem_input *mem_input,
+	struct dce_watermarks nbp,
+	struct dce_watermarks stutter,
+	struct dce_watermarks urgent,
+	uint32_t total_dest_line_time_ns)
+{
 	program_urgency_watermark_c(
 		mem_input->ctx,
 		urgent,
-		total_dest_line_समय_ns);
+		total_dest_line_time_ns);
 
 	program_nbp_watermark_c(
 		mem_input->ctx,
@@ -963,63 +962,63 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MAS
 	program_stutter_watermark_c(
 		mem_input->ctx,
 		stutter);
-पूर्ण
+}
 
-अटल व्योम dce110_allocate_mem_input_v(
-	काष्ठा mem_input *mi,
-	uपूर्णांक32_t h_total,/* क्रम current stream */
-	uपूर्णांक32_t v_total,/* क्रम current stream */
-	uपूर्णांक32_t pix_clk_khz,/* क्रम current stream */
-	uपूर्णांक32_t total_stream_num)
-अणु
-	uपूर्णांक32_t addr;
-	uपूर्णांक32_t value;
-	uपूर्णांक32_t pix_dur;
-	अगर (pix_clk_khz != 0) अणु
+static void dce110_allocate_mem_input_v(
+	struct mem_input *mi,
+	uint32_t h_total,/* for current stream */
+	uint32_t v_total,/* for current stream */
+	uint32_t pix_clk_khz,/* for current stream */
+	uint32_t total_stream_num)
+{
+	uint32_t addr;
+	uint32_t value;
+	uint32_t pix_dur;
+	if (pix_clk_khz != 0) {
 		addr = mmDPGV0_PIPE_ARBITRATION_CONTROL1;
-		value = dm_पढ़ो_reg(mi->ctx, addr);
+		value = dm_read_reg(mi->ctx, addr);
 		pix_dur = 1000000000ULL / pix_clk_khz;
 		set_reg_field_value(
 			value,
 			pix_dur,
 			DPGV0_PIPE_ARBITRATION_CONTROL1,
 			PIXEL_DURATION);
-		dm_ग_लिखो_reg(mi->ctx, addr, value);
+		dm_write_reg(mi->ctx, addr, value);
 
 		addr = mmDPGV1_PIPE_ARBITRATION_CONTROL1;
-		value = dm_पढ़ो_reg(mi->ctx, addr);
+		value = dm_read_reg(mi->ctx, addr);
 		pix_dur = 1000000000ULL / pix_clk_khz;
 		set_reg_field_value(
 			value,
 			pix_dur,
 			DPGV1_PIPE_ARBITRATION_CONTROL1,
 			PIXEL_DURATION);
-		dm_ग_लिखो_reg(mi->ctx, addr, value);
+		dm_write_reg(mi->ctx, addr, value);
 
 		addr = mmDPGV0_PIPE_ARBITRATION_CONTROL2;
 		value = 0x4000800;
-		dm_ग_लिखो_reg(mi->ctx, addr, value);
+		dm_write_reg(mi->ctx, addr, value);
 
 		addr = mmDPGV1_PIPE_ARBITRATION_CONTROL2;
 		value = 0x4000800;
-		dm_ग_लिखो_reg(mi->ctx, addr, value);
-	पूर्ण
+		dm_write_reg(mi->ctx, addr, value);
+	}
 
-पूर्ण
+}
 
-अटल व्योम dce110_मुक्त_mem_input_v(
-	काष्ठा mem_input *mi,
-	uपूर्णांक32_t total_stream_num)
-अणु
-पूर्ण
+static void dce110_free_mem_input_v(
+	struct mem_input *mi,
+	uint32_t total_stream_num)
+{
+}
 
-अटल स्थिर काष्ठा mem_input_funcs dce110_mem_input_v_funcs = अणु
+static const struct mem_input_funcs dce110_mem_input_v_funcs = {
 	.mem_input_program_display_marks =
 			dce_mem_input_v_program_display_marks,
 	.mem_input_program_chroma_display_marks =
 			dce_mem_input_program_chroma_display_marks,
 	.allocate_mem_input = dce110_allocate_mem_input_v,
-	.मुक्त_mem_input = dce110_मुक्त_mem_input_v,
+	.free_mem_input = dce110_free_mem_input_v,
 	.mem_input_program_surface_flip_and_addr =
 			dce_mem_input_v_program_surface_flip_and_addr,
 	.mem_input_program_pte_vm =
@@ -1028,16 +1027,16 @@ UNP_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L__GRPH_PRIMARY_SURFACE_ADDRESS_HIGH_L_MAS
 			dce_mem_input_v_program_surface_config,
 	.mem_input_is_flip_pending =
 			dce_mem_input_v_is_surface_pending
-पूर्ण;
+};
 /*****************************************/
-/* Conकाष्ठाor, Deकाष्ठाor               */
+/* Constructor, Destructor               */
 /*****************************************/
 
-व्योम dce110_mem_input_v_स्थिरruct(
-	काष्ठा dce_mem_input *dce_mi,
-	काष्ठा dc_context *ctx)
-अणु
+void dce110_mem_input_v_construct(
+	struct dce_mem_input *dce_mi,
+	struct dc_context *ctx)
+{
 	dce_mi->base.funcs = &dce110_mem_input_v_funcs;
 	dce_mi->base.ctx = ctx;
-पूर्ण
+}
 

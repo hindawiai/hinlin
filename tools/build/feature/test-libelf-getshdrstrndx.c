@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <libelf.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <libelf.h>
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	माप_प्रकार dst;
+int main(void)
+{
+	size_t dst;
 
-	वापस elf_माला_लोhdrstrndx(0, &dst);
-पूर्ण
+	return elf_getshdrstrndx(0, &dst);
+}

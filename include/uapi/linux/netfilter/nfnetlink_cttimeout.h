@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _CTTIMEOUT_NETLINK_H
-#घोषणा _CTTIMEOUT_NETLINK_H
-#समावेश <linux/netfilter/nfnetlink.h>
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _CTTIMEOUT_NETLINK_H
+#define _CTTIMEOUT_NETLINK_H
+#include <linux/netfilter/nfnetlink.h>
 
-क्रमागत ctnl_समयout_msg_types अणु
+enum ctnl_timeout_msg_types {
 	IPCTNL_MSG_TIMEOUT_NEW,
 	IPCTNL_MSG_TIMEOUT_GET,
 	IPCTNL_MSG_TIMEOUT_DELETE,
@@ -12,9 +11,9 @@
 	IPCTNL_MSG_TIMEOUT_DEFAULT_GET,
 
 	IPCTNL_MSG_TIMEOUT_MAX
-पूर्ण;
+};
 
-क्रमागत ctattr_समयout अणु
+enum ctattr_timeout {
 	CTA_TIMEOUT_UNSPEC,
 	CTA_TIMEOUT_NAME,
 	CTA_TIMEOUT_L3PROTO,
@@ -22,17 +21,17 @@
 	CTA_TIMEOUT_DATA,
 	CTA_TIMEOUT_USE,
 	__CTA_TIMEOUT_MAX
-पूर्ण;
-#घोषणा CTA_TIMEOUT_MAX (__CTA_TIMEOUT_MAX - 1)
+};
+#define CTA_TIMEOUT_MAX (__CTA_TIMEOUT_MAX - 1)
 
-क्रमागत ctattr_समयout_generic अणु
+enum ctattr_timeout_generic {
 	CTA_TIMEOUT_GENERIC_UNSPEC,
 	CTA_TIMEOUT_GENERIC_TIMEOUT,
 	__CTA_TIMEOUT_GENERIC_MAX
-पूर्ण;
-#घोषणा CTA_TIMEOUT_GENERIC_MAX (__CTA_TIMEOUT_GENERIC_MAX - 1)
+};
+#define CTA_TIMEOUT_GENERIC_MAX (__CTA_TIMEOUT_GENERIC_MAX - 1)
 
-क्रमागत ctattr_समयout_tcp अणु
+enum ctattr_timeout_tcp {
 	CTA_TIMEOUT_TCP_UNSPEC,
 	CTA_TIMEOUT_TCP_SYN_SENT,
 	CTA_TIMEOUT_TCP_SYN_RECV,
@@ -46,33 +45,33 @@
 	CTA_TIMEOUT_TCP_RETRANS,
 	CTA_TIMEOUT_TCP_UNACK,
 	__CTA_TIMEOUT_TCP_MAX
-पूर्ण;
-#घोषणा CTA_TIMEOUT_TCP_MAX (__CTA_TIMEOUT_TCP_MAX - 1)
+};
+#define CTA_TIMEOUT_TCP_MAX (__CTA_TIMEOUT_TCP_MAX - 1)
 
-क्रमागत ctattr_समयout_udp अणु
+enum ctattr_timeout_udp {
 	CTA_TIMEOUT_UDP_UNSPEC,
 	CTA_TIMEOUT_UDP_UNREPLIED,
 	CTA_TIMEOUT_UDP_REPLIED,
 	__CTA_TIMEOUT_UDP_MAX
-पूर्ण;
-#घोषणा CTA_TIMEOUT_UDP_MAX (__CTA_TIMEOUT_UDP_MAX - 1)
+};
+#define CTA_TIMEOUT_UDP_MAX (__CTA_TIMEOUT_UDP_MAX - 1)
 
-क्रमागत ctattr_समयout_udplite अणु
+enum ctattr_timeout_udplite {
 	CTA_TIMEOUT_UDPLITE_UNSPEC,
 	CTA_TIMEOUT_UDPLITE_UNREPLIED,
 	CTA_TIMEOUT_UDPLITE_REPLIED,
 	__CTA_TIMEOUT_UDPLITE_MAX
-पूर्ण;
-#घोषणा CTA_TIMEOUT_UDPLITE_MAX (__CTA_TIMEOUT_UDPLITE_MAX - 1)
+};
+#define CTA_TIMEOUT_UDPLITE_MAX (__CTA_TIMEOUT_UDPLITE_MAX - 1)
 
-क्रमागत ctattr_समयout_icmp अणु
+enum ctattr_timeout_icmp {
 	CTA_TIMEOUT_ICMP_UNSPEC,
 	CTA_TIMEOUT_ICMP_TIMEOUT,
 	__CTA_TIMEOUT_ICMP_MAX
-पूर्ण;
-#घोषणा CTA_TIMEOUT_ICMP_MAX (__CTA_TIMEOUT_ICMP_MAX - 1)
+};
+#define CTA_TIMEOUT_ICMP_MAX (__CTA_TIMEOUT_ICMP_MAX - 1)
 
-क्रमागत ctattr_समयout_dccp अणु
+enum ctattr_timeout_dccp {
 	CTA_TIMEOUT_DCCP_UNSPEC,
 	CTA_TIMEOUT_DCCP_REQUEST,
 	CTA_TIMEOUT_DCCP_RESPOND,
@@ -82,10 +81,10 @@
 	CTA_TIMEOUT_DCCP_CLOSING,
 	CTA_TIMEOUT_DCCP_TIMEWAIT,
 	__CTA_TIMEOUT_DCCP_MAX
-पूर्ण;
-#घोषणा CTA_TIMEOUT_DCCP_MAX (__CTA_TIMEOUT_DCCP_MAX - 1)
+};
+#define CTA_TIMEOUT_DCCP_MAX (__CTA_TIMEOUT_DCCP_MAX - 1)
 
-क्रमागत ctattr_समयout_sctp अणु
+enum ctattr_timeout_sctp {
 	CTA_TIMEOUT_SCTP_UNSPEC,
 	CTA_TIMEOUT_SCTP_CLOSED,
 	CTA_TIMEOUT_SCTP_COOKIE_WAIT,
@@ -97,24 +96,24 @@
 	CTA_TIMEOUT_SCTP_HEARTBEAT_SENT,
 	CTA_TIMEOUT_SCTP_HEARTBEAT_ACKED,
 	__CTA_TIMEOUT_SCTP_MAX
-पूर्ण;
-#घोषणा CTA_TIMEOUT_SCTP_MAX (__CTA_TIMEOUT_SCTP_MAX - 1)
+};
+#define CTA_TIMEOUT_SCTP_MAX (__CTA_TIMEOUT_SCTP_MAX - 1)
 
-क्रमागत ctattr_समयout_icmpv6 अणु
+enum ctattr_timeout_icmpv6 {
 	CTA_TIMEOUT_ICMPV6_UNSPEC,
 	CTA_TIMEOUT_ICMPV6_TIMEOUT,
 	__CTA_TIMEOUT_ICMPV6_MAX
-पूर्ण;
-#घोषणा CTA_TIMEOUT_ICMPV6_MAX (__CTA_TIMEOUT_ICMPV6_MAX - 1)
+};
+#define CTA_TIMEOUT_ICMPV6_MAX (__CTA_TIMEOUT_ICMPV6_MAX - 1)
 
-क्रमागत ctattr_समयout_gre अणु
+enum ctattr_timeout_gre {
 	CTA_TIMEOUT_GRE_UNSPEC,
 	CTA_TIMEOUT_GRE_UNREPLIED,
 	CTA_TIMEOUT_GRE_REPLIED,
 	__CTA_TIMEOUT_GRE_MAX
-पूर्ण;
-#घोषणा CTA_TIMEOUT_GRE_MAX (__CTA_TIMEOUT_GRE_MAX - 1)
+};
+#define CTA_TIMEOUT_GRE_MAX (__CTA_TIMEOUT_GRE_MAX - 1)
 
-#घोषणा CTNL_TIMEOUT_NAME_MAX	32
+#define CTNL_TIMEOUT_NAME_MAX	32
 
-#पूर्ण_अगर
+#endif

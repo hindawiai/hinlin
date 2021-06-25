@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * ppc_cbe_cpufreq.h
  *
@@ -11,24 +10,24 @@
  *
  */
 
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/types.h>
+#include <linux/cpufreq.h>
+#include <linux/types.h>
 
-पूर्णांक cbe_cpufreq_set_pmode(पूर्णांक cpu, अचिन्हित पूर्णांक pmode);
-पूर्णांक cbe_cpufreq_get_pmode(पूर्णांक cpu);
+int cbe_cpufreq_set_pmode(int cpu, unsigned int pmode);
+int cbe_cpufreq_get_pmode(int cpu);
 
-पूर्णांक cbe_cpufreq_set_pmode_pmi(पूर्णांक cpu, अचिन्हित पूर्णांक pmode);
+int cbe_cpufreq_set_pmode_pmi(int cpu, unsigned int pmode);
 
-#अगर IS_ENABLED(CONFIG_CPU_FREQ_CBE_PMI)
-बाह्य bool cbe_cpufreq_has_pmi;
-व्योम cbe_cpufreq_pmi_policy_init(काष्ठा cpufreq_policy *policy);
-व्योम cbe_cpufreq_pmi_policy_निकास(काष्ठा cpufreq_policy *policy);
-व्योम cbe_cpufreq_pmi_init(व्योम);
-व्योम cbe_cpufreq_pmi_निकास(व्योम);
-#अन्यथा
-#घोषणा cbe_cpufreq_has_pmi (0)
-अटल अंतरभूत व्योम cbe_cpufreq_pmi_policy_init(काष्ठा cpufreq_policy *policy) अणुपूर्ण
-अटल अंतरभूत व्योम cbe_cpufreq_pmi_policy_निकास(काष्ठा cpufreq_policy *policy) अणुपूर्ण
-अटल अंतरभूत व्योम cbe_cpufreq_pmi_init(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम cbe_cpufreq_pmi_निकास(व्योम) अणुपूर्ण
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_CPU_FREQ_CBE_PMI)
+extern bool cbe_cpufreq_has_pmi;
+void cbe_cpufreq_pmi_policy_init(struct cpufreq_policy *policy);
+void cbe_cpufreq_pmi_policy_exit(struct cpufreq_policy *policy);
+void cbe_cpufreq_pmi_init(void);
+void cbe_cpufreq_pmi_exit(void);
+#else
+#define cbe_cpufreq_has_pmi (0)
+static inline void cbe_cpufreq_pmi_policy_init(struct cpufreq_policy *policy) {}
+static inline void cbe_cpufreq_pmi_policy_exit(struct cpufreq_policy *policy) {}
+static inline void cbe_cpufreq_pmi_init(void) {}
+static inline void cbe_cpufreq_pmi_exit(void) {}
+#endif

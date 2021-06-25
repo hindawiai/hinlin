@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PERF_CACHE_H
-#घोषणा __PERF_CACHE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PERF_CACHE_H
+#define __PERF_CACHE_H
 
-#समावेश "strbuf.h"
-#समावेश <subcmd/pager.h>
-#समावेश "../ui/ui.h"
+#include "strbuf.h"
+#include <subcmd/pager.h>
+#include "../ui/ui.h"
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/माला.स>
+#include <linux/compiler.h>
+#include <linux/string.h>
 
-#घोषणा CMD_EXEC_PATH "--exec-path"
-#घोषणा CMD_DEBUGFS_सूची "--debugfs-dir="
+#define CMD_EXEC_PATH "--exec-path"
+#define CMD_DEBUGFS_DIR "--debugfs-dir="
 
-#घोषणा EXEC_PATH_ENVIRONMENT "PERF_EXEC_PATH"
-#घोषणा PERF_DEBUGFS_ENVIRONMENT "PERF_DEBUGFS_DIR"
-#घोषणा PERF_TRACEFS_ENVIRONMENT "PERF_TRACEFS_DIR"
-#घोषणा PERF_PAGER_ENVIRONMENT "PERF_PAGER"
+#define EXEC_PATH_ENVIRONMENT "PERF_EXEC_PATH"
+#define PERF_DEBUGFS_ENVIRONMENT "PERF_DEBUGFS_DIR"
+#define PERF_TRACEFS_ENVIRONMENT "PERF_TRACEFS_DIR"
+#define PERF_PAGER_ENVIRONMENT "PERF_PAGER"
 
-पूर्णांक split_cmdline(अक्षर *cmdline, स्थिर अक्षर ***argv);
+int split_cmdline(char *cmdline, const char ***argv);
 
-#घोषणा alloc_nr(x) (((x)+16)*3/2)
+#define alloc_nr(x) (((x)+16)*3/2)
 
-अटल अंतरभूत पूर्णांक is_असलolute_path(स्थिर अक्षर *path)
-अणु
-	वापस path[0] == '/';
-पूर्ण
+static inline int is_absolute_path(const char *path)
+{
+	return path[0] == '/';
+}
 
-अक्षर *mkpath(स्थिर अक्षर *fmt, ...) __म_लिखो(1, 2);
+char *mkpath(const char *fmt, ...) __printf(1, 2);
 
-#पूर्ण_अगर /* __PERF_CACHE_H */
+#endif /* __PERF_CACHE_H */

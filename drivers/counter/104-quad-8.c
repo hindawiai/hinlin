@@ -1,180 +1,179 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Counter driver क्रम the ACCES 104-QUAD-8
+ * Counter driver for the ACCES 104-QUAD-8
  * Copyright (C) 2016 William Breathitt Gray
  *
  * This driver supports the ACCES 104-QUAD-8 and ACCES 104-QUAD-4.
  */
-#समावेश <linux/bitops.h>
-#समावेश <linux/counter.h>
-#समावेश <linux/device.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/पन.स>
-#समावेश <linux/ioport.h>
-#समावेश <linux/isa.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/types.h>
+#include <linux/bitops.h>
+#include <linux/counter.h>
+#include <linux/device.h>
+#include <linux/errno.h>
+#include <linux/io.h>
+#include <linux/ioport.h>
+#include <linux/isa.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/types.h>
 
-#घोषणा QUAD8_EXTENT 32
+#define QUAD8_EXTENT 32
 
-अटल अचिन्हित पूर्णांक base[max_num_isa_dev(QUAD8_EXTENT)];
-अटल अचिन्हित पूर्णांक num_quad8;
-module_param_array(base, uपूर्णांक, &num_quad8, 0);
+static unsigned int base[max_num_isa_dev(QUAD8_EXTENT)];
+static unsigned int num_quad8;
+module_param_array(base, uint, &num_quad8, 0);
 MODULE_PARM_DESC(base, "ACCES 104-QUAD-8 base addresses");
 
-#घोषणा QUAD8_NUM_COUNTERS 8
+#define QUAD8_NUM_COUNTERS 8
 
 /**
- * काष्ठा quad8 - device निजी data काष्ठाure
+ * struct quad8 - device private data structure
  * @counter:		instance of the counter_device
- * @fck_prescaler:	array of filter घड़ी prescaler configurations
+ * @fck_prescaler:	array of filter clock prescaler configurations
  * @preset:		array of preset values
  * @count_mode:		array of count mode configurations
  * @quadrature_mode:	array of quadrature mode configurations
  * @quadrature_scale:	array of quadrature mode scale configurations
- * @ab_enable:		array of A and B inमाला_दो enable configurations
+ * @ab_enable:		array of A and B inputs enable configurations
  * @preset_enable:	array of set_to_preset_on_index attribute configurations
  * @synchronous_mode:	array of index function synchronous mode configurations
  * @index_polarity:	array of index function polarity configurations
- * @cable_fault_enable:	dअगरferential encoder cable status enable configurations
+ * @cable_fault_enable:	differential encoder cable status enable configurations
  * @base:		base port address of the device
  */
-काष्ठा quad8 अणु
-	काष्ठा mutex lock;
-	काष्ठा counter_device counter;
-	अचिन्हित पूर्णांक fck_prescaler[QUAD8_NUM_COUNTERS];
-	अचिन्हित पूर्णांक preset[QUAD8_NUM_COUNTERS];
-	अचिन्हित पूर्णांक count_mode[QUAD8_NUM_COUNTERS];
-	अचिन्हित पूर्णांक quadrature_mode[QUAD8_NUM_COUNTERS];
-	अचिन्हित पूर्णांक quadrature_scale[QUAD8_NUM_COUNTERS];
-	अचिन्हित पूर्णांक ab_enable[QUAD8_NUM_COUNTERS];
-	अचिन्हित पूर्णांक preset_enable[QUAD8_NUM_COUNTERS];
-	अचिन्हित पूर्णांक synchronous_mode[QUAD8_NUM_COUNTERS];
-	अचिन्हित पूर्णांक index_polarity[QUAD8_NUM_COUNTERS];
-	अचिन्हित पूर्णांक cable_fault_enable;
-	अचिन्हित पूर्णांक base;
-पूर्ण;
+struct quad8 {
+	struct mutex lock;
+	struct counter_device counter;
+	unsigned int fck_prescaler[QUAD8_NUM_COUNTERS];
+	unsigned int preset[QUAD8_NUM_COUNTERS];
+	unsigned int count_mode[QUAD8_NUM_COUNTERS];
+	unsigned int quadrature_mode[QUAD8_NUM_COUNTERS];
+	unsigned int quadrature_scale[QUAD8_NUM_COUNTERS];
+	unsigned int ab_enable[QUAD8_NUM_COUNTERS];
+	unsigned int preset_enable[QUAD8_NUM_COUNTERS];
+	unsigned int synchronous_mode[QUAD8_NUM_COUNTERS];
+	unsigned int index_polarity[QUAD8_NUM_COUNTERS];
+	unsigned int cable_fault_enable;
+	unsigned int base;
+};
 
-#घोषणा QUAD8_REG_CHAN_OP 0x11
-#घोषणा QUAD8_REG_INDEX_INPUT_LEVELS 0x16
-#घोषणा QUAD8_DIFF_ENCODER_CABLE_STATUS 0x17
+#define QUAD8_REG_CHAN_OP 0x11
+#define QUAD8_REG_INDEX_INPUT_LEVELS 0x16
+#define QUAD8_DIFF_ENCODER_CABLE_STATUS 0x17
 /* Borrow Toggle flip-flop */
-#घोषणा QUAD8_FLAG_BT BIT(0)
+#define QUAD8_FLAG_BT BIT(0)
 /* Carry Toggle flip-flop */
-#घोषणा QUAD8_FLAG_CT BIT(1)
+#define QUAD8_FLAG_CT BIT(1)
 /* Error flag */
-#घोषणा QUAD8_FLAG_E BIT(4)
+#define QUAD8_FLAG_E BIT(4)
 /* Up/Down flag */
-#घोषणा QUAD8_FLAG_UD BIT(5)
+#define QUAD8_FLAG_UD BIT(5)
 /* Reset and Load Signal Decoders */
-#घोषणा QUAD8_CTR_RLD 0x00
+#define QUAD8_CTR_RLD 0x00
 /* Counter Mode Register */
-#घोषणा QUAD8_CTR_CMR 0x20
+#define QUAD8_CTR_CMR 0x20
 /* Input / Output Control Register */
-#घोषणा QUAD8_CTR_IOR 0x40
+#define QUAD8_CTR_IOR 0x40
 /* Index Control Register */
-#घोषणा QUAD8_CTR_IDR 0x60
-/* Reset Byte Poपूर्णांकer (three byte data poपूर्णांकer) */
-#घोषणा QUAD8_RLD_RESET_BP 0x01
+#define QUAD8_CTR_IDR 0x60
+/* Reset Byte Pointer (three byte data pointer) */
+#define QUAD8_RLD_RESET_BP 0x01
 /* Reset Counter */
-#घोषणा QUAD8_RLD_RESET_CNTR 0x02
+#define QUAD8_RLD_RESET_CNTR 0x02
 /* Reset Borrow Toggle, Carry Toggle, Compare Toggle, and Sign flags */
-#घोषणा QUAD8_RLD_RESET_FLAGS 0x04
+#define QUAD8_RLD_RESET_FLAGS 0x04
 /* Reset Error flag */
-#घोषणा QUAD8_RLD_RESET_E 0x06
+#define QUAD8_RLD_RESET_E 0x06
 /* Preset Register to Counter */
-#घोषणा QUAD8_RLD_PRESET_CNTR 0x08
+#define QUAD8_RLD_PRESET_CNTR 0x08
 /* Transfer Counter to Output Latch */
-#घोषणा QUAD8_RLD_CNTR_OUT 0x10
+#define QUAD8_RLD_CNTR_OUT 0x10
 /* Transfer Preset Register LSB to FCK Prescaler */
-#घोषणा QUAD8_RLD_PRESET_PSC 0x18
-#घोषणा QUAD8_CHAN_OP_ENABLE_COUNTERS 0x00
-#घोषणा QUAD8_CHAN_OP_RESET_COUNTERS 0x01
-#घोषणा QUAD8_CMR_QUADRATURE_X1 0x08
-#घोषणा QUAD8_CMR_QUADRATURE_X2 0x10
-#घोषणा QUAD8_CMR_QUADRATURE_X4 0x18
+#define QUAD8_RLD_PRESET_PSC 0x18
+#define QUAD8_CHAN_OP_ENABLE_COUNTERS 0x00
+#define QUAD8_CHAN_OP_RESET_COUNTERS 0x01
+#define QUAD8_CMR_QUADRATURE_X1 0x08
+#define QUAD8_CMR_QUADRATURE_X2 0x10
+#define QUAD8_CMR_QUADRATURE_X4 0x18
 
-अटल पूर्णांक quad8_संकेत_पढ़ो(काष्ठा counter_device *counter,
-	काष्ठा counter_संकेत *संकेत, क्रमागत counter_संकेत_value *val)
-अणु
-	स्थिर काष्ठा quad8 *स्थिर priv = counter->priv;
-	अचिन्हित पूर्णांक state;
+static int quad8_signal_read(struct counter_device *counter,
+	struct counter_signal *signal, enum counter_signal_value *val)
+{
+	const struct quad8 *const priv = counter->priv;
+	unsigned int state;
 
-	/* Only Index संकेत levels can be पढ़ो */
-	अगर (संकेत->id < 16)
-		वापस -EINVAL;
+	/* Only Index signal levels can be read */
+	if (signal->id < 16)
+		return -EINVAL;
 
 	state = inb(priv->base + QUAD8_REG_INDEX_INPUT_LEVELS)
-		& BIT(संकेत->id - 16);
+		& BIT(signal->id - 16);
 
 	*val = (state) ? COUNTER_SIGNAL_HIGH : COUNTER_SIGNAL_LOW;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक quad8_count_पढ़ो(काष्ठा counter_device *counter,
-	काष्ठा counter_count *count, अचिन्हित दीर्घ *val)
-अणु
-	काष्ठा quad8 *स्थिर priv = counter->priv;
-	स्थिर पूर्णांक base_offset = priv->base + 2 * count->id;
-	अचिन्हित पूर्णांक flags;
-	अचिन्हित पूर्णांक borrow;
-	अचिन्हित पूर्णांक carry;
-	पूर्णांक i;
+static int quad8_count_read(struct counter_device *counter,
+	struct counter_count *count, unsigned long *val)
+{
+	struct quad8 *const priv = counter->priv;
+	const int base_offset = priv->base + 2 * count->id;
+	unsigned int flags;
+	unsigned int borrow;
+	unsigned int carry;
+	int i;
 
 	flags = inb(base_offset + 1);
 	borrow = flags & QUAD8_FLAG_BT;
 	carry = !!(flags & QUAD8_FLAG_CT);
 
-	/* Borrow XOR Carry effectively द्विगुनs count range */
-	*val = (अचिन्हित दीर्घ)(borrow ^ carry) << 24;
+	/* Borrow XOR Carry effectively doubles count range */
+	*val = (unsigned long)(borrow ^ carry) << 24;
 
 	mutex_lock(&priv->lock);
 
-	/* Reset Byte Poपूर्णांकer; transfer Counter to Output Latch */
+	/* Reset Byte Pointer; transfer Counter to Output Latch */
 	outb(QUAD8_CTR_RLD | QUAD8_RLD_RESET_BP | QUAD8_RLD_CNTR_OUT,
 	     base_offset + 1);
 
-	क्रम (i = 0; i < 3; i++)
-		*val |= (अचिन्हित दीर्घ)inb(base_offset) << (8 * i);
+	for (i = 0; i < 3; i++)
+		*val |= (unsigned long)inb(base_offset) << (8 * i);
 
 	mutex_unlock(&priv->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक quad8_count_ग_लिखो(काष्ठा counter_device *counter,
-	काष्ठा counter_count *count, अचिन्हित दीर्घ val)
-अणु
-	काष्ठा quad8 *स्थिर priv = counter->priv;
-	स्थिर पूर्णांक base_offset = priv->base + 2 * count->id;
-	पूर्णांक i;
+static int quad8_count_write(struct counter_device *counter,
+	struct counter_count *count, unsigned long val)
+{
+	struct quad8 *const priv = counter->priv;
+	const int base_offset = priv->base + 2 * count->id;
+	int i;
 
 	/* Only 24-bit values are supported */
-	अगर (val > 0xFFFFFF)
-		वापस -EINVAL;
+	if (val > 0xFFFFFF)
+		return -EINVAL;
 
 	mutex_lock(&priv->lock);
 
-	/* Reset Byte Poपूर्णांकer */
+	/* Reset Byte Pointer */
 	outb(QUAD8_CTR_RLD | QUAD8_RLD_RESET_BP, base_offset + 1);
 
 	/* Counter can only be set via Preset Register */
-	क्रम (i = 0; i < 3; i++)
+	for (i = 0; i < 3; i++)
 		outb(val >> (8 * i), base_offset);
 
 	/* Transfer Preset Register to Counter */
 	outb(QUAD8_CTR_RLD | QUAD8_RLD_PRESET_CNTR, base_offset + 1);
 
-	/* Reset Byte Poपूर्णांकer */
+	/* Reset Byte Pointer */
 	outb(QUAD8_CTR_RLD | QUAD8_RLD_RESET_BP, base_offset + 1);
 
 	/* Set Preset Register back to original value */
 	val = priv->preset[count->id];
-	क्रम (i = 0; i < 3; i++)
+	for (i = 0; i < 3; i++)
 		outb(val >> (8 * i), base_offset);
 
 	/* Reset Borrow, Carry, Compare, and Sign flags */
@@ -184,227 +183,227 @@ MODULE_PARM_DESC(base, "ACCES 104-QUAD-8 base addresses");
 
 	mutex_unlock(&priv->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-क्रमागत quad8_count_function अणु
-	QUAD8_COUNT_FUNCTION_PULSE_सूचीECTION = 0,
+enum quad8_count_function {
+	QUAD8_COUNT_FUNCTION_PULSE_DIRECTION = 0,
 	QUAD8_COUNT_FUNCTION_QUADRATURE_X1,
 	QUAD8_COUNT_FUNCTION_QUADRATURE_X2,
 	QUAD8_COUNT_FUNCTION_QUADRATURE_X4
-पूर्ण;
+};
 
-अटल क्रमागत counter_count_function quad8_count_functions_list[] = अणु
-	[QUAD8_COUNT_FUNCTION_PULSE_सूचीECTION] = COUNTER_COUNT_FUNCTION_PULSE_सूचीECTION,
+static enum counter_count_function quad8_count_functions_list[] = {
+	[QUAD8_COUNT_FUNCTION_PULSE_DIRECTION] = COUNTER_COUNT_FUNCTION_PULSE_DIRECTION,
 	[QUAD8_COUNT_FUNCTION_QUADRATURE_X1] = COUNTER_COUNT_FUNCTION_QUADRATURE_X1_A,
 	[QUAD8_COUNT_FUNCTION_QUADRATURE_X2] = COUNTER_COUNT_FUNCTION_QUADRATURE_X2_A,
 	[QUAD8_COUNT_FUNCTION_QUADRATURE_X4] = COUNTER_COUNT_FUNCTION_QUADRATURE_X4
-पूर्ण;
+};
 
-अटल पूर्णांक quad8_function_get(काष्ठा counter_device *counter,
-	काष्ठा counter_count *count, माप_प्रकार *function)
-अणु
-	काष्ठा quad8 *स्थिर priv = counter->priv;
-	स्थिर पूर्णांक id = count->id;
+static int quad8_function_get(struct counter_device *counter,
+	struct counter_count *count, size_t *function)
+{
+	struct quad8 *const priv = counter->priv;
+	const int id = count->id;
 
 	mutex_lock(&priv->lock);
 
-	अगर (priv->quadrature_mode[id])
-		चयन (priv->quadrature_scale[id]) अणु
-		हाल 0:
+	if (priv->quadrature_mode[id])
+		switch (priv->quadrature_scale[id]) {
+		case 0:
 			*function = QUAD8_COUNT_FUNCTION_QUADRATURE_X1;
-			अवरोध;
-		हाल 1:
+			break;
+		case 1:
 			*function = QUAD8_COUNT_FUNCTION_QUADRATURE_X2;
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			*function = QUAD8_COUNT_FUNCTION_QUADRATURE_X4;
-			अवरोध;
-		पूर्ण
-	अन्यथा
-		*function = QUAD8_COUNT_FUNCTION_PULSE_सूचीECTION;
+			break;
+		}
+	else
+		*function = QUAD8_COUNT_FUNCTION_PULSE_DIRECTION;
 
 	mutex_unlock(&priv->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक quad8_function_set(काष्ठा counter_device *counter,
-	काष्ठा counter_count *count, माप_प्रकार function)
-अणु
-	काष्ठा quad8 *स्थिर priv = counter->priv;
-	स्थिर पूर्णांक id = count->id;
-	अचिन्हित पूर्णांक *स्थिर quadrature_mode = priv->quadrature_mode + id;
-	अचिन्हित पूर्णांक *स्थिर scale = priv->quadrature_scale + id;
-	अचिन्हित पूर्णांक *स्थिर synchronous_mode = priv->synchronous_mode + id;
-	स्थिर पूर्णांक base_offset = priv->base + 2 * id + 1;
-	अचिन्हित पूर्णांक mode_cfg;
-	अचिन्हित पूर्णांक idr_cfg;
+static int quad8_function_set(struct counter_device *counter,
+	struct counter_count *count, size_t function)
+{
+	struct quad8 *const priv = counter->priv;
+	const int id = count->id;
+	unsigned int *const quadrature_mode = priv->quadrature_mode + id;
+	unsigned int *const scale = priv->quadrature_scale + id;
+	unsigned int *const synchronous_mode = priv->synchronous_mode + id;
+	const int base_offset = priv->base + 2 * id + 1;
+	unsigned int mode_cfg;
+	unsigned int idr_cfg;
 
 	mutex_lock(&priv->lock);
 
 	mode_cfg = priv->count_mode[id] << 1;
 	idr_cfg = priv->index_polarity[id] << 1;
 
-	अगर (function == QUAD8_COUNT_FUNCTION_PULSE_सूचीECTION) अणु
+	if (function == QUAD8_COUNT_FUNCTION_PULSE_DIRECTION) {
 		*quadrature_mode = 0;
 
 		/* Quadrature scaling only available in quadrature mode */
 		*scale = 0;
 
 		/* Synchronous function not supported in non-quadrature mode */
-		अगर (*synchronous_mode) अणु
+		if (*synchronous_mode) {
 			*synchronous_mode = 0;
 			/* Disable synchronous function mode */
 			outb(QUAD8_CTR_IDR | idr_cfg, base_offset);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		*quadrature_mode = 1;
 
-		चयन (function) अणु
-		हाल QUAD8_COUNT_FUNCTION_QUADRATURE_X1:
+		switch (function) {
+		case QUAD8_COUNT_FUNCTION_QUADRATURE_X1:
 			*scale = 0;
 			mode_cfg |= QUAD8_CMR_QUADRATURE_X1;
-			अवरोध;
-		हाल QUAD8_COUNT_FUNCTION_QUADRATURE_X2:
+			break;
+		case QUAD8_COUNT_FUNCTION_QUADRATURE_X2:
 			*scale = 1;
 			mode_cfg |= QUAD8_CMR_QUADRATURE_X2;
-			अवरोध;
-		हाल QUAD8_COUNT_FUNCTION_QUADRATURE_X4:
+			break;
+		case QUAD8_COUNT_FUNCTION_QUADRATURE_X4:
 			*scale = 2;
 			mode_cfg |= QUAD8_CMR_QUADRATURE_X4;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	/* Load mode configuration to Counter Mode Register */
 	outb(QUAD8_CTR_CMR | mode_cfg, base_offset);
 
 	mutex_unlock(&priv->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम quad8_direction_get(काष्ठा counter_device *counter,
-	काष्ठा counter_count *count, क्रमागत counter_count_direction *direction)
-अणु
-	स्थिर काष्ठा quad8 *स्थिर priv = counter->priv;
-	अचिन्हित पूर्णांक ud_flag;
-	स्थिर अचिन्हित पूर्णांक flag_addr = priv->base + 2 * count->id + 1;
+static void quad8_direction_get(struct counter_device *counter,
+	struct counter_count *count, enum counter_count_direction *direction)
+{
+	const struct quad8 *const priv = counter->priv;
+	unsigned int ud_flag;
+	const unsigned int flag_addr = priv->base + 2 * count->id + 1;
 
-	/* U/D flag: nonzero = up, zero = करोwn */
+	/* U/D flag: nonzero = up, zero = down */
 	ud_flag = inb(flag_addr) & QUAD8_FLAG_UD;
 
-	*direction = (ud_flag) ? COUNTER_COUNT_सूचीECTION_FORWARD :
-		COUNTER_COUNT_सूचीECTION_BACKWARD;
-पूर्ण
+	*direction = (ud_flag) ? COUNTER_COUNT_DIRECTION_FORWARD :
+		COUNTER_COUNT_DIRECTION_BACKWARD;
+}
 
-क्रमागत quad8_synapse_action अणु
+enum quad8_synapse_action {
 	QUAD8_SYNAPSE_ACTION_NONE = 0,
 	QUAD8_SYNAPSE_ACTION_RISING_EDGE,
 	QUAD8_SYNAPSE_ACTION_FALLING_EDGE,
 	QUAD8_SYNAPSE_ACTION_BOTH_EDGES
-पूर्ण;
+};
 
-अटल क्रमागत counter_synapse_action quad8_index_actions_list[] = अणु
+static enum counter_synapse_action quad8_index_actions_list[] = {
 	[QUAD8_SYNAPSE_ACTION_NONE] = COUNTER_SYNAPSE_ACTION_NONE,
 	[QUAD8_SYNAPSE_ACTION_RISING_EDGE] = COUNTER_SYNAPSE_ACTION_RISING_EDGE
-पूर्ण;
+};
 
-अटल क्रमागत counter_synapse_action quad8_synapse_actions_list[] = अणु
+static enum counter_synapse_action quad8_synapse_actions_list[] = {
 	[QUAD8_SYNAPSE_ACTION_NONE] = COUNTER_SYNAPSE_ACTION_NONE,
 	[QUAD8_SYNAPSE_ACTION_RISING_EDGE] = COUNTER_SYNAPSE_ACTION_RISING_EDGE,
 	[QUAD8_SYNAPSE_ACTION_FALLING_EDGE] = COUNTER_SYNAPSE_ACTION_FALLING_EDGE,
 	[QUAD8_SYNAPSE_ACTION_BOTH_EDGES] = COUNTER_SYNAPSE_ACTION_BOTH_EDGES
-पूर्ण;
+};
 
-अटल पूर्णांक quad8_action_get(काष्ठा counter_device *counter,
-	काष्ठा counter_count *count, काष्ठा counter_synapse *synapse,
-	माप_प्रकार *action)
-अणु
-	काष्ठा quad8 *स्थिर priv = counter->priv;
-	पूर्णांक err;
-	माप_प्रकार function = 0;
-	स्थिर माप_प्रकार संकेत_a_id = count->synapses[0].संकेत->id;
-	क्रमागत counter_count_direction direction;
+static int quad8_action_get(struct counter_device *counter,
+	struct counter_count *count, struct counter_synapse *synapse,
+	size_t *action)
+{
+	struct quad8 *const priv = counter->priv;
+	int err;
+	size_t function = 0;
+	const size_t signal_a_id = count->synapses[0].signal->id;
+	enum counter_count_direction direction;
 
-	/* Handle Index संकेतs */
-	अगर (synapse->संकेत->id >= 16) अणु
-		अगर (priv->preset_enable[count->id])
+	/* Handle Index signals */
+	if (synapse->signal->id >= 16) {
+		if (priv->preset_enable[count->id])
 			*action = QUAD8_SYNAPSE_ACTION_RISING_EDGE;
-		अन्यथा
+		else
 			*action = QUAD8_SYNAPSE_ACTION_NONE;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	err = quad8_function_get(counter, count, &function);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* Default action mode */
 	*action = QUAD8_SYNAPSE_ACTION_NONE;
 
 	/* Determine action mode based on current count function mode */
-	चयन (function) अणु
-	हाल QUAD8_COUNT_FUNCTION_PULSE_सूचीECTION:
-		अगर (synapse->संकेत->id == संकेत_a_id)
+	switch (function) {
+	case QUAD8_COUNT_FUNCTION_PULSE_DIRECTION:
+		if (synapse->signal->id == signal_a_id)
 			*action = QUAD8_SYNAPSE_ACTION_RISING_EDGE;
-		अवरोध;
-	हाल QUAD8_COUNT_FUNCTION_QUADRATURE_X1:
-		अगर (synapse->संकेत->id == संकेत_a_id) अणु
+		break;
+	case QUAD8_COUNT_FUNCTION_QUADRATURE_X1:
+		if (synapse->signal->id == signal_a_id) {
 			quad8_direction_get(counter, count, &direction);
 
-			अगर (direction == COUNTER_COUNT_सूचीECTION_FORWARD)
+			if (direction == COUNTER_COUNT_DIRECTION_FORWARD)
 				*action = QUAD8_SYNAPSE_ACTION_RISING_EDGE;
-			अन्यथा
+			else
 				*action = QUAD8_SYNAPSE_ACTION_FALLING_EDGE;
-		पूर्ण
-		अवरोध;
-	हाल QUAD8_COUNT_FUNCTION_QUADRATURE_X2:
-		अगर (synapse->संकेत->id == संकेत_a_id)
+		}
+		break;
+	case QUAD8_COUNT_FUNCTION_QUADRATURE_X2:
+		if (synapse->signal->id == signal_a_id)
 			*action = QUAD8_SYNAPSE_ACTION_BOTH_EDGES;
-		अवरोध;
-	हाल QUAD8_COUNT_FUNCTION_QUADRATURE_X4:
+		break;
+	case QUAD8_COUNT_FUNCTION_QUADRATURE_X4:
 		*action = QUAD8_SYNAPSE_ACTION_BOTH_EDGES;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा counter_ops quad8_ops = अणु
-	.संकेत_पढ़ो = quad8_संकेत_पढ़ो,
-	.count_पढ़ो = quad8_count_पढ़ो,
-	.count_ग_लिखो = quad8_count_ग_लिखो,
+static const struct counter_ops quad8_ops = {
+	.signal_read = quad8_signal_read,
+	.count_read = quad8_count_read,
+	.count_write = quad8_count_write,
 	.function_get = quad8_function_get,
 	.function_set = quad8_function_set,
 	.action_get = quad8_action_get
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर quad8_index_polarity_modes[] = अणु
+static const char *const quad8_index_polarity_modes[] = {
 	"negative",
 	"positive"
-पूर्ण;
+};
 
-अटल पूर्णांक quad8_index_polarity_get(काष्ठा counter_device *counter,
-	काष्ठा counter_संकेत *संकेत, माप_प्रकार *index_polarity)
-अणु
-	स्थिर काष्ठा quad8 *स्थिर priv = counter->priv;
-	स्थिर माप_प्रकार channel_id = संकेत->id - 16;
+static int quad8_index_polarity_get(struct counter_device *counter,
+	struct counter_signal *signal, size_t *index_polarity)
+{
+	const struct quad8 *const priv = counter->priv;
+	const size_t channel_id = signal->id - 16;
 
 	*index_polarity = priv->index_polarity[channel_id];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक quad8_index_polarity_set(काष्ठा counter_device *counter,
-	काष्ठा counter_संकेत *संकेत, माप_प्रकार index_polarity)
-अणु
-	काष्ठा quad8 *स्थिर priv = counter->priv;
-	स्थिर माप_प्रकार channel_id = संकेत->id - 16;
-	स्थिर पूर्णांक base_offset = priv->base + 2 * channel_id + 1;
-	अचिन्हित पूर्णांक idr_cfg = index_polarity << 1;
+static int quad8_index_polarity_set(struct counter_device *counter,
+	struct counter_signal *signal, size_t index_polarity)
+{
+	struct quad8 *const priv = counter->priv;
+	const size_t channel_id = signal->id - 16;
+	const int base_offset = priv->base + 2 * channel_id + 1;
+	unsigned int idr_cfg = index_polarity << 1;
 
 	mutex_lock(&priv->lock);
 
@@ -417,49 +416,49 @@ MODULE_PARM_DESC(base, "ACCES 104-QUAD-8 base addresses");
 
 	mutex_unlock(&priv->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा counter_संकेत_क्रमागत_ext quad8_index_pol_क्रमागत = अणु
+static struct counter_signal_enum_ext quad8_index_pol_enum = {
 	.items = quad8_index_polarity_modes,
 	.num_items = ARRAY_SIZE(quad8_index_polarity_modes),
 	.get = quad8_index_polarity_get,
 	.set = quad8_index_polarity_set
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर quad8_synchronous_modes[] = अणु
+static const char *const quad8_synchronous_modes[] = {
 	"non-synchronous",
 	"synchronous"
-पूर्ण;
+};
 
-अटल पूर्णांक quad8_synchronous_mode_get(काष्ठा counter_device *counter,
-	काष्ठा counter_संकेत *संकेत, माप_प्रकार *synchronous_mode)
-अणु
-	स्थिर काष्ठा quad8 *स्थिर priv = counter->priv;
-	स्थिर माप_प्रकार channel_id = संकेत->id - 16;
+static int quad8_synchronous_mode_get(struct counter_device *counter,
+	struct counter_signal *signal, size_t *synchronous_mode)
+{
+	const struct quad8 *const priv = counter->priv;
+	const size_t channel_id = signal->id - 16;
 
 	*synchronous_mode = priv->synchronous_mode[channel_id];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक quad8_synchronous_mode_set(काष्ठा counter_device *counter,
-	काष्ठा counter_संकेत *संकेत, माप_प्रकार synchronous_mode)
-अणु
-	काष्ठा quad8 *स्थिर priv = counter->priv;
-	स्थिर माप_प्रकार channel_id = संकेत->id - 16;
-	स्थिर पूर्णांक base_offset = priv->base + 2 * channel_id + 1;
-	अचिन्हित पूर्णांक idr_cfg = synchronous_mode;
+static int quad8_synchronous_mode_set(struct counter_device *counter,
+	struct counter_signal *signal, size_t synchronous_mode)
+{
+	struct quad8 *const priv = counter->priv;
+	const size_t channel_id = signal->id - 16;
+	const int base_offset = priv->base + 2 * channel_id + 1;
+	unsigned int idr_cfg = synchronous_mode;
 
 	mutex_lock(&priv->lock);
 
 	idr_cfg |= priv->index_polarity[channel_id] << 1;
 
 	/* Index function must be non-synchronous in non-quadrature mode */
-	अगर (synchronous_mode && !priv->quadrature_mode[channel_id]) अणु
+	if (synchronous_mode && !priv->quadrature_mode[channel_id]) {
 		mutex_unlock(&priv->lock);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	priv->synchronous_mode[channel_id] = synchronous_mode;
 
@@ -468,69 +467,69 @@ MODULE_PARM_DESC(base, "ACCES 104-QUAD-8 base addresses");
 
 	mutex_unlock(&priv->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा counter_संकेत_क्रमागत_ext quad8_syn_mode_क्रमागत = अणु
+static struct counter_signal_enum_ext quad8_syn_mode_enum = {
 	.items = quad8_synchronous_modes,
 	.num_items = ARRAY_SIZE(quad8_synchronous_modes),
 	.get = quad8_synchronous_mode_get,
 	.set = quad8_synchronous_mode_set
-पूर्ण;
+};
 
-अटल sमाप_प्रकार quad8_count_न्यूनमान_पढ़ो(काष्ठा counter_device *counter,
-	काष्ठा counter_count *count, व्योम *निजी, अक्षर *buf)
-अणु
-	/* Only a न्यूनमान of 0 is supported */
-	वापस प्र_लिखो(buf, "0\n");
-पूर्ण
+static ssize_t quad8_count_floor_read(struct counter_device *counter,
+	struct counter_count *count, void *private, char *buf)
+{
+	/* Only a floor of 0 is supported */
+	return sprintf(buf, "0\n");
+}
 
-अटल पूर्णांक quad8_count_mode_get(काष्ठा counter_device *counter,
-	काष्ठा counter_count *count, माप_प्रकार *cnt_mode)
-अणु
-	स्थिर काष्ठा quad8 *स्थिर priv = counter->priv;
+static int quad8_count_mode_get(struct counter_device *counter,
+	struct counter_count *count, size_t *cnt_mode)
+{
+	const struct quad8 *const priv = counter->priv;
 
 	/* Map 104-QUAD-8 count mode to Generic Counter count mode */
-	चयन (priv->count_mode[count->id]) अणु
-	हाल 0:
+	switch (priv->count_mode[count->id]) {
+	case 0:
 		*cnt_mode = COUNTER_COUNT_MODE_NORMAL;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		*cnt_mode = COUNTER_COUNT_MODE_RANGE_LIMIT;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		*cnt_mode = COUNTER_COUNT_MODE_NON_RECYCLE;
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		*cnt_mode = COUNTER_COUNT_MODE_MODULO_N;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक quad8_count_mode_set(काष्ठा counter_device *counter,
-	काष्ठा counter_count *count, माप_प्रकार cnt_mode)
-अणु
-	काष्ठा quad8 *स्थिर priv = counter->priv;
-	अचिन्हित पूर्णांक mode_cfg;
-	स्थिर पूर्णांक base_offset = priv->base + 2 * count->id + 1;
+static int quad8_count_mode_set(struct counter_device *counter,
+	struct counter_count *count, size_t cnt_mode)
+{
+	struct quad8 *const priv = counter->priv;
+	unsigned int mode_cfg;
+	const int base_offset = priv->base + 2 * count->id + 1;
 
 	/* Map Generic Counter count mode to 104-QUAD-8 count mode */
-	चयन (cnt_mode) अणु
-	हाल COUNTER_COUNT_MODE_NORMAL:
+	switch (cnt_mode) {
+	case COUNTER_COUNT_MODE_NORMAL:
 		cnt_mode = 0;
-		अवरोध;
-	हाल COUNTER_COUNT_MODE_RANGE_LIMIT:
+		break;
+	case COUNTER_COUNT_MODE_RANGE_LIMIT:
 		cnt_mode = 1;
-		अवरोध;
-	हाल COUNTER_COUNT_MODE_NON_RECYCLE:
+		break;
+	case COUNTER_COUNT_MODE_NON_RECYCLE:
 		cnt_mode = 2;
-		अवरोध;
-	हाल COUNTER_COUNT_MODE_MODULO_N:
+		break;
+	case COUNTER_COUNT_MODE_MODULO_N:
 		cnt_mode = 3;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	mutex_lock(&priv->lock);
 
@@ -540,7 +539,7 @@ MODULE_PARM_DESC(base, "ACCES 104-QUAD-8 base addresses");
 	mode_cfg = cnt_mode << 1;
 
 	/* Add quadrature mode configuration */
-	अगर (priv->quadrature_mode[count->id])
+	if (priv->quadrature_mode[count->id])
 		mode_cfg |= (priv->quadrature_scale[count->id] + 1) << 3;
 
 	/* Load mode configuration to Counter Mode Register */
@@ -548,46 +547,46 @@ MODULE_PARM_DESC(base, "ACCES 104-QUAD-8 base addresses");
 
 	mutex_unlock(&priv->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा counter_count_क्रमागत_ext quad8_cnt_mode_क्रमागत = अणु
+static struct counter_count_enum_ext quad8_cnt_mode_enum = {
 	.items = counter_count_mode_str,
 	.num_items = ARRAY_SIZE(counter_count_mode_str),
 	.get = quad8_count_mode_get,
 	.set = quad8_count_mode_set
-पूर्ण;
+};
 
-अटल sमाप_प्रकार quad8_count_direction_पढ़ो(काष्ठा counter_device *counter,
-	काष्ठा counter_count *count, व्योम *priv, अक्षर *buf)
-अणु
-	क्रमागत counter_count_direction dir;
+static ssize_t quad8_count_direction_read(struct counter_device *counter,
+	struct counter_count *count, void *priv, char *buf)
+{
+	enum counter_count_direction dir;
 
 	quad8_direction_get(counter, count, &dir);
 
-	वापस प्र_लिखो(buf, "%s\n", counter_count_direction_str[dir]);
-पूर्ण
+	return sprintf(buf, "%s\n", counter_count_direction_str[dir]);
+}
 
-अटल sमाप_प्रकार quad8_count_enable_पढ़ो(काष्ठा counter_device *counter,
-	काष्ठा counter_count *count, व्योम *निजी, अक्षर *buf)
-अणु
-	स्थिर काष्ठा quad8 *स्थिर priv = counter->priv;
+static ssize_t quad8_count_enable_read(struct counter_device *counter,
+	struct counter_count *count, void *private, char *buf)
+{
+	const struct quad8 *const priv = counter->priv;
 
-	वापस प्र_लिखो(buf, "%u\n", priv->ab_enable[count->id]);
-पूर्ण
+	return sprintf(buf, "%u\n", priv->ab_enable[count->id]);
+}
 
-अटल sमाप_प्रकार quad8_count_enable_ग_लिखो(काष्ठा counter_device *counter,
-	काष्ठा counter_count *count, व्योम *निजी, स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा quad8 *स्थिर priv = counter->priv;
-	स्थिर पूर्णांक base_offset = priv->base + 2 * count->id;
-	पूर्णांक err;
+static ssize_t quad8_count_enable_write(struct counter_device *counter,
+	struct counter_count *count, void *private, const char *buf, size_t len)
+{
+	struct quad8 *const priv = counter->priv;
+	const int base_offset = priv->base + 2 * count->id;
+	int err;
 	bool ab_enable;
-	अचिन्हित पूर्णांक ior_cfg;
+	unsigned int ior_cfg;
 
 	err = kstrtobool(buf, &ab_enable);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	mutex_lock(&priv->lock);
 
@@ -600,186 +599,186 @@ MODULE_PARM_DESC(base, "ACCES 104-QUAD-8 base addresses");
 
 	mutex_unlock(&priv->lock);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल स्थिर अक्षर *स्थिर quad8_noise_error_states[] = अणु
+static const char *const quad8_noise_error_states[] = {
 	"No excessive noise is present at the count inputs",
 	"Excessive noise is present at the count inputs"
-पूर्ण;
+};
 
-अटल पूर्णांक quad8_error_noise_get(काष्ठा counter_device *counter,
-	काष्ठा counter_count *count, माप_प्रकार *noise_error)
-अणु
-	स्थिर काष्ठा quad8 *स्थिर priv = counter->priv;
-	स्थिर पूर्णांक base_offset = priv->base + 2 * count->id + 1;
+static int quad8_error_noise_get(struct counter_device *counter,
+	struct counter_count *count, size_t *noise_error)
+{
+	const struct quad8 *const priv = counter->priv;
+	const int base_offset = priv->base + 2 * count->id + 1;
 
 	*noise_error = !!(inb(base_offset) & QUAD8_FLAG_E);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा counter_count_क्रमागत_ext quad8_error_noise_क्रमागत = अणु
+static struct counter_count_enum_ext quad8_error_noise_enum = {
 	.items = quad8_noise_error_states,
 	.num_items = ARRAY_SIZE(quad8_noise_error_states),
 	.get = quad8_error_noise_get
-पूर्ण;
+};
 
-अटल sमाप_प्रकार quad8_count_preset_पढ़ो(काष्ठा counter_device *counter,
-	काष्ठा counter_count *count, व्योम *निजी, अक्षर *buf)
-अणु
-	स्थिर काष्ठा quad8 *स्थिर priv = counter->priv;
+static ssize_t quad8_count_preset_read(struct counter_device *counter,
+	struct counter_count *count, void *private, char *buf)
+{
+	const struct quad8 *const priv = counter->priv;
 
-	वापस प्र_लिखो(buf, "%u\n", priv->preset[count->id]);
-पूर्ण
+	return sprintf(buf, "%u\n", priv->preset[count->id]);
+}
 
-अटल व्योम quad8_preset_रेजिस्टर_set(काष्ठा quad8 *priv, पूर्णांक id,
-				      अचिन्हित पूर्णांक preset)
-अणु
-	स्थिर अचिन्हित पूर्णांक base_offset = priv->base + 2 * id;
-	पूर्णांक i;
+static void quad8_preset_register_set(struct quad8 *priv, int id,
+				      unsigned int preset)
+{
+	const unsigned int base_offset = priv->base + 2 * id;
+	int i;
 
 	priv->preset[id] = preset;
 
-	/* Reset Byte Poपूर्णांकer */
+	/* Reset Byte Pointer */
 	outb(QUAD8_CTR_RLD | QUAD8_RLD_RESET_BP, base_offset + 1);
 
 	/* Set Preset Register */
-	क्रम (i = 0; i < 3; i++)
+	for (i = 0; i < 3; i++)
 		outb(preset >> (8 * i), base_offset);
-पूर्ण
+}
 
-अटल sमाप_प्रकार quad8_count_preset_ग_लिखो(काष्ठा counter_device *counter,
-	काष्ठा counter_count *count, व्योम *निजी, स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा quad8 *स्थिर priv = counter->priv;
-	अचिन्हित पूर्णांक preset;
-	पूर्णांक ret;
+static ssize_t quad8_count_preset_write(struct counter_device *counter,
+	struct counter_count *count, void *private, const char *buf, size_t len)
+{
+	struct quad8 *const priv = counter->priv;
+	unsigned int preset;
+	int ret;
 
-	ret = kstrtouपूर्णांक(buf, 0, &preset);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtouint(buf, 0, &preset);
+	if (ret)
+		return ret;
 
 	/* Only 24-bit values are supported */
-	अगर (preset > 0xFFFFFF)
-		वापस -EINVAL;
+	if (preset > 0xFFFFFF)
+		return -EINVAL;
 
 	mutex_lock(&priv->lock);
 
-	quad8_preset_रेजिस्टर_set(priv, count->id, preset);
+	quad8_preset_register_set(priv, count->id, preset);
 
 	mutex_unlock(&priv->lock);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार quad8_count_उच्चमानing_पढ़ो(काष्ठा counter_device *counter,
-	काष्ठा counter_count *count, व्योम *निजी, अक्षर *buf)
-अणु
-	काष्ठा quad8 *स्थिर priv = counter->priv;
+static ssize_t quad8_count_ceiling_read(struct counter_device *counter,
+	struct counter_count *count, void *private, char *buf)
+{
+	struct quad8 *const priv = counter->priv;
 
 	mutex_lock(&priv->lock);
 
-	/* Range Limit and Modulo-N count modes use preset value as उच्चमानing */
-	चयन (priv->count_mode[count->id]) अणु
-	हाल 1:
-	हाल 3:
+	/* Range Limit and Modulo-N count modes use preset value as ceiling */
+	switch (priv->count_mode[count->id]) {
+	case 1:
+	case 3:
 		mutex_unlock(&priv->lock);
-		वापस प्र_लिखो(buf, "%u\n", priv->preset[count->id]);
-	पूर्ण
+		return sprintf(buf, "%u\n", priv->preset[count->id]);
+	}
 
 	mutex_unlock(&priv->lock);
 
-	/* By शेष 0x1FFFFFF (25 bits अचिन्हित) is maximum count */
-	वापस प्र_लिखो(buf, "33554431\n");
-पूर्ण
+	/* By default 0x1FFFFFF (25 bits unsigned) is maximum count */
+	return sprintf(buf, "33554431\n");
+}
 
-अटल sमाप_प्रकार quad8_count_उच्चमानing_ग_लिखो(काष्ठा counter_device *counter,
-	काष्ठा counter_count *count, व्योम *निजी, स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा quad8 *स्थिर priv = counter->priv;
-	अचिन्हित पूर्णांक उच्चमानing;
-	पूर्णांक ret;
+static ssize_t quad8_count_ceiling_write(struct counter_device *counter,
+	struct counter_count *count, void *private, const char *buf, size_t len)
+{
+	struct quad8 *const priv = counter->priv;
+	unsigned int ceiling;
+	int ret;
 
-	ret = kstrtouपूर्णांक(buf, 0, &उच्चमानing);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtouint(buf, 0, &ceiling);
+	if (ret)
+		return ret;
 
 	/* Only 24-bit values are supported */
-	अगर (उच्चमानing > 0xFFFFFF)
-		वापस -EINVAL;
+	if (ceiling > 0xFFFFFF)
+		return -EINVAL;
 
 	mutex_lock(&priv->lock);
 
-	/* Range Limit and Modulo-N count modes use preset value as उच्चमानing */
-	चयन (priv->count_mode[count->id]) अणु
-	हाल 1:
-	हाल 3:
-		quad8_preset_रेजिस्टर_set(priv, count->id, उच्चमानing);
-		अवरोध;
-	पूर्ण
+	/* Range Limit and Modulo-N count modes use preset value as ceiling */
+	switch (priv->count_mode[count->id]) {
+	case 1:
+	case 3:
+		quad8_preset_register_set(priv, count->id, ceiling);
+		break;
+	}
 
 	mutex_unlock(&priv->lock);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार quad8_count_preset_enable_पढ़ो(काष्ठा counter_device *counter,
-	काष्ठा counter_count *count, व्योम *निजी, अक्षर *buf)
-अणु
-	स्थिर काष्ठा quad8 *स्थिर priv = counter->priv;
+static ssize_t quad8_count_preset_enable_read(struct counter_device *counter,
+	struct counter_count *count, void *private, char *buf)
+{
+	const struct quad8 *const priv = counter->priv;
 
-	वापस प्र_लिखो(buf, "%u\n", !priv->preset_enable[count->id]);
-पूर्ण
+	return sprintf(buf, "%u\n", !priv->preset_enable[count->id]);
+}
 
-अटल sमाप_प्रकार quad8_count_preset_enable_ग_लिखो(काष्ठा counter_device *counter,
-	काष्ठा counter_count *count, व्योम *निजी, स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा quad8 *स्थिर priv = counter->priv;
-	स्थिर पूर्णांक base_offset = priv->base + 2 * count->id + 1;
+static ssize_t quad8_count_preset_enable_write(struct counter_device *counter,
+	struct counter_count *count, void *private, const char *buf, size_t len)
+{
+	struct quad8 *const priv = counter->priv;
+	const int base_offset = priv->base + 2 * count->id + 1;
 	bool preset_enable;
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक ior_cfg;
+	int ret;
+	unsigned int ior_cfg;
 
 	ret = kstrtobool(buf, &preset_enable);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Preset enable is active low in Input/Output Control रेजिस्टर */
+	/* Preset enable is active low in Input/Output Control register */
 	preset_enable = !preset_enable;
 
 	mutex_lock(&priv->lock);
 
 	priv->preset_enable[count->id] = preset_enable;
 
-	ior_cfg = priv->ab_enable[count->id] | (अचिन्हित पूर्णांक)preset_enable << 1;
+	ior_cfg = priv->ab_enable[count->id] | (unsigned int)preset_enable << 1;
 
 	/* Load I/O control configuration to Input / Output Control Register */
 	outb(QUAD8_CTR_IOR | ior_cfg, base_offset);
 
 	mutex_unlock(&priv->lock);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार quad8_संकेत_cable_fault_पढ़ो(काष्ठा counter_device *counter,
-					     काष्ठा counter_संकेत *संकेत,
-					     व्योम *निजी, अक्षर *buf)
-अणु
-	काष्ठा quad8 *स्थिर priv = counter->priv;
-	स्थिर माप_प्रकार channel_id = संकेत->id / 2;
+static ssize_t quad8_signal_cable_fault_read(struct counter_device *counter,
+					     struct counter_signal *signal,
+					     void *private, char *buf)
+{
+	struct quad8 *const priv = counter->priv;
+	const size_t channel_id = signal->id / 2;
 	bool disabled;
-	अचिन्हित पूर्णांक status;
-	अचिन्हित पूर्णांक fault;
+	unsigned int status;
+	unsigned int fault;
 
 	mutex_lock(&priv->lock);
 
 	disabled = !(priv->cable_fault_enable & BIT(channel_id));
 
-	अगर (disabled) अणु
+	if (disabled) {
 		mutex_unlock(&priv->lock);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Logic 0 = cable fault */
 	status = inb(priv->base + QUAD8_DIFF_ENCODER_CABLE_STATUS);
@@ -789,130 +788,130 @@ MODULE_PARM_DESC(base, "ACCES 104-QUAD-8 base addresses");
 	/* Mask respective channel and invert logic */
 	fault = !(status & BIT(channel_id));
 
-	वापस प्र_लिखो(buf, "%u\n", fault);
-पूर्ण
+	return sprintf(buf, "%u\n", fault);
+}
 
-अटल sमाप_प्रकार quad8_संकेत_cable_fault_enable_पढ़ो(
-	काष्ठा counter_device *counter, काष्ठा counter_संकेत *संकेत,
-	व्योम *निजी, अक्षर *buf)
-अणु
-	स्थिर काष्ठा quad8 *स्थिर priv = counter->priv;
-	स्थिर माप_प्रकार channel_id = संकेत->id / 2;
-	स्थिर अचिन्हित पूर्णांक enb = !!(priv->cable_fault_enable & BIT(channel_id));
+static ssize_t quad8_signal_cable_fault_enable_read(
+	struct counter_device *counter, struct counter_signal *signal,
+	void *private, char *buf)
+{
+	const struct quad8 *const priv = counter->priv;
+	const size_t channel_id = signal->id / 2;
+	const unsigned int enb = !!(priv->cable_fault_enable & BIT(channel_id));
 
-	वापस प्र_लिखो(buf, "%u\n", enb);
-पूर्ण
+	return sprintf(buf, "%u\n", enb);
+}
 
-अटल sमाप_प्रकार quad8_संकेत_cable_fault_enable_ग_लिखो(
-	काष्ठा counter_device *counter, काष्ठा counter_संकेत *संकेत,
-	व्योम *निजी, स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा quad8 *स्थिर priv = counter->priv;
-	स्थिर माप_प्रकार channel_id = संकेत->id / 2;
+static ssize_t quad8_signal_cable_fault_enable_write(
+	struct counter_device *counter, struct counter_signal *signal,
+	void *private, const char *buf, size_t len)
+{
+	struct quad8 *const priv = counter->priv;
+	const size_t channel_id = signal->id / 2;
 	bool enable;
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक cable_fault_enable;
+	int ret;
+	unsigned int cable_fault_enable;
 
 	ret = kstrtobool(buf, &enable);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mutex_lock(&priv->lock);
 
-	अगर (enable)
+	if (enable)
 		priv->cable_fault_enable |= BIT(channel_id);
-	अन्यथा
+	else
 		priv->cable_fault_enable &= ~BIT(channel_id);
 
-	/* Enable is active low in Dअगरferential Encoder Cable Status रेजिस्टर */
+	/* Enable is active low in Differential Encoder Cable Status register */
 	cable_fault_enable = ~priv->cable_fault_enable;
 
 	outb(cable_fault_enable, priv->base + QUAD8_DIFF_ENCODER_CABLE_STATUS);
 
 	mutex_unlock(&priv->lock);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार quad8_संकेत_fck_prescaler_पढ़ो(काष्ठा counter_device *counter,
-	काष्ठा counter_संकेत *संकेत, व्योम *निजी, अक्षर *buf)
-अणु
-	स्थिर काष्ठा quad8 *स्थिर priv = counter->priv;
-	स्थिर माप_प्रकार channel_id = संकेत->id / 2;
+static ssize_t quad8_signal_fck_prescaler_read(struct counter_device *counter,
+	struct counter_signal *signal, void *private, char *buf)
+{
+	const struct quad8 *const priv = counter->priv;
+	const size_t channel_id = signal->id / 2;
 
-	वापस प्र_लिखो(buf, "%u\n", priv->fck_prescaler[channel_id]);
-पूर्ण
+	return sprintf(buf, "%u\n", priv->fck_prescaler[channel_id]);
+}
 
-अटल sमाप_प्रकार quad8_संकेत_fck_prescaler_ग_लिखो(काष्ठा counter_device *counter,
-	काष्ठा counter_संकेत *संकेत, व्योम *निजी, स्थिर अक्षर *buf,
-	माप_प्रकार len)
-अणु
-	काष्ठा quad8 *स्थिर priv = counter->priv;
-	स्थिर माप_प्रकार channel_id = संकेत->id / 2;
-	स्थिर पूर्णांक base_offset = priv->base + 2 * channel_id;
+static ssize_t quad8_signal_fck_prescaler_write(struct counter_device *counter,
+	struct counter_signal *signal, void *private, const char *buf,
+	size_t len)
+{
+	struct quad8 *const priv = counter->priv;
+	const size_t channel_id = signal->id / 2;
+	const int base_offset = priv->base + 2 * channel_id;
 	u8 prescaler;
-	पूर्णांक ret;
+	int ret;
 
 	ret = kstrtou8(buf, 0, &prescaler);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mutex_lock(&priv->lock);
 
 	priv->fck_prescaler[channel_id] = prescaler;
 
-	/* Reset Byte Poपूर्णांकer */
+	/* Reset Byte Pointer */
 	outb(QUAD8_CTR_RLD | QUAD8_RLD_RESET_BP, base_offset + 1);
 
-	/* Set filter घड़ी factor */
+	/* Set filter clock factor */
 	outb(prescaler, base_offset);
 	outb(QUAD8_CTR_RLD | QUAD8_RLD_RESET_BP | QUAD8_RLD_PRESET_PSC,
 	     base_offset + 1);
 
 	mutex_unlock(&priv->lock);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल स्थिर काष्ठा counter_संकेत_ext quad8_संकेत_ext[] = अणु
-	अणु
+static const struct counter_signal_ext quad8_signal_ext[] = {
+	{
 		.name = "cable_fault",
-		.पढ़ो = quad8_संकेत_cable_fault_पढ़ो
-	पूर्ण,
-	अणु
+		.read = quad8_signal_cable_fault_read
+	},
+	{
 		.name = "cable_fault_enable",
-		.पढ़ो = quad8_संकेत_cable_fault_enable_पढ़ो,
-		.ग_लिखो = quad8_संकेत_cable_fault_enable_ग_लिखो
-	पूर्ण,
-	अणु
+		.read = quad8_signal_cable_fault_enable_read,
+		.write = quad8_signal_cable_fault_enable_write
+	},
+	{
 		.name = "filter_clock_prescaler",
-		.पढ़ो = quad8_संकेत_fck_prescaler_पढ़ो,
-		.ग_लिखो = quad8_संकेत_fck_prescaler_ग_लिखो
-	पूर्ण
-पूर्ण;
+		.read = quad8_signal_fck_prescaler_read,
+		.write = quad8_signal_fck_prescaler_write
+	}
+};
 
-अटल स्थिर काष्ठा counter_संकेत_ext quad8_index_ext[] = अणु
-	COUNTER_SIGNAL_ENUM("index_polarity", &quad8_index_pol_क्रमागत),
-	COUNTER_SIGNAL_ENUM_AVAILABLE("index_polarity",	&quad8_index_pol_क्रमागत),
-	COUNTER_SIGNAL_ENUM("synchronous_mode", &quad8_syn_mode_क्रमागत),
-	COUNTER_SIGNAL_ENUM_AVAILABLE("synchronous_mode", &quad8_syn_mode_क्रमागत)
-पूर्ण;
+static const struct counter_signal_ext quad8_index_ext[] = {
+	COUNTER_SIGNAL_ENUM("index_polarity", &quad8_index_pol_enum),
+	COUNTER_SIGNAL_ENUM_AVAILABLE("index_polarity",	&quad8_index_pol_enum),
+	COUNTER_SIGNAL_ENUM("synchronous_mode", &quad8_syn_mode_enum),
+	COUNTER_SIGNAL_ENUM_AVAILABLE("synchronous_mode", &quad8_syn_mode_enum)
+};
 
-#घोषणा QUAD8_QUAD_SIGNAL(_id, _name) अणु		\
+#define QUAD8_QUAD_SIGNAL(_id, _name) {		\
 	.id = (_id),				\
 	.name = (_name),			\
-	.ext = quad8_संकेत_ext,		\
-	.num_ext = ARRAY_SIZE(quad8_संकेत_ext)	\
-पूर्ण
+	.ext = quad8_signal_ext,		\
+	.num_ext = ARRAY_SIZE(quad8_signal_ext)	\
+}
 
-#घोषणा	QUAD8_INDEX_SIGNAL(_id, _name) अणु	\
+#define	QUAD8_INDEX_SIGNAL(_id, _name) {	\
 	.id = (_id),				\
 	.name = (_name),			\
 	.ext = quad8_index_ext,			\
 	.num_ext = ARRAY_SIZE(quad8_index_ext)	\
-पूर्ण
+}
 
-अटल काष्ठा counter_संकेत quad8_संकेतs[] = अणु
+static struct counter_signal quad8_signals[] = {
 	QUAD8_QUAD_SIGNAL(0, "Channel 1 Quadrature A"),
 	QUAD8_QUAD_SIGNAL(1, "Channel 1 Quadrature B"),
 	QUAD8_QUAD_SIGNAL(2, "Channel 2 Quadrature A"),
@@ -937,69 +936,69 @@ MODULE_PARM_DESC(base, "ACCES 104-QUAD-8 base addresses");
 	QUAD8_INDEX_SIGNAL(21, "Channel 6 Index"),
 	QUAD8_INDEX_SIGNAL(22, "Channel 7 Index"),
 	QUAD8_INDEX_SIGNAL(23, "Channel 8 Index")
-पूर्ण;
+};
 
-#घोषणा QUAD8_COUNT_SYNAPSES(_id) अणु					\
-	अणु								\
+#define QUAD8_COUNT_SYNAPSES(_id) {					\
+	{								\
 		.actions_list = quad8_synapse_actions_list,		\
 		.num_actions = ARRAY_SIZE(quad8_synapse_actions_list),	\
-		.संकेत = quad8_संकेतs + 2 * (_id)			\
-	पूर्ण,								\
-	अणु								\
+		.signal = quad8_signals + 2 * (_id)			\
+	},								\
+	{								\
 		.actions_list = quad8_synapse_actions_list,		\
 		.num_actions = ARRAY_SIZE(quad8_synapse_actions_list),	\
-		.संकेत = quad8_संकेतs + 2 * (_id) + 1			\
-	पूर्ण,								\
-	अणु								\
+		.signal = quad8_signals + 2 * (_id) + 1			\
+	},								\
+	{								\
 		.actions_list = quad8_index_actions_list,		\
 		.num_actions = ARRAY_SIZE(quad8_index_actions_list),	\
-		.संकेत = quad8_संकेतs + 2 * (_id) + 16		\
-	पूर्ण								\
-पूर्ण
+		.signal = quad8_signals + 2 * (_id) + 16		\
+	}								\
+}
 
-अटल काष्ठा counter_synapse quad8_count_synapses[][3] = अणु
+static struct counter_synapse quad8_count_synapses[][3] = {
 	QUAD8_COUNT_SYNAPSES(0), QUAD8_COUNT_SYNAPSES(1),
 	QUAD8_COUNT_SYNAPSES(2), QUAD8_COUNT_SYNAPSES(3),
 	QUAD8_COUNT_SYNAPSES(4), QUAD8_COUNT_SYNAPSES(5),
 	QUAD8_COUNT_SYNAPSES(6), QUAD8_COUNT_SYNAPSES(7)
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा counter_count_ext quad8_count_ext[] = अणु
-	अणु
+static const struct counter_count_ext quad8_count_ext[] = {
+	{
 		.name = "ceiling",
-		.पढ़ो = quad8_count_उच्चमानing_पढ़ो,
-		.ग_लिखो = quad8_count_उच्चमानing_ग_लिखो
-	पूर्ण,
-	अणु
+		.read = quad8_count_ceiling_read,
+		.write = quad8_count_ceiling_write
+	},
+	{
 		.name = "floor",
-		.पढ़ो = quad8_count_न्यूनमान_पढ़ो
-	पूर्ण,
-	COUNTER_COUNT_ENUM("count_mode", &quad8_cnt_mode_क्रमागत),
-	COUNTER_COUNT_ENUM_AVAILABLE("count_mode", &quad8_cnt_mode_क्रमागत),
-	अणु
+		.read = quad8_count_floor_read
+	},
+	COUNTER_COUNT_ENUM("count_mode", &quad8_cnt_mode_enum),
+	COUNTER_COUNT_ENUM_AVAILABLE("count_mode", &quad8_cnt_mode_enum),
+	{
 		.name = "direction",
-		.पढ़ो = quad8_count_direction_पढ़ो
-	पूर्ण,
-	अणु
+		.read = quad8_count_direction_read
+	},
+	{
 		.name = "enable",
-		.पढ़ो = quad8_count_enable_पढ़ो,
-		.ग_लिखो = quad8_count_enable_ग_लिखो
-	पूर्ण,
-	COUNTER_COUNT_ENUM("error_noise", &quad8_error_noise_क्रमागत),
-	COUNTER_COUNT_ENUM_AVAILABLE("error_noise", &quad8_error_noise_क्रमागत),
-	अणु
+		.read = quad8_count_enable_read,
+		.write = quad8_count_enable_write
+	},
+	COUNTER_COUNT_ENUM("error_noise", &quad8_error_noise_enum),
+	COUNTER_COUNT_ENUM_AVAILABLE("error_noise", &quad8_error_noise_enum),
+	{
 		.name = "preset",
-		.पढ़ो = quad8_count_preset_पढ़ो,
-		.ग_लिखो = quad8_count_preset_ग_लिखो
-	पूर्ण,
-	अणु
+		.read = quad8_count_preset_read,
+		.write = quad8_count_preset_write
+	},
+	{
 		.name = "preset_enable",
-		.पढ़ो = quad8_count_preset_enable_पढ़ो,
-		.ग_लिखो = quad8_count_preset_enable_ग_लिखो
-	पूर्ण
-पूर्ण;
+		.read = quad8_count_preset_enable_read,
+		.write = quad8_count_preset_enable_write
+	}
+};
 
-#घोषणा QUAD8_COUNT(_id, _cntname) अणु					\
+#define QUAD8_COUNT(_id, _cntname) {					\
 	.id = (_id),							\
 	.name = (_cntname),						\
 	.functions_list = quad8_count_functions_list,			\
@@ -1008,9 +1007,9 @@ MODULE_PARM_DESC(base, "ACCES 104-QUAD-8 base addresses");
 	.num_synapses =	2,						\
 	.ext = quad8_count_ext,						\
 	.num_ext = ARRAY_SIZE(quad8_count_ext)				\
-पूर्ण
+}
 
-अटल काष्ठा counter_count quad8_counts[] = अणु
+static struct counter_count quad8_counts[] = {
 	QUAD8_COUNT(0, "Channel 1 Count"),
 	QUAD8_COUNT(1, "Channel 2 Count"),
 	QUAD8_COUNT(2, "Channel 3 Count"),
@@ -1019,23 +1018,23 @@ MODULE_PARM_DESC(base, "ACCES 104-QUAD-8 base addresses");
 	QUAD8_COUNT(5, "Channel 6 Count"),
 	QUAD8_COUNT(6, "Channel 7 Count"),
 	QUAD8_COUNT(7, "Channel 8 Count")
-पूर्ण;
+};
 
-अटल पूर्णांक quad8_probe(काष्ठा device *dev, अचिन्हित पूर्णांक id)
-अणु
-	काष्ठा quad8 *priv;
-	पूर्णांक i, j;
-	अचिन्हित पूर्णांक base_offset;
+static int quad8_probe(struct device *dev, unsigned int id)
+{
+	struct quad8 *priv;
+	int i, j;
+	unsigned int base_offset;
 
-	अगर (!devm_request_region(dev, base[id], QUAD8_EXTENT, dev_name(dev))) अणु
+	if (!devm_request_region(dev, base[id], QUAD8_EXTENT, dev_name(dev))) {
 		dev_err(dev, "Unable to lock port addresses (0x%X-0x%X)\n",
 			base[id], base[id] + QUAD8_EXTENT);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	/* Initialize Counter device and driver data */
 	priv->counter.name = dev_name(dev);
@@ -1043,29 +1042,29 @@ MODULE_PARM_DESC(base, "ACCES 104-QUAD-8 base addresses");
 	priv->counter.ops = &quad8_ops;
 	priv->counter.counts = quad8_counts;
 	priv->counter.num_counts = ARRAY_SIZE(quad8_counts);
-	priv->counter.संकेतs = quad8_संकेतs;
-	priv->counter.num_संकेतs = ARRAY_SIZE(quad8_संकेतs);
+	priv->counter.signals = quad8_signals;
+	priv->counter.num_signals = ARRAY_SIZE(quad8_signals);
 	priv->counter.priv = priv;
 	priv->base = base[id];
 
 	/* Initialize mutex */
 	mutex_init(&priv->lock);
 
-	/* Reset all counters and disable पूर्णांकerrupt function */
+	/* Reset all counters and disable interrupt function */
 	outb(QUAD8_CHAN_OP_RESET_COUNTERS, base[id] + QUAD8_REG_CHAN_OP);
-	/* Set initial configuration क्रम all counters */
-	क्रम (i = 0; i < QUAD8_NUM_COUNTERS; i++) अणु
+	/* Set initial configuration for all counters */
+	for (i = 0; i < QUAD8_NUM_COUNTERS; i++) {
 		base_offset = base[id] + 2 * i;
-		/* Reset Byte Poपूर्णांकer */
+		/* Reset Byte Pointer */
 		outb(QUAD8_CTR_RLD | QUAD8_RLD_RESET_BP, base_offset + 1);
-		/* Reset filter घड़ी factor */
+		/* Reset filter clock factor */
 		outb(0, base_offset);
 		outb(QUAD8_CTR_RLD | QUAD8_RLD_RESET_BP | QUAD8_RLD_PRESET_PSC,
 		     base_offset + 1);
-		/* Reset Byte Poपूर्णांकer */
+		/* Reset Byte Pointer */
 		outb(QUAD8_CTR_RLD | QUAD8_RLD_RESET_BP, base_offset + 1);
 		/* Reset Preset Register */
-		क्रम (j = 0; j < 3; j++)
+		for (j = 0; j < 3; j++)
 			outb(0x00, base_offset);
 		/* Reset Borrow, Carry, Compare, and Sign flags */
 		outb(QUAD8_CTR_RLD | QUAD8_RLD_RESET_FLAGS, base_offset + 1);
@@ -1073,26 +1072,26 @@ MODULE_PARM_DESC(base, "ACCES 104-QUAD-8 base addresses");
 		outb(QUAD8_CTR_RLD | QUAD8_RLD_RESET_E, base_offset + 1);
 		/* Binary encoding; Normal count; non-quadrature mode */
 		outb(QUAD8_CTR_CMR, base_offset + 1);
-		/* Disable A and B inमाला_दो; preset on index; FLG1 as Carry */
+		/* Disable A and B inputs; preset on index; FLG1 as Carry */
 		outb(QUAD8_CTR_IOR, base_offset + 1);
 		/* Disable index function; negative index polarity */
 		outb(QUAD8_CTR_IDR, base_offset + 1);
-	पूर्ण
-	/* Disable Dअगरferential Encoder Cable Status क्रम all channels */
+	}
+	/* Disable Differential Encoder Cable Status for all channels */
 	outb(0xFF, base[id] + QUAD8_DIFF_ENCODER_CABLE_STATUS);
 	/* Enable all counters */
 	outb(QUAD8_CHAN_OP_ENABLE_COUNTERS, base[id] + QUAD8_REG_CHAN_OP);
 
 	/* Register Counter device */
-	वापस devm_counter_रेजिस्टर(dev, &priv->counter);
-पूर्ण
+	return devm_counter_register(dev, &priv->counter);
+}
 
-अटल काष्ठा isa_driver quad8_driver = अणु
+static struct isa_driver quad8_driver = {
 	.probe = quad8_probe,
-	.driver = अणु
+	.driver = {
 		.name = "104-quad-8"
-	पूर्ण
-पूर्ण;
+	}
+};
 
 module_isa_driver(quad8_driver, num_quad8);
 

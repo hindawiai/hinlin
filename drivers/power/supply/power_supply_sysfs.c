@@ -1,50 +1,49 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *  Sysfs पूर्णांकerface क्रम the universal घातer supply monitor class
+ *  Sysfs interface for the universal power supply monitor class
  *
- *  Copyright तऊ 2007  David Woodhouse <dwmw2@infradead.org>
- *  Copyright तऊ 2007  Anton Vorontsov <cbou@mail.ru>
- *  Copyright तऊ 2004  Szabolcs Gyurko
- *  Copyright तऊ 2003  Ian Molton <spyro@f2s.com>
+ *  Copyright © 2007  David Woodhouse <dwmw2@infradead.org>
+ *  Copyright © 2007  Anton Vorontsov <cbou@mail.ru>
+ *  Copyright © 2004  Szabolcs Gyurko
+ *  Copyright © 2003  Ian Molton <spyro@f2s.com>
  *
- *  Modअगरied: 2004, Oct     Szabolcs Gyurko
+ *  Modified: 2004, Oct     Szabolcs Gyurko
  */
 
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/device.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/स्थिति.स>
+#include <linux/ctype.h>
+#include <linux/device.h>
+#include <linux/power_supply.h>
+#include <linux/slab.h>
+#include <linux/stat.h>
 
-#समावेश "power_supply.h"
+#include "power_supply.h"
 
-#घोषणा MAX_PROP_NAME_LEN 30
+#define MAX_PROP_NAME_LEN 30
 
-काष्ठा घातer_supply_attr अणु
-	स्थिर अक्षर *prop_name;
-	अक्षर attr_name[MAX_PROP_NAME_LEN + 1];
-	काष्ठा device_attribute dev_attr;
-	स्थिर अक्षर * स्थिर *text_values;
-	पूर्णांक text_values_len;
-पूर्ण;
+struct power_supply_attr {
+	const char *prop_name;
+	char attr_name[MAX_PROP_NAME_LEN + 1];
+	struct device_attribute dev_attr;
+	const char * const *text_values;
+	int text_values_len;
+};
 
-#घोषणा _POWER_SUPPLY_ATTR(_name, _text, _len)	\
+#define _POWER_SUPPLY_ATTR(_name, _text, _len)	\
 [POWER_SUPPLY_PROP_ ## _name] =			\
-अणु						\
+{						\
 	.prop_name = #_name,			\
 	.attr_name = #_name "\0",		\
 	.text_values = _text,			\
 	.text_values_len = _len,		\
-पूर्ण
+}
 
-#घोषणा POWER_SUPPLY_ATTR(_name) _POWER_SUPPLY_ATTR(_name, शून्य, 0)
-#घोषणा _POWER_SUPPLY_ENUM_ATTR(_name, _text)	\
+#define POWER_SUPPLY_ATTR(_name) _POWER_SUPPLY_ATTR(_name, NULL, 0)
+#define _POWER_SUPPLY_ENUM_ATTR(_name, _text)	\
 	_POWER_SUPPLY_ATTR(_name, _text, ARRAY_SIZE(_text))
-#घोषणा POWER_SUPPLY_ENUM_ATTR(_name)	\
+#define POWER_SUPPLY_ENUM_ATTR(_name)	\
 	_POWER_SUPPLY_ENUM_ATTR(_name, POWER_SUPPLY_ ## _name ## _TEXT)
 
-अटल स्थिर अक्षर * स्थिर POWER_SUPPLY_TYPE_TEXT[] = अणु
+static const char * const POWER_SUPPLY_TYPE_TEXT[] = {
 	[POWER_SUPPLY_TYPE_UNKNOWN]		= "Unknown",
 	[POWER_SUPPLY_TYPE_BATTERY]		= "Battery",
 	[POWER_SUPPLY_TYPE_UPS]			= "UPS",
@@ -58,9 +57,9 @@
 	[POWER_SUPPLY_TYPE_USB_PD_DRP]		= "USB_PD_DRP",
 	[POWER_SUPPLY_TYPE_APPLE_BRICK_ID]	= "BrickID",
 	[POWER_SUPPLY_TYPE_WIRELESS]		= "Wireless",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर POWER_SUPPLY_USB_TYPE_TEXT[] = अणु
+static const char * const POWER_SUPPLY_USB_TYPE_TEXT[] = {
 	[POWER_SUPPLY_USB_TYPE_UNKNOWN]		= "Unknown",
 	[POWER_SUPPLY_USB_TYPE_SDP]		= "SDP",
 	[POWER_SUPPLY_USB_TYPE_DCP]		= "DCP",
@@ -71,17 +70,17 @@
 	[POWER_SUPPLY_USB_TYPE_PD_DRP]		= "PD_DRP",
 	[POWER_SUPPLY_USB_TYPE_PD_PPS]		= "PD_PPS",
 	[POWER_SUPPLY_USB_TYPE_APPLE_BRICK_ID]	= "BrickID",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर POWER_SUPPLY_STATUS_TEXT[] = अणु
+static const char * const POWER_SUPPLY_STATUS_TEXT[] = {
 	[POWER_SUPPLY_STATUS_UNKNOWN]		= "Unknown",
 	[POWER_SUPPLY_STATUS_CHARGING]		= "Charging",
 	[POWER_SUPPLY_STATUS_DISCHARGING]	= "Discharging",
 	[POWER_SUPPLY_STATUS_NOT_CHARGING]	= "Not charging",
 	[POWER_SUPPLY_STATUS_FULL]		= "Full",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर POWER_SUPPLY_CHARGE_TYPE_TEXT[] = अणु
+static const char * const POWER_SUPPLY_CHARGE_TYPE_TEXT[] = {
 	[POWER_SUPPLY_CHARGE_TYPE_UNKNOWN]	= "Unknown",
 	[POWER_SUPPLY_CHARGE_TYPE_NONE]		= "N/A",
 	[POWER_SUPPLY_CHARGE_TYPE_TRICKLE]	= "Trickle",
@@ -90,9 +89,9 @@
 	[POWER_SUPPLY_CHARGE_TYPE_ADAPTIVE]	= "Adaptive",
 	[POWER_SUPPLY_CHARGE_TYPE_CUSTOM]	= "Custom",
 	[POWER_SUPPLY_CHARGE_TYPE_LONGLIFE]	= "Long Life",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर POWER_SUPPLY_HEALTH_TEXT[] = अणु
+static const char * const POWER_SUPPLY_HEALTH_TEXT[] = {
 	[POWER_SUPPLY_HEALTH_UNKNOWN]		    = "Unknown",
 	[POWER_SUPPLY_HEALTH_GOOD]		    = "Good",
 	[POWER_SUPPLY_HEALTH_OVERHEAT]		    = "Overheat",
@@ -107,9 +106,9 @@
 	[POWER_SUPPLY_HEALTH_WARM]		    = "Warm",
 	[POWER_SUPPLY_HEALTH_COOL]		    = "Cool",
 	[POWER_SUPPLY_HEALTH_HOT]		    = "Hot",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर POWER_SUPPLY_TECHNOLOGY_TEXT[] = अणु
+static const char * const POWER_SUPPLY_TECHNOLOGY_TEXT[] = {
 	[POWER_SUPPLY_TECHNOLOGY_UNKNOWN]	= "Unknown",
 	[POWER_SUPPLY_TECHNOLOGY_NiMH]		= "NiMH",
 	[POWER_SUPPLY_TECHNOLOGY_LION]		= "Li-ion",
@@ -117,25 +116,25 @@
 	[POWER_SUPPLY_TECHNOLOGY_LiFe]		= "LiFe",
 	[POWER_SUPPLY_TECHNOLOGY_NiCd]		= "NiCd",
 	[POWER_SUPPLY_TECHNOLOGY_LiMn]		= "LiMn",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर POWER_SUPPLY_CAPACITY_LEVEL_TEXT[] = अणु
+static const char * const POWER_SUPPLY_CAPACITY_LEVEL_TEXT[] = {
 	[POWER_SUPPLY_CAPACITY_LEVEL_UNKNOWN]	= "Unknown",
 	[POWER_SUPPLY_CAPACITY_LEVEL_CRITICAL]	= "Critical",
 	[POWER_SUPPLY_CAPACITY_LEVEL_LOW]	= "Low",
 	[POWER_SUPPLY_CAPACITY_LEVEL_NORMAL]	= "Normal",
 	[POWER_SUPPLY_CAPACITY_LEVEL_HIGH]	= "High",
 	[POWER_SUPPLY_CAPACITY_LEVEL_FULL]	= "Full",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर POWER_SUPPLY_SCOPE_TEXT[] = अणु
+static const char * const POWER_SUPPLY_SCOPE_TEXT[] = {
 	[POWER_SUPPLY_SCOPE_UNKNOWN]	= "Unknown",
 	[POWER_SUPPLY_SCOPE_SYSTEM]	= "System",
 	[POWER_SUPPLY_SCOPE_DEVICE]	= "Device",
-पूर्ण;
+};
 
-अटल काष्ठा घातer_supply_attr घातer_supply_attrs[] = अणु
-	/* Properties of type `पूर्णांक' */
+static struct power_supply_attr power_supply_attrs[] = {
+	/* Properties of type `int' */
 	POWER_SUPPLY_ENUM_ATTR(STATUS),
 	POWER_SUPPLY_ENUM_ATTR(CHARGE_TYPE),
 	POWER_SUPPLY_ENUM_ATTR(HEALTH),
@@ -208,280 +207,280 @@
 	POWER_SUPPLY_ATTR(MANUFACTURE_YEAR),
 	POWER_SUPPLY_ATTR(MANUFACTURE_MONTH),
 	POWER_SUPPLY_ATTR(MANUFACTURE_DAY),
-	/* Properties of type `स्थिर अक्षर *' */
+	/* Properties of type `const char *' */
 	POWER_SUPPLY_ATTR(MODEL_NAME),
 	POWER_SUPPLY_ATTR(MANUFACTURER),
 	POWER_SUPPLY_ATTR(SERIAL_NUMBER),
-पूर्ण;
+};
 
-अटल काष्ठा attribute *
-__घातer_supply_attrs[ARRAY_SIZE(घातer_supply_attrs) + 1];
+static struct attribute *
+__power_supply_attrs[ARRAY_SIZE(power_supply_attrs) + 1];
 
-अटल काष्ठा घातer_supply_attr *to_ps_attr(काष्ठा device_attribute *attr)
-अणु
-	वापस container_of(attr, काष्ठा घातer_supply_attr, dev_attr);
-पूर्ण
+static struct power_supply_attr *to_ps_attr(struct device_attribute *attr)
+{
+	return container_of(attr, struct power_supply_attr, dev_attr);
+}
 
-अटल क्रमागत घातer_supply_property dev_attr_psp(काष्ठा device_attribute *attr)
-अणु
-	वापस  to_ps_attr(attr) - घातer_supply_attrs;
-पूर्ण
+static enum power_supply_property dev_attr_psp(struct device_attribute *attr)
+{
+	return  to_ps_attr(attr) - power_supply_attrs;
+}
 
-अटल sमाप_प्रकार घातer_supply_show_usb_type(काष्ठा device *dev,
-					  स्थिर काष्ठा घातer_supply_desc *desc,
-					  जोड़ घातer_supply_propval *value,
-					  अक्षर *buf)
-अणु
-	क्रमागत घातer_supply_usb_type usb_type;
-	sमाप_प्रकार count = 0;
+static ssize_t power_supply_show_usb_type(struct device *dev,
+					  const struct power_supply_desc *desc,
+					  union power_supply_propval *value,
+					  char *buf)
+{
+	enum power_supply_usb_type usb_type;
+	ssize_t count = 0;
 	bool match = false;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < desc->num_usb_types; ++i) अणु
+	for (i = 0; i < desc->num_usb_types; ++i) {
 		usb_type = desc->usb_types[i];
 
-		अगर (value->पूर्णांकval == usb_type) अणु
-			count += प्र_लिखो(buf + count, "[%s] ",
+		if (value->intval == usb_type) {
+			count += sprintf(buf + count, "[%s] ",
 					 POWER_SUPPLY_USB_TYPE_TEXT[usb_type]);
 			match = true;
-		पूर्ण अन्यथा अणु
-			count += प्र_लिखो(buf + count, "%s ",
+		} else {
+			count += sprintf(buf + count, "%s ",
 					 POWER_SUPPLY_USB_TYPE_TEXT[usb_type]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!match) अणु
+	if (!match) {
 		dev_warn(dev, "driver reporting unsupported connected type\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (count)
+	if (count)
 		buf[count - 1] = '\n';
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार घातer_supply_show_property(काष्ठा device *dev,
-					  काष्ठा device_attribute *attr,
-					  अक्षर *buf) अणु
-	sमाप_प्रकार ret;
-	काष्ठा घातer_supply *psy = dev_get_drvdata(dev);
-	काष्ठा घातer_supply_attr *ps_attr = to_ps_attr(attr);
-	क्रमागत घातer_supply_property psp = dev_attr_psp(attr);
-	जोड़ घातer_supply_propval value;
+static ssize_t power_supply_show_property(struct device *dev,
+					  struct device_attribute *attr,
+					  char *buf) {
+	ssize_t ret;
+	struct power_supply *psy = dev_get_drvdata(dev);
+	struct power_supply_attr *ps_attr = to_ps_attr(attr);
+	enum power_supply_property psp = dev_attr_psp(attr);
+	union power_supply_propval value;
 
-	अगर (psp == POWER_SUPPLY_PROP_TYPE) अणु
-		value.पूर्णांकval = psy->desc->type;
-	पूर्ण अन्यथा अणु
-		ret = घातer_supply_get_property(psy, psp, &value);
+	if (psp == POWER_SUPPLY_PROP_TYPE) {
+		value.intval = psy->desc->type;
+	} else {
+		ret = power_supply_get_property(psy, psp, &value);
 
-		अगर (ret < 0) अणु
-			अगर (ret == -ENODATA)
+		if (ret < 0) {
+			if (ret == -ENODATA)
 				dev_dbg(dev, "driver has no data for `%s' property\n",
 					attr->attr.name);
-			अन्यथा अगर (ret != -ENODEV && ret != -EAGAIN)
+			else if (ret != -ENODEV && ret != -EAGAIN)
 				dev_err_ratelimited(dev,
 					"driver failed to report `%s' property: %zd\n",
 					attr->attr.name, ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	अगर (ps_attr->text_values_len > 0 &&
-	    value.पूर्णांकval < ps_attr->text_values_len && value.पूर्णांकval >= 0) अणु
-		वापस प्र_लिखो(buf, "%s\n", ps_attr->text_values[value.पूर्णांकval]);
-	पूर्ण
+	if (ps_attr->text_values_len > 0 &&
+	    value.intval < ps_attr->text_values_len && value.intval >= 0) {
+		return sprintf(buf, "%s\n", ps_attr->text_values[value.intval]);
+	}
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_USB_TYPE:
-		ret = घातer_supply_show_usb_type(dev, psy->desc,
+	switch (psp) {
+	case POWER_SUPPLY_PROP_USB_TYPE:
+		ret = power_supply_show_usb_type(dev, psy->desc,
 						&value, buf);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_MODEL_NAME ... POWER_SUPPLY_PROP_SERIAL_NUMBER:
-		ret = प्र_लिखो(buf, "%s\n", value.strval);
-		अवरोध;
-	शेष:
-		ret = प्र_लिखो(buf, "%d\n", value.पूर्णांकval);
-	पूर्ण
+		break;
+	case POWER_SUPPLY_PROP_MODEL_NAME ... POWER_SUPPLY_PROP_SERIAL_NUMBER:
+		ret = sprintf(buf, "%s\n", value.strval);
+		break;
+	default:
+		ret = sprintf(buf, "%d\n", value.intval);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार घातer_supply_store_property(काष्ठा device *dev,
-					   काष्ठा device_attribute *attr,
-					   स्थिर अक्षर *buf, माप_प्रकार count) अणु
-	sमाप_प्रकार ret;
-	काष्ठा घातer_supply *psy = dev_get_drvdata(dev);
-	काष्ठा घातer_supply_attr *ps_attr = to_ps_attr(attr);
-	क्रमागत घातer_supply_property psp = dev_attr_psp(attr);
-	जोड़ घातer_supply_propval value;
+static ssize_t power_supply_store_property(struct device *dev,
+					   struct device_attribute *attr,
+					   const char *buf, size_t count) {
+	ssize_t ret;
+	struct power_supply *psy = dev_get_drvdata(dev);
+	struct power_supply_attr *ps_attr = to_ps_attr(attr);
+	enum power_supply_property psp = dev_attr_psp(attr);
+	union power_supply_propval value;
 
 	ret = -EINVAL;
-	अगर (ps_attr->text_values_len > 0) अणु
+	if (ps_attr->text_values_len > 0) {
 		ret = __sysfs_match_string(ps_attr->text_values,
 					   ps_attr->text_values_len, buf);
-	पूर्ण
+	}
 
 	/*
-	 * If no match was found, then check to see अगर it is an पूर्णांकeger.
-	 * Integer values are valid क्रम क्रमागतs in addition to the text value.
+	 * If no match was found, then check to see if it is an integer.
+	 * Integer values are valid for enums in addition to the text value.
 	 */
-	अगर (ret < 0) अणु
-		दीर्घ दीर्घ_val;
+	if (ret < 0) {
+		long long_val;
 
-		ret = kम_से_दीर्घ(buf, 10, &दीर्घ_val);
-		अगर (ret < 0)
-			वापस ret;
+		ret = kstrtol(buf, 10, &long_val);
+		if (ret < 0)
+			return ret;
 
-		ret = दीर्घ_val;
-	पूर्ण
+		ret = long_val;
+	}
 
-	value.पूर्णांकval = ret;
+	value.intval = ret;
 
-	ret = घातer_supply_set_property(psy, psp, &value);
-	अगर (ret < 0)
-		वापस ret;
+	ret = power_supply_set_property(psy, psp, &value);
+	if (ret < 0)
+		return ret;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल umode_t घातer_supply_attr_is_visible(काष्ठा kobject *kobj,
-					   काष्ठा attribute *attr,
-					   पूर्णांक attrno)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा घातer_supply *psy = dev_get_drvdata(dev);
+static umode_t power_supply_attr_is_visible(struct kobject *kobj,
+					   struct attribute *attr,
+					   int attrno)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct power_supply *psy = dev_get_drvdata(dev);
 	umode_t mode = S_IRUSR | S_IRGRP | S_IROTH;
-	पूर्णांक i;
+	int i;
 
-	अगर (!घातer_supply_attrs[attrno].prop_name)
-		वापस 0;
+	if (!power_supply_attrs[attrno].prop_name)
+		return 0;
 
-	अगर (attrno == POWER_SUPPLY_PROP_TYPE)
-		वापस mode;
+	if (attrno == POWER_SUPPLY_PROP_TYPE)
+		return mode;
 
-	क्रम (i = 0; i < psy->desc->num_properties; i++) अणु
-		पूर्णांक property = psy->desc->properties[i];
+	for (i = 0; i < psy->desc->num_properties; i++) {
+		int property = psy->desc->properties[i];
 
-		अगर (property == attrno) अणु
-			अगर (psy->desc->property_is_ग_लिखोable &&
-			    psy->desc->property_is_ग_लिखोable(psy, property) > 0)
+		if (property == attrno) {
+			if (psy->desc->property_is_writeable &&
+			    psy->desc->property_is_writeable(psy, property) > 0)
 				mode |= S_IWUSR;
 
-			वापस mode;
-		पूर्ण
-	पूर्ण
+			return mode;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा attribute_group घातer_supply_attr_group = अणु
-	.attrs = __घातer_supply_attrs,
-	.is_visible = घातer_supply_attr_is_visible,
-पूर्ण;
+static const struct attribute_group power_supply_attr_group = {
+	.attrs = __power_supply_attrs,
+	.is_visible = power_supply_attr_is_visible,
+};
 
-अटल स्थिर काष्ठा attribute_group *घातer_supply_attr_groups[] = अणु
-	&घातer_supply_attr_group,
-	शून्य,
-पूर्ण;
+static const struct attribute_group *power_supply_attr_groups[] = {
+	&power_supply_attr_group,
+	NULL,
+};
 
-अटल व्योम str_to_lower(अक्षर *str)
-अणु
-	जबतक (*str) अणु
-		*str = छोटे(*str);
+static void str_to_lower(char *str)
+{
+	while (*str) {
+		*str = tolower(*str);
 		str++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम घातer_supply_init_attrs(काष्ठा device_type *dev_type)
-अणु
-	पूर्णांक i;
+void power_supply_init_attrs(struct device_type *dev_type)
+{
+	int i;
 
-	dev_type->groups = घातer_supply_attr_groups;
+	dev_type->groups = power_supply_attr_groups;
 
-	क्रम (i = 0; i < ARRAY_SIZE(घातer_supply_attrs); i++) अणु
-		काष्ठा device_attribute *attr;
+	for (i = 0; i < ARRAY_SIZE(power_supply_attrs); i++) {
+		struct device_attribute *attr;
 
-		अगर (!घातer_supply_attrs[i].prop_name) अणु
+		if (!power_supply_attrs[i].prop_name) {
 			pr_warn("%s: Property %d skipped because it is missing from power_supply_attrs\n",
 				__func__, i);
-			प्र_लिखो(घातer_supply_attrs[i].attr_name, "_err_%d", i);
-		पूर्ण अन्यथा अणु
-			str_to_lower(घातer_supply_attrs[i].attr_name);
-		पूर्ण
+			sprintf(power_supply_attrs[i].attr_name, "_err_%d", i);
+		} else {
+			str_to_lower(power_supply_attrs[i].attr_name);
+		}
 
-		attr = &घातer_supply_attrs[i].dev_attr;
+		attr = &power_supply_attrs[i].dev_attr;
 
-		attr->attr.name = घातer_supply_attrs[i].attr_name;
-		attr->show = घातer_supply_show_property;
-		attr->store = घातer_supply_store_property;
-		__घातer_supply_attrs[i] = &attr->attr;
-	पूर्ण
-पूर्ण
+		attr->attr.name = power_supply_attrs[i].attr_name;
+		attr->show = power_supply_show_property;
+		attr->store = power_supply_store_property;
+		__power_supply_attrs[i] = &attr->attr;
+	}
+}
 
-अटल पूर्णांक add_prop_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env,
-			   क्रमागत घातer_supply_property prop, अक्षर *prop_buf)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा घातer_supply_attr *pwr_attr;
-	काष्ठा device_attribute *dev_attr;
-	अक्षर *line;
+static int add_prop_uevent(struct device *dev, struct kobj_uevent_env *env,
+			   enum power_supply_property prop, char *prop_buf)
+{
+	int ret = 0;
+	struct power_supply_attr *pwr_attr;
+	struct device_attribute *dev_attr;
+	char *line;
 
-	pwr_attr = &घातer_supply_attrs[prop];
+	pwr_attr = &power_supply_attrs[prop];
 	dev_attr = &pwr_attr->dev_attr;
 
-	ret = घातer_supply_show_property(dev, dev_attr, prop_buf);
-	अगर (ret == -ENODEV || ret == -ENODATA) अणु
+	ret = power_supply_show_property(dev, dev_attr, prop_buf);
+	if (ret == -ENODEV || ret == -ENODATA) {
 		/*
-		 * When a battery is असलent, we expect -ENODEV. Don't पात;
+		 * When a battery is absent, we expect -ENODEV. Don't abort;
 		 * send the uevent with at least the the PRESENT=0 property
 		 */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	line = म_अक्षर(prop_buf, '\n');
-	अगर (line)
+	line = strchr(prop_buf, '\n');
+	if (line)
 		*line = 0;
 
-	वापस add_uevent_var(env, "POWER_SUPPLY_%s=%s",
+	return add_uevent_var(env, "POWER_SUPPLY_%s=%s",
 			      pwr_attr->prop_name, prop_buf);
-पूर्ण
+}
 
-पूर्णांक घातer_supply_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
-अणु
-	काष्ठा घातer_supply *psy = dev_get_drvdata(dev);
-	पूर्णांक ret = 0, j;
-	अक्षर *prop_buf;
+int power_supply_uevent(struct device *dev, struct kobj_uevent_env *env)
+{
+	struct power_supply *psy = dev_get_drvdata(dev);
+	int ret = 0, j;
+	char *prop_buf;
 
-	अगर (!psy || !psy->desc) अणु
+	if (!psy || !psy->desc) {
 		dev_dbg(dev, "No power supply yet\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = add_uevent_var(env, "POWER_SUPPLY_NAME=%s", psy->desc->name);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	prop_buf = (अक्षर *)get_zeroed_page(GFP_KERNEL);
-	अगर (!prop_buf)
-		वापस -ENOMEM;
+	prop_buf = (char *)get_zeroed_page(GFP_KERNEL);
+	if (!prop_buf)
+		return -ENOMEM;
 
 	ret = add_prop_uevent(dev, env, POWER_SUPPLY_PROP_TYPE, prop_buf);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	क्रम (j = 0; j < psy->desc->num_properties; j++) अणु
+	for (j = 0; j < psy->desc->num_properties; j++) {
 		ret = add_prop_uevent(dev, env, psy->desc->properties[j],
 				      prop_buf);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
 out:
-	मुक्त_page((अचिन्हित दीर्घ)prop_buf);
+	free_page((unsigned long)prop_buf);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

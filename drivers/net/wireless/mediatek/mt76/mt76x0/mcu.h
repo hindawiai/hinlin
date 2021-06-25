@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (C) 2014 Felix Fietkau <nbd@खोलोwrt.org>
+ * Copyright (C) 2014 Felix Fietkau <nbd@openwrt.org>
  * Copyright (C) 2015 Jakub Kicinski <kubakici@wp.pl>
  */
 
-#अगर_अघोषित __MT76X0U_MCU_H
-#घोषणा __MT76X0U_MCU_H
+#ifndef __MT76X0U_MCU_H
+#define __MT76X0U_MCU_H
 
-#समावेश "../mt76x02_mcu.h"
+#include "../mt76x02_mcu.h"
 
-काष्ठा mt76x02_dev;
+struct mt76x02_dev;
 
-#घोषणा MT_MCU_IVB_SIZE			0x40
-#घोषणा MT_MCU_DLM_OFFSET		0x80000
+#define MT_MCU_IVB_SIZE			0x40
+#define MT_MCU_DLM_OFFSET		0x80000
 
-/* We use same space क्रम BBP as क्रम MAC regs
- * #घोषणा MT_MCU_MEMMAP_BBP		0x40000000
+/* We use same space for BBP as for MAC regs
+ * #define MT_MCU_MEMMAP_BBP		0x40000000
  */
-#घोषणा MT_MCU_MEMMAP_RF		0x80000000
+#define MT_MCU_MEMMAP_RF		0x80000000
 
-क्रमागत mcu_calibrate अणु
+enum mcu_calibrate {
 	MCU_CAL_R = 1,
 	MCU_CAL_RXDCOC,
 	MCU_CAL_LC,
@@ -35,13 +34,13 @@
 	MCU_CAL_VCO,
 	MCU_CAL_NO_SIGNAL = 0xfe,
 	MCU_CAL_FULL = 0xff,
-पूर्ण;
+};
 
-पूर्णांक mt76x0e_mcu_init(काष्ठा mt76x02_dev *dev);
-पूर्णांक mt76x0u_mcu_init(काष्ठा mt76x02_dev *dev);
-अटल अंतरभूत पूर्णांक mt76x0_firmware_running(काष्ठा mt76x02_dev *dev)
-अणु
-	वापस mt76_rr(dev, MT_MCU_COM_REG0) == 1;
-पूर्ण
+int mt76x0e_mcu_init(struct mt76x02_dev *dev);
+int mt76x0u_mcu_init(struct mt76x02_dev *dev);
+static inline int mt76x0_firmware_running(struct mt76x02_dev *dev)
+{
+	return mt76_rr(dev, MT_MCU_COM_REG0) == 1;
+}
 
-#पूर्ण_अगर
+#endif

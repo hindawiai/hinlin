@@ -1,55 +1,54 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* XTS: as defined in IEEE1619/D16
  *	http://grouper.ieee.org/groups/1619/email/pdf00086.pdf
  *
  * Copyright (c) 2007 Rik Snel <rsnel@cube.dyndns.org>
  *
  * Based on ecb.c
- * Copyright (c) 2006 Herbert Xu <herbert@gonकरोr.apana.org.au>
+ * Copyright (c) 2006 Herbert Xu <herbert@gondor.apana.org.au>
  */
-#समावेश <crypto/पूर्णांकernal/cipher.h>
-#समावेश <crypto/पूर्णांकernal/skcipher.h>
-#समावेश <crypto/scatterwalk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/slab.h>
+#include <crypto/internal/cipher.h>
+#include <crypto/internal/skcipher.h>
+#include <crypto/scatterwalk.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/scatterlist.h>
+#include <linux/slab.h>
 
-#समावेश <crypto/xts.h>
-#समावेश <crypto/b128ops.h>
-#समावेश <crypto/gf128mul.h>
+#include <crypto/xts.h>
+#include <crypto/b128ops.h>
+#include <crypto/gf128mul.h>
 
-काष्ठा xts_tfm_ctx अणु
-	काष्ठा crypto_skcipher *child;
-	काष्ठा crypto_cipher *tweak;
-पूर्ण;
+struct xts_tfm_ctx {
+	struct crypto_skcipher *child;
+	struct crypto_cipher *tweak;
+};
 
-काष्ठा xts_instance_ctx अणु
-	काष्ठा crypto_skcipher_spawn spawn;
-	अक्षर name[CRYPTO_MAX_ALG_NAME];
-पूर्ण;
+struct xts_instance_ctx {
+	struct crypto_skcipher_spawn spawn;
+	char name[CRYPTO_MAX_ALG_NAME];
+};
 
-काष्ठा xts_request_ctx अणु
+struct xts_request_ctx {
 	le128 t;
-	काष्ठा scatterlist *tail;
-	काष्ठा scatterlist sg[2];
-	काष्ठा skcipher_request subreq;
-पूर्ण;
+	struct scatterlist *tail;
+	struct scatterlist sg[2];
+	struct skcipher_request subreq;
+};
 
-अटल पूर्णांक xts_setkey(काष्ठा crypto_skcipher *parent, स्थिर u8 *key,
-		      अचिन्हित पूर्णांक keylen)
-अणु
-	काष्ठा xts_tfm_ctx *ctx = crypto_skcipher_ctx(parent);
-	काष्ठा crypto_skcipher *child;
-	काष्ठा crypto_cipher *tweak;
-	पूर्णांक err;
+static int xts_setkey(struct crypto_skcipher *parent, const u8 *key,
+		      unsigned int keylen)
+{
+	struct xts_tfm_ctx *ctx = crypto_skcipher_ctx(parent);
+	struct crypto_skcipher *child;
+	struct crypto_cipher *tweak;
+	int err;
 
-	err = xts_verअगरy_key(parent, key, keylen);
-	अगर (err)
-		वापस err;
+	err = xts_verify_key(parent, key, keylen);
+	if (err)
+		return err;
 
 	keylen /= 2;
 
@@ -63,111 +62,111 @@
 	crypto_cipher_set_flags(tweak, crypto_skcipher_get_flags(parent) &
 				       CRYPTO_TFM_REQ_MASK);
 	err = crypto_cipher_setkey(tweak, key + keylen, keylen);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* data cipher, uses Key1 i.e. the first half of *key */
 	child = ctx->child;
 	crypto_skcipher_clear_flags(child, CRYPTO_TFM_REQ_MASK);
 	crypto_skcipher_set_flags(child, crypto_skcipher_get_flags(parent) &
 					 CRYPTO_TFM_REQ_MASK);
-	वापस crypto_skcipher_setkey(child, key, keylen);
-पूर्ण
+	return crypto_skcipher_setkey(child, key, keylen);
+}
 
 /*
- * We compute the tweak masks twice (both beक्रमe and after the ECB encryption or
- * decryption) to aव्योम having to allocate a temporary buffer and/or make
+ * We compute the tweak masks twice (both before and after the ECB encryption or
+ * decryption) to avoid having to allocate a temporary buffer and/or make
  * mutliple calls to the 'ecb(..)' instance, which usually would be slower than
- * just करोing the gf128mul_x_ble() calls again.
+ * just doing the gf128mul_x_ble() calls again.
  */
-अटल पूर्णांक xts_xor_tweak(काष्ठा skcipher_request *req, bool second_pass,
+static int xts_xor_tweak(struct skcipher_request *req, bool second_pass,
 			 bool enc)
-अणु
-	काष्ठा xts_request_ctx *rctx = skcipher_request_ctx(req);
-	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	स्थिर bool cts = (req->cryptlen % XTS_BLOCK_SIZE);
-	स्थिर पूर्णांक bs = XTS_BLOCK_SIZE;
-	काष्ठा skcipher_walk w;
+{
+	struct xts_request_ctx *rctx = skcipher_request_ctx(req);
+	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	const bool cts = (req->cryptlen % XTS_BLOCK_SIZE);
+	const int bs = XTS_BLOCK_SIZE;
+	struct skcipher_walk w;
 	le128 t = rctx->t;
-	पूर्णांक err;
+	int err;
 
-	अगर (second_pass) अणु
+	if (second_pass) {
 		req = &rctx->subreq;
-		/* set to our TFM to enक्रमce correct alignment: */
+		/* set to our TFM to enforce correct alignment: */
 		skcipher_request_set_tfm(req, tfm);
-	पूर्ण
+	}
 	err = skcipher_walk_virt(&w, req, false);
 
-	जबतक (w.nbytes) अणु
-		अचिन्हित पूर्णांक avail = w.nbytes;
+	while (w.nbytes) {
+		unsigned int avail = w.nbytes;
 		le128 *wsrc;
 		le128 *wdst;
 
 		wsrc = w.src.virt.addr;
 		wdst = w.dst.virt.addr;
 
-		करो अणु
-			अगर (unlikely(cts) &&
-			    w.total - w.nbytes + avail < 2 * XTS_BLOCK_SIZE) अणु
-				अगर (!enc) अणु
-					अगर (second_pass)
+		do {
+			if (unlikely(cts) &&
+			    w.total - w.nbytes + avail < 2 * XTS_BLOCK_SIZE) {
+				if (!enc) {
+					if (second_pass)
 						rctx->t = t;
 					gf128mul_x_ble(&t, &t);
-				पूर्ण
+				}
 				le128_xor(wdst, &t, wsrc);
-				अगर (enc && second_pass)
+				if (enc && second_pass)
 					gf128mul_x_ble(&rctx->t, &t);
-				skcipher_walk_करोne(&w, avail - bs);
-				वापस 0;
-			पूर्ण
+				skcipher_walk_done(&w, avail - bs);
+				return 0;
+			}
 
 			le128_xor(wdst++, &t, wsrc++);
 			gf128mul_x_ble(&t, &t);
-		पूर्ण जबतक ((avail -= bs) >= bs);
+		} while ((avail -= bs) >= bs);
 
-		err = skcipher_walk_करोne(&w, avail);
-	पूर्ण
+		err = skcipher_walk_done(&w, avail);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक xts_xor_tweak_pre(काष्ठा skcipher_request *req, bool enc)
-अणु
-	वापस xts_xor_tweak(req, false, enc);
-पूर्ण
+static int xts_xor_tweak_pre(struct skcipher_request *req, bool enc)
+{
+	return xts_xor_tweak(req, false, enc);
+}
 
-अटल पूर्णांक xts_xor_tweak_post(काष्ठा skcipher_request *req, bool enc)
-अणु
-	वापस xts_xor_tweak(req, true, enc);
-पूर्ण
+static int xts_xor_tweak_post(struct skcipher_request *req, bool enc)
+{
+	return xts_xor_tweak(req, true, enc);
+}
 
-अटल व्योम xts_cts_करोne(काष्ठा crypto_async_request *areq, पूर्णांक err)
-अणु
-	काष्ठा skcipher_request *req = areq->data;
+static void xts_cts_done(struct crypto_async_request *areq, int err)
+{
+	struct skcipher_request *req = areq->data;
 	le128 b;
 
-	अगर (!err) अणु
-		काष्ठा xts_request_ctx *rctx = skcipher_request_ctx(req);
+	if (!err) {
+		struct xts_request_ctx *rctx = skcipher_request_ctx(req);
 
 		scatterwalk_map_and_copy(&b, rctx->tail, 0, XTS_BLOCK_SIZE, 0);
 		le128_xor(&b, &rctx->t, &b);
 		scatterwalk_map_and_copy(&b, rctx->tail, 0, XTS_BLOCK_SIZE, 1);
-	पूर्ण
+	}
 
 	skcipher_request_complete(req, err);
-पूर्ण
+}
 
-अटल पूर्णांक xts_cts_final(काष्ठा skcipher_request *req,
-			 पूर्णांक (*crypt)(काष्ठा skcipher_request *req))
-अणु
-	स्थिर काष्ठा xts_tfm_ctx *ctx =
+static int xts_cts_final(struct skcipher_request *req,
+			 int (*crypt)(struct skcipher_request *req))
+{
+	const struct xts_tfm_ctx *ctx =
 		crypto_skcipher_ctx(crypto_skcipher_reqtfm(req));
-	पूर्णांक offset = req->cryptlen & ~(XTS_BLOCK_SIZE - 1);
-	काष्ठा xts_request_ctx *rctx = skcipher_request_ctx(req);
-	काष्ठा skcipher_request *subreq = &rctx->subreq;
-	पूर्णांक tail = req->cryptlen % XTS_BLOCK_SIZE;
+	int offset = req->cryptlen & ~(XTS_BLOCK_SIZE - 1);
+	struct xts_request_ctx *rctx = skcipher_request_ctx(req);
+	struct skcipher_request *subreq = &rctx->subreq;
+	int tail = req->cryptlen % XTS_BLOCK_SIZE;
 	le128 b[2];
-	पूर्णांक err;
+	int err;
 
 	rctx->tail = scatterwalk_ffwd(rctx->sg, req->dst,
 				      offset - XTS_BLOCK_SIZE);
@@ -181,214 +180,214 @@
 	scatterwalk_map_and_copy(b, rctx->tail, 0, XTS_BLOCK_SIZE + tail, 1);
 
 	skcipher_request_set_tfm(subreq, ctx->child);
-	skcipher_request_set_callback(subreq, req->base.flags, xts_cts_करोne,
+	skcipher_request_set_callback(subreq, req->base.flags, xts_cts_done,
 				      req);
 	skcipher_request_set_crypt(subreq, rctx->tail, rctx->tail,
-				   XTS_BLOCK_SIZE, शून्य);
+				   XTS_BLOCK_SIZE, NULL);
 
 	err = crypt(subreq);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	scatterwalk_map_and_copy(b, rctx->tail, 0, XTS_BLOCK_SIZE, 0);
 	le128_xor(b, &rctx->t, b);
 	scatterwalk_map_and_copy(b, rctx->tail, 0, XTS_BLOCK_SIZE, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम xts_encrypt_करोne(काष्ठा crypto_async_request *areq, पूर्णांक err)
-अणु
-	काष्ठा skcipher_request *req = areq->data;
+static void xts_encrypt_done(struct crypto_async_request *areq, int err)
+{
+	struct skcipher_request *req = areq->data;
 
-	अगर (!err) अणु
-		काष्ठा xts_request_ctx *rctx = skcipher_request_ctx(req);
+	if (!err) {
+		struct xts_request_ctx *rctx = skcipher_request_ctx(req);
 
 		rctx->subreq.base.flags &= ~CRYPTO_TFM_REQ_MAY_SLEEP;
 		err = xts_xor_tweak_post(req, true);
 
-		अगर (!err && unlikely(req->cryptlen % XTS_BLOCK_SIZE)) अणु
+		if (!err && unlikely(req->cryptlen % XTS_BLOCK_SIZE)) {
 			err = xts_cts_final(req, crypto_skcipher_encrypt);
-			अगर (err == -EINPROGRESS)
-				वापस;
-		पूर्ण
-	पूर्ण
+			if (err == -EINPROGRESS)
+				return;
+		}
+	}
 
 	skcipher_request_complete(req, err);
-पूर्ण
+}
 
-अटल व्योम xts_decrypt_करोne(काष्ठा crypto_async_request *areq, पूर्णांक err)
-अणु
-	काष्ठा skcipher_request *req = areq->data;
+static void xts_decrypt_done(struct crypto_async_request *areq, int err)
+{
+	struct skcipher_request *req = areq->data;
 
-	अगर (!err) अणु
-		काष्ठा xts_request_ctx *rctx = skcipher_request_ctx(req);
+	if (!err) {
+		struct xts_request_ctx *rctx = skcipher_request_ctx(req);
 
 		rctx->subreq.base.flags &= ~CRYPTO_TFM_REQ_MAY_SLEEP;
 		err = xts_xor_tweak_post(req, false);
 
-		अगर (!err && unlikely(req->cryptlen % XTS_BLOCK_SIZE)) अणु
+		if (!err && unlikely(req->cryptlen % XTS_BLOCK_SIZE)) {
 			err = xts_cts_final(req, crypto_skcipher_decrypt);
-			अगर (err == -EINPROGRESS)
-				वापस;
-		पूर्ण
-	पूर्ण
+			if (err == -EINPROGRESS)
+				return;
+		}
+	}
 
 	skcipher_request_complete(req, err);
-पूर्ण
+}
 
-अटल पूर्णांक xts_init_crypt(काष्ठा skcipher_request *req,
+static int xts_init_crypt(struct skcipher_request *req,
 			  crypto_completion_t compl)
-अणु
-	स्थिर काष्ठा xts_tfm_ctx *ctx =
+{
+	const struct xts_tfm_ctx *ctx =
 		crypto_skcipher_ctx(crypto_skcipher_reqtfm(req));
-	काष्ठा xts_request_ctx *rctx = skcipher_request_ctx(req);
-	काष्ठा skcipher_request *subreq = &rctx->subreq;
+	struct xts_request_ctx *rctx = skcipher_request_ctx(req);
+	struct skcipher_request *subreq = &rctx->subreq;
 
-	अगर (req->cryptlen < XTS_BLOCK_SIZE)
-		वापस -EINVAL;
+	if (req->cryptlen < XTS_BLOCK_SIZE)
+		return -EINVAL;
 
 	skcipher_request_set_tfm(subreq, ctx->child);
 	skcipher_request_set_callback(subreq, req->base.flags, compl, req);
 	skcipher_request_set_crypt(subreq, req->dst, req->dst,
-				   req->cryptlen & ~(XTS_BLOCK_SIZE - 1), शून्य);
+				   req->cryptlen & ~(XTS_BLOCK_SIZE - 1), NULL);
 
 	/* calculate first value of T */
 	crypto_cipher_encrypt_one(ctx->tweak, (u8 *)&rctx->t, req->iv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xts_encrypt(काष्ठा skcipher_request *req)
-अणु
-	काष्ठा xts_request_ctx *rctx = skcipher_request_ctx(req);
-	काष्ठा skcipher_request *subreq = &rctx->subreq;
-	पूर्णांक err;
+static int xts_encrypt(struct skcipher_request *req)
+{
+	struct xts_request_ctx *rctx = skcipher_request_ctx(req);
+	struct skcipher_request *subreq = &rctx->subreq;
+	int err;
 
-	err = xts_init_crypt(req, xts_encrypt_करोne) ?:
+	err = xts_init_crypt(req, xts_encrypt_done) ?:
 	      xts_xor_tweak_pre(req, true) ?:
 	      crypto_skcipher_encrypt(subreq) ?:
 	      xts_xor_tweak_post(req, true);
 
-	अगर (err || likely((req->cryptlen % XTS_BLOCK_SIZE) == 0))
-		वापस err;
+	if (err || likely((req->cryptlen % XTS_BLOCK_SIZE) == 0))
+		return err;
 
-	वापस xts_cts_final(req, crypto_skcipher_encrypt);
-पूर्ण
+	return xts_cts_final(req, crypto_skcipher_encrypt);
+}
 
-अटल पूर्णांक xts_decrypt(काष्ठा skcipher_request *req)
-अणु
-	काष्ठा xts_request_ctx *rctx = skcipher_request_ctx(req);
-	काष्ठा skcipher_request *subreq = &rctx->subreq;
-	पूर्णांक err;
+static int xts_decrypt(struct skcipher_request *req)
+{
+	struct xts_request_ctx *rctx = skcipher_request_ctx(req);
+	struct skcipher_request *subreq = &rctx->subreq;
+	int err;
 
-	err = xts_init_crypt(req, xts_decrypt_करोne) ?:
+	err = xts_init_crypt(req, xts_decrypt_done) ?:
 	      xts_xor_tweak_pre(req, false) ?:
 	      crypto_skcipher_decrypt(subreq) ?:
 	      xts_xor_tweak_post(req, false);
 
-	अगर (err || likely((req->cryptlen % XTS_BLOCK_SIZE) == 0))
-		वापस err;
+	if (err || likely((req->cryptlen % XTS_BLOCK_SIZE) == 0))
+		return err;
 
-	वापस xts_cts_final(req, crypto_skcipher_decrypt);
-पूर्ण
+	return xts_cts_final(req, crypto_skcipher_decrypt);
+}
 
-अटल पूर्णांक xts_init_tfm(काष्ठा crypto_skcipher *tfm)
-अणु
-	काष्ठा skcipher_instance *inst = skcipher_alg_instance(tfm);
-	काष्ठा xts_instance_ctx *ictx = skcipher_instance_ctx(inst);
-	काष्ठा xts_tfm_ctx *ctx = crypto_skcipher_ctx(tfm);
-	काष्ठा crypto_skcipher *child;
-	काष्ठा crypto_cipher *tweak;
+static int xts_init_tfm(struct crypto_skcipher *tfm)
+{
+	struct skcipher_instance *inst = skcipher_alg_instance(tfm);
+	struct xts_instance_ctx *ictx = skcipher_instance_ctx(inst);
+	struct xts_tfm_ctx *ctx = crypto_skcipher_ctx(tfm);
+	struct crypto_skcipher *child;
+	struct crypto_cipher *tweak;
 
 	child = crypto_spawn_skcipher(&ictx->spawn);
-	अगर (IS_ERR(child))
-		वापस PTR_ERR(child);
+	if (IS_ERR(child))
+		return PTR_ERR(child);
 
 	ctx->child = child;
 
 	tweak = crypto_alloc_cipher(ictx->name, 0, 0);
-	अगर (IS_ERR(tweak)) अणु
-		crypto_मुक्त_skcipher(ctx->child);
-		वापस PTR_ERR(tweak);
-	पूर्ण
+	if (IS_ERR(tweak)) {
+		crypto_free_skcipher(ctx->child);
+		return PTR_ERR(tweak);
+	}
 
 	ctx->tweak = tweak;
 
 	crypto_skcipher_set_reqsize(tfm, crypto_skcipher_reqsize(child) +
-					 माप(काष्ठा xts_request_ctx));
+					 sizeof(struct xts_request_ctx));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम xts_निकास_tfm(काष्ठा crypto_skcipher *tfm)
-अणु
-	काष्ठा xts_tfm_ctx *ctx = crypto_skcipher_ctx(tfm);
+static void xts_exit_tfm(struct crypto_skcipher *tfm)
+{
+	struct xts_tfm_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	crypto_मुक्त_skcipher(ctx->child);
-	crypto_मुक्त_cipher(ctx->tweak);
-पूर्ण
+	crypto_free_skcipher(ctx->child);
+	crypto_free_cipher(ctx->tweak);
+}
 
-अटल व्योम xts_मुक्त_instance(काष्ठा skcipher_instance *inst)
-अणु
-	काष्ठा xts_instance_ctx *ictx = skcipher_instance_ctx(inst);
+static void xts_free_instance(struct skcipher_instance *inst)
+{
+	struct xts_instance_ctx *ictx = skcipher_instance_ctx(inst);
 
 	crypto_drop_skcipher(&ictx->spawn);
-	kमुक्त(inst);
-पूर्ण
+	kfree(inst);
+}
 
-अटल पूर्णांक xts_create(काष्ठा crypto_ढाँचा *पंचांगpl, काष्ठा rtattr **tb)
-अणु
-	काष्ठा skcipher_instance *inst;
-	काष्ठा xts_instance_ctx *ctx;
-	काष्ठा skcipher_alg *alg;
-	स्थिर अक्षर *cipher_name;
+static int xts_create(struct crypto_template *tmpl, struct rtattr **tb)
+{
+	struct skcipher_instance *inst;
+	struct xts_instance_ctx *ctx;
+	struct skcipher_alg *alg;
+	const char *cipher_name;
 	u32 mask;
-	पूर्णांक err;
+	int err;
 
 	err = crypto_check_attr_type(tb, CRYPTO_ALG_TYPE_SKCIPHER, &mask);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	cipher_name = crypto_attr_alg_name(tb[1]);
-	अगर (IS_ERR(cipher_name))
-		वापस PTR_ERR(cipher_name);
+	if (IS_ERR(cipher_name))
+		return PTR_ERR(cipher_name);
 
-	inst = kzalloc(माप(*inst) + माप(*ctx), GFP_KERNEL);
-	अगर (!inst)
-		वापस -ENOMEM;
+	inst = kzalloc(sizeof(*inst) + sizeof(*ctx), GFP_KERNEL);
+	if (!inst)
+		return -ENOMEM;
 
 	ctx = skcipher_instance_ctx(inst);
 
 	err = crypto_grab_skcipher(&ctx->spawn, skcipher_crypto_instance(inst),
 				   cipher_name, 0, mask);
-	अगर (err == -ENOENT) अणु
+	if (err == -ENOENT) {
 		err = -ENAMETOOLONG;
-		अगर (snम_लिखो(ctx->name, CRYPTO_MAX_ALG_NAME, "ecb(%s)",
+		if (snprintf(ctx->name, CRYPTO_MAX_ALG_NAME, "ecb(%s)",
 			     cipher_name) >= CRYPTO_MAX_ALG_NAME)
-			जाओ err_मुक्त_inst;
+			goto err_free_inst;
 
 		err = crypto_grab_skcipher(&ctx->spawn,
 					   skcipher_crypto_instance(inst),
 					   ctx->name, 0, mask);
-	पूर्ण
+	}
 
-	अगर (err)
-		जाओ err_मुक्त_inst;
+	if (err)
+		goto err_free_inst;
 
 	alg = crypto_skcipher_spawn_alg(&ctx->spawn);
 
 	err = -EINVAL;
-	अगर (alg->base.cra_blocksize != XTS_BLOCK_SIZE)
-		जाओ err_मुक्त_inst;
+	if (alg->base.cra_blocksize != XTS_BLOCK_SIZE)
+		goto err_free_inst;
 
-	अगर (crypto_skcipher_alg_ivsize(alg))
-		जाओ err_मुक्त_inst;
+	if (crypto_skcipher_alg_ivsize(alg))
+		goto err_free_inst;
 
 	err = crypto_inst_setname(skcipher_crypto_instance(inst), "xts",
 				  &alg->base);
-	अगर (err)
-		जाओ err_मुक्त_inst;
+	if (err)
+		goto err_free_inst;
 
 	err = -EINVAL;
 	cipher_name = alg->base.cra_name;
@@ -396,25 +395,25 @@
 	/* Alas we screwed up the naming so we have to mangle the
 	 * cipher name.
 	 */
-	अगर (!म_भेदन(cipher_name, "ecb(", 4)) अणु
-		अचिन्हित len;
+	if (!strncmp(cipher_name, "ecb(", 4)) {
+		unsigned len;
 
-		len = strlcpy(ctx->name, cipher_name + 4, माप(ctx->name));
-		अगर (len < 2 || len >= माप(ctx->name))
-			जाओ err_मुक्त_inst;
+		len = strlcpy(ctx->name, cipher_name + 4, sizeof(ctx->name));
+		if (len < 2 || len >= sizeof(ctx->name))
+			goto err_free_inst;
 
-		अगर (ctx->name[len - 1] != ')')
-			जाओ err_मुक्त_inst;
+		if (ctx->name[len - 1] != ')')
+			goto err_free_inst;
 
 		ctx->name[len - 1] = 0;
 
-		अगर (snम_लिखो(inst->alg.base.cra_name, CRYPTO_MAX_ALG_NAME,
-			     "xts(%s)", ctx->name) >= CRYPTO_MAX_ALG_NAME) अणु
+		if (snprintf(inst->alg.base.cra_name, CRYPTO_MAX_ALG_NAME,
+			     "xts(%s)", ctx->name) >= CRYPTO_MAX_ALG_NAME) {
 			err = -ENAMETOOLONG;
-			जाओ err_मुक्त_inst;
-		पूर्ण
-	पूर्ण अन्यथा
-		जाओ err_मुक्त_inst;
+			goto err_free_inst;
+		}
+	} else
+		goto err_free_inst;
 
 	inst->alg.base.cra_priority = alg->base.cra_priority;
 	inst->alg.base.cra_blocksize = XTS_BLOCK_SIZE;
@@ -425,43 +424,43 @@
 	inst->alg.min_keysize = crypto_skcipher_alg_min_keysize(alg) * 2;
 	inst->alg.max_keysize = crypto_skcipher_alg_max_keysize(alg) * 2;
 
-	inst->alg.base.cra_ctxsize = माप(काष्ठा xts_tfm_ctx);
+	inst->alg.base.cra_ctxsize = sizeof(struct xts_tfm_ctx);
 
 	inst->alg.init = xts_init_tfm;
-	inst->alg.निकास = xts_निकास_tfm;
+	inst->alg.exit = xts_exit_tfm;
 
 	inst->alg.setkey = xts_setkey;
 	inst->alg.encrypt = xts_encrypt;
 	inst->alg.decrypt = xts_decrypt;
 
-	inst->मुक्त = xts_मुक्त_instance;
+	inst->free = xts_free_instance;
 
-	err = skcipher_रेजिस्टर_instance(पंचांगpl, inst);
-	अगर (err) अणु
-err_मुक्त_inst:
-		xts_मुक्त_instance(inst);
-	पूर्ण
-	वापस err;
-पूर्ण
+	err = skcipher_register_instance(tmpl, inst);
+	if (err) {
+err_free_inst:
+		xts_free_instance(inst);
+	}
+	return err;
+}
 
-अटल काष्ठा crypto_ढाँचा xts_पंचांगpl = अणु
+static struct crypto_template xts_tmpl = {
 	.name = "xts",
 	.create = xts_create,
 	.module = THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init xts_module_init(व्योम)
-अणु
-	वापस crypto_रेजिस्टर_ढाँचा(&xts_पंचांगpl);
-पूर्ण
+static int __init xts_module_init(void)
+{
+	return crypto_register_template(&xts_tmpl);
+}
 
-अटल व्योम __निकास xts_module_निकास(व्योम)
-अणु
-	crypto_unरेजिस्टर_ढाँचा(&xts_पंचांगpl);
-पूर्ण
+static void __exit xts_module_exit(void)
+{
+	crypto_unregister_template(&xts_tmpl);
+}
 
 subsys_initcall(xts_module_init);
-module_निकास(xts_module_निकास);
+module_exit(xts_module_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("XTS block cipher mode");

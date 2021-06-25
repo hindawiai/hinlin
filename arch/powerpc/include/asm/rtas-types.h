@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-#अगर_अघोषित _ASM_POWERPC_RTAS_TYPES_H
-#घोषणा _ASM_POWERPC_RTAS_TYPES_H
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#ifndef _ASM_POWERPC_RTAS_TYPES_H
+#define _ASM_POWERPC_RTAS_TYPES_H
 
-#समावेश <linux/spinlock_types.h>
+#include <linux/spinlock_types.h>
 
-प्रकार __be32 rtas_arg_t;
+typedef __be32 rtas_arg_t;
 
-काष्ठा rtas_args अणु
+struct rtas_args {
 	__be32 token;
 	__be32 nargs;
 	__be32 nret;
 	rtas_arg_t args[16];
-	rtas_arg_t *rets;     /* Poपूर्णांकer to वापस values in args[]. */
-पूर्ण;
+	rtas_arg_t *rets;     /* Pointer to return values in args[]. */
+};
 
-काष्ठा rtas_t अणु
-	अचिन्हित दीर्घ entry;		/* physical address poपूर्णांकer */
-	अचिन्हित दीर्घ base;		/* physical address poपूर्णांकer */
-	अचिन्हित दीर्घ size;
+struct rtas_t {
+	unsigned long entry;		/* physical address pointer */
+	unsigned long base;		/* physical address pointer */
+	unsigned long size;
 	arch_spinlock_t lock;
-	काष्ठा rtas_args args;
-	काष्ठा device_node *dev;	/* भव address poपूर्णांकer */
-पूर्ण;
+	struct rtas_args args;
+	struct device_node *dev;	/* virtual address pointer */
+};
 
-काष्ठा rtas_error_log अणु
+struct rtas_error_log {
 	/* Byte 0 */
 	u8		byte0;			/* Architectural version */
 
@@ -45,14 +44,14 @@
 	 */
 	u8		byte3;			/* General event or error*/
 	__be32		extended_log_length;	/* length in bytes */
-	अचिन्हित अक्षर	buffer[1];		/* Start of extended log */
+	unsigned char	buffer[1];		/* Start of extended log */
 						/* Variable length.      */
-पूर्ण;
+};
 
 /* RTAS general extended event log, Version 6. The extended log starts
- * from "buffer" field of काष्ठा rtas_error_log defined above.
+ * from "buffer" field of struct rtas_error_log defined above.
  */
-काष्ठा rtas_ext_event_log_v6 अणु
+struct rtas_ext_event_log_v6 {
 	/* Byte 0 */
 	u8 byte0;
 	/* XXXXXXXX
@@ -61,7 +60,7 @@
 	 *   X		1: Recoverable (correctable or successfully retried)
 	 *    X		1: Bypassed unrecoverable error (degraded operation)
 	 *     X	1: Predictive error
-	 *      X	1: "New" log (always 1 क्रम data वापसed from RTAS)
+	 *      X	1: "New" log (always 1 for data returned from RTAS)
 	 *       X	1: Big Endian
 	 *        X	1: Reserved
 	 */
@@ -72,9 +71,9 @@
 	/* Byte 2 */
 	u8 byte2;
 	/* XXXXXXXX
-	 * X		1: Set to 1 (indicating log is in PowerPC क्रमmat)
+	 * X		1: Set to 1 (indicating log is in PowerPC format)
 	 *  XXX		3: Reserved
-	 *     XXXX	4: Log क्रमmat used क्रम bytes 12-2047
+	 *     XXXX	4: Log format used for bytes 12-2047
 	 */
 
 	/* Byte 3 */
@@ -83,35 +82,35 @@
 	u8 reserved[8];			/* reserved */
 	/* Byte 12-15 */
 	__be32  company_id;		/* Company ID of the company	*/
-					/* that defines the क्रमmat क्रम	*/
-					/* the venकरोr specअगरic log type	*/
+					/* that defines the format for	*/
+					/* the vendor specific log type	*/
 	/* Byte 16-end of log */
-	u8 venकरोr_log[1];		/* Start of venकरोr specअगरic log	*/
+	u8 vendor_log[1];		/* Start of vendor specific log	*/
 					/* Variable length.		*/
-पूर्ण;
+};
 
-/* Venकरोr specअगरic Platक्रमm Event Log Format, Version 6, section header */
-काष्ठा pseries_errorlog अणु
+/* Vendor specific Platform Event Log Format, Version 6, section header */
+struct pseries_errorlog {
 	__be16 id;			/* 0x00 2-byte ASCII section ID	*/
 	__be16 length;			/* 0x02 Section length in bytes	*/
 	u8 version;			/* 0x04 Section version		*/
 	u8 subtype;			/* 0x05 Section subtype		*/
 	__be16 creator_component;	/* 0x06 Creator component ID	*/
 	u8 data[];			/* 0x08 Start of section data	*/
-पूर्ण;
+};
 
 /* RTAS pseries hotplug errorlog section */
-काष्ठा pseries_hp_errorlog अणु
+struct pseries_hp_errorlog {
 	u8	resource;
 	u8	action;
 	u8	id_type;
 	u8	reserved;
-	जोड़ अणु
+	union {
 		__be32	drc_index;
 		__be32	drc_count;
-		काष्ठा अणु __be32 count, index; पूर्ण ic;
-		अक्षर	drc_name[1];
-	पूर्ण _drc_u;
-पूर्ण;
+		struct { __be32 count, index; } ic;
+		char	drc_name[1];
+	} _drc_u;
+};
 
-#पूर्ण_अगर /* _ASM_POWERPC_RTAS_TYPES_H */
+#endif /* _ASM_POWERPC_RTAS_TYPES_H */

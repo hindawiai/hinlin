@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Kontron PLD MFD core driver
  *
@@ -7,283 +6,283 @@
  * Author: Michael Brunner <michael.brunner@kontron.com>
  */
 
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mfd/core.h>
-#समावेश <linux/mfd/kempld.h>
-#समावेश <linux/module.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/acpi.h>
+#include <linux/platform_device.h>
+#include <linux/mfd/core.h>
+#include <linux/mfd/kempld.h>
+#include <linux/module.h>
+#include <linux/dmi.h>
+#include <linux/io.h>
+#include <linux/delay.h>
+#include <linux/acpi.h>
 
-#घोषणा MAX_ID_LEN 4
-अटल अक्षर क्रमce_device_id[MAX_ID_LEN + 1] = "";
-module_param_string(क्रमce_device_id, क्रमce_device_id,
-		    माप(क्रमce_device_id), 0);
-MODULE_PARM_DESC(क्रमce_device_id, "Override detected product");
+#define MAX_ID_LEN 4
+static char force_device_id[MAX_ID_LEN + 1] = "";
+module_param_string(force_device_id, force_device_id,
+		    sizeof(force_device_id), 0);
+MODULE_PARM_DESC(force_device_id, "Override detected product");
 
 /*
  * Get hardware mutex to block firmware from accessing the pld.
- * It is possible क्रम the firmware may hold the mutex क्रम an extended length of
- * समय. This function will block until access has been granted.
+ * It is possible for the firmware may hold the mutex for an extended length of
+ * time. This function will block until access has been granted.
  */
-अटल व्योम kempld_get_hardware_mutex(काष्ठा kempld_device_data *pld)
-अणु
-	/* The mutex bit will पढ़ो 1 until access has been granted */
-	जबतक (ioपढ़ो8(pld->io_index) & KEMPLD_MUTEX_KEY)
+static void kempld_get_hardware_mutex(struct kempld_device_data *pld)
+{
+	/* The mutex bit will read 1 until access has been granted */
+	while (ioread8(pld->io_index) & KEMPLD_MUTEX_KEY)
 		usleep_range(1000, 3000);
-पूर्ण
+}
 
-अटल व्योम kempld_release_hardware_mutex(काष्ठा kempld_device_data *pld)
-अणु
+static void kempld_release_hardware_mutex(struct kempld_device_data *pld)
+{
 	/* The harware mutex is released when 1 is written to the mutex bit. */
-	ioग_लिखो8(KEMPLD_MUTEX_KEY, pld->io_index);
-पूर्ण
+	iowrite8(KEMPLD_MUTEX_KEY, pld->io_index);
+}
 
-अटल पूर्णांक kempld_get_info_generic(काष्ठा kempld_device_data *pld)
-अणु
+static int kempld_get_info_generic(struct kempld_device_data *pld)
+{
 	u16 version;
 	u8 spec;
 
 	kempld_get_mutex(pld);
 
-	version = kempld_पढ़ो16(pld, KEMPLD_VERSION);
-	spec = kempld_पढ़ो8(pld, KEMPLD_SPEC);
-	pld->info.buildnr = kempld_पढ़ो16(pld, KEMPLD_BUILDNR);
+	version = kempld_read16(pld, KEMPLD_VERSION);
+	spec = kempld_read8(pld, KEMPLD_SPEC);
+	pld->info.buildnr = kempld_read16(pld, KEMPLD_BUILDNR);
 
 	pld->info.minor = KEMPLD_VERSION_GET_MINOR(version);
 	pld->info.major = KEMPLD_VERSION_GET_MAJOR(version);
 	pld->info.number = KEMPLD_VERSION_GET_NUMBER(version);
 	pld->info.type = KEMPLD_VERSION_GET_TYPE(version);
 
-	अगर (spec == 0xff) अणु
+	if (spec == 0xff) {
 		pld->info.spec_minor = 0;
 		pld->info.spec_major = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		pld->info.spec_minor = KEMPLD_SPEC_GET_MINOR(spec);
 		pld->info.spec_major = KEMPLD_SPEC_GET_MAJOR(spec);
-	पूर्ण
+	}
 
-	अगर (pld->info.spec_major > 0)
-		pld->feature_mask = kempld_पढ़ो16(pld, KEMPLD_FEATURE);
-	अन्यथा
+	if (pld->info.spec_major > 0)
+		pld->feature_mask = kempld_read16(pld, KEMPLD_FEATURE);
+	else
 		pld->feature_mask = 0;
 
 	kempld_release_mutex(pld);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-क्रमागत kempld_cells अणु
+enum kempld_cells {
 	KEMPLD_I2C = 0,
 	KEMPLD_WDT,
 	KEMPLD_GPIO,
 	KEMPLD_UART,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *kempld_dev_names[] = अणु
+static const char *kempld_dev_names[] = {
 	[KEMPLD_I2C] = "kempld-i2c",
 	[KEMPLD_WDT] = "kempld-wdt",
 	[KEMPLD_GPIO] = "kempld-gpio",
 	[KEMPLD_UART] = "kempld-uart",
-पूर्ण;
+};
 
-#घोषणा KEMPLD_MAX_DEVS	ARRAY_SIZE(kempld_dev_names)
+#define KEMPLD_MAX_DEVS	ARRAY_SIZE(kempld_dev_names)
 
-अटल पूर्णांक kempld_रेजिस्टर_cells_generic(काष्ठा kempld_device_data *pld)
-अणु
-	काष्ठा mfd_cell devs[KEMPLD_MAX_DEVS] = अणुपूर्ण;
-	पूर्णांक i = 0;
+static int kempld_register_cells_generic(struct kempld_device_data *pld)
+{
+	struct mfd_cell devs[KEMPLD_MAX_DEVS] = {};
+	int i = 0;
 
-	अगर (pld->feature_mask & KEMPLD_FEATURE_BIT_I2C)
+	if (pld->feature_mask & KEMPLD_FEATURE_BIT_I2C)
 		devs[i++].name = kempld_dev_names[KEMPLD_I2C];
 
-	अगर (pld->feature_mask & KEMPLD_FEATURE_BIT_WATCHDOG)
+	if (pld->feature_mask & KEMPLD_FEATURE_BIT_WATCHDOG)
 		devs[i++].name = kempld_dev_names[KEMPLD_WDT];
 
-	अगर (pld->feature_mask & KEMPLD_FEATURE_BIT_GPIO)
+	if (pld->feature_mask & KEMPLD_FEATURE_BIT_GPIO)
 		devs[i++].name = kempld_dev_names[KEMPLD_GPIO];
 
-	अगर (pld->feature_mask & KEMPLD_FEATURE_MASK_UART)
+	if (pld->feature_mask & KEMPLD_FEATURE_MASK_UART)
 		devs[i++].name = kempld_dev_names[KEMPLD_UART];
 
-	वापस mfd_add_devices(pld->dev, -1, devs, i, शून्य, 0, शून्य);
-पूर्ण
+	return mfd_add_devices(pld->dev, -1, devs, i, NULL, 0, NULL);
+}
 
-अटल काष्ठा resource kempld_ioresource = अणु
+static struct resource kempld_ioresource = {
 	.start	= KEMPLD_IOINDEX,
 	.end	= KEMPLD_IODATA,
 	.flags	= IORESOURCE_IO,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kempld_platक्रमm_data kempld_platक्रमm_data_generic = अणु
-	.pld_घड़ी		= KEMPLD_CLK,
+static const struct kempld_platform_data kempld_platform_data_generic = {
+	.pld_clock		= KEMPLD_CLK,
 	.ioresource		= &kempld_ioresource,
 	.get_hardware_mutex	= kempld_get_hardware_mutex,
 	.release_hardware_mutex	= kempld_release_hardware_mutex,
 	.get_info		= kempld_get_info_generic,
-	.रेजिस्टर_cells		= kempld_रेजिस्टर_cells_generic,
-पूर्ण;
+	.register_cells		= kempld_register_cells_generic,
+};
 
-अटल काष्ठा platक्रमm_device *kempld_pdev;
+static struct platform_device *kempld_pdev;
 
-अटल पूर्णांक kempld_create_platक्रमm_device(स्थिर काष्ठा dmi_प्रणाली_id *id)
-अणु
-	स्थिर काष्ठा kempld_platक्रमm_data *pdata = id->driver_data;
-	पूर्णांक ret;
+static int kempld_create_platform_device(const struct dmi_system_id *id)
+{
+	const struct kempld_platform_data *pdata = id->driver_data;
+	int ret;
 
-	kempld_pdev = platक्रमm_device_alloc("kempld", -1);
-	अगर (!kempld_pdev)
-		वापस -ENOMEM;
+	kempld_pdev = platform_device_alloc("kempld", -1);
+	if (!kempld_pdev)
+		return -ENOMEM;
 
-	ret = platक्रमm_device_add_data(kempld_pdev, pdata, माप(*pdata));
-	अगर (ret)
-		जाओ err;
+	ret = platform_device_add_data(kempld_pdev, pdata, sizeof(*pdata));
+	if (ret)
+		goto err;
 
-	ret = platक्रमm_device_add_resources(kempld_pdev, pdata->ioresource, 1);
-	अगर (ret)
-		जाओ err;
+	ret = platform_device_add_resources(kempld_pdev, pdata->ioresource, 1);
+	if (ret)
+		goto err;
 
-	ret = platक्रमm_device_add(kempld_pdev);
-	अगर (ret)
-		जाओ err;
+	ret = platform_device_add(kempld_pdev);
+	if (ret)
+		goto err;
 
-	वापस 0;
+	return 0;
 err:
-	platक्रमm_device_put(kempld_pdev);
-	वापस ret;
-पूर्ण
+	platform_device_put(kempld_pdev);
+	return ret;
+}
 
 /**
- * kempld_पढ़ो8 - पढ़ो 8 bit रेजिस्टर
- * @pld: kempld_device_data काष्ठाure describing the PLD
- * @index: रेजिस्टर index on the chip
+ * kempld_read8 - read 8 bit register
+ * @pld: kempld_device_data structure describing the PLD
+ * @index: register index on the chip
  *
  * kempld_get_mutex must be called prior to calling this function.
  */
-u8 kempld_पढ़ो8(काष्ठा kempld_device_data *pld, u8 index)
-अणु
-	ioग_लिखो8(index, pld->io_index);
-	वापस ioपढ़ो8(pld->io_data);
-पूर्ण
-EXPORT_SYMBOL_GPL(kempld_पढ़ो8);
+u8 kempld_read8(struct kempld_device_data *pld, u8 index)
+{
+	iowrite8(index, pld->io_index);
+	return ioread8(pld->io_data);
+}
+EXPORT_SYMBOL_GPL(kempld_read8);
 
 /**
- * kempld_ग_लिखो8 - ग_लिखो 8 bit रेजिस्टर
- * @pld: kempld_device_data काष्ठाure describing the PLD
- * @index: रेजिस्टर index on the chip
- * @data: new रेजिस्टर value
+ * kempld_write8 - write 8 bit register
+ * @pld: kempld_device_data structure describing the PLD
+ * @index: register index on the chip
+ * @data: new register value
  *
  * kempld_get_mutex must be called prior to calling this function.
  */
-व्योम kempld_ग_लिखो8(काष्ठा kempld_device_data *pld, u8 index, u8 data)
-अणु
-	ioग_लिखो8(index, pld->io_index);
-	ioग_लिखो8(data, pld->io_data);
-पूर्ण
-EXPORT_SYMBOL_GPL(kempld_ग_लिखो8);
+void kempld_write8(struct kempld_device_data *pld, u8 index, u8 data)
+{
+	iowrite8(index, pld->io_index);
+	iowrite8(data, pld->io_data);
+}
+EXPORT_SYMBOL_GPL(kempld_write8);
 
 /**
- * kempld_पढ़ो16 - पढ़ो 16 bit रेजिस्टर
- * @pld: kempld_device_data काष्ठाure describing the PLD
- * @index: रेजिस्टर index on the chip
+ * kempld_read16 - read 16 bit register
+ * @pld: kempld_device_data structure describing the PLD
+ * @index: register index on the chip
  *
  * kempld_get_mutex must be called prior to calling this function.
  */
-u16 kempld_पढ़ो16(काष्ठा kempld_device_data *pld, u8 index)
-अणु
-	वापस kempld_पढ़ो8(pld, index) | kempld_पढ़ो8(pld, index + 1) << 8;
-पूर्ण
-EXPORT_SYMBOL_GPL(kempld_पढ़ो16);
+u16 kempld_read16(struct kempld_device_data *pld, u8 index)
+{
+	return kempld_read8(pld, index) | kempld_read8(pld, index + 1) << 8;
+}
+EXPORT_SYMBOL_GPL(kempld_read16);
 
 /**
- * kempld_ग_लिखो16 - ग_लिखो 16 bit रेजिस्टर
- * @pld: kempld_device_data काष्ठाure describing the PLD
- * @index: रेजिस्टर index on the chip
- * @data: new रेजिस्टर value
+ * kempld_write16 - write 16 bit register
+ * @pld: kempld_device_data structure describing the PLD
+ * @index: register index on the chip
+ * @data: new register value
  *
  * kempld_get_mutex must be called prior to calling this function.
  */
-व्योम kempld_ग_लिखो16(काष्ठा kempld_device_data *pld, u8 index, u16 data)
-अणु
-	kempld_ग_लिखो8(pld, index, (u8)data);
-	kempld_ग_लिखो8(pld, index + 1, (u8)(data >> 8));
-पूर्ण
-EXPORT_SYMBOL_GPL(kempld_ग_लिखो16);
+void kempld_write16(struct kempld_device_data *pld, u8 index, u16 data)
+{
+	kempld_write8(pld, index, (u8)data);
+	kempld_write8(pld, index + 1, (u8)(data >> 8));
+}
+EXPORT_SYMBOL_GPL(kempld_write16);
 
 /**
- * kempld_पढ़ो32 - पढ़ो 32 bit रेजिस्टर
- * @pld: kempld_device_data काष्ठाure describing the PLD
- * @index: रेजिस्टर index on the chip
+ * kempld_read32 - read 32 bit register
+ * @pld: kempld_device_data structure describing the PLD
+ * @index: register index on the chip
  *
  * kempld_get_mutex must be called prior to calling this function.
  */
-u32 kempld_पढ़ो32(काष्ठा kempld_device_data *pld, u8 index)
-अणु
-	वापस kempld_पढ़ो16(pld, index) | kempld_पढ़ो16(pld, index + 2) << 16;
-पूर्ण
-EXPORT_SYMBOL_GPL(kempld_पढ़ो32);
+u32 kempld_read32(struct kempld_device_data *pld, u8 index)
+{
+	return kempld_read16(pld, index) | kempld_read16(pld, index + 2) << 16;
+}
+EXPORT_SYMBOL_GPL(kempld_read32);
 
 /**
- * kempld_ग_लिखो32 - ग_लिखो 32 bit रेजिस्टर
- * @pld: kempld_device_data काष्ठाure describing the PLD
- * @index: रेजिस्टर index on the chip
- * @data: new रेजिस्टर value
+ * kempld_write32 - write 32 bit register
+ * @pld: kempld_device_data structure describing the PLD
+ * @index: register index on the chip
+ * @data: new register value
  *
  * kempld_get_mutex must be called prior to calling this function.
  */
-व्योम kempld_ग_लिखो32(काष्ठा kempld_device_data *pld, u8 index, u32 data)
-अणु
-	kempld_ग_लिखो16(pld, index, (u16)data);
-	kempld_ग_लिखो16(pld, index + 2, (u16)(data >> 16));
-पूर्ण
-EXPORT_SYMBOL_GPL(kempld_ग_लिखो32);
+void kempld_write32(struct kempld_device_data *pld, u8 index, u32 data)
+{
+	kempld_write16(pld, index, (u16)data);
+	kempld_write16(pld, index + 2, (u16)(data >> 16));
+}
+EXPORT_SYMBOL_GPL(kempld_write32);
 
 /**
  * kempld_get_mutex - acquire PLD mutex
- * @pld: kempld_device_data काष्ठाure describing the PLD
+ * @pld: kempld_device_data structure describing the PLD
  */
-व्योम kempld_get_mutex(काष्ठा kempld_device_data *pld)
-अणु
-	स्थिर काष्ठा kempld_platक्रमm_data *pdata = dev_get_platdata(pld->dev);
+void kempld_get_mutex(struct kempld_device_data *pld)
+{
+	const struct kempld_platform_data *pdata = dev_get_platdata(pld->dev);
 
 	mutex_lock(&pld->lock);
 	pdata->get_hardware_mutex(pld);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(kempld_get_mutex);
 
 /**
  * kempld_release_mutex - release PLD mutex
- * @pld: kempld_device_data काष्ठाure describing the PLD
+ * @pld: kempld_device_data structure describing the PLD
  */
-व्योम kempld_release_mutex(काष्ठा kempld_device_data *pld)
-अणु
-	स्थिर काष्ठा kempld_platक्रमm_data *pdata = dev_get_platdata(pld->dev);
+void kempld_release_mutex(struct kempld_device_data *pld)
+{
+	const struct kempld_platform_data *pdata = dev_get_platdata(pld->dev);
 
 	pdata->release_hardware_mutex(pld);
 	mutex_unlock(&pld->lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(kempld_release_mutex);
 
 /**
- * kempld_get_info - update device specअगरic inक्रमmation
- * @pld: kempld_device_data काष्ठाure describing the PLD
+ * kempld_get_info - update device specific information
+ * @pld: kempld_device_data structure describing the PLD
  *
- * This function calls the configured board specअगरic kempld_get_info_XXXX
- * function which is responsible क्रम gathering inक्रमmation about the specअगरic
- * hardware. The inक्रमmation is then stored within the pld काष्ठाure.
+ * This function calls the configured board specific kempld_get_info_XXXX
+ * function which is responsible for gathering information about the specific
+ * hardware. The information is then stored within the pld structure.
  */
-अटल पूर्णांक kempld_get_info(काष्ठा kempld_device_data *pld)
-अणु
-	पूर्णांक ret;
-	स्थिर काष्ठा kempld_platक्रमm_data *pdata = dev_get_platdata(pld->dev);
-	अक्षर major, minor;
+static int kempld_get_info(struct kempld_device_data *pld)
+{
+	int ret;
+	const struct kempld_platform_data *pdata = dev_get_platdata(pld->dev);
+	char major, minor;
 
 	ret = pdata->get_info(pld);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* The Kontron PLD firmware version string has the following क्रमmat:
+	/* The Kontron PLD firmware version string has the following format:
 	 * Pwxy.zzzz
 	 *   P:    Fixed
 	 *   w:    PLD number    - 1 hex digit
@@ -291,694 +290,694 @@ EXPORT_SYMBOL_GPL(kempld_release_mutex);
 	 *   y:    Minor version - 1 alphanumerical digit (0-9A-V)
 	 *   zzzz: Build number  - 4 zero padded hex digits */
 
-	अगर (pld->info.major < 10)
+	if (pld->info.major < 10)
 		major = pld->info.major + '0';
-	अन्यथा
+	else
 		major = (pld->info.major - 10) + 'A';
-	अगर (pld->info.minor < 10)
+	if (pld->info.minor < 10)
 		minor = pld->info.minor + '0';
-	अन्यथा
+	else
 		minor = (pld->info.minor - 10) + 'A';
 
-	ret = scnम_लिखो(pld->info.version, माप(pld->info.version),
+	ret = scnprintf(pld->info.version, sizeof(pld->info.version),
 			"P%X%c%c.%04X", pld->info.number, major, minor,
 			pld->info.buildnr);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * kempld_रेजिस्टर_cells - रेजिस्टर cell drivers
+ * kempld_register_cells - register cell drivers
  *
- * This function रेजिस्टरs cell drivers क्रम the detected hardware by calling
- * the configured kempld_रेजिस्टर_cells_XXXX function which is responsible
- * to detect and रेजिस्टर the needed cell drivers.
+ * This function registers cell drivers for the detected hardware by calling
+ * the configured kempld_register_cells_XXXX function which is responsible
+ * to detect and register the needed cell drivers.
  */
-अटल पूर्णांक kempld_रेजिस्टर_cells(काष्ठा kempld_device_data *pld)
-अणु
-	स्थिर काष्ठा kempld_platक्रमm_data *pdata = dev_get_platdata(pld->dev);
+static int kempld_register_cells(struct kempld_device_data *pld)
+{
+	const struct kempld_platform_data *pdata = dev_get_platdata(pld->dev);
 
-	वापस pdata->रेजिस्टर_cells(pld);
-पूर्ण
+	return pdata->register_cells(pld);
+}
 
-अटल स्थिर अक्षर *kempld_get_type_string(काष्ठा kempld_device_data *pld)
-अणु
-	स्थिर अक्षर *version_type;
+static const char *kempld_get_type_string(struct kempld_device_data *pld)
+{
+	const char *version_type;
 
-	चयन (pld->info.type) अणु
-	हाल 0:
+	switch (pld->info.type) {
+	case 0:
 		version_type = "release";
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		version_type = "debug";
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		version_type = "custom";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		version_type = "unspecified";
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस version_type;
-पूर्ण
+	return version_type;
+}
 
-अटल sमाप_प्रकार kempld_version_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा kempld_device_data *pld = dev_get_drvdata(dev);
+static ssize_t kempld_version_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct kempld_device_data *pld = dev_get_drvdata(dev);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%s\n", pld->info.version);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%s\n", pld->info.version);
+}
 
-अटल sमाप_प्रकार kempld_specअगरication_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा kempld_device_data *pld = dev_get_drvdata(dev);
+static ssize_t kempld_specification_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct kempld_device_data *pld = dev_get_drvdata(dev);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%d.%d\n", pld->info.spec_major,
+	return scnprintf(buf, PAGE_SIZE, "%d.%d\n", pld->info.spec_major,
 		       pld->info.spec_minor);
-पूर्ण
+}
 
-अटल sमाप_प्रकार kempld_type_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा kempld_device_data *pld = dev_get_drvdata(dev);
+static ssize_t kempld_type_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct kempld_device_data *pld = dev_get_drvdata(dev);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%s\n", kempld_get_type_string(pld));
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%s\n", kempld_get_type_string(pld));
+}
 
-अटल DEVICE_ATTR(pld_version, S_IRUGO, kempld_version_show, शून्य);
-अटल DEVICE_ATTR(pld_specअगरication, S_IRUGO, kempld_specअगरication_show,
-		   शून्य);
-अटल DEVICE_ATTR(pld_type, S_IRUGO, kempld_type_show, शून्य);
+static DEVICE_ATTR(pld_version, S_IRUGO, kempld_version_show, NULL);
+static DEVICE_ATTR(pld_specification, S_IRUGO, kempld_specification_show,
+		   NULL);
+static DEVICE_ATTR(pld_type, S_IRUGO, kempld_type_show, NULL);
 
-अटल काष्ठा attribute *pld_attributes[] = अणु
+static struct attribute *pld_attributes[] = {
 	&dev_attr_pld_version.attr,
-	&dev_attr_pld_specअगरication.attr,
+	&dev_attr_pld_specification.attr,
 	&dev_attr_pld_type.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group pld_attr_group = अणु
+static const struct attribute_group pld_attr_group = {
 	.attrs = pld_attributes,
-पूर्ण;
+};
 
-अटल पूर्णांक kempld_detect_device(काष्ठा kempld_device_data *pld)
-अणु
+static int kempld_detect_device(struct kempld_device_data *pld)
+{
 	u8 index_reg;
-	पूर्णांक ret;
+	int ret;
 
 	mutex_lock(&pld->lock);
 
-	/* Check क्रम empty IO space */
-	index_reg = ioपढ़ो8(pld->io_index);
-	अगर (index_reg == 0xff && ioपढ़ो8(pld->io_data) == 0xff) अणु
+	/* Check for empty IO space */
+	index_reg = ioread8(pld->io_index);
+	if (index_reg == 0xff && ioread8(pld->io_data) == 0xff) {
 		mutex_unlock(&pld->lock);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* Release hardware mutex अगर acquired */
-	अगर (!(index_reg & KEMPLD_MUTEX_KEY)) अणु
-		ioग_लिखो8(KEMPLD_MUTEX_KEY, pld->io_index);
+	/* Release hardware mutex if acquired */
+	if (!(index_reg & KEMPLD_MUTEX_KEY)) {
+		iowrite8(KEMPLD_MUTEX_KEY, pld->io_index);
 		/* PXT and COMe-cPC2 boards may require a second release */
-		ioग_लिखो8(KEMPLD_MUTEX_KEY, pld->io_index);
-	पूर्ण
+		iowrite8(KEMPLD_MUTEX_KEY, pld->io_index);
+	}
 
 	mutex_unlock(&pld->lock);
 
 	ret = kempld_get_info(pld);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	dev_info(pld->dev, "Found Kontron PLD - %s (%s), spec %d.%d\n",
 		 pld->info.version, kempld_get_type_string(pld),
 		 pld->info.spec_major, pld->info.spec_minor);
 
 	ret = sysfs_create_group(&pld->dev->kobj, &pld_attr_group);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = kempld_रेजिस्टर_cells(pld);
-	अगर (ret)
-		sysfs_हटाओ_group(&pld->dev->kobj, &pld_attr_group);
+	ret = kempld_register_cells(pld);
+	if (ret)
+		sysfs_remove_group(&pld->dev->kobj, &pld_attr_group);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_ACPI
-अटल पूर्णांक kempld_get_acpi_data(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा list_head resource_list;
-	काष्ठा resource *resources;
-	काष्ठा resource_entry *rentry;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा acpi_device *acpi_dev = ACPI_COMPANION(dev);
-	स्थिर काष्ठा kempld_platक्रमm_data *pdata;
-	पूर्णांक ret;
-	पूर्णांक count;
+#ifdef CONFIG_ACPI
+static int kempld_get_acpi_data(struct platform_device *pdev)
+{
+	struct list_head resource_list;
+	struct resource *resources;
+	struct resource_entry *rentry;
+	struct device *dev = &pdev->dev;
+	struct acpi_device *acpi_dev = ACPI_COMPANION(dev);
+	const struct kempld_platform_data *pdata;
+	int ret;
+	int count;
 
 	pdata = acpi_device_get_match_data(dev);
-	ret = platक्रमm_device_add_data(pdev, pdata,
-				       माप(काष्ठा kempld_platक्रमm_data));
-	अगर (ret)
-		वापस ret;
+	ret = platform_device_add_data(pdev, pdata,
+				       sizeof(struct kempld_platform_data));
+	if (ret)
+		return ret;
 
 	INIT_LIST_HEAD(&resource_list);
-	ret = acpi_dev_get_resources(acpi_dev, &resource_list, शून्य, शून्य);
-	अगर (ret < 0)
-		जाओ out;
+	ret = acpi_dev_get_resources(acpi_dev, &resource_list, NULL, NULL);
+	if (ret < 0)
+		goto out;
 
 	count = ret;
 
-	अगर (count == 0) अणु
-		ret = platक्रमm_device_add_resources(pdev, pdata->ioresource, 1);
-		जाओ out;
-	पूर्ण
+	if (count == 0) {
+		ret = platform_device_add_resources(pdev, pdata->ioresource, 1);
+		goto out;
+	}
 
-	resources = devm_kसुस्मृति(&acpi_dev->dev, count, माप(*resources),
+	resources = devm_kcalloc(&acpi_dev->dev, count, sizeof(*resources),
 				 GFP_KERNEL);
-	अगर (!resources) अणु
+	if (!resources) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	count = 0;
-	list_क्रम_each_entry(rentry, &resource_list, node) अणु
-		स_नकल(&resources[count], rentry->res,
-		       माप(*resources));
+	list_for_each_entry(rentry, &resource_list, node) {
+		memcpy(&resources[count], rentry->res,
+		       sizeof(*resources));
 		count++;
-	पूर्ण
-	ret = platक्रमm_device_add_resources(pdev, resources, count);
+	}
+	ret = platform_device_add_resources(pdev, resources, count);
 
 out:
-	acpi_dev_मुक्त_resource_list(&resource_list);
+	acpi_dev_free_resource_list(&resource_list);
 
-	वापस ret;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक kempld_get_acpi_data(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस -ENODEV;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_ACPI */
+	return ret;
+}
+#else
+static int kempld_get_acpi_data(struct platform_device *pdev)
+{
+	return -ENODEV;
+}
+#endif /* CONFIG_ACPI */
 
-अटल पूर्णांक kempld_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा kempld_platक्रमm_data *pdata;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा kempld_device_data *pld;
-	काष्ठा resource *ioport;
-	पूर्णांक ret;
+static int kempld_probe(struct platform_device *pdev)
+{
+	const struct kempld_platform_data *pdata;
+	struct device *dev = &pdev->dev;
+	struct kempld_device_data *pld;
+	struct resource *ioport;
+	int ret;
 
-	अगर (kempld_pdev == शून्य) अणु
+	if (kempld_pdev == NULL) {
 		/*
-		 * No kempld_pdev device has been रेजिस्टरed in kempld_init,
-		 * so we seem to be probing an ACPI platक्रमm device.
+		 * No kempld_pdev device has been registered in kempld_init,
+		 * so we seem to be probing an ACPI platform device.
 		 */
 		ret = kempld_get_acpi_data(pdev);
-		अगर (ret)
-			वापस ret;
-	पूर्ण अन्यथा अगर (kempld_pdev != pdev) अणु
+		if (ret)
+			return ret;
+	} else if (kempld_pdev != pdev) {
 		/*
-		 * The platक्रमm device we are probing is not the one we
-		 * रेजिस्टरed in kempld_init using the DMI table, so this one
+		 * The platform device we are probing is not the one we
+		 * registered in kempld_init using the DMI table, so this one
 		 * comes from ACPI.
-		 * As we can only probe one - पात here and use the DMI
+		 * As we can only probe one - abort here and use the DMI
 		 * based one instead.
 		 */
 		dev_notice(dev, "platform device exists - not using ACPI\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	pdata = dev_get_platdata(dev);
 
-	pld = devm_kzalloc(dev, माप(*pld), GFP_KERNEL);
-	अगर (!pld)
-		वापस -ENOMEM;
+	pld = devm_kzalloc(dev, sizeof(*pld), GFP_KERNEL);
+	if (!pld)
+		return -ENOMEM;
 
-	ioport = platक्रमm_get_resource(pdev, IORESOURCE_IO, 0);
-	अगर (!ioport)
-		वापस -EINVAL;
+	ioport = platform_get_resource(pdev, IORESOURCE_IO, 0);
+	if (!ioport)
+		return -EINVAL;
 
 	pld->io_base = devm_ioport_map(dev, ioport->start,
 					resource_size(ioport));
-	अगर (!pld->io_base)
-		वापस -ENOMEM;
+	if (!pld->io_base)
+		return -ENOMEM;
 
 	pld->io_index = pld->io_base;
 	pld->io_data = pld->io_base + 1;
-	pld->pld_घड़ी = pdata->pld_घड़ी;
+	pld->pld_clock = pdata->pld_clock;
 	pld->dev = dev;
 
 	mutex_init(&pld->lock);
-	platक्रमm_set_drvdata(pdev, pld);
+	platform_set_drvdata(pdev, pld);
 
-	वापस kempld_detect_device(pld);
-पूर्ण
+	return kempld_detect_device(pld);
+}
 
-अटल पूर्णांक kempld_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा kempld_device_data *pld = platक्रमm_get_drvdata(pdev);
-	स्थिर काष्ठा kempld_platक्रमm_data *pdata = dev_get_platdata(pld->dev);
+static int kempld_remove(struct platform_device *pdev)
+{
+	struct kempld_device_data *pld = platform_get_drvdata(pdev);
+	const struct kempld_platform_data *pdata = dev_get_platdata(pld->dev);
 
-	sysfs_हटाओ_group(&pld->dev->kobj, &pld_attr_group);
+	sysfs_remove_group(&pld->dev->kobj, &pld_attr_group);
 
-	mfd_हटाओ_devices(&pdev->dev);
+	mfd_remove_devices(&pdev->dev);
 	pdata->release_hardware_mutex(pld);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_ACPI
-अटल स्थिर काष्ठा acpi_device_id kempld_acpi_table[] = अणु
-	अणु "KEM0000", (kernel_uदीर्घ_t)&kempld_platक्रमm_data_generic पूर्ण,
-	अणु "KEM0001", (kernel_uदीर्घ_t)&kempld_platक्रमm_data_generic पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+#ifdef CONFIG_ACPI
+static const struct acpi_device_id kempld_acpi_table[] = {
+	{ "KEM0000", (kernel_ulong_t)&kempld_platform_data_generic },
+	{ "KEM0001", (kernel_ulong_t)&kempld_platform_data_generic },
+	{}
+};
 MODULE_DEVICE_TABLE(acpi, kempld_acpi_table);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver kempld_driver = अणु
-	.driver		= अणु
+static struct platform_driver kempld_driver = {
+	.driver		= {
 		.name	= "kempld",
 		.acpi_match_table = ACPI_PTR(kempld_acpi_table),
-	पूर्ण,
+	},
 	.probe		= kempld_probe,
-	.हटाओ		= kempld_हटाओ,
-पूर्ण;
+	.remove		= kempld_remove,
+};
 
-अटल स्थिर काष्ठा dmi_प्रणाली_id kempld_dmi_table[] __initस्थिर = अणु
-	अणु
+static const struct dmi_system_id kempld_dmi_table[] __initconst = {
+	{
 		.ident = "BBD6",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-bBD"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "BBL6",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-bBL6"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "BDV7",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-bDV7"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "BHL6",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-bHL6"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "BKL6",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-bKL6"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "BSL6",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-bSL6"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "CAL6",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-cAL"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "CBL6",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-cBL6"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "CBW6",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-cBW6"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "CCR2",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-bIP2"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "CCR6",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-bIP6"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "CDV7",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-cDV7"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "CHL6",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-cHL6"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "CHR2",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "ETXexpress-SC T2"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "CHR2",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "ETXe-SC T2"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "CHR2",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-bSC2"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "CHR6",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "ETXexpress-SC T6"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "CHR6",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "ETXe-SC T6"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "CHR6",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-bSC6"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "CKL6",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-cKL6"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "CNTG",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "ETXexpress-PC"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "CNTG",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-bPC2"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "CNTX",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "PXT"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "CSL6",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-cSL6"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "CVV6",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-cBT"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "FRI2",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BIOS_VERSION, "FRI2"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "FRI2",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "Fish River Island II"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "A203",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "KBox A-203"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "M4A1",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-m4AL"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "MAL1",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-mAL10"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "MAPL",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "mITX-APL"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "MBR1",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "ETX-OH"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "MVV1",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-mBT"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "NTC1",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "nanoETXexpress-TT"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "NTC1",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "nETXe-TT"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "NTC1",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-mTT"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "NUP1",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-mCT"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "PAPL",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "pITX-APL"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "SXAL",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "SMARC-sXAL"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "SXAL4",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "SMARC-sXA4"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "UNP1",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "microETXexpress-DC"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "UNP1",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-cDC2"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "UNTG",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "microETXexpress-PC"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "UNTG",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-cPC2"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "UUP6",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-cCT6"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "UTH6",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "COMe-cTH6"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण, अणु
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	}, {
 		.ident = "Q7AL",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Kontron"),
 			DMI_MATCH(DMI_BOARD_NAME, "Qseven-Q7AL"),
-		पूर्ण,
-		.driver_data = (व्योम *)&kempld_platक्रमm_data_generic,
-		.callback = kempld_create_platक्रमm_device,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+		},
+		.driver_data = (void *)&kempld_platform_data_generic,
+		.callback = kempld_create_platform_device,
+	},
+	{}
+};
 MODULE_DEVICE_TABLE(dmi, kempld_dmi_table);
 
-अटल पूर्णांक __init kempld_init(व्योम)
-अणु
-	स्थिर काष्ठा dmi_प्रणाली_id *id;
+static int __init kempld_init(void)
+{
+	const struct dmi_system_id *id;
 
-	अगर (क्रमce_device_id[0]) अणु
-		क्रम (id = kempld_dmi_table;
+	if (force_device_id[0]) {
+		for (id = kempld_dmi_table;
 		     id->matches[0].slot != DMI_NONE; id++)
-			अगर (म_माला(id->ident, क्रमce_device_id))
-				अगर (id->callback && !id->callback(id))
-					अवरोध;
-		अगर (id->matches[0].slot == DMI_NONE)
-			वापस -ENODEV;
-	पूर्ण अन्यथा अणु
-		dmi_check_प्रणाली(kempld_dmi_table);
-	पूर्ण
+			if (strstr(id->ident, force_device_id))
+				if (id->callback && !id->callback(id))
+					break;
+		if (id->matches[0].slot == DMI_NONE)
+			return -ENODEV;
+	} else {
+		dmi_check_system(kempld_dmi_table);
+	}
 
-	वापस platक्रमm_driver_रेजिस्टर(&kempld_driver);
-पूर्ण
+	return platform_driver_register(&kempld_driver);
+}
 
-अटल व्योम __निकास kempld_निकास(व्योम)
-अणु
-	अगर (kempld_pdev)
-		platक्रमm_device_unरेजिस्टर(kempld_pdev);
+static void __exit kempld_exit(void)
+{
+	if (kempld_pdev)
+		platform_device_unregister(kempld_pdev);
 
-	platक्रमm_driver_unरेजिस्टर(&kempld_driver);
-पूर्ण
+	platform_driver_unregister(&kempld_driver);
+}
 
 module_init(kempld_init);
-module_निकास(kempld_निकास);
+module_exit(kempld_exit);
 
 MODULE_DESCRIPTION("KEM PLD Core Driver");
 MODULE_AUTHOR("Michael Brunner <michael.brunner@kontron.com>");

@@ -1,129 +1,128 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
- * os_पूर्णांकfs.c
+ * os_intfs.c
  *
  * Copyright(c) 2007 - 2010 Realtek Corporation. All rights reserved.
- * Linux device driver क्रम RTL8192SU
+ * Linux device driver for RTL8192SU
  *
- * Modअगरications क्रम inclusion पूर्णांकo the Linux staging tree are
+ * Modifications for inclusion into the Linux staging tree are
  * Copyright(c) 2010 Larry Finger. All rights reserved.
  *
- * Contact inक्रमmation:
+ * Contact information:
  * WLAN FAE <wlanfae@realtek.com>.
  * Larry Finger <Larry.Finger@lwfinger.net>
  *
  ******************************************************************************/
 
-#घोषणा _OS_INTFS_C_
+#define _OS_INTFS_C_
 
-#समावेश <linux/module.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/firmware.h>
-#समावेश "osdep_service.h"
-#समावेश "drv_types.h"
-#समावेश "xmit_osdep.h"
-#समावेश "recv_osdep.h"
-#समावेश "rtl871x_ioctl.h"
-#समावेश "usb_osintf.h"
+#include <linux/module.h>
+#include <linux/kthread.h>
+#include <linux/firmware.h>
+#include "osdep_service.h"
+#include "drv_types.h"
+#include "xmit_osdep.h"
+#include "recv_osdep.h"
+#include "rtl871x_ioctl.h"
+#include "usb_osintf.h"
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("rtl871x wireless lan driver");
 MODULE_AUTHOR("Larry Finger");
 
-अटल अक्षर अगरname[IFNAMSIZ] = "wlan%d";
+static char ifname[IFNAMSIZ] = "wlan%d";
 
-/* module param शेषs */
-अटल पूर्णांक chip_version = RTL8712_2ndCUT;
-अटल पूर्णांक rfपूर्णांकfs = HWPI;
-अटल पूर्णांक lbkmode = RTL8712_AIR_TRX;
-अटल पूर्णांक hci = RTL8712_USB;
-अटल पूर्णांक ampdu_enable = 1;/*क्रम enable tx_ampdu*/
+/* module param defaults */
+static int chip_version = RTL8712_2ndCUT;
+static int rfintfs = HWPI;
+static int lbkmode = RTL8712_AIR_TRX;
+static int hci = RTL8712_USB;
+static int ampdu_enable = 1;/*for enable tx_ampdu*/
 
-/* The video_mode variable is क्रम video mode.*/
-/* It may be specअगरy when inserting module with video_mode=1 parameter.*/
-अटल पूर्णांक video_mode = 1;   /* enable video mode*/
+/* The video_mode variable is for video mode.*/
+/* It may be specify when inserting module with video_mode=1 parameter.*/
+static int video_mode = 1;   /* enable video mode*/
 
-/*Ndis802_11Infraकाष्ठाure; infra, ad-hoc, स्वतः*/
-अटल पूर्णांक network_mode = Ndis802_11IBSS;
-अटल पूर्णांक channel = 1;/*ad-hoc support requirement*/
-अटल पूर्णांक wireless_mode = WIRELESS_11BG;
-अटल पूर्णांक vrtl_carrier_sense = AUTO_VCS;
-अटल पूर्णांक vcs_type = RTS_CTS;
-अटल पूर्णांक frag_thresh = 2346;
-अटल पूर्णांक preamble = PREAMBLE_LONG;/*दीर्घ, लघु, स्वतः*/
-अटल पूर्णांक scan_mode = 1;/*active, passive*/
-अटल पूर्णांक adhoc_tx_pwr = 1;
-अटल पूर्णांक soft_ap;
-अटल पूर्णांक smart_ps = 1;
-अटल पूर्णांक घातer_mgnt = PS_MODE_ACTIVE;
-अटल पूर्णांक radio_enable = 1;
-अटल पूर्णांक दीर्घ_retry_lmt = 7;
-अटल पूर्णांक लघु_retry_lmt = 7;
-अटल पूर्णांक busy_thresh = 40;
-अटल पूर्णांक ack_policy = NORMAL_ACK;
-अटल पूर्णांक mp_mode;
-अटल पूर्णांक software_encrypt;
-अटल पूर्णांक software_decrypt;
+/*Ndis802_11Infrastructure; infra, ad-hoc, auto*/
+static int network_mode = Ndis802_11IBSS;
+static int channel = 1;/*ad-hoc support requirement*/
+static int wireless_mode = WIRELESS_11BG;
+static int vrtl_carrier_sense = AUTO_VCS;
+static int vcs_type = RTS_CTS;
+static int frag_thresh = 2346;
+static int preamble = PREAMBLE_LONG;/*long, short, auto*/
+static int scan_mode = 1;/*active, passive*/
+static int adhoc_tx_pwr = 1;
+static int soft_ap;
+static int smart_ps = 1;
+static int power_mgnt = PS_MODE_ACTIVE;
+static int radio_enable = 1;
+static int long_retry_lmt = 7;
+static int short_retry_lmt = 7;
+static int busy_thresh = 40;
+static int ack_policy = NORMAL_ACK;
+static int mp_mode;
+static int software_encrypt;
+static int software_decrypt;
 
-अटल पूर्णांक wmm_enable;/* शेष is set to disable the wmm.*/
-अटल पूर्णांक uapsd_enable;
-अटल पूर्णांक uapsd_max_sp = NO_LIMIT;
-अटल पूर्णांक uapsd_acbk_en;
-अटल पूर्णांक uapsd_acbe_en;
-अटल पूर्णांक uapsd_acvi_en;
-अटल पूर्णांक uapsd_acvo_en;
+static int wmm_enable;/* default is set to disable the wmm.*/
+static int uapsd_enable;
+static int uapsd_max_sp = NO_LIMIT;
+static int uapsd_acbk_en;
+static int uapsd_acbe_en;
+static int uapsd_acvi_en;
+static int uapsd_acvo_en;
 
-अटल पूर्णांक ht_enable = 1;
-अटल पूर्णांक cbw40_enable = 1;
-अटल पूर्णांक rf_config = RTL8712_RF_1T2R;  /* 1T2R*/
-अटल पूर्णांक low_घातer;
+static int ht_enable = 1;
+static int cbw40_enable = 1;
+static int rf_config = RTL8712_RF_1T2R;  /* 1T2R*/
+static int low_power;
 /* mac address to use instead of the one stored in Efuse */
-अक्षर *r8712_iniपंचांगac;
-अटल अक्षर *iniपंचांगac;
-/* अगर wअगरi_test = 1, driver will disable the turbo mode and pass it to
- * firmware निजी.
+char *r8712_initmac;
+static char *initmac;
+/* if wifi_test = 1, driver will disable the turbo mode and pass it to
+ * firmware private.
  */
-अटल पूर्णांक wअगरi_test;
+static int wifi_test;
 
-module_param_string(अगरname, अगरname, माप(अगरname), 0644);
-module_param(wअगरi_test, पूर्णांक, 0644);
-module_param(iniपंचांगac, अक्षरp, 0644);
-module_param(video_mode, पूर्णांक, 0644);
-module_param(chip_version, पूर्णांक, 0644);
-module_param(rfपूर्णांकfs, पूर्णांक, 0644);
-module_param(lbkmode, पूर्णांक, 0644);
-module_param(hci, पूर्णांक, 0644);
-module_param(network_mode, पूर्णांक, 0644);
-module_param(channel, पूर्णांक, 0644);
-module_param(mp_mode, पूर्णांक, 0644);
-module_param(wmm_enable, पूर्णांक, 0644);
-module_param(vrtl_carrier_sense, पूर्णांक, 0644);
-module_param(vcs_type, पूर्णांक, 0644);
-module_param(busy_thresh, पूर्णांक, 0644);
-module_param(ht_enable, पूर्णांक, 0644);
-module_param(cbw40_enable, पूर्णांक, 0644);
-module_param(ampdu_enable, पूर्णांक, 0644);
-module_param(rf_config, पूर्णांक, 0644);
-module_param(घातer_mgnt, पूर्णांक, 0644);
-module_param(low_घातer, पूर्णांक, 0644);
+module_param_string(ifname, ifname, sizeof(ifname), 0644);
+module_param(wifi_test, int, 0644);
+module_param(initmac, charp, 0644);
+module_param(video_mode, int, 0644);
+module_param(chip_version, int, 0644);
+module_param(rfintfs, int, 0644);
+module_param(lbkmode, int, 0644);
+module_param(hci, int, 0644);
+module_param(network_mode, int, 0644);
+module_param(channel, int, 0644);
+module_param(mp_mode, int, 0644);
+module_param(wmm_enable, int, 0644);
+module_param(vrtl_carrier_sense, int, 0644);
+module_param(vcs_type, int, 0644);
+module_param(busy_thresh, int, 0644);
+module_param(ht_enable, int, 0644);
+module_param(cbw40_enable, int, 0644);
+module_param(ampdu_enable, int, 0644);
+module_param(rf_config, int, 0644);
+module_param(power_mgnt, int, 0644);
+module_param(low_power, int, 0644);
 
-MODULE_PARM_DESC(अगरname, " Net interface name, wlan%d=default");
-MODULE_PARM_DESC(iniपंचांगac, "MAC-Address, default: use FUSE");
+MODULE_PARM_DESC(ifname, " Net interface name, wlan%d=default");
+MODULE_PARM_DESC(initmac, "MAC-Address, default: use FUSE");
 
-अटल पूर्णांक netdev_खोलो(काष्ठा net_device *pnetdev);
-अटल पूर्णांक netdev_बंद(काष्ठा net_device *pnetdev);
+static int netdev_open(struct net_device *pnetdev);
+static int netdev_close(struct net_device *pnetdev);
 
-अटल व्योम loadparam(काष्ठा _adapter *padapter, काष्ठा  net_device *pnetdev)
-अणु
-	काष्ठा registry_priv  *registry_par = &padapter->registrypriv;
+static void loadparam(struct _adapter *padapter, struct  net_device *pnetdev)
+{
+	struct registry_priv  *registry_par = &padapter->registrypriv;
 
 	registry_par->chip_version = (u8)chip_version;
-	registry_par->rfपूर्णांकfs = (u8)rfपूर्णांकfs;
+	registry_par->rfintfs = (u8)rfintfs;
 	registry_par->lbkmode = (u8)lbkmode;
 	registry_par->hci = (u8)hci;
 	registry_par->network_mode  = (u8)network_mode;
-	स_नकल(registry_par->ssid.Ssid, "ANY", 3);
+	memcpy(registry_par->ssid.Ssid, "ANY", 3);
 	registry_par->ssid.SsidLength = 3;
 	registry_par->channel = (u8)channel;
 	registry_par->wireless_mode = (u8)wireless_mode;
@@ -135,10 +134,10 @@ MODULE_PARM_DESC(iniपंचांगac, "MAC-Address, default: use FUSE");
 	registry_par->adhoc_tx_pwr = (u8)adhoc_tx_pwr;
 	registry_par->soft_ap = (u8)soft_ap;
 	registry_par->smart_ps = (u8)smart_ps;
-	registry_par->घातer_mgnt = (u8)घातer_mgnt;
+	registry_par->power_mgnt = (u8)power_mgnt;
 	registry_par->radio_enable = (u8)radio_enable;
-	registry_par->दीर्घ_retry_lmt = (u8)दीर्घ_retry_lmt;
-	registry_par->लघु_retry_lmt = (u8)लघु_retry_lmt;
+	registry_par->long_retry_lmt = (u8)long_retry_lmt;
+	registry_par->short_retry_lmt = (u8)short_retry_lmt;
 	registry_par->busy_thresh = (u16)busy_thresh;
 	registry_par->ack_policy = (u8)ack_policy;
 	registry_par->mp_mode = (u8)mp_mode;
@@ -156,26 +155,26 @@ MODULE_PARM_DESC(iniपंचांगac, "MAC-Address, default: use FUSE");
 	registry_par->cbw40_enable = (u8)cbw40_enable;
 	registry_par->ampdu_enable = (u8)ampdu_enable;
 	registry_par->rf_config = (u8)rf_config;
-	registry_par->low_घातer = (u8)low_घातer;
-	registry_par->wअगरi_test = (u8)wअगरi_test;
-	r8712_iniपंचांगac = iniपंचांगac;
-पूर्ण
+	registry_par->low_power = (u8)low_power;
+	registry_par->wifi_test = (u8)wifi_test;
+	r8712_initmac = initmac;
+}
 
-अटल पूर्णांक r871x_net_set_mac_address(काष्ठा net_device *pnetdev, व्योम *p)
-अणु
-	काष्ठा _adapter *padapter = netdev_priv(pnetdev);
-	काष्ठा sockaddr *addr = p;
+static int r871x_net_set_mac_address(struct net_device *pnetdev, void *p)
+{
+	struct _adapter *padapter = netdev_priv(pnetdev);
+	struct sockaddr *addr = p;
 
-	अगर (!padapter->bup)
+	if (!padapter->bup)
 		ether_addr_copy(pnetdev->dev_addr, addr->sa_data);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा net_device_stats *r871x_net_get_stats(काष्ठा net_device *pnetdev)
-अणु
-	काष्ठा _adapter *padapter = netdev_priv(pnetdev);
-	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
-	काष्ठा recv_priv *precvpriv = &padapter->recvpriv;
+static struct net_device_stats *r871x_net_get_stats(struct net_device *pnetdev)
+{
+	struct _adapter *padapter = netdev_priv(pnetdev);
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	struct recv_priv *precvpriv = &padapter->recvpriv;
 
 	padapter->stats.tx_packets = pxmitpriv->tx_pkts;
 	padapter->stats.rx_packets = precvpriv->rx_pkts;
@@ -183,88 +182,88 @@ MODULE_PARM_DESC(iniपंचांगac, "MAC-Address, default: use FUSE");
 	padapter->stats.rx_dropped = precvpriv->rx_drop;
 	padapter->stats.tx_bytes = pxmitpriv->tx_bytes;
 	padapter->stats.rx_bytes = precvpriv->rx_bytes;
-	वापस &padapter->stats;
-पूर्ण
+	return &padapter->stats;
+}
 
-अटल स्थिर काष्ठा net_device_ops rtl8712_netdev_ops = अणु
-	.nकरो_खोलो = netdev_खोलो,
-	.nकरो_stop = netdev_बंद,
-	.nकरो_start_xmit = r8712_xmit_entry,
-	.nकरो_set_mac_address = r871x_net_set_mac_address,
-	.nकरो_get_stats = r871x_net_get_stats,
-	.nकरो_करो_ioctl = r871x_ioctl,
-पूर्ण;
+static const struct net_device_ops rtl8712_netdev_ops = {
+	.ndo_open = netdev_open,
+	.ndo_stop = netdev_close,
+	.ndo_start_xmit = r8712_xmit_entry,
+	.ndo_set_mac_address = r871x_net_set_mac_address,
+	.ndo_get_stats = r871x_net_get_stats,
+	.ndo_do_ioctl = r871x_ioctl,
+};
 
-काष्ठा net_device *r8712_init_netdev(व्योम)
-अणु
-	काष्ठा _adapter *padapter;
-	काष्ठा net_device *pnetdev;
+struct net_device *r8712_init_netdev(void)
+{
+	struct _adapter *padapter;
+	struct net_device *pnetdev;
 
-	pnetdev = alloc_etherdev(माप(काष्ठा _adapter));
-	अगर (!pnetdev)
-		वापस शून्य;
-	अगर (dev_alloc_name(pnetdev, अगरname) < 0) अणु
-		म_नकल(अगरname, "wlan%d");
-		dev_alloc_name(pnetdev, अगरname);
-	पूर्ण
+	pnetdev = alloc_etherdev(sizeof(struct _adapter));
+	if (!pnetdev)
+		return NULL;
+	if (dev_alloc_name(pnetdev, ifname) < 0) {
+		strcpy(ifname, "wlan%d");
+		dev_alloc_name(pnetdev, ifname);
+	}
 	padapter = netdev_priv(pnetdev);
 	padapter->pnetdev = pnetdev;
 	pr_info("r8712u: register rtl8712_netdev_ops to netdev_ops\n");
 	pnetdev->netdev_ops = &rtl8712_netdev_ops;
-	pnetdev->watchकरोg_समयo = HZ; /* 1 second समयout */
-	pnetdev->wireless_handlers = (काष्ठा iw_handler_def *)
+	pnetdev->watchdog_timeo = HZ; /* 1 second timeout */
+	pnetdev->wireless_handlers = (struct iw_handler_def *)
 				     &r871x_handlers_def;
 	loadparam(padapter, pnetdev);
-	netअगर_carrier_off(pnetdev);
-	padapter->pid = 0;  /* Initial the PID value used क्रम HW PBC.*/
-	वापस pnetdev;
-पूर्ण
+	netif_carrier_off(pnetdev);
+	padapter->pid = 0;  /* Initial the PID value used for HW PBC.*/
+	return pnetdev;
+}
 
-अटल u32 start_drv_thपढ़ोs(काष्ठा _adapter *padapter)
-अणु
-	padapter->cmd_thपढ़ो = kthपढ़ो_run(r8712_cmd_thपढ़ो, padapter, "%s",
+static u32 start_drv_threads(struct _adapter *padapter)
+{
+	padapter->cmd_thread = kthread_run(r8712_cmd_thread, padapter, "%s",
 					  padapter->pnetdev->name);
-	अगर (IS_ERR(padapter->cmd_thपढ़ो))
-		वापस _FAIL;
-	वापस _SUCCESS;
-पूर्ण
+	if (IS_ERR(padapter->cmd_thread))
+		return _FAIL;
+	return _SUCCESS;
+}
 
-व्योम r8712_stop_drv_thपढ़ोs(काष्ठा _adapter *padapter)
-अणु
-	काष्ठा completion *completion =
-		&padapter->cmdpriv.terminate_cmdthपढ़ो_comp;
+void r8712_stop_drv_threads(struct _adapter *padapter)
+{
+	struct completion *completion =
+		&padapter->cmdpriv.terminate_cmdthread_comp;
 
-	/*Below is to terminate r8712_cmd_thपढ़ो & event_thपढ़ो...*/
+	/*Below is to terminate r8712_cmd_thread & event_thread...*/
 	complete(&padapter->cmdpriv.cmd_queue_comp);
-	अगर (padapter->cmd_thपढ़ो)
-		रुको_क्रम_completion_पूर्णांकerruptible(completion);
+	if (padapter->cmd_thread)
+		wait_for_completion_interruptible(completion);
 	padapter->cmdpriv.cmd_seq = 1;
-पूर्ण
+}
 
-अटल व्योम start_drv_समयrs(काष्ठा _adapter *padapter)
-अणु
-	mod_समयr(&padapter->mlmepriv.sitesurveyctrl.sitesurvey_ctrl_समयr,
-		  jअगरfies + msecs_to_jअगरfies(5000));
-	mod_समयr(&padapter->mlmepriv.wdg_समयr,
-		  jअगरfies + msecs_to_jअगरfies(2000));
-पूर्ण
+static void start_drv_timers(struct _adapter *padapter)
+{
+	mod_timer(&padapter->mlmepriv.sitesurveyctrl.sitesurvey_ctrl_timer,
+		  jiffies + msecs_to_jiffies(5000));
+	mod_timer(&padapter->mlmepriv.wdg_timer,
+		  jiffies + msecs_to_jiffies(2000));
+}
 
-व्योम r8712_stop_drv_समयrs(काष्ठा _adapter *padapter)
-अणु
-	del_समयr_sync(&padapter->mlmepriv.assoc_समयr);
-	del_समयr_sync(&padapter->securitypriv.tkip_समयr);
-	del_समयr_sync(&padapter->mlmepriv.scan_to_समयr);
-	del_समयr_sync(&padapter->mlmepriv.dhcp_समयr);
-	del_समयr_sync(&padapter->mlmepriv.wdg_समयr);
-	del_समयr_sync(&padapter->mlmepriv.sitesurveyctrl.sitesurvey_ctrl_समयr);
-पूर्ण
+void r8712_stop_drv_timers(struct _adapter *padapter)
+{
+	del_timer_sync(&padapter->mlmepriv.assoc_timer);
+	del_timer_sync(&padapter->securitypriv.tkip_timer);
+	del_timer_sync(&padapter->mlmepriv.scan_to_timer);
+	del_timer_sync(&padapter->mlmepriv.dhcp_timer);
+	del_timer_sync(&padapter->mlmepriv.wdg_timer);
+	del_timer_sync(&padapter->mlmepriv.sitesurveyctrl.sitesurvey_ctrl_timer);
+}
 
-अटल व्योम init_शेष_value(काष्ठा _adapter *padapter)
-अणु
-	काष्ठा registry_priv *pregistrypriv = &padapter->registrypriv;
-	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	काष्ठा security_priv *psecuritypriv = &padapter->securitypriv;
+static void init_default_value(struct _adapter *padapter)
+{
+	struct registry_priv *pregistrypriv = &padapter->registrypriv;
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct security_priv *psecuritypriv = &padapter->securitypriv;
 
 	/*xmit_priv*/
 	pxmitpriv->vcs_setting = pregistrypriv->vrtl_carrier_sense;
@@ -273,17 +272,17 @@ MODULE_PARM_DESC(iniपंचांगac, "MAC-Address, default: use FUSE");
 	pxmitpriv->rts_thresh = pregistrypriv->rts_thresh;
 	pxmitpriv->frag_len = pregistrypriv->frag_thresh;
 	/* mlme_priv */
-	/* Maybe someday we should नाम this variable to "active_mode"(Jeff)*/
+	/* Maybe someday we should rename this variable to "active_mode"(Jeff)*/
 	pmlmepriv->passive_mode = 1; /* 1: active, 0: passive. */
 	/*ht_priv*/
-	अणु
-		पूर्णांक i;
-		काष्ठा ht_priv	 *phtpriv = &pmlmepriv->htpriv;
+	{
+		int i;
+		struct ht_priv	 *phtpriv = &pmlmepriv->htpriv;
 
 		phtpriv->ampdu_enable = false;/*set to disabled*/
-		क्रम (i = 0; i < 16; i++)
+		for (i = 0; i < 16; i++)
 			phtpriv->baddbareq_issued[i] = false;
-	पूर्ण
+	}
 	/*security_priv*/
 	psecuritypriv->sw_encrypt = pregistrypriv->software_encrypt;
 	psecuritypriv->sw_decrypt = pregistrypriv->software_decrypt;
@@ -293,59 +292,59 @@ MODULE_PARM_DESC(iniपंचांगac, "MAC-Address, default: use FUSE");
 	r8712_init_registrypriv_dev_network(padapter);
 	r8712_update_registrypriv_dev_network(padapter);
 	/*misc.*/
-पूर्ण
+}
 
-पूर्णांक r8712_init_drv_sw(काष्ठा _adapter *padapter)
-अणु
-	पूर्णांक ret;
+int r8712_init_drv_sw(struct _adapter *padapter)
+{
+	int ret;
 
 	ret = r8712_init_cmd_priv(&padapter->cmdpriv);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	padapter->cmdpriv.padapter = padapter;
 	ret = r8712_init_evt_priv(&padapter->evtpriv);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = r8712_init_mlme_priv(padapter);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	_r8712_init_xmit_priv(&padapter->xmitpriv, padapter);
 	_r8712_init_recv_priv(&padapter->recvpriv, padapter);
-	स_रखो((अचिन्हित अक्षर *)&padapter->securitypriv, 0,
-	       माप(काष्ठा security_priv));
-	समयr_setup(&padapter->securitypriv.tkip_समयr,
+	memset((unsigned char *)&padapter->securitypriv, 0,
+	       sizeof(struct security_priv));
+	timer_setup(&padapter->securitypriv.tkip_timer,
 		    r8712_use_tkipkey_handler, 0);
 	ret = _r8712_init_sta_priv(&padapter->stapriv);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	padapter->stapriv.padapter = padapter;
 	r8712_init_bcmc_stainfo(padapter);
 	r8712_init_pwrctrl_priv(padapter);
 	mp871xinit(padapter);
-	init_शेष_value(padapter);
+	init_default_value(padapter);
 	r8712_InitSwLeds(padapter);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम r8712_मुक्त_drv_sw(काष्ठा _adapter *padapter)
-अणु
-	काष्ठा net_device *pnetdev = padapter->pnetdev;
+void r8712_free_drv_sw(struct _adapter *padapter)
+{
+	struct net_device *pnetdev = padapter->pnetdev;
 
-	r8712_मुक्त_cmd_priv(&padapter->cmdpriv);
-	r8712_मुक्त_evt_priv(&padapter->evtpriv);
+	r8712_free_cmd_priv(&padapter->cmdpriv);
+	r8712_free_evt_priv(&padapter->evtpriv);
 	r8712_DeInitSwLeds(padapter);
-	r8712_मुक्त_mlme_priv(&padapter->mlmepriv);
-	r8712_मुक्त_io_queue(padapter);
-	_मुक्त_xmit_priv(&padapter->xmitpriv);
-	_r8712_मुक्त_sta_priv(&padapter->stapriv);
-	_r8712_मुक्त_recv_priv(&padapter->recvpriv);
+	r8712_free_mlme_priv(&padapter->mlmepriv);
+	r8712_free_io_queue(padapter);
+	_free_xmit_priv(&padapter->xmitpriv);
+	_r8712_free_sta_priv(&padapter->stapriv);
+	_r8712_free_recv_priv(&padapter->recvpriv);
 	mp871xdeinit(padapter);
-	अगर (pnetdev)
-		मुक्त_netdev(pnetdev);
-पूर्ण
+	if (pnetdev)
+		free_netdev(pnetdev);
+}
 
-अटल व्योम enable_video_mode(काष्ठा _adapter *padapter, पूर्णांक cbw40_value)
-अणु
+static void enable_video_mode(struct _adapter *padapter, int cbw40_value)
+{
 	/*   bit 8:
 	 *   1 -> enable video mode to 96B AP
 	 *   0 -> disable video mode to 96B AP
@@ -356,114 +355,114 @@ MODULE_PARM_DESC(iniपंचांगac, "MAC-Address, default: use FUSE");
 	 *   1 -> enable STBC
 	 *   0 -> disable STBC
 	 */
-	u32  पूर्णांकcmd = 0xf4000500;   /* enable bit8, bit10*/
+	u32  intcmd = 0xf4000500;   /* enable bit8, bit10*/
 
-	अगर (cbw40_value) अणु
-		/* अगर the driver supports the 40M bandwidth,
+	if (cbw40_value) {
+		/* if the driver supports the 40M bandwidth,
 		 * we can enable the bit 9.
 		 */
-		पूर्णांकcmd |= 0x200;
-	पूर्ण
-	r8712_fw_cmd(padapter, पूर्णांकcmd);
-पूर्ण
+		intcmd |= 0x200;
+	}
+	r8712_fw_cmd(padapter, intcmd);
+}
 
 /*
  *
- * This function पूर्णांकends to handle the activation of an पूर्णांकerface
+ * This function intends to handle the activation of an interface
  * i.e. when it is brought Up/Active from a Down state.
  *
  */
-अटल पूर्णांक netdev_खोलो(काष्ठा net_device *pnetdev)
-अणु
-	काष्ठा _adapter *padapter = netdev_priv(pnetdev);
+static int netdev_open(struct net_device *pnetdev)
+{
+	struct _adapter *padapter = netdev_priv(pnetdev);
 
 	mutex_lock(&padapter->mutex_start);
-	अगर (!padapter->bup) अणु
+	if (!padapter->bup) {
 		padapter->driver_stopped = false;
-		padapter->surprise_हटाओd = false;
+		padapter->surprise_removed = false;
 		padapter->bup = true;
-		अगर (rtl871x_hal_init(padapter) != _SUCCESS)
-			जाओ netdev_खोलो_error;
-		अगर (!r8712_iniपंचांगac) अणु
+		if (rtl871x_hal_init(padapter) != _SUCCESS)
+			goto netdev_open_error;
+		if (!r8712_initmac) {
 			/* Use the mac address stored in the Efuse */
-			स_नकल(pnetdev->dev_addr,
+			memcpy(pnetdev->dev_addr,
 			       padapter->eeprompriv.mac_addr, ETH_ALEN);
-		पूर्ण अन्यथा अणु
-			/* We have to inक्रमm f/w to use user-supplied MAC
+		} else {
+			/* We have to inform f/w to use user-supplied MAC
 			 * address.
 			 */
 			msleep(200);
 			r8712_setMacAddr_cmd(padapter, (u8 *)pnetdev->dev_addr);
 			/*
-			 * The "myid" function will get the wअगरi mac address
-			 * from eeprompriv काष्ठाure instead of netdev
-			 * काष्ठाure. So, we have to overग_लिखो the mac_addr
-			 * stored in the eeprompriv काष्ठाure. In this हाल,
+			 * The "myid" function will get the wifi mac address
+			 * from eeprompriv structure instead of netdev
+			 * structure. So, we have to overwrite the mac_addr
+			 * stored in the eeprompriv structure. In this case,
 			 * the real mac address won't be used anymore. So that,
 			 * the eeprompriv.mac_addr should store the mac which
-			 * users specअगरy.
+			 * users specify.
 			 */
-			स_नकल(padapter->eeprompriv.mac_addr,
+			memcpy(padapter->eeprompriv.mac_addr,
 			       pnetdev->dev_addr, ETH_ALEN);
-		पूर्ण
-		अगर (start_drv_thपढ़ोs(padapter) != _SUCCESS)
-			जाओ netdev_खोलो_error;
-		अगर (!padapter->dvobjpriv.inirp_init)
-			जाओ netdev_खोलो_error;
-		अन्यथा
+		}
+		if (start_drv_threads(padapter) != _SUCCESS)
+			goto netdev_open_error;
+		if (!padapter->dvobjpriv.inirp_init)
+			goto netdev_open_error;
+		else
 			padapter->dvobjpriv.inirp_init(padapter);
-		r8712_set_ps_mode(padapter, padapter->registrypriv.घातer_mgnt,
+		r8712_set_ps_mode(padapter, padapter->registrypriv.power_mgnt,
 				  padapter->registrypriv.smart_ps);
-	पूर्ण
-	अगर (!netअगर_queue_stopped(pnetdev))
-		netअगर_start_queue(pnetdev);
-	अन्यथा
-		netअगर_wake_queue(pnetdev);
+	}
+	if (!netif_queue_stopped(pnetdev))
+		netif_start_queue(pnetdev);
+	else
+		netif_wake_queue(pnetdev);
 
-	अगर (video_mode)
+	if (video_mode)
 		enable_video_mode(padapter, cbw40_enable);
-	/* start driver mlme relation समयr */
-	start_drv_समयrs(padapter);
+	/* start driver mlme relation timer */
+	start_drv_timers(padapter);
 	padapter->ledpriv.LedControlHandler(padapter, LED_CTL_NO_LINK);
 	mutex_unlock(&padapter->mutex_start);
-	वापस 0;
-netdev_खोलो_error:
+	return 0;
+netdev_open_error:
 	padapter->bup = false;
-	netअगर_carrier_off(pnetdev);
-	netअगर_stop_queue(pnetdev);
+	netif_carrier_off(pnetdev);
+	netif_stop_queue(pnetdev);
 	mutex_unlock(&padapter->mutex_start);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
 /*
  *
- * This function पूर्णांकends to handle the shutकरोwn of an पूर्णांकerface
+ * This function intends to handle the shutdown of an interface
  * i.e. when it is brought Down from an Up/Active state.
  *
  */
-अटल पूर्णांक netdev_बंद(काष्ठा net_device *pnetdev)
-अणु
-	काष्ठा _adapter *padapter = netdev_priv(pnetdev);
+static int netdev_close(struct net_device *pnetdev)
+{
+	struct _adapter *padapter = netdev_priv(pnetdev);
 
 	/* Close LED*/
 	padapter->ledpriv.LedControlHandler(padapter, LED_CTL_POWER_OFF);
 	msleep(200);
 
 	/*s1.*/
-	अगर (pnetdev) अणु
-		अगर (!netअगर_queue_stopped(pnetdev))
-			netअगर_stop_queue(pnetdev);
-	पूर्ण
+	if (pnetdev) {
+		if (!netif_queue_stopped(pnetdev))
+			netif_stop_queue(pnetdev);
+	}
 	/*s2.*/
 	/*s2-1.  issue disassoc_cmd to fw*/
 	r8712_disassoc_cmd(padapter);
 	/*s2-2.  indicate disconnect to os*/
 	r8712_ind_disconnect(padapter);
 	/*s2-3.*/
-	r8712_मुक्त_assoc_resources(padapter);
+	r8712_free_assoc_resources(padapter);
 	/*s2-4.*/
-	r8712_मुक्त_network_queue(padapter);
-	वापस 0;
-पूर्ण
+	r8712_free_network_queue(padapter);
+	return 0;
+}
 
-#समावेश "mlme_osdep.h"
+#include "mlme_osdep.h"

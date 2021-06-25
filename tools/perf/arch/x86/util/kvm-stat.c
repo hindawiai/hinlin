@@ -1,169 +1,168 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <त्रुटिसं.स>
-#समावेश <माला.स>
-#समावेश "../../../util/kvm-stat.h"
-#समावेश "../../../util/evsel.h"
-#समावेश <यंत्र/svm.h>
-#समावेश <यंत्र/vmx.h>
-#समावेश <यंत्र/kvm.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <errno.h>
+#include <string.h>
+#include "../../../util/kvm-stat.h"
+#include "../../../util/evsel.h"
+#include <asm/svm.h>
+#include <asm/vmx.h>
+#include <asm/kvm.h>
 
-define_निकास_reasons_table(vmx_निकास_reasons, VMX_EXIT_REASONS);
-define_निकास_reasons_table(svm_निकास_reasons, SVM_EXIT_REASONS);
+define_exit_reasons_table(vmx_exit_reasons, VMX_EXIT_REASONS);
+define_exit_reasons_table(svm_exit_reasons, SVM_EXIT_REASONS);
 
-अटल काष्ठा kvm_events_ops निकास_events = अणु
-	.is_begin_event = निकास_event_begin,
-	.is_end_event = निकास_event_end,
-	.decode_key = निकास_event_decode_key,
+static struct kvm_events_ops exit_events = {
+	.is_begin_event = exit_event_begin,
+	.is_end_event = exit_event_end,
+	.decode_key = exit_event_decode_key,
 	.name = "VM-EXIT"
-पूर्ण;
+};
 
-स्थिर अक्षर *vcpu_id_str = "vcpu_id";
-स्थिर पूर्णांक decode_str_len = 20;
-स्थिर अक्षर *kvm_निकास_reason = "exit_reason";
-स्थिर अक्षर *kvm_entry_trace = "kvm:kvm_entry";
-स्थिर अक्षर *kvm_निकास_trace = "kvm:kvm_exit";
+const char *vcpu_id_str = "vcpu_id";
+const int decode_str_len = 20;
+const char *kvm_exit_reason = "exit_reason";
+const char *kvm_entry_trace = "kvm:kvm_entry";
+const char *kvm_exit_trace = "kvm:kvm_exit";
 
 /*
  * For the mmio events, we treat:
- * the समय of MMIO ग_लिखो: kvm_mmio(KVM_TRACE_MMIO_WRITE...) -> kvm_entry
- * the समय of MMIO पढ़ो: kvm_निकास -> kvm_mmio(KVM_TRACE_MMIO_READ...).
+ * the time of MMIO write: kvm_mmio(KVM_TRACE_MMIO_WRITE...) -> kvm_entry
+ * the time of MMIO read: kvm_exit -> kvm_mmio(KVM_TRACE_MMIO_READ...).
  */
-अटल व्योम mmio_event_get_key(काष्ठा evsel *evsel, काष्ठा perf_sample *sample,
-			       काष्ठा event_key *key)
-अणु
-	key->key  = evsel__पूर्णांकval(evsel, sample, "gpa");
-	key->info = evsel__पूर्णांकval(evsel, sample, "type");
-पूर्ण
+static void mmio_event_get_key(struct evsel *evsel, struct perf_sample *sample,
+			       struct event_key *key)
+{
+	key->key  = evsel__intval(evsel, sample, "gpa");
+	key->info = evsel__intval(evsel, sample, "type");
+}
 
-#घोषणा KVM_TRACE_MMIO_READ_UNSATISFIED 0
-#घोषणा KVM_TRACE_MMIO_READ 1
-#घोषणा KVM_TRACE_MMIO_WRITE 2
+#define KVM_TRACE_MMIO_READ_UNSATISFIED 0
+#define KVM_TRACE_MMIO_READ 1
+#define KVM_TRACE_MMIO_WRITE 2
 
-अटल bool mmio_event_begin(काष्ठा evsel *evsel,
-			     काष्ठा perf_sample *sample, काष्ठा event_key *key)
-अणु
-	/* MMIO पढ़ो begin event in kernel. */
-	अगर (kvm_निकास_event(evsel))
-		वापस true;
+static bool mmio_event_begin(struct evsel *evsel,
+			     struct perf_sample *sample, struct event_key *key)
+{
+	/* MMIO read begin event in kernel. */
+	if (kvm_exit_event(evsel))
+		return true;
 
-	/* MMIO ग_लिखो begin event in kernel. */
-	अगर (!म_भेद(evsel->name, "kvm:kvm_mmio") &&
-	    evsel__पूर्णांकval(evsel, sample, "type") == KVM_TRACE_MMIO_WRITE) अणु
+	/* MMIO write begin event in kernel. */
+	if (!strcmp(evsel->name, "kvm:kvm_mmio") &&
+	    evsel__intval(evsel, sample, "type") == KVM_TRACE_MMIO_WRITE) {
 		mmio_event_get_key(evsel, sample, key);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool mmio_event_end(काष्ठा evsel *evsel, काष्ठा perf_sample *sample,
-			   काष्ठा event_key *key)
-अणु
-	/* MMIO ग_लिखो end event in kernel. */
-	अगर (kvm_entry_event(evsel))
-		वापस true;
+static bool mmio_event_end(struct evsel *evsel, struct perf_sample *sample,
+			   struct event_key *key)
+{
+	/* MMIO write end event in kernel. */
+	if (kvm_entry_event(evsel))
+		return true;
 
-	/* MMIO पढ़ो end event in kernel.*/
-	अगर (!म_भेद(evsel->name, "kvm:kvm_mmio") &&
-	    evsel__पूर्णांकval(evsel, sample, "type") == KVM_TRACE_MMIO_READ) अणु
+	/* MMIO read end event in kernel.*/
+	if (!strcmp(evsel->name, "kvm:kvm_mmio") &&
+	    evsel__intval(evsel, sample, "type") == KVM_TRACE_MMIO_READ) {
 		mmio_event_get_key(evsel, sample, key);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम mmio_event_decode_key(काष्ठा perf_kvm_stat *kvm __maybe_unused,
-				  काष्ठा event_key *key,
-				  अक्षर *decode)
-अणु
-	scnम_लिखो(decode, decode_str_len, "%#lx:%s",
-		  (अचिन्हित दीर्घ)key->key,
+static void mmio_event_decode_key(struct perf_kvm_stat *kvm __maybe_unused,
+				  struct event_key *key,
+				  char *decode)
+{
+	scnprintf(decode, decode_str_len, "%#lx:%s",
+		  (unsigned long)key->key,
 		  key->info == KVM_TRACE_MMIO_WRITE ? "W" : "R");
-पूर्ण
+}
 
-अटल काष्ठा kvm_events_ops mmio_events = अणु
+static struct kvm_events_ops mmio_events = {
 	.is_begin_event = mmio_event_begin,
 	.is_end_event = mmio_event_end,
 	.decode_key = mmio_event_decode_key,
 	.name = "MMIO Access"
-पूर्ण;
+};
 
- /* The समय of emulation pio access is from kvm_pio to kvm_entry. */
-अटल व्योम ioport_event_get_key(काष्ठा evsel *evsel,
-				 काष्ठा perf_sample *sample,
-				 काष्ठा event_key *key)
-अणु
-	key->key  = evsel__पूर्णांकval(evsel, sample, "port");
-	key->info = evsel__पूर्णांकval(evsel, sample, "rw");
-पूर्ण
+ /* The time of emulation pio access is from kvm_pio to kvm_entry. */
+static void ioport_event_get_key(struct evsel *evsel,
+				 struct perf_sample *sample,
+				 struct event_key *key)
+{
+	key->key  = evsel__intval(evsel, sample, "port");
+	key->info = evsel__intval(evsel, sample, "rw");
+}
 
-अटल bool ioport_event_begin(काष्ठा evsel *evsel,
-			       काष्ठा perf_sample *sample,
-			       काष्ठा event_key *key)
-अणु
-	अगर (!म_भेद(evsel->name, "kvm:kvm_pio")) अणु
+static bool ioport_event_begin(struct evsel *evsel,
+			       struct perf_sample *sample,
+			       struct event_key *key)
+{
+	if (!strcmp(evsel->name, "kvm:kvm_pio")) {
 		ioport_event_get_key(evsel, sample, key);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool ioport_event_end(काष्ठा evsel *evsel,
-			     काष्ठा perf_sample *sample __maybe_unused,
-			     काष्ठा event_key *key __maybe_unused)
-अणु
-	वापस kvm_entry_event(evsel);
-पूर्ण
+static bool ioport_event_end(struct evsel *evsel,
+			     struct perf_sample *sample __maybe_unused,
+			     struct event_key *key __maybe_unused)
+{
+	return kvm_entry_event(evsel);
+}
 
-अटल व्योम ioport_event_decode_key(काष्ठा perf_kvm_stat *kvm __maybe_unused,
-				    काष्ठा event_key *key,
-				    अक्षर *decode)
-अणु
-	scnम_लिखो(decode, decode_str_len, "%#llx:%s",
-		  (अचिन्हित दीर्घ दीर्घ)key->key,
+static void ioport_event_decode_key(struct perf_kvm_stat *kvm __maybe_unused,
+				    struct event_key *key,
+				    char *decode)
+{
+	scnprintf(decode, decode_str_len, "%#llx:%s",
+		  (unsigned long long)key->key,
 		  key->info ? "POUT" : "PIN");
-पूर्ण
+}
 
-अटल काष्ठा kvm_events_ops ioport_events = अणु
+static struct kvm_events_ops ioport_events = {
 	.is_begin_event = ioport_event_begin,
 	.is_end_event = ioport_event_end,
 	.decode_key = ioport_event_decode_key,
 	.name = "IO Port Access"
-पूर्ण;
+};
 
-स्थिर अक्षर *kvm_events_tp[] = अणु
+const char *kvm_events_tp[] = {
 	"kvm:kvm_entry",
 	"kvm:kvm_exit",
 	"kvm:kvm_mmio",
 	"kvm:kvm_pio",
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-काष्ठा kvm_reg_events_ops kvm_reg_events_ops[] = अणु
-	अणु .name = "vmexit", .ops = &निकास_events पूर्ण,
-	अणु .name = "mmio", .ops = &mmio_events पूर्ण,
-	अणु .name = "ioport", .ops = &ioport_events पूर्ण,
-	अणु शून्य, शून्य पूर्ण,
-पूर्ण;
+struct kvm_reg_events_ops kvm_reg_events_ops[] = {
+	{ .name = "vmexit", .ops = &exit_events },
+	{ .name = "mmio", .ops = &mmio_events },
+	{ .name = "ioport", .ops = &ioport_events },
+	{ NULL, NULL },
+};
 
-स्थिर अक्षर * स्थिर kvm_skip_events[] = अणु
+const char * const kvm_skip_events[] = {
 	"HLT",
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-पूर्णांक cpu_isa_init(काष्ठा perf_kvm_stat *kvm, स्थिर अक्षर *cpuid)
-अणु
-	अगर (म_माला(cpuid, "Intel")) अणु
-		kvm->निकास_reasons = vmx_निकास_reasons;
-		kvm->निकास_reasons_isa = "VMX";
-	पूर्ण अन्यथा अगर (म_माला(cpuid, "AMD") || म_माला(cpuid, "Hygon")) अणु
-		kvm->निकास_reasons = svm_निकास_reasons;
-		kvm->निकास_reasons_isa = "SVM";
-	पूर्ण अन्यथा
-		वापस -ENOTSUP;
+int cpu_isa_init(struct perf_kvm_stat *kvm, const char *cpuid)
+{
+	if (strstr(cpuid, "Intel")) {
+		kvm->exit_reasons = vmx_exit_reasons;
+		kvm->exit_reasons_isa = "VMX";
+	} else if (strstr(cpuid, "AMD") || strstr(cpuid, "Hygon")) {
+		kvm->exit_reasons = svm_exit_reasons;
+		kvm->exit_reasons_isa = "SVM";
+	} else
+		return -ENOTSUP;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

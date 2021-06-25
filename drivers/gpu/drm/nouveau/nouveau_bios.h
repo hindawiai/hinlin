@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2007-2008 Nouveau Project
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,157 +21,157 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#अगर_अघोषित __NOUVEAU_DISPBIOS_H__
-#घोषणा __NOUVEAU_DISPBIOS_H__
+#ifndef __NOUVEAU_DISPBIOS_H__
+#define __NOUVEAU_DISPBIOS_H__
 
-#घोषणा DCB_MAX_NUM_ENTRIES 16
-#घोषणा DCB_MAX_NUM_I2C_ENTRIES 16
-#घोषणा DCB_MAX_NUM_GPIO_ENTRIES 32
-#घोषणा DCB_MAX_NUM_CONNECTOR_ENTRIES 16
+#define DCB_MAX_NUM_ENTRIES 16
+#define DCB_MAX_NUM_I2C_ENTRIES 16
+#define DCB_MAX_NUM_GPIO_ENTRIES 32
+#define DCB_MAX_NUM_CONNECTOR_ENTRIES 16
 
-#घोषणा DCB_LOC_ON_CHIP 0
+#define DCB_LOC_ON_CHIP 0
 
-#घोषणा ROM16(x) get_unaligned_le16(&(x))
-#घोषणा ROM32(x) get_unaligned_le32(&(x))
-#घोषणा ROMPTR(d,x) (अणु            \
-	काष्ठा nouveau_drm *drm = nouveau_drm((d)); \
-	ROM16(x) ? &drm->vbios.data[ROM16(x)] : शून्य; \
-पूर्ण)
+#define ROM16(x) get_unaligned_le16(&(x))
+#define ROM32(x) get_unaligned_le32(&(x))
+#define ROMPTR(d,x) ({            \
+	struct nouveau_drm *drm = nouveau_drm((d)); \
+	ROM16(x) ? &drm->vbios.data[ROM16(x)] : NULL; \
+})
 
-काष्ठा bit_entry अणु
-	uपूर्णांक8_t  id;
-	uपूर्णांक8_t  version;
-	uपूर्णांक16_t length;
-	uपूर्णांक16_t offset;
-	uपूर्णांक8_t *data;
-पूर्ण;
+struct bit_entry {
+	uint8_t  id;
+	uint8_t  version;
+	uint16_t length;
+	uint16_t offset;
+	uint8_t *data;
+};
 
-पूर्णांक bit_table(काष्ठा drm_device *, u8 id, काष्ठा bit_entry *);
+int bit_table(struct drm_device *, u8 id, struct bit_entry *);
 
-#समावेश <subdev/bios/dcb.h>
-#समावेश <subdev/bios/conn.h>
+#include <subdev/bios/dcb.h>
+#include <subdev/bios/conn.h>
 
-काष्ठा dcb_table अणु
-	uपूर्णांक8_t version;
-	पूर्णांक entries;
-	काष्ठा dcb_output entry[DCB_MAX_NUM_ENTRIES];
-पूर्ण;
+struct dcb_table {
+	uint8_t version;
+	int entries;
+	struct dcb_output entry[DCB_MAX_NUM_ENTRIES];
+};
 
-क्रमागत nouveau_or अणु
+enum nouveau_or {
 	DCB_OUTPUT_A = (1 << 0),
 	DCB_OUTPUT_B = (1 << 1),
 	DCB_OUTPUT_C = (1 << 2)
-पूर्ण;
+};
 
-क्रमागत LVDS_script अणु
-	/* Order *करोes* matter here */
+enum LVDS_script {
+	/* Order *does* matter here */
 	LVDS_INIT = 1,
 	LVDS_RESET,
 	LVDS_BACKLIGHT_ON,
 	LVDS_BACKLIGHT_OFF,
 	LVDS_PANEL_ON,
 	LVDS_PANEL_OFF
-पूर्ण;
+};
 
-काष्ठा nvbios अणु
-	काष्ठा drm_device *dev;
-	क्रमागत अणु
+struct nvbios {
+	struct drm_device *dev;
+	enum {
 		NVBIOS_BMP,
 		NVBIOS_BIT
-	पूर्ण type;
-	uपूर्णांक16_t offset;
-	uपूर्णांक32_t length;
-	uपूर्णांक8_t *data;
+	} type;
+	uint16_t offset;
+	uint32_t length;
+	uint8_t *data;
 
-	uपूर्णांक8_t chip_version;
+	uint8_t chip_version;
 
-	uपूर्णांक32_t dactestval;
-	uपूर्णांक32_t tvdactestval;
-	uपूर्णांक8_t digital_min_front_porch;
+	uint32_t dactestval;
+	uint32_t tvdactestval;
+	uint8_t digital_min_front_porch;
 	bool fp_no_ddc;
 
 	spinlock_t lock;
 
 	bool execute;
 
-	uपूर्णांक8_t major_version;
-	uपूर्णांक8_t feature_byte;
+	uint8_t major_version;
+	uint8_t feature_byte;
 	bool is_mobile;
 
-	uपूर्णांक32_t fmaxvco, fminvco;
+	uint32_t fmaxvco, fminvco;
 
 	bool old_style_init;
-	uपूर्णांक16_t init_script_tbls_ptr;
-	uपूर्णांक16_t extra_init_script_tbl_ptr;
+	uint16_t init_script_tbls_ptr;
+	uint16_t extra_init_script_tbl_ptr;
 
-	uपूर्णांक16_t ram_restrict_tbl_ptr;
-	uपूर्णांक8_t ram_restrict_group_count;
+	uint16_t ram_restrict_tbl_ptr;
+	uint8_t ram_restrict_group_count;
 
-	काष्ठा dcb_table dcb;
+	struct dcb_table dcb;
 
-	काष्ठा अणु
-		पूर्णांक crtchead;
-	पूर्ण state;
+	struct {
+		int crtchead;
+	} state;
 
-	काष्ठा अणु
-		uपूर्णांक16_t fptablepoपूर्णांकer;	/* also used by पंचांगds */
-		uपूर्णांक16_t fpxlatetableptr;
-		पूर्णांक xlatwidth;
-		uपूर्णांक16_t lvdsmanufacturerpoपूर्णांकer;
-		uपूर्णांक16_t fpxlatemanufacturertableptr;
-		uपूर्णांक16_t mode_ptr;
-		uपूर्णांक16_t xlated_entry;
-		bool घातer_off_क्रम_reset;
+	struct {
+		uint16_t fptablepointer;	/* also used by tmds */
+		uint16_t fpxlatetableptr;
+		int xlatwidth;
+		uint16_t lvdsmanufacturerpointer;
+		uint16_t fpxlatemanufacturertableptr;
+		uint16_t mode_ptr;
+		uint16_t xlated_entry;
+		bool power_off_for_reset;
 		bool reset_after_pclk_change;
 		bool dual_link;
 		bool link_c_increment;
-		bool अगर_is_24bit;
-		पूर्णांक duallink_transition_clk;
-		uपूर्णांक8_t strapless_is_24bit;
-		uपूर्णांक8_t *edid;
+		bool if_is_24bit;
+		int duallink_transition_clk;
+		uint8_t strapless_is_24bit;
+		uint8_t *edid;
 
 		/* will need resetting after suspend */
-		पूर्णांक last_script_invoc;
+		int last_script_invoc;
 		bool lvds_init_run;
-	पूर्ण fp;
+	} fp;
 
-	काष्ठा अणु
-		uपूर्णांक16_t output0_script_ptr;
-		uपूर्णांक16_t output1_script_ptr;
-	पूर्ण पंचांगds;
+	struct {
+		uint16_t output0_script_ptr;
+		uint16_t output1_script_ptr;
+	} tmds;
 
-	काष्ठा अणु
-		uपूर्णांक16_t mem_init_tbl_ptr;
-		uपूर्णांक16_t sdr_seq_tbl_ptr;
-		uपूर्णांक16_t ddr_seq_tbl_ptr;
+	struct {
+		uint16_t mem_init_tbl_ptr;
+		uint16_t sdr_seq_tbl_ptr;
+		uint16_t ddr_seq_tbl_ptr;
 
-		काष्ठा अणु
-			uपूर्णांक8_t crt, tv, panel;
-		पूर्ण i2c_indices;
+		struct {
+			uint8_t crt, tv, panel;
+		} i2c_indices;
 
-		uपूर्णांक16_t lvds_single_a_script_ptr;
-	पूर्ण legacy;
-पूर्ण;
+		uint16_t lvds_single_a_script_ptr;
+	} legacy;
+};
 
-व्योम *olddcb_table(काष्ठा drm_device *);
-व्योम *olddcb_outp(काष्ठा drm_device *, u8 idx);
-पूर्णांक olddcb_outp_क्रमeach(काष्ठा drm_device *, व्योम *data,
-		     पूर्णांक (*)(काष्ठा drm_device *, व्योम *, पूर्णांक idx, u8 *outp));
-u8 *olddcb_conntab(काष्ठा drm_device *);
-u8 *olddcb_conn(काष्ठा drm_device *, u8 idx);
+void *olddcb_table(struct drm_device *);
+void *olddcb_outp(struct drm_device *, u8 idx);
+int olddcb_outp_foreach(struct drm_device *, void *data,
+		     int (*)(struct drm_device *, void *, int idx, u8 *outp));
+u8 *olddcb_conntab(struct drm_device *);
+u8 *olddcb_conn(struct drm_device *, u8 idx);
 
-पूर्णांक nouveau_bios_init(काष्ठा drm_device *);
-व्योम nouveau_bios_takeकरोwn(काष्ठा drm_device *dev);
-पूर्णांक nouveau_run_vbios_init(काष्ठा drm_device *);
-काष्ठा dcb_connector_table_entry *
-nouveau_bios_connector_entry(काष्ठा drm_device *, पूर्णांक index);
-bool nouveau_bios_fp_mode(काष्ठा drm_device *, काष्ठा drm_display_mode *);
-uपूर्णांक8_t *nouveau_bios_embedded_edid(काष्ठा drm_device *);
-पूर्णांक nouveau_bios_parse_lvds_table(काष्ठा drm_device *, पूर्णांक pxclk,
-					 bool *dl, bool *अगर_is_24bit);
-पूर्णांक run_पंचांगds_table(काष्ठा drm_device *, काष्ठा dcb_output *,
-			  पूर्णांक head, पूर्णांक pxclk);
-पूर्णांक call_lvds_script(काष्ठा drm_device *, काष्ठा dcb_output *, पूर्णांक head,
-			    क्रमागत LVDS_script, पूर्णांक pxclk);
+int nouveau_bios_init(struct drm_device *);
+void nouveau_bios_takedown(struct drm_device *dev);
+int nouveau_run_vbios_init(struct drm_device *);
+struct dcb_connector_table_entry *
+nouveau_bios_connector_entry(struct drm_device *, int index);
+bool nouveau_bios_fp_mode(struct drm_device *, struct drm_display_mode *);
+uint8_t *nouveau_bios_embedded_edid(struct drm_device *);
+int nouveau_bios_parse_lvds_table(struct drm_device *, int pxclk,
+					 bool *dl, bool *if_is_24bit);
+int run_tmds_table(struct drm_device *, struct dcb_output *,
+			  int head, int pxclk);
+int call_lvds_script(struct drm_device *, struct dcb_output *, int head,
+			    enum LVDS_script, int pxclk);
 
-#पूर्ण_अगर
+#endif

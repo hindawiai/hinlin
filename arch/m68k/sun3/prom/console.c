@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * console.c: Routines that deal with sending and receiving IO
  *            to/from the current console device using the PROM.
@@ -7,165 +6,165 @@
  * Copyright (C) 1995 David S. Miller (davem@caip.rutgers.edu)
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <यंत्र/खोलोprom.h>
-#समावेश <यंत्र/oplib.h>
-#समावेश <linux/माला.स>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <asm/openprom.h>
+#include <asm/oplib.h>
+#include <linux/string.h>
 
-/* Non blocking get अक्षरacter from console input device, वापसs -1
- * अगर no input was taken.  This can be used क्रम polling.
+/* Non blocking get character from console input device, returns -1
+ * if no input was taken.  This can be used for polling.
  */
-पूर्णांक
-prom_nbअक्षर_लो(व्योम)
-अणु
-	पूर्णांक i = -1;
-	अचिन्हित दीर्घ flags;
+int
+prom_nbgetchar(void)
+{
+	int i = -1;
+	unsigned long flags;
 
 	local_irq_save(flags);
-		i = (*(romvec->pv_nbअक्षर_लो))();
+		i = (*(romvec->pv_nbgetchar))();
 	local_irq_restore(flags);
-	वापस i; /* Ugh, we could spin क्रमever on unsupported proms ;( */
-पूर्ण
+	return i; /* Ugh, we could spin forever on unsupported proms ;( */
+}
 
-/* Non blocking put अक्षरacter to console device, वापसs -1 अगर
+/* Non blocking put character to console device, returns -1 if
  * unsuccessful.
  */
-पूर्णांक
-prom_nbअक्षर_दो(अक्षर c)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i = -1;
+int
+prom_nbputchar(char c)
+{
+	unsigned long flags;
+	int i = -1;
 
 	local_irq_save(flags);
-		i = (*(romvec->pv_nbअक्षर_दो))(c);
+		i = (*(romvec->pv_nbputchar))(c);
 	local_irq_restore(flags);
-	वापस i; /* Ugh, we could spin क्रमever on unsupported proms ;( */
-पूर्ण
+	return i; /* Ugh, we could spin forever on unsupported proms ;( */
+}
 
-/* Blocking version of get अक्षरacter routine above. */
-अक्षर
-prom_अक्षर_लो(व्योम)
-अणु
-	पूर्णांक अक्षरacter;
-	जबतक((अक्षरacter = prom_nbअक्षर_लो()) == -1) ;
-	वापस (अक्षर) अक्षरacter;
-पूर्ण
+/* Blocking version of get character routine above. */
+char
+prom_getchar(void)
+{
+	int character;
+	while((character = prom_nbgetchar()) == -1) ;
+	return (char) character;
+}
 
-/* Blocking version of put अक्षरacter routine above. */
-व्योम
-prom_अक्षर_दो(अक्षर c)
-अणु
-	जबतक(prom_nbअक्षर_दो(c) == -1) ;
-	वापस;
-पूर्ण
+/* Blocking version of put character routine above. */
+void
+prom_putchar(char c)
+{
+	while(prom_nbputchar(c) == -1) ;
+	return;
+}
 
-/* Query क्रम input device type */
-#अगर 0
-क्रमागत prom_input_device
+/* Query for input device type */
+#if 0
+enum prom_input_device
 prom_query_input_device()
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक st_p;
-	अक्षर propb[64];
-	अक्षर *p;
+{
+	unsigned long flags;
+	int st_p;
+	char propb[64];
+	char *p;
 
-	चयन(prom_vers) अणु
-	हाल PROM_V0:
-	हाल PROM_V2:
-	शेष:
-		चयन(*romvec->pv_मानक_निवेश) अणु
-		हाल PROMDEV_KBD:	वापस PROMDEV_IKBD;
-		हाल PROMDEV_TTYA:	वापस PROMDEV_ITTYA;
-		हाल PROMDEV_TTYB:	वापस PROMDEV_ITTYB;
-		शेष:
-			वापस PROMDEV_I_UNK;
-		पूर्ण;
-	हाल PROM_V3:
-	हाल PROM_P1275:
+	switch(prom_vers) {
+	case PROM_V0:
+	case PROM_V2:
+	default:
+		switch(*romvec->pv_stdin) {
+		case PROMDEV_KBD:	return PROMDEV_IKBD;
+		case PROMDEV_TTYA:	return PROMDEV_ITTYA;
+		case PROMDEV_TTYB:	return PROMDEV_ITTYB;
+		default:
+			return PROMDEV_I_UNK;
+		};
+	case PROM_V3:
+	case PROM_P1275:
 		local_irq_save(flags);
-		st_p = (*romvec->pv_v2devops.v2_inst2pkg)(*romvec->pv_v2bootargs.fd_मानक_निवेश);
-		__यंत्र__ __अस्थिर__("ld [%0], %%g6\n\t" : :
+		st_p = (*romvec->pv_v2devops.v2_inst2pkg)(*romvec->pv_v2bootargs.fd_stdin);
+		__asm__ __volatile__("ld [%0], %%g6\n\t" : :
 				     "r" (&current_set[smp_processor_id()]) :
 				     "memory");
 		local_irq_restore(flags);
-		अगर(prom_node_has_property(st_p, "keyboard"))
-			वापस PROMDEV_IKBD;
-		prom_getproperty(st_p, "device_type", propb, माप(propb));
-		अगर(म_भेदन(propb, "serial", माप("serial")))
-			वापस PROMDEV_I_UNK;
-		prom_getproperty(prom_root_node, "stdin-path", propb, माप(propb));
+		if(prom_node_has_property(st_p, "keyboard"))
+			return PROMDEV_IKBD;
+		prom_getproperty(st_p, "device_type", propb, sizeof(propb));
+		if(strncmp(propb, "serial", sizeof("serial")))
+			return PROMDEV_I_UNK;
+		prom_getproperty(prom_root_node, "stdin-path", propb, sizeof(propb));
 		p = propb;
-		जबतक(*p) p++; p -= 2;
-		अगर(p[0] == ':') अणु
-			अगर(p[1] == 'a')
-				वापस PROMDEV_ITTYA;
-			अन्यथा अगर(p[1] == 'b')
-				वापस PROMDEV_ITTYB;
-		पूर्ण
-		वापस PROMDEV_I_UNK;
-	पूर्ण;
-पूर्ण
-#पूर्ण_अगर
+		while(*p) p++; p -= 2;
+		if(p[0] == ':') {
+			if(p[1] == 'a')
+				return PROMDEV_ITTYA;
+			else if(p[1] == 'b')
+				return PROMDEV_ITTYB;
+		}
+		return PROMDEV_I_UNK;
+	};
+}
+#endif
 
-/* Query क्रम output device type */
+/* Query for output device type */
 
-#अगर 0
-क्रमागत prom_output_device
+#if 0
+enum prom_output_device
 prom_query_output_device()
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक st_p;
-	अक्षर propb[64];
-	अक्षर *p;
-	पूर्णांक propl;
+{
+	unsigned long flags;
+	int st_p;
+	char propb[64];
+	char *p;
+	int propl;
 
-	चयन(prom_vers) अणु
-	हाल PROM_V0:
-		चयन(*romvec->pv_मानक_निवेश) अणु
-		हाल PROMDEV_SCREEN:	वापस PROMDEV_OSCREEN;
-		हाल PROMDEV_TTYA:	वापस PROMDEV_OTTYA;
-		हाल PROMDEV_TTYB:	वापस PROMDEV_OTTYB;
-		पूर्ण;
-		अवरोध;
-	हाल PROM_V2:
-	हाल PROM_V3:
-	हाल PROM_P1275:
+	switch(prom_vers) {
+	case PROM_V0:
+		switch(*romvec->pv_stdin) {
+		case PROMDEV_SCREEN:	return PROMDEV_OSCREEN;
+		case PROMDEV_TTYA:	return PROMDEV_OTTYA;
+		case PROMDEV_TTYB:	return PROMDEV_OTTYB;
+		};
+		break;
+	case PROM_V2:
+	case PROM_V3:
+	case PROM_P1275:
 		local_irq_save(flags);
-		st_p = (*romvec->pv_v2devops.v2_inst2pkg)(*romvec->pv_v2bootargs.fd_मानक_निकास);
-		__यंत्र__ __अस्थिर__("ld [%0], %%g6\n\t" : :
+		st_p = (*romvec->pv_v2devops.v2_inst2pkg)(*romvec->pv_v2bootargs.fd_stdout);
+		__asm__ __volatile__("ld [%0], %%g6\n\t" : :
 				     "r" (&current_set[smp_processor_id()]) :
 				     "memory");
 		local_irq_restore(flags);
-		propl = prom_getproperty(st_p, "device_type", propb, माप(propb));
-		अगर (propl >= 0 && propl == माप("display") &&
-			म_भेदन("display", propb, माप("display")) == 0)
-		अणु
-			वापस PROMDEV_OSCREEN;
-		पूर्ण
-		अगर(prom_vers == PROM_V3) अणु
-			अगर(म_भेदन("serial", propb, माप("serial")))
-				वापस PROMDEV_O_UNK;
-			prom_getproperty(prom_root_node, "stdout-path", propb, माप(propb));
+		propl = prom_getproperty(st_p, "device_type", propb, sizeof(propb));
+		if (propl >= 0 && propl == sizeof("display") &&
+			strncmp("display", propb, sizeof("display")) == 0)
+		{
+			return PROMDEV_OSCREEN;
+		}
+		if(prom_vers == PROM_V3) {
+			if(strncmp("serial", propb, sizeof("serial")))
+				return PROMDEV_O_UNK;
+			prom_getproperty(prom_root_node, "stdout-path", propb, sizeof(propb));
 			p = propb;
-			जबतक(*p) p++; p -= 2;
-			अगर(p[0]==':') अणु
-				अगर(p[1] == 'a')
-					वापस PROMDEV_OTTYA;
-				अन्यथा अगर(p[1] == 'b')
-					वापस PROMDEV_OTTYB;
-			पूर्ण
-			वापस PROMDEV_O_UNK;
-		पूर्ण अन्यथा अणु
+			while(*p) p++; p -= 2;
+			if(p[0]==':') {
+				if(p[1] == 'a')
+					return PROMDEV_OTTYA;
+				else if(p[1] == 'b')
+					return PROMDEV_OTTYB;
+			}
+			return PROMDEV_O_UNK;
+		} else {
 			/* This works on SS-2 (an early OpenFirmware) still. */
-			चयन(*romvec->pv_मानक_निवेश) अणु
-			हाल PROMDEV_TTYA:	वापस PROMDEV_OTTYA;
-			हाल PROMDEV_TTYB:	वापस PROMDEV_OTTYB;
-			पूर्ण;
-		पूर्ण
-		अवरोध;
-	पूर्ण;
-	वापस PROMDEV_O_UNK;
-पूर्ण
-#पूर्ण_अगर
+			switch(*romvec->pv_stdin) {
+			case PROMDEV_TTYA:	return PROMDEV_OTTYA;
+			case PROMDEV_TTYB:	return PROMDEV_OTTYB;
+			};
+		}
+		break;
+	};
+	return PROMDEV_O_UNK;
+}
+#endif

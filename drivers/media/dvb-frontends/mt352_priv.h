@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- *  Driver क्रम Zarlink DVB-T MT352 demodulator
+ *  Driver for Zarlink DVB-T MT352 demodulator
  *
  *  Written by Holger Waechtler <holger@qanu.de>
  *	 and Daniel Mack <daniel@qanu.de>
@@ -9,7 +8,7 @@
  *  AVerMedia AVerTV DVB-T 771 support by
  *       Wolfram Joost <dbox2@frokaschwei.de>
  *
- *  Support क्रम Samsung TDTC9251DH01C(M) tuner
+ *  Support for Samsung TDTC9251DH01C(M) tuner
  *  Copyright (C) 2004 Antonio Mancuso <antonio.mancuso@digitaltelevision.it>
  *                     Amauri  Celani  <acelani@essegi.net>
  *
@@ -17,15 +16,15 @@
  *       Christopher Pascoe <c.pascoe@itee.uq.edu.au>
  */
 
-#अगर_अघोषित _MT352_PRIV_
-#घोषणा _MT352_PRIV_
+#ifndef _MT352_PRIV_
+#define _MT352_PRIV_
 
-#घोषणा ID_MT352        0x13
+#define ID_MT352        0x13
 
-#घोषणा msb(x) (((x) >> 8) & 0xff)
-#घोषणा lsb(x) ((x) & 0xff)
+#define msb(x) (((x) >> 8) & 0xff)
+#define lsb(x) ((x) & 0xff)
 
-क्रमागत mt352_reg_addr अणु
+enum mt352_reg_addr {
 	STATUS_0           = 0x00,
 	STATUS_1           = 0x01,
 	STATUS_2           = 0x02,
@@ -106,9 +105,9 @@
 	GPP_CTL            = 0x8C,
 	ADC_CTL_1          = 0x8E,
 	ADC_CTL_0          = 0x8F
-पूर्ण;
+};
 
 /* here we assume 1/6MHz == 166.66kHz stepsize */
-#घोषणा IF_FREQUENCYx6 217    /* 6 * 36.16666666667MHz */
+#define IF_FREQUENCYx6 217    /* 6 * 36.16666666667MHz */
 
-#पूर्ण_अगर                          /* _MT352_PRIV_ */
+#endif                          /* _MT352_PRIV_ */

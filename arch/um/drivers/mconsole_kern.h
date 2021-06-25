@@ -1,53 +1,52 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2001, 2002 Jeff Dike (jdike@karaya.com)
  */
 
-#अगर_अघोषित __MCONSOLE_KERN_H__
-#घोषणा __MCONSOLE_KERN_H__
+#ifndef __MCONSOLE_KERN_H__
+#define __MCONSOLE_KERN_H__
 
-#समावेश <linux/list.h>
-#समावेश "mconsole.h"
+#include <linux/list.h>
+#include "mconsole.h"
 
-काष्ठा mconsole_entry अणु
-	काष्ठा list_head list;
-	काष्ठा mc_request request;
-पूर्ण;
+struct mconsole_entry {
+	struct list_head list;
+	struct mc_request request;
+};
 
 /* All these methods are called in process context. */
-काष्ठा mc_device अणु
-	काष्ठा list_head list;
-	अक्षर *name;
-	पूर्णांक (*config)(अक्षर *, अक्षर **);
-	पूर्णांक (*get_config)(अक्षर *, अक्षर *, पूर्णांक, अक्षर **);
-	पूर्णांक (*id)(अक्षर **, पूर्णांक *, पूर्णांक *);
-	पूर्णांक (*हटाओ)(पूर्णांक, अक्षर **);
-पूर्ण;
+struct mc_device {
+	struct list_head list;
+	char *name;
+	int (*config)(char *, char **);
+	int (*get_config)(char *, char *, int, char **);
+	int (*id)(char **, int *, int *);
+	int (*remove)(int, char **);
+};
 
-#घोषणा CONFIG_CHUNK(str, size, current, chunk, end) \
-करो अणु \
-	current += म_माप(chunk); \
-	अगर(current >= size) \
-		str = शून्य; \
-	अगर(str != शून्य)अणु \
-		म_नकल(str, chunk); \
-		str += म_माप(chunk); \
-	पूर्ण \
-	अगर(end) \
+#define CONFIG_CHUNK(str, size, current, chunk, end) \
+do { \
+	current += strlen(chunk); \
+	if(current >= size) \
+		str = NULL; \
+	if(str != NULL){ \
+		strcpy(str, chunk); \
+		str += strlen(chunk); \
+	} \
+	if(end) \
 		current++; \
-पूर्ण जबतक(0)
+} while(0)
 
-#अगर_घोषित CONFIG_MCONSOLE
+#ifdef CONFIG_MCONSOLE
 
-बाह्य व्योम mconsole_रेजिस्टर_dev(काष्ठा mc_device *new);
+extern void mconsole_register_dev(struct mc_device *new);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम mconsole_रेजिस्टर_dev(काष्ठा mc_device *new)
-अणु
-पूर्ण
+static inline void mconsole_register_dev(struct mc_device *new)
+{
+}
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर
+#endif

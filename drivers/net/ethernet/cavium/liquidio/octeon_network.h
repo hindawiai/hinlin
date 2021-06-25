@@ -1,4 +1,3 @@
-<शैली गुरु>
 /**********************************************************************
  * Author: Cavium, Inc.
  *
@@ -7,151 +6,151 @@
  *
  * Copyright (c) 2003-2016 Cavium, Inc.
  *
- * This file is मुक्त software; you can redistribute it and/or modअगरy
+ * This file is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, Version 2, as
  * published by the Free Software Foundation.
  *
  * This file is distributed in the hope that it will be useful, but
  * AS-IS and WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE, TITLE, or
- * NONINFRINGEMENT.  See the GNU General Public License क्रम more
+ * NONINFRINGEMENT.  See the GNU General Public License for more
  * details.
  **********************************************************************/
 
-/*!  \पile  octeon_network.h
- *   \मrief Host NIC Driver: Structure and Macro definitions used by NIC Module.
+/*!  \file  octeon_network.h
+ *   \brief Host NIC Driver: Structure and Macro definitions used by NIC Module.
  */
 
-#अगर_अघोषित __OCTEON_NETWORK_H__
-#घोषणा __OCTEON_NETWORK_H__
-#समावेश <linux/ptp_घड़ी_kernel.h>
+#ifndef __OCTEON_NETWORK_H__
+#define __OCTEON_NETWORK_H__
+#include <linux/ptp_clock_kernel.h>
 
-#घोषणा LIO_MAX_MTU_SIZE (OCTNET_MAX_FRM_SIZE - OCTNET_FRM_HEADER_SIZE)
-#घोषणा LIO_MIN_MTU_SIZE ETH_MIN_MTU
+#define LIO_MAX_MTU_SIZE (OCTNET_MAX_FRM_SIZE - OCTNET_FRM_HEADER_SIZE)
+#define LIO_MIN_MTU_SIZE ETH_MIN_MTU
 
-/* Bit mask values क्रम lio->अगरstate */
-#घोषणा   LIO_IFSTATE_DROQ_OPS             0x01
-#घोषणा   LIO_IFSTATE_REGISTERED           0x02
-#घोषणा   LIO_IFSTATE_RUNNING              0x04
-#घोषणा   LIO_IFSTATE_RX_TIMESTAMP_ENABLED 0x08
-#घोषणा   LIO_IFSTATE_RESETTING		   0x10
+/* Bit mask values for lio->ifstate */
+#define   LIO_IFSTATE_DROQ_OPS             0x01
+#define   LIO_IFSTATE_REGISTERED           0x02
+#define   LIO_IFSTATE_RUNNING              0x04
+#define   LIO_IFSTATE_RX_TIMESTAMP_ENABLED 0x08
+#define   LIO_IFSTATE_RESETTING		   0x10
 
-काष्ठा liquidio_अगर_cfg_resp अणु
+struct liquidio_if_cfg_resp {
 	u64 rh;
-	काष्ठा liquidio_अगर_cfg_info cfg_info;
+	struct liquidio_if_cfg_info cfg_info;
 	u64 status;
-पूर्ण;
+};
 
-#घोषणा LIO_IFCFG_WAIT_TIME    3000 /* In milli seconds */
-#घोषणा LIQUIDIO_NDEV_STATS_POLL_TIME_MS 200
+#define LIO_IFCFG_WAIT_TIME    3000 /* In milli seconds */
+#define LIQUIDIO_NDEV_STATS_POLL_TIME_MS 200
 
-/* Structure of a node in list of gather components मुख्यtained by
- * NIC driver क्रम each network device.
+/* Structure of a node in list of gather components maintained by
+ * NIC driver for each network device.
  */
-काष्ठा octnic_gather अणु
-	/* List manipulation. Next and prev poपूर्णांकers. */
-	काष्ठा list_head list;
+struct octnic_gather {
+	/* List manipulation. Next and prev pointers. */
+	struct list_head list;
 
 	/* Size of the gather component at sg in bytes. */
-	पूर्णांक sg_size;
+	int sg_size;
 
 	/* Number of bytes that sg was adjusted to make it 8B-aligned. */
-	पूर्णांक adjust;
+	int adjust;
 
 	/* Gather component that can accommodate max sized fragment list
 	 * received from the IP layer.
 	 */
-	काष्ठा octeon_sg_entry *sg;
+	struct octeon_sg_entry *sg;
 
 	dma_addr_t sg_dma_ptr;
-पूर्ण;
+};
 
-काष्ठा oct_nic_stats_resp अणु
+struct oct_nic_stats_resp {
 	u64     rh;
-	काष्ठा oct_link_stats stats;
+	struct oct_link_stats stats;
 	u64     status;
-पूर्ण;
+};
 
-काष्ठा oct_nic_vf_stats_resp अणु
+struct oct_nic_vf_stats_resp {
 	u64     rh;
 	u64	spoofmac_cnt;
 	u64     status;
-पूर्ण;
+};
 
-काष्ठा oct_nic_stats_ctrl अणु
-	काष्ठा completion complete;
-	काष्ठा net_device *netdev;
-पूर्ण;
+struct oct_nic_stats_ctrl {
+	struct completion complete;
+	struct net_device *netdev;
+};
 
-काष्ठा oct_nic_seapi_resp अणु
+struct oct_nic_seapi_resp {
 	u64 rh;
-	जोड़ अणु
+	union {
 		u32 fec_setting;
 		u32 speed;
-	पूर्ण;
+	};
 	u64 status;
-पूर्ण;
+};
 
-/** LiquidIO per-पूर्णांकerface network निजी data */
-काष्ठा lio अणु
-	/** State of the पूर्णांकerface. Rx/Tx happens only in the RUNNING state.  */
-	atomic_t अगरstate;
+/** LiquidIO per-interface network private data */
+struct lio {
+	/** State of the interface. Rx/Tx happens only in the RUNNING state.  */
+	atomic_t ifstate;
 
 	/** Octeon Interface index number. This device will be represented as
-	 *  oct<अगरidx> in the प्रणाली.
+	 *  oct<ifidx> in the system.
 	 */
-	पूर्णांक अगरidx;
+	int ifidx;
 
-	/** Octeon Input queue to use to transmit क्रम this network पूर्णांकerface. */
-	पूर्णांक txq;
+	/** Octeon Input queue to use to transmit for this network interface. */
+	int txq;
 
 	/** Octeon Output queue from which pkts arrive
-	 * क्रम this network पूर्णांकerface.
+	 * for this network interface.
 	 */
-	पूर्णांक rxq;
+	int rxq;
 
 	/** Guards each glist */
 	spinlock_t *glist_lock;
 
 	/** Array of gather component linked lists */
-	काष्ठा list_head *glist;
-	व्योम **glists_virt_base;
+	struct list_head *glist;
+	void **glists_virt_base;
 	dma_addr_t *glists_dma_base;
 	u32 glist_entry_size;
 
-	/** Poपूर्णांकer to the NIC properties क्रम the Octeon device this network
-	 *  पूर्णांकerface is associated with.
+	/** Pointer to the NIC properties for the Octeon device this network
+	 *  interface is associated with.
 	 */
-	काष्ठा octdev_props *octprops;
+	struct octdev_props *octprops;
 
-	/** Poपूर्णांकer to the octeon device काष्ठाure. */
-	काष्ठा octeon_device *oct_dev;
+	/** Pointer to the octeon device structure. */
+	struct octeon_device *oct_dev;
 
-	काष्ठा net_device *netdev;
+	struct net_device *netdev;
 
-	/** Link inक्रमmation sent by the core application क्रम this पूर्णांकerface. */
-	काष्ठा oct_link_info linfo;
+	/** Link information sent by the core application for this interface. */
+	struct oct_link_info linfo;
 
 	/** counter of link changes */
 	u64 link_changes;
 
-	/** Size of Tx queue क्रम this octeon device. */
+	/** Size of Tx queue for this octeon device. */
 	u32 tx_qsize;
 
-	/** Size of Rx queue क्रम this octeon device. */
+	/** Size of Rx queue for this octeon device. */
 	u32 rx_qsize;
 
 	/** Size of MTU this octeon device. */
 	u32 mtu;
 
-	/** msg level flag per पूर्णांकerface. */
+	/** msg level flag per interface. */
 	u32 msg_enable;
 
 	/** Copy of Interface capabilities: TSO, TSO6, LRO, Chescksums . */
 	u64 dev_capability;
 
 	/* Copy of transmit encapsulation capabilities:
-	 * TSO, TSO6, Checksums क्रम this device क्रम Kernel
+	 * TSO, TSO6, Checksums for this device for Kernel
 	 * 3.10.0 onwards
 	 */
 	u64 enc_dev_capability;
@@ -162,138 +161,138 @@
 	/** Copy of ctrl reg in phy */
 	u32 led_ctrl_val;
 
-	/* PTP घड़ी inक्रमmation */
-	काष्ठा ptp_घड़ी_info ptp_info;
-	काष्ठा ptp_घड़ी *ptp_घड़ी;
+	/* PTP clock information */
+	struct ptp_clock_info ptp_info;
+	struct ptp_clock *ptp_clock;
 	s64 ptp_adjust;
 
-	/* क्रम atomic access to Octeon PTP reg and data काष्ठा */
+	/* for atomic access to Octeon PTP reg and data struct */
 	spinlock_t ptp_lock;
 
 	/* Interface info */
-	u32	पूर्णांकf_खोलो;
+	u32	intf_open;
 
-	/* work queue क्रम  txq status */
-	काष्ठा cavium_wq	txq_status_wq;
+	/* work queue for  txq status */
+	struct cavium_wq	txq_status_wq;
 
-	/* work queue क्रम  rxq oom status */
-	काष्ठा cavium_wq rxq_status_wq[MAX_POSSIBLE_OCTEON_OUTPUT_QUEUES];
+	/* work queue for  rxq oom status */
+	struct cavium_wq rxq_status_wq[MAX_POSSIBLE_OCTEON_OUTPUT_QUEUES];
 
-	/* work queue क्रम  link status */
-	काष्ठा cavium_wq	link_status_wq;
+	/* work queue for  link status */
+	struct cavium_wq	link_status_wq;
 
-	/* work queue to regularly send local समय to octeon firmware */
-	काष्ठा cavium_wq	sync_octeon_समय_wq;
+	/* work queue to regularly send local time to octeon firmware */
+	struct cavium_wq	sync_octeon_time_wq;
 
-	पूर्णांक netdev_uc_count;
-	काष्ठा cavium_wk stats_wk;
-पूर्ण;
+	int netdev_uc_count;
+	struct cavium_wk stats_wk;
+};
 
-#घोषणा LIO_SIZE         (माप(काष्ठा lio))
-#घोषणा GET_LIO(netdev)  ((काष्ठा lio *)netdev_priv(netdev))
+#define LIO_SIZE         (sizeof(struct lio))
+#define GET_LIO(netdev)  ((struct lio *)netdev_priv(netdev))
 
-#घोषणा LIO_MAX_CORES                16
+#define LIO_MAX_CORES                16
 
 /**
- * \मrief Enable or disable feature
- * @param netdev    poपूर्णांकer to network device
+ * \brief Enable or disable feature
+ * @param netdev    pointer to network device
  * @param cmd       Command that just requires acknowledgment
  * @param param1    Parameter to command
  */
-पूर्णांक liquidio_set_feature(काष्ठा net_device *netdev, पूर्णांक cmd, u16 param1);
+int liquidio_set_feature(struct net_device *netdev, int cmd, u16 param1);
 
-पूर्णांक setup_rx_oom_poll_fn(काष्ठा net_device *netdev);
+int setup_rx_oom_poll_fn(struct net_device *netdev);
 
-व्योम cleanup_rx_oom_poll_fn(काष्ठा net_device *netdev);
+void cleanup_rx_oom_poll_fn(struct net_device *netdev);
 
 /**
- * \मrief Link control command completion callback
- * @param nctrl_ptr poपूर्णांकer to control packet काष्ठाure
+ * \brief Link control command completion callback
+ * @param nctrl_ptr pointer to control packet structure
  *
  * This routine is called by the callback function when a ctrl pkt sent to
  * core app completes. The nctrl_ptr contains a copy of the command type
- * and data sent to the core app. This routine is only called अगर the ctrl
+ * and data sent to the core app. This routine is only called if the ctrl
  * pkt was sent successfully to the core app.
  */
-व्योम liquidio_link_ctrl_cmd_completion(व्योम *nctrl_ptr);
+void liquidio_link_ctrl_cmd_completion(void *nctrl_ptr);
 
-पूर्णांक liquidio_setup_io_queues(काष्ठा octeon_device *octeon_dev, पूर्णांक अगरidx,
+int liquidio_setup_io_queues(struct octeon_device *octeon_dev, int ifidx,
 			     u32 num_iqs, u32 num_oqs);
 
-irqवापस_t liquidio_msix_पूर्णांकr_handler(पूर्णांक irq __attribute__((unused)),
-				       व्योम *dev);
+irqreturn_t liquidio_msix_intr_handler(int irq __attribute__((unused)),
+				       void *dev);
 
-पूर्णांक octeon_setup_पूर्णांकerrupt(काष्ठा octeon_device *oct, u32 num_ioqs);
+int octeon_setup_interrupt(struct octeon_device *oct, u32 num_ioqs);
 
-व्योम lio_fetch_stats(काष्ठा work_काष्ठा *work);
+void lio_fetch_stats(struct work_struct *work);
 
-पूर्णांक lio_रुको_क्रम_clean_oq(काष्ठा octeon_device *oct);
+int lio_wait_for_clean_oq(struct octeon_device *oct);
 /**
- * \मrief Register ethtool operations
- * @param netdev    poपूर्णांकer to network device
+ * \brief Register ethtool operations
+ * @param netdev    pointer to network device
  */
-व्योम liquidio_set_ethtool_ops(काष्ठा net_device *netdev);
+void liquidio_set_ethtool_ops(struct net_device *netdev);
 
-व्योम lio_delete_glists(काष्ठा lio *lio);
+void lio_delete_glists(struct lio *lio);
 
-पूर्णांक lio_setup_glists(काष्ठा octeon_device *oct, काष्ठा lio *lio, पूर्णांक num_qs);
+int lio_setup_glists(struct octeon_device *oct, struct lio *lio, int num_qs);
 
-पूर्णांक liquidio_get_speed(काष्ठा lio *lio);
-पूर्णांक liquidio_set_speed(काष्ठा lio *lio, पूर्णांक speed);
-पूर्णांक liquidio_get_fec(काष्ठा lio *lio);
-पूर्णांक liquidio_set_fec(काष्ठा lio *lio, पूर्णांक on_off);
+int liquidio_get_speed(struct lio *lio);
+int liquidio_set_speed(struct lio *lio, int speed);
+int liquidio_get_fec(struct lio *lio);
+int liquidio_set_fec(struct lio *lio, int on_off);
 
 /**
- * \मrief Net device change_mtu
+ * \brief Net device change_mtu
  * @param netdev network device
  */
-पूर्णांक liquidio_change_mtu(काष्ठा net_device *netdev, पूर्णांक new_mtu);
-#घोषणा LIO_CHANGE_MTU_SUCCESS 1
-#घोषणा LIO_CHANGE_MTU_FAIL    2
+int liquidio_change_mtu(struct net_device *netdev, int new_mtu);
+#define LIO_CHANGE_MTU_SUCCESS 1
+#define LIO_CHANGE_MTU_FAIL    2
 
-#घोषणा SKB_ADJ_MASK  0x3F
-#घोषणा SKB_ADJ       (SKB_ADJ_MASK + 1)
+#define SKB_ADJ_MASK  0x3F
+#define SKB_ADJ       (SKB_ADJ_MASK + 1)
 
-#घोषणा MIN_SKB_SIZE       256 /* 8 bytes and more - 8 bytes क्रम PTP */
-#घोषणा LIO_RXBUFFER_SZ    2048
+#define MIN_SKB_SIZE       256 /* 8 bytes and more - 8 bytes for PTP */
+#define LIO_RXBUFFER_SZ    2048
 
-अटल अंतरभूत व्योम
-*recv_buffer_alloc(काष्ठा octeon_device *oct,
-		   काष्ठा octeon_skb_page_info *pg_info)
-अणु
-	काष्ठा page *page;
-	काष्ठा sk_buff *skb;
-	काष्ठा octeon_skb_page_info *skb_pg_info;
+static inline void
+*recv_buffer_alloc(struct octeon_device *oct,
+		   struct octeon_skb_page_info *pg_info)
+{
+	struct page *page;
+	struct sk_buff *skb;
+	struct octeon_skb_page_info *skb_pg_info;
 
 	page = alloc_page(GFP_ATOMIC);
-	अगर (unlikely(!page))
-		वापस शून्य;
+	if (unlikely(!page))
+		return NULL;
 
 	skb = dev_alloc_skb(MIN_SKB_SIZE + SKB_ADJ);
-	अगर (unlikely(!skb)) अणु
-		__मुक्त_page(page);
-		pg_info->page = शून्य;
-		वापस शून्य;
-	पूर्ण
+	if (unlikely(!skb)) {
+		__free_page(page);
+		pg_info->page = NULL;
+		return NULL;
+	}
 
-	अगर ((अचिन्हित दीर्घ)skb->data & SKB_ADJ_MASK) अणु
-		u32 r = SKB_ADJ - ((अचिन्हित दीर्घ)skb->data & SKB_ADJ_MASK);
+	if ((unsigned long)skb->data & SKB_ADJ_MASK) {
+		u32 r = SKB_ADJ - ((unsigned long)skb->data & SKB_ADJ_MASK);
 
 		skb_reserve(skb, r);
-	पूर्ण
+	}
 
-	skb_pg_info = ((काष्ठा octeon_skb_page_info *)(skb->cb));
+	skb_pg_info = ((struct octeon_skb_page_info *)(skb->cb));
 	/* Get DMA info */
 	pg_info->dma = dma_map_page(&oct->pci_dev->dev, page, 0,
 				    PAGE_SIZE, DMA_FROM_DEVICE);
 
 	/* Mapping failed!! */
-	अगर (dma_mapping_error(&oct->pci_dev->dev, pg_info->dma)) अणु
-		__मुक्त_page(page);
-		dev_kमुक्त_skb_any((काष्ठा sk_buff *)skb);
-		pg_info->page = शून्य;
-		वापस शून्य;
-	पूर्ण
+	if (dma_mapping_error(&oct->pci_dev->dev, pg_info->dma)) {
+		__free_page(page);
+		dev_kfree_skb_any((struct sk_buff *)skb);
+		pg_info->page = NULL;
+		return NULL;
+	}
 
 	pg_info->page = page;
 	pg_info->page_offset = 0;
@@ -301,327 +300,327 @@ irqवापस_t liquidio_msix_पूर्णांकr_handler(पूर्�
 	skb_pg_info->page_offset = 0;
 	skb_pg_info->dma = pg_info->dma;
 
-	वापस (व्योम *)skb;
-पूर्ण
+	return (void *)skb;
+}
 
-अटल अंतरभूत व्योम
+static inline void
 *recv_buffer_fast_alloc(u32 size)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा octeon_skb_page_info *skb_pg_info;
+{
+	struct sk_buff *skb;
+	struct octeon_skb_page_info *skb_pg_info;
 
 	skb = dev_alloc_skb(size + SKB_ADJ);
-	अगर (unlikely(!skb))
-		वापस शून्य;
+	if (unlikely(!skb))
+		return NULL;
 
-	अगर ((अचिन्हित दीर्घ)skb->data & SKB_ADJ_MASK) अणु
-		u32 r = SKB_ADJ - ((अचिन्हित दीर्घ)skb->data & SKB_ADJ_MASK);
+	if ((unsigned long)skb->data & SKB_ADJ_MASK) {
+		u32 r = SKB_ADJ - ((unsigned long)skb->data & SKB_ADJ_MASK);
 
 		skb_reserve(skb, r);
-	पूर्ण
+	}
 
-	skb_pg_info = ((काष्ठा octeon_skb_page_info *)(skb->cb));
-	skb_pg_info->page = शून्य;
+	skb_pg_info = ((struct octeon_skb_page_info *)(skb->cb));
+	skb_pg_info->page = NULL;
 	skb_pg_info->page_offset = 0;
 	skb_pg_info->dma = 0;
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल अंतरभूत पूर्णांक
-recv_buffer_recycle(काष्ठा octeon_device *oct, व्योम *buf)
-अणु
-	काष्ठा octeon_skb_page_info *pg_info = buf;
+static inline int
+recv_buffer_recycle(struct octeon_device *oct, void *buf)
+{
+	struct octeon_skb_page_info *pg_info = buf;
 
-	अगर (!pg_info->page) अणु
+	if (!pg_info->page) {
 		dev_err(&oct->pci_dev->dev, "%s: pg_info->page NULL\n",
 			__func__);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	अगर (unlikely(page_count(pg_info->page) != 1) ||
-	    unlikely(page_to_nid(pg_info->page)	!= numa_node_id())) अणु
+	if (unlikely(page_count(pg_info->page) != 1) ||
+	    unlikely(page_to_nid(pg_info->page)	!= numa_node_id())) {
 		dma_unmap_page(&oct->pci_dev->dev,
 			       pg_info->dma, (PAGE_SIZE << 0),
 			       DMA_FROM_DEVICE);
 		pg_info->dma = 0;
-		pg_info->page = शून्य;
+		pg_info->page = NULL;
 		pg_info->page_offset = 0;
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* Flip to other half of the buffer */
-	अगर (pg_info->page_offset == 0)
+	if (pg_info->page_offset == 0)
 		pg_info->page_offset = LIO_RXBUFFER_SZ;
-	अन्यथा
+	else
 		pg_info->page_offset = 0;
 	page_ref_inc(pg_info->page);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम
-*recv_buffer_reuse(काष्ठा octeon_device *oct, व्योम *buf)
-अणु
-	काष्ठा octeon_skb_page_info *pg_info = buf, *skb_pg_info;
-	काष्ठा sk_buff *skb;
+static inline void
+*recv_buffer_reuse(struct octeon_device *oct, void *buf)
+{
+	struct octeon_skb_page_info *pg_info = buf, *skb_pg_info;
+	struct sk_buff *skb;
 
 	skb = dev_alloc_skb(MIN_SKB_SIZE + SKB_ADJ);
-	अगर (unlikely(!skb)) अणु
+	if (unlikely(!skb)) {
 		dma_unmap_page(&oct->pci_dev->dev,
 			       pg_info->dma, (PAGE_SIZE << 0),
 			       DMA_FROM_DEVICE);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर ((अचिन्हित दीर्घ)skb->data & SKB_ADJ_MASK) अणु
-		u32 r = SKB_ADJ - ((अचिन्हित दीर्घ)skb->data & SKB_ADJ_MASK);
+	if ((unsigned long)skb->data & SKB_ADJ_MASK) {
+		u32 r = SKB_ADJ - ((unsigned long)skb->data & SKB_ADJ_MASK);
 
 		skb_reserve(skb, r);
-	पूर्ण
+	}
 
-	skb_pg_info = ((काष्ठा octeon_skb_page_info *)(skb->cb));
+	skb_pg_info = ((struct octeon_skb_page_info *)(skb->cb));
 	skb_pg_info->page = pg_info->page;
 	skb_pg_info->page_offset = pg_info->page_offset;
 	skb_pg_info->dma = pg_info->dma;
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल अंतरभूत व्योम
-recv_buffer_destroy(व्योम *buffer, काष्ठा octeon_skb_page_info *pg_info)
-अणु
-	काष्ठा sk_buff *skb = (काष्ठा sk_buff *)buffer;
+static inline void
+recv_buffer_destroy(void *buffer, struct octeon_skb_page_info *pg_info)
+{
+	struct sk_buff *skb = (struct sk_buff *)buffer;
 
 	put_page(pg_info->page);
 	pg_info->dma = 0;
-	pg_info->page = शून्य;
+	pg_info->page = NULL;
 	pg_info->page_offset = 0;
 
-	अगर (skb)
-		dev_kमुक्त_skb_any(skb);
-पूर्ण
+	if (skb)
+		dev_kfree_skb_any(skb);
+}
 
-अटल अंतरभूत व्योम recv_buffer_मुक्त(व्योम *buffer)
-अणु
-	काष्ठा sk_buff *skb = (काष्ठा sk_buff *)buffer;
-	काष्ठा octeon_skb_page_info *pg_info;
+static inline void recv_buffer_free(void *buffer)
+{
+	struct sk_buff *skb = (struct sk_buff *)buffer;
+	struct octeon_skb_page_info *pg_info;
 
-	pg_info = ((काष्ठा octeon_skb_page_info *)(skb->cb));
+	pg_info = ((struct octeon_skb_page_info *)(skb->cb));
 
-	अगर (pg_info->page) अणु
+	if (pg_info->page) {
 		put_page(pg_info->page);
 		pg_info->dma = 0;
-		pg_info->page = शून्य;
+		pg_info->page = NULL;
 		pg_info->page_offset = 0;
-	पूर्ण
+	}
 
-	dev_kमुक्त_skb_any((काष्ठा sk_buff *)buffer);
-पूर्ण
+	dev_kfree_skb_any((struct sk_buff *)buffer);
+}
 
-अटल अंतरभूत व्योम
-recv_buffer_fast_मुक्त(व्योम *buffer)
-अणु
-	dev_kमुक्त_skb_any((काष्ठा sk_buff *)buffer);
-पूर्ण
+static inline void
+recv_buffer_fast_free(void *buffer)
+{
+	dev_kfree_skb_any((struct sk_buff *)buffer);
+}
 
-अटल अंतरभूत व्योम tx_buffer_मुक्त(व्योम *buffer)
-अणु
-	dev_kमुक्त_skb_any((काष्ठा sk_buff *)buffer);
-पूर्ण
+static inline void tx_buffer_free(void *buffer)
+{
+	dev_kfree_skb_any((struct sk_buff *)buffer);
+}
 
-#घोषणा lio_dma_alloc(oct, size, dma_addr) \
+#define lio_dma_alloc(oct, size, dma_addr) \
 	dma_alloc_coherent(&(oct)->pci_dev->dev, size, dma_addr, GFP_KERNEL)
-#घोषणा lio_dma_मुक्त(oct, size, virt_addr, dma_addr) \
-	dma_मुक्त_coherent(&(oct)->pci_dev->dev, size, virt_addr, dma_addr)
+#define lio_dma_free(oct, size, virt_addr, dma_addr) \
+	dma_free_coherent(&(oct)->pci_dev->dev, size, virt_addr, dma_addr)
 
-अटल अंतरभूत
-व्योम *get_rbd(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा octeon_skb_page_info *pg_info;
-	अचिन्हित अक्षर *va;
+static inline
+void *get_rbd(struct sk_buff *skb)
+{
+	struct octeon_skb_page_info *pg_info;
+	unsigned char *va;
 
-	pg_info = ((काष्ठा octeon_skb_page_info *)(skb->cb));
+	pg_info = ((struct octeon_skb_page_info *)(skb->cb));
 	va = page_address(pg_info->page) + pg_info->page_offset;
 
-	वापस va;
-पूर्ण
+	return va;
+}
 
-अटल अंतरभूत u64
-lio_map_ring(व्योम *buf)
-अणु
+static inline u64
+lio_map_ring(void *buf)
+{
 	dma_addr_t dma_addr;
 
-	काष्ठा sk_buff *skb = (काष्ठा sk_buff *)buf;
-	काष्ठा octeon_skb_page_info *pg_info;
+	struct sk_buff *skb = (struct sk_buff *)buf;
+	struct octeon_skb_page_info *pg_info;
 
-	pg_info = ((काष्ठा octeon_skb_page_info *)(skb->cb));
-	अगर (!pg_info->page) अणु
+	pg_info = ((struct octeon_skb_page_info *)(skb->cb));
+	if (!pg_info->page) {
 		pr_err("%s: pg_info->page NULL\n", __func__);
 		WARN_ON(1);
-	पूर्ण
+	}
 
 	/* Get DMA info */
 	dma_addr = pg_info->dma;
-	अगर (!pg_info->dma) अणु
+	if (!pg_info->dma) {
 		pr_err("%s: ERROR it should be already available\n",
 		       __func__);
 		WARN_ON(1);
-	पूर्ण
+	}
 	dma_addr += pg_info->page_offset;
 
-	वापस (u64)dma_addr;
-पूर्ण
+	return (u64)dma_addr;
+}
 
-अटल अंतरभूत व्योम
-lio_unmap_ring(काष्ठा pci_dev *pci_dev,
+static inline void
+lio_unmap_ring(struct pci_dev *pci_dev,
 	       u64 buf_ptr)
 
-अणु
+{
 	dma_unmap_page(&pci_dev->dev,
 		       buf_ptr, (PAGE_SIZE << 0),
 		       DMA_FROM_DEVICE);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम *octeon_fast_packet_alloc(u32 size)
-अणु
-	वापस recv_buffer_fast_alloc(size);
-पूर्ण
+static inline void *octeon_fast_packet_alloc(u32 size)
+{
+	return recv_buffer_fast_alloc(size);
+}
 
-अटल अंतरभूत व्योम octeon_fast_packet_next(काष्ठा octeon_droq *droq,
-					   काष्ठा sk_buff *nicbuf,
-					   पूर्णांक copy_len,
-					   पूर्णांक idx)
-अणु
+static inline void octeon_fast_packet_next(struct octeon_droq *droq,
+					   struct sk_buff *nicbuf,
+					   int copy_len,
+					   int idx)
+{
 	skb_put_data(nicbuf, get_rbd(droq->recv_buf_list[idx].buffer),
 		     copy_len);
-पूर्ण
+}
 
 /**
- * \मrief check पूर्णांकerface state
- * @param lio per-network निजी data
+ * \brief check interface state
+ * @param lio per-network private data
  * @param state_flag flag state to check
  */
-अटल अंतरभूत पूर्णांक अगरstate_check(काष्ठा lio *lio, पूर्णांक state_flag)
-अणु
-	वापस atomic_पढ़ो(&lio->अगरstate) & state_flag;
-पूर्ण
+static inline int ifstate_check(struct lio *lio, int state_flag)
+{
+	return atomic_read(&lio->ifstate) & state_flag;
+}
 
 /**
- * \मrief set पूर्णांकerface state
- * @param lio per-network निजी data
+ * \brief set interface state
+ * @param lio per-network private data
  * @param state_flag flag state to set
  */
-अटल अंतरभूत व्योम अगरstate_set(काष्ठा lio *lio, पूर्णांक state_flag)
-अणु
-	atomic_set(&lio->अगरstate, (atomic_पढ़ो(&lio->अगरstate) | state_flag));
-पूर्ण
+static inline void ifstate_set(struct lio *lio, int state_flag)
+{
+	atomic_set(&lio->ifstate, (atomic_read(&lio->ifstate) | state_flag));
+}
 
 /**
- * \मrief clear पूर्णांकerface state
- * @param lio per-network निजी data
+ * \brief clear interface state
+ * @param lio per-network private data
  * @param state_flag flag state to clear
  */
-अटल अंतरभूत व्योम अगरstate_reset(काष्ठा lio *lio, पूर्णांक state_flag)
-अणु
-	atomic_set(&lio->अगरstate, (atomic_पढ़ो(&lio->अगरstate) & ~(state_flag)));
-पूर्ण
+static inline void ifstate_reset(struct lio *lio, int state_flag)
+{
+	atomic_set(&lio->ifstate, (atomic_read(&lio->ifstate) & ~(state_flag)));
+}
 
 /**
- * \मrief रुको क्रम all pending requests to complete
- * @param oct Poपूर्णांकer to Octeon device
+ * \brief wait for all pending requests to complete
+ * @param oct Pointer to Octeon device
  *
- * Called during shutकरोwn sequence
+ * Called during shutdown sequence
  */
-अटल अंतरभूत पूर्णांक रुको_क्रम_pending_requests(काष्ठा octeon_device *oct)
-अणु
-	पूर्णांक i, pcount = 0;
+static inline int wait_for_pending_requests(struct octeon_device *oct)
+{
+	int i, pcount = 0;
 
-	क्रम (i = 0; i < MAX_IO_PENDING_PKT_COUNT; i++) अणु
-		pcount = atomic_पढ़ो(
+	for (i = 0; i < MAX_IO_PENDING_PKT_COUNT; i++) {
+		pcount = atomic_read(
 		    &oct->response_list[OCTEON_ORDERED_SC_LIST]
 			 .pending_req_count);
-		अगर (pcount)
-			schedule_समयout_unपूर्णांकerruptible(HZ / 10);
-		अन्यथा
-			अवरोध;
-	पूर्ण
+		if (pcount)
+			schedule_timeout_uninterruptible(HZ / 10);
+		else
+			break;
+	}
 
-	अगर (pcount)
-		वापस 1;
+	if (pcount)
+		return 1;
 
-	वापस 0;
-पूर्ण
-
-/**
- * \मrief Stop Tx queues
- * @param netdev network device
- */
-अटल अंतरभूत व्योम stop_txqs(काष्ठा net_device *netdev)
-अणु
-	पूर्णांक i;
-
-	क्रम (i = 0; i < netdev->real_num_tx_queues; i++)
-		netअगर_stop_subqueue(netdev, i);
-पूर्ण
+	return 0;
+}
 
 /**
- * \मrief Wake Tx queues
+ * \brief Stop Tx queues
  * @param netdev network device
  */
-अटल अंतरभूत व्योम wake_txqs(काष्ठा net_device *netdev)
-अणु
-	काष्ठा lio *lio = GET_LIO(netdev);
-	पूर्णांक i, qno;
+static inline void stop_txqs(struct net_device *netdev)
+{
+	int i;
 
-	क्रम (i = 0; i < netdev->real_num_tx_queues; i++) अणु
+	for (i = 0; i < netdev->real_num_tx_queues; i++)
+		netif_stop_subqueue(netdev, i);
+}
+
+/**
+ * \brief Wake Tx queues
+ * @param netdev network device
+ */
+static inline void wake_txqs(struct net_device *netdev)
+{
+	struct lio *lio = GET_LIO(netdev);
+	int i, qno;
+
+	for (i = 0; i < netdev->real_num_tx_queues; i++) {
 		qno = lio->linfo.txpciq[i % lio->oct_dev->num_iqs].s.q_no;
 
-		अगर (__netअगर_subqueue_stopped(netdev, i)) अणु
+		if (__netif_subqueue_stopped(netdev, i)) {
 			INCR_INSTRQUEUE_PKT_COUNT(lio->oct_dev, qno,
 						  tx_restart, 1);
-			netअगर_wake_subqueue(netdev, i);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			netif_wake_subqueue(netdev, i);
+		}
+	}
+}
 
 /**
- * \मrief Start Tx queues
+ * \brief Start Tx queues
  * @param netdev network device
  */
-अटल अंतरभूत व्योम start_txqs(काष्ठा net_device *netdev)
-अणु
-	काष्ठा lio *lio = GET_LIO(netdev);
-	पूर्णांक i;
+static inline void start_txqs(struct net_device *netdev)
+{
+	struct lio *lio = GET_LIO(netdev);
+	int i;
 
-	अगर (lio->linfo.link.s.link_up) अणु
-		क्रम (i = 0; i < netdev->real_num_tx_queues; i++)
-			netअगर_start_subqueue(netdev, i);
-	पूर्ण
-पूर्ण
+	if (lio->linfo.link.s.link_up) {
+		for (i = 0; i < netdev->real_num_tx_queues; i++)
+			netif_start_subqueue(netdev, i);
+	}
+}
 
-अटल अंतरभूत पूर्णांक skb_iq(काष्ठा octeon_device *oct, काष्ठा sk_buff *skb)
-अणु
-	वापस skb->queue_mapping % oct->num_iqs;
-पूर्ण
+static inline int skb_iq(struct octeon_device *oct, struct sk_buff *skb)
+{
+	return skb->queue_mapping % oct->num_iqs;
+}
 
 /**
  * Remove the node at the head of the list. The list would be empty at
- * the end of this call अगर there are no more nodes in the list.
+ * the end of this call if there are no more nodes in the list.
  */
-अटल अंतरभूत काष्ठा list_head *lio_list_delete_head(काष्ठा list_head *root)
-अणु
-	काष्ठा list_head *node;
+static inline struct list_head *lio_list_delete_head(struct list_head *root)
+{
+	struct list_head *node;
 
-	अगर (list_empty_careful(root))
-		node = शून्य;
-	अन्यथा
+	if (list_empty_careful(root))
+		node = NULL;
+	else
 		node = root->next;
 
-	अगर (node)
+	if (node)
 		list_del(node);
 
-	वापस node;
-पूर्ण
+	return node;
+}
 
-#पूर्ण_अगर
+#endif

@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  */
 
 /**
- * DOC: Sample flow of using the ioctl पूर्णांकerface provided by the Nitro Enclaves (NE)
+ * DOC: Sample flow of using the ioctl interface provided by the Nitro Enclaves (NE)
  * kernel driver.
  *
  * Usage
@@ -13,20 +12,20 @@
  *
  * Load the nitro_enclaves module, setting also the enclave CPU pool. The
  * enclave CPUs need to be full cores from the same NUMA node. CPU 0 and its
- * siblings have to reमुख्य available क्रम the primary / parent VM, so they
+ * siblings have to remain available for the primary / parent VM, so they
  * cannot be included in the enclave CPU pool.
  *
- * See the cpu list section from the kernel करोcumentation.
- * https://www.kernel.org/करोc/hपंचांगl/latest/admin-guide/kernel-parameters.hपंचांगl#cpu-lists
+ * See the cpu list section from the kernel documentation.
+ * https://www.kernel.org/doc/html/latest/admin-guide/kernel-parameters.html#cpu-lists
  *
  *	insmod drivers/virt/nitro_enclaves/nitro_enclaves.ko
  *	lsmod
  *
- *	The CPU pool can be set at runसमय, after the kernel module is loaded.
+ *	The CPU pool can be set at runtime, after the kernel module is loaded.
  *
  *	echo <cpu-list> > /sys/module/nitro_enclaves/parameters/ne_cpus
  *
- *	NUMA and CPU siblings inक्रमmation can be found using:
+ *	NUMA and CPU siblings information can be found using:
  *
  *	lscpu
  *	/proc/cpuinfo
@@ -36,7 +35,7 @@
  *
  *	lscpu
  *
- * Check dmesg क्रम any warnings / errors through the NE driver lअगरeसमय / usage.
+ * Check dmesg for any warnings / errors through the NE driver lifetime / usage.
  * The NE logs contain the "nitro_enclaves" or "pci 0000:00:02.0" pattern.
  *
  *	dmesg
@@ -44,16 +43,16 @@
  * Setup hugetlbfs huge pages. The memory needs to be from the same NUMA node as
  * the enclave CPUs.
  *
- * https://www.kernel.org/करोc/hपंचांगl/latest/admin-guide/mm/hugetlbpage.hपंचांगl
+ * https://www.kernel.org/doc/html/latest/admin-guide/mm/hugetlbpage.html
  *
- * By शेष, the allocation of hugetlb pages are distributed on all possible
+ * By default, the allocation of hugetlb pages are distributed on all possible
  * NUMA nodes. Use the following configuration files to set the number of huge
  * pages from a NUMA node:
  *
- *	/sys/devices/प्रणाली/node/node<X>/hugepages/hugepages-2048kB/nr_hugepages
- *	/sys/devices/प्रणाली/node/node<X>/hugepages/hugepages-1048576kB/nr_hugepages
+ *	/sys/devices/system/node/node<X>/hugepages/hugepages-2048kB/nr_hugepages
+ *	/sys/devices/system/node/node<X>/hugepages/hugepages-1048576kB/nr_hugepages
  *
- *	or, अगर not on a प्रणाली with multiple NUMA nodes, can also set the number
+ *	or, if not on a system with multiple NUMA nodes, can also set the number
  *	of 2 MiB / 1 GiB huge pages using
  *
  *	/sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
@@ -73,573 +72,573 @@
  *	lsmod
  */
 
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <सीमा.स>
-#समावेश <poll.h>
-#समावेश <pthपढ़ो.h>
-#समावेश <माला.स>
-#समावेश <sys/eventfd.h>
-#समावेश <sys/ioctl.h>
-#समावेश <sys/mman.h>
-#समावेश <sys/socket.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/types.h>
-#समावेश <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <poll.h>
+#include <pthread.h>
+#include <string.h>
+#include <sys/eventfd.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-#समावेश <linux/mman.h>
-#समावेश <linux/nitro_enclaves.h>
-#समावेश <linux/vm_sockets.h>
-
-/**
- * NE_DEV_NAME - Nitro Enclaves (NE) misc device that provides the ioctl पूर्णांकerface.
- */
-#घोषणा NE_DEV_NAME			"/dev/nitro_enclaves"
+#include <linux/mman.h>
+#include <linux/nitro_enclaves.h>
+#include <linux/vm_sockets.h>
 
 /**
- * NE_POLL_WAIT_TIME - Timeout in seconds क्रम each poll event.
+ * NE_DEV_NAME - Nitro Enclaves (NE) misc device that provides the ioctl interface.
  */
-#घोषणा NE_POLL_WAIT_TIME		(60)
-/**
- * NE_POLL_WAIT_TIME_MS - Timeout in milliseconds क्रम each poll event.
- */
-#घोषणा NE_POLL_WAIT_TIME_MS		(NE_POLL_WAIT_TIME * 1000)
+#define NE_DEV_NAME			"/dev/nitro_enclaves"
 
 /**
- * NE_SLEEP_TIME - Amount of समय in seconds क्रम the process to keep the enclave alive.
+ * NE_POLL_WAIT_TIME - Timeout in seconds for each poll event.
  */
-#घोषणा NE_SLEEP_TIME			(300)
+#define NE_POLL_WAIT_TIME		(60)
+/**
+ * NE_POLL_WAIT_TIME_MS - Timeout in milliseconds for each poll event.
+ */
+#define NE_POLL_WAIT_TIME_MS		(NE_POLL_WAIT_TIME * 1000)
 
 /**
- * NE_DEFAULT_NR_VCPUS - Default number of vCPUs set क्रम an enclave.
+ * NE_SLEEP_TIME - Amount of time in seconds for the process to keep the enclave alive.
  */
-#घोषणा NE_DEFAULT_NR_VCPUS		(2)
+#define NE_SLEEP_TIME			(300)
+
+/**
+ * NE_DEFAULT_NR_VCPUS - Default number of vCPUs set for an enclave.
+ */
+#define NE_DEFAULT_NR_VCPUS		(2)
 
 /**
  * NE_MIN_MEM_REGION_SIZE - Minimum size of a memory region - 2 MiB.
  */
-#घोषणा NE_MIN_MEM_REGION_SIZE		(2 * 1024 * 1024)
+#define NE_MIN_MEM_REGION_SIZE		(2 * 1024 * 1024)
 
 /**
- * NE_DEFAULT_NR_MEM_REGIONS - Default number of memory regions of 2 MiB set क्रम
+ * NE_DEFAULT_NR_MEM_REGIONS - Default number of memory regions of 2 MiB set for
  *			       an enclave.
  */
-#घोषणा NE_DEFAULT_NR_MEM_REGIONS	(256)
+#define NE_DEFAULT_NR_MEM_REGIONS	(256)
 
 /**
- * NE_IMAGE_LOAD_HEARTBEAT_CID - Vsock CID क्रम enclave image loading heartbeat logic.
+ * NE_IMAGE_LOAD_HEARTBEAT_CID - Vsock CID for enclave image loading heartbeat logic.
  */
-#घोषणा NE_IMAGE_LOAD_HEARTBEAT_CID	(3)
+#define NE_IMAGE_LOAD_HEARTBEAT_CID	(3)
 /**
- * NE_IMAGE_LOAD_HEARTBEAT_PORT - Vsock port क्रम enclave image loading heartbeat logic.
+ * NE_IMAGE_LOAD_HEARTBEAT_PORT - Vsock port for enclave image loading heartbeat logic.
  */
-#घोषणा NE_IMAGE_LOAD_HEARTBEAT_PORT	(9000)
+#define NE_IMAGE_LOAD_HEARTBEAT_PORT	(9000)
 /**
- * NE_IMAGE_LOAD_HEARTBEAT_VALUE - Heartbeat value क्रम enclave image loading.
+ * NE_IMAGE_LOAD_HEARTBEAT_VALUE - Heartbeat value for enclave image loading.
  */
-#घोषणा NE_IMAGE_LOAD_HEARTBEAT_VALUE	(0xb7)
+#define NE_IMAGE_LOAD_HEARTBEAT_VALUE	(0xb7)
 
 /**
- * काष्ठा ne_user_mem_region - User space memory region set क्रम an enclave.
+ * struct ne_user_mem_region - User space memory region set for an enclave.
  * @userspace_addr:	Address of the user space memory region.
  * @memory_size:	Size of the user space memory region.
  */
-काष्ठा ne_user_mem_region अणु
-	व्योम	*userspace_addr;
-	माप_प्रकार	memory_size;
-पूर्ण;
+struct ne_user_mem_region {
+	void	*userspace_addr;
+	size_t	memory_size;
+};
 
 /**
- * ne_create_vm() - Create a slot क्रम the enclave VM.
+ * ne_create_vm() - Create a slot for the enclave VM.
  * @ne_dev_fd:		The file descriptor of the NE misc device.
- * @slot_uid:		The generated slot uid क्रम the enclave.
- * @enclave_fd :	The generated file descriptor क्रम the enclave.
+ * @slot_uid:		The generated slot uid for the enclave.
+ * @enclave_fd :	The generated file descriptor for the enclave.
  *
  * Context: Process context.
  * Return:
  * * 0 on success.
- * * Negative वापस value on failure.
+ * * Negative return value on failure.
  */
-अटल पूर्णांक ne_create_vm(पूर्णांक ne_dev_fd, अचिन्हित दीर्घ *slot_uid, पूर्णांक *enclave_fd)
-अणु
-	पूर्णांक rc = -EINVAL;
+static int ne_create_vm(int ne_dev_fd, unsigned long *slot_uid, int *enclave_fd)
+{
+	int rc = -EINVAL;
 	*enclave_fd = ioctl(ne_dev_fd, NE_CREATE_VM, slot_uid);
 
-	अगर (*enclave_fd < 0) अणु
+	if (*enclave_fd < 0) {
 		rc = *enclave_fd;
-		चयन (त्रुटि_सं) अणु
-		हाल NE_ERR_NO_CPUS_AVAIL_IN_POOL: अणु
-			म_लिखो("Error in create VM, no CPUs available in the NE CPU pool\n");
+		switch (errno) {
+		case NE_ERR_NO_CPUS_AVAIL_IN_POOL: {
+			printf("Error in create VM, no CPUs available in the NE CPU pool\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		शेष:
-			म_लिखो("Error in create VM [%m]\n");
-		पूर्ण
+		default:
+			printf("Error in create VM [%m]\n");
+		}
 
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /**
- * ne_poll_enclave_fd() - Thपढ़ो function क्रम polling the enclave fd.
- * @data:	Argument provided क्रम the polling function.
+ * ne_poll_enclave_fd() - Thread function for polling the enclave fd.
+ * @data:	Argument provided for the polling function.
  *
  * Context: Process context.
  * Return:
- * * शून्य on success / failure.
+ * * NULL on success / failure.
  */
-व्योम *ne_poll_enclave_fd(व्योम *data)
-अणु
-	पूर्णांक enclave_fd = *(पूर्णांक *)data;
-	काष्ठा pollfd fds[1] = अणुपूर्ण;
-	पूर्णांक i = 0;
-	पूर्णांक rc = -EINVAL;
+void *ne_poll_enclave_fd(void *data)
+{
+	int enclave_fd = *(int *)data;
+	struct pollfd fds[1] = {};
+	int i = 0;
+	int rc = -EINVAL;
 
-	म_लिखो("Running from poll thread, enclave fd %d\n", enclave_fd);
+	printf("Running from poll thread, enclave fd %d\n", enclave_fd);
 
 	fds[0].fd = enclave_fd;
 	fds[0].events = POLLIN | POLLERR | POLLHUP;
 
 	/* Keep on polling until the current process is terminated. */
-	जबतक (1) अणु
-		म_लिखो("[iter %d] Polling ...\n", i);
+	while (1) {
+		printf("[iter %d] Polling ...\n", i);
 
 		rc = poll(fds, 1, NE_POLL_WAIT_TIME_MS);
-		अगर (rc < 0) अणु
-			म_लिखो("Error in poll [%m]\n");
+		if (rc < 0) {
+			printf("Error in poll [%m]\n");
 
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 
 		i++;
 
-		अगर (!rc) अणु
-			म_लिखो("Poll: %d seconds elapsed\n",
+		if (!rc) {
+			printf("Poll: %d seconds elapsed\n",
 			       i * NE_POLL_WAIT_TIME);
 
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		म_लिखो("Poll received value 0x%x\n", fds[0].revents);
+		printf("Poll received value 0x%x\n", fds[0].revents);
 
-		अगर (fds[0].revents & POLLHUP) अणु
-			म_लिखो("Received POLLHUP\n");
+		if (fds[0].revents & POLLHUP) {
+			printf("Received POLLHUP\n");
 
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 
-		अगर (fds[0].revents & POLLNVAL) अणु
-			म_लिखो("Received POLLNVAL\n");
+		if (fds[0].revents & POLLNVAL) {
+			printf("Received POLLNVAL\n");
 
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
+			return NULL;
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
- * ne_alloc_user_mem_region() - Allocate a user space memory region क्रम an enclave.
+ * ne_alloc_user_mem_region() - Allocate a user space memory region for an enclave.
  * @ne_user_mem_region:	User space memory region allocated using hugetlbfs.
  *
  * Context: Process context.
  * Return:
  * * 0 on success.
- * * Negative वापस value on failure.
+ * * Negative return value on failure.
  */
-अटल पूर्णांक ne_alloc_user_mem_region(काष्ठा ne_user_mem_region *ne_user_mem_region)
-अणु
+static int ne_alloc_user_mem_region(struct ne_user_mem_region *ne_user_mem_region)
+{
 	/**
-	 * Check available hugetlb encodings क्रम dअगरferent huge page sizes in
+	 * Check available hugetlb encodings for different huge page sizes in
 	 * include/uapi/linux/mman.h.
 	 */
-	ne_user_mem_region->userspace_addr = mmap(शून्य, ne_user_mem_region->memory_size,
+	ne_user_mem_region->userspace_addr = mmap(NULL, ne_user_mem_region->memory_size,
 						  PROT_READ | PROT_WRITE,
 						  MAP_PRIVATE | MAP_ANONYMOUS |
 						  MAP_HUGETLB | MAP_HUGE_2MB, -1, 0);
-	अगर (ne_user_mem_region->userspace_addr == MAP_FAILED) अणु
-		म_लिखो("Error in mmap memory [%m]\n");
+	if (ne_user_mem_region->userspace_addr == MAP_FAILED) {
+		printf("Error in mmap memory [%m]\n");
 
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * ne_load_enclave_image() - Place the enclave image in the enclave memory.
  * @enclave_fd :		The file descriptor associated with the enclave.
- * @ne_user_mem_regions:	User space memory regions allocated क्रम the enclave.
+ * @ne_user_mem_regions:	User space memory regions allocated for the enclave.
  * @enclave_image_path :	The file path of the enclave image.
  *
  * Context: Process context.
  * Return:
  * * 0 on success.
- * * Negative वापस value on failure.
+ * * Negative return value on failure.
  */
-अटल पूर्णांक ne_load_enclave_image(पूर्णांक enclave_fd, काष्ठा ne_user_mem_region ne_user_mem_regions[],
-				 अक्षर *enclave_image_path)
-अणु
-	अचिन्हित अक्षर *enclave_image = शून्य;
-	पूर्णांक enclave_image_fd = -1;
-	माप_प्रकार enclave_image_size = 0;
-	माप_प्रकार enclave_memory_size = 0;
-	अचिन्हित दीर्घ i = 0;
-	माप_प्रकार image_written_bytes = 0;
-	काष्ठा ne_image_load_info image_load_info = अणु
+static int ne_load_enclave_image(int enclave_fd, struct ne_user_mem_region ne_user_mem_regions[],
+				 char *enclave_image_path)
+{
+	unsigned char *enclave_image = NULL;
+	int enclave_image_fd = -1;
+	size_t enclave_image_size = 0;
+	size_t enclave_memory_size = 0;
+	unsigned long i = 0;
+	size_t image_written_bytes = 0;
+	struct ne_image_load_info image_load_info = {
 		.flags = NE_EIF_IMAGE,
-	पूर्ण;
-	काष्ठा stat image_stat_buf = अणुपूर्ण;
-	पूर्णांक rc = -EINVAL;
-	माप_प्रकार temp_image_offset = 0;
+	};
+	struct stat image_stat_buf = {};
+	int rc = -EINVAL;
+	size_t temp_image_offset = 0;
 
-	क्रम (i = 0; i < NE_DEFAULT_NR_MEM_REGIONS; i++)
+	for (i = 0; i < NE_DEFAULT_NR_MEM_REGIONS; i++)
 		enclave_memory_size += ne_user_mem_regions[i].memory_size;
 
 	rc = stat(enclave_image_path, &image_stat_buf);
-	अगर (rc < 0) अणु
-		म_लिखो("Error in get image stat info [%m]\n");
+	if (rc < 0) {
+		printf("Error in get image stat info [%m]\n");
 
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	enclave_image_size = image_stat_buf.st_size;
 
-	अगर (enclave_memory_size < enclave_image_size) अणु
-		म_लिखो("The enclave memory is smaller than the enclave image size\n");
+	if (enclave_memory_size < enclave_image_size) {
+		printf("The enclave memory is smaller than the enclave image size\n");
 
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	rc = ioctl(enclave_fd, NE_GET_IMAGE_LOAD_INFO, &image_load_info);
-	अगर (rc < 0) अणु
-		चयन (त्रुटि_सं) अणु
-		हाल NE_ERR_NOT_IN_INIT_STATE: अणु
-			म_लिखो("Error in get image load info, enclave not in init state\n");
+	if (rc < 0) {
+		switch (errno) {
+		case NE_ERR_NOT_IN_INIT_STATE: {
+			printf("Error in get image load info, enclave not in init state\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		हाल NE_ERR_INVALID_FLAG_VALUE: अणु
-			म_लिखो("Error in get image load info, provided invalid flag\n");
+		case NE_ERR_INVALID_FLAG_VALUE: {
+			printf("Error in get image load info, provided invalid flag\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		शेष:
-			म_लिखो("Error in get image load info [%m]\n");
-		पूर्ण
+		default:
+			printf("Error in get image load info [%m]\n");
+		}
 
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	म_लिखो("Enclave image offset in enclave memory is %lld\n",
+	printf("Enclave image offset in enclave memory is %lld\n",
 	       image_load_info.memory_offset);
 
-	enclave_image_fd = खोलो(enclave_image_path, O_RDONLY);
-	अगर (enclave_image_fd < 0) अणु
-		म_लिखो("Error in open enclave image file [%m]\n");
+	enclave_image_fd = open(enclave_image_path, O_RDONLY);
+	if (enclave_image_fd < 0) {
+		printf("Error in open enclave image file [%m]\n");
 
-		वापस enclave_image_fd;
-	पूर्ण
+		return enclave_image_fd;
+	}
 
-	enclave_image = mmap(शून्य, enclave_image_size, PROT_READ,
+	enclave_image = mmap(NULL, enclave_image_size, PROT_READ,
 			     MAP_PRIVATE, enclave_image_fd, 0);
-	अगर (enclave_image == MAP_FAILED) अणु
-		म_लिखो("Error in mmap enclave image [%m]\n");
+	if (enclave_image == MAP_FAILED) {
+		printf("Error in mmap enclave image [%m]\n");
 
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	temp_image_offset = image_load_info.memory_offset;
 
-	क्रम (i = 0; i < NE_DEFAULT_NR_MEM_REGIONS; i++) अणु
-		माप_प्रकार bytes_to_ग_लिखो = 0;
-		माप_प्रकार memory_offset = 0;
-		माप_प्रकार memory_size = ne_user_mem_regions[i].memory_size;
-		माप_प्रकार reमुख्यing_bytes = 0;
-		व्योम *userspace_addr = ne_user_mem_regions[i].userspace_addr;
+	for (i = 0; i < NE_DEFAULT_NR_MEM_REGIONS; i++) {
+		size_t bytes_to_write = 0;
+		size_t memory_offset = 0;
+		size_t memory_size = ne_user_mem_regions[i].memory_size;
+		size_t remaining_bytes = 0;
+		void *userspace_addr = ne_user_mem_regions[i].userspace_addr;
 
-		अगर (temp_image_offset >= memory_size) अणु
+		if (temp_image_offset >= memory_size) {
 			temp_image_offset -= memory_size;
 
-			जारी;
-		पूर्ण अन्यथा अगर (temp_image_offset != 0) अणु
+			continue;
+		} else if (temp_image_offset != 0) {
 			memory_offset = temp_image_offset;
 			memory_size -= temp_image_offset;
 			temp_image_offset = 0;
-		पूर्ण
+		}
 
-		reमुख्यing_bytes = enclave_image_size - image_written_bytes;
-		bytes_to_ग_लिखो = memory_size < reमुख्यing_bytes ?
-				 memory_size : reमुख्यing_bytes;
+		remaining_bytes = enclave_image_size - image_written_bytes;
+		bytes_to_write = memory_size < remaining_bytes ?
+				 memory_size : remaining_bytes;
 
-		स_नकल(userspace_addr + memory_offset,
-		       enclave_image + image_written_bytes, bytes_to_ग_लिखो);
+		memcpy(userspace_addr + memory_offset,
+		       enclave_image + image_written_bytes, bytes_to_write);
 
-		image_written_bytes += bytes_to_ग_लिखो;
+		image_written_bytes += bytes_to_write;
 
-		अगर (image_written_bytes == enclave_image_size)
-			अवरोध;
-	पूर्ण
+		if (image_written_bytes == enclave_image_size)
+			break;
+	}
 
 	munmap(enclave_image, enclave_image_size);
 
-	बंद(enclave_image_fd);
+	close(enclave_image_fd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ne_set_user_mem_region() - Set a user space memory region क्रम the given enclave.
+ * ne_set_user_mem_region() - Set a user space memory region for the given enclave.
  * @enclave_fd :		The file descriptor associated with the enclave.
- * @ne_user_mem_region :	User space memory region to be set क्रम the enclave.
+ * @ne_user_mem_region :	User space memory region to be set for the enclave.
  *
  * Context: Process context.
  * Return:
  * * 0 on success.
- * * Negative वापस value on failure.
+ * * Negative return value on failure.
  */
-अटल पूर्णांक ne_set_user_mem_region(पूर्णांक enclave_fd, काष्ठा ne_user_mem_region ne_user_mem_region)
-अणु
-	काष्ठा ne_user_memory_region mem_region = अणु
+static int ne_set_user_mem_region(int enclave_fd, struct ne_user_mem_region ne_user_mem_region)
+{
+	struct ne_user_memory_region mem_region = {
 		.flags = NE_DEFAULT_MEMORY_REGION,
 		.memory_size = ne_user_mem_region.memory_size,
 		.userspace_addr = (__u64)ne_user_mem_region.userspace_addr,
-	पूर्ण;
-	पूर्णांक rc = -EINVAL;
+	};
+	int rc = -EINVAL;
 
 	rc = ioctl(enclave_fd, NE_SET_USER_MEMORY_REGION, &mem_region);
-	अगर (rc < 0) अणु
-		चयन (त्रुटि_सं) अणु
-		हाल NE_ERR_NOT_IN_INIT_STATE: अणु
-			म_लिखो("Error in set user memory region, enclave not in init state\n");
+	if (rc < 0) {
+		switch (errno) {
+		case NE_ERR_NOT_IN_INIT_STATE: {
+			printf("Error in set user memory region, enclave not in init state\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		हाल NE_ERR_INVALID_MEM_REGION_SIZE: अणु
-			म_लिखो("Error in set user memory region, mem size not multiple of 2 MiB\n");
+		case NE_ERR_INVALID_MEM_REGION_SIZE: {
+			printf("Error in set user memory region, mem size not multiple of 2 MiB\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		हाल NE_ERR_INVALID_MEM_REGION_ADDR: अणु
-			म_लिखो("Error in set user memory region, invalid user space address\n");
+		case NE_ERR_INVALID_MEM_REGION_ADDR: {
+			printf("Error in set user memory region, invalid user space address\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		हाल NE_ERR_UNALIGNED_MEM_REGION_ADDR: अणु
-			म_लिखो("Error in set user memory region, unaligned user space address\n");
+		case NE_ERR_UNALIGNED_MEM_REGION_ADDR: {
+			printf("Error in set user memory region, unaligned user space address\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		हाल NE_ERR_MEM_REGION_ALREADY_USED: अणु
-			म_लिखो("Error in set user memory region, memory region already used\n");
+		case NE_ERR_MEM_REGION_ALREADY_USED: {
+			printf("Error in set user memory region, memory region already used\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		हाल NE_ERR_MEM_NOT_HUGE_PAGE: अणु
-			म_लिखो("Error in set user memory region, not backed by huge pages\n");
+		case NE_ERR_MEM_NOT_HUGE_PAGE: {
+			printf("Error in set user memory region, not backed by huge pages\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		हाल NE_ERR_MEM_DIFFERENT_NUMA_NODE: अणु
-			म_लिखो("Error in set user memory region, different NUMA node than CPUs\n");
+		case NE_ERR_MEM_DIFFERENT_NUMA_NODE: {
+			printf("Error in set user memory region, different NUMA node than CPUs\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		हाल NE_ERR_MEM_MAX_REGIONS: अणु
-			म_लिखो("Error in set user memory region, max memory regions reached\n");
+		case NE_ERR_MEM_MAX_REGIONS: {
+			printf("Error in set user memory region, max memory regions reached\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		हाल NE_ERR_INVALID_PAGE_SIZE: अणु
-			म_लिखो("Error in set user memory region, has page not multiple of 2 MiB\n");
+		case NE_ERR_INVALID_PAGE_SIZE: {
+			printf("Error in set user memory region, has page not multiple of 2 MiB\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		हाल NE_ERR_INVALID_FLAG_VALUE: अणु
-			म_लिखो("Error in set user memory region, provided invalid flag\n");
+		case NE_ERR_INVALID_FLAG_VALUE: {
+			printf("Error in set user memory region, provided invalid flag\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		शेष:
-			म_लिखो("Error in set user memory region [%m]\n");
-		पूर्ण
+		default:
+			printf("Error in set user memory region [%m]\n");
+		}
 
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ne_मुक्त_mem_regions() - Unmap all the user space memory regions that were set
- *			   aside क्रम the enclave.
+ * ne_free_mem_regions() - Unmap all the user space memory regions that were set
+ *			   aside for the enclave.
  * @ne_user_mem_regions:	The user space memory regions associated with an enclave.
  *
  * Context: Process context.
  */
-अटल व्योम ne_मुक्त_mem_regions(काष्ठा ne_user_mem_region ne_user_mem_regions[])
-अणु
-	अचिन्हित पूर्णांक i = 0;
+static void ne_free_mem_regions(struct ne_user_mem_region ne_user_mem_regions[])
+{
+	unsigned int i = 0;
 
-	क्रम (i = 0; i < NE_DEFAULT_NR_MEM_REGIONS; i++)
+	for (i = 0; i < NE_DEFAULT_NR_MEM_REGIONS; i++)
 		munmap(ne_user_mem_regions[i].userspace_addr,
 		       ne_user_mem_regions[i].memory_size);
-पूर्ण
+}
 
 /**
  * ne_add_vcpu() - Add a vCPU to the given enclave.
  * @enclave_fd :	The file descriptor associated with the enclave.
- * @vcpu_id:		vCPU id to be set क्रम the enclave, either provided or
- *			स्वतः-generated (अगर provided vCPU id is 0).
+ * @vcpu_id:		vCPU id to be set for the enclave, either provided or
+ *			auto-generated (if provided vCPU id is 0).
  *
  * Context: Process context.
  * Return:
  * * 0 on success.
- * * Negative वापस value on failure.
+ * * Negative return value on failure.
  */
-अटल पूर्णांक ne_add_vcpu(पूर्णांक enclave_fd, अचिन्हित पूर्णांक *vcpu_id)
-अणु
-	पूर्णांक rc = -EINVAL;
+static int ne_add_vcpu(int enclave_fd, unsigned int *vcpu_id)
+{
+	int rc = -EINVAL;
 
 	rc = ioctl(enclave_fd, NE_ADD_VCPU, vcpu_id);
-	अगर (rc < 0) अणु
-		चयन (त्रुटि_सं) अणु
-		हाल NE_ERR_NO_CPUS_AVAIL_IN_POOL: अणु
-			म_लिखो("Error in add vcpu, no CPUs available in the NE CPU pool\n");
+	if (rc < 0) {
+		switch (errno) {
+		case NE_ERR_NO_CPUS_AVAIL_IN_POOL: {
+			printf("Error in add vcpu, no CPUs available in the NE CPU pool\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		हाल NE_ERR_VCPU_ALREADY_USED: अणु
-			म_लिखो("Error in add vcpu, the provided vCPU is already used\n");
+		case NE_ERR_VCPU_ALREADY_USED: {
+			printf("Error in add vcpu, the provided vCPU is already used\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		हाल NE_ERR_VCPU_NOT_IN_CPU_POOL: अणु
-			म_लिखो("Error in add vcpu, the provided vCPU is not in the NE CPU pool\n");
+		case NE_ERR_VCPU_NOT_IN_CPU_POOL: {
+			printf("Error in add vcpu, the provided vCPU is not in the NE CPU pool\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		हाल NE_ERR_VCPU_INVALID_CPU_CORE: अणु
-			म_लिखो("Error in add vcpu, the core id of the provided vCPU is invalid\n");
+		case NE_ERR_VCPU_INVALID_CPU_CORE: {
+			printf("Error in add vcpu, the core id of the provided vCPU is invalid\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		हाल NE_ERR_NOT_IN_INIT_STATE: अणु
-			म_लिखो("Error in add vcpu, enclave not in init state\n");
+		case NE_ERR_NOT_IN_INIT_STATE: {
+			printf("Error in add vcpu, enclave not in init state\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		हाल NE_ERR_INVALID_VCPU: अणु
-			म_लिखो("Error in add vcpu, the provided vCPU is out of avail CPUs range\n");
+		case NE_ERR_INVALID_VCPU: {
+			printf("Error in add vcpu, the provided vCPU is out of avail CPUs range\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		शेष:
-			म_लिखो("Error in add vcpu [%m]\n");
+		default:
+			printf("Error in add vcpu [%m]\n");
 
-		पूर्ण
-		वापस rc;
-	पूर्ण
+		}
+		return rc;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * ne_start_enclave() - Start the given enclave.
  * @enclave_fd :		The file descriptor associated with the enclave.
- * @enclave_start_info :	Enclave metadata used क्रम starting e.g. vsock CID.
+ * @enclave_start_info :	Enclave metadata used for starting e.g. vsock CID.
  *
  * Context: Process context.
  * Return:
  * * 0 on success.
- * * Negative वापस value on failure.
+ * * Negative return value on failure.
  */
-अटल पूर्णांक ne_start_enclave(पूर्णांक enclave_fd,  काष्ठा ne_enclave_start_info *enclave_start_info)
-अणु
-	पूर्णांक rc = -EINVAL;
+static int ne_start_enclave(int enclave_fd,  struct ne_enclave_start_info *enclave_start_info)
+{
+	int rc = -EINVAL;
 
 	rc = ioctl(enclave_fd, NE_START_ENCLAVE, enclave_start_info);
-	अगर (rc < 0) अणु
-		चयन (त्रुटि_सं) अणु
-		हाल NE_ERR_NOT_IN_INIT_STATE: अणु
-			म_लिखो("Error in start enclave, enclave not in init state\n");
+	if (rc < 0) {
+		switch (errno) {
+		case NE_ERR_NOT_IN_INIT_STATE: {
+			printf("Error in start enclave, enclave not in init state\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		हाल NE_ERR_NO_MEM_REGIONS_ADDED: अणु
-			म_लिखो("Error in start enclave, no memory regions have been added\n");
+		case NE_ERR_NO_MEM_REGIONS_ADDED: {
+			printf("Error in start enclave, no memory regions have been added\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		हाल NE_ERR_NO_VCPUS_ADDED: अणु
-			म_लिखो("Error in start enclave, no vCPUs have been added\n");
+		case NE_ERR_NO_VCPUS_ADDED: {
+			printf("Error in start enclave, no vCPUs have been added\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		हाल NE_ERR_FULL_CORES_NOT_USED: अणु
-			म_लिखो("Error in start enclave, enclave has no full cores set\n");
+		case NE_ERR_FULL_CORES_NOT_USED: {
+			printf("Error in start enclave, enclave has no full cores set\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		हाल NE_ERR_ENCLAVE_MEM_MIN_SIZE: अणु
-			म_लिखो("Error in start enclave, enclave memory is less than min size\n");
+		case NE_ERR_ENCLAVE_MEM_MIN_SIZE: {
+			printf("Error in start enclave, enclave memory is less than min size\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		हाल NE_ERR_INVALID_FLAG_VALUE: अणु
-			म_लिखो("Error in start enclave, provided invalid flag\n");
+		case NE_ERR_INVALID_FLAG_VALUE: {
+			printf("Error in start enclave, provided invalid flag\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		हाल NE_ERR_INVALID_ENCLAVE_CID: अणु
-			म_लिखो("Error in start enclave, provided invalid enclave CID\n");
+		case NE_ERR_INVALID_ENCLAVE_CID: {
+			printf("Error in start enclave, provided invalid enclave CID\n");
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		शेष:
-			म_लिखो("Error in start enclave [%m]\n");
-		पूर्ण
+		default:
+			printf("Error in start enclave [%m]\n");
+		}
 
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ne_start_enclave_check_booted() - Start the enclave and रुको क्रम a hearbeat
+ * ne_start_enclave_check_booted() - Start the enclave and wait for a hearbeat
  *				     from it, on a newly created vsock channel,
  *				     to check it has booted.
  * @enclave_fd :	The file descriptor associated with the enclave.
@@ -647,87 +646,87 @@
  * Context: Process context.
  * Return:
  * * 0 on success.
- * * Negative वापस value on failure.
+ * * Negative return value on failure.
  */
-अटल पूर्णांक ne_start_enclave_check_booted(पूर्णांक enclave_fd)
-अणु
-	काष्ठा sockaddr_vm client_vsock_addr = अणुपूर्ण;
-	पूर्णांक client_vsock_fd = -1;
-	socklen_t client_vsock_len = माप(client_vsock_addr);
-	काष्ठा ne_enclave_start_info enclave_start_info = अणुपूर्ण;
-	काष्ठा pollfd fds[1] = अणुपूर्ण;
-	पूर्णांक rc = -EINVAL;
-	अचिन्हित अक्षर recv_buf = 0;
-	काष्ठा sockaddr_vm server_vsock_addr = अणु
+static int ne_start_enclave_check_booted(int enclave_fd)
+{
+	struct sockaddr_vm client_vsock_addr = {};
+	int client_vsock_fd = -1;
+	socklen_t client_vsock_len = sizeof(client_vsock_addr);
+	struct ne_enclave_start_info enclave_start_info = {};
+	struct pollfd fds[1] = {};
+	int rc = -EINVAL;
+	unsigned char recv_buf = 0;
+	struct sockaddr_vm server_vsock_addr = {
 		.svm_family = AF_VSOCK,
 		.svm_cid = NE_IMAGE_LOAD_HEARTBEAT_CID,
 		.svm_port = NE_IMAGE_LOAD_HEARTBEAT_PORT,
-	पूर्ण;
-	पूर्णांक server_vsock_fd = -1;
+	};
+	int server_vsock_fd = -1;
 
 	server_vsock_fd = socket(AF_VSOCK, SOCK_STREAM, 0);
-	अगर (server_vsock_fd < 0) अणु
+	if (server_vsock_fd < 0) {
 		rc = server_vsock_fd;
 
-		म_लिखो("Error in socket [%m]\n");
+		printf("Error in socket [%m]\n");
 
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	rc = bind(server_vsock_fd, (काष्ठा sockaddr *)&server_vsock_addr,
-		  माप(server_vsock_addr));
-	अगर (rc < 0) अणु
-		म_लिखो("Error in bind [%m]\n");
+	rc = bind(server_vsock_fd, (struct sockaddr *)&server_vsock_addr,
+		  sizeof(server_vsock_addr));
+	if (rc < 0) {
+		printf("Error in bind [%m]\n");
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	rc = listen(server_vsock_fd, 1);
-	अगर (rc < 0) अणु
-		म_लिखो("Error in listen [%m]\n");
+	if (rc < 0) {
+		printf("Error in listen [%m]\n");
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	rc = ne_start_enclave(enclave_fd, &enclave_start_info);
-	अगर (rc < 0)
-		जाओ out;
+	if (rc < 0)
+		goto out;
 
-	म_लिखो("Enclave started, CID %llu\n", enclave_start_info.enclave_cid);
+	printf("Enclave started, CID %llu\n", enclave_start_info.enclave_cid);
 
 	fds[0].fd = server_vsock_fd;
 	fds[0].events = POLLIN;
 
 	rc = poll(fds, 1, NE_POLL_WAIT_TIME_MS);
-	अगर (rc < 0) अणु
-		म_लिखो("Error in poll [%m]\n");
+	if (rc < 0) {
+		printf("Error in poll [%m]\n");
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!rc) अणु
-		म_लिखो("Poll timeout, %d seconds elapsed\n", NE_POLL_WAIT_TIME);
+	if (!rc) {
+		printf("Poll timeout, %d seconds elapsed\n", NE_POLL_WAIT_TIME);
 
 		rc = -ETIMEDOUT;
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर ((fds[0].revents & POLLIN) == 0) अणु
-		म_लिखो("Poll received value %d\n", fds[0].revents);
+	if ((fds[0].revents & POLLIN) == 0) {
+		printf("Poll received value %d\n", fds[0].revents);
 
 		rc = -EINVAL;
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	rc = accept(server_vsock_fd, (काष्ठा sockaddr *)&client_vsock_addr,
+	rc = accept(server_vsock_fd, (struct sockaddr *)&client_vsock_addr,
 		    &client_vsock_len);
-	अगर (rc < 0) अणु
-		म_लिखो("Error in accept [%m]\n");
+	if (rc < 0) {
+		printf("Error in accept [%m]\n");
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	client_vsock_fd = rc;
 
@@ -735,150 +734,150 @@
 	 * Read the heartbeat value that the init process in the enclave sends
 	 * after vsock connect.
 	 */
-	rc = पढ़ो(client_vsock_fd, &recv_buf, माप(recv_buf));
-	अगर (rc < 0) अणु
-		म_लिखो("Error in read [%m]\n");
+	rc = read(client_vsock_fd, &recv_buf, sizeof(recv_buf));
+	if (rc < 0) {
+		printf("Error in read [%m]\n");
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (rc != माप(recv_buf) || recv_buf != NE_IMAGE_LOAD_HEARTBEAT_VALUE) अणु
-		म_लिखो("Read %d instead of %d\n", recv_buf,
+	if (rc != sizeof(recv_buf) || recv_buf != NE_IMAGE_LOAD_HEARTBEAT_VALUE) {
+		printf("Read %d instead of %d\n", recv_buf,
 		       NE_IMAGE_LOAD_HEARTBEAT_VALUE);
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Write the heartbeat value back. */
-	rc = ग_लिखो(client_vsock_fd, &recv_buf, माप(recv_buf));
-	अगर (rc < 0) अणु
-		म_लिखो("Error in write [%m]\n");
+	rc = write(client_vsock_fd, &recv_buf, sizeof(recv_buf));
+	if (rc < 0) {
+		printf("Error in write [%m]\n");
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	rc = 0;
 
 out:
-	बंद(server_vsock_fd);
+	close(server_vsock_fd);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	पूर्णांक enclave_fd = -1;
-	अचिन्हित पूर्णांक i = 0;
-	पूर्णांक ne_dev_fd = -1;
-	काष्ठा ne_user_mem_region ne_user_mem_regions[NE_DEFAULT_NR_MEM_REGIONS] = अणुपूर्ण;
-	अचिन्हित पूर्णांक ne_vcpus[NE_DEFAULT_NR_VCPUS] = अणुपूर्ण;
-	पूर्णांक rc = -EINVAL;
-	pthपढ़ो_t thपढ़ो_id = 0;
-	अचिन्हित दीर्घ slot_uid = 0;
+int main(int argc, char *argv[])
+{
+	int enclave_fd = -1;
+	unsigned int i = 0;
+	int ne_dev_fd = -1;
+	struct ne_user_mem_region ne_user_mem_regions[NE_DEFAULT_NR_MEM_REGIONS] = {};
+	unsigned int ne_vcpus[NE_DEFAULT_NR_VCPUS] = {};
+	int rc = -EINVAL;
+	pthread_t thread_id = 0;
+	unsigned long slot_uid = 0;
 
-	अगर (argc != 2) अणु
-		म_लिखो("Usage: %s <path_to_enclave_image>\n", argv[0]);
+	if (argc != 2) {
+		printf("Usage: %s <path_to_enclave_image>\n", argv[0]);
 
-		निकास(निकास_त्रुटि);
-	पूर्ण
+		exit(EXIT_FAILURE);
+	}
 
-	अगर (म_माप(argv[1]) >= PATH_MAX) अणु
-		म_लिखो("The size of the path to enclave image is higher than max path\n");
+	if (strlen(argv[1]) >= PATH_MAX) {
+		printf("The size of the path to enclave image is higher than max path\n");
 
-		निकास(निकास_त्रुटि);
-	पूर्ण
+		exit(EXIT_FAILURE);
+	}
 
-	ne_dev_fd = खोलो(NE_DEV_NAME, O_RDWR | O_CLOEXEC);
-	अगर (ne_dev_fd < 0) अणु
-		म_लिखो("Error in open NE device [%m]\n");
+	ne_dev_fd = open(NE_DEV_NAME, O_RDWR | O_CLOEXEC);
+	if (ne_dev_fd < 0) {
+		printf("Error in open NE device [%m]\n");
 
-		निकास(निकास_त्रुटि);
-	पूर्ण
+		exit(EXIT_FAILURE);
+	}
 
-	म_लिखो("Creating enclave slot ...\n");
+	printf("Creating enclave slot ...\n");
 
 	rc = ne_create_vm(ne_dev_fd, &slot_uid, &enclave_fd);
 
-	बंद(ne_dev_fd);
+	close(ne_dev_fd);
 
-	अगर (rc < 0)
-		निकास(निकास_त्रुटि);
+	if (rc < 0)
+		exit(EXIT_FAILURE);
 
-	म_लिखो("Enclave fd %d\n", enclave_fd);
+	printf("Enclave fd %d\n", enclave_fd);
 
-	rc = pthपढ़ो_create(&thपढ़ो_id, शून्य, ne_poll_enclave_fd, (व्योम *)&enclave_fd);
-	अगर (rc < 0) अणु
-		म_लिखो("Error in thread create [%m]\n");
+	rc = pthread_create(&thread_id, NULL, ne_poll_enclave_fd, (void *)&enclave_fd);
+	if (rc < 0) {
+		printf("Error in thread create [%m]\n");
 
-		बंद(enclave_fd);
+		close(enclave_fd);
 
-		निकास(निकास_त्रुटि);
-	पूर्ण
+		exit(EXIT_FAILURE);
+	}
 
-	क्रम (i = 0; i < NE_DEFAULT_NR_MEM_REGIONS; i++) अणु
+	for (i = 0; i < NE_DEFAULT_NR_MEM_REGIONS; i++) {
 		ne_user_mem_regions[i].memory_size = NE_MIN_MEM_REGION_SIZE;
 
 		rc = ne_alloc_user_mem_region(&ne_user_mem_regions[i]);
-		अगर (rc < 0) अणु
-			म_लिखो("Error in alloc userspace memory region, iter %d\n", i);
+		if (rc < 0) {
+			printf("Error in alloc userspace memory region, iter %d\n", i);
 
-			जाओ release_enclave_fd;
-		पूर्ण
-	पूर्ण
+			goto release_enclave_fd;
+		}
+	}
 
 	rc = ne_load_enclave_image(enclave_fd, ne_user_mem_regions, argv[1]);
-	अगर (rc < 0)
-		जाओ release_enclave_fd;
+	if (rc < 0)
+		goto release_enclave_fd;
 
-	क्रम (i = 0; i < NE_DEFAULT_NR_MEM_REGIONS; i++) अणु
+	for (i = 0; i < NE_DEFAULT_NR_MEM_REGIONS; i++) {
 		rc = ne_set_user_mem_region(enclave_fd, ne_user_mem_regions[i]);
-		अगर (rc < 0) अणु
-			म_लिखो("Error in set memory region, iter %d\n", i);
+		if (rc < 0) {
+			printf("Error in set memory region, iter %d\n", i);
 
-			जाओ release_enclave_fd;
-		पूर्ण
-	पूर्ण
+			goto release_enclave_fd;
+		}
+	}
 
-	म_लिखो("Enclave memory regions were added\n");
+	printf("Enclave memory regions were added\n");
 
-	क्रम (i = 0; i < NE_DEFAULT_NR_VCPUS; i++) अणु
+	for (i = 0; i < NE_DEFAULT_NR_VCPUS; i++) {
 		/*
-		 * The vCPU is chosen from the enclave vCPU pool, अगर the value
+		 * The vCPU is chosen from the enclave vCPU pool, if the value
 		 * of the vcpu_id is 0.
 		 */
 		ne_vcpus[i] = 0;
 		rc = ne_add_vcpu(enclave_fd, &ne_vcpus[i]);
-		अगर (rc < 0) अणु
-			म_लिखो("Error in add vcpu, iter %d\n", i);
+		if (rc < 0) {
+			printf("Error in add vcpu, iter %d\n", i);
 
-			जाओ release_enclave_fd;
-		पूर्ण
+			goto release_enclave_fd;
+		}
 
-		म_लिखो("Added vCPU %d to the enclave\n", ne_vcpus[i]);
-	पूर्ण
+		printf("Added vCPU %d to the enclave\n", ne_vcpus[i]);
+	}
 
-	म_लिखो("Enclave vCPUs were added\n");
+	printf("Enclave vCPUs were added\n");
 
 	rc = ne_start_enclave_check_booted(enclave_fd);
-	अगर (rc < 0) अणु
-		म_लिखो("Error in the enclave start / image loading heartbeat logic [rc=%d]\n", rc);
+	if (rc < 0) {
+		printf("Error in the enclave start / image loading heartbeat logic [rc=%d]\n", rc);
 
-		जाओ release_enclave_fd;
-	पूर्ण
+		goto release_enclave_fd;
+	}
 
-	म_लिखो("Entering sleep for %d seconds ...\n", NE_SLEEP_TIME);
+	printf("Entering sleep for %d seconds ...\n", NE_SLEEP_TIME);
 
 	sleep(NE_SLEEP_TIME);
 
-	बंद(enclave_fd);
+	close(enclave_fd);
 
-	ne_मुक्त_mem_regions(ne_user_mem_regions);
+	ne_free_mem_regions(ne_user_mem_regions);
 
-	निकास(निकास_सफल);
+	exit(EXIT_SUCCESS);
 
 release_enclave_fd:
-	बंद(enclave_fd);
-	ne_मुक्त_mem_regions(ne_user_mem_regions);
+	close(enclave_fd);
+	ne_free_mem_regions(ne_user_mem_regions);
 
-	निकास(निकास_त्रुटि);
-पूर्ण
+	exit(EXIT_FAILURE);
+}

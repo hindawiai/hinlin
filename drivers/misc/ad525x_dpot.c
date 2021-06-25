@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * ad525x_dpot: Driver क्रम the Analog Devices digital potentiometers
+ * ad525x_dpot: Driver for the Analog Devices digital potentiometers
  * Copyright (c) 2009-2010 Analog Devices, Inc.
  * Author: Michael Hennerich <michael.hennerich@analog.com>
  *
@@ -59,468 +58,468 @@
  * AD5272		1		1024		20, 50, 100 (50-TP)
  * AD5274		1		256		20, 50, 100 (50-TP)
  *
- * See Documentation/misc-devices/ad525x_dpot.rst क्रम more info.
+ * See Documentation/misc-devices/ad525x_dpot.rst for more info.
  *
  * derived from ad5258.c
  * Copyright (c) 2009 Cyber Switching, Inc.
- * Author: Chris Verges <chrisv@cyberचयनing.com>
+ * Author: Chris Verges <chrisv@cyberswitching.com>
  *
  * derived from ad5252.c
  * Copyright (c) 2006-2011 Michael Hennerich <michael.hennerich@analog.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/kernel.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
 
-#समावेश "ad525x_dpot.h"
+#include "ad525x_dpot.h"
 
 /*
- * Client data (each client माला_लो its own)
+ * Client data (each client gets its own)
  */
 
-काष्ठा dpot_data अणु
-	काष्ठा ad_dpot_bus_data	bdata;
-	काष्ठा mutex update_lock;
-	अचिन्हित पूर्णांक rdac_mask;
-	अचिन्हित पूर्णांक max_pos;
-	अचिन्हित दीर्घ devid;
-	अचिन्हित पूर्णांक uid;
-	अचिन्हित पूर्णांक feat;
-	अचिन्हित पूर्णांक wipers;
+struct dpot_data {
+	struct ad_dpot_bus_data	bdata;
+	struct mutex update_lock;
+	unsigned int rdac_mask;
+	unsigned int max_pos;
+	unsigned long devid;
+	unsigned int uid;
+	unsigned int feat;
+	unsigned int wipers;
 	u16 rdac_cache[MAX_RDACS];
 	DECLARE_BITMAP(otp_en_mask, MAX_RDACS);
-पूर्ण;
+};
 
-अटल अंतरभूत पूर्णांक dpot_पढ़ो_d8(काष्ठा dpot_data *dpot)
-अणु
-	वापस dpot->bdata.bops->पढ़ो_d8(dpot->bdata.client);
-पूर्ण
+static inline int dpot_read_d8(struct dpot_data *dpot)
+{
+	return dpot->bdata.bops->read_d8(dpot->bdata.client);
+}
 
-अटल अंतरभूत पूर्णांक dpot_पढ़ो_r8d8(काष्ठा dpot_data *dpot, u8 reg)
-अणु
-	वापस dpot->bdata.bops->पढ़ो_r8d8(dpot->bdata.client, reg);
-पूर्ण
+static inline int dpot_read_r8d8(struct dpot_data *dpot, u8 reg)
+{
+	return dpot->bdata.bops->read_r8d8(dpot->bdata.client, reg);
+}
 
-अटल अंतरभूत पूर्णांक dpot_पढ़ो_r8d16(काष्ठा dpot_data *dpot, u8 reg)
-अणु
-	वापस dpot->bdata.bops->पढ़ो_r8d16(dpot->bdata.client, reg);
-पूर्ण
+static inline int dpot_read_r8d16(struct dpot_data *dpot, u8 reg)
+{
+	return dpot->bdata.bops->read_r8d16(dpot->bdata.client, reg);
+}
 
-अटल अंतरभूत पूर्णांक dpot_ग_लिखो_d8(काष्ठा dpot_data *dpot, u8 val)
-अणु
-	वापस dpot->bdata.bops->ग_लिखो_d8(dpot->bdata.client, val);
-पूर्ण
+static inline int dpot_write_d8(struct dpot_data *dpot, u8 val)
+{
+	return dpot->bdata.bops->write_d8(dpot->bdata.client, val);
+}
 
-अटल अंतरभूत पूर्णांक dpot_ग_लिखो_r8d8(काष्ठा dpot_data *dpot, u8 reg, u16 val)
-अणु
-	वापस dpot->bdata.bops->ग_लिखो_r8d8(dpot->bdata.client, reg, val);
-पूर्ण
+static inline int dpot_write_r8d8(struct dpot_data *dpot, u8 reg, u16 val)
+{
+	return dpot->bdata.bops->write_r8d8(dpot->bdata.client, reg, val);
+}
 
-अटल अंतरभूत पूर्णांक dpot_ग_लिखो_r8d16(काष्ठा dpot_data *dpot, u8 reg, u16 val)
-अणु
-	वापस dpot->bdata.bops->ग_लिखो_r8d16(dpot->bdata.client, reg, val);
-पूर्ण
+static inline int dpot_write_r8d16(struct dpot_data *dpot, u8 reg, u16 val)
+{
+	return dpot->bdata.bops->write_r8d16(dpot->bdata.client, reg, val);
+}
 
-अटल s32 dpot_पढ़ो_spi(काष्ठा dpot_data *dpot, u8 reg)
-अणु
-	अचिन्हित पूर्णांक ctrl = 0;
-	पूर्णांक value;
+static s32 dpot_read_spi(struct dpot_data *dpot, u8 reg)
+{
+	unsigned int ctrl = 0;
+	int value;
 
-	अगर (!(reg & (DPOT_ADDR_EEPROM | DPOT_ADDR_CMD))) अणु
+	if (!(reg & (DPOT_ADDR_EEPROM | DPOT_ADDR_CMD))) {
 
-		अगर (dpot->feat & F_RDACS_WONLY)
-			वापस dpot->rdac_cache[reg & DPOT_RDAC_MASK];
-		अगर (dpot->uid == DPOT_UID(AD5291_ID) ||
+		if (dpot->feat & F_RDACS_WONLY)
+			return dpot->rdac_cache[reg & DPOT_RDAC_MASK];
+		if (dpot->uid == DPOT_UID(AD5291_ID) ||
 			dpot->uid == DPOT_UID(AD5292_ID) ||
-			dpot->uid == DPOT_UID(AD5293_ID)) अणु
+			dpot->uid == DPOT_UID(AD5293_ID)) {
 
-			value = dpot_पढ़ो_r8d8(dpot,
+			value = dpot_read_r8d8(dpot,
 				DPOT_AD5291_READ_RDAC << 2);
 
-			अगर (value < 0)
-				वापस value;
+			if (value < 0)
+				return value;
 
-			अगर (dpot->uid == DPOT_UID(AD5291_ID))
+			if (dpot->uid == DPOT_UID(AD5291_ID))
 				value = value >> 2;
 
-			वापस value;
-		पूर्ण अन्यथा अगर (dpot->uid == DPOT_UID(AD5270_ID) ||
-			dpot->uid == DPOT_UID(AD5271_ID)) अणु
+			return value;
+		} else if (dpot->uid == DPOT_UID(AD5270_ID) ||
+			dpot->uid == DPOT_UID(AD5271_ID)) {
 
-			value = dpot_पढ़ो_r8d8(dpot,
+			value = dpot_read_r8d8(dpot,
 				DPOT_AD5270_1_2_4_READ_RDAC << 2);
 
-			अगर (value < 0)
-				वापस value;
+			if (value < 0)
+				return value;
 
-			अगर (dpot->uid == DPOT_UID(AD5271_ID))
+			if (dpot->uid == DPOT_UID(AD5271_ID))
 				value = value >> 2;
 
-			वापस value;
-		पूर्ण
+			return value;
+		}
 
 		ctrl = DPOT_SPI_READ_RDAC;
-	पूर्ण अन्यथा अगर (reg & DPOT_ADDR_EEPROM) अणु
+	} else if (reg & DPOT_ADDR_EEPROM) {
 		ctrl = DPOT_SPI_READ_EEPROM;
-	पूर्ण
+	}
 
-	अगर (dpot->feat & F_SPI_16BIT)
-		वापस dpot_पढ़ो_r8d8(dpot, ctrl);
-	अन्यथा अगर (dpot->feat & F_SPI_24BIT)
-		वापस dpot_पढ़ो_r8d16(dpot, ctrl);
+	if (dpot->feat & F_SPI_16BIT)
+		return dpot_read_r8d8(dpot, ctrl);
+	else if (dpot->feat & F_SPI_24BIT)
+		return dpot_read_r8d16(dpot, ctrl);
 
-	वापस -EFAULT;
-पूर्ण
+	return -EFAULT;
+}
 
-अटल s32 dpot_पढ़ो_i2c(काष्ठा dpot_data *dpot, u8 reg)
-अणु
-	पूर्णांक value;
-	अचिन्हित पूर्णांक ctrl = 0;
+static s32 dpot_read_i2c(struct dpot_data *dpot, u8 reg)
+{
+	int value;
+	unsigned int ctrl = 0;
 
-	चयन (dpot->uid) अणु
-	हाल DPOT_UID(AD5246_ID):
-	हाल DPOT_UID(AD5247_ID):
-		वापस dpot_पढ़ो_d8(dpot);
-	हाल DPOT_UID(AD5245_ID):
-	हाल DPOT_UID(AD5241_ID):
-	हाल DPOT_UID(AD5242_ID):
-	हाल DPOT_UID(AD5243_ID):
-	हाल DPOT_UID(AD5248_ID):
-	हाल DPOT_UID(AD5280_ID):
-	हाल DPOT_UID(AD5282_ID):
+	switch (dpot->uid) {
+	case DPOT_UID(AD5246_ID):
+	case DPOT_UID(AD5247_ID):
+		return dpot_read_d8(dpot);
+	case DPOT_UID(AD5245_ID):
+	case DPOT_UID(AD5241_ID):
+	case DPOT_UID(AD5242_ID):
+	case DPOT_UID(AD5243_ID):
+	case DPOT_UID(AD5248_ID):
+	case DPOT_UID(AD5280_ID):
+	case DPOT_UID(AD5282_ID):
 		ctrl = ((reg & DPOT_RDAC_MASK) == DPOT_RDAC0) ?
 			0 : DPOT_AD5282_RDAC_AB;
-		वापस dpot_पढ़ो_r8d8(dpot, ctrl);
-	हाल DPOT_UID(AD5170_ID):
-	हाल DPOT_UID(AD5171_ID):
-	हाल DPOT_UID(AD5273_ID):
-			वापस dpot_पढ़ो_d8(dpot);
-	हाल DPOT_UID(AD5172_ID):
-	हाल DPOT_UID(AD5173_ID):
+		return dpot_read_r8d8(dpot, ctrl);
+	case DPOT_UID(AD5170_ID):
+	case DPOT_UID(AD5171_ID):
+	case DPOT_UID(AD5273_ID):
+			return dpot_read_d8(dpot);
+	case DPOT_UID(AD5172_ID):
+	case DPOT_UID(AD5173_ID):
 		ctrl = ((reg & DPOT_RDAC_MASK) == DPOT_RDAC0) ?
 			0 : DPOT_AD5172_3_A0;
-		वापस dpot_पढ़ो_r8d8(dpot, ctrl);
-	हाल DPOT_UID(AD5272_ID):
-	हाल DPOT_UID(AD5274_ID):
-		dpot_ग_लिखो_r8d8(dpot,
+		return dpot_read_r8d8(dpot, ctrl);
+	case DPOT_UID(AD5272_ID):
+	case DPOT_UID(AD5274_ID):
+		dpot_write_r8d8(dpot,
 				(DPOT_AD5270_1_2_4_READ_RDAC << 2), 0);
 
-		value = dpot_पढ़ो_r8d16(dpot, DPOT_AD5270_1_2_4_RDAC << 2);
-		अगर (value < 0)
-			वापस value;
+		value = dpot_read_r8d16(dpot, DPOT_AD5270_1_2_4_RDAC << 2);
+		if (value < 0)
+			return value;
 		/*
-		 * AD5272/AD5274 वापसs high byte first, however
+		 * AD5272/AD5274 returns high byte first, however
 		 * underling smbus expects low byte first.
 		 */
 		value = swab16(value);
 
-		अगर (dpot->uid == DPOT_UID(AD5274_ID))
+		if (dpot->uid == DPOT_UID(AD5274_ID))
 			value = value >> 2;
-		वापस value;
-	शेष:
-		अगर ((reg & DPOT_REG_TOL) || (dpot->max_pos > 256))
-			वापस dpot_पढ़ो_r8d16(dpot, (reg & 0xF8) |
+		return value;
+	default:
+		if ((reg & DPOT_REG_TOL) || (dpot->max_pos > 256))
+			return dpot_read_r8d16(dpot, (reg & 0xF8) |
 					((reg & 0x7) << 1));
-		अन्यथा
-			वापस dpot_पढ़ो_r8d8(dpot, reg);
-	पूर्ण
-पूर्ण
+		else
+			return dpot_read_r8d8(dpot, reg);
+	}
+}
 
-अटल s32 dpot_पढ़ो(काष्ठा dpot_data *dpot, u8 reg)
-अणु
-	अगर (dpot->feat & F_SPI)
-		वापस dpot_पढ़ो_spi(dpot, reg);
-	अन्यथा
-		वापस dpot_पढ़ो_i2c(dpot, reg);
-पूर्ण
+static s32 dpot_read(struct dpot_data *dpot, u8 reg)
+{
+	if (dpot->feat & F_SPI)
+		return dpot_read_spi(dpot, reg);
+	else
+		return dpot_read_i2c(dpot, reg);
+}
 
-अटल s32 dpot_ग_लिखो_spi(काष्ठा dpot_data *dpot, u8 reg, u16 value)
-अणु
-	अचिन्हित पूर्णांक val = 0;
+static s32 dpot_write_spi(struct dpot_data *dpot, u8 reg, u16 value)
+{
+	unsigned int val = 0;
 
-	अगर (!(reg & (DPOT_ADDR_EEPROM | DPOT_ADDR_CMD | DPOT_ADDR_OTP))) अणु
-		अगर (dpot->feat & F_RDACS_WONLY)
+	if (!(reg & (DPOT_ADDR_EEPROM | DPOT_ADDR_CMD | DPOT_ADDR_OTP))) {
+		if (dpot->feat & F_RDACS_WONLY)
 			dpot->rdac_cache[reg & DPOT_RDAC_MASK] = value;
 
-		अगर (dpot->feat & F_AD_APPDATA) अणु
-			अगर (dpot->feat & F_SPI_8BIT) अणु
+		if (dpot->feat & F_AD_APPDATA) {
+			if (dpot->feat & F_SPI_8BIT) {
 				val = ((reg & DPOT_RDAC_MASK) <<
 					DPOT_MAX_POS(dpot->devid)) |
 					value;
-				वापस dpot_ग_लिखो_d8(dpot, val);
-			पूर्ण अन्यथा अगर (dpot->feat & F_SPI_16BIT) अणु
+				return dpot_write_d8(dpot, val);
+			} else if (dpot->feat & F_SPI_16BIT) {
 				val = ((reg & DPOT_RDAC_MASK) <<
 					DPOT_MAX_POS(dpot->devid)) |
 					value;
-				वापस dpot_ग_लिखो_r8d8(dpot, val >> 8,
+				return dpot_write_r8d8(dpot, val >> 8,
 					val & 0xFF);
-			पूर्ण अन्यथा
+			} else
 				BUG();
-		पूर्ण अन्यथा अणु
-			अगर (dpot->uid == DPOT_UID(AD5291_ID) ||
+		} else {
+			if (dpot->uid == DPOT_UID(AD5291_ID) ||
 				dpot->uid == DPOT_UID(AD5292_ID) ||
-				dpot->uid == DPOT_UID(AD5293_ID)) अणु
+				dpot->uid == DPOT_UID(AD5293_ID)) {
 
-				dpot_ग_लिखो_r8d8(dpot, DPOT_AD5291_CTRLREG << 2,
+				dpot_write_r8d8(dpot, DPOT_AD5291_CTRLREG << 2,
 						DPOT_AD5291_UNLOCK_CMD);
 
-				अगर (dpot->uid == DPOT_UID(AD5291_ID))
+				if (dpot->uid == DPOT_UID(AD5291_ID))
 					value = value << 2;
 
-				वापस dpot_ग_लिखो_r8d8(dpot,
+				return dpot_write_r8d8(dpot,
 					(DPOT_AD5291_RDAC << 2) |
 					(value >> 8), value & 0xFF);
-			पूर्ण अन्यथा अगर (dpot->uid == DPOT_UID(AD5270_ID) ||
-				dpot->uid == DPOT_UID(AD5271_ID)) अणु
-				dpot_ग_लिखो_r8d8(dpot,
+			} else if (dpot->uid == DPOT_UID(AD5270_ID) ||
+				dpot->uid == DPOT_UID(AD5271_ID)) {
+				dpot_write_r8d8(dpot,
 						DPOT_AD5270_1_2_4_CTRLREG << 2,
 						DPOT_AD5270_1_2_4_UNLOCK_CMD);
 
-				अगर (dpot->uid == DPOT_UID(AD5271_ID))
+				if (dpot->uid == DPOT_UID(AD5271_ID))
 					value = value << 2;
 
-				वापस dpot_ग_लिखो_r8d8(dpot,
+				return dpot_write_r8d8(dpot,
 					(DPOT_AD5270_1_2_4_RDAC << 2) |
 					(value >> 8), value & 0xFF);
-			पूर्ण
+			}
 			val = DPOT_SPI_RDAC | (reg & DPOT_RDAC_MASK);
-		पूर्ण
-	पूर्ण अन्यथा अगर (reg & DPOT_ADDR_EEPROM) अणु
+		}
+	} else if (reg & DPOT_ADDR_EEPROM) {
 		val = DPOT_SPI_EEPROM | (reg & DPOT_RDAC_MASK);
-	पूर्ण अन्यथा अगर (reg & DPOT_ADDR_CMD) अणु
-		चयन (reg) अणु
-		हाल DPOT_DEC_ALL_6DB:
+	} else if (reg & DPOT_ADDR_CMD) {
+		switch (reg) {
+		case DPOT_DEC_ALL_6DB:
 			val = DPOT_SPI_DEC_ALL_6DB;
-			अवरोध;
-		हाल DPOT_INC_ALL_6DB:
+			break;
+		case DPOT_INC_ALL_6DB:
 			val = DPOT_SPI_INC_ALL_6DB;
-			अवरोध;
-		हाल DPOT_DEC_ALL:
+			break;
+		case DPOT_DEC_ALL:
 			val = DPOT_SPI_DEC_ALL;
-			अवरोध;
-		हाल DPOT_INC_ALL:
+			break;
+		case DPOT_INC_ALL:
 			val = DPOT_SPI_INC_ALL;
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अगर (reg & DPOT_ADDR_OTP) अणु
-		अगर (dpot->uid == DPOT_UID(AD5291_ID) ||
-			dpot->uid == DPOT_UID(AD5292_ID)) अणु
-			वापस dpot_ग_लिखो_r8d8(dpot,
+			break;
+		}
+	} else if (reg & DPOT_ADDR_OTP) {
+		if (dpot->uid == DPOT_UID(AD5291_ID) ||
+			dpot->uid == DPOT_UID(AD5292_ID)) {
+			return dpot_write_r8d8(dpot,
 				DPOT_AD5291_STORE_XTPM << 2, 0);
-		पूर्ण अन्यथा अगर (dpot->uid == DPOT_UID(AD5270_ID) ||
-			dpot->uid == DPOT_UID(AD5271_ID)) अणु
-			वापस dpot_ग_लिखो_r8d8(dpot,
+		} else if (dpot->uid == DPOT_UID(AD5270_ID) ||
+			dpot->uid == DPOT_UID(AD5271_ID)) {
+			return dpot_write_r8d8(dpot,
 				DPOT_AD5270_1_2_4_STORE_XTPM << 2, 0);
-		पूर्ण
-	पूर्ण अन्यथा
+		}
+	} else
 		BUG();
 
-	अगर (dpot->feat & F_SPI_16BIT)
-		वापस dpot_ग_लिखो_r8d8(dpot, val, value);
-	अन्यथा अगर (dpot->feat & F_SPI_24BIT)
-		वापस dpot_ग_लिखो_r8d16(dpot, val, value);
+	if (dpot->feat & F_SPI_16BIT)
+		return dpot_write_r8d8(dpot, val, value);
+	else if (dpot->feat & F_SPI_24BIT)
+		return dpot_write_r8d16(dpot, val, value);
 
-	वापस -EFAULT;
-पूर्ण
+	return -EFAULT;
+}
 
-अटल s32 dpot_ग_लिखो_i2c(काष्ठा dpot_data *dpot, u8 reg, u16 value)
-अणु
-	/* Only ग_लिखो the inकाष्ठाion byte क्रम certain commands */
-	अचिन्हित पूर्णांक पंचांगp = 0, ctrl = 0;
+static s32 dpot_write_i2c(struct dpot_data *dpot, u8 reg, u16 value)
+{
+	/* Only write the instruction byte for certain commands */
+	unsigned int tmp = 0, ctrl = 0;
 
-	चयन (dpot->uid) अणु
-	हाल DPOT_UID(AD5246_ID):
-	हाल DPOT_UID(AD5247_ID):
-		वापस dpot_ग_लिखो_d8(dpot, value);
+	switch (dpot->uid) {
+	case DPOT_UID(AD5246_ID):
+	case DPOT_UID(AD5247_ID):
+		return dpot_write_d8(dpot, value);
 
-	हाल DPOT_UID(AD5245_ID):
-	हाल DPOT_UID(AD5241_ID):
-	हाल DPOT_UID(AD5242_ID):
-	हाल DPOT_UID(AD5243_ID):
-	हाल DPOT_UID(AD5248_ID):
-	हाल DPOT_UID(AD5280_ID):
-	हाल DPOT_UID(AD5282_ID):
+	case DPOT_UID(AD5245_ID):
+	case DPOT_UID(AD5241_ID):
+	case DPOT_UID(AD5242_ID):
+	case DPOT_UID(AD5243_ID):
+	case DPOT_UID(AD5248_ID):
+	case DPOT_UID(AD5280_ID):
+	case DPOT_UID(AD5282_ID):
 		ctrl = ((reg & DPOT_RDAC_MASK) == DPOT_RDAC0) ?
 			0 : DPOT_AD5282_RDAC_AB;
-		वापस dpot_ग_लिखो_r8d8(dpot, ctrl, value);
-	हाल DPOT_UID(AD5171_ID):
-	हाल DPOT_UID(AD5273_ID):
-		अगर (reg & DPOT_ADDR_OTP) अणु
-			पंचांगp = dpot_पढ़ो_d8(dpot);
-			अगर (पंचांगp >> 6) /* Ready to Program? */
-				वापस -EFAULT;
+		return dpot_write_r8d8(dpot, ctrl, value);
+	case DPOT_UID(AD5171_ID):
+	case DPOT_UID(AD5273_ID):
+		if (reg & DPOT_ADDR_OTP) {
+			tmp = dpot_read_d8(dpot);
+			if (tmp >> 6) /* Ready to Program? */
+				return -EFAULT;
 			ctrl = DPOT_AD5273_FUSE;
-		पूर्ण
-		वापस dpot_ग_लिखो_r8d8(dpot, ctrl, value);
-	हाल DPOT_UID(AD5172_ID):
-	हाल DPOT_UID(AD5173_ID):
+		}
+		return dpot_write_r8d8(dpot, ctrl, value);
+	case DPOT_UID(AD5172_ID):
+	case DPOT_UID(AD5173_ID):
 		ctrl = ((reg & DPOT_RDAC_MASK) == DPOT_RDAC0) ?
 			0 : DPOT_AD5172_3_A0;
-		अगर (reg & DPOT_ADDR_OTP) अणु
-			पंचांगp = dpot_पढ़ो_r8d16(dpot, ctrl);
-			अगर (पंचांगp >> 14) /* Ready to Program? */
-				वापस -EFAULT;
+		if (reg & DPOT_ADDR_OTP) {
+			tmp = dpot_read_r8d16(dpot, ctrl);
+			if (tmp >> 14) /* Ready to Program? */
+				return -EFAULT;
 			ctrl |= DPOT_AD5170_2_3_FUSE;
-		पूर्ण
-		वापस dpot_ग_लिखो_r8d8(dpot, ctrl, value);
-	हाल DPOT_UID(AD5170_ID):
-		अगर (reg & DPOT_ADDR_OTP) अणु
-			पंचांगp = dpot_पढ़ो_r8d16(dpot, पंचांगp);
-			अगर (पंचांगp >> 14) /* Ready to Program? */
-				वापस -EFAULT;
+		}
+		return dpot_write_r8d8(dpot, ctrl, value);
+	case DPOT_UID(AD5170_ID):
+		if (reg & DPOT_ADDR_OTP) {
+			tmp = dpot_read_r8d16(dpot, tmp);
+			if (tmp >> 14) /* Ready to Program? */
+				return -EFAULT;
 			ctrl = DPOT_AD5170_2_3_FUSE;
-		पूर्ण
-		वापस dpot_ग_लिखो_r8d8(dpot, ctrl, value);
-	हाल DPOT_UID(AD5272_ID):
-	हाल DPOT_UID(AD5274_ID):
-		dpot_ग_लिखो_r8d8(dpot, DPOT_AD5270_1_2_4_CTRLREG << 2,
+		}
+		return dpot_write_r8d8(dpot, ctrl, value);
+	case DPOT_UID(AD5272_ID):
+	case DPOT_UID(AD5274_ID):
+		dpot_write_r8d8(dpot, DPOT_AD5270_1_2_4_CTRLREG << 2,
 				DPOT_AD5270_1_2_4_UNLOCK_CMD);
 
-		अगर (reg & DPOT_ADDR_OTP)
-			वापस dpot_ग_लिखो_r8d8(dpot,
+		if (reg & DPOT_ADDR_OTP)
+			return dpot_write_r8d8(dpot,
 					DPOT_AD5270_1_2_4_STORE_XTPM << 2, 0);
 
-		अगर (dpot->uid == DPOT_UID(AD5274_ID))
+		if (dpot->uid == DPOT_UID(AD5274_ID))
 			value = value << 2;
 
-		वापस dpot_ग_लिखो_r8d8(dpot, (DPOT_AD5270_1_2_4_RDAC << 2) |
+		return dpot_write_r8d8(dpot, (DPOT_AD5270_1_2_4_RDAC << 2) |
 				       (value >> 8), value & 0xFF);
-	शेष:
-		अगर (reg & DPOT_ADDR_CMD)
-			वापस dpot_ग_लिखो_d8(dpot, reg);
+	default:
+		if (reg & DPOT_ADDR_CMD)
+			return dpot_write_d8(dpot, reg);
 
-		अगर (dpot->max_pos > 256)
-			वापस dpot_ग_लिखो_r8d16(dpot, (reg & 0xF8) |
+		if (dpot->max_pos > 256)
+			return dpot_write_r8d16(dpot, (reg & 0xF8) |
 						((reg & 0x7) << 1), value);
-		अन्यथा
-			/* All other रेजिस्टरs require inकाष्ठाion + data bytes */
-			वापस dpot_ग_लिखो_r8d8(dpot, reg, value);
-	पूर्ण
-पूर्ण
+		else
+			/* All other registers require instruction + data bytes */
+			return dpot_write_r8d8(dpot, reg, value);
+	}
+}
 
-अटल s32 dpot_ग_लिखो(काष्ठा dpot_data *dpot, u8 reg, u16 value)
-अणु
-	अगर (dpot->feat & F_SPI)
-		वापस dpot_ग_लिखो_spi(dpot, reg, value);
-	अन्यथा
-		वापस dpot_ग_लिखो_i2c(dpot, reg, value);
-पूर्ण
+static s32 dpot_write(struct dpot_data *dpot, u8 reg, u16 value)
+{
+	if (dpot->feat & F_SPI)
+		return dpot_write_spi(dpot, reg, value);
+	else
+		return dpot_write_i2c(dpot, reg, value);
+}
 
 /* sysfs functions */
 
-अटल sमाप_प्रकार sysfs_show_reg(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr,
-			      अक्षर *buf, u32 reg)
-अणु
-	काष्ठा dpot_data *data = dev_get_drvdata(dev);
+static ssize_t sysfs_show_reg(struct device *dev,
+			      struct device_attribute *attr,
+			      char *buf, u32 reg)
+{
+	struct dpot_data *data = dev_get_drvdata(dev);
 	s32 value;
 
-	अगर (reg & DPOT_ADDR_OTP_EN)
-		वापस प्र_लिखो(buf, "%s\n",
+	if (reg & DPOT_ADDR_OTP_EN)
+		return sprintf(buf, "%s\n",
 			test_bit(DPOT_RDAC_MASK & reg, data->otp_en_mask) ?
 			"enabled" : "disabled");
 
 
 	mutex_lock(&data->update_lock);
-	value = dpot_पढ़ो(data, reg);
+	value = dpot_read(data, reg);
 	mutex_unlock(&data->update_lock);
 
-	अगर (value < 0)
-		वापस -EINVAL;
+	if (value < 0)
+		return -EINVAL;
 	/*
-	 * Let someone अन्यथा deal with converting this ...
+	 * Let someone else deal with converting this ...
 	 * the tolerance is a two-byte value where the MSB
-	 * is a sign + पूर्णांकeger value, and the LSB is a
+	 * is a sign + integer value, and the LSB is a
 	 * decimal value.  See page 18 of the AD5258
-	 * datasheet (Rev. A) क्रम more details.
+	 * datasheet (Rev. A) for more details.
 	 */
 
-	अगर (reg & DPOT_REG_TOL)
-		वापस प्र_लिखो(buf, "0x%04x\n", value & 0xFFFF);
-	अन्यथा
-		वापस प्र_लिखो(buf, "%u\n", value & data->rdac_mask);
-पूर्ण
+	if (reg & DPOT_REG_TOL)
+		return sprintf(buf, "0x%04x\n", value & 0xFFFF);
+	else
+		return sprintf(buf, "%u\n", value & data->rdac_mask);
+}
 
-अटल sमाप_प्रकार sysfs_set_reg(काष्ठा device *dev,
-			     काष्ठा device_attribute *attr,
-			     स्थिर अक्षर *buf, माप_प्रकार count, u32 reg)
-अणु
-	काष्ठा dpot_data *data = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ value;
-	पूर्णांक err;
+static ssize_t sysfs_set_reg(struct device *dev,
+			     struct device_attribute *attr,
+			     const char *buf, size_t count, u32 reg)
+{
+	struct dpot_data *data = dev_get_drvdata(dev);
+	unsigned long value;
+	int err;
 
-	अगर (reg & DPOT_ADDR_OTP_EN) अणु
-		अगर (sysfs_streq(buf, "enabled"))
+	if (reg & DPOT_ADDR_OTP_EN) {
+		if (sysfs_streq(buf, "enabled"))
 			set_bit(DPOT_RDAC_MASK & reg, data->otp_en_mask);
-		अन्यथा
+		else
 			clear_bit(DPOT_RDAC_MASK & reg, data->otp_en_mask);
 
-		वापस count;
-	पूर्ण
+		return count;
+	}
 
-	अगर ((reg & DPOT_ADDR_OTP) &&
+	if ((reg & DPOT_ADDR_OTP) &&
 		!test_bit(DPOT_RDAC_MASK & reg, data->otp_en_mask))
-		वापस -EPERM;
+		return -EPERM;
 
-	err = kम_से_अदीर्घ(buf, 10, &value);
-	अगर (err)
-		वापस err;
+	err = kstrtoul(buf, 10, &value);
+	if (err)
+		return err;
 
-	अगर (value > data->rdac_mask)
+	if (value > data->rdac_mask)
 		value = data->rdac_mask;
 
 	mutex_lock(&data->update_lock);
-	dpot_ग_लिखो(data, reg, value);
-	अगर (reg & DPOT_ADDR_EEPROM)
-		msleep(26);	/* Sleep जबतक the EEPROM updates */
-	अन्यथा अगर (reg & DPOT_ADDR_OTP)
-		msleep(400);	/* Sleep जबतक the OTP updates */
+	dpot_write(data, reg, value);
+	if (reg & DPOT_ADDR_EEPROM)
+		msleep(26);	/* Sleep while the EEPROM updates */
+	else if (reg & DPOT_ADDR_OTP)
+		msleep(400);	/* Sleep while the OTP updates */
 	mutex_unlock(&data->update_lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार sysfs_करो_cmd(काष्ठा device *dev,
-			    काष्ठा device_attribute *attr,
-			    स्थिर अक्षर *buf, माप_प्रकार count, u32 reg)
-अणु
-	काष्ठा dpot_data *data = dev_get_drvdata(dev);
+static ssize_t sysfs_do_cmd(struct device *dev,
+			    struct device_attribute *attr,
+			    const char *buf, size_t count, u32 reg)
+{
+	struct dpot_data *data = dev_get_drvdata(dev);
 
 	mutex_lock(&data->update_lock);
-	dpot_ग_लिखो(data, reg, 0);
+	dpot_write(data, reg, 0);
 	mutex_unlock(&data->update_lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /* ------------------------------------------------------------------------- */
 
-#घोषणा DPOT_DEVICE_SHOW(_name, _reg) अटल sमाप_प्रकार \
-show_##_name(काष्ठा device *dev, \
-			  काष्ठा device_attribute *attr, अक्षर *buf) \
-अणु \
-	वापस sysfs_show_reg(dev, attr, buf, _reg); \
-पूर्ण
+#define DPOT_DEVICE_SHOW(_name, _reg) static ssize_t \
+show_##_name(struct device *dev, \
+			  struct device_attribute *attr, char *buf) \
+{ \
+	return sysfs_show_reg(dev, attr, buf, _reg); \
+}
 
-#घोषणा DPOT_DEVICE_SET(_name, _reg) अटल sमाप_प्रकार \
-set_##_name(काष्ठा device *dev, \
-			 काष्ठा device_attribute *attr, \
-			 स्थिर अक्षर *buf, माप_प्रकार count) \
-अणु \
-	वापस sysfs_set_reg(dev, attr, buf, count, _reg); \
-पूर्ण
+#define DPOT_DEVICE_SET(_name, _reg) static ssize_t \
+set_##_name(struct device *dev, \
+			 struct device_attribute *attr, \
+			 const char *buf, size_t count) \
+{ \
+	return sysfs_set_reg(dev, attr, buf, count, _reg); \
+}
 
-#घोषणा DPOT_DEVICE_SHOW_SET(name, reg) \
+#define DPOT_DEVICE_SHOW_SET(name, reg) \
 DPOT_DEVICE_SHOW(name, reg) \
 DPOT_DEVICE_SET(name, reg) \
-अटल DEVICE_ATTR(name, S_IWUSR | S_IRUGO, show_##name, set_##name)
+static DEVICE_ATTR(name, S_IWUSR | S_IRUGO, show_##name, set_##name)
 
-#घोषणा DPOT_DEVICE_SHOW_ONLY(name, reg) \
+#define DPOT_DEVICE_SHOW_ONLY(name, reg) \
 DPOT_DEVICE_SHOW(name, reg) \
-अटल DEVICE_ATTR(name, S_IWUSR | S_IRUGO, show_##name, शून्य)
+static DEVICE_ATTR(name, S_IWUSR | S_IRUGO, show_##name, NULL)
 
 DPOT_DEVICE_SHOW_SET(rdac0, DPOT_ADDR_RDAC | DPOT_RDAC0);
 DPOT_DEVICE_SHOW_SET(eeprom0, DPOT_ADDR_EEPROM | DPOT_RDAC0);
@@ -558,141 +557,141 @@ DPOT_DEVICE_SHOW_ONLY(tolerance5, DPOT_ADDR_EEPROM | DPOT_TOL_RDAC5);
 DPOT_DEVICE_SHOW_SET(otp5, DPOT_ADDR_OTP | DPOT_RDAC5);
 DPOT_DEVICE_SHOW_SET(otp5en, DPOT_ADDR_OTP_EN | DPOT_RDAC5);
 
-अटल स्थिर काष्ठा attribute *dpot_attrib_wipers[] = अणु
+static const struct attribute *dpot_attrib_wipers[] = {
 	&dev_attr_rdac0.attr,
 	&dev_attr_rdac1.attr,
 	&dev_attr_rdac2.attr,
 	&dev_attr_rdac3.attr,
 	&dev_attr_rdac4.attr,
 	&dev_attr_rdac5.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute *dpot_attrib_eeprom[] = अणु
+static const struct attribute *dpot_attrib_eeprom[] = {
 	&dev_attr_eeprom0.attr,
 	&dev_attr_eeprom1.attr,
 	&dev_attr_eeprom2.attr,
 	&dev_attr_eeprom3.attr,
 	&dev_attr_eeprom4.attr,
 	&dev_attr_eeprom5.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute *dpot_attrib_otp[] = अणु
+static const struct attribute *dpot_attrib_otp[] = {
 	&dev_attr_otp0.attr,
 	&dev_attr_otp1.attr,
 	&dev_attr_otp2.attr,
 	&dev_attr_otp3.attr,
 	&dev_attr_otp4.attr,
 	&dev_attr_otp5.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute *dpot_attrib_otp_en[] = अणु
+static const struct attribute *dpot_attrib_otp_en[] = {
 	&dev_attr_otp0en.attr,
 	&dev_attr_otp1en.attr,
 	&dev_attr_otp2en.attr,
 	&dev_attr_otp3en.attr,
 	&dev_attr_otp4en.attr,
 	&dev_attr_otp5en.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute *dpot_attrib_tolerance[] = अणु
+static const struct attribute *dpot_attrib_tolerance[] = {
 	&dev_attr_tolerance0.attr,
 	&dev_attr_tolerance1.attr,
 	&dev_attr_tolerance2.attr,
 	&dev_attr_tolerance3.attr,
 	&dev_attr_tolerance4.attr,
 	&dev_attr_tolerance5.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
 /* ------------------------------------------------------------------------- */
 
-#घोषणा DPOT_DEVICE_DO_CMD(_name, _cmd) अटल sमाप_प्रकार \
-set_##_name(काष्ठा device *dev, \
-			 काष्ठा device_attribute *attr, \
-			 स्थिर अक्षर *buf, माप_प्रकार count) \
-अणु \
-	वापस sysfs_करो_cmd(dev, attr, buf, count, _cmd); \
-पूर्ण \
-अटल DEVICE_ATTR(_name, S_IWUSR | S_IRUGO, शून्य, set_##_name)
+#define DPOT_DEVICE_DO_CMD(_name, _cmd) static ssize_t \
+set_##_name(struct device *dev, \
+			 struct device_attribute *attr, \
+			 const char *buf, size_t count) \
+{ \
+	return sysfs_do_cmd(dev, attr, buf, count, _cmd); \
+} \
+static DEVICE_ATTR(_name, S_IWUSR | S_IRUGO, NULL, set_##_name)
 
 DPOT_DEVICE_DO_CMD(inc_all, DPOT_INC_ALL);
 DPOT_DEVICE_DO_CMD(dec_all, DPOT_DEC_ALL);
 DPOT_DEVICE_DO_CMD(inc_all_6db, DPOT_INC_ALL_6DB);
 DPOT_DEVICE_DO_CMD(dec_all_6db, DPOT_DEC_ALL_6DB);
 
-अटल काष्ठा attribute *ad525x_attributes_commands[] = अणु
+static struct attribute *ad525x_attributes_commands[] = {
 	&dev_attr_inc_all.attr,
 	&dev_attr_dec_all.attr,
 	&dev_attr_inc_all_6db.attr,
 	&dev_attr_dec_all_6db.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group ad525x_group_commands = अणु
+static const struct attribute_group ad525x_group_commands = {
 	.attrs = ad525x_attributes_commands,
-पूर्ण;
+};
 
-अटल पूर्णांक ad_dpot_add_files(काष्ठा device *dev,
-		अचिन्हित पूर्णांक features, अचिन्हित पूर्णांक rdac)
-अणु
-	पूर्णांक err = sysfs_create_file(&dev->kobj,
+static int ad_dpot_add_files(struct device *dev,
+		unsigned int features, unsigned int rdac)
+{
+	int err = sysfs_create_file(&dev->kobj,
 		dpot_attrib_wipers[rdac]);
-	अगर (features & F_CMD_EEP)
+	if (features & F_CMD_EEP)
 		err |= sysfs_create_file(&dev->kobj,
 			dpot_attrib_eeprom[rdac]);
-	अगर (features & F_CMD_TOL)
+	if (features & F_CMD_TOL)
 		err |= sysfs_create_file(&dev->kobj,
 			dpot_attrib_tolerance[rdac]);
-	अगर (features & F_CMD_OTP) अणु
+	if (features & F_CMD_OTP) {
 		err |= sysfs_create_file(&dev->kobj,
 			dpot_attrib_otp_en[rdac]);
 		err |= sysfs_create_file(&dev->kobj,
 			dpot_attrib_otp[rdac]);
-	पूर्ण
+	}
 
-	अगर (err)
+	if (err)
 		dev_err(dev, "failed to register sysfs hooks for RDAC%d\n",
 			rdac);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत व्योम ad_dpot_हटाओ_files(काष्ठा device *dev,
-		अचिन्हित पूर्णांक features, अचिन्हित पूर्णांक rdac)
-अणु
-	sysfs_हटाओ_file(&dev->kobj,
+static inline void ad_dpot_remove_files(struct device *dev,
+		unsigned int features, unsigned int rdac)
+{
+	sysfs_remove_file(&dev->kobj,
 		dpot_attrib_wipers[rdac]);
-	अगर (features & F_CMD_EEP)
-		sysfs_हटाओ_file(&dev->kobj,
+	if (features & F_CMD_EEP)
+		sysfs_remove_file(&dev->kobj,
 			dpot_attrib_eeprom[rdac]);
-	अगर (features & F_CMD_TOL)
-		sysfs_हटाओ_file(&dev->kobj,
+	if (features & F_CMD_TOL)
+		sysfs_remove_file(&dev->kobj,
 			dpot_attrib_tolerance[rdac]);
-	अगर (features & F_CMD_OTP) अणु
-		sysfs_हटाओ_file(&dev->kobj,
+	if (features & F_CMD_OTP) {
+		sysfs_remove_file(&dev->kobj,
 			dpot_attrib_otp_en[rdac]);
-		sysfs_हटाओ_file(&dev->kobj,
+		sysfs_remove_file(&dev->kobj,
 			dpot_attrib_otp[rdac]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक ad_dpot_probe(काष्ठा device *dev,
-		काष्ठा ad_dpot_bus_data *bdata, अचिन्हित दीर्घ devid,
-			    स्थिर अक्षर *name)
-अणु
+int ad_dpot_probe(struct device *dev,
+		struct ad_dpot_bus_data *bdata, unsigned long devid,
+			    const char *name)
+{
 
-	काष्ठा dpot_data *data;
-	पूर्णांक i, err = 0;
+	struct dpot_data *data;
+	int i, err = 0;
 
-	data = kzalloc(माप(काष्ठा dpot_data), GFP_KERNEL);
-	अगर (!data) अणु
+	data = kzalloc(sizeof(struct dpot_data), GFP_KERNEL);
+	if (!data) {
 		err = -ENOMEM;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	dev_set_drvdata(dev, data);
 	mutex_init(&data->update_lock);
@@ -706,58 +705,58 @@ DPOT_DEVICE_DO_CMD(dec_all_6db, DPOT_DEC_ALL_6DB);
 	data->uid = DPOT_UID(devid);
 	data->wipers = DPOT_WIPERS(devid);
 
-	क्रम (i = DPOT_RDAC0; i < MAX_RDACS; i++)
-		अगर (data->wipers & (1 << i)) अणु
+	for (i = DPOT_RDAC0; i < MAX_RDACS; i++)
+		if (data->wipers & (1 << i)) {
 			err = ad_dpot_add_files(dev, data->feat, i);
-			अगर (err)
-				जाओ निकास_हटाओ_files;
-			/* घातer-up midscale */
-			अगर (data->feat & F_RDACS_WONLY)
+			if (err)
+				goto exit_remove_files;
+			/* power-up midscale */
+			if (data->feat & F_RDACS_WONLY)
 				data->rdac_cache[i] = data->max_pos / 2;
-		पूर्ण
+		}
 
-	अगर (data->feat & F_CMD_INC)
+	if (data->feat & F_CMD_INC)
 		err = sysfs_create_group(&dev->kobj, &ad525x_group_commands);
 
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "failed to register sysfs hooks\n");
-		जाओ निकास_मुक्त;
-	पूर्ण
+		goto exit_free;
+	}
 
 	dev_info(dev, "%s %d-Position Digital Potentiometer registered\n",
 		 name, data->max_pos);
 
-	वापस 0;
+	return 0;
 
-निकास_हटाओ_files:
-	क्रम (i = DPOT_RDAC0; i < MAX_RDACS; i++)
-		अगर (data->wipers & (1 << i))
-			ad_dpot_हटाओ_files(dev, data->feat, i);
+exit_remove_files:
+	for (i = DPOT_RDAC0; i < MAX_RDACS; i++)
+		if (data->wipers & (1 << i))
+			ad_dpot_remove_files(dev, data->feat, i);
 
-निकास_मुक्त:
-	kमुक्त(data);
-	dev_set_drvdata(dev, शून्य);
-निकास:
+exit_free:
+	kfree(data);
+	dev_set_drvdata(dev, NULL);
+exit:
 	dev_err(dev, "failed to create client for %s ID 0x%lX\n",
 		name, devid);
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(ad_dpot_probe);
 
-पूर्णांक ad_dpot_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा dpot_data *data = dev_get_drvdata(dev);
-	पूर्णांक i;
+int ad_dpot_remove(struct device *dev)
+{
+	struct dpot_data *data = dev_get_drvdata(dev);
+	int i;
 
-	क्रम (i = DPOT_RDAC0; i < MAX_RDACS; i++)
-		अगर (data->wipers & (1 << i))
-			ad_dpot_हटाओ_files(dev, data->feat, i);
+	for (i = DPOT_RDAC0; i < MAX_RDACS; i++)
+		if (data->wipers & (1 << i))
+			ad_dpot_remove_files(dev, data->feat, i);
 
-	kमुक्त(data);
+	kfree(data);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(ad_dpot_हटाओ);
+	return 0;
+}
+EXPORT_SYMBOL(ad_dpot_remove);
 
 
 MODULE_AUTHOR("Chris Verges <chrisv@cyberswitching.com>, "

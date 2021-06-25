@@ -1,16 +1,15 @@
-<शैली गुरु>
 /* Copyright 2008 - 2016 Freescale Semiconductor, Inc.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
  *	 notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary क्रमm must reproduce the above copyright
+ *     * Redistributions in binary form must reproduce the above copyright
  *	 notice, this list of conditions and the following disclaimer in the
- *	 करोcumentation and/or other materials provided with the distribution.
+ *	 documentation and/or other materials provided with the distribution.
  *     * Neither the name of Freescale Semiconductor nor the
- *	 names of its contributors may be used to enकरोrse or promote products
- *	 derived from this software without specअगरic prior written permission.
+ *	 names of its contributors may be used to endorse or promote products
+ *	 derived from this software without specific prior written permission.
  *
  * ALTERNATIVELY, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") as published by the Free Software
@@ -21,7 +20,7 @@
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL Freescale Semiconductor BE LIABLE FOR ANY
- * सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
@@ -29,102 +28,102 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#समावेश "qman_test.h"
+#include "qman_test.h"
 
-#घोषणा CGR_ID		27
-#घोषणा POOL_ID		2
-#घोषणा FQ_FLAGS	QMAN_FQ_FLAG_DYNAMIC_FQID
-#घोषणा NUM_ENQUEUES	10
-#घोषणा NUM_PARTIAL	4
-#घोषणा PORTAL_SDQCR	(QM_SDQCR_SOURCE_CHANNELS | \
+#define CGR_ID		27
+#define POOL_ID		2
+#define FQ_FLAGS	QMAN_FQ_FLAG_DYNAMIC_FQID
+#define NUM_ENQUEUES	10
+#define NUM_PARTIAL	4
+#define PORTAL_SDQCR	(QM_SDQCR_SOURCE_CHANNELS | \
 			QM_SDQCR_TYPE_PRIO_QOS | \
 			QM_SDQCR_TOKEN_SET(0x98) | \
 			QM_SDQCR_CHANNELS_DEDICATED | \
 			QM_SDQCR_CHANNELS_POOL(POOL_ID))
-#घोषणा PORTAL_OPAQUE	((व्योम *)0xf00dbeef)
-#घोषणा VDQCR_FLAGS	(QMAN_VOLATILE_FLAG_WAIT | QMAN_VOLATILE_FLAG_FINISH)
+#define PORTAL_OPAQUE	((void *)0xf00dbeef)
+#define VDQCR_FLAGS	(QMAN_VOLATILE_FLAG_WAIT | QMAN_VOLATILE_FLAG_FINISH)
 
-अटल क्रमागत qman_cb_dqrr_result cb_dqrr(काष्ठा qman_portal *,
-					काष्ठा qman_fq *,
-					स्थिर काष्ठा qm_dqrr_entry *,
+static enum qman_cb_dqrr_result cb_dqrr(struct qman_portal *,
+					struct qman_fq *,
+					const struct qm_dqrr_entry *,
 					bool sched_napi);
-अटल व्योम cb_ern(काष्ठा qman_portal *, काष्ठा qman_fq *,
-		   स्थिर जोड़ qm_mr_entry *);
-अटल व्योम cb_fqs(काष्ठा qman_portal *, काष्ठा qman_fq *,
-		   स्थिर जोड़ qm_mr_entry *);
+static void cb_ern(struct qman_portal *, struct qman_fq *,
+		   const union qm_mr_entry *);
+static void cb_fqs(struct qman_portal *, struct qman_fq *,
+		   const union qm_mr_entry *);
 
-अटल काष्ठा qm_fd fd, fd_dq;
-अटल काष्ठा qman_fq fq_base = अणु
+static struct qm_fd fd, fd_dq;
+static struct qman_fq fq_base = {
 	.cb.dqrr = cb_dqrr,
 	.cb.ern = cb_ern,
 	.cb.fqs = cb_fqs
-पूर्ण;
-अटल DECLARE_WAIT_QUEUE_HEAD(रुकोqueue);
-अटल पूर्णांक retire_complete, sdqcr_complete;
+};
+static DECLARE_WAIT_QUEUE_HEAD(waitqueue);
+static int retire_complete, sdqcr_complete;
 
-/* Helpers क्रम initialising and "incrementing" a frame descriptor */
-अटल व्योम fd_init(काष्ठा qm_fd *fd)
-अणु
+/* Helpers for initialising and "incrementing" a frame descriptor */
+static void fd_init(struct qm_fd *fd)
+{
 	qm_fd_addr_set64(fd, 0xabdeadbeefLLU);
 	qm_fd_set_contig_big(fd, 0x0000ffff);
 	fd->cmd = cpu_to_be32(0xfeedf00d);
-पूर्ण
+}
 
-अटल व्योम fd_inc(काष्ठा qm_fd *fd)
-अणु
+static void fd_inc(struct qm_fd *fd)
+{
 	u64 t = qm_fd_addr_get64(fd);
-	पूर्णांक z = t >> 40;
-	अचिन्हित पूर्णांक len, off;
-	क्रमागत qm_fd_क्रमmat fmt;
+	int z = t >> 40;
+	unsigned int len, off;
+	enum qm_fd_format fmt;
 
 	t <<= 1;
-	अगर (z)
+	if (z)
 		t |= 1;
 	qm_fd_addr_set64(fd, t);
 
-	fmt = qm_fd_get_क्रमmat(fd);
+	fmt = qm_fd_get_format(fd);
 	off = qm_fd_get_offset(fd);
 	len = qm_fd_get_length(fd);
 	len--;
 	qm_fd_set_param(fd, fmt, off, len);
 
 	be32_add_cpu(&fd->cmd, 1);
-पूर्ण
+}
 
-/* The only part of the 'fd' we can't स_भेद() is the ppid */
-अटल bool fd_neq(स्थिर काष्ठा qm_fd *a, स्थिर काष्ठा qm_fd *b)
-अणु
+/* The only part of the 'fd' we can't memcmp() is the ppid */
+static bool fd_neq(const struct qm_fd *a, const struct qm_fd *b)
+{
 	bool neq = qm_fd_addr_get64(a) != qm_fd_addr_get64(b);
 
-	neq |= qm_fd_get_क्रमmat(a) != qm_fd_get_क्रमmat(b);
+	neq |= qm_fd_get_format(a) != qm_fd_get_format(b);
 	neq |= a->cfg != b->cfg;
 	neq |= a->cmd != b->cmd;
 
-	वापस neq;
-पूर्ण
+	return neq;
+}
 
 /* test */
-अटल पूर्णांक करो_enqueues(काष्ठा qman_fq *fq)
-अणु
-	अचिन्हित पूर्णांक loop;
-	पूर्णांक err = 0;
+static int do_enqueues(struct qman_fq *fq)
+{
+	unsigned int loop;
+	int err = 0;
 
-	क्रम (loop = 0; loop < NUM_ENQUEUES; loop++) अणु
-		अगर (qman_enqueue(fq, &fd)) अणु
+	for (loop = 0; loop < NUM_ENQUEUES; loop++) {
+		if (qman_enqueue(fq, &fd)) {
 			pr_crit("qman_enqueue() failed\n");
 			err = -EIO;
-		पूर्ण
+		}
 		fd_inc(&fd);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक qman_test_api(व्योम)
-अणु
-	अचिन्हित पूर्णांक flags, frmcnt;
-	पूर्णांक err;
-	काष्ठा qman_fq *fq = &fq_base;
+int qman_test_api(void)
+{
+	unsigned int flags, frmcnt;
+	int err;
+	struct qman_fq *fq = &fq_base;
 
 	pr_info("%s(): Starting\n", __func__);
 	fd_init(&fd);
@@ -132,117 +131,117 @@
 
 	/* Initialise (parked) FQ */
 	err = qman_create_fq(0, FQ_FLAGS, fq);
-	अगर (err) अणु
+	if (err) {
 		pr_crit("qman_create_fq() failed\n");
-		जाओ failed;
-	पूर्ण
-	err = qman_init_fq(fq, QMAN_INITFQ_FLAG_LOCAL, शून्य);
-	अगर (err) अणु
+		goto failed;
+	}
+	err = qman_init_fq(fq, QMAN_INITFQ_FLAG_LOCAL, NULL);
+	if (err) {
 		pr_crit("qman_init_fq() failed\n");
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 	/* Do enqueues + VDQCR, twice. (Parked FQ) */
-	err = करो_enqueues(fq);
-	अगर (err)
-		जाओ failed;
+	err = do_enqueues(fq);
+	if (err)
+		goto failed;
 	pr_info("VDQCR (till-empty);\n");
 	frmcnt = QM_VDQCR_NUMFRAMES_TILLEMPTY;
-	err = qman_अस्थिर_dequeue(fq, VDQCR_FLAGS, frmcnt);
-	अगर (err) अणु
+	err = qman_volatile_dequeue(fq, VDQCR_FLAGS, frmcnt);
+	if (err) {
 		pr_crit("qman_volatile_dequeue() failed\n");
-		जाओ failed;
-	पूर्ण
-	err = करो_enqueues(fq);
-	अगर (err)
-		जाओ failed;
+		goto failed;
+	}
+	err = do_enqueues(fq);
+	if (err)
+		goto failed;
 	pr_info("VDQCR (%d of %d);\n", NUM_PARTIAL, NUM_ENQUEUES);
 	frmcnt = QM_VDQCR_NUMFRAMES_SET(NUM_PARTIAL);
-	err = qman_अस्थिर_dequeue(fq, VDQCR_FLAGS, frmcnt);
-	अगर (err) अणु
+	err = qman_volatile_dequeue(fq, VDQCR_FLAGS, frmcnt);
+	if (err) {
 		pr_crit("qman_volatile_dequeue() failed\n");
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 	pr_info("VDQCR (%d of %d);\n", NUM_ENQUEUES - NUM_PARTIAL,
 		NUM_ENQUEUES);
 	frmcnt = QM_VDQCR_NUMFRAMES_SET(NUM_ENQUEUES - NUM_PARTIAL);
-	err = qman_अस्थिर_dequeue(fq, VDQCR_FLAGS, frmcnt);
-	अगर (err) अणु
+	err = qman_volatile_dequeue(fq, VDQCR_FLAGS, frmcnt);
+	if (err) {
 		pr_err("qman_volatile_dequeue() failed\n");
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
-	err = करो_enqueues(fq);
-	अगर (err)
-		जाओ failed;
+	err = do_enqueues(fq);
+	if (err)
+		goto failed;
 	pr_info("scheduled dequeue (till-empty)\n");
 	err = qman_schedule_fq(fq);
-	अगर (err) अणु
+	if (err) {
 		pr_crit("qman_schedule_fq() failed\n");
-		जाओ failed;
-	पूर्ण
-	रुको_event(रुकोqueue, sdqcr_complete);
+		goto failed;
+	}
+	wait_event(waitqueue, sdqcr_complete);
 
 	/* Retire and OOS the FQ */
 	err = qman_retire_fq(fq, &flags);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		pr_crit("qman_retire_fq() failed\n");
-		जाओ failed;
-	पूर्ण
-	रुको_event(रुकोqueue, retire_complete);
-	अगर (flags & QMAN_FQ_STATE_BLOCKOOS) अणु
+		goto failed;
+	}
+	wait_event(waitqueue, retire_complete);
+	if (flags & QMAN_FQ_STATE_BLOCKOOS) {
 		err = -EIO;
 		pr_crit("leaking frames\n");
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 	err = qman_oos_fq(fq);
-	अगर (err) अणु
+	if (err) {
 		pr_crit("qman_oos_fq() failed\n");
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 	qman_destroy_fq(fq);
 	pr_info("%s(): Finished\n", __func__);
-	वापस 0;
+	return 0;
 
 failed:
 	WARN_ON(1);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल क्रमागत qman_cb_dqrr_result cb_dqrr(काष्ठा qman_portal *p,
-					काष्ठा qman_fq *fq,
-					स्थिर काष्ठा qm_dqrr_entry *dq,
+static enum qman_cb_dqrr_result cb_dqrr(struct qman_portal *p,
+					struct qman_fq *fq,
+					const struct qm_dqrr_entry *dq,
 					bool sched_napi)
-अणु
-	अगर (WARN_ON(fd_neq(&fd_dq, &dq->fd))) अणु
+{
+	if (WARN_ON(fd_neq(&fd_dq, &dq->fd))) {
 		pr_err("BADNESS: dequeued frame doesn't match;\n");
-		वापस qman_cb_dqrr_consume;
-	पूर्ण
+		return qman_cb_dqrr_consume;
+	}
 	fd_inc(&fd_dq);
-	अगर (!(dq->stat & QM_DQRR_STAT_UNSCHEDULED) && !fd_neq(&fd_dq, &fd)) अणु
+	if (!(dq->stat & QM_DQRR_STAT_UNSCHEDULED) && !fd_neq(&fd_dq, &fd)) {
 		sdqcr_complete = 1;
-		wake_up(&रुकोqueue);
-	पूर्ण
-	वापस qman_cb_dqrr_consume;
-पूर्ण
+		wake_up(&waitqueue);
+	}
+	return qman_cb_dqrr_consume;
+}
 
-अटल व्योम cb_ern(काष्ठा qman_portal *p, काष्ठा qman_fq *fq,
-		   स्थिर जोड़ qm_mr_entry *msg)
-अणु
+static void cb_ern(struct qman_portal *p, struct qman_fq *fq,
+		   const union qm_mr_entry *msg)
+{
 	pr_crit("cb_ern() unimplemented");
 	WARN_ON(1);
-पूर्ण
+}
 
-अटल व्योम cb_fqs(काष्ठा qman_portal *p, काष्ठा qman_fq *fq,
-		   स्थिर जोड़ qm_mr_entry *msg)
-अणु
+static void cb_fqs(struct qman_portal *p, struct qman_fq *fq,
+		   const union qm_mr_entry *msg)
+{
 	u8 verb = (msg->verb & QM_MR_VERB_TYPE_MASK);
 
-	अगर ((verb != QM_MR_VERB_FQRN) && (verb != QM_MR_VERB_FQRNI)) अणु
+	if ((verb != QM_MR_VERB_FQRN) && (verb != QM_MR_VERB_FQRNI)) {
 		pr_crit("unexpected FQS message");
 		WARN_ON(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 	pr_info("Retirement message received\n");
 	retire_complete = 1;
-	wake_up(&रुकोqueue);
-पूर्ण
+	wake_up(&waitqueue);
+}

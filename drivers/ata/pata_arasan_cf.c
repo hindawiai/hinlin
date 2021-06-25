@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * drivers/ata/pata_arasan_cf.c
  *
@@ -17,546 +16,546 @@
  * operation: PC card ATA using I/O mode, PC card ATA using memory mode, PC card
  * ATA using true IDE modes. This driver supports only True IDE mode currently.
  *
- * Arasan CF Controller shares global irq रेजिस्टर with Arasan XD Controller.
+ * Arasan CF Controller shares global irq register with Arasan XD Controller.
  *
  * Tested on arch/arm/mach-spear13xx
  */
 
-#समावेश <linux/ata.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/irq.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/libata.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/pata_arasan_cf_data.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/types.h>
-#समावेश <linux/workqueue.h>
+#include <linux/ata.h>
+#include <linux/clk.h>
+#include <linux/completion.h>
+#include <linux/delay.h>
+#include <linux/dmaengine.h>
+#include <linux/io.h>
+#include <linux/irq.h>
+#include <linux/kernel.h>
+#include <linux/libata.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/pata_arasan_cf_data.h>
+#include <linux/platform_device.h>
+#include <linux/pm.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/types.h>
+#include <linux/workqueue.h>
 
-#घोषणा DRIVER_NAME	"arasan_cf"
-#घोषणा TIMEOUT		msecs_to_jअगरfies(3000)
+#define DRIVER_NAME	"arasan_cf"
+#define TIMEOUT		msecs_to_jiffies(3000)
 
 /* Registers */
 /* CompactFlash Interface Status */
-#घोषणा CFI_STS			0x000
-	#घोषणा STS_CHG				(1)
-	#घोषणा BIN_AUDIO_OUT			(1 << 1)
-	#घोषणा CARD_DETECT1			(1 << 2)
-	#घोषणा CARD_DETECT2			(1 << 3)
-	#घोषणा INP_ACK				(1 << 4)
-	#घोषणा CARD_READY			(1 << 5)
-	#घोषणा IO_READY			(1 << 6)
-	#घोषणा B16_IO_PORT_SEL			(1 << 7)
+#define CFI_STS			0x000
+	#define STS_CHG				(1)
+	#define BIN_AUDIO_OUT			(1 << 1)
+	#define CARD_DETECT1			(1 << 2)
+	#define CARD_DETECT2			(1 << 3)
+	#define INP_ACK				(1 << 4)
+	#define CARD_READY			(1 << 5)
+	#define IO_READY			(1 << 6)
+	#define B16_IO_PORT_SEL			(1 << 7)
 /* IRQ */
-#घोषणा IRQ_STS			0x004
+#define IRQ_STS			0x004
 /* Interrupt Enable */
-#घोषणा IRQ_EN			0x008
-	#घोषणा CARD_DETECT_IRQ			(1)
-	#घोषणा STATUS_CHNG_IRQ			(1 << 1)
-	#घोषणा MEM_MODE_IRQ			(1 << 2)
-	#घोषणा IO_MODE_IRQ			(1 << 3)
-	#घोषणा TRUE_IDE_MODE_IRQ		(1 << 8)
-	#घोषणा PIO_XFER_ERR_IRQ		(1 << 9)
-	#घोषणा BUF_AVAIL_IRQ			(1 << 10)
-	#घोषणा XFER_DONE_IRQ			(1 << 11)
-	#घोषणा IGNORED_IRQS	(STATUS_CHNG_IRQ | MEM_MODE_IRQ | IO_MODE_IRQ |\
+#define IRQ_EN			0x008
+	#define CARD_DETECT_IRQ			(1)
+	#define STATUS_CHNG_IRQ			(1 << 1)
+	#define MEM_MODE_IRQ			(1 << 2)
+	#define IO_MODE_IRQ			(1 << 3)
+	#define TRUE_IDE_MODE_IRQ		(1 << 8)
+	#define PIO_XFER_ERR_IRQ		(1 << 9)
+	#define BUF_AVAIL_IRQ			(1 << 10)
+	#define XFER_DONE_IRQ			(1 << 11)
+	#define IGNORED_IRQS	(STATUS_CHNG_IRQ | MEM_MODE_IRQ | IO_MODE_IRQ |\
 					TRUE_IDE_MODE_IRQ)
-	#घोषणा TRUE_IDE_IRQS	(CARD_DETECT_IRQ | PIO_XFER_ERR_IRQ |\
+	#define TRUE_IDE_IRQS	(CARD_DETECT_IRQ | PIO_XFER_ERR_IRQ |\
 					BUF_AVAIL_IRQ | XFER_DONE_IRQ)
 /* Operation Mode */
-#घोषणा OP_MODE			0x00C
-	#घोषणा CARD_MODE_MASK			(0x3)
-	#घोषणा MEM_MODE			(0x0)
-	#घोषणा IO_MODE				(0x1)
-	#घोषणा TRUE_IDE_MODE			(0x2)
+#define OP_MODE			0x00C
+	#define CARD_MODE_MASK			(0x3)
+	#define MEM_MODE			(0x0)
+	#define IO_MODE				(0x1)
+	#define TRUE_IDE_MODE			(0x2)
 
-	#घोषणा CARD_TYPE_MASK			(1 << 2)
-	#घोषणा CF_CARD				(0)
-	#घोषणा CF_PLUS_CARD			(1 << 2)
+	#define CARD_TYPE_MASK			(1 << 2)
+	#define CF_CARD				(0)
+	#define CF_PLUS_CARD			(1 << 2)
 
-	#घोषणा CARD_RESET			(1 << 3)
-	#घोषणा CFHOST_ENB			(1 << 4)
-	#घोषणा OUTPUTS_TRISTATE		(1 << 5)
-	#घोषणा ULTRA_DMA_ENB			(1 << 8)
-	#घोषणा MULTI_WORD_DMA_ENB		(1 << 9)
-	#घोषणा DRQ_BLOCK_SIZE_MASK		(0x3 << 11)
-	#घोषणा DRQ_BLOCK_SIZE_512		(0)
-	#घोषणा DRQ_BLOCK_SIZE_1024		(1 << 11)
-	#घोषणा DRQ_BLOCK_SIZE_2048		(2 << 11)
-	#घोषणा DRQ_BLOCK_SIZE_4096		(3 << 11)
+	#define CARD_RESET			(1 << 3)
+	#define CFHOST_ENB			(1 << 4)
+	#define OUTPUTS_TRISTATE		(1 << 5)
+	#define ULTRA_DMA_ENB			(1 << 8)
+	#define MULTI_WORD_DMA_ENB		(1 << 9)
+	#define DRQ_BLOCK_SIZE_MASK		(0x3 << 11)
+	#define DRQ_BLOCK_SIZE_512		(0)
+	#define DRQ_BLOCK_SIZE_1024		(1 << 11)
+	#define DRQ_BLOCK_SIZE_2048		(2 << 11)
+	#define DRQ_BLOCK_SIZE_4096		(3 << 11)
 /* CF Interface Clock Configuration */
-#घोषणा CLK_CFG			0x010
-	#घोषणा CF_IF_CLK_MASK			(0XF)
+#define CLK_CFG			0x010
+	#define CF_IF_CLK_MASK			(0XF)
 /* CF Timing Mode Configuration */
-#घोषणा TM_CFG			0x014
-	#घोषणा MEM_MODE_TIMING_MASK		(0x3)
-	#घोषणा MEM_MODE_TIMING_250NS		(0x0)
-	#घोषणा MEM_MODE_TIMING_120NS		(0x1)
-	#घोषणा MEM_MODE_TIMING_100NS		(0x2)
-	#घोषणा MEM_MODE_TIMING_80NS		(0x3)
+#define TM_CFG			0x014
+	#define MEM_MODE_TIMING_MASK		(0x3)
+	#define MEM_MODE_TIMING_250NS		(0x0)
+	#define MEM_MODE_TIMING_120NS		(0x1)
+	#define MEM_MODE_TIMING_100NS		(0x2)
+	#define MEM_MODE_TIMING_80NS		(0x3)
 
-	#घोषणा IO_MODE_TIMING_MASK		(0x3 << 2)
-	#घोषणा IO_MODE_TIMING_250NS		(0x0 << 2)
-	#घोषणा IO_MODE_TIMING_120NS		(0x1 << 2)
-	#घोषणा IO_MODE_TIMING_100NS		(0x2 << 2)
-	#घोषणा IO_MODE_TIMING_80NS		(0x3 << 2)
+	#define IO_MODE_TIMING_MASK		(0x3 << 2)
+	#define IO_MODE_TIMING_250NS		(0x0 << 2)
+	#define IO_MODE_TIMING_120NS		(0x1 << 2)
+	#define IO_MODE_TIMING_100NS		(0x2 << 2)
+	#define IO_MODE_TIMING_80NS		(0x3 << 2)
 
-	#घोषणा TRUEIDE_PIO_TIMING_MASK		(0x7 << 4)
-	#घोषणा TRUEIDE_PIO_TIMING_SHIFT	4
+	#define TRUEIDE_PIO_TIMING_MASK		(0x7 << 4)
+	#define TRUEIDE_PIO_TIMING_SHIFT	4
 
-	#घोषणा TRUEIDE_MWORD_DMA_TIMING_MASK	(0x7 << 7)
-	#घोषणा TRUEIDE_MWORD_DMA_TIMING_SHIFT	7
+	#define TRUEIDE_MWORD_DMA_TIMING_MASK	(0x7 << 7)
+	#define TRUEIDE_MWORD_DMA_TIMING_SHIFT	7
 
-	#घोषणा ULTRA_DMA_TIMING_MASK		(0x7 << 10)
-	#घोषणा ULTRA_DMA_TIMING_SHIFT		10
+	#define ULTRA_DMA_TIMING_MASK		(0x7 << 10)
+	#define ULTRA_DMA_TIMING_SHIFT		10
 /* CF Transfer Address */
-#घोषणा XFER_ADDR		0x014
-	#घोषणा XFER_ADDR_MASK			(0x7FF)
-	#घोषणा MAX_XFER_COUNT			0x20000u
+#define XFER_ADDR		0x014
+	#define XFER_ADDR_MASK			(0x7FF)
+	#define MAX_XFER_COUNT			0x20000u
 /* Transfer Control */
-#घोषणा XFER_CTR		0x01C
-	#घोषणा XFER_COUNT_MASK			(0x3FFFF)
-	#घोषणा ADDR_INC_DISABLE		(1 << 24)
-	#घोषणा XFER_WIDTH_MASK			(1 << 25)
-	#घोषणा XFER_WIDTH_8B			(0)
-	#घोषणा XFER_WIDTH_16B			(1 << 25)
+#define XFER_CTR		0x01C
+	#define XFER_COUNT_MASK			(0x3FFFF)
+	#define ADDR_INC_DISABLE		(1 << 24)
+	#define XFER_WIDTH_MASK			(1 << 25)
+	#define XFER_WIDTH_8B			(0)
+	#define XFER_WIDTH_16B			(1 << 25)
 
-	#घोषणा MEM_TYPE_MASK			(1 << 26)
-	#घोषणा MEM_TYPE_COMMON			(0)
-	#घोषणा MEM_TYPE_ATTRIBUTE		(1 << 26)
+	#define MEM_TYPE_MASK			(1 << 26)
+	#define MEM_TYPE_COMMON			(0)
+	#define MEM_TYPE_ATTRIBUTE		(1 << 26)
 
-	#घोषणा MEM_IO_XFER_MASK		(1 << 27)
-	#घोषणा MEM_XFER			(0)
-	#घोषणा IO_XFER				(1 << 27)
+	#define MEM_IO_XFER_MASK		(1 << 27)
+	#define MEM_XFER			(0)
+	#define IO_XFER				(1 << 27)
 
-	#घोषणा DMA_XFER_MODE			(1 << 28)
+	#define DMA_XFER_MODE			(1 << 28)
 
-	#घोषणा AHB_BUS_NORMAL_PIO_OPRTN	(~(1 << 29))
-	#घोषणा XFER_सूची_MASK			(1 << 30)
-	#घोषणा XFER_READ			(0)
-	#घोषणा XFER_WRITE			(1 << 30)
+	#define AHB_BUS_NORMAL_PIO_OPRTN	(~(1 << 29))
+	#define XFER_DIR_MASK			(1 << 30)
+	#define XFER_READ			(0)
+	#define XFER_WRITE			(1 << 30)
 
-	#घोषणा XFER_START			(1 << 31)
+	#define XFER_START			(1 << 31)
 /* Write Data Port */
-#घोषणा WRITE_PORT		0x024
+#define WRITE_PORT		0x024
 /* Read Data Port */
-#घोषणा READ_PORT		0x028
+#define READ_PORT		0x028
 /* ATA Data Port */
-#घोषणा ATA_DATA_PORT		0x030
-	#घोषणा ATA_DATA_PORT_MASK		(0xFFFF)
+#define ATA_DATA_PORT		0x030
+	#define ATA_DATA_PORT_MASK		(0xFFFF)
 /* ATA Error/Features */
-#घोषणा ATA_ERR_FTR		0x034
+#define ATA_ERR_FTR		0x034
 /* ATA Sector Count */
-#घोषणा ATA_SC			0x038
+#define ATA_SC			0x038
 /* ATA Sector Number */
-#घोषणा ATA_SN			0x03C
+#define ATA_SN			0x03C
 /* ATA Cylinder Low */
-#घोषणा ATA_CL			0x040
+#define ATA_CL			0x040
 /* ATA Cylinder High */
-#घोषणा ATA_CH			0x044
+#define ATA_CH			0x044
 /* ATA Select Card/Head */
-#घोषणा ATA_SH			0x048
+#define ATA_SH			0x048
 /* ATA Status-Command */
-#घोषणा ATA_STS_CMD		0x04C
+#define ATA_STS_CMD		0x04C
 /* ATA Alternate Status/Device Control */
-#घोषणा ATA_ASTS_DCTR		0x050
+#define ATA_ASTS_DCTR		0x050
 /* Extended Write Data Port 0x200-0x3FC */
-#घोषणा EXT_WRITE_PORT		0x200
+#define EXT_WRITE_PORT		0x200
 /* Extended Read Data Port 0x400-0x5FC */
-#घोषणा EXT_READ_PORT		0x400
-	#घोषणा FIFO_SIZE	0x200u
+#define EXT_READ_PORT		0x400
+	#define FIFO_SIZE	0x200u
 /* Global Interrupt Status */
-#घोषणा GIRQ_STS		0x800
+#define GIRQ_STS		0x800
 /* Global Interrupt Status enable */
-#घोषणा GIRQ_STS_EN		0x804
+#define GIRQ_STS_EN		0x804
 /* Global Interrupt Signal enable */
-#घोषणा GIRQ_SGN_EN		0x808
-	#घोषणा GIRQ_CF		(1)
-	#घोषणा GIRQ_XD		(1 << 1)
+#define GIRQ_SGN_EN		0x808
+	#define GIRQ_CF		(1)
+	#define GIRQ_XD		(1 << 1)
 
 /* Compact Flash Controller Dev Structure */
-काष्ठा arasan_cf_dev अणु
-	/* poपूर्णांकer to ata_host काष्ठाure */
-	काष्ठा ata_host *host;
-	/* clk काष्ठाure */
-	काष्ठा clk *clk;
+struct arasan_cf_dev {
+	/* pointer to ata_host structure */
+	struct ata_host *host;
+	/* clk structure */
+	struct clk *clk;
 
 	/* physical base address of controller */
 	dma_addr_t pbase;
-	/* भव base address of controller */
-	व्योम __iomem *vbase;
+	/* virtual base address of controller */
+	void __iomem *vbase;
 	/* irq number*/
-	पूर्णांक irq;
+	int irq;
 
 	/* status to be updated to framework regarding DMA transfer */
 	u8 dma_status;
 	/* Card is present or Not */
 	u8 card_present;
 
-	/* dma specअगरic */
-	/* Completion क्रम transfer complete पूर्णांकerrupt from controller */
-	काष्ठा completion cf_completion;
-	/* Completion क्रम DMA transfer complete. */
-	काष्ठा completion dma_completion;
+	/* dma specific */
+	/* Completion for transfer complete interrupt from controller */
+	struct completion cf_completion;
+	/* Completion for DMA transfer complete. */
+	struct completion dma_completion;
 	/* Dma channel allocated */
-	काष्ठा dma_chan *dma_chan;
-	/* Mask क्रम DMA transfers */
+	struct dma_chan *dma_chan;
+	/* Mask for DMA transfers */
 	dma_cap_mask_t mask;
 	/* DMA transfer work */
-	काष्ठा work_काष्ठा work;
+	struct work_struct work;
 	/* DMA delayed finish work */
-	काष्ठा delayed_work dwork;
+	struct delayed_work dwork;
 	/* qc to be transferred using DMA */
-	काष्ठा ata_queued_cmd *qc;
-पूर्ण;
+	struct ata_queued_cmd *qc;
+};
 
-अटल काष्ठा scsi_host_ढाँचा arasan_cf_sht = अणु
+static struct scsi_host_template arasan_cf_sht = {
 	ATA_BASE_SHT(DRIVER_NAME),
 	.dma_boundary = 0xFFFFFFFFUL,
-पूर्ण;
+};
 
-अटल व्योम cf_dumpregs(काष्ठा arasan_cf_dev *acdev)
-अणु
-	काष्ठा device *dev = acdev->host->dev;
+static void cf_dumpregs(struct arasan_cf_dev *acdev)
+{
+	struct device *dev = acdev->host->dev;
 
 	dev_dbg(dev, ": =========== REGISTER DUMP ===========");
-	dev_dbg(dev, ": CFI_STS: %x", पढ़ोl(acdev->vbase + CFI_STS));
-	dev_dbg(dev, ": IRQ_STS: %x", पढ़ोl(acdev->vbase + IRQ_STS));
-	dev_dbg(dev, ": IRQ_EN: %x", पढ़ोl(acdev->vbase + IRQ_EN));
-	dev_dbg(dev, ": OP_MODE: %x", पढ़ोl(acdev->vbase + OP_MODE));
-	dev_dbg(dev, ": CLK_CFG: %x", पढ़ोl(acdev->vbase + CLK_CFG));
-	dev_dbg(dev, ": TM_CFG: %x", पढ़ोl(acdev->vbase + TM_CFG));
-	dev_dbg(dev, ": XFER_CTR: %x", पढ़ोl(acdev->vbase + XFER_CTR));
-	dev_dbg(dev, ": GIRQ_STS: %x", पढ़ोl(acdev->vbase + GIRQ_STS));
-	dev_dbg(dev, ": GIRQ_STS_EN: %x", पढ़ोl(acdev->vbase + GIRQ_STS_EN));
-	dev_dbg(dev, ": GIRQ_SGN_EN: %x", पढ़ोl(acdev->vbase + GIRQ_SGN_EN));
+	dev_dbg(dev, ": CFI_STS: %x", readl(acdev->vbase + CFI_STS));
+	dev_dbg(dev, ": IRQ_STS: %x", readl(acdev->vbase + IRQ_STS));
+	dev_dbg(dev, ": IRQ_EN: %x", readl(acdev->vbase + IRQ_EN));
+	dev_dbg(dev, ": OP_MODE: %x", readl(acdev->vbase + OP_MODE));
+	dev_dbg(dev, ": CLK_CFG: %x", readl(acdev->vbase + CLK_CFG));
+	dev_dbg(dev, ": TM_CFG: %x", readl(acdev->vbase + TM_CFG));
+	dev_dbg(dev, ": XFER_CTR: %x", readl(acdev->vbase + XFER_CTR));
+	dev_dbg(dev, ": GIRQ_STS: %x", readl(acdev->vbase + GIRQ_STS));
+	dev_dbg(dev, ": GIRQ_STS_EN: %x", readl(acdev->vbase + GIRQ_STS_EN));
+	dev_dbg(dev, ": GIRQ_SGN_EN: %x", readl(acdev->vbase + GIRQ_SGN_EN));
 	dev_dbg(dev, ": =====================================");
-पूर्ण
+}
 
-/* Enable/Disable global पूर्णांकerrupts shared between CF and XD ctrlr. */
-अटल व्योम cf_gपूर्णांकerrupt_enable(काष्ठा arasan_cf_dev *acdev, bool enable)
-अणु
+/* Enable/Disable global interrupts shared between CF and XD ctrlr. */
+static void cf_ginterrupt_enable(struct arasan_cf_dev *acdev, bool enable)
+{
 	/* enable should be 0 or 1 */
-	ग_लिखोl(enable, acdev->vbase + GIRQ_STS_EN);
-	ग_लिखोl(enable, acdev->vbase + GIRQ_SGN_EN);
-पूर्ण
+	writel(enable, acdev->vbase + GIRQ_STS_EN);
+	writel(enable, acdev->vbase + GIRQ_SGN_EN);
+}
 
-/* Enable/Disable CF पूर्णांकerrupts */
-अटल अंतरभूत व्योम
-cf_पूर्णांकerrupt_enable(काष्ठा arasan_cf_dev *acdev, u32 mask, bool enable)
-अणु
-	u32 val = पढ़ोl(acdev->vbase + IRQ_EN);
+/* Enable/Disable CF interrupts */
+static inline void
+cf_interrupt_enable(struct arasan_cf_dev *acdev, u32 mask, bool enable)
+{
+	u32 val = readl(acdev->vbase + IRQ_EN);
 	/* clear & enable/disable irqs */
-	अगर (enable) अणु
-		ग_लिखोl(mask, acdev->vbase + IRQ_STS);
-		ग_लिखोl(val | mask, acdev->vbase + IRQ_EN);
-	पूर्ण अन्यथा
-		ग_लिखोl(val & ~mask, acdev->vbase + IRQ_EN);
-पूर्ण
+	if (enable) {
+		writel(mask, acdev->vbase + IRQ_STS);
+		writel(val | mask, acdev->vbase + IRQ_EN);
+	} else
+		writel(val & ~mask, acdev->vbase + IRQ_EN);
+}
 
-अटल अंतरभूत व्योम cf_card_reset(काष्ठा arasan_cf_dev *acdev)
-अणु
-	u32 val = पढ़ोl(acdev->vbase + OP_MODE);
+static inline void cf_card_reset(struct arasan_cf_dev *acdev)
+{
+	u32 val = readl(acdev->vbase + OP_MODE);
 
-	ग_लिखोl(val | CARD_RESET, acdev->vbase + OP_MODE);
+	writel(val | CARD_RESET, acdev->vbase + OP_MODE);
 	udelay(200);
-	ग_लिखोl(val & ~CARD_RESET, acdev->vbase + OP_MODE);
-पूर्ण
+	writel(val & ~CARD_RESET, acdev->vbase + OP_MODE);
+}
 
-अटल अंतरभूत व्योम cf_ctrl_reset(काष्ठा arasan_cf_dev *acdev)
-अणु
-	ग_लिखोl(पढ़ोl(acdev->vbase + OP_MODE) & ~CFHOST_ENB,
+static inline void cf_ctrl_reset(struct arasan_cf_dev *acdev)
+{
+	writel(readl(acdev->vbase + OP_MODE) & ~CFHOST_ENB,
 			acdev->vbase + OP_MODE);
-	ग_लिखोl(पढ़ोl(acdev->vbase + OP_MODE) | CFHOST_ENB,
+	writel(readl(acdev->vbase + OP_MODE) | CFHOST_ENB,
 			acdev->vbase + OP_MODE);
-पूर्ण
+}
 
-अटल व्योम cf_card_detect(काष्ठा arasan_cf_dev *acdev, bool hotplugged)
-अणु
-	काष्ठा ata_port *ap = acdev->host->ports[0];
-	काष्ठा ata_eh_info *ehi = &ap->link.eh_info;
-	u32 val = पढ़ोl(acdev->vbase + CFI_STS);
+static void cf_card_detect(struct arasan_cf_dev *acdev, bool hotplugged)
+{
+	struct ata_port *ap = acdev->host->ports[0];
+	struct ata_eh_info *ehi = &ap->link.eh_info;
+	u32 val = readl(acdev->vbase + CFI_STS);
 
-	/* Both CD1 & CD2 should be low अगर card inserted completely */
-	अगर (!(val & (CARD_DETECT1 | CARD_DETECT2))) अणु
-		अगर (acdev->card_present)
-			वापस;
+	/* Both CD1 & CD2 should be low if card inserted completely */
+	if (!(val & (CARD_DETECT1 | CARD_DETECT2))) {
+		if (acdev->card_present)
+			return;
 		acdev->card_present = 1;
 		cf_card_reset(acdev);
-	पूर्ण अन्यथा अणु
-		अगर (!acdev->card_present)
-			वापस;
+	} else {
+		if (!acdev->card_present)
+			return;
 		acdev->card_present = 0;
-	पूर्ण
+	}
 
-	अगर (hotplugged) अणु
+	if (hotplugged) {
 		ata_ehi_hotplugged(ehi);
-		ata_port_मुक्तze(ap);
-	पूर्ण
-पूर्ण
+		ata_port_freeze(ap);
+	}
+}
 
-अटल पूर्णांक cf_init(काष्ठा arasan_cf_dev *acdev)
-अणु
-	काष्ठा arasan_cf_pdata *pdata = dev_get_platdata(acdev->host->dev);
-	अचिन्हित पूर्णांक अगर_clk;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+static int cf_init(struct arasan_cf_dev *acdev)
+{
+	struct arasan_cf_pdata *pdata = dev_get_platdata(acdev->host->dev);
+	unsigned int if_clk;
+	unsigned long flags;
+	int ret = 0;
 
 	ret = clk_prepare_enable(acdev->clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_dbg(acdev->host->dev, "clock enable failed");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = clk_set_rate(acdev->clk, 166000000);
-	अगर (ret) अणु
+	if (ret) {
 		dev_warn(acdev->host->dev, "clock set rate failed");
 		clk_disable_unprepare(acdev->clk);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	spin_lock_irqsave(&acdev->host->lock, flags);
-	/* configure CF पूर्णांकerface घड़ी */
-	/* TODO: पढ़ो from device tree */
-	अगर_clk = CF_IF_CLK_166M;
-	अगर (pdata && pdata->cf_अगर_clk <= CF_IF_CLK_200M)
-		अगर_clk = pdata->cf_अगर_clk;
+	/* configure CF interface clock */
+	/* TODO: read from device tree */
+	if_clk = CF_IF_CLK_166M;
+	if (pdata && pdata->cf_if_clk <= CF_IF_CLK_200M)
+		if_clk = pdata->cf_if_clk;
 
-	ग_लिखोl(अगर_clk, acdev->vbase + CLK_CFG);
+	writel(if_clk, acdev->vbase + CLK_CFG);
 
-	ग_लिखोl(TRUE_IDE_MODE | CFHOST_ENB, acdev->vbase + OP_MODE);
-	cf_पूर्णांकerrupt_enable(acdev, CARD_DETECT_IRQ, 1);
-	cf_gपूर्णांकerrupt_enable(acdev, 1);
+	writel(TRUE_IDE_MODE | CFHOST_ENB, acdev->vbase + OP_MODE);
+	cf_interrupt_enable(acdev, CARD_DETECT_IRQ, 1);
+	cf_ginterrupt_enable(acdev, 1);
 	spin_unlock_irqrestore(&acdev->host->lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम cf_निकास(काष्ठा arasan_cf_dev *acdev)
-अणु
-	अचिन्हित दीर्घ flags;
+static void cf_exit(struct arasan_cf_dev *acdev)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&acdev->host->lock, flags);
-	cf_gपूर्णांकerrupt_enable(acdev, 0);
-	cf_पूर्णांकerrupt_enable(acdev, TRUE_IDE_IRQS, 0);
+	cf_ginterrupt_enable(acdev, 0);
+	cf_interrupt_enable(acdev, TRUE_IDE_IRQS, 0);
 	cf_card_reset(acdev);
-	ग_लिखोl(पढ़ोl(acdev->vbase + OP_MODE) & ~CFHOST_ENB,
+	writel(readl(acdev->vbase + OP_MODE) & ~CFHOST_ENB,
 			acdev->vbase + OP_MODE);
 	spin_unlock_irqrestore(&acdev->host->lock, flags);
 	clk_disable_unprepare(acdev->clk);
-पूर्ण
+}
 
-अटल व्योम dma_callback(व्योम *dev)
-अणु
-	काष्ठा arasan_cf_dev *acdev = dev;
+static void dma_callback(void *dev)
+{
+	struct arasan_cf_dev *acdev = dev;
 
 	complete(&acdev->dma_completion);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम dma_complete(काष्ठा arasan_cf_dev *acdev)
-अणु
-	काष्ठा ata_queued_cmd *qc = acdev->qc;
-	अचिन्हित दीर्घ flags;
+static inline void dma_complete(struct arasan_cf_dev *acdev)
+{
+	struct ata_queued_cmd *qc = acdev->qc;
+	unsigned long flags;
 
-	acdev->qc = शून्य;
-	ata_sff_पूर्णांकerrupt(acdev->irq, acdev->host);
+	acdev->qc = NULL;
+	ata_sff_interrupt(acdev->irq, acdev->host);
 
 	spin_lock_irqsave(&acdev->host->lock, flags);
-	अगर (unlikely(qc->err_mask) && ata_is_dma(qc->tf.protocol))
+	if (unlikely(qc->err_mask) && ata_is_dma(qc->tf.protocol))
 		ata_ehi_push_desc(&qc->ap->link.eh_info, "DMA Failed: Timeout");
 	spin_unlock_irqrestore(&acdev->host->lock, flags);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक रुको4buf(काष्ठा arasan_cf_dev *acdev)
-अणु
-	अगर (!रुको_क्रम_completion_समयout(&acdev->cf_completion, TIMEOUT)) अणु
+static inline int wait4buf(struct arasan_cf_dev *acdev)
+{
+	if (!wait_for_completion_timeout(&acdev->cf_completion, TIMEOUT)) {
 		u32 rw = acdev->qc->tf.flags & ATA_TFLAG_WRITE;
 
 		dev_err(acdev->host->dev, "%s TimeOut", rw ? "write" : "read");
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	/* Check अगर PIO Error पूर्णांकerrupt has occurred */
-	अगर (acdev->dma_status & ATA_DMA_ERR)
-		वापस -EAGAIN;
+	/* Check if PIO Error interrupt has occurred */
+	if (acdev->dma_status & ATA_DMA_ERR)
+		return -EAGAIN;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-dma_xfer(काष्ठा arasan_cf_dev *acdev, dma_addr_t src, dma_addr_t dest, u32 len)
-अणु
-	काष्ठा dma_async_tx_descriptor *tx;
-	काष्ठा dma_chan *chan = acdev->dma_chan;
+static int
+dma_xfer(struct arasan_cf_dev *acdev, dma_addr_t src, dma_addr_t dest, u32 len)
+{
+	struct dma_async_tx_descriptor *tx;
+	struct dma_chan *chan = acdev->dma_chan;
 	dma_cookie_t cookie;
-	अचिन्हित दीर्घ flags = DMA_PREP_INTERRUPT;
-	पूर्णांक ret = 0;
+	unsigned long flags = DMA_PREP_INTERRUPT;
+	int ret = 0;
 
-	tx = chan->device->device_prep_dma_स_नकल(chan, dest, src, len, flags);
-	अगर (!tx) अणु
+	tx = chan->device->device_prep_dma_memcpy(chan, dest, src, len, flags);
+	if (!tx) {
 		dev_err(acdev->host->dev, "device_prep_dma_memcpy failed\n");
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
 	tx->callback = dma_callback;
 	tx->callback_param = acdev;
 	cookie = tx->tx_submit(tx);
 
 	ret = dma_submit_error(cookie);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(acdev->host->dev, "dma_submit_error\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	chan->device->device_issue_pending(chan);
 
-	/* Wait क्रम DMA to complete */
-	अगर (!रुको_क्रम_completion_समयout(&acdev->dma_completion, TIMEOUT)) अणु
+	/* Wait for DMA to complete */
+	if (!wait_for_completion_timeout(&acdev->dma_completion, TIMEOUT)) {
 		dmaengine_terminate_all(chan);
 		dev_err(acdev->host->dev, "wait_for_completion_timeout\n");
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sg_xfer(काष्ठा arasan_cf_dev *acdev, काष्ठा scatterlist *sg)
-अणु
+static int sg_xfer(struct arasan_cf_dev *acdev, struct scatterlist *sg)
+{
 	dma_addr_t dest = 0, src = 0;
 	u32 xfer_cnt, sglen, dma_len, xfer_ctr;
-	u32 ग_लिखो = acdev->qc->tf.flags & ATA_TFLAG_WRITE;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+	u32 write = acdev->qc->tf.flags & ATA_TFLAG_WRITE;
+	unsigned long flags;
+	int ret = 0;
 
 	sglen = sg_dma_len(sg);
-	अगर (ग_लिखो) अणु
+	if (write) {
 		src = sg_dma_address(sg);
 		dest = acdev->pbase + EXT_WRITE_PORT;
-	पूर्ण अन्यथा अणु
+	} else {
 		dest = sg_dma_address(sg);
 		src = acdev->pbase + EXT_READ_PORT;
-	पूर्ण
+	}
 
 	/*
 	 * For each sg:
-	 * MAX_XFER_COUNT data will be transferred beक्रमe we get transfer
-	 * complete पूर्णांकerrupt. Between after FIFO_SIZE data
-	 * buffer available पूर्णांकerrupt will be generated. At this समय we will
+	 * MAX_XFER_COUNT data will be transferred before we get transfer
+	 * complete interrupt. Between after FIFO_SIZE data
+	 * buffer available interrupt will be generated. At this time we will
 	 * fill FIFO again: max FIFO_SIZE data.
 	 */
-	जबतक (sglen) अणु
+	while (sglen) {
 		xfer_cnt = min(sglen, MAX_XFER_COUNT);
 		spin_lock_irqsave(&acdev->host->lock, flags);
-		xfer_ctr = पढ़ोl(acdev->vbase + XFER_CTR) &
+		xfer_ctr = readl(acdev->vbase + XFER_CTR) &
 			~XFER_COUNT_MASK;
-		ग_लिखोl(xfer_ctr | xfer_cnt | XFER_START,
+		writel(xfer_ctr | xfer_cnt | XFER_START,
 				acdev->vbase + XFER_CTR);
 		spin_unlock_irqrestore(&acdev->host->lock, flags);
 
-		/* जारी dma xfers until current sg is completed */
-		जबतक (xfer_cnt) अणु
-			/* रुको क्रम पढ़ो to complete */
-			अगर (!ग_लिखो) अणु
-				ret = रुको4buf(acdev);
-				अगर (ret)
-					जाओ fail;
-			पूर्ण
+		/* continue dma xfers until current sg is completed */
+		while (xfer_cnt) {
+			/* wait for read to complete */
+			if (!write) {
+				ret = wait4buf(acdev);
+				if (ret)
+					goto fail;
+			}
 
-			/* पढ़ो/ग_लिखो FIFO in chunk of FIFO_SIZE */
+			/* read/write FIFO in chunk of FIFO_SIZE */
 			dma_len = min(xfer_cnt, FIFO_SIZE);
 			ret = dma_xfer(acdev, src, dest, dma_len);
-			अगर (ret) अणु
+			if (ret) {
 				dev_err(acdev->host->dev, "dma failed");
-				जाओ fail;
-			पूर्ण
+				goto fail;
+			}
 
-			अगर (ग_लिखो)
+			if (write)
 				src += dma_len;
-			अन्यथा
+			else
 				dest += dma_len;
 
 			sglen -= dma_len;
 			xfer_cnt -= dma_len;
 
-			/* रुको क्रम ग_लिखो to complete */
-			अगर (ग_लिखो) अणु
-				ret = रुको4buf(acdev);
-				अगर (ret)
-					जाओ fail;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			/* wait for write to complete */
+			if (write) {
+				ret = wait4buf(acdev);
+				if (ret)
+					goto fail;
+			}
+		}
+	}
 
 fail:
 	spin_lock_irqsave(&acdev->host->lock, flags);
-	ग_लिखोl(पढ़ोl(acdev->vbase + XFER_CTR) & ~XFER_START,
+	writel(readl(acdev->vbase + XFER_CTR) & ~XFER_START,
 			acdev->vbase + XFER_CTR);
 	spin_unlock_irqrestore(&acdev->host->lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * This routine uses External DMA controller to पढ़ो/ग_लिखो data to FIFO of CF
- * controller. There are two xfer related पूर्णांकerrupt supported by CF controller:
- * - buf_avail: This पूर्णांकerrupt is generated as soon as we have buffer of 512
- *	bytes available क्रम पढ़ोing or empty buffer available क्रम writing.
- * - xfer_करोne: This पूर्णांकerrupt is generated on transfer of "xfer_size" amount of
- *	data to/from FIFO. xfer_size is programmed in XFER_CTR रेजिस्टर.
+ * This routine uses External DMA controller to read/write data to FIFO of CF
+ * controller. There are two xfer related interrupt supported by CF controller:
+ * - buf_avail: This interrupt is generated as soon as we have buffer of 512
+ *	bytes available for reading or empty buffer available for writing.
+ * - xfer_done: This interrupt is generated on transfer of "xfer_size" amount of
+ *	data to/from FIFO. xfer_size is programmed in XFER_CTR register.
  *
  * Max buffer size = FIFO_SIZE = 512 Bytes.
  * Max xfer_size = MAX_XFER_COUNT = 256 KB.
  */
-अटल व्योम data_xfer(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा arasan_cf_dev *acdev = container_of(work, काष्ठा arasan_cf_dev,
+static void data_xfer(struct work_struct *work)
+{
+	struct arasan_cf_dev *acdev = container_of(work, struct arasan_cf_dev,
 			work);
-	काष्ठा ata_queued_cmd *qc = acdev->qc;
-	काष्ठा scatterlist *sg;
-	अचिन्हित दीर्घ flags;
+	struct ata_queued_cmd *qc = acdev->qc;
+	struct scatterlist *sg;
+	unsigned long flags;
 	u32 temp;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	/* request dma channels */
 	/* dma_request_channel may sleep, so calling from process context */
 	acdev->dma_chan = dma_request_chan(acdev->host->dev, "data");
-	अगर (IS_ERR(acdev->dma_chan)) अणु
+	if (IS_ERR(acdev->dma_chan)) {
 		dev_err(acdev->host->dev, "Unable to get dma_chan\n");
-		acdev->dma_chan = शून्य;
-		जाओ chan_request_fail;
-	पूर्ण
+		acdev->dma_chan = NULL;
+		goto chan_request_fail;
+	}
 
-	क्रम_each_sg(qc->sg, sg, qc->n_elem, temp) अणु
+	for_each_sg(qc->sg, sg, qc->n_elem, temp) {
 		ret = sg_xfer(acdev, sg);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+		if (ret)
+			break;
+	}
 
 	dma_release_channel(acdev->dma_chan);
-	acdev->dma_chan = शून्य;
+	acdev->dma_chan = NULL;
 
 	/* data xferred successfully */
-	अगर (!ret) अणु
+	if (!ret) {
 		u32 status;
 
 		spin_lock_irqsave(&acdev->host->lock, flags);
-		status = ioपढ़ो8(qc->ap->ioaddr.altstatus_addr);
+		status = ioread8(qc->ap->ioaddr.altstatus_addr);
 		spin_unlock_irqrestore(&acdev->host->lock, flags);
-		अगर (status & (ATA_BUSY | ATA_DRQ)) अणु
+		if (status & (ATA_BUSY | ATA_DRQ)) {
 			ata_sff_queue_delayed_work(&acdev->dwork, 1);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		जाओ sff_पूर्णांकr;
-	पूर्ण
+		goto sff_intr;
+	}
 
 	cf_dumpregs(acdev);
 
@@ -568,140 +567,140 @@ chan_request_fail:
 
 	cf_ctrl_reset(acdev);
 	spin_unlock_irqrestore(&acdev->host->lock, flags);
-sff_पूर्णांकr:
+sff_intr:
 	dma_complete(acdev);
-पूर्ण
+}
 
-अटल व्योम delayed_finish(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा arasan_cf_dev *acdev = container_of(work, काष्ठा arasan_cf_dev,
+static void delayed_finish(struct work_struct *work)
+{
+	struct arasan_cf_dev *acdev = container_of(work, struct arasan_cf_dev,
 			dwork.work);
-	काष्ठा ata_queued_cmd *qc = acdev->qc;
-	अचिन्हित दीर्घ flags;
+	struct ata_queued_cmd *qc = acdev->qc;
+	unsigned long flags;
 	u8 status;
 
 	spin_lock_irqsave(&acdev->host->lock, flags);
-	status = ioपढ़ो8(qc->ap->ioaddr.altstatus_addr);
+	status = ioread8(qc->ap->ioaddr.altstatus_addr);
 	spin_unlock_irqrestore(&acdev->host->lock, flags);
 
-	अगर (status & (ATA_BUSY | ATA_DRQ))
+	if (status & (ATA_BUSY | ATA_DRQ))
 		ata_sff_queue_delayed_work(&acdev->dwork, 1);
-	अन्यथा
+	else
 		dma_complete(acdev);
-पूर्ण
+}
 
-अटल irqवापस_t arasan_cf_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev)
-अणु
-	काष्ठा arasan_cf_dev *acdev = ((काष्ठा ata_host *)dev)->निजी_data;
-	अचिन्हित दीर्घ flags;
+static irqreturn_t arasan_cf_interrupt(int irq, void *dev)
+{
+	struct arasan_cf_dev *acdev = ((struct ata_host *)dev)->private_data;
+	unsigned long flags;
 	u32 irqsts;
 
-	irqsts = पढ़ोl(acdev->vbase + GIRQ_STS);
-	अगर (!(irqsts & GIRQ_CF))
-		वापस IRQ_NONE;
+	irqsts = readl(acdev->vbase + GIRQ_STS);
+	if (!(irqsts & GIRQ_CF))
+		return IRQ_NONE;
 
 	spin_lock_irqsave(&acdev->host->lock, flags);
-	irqsts = पढ़ोl(acdev->vbase + IRQ_STS);
-	ग_लिखोl(irqsts, acdev->vbase + IRQ_STS);		/* clear irqs */
-	ग_लिखोl(GIRQ_CF, acdev->vbase + GIRQ_STS);	/* clear girqs */
+	irqsts = readl(acdev->vbase + IRQ_STS);
+	writel(irqsts, acdev->vbase + IRQ_STS);		/* clear irqs */
+	writel(GIRQ_CF, acdev->vbase + GIRQ_STS);	/* clear girqs */
 
-	/* handle only relevant पूर्णांकerrupts */
+	/* handle only relevant interrupts */
 	irqsts &= ~IGNORED_IRQS;
 
-	अगर (irqsts & CARD_DETECT_IRQ) अणु
+	if (irqsts & CARD_DETECT_IRQ) {
 		cf_card_detect(acdev, 1);
 		spin_unlock_irqrestore(&acdev->host->lock, flags);
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
-	अगर (irqsts & PIO_XFER_ERR_IRQ) अणु
+	if (irqsts & PIO_XFER_ERR_IRQ) {
 		acdev->dma_status = ATA_DMA_ERR;
-		ग_लिखोl(पढ़ोl(acdev->vbase + XFER_CTR) & ~XFER_START,
+		writel(readl(acdev->vbase + XFER_CTR) & ~XFER_START,
 				acdev->vbase + XFER_CTR);
 		spin_unlock_irqrestore(&acdev->host->lock, flags);
 		complete(&acdev->cf_completion);
 		dev_err(acdev->host->dev, "pio xfer err irq\n");
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
 	spin_unlock_irqrestore(&acdev->host->lock, flags);
 
-	अगर (irqsts & BUF_AVAIL_IRQ) अणु
+	if (irqsts & BUF_AVAIL_IRQ) {
 		complete(&acdev->cf_completion);
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
-	अगर (irqsts & XFER_DONE_IRQ) अणु
-		काष्ठा ata_queued_cmd *qc = acdev->qc;
+	if (irqsts & XFER_DONE_IRQ) {
+		struct ata_queued_cmd *qc = acdev->qc;
 
-		/* Send Complete only क्रम ग_लिखो */
-		अगर (qc->tf.flags & ATA_TFLAG_WRITE)
+		/* Send Complete only for write */
+		if (qc->tf.flags & ATA_TFLAG_WRITE)
 			complete(&acdev->cf_completion);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम arasan_cf_मुक्तze(काष्ठा ata_port *ap)
-अणु
-	काष्ठा arasan_cf_dev *acdev = ap->host->निजी_data;
+static void arasan_cf_freeze(struct ata_port *ap)
+{
+	struct arasan_cf_dev *acdev = ap->host->private_data;
 
 	/* stop transfer and reset controller */
-	ग_लिखोl(पढ़ोl(acdev->vbase + XFER_CTR) & ~XFER_START,
+	writel(readl(acdev->vbase + XFER_CTR) & ~XFER_START,
 			acdev->vbase + XFER_CTR);
 	cf_ctrl_reset(acdev);
 	acdev->dma_status = ATA_DMA_ERR;
 
-	ata_sff_dma_छोड़ो(ap);
-	ata_sff_मुक्तze(ap);
-पूर्ण
+	ata_sff_dma_pause(ap);
+	ata_sff_freeze(ap);
+}
 
-अटल व्योम arasan_cf_error_handler(काष्ठा ata_port *ap)
-अणु
-	काष्ठा arasan_cf_dev *acdev = ap->host->निजी_data;
+static void arasan_cf_error_handler(struct ata_port *ap)
+{
+	struct arasan_cf_dev *acdev = ap->host->private_data;
 
 	/*
-	 * DMA transfers using an बाह्यal DMA controller may be scheduled.
-	 * Abort them beक्रमe handling error. Refer data_xfer() क्रम further
+	 * DMA transfers using an external DMA controller may be scheduled.
+	 * Abort them before handling error. Refer data_xfer() for further
 	 * details.
 	 */
 	cancel_work_sync(&acdev->work);
 	cancel_delayed_work_sync(&acdev->dwork);
-	वापस ata_sff_error_handler(ap);
-पूर्ण
+	return ata_sff_error_handler(ap);
+}
 
-अटल व्योम arasan_cf_dma_start(काष्ठा arasan_cf_dev *acdev)
-अणु
-	काष्ठा ata_queued_cmd *qc = acdev->qc;
-	काष्ठा ata_port *ap = qc->ap;
-	काष्ठा ata_taskfile *tf = &qc->tf;
-	u32 xfer_ctr = पढ़ोl(acdev->vbase + XFER_CTR) & ~XFER_सूची_MASK;
-	u32 ग_लिखो = tf->flags & ATA_TFLAG_WRITE;
+static void arasan_cf_dma_start(struct arasan_cf_dev *acdev)
+{
+	struct ata_queued_cmd *qc = acdev->qc;
+	struct ata_port *ap = qc->ap;
+	struct ata_taskfile *tf = &qc->tf;
+	u32 xfer_ctr = readl(acdev->vbase + XFER_CTR) & ~XFER_DIR_MASK;
+	u32 write = tf->flags & ATA_TFLAG_WRITE;
 
-	xfer_ctr |= ग_लिखो ? XFER_WRITE : XFER_READ;
-	ग_लिखोl(xfer_ctr, acdev->vbase + XFER_CTR);
+	xfer_ctr |= write ? XFER_WRITE : XFER_READ;
+	writel(xfer_ctr, acdev->vbase + XFER_CTR);
 
 	ap->ops->sff_exec_command(ap, tf);
 	ata_sff_queue_work(&acdev->work);
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक arasan_cf_qc_issue(काष्ठा ata_queued_cmd *qc)
-अणु
-	काष्ठा ata_port *ap = qc->ap;
-	काष्ठा arasan_cf_dev *acdev = ap->host->निजी_data;
+static unsigned int arasan_cf_qc_issue(struct ata_queued_cmd *qc)
+{
+	struct ata_port *ap = qc->ap;
+	struct arasan_cf_dev *acdev = ap->host->private_data;
 
 	/* defer PIO handling to sff_qc_issue */
-	अगर (!ata_is_dma(qc->tf.protocol))
-		वापस ata_sff_qc_issue(qc);
+	if (!ata_is_dma(qc->tf.protocol))
+		return ata_sff_qc_issue(qc);
 
 	/* select the device */
-	ata_रुको_idle(ap);
+	ata_wait_idle(ap);
 	ata_sff_dev_select(ap, qc->dev->devno);
-	ata_रुको_idle(ap);
+	ata_wait_idle(ap);
 
 	/* start the command */
-	चयन (qc->tf.protocol) अणु
-	हाल ATA_PROT_DMA:
+	switch (qc->tf.protocol) {
+	case ATA_PROT_DMA:
 		WARN_ON_ONCE(qc->tf.flags & ATA_TFLAG_POLLING);
 
 		ap->ops->sff_tf_load(ap, &qc->tf);
@@ -709,153 +708,153 @@ sff_पूर्णांकr:
 		acdev->qc = qc;
 		arasan_cf_dma_start(acdev);
 		ap->hsm_task_state = HSM_ST_LAST;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		WARN_ON(1);
-		वापस AC_ERR_SYSTEM;
-	पूर्ण
+		return AC_ERR_SYSTEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम arasan_cf_set_piomode(काष्ठा ata_port *ap, काष्ठा ata_device *adev)
-अणु
-	काष्ठा arasan_cf_dev *acdev = ap->host->निजी_data;
+static void arasan_cf_set_piomode(struct ata_port *ap, struct ata_device *adev)
+{
+	struct arasan_cf_dev *acdev = ap->host->private_data;
 	u8 pio = adev->pio_mode - XFER_PIO_0;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 	u32 val;
 
 	/* Arasan ctrl supports Mode0 -> Mode6 */
-	अगर (pio > 6) अणु
+	if (pio > 6) {
 		dev_err(ap->dev, "Unknown PIO mode\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock_irqsave(&acdev->host->lock, flags);
-	val = पढ़ोl(acdev->vbase + OP_MODE) &
+	val = readl(acdev->vbase + OP_MODE) &
 		~(ULTRA_DMA_ENB | MULTI_WORD_DMA_ENB | DRQ_BLOCK_SIZE_MASK);
-	ग_लिखोl(val, acdev->vbase + OP_MODE);
-	val = पढ़ोl(acdev->vbase + TM_CFG) & ~TRUEIDE_PIO_TIMING_MASK;
+	writel(val, acdev->vbase + OP_MODE);
+	val = readl(acdev->vbase + TM_CFG) & ~TRUEIDE_PIO_TIMING_MASK;
 	val |= pio << TRUEIDE_PIO_TIMING_SHIFT;
-	ग_लिखोl(val, acdev->vbase + TM_CFG);
+	writel(val, acdev->vbase + TM_CFG);
 
-	cf_पूर्णांकerrupt_enable(acdev, BUF_AVAIL_IRQ | XFER_DONE_IRQ, 0);
-	cf_पूर्णांकerrupt_enable(acdev, PIO_XFER_ERR_IRQ, 1);
+	cf_interrupt_enable(acdev, BUF_AVAIL_IRQ | XFER_DONE_IRQ, 0);
+	cf_interrupt_enable(acdev, PIO_XFER_ERR_IRQ, 1);
 	spin_unlock_irqrestore(&acdev->host->lock, flags);
-पूर्ण
+}
 
-अटल व्योम arasan_cf_set_dmamode(काष्ठा ata_port *ap, काष्ठा ata_device *adev)
-अणु
-	काष्ठा arasan_cf_dev *acdev = ap->host->निजी_data;
-	u32 opmode, पंचांगcfg, dma_mode = adev->dma_mode;
-	अचिन्हित दीर्घ flags;
+static void arasan_cf_set_dmamode(struct ata_port *ap, struct ata_device *adev)
+{
+	struct arasan_cf_dev *acdev = ap->host->private_data;
+	u32 opmode, tmcfg, dma_mode = adev->dma_mode;
+	unsigned long flags;
 
 	spin_lock_irqsave(&acdev->host->lock, flags);
-	opmode = पढ़ोl(acdev->vbase + OP_MODE) &
+	opmode = readl(acdev->vbase + OP_MODE) &
 		~(MULTI_WORD_DMA_ENB | ULTRA_DMA_ENB);
-	पंचांगcfg = पढ़ोl(acdev->vbase + TM_CFG);
+	tmcfg = readl(acdev->vbase + TM_CFG);
 
-	अगर ((dma_mode >= XFER_UDMA_0) && (dma_mode <= XFER_UDMA_6)) अणु
+	if ((dma_mode >= XFER_UDMA_0) && (dma_mode <= XFER_UDMA_6)) {
 		opmode |= ULTRA_DMA_ENB;
-		पंचांगcfg &= ~ULTRA_DMA_TIMING_MASK;
-		पंचांगcfg |= (dma_mode - XFER_UDMA_0) << ULTRA_DMA_TIMING_SHIFT;
-	पूर्ण अन्यथा अगर ((dma_mode >= XFER_MW_DMA_0) && (dma_mode <= XFER_MW_DMA_4)) अणु
+		tmcfg &= ~ULTRA_DMA_TIMING_MASK;
+		tmcfg |= (dma_mode - XFER_UDMA_0) << ULTRA_DMA_TIMING_SHIFT;
+	} else if ((dma_mode >= XFER_MW_DMA_0) && (dma_mode <= XFER_MW_DMA_4)) {
 		opmode |= MULTI_WORD_DMA_ENB;
-		पंचांगcfg &= ~TRUEIDE_MWORD_DMA_TIMING_MASK;
-		पंचांगcfg |= (dma_mode - XFER_MW_DMA_0) <<
+		tmcfg &= ~TRUEIDE_MWORD_DMA_TIMING_MASK;
+		tmcfg |= (dma_mode - XFER_MW_DMA_0) <<
 			TRUEIDE_MWORD_DMA_TIMING_SHIFT;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(ap->dev, "Unknown DMA mode\n");
 		spin_unlock_irqrestore(&acdev->host->lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	ग_लिखोl(opmode, acdev->vbase + OP_MODE);
-	ग_लिखोl(पंचांगcfg, acdev->vbase + TM_CFG);
-	ग_लिखोl(DMA_XFER_MODE, acdev->vbase + XFER_CTR);
+	writel(opmode, acdev->vbase + OP_MODE);
+	writel(tmcfg, acdev->vbase + TM_CFG);
+	writel(DMA_XFER_MODE, acdev->vbase + XFER_CTR);
 
-	cf_पूर्णांकerrupt_enable(acdev, PIO_XFER_ERR_IRQ, 0);
-	cf_पूर्णांकerrupt_enable(acdev, BUF_AVAIL_IRQ | XFER_DONE_IRQ, 1);
+	cf_interrupt_enable(acdev, PIO_XFER_ERR_IRQ, 0);
+	cf_interrupt_enable(acdev, BUF_AVAIL_IRQ | XFER_DONE_IRQ, 1);
 	spin_unlock_irqrestore(&acdev->host->lock, flags);
-पूर्ण
+}
 
-अटल काष्ठा ata_port_operations arasan_cf_ops = अणु
+static struct ata_port_operations arasan_cf_ops = {
 	.inherits = &ata_sff_port_ops,
-	.मुक्तze = arasan_cf_मुक्तze,
+	.freeze = arasan_cf_freeze,
 	.error_handler = arasan_cf_error_handler,
 	.qc_issue = arasan_cf_qc_issue,
 	.set_piomode = arasan_cf_set_piomode,
 	.set_dmamode = arasan_cf_set_dmamode,
-पूर्ण;
+};
 
-अटल पूर्णांक arasan_cf_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा arasan_cf_dev *acdev;
-	काष्ठा arasan_cf_pdata *pdata = dev_get_platdata(&pdev->dev);
-	काष्ठा ata_host *host;
-	काष्ठा ata_port *ap;
-	काष्ठा resource *res;
+static int arasan_cf_probe(struct platform_device *pdev)
+{
+	struct arasan_cf_dev *acdev;
+	struct arasan_cf_pdata *pdata = dev_get_platdata(&pdev->dev);
+	struct ata_host *host;
+	struct ata_port *ap;
+	struct resource *res;
 	u32 quirk;
-	irq_handler_t irq_handler = शून्य;
-	पूर्णांक ret;
+	irq_handler_t irq_handler = NULL;
+	int ret;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res)
-		वापस -EINVAL;
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res)
+		return -EINVAL;
 
-	अगर (!devm_request_mem_region(&pdev->dev, res->start, resource_size(res),
-				DRIVER_NAME)) अणु
+	if (!devm_request_mem_region(&pdev->dev, res->start, resource_size(res),
+				DRIVER_NAME)) {
 		dev_warn(&pdev->dev, "Failed to get memory region resource\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	acdev = devm_kzalloc(&pdev->dev, माप(*acdev), GFP_KERNEL);
-	अगर (!acdev)
-		वापस -ENOMEM;
+	acdev = devm_kzalloc(&pdev->dev, sizeof(*acdev), GFP_KERNEL);
+	if (!acdev)
+		return -ENOMEM;
 
-	अगर (pdata)
+	if (pdata)
 		quirk = pdata->quirk;
-	अन्यथा
+	else
 		quirk = CF_BROKEN_UDMA; /* as it is on spear1340 */
 
 	/*
-	 * If there's an error getting IRQ (or we करो get IRQ0),
+	 * If there's an error getting IRQ (or we do get IRQ0),
 	 * support only PIO
 	 */
-	ret = platक्रमm_get_irq(pdev, 0);
-	अगर (ret > 0) अणु
+	ret = platform_get_irq(pdev, 0);
+	if (ret > 0) {
 		acdev->irq = ret;
-		irq_handler = arasan_cf_पूर्णांकerrupt;
-	पूर्ण अन्यथा	अगर (ret == -EPROBE_DEFER) अणु
-		वापस ret;
-	पूर्ण अन्यथा	अणु
+		irq_handler = arasan_cf_interrupt;
+	} else	if (ret == -EPROBE_DEFER) {
+		return ret;
+	} else	{
 		quirk |= CF_BROKEN_MWDMA | CF_BROKEN_UDMA;
-	पूर्ण
+	}
 
 	acdev->pbase = res->start;
 	acdev->vbase = devm_ioremap(&pdev->dev, res->start,
 			resource_size(res));
-	अगर (!acdev->vbase) अणु
+	if (!acdev->vbase) {
 		dev_warn(&pdev->dev, "ioremap fail\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	acdev->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(acdev->clk)) अणु
+	acdev->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(acdev->clk)) {
 		dev_warn(&pdev->dev, "Clock not found\n");
-		वापस PTR_ERR(acdev->clk);
-	पूर्ण
+		return PTR_ERR(acdev->clk);
+	}
 
 	/* allocate host */
 	host = ata_host_alloc(&pdev->dev, 1);
-	अगर (!host) अणु
+	if (!host) {
 		dev_warn(&pdev->dev, "alloc host fail\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ap = host->ports[0];
-	host->निजी_data = acdev;
+	host->private_data = acdev;
 	acdev->host = host;
 	ap->ops = &arasan_cf_ops;
 	ap->pio_mask = ATA_PIO6;
@@ -868,17 +867,17 @@ sff_पूर्णांकr:
 	INIT_DELAYED_WORK(&acdev->dwork, delayed_finish);
 	dma_cap_set(DMA_MEMCPY, acdev->mask);
 
-	/* Handle platक्रमm specअगरic quirks */
-	अगर (quirk) अणु
-		अगर (quirk & CF_BROKEN_PIO) अणु
-			ap->ops->set_piomode = शून्य;
+	/* Handle platform specific quirks */
+	if (quirk) {
+		if (quirk & CF_BROKEN_PIO) {
+			ap->ops->set_piomode = NULL;
 			ap->pio_mask = 0;
-		पूर्ण
-		अगर (quirk & CF_BROKEN_MWDMA)
+		}
+		if (quirk & CF_BROKEN_MWDMA)
 			ap->mwdma_mask = 0;
-		अगर (quirk & CF_BROKEN_UDMA)
+		if (quirk & CF_BROKEN_UDMA)
 			ap->udma_mask = 0;
-	पूर्ण
+	}
 	ap->flags |= ATA_FLAG_PIO_POLLING | ATA_FLAG_NO_ATAPI;
 
 	ap->ioaddr.cmd_addr = acdev->vbase + ATA_DATA_PORT;
@@ -896,81 +895,81 @@ sff_पूर्णांकr:
 	ap->ioaddr.ctl_addr = acdev->vbase + ATA_ASTS_DCTR;
 
 	ata_port_desc(ap, "phy_addr %llx virt_addr %p",
-		      (अचिन्हित दीर्घ दीर्घ) res->start, acdev->vbase);
+		      (unsigned long long) res->start, acdev->vbase);
 
 	ret = cf_init(acdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	cf_card_detect(acdev, 0);
 
 	ret = ata_host_activate(host, acdev->irq, irq_handler, 0,
 				&arasan_cf_sht);
-	अगर (!ret)
-		वापस 0;
+	if (!ret)
+		return 0;
 
-	cf_निकास(acdev);
+	cf_exit(acdev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक arasan_cf_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ata_host *host = platक्रमm_get_drvdata(pdev);
-	काष्ठा arasan_cf_dev *acdev = host->ports[0]->निजी_data;
+static int arasan_cf_remove(struct platform_device *pdev)
+{
+	struct ata_host *host = platform_get_drvdata(pdev);
+	struct arasan_cf_dev *acdev = host->ports[0]->private_data;
 
 	ata_host_detach(host);
-	cf_निकास(acdev);
+	cf_exit(acdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक arasan_cf_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा ata_host *host = dev_get_drvdata(dev);
-	काष्ठा arasan_cf_dev *acdev = host->ports[0]->निजी_data;
+#ifdef CONFIG_PM_SLEEP
+static int arasan_cf_suspend(struct device *dev)
+{
+	struct ata_host *host = dev_get_drvdata(dev);
+	struct arasan_cf_dev *acdev = host->ports[0]->private_data;
 
-	अगर (acdev->dma_chan)
+	if (acdev->dma_chan)
 		dmaengine_terminate_all(acdev->dma_chan);
 
-	cf_निकास(acdev);
-	वापस ata_host_suspend(host, PMSG_SUSPEND);
-पूर्ण
+	cf_exit(acdev);
+	return ata_host_suspend(host, PMSG_SUSPEND);
+}
 
-अटल पूर्णांक arasan_cf_resume(काष्ठा device *dev)
-अणु
-	काष्ठा ata_host *host = dev_get_drvdata(dev);
-	काष्ठा arasan_cf_dev *acdev = host->ports[0]->निजी_data;
+static int arasan_cf_resume(struct device *dev)
+{
+	struct ata_host *host = dev_get_drvdata(dev);
+	struct arasan_cf_dev *acdev = host->ports[0]->private_data;
 
 	cf_init(acdev);
 	ata_host_resume(host);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(arasan_cf_pm_ops, arasan_cf_suspend, arasan_cf_resume);
+static SIMPLE_DEV_PM_OPS(arasan_cf_pm_ops, arasan_cf_suspend, arasan_cf_resume);
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id arasan_cf_id_table[] = अणु
-	अणु .compatible = "arasan,cf-spear1340" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id arasan_cf_id_table[] = {
+	{ .compatible = "arasan,cf-spear1340" },
+	{}
+};
 MODULE_DEVICE_TABLE(of, arasan_cf_id_table);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver arasan_cf_driver = अणु
+static struct platform_driver arasan_cf_driver = {
 	.probe		= arasan_cf_probe,
-	.हटाओ		= arasan_cf_हटाओ,
-	.driver		= अणु
+	.remove		= arasan_cf_remove,
+	.driver		= {
 		.name	= DRIVER_NAME,
 		.pm	= &arasan_cf_pm_ops,
 		.of_match_table = of_match_ptr(arasan_cf_id_table),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(arasan_cf_driver);
+module_platform_driver(arasan_cf_driver);
 
 MODULE_AUTHOR("Viresh Kumar <vireshk@kernel.org>");
 MODULE_DESCRIPTION("Arasan ATA Compact Flash driver");

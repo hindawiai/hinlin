@@ -1,457 +1,456 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * This file is part the core part STM32 DFSDM driver
  *
  * Copyright (C) 2017, STMicroelectronics - All Rights Reserved
- * Author(s): Arnaud Pouliquen <arnaud.pouliquen@st.com> क्रम STMicroelectronics.
+ * Author(s): Arnaud Pouliquen <arnaud.pouliquen@st.com> for STMicroelectronics.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pinctrl/consumer.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/pinctrl/consumer.h>
+#include <linux/pm_runtime.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
 
-#समावेश "stm32-dfsdm.h"
+#include "stm32-dfsdm.h"
 
-काष्ठा sपंचांग32_dfsdm_dev_data अणु
-	अचिन्हित पूर्णांक num_filters;
-	अचिन्हित पूर्णांक num_channels;
-	स्थिर काष्ठा regmap_config *regmap_cfg;
-पूर्ण;
+struct stm32_dfsdm_dev_data {
+	unsigned int num_filters;
+	unsigned int num_channels;
+	const struct regmap_config *regmap_cfg;
+};
 
-#घोषणा STM32H7_DFSDM_NUM_FILTERS	4
-#घोषणा STM32H7_DFSDM_NUM_CHANNELS	8
-#घोषणा STM32MP1_DFSDM_NUM_FILTERS	6
-#घोषणा STM32MP1_DFSDM_NUM_CHANNELS	8
+#define STM32H7_DFSDM_NUM_FILTERS	4
+#define STM32H7_DFSDM_NUM_CHANNELS	8
+#define STM32MP1_DFSDM_NUM_FILTERS	6
+#define STM32MP1_DFSDM_NUM_CHANNELS	8
 
-अटल bool sपंचांग32_dfsdm_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	अगर (reg < DFSDM_FILTER_BASE_ADR)
-		वापस false;
+static bool stm32_dfsdm_volatile_reg(struct device *dev, unsigned int reg)
+{
+	if (reg < DFSDM_FILTER_BASE_ADR)
+		return false;
 
 	/*
-	 * Mask is करोne on रेजिस्टर to aव्योम to list रेजिस्टरs of all
+	 * Mask is done on register to avoid to list registers of all
 	 * filter instances.
 	 */
-	चयन (reg & DFSDM_FILTER_REG_MASK) अणु
-	हाल DFSDM_CR1(0) & DFSDM_FILTER_REG_MASK:
-	हाल DFSDM_ISR(0) & DFSDM_FILTER_REG_MASK:
-	हाल DFSDM_JDATAR(0) & DFSDM_FILTER_REG_MASK:
-	हाल DFSDM_RDATAR(0) & DFSDM_FILTER_REG_MASK:
-		वापस true;
-	पूर्ण
+	switch (reg & DFSDM_FILTER_REG_MASK) {
+	case DFSDM_CR1(0) & DFSDM_FILTER_REG_MASK:
+	case DFSDM_ISR(0) & DFSDM_FILTER_REG_MASK:
+	case DFSDM_JDATAR(0) & DFSDM_FILTER_REG_MASK:
+	case DFSDM_RDATAR(0) & DFSDM_FILTER_REG_MASK:
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल स्थिर काष्ठा regmap_config sपंचांग32h7_dfsdm_regmap_cfg = अणु
+static const struct regmap_config stm32h7_dfsdm_regmap_cfg = {
 	.reg_bits = 32,
 	.val_bits = 32,
-	.reg_stride = माप(u32),
-	.max_रेजिस्टर = 0x2B8,
-	.अस्थिर_reg = sपंचांग32_dfsdm_अस्थिर_reg,
+	.reg_stride = sizeof(u32),
+	.max_register = 0x2B8,
+	.volatile_reg = stm32_dfsdm_volatile_reg,
 	.fast_io = true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sपंचांग32_dfsdm_dev_data sपंचांग32h7_dfsdm_data = अणु
+static const struct stm32_dfsdm_dev_data stm32h7_dfsdm_data = {
 	.num_filters = STM32H7_DFSDM_NUM_FILTERS,
 	.num_channels = STM32H7_DFSDM_NUM_CHANNELS,
-	.regmap_cfg = &sपंचांग32h7_dfsdm_regmap_cfg,
-पूर्ण;
+	.regmap_cfg = &stm32h7_dfsdm_regmap_cfg,
+};
 
-अटल स्थिर काष्ठा regmap_config sपंचांग32mp1_dfsdm_regmap_cfg = अणु
+static const struct regmap_config stm32mp1_dfsdm_regmap_cfg = {
 	.reg_bits = 32,
 	.val_bits = 32,
-	.reg_stride = माप(u32),
-	.max_रेजिस्टर = 0x7fc,
-	.अस्थिर_reg = sपंचांग32_dfsdm_अस्थिर_reg,
+	.reg_stride = sizeof(u32),
+	.max_register = 0x7fc,
+	.volatile_reg = stm32_dfsdm_volatile_reg,
 	.fast_io = true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sपंचांग32_dfsdm_dev_data sपंचांग32mp1_dfsdm_data = अणु
+static const struct stm32_dfsdm_dev_data stm32mp1_dfsdm_data = {
 	.num_filters = STM32MP1_DFSDM_NUM_FILTERS,
 	.num_channels = STM32MP1_DFSDM_NUM_CHANNELS,
-	.regmap_cfg = &sपंचांग32mp1_dfsdm_regmap_cfg,
-पूर्ण;
+	.regmap_cfg = &stm32mp1_dfsdm_regmap_cfg,
+};
 
-काष्ठा dfsdm_priv अणु
-	काष्ठा platक्रमm_device *pdev; /* platक्रमm device */
+struct dfsdm_priv {
+	struct platform_device *pdev; /* platform device */
 
-	काष्ठा sपंचांग32_dfsdm dfsdm; /* common data exported क्रम all instances */
+	struct stm32_dfsdm dfsdm; /* common data exported for all instances */
 
-	अचिन्हित पूर्णांक spi_clk_out_भाग; /* SPI clkout भागider value */
+	unsigned int spi_clk_out_div; /* SPI clkout divider value */
 	atomic_t n_active_ch;	/* number of current active channels */
 
-	काष्ठा clk *clk; /* DFSDM घड़ी */
-	काष्ठा clk *aclk; /* audio घड़ी */
-पूर्ण;
+	struct clk *clk; /* DFSDM clock */
+	struct clk *aclk; /* audio clock */
+};
 
-अटल अंतरभूत काष्ठा dfsdm_priv *to_sपंचांग32_dfsdm_priv(काष्ठा sपंचांग32_dfsdm *dfsdm)
-अणु
-	वापस container_of(dfsdm, काष्ठा dfsdm_priv, dfsdm);
-पूर्ण
+static inline struct dfsdm_priv *to_stm32_dfsdm_priv(struct stm32_dfsdm *dfsdm)
+{
+	return container_of(dfsdm, struct dfsdm_priv, dfsdm);
+}
 
-अटल पूर्णांक sपंचांग32_dfsdm_clk_prepare_enable(काष्ठा sपंचांग32_dfsdm *dfsdm)
-अणु
-	काष्ठा dfsdm_priv *priv = to_sपंचांग32_dfsdm_priv(dfsdm);
-	पूर्णांक ret;
+static int stm32_dfsdm_clk_prepare_enable(struct stm32_dfsdm *dfsdm)
+{
+	struct dfsdm_priv *priv = to_stm32_dfsdm_priv(dfsdm);
+	int ret;
 
 	ret = clk_prepare_enable(priv->clk);
-	अगर (ret || !priv->aclk)
-		वापस ret;
+	if (ret || !priv->aclk)
+		return ret;
 
 	ret = clk_prepare_enable(priv->aclk);
-	अगर (ret)
+	if (ret)
 		clk_disable_unprepare(priv->clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम sपंचांग32_dfsdm_clk_disable_unprepare(काष्ठा sपंचांग32_dfsdm *dfsdm)
-अणु
-	काष्ठा dfsdm_priv *priv = to_sपंचांग32_dfsdm_priv(dfsdm);
+static void stm32_dfsdm_clk_disable_unprepare(struct stm32_dfsdm *dfsdm)
+{
+	struct dfsdm_priv *priv = to_stm32_dfsdm_priv(dfsdm);
 
 	clk_disable_unprepare(priv->aclk);
 	clk_disable_unprepare(priv->clk);
-पूर्ण
+}
 
 /**
- * sपंचांग32_dfsdm_start_dfsdm - start global dfsdm पूर्णांकerface.
+ * stm32_dfsdm_start_dfsdm - start global dfsdm interface.
  *
- * Enable पूर्णांकerface अगर n_active_ch is not null.
+ * Enable interface if n_active_ch is not null.
  * @dfsdm: Handle used to retrieve dfsdm context.
  */
-पूर्णांक sपंचांग32_dfsdm_start_dfsdm(काष्ठा sपंचांग32_dfsdm *dfsdm)
-अणु
-	काष्ठा dfsdm_priv *priv = to_sपंचांग32_dfsdm_priv(dfsdm);
-	काष्ठा device *dev = &priv->pdev->dev;
-	अचिन्हित पूर्णांक clk_भाग = priv->spi_clk_out_भाग, clk_src;
-	पूर्णांक ret;
+int stm32_dfsdm_start_dfsdm(struct stm32_dfsdm *dfsdm)
+{
+	struct dfsdm_priv *priv = to_stm32_dfsdm_priv(dfsdm);
+	struct device *dev = &priv->pdev->dev;
+	unsigned int clk_div = priv->spi_clk_out_div, clk_src;
+	int ret;
 
-	अगर (atomic_inc_वापस(&priv->n_active_ch) == 1) अणु
-		ret = pm_runसमय_get_sync(dev);
-		अगर (ret < 0) अणु
-			pm_runसमय_put_noidle(dev);
-			जाओ error_ret;
-		पूर्ण
+	if (atomic_inc_return(&priv->n_active_ch) == 1) {
+		ret = pm_runtime_get_sync(dev);
+		if (ret < 0) {
+			pm_runtime_put_noidle(dev);
+			goto error_ret;
+		}
 
-		/* select घड़ी source, e.g. 0 क्रम "dfsdm" or 1 क्रम "audio" */
+		/* select clock source, e.g. 0 for "dfsdm" or 1 for "audio" */
 		clk_src = priv->aclk ? 1 : 0;
 		ret = regmap_update_bits(dfsdm->regmap, DFSDM_CHCFGR1(0),
 					 DFSDM_CHCFGR1_CKOUTSRC_MASK,
 					 DFSDM_CHCFGR1_CKOUTSRC(clk_src));
-		अगर (ret < 0)
-			जाओ pm_put;
+		if (ret < 0)
+			goto pm_put;
 
-		/* Output the SPI CLKOUT (अगर clk_भाग == 0 घड़ी अगर OFF) */
+		/* Output the SPI CLKOUT (if clk_div == 0 clock if OFF) */
 		ret = regmap_update_bits(dfsdm->regmap, DFSDM_CHCFGR1(0),
 					 DFSDM_CHCFGR1_CKOUTDIV_MASK,
-					 DFSDM_CHCFGR1_CKOUTDIV(clk_भाग));
-		अगर (ret < 0)
-			जाओ pm_put;
+					 DFSDM_CHCFGR1_CKOUTDIV(clk_div));
+		if (ret < 0)
+			goto pm_put;
 
-		/* Global enable of DFSDM पूर्णांकerface */
+		/* Global enable of DFSDM interface */
 		ret = regmap_update_bits(dfsdm->regmap, DFSDM_CHCFGR1(0),
 					 DFSDM_CHCFGR1_DFSDMEN_MASK,
 					 DFSDM_CHCFGR1_DFSDMEN(1));
-		अगर (ret < 0)
-			जाओ pm_put;
-	पूर्ण
+		if (ret < 0)
+			goto pm_put;
+	}
 
 	dev_dbg(dev, "%s: n_active_ch %d\n", __func__,
-		atomic_पढ़ो(&priv->n_active_ch));
+		atomic_read(&priv->n_active_ch));
 
-	वापस 0;
+	return 0;
 
 pm_put:
-	pm_runसमय_put_sync(dev);
+	pm_runtime_put_sync(dev);
 error_ret:
 	atomic_dec(&priv->n_active_ch);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(sपंचांग32_dfsdm_start_dfsdm);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(stm32_dfsdm_start_dfsdm);
 
 /**
- * sपंचांग32_dfsdm_stop_dfsdm - stop global DFSDM पूर्णांकerface.
+ * stm32_dfsdm_stop_dfsdm - stop global DFSDM interface.
  *
- * Disable पूर्णांकerface अगर n_active_ch is null
+ * Disable interface if n_active_ch is null
  * @dfsdm: Handle used to retrieve dfsdm context.
  */
-पूर्णांक sपंचांग32_dfsdm_stop_dfsdm(काष्ठा sपंचांग32_dfsdm *dfsdm)
-अणु
-	काष्ठा dfsdm_priv *priv = to_sपंचांग32_dfsdm_priv(dfsdm);
-	पूर्णांक ret;
+int stm32_dfsdm_stop_dfsdm(struct stm32_dfsdm *dfsdm)
+{
+	struct dfsdm_priv *priv = to_stm32_dfsdm_priv(dfsdm);
+	int ret;
 
-	अगर (atomic_dec_and_test(&priv->n_active_ch)) अणु
-		/* Global disable of DFSDM पूर्णांकerface */
+	if (atomic_dec_and_test(&priv->n_active_ch)) {
+		/* Global disable of DFSDM interface */
 		ret = regmap_update_bits(dfsdm->regmap, DFSDM_CHCFGR1(0),
 					 DFSDM_CHCFGR1_DFSDMEN_MASK,
 					 DFSDM_CHCFGR1_DFSDMEN(0));
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		/* Stop SPI CLKOUT */
 		ret = regmap_update_bits(dfsdm->regmap, DFSDM_CHCFGR1(0),
 					 DFSDM_CHCFGR1_CKOUTDIV_MASK,
 					 DFSDM_CHCFGR1_CKOUTDIV(0));
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
-		pm_runसमय_put_sync(&priv->pdev->dev);
-	पूर्ण
+		pm_runtime_put_sync(&priv->pdev->dev);
+	}
 	dev_dbg(&priv->pdev->dev, "%s: n_active_ch %d\n", __func__,
-		atomic_पढ़ो(&priv->n_active_ch));
+		atomic_read(&priv->n_active_ch));
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(sपंचांग32_dfsdm_stop_dfsdm);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(stm32_dfsdm_stop_dfsdm);
 
-अटल पूर्णांक sपंचांग32_dfsdm_parse_of(काष्ठा platक्रमm_device *pdev,
-				काष्ठा dfsdm_priv *priv)
-अणु
-	काष्ठा device_node *node = pdev->dev.of_node;
-	काष्ठा resource *res;
-	अचिन्हित दीर्घ clk_freq, भागider;
-	अचिन्हित पूर्णांक spi_freq, rem;
-	पूर्णांक ret;
+static int stm32_dfsdm_parse_of(struct platform_device *pdev,
+				struct dfsdm_priv *priv)
+{
+	struct device_node *node = pdev->dev.of_node;
+	struct resource *res;
+	unsigned long clk_freq, divider;
+	unsigned int spi_freq, rem;
+	int ret;
 
-	अगर (!node)
-		वापस -EINVAL;
+	if (!node)
+		return -EINVAL;
 
-	priv->dfsdm.base = devm_platक्रमm_get_and_ioremap_resource(pdev, 0,
+	priv->dfsdm.base = devm_platform_get_and_ioremap_resource(pdev, 0,
 							&res);
-	अगर (IS_ERR(priv->dfsdm.base))
-		वापस PTR_ERR(priv->dfsdm.base);
+	if (IS_ERR(priv->dfsdm.base))
+		return PTR_ERR(priv->dfsdm.base);
 
 	priv->dfsdm.phys_base = res->start;
 
 	/*
-	 * "dfsdm" घड़ी is mandatory क्रम DFSDM peripheral घड़ीing.
-	 * "dfsdm" or "audio" घड़ीs can be used as source घड़ी क्रम
-	 * the SPI घड़ी out संकेत and पूर्णांकernal processing, depending
-	 * on use हाल.
+	 * "dfsdm" clock is mandatory for DFSDM peripheral clocking.
+	 * "dfsdm" or "audio" clocks can be used as source clock for
+	 * the SPI clock out signal and internal processing, depending
+	 * on use case.
 	 */
 	priv->clk = devm_clk_get(&pdev->dev, "dfsdm");
-	अगर (IS_ERR(priv->clk))
-		वापस dev_err_probe(&pdev->dev, PTR_ERR(priv->clk),
+	if (IS_ERR(priv->clk))
+		return dev_err_probe(&pdev->dev, PTR_ERR(priv->clk),
 				     "Failed to get clock\n");
 
 	priv->aclk = devm_clk_get(&pdev->dev, "audio");
-	अगर (IS_ERR(priv->aclk))
-		priv->aclk = शून्य;
+	if (IS_ERR(priv->aclk))
+		priv->aclk = NULL;
 
-	अगर (priv->aclk)
+	if (priv->aclk)
 		clk_freq = clk_get_rate(priv->aclk);
-	अन्यथा
+	else
 		clk_freq = clk_get_rate(priv->clk);
 
-	/* SPI घड़ी out frequency */
-	ret = of_property_पढ़ो_u32(pdev->dev.of_node, "spi-max-frequency",
+	/* SPI clock out frequency */
+	ret = of_property_read_u32(pdev->dev.of_node, "spi-max-frequency",
 				   &spi_freq);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		/* No SPI master mode */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	भागider = भाग_u64_rem(clk_freq, spi_freq, &rem);
-	/* Round up भागider when ckout isn't precise, not to exceed spi_freq */
-	अगर (rem)
-		भागider++;
+	divider = div_u64_rem(clk_freq, spi_freq, &rem);
+	/* Round up divider when ckout isn't precise, not to exceed spi_freq */
+	if (rem)
+		divider++;
 
-	/* programmable भागider is in range of [2:256] */
-	अगर (भागider < 2 || भागider > 256) अणु
+	/* programmable divider is in range of [2:256] */
+	if (divider < 2 || divider > 256) {
 		dev_err(&pdev->dev, "spi-max-frequency not achievable\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* SPI घड़ी output भागider is: भागider = CKOUTDIV + 1 */
-	priv->spi_clk_out_भाग = भागider - 1;
-	priv->dfsdm.spi_master_freq = clk_freq / (priv->spi_clk_out_भाग + 1);
+	/* SPI clock output divider is: divider = CKOUTDIV + 1 */
+	priv->spi_clk_out_div = divider - 1;
+	priv->dfsdm.spi_master_freq = clk_freq / (priv->spi_clk_out_div + 1);
 
-	अगर (rem) अणु
+	if (rem) {
 		dev_warn(&pdev->dev, "SPI clock not accurate\n");
 		dev_warn(&pdev->dev, "%ld = %d * %d + %d\n",
-			 clk_freq, spi_freq, priv->spi_clk_out_भाग + 1, rem);
-	पूर्ण
+			 clk_freq, spi_freq, priv->spi_clk_out_div + 1, rem);
+	}
 
-	वापस 0;
-पूर्ण;
+	return 0;
+};
 
-अटल स्थिर काष्ठा of_device_id sपंचांग32_dfsdm_of_match[] = अणु
-	अणु
+static const struct of_device_id stm32_dfsdm_of_match[] = {
+	{
 		.compatible = "st,stm32h7-dfsdm",
-		.data = &sपंचांग32h7_dfsdm_data,
-	पूर्ण,
-	अणु
+		.data = &stm32h7_dfsdm_data,
+	},
+	{
 		.compatible = "st,stm32mp1-dfsdm",
-		.data = &sपंचांग32mp1_dfsdm_data,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(of, sपंचांग32_dfsdm_of_match);
+		.data = &stm32mp1_dfsdm_data,
+	},
+	{}
+};
+MODULE_DEVICE_TABLE(of, stm32_dfsdm_of_match);
 
-अटल पूर्णांक sपंचांग32_dfsdm_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा dfsdm_priv *priv;
-	स्थिर काष्ठा sपंचांग32_dfsdm_dev_data *dev_data;
-	काष्ठा sपंचांग32_dfsdm *dfsdm;
-	पूर्णांक ret;
+static int stm32_dfsdm_probe(struct platform_device *pdev)
+{
+	struct dfsdm_priv *priv;
+	const struct stm32_dfsdm_dev_data *dev_data;
+	struct stm32_dfsdm *dfsdm;
+	int ret;
 
-	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->pdev = pdev;
 
 	dev_data = of_device_get_match_data(&pdev->dev);
 
 	dfsdm = &priv->dfsdm;
-	dfsdm->fl_list = devm_kसुस्मृति(&pdev->dev, dev_data->num_filters,
-				      माप(*dfsdm->fl_list), GFP_KERNEL);
-	अगर (!dfsdm->fl_list)
-		वापस -ENOMEM;
+	dfsdm->fl_list = devm_kcalloc(&pdev->dev, dev_data->num_filters,
+				      sizeof(*dfsdm->fl_list), GFP_KERNEL);
+	if (!dfsdm->fl_list)
+		return -ENOMEM;
 
 	dfsdm->num_fls = dev_data->num_filters;
-	dfsdm->ch_list = devm_kसुस्मृति(&pdev->dev, dev_data->num_channels,
-				      माप(*dfsdm->ch_list),
+	dfsdm->ch_list = devm_kcalloc(&pdev->dev, dev_data->num_channels,
+				      sizeof(*dfsdm->ch_list),
 				      GFP_KERNEL);
-	अगर (!dfsdm->ch_list)
-		वापस -ENOMEM;
+	if (!dfsdm->ch_list)
+		return -ENOMEM;
 	dfsdm->num_chs = dev_data->num_channels;
 
-	ret = sपंचांग32_dfsdm_parse_of(pdev, priv);
-	अगर (ret < 0)
-		वापस ret;
+	ret = stm32_dfsdm_parse_of(pdev, priv);
+	if (ret < 0)
+		return ret;
 
 	dfsdm->regmap = devm_regmap_init_mmio_clk(&pdev->dev, "dfsdm",
 						  dfsdm->base,
 						  dev_data->regmap_cfg);
-	अगर (IS_ERR(dfsdm->regmap)) अणु
+	if (IS_ERR(dfsdm->regmap)) {
 		ret = PTR_ERR(dfsdm->regmap);
 		dev_err(&pdev->dev, "%s: Failed to allocate regmap: %d\n",
 			__func__, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	platक्रमm_set_drvdata(pdev, dfsdm);
+	platform_set_drvdata(pdev, dfsdm);
 
-	ret = sपंचांग32_dfsdm_clk_prepare_enable(dfsdm);
-	अगर (ret) अणु
+	ret = stm32_dfsdm_clk_prepare_enable(dfsdm);
+	if (ret) {
 		dev_err(&pdev->dev, "Failed to start clock\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	pm_runसमय_get_noresume(&pdev->dev);
-	pm_runसमय_set_active(&pdev->dev);
-	pm_runसमय_enable(&pdev->dev);
+	pm_runtime_get_noresume(&pdev->dev);
+	pm_runtime_set_active(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 
-	ret = of_platक्रमm_populate(pdev->dev.of_node, शून्य, शून्य, &pdev->dev);
-	अगर (ret)
-		जाओ pm_put;
+	ret = of_platform_populate(pdev->dev.of_node, NULL, NULL, &pdev->dev);
+	if (ret)
+		goto pm_put;
 
-	pm_runसमय_put(&pdev->dev);
+	pm_runtime_put(&pdev->dev);
 
-	वापस 0;
+	return 0;
 
 pm_put:
-	pm_runसमय_disable(&pdev->dev);
-	pm_runसमय_set_suspended(&pdev->dev);
-	pm_runसमय_put_noidle(&pdev->dev);
-	sपंचांग32_dfsdm_clk_disable_unprepare(dfsdm);
+	pm_runtime_disable(&pdev->dev);
+	pm_runtime_set_suspended(&pdev->dev);
+	pm_runtime_put_noidle(&pdev->dev);
+	stm32_dfsdm_clk_disable_unprepare(dfsdm);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sपंचांग32_dfsdm_core_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sपंचांग32_dfsdm *dfsdm = platक्रमm_get_drvdata(pdev);
+static int stm32_dfsdm_core_remove(struct platform_device *pdev)
+{
+	struct stm32_dfsdm *dfsdm = platform_get_drvdata(pdev);
 
-	pm_runसमय_get_sync(&pdev->dev);
-	of_platक्रमm_depopulate(&pdev->dev);
-	pm_runसमय_disable(&pdev->dev);
-	pm_runसमय_set_suspended(&pdev->dev);
-	pm_runसमय_put_noidle(&pdev->dev);
-	sपंचांग32_dfsdm_clk_disable_unprepare(dfsdm);
+	pm_runtime_get_sync(&pdev->dev);
+	of_platform_depopulate(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
+	pm_runtime_set_suspended(&pdev->dev);
+	pm_runtime_put_noidle(&pdev->dev);
+	stm32_dfsdm_clk_disable_unprepare(dfsdm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused sपंचांग32_dfsdm_core_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा sपंचांग32_dfsdm *dfsdm = dev_get_drvdata(dev);
-	काष्ठा dfsdm_priv *priv = to_sपंचांग32_dfsdm_priv(dfsdm);
-	पूर्णांक ret;
+static int __maybe_unused stm32_dfsdm_core_suspend(struct device *dev)
+{
+	struct stm32_dfsdm *dfsdm = dev_get_drvdata(dev);
+	struct dfsdm_priv *priv = to_stm32_dfsdm_priv(dfsdm);
+	int ret;
 
-	ret = pm_runसमय_क्रमce_suspend(dev);
-	अगर (ret)
-		वापस ret;
+	ret = pm_runtime_force_suspend(dev);
+	if (ret)
+		return ret;
 
 	/* Balance devm_regmap_init_mmio_clk() clk_prepare() */
 	clk_unprepare(priv->clk);
 
-	वापस pinctrl_pm_select_sleep_state(dev);
-पूर्ण
+	return pinctrl_pm_select_sleep_state(dev);
+}
 
-अटल पूर्णांक __maybe_unused sपंचांग32_dfsdm_core_resume(काष्ठा device *dev)
-अणु
-	काष्ठा sपंचांग32_dfsdm *dfsdm = dev_get_drvdata(dev);
-	काष्ठा dfsdm_priv *priv = to_sपंचांग32_dfsdm_priv(dfsdm);
-	पूर्णांक ret;
+static int __maybe_unused stm32_dfsdm_core_resume(struct device *dev)
+{
+	struct stm32_dfsdm *dfsdm = dev_get_drvdata(dev);
+	struct dfsdm_priv *priv = to_stm32_dfsdm_priv(dfsdm);
+	int ret;
 
-	ret = pinctrl_pm_select_शेष_state(dev);
-	अगर (ret)
-		वापस ret;
+	ret = pinctrl_pm_select_default_state(dev);
+	if (ret)
+		return ret;
 
 	ret = clk_prepare(priv->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस pm_runसमय_क्रमce_resume(dev);
-पूर्ण
+	return pm_runtime_force_resume(dev);
+}
 
-अटल पूर्णांक __maybe_unused sपंचांग32_dfsdm_core_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा sपंचांग32_dfsdm *dfsdm = dev_get_drvdata(dev);
+static int __maybe_unused stm32_dfsdm_core_runtime_suspend(struct device *dev)
+{
+	struct stm32_dfsdm *dfsdm = dev_get_drvdata(dev);
 
-	sपंचांग32_dfsdm_clk_disable_unprepare(dfsdm);
+	stm32_dfsdm_clk_disable_unprepare(dfsdm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused sपंचांग32_dfsdm_core_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा sपंचांग32_dfsdm *dfsdm = dev_get_drvdata(dev);
+static int __maybe_unused stm32_dfsdm_core_runtime_resume(struct device *dev)
+{
+	struct stm32_dfsdm *dfsdm = dev_get_drvdata(dev);
 
-	वापस sपंचांग32_dfsdm_clk_prepare_enable(dfsdm);
-पूर्ण
+	return stm32_dfsdm_clk_prepare_enable(dfsdm);
+}
 
-अटल स्थिर काष्ठा dev_pm_ops sपंचांग32_dfsdm_core_pm_ops = अणु
-	SET_SYSTEM_SLEEP_PM_OPS(sपंचांग32_dfsdm_core_suspend,
-				sपंचांग32_dfsdm_core_resume)
-	SET_RUNTIME_PM_OPS(sपंचांग32_dfsdm_core_runसमय_suspend,
-			   sपंचांग32_dfsdm_core_runसमय_resume,
-			   शून्य)
-पूर्ण;
+static const struct dev_pm_ops stm32_dfsdm_core_pm_ops = {
+	SET_SYSTEM_SLEEP_PM_OPS(stm32_dfsdm_core_suspend,
+				stm32_dfsdm_core_resume)
+	SET_RUNTIME_PM_OPS(stm32_dfsdm_core_runtime_suspend,
+			   stm32_dfsdm_core_runtime_resume,
+			   NULL)
+};
 
-अटल काष्ठा platक्रमm_driver sपंचांग32_dfsdm_driver = अणु
-	.probe = sपंचांग32_dfsdm_probe,
-	.हटाओ = sपंचांग32_dfsdm_core_हटाओ,
-	.driver = अणु
+static struct platform_driver stm32_dfsdm_driver = {
+	.probe = stm32_dfsdm_probe,
+	.remove = stm32_dfsdm_core_remove,
+	.driver = {
 		.name = "stm32-dfsdm",
-		.of_match_table = sपंचांग32_dfsdm_of_match,
-		.pm = &sपंचांग32_dfsdm_core_pm_ops,
-	पूर्ण,
-पूर्ण;
+		.of_match_table = stm32_dfsdm_of_match,
+		.pm = &stm32_dfsdm_core_pm_ops,
+	},
+};
 
-module_platक्रमm_driver(sपंचांग32_dfsdm_driver);
+module_platform_driver(stm32_dfsdm_driver);
 
 MODULE_AUTHOR("Arnaud Pouliquen <arnaud.pouliquen@st.com>");
 MODULE_DESCRIPTION("STMicroelectronics STM32 dfsdm driver");

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,33 +22,33 @@
  *
  */
 
-#अगर defined(CONFIG_ACPI)
-बाह्य व्योम psb_पूर्णांकel_opregion_asle_पूर्णांकr(काष्ठा drm_device *dev);
-बाह्य व्योम psb_पूर्णांकel_opregion_init(काष्ठा drm_device *dev);
-बाह्य व्योम psb_पूर्णांकel_opregion_fini(काष्ठा drm_device *dev);
-बाह्य पूर्णांक psb_पूर्णांकel_opregion_setup(काष्ठा drm_device *dev);
-बाह्य व्योम psb_पूर्णांकel_opregion_enable_asle(काष्ठा drm_device *dev);
+#if defined(CONFIG_ACPI)
+extern void psb_intel_opregion_asle_intr(struct drm_device *dev);
+extern void psb_intel_opregion_init(struct drm_device *dev);
+extern void psb_intel_opregion_fini(struct drm_device *dev);
+extern int psb_intel_opregion_setup(struct drm_device *dev);
+extern void psb_intel_opregion_enable_asle(struct drm_device *dev);
 
-#अन्यथा
+#else
 
-बाह्य अंतरभूत व्योम psb_पूर्णांकel_opregion_asle_पूर्णांकr(काष्ठा drm_device *dev)
-अणु
-पूर्ण
+extern inline void psb_intel_opregion_asle_intr(struct drm_device *dev)
+{
+}
 
-बाह्य अंतरभूत व्योम psb_पूर्णांकel_opregion_init(काष्ठा drm_device *dev)
-अणु
-पूर्ण
+extern inline void psb_intel_opregion_init(struct drm_device *dev)
+{
+}
 
-बाह्य अंतरभूत व्योम psb_पूर्णांकel_opregion_fini(काष्ठा drm_device *dev)
-अणु
-पूर्ण
+extern inline void psb_intel_opregion_fini(struct drm_device *dev)
+{
+}
 
-बाह्य अंतरभूत पूर्णांक psb_पूर्णांकel_opregion_setup(काष्ठा drm_device *dev)
-अणु
-	वापस 0;
-पूर्ण
+extern inline int psb_intel_opregion_setup(struct drm_device *dev)
+{
+	return 0;
+}
 
-बाह्य अंतरभूत व्योम psb_पूर्णांकel_opregion_enable_asle(काष्ठा drm_device *dev)
-अणु
-पूर्ण
-#पूर्ण_अगर
+extern inline void psb_intel_opregion_enable_asle(struct drm_device *dev)
+{
+}
+#endif

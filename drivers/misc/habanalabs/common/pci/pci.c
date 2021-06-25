@@ -1,291 +1,290 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /*
- * Copyright 2016-2019 HabanaLअसल, Ltd.
+ * Copyright 2016-2019 HabanaLabs, Ltd.
  * All Rights Reserved.
  */
 
-#समावेश "../habanalabs.h"
-#समावेश "../../include/hw_ip/pci/pci_general.h"
+#include "../habanalabs.h"
+#include "../../include/hw_ip/pci/pci_general.h"
 
-#समावेश <linux/pci.h>
+#include <linux/pci.h>
 
-#घोषणा HL_PLDM_PCI_ELBI_TIMEOUT_MSEC	(HL_PCI_ELBI_TIMEOUT_MSEC * 10)
+#define HL_PLDM_PCI_ELBI_TIMEOUT_MSEC	(HL_PCI_ELBI_TIMEOUT_MSEC * 10)
 
-#घोषणा IATU_REGION_CTRL_REGION_EN_MASK		BIT(31)
-#घोषणा IATU_REGION_CTRL_MATCH_MODE_MASK	BIT(30)
-#घोषणा IATU_REGION_CTRL_NUM_MATCH_EN_MASK	BIT(19)
-#घोषणा IATU_REGION_CTRL_BAR_NUM_MASK		GENMASK(10, 8)
+#define IATU_REGION_CTRL_REGION_EN_MASK		BIT(31)
+#define IATU_REGION_CTRL_MATCH_MODE_MASK	BIT(30)
+#define IATU_REGION_CTRL_NUM_MATCH_EN_MASK	BIT(19)
+#define IATU_REGION_CTRL_BAR_NUM_MASK		GENMASK(10, 8)
 
 /**
  * hl_pci_bars_map() - Map PCI BARs.
- * @hdev: Poपूर्णांकer to hl_device काष्ठाure.
+ * @hdev: Pointer to hl_device structure.
  * @name: Array of BAR names.
- * @is_wc: Array with flag per BAR whether a ग_लिखो-combined mapping is needed.
+ * @is_wc: Array with flag per BAR whether a write-combined mapping is needed.
  *
- * Request PCI regions and map them to kernel भव addresses.
+ * Request PCI regions and map them to kernel virtual addresses.
  *
- * Return: 0 on success, non-zero क्रम failure.
+ * Return: 0 on success, non-zero for failure.
  */
-पूर्णांक hl_pci_bars_map(काष्ठा hl_device *hdev, स्थिर अक्षर * स्थिर name[3],
+int hl_pci_bars_map(struct hl_device *hdev, const char * const name[3],
 			bool is_wc[3])
-अणु
-	काष्ठा pci_dev *pdev = hdev->pdev;
-	पूर्णांक rc, i, bar;
+{
+	struct pci_dev *pdev = hdev->pdev;
+	int rc, i, bar;
 
 	rc = pci_request_regions(pdev, HL_NAME);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(hdev->dev, "Cannot obtain PCI resources\n");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	क्रम (i = 0 ; i < 3 ; i++) अणु
+	for (i = 0 ; i < 3 ; i++) {
 		bar = i * 2; /* 64-bit BARs */
 		hdev->pcie_bar[bar] = is_wc[i] ?
 				pci_ioremap_wc_bar(pdev, bar) :
 				pci_ioremap_bar(pdev, bar);
-		अगर (!hdev->pcie_bar[bar]) अणु
+		if (!hdev->pcie_bar[bar]) {
 			dev_err(hdev->dev, "pci_ioremap%s_bar failed for %s\n",
 					is_wc[i] ? "_wc" : "", name[i]);
 			rc = -ENODEV;
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	क्रम (i = 2 ; i >= 0 ; i--) अणु
+	for (i = 2 ; i >= 0 ; i--) {
 		bar = i * 2; /* 64-bit BARs */
-		अगर (hdev->pcie_bar[bar])
+		if (hdev->pcie_bar[bar])
 			iounmap(hdev->pcie_bar[bar]);
-	पूर्ण
+	}
 
 	pci_release_regions(pdev);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * hl_pci_bars_unmap() - Unmap PCI BARS.
- * @hdev: Poपूर्णांकer to hl_device काष्ठाure.
+ * @hdev: Pointer to hl_device structure.
  *
- * Release all PCI BARs and unmap their भव addresses.
+ * Release all PCI BARs and unmap their virtual addresses.
  */
-अटल व्योम hl_pci_bars_unmap(काष्ठा hl_device *hdev)
-अणु
-	काष्ठा pci_dev *pdev = hdev->pdev;
-	पूर्णांक i, bar;
+static void hl_pci_bars_unmap(struct hl_device *hdev)
+{
+	struct pci_dev *pdev = hdev->pdev;
+	int i, bar;
 
-	क्रम (i = 2 ; i >= 0 ; i--) अणु
+	for (i = 2 ; i >= 0 ; i--) {
 		bar = i * 2; /* 64-bit BARs */
 		iounmap(hdev->pcie_bar[bar]);
-	पूर्ण
+	}
 
 	pci_release_regions(pdev);
-पूर्ण
+}
 
-पूर्णांक hl_pci_elbi_पढ़ो(काष्ठा hl_device *hdev, u64 addr, u32 *data)
-अणु
-	काष्ठा pci_dev *pdev = hdev->pdev;
-	kसमय_प्रकार समयout;
+int hl_pci_elbi_read(struct hl_device *hdev, u64 addr, u32 *data)
+{
+	struct pci_dev *pdev = hdev->pdev;
+	ktime_t timeout;
 	u64 msec;
 	u32 val;
 
-	अगर (hdev->pldm)
+	if (hdev->pldm)
 		msec = HL_PLDM_PCI_ELBI_TIMEOUT_MSEC;
-	अन्यथा
+	else
 		msec = HL_PCI_ELBI_TIMEOUT_MSEC;
 
 	/* Clear previous status */
-	pci_ग_लिखो_config_dword(pdev, mmPCI_CONFIG_ELBI_STS, 0);
+	pci_write_config_dword(pdev, mmPCI_CONFIG_ELBI_STS, 0);
 
-	pci_ग_लिखो_config_dword(pdev, mmPCI_CONFIG_ELBI_ADDR, (u32) addr);
-	pci_ग_लिखो_config_dword(pdev, mmPCI_CONFIG_ELBI_CTRL, 0);
+	pci_write_config_dword(pdev, mmPCI_CONFIG_ELBI_ADDR, (u32) addr);
+	pci_write_config_dword(pdev, mmPCI_CONFIG_ELBI_CTRL, 0);
 
-	समयout = kसमय_add_ms(kसमय_get(), msec);
-	क्रम (;;) अणु
-		pci_पढ़ो_config_dword(pdev, mmPCI_CONFIG_ELBI_STS, &val);
-		अगर (val & PCI_CONFIG_ELBI_STS_MASK)
-			अवरोध;
-		अगर (kसमय_compare(kसमय_get(), समयout) > 0) अणु
-			pci_पढ़ो_config_dword(pdev, mmPCI_CONFIG_ELBI_STS,
+	timeout = ktime_add_ms(ktime_get(), msec);
+	for (;;) {
+		pci_read_config_dword(pdev, mmPCI_CONFIG_ELBI_STS, &val);
+		if (val & PCI_CONFIG_ELBI_STS_MASK)
+			break;
+		if (ktime_compare(ktime_get(), timeout) > 0) {
+			pci_read_config_dword(pdev, mmPCI_CONFIG_ELBI_STS,
 						&val);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		usleep_range(300, 500);
-	पूर्ण
+	}
 
-	अगर ((val & PCI_CONFIG_ELBI_STS_MASK) == PCI_CONFIG_ELBI_STS_DONE) अणु
-		pci_पढ़ो_config_dword(pdev, mmPCI_CONFIG_ELBI_DATA, data);
+	if ((val & PCI_CONFIG_ELBI_STS_MASK) == PCI_CONFIG_ELBI_STS_DONE) {
+		pci_read_config_dword(pdev, mmPCI_CONFIG_ELBI_DATA, data);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (val & PCI_CONFIG_ELBI_STS_ERR) अणु
+	if (val & PCI_CONFIG_ELBI_STS_ERR) {
 		dev_err(hdev->dev, "Error reading from ELBI\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (!(val & PCI_CONFIG_ELBI_STS_MASK)) अणु
+	if (!(val & PCI_CONFIG_ELBI_STS_MASK)) {
 		dev_err(hdev->dev, "ELBI read didn't finish in time\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	dev_err(hdev->dev, "ELBI read has undefined bits in status\n");
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
 /**
- * hl_pci_elbi_ग_लिखो() - Write through the ELBI पूर्णांकerface.
- * @hdev: Poपूर्णांकer to hl_device काष्ठाure.
- * @addr: Address to ग_लिखो to
- * @data: Data to ग_लिखो
+ * hl_pci_elbi_write() - Write through the ELBI interface.
+ * @hdev: Pointer to hl_device structure.
+ * @addr: Address to write to
+ * @data: Data to write
  *
- * Return: 0 on success, negative value क्रम failure.
+ * Return: 0 on success, negative value for failure.
  */
-अटल पूर्णांक hl_pci_elbi_ग_लिखो(काष्ठा hl_device *hdev, u64 addr, u32 data)
-अणु
-	काष्ठा pci_dev *pdev = hdev->pdev;
-	kसमय_प्रकार समयout;
+static int hl_pci_elbi_write(struct hl_device *hdev, u64 addr, u32 data)
+{
+	struct pci_dev *pdev = hdev->pdev;
+	ktime_t timeout;
 	u64 msec;
 	u32 val;
 
-	अगर (hdev->pldm)
+	if (hdev->pldm)
 		msec = HL_PLDM_PCI_ELBI_TIMEOUT_MSEC;
-	अन्यथा
+	else
 		msec = HL_PCI_ELBI_TIMEOUT_MSEC;
 
 	/* Clear previous status */
-	pci_ग_लिखो_config_dword(pdev, mmPCI_CONFIG_ELBI_STS, 0);
+	pci_write_config_dword(pdev, mmPCI_CONFIG_ELBI_STS, 0);
 
-	pci_ग_लिखो_config_dword(pdev, mmPCI_CONFIG_ELBI_ADDR, (u32) addr);
-	pci_ग_लिखो_config_dword(pdev, mmPCI_CONFIG_ELBI_DATA, data);
-	pci_ग_लिखो_config_dword(pdev, mmPCI_CONFIG_ELBI_CTRL,
+	pci_write_config_dword(pdev, mmPCI_CONFIG_ELBI_ADDR, (u32) addr);
+	pci_write_config_dword(pdev, mmPCI_CONFIG_ELBI_DATA, data);
+	pci_write_config_dword(pdev, mmPCI_CONFIG_ELBI_CTRL,
 				PCI_CONFIG_ELBI_CTRL_WRITE);
 
-	समयout = kसमय_add_ms(kसमय_get(), msec);
-	क्रम (;;) अणु
-		pci_पढ़ो_config_dword(pdev, mmPCI_CONFIG_ELBI_STS, &val);
-		अगर (val & PCI_CONFIG_ELBI_STS_MASK)
-			अवरोध;
-		अगर (kसमय_compare(kसमय_get(), समयout) > 0) अणु
-			pci_पढ़ो_config_dword(pdev, mmPCI_CONFIG_ELBI_STS,
+	timeout = ktime_add_ms(ktime_get(), msec);
+	for (;;) {
+		pci_read_config_dword(pdev, mmPCI_CONFIG_ELBI_STS, &val);
+		if (val & PCI_CONFIG_ELBI_STS_MASK)
+			break;
+		if (ktime_compare(ktime_get(), timeout) > 0) {
+			pci_read_config_dword(pdev, mmPCI_CONFIG_ELBI_STS,
 						&val);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		usleep_range(300, 500);
-	पूर्ण
+	}
 
-	अगर ((val & PCI_CONFIG_ELBI_STS_MASK) == PCI_CONFIG_ELBI_STS_DONE)
-		वापस 0;
+	if ((val & PCI_CONFIG_ELBI_STS_MASK) == PCI_CONFIG_ELBI_STS_DONE)
+		return 0;
 
-	अगर (val & PCI_CONFIG_ELBI_STS_ERR)
-		वापस -EIO;
+	if (val & PCI_CONFIG_ELBI_STS_ERR)
+		return -EIO;
 
-	अगर (!(val & PCI_CONFIG_ELBI_STS_MASK)) अणु
+	if (!(val & PCI_CONFIG_ELBI_STS_MASK)) {
 		dev_err(hdev->dev, "ELBI write didn't finish in time\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	dev_err(hdev->dev, "ELBI write has undefined bits in status\n");
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
 /**
- * hl_pci_iatu_ग_लिखो() - iatu ग_लिखो routine.
- * @hdev: Poपूर्णांकer to hl_device काष्ठाure.
- * @addr: Address to ग_लिखो to
- * @data: Data to ग_लिखो
+ * hl_pci_iatu_write() - iatu write routine.
+ * @hdev: Pointer to hl_device structure.
+ * @addr: Address to write to
+ * @data: Data to write
  *
- * Return: 0 on success, negative value क्रम failure.
+ * Return: 0 on success, negative value for failure.
  */
-पूर्णांक hl_pci_iatu_ग_लिखो(काष्ठा hl_device *hdev, u32 addr, u32 data)
-अणु
-	काष्ठा asic_fixed_properties *prop = &hdev->asic_prop;
+int hl_pci_iatu_write(struct hl_device *hdev, u32 addr, u32 data)
+{
+	struct asic_fixed_properties *prop = &hdev->asic_prop;
 	u32 dbi_offset;
-	पूर्णांक rc;
+	int rc;
 
 	dbi_offset = addr & 0xFFF;
 
 	/* Ignore result of writing to pcie_aux_dbi_reg_addr as it could fail
-	 * in हाल the firmware security is enabled
+	 * in case the firmware security is enabled
 	 */
-	hl_pci_elbi_ग_लिखो(hdev, prop->pcie_aux_dbi_reg_addr, 0x00300000);
+	hl_pci_elbi_write(hdev, prop->pcie_aux_dbi_reg_addr, 0x00300000);
 
-	rc = hl_pci_elbi_ग_लिखो(hdev, prop->pcie_dbi_base_address + dbi_offset,
+	rc = hl_pci_elbi_write(hdev, prop->pcie_dbi_base_address + dbi_offset,
 				data);
 
-	अगर (rc)
-		वापस -EIO;
+	if (rc)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * hl_pci_reset_link_through_bridge() - Reset PCI link.
- * @hdev: Poपूर्णांकer to hl_device काष्ठाure.
+ * @hdev: Pointer to hl_device structure.
  */
-अटल व्योम hl_pci_reset_link_through_bridge(काष्ठा hl_device *hdev)
-अणु
-	काष्ठा pci_dev *pdev = hdev->pdev;
-	काष्ठा pci_dev *parent_port;
+static void hl_pci_reset_link_through_bridge(struct hl_device *hdev)
+{
+	struct pci_dev *pdev = hdev->pdev;
+	struct pci_dev *parent_port;
 	u16 val;
 
 	parent_port = pdev->bus->self;
-	pci_पढ़ो_config_word(parent_port, PCI_BRIDGE_CONTROL, &val);
+	pci_read_config_word(parent_port, PCI_BRIDGE_CONTROL, &val);
 	val |= PCI_BRIDGE_CTL_BUS_RESET;
-	pci_ग_लिखो_config_word(parent_port, PCI_BRIDGE_CONTROL, val);
+	pci_write_config_word(parent_port, PCI_BRIDGE_CONTROL, val);
 	ssleep(1);
 
 	val &= ~(PCI_BRIDGE_CTL_BUS_RESET);
-	pci_ग_लिखो_config_word(parent_port, PCI_BRIDGE_CONTROL, val);
+	pci_write_config_word(parent_port, PCI_BRIDGE_CONTROL, val);
 	ssleep(3);
-पूर्ण
+}
 
 /**
  * hl_pci_set_inbound_region() - Configure inbound region
- * @hdev: Poपूर्णांकer to hl_device काष्ठाure.
+ * @hdev: Pointer to hl_device structure.
  * @region: Inbound region number.
  * @pci_region: Inbound region parameters.
  *
  * Configure the iATU inbound region.
  *
- * Return: 0 on success, negative value क्रम failure.
+ * Return: 0 on success, negative value for failure.
  */
-पूर्णांक hl_pci_set_inbound_region(काष्ठा hl_device *hdev, u8 region,
-		काष्ठा hl_inbound_pci_region *pci_region)
-अणु
-	काष्ठा asic_fixed_properties *prop = &hdev->asic_prop;
+int hl_pci_set_inbound_region(struct hl_device *hdev, u8 region,
+		struct hl_inbound_pci_region *pci_region)
+{
+	struct asic_fixed_properties *prop = &hdev->asic_prop;
 	u64 bar_phys_base, region_base, region_end_address;
 	u32 offset, ctrl_reg_val;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
 	/* region offset */
 	offset = (0x200 * region) + 0x100;
 
-	अगर (pci_region->mode == PCI_ADDRESS_MATCH_MODE) अणु
+	if (pci_region->mode == PCI_ADDRESS_MATCH_MODE) {
 		bar_phys_base = hdev->pcie_bar_phys[pci_region->bar];
 		region_base = bar_phys_base + pci_region->offset_in_bar;
 		region_end_address = region_base + pci_region->size - 1;
 
-		rc |= hl_pci_iatu_ग_लिखो(hdev, offset + 0x8,
+		rc |= hl_pci_iatu_write(hdev, offset + 0x8,
 				lower_32_bits(region_base));
-		rc |= hl_pci_iatu_ग_लिखो(hdev, offset + 0xC,
+		rc |= hl_pci_iatu_write(hdev, offset + 0xC,
 				upper_32_bits(region_base));
-		rc |= hl_pci_iatu_ग_लिखो(hdev, offset + 0x10,
+		rc |= hl_pci_iatu_write(hdev, offset + 0x10,
 				lower_32_bits(region_end_address));
-	पूर्ण
+	}
 
-	/* Poपूर्णांक to the specअगरied address */
-	rc |= hl_pci_iatu_ग_लिखो(hdev, offset + 0x14,
+	/* Point to the specified address */
+	rc |= hl_pci_iatu_write(hdev, offset + 0x14,
 			lower_32_bits(pci_region->addr));
-	rc |= hl_pci_iatu_ग_लिखो(hdev, offset + 0x18,
+	rc |= hl_pci_iatu_write(hdev, offset + 0x18,
 			upper_32_bits(pci_region->addr));
-	rc |= hl_pci_iatu_ग_लिखो(hdev, offset + 0x0, 0);
+	rc |= hl_pci_iatu_write(hdev, offset + 0x0, 0);
 
 	/* Enable + bar/address match + match enable + bar number */
 	ctrl_reg_val = FIELD_PREP(IATU_REGION_CTRL_REGION_EN_MASK, 1);
@@ -293,119 +292,119 @@ err:
 			pci_region->mode);
 	ctrl_reg_val |= FIELD_PREP(IATU_REGION_CTRL_NUM_MATCH_EN_MASK, 1);
 
-	अगर (pci_region->mode == PCI_BAR_MATCH_MODE)
+	if (pci_region->mode == PCI_BAR_MATCH_MODE)
 		ctrl_reg_val |= FIELD_PREP(IATU_REGION_CTRL_BAR_NUM_MASK,
 				pci_region->bar);
 
-	rc |= hl_pci_iatu_ग_लिखो(hdev, offset + 0x4, ctrl_reg_val);
+	rc |= hl_pci_iatu_write(hdev, offset + 0x4, ctrl_reg_val);
 
-	/* Return the DBI winकरोw to the शेष location
+	/* Return the DBI window to the default location
 	 * Ignore result of writing to pcie_aux_dbi_reg_addr as it could fail
-	 * in हाल the firmware security is enabled
+	 * in case the firmware security is enabled
 	 */
-	hl_pci_elbi_ग_लिखो(hdev, prop->pcie_aux_dbi_reg_addr, 0);
+	hl_pci_elbi_write(hdev, prop->pcie_aux_dbi_reg_addr, 0);
 
-	अगर (rc)
+	if (rc)
 		dev_err(hdev->dev, "failed to map bar %u to 0x%08llx\n",
 				pci_region->bar, pci_region->addr);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * hl_pci_set_outbound_region() - Configure outbound region 0
- * @hdev: Poपूर्णांकer to hl_device काष्ठाure.
+ * @hdev: Pointer to hl_device structure.
  * @pci_region: Outbound region parameters.
  *
  * Configure the iATU outbound region 0.
  *
- * Return: 0 on success, negative value क्रम failure.
+ * Return: 0 on success, negative value for failure.
  */
-पूर्णांक hl_pci_set_outbound_region(काष्ठा hl_device *hdev,
-		काष्ठा hl_outbound_pci_region *pci_region)
-अणु
-	काष्ठा asic_fixed_properties *prop = &hdev->asic_prop;
+int hl_pci_set_outbound_region(struct hl_device *hdev,
+		struct hl_outbound_pci_region *pci_region)
+{
+	struct asic_fixed_properties *prop = &hdev->asic_prop;
 	u64 outbound_region_end_address;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
 	/* Outbound Region 0 */
 	outbound_region_end_address =
 			pci_region->addr + pci_region->size - 1;
-	rc |= hl_pci_iatu_ग_लिखो(hdev, 0x008,
+	rc |= hl_pci_iatu_write(hdev, 0x008,
 				lower_32_bits(pci_region->addr));
-	rc |= hl_pci_iatu_ग_लिखो(hdev, 0x00C,
+	rc |= hl_pci_iatu_write(hdev, 0x00C,
 				upper_32_bits(pci_region->addr));
-	rc |= hl_pci_iatu_ग_लिखो(hdev, 0x010,
+	rc |= hl_pci_iatu_write(hdev, 0x010,
 				lower_32_bits(outbound_region_end_address));
-	rc |= hl_pci_iatu_ग_लिखो(hdev, 0x014, 0);
+	rc |= hl_pci_iatu_write(hdev, 0x014, 0);
 
-	अगर ((hdev->घातer9_64bit_dma_enable) && (hdev->dma_mask == 64))
-		rc |= hl_pci_iatu_ग_लिखो(hdev, 0x018, 0x08000000);
-	अन्यथा
-		rc |= hl_pci_iatu_ग_लिखो(hdev, 0x018, 0);
+	if ((hdev->power9_64bit_dma_enable) && (hdev->dma_mask == 64))
+		rc |= hl_pci_iatu_write(hdev, 0x018, 0x08000000);
+	else
+		rc |= hl_pci_iatu_write(hdev, 0x018, 0);
 
-	rc |= hl_pci_iatu_ग_लिखो(hdev, 0x020,
+	rc |= hl_pci_iatu_write(hdev, 0x020,
 				upper_32_bits(outbound_region_end_address));
 	/* Increase region size */
-	rc |= hl_pci_iatu_ग_लिखो(hdev, 0x000, 0x00002000);
+	rc |= hl_pci_iatu_write(hdev, 0x000, 0x00002000);
 	/* Enable */
-	rc |= hl_pci_iatu_ग_लिखो(hdev, 0x004, 0x80000000);
+	rc |= hl_pci_iatu_write(hdev, 0x004, 0x80000000);
 
-	/* Return the DBI winकरोw to the शेष location
+	/* Return the DBI window to the default location
 	 * Ignore result of writing to pcie_aux_dbi_reg_addr as it could fail
-	 * in हाल the firmware security is enabled
+	 * in case the firmware security is enabled
 	 */
-	hl_pci_elbi_ग_लिखो(hdev, prop->pcie_aux_dbi_reg_addr, 0);
+	hl_pci_elbi_write(hdev, prop->pcie_aux_dbi_reg_addr, 0);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * hl_pci_init() - PCI initialization code.
- * @hdev: Poपूर्णांकer to hl_device काष्ठाure.
+ * @hdev: Pointer to hl_device structure.
  *
  * Set DMA masks, initialize the PCI controller and map the PCI BARs.
  *
- * Return: 0 on success, non-zero क्रम failure.
+ * Return: 0 on success, non-zero for failure.
  */
-पूर्णांक hl_pci_init(काष्ठा hl_device *hdev)
-अणु
-	काष्ठा pci_dev *pdev = hdev->pdev;
-	पूर्णांक rc;
+int hl_pci_init(struct hl_device *hdev)
+{
+	struct pci_dev *pdev = hdev->pdev;
+	int rc;
 
-	अगर (hdev->reset_pcilink)
+	if (hdev->reset_pcilink)
 		hl_pci_reset_link_through_bridge(hdev);
 
 	rc = pci_enable_device_mem(pdev);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(hdev->dev, "can't enable PCI device\n");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	pci_set_master(pdev);
 
 	rc = hdev->asic_funcs->pci_bars_map(hdev);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(hdev->dev, "Failed to initialize PCI BARs\n");
-		जाओ disable_device;
-	पूर्ण
+		goto disable_device;
+	}
 
 	rc = hdev->asic_funcs->init_iatu(hdev);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(hdev->dev, "Failed to initialize iATU\n");
-		जाओ unmap_pci_bars;
-	पूर्ण
+		goto unmap_pci_bars;
+	}
 
 	rc = dma_set_mask_and_coherent(&pdev->dev,
 					DMA_BIT_MASK(hdev->dma_mask));
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(hdev->dev,
 			"Failed to set dma mask to %d bits, error %d\n",
 			hdev->dma_mask, rc);
-		जाओ unmap_pci_bars;
-	पूर्ण
+		goto unmap_pci_bars;
+	}
 
-	वापस 0;
+	return 0;
 
 unmap_pci_bars:
 	hl_pci_bars_unmap(hdev);
@@ -413,19 +412,19 @@ disable_device:
 	pci_clear_master(pdev);
 	pci_disable_device(pdev);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * hl_fw_fini() - PCI finalization code.
- * @hdev: Poपूर्णांकer to hl_device काष्ठाure
+ * @hdev: Pointer to hl_device structure
  *
  * Unmap PCI bars and disable PCI device.
  */
-व्योम hl_pci_fini(काष्ठा hl_device *hdev)
-अणु
+void hl_pci_fini(struct hl_device *hdev)
+{
 	hl_pci_bars_unmap(hdev);
 
 	pci_clear_master(hdev->pdev);
 	pci_disable_device(hdev->pdev);
-पूर्ण
+}

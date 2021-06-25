@@ -1,24 +1,23 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * FB driver क्रम the ILI9486 LCD Controller
+ * FB driver for the ILI9486 LCD Controller
  *
  * Copyright (C) 2014 Noralf Tronnes
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <video/mipi_display.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <video/mipi_display.h>
 
-#समावेश "fbtft.h"
+#include "fbtft.h"
 
-#घोषणा DRVNAME		"fb_ili9486"
-#घोषणा WIDTH		320
-#घोषणा HEIGHT		480
+#define DRVNAME		"fb_ili9486"
+#define WIDTH		320
+#define HEIGHT		480
 
 /* this init sequence matches PiScreen */
-अटल स्थिर s16 शेष_init_sequence[] = अणु
+static const s16 default_init_sequence[] = {
 	/* Interface Mode Control */
 	-1, 0xb0, 0x0,
 	-1, MIPI_DCS_EXIT_SLEEP_MODE,
@@ -42,55 +41,55 @@
 	-1, MIPI_DCS_SET_DISPLAY_ON,
 	/* end marker */
 	-3
-पूर्ण;
+};
 
-अटल व्योम set_addr_win(काष्ठा fbtft_par *par, पूर्णांक xs, पूर्णांक ys, पूर्णांक xe, पूर्णांक ye)
-अणु
-	ग_लिखो_reg(par, MIPI_DCS_SET_COLUMN_ADDRESS,
+static void set_addr_win(struct fbtft_par *par, int xs, int ys, int xe, int ye)
+{
+	write_reg(par, MIPI_DCS_SET_COLUMN_ADDRESS,
 		  xs >> 8, xs & 0xFF, xe >> 8, xe & 0xFF);
 
-	ग_लिखो_reg(par, MIPI_DCS_SET_PAGE_ADDRESS,
+	write_reg(par, MIPI_DCS_SET_PAGE_ADDRESS,
 		  ys >> 8, ys & 0xFF, ye >> 8, ye & 0xFF);
 
-	ग_लिखो_reg(par, MIPI_DCS_WRITE_MEMORY_START);
-पूर्ण
+	write_reg(par, MIPI_DCS_WRITE_MEMORY_START);
+}
 
-अटल पूर्णांक set_var(काष्ठा fbtft_par *par)
-अणु
-	चयन (par->info->var.rotate) अणु
-	हाल 0:
-		ग_लिखो_reg(par, MIPI_DCS_SET_ADDRESS_MODE,
+static int set_var(struct fbtft_par *par)
+{
+	switch (par->info->var.rotate) {
+	case 0:
+		write_reg(par, MIPI_DCS_SET_ADDRESS_MODE,
 			  0x80 | (par->bgr << 3));
-		अवरोध;
-	हाल 90:
-		ग_लिखो_reg(par, MIPI_DCS_SET_ADDRESS_MODE,
+		break;
+	case 90:
+		write_reg(par, MIPI_DCS_SET_ADDRESS_MODE,
 			  0x20 | (par->bgr << 3));
-		अवरोध;
-	हाल 180:
-		ग_लिखो_reg(par, MIPI_DCS_SET_ADDRESS_MODE,
+		break;
+	case 180:
+		write_reg(par, MIPI_DCS_SET_ADDRESS_MODE,
 			  0x40 | (par->bgr << 3));
-		अवरोध;
-	हाल 270:
-		ग_लिखो_reg(par, MIPI_DCS_SET_ADDRESS_MODE,
+		break;
+	case 270:
+		write_reg(par, MIPI_DCS_SET_ADDRESS_MODE,
 			  0xE0 | (par->bgr << 3));
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा fbtft_display display = अणु
+static struct fbtft_display display = {
 	.regwidth = 8,
 	.width = WIDTH,
 	.height = HEIGHT,
-	.init_sequence = शेष_init_sequence,
-	.fbtftops = अणु
+	.init_sequence = default_init_sequence,
+	.fbtftops = {
 		.set_addr_win = set_addr_win,
 		.set_var = set_var,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 FBTFT_REGISTER_DRIVER(DRVNAME, "ilitek,ili9486", &display);
 

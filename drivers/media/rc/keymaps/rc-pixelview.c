@@ -1,79 +1,78 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
-// pixelview.h - Keytable क्रम pixelview Remote Controller
+// SPDX-License-Identifier: GPL-2.0+
+// pixelview.h - Keytable for pixelview Remote Controller
 //
 // keymap imported from ir-keymaps.c
 //
 // Copyright (c) 2010 by Mauro Carvalho Chehab
 
-#समावेश <media/rc-map.h>
-#समावेश <linux/module.h>
+#include <media/rc-map.h>
+#include <linux/module.h>
 
-अटल काष्ठा rc_map_table pixelview[] = अणु
+static struct rc_map_table pixelview[] = {
 
-	अणु 0x1e, KEY_POWER पूर्ण,	/* घातer */
-	अणु 0x07, KEY_VIDEO पूर्ण,	/* source */
-	अणु 0x1c, KEY_SEARCH पूर्ण,	/* scan */
+	{ 0x1e, KEY_POWER },	/* power */
+	{ 0x07, KEY_VIDEO },	/* source */
+	{ 0x1c, KEY_SEARCH },	/* scan */
 
 
-	अणु 0x03, KEY_TUNER पूर्ण,		/* TV/FM */
+	{ 0x03, KEY_TUNER },		/* TV/FM */
 
-	अणु 0x00, KEY_RECORD पूर्ण,
-	अणु 0x08, KEY_STOP पूर्ण,
-	अणु 0x11, KEY_PLAY पूर्ण,
+	{ 0x00, KEY_RECORD },
+	{ 0x08, KEY_STOP },
+	{ 0x11, KEY_PLAY },
 
-	अणु 0x1a, KEY_PLAYPAUSE पूर्ण,	/* मुक्तze */
-	अणु 0x19, KEY_ZOOM पूर्ण,		/* zoom */
-	अणु 0x0f, KEY_TEXT पूर्ण,		/* min */
+	{ 0x1a, KEY_PLAYPAUSE },	/* freeze */
+	{ 0x19, KEY_ZOOM },		/* zoom */
+	{ 0x0f, KEY_TEXT },		/* min */
 
-	अणु 0x01, KEY_NUMERIC_1 पूर्ण,
-	अणु 0x0b, KEY_NUMERIC_2 पूर्ण,
-	अणु 0x1b, KEY_NUMERIC_3 पूर्ण,
-	अणु 0x05, KEY_NUMERIC_4 पूर्ण,
-	अणु 0x09, KEY_NUMERIC_5 पूर्ण,
-	अणु 0x15, KEY_NUMERIC_6 पूर्ण,
-	अणु 0x06, KEY_NUMERIC_7 पूर्ण,
-	अणु 0x0a, KEY_NUMERIC_8 पूर्ण,
-	अणु 0x12, KEY_NUMERIC_9 पूर्ण,
-	अणु 0x02, KEY_NUMERIC_0 पूर्ण,
-	अणु 0x10, KEY_LAST पूर्ण,		/* +100 */
-	अणु 0x13, KEY_LIST पूर्ण,		/* recall */
+	{ 0x01, KEY_NUMERIC_1 },
+	{ 0x0b, KEY_NUMERIC_2 },
+	{ 0x1b, KEY_NUMERIC_3 },
+	{ 0x05, KEY_NUMERIC_4 },
+	{ 0x09, KEY_NUMERIC_5 },
+	{ 0x15, KEY_NUMERIC_6 },
+	{ 0x06, KEY_NUMERIC_7 },
+	{ 0x0a, KEY_NUMERIC_8 },
+	{ 0x12, KEY_NUMERIC_9 },
+	{ 0x02, KEY_NUMERIC_0 },
+	{ 0x10, KEY_LAST },		/* +100 */
+	{ 0x13, KEY_LIST },		/* recall */
 
-	अणु 0x1f, KEY_CHANNELUP पूर्ण,	/* chn करोwn */
-	अणु 0x17, KEY_CHANNELDOWN पूर्ण,	/* chn up */
-	अणु 0x16, KEY_VOLUMEUP पूर्ण,		/* vol करोwn */
-	अणु 0x14, KEY_VOLUMEDOWN पूर्ण,	/* vol up */
+	{ 0x1f, KEY_CHANNELUP },	/* chn down */
+	{ 0x17, KEY_CHANNELDOWN },	/* chn up */
+	{ 0x16, KEY_VOLUMEUP },		/* vol down */
+	{ 0x14, KEY_VOLUMEDOWN },	/* vol up */
 
-	अणु 0x04, KEY_KPMINUS पूर्ण,		/* <<< */
-	अणु 0x0e, KEY_SETUP पूर्ण,		/* function */
-	अणु 0x0c, KEY_KPPLUS पूर्ण,		/* >>> */
+	{ 0x04, KEY_KPMINUS },		/* <<< */
+	{ 0x0e, KEY_SETUP },		/* function */
+	{ 0x0c, KEY_KPPLUS },		/* >>> */
 
-	अणु 0x0d, KEY_GOTO पूर्ण,		/* mts */
-	अणु 0x1d, KEY_REFRESH पूर्ण,		/* reset */
-	अणु 0x18, KEY_MUTE पूर्ण,		/* mute/unmute */
-पूर्ण;
+	{ 0x0d, KEY_GOTO },		/* mts */
+	{ 0x1d, KEY_REFRESH },		/* reset */
+	{ 0x18, KEY_MUTE },		/* mute/unmute */
+};
 
-अटल काष्ठा rc_map_list pixelview_map = अणु
-	.map = अणु
+static struct rc_map_list pixelview_map = {
+	.map = {
 		.scan     = pixelview,
 		.size     = ARRAY_SIZE(pixelview),
 		.rc_proto = RC_PROTO_UNKNOWN,	/* Legacy IR type */
 		.name     = RC_MAP_PIXELVIEW,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल पूर्णांक __init init_rc_map_pixelview(व्योम)
-अणु
-	वापस rc_map_रेजिस्टर(&pixelview_map);
-पूर्ण
+static int __init init_rc_map_pixelview(void)
+{
+	return rc_map_register(&pixelview_map);
+}
 
-अटल व्योम __निकास निकास_rc_map_pixelview(व्योम)
-अणु
-	rc_map_unरेजिस्टर(&pixelview_map);
-पूर्ण
+static void __exit exit_rc_map_pixelview(void)
+{
+	rc_map_unregister(&pixelview_map);
+}
 
 module_init(init_rc_map_pixelview)
-module_निकास(निकास_rc_map_pixelview)
+module_exit(exit_rc_map_pixelview)
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Mauro Carvalho Chehab");

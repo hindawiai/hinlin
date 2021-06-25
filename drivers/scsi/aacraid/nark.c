@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *	Adaptec AAC series RAID controller driver
  *
  * based on the old aacraid driver that is..
- * Adaptec aacraid device driver क्रम Linux.
+ * Adaptec aacraid device driver for Linux.
  *
  * Copyright (c) 2000-2010 Adaptec, Inc.
  *               2010-2015 PMC-Sierra, Inc. (aacraid@pmc-sierra.com)
@@ -13,15 +12,15 @@
  * Module Name:
  *  nark.c
  *
- * Abstract: Hardware Device Interface क्रम NEMER/ARK
+ * Abstract: Hardware Device Interface for NEMER/ARK
  */
 
-#समावेश <linux/pci.h>
-#समावेश <linux/blkdev.h>
+#include <linux/pci.h>
+#include <linux/blkdev.h>
 
-#समावेश <scsi/scsi_host.h>
+#include <scsi/scsi_host.h>
 
-#समावेश "aacraid.h"
+#include "aacraid.h"
 
 /**
  *	aac_nark_ioremap
@@ -29,31 +28,31 @@
  *	@size: mapping resize request
  *
  */
-अटल पूर्णांक aac_nark_ioremap(काष्ठा aac_dev * dev, u32 size)
-अणु
-	अगर (!size) अणु
+static int aac_nark_ioremap(struct aac_dev * dev, u32 size)
+{
+	if (!size) {
 		iounmap(dev->regs.rx);
-		dev->regs.rx = शून्य;
+		dev->regs.rx = NULL;
 		iounmap(dev->base);
-		dev->base = शून्य;
-		वापस 0;
-	पूर्ण
+		dev->base = NULL;
+		return 0;
+	}
 	dev->base_start = pci_resource_start(dev->pdev, 2);
 	dev->regs.rx = ioremap((u64)pci_resource_start(dev->pdev, 0) |
 	  ((u64)pci_resource_start(dev->pdev, 1) << 32),
-	  माप(काष्ठा rx_रेजिस्टरs) - माप(काष्ठा rx_inbound));
-	dev->base = शून्य;
-	अगर (dev->regs.rx == शून्य)
-		वापस -1;
+	  sizeof(struct rx_registers) - sizeof(struct rx_inbound));
+	dev->base = NULL;
+	if (dev->regs.rx == NULL)
+		return -1;
 	dev->base = ioremap(dev->base_start, size);
-	अगर (dev->base == शून्य) अणु
+	if (dev->base == NULL) {
 		iounmap(dev->regs.rx);
-		dev->regs.rx = शून्य;
-		वापस -1;
-	पूर्ण
-	dev->IndexRegs = &((काष्ठा rx_रेजिस्टरs __iomem *)dev->base)->IndexRegs;
-	वापस 0;
-पूर्ण
+		dev->regs.rx = NULL;
+		return -1;
+	}
+	dev->IndexRegs = &((struct rx_registers __iomem *)dev->base)->IndexRegs;
+	return 0;
+}
 
 /**
  *	aac_nark_init	-	initialize an NEMER/ARK Split Bar card
@@ -61,13 +60,13 @@
  *
  */
 
-पूर्णांक aac_nark_init(काष्ठा aac_dev * dev)
-अणु
+int aac_nark_init(struct aac_dev * dev)
+{
 	/*
 	 *	Fill in the function dispatch table.
 	 */
 	dev->a_ops.adapter_ioremap = aac_nark_ioremap;
 	dev->a_ops.adapter_comm = aac_rx_select_comm;
 
-	वापस _aac_rx_init(dev);
-पूर्ण
+	return _aac_rx_init(dev);
+}

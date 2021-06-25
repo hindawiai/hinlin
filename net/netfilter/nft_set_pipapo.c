@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 
-/* PIPAPO: PIle PAcket POlicies: set क्रम arbitrary concatenations of ranges
+/* PIPAPO: PIle PAcket POlicies: set for arbitrary concatenations of ranges
  *
  * Copyright (c) 2019-2020 Red Hat GmbH
  *
@@ -16,7 +15,7 @@
  * -------
  *
  * Match packet bytes against entries composed of ranged or non-ranged packet
- * field specअगरiers, mapping them to arbitrary references. For example:
+ * field specifiers, mapping them to arbitrary references. For example:
  *
  * ::
  *
@@ -26,7 +25,7 @@
  *      |    [net],[port],[net]... => [reference]
  *      V    ...
  *
- * where [net] fields can be IP ranges or neपंचांगasks, and [port] fields are port
+ * where [net] fields can be IP ranges or netmasks, and [port] fields are port
  * ranges. Arbitrary packet fields can be matched.
  *
  *
@@ -35,29 +34,29 @@
  *
  * This algorithm is loosely inspired by [Ligatti 2010], and fundamentally
  * relies on the consideration that every contiguous range in a space of b bits
- * can be converted पूर्णांकo b * 2 neपंचांगasks, from Theorem 3 in [Rottenstreich 2010],
+ * can be converted into b * 2 netmasks, from Theorem 3 in [Rottenstreich 2010],
  * as also illustrated in Section 9 of [Kogan 2014].
  *
- * Classअगरication against a number of entries, that require matching given bits
- * of a packet field, is perक्रमmed by grouping those bits in sets of arbitrary
- * size, and classअगरying packet bits one group at a समय.
+ * Classification against a number of entries, that require matching given bits
+ * of a packet field, is performed by grouping those bits in sets of arbitrary
+ * size, and classifying packet bits one group at a time.
  *
  * Example:
- *   to match the source port (16 bits) of a packet, we can भागide those 16 bits
+ *   to match the source port (16 bits) of a packet, we can divide those 16 bits
  *   in 4 groups of 4 bits each. Given the entry:
  *      0000 0001 0101 1001
  *   and a packet with source port:
  *      0000 0001 1010 1001
- *   first and second groups match, but the third करोesn't. We conclude that the
- *   packet करोesn't match the given entry.
+ *   first and second groups match, but the third doesn't. We conclude that the
+ *   packet doesn't match the given entry.
  *
  * Translate the set to a sequence of lookup tables, one per field. Each table
- * has two dimensions: bit groups to be matched क्रम a single packet field, and
+ * has two dimensions: bit groups to be matched for a single packet field, and
  * all the possible values of said groups (buckets). Input entries are
  * represented as one or more rules, depending on the number of composing
- * neपंचांगasks क्रम the given field specअगरier, and a group match is indicated as a
+ * netmasks for the given field specifier, and a group match is indicated as a
  * set bit, with number corresponding to the rule index, in all the buckets
- * whose value matches the entry क्रम a given group.
+ * whose value matches the entry for a given group.
  *
  * Rules are mapped between fields through an array of x, n pairs, with each
  * item mapping a matched rule to one or more rules. The position of the pair in
@@ -65,9 +64,9 @@
  * indicates the first rule index in the next field, and n the amount of
  * next-field rules the current rule maps to.
  *
- * The mapping array क्रम the last field maps to the desired references.
+ * The mapping array for the last field maps to the desired references.
  *
- * To match, we perक्रमm table lookups using the values of grouped packet bits,
+ * To match, we perform table lookups using the values of grouped packet bits,
  * and use a sequence of bitwise operations to progressively evaluate rule
  * matching.
  *
@@ -80,14 +79,14 @@
  *
  * - For each packet field:
  *
- *   - भागide the b packet bits we want to classअगरy पूर्णांकo groups of size t,
- *     obtaining उच्चमान(b / t) groups
+ *   - divide the b packet bits we want to classify into groups of size t,
+ *     obtaining ceil(b / t) groups
  *
  *      Example: match on destination IP address, with t = 4: 32 bits, 8 groups
  *      of 4 bits each
  *
- *   - allocate a lookup table with one column ("bucket") क्रम each possible
- *     value of a group, and with one row क्रम each group
+ *   - allocate a lookup table with one column ("bucket") for each possible
+ *     value of a group, and with one row for each group
  *
  *      Example: 8 groups, 2^4 buckets:
  *
@@ -104,9 +103,9 @@
  *        6
  *        7
  *
- *   - map the bits we want to classअगरy क्रम the current field, क्रम a given
- *     entry, to a single rule क्रम non-ranged and neपंचांगask set items, and to one
- *     or multiple rules क्रम ranges. Ranges are expanded to composing neपंचांगasks
+ *   - map the bits we want to classify for the current field, for a given
+ *     entry, to a single rule for non-ranged and netmask set items, and to one
+ *     or multiple rules for ranges. Ranges are expanded to composing netmasks
  *     by pipapo_expand().
  *
  *      Example: 2 entries, 10.0.0.5:1024 and 192.168.1.0-192.168.2.1:2048
@@ -115,7 +114,7 @@
  *      - rule #2: 192.168.2.0/31
  *
  *   - insert references to the rules in the lookup table, selecting buckets
- *     according to bit values of a rule in the given group. This is करोne by
+ *     according to bit values of a rule in the given group. This is done by
  *     pipapo_insert().
  *
  *      Example: given:
@@ -141,16 +140,16 @@
  *        6  0,1,2 1   1   1   1   1   1   1   1   1   1   1   1   1   1   1
  *        7   1,2 1,2  1   1   1  0,1  1   1   1   1   1   1   1   1   1   1
  *
- *   - अगर this is not the last field in the set, fill a mapping array that maps
- *     rules from the lookup table to rules beदीर्घing to the same entry in
- *     the next lookup table, करोne by pipapo_map().
+ *   - if this is not the last field in the set, fill a mapping array that maps
+ *     rules from the lookup table to rules belonging to the same entry in
+ *     the next lookup table, done by pipapo_map().
  *
- *     Note that as rules map to contiguous ranges of rules, given how neपंचांगask
- *     expansion and insertion is perक्रमmed, &जोड़ nft_pipapo_map_bucket stores
- *     this inक्रमmation as pairs of first rule index, rule count.
+ *     Note that as rules map to contiguous ranges of rules, given how netmask
+ *     expansion and insertion is performed, &union nft_pipapo_map_bucket stores
+ *     this information as pairs of first rule index, rule count.
  *
  *      Example: 2 entries, 10.0.0.5:1024 and 192.168.1.0-192.168.2.1:2048,
- *      given lookup table #0 क्रम field 0 (see example above):
+ *      given lookup table #0 for field 0 (see example above):
  *
  * ::
  *
@@ -165,7 +164,7 @@
  *        6  0,1,2 1   1   1   1   1   1   1   1   1   1   1   1   1   1   1
  *        7   1,2 1,2  1   1   1  0,1  1   1   1   1   1   1   1   1   1   1
  *
- *      and lookup table #1 क्रम field 1 with:
+ *      and lookup table #1 for field 1 with:
  *      - rule #0: 1024 mapping to buckets
  *        < 0  0  4  0 >
  *      - rule #1: 2048 mapping to buckets
@@ -180,8 +179,8 @@
  *        2                    0   1
  *        3   0,1
  *
- *      we need to map rules क्रम 10.0.0.5 in lookup table #0 (rule #0) to 1024
- *      in lookup table #1 (rule #0) and rules क्रम 192.168.1.0-192.168.2.1
+ *      we need to map rules for 10.0.0.5 in lookup table #0 (rule #0) to 1024
+ *      in lookup table #1 (rule #0) and rules for 192.168.1.0-192.168.2.1
  *      (rules #1, #2) to 2048 in lookup table #2 (rule #1):
  *
  * ::
@@ -189,16 +188,16 @@
  *       rule indices in current field: 0    1    2
  *       map to rules in next field:    0    1    1
  *
- *   - अगर this is the last field in the set, fill a mapping array that maps
- *     rules from the last lookup table to element poपूर्णांकers, also करोne by
+ *   - if this is the last field in the set, fill a mapping array that maps
+ *     rules from the last lookup table to element pointers, also done by
  *     pipapo_map().
  *
- *     Note that, in this implementation, we have two elements (start, end) क्रम
- *     each entry. The poपूर्णांकer to the end element is stored in this array, and
- *     the poपूर्णांकer to the start element is linked from it.
+ *     Note that, in this implementation, we have two elements (start, end) for
+ *     each entry. The pointer to the end element is stored in this array, and
+ *     the pointer to the start element is linked from it.
  *
- *      Example: entry 10.0.0.5:1024 has a corresponding &काष्ठा nft_pipapo_elem
- *      poपूर्णांकer, 0x66, and element क्रम 192.168.1.0-192.168.2.1:2048 is at 0x42.
+ *      Example: entry 10.0.0.5:1024 has a corresponding &struct nft_pipapo_elem
+ *      pointer, 0x66, and element for 192.168.1.0-192.168.2.1:2048 is at 0x42.
  *      From the rules of lookup table #1 as mapped above:
  *
  * ::
@@ -210,73 +209,73 @@
  * Matching
  * --------
  *
- * We use a result biपंचांगap, with the size of a single lookup table bucket, to
+ * We use a result bitmap, with the size of a single lookup table bucket, to
  * represent the matching state that applies at every algorithm step. This is
- * करोne by pipapo_lookup().
+ * done by pipapo_lookup().
  *
  * - For each packet field:
  *
- *   - start with an all-ones result biपंचांगap (res_map in pipapo_lookup())
+ *   - start with an all-ones result bitmap (res_map in pipapo_lookup())
  *
- *   - perक्रमm a lookup पूर्णांकo the table corresponding to the current field,
- *     क्रम each group, and at every group, AND the current result biपंचांगap with
+ *   - perform a lookup into the table corresponding to the current field,
+ *     for each group, and at every group, AND the current result bitmap with
  *     the value from the lookup table bucket
  *
  * ::
  *
  *      Example: 192.168.1.5 < 12 0  10 8  0 1  0 5 >, with lookup table from
  *      insertion examples.
- *      Lookup table buckets are at least 3 bits wide, we'll assume 8 bits क्रम
- *      convenience in this example. Initial result biपंचांगap is 0xff, the steps
- *      below show the value of the result biपंचांगap after each group is processed:
+ *      Lookup table buckets are at least 3 bits wide, we'll assume 8 bits for
+ *      convenience in this example. Initial result bitmap is 0xff, the steps
+ *      below show the value of the result bitmap after each group is processed:
  *
  *                     bucket
  *      group  0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
  *        0    0                                              1,2
- *        result biपंचांगap is now: 0xff & 0x6 [bucket 12] = 0x6
+ *        result bitmap is now: 0xff & 0x6 [bucket 12] = 0x6
  *
  *        1   1,2                                      0
- *        result biपंचांगap is now: 0x6 & 0x6 [bucket 0] = 0x6
+ *        result bitmap is now: 0x6 & 0x6 [bucket 0] = 0x6
  *
  *        2    0                                      1,2
- *        result biपंचांगap is now: 0x6 & 0x6 [bucket 10] = 0x6
+ *        result bitmap is now: 0x6 & 0x6 [bucket 10] = 0x6
  *
  *        3    0                              1,2
- *        result biपंचांगap is now: 0x6 & 0x6 [bucket 8] = 0x6
+ *        result bitmap is now: 0x6 & 0x6 [bucket 8] = 0x6
  *
  *        4  0,1,2
- *        result biपंचांगap is now: 0x6 & 0x7 [bucket 0] = 0x6
+ *        result bitmap is now: 0x6 & 0x7 [bucket 0] = 0x6
  *
  *        5    0   1   2
- *        result biपंचांगap is now: 0x6 & 0x2 [bucket 1] = 0x2
+ *        result bitmap is now: 0x6 & 0x2 [bucket 1] = 0x2
  *
  *        6  0,1,2 1   1   1   1   1   1   1   1   1   1   1   1   1   1   1
- *        result biपंचांगap is now: 0x2 & 0x7 [bucket 0] = 0x2
+ *        result bitmap is now: 0x2 & 0x7 [bucket 0] = 0x2
  *
  *        7   1,2 1,2  1   1   1  0,1  1   1   1   1   1   1   1   1   1   1
- *        final result biपंचांगap क्रम this field is: 0x2 & 0x3 [bucket 5] = 0x2
+ *        final result bitmap for this field is: 0x2 & 0x3 [bucket 5] = 0x2
  *
- *   - at the next field, start with a new, all-zeroes result biपंचांगap. For each
- *     bit set in the previous result biपंचांगap, fill the new result biपंचांगap
+ *   - at the next field, start with a new, all-zeroes result bitmap. For each
+ *     bit set in the previous result bitmap, fill the new result bitmap
  *     (fill_map in pipapo_lookup()) with the rule indices from the
- *     corresponding buckets of the mapping field क्रम this field, करोne by
+ *     corresponding buckets of the mapping field for this field, done by
  *     pipapo_refill()
  *
  *      Example: with mapping table from insertion examples, with the current
- *      result biपंचांगap from the previous example, 0x02:
+ *      result bitmap from the previous example, 0x02:
  *
  * ::
  *
  *       rule indices in current field: 0    1    2
  *       map to rules in next field:    0    1    1
  *
- *      the new result biपंचांगap will be 0x02: rule 1 was set, and rule 1 will be
+ *      the new result bitmap will be 0x02: rule 1 was set, and rule 1 will be
  *      set.
  *
  *      We can now extend this example to cover the second iteration of the step
- *      above (lookup and AND biपंचांगap): assuming the port field is
- *      2048 < 0  0  5  0 >, with starting result biपंचांगap 0x2, and lookup table
- *      क्रम "port" field from pre-computation example:
+ *      above (lookup and AND bitmap): assuming the port field is
+ *      2048 < 0  0  5  0 >, with starting result bitmap 0x2, and lookup table
+ *      for "port" field from pre-computation example:
  *
  * ::
  *
@@ -288,12 +287,12 @@
  *        3   0,1
  *
  *       operations are: 0x2 & 0x3 [bucket 0] & 0x3 [bucket 0] & 0x2 [bucket 5]
- *       & 0x3 [bucket 0], resulting biपंचांगap is 0x2.
+ *       & 0x3 [bucket 0], resulting bitmap is 0x2.
  *
- *   - अगर this is the last field in the set, look up the value from the mapping
- *     array corresponding to the final result biपंचांगap
+ *   - if this is the last field in the set, look up the value from the mapping
+ *     array corresponding to the final result bitmap
  *
- *      Example: 0x2 resulting biपंचांगap from 192.168.1.5:2048, mapping array क्रम
+ *      Example: 0x2 resulting bitmap from 192.168.1.5:2048, mapping array for
  *      last field from insertion example:
  *
  * ::
@@ -308,7 +307,7 @@
  * ----------
  *
  * [Ligatti 2010]
- *      A Packet-classअगरication Algorithm क्रम Arbitrary Biपंचांगask Rules, with
+ *      A Packet-classification Algorithm for Arbitrary Bitmask Rules, with
  *      Automatic Time-space Tradeoffs
  *      Jay Ligatti, Josh Kuhn, and Chris Gage.
  *      Proceedings of the IEEE International Conference on Computer
@@ -319,185 +318,185 @@
  *      Worst-Case TCAM Rule Expansion
  *      Ori Rottenstreich and Isaac Keslassy.
  *      2010 Proceedings IEEE INFOCOM, San Diego, CA, 2010.
- *      http://citeseerx.ist.psu.edu/viewकरोc/करोwnload?करोi=10.1.1.212.4592&rep=rep1&type=pdf
+ *      http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.212.4592&rep=rep1&type=pdf
  *
  * [Kogan 2014]
- *      SAX-PAC (Scalable And eXpressive PAcket Classअगरication)
+ *      SAX-PAC (Scalable And eXpressive PAcket Classification)
  *      Kirill Kogan, Sergey Nikolenko, Ori Rottenstreich, William Culhane,
  *      and Patrick Eugster.
  *      Proceedings of the 2014 ACM conference on SIGCOMM, August 2014.
- *      https://www.sigcomm.org/sites/शेष/files/ccr/papers/2014/August/2619239-2626294.pdf
+ *      https://www.sigcomm.org/sites/default/files/ccr/papers/2014/August/2619239-2626294.pdf
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/netlink.h>
-#समावेश <linux/netfilter.h>
-#समावेश <linux/netfilter/nf_tables.h>
-#समावेश <net/netfilter/nf_tables_core.h>
-#समावेश <uapi/linux/netfilter/nf_tables.h>
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/bitops.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/netlink.h>
+#include <linux/netfilter.h>
+#include <linux/netfilter/nf_tables.h>
+#include <net/netfilter/nf_tables_core.h>
+#include <uapi/linux/netfilter/nf_tables.h>
+#include <linux/bitmap.h>
+#include <linux/bitops.h>
 
-#समावेश "nft_set_pipapo_avx2.h"
-#समावेश "nft_set_pipapo.h"
+#include "nft_set_pipapo_avx2.h"
+#include "nft_set_pipapo.h"
 
-/* Current working biपंचांगap index, toggled between field matches */
-अटल DEFINE_PER_CPU(bool, nft_pipapo_scratch_index);
+/* Current working bitmap index, toggled between field matches */
+static DEFINE_PER_CPU(bool, nft_pipapo_scratch_index);
 
 /**
  * pipapo_refill() - For each set bit, set bits from selected mapping table item
- * @map:	Biपंचांगap to be scanned क्रम set bits
- * @len:	Length of biपंचांगap in दीर्घs
+ * @map:	Bitmap to be scanned for set bits
+ * @len:	Length of bitmap in longs
  * @rules:	Number of rules in field
- * @dst:	Destination biपंचांगap
- * @mt:		Mapping table containing bit set specअगरiers
- * @match_only:	Find a single bit and वापस, करोn't fill
+ * @dst:	Destination bitmap
+ * @mt:		Mapping table containing bit set specifiers
+ * @match_only:	Find a single bit and return, don't fill
  *
- * Iteration over set bits with __builtin_ctzl(): Daniel Lemire, खुला करोमुख्य.
+ * Iteration over set bits with __builtin_ctzl(): Daniel Lemire, public domain.
  *
  * For each bit set in map, select the bucket from mapping table with index
  * corresponding to the position of the bit set. Use start bit and amount of
- * bits specअगरied in bucket to fill region in dst.
+ * bits specified in bucket to fill region in dst.
  *
  * Return: -1 on no match, bit position on 'match_only', 0 otherwise.
  */
-पूर्णांक pipapo_refill(अचिन्हित दीर्घ *map, पूर्णांक len, पूर्णांक rules, अचिन्हित दीर्घ *dst,
-		  जोड़ nft_pipapo_map_bucket *mt, bool match_only)
-अणु
-	अचिन्हित दीर्घ bitset;
-	पूर्णांक k, ret = -1;
+int pipapo_refill(unsigned long *map, int len, int rules, unsigned long *dst,
+		  union nft_pipapo_map_bucket *mt, bool match_only)
+{
+	unsigned long bitset;
+	int k, ret = -1;
 
-	क्रम (k = 0; k < len; k++) अणु
+	for (k = 0; k < len; k++) {
 		bitset = map[k];
-		जबतक (bitset) अणु
-			अचिन्हित दीर्घ t = bitset & -bitset;
-			पूर्णांक r = __builtin_ctzl(bitset);
-			पूर्णांक i = k * BITS_PER_LONG + r;
+		while (bitset) {
+			unsigned long t = bitset & -bitset;
+			int r = __builtin_ctzl(bitset);
+			int i = k * BITS_PER_LONG + r;
 
-			अगर (unlikely(i >= rules)) अणु
+			if (unlikely(i >= rules)) {
 				map[k] = 0;
-				वापस -1;
-			पूर्ण
+				return -1;
+			}
 
-			अगर (match_only) अणु
-				biपंचांगap_clear(map, i, 1);
-				वापस i;
-			पूर्ण
+			if (match_only) {
+				bitmap_clear(map, i, 1);
+				return i;
+			}
 
 			ret = 0;
 
-			biपंचांगap_set(dst, mt[i].to, mt[i].n);
+			bitmap_set(dst, mt[i].to, mt[i].n);
 
 			bitset ^= t;
-		पूर्ण
+		}
 		map[k] = 0;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * nft_pipapo_lookup() - Lookup function
  * @net:	Network namespace
  * @set:	nftables API set representation
  * @key:	nftables API element representation containing key data
- * @ext:	nftables API extension poपूर्णांकer, filled with matching reference
+ * @ext:	nftables API extension pointer, filled with matching reference
  *
  * For more details, see DOC: Theory of Operation.
  *
  * Return: true on match, false otherwise.
  */
-bool nft_pipapo_lookup(स्थिर काष्ठा net *net, स्थिर काष्ठा nft_set *set,
-		       स्थिर u32 *key, स्थिर काष्ठा nft_set_ext **ext)
-अणु
-	काष्ठा nft_pipapo *priv = nft_set_priv(set);
-	अचिन्हित दीर्घ *res_map, *fill_map;
+bool nft_pipapo_lookup(const struct net *net, const struct nft_set *set,
+		       const u32 *key, const struct nft_set_ext **ext)
+{
+	struct nft_pipapo *priv = nft_set_priv(set);
+	unsigned long *res_map, *fill_map;
 	u8 genmask = nft_genmask_cur(net);
-	स्थिर u8 *rp = (स्थिर u8 *)key;
-	काष्ठा nft_pipapo_match *m;
-	काष्ठा nft_pipapo_field *f;
+	const u8 *rp = (const u8 *)key;
+	struct nft_pipapo_match *m;
+	struct nft_pipapo_field *f;
 	bool map_index;
-	पूर्णांक i;
+	int i;
 
 	local_bh_disable();
 
-	map_index = raw_cpu_पढ़ो(nft_pipapo_scratch_index);
+	map_index = raw_cpu_read(nft_pipapo_scratch_index);
 
 	m = rcu_dereference(priv->match);
 
-	अगर (unlikely(!m || !*raw_cpu_ptr(m->scratch)))
-		जाओ out;
+	if (unlikely(!m || !*raw_cpu_ptr(m->scratch)))
+		goto out;
 
 	res_map  = *raw_cpu_ptr(m->scratch) + (map_index ? m->bsize_max : 0);
 	fill_map = *raw_cpu_ptr(m->scratch) + (map_index ? 0 : m->bsize_max);
 
-	स_रखो(res_map, 0xff, m->bsize_max * माप(*res_map));
+	memset(res_map, 0xff, m->bsize_max * sizeof(*res_map));
 
-	nft_pipapo_क्रम_each_field(f, i, m) अणु
+	nft_pipapo_for_each_field(f, i, m) {
 		bool last = i == m->field_count - 1;
-		पूर्णांक b;
+		int b;
 
 		/* For each bit group: select lookup table bucket depending on
 		 * packet bytes value, then AND bucket value
 		 */
-		अगर (likely(f->bb == 8))
+		if (likely(f->bb == 8))
 			pipapo_and_field_buckets_8bit(f, res_map, rp);
-		अन्यथा
+		else
 			pipapo_and_field_buckets_4bit(f, res_map, rp);
 		NFT_PIPAPO_GROUP_BITS_ARE_8_OR_4;
 
 		rp += f->groups / NFT_PIPAPO_GROUPS_PER_BYTE(f);
 
-		/* Now populate the biपंचांगap क्रम the next field, unless this is
-		 * the last field, in which हाल वापस the matched 'ext'
-		 * poपूर्णांकer अगर any.
+		/* Now populate the bitmap for the next field, unless this is
+		 * the last field, in which case return the matched 'ext'
+		 * pointer if any.
 		 *
-		 * Now res_map contains the matching biपंचांगap, and fill_map is the
-		 * biपंचांगap क्रम the next field.
+		 * Now res_map contains the matching bitmap, and fill_map is the
+		 * bitmap for the next field.
 		 */
 next_match:
 		b = pipapo_refill(res_map, f->bsize, f->rules, fill_map, f->mt,
 				  last);
-		अगर (b < 0) अणु
-			raw_cpu_ग_लिखो(nft_pipapo_scratch_index, map_index);
+		if (b < 0) {
+			raw_cpu_write(nft_pipapo_scratch_index, map_index);
 			local_bh_enable();
 
-			वापस false;
-		पूर्ण
+			return false;
+		}
 
-		अगर (last) अणु
+		if (last) {
 			*ext = &f->mt[b].e->ext;
-			अगर (unlikely(nft_set_elem_expired(*ext) ||
+			if (unlikely(nft_set_elem_expired(*ext) ||
 				     !nft_set_elem_active(*ext, genmask)))
-				जाओ next_match;
+				goto next_match;
 
-			/* Last field: we're just वापसing the key without
-			 * filling the initial biपंचांगap क्रम the next field, so the
-			 * current inactive biपंचांगap is clean and can be reused as
-			 * *next* biपंचांगap (not initial) क्रम the next packet.
+			/* Last field: we're just returning the key without
+			 * filling the initial bitmap for the next field, so the
+			 * current inactive bitmap is clean and can be reused as
+			 * *next* bitmap (not initial) for the next packet.
 			 */
-			raw_cpu_ग_लिखो(nft_pipapo_scratch_index, map_index);
+			raw_cpu_write(nft_pipapo_scratch_index, map_index);
 			local_bh_enable();
 
-			वापस true;
-		पूर्ण
+			return true;
+		}
 
-		/* Swap biपंचांगap indices: res_map is the initial biपंचांगap क्रम the
+		/* Swap bitmap indices: res_map is the initial bitmap for the
 		 * next field, and fill_map is guaranteed to be all-zeroes at
-		 * this poपूर्णांक.
+		 * this point.
 		 */
 		map_index = !map_index;
 		swap(res_map, fill_map);
 
 		rp += NFT_PIPAPO_GROUPS_PADDING(f);
-	पूर्ण
+	}
 
 out:
 	local_bh_enable();
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /**
  * pipapo_get() - Get matching element reference given key data
@@ -507,90 +506,90 @@ out:
  * @genmask:	If set, check that element is active in given genmask
  *
  * This is essentially the same as the lookup function, except that it matches
- * key data against the uncommitted copy and करोesn't use pपुनः_स्मृतिated maps क्रम
- * biपंचांगap results.
+ * key data against the uncommitted copy and doesn't use preallocated maps for
+ * bitmap results.
  *
- * Return: poपूर्णांकer to &काष्ठा nft_pipapo_elem on match, error poपूर्णांकer otherwise.
+ * Return: pointer to &struct nft_pipapo_elem on match, error pointer otherwise.
  */
-अटल काष्ठा nft_pipapo_elem *pipapo_get(स्थिर काष्ठा net *net,
-					  स्थिर काष्ठा nft_set *set,
-					  स्थिर u8 *data, u8 genmask)
-अणु
-	काष्ठा nft_pipapo_elem *ret = ERR_PTR(-ENOENT);
-	काष्ठा nft_pipapo *priv = nft_set_priv(set);
-	काष्ठा nft_pipapo_match *m = priv->clone;
-	अचिन्हित दीर्घ *res_map, *fill_map = शून्य;
-	काष्ठा nft_pipapo_field *f;
-	पूर्णांक i;
+static struct nft_pipapo_elem *pipapo_get(const struct net *net,
+					  const struct nft_set *set,
+					  const u8 *data, u8 genmask)
+{
+	struct nft_pipapo_elem *ret = ERR_PTR(-ENOENT);
+	struct nft_pipapo *priv = nft_set_priv(set);
+	struct nft_pipapo_match *m = priv->clone;
+	unsigned long *res_map, *fill_map = NULL;
+	struct nft_pipapo_field *f;
+	int i;
 
-	res_map = kदो_स्मृति_array(m->bsize_max, माप(*res_map), GFP_ATOMIC);
-	अगर (!res_map) अणु
+	res_map = kmalloc_array(m->bsize_max, sizeof(*res_map), GFP_ATOMIC);
+	if (!res_map) {
 		ret = ERR_PTR(-ENOMEM);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	fill_map = kसुस्मृति(m->bsize_max, माप(*res_map), GFP_ATOMIC);
-	अगर (!fill_map) अणु
+	fill_map = kcalloc(m->bsize_max, sizeof(*res_map), GFP_ATOMIC);
+	if (!fill_map) {
 		ret = ERR_PTR(-ENOMEM);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	स_रखो(res_map, 0xff, m->bsize_max * माप(*res_map));
+	memset(res_map, 0xff, m->bsize_max * sizeof(*res_map));
 
-	nft_pipapo_क्रम_each_field(f, i, m) अणु
+	nft_pipapo_for_each_field(f, i, m) {
 		bool last = i == m->field_count - 1;
-		पूर्णांक b;
+		int b;
 
 		/* For each bit group: select lookup table bucket depending on
 		 * packet bytes value, then AND bucket value
 		 */
-		अगर (f->bb == 8)
+		if (f->bb == 8)
 			pipapo_and_field_buckets_8bit(f, res_map, data);
-		अन्यथा अगर (f->bb == 4)
+		else if (f->bb == 4)
 			pipapo_and_field_buckets_4bit(f, res_map, data);
-		अन्यथा
+		else
 			BUG();
 
 		data += f->groups / NFT_PIPAPO_GROUPS_PER_BYTE(f);
 
-		/* Now populate the biपंचांगap क्रम the next field, unless this is
-		 * the last field, in which हाल वापस the matched 'ext'
-		 * poपूर्णांकer अगर any.
+		/* Now populate the bitmap for the next field, unless this is
+		 * the last field, in which case return the matched 'ext'
+		 * pointer if any.
 		 *
-		 * Now res_map contains the matching biपंचांगap, and fill_map is the
-		 * biपंचांगap क्रम the next field.
+		 * Now res_map contains the matching bitmap, and fill_map is the
+		 * bitmap for the next field.
 		 */
 next_match:
 		b = pipapo_refill(res_map, f->bsize, f->rules, fill_map, f->mt,
 				  last);
-		अगर (b < 0)
-			जाओ out;
+		if (b < 0)
+			goto out;
 
-		अगर (last) अणु
-			अगर (nft_set_elem_expired(&f->mt[b].e->ext) ||
+		if (last) {
+			if (nft_set_elem_expired(&f->mt[b].e->ext) ||
 			    (genmask &&
 			     !nft_set_elem_active(&f->mt[b].e->ext, genmask)))
-				जाओ next_match;
+				goto next_match;
 
 			ret = f->mt[b].e;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		data += NFT_PIPAPO_GROUPS_PADDING(f);
 
-		/* Swap biपंचांगap indices: fill_map will be the initial biपंचांगap क्रम
+		/* Swap bitmap indices: fill_map will be the initial bitmap for
 		 * the next field (i.e. the new res_map), and res_map is
-		 * guaranteed to be all-zeroes at this poपूर्णांक, पढ़ोy to be filled
+		 * guaranteed to be all-zeroes at this point, ready to be filled
 		 * according to the next mapping table.
 		 */
 		swap(res_map, fill_map);
-	पूर्ण
+	}
 
 out:
-	kमुक्त(fill_map);
-	kमुक्त(res_map);
-	वापस ret;
-पूर्ण
+	kfree(fill_map);
+	kfree(res_map);
+	return ret;
+}
 
 /**
  * nft_pipapo_get() - Get matching element reference given key data
@@ -599,12 +598,12 @@ out:
  * @elem:	nftables API element representation containing key data
  * @flags:	Unused
  */
-अटल व्योम *nft_pipapo_get(स्थिर काष्ठा net *net, स्थिर काष्ठा nft_set *set,
-			    स्थिर काष्ठा nft_set_elem *elem, अचिन्हित पूर्णांक flags)
-अणु
-	वापस pipapo_get(net, set, (स्थिर u8 *)elem->key.val.data,
+static void *nft_pipapo_get(const struct net *net, const struct nft_set *set,
+			    const struct nft_set_elem *elem, unsigned int flags)
+{
+	return pipapo_get(net, set, (const u8 *)elem->key.val.data,
 			  nft_genmask_cur(net));
-पूर्ण
+}
 
 /**
  * pipapo_resize() - Resize lookup or mapping table, or both
@@ -612,80 +611,80 @@ out:
  * @old_rules:	Previous amount of rules in field
  * @rules:	New amount of rules
  *
- * Increase, decrease or मुख्यtain tables size depending on new amount of rules,
- * and copy data over. In हाल the new size is smaller, throw away data क्रम
+ * Increase, decrease or maintain tables size depending on new amount of rules,
+ * and copy data over. In case the new size is smaller, throw away data for
  * highest-numbered rules.
  *
  * Return: 0 on success, -ENOMEM on allocation failure.
  */
-अटल पूर्णांक pipapo_resize(काष्ठा nft_pipapo_field *f, पूर्णांक old_rules, पूर्णांक rules)
-अणु
-	दीर्घ *new_lt = शून्य, *new_p, *old_lt = f->lt, *old_p;
-	जोड़ nft_pipapo_map_bucket *new_mt, *old_mt = f->mt;
-	माप_प्रकार new_bucket_size, copy;
-	पूर्णांक group, bucket;
+static int pipapo_resize(struct nft_pipapo_field *f, int old_rules, int rules)
+{
+	long *new_lt = NULL, *new_p, *old_lt = f->lt, *old_p;
+	union nft_pipapo_map_bucket *new_mt, *old_mt = f->mt;
+	size_t new_bucket_size, copy;
+	int group, bucket;
 
 	new_bucket_size = DIV_ROUND_UP(rules, BITS_PER_LONG);
-#अगर_घोषित NFT_PIPAPO_ALIGN
+#ifdef NFT_PIPAPO_ALIGN
 	new_bucket_size = roundup(new_bucket_size,
-				  NFT_PIPAPO_ALIGN / माप(*new_lt));
-#पूर्ण_अगर
+				  NFT_PIPAPO_ALIGN / sizeof(*new_lt));
+#endif
 
-	अगर (new_bucket_size == f->bsize)
-		जाओ mt;
+	if (new_bucket_size == f->bsize)
+		goto mt;
 
-	अगर (new_bucket_size > f->bsize)
+	if (new_bucket_size > f->bsize)
 		copy = f->bsize;
-	अन्यथा
+	else
 		copy = new_bucket_size;
 
 	new_lt = kvzalloc(f->groups * NFT_PIPAPO_BUCKETS(f->bb) *
-			  new_bucket_size * माप(*new_lt) +
+			  new_bucket_size * sizeof(*new_lt) +
 			  NFT_PIPAPO_ALIGN_HEADROOM,
 			  GFP_KERNEL);
-	अगर (!new_lt)
-		वापस -ENOMEM;
+	if (!new_lt)
+		return -ENOMEM;
 
 	new_p = NFT_PIPAPO_LT_ALIGN(new_lt);
 	old_p = NFT_PIPAPO_LT_ALIGN(old_lt);
 
-	क्रम (group = 0; group < f->groups; group++) अणु
-		क्रम (bucket = 0; bucket < NFT_PIPAPO_BUCKETS(f->bb); bucket++) अणु
-			स_नकल(new_p, old_p, copy * माप(*new_p));
+	for (group = 0; group < f->groups; group++) {
+		for (bucket = 0; bucket < NFT_PIPAPO_BUCKETS(f->bb); bucket++) {
+			memcpy(new_p, old_p, copy * sizeof(*new_p));
 			new_p += copy;
 			old_p += copy;
 
-			अगर (new_bucket_size > f->bsize)
+			if (new_bucket_size > f->bsize)
 				new_p += new_bucket_size - f->bsize;
-			अन्यथा
+			else
 				old_p += f->bsize - new_bucket_size;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 mt:
-	new_mt = kvदो_स्मृति(rules * माप(*new_mt), GFP_KERNEL);
-	अगर (!new_mt) अणु
-		kvमुक्त(new_lt);
-		वापस -ENOMEM;
-	पूर्ण
+	new_mt = kvmalloc(rules * sizeof(*new_mt), GFP_KERNEL);
+	if (!new_mt) {
+		kvfree(new_lt);
+		return -ENOMEM;
+	}
 
-	स_नकल(new_mt, f->mt, min(old_rules, rules) * माप(*new_mt));
-	अगर (rules > old_rules) अणु
-		स_रखो(new_mt + old_rules, 0,
-		       (rules - old_rules) * माप(*new_mt));
-	पूर्ण
+	memcpy(new_mt, f->mt, min(old_rules, rules) * sizeof(*new_mt));
+	if (rules > old_rules) {
+		memset(new_mt + old_rules, 0,
+		       (rules - old_rules) * sizeof(*new_mt));
+	}
 
-	अगर (new_lt) अणु
+	if (new_lt) {
 		f->bsize = new_bucket_size;
 		NFT_PIPAPO_LT_ASSIGN(f, new_lt);
-		kvमुक्त(old_lt);
-	पूर्ण
+		kvfree(old_lt);
+	}
 
 	f->mt = new_mt;
-	kvमुक्त(old_mt);
+	kvfree(old_mt);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * pipapo_bucket_set() - Set rule bit in bucket given group and group value
@@ -694,27 +693,27 @@ mt:
  * @group:	Group index
  * @v:		Value of bit group
  */
-अटल व्योम pipapo_bucket_set(काष्ठा nft_pipapo_field *f, पूर्णांक rule, पूर्णांक group,
-			      पूर्णांक v)
-अणु
-	अचिन्हित दीर्घ *pos;
+static void pipapo_bucket_set(struct nft_pipapo_field *f, int rule, int group,
+			      int v)
+{
+	unsigned long *pos;
 
 	pos = NFT_PIPAPO_LT_ALIGN(f->lt);
 	pos += f->bsize * NFT_PIPAPO_BUCKETS(f->bb) * group;
 	pos += f->bsize * v;
 
 	__set_bit(rule, pos);
-पूर्ण
+}
 
 /**
  * pipapo_lt_4b_to_8b() - Switch lookup table group width from 4 bits to 8 bits
  * @old_groups:	Number of current groups
- * @bsize:	Size of one bucket, in दीर्घs
- * @old_lt:	Poपूर्णांकer to the current lookup table
- * @new_lt:	Poपूर्णांकer to the new, pre-allocated lookup table
+ * @bsize:	Size of one bucket, in longs
+ * @old_lt:	Pointer to the current lookup table
+ * @new_lt:	Pointer to the new, pre-allocated lookup table
  *
- * Each bucket with index b in the new lookup table, beदीर्घing to group g, is
- * filled with the bit पूर्णांकersection between:
+ * Each bucket with index b in the new lookup table, belonging to group g, is
+ * filled with the bit intersection between:
  * - bucket with index given by the upper 4 bits of b, from group g, and
  * - bucket with index given by the lower 4 bits of b, from group g + 1
  *
@@ -741,38 +740,38 @@ mt:
  *        3                                                          '-
  *       ...
  */
-अटल व्योम pipapo_lt_4b_to_8b(पूर्णांक old_groups, पूर्णांक bsize,
-			       अचिन्हित दीर्घ *old_lt, अचिन्हित दीर्घ *new_lt)
-अणु
-	पूर्णांक g, b, i;
+static void pipapo_lt_4b_to_8b(int old_groups, int bsize,
+			       unsigned long *old_lt, unsigned long *new_lt)
+{
+	int g, b, i;
 
-	क्रम (g = 0; g < old_groups / 2; g++) अणु
-		पूर्णांक src_g0 = g * 2, src_g1 = g * 2 + 1;
+	for (g = 0; g < old_groups / 2; g++) {
+		int src_g0 = g * 2, src_g1 = g * 2 + 1;
 
-		क्रम (b = 0; b < NFT_PIPAPO_BUCKETS(8); b++) अणु
-			पूर्णांक src_b0 = b / NFT_PIPAPO_BUCKETS(4);
-			पूर्णांक src_b1 = b % NFT_PIPAPO_BUCKETS(4);
-			पूर्णांक src_i0 = src_g0 * NFT_PIPAPO_BUCKETS(4) + src_b0;
-			पूर्णांक src_i1 = src_g1 * NFT_PIPAPO_BUCKETS(4) + src_b1;
+		for (b = 0; b < NFT_PIPAPO_BUCKETS(8); b++) {
+			int src_b0 = b / NFT_PIPAPO_BUCKETS(4);
+			int src_b1 = b % NFT_PIPAPO_BUCKETS(4);
+			int src_i0 = src_g0 * NFT_PIPAPO_BUCKETS(4) + src_b0;
+			int src_i1 = src_g1 * NFT_PIPAPO_BUCKETS(4) + src_b1;
 
-			क्रम (i = 0; i < bsize; i++) अणु
+			for (i = 0; i < bsize; i++) {
 				*new_lt = old_lt[src_i0 * bsize + i] &
 					  old_lt[src_i1 * bsize + i];
 				new_lt++;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
 /**
  * pipapo_lt_8b_to_4b() - Switch lookup table group width from 8 bits to 4 bits
  * @old_groups:	Number of current groups
- * @bsize:	Size of one bucket, in दीर्घs
- * @old_lt:	Poपूर्णांकer to the current lookup table
- * @new_lt:	Poपूर्णांकer to the new, pre-allocated lookup table
+ * @bsize:	Size of one bucket, in longs
+ * @old_lt:	Pointer to the current lookup table
+ * @new_lt:	Pointer to the new, pre-allocated lookup table
  *
- * Each bucket with index b in the new lookup table, beदीर्घing to group g, is
- * filled with the bit जोड़ of:
+ * Each bucket with index b in the new lookup table, belonging to group g, is
+ * filled with the bit union of:
  * - all the buckets with index such that the upper four bits of the lower byte
  *   equal b, from group g, with g odd
  * - all the buckets with index such that the lower four bits equal b, from
@@ -781,135 +780,135 @@ mt:
  * That is, given buckets from the new lookup table N(x, y) and the old lookup
  * table O(x, y), with x bucket index, and y group index:
  *
- *	- with g odd:  N(b, g) := U(O(x, g) क्रम each x : x = (b & 0xf0) >> 4)
- *	- with g even: N(b, g) := U(O(x, g) क्रम each x : x = b & 0x0f)
+ *	- with g odd:  N(b, g) := U(O(x, g) for each x : x = (b & 0xf0) >> 4)
+ *	- with g even: N(b, g) := U(O(x, g) for each x : x = b & 0x0f)
  *
- * where U() denotes the arbitrary जोड़ operation (binary OR of n terms). This
+ * where U() denotes the arbitrary union operation (binary OR of n terms). This
  * ensures equivalence of the matching results on lookup.
  */
-अटल व्योम pipapo_lt_8b_to_4b(पूर्णांक old_groups, पूर्णांक bsize,
-			       अचिन्हित दीर्घ *old_lt, अचिन्हित दीर्घ *new_lt)
-अणु
-	पूर्णांक g, b, bsrc, i;
+static void pipapo_lt_8b_to_4b(int old_groups, int bsize,
+			       unsigned long *old_lt, unsigned long *new_lt)
+{
+	int g, b, bsrc, i;
 
-	स_रखो(new_lt, 0, old_groups * 2 * NFT_PIPAPO_BUCKETS(4) * bsize *
-			  माप(अचिन्हित दीर्घ));
+	memset(new_lt, 0, old_groups * 2 * NFT_PIPAPO_BUCKETS(4) * bsize *
+			  sizeof(unsigned long));
 
-	क्रम (g = 0; g < old_groups * 2; g += 2) अणु
-		पूर्णांक src_g = g / 2;
+	for (g = 0; g < old_groups * 2; g += 2) {
+		int src_g = g / 2;
 
-		क्रम (b = 0; b < NFT_PIPAPO_BUCKETS(4); b++) अणु
-			क्रम (bsrc = NFT_PIPAPO_BUCKETS(8) * src_g;
+		for (b = 0; b < NFT_PIPAPO_BUCKETS(4); b++) {
+			for (bsrc = NFT_PIPAPO_BUCKETS(8) * src_g;
 			     bsrc < NFT_PIPAPO_BUCKETS(8) * (src_g + 1);
-			     bsrc++) अणु
-				अगर (((bsrc & 0xf0) >> 4) != b)
-					जारी;
+			     bsrc++) {
+				if (((bsrc & 0xf0) >> 4) != b)
+					continue;
 
-				क्रम (i = 0; i < bsize; i++)
+				for (i = 0; i < bsize; i++)
 					new_lt[i] |= old_lt[bsrc * bsize + i];
-			पूर्ण
+			}
 
 			new_lt += bsize;
-		पूर्ण
+		}
 
-		क्रम (b = 0; b < NFT_PIPAPO_BUCKETS(4); b++) अणु
-			क्रम (bsrc = NFT_PIPAPO_BUCKETS(8) * src_g;
+		for (b = 0; b < NFT_PIPAPO_BUCKETS(4); b++) {
+			for (bsrc = NFT_PIPAPO_BUCKETS(8) * src_g;
 			     bsrc < NFT_PIPAPO_BUCKETS(8) * (src_g + 1);
-			     bsrc++) अणु
-				अगर ((bsrc & 0x0f) != b)
-					जारी;
+			     bsrc++) {
+				if ((bsrc & 0x0f) != b)
+					continue;
 
-				क्रम (i = 0; i < bsize; i++)
+				for (i = 0; i < bsize; i++)
 					new_lt[i] |= old_lt[bsrc * bsize + i];
-			पूर्ण
+			}
 
 			new_lt += bsize;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /**
- * pipapo_lt_bits_adjust() - Adjust group size क्रम lookup table अगर needed
+ * pipapo_lt_bits_adjust() - Adjust group size for lookup table if needed
  * @f:		Field containing lookup table
  */
-अटल व्योम pipapo_lt_bits_adjust(काष्ठा nft_pipapo_field *f)
-अणु
-	अचिन्हित दीर्घ *new_lt;
-	पूर्णांक groups, bb;
-	माप_प्रकार lt_size;
+static void pipapo_lt_bits_adjust(struct nft_pipapo_field *f)
+{
+	unsigned long *new_lt;
+	int groups, bb;
+	size_t lt_size;
 
 	lt_size = f->groups * NFT_PIPAPO_BUCKETS(f->bb) * f->bsize *
-		  माप(*f->lt);
+		  sizeof(*f->lt);
 
-	अगर (f->bb == NFT_PIPAPO_GROUP_BITS_SMALL_SET &&
-	    lt_size > NFT_PIPAPO_LT_SIZE_HIGH) अणु
+	if (f->bb == NFT_PIPAPO_GROUP_BITS_SMALL_SET &&
+	    lt_size > NFT_PIPAPO_LT_SIZE_HIGH) {
 		groups = f->groups * 2;
 		bb = NFT_PIPAPO_GROUP_BITS_LARGE_SET;
 
 		lt_size = groups * NFT_PIPAPO_BUCKETS(bb) * f->bsize *
-			  माप(*f->lt);
-	पूर्ण अन्यथा अगर (f->bb == NFT_PIPAPO_GROUP_BITS_LARGE_SET &&
-		   lt_size < NFT_PIPAPO_LT_SIZE_LOW) अणु
+			  sizeof(*f->lt);
+	} else if (f->bb == NFT_PIPAPO_GROUP_BITS_LARGE_SET &&
+		   lt_size < NFT_PIPAPO_LT_SIZE_LOW) {
 		groups = f->groups / 2;
 		bb = NFT_PIPAPO_GROUP_BITS_SMALL_SET;
 
 		lt_size = groups * NFT_PIPAPO_BUCKETS(bb) * f->bsize *
-			  माप(*f->lt);
+			  sizeof(*f->lt);
 
-		/* Don't increase group width अगर the resulting lookup table size
-		 * would exceed the upper size threshold क्रम a "small" set.
+		/* Don't increase group width if the resulting lookup table size
+		 * would exceed the upper size threshold for a "small" set.
 		 */
-		अगर (lt_size > NFT_PIPAPO_LT_SIZE_HIGH)
-			वापस;
-	पूर्ण अन्यथा अणु
-		वापस;
-	पूर्ण
+		if (lt_size > NFT_PIPAPO_LT_SIZE_HIGH)
+			return;
+	} else {
+		return;
+	}
 
 	new_lt = kvzalloc(lt_size + NFT_PIPAPO_ALIGN_HEADROOM, GFP_KERNEL);
-	अगर (!new_lt)
-		वापस;
+	if (!new_lt)
+		return;
 
 	NFT_PIPAPO_GROUP_BITS_ARE_8_OR_4;
-	अगर (f->bb == 4 && bb == 8) अणु
+	if (f->bb == 4 && bb == 8) {
 		pipapo_lt_4b_to_8b(f->groups, f->bsize,
 				   NFT_PIPAPO_LT_ALIGN(f->lt),
 				   NFT_PIPAPO_LT_ALIGN(new_lt));
-	पूर्ण अन्यथा अगर (f->bb == 8 && bb == 4) अणु
+	} else if (f->bb == 8 && bb == 4) {
 		pipapo_lt_8b_to_4b(f->groups, f->bsize,
 				   NFT_PIPAPO_LT_ALIGN(f->lt),
 				   NFT_PIPAPO_LT_ALIGN(new_lt));
-	पूर्ण अन्यथा अणु
+	} else {
 		BUG();
-	पूर्ण
+	}
 
 	f->groups = groups;
 	f->bb = bb;
-	kvमुक्त(f->lt);
+	kvfree(f->lt);
 	NFT_PIPAPO_LT_ASSIGN(f, new_lt);
-पूर्ण
+}
 
 /**
  * pipapo_insert() - Insert new rule in field given input key and mask length
  * @f:		Field containing lookup table
- * @k:		Input key क्रम classअगरication, without nftables padding
- * @mask_bits:	Length of mask; matches field length क्रम non-ranged entry
+ * @k:		Input key for classification, without nftables padding
+ * @mask_bits:	Length of mask; matches field length for non-ranged entry
  *
  * Insert a new rule reference in lookup buckets corresponding to k and
  * mask_bits.
  *
  * Return: 1 on success (one rule inserted), negative error code on failure.
  */
-अटल पूर्णांक pipapo_insert(काष्ठा nft_pipapo_field *f, स्थिर uपूर्णांक8_t *k,
-			 पूर्णांक mask_bits)
-अणु
-	पूर्णांक rule = f->rules++, group, ret, bit_offset = 0;
+static int pipapo_insert(struct nft_pipapo_field *f, const uint8_t *k,
+			 int mask_bits)
+{
+	int rule = f->rules++, group, ret, bit_offset = 0;
 
 	ret = pipapo_resize(f, f->rules - 1, f->rules);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	क्रम (group = 0; group < f->groups; group++) अणु
-		पूर्णांक i, v;
+	for (group = 0; group < f->groups; group++) {
+		int i, v;
 		u8 mask;
 
 		v = k[group / (BITS_PER_BYTE / f->bb)];
@@ -919,431 +918,431 @@ mt:
 		bit_offset += f->bb;
 		bit_offset %= BITS_PER_BYTE;
 
-		अगर (mask_bits >= (group + 1) * f->bb) अणु
+		if (mask_bits >= (group + 1) * f->bb) {
 			/* Not masked */
 			pipapo_bucket_set(f, rule, group, v);
-		पूर्ण अन्यथा अगर (mask_bits <= group * f->bb) अणु
+		} else if (mask_bits <= group * f->bb) {
 			/* Completely masked */
-			क्रम (i = 0; i < NFT_PIPAPO_BUCKETS(f->bb); i++)
+			for (i = 0; i < NFT_PIPAPO_BUCKETS(f->bb); i++)
 				pipapo_bucket_set(f, rule, group, i);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* The mask limit falls on this group */
 			mask = GENMASK(f->bb - 1, 0);
 			mask >>= mask_bits - group * f->bb;
-			क्रम (i = 0; i < NFT_PIPAPO_BUCKETS(f->bb); i++) अणु
-				अगर ((i & ~mask) == (v & ~mask))
+			for (i = 0; i < NFT_PIPAPO_BUCKETS(f->bb); i++) {
+				if ((i & ~mask) == (v & ~mask))
 					pipapo_bucket_set(f, rule, group, i);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	pipapo_lt_bits_adjust(f);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /**
- * pipapo_step_dअगरf() - Check अगर setting @step bit in neपंचांगask would change it
+ * pipapo_step_diff() - Check if setting @step bit in netmask would change it
  * @base:	Mask we are expanding
- * @step:	Step bit क्रम given expansion step
+ * @step:	Step bit for given expansion step
  * @len:	Total length of mask space (set and unset bits), bytes
  *
- * Convenience function क्रम mask expansion.
+ * Convenience function for mask expansion.
  *
- * Return: true अगर step bit changes mask (i.e. isn't set), false otherwise.
+ * Return: true if step bit changes mask (i.e. isn't set), false otherwise.
  */
-अटल bool pipapo_step_dअगरf(u8 *base, पूर्णांक step, पूर्णांक len)
-अणु
+static bool pipapo_step_diff(u8 *base, int step, int len)
+{
 	/* Network order, byte-addressed */
-#अगर_घोषित __BIG_ENDIAN__
-	वापस !(BIT(step % BITS_PER_BYTE) & base[step / BITS_PER_BYTE]);
-#अन्यथा
-	वापस !(BIT(step % BITS_PER_BYTE) &
+#ifdef __BIG_ENDIAN__
+	return !(BIT(step % BITS_PER_BYTE) & base[step / BITS_PER_BYTE]);
+#else
+	return !(BIT(step % BITS_PER_BYTE) &
 		 base[len - 1 - step / BITS_PER_BYTE]);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 /**
- * pipapo_step_after_end() - Check अगर mask exceeds range end with given step
+ * pipapo_step_after_end() - Check if mask exceeds range end with given step
  * @base:	Mask we are expanding
  * @end:	End of range
- * @step:	Step bit क्रम given expansion step, highest bit to be set
+ * @step:	Step bit for given expansion step, highest bit to be set
  * @len:	Total length of mask space (set and unset bits), bytes
  *
- * Convenience function क्रम mask expansion.
+ * Convenience function for mask expansion.
  *
- * Return: true अगर mask exceeds range setting step bits, false otherwise.
+ * Return: true if mask exceeds range setting step bits, false otherwise.
  */
-अटल bool pipapo_step_after_end(स्थिर u8 *base, स्थिर u8 *end, पूर्णांक step,
-				  पूर्णांक len)
-अणु
-	u8 पंचांगp[NFT_PIPAPO_MAX_BYTES];
-	पूर्णांक i;
+static bool pipapo_step_after_end(const u8 *base, const u8 *end, int step,
+				  int len)
+{
+	u8 tmp[NFT_PIPAPO_MAX_BYTES];
+	int i;
 
-	स_नकल(पंचांगp, base, len);
+	memcpy(tmp, base, len);
 
 	/* Network order, byte-addressed */
-	क्रम (i = 0; i <= step; i++)
-#अगर_घोषित __BIG_ENDIAN__
-		पंचांगp[i / BITS_PER_BYTE] |= BIT(i % BITS_PER_BYTE);
-#अन्यथा
-		पंचांगp[len - 1 - i / BITS_PER_BYTE] |= BIT(i % BITS_PER_BYTE);
-#पूर्ण_अगर
+	for (i = 0; i <= step; i++)
+#ifdef __BIG_ENDIAN__
+		tmp[i / BITS_PER_BYTE] |= BIT(i % BITS_PER_BYTE);
+#else
+		tmp[len - 1 - i / BITS_PER_BYTE] |= BIT(i % BITS_PER_BYTE);
+#endif
 
-	वापस स_भेद(पंचांगp, end, len) > 0;
-पूर्ण
+	return memcmp(tmp, end, len) > 0;
+}
 
 /**
- * pipapo_base_sum() - Sum step bit to given len-sized neपंचांगask base with carry
- * @base:	Neपंचांगask base
+ * pipapo_base_sum() - Sum step bit to given len-sized netmask base with carry
+ * @base:	Netmask base
  * @step:	Step bit to sum
- * @len:	Neपंचांगask length, bytes
+ * @len:	Netmask length, bytes
  */
-अटल व्योम pipapo_base_sum(u8 *base, पूर्णांक step, पूर्णांक len)
-अणु
+static void pipapo_base_sum(u8 *base, int step, int len)
+{
 	bool carry = false;
-	पूर्णांक i;
+	int i;
 
 	/* Network order, byte-addressed */
-#अगर_घोषित __BIG_ENDIAN__
-	क्रम (i = step / BITS_PER_BYTE; i < len; i++) अणु
-#अन्यथा
-	क्रम (i = len - 1 - step / BITS_PER_BYTE; i >= 0; i--) अणु
-#पूर्ण_अगर
-		अगर (carry)
+#ifdef __BIG_ENDIAN__
+	for (i = step / BITS_PER_BYTE; i < len; i++) {
+#else
+	for (i = len - 1 - step / BITS_PER_BYTE; i >= 0; i--) {
+#endif
+		if (carry)
 			base[i]++;
-		अन्यथा
+		else
 			base[i] += 1 << (step % BITS_PER_BYTE);
 
-		अगर (base[i])
-			अवरोध;
+		if (base[i])
+			break;
 
 		carry = true;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * pipapo_expand() - Expand to composing neपंचांगasks, insert पूर्णांकo lookup table
+ * pipapo_expand() - Expand to composing netmasks, insert into lookup table
  * @f:		Field containing lookup table
  * @start:	Start of range
  * @end:	End of range
  * @len:	Length of value in bits
  *
- * Expand range to composing neपंचांगasks and insert corresponding rule references
+ * Expand range to composing netmasks and insert corresponding rule references
  * in lookup buckets.
  *
  * Return: number of inserted rules on success, negative error code on failure.
  */
-अटल पूर्णांक pipapo_expand(काष्ठा nft_pipapo_field *f,
-			 स्थिर u8 *start, स्थिर u8 *end, पूर्णांक len)
-अणु
-	पूर्णांक step, masks = 0, bytes = DIV_ROUND_UP(len, BITS_PER_BYTE);
+static int pipapo_expand(struct nft_pipapo_field *f,
+			 const u8 *start, const u8 *end, int len)
+{
+	int step, masks = 0, bytes = DIV_ROUND_UP(len, BITS_PER_BYTE);
 	u8 base[NFT_PIPAPO_MAX_BYTES];
 
-	स_नकल(base, start, bytes);
-	जबतक (स_भेद(base, end, bytes) <= 0) अणु
-		पूर्णांक err;
+	memcpy(base, start, bytes);
+	while (memcmp(base, end, bytes) <= 0) {
+		int err;
 
 		step = 0;
-		जबतक (pipapo_step_dअगरf(base, step, bytes)) अणु
-			अगर (pipapo_step_after_end(base, end, step, bytes))
-				अवरोध;
+		while (pipapo_step_diff(base, step, bytes)) {
+			if (pipapo_step_after_end(base, end, step, bytes))
+				break;
 
 			step++;
-			अगर (step >= len) अणु
-				अगर (!masks) अणु
+			if (step >= len) {
+				if (!masks) {
 					pipapo_insert(f, base, 0);
 					masks = 1;
-				पूर्ण
-				जाओ out;
-			पूर्ण
-		पूर्ण
+				}
+				goto out;
+			}
+		}
 
 		err = pipapo_insert(f, base, len - step);
 
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 
 		masks++;
 		pipapo_base_sum(base, step, bytes);
-	पूर्ण
+	}
 out:
-	वापस masks;
-पूर्ण
+	return masks;
+}
 
 /**
  * pipapo_map() - Insert rules in mapping tables, mapping them between fields
  * @m:		Matching data, including mapping table
  * @map:	Table of rule maps: array of first rule and amount of rules
- *		in next field a given rule maps to, क्रम each field
- * @e:		For last field, nft_set_ext poपूर्णांकer matching rules map to
+ *		in next field a given rule maps to, for each field
+ * @e:		For last field, nft_set_ext pointer matching rules map to
  */
-अटल व्योम pipapo_map(काष्ठा nft_pipapo_match *m,
-		       जोड़ nft_pipapo_map_bucket map[NFT_PIPAPO_MAX_FIELDS],
-		       काष्ठा nft_pipapo_elem *e)
-अणु
-	काष्ठा nft_pipapo_field *f;
-	पूर्णांक i, j;
+static void pipapo_map(struct nft_pipapo_match *m,
+		       union nft_pipapo_map_bucket map[NFT_PIPAPO_MAX_FIELDS],
+		       struct nft_pipapo_elem *e)
+{
+	struct nft_pipapo_field *f;
+	int i, j;
 
-	क्रम (i = 0, f = m->f; i < m->field_count - 1; i++, f++) अणु
-		क्रम (j = 0; j < map[i].n; j++) अणु
+	for (i = 0, f = m->f; i < m->field_count - 1; i++, f++) {
+		for (j = 0; j < map[i].n; j++) {
 			f->mt[map[i].to + j].to = map[i + 1].to;
 			f->mt[map[i].to + j].n = map[i + 1].n;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Last field: map to ext instead of mapping to next field */
-	क्रम (j = 0; j < map[i].n; j++)
+	for (j = 0; j < map[i].n; j++)
 		f->mt[map[i].to + j].e = e;
-पूर्ण
+}
 
 /**
- * pipapo_पुनः_स्मृति_scratch() - Reallocate scratch maps क्रम partial match results
+ * pipapo_realloc_scratch() - Reallocate scratch maps for partial match results
  * @clone:	Copy of matching data with pending insertions and deletions
  * @bsize_max:	Maximum bucket size, scratch maps cover two buckets
  *
  * Return: 0 on success, -ENOMEM on failure.
  */
-अटल पूर्णांक pipapo_पुनः_स्मृति_scratch(काष्ठा nft_pipapo_match *clone,
-				  अचिन्हित दीर्घ bsize_max)
-अणु
-	पूर्णांक i;
+static int pipapo_realloc_scratch(struct nft_pipapo_match *clone,
+				  unsigned long bsize_max)
+{
+	int i;
 
-	क्रम_each_possible_cpu(i) अणु
-		अचिन्हित दीर्घ *scratch;
-#अगर_घोषित NFT_PIPAPO_ALIGN
-		अचिन्हित दीर्घ *scratch_aligned;
-#पूर्ण_अगर
+	for_each_possible_cpu(i) {
+		unsigned long *scratch;
+#ifdef NFT_PIPAPO_ALIGN
+		unsigned long *scratch_aligned;
+#endif
 
-		scratch = kzalloc_node(bsize_max * माप(*scratch) * 2 +
+		scratch = kzalloc_node(bsize_max * sizeof(*scratch) * 2 +
 				       NFT_PIPAPO_ALIGN_HEADROOM,
 				       GFP_KERNEL, cpu_to_node(i));
-		अगर (!scratch) अणु
-			/* On failure, there's no need to unकरो previous
+		if (!scratch) {
+			/* On failure, there's no need to undo previous
 			 * allocations: this means that some scratch maps have
 			 * a bigger allocated size now (this is only called on
 			 * insertion), but the extra space won't be used by any
 			 * CPU as new elements are not inserted and m->bsize_max
 			 * is not updated.
 			 */
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
-		kमुक्त(*per_cpu_ptr(clone->scratch, i));
+		kfree(*per_cpu_ptr(clone->scratch, i));
 
 		*per_cpu_ptr(clone->scratch, i) = scratch;
 
-#अगर_घोषित NFT_PIPAPO_ALIGN
+#ifdef NFT_PIPAPO_ALIGN
 		scratch_aligned = NFT_PIPAPO_LT_ALIGN(scratch);
 		*per_cpu_ptr(clone->scratch_aligned, i) = scratch_aligned;
-#पूर्ण_अगर
-	पूर्ण
+#endif
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * nft_pipapo_insert() - Validate and insert ranged elements
  * @net:	Network namespace
  * @set:	nftables API set representation
  * @elem:	nftables API element representation containing key data
- * @ext2:	Filled with poपूर्णांकer to &काष्ठा nft_set_ext in inserted element
+ * @ext2:	Filled with pointer to &struct nft_set_ext in inserted element
  *
- * Return: 0 on success, error poपूर्णांकer on failure.
+ * Return: 0 on success, error pointer on failure.
  */
-अटल पूर्णांक nft_pipapo_insert(स्थिर काष्ठा net *net, स्थिर काष्ठा nft_set *set,
-			     स्थिर काष्ठा nft_set_elem *elem,
-			     काष्ठा nft_set_ext **ext2)
-अणु
-	स्थिर काष्ठा nft_set_ext *ext = nft_set_elem_ext(set, elem->priv);
-	जोड़ nft_pipapo_map_bucket rulemap[NFT_PIPAPO_MAX_FIELDS];
-	स्थिर u8 *start = (स्थिर u8 *)elem->key.val.data, *end;
-	काष्ठा nft_pipapo_elem *e = elem->priv, *dup;
-	काष्ठा nft_pipapo *priv = nft_set_priv(set);
-	काष्ठा nft_pipapo_match *m = priv->clone;
+static int nft_pipapo_insert(const struct net *net, const struct nft_set *set,
+			     const struct nft_set_elem *elem,
+			     struct nft_set_ext **ext2)
+{
+	const struct nft_set_ext *ext = nft_set_elem_ext(set, elem->priv);
+	union nft_pipapo_map_bucket rulemap[NFT_PIPAPO_MAX_FIELDS];
+	const u8 *start = (const u8 *)elem->key.val.data, *end;
+	struct nft_pipapo_elem *e = elem->priv, *dup;
+	struct nft_pipapo *priv = nft_set_priv(set);
+	struct nft_pipapo_match *m = priv->clone;
 	u8 genmask = nft_genmask_next(net);
-	काष्ठा nft_pipapo_field *f;
-	पूर्णांक i, bsize_max, err = 0;
+	struct nft_pipapo_field *f;
+	int i, bsize_max, err = 0;
 
-	अगर (nft_set_ext_exists(ext, NFT_SET_EXT_KEY_END))
-		end = (स्थिर u8 *)nft_set_ext_key_end(ext)->data;
-	अन्यथा
+	if (nft_set_ext_exists(ext, NFT_SET_EXT_KEY_END))
+		end = (const u8 *)nft_set_ext_key_end(ext)->data;
+	else
 		end = start;
 
 	dup = pipapo_get(net, set, start, genmask);
-	अगर (!IS_ERR(dup)) अणु
-		/* Check अगर we alपढ़ोy have the same exact entry */
-		स्थिर काष्ठा nft_data *dup_key, *dup_end;
+	if (!IS_ERR(dup)) {
+		/* Check if we already have the same exact entry */
+		const struct nft_data *dup_key, *dup_end;
 
 		dup_key = nft_set_ext_key(&dup->ext);
-		अगर (nft_set_ext_exists(&dup->ext, NFT_SET_EXT_KEY_END))
+		if (nft_set_ext_exists(&dup->ext, NFT_SET_EXT_KEY_END))
 			dup_end = nft_set_ext_key_end(&dup->ext);
-		अन्यथा
+		else
 			dup_end = dup_key;
 
-		अगर (!स_भेद(start, dup_key->data, माप(*dup_key->data)) &&
-		    !स_भेद(end, dup_end->data, माप(*dup_end->data))) अणु
+		if (!memcmp(start, dup_key->data, sizeof(*dup_key->data)) &&
+		    !memcmp(end, dup_end->data, sizeof(*dup_end->data))) {
 			*ext2 = &dup->ext;
-			वापस -EEXIST;
-		पूर्ण
+			return -EEXIST;
+		}
 
-		वापस -ENOTEMPTY;
-	पूर्ण
+		return -ENOTEMPTY;
+	}
 
-	अगर (PTR_ERR(dup) == -ENOENT) अणु
-		/* Look क्रम partially overlapping entries */
+	if (PTR_ERR(dup) == -ENOENT) {
+		/* Look for partially overlapping entries */
 		dup = pipapo_get(net, set, end, nft_genmask_next(net));
-	पूर्ण
+	}
 
-	अगर (PTR_ERR(dup) != -ENOENT) अणु
-		अगर (IS_ERR(dup))
-			वापस PTR_ERR(dup);
+	if (PTR_ERR(dup) != -ENOENT) {
+		if (IS_ERR(dup))
+			return PTR_ERR(dup);
 		*ext2 = &dup->ext;
-		वापस -ENOTEMPTY;
-	पूर्ण
+		return -ENOTEMPTY;
+	}
 
 	/* Validate */
-	nft_pipapo_क्रम_each_field(f, i, m) अणु
-		स्थिर u8 *start_p = start, *end_p = end;
+	nft_pipapo_for_each_field(f, i, m) {
+		const u8 *start_p = start, *end_p = end;
 
-		अगर (f->rules >= (अचिन्हित दीर्घ)NFT_PIPAPO_RULE0_MAX)
-			वापस -ENOSPC;
+		if (f->rules >= (unsigned long)NFT_PIPAPO_RULE0_MAX)
+			return -ENOSPC;
 
-		अगर (स_भेद(start_p, end_p,
+		if (memcmp(start_p, end_p,
 			   f->groups / NFT_PIPAPO_GROUPS_PER_BYTE(f)) > 0)
-			वापस -EINVAL;
+			return -EINVAL;
 
 		start_p += NFT_PIPAPO_GROUPS_PADDED_SIZE(f);
 		end_p += NFT_PIPAPO_GROUPS_PADDED_SIZE(f);
-	पूर्ण
+	}
 
 	/* Insert */
 	priv->dirty = true;
 
 	bsize_max = m->bsize_max;
 
-	nft_pipapo_क्रम_each_field(f, i, m) अणु
-		पूर्णांक ret;
+	nft_pipapo_for_each_field(f, i, m) {
+		int ret;
 
 		rulemap[i].to = f->rules;
 
-		ret = स_भेद(start, end,
+		ret = memcmp(start, end,
 			     f->groups / NFT_PIPAPO_GROUPS_PER_BYTE(f));
-		अगर (!ret)
+		if (!ret)
 			ret = pipapo_insert(f, start, f->groups * f->bb);
-		अन्यथा
+		else
 			ret = pipapo_expand(f, start, end, f->groups * f->bb);
 
-		अगर (f->bsize > bsize_max)
+		if (f->bsize > bsize_max)
 			bsize_max = f->bsize;
 
 		rulemap[i].n = ret;
 
 		start += NFT_PIPAPO_GROUPS_PADDED_SIZE(f);
 		end += NFT_PIPAPO_GROUPS_PADDED_SIZE(f);
-	पूर्ण
+	}
 
-	अगर (!*get_cpu_ptr(m->scratch) || bsize_max > m->bsize_max) अणु
+	if (!*get_cpu_ptr(m->scratch) || bsize_max > m->bsize_max) {
 		put_cpu_ptr(m->scratch);
 
-		err = pipapo_पुनः_स्मृति_scratch(m, bsize_max);
-		अगर (err)
-			वापस err;
+		err = pipapo_realloc_scratch(m, bsize_max);
+		if (err)
+			return err;
 
 		m->bsize_max = bsize_max;
-	पूर्ण अन्यथा अणु
+	} else {
 		put_cpu_ptr(m->scratch);
-	पूर्ण
+	}
 
 	*ext2 = &e->ext;
 
 	pipapo_map(m, rulemap, e);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * pipapo_clone() - Clone matching data to create new working copy
  * @old:	Existing matching data
  *
- * Return: copy of matching data passed as 'old', error poपूर्णांकer on failure
+ * Return: copy of matching data passed as 'old', error pointer on failure
  */
-अटल काष्ठा nft_pipapo_match *pipapo_clone(काष्ठा nft_pipapo_match *old)
-अणु
-	काष्ठा nft_pipapo_field *dst, *src;
-	काष्ठा nft_pipapo_match *new;
-	पूर्णांक i;
+static struct nft_pipapo_match *pipapo_clone(struct nft_pipapo_match *old)
+{
+	struct nft_pipapo_field *dst, *src;
+	struct nft_pipapo_match *new;
+	int i;
 
-	new = kदो_स्मृति(माप(*new) + माप(*dst) * old->field_count,
+	new = kmalloc(sizeof(*new) + sizeof(*dst) * old->field_count,
 		      GFP_KERNEL);
-	अगर (!new)
-		वापस ERR_PTR(-ENOMEM);
+	if (!new)
+		return ERR_PTR(-ENOMEM);
 
 	new->field_count = old->field_count;
 	new->bsize_max = old->bsize_max;
 
 	new->scratch = alloc_percpu(*new->scratch);
-	अगर (!new->scratch)
-		जाओ out_scratch;
+	if (!new->scratch)
+		goto out_scratch;
 
-#अगर_घोषित NFT_PIPAPO_ALIGN
+#ifdef NFT_PIPAPO_ALIGN
 	new->scratch_aligned = alloc_percpu(*new->scratch_aligned);
-	अगर (!new->scratch_aligned)
-		जाओ out_scratch;
-#पूर्ण_अगर
+	if (!new->scratch_aligned)
+		goto out_scratch;
+#endif
 
 	rcu_head_init(&new->rcu);
 
 	src = old->f;
 	dst = new->f;
 
-	क्रम (i = 0; i < old->field_count; i++) अणु
-		अचिन्हित दीर्घ *new_lt;
+	for (i = 0; i < old->field_count; i++) {
+		unsigned long *new_lt;
 
-		स_नकल(dst, src, दुरत्व(काष्ठा nft_pipapo_field, lt));
+		memcpy(dst, src, offsetof(struct nft_pipapo_field, lt));
 
 		new_lt = kvzalloc(src->groups * NFT_PIPAPO_BUCKETS(src->bb) *
-				  src->bsize * माप(*dst->lt) +
+				  src->bsize * sizeof(*dst->lt) +
 				  NFT_PIPAPO_ALIGN_HEADROOM,
 				  GFP_KERNEL);
-		अगर (!new_lt)
-			जाओ out_lt;
+		if (!new_lt)
+			goto out_lt;
 
 		NFT_PIPAPO_LT_ASSIGN(dst, new_lt);
 
-		स_नकल(NFT_PIPAPO_LT_ALIGN(new_lt),
+		memcpy(NFT_PIPAPO_LT_ALIGN(new_lt),
 		       NFT_PIPAPO_LT_ALIGN(src->lt),
-		       src->bsize * माप(*dst->lt) *
+		       src->bsize * sizeof(*dst->lt) *
 		       src->groups * NFT_PIPAPO_BUCKETS(src->bb));
 
-		dst->mt = kvदो_स्मृति(src->rules * माप(*src->mt), GFP_KERNEL);
-		अगर (!dst->mt)
-			जाओ out_mt;
+		dst->mt = kvmalloc(src->rules * sizeof(*src->mt), GFP_KERNEL);
+		if (!dst->mt)
+			goto out_mt;
 
-		स_नकल(dst->mt, src->mt, src->rules * माप(*src->mt));
+		memcpy(dst->mt, src->mt, src->rules * sizeof(*src->mt));
 		src++;
 		dst++;
-	पूर्ण
+	}
 
-	वापस new;
+	return new;
 
 out_mt:
-	kvमुक्त(dst->lt);
+	kvfree(dst->lt);
 out_lt:
-	क्रम (dst--; i > 0; i--) अणु
-		kvमुक्त(dst->mt);
-		kvमुक्त(dst->lt);
+	for (dst--; i > 0; i--) {
+		kvfree(dst->mt);
+		kvfree(dst->lt);
 		dst--;
-	पूर्ण
-#अगर_घोषित NFT_PIPAPO_ALIGN
-	मुक्त_percpu(new->scratch_aligned);
-#पूर्ण_अगर
+	}
+#ifdef NFT_PIPAPO_ALIGN
+	free_percpu(new->scratch_aligned);
+#endif
 out_scratch:
-	मुक्त_percpu(new->scratch);
-	kमुक्त(new);
+	free_percpu(new->scratch);
+	kfree(new);
 
-	वापस ERR_PTR(-ENOMEM);
-पूर्ण
+	return ERR_PTR(-ENOMEM);
+}
 
 /**
  * pipapo_rules_same_key() - Get number of rules originated from the same entry
@@ -1352,7 +1351,7 @@ out_scratch:
  *
  * Using the fact that all rules in a field that originated from the same entry
  * will map to the same set of rules in the next field, or to the same element
- * reference, वापस the cardinality of the set of rules that originated from
+ * reference, return the cardinality of the set of rules that originated from
  * the same entry as the rule with index @first, @first rule included.
  *
  * In pictures:
@@ -1366,7 +1365,7 @@ out_scratch:
  *				'    '    '    '    '   \
  *	in field #1		0    1    2    3    4    5 ...
  *
- * अगर this is called क्रम rule 2 on field #0, it will वापस 3, as also rules 2
+ * if this is called for rule 2 on field #0, it will return 3, as also rules 2
  * and 3 in field 0 map to the same set of rules (2, 3, 4) in the next field.
  *
  * For the last field in a set, we can rely on associated entries to map to the
@@ -1374,35 +1373,35 @@ out_scratch:
  *
  * Return: Number of rules that originated from the same entry as @first.
  */
-अटल पूर्णांक pipapo_rules_same_key(काष्ठा nft_pipapo_field *f, पूर्णांक first)
-अणु
-	काष्ठा nft_pipapo_elem *e = शून्य; /* Keep gcc happy */
-	पूर्णांक r;
+static int pipapo_rules_same_key(struct nft_pipapo_field *f, int first)
+{
+	struct nft_pipapo_elem *e = NULL; /* Keep gcc happy */
+	int r;
 
-	क्रम (r = first; r < f->rules; r++) अणु
-		अगर (r != first && e != f->mt[r].e)
-			वापस r - first;
+	for (r = first; r < f->rules; r++) {
+		if (r != first && e != f->mt[r].e)
+			return r - first;
 
 		e = f->mt[r].e;
-	पूर्ण
+	}
 
-	अगर (r != first)
-		वापस r - first;
+	if (r != first)
+		return r - first;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * pipapo_unmap() - Remove rules from mapping tables, rक्रमागतber reमुख्यing ones
+ * pipapo_unmap() - Remove rules from mapping tables, renumber remaining ones
  * @mt:		Mapping array
  * @rules:	Original amount of rules in mapping table
- * @start:	First rule index to be हटाओd
- * @n:		Amount of rules to be हटाओd
+ * @start:	First rule index to be removed
+ * @n:		Amount of rules to be removed
  * @to_offset:	First rule index, in next field, this group of rules maps to
  * @is_last:	If this is the last field, delete reference from mapping array
  *
- * This is used to unmap rules from the mapping table क्रम a single field,
- * मुख्यtaining consistency and compactness क्रम the existing ones.
+ * This is used to unmap rules from the mapping table for a single field,
+ * maintaining consistency and compactness for the existing ones.
  *
  * In pictures: let's assume that we want to delete rules 2 and 3 from the
  * following mapping array:
@@ -1417,39 +1416,39 @@ out_scratch:
  *               0      1      2
  *      map to:  4-10   4-10   11-13
  *
- * क्रम fields beक्रमe the last one. In हाल this is the mapping table क्रम the
- * last field in a set, and rules map to poपूर्णांकers to &काष्ठा nft_pipapo_elem:
+ * for fields before the last one. In case this is the mapping table for the
+ * last field in a set, and rules map to pointers to &struct nft_pipapo_elem:
  *
  *                      rules
  *                        0      1      2      3      4
- *  element poपूर्णांकers:  0x42   0x42   0x33   0x33   0x44
+ *  element pointers:  0x42   0x42   0x33   0x33   0x44
  *
  * the result will be:
  *
  *                      rules
  *                        0      1      2
- *  element poपूर्णांकers:  0x42   0x42   0x44
+ *  element pointers:  0x42   0x42   0x44
  */
-अटल व्योम pipapo_unmap(जोड़ nft_pipapo_map_bucket *mt, पूर्णांक rules,
-			 पूर्णांक start, पूर्णांक n, पूर्णांक to_offset, bool is_last)
-अणु
-	पूर्णांक i;
+static void pipapo_unmap(union nft_pipapo_map_bucket *mt, int rules,
+			 int start, int n, int to_offset, bool is_last)
+{
+	int i;
 
-	स_हटाओ(mt + start, mt + start + n, (rules - start - n) * माप(*mt));
-	स_रखो(mt + rules - n, 0, n * माप(*mt));
+	memmove(mt + start, mt + start + n, (rules - start - n) * sizeof(*mt));
+	memset(mt + rules - n, 0, n * sizeof(*mt));
 
-	अगर (is_last)
-		वापस;
+	if (is_last)
+		return;
 
-	क्रम (i = start; i < rules - n; i++)
+	for (i = start; i < rules - n; i++)
 		mt[i].to -= to_offset;
-पूर्ण
+}
 
 /**
  * pipapo_drop() - Delete entry from lookup and mapping tables, given rule map
  * @m:		Matching data
  * @rulemap:	Table of rule maps, arrays of first rule and amount of rules
- *		in next field a given entry maps to, क्रम each field
+ *		in next field a given entry maps to, for each field
  *
  * For each rule in lookup table buckets mapping to this set of rules, drop
  * all bits set in lookup table mapping. In pictures, assuming we want to drop
@@ -1479,83 +1478,83 @@ out_scratch:
  *        6    0
  *        7    0   0
  *
- * once this is करोne, call unmap() to drop all the corresponding rule references
+ * once this is done, call unmap() to drop all the corresponding rule references
  * from mapping tables.
  */
-अटल व्योम pipapo_drop(काष्ठा nft_pipapo_match *m,
-			जोड़ nft_pipapo_map_bucket rulemap[])
-अणु
-	काष्ठा nft_pipapo_field *f;
-	पूर्णांक i;
+static void pipapo_drop(struct nft_pipapo_match *m,
+			union nft_pipapo_map_bucket rulemap[])
+{
+	struct nft_pipapo_field *f;
+	int i;
 
-	nft_pipapo_क्रम_each_field(f, i, m) अणु
-		पूर्णांक g;
+	nft_pipapo_for_each_field(f, i, m) {
+		int g;
 
-		क्रम (g = 0; g < f->groups; g++) अणु
-			अचिन्हित दीर्घ *pos;
-			पूर्णांक b;
+		for (g = 0; g < f->groups; g++) {
+			unsigned long *pos;
+			int b;
 
 			pos = NFT_PIPAPO_LT_ALIGN(f->lt) + g *
 			      NFT_PIPAPO_BUCKETS(f->bb) * f->bsize;
 
-			क्रम (b = 0; b < NFT_PIPAPO_BUCKETS(f->bb); b++) अणु
-				biपंचांगap_cut(pos, pos, rulemap[i].to,
+			for (b = 0; b < NFT_PIPAPO_BUCKETS(f->bb); b++) {
+				bitmap_cut(pos, pos, rulemap[i].to,
 					   rulemap[i].n,
 					   f->bsize * BITS_PER_LONG);
 
 				pos += f->bsize;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		pipapo_unmap(f->mt, f->rules, rulemap[i].to, rulemap[i].n,
 			     rulemap[i + 1].n, i == m->field_count - 1);
-		अगर (pipapo_resize(f, f->rules, f->rules - rulemap[i].n)) अणु
-			/* We can ignore this, a failure to shrink tables करोwn
-			 * करोesn't make tables invalid.
+		if (pipapo_resize(f, f->rules, f->rules - rulemap[i].n)) {
+			/* We can ignore this, a failure to shrink tables down
+			 * doesn't make tables invalid.
 			 */
 			;
-		पूर्ण
+		}
 		f->rules -= rulemap[i].n;
 
 		pipapo_lt_bits_adjust(f);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * pipapo_gc() - Drop expired entries from set, destroy start and end elements
  * @set:	nftables API set representation
  * @m:		Matching data
  */
-अटल व्योम pipapo_gc(स्थिर काष्ठा nft_set *set, काष्ठा nft_pipapo_match *m)
-अणु
-	काष्ठा nft_pipapo *priv = nft_set_priv(set);
-	पूर्णांक rules_f0, first_rule = 0;
-	काष्ठा nft_pipapo_elem *e;
+static void pipapo_gc(const struct nft_set *set, struct nft_pipapo_match *m)
+{
+	struct nft_pipapo *priv = nft_set_priv(set);
+	int rules_f0, first_rule = 0;
+	struct nft_pipapo_elem *e;
 
-	जबतक ((rules_f0 = pipapo_rules_same_key(m->f, first_rule))) अणु
-		जोड़ nft_pipapo_map_bucket rulemap[NFT_PIPAPO_MAX_FIELDS];
-		काष्ठा nft_pipapo_field *f;
-		पूर्णांक i, start, rules_fx;
+	while ((rules_f0 = pipapo_rules_same_key(m->f, first_rule))) {
+		union nft_pipapo_map_bucket rulemap[NFT_PIPAPO_MAX_FIELDS];
+		struct nft_pipapo_field *f;
+		int i, start, rules_fx;
 
 		start = first_rule;
 		rules_fx = rules_f0;
 
-		nft_pipapo_क्रम_each_field(f, i, m) अणु
+		nft_pipapo_for_each_field(f, i, m) {
 			rulemap[i].to = start;
 			rulemap[i].n = rules_fx;
 
-			अगर (i < m->field_count - 1) अणु
+			if (i < m->field_count - 1) {
 				rules_fx = f->mt[start].n;
 				start = f->mt[start].to;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/* Pick the last field, and its last index */
 		f--;
 		i--;
 		e = f->mt[rulemap[i].to].e;
-		अगर (nft_set_elem_expired(&e->ext) &&
-		    !nft_set_elem_mark_busy(&e->ext)) अणु
+		if (nft_set_elem_expired(&e->ext) &&
+		    !nft_set_elem_mark_busy(&e->ext)) {
 			priv->dirty = true;
 			pipapo_drop(m, rulemap);
 
@@ -1565,92 +1564,92 @@ out_scratch:
 			/* And check again current first rule, which is now the
 			 * first we haven't checked.
 			 */
-		पूर्ण अन्यथा अणु
+		} else {
 			first_rule += rules_f0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	e = nft_set_catchall_gc(set);
-	अगर (e)
+	if (e)
 		nft_set_elem_destroy(set, e, true);
 
-	priv->last_gc = jअगरfies;
-पूर्ण
+	priv->last_gc = jiffies;
+}
 
 /**
- * pipapo_मुक्त_fields() - Free per-field tables contained in matching data
+ * pipapo_free_fields() - Free per-field tables contained in matching data
  * @m:		Matching data
  */
-अटल व्योम pipapo_मुक्त_fields(काष्ठा nft_pipapo_match *m)
-अणु
-	काष्ठा nft_pipapo_field *f;
-	पूर्णांक i;
+static void pipapo_free_fields(struct nft_pipapo_match *m)
+{
+	struct nft_pipapo_field *f;
+	int i;
 
-	nft_pipapo_क्रम_each_field(f, i, m) अणु
-		kvमुक्त(f->lt);
-		kvमुक्त(f->mt);
-	पूर्ण
-पूर्ण
+	nft_pipapo_for_each_field(f, i, m) {
+		kvfree(f->lt);
+		kvfree(f->mt);
+	}
+}
 
 /**
- * pipapo_reclaim_match - RCU callback to मुक्त fields from old matching data
+ * pipapo_reclaim_match - RCU callback to free fields from old matching data
  * @rcu:	RCU head
  */
-अटल व्योम pipapo_reclaim_match(काष्ठा rcu_head *rcu)
-अणु
-	काष्ठा nft_pipapo_match *m;
-	पूर्णांक i;
+static void pipapo_reclaim_match(struct rcu_head *rcu)
+{
+	struct nft_pipapo_match *m;
+	int i;
 
-	m = container_of(rcu, काष्ठा nft_pipapo_match, rcu);
+	m = container_of(rcu, struct nft_pipapo_match, rcu);
 
-	क्रम_each_possible_cpu(i)
-		kमुक्त(*per_cpu_ptr(m->scratch, i));
+	for_each_possible_cpu(i)
+		kfree(*per_cpu_ptr(m->scratch, i));
 
-#अगर_घोषित NFT_PIPAPO_ALIGN
-	मुक्त_percpu(m->scratch_aligned);
-#पूर्ण_अगर
-	मुक्त_percpu(m->scratch);
+#ifdef NFT_PIPAPO_ALIGN
+	free_percpu(m->scratch_aligned);
+#endif
+	free_percpu(m->scratch);
 
-	pipapo_मुक्त_fields(m);
+	pipapo_free_fields(m);
 
-	kमुक्त(m);
-पूर्ण
+	kfree(m);
+}
 
 /**
  * pipapo_commit() - Replace lookup data with current working copy
  * @set:	nftables API set representation
  *
- * While at it, check अगर we should perक्रमm garbage collection on the working
- * copy beक्रमe committing it क्रम lookup, and करोn't replace the table अगर the
- * working copy करोesn't have pending changes.
+ * While at it, check if we should perform garbage collection on the working
+ * copy before committing it for lookup, and don't replace the table if the
+ * working copy doesn't have pending changes.
  *
- * We also need to create a new working copy क्रम subsequent insertions and
+ * We also need to create a new working copy for subsequent insertions and
  * deletions.
  */
-अटल व्योम pipapo_commit(स्थिर काष्ठा nft_set *set)
-अणु
-	काष्ठा nft_pipapo *priv = nft_set_priv(set);
-	काष्ठा nft_pipapo_match *new_clone, *old;
+static void pipapo_commit(const struct nft_set *set)
+{
+	struct nft_pipapo *priv = nft_set_priv(set);
+	struct nft_pipapo_match *new_clone, *old;
 
-	अगर (समय_after_eq(jअगरfies, priv->last_gc + nft_set_gc_पूर्णांकerval(set)))
+	if (time_after_eq(jiffies, priv->last_gc + nft_set_gc_interval(set)))
 		pipapo_gc(set, priv->clone);
 
-	अगर (!priv->dirty)
-		वापस;
+	if (!priv->dirty)
+		return;
 
 	new_clone = pipapo_clone(priv->clone);
-	अगर (IS_ERR(new_clone))
-		वापस;
+	if (IS_ERR(new_clone))
+		return;
 
 	priv->dirty = false;
 
-	old = rcu_access_poपूर्णांकer(priv->match);
-	rcu_assign_poपूर्णांकer(priv->match, priv->clone);
-	अगर (old)
+	old = rcu_access_pointer(priv->match);
+	rcu_assign_pointer(priv->match, priv->clone);
+	if (old)
 		call_rcu(&old->rcu, pipapo_reclaim_match);
 
 	priv->clone = new_clone;
-पूर्ण
+}
 
 /**
  * nft_pipapo_activate() - Mark element reference as active given key, commit
@@ -1659,53 +1658,53 @@ out_scratch:
  * @elem:	nftables API element representation containing key data
  *
  * On insertion, elements are added to a copy of the matching data currently
- * in use क्रम lookups, and not directly inserted पूर्णांकo current lookup data, so
+ * in use for lookups, and not directly inserted into current lookup data, so
  * we'll take care of that by calling pipapo_commit() here. Both
- * nft_pipapo_insert() and nft_pipapo_activate() are called once क्रम each
+ * nft_pipapo_insert() and nft_pipapo_activate() are called once for each
  * element, hence we can't purpose either one as a real commit operation.
  */
-अटल व्योम nft_pipapo_activate(स्थिर काष्ठा net *net,
-				स्थिर काष्ठा nft_set *set,
-				स्थिर काष्ठा nft_set_elem *elem)
-अणु
-	काष्ठा nft_pipapo_elem *e;
+static void nft_pipapo_activate(const struct net *net,
+				const struct nft_set *set,
+				const struct nft_set_elem *elem)
+{
+	struct nft_pipapo_elem *e;
 
-	e = pipapo_get(net, set, (स्थिर u8 *)elem->key.val.data, 0);
-	अगर (IS_ERR(e))
-		वापस;
+	e = pipapo_get(net, set, (const u8 *)elem->key.val.data, 0);
+	if (IS_ERR(e))
+		return;
 
 	nft_set_elem_change_active(net, set, &e->ext);
 	nft_set_elem_clear_busy(&e->ext);
 
 	pipapo_commit(set);
-पूर्ण
+}
 
 /**
  * pipapo_deactivate() - Check that element is in set, mark as inactive
  * @net:	Network namespace
  * @set:	nftables API set representation
  * @data:	Input key data
- * @ext:	nftables API extension poपूर्णांकer, used to check क्रम end element
+ * @ext:	nftables API extension pointer, used to check for end element
  *
  * This is a convenience function that can be called from both
  * nft_pipapo_deactivate() and nft_pipapo_flush(), as they are in fact the same
  * operation.
  *
- * Return: deactivated element अगर found, शून्य otherwise.
+ * Return: deactivated element if found, NULL otherwise.
  */
-अटल व्योम *pipapo_deactivate(स्थिर काष्ठा net *net, स्थिर काष्ठा nft_set *set,
-			       स्थिर u8 *data, स्थिर काष्ठा nft_set_ext *ext)
-अणु
-	काष्ठा nft_pipapo_elem *e;
+static void *pipapo_deactivate(const struct net *net, const struct nft_set *set,
+			       const u8 *data, const struct nft_set_ext *ext)
+{
+	struct nft_pipapo_elem *e;
 
 	e = pipapo_get(net, set, data, nft_genmask_next(net));
-	अगर (IS_ERR(e))
-		वापस शून्य;
+	if (IS_ERR(e))
+		return NULL;
 
 	nft_set_elem_change_active(net, set, &e->ext);
 
-	वापस e;
-पूर्ण
+	return e;
+}
 
 /**
  * nft_pipapo_deactivate() - Call pipapo_deactivate() to make element inactive
@@ -1713,16 +1712,16 @@ out_scratch:
  * @set:	nftables API set representation
  * @elem:	nftables API element representation containing key data
  *
- * Return: deactivated element अगर found, शून्य otherwise.
+ * Return: deactivated element if found, NULL otherwise.
  */
-अटल व्योम *nft_pipapo_deactivate(स्थिर काष्ठा net *net,
-				   स्थिर काष्ठा nft_set *set,
-				   स्थिर काष्ठा nft_set_elem *elem)
-अणु
-	स्थिर काष्ठा nft_set_ext *ext = nft_set_elem_ext(set, elem->priv);
+static void *nft_pipapo_deactivate(const struct net *net,
+				   const struct nft_set *set,
+				   const struct nft_set_elem *elem)
+{
+	const struct nft_set_ext *ext = nft_set_elem_ext(set, elem->priv);
 
-	वापस pipapo_deactivate(net, set, (स्थिर u8 *)elem->key.val.data, ext);
-पूर्ण
+	return pipapo_deactivate(net, set, (const u8 *)elem->key.val.data, ext);
+}
 
 /**
  * nft_pipapo_flush() - Call pipapo_deactivate() to make element inactive
@@ -1731,37 +1730,37 @@ out_scratch:
  * @elem:	nftables API element representation containing key data
  *
  * This is functionally the same as nft_pipapo_deactivate(), with a slightly
- * dअगरferent पूर्णांकerface, and it's also called once क्रम each element in a set
+ * different interface, and it's also called once for each element in a set
  * being flushed, so we can't implement, strictly speaking, a flush operation,
  * which would otherwise be as simple as allocating an empty copy of the
  * matching data.
  *
- * Note that we could in theory करो that, mark the set as flushed, and ignore
+ * Note that we could in theory do that, mark the set as flushed, and ignore
  * subsequent calls, but we would leak all the elements after the first one,
- * because they wouldn't then be मुक्तd as result of API calls.
+ * because they wouldn't then be freed as result of API calls.
  *
- * Return: true अगर element was found and deactivated.
+ * Return: true if element was found and deactivated.
  */
-अटल bool nft_pipapo_flush(स्थिर काष्ठा net *net, स्थिर काष्ठा nft_set *set,
-			     व्योम *elem)
-अणु
-	काष्ठा nft_pipapo_elem *e = elem;
+static bool nft_pipapo_flush(const struct net *net, const struct nft_set *set,
+			     void *elem)
+{
+	struct nft_pipapo_elem *e = elem;
 
-	वापस pipapo_deactivate(net, set, (स्थिर u8 *)nft_set_ext_key(&e->ext),
+	return pipapo_deactivate(net, set, (const u8 *)nft_set_ext_key(&e->ext),
 				 &e->ext);
-पूर्ण
+}
 
 /**
- * pipapo_get_boundaries() - Get byte पूर्णांकerval क्रम associated rules
+ * pipapo_get_boundaries() - Get byte interval for associated rules
  * @f:		Field including lookup table
  * @first_rule:	First rule (lowest index)
  * @rule_count:	Number of associated rules
- * @left:	Byte expression क्रम left boundary (start of range)
- * @right:	Byte expression क्रम right boundary (end of range)
+ * @left:	Byte expression for left boundary (start of range)
+ * @right:	Byte expression for right boundary (end of range)
  *
  * Given the first rule and amount of rules that originated from the same entry,
  * build the original range associated with the entry, and calculate the length
- * of the originating neपंचांगask.
+ * of the originating netmask.
  *
  * In pictures:
  *
@@ -1777,11 +1776,11 @@ out_scratch:
  *        7   1,2 1,2  1   1   1   1   1   1   1   1   1   1   1   1   1   1
  *
  * this is the lookup table corresponding to the IPv4 range
- * 192.168.1.0-192.168.2.1, which was expanded to the two composing neपंचांगasks,
+ * 192.168.1.0-192.168.2.1, which was expanded to the two composing netmasks,
  * rule #1: 192.168.1.0/24, and rule #2: 192.168.2.0/31.
  *
- * This function fills @left and @right with the byte values of the lefपंचांगost
- * and righपंचांगost bucket indices क्रम the lowest and highest rule indices,
+ * This function fills @left and @right with the byte values of the leftmost
+ * and rightmost bucket indices for the lowest and highest rule indices,
  * respectively. If @first_rule is 1 and @rule_count is 2, we obtain, in
  * nibbles:
  *   left:  < 12, 0, 10, 8, 0, 1, 0, 0 >
@@ -1789,59 +1788,59 @@ out_scratch:
  * corresponding to bytes:
  *   left:  < 192, 168, 1, 0 >
  *   right: < 192, 168, 2, 1 >
- * with mask length irrelevant here, unused on वापस, as the range is alपढ़ोy
- * defined by its start and end poपूर्णांकs. The mask length is relevant क्रम a single
- * ranged entry instead: अगर @first_rule is 1 and @rule_count is 1, we ignore
+ * with mask length irrelevant here, unused on return, as the range is already
+ * defined by its start and end points. The mask length is relevant for a single
+ * ranged entry instead: if @first_rule is 1 and @rule_count is 1, we ignore
  * rule 2 above: @left becomes < 192, 168, 1, 0 >, @right becomes
  * < 192, 168, 1, 255 >, and the mask length, calculated from the distances
- * between lefपंचांगost and righपंचांगost bucket indices क्रम each group, would be 24.
+ * between leftmost and rightmost bucket indices for each group, would be 24.
  *
  * Return: mask length, in bits.
  */
-अटल पूर्णांक pipapo_get_boundaries(काष्ठा nft_pipapo_field *f, पूर्णांक first_rule,
-				 पूर्णांक rule_count, u8 *left, u8 *right)
-अणु
-	पूर्णांक g, mask_len = 0, bit_offset = 0;
+static int pipapo_get_boundaries(struct nft_pipapo_field *f, int first_rule,
+				 int rule_count, u8 *left, u8 *right)
+{
+	int g, mask_len = 0, bit_offset = 0;
 	u8 *l = left, *r = right;
 
-	क्रम (g = 0; g < f->groups; g++) अणु
-		पूर्णांक b, x0, x1;
+	for (g = 0; g < f->groups; g++) {
+		int b, x0, x1;
 
 		x0 = -1;
 		x1 = -1;
-		क्रम (b = 0; b < NFT_PIPAPO_BUCKETS(f->bb); b++) अणु
-			अचिन्हित दीर्घ *pos;
+		for (b = 0; b < NFT_PIPAPO_BUCKETS(f->bb); b++) {
+			unsigned long *pos;
 
 			pos = NFT_PIPAPO_LT_ALIGN(f->lt) +
 			      (g * NFT_PIPAPO_BUCKETS(f->bb) + b) * f->bsize;
-			अगर (test_bit(first_rule, pos) && x0 == -1)
+			if (test_bit(first_rule, pos) && x0 == -1)
 				x0 = b;
-			अगर (test_bit(first_rule + rule_count - 1, pos))
+			if (test_bit(first_rule + rule_count - 1, pos))
 				x1 = b;
-		पूर्ण
+		}
 
 		*l |= x0 << (BITS_PER_BYTE - f->bb - bit_offset);
 		*r |= x1 << (BITS_PER_BYTE - f->bb - bit_offset);
 
 		bit_offset += f->bb;
-		अगर (bit_offset >= BITS_PER_BYTE) अणु
+		if (bit_offset >= BITS_PER_BYTE) {
 			bit_offset %= BITS_PER_BYTE;
 			l++;
 			r++;
-		पूर्ण
+		}
 
-		अगर (x1 - x0 == 0)
+		if (x1 - x0 == 0)
 			mask_len += 4;
-		अन्यथा अगर (x1 - x0 == 1)
+		else if (x1 - x0 == 1)
 			mask_len += 3;
-		अन्यथा अगर (x1 - x0 == 3)
+		else if (x1 - x0 == 3)
 			mask_len += 2;
-		अन्यथा अगर (x1 - x0 == 7)
+		else if (x1 - x0 == 7)
 			mask_len += 1;
-	पूर्ण
+	}
 
-	वापस mask_len;
-पूर्ण
+	return mask_len;
+}
 
 /**
  * pipapo_match_field() - Match rules against byte ranges
@@ -1853,62 +1852,62 @@ out_scratch:
  *
  * Return: true on match, false otherwise.
  */
-अटल bool pipapo_match_field(काष्ठा nft_pipapo_field *f,
-			       पूर्णांक first_rule, पूर्णांक rule_count,
-			       स्थिर u8 *start, स्थिर u8 *end)
-अणु
-	u8 right[NFT_PIPAPO_MAX_BYTES] = अणु 0 पूर्ण;
-	u8 left[NFT_PIPAPO_MAX_BYTES] = अणु 0 पूर्ण;
+static bool pipapo_match_field(struct nft_pipapo_field *f,
+			       int first_rule, int rule_count,
+			       const u8 *start, const u8 *end)
+{
+	u8 right[NFT_PIPAPO_MAX_BYTES] = { 0 };
+	u8 left[NFT_PIPAPO_MAX_BYTES] = { 0 };
 
 	pipapo_get_boundaries(f, first_rule, rule_count, left, right);
 
-	वापस !स_भेद(start, left,
+	return !memcmp(start, left,
 		       f->groups / NFT_PIPAPO_GROUPS_PER_BYTE(f)) &&
-	       !स_भेद(end, right, f->groups / NFT_PIPAPO_GROUPS_PER_BYTE(f));
-पूर्ण
+	       !memcmp(end, right, f->groups / NFT_PIPAPO_GROUPS_PER_BYTE(f));
+}
 
 /**
- * nft_pipapo_हटाओ() - Remove element given key, commit
+ * nft_pipapo_remove() - Remove element given key, commit
  * @net:	Network namespace
  * @set:	nftables API set representation
  * @elem:	nftables API element representation containing key data
  *
  * Similarly to nft_pipapo_activate(), this is used as commit operation by the
  * API, but it's called once per element in the pending transaction, so we can't
- * implement this as a single commit operation. Closest we can get is to हटाओ
- * the matched element here, अगर any, and commit the updated matching data.
+ * implement this as a single commit operation. Closest we can get is to remove
+ * the matched element here, if any, and commit the updated matching data.
  */
-अटल व्योम nft_pipapo_हटाओ(स्थिर काष्ठा net *net, स्थिर काष्ठा nft_set *set,
-			      स्थिर काष्ठा nft_set_elem *elem)
-अणु
-	काष्ठा nft_pipapo *priv = nft_set_priv(set);
-	काष्ठा nft_pipapo_match *m = priv->clone;
-	काष्ठा nft_pipapo_elem *e = elem->priv;
-	पूर्णांक rules_f0, first_rule = 0;
-	स्थिर u8 *data;
+static void nft_pipapo_remove(const struct net *net, const struct nft_set *set,
+			      const struct nft_set_elem *elem)
+{
+	struct nft_pipapo *priv = nft_set_priv(set);
+	struct nft_pipapo_match *m = priv->clone;
+	struct nft_pipapo_elem *e = elem->priv;
+	int rules_f0, first_rule = 0;
+	const u8 *data;
 
-	data = (स्थिर u8 *)nft_set_ext_key(&e->ext);
+	data = (const u8 *)nft_set_ext_key(&e->ext);
 
 	e = pipapo_get(net, set, data, 0);
-	अगर (IS_ERR(e))
-		वापस;
+	if (IS_ERR(e))
+		return;
 
-	जबतक ((rules_f0 = pipapo_rules_same_key(m->f, first_rule))) अणु
-		जोड़ nft_pipapo_map_bucket rulemap[NFT_PIPAPO_MAX_FIELDS];
-		स्थिर u8 *match_start, *match_end;
-		काष्ठा nft_pipapo_field *f;
-		पूर्णांक i, start, rules_fx;
+	while ((rules_f0 = pipapo_rules_same_key(m->f, first_rule))) {
+		union nft_pipapo_map_bucket rulemap[NFT_PIPAPO_MAX_FIELDS];
+		const u8 *match_start, *match_end;
+		struct nft_pipapo_field *f;
+		int i, start, rules_fx;
 
 		match_start = data;
-		match_end = (स्थिर u8 *)nft_set_ext_key_end(&e->ext)->data;
+		match_end = (const u8 *)nft_set_ext_key_end(&e->ext)->data;
 
 		start = first_rule;
 		rules_fx = rules_f0;
 
-		nft_pipapo_क्रम_each_field(f, i, m) अणु
-			अगर (!pipapo_match_field(f, start, rules_fx,
+		nft_pipapo_for_each_field(f, i, m) {
+			if (!pipapo_match_field(f, start, rules_fx,
 						match_start, match_end))
-				अवरोध;
+				break;
 
 			rulemap[i].to = start;
 			rulemap[i].n = rules_fx;
@@ -1918,18 +1917,18 @@ out_scratch:
 
 			match_start += NFT_PIPAPO_GROUPS_PADDED_SIZE(f);
 			match_end += NFT_PIPAPO_GROUPS_PADDED_SIZE(f);
-		पूर्ण
+		}
 
-		अगर (i == m->field_count) अणु
+		if (i == m->field_count) {
 			priv->dirty = true;
 			pipapo_drop(m, rulemap);
 			pipapo_commit(set);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		first_rule += rules_f0;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * nft_pipapo_walk() - Walk over elements
@@ -1937,266 +1936,266 @@ out_scratch:
  * @set:	nftables API set representation
  * @iter:	Iterator
  *
- * As elements are referenced in the mapping array क्रम the last field, directly
+ * As elements are referenced in the mapping array for the last field, directly
  * scan that array: there's no need to follow rule mappings from the first
  * field.
  */
-अटल व्योम nft_pipapo_walk(स्थिर काष्ठा nft_ctx *ctx, काष्ठा nft_set *set,
-			    काष्ठा nft_set_iter *iter)
-अणु
-	काष्ठा nft_pipapo *priv = nft_set_priv(set);
-	काष्ठा nft_pipapo_match *m;
-	काष्ठा nft_pipapo_field *f;
-	पूर्णांक i, r;
+static void nft_pipapo_walk(const struct nft_ctx *ctx, struct nft_set *set,
+			    struct nft_set_iter *iter)
+{
+	struct nft_pipapo *priv = nft_set_priv(set);
+	struct nft_pipapo_match *m;
+	struct nft_pipapo_field *f;
+	int i, r;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	m = rcu_dereference(priv->match);
 
-	अगर (unlikely(!m))
-		जाओ out;
+	if (unlikely(!m))
+		goto out;
 
-	क्रम (i = 0, f = m->f; i < m->field_count - 1; i++, f++)
+	for (i = 0, f = m->f; i < m->field_count - 1; i++, f++)
 		;
 
-	क्रम (r = 0; r < f->rules; r++) अणु
-		काष्ठा nft_pipapo_elem *e;
-		काष्ठा nft_set_elem elem;
+	for (r = 0; r < f->rules; r++) {
+		struct nft_pipapo_elem *e;
+		struct nft_set_elem elem;
 
-		अगर (r < f->rules - 1 && f->mt[r + 1].e == f->mt[r].e)
-			जारी;
+		if (r < f->rules - 1 && f->mt[r + 1].e == f->mt[r].e)
+			continue;
 
-		अगर (iter->count < iter->skip)
-			जाओ cont;
+		if (iter->count < iter->skip)
+			goto cont;
 
 		e = f->mt[r].e;
-		अगर (nft_set_elem_expired(&e->ext))
-			जाओ cont;
+		if (nft_set_elem_expired(&e->ext))
+			goto cont;
 
 		elem.priv = e;
 
 		iter->err = iter->fn(ctx, set, iter, &elem);
-		अगर (iter->err < 0)
-			जाओ out;
+		if (iter->err < 0)
+			goto out;
 
 cont:
 		iter->count++;
-	पूर्ण
+	}
 
 out:
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
 /**
- * nft_pipapo_privsize() - Return the size of निजी data क्रम the set
- * @nla:	netlink attributes, ignored as size करोesn't depend on them
- * @desc:	Set description, ignored as size करोesn't depend on it
+ * nft_pipapo_privsize() - Return the size of private data for the set
+ * @nla:	netlink attributes, ignored as size doesn't depend on them
+ * @desc:	Set description, ignored as size doesn't depend on it
  *
- * Return: size of निजी data क्रम this set implementation, in bytes
+ * Return: size of private data for this set implementation, in bytes
  */
-अटल u64 nft_pipapo_privsize(स्थिर काष्ठा nlattr * स्थिर nla[],
-			       स्थिर काष्ठा nft_set_desc *desc)
-अणु
-	वापस माप(काष्ठा nft_pipapo);
-पूर्ण
+static u64 nft_pipapo_privsize(const struct nlattr * const nla[],
+			       const struct nft_set_desc *desc)
+{
+	return sizeof(struct nft_pipapo);
+}
 
 /**
- * nft_pipapo_estimate() - Set size, space and lookup complनिकासy
+ * nft_pipapo_estimate() - Set size, space and lookup complexity
  * @desc:	Set description, element count and field description used
  * @features:	Flags: NFT_SET_INTERVAL needs to be there
- * @est:	Storage क्रम estimation data
+ * @est:	Storage for estimation data
  *
- * Return: true अगर set description is compatible, false otherwise
+ * Return: true if set description is compatible, false otherwise
  */
-अटल bool nft_pipapo_estimate(स्थिर काष्ठा nft_set_desc *desc, u32 features,
-				काष्ठा nft_set_estimate *est)
-अणु
-	अगर (!(features & NFT_SET_INTERVAL) ||
+static bool nft_pipapo_estimate(const struct nft_set_desc *desc, u32 features,
+				struct nft_set_estimate *est)
+{
+	if (!(features & NFT_SET_INTERVAL) ||
 	    desc->field_count < NFT_PIPAPO_MIN_FIELDS)
-		वापस false;
+		return false;
 
 	est->size = pipapo_estimate_size(desc);
-	अगर (!est->size)
-		वापस false;
+	if (!est->size)
+		return false;
 
 	est->lookup = NFT_SET_CLASS_O_LOG_N;
 
 	est->space = NFT_SET_CLASS_O_N;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /**
- * nft_pipapo_init() - Initialise data क्रम a set instance
+ * nft_pipapo_init() - Initialise data for a set instance
  * @set:	nftables API set representation
  * @desc:	Set description
  * @nla:	netlink attributes
  *
  * Validate number and size of fields passed as NFTA_SET_DESC_CONCAT netlink
- * attributes, initialise पूर्णांकernal set parameters, current instance of matching
- * data and a copy क्रम subsequent insertions.
+ * attributes, initialise internal set parameters, current instance of matching
+ * data and a copy for subsequent insertions.
  *
  * Return: 0 on success, negative error code on failure.
  */
-अटल पूर्णांक nft_pipapo_init(स्थिर काष्ठा nft_set *set,
-			   स्थिर काष्ठा nft_set_desc *desc,
-			   स्थिर काष्ठा nlattr * स्थिर nla[])
-अणु
-	काष्ठा nft_pipapo *priv = nft_set_priv(set);
-	काष्ठा nft_pipapo_match *m;
-	काष्ठा nft_pipapo_field *f;
-	पूर्णांक err, i, field_count;
+static int nft_pipapo_init(const struct nft_set *set,
+			   const struct nft_set_desc *desc,
+			   const struct nlattr * const nla[])
+{
+	struct nft_pipapo *priv = nft_set_priv(set);
+	struct nft_pipapo_match *m;
+	struct nft_pipapo_field *f;
+	int err, i, field_count;
 
 	field_count = desc->field_count ? : 1;
 
-	अगर (field_count > NFT_PIPAPO_MAX_FIELDS)
-		वापस -EINVAL;
+	if (field_count > NFT_PIPAPO_MAX_FIELDS)
+		return -EINVAL;
 
-	m = kदो_स्मृति(माप(*priv->match) + माप(*f) * field_count,
+	m = kmalloc(sizeof(*priv->match) + sizeof(*f) * field_count,
 		    GFP_KERNEL);
-	अगर (!m)
-		वापस -ENOMEM;
+	if (!m)
+		return -ENOMEM;
 
 	m->field_count = field_count;
 	m->bsize_max = 0;
 
-	m->scratch = alloc_percpu(अचिन्हित दीर्घ *);
-	अगर (!m->scratch) अणु
+	m->scratch = alloc_percpu(unsigned long *);
+	if (!m->scratch) {
 		err = -ENOMEM;
-		जाओ out_scratch;
-	पूर्ण
-	क्रम_each_possible_cpu(i)
-		*per_cpu_ptr(m->scratch, i) = शून्य;
+		goto out_scratch;
+	}
+	for_each_possible_cpu(i)
+		*per_cpu_ptr(m->scratch, i) = NULL;
 
-#अगर_घोषित NFT_PIPAPO_ALIGN
-	m->scratch_aligned = alloc_percpu(अचिन्हित दीर्घ *);
-	अगर (!m->scratch_aligned) अणु
+#ifdef NFT_PIPAPO_ALIGN
+	m->scratch_aligned = alloc_percpu(unsigned long *);
+	if (!m->scratch_aligned) {
 		err = -ENOMEM;
-		जाओ out_मुक्त;
-	पूर्ण
-	क्रम_each_possible_cpu(i)
-		*per_cpu_ptr(m->scratch_aligned, i) = शून्य;
-#पूर्ण_अगर
+		goto out_free;
+	}
+	for_each_possible_cpu(i)
+		*per_cpu_ptr(m->scratch_aligned, i) = NULL;
+#endif
 
 	rcu_head_init(&m->rcu);
 
-	nft_pipapo_क्रम_each_field(f, i, m) अणु
-		पूर्णांक len = desc->field_len[i] ? : set->klen;
+	nft_pipapo_for_each_field(f, i, m) {
+		int len = desc->field_len[i] ? : set->klen;
 
 		f->bb = NFT_PIPAPO_GROUP_BITS_INIT;
 		f->groups = len * NFT_PIPAPO_GROUPS_PER_BYTE(f);
 
-		priv->width += round_up(len, माप(u32));
+		priv->width += round_up(len, sizeof(u32));
 
 		f->bsize = 0;
 		f->rules = 0;
-		NFT_PIPAPO_LT_ASSIGN(f, शून्य);
-		f->mt = शून्य;
-	पूर्ण
+		NFT_PIPAPO_LT_ASSIGN(f, NULL);
+		f->mt = NULL;
+	}
 
-	/* Create an initial clone of matching data क्रम next insertion */
+	/* Create an initial clone of matching data for next insertion */
 	priv->clone = pipapo_clone(m);
-	अगर (IS_ERR(priv->clone)) अणु
+	if (IS_ERR(priv->clone)) {
 		err = PTR_ERR(priv->clone);
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	priv->dirty = false;
 
-	rcu_assign_poपूर्णांकer(priv->match, m);
+	rcu_assign_pointer(priv->match, m);
 
-	वापस 0;
+	return 0;
 
-out_मुक्त:
-#अगर_घोषित NFT_PIPAPO_ALIGN
-	मुक्त_percpu(m->scratch_aligned);
-#पूर्ण_अगर
-	मुक्त_percpu(m->scratch);
+out_free:
+#ifdef NFT_PIPAPO_ALIGN
+	free_percpu(m->scratch_aligned);
+#endif
+	free_percpu(m->scratch);
 out_scratch:
-	kमुक्त(m);
+	kfree(m);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * nft_pipapo_destroy() - Free निजी data क्रम set and all committed elements
+ * nft_pipapo_destroy() - Free private data for set and all committed elements
  * @set:	nftables API set representation
  */
-अटल व्योम nft_pipapo_destroy(स्थिर काष्ठा nft_set *set)
-अणु
-	काष्ठा nft_pipapo *priv = nft_set_priv(set);
-	काष्ठा nft_pipapo_match *m;
-	काष्ठा nft_pipapo_field *f;
-	पूर्णांक i, r, cpu;
+static void nft_pipapo_destroy(const struct nft_set *set)
+{
+	struct nft_pipapo *priv = nft_set_priv(set);
+	struct nft_pipapo_match *m;
+	struct nft_pipapo_field *f;
+	int i, r, cpu;
 
-	m = rcu_dereference_रक्षित(priv->match, true);
-	अगर (m) अणु
+	m = rcu_dereference_protected(priv->match, true);
+	if (m) {
 		rcu_barrier();
 
-		क्रम (i = 0, f = m->f; i < m->field_count - 1; i++, f++)
+		for (i = 0, f = m->f; i < m->field_count - 1; i++, f++)
 			;
 
-		क्रम (r = 0; r < f->rules; r++) अणु
-			काष्ठा nft_pipapo_elem *e;
+		for (r = 0; r < f->rules; r++) {
+			struct nft_pipapo_elem *e;
 
-			अगर (r < f->rules - 1 && f->mt[r + 1].e == f->mt[r].e)
-				जारी;
+			if (r < f->rules - 1 && f->mt[r + 1].e == f->mt[r].e)
+				continue;
 
 			e = f->mt[r].e;
 
 			nft_set_elem_destroy(set, e, true);
-		पूर्ण
+		}
 
-#अगर_घोषित NFT_PIPAPO_ALIGN
-		मुक्त_percpu(m->scratch_aligned);
-#पूर्ण_अगर
-		क्रम_each_possible_cpu(cpu)
-			kमुक्त(*per_cpu_ptr(m->scratch, cpu));
-		मुक्त_percpu(m->scratch);
-		pipapo_मुक्त_fields(m);
-		kमुक्त(m);
-		priv->match = शून्य;
-	पूर्ण
+#ifdef NFT_PIPAPO_ALIGN
+		free_percpu(m->scratch_aligned);
+#endif
+		for_each_possible_cpu(cpu)
+			kfree(*per_cpu_ptr(m->scratch, cpu));
+		free_percpu(m->scratch);
+		pipapo_free_fields(m);
+		kfree(m);
+		priv->match = NULL;
+	}
 
-	अगर (priv->clone) अणु
-#अगर_घोषित NFT_PIPAPO_ALIGN
-		मुक्त_percpu(priv->clone->scratch_aligned);
-#पूर्ण_अगर
-		क्रम_each_possible_cpu(cpu)
-			kमुक्त(*per_cpu_ptr(priv->clone->scratch, cpu));
-		मुक्त_percpu(priv->clone->scratch);
+	if (priv->clone) {
+#ifdef NFT_PIPAPO_ALIGN
+		free_percpu(priv->clone->scratch_aligned);
+#endif
+		for_each_possible_cpu(cpu)
+			kfree(*per_cpu_ptr(priv->clone->scratch, cpu));
+		free_percpu(priv->clone->scratch);
 
-		pipapo_मुक्त_fields(priv->clone);
-		kमुक्त(priv->clone);
-		priv->clone = शून्य;
-	पूर्ण
-पूर्ण
+		pipapo_free_fields(priv->clone);
+		kfree(priv->clone);
+		priv->clone = NULL;
+	}
+}
 
 /**
  * nft_pipapo_gc_init() - Initialise garbage collection
  * @set:	nftables API set representation
  *
- * Instead of actually setting up a periodic work क्रम garbage collection, as
+ * Instead of actually setting up a periodic work for garbage collection, as
  * this operation requires a swap of matching data with the working copy, we'll
- * करो that opportunistically with other commit operations अगर the पूर्णांकerval is
- * elapsed, so we just need to set the current jअगरfies बारtamp here.
+ * do that opportunistically with other commit operations if the interval is
+ * elapsed, so we just need to set the current jiffies timestamp here.
  */
-अटल व्योम nft_pipapo_gc_init(स्थिर काष्ठा nft_set *set)
-अणु
-	काष्ठा nft_pipapo *priv = nft_set_priv(set);
+static void nft_pipapo_gc_init(const struct nft_set *set)
+{
+	struct nft_pipapo *priv = nft_set_priv(set);
 
-	priv->last_gc = jअगरfies;
-पूर्ण
+	priv->last_gc = jiffies;
+}
 
-स्थिर काष्ठा nft_set_type nft_set_pipapo_type = अणु
+const struct nft_set_type nft_set_pipapo_type = {
 	.features	= NFT_SET_INTERVAL | NFT_SET_MAP | NFT_SET_OBJECT |
 			  NFT_SET_TIMEOUT,
-	.ops		= अणु
+	.ops		= {
 		.lookup		= nft_pipapo_lookup,
 		.insert		= nft_pipapo_insert,
 		.activate	= nft_pipapo_activate,
 		.deactivate	= nft_pipapo_deactivate,
 		.flush		= nft_pipapo_flush,
-		.हटाओ		= nft_pipapo_हटाओ,
+		.remove		= nft_pipapo_remove,
 		.walk		= nft_pipapo_walk,
 		.get		= nft_pipapo_get,
 		.privsize	= nft_pipapo_privsize,
@@ -2204,21 +2203,21 @@ out_scratch:
 		.init		= nft_pipapo_init,
 		.destroy	= nft_pipapo_destroy,
 		.gc_init	= nft_pipapo_gc_init,
-		.elemsize	= दुरत्व(काष्ठा nft_pipapo_elem, ext),
-	पूर्ण,
-पूर्ण;
+		.elemsize	= offsetof(struct nft_pipapo_elem, ext),
+	},
+};
 
-#अगर defined(CONFIG_X86_64) && !defined(CONFIG_UML)
-स्थिर काष्ठा nft_set_type nft_set_pipapo_avx2_type = अणु
+#if defined(CONFIG_X86_64) && !defined(CONFIG_UML)
+const struct nft_set_type nft_set_pipapo_avx2_type = {
 	.features	= NFT_SET_INTERVAL | NFT_SET_MAP | NFT_SET_OBJECT |
 			  NFT_SET_TIMEOUT,
-	.ops		= अणु
+	.ops		= {
 		.lookup		= nft_pipapo_avx2_lookup,
 		.insert		= nft_pipapo_insert,
 		.activate	= nft_pipapo_activate,
 		.deactivate	= nft_pipapo_deactivate,
 		.flush		= nft_pipapo_flush,
-		.हटाओ		= nft_pipapo_हटाओ,
+		.remove		= nft_pipapo_remove,
 		.walk		= nft_pipapo_walk,
 		.get		= nft_pipapo_get,
 		.privsize	= nft_pipapo_privsize,
@@ -2226,7 +2225,7 @@ out_scratch:
 		.init		= nft_pipapo_init,
 		.destroy	= nft_pipapo_destroy,
 		.gc_init	= nft_pipapo_gc_init,
-		.elemsize	= दुरत्व(काष्ठा nft_pipapo_elem, ext),
-	पूर्ण,
-पूर्ण;
-#पूर्ण_अगर
+		.elemsize	= offsetof(struct nft_pipapo_elem, ext),
+	},
+};
+#endif

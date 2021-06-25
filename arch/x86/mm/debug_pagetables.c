@@ -1,77 +1,76 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/debugfs.h>
-#समावेश <linux/efi.h>
-#समावेश <linux/module.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/pgtable.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/debugfs.h>
+#include <linux/efi.h>
+#include <linux/module.h>
+#include <linux/seq_file.h>
+#include <linux/pgtable.h>
 
-अटल पूर्णांक ptdump_show(काष्ठा seq_file *m, व्योम *v)
-अणु
+static int ptdump_show(struct seq_file *m, void *v)
+{
 	ptdump_walk_pgd_level_debugfs(m, &init_mm, false);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SHOW_ATTRIBUTE(ptdump);
 
-अटल पूर्णांक ptdump_curknl_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	अगर (current->mm->pgd)
+static int ptdump_curknl_show(struct seq_file *m, void *v)
+{
+	if (current->mm->pgd)
 		ptdump_walk_pgd_level_debugfs(m, current->mm, false);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SHOW_ATTRIBUTE(ptdump_curknl);
 
-#अगर_घोषित CONFIG_PAGE_TABLE_ISOLATION
-अटल पूर्णांक ptdump_curusr_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	अगर (current->mm->pgd)
+#ifdef CONFIG_PAGE_TABLE_ISOLATION
+static int ptdump_curusr_show(struct seq_file *m, void *v)
+{
+	if (current->mm->pgd)
 		ptdump_walk_pgd_level_debugfs(m, current->mm, true);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SHOW_ATTRIBUTE(ptdump_curusr);
-#पूर्ण_अगर
+#endif
 
-#अगर defined(CONFIG_EFI) && defined(CONFIG_X86_64)
-अटल पूर्णांक ptdump_efi_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	अगर (efi_mm.pgd)
+#if defined(CONFIG_EFI) && defined(CONFIG_X86_64)
+static int ptdump_efi_show(struct seq_file *m, void *v)
+{
+	if (efi_mm.pgd)
 		ptdump_walk_pgd_level_debugfs(m, &efi_mm, false);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SHOW_ATTRIBUTE(ptdump_efi);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा dentry *dir;
+static struct dentry *dir;
 
-अटल पूर्णांक __init pt_dump_debug_init(व्योम)
-अणु
-	dir = debugfs_create_dir("page_tables", शून्य);
+static int __init pt_dump_debug_init(void)
+{
+	dir = debugfs_create_dir("page_tables", NULL);
 
-	debugfs_create_file("kernel", 0400, dir, शून्य, &ptdump_fops);
-	debugfs_create_file("current_kernel", 0400, dir, शून्य,
+	debugfs_create_file("kernel", 0400, dir, NULL, &ptdump_fops);
+	debugfs_create_file("current_kernel", 0400, dir, NULL,
 			    &ptdump_curknl_fops);
 
-#अगर_घोषित CONFIG_PAGE_TABLE_ISOLATION
-	debugfs_create_file("current_user", 0400, dir, शून्य,
+#ifdef CONFIG_PAGE_TABLE_ISOLATION
+	debugfs_create_file("current_user", 0400, dir, NULL,
 			    &ptdump_curusr_fops);
-#पूर्ण_अगर
-#अगर defined(CONFIG_EFI) && defined(CONFIG_X86_64)
-	debugfs_create_file("efi", 0400, dir, शून्य, &ptdump_efi_fops);
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+#endif
+#if defined(CONFIG_EFI) && defined(CONFIG_X86_64)
+	debugfs_create_file("efi", 0400, dir, NULL, &ptdump_efi_fops);
+#endif
+	return 0;
+}
 
-अटल व्योम __निकास pt_dump_debug_निकास(व्योम)
-अणु
-	debugfs_हटाओ_recursive(dir);
-पूर्ण
+static void __exit pt_dump_debug_exit(void)
+{
+	debugfs_remove_recursive(dir);
+}
 
 module_init(pt_dump_debug_init);
-module_निकास(pt_dump_debug_निकास);
+module_exit(pt_dump_debug_exit);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Arjan van de Ven <arjan@linux.intel.com>");
 MODULE_DESCRIPTION("Kernel debugging helper that dumps pagetables");

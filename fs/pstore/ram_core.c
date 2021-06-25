@@ -1,201 +1,200 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2012 Google, Inc.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/pstore_ram.h>
-#समावेश <linux/rslib.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <यंत्र/page.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/memblock.h>
+#include <linux/pstore_ram.h>
+#include <linux/rslib.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <linux/vmalloc.h>
+#include <asm/page.h>
 
 /**
- * काष्ठा persistent_ram_buffer - persistent circular RAM buffer
+ * struct persistent_ram_buffer - persistent circular RAM buffer
  *
  * @sig:
  *	signature to indicate header (PERSISTENT_RAM_SIG xor PRZ-type value)
  * @start:
- *	offset पूर्णांकo @data where the beginning of the stored bytes begin
+ *	offset into @data where the beginning of the stored bytes begin
  * @size:
  *	number of valid bytes stored in @data
  */
-काष्ठा persistent_ram_buffer अणु
-	uपूर्णांक32_t    sig;
+struct persistent_ram_buffer {
+	uint32_t    sig;
 	atomic_t    start;
 	atomic_t    size;
-	uपूर्णांक8_t     data[];
-पूर्ण;
+	uint8_t     data[];
+};
 
-#घोषणा PERSISTENT_RAM_SIG (0x43474244) /* DBGC */
+#define PERSISTENT_RAM_SIG (0x43474244) /* DBGC */
 
-अटल अंतरभूत माप_प्रकार buffer_size(काष्ठा persistent_ram_zone *prz)
-अणु
-	वापस atomic_पढ़ो(&prz->buffer->size);
-पूर्ण
+static inline size_t buffer_size(struct persistent_ram_zone *prz)
+{
+	return atomic_read(&prz->buffer->size);
+}
 
-अटल अंतरभूत माप_प्रकार buffer_start(काष्ठा persistent_ram_zone *prz)
-अणु
-	वापस atomic_पढ़ो(&prz->buffer->start);
-पूर्ण
+static inline size_t buffer_start(struct persistent_ram_zone *prz)
+{
+	return atomic_read(&prz->buffer->start);
+}
 
-/* increase and wrap the start poपूर्णांकer, वापसing the old value */
-अटल माप_प्रकार buffer_start_add(काष्ठा persistent_ram_zone *prz, माप_प्रकार a)
-अणु
-	पूर्णांक old;
-	पूर्णांक new;
-	अचिन्हित दीर्घ flags = 0;
+/* increase and wrap the start pointer, returning the old value */
+static size_t buffer_start_add(struct persistent_ram_zone *prz, size_t a)
+{
+	int old;
+	int new;
+	unsigned long flags = 0;
 
-	अगर (!(prz->flags & PRZ_FLAG_NO_LOCK))
+	if (!(prz->flags & PRZ_FLAG_NO_LOCK))
 		raw_spin_lock_irqsave(&prz->buffer_lock, flags);
 
-	old = atomic_पढ़ो(&prz->buffer->start);
+	old = atomic_read(&prz->buffer->start);
 	new = old + a;
-	जबतक (unlikely(new >= prz->buffer_size))
+	while (unlikely(new >= prz->buffer_size))
 		new -= prz->buffer_size;
 	atomic_set(&prz->buffer->start, new);
 
-	अगर (!(prz->flags & PRZ_FLAG_NO_LOCK))
+	if (!(prz->flags & PRZ_FLAG_NO_LOCK))
 		raw_spin_unlock_irqrestore(&prz->buffer_lock, flags);
 
-	वापस old;
-पूर्ण
+	return old;
+}
 
 /* increase the size counter until it hits the max size */
-अटल व्योम buffer_size_add(काष्ठा persistent_ram_zone *prz, माप_प्रकार a)
-अणु
-	माप_प्रकार old;
-	माप_प्रकार new;
-	अचिन्हित दीर्घ flags = 0;
+static void buffer_size_add(struct persistent_ram_zone *prz, size_t a)
+{
+	size_t old;
+	size_t new;
+	unsigned long flags = 0;
 
-	अगर (!(prz->flags & PRZ_FLAG_NO_LOCK))
+	if (!(prz->flags & PRZ_FLAG_NO_LOCK))
 		raw_spin_lock_irqsave(&prz->buffer_lock, flags);
 
-	old = atomic_पढ़ो(&prz->buffer->size);
-	अगर (old == prz->buffer_size)
-		जाओ निकास;
+	old = atomic_read(&prz->buffer->size);
+	if (old == prz->buffer_size)
+		goto exit;
 
 	new = old + a;
-	अगर (new > prz->buffer_size)
+	if (new > prz->buffer_size)
 		new = prz->buffer_size;
 	atomic_set(&prz->buffer->size, new);
 
-निकास:
-	अगर (!(prz->flags & PRZ_FLAG_NO_LOCK))
+exit:
+	if (!(prz->flags & PRZ_FLAG_NO_LOCK))
 		raw_spin_unlock_irqrestore(&prz->buffer_lock, flags);
-पूर्ण
+}
 
-अटल व्योम notrace persistent_ram_encode_rs8(काष्ठा persistent_ram_zone *prz,
-	uपूर्णांक8_t *data, माप_प्रकार len, uपूर्णांक8_t *ecc)
-अणु
-	पूर्णांक i;
+static void notrace persistent_ram_encode_rs8(struct persistent_ram_zone *prz,
+	uint8_t *data, size_t len, uint8_t *ecc)
+{
+	int i;
 
 	/* Initialize the parity buffer */
-	स_रखो(prz->ecc_info.par, 0,
-	       prz->ecc_info.ecc_size * माप(prz->ecc_info.par[0]));
+	memset(prz->ecc_info.par, 0,
+	       prz->ecc_info.ecc_size * sizeof(prz->ecc_info.par[0]));
 	encode_rs8(prz->rs_decoder, data, len, prz->ecc_info.par, 0);
-	क्रम (i = 0; i < prz->ecc_info.ecc_size; i++)
+	for (i = 0; i < prz->ecc_info.ecc_size; i++)
 		ecc[i] = prz->ecc_info.par[i];
-पूर्ण
+}
 
-अटल पूर्णांक persistent_ram_decode_rs8(काष्ठा persistent_ram_zone *prz,
-	व्योम *data, माप_प्रकार len, uपूर्णांक8_t *ecc)
-अणु
-	पूर्णांक i;
+static int persistent_ram_decode_rs8(struct persistent_ram_zone *prz,
+	void *data, size_t len, uint8_t *ecc)
+{
+	int i;
 
-	क्रम (i = 0; i < prz->ecc_info.ecc_size; i++)
+	for (i = 0; i < prz->ecc_info.ecc_size; i++)
 		prz->ecc_info.par[i] = ecc[i];
-	वापस decode_rs8(prz->rs_decoder, data, prz->ecc_info.par, len,
-				शून्य, 0, शून्य, 0, शून्य);
-पूर्ण
+	return decode_rs8(prz->rs_decoder, data, prz->ecc_info.par, len,
+				NULL, 0, NULL, 0, NULL);
+}
 
-अटल व्योम notrace persistent_ram_update_ecc(काष्ठा persistent_ram_zone *prz,
-	अचिन्हित पूर्णांक start, अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा persistent_ram_buffer *buffer = prz->buffer;
-	uपूर्णांक8_t *buffer_end = buffer->data + prz->buffer_size;
-	uपूर्णांक8_t *block;
-	uपूर्णांक8_t *par;
-	पूर्णांक ecc_block_size = prz->ecc_info.block_size;
-	पूर्णांक ecc_size = prz->ecc_info.ecc_size;
-	पूर्णांक size = ecc_block_size;
+static void notrace persistent_ram_update_ecc(struct persistent_ram_zone *prz,
+	unsigned int start, unsigned int count)
+{
+	struct persistent_ram_buffer *buffer = prz->buffer;
+	uint8_t *buffer_end = buffer->data + prz->buffer_size;
+	uint8_t *block;
+	uint8_t *par;
+	int ecc_block_size = prz->ecc_info.block_size;
+	int ecc_size = prz->ecc_info.ecc_size;
+	int size = ecc_block_size;
 
-	अगर (!ecc_size)
-		वापस;
+	if (!ecc_size)
+		return;
 
 	block = buffer->data + (start & ~(ecc_block_size - 1));
 	par = prz->par_buffer + (start / ecc_block_size) * ecc_size;
 
-	करो अणु
-		अगर (block + ecc_block_size > buffer_end)
+	do {
+		if (block + ecc_block_size > buffer_end)
 			size = buffer_end - block;
 		persistent_ram_encode_rs8(prz, block, size, par);
 		block += ecc_block_size;
 		par += ecc_size;
-	पूर्ण जबतक (block < buffer->data + start + count);
-पूर्ण
+	} while (block < buffer->data + start + count);
+}
 
-अटल व्योम persistent_ram_update_header_ecc(काष्ठा persistent_ram_zone *prz)
-अणु
-	काष्ठा persistent_ram_buffer *buffer = prz->buffer;
+static void persistent_ram_update_header_ecc(struct persistent_ram_zone *prz)
+{
+	struct persistent_ram_buffer *buffer = prz->buffer;
 
-	अगर (!prz->ecc_info.ecc_size)
-		वापस;
+	if (!prz->ecc_info.ecc_size)
+		return;
 
-	persistent_ram_encode_rs8(prz, (uपूर्णांक8_t *)buffer, माप(*buffer),
+	persistent_ram_encode_rs8(prz, (uint8_t *)buffer, sizeof(*buffer),
 				  prz->par_header);
-पूर्ण
+}
 
-अटल व्योम persistent_ram_ecc_old(काष्ठा persistent_ram_zone *prz)
-अणु
-	काष्ठा persistent_ram_buffer *buffer = prz->buffer;
-	uपूर्णांक8_t *block;
-	uपूर्णांक8_t *par;
+static void persistent_ram_ecc_old(struct persistent_ram_zone *prz)
+{
+	struct persistent_ram_buffer *buffer = prz->buffer;
+	uint8_t *block;
+	uint8_t *par;
 
-	अगर (!prz->ecc_info.ecc_size)
-		वापस;
+	if (!prz->ecc_info.ecc_size)
+		return;
 
 	block = buffer->data;
 	par = prz->par_buffer;
-	जबतक (block < buffer->data + buffer_size(prz)) अणु
-		पूर्णांक numerr;
-		पूर्णांक size = prz->ecc_info.block_size;
-		अगर (block + size > buffer->data + prz->buffer_size)
+	while (block < buffer->data + buffer_size(prz)) {
+		int numerr;
+		int size = prz->ecc_info.block_size;
+		if (block + size > buffer->data + prz->buffer_size)
 			size = buffer->data + prz->buffer_size - block;
 		numerr = persistent_ram_decode_rs8(prz, block, size, par);
-		अगर (numerr > 0) अणु
+		if (numerr > 0) {
 			pr_devel("error in block %p, %d\n", block, numerr);
 			prz->corrected_bytes += numerr;
-		पूर्ण अन्यथा अगर (numerr < 0) अणु
+		} else if (numerr < 0) {
 			pr_devel("uncorrectable error in block %p\n", block);
 			prz->bad_blocks++;
-		पूर्ण
+		}
 		block += prz->ecc_info.block_size;
 		par += prz->ecc_info.ecc_size;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक persistent_ram_init_ecc(काष्ठा persistent_ram_zone *prz,
-				   काष्ठा persistent_ram_ecc_info *ecc_info)
-अणु
-	पूर्णांक numerr;
-	काष्ठा persistent_ram_buffer *buffer = prz->buffer;
-	पूर्णांक ecc_blocks;
-	माप_प्रकार ecc_total;
+static int persistent_ram_init_ecc(struct persistent_ram_zone *prz,
+				   struct persistent_ram_ecc_info *ecc_info)
+{
+	int numerr;
+	struct persistent_ram_buffer *buffer = prz->buffer;
+	int ecc_blocks;
+	size_t ecc_total;
 
-	अगर (!ecc_info || !ecc_info->ecc_size)
-		वापस 0;
+	if (!ecc_info || !ecc_info->ecc_size)
+		return 0;
 
 	prz->ecc_info.block_size = ecc_info->block_size ?: 128;
 	prz->ecc_info.ecc_size = ecc_info->ecc_size ?: 16;
@@ -206,12 +205,12 @@
 				  prz->ecc_info.block_size +
 				  prz->ecc_info.ecc_size);
 	ecc_total = (ecc_blocks + 1) * prz->ecc_info.ecc_size;
-	अगर (ecc_total >= prz->buffer_size) अणु
+	if (ecc_total >= prz->buffer_size) {
 		pr_err("%s: invalid ecc_size %u (total %zu, buffer size %zu)\n",
 		       __func__, prz->ecc_info.ecc_size,
 		       ecc_total, prz->buffer_size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	prz->buffer_size -= ecc_total;
 	prz->par_buffer = buffer->data + prz->buffer_size;
@@ -224,365 +223,365 @@
 	 */
 	prz->rs_decoder = init_rs(prz->ecc_info.symsize, prz->ecc_info.poly,
 				  0, 1, prz->ecc_info.ecc_size);
-	अगर (prz->rs_decoder == शून्य) अणु
+	if (prz->rs_decoder == NULL) {
 		pr_info("init_rs failed\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* allocate workspace instead of using stack VLA */
-	prz->ecc_info.par = kदो_स्मृति_array(prz->ecc_info.ecc_size,
-					  माप(*prz->ecc_info.par),
+	prz->ecc_info.par = kmalloc_array(prz->ecc_info.ecc_size,
+					  sizeof(*prz->ecc_info.par),
 					  GFP_KERNEL);
-	अगर (!prz->ecc_info.par) अणु
+	if (!prz->ecc_info.par) {
 		pr_err("cannot allocate ECC parity workspace\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	prz->corrected_bytes = 0;
 	prz->bad_blocks = 0;
 
-	numerr = persistent_ram_decode_rs8(prz, buffer, माप(*buffer),
+	numerr = persistent_ram_decode_rs8(prz, buffer, sizeof(*buffer),
 					   prz->par_header);
-	अगर (numerr > 0) अणु
+	if (numerr > 0) {
 		pr_info("error in header, %d\n", numerr);
 		prz->corrected_bytes += numerr;
-	पूर्ण अन्यथा अगर (numerr < 0) अणु
+	} else if (numerr < 0) {
 		pr_info_ratelimited("uncorrectable error in header\n");
 		prz->bad_blocks++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-sमाप_प्रकार persistent_ram_ecc_string(काष्ठा persistent_ram_zone *prz,
-	अक्षर *str, माप_प्रकार len)
-अणु
-	sमाप_प्रकार ret;
+ssize_t persistent_ram_ecc_string(struct persistent_ram_zone *prz,
+	char *str, size_t len)
+{
+	ssize_t ret;
 
-	अगर (!prz->ecc_info.ecc_size)
-		वापस 0;
+	if (!prz->ecc_info.ecc_size)
+		return 0;
 
-	अगर (prz->corrected_bytes || prz->bad_blocks)
-		ret = snम_लिखो(str, len, ""
+	if (prz->corrected_bytes || prz->bad_blocks)
+		ret = snprintf(str, len, ""
 			"\n%d Corrected bytes, %d unrecoverable blocks\n",
 			prz->corrected_bytes, prz->bad_blocks);
-	अन्यथा
-		ret = snम_लिखो(str, len, "\nNo errors detected\n");
+	else
+		ret = snprintf(str, len, "\nNo errors detected\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम notrace persistent_ram_update(काष्ठा persistent_ram_zone *prz,
-	स्थिर व्योम *s, अचिन्हित पूर्णांक start, अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा persistent_ram_buffer *buffer = prz->buffer;
-	स_नकल_toio(buffer->data + start, s, count);
+static void notrace persistent_ram_update(struct persistent_ram_zone *prz,
+	const void *s, unsigned int start, unsigned int count)
+{
+	struct persistent_ram_buffer *buffer = prz->buffer;
+	memcpy_toio(buffer->data + start, s, count);
 	persistent_ram_update_ecc(prz, start, count);
-पूर्ण
+}
 
-अटल पूर्णांक notrace persistent_ram_update_user(काष्ठा persistent_ram_zone *prz,
-	स्थिर व्योम __user *s, अचिन्हित पूर्णांक start, अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा persistent_ram_buffer *buffer = prz->buffer;
-	पूर्णांक ret = unlikely(copy_from_user(buffer->data + start, s, count)) ?
+static int notrace persistent_ram_update_user(struct persistent_ram_zone *prz,
+	const void __user *s, unsigned int start, unsigned int count)
+{
+	struct persistent_ram_buffer *buffer = prz->buffer;
+	int ret = unlikely(copy_from_user(buffer->data + start, s, count)) ?
 		-EFAULT : 0;
 	persistent_ram_update_ecc(prz, start, count);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम persistent_ram_save_old(काष्ठा persistent_ram_zone *prz)
-अणु
-	काष्ठा persistent_ram_buffer *buffer = prz->buffer;
-	माप_प्रकार size = buffer_size(prz);
-	माप_प्रकार start = buffer_start(prz);
+void persistent_ram_save_old(struct persistent_ram_zone *prz)
+{
+	struct persistent_ram_buffer *buffer = prz->buffer;
+	size_t size = buffer_size(prz);
+	size_t start = buffer_start(prz);
 
-	अगर (!size)
-		वापस;
+	if (!size)
+		return;
 
-	अगर (!prz->old_log) अणु
+	if (!prz->old_log) {
 		persistent_ram_ecc_old(prz);
-		prz->old_log = kदो_स्मृति(size, GFP_KERNEL);
-	पूर्ण
-	अगर (!prz->old_log) अणु
+		prz->old_log = kmalloc(size, GFP_KERNEL);
+	}
+	if (!prz->old_log) {
 		pr_err("failed to allocate buffer\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	prz->old_log_size = size;
-	स_नकल_fromio(prz->old_log, &buffer->data[start], size - start);
-	स_नकल_fromio(prz->old_log + size - start, &buffer->data[0], start);
-पूर्ण
+	memcpy_fromio(prz->old_log, &buffer->data[start], size - start);
+	memcpy_fromio(prz->old_log + size - start, &buffer->data[0], start);
+}
 
-पूर्णांक notrace persistent_ram_ग_लिखो(काष्ठा persistent_ram_zone *prz,
-	स्थिर व्योम *s, अचिन्हित पूर्णांक count)
-अणु
-	पूर्णांक rem;
-	पूर्णांक c = count;
-	माप_प्रकार start;
+int notrace persistent_ram_write(struct persistent_ram_zone *prz,
+	const void *s, unsigned int count)
+{
+	int rem;
+	int c = count;
+	size_t start;
 
-	अगर (unlikely(c > prz->buffer_size)) अणु
+	if (unlikely(c > prz->buffer_size)) {
 		s += c - prz->buffer_size;
 		c = prz->buffer_size;
-	पूर्ण
+	}
 
 	buffer_size_add(prz, c);
 
 	start = buffer_start_add(prz, c);
 
 	rem = prz->buffer_size - start;
-	अगर (unlikely(rem < c)) अणु
+	if (unlikely(rem < c)) {
 		persistent_ram_update(prz, s, start, rem);
 		s += rem;
 		c -= rem;
 		start = 0;
-	पूर्ण
+	}
 	persistent_ram_update(prz, s, start, c);
 
 	persistent_ram_update_header_ecc(prz);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-पूर्णांक notrace persistent_ram_ग_लिखो_user(काष्ठा persistent_ram_zone *prz,
-	स्थिर व्योम __user *s, अचिन्हित पूर्णांक count)
-अणु
-	पूर्णांक rem, ret = 0, c = count;
-	माप_प्रकार start;
+int notrace persistent_ram_write_user(struct persistent_ram_zone *prz,
+	const void __user *s, unsigned int count)
+{
+	int rem, ret = 0, c = count;
+	size_t start;
 
-	अगर (unlikely(c > prz->buffer_size)) अणु
+	if (unlikely(c > prz->buffer_size)) {
 		s += c - prz->buffer_size;
 		c = prz->buffer_size;
-	पूर्ण
+	}
 
 	buffer_size_add(prz, c);
 
 	start = buffer_start_add(prz, c);
 
 	rem = prz->buffer_size - start;
-	अगर (unlikely(rem < c)) अणु
+	if (unlikely(rem < c)) {
 		ret = persistent_ram_update_user(prz, s, start, rem);
 		s += rem;
 		c -= rem;
 		start = 0;
-	पूर्ण
-	अगर (likely(!ret))
+	}
+	if (likely(!ret))
 		ret = persistent_ram_update_user(prz, s, start, c);
 
 	persistent_ram_update_header_ecc(prz);
 
-	वापस unlikely(ret) ? ret : count;
-पूर्ण
+	return unlikely(ret) ? ret : count;
+}
 
-माप_प्रकार persistent_ram_old_size(काष्ठा persistent_ram_zone *prz)
-अणु
-	वापस prz->old_log_size;
-पूर्ण
+size_t persistent_ram_old_size(struct persistent_ram_zone *prz)
+{
+	return prz->old_log_size;
+}
 
-व्योम *persistent_ram_old(काष्ठा persistent_ram_zone *prz)
-अणु
-	वापस prz->old_log;
-पूर्ण
+void *persistent_ram_old(struct persistent_ram_zone *prz)
+{
+	return prz->old_log;
+}
 
-व्योम persistent_ram_मुक्त_old(काष्ठा persistent_ram_zone *prz)
-अणु
-	kमुक्त(prz->old_log);
-	prz->old_log = शून्य;
+void persistent_ram_free_old(struct persistent_ram_zone *prz)
+{
+	kfree(prz->old_log);
+	prz->old_log = NULL;
 	prz->old_log_size = 0;
-पूर्ण
+}
 
-व्योम persistent_ram_zap(काष्ठा persistent_ram_zone *prz)
-अणु
+void persistent_ram_zap(struct persistent_ram_zone *prz)
+{
 	atomic_set(&prz->buffer->start, 0);
 	atomic_set(&prz->buffer->size, 0);
 	persistent_ram_update_header_ecc(prz);
-पूर्ण
+}
 
-#घोषणा MEM_TYPE_WCOMBINE	0
-#घोषणा MEM_TYPE_NONCACHED	1
-#घोषणा MEM_TYPE_NORMAL		2
+#define MEM_TYPE_WCOMBINE	0
+#define MEM_TYPE_NONCACHED	1
+#define MEM_TYPE_NORMAL		2
 
-अटल व्योम *persistent_ram_vmap(phys_addr_t start, माप_प्रकार size,
-		अचिन्हित पूर्णांक memtype)
-अणु
-	काष्ठा page **pages;
+static void *persistent_ram_vmap(phys_addr_t start, size_t size,
+		unsigned int memtype)
+{
+	struct page **pages;
 	phys_addr_t page_start;
-	अचिन्हित पूर्णांक page_count;
+	unsigned int page_count;
 	pgprot_t prot;
-	अचिन्हित पूर्णांक i;
-	व्योम *vaddr;
+	unsigned int i;
+	void *vaddr;
 
 	page_start = start - offset_in_page(start);
 	page_count = DIV_ROUND_UP(size + offset_in_page(start), PAGE_SIZE);
 
-	चयन (memtype) अणु
-	हाल MEM_TYPE_NORMAL:
+	switch (memtype) {
+	case MEM_TYPE_NORMAL:
 		prot = PAGE_KERNEL;
-		अवरोध;
-	हाल MEM_TYPE_NONCACHED:
+		break;
+	case MEM_TYPE_NONCACHED:
 		prot = pgprot_noncached(PAGE_KERNEL);
-		अवरोध;
-	हाल MEM_TYPE_WCOMBINE:
-		prot = pgprot_ग_लिखोcombine(PAGE_KERNEL);
-		अवरोध;
-	शेष:
+		break;
+	case MEM_TYPE_WCOMBINE:
+		prot = pgprot_writecombine(PAGE_KERNEL);
+		break;
+	default:
 		pr_err("invalid mem_type=%d\n", memtype);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	pages = kदो_स्मृति_array(page_count, माप(काष्ठा page *), GFP_KERNEL);
-	अगर (!pages) अणु
+	pages = kmalloc_array(page_count, sizeof(struct page *), GFP_KERNEL);
+	if (!pages) {
 		pr_err("%s: Failed to allocate array for %u pages\n",
 		       __func__, page_count);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	क्रम (i = 0; i < page_count; i++) अणु
+	for (i = 0; i < page_count; i++) {
 		phys_addr_t addr = page_start + i * PAGE_SIZE;
 		pages[i] = pfn_to_page(addr >> PAGE_SHIFT);
-	पूर्ण
+	}
 	vaddr = vmap(pages, page_count, VM_MAP, prot);
-	kमुक्त(pages);
+	kfree(pages);
 
 	/*
 	 * Since vmap() uses page granularity, we must add the offset
-	 * पूर्णांकo the page here, to get the byte granularity address
-	 * पूर्णांकo the mapping to represent the actual "start" location.
+	 * into the page here, to get the byte granularity address
+	 * into the mapping to represent the actual "start" location.
 	 */
-	वापस vaddr + offset_in_page(start);
-पूर्ण
+	return vaddr + offset_in_page(start);
+}
 
-अटल व्योम *persistent_ram_iomap(phys_addr_t start, माप_प्रकार size,
-		अचिन्हित पूर्णांक memtype, अक्षर *label)
-अणु
-	व्योम *va;
+static void *persistent_ram_iomap(phys_addr_t start, size_t size,
+		unsigned int memtype, char *label)
+{
+	void *va;
 
-	अगर (!request_mem_region(start, size, label ?: "ramoops")) अणु
+	if (!request_mem_region(start, size, label ?: "ramoops")) {
 		pr_err("request mem region (%s 0x%llx@0x%llx) failed\n",
 			label ?: "ramoops",
-			(अचिन्हित दीर्घ दीर्घ)size, (अचिन्हित दीर्घ दीर्घ)start);
-		वापस शून्य;
-	पूर्ण
+			(unsigned long long)size, (unsigned long long)start);
+		return NULL;
+	}
 
-	अगर (memtype)
+	if (memtype)
 		va = ioremap(start, size);
-	अन्यथा
+	else
 		va = ioremap_wc(start, size);
 
 	/*
 	 * Since request_mem_region() and ioremap() are byte-granularity
-	 * there is no need handle anything special like we करो when the
-	 * vmap() हाल in persistent_ram_vmap() above.
+	 * there is no need handle anything special like we do when the
+	 * vmap() case in persistent_ram_vmap() above.
 	 */
-	वापस va;
-पूर्ण
+	return va;
+}
 
-अटल पूर्णांक persistent_ram_buffer_map(phys_addr_t start, phys_addr_t size,
-		काष्ठा persistent_ram_zone *prz, पूर्णांक memtype)
-अणु
+static int persistent_ram_buffer_map(phys_addr_t start, phys_addr_t size,
+		struct persistent_ram_zone *prz, int memtype)
+{
 	prz->paddr = start;
 	prz->size = size;
 
-	अगर (pfn_valid(start >> PAGE_SHIFT))
+	if (pfn_valid(start >> PAGE_SHIFT))
 		prz->vaddr = persistent_ram_vmap(start, size, memtype);
-	अन्यथा
+	else
 		prz->vaddr = persistent_ram_iomap(start, size, memtype,
 						  prz->label);
 
-	अगर (!prz->vaddr) अणु
+	if (!prz->vaddr) {
 		pr_err("%s: Failed to map 0x%llx pages at 0x%llx\n", __func__,
-			(अचिन्हित दीर्घ दीर्घ)size, (अचिन्हित दीर्घ दीर्घ)start);
-		वापस -ENOMEM;
-	पूर्ण
+			(unsigned long long)size, (unsigned long long)start);
+		return -ENOMEM;
+	}
 
 	prz->buffer = prz->vaddr;
-	prz->buffer_size = size - माप(काष्ठा persistent_ram_buffer);
+	prz->buffer_size = size - sizeof(struct persistent_ram_buffer);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक persistent_ram_post_init(काष्ठा persistent_ram_zone *prz, u32 sig,
-				    काष्ठा persistent_ram_ecc_info *ecc_info)
-अणु
-	पूर्णांक ret;
+static int persistent_ram_post_init(struct persistent_ram_zone *prz, u32 sig,
+				    struct persistent_ram_ecc_info *ecc_info)
+{
+	int ret;
 	bool zap = !!(prz->flags & PRZ_FLAG_ZAP_OLD);
 
 	ret = persistent_ram_init_ecc(prz, ecc_info);
-	अगर (ret) अणु
+	if (ret) {
 		pr_warn("ECC failed %s\n", prz->label);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	sig ^= PERSISTENT_RAM_SIG;
 
-	अगर (prz->buffer->sig == sig) अणु
-		अगर (buffer_size(prz) == 0) अणु
+	if (prz->buffer->sig == sig) {
+		if (buffer_size(prz) == 0) {
 			pr_debug("found existing empty buffer\n");
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		अगर (buffer_size(prz) > prz->buffer_size ||
-		    buffer_start(prz) > buffer_size(prz)) अणु
+		if (buffer_size(prz) > prz->buffer_size ||
+		    buffer_start(prz) > buffer_size(prz)) {
 			pr_info("found existing invalid buffer, size %zu, start %zu\n",
 				buffer_size(prz), buffer_start(prz));
 			zap = true;
-		पूर्ण अन्यथा अणु
+		} else {
 			pr_debug("found existing buffer, size %zu, start %zu\n",
 				 buffer_size(prz), buffer_start(prz));
 			persistent_ram_save_old(prz);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		pr_debug("no valid data in buffer (sig = 0x%08x)\n",
 			 prz->buffer->sig);
 		prz->buffer->sig = sig;
 		zap = true;
-	पूर्ण
+	}
 
 	/* Reset missing, invalid, or single-use memory area. */
-	अगर (zap)
+	if (zap)
 		persistent_ram_zap(prz);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम persistent_ram_मुक्त(काष्ठा persistent_ram_zone *prz)
-अणु
-	अगर (!prz)
-		वापस;
+void persistent_ram_free(struct persistent_ram_zone *prz)
+{
+	if (!prz)
+		return;
 
-	अगर (prz->vaddr) अणु
-		अगर (pfn_valid(prz->paddr >> PAGE_SHIFT)) अणु
+	if (prz->vaddr) {
+		if (pfn_valid(prz->paddr >> PAGE_SHIFT)) {
 			/* We must vunmap() at page-granularity. */
 			vunmap(prz->vaddr - offset_in_page(prz->paddr));
-		पूर्ण अन्यथा अणु
+		} else {
 			iounmap(prz->vaddr);
 			release_mem_region(prz->paddr, prz->size);
-		पूर्ण
-		prz->vaddr = शून्य;
-	पूर्ण
-	अगर (prz->rs_decoder) अणु
-		मुक्त_rs(prz->rs_decoder);
-		prz->rs_decoder = शून्य;
-	पूर्ण
-	kमुक्त(prz->ecc_info.par);
-	prz->ecc_info.par = शून्य;
+		}
+		prz->vaddr = NULL;
+	}
+	if (prz->rs_decoder) {
+		free_rs(prz->rs_decoder);
+		prz->rs_decoder = NULL;
+	}
+	kfree(prz->ecc_info.par);
+	prz->ecc_info.par = NULL;
 
-	persistent_ram_मुक्त_old(prz);
-	kमुक्त(prz->label);
-	kमुक्त(prz);
-पूर्ण
+	persistent_ram_free_old(prz);
+	kfree(prz->label);
+	kfree(prz);
+}
 
-काष्ठा persistent_ram_zone *persistent_ram_new(phys_addr_t start, माप_प्रकार size,
-			u32 sig, काष्ठा persistent_ram_ecc_info *ecc_info,
-			अचिन्हित पूर्णांक memtype, u32 flags, अक्षर *label)
-अणु
-	काष्ठा persistent_ram_zone *prz;
-	पूर्णांक ret = -ENOMEM;
+struct persistent_ram_zone *persistent_ram_new(phys_addr_t start, size_t size,
+			u32 sig, struct persistent_ram_ecc_info *ecc_info,
+			unsigned int memtype, u32 flags, char *label)
+{
+	struct persistent_ram_zone *prz;
+	int ret = -ENOMEM;
 
-	prz = kzalloc(माप(काष्ठा persistent_ram_zone), GFP_KERNEL);
-	अगर (!prz) अणु
+	prz = kzalloc(sizeof(struct persistent_ram_zone), GFP_KERNEL);
+	if (!prz) {
 		pr_err("failed to allocate persistent ram zone\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/* Initialize general buffer state. */
 	raw_spin_lock_init(&prz->buffer_lock);
@@ -590,21 +589,21 @@ sमाप_प्रकार persistent_ram_ecc_string(काष्ठा persi
 	prz->label = kstrdup(label, GFP_KERNEL);
 
 	ret = persistent_ram_buffer_map(start, size, prz, memtype);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = persistent_ram_post_init(prz, sig, ecc_info);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	pr_debug("attached %s 0x%zx@0x%llx: %zu header, %zu data, %zu ecc (%d/%d)\n",
-		prz->label, prz->size, (अचिन्हित दीर्घ दीर्घ)prz->paddr,
-		माप(*prz->buffer), prz->buffer_size,
-		prz->size - माप(*prz->buffer) - prz->buffer_size,
+		prz->label, prz->size, (unsigned long long)prz->paddr,
+		sizeof(*prz->buffer), prz->buffer_size,
+		prz->size - sizeof(*prz->buffer) - prz->buffer_size,
 		prz->ecc_info.ecc_size, prz->ecc_info.block_size);
 
-	वापस prz;
+	return prz;
 err:
-	persistent_ram_मुक्त(prz);
-	वापस ERR_PTR(ret);
-पूर्ण
+	persistent_ram_free(prz);
+	return ERR_PTR(ret);
+}

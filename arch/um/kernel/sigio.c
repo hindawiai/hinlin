@@ -1,49 +1,48 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2002 - 2007 Jeff Dike (jdike@अणुlinux.पूर्णांकel,addtoitपूर्ण.com)
+ * Copyright (C) 2002 - 2007 Jeff Dike (jdike@{linux.intel,addtoit}.com)
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <irq_kern.h>
-#समावेश <os.h>
-#समावेश <sigपन.स>
+#include <linux/interrupt.h>
+#include <irq_kern.h>
+#include <os.h>
+#include <sigio.h>
 
-/* Protected by sigio_lock() called from ग_लिखो_sigio_workaround */
-अटल पूर्णांक sigio_irq_fd = -1;
+/* Protected by sigio_lock() called from write_sigio_workaround */
+static int sigio_irq_fd = -1;
 
-अटल irqवापस_t sigio_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	अक्षर c;
+static irqreturn_t sigio_interrupt(int irq, void *data)
+{
+	char c;
 
-	os_पढ़ो_file(sigio_irq_fd, &c, माप(c));
-	वापस IRQ_HANDLED;
-पूर्ण
+	os_read_file(sigio_irq_fd, &c, sizeof(c));
+	return IRQ_HANDLED;
+}
 
-पूर्णांक ग_लिखो_sigio_irq(पूर्णांक fd)
-अणु
-	पूर्णांक err;
+int write_sigio_irq(int fd)
+{
+	int err;
 
-	err = um_request_irq(SIGIO_WRITE_IRQ, fd, IRQ_READ, sigio_पूर्णांकerrupt,
-			     0, "write sigio", शून्य);
-	अगर (err < 0) अणु
-		prपूर्णांकk(KERN_ERR "write_sigio_irq : um_request_irq failed, "
+	err = um_request_irq(SIGIO_WRITE_IRQ, fd, IRQ_READ, sigio_interrupt,
+			     0, "write sigio", NULL);
+	if (err < 0) {
+		printk(KERN_ERR "write_sigio_irq : um_request_irq failed, "
 		       "err = %d\n", err);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	sigio_irq_fd = fd;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* These are called from os-Linux/sigio.c to protect its pollfds arrays. */
-अटल DEFINE_MUTEX(sigio_mutex);
+static DEFINE_MUTEX(sigio_mutex);
 
-व्योम sigio_lock(व्योम)
-अणु
+void sigio_lock(void)
+{
 	mutex_lock(&sigio_mutex);
-पूर्ण
+}
 
-व्योम sigio_unlock(व्योम)
-अणु
+void sigio_unlock(void)
+{
 	mutex_unlock(&sigio_mutex);
-पूर्ण
+}

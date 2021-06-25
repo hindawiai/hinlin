@@ -1,8 +1,7 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित OCFS2_MMAP_H
-#घोषणा OCFS2_MMAP_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef OCFS2_MMAP_H
+#define OCFS2_MMAP_H
 
-पूर्णांक ocfs2_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma);
+int ocfs2_mmap(struct file *file, struct vm_area_struct *vma);
 
-#पूर्ण_अगर  /* OCFS2_MMAP_H */
+#endif  /* OCFS2_MMAP_H */

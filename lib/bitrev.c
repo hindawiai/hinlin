@@ -1,15 +1,14 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#अगर_अघोषित CONFIG_HAVE_ARCH_BITREVERSE
-#समावेश <linux/types.h>
-#समावेश <linux/module.h>
-#समावेश <linux/bitrev.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#ifndef CONFIG_HAVE_ARCH_BITREVERSE
+#include <linux/types.h>
+#include <linux/module.h>
+#include <linux/bitrev.h>
 
 MODULE_AUTHOR("Akinobu Mita <akinobu.mita@gmail.com>");
 MODULE_DESCRIPTION("Bit ordering reversal functions");
 MODULE_LICENSE("GPL");
 
-स्थिर u8 byte_rev_table[256] = अणु
+const u8 byte_rev_table[256] = {
 	0x00, 0x80, 0x40, 0xc0, 0x20, 0xa0, 0x60, 0xe0,
 	0x10, 0x90, 0x50, 0xd0, 0x30, 0xb0, 0x70, 0xf0,
 	0x08, 0x88, 0x48, 0xc8, 0x28, 0xa8, 0x68, 0xe8,
@@ -42,7 +41,7 @@ MODULE_LICENSE("GPL");
 	0x17, 0x97, 0x57, 0xd7, 0x37, 0xb7, 0x77, 0xf7,
 	0x0f, 0x8f, 0x4f, 0xcf, 0x2f, 0xaf, 0x6f, 0xef,
 	0x1f, 0x9f, 0x5f, 0xdf, 0x3f, 0xbf, 0x7f, 0xff,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(byte_rev_table);
 
-#पूर्ण_अगर /* CONFIG_HAVE_ARCH_BITREVERSE */
+#endif /* CONFIG_HAVE_ARCH_BITREVERSE */

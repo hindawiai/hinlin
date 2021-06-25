@@ -1,33 +1,32 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <config.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <config.h>
 
-#समावेश <निश्चित.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <pthपढ़ो.h>
-#समावेश <मानकघोष.स>
-#समावेश <माला.स>
-#समावेश <sys/types.h>
+#include <assert.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <pthread.h>
+#include <stddef.h>
+#include <string.h>
+#include <sys/types.h>
 
-#समावेश "int_typedefs.h"
+#include "int_typedefs.h"
 
-#समावेश "barriers.h"
-#समावेश "bug_on.h"
-#समावेश "locks.h"
-#समावेश "misc.h"
-#समावेश "preempt.h"
-#समावेश "percpu.h"
-#समावेश "workqueues.h"
+#include "barriers.h"
+#include "bug_on.h"
+#include "locks.h"
+#include "misc.h"
+#include "preempt.h"
+#include "percpu.h"
+#include "workqueues.h"
 
-#अगर_घोषित USE_SIMPLE_SYNC_SRCU
-#घोषणा synchronize_srcu(sp) synchronize_srcu_original(sp)
-#पूर्ण_अगर
+#ifdef USE_SIMPLE_SYNC_SRCU
+#define synchronize_srcu(sp) synchronize_srcu_original(sp)
+#endif
 
-#समावेश <srcu.c>
+#include <srcu.c>
 
-#अगर_घोषित USE_SIMPLE_SYNC_SRCU
-#अघोषित synchronize_srcu
+#ifdef USE_SIMPLE_SYNC_SRCU
+#undef synchronize_srcu
 
-#समावेश "simple_sync_srcu.c"
-#पूर्ण_अगर
+#include "simple_sync_srcu.c"
+#endif

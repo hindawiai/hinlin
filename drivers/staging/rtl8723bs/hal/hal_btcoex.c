@@ -1,86 +1,85 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2013 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#घोषणा __HAL_BTCOEX_C__
+#define __HAL_BTCOEX_C__
 
-#समावेश <hal_data.h>
-#समावेश <rtw_debug.h>
-#समावेश <hal_btcoex.h>
-#समावेश <Mp_Precomp.h>
+#include <hal_data.h>
+#include <rtw_debug.h>
+#include <hal_btcoex.h>
+#include <Mp_Precomp.h>
 
 /* 		Global variables */
 
-काष्ठा btc_coexist GLBtCoexist;
-अटल u8 GLBtcWiFiInScanState;
-अटल u8 GLBtcWiFiInIQKState;
+struct btc_coexist GLBtCoexist;
+static u8 GLBtcWiFiInScanState;
+static u8 GLBtcWiFiInIQKState;
 
 u32 GLBtcDbgType[BTC_MSG_MAX];
-अटल u8 GLBtcDbgBuf[BT_TMP_BUF_SIZE];
+static u8 GLBtcDbgBuf[BT_TMP_BUF_SIZE];
 
-काष्ठा btcdbginfo अणु /* _btcoexdbginfo */
+struct btcdbginfo { /* _btcoexdbginfo */
 	u8 *info;
 	u32 size; /*  buffer total size */
 	u32 len; /*  now used length */
-पूर्ण;
+};
 
-अटल काष्ठा btcdbginfo GLBtcDbgInfo;
+static struct btcdbginfo GLBtcDbgInfo;
 
-#घोषणा	BT_Operation(Adapter)						false
+#define	BT_Operation(Adapter)						false
 
-अटल व्योम DBG_BT_INFO_INIT(काष्ठा btcdbginfo *pinfo, u8 *pbuf, u32 size)
-अणु
-	अगर (!pinfo)
-		वापस;
+static void DBG_BT_INFO_INIT(struct btcdbginfo *pinfo, u8 *pbuf, u32 size)
+{
+	if (!pinfo)
+		return;
 
-	स_रखो(pinfo, 0, माप(काष्ठा btcdbginfo));
+	memset(pinfo, 0, sizeof(struct btcdbginfo));
 
-	अगर (pbuf && size) अणु
+	if (pbuf && size) {
 		pinfo->info = pbuf;
 		pinfo->size = size;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम DBG_BT_INFO(u8 *dbgmsg)
-अणु
-	काष्ठा btcdbginfo *pinfo;
+void DBG_BT_INFO(u8 *dbgmsg)
+{
+	struct btcdbginfo *pinfo;
 	u32 msglen;
 	u8 *pbuf;
 
 
 	pinfo = &GLBtcDbgInfo;
 
-	अगर (!pinfo->info)
-		वापस;
+	if (!pinfo->info)
+		return;
 
-	msglen = म_माप(dbgmsg);
-	अगर (pinfo->len + msglen > pinfo->size)
-		वापस;
+	msglen = strlen(dbgmsg);
+	if (pinfo->len + msglen > pinfo->size)
+		return;
 
 	pbuf = pinfo->info + pinfo->len;
-	स_नकल(pbuf, dbgmsg, msglen);
+	memcpy(pbuf, dbgmsg, msglen);
 	pinfo->len += msglen;
-पूर्ण
+}
 
 /*  */
 /* 		Debug related function */
 /*  */
-अटल u8 halbtcoutsrc_IsBtCoexistAvailable(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	अगर (!pBtCoexist->bBinded || !pBtCoexist->Adapter)
-		वापस false;
+static u8 halbtcoutsrc_IsBtCoexistAvailable(struct btc_coexist *pBtCoexist)
+{
+	if (!pBtCoexist->bBinded || !pBtCoexist->Adapter)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम halbtcoutsrc_DbgInit(व्योम)
-अणु
+static void halbtcoutsrc_DbgInit(void)
+{
 	u8 i;
 
-	क्रम (i = 0; i < BTC_MSG_MAX; i++)
+	for (i = 0; i < BTC_MSG_MAX; i++)
 		GLBtcDbgType[i] = 0;
 
 	GLBtcDbgType[BTC_MSG_INTERFACE]			=	\
@@ -100,11 +99,11 @@ u32 GLBtcDbgType[BTC_MSG_MAX];
 /* 			ALGO_TRACE_SW_DETAIL				| */
 /* 			ALGO_TRACE_SW_EXEC					| */
 			0;
-पूर्ण
+}
 
-अटल व्योम halbtcoutsrc_LeaveLps(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	काष्ठा adapter *padapter;
+static void halbtcoutsrc_LeaveLps(struct btc_coexist *pBtCoexist)
+{
+	struct adapter *padapter;
 
 
 	padapter = pBtCoexist->Adapter;
@@ -113,11 +112,11 @@ u32 GLBtcDbgType[BTC_MSG_MAX];
 	pBtCoexist->btInfo.bBtLpsOn = false;
 
 	rtw_btcoex_LPS_Leave(padapter);
-पूर्ण
+}
 
-अटल व्योम halbtcoutsrc_EnterLps(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	काष्ठा adapter *padapter;
+static void halbtcoutsrc_EnterLps(struct btc_coexist *pBtCoexist)
+{
+	struct adapter *padapter;
 
 
 	padapter = pBtCoexist->Adapter;
@@ -126,136 +125,136 @@ u32 GLBtcDbgType[BTC_MSG_MAX];
 	pBtCoexist->btInfo.bBtLpsOn = true;
 
 	rtw_btcoex_LPS_Enter(padapter);
-पूर्ण
+}
 
-अटल व्योम halbtcoutsrc_NormalLps(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	काष्ठा adapter *padapter;
+static void halbtcoutsrc_NormalLps(struct btc_coexist *pBtCoexist)
+{
+	struct adapter *padapter;
 
 
 	BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], Normal LPS behavior!!!\n"));
 
 	padapter = pBtCoexist->Adapter;
 
-	अगर (pBtCoexist->btInfo.bBtCtrlLps) अणु
+	if (pBtCoexist->btInfo.bBtCtrlLps) {
 		pBtCoexist->btInfo.bBtLpsOn = false;
 		rtw_btcoex_LPS_Leave(padapter);
 		pBtCoexist->btInfo.bBtCtrlLps = false;
 
 		/*  recover the LPS state to the original */
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- *  Constraपूर्णांक:
+ *  Constraint:
  *   1. this function will request pwrctrl->lock
  */
-अटल व्योम halbtcoutsrc_LeaveLowPower(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	काष्ठा adapter *padapter;
-	s32 पढ़ोy;
-	अचिन्हित दीर्घ sसमय;
-	अचिन्हित दीर्घ uसमय;
-	u32 समयout; /*  unit: ms */
+static void halbtcoutsrc_LeaveLowPower(struct btc_coexist *pBtCoexist)
+{
+	struct adapter *padapter;
+	s32 ready;
+	unsigned long stime;
+	unsigned long utime;
+	u32 timeout; /*  unit: ms */
 
 
 	padapter = pBtCoexist->Adapter;
-	पढ़ोy = _FAIL;
-#अगर_घोषित LPS_RPWM_WAIT_MS
-	समयout = LPS_RPWM_WAIT_MS;
-#अन्यथा /*  !LPS_RPWM_WAIT_MS */
-	समयout = 30;
-#पूर्ण_अगर /*  !LPS_RPWM_WAIT_MS */
+	ready = _FAIL;
+#ifdef LPS_RPWM_WAIT_MS
+	timeout = LPS_RPWM_WAIT_MS;
+#else /*  !LPS_RPWM_WAIT_MS */
+	timeout = 30;
+#endif /*  !LPS_RPWM_WAIT_MS */
 
-	sसमय = jअगरfies;
-	करो अणु
-		पढ़ोy = rtw_रेजिस्टर_task_alive(padapter, BTCOEX_ALIVE);
-		अगर (_SUCCESS == पढ़ोy)
-			अवरोध;
+	stime = jiffies;
+	do {
+		ready = rtw_register_task_alive(padapter, BTCOEX_ALIVE);
+		if (_SUCCESS == ready)
+			break;
 
-		uसमय = jअगरfies_to_msecs(jअगरfies - sसमय);
-		अगर (uसमय > समयout)
-			अवरोध;
+		utime = jiffies_to_msecs(jiffies - stime);
+		if (utime > timeout)
+			break;
 
 		msleep(1);
-	पूर्ण जबतक (1);
-पूर्ण
+	} while (1);
+}
 
 /*
- *  Constraपूर्णांक:
+ *  Constraint:
  *   1. this function will request pwrctrl->lock
  */
-अटल व्योम halbtcoutsrc_NormalLowPower(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	काष्ठा adapter *padapter;
+static void halbtcoutsrc_NormalLowPower(struct btc_coexist *pBtCoexist)
+{
+	struct adapter *padapter;
 
 
 	padapter = pBtCoexist->Adapter;
-	rtw_unरेजिस्टर_task_alive(padapter, BTCOEX_ALIVE);
-पूर्ण
+	rtw_unregister_task_alive(padapter, BTCOEX_ALIVE);
+}
 
-अटल व्योम halbtcoutsrc_DisableLowPower(काष्ठा btc_coexist *pBtCoexist, u8 bLowPwrDisable)
-अणु
+static void halbtcoutsrc_DisableLowPower(struct btc_coexist *pBtCoexist, u8 bLowPwrDisable)
+{
 	pBtCoexist->btInfo.bBtDisableLowPwr = bLowPwrDisable;
-	अगर (bLowPwrDisable)
-		halbtcoutsrc_LeaveLowPower(pBtCoexist);		/*  leave 32k low घातer. */
-	अन्यथा
-		halbtcoutsrc_NormalLowPower(pBtCoexist);	/*  original 32k low घातer behavior. */
-पूर्ण
+	if (bLowPwrDisable)
+		halbtcoutsrc_LeaveLowPower(pBtCoexist);		/*  leave 32k low power. */
+	else
+		halbtcoutsrc_NormalLowPower(pBtCoexist);	/*  original 32k low power behavior. */
+}
 
-अटल व्योम halbtcoutsrc_AggregationCheck(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	काष्ठा adapter *padapter;
+static void halbtcoutsrc_AggregationCheck(struct btc_coexist *pBtCoexist)
+{
+	struct adapter *padapter;
 	bool bNeedToAct;
 
 
 	padapter = pBtCoexist->Adapter;
 	bNeedToAct = false;
 
-	अगर (pBtCoexist->btInfo.bRejectAggPkt) अणु
+	if (pBtCoexist->btInfo.bRejectAggPkt) {
 		rtw_btcoex_RejectApAggregatedPacket(padapter, true);
-	पूर्ण अन्यथा अणु
-		अगर (pBtCoexist->btInfo.bPreBtCtrlAggBufSize !=
-			pBtCoexist->btInfo.bBtCtrlAggBufSize) अणु
+	} else {
+		if (pBtCoexist->btInfo.bPreBtCtrlAggBufSize !=
+			pBtCoexist->btInfo.bBtCtrlAggBufSize) {
 			bNeedToAct = true;
 			pBtCoexist->btInfo.bPreBtCtrlAggBufSize = pBtCoexist->btInfo.bBtCtrlAggBufSize;
-		पूर्ण
+		}
 
-		अगर (pBtCoexist->btInfo.bBtCtrlAggBufSize) अणु
-			अगर (pBtCoexist->btInfo.preAggBufSize !=
-				pBtCoexist->btInfo.aggBufSize)अणु
+		if (pBtCoexist->btInfo.bBtCtrlAggBufSize) {
+			if (pBtCoexist->btInfo.preAggBufSize !=
+				pBtCoexist->btInfo.aggBufSize){
 				bNeedToAct = true;
-			पूर्ण
+			}
 			pBtCoexist->btInfo.preAggBufSize = pBtCoexist->btInfo.aggBufSize;
-		पूर्ण
+		}
 
-		अगर (bNeedToAct) अणु
+		if (bNeedToAct) {
 			rtw_btcoex_RejectApAggregatedPacket(padapter, true);
 			rtw_btcoex_RejectApAggregatedPacket(padapter, false);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल u8 halbtcoutsrc_IsWअगरiBusy(काष्ठा adapter *padapter)
-अणु
-	काष्ठा mlme_priv *pmlmepriv;
+static u8 halbtcoutsrc_IsWifiBusy(struct adapter *padapter)
+{
+	struct mlme_priv *pmlmepriv;
 
 
 	pmlmepriv = &padapter->mlmepriv;
 
-	अगर (check_fwstate(pmlmepriv, WIFI_ASOC_STATE) == true) अणु
-		अगर (check_fwstate(pmlmepriv, WIFI_AP_STATE) == true)
-			वापस true;
-		अगर (pmlmepriv->LinkDetectInfo.bBusyTraffic)
-			वापस true;
-	पूर्ण
+	if (check_fwstate(pmlmepriv, WIFI_ASOC_STATE) == true) {
+		if (check_fwstate(pmlmepriv, WIFI_AP_STATE) == true)
+			return true;
+		if (pmlmepriv->LinkDetectInfo.bBusyTraffic)
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल u32 _halbtcoutsrc_GetWअगरiLinkStatus(काष्ठा adapter *padapter)
-अणु
-	काष्ठा mlme_priv *pmlmepriv;
+static u32 _halbtcoutsrc_GetWifiLinkStatus(struct adapter *padapter)
+{
+	struct mlme_priv *pmlmepriv;
 	u8 bp2p;
 	u32 portConnectedStatus;
 
@@ -264,32 +263,32 @@ u32 GLBtcDbgType[BTC_MSG_MAX];
 	bp2p = false;
 	portConnectedStatus = 0;
 
-	अगर (check_fwstate(pmlmepriv, WIFI_ASOC_STATE) == true) अणु
-		अगर (check_fwstate(pmlmepriv, WIFI_AP_STATE) == true) अणु
-			अगर (bp2p)
+	if (check_fwstate(pmlmepriv, WIFI_ASOC_STATE) == true) {
+		if (check_fwstate(pmlmepriv, WIFI_AP_STATE) == true) {
+			if (bp2p)
 				portConnectedStatus |= WIFI_P2P_GO_CONNECTED;
-			अन्यथा
+			else
 				portConnectedStatus |= WIFI_AP_CONNECTED;
-		पूर्ण अन्यथा अणु
-			अगर (bp2p)
+		} else {
+			if (bp2p)
 				portConnectedStatus |= WIFI_P2P_GC_CONNECTED;
-			अन्यथा
+			else
 				portConnectedStatus |= WIFI_STA_CONNECTED;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस portConnectedStatus;
-पूर्ण
+	return portConnectedStatus;
+}
 
-अटल u32 halbtcoutsrc_GetWअगरiLinkStatus(काष्ठा btc_coexist *pBtCoexist)
-अणु
+static u32 halbtcoutsrc_GetWifiLinkStatus(struct btc_coexist *pBtCoexist)
+{
 	/*  */
-	/*  वापस value: */
+	/*  return value: */
 	/*  [31:16]=> connected port number */
 	/*  [15:0]=> port connected bit define */
 	/*  */
 
-	काष्ठा adapter *padapter;
+	struct adapter *padapter;
 	u32 retVal;
 	u32 portConnectedStatus, numOfConnectedPort;
 
@@ -298,61 +297,61 @@ u32 GLBtcDbgType[BTC_MSG_MAX];
 	portConnectedStatus = 0;
 	numOfConnectedPort = 0;
 
-	retVal = _halbtcoutsrc_GetWअगरiLinkStatus(padapter);
-	अगर (retVal) अणु
+	retVal = _halbtcoutsrc_GetWifiLinkStatus(padapter);
+	if (retVal) {
 		portConnectedStatus |= retVal;
 		numOfConnectedPort++;
-	पूर्ण
+	}
 
 	retVal = (numOfConnectedPort << 16) | portConnectedStatus;
 
-	वापस retVal;
-पूर्ण
+	return retVal;
+}
 
-अटल u32 halbtcoutsrc_GetBtPatchVer(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	वापस pBtCoexist->btInfo.btRealFwVer;
-पूर्ण
+static u32 halbtcoutsrc_GetBtPatchVer(struct btc_coexist *pBtCoexist)
+{
+	return pBtCoexist->btInfo.btRealFwVer;
+}
 
-अटल s32 halbtcoutsrc_GetWअगरiRssi(काष्ठा adapter *padapter)
-अणु
-	काष्ठा hal_com_data *pHalData = GET_HAL_DATA(padapter);
+static s32 halbtcoutsrc_GetWifiRssi(struct adapter *padapter)
+{
+	struct hal_com_data *pHalData = GET_HAL_DATA(padapter);
 
-	वापस pHalData->dmpriv.EntryMinUndecoratedSmoothedPWDB;
-पूर्ण
+	return pHalData->dmpriv.EntryMinUndecoratedSmoothedPWDB;
+}
 
-अटल u8 halbtcoutsrc_GetWअगरiScanAPNum(काष्ठा adapter *padapter)
-अणु
-	काष्ठा mlme_ext_priv *pmlmeext;
-	अटल u8 scan_AP_num;
+static u8 halbtcoutsrc_GetWifiScanAPNum(struct adapter *padapter)
+{
+	struct mlme_ext_priv *pmlmeext;
+	static u8 scan_AP_num;
 
 	pmlmeext = &padapter->mlmeextpriv;
 
-	अगर (!GLBtcWiFiInScanState) अणु
-		अगर (pmlmeext->sitesurvey_res.bss_cnt > 0xFF)
+	if (!GLBtcWiFiInScanState) {
+		if (pmlmeext->sitesurvey_res.bss_cnt > 0xFF)
 			scan_AP_num = 0xFF;
-		अन्यथा
+		else
 			scan_AP_num = (u8)pmlmeext->sitesurvey_res.bss_cnt;
-	पूर्ण
+	}
 
-	वापस scan_AP_num;
-पूर्ण
+	return scan_AP_num;
+}
 
-अटल u8 halbtcoutsrc_Get(व्योम *pBtcContext, u8 getType, व्योम *pOutBuf)
-अणु
-	काष्ठा btc_coexist *pBtCoexist;
-	काष्ठा adapter *padapter;
-	काष्ठा hal_com_data *pHalData;
-	काष्ठा mlme_ext_priv *mlmeext;
+static u8 halbtcoutsrc_Get(void *pBtcContext, u8 getType, void *pOutBuf)
+{
+	struct btc_coexist *pBtCoexist;
+	struct adapter *padapter;
+	struct hal_com_data *pHalData;
+	struct mlme_ext_priv *mlmeext;
 	u8 *pu8;
 	s32 *pS4Tmp;
 	u32 *pU4Tmp;
 	u8 ret;
 
 
-	pBtCoexist = (काष्ठा btc_coexist *)pBtcContext;
-	अगर (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
-		वापस false;
+	pBtCoexist = (struct btc_coexist *)pBtcContext;
+	if (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
+		return false;
 
 	padapter = pBtCoexist->Adapter;
 	pHalData = GET_HAL_DATA(padapter);
@@ -362,289 +361,289 @@ u32 GLBtcDbgType[BTC_MSG_MAX];
 	pU4Tmp = pOutBuf;
 	ret = true;
 
-	चयन (getType) अणु
-	हाल BTC_GET_BL_HS_OPERATION:
+	switch (getType) {
+	case BTC_GET_BL_HS_OPERATION:
 		*pu8 = false;
 		ret = false;
-		अवरोध;
+		break;
 
-	हाल BTC_GET_BL_HS_CONNECTING:
+	case BTC_GET_BL_HS_CONNECTING:
 		*pu8 = false;
 		ret = false;
-		अवरोध;
+		break;
 
-	हाल BTC_GET_BL_WIFI_CONNECTED:
+	case BTC_GET_BL_WIFI_CONNECTED:
 		*pu8 = check_fwstate(&padapter->mlmepriv, WIFI_ASOC_STATE);
-		अवरोध;
+		break;
 
-	हाल BTC_GET_BL_WIFI_BUSY:
-		*pu8 = halbtcoutsrc_IsWअगरiBusy(padapter);
-		अवरोध;
+	case BTC_GET_BL_WIFI_BUSY:
+		*pu8 = halbtcoutsrc_IsWifiBusy(padapter);
+		break;
 
-	हाल BTC_GET_BL_WIFI_SCAN:
+	case BTC_GET_BL_WIFI_SCAN:
 		/* Use the value of the new variable GLBtcWiFiInScanState to judge whether WiFi is in scan state or not, since the originally used flag
-			WIFI_SITE_MONITOR in fwstate may not be cleared in समय */
+			WIFI_SITE_MONITOR in fwstate may not be cleared in time */
 		*pu8 = GLBtcWiFiInScanState;
-		अवरोध;
+		break;
 
-	हाल BTC_GET_BL_WIFI_LINK:
+	case BTC_GET_BL_WIFI_LINK:
 		*pu8 = check_fwstate(&padapter->mlmepriv, WIFI_UNDER_LINKING);
-		अवरोध;
+		break;
 
-	हाल BTC_GET_BL_WIFI_ROAM:
+	case BTC_GET_BL_WIFI_ROAM:
 		*pu8 = check_fwstate(&padapter->mlmepriv, WIFI_UNDER_LINKING);
-		अवरोध;
+		break;
 
-	हाल BTC_GET_BL_WIFI_4_WAY_PROGRESS:
+	case BTC_GET_BL_WIFI_4_WAY_PROGRESS:
 		*pu8 = false;
-		अवरोध;
+		break;
 
-	हाल BTC_GET_BL_WIFI_UNDER_5G:
+	case BTC_GET_BL_WIFI_UNDER_5G:
 		*pu8 = pHalData->CurrentBandType == 1;
-		अवरोध;
+		break;
 
-	हाल BTC_GET_BL_WIFI_AP_MODE_ENABLE:
+	case BTC_GET_BL_WIFI_AP_MODE_ENABLE:
 		*pu8 = check_fwstate(&padapter->mlmepriv, WIFI_AP_STATE);
-		अवरोध;
+		break;
 
-	हाल BTC_GET_BL_WIFI_ENABLE_ENCRYPTION:
-		*pu8 = padapter->securitypriv.करोt11PrivacyAlgrthm != 0;
-		अवरोध;
+	case BTC_GET_BL_WIFI_ENABLE_ENCRYPTION:
+		*pu8 = padapter->securitypriv.dot11PrivacyAlgrthm != 0;
+		break;
 
-	हाल BTC_GET_BL_WIFI_UNDER_B_MODE:
-		अगर (mlmeext->cur_wireless_mode == WIRELESS_11B)
+	case BTC_GET_BL_WIFI_UNDER_B_MODE:
+		if (mlmeext->cur_wireless_mode == WIRELESS_11B)
 			*pu8 = true;
-		अन्यथा
+		else
 			*pu8 = false;
-		अवरोध;
+		break;
 
-	हाल BTC_GET_BL_WIFI_IS_IN_MP_MODE:
+	case BTC_GET_BL_WIFI_IS_IN_MP_MODE:
 		*pu8 = false;
-		अवरोध;
+		break;
 
-	हाल BTC_GET_BL_EXT_SWITCH:
+	case BTC_GET_BL_EXT_SWITCH:
 		*pu8 = false;
-		अवरोध;
+		break;
 
-	हाल BTC_GET_S4_WIFI_RSSI:
-		*pS4Tmp = halbtcoutsrc_GetWअगरiRssi(padapter);
-		अवरोध;
+	case BTC_GET_S4_WIFI_RSSI:
+		*pS4Tmp = halbtcoutsrc_GetWifiRssi(padapter);
+		break;
 
-	हाल BTC_GET_S4_HS_RSSI:
+	case BTC_GET_S4_HS_RSSI:
 		*pS4Tmp = 0;
 		ret = false;
-		अवरोध;
+		break;
 
-	हाल BTC_GET_U4_WIFI_BW:
-		अगर (IsLegacyOnly(mlmeext->cur_wireless_mode))
+	case BTC_GET_U4_WIFI_BW:
+		if (IsLegacyOnly(mlmeext->cur_wireless_mode))
 			*pU4Tmp = BTC_WIFI_BW_LEGACY;
-		अन्यथा अगर (pHalData->CurrentChannelBW == CHANNEL_WIDTH_20)
+		else if (pHalData->CurrentChannelBW == CHANNEL_WIDTH_20)
 			*pU4Tmp = BTC_WIFI_BW_HT20;
-		अन्यथा
+		else
 			*pU4Tmp = BTC_WIFI_BW_HT40;
-		अवरोध;
+		break;
 
-	हाल BTC_GET_U4_WIFI_TRAFFIC_सूचीECTION:
-		अणु
-			काष्ठा rt_link_detect_t *plinkinfo;
+	case BTC_GET_U4_WIFI_TRAFFIC_DIRECTION:
+		{
+			struct rt_link_detect_t *plinkinfo;
 			plinkinfo = &padapter->mlmepriv.LinkDetectInfo;
 
-			अगर (plinkinfo->NumTxOkInPeriod > plinkinfo->NumRxOkInPeriod)
+			if (plinkinfo->NumTxOkInPeriod > plinkinfo->NumRxOkInPeriod)
 				*pU4Tmp = BTC_WIFI_TRAFFIC_TX;
-			अन्यथा
+			else
 				*pU4Tmp = BTC_WIFI_TRAFFIC_RX;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल BTC_GET_U4_WIFI_FW_VER:
+	case BTC_GET_U4_WIFI_FW_VER:
 		*pU4Tmp = pHalData->FirmwareVersion << 16;
 		*pU4Tmp |= pHalData->FirmwareSubVersion;
-		अवरोध;
+		break;
 
-	हाल BTC_GET_U4_WIFI_LINK_STATUS:
-		*pU4Tmp = halbtcoutsrc_GetWअगरiLinkStatus(pBtCoexist);
-		अवरोध;
+	case BTC_GET_U4_WIFI_LINK_STATUS:
+		*pU4Tmp = halbtcoutsrc_GetWifiLinkStatus(pBtCoexist);
+		break;
 
-	हाल BTC_GET_U4_BT_PATCH_VER:
+	case BTC_GET_U4_BT_PATCH_VER:
 		*pU4Tmp = halbtcoutsrc_GetBtPatchVer(pBtCoexist);
-		अवरोध;
+		break;
 
-	हाल BTC_GET_U1_WIFI_DOT11_CHNL:
+	case BTC_GET_U1_WIFI_DOT11_CHNL:
 		*pu8 = padapter->mlmeextpriv.cur_channel;
-		अवरोध;
+		break;
 
-	हाल BTC_GET_U1_WIFI_CENTRAL_CHNL:
+	case BTC_GET_U1_WIFI_CENTRAL_CHNL:
 		*pu8 = pHalData->CurrentChannel;
-		अवरोध;
+		break;
 
-	हाल BTC_GET_U1_WIFI_HS_CHNL:
+	case BTC_GET_U1_WIFI_HS_CHNL:
 		*pu8 = 0;
 		ret = false;
-		अवरोध;
+		break;
 
-	हाल BTC_GET_U1_MAC_PHY_MODE:
+	case BTC_GET_U1_MAC_PHY_MODE:
 		*pu8 = BTC_SMSP;
 /* 			*pU1Tmp = BTC_DMSP; */
 /* 			*pU1Tmp = BTC_DMDP; */
 /* 			*pU1Tmp = BTC_MP_UNKNOWN; */
-		अवरोध;
+		break;
 
-	हाल BTC_GET_U1_AP_NUM:
-		*pu8 = halbtcoutsrc_GetWअगरiScanAPNum(padapter);
-		अवरोध;
+	case BTC_GET_U1_AP_NUM:
+		*pu8 = halbtcoutsrc_GetWifiScanAPNum(padapter);
+		break;
 
 	/* 1Ant =========== */
-	हाल BTC_GET_U1_LPS_MODE:
+	case BTC_GET_U1_LPS_MODE:
 		*pu8 = padapter->dvobj->pwrctl_priv.pwr_mode;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		ret = false;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u8 halbtcoutsrc_Set(व्योम *pBtcContext, u8 setType, व्योम *pInBuf)
-अणु
-	काष्ठा btc_coexist *pBtCoexist;
-	काष्ठा adapter *padapter;
+static u8 halbtcoutsrc_Set(void *pBtcContext, u8 setType, void *pInBuf)
+{
+	struct btc_coexist *pBtCoexist;
+	struct adapter *padapter;
 	u8 *pu8;
 	u32 *pU4Tmp;
 	u8 ret;
 
 
-	pBtCoexist = (काष्ठा btc_coexist *)pBtcContext;
+	pBtCoexist = (struct btc_coexist *)pBtcContext;
 	padapter = pBtCoexist->Adapter;
 	pu8 = pInBuf;
 	pU4Tmp = pInBuf;
 	ret = true;
 
-	अगर (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
-		वापस false;
+	if (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
+		return false;
 
-	चयन (setType) अणु
+	switch (setType) {
 	/*  set some u8 type variables. */
-	हाल BTC_SET_BL_BT_DISABLE:
+	case BTC_SET_BL_BT_DISABLE:
 		pBtCoexist->btInfo.bBtDisabled = *pu8;
-		अवरोध;
+		break;
 
-	हाल BTC_SET_BL_BT_TRAFFIC_BUSY:
+	case BTC_SET_BL_BT_TRAFFIC_BUSY:
 		pBtCoexist->btInfo.bBtBusy = *pu8;
-		अवरोध;
+		break;
 
-	हाल BTC_SET_BL_BT_LIMITED_DIG:
+	case BTC_SET_BL_BT_LIMITED_DIG:
 		pBtCoexist->btInfo.bLimitedDig = *pu8;
-		अवरोध;
+		break;
 
-	हाल BTC_SET_BL_FORCE_TO_ROAM:
+	case BTC_SET_BL_FORCE_TO_ROAM:
 		pBtCoexist->btInfo.bForceToRoam = *pu8;
-		अवरोध;
+		break;
 
-	हाल BTC_SET_BL_TO_REJ_AP_AGG_PKT:
+	case BTC_SET_BL_TO_REJ_AP_AGG_PKT:
 		pBtCoexist->btInfo.bRejectAggPkt = *pu8;
-		अवरोध;
+		break;
 
-	हाल BTC_SET_BL_BT_CTRL_AGG_SIZE:
+	case BTC_SET_BL_BT_CTRL_AGG_SIZE:
 		pBtCoexist->btInfo.bBtCtrlAggBufSize = *pu8;
-		अवरोध;
+		break;
 
-	हाल BTC_SET_BL_INC_SCAN_DEV_NUM:
+	case BTC_SET_BL_INC_SCAN_DEV_NUM:
 		pBtCoexist->btInfo.bIncreaseScanDevNum = *pu8;
-		अवरोध;
+		break;
 
-	हाल BTC_SET_BL_BT_TX_RX_MASK:
+	case BTC_SET_BL_BT_TX_RX_MASK:
 		pBtCoexist->btInfo.bBtTxRxMask = *pu8;
-		अवरोध;
+		break;
 
 	/*  set some u8 type variables. */
-	हाल BTC_SET_U1_RSSI_ADJ_VAL_FOR_AGC_TABLE_ON:
+	case BTC_SET_U1_RSSI_ADJ_VAL_FOR_AGC_TABLE_ON:
 		pBtCoexist->btInfo.rssiAdjustForAgcTableOn = *pu8;
-		अवरोध;
+		break;
 
-	हाल BTC_SET_U1_AGG_BUF_SIZE:
+	case BTC_SET_U1_AGG_BUF_SIZE:
 		pBtCoexist->btInfo.aggBufSize = *pu8;
-		अवरोध;
+		break;
 
 	/*  the following are some action which will be triggered */
-	हाल BTC_SET_ACT_GET_BT_RSSI:
+	case BTC_SET_ACT_GET_BT_RSSI:
 		ret = false;
-		अवरोध;
+		break;
 
-	हाल BTC_SET_ACT_AGGREGATE_CTRL:
+	case BTC_SET_ACT_AGGREGATE_CTRL:
 		halbtcoutsrc_AggregationCheck(pBtCoexist);
-		अवरोध;
+		break;
 
 	/* 1Ant =========== */
 	/*  set some u8 type variables. */
-	हाल BTC_SET_U1_RSSI_ADJ_VAL_FOR_1ANT_COEX_TYPE:
+	case BTC_SET_U1_RSSI_ADJ_VAL_FOR_1ANT_COEX_TYPE:
 		pBtCoexist->btInfo.rssiAdjustFor1AntCoexType = *pu8;
-		अवरोध;
+		break;
 
-	हाल BTC_SET_U1_LPS_VAL:
+	case BTC_SET_U1_LPS_VAL:
 		pBtCoexist->btInfo.lpsVal = *pu8;
-		अवरोध;
+		break;
 
-	हाल BTC_SET_U1_RPWM_VAL:
+	case BTC_SET_U1_RPWM_VAL:
 		pBtCoexist->btInfo.rpwmVal = *pu8;
-		अवरोध;
+		break;
 
 	/*  the following are some action which will be triggered */
-	हाल BTC_SET_ACT_LEAVE_LPS:
+	case BTC_SET_ACT_LEAVE_LPS:
 		halbtcoutsrc_LeaveLps(pBtCoexist);
-		अवरोध;
+		break;
 
-	हाल BTC_SET_ACT_ENTER_LPS:
+	case BTC_SET_ACT_ENTER_LPS:
 		halbtcoutsrc_EnterLps(pBtCoexist);
-		अवरोध;
+		break;
 
-	हाल BTC_SET_ACT_NORMAL_LPS:
+	case BTC_SET_ACT_NORMAL_LPS:
 		halbtcoutsrc_NormalLps(pBtCoexist);
-		अवरोध;
+		break;
 
-	हाल BTC_SET_ACT_DISABLE_LOW_POWER:
+	case BTC_SET_ACT_DISABLE_LOW_POWER:
 		halbtcoutsrc_DisableLowPower(pBtCoexist, *pu8);
-		अवरोध;
+		break;
 
-	हाल BTC_SET_ACT_UPDATE_RAMASK:
+	case BTC_SET_ACT_UPDATE_RAMASK:
 		pBtCoexist->btInfo.raMask = *pU4Tmp;
 
-		अगर (check_fwstate(&padapter->mlmepriv, WIFI_ASOC_STATE) == true) अणु
-			काष्ठा sta_info *psta;
-			काष्ठा wlan_bssid_ex *cur_network;
+		if (check_fwstate(&padapter->mlmepriv, WIFI_ASOC_STATE) == true) {
+			struct sta_info *psta;
+			struct wlan_bssid_ex *cur_network;
 
 			cur_network = &padapter->mlmeextpriv.mlmext_info.network;
 			psta = rtw_get_stainfo(&padapter->stapriv, cur_network->MacAddress);
 			rtw_hal_update_ra_mask(psta, 0);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल BTC_SET_ACT_SEND_MIMO_PS:
+	case BTC_SET_ACT_SEND_MIMO_PS:
 		ret = false;
-		अवरोध;
+		break;
 
-	हाल BTC_SET_ACT_CTRL_BT_INFO:
+	case BTC_SET_ACT_CTRL_BT_INFO:
 		ret = false;
-		अवरोध;
+		break;
 
-	हाल BTC_SET_ACT_CTRL_BT_COEX:
+	case BTC_SET_ACT_CTRL_BT_COEX:
 		ret = false;
-		अवरोध;
-	हाल BTC_SET_ACT_CTRL_8723B_ANT:
+		break;
+	case BTC_SET_ACT_CTRL_8723B_ANT:
 		ret = false;
-		अवरोध;
+		break;
 	/*  */
-	शेष:
+	default:
 		ret = false;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम halbtcoutsrc_DisplayFwPwrModeCmd(काष्ठा btc_coexist *pBtCoexist)
-अणु
+static void halbtcoutsrc_DisplayFwPwrModeCmd(struct btc_coexist *pBtCoexist)
+{
 	u8 *cliBuf = pBtCoexist->cliBuf;
 
 	CL_SPRINTF(cliBuf, BT_TMP_BUF_SIZE, "\r\n %-35s = %02x %02x %02x %02x %02x %02x ", "Power mode cmd ", \
@@ -652,183 +651,183 @@ u32 GLBtcDbgType[BTC_MSG_MAX];
 		pBtCoexist->pwrModeVal[2], pBtCoexist->pwrModeVal[3],
 		pBtCoexist->pwrModeVal[4], pBtCoexist->pwrModeVal[5]);
 	CL_PRINTF(cliBuf);
-पूर्ण
+}
 
 /*  */
 /* 		IO related function */
 /*  */
-अटल u8 halbtcoutsrc_Read1Byte(व्योम *pBtcContext, u32 RegAddr)
-अणु
-	काष्ठा btc_coexist *pBtCoexist;
-	काष्ठा adapter *padapter;
+static u8 halbtcoutsrc_Read1Byte(void *pBtcContext, u32 RegAddr)
+{
+	struct btc_coexist *pBtCoexist;
+	struct adapter *padapter;
 
 
-	pBtCoexist = (काष्ठा btc_coexist *)pBtcContext;
+	pBtCoexist = (struct btc_coexist *)pBtcContext;
 	padapter = pBtCoexist->Adapter;
 
-	वापस rtw_पढ़ो8(padapter, RegAddr);
-पूर्ण
+	return rtw_read8(padapter, RegAddr);
+}
 
-अटल u16 halbtcoutsrc_Read2Byte(व्योम *pBtcContext, u32 RegAddr)
-अणु
-	काष्ठा btc_coexist *pBtCoexist;
-	काष्ठा adapter *padapter;
+static u16 halbtcoutsrc_Read2Byte(void *pBtcContext, u32 RegAddr)
+{
+	struct btc_coexist *pBtCoexist;
+	struct adapter *padapter;
 
 
-	pBtCoexist = (काष्ठा btc_coexist *)pBtcContext;
+	pBtCoexist = (struct btc_coexist *)pBtcContext;
 	padapter = pBtCoexist->Adapter;
 
-	वापस	rtw_पढ़ो16(padapter, RegAddr);
-पूर्ण
+	return	rtw_read16(padapter, RegAddr);
+}
 
-अटल u32 halbtcoutsrc_Read4Byte(व्योम *pBtcContext, u32 RegAddr)
-अणु
-	काष्ठा btc_coexist *pBtCoexist;
-	काष्ठा adapter *padapter;
+static u32 halbtcoutsrc_Read4Byte(void *pBtcContext, u32 RegAddr)
+{
+	struct btc_coexist *pBtCoexist;
+	struct adapter *padapter;
 
 
-	pBtCoexist = (काष्ठा btc_coexist *)pBtcContext;
+	pBtCoexist = (struct btc_coexist *)pBtcContext;
 	padapter = pBtCoexist->Adapter;
 
-	वापस	rtw_पढ़ो32(padapter, RegAddr);
-पूर्ण
+	return	rtw_read32(padapter, RegAddr);
+}
 
-अटल व्योम halbtcoutsrc_Write1Byte(व्योम *pBtcContext, u32 RegAddr, u8 Data)
-अणु
-	काष्ठा btc_coexist *pBtCoexist;
-	काष्ठा adapter *padapter;
+static void halbtcoutsrc_Write1Byte(void *pBtcContext, u32 RegAddr, u8 Data)
+{
+	struct btc_coexist *pBtCoexist;
+	struct adapter *padapter;
 
 
-	pBtCoexist = (काष्ठा btc_coexist *)pBtcContext;
+	pBtCoexist = (struct btc_coexist *)pBtcContext;
 	padapter = pBtCoexist->Adapter;
 
-	rtw_ग_लिखो8(padapter, RegAddr, Data);
-पूर्ण
+	rtw_write8(padapter, RegAddr, Data);
+}
 
-अटल व्योम halbtcoutsrc_BitMaskWrite1Byte(व्योम *pBtcContext, u32 regAddr, u8 bitMask, u8 data1b)
-अणु
-	काष्ठा btc_coexist *pBtCoexist;
-	काष्ठा adapter *padapter;
-	u8 originalValue, bitShअगरt;
+static void halbtcoutsrc_BitMaskWrite1Byte(void *pBtcContext, u32 regAddr, u8 bitMask, u8 data1b)
+{
+	struct btc_coexist *pBtCoexist;
+	struct adapter *padapter;
+	u8 originalValue, bitShift;
 	u8 i;
 
 
-	pBtCoexist = (काष्ठा btc_coexist *)pBtcContext;
+	pBtCoexist = (struct btc_coexist *)pBtcContext;
 	padapter = pBtCoexist->Adapter;
 	originalValue = 0;
-	bitShअगरt = 0;
+	bitShift = 0;
 
-	अगर (bitMask != 0xFF) अणु
-		originalValue = rtw_पढ़ो8(padapter, regAddr);
+	if (bitMask != 0xFF) {
+		originalValue = rtw_read8(padapter, regAddr);
 
-		क्रम (i = 0; i <= 7; i++) अणु
-			अगर ((bitMask >> i) & 0x1)
-				अवरोध;
-		पूर्ण
-		bitShअगरt = i;
+		for (i = 0; i <= 7; i++) {
+			if ((bitMask >> i) & 0x1)
+				break;
+		}
+		bitShift = i;
 
-		data1b = (originalValue & ~bitMask) | ((data1b << bitShअगरt) & bitMask);
-	पूर्ण
+		data1b = (originalValue & ~bitMask) | ((data1b << bitShift) & bitMask);
+	}
 
-	rtw_ग_लिखो8(padapter, regAddr, data1b);
-पूर्ण
+	rtw_write8(padapter, regAddr, data1b);
+}
 
-अटल व्योम halbtcoutsrc_Write2Byte(व्योम *pBtcContext, u32 RegAddr, u16 Data)
-अणु
-	काष्ठा btc_coexist *pBtCoexist;
-	काष्ठा adapter *padapter;
+static void halbtcoutsrc_Write2Byte(void *pBtcContext, u32 RegAddr, u16 Data)
+{
+	struct btc_coexist *pBtCoexist;
+	struct adapter *padapter;
 
 
-	pBtCoexist = (काष्ठा btc_coexist *)pBtcContext;
+	pBtCoexist = (struct btc_coexist *)pBtcContext;
 	padapter = pBtCoexist->Adapter;
 
-	rtw_ग_लिखो16(padapter, RegAddr, Data);
-पूर्ण
+	rtw_write16(padapter, RegAddr, Data);
+}
 
-अटल व्योम halbtcoutsrc_Write4Byte(व्योम *pBtcContext, u32 RegAddr, u32 Data)
-अणु
-	काष्ठा btc_coexist *pBtCoexist;
-	काष्ठा adapter *padapter;
+static void halbtcoutsrc_Write4Byte(void *pBtcContext, u32 RegAddr, u32 Data)
+{
+	struct btc_coexist *pBtCoexist;
+	struct adapter *padapter;
 
 
-	pBtCoexist = (काष्ठा btc_coexist *)pBtcContext;
+	pBtCoexist = (struct btc_coexist *)pBtcContext;
 	padapter = pBtCoexist->Adapter;
 
-	rtw_ग_लिखो32(padapter, RegAddr, Data);
-पूर्ण
+	rtw_write32(padapter, RegAddr, Data);
+}
 
-अटल व्योम halbtcoutsrc_WriteLocalReg1Byte(व्योम *pBtcContext, u32 RegAddr, u8 Data)
-अणु
-	काष्ठा btc_coexist *pBtCoexist = (काष्ठा btc_coexist *)pBtcContext;
-	काष्ठा adapter *Adapter = pBtCoexist->Adapter;
+static void halbtcoutsrc_WriteLocalReg1Byte(void *pBtcContext, u32 RegAddr, u8 Data)
+{
+	struct btc_coexist *pBtCoexist = (struct btc_coexist *)pBtcContext;
+	struct adapter *Adapter = pBtCoexist->Adapter;
 
-	अगर (BTC_INTF_SDIO == pBtCoexist->chipInterface)
-		rtw_ग_लिखो8(Adapter, SDIO_LOCAL_BASE | RegAddr, Data);
-	अन्यथा
-		rtw_ग_लिखो8(Adapter, RegAddr, Data);
-पूर्ण
+	if (BTC_INTF_SDIO == pBtCoexist->chipInterface)
+		rtw_write8(Adapter, SDIO_LOCAL_BASE | RegAddr, Data);
+	else
+		rtw_write8(Adapter, RegAddr, Data);
+}
 
-अटल व्योम halbtcoutsrc_SetBbReg(व्योम *pBtcContext, u32 RegAddr, u32 BitMask, u32 Data)
-अणु
-	काष्ठा btc_coexist *pBtCoexist;
-	काष्ठा adapter *padapter;
+static void halbtcoutsrc_SetBbReg(void *pBtcContext, u32 RegAddr, u32 BitMask, u32 Data)
+{
+	struct btc_coexist *pBtCoexist;
+	struct adapter *padapter;
 
 
-	pBtCoexist = (काष्ठा btc_coexist *)pBtcContext;
+	pBtCoexist = (struct btc_coexist *)pBtcContext;
 	padapter = pBtCoexist->Adapter;
 
 	PHY_SetBBReg(padapter, RegAddr, BitMask, Data);
-पूर्ण
+}
 
 
-अटल u32 halbtcoutsrc_GetBbReg(व्योम *pBtcContext, u32 RegAddr, u32 BitMask)
-अणु
-	काष्ठा btc_coexist *pBtCoexist;
-	काष्ठा adapter *padapter;
+static u32 halbtcoutsrc_GetBbReg(void *pBtcContext, u32 RegAddr, u32 BitMask)
+{
+	struct btc_coexist *pBtCoexist;
+	struct adapter *padapter;
 
 
-	pBtCoexist = (काष्ठा btc_coexist *)pBtcContext;
+	pBtCoexist = (struct btc_coexist *)pBtcContext;
 	padapter = pBtCoexist->Adapter;
 
-	वापस PHY_QueryBBReg(padapter, RegAddr, BitMask);
-पूर्ण
+	return PHY_QueryBBReg(padapter, RegAddr, BitMask);
+}
 
-अटल व्योम halbtcoutsrc_SetRfReg(व्योम *pBtcContext, u8 eRFPath, u32 RegAddr, u32 BitMask, u32 Data)
-अणु
-	काष्ठा btc_coexist *pBtCoexist;
-	काष्ठा adapter *padapter;
+static void halbtcoutsrc_SetRfReg(void *pBtcContext, u8 eRFPath, u32 RegAddr, u32 BitMask, u32 Data)
+{
+	struct btc_coexist *pBtCoexist;
+	struct adapter *padapter;
 
 
-	pBtCoexist = (काष्ठा btc_coexist *)pBtcContext;
+	pBtCoexist = (struct btc_coexist *)pBtcContext;
 	padapter = pBtCoexist->Adapter;
 
 	PHY_SetRFReg(padapter, eRFPath, RegAddr, BitMask, Data);
-पूर्ण
+}
 
-अटल u32 halbtcoutsrc_GetRfReg(व्योम *pBtcContext, u8 eRFPath, u32 RegAddr, u32 BitMask)
-अणु
-	काष्ठा btc_coexist *pBtCoexist;
-	काष्ठा adapter *padapter;
+static u32 halbtcoutsrc_GetRfReg(void *pBtcContext, u8 eRFPath, u32 RegAddr, u32 BitMask)
+{
+	struct btc_coexist *pBtCoexist;
+	struct adapter *padapter;
 
 
-	pBtCoexist = (काष्ठा btc_coexist *)pBtcContext;
+	pBtCoexist = (struct btc_coexist *)pBtcContext;
 	padapter = pBtCoexist->Adapter;
 
-	वापस PHY_QueryRFReg(padapter, eRFPath, RegAddr, BitMask);
-पूर्ण
+	return PHY_QueryRFReg(padapter, eRFPath, RegAddr, BitMask);
+}
 
-अटल व्योम halbtcoutsrc_SetBtReg(व्योम *pBtcContext, u8 RegType, u32 RegAddr, u32 Data)
-अणु
-	काष्ठा btc_coexist *pBtCoexist;
-	काष्ठा adapter *padapter;
-	u8 CmdBuffer1[4] = अणु0पूर्ण;
-	u8 CmdBuffer2[4] = अणु0पूर्ण;
+static void halbtcoutsrc_SetBtReg(void *pBtcContext, u8 RegType, u32 RegAddr, u32 Data)
+{
+	struct btc_coexist *pBtCoexist;
+	struct adapter *padapter;
+	u8 CmdBuffer1[4] = {0};
+	u8 CmdBuffer2[4] = {0};
 	u8 *AddrToSet = (u8 *)&RegAddr;
 	u8 *ValueToSet = (u8 *)&Data;
 	u8 OperVer = 0;
 	u8 ReqNum = 0;
 
-	pBtCoexist = (काष्ठा btc_coexist *)pBtcContext;
+	pBtCoexist = (struct btc_coexist *)pBtcContext;
 	padapter = pBtCoexist->Adapter;
 
 	CmdBuffer1[0] |= (OperVer & 0x0f);						/* Set OperVer */
@@ -845,79 +844,79 @@ u32 GLBtcDbgType[BTC_MSG_MAX];
 	CmdBuffer2[1] = 0x0c;									/* Set OpCode of BT_LO_OP_WRITE_REG_ADDR */
 	CmdBuffer2[3] = AddrToSet[0];							/* Set WriteRegAddr */
 	rtw_hal_fill_h2c_cmd(padapter, 0x67, 4, &(CmdBuffer2[0]));
-पूर्ण
+}
 
-अटल u32 halbtcoutsrc_GetBtReg(व्योम *pBtcContext, u8 RegType, u32 RegAddr)
-अणु
-	/* To be implemented. Always वापस 0 temporarily */
-	वापस 0;
-पूर्ण
+static u32 halbtcoutsrc_GetBtReg(void *pBtcContext, u8 RegType, u32 RegAddr)
+{
+	/* To be implemented. Always return 0 temporarily */
+	return 0;
+}
 
-अटल व्योम halbtcoutsrc_FillH2cCmd(व्योम *pBtcContext, u8 elementId, u32 cmdLen, u8 *pCmdBuffer)
-अणु
-	काष्ठा btc_coexist *pBtCoexist;
-	काष्ठा adapter *padapter;
+static void halbtcoutsrc_FillH2cCmd(void *pBtcContext, u8 elementId, u32 cmdLen, u8 *pCmdBuffer)
+{
+	struct btc_coexist *pBtCoexist;
+	struct adapter *padapter;
 
 
-	pBtCoexist = (काष्ठा btc_coexist *)pBtcContext;
+	pBtCoexist = (struct btc_coexist *)pBtcContext;
 	padapter = pBtCoexist->Adapter;
 
 	rtw_hal_fill_h2c_cmd(padapter, elementId, cmdLen, pCmdBuffer);
-पूर्ण
+}
 
-अटल व्योम halbtcoutsrc_DisplayDbgMsg(व्योम *pBtcContext, u8 dispType)
-अणु
-	काष्ठा btc_coexist *pBtCoexist;
+static void halbtcoutsrc_DisplayDbgMsg(void *pBtcContext, u8 dispType)
+{
+	struct btc_coexist *pBtCoexist;
 
 
-	pBtCoexist = (काष्ठा btc_coexist *)pBtcContext;
-	चयन (dispType) अणु
-	हाल BTC_DBG_DISP_COEX_STATISTICS:
-		अवरोध;
-	हाल BTC_DBG_DISP_BT_LINK_INFO:
-		अवरोध;
-	हाल BTC_DBG_DISP_FW_PWR_MODE_CMD:
+	pBtCoexist = (struct btc_coexist *)pBtcContext;
+	switch (dispType) {
+	case BTC_DBG_DISP_COEX_STATISTICS:
+		break;
+	case BTC_DBG_DISP_BT_LINK_INFO:
+		break;
+	case BTC_DBG_DISP_FW_PWR_MODE_CMD:
 		halbtcoutsrc_DisplayFwPwrModeCmd(pBtCoexist);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
 /*  */
 /* 		Extern functions called by other module */
 /*  */
-अटल u8 EXhalbtcoutsrc_BindBtCoexWithAdapter(व्योम *padapter)
-अणु
-	काष्ठा btc_coexist *pBtCoexist = &GLBtCoexist;
+static u8 EXhalbtcoutsrc_BindBtCoexWithAdapter(void *padapter)
+{
+	struct btc_coexist *pBtCoexist = &GLBtCoexist;
 
-	अगर (pBtCoexist->bBinded)
-		वापस false;
-	अन्यथा
+	if (pBtCoexist->bBinded)
+		return false;
+	else
 		pBtCoexist->bBinded = true;
 
 	pBtCoexist->statistics.cntBind++;
 
 	pBtCoexist->Adapter = padapter;
 
-	pBtCoexist->stackInfo.bProfileNotअगरied = false;
+	pBtCoexist->stackInfo.bProfileNotified = false;
 
 	pBtCoexist->btInfo.bBtCtrlAggBufSize = false;
 	pBtCoexist->btInfo.aggBufSize = 5;
 
 	pBtCoexist->btInfo.bIncreaseScanDevNum = false;
 
-	/*  set शेष antenna position to मुख्य  port */
+	/*  set default antenna position to main  port */
 	pBtCoexist->boardInfo.btdmAntPos = BTC_ANTENNA_AT_MAIN_PORT;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम hal_btcoex_Initialize(व्योम *padapter)
-अणु
-	काष्ठा btc_coexist *pBtCoexist;
+void hal_btcoex_Initialize(void *padapter)
+{
+	struct btc_coexist *pBtCoexist;
 
-	स_रखो(&GLBtCoexist, 0, माप(GLBtCoexist));
+	memset(&GLBtCoexist, 0, sizeof(GLBtCoexist));
 
 	pBtCoexist = &GLBtCoexist;
 
@@ -959,332 +958,332 @@ u32 GLBtcDbgType[BTC_MSG_MAX];
 	GLBtcWiFiInScanState = false;
 
 	GLBtcWiFiInIQKState = false;
-पूर्ण
+}
 
-व्योम EXhalbtcoutsrc_PowerOnSetting(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	अगर (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
-		वापस;
+void EXhalbtcoutsrc_PowerOnSetting(struct btc_coexist *pBtCoexist)
+{
+	if (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
+		return;
 
 	/* Power on setting function is only added in 8723B currently */
-	अगर (pBtCoexist->boardInfo.btdmAntNum == 2)
+	if (pBtCoexist->boardInfo.btdmAntNum == 2)
 		EXhalbtc8723b2ant_PowerOnSetting(pBtCoexist);
-	अन्यथा अगर (pBtCoexist->boardInfo.btdmAntNum == 1)
+	else if (pBtCoexist->boardInfo.btdmAntNum == 1)
 		EXhalbtc8723b1ant_PowerOnSetting(pBtCoexist);
-पूर्ण
+}
 
-व्योम EXhalbtcoutsrc_InitHwConfig(काष्ठा btc_coexist *pBtCoexist, u8 bWअगरiOnly)
-अणु
-	अगर (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
-		वापस;
+void EXhalbtcoutsrc_InitHwConfig(struct btc_coexist *pBtCoexist, u8 bWifiOnly)
+{
+	if (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
+		return;
 
 	pBtCoexist->statistics.cntInitHwConfig++;
 
-	अगर (pBtCoexist->boardInfo.btdmAntNum == 2)
-		EXhalbtc8723b2ant_InitHwConfig(pBtCoexist, bWअगरiOnly);
-	अन्यथा अगर (pBtCoexist->boardInfo.btdmAntNum == 1)
-		EXhalbtc8723b1ant_InitHwConfig(pBtCoexist, bWअगरiOnly);
-पूर्ण
+	if (pBtCoexist->boardInfo.btdmAntNum == 2)
+		EXhalbtc8723b2ant_InitHwConfig(pBtCoexist, bWifiOnly);
+	else if (pBtCoexist->boardInfo.btdmAntNum == 1)
+		EXhalbtc8723b1ant_InitHwConfig(pBtCoexist, bWifiOnly);
+}
 
-व्योम EXhalbtcoutsrc_InitCoexDm(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	अगर (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
-		वापस;
+void EXhalbtcoutsrc_InitCoexDm(struct btc_coexist *pBtCoexist)
+{
+	if (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
+		return;
 
 	pBtCoexist->statistics.cntInitCoexDm++;
 
-	अगर (pBtCoexist->boardInfo.btdmAntNum == 2)
+	if (pBtCoexist->boardInfo.btdmAntNum == 2)
 		EXhalbtc8723b2ant_InitCoexDm(pBtCoexist);
-	अन्यथा अगर (pBtCoexist->boardInfo.btdmAntNum == 1)
+	else if (pBtCoexist->boardInfo.btdmAntNum == 1)
 		EXhalbtc8723b1ant_InitCoexDm(pBtCoexist);
 
 	pBtCoexist->bInitilized = true;
-पूर्ण
+}
 
-व्योम EXhalbtcoutsrc_IpsNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 type)
-अणु
+void EXhalbtcoutsrc_IpsNotify(struct btc_coexist *pBtCoexist, u8 type)
+{
 	u8 ipsType;
 
-	अगर (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
-		वापस;
+	if (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
+		return;
 
-	pBtCoexist->statistics.cntIpsNotअगरy++;
-	अगर (pBtCoexist->bManualControl)
-		वापस;
+	pBtCoexist->statistics.cntIpsNotify++;
+	if (pBtCoexist->bManualControl)
+		return;
 
-	अगर (IPS_NONE == type)
+	if (IPS_NONE == type)
 		ipsType = BTC_IPS_LEAVE;
-	अन्यथा
+	else
 		ipsType = BTC_IPS_ENTER;
 
-	/*  All notअगरy is called in cmd thपढ़ो, करोn't need to leave low घातer again */
+	/*  All notify is called in cmd thread, don't need to leave low power again */
 /* 	halbtcoutsrc_LeaveLowPower(pBtCoexist); */
 
-	अगर (pBtCoexist->boardInfo.btdmAntNum == 2)
-		EXhalbtc8723b2ant_IpsNotअगरy(pBtCoexist, ipsType);
-	अन्यथा अगर (pBtCoexist->boardInfo.btdmAntNum == 1)
-		EXhalbtc8723b1ant_IpsNotअगरy(pBtCoexist, ipsType);
+	if (pBtCoexist->boardInfo.btdmAntNum == 2)
+		EXhalbtc8723b2ant_IpsNotify(pBtCoexist, ipsType);
+	else if (pBtCoexist->boardInfo.btdmAntNum == 1)
+		EXhalbtc8723b1ant_IpsNotify(pBtCoexist, ipsType);
 
 /* 	halbtcoutsrc_NormalLowPower(pBtCoexist); */
-पूर्ण
+}
 
-व्योम EXhalbtcoutsrc_LpsNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 type)
-अणु
+void EXhalbtcoutsrc_LpsNotify(struct btc_coexist *pBtCoexist, u8 type)
+{
 	u8 lpsType;
 
 
-	अगर (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
-		वापस;
+	if (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
+		return;
 
-	pBtCoexist->statistics.cntLpsNotअगरy++;
-	अगर (pBtCoexist->bManualControl)
-		वापस;
+	pBtCoexist->statistics.cntLpsNotify++;
+	if (pBtCoexist->bManualControl)
+		return;
 
-	अगर (PS_MODE_ACTIVE == type)
+	if (PS_MODE_ACTIVE == type)
 		lpsType = BTC_LPS_DISABLE;
-	अन्यथा
+	else
 		lpsType = BTC_LPS_ENABLE;
 
-	अगर (pBtCoexist->boardInfo.btdmAntNum == 2)
-		EXhalbtc8723b2ant_LpsNotअगरy(pBtCoexist, lpsType);
-	अन्यथा अगर (pBtCoexist->boardInfo.btdmAntNum == 1)
-		EXhalbtc8723b1ant_LpsNotअगरy(pBtCoexist, lpsType);
-पूर्ण
+	if (pBtCoexist->boardInfo.btdmAntNum == 2)
+		EXhalbtc8723b2ant_LpsNotify(pBtCoexist, lpsType);
+	else if (pBtCoexist->boardInfo.btdmAntNum == 1)
+		EXhalbtc8723b1ant_LpsNotify(pBtCoexist, lpsType);
+}
 
-व्योम EXhalbtcoutsrc_ScanNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 type)
-अणु
+void EXhalbtcoutsrc_ScanNotify(struct btc_coexist *pBtCoexist, u8 type)
+{
 	u8 scanType;
 
-	अगर (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
-		वापस;
-	pBtCoexist->statistics.cntScanNotअगरy++;
-	अगर (pBtCoexist->bManualControl)
-		वापस;
+	if (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
+		return;
+	pBtCoexist->statistics.cntScanNotify++;
+	if (pBtCoexist->bManualControl)
+		return;
 
-	अगर (type) अणु
+	if (type) {
 		scanType = BTC_SCAN_START;
 		GLBtcWiFiInScanState = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		scanType = BTC_SCAN_FINISH;
 		GLBtcWiFiInScanState = false;
-	पूर्ण
+	}
 
-	/*  All notअगरy is called in cmd thपढ़ो, करोn't need to leave low घातer again */
+	/*  All notify is called in cmd thread, don't need to leave low power again */
 /* 	halbtcoutsrc_LeaveLowPower(pBtCoexist); */
 
-	अगर (pBtCoexist->boardInfo.btdmAntNum == 2)
-		EXhalbtc8723b2ant_ScanNotअगरy(pBtCoexist, scanType);
-	अन्यथा अगर (pBtCoexist->boardInfo.btdmAntNum == 1)
-		EXhalbtc8723b1ant_ScanNotअगरy(pBtCoexist, scanType);
+	if (pBtCoexist->boardInfo.btdmAntNum == 2)
+		EXhalbtc8723b2ant_ScanNotify(pBtCoexist, scanType);
+	else if (pBtCoexist->boardInfo.btdmAntNum == 1)
+		EXhalbtc8723b1ant_ScanNotify(pBtCoexist, scanType);
 
 /* 	halbtcoutsrc_NormalLowPower(pBtCoexist); */
-पूर्ण
+}
 
-व्योम EXhalbtcoutsrc_ConnectNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 action)
-अणु
+void EXhalbtcoutsrc_ConnectNotify(struct btc_coexist *pBtCoexist, u8 action)
+{
 	u8 assoType;
 
-	अगर (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
-		वापस;
-	pBtCoexist->statistics.cntConnectNotअगरy++;
-	अगर (pBtCoexist->bManualControl)
-		वापस;
+	if (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
+		return;
+	pBtCoexist->statistics.cntConnectNotify++;
+	if (pBtCoexist->bManualControl)
+		return;
 
-	अगर (action)
+	if (action)
 		assoType = BTC_ASSOCIATE_START;
-	अन्यथा
+	else
 		assoType = BTC_ASSOCIATE_FINISH;
 
-	/*  All notअगरy is called in cmd thपढ़ो, करोn't need to leave low घातer again */
+	/*  All notify is called in cmd thread, don't need to leave low power again */
 /* 	halbtcoutsrc_LeaveLowPower(pBtCoexist); */
 
-	अगर (pBtCoexist->boardInfo.btdmAntNum == 2)
-		EXhalbtc8723b2ant_ConnectNotअगरy(pBtCoexist, assoType);
-	अन्यथा अगर (pBtCoexist->boardInfo.btdmAntNum == 1)
-		EXhalbtc8723b1ant_ConnectNotअगरy(pBtCoexist, assoType);
+	if (pBtCoexist->boardInfo.btdmAntNum == 2)
+		EXhalbtc8723b2ant_ConnectNotify(pBtCoexist, assoType);
+	else if (pBtCoexist->boardInfo.btdmAntNum == 1)
+		EXhalbtc8723b1ant_ConnectNotify(pBtCoexist, assoType);
 
 /* 	halbtcoutsrc_NormalLowPower(pBtCoexist); */
-पूर्ण
+}
 
-व्योम EXhalbtcoutsrc_MediaStatusNotअगरy(काष्ठा btc_coexist *pBtCoexist, क्रमागत
+void EXhalbtcoutsrc_MediaStatusNotify(struct btc_coexist *pBtCoexist, enum
 	rt_media_status mediaStatus)
-अणु
+{
 	u8 mStatus;
 
-	अगर (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
-		वापस;
+	if (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
+		return;
 
-	pBtCoexist->statistics.cntMediaStatusNotअगरy++;
-	अगर (pBtCoexist->bManualControl)
-		वापस;
+	pBtCoexist->statistics.cntMediaStatusNotify++;
+	if (pBtCoexist->bManualControl)
+		return;
 
-	अगर (RT_MEDIA_CONNECT == mediaStatus)
+	if (RT_MEDIA_CONNECT == mediaStatus)
 		mStatus = BTC_MEDIA_CONNECT;
-	अन्यथा
+	else
 		mStatus = BTC_MEDIA_DISCONNECT;
 
-	/*  All notअगरy is called in cmd thपढ़ो, करोn't need to leave low घातer again */
+	/*  All notify is called in cmd thread, don't need to leave low power again */
 /* 	halbtcoutsrc_LeaveLowPower(pBtCoexist); */
 
-	अगर (pBtCoexist->boardInfo.btdmAntNum == 2)
-		EXhalbtc8723b2ant_MediaStatusNotअगरy(pBtCoexist, mStatus);
-	अन्यथा अगर (pBtCoexist->boardInfo.btdmAntNum == 1)
-		EXhalbtc8723b1ant_MediaStatusNotअगरy(pBtCoexist, mStatus);
+	if (pBtCoexist->boardInfo.btdmAntNum == 2)
+		EXhalbtc8723b2ant_MediaStatusNotify(pBtCoexist, mStatus);
+	else if (pBtCoexist->boardInfo.btdmAntNum == 1)
+		EXhalbtc8723b1ant_MediaStatusNotify(pBtCoexist, mStatus);
 
 /* 	halbtcoutsrc_NormalLowPower(pBtCoexist); */
-पूर्ण
+}
 
-व्योम EXhalbtcoutsrc_SpecialPacketNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 pktType)
-अणु
+void EXhalbtcoutsrc_SpecialPacketNotify(struct btc_coexist *pBtCoexist, u8 pktType)
+{
 	u8 packetType;
 
-	अगर (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
-		वापस;
-	pBtCoexist->statistics.cntSpecialPacketNotअगरy++;
-	अगर (pBtCoexist->bManualControl)
-		वापस;
+	if (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
+		return;
+	pBtCoexist->statistics.cntSpecialPacketNotify++;
+	if (pBtCoexist->bManualControl)
+		return;
 
-	अगर (PACKET_DHCP == pktType) अणु
+	if (PACKET_DHCP == pktType) {
 		packetType = BTC_PACKET_DHCP;
-	पूर्ण अन्यथा अगर (PACKET_EAPOL == pktType) अणु
+	} else if (PACKET_EAPOL == pktType) {
 		packetType = BTC_PACKET_EAPOL;
-	पूर्ण अन्यथा अगर (PACKET_ARP == pktType) अणु
+	} else if (PACKET_ARP == pktType) {
 		packetType = BTC_PACKET_ARP;
-	पूर्ण अन्यथा अणु
-		वापस;
-	पूर्ण
+	} else {
+		return;
+	}
 
-	/*  All notअगरy is called in cmd thपढ़ो, करोn't need to leave low घातer again */
+	/*  All notify is called in cmd thread, don't need to leave low power again */
 /* 	halbtcoutsrc_LeaveLowPower(pBtCoexist); */
 
-	अगर (pBtCoexist->boardInfo.btdmAntNum == 2)
-		EXhalbtc8723b2ant_SpecialPacketNotअगरy(pBtCoexist, packetType);
-	अन्यथा अगर (pBtCoexist->boardInfo.btdmAntNum == 1)
-		EXhalbtc8723b1ant_SpecialPacketNotअगरy(pBtCoexist, packetType);
+	if (pBtCoexist->boardInfo.btdmAntNum == 2)
+		EXhalbtc8723b2ant_SpecialPacketNotify(pBtCoexist, packetType);
+	else if (pBtCoexist->boardInfo.btdmAntNum == 1)
+		EXhalbtc8723b1ant_SpecialPacketNotify(pBtCoexist, packetType);
 
 /* 	halbtcoutsrc_NormalLowPower(pBtCoexist); */
-पूर्ण
+}
 
-व्योम EXhalbtcoutsrc_BtInfoNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 *पंचांगpBuf, u8 length)
-अणु
-	अगर (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
-		वापस;
+void EXhalbtcoutsrc_BtInfoNotify(struct btc_coexist *pBtCoexist, u8 *tmpBuf, u8 length)
+{
+	if (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
+		return;
 
-	pBtCoexist->statistics.cntBtInfoNotअगरy++;
+	pBtCoexist->statistics.cntBtInfoNotify++;
 
-	/*  All notअगरy is called in cmd thपढ़ो, करोn't need to leave low घातer again */
+	/*  All notify is called in cmd thread, don't need to leave low power again */
 /* 	halbtcoutsrc_LeaveLowPower(pBtCoexist); */
 
-	अगर (pBtCoexist->boardInfo.btdmAntNum == 2)
-		EXhalbtc8723b2ant_BtInfoNotअगरy(pBtCoexist, पंचांगpBuf, length);
-	अन्यथा अगर (pBtCoexist->boardInfo.btdmAntNum == 1)
-		EXhalbtc8723b1ant_BtInfoNotअगरy(pBtCoexist, पंचांगpBuf, length);
+	if (pBtCoexist->boardInfo.btdmAntNum == 2)
+		EXhalbtc8723b2ant_BtInfoNotify(pBtCoexist, tmpBuf, length);
+	else if (pBtCoexist->boardInfo.btdmAntNum == 1)
+		EXhalbtc8723b1ant_BtInfoNotify(pBtCoexist, tmpBuf, length);
 
 /* 	halbtcoutsrc_NormalLowPower(pBtCoexist); */
-पूर्ण
+}
 
-व्योम EXhalbtcoutsrc_HaltNotअगरy(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	अगर (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
-		वापस;
+void EXhalbtcoutsrc_HaltNotify(struct btc_coexist *pBtCoexist)
+{
+	if (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
+		return;
 
-	अगर (pBtCoexist->boardInfo.btdmAntNum == 2)
-		EXhalbtc8723b2ant_HaltNotअगरy(pBtCoexist);
-	अन्यथा अगर (pBtCoexist->boardInfo.btdmAntNum == 1)
-		EXhalbtc8723b1ant_HaltNotअगरy(pBtCoexist);
+	if (pBtCoexist->boardInfo.btdmAntNum == 2)
+		EXhalbtc8723b2ant_HaltNotify(pBtCoexist);
+	else if (pBtCoexist->boardInfo.btdmAntNum == 1)
+		EXhalbtc8723b1ant_HaltNotify(pBtCoexist);
 
 	pBtCoexist->bBinded = false;
-पूर्ण
+}
 
-व्योम EXhalbtcoutsrc_PnpNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 pnpState)
-अणु
-	अगर (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
-		वापस;
+void EXhalbtcoutsrc_PnpNotify(struct btc_coexist *pBtCoexist, u8 pnpState)
+{
+	if (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
+		return;
 
 	/*  */
-	/*  currently only 1ant we have to करो the notअगरication, */
-	/*  once pnp is notअगरied to sleep state, we have to leave LPS that we can sleep normally. */
+	/*  currently only 1ant we have to do the notification, */
+	/*  once pnp is notified to sleep state, we have to leave LPS that we can sleep normally. */
 	/*  */
 
-	अगर (pBtCoexist->boardInfo.btdmAntNum == 1)
-		EXhalbtc8723b1ant_PnpNotअगरy(pBtCoexist, pnpState);
-	अन्यथा अगर (pBtCoexist->boardInfo.btdmAntNum == 2)
-		EXhalbtc8723b2ant_PnpNotअगरy(pBtCoexist, pnpState);
-पूर्ण
+	if (pBtCoexist->boardInfo.btdmAntNum == 1)
+		EXhalbtc8723b1ant_PnpNotify(pBtCoexist, pnpState);
+	else if (pBtCoexist->boardInfo.btdmAntNum == 2)
+		EXhalbtc8723b2ant_PnpNotify(pBtCoexist, pnpState);
+}
 
-व्योम EXhalbtcoutsrc_Periodical(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	अगर (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
-		वापस;
+void EXhalbtcoutsrc_Periodical(struct btc_coexist *pBtCoexist)
+{
+	if (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
+		return;
 	pBtCoexist->statistics.cntPeriodical++;
 
-	/*  Periodical should be called in cmd thपढ़ो, */
-	/*  करोn't need to leave low घातer again */
+	/*  Periodical should be called in cmd thread, */
+	/*  don't need to leave low power again */
 /* 	halbtcoutsrc_LeaveLowPower(pBtCoexist); */
 
-	अगर (pBtCoexist->boardInfo.btdmAntNum == 2)
+	if (pBtCoexist->boardInfo.btdmAntNum == 2)
 		EXhalbtc8723b2ant_Periodical(pBtCoexist);
-	अन्यथा अगर (pBtCoexist->boardInfo.btdmAntNum == 1)
+	else if (pBtCoexist->boardInfo.btdmAntNum == 1)
 		EXhalbtc8723b1ant_Periodical(pBtCoexist);
 
 /* 	halbtcoutsrc_NormalLowPower(pBtCoexist); */
-पूर्ण
+}
 
-व्योम EXhalbtcoutsrc_SetChipType(u8 chipType)
-अणु
+void EXhalbtcoutsrc_SetChipType(u8 chipType)
+{
 	GLBtCoexist.boardInfo.btChipType = BTC_CHIP_RTL8723B;
-पूर्ण
+}
 
-व्योम EXhalbtcoutsrc_SetAntNum(u8 type, u8 antNum)
-अणु
-	अगर (BT_COEX_ANT_TYPE_PG == type) अणु
+void EXhalbtcoutsrc_SetAntNum(u8 type, u8 antNum)
+{
+	if (BT_COEX_ANT_TYPE_PG == type) {
 		GLBtCoexist.boardInfo.pgAntNum = antNum;
 		GLBtCoexist.boardInfo.btdmAntNum = antNum;
-	पूर्ण अन्यथा अगर (BT_COEX_ANT_TYPE_ANTDIV == type) अणु
+	} else if (BT_COEX_ANT_TYPE_ANTDIV == type) {
 		GLBtCoexist.boardInfo.btdmAntNum = antNum;
 		/* GLBtCoexist.boardInfo.btdmAntPos = BTC_ANTENNA_AT_MAIN_PORT; */
-	पूर्ण अन्यथा अगर (BT_COEX_ANT_TYPE_DETECTED == type) अणु
+	} else if (BT_COEX_ANT_TYPE_DETECTED == type) {
 		GLBtCoexist.boardInfo.btdmAntNum = antNum;
 		/* GLBtCoexist.boardInfo.btdmAntPos = BTC_ANTENNA_AT_MAIN_PORT; */
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*  */
 /*  Currently used by 8723b only, S0 or S1 */
 /*  */
-व्योम EXhalbtcoutsrc_SetSingleAntPath(u8 singleAntPath)
-अणु
+void EXhalbtcoutsrc_SetSingleAntPath(u8 singleAntPath)
+{
 	GLBtCoexist.boardInfo.singleAntPath = singleAntPath;
-पूर्ण
+}
 
-व्योम EXhalbtcoutsrc_DisplayBtCoexInfo(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	अगर (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
-		वापस;
+void EXhalbtcoutsrc_DisplayBtCoexInfo(struct btc_coexist *pBtCoexist)
+{
+	if (!halbtcoutsrc_IsBtCoexistAvailable(pBtCoexist))
+		return;
 
 	halbtcoutsrc_LeaveLowPower(pBtCoexist);
 
-	अगर (pBtCoexist->boardInfo.btdmAntNum == 2)
+	if (pBtCoexist->boardInfo.btdmAntNum == 2)
 		EXhalbtc8723b2ant_DisplayCoexInfo(pBtCoexist);
-	अन्यथा अगर (pBtCoexist->boardInfo.btdmAntNum == 1)
+	else if (pBtCoexist->boardInfo.btdmAntNum == 1)
 		EXhalbtc8723b1ant_DisplayCoexInfo(pBtCoexist);
 
 	halbtcoutsrc_NormalLowPower(pBtCoexist);
-पूर्ण
+}
 
 /*
  * Description:
  *Run BT-Coexist mechanism or not
  *
  */
-व्योम hal_btcoex_SetBTCoexist(काष्ठा adapter *padapter, u8 bBtExist)
-अणु
-	काष्ठा hal_com_data *pHalData;
+void hal_btcoex_SetBTCoexist(struct adapter *padapter, u8 bBtExist)
+{
+	struct hal_com_data *pHalData;
 
 
 	pHalData = GET_HAL_DATA(padapter);
 	pHalData->bt_coexist.bBtExist = bBtExist;
-पूर्ण
+}
 
 /*
  * Dewcription:
@@ -1294,344 +1293,344 @@ u32 GLBtcDbgType[BTC_MSG_MAX];
  *true	Enable BT co-exist mechanism
  *false	Disable BT co-exist mechanism
  */
-bool hal_btcoex_IsBtExist(काष्ठा adapter *padapter)
-अणु
-	काष्ठा hal_com_data *pHalData;
+bool hal_btcoex_IsBtExist(struct adapter *padapter)
+{
+	struct hal_com_data *pHalData;
 
 
 	pHalData = GET_HAL_DATA(padapter);
-	वापस pHalData->bt_coexist.bBtExist;
-पूर्ण
+	return pHalData->bt_coexist.bBtExist;
+}
 
-bool hal_btcoex_IsBtDisabled(काष्ठा adapter *padapter)
-अणु
-	अगर (!hal_btcoex_IsBtExist(padapter))
-		वापस true;
+bool hal_btcoex_IsBtDisabled(struct adapter *padapter)
+{
+	if (!hal_btcoex_IsBtExist(padapter))
+		return true;
 
-	अगर (GLBtCoexist.btInfo.bBtDisabled)
-		वापस true;
-	अन्यथा
-		वापस false;
-पूर्ण
+	if (GLBtCoexist.btInfo.bBtDisabled)
+		return true;
+	else
+		return false;
+}
 
-व्योम hal_btcoex_SetChipType(काष्ठा adapter *padapter, u8 chipType)
-अणु
-	काष्ठा hal_com_data *pHalData;
+void hal_btcoex_SetChipType(struct adapter *padapter, u8 chipType)
+{
+	struct hal_com_data *pHalData;
 
 
 	pHalData = GET_HAL_DATA(padapter);
 	pHalData->bt_coexist.btChipType = chipType;
 
 	EXhalbtcoutsrc_SetChipType(chipType);
-पूर्ण
+}
 
-व्योम hal_btcoex_SetPgAntNum(काष्ठा adapter *padapter, u8 antNum)
-अणु
-	काष्ठा hal_com_data *pHalData;
+void hal_btcoex_SetPgAntNum(struct adapter *padapter, u8 antNum)
+{
+	struct hal_com_data *pHalData;
 
 
 	pHalData = GET_HAL_DATA(padapter);
 
 	pHalData->bt_coexist.btTotalAntNum = antNum;
 	EXhalbtcoutsrc_SetAntNum(BT_COEX_ANT_TYPE_PG, antNum);
-पूर्ण
+}
 
-व्योम hal_btcoex_SetSingleAntPath(काष्ठा adapter *padapter, u8 singleAntPath)
-अणु
+void hal_btcoex_SetSingleAntPath(struct adapter *padapter, u8 singleAntPath)
+{
 	EXhalbtcoutsrc_SetSingleAntPath(singleAntPath);
-पूर्ण
+}
 
-व्योम hal_btcoex_PowerOnSetting(काष्ठा adapter *padapter)
-अणु
+void hal_btcoex_PowerOnSetting(struct adapter *padapter)
+{
 	EXhalbtcoutsrc_PowerOnSetting(&GLBtCoexist);
-पूर्ण
+}
 
-व्योम hal_btcoex_InitHwConfig(काष्ठा adapter *padapter, u8 bWअगरiOnly)
-अणु
-	अगर (!hal_btcoex_IsBtExist(padapter))
-		वापस;
+void hal_btcoex_InitHwConfig(struct adapter *padapter, u8 bWifiOnly)
+{
+	if (!hal_btcoex_IsBtExist(padapter))
+		return;
 
-	EXhalbtcoutsrc_InitHwConfig(&GLBtCoexist, bWअगरiOnly);
+	EXhalbtcoutsrc_InitHwConfig(&GLBtCoexist, bWifiOnly);
 	EXhalbtcoutsrc_InitCoexDm(&GLBtCoexist);
-पूर्ण
+}
 
-व्योम hal_btcoex_IpsNotअगरy(काष्ठा adapter *padapter, u8 type)
-अणु
-	EXhalbtcoutsrc_IpsNotअगरy(&GLBtCoexist, type);
-पूर्ण
+void hal_btcoex_IpsNotify(struct adapter *padapter, u8 type)
+{
+	EXhalbtcoutsrc_IpsNotify(&GLBtCoexist, type);
+}
 
-व्योम hal_btcoex_LpsNotअगरy(काष्ठा adapter *padapter, u8 type)
-अणु
-	EXhalbtcoutsrc_LpsNotअगरy(&GLBtCoexist, type);
-पूर्ण
+void hal_btcoex_LpsNotify(struct adapter *padapter, u8 type)
+{
+	EXhalbtcoutsrc_LpsNotify(&GLBtCoexist, type);
+}
 
-व्योम hal_btcoex_ScanNotअगरy(काष्ठा adapter *padapter, u8 type)
-अणु
-	EXhalbtcoutsrc_ScanNotअगरy(&GLBtCoexist, type);
-पूर्ण
+void hal_btcoex_ScanNotify(struct adapter *padapter, u8 type)
+{
+	EXhalbtcoutsrc_ScanNotify(&GLBtCoexist, type);
+}
 
-व्योम hal_btcoex_ConnectNotअगरy(काष्ठा adapter *padapter, u8 action)
-अणु
-	EXhalbtcoutsrc_ConnectNotअगरy(&GLBtCoexist, action);
-पूर्ण
+void hal_btcoex_ConnectNotify(struct adapter *padapter, u8 action)
+{
+	EXhalbtcoutsrc_ConnectNotify(&GLBtCoexist, action);
+}
 
-व्योम hal_btcoex_MediaStatusNotअगरy(काष्ठा adapter *padapter, u8 mediaStatus)
-अणु
-	EXhalbtcoutsrc_MediaStatusNotअगरy(&GLBtCoexist, mediaStatus);
-पूर्ण
+void hal_btcoex_MediaStatusNotify(struct adapter *padapter, u8 mediaStatus)
+{
+	EXhalbtcoutsrc_MediaStatusNotify(&GLBtCoexist, mediaStatus);
+}
 
-व्योम hal_btcoex_SpecialPacketNotअगरy(काष्ठा adapter *padapter, u8 pktType)
-अणु
-	EXhalbtcoutsrc_SpecialPacketNotअगरy(&GLBtCoexist, pktType);
-पूर्ण
+void hal_btcoex_SpecialPacketNotify(struct adapter *padapter, u8 pktType)
+{
+	EXhalbtcoutsrc_SpecialPacketNotify(&GLBtCoexist, pktType);
+}
 
-व्योम hal_btcoex_IQKNotअगरy(काष्ठा adapter *padapter, u8 state)
-अणु
+void hal_btcoex_IQKNotify(struct adapter *padapter, u8 state)
+{
 	GLBtcWiFiInIQKState = state;
-पूर्ण
+}
 
-व्योम hal_btcoex_BtInfoNotअगरy(काष्ठा adapter *padapter, u8 length, u8 *पंचांगpBuf)
-अणु
-	अगर (GLBtcWiFiInIQKState)
-		वापस;
+void hal_btcoex_BtInfoNotify(struct adapter *padapter, u8 length, u8 *tmpBuf)
+{
+	if (GLBtcWiFiInIQKState)
+		return;
 
-	EXhalbtcoutsrc_BtInfoNotअगरy(&GLBtCoexist, पंचांगpBuf, length);
-पूर्ण
+	EXhalbtcoutsrc_BtInfoNotify(&GLBtCoexist, tmpBuf, length);
+}
 
-व्योम hal_btcoex_SuspendNotअगरy(काष्ठा adapter *padapter, u8 state)
-अणु
-	अगर (state == 1)
+void hal_btcoex_SuspendNotify(struct adapter *padapter, u8 state)
+{
+	if (state == 1)
 		state = BTC_WIFI_PNP_SLEEP;
-	अन्यथा
+	else
 		state = BTC_WIFI_PNP_WAKE_UP;
 
-	EXhalbtcoutsrc_PnpNotअगरy(&GLBtCoexist, state);
-पूर्ण
+	EXhalbtcoutsrc_PnpNotify(&GLBtCoexist, state);
+}
 
-व्योम hal_btcoex_HaltNotअगरy(काष्ठा adapter *padapter)
-अणु
-	EXhalbtcoutsrc_HaltNotअगरy(&GLBtCoexist);
-पूर्ण
+void hal_btcoex_HaltNotify(struct adapter *padapter)
+{
+	EXhalbtcoutsrc_HaltNotify(&GLBtCoexist);
+}
 
-व्योम hal_btcoex_Handler(काष्ठा adapter *padapter)
-अणु
+void hal_btcoex_Handler(struct adapter *padapter)
+{
 	EXhalbtcoutsrc_Periodical(&GLBtCoexist);
-पूर्ण
+}
 
-s32 hal_btcoex_IsBTCoexCtrlAMPDUSize(काष्ठा adapter *padapter)
-अणु
-	वापस (s32)GLBtCoexist.btInfo.bBtCtrlAggBufSize;
-पूर्ण
+s32 hal_btcoex_IsBTCoexCtrlAMPDUSize(struct adapter *padapter)
+{
+	return (s32)GLBtCoexist.btInfo.bBtCtrlAggBufSize;
+}
 
-व्योम hal_btcoex_SetManualControl(काष्ठा adapter *padapter, u8 bmanual)
-अणु
+void hal_btcoex_SetManualControl(struct adapter *padapter, u8 bmanual)
+{
 	GLBtCoexist.bManualControl = bmanual;
-पूर्ण
+}
 
-bool hal_btcoex_IsBtControlLps(काष्ठा adapter *padapter)
-अणु
-	अगर (!hal_btcoex_IsBtExist(padapter))
-		वापस false;
+bool hal_btcoex_IsBtControlLps(struct adapter *padapter)
+{
+	if (!hal_btcoex_IsBtExist(padapter))
+		return false;
 
-	अगर (GLBtCoexist.btInfo.bBtDisabled)
-		वापस false;
+	if (GLBtCoexist.btInfo.bBtDisabled)
+		return false;
 
-	अगर (GLBtCoexist.btInfo.bBtCtrlLps)
-		वापस true;
+	if (GLBtCoexist.btInfo.bBtCtrlLps)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-bool hal_btcoex_IsLpsOn(काष्ठा adapter *padapter)
-अणु
-	अगर (!hal_btcoex_IsBtExist(padapter))
-		वापस false;
+bool hal_btcoex_IsLpsOn(struct adapter *padapter)
+{
+	if (!hal_btcoex_IsBtExist(padapter))
+		return false;
 
-	अगर (GLBtCoexist.btInfo.bBtDisabled)
-		वापस false;
+	if (GLBtCoexist.btInfo.bBtDisabled)
+		return false;
 
-	अगर (GLBtCoexist.btInfo.bBtLpsOn)
-		वापस true;
+	if (GLBtCoexist.btInfo.bBtLpsOn)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-u8 hal_btcoex_RpwmVal(काष्ठा adapter *padapter)
-अणु
-	वापस GLBtCoexist.btInfo.rpwmVal;
-पूर्ण
+u8 hal_btcoex_RpwmVal(struct adapter *padapter)
+{
+	return GLBtCoexist.btInfo.rpwmVal;
+}
 
-u8 hal_btcoex_LpsVal(काष्ठा adapter *padapter)
-अणु
-	वापस GLBtCoexist.btInfo.lpsVal;
-पूर्ण
+u8 hal_btcoex_LpsVal(struct adapter *padapter)
+{
+	return GLBtCoexist.btInfo.lpsVal;
+}
 
-u32 hal_btcoex_GetRaMask(काष्ठा adapter *padapter)
-अणु
-	अगर (!hal_btcoex_IsBtExist(padapter))
-		वापस 0;
+u32 hal_btcoex_GetRaMask(struct adapter *padapter)
+{
+	if (!hal_btcoex_IsBtExist(padapter))
+		return 0;
 
-	अगर (GLBtCoexist.btInfo.bBtDisabled)
-		वापस 0;
+	if (GLBtCoexist.btInfo.bBtDisabled)
+		return 0;
 
-	अगर (GLBtCoexist.boardInfo.btdmAntNum != 1)
-		वापस 0;
+	if (GLBtCoexist.boardInfo.btdmAntNum != 1)
+		return 0;
 
-	वापस GLBtCoexist.btInfo.raMask;
-पूर्ण
+	return GLBtCoexist.btInfo.raMask;
+}
 
-व्योम hal_btcoex_RecordPwrMode(काष्ठा adapter *padapter, u8 *pCmdBuf, u8 cmdLen)
-अणु
+void hal_btcoex_RecordPwrMode(struct adapter *padapter, u8 *pCmdBuf, u8 cmdLen)
+{
 	BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE_FW_EXEC, ("[BTCoex], FW write pwrModeCmd = 0x%04x%08x\n",
 		pCmdBuf[0] << 8 | pCmdBuf[1],
 		pCmdBuf[2] << 24 | pCmdBuf[3] << 16 | pCmdBuf[4] << 8 | pCmdBuf[5]));
 
-	स_नकल(GLBtCoexist.pwrModeVal, pCmdBuf, cmdLen);
-पूर्ण
+	memcpy(GLBtCoexist.pwrModeVal, pCmdBuf, cmdLen);
+}
 
-व्योम hal_btcoex_DisplayBtCoexInfo(काष्ठा adapter *padapter, u8 *pbuf, u32 bufsize)
-अणु
-	काष्ठा btcdbginfo *pinfo;
+void hal_btcoex_DisplayBtCoexInfo(struct adapter *padapter, u8 *pbuf, u32 bufsize)
+{
+	struct btcdbginfo *pinfo;
 
 
 	pinfo = &GLBtcDbgInfo;
 	DBG_BT_INFO_INIT(pinfo, pbuf, bufsize);
 	EXhalbtcoutsrc_DisplayBtCoexInfo(&GLBtCoexist);
-	DBG_BT_INFO_INIT(pinfo, शून्य, 0);
-पूर्ण
+	DBG_BT_INFO_INIT(pinfo, NULL, 0);
+}
 
-व्योम hal_btcoex_SetDBG(काष्ठा adapter *padapter, u32 *pDbgModule)
-अणु
+void hal_btcoex_SetDBG(struct adapter *padapter, u32 *pDbgModule)
+{
 	u32 i;
 
 
-	अगर (!pDbgModule)
-		वापस;
+	if (!pDbgModule)
+		return;
 
-	क्रम (i = 0; i < BTC_MSG_MAX; i++)
+	for (i = 0; i < BTC_MSG_MAX; i++)
 		GLBtcDbgType[i] = pDbgModule[i];
-पूर्ण
+}
 
-u32 hal_btcoex_GetDBG(काष्ठा adapter *padapter, u8 *pStrBuf, u32 bufSize)
-अणु
+u32 hal_btcoex_GetDBG(struct adapter *padapter, u8 *pStrBuf, u32 bufSize)
+{
 	s32 count;
 	u8 *pstr;
 	u32 leftSize;
 
 
-	अगर (!pStrBuf || bufSize == 0)
-		वापस 0;
+	if (!pStrBuf || bufSize == 0)
+		return 0;
 
 	pstr = pStrBuf;
 	leftSize = bufSize;
 
-	count = rtw_प्र_लिखो(pstr, leftSize, "#define DBG\t%d\n", DBG);
-	अगर ((count < 0) || (count >= leftSize))
-		जाओ निकास;
+	count = rtw_sprintf(pstr, leftSize, "#define DBG\t%d\n", DBG);
+	if ((count < 0) || (count >= leftSize))
+		goto exit;
 	pstr += count;
 	leftSize -= count;
 
-	count = rtw_प्र_लिखो(pstr, leftSize, "BTCOEX Debug Setting:\n");
-	अगर ((count < 0) || (count >= leftSize))
-		जाओ निकास;
+	count = rtw_sprintf(pstr, leftSize, "BTCOEX Debug Setting:\n");
+	if ((count < 0) || (count >= leftSize))
+		goto exit;
 	pstr += count;
 	leftSize -= count;
 
-	count = rtw_प्र_लिखो(pstr, leftSize,
+	count = rtw_sprintf(pstr, leftSize,
 		"INTERFACE / ALGORITHM: 0x%08X / 0x%08X\n\n",
 		GLBtcDbgType[BTC_MSG_INTERFACE],
 		GLBtcDbgType[BTC_MSG_ALGORITHM]);
-	अगर ((count < 0) || (count >= leftSize))
-		जाओ निकास;
+	if ((count < 0) || (count >= leftSize))
+		goto exit;
 	pstr += count;
 	leftSize -= count;
 
-	count = rtw_प्र_लिखो(pstr, leftSize, "INTERFACE Debug Setting Definition:\n");
-	अगर ((count < 0) || (count >= leftSize))
-		जाओ निकास;
+	count = rtw_sprintf(pstr, leftSize, "INTERFACE Debug Setting Definition:\n");
+	if ((count < 0) || (count >= leftSize))
+		goto exit;
 	pstr += count;
 	leftSize -= count;
-	count = rtw_प्र_लिखो(pstr, leftSize, "\tbit[0]=%d for INTF_INIT\n",
+	count = rtw_sprintf(pstr, leftSize, "\tbit[0]=%d for INTF_INIT\n",
 		(GLBtcDbgType[BTC_MSG_INTERFACE] & INTF_INIT) ? 1 : 0);
-	अगर ((count < 0) || (count >= leftSize))
-		जाओ निकास;
+	if ((count < 0) || (count >= leftSize))
+		goto exit;
 	pstr += count;
 	leftSize -= count;
-	count = rtw_प्र_लिखो(pstr, leftSize, "\tbit[2]=%d for INTF_NOTIFY\n\n",
+	count = rtw_sprintf(pstr, leftSize, "\tbit[2]=%d for INTF_NOTIFY\n\n",
 		(GLBtcDbgType[BTC_MSG_INTERFACE] & INTF_NOTIFY) ? 1 : 0);
-	अगर ((count < 0) || (count >= leftSize))
-		जाओ निकास;
+	if ((count < 0) || (count >= leftSize))
+		goto exit;
 	pstr += count;
 	leftSize -= count;
 
-	count = rtw_प्र_लिखो(pstr, leftSize, "ALGORITHM Debug Setting Definition:\n");
-	अगर ((count < 0) || (count >= leftSize))
-		जाओ निकास;
+	count = rtw_sprintf(pstr, leftSize, "ALGORITHM Debug Setting Definition:\n");
+	if ((count < 0) || (count >= leftSize))
+		goto exit;
 	pstr += count;
 	leftSize -= count;
-	count = rtw_प्र_लिखो(pstr, leftSize, "\tbit[0]=%d for BT_RSSI_STATE\n",
+	count = rtw_sprintf(pstr, leftSize, "\tbit[0]=%d for BT_RSSI_STATE\n",
 		(GLBtcDbgType[BTC_MSG_ALGORITHM] & ALGO_BT_RSSI_STATE) ? 1 : 0);
-	अगर ((count < 0) || (count >= leftSize))
-		जाओ निकास;
+	if ((count < 0) || (count >= leftSize))
+		goto exit;
 	pstr += count;
 	leftSize -= count;
-	count = rtw_प्र_लिखो(pstr, leftSize, "\tbit[1]=%d for WIFI_RSSI_STATE\n",
+	count = rtw_sprintf(pstr, leftSize, "\tbit[1]=%d for WIFI_RSSI_STATE\n",
 		(GLBtcDbgType[BTC_MSG_ALGORITHM] & ALGO_WIFI_RSSI_STATE) ? 1 : 0);
-	अगर ((count < 0) || (count >= leftSize))
-		जाओ निकास;
+	if ((count < 0) || (count >= leftSize))
+		goto exit;
 	pstr += count;
 	leftSize -= count;
-	count = rtw_प्र_लिखो(pstr, leftSize, "\tbit[2]=%d for BT_MONITOR\n",
+	count = rtw_sprintf(pstr, leftSize, "\tbit[2]=%d for BT_MONITOR\n",
 		(GLBtcDbgType[BTC_MSG_ALGORITHM] & ALGO_BT_MONITOR) ? 1 : 0);
-	अगर ((count < 0) || (count >= leftSize))
-		जाओ निकास;
+	if ((count < 0) || (count >= leftSize))
+		goto exit;
 	pstr += count;
 	leftSize -= count;
-	count = rtw_प्र_लिखो(pstr, leftSize, "\tbit[3]=%d for TRACE\n",
+	count = rtw_sprintf(pstr, leftSize, "\tbit[3]=%d for TRACE\n",
 		(GLBtcDbgType[BTC_MSG_ALGORITHM] & ALGO_TRACE) ? 1 : 0);
-	अगर ((count < 0) || (count >= leftSize))
-		जाओ निकास;
+	if ((count < 0) || (count >= leftSize))
+		goto exit;
 	pstr += count;
 	leftSize -= count;
-	count = rtw_प्र_लिखो(pstr, leftSize, "\tbit[4]=%d for TRACE_FW\n",
+	count = rtw_sprintf(pstr, leftSize, "\tbit[4]=%d for TRACE_FW\n",
 		(GLBtcDbgType[BTC_MSG_ALGORITHM] & ALGO_TRACE_FW) ? 1 : 0);
-	अगर ((count < 0) || (count >= leftSize))
-		जाओ निकास;
+	if ((count < 0) || (count >= leftSize))
+		goto exit;
 	pstr += count;
 	leftSize -= count;
-	count = rtw_प्र_लिखो(pstr, leftSize, "\tbit[5]=%d for TRACE_FW_DETAIL\n",
+	count = rtw_sprintf(pstr, leftSize, "\tbit[5]=%d for TRACE_FW_DETAIL\n",
 		(GLBtcDbgType[BTC_MSG_ALGORITHM] & ALGO_TRACE_FW_DETAIL) ? 1 : 0);
-	अगर ((count < 0) || (count >= leftSize))
-		जाओ निकास;
+	if ((count < 0) || (count >= leftSize))
+		goto exit;
 	pstr += count;
 	leftSize -= count;
-	count = rtw_प्र_लिखो(pstr, leftSize, "\tbit[6]=%d for TRACE_FW_EXEC\n",
+	count = rtw_sprintf(pstr, leftSize, "\tbit[6]=%d for TRACE_FW_EXEC\n",
 		(GLBtcDbgType[BTC_MSG_ALGORITHM] & ALGO_TRACE_FW_EXEC) ? 1 : 0);
-	अगर ((count < 0) || (count >= leftSize))
-		जाओ निकास;
+	if ((count < 0) || (count >= leftSize))
+		goto exit;
 	pstr += count;
 	leftSize -= count;
-	count = rtw_प्र_लिखो(pstr, leftSize, "\tbit[7]=%d for TRACE_SW\n",
+	count = rtw_sprintf(pstr, leftSize, "\tbit[7]=%d for TRACE_SW\n",
 		(GLBtcDbgType[BTC_MSG_ALGORITHM] & ALGO_TRACE_SW) ? 1 : 0);
-	अगर ((count < 0) || (count >= leftSize))
-		जाओ निकास;
+	if ((count < 0) || (count >= leftSize))
+		goto exit;
 	pstr += count;
 	leftSize -= count;
-	count = rtw_प्र_लिखो(pstr, leftSize, "\tbit[8]=%d for TRACE_SW_DETAIL\n",
+	count = rtw_sprintf(pstr, leftSize, "\tbit[8]=%d for TRACE_SW_DETAIL\n",
 		(GLBtcDbgType[BTC_MSG_ALGORITHM] & ALGO_TRACE_SW_DETAIL) ? 1 : 0);
-	अगर ((count < 0) || (count >= leftSize))
-		जाओ निकास;
+	if ((count < 0) || (count >= leftSize))
+		goto exit;
 	pstr += count;
 	leftSize -= count;
-	count = rtw_प्र_लिखो(pstr, leftSize, "\tbit[9]=%d for TRACE_SW_EXEC\n",
+	count = rtw_sprintf(pstr, leftSize, "\tbit[9]=%d for TRACE_SW_EXEC\n",
 		(GLBtcDbgType[BTC_MSG_ALGORITHM] & ALGO_TRACE_SW_EXEC) ? 1 : 0);
-	अगर ((count < 0) || (count >= leftSize))
-		जाओ निकास;
+	if ((count < 0) || (count >= leftSize))
+		goto exit;
 	pstr += count;
 	leftSize -= count;
 
-निकास:
+exit:
 	count = pstr - pStrBuf;
 
-	वापस count;
-पूर्ण
+	return count;
+}

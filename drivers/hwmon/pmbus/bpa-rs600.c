@@ -1,111 +1,110 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Hardware monitoring driver क्रम BluTek BPA-RS600 Power Supplies
+ * Hardware monitoring driver for BluTek BPA-RS600 Power Supplies
  *
- * Copyright 2021 Allied Telesis Lअसल
+ * Copyright 2021 Allied Telesis Labs
  */
 
-#समावेश <linux/i2c.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pmbus.h>
-#समावेश "pmbus.h"
+#include <linux/i2c.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pmbus.h>
+#include "pmbus.h"
 
-#घोषणा BPARS600_MFR_VIN_MIN	0xa0
-#घोषणा BPARS600_MFR_VIN_MAX	0xa1
-#घोषणा BPARS600_MFR_IIN_MAX	0xa2
-#घोषणा BPARS600_MFR_PIN_MAX	0xa3
-#घोषणा BPARS600_MFR_VOUT_MIN	0xa4
-#घोषणा BPARS600_MFR_VOUT_MAX	0xa5
-#घोषणा BPARS600_MFR_IOUT_MAX	0xa6
-#घोषणा BPARS600_MFR_POUT_MAX	0xa7
+#define BPARS600_MFR_VIN_MIN	0xa0
+#define BPARS600_MFR_VIN_MAX	0xa1
+#define BPARS600_MFR_IIN_MAX	0xa2
+#define BPARS600_MFR_PIN_MAX	0xa3
+#define BPARS600_MFR_VOUT_MIN	0xa4
+#define BPARS600_MFR_VOUT_MAX	0xa5
+#define BPARS600_MFR_IOUT_MAX	0xa6
+#define BPARS600_MFR_POUT_MAX	0xa7
 
-अटल पूर्णांक bpa_rs600_पढ़ो_byte_data(काष्ठा i2c_client *client, पूर्णांक page, पूर्णांक reg)
-अणु
-	पूर्णांक ret;
+static int bpa_rs600_read_byte_data(struct i2c_client *client, int page, int reg)
+{
+	int ret;
 
-	अगर (page > 0)
-		वापस -ENXIO;
+	if (page > 0)
+		return -ENXIO;
 
-	चयन (reg) अणु
-	हाल PMBUS_FAN_CONFIG_12:
+	switch (reg) {
+	case PMBUS_FAN_CONFIG_12:
 		/*
 		 * Two fans are reported in PMBUS_FAN_CONFIG_12 but there is
 		 * only one fan in the module. Mask out the FAN2 bits.
 		 */
-		ret = pmbus_पढ़ो_byte_data(client, 0, PMBUS_FAN_CONFIG_12);
-		अगर (ret >= 0)
+		ret = pmbus_read_byte_data(client, 0, PMBUS_FAN_CONFIG_12);
+		if (ret >= 0)
 			ret &= ~(PB_FAN_2_INSTALLED | PB_FAN_2_PULSE_MASK);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -ENODATA;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bpa_rs600_पढ़ो_word_data(काष्ठा i2c_client *client, पूर्णांक page, पूर्णांक phase, पूर्णांक reg)
-अणु
-	पूर्णांक ret;
+static int bpa_rs600_read_word_data(struct i2c_client *client, int page, int phase, int reg)
+{
+	int ret;
 
-	अगर (page > 0)
-		वापस -ENXIO;
+	if (page > 0)
+		return -ENXIO;
 
-	चयन (reg) अणु
-	हाल PMBUS_VIN_UV_WARN_LIMIT:
-		ret = pmbus_पढ़ो_word_data(client, 0, 0xff, BPARS600_MFR_VIN_MIN);
-		अवरोध;
-	हाल PMBUS_VIN_OV_WARN_LIMIT:
-		ret = pmbus_पढ़ो_word_data(client, 0, 0xff, BPARS600_MFR_VIN_MAX);
-		अवरोध;
-	हाल PMBUS_VOUT_UV_WARN_LIMIT:
-		ret = pmbus_पढ़ो_word_data(client, 0, 0xff, BPARS600_MFR_VOUT_MIN);
-		अवरोध;
-	हाल PMBUS_VOUT_OV_WARN_LIMIT:
-		ret = pmbus_पढ़ो_word_data(client, 0, 0xff, BPARS600_MFR_VOUT_MAX);
-		अवरोध;
-	हाल PMBUS_IIN_OC_WARN_LIMIT:
-		ret = pmbus_पढ़ो_word_data(client, 0, 0xff, BPARS600_MFR_IIN_MAX);
-		अवरोध;
-	हाल PMBUS_IOUT_OC_WARN_LIMIT:
-		ret = pmbus_पढ़ो_word_data(client, 0, 0xff, BPARS600_MFR_IOUT_MAX);
-		अवरोध;
-	हाल PMBUS_PIN_OP_WARN_LIMIT:
-		ret = pmbus_पढ़ो_word_data(client, 0, 0xff, BPARS600_MFR_PIN_MAX);
-		अवरोध;
-	हाल PMBUS_POUT_OP_WARN_LIMIT:
-		ret = pmbus_पढ़ो_word_data(client, 0, 0xff, BPARS600_MFR_POUT_MAX);
-		अवरोध;
-	हाल PMBUS_VIN_UV_FAULT_LIMIT:
-	हाल PMBUS_VIN_OV_FAULT_LIMIT:
-	हाल PMBUS_VOUT_UV_FAULT_LIMIT:
-	हाल PMBUS_VOUT_OV_FAULT_LIMIT:
-		/* These commands वापस data but it is invalid/un-करोcumented */
+	switch (reg) {
+	case PMBUS_VIN_UV_WARN_LIMIT:
+		ret = pmbus_read_word_data(client, 0, 0xff, BPARS600_MFR_VIN_MIN);
+		break;
+	case PMBUS_VIN_OV_WARN_LIMIT:
+		ret = pmbus_read_word_data(client, 0, 0xff, BPARS600_MFR_VIN_MAX);
+		break;
+	case PMBUS_VOUT_UV_WARN_LIMIT:
+		ret = pmbus_read_word_data(client, 0, 0xff, BPARS600_MFR_VOUT_MIN);
+		break;
+	case PMBUS_VOUT_OV_WARN_LIMIT:
+		ret = pmbus_read_word_data(client, 0, 0xff, BPARS600_MFR_VOUT_MAX);
+		break;
+	case PMBUS_IIN_OC_WARN_LIMIT:
+		ret = pmbus_read_word_data(client, 0, 0xff, BPARS600_MFR_IIN_MAX);
+		break;
+	case PMBUS_IOUT_OC_WARN_LIMIT:
+		ret = pmbus_read_word_data(client, 0, 0xff, BPARS600_MFR_IOUT_MAX);
+		break;
+	case PMBUS_PIN_OP_WARN_LIMIT:
+		ret = pmbus_read_word_data(client, 0, 0xff, BPARS600_MFR_PIN_MAX);
+		break;
+	case PMBUS_POUT_OP_WARN_LIMIT:
+		ret = pmbus_read_word_data(client, 0, 0xff, BPARS600_MFR_POUT_MAX);
+		break;
+	case PMBUS_VIN_UV_FAULT_LIMIT:
+	case PMBUS_VIN_OV_FAULT_LIMIT:
+	case PMBUS_VOUT_UV_FAULT_LIMIT:
+	case PMBUS_VOUT_OV_FAULT_LIMIT:
+		/* These commands return data but it is invalid/un-documented */
 		ret = -ENXIO;
-		अवरोध;
-	शेष:
-		अगर (reg >= PMBUS_VIRT_BASE)
+		break;
+	default:
+		if (reg >= PMBUS_VIRT_BASE)
 			ret = -ENXIO;
-		अन्यथा
+		else
 			ret = -ENODATA;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा pmbus_driver_info bpa_rs600_info = अणु
+static struct pmbus_driver_info bpa_rs600_info = {
 	.pages = 1,
-	.क्रमmat[PSC_VOLTAGE_IN] = linear,
-	.क्रमmat[PSC_VOLTAGE_OUT] = linear,
-	.क्रमmat[PSC_CURRENT_IN] = linear,
-	.क्रमmat[PSC_CURRENT_OUT] = linear,
-	.क्रमmat[PSC_POWER] = linear,
-	.क्रमmat[PSC_TEMPERATURE] = linear,
-	.क्रमmat[PSC_FAN] = linear,
+	.format[PSC_VOLTAGE_IN] = linear,
+	.format[PSC_VOLTAGE_OUT] = linear,
+	.format[PSC_CURRENT_IN] = linear,
+	.format[PSC_CURRENT_OUT] = linear,
+	.format[PSC_POWER] = linear,
+	.format[PSC_TEMPERATURE] = linear,
+	.format[PSC_FAN] = linear,
 	.func[0] = PMBUS_HAVE_VIN | PMBUS_HAVE_VOUT |
 		PMBUS_HAVE_IIN | PMBUS_HAVE_IOUT |
 		PMBUS_HAVE_PIN | PMBUS_HAVE_POUT |
@@ -114,57 +113,57 @@
 		PMBUS_HAVE_STATUS_VOUT | PMBUS_HAVE_STATUS_IOUT |
 		PMBUS_HAVE_STATUS_INPUT | PMBUS_HAVE_STATUS_TEMP |
 		PMBUS_HAVE_STATUS_FAN12,
-	.पढ़ो_byte_data = bpa_rs600_पढ़ो_byte_data,
-	.पढ़ो_word_data = bpa_rs600_पढ़ो_word_data,
-पूर्ण;
+	.read_byte_data = bpa_rs600_read_byte_data,
+	.read_word_data = bpa_rs600_read_word_data,
+};
 
-अटल पूर्णांक bpa_rs600_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा device *dev = &client->dev;
+static int bpa_rs600_probe(struct i2c_client *client)
+{
+	struct device *dev = &client->dev;
 	u8 buf[I2C_SMBUS_BLOCK_MAX + 1];
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!i2c_check_functionality(client->adapter,
+	if (!i2c_check_functionality(client->adapter,
 				     I2C_FUNC_SMBUS_READ_BYTE_DATA
 				     | I2C_FUNC_SMBUS_READ_WORD_DATA
 				     | I2C_FUNC_SMBUS_READ_BLOCK_DATA))
-		वापस -ENODEV;
+		return -ENODEV;
 
-	ret = i2c_smbus_पढ़ो_block_data(client, PMBUS_MFR_MODEL, buf);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_read_block_data(client, PMBUS_MFR_MODEL, buf);
+	if (ret < 0) {
 		dev_err(dev, "Failed to read Manufacturer Model\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (म_भेदन(buf, "BPA-RS600", 8)) अणु
+	if (strncmp(buf, "BPA-RS600", 8)) {
 		buf[ret] = '\0';
 		dev_err(dev, "Unsupported Manufacturer Model '%s'\n", buf);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस pmbus_करो_probe(client, &bpa_rs600_info);
-पूर्ण
+	return pmbus_do_probe(client, &bpa_rs600_info);
+}
 
-अटल स्थिर काष्ठा i2c_device_id bpa_rs600_id[] = अणु
-	अणु "bpars600", 0 पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct i2c_device_id bpa_rs600_id[] = {
+	{ "bpars600", 0 },
+	{},
+};
 MODULE_DEVICE_TABLE(i2c, bpa_rs600_id);
 
-अटल स्थिर काष्ठा of_device_id __maybe_unused bpa_rs600_of_match[] = अणु
-	अणु .compatible = "blutek,bpa-rs600" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id __maybe_unused bpa_rs600_of_match[] = {
+	{ .compatible = "blutek,bpa-rs600" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, bpa_rs600_of_match);
 
-अटल काष्ठा i2c_driver bpa_rs600_driver = अणु
-	.driver = अणु
+static struct i2c_driver bpa_rs600_driver = {
+	.driver = {
 		.name = "bpa-rs600",
 		.of_match_table = of_match_ptr(bpa_rs600_of_match),
-	पूर्ण,
+	},
 	.probe_new = bpa_rs600_probe,
 	.id_table = bpa_rs600_id,
-पूर्ण;
+};
 
 module_i2c_driver(bpa_rs600_driver);
 

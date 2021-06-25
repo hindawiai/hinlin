@@ -1,352 +1,351 @@
-<शैली गुरु>
 /*
  * driver.c - driver support
  *
- * (C) 2006-2007 Venkatesh Pallipadi <venkatesh.pallipadi@पूर्णांकel.com>
- *               Shaohua Li <shaohua.li@पूर्णांकel.com>
+ * (C) 2006-2007 Venkatesh Pallipadi <venkatesh.pallipadi@intel.com>
+ *               Shaohua Li <shaohua.li@intel.com>
  *               Adam Belay <abelay@novell.com>
  *
  * This code is licenced under the GPL.
  */
 
-#समावेश <linux/mutex.h>
-#समावेश <linux/module.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/idle.h>
-#समावेश <linux/cpuidle.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/tick.h>
-#समावेश <linux/cpu.h>
+#include <linux/mutex.h>
+#include <linux/module.h>
+#include <linux/sched.h>
+#include <linux/sched/idle.h>
+#include <linux/cpuidle.h>
+#include <linux/cpumask.h>
+#include <linux/tick.h>
+#include <linux/cpu.h>
 
-#समावेश "cpuidle.h"
+#include "cpuidle.h"
 
 DEFINE_SPINLOCK(cpuidle_driver_lock);
 
-#अगर_घोषित CONFIG_CPU_IDLE_MULTIPLE_DRIVERS
+#ifdef CONFIG_CPU_IDLE_MULTIPLE_DRIVERS
 
-अटल DEFINE_PER_CPU(काष्ठा cpuidle_driver *, cpuidle_drivers);
+static DEFINE_PER_CPU(struct cpuidle_driver *, cpuidle_drivers);
 
 /**
- * __cpuidle_get_cpu_driver - वापस the cpuidle driver tied to a CPU.
+ * __cpuidle_get_cpu_driver - return the cpuidle driver tied to a CPU.
  * @cpu: the CPU handled by the driver
  *
- * Returns a poपूर्णांकer to काष्ठा cpuidle_driver or शून्य अगर no driver has been
- * रेजिस्टरed क्रम @cpu.
+ * Returns a pointer to struct cpuidle_driver or NULL if no driver has been
+ * registered for @cpu.
  */
-अटल काष्ठा cpuidle_driver *__cpuidle_get_cpu_driver(पूर्णांक cpu)
-अणु
-	वापस per_cpu(cpuidle_drivers, cpu);
-पूर्ण
+static struct cpuidle_driver *__cpuidle_get_cpu_driver(int cpu)
+{
+	return per_cpu(cpuidle_drivers, cpu);
+}
 
 /**
  * __cpuidle_unset_driver - unset per CPU driver variables.
- * @drv: a valid poपूर्णांकer to a काष्ठा cpuidle_driver
+ * @drv: a valid pointer to a struct cpuidle_driver
  *
- * For each CPU in the driver's CPU mask, unset the रेजिस्टरed driver per CPU
- * variable. If @drv is dअगरferent from the रेजिस्टरed driver, the corresponding
+ * For each CPU in the driver's CPU mask, unset the registered driver per CPU
+ * variable. If @drv is different from the registered driver, the corresponding
  * variable is not cleared.
  */
-अटल अंतरभूत व्योम __cpuidle_unset_driver(काष्ठा cpuidle_driver *drv)
-अणु
-	पूर्णांक cpu;
+static inline void __cpuidle_unset_driver(struct cpuidle_driver *drv)
+{
+	int cpu;
 
-	क्रम_each_cpu(cpu, drv->cpumask) अणु
+	for_each_cpu(cpu, drv->cpumask) {
 
-		अगर (drv != __cpuidle_get_cpu_driver(cpu))
-			जारी;
+		if (drv != __cpuidle_get_cpu_driver(cpu))
+			continue;
 
-		per_cpu(cpuidle_drivers, cpu) = शून्य;
-	पूर्ण
-पूर्ण
+		per_cpu(cpuidle_drivers, cpu) = NULL;
+	}
+}
 
 /**
- * __cpuidle_set_driver - set per CPU driver variables क्रम the given driver.
- * @drv: a valid poपूर्णांकer to a काष्ठा cpuidle_driver
+ * __cpuidle_set_driver - set per CPU driver variables for the given driver.
+ * @drv: a valid pointer to a struct cpuidle_driver
  *
- * Returns 0 on success, -EBUSY अगर any CPU in the cpumask have a driver
- * dअगरferent from drv alपढ़ोy.
+ * Returns 0 on success, -EBUSY if any CPU in the cpumask have a driver
+ * different from drv already.
  */
-अटल अंतरभूत पूर्णांक __cpuidle_set_driver(काष्ठा cpuidle_driver *drv)
-अणु
-	पूर्णांक cpu;
+static inline int __cpuidle_set_driver(struct cpuidle_driver *drv)
+{
+	int cpu;
 
-	क्रम_each_cpu(cpu, drv->cpumask) अणु
-		काष्ठा cpuidle_driver *old_drv;
+	for_each_cpu(cpu, drv->cpumask) {
+		struct cpuidle_driver *old_drv;
 
 		old_drv = __cpuidle_get_cpu_driver(cpu);
-		अगर (old_drv && old_drv != drv)
-			वापस -EBUSY;
-	पूर्ण
+		if (old_drv && old_drv != drv)
+			return -EBUSY;
+	}
 
-	क्रम_each_cpu(cpu, drv->cpumask)
+	for_each_cpu(cpu, drv->cpumask)
 		per_cpu(cpuidle_drivers, cpu) = drv;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अन्यथा
+#else
 
-अटल काष्ठा cpuidle_driver *cpuidle_curr_driver;
+static struct cpuidle_driver *cpuidle_curr_driver;
 
 /**
- * __cpuidle_get_cpu_driver - वापस the global cpuidle driver poपूर्णांकer.
+ * __cpuidle_get_cpu_driver - return the global cpuidle driver pointer.
  * @cpu: ignored without the multiple driver support
  *
- * Return a poपूर्णांकer to a काष्ठा cpuidle_driver object or शून्य अगर no driver was
- * previously रेजिस्टरed.
+ * Return a pointer to a struct cpuidle_driver object or NULL if no driver was
+ * previously registered.
  */
-अटल अंतरभूत काष्ठा cpuidle_driver *__cpuidle_get_cpu_driver(पूर्णांक cpu)
-अणु
-	वापस cpuidle_curr_driver;
-पूर्ण
+static inline struct cpuidle_driver *__cpuidle_get_cpu_driver(int cpu)
+{
+	return cpuidle_curr_driver;
+}
 
 /**
  * __cpuidle_set_driver - assign the global cpuidle driver variable.
- * @drv: poपूर्णांकer to a काष्ठा cpuidle_driver object
+ * @drv: pointer to a struct cpuidle_driver object
  *
- * Returns 0 on success, -EBUSY अगर the driver is alपढ़ोy रेजिस्टरed.
+ * Returns 0 on success, -EBUSY if the driver is already registered.
  */
-अटल अंतरभूत पूर्णांक __cpuidle_set_driver(काष्ठा cpuidle_driver *drv)
-अणु
-	अगर (cpuidle_curr_driver)
-		वापस -EBUSY;
+static inline int __cpuidle_set_driver(struct cpuidle_driver *drv)
+{
+	if (cpuidle_curr_driver)
+		return -EBUSY;
 
 	cpuidle_curr_driver = drv;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * __cpuidle_unset_driver - unset the global cpuidle driver variable.
- * @drv: a poपूर्णांकer to a काष्ठा cpuidle_driver
+ * @drv: a pointer to a struct cpuidle_driver
  *
- * Reset the global cpuidle variable to शून्य.  If @drv करोes not match the
- * रेजिस्टरed driver, करो nothing.
+ * Reset the global cpuidle variable to NULL.  If @drv does not match the
+ * registered driver, do nothing.
  */
-अटल अंतरभूत व्योम __cpuidle_unset_driver(काष्ठा cpuidle_driver *drv)
-अणु
-	अगर (drv == cpuidle_curr_driver)
-		cpuidle_curr_driver = शून्य;
-पूर्ण
+static inline void __cpuidle_unset_driver(struct cpuidle_driver *drv)
+{
+	if (drv == cpuidle_curr_driver)
+		cpuidle_curr_driver = NULL;
+}
 
-#पूर्ण_अगर
+#endif
 
 /**
- * cpuidle_setup_broadcast_समयr - enable/disable the broadcast समयr on a cpu
- * @arg: a व्योम poपूर्णांकer used to match the SMP cross call API
+ * cpuidle_setup_broadcast_timer - enable/disable the broadcast timer on a cpu
+ * @arg: a void pointer used to match the SMP cross call API
  *
- * If @arg is शून्य broadcast is disabled otherwise enabled
+ * If @arg is NULL broadcast is disabled otherwise enabled
  *
  * This function is executed per CPU by an SMP cross call.  It's not
  * supposed to be called directly.
  */
-अटल व्योम cpuidle_setup_broadcast_समयr(व्योम *arg)
-अणु
-	अगर (arg)
+static void cpuidle_setup_broadcast_timer(void *arg)
+{
+	if (arg)
 		tick_broadcast_enable();
-	अन्यथा
+	else
 		tick_broadcast_disable();
-पूर्ण
+}
 
 /**
- * __cpuidle_driver_init - initialize the driver's पूर्णांकernal data
- * @drv: a valid poपूर्णांकer to a काष्ठा cpuidle_driver
+ * __cpuidle_driver_init - initialize the driver's internal data
+ * @drv: a valid pointer to a struct cpuidle_driver
  */
-अटल व्योम __cpuidle_driver_init(काष्ठा cpuidle_driver *drv)
-अणु
-	पूर्णांक i;
+static void __cpuidle_driver_init(struct cpuidle_driver *drv)
+{
+	int i;
 
 	/*
-	 * Use all possible CPUs as the शेष, because अगर the kernel boots
+	 * Use all possible CPUs as the default, because if the kernel boots
 	 * with some CPUs offline and then we online one of them, the CPU
-	 * notअगरier has to know which driver to assign.
+	 * notifier has to know which driver to assign.
 	 */
-	अगर (!drv->cpumask)
-		drv->cpumask = (काष्ठा cpumask *)cpu_possible_mask;
+	if (!drv->cpumask)
+		drv->cpumask = (struct cpumask *)cpu_possible_mask;
 
-	क्रम (i = 0; i < drv->state_count; i++) अणु
-		काष्ठा cpuidle_state *s = &drv->states[i];
+	for (i = 0; i < drv->state_count; i++) {
+		struct cpuidle_state *s = &drv->states[i];
 
 		/*
-		 * Look क्रम the समयr stop flag in the dअगरferent states and अगर
-		 * it is found, indicate that the broadcast समयr has to be set
+		 * Look for the timer stop flag in the different states and if
+		 * it is found, indicate that the broadcast timer has to be set
 		 * up.
 		 */
-		अगर (s->flags & CPUIDLE_FLAG_TIMER_STOP)
-			drv->bस_समयr = 1;
+		if (s->flags & CPUIDLE_FLAG_TIMER_STOP)
+			drv->bctimer = 1;
 
 		/*
-		 * The core will use the target residency and निकास latency
+		 * The core will use the target residency and exit latency
 		 * values in nanoseconds, but allow drivers to provide them in
 		 * microseconds too.
 		 */
-		अगर (s->target_residency > 0)
+		if (s->target_residency > 0)
 			s->target_residency_ns = s->target_residency * NSEC_PER_USEC;
-		अन्यथा अगर (s->target_residency_ns < 0)
+		else if (s->target_residency_ns < 0)
 			s->target_residency_ns = 0;
 
-		अगर (s->निकास_latency > 0)
-			s->निकास_latency_ns = s->निकास_latency * NSEC_PER_USEC;
-		अन्यथा अगर (s->निकास_latency_ns < 0)
-			s->निकास_latency_ns =  0;
-	पूर्ण
-पूर्ण
+		if (s->exit_latency > 0)
+			s->exit_latency_ns = s->exit_latency * NSEC_PER_USEC;
+		else if (s->exit_latency_ns < 0)
+			s->exit_latency_ns =  0;
+	}
+}
 
 /**
- * __cpuidle_रेजिस्टर_driver: रेजिस्टर the driver
- * @drv: a valid poपूर्णांकer to a काष्ठा cpuidle_driver
+ * __cpuidle_register_driver: register the driver
+ * @drv: a valid pointer to a struct cpuidle_driver
  *
  * Do some sanity checks, initialize the driver, assign the driver to the
- * global cpuidle driver variable(s) and set up the broadcast समयr अगर the
- * cpuidle driver has some states that shut करोwn the local समयr.
+ * global cpuidle driver variable(s) and set up the broadcast timer if the
+ * cpuidle driver has some states that shut down the local timer.
  *
  * Returns 0 on success, a negative error code otherwise:
- *  * -EINVAL अगर the driver poपूर्णांकer is शून्य or no idle states are available
- *  * -ENODEV अगर the cpuidle framework is disabled
- *  * -EBUSY अगर the driver is alपढ़ोy asचिन्हित to the global variable(s)
+ *  * -EINVAL if the driver pointer is NULL or no idle states are available
+ *  * -ENODEV if the cpuidle framework is disabled
+ *  * -EBUSY if the driver is already assigned to the global variable(s)
  */
-अटल पूर्णांक __cpuidle_रेजिस्टर_driver(काष्ठा cpuidle_driver *drv)
-अणु
-	पूर्णांक ret;
+static int __cpuidle_register_driver(struct cpuidle_driver *drv)
+{
+	int ret;
 
-	अगर (!drv || !drv->state_count)
-		वापस -EINVAL;
+	if (!drv || !drv->state_count)
+		return -EINVAL;
 
-	ret = cpuidle_coupled_state_verअगरy(drv);
-	अगर (ret)
-		वापस ret;
+	ret = cpuidle_coupled_state_verify(drv);
+	if (ret)
+		return ret;
 
-	अगर (cpuidle_disabled())
-		वापस -ENODEV;
+	if (cpuidle_disabled())
+		return -ENODEV;
 
 	__cpuidle_driver_init(drv);
 
 	ret = __cpuidle_set_driver(drv);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (drv->bस_समयr)
-		on_each_cpu_mask(drv->cpumask, cpuidle_setup_broadcast_समयr,
-				 (व्योम *)1, 1);
+	if (drv->bctimer)
+		on_each_cpu_mask(drv->cpumask, cpuidle_setup_broadcast_timer,
+				 (void *)1, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * __cpuidle_unरेजिस्टर_driver - unरेजिस्टर the driver
- * @drv: a valid poपूर्णांकer to a काष्ठा cpuidle_driver
+ * __cpuidle_unregister_driver - unregister the driver
+ * @drv: a valid pointer to a struct cpuidle_driver
  *
- * Check अगर the driver is no दीर्घer in use, reset the global cpuidle driver
- * variable(s) and disable the समयr broadcast notअगरication mechanism अगर it was
+ * Check if the driver is no longer in use, reset the global cpuidle driver
+ * variable(s) and disable the timer broadcast notification mechanism if it was
  * in use.
  *
  */
-अटल व्योम __cpuidle_unरेजिस्टर_driver(काष्ठा cpuidle_driver *drv)
-अणु
-	अगर (drv->bस_समयr) अणु
-		drv->bस_समयr = 0;
-		on_each_cpu_mask(drv->cpumask, cpuidle_setup_broadcast_समयr,
-				 शून्य, 1);
-	पूर्ण
+static void __cpuidle_unregister_driver(struct cpuidle_driver *drv)
+{
+	if (drv->bctimer) {
+		drv->bctimer = 0;
+		on_each_cpu_mask(drv->cpumask, cpuidle_setup_broadcast_timer,
+				 NULL, 1);
+	}
 
 	__cpuidle_unset_driver(drv);
-पूर्ण
+}
 
 /**
- * cpuidle_रेजिस्टर_driver - रेजिस्टरs a driver
- * @drv: a poपूर्णांकer to a valid काष्ठा cpuidle_driver
+ * cpuidle_register_driver - registers a driver
+ * @drv: a pointer to a valid struct cpuidle_driver
  *
  * Register the driver under a lock to prevent concurrent attempts to
- * [un]रेजिस्टर the driver from occuring at the same समय.
+ * [un]register the driver from occuring at the same time.
  *
- * Returns 0 on success, a negative error code (वापसed by
- * __cpuidle_रेजिस्टर_driver()) otherwise.
+ * Returns 0 on success, a negative error code (returned by
+ * __cpuidle_register_driver()) otherwise.
  */
-पूर्णांक cpuidle_रेजिस्टर_driver(काष्ठा cpuidle_driver *drv)
-अणु
-	काष्ठा cpuidle_governor *gov;
-	पूर्णांक ret;
+int cpuidle_register_driver(struct cpuidle_driver *drv)
+{
+	struct cpuidle_governor *gov;
+	int ret;
 
 	spin_lock(&cpuidle_driver_lock);
-	ret = __cpuidle_रेजिस्टर_driver(drv);
+	ret = __cpuidle_register_driver(drv);
 	spin_unlock(&cpuidle_driver_lock);
 
-	अगर (!ret && !म_माप(param_governor) && drv->governor &&
-	    (cpuidle_get_driver() == drv)) अणु
+	if (!ret && !strlen(param_governor) && drv->governor &&
+	    (cpuidle_get_driver() == drv)) {
 		mutex_lock(&cpuidle_lock);
 		gov = cpuidle_find_governor(drv->governor);
-		अगर (gov) अणु
+		if (gov) {
 			cpuidle_prev_governor = cpuidle_curr_governor;
-			अगर (cpuidle_चयन_governor(gov) < 0)
-				cpuidle_prev_governor = शून्य;
-		पूर्ण
+			if (cpuidle_switch_governor(gov) < 0)
+				cpuidle_prev_governor = NULL;
+		}
 		mutex_unlock(&cpuidle_lock);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(cpuidle_रेजिस्टर_driver);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(cpuidle_register_driver);
 
 /**
- * cpuidle_unरेजिस्टर_driver - unरेजिस्टरs a driver
- * @drv: a poपूर्णांकer to a valid काष्ठा cpuidle_driver
+ * cpuidle_unregister_driver - unregisters a driver
+ * @drv: a pointer to a valid struct cpuidle_driver
  *
- * Unरेजिस्टरs the cpuidle driver under a lock to prevent concurrent attempts
- * to [un]रेजिस्टर the driver from occuring at the same समय.  @drv has to
- * match the currently रेजिस्टरed driver.
+ * Unregisters the cpuidle driver under a lock to prevent concurrent attempts
+ * to [un]register the driver from occuring at the same time.  @drv has to
+ * match the currently registered driver.
  */
-व्योम cpuidle_unरेजिस्टर_driver(काष्ठा cpuidle_driver *drv)
-अणु
+void cpuidle_unregister_driver(struct cpuidle_driver *drv)
+{
 	bool enabled = (cpuidle_get_driver() == drv);
 
 	spin_lock(&cpuidle_driver_lock);
-	__cpuidle_unरेजिस्टर_driver(drv);
+	__cpuidle_unregister_driver(drv);
 	spin_unlock(&cpuidle_driver_lock);
 
-	अगर (!enabled)
-		वापस;
+	if (!enabled)
+		return;
 
 	mutex_lock(&cpuidle_lock);
-	अगर (cpuidle_prev_governor) अणु
-		अगर (!cpuidle_चयन_governor(cpuidle_prev_governor))
-			cpuidle_prev_governor = शून्य;
-	पूर्ण
+	if (cpuidle_prev_governor) {
+		if (!cpuidle_switch_governor(cpuidle_prev_governor))
+			cpuidle_prev_governor = NULL;
+	}
 	mutex_unlock(&cpuidle_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(cpuidle_unरेजिस्टर_driver);
+}
+EXPORT_SYMBOL_GPL(cpuidle_unregister_driver);
 
 /**
- * cpuidle_get_driver - वापस the driver tied to the current CPU.
+ * cpuidle_get_driver - return the driver tied to the current CPU.
  *
- * Returns a काष्ठा cpuidle_driver poपूर्णांकer, or शून्य अगर no driver is रेजिस्टरed.
+ * Returns a struct cpuidle_driver pointer, or NULL if no driver is registered.
  */
-काष्ठा cpuidle_driver *cpuidle_get_driver(व्योम)
-अणु
-	काष्ठा cpuidle_driver *drv;
-	पूर्णांक cpu;
+struct cpuidle_driver *cpuidle_get_driver(void)
+{
+	struct cpuidle_driver *drv;
+	int cpu;
 
 	cpu = get_cpu();
 	drv = __cpuidle_get_cpu_driver(cpu);
 	put_cpu();
 
-	वापस drv;
-पूर्ण
+	return drv;
+}
 EXPORT_SYMBOL_GPL(cpuidle_get_driver);
 
 /**
- * cpuidle_get_cpu_driver - वापस the driver रेजिस्टरed क्रम a CPU.
- * @dev: a valid poपूर्णांकer to a काष्ठा cpuidle_device
+ * cpuidle_get_cpu_driver - return the driver registered for a CPU.
+ * @dev: a valid pointer to a struct cpuidle_device
  *
- * Returns a काष्ठा cpuidle_driver poपूर्णांकer, or शून्य अगर no driver is रेजिस्टरed
- * क्रम the CPU associated with @dev.
+ * Returns a struct cpuidle_driver pointer, or NULL if no driver is registered
+ * for the CPU associated with @dev.
  */
-काष्ठा cpuidle_driver *cpuidle_get_cpu_driver(काष्ठा cpuidle_device *dev)
-अणु
-	अगर (!dev)
-		वापस शून्य;
+struct cpuidle_driver *cpuidle_get_cpu_driver(struct cpuidle_device *dev)
+{
+	if (!dev)
+		return NULL;
 
-	वापस __cpuidle_get_cpu_driver(dev->cpu);
-पूर्ण
+	return __cpuidle_get_cpu_driver(dev->cpu);
+}
 EXPORT_SYMBOL_GPL(cpuidle_get_cpu_driver);
 
 /**
@@ -355,34 +354,34 @@ EXPORT_SYMBOL_GPL(cpuidle_get_cpu_driver);
  * @idx: State index
  * @disable: Whether or not to disable the state
  */
-व्योम cpuidle_driver_state_disabled(काष्ठा cpuidle_driver *drv, पूर्णांक idx,
+void cpuidle_driver_state_disabled(struct cpuidle_driver *drv, int idx,
 				 bool disable)
-अणु
-	अचिन्हित पूर्णांक cpu;
+{
+	unsigned int cpu;
 
 	mutex_lock(&cpuidle_lock);
 
 	spin_lock(&cpuidle_driver_lock);
 
-	अगर (!drv->cpumask) अणु
+	if (!drv->cpumask) {
 		drv->states[idx].flags |= CPUIDLE_FLAG_UNUSABLE;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	क्रम_each_cpu(cpu, drv->cpumask) अणु
-		काष्ठा cpuidle_device *dev = per_cpu(cpuidle_devices, cpu);
+	for_each_cpu(cpu, drv->cpumask) {
+		struct cpuidle_device *dev = per_cpu(cpuidle_devices, cpu);
 
-		अगर (!dev)
-			जारी;
+		if (!dev)
+			continue;
 
-		अगर (disable)
+		if (disable)
 			dev->states_usage[idx].disable |= CPUIDLE_STATE_DISABLED_BY_DRIVER;
-		अन्यथा
+		else
 			dev->states_usage[idx].disable &= ~CPUIDLE_STATE_DISABLED_BY_DRIVER;
-	पूर्ण
+	}
 
 unlock:
 	spin_unlock(&cpuidle_driver_lock);
 
 	mutex_unlock(&cpuidle_lock);
-पूर्ण
+}

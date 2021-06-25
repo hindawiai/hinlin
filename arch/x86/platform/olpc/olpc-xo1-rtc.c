@@ -1,67 +1,66 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Support क्रम OLPC XO-1 Real Time Clock (RTC)
+ * Support for OLPC XO-1 Real Time Clock (RTC)
  *
  * Copyright (C) 2011 One Laptop per Child
  */
 
-#समावेश <linux/mc146818rtc.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/of.h>
+#include <linux/mc146818rtc.h>
+#include <linux/platform_device.h>
+#include <linux/rtc.h>
+#include <linux/of.h>
 
-#समावेश <यंत्र/msr.h>
-#समावेश <यंत्र/olpc.h>
-#समावेश <यंत्र/x86_init.h>
+#include <asm/msr.h>
+#include <asm/olpc.h>
+#include <asm/x86_init.h>
 
-अटल व्योम rtc_wake_on(काष्ठा device *dev)
-अणु
+static void rtc_wake_on(struct device *dev)
+{
 	olpc_xo1_pm_wakeup_set(CS5536_PM_RTC);
-पूर्ण
+}
 
-अटल व्योम rtc_wake_off(काष्ठा device *dev)
-अणु
+static void rtc_wake_off(struct device *dev)
+{
 	olpc_xo1_pm_wakeup_clear(CS5536_PM_RTC);
-पूर्ण
+}
 
-अटल काष्ठा resource rtc_platक्रमm_resource[] = अणु
-	[0] = अणु
+static struct resource rtc_platform_resource[] = {
+	[0] = {
 		.start	= RTC_PORT(0),
 		.end	= RTC_PORT(1),
 		.flags	= IORESOURCE_IO,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= RTC_IRQ,
 		.end	= RTC_IRQ,
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा cmos_rtc_board_info rtc_info = अणु
+static struct cmos_rtc_board_info rtc_info = {
 	.rtc_day_alarm = 0,
 	.rtc_mon_alarm = 0,
 	.rtc_century = 0,
 	.wake_on = rtc_wake_on,
 	.wake_off = rtc_wake_off,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device xo1_rtc_device = अणु
+static struct platform_device xo1_rtc_device = {
 	.name = "rtc_cmos",
 	.id = -1,
-	.num_resources = ARRAY_SIZE(rtc_platक्रमm_resource),
-	.dev.platक्रमm_data = &rtc_info,
-	.resource = rtc_platक्रमm_resource,
-पूर्ण;
+	.num_resources = ARRAY_SIZE(rtc_platform_resource),
+	.dev.platform_data = &rtc_info,
+	.resource = rtc_platform_resource,
+};
 
-अटल पूर्णांक __init xo1_rtc_init(व्योम)
-अणु
-	पूर्णांक r;
-	काष्ठा device_node *node;
+static int __init xo1_rtc_init(void)
+{
+	int r;
+	struct device_node *node;
 
-	node = of_find_compatible_node(शून्य, शून्य, "olpc,xo1-rtc");
-	अगर (!node)
-		वापस 0;
+	node = of_find_compatible_node(NULL, NULL, "olpc,xo1-rtc");
+	if (!node)
+		return 0;
 	of_node_put(node);
 
 	pr_info("olpc-xo1-rtc: Initializing OLPC XO-1 RTC\n");
@@ -69,13 +68,13 @@
 	rdmsrl(MSR_RTC_MONA_OFFSET, rtc_info.rtc_mon_alarm);
 	rdmsrl(MSR_RTC_CEN_OFFSET, rtc_info.rtc_century);
 
-	r = platक्रमm_device_रेजिस्टर(&xo1_rtc_device);
-	अगर (r)
-		वापस r;
+	r = platform_device_register(&xo1_rtc_device);
+	if (r)
+		return r;
 
-	x86_platक्रमm.legacy.rtc = 0;
+	x86_platform.legacy.rtc = 0;
 
 	device_init_wakeup(&xo1_rtc_device.dev, 1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 arch_initcall(xo1_rtc_init);

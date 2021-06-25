@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * OpenRISC prom.c
  *
@@ -7,22 +6,22 @@
  * others.  All original copyrights apply as per the original source
  * declaration.
  *
- * Modअगरications क्रम the OpenRISC architecture:
+ * Modifications for the OpenRISC architecture:
  * Copyright (C) 2010-2011 Jonas Bonn <jonas@southpole.se>
  *
- * Architecture specअगरic procedures क्रम creating, accessing and
- * पूर्णांकerpreting the device tree.
+ * Architecture specific procedures for creating, accessing and
+ * interpreting the device tree.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/types.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/of_fdt.h>
+#include <linux/init.h>
+#include <linux/types.h>
+#include <linux/memblock.h>
+#include <linux/of_fdt.h>
 
-#समावेश <यंत्र/page.h>
+#include <asm/page.h>
 
-व्योम __init early_init_devtree(व्योम *params)
-अणु
+void __init early_init_devtree(void *params)
+{
 	early_init_dt_scan(params);
 	memblock_allow_resize();
-पूर्ण
+}

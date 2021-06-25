@@ -1,91 +1,90 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PERF_STRLIST_H
-#घोषणा __PERF_STRLIST_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PERF_STRLIST_H
+#define __PERF_STRLIST_H
 
-#समावेश <linux/rbtree.h>
-#समावेश <stdbool.h>
+#include <linux/rbtree.h>
+#include <stdbool.h>
 
-#समावेश "rblist.h"
+#include "rblist.h"
 
-काष्ठा str_node अणु
-	काष्ठा rb_node rb_node;
-	स्थिर अक्षर     *s;
-पूर्ण;
+struct str_node {
+	struct rb_node rb_node;
+	const char     *s;
+};
 
-काष्ठा strlist अणु
-	काष्ठा rblist rblist;
+struct strlist {
+	struct rblist rblist;
 	bool	      dupstr;
 	bool	      file_only;
-पूर्ण;
+};
 
 /*
- * @file_only: When स_नाम is present, only consider entries as filenames,
- *             that should not be added to the list अगर स_नाम/entry is not
+ * @file_only: When dirname is present, only consider entries as filenames,
+ *             that should not be added to the list if dirname/entry is not
  *             found
  */
-काष्ठा strlist_config अणु
-	bool करोnt_dupstr;
+struct strlist_config {
+	bool dont_dupstr;
 	bool file_only;
-	स्थिर अक्षर *स_नाम;
-पूर्ण;
+	const char *dirname;
+};
 
-काष्ठा strlist *strlist__new(स्थिर अक्षर *slist, स्थिर काष्ठा strlist_config *config);
-व्योम strlist__delete(काष्ठा strlist *slist);
+struct strlist *strlist__new(const char *slist, const struct strlist_config *config);
+void strlist__delete(struct strlist *slist);
 
-व्योम strlist__हटाओ(काष्ठा strlist *slist, काष्ठा str_node *sn);
-पूर्णांक strlist__load(काष्ठा strlist *slist, स्थिर अक्षर *filename);
-पूर्णांक strlist__add(काष्ठा strlist *slist, स्थिर अक्षर *str);
+void strlist__remove(struct strlist *slist, struct str_node *sn);
+int strlist__load(struct strlist *slist, const char *filename);
+int strlist__add(struct strlist *slist, const char *str);
 
-काष्ठा str_node *strlist__entry(स्थिर काष्ठा strlist *slist, अचिन्हित पूर्णांक idx);
-काष्ठा str_node *strlist__find(काष्ठा strlist *slist, स्थिर अक्षर *entry);
+struct str_node *strlist__entry(const struct strlist *slist, unsigned int idx);
+struct str_node *strlist__find(struct strlist *slist, const char *entry);
 
-अटल अंतरभूत bool strlist__has_entry(काष्ठा strlist *slist, स्थिर अक्षर *entry)
-अणु
-	वापस strlist__find(slist, entry) != शून्य;
-पूर्ण
+static inline bool strlist__has_entry(struct strlist *slist, const char *entry)
+{
+	return strlist__find(slist, entry) != NULL;
+}
 
-अटल अंतरभूत bool strlist__empty(स्थिर काष्ठा strlist *slist)
-अणु
-	वापस rblist__empty(&slist->rblist);
-पूर्ण
+static inline bool strlist__empty(const struct strlist *slist)
+{
+	return rblist__empty(&slist->rblist);
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक strlist__nr_entries(स्थिर काष्ठा strlist *slist)
-अणु
-	वापस rblist__nr_entries(&slist->rblist);
-पूर्ण
+static inline unsigned int strlist__nr_entries(const struct strlist *slist)
+{
+	return rblist__nr_entries(&slist->rblist);
+}
 
 /* For strlist iteration */
-अटल अंतरभूत काष्ठा str_node *strlist__first(काष्ठा strlist *slist)
-अणु
-	काष्ठा rb_node *rn = rb_first_cached(&slist->rblist.entries);
-	वापस rn ? rb_entry(rn, काष्ठा str_node, rb_node) : शून्य;
-पूर्ण
-अटल अंतरभूत काष्ठा str_node *strlist__next(काष्ठा str_node *sn)
-अणु
-	काष्ठा rb_node *rn;
-	अगर (!sn)
-		वापस शून्य;
+static inline struct str_node *strlist__first(struct strlist *slist)
+{
+	struct rb_node *rn = rb_first_cached(&slist->rblist.entries);
+	return rn ? rb_entry(rn, struct str_node, rb_node) : NULL;
+}
+static inline struct str_node *strlist__next(struct str_node *sn)
+{
+	struct rb_node *rn;
+	if (!sn)
+		return NULL;
 	rn = rb_next(&sn->rb_node);
-	वापस rn ? rb_entry(rn, काष्ठा str_node, rb_node) : शून्य;
-पूर्ण
+	return rn ? rb_entry(rn, struct str_node, rb_node) : NULL;
+}
 
 /**
- * strlist_क्रम_each      - iterate over a strlist
- * @pos:	the &काष्ठा str_node to use as a loop cursor.
- * @slist:	the &काष्ठा strlist क्रम loop.
+ * strlist_for_each      - iterate over a strlist
+ * @pos:	the &struct str_node to use as a loop cursor.
+ * @slist:	the &struct strlist for loop.
  */
-#घोषणा strlist__क्रम_each_entry(pos, slist)	\
-	क्रम (pos = strlist__first(slist); pos; pos = strlist__next(pos))
+#define strlist__for_each_entry(pos, slist)	\
+	for (pos = strlist__first(slist); pos; pos = strlist__next(pos))
 
 /**
- * strlist_क्रम_each_safe - iterate over a strlist safe against removal of
+ * strlist_for_each_safe - iterate over a strlist safe against removal of
  *                         str_node
- * @pos:	the &काष्ठा str_node to use as a loop cursor.
- * @n:		another &काष्ठा str_node to use as temporary storage.
- * @slist:	the &काष्ठा strlist क्रम loop.
+ * @pos:	the &struct str_node to use as a loop cursor.
+ * @n:		another &struct str_node to use as temporary storage.
+ * @slist:	the &struct strlist for loop.
  */
-#घोषणा strlist__क्रम_each_entry_safe(pos, n, slist)	\
-	क्रम (pos = strlist__first(slist), n = strlist__next(pos); pos;\
+#define strlist__for_each_entry_safe(pos, n, slist)	\
+	for (pos = strlist__first(slist), n = strlist__next(pos); pos;\
 	     pos = n, n = strlist__next(n))
-#पूर्ण_अगर /* __PERF_STRLIST_H */
+#endif /* __PERF_STRLIST_H */

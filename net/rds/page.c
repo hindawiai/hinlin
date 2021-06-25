@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2006 Oracle.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,138 +30,138 @@
  * SOFTWARE.
  *
  */
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/gfp.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/export.h>
+#include <linux/highmem.h>
+#include <linux/gfp.h>
+#include <linux/cpu.h>
+#include <linux/export.h>
 
-#समावेश "rds.h"
+#include "rds.h"
 
-काष्ठा rds_page_reमुख्यder अणु
-	काष्ठा page	*r_page;
-	अचिन्हित दीर्घ	r_offset;
-पूर्ण;
+struct rds_page_remainder {
+	struct page	*r_page;
+	unsigned long	r_offset;
+};
 
-अटल
-DEFINE_PER_CPU_SHARED_ALIGNED(काष्ठा rds_page_reमुख्यder, rds_page_reमुख्यders);
+static
+DEFINE_PER_CPU_SHARED_ALIGNED(struct rds_page_remainder, rds_page_remainders);
 
 /**
- * rds_page_reमुख्यder_alloc - build up regions of a message.
+ * rds_page_remainder_alloc - build up regions of a message.
  *
- * @scat: Scatter list क्रम message
+ * @scat: Scatter list for message
  * @bytes: the number of bytes needed.
- * @gfp: the रुकोing behaviour of the allocation
+ * @gfp: the waiting behaviour of the allocation
  *
  * @gfp is always ored with __GFP_HIGHMEM.  Callers must be prepared to
  * kmap the pages, etc.
  *
- * If @bytes is at least a full page then this just वापसs a page from
+ * If @bytes is at least a full page then this just returns a page from
  * alloc_page().
  *
  * If @bytes is a partial page then this stores the unused region of the
- * page in a per-cpu काष्ठाure.  Future partial-page allocations may be
+ * page in a per-cpu structure.  Future partial-page allocations may be
  * satisfied from that cached region.  This lets us waste less memory on
- * small allocations with minimal complनिकासy.  It works because the transmit
- * path passes पढ़ो-only page regions करोwn to devices.  They hold a page
- * reference until they are करोne with the region.
+ * small allocations with minimal complexity.  It works because the transmit
+ * path passes read-only page regions down to devices.  They hold a page
+ * reference until they are done with the region.
  */
-पूर्णांक rds_page_reमुख्यder_alloc(काष्ठा scatterlist *scat, अचिन्हित दीर्घ bytes,
+int rds_page_remainder_alloc(struct scatterlist *scat, unsigned long bytes,
 			     gfp_t gfp)
-अणु
-	काष्ठा rds_page_reमुख्यder *rem;
-	अचिन्हित दीर्घ flags;
-	काष्ठा page *page;
-	पूर्णांक ret;
+{
+	struct rds_page_remainder *rem;
+	unsigned long flags;
+	struct page *page;
+	int ret;
 
 	gfp |= __GFP_HIGHMEM;
 
-	/* jump straight to allocation अगर we're trying क्रम a huge page */
-	अगर (bytes >= PAGE_SIZE) अणु
+	/* jump straight to allocation if we're trying for a huge page */
+	if (bytes >= PAGE_SIZE) {
 		page = alloc_page(gfp);
-		अगर (!page) अणु
+		if (!page) {
 			ret = -ENOMEM;
-		पूर्ण अन्यथा अणु
+		} else {
 			sg_set_page(scat, page, PAGE_SIZE, 0);
 			ret = 0;
-		पूर्ण
-		जाओ out;
-	पूर्ण
+		}
+		goto out;
+	}
 
-	rem = &per_cpu(rds_page_reमुख्यders, get_cpu());
+	rem = &per_cpu(rds_page_remainders, get_cpu());
 	local_irq_save(flags);
 
-	जबतक (1) अणु
-		/* aव्योम a tiny region getting stuck by tossing it */
-		अगर (rem->r_page && bytes > (PAGE_SIZE - rem->r_offset)) अणु
-			rds_stats_inc(s_page_reमुख्यder_miss);
-			__मुक्त_page(rem->r_page);
-			rem->r_page = शून्य;
-		पूर्ण
+	while (1) {
+		/* avoid a tiny region getting stuck by tossing it */
+		if (rem->r_page && bytes > (PAGE_SIZE - rem->r_offset)) {
+			rds_stats_inc(s_page_remainder_miss);
+			__free_page(rem->r_page);
+			rem->r_page = NULL;
+		}
 
 		/* hand out a fragment from the cached page */
-		अगर (rem->r_page && bytes <= (PAGE_SIZE - rem->r_offset)) अणु
+		if (rem->r_page && bytes <= (PAGE_SIZE - rem->r_offset)) {
 			sg_set_page(scat, rem->r_page, bytes, rem->r_offset);
 			get_page(sg_page(scat));
 
-			अगर (rem->r_offset != 0)
-				rds_stats_inc(s_page_reमुख्यder_hit);
+			if (rem->r_offset != 0)
+				rds_stats_inc(s_page_remainder_hit);
 
 			rem->r_offset += ALIGN(bytes, 8);
-			अगर (rem->r_offset >= PAGE_SIZE) अणु
-				__मुक्त_page(rem->r_page);
-				rem->r_page = शून्य;
-			पूर्ण
+			if (rem->r_offset >= PAGE_SIZE) {
+				__free_page(rem->r_page);
+				rem->r_page = NULL;
+			}
 			ret = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		/* alloc अगर there is nothing क्रम us to use */
+		/* alloc if there is nothing for us to use */
 		local_irq_restore(flags);
 		put_cpu();
 
 		page = alloc_page(gfp);
 
-		rem = &per_cpu(rds_page_reमुख्यders, get_cpu());
+		rem = &per_cpu(rds_page_remainders, get_cpu());
 		local_irq_save(flags);
 
-		अगर (!page) अणु
+		if (!page) {
 			ret = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		/* did someone race to fill the reमुख्यder beक्रमe us? */
-		अगर (rem->r_page) अणु
-			__मुक्त_page(page);
-			जारी;
-		पूर्ण
+		/* did someone race to fill the remainder before us? */
+		if (rem->r_page) {
+			__free_page(page);
+			continue;
+		}
 
 		/* otherwise install our page and loop around to alloc */
 		rem->r_page = page;
 		rem->r_offset = 0;
-	पूर्ण
+	}
 
 	local_irq_restore(flags);
 	put_cpu();
 out:
 	rdsdebug("bytes %lu ret %d %p %u %u\n", bytes, ret,
-		 ret ? शून्य : sg_page(scat), ret ? 0 : scat->offset,
+		 ret ? NULL : sg_page(scat), ret ? 0 : scat->offset,
 		 ret ? 0 : scat->length);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(rds_page_reमुख्यder_alloc);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(rds_page_remainder_alloc);
 
-व्योम rds_page_निकास(व्योम)
-अणु
-	अचिन्हित पूर्णांक cpu;
+void rds_page_exit(void)
+{
+	unsigned int cpu;
 
-	क्रम_each_possible_cpu(cpu) अणु
-		काष्ठा rds_page_reमुख्यder *rem;
+	for_each_possible_cpu(cpu) {
+		struct rds_page_remainder *rem;
 
-		rem = &per_cpu(rds_page_reमुख्यders, cpu);
+		rem = &per_cpu(rds_page_remainders, cpu);
 		rdsdebug("cpu %u\n", cpu);
 
-		अगर (rem->r_page)
-			__मुक्त_page(rem->r_page);
-		rem->r_page = शून्य;
-	पूर्ण
-पूर्ण
+		if (rem->r_page)
+			__free_page(rem->r_page);
+		rem->r_page = NULL;
+	}
+}

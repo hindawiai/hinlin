@@ -1,240 +1,239 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Generic SCSI-3 ALUA SCSI Device Handler
  *
  * Copyright (C) 2007-2010 Hannes Reinecke, SUSE Linux Products GmbH.
  * All rights reserved.
  */
-#समावेश <linux/slab.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/module.h>
-#समावेश <यंत्र/unaligned.h>
-#समावेश <scsi/scsi.h>
-#समावेश <scsi/scsi_proto.h>
-#समावेश <scsi/scsi_dbg.h>
-#समावेश <scsi/scsi_eh.h>
-#समावेश <scsi/scsi_dh.h>
+#include <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/module.h>
+#include <asm/unaligned.h>
+#include <scsi/scsi.h>
+#include <scsi/scsi_proto.h>
+#include <scsi/scsi_dbg.h>
+#include <scsi/scsi_eh.h>
+#include <scsi/scsi_dh.h>
 
-#घोषणा ALUA_DH_NAME "alua"
-#घोषणा ALUA_DH_VER "2.0"
+#define ALUA_DH_NAME "alua"
+#define ALUA_DH_VER "2.0"
 
-#घोषणा TPGS_SUPPORT_NONE		0x00
-#घोषणा TPGS_SUPPORT_OPTIMIZED		0x01
-#घोषणा TPGS_SUPPORT_NONOPTIMIZED	0x02
-#घोषणा TPGS_SUPPORT_STANDBY		0x04
-#घोषणा TPGS_SUPPORT_UNAVAILABLE	0x08
-#घोषणा TPGS_SUPPORT_LBA_DEPENDENT	0x10
-#घोषणा TPGS_SUPPORT_OFFLINE		0x40
-#घोषणा TPGS_SUPPORT_TRANSITION		0x80
-#घोषणा TPGS_SUPPORT_ALL		0xdf
+#define TPGS_SUPPORT_NONE		0x00
+#define TPGS_SUPPORT_OPTIMIZED		0x01
+#define TPGS_SUPPORT_NONOPTIMIZED	0x02
+#define TPGS_SUPPORT_STANDBY		0x04
+#define TPGS_SUPPORT_UNAVAILABLE	0x08
+#define TPGS_SUPPORT_LBA_DEPENDENT	0x10
+#define TPGS_SUPPORT_OFFLINE		0x40
+#define TPGS_SUPPORT_TRANSITION		0x80
+#define TPGS_SUPPORT_ALL		0xdf
 
-#घोषणा RTPG_FMT_MASK			0x70
-#घोषणा RTPG_FMT_EXT_HDR		0x10
+#define RTPG_FMT_MASK			0x70
+#define RTPG_FMT_EXT_HDR		0x10
 
-#घोषणा TPGS_MODE_UNINITIALIZED		 -1
-#घोषणा TPGS_MODE_NONE			0x0
-#घोषणा TPGS_MODE_IMPLICIT		0x1
-#घोषणा TPGS_MODE_EXPLICIT		0x2
+#define TPGS_MODE_UNINITIALIZED		 -1
+#define TPGS_MODE_NONE			0x0
+#define TPGS_MODE_IMPLICIT		0x1
+#define TPGS_MODE_EXPLICIT		0x2
 
-#घोषणा ALUA_RTPG_SIZE			128
-#घोषणा ALUA_FAILOVER_TIMEOUT		60
-#घोषणा ALUA_FAILOVER_RETRIES		5
-#घोषणा ALUA_RTPG_DELAY_MSECS		5
-#घोषणा ALUA_RTPG_RETRY_DELAY		2
+#define ALUA_RTPG_SIZE			128
+#define ALUA_FAILOVER_TIMEOUT		60
+#define ALUA_FAILOVER_RETRIES		5
+#define ALUA_RTPG_DELAY_MSECS		5
+#define ALUA_RTPG_RETRY_DELAY		2
 
 /* device handler flags */
-#घोषणा ALUA_OPTIMIZE_STPG		0x01
-#घोषणा ALUA_RTPG_EXT_HDR_UNSUPP	0x02
+#define ALUA_OPTIMIZE_STPG		0x01
+#define ALUA_RTPG_EXT_HDR_UNSUPP	0x02
 /* State machine flags */
-#घोषणा ALUA_PG_RUN_RTPG		0x10
-#घोषणा ALUA_PG_RUN_STPG		0x20
-#घोषणा ALUA_PG_RUNNING			0x40
+#define ALUA_PG_RUN_RTPG		0x10
+#define ALUA_PG_RUN_STPG		0x20
+#define ALUA_PG_RUNNING			0x40
 
-अटल uपूर्णांक optimize_stpg;
-module_param(optimize_stpg, uपूर्णांक, S_IRUGO|S_IWUSR);
+static uint optimize_stpg;
+module_param(optimize_stpg, uint, S_IRUGO|S_IWUSR);
 MODULE_PARM_DESC(optimize_stpg, "Allow use of a non-optimized path, rather than sending a STPG, when implicit TPGS is supported (0=No,1=Yes). Default is 0.");
 
-अटल LIST_HEAD(port_group_list);
-अटल DEFINE_SPINLOCK(port_group_lock);
-अटल काष्ठा workqueue_काष्ठा *kaluad_wq;
+static LIST_HEAD(port_group_list);
+static DEFINE_SPINLOCK(port_group_lock);
+static struct workqueue_struct *kaluad_wq;
 
-काष्ठा alua_port_group अणु
-	काष्ठा kref		kref;
-	काष्ठा rcu_head		rcu;
-	काष्ठा list_head	node;
-	काष्ठा list_head	dh_list;
-	अचिन्हित अक्षर		device_id_str[256];
-	पूर्णांक			device_id_len;
-	पूर्णांक			group_id;
-	पूर्णांक			tpgs;
-	पूर्णांक			state;
-	पूर्णांक			pref;
-	पूर्णांक			valid_states;
-	अचिन्हित		flags; /* used क्रम optimizing STPG */
-	अचिन्हित अक्षर		transition_पंचांगo;
-	अचिन्हित दीर्घ		expiry;
-	अचिन्हित दीर्घ		पूर्णांकerval;
-	काष्ठा delayed_work	rtpg_work;
+struct alua_port_group {
+	struct kref		kref;
+	struct rcu_head		rcu;
+	struct list_head	node;
+	struct list_head	dh_list;
+	unsigned char		device_id_str[256];
+	int			device_id_len;
+	int			group_id;
+	int			tpgs;
+	int			state;
+	int			pref;
+	int			valid_states;
+	unsigned		flags; /* used for optimizing STPG */
+	unsigned char		transition_tmo;
+	unsigned long		expiry;
+	unsigned long		interval;
+	struct delayed_work	rtpg_work;
 	spinlock_t		lock;
-	काष्ठा list_head	rtpg_list;
-	काष्ठा scsi_device	*rtpg_sdev;
-पूर्ण;
+	struct list_head	rtpg_list;
+	struct scsi_device	*rtpg_sdev;
+};
 
-काष्ठा alua_dh_data अणु
-	काष्ठा list_head	node;
-	काष्ठा alua_port_group __rcu *pg;
-	पूर्णांक			group_id;
+struct alua_dh_data {
+	struct list_head	node;
+	struct alua_port_group __rcu *pg;
+	int			group_id;
 	spinlock_t		pg_lock;
-	काष्ठा scsi_device	*sdev;
-	पूर्णांक			init_error;
-	काष्ठा mutex		init_mutex;
-पूर्ण;
+	struct scsi_device	*sdev;
+	int			init_error;
+	struct mutex		init_mutex;
+};
 
-काष्ठा alua_queue_data अणु
-	काष्ठा list_head	entry;
+struct alua_queue_data {
+	struct list_head	entry;
 	activate_complete	callback_fn;
-	व्योम			*callback_data;
-पूर्ण;
+	void			*callback_data;
+};
 
-#घोषणा ALUA_POLICY_SWITCH_CURRENT	0
-#घोषणा ALUA_POLICY_SWITCH_ALL		1
+#define ALUA_POLICY_SWITCH_CURRENT	0
+#define ALUA_POLICY_SWITCH_ALL		1
 
-अटल व्योम alua_rtpg_work(काष्ठा work_काष्ठा *work);
-अटल bool alua_rtpg_queue(काष्ठा alua_port_group *pg,
-			    काष्ठा scsi_device *sdev,
-			    काष्ठा alua_queue_data *qdata, bool क्रमce);
-अटल व्योम alua_check(काष्ठा scsi_device *sdev, bool क्रमce);
+static void alua_rtpg_work(struct work_struct *work);
+static bool alua_rtpg_queue(struct alua_port_group *pg,
+			    struct scsi_device *sdev,
+			    struct alua_queue_data *qdata, bool force);
+static void alua_check(struct scsi_device *sdev, bool force);
 
-अटल व्योम release_port_group(काष्ठा kref *kref)
-अणु
-	काष्ठा alua_port_group *pg;
+static void release_port_group(struct kref *kref)
+{
+	struct alua_port_group *pg;
 
-	pg = container_of(kref, काष्ठा alua_port_group, kref);
-	अगर (pg->rtpg_sdev)
+	pg = container_of(kref, struct alua_port_group, kref);
+	if (pg->rtpg_sdev)
 		flush_delayed_work(&pg->rtpg_work);
 	spin_lock(&port_group_lock);
 	list_del(&pg->node);
 	spin_unlock(&port_group_lock);
-	kमुक्त_rcu(pg, rcu);
-पूर्ण
+	kfree_rcu(pg, rcu);
+}
 
 /*
  * submit_rtpg - Issue a REPORT TARGET GROUP STATES command
  * @sdev: sdev the command should be sent to
  */
-अटल पूर्णांक submit_rtpg(काष्ठा scsi_device *sdev, अचिन्हित अक्षर *buff,
-		       पूर्णांक bufflen, काष्ठा scsi_sense_hdr *sshdr, पूर्णांक flags)
-अणु
+static int submit_rtpg(struct scsi_device *sdev, unsigned char *buff,
+		       int bufflen, struct scsi_sense_hdr *sshdr, int flags)
+{
 	u8 cdb[MAX_COMMAND_SIZE];
-	पूर्णांक req_flags = REQ_FAILFAST_DEV | REQ_FAILFAST_TRANSPORT |
+	int req_flags = REQ_FAILFAST_DEV | REQ_FAILFAST_TRANSPORT |
 		REQ_FAILFAST_DRIVER;
 
 	/* Prepare the command. */
-	स_रखो(cdb, 0x0, MAX_COMMAND_SIZE);
-	cdb[0] = MAINTEन_अंकCE_IN;
-	अगर (!(flags & ALUA_RTPG_EXT_HDR_UNSUPP))
+	memset(cdb, 0x0, MAX_COMMAND_SIZE);
+	cdb[0] = MAINTENANCE_IN;
+	if (!(flags & ALUA_RTPG_EXT_HDR_UNSUPP))
 		cdb[1] = MI_REPORT_TARGET_PGS | MI_EXT_HDR_PARAM_FMT;
-	अन्यथा
+	else
 		cdb[1] = MI_REPORT_TARGET_PGS;
 	put_unaligned_be32(bufflen, &cdb[6]);
 
-	वापस scsi_execute(sdev, cdb, DMA_FROM_DEVICE, buff, bufflen, शून्य,
+	return scsi_execute(sdev, cdb, DMA_FROM_DEVICE, buff, bufflen, NULL,
 			sshdr, ALUA_FAILOVER_TIMEOUT * HZ,
-			ALUA_FAILOVER_RETRIES, req_flags, 0, शून्य);
-पूर्ण
+			ALUA_FAILOVER_RETRIES, req_flags, 0, NULL);
+}
 
 /*
  * submit_stpg - Issue a SET TARGET PORT GROUP command
  *
  * Currently we're only setting the current target port group state
  * to 'active/optimized' and let the array firmware figure out
- * the states of the reमुख्यing groups.
+ * the states of the remaining groups.
  */
-अटल पूर्णांक submit_stpg(काष्ठा scsi_device *sdev, पूर्णांक group_id,
-		       काष्ठा scsi_sense_hdr *sshdr)
-अणु
+static int submit_stpg(struct scsi_device *sdev, int group_id,
+		       struct scsi_sense_hdr *sshdr)
+{
 	u8 cdb[MAX_COMMAND_SIZE];
-	अचिन्हित अक्षर stpg_data[8];
-	पूर्णांक stpg_len = 8;
-	पूर्णांक req_flags = REQ_FAILFAST_DEV | REQ_FAILFAST_TRANSPORT |
+	unsigned char stpg_data[8];
+	int stpg_len = 8;
+	int req_flags = REQ_FAILFAST_DEV | REQ_FAILFAST_TRANSPORT |
 		REQ_FAILFAST_DRIVER;
 
 	/* Prepare the data buffer */
-	स_रखो(stpg_data, 0, stpg_len);
+	memset(stpg_data, 0, stpg_len);
 	stpg_data[4] = SCSI_ACCESS_STATE_OPTIMAL;
 	put_unaligned_be16(group_id, &stpg_data[6]);
 
 	/* Prepare the command. */
-	स_रखो(cdb, 0x0, MAX_COMMAND_SIZE);
-	cdb[0] = MAINTEन_अंकCE_OUT;
+	memset(cdb, 0x0, MAX_COMMAND_SIZE);
+	cdb[0] = MAINTENANCE_OUT;
 	cdb[1] = MO_SET_TARGET_PGS;
 	put_unaligned_be32(stpg_len, &cdb[6]);
 
-	वापस scsi_execute(sdev, cdb, DMA_TO_DEVICE, stpg_data, stpg_len, शून्य,
+	return scsi_execute(sdev, cdb, DMA_TO_DEVICE, stpg_data, stpg_len, NULL,
 			sshdr, ALUA_FAILOVER_TIMEOUT * HZ,
-			ALUA_FAILOVER_RETRIES, req_flags, 0, शून्य);
-पूर्ण
+			ALUA_FAILOVER_RETRIES, req_flags, 0, NULL);
+}
 
-अटल काष्ठा alua_port_group *alua_find_get_pg(अक्षर *id_str, माप_प्रकार id_size,
-						पूर्णांक group_id)
-अणु
-	काष्ठा alua_port_group *pg;
+static struct alua_port_group *alua_find_get_pg(char *id_str, size_t id_size,
+						int group_id)
+{
+	struct alua_port_group *pg;
 
-	अगर (!id_str || !id_size || !म_माप(id_str))
-		वापस शून्य;
+	if (!id_str || !id_size || !strlen(id_str))
+		return NULL;
 
-	list_क्रम_each_entry(pg, &port_group_list, node) अणु
-		अगर (pg->group_id != group_id)
-			जारी;
-		अगर (!pg->device_id_len || pg->device_id_len != id_size)
-			जारी;
-		अगर (म_भेदन(pg->device_id_str, id_str, id_size))
-			जारी;
-		अगर (!kref_get_unless_zero(&pg->kref))
-			जारी;
-		वापस pg;
-	पूर्ण
+	list_for_each_entry(pg, &port_group_list, node) {
+		if (pg->group_id != group_id)
+			continue;
+		if (!pg->device_id_len || pg->device_id_len != id_size)
+			continue;
+		if (strncmp(pg->device_id_str, id_str, id_size))
+			continue;
+		if (!kref_get_unless_zero(&pg->kref))
+			continue;
+		return pg;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
- * alua_alloc_pg - Allocate a new port_group काष्ठाure
+ * alua_alloc_pg - Allocate a new port_group structure
  * @sdev: scsi device
  * @group_id: port group id
  * @tpgs: target port group settings
  *
- * Allocate a new port_group काष्ठाure क्रम a given
+ * Allocate a new port_group structure for a given
  * device.
  */
-अटल काष्ठा alua_port_group *alua_alloc_pg(काष्ठा scsi_device *sdev,
-					     पूर्णांक group_id, पूर्णांक tpgs)
-अणु
-	काष्ठा alua_port_group *pg, *पंचांगp_pg;
+static struct alua_port_group *alua_alloc_pg(struct scsi_device *sdev,
+					     int group_id, int tpgs)
+{
+	struct alua_port_group *pg, *tmp_pg;
 
-	pg = kzalloc(माप(काष्ठा alua_port_group), GFP_KERNEL);
-	अगर (!pg)
-		वापस ERR_PTR(-ENOMEM);
+	pg = kzalloc(sizeof(struct alua_port_group), GFP_KERNEL);
+	if (!pg)
+		return ERR_PTR(-ENOMEM);
 
 	pg->device_id_len = scsi_vpd_lun_id(sdev, pg->device_id_str,
-					    माप(pg->device_id_str));
-	अगर (pg->device_id_len <= 0) अणु
+					    sizeof(pg->device_id_str));
+	if (pg->device_id_len <= 0) {
 		/*
-		 * TPGS supported but no device identअगरication found.
-		 * Generate निजी device identअगरication.
+		 * TPGS supported but no device identification found.
+		 * Generate private device identification.
 		 */
-		sdev_prपूर्णांकk(KERN_INFO, sdev,
+		sdev_printk(KERN_INFO, sdev,
 			    "%s: No device descriptors found\n",
 			    ALUA_DH_NAME);
 		pg->device_id_str[0] = '\0';
 		pg->device_id_len = 0;
-	पूर्ण
+	}
 	pg->group_id = group_id;
 	pg->tpgs = tpgs;
 	pg->state = SCSI_ACCESS_STATE_OPTIMAL;
 	pg->valid_states = TPGS_SUPPORT_ALL;
-	अगर (optimize_stpg)
+	if (optimize_stpg)
 		pg->flags |= ALUA_OPTIMIZE_STPG;
 	kref_init(&pg->kref);
 	INIT_DELAYED_WORK(&pg->rtpg_work, alua_rtpg_work);
@@ -244,284 +243,284 @@ MODULE_PARM_DESC(optimize_stpg, "Allow use of a non-optimized path, rather than 
 	spin_lock_init(&pg->lock);
 
 	spin_lock(&port_group_lock);
-	पंचांगp_pg = alua_find_get_pg(pg->device_id_str, pg->device_id_len,
+	tmp_pg = alua_find_get_pg(pg->device_id_str, pg->device_id_len,
 				  group_id);
-	अगर (पंचांगp_pg) अणु
+	if (tmp_pg) {
 		spin_unlock(&port_group_lock);
-		kमुक्त(pg);
-		वापस पंचांगp_pg;
-	पूर्ण
+		kfree(pg);
+		return tmp_pg;
+	}
 
 	list_add(&pg->node, &port_group_list);
 	spin_unlock(&port_group_lock);
 
-	वापस pg;
-पूर्ण
+	return pg;
+}
 
 /*
  * alua_check_tpgs - Evaluate TPGS setting
  * @sdev: device to be checked
  *
- * Examine the TPGS setting of the sdev to find out अगर ALUA
+ * Examine the TPGS setting of the sdev to find out if ALUA
  * is supported.
  */
-अटल पूर्णांक alua_check_tpgs(काष्ठा scsi_device *sdev)
-अणु
-	पूर्णांक tpgs = TPGS_MODE_NONE;
+static int alua_check_tpgs(struct scsi_device *sdev)
+{
+	int tpgs = TPGS_MODE_NONE;
 
 	/*
-	 * ALUA support क्रम non-disk devices is fraught with
-	 * dअगरficulties, so disable it क्रम now.
+	 * ALUA support for non-disk devices is fraught with
+	 * difficulties, so disable it for now.
 	 */
-	अगर (sdev->type != TYPE_DISK) अणु
-		sdev_prपूर्णांकk(KERN_INFO, sdev,
+	if (sdev->type != TYPE_DISK) {
+		sdev_printk(KERN_INFO, sdev,
 			    "%s: disable for non-disk devices\n",
 			    ALUA_DH_NAME);
-		वापस tpgs;
-	पूर्ण
+		return tpgs;
+	}
 
 	tpgs = scsi_device_tpgs(sdev);
-	चयन (tpgs) अणु
-	हाल TPGS_MODE_EXPLICIT|TPGS_MODE_IMPLICIT:
-		sdev_prपूर्णांकk(KERN_INFO, sdev,
+	switch (tpgs) {
+	case TPGS_MODE_EXPLICIT|TPGS_MODE_IMPLICIT:
+		sdev_printk(KERN_INFO, sdev,
 			    "%s: supports implicit and explicit TPGS\n",
 			    ALUA_DH_NAME);
-		अवरोध;
-	हाल TPGS_MODE_EXPLICIT:
-		sdev_prपूर्णांकk(KERN_INFO, sdev, "%s: supports explicit TPGS\n",
+		break;
+	case TPGS_MODE_EXPLICIT:
+		sdev_printk(KERN_INFO, sdev, "%s: supports explicit TPGS\n",
 			    ALUA_DH_NAME);
-		अवरोध;
-	हाल TPGS_MODE_IMPLICIT:
-		sdev_prपूर्णांकk(KERN_INFO, sdev, "%s: supports implicit TPGS\n",
+		break;
+	case TPGS_MODE_IMPLICIT:
+		sdev_printk(KERN_INFO, sdev, "%s: supports implicit TPGS\n",
 			    ALUA_DH_NAME);
-		अवरोध;
-	हाल TPGS_MODE_NONE:
-		sdev_prपूर्णांकk(KERN_INFO, sdev, "%s: not supported\n",
+		break;
+	case TPGS_MODE_NONE:
+		sdev_printk(KERN_INFO, sdev, "%s: not supported\n",
 			    ALUA_DH_NAME);
-		अवरोध;
-	शेष:
-		sdev_prपूर्णांकk(KERN_INFO, sdev,
+		break;
+	default:
+		sdev_printk(KERN_INFO, sdev,
 			    "%s: unsupported TPGS setting %d\n",
 			    ALUA_DH_NAME, tpgs);
 		tpgs = TPGS_MODE_NONE;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस tpgs;
-पूर्ण
+	return tpgs;
+}
 
 /*
  * alua_check_vpd - Evaluate INQUIRY vpd page 0x83
  * @sdev: device to be checked
  *
  * Extract the relative target port and the target port group
- * descriptor from the list of identअगरicators.
+ * descriptor from the list of identificators.
  */
-अटल पूर्णांक alua_check_vpd(काष्ठा scsi_device *sdev, काष्ठा alua_dh_data *h,
-			  पूर्णांक tpgs)
-अणु
-	पूर्णांक rel_port = -1, group_id;
-	काष्ठा alua_port_group *pg, *old_pg = शून्य;
+static int alua_check_vpd(struct scsi_device *sdev, struct alua_dh_data *h,
+			  int tpgs)
+{
+	int rel_port = -1, group_id;
+	struct alua_port_group *pg, *old_pg = NULL;
 	bool pg_updated = false;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	group_id = scsi_vpd_tpg_id(sdev, &rel_port);
-	अगर (group_id < 0) अणु
+	if (group_id < 0) {
 		/*
 		 * Internal error; TPGS supported but required
-		 * VPD identअगरication descriptors not present.
+		 * VPD identification descriptors not present.
 		 * Disable ALUA support
 		 */
-		sdev_prपूर्णांकk(KERN_INFO, sdev,
+		sdev_printk(KERN_INFO, sdev,
 			    "%s: No target port descriptors found\n",
 			    ALUA_DH_NAME);
-		वापस SCSI_DH_DEV_UNSUPP;
-	पूर्ण
+		return SCSI_DH_DEV_UNSUPP;
+	}
 
 	pg = alua_alloc_pg(sdev, group_id, tpgs);
-	अगर (IS_ERR(pg)) अणु
-		अगर (PTR_ERR(pg) == -ENOMEM)
-			वापस SCSI_DH_NOMEM;
-		वापस SCSI_DH_DEV_UNSUPP;
-	पूर्ण
-	अगर (pg->device_id_len)
-		sdev_prपूर्णांकk(KERN_INFO, sdev,
+	if (IS_ERR(pg)) {
+		if (PTR_ERR(pg) == -ENOMEM)
+			return SCSI_DH_NOMEM;
+		return SCSI_DH_DEV_UNSUPP;
+	}
+	if (pg->device_id_len)
+		sdev_printk(KERN_INFO, sdev,
 			    "%s: device %s port group %x rel port %x\n",
 			    ALUA_DH_NAME, pg->device_id_str,
 			    group_id, rel_port);
-	अन्यथा
-		sdev_prपूर्णांकk(KERN_INFO, sdev,
+	else
+		sdev_printk(KERN_INFO, sdev,
 			    "%s: port group %x rel port %x\n",
 			    ALUA_DH_NAME, group_id, rel_port);
 
-	/* Check क्रम existing port group references */
+	/* Check for existing port group references */
 	spin_lock(&h->pg_lock);
-	old_pg = rcu_dereference_रक्षित(h->pg, lockdep_is_held(&h->pg_lock));
-	अगर (old_pg != pg) अणु
+	old_pg = rcu_dereference_protected(h->pg, lockdep_is_held(&h->pg_lock));
+	if (old_pg != pg) {
 		/* port group has changed. Update to new port group */
-		अगर (h->pg) अणु
+		if (h->pg) {
 			spin_lock_irqsave(&old_pg->lock, flags);
 			list_del_rcu(&h->node);
 			spin_unlock_irqrestore(&old_pg->lock, flags);
-		पूर्ण
-		rcu_assign_poपूर्णांकer(h->pg, pg);
+		}
+		rcu_assign_pointer(h->pg, pg);
 		pg_updated = true;
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&pg->lock, flags);
-	अगर (pg_updated)
+	if (pg_updated)
 		list_add_rcu(&h->node, &pg->dh_list);
 	spin_unlock_irqrestore(&pg->lock, flags);
 
-	alua_rtpg_queue(rcu_dereference_रक्षित(h->pg,
+	alua_rtpg_queue(rcu_dereference_protected(h->pg,
 						  lockdep_is_held(&h->pg_lock)),
-			sdev, शून्य, true);
+			sdev, NULL, true);
 	spin_unlock(&h->pg_lock);
 
-	अगर (old_pg)
+	if (old_pg)
 		kref_put(&old_pg->kref, release_port_group);
 
-	वापस SCSI_DH_OK;
-पूर्ण
+	return SCSI_DH_OK;
+}
 
-अटल अक्षर prपूर्णांक_alua_state(अचिन्हित अक्षर state)
-अणु
-	चयन (state) अणु
-	हाल SCSI_ACCESS_STATE_OPTIMAL:
-		वापस 'A';
-	हाल SCSI_ACCESS_STATE_ACTIVE:
-		वापस 'N';
-	हाल SCSI_ACCESS_STATE_STANDBY:
-		वापस 'S';
-	हाल SCSI_ACCESS_STATE_UNAVAILABLE:
-		वापस 'U';
-	हाल SCSI_ACCESS_STATE_LBA:
-		वापस 'L';
-	हाल SCSI_ACCESS_STATE_OFFLINE:
-		वापस 'O';
-	हाल SCSI_ACCESS_STATE_TRANSITIONING:
-		वापस 'T';
-	शेष:
-		वापस 'X';
-	पूर्ण
-पूर्ण
+static char print_alua_state(unsigned char state)
+{
+	switch (state) {
+	case SCSI_ACCESS_STATE_OPTIMAL:
+		return 'A';
+	case SCSI_ACCESS_STATE_ACTIVE:
+		return 'N';
+	case SCSI_ACCESS_STATE_STANDBY:
+		return 'S';
+	case SCSI_ACCESS_STATE_UNAVAILABLE:
+		return 'U';
+	case SCSI_ACCESS_STATE_LBA:
+		return 'L';
+	case SCSI_ACCESS_STATE_OFFLINE:
+		return 'O';
+	case SCSI_ACCESS_STATE_TRANSITIONING:
+		return 'T';
+	default:
+		return 'X';
+	}
+}
 
-अटल क्रमागत scsi_disposition alua_check_sense(काष्ठा scsi_device *sdev,
-					      काष्ठा scsi_sense_hdr *sense_hdr)
-अणु
-	काष्ठा alua_dh_data *h = sdev->handler_data;
-	काष्ठा alua_port_group *pg;
+static enum scsi_disposition alua_check_sense(struct scsi_device *sdev,
+					      struct scsi_sense_hdr *sense_hdr)
+{
+	struct alua_dh_data *h = sdev->handler_data;
+	struct alua_port_group *pg;
 
-	चयन (sense_hdr->sense_key) अणु
-	हाल NOT_READY:
-		अगर (sense_hdr->asc == 0x04 && sense_hdr->ascq == 0x0a) अणु
+	switch (sense_hdr->sense_key) {
+	case NOT_READY:
+		if (sense_hdr->asc == 0x04 && sense_hdr->ascq == 0x0a) {
 			/*
 			 * LUN Not Accessible - ALUA state transition
 			 */
-			rcu_पढ़ो_lock();
+			rcu_read_lock();
 			pg = rcu_dereference(h->pg);
-			अगर (pg)
+			if (pg)
 				pg->state = SCSI_ACCESS_STATE_TRANSITIONING;
-			rcu_पढ़ो_unlock();
+			rcu_read_unlock();
 			alua_check(sdev, false);
-			वापस NEEDS_RETRY;
-		पूर्ण
-		अवरोध;
-	हाल UNIT_ATTENTION:
-		अगर (sense_hdr->asc == 0x29 && sense_hdr->ascq == 0x00) अणु
+			return NEEDS_RETRY;
+		}
+		break;
+	case UNIT_ATTENTION:
+		if (sense_hdr->asc == 0x29 && sense_hdr->ascq == 0x00) {
 			/*
 			 * Power On, Reset, or Bus Device Reset.
 			 * Might have obscured a state transition,
 			 * so schedule a recheck.
 			 */
 			alua_check(sdev, true);
-			वापस ADD_TO_MLQUEUE;
-		पूर्ण
-		अगर (sense_hdr->asc == 0x29 && sense_hdr->ascq == 0x04)
+			return ADD_TO_MLQUEUE;
+		}
+		if (sense_hdr->asc == 0x29 && sense_hdr->ascq == 0x04)
 			/*
-			 * Device पूर्णांकernal reset
+			 * Device internal reset
 			 */
-			वापस ADD_TO_MLQUEUE;
-		अगर (sense_hdr->asc == 0x2a && sense_hdr->ascq == 0x01)
+			return ADD_TO_MLQUEUE;
+		if (sense_hdr->asc == 0x2a && sense_hdr->ascq == 0x01)
 			/*
 			 * Mode Parameters Changed
 			 */
-			वापस ADD_TO_MLQUEUE;
-		अगर (sense_hdr->asc == 0x2a && sense_hdr->ascq == 0x06) अणु
+			return ADD_TO_MLQUEUE;
+		if (sense_hdr->asc == 0x2a && sense_hdr->ascq == 0x06) {
 			/*
 			 * ALUA state changed
 			 */
 			alua_check(sdev, true);
-			वापस ADD_TO_MLQUEUE;
-		पूर्ण
-		अगर (sense_hdr->asc == 0x2a && sense_hdr->ascq == 0x07) अणु
+			return ADD_TO_MLQUEUE;
+		}
+		if (sense_hdr->asc == 0x2a && sense_hdr->ascq == 0x07) {
 			/*
 			 * Implicit ALUA state transition failed
 			 */
 			alua_check(sdev, true);
-			वापस ADD_TO_MLQUEUE;
-		पूर्ण
-		अगर (sense_hdr->asc == 0x3f && sense_hdr->ascq == 0x03)
+			return ADD_TO_MLQUEUE;
+		}
+		if (sense_hdr->asc == 0x3f && sense_hdr->ascq == 0x03)
 			/*
 			 * Inquiry data has changed
 			 */
-			वापस ADD_TO_MLQUEUE;
-		अगर (sense_hdr->asc == 0x3f && sense_hdr->ascq == 0x0e)
+			return ADD_TO_MLQUEUE;
+		if (sense_hdr->asc == 0x3f && sense_hdr->ascq == 0x0e)
 			/*
 			 * REPORTED_LUNS_DATA_HAS_CHANGED is reported
-			 * when चयनing controllers on tarमाला_लो like
+			 * when switching controllers on targets like
 			 * Intel Multi-Flex. We can just retry.
 			 */
-			वापस ADD_TO_MLQUEUE;
-		अवरोध;
-	पूर्ण
+			return ADD_TO_MLQUEUE;
+		break;
+	}
 
-	वापस SCSI_RETURN_NOT_HANDLED;
-पूर्ण
+	return SCSI_RETURN_NOT_HANDLED;
+}
 
 /*
  * alua_tur - Send a TEST UNIT READY
  * @sdev: device to which the TEST UNIT READY command should be send
  *
  * Send a TEST UNIT READY to @sdev to figure out the device state
- * Returns SCSI_DH_RETRY अगर the sense code is NOT READY/ALUA TRANSITIONING,
- * SCSI_DH_OK अगर no error occurred, and SCSI_DH_IO otherwise.
+ * Returns SCSI_DH_RETRY if the sense code is NOT READY/ALUA TRANSITIONING,
+ * SCSI_DH_OK if no error occurred, and SCSI_DH_IO otherwise.
  */
-अटल पूर्णांक alua_tur(काष्ठा scsi_device *sdev)
-अणु
-	काष्ठा scsi_sense_hdr sense_hdr;
-	पूर्णांक retval;
+static int alua_tur(struct scsi_device *sdev)
+{
+	struct scsi_sense_hdr sense_hdr;
+	int retval;
 
-	retval = scsi_test_unit_पढ़ोy(sdev, ALUA_FAILOVER_TIMEOUT * HZ,
+	retval = scsi_test_unit_ready(sdev, ALUA_FAILOVER_TIMEOUT * HZ,
 				      ALUA_FAILOVER_RETRIES, &sense_hdr);
-	अगर (sense_hdr.sense_key == NOT_READY &&
+	if (sense_hdr.sense_key == NOT_READY &&
 	    sense_hdr.asc == 0x04 && sense_hdr.ascq == 0x0a)
-		वापस SCSI_DH_RETRY;
-	अन्यथा अगर (retval)
-		वापस SCSI_DH_IO;
-	अन्यथा
-		वापस SCSI_DH_OK;
-पूर्ण
+		return SCSI_DH_RETRY;
+	else if (retval)
+		return SCSI_DH_IO;
+	else
+		return SCSI_DH_OK;
+}
 
 /*
  * alua_rtpg - Evaluate REPORT TARGET GROUP STATES
  * @sdev: the device to be evaluated.
  *
  * Evaluate the Target Port Group State.
- * Returns SCSI_DH_DEV_OFFLINED अगर the path is
+ * Returns SCSI_DH_DEV_OFFLINED if the path is
  * found to be unusable.
  */
-अटल पूर्णांक alua_rtpg(काष्ठा scsi_device *sdev, काष्ठा alua_port_group *pg)
-अणु
-	काष्ठा scsi_sense_hdr sense_hdr;
-	काष्ठा alua_port_group *पंचांगp_pg;
-	पूर्णांक len, k, off, bufflen = ALUA_RTPG_SIZE;
-	पूर्णांक group_id_old, state_old, pref_old, valid_states_old;
-	अचिन्हित अक्षर *desc, *buff;
-	अचिन्हित err, retval;
-	अचिन्हित पूर्णांक tpg_desc_tbl_off;
-	अचिन्हित अक्षर orig_transition_पंचांगo;
-	अचिन्हित दीर्घ flags;
+static int alua_rtpg(struct scsi_device *sdev, struct alua_port_group *pg)
+{
+	struct scsi_sense_hdr sense_hdr;
+	struct alua_port_group *tmp_pg;
+	int len, k, off, bufflen = ALUA_RTPG_SIZE;
+	int group_id_old, state_old, pref_old, valid_states_old;
+	unsigned char *desc, *buff;
+	unsigned err, retval;
+	unsigned int tpg_desc_tbl_off;
+	unsigned char orig_transition_tmo;
+	unsigned long flags;
 	bool transitioning_sense = false;
 
 	group_id_old = pg->group_id;
@@ -529,176 +528,176 @@ MODULE_PARM_DESC(optimize_stpg, "Allow use of a non-optimized path, rather than 
 	pref_old = pg->pref;
 	valid_states_old = pg->valid_states;
 
-	अगर (!pg->expiry) अणु
-		अचिन्हित दीर्घ transition_पंचांगo = ALUA_FAILOVER_TIMEOUT * HZ;
+	if (!pg->expiry) {
+		unsigned long transition_tmo = ALUA_FAILOVER_TIMEOUT * HZ;
 
-		अगर (pg->transition_पंचांगo)
-			transition_पंचांगo = pg->transition_पंचांगo * HZ;
+		if (pg->transition_tmo)
+			transition_tmo = pg->transition_tmo * HZ;
 
-		pg->expiry = round_jअगरfies_up(jअगरfies + transition_पंचांगo);
-	पूर्ण
+		pg->expiry = round_jiffies_up(jiffies + transition_tmo);
+	}
 
 	buff = kzalloc(bufflen, GFP_KERNEL);
-	अगर (!buff)
-		वापस SCSI_DH_DEV_TEMP_BUSY;
+	if (!buff)
+		return SCSI_DH_DEV_TEMP_BUSY;
 
  retry:
 	err = 0;
 	retval = submit_rtpg(sdev, buff, bufflen, &sense_hdr, pg->flags);
 
-	अगर (retval) अणु
+	if (retval) {
 		/*
-		 * Some (broken) implementations have a habit of वापसing
+		 * Some (broken) implementations have a habit of returning
 		 * an error during things like firmware update etc.
-		 * But अगर the target only supports active/optimized there's
-		 * not much we can करो; it's not that we can चयन paths
+		 * But if the target only supports active/optimized there's
+		 * not much we can do; it's not that we can switch paths
 		 * or anything.
-		 * So ignore any errors to aव्योम spurious failures during
+		 * So ignore any errors to avoid spurious failures during
 		 * path failover.
 		 */
-		अगर ((pg->valid_states & ~TPGS_SUPPORT_OPTIMIZED) == 0) अणु
-			sdev_prपूर्णांकk(KERN_INFO, sdev,
+		if ((pg->valid_states & ~TPGS_SUPPORT_OPTIMIZED) == 0) {
+			sdev_printk(KERN_INFO, sdev,
 				    "%s: ignoring rtpg result %d\n",
 				    ALUA_DH_NAME, retval);
-			kमुक्त(buff);
-			वापस SCSI_DH_OK;
-		पूर्ण
-		अगर (!scsi_sense_valid(&sense_hdr)) अणु
-			sdev_prपूर्णांकk(KERN_INFO, sdev,
+			kfree(buff);
+			return SCSI_DH_OK;
+		}
+		if (!scsi_sense_valid(&sense_hdr)) {
+			sdev_printk(KERN_INFO, sdev,
 				    "%s: rtpg failed, result %d\n",
 				    ALUA_DH_NAME, retval);
-			kमुक्त(buff);
-			अगर (driver_byte(retval) == DRIVER_ERROR)
-				वापस SCSI_DH_DEV_TEMP_BUSY;
-			वापस SCSI_DH_IO;
-		पूर्ण
+			kfree(buff);
+			if (driver_byte(retval) == DRIVER_ERROR)
+				return SCSI_DH_DEV_TEMP_BUSY;
+			return SCSI_DH_IO;
+		}
 
 		/*
 		 * submit_rtpg() has failed on existing arrays
 		 * when requesting extended header info, and
-		 * the array करोesn't support extended headers,
+		 * the array doesn't support extended headers,
 		 * even though it shouldn't according to T10.
 		 * The retry without rtpg_ext_hdr_req set
 		 * handles this.
-		 * Note:  some arrays वापस a sense key of ILLEGAL_REQUEST
-		 * with ASC 00h अगर they करोn't support the extended header.
+		 * Note:  some arrays return a sense key of ILLEGAL_REQUEST
+		 * with ASC 00h if they don't support the extended header.
 		 */
-		अगर (!(pg->flags & ALUA_RTPG_EXT_HDR_UNSUPP) &&
-		    sense_hdr.sense_key == ILLEGAL_REQUEST) अणु
+		if (!(pg->flags & ALUA_RTPG_EXT_HDR_UNSUPP) &&
+		    sense_hdr.sense_key == ILLEGAL_REQUEST) {
 			pg->flags |= ALUA_RTPG_EXT_HDR_UNSUPP;
-			जाओ retry;
-		पूर्ण
+			goto retry;
+		}
 		/*
-		 * If the array वापसs with 'ALUA state transition'
-		 * sense code here it cannot वापस RTPG data during
+		 * If the array returns with 'ALUA state transition'
+		 * sense code here it cannot return RTPG data during
 		 * transition. So set the state to 'transitioning' directly.
 		 */
-		अगर (sense_hdr.sense_key == NOT_READY &&
-		    sense_hdr.asc == 0x04 && sense_hdr.ascq == 0x0a) अणु
+		if (sense_hdr.sense_key == NOT_READY &&
+		    sense_hdr.asc == 0x04 && sense_hdr.ascq == 0x0a) {
 			transitioning_sense = true;
-			जाओ skip_rtpg;
-		पूर्ण
+			goto skip_rtpg;
+		}
 		/*
 		 * Retry on any other UNIT ATTENTION occurred.
 		 */
-		अगर (sense_hdr.sense_key == UNIT_ATTENTION)
+		if (sense_hdr.sense_key == UNIT_ATTENTION)
 			err = SCSI_DH_RETRY;
-		अगर (err == SCSI_DH_RETRY &&
-		    pg->expiry != 0 && समय_beक्रमe(jअगरfies, pg->expiry)) अणु
-			sdev_prपूर्णांकk(KERN_ERR, sdev, "%s: rtpg retry\n",
+		if (err == SCSI_DH_RETRY &&
+		    pg->expiry != 0 && time_before(jiffies, pg->expiry)) {
+			sdev_printk(KERN_ERR, sdev, "%s: rtpg retry\n",
 				    ALUA_DH_NAME);
-			scsi_prपूर्णांक_sense_hdr(sdev, ALUA_DH_NAME, &sense_hdr);
-			kमुक्त(buff);
-			वापस err;
-		पूर्ण
-		sdev_prपूर्णांकk(KERN_ERR, sdev, "%s: rtpg failed\n",
+			scsi_print_sense_hdr(sdev, ALUA_DH_NAME, &sense_hdr);
+			kfree(buff);
+			return err;
+		}
+		sdev_printk(KERN_ERR, sdev, "%s: rtpg failed\n",
 			    ALUA_DH_NAME);
-		scsi_prपूर्णांक_sense_hdr(sdev, ALUA_DH_NAME, &sense_hdr);
-		kमुक्त(buff);
+		scsi_print_sense_hdr(sdev, ALUA_DH_NAME, &sense_hdr);
+		kfree(buff);
 		pg->expiry = 0;
-		वापस SCSI_DH_IO;
-	पूर्ण
+		return SCSI_DH_IO;
+	}
 
 	len = get_unaligned_be32(&buff[0]) + 4;
 
-	अगर (len > bufflen) अणु
+	if (len > bufflen) {
 		/* Resubmit with the correct length */
-		kमुक्त(buff);
+		kfree(buff);
 		bufflen = len;
-		buff = kदो_स्मृति(bufflen, GFP_KERNEL);
-		अगर (!buff) अणु
-			sdev_prपूर्णांकk(KERN_WARNING, sdev,
+		buff = kmalloc(bufflen, GFP_KERNEL);
+		if (!buff) {
+			sdev_printk(KERN_WARNING, sdev,
 				    "%s: kmalloc buffer failed\n",__func__);
 			/* Temporary failure, bypass */
 			pg->expiry = 0;
-			वापस SCSI_DH_DEV_TEMP_BUSY;
-		पूर्ण
-		जाओ retry;
-	पूर्ण
+			return SCSI_DH_DEV_TEMP_BUSY;
+		}
+		goto retry;
+	}
 
-	orig_transition_पंचांगo = pg->transition_पंचांगo;
-	अगर ((buff[4] & RTPG_FMT_MASK) == RTPG_FMT_EXT_HDR && buff[5] != 0)
-		pg->transition_पंचांगo = buff[5];
-	अन्यथा
-		pg->transition_पंचांगo = ALUA_FAILOVER_TIMEOUT;
+	orig_transition_tmo = pg->transition_tmo;
+	if ((buff[4] & RTPG_FMT_MASK) == RTPG_FMT_EXT_HDR && buff[5] != 0)
+		pg->transition_tmo = buff[5];
+	else
+		pg->transition_tmo = ALUA_FAILOVER_TIMEOUT;
 
-	अगर (orig_transition_पंचांगo != pg->transition_पंचांगo) अणु
-		sdev_prपूर्णांकk(KERN_INFO, sdev,
+	if (orig_transition_tmo != pg->transition_tmo) {
+		sdev_printk(KERN_INFO, sdev,
 			    "%s: transition timeout set to %d seconds\n",
-			    ALUA_DH_NAME, pg->transition_पंचांगo);
-		pg->expiry = jअगरfies + pg->transition_पंचांगo * HZ;
-	पूर्ण
+			    ALUA_DH_NAME, pg->transition_tmo);
+		pg->expiry = jiffies + pg->transition_tmo * HZ;
+	}
 
-	अगर ((buff[4] & RTPG_FMT_MASK) == RTPG_FMT_EXT_HDR)
+	if ((buff[4] & RTPG_FMT_MASK) == RTPG_FMT_EXT_HDR)
 		tpg_desc_tbl_off = 8;
-	अन्यथा
+	else
 		tpg_desc_tbl_off = 4;
 
-	क्रम (k = tpg_desc_tbl_off, desc = buff + tpg_desc_tbl_off;
+	for (k = tpg_desc_tbl_off, desc = buff + tpg_desc_tbl_off;
 	     k < len;
-	     k += off, desc += off) अणु
+	     k += off, desc += off) {
 		u16 group_id = get_unaligned_be16(&desc[2]);
 
 		spin_lock_irqsave(&port_group_lock, flags);
-		पंचांगp_pg = alua_find_get_pg(pg->device_id_str, pg->device_id_len,
+		tmp_pg = alua_find_get_pg(pg->device_id_str, pg->device_id_len,
 					  group_id);
 		spin_unlock_irqrestore(&port_group_lock, flags);
-		अगर (पंचांगp_pg) अणु
-			अगर (spin_trylock_irqsave(&पंचांगp_pg->lock, flags)) अणु
-				अगर ((पंचांगp_pg == pg) ||
-				    !(पंचांगp_pg->flags & ALUA_PG_RUNNING)) अणु
-					काष्ठा alua_dh_data *h;
+		if (tmp_pg) {
+			if (spin_trylock_irqsave(&tmp_pg->lock, flags)) {
+				if ((tmp_pg == pg) ||
+				    !(tmp_pg->flags & ALUA_PG_RUNNING)) {
+					struct alua_dh_data *h;
 
-					पंचांगp_pg->state = desc[0] & 0x0f;
-					पंचांगp_pg->pref = desc[0] >> 7;
-					rcu_पढ़ो_lock();
-					list_क्रम_each_entry_rcu(h,
-						&पंचांगp_pg->dh_list, node) अणु
-						अगर (!h->sdev)
-							जारी;
+					tmp_pg->state = desc[0] & 0x0f;
+					tmp_pg->pref = desc[0] >> 7;
+					rcu_read_lock();
+					list_for_each_entry_rcu(h,
+						&tmp_pg->dh_list, node) {
+						if (!h->sdev)
+							continue;
 						h->sdev->access_state = desc[0];
-					पूर्ण
-					rcu_पढ़ो_unlock();
-				पूर्ण
-				अगर (पंचांगp_pg == pg)
-					पंचांगp_pg->valid_states = desc[1];
-				spin_unlock_irqrestore(&पंचांगp_pg->lock, flags);
-			पूर्ण
-			kref_put(&पंचांगp_pg->kref, release_port_group);
-		पूर्ण
+					}
+					rcu_read_unlock();
+				}
+				if (tmp_pg == pg)
+					tmp_pg->valid_states = desc[1];
+				spin_unlock_irqrestore(&tmp_pg->lock, flags);
+			}
+			kref_put(&tmp_pg->kref, release_port_group);
+		}
 		off = 8 + (desc[7] * 4);
-	पूर्ण
+	}
 
  skip_rtpg:
 	spin_lock_irqsave(&pg->lock, flags);
-	अगर (transitioning_sense)
+	if (transitioning_sense)
 		pg->state = SCSI_ACCESS_STATE_TRANSITIONING;
 
-	अगर (group_id_old != pg->group_id || state_old != pg->state ||
+	if (group_id_old != pg->group_id || state_old != pg->state ||
 		pref_old != pg->pref || valid_states_old != pg->valid_states)
-		sdev_prपूर्णांकk(KERN_INFO, sdev,
+		sdev_printk(KERN_INFO, sdev,
 			"%s: port group %02x state %c %s supports %c%c%c%c%c%c%c\n",
-			ALUA_DH_NAME, pg->group_id, prपूर्णांक_alua_state(pg->state),
+			ALUA_DH_NAME, pg->group_id, print_alua_state(pg->state),
 			pg->pref ? "preferred" : "non-preferred",
 			pg->valid_states&TPGS_SUPPORT_TRANSITION?'T':'t',
 			pg->valid_states&TPGS_SUPPORT_OFFLINE?'O':'o',
@@ -708,360 +707,360 @@ MODULE_PARM_DESC(optimize_stpg, "Allow use of a non-optimized path, rather than 
 			pg->valid_states&TPGS_SUPPORT_NONOPTIMIZED?'N':'n',
 			pg->valid_states&TPGS_SUPPORT_OPTIMIZED?'A':'a');
 
-	चयन (pg->state) अणु
-	हाल SCSI_ACCESS_STATE_TRANSITIONING:
-		अगर (समय_beक्रमe(jअगरfies, pg->expiry)) अणु
+	switch (pg->state) {
+	case SCSI_ACCESS_STATE_TRANSITIONING:
+		if (time_before(jiffies, pg->expiry)) {
 			/* State transition, retry */
-			pg->पूर्णांकerval = ALUA_RTPG_RETRY_DELAY;
+			pg->interval = ALUA_RTPG_RETRY_DELAY;
 			err = SCSI_DH_RETRY;
-		पूर्ण अन्यथा अणु
-			काष्ठा alua_dh_data *h;
+		} else {
+			struct alua_dh_data *h;
 
-			/* Transitioning समय exceeded, set port to standby */
+			/* Transitioning time exceeded, set port to standby */
 			err = SCSI_DH_IO;
 			pg->state = SCSI_ACCESS_STATE_STANDBY;
 			pg->expiry = 0;
-			rcu_पढ़ो_lock();
-			list_क्रम_each_entry_rcu(h, &pg->dh_list, node) अणु
-				अगर (!h->sdev)
-					जारी;
+			rcu_read_lock();
+			list_for_each_entry_rcu(h, &pg->dh_list, node) {
+				if (!h->sdev)
+					continue;
 				h->sdev->access_state =
 					(pg->state & SCSI_ACCESS_STATE_MASK);
-				अगर (pg->pref)
+				if (pg->pref)
 					h->sdev->access_state |=
 						SCSI_ACCESS_STATE_PREFERRED;
-			पूर्ण
-			rcu_पढ़ो_unlock();
-		पूर्ण
-		अवरोध;
-	हाल SCSI_ACCESS_STATE_OFFLINE:
+			}
+			rcu_read_unlock();
+		}
+		break;
+	case SCSI_ACCESS_STATE_OFFLINE:
 		/* Path unusable */
 		err = SCSI_DH_DEV_OFFLINED;
 		pg->expiry = 0;
-		अवरोध;
-	शेष:
-		/* Useable path अगर active */
+		break;
+	default:
+		/* Useable path if active */
 		err = SCSI_DH_OK;
 		pg->expiry = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	spin_unlock_irqrestore(&pg->lock, flags);
-	kमुक्त(buff);
-	वापस err;
-पूर्ण
+	kfree(buff);
+	return err;
+}
 
 /*
  * alua_stpg - Issue a SET TARGET PORT GROUP command
  *
  * Issue a SET TARGET PORT GROUP command and evaluate the
- * response. Returns SCSI_DH_RETRY per शेष to trigger
+ * response. Returns SCSI_DH_RETRY per default to trigger
  * a re-evaluation of the target group state or SCSI_DH_OK
- * अगर no further action needs to be taken.
+ * if no further action needs to be taken.
  */
-अटल अचिन्हित alua_stpg(काष्ठा scsi_device *sdev, काष्ठा alua_port_group *pg)
-अणु
-	पूर्णांक retval;
-	काष्ठा scsi_sense_hdr sense_hdr;
+static unsigned alua_stpg(struct scsi_device *sdev, struct alua_port_group *pg)
+{
+	int retval;
+	struct scsi_sense_hdr sense_hdr;
 
-	अगर (!(pg->tpgs & TPGS_MODE_EXPLICIT)) अणु
+	if (!(pg->tpgs & TPGS_MODE_EXPLICIT)) {
 		/* Only implicit ALUA supported, retry */
-		वापस SCSI_DH_RETRY;
-	पूर्ण
-	चयन (pg->state) अणु
-	हाल SCSI_ACCESS_STATE_OPTIMAL:
-		वापस SCSI_DH_OK;
-	हाल SCSI_ACCESS_STATE_ACTIVE:
-		अगर ((pg->flags & ALUA_OPTIMIZE_STPG) &&
+		return SCSI_DH_RETRY;
+	}
+	switch (pg->state) {
+	case SCSI_ACCESS_STATE_OPTIMAL:
+		return SCSI_DH_OK;
+	case SCSI_ACCESS_STATE_ACTIVE:
+		if ((pg->flags & ALUA_OPTIMIZE_STPG) &&
 		    !pg->pref &&
 		    (pg->tpgs & TPGS_MODE_IMPLICIT))
-			वापस SCSI_DH_OK;
-		अवरोध;
-	हाल SCSI_ACCESS_STATE_STANDBY:
-	हाल SCSI_ACCESS_STATE_UNAVAILABLE:
-		अवरोध;
-	हाल SCSI_ACCESS_STATE_OFFLINE:
-		वापस SCSI_DH_IO;
-	हाल SCSI_ACCESS_STATE_TRANSITIONING:
-		अवरोध;
-	शेष:
-		sdev_prपूर्णांकk(KERN_INFO, sdev,
+			return SCSI_DH_OK;
+		break;
+	case SCSI_ACCESS_STATE_STANDBY:
+	case SCSI_ACCESS_STATE_UNAVAILABLE:
+		break;
+	case SCSI_ACCESS_STATE_OFFLINE:
+		return SCSI_DH_IO;
+	case SCSI_ACCESS_STATE_TRANSITIONING:
+		break;
+	default:
+		sdev_printk(KERN_INFO, sdev,
 			    "%s: stpg failed, unhandled TPGS state %d",
 			    ALUA_DH_NAME, pg->state);
-		वापस SCSI_DH_NOSYS;
-	पूर्ण
+		return SCSI_DH_NOSYS;
+	}
 	retval = submit_stpg(sdev, pg->group_id, &sense_hdr);
 
-	अगर (retval) अणु
-		अगर (!scsi_sense_valid(&sense_hdr)) अणु
-			sdev_prपूर्णांकk(KERN_INFO, sdev,
+	if (retval) {
+		if (!scsi_sense_valid(&sense_hdr)) {
+			sdev_printk(KERN_INFO, sdev,
 				    "%s: stpg failed, result %d",
 				    ALUA_DH_NAME, retval);
-			अगर (driver_byte(retval) == DRIVER_ERROR)
-				वापस SCSI_DH_DEV_TEMP_BUSY;
-		पूर्ण अन्यथा अणु
-			sdev_prपूर्णांकk(KERN_INFO, sdev, "%s: stpg failed\n",
+			if (driver_byte(retval) == DRIVER_ERROR)
+				return SCSI_DH_DEV_TEMP_BUSY;
+		} else {
+			sdev_printk(KERN_INFO, sdev, "%s: stpg failed\n",
 				    ALUA_DH_NAME);
-			scsi_prपूर्णांक_sense_hdr(sdev, ALUA_DH_NAME, &sense_hdr);
-		पूर्ण
-	पूर्ण
+			scsi_print_sense_hdr(sdev, ALUA_DH_NAME, &sense_hdr);
+		}
+	}
 	/* Retry RTPG */
-	वापस SCSI_DH_RETRY;
-पूर्ण
+	return SCSI_DH_RETRY;
+}
 
-अटल व्योम alua_rtpg_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा alua_port_group *pg =
-		container_of(work, काष्ठा alua_port_group, rtpg_work.work);
-	काष्ठा scsi_device *sdev;
+static void alua_rtpg_work(struct work_struct *work)
+{
+	struct alua_port_group *pg =
+		container_of(work, struct alua_port_group, rtpg_work.work);
+	struct scsi_device *sdev;
 	LIST_HEAD(qdata_list);
-	पूर्णांक err = SCSI_DH_OK;
-	काष्ठा alua_queue_data *qdata, *पंचांगp;
-	अचिन्हित दीर्घ flags;
+	int err = SCSI_DH_OK;
+	struct alua_queue_data *qdata, *tmp;
+	unsigned long flags;
 
 	spin_lock_irqsave(&pg->lock, flags);
 	sdev = pg->rtpg_sdev;
-	अगर (!sdev) अणु
+	if (!sdev) {
 		WARN_ON(pg->flags & ALUA_PG_RUN_RTPG);
 		WARN_ON(pg->flags & ALUA_PG_RUN_STPG);
 		spin_unlock_irqrestore(&pg->lock, flags);
 		kref_put(&pg->kref, release_port_group);
-		वापस;
-	पूर्ण
+		return;
+	}
 	pg->flags |= ALUA_PG_RUNNING;
-	अगर (pg->flags & ALUA_PG_RUN_RTPG) अणु
-		पूर्णांक state = pg->state;
+	if (pg->flags & ALUA_PG_RUN_RTPG) {
+		int state = pg->state;
 
 		pg->flags &= ~ALUA_PG_RUN_RTPG;
 		spin_unlock_irqrestore(&pg->lock, flags);
-		अगर (state == SCSI_ACCESS_STATE_TRANSITIONING) अणु
-			अगर (alua_tur(sdev) == SCSI_DH_RETRY) अणु
+		if (state == SCSI_ACCESS_STATE_TRANSITIONING) {
+			if (alua_tur(sdev) == SCSI_DH_RETRY) {
 				spin_lock_irqsave(&pg->lock, flags);
 				pg->flags &= ~ALUA_PG_RUNNING;
 				pg->flags |= ALUA_PG_RUN_RTPG;
-				अगर (!pg->पूर्णांकerval)
-					pg->पूर्णांकerval = ALUA_RTPG_RETRY_DELAY;
+				if (!pg->interval)
+					pg->interval = ALUA_RTPG_RETRY_DELAY;
 				spin_unlock_irqrestore(&pg->lock, flags);
 				queue_delayed_work(kaluad_wq, &pg->rtpg_work,
-						   pg->पूर्णांकerval * HZ);
-				वापस;
-			पूर्ण
-			/* Send RTPG on failure or अगर TUR indicates SUCCESS */
-		पूर्ण
+						   pg->interval * HZ);
+				return;
+			}
+			/* Send RTPG on failure or if TUR indicates SUCCESS */
+		}
 		err = alua_rtpg(sdev, pg);
 		spin_lock_irqsave(&pg->lock, flags);
-		अगर (err == SCSI_DH_RETRY || pg->flags & ALUA_PG_RUN_RTPG) अणु
+		if (err == SCSI_DH_RETRY || pg->flags & ALUA_PG_RUN_RTPG) {
 			pg->flags &= ~ALUA_PG_RUNNING;
-			अगर (!pg->पूर्णांकerval && !(pg->flags & ALUA_PG_RUN_RTPG))
-				pg->पूर्णांकerval = ALUA_RTPG_RETRY_DELAY;
+			if (!pg->interval && !(pg->flags & ALUA_PG_RUN_RTPG))
+				pg->interval = ALUA_RTPG_RETRY_DELAY;
 			pg->flags |= ALUA_PG_RUN_RTPG;
 			spin_unlock_irqrestore(&pg->lock, flags);
 			queue_delayed_work(kaluad_wq, &pg->rtpg_work,
-					   pg->पूर्णांकerval * HZ);
-			वापस;
-		पूर्ण
-		अगर (err != SCSI_DH_OK)
+					   pg->interval * HZ);
+			return;
+		}
+		if (err != SCSI_DH_OK)
 			pg->flags &= ~ALUA_PG_RUN_STPG;
-	पूर्ण
-	अगर (pg->flags & ALUA_PG_RUN_STPG) अणु
+	}
+	if (pg->flags & ALUA_PG_RUN_STPG) {
 		pg->flags &= ~ALUA_PG_RUN_STPG;
 		spin_unlock_irqrestore(&pg->lock, flags);
 		err = alua_stpg(sdev, pg);
 		spin_lock_irqsave(&pg->lock, flags);
-		अगर (err == SCSI_DH_RETRY || pg->flags & ALUA_PG_RUN_RTPG) अणु
+		if (err == SCSI_DH_RETRY || pg->flags & ALUA_PG_RUN_RTPG) {
 			pg->flags |= ALUA_PG_RUN_RTPG;
-			pg->पूर्णांकerval = 0;
+			pg->interval = 0;
 			pg->flags &= ~ALUA_PG_RUNNING;
 			spin_unlock_irqrestore(&pg->lock, flags);
 			queue_delayed_work(kaluad_wq, &pg->rtpg_work,
-					   pg->पूर्णांकerval * HZ);
-			वापस;
-		पूर्ण
-	पूर्ण
+					   pg->interval * HZ);
+			return;
+		}
+	}
 
 	list_splice_init(&pg->rtpg_list, &qdata_list);
-	pg->rtpg_sdev = शून्य;
+	pg->rtpg_sdev = NULL;
 	spin_unlock_irqrestore(&pg->lock, flags);
 
-	list_क्रम_each_entry_safe(qdata, पंचांगp, &qdata_list, entry) अणु
+	list_for_each_entry_safe(qdata, tmp, &qdata_list, entry) {
 		list_del(&qdata->entry);
-		अगर (qdata->callback_fn)
+		if (qdata->callback_fn)
 			qdata->callback_fn(qdata->callback_data, err);
-		kमुक्त(qdata);
-	पूर्ण
+		kfree(qdata);
+	}
 	spin_lock_irqsave(&pg->lock, flags);
 	pg->flags &= ~ALUA_PG_RUNNING;
 	spin_unlock_irqrestore(&pg->lock, flags);
 	scsi_device_put(sdev);
 	kref_put(&pg->kref, release_port_group);
-पूर्ण
+}
 
 /**
  * alua_rtpg_queue() - cause RTPG to be submitted asynchronously
  * @pg: ALUA port group associated with @sdev.
- * @sdev: SCSI device क्रम which to submit an RTPG.
- * @qdata: Inक्रमmation about the callback to invoke after the RTPG.
- * @क्रमce: Whether or not to submit an RTPG अगर a work item that will submit an
- *         RTPG alपढ़ोy has been scheduled.
+ * @sdev: SCSI device for which to submit an RTPG.
+ * @qdata: Information about the callback to invoke after the RTPG.
+ * @force: Whether or not to submit an RTPG if a work item that will submit an
+ *         RTPG already has been scheduled.
  *
- * Returns true अगर and only अगर alua_rtpg_work() will be called asynchronously.
- * That function is responsible क्रम calling @qdata->fn().
+ * Returns true if and only if alua_rtpg_work() will be called asynchronously.
+ * That function is responsible for calling @qdata->fn().
  */
-अटल bool alua_rtpg_queue(काष्ठा alua_port_group *pg,
-			    काष्ठा scsi_device *sdev,
-			    काष्ठा alua_queue_data *qdata, bool क्रमce)
-अणु
-	पूर्णांक start_queue = 0;
-	अचिन्हित दीर्घ flags;
-	अगर (WARN_ON_ONCE(!pg) || scsi_device_get(sdev))
-		वापस false;
+static bool alua_rtpg_queue(struct alua_port_group *pg,
+			    struct scsi_device *sdev,
+			    struct alua_queue_data *qdata, bool force)
+{
+	int start_queue = 0;
+	unsigned long flags;
+	if (WARN_ON_ONCE(!pg) || scsi_device_get(sdev))
+		return false;
 
 	spin_lock_irqsave(&pg->lock, flags);
-	अगर (qdata) अणु
+	if (qdata) {
 		list_add_tail(&qdata->entry, &pg->rtpg_list);
 		pg->flags |= ALUA_PG_RUN_STPG;
-		क्रमce = true;
-	पूर्ण
-	अगर (pg->rtpg_sdev == शून्य) अणु
-		pg->पूर्णांकerval = 0;
+		force = true;
+	}
+	if (pg->rtpg_sdev == NULL) {
+		pg->interval = 0;
 		pg->flags |= ALUA_PG_RUN_RTPG;
 		kref_get(&pg->kref);
 		pg->rtpg_sdev = sdev;
 		start_queue = 1;
-	पूर्ण अन्यथा अगर (!(pg->flags & ALUA_PG_RUN_RTPG) && क्रमce) अणु
+	} else if (!(pg->flags & ALUA_PG_RUN_RTPG) && force) {
 		pg->flags |= ALUA_PG_RUN_RTPG;
-		/* Do not queue अगर the worker is alपढ़ोy running */
-		अगर (!(pg->flags & ALUA_PG_RUNNING)) अणु
+		/* Do not queue if the worker is already running */
+		if (!(pg->flags & ALUA_PG_RUNNING)) {
 			kref_get(&pg->kref);
 			start_queue = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	spin_unlock_irqrestore(&pg->lock, flags);
 
-	अगर (start_queue) अणु
-		अगर (queue_delayed_work(kaluad_wq, &pg->rtpg_work,
-				msecs_to_jअगरfies(ALUA_RTPG_DELAY_MSECS)))
-			sdev = शून्य;
-		अन्यथा
+	if (start_queue) {
+		if (queue_delayed_work(kaluad_wq, &pg->rtpg_work,
+				msecs_to_jiffies(ALUA_RTPG_DELAY_MSECS)))
+			sdev = NULL;
+		else
 			kref_put(&pg->kref, release_port_group);
-	पूर्ण
-	अगर (sdev)
+	}
+	if (sdev)
 		scsi_device_put(sdev);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
  * alua_initialize - Initialize ALUA state
  * @sdev: the device to be initialized
  *
  * For the prep_fn to work correctly we have
- * to initialize the ALUA state क्रम the device.
+ * to initialize the ALUA state for the device.
  */
-अटल पूर्णांक alua_initialize(काष्ठा scsi_device *sdev, काष्ठा alua_dh_data *h)
-अणु
-	पूर्णांक err = SCSI_DH_DEV_UNSUPP, tpgs;
+static int alua_initialize(struct scsi_device *sdev, struct alua_dh_data *h)
+{
+	int err = SCSI_DH_DEV_UNSUPP, tpgs;
 
 	mutex_lock(&h->init_mutex);
 	tpgs = alua_check_tpgs(sdev);
-	अगर (tpgs != TPGS_MODE_NONE)
+	if (tpgs != TPGS_MODE_NONE)
 		err = alua_check_vpd(sdev, h, tpgs);
 	h->init_error = err;
 	mutex_unlock(&h->init_mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 /*
  * alua_set_params - set/unset the optimize flag
  * @sdev: device on the path to be activated
- * params - parameters in the following क्रमmat
+ * params - parameters in the following format
  *      "no_of_params\0param1\0param2\0param3\0...\0"
  * For example, to set the flag pass the following parameters
  * from multipath.conf
  *     hardware_handler        "2 alua 1"
  */
-अटल पूर्णांक alua_set_params(काष्ठा scsi_device *sdev, स्थिर अक्षर *params)
-अणु
-	काष्ठा alua_dh_data *h = sdev->handler_data;
-	काष्ठा alua_port_group *pg = शून्य;
-	अचिन्हित पूर्णांक optimize = 0, argc;
-	स्थिर अक्षर *p = params;
-	पूर्णांक result = SCSI_DH_OK;
-	अचिन्हित दीर्घ flags;
+static int alua_set_params(struct scsi_device *sdev, const char *params)
+{
+	struct alua_dh_data *h = sdev->handler_data;
+	struct alua_port_group *pg = NULL;
+	unsigned int optimize = 0, argc;
+	const char *p = params;
+	int result = SCSI_DH_OK;
+	unsigned long flags;
 
-	अगर ((माला_पूछो(params, "%u", &argc) != 1) || (argc != 1))
-		वापस -EINVAL;
+	if ((sscanf(params, "%u", &argc) != 1) || (argc != 1))
+		return -EINVAL;
 
-	जबतक (*p++)
+	while (*p++)
 		;
-	अगर ((माला_पूछो(p, "%u", &optimize) != 1) || (optimize > 1))
-		वापस -EINVAL;
+	if ((sscanf(p, "%u", &optimize) != 1) || (optimize > 1))
+		return -EINVAL;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	pg = rcu_dereference(h->pg);
-	अगर (!pg) अणु
-		rcu_पढ़ो_unlock();
-		वापस -ENXIO;
-	पूर्ण
+	if (!pg) {
+		rcu_read_unlock();
+		return -ENXIO;
+	}
 	spin_lock_irqsave(&pg->lock, flags);
-	अगर (optimize)
+	if (optimize)
 		pg->flags |= ALUA_OPTIMIZE_STPG;
-	अन्यथा
+	else
 		pg->flags &= ~ALUA_OPTIMIZE_STPG;
 	spin_unlock_irqrestore(&pg->lock, flags);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*
  * alua_activate - activate a path
  * @sdev: device on the path to be activated
  *
- * We're currently चयनing the port group to be activated only and
+ * We're currently switching the port group to be activated only and
  * let the array figure out the rest.
- * There may be other arrays which require us to चयन all port groups
+ * There may be other arrays which require us to switch all port groups
  * based on a certain policy. But until we actually encounter them it
  * should be okay.
  */
-अटल पूर्णांक alua_activate(काष्ठा scsi_device *sdev,
-			activate_complete fn, व्योम *data)
-अणु
-	काष्ठा alua_dh_data *h = sdev->handler_data;
-	पूर्णांक err = SCSI_DH_OK;
-	काष्ठा alua_queue_data *qdata;
-	काष्ठा alua_port_group *pg;
+static int alua_activate(struct scsi_device *sdev,
+			activate_complete fn, void *data)
+{
+	struct alua_dh_data *h = sdev->handler_data;
+	int err = SCSI_DH_OK;
+	struct alua_queue_data *qdata;
+	struct alua_port_group *pg;
 
-	qdata = kzalloc(माप(*qdata), GFP_KERNEL);
-	अगर (!qdata) अणु
+	qdata = kzalloc(sizeof(*qdata), GFP_KERNEL);
+	if (!qdata) {
 		err = SCSI_DH_RES_TEMP_UNAVAIL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	qdata->callback_fn = fn;
 	qdata->callback_data = data;
 
 	mutex_lock(&h->init_mutex);
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	pg = rcu_dereference(h->pg);
-	अगर (!pg || !kref_get_unless_zero(&pg->kref)) अणु
-		rcu_पढ़ो_unlock();
-		kमुक्त(qdata);
+	if (!pg || !kref_get_unless_zero(&pg->kref)) {
+		rcu_read_unlock();
+		kfree(qdata);
 		err = h->init_error;
 		mutex_unlock(&h->init_mutex);
-		जाओ out;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		goto out;
+	}
+	rcu_read_unlock();
 	mutex_unlock(&h->init_mutex);
 
-	अगर (alua_rtpg_queue(pg, sdev, qdata, true))
-		fn = शून्य;
-	अन्यथा
+	if (alua_rtpg_queue(pg, sdev, qdata, true))
+		fn = NULL;
+	else
 		err = SCSI_DH_DEV_OFFLINED;
 	kref_put(&pg->kref, release_port_group);
 out:
-	अगर (fn)
+	if (fn)
 		fn(data, err);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * alua_check - check path status
@@ -1069,22 +1068,22 @@ out:
  *
  * Check the device status
  */
-अटल व्योम alua_check(काष्ठा scsi_device *sdev, bool क्रमce)
-अणु
-	काष्ठा alua_dh_data *h = sdev->handler_data;
-	काष्ठा alua_port_group *pg;
+static void alua_check(struct scsi_device *sdev, bool force)
+{
+	struct alua_dh_data *h = sdev->handler_data;
+	struct alua_port_group *pg;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	pg = rcu_dereference(h->pg);
-	अगर (!pg || !kref_get_unless_zero(&pg->kref)) अणु
-		rcu_पढ़ो_unlock();
-		वापस;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	if (!pg || !kref_get_unless_zero(&pg->kref)) {
+		rcu_read_unlock();
+		return;
+	}
+	rcu_read_unlock();
 
-	alua_rtpg_queue(pg, sdev, शून्य, क्रमce);
+	alua_rtpg_queue(pg, sdev, NULL, force);
 	kref_put(&pg->kref, release_port_group);
-पूर्ण
+}
 
 /*
  * alua_prep_fn - request callback
@@ -1092,93 +1091,93 @@ out:
  * Fail I/O to all paths not in state
  * active/optimized or active/non-optimized.
  */
-अटल blk_status_t alua_prep_fn(काष्ठा scsi_device *sdev, काष्ठा request *req)
-अणु
-	काष्ठा alua_dh_data *h = sdev->handler_data;
-	काष्ठा alua_port_group *pg;
-	अचिन्हित अक्षर state = SCSI_ACCESS_STATE_OPTIMAL;
+static blk_status_t alua_prep_fn(struct scsi_device *sdev, struct request *req)
+{
+	struct alua_dh_data *h = sdev->handler_data;
+	struct alua_port_group *pg;
+	unsigned char state = SCSI_ACCESS_STATE_OPTIMAL;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	pg = rcu_dereference(h->pg);
-	अगर (pg)
+	if (pg)
 		state = pg->state;
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	चयन (state) अणु
-	हाल SCSI_ACCESS_STATE_OPTIMAL:
-	हाल SCSI_ACCESS_STATE_ACTIVE:
-	हाल SCSI_ACCESS_STATE_LBA:
-		वापस BLK_STS_OK;
-	हाल SCSI_ACCESS_STATE_TRANSITIONING:
-		वापस BLK_STS_AGAIN;
-	शेष:
+	switch (state) {
+	case SCSI_ACCESS_STATE_OPTIMAL:
+	case SCSI_ACCESS_STATE_ACTIVE:
+	case SCSI_ACCESS_STATE_LBA:
+		return BLK_STS_OK;
+	case SCSI_ACCESS_STATE_TRANSITIONING:
+		return BLK_STS_AGAIN;
+	default:
 		req->rq_flags |= RQF_QUIET;
-		वापस BLK_STS_IOERR;
-	पूर्ण
-पूर्ण
+		return BLK_STS_IOERR;
+	}
+}
 
-अटल व्योम alua_rescan(काष्ठा scsi_device *sdev)
-अणु
-	काष्ठा alua_dh_data *h = sdev->handler_data;
+static void alua_rescan(struct scsi_device *sdev)
+{
+	struct alua_dh_data *h = sdev->handler_data;
 
 	alua_initialize(sdev, h);
-पूर्ण
+}
 
 /*
  * alua_bus_attach - Attach device handler
  * @sdev: device to be attached to
  */
-अटल पूर्णांक alua_bus_attach(काष्ठा scsi_device *sdev)
-अणु
-	काष्ठा alua_dh_data *h;
-	पूर्णांक err;
+static int alua_bus_attach(struct scsi_device *sdev)
+{
+	struct alua_dh_data *h;
+	int err;
 
-	h = kzalloc(माप(*h) , GFP_KERNEL);
-	अगर (!h)
-		वापस SCSI_DH_NOMEM;
+	h = kzalloc(sizeof(*h) , GFP_KERNEL);
+	if (!h)
+		return SCSI_DH_NOMEM;
 	spin_lock_init(&h->pg_lock);
-	rcu_assign_poपूर्णांकer(h->pg, शून्य);
+	rcu_assign_pointer(h->pg, NULL);
 	h->init_error = SCSI_DH_OK;
 	h->sdev = sdev;
 	INIT_LIST_HEAD(&h->node);
 
 	mutex_init(&h->init_mutex);
 	err = alua_initialize(sdev, h);
-	अगर (err != SCSI_DH_OK && err != SCSI_DH_DEV_OFFLINED)
-		जाओ failed;
+	if (err != SCSI_DH_OK && err != SCSI_DH_DEV_OFFLINED)
+		goto failed;
 
 	sdev->handler_data = h;
-	वापस SCSI_DH_OK;
+	return SCSI_DH_OK;
 failed:
-	kमुक्त(h);
-	वापस err;
-पूर्ण
+	kfree(h);
+	return err;
+}
 
 /*
  * alua_bus_detach - Detach device handler
  * @sdev: device to be detached from
  */
-अटल व्योम alua_bus_detach(काष्ठा scsi_device *sdev)
-अणु
-	काष्ठा alua_dh_data *h = sdev->handler_data;
-	काष्ठा alua_port_group *pg;
+static void alua_bus_detach(struct scsi_device *sdev)
+{
+	struct alua_dh_data *h = sdev->handler_data;
+	struct alua_port_group *pg;
 
 	spin_lock(&h->pg_lock);
-	pg = rcu_dereference_रक्षित(h->pg, lockdep_is_held(&h->pg_lock));
-	rcu_assign_poपूर्णांकer(h->pg, शून्य);
+	pg = rcu_dereference_protected(h->pg, lockdep_is_held(&h->pg_lock));
+	rcu_assign_pointer(h->pg, NULL);
 	spin_unlock(&h->pg_lock);
-	अगर (pg) अणु
+	if (pg) {
 		spin_lock_irq(&pg->lock);
 		list_del_rcu(&h->node);
 		spin_unlock_irq(&pg->lock);
 		kref_put(&pg->kref, release_port_group);
-	पूर्ण
-	sdev->handler_data = शून्य;
+	}
+	sdev->handler_data = NULL;
 	synchronize_rcu();
-	kमुक्त(h);
-पूर्ण
+	kfree(h);
+}
 
-अटल काष्ठा scsi_device_handler alua_dh = अणु
+static struct scsi_device_handler alua_dh = {
 	.name = ALUA_DH_NAME,
 	.module = THIS_MODULE,
 	.attach = alua_bus_attach,
@@ -1188,33 +1187,33 @@ failed:
 	.activate = alua_activate,
 	.rescan = alua_rescan,
 	.set_params = alua_set_params,
-पूर्ण;
+};
 
-अटल पूर्णांक __init alua_init(व्योम)
-अणु
-	पूर्णांक r;
+static int __init alua_init(void)
+{
+	int r;
 
 	kaluad_wq = alloc_workqueue("kaluad", WQ_MEM_RECLAIM, 0);
-	अगर (!kaluad_wq)
-		वापस -ENOMEM;
+	if (!kaluad_wq)
+		return -ENOMEM;
 
-	r = scsi_रेजिस्टर_device_handler(&alua_dh);
-	अगर (r != 0) अणु
-		prपूर्णांकk(KERN_ERR "%s: Failed to register scsi device handler",
+	r = scsi_register_device_handler(&alua_dh);
+	if (r != 0) {
+		printk(KERN_ERR "%s: Failed to register scsi device handler",
 			ALUA_DH_NAME);
 		destroy_workqueue(kaluad_wq);
-	पूर्ण
-	वापस r;
-पूर्ण
+	}
+	return r;
+}
 
-अटल व्योम __निकास alua_निकास(व्योम)
-अणु
-	scsi_unरेजिस्टर_device_handler(&alua_dh);
+static void __exit alua_exit(void)
+{
+	scsi_unregister_device_handler(&alua_dh);
 	destroy_workqueue(kaluad_wq);
-पूर्ण
+}
 
 module_init(alua_init);
-module_निकास(alua_निकास);
+module_exit(alua_exit);
 
 MODULE_DESCRIPTION("DM Multipath ALUA support");
 MODULE_AUTHOR("Hannes Reinecke <hare@suse.de>");

@@ -1,81 +1,80 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2019 Xilinx, Inc.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/nvmem-provider.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/firmware/xlnx-zynqmp.h>
+#include <linux/module.h>
+#include <linux/nvmem-provider.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/firmware/xlnx-zynqmp.h>
 
-#घोषणा SILICON_REVISION_MASK 0xF
+#define SILICON_REVISION_MASK 0xF
 
-काष्ठा zynqmp_nvmem_data अणु
-	काष्ठा device *dev;
-	काष्ठा nvmem_device *nvmem;
-पूर्ण;
+struct zynqmp_nvmem_data {
+	struct device *dev;
+	struct nvmem_device *nvmem;
+};
 
-अटल पूर्णांक zynqmp_nvmem_पढ़ो(व्योम *context, अचिन्हित पूर्णांक offset,
-			     व्योम *val, माप_प्रकार bytes)
-अणु
-	पूर्णांक ret;
-	पूर्णांक idcode, version;
-	काष्ठा zynqmp_nvmem_data *priv = context;
+static int zynqmp_nvmem_read(void *context, unsigned int offset,
+			     void *val, size_t bytes)
+{
+	int ret;
+	int idcode, version;
+	struct zynqmp_nvmem_data *priv = context;
 
 	ret = zynqmp_pm_get_chipid(&idcode, &version);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	dev_dbg(priv->dev, "Read chipid val %x %x\n", idcode, version);
-	*(पूर्णांक *)val = version & SILICON_REVISION_MASK;
+	*(int *)val = version & SILICON_REVISION_MASK;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा nvmem_config econfig = अणु
+static struct nvmem_config econfig = {
 	.name = "zynqmp-nvmem",
 	.owner = THIS_MODULE,
 	.word_size = 1,
 	.size = 1,
-	.पढ़ो_only = true,
-पूर्ण;
+	.read_only = true,
+};
 
-अटल स्थिर काष्ठा of_device_id zynqmp_nvmem_match[] = अणु
-	अणु .compatible = "xlnx,zynqmp-nvmem-fw", पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+static const struct of_device_id zynqmp_nvmem_match[] = {
+	{ .compatible = "xlnx,zynqmp-nvmem-fw", },
+	{ /* sentinel */ },
+};
 MODULE_DEVICE_TABLE(of, zynqmp_nvmem_match);
 
-अटल पूर्णांक zynqmp_nvmem_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा zynqmp_nvmem_data *priv;
+static int zynqmp_nvmem_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct zynqmp_nvmem_data *priv;
 
-	priv = devm_kzalloc(dev, माप(काष्ठा zynqmp_nvmem_data), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(struct zynqmp_nvmem_data), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->dev = dev;
 	econfig.dev = dev;
-	econfig.reg_पढ़ो = zynqmp_nvmem_पढ़ो;
+	econfig.reg_read = zynqmp_nvmem_read;
 	econfig.priv = priv;
 
-	priv->nvmem = devm_nvmem_रेजिस्टर(dev, &econfig);
+	priv->nvmem = devm_nvmem_register(dev, &econfig);
 
-	वापस PTR_ERR_OR_ZERO(priv->nvmem);
-पूर्ण
+	return PTR_ERR_OR_ZERO(priv->nvmem);
+}
 
-अटल काष्ठा platक्रमm_driver zynqmp_nvmem_driver = अणु
+static struct platform_driver zynqmp_nvmem_driver = {
 	.probe = zynqmp_nvmem_probe,
-	.driver = अणु
+	.driver = {
 		.name = "zynqmp-nvmem",
 		.of_match_table = zynqmp_nvmem_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(zynqmp_nvmem_driver);
+module_platform_driver(zynqmp_nvmem_driver);
 
 MODULE_AUTHOR("Michal Simek <michal.simek@xilinx.com>, Nava kishore Manne <navam@xilinx.com>");
 MODULE_DESCRIPTION("ZynqMP NVMEM driver");

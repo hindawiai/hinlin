@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-/* Header file क्रम cc2520 radio driver
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+/* Header file for cc2520 radio driver
  *
  * Copyright (C) 2014 Varka Bhadram <varkab@cdac.in>
  *                    Md.Jamal Mohiuddin <mjmohiuddin@cdac.in>
  *                    P Sowjanya <sowjanyap@cdac.in>
  */
 
-#अगर_अघोषित __CC2520_H
-#घोषणा __CC2520_H
+#ifndef __CC2520_H
+#define __CC2520_H
 
-काष्ठा cc2520_platक्रमm_data अणु
-	पूर्णांक fअगरo;
-	पूर्णांक fअगरop;
-	पूर्णांक cca;
-	पूर्णांक sfd;
-	पूर्णांक reset;
-	पूर्णांक vreg;
-पूर्ण;
+struct cc2520_platform_data {
+	int fifo;
+	int fifop;
+	int cca;
+	int sfd;
+	int reset;
+	int vreg;
+};
 
-#पूर्ण_अगर
+#endif

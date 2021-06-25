@@ -1,136 +1,135 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Qualcomm APCS घड़ी controller driver
+ * Qualcomm APCS clock controller driver
  *
  * Copyright (c) 2017, Linaro Limited
  * Author: Georgi Djakov <georgi.djakov@linaro.org>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
 
-#समावेश "clk-regmap.h"
-#समावेश "clk-regmap-mux-div.h"
+#include "clk-regmap.h"
+#include "clk-regmap-mux-div.h"
 
-अटल स्थिर u32 gpll0_a53cc_map[] = अणु 4, 5 पूर्ण;
+static const u32 gpll0_a53cc_map[] = { 4, 5 };
 
-अटल स्थिर काष्ठा clk_parent_data pdata[] = अणु
-	अणु .fw_name = "aux", .name = "gpll0_vote", पूर्ण,
-	अणु .fw_name = "pll", .name = "a53pll", पूर्ण,
-पूर्ण;
+static const struct clk_parent_data pdata[] = {
+	{ .fw_name = "aux", .name = "gpll0_vote", },
+	{ .fw_name = "pll", .name = "a53pll", },
+};
 
 /*
- * We use the notअगरier function क्रम चयनing to a temporary safe configuration
- * (mux and भागider), जबतक the A53 PLL is reconfigured.
+ * We use the notifier function for switching to a temporary safe configuration
+ * (mux and divider), while the A53 PLL is reconfigured.
  */
-अटल पूर्णांक a53cc_notअगरier_cb(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ event,
-			     व्योम *data)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा clk_regmap_mux_भाग *md = container_of(nb,
-						     काष्ठा clk_regmap_mux_भाग,
+static int a53cc_notifier_cb(struct notifier_block *nb, unsigned long event,
+			     void *data)
+{
+	int ret = 0;
+	struct clk_regmap_mux_div *md = container_of(nb,
+						     struct clk_regmap_mux_div,
 						     clk_nb);
-	अगर (event == PRE_RATE_CHANGE)
-		/* set the mux and भागider to safe frequency (400mhz) */
-		ret = mux_भाग_set_src_भाग(md, 4, 3);
+	if (event == PRE_RATE_CHANGE)
+		/* set the mux and divider to safe frequency (400mhz) */
+		ret = mux_div_set_src_div(md, 4, 3);
 
-	वापस notअगरier_from_त्रुटि_सं(ret);
-पूर्ण
+	return notifier_from_errno(ret);
+}
 
-अटल पूर्णांक qcom_apcs_msm8916_clk_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device *parent = dev->parent;
-	काष्ठा clk_regmap_mux_भाग *a53cc;
-	काष्ठा regmap *regmap;
-	काष्ठा clk_init_data init = अणु पूर्ण;
-	पूर्णांक ret = -ENODEV;
+static int qcom_apcs_msm8916_clk_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct device *parent = dev->parent;
+	struct clk_regmap_mux_div *a53cc;
+	struct regmap *regmap;
+	struct clk_init_data init = { };
+	int ret = -ENODEV;
 
-	regmap = dev_get_regmap(parent, शून्य);
-	अगर (!regmap) अणु
+	regmap = dev_get_regmap(parent, NULL);
+	if (!regmap) {
 		dev_err(dev, "failed to get regmap: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	a53cc = devm_kzalloc(dev, माप(*a53cc), GFP_KERNEL);
-	अगर (!a53cc)
-		वापस -ENOMEM;
+	a53cc = devm_kzalloc(dev, sizeof(*a53cc), GFP_KERNEL);
+	if (!a53cc)
+		return -ENOMEM;
 
 	init.name = "a53mux";
 	init.parent_data = pdata;
 	init.num_parents = ARRAY_SIZE(pdata);
-	init.ops = &clk_regmap_mux_भाग_ops;
+	init.ops = &clk_regmap_mux_div_ops;
 	init.flags = CLK_SET_RATE_PARENT;
 
 	a53cc->clkr.hw.init = &init;
 	a53cc->clkr.regmap = regmap;
 	a53cc->reg_offset = 0x50;
 	a53cc->hid_width = 5;
-	a53cc->hid_shअगरt = 0;
+	a53cc->hid_shift = 0;
 	a53cc->src_width = 3;
-	a53cc->src_shअगरt = 8;
+	a53cc->src_shift = 8;
 	a53cc->parent_map = gpll0_a53cc_map;
 
-	a53cc->pclk = devm_clk_get(parent, शून्य);
-	अगर (IS_ERR(a53cc->pclk)) अणु
+	a53cc->pclk = devm_clk_get(parent, NULL);
+	if (IS_ERR(a53cc->pclk)) {
 		ret = PTR_ERR(a53cc->pclk);
-		अगर (ret != -EPROBE_DEFER)
+		if (ret != -EPROBE_DEFER)
 			dev_err(dev, "failed to get clk: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	a53cc->clk_nb.notअगरier_call = a53cc_notअगरier_cb;
-	ret = clk_notअगरier_रेजिस्टर(a53cc->pclk, &a53cc->clk_nb);
-	अगर (ret) अणु
+	a53cc->clk_nb.notifier_call = a53cc_notifier_cb;
+	ret = clk_notifier_register(a53cc->pclk, &a53cc->clk_nb);
+	if (ret) {
 		dev_err(dev, "failed to register clock notifier: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = devm_clk_रेजिस्टर_regmap(dev, &a53cc->clkr);
-	अगर (ret) अणु
+	ret = devm_clk_register_regmap(dev, &a53cc->clkr);
+	if (ret) {
 		dev_err(dev, "failed to register regmap clock: %d\n", ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = devm_of_clk_add_hw_provider(dev, of_clk_hw_simple_get,
 					  &a53cc->clkr.hw);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to add clock provider: %d\n", ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	platक्रमm_set_drvdata(pdev, a53cc);
+	platform_set_drvdata(pdev, a53cc);
 
-	वापस 0;
+	return 0;
 
 err:
-	clk_notअगरier_unरेजिस्टर(a53cc->pclk, &a53cc->clk_nb);
-	वापस ret;
-पूर्ण
+	clk_notifier_unregister(a53cc->pclk, &a53cc->clk_nb);
+	return ret;
+}
 
-अटल पूर्णांक qcom_apcs_msm8916_clk_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा clk_regmap_mux_भाग *a53cc = platक्रमm_get_drvdata(pdev);
+static int qcom_apcs_msm8916_clk_remove(struct platform_device *pdev)
+{
+	struct clk_regmap_mux_div *a53cc = platform_get_drvdata(pdev);
 
-	clk_notअगरier_unरेजिस्टर(a53cc->pclk, &a53cc->clk_nb);
+	clk_notifier_unregister(a53cc->pclk, &a53cc->clk_nb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver qcom_apcs_msm8916_clk_driver = अणु
+static struct platform_driver qcom_apcs_msm8916_clk_driver = {
 	.probe = qcom_apcs_msm8916_clk_probe,
-	.हटाओ = qcom_apcs_msm8916_clk_हटाओ,
-	.driver = अणु
+	.remove = qcom_apcs_msm8916_clk_remove,
+	.driver = {
 		.name = "qcom-apcs-msm8916-clk",
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(qcom_apcs_msm8916_clk_driver);
+	},
+};
+module_platform_driver(qcom_apcs_msm8916_clk_driver);
 
 MODULE_AUTHOR("Georgi Djakov <georgi.djakov@linaro.org>");
 MODULE_LICENSE("GPL v2");

@@ -1,185 +1,184 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Device wakeirq helper functions */
-#समावेश <linux/device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/pm_wakeirq.h>
+#include <linux/device.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/slab.h>
+#include <linux/pm_runtime.h>
+#include <linux/pm_wakeirq.h>
 
-#समावेश "power.h"
+#include "power.h"
 
 /**
- * dev_pm_attach_wake_irq - Attach device पूर्णांकerrupt as a wake IRQ
+ * dev_pm_attach_wake_irq - Attach device interrupt as a wake IRQ
  * @dev: Device entry
- * @irq: Device wake-up capable पूर्णांकerrupt
- * @wirq: Wake irq specअगरic data
+ * @irq: Device wake-up capable interrupt
+ * @wirq: Wake irq specific data
  *
- * Internal function to attach either a device IO पूर्णांकerrupt or a
- * dedicated wake-up पूर्णांकerrupt as a wake IRQ.
+ * Internal function to attach either a device IO interrupt or a
+ * dedicated wake-up interrupt as a wake IRQ.
  */
-अटल पूर्णांक dev_pm_attach_wake_irq(काष्ठा device *dev, पूर्णांक irq,
-				  काष्ठा wake_irq *wirq)
-अणु
-	अचिन्हित दीर्घ flags;
+static int dev_pm_attach_wake_irq(struct device *dev, int irq,
+				  struct wake_irq *wirq)
+{
+	unsigned long flags;
 
-	अगर (!dev || !wirq)
-		वापस -EINVAL;
+	if (!dev || !wirq)
+		return -EINVAL;
 
-	spin_lock_irqsave(&dev->घातer.lock, flags);
-	अगर (dev_WARN_ONCE(dev, dev->घातer.wakeirq,
-			  "wake irq already initialized\n")) अणु
-		spin_unlock_irqrestore(&dev->घातer.lock, flags);
-		वापस -EEXIST;
-	पूर्ण
+	spin_lock_irqsave(&dev->power.lock, flags);
+	if (dev_WARN_ONCE(dev, dev->power.wakeirq,
+			  "wake irq already initialized\n")) {
+		spin_unlock_irqrestore(&dev->power.lock, flags);
+		return -EEXIST;
+	}
 
-	dev->घातer.wakeirq = wirq;
+	dev->power.wakeirq = wirq;
 	device_wakeup_attach_irq(dev, wirq);
 
-	spin_unlock_irqrestore(&dev->घातer.lock, flags);
-	वापस 0;
-पूर्ण
+	spin_unlock_irqrestore(&dev->power.lock, flags);
+	return 0;
+}
 
 /**
- * dev_pm_set_wake_irq - Attach device IO पूर्णांकerrupt as wake IRQ
+ * dev_pm_set_wake_irq - Attach device IO interrupt as wake IRQ
  * @dev: Device entry
- * @irq: Device IO पूर्णांकerrupt
+ * @irq: Device IO interrupt
  *
- * Attach a device IO पूर्णांकerrupt as a wake IRQ. The wake IRQ माला_लो
- * स्वतःmatically configured क्रम wake-up from suspend  based
- * on the device specअगरic sysfs wakeup entry. Typically called
+ * Attach a device IO interrupt as a wake IRQ. The wake IRQ gets
+ * automatically configured for wake-up from suspend  based
+ * on the device specific sysfs wakeup entry. Typically called
  * during driver probe after calling device_init_wakeup().
  */
-पूर्णांक dev_pm_set_wake_irq(काष्ठा device *dev, पूर्णांक irq)
-अणु
-	काष्ठा wake_irq *wirq;
-	पूर्णांक err;
+int dev_pm_set_wake_irq(struct device *dev, int irq)
+{
+	struct wake_irq *wirq;
+	int err;
 
-	अगर (irq < 0)
-		वापस -EINVAL;
+	if (irq < 0)
+		return -EINVAL;
 
-	wirq = kzalloc(माप(*wirq), GFP_KERNEL);
-	अगर (!wirq)
-		वापस -ENOMEM;
+	wirq = kzalloc(sizeof(*wirq), GFP_KERNEL);
+	if (!wirq)
+		return -ENOMEM;
 
 	wirq->dev = dev;
 	wirq->irq = irq;
 
 	err = dev_pm_attach_wake_irq(dev, irq, wirq);
-	अगर (err)
-		kमुक्त(wirq);
+	if (err)
+		kfree(wirq);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL_GPL(dev_pm_set_wake_irq);
 
 /**
- * dev_pm_clear_wake_irq - Detach a device IO पूर्णांकerrupt wake IRQ
+ * dev_pm_clear_wake_irq - Detach a device IO interrupt wake IRQ
  * @dev: Device entry
  *
- * Detach a device wake IRQ and मुक्त resources.
+ * Detach a device wake IRQ and free resources.
  *
- * Note that it's OK क्रम drivers to call this without calling
+ * Note that it's OK for drivers to call this without calling
  * dev_pm_set_wake_irq() as all the driver instances may not have
- * a wake IRQ configured. This aव्योम adding wake IRQ specअगरic
- * checks पूर्णांकo the drivers.
+ * a wake IRQ configured. This avoid adding wake IRQ specific
+ * checks into the drivers.
  */
-व्योम dev_pm_clear_wake_irq(काष्ठा device *dev)
-अणु
-	काष्ठा wake_irq *wirq = dev->घातer.wakeirq;
-	अचिन्हित दीर्घ flags;
+void dev_pm_clear_wake_irq(struct device *dev)
+{
+	struct wake_irq *wirq = dev->power.wakeirq;
+	unsigned long flags;
 
-	अगर (!wirq)
-		वापस;
+	if (!wirq)
+		return;
 
-	spin_lock_irqsave(&dev->घातer.lock, flags);
+	spin_lock_irqsave(&dev->power.lock, flags);
 	device_wakeup_detach_irq(dev);
-	dev->घातer.wakeirq = शून्य;
-	spin_unlock_irqrestore(&dev->घातer.lock, flags);
+	dev->power.wakeirq = NULL;
+	spin_unlock_irqrestore(&dev->power.lock, flags);
 
-	अगर (wirq->status & WAKE_IRQ_DEDICATED_ALLOCATED) अणु
-		मुक्त_irq(wirq->irq, wirq);
+	if (wirq->status & WAKE_IRQ_DEDICATED_ALLOCATED) {
+		free_irq(wirq->irq, wirq);
 		wirq->status &= ~WAKE_IRQ_DEDICATED_MASK;
-	पूर्ण
-	kमुक्त(wirq->name);
-	kमुक्त(wirq);
-पूर्ण
+	}
+	kfree(wirq->name);
+	kfree(wirq);
+}
 EXPORT_SYMBOL_GPL(dev_pm_clear_wake_irq);
 
 /**
- * handle_thपढ़ोed_wake_irq - Handler क्रम dedicated wake-up पूर्णांकerrupts
- * @irq: Device specअगरic dedicated wake-up पूर्णांकerrupt
+ * handle_threaded_wake_irq - Handler for dedicated wake-up interrupts
+ * @irq: Device specific dedicated wake-up interrupt
  * @_wirq: Wake IRQ data
  *
- * Some devices have a separate wake-up पूर्णांकerrupt in addition to the
- * device IO पूर्णांकerrupt. The wake-up पूर्णांकerrupt संकेतs that a device
+ * Some devices have a separate wake-up interrupt in addition to the
+ * device IO interrupt. The wake-up interrupt signals that a device
  * should be woken up from it's idle state. This handler uses device
- * specअगरic pm_runसमय functions to wake the device, and then it's
- * up to the device to करो whatever it needs to. Note that as the
+ * specific pm_runtime functions to wake the device, and then it's
+ * up to the device to do whatever it needs to. Note that as the
  * device may need to restore context and start up regulators, we
- * use a thपढ़ोed IRQ.
+ * use a threaded IRQ.
  *
- * Also note that we are not resending the lost device पूर्णांकerrupts.
- * We assume that the wake-up पूर्णांकerrupt just needs to wake-up the
- * device, and then device's pm_runसमय_resume() can deal with the
+ * Also note that we are not resending the lost device interrupts.
+ * We assume that the wake-up interrupt just needs to wake-up the
+ * device, and then device's pm_runtime_resume() can deal with the
  * situation.
  */
-अटल irqवापस_t handle_thपढ़ोed_wake_irq(पूर्णांक irq, व्योम *_wirq)
-अणु
-	काष्ठा wake_irq *wirq = _wirq;
-	पूर्णांक res;
+static irqreturn_t handle_threaded_wake_irq(int irq, void *_wirq)
+{
+	struct wake_irq *wirq = _wirq;
+	int res;
 
-	/* Maybe पात suspend? */
-	अगर (irqd_is_wakeup_set(irq_get_irq_data(irq))) अणु
+	/* Maybe abort suspend? */
+	if (irqd_is_wakeup_set(irq_get_irq_data(irq))) {
 		pm_wakeup_event(wirq->dev, 0);
 
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
-	/* We करोn't want RPM_ASYNC or RPM_NOWAIT here */
-	res = pm_runसमय_resume(wirq->dev);
-	अगर (res < 0)
+	/* We don't want RPM_ASYNC or RPM_NOWAIT here */
+	res = pm_runtime_resume(wirq->dev);
+	if (res < 0)
 		dev_warn(wirq->dev,
 			 "wake IRQ with no resume: %i\n", res);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /**
- * dev_pm_set_dedicated_wake_irq - Request a dedicated wake-up पूर्णांकerrupt
+ * dev_pm_set_dedicated_wake_irq - Request a dedicated wake-up interrupt
  * @dev: Device entry
- * @irq: Device wake-up पूर्णांकerrupt
+ * @irq: Device wake-up interrupt
  *
- * Unless your hardware has separate wake-up पूर्णांकerrupts in addition
- * to the device IO पूर्णांकerrupts, you करोn't need this.
+ * Unless your hardware has separate wake-up interrupts in addition
+ * to the device IO interrupts, you don't need this.
  *
- * Sets up a thपढ़ोed पूर्णांकerrupt handler क्रम a device that has
- * a dedicated wake-up पूर्णांकerrupt in addition to the device IO
- * पूर्णांकerrupt.
+ * Sets up a threaded interrupt handler for a device that has
+ * a dedicated wake-up interrupt in addition to the device IO
+ * interrupt.
  *
- * The पूर्णांकerrupt starts disabled, and needs to be managed क्रम
+ * The interrupt starts disabled, and needs to be managed for
  * the device by the bus code or the device driver using
  * dev_pm_enable_wake_irq() and dev_pm_disable_wake_irq()
  * functions.
  */
-पूर्णांक dev_pm_set_dedicated_wake_irq(काष्ठा device *dev, पूर्णांक irq)
-अणु
-	काष्ठा wake_irq *wirq;
-	पूर्णांक err;
+int dev_pm_set_dedicated_wake_irq(struct device *dev, int irq)
+{
+	struct wake_irq *wirq;
+	int err;
 
-	अगर (irq < 0)
-		वापस -EINVAL;
+	if (irq < 0)
+		return -EINVAL;
 
-	wirq = kzalloc(माप(*wirq), GFP_KERNEL);
-	अगर (!wirq)
-		वापस -ENOMEM;
+	wirq = kzalloc(sizeof(*wirq), GFP_KERNEL);
+	if (!wirq)
+		return -ENOMEM;
 
-	wirq->name = kaप्र_लिखो(GFP_KERNEL, "%s:wakeup", dev_name(dev));
-	अगर (!wirq->name) अणु
+	wirq->name = kasprintf(GFP_KERNEL, "%s:wakeup", dev_name(dev));
+	if (!wirq->name) {
 		err = -ENOMEM;
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	wirq->dev = dev;
 	wirq->irq = irq;
@@ -189,162 +188,162 @@ EXPORT_SYMBOL_GPL(dev_pm_clear_wake_irq);
 	irq_set_status_flags(irq, IRQ_DISABLE_UNLAZY);
 
 	/*
-	 * Consumer device may need to घातer up and restore state
-	 * so we use a thपढ़ोed irq.
+	 * Consumer device may need to power up and restore state
+	 * so we use a threaded irq.
 	 */
-	err = request_thपढ़ोed_irq(irq, शून्य, handle_thपढ़ोed_wake_irq,
+	err = request_threaded_irq(irq, NULL, handle_threaded_wake_irq,
 				   IRQF_ONESHOT, wirq->name, wirq);
-	अगर (err)
-		जाओ err_मुक्त_name;
+	if (err)
+		goto err_free_name;
 
 	err = dev_pm_attach_wake_irq(dev, irq, wirq);
-	अगर (err)
-		जाओ err_मुक्त_irq;
+	if (err)
+		goto err_free_irq;
 
 	wirq->status = WAKE_IRQ_DEDICATED_ALLOCATED;
 
-	वापस err;
+	return err;
 
-err_मुक्त_irq:
-	मुक्त_irq(irq, wirq);
-err_मुक्त_name:
-	kमुक्त(wirq->name);
-err_मुक्त:
-	kमुक्त(wirq);
+err_free_irq:
+	free_irq(irq, wirq);
+err_free_name:
+	kfree(wirq->name);
+err_free:
+	kfree(wirq);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL_GPL(dev_pm_set_dedicated_wake_irq);
 
 /**
- * dev_pm_enable_wake_irq - Enable device wake-up पूर्णांकerrupt
+ * dev_pm_enable_wake_irq - Enable device wake-up interrupt
  * @dev: Device
  *
- * Optionally called from the bus code or the device driver क्रम
- * runसमय_resume() to override the PM runसमय core managed wake-up
- * पूर्णांकerrupt handling to enable the wake-up पूर्णांकerrupt.
+ * Optionally called from the bus code or the device driver for
+ * runtime_resume() to override the PM runtime core managed wake-up
+ * interrupt handling to enable the wake-up interrupt.
  *
- * Note that क्रम runसमय_suspend()) the wake-up पूर्णांकerrupts
- * should be unconditionally enabled unlike क्रम suspend()
+ * Note that for runtime_suspend()) the wake-up interrupts
+ * should be unconditionally enabled unlike for suspend()
  * that is conditional.
  */
-व्योम dev_pm_enable_wake_irq(काष्ठा device *dev)
-अणु
-	काष्ठा wake_irq *wirq = dev->घातer.wakeirq;
+void dev_pm_enable_wake_irq(struct device *dev)
+{
+	struct wake_irq *wirq = dev->power.wakeirq;
 
-	अगर (wirq && (wirq->status & WAKE_IRQ_DEDICATED_ALLOCATED))
+	if (wirq && (wirq->status & WAKE_IRQ_DEDICATED_ALLOCATED))
 		enable_irq(wirq->irq);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(dev_pm_enable_wake_irq);
 
 /**
- * dev_pm_disable_wake_irq - Disable device wake-up पूर्णांकerrupt
+ * dev_pm_disable_wake_irq - Disable device wake-up interrupt
  * @dev: Device
  *
- * Optionally called from the bus code or the device driver क्रम
- * runसमय_suspend() to override the PM runसमय core managed wake-up
- * पूर्णांकerrupt handling to disable the wake-up पूर्णांकerrupt.
+ * Optionally called from the bus code or the device driver for
+ * runtime_suspend() to override the PM runtime core managed wake-up
+ * interrupt handling to disable the wake-up interrupt.
  */
-व्योम dev_pm_disable_wake_irq(काष्ठा device *dev)
-अणु
-	काष्ठा wake_irq *wirq = dev->घातer.wakeirq;
+void dev_pm_disable_wake_irq(struct device *dev)
+{
+	struct wake_irq *wirq = dev->power.wakeirq;
 
-	अगर (wirq && (wirq->status & WAKE_IRQ_DEDICATED_ALLOCATED))
+	if (wirq && (wirq->status & WAKE_IRQ_DEDICATED_ALLOCATED))
 		disable_irq_nosync(wirq->irq);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(dev_pm_disable_wake_irq);
 
 /**
- * dev_pm_enable_wake_irq_check - Checks and enables wake-up पूर्णांकerrupt
+ * dev_pm_enable_wake_irq_check - Checks and enables wake-up interrupt
  * @dev: Device
- * @can_change_status: Can change wake-up पूर्णांकerrupt status
+ * @can_change_status: Can change wake-up interrupt status
  *
- * Enables wakeirq conditionally. We need to enable wake-up पूर्णांकerrupt
+ * Enables wakeirq conditionally. We need to enable wake-up interrupt
  * lazily on the first rpm_suspend(). This is needed as the consumer device
- * starts in RPM_SUSPENDED state, and the the first pm_runसमय_get() would
- * otherwise try to disable alपढ़ोy disabled wakeirq. The wake-up पूर्णांकerrupt
+ * starts in RPM_SUSPENDED state, and the the first pm_runtime_get() would
+ * otherwise try to disable already disabled wakeirq. The wake-up interrupt
  * starts disabled with IRQ_NOAUTOEN set.
  *
  * Should be only called from rpm_suspend() and rpm_resume() path.
- * Caller must hold &dev->घातer.lock to change wirq->status
+ * Caller must hold &dev->power.lock to change wirq->status
  */
-व्योम dev_pm_enable_wake_irq_check(काष्ठा device *dev,
+void dev_pm_enable_wake_irq_check(struct device *dev,
 				  bool can_change_status)
-अणु
-	काष्ठा wake_irq *wirq = dev->घातer.wakeirq;
+{
+	struct wake_irq *wirq = dev->power.wakeirq;
 
-	अगर (!wirq || !(wirq->status & WAKE_IRQ_DEDICATED_MASK))
-		वापस;
+	if (!wirq || !(wirq->status & WAKE_IRQ_DEDICATED_MASK))
+		return;
 
-	अगर (likely(wirq->status & WAKE_IRQ_DEDICATED_MANAGED)) अणु
-		जाओ enable;
-	पूर्ण अन्यथा अगर (can_change_status) अणु
+	if (likely(wirq->status & WAKE_IRQ_DEDICATED_MANAGED)) {
+		goto enable;
+	} else if (can_change_status) {
 		wirq->status |= WAKE_IRQ_DEDICATED_MANAGED;
-		जाओ enable;
-	पूर्ण
+		goto enable;
+	}
 
-	वापस;
+	return;
 
 enable:
 	enable_irq(wirq->irq);
-पूर्ण
+}
 
 /**
- * dev_pm_disable_wake_irq_check - Checks and disables wake-up पूर्णांकerrupt
+ * dev_pm_disable_wake_irq_check - Checks and disables wake-up interrupt
  * @dev: Device
  *
- * Disables wake-up पूर्णांकerrupt conditionally based on status.
+ * Disables wake-up interrupt conditionally based on status.
  * Should be only called from rpm_suspend() and rpm_resume() path.
  */
-व्योम dev_pm_disable_wake_irq_check(काष्ठा device *dev)
-अणु
-	काष्ठा wake_irq *wirq = dev->घातer.wakeirq;
+void dev_pm_disable_wake_irq_check(struct device *dev)
+{
+	struct wake_irq *wirq = dev->power.wakeirq;
 
-	अगर (!wirq || !(wirq->status & WAKE_IRQ_DEDICATED_MASK))
-		वापस;
+	if (!wirq || !(wirq->status & WAKE_IRQ_DEDICATED_MASK))
+		return;
 
-	अगर (wirq->status & WAKE_IRQ_DEDICATED_MANAGED)
+	if (wirq->status & WAKE_IRQ_DEDICATED_MANAGED)
 		disable_irq_nosync(wirq->irq);
-पूर्ण
+}
 
 /**
  * dev_pm_arm_wake_irq - Arm device wake-up
- * @wirq: Device wake-up पूर्णांकerrupt
+ * @wirq: Device wake-up interrupt
  *
  * Sets up the wake-up event conditionally based on the
  * device_may_wake().
  */
-व्योम dev_pm_arm_wake_irq(काष्ठा wake_irq *wirq)
-अणु
-	अगर (!wirq)
-		वापस;
+void dev_pm_arm_wake_irq(struct wake_irq *wirq)
+{
+	if (!wirq)
+		return;
 
-	अगर (device_may_wakeup(wirq->dev)) अणु
-		अगर (wirq->status & WAKE_IRQ_DEDICATED_ALLOCATED &&
-		    !pm_runसमय_status_suspended(wirq->dev))
+	if (device_may_wakeup(wirq->dev)) {
+		if (wirq->status & WAKE_IRQ_DEDICATED_ALLOCATED &&
+		    !pm_runtime_status_suspended(wirq->dev))
 			enable_irq(wirq->irq);
 
 		enable_irq_wake(wirq->irq);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * dev_pm_disarm_wake_irq - Disarm device wake-up
- * @wirq: Device wake-up पूर्णांकerrupt
+ * @wirq: Device wake-up interrupt
  *
  * Clears up the wake-up event conditionally based on the
  * device_may_wake().
  */
-व्योम dev_pm_disarm_wake_irq(काष्ठा wake_irq *wirq)
-अणु
-	अगर (!wirq)
-		वापस;
+void dev_pm_disarm_wake_irq(struct wake_irq *wirq)
+{
+	if (!wirq)
+		return;
 
-	अगर (device_may_wakeup(wirq->dev)) अणु
+	if (device_may_wakeup(wirq->dev)) {
 		disable_irq_wake(wirq->irq);
 
-		अगर (wirq->status & WAKE_IRQ_DEDICATED_ALLOCATED &&
-		    !pm_runसमय_status_suspended(wirq->dev))
+		if (wirq->status & WAKE_IRQ_DEDICATED_ALLOCATED &&
+		    !pm_runtime_status_suspended(wirq->dev))
 			disable_irq_nosync(wirq->irq);
-	पूर्ण
-पूर्ण
+	}
+}

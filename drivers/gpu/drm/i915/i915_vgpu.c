@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright(c) 2011-2015 Intel Corporation. All rights reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,80 +21,80 @@
  * SOFTWARE.
  */
 
-#समावेश "i915_drv.h"
-#समावेश "i915_pvinfo.h"
-#समावेश "i915_vgpu.h"
+#include "i915_drv.h"
+#include "i915_pvinfo.h"
+#include "i915_vgpu.h"
 
 /**
  * DOC: Intel GVT-g guest support
  *
- * Intel GVT-g is a graphics भवization technology which shares the
- * GPU among multiple भव machines on a समय-sharing basis. Each
- * भव machine is presented a भव GPU (vGPU), which has equivalent
+ * Intel GVT-g is a graphics virtualization technology which shares the
+ * GPU among multiple virtual machines on a time-sharing basis. Each
+ * virtual machine is presented a virtual GPU (vGPU), which has equivalent
  * features as the underlying physical GPU (pGPU), so i915 driver can run
- * seamlessly in a भव machine. This file provides vGPU specअगरic
- * optimizations when running in a भव machine, to reduce the complनिकासy
- * of vGPU emulation and to improve the overall perक्रमmance.
+ * seamlessly in a virtual machine. This file provides vGPU specific
+ * optimizations when running in a virtual machine, to reduce the complexity
+ * of vGPU emulation and to improve the overall performance.
  *
- * A primary function पूर्णांकroduced here is so-called "address space ballooning"
+ * A primary function introduced here is so-called "address space ballooning"
  * technique. Intel GVT-g partitions global graphics memory among multiple VMs,
  * so each VM can directly access a portion of the memory without hypervisor's
- * पूर्णांकervention, e.g. filling textures or queuing commands. However with the
- * partitioning an unmodअगरied i915 driver would assume a smaller graphics
+ * intervention, e.g. filling textures or queuing commands. However with the
+ * partitioning an unmodified i915 driver would assume a smaller graphics
  * memory starting from address ZERO, then requires vGPU emulation module to
- * translate the graphics address between 'guest view' and 'host view', क्रम
- * all रेजिस्टरs and command opcodes which contain a graphics memory address.
- * To reduce the complनिकासy, Intel GVT-g पूर्णांकroduces "address space ballooning",
+ * translate the graphics address between 'guest view' and 'host view', for
+ * all registers and command opcodes which contain a graphics memory address.
+ * To reduce the complexity, Intel GVT-g introduces "address space ballooning",
  * by telling the exact partitioning knowledge to each guest i915 driver, which
  * then reserves and prevents non-allocated portions from allocation. Thus vGPU
  * emulation module only needs to scan and validate graphics addresses without
- * complनिकासy of address translation.
+ * complexity of address translation.
  *
  */
 
 /**
- * पूर्णांकel_vgpu_detect - detect भव GPU
- * @dev_priv: i915 device निजी
+ * intel_vgpu_detect - detect virtual GPU
+ * @dev_priv: i915 device private
  *
  * This function is called at the initialization stage, to detect whether
  * running on a vGPU.
  */
-व्योम पूर्णांकel_vgpu_detect(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev_priv->drm.dev);
+void intel_vgpu_detect(struct drm_i915_private *dev_priv)
+{
+	struct pci_dev *pdev = to_pci_dev(dev_priv->drm.dev);
 	u64 magic;
 	u16 version_major;
-	व्योम __iomem *shared_area;
+	void __iomem *shared_area;
 
-	BUILD_BUG_ON(माप(काष्ठा vgt_अगर) != VGT_PVINFO_SIZE);
+	BUILD_BUG_ON(sizeof(struct vgt_if) != VGT_PVINFO_SIZE);
 
 	/*
-	 * This is called beक्रमe we setup the मुख्य MMIO BAR mappings used via
-	 * the uncore काष्ठाure, so we need to access the BAR directly. Since
-	 * we करो not support VGT on older gens, वापस early so we करोn't have
-	 * to consider dअगरferently numbered or sized MMIO bars
+	 * This is called before we setup the main MMIO BAR mappings used via
+	 * the uncore structure, so we need to access the BAR directly. Since
+	 * we do not support VGT on older gens, return early so we don't have
+	 * to consider differently numbered or sized MMIO bars
 	 */
-	अगर (INTEL_GEN(dev_priv) < 6)
-		वापस;
+	if (INTEL_GEN(dev_priv) < 6)
+		return;
 
 	shared_area = pci_iomap_range(pdev, 0, VGT_PVINFO_PAGE, VGT_PVINFO_SIZE);
-	अगर (!shared_area) अणु
+	if (!shared_area) {
 		drm_err(&dev_priv->drm,
 			"failed to map MMIO bar to check for VGT\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	magic = पढ़ोq(shared_area + vgtअगर_offset(magic));
-	अगर (magic != VGT_MAGIC)
-		जाओ out;
+	magic = readq(shared_area + vgtif_offset(magic));
+	if (magic != VGT_MAGIC)
+		goto out;
 
-	version_major = पढ़ोw(shared_area + vgtअगर_offset(version_major));
-	अगर (version_major < VGT_VERSION_MAJOR) अणु
+	version_major = readw(shared_area + vgtif_offset(version_major));
+	if (version_major < VGT_VERSION_MAJOR) {
 		drm_info(&dev_priv->drm, "VGT interface version mismatch!\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	dev_priv->vgpu.caps = पढ़ोl(shared_area + vgtअगर_offset(vgt_caps));
+	dev_priv->vgpu.caps = readl(shared_area + vgtif_offset(vgt_caps));
 
 	dev_priv->vgpu.active = true;
 	mutex_init(&dev_priv->vgpu.lock);
@@ -103,55 +102,55 @@
 
 out:
 	pci_iounmap(pdev, shared_area);
-पूर्ण
+}
 
-व्योम पूर्णांकel_vgpu_रेजिस्टर(काष्ठा drm_i915_निजी *i915)
-अणु
+void intel_vgpu_register(struct drm_i915_private *i915)
+{
 	/*
-	 * Notअगरy a valid surface after modesetting, when running inside a VM.
+	 * Notify a valid surface after modesetting, when running inside a VM.
 	 */
-	अगर (पूर्णांकel_vgpu_active(i915))
-		पूर्णांकel_uncore_ग_लिखो(&i915->uncore, vgtअगर_reg(display_पढ़ोy),
+	if (intel_vgpu_active(i915))
+		intel_uncore_write(&i915->uncore, vgtif_reg(display_ready),
 				   VGT_DRV_DISPLAY_READY);
-पूर्ण
+}
 
-bool पूर्णांकel_vgpu_active(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	वापस dev_priv->vgpu.active;
-पूर्ण
+bool intel_vgpu_active(struct drm_i915_private *dev_priv)
+{
+	return dev_priv->vgpu.active;
+}
 
-bool पूर्णांकel_vgpu_has_full_ppgtt(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	वापस dev_priv->vgpu.caps & VGT_CAPS_FULL_PPGTT;
-पूर्ण
+bool intel_vgpu_has_full_ppgtt(struct drm_i915_private *dev_priv)
+{
+	return dev_priv->vgpu.caps & VGT_CAPS_FULL_PPGTT;
+}
 
-bool पूर्णांकel_vgpu_has_hwsp_emulation(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	वापस dev_priv->vgpu.caps & VGT_CAPS_HWSP_EMULATION;
-पूर्ण
+bool intel_vgpu_has_hwsp_emulation(struct drm_i915_private *dev_priv)
+{
+	return dev_priv->vgpu.caps & VGT_CAPS_HWSP_EMULATION;
+}
 
-bool पूर्णांकel_vgpu_has_huge_gtt(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	वापस dev_priv->vgpu.caps & VGT_CAPS_HUGE_GTT;
-पूर्ण
+bool intel_vgpu_has_huge_gtt(struct drm_i915_private *dev_priv)
+{
+	return dev_priv->vgpu.caps & VGT_CAPS_HUGE_GTT;
+}
 
-काष्ठा _balloon_info_ अणु
+struct _balloon_info_ {
 	/*
 	 * There are up to 2 regions per mappable/unmappable graphic
-	 * memory that might be ballooned. Here, index 0/1 is क्रम mappable
-	 * graphic memory, 2/3 क्रम unmappable graphic memory.
+	 * memory that might be ballooned. Here, index 0/1 is for mappable
+	 * graphic memory, 2/3 for unmappable graphic memory.
 	 */
-	काष्ठा drm_mm_node space[4];
-पूर्ण;
+	struct drm_mm_node space[4];
+};
 
-अटल काष्ठा _balloon_info_ bl_info;
+static struct _balloon_info_ bl_info;
 
-अटल व्योम vgt_deballoon_space(काष्ठा i915_ggtt *ggtt,
-				काष्ठा drm_mm_node *node)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = ggtt->vm.i915;
-	अगर (!drm_mm_node_allocated(node))
-		वापस;
+static void vgt_deballoon_space(struct i915_ggtt *ggtt,
+				struct drm_mm_node *node)
+{
+	struct drm_i915_private *dev_priv = ggtt->vm.i915;
+	if (!drm_mm_node_allocated(node))
+		return;
 
 	drm_dbg(&dev_priv->drm,
 		"deballoon space: range [0x%llx - 0x%llx] %llu KiB.\n",
@@ -160,40 +159,40 @@ bool पूर्णांकel_vgpu_has_huge_gtt(काष्ठा drm_i915_�
 		node->size / 1024);
 
 	ggtt->vm.reserved -= node->size;
-	drm_mm_हटाओ_node(node);
-पूर्ण
+	drm_mm_remove_node(node);
+}
 
 /**
- * पूर्णांकel_vgt_deballoon - deballoon reserved graphics address trunks
+ * intel_vgt_deballoon - deballoon reserved graphics address trunks
  * @ggtt: the global GGTT from which we reserved earlier
  *
  * This function is called to deallocate the ballooned-out graphic memory, when
  * driver is unloaded or when ballooning fails.
  */
-व्योम पूर्णांकel_vgt_deballoon(काष्ठा i915_ggtt *ggtt)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = ggtt->vm.i915;
-	पूर्णांक i;
+void intel_vgt_deballoon(struct i915_ggtt *ggtt)
+{
+	struct drm_i915_private *dev_priv = ggtt->vm.i915;
+	int i;
 
-	अगर (!पूर्णांकel_vgpu_active(ggtt->vm.i915))
-		वापस;
+	if (!intel_vgpu_active(ggtt->vm.i915))
+		return;
 
 	drm_dbg(&dev_priv->drm, "VGT deballoon.\n");
 
-	क्रम (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
 		vgt_deballoon_space(ggtt, &bl_info.space[i]);
-पूर्ण
+}
 
-अटल पूर्णांक vgt_balloon_space(काष्ठा i915_ggtt *ggtt,
-			     काष्ठा drm_mm_node *node,
-			     अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = ggtt->vm.i915;
-	अचिन्हित दीर्घ size = end - start;
-	पूर्णांक ret;
+static int vgt_balloon_space(struct i915_ggtt *ggtt,
+			     struct drm_mm_node *node,
+			     unsigned long start, unsigned long end)
+{
+	struct drm_i915_private *dev_priv = ggtt->vm.i915;
+	unsigned long size = end - start;
+	int ret;
 
-	अगर (start >= end)
-		वापस -EINVAL;
+	if (start >= end)
+		return -EINVAL;
 
 	drm_info(&dev_priv->drm,
 		 "balloon space: range [ 0x%lx - 0x%lx ] %lu KiB.\n",
@@ -201,30 +200,30 @@ bool पूर्णांकel_vgpu_has_huge_gtt(काष्ठा drm_i915_�
 	ret = i915_gem_gtt_reserve(&ggtt->vm, node,
 				   size, start, I915_COLOR_UNEVICTABLE,
 				   0);
-	अगर (!ret)
+	if (!ret)
 		ggtt->vm.reserved += size;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * पूर्णांकel_vgt_balloon - balloon out reserved graphics address trunks
+ * intel_vgt_balloon - balloon out reserved graphics address trunks
  * @ggtt: the global GGTT from which to reserve
  *
  * This function is called at the initialization stage, to balloon out the
  * graphic address space allocated to other vGPUs, by marking these spaces as
  * reserved. The ballooning related knowledge(starting address and size of
- * the mappable/unmappable graphic memory) is described in the vgt_अगर काष्ठाure
+ * the mappable/unmappable graphic memory) is described in the vgt_if structure
  * in a reserved mmio range.
  *
  * To give an example, the drawing below depicts one typical scenario after
  * ballooning. Here the vGPU1 has 2 pieces of graphic address spaces ballooned
- * out each क्रम the mappable and the non-mappable part. From the vGPU1 poपूर्णांक of
+ * out each for the mappable and the non-mappable part. From the vGPU1 point of
  * view, the total size is the same as the physical one, with the start address
  * of its graphic space being zero. Yet there are some portions ballooned out(
- * the shaकरोw part, which are marked as reserved by drm allocator). From the
- * host poपूर्णांक of view, the graphic address space is partitioned by multiple
- * vGPUs in dअगरferent VMs. ::
+ * the shadow part, which are marked as reserved by drm allocator). From the
+ * host point of view, the graphic address space is partitioned by multiple
+ * vGPUs in different VMs. ::
  *
  *                         vGPU1 view         Host view
  *              0 ------> +-----------+     +-----------+
@@ -249,29 +248,29 @@ bool पूर्णांकel_vgpu_has_huge_gtt(काष्ठा drm_i915_�
  *  total GM size ------> +-----------+     +-----------+
  *
  * Returns:
- * zero on success, non-zero अगर configuration invalid or ballooning failed
+ * zero on success, non-zero if configuration invalid or ballooning failed
  */
-पूर्णांक पूर्णांकel_vgt_balloon(काष्ठा i915_ggtt *ggtt)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = ggtt->vm.i915;
-	काष्ठा पूर्णांकel_uncore *uncore = &dev_priv->uncore;
-	अचिन्हित दीर्घ ggtt_end = ggtt->vm.total;
+int intel_vgt_balloon(struct i915_ggtt *ggtt)
+{
+	struct drm_i915_private *dev_priv = ggtt->vm.i915;
+	struct intel_uncore *uncore = &dev_priv->uncore;
+	unsigned long ggtt_end = ggtt->vm.total;
 
-	अचिन्हित दीर्घ mappable_base, mappable_size, mappable_end;
-	अचिन्हित दीर्घ unmappable_base, unmappable_size, unmappable_end;
-	पूर्णांक ret;
+	unsigned long mappable_base, mappable_size, mappable_end;
+	unsigned long unmappable_base, unmappable_size, unmappable_end;
+	int ret;
 
-	अगर (!पूर्णांकel_vgpu_active(ggtt->vm.i915))
-		वापस 0;
+	if (!intel_vgpu_active(ggtt->vm.i915))
+		return 0;
 
 	mappable_base =
-	  पूर्णांकel_uncore_पढ़ो(uncore, vgtअगर_reg(avail_rs.mappable_gmadr.base));
+	  intel_uncore_read(uncore, vgtif_reg(avail_rs.mappable_gmadr.base));
 	mappable_size =
-	  पूर्णांकel_uncore_पढ़ो(uncore, vgtअगर_reg(avail_rs.mappable_gmadr.size));
+	  intel_uncore_read(uncore, vgtif_reg(avail_rs.mappable_gmadr.size));
 	unmappable_base =
-	  पूर्णांकel_uncore_पढ़ो(uncore, vgtअगर_reg(avail_rs.nonmappable_gmadr.base));
+	  intel_uncore_read(uncore, vgtif_reg(avail_rs.nonmappable_gmadr.base));
 	unmappable_size =
-	  पूर्णांकel_uncore_पढ़ो(uncore, vgtअगर_reg(avail_rs.nonmappable_gmadr.size));
+	  intel_uncore_read(uncore, vgtif_reg(avail_rs.nonmappable_gmadr.size));
 
 	mappable_end = mappable_base + mappable_size;
 	unmappable_end = unmappable_base + unmappable_size;
@@ -284,48 +283,48 @@ bool पूर्णांकel_vgpu_has_huge_gtt(काष्ठा drm_i915_�
 		 "Unmappable graphic memory: base 0x%lx size %ldKiB\n",
 		 unmappable_base, unmappable_size / 1024);
 
-	अगर (mappable_end > ggtt->mappable_end ||
+	if (mappable_end > ggtt->mappable_end ||
 	    unmappable_base < ggtt->mappable_end ||
-	    unmappable_end > ggtt_end) अणु
+	    unmappable_end > ggtt_end) {
 		drm_err(&dev_priv->drm, "Invalid ballooning configuration!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Unmappable graphic memory ballooning */
-	अगर (unmappable_base > ggtt->mappable_end) अणु
+	if (unmappable_base > ggtt->mappable_end) {
 		ret = vgt_balloon_space(ggtt, &bl_info.space[2],
 					ggtt->mappable_end, unmappable_base);
 
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+		if (ret)
+			goto err;
+	}
 
-	अगर (unmappable_end < ggtt_end) अणु
+	if (unmappable_end < ggtt_end) {
 		ret = vgt_balloon_space(ggtt, &bl_info.space[3],
 					unmappable_end, ggtt_end);
-		अगर (ret)
-			जाओ err_upon_mappable;
-	पूर्ण
+		if (ret)
+			goto err_upon_mappable;
+	}
 
 	/* Mappable graphic memory ballooning */
-	अगर (mappable_base) अणु
+	if (mappable_base) {
 		ret = vgt_balloon_space(ggtt, &bl_info.space[0],
 					0, mappable_base);
 
-		अगर (ret)
-			जाओ err_upon_unmappable;
-	पूर्ण
+		if (ret)
+			goto err_upon_unmappable;
+	}
 
-	अगर (mappable_end < ggtt->mappable_end) अणु
+	if (mappable_end < ggtt->mappable_end) {
 		ret = vgt_balloon_space(ggtt, &bl_info.space[1],
 					mappable_end, ggtt->mappable_end);
 
-		अगर (ret)
-			जाओ err_below_mappable;
-	पूर्ण
+		if (ret)
+			goto err_below_mappable;
+	}
 
 	drm_info(&dev_priv->drm, "VGT balloon successfully\n");
-	वापस 0;
+	return 0;
 
 err_below_mappable:
 	vgt_deballoon_space(ggtt, &bl_info.space[0]);
@@ -335,5 +334,5 @@ err_upon_mappable:
 	vgt_deballoon_space(ggtt, &bl_info.space[2]);
 err:
 	drm_err(&dev_priv->drm, "VGT balloon fail\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}

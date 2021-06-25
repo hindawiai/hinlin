@@ -1,293 +1,292 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2010 Broadcom Corporation
  *
- * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/pci.h>
-#समावेश <net/cfg80211.h>
-#समावेश <net/mac80211.h>
+#include <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/pci.h>
+#include <net/cfg80211.h>
+#include <net/mac80211.h>
 
-#समावेश <brcmu_utils.h>
-#समावेश <aiutils.h>
-#समावेश "types.h"
-#समावेश "main.h"
-#समावेश "dma.h"
-#समावेश "soc.h"
-#समावेश "scb.h"
-#समावेश "ampdu.h"
-#समावेश "debug.h"
-#समावेश "brcms_trace_events.h"
+#include <brcmu_utils.h>
+#include <aiutils.h>
+#include "types.h"
+#include "main.h"
+#include "dma.h"
+#include "soc.h"
+#include "scb.h"
+#include "ampdu.h"
+#include "debug.h"
+#include "brcms_trace_events.h"
 
 /*
- * dma रेजिस्टर field offset calculation
+ * dma register field offset calculation
  */
-#घोषणा DMA64REGOFFS(field)		दुरत्व(काष्ठा dma64regs, field)
-#घोषणा DMA64TXREGOFFS(di, field)	(di->d64txregbase + DMA64REGOFFS(field))
-#घोषणा DMA64RXREGOFFS(di, field)	(di->d64rxregbase + DMA64REGOFFS(field))
+#define DMA64REGOFFS(field)		offsetof(struct dma64regs, field)
+#define DMA64TXREGOFFS(di, field)	(di->d64txregbase + DMA64REGOFFS(field))
+#define DMA64RXREGOFFS(di, field)	(di->d64rxregbase + DMA64REGOFFS(field))
 
 /*
  * DMA hardware requires each descriptor ring to be 8kB aligned, and fit within
  * a contiguous 8kB physical address.
  */
-#घोषणा D64RINGALIGN_BITS	13
-#घोषणा	D64MAXRINGSZ		(1 << D64RINGALIGN_BITS)
-#घोषणा	D64RINGALIGN		(1 << D64RINGALIGN_BITS)
+#define D64RINGALIGN_BITS	13
+#define	D64MAXRINGSZ		(1 << D64RINGALIGN_BITS)
+#define	D64RINGALIGN		(1 << D64RINGALIGN_BITS)
 
-#घोषणा	D64MAXDD	(D64MAXRINGSZ / माप(काष्ठा dma64desc))
+#define	D64MAXDD	(D64MAXRINGSZ / sizeof(struct dma64desc))
 
 /* transmit channel control */
-#घोषणा	D64_XC_XE		0x00000001	/* transmit enable */
-#घोषणा	D64_XC_SE		0x00000002	/* transmit suspend request */
-#घोषणा	D64_XC_LE		0x00000004	/* loopback enable */
-#घोषणा	D64_XC_FL		0x00000010	/* flush request */
-#घोषणा	D64_XC_PD		0x00000800	/* parity check disable */
-#घोषणा	D64_XC_AE		0x00030000	/* address extension bits */
-#घोषणा	D64_XC_AE_SHIFT		16
+#define	D64_XC_XE		0x00000001	/* transmit enable */
+#define	D64_XC_SE		0x00000002	/* transmit suspend request */
+#define	D64_XC_LE		0x00000004	/* loopback enable */
+#define	D64_XC_FL		0x00000010	/* flush request */
+#define	D64_XC_PD		0x00000800	/* parity check disable */
+#define	D64_XC_AE		0x00030000	/* address extension bits */
+#define	D64_XC_AE_SHIFT		16
 
-/* transmit descriptor table poपूर्णांकer */
-#घोषणा	D64_XP_LD_MASK		0x00000fff	/* last valid descriptor */
+/* transmit descriptor table pointer */
+#define	D64_XP_LD_MASK		0x00000fff	/* last valid descriptor */
 
 /* transmit channel status */
-#घोषणा	D64_XS0_CD_MASK		0x00001fff	/* current descriptor poपूर्णांकer */
-#घोषणा	D64_XS0_XS_MASK		0xf0000000	/* transmit state */
-#घोषणा	D64_XS0_XS_SHIFT		28
-#घोषणा	D64_XS0_XS_DISABLED	0x00000000	/* disabled */
-#घोषणा	D64_XS0_XS_ACTIVE	0x10000000	/* active */
-#घोषणा	D64_XS0_XS_IDLE		0x20000000	/* idle रुको */
-#घोषणा	D64_XS0_XS_STOPPED	0x30000000	/* stopped */
-#घोषणा	D64_XS0_XS_SUSP		0x40000000	/* suspend pending */
+#define	D64_XS0_CD_MASK		0x00001fff	/* current descriptor pointer */
+#define	D64_XS0_XS_MASK		0xf0000000	/* transmit state */
+#define	D64_XS0_XS_SHIFT		28
+#define	D64_XS0_XS_DISABLED	0x00000000	/* disabled */
+#define	D64_XS0_XS_ACTIVE	0x10000000	/* active */
+#define	D64_XS0_XS_IDLE		0x20000000	/* idle wait */
+#define	D64_XS0_XS_STOPPED	0x30000000	/* stopped */
+#define	D64_XS0_XS_SUSP		0x40000000	/* suspend pending */
 
-#घोषणा	D64_XS1_AD_MASK		0x00001fff	/* active descriptor */
-#घोषणा	D64_XS1_XE_MASK		0xf0000000	/* transmit errors */
-#घोषणा	D64_XS1_XE_SHIFT		28
-#घोषणा	D64_XS1_XE_NOERR	0x00000000	/* no error */
-#घोषणा	D64_XS1_XE_DPE		0x10000000	/* descriptor protocol error */
-#घोषणा	D64_XS1_XE_DFU		0x20000000	/* data fअगरo underrun */
-#घोषणा	D64_XS1_XE_DTE		0x30000000	/* data transfer error */
-#घोषणा	D64_XS1_XE_DESRE	0x40000000	/* descriptor पढ़ो error */
-#घोषणा	D64_XS1_XE_COREE	0x50000000	/* core error */
+#define	D64_XS1_AD_MASK		0x00001fff	/* active descriptor */
+#define	D64_XS1_XE_MASK		0xf0000000	/* transmit errors */
+#define	D64_XS1_XE_SHIFT		28
+#define	D64_XS1_XE_NOERR	0x00000000	/* no error */
+#define	D64_XS1_XE_DPE		0x10000000	/* descriptor protocol error */
+#define	D64_XS1_XE_DFU		0x20000000	/* data fifo underrun */
+#define	D64_XS1_XE_DTE		0x30000000	/* data transfer error */
+#define	D64_XS1_XE_DESRE	0x40000000	/* descriptor read error */
+#define	D64_XS1_XE_COREE	0x50000000	/* core error */
 
 /* receive channel control */
 /* receive enable */
-#घोषणा	D64_RC_RE		0x00000001
+#define	D64_RC_RE		0x00000001
 /* receive frame offset */
-#घोषणा	D64_RC_RO_MASK		0x000000fe
-#घोषणा	D64_RC_RO_SHIFT		1
-/* direct fअगरo receive (pio) mode */
-#घोषणा	D64_RC_FM		0x00000100
+#define	D64_RC_RO_MASK		0x000000fe
+#define	D64_RC_RO_SHIFT		1
+/* direct fifo receive (pio) mode */
+#define	D64_RC_FM		0x00000100
 /* separate rx header descriptor enable */
-#घोषणा	D64_RC_SH		0x00000200
-/* overflow जारी */
-#घोषणा	D64_RC_OC		0x00000400
+#define	D64_RC_SH		0x00000200
+/* overflow continue */
+#define	D64_RC_OC		0x00000400
 /* parity check disable */
-#घोषणा	D64_RC_PD		0x00000800
+#define	D64_RC_PD		0x00000800
 /* address extension bits */
-#घोषणा	D64_RC_AE		0x00030000
-#घोषणा	D64_RC_AE_SHIFT		16
+#define	D64_RC_AE		0x00030000
+#define	D64_RC_AE_SHIFT		16
 
-/* flags क्रम dma controller */
+/* flags for dma controller */
 /* partity enable */
-#घोषणा DMA_CTRL_PEN		(1 << 0)
-/* rx overflow जारी */
-#घोषणा DMA_CTRL_ROC		(1 << 1)
+#define DMA_CTRL_PEN		(1 << 0)
+/* rx overflow continue */
+#define DMA_CTRL_ROC		(1 << 1)
 /* allow rx scatter to multiple descriptors */
-#घोषणा DMA_CTRL_RXMULTI	(1 << 2)
+#define DMA_CTRL_RXMULTI	(1 << 2)
 /* Unframed Rx/Tx data */
-#घोषणा DMA_CTRL_UNFRAMED	(1 << 3)
+#define DMA_CTRL_UNFRAMED	(1 << 3)
 
-/* receive descriptor table poपूर्णांकer */
-#घोषणा	D64_RP_LD_MASK		0x00000fff	/* last valid descriptor */
+/* receive descriptor table pointer */
+#define	D64_RP_LD_MASK		0x00000fff	/* last valid descriptor */
 
 /* receive channel status */
-#घोषणा	D64_RS0_CD_MASK		0x00001fff	/* current descriptor poपूर्णांकer */
-#घोषणा	D64_RS0_RS_MASK		0xf0000000	/* receive state */
-#घोषणा	D64_RS0_RS_SHIFT		28
-#घोषणा	D64_RS0_RS_DISABLED	0x00000000	/* disabled */
-#घोषणा	D64_RS0_RS_ACTIVE	0x10000000	/* active */
-#घोषणा	D64_RS0_RS_IDLE		0x20000000	/* idle रुको */
-#घोषणा	D64_RS0_RS_STOPPED	0x30000000	/* stopped */
-#घोषणा	D64_RS0_RS_SUSP		0x40000000	/* suspend pending */
+#define	D64_RS0_CD_MASK		0x00001fff	/* current descriptor pointer */
+#define	D64_RS0_RS_MASK		0xf0000000	/* receive state */
+#define	D64_RS0_RS_SHIFT		28
+#define	D64_RS0_RS_DISABLED	0x00000000	/* disabled */
+#define	D64_RS0_RS_ACTIVE	0x10000000	/* active */
+#define	D64_RS0_RS_IDLE		0x20000000	/* idle wait */
+#define	D64_RS0_RS_STOPPED	0x30000000	/* stopped */
+#define	D64_RS0_RS_SUSP		0x40000000	/* suspend pending */
 
-#घोषणा	D64_RS1_AD_MASK		0x0001ffff	/* active descriptor */
-#घोषणा	D64_RS1_RE_MASK		0xf0000000	/* receive errors */
-#घोषणा	D64_RS1_RE_SHIFT		28
-#घोषणा	D64_RS1_RE_NOERR	0x00000000	/* no error */
-#घोषणा	D64_RS1_RE_DPO		0x10000000	/* descriptor protocol error */
-#घोषणा	D64_RS1_RE_DFU		0x20000000	/* data fअगरo overflow */
-#घोषणा	D64_RS1_RE_DTE		0x30000000	/* data transfer error */
-#घोषणा	D64_RS1_RE_DESRE	0x40000000	/* descriptor पढ़ो error */
-#घोषणा	D64_RS1_RE_COREE	0x50000000	/* core error */
+#define	D64_RS1_AD_MASK		0x0001ffff	/* active descriptor */
+#define	D64_RS1_RE_MASK		0xf0000000	/* receive errors */
+#define	D64_RS1_RE_SHIFT		28
+#define	D64_RS1_RE_NOERR	0x00000000	/* no error */
+#define	D64_RS1_RE_DPO		0x10000000	/* descriptor protocol error */
+#define	D64_RS1_RE_DFU		0x20000000	/* data fifo overflow */
+#define	D64_RS1_RE_DTE		0x30000000	/* data transfer error */
+#define	D64_RS1_RE_DESRE	0x40000000	/* descriptor read error */
+#define	D64_RS1_RE_COREE	0x50000000	/* core error */
 
-/* fअगरoaddr */
-#घोषणा	D64_FA_OFF_MASK		0xffff	/* offset */
-#घोषणा	D64_FA_SEL_MASK		0xf0000	/* select */
-#घोषणा	D64_FA_SEL_SHIFT	16
-#घोषणा	D64_FA_SEL_XDD		0x00000	/* transmit dma data */
-#घोषणा	D64_FA_SEL_XDP		0x10000	/* transmit dma poपूर्णांकers */
-#घोषणा	D64_FA_SEL_RDD		0x40000	/* receive dma data */
-#घोषणा	D64_FA_SEL_RDP		0x50000	/* receive dma poपूर्णांकers */
-#घोषणा	D64_FA_SEL_XFD		0x80000	/* transmit fअगरo data */
-#घोषणा	D64_FA_SEL_XFP		0x90000	/* transmit fअगरo poपूर्णांकers */
-#घोषणा	D64_FA_SEL_RFD		0xc0000	/* receive fअगरo data */
-#घोषणा	D64_FA_SEL_RFP		0xd0000	/* receive fअगरo poपूर्णांकers */
-#घोषणा	D64_FA_SEL_RSD		0xe0000	/* receive frame status data */
-#घोषणा	D64_FA_SEL_RSP		0xf0000	/* receive frame status poपूर्णांकers */
+/* fifoaddr */
+#define	D64_FA_OFF_MASK		0xffff	/* offset */
+#define	D64_FA_SEL_MASK		0xf0000	/* select */
+#define	D64_FA_SEL_SHIFT	16
+#define	D64_FA_SEL_XDD		0x00000	/* transmit dma data */
+#define	D64_FA_SEL_XDP		0x10000	/* transmit dma pointers */
+#define	D64_FA_SEL_RDD		0x40000	/* receive dma data */
+#define	D64_FA_SEL_RDP		0x50000	/* receive dma pointers */
+#define	D64_FA_SEL_XFD		0x80000	/* transmit fifo data */
+#define	D64_FA_SEL_XFP		0x90000	/* transmit fifo pointers */
+#define	D64_FA_SEL_RFD		0xc0000	/* receive fifo data */
+#define	D64_FA_SEL_RFP		0xd0000	/* receive fifo pointers */
+#define	D64_FA_SEL_RSD		0xe0000	/* receive frame status data */
+#define	D64_FA_SEL_RSP		0xf0000	/* receive frame status pointers */
 
 /* descriptor control flags 1 */
-#घोषणा D64_CTRL_COREFLAGS	0x0ff00000	/* core specअगरic flags */
-#घोषणा	D64_CTRL1_EOT		((u32)1 << 28)	/* end of descriptor table */
-#घोषणा	D64_CTRL1_IOC		((u32)1 << 29)	/* पूर्णांकerrupt on completion */
-#घोषणा	D64_CTRL1_खातापूर्ण		((u32)1 << 30)	/* end of frame */
-#घोषणा	D64_CTRL1_SOF		((u32)1 << 31)	/* start of frame */
+#define D64_CTRL_COREFLAGS	0x0ff00000	/* core specific flags */
+#define	D64_CTRL1_EOT		((u32)1 << 28)	/* end of descriptor table */
+#define	D64_CTRL1_IOC		((u32)1 << 29)	/* interrupt on completion */
+#define	D64_CTRL1_EOF		((u32)1 << 30)	/* end of frame */
+#define	D64_CTRL1_SOF		((u32)1 << 31)	/* start of frame */
 
 /* descriptor control flags 2 */
 /* buffer byte count. real data len must <= 16KB */
-#घोषणा	D64_CTRL2_BC_MASK	0x00007fff
+#define	D64_CTRL2_BC_MASK	0x00007fff
 /* address extension bits */
-#घोषणा	D64_CTRL2_AE		0x00030000
-#घोषणा	D64_CTRL2_AE_SHIFT	16
+#define	D64_CTRL2_AE		0x00030000
+#define	D64_CTRL2_AE_SHIFT	16
 /* parity bit */
-#घोषणा D64_CTRL2_PARITY	0x00040000
+#define D64_CTRL2_PARITY	0x00040000
 
-/* control flags in the range [27:20] are core-specअगरic and not defined here */
-#घोषणा	D64_CTRL_CORE_MASK	0x0ff00000
+/* control flags in the range [27:20] are core-specific and not defined here */
+#define	D64_CTRL_CORE_MASK	0x0ff00000
 
-#घोषणा D64_RX_FRM_STS_LEN	0x0000ffff	/* frame length mask */
-#घोषणा D64_RX_FRM_STS_OVFL	0x00800000	/* RxOverFlow */
-#घोषणा D64_RX_FRM_STS_DSCRCNT	0x0f000000  /* no. of descriptors used - 1 */
-#घोषणा D64_RX_FRM_STS_DATATYPE	0xf0000000	/* core-dependent data type */
+#define D64_RX_FRM_STS_LEN	0x0000ffff	/* frame length mask */
+#define D64_RX_FRM_STS_OVFL	0x00800000	/* RxOverFlow */
+#define D64_RX_FRM_STS_DSCRCNT	0x0f000000  /* no. of descriptors used - 1 */
+#define D64_RX_FRM_STS_DATATYPE	0xf0000000	/* core-dependent data type */
 
 /*
  * packet headroom necessary to accommodate the largest header
- * in the प्रणाली, (i.e TXOFF). By करोing, we aव्योम the need to
- * allocate an extra buffer क्रम the header when bridging to WL.
- * There is a compile समय check in wlc.c which ensure that this
+ * in the system, (i.e TXOFF). By doing, we avoid the need to
+ * allocate an extra buffer for the header when bridging to WL.
+ * There is a compile time check in wlc.c which ensure that this
  * value is at least as big as TXOFF. This value is used in
  * dma_rxfill().
  */
 
-#घोषणा BCMEXTRAHDROOM 172
+#define BCMEXTRAHDROOM 172
 
-#घोषणा	MAXNAMEL	8	/* 8 अक्षर names */
+#define	MAXNAMEL	8	/* 8 char names */
 
 /* macros to convert between byte offsets and indexes */
-#घोषणा	B2I(bytes, type)	((bytes) / माप(type))
-#घोषणा	I2B(index, type)	((index) * माप(type))
+#define	B2I(bytes, type)	((bytes) / sizeof(type))
+#define	I2B(index, type)	((index) * sizeof(type))
 
-#घोषणा	PCI32ADDR_HIGH		0xc0000000	/* address[31:30] */
-#घोषणा	PCI32ADDR_HIGH_SHIFT	30	/* address[31:30] */
+#define	PCI32ADDR_HIGH		0xc0000000	/* address[31:30] */
+#define	PCI32ADDR_HIGH_SHIFT	30	/* address[31:30] */
 
-#घोषणा	PCI64ADDR_HIGH		0x80000000	/* address[63] */
-#घोषणा	PCI64ADDR_HIGH_SHIFT	31	/* address[63] */
+#define	PCI64ADDR_HIGH		0x80000000	/* address[63] */
+#define	PCI64ADDR_HIGH_SHIFT	31	/* address[63] */
 
 /*
  * DMA Descriptor
- * Descriptors are only पढ़ो by the hardware, never written back.
+ * Descriptors are only read by the hardware, never written back.
  */
-काष्ठा dma64desc अणु
+struct dma64desc {
 	__le32 ctrl1;	/* misc control bits & bufcount */
 	__le32 ctrl2;	/* buffer count and address extension */
 	__le32 addrlow;	/* memory address of the date buffer, bits 31:0 */
 	__le32 addrhigh; /* memory address of the date buffer, bits 63:32 */
-पूर्ण;
+};
 
 /* dma engine software state */
-काष्ठा dma_info अणु
-	काष्ठा dma_pub dma; /* exported काष्ठाure */
-	अक्षर name[MAXNAMEL];	/* callers name क्रम diag msgs */
+struct dma_info {
+	struct dma_pub dma; /* exported structure */
+	char name[MAXNAMEL];	/* callers name for diag msgs */
 
-	काष्ठा bcma_device *core;
-	काष्ठा device *dmadev;
+	struct bcma_device *core;
+	struct device *dmadev;
 
-	/* session inक्रमmation क्रम AMPDU */
-	काष्ठा brcms_ampdu_session ampdu_session;
+	/* session information for AMPDU */
+	struct brcms_ampdu_session ampdu_session;
 
 	bool dma64;	/* this dma engine is operating in 64-bit mode */
 	bool addrext;	/* this dma engine supports DmaExtendedAddrChanges */
 
-	/* 64-bit dma tx engine रेजिस्टरs */
-	uपूर्णांक d64txregbase;
-	/* 64-bit dma rx engine रेजिस्टरs */
-	uपूर्णांक d64rxregbase;
-	/* poपूर्णांकer to dma64 tx descriptor ring */
-	काष्ठा dma64desc *txd64;
-	/* poपूर्णांकer to dma64 rx descriptor ring */
-	काष्ठा dma64desc *rxd64;
+	/* 64-bit dma tx engine registers */
+	uint d64txregbase;
+	/* 64-bit dma rx engine registers */
+	uint d64rxregbase;
+	/* pointer to dma64 tx descriptor ring */
+	struct dma64desc *txd64;
+	/* pointer to dma64 rx descriptor ring */
+	struct dma64desc *rxd64;
 
-	u16 dmadesc_align;	/* alignment requirement क्रम dma descriptors */
+	u16 dmadesc_align;	/* alignment requirement for dma descriptors */
 
 	u16 ntxd;		/* # tx descriptors tunable */
 	u16 txin;		/* index of next descriptor to reclaim */
 	u16 txout;		/* index of next descriptor to post */
-	/* poपूर्णांकer to parallel array of poपूर्णांकers to packets */
-	काष्ठा sk_buff **txp;
+	/* pointer to parallel array of pointers to packets */
+	struct sk_buff **txp;
 	/* Aligned physical address of descriptor ring */
 	dma_addr_t txdpa;
 	/* Original physical address of descriptor ring */
 	dma_addr_t txdpaorig;
 	u16 txdalign;	/* #bytes added to alloc'd mem to align txd */
-	u32 txdalloc;	/* #bytes allocated क्रम the ring */
-	u32 xmtptrbase;	/* When using unaligned descriptors, the ptr रेजिस्टर
+	u32 txdalloc;	/* #bytes allocated for the ring */
+	u32 xmtptrbase;	/* When using unaligned descriptors, the ptr register
 			 * is not just an index, it needs all 13 bits to be
-			 * an offset from the addr रेजिस्टर.
+			 * an offset from the addr register.
 			 */
 
 	u16 nrxd;	/* # rx descriptors tunable */
 	u16 rxin;	/* index of next descriptor to reclaim */
 	u16 rxout;	/* index of next descriptor to post */
-	/* poपूर्णांकer to parallel array of poपूर्णांकers to packets */
-	काष्ठा sk_buff **rxp;
+	/* pointer to parallel array of pointers to packets */
+	struct sk_buff **rxp;
 	/* Aligned physical address of descriptor ring */
 	dma_addr_t rxdpa;
 	/* Original physical address of descriptor ring */
 	dma_addr_t rxdpaorig;
 	u16 rxdalign;	/* #bytes added to alloc'd mem to align rxd */
-	u32 rxdalloc;	/* #bytes allocated क्रम the ring */
-	u32 rcvptrbase;	/* Base क्रम ptr reg when using unaligned descriptors */
+	u32 rxdalloc;	/* #bytes allocated for the ring */
+	u32 rcvptrbase;	/* Base for ptr reg when using unaligned descriptors */
 
 	/* tunables */
-	अचिन्हित पूर्णांक rxbufsize;	/* rx buffer size in bytes, not including
+	unsigned int rxbufsize;	/* rx buffer size in bytes, not including
 				 * the extra headroom
 				 */
-	uपूर्णांक rxextrahdrroom;	/* extra rx headroom, reverseved to assist upper
+	uint rxextrahdrroom;	/* extra rx headroom, reverseved to assist upper
 				 * stack, e.g. some rx pkt buffers will be
 				 * bridged to tx side without byte copying.
 				 * The extra headroom needs to be large enough
-				 * to fit txheader needs. Some करोngle driver may
+				 * to fit txheader needs. Some dongle driver may
 				 * not need it.
 				 */
-	uपूर्णांक nrxpost;		/* # rx buffers to keep posted */
-	अचिन्हित पूर्णांक rxoffset;	/* rxcontrol offset */
+	uint nrxpost;		/* # rx buffers to keep posted */
+	unsigned int rxoffset;	/* rxcontrol offset */
 	/* add to get dma address of descriptor ring, low 32 bits */
-	uपूर्णांक dकरोffsetlow;
+	uint ddoffsetlow;
 	/*   high 32 bits */
-	uपूर्णांक dकरोffsethigh;
+	uint ddoffsethigh;
 	/* add to get dma address of data buffer, low 32 bits */
-	uपूर्णांक dataoffsetlow;
+	uint dataoffsetlow;
 	/*   high 32 bits */
-	uपूर्णांक dataoffsethigh;
+	uint dataoffsethigh;
 	/* descriptor base need to be aligned or not */
 	bool aligndesc_4k;
-पूर्ण;
+};
 
-/* Check क्रम odd number of 1's */
-अटल u32 parity32(__le32 data)
-अणु
-	/* no swap needed क्रम counting 1's */
+/* Check for odd number of 1's */
+static u32 parity32(__le32 data)
+{
+	/* no swap needed for counting 1's */
 	u32 par_data = *(u32 *)&data;
 
 	par_data ^= par_data >> 16;
@@ -296,275 +295,275 @@
 	par_data ^= par_data >> 2;
 	par_data ^= par_data >> 1;
 
-	वापस par_data & 1;
-पूर्ण
+	return par_data & 1;
+}
 
-अटल bool dma64_dd_parity(काष्ठा dma64desc *dd)
-अणु
-	वापस parity32(dd->addrlow ^ dd->addrhigh ^ dd->ctrl1 ^ dd->ctrl2);
-पूर्ण
+static bool dma64_dd_parity(struct dma64desc *dd)
+{
+	return parity32(dd->addrlow ^ dd->addrhigh ^ dd->ctrl1 ^ dd->ctrl2);
+}
 
 /* descriptor bumping functions */
 
-अटल uपूर्णांक xxd(uपूर्णांक x, uपूर्णांक n)
-अणु
-	वापस x & (n - 1); /* faster than %, but n must be घातer of 2 */
-पूर्ण
+static uint xxd(uint x, uint n)
+{
+	return x & (n - 1); /* faster than %, but n must be power of 2 */
+}
 
-अटल uपूर्णांक txd(काष्ठा dma_info *di, uपूर्णांक x)
-अणु
-	वापस xxd(x, di->ntxd);
-पूर्ण
+static uint txd(struct dma_info *di, uint x)
+{
+	return xxd(x, di->ntxd);
+}
 
-अटल uपूर्णांक rxd(काष्ठा dma_info *di, uपूर्णांक x)
-अणु
-	वापस xxd(x, di->nrxd);
-पूर्ण
+static uint rxd(struct dma_info *di, uint x)
+{
+	return xxd(x, di->nrxd);
+}
 
-अटल uपूर्णांक nexttxd(काष्ठा dma_info *di, uपूर्णांक i)
-अणु
-	वापस txd(di, i + 1);
-पूर्ण
+static uint nexttxd(struct dma_info *di, uint i)
+{
+	return txd(di, i + 1);
+}
 
-अटल uपूर्णांक prevtxd(काष्ठा dma_info *di, uपूर्णांक i)
-अणु
-	वापस txd(di, i - 1);
-पूर्ण
+static uint prevtxd(struct dma_info *di, uint i)
+{
+	return txd(di, i - 1);
+}
 
-अटल uपूर्णांक nextrxd(काष्ठा dma_info *di, uपूर्णांक i)
-अणु
-	वापस rxd(di, i + 1);
-पूर्ण
+static uint nextrxd(struct dma_info *di, uint i)
+{
+	return rxd(di, i + 1);
+}
 
-अटल uपूर्णांक ntxdactive(काष्ठा dma_info *di, uपूर्णांक h, uपूर्णांक t)
-अणु
-	वापस txd(di, t-h);
-पूर्ण
+static uint ntxdactive(struct dma_info *di, uint h, uint t)
+{
+	return txd(di, t-h);
+}
 
-अटल uपूर्णांक nrxdactive(काष्ठा dma_info *di, uपूर्णांक h, uपूर्णांक t)
-अणु
-	वापस rxd(di, t-h);
-पूर्ण
+static uint nrxdactive(struct dma_info *di, uint h, uint t)
+{
+	return rxd(di, t-h);
+}
 
-अटल uपूर्णांक _dma_ctrlflags(काष्ठा dma_info *di, uपूर्णांक mask, uपूर्णांक flags)
-अणु
-	uपूर्णांक dmactrlflags;
+static uint _dma_ctrlflags(struct dma_info *di, uint mask, uint flags)
+{
+	uint dmactrlflags;
 
-	अगर (di == शून्य)
-		वापस 0;
+	if (di == NULL)
+		return 0;
 
 	dmactrlflags = di->dma.dmactrlflags;
 	dmactrlflags &= ~mask;
 	dmactrlflags |= flags;
 
-	/* If trying to enable parity, check अगर parity is actually supported */
-	अगर (dmactrlflags & DMA_CTRL_PEN) अणु
+	/* If trying to enable parity, check if parity is actually supported */
+	if (dmactrlflags & DMA_CTRL_PEN) {
 		u32 control;
 
-		control = bcma_पढ़ो32(di->core, DMA64TXREGOFFS(di, control));
-		bcma_ग_लिखो32(di->core, DMA64TXREGOFFS(di, control),
+		control = bcma_read32(di->core, DMA64TXREGOFFS(di, control));
+		bcma_write32(di->core, DMA64TXREGOFFS(di, control),
 		      control | D64_XC_PD);
-		अगर (bcma_पढ़ो32(di->core, DMA64TXREGOFFS(di, control)) &
+		if (bcma_read32(di->core, DMA64TXREGOFFS(di, control)) &
 		    D64_XC_PD)
 			/* We *can* disable it so it is supported,
-			 * restore control रेजिस्टर
+			 * restore control register
 			 */
-			bcma_ग_लिखो32(di->core, DMA64TXREGOFFS(di, control),
+			bcma_write32(di->core, DMA64TXREGOFFS(di, control),
 				     control);
-		अन्यथा
-			/* Not supported, करोn't allow it to be enabled */
+		else
+			/* Not supported, don't allow it to be enabled */
 			dmactrlflags &= ~DMA_CTRL_PEN;
-	पूर्ण
+	}
 
 	di->dma.dmactrlflags = dmactrlflags;
 
-	वापस dmactrlflags;
-पूर्ण
+	return dmactrlflags;
+}
 
-अटल bool _dma64_addrext(काष्ठा dma_info *di, uपूर्णांक ctrl_offset)
-अणु
+static bool _dma64_addrext(struct dma_info *di, uint ctrl_offset)
+{
 	u32 w;
 	bcma_set32(di->core, ctrl_offset, D64_XC_AE);
-	w = bcma_पढ़ो32(di->core, ctrl_offset);
+	w = bcma_read32(di->core, ctrl_offset);
 	bcma_mask32(di->core, ctrl_offset, ~D64_XC_AE);
-	वापस (w & D64_XC_AE) == D64_XC_AE;
-पूर्ण
+	return (w & D64_XC_AE) == D64_XC_AE;
+}
 
 /*
- * वापस true अगर this dma engine supports DmaExtendedAddrChanges,
+ * return true if this dma engine supports DmaExtendedAddrChanges,
  * otherwise false
  */
-अटल bool _dma_isaddrext(काष्ठा dma_info *di)
-अणु
+static bool _dma_isaddrext(struct dma_info *di)
+{
 	/* DMA64 supports full 32- or 64-bit operation. AE is always valid */
 
 	/* not all tx or rx channel are available */
-	अगर (di->d64txregbase != 0) अणु
-		अगर (!_dma64_addrext(di, DMA64TXREGOFFS(di, control)))
+	if (di->d64txregbase != 0) {
+		if (!_dma64_addrext(di, DMA64TXREGOFFS(di, control)))
 			brcms_dbg_dma(di->core,
 				      "%s: DMA64 tx doesn't have AE set\n",
 				      di->name);
-		वापस true;
-	पूर्ण अन्यथा अगर (di->d64rxregbase != 0) अणु
-		अगर (!_dma64_addrext(di, DMA64RXREGOFFS(di, control)))
+		return true;
+	} else if (di->d64rxregbase != 0) {
+		if (!_dma64_addrext(di, DMA64RXREGOFFS(di, control)))
 			brcms_dbg_dma(di->core,
 				      "%s: DMA64 rx doesn't have AE set\n",
 				      di->name);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool _dma_descriptor_align(काष्ठा dma_info *di)
-अणु
+static bool _dma_descriptor_align(struct dma_info *di)
+{
 	u32 addrl;
 
-	/* Check to see अगर the descriptors need to be aligned on 4K/8K or not */
-	अगर (di->d64txregbase != 0) अणु
-		bcma_ग_लिखो32(di->core, DMA64TXREGOFFS(di, addrlow), 0xff0);
-		addrl = bcma_पढ़ो32(di->core, DMA64TXREGOFFS(di, addrlow));
-		अगर (addrl != 0)
-			वापस false;
-	पूर्ण अन्यथा अगर (di->d64rxregbase != 0) अणु
-		bcma_ग_लिखो32(di->core, DMA64RXREGOFFS(di, addrlow), 0xff0);
-		addrl = bcma_पढ़ो32(di->core, DMA64RXREGOFFS(di, addrlow));
-		अगर (addrl != 0)
-			वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+	/* Check to see if the descriptors need to be aligned on 4K/8K or not */
+	if (di->d64txregbase != 0) {
+		bcma_write32(di->core, DMA64TXREGOFFS(di, addrlow), 0xff0);
+		addrl = bcma_read32(di->core, DMA64TXREGOFFS(di, addrlow));
+		if (addrl != 0)
+			return false;
+	} else if (di->d64rxregbase != 0) {
+		bcma_write32(di->core, DMA64RXREGOFFS(di, addrlow), 0xff0);
+		addrl = bcma_read32(di->core, DMA64RXREGOFFS(di, addrlow));
+		if (addrl != 0)
+			return false;
+	}
+	return true;
+}
 
 /*
  * Descriptor table must start at the DMA hardware dictated alignment, so
  * allocated memory must be large enough to support this requirement.
  */
-अटल व्योम *dma_alloc_consistent(काष्ठा dma_info *di, uपूर्णांक size,
-				  u16 align_bits, uपूर्णांक *alloced,
+static void *dma_alloc_consistent(struct dma_info *di, uint size,
+				  u16 align_bits, uint *alloced,
 				  dma_addr_t *pap)
-अणु
-	अगर (align_bits) अणु
+{
+	if (align_bits) {
 		u16 align = (1 << align_bits);
-		अगर (!IS_ALIGNED(PAGE_SIZE, align))
+		if (!IS_ALIGNED(PAGE_SIZE, align))
 			size += align;
 		*alloced = size;
-	पूर्ण
-	वापस dma_alloc_coherent(di->dmadev, size, pap, GFP_ATOMIC);
-पूर्ण
+	}
+	return dma_alloc_coherent(di->dmadev, size, pap, GFP_ATOMIC);
+}
 
-अटल
-u8 dma_align_sizetobits(uपूर्णांक size)
-अणु
+static
+u8 dma_align_sizetobits(uint size)
+{
 	u8 bitpos = 0;
-	जबतक (size >>= 1)
+	while (size >>= 1)
 		bitpos++;
-	वापस bitpos;
-पूर्ण
+	return bitpos;
+}
 
 /* This function ensures that the DMA descriptor ring will not get allocated
- * across Page boundary. If the allocation is करोne across the page boundary
- * at the first समय, then it is मुक्तd and the allocation is करोne at
+ * across Page boundary. If the allocation is done across the page boundary
+ * at the first time, then it is freed and the allocation is done at
  * descriptor ring size aligned location. This will ensure that the ring will
  * not cross page boundary
  */
-अटल व्योम *dma_ringalloc(काष्ठा dma_info *di, u32 boundary, uपूर्णांक size,
-			   u16 *alignbits, uपूर्णांक *alloced,
+static void *dma_ringalloc(struct dma_info *di, u32 boundary, uint size,
+			   u16 *alignbits, uint *alloced,
 			   dma_addr_t *descpa)
-अणु
-	व्योम *va;
+{
+	void *va;
 	u32 desc_strtaddr;
 	u32 alignbytes = 1 << *alignbits;
 
 	va = dma_alloc_consistent(di, size, *alignbits, alloced, descpa);
 
-	अगर (शून्य == va)
-		वापस शून्य;
+	if (NULL == va)
+		return NULL;
 
-	desc_strtaddr = (u32) roundup((अचिन्हित दीर्घ)va, alignbytes);
-	अगर (((desc_strtaddr + size - 1) & boundary) != (desc_strtaddr
-							& boundary)) अणु
+	desc_strtaddr = (u32) roundup((unsigned long)va, alignbytes);
+	if (((desc_strtaddr + size - 1) & boundary) != (desc_strtaddr
+							& boundary)) {
 		*alignbits = dma_align_sizetobits(size);
-		dma_मुक्त_coherent(di->dmadev, size, va, *descpa);
+		dma_free_coherent(di->dmadev, size, va, *descpa);
 		va = dma_alloc_consistent(di, size, *alignbits,
 			alloced, descpa);
-	पूर्ण
-	वापस va;
-पूर्ण
+	}
+	return va;
+}
 
-अटल bool dma64_alloc(काष्ठा dma_info *di, uपूर्णांक direction)
-अणु
+static bool dma64_alloc(struct dma_info *di, uint direction)
+{
 	u16 size;
-	uपूर्णांक ddlen;
-	व्योम *va;
-	uपूर्णांक alloced = 0;
+	uint ddlen;
+	void *va;
+	uint alloced = 0;
 	u16 align;
 	u16 align_bits;
 
-	ddlen = माप(काष्ठा dma64desc);
+	ddlen = sizeof(struct dma64desc);
 
 	size = (direction == DMA_TX) ? (di->ntxd * ddlen) : (di->nrxd * ddlen);
 	align_bits = di->dmadesc_align;
 	align = (1 << align_bits);
 
-	अगर (direction == DMA_TX) अणु
+	if (direction == DMA_TX) {
 		va = dma_ringalloc(di, D64RINGALIGN, size, &align_bits,
 			&alloced, &di->txdpaorig);
-		अगर (va == शून्य) अणु
+		if (va == NULL) {
 			brcms_dbg_dma(di->core,
 				      "%s: DMA_ALLOC_CONSISTENT(ntxd) failed\n",
 				      di->name);
-			वापस false;
-		पूर्ण
+			return false;
+		}
 		align = (1 << align_bits);
-		di->txd64 = (काष्ठा dma64desc *)
-					roundup((अचिन्हित दीर्घ)va, align);
-		di->txdalign = (uपूर्णांक) ((s8 *)di->txd64 - (s8 *) va);
+		di->txd64 = (struct dma64desc *)
+					roundup((unsigned long)va, align);
+		di->txdalign = (uint) ((s8 *)di->txd64 - (s8 *) va);
 		di->txdpa = di->txdpaorig + di->txdalign;
 		di->txdalloc = alloced;
-	पूर्ण अन्यथा अणु
+	} else {
 		va = dma_ringalloc(di, D64RINGALIGN, size, &align_bits,
 			&alloced, &di->rxdpaorig);
-		अगर (va == शून्य) अणु
+		if (va == NULL) {
 			brcms_dbg_dma(di->core,
 				      "%s: DMA_ALLOC_CONSISTENT(nrxd) failed\n",
 				      di->name);
-			वापस false;
-		पूर्ण
+			return false;
+		}
 		align = (1 << align_bits);
-		di->rxd64 = (काष्ठा dma64desc *)
-					roundup((अचिन्हित दीर्घ)va, align);
-		di->rxdalign = (uपूर्णांक) ((s8 *)di->rxd64 - (s8 *) va);
+		di->rxd64 = (struct dma64desc *)
+					roundup((unsigned long)va, align);
+		di->rxdalign = (uint) ((s8 *)di->rxd64 - (s8 *) va);
 		di->rxdpa = di->rxdpaorig + di->rxdalign;
 		di->rxdalloc = alloced;
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool _dma_alloc(काष्ठा dma_info *di, uपूर्णांक direction)
-अणु
-	वापस dma64_alloc(di, direction);
-पूर्ण
+static bool _dma_alloc(struct dma_info *di, uint direction)
+{
+	return dma64_alloc(di, direction);
+}
 
-काष्ठा dma_pub *dma_attach(अक्षर *name, काष्ठा brcms_c_info *wlc,
-			   uपूर्णांक txregbase, uपूर्णांक rxregbase, uपूर्णांक ntxd, uपूर्णांक nrxd,
-			   uपूर्णांक rxbufsize, पूर्णांक rxextheadroom,
-			   uपूर्णांक nrxpost, uपूर्णांक rxoffset)
-अणु
-	काष्ठा si_pub *sih = wlc->hw->sih;
-	काष्ठा bcma_device *core = wlc->hw->d11core;
-	काष्ठा dma_info *di;
+struct dma_pub *dma_attach(char *name, struct brcms_c_info *wlc,
+			   uint txregbase, uint rxregbase, uint ntxd, uint nrxd,
+			   uint rxbufsize, int rxextheadroom,
+			   uint nrxpost, uint rxoffset)
+{
+	struct si_pub *sih = wlc->hw->sih;
+	struct bcma_device *core = wlc->hw->d11core;
+	struct dma_info *di;
 	u8 rev = core->id.rev;
-	uपूर्णांक size;
-	काष्ठा si_info *sii = container_of(sih, काष्ठा si_info, pub);
+	uint size;
+	struct si_info *sii = container_of(sih, struct si_info, pub);
 
-	/* allocate निजी info काष्ठाure */
-	di = kzalloc(माप(काष्ठा dma_info), GFP_ATOMIC);
-	अगर (di == शून्य)
-		वापस शून्य;
+	/* allocate private info structure */
+	di = kzalloc(sizeof(struct dma_info), GFP_ATOMIC);
+	if (di == NULL)
+		return NULL;
 
 	di->dma64 =
-		((bcma_aपढ़ो32(core, BCMA_IOST) & SISF_DMA64) == SISF_DMA64);
+		((bcma_aread32(core, BCMA_IOST) & SISF_DMA64) == SISF_DMA64);
 
 	/* init dma reg info */
 	di->core = core;
@@ -573,7 +572,7 @@ u8 dma_align_sizetobits(uपूर्णांक size)
 
 	/*
 	 * Default flags (which can be changed by the driver calling
-	 * dma_ctrlflags beक्रमe enable): For backwards compatibility
+	 * dma_ctrlflags before enable): For backwards compatibility
 	 * both Rx Overflow Continue and Parity are DISABLED.
 	 */
 	_dma_ctrlflags(di, DMA_CTRL_ROC | DMA_CTRL_PEN, 0);
@@ -584,8 +583,8 @@ u8 dma_align_sizetobits(uपूर्णांक size)
 		      di->dma.dmactrlflags, ntxd, nrxd, rxbufsize,
 		      rxextheadroom, nrxpost, rxoffset, txregbase, rxregbase);
 
-	/* make a निजी copy of our callers name */
-	म_नकलन(di->name, name, MAXNAMEL);
+	/* make a private copy of our callers name */
+	strncpy(di->name, name, MAXNAMEL);
 	di->name[MAXNAMEL - 1] = '\0';
 
 	di->dmadev = core->dma_dev;
@@ -594,138 +593,138 @@ u8 dma_align_sizetobits(uपूर्णांक size)
 	di->ntxd = (u16) ntxd;
 	di->nrxd = (u16) nrxd;
 
-	/* the actual dma size करोesn't include the extra headroom */
+	/* the actual dma size doesn't include the extra headroom */
 	di->rxextrahdrroom =
 	    (rxextheadroom == -1) ? BCMEXTRAHDROOM : rxextheadroom;
-	अगर (rxbufsize > BCMEXTRAHDROOM)
+	if (rxbufsize > BCMEXTRAHDROOM)
 		di->rxbufsize = (u16) (rxbufsize - di->rxextrahdrroom);
-	अन्यथा
+	else
 		di->rxbufsize = (u16) rxbufsize;
 
 	di->nrxpost = (u16) nrxpost;
 	di->rxoffset = (u8) rxoffset;
 
 	/*
-	 * figure out the DMA physical address offset क्रम dd and data
+	 * figure out the DMA physical address offset for dd and data
 	 *     PCI/PCIE: they map silicon backplace address to zero
 	 *     based memory, need offset
 	 *     Other bus: use zero SI_BUS BIGENDIAN kludge: use sdram
-	 *     swapped region क्रम data buffer, not descriptor
+	 *     swapped region for data buffer, not descriptor
 	 */
-	di->dकरोffsetlow = 0;
+	di->ddoffsetlow = 0;
 	di->dataoffsetlow = 0;
-	/* क्रम pci bus, add offset */
-	अगर (sii->icbus->hosttype == BCMA_HOSTTYPE_PCI) अणु
-		/* add offset क्रम pcie with DMA64 bus */
-		di->dकरोffsetlow = 0;
-		di->dकरोffsethigh = SI_PCIE_DMA_H32;
-	पूर्ण
-	di->dataoffsetlow = di->dकरोffsetlow;
-	di->dataoffsethigh = di->dकरोffsethigh;
+	/* for pci bus, add offset */
+	if (sii->icbus->hosttype == BCMA_HOSTTYPE_PCI) {
+		/* add offset for pcie with DMA64 bus */
+		di->ddoffsetlow = 0;
+		di->ddoffsethigh = SI_PCIE_DMA_H32;
+	}
+	di->dataoffsetlow = di->ddoffsetlow;
+	di->dataoffsethigh = di->ddoffsethigh;
 
 	/* WAR64450 : DMACtl.Addr ext fields are not supported in SDIOD core. */
-	अगर ((core->id.id == BCMA_CORE_SDIO_DEV)
+	if ((core->id.id == BCMA_CORE_SDIO_DEV)
 	    && ((rev > 0) && (rev <= 2)))
 		di->addrext = false;
-	अन्यथा अगर ((core->id.id == BCMA_CORE_I2S) &&
+	else if ((core->id.id == BCMA_CORE_I2S) &&
 		 ((rev == 0) || (rev == 1)))
 		di->addrext = false;
-	अन्यथा
+	else
 		di->addrext = _dma_isaddrext(di);
 
-	/* करोes the descriptor need to be aligned and अगर yes, on 4K/8K or not */
+	/* does the descriptor need to be aligned and if yes, on 4K/8K or not */
 	di->aligndesc_4k = _dma_descriptor_align(di);
-	अगर (di->aligndesc_4k) अणु
+	if (di->aligndesc_4k) {
 		di->dmadesc_align = D64RINGALIGN_BITS;
-		अगर ((ntxd < D64MAXDD / 2) && (nrxd < D64MAXDD / 2))
-			/* क्रम smaller dd table, HW relax alignment reqmnt */
+		if ((ntxd < D64MAXDD / 2) && (nrxd < D64MAXDD / 2))
+			/* for smaller dd table, HW relax alignment reqmnt */
 			di->dmadesc_align = D64RINGALIGN_BITS - 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		di->dmadesc_align = 4;	/* 16 byte alignment */
-	पूर्ण
+	}
 
 	brcms_dbg_dma(di->core, "DMA descriptor align_needed %d, align %d\n",
 		      di->aligndesc_4k, di->dmadesc_align);
 
-	/* allocate tx packet poपूर्णांकer vector */
-	अगर (ntxd) अणु
-		size = ntxd * माप(व्योम *);
+	/* allocate tx packet pointer vector */
+	if (ntxd) {
+		size = ntxd * sizeof(void *);
 		di->txp = kzalloc(size, GFP_ATOMIC);
-		अगर (di->txp == शून्य)
-			जाओ fail;
-	पूर्ण
+		if (di->txp == NULL)
+			goto fail;
+	}
 
-	/* allocate rx packet poपूर्णांकer vector */
-	अगर (nrxd) अणु
-		size = nrxd * माप(व्योम *);
+	/* allocate rx packet pointer vector */
+	if (nrxd) {
+		size = nrxd * sizeof(void *);
 		di->rxp = kzalloc(size, GFP_ATOMIC);
-		अगर (di->rxp == शून्य)
-			जाओ fail;
-	पूर्ण
+		if (di->rxp == NULL)
+			goto fail;
+	}
 
 	/*
 	 * allocate transmit descriptor ring, only need ntxd descriptors
 	 * but it must be aligned
 	 */
-	अगर (ntxd) अणु
-		अगर (!_dma_alloc(di, DMA_TX))
-			जाओ fail;
-	पूर्ण
+	if (ntxd) {
+		if (!_dma_alloc(di, DMA_TX))
+			goto fail;
+	}
 
 	/*
 	 * allocate receive descriptor ring, only need nrxd descriptors
 	 * but it must be aligned
 	 */
-	अगर (nrxd) अणु
-		अगर (!_dma_alloc(di, DMA_RX))
-			जाओ fail;
-	पूर्ण
+	if (nrxd) {
+		if (!_dma_alloc(di, DMA_RX))
+			goto fail;
+	}
 
-	अगर ((di->dकरोffsetlow != 0) && !di->addrext) अणु
-		अगर (di->txdpa > SI_PCI_DMA_SZ) अणु
+	if ((di->ddoffsetlow != 0) && !di->addrext) {
+		if (di->txdpa > SI_PCI_DMA_SZ) {
 			brcms_dbg_dma(di->core,
 				      "%s: txdpa 0x%x: addrext not supported\n",
 				      di->name, (u32)di->txdpa);
-			जाओ fail;
-		पूर्ण
-		अगर (di->rxdpa > SI_PCI_DMA_SZ) अणु
+			goto fail;
+		}
+		if (di->rxdpa > SI_PCI_DMA_SZ) {
 			brcms_dbg_dma(di->core,
 				      "%s: rxdpa 0x%x: addrext not supported\n",
 				      di->name, (u32)di->rxdpa);
-			जाओ fail;
-		पूर्ण
-	पूर्ण
+			goto fail;
+		}
+	}
 
 	/* Initialize AMPDU session */
 	brcms_c_ampdu_reset_session(&di->ampdu_session, wlc);
 
 	brcms_dbg_dma(di->core,
 		      "ddoffsetlow 0x%x ddoffsethigh 0x%x dataoffsetlow 0x%x dataoffsethigh 0x%x addrext %d\n",
-		      di->dकरोffsetlow, di->dकरोffsethigh,
+		      di->ddoffsetlow, di->ddoffsethigh,
 		      di->dataoffsetlow, di->dataoffsethigh,
 		      di->addrext);
 
-	वापस (काष्ठा dma_pub *) di;
+	return (struct dma_pub *) di;
 
  fail:
-	dma_detach((काष्ठा dma_pub *)di);
-	वापस शून्य;
-पूर्ण
+	dma_detach((struct dma_pub *)di);
+	return NULL;
+}
 
-अटल अंतरभूत व्योम
-dma64_dd_upd(काष्ठा dma_info *di, काष्ठा dma64desc *ddring,
-	     dma_addr_t pa, uपूर्णांक outidx, u32 *flags, u32 bufcount)
-अणु
+static inline void
+dma64_dd_upd(struct dma_info *di, struct dma64desc *ddring,
+	     dma_addr_t pa, uint outidx, u32 *flags, u32 bufcount)
+{
 	u32 ctrl2 = bufcount & D64_CTRL2_BC_MASK;
 
 	/* PCI bus with big(>1G) physical address, use address extension */
-	अगर ((di->dataoffsetlow == 0) || !(pa & PCI32ADDR_HIGH)) अणु
+	if ((di->dataoffsetlow == 0) || !(pa & PCI32ADDR_HIGH)) {
 		ddring[outidx].addrlow = cpu_to_le32(pa + di->dataoffsetlow);
 		ddring[outidx].addrhigh = cpu_to_le32(di->dataoffsethigh);
 		ddring[outidx].ctrl1 = cpu_to_le32(*flags);
 		ddring[outidx].ctrl2 = cpu_to_le32(ctrl2);
-	पूर्ण अन्यथा अणु
-		/* address extension क्रम 32-bit PCI */
+	} else {
+		/* address extension for 32-bit PCI */
 		u32 ae;
 
 		ae = (pa & PCI32ADDR_HIGH) >> PCI32ADDR_HIGH_SHIFT;
@@ -736,161 +735,161 @@ dma64_dd_upd(काष्ठा dma_info *di, काष्ठा dma64desc *ddri
 		ddring[outidx].addrhigh = cpu_to_le32(di->dataoffsethigh);
 		ddring[outidx].ctrl1 = cpu_to_le32(*flags);
 		ddring[outidx].ctrl2 = cpu_to_le32(ctrl2);
-	पूर्ण
-	अगर (di->dma.dmactrlflags & DMA_CTRL_PEN) अणु
-		अगर (dma64_dd_parity(&ddring[outidx]))
+	}
+	if (di->dma.dmactrlflags & DMA_CTRL_PEN) {
+		if (dma64_dd_parity(&ddring[outidx]))
 			ddring[outidx].ctrl2 =
 			     cpu_to_le32(ctrl2 | D64_CTRL2_PARITY);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* !! may be called with core in reset */
-व्योम dma_detach(काष्ठा dma_pub *pub)
-अणु
-	काष्ठा dma_info *di = container_of(pub, काष्ठा dma_info, dma);
+void dma_detach(struct dma_pub *pub)
+{
+	struct dma_info *di = container_of(pub, struct dma_info, dma);
 
 	brcms_dbg_dma(di->core, "%s:\n", di->name);
 
-	/* मुक्त dma descriptor rings */
-	अगर (di->txd64)
-		dma_मुक्त_coherent(di->dmadev, di->txdalloc,
+	/* free dma descriptor rings */
+	if (di->txd64)
+		dma_free_coherent(di->dmadev, di->txdalloc,
 				  ((s8 *)di->txd64 - di->txdalign),
 				  (di->txdpaorig));
-	अगर (di->rxd64)
-		dma_मुक्त_coherent(di->dmadev, di->rxdalloc,
+	if (di->rxd64)
+		dma_free_coherent(di->dmadev, di->rxdalloc,
 				  ((s8 *)di->rxd64 - di->rxdalign),
 				  (di->rxdpaorig));
 
-	/* मुक्त packet poपूर्णांकer vectors */
-	kमुक्त(di->txp);
-	kमुक्त(di->rxp);
+	/* free packet pointer vectors */
+	kfree(di->txp);
+	kfree(di->rxp);
 
-	/* मुक्त our निजी info काष्ठाure */
-	kमुक्त(di);
+	/* free our private info structure */
+	kfree(di);
 
-पूर्ण
+}
 
 /* initialize descriptor table base address */
-अटल व्योम
-_dma_ddtable_init(काष्ठा dma_info *di, uपूर्णांक direction, dma_addr_t pa)
-अणु
-	अगर (!di->aligndesc_4k) अणु
-		अगर (direction == DMA_TX)
+static void
+_dma_ddtable_init(struct dma_info *di, uint direction, dma_addr_t pa)
+{
+	if (!di->aligndesc_4k) {
+		if (direction == DMA_TX)
 			di->xmtptrbase = pa;
-		अन्यथा
+		else
 			di->rcvptrbase = pa;
-	पूर्ण
+	}
 
-	अगर ((di->dकरोffsetlow == 0)
-	    || !(pa & PCI32ADDR_HIGH)) अणु
-		अगर (direction == DMA_TX) अणु
-			bcma_ग_लिखो32(di->core, DMA64TXREGOFFS(di, addrlow),
-				     pa + di->dकरोffsetlow);
-			bcma_ग_लिखो32(di->core, DMA64TXREGOFFS(di, addrhigh),
-				     di->dकरोffsethigh);
-		पूर्ण अन्यथा अणु
-			bcma_ग_लिखो32(di->core, DMA64RXREGOFFS(di, addrlow),
-				     pa + di->dकरोffsetlow);
-			bcma_ग_लिखो32(di->core, DMA64RXREGOFFS(di, addrhigh),
-				     di->dकरोffsethigh);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+	if ((di->ddoffsetlow == 0)
+	    || !(pa & PCI32ADDR_HIGH)) {
+		if (direction == DMA_TX) {
+			bcma_write32(di->core, DMA64TXREGOFFS(di, addrlow),
+				     pa + di->ddoffsetlow);
+			bcma_write32(di->core, DMA64TXREGOFFS(di, addrhigh),
+				     di->ddoffsethigh);
+		} else {
+			bcma_write32(di->core, DMA64RXREGOFFS(di, addrlow),
+				     pa + di->ddoffsetlow);
+			bcma_write32(di->core, DMA64RXREGOFFS(di, addrhigh),
+				     di->ddoffsethigh);
+		}
+	} else {
 		/* DMA64 32bits address extension */
 		u32 ae;
 
-		/* shअगरt the high bit(s) from pa to ae */
+		/* shift the high bit(s) from pa to ae */
 		ae = (pa & PCI32ADDR_HIGH) >> PCI32ADDR_HIGH_SHIFT;
 		pa &= ~PCI32ADDR_HIGH;
 
-		अगर (direction == DMA_TX) अणु
-			bcma_ग_लिखो32(di->core, DMA64TXREGOFFS(di, addrlow),
-				     pa + di->dकरोffsetlow);
-			bcma_ग_लिखो32(di->core, DMA64TXREGOFFS(di, addrhigh),
-				     di->dकरोffsethigh);
+		if (direction == DMA_TX) {
+			bcma_write32(di->core, DMA64TXREGOFFS(di, addrlow),
+				     pa + di->ddoffsetlow);
+			bcma_write32(di->core, DMA64TXREGOFFS(di, addrhigh),
+				     di->ddoffsethigh);
 			bcma_maskset32(di->core, DMA64TXREGOFFS(di, control),
 				       D64_XC_AE, (ae << D64_XC_AE_SHIFT));
-		पूर्ण अन्यथा अणु
-			bcma_ग_लिखो32(di->core, DMA64RXREGOFFS(di, addrlow),
-				     pa + di->dकरोffsetlow);
-			bcma_ग_लिखो32(di->core, DMA64RXREGOFFS(di, addrhigh),
-				     di->dकरोffsethigh);
+		} else {
+			bcma_write32(di->core, DMA64RXREGOFFS(di, addrlow),
+				     pa + di->ddoffsetlow);
+			bcma_write32(di->core, DMA64RXREGOFFS(di, addrhigh),
+				     di->ddoffsethigh);
 			bcma_maskset32(di->core, DMA64RXREGOFFS(di, control),
 				       D64_RC_AE, (ae << D64_RC_AE_SHIFT));
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम _dma_rxenable(काष्ठा dma_info *di)
-अणु
-	uपूर्णांक dmactrlflags = di->dma.dmactrlflags;
+static void _dma_rxenable(struct dma_info *di)
+{
+	uint dmactrlflags = di->dma.dmactrlflags;
 	u32 control;
 
 	brcms_dbg_dma(di->core, "%s:\n", di->name);
 
-	control = D64_RC_RE | (bcma_पढ़ो32(di->core,
+	control = D64_RC_RE | (bcma_read32(di->core,
 					   DMA64RXREGOFFS(di, control)) &
 			       D64_RC_AE);
 
-	अगर ((dmactrlflags & DMA_CTRL_PEN) == 0)
+	if ((dmactrlflags & DMA_CTRL_PEN) == 0)
 		control |= D64_RC_PD;
 
-	अगर (dmactrlflags & DMA_CTRL_ROC)
+	if (dmactrlflags & DMA_CTRL_ROC)
 		control |= D64_RC_OC;
 
-	bcma_ग_लिखो32(di->core, DMA64RXREGOFFS(di, control),
+	bcma_write32(di->core, DMA64RXREGOFFS(di, control),
 		((di->rxoffset << D64_RC_RO_SHIFT) | control));
-पूर्ण
+}
 
-व्योम dma_rxinit(काष्ठा dma_pub *pub)
-अणु
-	काष्ठा dma_info *di = container_of(pub, काष्ठा dma_info, dma);
+void dma_rxinit(struct dma_pub *pub)
+{
+	struct dma_info *di = container_of(pub, struct dma_info, dma);
 
 	brcms_dbg_dma(di->core, "%s:\n", di->name);
 
-	अगर (di->nrxd == 0)
-		वापस;
+	if (di->nrxd == 0)
+		return;
 
 	di->rxin = di->rxout = 0;
 
 	/* clear rx descriptor ring */
-	स_रखो(di->rxd64, '\0', di->nrxd * माप(काष्ठा dma64desc));
+	memset(di->rxd64, '\0', di->nrxd * sizeof(struct dma64desc));
 
 	/* DMA engine with out alignment requirement requires table to be inited
-	 * beक्रमe enabling the engine
+	 * before enabling the engine
 	 */
-	अगर (!di->aligndesc_4k)
+	if (!di->aligndesc_4k)
 		_dma_ddtable_init(di, DMA_RX, di->rxdpa);
 
 	_dma_rxenable(di);
 
-	अगर (di->aligndesc_4k)
+	if (di->aligndesc_4k)
 		_dma_ddtable_init(di, DMA_RX, di->rxdpa);
-पूर्ण
+}
 
-अटल काष्ठा sk_buff *dma64_getnextrxp(काष्ठा dma_info *di, bool क्रमceall)
-अणु
-	uपूर्णांक i, curr;
-	काष्ठा sk_buff *rxp;
+static struct sk_buff *dma64_getnextrxp(struct dma_info *di, bool forceall)
+{
+	uint i, curr;
+	struct sk_buff *rxp;
 	dma_addr_t pa;
 
 	i = di->rxin;
 
-	/* वापस अगर no packets posted */
-	अगर (i == di->rxout)
-		वापस शून्य;
+	/* return if no packets posted */
+	if (i == di->rxout)
+		return NULL;
 
 	curr =
-	    B2I(((bcma_पढ़ो32(di->core,
+	    B2I(((bcma_read32(di->core,
 			      DMA64RXREGOFFS(di, status0)) & D64_RS0_CD_MASK) -
-		 di->rcvptrbase) & D64_RS0_CD_MASK, काष्ठा dma64desc);
+		 di->rcvptrbase) & D64_RS0_CD_MASK, struct dma64desc);
 
-	/* ignore curr अगर क्रमceall */
-	अगर (!क्रमceall && (i == curr))
-		वापस शून्य;
+	/* ignore curr if forceall */
+	if (!forceall && (i == curr))
+		return NULL;
 
-	/* get the packet poपूर्णांकer that corresponds to the rx descriptor */
+	/* get the packet pointer that corresponds to the rx descriptor */
 	rxp = di->rxp[i];
-	di->rxp[i] = शून्य;
+	di->rxp[i] = NULL;
 
 	pa = le32_to_cpu(di->rxd64[i].addrlow) - di->dataoffsetlow;
 
@@ -902,46 +901,46 @@ _dma_ddtable_init(काष्ठा dma_info *di, uपूर्णांक dir
 
 	di->rxin = nextrxd(di, i);
 
-	वापस rxp;
-पूर्ण
+	return rxp;
+}
 
-अटल काष्ठा sk_buff *_dma_getnextrxp(काष्ठा dma_info *di, bool क्रमceall)
-अणु
-	अगर (di->nrxd == 0)
-		वापस शून्य;
+static struct sk_buff *_dma_getnextrxp(struct dma_info *di, bool forceall)
+{
+	if (di->nrxd == 0)
+		return NULL;
 
-	वापस dma64_getnextrxp(di, क्रमceall);
-पूर्ण
+	return dma64_getnextrxp(di, forceall);
+}
 
 /*
  * !! rx entry routine
- * वापसs the number packages in the next frame, or 0 अगर there are no more
- *   अगर DMA_CTRL_RXMULTI is defined, DMA scattering(multiple buffers) is
+ * returns the number packages in the next frame, or 0 if there are no more
+ *   if DMA_CTRL_RXMULTI is defined, DMA scattering(multiple buffers) is
  *   supported with pkts chain
  *   otherwise, it's treated as giant pkt and will be tossed.
  *   The DMA scattering starts with normal DMA header, followed by first
- *   buffer data. After it reaches the max size of buffer, the data जारीs
+ *   buffer data. After it reaches the max size of buffer, the data continues
  *   in next DMA descriptor buffer WITHOUT DMA header
  */
-पूर्णांक dma_rx(काष्ठा dma_pub *pub, काष्ठा sk_buff_head *skb_list)
-अणु
-	काष्ठा dma_info *di = container_of(pub, काष्ठा dma_info, dma);
-	काष्ठा sk_buff_head dma_frames;
-	काष्ठा sk_buff *p, *next;
-	uपूर्णांक len;
-	uपूर्णांक pkt_len;
-	पूर्णांक resid = 0;
-	पूर्णांक pktcnt = 1;
+int dma_rx(struct dma_pub *pub, struct sk_buff_head *skb_list)
+{
+	struct dma_info *di = container_of(pub, struct dma_info, dma);
+	struct sk_buff_head dma_frames;
+	struct sk_buff *p, *next;
+	uint len;
+	uint pkt_len;
+	int resid = 0;
+	int pktcnt = 1;
 
 	skb_queue_head_init(&dma_frames);
  next_frame:
 	p = _dma_getnextrxp(di, false);
-	अगर (p == शून्य)
-		वापस 0;
+	if (p == NULL)
+		return 0;
 
 	len = le16_to_cpu(*(__le16 *) (p->data));
 	brcms_dbg_dma(di->core, "%s: dma_rx len %d\n", di->name, len);
-	dma_spin_क्रम_len(len, p);
+	dma_spin_for_len(len, p);
 
 	/* set actual length */
 	pkt_len = min((di->rxoffset + len), di->rxbufsize);
@@ -949,88 +948,88 @@ _dma_ddtable_init(काष्ठा dma_info *di, uपूर्णांक dir
 	skb_queue_tail(&dma_frames, p);
 	resid = len - (di->rxbufsize - di->rxoffset);
 
-	/* check क्रम single or multi-buffer rx */
-	अगर (resid > 0) अणु
-		जबतक ((resid > 0) && (p = _dma_getnextrxp(di, false))) अणु
-			pkt_len = min_t(uपूर्णांक, resid, di->rxbufsize);
+	/* check for single or multi-buffer rx */
+	if (resid > 0) {
+		while ((resid > 0) && (p = _dma_getnextrxp(di, false))) {
+			pkt_len = min_t(uint, resid, di->rxbufsize);
 			__skb_trim(p, pkt_len);
 			skb_queue_tail(&dma_frames, p);
 			resid -= di->rxbufsize;
 			pktcnt++;
-		पूर्ण
+		}
 
-#अगर_घोषित DEBUG
-		अगर (resid > 0) अणु
-			uपूर्णांक cur;
+#ifdef DEBUG
+		if (resid > 0) {
+			uint cur;
 			cur =
-			    B2I(((bcma_पढ़ो32(di->core,
+			    B2I(((bcma_read32(di->core,
 					      DMA64RXREGOFFS(di, status0)) &
 				  D64_RS0_CD_MASK) - di->rcvptrbase) &
-				D64_RS0_CD_MASK, काष्ठा dma64desc);
+				D64_RS0_CD_MASK, struct dma64desc);
 			brcms_dbg_dma(di->core,
 				      "rxin %d rxout %d, hw_curr %d\n",
 				      di->rxin, di->rxout, cur);
-		पूर्ण
-#पूर्ण_अगर				/* DEBUG */
+		}
+#endif				/* DEBUG */
 
-		अगर ((di->dma.dmactrlflags & DMA_CTRL_RXMULTI) == 0) अणु
+		if ((di->dma.dmactrlflags & DMA_CTRL_RXMULTI) == 0) {
 			brcms_dbg_dma(di->core, "%s: bad frame length (%d)\n",
 				      di->name, len);
-			skb_queue_walk_safe(&dma_frames, p, next) अणु
+			skb_queue_walk_safe(&dma_frames, p, next) {
 				skb_unlink(p, &dma_frames);
-				brcmu_pkt_buf_मुक्त_skb(p);
-			पूर्ण
+				brcmu_pkt_buf_free_skb(p);
+			}
 			di->dma.rxgiants++;
 			pktcnt = 1;
-			जाओ next_frame;
-		पूर्ण
-	पूर्ण
+			goto next_frame;
+		}
+	}
 
 	skb_queue_splice_tail(&dma_frames, skb_list);
-	वापस pktcnt;
-पूर्ण
+	return pktcnt;
+}
 
-अटल bool dma64_rxidle(काष्ठा dma_info *di)
-अणु
+static bool dma64_rxidle(struct dma_info *di)
+{
 	brcms_dbg_dma(di->core, "%s:\n", di->name);
 
-	अगर (di->nrxd == 0)
-		वापस true;
+	if (di->nrxd == 0)
+		return true;
 
-	वापस ((bcma_पढ़ो32(di->core,
+	return ((bcma_read32(di->core,
 			     DMA64RXREGOFFS(di, status0)) & D64_RS0_CD_MASK) ==
-		(bcma_पढ़ो32(di->core, DMA64RXREGOFFS(di, ptr)) &
+		(bcma_read32(di->core, DMA64RXREGOFFS(di, ptr)) &
 		 D64_RS0_CD_MASK));
-पूर्ण
+}
 
-अटल bool dma64_txidle(काष्ठा dma_info *di)
-अणु
-	अगर (di->ntxd == 0)
-		वापस true;
+static bool dma64_txidle(struct dma_info *di)
+{
+	if (di->ntxd == 0)
+		return true;
 
-	वापस ((bcma_पढ़ो32(di->core,
+	return ((bcma_read32(di->core,
 			     DMA64TXREGOFFS(di, status0)) & D64_XS0_CD_MASK) ==
-		(bcma_पढ़ो32(di->core, DMA64TXREGOFFS(di, ptr)) &
+		(bcma_read32(di->core, DMA64TXREGOFFS(di, ptr)) &
 		 D64_XS0_CD_MASK));
-पूर्ण
+}
 
 /*
  * post receive buffers
- *  Return false अगर refill failed completely or dma mapping failed. The ring
+ *  Return false if refill failed completely or dma mapping failed. The ring
  *  is empty, which will stall the rx dma and user might want to call rxfill
  *  again asap. This is unlikely to happen on a memory-rich NIC, but often on
- *  memory-स्थिरrained करोngle.
+ *  memory-constrained dongle.
  */
-bool dma_rxfill(काष्ठा dma_pub *pub)
-अणु
-	काष्ठा dma_info *di = container_of(pub, काष्ठा dma_info, dma);
-	काष्ठा sk_buff *p;
+bool dma_rxfill(struct dma_pub *pub)
+{
+	struct dma_info *di = container_of(pub, struct dma_info, dma);
+	struct sk_buff *p;
 	u16 rxin, rxout;
 	u32 flags = 0;
-	uपूर्णांक n;
-	uपूर्णांक i;
+	uint n;
+	uint i;
 	dma_addr_t pa;
-	uपूर्णांक extra_offset = 0;
+	uint extra_offset = 0;
 	bool ring_empty;
 
 	ring_empty = false;
@@ -1048,167 +1047,167 @@ bool dma_rxfill(काष्ठा dma_pub *pub)
 
 	brcms_dbg_dma(di->core, "%s: post %d\n", di->name, n);
 
-	अगर (di->rxbufsize > BCMEXTRAHDROOM)
+	if (di->rxbufsize > BCMEXTRAHDROOM)
 		extra_offset = di->rxextrahdrroom;
 
-	क्रम (i = 0; i < n; i++) अणु
+	for (i = 0; i < n; i++) {
 		/*
-		 * the di->rxbufsize करोesn't include the extra headroom,
+		 * the di->rxbufsize doesn't include the extra headroom,
 		 * we need to add it to the size to be allocated
 		 */
 		p = brcmu_pkt_buf_get_skb(di->rxbufsize + extra_offset);
 
-		अगर (p == शून्य) अणु
+		if (p == NULL) {
 			brcms_dbg_dma(di->core, "%s: out of rxbufs\n",
 				      di->name);
-			अगर (i == 0 && dma64_rxidle(di)) अणु
+			if (i == 0 && dma64_rxidle(di)) {
 				brcms_dbg_dma(di->core, "%s: ring is empty !\n",
 					      di->name);
 				ring_empty = true;
-			पूर्ण
+			}
 			di->dma.rxnobuf++;
-			अवरोध;
-		पूर्ण
-		/* reserve an extra headroom, अगर applicable */
-		अगर (extra_offset)
+			break;
+		}
+		/* reserve an extra headroom, if applicable */
+		if (extra_offset)
 			skb_pull(p, extra_offset);
 
-		/* Do a cached ग_लिखो instead of uncached ग_लिखो since DMA_MAP
+		/* Do a cached write instead of uncached write since DMA_MAP
 		 * will flush the cache.
 		 */
 		*(u32 *) (p->data) = 0;
 
 		pa = dma_map_single(di->dmadev, p->data, di->rxbufsize,
 				    DMA_FROM_DEVICE);
-		अगर (dma_mapping_error(di->dmadev, pa)) अणु
-			brcmu_pkt_buf_मुक्त_skb(p);
-			वापस false;
-		पूर्ण
+		if (dma_mapping_error(di->dmadev, pa)) {
+			brcmu_pkt_buf_free_skb(p);
+			return false;
+		}
 
-		/* save the मुक्त packet poपूर्णांकer */
+		/* save the free packet pointer */
 		di->rxp[rxout] = p;
 
-		/* reset flags क्रम each descriptor */
+		/* reset flags for each descriptor */
 		flags = 0;
-		अगर (rxout == (di->nrxd - 1))
+		if (rxout == (di->nrxd - 1))
 			flags = D64_CTRL1_EOT;
 
 		dma64_dd_upd(di, di->rxd64, pa, rxout, &flags,
 			     di->rxbufsize);
 		rxout = nextrxd(di, rxout);
-	पूर्ण
+	}
 
 	di->rxout = rxout;
 
-	/* update the chip lastdscr poपूर्णांकer */
-	bcma_ग_लिखो32(di->core, DMA64RXREGOFFS(di, ptr),
-	      di->rcvptrbase + I2B(rxout, काष्ठा dma64desc));
+	/* update the chip lastdscr pointer */
+	bcma_write32(di->core, DMA64RXREGOFFS(di, ptr),
+	      di->rcvptrbase + I2B(rxout, struct dma64desc));
 
-	वापस ring_empty;
-पूर्ण
+	return ring_empty;
+}
 
-व्योम dma_rxreclaim(काष्ठा dma_pub *pub)
-अणु
-	काष्ठा dma_info *di = container_of(pub, काष्ठा dma_info, dma);
-	काष्ठा sk_buff *p;
+void dma_rxreclaim(struct dma_pub *pub)
+{
+	struct dma_info *di = container_of(pub, struct dma_info, dma);
+	struct sk_buff *p;
 
 	brcms_dbg_dma(di->core, "%s:\n", di->name);
 
-	जबतक ((p = _dma_getnextrxp(di, true)))
-		brcmu_pkt_buf_मुक्त_skb(p);
-पूर्ण
+	while ((p = _dma_getnextrxp(di, true)))
+		brcmu_pkt_buf_free_skb(p);
+}
 
-व्योम dma_counterreset(काष्ठा dma_pub *pub)
-अणु
+void dma_counterreset(struct dma_pub *pub)
+{
 	/* reset all software counters */
 	pub->rxgiants = 0;
 	pub->rxnobuf = 0;
 	pub->txnobuf = 0;
-पूर्ण
+}
 
 /* get the address of the var in order to change later */
-अचिन्हित दीर्घ dma_getvar(काष्ठा dma_pub *pub, स्थिर अक्षर *name)
-अणु
-	काष्ठा dma_info *di = container_of(pub, काष्ठा dma_info, dma);
+unsigned long dma_getvar(struct dma_pub *pub, const char *name)
+{
+	struct dma_info *di = container_of(pub, struct dma_info, dma);
 
-	अगर (!म_भेद(name, "&txavail"))
-		वापस (अचिन्हित दीर्घ)&(di->dma.txavail);
-	वापस 0;
-पूर्ण
+	if (!strcmp(name, "&txavail"))
+		return (unsigned long)&(di->dma.txavail);
+	return 0;
+}
 
 /* 64-bit DMA functions */
 
-व्योम dma_txinit(काष्ठा dma_pub *pub)
-अणु
-	काष्ठा dma_info *di = container_of(pub, काष्ठा dma_info, dma);
+void dma_txinit(struct dma_pub *pub)
+{
+	struct dma_info *di = container_of(pub, struct dma_info, dma);
 	u32 control = D64_XC_XE;
 
 	brcms_dbg_dma(di->core, "%s:\n", di->name);
 
-	अगर (di->ntxd == 0)
-		वापस;
+	if (di->ntxd == 0)
+		return;
 
 	di->txin = di->txout = 0;
 	di->dma.txavail = di->ntxd - 1;
 
 	/* clear tx descriptor ring */
-	स_रखो(di->txd64, '\0', (di->ntxd * माप(काष्ठा dma64desc)));
+	memset(di->txd64, '\0', (di->ntxd * sizeof(struct dma64desc)));
 
 	/* DMA engine with out alignment requirement requires table to be inited
-	 * beक्रमe enabling the engine
+	 * before enabling the engine
 	 */
-	अगर (!di->aligndesc_4k)
+	if (!di->aligndesc_4k)
 		_dma_ddtable_init(di, DMA_TX, di->txdpa);
 
-	अगर ((di->dma.dmactrlflags & DMA_CTRL_PEN) == 0)
+	if ((di->dma.dmactrlflags & DMA_CTRL_PEN) == 0)
 		control |= D64_XC_PD;
 	bcma_set32(di->core, DMA64TXREGOFFS(di, control), control);
 
 	/* DMA engine with alignment requirement requires table to be inited
-	 * beक्रमe enabling the engine
+	 * before enabling the engine
 	 */
-	अगर (di->aligndesc_4k)
+	if (di->aligndesc_4k)
 		_dma_ddtable_init(di, DMA_TX, di->txdpa);
-पूर्ण
+}
 
-व्योम dma_txsuspend(काष्ठा dma_pub *pub)
-अणु
-	काष्ठा dma_info *di = container_of(pub, काष्ठा dma_info, dma);
+void dma_txsuspend(struct dma_pub *pub)
+{
+	struct dma_info *di = container_of(pub, struct dma_info, dma);
 
 	brcms_dbg_dma(di->core, "%s:\n", di->name);
 
-	अगर (di->ntxd == 0)
-		वापस;
+	if (di->ntxd == 0)
+		return;
 
 	bcma_set32(di->core, DMA64TXREGOFFS(di, control), D64_XC_SE);
-पूर्ण
+}
 
-व्योम dma_txresume(काष्ठा dma_pub *pub)
-अणु
-	काष्ठा dma_info *di = container_of(pub, काष्ठा dma_info, dma);
+void dma_txresume(struct dma_pub *pub)
+{
+	struct dma_info *di = container_of(pub, struct dma_info, dma);
 
 	brcms_dbg_dma(di->core, "%s:\n", di->name);
 
-	अगर (di->ntxd == 0)
-		वापस;
+	if (di->ntxd == 0)
+		return;
 
 	bcma_mask32(di->core, DMA64TXREGOFFS(di, control), ~D64_XC_SE);
-पूर्ण
+}
 
-bool dma_txsuspended(काष्ठा dma_pub *pub)
-अणु
-	काष्ठा dma_info *di = container_of(pub, काष्ठा dma_info, dma);
+bool dma_txsuspended(struct dma_pub *pub)
+{
+	struct dma_info *di = container_of(pub, struct dma_info, dma);
 
-	वापस (di->ntxd == 0) ||
-	       ((bcma_पढ़ो32(di->core,
+	return (di->ntxd == 0) ||
+	       ((bcma_read32(di->core,
 			     DMA64TXREGOFFS(di, control)) & D64_XC_SE) ==
 		D64_XC_SE);
-पूर्ण
+}
 
-व्योम dma_txreclaim(काष्ठा dma_pub *pub, क्रमागत txd_range range)
-अणु
-	काष्ठा dma_info *di = container_of(pub, काष्ठा dma_info, dma);
-	काष्ठा sk_buff *p;
+void dma_txreclaim(struct dma_pub *pub, enum txd_range range)
+{
+	struct dma_info *di = container_of(pub, struct dma_info, dma);
+	struct sk_buff *p;
 
 	brcms_dbg_dma(di->core, "%s: %s\n",
 		      di->name,
@@ -1216,71 +1215,71 @@ bool dma_txsuspended(काष्ठा dma_pub *pub)
 		      range == DMA_RANGE_TRANSMITTED ? "transmitted" :
 		      "transferred");
 
-	अगर (di->txin == di->txout)
-		वापस;
+	if (di->txin == di->txout)
+		return;
 
-	जबतक ((p = dma_getnexttxp(pub, range))) अणु
-		/* For unframed data, we करोn't have any packets to मुक्त */
-		अगर (!(di->dma.dmactrlflags & DMA_CTRL_UNFRAMED))
-			brcmu_pkt_buf_मुक्त_skb(p);
-	पूर्ण
-पूर्ण
+	while ((p = dma_getnexttxp(pub, range))) {
+		/* For unframed data, we don't have any packets to free */
+		if (!(di->dma.dmactrlflags & DMA_CTRL_UNFRAMED))
+			brcmu_pkt_buf_free_skb(p);
+	}
+}
 
-bool dma_txreset(काष्ठा dma_pub *pub)
-अणु
-	काष्ठा dma_info *di = container_of(pub, काष्ठा dma_info, dma);
+bool dma_txreset(struct dma_pub *pub)
+{
+	struct dma_info *di = container_of(pub, struct dma_info, dma);
 	u32 status;
 
-	अगर (di->ntxd == 0)
-		वापस true;
+	if (di->ntxd == 0)
+		return true;
 
 	/* suspend tx DMA first */
-	bcma_ग_लिखो32(di->core, DMA64TXREGOFFS(di, control), D64_XC_SE);
+	bcma_write32(di->core, DMA64TXREGOFFS(di, control), D64_XC_SE);
 	SPINWAIT(((status =
-		   (bcma_पढ़ो32(di->core, DMA64TXREGOFFS(di, status0)) &
+		   (bcma_read32(di->core, DMA64TXREGOFFS(di, status0)) &
 		    D64_XS0_XS_MASK)) != D64_XS0_XS_DISABLED) &&
 		  (status != D64_XS0_XS_IDLE) && (status != D64_XS0_XS_STOPPED),
 		 10000);
 
-	bcma_ग_लिखो32(di->core, DMA64TXREGOFFS(di, control), 0);
+	bcma_write32(di->core, DMA64TXREGOFFS(di, control), 0);
 	SPINWAIT(((status =
-		   (bcma_पढ़ो32(di->core, DMA64TXREGOFFS(di, status0)) &
+		   (bcma_read32(di->core, DMA64TXREGOFFS(di, status0)) &
 		    D64_XS0_XS_MASK)) != D64_XS0_XS_DISABLED), 10000);
 
-	/* रुको क्रम the last transaction to complete */
+	/* wait for the last transaction to complete */
 	udelay(300);
 
-	वापस status == D64_XS0_XS_DISABLED;
-पूर्ण
+	return status == D64_XS0_XS_DISABLED;
+}
 
-bool dma_rxreset(काष्ठा dma_pub *pub)
-अणु
-	काष्ठा dma_info *di = container_of(pub, काष्ठा dma_info, dma);
+bool dma_rxreset(struct dma_pub *pub)
+{
+	struct dma_info *di = container_of(pub, struct dma_info, dma);
 	u32 status;
 
-	अगर (di->nrxd == 0)
-		वापस true;
+	if (di->nrxd == 0)
+		return true;
 
-	bcma_ग_लिखो32(di->core, DMA64RXREGOFFS(di, control), 0);
+	bcma_write32(di->core, DMA64RXREGOFFS(di, control), 0);
 	SPINWAIT(((status =
-		   (bcma_पढ़ो32(di->core, DMA64RXREGOFFS(di, status0)) &
+		   (bcma_read32(di->core, DMA64RXREGOFFS(di, status0)) &
 		    D64_RS0_RS_MASK)) != D64_RS0_RS_DISABLED), 10000);
 
-	वापस status == D64_RS0_RS_DISABLED;
-पूर्ण
+	return status == D64_RS0_RS_DISABLED;
+}
 
-अटल व्योम dma_txenq(काष्ठा dma_info *di, काष्ठा sk_buff *p)
-अणु
-	अचिन्हित अक्षर *data;
-	uपूर्णांक len;
+static void dma_txenq(struct dma_info *di, struct sk_buff *p)
+{
+	unsigned char *data;
+	uint len;
 	u16 txout;
 	u32 flags = 0;
 	dma_addr_t pa;
 
 	txout = di->txout;
 
-	अगर (WARN_ON(nexttxd(di, txout) == di->txin))
-		वापस;
+	if (WARN_ON(nexttxd(di, txout) == di->txin))
+		return;
 
 	/*
 	 * obtain and initialize transmit descriptor entry.
@@ -1290,18 +1289,18 @@ bool dma_rxreset(काष्ठा dma_pub *pub)
 
 	/* get physical address of buffer start */
 	pa = dma_map_single(di->dmadev, data, len, DMA_TO_DEVICE);
-	/* अगर mapping failed, मुक्त skb */
-	अगर (dma_mapping_error(di->dmadev, pa)) अणु
-		brcmu_pkt_buf_मुक्त_skb(p);
-		वापस;
-	पूर्ण
+	/* if mapping failed, free skb */
+	if (dma_mapping_error(di->dmadev, pa)) {
+		brcmu_pkt_buf_free_skb(p);
+		return;
+	}
 	/* With a DMA segment list, Descriptor table is filled
 	 * using the segment list instead of looping over
-	 * buffers in multi-chain DMA. Thereक्रमe, खातापूर्ण क्रम SGLIST
+	 * buffers in multi-chain DMA. Therefore, EOF for SGLIST
 	 * is when end of segment list is reached.
 	 */
-	flags = D64_CTRL1_SOF | D64_CTRL1_IOC | D64_CTRL1_खातापूर्ण;
-	अगर (txout == (di->ntxd - 1))
+	flags = D64_CTRL1_SOF | D64_CTRL1_IOC | D64_CTRL1_EOF;
+	if (txout == (di->ntxd - 1))
 		flags |= D64_CTRL1_EOT;
 
 	dma64_dd_upd(di, di->txd64, pa, txout, &flags, len);
@@ -1313,12 +1312,12 @@ bool dma_rxreset(काष्ठा dma_pub *pub)
 
 	/* bump the tx descriptor index */
 	di->txout = txout;
-पूर्ण
+}
 
-अटल व्योम ampdu_finalize(काष्ठा dma_info *di)
-अणु
-	काष्ठा brcms_ampdu_session *session = &di->ampdu_session;
-	काष्ठा sk_buff *p;
+static void ampdu_finalize(struct dma_info *di)
+{
+	struct brcms_ampdu_session *session = &di->ampdu_session;
+	struct sk_buff *p;
 
 	trace_brcms_ampdu_session(&session->wlc->hw->d11core->dev,
 				  session->max_ampdu_len,
@@ -1327,151 +1326,151 @@ bool dma_rxreset(काष्ठा dma_pub *pub)
 				  skb_queue_len(&session->skb_list),
 				  session->dma_len);
 
-	अगर (WARN_ON(skb_queue_empty(&session->skb_list)))
-		वापस;
+	if (WARN_ON(skb_queue_empty(&session->skb_list)))
+		return;
 
 	brcms_c_ampdu_finalize(session);
 
-	जबतक (!skb_queue_empty(&session->skb_list)) अणु
+	while (!skb_queue_empty(&session->skb_list)) {
 		p = skb_dequeue(&session->skb_list);
 		dma_txenq(di, p);
-	पूर्ण
+	}
 
-	bcma_ग_लिखो32(di->core, DMA64TXREGOFFS(di, ptr),
-		     di->xmtptrbase + I2B(di->txout, काष्ठा dma64desc));
+	bcma_write32(di->core, DMA64TXREGOFFS(di, ptr),
+		     di->xmtptrbase + I2B(di->txout, struct dma64desc));
 	brcms_c_ampdu_reset_session(session, session->wlc);
-पूर्ण
+}
 
-अटल व्योम prep_ampdu_frame(काष्ठा dma_info *di, काष्ठा sk_buff *p)
-अणु
-	काष्ठा brcms_ampdu_session *session = &di->ampdu_session;
-	पूर्णांक ret;
+static void prep_ampdu_frame(struct dma_info *di, struct sk_buff *p)
+{
+	struct brcms_ampdu_session *session = &di->ampdu_session;
+	int ret;
 
 	ret = brcms_c_ampdu_add_frame(session, p);
-	अगर (ret == -ENOSPC) अणु
+	if (ret == -ENOSPC) {
 		/*
 		 * AMPDU cannot accomodate this frame. Close out the in-
 		 * progress AMPDU session and start a new one.
 		 */
 		ampdu_finalize(di);
 		ret = brcms_c_ampdu_add_frame(session, p);
-	पूर्ण
+	}
 
 	WARN_ON(ret);
-पूर्ण
+}
 
 /* Update count of available tx descriptors based on current DMA state */
-अटल व्योम dma_update_txavail(काष्ठा dma_info *di)
-अणु
+static void dma_update_txavail(struct dma_info *di)
+{
 	/*
 	 * Available space is number of descriptors less the number of
 	 * active descriptors and the number of queued AMPDU frames.
 	 */
 	di->dma.txavail = di->ntxd - ntxdactive(di, di->txin, di->txout) -
 			  skb_queue_len(&di->ampdu_session.skb_list) - 1;
-पूर्ण
+}
 
 /*
  * !! tx entry routine
- * WARNING: call must check the वापस value क्रम error.
+ * WARNING: call must check the return value for error.
  *   the error(toss frames) could be fatal and cause many subsequent hard
  *   to debug problems
  */
-पूर्णांक dma_txfast(काष्ठा brcms_c_info *wlc, काष्ठा dma_pub *pub,
-	       काष्ठा sk_buff *p)
-अणु
-	काष्ठा dma_info *di = container_of(pub, काष्ठा dma_info, dma);
-	काष्ठा brcms_ampdu_session *session = &di->ampdu_session;
-	काष्ठा ieee80211_tx_info *tx_info;
+int dma_txfast(struct brcms_c_info *wlc, struct dma_pub *pub,
+	       struct sk_buff *p)
+{
+	struct dma_info *di = container_of(pub, struct dma_info, dma);
+	struct brcms_ampdu_session *session = &di->ampdu_session;
+	struct ieee80211_tx_info *tx_info;
 	bool is_ampdu;
 
 	/* no use to transmit a zero length packet */
-	अगर (p->len == 0)
-		वापस 0;
+	if (p->len == 0)
+		return 0;
 
-	/* वापस nonzero अगर out of tx descriptors */
-	अगर (di->dma.txavail == 0 || nexttxd(di, di->txout) == di->txin)
-		जाओ outoftxd;
+	/* return nonzero if out of tx descriptors */
+	if (di->dma.txavail == 0 || nexttxd(di, di->txout) == di->txin)
+		goto outoftxd;
 
 	tx_info = IEEE80211_SKB_CB(p);
 	is_ampdu = tx_info->flags & IEEE80211_TX_CTL_AMPDU;
-	अगर (is_ampdu)
+	if (is_ampdu)
 		prep_ampdu_frame(di, p);
-	अन्यथा
+	else
 		dma_txenq(di, p);
 
 	/* tx flow control */
 	dma_update_txavail(di);
 
 	/* kick the chip */
-	अगर (is_ampdu) अणु
+	if (is_ampdu) {
 		/*
-		 * Start sending data अगर we've got a full AMPDU, there's
+		 * Start sending data if we've got a full AMPDU, there's
 		 * no more space in the DMA ring, or the ring isn't
 		 * currently transmitting.
 		 */
-		अगर (skb_queue_len(&session->skb_list) == session->max_ampdu_frames ||
+		if (skb_queue_len(&session->skb_list) == session->max_ampdu_frames ||
 		    di->dma.txavail == 0 || dma64_txidle(di))
 			ampdu_finalize(di);
-	पूर्ण अन्यथा अणु
-		bcma_ग_लिखो32(di->core, DMA64TXREGOFFS(di, ptr),
-			     di->xmtptrbase + I2B(di->txout, काष्ठा dma64desc));
-	पूर्ण
+	} else {
+		bcma_write32(di->core, DMA64TXREGOFFS(di, ptr),
+			     di->xmtptrbase + I2B(di->txout, struct dma64desc));
+	}
 
-	वापस 0;
+	return 0;
 
  outoftxd:
 	brcms_dbg_dma(di->core, "%s: out of txds !!!\n", di->name);
-	brcmu_pkt_buf_मुक्त_skb(p);
+	brcmu_pkt_buf_free_skb(p);
 	di->dma.txavail = 0;
 	di->dma.txnobuf++;
-	वापस -ENOSPC;
-पूर्ण
+	return -ENOSPC;
+}
 
-व्योम dma_txflush(काष्ठा dma_pub *pub)
-अणु
-	काष्ठा dma_info *di = container_of(pub, काष्ठा dma_info, dma);
-	काष्ठा brcms_ampdu_session *session = &di->ampdu_session;
+void dma_txflush(struct dma_pub *pub)
+{
+	struct dma_info *di = container_of(pub, struct dma_info, dma);
+	struct brcms_ampdu_session *session = &di->ampdu_session;
 
-	अगर (!skb_queue_empty(&session->skb_list))
+	if (!skb_queue_empty(&session->skb_list))
 		ampdu_finalize(di);
-पूर्ण
+}
 
-पूर्णांक dma_txpending(काष्ठा dma_pub *pub)
-अणु
-	काष्ठा dma_info *di = container_of(pub, काष्ठा dma_info, dma);
-	वापस ntxdactive(di, di->txin, di->txout);
-पूर्ण
+int dma_txpending(struct dma_pub *pub)
+{
+	struct dma_info *di = container_of(pub, struct dma_info, dma);
+	return ntxdactive(di, di->txin, di->txout);
+}
 
 /*
  * If we have an active AMPDU session and are not transmitting,
- * this function will क्रमce tx to start.
+ * this function will force tx to start.
  */
-व्योम dma_kick_tx(काष्ठा dma_pub *pub)
-अणु
-	काष्ठा dma_info *di = container_of(pub, काष्ठा dma_info, dma);
-	काष्ठा brcms_ampdu_session *session = &di->ampdu_session;
+void dma_kick_tx(struct dma_pub *pub)
+{
+	struct dma_info *di = container_of(pub, struct dma_info, dma);
+	struct brcms_ampdu_session *session = &di->ampdu_session;
 
-	अगर (!skb_queue_empty(&session->skb_list) && dma64_txidle(di))
+	if (!skb_queue_empty(&session->skb_list) && dma64_txidle(di))
 		ampdu_finalize(di);
-पूर्ण
+}
 
 /*
- * Reclaim next completed txd (txds अगर using chained buffers) in the range
- * specअगरied and वापस associated packet.
+ * Reclaim next completed txd (txds if using chained buffers) in the range
+ * specified and return associated packet.
  * If range is DMA_RANGE_TRANSMITTED, reclaim descriptors that have be
- * transmitted as noted by the hardware "CurrDescr" poपूर्णांकer.
+ * transmitted as noted by the hardware "CurrDescr" pointer.
  * If range is DMA_RANGE_TRANSFERED, reclaim descriptors that have be
- * transferred by the DMA as noted by the hardware "ActiveDescr" poपूर्णांकer.
+ * transferred by the DMA as noted by the hardware "ActiveDescr" pointer.
  * If range is DMA_RANGE_ALL, reclaim all txd(s) posted to the ring and
- * वापस associated packet regardless of the value of hardware poपूर्णांकers.
+ * return associated packet regardless of the value of hardware pointers.
  */
-काष्ठा sk_buff *dma_getnexttxp(काष्ठा dma_pub *pub, क्रमागत txd_range range)
-अणु
-	काष्ठा dma_info *di = container_of(pub, काष्ठा dma_info, dma);
+struct sk_buff *dma_getnexttxp(struct dma_pub *pub, enum txd_range range)
+{
+	struct dma_info *di = container_of(pub, struct dma_info, dma);
 	u16 start, end, i;
 	u16 active_desc;
-	काष्ठा sk_buff *txp;
+	struct sk_buff *txp;
 
 	brcms_dbg_dma(di->core, "%s: %s\n",
 		      di->name,
@@ -1479,39 +1478,39 @@ bool dma_rxreset(काष्ठा dma_pub *pub)
 		      range == DMA_RANGE_TRANSMITTED ? "transmitted" :
 		      "transferred");
 
-	अगर (di->ntxd == 0)
-		वापस शून्य;
+	if (di->ntxd == 0)
+		return NULL;
 
-	txp = शून्य;
+	txp = NULL;
 
 	start = di->txin;
-	अगर (range == DMA_RANGE_ALL)
+	if (range == DMA_RANGE_ALL)
 		end = di->txout;
-	अन्यथा अणु
-		end = (u16) (B2I(((bcma_पढ़ो32(di->core,
+	else {
+		end = (u16) (B2I(((bcma_read32(di->core,
 					       DMA64TXREGOFFS(di, status0)) &
 				   D64_XS0_CD_MASK) - di->xmtptrbase) &
-				 D64_XS0_CD_MASK, काष्ठा dma64desc));
+				 D64_XS0_CD_MASK, struct dma64desc));
 
-		अगर (range == DMA_RANGE_TRANSFERED) अणु
+		if (range == DMA_RANGE_TRANSFERED) {
 			active_desc =
-				(u16)(bcma_पढ़ो32(di->core,
+				(u16)(bcma_read32(di->core,
 						  DMA64TXREGOFFS(di, status1)) &
 				      D64_XS1_AD_MASK);
 			active_desc =
 			    (active_desc - di->xmtptrbase) & D64_XS0_CD_MASK;
-			active_desc = B2I(active_desc, काष्ठा dma64desc);
-			अगर (end != active_desc)
+			active_desc = B2I(active_desc, struct dma64desc);
+			if (end != active_desc)
 				end = prevtxd(di, active_desc);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर ((start == 0) && (end > di->txout))
-		जाओ bogus;
+	if ((start == 0) && (end > di->txout))
+		goto bogus;
 
-	क्रम (i = start; i != end && !txp; i = nexttxd(di, i)) अणु
+	for (i = start; i != end && !txp; i = nexttxd(di, i)) {
 		dma_addr_t pa;
-		uपूर्णांक size;
+		uint size;
 
 		pa = le32_to_cpu(di->txd64[i].addrlow) - di->dataoffsetlow;
 
@@ -1523,45 +1522,45 @@ bool dma_rxreset(काष्ठा dma_pub *pub)
 		di->txd64[i].addrhigh = cpu_to_le32(0xdeadbeef);
 
 		txp = di->txp[i];
-		di->txp[i] = शून्य;
+		di->txp[i] = NULL;
 
 		dma_unmap_single(di->dmadev, pa, size, DMA_TO_DEVICE);
-	पूर्ण
+	}
 
 	di->txin = i;
 
 	/* tx flow control */
 	dma_update_txavail(di);
 
-	वापस txp;
+	return txp;
 
  bogus:
 	brcms_dbg_dma(di->core, "bogus curr: start %d end %d txout %d\n",
 		      start, end, di->txout);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
- * Mac80211 initiated actions someबार require packets in the DMA queue to be
- * modअगरied. The modअगरied portion of the packet is not under control of the DMA
- * engine. This function calls a caller-supplied function क्रम each packet in
- * the caller specअगरied dma chain.
+ * Mac80211 initiated actions sometimes require packets in the DMA queue to be
+ * modified. The modified portion of the packet is not under control of the DMA
+ * engine. This function calls a caller-supplied function for each packet in
+ * the caller specified dma chain.
  */
-व्योम dma_walk_packets(काष्ठा dma_pub *dmah, व्योम (*callback_fnc)
-		      (व्योम *pkt, व्योम *arg_a), व्योम *arg_a)
-अणु
-	काष्ठा dma_info *di = container_of(dmah, काष्ठा dma_info, dma);
-	uपूर्णांक i =   di->txin;
-	uपूर्णांक end = di->txout;
-	काष्ठा sk_buff *skb;
-	काष्ठा ieee80211_tx_info *tx_info;
+void dma_walk_packets(struct dma_pub *dmah, void (*callback_fnc)
+		      (void *pkt, void *arg_a), void *arg_a)
+{
+	struct dma_info *di = container_of(dmah, struct dma_info, dma);
+	uint i =   di->txin;
+	uint end = di->txout;
+	struct sk_buff *skb;
+	struct ieee80211_tx_info *tx_info;
 
-	जबतक (i != end) अणु
+	while (i != end) {
 		skb = di->txp[i];
-		अगर (skb != शून्य) अणु
-			tx_info = (काष्ठा ieee80211_tx_info *)skb->cb;
+		if (skb != NULL) {
+			tx_info = (struct ieee80211_tx_info *)skb->cb;
 			(callback_fnc)(tx_info, arg_a);
-		पूर्ण
+		}
 		i = nexttxd(di, i);
-	पूर्ण
-पूर्ण
+	}
+}

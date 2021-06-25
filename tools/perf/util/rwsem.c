@@ -1,34 +1,33 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश "util.h"
-#समावेश "rwsem.h"
+// SPDX-License-Identifier: GPL-2.0
+#include "util.h"
+#include "rwsem.h"
 
-पूर्णांक init_rwsem(काष्ठा rw_semaphore *sem)
-अणु
-	वापस pthपढ़ो_rwlock_init(&sem->lock, शून्य);
-पूर्ण
+int init_rwsem(struct rw_semaphore *sem)
+{
+	return pthread_rwlock_init(&sem->lock, NULL);
+}
 
-पूर्णांक निकास_rwsem(काष्ठा rw_semaphore *sem)
-अणु
-	वापस pthपढ़ो_rwlock_destroy(&sem->lock);
-पूर्ण
+int exit_rwsem(struct rw_semaphore *sem)
+{
+	return pthread_rwlock_destroy(&sem->lock);
+}
 
-पूर्णांक करोwn_पढ़ो(काष्ठा rw_semaphore *sem)
-अणु
-	वापस perf_singlethपढ़ोed ? 0 : pthपढ़ो_rwlock_rdlock(&sem->lock);
-पूर्ण
+int down_read(struct rw_semaphore *sem)
+{
+	return perf_singlethreaded ? 0 : pthread_rwlock_rdlock(&sem->lock);
+}
 
-पूर्णांक up_पढ़ो(काष्ठा rw_semaphore *sem)
-अणु
-	वापस perf_singlethपढ़ोed ? 0 : pthपढ़ो_rwlock_unlock(&sem->lock);
-पूर्ण
+int up_read(struct rw_semaphore *sem)
+{
+	return perf_singlethreaded ? 0 : pthread_rwlock_unlock(&sem->lock);
+}
 
-पूर्णांक करोwn_ग_लिखो(काष्ठा rw_semaphore *sem)
-अणु
-	वापस perf_singlethपढ़ोed ? 0 : pthपढ़ो_rwlock_wrlock(&sem->lock);
-पूर्ण
+int down_write(struct rw_semaphore *sem)
+{
+	return perf_singlethreaded ? 0 : pthread_rwlock_wrlock(&sem->lock);
+}
 
-पूर्णांक up_ग_लिखो(काष्ठा rw_semaphore *sem)
-अणु
-	वापस perf_singlethपढ़ोed ? 0 : pthपढ़ो_rwlock_unlock(&sem->lock);
-पूर्ण
+int up_write(struct rw_semaphore *sem)
+{
+	return perf_singlethreaded ? 0 : pthread_rwlock_unlock(&sem->lock);
+}

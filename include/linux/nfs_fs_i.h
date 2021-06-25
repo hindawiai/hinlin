@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _NFS_FS_I
-#घोषणा _NFS_FS_I
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _NFS_FS_I
+#define _NFS_FS_I
 
-काष्ठा nlm_lockowner;
+struct nlm_lockowner;
 
 /*
  * NFS lock info
  */
-काष्ठा nfs_lock_info अणु
+struct nfs_lock_info {
 	u32		state;
-	काष्ठा nlm_lockowner *owner;
-	काष्ठा list_head list;
-पूर्ण;
+	struct nlm_lockowner *owner;
+	struct list_head list;
+};
 
-काष्ठा nfs4_lock_state;
-काष्ठा nfs4_lock_info अणु
-	काष्ठा nfs4_lock_state *owner;
-पूर्ण;
+struct nfs4_lock_state;
+struct nfs4_lock_info {
+	struct nfs4_lock_state *owner;
+};
 
-#पूर्ण_अगर
+#endif

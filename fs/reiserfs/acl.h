@@ -1,79 +1,78 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#समावेश <linux/init.h>
-#समावेश <linux/posix_acl.h>
+/* SPDX-License-Identifier: GPL-2.0 */
+#include <linux/init.h>
+#include <linux/posix_acl.h>
 
-#घोषणा REISERFS_ACL_VERSION	0x0001
+#define REISERFS_ACL_VERSION	0x0001
 
-प्रकार काष्ठा अणु
+typedef struct {
 	__le16 e_tag;
 	__le16 e_perm;
 	__le32 e_id;
-पूर्ण reiserfs_acl_entry;
+} reiserfs_acl_entry;
 
-प्रकार काष्ठा अणु
+typedef struct {
 	__le16 e_tag;
 	__le16 e_perm;
-पूर्ण reiserfs_acl_entry_लघु;
+} reiserfs_acl_entry_short;
 
-प्रकार काष्ठा अणु
+typedef struct {
 	__le32 a_version;
-पूर्ण reiserfs_acl_header;
+} reiserfs_acl_header;
 
-अटल अंतरभूत माप_प्रकार reiserfs_acl_size(पूर्णांक count)
-अणु
-	अगर (count <= 4) अणु
-		वापस माप(reiserfs_acl_header) +
-		    count * माप(reiserfs_acl_entry_लघु);
-	पूर्ण अन्यथा अणु
-		वापस माप(reiserfs_acl_header) +
-		    4 * माप(reiserfs_acl_entry_लघु) +
-		    (count - 4) * माप(reiserfs_acl_entry);
-	पूर्ण
-पूर्ण
+static inline size_t reiserfs_acl_size(int count)
+{
+	if (count <= 4) {
+		return sizeof(reiserfs_acl_header) +
+		    count * sizeof(reiserfs_acl_entry_short);
+	} else {
+		return sizeof(reiserfs_acl_header) +
+		    4 * sizeof(reiserfs_acl_entry_short) +
+		    (count - 4) * sizeof(reiserfs_acl_entry);
+	}
+}
 
-अटल अंतरभूत पूर्णांक reiserfs_acl_count(माप_प्रकार size)
-अणु
-	sमाप_प्रकार s;
-	size -= माप(reiserfs_acl_header);
-	s = size - 4 * माप(reiserfs_acl_entry_लघु);
-	अगर (s < 0) अणु
-		अगर (size % माप(reiserfs_acl_entry_लघु))
-			वापस -1;
-		वापस size / माप(reiserfs_acl_entry_लघु);
-	पूर्ण अन्यथा अणु
-		अगर (s % माप(reiserfs_acl_entry))
-			वापस -1;
-		वापस s / माप(reiserfs_acl_entry) + 4;
-	पूर्ण
-पूर्ण
+static inline int reiserfs_acl_count(size_t size)
+{
+	ssize_t s;
+	size -= sizeof(reiserfs_acl_header);
+	s = size - 4 * sizeof(reiserfs_acl_entry_short);
+	if (s < 0) {
+		if (size % sizeof(reiserfs_acl_entry_short))
+			return -1;
+		return size / sizeof(reiserfs_acl_entry_short);
+	} else {
+		if (s % sizeof(reiserfs_acl_entry))
+			return -1;
+		return s / sizeof(reiserfs_acl_entry) + 4;
+	}
+}
 
-#अगर_घोषित CONFIG_REISERFS_FS_POSIX_ACL
-काष्ठा posix_acl *reiserfs_get_acl(काष्ठा inode *inode, पूर्णांक type);
-पूर्णांक reiserfs_set_acl(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
-		     काष्ठा posix_acl *acl, पूर्णांक type);
-पूर्णांक reiserfs_acl_chmod(काष्ठा inode *inode);
-पूर्णांक reiserfs_inherit_शेष_acl(काष्ठा reiserfs_transaction_handle *th,
-				 काष्ठा inode *dir, काष्ठा dentry *dentry,
-				 काष्ठा inode *inode);
-पूर्णांक reiserfs_cache_शेष_acl(काष्ठा inode *dir);
+#ifdef CONFIG_REISERFS_FS_POSIX_ACL
+struct posix_acl *reiserfs_get_acl(struct inode *inode, int type);
+int reiserfs_set_acl(struct user_namespace *mnt_userns, struct inode *inode,
+		     struct posix_acl *acl, int type);
+int reiserfs_acl_chmod(struct inode *inode);
+int reiserfs_inherit_default_acl(struct reiserfs_transaction_handle *th,
+				 struct inode *dir, struct dentry *dentry,
+				 struct inode *inode);
+int reiserfs_cache_default_acl(struct inode *dir);
 
-#अन्यथा
+#else
 
-#घोषणा reiserfs_cache_शेष_acl(inode) 0
-#घोषणा reiserfs_get_acl शून्य
-#घोषणा reiserfs_set_acl शून्य
+#define reiserfs_cache_default_acl(inode) 0
+#define reiserfs_get_acl NULL
+#define reiserfs_set_acl NULL
 
-अटल अंतरभूत पूर्णांक reiserfs_acl_chmod(काष्ठा inode *inode)
-अणु
-	वापस 0;
-पूर्ण
+static inline int reiserfs_acl_chmod(struct inode *inode)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक
-reiserfs_inherit_शेष_acl(काष्ठा reiserfs_transaction_handle *th,
-			     स्थिर काष्ठा inode *dir, काष्ठा dentry *dentry,
-			     काष्ठा inode *inode)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+static inline int
+reiserfs_inherit_default_acl(struct reiserfs_transaction_handle *th,
+			     const struct inode *dir, struct dentry *dentry,
+			     struct inode *inode)
+{
+	return 0;
+}
+#endif

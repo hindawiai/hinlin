@@ -1,54 +1,53 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /* The industrial I/O core, trigger consumer functions
  *
  * Copyright (c) 2008-2011 Jonathan Cameron
  */
 
-#अगर_अघोषित __LINUX_IIO_TRIGGER_CONSUMER_H__
-#घोषणा __LINUX_IIO_TRIGGER_CONSUMER_H__
+#ifndef __LINUX_IIO_TRIGGER_CONSUMER_H__
+#define __LINUX_IIO_TRIGGER_CONSUMER_H__
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/types.h>
+#include <linux/interrupt.h>
+#include <linux/types.h>
 
-काष्ठा iio_dev;
-काष्ठा iio_trigger;
+struct iio_dev;
+struct iio_trigger;
 
 /**
- * काष्ठा iio_poll_func - poll function pair
+ * struct iio_poll_func - poll function pair
  *
- * @indio_dev:			data specअगरic to device (passed पूर्णांकo poll func)
+ * @indio_dev:			data specific to device (passed into poll func)
  * @h:				the function that is actually run on trigger
- * @thपढ़ो:			thपढ़ोed पूर्णांकerrupt part
- * @type:			the type of पूर्णांकerrupt (basically अगर oneshot)
- * @name:			name used to identअगरy the trigger consumer.
+ * @thread:			threaded interrupt part
+ * @type:			the type of interrupt (basically if oneshot)
+ * @name:			name used to identify the trigger consumer.
  * @irq:			the corresponding irq as allocated from the
  *				trigger pool
- * @बारtamp:			some devices need a बारtamp grabbed as soon
+ * @timestamp:			some devices need a timestamp grabbed as soon
  *				as possible after the trigger - hence handler
  *				passes it via here.
  **/
-काष्ठा iio_poll_func अणु
-	काष्ठा iio_dev *indio_dev;
-	irqवापस_t (*h)(पूर्णांक irq, व्योम *p);
-	irqवापस_t (*thपढ़ो)(पूर्णांक irq, व्योम *p);
-	पूर्णांक type;
-	अक्षर *name;
-	पूर्णांक irq;
-	s64 बारtamp;
-पूर्ण;
+struct iio_poll_func {
+	struct iio_dev *indio_dev;
+	irqreturn_t (*h)(int irq, void *p);
+	irqreturn_t (*thread)(int irq, void *p);
+	int type;
+	char *name;
+	int irq;
+	s64 timestamp;
+};
 
 
-__म_लिखो(5, 6) काष्ठा iio_poll_func
-*iio_alloc_pollfunc(irqवापस_t (*h)(पूर्णांक irq, व्योम *p),
-		    irqवापस_t (*thपढ़ो)(पूर्णांक irq, व्योम *p),
-		    पूर्णांक type,
-		    काष्ठा iio_dev *indio_dev,
-		    स्थिर अक्षर *fmt,
+__printf(5, 6) struct iio_poll_func
+*iio_alloc_pollfunc(irqreturn_t (*h)(int irq, void *p),
+		    irqreturn_t (*thread)(int irq, void *p),
+		    int type,
+		    struct iio_dev *indio_dev,
+		    const char *fmt,
 		    ...);
-व्योम iio_dealloc_pollfunc(काष्ठा iio_poll_func *pf);
-irqवापस_t iio_pollfunc_store_समय(पूर्णांक irq, व्योम *p);
+void iio_dealloc_pollfunc(struct iio_poll_func *pf);
+irqreturn_t iio_pollfunc_store_time(int irq, void *p);
 
-व्योम iio_trigger_notअगरy_करोne(काष्ठा iio_trigger *trig);
+void iio_trigger_notify_done(struct iio_trigger *trig);
 
-#पूर्ण_अगर
+#endif

@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- *  Driver क्रम the Integrant ITD1000 "Zero-IF Tuner IC for Direct Broadcast Satellite"
+ *  Driver for the Integrant ITD1000 "Zero-IF Tuner IC for Direct Broadcast Satellite"
  *
  *  Copyright (c) 2007 Patrick Boettcher <pb@linuxtv.org>
  */
 
-#अगर_अघोषित ITD1000_PRIV_H
-#घोषणा ITD1000_PRIV_H
+#ifndef ITD1000_PRIV_H
+#define ITD1000_PRIV_H
 
-काष्ठा itd1000_state अणु
-	काष्ठा itd1000_config *cfg;
-	काष्ठा i2c_adapter    *i2c;
+struct itd1000_state {
+	struct itd1000_config *cfg;
+	struct i2c_adapter    *i2c;
 
 	u32 frequency; /* contains the value resulting from the LO-setting */
 
-	/* ugly workaround क्रम flexcop's incapable i2c-controller
-	 * FIXME, अगर possible
+	/* ugly workaround for flexcop's incapable i2c-controller
+	 * FIXME, if possible
 	 */
-	u8 shaकरोw[256];
-पूर्ण;
+	u8 shadow[256];
+};
 
-क्रमागत itd1000_रेजिस्टर अणु
+enum itd1000_register {
 	VCO_CHP1 = 0x65,
 	VCO_CHP2,
 	PLLCON1,
@@ -70,6 +69,6 @@
 	RESERVED_0X99,
 	RESERVED_0X9A,
 	RESERVED_0X9B,
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

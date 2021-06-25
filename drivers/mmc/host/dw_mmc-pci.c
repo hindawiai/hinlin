@@ -1,50 +1,49 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Synopsys DesignWare Mulसमयdia Card PCI Interface driver
+ * Synopsys DesignWare Multimedia Card PCI Interface driver
  *
- * Copyright (C) 2012 Vayavya Lअसल Pvt. Ltd.
+ * Copyright (C) 2012 Vayavya Labs Pvt. Ltd.
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/irq.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/mmc/host.h>
-#समावेश <linux/mmc/mmc.h>
-#समावेश "dw_mmc.h"
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/io.h>
+#include <linux/irq.h>
+#include <linux/pci.h>
+#include <linux/pm_runtime.h>
+#include <linux/slab.h>
+#include <linux/mmc/host.h>
+#include <linux/mmc/mmc.h>
+#include "dw_mmc.h"
 
-#घोषणा PCI_BAR_NO 2
-#घोषणा SYNOPSYS_DW_MCI_VENDOR_ID 0x700
-#घोषणा SYNOPSYS_DW_MCI_DEVICE_ID 0x1107
+#define PCI_BAR_NO 2
+#define SYNOPSYS_DW_MCI_VENDOR_ID 0x700
+#define SYNOPSYS_DW_MCI_DEVICE_ID 0x1107
 /* Defining the Capabilities */
-#घोषणा DW_MCI_CAPABILITIES (MMC_CAP_4_BIT_DATA | MMC_CAP_MMC_HIGHSPEED |\
+#define DW_MCI_CAPABILITIES (MMC_CAP_4_BIT_DATA | MMC_CAP_MMC_HIGHSPEED |\
 				MMC_CAP_SD_HIGHSPEED | MMC_CAP_8_BIT_DATA |\
 				MMC_CAP_SDIO_IRQ)
 
-अटल काष्ठा dw_mci_board pci_board_data = अणु
+static struct dw_mci_board pci_board_data = {
 	.caps				= DW_MCI_CAPABILITIES,
 	.bus_hz				= 33 * 1000 * 1000,
 	.detect_delay_ms		= 200,
-	.fअगरo_depth			= 32,
-पूर्ण;
+	.fifo_depth			= 32,
+};
 
-अटल पूर्णांक dw_mci_pci_probe(काष्ठा pci_dev *pdev,
-			    स्थिर काष्ठा pci_device_id *entries)
-अणु
-	काष्ठा dw_mci *host;
-	पूर्णांक ret;
+static int dw_mci_pci_probe(struct pci_dev *pdev,
+			    const struct pci_device_id *entries)
+{
+	struct dw_mci *host;
+	int ret;
 
 	ret = pcim_enable_device(pdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	host = devm_kzalloc(&pdev->dev, माप(काष्ठा dw_mci), GFP_KERNEL);
-	अगर (!host)
-		वापस -ENOMEM;
+	host = devm_kzalloc(&pdev->dev, sizeof(struct dw_mci), GFP_KERNEL);
+	if (!host)
+		return -ENOMEM;
 
 	host->irq = pdev->irq;
 	host->irq_flags = IRQF_SHARED;
@@ -52,52 +51,52 @@
 	host->pdata = &pci_board_data;
 
 	ret = pcim_iomap_regions(pdev, 1 << PCI_BAR_NO, pci_name(pdev));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	host->regs = pcim_iomap_table(pdev)[PCI_BAR_NO];
 
 	pci_set_master(pdev);
 
 	ret = dw_mci_probe(host);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	pci_set_drvdata(pdev, host);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dw_mci_pci_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा dw_mci *host = pci_get_drvdata(pdev);
+static void dw_mci_pci_remove(struct pci_dev *pdev)
+{
+	struct dw_mci *host = pci_get_drvdata(pdev);
 
-	dw_mci_हटाओ(host);
-पूर्ण
+	dw_mci_remove(host);
+}
 
-अटल स्थिर काष्ठा dev_pm_ops dw_mci_pci_dev_pm_ops = अणु
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
-				pm_runसमय_क्रमce_resume)
-	SET_RUNTIME_PM_OPS(dw_mci_runसमय_suspend,
-			   dw_mci_runसमय_resume,
-			   शून्य)
-पूर्ण;
+static const struct dev_pm_ops dw_mci_pci_dev_pm_ops = {
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
+				pm_runtime_force_resume)
+	SET_RUNTIME_PM_OPS(dw_mci_runtime_suspend,
+			   dw_mci_runtime_resume,
+			   NULL)
+};
 
-अटल स्थिर काष्ठा pci_device_id dw_mci_pci_id[] = अणु
-	अणु PCI_DEVICE(SYNOPSYS_DW_MCI_VENDOR_ID, SYNOPSYS_DW_MCI_DEVICE_ID) पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct pci_device_id dw_mci_pci_id[] = {
+	{ PCI_DEVICE(SYNOPSYS_DW_MCI_VENDOR_ID, SYNOPSYS_DW_MCI_DEVICE_ID) },
+	{}
+};
 MODULE_DEVICE_TABLE(pci, dw_mci_pci_id);
 
-अटल काष्ठा pci_driver dw_mci_pci_driver = अणु
+static struct pci_driver dw_mci_pci_driver = {
 	.name		= "dw_mmc_pci",
 	.id_table	= dw_mci_pci_id,
 	.probe		= dw_mci_pci_probe,
-	.हटाओ		= dw_mci_pci_हटाओ,
-	.driver		=	अणु
+	.remove		= dw_mci_pci_remove,
+	.driver		=	{
 		.pm =   &dw_mci_pci_dev_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 module_pci_driver(dw_mci_pci_driver);
 

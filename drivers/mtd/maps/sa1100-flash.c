@@ -1,310 +1,309 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Flash memory access on SA11x0 based devices
  *
  * (C) 2000 Nicolas Pitre <nico@fluxnic.net>
  */
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/ioport.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/errno.h>
+#include <linux/slab.h>
+#include <linux/platform_device.h>
+#include <linux/err.h>
+#include <linux/io.h>
 
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/map.h>
-#समावेश <linux/mtd/partitions.h>
-#समावेश <linux/mtd/concat.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/map.h>
+#include <linux/mtd/partitions.h>
+#include <linux/mtd/concat.h>
 
-#समावेश <mach/hardware.h>
-#समावेश <linux/sizes.h>
-#समावेश <यंत्र/mach/flash.h>
+#include <mach/hardware.h>
+#include <linux/sizes.h>
+#include <asm/mach/flash.h>
 
-काष्ठा sa_subdev_info अणु
-	अक्षर name[16];
-	काष्ठा map_info map;
-	काष्ठा mtd_info *mtd;
-	काष्ठा flash_platक्रमm_data *plat;
-पूर्ण;
+struct sa_subdev_info {
+	char name[16];
+	struct map_info map;
+	struct mtd_info *mtd;
+	struct flash_platform_data *plat;
+};
 
-काष्ठा sa_info अणु
-	काष्ठा mtd_info		*mtd;
-	पूर्णांक			num_subdev;
-	काष्ठा sa_subdev_info	subdev[];
-पूर्ण;
+struct sa_info {
+	struct mtd_info		*mtd;
+	int			num_subdev;
+	struct sa_subdev_info	subdev[];
+};
 
-अटल DEFINE_SPINLOCK(sa1100_vpp_lock);
-अटल पूर्णांक sa1100_vpp_refcnt;
-अटल व्योम sa1100_set_vpp(काष्ठा map_info *map, पूर्णांक on)
-अणु
-	काष्ठा sa_subdev_info *subdev = container_of(map, काष्ठा sa_subdev_info, map);
-	अचिन्हित दीर्घ flags;
+static DEFINE_SPINLOCK(sa1100_vpp_lock);
+static int sa1100_vpp_refcnt;
+static void sa1100_set_vpp(struct map_info *map, int on)
+{
+	struct sa_subdev_info *subdev = container_of(map, struct sa_subdev_info, map);
+	unsigned long flags;
 
 	spin_lock_irqsave(&sa1100_vpp_lock, flags);
-	अगर (on) अणु
-		अगर (++sa1100_vpp_refcnt == 1)   /* first nested 'on' */
+	if (on) {
+		if (++sa1100_vpp_refcnt == 1)   /* first nested 'on' */
 			subdev->plat->set_vpp(1);
-	पूर्ण अन्यथा अणु
-		अगर (--sa1100_vpp_refcnt == 0)   /* last nested 'off' */
+	} else {
+		if (--sa1100_vpp_refcnt == 0)   /* last nested 'off' */
 			subdev->plat->set_vpp(0);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&sa1100_vpp_lock, flags);
-पूर्ण
+}
 
-अटल व्योम sa1100_destroy_subdev(काष्ठा sa_subdev_info *subdev)
-अणु
-	अगर (subdev->mtd)
+static void sa1100_destroy_subdev(struct sa_subdev_info *subdev)
+{
+	if (subdev->mtd)
 		map_destroy(subdev->mtd);
-	अगर (subdev->map.virt)
+	if (subdev->map.virt)
 		iounmap(subdev->map.virt);
 	release_mem_region(subdev->map.phys, subdev->map.size);
-पूर्ण
+}
 
-अटल पूर्णांक sa1100_probe_subdev(काष्ठा sa_subdev_info *subdev, काष्ठा resource *res)
-अणु
-	अचिन्हित दीर्घ phys;
-	अचिन्हित पूर्णांक size;
-	पूर्णांक ret;
+static int sa1100_probe_subdev(struct sa_subdev_info *subdev, struct resource *res)
+{
+	unsigned long phys;
+	unsigned int size;
+	int ret;
 
 	phys = res->start;
 	size = res->end - phys + 1;
 
 	/*
-	 * Retrieve the bankwidth from the MSC रेजिस्टरs.
+	 * Retrieve the bankwidth from the MSC registers.
 	 * We currently only implement CS0 and CS1 here.
 	 */
-	चयन (phys) अणु
-	शेष:
-		prपूर्णांकk(KERN_WARNING "SA1100 flash: unknown base address "
+	switch (phys) {
+	default:
+		printk(KERN_WARNING "SA1100 flash: unknown base address "
 		       "0x%08lx, assuming CS0\n", phys);
 		fallthrough;
-	हाल SA1100_CS0_PHYS:
+	case SA1100_CS0_PHYS:
 		subdev->map.bankwidth = (MSC0 & MSC_RBW) ? 2 : 4;
-		अवरोध;
+		break;
 
-	हाल SA1100_CS1_PHYS:
+	case SA1100_CS1_PHYS:
 		subdev->map.bankwidth = ((MSC0 >> 16) & MSC_RBW) ? 2 : 4;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (!request_mem_region(phys, size, subdev->name)) अणु
+	if (!request_mem_region(phys, size, subdev->name)) {
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (subdev->plat->set_vpp)
+	if (subdev->plat->set_vpp)
 		subdev->map.set_vpp = sa1100_set_vpp;
 
 	subdev->map.phys = phys;
 	subdev->map.size = size;
 	subdev->map.virt = ioremap(phys, size);
-	अगर (!subdev->map.virt) अणु
+	if (!subdev->map.virt) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	simple_map_init(&subdev->map);
 
 	/*
-	 * Now let's probe क्रम the actual flash.  Do it here since
-	 * specअगरic machine settings might have been set above.
+	 * Now let's probe for the actual flash.  Do it here since
+	 * specific machine settings might have been set above.
 	 */
-	subdev->mtd = करो_map_probe(subdev->plat->map_name, &subdev->map);
-	अगर (subdev->mtd == शून्य) अणु
+	subdev->mtd = do_map_probe(subdev->plat->map_name, &subdev->map);
+	if (subdev->mtd == NULL) {
 		ret = -ENXIO;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	prपूर्णांकk(KERN_INFO "SA1100 flash: CFI device at 0x%08lx, %uMiB, %d-bit\n",
-		phys, (अचिन्हित)(subdev->mtd->size >> 20),
+	printk(KERN_INFO "SA1100 flash: CFI device at 0x%08lx, %uMiB, %d-bit\n",
+		phys, (unsigned)(subdev->mtd->size >> 20),
 		subdev->map.bankwidth * 8);
 
-	वापस 0;
+	return 0;
 
  err:
 	sa1100_destroy_subdev(subdev);
  out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम sa1100_destroy(काष्ठा sa_info *info, काष्ठा flash_platक्रमm_data *plat)
-अणु
-	पूर्णांक i;
+static void sa1100_destroy(struct sa_info *info, struct flash_platform_data *plat)
+{
+	int i;
 
-	अगर (info->mtd) अणु
-		mtd_device_unरेजिस्टर(info->mtd);
-		अगर (info->mtd != info->subdev[0].mtd)
+	if (info->mtd) {
+		mtd_device_unregister(info->mtd);
+		if (info->mtd != info->subdev[0].mtd)
 			mtd_concat_destroy(info->mtd);
-	पूर्ण
+	}
 
-	क्रम (i = info->num_subdev - 1; i >= 0; i--)
+	for (i = info->num_subdev - 1; i >= 0; i--)
 		sa1100_destroy_subdev(&info->subdev[i]);
-	kमुक्त(info);
+	kfree(info);
 
-	अगर (plat->निकास)
-		plat->निकास();
-पूर्ण
+	if (plat->exit)
+		plat->exit();
+}
 
-अटल काष्ठा sa_info *sa1100_setup_mtd(काष्ठा platक्रमm_device *pdev,
-					काष्ठा flash_platक्रमm_data *plat)
-अणु
-	काष्ठा sa_info *info;
-	पूर्णांक nr, size, i, ret = 0;
+static struct sa_info *sa1100_setup_mtd(struct platform_device *pdev,
+					struct flash_platform_data *plat)
+{
+	struct sa_info *info;
+	int nr, size, i, ret = 0;
 
 	/*
 	 * Count number of devices.
 	 */
-	क्रम (nr = 0; ; nr++)
-		अगर (!platक्रमm_get_resource(pdev, IORESOURCE_MEM, nr))
-			अवरोध;
+	for (nr = 0; ; nr++)
+		if (!platform_get_resource(pdev, IORESOURCE_MEM, nr))
+			break;
 
-	अगर (nr == 0) अणु
+	if (nr == 0) {
 		ret = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	size = माप(काष्ठा sa_info) + माप(काष्ठा sa_subdev_info) * nr;
+	size = sizeof(struct sa_info) + sizeof(struct sa_subdev_info) * nr;
 
 	/*
-	 * Allocate the map_info काष्ठाs in one go.
+	 * Allocate the map_info structs in one go.
 	 */
 	info = kzalloc(size, GFP_KERNEL);
-	अगर (!info) अणु
+	if (!info) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (plat->init) अणु
+	if (plat->init) {
 		ret = plat->init();
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+		if (ret)
+			goto err;
+	}
 
 	/*
 	 * Claim and then map the memory regions.
 	 */
-	क्रम (i = 0; i < nr; i++) अणु
-		काष्ठा sa_subdev_info *subdev = &info->subdev[i];
-		काष्ठा resource *res;
+	for (i = 0; i < nr; i++) {
+		struct sa_subdev_info *subdev = &info->subdev[i];
+		struct resource *res;
 
-		res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, i);
-		अगर (!res)
-			अवरोध;
+		res = platform_get_resource(pdev, IORESOURCE_MEM, i);
+		if (!res)
+			break;
 
 		subdev->map.name = subdev->name;
-		प्र_लिखो(subdev->name, "%s-%d", plat->name, i);
+		sprintf(subdev->name, "%s-%d", plat->name, i);
 		subdev->plat = plat;
 
 		ret = sa1100_probe_subdev(subdev, res);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+		if (ret)
+			break;
+	}
 
 	info->num_subdev = i;
 
 	/*
 	 * ENXIO is special.  It means we didn't find a chip when we probed.
 	 */
-	अगर (ret != 0 && !(ret == -ENXIO && info->num_subdev > 0))
-		जाओ err;
+	if (ret != 0 && !(ret == -ENXIO && info->num_subdev > 0))
+		goto err;
 
 	/*
-	 * If we found one device, करोn't bother with concat support.  If
-	 * we found multiple devices, use concat अगर we have it available,
+	 * If we found one device, don't bother with concat support.  If
+	 * we found multiple devices, use concat if we have it available,
 	 * otherwise fail.  Either way, it'll be called "sa1100".
 	 */
-	अगर (info->num_subdev == 1) अणु
-		म_नकल(info->subdev[0].name, plat->name);
+	if (info->num_subdev == 1) {
+		strcpy(info->subdev[0].name, plat->name);
 		info->mtd = info->subdev[0].mtd;
 		ret = 0;
-	पूर्ण अन्यथा अगर (info->num_subdev > 1) अणु
-		काष्ठा mtd_info **cdev;
+	} else if (info->num_subdev > 1) {
+		struct mtd_info **cdev;
 
-		cdev = kदो_स्मृति_array(nr, माप(*cdev), GFP_KERNEL);
-		अगर (!cdev) अणु
+		cdev = kmalloc_array(nr, sizeof(*cdev), GFP_KERNEL);
+		if (!cdev) {
 			ret = -ENOMEM;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		/*
 		 * We detected multiple devices.  Concatenate them together.
 		 */
-		क्रम (i = 0; i < info->num_subdev; i++)
+		for (i = 0; i < info->num_subdev; i++)
 			cdev[i] = info->subdev[i].mtd;
 
 		info->mtd = mtd_concat_create(cdev, info->num_subdev,
 					      plat->name);
-		kमुक्त(cdev);
-		अगर (info->mtd == शून्य) अणु
+		kfree(cdev);
+		if (info->mtd == NULL) {
 			ret = -ENXIO;
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 	info->mtd->dev.parent = &pdev->dev;
 
-	अगर (ret == 0)
-		वापस info;
+	if (ret == 0)
+		return info;
 
  err:
 	sa1100_destroy(info, plat);
  out:
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
-अटल स्थिर अक्षर * स्थिर part_probes[] = अणु "cmdlinepart", "RedBoot", शून्य पूर्ण;
+static const char * const part_probes[] = { "cmdlinepart", "RedBoot", NULL };
 
-अटल पूर्णांक sa1100_mtd_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा flash_platक्रमm_data *plat = dev_get_platdata(&pdev->dev);
-	काष्ठा sa_info *info;
-	पूर्णांक err;
+static int sa1100_mtd_probe(struct platform_device *pdev)
+{
+	struct flash_platform_data *plat = dev_get_platdata(&pdev->dev);
+	struct sa_info *info;
+	int err;
 
-	अगर (!plat)
-		वापस -ENODEV;
+	if (!plat)
+		return -ENODEV;
 
 	info = sa1100_setup_mtd(pdev, plat);
-	अगर (IS_ERR(info)) अणु
+	if (IS_ERR(info)) {
 		err = PTR_ERR(info);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * Partition selection stuff.
 	 */
-	mtd_device_parse_रेजिस्टर(info->mtd, part_probes, शून्य, plat->parts,
+	mtd_device_parse_register(info->mtd, part_probes, NULL, plat->parts,
 				  plat->nr_parts);
 
-	platक्रमm_set_drvdata(pdev, info);
+	platform_set_drvdata(pdev, info);
 	err = 0;
 
  out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sa1100_mtd_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sa_info *info = platक्रमm_get_drvdata(pdev);
-	काष्ठा flash_platक्रमm_data *plat = dev_get_platdata(&pdev->dev);
+static int sa1100_mtd_remove(struct platform_device *pdev)
+{
+	struct sa_info *info = platform_get_drvdata(pdev);
+	struct flash_platform_data *plat = dev_get_platdata(&pdev->dev);
 
 	sa1100_destroy(info, plat);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver sa1100_mtd_driver = अणु
+static struct platform_driver sa1100_mtd_driver = {
 	.probe		= sa1100_mtd_probe,
-	.हटाओ		= sa1100_mtd_हटाओ,
-	.driver		= अणु
+	.remove		= sa1100_mtd_remove,
+	.driver		= {
 		.name	= "sa1100-mtd",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(sa1100_mtd_driver);
+module_platform_driver(sa1100_mtd_driver);
 
 MODULE_AUTHOR("Nicolas Pitre");
 MODULE_DESCRIPTION("SA1100 CFI map driver");

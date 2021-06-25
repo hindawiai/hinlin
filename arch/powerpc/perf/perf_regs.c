@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2016 Anju T, IBM Corporation.
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/task_stack.h>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/perf_regs.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/sched/task_stack.h>
+#include <linux/perf_event.h>
+#include <linux/bug.h>
+#include <linux/stddef.h>
+#include <asm/ptrace.h>
+#include <asm/perf_regs.h>
 
 u64 PERF_REG_EXTENDED_MASK;
 
-#घोषणा PT_REGS_OFFSET(id, r) [id] = दुरत्व(काष्ठा pt_regs, r)
+#define PT_REGS_OFFSET(id, r) [id] = offsetof(struct pt_regs, r)
 
-#घोषणा REG_RESERVED (~(PERF_REG_EXTENDED_MASK | PERF_REG_PMU_MASK))
+#define REG_RESERVED (~(PERF_REG_EXTENDED_MASK | PERF_REG_PMU_MASK))
 
-अटल अचिन्हित पूर्णांक pt_regs_offset[PERF_REG_POWERPC_MAX] = अणु
+static unsigned int pt_regs_offset[PERF_REG_POWERPC_MAX] = {
 	PT_REGS_OFFSET(PERF_REG_POWERPC_R0,  gpr[0]),
 	PT_REGS_OFFSET(PERF_REG_POWERPC_R1,  gpr[1]),
 	PT_REGS_OFFSET(PERF_REG_POWERPC_R2,  gpr[2]),
@@ -60,89 +59,89 @@ u64 PERF_REG_EXTENDED_MASK;
 	PT_REGS_OFFSET(PERF_REG_POWERPC_LINK, link),
 	PT_REGS_OFFSET(PERF_REG_POWERPC_XER, xer),
 	PT_REGS_OFFSET(PERF_REG_POWERPC_CCR, ccr),
-#अगर_घोषित CONFIG_PPC64
+#ifdef CONFIG_PPC64
 	PT_REGS_OFFSET(PERF_REG_POWERPC_SOFTE, softe),
-#अन्यथा
+#else
 	PT_REGS_OFFSET(PERF_REG_POWERPC_SOFTE, mq),
-#पूर्ण_अगर
+#endif
 	PT_REGS_OFFSET(PERF_REG_POWERPC_TRAP, trap),
 	PT_REGS_OFFSET(PERF_REG_POWERPC_DAR, dar),
 	PT_REGS_OFFSET(PERF_REG_POWERPC_DSISR, dsisr),
 	PT_REGS_OFFSET(PERF_REG_POWERPC_SIER, dar),
 	PT_REGS_OFFSET(PERF_REG_POWERPC_MMCRA, dsisr),
-पूर्ण;
+};
 
-/* Function to वापस the extended रेजिस्टर values */
-अटल u64 get_ext_regs_value(पूर्णांक idx)
-अणु
-	चयन (idx) अणु
-	हाल PERF_REG_POWERPC_PMC1 ... PERF_REG_POWERPC_PMC6:
-		वापस get_pmcs_ext_regs(idx - PERF_REG_POWERPC_PMC1);
-	हाल PERF_REG_POWERPC_MMCR0:
-		वापस mfspr(SPRN_MMCR0);
-	हाल PERF_REG_POWERPC_MMCR1:
-		वापस mfspr(SPRN_MMCR1);
-	हाल PERF_REG_POWERPC_MMCR2:
-		वापस mfspr(SPRN_MMCR2);
-#अगर_घोषित CONFIG_PPC64
-	हाल PERF_REG_POWERPC_MMCR3:
-		वापस mfspr(SPRN_MMCR3);
-	हाल PERF_REG_POWERPC_SIER2:
-		वापस mfspr(SPRN_SIER2);
-	हाल PERF_REG_POWERPC_SIER3:
-		वापस mfspr(SPRN_SIER3);
-#पूर्ण_अगर
-	शेष: वापस 0;
-	पूर्ण
-पूर्ण
+/* Function to return the extended register values */
+static u64 get_ext_regs_value(int idx)
+{
+	switch (idx) {
+	case PERF_REG_POWERPC_PMC1 ... PERF_REG_POWERPC_PMC6:
+		return get_pmcs_ext_regs(idx - PERF_REG_POWERPC_PMC1);
+	case PERF_REG_POWERPC_MMCR0:
+		return mfspr(SPRN_MMCR0);
+	case PERF_REG_POWERPC_MMCR1:
+		return mfspr(SPRN_MMCR1);
+	case PERF_REG_POWERPC_MMCR2:
+		return mfspr(SPRN_MMCR2);
+#ifdef CONFIG_PPC64
+	case PERF_REG_POWERPC_MMCR3:
+		return mfspr(SPRN_MMCR3);
+	case PERF_REG_POWERPC_SIER2:
+		return mfspr(SPRN_SIER2);
+	case PERF_REG_POWERPC_SIER3:
+		return mfspr(SPRN_SIER3);
+#endif
+	default: return 0;
+	}
+}
 
-u64 perf_reg_value(काष्ठा pt_regs *regs, पूर्णांक idx)
-अणु
-	अगर (idx == PERF_REG_POWERPC_SIER &&
+u64 perf_reg_value(struct pt_regs *regs, int idx)
+{
+	if (idx == PERF_REG_POWERPC_SIER &&
 	   (IS_ENABLED(CONFIG_FSL_EMB_PERF_EVENT) ||
 	    IS_ENABLED(CONFIG_PPC32) ||
 	    !is_sier_available()))
-		वापस 0;
+		return 0;
 
-	अगर (idx == PERF_REG_POWERPC_MMCRA &&
+	if (idx == PERF_REG_POWERPC_MMCRA &&
 	   (IS_ENABLED(CONFIG_FSL_EMB_PERF_EVENT) ||
 	    IS_ENABLED(CONFIG_PPC32)))
-		वापस 0;
+		return 0;
 
-	अगर (idx >= PERF_REG_POWERPC_MAX && idx < PERF_REG_EXTENDED_MAX)
-		वापस get_ext_regs_value(idx);
+	if (idx >= PERF_REG_POWERPC_MAX && idx < PERF_REG_EXTENDED_MAX)
+		return get_ext_regs_value(idx);
 
 	/*
 	 * If the idx is referring to value beyond the
-	 * supported रेजिस्टरs, वापस 0 with a warning
+	 * supported registers, return 0 with a warning
 	 */
-	अगर (WARN_ON_ONCE(idx >= PERF_REG_EXTENDED_MAX))
-		वापस 0;
+	if (WARN_ON_ONCE(idx >= PERF_REG_EXTENDED_MAX))
+		return 0;
 
-	वापस regs_get_रेजिस्टर(regs, pt_regs_offset[idx]);
-पूर्ण
+	return regs_get_register(regs, pt_regs_offset[idx]);
+}
 
-पूर्णांक perf_reg_validate(u64 mask)
-अणु
-	अगर (!mask || mask & REG_RESERVED)
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+int perf_reg_validate(u64 mask)
+{
+	if (!mask || mask & REG_RESERVED)
+		return -EINVAL;
+	return 0;
+}
 
-u64 perf_reg_abi(काष्ठा task_काष्ठा *task)
-अणु
-#अगर_घोषित CONFIG_PPC64
-	अगर (!test_tsk_thपढ़ो_flag(task, TIF_32BIT))
-		वापस PERF_SAMPLE_REGS_ABI_64;
-	अन्यथा
-#पूर्ण_अगर
-	वापस PERF_SAMPLE_REGS_ABI_32;
-पूर्ण
+u64 perf_reg_abi(struct task_struct *task)
+{
+#ifdef CONFIG_PPC64
+	if (!test_tsk_thread_flag(task, TIF_32BIT))
+		return PERF_SAMPLE_REGS_ABI_64;
+	else
+#endif
+	return PERF_SAMPLE_REGS_ABI_32;
+}
 
-व्योम perf_get_regs_user(काष्ठा perf_regs *regs_user,
-			काष्ठा pt_regs *regs)
-अणु
+void perf_get_regs_user(struct perf_regs *regs_user,
+			struct pt_regs *regs)
+{
 	regs_user->regs = task_pt_regs(current);
 	regs_user->abi = (regs_user->regs) ? perf_reg_abi(current) :
 			 PERF_SAMPLE_REGS_ABI_NONE;
-पूर्ण
+}

@@ -1,74 +1,73 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/bitops.h>
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/bitops.h>
+#include <linux/types.h>
+#include <linux/slab.h>
 
-#समावेश <यंत्र/cpu_entry_area.h>
-#समावेश <यंत्र/perf_event.h>
-#समावेश <यंत्र/tlbflush.h>
-#समावेश <यंत्र/insn.h>
-#समावेश <यंत्र/पन.स>
+#include <asm/cpu_entry_area.h>
+#include <asm/perf_event.h>
+#include <asm/tlbflush.h>
+#include <asm/insn.h>
+#include <asm/io.h>
 
-#समावेश "../perf_event.h"
+#include "../perf_event.h"
 
-/* Waste a full page so it can be mapped पूर्णांकo the cpu_entry_area */
-DEFINE_PER_CPU_PAGE_ALIGNED(काष्ठा debug_store, cpu_debug_store);
+/* Waste a full page so it can be mapped into the cpu_entry_area */
+DEFINE_PER_CPU_PAGE_ALIGNED(struct debug_store, cpu_debug_store);
 
 /* The size of a BTS record in bytes: */
-#घोषणा BTS_RECORD_SIZE		24
+#define BTS_RECORD_SIZE		24
 
-#घोषणा PEBS_FIXUP_SIZE		PAGE_SIZE
+#define PEBS_FIXUP_SIZE		PAGE_SIZE
 
 /*
- * pebs_record_32 क्रम p4 and core not supported
+ * pebs_record_32 for p4 and core not supported
 
-काष्ठा pebs_record_32 अणु
+struct pebs_record_32 {
 	u32 flags, ip;
 	u32 ax, bc, cx, dx;
 	u32 si, di, bp, sp;
-पूर्ण;
+};
 
  */
 
-जोड़ पूर्णांकel_x86_pebs_dse अणु
+union intel_x86_pebs_dse {
 	u64 val;
-	काष्ठा अणु
-		अचिन्हित पूर्णांक ld_dse:4;
-		अचिन्हित पूर्णांक ld_stlb_miss:1;
-		अचिन्हित पूर्णांक ld_locked:1;
-		अचिन्हित पूर्णांक ld_data_blk:1;
-		अचिन्हित पूर्णांक ld_addr_blk:1;
-		अचिन्हित पूर्णांक ld_reserved:24;
-	पूर्ण;
-	काष्ठा अणु
-		अचिन्हित पूर्णांक st_l1d_hit:1;
-		अचिन्हित पूर्णांक st_reserved1:3;
-		अचिन्हित पूर्णांक st_stlb_miss:1;
-		अचिन्हित पूर्णांक st_locked:1;
-		अचिन्हित पूर्णांक st_reserved2:26;
-	पूर्ण;
-	काष्ठा अणु
-		अचिन्हित पूर्णांक st_lat_dse:4;
-		अचिन्हित पूर्णांक st_lat_stlb_miss:1;
-		अचिन्हित पूर्णांक st_lat_locked:1;
-		अचिन्हित पूर्णांक ld_reserved3:26;
-	पूर्ण;
-पूर्ण;
+	struct {
+		unsigned int ld_dse:4;
+		unsigned int ld_stlb_miss:1;
+		unsigned int ld_locked:1;
+		unsigned int ld_data_blk:1;
+		unsigned int ld_addr_blk:1;
+		unsigned int ld_reserved:24;
+	};
+	struct {
+		unsigned int st_l1d_hit:1;
+		unsigned int st_reserved1:3;
+		unsigned int st_stlb_miss:1;
+		unsigned int st_locked:1;
+		unsigned int st_reserved2:26;
+	};
+	struct {
+		unsigned int st_lat_dse:4;
+		unsigned int st_lat_stlb_miss:1;
+		unsigned int st_lat_locked:1;
+		unsigned int ld_reserved3:26;
+	};
+};
 
 
 /*
  * Map PEBS Load Latency Data Source encodings to generic
- * memory data source inक्रमmation
+ * memory data source information
  */
-#घोषणा P(a, b) PERF_MEM_S(a, b)
-#घोषणा OP_LH (P(OP, LOAD) | P(LVL, HIT))
-#घोषणा LEVEL(x) P(LVLNUM, x)
-#घोषणा REM P(REMOTE, REMOTE)
-#घोषणा SNOOP_NONE_MISS (P(SNOOP, NONE) | P(SNOOP, MISS))
+#define P(a, b) PERF_MEM_S(a, b)
+#define OP_LH (P(OP, LOAD) | P(LVL, HIT))
+#define LEVEL(x) P(LVLNUM, x)
+#define REM P(REMOTE, REMOTE)
+#define SNOOP_NONE_MISS (P(SNOOP, NONE) | P(SNOOP, MISS))
 
-/* Version क्रम Sandy Bridge and later */
-अटल u64 pebs_data_source[] = अणु
+/* Version for Sandy Bridge and later */
+static u64 pebs_data_source[] = {
 	P(OP, LOAD) | P(LVL, MISS) | LEVEL(L3) | P(SNOOP, NA),/* 0x00:ukn L3 */
 	OP_LH | P(LVL, L1)  | LEVEL(L1) | P(SNOOP, NONE),  /* 0x01: L1 local */
 	OP_LH | P(LVL, LFB) | LEVEL(LFB) | P(SNOOP, NONE), /* 0x02: LFB hit */
@@ -76,27 +75,27 @@ DEFINE_PER_CPU_PAGE_ALIGNED(काष्ठा debug_store, cpu_debug_store);
 	OP_LH | P(LVL, L3)  | LEVEL(L3) | P(SNOOP, NONE),  /* 0x04: L3 hit */
 	OP_LH | P(LVL, L3)  | LEVEL(L3) | P(SNOOP, MISS),  /* 0x05: L3 hit, snoop miss */
 	OP_LH | P(LVL, L3)  | LEVEL(L3) | P(SNOOP, HIT),   /* 0x06: L3 hit, snoop hit */
-	OP_LH | P(LVL, L3)  | LEVEL(L3) | P(SNOOP, HITM),  /* 0x07: L3 hit, snoop hiपंचांग */
+	OP_LH | P(LVL, L3)  | LEVEL(L3) | P(SNOOP, HITM),  /* 0x07: L3 hit, snoop hitm */
 	OP_LH | P(LVL, REM_CCE1) | REM | LEVEL(L3) | P(SNOOP, HIT),  /* 0x08: L3 miss snoop hit */
-	OP_LH | P(LVL, REM_CCE1) | REM | LEVEL(L3) | P(SNOOP, HITM), /* 0x09: L3 miss snoop hiपंचांग*/
+	OP_LH | P(LVL, REM_CCE1) | REM | LEVEL(L3) | P(SNOOP, HITM), /* 0x09: L3 miss snoop hitm*/
 	OP_LH | P(LVL, LOC_RAM)  | LEVEL(RAM) | P(SNOOP, HIT),       /* 0x0a: L3 miss, shared */
 	OP_LH | P(LVL, REM_RAM1) | REM | LEVEL(L3) | P(SNOOP, HIT),  /* 0x0b: L3 miss, shared */
 	OP_LH | P(LVL, LOC_RAM)  | LEVEL(RAM) | SNOOP_NONE_MISS,     /* 0x0c: L3 miss, excl */
 	OP_LH | P(LVL, REM_RAM1) | LEVEL(RAM) | REM | SNOOP_NONE_MISS, /* 0x0d: L3 miss, excl */
 	OP_LH | P(LVL, IO)  | LEVEL(NA) | P(SNOOP, NONE), /* 0x0e: I/O */
 	OP_LH | P(LVL, UNC) | LEVEL(NA) | P(SNOOP, NONE), /* 0x0f: uncached */
-पूर्ण;
+};
 
-/* Patch up minor dअगरferences in the bits */
-व्योम __init पूर्णांकel_pmu_pebs_data_source_nhm(व्योम)
-अणु
+/* Patch up minor differences in the bits */
+void __init intel_pmu_pebs_data_source_nhm(void)
+{
 	pebs_data_source[0x05] = OP_LH | P(LVL, L3) | LEVEL(L3) | P(SNOOP, HIT);
 	pebs_data_source[0x06] = OP_LH | P(LVL, L3) | LEVEL(L3) | P(SNOOP, HITM);
 	pebs_data_source[0x07] = OP_LH | P(LVL, L3) | LEVEL(L3) | P(SNOOP, HITM);
-पूर्ण
+}
 
-व्योम __init पूर्णांकel_pmu_pebs_data_source_skl(bool pmem)
-अणु
+void __init intel_pmu_pebs_data_source_skl(bool pmem)
+{
 	u64 pmem_or_l4 = pmem ? LEVEL(PMEM) : LEVEL(L4);
 
 	pebs_data_source[0x08] = OP_LH | pmem_or_l4 | P(SNOOP, HIT);
@@ -104,11 +103,11 @@ DEFINE_PER_CPU_PAGE_ALIGNED(काष्ठा debug_store, cpu_debug_store);
 	pebs_data_source[0x0b] = OP_LH | LEVEL(RAM) | REM | P(SNOOP, NONE);
 	pebs_data_source[0x0c] = OP_LH | LEVEL(ANY_CACHE) | REM | P(SNOOPX, FWD);
 	pebs_data_source[0x0d] = OP_LH | LEVEL(ANY_CACHE) | REM | P(SNOOP, HITM);
-पूर्ण
+}
 
-अटल u64 precise_store_data(u64 status)
-अणु
-	जोड़ पूर्णांकel_x86_pebs_dse dse;
+static u64 precise_store_data(u64 status)
+{
+	union intel_x86_pebs_dse dse;
 	u64 val = P(OP, STORE) | P(SNOOP, NA) | P(LVL, L1) | P(TLB, L2);
 
 	dse.val = status;
@@ -120,129 +119,129 @@ DEFINE_PER_CPU_PAGE_ALIGNED(काष्ठा debug_store, cpu_debug_store);
 	 * so it either hit the walker or the OS
 	 * otherwise hit 2nd level TLB
 	 */
-	अगर (dse.st_stlb_miss)
+	if (dse.st_stlb_miss)
 		val |= P(TLB, MISS);
-	अन्यथा
+	else
 		val |= P(TLB, HIT);
 
 	/*
 	 * bit 0: hit L1 data cache
-	 * अगर not set, then all we know is that
+	 * if not set, then all we know is that
 	 * it missed L1D
 	 */
-	अगर (dse.st_l1d_hit)
+	if (dse.st_l1d_hit)
 		val |= P(LVL, HIT);
-	अन्यथा
+	else
 		val |= P(LVL, MISS);
 
 	/*
 	 * bit 5: Locked prefix
 	 */
-	अगर (dse.st_locked)
+	if (dse.st_locked)
 		val |= P(LOCK, LOCKED);
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल u64 precise_datala_hsw(काष्ठा perf_event *event, u64 status)
-अणु
-	जोड़ perf_mem_data_src dse;
+static u64 precise_datala_hsw(struct perf_event *event, u64 status)
+{
+	union perf_mem_data_src dse;
 
 	dse.val = PERF_MEM_NA;
 
-	अगर (event->hw.flags & PERF_X86_EVENT_PEBS_ST_HSW)
+	if (event->hw.flags & PERF_X86_EVENT_PEBS_ST_HSW)
 		dse.mem_op = PERF_MEM_OP_STORE;
-	अन्यथा अगर (event->hw.flags & PERF_X86_EVENT_PEBS_LD_HSW)
+	else if (event->hw.flags & PERF_X86_EVENT_PEBS_LD_HSW)
 		dse.mem_op = PERF_MEM_OP_LOAD;
 
 	/*
-	 * L1 info only valid क्रम following events:
+	 * L1 info only valid for following events:
 	 *
 	 * MEM_UOPS_RETIRED.STLB_MISS_STORES
 	 * MEM_UOPS_RETIRED.LOCK_STORES
 	 * MEM_UOPS_RETIRED.SPLIT_STORES
 	 * MEM_UOPS_RETIRED.ALL_STORES
 	 */
-	अगर (event->hw.flags & PERF_X86_EVENT_PEBS_ST_HSW) अणु
-		अगर (status & 1)
+	if (event->hw.flags & PERF_X86_EVENT_PEBS_ST_HSW) {
+		if (status & 1)
 			dse.mem_lvl = PERF_MEM_LVL_L1 | PERF_MEM_LVL_HIT;
-		अन्यथा
+		else
 			dse.mem_lvl = PERF_MEM_LVL_L1 | PERF_MEM_LVL_MISS;
-	पूर्ण
-	वापस dse.val;
-पूर्ण
+	}
+	return dse.val;
+}
 
-अटल u64 load_latency_data(u64 status)
-अणु
-	जोड़ पूर्णांकel_x86_pebs_dse dse;
+static u64 load_latency_data(u64 status)
+{
+	union intel_x86_pebs_dse dse;
 	u64 val;
 
 	dse.val = status;
 
 	/*
-	 * use the mapping table क्रम bit 0-3
+	 * use the mapping table for bit 0-3
 	 */
 	val = pebs_data_source[dse.ld_dse];
 
 	/*
-	 * Nehalem models करो not support TLB, Lock infos
+	 * Nehalem models do not support TLB, Lock infos
 	 */
-	अगर (x86_pmu.pebs_no_tlb) अणु
+	if (x86_pmu.pebs_no_tlb) {
 		val |= P(TLB, NA) | P(LOCK, NA);
-		वापस val;
-	पूर्ण
+		return val;
+	}
 	/*
 	 * bit 4: TLB access
 	 * 0 = did not miss 2nd level TLB
 	 * 1 = missed 2nd level TLB
 	 */
-	अगर (dse.ld_stlb_miss)
+	if (dse.ld_stlb_miss)
 		val |= P(TLB, MISS) | P(TLB, L2);
-	अन्यथा
+	else
 		val |= P(TLB, HIT) | P(TLB, L1) | P(TLB, L2);
 
 	/*
 	 * bit 5: locked prefix
 	 */
-	अगर (dse.ld_locked)
+	if (dse.ld_locked)
 		val |= P(LOCK, LOCKED);
 
 	/*
-	 * Ice Lake and earlier models करो not support block infos.
+	 * Ice Lake and earlier models do not support block infos.
 	 */
-	अगर (!x86_pmu.pebs_block) अणु
+	if (!x86_pmu.pebs_block) {
 		val |= P(BLK, NA);
-		वापस val;
-	पूर्ण
+		return val;
+	}
 	/*
-	 * bit 6: load was blocked since its data could not be क्रमwarded
+	 * bit 6: load was blocked since its data could not be forwarded
 	 *        from a preceding store
 	 */
-	अगर (dse.ld_data_blk)
+	if (dse.ld_data_blk)
 		val |= P(BLK, DATA);
 
 	/*
 	 * bit 7: load was blocked due to potential address conflict with
 	 *        a preceding store
 	 */
-	अगर (dse.ld_addr_blk)
+	if (dse.ld_addr_blk)
 		val |= P(BLK, ADDR);
 
-	अगर (!dse.ld_data_blk && !dse.ld_addr_blk)
+	if (!dse.ld_data_blk && !dse.ld_addr_blk)
 		val |= P(BLK, NA);
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल u64 store_latency_data(u64 status)
-अणु
-	जोड़ पूर्णांकel_x86_pebs_dse dse;
+static u64 store_latency_data(u64 status)
+{
+	union intel_x86_pebs_dse dse;
 	u64 val;
 
 	dse.val = status;
 
 	/*
-	 * use the mapping table क्रम bit 0-3
+	 * use the mapping table for bit 0-3
 	 */
 	val = pebs_data_source[dse.st_lat_dse];
 
@@ -251,43 +250,43 @@ DEFINE_PER_CPU_PAGE_ALIGNED(काष्ठा debug_store, cpu_debug_store);
 	 * 0 = did not miss 2nd level TLB
 	 * 1 = missed 2nd level TLB
 	 */
-	अगर (dse.st_lat_stlb_miss)
+	if (dse.st_lat_stlb_miss)
 		val |= P(TLB, MISS) | P(TLB, L2);
-	अन्यथा
+	else
 		val |= P(TLB, HIT) | P(TLB, L1) | P(TLB, L2);
 
 	/*
 	 * bit 5: locked prefix
 	 */
-	अगर (dse.st_lat_locked)
+	if (dse.st_lat_locked)
 		val |= P(LOCK, LOCKED);
 
 	val |= P(BLK, NA);
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-काष्ठा pebs_record_core अणु
+struct pebs_record_core {
 	u64 flags, ip;
 	u64 ax, bx, cx, dx;
 	u64 si, di, bp, sp;
 	u64 r8,  r9,  r10, r11;
 	u64 r12, r13, r14, r15;
-पूर्ण;
+};
 
-काष्ठा pebs_record_nhm अणु
+struct pebs_record_nhm {
 	u64 flags, ip;
 	u64 ax, bx, cx, dx;
 	u64 si, di, bp, sp;
 	u64 r8,  r9,  r10, r11;
 	u64 r12, r13, r14, r15;
 	u64 status, dla, dse, lat;
-पूर्ण;
+};
 
 /*
  * Same as pebs_record_nhm, with two additional fields.
  */
-काष्ठा pebs_record_hsw अणु
+struct pebs_record_hsw {
 	u64 flags, ip;
 	u64 ax, bx, cx, dx;
 	u64 si, di, bp, sp;
@@ -295,28 +294,28 @@ DEFINE_PER_CPU_PAGE_ALIGNED(काष्ठा debug_store, cpu_debug_store);
 	u64 r12, r13, r14, r15;
 	u64 status, dla, dse, lat;
 	u64 real_ip, tsx_tuning;
-पूर्ण;
+};
 
-जोड़ hsw_tsx_tuning अणु
-	काष्ठा अणु
+union hsw_tsx_tuning {
+	struct {
 		u32 cycles_last_block     : 32,
-		    hle_पात		  : 1,
-		    rपंचांग_पात		  : 1,
-		    inकाष्ठाion_पात     : 1,
-		    non_inकाष्ठाion_पात : 1,
+		    hle_abort		  : 1,
+		    rtm_abort		  : 1,
+		    instruction_abort     : 1,
+		    non_instruction_abort : 1,
 		    retry		  : 1,
 		    data_conflict	  : 1,
-		    capacity_ग_लिखोs	  : 1,
-		    capacity_पढ़ोs	  : 1;
-	पूर्ण;
+		    capacity_writes	  : 1,
+		    capacity_reads	  : 1;
+	};
 	u64	    value;
-पूर्ण;
+};
 
-#घोषणा PEBS_HSW_TSX_FLAGS	0xff00000000ULL
+#define PEBS_HSW_TSX_FLAGS	0xff00000000ULL
 
 /* Same as HSW, plus TSC */
 
-काष्ठा pebs_record_skl अणु
+struct pebs_record_skl {
 	u64 flags, ip;
 	u64 ax, bx, cx, dx;
 	u64 si, di, bp, sp;
@@ -325,315 +324,315 @@ DEFINE_PER_CPU_PAGE_ALIGNED(काष्ठा debug_store, cpu_debug_store);
 	u64 status, dla, dse, lat;
 	u64 real_ip, tsx_tuning;
 	u64 tsc;
-पूर्ण;
+};
 
-व्योम init_debug_store_on_cpu(पूर्णांक cpu)
-अणु
-	काष्ठा debug_store *ds = per_cpu(cpu_hw_events, cpu).ds;
+void init_debug_store_on_cpu(int cpu)
+{
+	struct debug_store *ds = per_cpu(cpu_hw_events, cpu).ds;
 
-	अगर (!ds)
-		वापस;
+	if (!ds)
+		return;
 
 	wrmsr_on_cpu(cpu, MSR_IA32_DS_AREA,
-		     (u32)((u64)(अचिन्हित दीर्घ)ds),
-		     (u32)((u64)(अचिन्हित दीर्घ)ds >> 32));
-पूर्ण
+		     (u32)((u64)(unsigned long)ds),
+		     (u32)((u64)(unsigned long)ds >> 32));
+}
 
-व्योम fini_debug_store_on_cpu(पूर्णांक cpu)
-अणु
-	अगर (!per_cpu(cpu_hw_events, cpu).ds)
-		वापस;
+void fini_debug_store_on_cpu(int cpu)
+{
+	if (!per_cpu(cpu_hw_events, cpu).ds)
+		return;
 
 	wrmsr_on_cpu(cpu, MSR_IA32_DS_AREA, 0, 0);
-पूर्ण
+}
 
-अटल DEFINE_PER_CPU(व्योम *, insn_buffer);
+static DEFINE_PER_CPU(void *, insn_buffer);
 
-अटल व्योम ds_update_cea(व्योम *cea, व्योम *addr, माप_प्रकार size, pgprot_t prot)
-अणु
-	अचिन्हित दीर्घ start = (अचिन्हित दीर्घ)cea;
+static void ds_update_cea(void *cea, void *addr, size_t size, pgprot_t prot)
+{
+	unsigned long start = (unsigned long)cea;
 	phys_addr_t pa;
-	माप_प्रकार msz = 0;
+	size_t msz = 0;
 
 	pa = virt_to_phys(addr);
 
 	preempt_disable();
-	क्रम (; msz < size; msz += PAGE_SIZE, pa += PAGE_SIZE, cea += PAGE_SIZE)
+	for (; msz < size; msz += PAGE_SIZE, pa += PAGE_SIZE, cea += PAGE_SIZE)
 		cea_set_pte(cea, pa, prot);
 
 	/*
-	 * This is a cross-CPU update of the cpu_entry_area, we must shoot करोwn
-	 * all TLB entries क्रम it.
+	 * This is a cross-CPU update of the cpu_entry_area, we must shoot down
+	 * all TLB entries for it.
 	 */
 	flush_tlb_kernel_range(start, start + size);
 	preempt_enable();
-पूर्ण
+}
 
-अटल व्योम ds_clear_cea(व्योम *cea, माप_प्रकार size)
-अणु
-	अचिन्हित दीर्घ start = (अचिन्हित दीर्घ)cea;
-	माप_प्रकार msz = 0;
+static void ds_clear_cea(void *cea, size_t size)
+{
+	unsigned long start = (unsigned long)cea;
+	size_t msz = 0;
 
 	preempt_disable();
-	क्रम (; msz < size; msz += PAGE_SIZE, cea += PAGE_SIZE)
+	for (; msz < size; msz += PAGE_SIZE, cea += PAGE_SIZE)
 		cea_set_pte(cea, 0, PAGE_NONE);
 
 	flush_tlb_kernel_range(start, start + size);
 	preempt_enable();
-पूर्ण
+}
 
-अटल व्योम *dsalloc_pages(माप_प्रकार size, gfp_t flags, पूर्णांक cpu)
-अणु
-	अचिन्हित पूर्णांक order = get_order(size);
-	पूर्णांक node = cpu_to_node(cpu);
-	काष्ठा page *page;
+static void *dsalloc_pages(size_t size, gfp_t flags, int cpu)
+{
+	unsigned int order = get_order(size);
+	int node = cpu_to_node(cpu);
+	struct page *page;
 
 	page = __alloc_pages_node(node, flags | __GFP_ZERO, order);
-	वापस page ? page_address(page) : शून्य;
-पूर्ण
+	return page ? page_address(page) : NULL;
+}
 
-अटल व्योम dsमुक्त_pages(स्थिर व्योम *buffer, माप_प्रकार size)
-अणु
-	अगर (buffer)
-		मुक्त_pages((अचिन्हित दीर्घ)buffer, get_order(size));
-पूर्ण
+static void dsfree_pages(const void *buffer, size_t size)
+{
+	if (buffer)
+		free_pages((unsigned long)buffer, get_order(size));
+}
 
-अटल पूर्णांक alloc_pebs_buffer(पूर्णांक cpu)
-अणु
-	काष्ठा cpu_hw_events *hwev = per_cpu_ptr(&cpu_hw_events, cpu);
-	काष्ठा debug_store *ds = hwev->ds;
-	माप_प्रकार bsiz = x86_pmu.pebs_buffer_size;
-	पूर्णांक max, node = cpu_to_node(cpu);
-	व्योम *buffer, *insn_buff, *cea;
+static int alloc_pebs_buffer(int cpu)
+{
+	struct cpu_hw_events *hwev = per_cpu_ptr(&cpu_hw_events, cpu);
+	struct debug_store *ds = hwev->ds;
+	size_t bsiz = x86_pmu.pebs_buffer_size;
+	int max, node = cpu_to_node(cpu);
+	void *buffer, *insn_buff, *cea;
 
-	अगर (!x86_pmu.pebs)
-		वापस 0;
+	if (!x86_pmu.pebs)
+		return 0;
 
 	buffer = dsalloc_pages(bsiz, GFP_KERNEL, cpu);
-	अगर (unlikely(!buffer))
-		वापस -ENOMEM;
+	if (unlikely(!buffer))
+		return -ENOMEM;
 
 	/*
-	 * HSW+ alपढ़ोy provides us the eventing ip; no need to allocate this
+	 * HSW+ already provides us the eventing ip; no need to allocate this
 	 * buffer then.
 	 */
-	अगर (x86_pmu.पूर्णांकel_cap.pebs_क्रमmat < 2) अणु
+	if (x86_pmu.intel_cap.pebs_format < 2) {
 		insn_buff = kzalloc_node(PEBS_FIXUP_SIZE, GFP_KERNEL, node);
-		अगर (!insn_buff) अणु
-			dsमुक्त_pages(buffer, bsiz);
-			वापस -ENOMEM;
-		पूर्ण
+		if (!insn_buff) {
+			dsfree_pages(buffer, bsiz);
+			return -ENOMEM;
+		}
 		per_cpu(insn_buffer, cpu) = insn_buff;
-	पूर्ण
+	}
 	hwev->ds_pebs_vaddr = buffer;
 	/* Update the cpu entry area mapping */
 	cea = &get_cpu_entry_area(cpu)->cpu_debug_buffers.pebs_buffer;
-	ds->pebs_buffer_base = (अचिन्हित दीर्घ) cea;
+	ds->pebs_buffer_base = (unsigned long) cea;
 	ds_update_cea(cea, buffer, bsiz, PAGE_KERNEL);
 	ds->pebs_index = ds->pebs_buffer_base;
 	max = x86_pmu.pebs_record_size * (bsiz / x86_pmu.pebs_record_size);
-	ds->pebs_असलolute_maximum = ds->pebs_buffer_base + max;
-	वापस 0;
-पूर्ण
+	ds->pebs_absolute_maximum = ds->pebs_buffer_base + max;
+	return 0;
+}
 
-अटल व्योम release_pebs_buffer(पूर्णांक cpu)
-अणु
-	काष्ठा cpu_hw_events *hwev = per_cpu_ptr(&cpu_hw_events, cpu);
-	व्योम *cea;
+static void release_pebs_buffer(int cpu)
+{
+	struct cpu_hw_events *hwev = per_cpu_ptr(&cpu_hw_events, cpu);
+	void *cea;
 
-	अगर (!x86_pmu.pebs)
-		वापस;
+	if (!x86_pmu.pebs)
+		return;
 
-	kमुक्त(per_cpu(insn_buffer, cpu));
-	per_cpu(insn_buffer, cpu) = शून्य;
+	kfree(per_cpu(insn_buffer, cpu));
+	per_cpu(insn_buffer, cpu) = NULL;
 
 	/* Clear the fixmap */
 	cea = &get_cpu_entry_area(cpu)->cpu_debug_buffers.pebs_buffer;
 	ds_clear_cea(cea, x86_pmu.pebs_buffer_size);
-	dsमुक्त_pages(hwev->ds_pebs_vaddr, x86_pmu.pebs_buffer_size);
-	hwev->ds_pebs_vaddr = शून्य;
-पूर्ण
+	dsfree_pages(hwev->ds_pebs_vaddr, x86_pmu.pebs_buffer_size);
+	hwev->ds_pebs_vaddr = NULL;
+}
 
-अटल पूर्णांक alloc_bts_buffer(पूर्णांक cpu)
-अणु
-	काष्ठा cpu_hw_events *hwev = per_cpu_ptr(&cpu_hw_events, cpu);
-	काष्ठा debug_store *ds = hwev->ds;
-	व्योम *buffer, *cea;
-	पूर्णांक max;
+static int alloc_bts_buffer(int cpu)
+{
+	struct cpu_hw_events *hwev = per_cpu_ptr(&cpu_hw_events, cpu);
+	struct debug_store *ds = hwev->ds;
+	void *buffer, *cea;
+	int max;
 
-	अगर (!x86_pmu.bts)
-		वापस 0;
+	if (!x86_pmu.bts)
+		return 0;
 
 	buffer = dsalloc_pages(BTS_BUFFER_SIZE, GFP_KERNEL | __GFP_NOWARN, cpu);
-	अगर (unlikely(!buffer)) अणु
+	if (unlikely(!buffer)) {
 		WARN_ONCE(1, "%s: BTS buffer allocation failure\n", __func__);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	hwev->ds_bts_vaddr = buffer;
 	/* Update the fixmap */
 	cea = &get_cpu_entry_area(cpu)->cpu_debug_buffers.bts_buffer;
-	ds->bts_buffer_base = (अचिन्हित दीर्घ) cea;
+	ds->bts_buffer_base = (unsigned long) cea;
 	ds_update_cea(cea, buffer, BTS_BUFFER_SIZE, PAGE_KERNEL);
 	ds->bts_index = ds->bts_buffer_base;
 	max = BTS_BUFFER_SIZE / BTS_RECORD_SIZE;
-	ds->bts_असलolute_maximum = ds->bts_buffer_base +
+	ds->bts_absolute_maximum = ds->bts_buffer_base +
 					max * BTS_RECORD_SIZE;
-	ds->bts_पूर्णांकerrupt_threshold = ds->bts_असलolute_maximum -
+	ds->bts_interrupt_threshold = ds->bts_absolute_maximum -
 					(max / 16) * BTS_RECORD_SIZE;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम release_bts_buffer(पूर्णांक cpu)
-अणु
-	काष्ठा cpu_hw_events *hwev = per_cpu_ptr(&cpu_hw_events, cpu);
-	व्योम *cea;
+static void release_bts_buffer(int cpu)
+{
+	struct cpu_hw_events *hwev = per_cpu_ptr(&cpu_hw_events, cpu);
+	void *cea;
 
-	अगर (!x86_pmu.bts)
-		वापस;
+	if (!x86_pmu.bts)
+		return;
 
 	/* Clear the fixmap */
 	cea = &get_cpu_entry_area(cpu)->cpu_debug_buffers.bts_buffer;
 	ds_clear_cea(cea, BTS_BUFFER_SIZE);
-	dsमुक्त_pages(hwev->ds_bts_vaddr, BTS_BUFFER_SIZE);
-	hwev->ds_bts_vaddr = शून्य;
-पूर्ण
+	dsfree_pages(hwev->ds_bts_vaddr, BTS_BUFFER_SIZE);
+	hwev->ds_bts_vaddr = NULL;
+}
 
-अटल पूर्णांक alloc_ds_buffer(पूर्णांक cpu)
-अणु
-	काष्ठा debug_store *ds = &get_cpu_entry_area(cpu)->cpu_debug_store;
+static int alloc_ds_buffer(int cpu)
+{
+	struct debug_store *ds = &get_cpu_entry_area(cpu)->cpu_debug_store;
 
-	स_रखो(ds, 0, माप(*ds));
+	memset(ds, 0, sizeof(*ds));
 	per_cpu(cpu_hw_events, cpu).ds = ds;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम release_ds_buffer(पूर्णांक cpu)
-अणु
-	per_cpu(cpu_hw_events, cpu).ds = शून्य;
-पूर्ण
+static void release_ds_buffer(int cpu)
+{
+	per_cpu(cpu_hw_events, cpu).ds = NULL;
+}
 
-व्योम release_ds_buffers(व्योम)
-अणु
-	पूर्णांक cpu;
+void release_ds_buffers(void)
+{
+	int cpu;
 
-	अगर (!x86_pmu.bts && !x86_pmu.pebs)
-		वापस;
+	if (!x86_pmu.bts && !x86_pmu.pebs)
+		return;
 
-	क्रम_each_possible_cpu(cpu)
+	for_each_possible_cpu(cpu)
 		release_ds_buffer(cpu);
 
-	क्रम_each_possible_cpu(cpu) अणु
+	for_each_possible_cpu(cpu) {
 		/*
-		 * Again, ignore errors from offline CPUs, they will no दीर्घer
+		 * Again, ignore errors from offline CPUs, they will no longer
 		 * observe cpu_hw_events.ds and not program the DS_AREA when
 		 * they come up.
 		 */
 		fini_debug_store_on_cpu(cpu);
-	पूर्ण
+	}
 
-	क्रम_each_possible_cpu(cpu) अणु
+	for_each_possible_cpu(cpu) {
 		release_pebs_buffer(cpu);
 		release_bts_buffer(cpu);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम reserve_ds_buffers(व्योम)
-अणु
-	पूर्णांक bts_err = 0, pebs_err = 0;
-	पूर्णांक cpu;
+void reserve_ds_buffers(void)
+{
+	int bts_err = 0, pebs_err = 0;
+	int cpu;
 
 	x86_pmu.bts_active = 0;
 	x86_pmu.pebs_active = 0;
 
-	अगर (!x86_pmu.bts && !x86_pmu.pebs)
-		वापस;
+	if (!x86_pmu.bts && !x86_pmu.pebs)
+		return;
 
-	अगर (!x86_pmu.bts)
+	if (!x86_pmu.bts)
 		bts_err = 1;
 
-	अगर (!x86_pmu.pebs)
+	if (!x86_pmu.pebs)
 		pebs_err = 1;
 
-	क्रम_each_possible_cpu(cpu) अणु
-		अगर (alloc_ds_buffer(cpu)) अणु
+	for_each_possible_cpu(cpu) {
+		if (alloc_ds_buffer(cpu)) {
 			bts_err = 1;
 			pebs_err = 1;
-		पूर्ण
+		}
 
-		अगर (!bts_err && alloc_bts_buffer(cpu))
+		if (!bts_err && alloc_bts_buffer(cpu))
 			bts_err = 1;
 
-		अगर (!pebs_err && alloc_pebs_buffer(cpu))
+		if (!pebs_err && alloc_pebs_buffer(cpu))
 			pebs_err = 1;
 
-		अगर (bts_err && pebs_err)
-			अवरोध;
-	पूर्ण
+		if (bts_err && pebs_err)
+			break;
+	}
 
-	अगर (bts_err) अणु
-		क्रम_each_possible_cpu(cpu)
+	if (bts_err) {
+		for_each_possible_cpu(cpu)
 			release_bts_buffer(cpu);
-	पूर्ण
+	}
 
-	अगर (pebs_err) अणु
-		क्रम_each_possible_cpu(cpu)
+	if (pebs_err) {
+		for_each_possible_cpu(cpu)
 			release_pebs_buffer(cpu);
-	पूर्ण
+	}
 
-	अगर (bts_err && pebs_err) अणु
-		क्रम_each_possible_cpu(cpu)
+	if (bts_err && pebs_err) {
+		for_each_possible_cpu(cpu)
 			release_ds_buffer(cpu);
-	पूर्ण अन्यथा अणु
-		अगर (x86_pmu.bts && !bts_err)
+	} else {
+		if (x86_pmu.bts && !bts_err)
 			x86_pmu.bts_active = 1;
 
-		अगर (x86_pmu.pebs && !pebs_err)
+		if (x86_pmu.pebs && !pebs_err)
 			x86_pmu.pebs_active = 1;
 
-		क्रम_each_possible_cpu(cpu) अणु
+		for_each_possible_cpu(cpu) {
 			/*
-			 * Ignores wrmsr_on_cpu() errors क्रम offline CPUs they
-			 * will get this call through पूर्णांकel_pmu_cpu_starting().
+			 * Ignores wrmsr_on_cpu() errors for offline CPUs they
+			 * will get this call through intel_pmu_cpu_starting().
 			 */
 			init_debug_store_on_cpu(cpu);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
  * BTS
  */
 
-काष्ठा event_स्थिरraपूर्णांक bts_स्थिरraपूर्णांक =
+struct event_constraint bts_constraint =
 	EVENT_CONSTRAINT(0, 1ULL << INTEL_PMC_IDX_FIXED_BTS, 0);
 
-व्योम पूर्णांकel_pmu_enable_bts(u64 config)
-अणु
-	अचिन्हित दीर्घ debugctlmsr;
+void intel_pmu_enable_bts(u64 config)
+{
+	unsigned long debugctlmsr;
 
 	debugctlmsr = get_debugctlmsr();
 
 	debugctlmsr |= DEBUGCTLMSR_TR;
 	debugctlmsr |= DEBUGCTLMSR_BTS;
-	अगर (config & ARCH_PERFMON_EVENTSEL_INT)
+	if (config & ARCH_PERFMON_EVENTSEL_INT)
 		debugctlmsr |= DEBUGCTLMSR_BTINT;
 
-	अगर (!(config & ARCH_PERFMON_EVENTSEL_OS))
+	if (!(config & ARCH_PERFMON_EVENTSEL_OS))
 		debugctlmsr |= DEBUGCTLMSR_BTS_OFF_OS;
 
-	अगर (!(config & ARCH_PERFMON_EVENTSEL_USR))
+	if (!(config & ARCH_PERFMON_EVENTSEL_USR))
 		debugctlmsr |= DEBUGCTLMSR_BTS_OFF_USR;
 
 	update_debugctlmsr(debugctlmsr);
-पूर्ण
+}
 
-व्योम पूर्णांकel_pmu_disable_bts(व्योम)
-अणु
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
-	अचिन्हित दीर्घ debugctlmsr;
+void intel_pmu_disable_bts(void)
+{
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+	unsigned long debugctlmsr;
 
-	अगर (!cpuc->ds)
-		वापस;
+	if (!cpuc->ds)
+		return;
 
 	debugctlmsr = get_debugctlmsr();
 
@@ -642,38 +641,38 @@ DEFINE_PER_CPU_PAGE_ALIGNED(काष्ठा debug_store, cpu_debug_store);
 		  DEBUGCTLMSR_BTS_OFF_OS | DEBUGCTLMSR_BTS_OFF_USR);
 
 	update_debugctlmsr(debugctlmsr);
-पूर्ण
+}
 
-पूर्णांक पूर्णांकel_pmu_drain_bts_buffer(व्योम)
-अणु
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
-	काष्ठा debug_store *ds = cpuc->ds;
-	काष्ठा bts_record अणु
+int intel_pmu_drain_bts_buffer(void)
+{
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+	struct debug_store *ds = cpuc->ds;
+	struct bts_record {
 		u64	from;
 		u64	to;
 		u64	flags;
-	पूर्ण;
-	काष्ठा perf_event *event = cpuc->events[INTEL_PMC_IDX_FIXED_BTS];
-	काष्ठा bts_record *at, *base, *top;
-	काष्ठा perf_output_handle handle;
-	काष्ठा perf_event_header header;
-	काष्ठा perf_sample_data data;
-	अचिन्हित दीर्घ skip = 0;
-	काष्ठा pt_regs regs;
+	};
+	struct perf_event *event = cpuc->events[INTEL_PMC_IDX_FIXED_BTS];
+	struct bts_record *at, *base, *top;
+	struct perf_output_handle handle;
+	struct perf_event_header header;
+	struct perf_sample_data data;
+	unsigned long skip = 0;
+	struct pt_regs regs;
 
-	अगर (!event)
-		वापस 0;
+	if (!event)
+		return 0;
 
-	अगर (!x86_pmu.bts_active)
-		वापस 0;
+	if (!x86_pmu.bts_active)
+		return 0;
 
-	base = (काष्ठा bts_record *)(अचिन्हित दीर्घ)ds->bts_buffer_base;
-	top  = (काष्ठा bts_record *)(अचिन्हित दीर्घ)ds->bts_index;
+	base = (struct bts_record *)(unsigned long)ds->bts_buffer_base;
+	top  = (struct bts_record *)(unsigned long)ds->bts_index;
 
-	अगर (top <= base)
-		वापस 0;
+	if (top <= base)
+		return 0;
 
-	स_रखो(&regs, 0, माप(regs));
+	memset(&regs, 0, sizeof(regs));
 
 	ds->bts_index = ds->bts_buffer_base;
 
@@ -681,7 +680,7 @@ DEFINE_PER_CPU_PAGE_ALIGNED(काष्ठा debug_store, cpu_debug_store);
 
 	/*
 	 * BTS leaks kernel addresses in branches across the cpl boundary,
-	 * such as traps or प्रणाली calls, so unless the user is asking क्रम
+	 * such as traps or system calls, so unless the user is asking for
 	 * kernel tracing (and right now it's not possible), we'd need to
 	 * filter them out. But first we need to count how many of those we
 	 * have in the current batch. This is an extra O(n) pass, however,
@@ -689,62 +688,62 @@ DEFINE_PER_CPU_PAGE_ALIGNED(काष्ठा debug_store, cpu_debug_store);
 	 * n <= 2560 (BTS_BUFFER_SIZE / BTS_RECORD_SIZE * 15/16; see the
 	 * alloc_bts_buffer()).
 	 */
-	क्रम (at = base; at < top; at++) अणु
+	for (at = base; at < top; at++) {
 		/*
-		 * Note that right now *this* BTS code only works अगर
+		 * Note that right now *this* BTS code only works if
 		 * attr::exclude_kernel is set, but let's keep this extra
-		 * check here in हाल that changes.
+		 * check here in case that changes.
 		 */
-		अगर (event->attr.exclude_kernel &&
+		if (event->attr.exclude_kernel &&
 		    (kernel_ip(at->from) || kernel_ip(at->to)))
 			skip++;
-	पूर्ण
+	}
 
 	/*
 	 * Prepare a generic sample, i.e. fill in the invariant fields.
-	 * We will overग_लिखो the from and to address beक्रमe we output
+	 * We will overwrite the from and to address before we output
 	 * the sample.
 	 */
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	perf_prepare_sample(&header, &data, event, &regs);
 
-	अगर (perf_output_begin(&handle, &data, event,
+	if (perf_output_begin(&handle, &data, event,
 			      header.size * (top - base - skip)))
-		जाओ unlock;
+		goto unlock;
 
-	क्रम (at = base; at < top; at++) अणु
+	for (at = base; at < top; at++) {
 		/* Filter out any records that contain kernel addresses. */
-		अगर (event->attr.exclude_kernel &&
+		if (event->attr.exclude_kernel &&
 		    (kernel_ip(at->from) || kernel_ip(at->to)))
-			जारी;
+			continue;
 
 		data.ip		= at->from;
 		data.addr	= at->to;
 
 		perf_output_sample(&handle, &header, &data, event);
-	पूर्ण
+	}
 
 	perf_output_end(&handle);
 
 	/* There's new data available. */
-	event->hw.पूर्णांकerrupts++;
-	event->pending_समाप्त = POLL_IN;
+	event->hw.interrupts++;
+	event->pending_kill = POLL_IN;
 unlock:
-	rcu_पढ़ो_unlock();
-	वापस 1;
-पूर्ण
+	rcu_read_unlock();
+	return 1;
+}
 
-अटल अंतरभूत व्योम पूर्णांकel_pmu_drain_pebs_buffer(व्योम)
-अणु
-	काष्ठा perf_sample_data data;
+static inline void intel_pmu_drain_pebs_buffer(void)
+{
+	struct perf_sample_data data;
 
-	x86_pmu.drain_pebs(शून्य, &data);
-पूर्ण
+	x86_pmu.drain_pebs(NULL, &data);
+}
 
 /*
  * PEBS
  */
-काष्ठा event_स्थिरraपूर्णांक पूर्णांकel_core2_pebs_event_स्थिरraपूर्णांकs[] = अणु
+struct event_constraint intel_core2_pebs_event_constraints[] = {
 	INTEL_FLAGS_UEVENT_CONSTRAINT(0x00c0, 0x1), /* INST_RETIRED.ANY */
 	INTEL_FLAGS_UEVENT_CONSTRAINT(0xfec1, 0x1), /* X87_OPS_RETIRED.ANY */
 	INTEL_FLAGS_UEVENT_CONSTRAINT(0x00c5, 0x1), /* BR_INST_RETIRED.MISPRED */
@@ -753,9 +752,9 @@ unlock:
 	/* INST_RETIRED.ANY_P, inv=1, cmask=16 (cycles:p). */
 	INTEL_FLAGS_UEVENT_CONSTRAINT(0x108000c0, 0x01),
 	EVENT_CONSTRAINT_END
-पूर्ण;
+};
 
-काष्ठा event_स्थिरraपूर्णांक पूर्णांकel_atom_pebs_event_स्थिरraपूर्णांकs[] = अणु
+struct event_constraint intel_atom_pebs_event_constraints[] = {
 	INTEL_FLAGS_UEVENT_CONSTRAINT(0x00c0, 0x1), /* INST_RETIRED.ANY */
 	INTEL_FLAGS_UEVENT_CONSTRAINT(0x00c5, 0x1), /* MISPREDICTED_BRANCH_RETIRED */
 	INTEL_FLAGS_EVENT_CONSTRAINT(0xcb, 0x1),    /* MEM_LOAD_RETIRED.* */
@@ -764,30 +763,30 @@ unlock:
 	/* Allow all events as PEBS with no flags */
 	INTEL_ALL_EVENT_CONSTRAINT(0, 0x1),
 	EVENT_CONSTRAINT_END
-पूर्ण;
+};
 
-काष्ठा event_स्थिरraपूर्णांक पूर्णांकel_slm_pebs_event_स्थिरraपूर्णांकs[] = अणु
+struct event_constraint intel_slm_pebs_event_constraints[] = {
 	/* INST_RETIRED.ANY_P, inv=1, cmask=16 (cycles:p). */
 	INTEL_FLAGS_UEVENT_CONSTRAINT(0x108000c0, 0x1),
 	/* Allow all events as PEBS with no flags */
 	INTEL_ALL_EVENT_CONSTRAINT(0, 0x1),
 	EVENT_CONSTRAINT_END
-पूर्ण;
+};
 
-काष्ठा event_स्थिरraपूर्णांक पूर्णांकel_glm_pebs_event_स्थिरraपूर्णांकs[] = अणु
+struct event_constraint intel_glm_pebs_event_constraints[] = {
 	/* Allow all events as PEBS with no flags */
 	INTEL_ALL_EVENT_CONSTRAINT(0, 0x1),
 	EVENT_CONSTRAINT_END
-पूर्ण;
+};
 
-काष्ठा event_स्थिरraपूर्णांक पूर्णांकel_grt_pebs_event_स्थिरraपूर्णांकs[] = अणु
+struct event_constraint intel_grt_pebs_event_constraints[] = {
 	/* Allow all events as PEBS with no flags */
 	INTEL_PLD_CONSTRAINT(0x5d0, 0xf),
 	INTEL_PSD_CONSTRAINT(0x6d0, 0xf),
 	EVENT_CONSTRAINT_END
-पूर्ण;
+};
 
-काष्ठा event_स्थिरraपूर्णांक पूर्णांकel_nehalem_pebs_event_स्थिरraपूर्णांकs[] = अणु
+struct event_constraint intel_nehalem_pebs_event_constraints[] = {
 	INTEL_PLD_CONSTRAINT(0x100b, 0xf),      /* MEM_INST_RETIRED.* */
 	INTEL_FLAGS_EVENT_CONSTRAINT(0x0f, 0xf),    /* MEM_UNCORE_RETIRED.* */
 	INTEL_FLAGS_UEVENT_CONSTRAINT(0x010c, 0xf), /* MEM_STORE_RETIRED.DTLB_MISS */
@@ -802,9 +801,9 @@ unlock:
 	/* INST_RETIRED.ANY_P, inv=1, cmask=16 (cycles:p). */
 	INTEL_FLAGS_UEVENT_CONSTRAINT(0x108000c0, 0x0f),
 	EVENT_CONSTRAINT_END
-पूर्ण;
+};
 
-काष्ठा event_स्थिरraपूर्णांक पूर्णांकel_wesपंचांगere_pebs_event_स्थिरraपूर्णांकs[] = अणु
+struct event_constraint intel_westmere_pebs_event_constraints[] = {
 	INTEL_PLD_CONSTRAINT(0x100b, 0xf),      /* MEM_INST_RETIRED.* */
 	INTEL_FLAGS_EVENT_CONSTRAINT(0x0f, 0xf),    /* MEM_UNCORE_RETIRED.* */
 	INTEL_FLAGS_UEVENT_CONSTRAINT(0x010c, 0xf), /* MEM_STORE_RETIRED.DTLB_MISS */
@@ -819,9 +818,9 @@ unlock:
 	/* INST_RETIRED.ANY_P, inv=1, cmask=16 (cycles:p). */
 	INTEL_FLAGS_UEVENT_CONSTRAINT(0x108000c0, 0x0f),
 	EVENT_CONSTRAINT_END
-पूर्ण;
+};
 
-काष्ठा event_स्थिरraपूर्णांक पूर्णांकel_snb_pebs_event_स्थिरraपूर्णांकs[] = अणु
+struct event_constraint intel_snb_pebs_event_constraints[] = {
 	INTEL_FLAGS_UEVENT_CONSTRAINT(0x01c0, 0x2), /* INST_RETIRED.PRECDIST */
 	INTEL_PLD_CONSTRAINT(0x01cd, 0x8),    /* MEM_TRANS_RETIRED.LAT_ABOVE_THR */
 	INTEL_PST_CONSTRAINT(0x02cd, 0x8),    /* MEM_TRANS_RETIRED.PRECISE_STORES */
@@ -834,9 +833,9 @@ unlock:
 	/* Allow all events as PEBS with no flags */
 	INTEL_ALL_EVENT_CONSTRAINT(0, 0xf),
 	EVENT_CONSTRAINT_END
-पूर्ण;
+};
 
-काष्ठा event_स्थिरraपूर्णांक पूर्णांकel_ivb_pebs_event_स्थिरraपूर्णांकs[] = अणु
+struct event_constraint intel_ivb_pebs_event_constraints[] = {
         INTEL_FLAGS_UEVENT_CONSTRAINT(0x01c0, 0x2), /* INST_RETIRED.PRECDIST */
         INTEL_PLD_CONSTRAINT(0x01cd, 0x8),    /* MEM_TRANS_RETIRED.LAT_ABOVE_THR */
 	INTEL_PST_CONSTRAINT(0x02cd, 0x8),    /* MEM_TRANS_RETIRED.PRECISE_STORES */
@@ -851,9 +850,9 @@ unlock:
 	/* Allow all events as PEBS with no flags */
 	INTEL_ALL_EVENT_CONSTRAINT(0, 0xf),
         EVENT_CONSTRAINT_END
-पूर्ण;
+};
 
-काष्ठा event_स्थिरraपूर्णांक पूर्णांकel_hsw_pebs_event_स्थिरraपूर्णांकs[] = अणु
+struct event_constraint intel_hsw_pebs_event_constraints[] = {
 	INTEL_FLAGS_UEVENT_CONSTRAINT(0x01c0, 0x2), /* INST_RETIRED.PRECDIST */
 	INTEL_PLD_CONSTRAINT(0x01cd, 0xf),    /* MEM_TRANS_RETIRED.* */
 	/* UOPS_RETIRED.ALL, inv=1, cmask=16 (cycles:p). */
@@ -874,9 +873,9 @@ unlock:
 	/* Allow all events as PEBS with no flags */
 	INTEL_ALL_EVENT_CONSTRAINT(0, 0xf),
 	EVENT_CONSTRAINT_END
-पूर्ण;
+};
 
-काष्ठा event_स्थिरraपूर्णांक पूर्णांकel_bdw_pebs_event_स्थिरraपूर्णांकs[] = अणु
+struct event_constraint intel_bdw_pebs_event_constraints[] = {
 	INTEL_FLAGS_UEVENT_CONSTRAINT(0x01c0, 0x2), /* INST_RETIRED.PRECDIST */
 	INTEL_PLD_CONSTRAINT(0x01cd, 0xf),    /* MEM_TRANS_RETIRED.* */
 	/* UOPS_RETIRED.ALL, inv=1, cmask=16 (cycles:p). */
@@ -897,10 +896,10 @@ unlock:
 	/* Allow all events as PEBS with no flags */
 	INTEL_ALL_EVENT_CONSTRAINT(0, 0xf),
 	EVENT_CONSTRAINT_END
-पूर्ण;
+};
 
 
-काष्ठा event_स्थिरraपूर्णांक पूर्णांकel_skl_pebs_event_स्थिरraपूर्णांकs[] = अणु
+struct event_constraint intel_skl_pebs_event_constraints[] = {
 	INTEL_FLAGS_UEVENT_CONSTRAINT(0x1c0, 0x2),	/* INST_RETIRED.PREC_DIST */
 	/* INST_RETIRED.PREC_DIST, inv=1, cmask=16 (cycles:ppp). */
 	INTEL_FLAGS_UEVENT_CONSTRAINT(0x108001c0, 0x2),
@@ -921,9 +920,9 @@ unlock:
 	/* Allow all events as PEBS with no flags */
 	INTEL_ALL_EVENT_CONSTRAINT(0, 0xf),
 	EVENT_CONSTRAINT_END
-पूर्ण;
+};
 
-काष्ठा event_स्थिरraपूर्णांक पूर्णांकel_icl_pebs_event_स्थिरraपूर्णांकs[] = अणु
+struct event_constraint intel_icl_pebs_event_constraints[] = {
 	INTEL_FLAGS_UEVENT_CONSTRAINT(0x1c0, 0x100000000ULL),	/* INST_RETIRED.PREC_DIST */
 	INTEL_FLAGS_UEVENT_CONSTRAINT(0x0400, 0x800000000ULL),	/* SLOTS */
 
@@ -936,14 +935,14 @@ unlock:
 	INTEL_FLAGS_EVENT_CONSTRAINT(0xd0, 0xf),		/* MEM_INST_RETIRED.* */
 
 	/*
-	 * Everything अन्यथा is handled by PMU_FL_PEBS_ALL, because we
-	 * need the full स्थिरraपूर्णांकs from the मुख्य table.
+	 * Everything else is handled by PMU_FL_PEBS_ALL, because we
+	 * need the full constraints from the main table.
 	 */
 
 	EVENT_CONSTRAINT_END
-पूर्ण;
+};
 
-काष्ठा event_स्थिरraपूर्णांक पूर्णांकel_spr_pebs_event_स्थिरraपूर्णांकs[] = अणु
+struct event_constraint intel_spr_pebs_event_constraints[] = {
 	INTEL_FLAGS_UEVENT_CONSTRAINT(0x1c0, 0x100000000ULL),
 	INTEL_FLAGS_UEVENT_CONSTRAINT(0x0400, 0x800000000ULL),
 
@@ -958,506 +957,506 @@ unlock:
 	INTEL_FLAGS_EVENT_CONSTRAINT(0xd0, 0xf),
 
 	/*
-	 * Everything अन्यथा is handled by PMU_FL_PEBS_ALL, because we
-	 * need the full स्थिरraपूर्णांकs from the मुख्य table.
+	 * Everything else is handled by PMU_FL_PEBS_ALL, because we
+	 * need the full constraints from the main table.
 	 */
 
 	EVENT_CONSTRAINT_END
-पूर्ण;
+};
 
-काष्ठा event_स्थिरraपूर्णांक *पूर्णांकel_pebs_स्थिरraपूर्णांकs(काष्ठा perf_event *event)
-अणु
-	काष्ठा event_स्थिरraपूर्णांक *pebs_स्थिरraपूर्णांकs = hybrid(event->pmu, pebs_स्थिरraपूर्णांकs);
-	काष्ठा event_स्थिरraपूर्णांक *c;
+struct event_constraint *intel_pebs_constraints(struct perf_event *event)
+{
+	struct event_constraint *pebs_constraints = hybrid(event->pmu, pebs_constraints);
+	struct event_constraint *c;
 
-	अगर (!event->attr.precise_ip)
-		वापस शून्य;
+	if (!event->attr.precise_ip)
+		return NULL;
 
-	अगर (pebs_स्थिरraपूर्णांकs) अणु
-		क्रम_each_event_स्थिरraपूर्णांक(c, pebs_स्थिरraपूर्णांकs) अणु
-			अगर (स्थिरraपूर्णांक_match(c, event->hw.config)) अणु
+	if (pebs_constraints) {
+		for_each_event_constraint(c, pebs_constraints) {
+			if (constraint_match(c, event->hw.config)) {
 				event->hw.flags |= c->flags;
-				वापस c;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return c;
+			}
+		}
+	}
 
 	/*
 	 * Extended PEBS support
-	 * Makes the PEBS code search the normal स्थिरraपूर्णांकs.
+	 * Makes the PEBS code search the normal constraints.
 	 */
-	अगर (x86_pmu.flags & PMU_FL_PEBS_ALL)
-		वापस शून्य;
+	if (x86_pmu.flags & PMU_FL_PEBS_ALL)
+		return NULL;
 
-	वापस &emptyस्थिरraपूर्णांक;
-पूर्ण
+	return &emptyconstraint;
+}
 
 /*
- * We need the sched_task callback even क्रम per-cpu events when we use
- * the large पूर्णांकerrupt threshold, such that we can provide PID and TID
+ * We need the sched_task callback even for per-cpu events when we use
+ * the large interrupt threshold, such that we can provide PID and TID
  * to PEBS samples.
  */
-अटल अंतरभूत bool pebs_needs_sched_cb(काष्ठा cpu_hw_events *cpuc)
-अणु
-	अगर (cpuc->n_pebs == cpuc->n_pebs_via_pt)
-		वापस false;
+static inline bool pebs_needs_sched_cb(struct cpu_hw_events *cpuc)
+{
+	if (cpuc->n_pebs == cpuc->n_pebs_via_pt)
+		return false;
 
-	वापस cpuc->n_pebs && (cpuc->n_pebs == cpuc->n_large_pebs);
-पूर्ण
+	return cpuc->n_pebs && (cpuc->n_pebs == cpuc->n_large_pebs);
+}
 
-व्योम पूर्णांकel_pmu_pebs_sched_task(काष्ठा perf_event_context *ctx, bool sched_in)
-अणु
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+void intel_pmu_pebs_sched_task(struct perf_event_context *ctx, bool sched_in)
+{
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
 
-	अगर (!sched_in && pebs_needs_sched_cb(cpuc))
-		पूर्णांकel_pmu_drain_pebs_buffer();
-पूर्ण
+	if (!sched_in && pebs_needs_sched_cb(cpuc))
+		intel_pmu_drain_pebs_buffer();
+}
 
-अटल अंतरभूत व्योम pebs_update_threshold(काष्ठा cpu_hw_events *cpuc)
-अणु
-	काष्ठा debug_store *ds = cpuc->ds;
-	पूर्णांक max_pebs_events = hybrid(cpuc->pmu, max_pebs_events);
-	पूर्णांक num_counters_fixed = hybrid(cpuc->pmu, num_counters_fixed);
+static inline void pebs_update_threshold(struct cpu_hw_events *cpuc)
+{
+	struct debug_store *ds = cpuc->ds;
+	int max_pebs_events = hybrid(cpuc->pmu, max_pebs_events);
+	int num_counters_fixed = hybrid(cpuc->pmu, num_counters_fixed);
 	u64 threshold;
-	पूर्णांक reserved;
+	int reserved;
 
-	अगर (cpuc->n_pebs_via_pt)
-		वापस;
+	if (cpuc->n_pebs_via_pt)
+		return;
 
-	अगर (x86_pmu.flags & PMU_FL_PEBS_ALL)
+	if (x86_pmu.flags & PMU_FL_PEBS_ALL)
 		reserved = max_pebs_events + num_counters_fixed;
-	अन्यथा
+	else
 		reserved = max_pebs_events;
 
-	अगर (cpuc->n_pebs == cpuc->n_large_pebs) अणु
-		threshold = ds->pebs_असलolute_maximum -
+	if (cpuc->n_pebs == cpuc->n_large_pebs) {
+		threshold = ds->pebs_absolute_maximum -
 			reserved * cpuc->pebs_record_size;
-	पूर्ण अन्यथा अणु
+	} else {
 		threshold = ds->pebs_buffer_base + cpuc->pebs_record_size;
-	पूर्ण
+	}
 
-	ds->pebs_पूर्णांकerrupt_threshold = threshold;
-पूर्ण
+	ds->pebs_interrupt_threshold = threshold;
+}
 
-अटल व्योम adaptive_pebs_record_size_update(व्योम)
-अणु
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+static void adaptive_pebs_record_size_update(void)
+{
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
 	u64 pebs_data_cfg = cpuc->pebs_data_cfg;
-	पूर्णांक sz = माप(काष्ठा pebs_basic);
+	int sz = sizeof(struct pebs_basic);
 
-	अगर (pebs_data_cfg & PEBS_DATACFG_MEMINFO)
-		sz += माप(काष्ठा pebs_meminfo);
-	अगर (pebs_data_cfg & PEBS_DATACFG_GP)
-		sz += माप(काष्ठा pebs_gprs);
-	अगर (pebs_data_cfg & PEBS_DATACFG_XMMS)
-		sz += माप(काष्ठा pebs_xmm);
-	अगर (pebs_data_cfg & PEBS_DATACFG_LBRS)
-		sz += x86_pmu.lbr_nr * माप(काष्ठा lbr_entry);
+	if (pebs_data_cfg & PEBS_DATACFG_MEMINFO)
+		sz += sizeof(struct pebs_meminfo);
+	if (pebs_data_cfg & PEBS_DATACFG_GP)
+		sz += sizeof(struct pebs_gprs);
+	if (pebs_data_cfg & PEBS_DATACFG_XMMS)
+		sz += sizeof(struct pebs_xmm);
+	if (pebs_data_cfg & PEBS_DATACFG_LBRS)
+		sz += x86_pmu.lbr_nr * sizeof(struct lbr_entry);
 
 	cpuc->pebs_record_size = sz;
-पूर्ण
+}
 
-#घोषणा PERF_PEBS_MEMINFO_TYPE	(PERF_SAMPLE_ADDR | PERF_SAMPLE_DATA_SRC |   \
+#define PERF_PEBS_MEMINFO_TYPE	(PERF_SAMPLE_ADDR | PERF_SAMPLE_DATA_SRC |   \
 				PERF_SAMPLE_PHYS_ADDR |			     \
 				PERF_SAMPLE_WEIGHT_TYPE |		     \
 				PERF_SAMPLE_TRANSACTION |		     \
 				PERF_SAMPLE_DATA_PAGE_SIZE)
 
-अटल u64 pebs_update_adaptive_cfg(काष्ठा perf_event *event)
-अणु
-	काष्ठा perf_event_attr *attr = &event->attr;
+static u64 pebs_update_adaptive_cfg(struct perf_event *event)
+{
+	struct perf_event_attr *attr = &event->attr;
 	u64 sample_type = attr->sample_type;
 	u64 pebs_data_cfg = 0;
 	bool gprs, tsx_weight;
 
-	अगर (!(sample_type & ~(PERF_SAMPLE_IP|PERF_SAMPLE_TIME)) &&
+	if (!(sample_type & ~(PERF_SAMPLE_IP|PERF_SAMPLE_TIME)) &&
 	    attr->precise_ip > 1)
-		वापस pebs_data_cfg;
+		return pebs_data_cfg;
 
-	अगर (sample_type & PERF_PEBS_MEMINFO_TYPE)
+	if (sample_type & PERF_PEBS_MEMINFO_TYPE)
 		pebs_data_cfg |= PEBS_DATACFG_MEMINFO;
 
 	/*
 	 * We need GPRs when:
 	 * + user requested them
-	 * + precise_ip < 2 क्रम the non event IP
-	 * + For RTM TSX weight we need GPRs क्रम the पात code.
+	 * + precise_ip < 2 for the non event IP
+	 * + For RTM TSX weight we need GPRs for the abort code.
 	 */
 	gprs = (sample_type & PERF_SAMPLE_REGS_INTR) &&
-	       (attr->sample_regs_पूर्णांकr & PEBS_GP_REGS);
+	       (attr->sample_regs_intr & PEBS_GP_REGS);
 
 	tsx_weight = (sample_type & PERF_SAMPLE_WEIGHT_TYPE) &&
 		     ((attr->config & INTEL_ARCH_EVENT_MASK) ==
-		      x86_pmu.rपंचांग_पात_event);
+		      x86_pmu.rtm_abort_event);
 
-	अगर (gprs || (attr->precise_ip < 2) || tsx_weight)
+	if (gprs || (attr->precise_ip < 2) || tsx_weight)
 		pebs_data_cfg |= PEBS_DATACFG_GP;
 
-	अगर ((sample_type & PERF_SAMPLE_REGS_INTR) &&
-	    (attr->sample_regs_पूर्णांकr & PERF_REG_EXTENDED_MASK))
+	if ((sample_type & PERF_SAMPLE_REGS_INTR) &&
+	    (attr->sample_regs_intr & PERF_REG_EXTENDED_MASK))
 		pebs_data_cfg |= PEBS_DATACFG_XMMS;
 
-	अगर (sample_type & PERF_SAMPLE_BRANCH_STACK) अणु
+	if (sample_type & PERF_SAMPLE_BRANCH_STACK) {
 		/*
 		 * For now always log all LBRs. Could configure this
 		 * later.
 		 */
 		pebs_data_cfg |= PEBS_DATACFG_LBRS |
 			((x86_pmu.lbr_nr-1) << PEBS_DATACFG_LBR_SHIFT);
-	पूर्ण
+	}
 
-	वापस pebs_data_cfg;
-पूर्ण
+	return pebs_data_cfg;
+}
 
-अटल व्योम
-pebs_update_state(bool needed_cb, काष्ठा cpu_hw_events *cpuc,
-		  काष्ठा perf_event *event, bool add)
-अणु
-	काष्ठा pmu *pmu = event->ctx->pmu;
+static void
+pebs_update_state(bool needed_cb, struct cpu_hw_events *cpuc,
+		  struct perf_event *event, bool add)
+{
+	struct pmu *pmu = event->ctx->pmu;
 	/*
 	 * Make sure we get updated with the first PEBS
 	 * event. It will trigger also during removal, but
-	 * that करोes not hurt:
+	 * that does not hurt:
 	 */
 	bool update = cpuc->n_pebs == 1;
 
-	अगर (needed_cb != pebs_needs_sched_cb(cpuc)) अणु
-		अगर (!needed_cb)
+	if (needed_cb != pebs_needs_sched_cb(cpuc)) {
+		if (!needed_cb)
 			perf_sched_cb_inc(pmu);
-		अन्यथा
+		else
 			perf_sched_cb_dec(pmu);
 
 		update = true;
-	पूर्ण
+	}
 
 	/*
-	 * The PEBS record करोesn't shrink on pmu::del(). Doing so would require
-	 * iterating all reमुख्यing PEBS events to reस्थिरruct the config.
+	 * The PEBS record doesn't shrink on pmu::del(). Doing so would require
+	 * iterating all remaining PEBS events to reconstruct the config.
 	 */
-	अगर (x86_pmu.पूर्णांकel_cap.pebs_baseline && add) अणु
+	if (x86_pmu.intel_cap.pebs_baseline && add) {
 		u64 pebs_data_cfg;
 
-		/* Clear pebs_data_cfg and pebs_record_size क्रम first PEBS. */
-		अगर (cpuc->n_pebs == 1) अणु
+		/* Clear pebs_data_cfg and pebs_record_size for first PEBS. */
+		if (cpuc->n_pebs == 1) {
 			cpuc->pebs_data_cfg = 0;
-			cpuc->pebs_record_size = माप(काष्ठा pebs_basic);
-		पूर्ण
+			cpuc->pebs_record_size = sizeof(struct pebs_basic);
+		}
 
 		pebs_data_cfg = pebs_update_adaptive_cfg(event);
 
-		/* Update pebs_record_size अगर new event requires more data. */
-		अगर (pebs_data_cfg & ~cpuc->pebs_data_cfg) अणु
+		/* Update pebs_record_size if new event requires more data. */
+		if (pebs_data_cfg & ~cpuc->pebs_data_cfg) {
 			cpuc->pebs_data_cfg |= pebs_data_cfg;
 			adaptive_pebs_record_size_update();
 			update = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (update)
+	if (update)
 		pebs_update_threshold(cpuc);
-पूर्ण
+}
 
-व्योम पूर्णांकel_pmu_pebs_add(काष्ठा perf_event *event)
-अणु
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
-	काष्ठा hw_perf_event *hwc = &event->hw;
+void intel_pmu_pebs_add(struct perf_event *event)
+{
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+	struct hw_perf_event *hwc = &event->hw;
 	bool needed_cb = pebs_needs_sched_cb(cpuc);
 
 	cpuc->n_pebs++;
-	अगर (hwc->flags & PERF_X86_EVENT_LARGE_PEBS)
+	if (hwc->flags & PERF_X86_EVENT_LARGE_PEBS)
 		cpuc->n_large_pebs++;
-	अगर (hwc->flags & PERF_X86_EVENT_PEBS_VIA_PT)
+	if (hwc->flags & PERF_X86_EVENT_PEBS_VIA_PT)
 		cpuc->n_pebs_via_pt++;
 
 	pebs_update_state(needed_cb, cpuc, event, true);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_pmu_pebs_via_pt_disable(काष्ठा perf_event *event)
-अणु
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+static void intel_pmu_pebs_via_pt_disable(struct perf_event *event)
+{
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
 
-	अगर (!is_pebs_pt(event))
-		वापस;
+	if (!is_pebs_pt(event))
+		return;
 
-	अगर (!(cpuc->pebs_enabled & ~PEBS_VIA_PT_MASK))
+	if (!(cpuc->pebs_enabled & ~PEBS_VIA_PT_MASK))
 		cpuc->pebs_enabled &= ~PEBS_VIA_PT_MASK;
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_pmu_pebs_via_pt_enable(काष्ठा perf_event *event)
-अणु
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	काष्ठा debug_store *ds = cpuc->ds;
+static void intel_pmu_pebs_via_pt_enable(struct perf_event *event)
+{
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+	struct hw_perf_event *hwc = &event->hw;
+	struct debug_store *ds = cpuc->ds;
 
-	अगर (!is_pebs_pt(event))
-		वापस;
+	if (!is_pebs_pt(event))
+		return;
 
-	अगर (!(event->hw.flags & PERF_X86_EVENT_LARGE_PEBS))
+	if (!(event->hw.flags & PERF_X86_EVENT_LARGE_PEBS))
 		cpuc->pebs_enabled |= PEBS_PMI_AFTER_EACH_RECORD;
 
 	cpuc->pebs_enabled |= PEBS_OUTPUT_PT;
 
 	wrmsrl(MSR_RELOAD_PMC0 + hwc->idx, ds->pebs_event_reset[hwc->idx]);
-पूर्ण
+}
 
-व्योम पूर्णांकel_pmu_pebs_enable(काष्ठा perf_event *event)
-अणु
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	काष्ठा debug_store *ds = cpuc->ds;
+void intel_pmu_pebs_enable(struct perf_event *event)
+{
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+	struct hw_perf_event *hwc = &event->hw;
+	struct debug_store *ds = cpuc->ds;
 
 	hwc->config &= ~ARCH_PERFMON_EVENTSEL_INT;
 
 	cpuc->pebs_enabled |= 1ULL << hwc->idx;
 
-	अगर ((event->hw.flags & PERF_X86_EVENT_PEBS_LDLAT) && (x86_pmu.version < 5))
+	if ((event->hw.flags & PERF_X86_EVENT_PEBS_LDLAT) && (x86_pmu.version < 5))
 		cpuc->pebs_enabled |= 1ULL << (hwc->idx + 32);
-	अन्यथा अगर (event->hw.flags & PERF_X86_EVENT_PEBS_ST)
+	else if (event->hw.flags & PERF_X86_EVENT_PEBS_ST)
 		cpuc->pebs_enabled |= 1ULL << 63;
 
-	अगर (x86_pmu.पूर्णांकel_cap.pebs_baseline) अणु
+	if (x86_pmu.intel_cap.pebs_baseline) {
 		hwc->config |= ICL_EVENTSEL_ADAPTIVE;
-		अगर (cpuc->pebs_data_cfg != cpuc->active_pebs_data_cfg) अणु
+		if (cpuc->pebs_data_cfg != cpuc->active_pebs_data_cfg) {
 			wrmsrl(MSR_PEBS_DATA_CFG, cpuc->pebs_data_cfg);
 			cpuc->active_pebs_data_cfg = cpuc->pebs_data_cfg;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
-	 * Use स्वतः-reload अगर possible to save a MSR ग_लिखो in the PMI.
-	 * This must be करोne in pmu::start(), because PERF_EVENT_IOC_PERIOD.
+	 * Use auto-reload if possible to save a MSR write in the PMI.
+	 * This must be done in pmu::start(), because PERF_EVENT_IOC_PERIOD.
 	 */
-	अगर (hwc->flags & PERF_X86_EVENT_AUTO_RELOAD) अणु
-		अचिन्हित पूर्णांक idx = hwc->idx;
+	if (hwc->flags & PERF_X86_EVENT_AUTO_RELOAD) {
+		unsigned int idx = hwc->idx;
 
-		अगर (idx >= INTEL_PMC_IDX_FIXED)
+		if (idx >= INTEL_PMC_IDX_FIXED)
 			idx = MAX_PEBS_EVENTS + (idx - INTEL_PMC_IDX_FIXED);
 		ds->pebs_event_reset[idx] =
 			(u64)(-hwc->sample_period) & x86_pmu.cntval_mask;
-	पूर्ण अन्यथा अणु
+	} else {
 		ds->pebs_event_reset[hwc->idx] = 0;
-	पूर्ण
+	}
 
-	पूर्णांकel_pmu_pebs_via_pt_enable(event);
-पूर्ण
+	intel_pmu_pebs_via_pt_enable(event);
+}
 
-व्योम पूर्णांकel_pmu_pebs_del(काष्ठा perf_event *event)
-अणु
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
-	काष्ठा hw_perf_event *hwc = &event->hw;
+void intel_pmu_pebs_del(struct perf_event *event)
+{
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+	struct hw_perf_event *hwc = &event->hw;
 	bool needed_cb = pebs_needs_sched_cb(cpuc);
 
 	cpuc->n_pebs--;
-	अगर (hwc->flags & PERF_X86_EVENT_LARGE_PEBS)
+	if (hwc->flags & PERF_X86_EVENT_LARGE_PEBS)
 		cpuc->n_large_pebs--;
-	अगर (hwc->flags & PERF_X86_EVENT_PEBS_VIA_PT)
+	if (hwc->flags & PERF_X86_EVENT_PEBS_VIA_PT)
 		cpuc->n_pebs_via_pt--;
 
 	pebs_update_state(needed_cb, cpuc, event, false);
-पूर्ण
+}
 
-व्योम पूर्णांकel_pmu_pebs_disable(काष्ठा perf_event *event)
-अणु
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
-	काष्ठा hw_perf_event *hwc = &event->hw;
+void intel_pmu_pebs_disable(struct perf_event *event)
+{
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+	struct hw_perf_event *hwc = &event->hw;
 
-	अगर (cpuc->n_pebs == cpuc->n_large_pebs &&
+	if (cpuc->n_pebs == cpuc->n_large_pebs &&
 	    cpuc->n_pebs != cpuc->n_pebs_via_pt)
-		पूर्णांकel_pmu_drain_pebs_buffer();
+		intel_pmu_drain_pebs_buffer();
 
 	cpuc->pebs_enabled &= ~(1ULL << hwc->idx);
 
-	अगर ((event->hw.flags & PERF_X86_EVENT_PEBS_LDLAT) &&
+	if ((event->hw.flags & PERF_X86_EVENT_PEBS_LDLAT) &&
 	    (x86_pmu.version < 5))
 		cpuc->pebs_enabled &= ~(1ULL << (hwc->idx + 32));
-	अन्यथा अगर (event->hw.flags & PERF_X86_EVENT_PEBS_ST)
+	else if (event->hw.flags & PERF_X86_EVENT_PEBS_ST)
 		cpuc->pebs_enabled &= ~(1ULL << 63);
 
-	पूर्णांकel_pmu_pebs_via_pt_disable(event);
+	intel_pmu_pebs_via_pt_disable(event);
 
-	अगर (cpuc->enabled)
+	if (cpuc->enabled)
 		wrmsrl(MSR_IA32_PEBS_ENABLE, cpuc->pebs_enabled);
 
 	hwc->config |= ARCH_PERFMON_EVENTSEL_INT;
-पूर्ण
+}
 
-व्योम पूर्णांकel_pmu_pebs_enable_all(व्योम)
-अणु
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+void intel_pmu_pebs_enable_all(void)
+{
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
 
-	अगर (cpuc->pebs_enabled)
+	if (cpuc->pebs_enabled)
 		wrmsrl(MSR_IA32_PEBS_ENABLE, cpuc->pebs_enabled);
-पूर्ण
+}
 
-व्योम पूर्णांकel_pmu_pebs_disable_all(व्योम)
-अणु
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+void intel_pmu_pebs_disable_all(void)
+{
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
 
-	अगर (cpuc->pebs_enabled)
+	if (cpuc->pebs_enabled)
 		wrmsrl(MSR_IA32_PEBS_ENABLE, 0);
-पूर्ण
+}
 
-अटल पूर्णांक पूर्णांकel_pmu_pebs_fixup_ip(काष्ठा pt_regs *regs)
-अणु
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
-	अचिन्हित दीर्घ from = cpuc->lbr_entries[0].from;
-	अचिन्हित दीर्घ old_to, to = cpuc->lbr_entries[0].to;
-	अचिन्हित दीर्घ ip = regs->ip;
-	पूर्णांक is_64bit = 0;
-	व्योम *kaddr;
-	पूर्णांक size;
-
-	/*
-	 * We करोn't need to fixup अगर the PEBS assist is fault like
-	 */
-	अगर (!x86_pmu.पूर्णांकel_cap.pebs_trap)
-		वापस 1;
+static int intel_pmu_pebs_fixup_ip(struct pt_regs *regs)
+{
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+	unsigned long from = cpuc->lbr_entries[0].from;
+	unsigned long old_to, to = cpuc->lbr_entries[0].to;
+	unsigned long ip = regs->ip;
+	int is_64bit = 0;
+	void *kaddr;
+	int size;
 
 	/*
-	 * No LBR entry, no basic block, no शुरुआतing
+	 * We don't need to fixup if the PEBS assist is fault like
 	 */
-	अगर (!cpuc->lbr_stack.nr || !from || !to)
-		वापस 0;
+	if (!x86_pmu.intel_cap.pebs_trap)
+		return 1;
+
+	/*
+	 * No LBR entry, no basic block, no rewinding
+	 */
+	if (!cpuc->lbr_stack.nr || !from || !to)
+		return 0;
 
 	/*
 	 * Basic blocks should never cross user/kernel boundaries
 	 */
-	अगर (kernel_ip(ip) != kernel_ip(to))
-		वापस 0;
+	if (kernel_ip(ip) != kernel_ip(to))
+		return 0;
 
 	/*
-	 * अचिन्हित math, either ip is beक्रमe the start (impossible) or
+	 * unsigned math, either ip is before the start (impossible) or
 	 * the basic block is larger than 1 page (sanity)
 	 */
-	अगर ((ip - to) > PEBS_FIXUP_SIZE)
-		वापस 0;
+	if ((ip - to) > PEBS_FIXUP_SIZE)
+		return 0;
 
 	/*
-	 * We sampled a branch insn, शुरुआत using the LBR stack
+	 * We sampled a branch insn, rewind using the LBR stack
 	 */
-	अगर (ip == to) अणु
+	if (ip == to) {
 		set_linear_ip(regs, from);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	size = ip - to;
-	अगर (!kernel_ip(ip)) अणु
-		पूर्णांक bytes;
-		u8 *buf = this_cpu_पढ़ो(insn_buffer);
+	if (!kernel_ip(ip)) {
+		int bytes;
+		u8 *buf = this_cpu_read(insn_buffer);
 
 		/* 'size' must fit our buffer, see above */
-		bytes = copy_from_user_nmi(buf, (व्योम __user *)to, size);
-		अगर (bytes != 0)
-			वापस 0;
+		bytes = copy_from_user_nmi(buf, (void __user *)to, size);
+		if (bytes != 0)
+			return 0;
 
 		kaddr = buf;
-	पूर्ण अन्यथा अणु
-		kaddr = (व्योम *)to;
-	पूर्ण
+	} else {
+		kaddr = (void *)to;
+	}
 
-	करो अणु
-		काष्ठा insn insn;
+	do {
+		struct insn insn;
 
 		old_to = to;
 
-#अगर_घोषित CONFIG_X86_64
+#ifdef CONFIG_X86_64
 		is_64bit = kernel_ip(to) || any_64bit_mode(regs);
-#पूर्ण_अगर
+#endif
 		insn_init(&insn, kaddr, size, is_64bit);
 
 		/*
-		 * Make sure there was not a problem decoding the inकाष्ठाion.
-		 * This is करोubly important because we have an infinite loop अगर
+		 * Make sure there was not a problem decoding the instruction.
+		 * This is doubly important because we have an infinite loop if
 		 * insn.length=0.
 		 */
-		अगर (insn_get_length(&insn))
-			अवरोध;
+		if (insn_get_length(&insn))
+			break;
 
 		to += insn.length;
 		kaddr += insn.length;
 		size -= insn.length;
-	पूर्ण जबतक (to < ip);
+	} while (to < ip);
 
-	अगर (to == ip) अणु
+	if (to == ip) {
 		set_linear_ip(regs, old_to);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	/*
-	 * Even though we decoded the basic block, the inकाष्ठाion stream
+	 * Even though we decoded the basic block, the instruction stream
 	 * never matched the given IP, either the TO or the IP got corrupted.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत u64 पूर्णांकel_get_tsx_weight(u64 tsx_tuning)
-अणु
-	अगर (tsx_tuning) अणु
-		जोड़ hsw_tsx_tuning tsx = अणु .value = tsx_tuning पूर्ण;
-		वापस tsx.cycles_last_block;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static inline u64 intel_get_tsx_weight(u64 tsx_tuning)
+{
+	if (tsx_tuning) {
+		union hsw_tsx_tuning tsx = { .value = tsx_tuning };
+		return tsx.cycles_last_block;
+	}
+	return 0;
+}
 
-अटल अंतरभूत u64 पूर्णांकel_get_tsx_transaction(u64 tsx_tuning, u64 ax)
-अणु
+static inline u64 intel_get_tsx_transaction(u64 tsx_tuning, u64 ax)
+{
 	u64 txn = (tsx_tuning & PEBS_HSW_TSX_FLAGS) >> 32;
 
-	/* For RTM XABORTs also log the पात code from AX */
-	अगर ((txn & PERF_TXN_TRANSACTION) && (ax & 1))
+	/* For RTM XABORTs also log the abort code from AX */
+	if ((txn & PERF_TXN_TRANSACTION) && (ax & 1))
 		txn |= ((ax >> 24) & 0xff) << PERF_TXN_ABORT_SHIFT;
-	वापस txn;
-पूर्ण
+	return txn;
+}
 
-अटल अंतरभूत u64 get_pebs_status(व्योम *n)
-अणु
-	अगर (x86_pmu.पूर्णांकel_cap.pebs_क्रमmat < 4)
-		वापस ((काष्ठा pebs_record_nhm *)n)->status;
-	वापस ((काष्ठा pebs_basic *)n)->applicable_counters;
-पूर्ण
+static inline u64 get_pebs_status(void *n)
+{
+	if (x86_pmu.intel_cap.pebs_format < 4)
+		return ((struct pebs_record_nhm *)n)->status;
+	return ((struct pebs_basic *)n)->applicable_counters;
+}
 
-#घोषणा PERF_X86_EVENT_PEBS_HSW_PREC \
+#define PERF_X86_EVENT_PEBS_HSW_PREC \
 		(PERF_X86_EVENT_PEBS_ST_HSW | \
 		 PERF_X86_EVENT_PEBS_LD_HSW | \
 		 PERF_X86_EVENT_PEBS_NA_HSW)
 
-अटल u64 get_data_src(काष्ठा perf_event *event, u64 aux)
-अणु
+static u64 get_data_src(struct perf_event *event, u64 aux)
+{
 	u64 val = PERF_MEM_NA;
-	पूर्णांक fl = event->hw.flags;
+	int fl = event->hw.flags;
 	bool fst = fl & (PERF_X86_EVENT_PEBS_ST | PERF_X86_EVENT_PEBS_HSW_PREC);
 
-	अगर (fl & PERF_X86_EVENT_PEBS_LDLAT)
+	if (fl & PERF_X86_EVENT_PEBS_LDLAT)
 		val = load_latency_data(aux);
-	अन्यथा अगर (fl & PERF_X86_EVENT_PEBS_STLAT)
+	else if (fl & PERF_X86_EVENT_PEBS_STLAT)
 		val = store_latency_data(aux);
-	अन्यथा अगर (fst && (fl & PERF_X86_EVENT_PEBS_HSW_PREC))
+	else if (fst && (fl & PERF_X86_EVENT_PEBS_HSW_PREC))
 		val = precise_datala_hsw(event, aux);
-	अन्यथा अगर (fst)
+	else if (fst)
 		val = precise_store_data(aux);
-	वापस val;
-पूर्ण
+	return val;
+}
 
-#घोषणा PERF_SAMPLE_ADDR_TYPE	(PERF_SAMPLE_ADDR |		\
+#define PERF_SAMPLE_ADDR_TYPE	(PERF_SAMPLE_ADDR |		\
 				 PERF_SAMPLE_PHYS_ADDR |	\
 				 PERF_SAMPLE_DATA_PAGE_SIZE)
 
-अटल व्योम setup_pebs_fixed_sample_data(काष्ठा perf_event *event,
-				   काष्ठा pt_regs *iregs, व्योम *__pebs,
-				   काष्ठा perf_sample_data *data,
-				   काष्ठा pt_regs *regs)
-अणु
+static void setup_pebs_fixed_sample_data(struct perf_event *event,
+				   struct pt_regs *iregs, void *__pebs,
+				   struct perf_sample_data *data,
+				   struct pt_regs *regs)
+{
 	/*
 	 * We cast to the biggest pebs_record but are careful not to
 	 * unconditionally access the 'extra' entries.
 	 */
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
-	काष्ठा pebs_record_skl *pebs = __pebs;
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+	struct pebs_record_skl *pebs = __pebs;
 	u64 sample_type;
-	पूर्णांक fll;
+	int fll;
 
-	अगर (pebs == शून्य)
-		वापस;
+	if (pebs == NULL)
+		return;
 
 	sample_type = event->attr.sample_type;
 	fll = event->hw.flags & PERF_X86_EVENT_PEBS_LDLAT;
@@ -1467,43 +1466,43 @@ pebs_update_state(bool needed_cb, काष्ठा cpu_hw_events *cpuc,
 	data->period = event->hw.last_period;
 
 	/*
-	 * Use latency क्रम weight (only avail with PEBS-LL)
+	 * Use latency for weight (only avail with PEBS-LL)
 	 */
-	अगर (fll && (sample_type & PERF_SAMPLE_WEIGHT_TYPE))
+	if (fll && (sample_type & PERF_SAMPLE_WEIGHT_TYPE))
 		data->weight.full = pebs->lat;
 
 	/*
 	 * data.data_src encodes the data source
 	 */
-	अगर (sample_type & PERF_SAMPLE_DATA_SRC)
+	if (sample_type & PERF_SAMPLE_DATA_SRC)
 		data->data_src.val = get_data_src(event, pebs->dse);
 
 	/*
-	 * We must however always use iregs क्रम the unwinder to stay sane; the
-	 * record BP,SP,IP can poपूर्णांक पूर्णांकo thin air when the record is from a
+	 * We must however always use iregs for the unwinder to stay sane; the
+	 * record BP,SP,IP can point into thin air when the record is from a
 	 * previous PMI context or an (I)RET happened between the record and
 	 * PMI.
 	 */
-	अगर (sample_type & PERF_SAMPLE_CALLCHAIN)
+	if (sample_type & PERF_SAMPLE_CALLCHAIN)
 		data->callchain = perf_callchain(event, iregs);
 
 	/*
-	 * We use the पूर्णांकerrupt regs as a base because the PEBS record करोes not
-	 * contain a full regs set, specअगरically it seems to lack segment
+	 * We use the interrupt regs as a base because the PEBS record does not
+	 * contain a full regs set, specifically it seems to lack segment
 	 * descriptors, which get used by things like user_mode().
 	 *
-	 * In the simple हाल fix up only the IP क्रम PERF_SAMPLE_IP.
+	 * In the simple case fix up only the IP for PERF_SAMPLE_IP.
 	 */
 	*regs = *iregs;
 
 	/*
 	 * Initialize regs_>flags from PEBS,
 	 * Clear exact bit (which uses x86 EFLAGS Reserved bit 3),
-	 * i.e., करो not rely on it being zero:
+	 * i.e., do not rely on it being zero:
 	 */
 	regs->flags = pebs->flags & ~PERF_EFLAGS_EXACT;
 
-	अगर (sample_type & PERF_SAMPLE_REGS_INTR) अणु
+	if (sample_type & PERF_SAMPLE_REGS_INTR) {
 		regs->ax = pebs->ax;
 		regs->bx = pebs->bx;
 		regs->cx = pebs->cx;
@@ -1514,7 +1513,7 @@ pebs_update_state(bool needed_cb, काष्ठा cpu_hw_events *cpuc,
 		regs->bp = pebs->bp;
 		regs->sp = pebs->sp;
 
-#अगर_अघोषित CONFIG_X86_32
+#ifndef CONFIG_X86_32
 		regs->r8 = pebs->r8;
 		regs->r9 = pebs->r9;
 		regs->r10 = pebs->r10;
@@ -1523,19 +1522,19 @@ pebs_update_state(bool needed_cb, काष्ठा cpu_hw_events *cpuc,
 		regs->r13 = pebs->r13;
 		regs->r14 = pebs->r14;
 		regs->r15 = pebs->r15;
-#पूर्ण_अगर
-	पूर्ण
+#endif
+	}
 
-	अगर (event->attr.precise_ip > 1) अणु
+	if (event->attr.precise_ip > 1) {
 		/*
 		 * Haswell and later processors have an 'eventing IP'
 		 * (real IP) which fixes the off-by-1 skid in hardware.
 		 * Use it when precise_ip >= 2 :
 		 */
-		अगर (x86_pmu.पूर्णांकel_cap.pebs_क्रमmat >= 2) अणु
+		if (x86_pmu.intel_cap.pebs_format >= 2) {
 			set_linear_ip(regs, pebs->real_ip);
 			regs->flags |= PERF_EFLAGS_EXACT;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Otherwise, use PEBS off-by-1 IP: */
 			set_linear_ip(regs, pebs->ip);
 
@@ -1544,49 +1543,49 @@ pebs_update_state(bool needed_cb, काष्ठा cpu_hw_events *cpuc,
 			 * using the LBR. If successful, the fixup function
 			 * corrects regs->ip and calls set_linear_ip() on regs:
 			 */
-			अगर (पूर्णांकel_pmu_pebs_fixup_ip(regs))
+			if (intel_pmu_pebs_fixup_ip(regs))
 				regs->flags |= PERF_EFLAGS_EXACT;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/*
-		 * When precise_ip == 1, वापस the PEBS off-by-1 IP,
+		 * When precise_ip == 1, return the PEBS off-by-1 IP,
 		 * no fixup attempted:
 		 */
 		set_linear_ip(regs, pebs->ip);
-	पूर्ण
+	}
 
 
-	अगर ((sample_type & PERF_SAMPLE_ADDR_TYPE) &&
-	    x86_pmu.पूर्णांकel_cap.pebs_क्रमmat >= 1)
+	if ((sample_type & PERF_SAMPLE_ADDR_TYPE) &&
+	    x86_pmu.intel_cap.pebs_format >= 1)
 		data->addr = pebs->dla;
 
-	अगर (x86_pmu.पूर्णांकel_cap.pebs_क्रमmat >= 2) अणु
+	if (x86_pmu.intel_cap.pebs_format >= 2) {
 		/* Only set the TSX weight when no memory weight. */
-		अगर ((sample_type & PERF_SAMPLE_WEIGHT_TYPE) && !fll)
-			data->weight.full = पूर्णांकel_get_tsx_weight(pebs->tsx_tuning);
+		if ((sample_type & PERF_SAMPLE_WEIGHT_TYPE) && !fll)
+			data->weight.full = intel_get_tsx_weight(pebs->tsx_tuning);
 
-		अगर (sample_type & PERF_SAMPLE_TRANSACTION)
-			data->txn = पूर्णांकel_get_tsx_transaction(pebs->tsx_tuning,
+		if (sample_type & PERF_SAMPLE_TRANSACTION)
+			data->txn = intel_get_tsx_transaction(pebs->tsx_tuning,
 							      pebs->ax);
-	पूर्ण
+	}
 
 	/*
-	 * v3 supplies an accurate समय stamp, so we use that
-	 * क्रम the समय stamp.
+	 * v3 supplies an accurate time stamp, so we use that
+	 * for the time stamp.
 	 *
-	 * We can only करो this क्रम the शेष trace घड़ी.
+	 * We can only do this for the default trace clock.
 	 */
-	अगर (x86_pmu.पूर्णांकel_cap.pebs_क्रमmat >= 3 &&
-		event->attr.use_घड़ीid == 0)
-		data->समय = native_sched_घड़ी_from_tsc(pebs->tsc);
+	if (x86_pmu.intel_cap.pebs_format >= 3 &&
+		event->attr.use_clockid == 0)
+		data->time = native_sched_clock_from_tsc(pebs->tsc);
 
-	अगर (has_branch_stack(event))
+	if (has_branch_stack(event))
 		data->br_stack = &cpuc->lbr_stack;
-पूर्ण
+}
 
-अटल व्योम adaptive_pebs_save_regs(काष्ठा pt_regs *regs,
-				    काष्ठा pebs_gprs *gprs)
-अणु
+static void adaptive_pebs_save_regs(struct pt_regs *regs,
+				    struct pebs_gprs *gprs)
+{
 	regs->ax = gprs->ax;
 	regs->bx = gprs->bx;
 	regs->cx = gprs->cx;
@@ -1595,7 +1594,7 @@ pebs_update_state(bool needed_cb, काष्ठा cpu_hw_events *cpuc,
 	regs->di = gprs->di;
 	regs->bp = gprs->bp;
 	regs->sp = gprs->sp;
-#अगर_अघोषित CONFIG_X86_32
+#ifndef CONFIG_X86_32
 	regs->r8 = gprs->r8;
 	regs->r9 = gprs->r9;
 	regs->r10 = gprs->r10;
@@ -1604,51 +1603,51 @@ pebs_update_state(bool needed_cb, काष्ठा cpu_hw_events *cpuc,
 	regs->r13 = gprs->r13;
 	regs->r14 = gprs->r14;
 	regs->r15 = gprs->r15;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-#घोषणा PEBS_LATENCY_MASK			0xffff
-#घोषणा PEBS_CACHE_LATENCY_OFFSET		32
+#define PEBS_LATENCY_MASK			0xffff
+#define PEBS_CACHE_LATENCY_OFFSET		32
 
 /*
  * With adaptive PEBS the layout depends on what fields are configured.
  */
 
-अटल व्योम setup_pebs_adaptive_sample_data(काष्ठा perf_event *event,
-					    काष्ठा pt_regs *iregs, व्योम *__pebs,
-					    काष्ठा perf_sample_data *data,
-					    काष्ठा pt_regs *regs)
-अणु
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
-	काष्ठा pebs_basic *basic = __pebs;
-	व्योम *next_record = basic + 1;
+static void setup_pebs_adaptive_sample_data(struct perf_event *event,
+					    struct pt_regs *iregs, void *__pebs,
+					    struct perf_sample_data *data,
+					    struct pt_regs *regs)
+{
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+	struct pebs_basic *basic = __pebs;
+	void *next_record = basic + 1;
 	u64 sample_type;
-	u64 क्रमmat_size;
-	काष्ठा pebs_meminfo *meminfo = शून्य;
-	काष्ठा pebs_gprs *gprs = शून्य;
-	काष्ठा x86_perf_regs *perf_regs;
+	u64 format_size;
+	struct pebs_meminfo *meminfo = NULL;
+	struct pebs_gprs *gprs = NULL;
+	struct x86_perf_regs *perf_regs;
 
-	अगर (basic == शून्य)
-		वापस;
+	if (basic == NULL)
+		return;
 
-	perf_regs = container_of(regs, काष्ठा x86_perf_regs, regs);
-	perf_regs->xmm_regs = शून्य;
+	perf_regs = container_of(regs, struct x86_perf_regs, regs);
+	perf_regs->xmm_regs = NULL;
 
 	sample_type = event->attr.sample_type;
-	क्रमmat_size = basic->क्रमmat_size;
+	format_size = basic->format_size;
 	perf_sample_data_init(data, 0, event->hw.last_period);
 	data->period = event->hw.last_period;
 
-	अगर (event->attr.use_घड़ीid == 0)
-		data->समय = native_sched_घड़ी_from_tsc(basic->tsc);
+	if (event->attr.use_clockid == 0)
+		data->time = native_sched_clock_from_tsc(basic->tsc);
 
 	/*
-	 * We must however always use iregs क्रम the unwinder to stay sane; the
-	 * record BP,SP,IP can poपूर्णांक पूर्णांकo thin air when the record is from a
+	 * We must however always use iregs for the unwinder to stay sane; the
+	 * record BP,SP,IP can point into thin air when the record is from a
 	 * previous PMI context or an (I)RET happened between the record and
 	 * PMI.
 	 */
-	अगर (sample_type & PERF_SAMPLE_CALLCHAIN)
+	if (sample_type & PERF_SAMPLE_CALLCHAIN)
 		data->callchain = perf_callchain(event, iregs);
 
 	*regs = *iregs;
@@ -1657,143 +1656,143 @@ pebs_update_state(bool needed_cb, काष्ठा cpu_hw_events *cpuc,
 	regs->flags = PERF_EFLAGS_EXACT;
 
 	/*
-	 * The record क्रम MEMINFO is in front of GP
+	 * The record for MEMINFO is in front of GP
 	 * But PERF_SAMPLE_TRANSACTION needs gprs->ax.
-	 * Save the poपूर्णांकer here but process later.
+	 * Save the pointer here but process later.
 	 */
-	अगर (क्रमmat_size & PEBS_DATACFG_MEMINFO) अणु
+	if (format_size & PEBS_DATACFG_MEMINFO) {
 		meminfo = next_record;
 		next_record = meminfo + 1;
-	पूर्ण
+	}
 
-	अगर (क्रमmat_size & PEBS_DATACFG_GP) अणु
+	if (format_size & PEBS_DATACFG_GP) {
 		gprs = next_record;
 		next_record = gprs + 1;
 
-		अगर (event->attr.precise_ip < 2) अणु
+		if (event->attr.precise_ip < 2) {
 			set_linear_ip(regs, gprs->ip);
 			regs->flags &= ~PERF_EFLAGS_EXACT;
-		पूर्ण
+		}
 
-		अगर (sample_type & PERF_SAMPLE_REGS_INTR)
+		if (sample_type & PERF_SAMPLE_REGS_INTR)
 			adaptive_pebs_save_regs(regs, gprs);
-	पूर्ण
+	}
 
-	अगर (क्रमmat_size & PEBS_DATACFG_MEMINFO) अणु
-		अगर (sample_type & PERF_SAMPLE_WEIGHT_TYPE) अणु
+	if (format_size & PEBS_DATACFG_MEMINFO) {
+		if (sample_type & PERF_SAMPLE_WEIGHT_TYPE) {
 			u64 weight = meminfo->latency;
 
-			अगर (x86_pmu.flags & PMU_FL_INSTR_LATENCY) अणु
+			if (x86_pmu.flags & PMU_FL_INSTR_LATENCY) {
 				data->weight.var2_w = weight & PEBS_LATENCY_MASK;
 				weight >>= PEBS_CACHE_LATENCY_OFFSET;
-			पूर्ण
+			}
 
 			/*
 			 * Although meminfo::latency is defined as a u64,
 			 * only the lower 32 bits include the valid data
-			 * in practice on Ice Lake and earlier platक्रमms.
+			 * in practice on Ice Lake and earlier platforms.
 			 */
-			अगर (sample_type & PERF_SAMPLE_WEIGHT) अणु
+			if (sample_type & PERF_SAMPLE_WEIGHT) {
 				data->weight.full = weight ?:
-					पूर्णांकel_get_tsx_weight(meminfo->tsx_tuning);
-			पूर्ण अन्यथा अणु
+					intel_get_tsx_weight(meminfo->tsx_tuning);
+			} else {
 				data->weight.var1_dw = (u32)(weight & PEBS_LATENCY_MASK) ?:
-					पूर्णांकel_get_tsx_weight(meminfo->tsx_tuning);
-			पूर्ण
-		पूर्ण
+					intel_get_tsx_weight(meminfo->tsx_tuning);
+			}
+		}
 
-		अगर (sample_type & PERF_SAMPLE_DATA_SRC)
+		if (sample_type & PERF_SAMPLE_DATA_SRC)
 			data->data_src.val = get_data_src(event, meminfo->aux);
 
-		अगर (sample_type & PERF_SAMPLE_ADDR_TYPE)
+		if (sample_type & PERF_SAMPLE_ADDR_TYPE)
 			data->addr = meminfo->address;
 
-		अगर (sample_type & PERF_SAMPLE_TRANSACTION)
-			data->txn = पूर्णांकel_get_tsx_transaction(meminfo->tsx_tuning,
+		if (sample_type & PERF_SAMPLE_TRANSACTION)
+			data->txn = intel_get_tsx_transaction(meminfo->tsx_tuning,
 							  gprs ? gprs->ax : 0);
-	पूर्ण
+	}
 
-	अगर (क्रमmat_size & PEBS_DATACFG_XMMS) अणु
-		काष्ठा pebs_xmm *xmm = next_record;
+	if (format_size & PEBS_DATACFG_XMMS) {
+		struct pebs_xmm *xmm = next_record;
 
 		next_record = xmm + 1;
 		perf_regs->xmm_regs = xmm->xmm;
-	पूर्ण
+	}
 
-	अगर (क्रमmat_size & PEBS_DATACFG_LBRS) अणु
-		काष्ठा lbr_entry *lbr = next_record;
-		पूर्णांक num_lbr = ((क्रमmat_size >> PEBS_DATACFG_LBR_SHIFT)
+	if (format_size & PEBS_DATACFG_LBRS) {
+		struct lbr_entry *lbr = next_record;
+		int num_lbr = ((format_size >> PEBS_DATACFG_LBR_SHIFT)
 					& 0xff) + 1;
-		next_record = next_record + num_lbr * माप(काष्ठा lbr_entry);
+		next_record = next_record + num_lbr * sizeof(struct lbr_entry);
 
-		अगर (has_branch_stack(event)) अणु
-			पूर्णांकel_pmu_store_pebs_lbrs(lbr);
+		if (has_branch_stack(event)) {
+			intel_pmu_store_pebs_lbrs(lbr);
 			data->br_stack = &cpuc->lbr_stack;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	WARN_ONCE(next_record != __pebs + (क्रमmat_size >> 48),
+	WARN_ONCE(next_record != __pebs + (format_size >> 48),
 			"PEBS record size %llu, expected %llu, config %llx\n",
-			क्रमmat_size >> 48,
+			format_size >> 48,
 			(u64)(next_record - __pebs),
-			basic->क्रमmat_size);
-पूर्ण
+			basic->format_size);
+}
 
-अटल अंतरभूत व्योम *
-get_next_pebs_record_by_bit(व्योम *base, व्योम *top, पूर्णांक bit)
-अणु
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
-	व्योम *at;
+static inline void *
+get_next_pebs_record_by_bit(void *base, void *top, int bit)
+{
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+	void *at;
 	u64 pebs_status;
 
 	/*
-	 * fmt0 करोes not have a status bitfield (करोes not use
-	 * perf_record_nhm क्रमmat)
+	 * fmt0 does not have a status bitfield (does not use
+	 * perf_record_nhm format)
 	 */
-	अगर (x86_pmu.पूर्णांकel_cap.pebs_क्रमmat < 1)
-		वापस base;
+	if (x86_pmu.intel_cap.pebs_format < 1)
+		return base;
 
-	अगर (base == शून्य)
-		वापस शून्य;
+	if (base == NULL)
+		return NULL;
 
-	क्रम (at = base; at < top; at += cpuc->pebs_record_size) अणु
-		अचिन्हित दीर्घ status = get_pebs_status(at);
+	for (at = base; at < top; at += cpuc->pebs_record_size) {
+		unsigned long status = get_pebs_status(at);
 
-		अगर (test_bit(bit, (अचिन्हित दीर्घ *)&status)) अणु
+		if (test_bit(bit, (unsigned long *)&status)) {
 			/* PEBS v3 has accurate status bits */
-			अगर (x86_pmu.पूर्णांकel_cap.pebs_क्रमmat >= 3)
-				वापस at;
+			if (x86_pmu.intel_cap.pebs_format >= 3)
+				return at;
 
-			अगर (status == (1 << bit))
-				वापस at;
+			if (status == (1 << bit))
+				return at;
 
 			/* clear non-PEBS bit and re-check */
 			pebs_status = status & cpuc->pebs_enabled;
 			pebs_status &= PEBS_COUNTER_MASK;
-			अगर (pebs_status == (1 << bit))
-				वापस at;
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+			if (pebs_status == (1 << bit))
+				return at;
+		}
+	}
+	return NULL;
+}
 
-व्योम पूर्णांकel_pmu_स्वतः_reload_पढ़ो(काष्ठा perf_event *event)
-अणु
+void intel_pmu_auto_reload_read(struct perf_event *event)
+{
 	WARN_ON(!(event->hw.flags & PERF_X86_EVENT_AUTO_RELOAD));
 
 	perf_pmu_disable(event->pmu);
-	पूर्णांकel_pmu_drain_pebs_buffer();
+	intel_pmu_drain_pebs_buffer();
 	perf_pmu_enable(event->pmu);
-पूर्ण
+}
 
 /*
- * Special variant of पूर्णांकel_pmu_save_and_restart() क्रम स्वतः-reload.
+ * Special variant of intel_pmu_save_and_restart() for auto-reload.
  */
-अटल पूर्णांक
-पूर्णांकel_pmu_save_and_restart_reload(काष्ठा perf_event *event, पूर्णांक count)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	पूर्णांक shअगरt = 64 - x86_pmu.cntval_bits;
+static int
+intel_pmu_save_and_restart_reload(struct perf_event *event, int count)
+{
+	struct hw_perf_event *hwc = &event->hw;
+	int shift = 64 - x86_pmu.cntval_bits;
 	u64 period = hwc->sample_period;
 	u64 prev_raw_count, new_raw_count;
 	s64 new, old;
@@ -1803,19 +1802,19 @@ get_next_pebs_record_by_bit(व्योम *base, व्योम *top, पू�
 	/*
 	 * drain_pebs() only happens when the PMU is disabled.
 	 */
-	WARN_ON(this_cpu_पढ़ो(cpu_hw_events.enabled));
+	WARN_ON(this_cpu_read(cpu_hw_events.enabled));
 
-	prev_raw_count = local64_पढ़ो(&hwc->prev_count);
+	prev_raw_count = local64_read(&hwc->prev_count);
 	rdpmcl(hwc->event_base_rdpmc, new_raw_count);
 	local64_set(&hwc->prev_count, new_raw_count);
 
 	/*
 	 * Since the counter increments a negative counter value and
-	 * overflows on the sign चयन, giving the पूर्णांकerval:
+	 * overflows on the sign switch, giving the interval:
 	 *
 	 *   [-period, 0]
 	 *
-	 * the dअगरference between two consecutive पढ़ोs is:
+	 * the difference between two consecutive reads is:
 	 *
 	 *   A) value2 - value1;
 	 *      when no overflows have happened in between,
@@ -1826,275 +1825,275 @@ get_next_pebs_record_by_bit(व्योम *base, व्योम *top, पू�
 	 *   C) (0 - value1) + (n - 1) * (period) + (value2 - (-period));
 	 *      when @n overflows happened in between.
 	 *
-	 * Here A) is the obvious dअगरference, B) is the extension to the
-	 * discrete पूर्णांकerval, where the first term is to the top of the
-	 * पूर्णांकerval and the second term is from the bottom of the next
-	 * पूर्णांकerval and C) the extension to multiple पूर्णांकervals, where the
-	 * middle term is the whole पूर्णांकervals covered.
+	 * Here A) is the obvious difference, B) is the extension to the
+	 * discrete interval, where the first term is to the top of the
+	 * interval and the second term is from the bottom of the next
+	 * interval and C) the extension to multiple intervals, where the
+	 * middle term is the whole intervals covered.
 	 *
 	 * An equivalent of C, by reduction, is:
 	 *
 	 *   value2 - value1 + n * period
 	 */
-	new = ((s64)(new_raw_count << shअगरt) >> shअगरt);
-	old = ((s64)(prev_raw_count << shअगरt) >> shअगरt);
+	new = ((s64)(new_raw_count << shift) >> shift);
+	old = ((s64)(prev_raw_count << shift) >> shift);
 	local64_add(new - old + count * period, &event->count);
 
 	local64_set(&hwc->period_left, -new);
 
 	perf_event_update_userpage(event);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __always_अंतरभूत व्योम
-__पूर्णांकel_pmu_pebs_event(काष्ठा perf_event *event,
-		       काष्ठा pt_regs *iregs,
-		       काष्ठा perf_sample_data *data,
-		       व्योम *base, व्योम *top,
-		       पूर्णांक bit, पूर्णांक count,
-		       व्योम (*setup_sample)(काष्ठा perf_event *,
-					    काष्ठा pt_regs *,
-					    व्योम *,
-					    काष्ठा perf_sample_data *,
-					    काष्ठा pt_regs *))
-अणु
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	काष्ठा x86_perf_regs perf_regs;
-	काष्ठा pt_regs *regs = &perf_regs.regs;
-	व्योम *at = get_next_pebs_record_by_bit(base, top, bit);
-	अटल काष्ठा pt_regs dummy_iregs;
+static __always_inline void
+__intel_pmu_pebs_event(struct perf_event *event,
+		       struct pt_regs *iregs,
+		       struct perf_sample_data *data,
+		       void *base, void *top,
+		       int bit, int count,
+		       void (*setup_sample)(struct perf_event *,
+					    struct pt_regs *,
+					    void *,
+					    struct perf_sample_data *,
+					    struct pt_regs *))
+{
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+	struct hw_perf_event *hwc = &event->hw;
+	struct x86_perf_regs perf_regs;
+	struct pt_regs *regs = &perf_regs.regs;
+	void *at = get_next_pebs_record_by_bit(base, top, bit);
+	static struct pt_regs dummy_iregs;
 
-	अगर (hwc->flags & PERF_X86_EVENT_AUTO_RELOAD) अणु
+	if (hwc->flags & PERF_X86_EVENT_AUTO_RELOAD) {
 		/*
-		 * Now, स्वतः-reload is only enabled in fixed period mode.
+		 * Now, auto-reload is only enabled in fixed period mode.
 		 * The reload value is always hwc->sample_period.
-		 * May need to change it, अगर स्वतः-reload is enabled in
+		 * May need to change it, if auto-reload is enabled in
 		 * freq mode later.
 		 */
-		पूर्णांकel_pmu_save_and_restart_reload(event, count);
-	पूर्ण अन्यथा अगर (!पूर्णांकel_pmu_save_and_restart(event))
-		वापस;
+		intel_pmu_save_and_restart_reload(event, count);
+	} else if (!intel_pmu_save_and_restart(event))
+		return;
 
-	अगर (!iregs)
+	if (!iregs)
 		iregs = &dummy_iregs;
 
-	जबतक (count > 1) अणु
+	while (count > 1) {
 		setup_sample(event, iregs, at, data, regs);
 		perf_event_output(event, data, regs);
 		at += cpuc->pebs_record_size;
 		at = get_next_pebs_record_by_bit(at, top, bit);
 		count--;
-	पूर्ण
+	}
 
 	setup_sample(event, iregs, at, data, regs);
-	अगर (iregs == &dummy_iregs) अणु
+	if (iregs == &dummy_iregs) {
 		/*
 		 * The PEBS records may be drained in the non-overflow context,
-		 * e.g., large PEBS + context चयन. Perf should treat the
-		 * last record the same as other PEBS records, and करोesn't
+		 * e.g., large PEBS + context switch. Perf should treat the
+		 * last record the same as other PEBS records, and doesn't
 		 * invoke the generic overflow handler.
 		 */
 		perf_event_output(event, data, regs);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * All but the last records are processed.
 		 * The last one is left to be able to call the overflow handler.
 		 */
-		अगर (perf_event_overflow(event, data, regs))
+		if (perf_event_overflow(event, data, regs))
 			x86_pmu_stop(event, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम पूर्णांकel_pmu_drain_pebs_core(काष्ठा pt_regs *iregs, काष्ठा perf_sample_data *data)
-अणु
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
-	काष्ठा debug_store *ds = cpuc->ds;
-	काष्ठा perf_event *event = cpuc->events[0]; /* PMC0 only */
-	काष्ठा pebs_record_core *at, *top;
-	पूर्णांक n;
+static void intel_pmu_drain_pebs_core(struct pt_regs *iregs, struct perf_sample_data *data)
+{
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+	struct debug_store *ds = cpuc->ds;
+	struct perf_event *event = cpuc->events[0]; /* PMC0 only */
+	struct pebs_record_core *at, *top;
+	int n;
 
-	अगर (!x86_pmu.pebs_active)
-		वापस;
+	if (!x86_pmu.pebs_active)
+		return;
 
-	at  = (काष्ठा pebs_record_core *)(अचिन्हित दीर्घ)ds->pebs_buffer_base;
-	top = (काष्ठा pebs_record_core *)(अचिन्हित दीर्घ)ds->pebs_index;
+	at  = (struct pebs_record_core *)(unsigned long)ds->pebs_buffer_base;
+	top = (struct pebs_record_core *)(unsigned long)ds->pebs_index;
 
 	/*
-	 * Whatever अन्यथा happens, drain the thing
+	 * Whatever else happens, drain the thing
 	 */
 	ds->pebs_index = ds->pebs_buffer_base;
 
-	अगर (!test_bit(0, cpuc->active_mask))
-		वापस;
+	if (!test_bit(0, cpuc->active_mask))
+		return;
 
 	WARN_ON_ONCE(!event);
 
-	अगर (!event->attr.precise_ip)
-		वापस;
+	if (!event->attr.precise_ip)
+		return;
 
 	n = top - at;
-	अगर (n <= 0) अणु
-		अगर (event->hw.flags & PERF_X86_EVENT_AUTO_RELOAD)
-			पूर्णांकel_pmu_save_and_restart_reload(event, 0);
-		वापस;
-	पूर्ण
+	if (n <= 0) {
+		if (event->hw.flags & PERF_X86_EVENT_AUTO_RELOAD)
+			intel_pmu_save_and_restart_reload(event, 0);
+		return;
+	}
 
-	__पूर्णांकel_pmu_pebs_event(event, iregs, data, at, top, 0, n,
+	__intel_pmu_pebs_event(event, iregs, data, at, top, 0, n,
 			       setup_pebs_fixed_sample_data);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_pmu_pebs_event_update_no_drain(काष्ठा cpu_hw_events *cpuc, पूर्णांक size)
-अणु
-	काष्ठा perf_event *event;
-	पूर्णांक bit;
+static void intel_pmu_pebs_event_update_no_drain(struct cpu_hw_events *cpuc, int size)
+{
+	struct perf_event *event;
+	int bit;
 
 	/*
-	 * The drain_pebs() could be called twice in a लघु period
-	 * क्रम स्वतः-reload event in pmu::पढ़ो(). There are no
+	 * The drain_pebs() could be called twice in a short period
+	 * for auto-reload event in pmu::read(). There are no
 	 * overflows have happened in between.
-	 * It needs to call पूर्णांकel_pmu_save_and_restart_reload() to
-	 * update the event->count क्रम this हाल.
+	 * It needs to call intel_pmu_save_and_restart_reload() to
+	 * update the event->count for this case.
 	 */
-	क्रम_each_set_bit(bit, (अचिन्हित दीर्घ *)&cpuc->pebs_enabled, size) अणु
+	for_each_set_bit(bit, (unsigned long *)&cpuc->pebs_enabled, size) {
 		event = cpuc->events[bit];
-		अगर (event->hw.flags & PERF_X86_EVENT_AUTO_RELOAD)
-			पूर्णांकel_pmu_save_and_restart_reload(event, 0);
-	पूर्ण
-पूर्ण
+		if (event->hw.flags & PERF_X86_EVENT_AUTO_RELOAD)
+			intel_pmu_save_and_restart_reload(event, 0);
+	}
+}
 
-अटल व्योम पूर्णांकel_pmu_drain_pebs_nhm(काष्ठा pt_regs *iregs, काष्ठा perf_sample_data *data)
-अणु
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
-	काष्ठा debug_store *ds = cpuc->ds;
-	काष्ठा perf_event *event;
-	व्योम *base, *at, *top;
-	लघु counts[INTEL_PMC_IDX_FIXED + MAX_FIXED_PEBS_EVENTS] = अणुपूर्ण;
-	लघु error[INTEL_PMC_IDX_FIXED + MAX_FIXED_PEBS_EVENTS] = अणुपूर्ण;
-	पूर्णांक bit, i, size;
+static void intel_pmu_drain_pebs_nhm(struct pt_regs *iregs, struct perf_sample_data *data)
+{
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+	struct debug_store *ds = cpuc->ds;
+	struct perf_event *event;
+	void *base, *at, *top;
+	short counts[INTEL_PMC_IDX_FIXED + MAX_FIXED_PEBS_EVENTS] = {};
+	short error[INTEL_PMC_IDX_FIXED + MAX_FIXED_PEBS_EVENTS] = {};
+	int bit, i, size;
 	u64 mask;
 
-	अगर (!x86_pmu.pebs_active)
-		वापस;
+	if (!x86_pmu.pebs_active)
+		return;
 
-	base = (काष्ठा pebs_record_nhm *)(अचिन्हित दीर्घ)ds->pebs_buffer_base;
-	top = (काष्ठा pebs_record_nhm *)(अचिन्हित दीर्घ)ds->pebs_index;
+	base = (struct pebs_record_nhm *)(unsigned long)ds->pebs_buffer_base;
+	top = (struct pebs_record_nhm *)(unsigned long)ds->pebs_index;
 
 	ds->pebs_index = ds->pebs_buffer_base;
 
 	mask = (1ULL << x86_pmu.max_pebs_events) - 1;
 	size = x86_pmu.max_pebs_events;
-	अगर (x86_pmu.flags & PMU_FL_PEBS_ALL) अणु
+	if (x86_pmu.flags & PMU_FL_PEBS_ALL) {
 		mask |= ((1ULL << x86_pmu.num_counters_fixed) - 1) << INTEL_PMC_IDX_FIXED;
 		size = INTEL_PMC_IDX_FIXED + x86_pmu.num_counters_fixed;
-	पूर्ण
+	}
 
-	अगर (unlikely(base >= top)) अणु
-		पूर्णांकel_pmu_pebs_event_update_no_drain(cpuc, size);
-		वापस;
-	पूर्ण
+	if (unlikely(base >= top)) {
+		intel_pmu_pebs_event_update_no_drain(cpuc, size);
+		return;
+	}
 
-	क्रम (at = base; at < top; at += x86_pmu.pebs_record_size) अणु
-		काष्ठा pebs_record_nhm *p = at;
+	for (at = base; at < top; at += x86_pmu.pebs_record_size) {
+		struct pebs_record_nhm *p = at;
 		u64 pebs_status;
 
 		pebs_status = p->status & cpuc->pebs_enabled;
 		pebs_status &= mask;
 
 		/* PEBS v3 has more accurate status bits */
-		अगर (x86_pmu.पूर्णांकel_cap.pebs_क्रमmat >= 3) अणु
-			क्रम_each_set_bit(bit, (अचिन्हित दीर्घ *)&pebs_status, size)
+		if (x86_pmu.intel_cap.pebs_format >= 3) {
+			for_each_set_bit(bit, (unsigned long *)&pebs_status, size)
 				counts[bit]++;
 
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/*
 		 * On some CPUs the PEBS status can be zero when PEBS is
 		 * racing with clearing of GLOBAL_STATUS.
 		 *
 		 * Normally we would drop that record, but in the
-		 * हाल when there is only a single active PEBS event
-		 * we can assume it's क्रम that event.
+		 * case when there is only a single active PEBS event
+		 * we can assume it's for that event.
 		 */
-		अगर (!pebs_status && cpuc->pebs_enabled &&
+		if (!pebs_status && cpuc->pebs_enabled &&
 			!(cpuc->pebs_enabled & (cpuc->pebs_enabled-1)))
 			pebs_status = p->status = cpuc->pebs_enabled;
 
-		bit = find_first_bit((अचिन्हित दीर्घ *)&pebs_status,
+		bit = find_first_bit((unsigned long *)&pebs_status,
 					x86_pmu.max_pebs_events);
-		अगर (bit >= x86_pmu.max_pebs_events)
-			जारी;
+		if (bit >= x86_pmu.max_pebs_events)
+			continue;
 
 		/*
-		 * The PEBS hardware करोes not deal well with the situation
+		 * The PEBS hardware does not deal well with the situation
 		 * when events happen near to each other and multiple bits
 		 * are set. But it should happen rarely.
 		 *
 		 * If these events include one PEBS and multiple non-PEBS
-		 * events, it करोesn't impact PEBS record. The record will
+		 * events, it doesn't impact PEBS record. The record will
 		 * be handled normally. (slow path)
 		 *
 		 * If these events include two or more PEBS events, the
-		 * records क्रम the events can be collapsed पूर्णांकo a single
-		 * one, and it's not possible to reस्थिरruct all events
+		 * records for the events can be collapsed into a single
+		 * one, and it's not possible to reconstruct all events
 		 * that caused the PEBS record. It's called collision.
 		 * If collision happened, the record will be dropped.
 		 */
-		अगर (pebs_status != (1ULL << bit)) अणु
-			क्रम_each_set_bit(i, (अचिन्हित दीर्घ *)&pebs_status, size)
+		if (pebs_status != (1ULL << bit)) {
+			for_each_set_bit(i, (unsigned long *)&pebs_status, size)
 				error[i]++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		counts[bit]++;
-	पूर्ण
+	}
 
-	क्रम_each_set_bit(bit, (अचिन्हित दीर्घ *)&mask, size) अणु
-		अगर ((counts[bit] == 0) && (error[bit] == 0))
-			जारी;
+	for_each_set_bit(bit, (unsigned long *)&mask, size) {
+		if ((counts[bit] == 0) && (error[bit] == 0))
+			continue;
 
 		event = cpuc->events[bit];
-		अगर (WARN_ON_ONCE(!event))
-			जारी;
+		if (WARN_ON_ONCE(!event))
+			continue;
 
-		अगर (WARN_ON_ONCE(!event->attr.precise_ip))
-			जारी;
+		if (WARN_ON_ONCE(!event->attr.precise_ip))
+			continue;
 
 		/* log dropped samples number */
-		अगर (error[bit]) अणु
+		if (error[bit]) {
 			perf_log_lost_samples(event, error[bit]);
 
-			अगर (iregs && perf_event_account_पूर्णांकerrupt(event))
+			if (iregs && perf_event_account_interrupt(event))
 				x86_pmu_stop(event, 0);
-		पूर्ण
+		}
 
-		अगर (counts[bit]) अणु
-			__पूर्णांकel_pmu_pebs_event(event, iregs, data, base,
+		if (counts[bit]) {
+			__intel_pmu_pebs_event(event, iregs, data, base,
 					       top, bit, counts[bit],
 					       setup_pebs_fixed_sample_data);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम पूर्णांकel_pmu_drain_pebs_icl(काष्ठा pt_regs *iregs, काष्ठा perf_sample_data *data)
-अणु
-	लघु counts[INTEL_PMC_IDX_FIXED + MAX_FIXED_PEBS_EVENTS] = अणुपूर्ण;
-	काष्ठा cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
-	पूर्णांक max_pebs_events = hybrid(cpuc->pmu, max_pebs_events);
-	पूर्णांक num_counters_fixed = hybrid(cpuc->pmu, num_counters_fixed);
-	काष्ठा debug_store *ds = cpuc->ds;
-	काष्ठा perf_event *event;
-	व्योम *base, *at, *top;
-	पूर्णांक bit, size;
+static void intel_pmu_drain_pebs_icl(struct pt_regs *iregs, struct perf_sample_data *data)
+{
+	short counts[INTEL_PMC_IDX_FIXED + MAX_FIXED_PEBS_EVENTS] = {};
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+	int max_pebs_events = hybrid(cpuc->pmu, max_pebs_events);
+	int num_counters_fixed = hybrid(cpuc->pmu, num_counters_fixed);
+	struct debug_store *ds = cpuc->ds;
+	struct perf_event *event;
+	void *base, *at, *top;
+	int bit, size;
 	u64 mask;
 
-	अगर (!x86_pmu.pebs_active)
-		वापस;
+	if (!x86_pmu.pebs_active)
+		return;
 
-	base = (काष्ठा pebs_basic *)(अचिन्हित दीर्घ)ds->pebs_buffer_base;
-	top = (काष्ठा pebs_basic *)(अचिन्हित दीर्घ)ds->pebs_index;
+	base = (struct pebs_basic *)(unsigned long)ds->pebs_buffer_base;
+	top = (struct pebs_basic *)(unsigned long)ds->pebs_index;
 
 	ds->pebs_index = ds->pebs_buffer_base;
 
@@ -2102,110 +2101,110 @@ __पूर्णांकel_pmu_pebs_event(काष्ठा perf_event *event
 	       (((1ULL << num_counters_fixed) - 1) << INTEL_PMC_IDX_FIXED);
 	size = INTEL_PMC_IDX_FIXED + num_counters_fixed;
 
-	अगर (unlikely(base >= top)) अणु
-		पूर्णांकel_pmu_pebs_event_update_no_drain(cpuc, size);
-		वापस;
-	पूर्ण
+	if (unlikely(base >= top)) {
+		intel_pmu_pebs_event_update_no_drain(cpuc, size);
+		return;
+	}
 
-	क्रम (at = base; at < top; at += cpuc->pebs_record_size) अणु
+	for (at = base; at < top; at += cpuc->pebs_record_size) {
 		u64 pebs_status;
 
 		pebs_status = get_pebs_status(at) & cpuc->pebs_enabled;
 		pebs_status &= mask;
 
-		क्रम_each_set_bit(bit, (अचिन्हित दीर्घ *)&pebs_status, size)
+		for_each_set_bit(bit, (unsigned long *)&pebs_status, size)
 			counts[bit]++;
-	पूर्ण
+	}
 
-	क्रम_each_set_bit(bit, (अचिन्हित दीर्घ *)&mask, size) अणु
-		अगर (counts[bit] == 0)
-			जारी;
+	for_each_set_bit(bit, (unsigned long *)&mask, size) {
+		if (counts[bit] == 0)
+			continue;
 
 		event = cpuc->events[bit];
-		अगर (WARN_ON_ONCE(!event))
-			जारी;
+		if (WARN_ON_ONCE(!event))
+			continue;
 
-		अगर (WARN_ON_ONCE(!event->attr.precise_ip))
-			जारी;
+		if (WARN_ON_ONCE(!event->attr.precise_ip))
+			continue;
 
-		__पूर्णांकel_pmu_pebs_event(event, iregs, data, base,
+		__intel_pmu_pebs_event(event, iregs, data, base,
 				       top, bit, counts[bit],
 				       setup_pebs_adaptive_sample_data);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * BTS, PEBS probe and setup
  */
 
-व्योम __init पूर्णांकel_ds_init(व्योम)
-अणु
+void __init intel_ds_init(void)
+{
 	/*
-	 * No support क्रम 32bit क्रमmats
+	 * No support for 32bit formats
 	 */
-	अगर (!boot_cpu_has(X86_FEATURE_DTES64))
-		वापस;
+	if (!boot_cpu_has(X86_FEATURE_DTES64))
+		return;
 
 	x86_pmu.bts  = boot_cpu_has(X86_FEATURE_BTS);
 	x86_pmu.pebs = boot_cpu_has(X86_FEATURE_PEBS);
 	x86_pmu.pebs_buffer_size = PEBS_BUFFER_SIZE;
-	अगर (x86_pmu.version <= 4)
+	if (x86_pmu.version <= 4)
 		x86_pmu.pebs_no_isolation = 1;
 
-	अगर (x86_pmu.pebs) अणु
-		अक्षर pebs_type = x86_pmu.पूर्णांकel_cap.pebs_trap ?  '+' : '-';
-		अक्षर *pebs_qual = "";
-		पूर्णांक क्रमmat = x86_pmu.पूर्णांकel_cap.pebs_क्रमmat;
+	if (x86_pmu.pebs) {
+		char pebs_type = x86_pmu.intel_cap.pebs_trap ?  '+' : '-';
+		char *pebs_qual = "";
+		int format = x86_pmu.intel_cap.pebs_format;
 
-		अगर (क्रमmat < 4)
-			x86_pmu.पूर्णांकel_cap.pebs_baseline = 0;
+		if (format < 4)
+			x86_pmu.intel_cap.pebs_baseline = 0;
 
-		चयन (क्रमmat) अणु
-		हाल 0:
+		switch (format) {
+		case 0:
 			pr_cont("PEBS fmt0%c, ", pebs_type);
-			x86_pmu.pebs_record_size = माप(काष्ठा pebs_record_core);
+			x86_pmu.pebs_record_size = sizeof(struct pebs_record_core);
 			/*
 			 * Using >PAGE_SIZE buffers makes the WRMSR to
-			 * PERF_GLOBAL_CTRL in पूर्णांकel_pmu_enable_all()
+			 * PERF_GLOBAL_CTRL in intel_pmu_enable_all()
 			 * mysteriously hang on Core2.
 			 *
-			 * As a workaround, we करोn't करो this.
+			 * As a workaround, we don't do this.
 			 */
 			x86_pmu.pebs_buffer_size = PAGE_SIZE;
-			x86_pmu.drain_pebs = पूर्णांकel_pmu_drain_pebs_core;
-			अवरोध;
+			x86_pmu.drain_pebs = intel_pmu_drain_pebs_core;
+			break;
 
-		हाल 1:
+		case 1:
 			pr_cont("PEBS fmt1%c, ", pebs_type);
-			x86_pmu.pebs_record_size = माप(काष्ठा pebs_record_nhm);
-			x86_pmu.drain_pebs = पूर्णांकel_pmu_drain_pebs_nhm;
-			अवरोध;
+			x86_pmu.pebs_record_size = sizeof(struct pebs_record_nhm);
+			x86_pmu.drain_pebs = intel_pmu_drain_pebs_nhm;
+			break;
 
-		हाल 2:
+		case 2:
 			pr_cont("PEBS fmt2%c, ", pebs_type);
-			x86_pmu.pebs_record_size = माप(काष्ठा pebs_record_hsw);
-			x86_pmu.drain_pebs = पूर्णांकel_pmu_drain_pebs_nhm;
-			अवरोध;
+			x86_pmu.pebs_record_size = sizeof(struct pebs_record_hsw);
+			x86_pmu.drain_pebs = intel_pmu_drain_pebs_nhm;
+			break;
 
-		हाल 3:
+		case 3:
 			pr_cont("PEBS fmt3%c, ", pebs_type);
 			x86_pmu.pebs_record_size =
-						माप(काष्ठा pebs_record_skl);
-			x86_pmu.drain_pebs = पूर्णांकel_pmu_drain_pebs_nhm;
+						sizeof(struct pebs_record_skl);
+			x86_pmu.drain_pebs = intel_pmu_drain_pebs_nhm;
 			x86_pmu.large_pebs_flags |= PERF_SAMPLE_TIME;
-			अवरोध;
+			break;
 
-		हाल 4:
-			x86_pmu.drain_pebs = पूर्णांकel_pmu_drain_pebs_icl;
-			x86_pmu.pebs_record_size = माप(काष्ठा pebs_basic);
-			अगर (x86_pmu.पूर्णांकel_cap.pebs_baseline) अणु
+		case 4:
+			x86_pmu.drain_pebs = intel_pmu_drain_pebs_icl;
+			x86_pmu.pebs_record_size = sizeof(struct pebs_basic);
+			if (x86_pmu.intel_cap.pebs_baseline) {
 				x86_pmu.large_pebs_flags |=
 					PERF_SAMPLE_BRANCH_STACK |
 					PERF_SAMPLE_TIME;
 				x86_pmu.flags |= PMU_FL_PEBS_ALL;
 				pebs_qual = "-baseline";
 				x86_get_pmu(smp_processor_id())->capabilities |= PERF_PMU_CAP_EXTENDED_REGS;
-			पूर्ण अन्यथा अणु
+			} else {
 				/* Only basic record supported */
 				x86_pmu.large_pebs_flags &=
 					~(PERF_SAMPLE_ADDR |
@@ -2214,29 +2213,29 @@ __पूर्णांकel_pmu_pebs_event(काष्ठा perf_event *event
 					  PERF_SAMPLE_TRANSACTION |
 					  PERF_SAMPLE_REGS_USER |
 					  PERF_SAMPLE_REGS_INTR);
-			पूर्ण
+			}
 			pr_cont("PEBS fmt4%c%s, ", pebs_type, pebs_qual);
 
-			अगर (!is_hybrid() && x86_pmu.पूर्णांकel_cap.pebs_output_pt_available) अणु
+			if (!is_hybrid() && x86_pmu.intel_cap.pebs_output_pt_available) {
 				pr_cont("PEBS-via-PT, ");
 				x86_get_pmu(smp_processor_id())->capabilities |= PERF_PMU_CAP_AUX_OUTPUT;
-			पूर्ण
+			}
 
-			अवरोध;
+			break;
 
-		शेष:
-			pr_cont("no PEBS fmt%d%c, ", क्रमmat, pebs_type);
+		default:
+			pr_cont("no PEBS fmt%d%c, ", format, pebs_type);
 			x86_pmu.pebs = 0;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम perf_restore_debug_store(व्योम)
-अणु
-	काष्ठा debug_store *ds = __this_cpu_पढ़ो(cpu_hw_events.ds);
+void perf_restore_debug_store(void)
+{
+	struct debug_store *ds = __this_cpu_read(cpu_hw_events.ds);
 
-	अगर (!x86_pmu.bts && !x86_pmu.pebs)
-		वापस;
+	if (!x86_pmu.bts && !x86_pmu.pebs)
+		return;
 
-	wrmsrl(MSR_IA32_DS_AREA, (अचिन्हित दीर्घ)ds);
-पूर्ण
+	wrmsrl(MSR_IA32_DS_AREA, (unsigned long)ds);
+}

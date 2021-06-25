@@ -1,3 +1,2 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश "../kernel/ipl_vmparm.c"
+// SPDX-License-Identifier: GPL-2.0
+#include "../kernel/ipl_vmparm.c"

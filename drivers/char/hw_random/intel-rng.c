@@ -1,22 +1,21 @@
-<शैली गुरु>
 /*
- * RNG driver क्रम Intel RNGs
+ * RNG driver for Intel RNGs
  *
  * Copyright 2005 (c) MontaVista Software, Inc.
  *
  * with the majority of the code coming from:
  *
- * Hardware driver क्रम the Intel/AMD/VIA Ranकरोm Number Generators (RNG)
+ * Hardware driver for the Intel/AMD/VIA Random Number Generators (RNG)
  * (c) Copyright 2003 Red Hat Inc <jgarzik@redhat.com>
  *
  * derived from
  *
- * Hardware driver क्रम the AMD 768 Ranकरोm Number Generator (RNG)
+ * Hardware driver for the AMD 768 Random Number Generator (RNG)
  * (c) Copyright 2001 Red Hat Inc
  *
  * derived from
  *
- * Hardware driver क्रम Intel i810 Ranकरोm Number Generator (RNG)
+ * Hardware driver for Intel i810 Random Number Generator (RNG)
  * Copyright 2000,2001 Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2000,2001 Philipp Rumpf <prumpf@mandrakesoft.com>
  *
@@ -25,395 +24,395 @@
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/hw_अक्रमom.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/stop_machine.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
+#include <linux/hw_random.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/stop_machine.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
 
 
-#घोषणा PFX	KBUILD_MODNAME ": "
+#define PFX	KBUILD_MODNAME ": "
 
 /*
- * RNG रेजिस्टरs
+ * RNG registers
  */
-#घोषणा INTEL_RNG_HW_STATUS			0
-#घोषणा         INTEL_RNG_PRESENT		0x40
-#घोषणा         INTEL_RNG_ENABLED		0x01
-#घोषणा INTEL_RNG_STATUS			1
-#घोषणा         INTEL_RNG_DATA_PRESENT		0x01
-#घोषणा INTEL_RNG_DATA				2
+#define INTEL_RNG_HW_STATUS			0
+#define         INTEL_RNG_PRESENT		0x40
+#define         INTEL_RNG_ENABLED		0x01
+#define INTEL_RNG_STATUS			1
+#define         INTEL_RNG_DATA_PRESENT		0x01
+#define INTEL_RNG_DATA				2
 
 /*
  * Magic address at which Intel PCI bridges locate the RNG
  */
-#घोषणा INTEL_RNG_ADDR				0xFFBC015F
-#घोषणा INTEL_RNG_ADDR_LEN			3
+#define INTEL_RNG_ADDR				0xFFBC015F
+#define INTEL_RNG_ADDR_LEN			3
 
 /*
- * LPC bridge PCI config space रेजिस्टरs
+ * LPC bridge PCI config space registers
  */
-#घोषणा FWH_DEC_EN1_REG_OLD			0xe3
-#घोषणा FWH_DEC_EN1_REG_NEW			0xd9 /* high byte of 16-bit रेजिस्टर */
-#घोषणा FWH_F8_EN_MASK				0x80
+#define FWH_DEC_EN1_REG_OLD			0xe3
+#define FWH_DEC_EN1_REG_NEW			0xd9 /* high byte of 16-bit register */
+#define FWH_F8_EN_MASK				0x80
 
-#घोषणा BIOS_CNTL_REG_OLD			0x4e
-#घोषणा BIOS_CNTL_REG_NEW			0xdc
-#घोषणा BIOS_CNTL_WRITE_ENABLE_MASK		0x01
-#घोषणा BIOS_CNTL_LOCK_ENABLE_MASK		0x02
+#define BIOS_CNTL_REG_OLD			0x4e
+#define BIOS_CNTL_REG_NEW			0xdc
+#define BIOS_CNTL_WRITE_ENABLE_MASK		0x01
+#define BIOS_CNTL_LOCK_ENABLE_MASK		0x02
 
 /*
  * Magic address at which Intel Firmware Hubs get accessed
  */
-#घोषणा INTEL_FWH_ADDR				0xffff0000
-#घोषणा INTEL_FWH_ADDR_LEN			2
+#define INTEL_FWH_ADDR				0xffff0000
+#define INTEL_FWH_ADDR_LEN			2
 
 /*
- * Intel Firmware Hub command codes (ग_लिखो to any address inside the device)
+ * Intel Firmware Hub command codes (write to any address inside the device)
  */
-#घोषणा INTEL_FWH_RESET_CMD			0xff /* aka READ_ARRAY */
-#घोषणा INTEL_FWH_READ_ID_CMD			0x90
+#define INTEL_FWH_RESET_CMD			0xff /* aka READ_ARRAY */
+#define INTEL_FWH_READ_ID_CMD			0x90
 
 /*
  * Intel Firmware Hub Read ID command result addresses
  */
-#घोषणा INTEL_FWH_MANUFACTURER_CODE_ADDRESS	0x000000
-#घोषणा INTEL_FWH_DEVICE_CODE_ADDRESS		0x000001
+#define INTEL_FWH_MANUFACTURER_CODE_ADDRESS	0x000000
+#define INTEL_FWH_DEVICE_CODE_ADDRESS		0x000001
 
 /*
  * Intel Firmware Hub Read ID command result values
  */
-#घोषणा INTEL_FWH_MANUFACTURER_CODE		0x89
-#घोषणा INTEL_FWH_DEVICE_CODE_8M		0xac
-#घोषणा INTEL_FWH_DEVICE_CODE_4M		0xad
+#define INTEL_FWH_MANUFACTURER_CODE		0x89
+#define INTEL_FWH_DEVICE_CODE_8M		0xac
+#define INTEL_FWH_DEVICE_CODE_4M		0xad
 
 /*
- * Data क्रम PCI driver पूर्णांकerface
+ * Data for PCI driver interface
  *
- * This data only exists क्रम exporting the supported
- * PCI ids via MODULE_DEVICE_TABLE.  We करो not actually
- * रेजिस्टर a pci_driver, because someone अन्यथा might one day
- * want to रेजिस्टर another driver on the same PCI id.
+ * This data only exists for exporting the supported
+ * PCI ids via MODULE_DEVICE_TABLE.  We do not actually
+ * register a pci_driver, because someone else might one day
+ * want to register another driver on the same PCI id.
  */
-अटल स्थिर काष्ठा pci_device_id pci_tbl[] = अणु
+static const struct pci_device_id pci_tbl[] = {
 /* AA
-	अणु PCI_DEVICE(0x8086, 0x2418) पूर्ण, */
-	अणु PCI_DEVICE(0x8086, 0x2410) पूर्ण, /* AA */
+	{ PCI_DEVICE(0x8086, 0x2418) }, */
+	{ PCI_DEVICE(0x8086, 0x2410) }, /* AA */
 /* AB
-	अणु PCI_DEVICE(0x8086, 0x2428) पूर्ण, */
-	अणु PCI_DEVICE(0x8086, 0x2420) पूर्ण, /* AB */
+	{ PCI_DEVICE(0x8086, 0x2428) }, */
+	{ PCI_DEVICE(0x8086, 0x2420) }, /* AB */
 /* ??
-	अणु PCI_DEVICE(0x8086, 0x2430) पूर्ण, */
+	{ PCI_DEVICE(0x8086, 0x2430) }, */
 /* BAM, CAM, DBM, FBM, GxM
-	अणु PCI_DEVICE(0x8086, 0x2448) पूर्ण, */
-	अणु PCI_DEVICE(0x8086, 0x244c) पूर्ण, /* BAM */
-	अणु PCI_DEVICE(0x8086, 0x248c) पूर्ण, /* CAM */
-	अणु PCI_DEVICE(0x8086, 0x24cc) पूर्ण, /* DBM */
-	अणु PCI_DEVICE(0x8086, 0x2641) पूर्ण, /* FBM */
-	अणु PCI_DEVICE(0x8086, 0x27b9) पूर्ण, /* GxM */
-	अणु PCI_DEVICE(0x8086, 0x27bd) पूर्ण, /* GxM DH */
+	{ PCI_DEVICE(0x8086, 0x2448) }, */
+	{ PCI_DEVICE(0x8086, 0x244c) }, /* BAM */
+	{ PCI_DEVICE(0x8086, 0x248c) }, /* CAM */
+	{ PCI_DEVICE(0x8086, 0x24cc) }, /* DBM */
+	{ PCI_DEVICE(0x8086, 0x2641) }, /* FBM */
+	{ PCI_DEVICE(0x8086, 0x27b9) }, /* GxM */
+	{ PCI_DEVICE(0x8086, 0x27bd) }, /* GxM DH */
 /* BA, CA, DB, Ex, 6300, Fx, 631x/632x, Gx
-	अणु PCI_DEVICE(0x8086, 0x244e) पूर्ण, */
-	अणु PCI_DEVICE(0x8086, 0x2440) पूर्ण, /* BA */
-	अणु PCI_DEVICE(0x8086, 0x2480) पूर्ण, /* CA */
-	अणु PCI_DEVICE(0x8086, 0x24c0) पूर्ण, /* DB */
-	अणु PCI_DEVICE(0x8086, 0x24d0) पूर्ण, /* Ex */
-	अणु PCI_DEVICE(0x8086, 0x25a1) पूर्ण, /* 6300 */
-	अणु PCI_DEVICE(0x8086, 0x2640) पूर्ण, /* Fx */
-	अणु PCI_DEVICE(0x8086, 0x2670) पूर्ण, /* 631x/632x */
-	अणु PCI_DEVICE(0x8086, 0x2671) पूर्ण, /* 631x/632x */
-	अणु PCI_DEVICE(0x8086, 0x2672) पूर्ण, /* 631x/632x */
-	अणु PCI_DEVICE(0x8086, 0x2673) पूर्ण, /* 631x/632x */
-	अणु PCI_DEVICE(0x8086, 0x2674) पूर्ण, /* 631x/632x */
-	अणु PCI_DEVICE(0x8086, 0x2675) पूर्ण, /* 631x/632x */
-	अणु PCI_DEVICE(0x8086, 0x2676) पूर्ण, /* 631x/632x */
-	अणु PCI_DEVICE(0x8086, 0x2677) पूर्ण, /* 631x/632x */
-	अणु PCI_DEVICE(0x8086, 0x2678) पूर्ण, /* 631x/632x */
-	अणु PCI_DEVICE(0x8086, 0x2679) पूर्ण, /* 631x/632x */
-	अणु PCI_DEVICE(0x8086, 0x267a) पूर्ण, /* 631x/632x */
-	अणु PCI_DEVICE(0x8086, 0x267b) पूर्ण, /* 631x/632x */
-	अणु PCI_DEVICE(0x8086, 0x267c) पूर्ण, /* 631x/632x */
-	अणु PCI_DEVICE(0x8086, 0x267d) पूर्ण, /* 631x/632x */
-	अणु PCI_DEVICE(0x8086, 0x267e) पूर्ण, /* 631x/632x */
-	अणु PCI_DEVICE(0x8086, 0x267f) पूर्ण, /* 631x/632x */
-	अणु PCI_DEVICE(0x8086, 0x27b8) पूर्ण, /* Gx */
+	{ PCI_DEVICE(0x8086, 0x244e) }, */
+	{ PCI_DEVICE(0x8086, 0x2440) }, /* BA */
+	{ PCI_DEVICE(0x8086, 0x2480) }, /* CA */
+	{ PCI_DEVICE(0x8086, 0x24c0) }, /* DB */
+	{ PCI_DEVICE(0x8086, 0x24d0) }, /* Ex */
+	{ PCI_DEVICE(0x8086, 0x25a1) }, /* 6300 */
+	{ PCI_DEVICE(0x8086, 0x2640) }, /* Fx */
+	{ PCI_DEVICE(0x8086, 0x2670) }, /* 631x/632x */
+	{ PCI_DEVICE(0x8086, 0x2671) }, /* 631x/632x */
+	{ PCI_DEVICE(0x8086, 0x2672) }, /* 631x/632x */
+	{ PCI_DEVICE(0x8086, 0x2673) }, /* 631x/632x */
+	{ PCI_DEVICE(0x8086, 0x2674) }, /* 631x/632x */
+	{ PCI_DEVICE(0x8086, 0x2675) }, /* 631x/632x */
+	{ PCI_DEVICE(0x8086, 0x2676) }, /* 631x/632x */
+	{ PCI_DEVICE(0x8086, 0x2677) }, /* 631x/632x */
+	{ PCI_DEVICE(0x8086, 0x2678) }, /* 631x/632x */
+	{ PCI_DEVICE(0x8086, 0x2679) }, /* 631x/632x */
+	{ PCI_DEVICE(0x8086, 0x267a) }, /* 631x/632x */
+	{ PCI_DEVICE(0x8086, 0x267b) }, /* 631x/632x */
+	{ PCI_DEVICE(0x8086, 0x267c) }, /* 631x/632x */
+	{ PCI_DEVICE(0x8086, 0x267d) }, /* 631x/632x */
+	{ PCI_DEVICE(0x8086, 0x267e) }, /* 631x/632x */
+	{ PCI_DEVICE(0x8086, 0x267f) }, /* 631x/632x */
+	{ PCI_DEVICE(0x8086, 0x27b8) }, /* Gx */
 /* E
-	अणु PCI_DEVICE(0x8086, 0x245e) पूर्ण, */
-	अणु PCI_DEVICE(0x8086, 0x2450) पूर्ण, /* E  */
-	अणु 0, पूर्ण,	/* terminate list */
-पूर्ण;
+	{ PCI_DEVICE(0x8086, 0x245e) }, */
+	{ PCI_DEVICE(0x8086, 0x2450) }, /* E  */
+	{ 0, },	/* terminate list */
+};
 MODULE_DEVICE_TABLE(pci, pci_tbl);
 
-अटल __initdata पूर्णांक no_fwh_detect;
-module_param(no_fwh_detect, पूर्णांक, 0);
+static __initdata int no_fwh_detect;
+module_param(no_fwh_detect, int, 0);
 MODULE_PARM_DESC(no_fwh_detect, "Skip FWH detection:\n"
                                 " positive value - skip if FWH space locked read-only\n"
                                 " negative value - skip always");
 
-अटल अंतरभूत u8 hwstatus_get(व्योम __iomem *mem)
-अणु
-	वापस पढ़ोb(mem + INTEL_RNG_HW_STATUS);
-पूर्ण
+static inline u8 hwstatus_get(void __iomem *mem)
+{
+	return readb(mem + INTEL_RNG_HW_STATUS);
+}
 
-अटल अंतरभूत u8 hwstatus_set(व्योम __iomem *mem,
+static inline u8 hwstatus_set(void __iomem *mem,
 			      u8 hw_status)
-अणु
-	ग_लिखोb(hw_status, mem + INTEL_RNG_HW_STATUS);
-	वापस hwstatus_get(mem);
-पूर्ण
+{
+	writeb(hw_status, mem + INTEL_RNG_HW_STATUS);
+	return hwstatus_get(mem);
+}
 
-अटल पूर्णांक पूर्णांकel_rng_data_present(काष्ठा hwrng *rng, पूर्णांक रुको)
-अणु
-	व्योम __iomem *mem = (व्योम __iomem *)rng->priv;
-	पूर्णांक data, i;
+static int intel_rng_data_present(struct hwrng *rng, int wait)
+{
+	void __iomem *mem = (void __iomem *)rng->priv;
+	int data, i;
 
-	क्रम (i = 0; i < 20; i++) अणु
-		data = !!(पढ़ोb(mem + INTEL_RNG_STATUS) &
+	for (i = 0; i < 20; i++) {
+		data = !!(readb(mem + INTEL_RNG_STATUS) &
 			  INTEL_RNG_DATA_PRESENT);
-		अगर (data || !रुको)
-			अवरोध;
+		if (data || !wait)
+			break;
 		udelay(10);
-	पूर्ण
-	वापस data;
-पूर्ण
+	}
+	return data;
+}
 
-अटल पूर्णांक पूर्णांकel_rng_data_पढ़ो(काष्ठा hwrng *rng, u32 *data)
-अणु
-	व्योम __iomem *mem = (व्योम __iomem *)rng->priv;
+static int intel_rng_data_read(struct hwrng *rng, u32 *data)
+{
+	void __iomem *mem = (void __iomem *)rng->priv;
 
-	*data = पढ़ोb(mem + INTEL_RNG_DATA);
+	*data = readb(mem + INTEL_RNG_DATA);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक पूर्णांकel_rng_init(काष्ठा hwrng *rng)
-अणु
-	व्योम __iomem *mem = (व्योम __iomem *)rng->priv;
+static int intel_rng_init(struct hwrng *rng)
+{
+	void __iomem *mem = (void __iomem *)rng->priv;
 	u8 hw_status;
-	पूर्णांक err = -EIO;
+	int err = -EIO;
 
 	hw_status = hwstatus_get(mem);
-	/* turn RNG h/w on, अगर it's off */
-	अगर ((hw_status & INTEL_RNG_ENABLED) == 0)
+	/* turn RNG h/w on, if it's off */
+	if ((hw_status & INTEL_RNG_ENABLED) == 0)
 		hw_status = hwstatus_set(mem, hw_status | INTEL_RNG_ENABLED);
-	अगर ((hw_status & INTEL_RNG_ENABLED) == 0) अणु
+	if ((hw_status & INTEL_RNG_ENABLED) == 0) {
 		pr_err(PFX "cannot enable RNG, aborting\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	err = 0;
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम पूर्णांकel_rng_cleanup(काष्ठा hwrng *rng)
-अणु
-	व्योम __iomem *mem = (व्योम __iomem *)rng->priv;
+static void intel_rng_cleanup(struct hwrng *rng)
+{
+	void __iomem *mem = (void __iomem *)rng->priv;
 	u8 hw_status;
 
 	hw_status = hwstatus_get(mem);
-	अगर (hw_status & INTEL_RNG_ENABLED)
+	if (hw_status & INTEL_RNG_ENABLED)
 		hwstatus_set(mem, hw_status & ~INTEL_RNG_ENABLED);
-	अन्यथा
+	else
 		pr_warn(PFX "unusual: RNG already disabled\n");
-पूर्ण
+}
 
 
-अटल काष्ठा hwrng पूर्णांकel_rng = अणु
+static struct hwrng intel_rng = {
 	.name		= "intel",
-	.init		= पूर्णांकel_rng_init,
-	.cleanup	= पूर्णांकel_rng_cleanup,
-	.data_present	= पूर्णांकel_rng_data_present,
-	.data_पढ़ो	= पूर्णांकel_rng_data_पढ़ो,
-पूर्ण;
+	.init		= intel_rng_init,
+	.cleanup	= intel_rng_cleanup,
+	.data_present	= intel_rng_data_present,
+	.data_read	= intel_rng_data_read,
+};
 
-काष्ठा पूर्णांकel_rng_hw अणु
-	काष्ठा pci_dev *dev;
-	व्योम __iomem *mem;
+struct intel_rng_hw {
+	struct pci_dev *dev;
+	void __iomem *mem;
 	u8 bios_cntl_off;
 	u8 bios_cntl_val;
 	u8 fwh_dec_en1_off;
 	u8 fwh_dec_en1_val;
-पूर्ण;
+};
 
-अटल पूर्णांक __init पूर्णांकel_rng_hw_init(व्योम *_पूर्णांकel_rng_hw)
-अणु
-	काष्ठा पूर्णांकel_rng_hw *पूर्णांकel_rng_hw = _पूर्णांकel_rng_hw;
+static int __init intel_rng_hw_init(void *_intel_rng_hw)
+{
+	struct intel_rng_hw *intel_rng_hw = _intel_rng_hw;
 	u8 mfc, dvc;
 
-	/* पूर्णांकerrupts disabled in stop_machine call */
+	/* interrupts disabled in stop_machine call */
 
-	अगर (!(पूर्णांकel_rng_hw->fwh_dec_en1_val & FWH_F8_EN_MASK))
-		pci_ग_लिखो_config_byte(पूर्णांकel_rng_hw->dev,
-		                      पूर्णांकel_rng_hw->fwh_dec_en1_off,
-		                      पूर्णांकel_rng_hw->fwh_dec_en1_val |
+	if (!(intel_rng_hw->fwh_dec_en1_val & FWH_F8_EN_MASK))
+		pci_write_config_byte(intel_rng_hw->dev,
+		                      intel_rng_hw->fwh_dec_en1_off,
+		                      intel_rng_hw->fwh_dec_en1_val |
 				      FWH_F8_EN_MASK);
-	अगर (!(पूर्णांकel_rng_hw->bios_cntl_val & BIOS_CNTL_WRITE_ENABLE_MASK))
-		pci_ग_लिखो_config_byte(पूर्णांकel_rng_hw->dev,
-		                      पूर्णांकel_rng_hw->bios_cntl_off,
-		                      पूर्णांकel_rng_hw->bios_cntl_val |
+	if (!(intel_rng_hw->bios_cntl_val & BIOS_CNTL_WRITE_ENABLE_MASK))
+		pci_write_config_byte(intel_rng_hw->dev,
+		                      intel_rng_hw->bios_cntl_off,
+		                      intel_rng_hw->bios_cntl_val |
 				      BIOS_CNTL_WRITE_ENABLE_MASK);
 
-	ग_लिखोb(INTEL_FWH_RESET_CMD, पूर्णांकel_rng_hw->mem);
-	ग_लिखोb(INTEL_FWH_READ_ID_CMD, पूर्णांकel_rng_hw->mem);
-	mfc = पढ़ोb(पूर्णांकel_rng_hw->mem + INTEL_FWH_MANUFACTURER_CODE_ADDRESS);
-	dvc = पढ़ोb(पूर्णांकel_rng_hw->mem + INTEL_FWH_DEVICE_CODE_ADDRESS);
-	ग_लिखोb(INTEL_FWH_RESET_CMD, पूर्णांकel_rng_hw->mem);
+	writeb(INTEL_FWH_RESET_CMD, intel_rng_hw->mem);
+	writeb(INTEL_FWH_READ_ID_CMD, intel_rng_hw->mem);
+	mfc = readb(intel_rng_hw->mem + INTEL_FWH_MANUFACTURER_CODE_ADDRESS);
+	dvc = readb(intel_rng_hw->mem + INTEL_FWH_DEVICE_CODE_ADDRESS);
+	writeb(INTEL_FWH_RESET_CMD, intel_rng_hw->mem);
 
-	अगर (!(पूर्णांकel_rng_hw->bios_cntl_val &
+	if (!(intel_rng_hw->bios_cntl_val &
 	      (BIOS_CNTL_LOCK_ENABLE_MASK|BIOS_CNTL_WRITE_ENABLE_MASK)))
-		pci_ग_लिखो_config_byte(पूर्णांकel_rng_hw->dev,
-				      पूर्णांकel_rng_hw->bios_cntl_off,
-				      पूर्णांकel_rng_hw->bios_cntl_val);
-	अगर (!(पूर्णांकel_rng_hw->fwh_dec_en1_val & FWH_F8_EN_MASK))
-		pci_ग_लिखो_config_byte(पूर्णांकel_rng_hw->dev,
-				      पूर्णांकel_rng_hw->fwh_dec_en1_off,
-				      पूर्णांकel_rng_hw->fwh_dec_en1_val);
+		pci_write_config_byte(intel_rng_hw->dev,
+				      intel_rng_hw->bios_cntl_off,
+				      intel_rng_hw->bios_cntl_val);
+	if (!(intel_rng_hw->fwh_dec_en1_val & FWH_F8_EN_MASK))
+		pci_write_config_byte(intel_rng_hw->dev,
+				      intel_rng_hw->fwh_dec_en1_off,
+				      intel_rng_hw->fwh_dec_en1_val);
 
-	अगर (mfc != INTEL_FWH_MANUFACTURER_CODE ||
+	if (mfc != INTEL_FWH_MANUFACTURER_CODE ||
 	    (dvc != INTEL_FWH_DEVICE_CODE_8M &&
-	     dvc != INTEL_FWH_DEVICE_CODE_4M)) अणु
+	     dvc != INTEL_FWH_DEVICE_CODE_4M)) {
 		pr_notice(PFX "FWH not detected\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init पूर्णांकel_init_hw_काष्ठा(काष्ठा पूर्णांकel_rng_hw *पूर्णांकel_rng_hw,
-					काष्ठा pci_dev *dev)
-अणु
-	पूर्णांकel_rng_hw->bios_cntl_val = 0xff;
-	पूर्णांकel_rng_hw->fwh_dec_en1_val = 0xff;
-	पूर्णांकel_rng_hw->dev = dev;
+static int __init intel_init_hw_struct(struct intel_rng_hw *intel_rng_hw,
+					struct pci_dev *dev)
+{
+	intel_rng_hw->bios_cntl_val = 0xff;
+	intel_rng_hw->fwh_dec_en1_val = 0xff;
+	intel_rng_hw->dev = dev;
 
-	/* Check क्रम Intel 82802 */
-	अगर (dev->device < 0x2640) अणु
-		पूर्णांकel_rng_hw->fwh_dec_en1_off = FWH_DEC_EN1_REG_OLD;
-		पूर्णांकel_rng_hw->bios_cntl_off = BIOS_CNTL_REG_OLD;
-	पूर्ण अन्यथा अणु
-		पूर्णांकel_rng_hw->fwh_dec_en1_off = FWH_DEC_EN1_REG_NEW;
-		पूर्णांकel_rng_hw->bios_cntl_off = BIOS_CNTL_REG_NEW;
-	पूर्ण
+	/* Check for Intel 82802 */
+	if (dev->device < 0x2640) {
+		intel_rng_hw->fwh_dec_en1_off = FWH_DEC_EN1_REG_OLD;
+		intel_rng_hw->bios_cntl_off = BIOS_CNTL_REG_OLD;
+	} else {
+		intel_rng_hw->fwh_dec_en1_off = FWH_DEC_EN1_REG_NEW;
+		intel_rng_hw->bios_cntl_off = BIOS_CNTL_REG_NEW;
+	}
 
-	pci_पढ़ो_config_byte(dev, पूर्णांकel_rng_hw->fwh_dec_en1_off,
-			     &पूर्णांकel_rng_hw->fwh_dec_en1_val);
-	pci_पढ़ो_config_byte(dev, पूर्णांकel_rng_hw->bios_cntl_off,
-			     &पूर्णांकel_rng_hw->bios_cntl_val);
+	pci_read_config_byte(dev, intel_rng_hw->fwh_dec_en1_off,
+			     &intel_rng_hw->fwh_dec_en1_val);
+	pci_read_config_byte(dev, intel_rng_hw->bios_cntl_off,
+			     &intel_rng_hw->bios_cntl_val);
 
-	अगर ((पूर्णांकel_rng_hw->bios_cntl_val &
+	if ((intel_rng_hw->bios_cntl_val &
 	     (BIOS_CNTL_LOCK_ENABLE_MASK|BIOS_CNTL_WRITE_ENABLE_MASK))
-	    == BIOS_CNTL_LOCK_ENABLE_MASK) अणु
-		अटल __initdata /*स्थिर*/ अक्षर warning[] =
+	    == BIOS_CNTL_LOCK_ENABLE_MASK) {
+		static __initdata /*const*/ char warning[] =
 PFX "Firmware space is locked read-only. If you can't or\n"
 PFX "don't want to disable this in firmware setup, and if\n"
 PFX "you are certain that your system has a functional\n"
 PFX "RNG, try using the 'no_fwh_detect' option.\n";
 
-		अगर (no_fwh_detect)
-			वापस -ENODEV;
+		if (no_fwh_detect)
+			return -ENODEV;
 		pr_warn("%s", warning);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	पूर्णांकel_rng_hw->mem = ioremap(INTEL_FWH_ADDR, INTEL_FWH_ADDR_LEN);
-	अगर (पूर्णांकel_rng_hw->mem == शून्य)
-		वापस -EBUSY;
+	intel_rng_hw->mem = ioremap(INTEL_FWH_ADDR, INTEL_FWH_ADDR_LEN);
+	if (intel_rng_hw->mem == NULL)
+		return -EBUSY;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक __init mod_init(व्योम)
-अणु
-	पूर्णांक err = -ENODEV;
-	पूर्णांक i;
-	काष्ठा pci_dev *dev = शून्य;
-	व्योम __iomem *mem;
+static int __init mod_init(void)
+{
+	int err = -ENODEV;
+	int i;
+	struct pci_dev *dev = NULL;
+	void __iomem *mem;
 	u8 hw_status;
-	काष्ठा पूर्णांकel_rng_hw *पूर्णांकel_rng_hw;
+	struct intel_rng_hw *intel_rng_hw;
 
-	क्रम (i = 0; !dev && pci_tbl[i].venकरोr; ++i)
-		dev = pci_get_device(pci_tbl[i].venकरोr, pci_tbl[i].device,
-				     शून्य);
+	for (i = 0; !dev && pci_tbl[i].vendor; ++i)
+		dev = pci_get_device(pci_tbl[i].vendor, pci_tbl[i].device,
+				     NULL);
 
-	अगर (!dev)
-		जाओ out; /* Device not found. */
+	if (!dev)
+		goto out; /* Device not found. */
 
-	अगर (no_fwh_detect < 0) अणु
+	if (no_fwh_detect < 0) {
 		pci_dev_put(dev);
-		जाओ fwh_करोne;
-	पूर्ण
+		goto fwh_done;
+	}
 
-	पूर्णांकel_rng_hw = kदो_स्मृति(माप(*पूर्णांकel_rng_hw), GFP_KERNEL);
-	अगर (!पूर्णांकel_rng_hw) अणु
+	intel_rng_hw = kmalloc(sizeof(*intel_rng_hw), GFP_KERNEL);
+	if (!intel_rng_hw) {
 		pci_dev_put(dev);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	err = पूर्णांकel_init_hw_काष्ठा(पूर्णांकel_rng_hw, dev);
-	अगर (err) अणु
+	err = intel_init_hw_struct(intel_rng_hw, dev);
+	if (err) {
 		pci_dev_put(dev);
-		kमुक्त(पूर्णांकel_rng_hw);
-		अगर (err == -ENODEV)
-			जाओ fwh_करोne;
-		जाओ out;
-	पूर्ण
+		kfree(intel_rng_hw);
+		if (err == -ENODEV)
+			goto fwh_done;
+		goto out;
+	}
 
 	/*
 	 * Since the BIOS code/data is going to disappear from its normal
-	 * location with the Read ID command, all activity on the प्रणाली
+	 * location with the Read ID command, all activity on the system
 	 * must be stopped until the state is back to normal.
 	 *
 	 * Use stop_machine because IPIs can be blocked by disabling
-	 * पूर्णांकerrupts.
+	 * interrupts.
 	 */
-	err = stop_machine(पूर्णांकel_rng_hw_init, पूर्णांकel_rng_hw, शून्य);
+	err = stop_machine(intel_rng_hw_init, intel_rng_hw, NULL);
 	pci_dev_put(dev);
-	iounmap(पूर्णांकel_rng_hw->mem);
-	kमुक्त(पूर्णांकel_rng_hw);
-	अगर (err)
-		जाओ out;
+	iounmap(intel_rng_hw->mem);
+	kfree(intel_rng_hw);
+	if (err)
+		goto out;
 
-fwh_करोne:
+fwh_done:
 	err = -ENOMEM;
 	mem = ioremap(INTEL_RNG_ADDR, INTEL_RNG_ADDR_LEN);
-	अगर (!mem)
-		जाओ out;
-	पूर्णांकel_rng.priv = (अचिन्हित दीर्घ)mem;
+	if (!mem)
+		goto out;
+	intel_rng.priv = (unsigned long)mem;
 
-	/* Check क्रम Ranकरोm Number Generator */
+	/* Check for Random Number Generator */
 	err = -ENODEV;
 	hw_status = hwstatus_get(mem);
-	अगर ((hw_status & INTEL_RNG_PRESENT) == 0) अणु
+	if ((hw_status & INTEL_RNG_PRESENT) == 0) {
 		iounmap(mem);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	pr_info("Intel 82802 RNG detected\n");
-	err = hwrng_रेजिस्टर(&पूर्णांकel_rng);
-	अगर (err) अणु
+	err = hwrng_register(&intel_rng);
+	if (err) {
 		pr_err(PFX "RNG registering failed (%d)\n",
 		       err);
 		iounmap(mem);
-	पूर्ण
+	}
 out:
-	वापस err;
+	return err;
 
-पूर्ण
+}
 
-अटल व्योम __निकास mod_निकास(व्योम)
-अणु
-	व्योम __iomem *mem = (व्योम __iomem *)पूर्णांकel_rng.priv;
+static void __exit mod_exit(void)
+{
+	void __iomem *mem = (void __iomem *)intel_rng.priv;
 
-	hwrng_unरेजिस्टर(&पूर्णांकel_rng);
+	hwrng_unregister(&intel_rng);
 	iounmap(mem);
-पूर्ण
+}
 
 module_init(mod_init);
-module_निकास(mod_निकास);
+module_exit(mod_exit);
 
 MODULE_DESCRIPTION("H/W RNG driver for Intel chipsets");
 MODULE_LICENSE("GPL");

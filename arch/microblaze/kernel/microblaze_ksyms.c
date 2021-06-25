@@ -1,50 +1,49 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2008-2009 Michal Simek <monstr@monstr.eu>
  * Copyright (C) 2008-2009 PetaLogix
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/in6.h>
-#समावेश <linux/syscalls.h>
+#include <linux/export.h>
+#include <linux/string.h>
+#include <linux/delay.h>
+#include <linux/in6.h>
+#include <linux/syscalls.h>
 
-#समावेश <यंत्र/checksum.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/page.h>
-#समावेश <linux/ftrace.h>
-#समावेश <linux/uaccess.h>
+#include <asm/checksum.h>
+#include <asm/cacheflush.h>
+#include <linux/io.h>
+#include <asm/page.h>
+#include <linux/ftrace.h>
+#include <linux/uaccess.h>
 
-#अगर_घोषित CONFIG_FUNCTION_TRACER
-बाह्य व्योम _mcount(व्योम);
+#ifdef CONFIG_FUNCTION_TRACER
+extern void _mcount(void);
 EXPORT_SYMBOL(_mcount);
-#पूर्ण_अगर
+#endif
 
 /*
  * Assembly functions that may be used (directly or indirectly) by modules
  */
 EXPORT_SYMBOL(__copy_tofrom_user);
-EXPORT_SYMBOL(__म_नकलन_user);
+EXPORT_SYMBOL(__strncpy_user);
 
-#अगर_घोषित CONFIG_OPT_LIB_ASM
-EXPORT_SYMBOL(स_नकल);
-EXPORT_SYMBOL(स_हटाओ);
-#पूर्ण_अगर
+#ifdef CONFIG_OPT_LIB_ASM
+EXPORT_SYMBOL(memcpy);
+EXPORT_SYMBOL(memmove);
+#endif
 
 EXPORT_SYMBOL(empty_zero_page);
 
 EXPORT_SYMBOL(mbc);
 
-बाह्य व्योम __भागsi3(व्योम);
-EXPORT_SYMBOL(__भागsi3);
-बाह्य व्योम __modsi3(व्योम);
+extern void __divsi3(void);
+EXPORT_SYMBOL(__divsi3);
+extern void __modsi3(void);
 EXPORT_SYMBOL(__modsi3);
-बाह्य व्योम __mulsi3(व्योम);
+extern void __mulsi3(void);
 EXPORT_SYMBOL(__mulsi3);
-बाह्य व्योम __uभागsi3(व्योम);
-EXPORT_SYMBOL(__uभागsi3);
-बाह्य व्योम __umodsi3(व्योम);
+extern void __udivsi3(void);
+EXPORT_SYMBOL(__udivsi3);
+extern void __umodsi3(void);
 EXPORT_SYMBOL(__umodsi3);

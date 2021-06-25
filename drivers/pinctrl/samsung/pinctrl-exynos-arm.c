@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
-// Exynos specअगरic support क्रम Samsung pinctrl/gpiolib driver with eपूर्णांक support.
+// Exynos specific support for Samsung pinctrl/gpiolib driver with eint support.
 //
 // Copyright (c) 2012 Samsung Electronics Co., Ltd.
 //		http://www.samsung.com
@@ -10,86 +9,86 @@
 //
 // Author: Thomas Abraham <thomas.ab@samsung.com>
 //
-// This file contains the Samsung Exynos specअगरic inक्रमmation required by the
+// This file contains the Samsung Exynos specific information required by the
 // the Samsung pinctrl/gpiolib driver. It also includes the implementation of
-// बाह्यal gpio and wakeup पूर्णांकerrupt support.
+// external gpio and wakeup interrupt support.
 
-#समावेश <linux/device.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/err.h>
-#समावेश <linux/soc/samsung/exynos-regs-pmu.h>
+#include <linux/device.h>
+#include <linux/of_address.h>
+#include <linux/slab.h>
+#include <linux/err.h>
+#include <linux/soc/samsung/exynos-regs-pmu.h>
 
-#समावेश "pinctrl-samsung.h"
-#समावेश "pinctrl-exynos.h"
+#include "pinctrl-samsung.h"
+#include "pinctrl-exynos.h"
 
-अटल स्थिर काष्ठा samsung_pin_bank_type bank_type_off = अणु
-	.fld_width = अणु 4, 1, 2, 2, 2, 2, पूर्ण,
-	.reg_offset = अणु 0x00, 0x04, 0x08, 0x0c, 0x10, 0x14, पूर्ण,
-पूर्ण;
+static const struct samsung_pin_bank_type bank_type_off = {
+	.fld_width = { 4, 1, 2, 2, 2, 2, },
+	.reg_offset = { 0x00, 0x04, 0x08, 0x0c, 0x10, 0x14, },
+};
 
-अटल स्थिर काष्ठा samsung_pin_bank_type bank_type_alive = अणु
-	.fld_width = अणु 4, 1, 2, 2, पूर्ण,
-	.reg_offset = अणु 0x00, 0x04, 0x08, 0x0c, पूर्ण,
-पूर्ण;
+static const struct samsung_pin_bank_type bank_type_alive = {
+	.fld_width = { 4, 1, 2, 2, },
+	.reg_offset = { 0x00, 0x04, 0x08, 0x0c, },
+};
 
-/* Retention control क्रम S5PV210 are located at the end of घड़ी controller */
-#घोषणा S5P_OTHERS 0xE000
+/* Retention control for S5PV210 are located at the end of clock controller */
+#define S5P_OTHERS 0xE000
 
-#घोषणा S5P_OTHERS_RET_IO		(1 << 31)
-#घोषणा S5P_OTHERS_RET_CF		(1 << 30)
-#घोषणा S5P_OTHERS_RET_MMC		(1 << 29)
-#घोषणा S5P_OTHERS_RET_UART		(1 << 28)
+#define S5P_OTHERS_RET_IO		(1 << 31)
+#define S5P_OTHERS_RET_CF		(1 << 30)
+#define S5P_OTHERS_RET_MMC		(1 << 29)
+#define S5P_OTHERS_RET_UART		(1 << 28)
 
-अटल व्योम s5pv210_retention_disable(काष्ठा samsung_pinctrl_drv_data *drvdata)
-अणु
-	व्योम __iomem *clk_base = (व्योम __iomem *)drvdata->retention_ctrl->priv;
-	u32 पंचांगp;
+static void s5pv210_retention_disable(struct samsung_pinctrl_drv_data *drvdata)
+{
+	void __iomem *clk_base = (void __iomem *)drvdata->retention_ctrl->priv;
+	u32 tmp;
 
-	पंचांगp = __raw_पढ़ोl(clk_base + S5P_OTHERS);
-	पंचांगp |= (S5P_OTHERS_RET_IO | S5P_OTHERS_RET_CF | S5P_OTHERS_RET_MMC |
+	tmp = __raw_readl(clk_base + S5P_OTHERS);
+	tmp |= (S5P_OTHERS_RET_IO | S5P_OTHERS_RET_CF | S5P_OTHERS_RET_MMC |
 		S5P_OTHERS_RET_UART);
-	__raw_ग_लिखोl(पंचांगp, clk_base + S5P_OTHERS);
-पूर्ण
+	__raw_writel(tmp, clk_base + S5P_OTHERS);
+}
 
-अटल काष्ठा samsung_retention_ctrl *
-s5pv210_retention_init(काष्ठा samsung_pinctrl_drv_data *drvdata,
-		       स्थिर काष्ठा samsung_retention_data *data)
-अणु
-	काष्ठा samsung_retention_ctrl *ctrl;
-	काष्ठा device_node *np;
-	व्योम __iomem *clk_base;
+static struct samsung_retention_ctrl *
+s5pv210_retention_init(struct samsung_pinctrl_drv_data *drvdata,
+		       const struct samsung_retention_data *data)
+{
+	struct samsung_retention_ctrl *ctrl;
+	struct device_node *np;
+	void __iomem *clk_base;
 
-	ctrl = devm_kzalloc(drvdata->dev, माप(*ctrl), GFP_KERNEL);
-	अगर (!ctrl)
-		वापस ERR_PTR(-ENOMEM);
+	ctrl = devm_kzalloc(drvdata->dev, sizeof(*ctrl), GFP_KERNEL);
+	if (!ctrl)
+		return ERR_PTR(-ENOMEM);
 
-	np = of_find_compatible_node(शून्य, शून्य, "samsung,s5pv210-clock");
-	अगर (!np) अणु
+	np = of_find_compatible_node(NULL, NULL, "samsung,s5pv210-clock");
+	if (!np) {
 		pr_err("%s: failed to find clock controller DT node\n",
 			__func__);
-		वापस ERR_PTR(-ENODEV);
-	पूर्ण
+		return ERR_PTR(-ENODEV);
+	}
 
 	clk_base = of_iomap(np, 0);
 	of_node_put(np);
-	अगर (!clk_base) अणु
+	if (!clk_base) {
 		pr_err("%s: failed to map clock registers\n", __func__);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	ctrl->priv = (व्योम __क्रमce *)clk_base;
+	ctrl->priv = (void __force *)clk_base;
 	ctrl->disable = s5pv210_retention_disable;
 
-	वापस ctrl;
-पूर्ण
+	return ctrl;
+}
 
-अटल स्थिर काष्ठा samsung_retention_data s5pv210_retention_data __initस्थिर = अणु
+static const struct samsung_retention_data s5pv210_retention_data __initconst = {
 	.init	 = s5pv210_retention_init,
-पूर्ण;
+};
 
 /* pin banks of s5pv210 pin-controller */
-अटल स्थिर काष्ठा samsung_pin_bank_data s5pv210_pin_bank[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data s5pv210_pin_bank[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTG(8, 0x000, "gpa0", 0x00),
 	EXYNOS_PIN_BANK_EINTG(4, 0x020, "gpa1", 0x04),
@@ -125,31 +124,31 @@ s5pv210_retention_init(काष्ठा samsung_pinctrl_drv_data *drvdata,
 	EXYNOS_PIN_BANK_EINTW(8, 0xc20, "gph1", 0x04),
 	EXYNOS_PIN_BANK_EINTW(8, 0xc40, "gph2", 0x08),
 	EXYNOS_PIN_BANK_EINTW(8, 0xc60, "gph3", 0x0c),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा samsung_pin_ctrl s5pv210_pin_ctrl[] __initस्थिर = अणु
-	अणु
+static const struct samsung_pin_ctrl s5pv210_pin_ctrl[] __initconst = {
+	{
 		/* pin-controller instance 0 data */
 		.pin_banks	= s5pv210_pin_bank,
 		.nr_banks	= ARRAY_SIZE(s5pv210_pin_bank),
-		.eपूर्णांक_gpio_init = exynos_eपूर्णांक_gpio_init,
-		.eपूर्णांक_wkup_init = exynos_eपूर्णांक_wkup_init,
+		.eint_gpio_init = exynos_eint_gpio_init,
+		.eint_wkup_init = exynos_eint_wkup_init,
 		.suspend	= exynos_pinctrl_suspend,
 		.resume		= exynos_pinctrl_resume,
 		.retention_data	= &s5pv210_retention_data,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-स्थिर काष्ठा samsung_pinctrl_of_match_data s5pv210_of_data __initस्थिर = अणु
+const struct samsung_pinctrl_of_match_data s5pv210_of_data __initconst = {
 	.ctrl		= s5pv210_pin_ctrl,
 	.num_ctrl	= ARRAY_SIZE(s5pv210_pin_ctrl),
-पूर्ण;
+};
 
-/* Pad retention control code क्रम accessing PMU regmap */
-अटल atomic_t exynos_shared_retention_refcnt;
+/* Pad retention control code for accessing PMU regmap */
+static atomic_t exynos_shared_retention_refcnt;
 
 /* pin banks of exynos3250 pin-controller 0 */
-अटल स्थिर काष्ठा samsung_pin_bank_data exynos3250_pin_banks0[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data exynos3250_pin_banks0[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTG(8, 0x000, "gpa0", 0x00),
 	EXYNOS_PIN_BANK_EINTG(6, 0x020, "gpa1", 0x04),
@@ -158,10 +157,10 @@ s5pv210_retention_init(काष्ठा samsung_pinctrl_drv_data *drvdata,
 	EXYNOS_PIN_BANK_EINTG(5, 0x080, "gpc1", 0x10),
 	EXYNOS_PIN_BANK_EINTG(4, 0x0a0, "gpd0", 0x14),
 	EXYNOS_PIN_BANK_EINTG(4, 0x0c0, "gpd1", 0x18),
-पूर्ण;
+};
 
 /* pin banks of exynos3250 pin-controller 1 */
-अटल स्थिर काष्ठा samsung_pin_bank_data exynos3250_pin_banks1[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data exynos3250_pin_banks1[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTN(8, 0x120, "gpe0"),
 	EXYNOS_PIN_BANK_EINTN(8, 0x140, "gpe1"),
@@ -179,13 +178,13 @@ s5pv210_retention_init(काष्ठा samsung_pinctrl_drv_data *drvdata,
 	EXYNOS_PIN_BANK_EINTW(8, 0xc20, "gpx1", 0x04),
 	EXYNOS_PIN_BANK_EINTW(8, 0xc40, "gpx2", 0x08),
 	EXYNOS_PIN_BANK_EINTW(8, 0xc60, "gpx3", 0x0c),
-पूर्ण;
+};
 
 /*
- * PMU pad retention groups क्रम Exynos3250 करोesn't match pin banks, so handle
+ * PMU pad retention groups for Exynos3250 doesn't match pin banks, so handle
  * them all together
  */
-अटल स्थिर u32 exynos3250_retention_regs[] = अणु
+static const u32 exynos3250_retention_regs[] = {
 	S5P_PAD_RET_MAUDIO_OPTION,
 	S5P_PAD_RET_GPIO_OPTION,
 	S5P_PAD_RET_UART_OPTION,
@@ -195,48 +194,48 @@ s5pv210_retention_init(काष्ठा samsung_pinctrl_drv_data *drvdata,
 	S5P_PAD_RET_EBIB_OPTION,
 	S5P_PAD_RET_MMC2_OPTION,
 	S5P_PAD_RET_SPI_OPTION,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा samsung_retention_data exynos3250_retention_data __initस्थिर = अणु
+static const struct samsung_retention_data exynos3250_retention_data __initconst = {
 	.regs	 = exynos3250_retention_regs,
 	.nr_regs = ARRAY_SIZE(exynos3250_retention_regs),
 	.value	 = EXYNOS_WAKEUP_FROM_LOWPWR,
 	.refcnt	 = &exynos_shared_retention_refcnt,
 	.init	 = exynos_retention_init,
-पूर्ण;
+};
 
 /*
- * Samsung pinctrl driver data क्रम Exynos3250 SoC. Exynos3250 SoC includes
+ * Samsung pinctrl driver data for Exynos3250 SoC. Exynos3250 SoC includes
  * two gpio/pin-mux/pinconfig controllers.
  */
-अटल स्थिर काष्ठा samsung_pin_ctrl exynos3250_pin_ctrl[] __initस्थिर = अणु
-	अणु
+static const struct samsung_pin_ctrl exynos3250_pin_ctrl[] __initconst = {
+	{
 		/* pin-controller instance 0 data */
 		.pin_banks	= exynos3250_pin_banks0,
 		.nr_banks	= ARRAY_SIZE(exynos3250_pin_banks0),
-		.eपूर्णांक_gpio_init = exynos_eपूर्णांक_gpio_init,
+		.eint_gpio_init = exynos_eint_gpio_init,
 		.suspend	= exynos_pinctrl_suspend,
 		.resume		= exynos_pinctrl_resume,
 		.retention_data	= &exynos3250_retention_data,
-	पूर्ण, अणु
+	}, {
 		/* pin-controller instance 1 data */
 		.pin_banks	= exynos3250_pin_banks1,
 		.nr_banks	= ARRAY_SIZE(exynos3250_pin_banks1),
-		.eपूर्णांक_gpio_init = exynos_eपूर्णांक_gpio_init,
-		.eपूर्णांक_wkup_init = exynos_eपूर्णांक_wkup_init,
+		.eint_gpio_init = exynos_eint_gpio_init,
+		.eint_wkup_init = exynos_eint_wkup_init,
 		.suspend	= exynos_pinctrl_suspend,
 		.resume		= exynos_pinctrl_resume,
 		.retention_data	= &exynos3250_retention_data,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-स्थिर काष्ठा samsung_pinctrl_of_match_data exynos3250_of_data __initस्थिर = अणु
+const struct samsung_pinctrl_of_match_data exynos3250_of_data __initconst = {
 	.ctrl		= exynos3250_pin_ctrl,
 	.num_ctrl	= ARRAY_SIZE(exynos3250_pin_ctrl),
-पूर्ण;
+};
 
 /* pin banks of exynos4210 pin-controller 0 */
-अटल स्थिर काष्ठा samsung_pin_bank_data exynos4210_pin_banks0[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data exynos4210_pin_banks0[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTG(8, 0x000, "gpa0", 0x00),
 	EXYNOS_PIN_BANK_EINTG(6, 0x020, "gpa1", 0x04),
@@ -254,10 +253,10 @@ s5pv210_retention_init(काष्ठा samsung_pinctrl_drv_data *drvdata,
 	EXYNOS_PIN_BANK_EINTG(8, 0x1A0, "gpf1", 0x34),
 	EXYNOS_PIN_BANK_EINTG(8, 0x1C0, "gpf2", 0x38),
 	EXYNOS_PIN_BANK_EINTG(6, 0x1E0, "gpf3", 0x3c),
-पूर्ण;
+};
 
 /* pin banks of exynos4210 pin-controller 1 */
-अटल स्थिर काष्ठा samsung_pin_bank_data exynos4210_pin_banks1[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data exynos4210_pin_banks1[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTG(8, 0x000, "gpj0", 0x00),
 	EXYNOS_PIN_BANK_EINTG(5, 0x020, "gpj1", 0x04),
@@ -279,81 +278,81 @@ s5pv210_retention_init(काष्ठा samsung_pinctrl_drv_data *drvdata,
 	EXYNOS_PIN_BANK_EINTW(8, 0xC20, "gpx1", 0x04),
 	EXYNOS_PIN_BANK_EINTW(8, 0xC40, "gpx2", 0x08),
 	EXYNOS_PIN_BANK_EINTW(8, 0xC60, "gpx3", 0x0c),
-पूर्ण;
+};
 
 /* pin banks of exynos4210 pin-controller 2 */
-अटल स्थिर काष्ठा samsung_pin_bank_data exynos4210_pin_banks2[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data exynos4210_pin_banks2[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTN(7, 0x000, "gpz"),
-पूर्ण;
+};
 
-/* PMU pad retention groups रेजिस्टरs क्रम Exynos4 (without audio) */
-अटल स्थिर u32 exynos4_retention_regs[] = अणु
+/* PMU pad retention groups registers for Exynos4 (without audio) */
+static const u32 exynos4_retention_regs[] = {
 	S5P_PAD_RET_GPIO_OPTION,
 	S5P_PAD_RET_UART_OPTION,
 	S5P_PAD_RET_MMCA_OPTION,
 	S5P_PAD_RET_MMCB_OPTION,
 	S5P_PAD_RET_EBIA_OPTION,
 	S5P_PAD_RET_EBIB_OPTION,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा samsung_retention_data exynos4_retention_data __initस्थिर = अणु
+static const struct samsung_retention_data exynos4_retention_data __initconst = {
 	.regs	 = exynos4_retention_regs,
 	.nr_regs = ARRAY_SIZE(exynos4_retention_regs),
 	.value	 = EXYNOS_WAKEUP_FROM_LOWPWR,
 	.refcnt	 = &exynos_shared_retention_refcnt,
 	.init	 = exynos_retention_init,
-पूर्ण;
+};
 
-/* PMU retention control क्रम audio pins can be tied to audio pin bank */
-अटल स्थिर u32 exynos4_audio_retention_regs[] = अणु
+/* PMU retention control for audio pins can be tied to audio pin bank */
+static const u32 exynos4_audio_retention_regs[] = {
 	S5P_PAD_RET_MAUDIO_OPTION,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा samsung_retention_data exynos4_audio_retention_data __initस्थिर = अणु
+static const struct samsung_retention_data exynos4_audio_retention_data __initconst = {
 	.regs	 = exynos4_audio_retention_regs,
 	.nr_regs = ARRAY_SIZE(exynos4_audio_retention_regs),
 	.value	 = EXYNOS_WAKEUP_FROM_LOWPWR,
 	.init	 = exynos_retention_init,
-पूर्ण;
+};
 
 /*
- * Samsung pinctrl driver data क्रम Exynos4210 SoC. Exynos4210 SoC includes
+ * Samsung pinctrl driver data for Exynos4210 SoC. Exynos4210 SoC includes
  * three gpio/pin-mux/pinconfig controllers.
  */
-अटल स्थिर काष्ठा samsung_pin_ctrl exynos4210_pin_ctrl[] __initस्थिर = अणु
-	अणु
+static const struct samsung_pin_ctrl exynos4210_pin_ctrl[] __initconst = {
+	{
 		/* pin-controller instance 0 data */
 		.pin_banks	= exynos4210_pin_banks0,
 		.nr_banks	= ARRAY_SIZE(exynos4210_pin_banks0),
-		.eपूर्णांक_gpio_init = exynos_eपूर्णांक_gpio_init,
+		.eint_gpio_init = exynos_eint_gpio_init,
 		.suspend	= exynos_pinctrl_suspend,
 		.resume		= exynos_pinctrl_resume,
 		.retention_data	= &exynos4_retention_data,
-	पूर्ण, अणु
+	}, {
 		/* pin-controller instance 1 data */
 		.pin_banks	= exynos4210_pin_banks1,
 		.nr_banks	= ARRAY_SIZE(exynos4210_pin_banks1),
-		.eपूर्णांक_gpio_init = exynos_eपूर्णांक_gpio_init,
-		.eपूर्णांक_wkup_init = exynos_eपूर्णांक_wkup_init,
+		.eint_gpio_init = exynos_eint_gpio_init,
+		.eint_wkup_init = exynos_eint_wkup_init,
 		.suspend	= exynos_pinctrl_suspend,
 		.resume		= exynos_pinctrl_resume,
 		.retention_data	= &exynos4_retention_data,
-	पूर्ण, अणु
+	}, {
 		/* pin-controller instance 2 data */
 		.pin_banks	= exynos4210_pin_banks2,
 		.nr_banks	= ARRAY_SIZE(exynos4210_pin_banks2),
 		.retention_data	= &exynos4_audio_retention_data,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-स्थिर काष्ठा samsung_pinctrl_of_match_data exynos4210_of_data __initस्थिर = अणु
+const struct samsung_pinctrl_of_match_data exynos4210_of_data __initconst = {
 	.ctrl		= exynos4210_pin_ctrl,
 	.num_ctrl	= ARRAY_SIZE(exynos4210_pin_ctrl),
-पूर्ण;
+};
 
 /* pin banks of exynos4x12 pin-controller 0 */
-अटल स्थिर काष्ठा samsung_pin_bank_data exynos4x12_pin_banks0[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data exynos4x12_pin_banks0[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTG(8, 0x000, "gpa0", 0x00),
 	EXYNOS_PIN_BANK_EINTG(6, 0x020, "gpa1", 0x04),
@@ -368,10 +367,10 @@ s5pv210_retention_init(काष्ठा samsung_pinctrl_drv_data *drvdata,
 	EXYNOS_PIN_BANK_EINTG(6, 0x1E0, "gpf3", 0x3c),
 	EXYNOS_PIN_BANK_EINTG(8, 0x240, "gpj0", 0x40),
 	EXYNOS_PIN_BANK_EINTG(5, 0x260, "gpj1", 0x44),
-पूर्ण;
+};
 
 /* pin banks of exynos4x12 pin-controller 1 */
-अटल स्थिर काष्ठा samsung_pin_bank_data exynos4x12_pin_banks1[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data exynos4x12_pin_banks1[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTG(7, 0x040, "gpk0", 0x08),
 	EXYNOS_PIN_BANK_EINTG(7, 0x060, "gpk1", 0x0c),
@@ -396,71 +395,71 @@ s5pv210_retention_init(काष्ठा samsung_pinctrl_drv_data *drvdata,
 	EXYNOS_PIN_BANK_EINTW(8, 0xC20, "gpx1", 0x04),
 	EXYNOS_PIN_BANK_EINTW(8, 0xC40, "gpx2", 0x08),
 	EXYNOS_PIN_BANK_EINTW(8, 0xC60, "gpx3", 0x0c),
-पूर्ण;
+};
 
 /* pin banks of exynos4x12 pin-controller 2 */
-अटल स्थिर काष्ठा samsung_pin_bank_data exynos4x12_pin_banks2[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data exynos4x12_pin_banks2[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTG(7, 0x000, "gpz", 0x00),
-पूर्ण;
+};
 
 /* pin banks of exynos4x12 pin-controller 3 */
-अटल स्थिर काष्ठा samsung_pin_bank_data exynos4x12_pin_banks3[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data exynos4x12_pin_banks3[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTG(8, 0x000, "gpv0", 0x00),
 	EXYNOS_PIN_BANK_EINTG(8, 0x020, "gpv1", 0x04),
 	EXYNOS_PIN_BANK_EINTG(8, 0x040, "gpv2", 0x08),
 	EXYNOS_PIN_BANK_EINTG(8, 0x060, "gpv3", 0x0c),
 	EXYNOS_PIN_BANK_EINTG(2, 0x080, "gpv4", 0x10),
-पूर्ण;
+};
 
 /*
- * Samsung pinctrl driver data क्रम Exynos4x12 SoC. Exynos4x12 SoC includes
+ * Samsung pinctrl driver data for Exynos4x12 SoC. Exynos4x12 SoC includes
  * four gpio/pin-mux/pinconfig controllers.
  */
-अटल स्थिर काष्ठा samsung_pin_ctrl exynos4x12_pin_ctrl[] __initस्थिर = अणु
-	अणु
+static const struct samsung_pin_ctrl exynos4x12_pin_ctrl[] __initconst = {
+	{
 		/* pin-controller instance 0 data */
 		.pin_banks	= exynos4x12_pin_banks0,
 		.nr_banks	= ARRAY_SIZE(exynos4x12_pin_banks0),
-		.eपूर्णांक_gpio_init = exynos_eपूर्णांक_gpio_init,
+		.eint_gpio_init = exynos_eint_gpio_init,
 		.suspend	= exynos_pinctrl_suspend,
 		.resume		= exynos_pinctrl_resume,
 		.retention_data	= &exynos4_retention_data,
-	पूर्ण, अणु
+	}, {
 		/* pin-controller instance 1 data */
 		.pin_banks	= exynos4x12_pin_banks1,
 		.nr_banks	= ARRAY_SIZE(exynos4x12_pin_banks1),
-		.eपूर्णांक_gpio_init = exynos_eपूर्णांक_gpio_init,
-		.eपूर्णांक_wkup_init = exynos_eपूर्णांक_wkup_init,
+		.eint_gpio_init = exynos_eint_gpio_init,
+		.eint_wkup_init = exynos_eint_wkup_init,
 		.suspend	= exynos_pinctrl_suspend,
 		.resume		= exynos_pinctrl_resume,
 		.retention_data	= &exynos4_retention_data,
-	पूर्ण, अणु
+	}, {
 		/* pin-controller instance 2 data */
 		.pin_banks	= exynos4x12_pin_banks2,
 		.nr_banks	= ARRAY_SIZE(exynos4x12_pin_banks2),
-		.eपूर्णांक_gpio_init = exynos_eपूर्णांक_gpio_init,
+		.eint_gpio_init = exynos_eint_gpio_init,
 		.suspend	= exynos_pinctrl_suspend,
 		.resume		= exynos_pinctrl_resume,
 		.retention_data	= &exynos4_audio_retention_data,
-	पूर्ण, अणु
+	}, {
 		/* pin-controller instance 3 data */
 		.pin_banks	= exynos4x12_pin_banks3,
 		.nr_banks	= ARRAY_SIZE(exynos4x12_pin_banks3),
-		.eपूर्णांक_gpio_init = exynos_eपूर्णांक_gpio_init,
+		.eint_gpio_init = exynos_eint_gpio_init,
 		.suspend	= exynos_pinctrl_suspend,
 		.resume		= exynos_pinctrl_resume,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-स्थिर काष्ठा samsung_pinctrl_of_match_data exynos4x12_of_data __initस्थिर = अणु
+const struct samsung_pinctrl_of_match_data exynos4x12_of_data __initconst = {
 	.ctrl		= exynos4x12_pin_ctrl,
 	.num_ctrl	= ARRAY_SIZE(exynos4x12_pin_ctrl),
-पूर्ण;
+};
 
 /* pin banks of exynos5250 pin-controller 0 */
-अटल स्थिर काष्ठा samsung_pin_bank_data exynos5250_pin_banks0[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data exynos5250_pin_banks0[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTG(8, 0x000, "gpa0", 0x00),
 	EXYNOS_PIN_BANK_EINTG(6, 0x020, "gpa1", 0x04),
@@ -487,10 +486,10 @@ s5pv210_retention_init(काष्ठा samsung_pinctrl_drv_data *drvdata,
 	EXYNOS_PIN_BANK_EINTW(8, 0xC20, "gpx1", 0x04),
 	EXYNOS_PIN_BANK_EINTW(8, 0xC40, "gpx2", 0x08),
 	EXYNOS_PIN_BANK_EINTW(8, 0xC60, "gpx3", 0x0c),
-पूर्ण;
+};
 
 /* pin banks of exynos5250 pin-controller 1 */
-अटल स्थिर काष्ठा samsung_pin_bank_data exynos5250_pin_banks1[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data exynos5250_pin_banks1[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTG(8, 0x000, "gpe0", 0x00),
 	EXYNOS_PIN_BANK_EINTG(2, 0x020, "gpe1", 0x04),
@@ -501,71 +500,71 @@ s5pv210_retention_init(काष्ठा samsung_pinctrl_drv_data *drvdata,
 	EXYNOS_PIN_BANK_EINTG(2, 0x0C0, "gpg2", 0x18),
 	EXYNOS_PIN_BANK_EINTG(4, 0x0E0, "gph0", 0x1c),
 	EXYNOS_PIN_BANK_EINTG(8, 0x100, "gph1", 0x20),
-पूर्ण;
+};
 
 /* pin banks of exynos5250 pin-controller 2 */
-अटल स्थिर काष्ठा samsung_pin_bank_data exynos5250_pin_banks2[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data exynos5250_pin_banks2[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTG(8, 0x000, "gpv0", 0x00),
 	EXYNOS_PIN_BANK_EINTG(8, 0x020, "gpv1", 0x04),
 	EXYNOS_PIN_BANK_EINTG(8, 0x060, "gpv2", 0x08),
 	EXYNOS_PIN_BANK_EINTG(8, 0x080, "gpv3", 0x0c),
 	EXYNOS_PIN_BANK_EINTG(2, 0x0C0, "gpv4", 0x10),
-पूर्ण;
+};
 
 /* pin banks of exynos5250 pin-controller 3 */
-अटल स्थिर काष्ठा samsung_pin_bank_data exynos5250_pin_banks3[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data exynos5250_pin_banks3[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTG(7, 0x000, "gpz", 0x00),
-पूर्ण;
+};
 
 /*
- * Samsung pinctrl driver data क्रम Exynos5250 SoC. Exynos5250 SoC includes
+ * Samsung pinctrl driver data for Exynos5250 SoC. Exynos5250 SoC includes
  * four gpio/pin-mux/pinconfig controllers.
  */
-अटल स्थिर काष्ठा samsung_pin_ctrl exynos5250_pin_ctrl[] __initस्थिर = अणु
-	अणु
+static const struct samsung_pin_ctrl exynos5250_pin_ctrl[] __initconst = {
+	{
 		/* pin-controller instance 0 data */
 		.pin_banks	= exynos5250_pin_banks0,
 		.nr_banks	= ARRAY_SIZE(exynos5250_pin_banks0),
-		.eपूर्णांक_gpio_init = exynos_eपूर्णांक_gpio_init,
-		.eपूर्णांक_wkup_init = exynos_eपूर्णांक_wkup_init,
+		.eint_gpio_init = exynos_eint_gpio_init,
+		.eint_wkup_init = exynos_eint_wkup_init,
 		.suspend	= exynos_pinctrl_suspend,
 		.resume		= exynos_pinctrl_resume,
 		.retention_data	= &exynos4_retention_data,
-	पूर्ण, अणु
+	}, {
 		/* pin-controller instance 1 data */
 		.pin_banks	= exynos5250_pin_banks1,
 		.nr_banks	= ARRAY_SIZE(exynos5250_pin_banks1),
-		.eपूर्णांक_gpio_init = exynos_eपूर्णांक_gpio_init,
+		.eint_gpio_init = exynos_eint_gpio_init,
 		.suspend	= exynos_pinctrl_suspend,
 		.resume		= exynos_pinctrl_resume,
 		.retention_data	= &exynos4_retention_data,
-	पूर्ण, अणु
+	}, {
 		/* pin-controller instance 2 data */
 		.pin_banks	= exynos5250_pin_banks2,
 		.nr_banks	= ARRAY_SIZE(exynos5250_pin_banks2),
-		.eपूर्णांक_gpio_init = exynos_eपूर्णांक_gpio_init,
+		.eint_gpio_init = exynos_eint_gpio_init,
 		.suspend	= exynos_pinctrl_suspend,
 		.resume		= exynos_pinctrl_resume,
-	पूर्ण, अणु
+	}, {
 		/* pin-controller instance 3 data */
 		.pin_banks	= exynos5250_pin_banks3,
 		.nr_banks	= ARRAY_SIZE(exynos5250_pin_banks3),
-		.eपूर्णांक_gpio_init = exynos_eपूर्णांक_gpio_init,
+		.eint_gpio_init = exynos_eint_gpio_init,
 		.suspend	= exynos_pinctrl_suspend,
 		.resume		= exynos_pinctrl_resume,
 		.retention_data	= &exynos4_audio_retention_data,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-स्थिर काष्ठा samsung_pinctrl_of_match_data exynos5250_of_data __initस्थिर = अणु
+const struct samsung_pinctrl_of_match_data exynos5250_of_data __initconst = {
 	.ctrl		= exynos5250_pin_ctrl,
 	.num_ctrl	= ARRAY_SIZE(exynos5250_pin_ctrl),
-पूर्ण;
+};
 
 /* pin banks of exynos5260 pin-controller 0 */
-अटल स्थिर काष्ठा samsung_pin_bank_data exynos5260_pin_banks0[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data exynos5260_pin_banks0[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTG(4, 0x000, "gpa0", 0x00),
 	EXYNOS_PIN_BANK_EINTG(7, 0x020, "gpa1", 0x04),
@@ -588,62 +587,62 @@ s5pv210_retention_init(काष्ठा samsung_pinctrl_drv_data *drvdata,
 	EXYNOS_PIN_BANK_EINTW(8, 0xc20, "gpx1", 0x04),
 	EXYNOS_PIN_BANK_EINTW(8, 0xc40, "gpx2", 0x08),
 	EXYNOS_PIN_BANK_EINTW(8, 0xc60, "gpx3", 0x0c),
-पूर्ण;
+};
 
 /* pin banks of exynos5260 pin-controller 1 */
-अटल स्थिर काष्ठा samsung_pin_bank_data exynos5260_pin_banks1[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data exynos5260_pin_banks1[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTG(7, 0x000, "gpc0", 0x00),
 	EXYNOS_PIN_BANK_EINTG(6, 0x020, "gpc1", 0x04),
 	EXYNOS_PIN_BANK_EINTG(7, 0x040, "gpc2", 0x08),
 	EXYNOS_PIN_BANK_EINTG(4, 0x060, "gpc3", 0x0c),
 	EXYNOS_PIN_BANK_EINTG(4, 0x080, "gpc4", 0x10),
-पूर्ण;
+};
 
 /* pin banks of exynos5260 pin-controller 2 */
-अटल स्थिर काष्ठा samsung_pin_bank_data exynos5260_pin_banks2[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data exynos5260_pin_banks2[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTG(7, 0x000, "gpz0", 0x00),
 	EXYNOS_PIN_BANK_EINTG(4, 0x020, "gpz1", 0x04),
-पूर्ण;
+};
 
 /*
- * Samsung pinctrl driver data क्रम Exynos5260 SoC. Exynos5260 SoC includes
+ * Samsung pinctrl driver data for Exynos5260 SoC. Exynos5260 SoC includes
  * three gpio/pin-mux/pinconfig controllers.
  */
-अटल स्थिर काष्ठा samsung_pin_ctrl exynos5260_pin_ctrl[] __initस्थिर = अणु
-	अणु
+static const struct samsung_pin_ctrl exynos5260_pin_ctrl[] __initconst = {
+	{
 		/* pin-controller instance 0 data */
 		.pin_banks	= exynos5260_pin_banks0,
 		.nr_banks	= ARRAY_SIZE(exynos5260_pin_banks0),
-		.eपूर्णांक_gpio_init = exynos_eपूर्णांक_gpio_init,
-		.eपूर्णांक_wkup_init = exynos_eपूर्णांक_wkup_init,
+		.eint_gpio_init = exynos_eint_gpio_init,
+		.eint_wkup_init = exynos_eint_wkup_init,
 		.suspend	= exynos_pinctrl_suspend,
 		.resume		= exynos_pinctrl_resume,
-	पूर्ण, अणु
+	}, {
 		/* pin-controller instance 1 data */
 		.pin_banks	= exynos5260_pin_banks1,
 		.nr_banks	= ARRAY_SIZE(exynos5260_pin_banks1),
-		.eपूर्णांक_gpio_init = exynos_eपूर्णांक_gpio_init,
+		.eint_gpio_init = exynos_eint_gpio_init,
 		.suspend	= exynos_pinctrl_suspend,
 		.resume		= exynos_pinctrl_resume,
-	पूर्ण, अणु
+	}, {
 		/* pin-controller instance 2 data */
 		.pin_banks	= exynos5260_pin_banks2,
 		.nr_banks	= ARRAY_SIZE(exynos5260_pin_banks2),
-		.eपूर्णांक_gpio_init = exynos_eपूर्णांक_gpio_init,
+		.eint_gpio_init = exynos_eint_gpio_init,
 		.suspend	= exynos_pinctrl_suspend,
 		.resume		= exynos_pinctrl_resume,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-स्थिर काष्ठा samsung_pinctrl_of_match_data exynos5260_of_data __initस्थिर = अणु
+const struct samsung_pinctrl_of_match_data exynos5260_of_data __initconst = {
 	.ctrl		= exynos5260_pin_ctrl,
 	.num_ctrl	= ARRAY_SIZE(exynos5260_pin_ctrl),
-पूर्ण;
+};
 
 /* pin banks of exynos5410 pin-controller 0 */
-अटल स्थिर काष्ठा samsung_pin_bank_data exynos5410_pin_banks0[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data exynos5410_pin_banks0[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTG(8, 0x000, "gpa0", 0x00),
 	EXYNOS_PIN_BANK_EINTG(6, 0x020, "gpa1", 0x04),
@@ -680,10 +679,10 @@ s5pv210_retention_init(काष्ठा samsung_pinctrl_drv_data *drvdata,
 	EXYNOS_PIN_BANK_EINTW(8, 0xC20, "gpx1", 0x04),
 	EXYNOS_PIN_BANK_EINTW(8, 0xC40, "gpx2", 0x08),
 	EXYNOS_PIN_BANK_EINTW(8, 0xC60, "gpx3", 0x0c),
-पूर्ण;
+};
 
 /* pin banks of exynos5410 pin-controller 1 */
-अटल स्थिर काष्ठा samsung_pin_bank_data exynos5410_pin_banks1[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data exynos5410_pin_banks1[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTG(5, 0x000, "gpj0", 0x00),
 	EXYNOS_PIN_BANK_EINTG(8, 0x020, "gpj1", 0x04),
@@ -694,78 +693,78 @@ s5pv210_retention_init(काष्ठा samsung_pinctrl_drv_data *drvdata,
 	EXYNOS_PIN_BANK_EINTG(8, 0x0C0, "gpk1", 0x18),
 	EXYNOS_PIN_BANK_EINTG(8, 0x0E0, "gpk2", 0x1c),
 	EXYNOS_PIN_BANK_EINTG(7, 0x100, "gpk3", 0x20),
-पूर्ण;
+};
 
 /* pin banks of exynos5410 pin-controller 2 */
-अटल स्थिर काष्ठा samsung_pin_bank_data exynos5410_pin_banks2[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data exynos5410_pin_banks2[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTG(8, 0x000, "gpv0", 0x00),
 	EXYNOS_PIN_BANK_EINTG(8, 0x020, "gpv1", 0x04),
 	EXYNOS_PIN_BANK_EINTG(8, 0x060, "gpv2", 0x08),
 	EXYNOS_PIN_BANK_EINTG(8, 0x080, "gpv3", 0x0c),
 	EXYNOS_PIN_BANK_EINTG(2, 0x0C0, "gpv4", 0x10),
-पूर्ण;
+};
 
 /* pin banks of exynos5410 pin-controller 3 */
-अटल स्थिर काष्ठा samsung_pin_bank_data exynos5410_pin_banks3[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data exynos5410_pin_banks3[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTG(7, 0x000, "gpz", 0x00),
-पूर्ण;
+};
 
 /*
- * Samsung pinctrl driver data क्रम Exynos5410 SoC. Exynos5410 SoC includes
+ * Samsung pinctrl driver data for Exynos5410 SoC. Exynos5410 SoC includes
  * four gpio/pin-mux/pinconfig controllers.
  */
-अटल स्थिर काष्ठा samsung_pin_ctrl exynos5410_pin_ctrl[] __initस्थिर = अणु
-	अणु
+static const struct samsung_pin_ctrl exynos5410_pin_ctrl[] __initconst = {
+	{
 		/* pin-controller instance 0 data */
 		.pin_banks	= exynos5410_pin_banks0,
 		.nr_banks	= ARRAY_SIZE(exynos5410_pin_banks0),
-		.eपूर्णांक_gpio_init = exynos_eपूर्णांक_gpio_init,
-		.eपूर्णांक_wkup_init = exynos_eपूर्णांक_wkup_init,
+		.eint_gpio_init = exynos_eint_gpio_init,
+		.eint_wkup_init = exynos_eint_wkup_init,
 		.suspend	= exynos_pinctrl_suspend,
 		.resume		= exynos_pinctrl_resume,
-	पूर्ण, अणु
+	}, {
 		/* pin-controller instance 1 data */
 		.pin_banks	= exynos5410_pin_banks1,
 		.nr_banks	= ARRAY_SIZE(exynos5410_pin_banks1),
-		.eपूर्णांक_gpio_init = exynos_eपूर्णांक_gpio_init,
+		.eint_gpio_init = exynos_eint_gpio_init,
 		.suspend	= exynos_pinctrl_suspend,
 		.resume		= exynos_pinctrl_resume,
-	पूर्ण, अणु
+	}, {
 		/* pin-controller instance 2 data */
 		.pin_banks	= exynos5410_pin_banks2,
 		.nr_banks	= ARRAY_SIZE(exynos5410_pin_banks2),
-		.eपूर्णांक_gpio_init = exynos_eपूर्णांक_gpio_init,
+		.eint_gpio_init = exynos_eint_gpio_init,
 		.suspend	= exynos_pinctrl_suspend,
 		.resume		= exynos_pinctrl_resume,
-	पूर्ण, अणु
+	}, {
 		/* pin-controller instance 3 data */
 		.pin_banks	= exynos5410_pin_banks3,
 		.nr_banks	= ARRAY_SIZE(exynos5410_pin_banks3),
-		.eपूर्णांक_gpio_init = exynos_eपूर्णांक_gpio_init,
+		.eint_gpio_init = exynos_eint_gpio_init,
 		.suspend	= exynos_pinctrl_suspend,
 		.resume		= exynos_pinctrl_resume,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-स्थिर काष्ठा samsung_pinctrl_of_match_data exynos5410_of_data __initस्थिर = अणु
+const struct samsung_pinctrl_of_match_data exynos5410_of_data __initconst = {
 	.ctrl		= exynos5410_pin_ctrl,
 	.num_ctrl	= ARRAY_SIZE(exynos5410_pin_ctrl),
-पूर्ण;
+};
 
 /* pin banks of exynos5420 pin-controller 0 */
-अटल स्थिर काष्ठा samsung_pin_bank_data exynos5420_pin_banks0[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data exynos5420_pin_banks0[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTG(8, 0x000, "gpy7", 0x00),
 	EXYNOS_PIN_BANK_EINTW(8, 0xC00, "gpx0", 0x00),
 	EXYNOS_PIN_BANK_EINTW(8, 0xC20, "gpx1", 0x04),
 	EXYNOS_PIN_BANK_EINTW(8, 0xC40, "gpx2", 0x08),
 	EXYNOS_PIN_BANK_EINTW(8, 0xC60, "gpx3", 0x0c),
-पूर्ण;
+};
 
 /* pin banks of exynos5420 pin-controller 1 */
-अटल स्थिर काष्ठा samsung_pin_bank_data exynos5420_pin_banks1[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data exynos5420_pin_banks1[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTG(8, 0x000, "gpc0", 0x00),
 	EXYNOS_PIN_BANK_EINTG(8, 0x020, "gpc1", 0x04),
@@ -780,10 +779,10 @@ s5pv210_retention_init(काष्ठा samsung_pinctrl_drv_data *drvdata,
 	EXYNOS_PIN_BANK_EINTN(8, 0x140, "gpy4"),
 	EXYNOS_PIN_BANK_EINTN(8, 0x160, "gpy5"),
 	EXYNOS_PIN_BANK_EINTN(8, 0x180, "gpy6"),
-पूर्ण;
+};
 
 /* pin banks of exynos5420 pin-controller 2 */
-अटल स्थिर काष्ठा samsung_pin_bank_data exynos5420_pin_banks2[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data exynos5420_pin_banks2[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTG(8, 0x000, "gpe0", 0x00),
 	EXYNOS_PIN_BANK_EINTG(2, 0x020, "gpe1", 0x04),
@@ -793,10 +792,10 @@ s5pv210_retention_init(काष्ठा samsung_pinctrl_drv_data *drvdata,
 	EXYNOS_PIN_BANK_EINTG(8, 0x0A0, "gpg1", 0x14),
 	EXYNOS_PIN_BANK_EINTG(2, 0x0C0, "gpg2", 0x18),
 	EXYNOS_PIN_BANK_EINTG(4, 0x0E0, "gpj4", 0x1c),
-पूर्ण;
+};
 
 /* pin banks of exynos5420 pin-controller 3 */
-अटल स्थिर काष्ठा samsung_pin_bank_data exynos5420_pin_banks3[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data exynos5420_pin_banks3[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTG(8, 0x000, "gpa0", 0x00),
 	EXYNOS_PIN_BANK_EINTG(6, 0x020, "gpa1", 0x04),
@@ -807,16 +806,16 @@ s5pv210_retention_init(काष्ठा samsung_pinctrl_drv_data *drvdata,
 	EXYNOS_PIN_BANK_EINTG(8, 0x0C0, "gpb3", 0x18),
 	EXYNOS_PIN_BANK_EINTG(2, 0x0E0, "gpb4", 0x1c),
 	EXYNOS_PIN_BANK_EINTG(8, 0x100, "gph0", 0x20),
-पूर्ण;
+};
 
 /* pin banks of exynos5420 pin-controller 4 */
-अटल स्थिर काष्ठा samsung_pin_bank_data exynos5420_pin_banks4[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data exynos5420_pin_banks4[] __initconst = {
 	/* Must start with EINTG banks, ordered by EINT group number. */
 	EXYNOS_PIN_BANK_EINTG(7, 0x000, "gpz", 0x00),
-पूर्ण;
+};
 
-/* PMU pad retention groups रेजिस्टरs क्रम Exynos5420 (without audio) */
-अटल स्थिर u32 exynos5420_retention_regs[] = अणु
+/* PMU pad retention groups registers for Exynos5420 (without audio) */
+static const u32 exynos5420_retention_regs[] = {
 	EXYNOS_PAD_RET_DRAM_OPTION,
 	EXYNOS_PAD_RET_JTAG_OPTION,
 	EXYNOS5420_PAD_RET_GPIO_OPTION,
@@ -829,66 +828,66 @@ s5pv210_retention_init(काष्ठा samsung_pinctrl_drv_data *drvdata,
 	EXYNOS_PAD_RET_EBIB_OPTION,
 	EXYNOS5420_PAD_RET_SPI_OPTION,
 	EXYNOS5420_PAD_RET_DRAM_COREBLK_OPTION,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा samsung_retention_data exynos5420_retention_data __initस्थिर = अणु
+static const struct samsung_retention_data exynos5420_retention_data __initconst = {
 	.regs	 = exynos5420_retention_regs,
 	.nr_regs = ARRAY_SIZE(exynos5420_retention_regs),
 	.value	 = EXYNOS_WAKEUP_FROM_LOWPWR,
 	.refcnt	 = &exynos_shared_retention_refcnt,
 	.init	 = exynos_retention_init,
-पूर्ण;
+};
 
 /*
- * Samsung pinctrl driver data क्रम Exynos5420 SoC. Exynos5420 SoC includes
+ * Samsung pinctrl driver data for Exynos5420 SoC. Exynos5420 SoC includes
  * four gpio/pin-mux/pinconfig controllers.
  */
-अटल स्थिर काष्ठा samsung_pin_ctrl exynos5420_pin_ctrl[] __initस्थिर = अणु
-	अणु
+static const struct samsung_pin_ctrl exynos5420_pin_ctrl[] __initconst = {
+	{
 		/* pin-controller instance 0 data */
 		.pin_banks	= exynos5420_pin_banks0,
 		.nr_banks	= ARRAY_SIZE(exynos5420_pin_banks0),
-		.eपूर्णांक_gpio_init = exynos_eपूर्णांक_gpio_init,
-		.eपूर्णांक_wkup_init = exynos_eपूर्णांक_wkup_init,
+		.eint_gpio_init = exynos_eint_gpio_init,
+		.eint_wkup_init = exynos_eint_wkup_init,
 		.suspend	= exynos_pinctrl_suspend,
 		.resume		= exynos_pinctrl_resume,
 		.retention_data	= &exynos5420_retention_data,
-	पूर्ण, अणु
+	}, {
 		/* pin-controller instance 1 data */
 		.pin_banks	= exynos5420_pin_banks1,
 		.nr_banks	= ARRAY_SIZE(exynos5420_pin_banks1),
-		.eपूर्णांक_gpio_init = exynos_eपूर्णांक_gpio_init,
+		.eint_gpio_init = exynos_eint_gpio_init,
 		.suspend	= exynos_pinctrl_suspend,
 		.resume		= exynos_pinctrl_resume,
 		.retention_data	= &exynos5420_retention_data,
-	पूर्ण, अणु
+	}, {
 		/* pin-controller instance 2 data */
 		.pin_banks	= exynos5420_pin_banks2,
 		.nr_banks	= ARRAY_SIZE(exynos5420_pin_banks2),
-		.eपूर्णांक_gpio_init = exynos_eपूर्णांक_gpio_init,
+		.eint_gpio_init = exynos_eint_gpio_init,
 		.suspend	= exynos_pinctrl_suspend,
 		.resume		= exynos_pinctrl_resume,
 		.retention_data	= &exynos5420_retention_data,
-	पूर्ण, अणु
+	}, {
 		/* pin-controller instance 3 data */
 		.pin_banks	= exynos5420_pin_banks3,
 		.nr_banks	= ARRAY_SIZE(exynos5420_pin_banks3),
-		.eपूर्णांक_gpio_init = exynos_eपूर्णांक_gpio_init,
+		.eint_gpio_init = exynos_eint_gpio_init,
 		.suspend	= exynos_pinctrl_suspend,
 		.resume		= exynos_pinctrl_resume,
 		.retention_data	= &exynos5420_retention_data,
-	पूर्ण, अणु
+	}, {
 		/* pin-controller instance 4 data */
 		.pin_banks	= exynos5420_pin_banks4,
 		.nr_banks	= ARRAY_SIZE(exynos5420_pin_banks4),
-		.eपूर्णांक_gpio_init = exynos_eपूर्णांक_gpio_init,
+		.eint_gpio_init = exynos_eint_gpio_init,
 		.suspend	= exynos_pinctrl_suspend,
 		.resume		= exynos_pinctrl_resume,
 		.retention_data	= &exynos4_audio_retention_data,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-स्थिर काष्ठा samsung_pinctrl_of_match_data exynos5420_of_data __initस्थिर = अणु
+const struct samsung_pinctrl_of_match_data exynos5420_of_data __initconst = {
 	.ctrl		= exynos5420_pin_ctrl,
 	.num_ctrl	= ARRAY_SIZE(exynos5420_pin_ctrl),
-पूर्ण;
+};

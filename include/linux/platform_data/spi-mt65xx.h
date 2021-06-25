@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *  MTK SPI bus driver definitions
  *
@@ -7,11 +6,11 @@
  * Author: Leilk Liu <leilk.liu@mediatek.com>
  */
 
-#अगर_अघोषित ____LINUX_PLATFORM_DATA_SPI_MTK_H
-#घोषणा ____LINUX_PLATFORM_DATA_SPI_MTK_H
+#ifndef ____LINUX_PLATFORM_DATA_SPI_MTK_H
+#define ____LINUX_PLATFORM_DATA_SPI_MTK_H
 
-/* Board specअगरic platक्रमm_data */
-काष्ठा mtk_chip_config अणु
+/* Board specific platform_data */
+struct mtk_chip_config {
 	u32 sample_sel;
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif

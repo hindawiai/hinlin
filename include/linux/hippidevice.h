@@ -1,11 +1,10 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * INET		An implementation of the TCP/IP protocol suite क्रम the LINUX
- *		operating प्रणाली.  INET is implemented using the BSD Socket
- *		पूर्णांकerface as the means of communication with the user level.
+ * INET		An implementation of the TCP/IP protocol suite for the LINUX
+ *		operating system.  INET is implemented using the BSD Socket
+ *		interface as the means of communication with the user level.
  *
- *		Definitions क्रम the HIPPI handlers.
+ *		Definitions for the HIPPI handlers.
  *
  * Version:	@(#)hippidevice.h	1.0.0	05/26/97
  *
@@ -17,21 +16,21 @@
  *			Alan Cox, <gw4pts@gw4pts.ampr.org>
  *			Lawrence V. Stefani, <stefani@lkg.dec.com>
  */
-#अगर_अघोषित _LINUX_HIPPIDEVICE_H
-#घोषणा _LINUX_HIPPIDEVICE_H
+#ifndef _LINUX_HIPPIDEVICE_H
+#define _LINUX_HIPPIDEVICE_H
 
-#समावेश <linux/अगर_hippi.h>
+#include <linux/if_hippi.h>
 
-#अगर_घोषित __KERNEL__
+#ifdef __KERNEL__
 
-काष्ठा hippi_cb अणु
-	__u32	अगरield;
-पूर्ण;
+struct hippi_cb {
+	__u32	ifield;
+};
 
-__be16 hippi_type_trans(काष्ठा sk_buff *skb, काष्ठा net_device *dev);
-पूर्णांक hippi_mac_addr(काष्ठा net_device *dev, व्योम *p);
-पूर्णांक hippi_neigh_setup_dev(काष्ठा net_device *dev, काष्ठा neigh_parms *p);
-काष्ठा net_device *alloc_hippi_dev(पूर्णांक माप_priv);
-#पूर्ण_अगर
+__be16 hippi_type_trans(struct sk_buff *skb, struct net_device *dev);
+int hippi_mac_addr(struct net_device *dev, void *p);
+int hippi_neigh_setup_dev(struct net_device *dev, struct neigh_parms *p);
+struct net_device *alloc_hippi_dev(int sizeof_priv);
+#endif
 
-#पूर्ण_अगर	/* _LINUX_HIPPIDEVICE_H */
+#endif	/* _LINUX_HIPPIDEVICE_H */

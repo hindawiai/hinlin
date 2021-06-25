@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * dlmthपढ़ो.c
+ * dlmthread.c
  *
  * standalone DLM module
  *
@@ -9,130 +8,130 @@
  */
 
 
-#समावेश <linux/module.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/types.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/init.h>
-#समावेश <linux/sysctl.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/inet.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/delay.h>
+#include <linux/module.h>
+#include <linux/fs.h>
+#include <linux/types.h>
+#include <linux/highmem.h>
+#include <linux/init.h>
+#include <linux/sysctl.h>
+#include <linux/random.h>
+#include <linux/blkdev.h>
+#include <linux/socket.h>
+#include <linux/inet.h>
+#include <linux/timer.h>
+#include <linux/kthread.h>
+#include <linux/delay.h>
 
 
-#समावेश "../cluster/heartbeat.h"
-#समावेश "../cluster/nodemanager.h"
-#समावेश "../cluster/tcp.h"
+#include "../cluster/heartbeat.h"
+#include "../cluster/nodemanager.h"
+#include "../cluster/tcp.h"
 
-#समावेश "dlmapi.h"
-#समावेश "dlmcommon.h"
-#समावेश "dlmdomain.h"
+#include "dlmapi.h"
+#include "dlmcommon.h"
+#include "dlmdomain.h"
 
-#घोषणा MLOG_MASK_PREFIX (ML_DLM|ML_DLM_THREAD)
-#समावेश "../cluster/masklog.h"
+#define MLOG_MASK_PREFIX (ML_DLM|ML_DLM_THREAD)
+#include "../cluster/masklog.h"
 
-अटल पूर्णांक dlm_thपढ़ो(व्योम *data);
-अटल व्योम dlm_flush_asts(काष्ठा dlm_ctxt *dlm);
+static int dlm_thread(void *data);
+static void dlm_flush_asts(struct dlm_ctxt *dlm);
 
-/* will निकास holding res->spinlock, but may drop in function */
-/* रुकोs until flags are cleared on res->state */
-व्योम __dlm_रुको_on_lockres_flags(काष्ठा dlm_lock_resource *res, पूर्णांक flags)
-अणु
-	DECLARE_WAITQUEUE(रुको, current);
+/* will exit holding res->spinlock, but may drop in function */
+/* waits until flags are cleared on res->state */
+void __dlm_wait_on_lockres_flags(struct dlm_lock_resource *res, int flags)
+{
+	DECLARE_WAITQUEUE(wait, current);
 
-	निश्चित_spin_locked(&res->spinlock);
+	assert_spin_locked(&res->spinlock);
 
-	add_रुको_queue(&res->wq, &रुको);
+	add_wait_queue(&res->wq, &wait);
 repeat:
 	set_current_state(TASK_UNINTERRUPTIBLE);
-	अगर (res->state & flags) अणु
+	if (res->state & flags) {
 		spin_unlock(&res->spinlock);
 		schedule();
 		spin_lock(&res->spinlock);
-		जाओ repeat;
-	पूर्ण
-	हटाओ_रुको_queue(&res->wq, &रुको);
+		goto repeat;
+	}
+	remove_wait_queue(&res->wq, &wait);
 	__set_current_state(TASK_RUNNING);
-पूर्ण
+}
 
-पूर्णांक __dlm_lockres_has_locks(काष्ठा dlm_lock_resource *res)
-अणु
-	अगर (list_empty(&res->granted) &&
+int __dlm_lockres_has_locks(struct dlm_lock_resource *res)
+{
+	if (list_empty(&res->granted) &&
 	    list_empty(&res->converting) &&
 	    list_empty(&res->blocked))
-		वापस 0;
-	वापस 1;
-पूर्ण
+		return 0;
+	return 1;
+}
 
 /* "unused": the lockres has no locks, is not on the dirty list,
  * has no inflight locks (in the gap between mastery and acquiring
  * the first lock), and has no bits in its refmap.
- * truly पढ़ोy to be मुक्तd. */
-पूर्णांक __dlm_lockres_unused(काष्ठा dlm_lock_resource *res)
-अणु
-	पूर्णांक bit;
+ * truly ready to be freed. */
+int __dlm_lockres_unused(struct dlm_lock_resource *res)
+{
+	int bit;
 
-	निश्चित_spin_locked(&res->spinlock);
+	assert_spin_locked(&res->spinlock);
 
-	अगर (__dlm_lockres_has_locks(res))
-		वापस 0;
+	if (__dlm_lockres_has_locks(res))
+		return 0;
 
 	/* Locks are in the process of being created */
-	अगर (res->inflight_locks)
-		वापस 0;
+	if (res->inflight_locks)
+		return 0;
 
-	अगर (!list_empty(&res->dirty) || res->state & DLM_LOCK_RES_सूचीTY)
-		वापस 0;
+	if (!list_empty(&res->dirty) || res->state & DLM_LOCK_RES_DIRTY)
+		return 0;
 
-	अगर (res->state & (DLM_LOCK_RES_RECOVERING|
+	if (res->state & (DLM_LOCK_RES_RECOVERING|
 			DLM_LOCK_RES_RECOVERY_WAITING))
-		वापस 0;
+		return 0;
 
 	/* Another node has this resource with this node as the master */
 	bit = find_next_bit(res->refmap, O2NM_MAX_NODES, 0);
-	अगर (bit < O2NM_MAX_NODES)
-		वापस 0;
+	if (bit < O2NM_MAX_NODES)
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 
 /* Call whenever you may have added or deleted something from one of
- * the lockres queue's. This will figure out whether it beदीर्घs on the
- * unused list or not and करोes the appropriate thing. */
-व्योम __dlm_lockres_calc_usage(काष्ठा dlm_ctxt *dlm,
-			      काष्ठा dlm_lock_resource *res)
-अणु
-	निश्चित_spin_locked(&dlm->spinlock);
-	निश्चित_spin_locked(&res->spinlock);
+ * the lockres queue's. This will figure out whether it belongs on the
+ * unused list or not and does the appropriate thing. */
+void __dlm_lockres_calc_usage(struct dlm_ctxt *dlm,
+			      struct dlm_lock_resource *res)
+{
+	assert_spin_locked(&dlm->spinlock);
+	assert_spin_locked(&res->spinlock);
 
-	अगर (__dlm_lockres_unused(res))अणु
-		अगर (list_empty(&res->purge)) अणु
+	if (__dlm_lockres_unused(res)){
+		if (list_empty(&res->purge)) {
 			mlog(0, "%s: Adding res %.*s to purge list\n",
 			     dlm->name, res->lockname.len, res->lockname.name);
 
-			res->last_used = jअगरfies;
+			res->last_used = jiffies;
 			dlm_lockres_get(res);
 			list_add_tail(&res->purge, &dlm->purge_list);
 			dlm->purge_count++;
-		पूर्ण
-	पूर्ण अन्यथा अगर (!list_empty(&res->purge)) अणु
+		}
+	} else if (!list_empty(&res->purge)) {
 		mlog(0, "%s: Removing res %.*s from purge list\n",
 		     dlm->name, res->lockname.len, res->lockname.name);
 
 		list_del_init(&res->purge);
 		dlm_lockres_put(res);
 		dlm->purge_count--;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम dlm_lockres_calc_usage(काष्ठा dlm_ctxt *dlm,
-			    काष्ठा dlm_lock_resource *res)
-अणु
+void dlm_lockres_calc_usage(struct dlm_ctxt *dlm,
+			    struct dlm_lock_resource *res)
+{
 	spin_lock(&dlm->spinlock);
 	spin_lock(&res->spinlock);
 
@@ -140,7 +139,7 @@ repeat:
 
 	spin_unlock(&res->spinlock);
 	spin_unlock(&dlm->spinlock);
-पूर्ण
+}
 
 /*
  * Do the real purge work:
@@ -148,67 +147,67 @@ repeat:
  *     clear flag DLM_LOCK_RES_DROPPING_REF.
  * It requires dlm and lockres spinlock to be taken.
  */
-व्योम __dlm_करो_purge_lockres(काष्ठा dlm_ctxt *dlm,
-		काष्ठा dlm_lock_resource *res)
-अणु
-	निश्चित_spin_locked(&dlm->spinlock);
-	निश्चित_spin_locked(&res->spinlock);
+void __dlm_do_purge_lockres(struct dlm_ctxt *dlm,
+		struct dlm_lock_resource *res)
+{
+	assert_spin_locked(&dlm->spinlock);
+	assert_spin_locked(&res->spinlock);
 
-	अगर (!list_empty(&res->purge)) अणु
+	if (!list_empty(&res->purge)) {
 		mlog(0, "%s: Removing res %.*s from purgelist\n",
 		     dlm->name, res->lockname.len, res->lockname.name);
 		list_del_init(&res->purge);
 		dlm_lockres_put(res);
 		dlm->purge_count--;
-	पूर्ण
+	}
 
-	अगर (!__dlm_lockres_unused(res)) अणु
+	if (!__dlm_lockres_unused(res)) {
 		mlog(ML_ERROR, "%s: res %.*s in use after deref\n",
 		     dlm->name, res->lockname.len, res->lockname.name);
-		__dlm_prपूर्णांक_one_lock_resource(res);
+		__dlm_print_one_lock_resource(res);
 		BUG();
-	पूर्ण
+	}
 
 	__dlm_unhash_lockres(dlm, res);
 
 	spin_lock(&dlm->track_lock);
-	अगर (!list_empty(&res->tracking))
+	if (!list_empty(&res->tracking))
 		list_del_init(&res->tracking);
-	अन्यथा अणु
+	else {
 		mlog(ML_ERROR, "%s: Resource %.*s not on the Tracking list\n",
 		     dlm->name, res->lockname.len, res->lockname.name);
-		__dlm_prपूर्णांक_one_lock_resource(res);
-	पूर्ण
+		__dlm_print_one_lock_resource(res);
+	}
 	spin_unlock(&dlm->track_lock);
 
 	/*
 	 * lockres is not in the hash now. drop the flag and wake up
-	 * any processes रुकोing in dlm_get_lock_resource.
+	 * any processes waiting in dlm_get_lock_resource.
 	 */
 	res->state &= ~DLM_LOCK_RES_DROPPING_REF;
-पूर्ण
+}
 
-अटल व्योम dlm_purge_lockres(काष्ठा dlm_ctxt *dlm,
-			     काष्ठा dlm_lock_resource *res)
-अणु
-	पूर्णांक master;
-	पूर्णांक ret = 0;
+static void dlm_purge_lockres(struct dlm_ctxt *dlm,
+			     struct dlm_lock_resource *res)
+{
+	int master;
+	int ret = 0;
 
-	निश्चित_spin_locked(&dlm->spinlock);
-	निश्चित_spin_locked(&res->spinlock);
+	assert_spin_locked(&dlm->spinlock);
+	assert_spin_locked(&res->spinlock);
 
 	master = (res->owner == dlm->node_num);
 
 	mlog(0, "%s: Purging res %.*s, master %d\n", dlm->name,
 	     res->lockname.len, res->lockname.name, master);
 
-	अगर (!master) अणु
-		अगर (res->state & DLM_LOCK_RES_DROPPING_REF) अणु
+	if (!master) {
+		if (res->state & DLM_LOCK_RES_DROPPING_REF) {
 			mlog(ML_NOTICE, "%s: res %.*s already in DLM_LOCK_RES_DROPPING_REF state\n",
 				dlm->name, res->lockname.len, res->lockname.name);
 			spin_unlock(&res->spinlock);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		res->state |= DLM_LOCK_RES_DROPPING_REF;
 		/* drop spinlock...  retake below */
@@ -217,113 +216,113 @@ repeat:
 
 		spin_lock(&res->spinlock);
 		/* This ensures that clear refmap is sent after the set */
-		__dlm_रुको_on_lockres_flags(res, DLM_LOCK_RES_SETREF_INPROG);
+		__dlm_wait_on_lockres_flags(res, DLM_LOCK_RES_SETREF_INPROG);
 		spin_unlock(&res->spinlock);
 
 		/* clear our bit from the master's refmap, ignore errors */
 		ret = dlm_drop_lockres_ref(dlm, res);
-		अगर (ret < 0) अणु
-			अगर (!dlm_is_host_करोwn(ret))
+		if (ret < 0) {
+			if (!dlm_is_host_down(ret))
 				BUG();
-		पूर्ण
+		}
 		spin_lock(&dlm->spinlock);
 		spin_lock(&res->spinlock);
-	पूर्ण
+	}
 
-	अगर (!list_empty(&res->purge)) अणु
+	if (!list_empty(&res->purge)) {
 		mlog(0, "%s: Removing res %.*s from purgelist, master %d\n",
 		     dlm->name, res->lockname.len, res->lockname.name, master);
 		list_del_init(&res->purge);
 		dlm_lockres_put(res);
 		dlm->purge_count--;
-	पूर्ण
+	}
 
-	अगर (!master && ret == DLM_DEREF_RESPONSE_INPROG) अणु
+	if (!master && ret == DLM_DEREF_RESPONSE_INPROG) {
 		mlog(0, "%s: deref %.*s in progress\n",
 			dlm->name, res->lockname.len, res->lockname.name);
 		spin_unlock(&res->spinlock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!__dlm_lockres_unused(res)) अणु
+	if (!__dlm_lockres_unused(res)) {
 		mlog(ML_ERROR, "%s: res %.*s in use after deref\n",
 		     dlm->name, res->lockname.len, res->lockname.name);
-		__dlm_prपूर्णांक_one_lock_resource(res);
+		__dlm_print_one_lock_resource(res);
 		BUG();
-	पूर्ण
+	}
 
 	__dlm_unhash_lockres(dlm, res);
 
 	spin_lock(&dlm->track_lock);
-	अगर (!list_empty(&res->tracking))
+	if (!list_empty(&res->tracking))
 		list_del_init(&res->tracking);
-	अन्यथा अणु
+	else {
 		mlog(ML_ERROR, "Resource %.*s not on the Tracking list\n",
 				res->lockname.len, res->lockname.name);
-		__dlm_prपूर्णांक_one_lock_resource(res);
-	पूर्ण
+		__dlm_print_one_lock_resource(res);
+	}
 	spin_unlock(&dlm->track_lock);
 
 	/* lockres is not in the hash now.  drop the flag and wake up
-	 * any processes रुकोing in dlm_get_lock_resource. */
-	अगर (!master) अणु
+	 * any processes waiting in dlm_get_lock_resource. */
+	if (!master) {
 		res->state &= ~DLM_LOCK_RES_DROPPING_REF;
 		spin_unlock(&res->spinlock);
 		wake_up(&res->wq);
-	पूर्ण अन्यथा
+	} else
 		spin_unlock(&res->spinlock);
-पूर्ण
+}
 
-अटल व्योम dlm_run_purge_list(काष्ठा dlm_ctxt *dlm,
-			       पूर्णांक purge_now)
-अणु
-	अचिन्हित पूर्णांक run_max, unused;
-	अचिन्हित दीर्घ purge_jअगरfies;
-	काष्ठा dlm_lock_resource *lockres;
+static void dlm_run_purge_list(struct dlm_ctxt *dlm,
+			       int purge_now)
+{
+	unsigned int run_max, unused;
+	unsigned long purge_jiffies;
+	struct dlm_lock_resource *lockres;
 
 	spin_lock(&dlm->spinlock);
 	run_max = dlm->purge_count;
 
-	जबतक(run_max && !list_empty(&dlm->purge_list)) अणु
+	while(run_max && !list_empty(&dlm->purge_list)) {
 		run_max--;
 
 		lockres = list_entry(dlm->purge_list.next,
-				     काष्ठा dlm_lock_resource, purge);
+				     struct dlm_lock_resource, purge);
 
 		spin_lock(&lockres->spinlock);
 
-		purge_jअगरfies = lockres->last_used +
-			msecs_to_jअगरfies(DLM_PURGE_INTERVAL_MS);
+		purge_jiffies = lockres->last_used +
+			msecs_to_jiffies(DLM_PURGE_INTERVAL_MS);
 
 		/* Make sure that we want to be processing this guy at
-		 * this समय. */
-		अगर (!purge_now && समय_after(purge_jअगरfies, jअगरfies)) अणु
+		 * this time. */
+		if (!purge_now && time_after(purge_jiffies, jiffies)) {
 			/* Since resources are added to the purge list
 			 * in tail order, we can stop at the first
 			 * unpurgable resource -- anyone added after
 			 * him will have a greater last_used value */
 			spin_unlock(&lockres->spinlock);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		/* Status of the lockres *might* change so द्विगुन
+		/* Status of the lockres *might* change so double
 		 * check. If the lockres is unused, holding the dlm
 		 * spinlock will prevent people from getting and more
 		 * refs on it. */
 		unused = __dlm_lockres_unused(lockres);
-		अगर (!unused ||
+		if (!unused ||
 		    (lockres->state & DLM_LOCK_RES_MIGRATING) ||
-		    (lockres->inflight_निश्चित_workers != 0)) अणु
+		    (lockres->inflight_assert_workers != 0)) {
 			mlog(0, "%s: res %.*s is in use or being remastered, "
 			     "used %d, state %d, assert master workers %u\n",
 			     dlm->name, lockres->lockname.len,
 			     lockres->lockname.name,
 			     !unused, lockres->state,
-			     lockres->inflight_निश्चित_workers);
+			     lockres->inflight_assert_workers);
 			list_move_tail(&lockres->purge, &dlm->purge_list);
 			spin_unlock(&lockres->spinlock);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		dlm_lockres_get(lockres);
 
@@ -331,79 +330,79 @@ repeat:
 
 		dlm_lockres_put(lockres);
 
-		/* Aव्योम adding any scheduling latencies */
+		/* Avoid adding any scheduling latencies */
 		cond_resched_lock(&dlm->spinlock);
-	पूर्ण
+	}
 
 	spin_unlock(&dlm->spinlock);
-पूर्ण
+}
 
-अटल व्योम dlm_shuffle_lists(काष्ठा dlm_ctxt *dlm,
-			      काष्ठा dlm_lock_resource *res)
-अणु
-	काष्ठा dlm_lock *lock, *target;
-	पूर्णांक can_grant = 1;
+static void dlm_shuffle_lists(struct dlm_ctxt *dlm,
+			      struct dlm_lock_resource *res)
+{
+	struct dlm_lock *lock, *target;
+	int can_grant = 1;
 
 	/*
 	 * Because this function is called with the lockres
 	 * spinlock, and because we know that it is not migrating/
 	 * recovering/in-progress, it is fine to reserve asts and
-	 * basts right beक्रमe queueing them all throughout
+	 * basts right before queueing them all throughout
 	 */
-	निश्चित_spin_locked(&dlm->ast_lock);
-	निश्चित_spin_locked(&res->spinlock);
+	assert_spin_locked(&dlm->ast_lock);
+	assert_spin_locked(&res->spinlock);
 	BUG_ON((res->state & (DLM_LOCK_RES_MIGRATING|
 			      DLM_LOCK_RES_RECOVERING|
 			      DLM_LOCK_RES_IN_PROGRESS)));
 
 converting:
-	अगर (list_empty(&res->converting))
-		जाओ blocked;
+	if (list_empty(&res->converting))
+		goto blocked;
 	mlog(0, "%s: res %.*s has locks on the convert queue\n", dlm->name,
 	     res->lockname.len, res->lockname.name);
 
-	target = list_entry(res->converting.next, काष्ठा dlm_lock, list);
-	अगर (target->ml.convert_type == LKM_IVMODE) अणु
+	target = list_entry(res->converting.next, struct dlm_lock, list);
+	if (target->ml.convert_type == LKM_IVMODE) {
 		mlog(ML_ERROR, "%s: res %.*s converting lock to invalid mode\n",
 		     dlm->name, res->lockname.len, res->lockname.name);
 		BUG();
-	पूर्ण
-	list_क्रम_each_entry(lock, &res->granted, list) अणु
-		अगर (lock==target)
-			जारी;
-		अगर (!dlm_lock_compatible(lock->ml.type,
-					 target->ml.convert_type)) अणु
+	}
+	list_for_each_entry(lock, &res->granted, list) {
+		if (lock==target)
+			continue;
+		if (!dlm_lock_compatible(lock->ml.type,
+					 target->ml.convert_type)) {
 			can_grant = 0;
-			/* queue the BAST अगर not alपढ़ोy */
-			अगर (lock->ml.highest_blocked == LKM_IVMODE) अणु
+			/* queue the BAST if not already */
+			if (lock->ml.highest_blocked == LKM_IVMODE) {
 				__dlm_lockres_reserve_ast(res);
 				__dlm_queue_bast(dlm, lock);
-			पूर्ण
-			/* update the highest_blocked अगर needed */
-			अगर (lock->ml.highest_blocked < target->ml.convert_type)
+			}
+			/* update the highest_blocked if needed */
+			if (lock->ml.highest_blocked < target->ml.convert_type)
 				lock->ml.highest_blocked =
 					target->ml.convert_type;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	list_क्रम_each_entry(lock, &res->converting, list) अणु
-		अगर (lock==target)
-			जारी;
-		अगर (!dlm_lock_compatible(lock->ml.type,
-					 target->ml.convert_type)) अणु
+	list_for_each_entry(lock, &res->converting, list) {
+		if (lock==target)
+			continue;
+		if (!dlm_lock_compatible(lock->ml.type,
+					 target->ml.convert_type)) {
 			can_grant = 0;
-			अगर (lock->ml.highest_blocked == LKM_IVMODE) अणु
+			if (lock->ml.highest_blocked == LKM_IVMODE) {
 				__dlm_lockres_reserve_ast(res);
 				__dlm_queue_bast(dlm, lock);
-			पूर्ण
-			अगर (lock->ml.highest_blocked < target->ml.convert_type)
+			}
+			if (lock->ml.highest_blocked < target->ml.convert_type)
 				lock->ml.highest_blocked =
 					target->ml.convert_type;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* we can convert the lock */
-	अगर (can_grant) अणु
+	if (can_grant) {
 		spin_lock(&target->spinlock);
 		BUG_ON(target->ml.highest_blocked != LKM_IVMODE);
 
@@ -426,46 +425,46 @@ converting:
 
 		__dlm_lockres_reserve_ast(res);
 		__dlm_queue_ast(dlm, target);
-		/* go back and check क्रम more */
-		जाओ converting;
-	पूर्ण
+		/* go back and check for more */
+		goto converting;
+	}
 
 blocked:
-	अगर (list_empty(&res->blocked))
-		जाओ leave;
-	target = list_entry(res->blocked.next, काष्ठा dlm_lock, list);
+	if (list_empty(&res->blocked))
+		goto leave;
+	target = list_entry(res->blocked.next, struct dlm_lock, list);
 
-	list_क्रम_each_entry(lock, &res->granted, list) अणु
-		अगर (lock==target)
-			जारी;
-		अगर (!dlm_lock_compatible(lock->ml.type, target->ml.type)) अणु
+	list_for_each_entry(lock, &res->granted, list) {
+		if (lock==target)
+			continue;
+		if (!dlm_lock_compatible(lock->ml.type, target->ml.type)) {
 			can_grant = 0;
-			अगर (lock->ml.highest_blocked == LKM_IVMODE) अणु
+			if (lock->ml.highest_blocked == LKM_IVMODE) {
 				__dlm_lockres_reserve_ast(res);
 				__dlm_queue_bast(dlm, lock);
-			पूर्ण
-			अगर (lock->ml.highest_blocked < target->ml.type)
+			}
+			if (lock->ml.highest_blocked < target->ml.type)
 				lock->ml.highest_blocked = target->ml.type;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	list_क्रम_each_entry(lock, &res->converting, list) अणु
-		अगर (lock==target)
-			जारी;
-		अगर (!dlm_lock_compatible(lock->ml.type, target->ml.type)) अणु
+	list_for_each_entry(lock, &res->converting, list) {
+		if (lock==target)
+			continue;
+		if (!dlm_lock_compatible(lock->ml.type, target->ml.type)) {
 			can_grant = 0;
-			अगर (lock->ml.highest_blocked == LKM_IVMODE) अणु
+			if (lock->ml.highest_blocked == LKM_IVMODE) {
 				__dlm_lockres_reserve_ast(res);
 				__dlm_queue_bast(dlm, lock);
-			पूर्ण
-			अगर (lock->ml.highest_blocked < target->ml.type)
+			}
+			if (lock->ml.highest_blocked < target->ml.type)
 				lock->ml.highest_blocked = target->ml.type;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* we can grant the blocked lock (only
-	 * possible अगर converting list empty) */
-	अगर (can_grant) अणु
+	 * possible if converting list empty) */
+	if (can_grant) {
 		spin_lock(&target->spinlock);
 		BUG_ON(target->ml.highest_blocked != LKM_IVMODE);
 
@@ -476,7 +475,7 @@ blocked:
 		     dlm_get_lock_cookie_seq(be64_to_cpu(target->ml.cookie)),
 		     target->ml.type, target->ml.node);
 
-		/* target->ml.type is alपढ़ोy correct */
+		/* target->ml.type is already correct */
 		list_move_tail(&target->list, &res->granted);
 
 		BUG_ON(!target->lksb);
@@ -486,98 +485,98 @@ blocked:
 
 		__dlm_lockres_reserve_ast(res);
 		__dlm_queue_ast(dlm, target);
-		/* go back and check क्रम more */
-		जाओ converting;
-	पूर्ण
+		/* go back and check for more */
+		goto converting;
+	}
 
 leave:
-	वापस;
-पूर्ण
+	return;
+}
 
-/* must have NO locks when calling this with res !=शून्य * */
-व्योम dlm_kick_thपढ़ो(काष्ठा dlm_ctxt *dlm, काष्ठा dlm_lock_resource *res)
-अणु
-	अगर (res) अणु
+/* must have NO locks when calling this with res !=NULL * */
+void dlm_kick_thread(struct dlm_ctxt *dlm, struct dlm_lock_resource *res)
+{
+	if (res) {
 		spin_lock(&dlm->spinlock);
 		spin_lock(&res->spinlock);
 		__dlm_dirty_lockres(dlm, res);
 		spin_unlock(&res->spinlock);
 		spin_unlock(&dlm->spinlock);
-	पूर्ण
-	wake_up(&dlm->dlm_thपढ़ो_wq);
-पूर्ण
+	}
+	wake_up(&dlm->dlm_thread_wq);
+}
 
-व्योम __dlm_dirty_lockres(काष्ठा dlm_ctxt *dlm, काष्ठा dlm_lock_resource *res)
-अणु
-	निश्चित_spin_locked(&dlm->spinlock);
-	निश्चित_spin_locked(&res->spinlock);
+void __dlm_dirty_lockres(struct dlm_ctxt *dlm, struct dlm_lock_resource *res)
+{
+	assert_spin_locked(&dlm->spinlock);
+	assert_spin_locked(&res->spinlock);
 
-	/* करोn't shuffle secondary queues */
-	अगर (res->owner == dlm->node_num) अणु
-		अगर (res->state & (DLM_LOCK_RES_MIGRATING |
-				  DLM_LOCK_RES_BLOCK_सूचीTY))
-		    वापस;
+	/* don't shuffle secondary queues */
+	if (res->owner == dlm->node_num) {
+		if (res->state & (DLM_LOCK_RES_MIGRATING |
+				  DLM_LOCK_RES_BLOCK_DIRTY))
+		    return;
 
-		अगर (list_empty(&res->dirty)) अणु
-			/* ref क्रम dirty_list */
+		if (list_empty(&res->dirty)) {
+			/* ref for dirty_list */
 			dlm_lockres_get(res);
 			list_add_tail(&res->dirty, &dlm->dirty_list);
-			res->state |= DLM_LOCK_RES_सूचीTY;
-		पूर्ण
-	पूर्ण
+			res->state |= DLM_LOCK_RES_DIRTY;
+		}
+	}
 
 	mlog(0, "%s: res %.*s\n", dlm->name, res->lockname.len,
 	     res->lockname.name);
-पूर्ण
+}
 
 
-/* Launch the NM thपढ़ो क्रम the mounted volume */
-पूर्णांक dlm_launch_thपढ़ो(काष्ठा dlm_ctxt *dlm)
-अणु
+/* Launch the NM thread for the mounted volume */
+int dlm_launch_thread(struct dlm_ctxt *dlm)
+{
 	mlog(0, "Starting dlm_thread...\n");
 
-	dlm->dlm_thपढ़ो_task = kthपढ़ो_run(dlm_thपढ़ो, dlm, "dlm-%s",
+	dlm->dlm_thread_task = kthread_run(dlm_thread, dlm, "dlm-%s",
 			dlm->name);
-	अगर (IS_ERR(dlm->dlm_thपढ़ो_task)) अणु
-		mlog_त्रुटि_सं(PTR_ERR(dlm->dlm_thपढ़ो_task));
-		dlm->dlm_thपढ़ो_task = शून्य;
-		वापस -EINVAL;
-	पूर्ण
+	if (IS_ERR(dlm->dlm_thread_task)) {
+		mlog_errno(PTR_ERR(dlm->dlm_thread_task));
+		dlm->dlm_thread_task = NULL;
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम dlm_complete_thपढ़ो(काष्ठा dlm_ctxt *dlm)
-अणु
-	अगर (dlm->dlm_thपढ़ो_task) अणु
+void dlm_complete_thread(struct dlm_ctxt *dlm)
+{
+	if (dlm->dlm_thread_task) {
 		mlog(ML_KTHREAD, "Waiting for dlm thread to exit\n");
-		kthपढ़ो_stop(dlm->dlm_thपढ़ो_task);
-		dlm->dlm_thपढ़ो_task = शून्य;
-	पूर्ण
-पूर्ण
+		kthread_stop(dlm->dlm_thread_task);
+		dlm->dlm_thread_task = NULL;
+	}
+}
 
-अटल पूर्णांक dlm_dirty_list_empty(काष्ठा dlm_ctxt *dlm)
-अणु
-	पूर्णांक empty;
+static int dlm_dirty_list_empty(struct dlm_ctxt *dlm)
+{
+	int empty;
 
 	spin_lock(&dlm->spinlock);
 	empty = list_empty(&dlm->dirty_list);
 	spin_unlock(&dlm->spinlock);
 
-	वापस empty;
-पूर्ण
+	return empty;
+}
 
-अटल व्योम dlm_flush_asts(काष्ठा dlm_ctxt *dlm)
-अणु
-	पूर्णांक ret;
-	काष्ठा dlm_lock *lock;
-	काष्ठा dlm_lock_resource *res;
+static void dlm_flush_asts(struct dlm_ctxt *dlm)
+{
+	int ret;
+	struct dlm_lock *lock;
+	struct dlm_lock_resource *res;
 	u8 hi;
 
 	spin_lock(&dlm->ast_lock);
-	जबतक (!list_empty(&dlm->pending_asts)) अणु
+	while (!list_empty(&dlm->pending_asts)) {
 		lock = list_entry(dlm->pending_asts.next,
-				  काष्ठा dlm_lock, ast_list);
+				  struct dlm_lock, ast_list);
 		/* get an extra ref on lock */
 		dlm_lock_get(lock);
 		res = lock->lockres;
@@ -590,38 +589,38 @@ leave:
 
 		BUG_ON(!lock->ast_pending);
 
-		/* हटाओ from list (including ref) */
+		/* remove from list (including ref) */
 		list_del_init(&lock->ast_list);
 		dlm_lock_put(lock);
 		spin_unlock(&dlm->ast_lock);
 
-		अगर (lock->ml.node != dlm->node_num) अणु
-			ret = dlm_करो_remote_ast(dlm, res, lock);
-			अगर (ret < 0)
-				mlog_त्रुटि_सं(ret);
-		पूर्ण अन्यथा
-			dlm_करो_local_ast(dlm, res, lock);
+		if (lock->ml.node != dlm->node_num) {
+			ret = dlm_do_remote_ast(dlm, res, lock);
+			if (ret < 0)
+				mlog_errno(ret);
+		} else
+			dlm_do_local_ast(dlm, res, lock);
 
 		spin_lock(&dlm->ast_lock);
 
-		/* possible that another ast was queued जबतक
+		/* possible that another ast was queued while
 		 * we were delivering the last one */
-		अगर (!list_empty(&lock->ast_list)) अणु
+		if (!list_empty(&lock->ast_list)) {
 			mlog(0, "%s: res %.*s, AST queued while flushing last "
 			     "one\n", dlm->name, res->lockname.len,
 			     res->lockname.name);
-		पूर्ण अन्यथा
+		} else
 			lock->ast_pending = 0;
 
 		/* drop the extra ref.
 		 * this may drop it completely. */
 		dlm_lock_put(lock);
 		dlm_lockres_release_ast(dlm, res);
-	पूर्ण
+	}
 
-	जबतक (!list_empty(&dlm->pending_basts)) अणु
+	while (!list_empty(&dlm->pending_basts)) {
 		lock = list_entry(dlm->pending_basts.next,
-				  काष्ठा dlm_lock, bast_list);
+				  struct dlm_lock, bast_list);
 		/* get an extra ref on lock */
 		dlm_lock_get(lock);
 		res = lock->lockres;
@@ -635,7 +634,7 @@ leave:
 		lock->ml.highest_blocked = LKM_IVMODE;
 		spin_unlock(&lock->spinlock);
 
-		/* हटाओ from list (including ref) */
+		/* remove from list (including ref) */
 		list_del_init(&lock->bast_list);
 		dlm_lock_put(lock);
 		spin_unlock(&dlm->ast_lock);
@@ -647,74 +646,74 @@ leave:
 		     dlm_get_lock_cookie_seq(be64_to_cpu(lock->ml.cookie)),
 		     hi, lock->ml.node);
 
-		अगर (lock->ml.node != dlm->node_num) अणु
+		if (lock->ml.node != dlm->node_num) {
 			ret = dlm_send_proxy_bast(dlm, res, lock, hi);
-			अगर (ret < 0)
-				mlog_त्रुटि_सं(ret);
-		पूर्ण अन्यथा
-			dlm_करो_local_bast(dlm, res, lock, hi);
+			if (ret < 0)
+				mlog_errno(ret);
+		} else
+			dlm_do_local_bast(dlm, res, lock, hi);
 
 		spin_lock(&dlm->ast_lock);
 
-		/* possible that another bast was queued जबतक
+		/* possible that another bast was queued while
 		 * we were delivering the last one */
-		अगर (!list_empty(&lock->bast_list)) अणु
+		if (!list_empty(&lock->bast_list)) {
 			mlog(0, "%s: res %.*s, BAST queued while flushing last "
 			     "one\n", dlm->name, res->lockname.len,
 			     res->lockname.name);
-		पूर्ण अन्यथा
+		} else
 			lock->bast_pending = 0;
 
 		/* drop the extra ref.
 		 * this may drop it completely. */
 		dlm_lock_put(lock);
 		dlm_lockres_release_ast(dlm, res);
-	पूर्ण
+	}
 	wake_up(&dlm->ast_wq);
 	spin_unlock(&dlm->ast_lock);
-पूर्ण
+}
 
 
-#घोषणा DLM_THREAD_TIMEOUT_MS (4 * 1000)
-#घोषणा DLM_THREAD_MAX_सूचीTY  100
+#define DLM_THREAD_TIMEOUT_MS (4 * 1000)
+#define DLM_THREAD_MAX_DIRTY  100
 
-अटल पूर्णांक dlm_thपढ़ो(व्योम *data)
-अणु
-	काष्ठा dlm_lock_resource *res;
-	काष्ठा dlm_ctxt *dlm = data;
-	अचिन्हित दीर्घ समयout = msecs_to_jअगरfies(DLM_THREAD_TIMEOUT_MS);
+static int dlm_thread(void *data)
+{
+	struct dlm_lock_resource *res;
+	struct dlm_ctxt *dlm = data;
+	unsigned long timeout = msecs_to_jiffies(DLM_THREAD_TIMEOUT_MS);
 
 	mlog(0, "dlm thread running for %s...\n", dlm->name);
 
-	जबतक (!kthपढ़ो_should_stop()) अणु
-		पूर्णांक n = DLM_THREAD_MAX_सूचीTY;
+	while (!kthread_should_stop()) {
+		int n = DLM_THREAD_MAX_DIRTY;
 
-		/* dlm_shutting_करोwn is very poपूर्णांक-in-समय, but that
-		 * करोesn't matter as we'll just loop back around अगर we
+		/* dlm_shutting_down is very point-in-time, but that
+		 * doesn't matter as we'll just loop back around if we
 		 * get false on the leading edge of a state
 		 * transition. */
-		dlm_run_purge_list(dlm, dlm_shutting_करोwn(dlm));
+		dlm_run_purge_list(dlm, dlm_shutting_down(dlm));
 
-		/* We really करोn't want to hold dlm->spinlock जबतक
+		/* We really don't want to hold dlm->spinlock while
 		 * calling dlm_shuffle_lists on each lockres that
 		 * needs to have its queues adjusted and AST/BASTs
 		 * run.  So let's pull each entry off the dirty_list
 		 * and drop dlm->spinlock ASAP.  Once off the list,
 		 * res->spinlock needs to be taken again to protect
-		 * the queues जबतक calling dlm_shuffle_lists.  */
+		 * the queues while calling dlm_shuffle_lists.  */
 		spin_lock(&dlm->spinlock);
-		जबतक (!list_empty(&dlm->dirty_list)) अणु
-			पूर्णांक delay = 0;
+		while (!list_empty(&dlm->dirty_list)) {
+			int delay = 0;
 			res = list_entry(dlm->dirty_list.next,
-					 काष्ठा dlm_lock_resource, dirty);
+					 struct dlm_lock_resource, dirty);
 
-			/* peel a lockres off, हटाओ it from the list,
+			/* peel a lockres off, remove it from the list,
 			 * unset the dirty flag and drop the dlm lock */
 			BUG_ON(!res);
 			dlm_lockres_get(res);
 
 			spin_lock(&res->spinlock);
-			/* We clear the DLM_LOCK_RES_सूचीTY state once we shuffle lists below */
+			/* We clear the DLM_LOCK_RES_DIRTY state once we shuffle lists below */
 			list_del_init(&res->dirty);
 			spin_unlock(&res->spinlock);
 			spin_unlock(&dlm->spinlock);
@@ -726,26 +725,26 @@ leave:
 
 			spin_lock(&dlm->ast_lock);
 			spin_lock(&res->spinlock);
-			अगर (res->owner != dlm->node_num) अणु
-				__dlm_prपूर्णांक_one_lock_resource(res);
+			if (res->owner != dlm->node_num) {
+				__dlm_print_one_lock_resource(res);
 				mlog(ML_ERROR, "%s: inprog %d, mig %d, reco %d,"
 				     " dirty %d\n", dlm->name,
 				     !!(res->state & DLM_LOCK_RES_IN_PROGRESS),
 				     !!(res->state & DLM_LOCK_RES_MIGRATING),
 				     !!(res->state & DLM_LOCK_RES_RECOVERING),
-				     !!(res->state & DLM_LOCK_RES_सूचीTY));
-			पूर्ण
+				     !!(res->state & DLM_LOCK_RES_DIRTY));
+			}
 			BUG_ON(res->owner != dlm->node_num);
 
 			/* it is now ok to move lockreses in these states
 			 * to the dirty list, assuming that they will only be
-			 * dirty क्रम a लघु जबतक. */
+			 * dirty for a short while. */
 			BUG_ON(res->state & DLM_LOCK_RES_MIGRATING);
-			अगर (res->state & (DLM_LOCK_RES_IN_PROGRESS |
+			if (res->state & (DLM_LOCK_RES_IN_PROGRESS |
 					  DLM_LOCK_RES_RECOVERING |
-					  DLM_LOCK_RES_RECOVERY_WAITING)) अणु
+					  DLM_LOCK_RES_RECOVERY_WAITING)) {
 				/* move it to the tail and keep going */
-				res->state &= ~DLM_LOCK_RES_सूचीTY;
+				res->state &= ~DLM_LOCK_RES_DIRTY;
 				spin_unlock(&res->spinlock);
 				spin_unlock(&dlm->ast_lock);
 				mlog(0, "%s: res %.*s, inprogress, delay list "
@@ -753,17 +752,17 @@ leave:
 				     res->lockname.len, res->lockname.name,
 				     res->state);
 				delay = 1;
-				जाओ in_progress;
-			पूर्ण
+				goto in_progress;
+			}
 
-			/* at this poपूर्णांक the lockres is not migrating/
+			/* at this point the lockres is not migrating/
 			 * recovering/in-progress.  we have the lockres
-			 * spinlock and करो NOT have the dlm lock.
+			 * spinlock and do NOT have the dlm lock.
 			 * safe to reserve/queue asts and run the lists. */
 
-			/* called जबतक holding lockres lock */
+			/* called while holding lockres lock */
 			dlm_shuffle_lists(dlm, res);
-			res->state &= ~DLM_LOCK_RES_सूचीTY;
+			res->state &= ~DLM_LOCK_RES_DIRTY;
 			spin_unlock(&res->spinlock);
 			spin_unlock(&dlm->ast_lock);
 
@@ -772,39 +771,39 @@ leave:
 in_progress:
 
 			spin_lock(&dlm->spinlock);
-			/* अगर the lock was in-progress, stick
+			/* if the lock was in-progress, stick
 			 * it on the back of the list */
-			अगर (delay) अणु
+			if (delay) {
 				spin_lock(&res->spinlock);
 				__dlm_dirty_lockres(dlm, res);
 				spin_unlock(&res->spinlock);
-			पूर्ण
+			}
 			dlm_lockres_put(res);
 
-			/* unlikely, but we may need to give समय to
+			/* unlikely, but we may need to give time to
 			 * other tasks */
-			अगर (!--n) अणु
+			if (!--n) {
 				mlog(0, "%s: Throttling dlm thread\n",
 				     dlm->name);
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
 		spin_unlock(&dlm->spinlock);
 		dlm_flush_asts(dlm);
 
-		/* yield and जारी right away अगर there is more work to करो */
-		अगर (!n) अणु
+		/* yield and continue right away if there is more work to do */
+		if (!n) {
 			cond_resched();
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		रुको_event_पूर्णांकerruptible_समयout(dlm->dlm_thपढ़ो_wq,
+		wait_event_interruptible_timeout(dlm->dlm_thread_wq,
 						 !dlm_dirty_list_empty(dlm) ||
-						 kthपढ़ो_should_stop(),
-						 समयout);
-	पूर्ण
+						 kthread_should_stop(),
+						 timeout);
+	}
 
 	mlog(0, "quitting DLM thread\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}

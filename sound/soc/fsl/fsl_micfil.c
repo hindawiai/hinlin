@@ -1,67 +1,66 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright 2018 NXP
 
-#समावेश <linux/clk.h>
-#समावेश <linux/device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kobject.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/regmap.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/types.h>
-#समावेश <sound/dmaengine_pcm.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/tlv.h>
-#समावेश <sound/core.h>
+#include <linux/clk.h>
+#include <linux/device.h>
+#include <linux/interrupt.h>
+#include <linux/kobject.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/of_platform.h>
+#include <linux/pm_runtime.h>
+#include <linux/regmap.h>
+#include <linux/sysfs.h>
+#include <linux/types.h>
+#include <sound/dmaengine_pcm.h>
+#include <sound/pcm.h>
+#include <sound/soc.h>
+#include <sound/tlv.h>
+#include <sound/core.h>
 
-#समावेश "fsl_micfil.h"
-#समावेश "imx-pcm.h"
+#include "fsl_micfil.h"
+#include "imx-pcm.h"
 
-#घोषणा FSL_MICFIL_RATES		SNDRV_PCM_RATE_8000_48000
-#घोषणा FSL_MICFIL_FORMATS		(SNDRV_PCM_FMTBIT_S16_LE)
+#define FSL_MICFIL_RATES		SNDRV_PCM_RATE_8000_48000
+#define FSL_MICFIL_FORMATS		(SNDRV_PCM_FMTBIT_S16_LE)
 
-काष्ठा fsl_micfil अणु
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा regmap *regmap;
-	स्थिर काष्ठा fsl_micfil_soc_data *soc;
-	काष्ठा clk *busclk;
-	काष्ठा clk *mclk;
-	काष्ठा snd_dmaengine_dai_dma_data dma_params_rx;
-	अचिन्हित पूर्णांक dataline;
-	अक्षर name[32];
-	पूर्णांक irq[MICFIL_IRQ_LINES];
-	अचिन्हित पूर्णांक mclk_streams;
-	पूर्णांक quality;	/*QUALITY 2-0 bits */
+struct fsl_micfil {
+	struct platform_device *pdev;
+	struct regmap *regmap;
+	const struct fsl_micfil_soc_data *soc;
+	struct clk *busclk;
+	struct clk *mclk;
+	struct snd_dmaengine_dai_dma_data dma_params_rx;
+	unsigned int dataline;
+	char name[32];
+	int irq[MICFIL_IRQ_LINES];
+	unsigned int mclk_streams;
+	int quality;	/*QUALITY 2-0 bits */
 	bool slave_mode;
-	पूर्णांक channel_gain[8];
-पूर्ण;
+	int channel_gain[8];
+};
 
-काष्ठा fsl_micfil_soc_data अणु
-	अचिन्हित पूर्णांक fअगरos;
-	अचिन्हित पूर्णांक fअगरo_depth;
-	अचिन्हित पूर्णांक dataline;
+struct fsl_micfil_soc_data {
+	unsigned int fifos;
+	unsigned int fifo_depth;
+	unsigned int dataline;
 	bool imx;
-पूर्ण;
+};
 
-अटल काष्ठा fsl_micfil_soc_data fsl_micfil_imx8mm = अणु
+static struct fsl_micfil_soc_data fsl_micfil_imx8mm = {
 	.imx = true,
-	.fअगरos = 8,
-	.fअगरo_depth = 8,
+	.fifos = 8,
+	.fifo_depth = 8,
 	.dataline =  0xf,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id fsl_micfil_dt_ids[] = अणु
-	अणु .compatible = "fsl,imx8mm-micfil", .data = &fsl_micfil_imx8mm पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id fsl_micfil_dt_ids[] = {
+	{ .compatible = "fsl,imx8mm-micfil", .data = &fsl_micfil_imx8mm },
+	{}
+};
 MODULE_DEVICE_TABLE(of, fsl_micfil_dt_ids);
 
 /* Table 5. Quality Modes
@@ -72,22 +71,22 @@ MODULE_DEVICE_TABLE(of, fsl_micfil_dt_ids);
  * Very Low 0	1 1 0
  * Low		1 1 1
  */
-अटल स्थिर अक्षर * स्थिर micfil_quality_select_texts[] = अणु
+static const char * const micfil_quality_select_texts[] = {
 	"Medium", "High",
 	"N/A", "N/A",
 	"VLow2", "VLow1",
 	"VLow0", "Low",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत fsl_micfil_quality_क्रमागत =
+static const struct soc_enum fsl_micfil_quality_enum =
 	SOC_ENUM_SINGLE(REG_MICFIL_CTRL2,
 			MICFIL_CTRL2_QSEL_SHIFT,
 			ARRAY_SIZE(micfil_quality_select_texts),
 			micfil_quality_select_texts);
 
-अटल DECLARE_TLV_DB_SCALE(gain_tlv, 0, 100, 0);
+static DECLARE_TLV_DB_SCALE(gain_tlv, 0, 100, 0);
 
-अटल स्थिर काष्ठा snd_kcontrol_new fsl_micfil_snd_controls[] = अणु
+static const struct snd_kcontrol_new fsl_micfil_snd_controls[] = {
 	SOC_SINGLE_SX_TLV("CH0 Volume", REG_MICFIL_OUT_CTRL,
 			  MICFIL_OUTGAIN_CHX_SHIFT(0), 0xF, 0x7, gain_tlv),
 	SOC_SINGLE_SX_TLV("CH1 Volume", REG_MICFIL_OUT_CTRL,
@@ -105,143 +104,143 @@ MODULE_DEVICE_TABLE(of, fsl_micfil_dt_ids);
 	SOC_SINGLE_SX_TLV("CH7 Volume", REG_MICFIL_OUT_CTRL,
 			  MICFIL_OUTGAIN_CHX_SHIFT(7), 0xF, 0x7, gain_tlv),
 	SOC_ENUM_EXT("MICFIL Quality Select",
-		     fsl_micfil_quality_क्रमागत,
-		     snd_soc_get_क्रमागत_द्विगुन, snd_soc_put_क्रमागत_द्विगुन),
-पूर्ण;
+		     fsl_micfil_quality_enum,
+		     snd_soc_get_enum_double, snd_soc_put_enum_double),
+};
 
-अटल अंतरभूत पूर्णांक get_pdm_clk(काष्ठा fsl_micfil *micfil,
-			      अचिन्हित पूर्णांक rate)
-अणु
+static inline int get_pdm_clk(struct fsl_micfil *micfil,
+			      unsigned int rate)
+{
 	u32 ctrl2_reg;
-	पूर्णांक qsel, osr;
-	पूर्णांक bclk;
+	int qsel, osr;
+	int bclk;
 
-	regmap_पढ़ो(micfil->regmap, REG_MICFIL_CTRL2, &ctrl2_reg);
+	regmap_read(micfil->regmap, REG_MICFIL_CTRL2, &ctrl2_reg);
 	osr = 16 - ((ctrl2_reg & MICFIL_CTRL2_CICOSR_MASK)
 		    >> MICFIL_CTRL2_CICOSR_SHIFT);
 
-	regmap_पढ़ो(micfil->regmap, REG_MICFIL_CTRL2, &ctrl2_reg);
+	regmap_read(micfil->regmap, REG_MICFIL_CTRL2, &ctrl2_reg);
 	qsel = ctrl2_reg & MICFIL_CTRL2_QSEL_MASK;
 
-	चयन (qsel) अणु
-	हाल MICFIL_HIGH_QUALITY:
+	switch (qsel) {
+	case MICFIL_HIGH_QUALITY:
 		bclk = rate * 8 * osr / 2; /* kfactor = 0.5 */
-		अवरोध;
-	हाल MICFIL_MEDIUM_QUALITY:
-	हाल MICFIL_VLOW0_QUALITY:
+		break;
+	case MICFIL_MEDIUM_QUALITY:
+	case MICFIL_VLOW0_QUALITY:
 		bclk = rate * 4 * osr * 1; /* kfactor = 1 */
-		अवरोध;
-	हाल MICFIL_LOW_QUALITY:
-	हाल MICFIL_VLOW1_QUALITY:
+		break;
+	case MICFIL_LOW_QUALITY:
+	case MICFIL_VLOW1_QUALITY:
 		bclk = rate * 2 * osr * 2; /* kfactor = 2 */
-		अवरोध;
-	हाल MICFIL_VLOW2_QUALITY:
+		break;
+	case MICFIL_VLOW2_QUALITY:
 		bclk = rate * osr * 4; /* kfactor = 4 */
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(&micfil->pdev->dev,
 			"Please make sure you select a valid quality.\n");
 		bclk = -1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस bclk;
-पूर्ण
+	return bclk;
+}
 
-अटल अंतरभूत पूर्णांक get_clk_भाग(काष्ठा fsl_micfil *micfil,
-			      अचिन्हित पूर्णांक rate)
-अणु
+static inline int get_clk_div(struct fsl_micfil *micfil,
+			      unsigned int rate)
+{
 	u32 ctrl2_reg;
-	दीर्घ mclk_rate;
-	पूर्णांक clk_भाग;
+	long mclk_rate;
+	int clk_div;
 
-	regmap_पढ़ो(micfil->regmap, REG_MICFIL_CTRL2, &ctrl2_reg);
+	regmap_read(micfil->regmap, REG_MICFIL_CTRL2, &ctrl2_reg);
 
 	mclk_rate = clk_get_rate(micfil->mclk);
 
-	clk_भाग = mclk_rate / (get_pdm_clk(micfil, rate) * 2);
+	clk_div = mclk_rate / (get_pdm_clk(micfil, rate) * 2);
 
-	वापस clk_भाग;
-पूर्ण
+	return clk_div;
+}
 
 /* The SRES is a self-negated bit which provides the CPU with the
  * capability to initialize the PDM Interface module through the
- * slave-bus पूर्णांकerface. This bit always पढ़ोs as zero, and this
+ * slave-bus interface. This bit always reads as zero, and this
  * bit is only effective when MDIS is cleared
  */
-अटल पूर्णांक fsl_micfil_reset(काष्ठा device *dev)
-अणु
-	काष्ठा fsl_micfil *micfil = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int fsl_micfil_reset(struct device *dev)
+{
+	struct fsl_micfil *micfil = dev_get_drvdata(dev);
+	int ret;
 
 	ret = regmap_update_bits(micfil->regmap,
 				 REG_MICFIL_CTRL1,
 				 MICFIL_CTRL1_MDIS_MASK,
 				 0);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to clear MDIS bit %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = regmap_update_bits(micfil->regmap,
 				 REG_MICFIL_CTRL1,
 				 MICFIL_CTRL1_SRES_MASK,
 				 MICFIL_CTRL1_SRES);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to reset MICFIL: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fsl_micfil_set_mclk_rate(काष्ठा fsl_micfil *micfil,
-				    अचिन्हित पूर्णांक freq)
-अणु
-	काष्ठा device *dev = &micfil->pdev->dev;
-	पूर्णांक ret;
+static int fsl_micfil_set_mclk_rate(struct fsl_micfil *micfil,
+				    unsigned int freq)
+{
+	struct device *dev = &micfil->pdev->dev;
+	int ret;
 
 	clk_disable_unprepare(micfil->mclk);
 
 	ret = clk_set_rate(micfil->mclk, freq * 1024);
-	अगर (ret)
+	if (ret)
 		dev_warn(dev, "failed to set rate (%u): %d\n",
 			 freq * 1024, ret);
 
 	clk_prepare_enable(micfil->mclk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक fsl_micfil_startup(काष्ठा snd_pcm_substream *substream,
-			      काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा fsl_micfil *micfil = snd_soc_dai_get_drvdata(dai);
+static int fsl_micfil_startup(struct snd_pcm_substream *substream,
+			      struct snd_soc_dai *dai)
+{
+	struct fsl_micfil *micfil = snd_soc_dai_get_drvdata(dai);
 
-	अगर (!micfil) अणु
+	if (!micfil) {
 		dev_err(dai->dev, "micfil dai priv_data not set\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fsl_micfil_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd,
-			      काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा fsl_micfil *micfil = snd_soc_dai_get_drvdata(dai);
-	काष्ठा device *dev = &micfil->pdev->dev;
-	पूर्णांक ret;
+static int fsl_micfil_trigger(struct snd_pcm_substream *substream, int cmd,
+			      struct snd_soc_dai *dai)
+{
+	struct fsl_micfil *micfil = snd_soc_dai_get_drvdata(dai);
+	struct device *dev = &micfil->pdev->dev;
+	int ret;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-	हाल SNDRV_PCM_TRIGGER_RESUME:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+	case SNDRV_PCM_TRIGGER_RESUME:
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 		ret = fsl_micfil_reset(dev);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "failed to soft reset\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		/* DMA Interrupt Selection - DISEL bits
 		 * 00 - DMA and IRQ disabled
@@ -252,55 +251,55 @@ MODULE_DEVICE_TABLE(of, fsl_micfil_dt_ids);
 		ret = regmap_update_bits(micfil->regmap, REG_MICFIL_CTRL1,
 					 MICFIL_CTRL1_DISEL_MASK,
 					 (1 << MICFIL_CTRL1_DISEL_SHIFT));
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "failed to update DISEL bits\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		/* Enable the module */
 		ret = regmap_update_bits(micfil->regmap, REG_MICFIL_CTRL1,
 					 MICFIL_CTRL1_PDMIEN_MASK,
 					 MICFIL_CTRL1_PDMIEN);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "failed to enable the module\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
+	case SNDRV_PCM_TRIGGER_SUSPEND:
+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
 		/* Disable the module */
 		ret = regmap_update_bits(micfil->regmap, REG_MICFIL_CTRL1,
 					 MICFIL_CTRL1_PDMIEN_MASK,
 					 0);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "failed to enable the module\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		ret = regmap_update_bits(micfil->regmap, REG_MICFIL_CTRL1,
 					 MICFIL_CTRL1_DISEL_MASK,
 					 (0 << MICFIL_CTRL1_DISEL_SHIFT));
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "failed to update DISEL bits\n");
-			वापस ret;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return ret;
+		}
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक fsl_set_घड़ी_params(काष्ठा device *dev, अचिन्हित पूर्णांक rate)
-अणु
-	काष्ठा fsl_micfil *micfil = dev_get_drvdata(dev);
-	पूर्णांक clk_भाग;
-	पूर्णांक ret;
+static int fsl_set_clock_params(struct device *dev, unsigned int rate)
+{
+	struct fsl_micfil *micfil = dev_get_drvdata(dev);
+	int clk_div;
+	int ret;
 
 	ret = fsl_micfil_set_mclk_rate(micfil, rate);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(dev, "failed to set mclk[%lu] to rate %u\n",
 			clk_get_rate(micfil->mclk), rate);
 
@@ -308,517 +307,517 @@ MODULE_DEVICE_TABLE(of, fsl_micfil_dt_ids);
 	ret |= regmap_update_bits(micfil->regmap, REG_MICFIL_CTRL2,
 				 MICFIL_CTRL2_CICOSR_MASK,
 				 MICFIL_CTRL2_OSR_DEFAULT);
-	अगर (ret)
+	if (ret)
 		dev_err(dev, "failed to set CICOSR in reg 0x%X\n",
 			REG_MICFIL_CTRL2);
 
 	/* set CLK_DIV */
-	clk_भाग = get_clk_भाग(micfil, rate);
-	अगर (clk_भाग < 0)
+	clk_div = get_clk_div(micfil, rate);
+	if (clk_div < 0)
 		ret = -EINVAL;
 
 	ret |= regmap_update_bits(micfil->regmap, REG_MICFIL_CTRL2,
-				 MICFIL_CTRL2_CLKDIV_MASK, clk_भाग);
-	अगर (ret)
+				 MICFIL_CTRL2_CLKDIV_MASK, clk_div);
+	if (ret)
 		dev_err(dev, "failed to set CLKDIV in reg 0x%X\n",
 			REG_MICFIL_CTRL2);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक fsl_micfil_hw_params(काष्ठा snd_pcm_substream *substream,
-				काष्ठा snd_pcm_hw_params *params,
-				काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा fsl_micfil *micfil = snd_soc_dai_get_drvdata(dai);
-	अचिन्हित पूर्णांक channels = params_channels(params);
-	अचिन्हित पूर्णांक rate = params_rate(params);
-	काष्ठा device *dev = &micfil->pdev->dev;
-	पूर्णांक ret;
+static int fsl_micfil_hw_params(struct snd_pcm_substream *substream,
+				struct snd_pcm_hw_params *params,
+				struct snd_soc_dai *dai)
+{
+	struct fsl_micfil *micfil = snd_soc_dai_get_drvdata(dai);
+	unsigned int channels = params_channels(params);
+	unsigned int rate = params_rate(params);
+	struct device *dev = &micfil->pdev->dev;
+	int ret;
 
 	/* 1. Disable the module */
 	ret = regmap_update_bits(micfil->regmap, REG_MICFIL_CTRL1,
 				 MICFIL_CTRL1_PDMIEN_MASK, 0);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to disable the module\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* enable channels */
 	ret = regmap_update_bits(micfil->regmap, REG_MICFIL_CTRL1,
 				 0xFF, ((1 << channels) - 1));
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to enable channels %d, reg 0x%X\n", ret,
 			REG_MICFIL_CTRL1);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = fsl_set_घड़ी_params(dev, rate);
-	अगर (ret < 0) अणु
+	ret = fsl_set_clock_params(dev, rate);
+	if (ret < 0) {
 		dev_err(dev, "Failed to set clock parameters [%d]\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	micfil->dma_params_rx.maxburst = channels * MICFIL_DMA_MAXBURST_RX;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fsl_micfil_set_dai_sysclk(काष्ठा snd_soc_dai *dai, पूर्णांक clk_id,
-				     अचिन्हित पूर्णांक freq, पूर्णांक dir)
-अणु
-	काष्ठा fsl_micfil *micfil = snd_soc_dai_get_drvdata(dai);
-	काष्ठा device *dev = &micfil->pdev->dev;
+static int fsl_micfil_set_dai_sysclk(struct snd_soc_dai *dai, int clk_id,
+				     unsigned int freq, int dir)
+{
+	struct fsl_micfil *micfil = snd_soc_dai_get_drvdata(dai);
+	struct device *dev = &micfil->pdev->dev;
 
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!freq)
-		वापस 0;
+	if (!freq)
+		return 0;
 
 	ret = fsl_micfil_set_mclk_rate(micfil, freq);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(dev, "failed to set mclk[%lu] to rate %u\n",
 			clk_get_rate(micfil->mclk), freq);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा snd_soc_dai_ops fsl_micfil_dai_ops = अणु
+static const struct snd_soc_dai_ops fsl_micfil_dai_ops = {
 	.startup = fsl_micfil_startup,
 	.trigger = fsl_micfil_trigger,
 	.hw_params = fsl_micfil_hw_params,
 	.set_sysclk = fsl_micfil_set_dai_sysclk,
-पूर्ण;
+};
 
-अटल पूर्णांक fsl_micfil_dai_probe(काष्ठा snd_soc_dai *cpu_dai)
-अणु
-	काष्ठा fsl_micfil *micfil = dev_get_drvdata(cpu_dai->dev);
-	काष्ठा device *dev = cpu_dai->dev;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
-	पूर्णांक i;
+static int fsl_micfil_dai_probe(struct snd_soc_dai *cpu_dai)
+{
+	struct fsl_micfil *micfil = dev_get_drvdata(cpu_dai->dev);
+	struct device *dev = cpu_dai->dev;
+	unsigned int val;
+	int ret;
+	int i;
 
 	/* set qsel to medium */
 	ret = regmap_update_bits(micfil->regmap, REG_MICFIL_CTRL2,
 				 MICFIL_CTRL2_QSEL_MASK, MICFIL_MEDIUM_QUALITY);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to set quality mode bits, reg 0x%X\n",
 			REG_MICFIL_CTRL2);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* set शेष gain to max_gain */
-	regmap_ग_लिखो(micfil->regmap, REG_MICFIL_OUT_CTRL, 0x77777777);
-	क्रम (i = 0; i < 8; i++)
+	/* set default gain to max_gain */
+	regmap_write(micfil->regmap, REG_MICFIL_OUT_CTRL, 0x77777777);
+	for (i = 0; i < 8; i++)
 		micfil->channel_gain[i] = 0xF;
 
-	snd_soc_dai_init_dma_data(cpu_dai, शून्य,
+	snd_soc_dai_init_dma_data(cpu_dai, NULL,
 				  &micfil->dma_params_rx);
 
 	/* FIFO Watermark Control - FIFOWMK*/
-	val = MICFIL_FIFO_CTRL_FIFOWMK(micfil->soc->fअगरo_depth) - 1;
+	val = MICFIL_FIFO_CTRL_FIFOWMK(micfil->soc->fifo_depth) - 1;
 	ret = regmap_update_bits(micfil->regmap, REG_MICFIL_FIFO_CTRL,
 				 MICFIL_FIFO_CTRL_FIFOWMK_MASK,
 				 val);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to set FIFOWMK\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा snd_soc_dai_driver fsl_micfil_dai = अणु
+static struct snd_soc_dai_driver fsl_micfil_dai = {
 	.probe = fsl_micfil_dai_probe,
-	.capture = अणु
+	.capture = {
 		.stream_name = "CPU-Capture",
 		.channels_min = 1,
 		.channels_max = 8,
 		.rates = FSL_MICFIL_RATES,
-		.क्रमmats = FSL_MICFIL_FORMATS,
-	पूर्ण,
+		.formats = FSL_MICFIL_FORMATS,
+	},
 	.ops = &fsl_micfil_dai_ops,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_component_driver fsl_micfil_component = अणु
+static const struct snd_soc_component_driver fsl_micfil_component = {
 	.name		= "fsl-micfil-dai",
 	.controls       = fsl_micfil_snd_controls,
 	.num_controls   = ARRAY_SIZE(fsl_micfil_snd_controls),
 
-पूर्ण;
+};
 
 /* REGMAP */
-अटल स्थिर काष्ठा reg_शेष fsl_micfil_reg_शेषs[] = अणु
-	अणुREG_MICFIL_CTRL1,		0x00000000पूर्ण,
-	अणुREG_MICFIL_CTRL2,		0x00000000पूर्ण,
-	अणुREG_MICFIL_STAT,		0x00000000पूर्ण,
-	अणुREG_MICFIL_FIFO_CTRL,		0x00000007पूर्ण,
-	अणुREG_MICFIL_FIFO_STAT,		0x00000000पूर्ण,
-	अणुREG_MICFIL_DATACH0,		0x00000000पूर्ण,
-	अणुREG_MICFIL_DATACH1,		0x00000000पूर्ण,
-	अणुREG_MICFIL_DATACH2,		0x00000000पूर्ण,
-	अणुREG_MICFIL_DATACH3,		0x00000000पूर्ण,
-	अणुREG_MICFIL_DATACH4,		0x00000000पूर्ण,
-	अणुREG_MICFIL_DATACH5,		0x00000000पूर्ण,
-	अणुREG_MICFIL_DATACH6,		0x00000000पूर्ण,
-	अणुREG_MICFIL_DATACH7,		0x00000000पूर्ण,
-	अणुREG_MICFIL_DC_CTRL,		0x00000000पूर्ण,
-	अणुREG_MICFIL_OUT_CTRL,		0x00000000पूर्ण,
-	अणुREG_MICFIL_OUT_STAT,		0x00000000पूर्ण,
-	अणुREG_MICFIL_VAD0_CTRL1,		0x00000000पूर्ण,
-	अणुREG_MICFIL_VAD0_CTRL2,		0x000A0000पूर्ण,
-	अणुREG_MICFIL_VAD0_STAT,		0x00000000पूर्ण,
-	अणुREG_MICFIL_VAD0_SCONFIG,	0x00000000पूर्ण,
-	अणुREG_MICFIL_VAD0_NCONFIG,	0x80000000पूर्ण,
-	अणुREG_MICFIL_VAD0_NDATA,		0x00000000पूर्ण,
-	अणुREG_MICFIL_VAD0_ZCD,		0x00000004पूर्ण,
-पूर्ण;
+static const struct reg_default fsl_micfil_reg_defaults[] = {
+	{REG_MICFIL_CTRL1,		0x00000000},
+	{REG_MICFIL_CTRL2,		0x00000000},
+	{REG_MICFIL_STAT,		0x00000000},
+	{REG_MICFIL_FIFO_CTRL,		0x00000007},
+	{REG_MICFIL_FIFO_STAT,		0x00000000},
+	{REG_MICFIL_DATACH0,		0x00000000},
+	{REG_MICFIL_DATACH1,		0x00000000},
+	{REG_MICFIL_DATACH2,		0x00000000},
+	{REG_MICFIL_DATACH3,		0x00000000},
+	{REG_MICFIL_DATACH4,		0x00000000},
+	{REG_MICFIL_DATACH5,		0x00000000},
+	{REG_MICFIL_DATACH6,		0x00000000},
+	{REG_MICFIL_DATACH7,		0x00000000},
+	{REG_MICFIL_DC_CTRL,		0x00000000},
+	{REG_MICFIL_OUT_CTRL,		0x00000000},
+	{REG_MICFIL_OUT_STAT,		0x00000000},
+	{REG_MICFIL_VAD0_CTRL1,		0x00000000},
+	{REG_MICFIL_VAD0_CTRL2,		0x000A0000},
+	{REG_MICFIL_VAD0_STAT,		0x00000000},
+	{REG_MICFIL_VAD0_SCONFIG,	0x00000000},
+	{REG_MICFIL_VAD0_NCONFIG,	0x80000000},
+	{REG_MICFIL_VAD0_NDATA,		0x00000000},
+	{REG_MICFIL_VAD0_ZCD,		0x00000004},
+};
 
-अटल bool fsl_micfil_पढ़ोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल REG_MICFIL_CTRL1:
-	हाल REG_MICFIL_CTRL2:
-	हाल REG_MICFIL_STAT:
-	हाल REG_MICFIL_FIFO_CTRL:
-	हाल REG_MICFIL_FIFO_STAT:
-	हाल REG_MICFIL_DATACH0:
-	हाल REG_MICFIL_DATACH1:
-	हाल REG_MICFIL_DATACH2:
-	हाल REG_MICFIL_DATACH3:
-	हाल REG_MICFIL_DATACH4:
-	हाल REG_MICFIL_DATACH5:
-	हाल REG_MICFIL_DATACH6:
-	हाल REG_MICFIL_DATACH7:
-	हाल REG_MICFIL_DC_CTRL:
-	हाल REG_MICFIL_OUT_CTRL:
-	हाल REG_MICFIL_OUT_STAT:
-	हाल REG_MICFIL_VAD0_CTRL1:
-	हाल REG_MICFIL_VAD0_CTRL2:
-	हाल REG_MICFIL_VAD0_STAT:
-	हाल REG_MICFIL_VAD0_SCONFIG:
-	हाल REG_MICFIL_VAD0_NCONFIG:
-	हाल REG_MICFIL_VAD0_NDATA:
-	हाल REG_MICFIL_VAD0_ZCD:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool fsl_micfil_readable_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case REG_MICFIL_CTRL1:
+	case REG_MICFIL_CTRL2:
+	case REG_MICFIL_STAT:
+	case REG_MICFIL_FIFO_CTRL:
+	case REG_MICFIL_FIFO_STAT:
+	case REG_MICFIL_DATACH0:
+	case REG_MICFIL_DATACH1:
+	case REG_MICFIL_DATACH2:
+	case REG_MICFIL_DATACH3:
+	case REG_MICFIL_DATACH4:
+	case REG_MICFIL_DATACH5:
+	case REG_MICFIL_DATACH6:
+	case REG_MICFIL_DATACH7:
+	case REG_MICFIL_DC_CTRL:
+	case REG_MICFIL_OUT_CTRL:
+	case REG_MICFIL_OUT_STAT:
+	case REG_MICFIL_VAD0_CTRL1:
+	case REG_MICFIL_VAD0_CTRL2:
+	case REG_MICFIL_VAD0_STAT:
+	case REG_MICFIL_VAD0_SCONFIG:
+	case REG_MICFIL_VAD0_NCONFIG:
+	case REG_MICFIL_VAD0_NDATA:
+	case REG_MICFIL_VAD0_ZCD:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool fsl_micfil_ग_लिखोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल REG_MICFIL_CTRL1:
-	हाल REG_MICFIL_CTRL2:
-	हाल REG_MICFIL_STAT:		/* Write 1 to Clear */
-	हाल REG_MICFIL_FIFO_CTRL:
-	हाल REG_MICFIL_FIFO_STAT:	/* Write 1 to Clear */
-	हाल REG_MICFIL_DC_CTRL:
-	हाल REG_MICFIL_OUT_CTRL:
-	हाल REG_MICFIL_OUT_STAT:	/* Write 1 to Clear */
-	हाल REG_MICFIL_VAD0_CTRL1:
-	हाल REG_MICFIL_VAD0_CTRL2:
-	हाल REG_MICFIL_VAD0_STAT:	/* Write 1 to Clear */
-	हाल REG_MICFIL_VAD0_SCONFIG:
-	हाल REG_MICFIL_VAD0_NCONFIG:
-	हाल REG_MICFIL_VAD0_ZCD:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool fsl_micfil_writeable_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case REG_MICFIL_CTRL1:
+	case REG_MICFIL_CTRL2:
+	case REG_MICFIL_STAT:		/* Write 1 to Clear */
+	case REG_MICFIL_FIFO_CTRL:
+	case REG_MICFIL_FIFO_STAT:	/* Write 1 to Clear */
+	case REG_MICFIL_DC_CTRL:
+	case REG_MICFIL_OUT_CTRL:
+	case REG_MICFIL_OUT_STAT:	/* Write 1 to Clear */
+	case REG_MICFIL_VAD0_CTRL1:
+	case REG_MICFIL_VAD0_CTRL2:
+	case REG_MICFIL_VAD0_STAT:	/* Write 1 to Clear */
+	case REG_MICFIL_VAD0_SCONFIG:
+	case REG_MICFIL_VAD0_NCONFIG:
+	case REG_MICFIL_VAD0_ZCD:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool fsl_micfil_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल REG_MICFIL_STAT:
-	हाल REG_MICFIL_DATACH0:
-	हाल REG_MICFIL_DATACH1:
-	हाल REG_MICFIL_DATACH2:
-	हाल REG_MICFIL_DATACH3:
-	हाल REG_MICFIL_DATACH4:
-	हाल REG_MICFIL_DATACH5:
-	हाल REG_MICFIL_DATACH6:
-	हाल REG_MICFIL_DATACH7:
-	हाल REG_MICFIL_VAD0_STAT:
-	हाल REG_MICFIL_VAD0_NDATA:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool fsl_micfil_volatile_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case REG_MICFIL_STAT:
+	case REG_MICFIL_DATACH0:
+	case REG_MICFIL_DATACH1:
+	case REG_MICFIL_DATACH2:
+	case REG_MICFIL_DATACH3:
+	case REG_MICFIL_DATACH4:
+	case REG_MICFIL_DATACH5:
+	case REG_MICFIL_DATACH6:
+	case REG_MICFIL_DATACH7:
+	case REG_MICFIL_VAD0_STAT:
+	case REG_MICFIL_VAD0_NDATA:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल स्थिर काष्ठा regmap_config fsl_micfil_regmap_config = अणु
+static const struct regmap_config fsl_micfil_regmap_config = {
 	.reg_bits = 32,
 	.reg_stride = 4,
 	.val_bits = 32,
 
-	.max_रेजिस्टर = REG_MICFIL_VAD0_ZCD,
-	.reg_शेषs = fsl_micfil_reg_शेषs,
-	.num_reg_शेषs = ARRAY_SIZE(fsl_micfil_reg_शेषs),
-	.पढ़ोable_reg = fsl_micfil_पढ़ोable_reg,
-	.अस्थिर_reg = fsl_micfil_अस्थिर_reg,
-	.ग_लिखोable_reg = fsl_micfil_ग_लिखोable_reg,
+	.max_register = REG_MICFIL_VAD0_ZCD,
+	.reg_defaults = fsl_micfil_reg_defaults,
+	.num_reg_defaults = ARRAY_SIZE(fsl_micfil_reg_defaults),
+	.readable_reg = fsl_micfil_readable_reg,
+	.volatile_reg = fsl_micfil_volatile_reg,
+	.writeable_reg = fsl_micfil_writeable_reg,
 	.cache_type = REGCACHE_RBTREE,
-पूर्ण;
+};
 
 /* END OF REGMAP */
 
-अटल irqवापस_t micfil_isr(पूर्णांक irq, व्योम *devid)
-अणु
-	काष्ठा fsl_micfil *micfil = (काष्ठा fsl_micfil *)devid;
-	काष्ठा platक्रमm_device *pdev = micfil->pdev;
+static irqreturn_t micfil_isr(int irq, void *devid)
+{
+	struct fsl_micfil *micfil = (struct fsl_micfil *)devid;
+	struct platform_device *pdev = micfil->pdev;
 	u32 stat_reg;
-	u32 fअगरo_stat_reg;
+	u32 fifo_stat_reg;
 	u32 ctrl1_reg;
 	bool dma_enabled;
-	पूर्णांक i;
+	int i;
 
-	regmap_पढ़ो(micfil->regmap, REG_MICFIL_STAT, &stat_reg);
-	regmap_पढ़ो(micfil->regmap, REG_MICFIL_CTRL1, &ctrl1_reg);
-	regmap_पढ़ो(micfil->regmap, REG_MICFIL_FIFO_STAT, &fअगरo_stat_reg);
+	regmap_read(micfil->regmap, REG_MICFIL_STAT, &stat_reg);
+	regmap_read(micfil->regmap, REG_MICFIL_CTRL1, &ctrl1_reg);
+	regmap_read(micfil->regmap, REG_MICFIL_FIFO_STAT, &fifo_stat_reg);
 
 	dma_enabled = MICFIL_DMA_ENABLED(ctrl1_reg);
 
 	/* Channel 0-7 Output Data Flags */
-	क्रम (i = 0; i < MICFIL_OUTPUT_CHANNELS; i++) अणु
-		अगर (stat_reg & MICFIL_STAT_CHXF_MASK(i))
+	for (i = 0; i < MICFIL_OUTPUT_CHANNELS; i++) {
+		if (stat_reg & MICFIL_STAT_CHXF_MASK(i))
 			dev_dbg(&pdev->dev,
 				"Data available in Data Channel %d\n", i);
-		/* अगर DMA is not enabled, field must be written with 1
+		/* if DMA is not enabled, field must be written with 1
 		 * to clear
 		 */
-		अगर (!dma_enabled)
-			regmap_ग_लिखो_bits(micfil->regmap,
+		if (!dma_enabled)
+			regmap_write_bits(micfil->regmap,
 					  REG_MICFIL_STAT,
 					  MICFIL_STAT_CHXF_MASK(i),
 					  1);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < MICFIL_FIFO_NUM; i++) अणु
-		अगर (fअगरo_stat_reg & MICFIL_FIFO_STAT_FIFOX_OVER_MASK(i))
+	for (i = 0; i < MICFIL_FIFO_NUM; i++) {
+		if (fifo_stat_reg & MICFIL_FIFO_STAT_FIFOX_OVER_MASK(i))
 			dev_dbg(&pdev->dev,
 				"FIFO Overflow Exception flag for channel %d\n",
 				i);
 
-		अगर (fअगरo_stat_reg & MICFIL_FIFO_STAT_FIFOX_UNDER_MASK(i))
+		if (fifo_stat_reg & MICFIL_FIFO_STAT_FIFOX_UNDER_MASK(i))
 			dev_dbg(&pdev->dev,
 				"FIFO Underflow Exception flag for channel %d\n",
 				i);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t micfil_err_isr(पूर्णांक irq, व्योम *devid)
-अणु
-	काष्ठा fsl_micfil *micfil = (काष्ठा fsl_micfil *)devid;
-	काष्ठा platक्रमm_device *pdev = micfil->pdev;
+static irqreturn_t micfil_err_isr(int irq, void *devid)
+{
+	struct fsl_micfil *micfil = (struct fsl_micfil *)devid;
+	struct platform_device *pdev = micfil->pdev;
 	u32 stat_reg;
 
-	regmap_पढ़ो(micfil->regmap, REG_MICFIL_STAT, &stat_reg);
+	regmap_read(micfil->regmap, REG_MICFIL_STAT, &stat_reg);
 
-	अगर (stat_reg & MICFIL_STAT_BSY_FIL_MASK)
+	if (stat_reg & MICFIL_STAT_BSY_FIL_MASK)
 		dev_dbg(&pdev->dev, "isr: Decimation Filter is running\n");
 
-	अगर (stat_reg & MICFIL_STAT_FIR_RDY_MASK)
+	if (stat_reg & MICFIL_STAT_FIR_RDY_MASK)
 		dev_dbg(&pdev->dev, "isr: FIR Filter Data ready\n");
 
-	अगर (stat_reg & MICFIL_STAT_LOWFREQF_MASK) अणु
+	if (stat_reg & MICFIL_STAT_LOWFREQF_MASK) {
 		dev_dbg(&pdev->dev, "isr: ipg_clk_app is too low\n");
-		regmap_ग_लिखो_bits(micfil->regmap, REG_MICFIL_STAT,
+		regmap_write_bits(micfil->regmap, REG_MICFIL_STAT,
 				  MICFIL_STAT_LOWFREQF_MASK, 1);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक fsl_micfil_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा fsl_micfil *micfil;
-	काष्ठा resource *res;
-	व्योम __iomem *regs;
-	पूर्णांक ret, i;
-	अचिन्हित दीर्घ irqflag = 0;
+static int fsl_micfil_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct fsl_micfil *micfil;
+	struct resource *res;
+	void __iomem *regs;
+	int ret, i;
+	unsigned long irqflag = 0;
 
-	micfil = devm_kzalloc(&pdev->dev, माप(*micfil), GFP_KERNEL);
-	अगर (!micfil)
-		वापस -ENOMEM;
+	micfil = devm_kzalloc(&pdev->dev, sizeof(*micfil), GFP_KERNEL);
+	if (!micfil)
+		return -ENOMEM;
 
 	micfil->pdev = pdev;
-	म_नकलन(micfil->name, np->name, माप(micfil->name) - 1);
+	strncpy(micfil->name, np->name, sizeof(micfil->name) - 1);
 
 	micfil->soc = of_device_get_match_data(&pdev->dev);
 
-	/* ipg_clk is used to control the रेजिस्टरs
+	/* ipg_clk is used to control the registers
 	 * ipg_clk_app is used to operate the filter
 	 */
 	micfil->mclk = devm_clk_get(&pdev->dev, "ipg_clk_app");
-	अगर (IS_ERR(micfil->mclk)) अणु
+	if (IS_ERR(micfil->mclk)) {
 		dev_err(&pdev->dev, "failed to get core clock: %ld\n",
 			PTR_ERR(micfil->mclk));
-		वापस PTR_ERR(micfil->mclk);
-	पूर्ण
+		return PTR_ERR(micfil->mclk);
+	}
 
 	micfil->busclk = devm_clk_get(&pdev->dev, "ipg_clk");
-	अगर (IS_ERR(micfil->busclk)) अणु
+	if (IS_ERR(micfil->busclk)) {
 		dev_err(&pdev->dev, "failed to get ipg clock: %ld\n",
 			PTR_ERR(micfil->busclk));
-		वापस PTR_ERR(micfil->busclk);
-	पूर्ण
+		return PTR_ERR(micfil->busclk);
+	}
 
 	/* init regmap */
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	regs = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(regs))
-		वापस PTR_ERR(regs);
+	if (IS_ERR(regs))
+		return PTR_ERR(regs);
 
 	micfil->regmap = devm_regmap_init_mmio(&pdev->dev,
 					       regs,
 					       &fsl_micfil_regmap_config);
-	अगर (IS_ERR(micfil->regmap)) अणु
+	if (IS_ERR(micfil->regmap)) {
 		dev_err(&pdev->dev, "failed to init MICFIL regmap: %ld\n",
 			PTR_ERR(micfil->regmap));
-		वापस PTR_ERR(micfil->regmap);
-	पूर्ण
+		return PTR_ERR(micfil->regmap);
+	}
 
-	/* dataline mask क्रम RX */
-	ret = of_property_पढ़ो_u32_index(np,
+	/* dataline mask for RX */
+	ret = of_property_read_u32_index(np,
 					 "fsl,dataline",
 					 0,
 					 &micfil->dataline);
-	अगर (ret)
+	if (ret)
 		micfil->dataline = 1;
 
-	अगर (micfil->dataline & ~micfil->soc->dataline) अणु
+	if (micfil->dataline & ~micfil->soc->dataline) {
 		dev_err(&pdev->dev, "dataline setting error, Mask is 0x%X\n",
 			micfil->soc->dataline);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* get IRQs */
-	क्रम (i = 0; i < MICFIL_IRQ_LINES; i++) अणु
-		micfil->irq[i] = platक्रमm_get_irq(pdev, i);
+	for (i = 0; i < MICFIL_IRQ_LINES; i++) {
+		micfil->irq[i] = platform_get_irq(pdev, i);
 		dev_err(&pdev->dev, "GET IRQ: %d\n", micfil->irq[i]);
-		अगर (micfil->irq[i] < 0)
-			वापस micfil->irq[i];
-	पूर्ण
+		if (micfil->irq[i] < 0)
+			return micfil->irq[i];
+	}
 
-	अगर (of_property_पढ़ो_bool(np, "fsl,shared-interrupt"))
+	if (of_property_read_bool(np, "fsl,shared-interrupt"))
 		irqflag = IRQF_SHARED;
 
-	/* Digital Microphone पूर्णांकerface पूर्णांकerrupt */
+	/* Digital Microphone interface interrupt */
 	ret = devm_request_irq(&pdev->dev, micfil->irq[0],
 			       micfil_isr, irqflag,
 			       micfil->name, micfil);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "failed to claim mic interface irq %u\n",
 			micfil->irq[0]);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Digital Microphone पूर्णांकerface error पूर्णांकerrupt */
+	/* Digital Microphone interface error interrupt */
 	ret = devm_request_irq(&pdev->dev, micfil->irq[1],
 			       micfil_err_isr, irqflag,
 			       micfil->name, micfil);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "failed to claim mic interface error irq %u\n",
 			micfil->irq[1]);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	micfil->dma_params_rx.chan_name = "rx";
 	micfil->dma_params_rx.addr = res->start + REG_MICFIL_DATACH0;
 	micfil->dma_params_rx.maxburst = MICFIL_DMA_MAXBURST_RX;
 
 
-	platक्रमm_set_drvdata(pdev, micfil);
+	platform_set_drvdata(pdev, micfil);
 
-	pm_runसमय_enable(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 	regcache_cache_only(micfil->regmap, true);
 
-	ret = devm_snd_soc_रेजिस्टर_component(&pdev->dev, &fsl_micfil_component,
+	ret = devm_snd_soc_register_component(&pdev->dev, &fsl_micfil_component,
 					      &fsl_micfil_dai, 1);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "failed to register component %s\n",
 			fsl_micfil_component.name);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = devm_snd_dmaengine_pcm_रेजिस्टर(&pdev->dev, शून्य, 0);
-	अगर (ret)
+	ret = devm_snd_dmaengine_pcm_register(&pdev->dev, NULL, 0);
+	if (ret)
 		dev_err(&pdev->dev, "failed to pcm register\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __maybe_unused fsl_micfil_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा fsl_micfil *micfil = dev_get_drvdata(dev);
+static int __maybe_unused fsl_micfil_runtime_suspend(struct device *dev)
+{
+	struct fsl_micfil *micfil = dev_get_drvdata(dev);
 
 	regcache_cache_only(micfil->regmap, true);
 
 	clk_disable_unprepare(micfil->mclk);
 	clk_disable_unprepare(micfil->busclk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused fsl_micfil_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा fsl_micfil *micfil = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int __maybe_unused fsl_micfil_runtime_resume(struct device *dev)
+{
+	struct fsl_micfil *micfil = dev_get_drvdata(dev);
+	int ret;
 
 	ret = clk_prepare_enable(micfil->busclk);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = clk_prepare_enable(micfil->mclk);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		clk_disable_unprepare(micfil->busclk);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	regcache_cache_only(micfil->regmap, false);
 	regcache_mark_dirty(micfil->regmap);
 	regcache_sync(micfil->regmap);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused fsl_micfil_suspend(काष्ठा device *dev)
-अणु
-	pm_runसमय_क्रमce_suspend(dev);
+static int __maybe_unused fsl_micfil_suspend(struct device *dev)
+{
+	pm_runtime_force_suspend(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused fsl_micfil_resume(काष्ठा device *dev)
-अणु
-	pm_runसमय_क्रमce_resume(dev);
+static int __maybe_unused fsl_micfil_resume(struct device *dev)
+{
+	pm_runtime_force_resume(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops fsl_micfil_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(fsl_micfil_runसमय_suspend,
-			   fsl_micfil_runसमय_resume,
-			   शून्य)
+static const struct dev_pm_ops fsl_micfil_pm_ops = {
+	SET_RUNTIME_PM_OPS(fsl_micfil_runtime_suspend,
+			   fsl_micfil_runtime_resume,
+			   NULL)
 	SET_SYSTEM_SLEEP_PM_OPS(fsl_micfil_suspend,
 				fsl_micfil_resume)
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_driver fsl_micfil_driver = अणु
+static struct platform_driver fsl_micfil_driver = {
 	.probe = fsl_micfil_probe,
-	.driver = अणु
+	.driver = {
 		.name = "fsl-micfil-dai",
 		.pm = &fsl_micfil_pm_ops,
 		.of_match_table = fsl_micfil_dt_ids,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(fsl_micfil_driver);
+	},
+};
+module_platform_driver(fsl_micfil_driver);
 
 MODULE_AUTHOR("Cosmin-Gabriel Samoila <cosmin.samoila@nxp.com>");
 MODULE_DESCRIPTION("NXP PDM Microphone Interface (MICFIL) driver");

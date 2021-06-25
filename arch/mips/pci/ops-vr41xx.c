@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  ops-vr41xx.c, PCI configuration routines क्रम the PCIU of NEC VR4100 series.
+ *  ops-vr41xx.c, PCI configuration routines for the PCIU of NEC VR4100 series.
  *
  *  Copyright (C) 2001-2003 MontaVista Software Inc.
  *    Author: Yoichi Yuasa <source@mvista.com>
@@ -12,103 +11,103 @@
  *  MontaVista Software Inc. <source@mvista.com>
  *  - New creation, NEC VR4122 and VR4131 are supported.
  */
-#समावेश <linux/pci.h>
-#समावेश <linux/types.h>
+#include <linux/pci.h>
+#include <linux/types.h>
 
-#समावेश <यंत्र/पन.स>
+#include <asm/io.h>
 
-#घोषणा PCICONFDREG	(व्योम __iomem *)KSEG1ADDR(0x0f000c14)
-#घोषणा PCICONFAREG	(व्योम __iomem *)KSEG1ADDR(0x0f000c18)
+#define PCICONFDREG	(void __iomem *)KSEG1ADDR(0x0f000c14)
+#define PCICONFAREG	(void __iomem *)KSEG1ADDR(0x0f000c18)
 
-अटल अंतरभूत पूर्णांक set_pci_configuration_address(अचिन्हित अक्षर number,
-						अचिन्हित पूर्णांक devfn, पूर्णांक where)
-अणु
-	अगर (number == 0) अणु
+static inline int set_pci_configuration_address(unsigned char number,
+						unsigned int devfn, int where)
+{
+	if (number == 0) {
 		/*
 		 * Type 0 configuration
 		 */
-		अगर (PCI_SLOT(devfn) < 11 || where > 0xff)
-			वापस -EINVAL;
+		if (PCI_SLOT(devfn) < 11 || where > 0xff)
+			return -EINVAL;
 
-		ग_लिखोl((1U << PCI_SLOT(devfn)) | (PCI_FUNC(devfn) << 8) |
+		writel((1U << PCI_SLOT(devfn)) | (PCI_FUNC(devfn) << 8) |
 		       (where & 0xfc), PCICONFAREG);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * Type 1 configuration
 		 */
-		अगर (where > 0xff)
-			वापस -EINVAL;
+		if (where > 0xff)
+			return -EINVAL;
 
-		ग_लिखोl(((uपूर्णांक32_t)number << 16) | ((devfn & 0xff) << 8) |
+		writel(((uint32_t)number << 16) | ((devfn & 0xff) << 8) |
 		       (where & 0xfc) | 1U, PCICONFAREG);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pci_config_पढ़ो(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक where,
-			   पूर्णांक size, uपूर्णांक32_t *val)
-अणु
-	uपूर्णांक32_t data;
+static int pci_config_read(struct pci_bus *bus, unsigned int devfn, int where,
+			   int size, uint32_t *val)
+{
+	uint32_t data;
 
 	*val = 0xffffffffU;
-	अगर (set_pci_configuration_address(bus->number, devfn, where) < 0)
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	if (set_pci_configuration_address(bus->number, devfn, where) < 0)
+		return PCIBIOS_DEVICE_NOT_FOUND;
 
-	data = पढ़ोl(PCICONFDREG);
+	data = readl(PCICONFDREG);
 
-	चयन (size) अणु
-	हाल 1:
+	switch (size) {
+	case 1:
 		*val = (data >> ((where & 3) << 3)) & 0xffU;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		*val = (data >> ((where & 2) << 3)) & 0xffffU;
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		*val = data;
-		अवरोध;
-	शेष:
-		वापस PCIBIOS_FUNC_NOT_SUPPORTED;
-	पूर्ण
+		break;
+	default:
+		return PCIBIOS_FUNC_NOT_SUPPORTED;
+	}
 
-	वापस PCIBIOS_SUCCESSFUL;
-पूर्ण
+	return PCIBIOS_SUCCESSFUL;
+}
 
-अटल पूर्णांक pci_config_ग_लिखो(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक where,
-			    पूर्णांक size, uपूर्णांक32_t val)
-अणु
-	uपूर्णांक32_t data;
-	पूर्णांक shअगरt;
+static int pci_config_write(struct pci_bus *bus, unsigned int devfn, int where,
+			    int size, uint32_t val)
+{
+	uint32_t data;
+	int shift;
 
-	अगर (set_pci_configuration_address(bus->number, devfn, where) < 0)
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	if (set_pci_configuration_address(bus->number, devfn, where) < 0)
+		return PCIBIOS_DEVICE_NOT_FOUND;
 
-	data = पढ़ोl(PCICONFDREG);
+	data = readl(PCICONFDREG);
 
-	चयन (size) अणु
-	हाल 1:
-		shअगरt = (where & 3) << 3;
-		data &= ~(0xffU << shअगरt);
-		data |= ((val & 0xffU) << shअगरt);
-		अवरोध;
-	हाल 2:
-		shअगरt = (where & 2) << 3;
-		data &= ~(0xffffU << shअगरt);
-		data |= ((val & 0xffffU) << shअगरt);
-		अवरोध;
-	हाल 4:
+	switch (size) {
+	case 1:
+		shift = (where & 3) << 3;
+		data &= ~(0xffU << shift);
+		data |= ((val & 0xffU) << shift);
+		break;
+	case 2:
+		shift = (where & 2) << 3;
+		data &= ~(0xffffU << shift);
+		data |= ((val & 0xffffU) << shift);
+		break;
+	case 4:
 		data = val;
-		अवरोध;
-	शेष:
-		वापस PCIBIOS_FUNC_NOT_SUPPORTED;
-	पूर्ण
+		break;
+	default:
+		return PCIBIOS_FUNC_NOT_SUPPORTED;
+	}
 
-	ग_लिखोl(data, PCICONFDREG);
+	writel(data, PCICONFDREG);
 
-	वापस PCIBIOS_SUCCESSFUL;
-पूर्ण
+	return PCIBIOS_SUCCESSFUL;
+}
 
-काष्ठा pci_ops vr41xx_pci_ops = अणु
-	.पढ़ो	= pci_config_पढ़ो,
-	.ग_लिखो	= pci_config_ग_लिखो,
-पूर्ण;
+struct pci_ops vr41xx_pci_ops = {
+	.read	= pci_config_read,
+	.write	= pci_config_write,
+};

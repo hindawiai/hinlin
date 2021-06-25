@@ -1,349 +1,348 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (C) 2015 Anton Ivanov (aivanov@अणुbrocade.com,kot-begemot.co.ukपूर्ण)
+ * Copyright (C) 2015 Anton Ivanov (aivanov@{brocade.com,kot-begemot.co.uk})
  * Copyright (C) 2015 Thomas Meyer (thomas@m3y3r.de)
- * Copyright (C) 2002 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
+ * Copyright (C) 2002 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
-#अगर_अघोषित __OS_H__
-#घोषणा __OS_H__
+#ifndef __OS_H__
+#define __OS_H__
 
-#समावेश <मानकतर्क.स>
-#समावेश <irq_user.h>
-#समावेश <दीर्घ_लाँघ.h>
-#समावेश <mm_id.h>
+#include <stdarg.h>
+#include <irq_user.h>
+#include <longjmp.h>
+#include <mm_id.h>
 
-#घोषणा CATCH_EINTR(expr) जबतक ((त्रुटि_सं = 0, ((expr) < 0)) && (त्रुटि_सं == EINTR))
+#define CATCH_EINTR(expr) while ((errno = 0, ((expr) < 0)) && (errno == EINTR))
 
-#घोषणा OS_TYPE_खाता 1
-#घोषणा OS_TYPE_सूची 2
-#घोषणा OS_TYPE_SYMLINK 3
-#घोषणा OS_TYPE_CHARDEV 4
-#घोषणा OS_TYPE_BLOCKDEV 5
-#घोषणा OS_TYPE_FIFO 6
-#घोषणा OS_TYPE_SOCK 7
+#define OS_TYPE_FILE 1
+#define OS_TYPE_DIR 2
+#define OS_TYPE_SYMLINK 3
+#define OS_TYPE_CHARDEV 4
+#define OS_TYPE_BLOCKDEV 5
+#define OS_TYPE_FIFO 6
+#define OS_TYPE_SOCK 7
 
 /* os_access() flags */
-#घोषणा OS_ACC_F_OK    0       /* Test क्रम existence.  */
-#घोषणा OS_ACC_X_OK    1       /* Test क्रम execute permission.  */
-#घोषणा OS_ACC_W_OK    2       /* Test क्रम ग_लिखो permission.  */
-#घोषणा OS_ACC_R_OK    4       /* Test क्रम पढ़ो permission.  */
-#घोषणा OS_ACC_RW_OK   (OS_ACC_W_OK | OS_ACC_R_OK) /* Test क्रम RW permission */
+#define OS_ACC_F_OK    0       /* Test for existence.  */
+#define OS_ACC_X_OK    1       /* Test for execute permission.  */
+#define OS_ACC_W_OK    2       /* Test for write permission.  */
+#define OS_ACC_R_OK    4       /* Test for read permission.  */
+#define OS_ACC_RW_OK   (OS_ACC_W_OK | OS_ACC_R_OK) /* Test for RW permission */
 
-#अगर_घोषित CONFIG_64BIT
-#घोषणा OS_LIB_PATH	"/usr/lib64/"
-#अन्यथा
-#घोषणा OS_LIB_PATH	"/usr/lib/"
-#पूर्ण_अगर
+#ifdef CONFIG_64BIT
+#define OS_LIB_PATH	"/usr/lib64/"
+#else
+#define OS_LIB_PATH	"/usr/lib/"
+#endif
 
-#घोषणा OS_SENDMSG_MAX_FDS 8
+#define OS_SENDMSG_MAX_FDS 8
 
 /*
  * types taken from stat_file() in hostfs_user.c
- * (अगर they are wrong here, they are wrong there...).
+ * (if they are wrong here, they are wrong there...).
  */
-काष्ठा uml_stat अणु
-	पूर्णांक                ust_dev;        /* device */
-	अचिन्हित दीर्घ दीर्घ ust_ino;        /* inode */
-	पूर्णांक                ust_mode;       /* protection */
-	पूर्णांक                ust_nlink;      /* number of hard links */
-	पूर्णांक                ust_uid;        /* user ID of owner */
-	पूर्णांक                ust_gid;        /* group ID of owner */
-	अचिन्हित दीर्घ दीर्घ ust_size;       /* total size, in bytes */
-	पूर्णांक                ust_blksize;    /* blocksize क्रम fileप्रणाली I/O */
-	अचिन्हित दीर्घ दीर्घ ust_blocks;     /* number of blocks allocated */
-	अचिन्हित दीर्घ      ust_aसमय;      /* समय of last access */
-	अचिन्हित दीर्घ      ust_mसमय;      /* समय of last modअगरication */
-	अचिन्हित दीर्घ      ust_स_समय;      /* समय of last change */
-पूर्ण;
+struct uml_stat {
+	int                ust_dev;        /* device */
+	unsigned long long ust_ino;        /* inode */
+	int                ust_mode;       /* protection */
+	int                ust_nlink;      /* number of hard links */
+	int                ust_uid;        /* user ID of owner */
+	int                ust_gid;        /* group ID of owner */
+	unsigned long long ust_size;       /* total size, in bytes */
+	int                ust_blksize;    /* blocksize for filesystem I/O */
+	unsigned long long ust_blocks;     /* number of blocks allocated */
+	unsigned long      ust_atime;      /* time of last access */
+	unsigned long      ust_mtime;      /* time of last modification */
+	unsigned long      ust_ctime;      /* time of last change */
+};
 
-काष्ठा खोलोflags अणु
-	अचिन्हित पूर्णांक r : 1;
-	अचिन्हित पूर्णांक w : 1;
-	अचिन्हित पूर्णांक s : 1;	/* O_SYNC */
-	अचिन्हित पूर्णांक c : 1;	/* O_CREAT */
-	अचिन्हित पूर्णांक t : 1;	/* O_TRUNC */
-	अचिन्हित पूर्णांक a : 1;	/* O_APPEND */
-	अचिन्हित पूर्णांक e : 1;	/* O_EXCL */
-	अचिन्हित पूर्णांक cl : 1;    /* FD_CLOEXEC */
-पूर्ण;
+struct openflags {
+	unsigned int r : 1;
+	unsigned int w : 1;
+	unsigned int s : 1;	/* O_SYNC */
+	unsigned int c : 1;	/* O_CREAT */
+	unsigned int t : 1;	/* O_TRUNC */
+	unsigned int a : 1;	/* O_APPEND */
+	unsigned int e : 1;	/* O_EXCL */
+	unsigned int cl : 1;    /* FD_CLOEXEC */
+};
 
-#घोषणा OPENFLAGS() ((काष्ठा खोलोflags) अणु .r = 0, .w = 0, .s = 0, .c = 0, \
-					  .t = 0, .a = 0, .e = 0, .cl = 0 पूर्ण)
+#define OPENFLAGS() ((struct openflags) { .r = 0, .w = 0, .s = 0, .c = 0, \
+					  .t = 0, .a = 0, .e = 0, .cl = 0 })
 
-अटल अंतरभूत काष्ठा खोलोflags of_पढ़ो(काष्ठा खोलोflags flags)
-अणु
+static inline struct openflags of_read(struct openflags flags)
+{
 	flags.r = 1;
-	वापस flags;
-पूर्ण
+	return flags;
+}
 
-अटल अंतरभूत काष्ठा खोलोflags of_ग_लिखो(काष्ठा खोलोflags flags)
-अणु
+static inline struct openflags of_write(struct openflags flags)
+{
 	flags.w = 1;
-	वापस flags;
-पूर्ण
+	return flags;
+}
 
-अटल अंतरभूत काष्ठा खोलोflags of_rdwr(काष्ठा खोलोflags flags)
-अणु
-	वापस of_पढ़ो(of_ग_लिखो(flags));
-पूर्ण
+static inline struct openflags of_rdwr(struct openflags flags)
+{
+	return of_read(of_write(flags));
+}
 
-अटल अंतरभूत काष्ठा खोलोflags of_set_rw(काष्ठा खोलोflags flags, पूर्णांक r, पूर्णांक w)
-अणु
+static inline struct openflags of_set_rw(struct openflags flags, int r, int w)
+{
 	flags.r = r;
 	flags.w = w;
-	वापस flags;
-पूर्ण
+	return flags;
+}
 
-अटल अंतरभूत काष्ठा खोलोflags of_sync(काष्ठा खोलोflags flags)
-अणु
+static inline struct openflags of_sync(struct openflags flags)
+{
 	flags.s = 1;
-	वापस flags;
-पूर्ण
+	return flags;
+}
 
-अटल अंतरभूत काष्ठा खोलोflags of_create(काष्ठा खोलोflags flags)
-अणु
+static inline struct openflags of_create(struct openflags flags)
+{
 	flags.c = 1;
-	वापस flags;
-पूर्ण
+	return flags;
+}
 
-अटल अंतरभूत काष्ठा खोलोflags of_trunc(काष्ठा खोलोflags flags)
-अणु
+static inline struct openflags of_trunc(struct openflags flags)
+{
 	flags.t = 1;
-	वापस flags;
-पूर्ण
+	return flags;
+}
 
-अटल अंतरभूत काष्ठा खोलोflags of_append(काष्ठा खोलोflags flags)
-अणु
+static inline struct openflags of_append(struct openflags flags)
+{
 	flags.a = 1;
-	वापस flags;
-पूर्ण
+	return flags;
+}
 
-अटल अंतरभूत काष्ठा खोलोflags of_excl(काष्ठा खोलोflags flags)
-अणु
+static inline struct openflags of_excl(struct openflags flags)
+{
 	flags.e = 1;
-	वापस flags;
-पूर्ण
+	return flags;
+}
 
-अटल अंतरभूत काष्ठा खोलोflags of_cloexec(काष्ठा खोलोflags flags)
-अणु
+static inline struct openflags of_cloexec(struct openflags flags)
+{
 	flags.cl = 1;
-	वापस flags;
-पूर्ण
+	return flags;
+}
 
 /* file.c */
-बाह्य पूर्णांक os_stat_file(स्थिर अक्षर *file_name, काष्ठा uml_stat *buf);
-बाह्य पूर्णांक os_stat_fd(स्थिर पूर्णांक fd, काष्ठा uml_stat *buf);
-बाह्य पूर्णांक os_access(स्थिर अक्षर *file, पूर्णांक mode);
-बाह्य पूर्णांक os_set_exec_बंद(पूर्णांक fd);
-बाह्य पूर्णांक os_ioctl_generic(पूर्णांक fd, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
-बाह्य पूर्णांक os_get_अगरname(पूर्णांक fd, अक्षर *namebuf);
-बाह्य पूर्णांक os_set_slip(पूर्णांक fd);
-बाह्य पूर्णांक os_mode_fd(पूर्णांक fd, पूर्णांक mode);
-बाह्य पूर्णांक os_fsync_file(पूर्णांक fd);
+extern int os_stat_file(const char *file_name, struct uml_stat *buf);
+extern int os_stat_fd(const int fd, struct uml_stat *buf);
+extern int os_access(const char *file, int mode);
+extern int os_set_exec_close(int fd);
+extern int os_ioctl_generic(int fd, unsigned int cmd, unsigned long arg);
+extern int os_get_ifname(int fd, char *namebuf);
+extern int os_set_slip(int fd);
+extern int os_mode_fd(int fd, int mode);
+extern int os_fsync_file(int fd);
 
-बाह्य पूर्णांक os_seek_file(पूर्णांक fd, अचिन्हित दीर्घ दीर्घ offset);
-बाह्य पूर्णांक os_खोलो_file(स्थिर अक्षर *file, काष्ठा खोलोflags flags, पूर्णांक mode);
-बाह्य पूर्णांक os_पढ़ो_file(पूर्णांक fd, व्योम *buf, पूर्णांक len);
-बाह्य पूर्णांक os_ग_लिखो_file(पूर्णांक fd, स्थिर व्योम *buf, पूर्णांक count);
-बाह्य पूर्णांक os_sync_file(पूर्णांक fd);
-बाह्य पूर्णांक os_file_size(स्थिर अक्षर *file, अचिन्हित दीर्घ दीर्घ *size_out);
-बाह्य पूर्णांक os_pपढ़ो_file(पूर्णांक fd, व्योम *buf, पूर्णांक len, अचिन्हित दीर्घ दीर्घ offset);
-बाह्य पूर्णांक os_pग_लिखो_file(पूर्णांक fd, स्थिर व्योम *buf, पूर्णांक count, अचिन्हित दीर्घ दीर्घ offset);
-बाह्य पूर्णांक os_file_modसमय(स्थिर अक्षर *file, दीर्घ दीर्घ *modसमय);
-बाह्य पूर्णांक os_pipe(पूर्णांक *fd, पूर्णांक stream, पूर्णांक बंद_on_exec);
-बाह्य पूर्णांक os_set_fd_async(पूर्णांक fd);
-बाह्य पूर्णांक os_clear_fd_async(पूर्णांक fd);
-बाह्य पूर्णांक os_set_fd_block(पूर्णांक fd, पूर्णांक blocking);
-बाह्य पूर्णांक os_accept_connection(पूर्णांक fd);
-बाह्य पूर्णांक os_create_unix_socket(स्थिर अक्षर *file, पूर्णांक len, पूर्णांक बंद_on_exec);
-बाह्य पूर्णांक os_shutकरोwn_socket(पूर्णांक fd, पूर्णांक r, पूर्णांक w);
-बाह्य व्योम os_बंद_file(पूर्णांक fd);
-बाह्य पूर्णांक os_rcv_fd(पूर्णांक fd, पूर्णांक *helper_pid_out);
-बाह्य पूर्णांक create_unix_socket(अक्षर *file, पूर्णांक len, पूर्णांक बंद_on_exec);
-बाह्य पूर्णांक os_connect_socket(स्थिर अक्षर *name);
-बाह्य पूर्णांक os_file_type(अक्षर *file);
-बाह्य पूर्णांक os_file_mode(स्थिर अक्षर *file, काष्ठा खोलोflags *mode_out);
-बाह्य पूर्णांक os_lock_file(पूर्णांक fd, पूर्णांक excl);
-बाह्य व्योम os_flush_मानक_निकास(व्योम);
-बाह्य पूर्णांक os_stat_fileप्रणाली(अक्षर *path, दीर्घ *bsize_out,
-			      दीर्घ दीर्घ *blocks_out, दीर्घ दीर्घ *bमुक्त_out,
-			      दीर्घ दीर्घ *bavail_out, दीर्घ दीर्घ *files_out,
-			      दीर्घ दीर्घ *fमुक्त_out, व्योम *fsid_out,
-			      पूर्णांक fsid_size, दीर्घ *namelen_out,
-			      दीर्घ *spare_out);
-बाह्य पूर्णांक os_change_dir(अक्षर *dir);
-बाह्य पूर्णांक os_fchange_dir(पूर्णांक fd);
-बाह्य अचिन्हित os_major(अचिन्हित दीर्घ दीर्घ dev);
-बाह्य अचिन्हित os_minor(अचिन्हित दीर्घ दीर्घ dev);
-बाह्य अचिन्हित दीर्घ दीर्घ os_makedev(अचिन्हित major, अचिन्हित minor);
-बाह्य पूर्णांक os_falloc_punch(पूर्णांक fd, अचिन्हित दीर्घ दीर्घ offset, पूर्णांक count);
-बाह्य पूर्णांक os_eventfd(अचिन्हित पूर्णांक initval, पूर्णांक flags);
-बाह्य पूर्णांक os_sendmsg_fds(पूर्णांक fd, स्थिर व्योम *buf, अचिन्हित पूर्णांक len,
-			  स्थिर पूर्णांक *fds, अचिन्हित पूर्णांक fds_num);
-पूर्णांक os_poll(अचिन्हित पूर्णांक n, स्थिर पूर्णांक *fds);
+extern int os_seek_file(int fd, unsigned long long offset);
+extern int os_open_file(const char *file, struct openflags flags, int mode);
+extern int os_read_file(int fd, void *buf, int len);
+extern int os_write_file(int fd, const void *buf, int count);
+extern int os_sync_file(int fd);
+extern int os_file_size(const char *file, unsigned long long *size_out);
+extern int os_pread_file(int fd, void *buf, int len, unsigned long long offset);
+extern int os_pwrite_file(int fd, const void *buf, int count, unsigned long long offset);
+extern int os_file_modtime(const char *file, long long *modtime);
+extern int os_pipe(int *fd, int stream, int close_on_exec);
+extern int os_set_fd_async(int fd);
+extern int os_clear_fd_async(int fd);
+extern int os_set_fd_block(int fd, int blocking);
+extern int os_accept_connection(int fd);
+extern int os_create_unix_socket(const char *file, int len, int close_on_exec);
+extern int os_shutdown_socket(int fd, int r, int w);
+extern void os_close_file(int fd);
+extern int os_rcv_fd(int fd, int *helper_pid_out);
+extern int create_unix_socket(char *file, int len, int close_on_exec);
+extern int os_connect_socket(const char *name);
+extern int os_file_type(char *file);
+extern int os_file_mode(const char *file, struct openflags *mode_out);
+extern int os_lock_file(int fd, int excl);
+extern void os_flush_stdout(void);
+extern int os_stat_filesystem(char *path, long *bsize_out,
+			      long long *blocks_out, long long *bfree_out,
+			      long long *bavail_out, long long *files_out,
+			      long long *ffree_out, void *fsid_out,
+			      int fsid_size, long *namelen_out,
+			      long *spare_out);
+extern int os_change_dir(char *dir);
+extern int os_fchange_dir(int fd);
+extern unsigned os_major(unsigned long long dev);
+extern unsigned os_minor(unsigned long long dev);
+extern unsigned long long os_makedev(unsigned major, unsigned minor);
+extern int os_falloc_punch(int fd, unsigned long long offset, int count);
+extern int os_eventfd(unsigned int initval, int flags);
+extern int os_sendmsg_fds(int fd, const void *buf, unsigned int len,
+			  const int *fds, unsigned int fds_num);
+int os_poll(unsigned int n, const int *fds);
 
 /* start_up.c */
-बाह्य व्योम os_early_checks(व्योम);
-बाह्य व्योम os_check_bugs(व्योम);
-बाह्य व्योम check_host_supports_tls(पूर्णांक *supports_tls, पूर्णांक *tls_min);
+extern void os_early_checks(void);
+extern void os_check_bugs(void);
+extern void check_host_supports_tls(int *supports_tls, int *tls_min);
 
 /* mem.c */
-बाह्य पूर्णांक create_mem_file(अचिन्हित दीर्घ दीर्घ len);
+extern int create_mem_file(unsigned long long len);
 
 /* process.c */
-बाह्य अचिन्हित दीर्घ os_process_pc(पूर्णांक pid);
-बाह्य पूर्णांक os_process_parent(पूर्णांक pid);
-बाह्य व्योम os_alarm_process(पूर्णांक pid);
-बाह्य व्योम os_stop_process(पूर्णांक pid);
-बाह्य व्योम os_समाप्त_process(पूर्णांक pid, पूर्णांक reap_child);
-बाह्य व्योम os_समाप्त_ptraced_process(पूर्णांक pid, पूर्णांक reap_child);
+extern unsigned long os_process_pc(int pid);
+extern int os_process_parent(int pid);
+extern void os_alarm_process(int pid);
+extern void os_stop_process(int pid);
+extern void os_kill_process(int pid, int reap_child);
+extern void os_kill_ptraced_process(int pid, int reap_child);
 
-बाह्य पूर्णांक os_getpid(व्योम);
-बाह्य पूर्णांक os_getpgrp(व्योम);
+extern int os_getpid(void);
+extern int os_getpgrp(void);
 
-बाह्य व्योम init_new_thपढ़ो_संकेतs(व्योम);
+extern void init_new_thread_signals(void);
 
-बाह्य पूर्णांक os_map_memory(व्योम *virt, पूर्णांक fd, अचिन्हित दीर्घ दीर्घ off,
-			 अचिन्हित दीर्घ len, पूर्णांक r, पूर्णांक w, पूर्णांक x);
-बाह्य पूर्णांक os_protect_memory(व्योम *addr, अचिन्हित दीर्घ len,
-			     पूर्णांक r, पूर्णांक w, पूर्णांक x);
-बाह्य पूर्णांक os_unmap_memory(व्योम *addr, पूर्णांक len);
-बाह्य पूर्णांक os_drop_memory(व्योम *addr, पूर्णांक length);
-बाह्य पूर्णांक can_drop_memory(व्योम);
-बाह्य व्योम os_flush_मानक_निकास(व्योम);
-बाह्य पूर्णांक os_mincore(व्योम *addr, अचिन्हित दीर्घ len);
+extern int os_map_memory(void *virt, int fd, unsigned long long off,
+			 unsigned long len, int r, int w, int x);
+extern int os_protect_memory(void *addr, unsigned long len,
+			     int r, int w, int x);
+extern int os_unmap_memory(void *addr, int len);
+extern int os_drop_memory(void *addr, int length);
+extern int can_drop_memory(void);
+extern void os_flush_stdout(void);
+extern int os_mincore(void *addr, unsigned long len);
 
 /* execvp.c */
-बाह्य पूर्णांक execvp_noalloc(अक्षर *buf, स्थिर अक्षर *file, अक्षर *स्थिर argv[]);
+extern int execvp_noalloc(char *buf, const char *file, char *const argv[]);
 /* helper.c */
-बाह्य पूर्णांक run_helper(व्योम (*pre_exec)(व्योम *), व्योम *pre_data, अक्षर **argv);
-बाह्य पूर्णांक run_helper_thपढ़ो(पूर्णांक (*proc)(व्योम *), व्योम *arg,
-			     अचिन्हित पूर्णांक flags, अचिन्हित दीर्घ *stack_out);
-बाह्य पूर्णांक helper_रुको(पूर्णांक pid);
+extern int run_helper(void (*pre_exec)(void *), void *pre_data, char **argv);
+extern int run_helper_thread(int (*proc)(void *), void *arg,
+			     unsigned int flags, unsigned long *stack_out);
+extern int helper_wait(int pid);
 
 
 /* umid.c */
-बाह्य पूर्णांक umid_file_name(अक्षर *name, अक्षर *buf, पूर्णांक len);
-बाह्य पूर्णांक set_umid(अक्षर *name);
-बाह्य अक्षर *get_umid(व्योम);
+extern int umid_file_name(char *name, char *buf, int len);
+extern int set_umid(char *name);
+extern char *get_umid(void);
 
-/* संकेत.c */
-बाह्य व्योम समयr_set_संकेत_handler(व्योम);
-बाह्य व्योम set_sigstack(व्योम *sig_stack, पूर्णांक size);
-बाह्य व्योम हटाओ_sigstack(व्योम);
-बाह्य व्योम set_handler(पूर्णांक sig);
-बाह्य व्योम send_sigio_to_self(व्योम);
-बाह्य पूर्णांक change_sig(पूर्णांक संकेत, पूर्णांक on);
-बाह्य व्योम block_संकेतs(व्योम);
-बाह्य व्योम unblock_संकेतs(व्योम);
-बाह्य पूर्णांक get_संकेतs(व्योम);
-बाह्य पूर्णांक set_संकेतs(पूर्णांक enable);
-बाह्य पूर्णांक set_संकेतs_trace(पूर्णांक enable);
-बाह्य पूर्णांक os_is_संकेत_stack(व्योम);
-बाह्य व्योम deliver_alarm(व्योम);
-बाह्य व्योम रेजिस्टर_pm_wake_संकेत(व्योम);
+/* signal.c */
+extern void timer_set_signal_handler(void);
+extern void set_sigstack(void *sig_stack, int size);
+extern void remove_sigstack(void);
+extern void set_handler(int sig);
+extern void send_sigio_to_self(void);
+extern int change_sig(int signal, int on);
+extern void block_signals(void);
+extern void unblock_signals(void);
+extern int get_signals(void);
+extern int set_signals(int enable);
+extern int set_signals_trace(int enable);
+extern int os_is_signal_stack(void);
+extern void deliver_alarm(void);
+extern void register_pm_wake_signal(void);
 
 /* util.c */
-बाह्य व्योम stack_protections(अचिन्हित दीर्घ address);
-बाह्य पूर्णांक raw(पूर्णांक fd);
-बाह्य व्योम setup_machinename(अक्षर *machine_out);
-बाह्य व्योम setup_hostinfo(अक्षर *buf, पूर्णांक len);
-बाह्य व्योम os_dump_core(व्योम) __attribute__ ((noवापस));
-बाह्य व्योम um_early_prपूर्णांकk(स्थिर अक्षर *s, अचिन्हित पूर्णांक n);
-बाह्य व्योम os_fix_helper_संकेतs(व्योम);
-बाह्य व्योम os_info(स्थिर अक्षर *fmt, ...)
-	__attribute__ ((क्रमmat (म_लिखो, 1, 2)));
-बाह्य व्योम os_warn(स्थिर अक्षर *fmt, ...)
-	__attribute__ ((क्रमmat (म_लिखो, 1, 2)));
+extern void stack_protections(unsigned long address);
+extern int raw(int fd);
+extern void setup_machinename(char *machine_out);
+extern void setup_hostinfo(char *buf, int len);
+extern void os_dump_core(void) __attribute__ ((noreturn));
+extern void um_early_printk(const char *s, unsigned int n);
+extern void os_fix_helper_signals(void);
+extern void os_info(const char *fmt, ...)
+	__attribute__ ((format (printf, 1, 2)));
+extern void os_warn(const char *fmt, ...)
+	__attribute__ ((format (printf, 1, 2)));
 
-/* समय.c */
-बाह्य व्योम os_idle_sleep(व्योम);
-बाह्य पूर्णांक os_समयr_create(व्योम);
-बाह्य पूर्णांक os_समयr_set_पूर्णांकerval(अचिन्हित दीर्घ दीर्घ nsecs);
-बाह्य पूर्णांक os_समयr_one_shot(अचिन्हित दीर्घ दीर्घ nsecs);
-बाह्य व्योम os_समयr_disable(व्योम);
-बाह्य व्योम uml_idle_समयr(व्योम);
-बाह्य दीर्घ दीर्घ os_persistent_घड़ी_emulation(व्योम);
-बाह्य दीर्घ दीर्घ os_nsecs(व्योम);
+/* time.c */
+extern void os_idle_sleep(void);
+extern int os_timer_create(void);
+extern int os_timer_set_interval(unsigned long long nsecs);
+extern int os_timer_one_shot(unsigned long long nsecs);
+extern void os_timer_disable(void);
+extern void uml_idle_timer(void);
+extern long long os_persistent_clock_emulation(void);
+extern long long os_nsecs(void);
 
 /* skas/mem.c */
-बाह्य दीर्घ run_syscall_stub(काष्ठा mm_id * mm_idp,
-			     पूर्णांक syscall, अचिन्हित दीर्घ *args, दीर्घ expected,
-			     व्योम **addr, पूर्णांक करोne);
-बाह्य दीर्घ syscall_stub_data(काष्ठा mm_id * mm_idp,
-			      अचिन्हित दीर्घ *data, पूर्णांक data_count,
-			      व्योम **addr, व्योम **stub_addr);
-बाह्य पूर्णांक map(काष्ठा mm_id * mm_idp, अचिन्हित दीर्घ virt,
-	       अचिन्हित दीर्घ len, पूर्णांक prot, पूर्णांक phys_fd,
-	       अचिन्हित दीर्घ दीर्घ offset, पूर्णांक करोne, व्योम **data);
-बाह्य पूर्णांक unmap(काष्ठा mm_id * mm_idp, अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
-		 पूर्णांक करोne, व्योम **data);
-बाह्य पूर्णांक protect(काष्ठा mm_id * mm_idp, अचिन्हित दीर्घ addr,
-		   अचिन्हित दीर्घ len, अचिन्हित पूर्णांक prot, पूर्णांक करोne, व्योम **data);
+extern long run_syscall_stub(struct mm_id * mm_idp,
+			     int syscall, unsigned long *args, long expected,
+			     void **addr, int done);
+extern long syscall_stub_data(struct mm_id * mm_idp,
+			      unsigned long *data, int data_count,
+			      void **addr, void **stub_addr);
+extern int map(struct mm_id * mm_idp, unsigned long virt,
+	       unsigned long len, int prot, int phys_fd,
+	       unsigned long long offset, int done, void **data);
+extern int unmap(struct mm_id * mm_idp, unsigned long addr, unsigned long len,
+		 int done, void **data);
+extern int protect(struct mm_id * mm_idp, unsigned long addr,
+		   unsigned long len, unsigned int prot, int done, void **data);
 
 /* skas/process.c */
-बाह्य पूर्णांक is_skas_winch(पूर्णांक pid, पूर्णांक fd, व्योम *data);
-बाह्य पूर्णांक start_userspace(अचिन्हित दीर्घ stub_stack);
-बाह्य पूर्णांक copy_context_skas0(अचिन्हित दीर्घ stack, पूर्णांक pid);
-बाह्य व्योम userspace(काष्ठा uml_pt_regs *regs, अचिन्हित दीर्घ *aux_fp_regs);
-बाह्य पूर्णांक map_stub_pages(पूर्णांक fd, अचिन्हित दीर्घ code, अचिन्हित दीर्घ data,
-			  अचिन्हित दीर्घ stack);
-बाह्य व्योम new_thपढ़ो(व्योम *stack, लाँघ_बफ *buf, व्योम (*handler)(व्योम));
-बाह्य व्योम चयन_thपढ़ोs(लाँघ_बफ *me, लाँघ_बफ *you);
-बाह्य पूर्णांक start_idle_thपढ़ो(व्योम *stack, लाँघ_बफ *चयन_buf);
-बाह्य व्योम initial_thपढ़ो_cb_skas(व्योम (*proc)(व्योम *),
-				 व्योम *arg);
-बाह्य व्योम halt_skas(व्योम);
-बाह्य व्योम reboot_skas(व्योम);
+extern int is_skas_winch(int pid, int fd, void *data);
+extern int start_userspace(unsigned long stub_stack);
+extern int copy_context_skas0(unsigned long stack, int pid);
+extern void userspace(struct uml_pt_regs *regs, unsigned long *aux_fp_regs);
+extern int map_stub_pages(int fd, unsigned long code, unsigned long data,
+			  unsigned long stack);
+extern void new_thread(void *stack, jmp_buf *buf, void (*handler)(void));
+extern void switch_threads(jmp_buf *me, jmp_buf *you);
+extern int start_idle_thread(void *stack, jmp_buf *switch_buf);
+extern void initial_thread_cb_skas(void (*proc)(void *),
+				 void *arg);
+extern void halt_skas(void);
+extern void reboot_skas(void);
 
 /* irq.c */
-बाह्य पूर्णांक os_रुकोing_क्रम_events_epoll(व्योम);
-बाह्य व्योम *os_epoll_get_data_poपूर्णांकer(पूर्णांक index);
-बाह्य पूर्णांक os_epoll_triggered(पूर्णांक index, पूर्णांक events);
-बाह्य पूर्णांक os_event_mask(क्रमागत um_irq_type irq_type);
-बाह्य पूर्णांक os_setup_epoll(व्योम);
-बाह्य पूर्णांक os_add_epoll_fd(पूर्णांक events, पूर्णांक fd, व्योम *data);
-बाह्य पूर्णांक os_mod_epoll_fd(पूर्णांक events, पूर्णांक fd, व्योम *data);
-बाह्य पूर्णांक os_del_epoll_fd(पूर्णांक fd);
-बाह्य व्योम os_set_ioignore(व्योम);
-बाह्य व्योम os_बंद_epoll_fd(व्योम);
-बाह्य व्योम um_irqs_suspend(व्योम);
-बाह्य व्योम um_irqs_resume(व्योम);
+extern int os_waiting_for_events_epoll(void);
+extern void *os_epoll_get_data_pointer(int index);
+extern int os_epoll_triggered(int index, int events);
+extern int os_event_mask(enum um_irq_type irq_type);
+extern int os_setup_epoll(void);
+extern int os_add_epoll_fd(int events, int fd, void *data);
+extern int os_mod_epoll_fd(int events, int fd, void *data);
+extern int os_del_epoll_fd(int fd);
+extern void os_set_ioignore(void);
+extern void os_close_epoll_fd(void);
+extern void um_irqs_suspend(void);
+extern void um_irqs_resume(void);
 
 /* sigio.c */
-बाह्य पूर्णांक add_sigio_fd(पूर्णांक fd);
-बाह्य पूर्णांक ignore_sigio_fd(पूर्णांक fd);
-बाह्य व्योम maybe_sigio_broken(पूर्णांक fd);
-बाह्य व्योम sigio_broken(पूर्णांक fd);
+extern int add_sigio_fd(int fd);
+extern int ignore_sigio_fd(int fd);
+extern void maybe_sigio_broken(int fd);
+extern void sigio_broken(int fd);
 /*
- * unlocked versions क्रम IRQ controller code.
+ * unlocked versions for IRQ controller code.
  *
  * This is safe because it's used at suspend/resume and nothing
- * अन्यथा is running.
+ * else is running.
  */
-बाह्य पूर्णांक __add_sigio_fd(पूर्णांक fd);
-बाह्य पूर्णांक __ignore_sigio_fd(पूर्णांक fd);
+extern int __add_sigio_fd(int fd);
+extern int __ignore_sigio_fd(int fd);
 
 /* prctl.c */
-बाह्य पूर्णांक os_arch_prctl(पूर्णांक pid, पूर्णांक option, अचिन्हित दीर्घ *arg2);
+extern int os_arch_prctl(int pid, int option, unsigned long *arg2);
 
 /* tty.c */
-बाह्य पूर्णांक get_pty(व्योम);
+extern int get_pty(void);
 
 /* sys-$ARCH/task_size.c */
-बाह्य अचिन्हित दीर्घ os_get_top_address(व्योम);
+extern unsigned long os_get_top_address(void);
 
-दीर्घ syscall(दीर्घ number, ...);
+long syscall(long number, ...);
 
 /* irqflags tracing */
-बाह्य व्योम block_संकेतs_trace(व्योम);
-बाह्य व्योम unblock_संकेतs_trace(व्योम);
-बाह्य व्योम um_trace_संकेतs_on(व्योम);
-बाह्य व्योम um_trace_संकेतs_off(व्योम);
+extern void block_signals_trace(void);
+extern void unblock_signals_trace(void);
+extern void um_trace_signals_on(void);
+extern void um_trace_signals_off(void);
 
-/* समय-travel */
-बाह्य व्योम deliver_समय_प्रकारravel_irqs(व्योम);
+/* time-travel */
+extern void deliver_time_travel_irqs(void);
 
-#पूर्ण_अगर
+#endif

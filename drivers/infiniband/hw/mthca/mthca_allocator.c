@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2004 Topspin Communications.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,40 +30,40 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/biपंचांगap.h>
+#include <linux/errno.h>
+#include <linux/slab.h>
+#include <linux/bitmap.h>
 
-#समावेश "mthca_dev.h"
+#include "mthca_dev.h"
 
-/* Trivial biपंचांगap-based allocator */
-u32 mthca_alloc(काष्ठा mthca_alloc *alloc)
-अणु
-	अचिन्हित दीर्घ flags;
+/* Trivial bitmap-based allocator */
+u32 mthca_alloc(struct mthca_alloc *alloc)
+{
+	unsigned long flags;
 	u32 obj;
 
 	spin_lock_irqsave(&alloc->lock, flags);
 
 	obj = find_next_zero_bit(alloc->table, alloc->max, alloc->last);
-	अगर (obj >= alloc->max) अणु
+	if (obj >= alloc->max) {
 		alloc->top = (alloc->top + alloc->max) & alloc->mask;
 		obj = find_first_zero_bit(alloc->table, alloc->max);
-	पूर्ण
+	}
 
-	अगर (obj < alloc->max) अणु
+	if (obj < alloc->max) {
 		set_bit(obj, alloc->table);
 		obj |= alloc->top;
-	पूर्ण अन्यथा
+	} else
 		obj = -1;
 
 	spin_unlock_irqrestore(&alloc->lock, flags);
 
-	वापस obj;
-पूर्ण
+	return obj;
+}
 
-व्योम mthca_मुक्त(काष्ठा mthca_alloc *alloc, u32 obj)
-अणु
-	अचिन्हित दीर्घ flags;
+void mthca_free(struct mthca_alloc *alloc, u32 obj)
+{
+	unsigned long flags;
 
 	obj &= alloc->max - 1;
 
@@ -75,230 +74,230 @@ u32 mthca_alloc(काष्ठा mthca_alloc *alloc)
 	alloc->top = (alloc->top + alloc->max) & alloc->mask;
 
 	spin_unlock_irqrestore(&alloc->lock, flags);
-पूर्ण
+}
 
-पूर्णांक mthca_alloc_init(काष्ठा mthca_alloc *alloc, u32 num, u32 mask,
+int mthca_alloc_init(struct mthca_alloc *alloc, u32 num, u32 mask,
 		     u32 reserved)
-अणु
-	पूर्णांक i;
+{
+	int i;
 
-	/* num must be a घातer of 2 */
-	अगर (num != 1 << (ffs(num) - 1))
-		वापस -EINVAL;
+	/* num must be a power of 2 */
+	if (num != 1 << (ffs(num) - 1))
+		return -EINVAL;
 
 	alloc->last = 0;
 	alloc->top  = 0;
 	alloc->max  = num;
 	alloc->mask = mask;
 	spin_lock_init(&alloc->lock);
-	alloc->table = kदो_स्मृति_array(BITS_TO_LONGS(num), माप(दीर्घ),
+	alloc->table = kmalloc_array(BITS_TO_LONGS(num), sizeof(long),
 				     GFP_KERNEL);
-	अगर (!alloc->table)
-		वापस -ENOMEM;
+	if (!alloc->table)
+		return -ENOMEM;
 
-	biपंचांगap_zero(alloc->table, num);
-	क्रम (i = 0; i < reserved; ++i)
+	bitmap_zero(alloc->table, num);
+	for (i = 0; i < reserved; ++i)
 		set_bit(i, alloc->table);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम mthca_alloc_cleanup(काष्ठा mthca_alloc *alloc)
-अणु
-	kमुक्त(alloc->table);
-पूर्ण
+void mthca_alloc_cleanup(struct mthca_alloc *alloc)
+{
+	kfree(alloc->table);
+}
 
 /*
- * Array of poपूर्णांकers with lazy allocation of leaf pages.  Callers of
+ * Array of pointers with lazy allocation of leaf pages.  Callers of
  * _get, _set and _clear methods must use a lock or otherwise
  * serialize access to the array.
  */
 
-#घोषणा MTHCA_ARRAY_MASK (PAGE_SIZE / माप (व्योम *) - 1)
+#define MTHCA_ARRAY_MASK (PAGE_SIZE / sizeof (void *) - 1)
 
-व्योम *mthca_array_get(काष्ठा mthca_array *array, पूर्णांक index)
-अणु
-	पूर्णांक p = (index * माप (व्योम *)) >> PAGE_SHIFT;
+void *mthca_array_get(struct mthca_array *array, int index)
+{
+	int p = (index * sizeof (void *)) >> PAGE_SHIFT;
 
-	अगर (array->page_list[p].page)
-		वापस array->page_list[p].page[index & MTHCA_ARRAY_MASK];
-	अन्यथा
-		वापस शून्य;
-पूर्ण
+	if (array->page_list[p].page)
+		return array->page_list[p].page[index & MTHCA_ARRAY_MASK];
+	else
+		return NULL;
+}
 
-पूर्णांक mthca_array_set(काष्ठा mthca_array *array, पूर्णांक index, व्योम *value)
-अणु
-	पूर्णांक p = (index * माप (व्योम *)) >> PAGE_SHIFT;
+int mthca_array_set(struct mthca_array *array, int index, void *value)
+{
+	int p = (index * sizeof (void *)) >> PAGE_SHIFT;
 
 	/* Allocate with GFP_ATOMIC because we'll be called with locks held. */
-	अगर (!array->page_list[p].page)
-		array->page_list[p].page = (व्योम **) get_zeroed_page(GFP_ATOMIC);
+	if (!array->page_list[p].page)
+		array->page_list[p].page = (void **) get_zeroed_page(GFP_ATOMIC);
 
-	अगर (!array->page_list[p].page)
-		वापस -ENOMEM;
+	if (!array->page_list[p].page)
+		return -ENOMEM;
 
 	array->page_list[p].page[index & MTHCA_ARRAY_MASK] = value;
 	++array->page_list[p].used;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम mthca_array_clear(काष्ठा mthca_array *array, पूर्णांक index)
-अणु
-	पूर्णांक p = (index * माप (व्योम *)) >> PAGE_SHIFT;
+void mthca_array_clear(struct mthca_array *array, int index)
+{
+	int p = (index * sizeof (void *)) >> PAGE_SHIFT;
 
-	अगर (--array->page_list[p].used == 0) अणु
-		मुक्त_page((अचिन्हित दीर्घ) array->page_list[p].page);
-		array->page_list[p].page = शून्य;
-	पूर्ण अन्यथा
-		array->page_list[p].page[index & MTHCA_ARRAY_MASK] = शून्य;
+	if (--array->page_list[p].used == 0) {
+		free_page((unsigned long) array->page_list[p].page);
+		array->page_list[p].page = NULL;
+	} else
+		array->page_list[p].page[index & MTHCA_ARRAY_MASK] = NULL;
 
-	अगर (array->page_list[p].used < 0)
+	if (array->page_list[p].used < 0)
 		pr_debug("Array %p index %d page %d with ref count %d < 0\n",
 			 array, index, p, array->page_list[p].used);
-पूर्ण
+}
 
-पूर्णांक mthca_array_init(काष्ठा mthca_array *array, पूर्णांक nent)
-अणु
-	पूर्णांक npage = (nent * माप (व्योम *) + PAGE_SIZE - 1) / PAGE_SIZE;
-	पूर्णांक i;
+int mthca_array_init(struct mthca_array *array, int nent)
+{
+	int npage = (nent * sizeof (void *) + PAGE_SIZE - 1) / PAGE_SIZE;
+	int i;
 
-	array->page_list = kदो_स्मृति_array(npage, माप(*array->page_list),
+	array->page_list = kmalloc_array(npage, sizeof(*array->page_list),
 					 GFP_KERNEL);
-	अगर (!array->page_list)
-		वापस -ENOMEM;
+	if (!array->page_list)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < npage; ++i) अणु
-		array->page_list[i].page = शून्य;
+	for (i = 0; i < npage; ++i) {
+		array->page_list[i].page = NULL;
 		array->page_list[i].used = 0;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम mthca_array_cleanup(काष्ठा mthca_array *array, पूर्णांक nent)
-अणु
-	पूर्णांक i;
+void mthca_array_cleanup(struct mthca_array *array, int nent)
+{
+	int i;
 
-	क्रम (i = 0; i < (nent * माप (व्योम *) + PAGE_SIZE - 1) / PAGE_SIZE; ++i)
-		मुक्त_page((अचिन्हित दीर्घ) array->page_list[i].page);
+	for (i = 0; i < (nent * sizeof (void *) + PAGE_SIZE - 1) / PAGE_SIZE; ++i)
+		free_page((unsigned long) array->page_list[i].page);
 
-	kमुक्त(array->page_list);
-पूर्ण
+	kfree(array->page_list);
+}
 
 /*
- * Handling क्रम queue buffers -- we allocate a bunch of memory and
- * रेजिस्टर it in a memory region at HCA भव address 0.  If the
- * requested size is > max_direct, we split the allocation पूर्णांकo
- * multiple pages, so we करोn't require too much contiguous memory.
+ * Handling for queue buffers -- we allocate a bunch of memory and
+ * register it in a memory region at HCA virtual address 0.  If the
+ * requested size is > max_direct, we split the allocation into
+ * multiple pages, so we don't require too much contiguous memory.
  */
 
-पूर्णांक mthca_buf_alloc(काष्ठा mthca_dev *dev, पूर्णांक size, पूर्णांक max_direct,
-		    जोड़ mthca_buf *buf, पूर्णांक *is_direct, काष्ठा mthca_pd *pd,
-		    पूर्णांक hca_ग_लिखो, काष्ठा mthca_mr *mr)
-अणु
-	पूर्णांक err = -ENOMEM;
-	पूर्णांक npages, shअगरt;
-	u64 *dma_list = शून्य;
+int mthca_buf_alloc(struct mthca_dev *dev, int size, int max_direct,
+		    union mthca_buf *buf, int *is_direct, struct mthca_pd *pd,
+		    int hca_write, struct mthca_mr *mr)
+{
+	int err = -ENOMEM;
+	int npages, shift;
+	u64 *dma_list = NULL;
 	dma_addr_t t;
-	पूर्णांक i;
+	int i;
 
-	अगर (size <= max_direct) अणु
+	if (size <= max_direct) {
 		*is_direct = 1;
 		npages     = 1;
-		shअगरt      = get_order(size) + PAGE_SHIFT;
+		shift      = get_order(size) + PAGE_SHIFT;
 
 		buf->direct.buf = dma_alloc_coherent(&dev->pdev->dev,
 						     size, &t, GFP_KERNEL);
-		अगर (!buf->direct.buf)
-			वापस -ENOMEM;
+		if (!buf->direct.buf)
+			return -ENOMEM;
 
 		dma_unmap_addr_set(&buf->direct, mapping, t);
 
-		जबतक (t & ((1 << shअगरt) - 1)) अणु
-			--shअगरt;
+		while (t & ((1 << shift) - 1)) {
+			--shift;
 			npages *= 2;
-		पूर्ण
+		}
 
-		dma_list = kदो_स्मृति_array(npages, माप(*dma_list),
+		dma_list = kmalloc_array(npages, sizeof(*dma_list),
 					 GFP_KERNEL);
-		अगर (!dma_list)
-			जाओ err_मुक्त;
+		if (!dma_list)
+			goto err_free;
 
-		क्रम (i = 0; i < npages; ++i)
-			dma_list[i] = t + i * (1 << shअगरt);
-	पूर्ण अन्यथा अणु
+		for (i = 0; i < npages; ++i)
+			dma_list[i] = t + i * (1 << shift);
+	} else {
 		*is_direct = 0;
 		npages     = (size + PAGE_SIZE - 1) / PAGE_SIZE;
-		shअगरt      = PAGE_SHIFT;
+		shift      = PAGE_SHIFT;
 
-		dma_list = kदो_स्मृति_array(npages, माप(*dma_list),
+		dma_list = kmalloc_array(npages, sizeof(*dma_list),
 					 GFP_KERNEL);
-		अगर (!dma_list)
-			वापस -ENOMEM;
+		if (!dma_list)
+			return -ENOMEM;
 
-		buf->page_list = kदो_स्मृति_array(npages,
-					       माप(*buf->page_list),
+		buf->page_list = kmalloc_array(npages,
+					       sizeof(*buf->page_list),
 					       GFP_KERNEL);
-		अगर (!buf->page_list)
-			जाओ err_out;
+		if (!buf->page_list)
+			goto err_out;
 
-		क्रम (i = 0; i < npages; ++i)
-			buf->page_list[i].buf = शून्य;
+		for (i = 0; i < npages; ++i)
+			buf->page_list[i].buf = NULL;
 
-		क्रम (i = 0; i < npages; ++i) अणु
+		for (i = 0; i < npages; ++i) {
 			buf->page_list[i].buf =
 				dma_alloc_coherent(&dev->pdev->dev, PAGE_SIZE,
 						   &t, GFP_KERNEL);
-			अगर (!buf->page_list[i].buf)
-				जाओ err_मुक्त;
+			if (!buf->page_list[i].buf)
+				goto err_free;
 
 			dma_list[i] = t;
 			dma_unmap_addr_set(&buf->page_list[i], mapping, t);
 
 			clear_page(buf->page_list[i].buf);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	err = mthca_mr_alloc_phys(dev, pd->pd_num,
-				  dma_list, shअगरt, npages,
+				  dma_list, shift, npages,
 				  0, size,
 				  MTHCA_MPT_FLAG_LOCAL_READ |
-				  (hca_ग_लिखो ? MTHCA_MPT_FLAG_LOCAL_WRITE : 0),
+				  (hca_write ? MTHCA_MPT_FLAG_LOCAL_WRITE : 0),
 				  mr);
-	अगर (err)
-		जाओ err_मुक्त;
+	if (err)
+		goto err_free;
 
-	kमुक्त(dma_list);
+	kfree(dma_list);
 
-	वापस 0;
+	return 0;
 
-err_मुक्त:
-	mthca_buf_मुक्त(dev, size, buf, *is_direct, शून्य);
+err_free:
+	mthca_buf_free(dev, size, buf, *is_direct, NULL);
 
 err_out:
-	kमुक्त(dma_list);
+	kfree(dma_list);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम mthca_buf_मुक्त(काष्ठा mthca_dev *dev, पूर्णांक size, जोड़ mthca_buf *buf,
-		    पूर्णांक is_direct, काष्ठा mthca_mr *mr)
-अणु
-	पूर्णांक i;
+void mthca_buf_free(struct mthca_dev *dev, int size, union mthca_buf *buf,
+		    int is_direct, struct mthca_mr *mr)
+{
+	int i;
 
-	अगर (mr)
-		mthca_मुक्त_mr(dev, mr);
+	if (mr)
+		mthca_free_mr(dev, mr);
 
-	अगर (is_direct)
-		dma_मुक्त_coherent(&dev->pdev->dev, size, buf->direct.buf,
+	if (is_direct)
+		dma_free_coherent(&dev->pdev->dev, size, buf->direct.buf,
 				  dma_unmap_addr(&buf->direct, mapping));
-	अन्यथा अणु
-		क्रम (i = 0; i < (size + PAGE_SIZE - 1) / PAGE_SIZE; ++i)
-			dma_मुक्त_coherent(&dev->pdev->dev, PAGE_SIZE,
+	else {
+		for (i = 0; i < (size + PAGE_SIZE - 1) / PAGE_SIZE; ++i)
+			dma_free_coherent(&dev->pdev->dev, PAGE_SIZE,
 					  buf->page_list[i].buf,
 					  dma_unmap_addr(&buf->page_list[i],
 							 mapping));
-		kमुक्त(buf->page_list);
-	पूर्ण
-पूर्ण
+		kfree(buf->page_list);
+	}
+}

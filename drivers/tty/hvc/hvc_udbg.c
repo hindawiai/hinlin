@@ -1,83 +1,82 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * udbg पूर्णांकerface to hvc_console.c
+ * udbg interface to hvc_console.c
  *
  * (C) Copyright David Gibson, IBM Corporation 2008.
  */
 
-#समावेश <linux/console.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/types.h>
-#समावेश <linux/irq.h>
+#include <linux/console.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/moduleparam.h>
+#include <linux/types.h>
+#include <linux/irq.h>
 
-#समावेश <यंत्र/udbg.h>
+#include <asm/udbg.h>
 
-#समावेश "hvc_console.h"
+#include "hvc_console.h"
 
-अटल काष्ठा hvc_काष्ठा *hvc_udbg_dev;
+static struct hvc_struct *hvc_udbg_dev;
 
-अटल पूर्णांक hvc_udbg_put(uपूर्णांक32_t vtermno, स्थिर अक्षर *buf, पूर्णांक count)
-अणु
-	पूर्णांक i;
+static int hvc_udbg_put(uint32_t vtermno, const char *buf, int count)
+{
+	int i;
 
-	क्रम (i = 0; i < count && udbg_अ_दो; i++)
-		udbg_अ_दो(buf[i]);
+	for (i = 0; i < count && udbg_putc; i++)
+		udbg_putc(buf[i]);
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल पूर्णांक hvc_udbg_get(uपूर्णांक32_t vtermno, अक्षर *buf, पूर्णांक count)
-अणु
-	पूर्णांक i, c;
+static int hvc_udbg_get(uint32_t vtermno, char *buf, int count)
+{
+	int i, c;
 
-	अगर (!udbg_अ_लो_poll)
-		वापस 0;
+	if (!udbg_getc_poll)
+		return 0;
 
-	क्रम (i = 0; i < count; i++) अणु
-		अगर ((c = udbg_अ_लो_poll()) == -1)
-			अवरोध;
+	for (i = 0; i < count; i++) {
+		if ((c = udbg_getc_poll()) == -1)
+			break;
 		buf[i] = c;
-	पूर्ण
+	}
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल स्थिर काष्ठा hv_ops hvc_udbg_ops = अणु
-	.get_अक्षरs = hvc_udbg_get,
-	.put_अक्षरs = hvc_udbg_put,
-पूर्ण;
+static const struct hv_ops hvc_udbg_ops = {
+	.get_chars = hvc_udbg_get,
+	.put_chars = hvc_udbg_put,
+};
 
-अटल पूर्णांक __init hvc_udbg_init(व्योम)
-अणु
-	काष्ठा hvc_काष्ठा *hp;
+static int __init hvc_udbg_init(void)
+{
+	struct hvc_struct *hp;
 
-	अगर (!udbg_अ_दो)
-		वापस -ENODEV;
+	if (!udbg_putc)
+		return -ENODEV;
 
 	BUG_ON(hvc_udbg_dev);
 
 	hp = hvc_alloc(0, 0, &hvc_udbg_ops, 16);
-	अगर (IS_ERR(hp))
-		वापस PTR_ERR(hp);
+	if (IS_ERR(hp))
+		return PTR_ERR(hp);
 
 	hvc_udbg_dev = hp;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 device_initcall(hvc_udbg_init);
 
-अटल पूर्णांक __init hvc_udbg_console_init(व्योम)
-अणु
-	अगर (!udbg_अ_दो)
-		वापस -ENODEV;
+static int __init hvc_udbg_console_init(void)
+{
+	if (!udbg_putc)
+		return -ENODEV;
 
 	hvc_instantiate(0, 0, &hvc_udbg_ops);
-	add_preferred_console("hvc", 0, शून्य);
+	add_preferred_console("hvc", 0, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 console_initcall(hvc_udbg_console_init);

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Xilinx XADC driver
  *
@@ -7,210 +6,210 @@
  *  Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
-#समावेश <linux/iio/events.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/kernel.h>
+#include <linux/iio/events.h>
+#include <linux/iio/iio.h>
+#include <linux/kernel.h>
 
-#समावेश "xilinx-xadc.h"
+#include "xilinx-xadc.h"
 
-अटल स्थिर काष्ठा iio_chan_spec *xadc_event_to_channel(
-	काष्ठा iio_dev *indio_dev, अचिन्हित पूर्णांक event)
-अणु
-	चयन (event) अणु
-	हाल XADC_THRESHOLD_OT_MAX:
-	हाल XADC_THRESHOLD_TEMP_MAX:
-		वापस &indio_dev->channels[0];
-	हाल XADC_THRESHOLD_VCCपूर्णांक_उच्च:
-	हाल XADC_THRESHOLD_VCCAUX_MAX:
-		वापस &indio_dev->channels[event];
-	शेष:
-		वापस &indio_dev->channels[event-1];
-	पूर्ण
-पूर्ण
+static const struct iio_chan_spec *xadc_event_to_channel(
+	struct iio_dev *indio_dev, unsigned int event)
+{
+	switch (event) {
+	case XADC_THRESHOLD_OT_MAX:
+	case XADC_THRESHOLD_TEMP_MAX:
+		return &indio_dev->channels[0];
+	case XADC_THRESHOLD_VCCINT_MAX:
+	case XADC_THRESHOLD_VCCAUX_MAX:
+		return &indio_dev->channels[event];
+	default:
+		return &indio_dev->channels[event-1];
+	}
+}
 
-अटल व्योम xadc_handle_event(काष्ठा iio_dev *indio_dev, अचिन्हित पूर्णांक event)
-अणु
-	स्थिर काष्ठा iio_chan_spec *chan;
+static void xadc_handle_event(struct iio_dev *indio_dev, unsigned int event)
+{
+	const struct iio_chan_spec *chan;
 
-	/* Temperature threshold error, we करोn't handle this yet */
-	अगर (event == 0)
-		वापस;
+	/* Temperature threshold error, we don't handle this yet */
+	if (event == 0)
+		return;
 
 	chan = xadc_event_to_channel(indio_dev, event);
 
-	अगर (chan->type == IIO_TEMP) अणु
+	if (chan->type == IIO_TEMP) {
 		/*
 		 * The temperature channel only supports over-temperature
 		 * events.
 		 */
 		iio_push_event(indio_dev,
 			IIO_UNMOD_EVENT_CODE(chan->type, chan->channel,
-				IIO_EV_TYPE_THRESH, IIO_EV_सूची_RISING),
-			iio_get_समय_ns(indio_dev));
-	पूर्ण अन्यथा अणु
+				IIO_EV_TYPE_THRESH, IIO_EV_DIR_RISING),
+			iio_get_time_ns(indio_dev));
+	} else {
 		/*
-		 * For other channels we करोn't know whether it is a upper or
+		 * For other channels we don't know whether it is a upper or
 		 * lower threshold event. Userspace will have to check the
-		 * channel value अगर it wants to know.
+		 * channel value if it wants to know.
 		 */
 		iio_push_event(indio_dev,
 			IIO_UNMOD_EVENT_CODE(chan->type, chan->channel,
-				IIO_EV_TYPE_THRESH, IIO_EV_सूची_EITHER),
-			iio_get_समय_ns(indio_dev));
-	पूर्ण
-पूर्ण
+				IIO_EV_TYPE_THRESH, IIO_EV_DIR_EITHER),
+			iio_get_time_ns(indio_dev));
+	}
+}
 
-व्योम xadc_handle_events(काष्ठा iio_dev *indio_dev, अचिन्हित दीर्घ events)
-अणु
-	अचिन्हित पूर्णांक i;
+void xadc_handle_events(struct iio_dev *indio_dev, unsigned long events)
+{
+	unsigned int i;
 
-	क्रम_each_set_bit(i, &events, 8)
+	for_each_set_bit(i, &events, 8)
 		xadc_handle_event(indio_dev, i);
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक xadc_get_threshold_offset(स्थिर काष्ठा iio_chan_spec *chan,
-	क्रमागत iio_event_direction dir)
-अणु
-	अचिन्हित पूर्णांक offset;
+static unsigned int xadc_get_threshold_offset(const struct iio_chan_spec *chan,
+	enum iio_event_direction dir)
+{
+	unsigned int offset;
 
-	अगर (chan->type == IIO_TEMP) अणु
+	if (chan->type == IIO_TEMP) {
 		offset = XADC_THRESHOLD_OT_MAX;
-	पूर्ण अन्यथा अणु
-		अगर (chan->channel < 2)
+	} else {
+		if (chan->channel < 2)
 			offset = chan->channel + 1;
-		अन्यथा
+		else
 			offset = chan->channel + 6;
-	पूर्ण
+	}
 
-	अगर (dir == IIO_EV_सूची_FALLING)
+	if (dir == IIO_EV_DIR_FALLING)
 		offset += 4;
 
-	वापस offset;
-पूर्ण
+	return offset;
+}
 
-अटल अचिन्हित पूर्णांक xadc_get_alarm_mask(स्थिर काष्ठा iio_chan_spec *chan)
-अणु
-	अगर (chan->type == IIO_TEMP)
-		वापस XADC_ALARM_OT_MASK;
-	चयन (chan->channel) अणु
-	हाल 0:
-		वापस XADC_ALARM_VCCINT_MASK;
-	हाल 1:
-		वापस XADC_ALARM_VCCAUX_MASK;
-	हाल 2:
-		वापस XADC_ALARM_VCCBRAM_MASK;
-	हाल 3:
-		वापस XADC_ALARM_VCCPINT_MASK;
-	हाल 4:
-		वापस XADC_ALARM_VCCPAUX_MASK;
-	हाल 5:
-		वापस XADC_ALARM_VCCODDR_MASK;
-	शेष:
+static unsigned int xadc_get_alarm_mask(const struct iio_chan_spec *chan)
+{
+	if (chan->type == IIO_TEMP)
+		return XADC_ALARM_OT_MASK;
+	switch (chan->channel) {
+	case 0:
+		return XADC_ALARM_VCCINT_MASK;
+	case 1:
+		return XADC_ALARM_VCCAUX_MASK;
+	case 2:
+		return XADC_ALARM_VCCBRAM_MASK;
+	case 3:
+		return XADC_ALARM_VCCPINT_MASK;
+	case 4:
+		return XADC_ALARM_VCCPAUX_MASK;
+	case 5:
+		return XADC_ALARM_VCCODDR_MASK;
+	default:
 		/* We will never get here */
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 
-पूर्णांक xadc_पढ़ो_event_config(काष्ठा iio_dev *indio_dev,
-	स्थिर काष्ठा iio_chan_spec *chan, क्रमागत iio_event_type type,
-	क्रमागत iio_event_direction dir)
-अणु
-	काष्ठा xadc *xadc = iio_priv(indio_dev);
+int xadc_read_event_config(struct iio_dev *indio_dev,
+	const struct iio_chan_spec *chan, enum iio_event_type type,
+	enum iio_event_direction dir)
+{
+	struct xadc *xadc = iio_priv(indio_dev);
 
-	वापस (bool)(xadc->alarm_mask & xadc_get_alarm_mask(chan));
-पूर्ण
+	return (bool)(xadc->alarm_mask & xadc_get_alarm_mask(chan));
+}
 
-पूर्णांक xadc_ग_लिखो_event_config(काष्ठा iio_dev *indio_dev,
-	स्थिर काष्ठा iio_chan_spec *chan, क्रमागत iio_event_type type,
-	क्रमागत iio_event_direction dir, पूर्णांक state)
-अणु
-	अचिन्हित पूर्णांक alarm = xadc_get_alarm_mask(chan);
-	काष्ठा xadc *xadc = iio_priv(indio_dev);
-	uपूर्णांक16_t cfg, old_cfg;
-	पूर्णांक ret;
+int xadc_write_event_config(struct iio_dev *indio_dev,
+	const struct iio_chan_spec *chan, enum iio_event_type type,
+	enum iio_event_direction dir, int state)
+{
+	unsigned int alarm = xadc_get_alarm_mask(chan);
+	struct xadc *xadc = iio_priv(indio_dev);
+	uint16_t cfg, old_cfg;
+	int ret;
 
 	mutex_lock(&xadc->mutex);
 
-	अगर (state)
+	if (state)
 		xadc->alarm_mask |= alarm;
-	अन्यथा
+	else
 		xadc->alarm_mask &= ~alarm;
 
 	xadc->ops->update_alarm(xadc, xadc->alarm_mask);
 
-	ret = _xadc_पढ़ो_adc_reg(xadc, XADC_REG_CONF1, &cfg);
-	अगर (ret)
-		जाओ err_out;
+	ret = _xadc_read_adc_reg(xadc, XADC_REG_CONF1, &cfg);
+	if (ret)
+		goto err_out;
 
 	old_cfg = cfg;
 	cfg |= XADC_CONF1_ALARM_MASK;
-	cfg &= ~((xadc->alarm_mask & 0xf0) << 4); /* bram, pपूर्णांक, paux, ddr */
+	cfg &= ~((xadc->alarm_mask & 0xf0) << 4); /* bram, pint, paux, ddr */
 	cfg &= ~((xadc->alarm_mask & 0x08) >> 3); /* ot */
-	cfg &= ~((xadc->alarm_mask & 0x07) << 1); /* temp, vccपूर्णांक, vccaux */
-	अगर (old_cfg != cfg)
-		ret = _xadc_ग_लिखो_adc_reg(xadc, XADC_REG_CONF1, cfg);
+	cfg &= ~((xadc->alarm_mask & 0x07) << 1); /* temp, vccint, vccaux */
+	if (old_cfg != cfg)
+		ret = _xadc_write_adc_reg(xadc, XADC_REG_CONF1, cfg);
 
 err_out:
 	mutex_unlock(&xadc->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक xadc_पढ़ो_event_value(काष्ठा iio_dev *indio_dev,
-	स्थिर काष्ठा iio_chan_spec *chan, क्रमागत iio_event_type type,
-	क्रमागत iio_event_direction dir, क्रमागत iio_event_info info,
-	पूर्णांक *val, पूर्णांक *val2)
-अणु
-	अचिन्हित पूर्णांक offset = xadc_get_threshold_offset(chan, dir);
-	काष्ठा xadc *xadc = iio_priv(indio_dev);
+int xadc_read_event_value(struct iio_dev *indio_dev,
+	const struct iio_chan_spec *chan, enum iio_event_type type,
+	enum iio_event_direction dir, enum iio_event_info info,
+	int *val, int *val2)
+{
+	unsigned int offset = xadc_get_threshold_offset(chan, dir);
+	struct xadc *xadc = iio_priv(indio_dev);
 
-	चयन (info) अणु
-	हाल IIO_EV_INFO_VALUE:
+	switch (info) {
+	case IIO_EV_INFO_VALUE:
 		*val = xadc->threshold[offset];
-		अवरोध;
-	हाल IIO_EV_INFO_HYSTERESIS:
+		break;
+	case IIO_EV_INFO_HYSTERESIS:
 		*val = xadc->temp_hysteresis;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	/* MSB aligned */
 	*val >>= 16 - chan->scan_type.realbits;
 
-	वापस IIO_VAL_INT;
-पूर्ण
+	return IIO_VAL_INT;
+}
 
-पूर्णांक xadc_ग_लिखो_event_value(काष्ठा iio_dev *indio_dev,
-	स्थिर काष्ठा iio_chan_spec *chan, क्रमागत iio_event_type type,
-	क्रमागत iio_event_direction dir, क्रमागत iio_event_info info,
-	पूर्णांक val, पूर्णांक val2)
-अणु
-	अचिन्हित पूर्णांक offset = xadc_get_threshold_offset(chan, dir);
-	काष्ठा xadc *xadc = iio_priv(indio_dev);
-	पूर्णांक ret = 0;
+int xadc_write_event_value(struct iio_dev *indio_dev,
+	const struct iio_chan_spec *chan, enum iio_event_type type,
+	enum iio_event_direction dir, enum iio_event_info info,
+	int val, int val2)
+{
+	unsigned int offset = xadc_get_threshold_offset(chan, dir);
+	struct xadc *xadc = iio_priv(indio_dev);
+	int ret = 0;
 
 	/* MSB aligned */
 	val <<= 16 - chan->scan_type.realbits;
 
-	अगर (val < 0 || val > 0xffff)
-		वापस -EINVAL;
+	if (val < 0 || val > 0xffff)
+		return -EINVAL;
 
 	mutex_lock(&xadc->mutex);
 
-	चयन (info) अणु
-	हाल IIO_EV_INFO_VALUE:
+	switch (info) {
+	case IIO_EV_INFO_VALUE:
 		xadc->threshold[offset] = val;
-		अवरोध;
-	हाल IIO_EV_INFO_HYSTERESIS:
+		break;
+	case IIO_EV_INFO_HYSTERESIS:
 		xadc->temp_hysteresis = val;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		mutex_unlock(&xadc->mutex);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (chan->type == IIO_TEMP) अणु
+	if (chan->type == IIO_TEMP) {
 		/*
 		 * According to the datasheet we need to set the lower 4 bits to
 		 * 0x3, otherwise 125 degree celsius will be used as the
@@ -220,26 +219,26 @@ err_out:
 
 		/*
 		 * Since we store the hysteresis as relative (to the threshold)
-		 * value, but the hardware expects an असलolute value we need to
+		 * value, but the hardware expects an absolute value we need to
 		 * recalcualte this value whenever the hysteresis or the
 		 * threshold changes.
 		 */
-		अगर (xadc->threshold[offset] < xadc->temp_hysteresis)
+		if (xadc->threshold[offset] < xadc->temp_hysteresis)
 			xadc->threshold[offset + 4] = 0;
-		अन्यथा
+		else
 			xadc->threshold[offset + 4] = xadc->threshold[offset] -
 					xadc->temp_hysteresis;
-		ret = _xadc_ग_लिखो_adc_reg(xadc, XADC_REG_THRESHOLD(offset + 4),
+		ret = _xadc_write_adc_reg(xadc, XADC_REG_THRESHOLD(offset + 4),
 			xadc->threshold[offset + 4]);
-		अगर (ret)
-			जाओ out_unlock;
-	पूर्ण
+		if (ret)
+			goto out_unlock;
+	}
 
-	अगर (info == IIO_EV_INFO_VALUE)
-		ret = _xadc_ग_लिखो_adc_reg(xadc, XADC_REG_THRESHOLD(offset), val);
+	if (info == IIO_EV_INFO_VALUE)
+		ret = _xadc_write_adc_reg(xadc, XADC_REG_THRESHOLD(offset), val);
 
 out_unlock:
 	mutex_unlock(&xadc->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

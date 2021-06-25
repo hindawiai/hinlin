@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Driver क्रम Digigram VX222 V2/Mic soundcards
+ * Driver for Digigram VX222 V2/Mic soundcards
  *
- * VX222-specअगरic low-level routines
+ * VX222-specific low-level routines
  *
  * Copyright (c) 2002 by Takashi Iwai <tiwai@suse.de>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/पन.स>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/firmware.h>
+#include <linux/mutex.h>
+#include <linux/io.h>
 
-#समावेश <sound/core.h>
-#समावेश <sound/control.h>
-#समावेश <sound/tlv.h>
-#समावेश "vx222.h"
+#include <sound/core.h>
+#include <sound/control.h>
+#include <sound/tlv.h>
+#include "vx222.h"
 
 
-अटल स्थिर पूर्णांक vx2_reg_offset[VX_REG_MAX] = अणु
+static const int vx2_reg_offset[VX_REG_MAX] = {
 	[VX_ICR]    = 0x00,
 	[VX_CVR]    = 0x04,
 	[VX_ISR]    = 0x08,
@@ -44,9 +43,9 @@
 	[VX_INTCSR] = 0x4c, // VX_INTCSR_REGISTER_OFFSET
 	[VX_CNTRL]  = 0x50,		// VX_CNTRL_REGISTER_OFFSET
 	[VX_GPIOC]  = 0x54,		// VX_GPIOC (new with PLX9030)
-पूर्ण;
+};
 
-अटल स्थिर पूर्णांक vx2_reg_index[VX_REG_MAX] = अणु
+static const int vx2_reg_index[VX_REG_MAX] = {
 	[VX_ICR]	= 1,
 	[VX_CVR]	= 1,
 	[VX_ISR]	= 1,
@@ -70,84 +69,84 @@
 	[VX_INTCSR]	= 0,	/* on the PLX */
 	[VX_CNTRL]	= 0,	/* on the PLX */
 	[VX_GPIOC]	= 0,	/* on the PLX */
-पूर्ण;
+};
 
-अटल अंतरभूत अचिन्हित दीर्घ vx2_reg_addr(काष्ठा vx_core *_chip, पूर्णांक reg)
-अणु
-	काष्ठा snd_vx222 *chip = to_vx222(_chip);
-	वापस chip->port[vx2_reg_index[reg]] + vx2_reg_offset[reg];
-पूर्ण
-
-/**
- * vx2_inb - पढ़ो a byte from the रेजिस्टर
- * @chip: VX core instance
- * @offset: रेजिस्टर क्रमागत
- */
-अटल अचिन्हित अक्षर vx2_inb(काष्ठा vx_core *chip, पूर्णांक offset)
-अणु
-	वापस inb(vx2_reg_addr(chip, offset));
-पूर्ण
+static inline unsigned long vx2_reg_addr(struct vx_core *_chip, int reg)
+{
+	struct snd_vx222 *chip = to_vx222(_chip);
+	return chip->port[vx2_reg_index[reg]] + vx2_reg_offset[reg];
+}
 
 /**
- * vx2_outb - ग_लिखो a byte on the रेजिस्टर
+ * vx2_inb - read a byte from the register
  * @chip: VX core instance
- * @offset: the रेजिस्टर offset
- * @val: the value to ग_लिखो
+ * @offset: register enum
  */
-अटल व्योम vx2_outb(काष्ठा vx_core *chip, पूर्णांक offset, अचिन्हित अक्षर val)
-अणु
+static unsigned char vx2_inb(struct vx_core *chip, int offset)
+{
+	return inb(vx2_reg_addr(chip, offset));
+}
+
+/**
+ * vx2_outb - write a byte on the register
+ * @chip: VX core instance
+ * @offset: the register offset
+ * @val: the value to write
+ */
+static void vx2_outb(struct vx_core *chip, int offset, unsigned char val)
+{
 	outb(val, vx2_reg_addr(chip, offset));
 	/*
 	dev_dbg(chip->card->dev, "outb: %x -> %x\n", val, vx2_reg_addr(chip, offset));
 	*/
-पूर्ण
+}
 
 /**
- * vx2_inl - पढ़ो a 32bit word from the रेजिस्टर
+ * vx2_inl - read a 32bit word from the register
  * @chip: VX core instance
- * @offset: रेजिस्टर क्रमागत
+ * @offset: register enum
  */
-अटल अचिन्हित पूर्णांक vx2_inl(काष्ठा vx_core *chip, पूर्णांक offset)
-अणु
-	वापस inl(vx2_reg_addr(chip, offset));
-पूर्ण
+static unsigned int vx2_inl(struct vx_core *chip, int offset)
+{
+	return inl(vx2_reg_addr(chip, offset));
+}
 
 /**
- * vx2_outl - ग_लिखो a 32bit word on the रेजिस्टर
+ * vx2_outl - write a 32bit word on the register
  * @chip: VX core instance
- * @offset: the रेजिस्टर क्रमागत
- * @val: the value to ग_लिखो
+ * @offset: the register enum
+ * @val: the value to write
  */
-अटल व्योम vx2_outl(काष्ठा vx_core *chip, पूर्णांक offset, अचिन्हित पूर्णांक val)
-अणु
+static void vx2_outl(struct vx_core *chip, int offset, unsigned int val)
+{
 	/*
 	dev_dbg(chip->card->dev, "outl: %x -> %x\n", val, vx2_reg_addr(chip, offset));
 	*/
 	outl(val, vx2_reg_addr(chip, offset));
-पूर्ण
+}
 
 /*
  * redefine macros to call directly
  */
-#अघोषित vx_inb
-#घोषणा vx_inb(chip,reg)	vx2_inb((काष्ठा vx_core*)(chip), VX_##reg)
-#अघोषित vx_outb
-#घोषणा vx_outb(chip,reg,val)	vx2_outb((काष्ठा vx_core*)(chip), VX_##reg, val)
-#अघोषित vx_inl
-#घोषणा vx_inl(chip,reg)	vx2_inl((काष्ठा vx_core*)(chip), VX_##reg)
-#अघोषित vx_outl
-#घोषणा vx_outl(chip,reg,val)	vx2_outl((काष्ठा vx_core*)(chip), VX_##reg, val)
+#undef vx_inb
+#define vx_inb(chip,reg)	vx2_inb((struct vx_core*)(chip), VX_##reg)
+#undef vx_outb
+#define vx_outb(chip,reg,val)	vx2_outb((struct vx_core*)(chip), VX_##reg, val)
+#undef vx_inl
+#define vx_inl(chip,reg)	vx2_inl((struct vx_core*)(chip), VX_##reg)
+#undef vx_outl
+#define vx_outl(chip,reg,val)	vx2_outl((struct vx_core*)(chip), VX_##reg, val)
 
 
 /*
  * vx_reset_dsp - reset the DSP
  */
 
-#घोषणा XX_DSP_RESET_WAIT_TIME		2	/* ms */
+#define XX_DSP_RESET_WAIT_TIME		2	/* ms */
 
-अटल व्योम vx2_reset_dsp(काष्ठा vx_core *_chip)
-अणु
-	काष्ठा snd_vx222 *chip = to_vx222(_chip);
+static void vx2_reset_dsp(struct vx_core *_chip)
+{
+	struct snd_vx222 *chip = to_vx222(_chip);
 
 	/* set the reset dsp bit to 0 */
 	vx_outl(chip, CDSP, chip->regCDSP & ~VX_CDSP_DSP_RESET_MASK);
@@ -157,210 +156,210 @@
 	chip->regCDSP |= VX_CDSP_DSP_RESET_MASK;
 	/* set the reset dsp bit to 1 */
 	vx_outl(chip, CDSP, chip->regCDSP);
-पूर्ण
+}
 
 
-अटल पूर्णांक vx2_test_xilinx(काष्ठा vx_core *_chip)
-अणु
-	काष्ठा snd_vx222 *chip = to_vx222(_chip);
-	अचिन्हित पूर्णांक data;
+static int vx2_test_xilinx(struct vx_core *_chip)
+{
+	struct snd_vx222 *chip = to_vx222(_chip);
+	unsigned int data;
 
 	dev_dbg(_chip->card->dev, "testing xilinx...\n");
-	/* This test uses several ग_लिखो/पढ़ो sequences on TEST0 and TEST1 bits
+	/* This test uses several write/read sequences on TEST0 and TEST1 bits
 	 * to figure out whever or not the xilinx was correctly loaded
 	 */
 
-	/* We ग_लिखो 1 on CDSP.TEST0. We should get 0 on STATUS.TEST0. */
+	/* We write 1 on CDSP.TEST0. We should get 0 on STATUS.TEST0. */
 	vx_outl(chip, CDSP, chip->regCDSP | VX_CDSP_TEST0_MASK);
 	vx_inl(chip, ISR);
 	data = vx_inl(chip, STATUS);
-	अगर ((data & VX_STATUS_VAL_TEST0_MASK) == VX_STATUS_VAL_TEST0_MASK) अणु
+	if ((data & VX_STATUS_VAL_TEST0_MASK) == VX_STATUS_VAL_TEST0_MASK) {
 		dev_dbg(_chip->card->dev, "bad!\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* We ग_लिखो 0 on CDSP.TEST0. We should get 1 on STATUS.TEST0. */
+	/* We write 0 on CDSP.TEST0. We should get 1 on STATUS.TEST0. */
 	vx_outl(chip, CDSP, chip->regCDSP & ~VX_CDSP_TEST0_MASK);
 	vx_inl(chip, ISR);
 	data = vx_inl(chip, STATUS);
-	अगर (! (data & VX_STATUS_VAL_TEST0_MASK)) अणु
+	if (! (data & VX_STATUS_VAL_TEST0_MASK)) {
 		dev_dbg(_chip->card->dev, "bad! #2\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (_chip->type == VX_TYPE_BOARD) अणु
+	if (_chip->type == VX_TYPE_BOARD) {
 		/* not implemented on VX_2_BOARDS */
-		/* We ग_लिखो 1 on CDSP.TEST1. We should get 0 on STATUS.TEST1. */
+		/* We write 1 on CDSP.TEST1. We should get 0 on STATUS.TEST1. */
 		vx_outl(chip, CDSP, chip->regCDSP | VX_CDSP_TEST1_MASK);
 		vx_inl(chip, ISR);
 		data = vx_inl(chip, STATUS);
-		अगर ((data & VX_STATUS_VAL_TEST1_MASK) == VX_STATUS_VAL_TEST1_MASK) अणु
+		if ((data & VX_STATUS_VAL_TEST1_MASK) == VX_STATUS_VAL_TEST1_MASK) {
 			dev_dbg(_chip->card->dev, "bad! #3\n");
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 
-		/* We ग_लिखो 0 on CDSP.TEST1. We should get 1 on STATUS.TEST1. */
+		/* We write 0 on CDSP.TEST1. We should get 1 on STATUS.TEST1. */
 		vx_outl(chip, CDSP, chip->regCDSP & ~VX_CDSP_TEST1_MASK);
 		vx_inl(chip, ISR);
 		data = vx_inl(chip, STATUS);
-		अगर (! (data & VX_STATUS_VAL_TEST1_MASK)) अणु
+		if (! (data & VX_STATUS_VAL_TEST1_MASK)) {
 			dev_dbg(_chip->card->dev, "bad! #4\n");
-			वापस -ENODEV;
-		पूर्ण
-	पूर्ण
+			return -ENODEV;
+		}
+	}
 	dev_dbg(_chip->card->dev, "ok, xilinx fine.\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /**
- * vx2_setup_pseuकरो_dma - set up the pseuकरो dma पढ़ो/ग_लिखो mode.
+ * vx2_setup_pseudo_dma - set up the pseudo dma read/write mode.
  * @chip: VX core instance
- * @करो_ग_लिखो: 0 = पढ़ो, 1 = set up क्रम DMA ग_लिखो
+ * @do_write: 0 = read, 1 = set up for DMA write
  */
-अटल व्योम vx2_setup_pseuकरो_dma(काष्ठा vx_core *chip, पूर्णांक करो_ग_लिखो)
-अणु
-	/* Interrupt mode and HREQ pin enabled क्रम host transmit data transfers
-	 * (in हाल of the use of the pseuकरो-dma facility).
+static void vx2_setup_pseudo_dma(struct vx_core *chip, int do_write)
+{
+	/* Interrupt mode and HREQ pin enabled for host transmit data transfers
+	 * (in case of the use of the pseudo-dma facility).
 	 */
-	vx_outl(chip, ICR, करो_ग_लिखो ? ICR_TREQ : ICR_RREQ);
+	vx_outl(chip, ICR, do_write ? ICR_TREQ : ICR_RREQ);
 
-	/* Reset the pseuकरो-dma रेजिस्टर (in हाल of the use of the
-	 * pseuकरो-dma facility).
+	/* Reset the pseudo-dma register (in case of the use of the
+	 * pseudo-dma facility).
 	 */
 	vx_outl(chip, RESET_DMA, 0);
-पूर्ण
+}
 
 /*
- * vx_release_pseuकरो_dma - disable the pseuकरो-DMA mode
+ * vx_release_pseudo_dma - disable the pseudo-DMA mode
  */
-अटल अंतरभूत व्योम vx2_release_pseuकरो_dma(काष्ठा vx_core *chip)
-अणु
+static inline void vx2_release_pseudo_dma(struct vx_core *chip)
+{
 	/* HREQ pin disabled. */
 	vx_outl(chip, ICR, 0);
-पूर्ण
+}
 
 
 
-/* pseuकरो-dma ग_लिखो */
-अटल व्योम vx2_dma_ग_लिखो(काष्ठा vx_core *chip, काष्ठा snd_pcm_runसमय *runसमय,
-			  काष्ठा vx_pipe *pipe, पूर्णांक count)
-अणु
-	अचिन्हित दीर्घ port = vx2_reg_addr(chip, VX_DMA);
-	पूर्णांक offset = pipe->hw_ptr;
-	u32 *addr = (u32 *)(runसमय->dma_area + offset);
+/* pseudo-dma write */
+static void vx2_dma_write(struct vx_core *chip, struct snd_pcm_runtime *runtime,
+			  struct vx_pipe *pipe, int count)
+{
+	unsigned long port = vx2_reg_addr(chip, VX_DMA);
+	int offset = pipe->hw_ptr;
+	u32 *addr = (u32 *)(runtime->dma_area + offset);
 
-	अगर (snd_BUG_ON(count % 4))
-		वापस;
+	if (snd_BUG_ON(count % 4))
+		return;
 
-	vx2_setup_pseuकरो_dma(chip, 1);
+	vx2_setup_pseudo_dma(chip, 1);
 
-	/* Transfer using pseuकरो-dma.
+	/* Transfer using pseudo-dma.
 	 */
-	अगर (offset + count >= pipe->buffer_bytes) अणु
-		पूर्णांक length = pipe->buffer_bytes - offset;
+	if (offset + count >= pipe->buffer_bytes) {
+		int length = pipe->buffer_bytes - offset;
 		count -= length;
 		length >>= 2; /* in 32bit words */
-		/* Transfer using pseuकरो-dma. */
-		क्रम (; length > 0; length--) अणु
+		/* Transfer using pseudo-dma. */
+		for (; length > 0; length--) {
 			outl(*addr, port);
 			addr++;
-		पूर्ण
-		addr = (u32 *)runसमय->dma_area;
+		}
+		addr = (u32 *)runtime->dma_area;
 		pipe->hw_ptr = 0;
-	पूर्ण
+	}
 	pipe->hw_ptr += count;
 	count >>= 2; /* in 32bit words */
-	/* Transfer using pseuकरो-dma. */
-	क्रम (; count > 0; count--) अणु
+	/* Transfer using pseudo-dma. */
+	for (; count > 0; count--) {
 		outl(*addr, port);
 		addr++;
-	पूर्ण
+	}
 
-	vx2_release_pseuकरो_dma(chip);
-पूर्ण
+	vx2_release_pseudo_dma(chip);
+}
 
 
-/* pseuकरो dma पढ़ो */
-अटल व्योम vx2_dma_पढ़ो(काष्ठा vx_core *chip, काष्ठा snd_pcm_runसमय *runसमय,
-			 काष्ठा vx_pipe *pipe, पूर्णांक count)
-अणु
-	पूर्णांक offset = pipe->hw_ptr;
-	u32 *addr = (u32 *)(runसमय->dma_area + offset);
-	अचिन्हित दीर्घ port = vx2_reg_addr(chip, VX_DMA);
+/* pseudo dma read */
+static void vx2_dma_read(struct vx_core *chip, struct snd_pcm_runtime *runtime,
+			 struct vx_pipe *pipe, int count)
+{
+	int offset = pipe->hw_ptr;
+	u32 *addr = (u32 *)(runtime->dma_area + offset);
+	unsigned long port = vx2_reg_addr(chip, VX_DMA);
 
-	अगर (snd_BUG_ON(count % 4))
-		वापस;
+	if (snd_BUG_ON(count % 4))
+		return;
 
-	vx2_setup_pseuकरो_dma(chip, 0);
-	/* Transfer using pseuकरो-dma.
+	vx2_setup_pseudo_dma(chip, 0);
+	/* Transfer using pseudo-dma.
 	 */
-	अगर (offset + count >= pipe->buffer_bytes) अणु
-		पूर्णांक length = pipe->buffer_bytes - offset;
+	if (offset + count >= pipe->buffer_bytes) {
+		int length = pipe->buffer_bytes - offset;
 		count -= length;
 		length >>= 2; /* in 32bit words */
-		/* Transfer using pseuकरो-dma. */
-		क्रम (; length > 0; length--)
+		/* Transfer using pseudo-dma. */
+		for (; length > 0; length--)
 			*addr++ = inl(port);
-		addr = (u32 *)runसमय->dma_area;
+		addr = (u32 *)runtime->dma_area;
 		pipe->hw_ptr = 0;
-	पूर्ण
+	}
 	pipe->hw_ptr += count;
 	count >>= 2; /* in 32bit words */
-	/* Transfer using pseuकरो-dma. */
-	क्रम (; count > 0; count--)
+	/* Transfer using pseudo-dma. */
+	for (; count > 0; count--)
 		*addr++ = inl(port);
 
-	vx2_release_pseuकरो_dma(chip);
-पूर्ण
+	vx2_release_pseudo_dma(chip);
+}
 
-#घोषणा VX_XILINX_RESET_MASK        0x40000000
-#घोषणा VX_USERBIT0_MASK            0x00000004
-#घोषणा VX_USERBIT1_MASK            0x00000020
-#घोषणा VX_CNTRL_REGISTER_VALUE     0x00172012
+#define VX_XILINX_RESET_MASK        0x40000000
+#define VX_USERBIT0_MASK            0x00000004
+#define VX_USERBIT1_MASK            0x00000020
+#define VX_CNTRL_REGISTER_VALUE     0x00172012
 
 /*
  * transfer counts bits to PLX
  */
-अटल पूर्णांक put_xilinx_data(काष्ठा vx_core *chip, अचिन्हित पूर्णांक port, अचिन्हित पूर्णांक counts, अचिन्हित अक्षर data)
-अणु
-	अचिन्हित पूर्णांक i;
+static int put_xilinx_data(struct vx_core *chip, unsigned int port, unsigned int counts, unsigned char data)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < counts; i++) अणु
-		अचिन्हित पूर्णांक val;
+	for (i = 0; i < counts; i++) {
+		unsigned int val;
 
-		/* set the घड़ी bit to 0. */
+		/* set the clock bit to 0. */
 		val = VX_CNTRL_REGISTER_VALUE & ~VX_USERBIT0_MASK;
 		vx2_outl(chip, port, val);
 		vx2_inl(chip, port);
 		udelay(1);
 
-		अगर (data & (1 << i))
+		if (data & (1 << i))
 			val |= VX_USERBIT1_MASK;
-		अन्यथा
+		else
 			val &= ~VX_USERBIT1_MASK;
 		vx2_outl(chip, port, val);
 		vx2_inl(chip, port);
 
-		/* set the घड़ी bit to 1. */
+		/* set the clock bit to 1. */
 		val |= VX_USERBIT0_MASK;
 		vx2_outl(chip, port, val);
 		vx2_inl(chip, port);
 		udelay(1);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /*
  * load the xilinx image
  */
-अटल पूर्णांक vx2_load_xilinx_binary(काष्ठा vx_core *chip, स्थिर काष्ठा firmware *xilinx)
-अणु
-	अचिन्हित पूर्णांक i;
-	अचिन्हित पूर्णांक port;
-	स्थिर अचिन्हित अक्षर *image;
+static int vx2_load_xilinx_binary(struct vx_core *chip, const struct firmware *xilinx)
+{
+	unsigned int i;
+	unsigned int port;
+	const unsigned char *image;
 
-	/* XILINX reset (रुको at least 1 millisecond between reset on and off). */
+	/* XILINX reset (wait at least 1 millisecond between reset on and off). */
 	vx_outl(chip, CNTRL, VX_CNTRL_REGISTER_VALUE | VX_XILINX_RESET_MASK);
 	vx_inl(chip, CNTRL);
 	msleep(10);
@@ -368,148 +367,148 @@
 	vx_inl(chip, CNTRL);
 	msleep(10);
 
-	अगर (chip->type == VX_TYPE_BOARD)
+	if (chip->type == VX_TYPE_BOARD)
 		port = VX_CNTRL;
-	अन्यथा
-		port = VX_GPIOC; /* VX222 V2 and VX222_MIC_BOARD with new PLX9030 use this रेजिस्टर */
+	else
+		port = VX_GPIOC; /* VX222 V2 and VX222_MIC_BOARD with new PLX9030 use this register */
 
 	image = xilinx->data;
-	क्रम (i = 0; i < xilinx->size; i++, image++) अणु
-		अगर (put_xilinx_data(chip, port, 8, *image) < 0)
-			वापस -EINVAL;
-		/* करोn't take too much समय in this loop... */
+	for (i = 0; i < xilinx->size; i++, image++) {
+		if (put_xilinx_data(chip, port, 8, *image) < 0)
+			return -EINVAL;
+		/* don't take too much time in this loop... */
 		cond_resched();
-	पूर्ण
+	}
 	put_xilinx_data(chip, port, 4, 0xff); /* end signature */
 
 	msleep(200);
 
 	/* test after loading (is buggy with VX222) */
-	अगर (chip->type != VX_TYPE_BOARD) अणु
-		/* Test अगर load successful: test bit 8 of रेजिस्टर GPIOC (VX222: use CNTRL) ! */
+	if (chip->type != VX_TYPE_BOARD) {
+		/* Test if load successful: test bit 8 of register GPIOC (VX222: use CNTRL) ! */
 		i = vx_inl(chip, GPIOC);
-		अगर (i & 0x0100)
-			वापस 0;
+		if (i & 0x0100)
+			return 0;
 		dev_err(chip->card->dev,
 			"xilinx test failed after load, GPIOC=0x%x\n", i);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 	
 /*
  * load the boot/dsp images
  */
-अटल पूर्णांक vx2_load_dsp(काष्ठा vx_core *vx, पूर्णांक index, स्थिर काष्ठा firmware *dsp)
-अणु
-	पूर्णांक err;
+static int vx2_load_dsp(struct vx_core *vx, int index, const struct firmware *dsp)
+{
+	int err;
 
-	चयन (index) अणु
-	हाल 1:
+	switch (index) {
+	case 1:
 		/* xilinx image */
-		अगर ((err = vx2_load_xilinx_binary(vx, dsp)) < 0)
-			वापस err;
-		अगर ((err = vx2_test_xilinx(vx)) < 0)
-			वापस err;
-		वापस 0;
-	हाल 2:
+		if ((err = vx2_load_xilinx_binary(vx, dsp)) < 0)
+			return err;
+		if ((err = vx2_test_xilinx(vx)) < 0)
+			return err;
+		return 0;
+	case 2:
 		/* DSP boot */
-		वापस snd_vx_dsp_boot(vx, dsp);
-	हाल 3:
+		return snd_vx_dsp_boot(vx, dsp);
+	case 3:
 		/* DSP image */
-		वापस snd_vx_dsp_load(vx, dsp);
-	शेष:
+		return snd_vx_dsp_load(vx, dsp);
+	default:
 		snd_BUG();
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return -EINVAL;
+	}
+}
 
 
 /*
- * vx_test_and_ack - test and acknowledge पूर्णांकerrupt
+ * vx_test_and_ack - test and acknowledge interrupt
  *
  * called from irq hander, too
  *
  * spinlock held!
  */
-अटल पूर्णांक vx2_test_and_ack(काष्ठा vx_core *chip)
-अणु
+static int vx2_test_and_ack(struct vx_core *chip)
+{
 	/* not booted yet? */
-	अगर (! (chip->chip_status & VX_STAT_XILINX_LOADED))
-		वापस -ENXIO;
+	if (! (chip->chip_status & VX_STAT_XILINX_LOADED))
+		return -ENXIO;
 
-	अगर (! (vx_inl(chip, STATUS) & VX_STATUS_MEMIRQ_MASK))
-		वापस -EIO;
+	if (! (vx_inl(chip, STATUS) & VX_STATUS_MEMIRQ_MASK))
+		return -EIO;
 	
-	/* ok, पूर्णांकerrupts generated, now ack it */
-	/* set ACQUIT bit up and करोwn */
+	/* ok, interrupts generated, now ack it */
+	/* set ACQUIT bit up and down */
 	vx_outl(chip, STATUS, 0);
-	/* useless पढ़ो just to spend some समय and मुख्यtain
-	 * the ACQUIT संकेत up क्रम a जबतक ( a bus cycle )
+	/* useless read just to spend some time and maintain
+	 * the ACQUIT signal up for a while ( a bus cycle )
 	 */
 	vx_inl(chip, STATUS);
 	/* ack */
 	vx_outl(chip, STATUS, VX_STATUS_MEMIRQ_MASK);
-	/* useless पढ़ो just to spend some समय and मुख्यtain
-	 * the ACQUIT संकेत up क्रम a जबतक ( a bus cycle ) */
+	/* useless read just to spend some time and maintain
+	 * the ACQUIT signal up for a while ( a bus cycle ) */
 	vx_inl(chip, STATUS);
 	/* clear */
 	vx_outl(chip, STATUS, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  * vx_validate_irq - enable/disable IRQ
  */
-अटल व्योम vx2_validate_irq(काष्ठा vx_core *_chip, पूर्णांक enable)
-अणु
-	काष्ठा snd_vx222 *chip = to_vx222(_chip);
+static void vx2_validate_irq(struct vx_core *_chip, int enable)
+{
+	struct snd_vx222 *chip = to_vx222(_chip);
 
-	/* Set the पूर्णांकerrupt enable bit to 1 in CDSP रेजिस्टर */
-	अगर (enable) अणु
-		/* Set the PCI पूर्णांकerrupt enable bit to 1.*/
+	/* Set the interrupt enable bit to 1 in CDSP register */
+	if (enable) {
+		/* Set the PCI interrupt enable bit to 1.*/
 		vx_outl(chip, INTCSR, VX_INTCSR_VALUE|VX_PCI_INTERRUPT_MASK);
 		chip->regCDSP |= VX_CDSP_VALID_IRQ_MASK;
-	पूर्ण अन्यथा अणु
-		/* Set the PCI पूर्णांकerrupt enable bit to 0. */
+	} else {
+		/* Set the PCI interrupt enable bit to 0. */
 		vx_outl(chip, INTCSR, VX_INTCSR_VALUE&~VX_PCI_INTERRUPT_MASK);
 		chip->regCDSP &= ~VX_CDSP_VALID_IRQ_MASK;
-	पूर्ण
+	}
 	vx_outl(chip, CDSP, chip->regCDSP);
-पूर्ण
+}
 
 
 /*
- * ग_लिखो an AKM codec data (24bit)
+ * write an AKM codec data (24bit)
  */
-अटल व्योम vx2_ग_लिखो_codec_reg(काष्ठा vx_core *chip, अचिन्हित पूर्णांक data)
-अणु
-	अचिन्हित पूर्णांक i;
+static void vx2_write_codec_reg(struct vx_core *chip, unsigned int data)
+{
+	unsigned int i;
 
 	vx_inl(chip, HIFREQ);
 
-	/* We have to send 24 bits (3 x 8 bits). Start with most signअगर. Bit */
-	क्रम (i = 0; i < 24; i++, data <<= 1)
+	/* We have to send 24 bits (3 x 8 bits). Start with most signif. Bit */
+	for (i = 0; i < 24; i++, data <<= 1)
 		vx_outl(chip, DATA, ((data & 0x800000) ? VX_DATA_CODEC_MASK : 0));
-	/* Terminate access to codec रेजिस्टरs */
+	/* Terminate access to codec registers */
 	vx_inl(chip, RUER);
-पूर्ण
+}
 
 
-#घोषणा AKM_CODEC_POWER_CONTROL_CMD 0xA007
-#घोषणा AKM_CODEC_RESET_ON_CMD      0xA100
-#घोषणा AKM_CODEC_RESET_OFF_CMD     0xA103
-#घोषणा AKM_CODEC_CLOCK_FORMAT_CMD  0xA240
-#घोषणा AKM_CODEC_MUTE_CMD          0xA38D
-#घोषणा AKM_CODEC_UNMUTE_CMD        0xA30D
-#घोषणा AKM_CODEC_LEFT_LEVEL_CMD    0xA400
-#घोषणा AKM_CODEC_RIGHT_LEVEL_CMD   0xA500
+#define AKM_CODEC_POWER_CONTROL_CMD 0xA007
+#define AKM_CODEC_RESET_ON_CMD      0xA100
+#define AKM_CODEC_RESET_OFF_CMD     0xA103
+#define AKM_CODEC_CLOCK_FORMAT_CMD  0xA240
+#define AKM_CODEC_MUTE_CMD          0xA38D
+#define AKM_CODEC_UNMUTE_CMD        0xA30D
+#define AKM_CODEC_LEFT_LEVEL_CMD    0xA400
+#define AKM_CODEC_RIGHT_LEVEL_CMD   0xA500
 
-अटल स्थिर u8 vx2_akm_gains_lut[VX2_AKM_LEVEL_MAX+1] = अणु
+static const u8 vx2_akm_gains_lut[VX2_AKM_LEVEL_MAX+1] = {
     0x7f,       // [000] =  +0.000 dB  ->  AKM(0x7f) =  +0.000 dB  error(+0.000 dB)
     0x7d,       // [001] =  -0.500 dB  ->  AKM(0x7d) =  -0.572 dB  error(-0.072 dB)
     0x7c,       // [002] =  -1.000 dB  ->  AKM(0x7c) =  -0.873 dB  error(+0.127 dB)
@@ -657,68 +656,68 @@
     0x01,       // [144] = -72.000 dB  ->  AKM(0x01) = -72.075 dB  error(-0.075 dB)
     0x01,       // [145] = -72.500 dB  ->  AKM(0x01) = -72.075 dB  error(+0.425 dB)
     0x01,       // [146] = -73.000 dB  ->  AKM(0x01) = -72.075 dB  error(+0.925 dB)
-    0x00पूर्ण;      // [147] = -73.500 dB  ->  AKM(0x00) =  mute       error(+infini)
+    0x00};      // [147] = -73.500 dB  ->  AKM(0x00) =  mute       error(+infini)
 
 /*
- * pseuकरो-codec ग_लिखो entry
+ * pseudo-codec write entry
  */
-अटल व्योम vx2_ग_लिखो_akm(काष्ठा vx_core *chip, पूर्णांक reg, अचिन्हित पूर्णांक data)
-अणु
-	अचिन्हित पूर्णांक val;
+static void vx2_write_akm(struct vx_core *chip, int reg, unsigned int data)
+{
+	unsigned int val;
 
-	अगर (reg == XX_CODEC_DAC_CONTROL_REGISTER) अणु
-		vx2_ग_लिखो_codec_reg(chip, data ? AKM_CODEC_MUTE_CMD : AKM_CODEC_UNMUTE_CMD);
-		वापस;
-	पूर्ण
+	if (reg == XX_CODEC_DAC_CONTROL_REGISTER) {
+		vx2_write_codec_reg(chip, data ? AKM_CODEC_MUTE_CMD : AKM_CODEC_UNMUTE_CMD);
+		return;
+	}
 
-	/* `data' is a value between 0x0 and VX2_AKM_LEVEL_MAX = 0x093, in the हाल of the AKM codecs, we need
+	/* `data' is a value between 0x0 and VX2_AKM_LEVEL_MAX = 0x093, in the case of the AKM codecs, we need
 	   a look up table, as there is no linear matching between the driver codec values
 	   and the real dBu value
 	*/
-	अगर (snd_BUG_ON(data >= माप(vx2_akm_gains_lut)))
-		वापस;
+	if (snd_BUG_ON(data >= sizeof(vx2_akm_gains_lut)))
+		return;
 
-	चयन (reg) अणु
-	हाल XX_CODEC_LEVEL_LEFT_REGISTER:
+	switch (reg) {
+	case XX_CODEC_LEVEL_LEFT_REGISTER:
 		val = AKM_CODEC_LEFT_LEVEL_CMD;
-		अवरोध;
-	हाल XX_CODEC_LEVEL_RIGHT_REGISTER:
+		break;
+	case XX_CODEC_LEVEL_RIGHT_REGISTER:
 		val = AKM_CODEC_RIGHT_LEVEL_CMD;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		snd_BUG();
-		वापस;
-	पूर्ण
+		return;
+	}
 	val |= vx2_akm_gains_lut[data];
 
-	vx2_ग_लिखो_codec_reg(chip, val);
-पूर्ण
+	vx2_write_codec_reg(chip, val);
+}
 
 
 /*
- * ग_लिखो codec bit क्रम old VX222 board
+ * write codec bit for old VX222 board
  */
-अटल व्योम vx2_old_ग_लिखो_codec_bit(काष्ठा vx_core *chip, पूर्णांक codec, अचिन्हित पूर्णांक data)
-अणु
-	पूर्णांक i;
+static void vx2_old_write_codec_bit(struct vx_core *chip, int codec, unsigned int data)
+{
+	int i;
 
-	/* activate access to codec रेजिस्टरs */
+	/* activate access to codec registers */
 	vx_inl(chip, HIFREQ);
 
-	क्रम (i = 0; i < 24; i++, data <<= 1)
+	for (i = 0; i < 24; i++, data <<= 1)
 		vx_outl(chip, DATA, ((data & 0x800000) ? VX_DATA_CODEC_MASK : 0));
 
-	/* Terminate access to codec रेजिस्टरs */
+	/* Terminate access to codec registers */
 	vx_inl(chip, RUER);
-पूर्ण
+}
 
 
 /*
  * reset codec bit
  */
-अटल व्योम vx2_reset_codec(काष्ठा vx_core *_chip)
-अणु
-	काष्ठा snd_vx222 *chip = to_vx222(_chip);
+static void vx2_reset_codec(struct vx_core *_chip)
+{
+	struct snd_vx222 *chip = to_vx222(_chip);
 
 	/* Set the reset CODEC bit to 0. */
 	vx_outl(chip, CDSP, chip->regCDSP &~ VX_CDSP_CODEC_RESET_MASK);
@@ -728,244 +727,244 @@
 	chip->regCDSP |= VX_CDSP_CODEC_RESET_MASK;
 	vx_outl(chip, CDSP, chip->regCDSP);
 	vx_inl(chip, CDSP);
-	अगर (_chip->type == VX_TYPE_BOARD) अणु
+	if (_chip->type == VX_TYPE_BOARD) {
 		msleep(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	msleep(5);  /* additionnel रुको समय क्रम AKM's */
+	msleep(5);  /* additionnel wait time for AKM's */
 
-	vx2_ग_लिखो_codec_reg(_chip, AKM_CODEC_POWER_CONTROL_CMD); /* DAC घातer up, ADC घातer up, Vref घातer करोwn */
+	vx2_write_codec_reg(_chip, AKM_CODEC_POWER_CONTROL_CMD); /* DAC power up, ADC power up, Vref power down */
 	
-	vx2_ग_लिखो_codec_reg(_chip, AKM_CODEC_CLOCK_FORMAT_CMD); /* शेष */
-	vx2_ग_लिखो_codec_reg(_chip, AKM_CODEC_MUTE_CMD); /* Mute = ON ,Deemphasis = OFF */
-	vx2_ग_लिखो_codec_reg(_chip, AKM_CODEC_RESET_OFF_CMD); /* DAC and ADC normal operation */
+	vx2_write_codec_reg(_chip, AKM_CODEC_CLOCK_FORMAT_CMD); /* default */
+	vx2_write_codec_reg(_chip, AKM_CODEC_MUTE_CMD); /* Mute = ON ,Deemphasis = OFF */
+	vx2_write_codec_reg(_chip, AKM_CODEC_RESET_OFF_CMD); /* DAC and ADC normal operation */
 
-	अगर (_chip->type == VX_TYPE_MIC) अणु
+	if (_chip->type == VX_TYPE_MIC) {
 		/* set up the micro input selector */
 		chip->regSELMIC =  MICRO_SELECT_INPUT_NORM |
 			MICRO_SELECT_PREAMPLI_G_0 |
 			MICRO_SELECT_NOISE_T_52DB;
 
-		/* reset phantom घातer supply */
+		/* reset phantom power supply */
 		chip->regSELMIC &= ~MICRO_SELECT_PHANTOM_ALIM;
 
 		vx_outl(_chip, SELMIC, chip->regSELMIC);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /*
  * change the audio source
  */
-अटल व्योम vx2_change_audio_source(काष्ठा vx_core *_chip, पूर्णांक src)
-अणु
-	काष्ठा snd_vx222 *chip = to_vx222(_chip);
+static void vx2_change_audio_source(struct vx_core *_chip, int src)
+{
+	struct snd_vx222 *chip = to_vx222(_chip);
 
-	चयन (src) अणु
-	हाल VX_AUDIO_SRC_DIGITAL:
+	switch (src) {
+	case VX_AUDIO_SRC_DIGITAL:
 		chip->regCFG |= VX_CFG_DATAIN_SEL_MASK;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		chip->regCFG &= ~VX_CFG_DATAIN_SEL_MASK;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	vx_outl(chip, CFG, chip->regCFG);
-पूर्ण
+}
 
 
 /*
- * set the घड़ी source
+ * set the clock source
  */
-अटल व्योम vx2_set_घड़ी_source(काष्ठा vx_core *_chip, पूर्णांक source)
-अणु
-	काष्ठा snd_vx222 *chip = to_vx222(_chip);
+static void vx2_set_clock_source(struct vx_core *_chip, int source)
+{
+	struct snd_vx222 *chip = to_vx222(_chip);
 
-	अगर (source == INTERNAL_QUARTZ)
+	if (source == INTERNAL_QUARTZ)
 		chip->regCFG &= ~VX_CFG_CLOCKIN_SEL_MASK;
-	अन्यथा
+	else
 		chip->regCFG |= VX_CFG_CLOCKIN_SEL_MASK;
 	vx_outl(chip, CFG, chip->regCFG);
-पूर्ण
+}
 
 /*
  * reset the board
  */
-अटल व्योम vx2_reset_board(काष्ठा vx_core *_chip, पूर्णांक cold_reset)
-अणु
-	काष्ठा snd_vx222 *chip = to_vx222(_chip);
+static void vx2_reset_board(struct vx_core *_chip, int cold_reset)
+{
+	struct snd_vx222 *chip = to_vx222(_chip);
 
-	/* initialize the रेजिस्टर values */
+	/* initialize the register values */
 	chip->regCDSP = VX_CDSP_CODEC_RESET_MASK | VX_CDSP_DSP_RESET_MASK ;
 	chip->regCFG = 0;
-पूर्ण
+}
 
 
 
 /*
- * input level controls क्रम VX222 Mic
+ * input level controls for VX222 Mic
  */
 
-/* Micro level is specअगरied to be adjustable from -96dB to 63 dB (board coded 0x00 ... 318),
+/* Micro level is specified to be adjustable from -96dB to 63 dB (board coded 0x00 ... 318),
  * 318 = 210 + 36 + 36 + 36   (210 = +9dB variable) (3 * 36 = 3 steps of 18dB pre ampli)
- * as we will mute अगर less than -110dB, so let's simply use line input coded levels and add स्थिरant offset !
+ * as we will mute if less than -110dB, so let's simply use line input coded levels and add constant offset !
  */
-#घोषणा V2_MICRO_LEVEL_RANGE        (318 - 255)
+#define V2_MICRO_LEVEL_RANGE        (318 - 255)
 
-अटल व्योम vx2_set_input_level(काष्ठा snd_vx222 *chip)
-अणु
-	पूर्णांक i, miclevel, preamp;
-	अचिन्हित पूर्णांक data;
+static void vx2_set_input_level(struct snd_vx222 *chip)
+{
+	int i, miclevel, preamp;
+	unsigned int data;
 
 	miclevel = chip->mic_level;
 	miclevel += V2_MICRO_LEVEL_RANGE; /* add 318 - 0xff */
 	preamp = 0;
-        जबतक (miclevel > 210) अणु /* limitation to +9dB of 3310 real gain */
-		preamp++;	/* उठाओ pre ampli + 18dB */
+        while (miclevel > 210) { /* limitation to +9dB of 3310 real gain */
+		preamp++;	/* raise pre ampli + 18dB */
 		miclevel -= (18 * 2);   /* lower level 18 dB (*2 because of 0.5 dB steps !) */
-        पूर्ण
-	अगर (snd_BUG_ON(preamp >= 4))
-		वापस;
+        }
+	if (snd_BUG_ON(preamp >= 4))
+		return;
 
 	/* set pre-amp level */
 	chip->regSELMIC &= ~MICRO_SELECT_PREAMPLI_MASK;
 	chip->regSELMIC |= (preamp << MICRO_SELECT_PREAMPLI_OFFSET) & MICRO_SELECT_PREAMPLI_MASK;
 	vx_outl(chip, SELMIC, chip->regSELMIC);
 
-	data = (अचिन्हित पूर्णांक)miclevel << 16 |
-		(अचिन्हित पूर्णांक)chip->input_level[1] << 8 |
-		(अचिन्हित पूर्णांक)chip->input_level[0];
+	data = (unsigned int)miclevel << 16 |
+		(unsigned int)chip->input_level[1] << 8 |
+		(unsigned int)chip->input_level[0];
 	vx_inl(chip, DATA); /* Activate input level programming */
 
 	/* We have to send 32 bits (4 x 8 bits) */
-	क्रम (i = 0; i < 32; i++, data <<= 1)
+	for (i = 0; i < 32; i++, data <<= 1)
 		vx_outl(chip, DATA, ((data & 0x80000000) ? VX_DATA_CODEC_MASK : 0));
 
 	vx_inl(chip, RUER); /* Terminate input level programming */
-पूर्ण
+}
 
 
-#घोषणा MIC_LEVEL_MAX	0xff
+#define MIC_LEVEL_MAX	0xff
 
-अटल स्थिर DECLARE_TLV_DB_SCALE(db_scale_mic, -6450, 50, 0);
+static const DECLARE_TLV_DB_SCALE(db_scale_mic, -6450, 50, 0);
 
 /*
- * controls API क्रम input levels
+ * controls API for input levels
  */
 
 /* input levels */
-अटल पूर्णांक vx_input_level_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int vx_input_level_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 2;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = MIC_LEVEL_MAX;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = MIC_LEVEL_MAX;
+	return 0;
+}
 
-अटल पूर्णांक vx_input_level_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा vx_core *_chip = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_vx222 *chip = to_vx222(_chip);
+static int vx_input_level_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct vx_core *_chip = snd_kcontrol_chip(kcontrol);
+	struct snd_vx222 *chip = to_vx222(_chip);
 	mutex_lock(&_chip->mixer_mutex);
-	ucontrol->value.पूर्णांकeger.value[0] = chip->input_level[0];
-	ucontrol->value.पूर्णांकeger.value[1] = chip->input_level[1];
+	ucontrol->value.integer.value[0] = chip->input_level[0];
+	ucontrol->value.integer.value[1] = chip->input_level[1];
 	mutex_unlock(&_chip->mixer_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vx_input_level_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा vx_core *_chip = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_vx222 *chip = to_vx222(_chip);
-	अगर (ucontrol->value.पूर्णांकeger.value[0] < 0 ||
-	    ucontrol->value.पूर्णांकeger.value[0] > MIC_LEVEL_MAX)
-		वापस -EINVAL;
-	अगर (ucontrol->value.पूर्णांकeger.value[1] < 0 ||
-	    ucontrol->value.पूर्णांकeger.value[1] > MIC_LEVEL_MAX)
-		वापस -EINVAL;
+static int vx_input_level_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct vx_core *_chip = snd_kcontrol_chip(kcontrol);
+	struct snd_vx222 *chip = to_vx222(_chip);
+	if (ucontrol->value.integer.value[0] < 0 ||
+	    ucontrol->value.integer.value[0] > MIC_LEVEL_MAX)
+		return -EINVAL;
+	if (ucontrol->value.integer.value[1] < 0 ||
+	    ucontrol->value.integer.value[1] > MIC_LEVEL_MAX)
+		return -EINVAL;
 	mutex_lock(&_chip->mixer_mutex);
-	अगर (chip->input_level[0] != ucontrol->value.पूर्णांकeger.value[0] ||
-	    chip->input_level[1] != ucontrol->value.पूर्णांकeger.value[1]) अणु
-		chip->input_level[0] = ucontrol->value.पूर्णांकeger.value[0];
-		chip->input_level[1] = ucontrol->value.पूर्णांकeger.value[1];
+	if (chip->input_level[0] != ucontrol->value.integer.value[0] ||
+	    chip->input_level[1] != ucontrol->value.integer.value[1]) {
+		chip->input_level[0] = ucontrol->value.integer.value[0];
+		chip->input_level[1] = ucontrol->value.integer.value[1];
 		vx2_set_input_level(chip);
 		mutex_unlock(&_chip->mixer_mutex);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 	mutex_unlock(&_chip->mixer_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* mic level */
-अटल पूर्णांक vx_mic_level_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int vx_mic_level_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = MIC_LEVEL_MAX;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = MIC_LEVEL_MAX;
+	return 0;
+}
 
-अटल पूर्णांक vx_mic_level_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा vx_core *_chip = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_vx222 *chip = to_vx222(_chip);
-	ucontrol->value.पूर्णांकeger.value[0] = chip->mic_level;
-	वापस 0;
-पूर्ण
+static int vx_mic_level_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct vx_core *_chip = snd_kcontrol_chip(kcontrol);
+	struct snd_vx222 *chip = to_vx222(_chip);
+	ucontrol->value.integer.value[0] = chip->mic_level;
+	return 0;
+}
 
-अटल पूर्णांक vx_mic_level_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा vx_core *_chip = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_vx222 *chip = to_vx222(_chip);
-	अगर (ucontrol->value.पूर्णांकeger.value[0] < 0 ||
-	    ucontrol->value.पूर्णांकeger.value[0] > MIC_LEVEL_MAX)
-		वापस -EINVAL;
+static int vx_mic_level_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct vx_core *_chip = snd_kcontrol_chip(kcontrol);
+	struct snd_vx222 *chip = to_vx222(_chip);
+	if (ucontrol->value.integer.value[0] < 0 ||
+	    ucontrol->value.integer.value[0] > MIC_LEVEL_MAX)
+		return -EINVAL;
 	mutex_lock(&_chip->mixer_mutex);
-	अगर (chip->mic_level != ucontrol->value.पूर्णांकeger.value[0]) अणु
-		chip->mic_level = ucontrol->value.पूर्णांकeger.value[0];
+	if (chip->mic_level != ucontrol->value.integer.value[0]) {
+		chip->mic_level = ucontrol->value.integer.value[0];
 		vx2_set_input_level(chip);
 		mutex_unlock(&_chip->mixer_mutex);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 	mutex_unlock(&_chip->mixer_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new vx_control_input_level = अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new vx_control_input_level = {
+	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	.access =	(SNDRV_CTL_ELEM_ACCESS_READWRITE |
 			 SNDRV_CTL_ELEM_ACCESS_TLV_READ),
 	.name =		"Capture Volume",
 	.info =		vx_input_level_info,
 	.get =		vx_input_level_get,
 	.put =		vx_input_level_put,
-	.tlv = अणु .p = db_scale_mic पूर्ण,
-पूर्ण;
+	.tlv = { .p = db_scale_mic },
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new vx_control_mic_level = अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new vx_control_mic_level = {
+	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	.access =	(SNDRV_CTL_ELEM_ACCESS_READWRITE |
 			 SNDRV_CTL_ELEM_ACCESS_TLV_READ),
 	.name =		"Mic Capture Volume",
 	.info =		vx_mic_level_info,
 	.get =		vx_mic_level_get,
 	.put =		vx_mic_level_put,
-	.tlv = अणु .p = db_scale_mic पूर्ण,
-पूर्ण;
+	.tlv = { .p = db_scale_mic },
+};
 
 /*
  * FIXME: compressor/limiter implementation is missing yet...
  */
 
-अटल पूर्णांक vx2_add_mic_controls(काष्ठा vx_core *_chip)
-अणु
-	काष्ठा snd_vx222 *chip = to_vx222(_chip);
-	पूर्णांक err;
+static int vx2_add_mic_controls(struct vx_core *_chip)
+{
+	struct snd_vx222 *chip = to_vx222(_chip);
+	int err;
 
-	अगर (_chip->type != VX_TYPE_MIC)
-		वापस 0;
+	if (_chip->type != VX_TYPE_MIC)
+		return 0;
 
 	/* mute input levels */
 	chip->input_level[0] = chip->input_level[1] = 0;
@@ -973,53 +972,53 @@
 	vx2_set_input_level(chip);
 
 	/* controls */
-	अगर ((err = snd_ctl_add(_chip->card, snd_ctl_new1(&vx_control_input_level, chip))) < 0)
-		वापस err;
-	अगर ((err = snd_ctl_add(_chip->card, snd_ctl_new1(&vx_control_mic_level, chip))) < 0)
-		वापस err;
+	if ((err = snd_ctl_add(_chip->card, snd_ctl_new1(&vx_control_input_level, chip))) < 0)
+		return err;
+	if ((err = snd_ctl_add(_chip->card, snd_ctl_new1(&vx_control_mic_level, chip))) < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  * callbacks
  */
-स्थिर काष्ठा snd_vx_ops vx222_ops = अणु
+const struct snd_vx_ops vx222_ops = {
 	.in8 = vx2_inb,
 	.in32 = vx2_inl,
 	.out8 = vx2_outb,
 	.out32 = vx2_outl,
 	.test_and_ack = vx2_test_and_ack,
 	.validate_irq = vx2_validate_irq,
-	.akm_ग_लिखो = vx2_ग_लिखो_akm,
+	.akm_write = vx2_write_akm,
 	.reset_codec = vx2_reset_codec,
 	.change_audio_source = vx2_change_audio_source,
-	.set_घड़ी_source = vx2_set_घड़ी_source,
+	.set_clock_source = vx2_set_clock_source,
 	.load_dsp = vx2_load_dsp,
 	.reset_dsp = vx2_reset_dsp,
 	.reset_board = vx2_reset_board,
-	.dma_ग_लिखो = vx2_dma_ग_लिखो,
-	.dma_पढ़ो = vx2_dma_पढ़ो,
+	.dma_write = vx2_dma_write,
+	.dma_read = vx2_dma_read,
 	.add_controls = vx2_add_mic_controls,
-पूर्ण;
+};
 
-/* क्रम old VX222 board */
-स्थिर काष्ठा snd_vx_ops vx222_old_ops = अणु
+/* for old VX222 board */
+const struct snd_vx_ops vx222_old_ops = {
 	.in8 = vx2_inb,
 	.in32 = vx2_inl,
 	.out8 = vx2_outb,
 	.out32 = vx2_outl,
 	.test_and_ack = vx2_test_and_ack,
 	.validate_irq = vx2_validate_irq,
-	.ग_लिखो_codec = vx2_old_ग_लिखो_codec_bit,
+	.write_codec = vx2_old_write_codec_bit,
 	.reset_codec = vx2_reset_codec,
 	.change_audio_source = vx2_change_audio_source,
-	.set_घड़ी_source = vx2_set_घड़ी_source,
+	.set_clock_source = vx2_set_clock_source,
 	.load_dsp = vx2_load_dsp,
 	.reset_dsp = vx2_reset_dsp,
 	.reset_board = vx2_reset_board,
-	.dma_ग_लिखो = vx2_dma_ग_लिखो,
-	.dma_पढ़ो = vx2_dma_पढ़ो,
-पूर्ण;
+	.dma_write = vx2_dma_write,
+	.dma_read = vx2_dma_read,
+};
 

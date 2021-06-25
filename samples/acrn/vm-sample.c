@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * A sample program to run a User VM on the ACRN hypervisor
  *
@@ -10,64 +9,64 @@
  *
  * Copyright (C) 2020 Intel Corporation. All rights reserved.
  */
-#समावेश <मानकपन.स>
-#समावेश <मानक_निवेशt.h>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <दो_स्मृति.h>
-#समावेश <fcntl.h>
-#समावेश <unistd.h>
-#समावेश <संकेत.स>
-#समावेश <sys/ioctl.h>
-#समावेश <linux/acrn.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <malloc.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <signal.h>
+#include <sys/ioctl.h>
+#include <linux/acrn.h>
 
-#घोषणा GUEST_MEMORY_SIZE	(1024*1024)
-व्योम *guest_memory;
+#define GUEST_MEMORY_SIZE	(1024*1024)
+void *guest_memory;
 
-बाह्य स्थिर अचिन्हित अक्षर guest16[], guest16_end[];
-अटल अक्षर io_request_page[4096] __attribute__((aligned(4096)));
-अटल काष्ठा acrn_io_request *io_req_buf = (काष्ठा acrn_io_request *)io_request_page;
+extern const unsigned char guest16[], guest16_end[];
+static char io_request_page[4096] __attribute__((aligned(4096)));
+static struct acrn_io_request *io_req_buf = (struct acrn_io_request *)io_request_page;
 
 __u16 vcpu_num;
 __u16 vmid;
 /* POST_STANDARD_VM_UUID1, refer to https://github.com/projectacrn/acrn-hypervisor/blob/master/hypervisor/include/common/vm_uuids.h */
 guid_t vm_uuid = GUID_INIT(0x385479d2, 0xd625, 0xe811, 0x86, 0x4e, 0xcb, 0x7a, 0x18, 0xb3, 0x46, 0x43);
 
-पूर्णांक hsm_fd;
-पूर्णांक is_running = 1;
+int hsm_fd;
+int is_running = 1;
 
-व्योम vm_निकास(पूर्णांक sig)
-अणु
+void vm_exit(int sig)
+{
 	sig = sig;
 
 	is_running = 0;
 	ioctl(hsm_fd, ACRN_IOCTL_PAUSE_VM, vmid);
 	ioctl(hsm_fd, ACRN_IOCTL_DESTROY_IOREQ_CLIENT, 0);
-पूर्ण
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	पूर्णांक vcpu_id, ret;
-	काष्ठा acrn_vm_creation create_vm = अणु0पूर्ण;
-	काष्ठा acrn_vm_memmap ram_map = अणु0पूर्ण;
-	काष्ठा acrn_vcpu_regs regs;
-	काष्ठा acrn_io_request *io_req;
-	काष्ठा acrn_ioreq_notअगरy __attribute__((aligned(8))) notअगरy;
+int main(int argc, char **argv)
+{
+	int vcpu_id, ret;
+	struct acrn_vm_creation create_vm = {0};
+	struct acrn_vm_memmap ram_map = {0};
+	struct acrn_vcpu_regs regs;
+	struct acrn_io_request *io_req;
+	struct acrn_ioreq_notify __attribute__((aligned(8))) notify;
 
 	argc = argc;
 	argv = argv;
 
 	guest_memory = memalign(4096, GUEST_MEMORY_SIZE);
-	अगर (!guest_memory) अणु
-		म_लिखो("No enough memory!\n");
-		वापस -1;
-	पूर्ण
-	hsm_fd = खोलो("/dev/acrn_hsm", O_RDWR|O_CLOEXEC);
+	if (!guest_memory) {
+		printf("No enough memory!\n");
+		return -1;
+	}
+	hsm_fd = open("/dev/acrn_hsm", O_RDWR|O_CLOEXEC);
 
-	स_नकल(&create_vm.uuid, &vm_uuid, 16);
+	memcpy(&create_vm.uuid, &vm_uuid, 16);
 	create_vm.ioreq_buf = (__u64)io_req_buf;
 	ret = ioctl(hsm_fd, ACRN_IOCTL_CREATE_VM, &create_vm);
-	म_लिखो("Created VM! [%d]\n", ret);
+	printf("Created VM! [%d]\n", ret);
 	vcpu_num = create_vm.vcpu_num;
 	vmid = create_vm.vmid;
 
@@ -78,12 +77,12 @@ guid_t vm_uuid = GUID_INIT(0x385479d2, 0xd625, 0xe811, 0x86, 0x4e, 0xcb, 0x7a, 0
 	ram_map.user_vm_pa = 0;
 	ram_map.attr = ACRN_MEM_ACCESS_RWX;
 	ret = ioctl(hsm_fd, ACRN_IOCTL_SET_MEMSEG, &ram_map);
-	म_लिखो("Set up VM memory! [%d]\n", ret);
+	printf("Set up VM memory! [%d]\n", ret);
 
-	स_नकल(guest_memory, guest16, guest16_end-guest16);
+	memcpy(guest_memory, guest16, guest16_end-guest16);
 
-	/* setup vcpu रेजिस्टरs */
-	स_रखो(&regs, 0, माप(regs));
+	/* setup vcpu registers */
+	memset(&regs, 0, sizeof(regs));
 	regs.vcpu_id = 0;
 	regs.vcpu_regs.rip = 0;
 
@@ -96,42 +95,42 @@ guid_t vm_uuid = GUID_INIT(0x385479d2, 0xd625, 0xe811, 0x86, 0x4e, 0xcb, 0x7a, 0
 	regs.vcpu_regs.rip = 0 & 0xFFFFUL;
 
 	ret = ioctl(hsm_fd, ACRN_IOCTL_SET_VCPU_REGS, &regs);
-	म_लिखो("Set up VM BSP registers! [%d]\n", ret);
+	printf("Set up VM BSP registers! [%d]\n", ret);
 
-	/* create an ioreq client क्रम this VM */
+	/* create an ioreq client for this VM */
 	ret = ioctl(hsm_fd, ACRN_IOCTL_CREATE_IOREQ_CLIENT, 0);
-	म_लिखो("Created IO request client! [%d]\n", ret);
+	printf("Created IO request client! [%d]\n", ret);
 
 	/* run vm */
 	ret = ioctl(hsm_fd, ACRN_IOCTL_START_VM, vmid);
-	म_लिखो("Start VM! [%d]\n", ret);
+	printf("Start VM! [%d]\n", ret);
 
-	संकेत(संक_विघ्न, vm_निकास);
-	जबतक (is_running) अणु
+	signal(SIGINT, vm_exit);
+	while (is_running) {
 		ret = ioctl(hsm_fd, ACRN_IOCTL_ATTACH_IOREQ_CLIENT, 0);
 
-		क्रम (vcpu_id = 0; vcpu_id < vcpu_num; vcpu_id++) अणु
+		for (vcpu_id = 0; vcpu_id < vcpu_num; vcpu_id++) {
 			io_req = &io_req_buf[vcpu_id];
-			अगर ((__sync_add_and_fetch(&io_req->processed, 0) == ACRN_IOREQ_STATE_PROCESSING)
+			if ((__sync_add_and_fetch(&io_req->processed, 0) == ACRN_IOREQ_STATE_PROCESSING)
 					&& (!io_req->kernel_handled))
-				अगर (io_req->type == ACRN_IOREQ_TYPE_PORTIO) अणु
-					पूर्णांक bytes, port, in;
+				if (io_req->type == ACRN_IOREQ_TYPE_PORTIO) {
+					int bytes, port, in;
 
 					port = io_req->reqs.pio_request.address;
 					bytes = io_req->reqs.pio_request.size;
-					in = (io_req->reqs.pio_request.direction == ACRN_IOREQ_सूची_READ);
-					म_लिखो("Guest VM %s PIO[%x] with size[%x]\n", in ? "read" : "write", port, bytes);
+					in = (io_req->reqs.pio_request.direction == ACRN_IOREQ_DIR_READ);
+					printf("Guest VM %s PIO[%x] with size[%x]\n", in ? "read" : "write", port, bytes);
 
-					notअगरy.vmid = vmid;
-					notअगरy.vcpu = vcpu_id;
-					ioctl(hsm_fd, ACRN_IOCTL_NOTIFY_REQUEST_FINISH, &notअगरy);
-				पूर्ण
-		पूर्ण
-	पूर्ण
+					notify.vmid = vmid;
+					notify.vcpu = vcpu_id;
+					ioctl(hsm_fd, ACRN_IOCTL_NOTIFY_REQUEST_FINISH, &notify);
+				}
+		}
+	}
 
-	ret = ioctl(hsm_fd, ACRN_IOCTL_DESTROY_VM, शून्य);
-	म_लिखो("Destroy VM! [%d]\n", ret);
-	बंद(hsm_fd);
-	मुक्त(guest_memory);
-	वापस 0;
-पूर्ण
+	ret = ioctl(hsm_fd, ACRN_IOCTL_DESTROY_VM, NULL);
+	printf("Destroy VM! [%d]\n", ret);
+	close(hsm_fd);
+	free(guest_memory);
+	return 0;
+}

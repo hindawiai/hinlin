@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _BPF_PRELOAD_COMMON_H
-#घोषणा _BPF_PRELOAD_COMMON_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _BPF_PRELOAD_COMMON_H
+#define _BPF_PRELOAD_COMMON_H
 
-#घोषणा BPF_PRELOAD_START 0x5555
-#घोषणा BPF_PRELOAD_END 0xAAAA
+#define BPF_PRELOAD_START 0x5555
+#define BPF_PRELOAD_END 0xAAAA
 
-काष्ठा bpf_preload_info अणु
-	अक्षर link_name[16];
-	पूर्णांक link_id;
-पूर्ण;
+struct bpf_preload_info {
+	char link_name[16];
+	int link_id;
+};
 
-#पूर्ण_अगर
+#endif

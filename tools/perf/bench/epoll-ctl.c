@@ -1,415 +1,414 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2018 Davidlohr Bueso.
  *
- * Benchmark the various operations allowed क्रम epoll_ctl(2).
+ * Benchmark the various operations allowed for epoll_ctl(2).
  * The idea is to concurrently stress a single epoll instance
  */
-#अगर_घोषित HAVE_EVENTFD_SUPPORT
+#ifdef HAVE_EVENTFD_SUPPORT
 /* For the CLR_() macros */
-#समावेश <माला.स>
-#समावेश <pthपढ़ो.h>
+#include <string.h>
+#include <pthread.h>
 
-#समावेश <त्रुटिसं.स>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <संकेत.स>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/kernel.h>
-#समावेश <sys/समय.स>
-#समावेश <sys/resource.h>
-#समावेश <sys/epoll.h>
-#समावेश <sys/eventfd.h>
-#समावेश <perf/cpumap.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <linux/compiler.h>
+#include <linux/kernel.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <sys/epoll.h>
+#include <sys/eventfd.h>
+#include <perf/cpumap.h>
 
-#समावेश "../util/stat.h"
-#समावेश <subcmd/parse-options.h>
-#समावेश "bench.h"
+#include "../util/stat.h"
+#include <subcmd/parse-options.h>
+#include "bench.h"
 
-#समावेश <err.h>
+#include <err.h>
 
-#घोषणा prपूर्णांकinfo(fmt, arg...) \
-	करो अणु अगर (__verbose) म_लिखो(fmt, ## arg); पूर्ण जबतक (0)
+#define printinfo(fmt, arg...) \
+	do { if (__verbose) printf(fmt, ## arg); } while (0)
 
-अटल अचिन्हित पूर्णांक nthपढ़ोs = 0;
-अटल अचिन्हित पूर्णांक nsecs    = 8;
-अटल bool करोne, __verbose, अक्रमomize;
+static unsigned int nthreads = 0;
+static unsigned int nsecs    = 8;
+static bool done, __verbose, randomize;
 
 /*
  * epoll related shared variables.
  */
 
 /* Maximum number of nesting allowed inside epoll sets */
-#घोषणा EPOLL_MAXNESTS 4
+#define EPOLL_MAXNESTS 4
 
-क्रमागत अणु
+enum {
 	OP_EPOLL_ADD,
 	OP_EPOLL_MOD,
 	OP_EPOLL_DEL,
 	EPOLL_NR_OPS,
-पूर्ण;
+};
 
-अटल पूर्णांक epollfd;
-अटल पूर्णांक *epollfdp;
-अटल bool noaffinity;
-अटल अचिन्हित पूर्णांक nested = 0;
+static int epollfd;
+static int *epollfdp;
+static bool noaffinity;
+static unsigned int nested = 0;
 
-/* amount of fds to monitor, per thपढ़ो */
-अटल अचिन्हित पूर्णांक nfds = 64;
+/* amount of fds to monitor, per thread */
+static unsigned int nfds = 64;
 
-अटल pthपढ़ो_mutex_t thपढ़ो_lock;
-अटल अचिन्हित पूर्णांक thपढ़ोs_starting;
-अटल काष्ठा stats all_stats[EPOLL_NR_OPS];
-अटल pthपढ़ो_cond_t thपढ़ो_parent, thपढ़ो_worker;
+static pthread_mutex_t thread_lock;
+static unsigned int threads_starting;
+static struct stats all_stats[EPOLL_NR_OPS];
+static pthread_cond_t thread_parent, thread_worker;
 
-काष्ठा worker अणु
-	पूर्णांक tid;
-	pthपढ़ो_t thपढ़ो;
-	अचिन्हित दीर्घ ops[EPOLL_NR_OPS];
-	पूर्णांक *fdmap;
-पूर्ण;
+struct worker {
+	int tid;
+	pthread_t thread;
+	unsigned long ops[EPOLL_NR_OPS];
+	int *fdmap;
+};
 
-अटल स्थिर काष्ठा option options[] = अणु
-	OPT_UINTEGER('t', "threads", &nthपढ़ोs, "Specify amount of threads"),
+static const struct option options[] = {
+	OPT_UINTEGER('t', "threads", &nthreads, "Specify amount of threads"),
 	OPT_UINTEGER('r', "runtime", &nsecs,    "Specify runtime (in seconds)"),
 	OPT_UINTEGER('f', "nfds", &nfds, "Specify amount of file descriptors to monitor for each thread"),
 	OPT_BOOLEAN( 'n', "noaffinity",  &noaffinity,   "Disables CPU affinity"),
 	OPT_UINTEGER( 'N', "nested",  &nested,   "Nesting level epoll hierarchy (default is 0, no nesting)"),
-	OPT_BOOLEAN( 'R', "randomize", &अक्रमomize,   "Perform random operations on random fds"),
+	OPT_BOOLEAN( 'R', "randomize", &randomize,   "Perform random operations on random fds"),
 	OPT_BOOLEAN( 'v', "verbose",  &__verbose,   "Verbose mode"),
 	OPT_END()
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर bench_epoll_ctl_usage[] = अणु
+static const char * const bench_epoll_ctl_usage[] = {
 	"perf bench epoll ctl <options>",
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल व्योम toggle_करोne(पूर्णांक sig __maybe_unused,
+static void toggle_done(int sig __maybe_unused,
 			siginfo_t *info __maybe_unused,
-			व्योम *uc __maybe_unused)
-अणु
-	/* inक्रमm all thपढ़ोs that we're करोne क्रम the day */
-	करोne = true;
-	समय_लोofday(&bench__end, शून्य);
-	समयrsub(&bench__end, &bench__start, &bench__runसमय);
-पूर्ण
+			void *uc __maybe_unused)
+{
+	/* inform all threads that we're done for the day */
+	done = true;
+	gettimeofday(&bench__end, NULL);
+	timersub(&bench__end, &bench__start, &bench__runtime);
+}
 
-अटल व्योम nest_epollfd(व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
-	काष्ठा epoll_event ev;
+static void nest_epollfd(void)
+{
+	unsigned int i;
+	struct epoll_event ev;
 
-	अगर (nested > EPOLL_MAXNESTS)
+	if (nested > EPOLL_MAXNESTS)
 		nested = EPOLL_MAXNESTS;
-	prपूर्णांकinfo("Nesting level(s): %d\n", nested);
+	printinfo("Nesting level(s): %d\n", nested);
 
-	epollfdp = सुस्मृति(nested, माप(पूर्णांक));
-	अगर (!epollfd)
-		err(निकास_त्रुटि, "calloc");
+	epollfdp = calloc(nested, sizeof(int));
+	if (!epollfd)
+		err(EXIT_FAILURE, "calloc");
 
-	क्रम (i = 0; i < nested; i++) अणु
+	for (i = 0; i < nested; i++) {
 		epollfdp[i] = epoll_create(1);
-		अगर (epollfd < 0)
-			err(निकास_त्रुटि, "epoll_create");
-	पूर्ण
+		if (epollfd < 0)
+			err(EXIT_FAILURE, "epoll_create");
+	}
 
 	ev.events = EPOLLHUP; /* anything */
 	ev.data.u64 = i; /* any number */
 
-	क्रम (i = nested - 1; i; i--) अणु
-		अगर (epoll_ctl(epollfdp[i - 1], EPOLL_CTL_ADD,
+	for (i = nested - 1; i; i--) {
+		if (epoll_ctl(epollfdp[i - 1], EPOLL_CTL_ADD,
 			      epollfdp[i], &ev) < 0)
-			err(निकास_त्रुटि, "epoll_ctl");
-	पूर्ण
+			err(EXIT_FAILURE, "epoll_ctl");
+	}
 
-	अगर (epoll_ctl(epollfd, EPOLL_CTL_ADD, *epollfdp, &ev) < 0)
-		err(निकास_त्रुटि, "epoll_ctl");
-पूर्ण
+	if (epoll_ctl(epollfd, EPOLL_CTL_ADD, *epollfdp, &ev) < 0)
+		err(EXIT_FAILURE, "epoll_ctl");
+}
 
-अटल अंतरभूत व्योम करो_epoll_op(काष्ठा worker *w, पूर्णांक op, पूर्णांक fd)
-अणु
-	पूर्णांक error;
-	काष्ठा epoll_event ev;
+static inline void do_epoll_op(struct worker *w, int op, int fd)
+{
+	int error;
+	struct epoll_event ev;
 
 	ev.events = EPOLLIN;
 	ev.data.u64 = fd;
 
-	चयन (op) अणु
-	हाल OP_EPOLL_ADD:
+	switch (op) {
+	case OP_EPOLL_ADD:
 		error = epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev);
-		अवरोध;
-	हाल OP_EPOLL_MOD:
+		break;
+	case OP_EPOLL_MOD:
 		ev.events = EPOLLOUT;
 		error = epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
-		अवरोध;
-	हाल OP_EPOLL_DEL:
-		error = epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, शून्य);
-		अवरोध;
-	शेष:
+		break;
+	case OP_EPOLL_DEL:
+		error = epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, NULL);
+		break;
+	default:
 		error = 1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (!error)
+	if (!error)
 		w->ops[op]++;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम करो_अक्रमom_epoll_op(काष्ठा worker *w)
-अणु
-	अचिन्हित दीर्घ rnd1 = अक्रमom(), rnd2 = अक्रमom();
-	पूर्णांक op, fd;
+static inline void do_random_epoll_op(struct worker *w)
+{
+	unsigned long rnd1 = random(), rnd2 = random();
+	int op, fd;
 
 	fd = w->fdmap[rnd1 % nfds];
 	op = rnd2 % EPOLL_NR_OPS;
 
-	करो_epoll_op(w, op, fd);
-पूर्ण
+	do_epoll_op(w, op, fd);
+}
 
-अटल व्योम *workerfn(व्योम *arg)
-अणु
-	अचिन्हित पूर्णांक i;
-	काष्ठा worker *w = (काष्ठा worker *) arg;
-	काष्ठा बारpec ts = अणु .tv_sec = 0,
-			       .tv_nsec = 250 पूर्ण;
+static void *workerfn(void *arg)
+{
+	unsigned int i;
+	struct worker *w = (struct worker *) arg;
+	struct timespec ts = { .tv_sec = 0,
+			       .tv_nsec = 250 };
 
-	pthपढ़ो_mutex_lock(&thपढ़ो_lock);
-	thपढ़ोs_starting--;
-	अगर (!thपढ़ोs_starting)
-		pthपढ़ो_cond_संकेत(&thपढ़ो_parent);
-	pthपढ़ो_cond_रुको(&thपढ़ो_worker, &thपढ़ो_lock);
-	pthपढ़ो_mutex_unlock(&thपढ़ो_lock);
+	pthread_mutex_lock(&thread_lock);
+	threads_starting--;
+	if (!threads_starting)
+		pthread_cond_signal(&thread_parent);
+	pthread_cond_wait(&thread_worker, &thread_lock);
+	pthread_mutex_unlock(&thread_lock);
 
 	/* Let 'em loose */
-	करो अणु
-		/* अक्रमom */
-		अगर (अक्रमomize) अणु
-			करो_अक्रमom_epoll_op(w);
-		पूर्ण अन्यथा अणु
-			क्रम (i = 0; i < nfds; i++) अणु
-				करो_epoll_op(w, OP_EPOLL_ADD, w->fdmap[i]);
-				करो_epoll_op(w, OP_EPOLL_MOD, w->fdmap[i]);
-				करो_epoll_op(w, OP_EPOLL_DEL, w->fdmap[i]);
-			पूर्ण
-		पूर्ण
+	do {
+		/* random */
+		if (randomize) {
+			do_random_epoll_op(w);
+		} else {
+			for (i = 0; i < nfds; i++) {
+				do_epoll_op(w, OP_EPOLL_ADD, w->fdmap[i]);
+				do_epoll_op(w, OP_EPOLL_MOD, w->fdmap[i]);
+				do_epoll_op(w, OP_EPOLL_DEL, w->fdmap[i]);
+			}
+		}
 
-		nanosleep(&ts, शून्य);
-	पूर्ण  जबतक (!करोne);
+		nanosleep(&ts, NULL);
+	}  while (!done);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम init_fdmaps(काष्ठा worker *w, पूर्णांक pct)
-अणु
-	अचिन्हित पूर्णांक i;
-	पूर्णांक inc;
-	काष्ठा epoll_event ev;
+static void init_fdmaps(struct worker *w, int pct)
+{
+	unsigned int i;
+	int inc;
+	struct epoll_event ev;
 
-	अगर (!pct)
-		वापस;
+	if (!pct)
+		return;
 
 	inc = 100/pct;
-	क्रम (i = 0; i < nfds; i+=inc) अणु
+	for (i = 0; i < nfds; i+=inc) {
 		ev.data.fd = w->fdmap[i];
 		ev.events = EPOLLIN;
 
-		अगर (epoll_ctl(epollfd, EPOLL_CTL_ADD, w->fdmap[i], &ev) < 0)
-			err(निकास_त्रुटि, "epoll_ct");
-	पूर्ण
-पूर्ण
+		if (epoll_ctl(epollfd, EPOLL_CTL_ADD, w->fdmap[i], &ev) < 0)
+			err(EXIT_FAILURE, "epoll_ct");
+	}
+}
 
-अटल पूर्णांक करो_thपढ़ोs(काष्ठा worker *worker, काष्ठा perf_cpu_map *cpu)
-अणु
-	pthपढ़ो_attr_t thपढ़ो_attr, *attrp = शून्य;
+static int do_threads(struct worker *worker, struct perf_cpu_map *cpu)
+{
+	pthread_attr_t thread_attr, *attrp = NULL;
 	cpu_set_t cpuset;
-	अचिन्हित पूर्णांक i, j;
-	पूर्णांक ret = 0;
+	unsigned int i, j;
+	int ret = 0;
 
-	अगर (!noaffinity)
-		pthपढ़ो_attr_init(&thपढ़ो_attr);
+	if (!noaffinity)
+		pthread_attr_init(&thread_attr);
 
-	क्रम (i = 0; i < nthपढ़ोs; i++) अणु
-		काष्ठा worker *w = &worker[i];
+	for (i = 0; i < nthreads; i++) {
+		struct worker *w = &worker[i];
 
 		w->tid = i;
-		w->fdmap = सुस्मृति(nfds, माप(पूर्णांक));
-		अगर (!w->fdmap)
-			वापस 1;
+		w->fdmap = calloc(nfds, sizeof(int));
+		if (!w->fdmap)
+			return 1;
 
-		क्रम (j = 0; j < nfds; j++) अणु
+		for (j = 0; j < nfds; j++) {
 			w->fdmap[j] = eventfd(0, EFD_NONBLOCK);
-			अगर (w->fdmap[j] < 0)
-				err(निकास_त्रुटि, "eventfd");
-		पूर्ण
+			if (w->fdmap[j] < 0)
+				err(EXIT_FAILURE, "eventfd");
+		}
 
 		/*
 		 * Lets add 50% of the fdmap to the epoll instance, and
-		 * करो it beक्रमe any thपढ़ोs are started; otherwise there is
+		 * do it before any threads are started; otherwise there is
 		 * an initial bias of the call failing  (mod and del ops).
 		 */
-		अगर (अक्रमomize)
+		if (randomize)
 			init_fdmaps(w, 50);
 
-		अगर (!noaffinity) अणु
+		if (!noaffinity) {
 			CPU_ZERO(&cpuset);
 			CPU_SET(cpu->map[i % cpu->nr], &cpuset);
 
-			ret = pthपढ़ो_attr_setaffinity_np(&thपढ़ो_attr, माप(cpu_set_t), &cpuset);
-			अगर (ret)
-				err(निकास_त्रुटि, "pthread_attr_setaffinity_np");
+			ret = pthread_attr_setaffinity_np(&thread_attr, sizeof(cpu_set_t), &cpuset);
+			if (ret)
+				err(EXIT_FAILURE, "pthread_attr_setaffinity_np");
 
-			attrp = &thपढ़ो_attr;
-		पूर्ण
+			attrp = &thread_attr;
+		}
 
-		ret = pthपढ़ो_create(&w->thपढ़ो, attrp, workerfn,
-				     (व्योम *)(काष्ठा worker *) w);
-		अगर (ret)
-			err(निकास_त्रुटि, "pthread_create");
-	पूर्ण
+		ret = pthread_create(&w->thread, attrp, workerfn,
+				     (void *)(struct worker *) w);
+		if (ret)
+			err(EXIT_FAILURE, "pthread_create");
+	}
 
-	अगर (!noaffinity)
-		pthपढ़ो_attr_destroy(&thपढ़ो_attr);
+	if (!noaffinity)
+		pthread_attr_destroy(&thread_attr);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम prपूर्णांक_summary(व्योम)
-अणु
-	पूर्णांक i;
-	अचिन्हित दीर्घ avg[EPOLL_NR_OPS];
-	द्विगुन stddev[EPOLL_NR_OPS];
+static void print_summary(void)
+{
+	int i;
+	unsigned long avg[EPOLL_NR_OPS];
+	double stddev[EPOLL_NR_OPS];
 
-	क्रम (i = 0; i < EPOLL_NR_OPS; i++) अणु
+	for (i = 0; i < EPOLL_NR_OPS; i++) {
 		avg[i] = avg_stats(&all_stats[i]);
 		stddev[i] = stddev_stats(&all_stats[i]);
-	पूर्ण
+	}
 
-	म_लिखो("\nAveraged %ld ADD operations (+- %.2f%%)\n",
+	printf("\nAveraged %ld ADD operations (+- %.2f%%)\n",
 	       avg[OP_EPOLL_ADD], rel_stddev_stats(stddev[OP_EPOLL_ADD],
 						   avg[OP_EPOLL_ADD]));
-	म_लिखो("Averaged %ld MOD operations (+- %.2f%%)\n",
+	printf("Averaged %ld MOD operations (+- %.2f%%)\n",
 	       avg[OP_EPOLL_MOD], rel_stddev_stats(stddev[OP_EPOLL_MOD],
 						   avg[OP_EPOLL_MOD]));
-	म_लिखो("Averaged %ld DEL operations (+- %.2f%%)\n",
+	printf("Averaged %ld DEL operations (+- %.2f%%)\n",
 	       avg[OP_EPOLL_DEL], rel_stddev_stats(stddev[OP_EPOLL_DEL],
 						   avg[OP_EPOLL_DEL]));
-पूर्ण
+}
 
-पूर्णांक bench_epoll_ctl(पूर्णांक argc, स्थिर अक्षर **argv)
-अणु
-	पूर्णांक j, ret = 0;
-	काष्ठा sigaction act;
-	काष्ठा worker *worker = शून्य;
-	काष्ठा perf_cpu_map *cpu;
-	काष्ठा rlimit rl, prevrl;
-	अचिन्हित पूर्णांक i;
+int bench_epoll_ctl(int argc, const char **argv)
+{
+	int j, ret = 0;
+	struct sigaction act;
+	struct worker *worker = NULL;
+	struct perf_cpu_map *cpu;
+	struct rlimit rl, prevrl;
+	unsigned int i;
 
 	argc = parse_options(argc, argv, options, bench_epoll_ctl_usage, 0);
-	अगर (argc) अणु
+	if (argc) {
 		usage_with_options(bench_epoll_ctl_usage, options);
-		निकास(निकास_त्रुटि);
-	पूर्ण
+		exit(EXIT_FAILURE);
+	}
 
-	स_रखो(&act, 0, माप(act));
+	memset(&act, 0, sizeof(act));
 	sigfillset(&act.sa_mask);
-	act.sa_sigaction = toggle_करोne;
-	sigaction(संक_विघ्न, &act, शून्य);
+	act.sa_sigaction = toggle_done;
+	sigaction(SIGINT, &act, NULL);
 
-	cpu = perf_cpu_map__new(शून्य);
-	अगर (!cpu)
-		जाओ errmem;
+	cpu = perf_cpu_map__new(NULL);
+	if (!cpu)
+		goto errmem;
 
-	/* a single, मुख्य epoll instance */
+	/* a single, main epoll instance */
 	epollfd = epoll_create(1);
-	अगर (epollfd < 0)
-		err(निकास_त्रुटि, "epoll_create");
+	if (epollfd < 0)
+		err(EXIT_FAILURE, "epoll_create");
 
 	/*
-	 * Deal with nested epolls, अगर any.
+	 * Deal with nested epolls, if any.
 	 */
-	अगर (nested)
+	if (nested)
 		nest_epollfd();
 
-	/* शेष to the number of CPUs */
-	अगर (!nthपढ़ोs)
-		nthपढ़ोs = cpu->nr;
+	/* default to the number of CPUs */
+	if (!nthreads)
+		nthreads = cpu->nr;
 
-	worker = सुस्मृति(nthपढ़ोs, माप(*worker));
-	अगर (!worker)
-		जाओ errmem;
+	worker = calloc(nthreads, sizeof(*worker));
+	if (!worker)
+		goto errmem;
 
-	अगर (getrlimit(RLIMIT_NOखाता, &prevrl))
-	    err(निकास_त्रुटि, "getrlimit");
-	rl.rlim_cur = rl.rlim_max = nfds * nthपढ़ोs * 2 + 50;
-	prपूर्णांकinfo("Setting RLIMIT_NOFILE rlimit from %" PRIu64 " to: %" PRIu64 "\n",
-		  (uपूर्णांक64_t)prevrl.rlim_max, (uपूर्णांक64_t)rl.rlim_max);
-	अगर (setrlimit(RLIMIT_NOखाता, &rl) < 0)
-		err(निकास_त्रुटि, "setrlimit");
+	if (getrlimit(RLIMIT_NOFILE, &prevrl))
+	    err(EXIT_FAILURE, "getrlimit");
+	rl.rlim_cur = rl.rlim_max = nfds * nthreads * 2 + 50;
+	printinfo("Setting RLIMIT_NOFILE rlimit from %" PRIu64 " to: %" PRIu64 "\n",
+		  (uint64_t)prevrl.rlim_max, (uint64_t)rl.rlim_max);
+	if (setrlimit(RLIMIT_NOFILE, &rl) < 0)
+		err(EXIT_FAILURE, "setrlimit");
 
-	म_लिखो("Run summary [PID %d]: %d threads doing epoll_ctl ops "
+	printf("Run summary [PID %d]: %d threads doing epoll_ctl ops "
 	       "%d file-descriptors for %d secs.\n\n",
-	       getpid(), nthपढ़ोs, nfds, nsecs);
+	       getpid(), nthreads, nfds, nsecs);
 
-	क्रम (i = 0; i < EPOLL_NR_OPS; i++)
+	for (i = 0; i < EPOLL_NR_OPS; i++)
 		init_stats(&all_stats[i]);
 
-	pthपढ़ो_mutex_init(&thपढ़ो_lock, शून्य);
-	pthपढ़ो_cond_init(&thपढ़ो_parent, शून्य);
-	pthपढ़ो_cond_init(&thपढ़ो_worker, शून्य);
+	pthread_mutex_init(&thread_lock, NULL);
+	pthread_cond_init(&thread_parent, NULL);
+	pthread_cond_init(&thread_worker, NULL);
 
-	thपढ़ोs_starting = nthपढ़ोs;
+	threads_starting = nthreads;
 
-	समय_लोofday(&bench__start, शून्य);
+	gettimeofday(&bench__start, NULL);
 
-	करो_thपढ़ोs(worker, cpu);
+	do_threads(worker, cpu);
 
-	pthपढ़ो_mutex_lock(&thपढ़ो_lock);
-	जबतक (thपढ़ोs_starting)
-		pthपढ़ो_cond_रुको(&thपढ़ो_parent, &thपढ़ो_lock);
-	pthपढ़ो_cond_broadcast(&thपढ़ो_worker);
-	pthपढ़ो_mutex_unlock(&thपढ़ो_lock);
+	pthread_mutex_lock(&thread_lock);
+	while (threads_starting)
+		pthread_cond_wait(&thread_parent, &thread_lock);
+	pthread_cond_broadcast(&thread_worker);
+	pthread_mutex_unlock(&thread_lock);
 
 	sleep(nsecs);
-	toggle_करोne(0, शून्य, शून्य);
-	prपूर्णांकinfo("main thread: toggling done\n");
+	toggle_done(0, NULL, NULL);
+	printinfo("main thread: toggling done\n");
 
-	क्रम (i = 0; i < nthपढ़ोs; i++) अणु
-		ret = pthपढ़ो_join(worker[i].thपढ़ो, शून्य);
-		अगर (ret)
-			err(निकास_त्रुटि, "pthread_join");
-	पूर्ण
+	for (i = 0; i < nthreads; i++) {
+		ret = pthread_join(worker[i].thread, NULL);
+		if (ret)
+			err(EXIT_FAILURE, "pthread_join");
+	}
 
 	/* cleanup & report results */
-	pthपढ़ो_cond_destroy(&thपढ़ो_parent);
-	pthपढ़ो_cond_destroy(&thपढ़ो_worker);
-	pthपढ़ो_mutex_destroy(&thपढ़ो_lock);
+	pthread_cond_destroy(&thread_parent);
+	pthread_cond_destroy(&thread_worker);
+	pthread_mutex_destroy(&thread_lock);
 
-	क्रम (i = 0; i < nthपढ़ोs; i++) अणु
-		अचिन्हित दीर्घ t[EPOLL_NR_OPS];
+	for (i = 0; i < nthreads; i++) {
+		unsigned long t[EPOLL_NR_OPS];
 
-		क्रम (j = 0; j < EPOLL_NR_OPS; j++) अणु
+		for (j = 0; j < EPOLL_NR_OPS; j++) {
 			t[j] = worker[i].ops[j];
 			update_stats(&all_stats[j], t[j]);
-		पूर्ण
+		}
 
-		अगर (nfds == 1)
-			म_लिखो("[thread %2d] fdmap: %p [ add: %04ld; mod: %04ld; del: %04lds ops ]\n",
+		if (nfds == 1)
+			printf("[thread %2d] fdmap: %p [ add: %04ld; mod: %04ld; del: %04lds ops ]\n",
 			       worker[i].tid, &worker[i].fdmap[0],
 			       t[OP_EPOLL_ADD], t[OP_EPOLL_MOD], t[OP_EPOLL_DEL]);
-		अन्यथा
-			म_लिखो("[thread %2d] fdmap: %p ... %p [ add: %04ld ops; mod: %04ld ops; del: %04ld ops ]\n",
+		else
+			printf("[thread %2d] fdmap: %p ... %p [ add: %04ld ops; mod: %04ld ops; del: %04ld ops ]\n",
 			       worker[i].tid, &worker[i].fdmap[0],
 			       &worker[i].fdmap[nfds-1],
 			       t[OP_EPOLL_ADD], t[OP_EPOLL_MOD], t[OP_EPOLL_DEL]);
-	पूर्ण
+	}
 
-	prपूर्णांक_summary();
+	print_summary();
 
-	बंद(epollfd);
-	वापस ret;
+	close(epollfd);
+	return ret;
 errmem:
-	err(निकास_त्रुटि, "calloc");
-पूर्ण
-#पूर्ण_अगर // HAVE_EVENTFD_SUPPORT
+	err(EXIT_FAILURE, "calloc");
+}
+#endif // HAVE_EVENTFD_SUPPORT

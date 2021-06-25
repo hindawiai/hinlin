@@ -1,63 +1,62 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#घोषणा pr_fmt(fmt) "irq-ls-extirq: " fmt
+#define pr_fmt(fmt) "irq-ls-extirq: " fmt
 
-#समावेश <linux/irq.h>
-#समावेश <linux/irqchip.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/of.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
+#include <linux/irq.h>
+#include <linux/irqchip.h>
+#include <linux/irqdomain.h>
+#include <linux/of.h>
+#include <linux/mfd/syscon.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
 
-#समावेश <dt-bindings/पूर्णांकerrupt-controller/arm-gic.h>
+#include <dt-bindings/interrupt-controller/arm-gic.h>
 
-#घोषणा MAXIRQ 12
-#घोषणा LS1021A_SCFGREVCR 0x200
+#define MAXIRQ 12
+#define LS1021A_SCFGREVCR 0x200
 
-काष्ठा ls_extirq_data अणु
-	काष्ठा regmap		*syscon;
-	u32			पूर्णांकpcr;
+struct ls_extirq_data {
+	struct regmap		*syscon;
+	u32			intpcr;
 	bool			is_ls1021a_or_ls1043a;
 	u32			nirq;
-	काष्ठा irq_fwspec	map[MAXIRQ];
-पूर्ण;
+	struct irq_fwspec	map[MAXIRQ];
+};
 
-अटल पूर्णांक
-ls_extirq_set_type(काष्ठा irq_data *data, अचिन्हित पूर्णांक type)
-अणु
-	काष्ठा ls_extirq_data *priv = data->chip_data;
+static int
+ls_extirq_set_type(struct irq_data *data, unsigned int type)
+{
+	struct ls_extirq_data *priv = data->chip_data;
 	irq_hw_number_t hwirq = data->hwirq;
 	u32 value, mask;
 
-	अगर (priv->is_ls1021a_or_ls1043a)
+	if (priv->is_ls1021a_or_ls1043a)
 		mask = 1U << (31 - hwirq);
-	अन्यथा
+	else
 		mask = 1U << hwirq;
 
-	चयन (type) अणु
-	हाल IRQ_TYPE_LEVEL_LOW:
+	switch (type) {
+	case IRQ_TYPE_LEVEL_LOW:
 		type = IRQ_TYPE_LEVEL_HIGH;
 		value = mask;
-		अवरोध;
-	हाल IRQ_TYPE_EDGE_FALLING:
+		break;
+	case IRQ_TYPE_EDGE_FALLING:
 		type = IRQ_TYPE_EDGE_RISING;
 		value = mask;
-		अवरोध;
-	हाल IRQ_TYPE_LEVEL_HIGH:
-	हाल IRQ_TYPE_EDGE_RISING:
+		break;
+	case IRQ_TYPE_LEVEL_HIGH:
+	case IRQ_TYPE_EDGE_RISING:
 		value = 0;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	regmap_update_bits(priv->syscon, priv->पूर्णांकpcr, mask, value);
+		break;
+	default:
+		return -EINVAL;
+	}
+	regmap_update_bits(priv->syscon, priv->intpcr, mask, value);
 
-	वापस irq_chip_set_type_parent(data, type);
-पूर्ण
+	return irq_chip_set_type_parent(data, type);
+}
 
-अटल काष्ठा irq_chip ls_extirq_chip = अणु
+static struct irq_chip ls_extirq_chip = {
 	.name			= "ls-extirq",
 	.irq_mask		= irq_chip_mask_parent,
 	.irq_unmask		= irq_chip_unmask_parent,
@@ -66,128 +65,128 @@ ls_extirq_set_type(काष्ठा irq_data *data, अचिन्हित �
 	.irq_retrigger		= irq_chip_retrigger_hierarchy,
 	.irq_set_affinity	= irq_chip_set_affinity_parent,
 	.flags                  = IRQCHIP_SET_TYPE_MASKED | IRQCHIP_SKIP_SET_WAKE,
-पूर्ण;
+};
 
-अटल पूर्णांक
-ls_extirq_करोमुख्य_alloc(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक virq,
-		       अचिन्हित पूर्णांक nr_irqs, व्योम *arg)
-अणु
-	काष्ठा ls_extirq_data *priv = करोमुख्य->host_data;
-	काष्ठा irq_fwspec *fwspec = arg;
+static int
+ls_extirq_domain_alloc(struct irq_domain *domain, unsigned int virq,
+		       unsigned int nr_irqs, void *arg)
+{
+	struct ls_extirq_data *priv = domain->host_data;
+	struct irq_fwspec *fwspec = arg;
 	irq_hw_number_t hwirq;
 
-	अगर (fwspec->param_count != 2)
-		वापस -EINVAL;
+	if (fwspec->param_count != 2)
+		return -EINVAL;
 
 	hwirq = fwspec->param[0];
-	अगर (hwirq >= priv->nirq)
-		वापस -EINVAL;
+	if (hwirq >= priv->nirq)
+		return -EINVAL;
 
-	irq_करोमुख्य_set_hwirq_and_chip(करोमुख्य, virq, hwirq, &ls_extirq_chip,
+	irq_domain_set_hwirq_and_chip(domain, virq, hwirq, &ls_extirq_chip,
 				      priv);
 
-	वापस irq_करोमुख्य_alloc_irqs_parent(करोमुख्य, virq, 1, &priv->map[hwirq]);
-पूर्ण
+	return irq_domain_alloc_irqs_parent(domain, virq, 1, &priv->map[hwirq]);
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops extirq_करोमुख्य_ops = अणु
-	.xlate		= irq_करोमुख्य_xlate_twocell,
-	.alloc		= ls_extirq_करोमुख्य_alloc,
-	.मुक्त		= irq_करोमुख्य_मुक्त_irqs_common,
-पूर्ण;
+static const struct irq_domain_ops extirq_domain_ops = {
+	.xlate		= irq_domain_xlate_twocell,
+	.alloc		= ls_extirq_domain_alloc,
+	.free		= irq_domain_free_irqs_common,
+};
 
-अटल पूर्णांक
-ls_extirq_parse_map(काष्ठा ls_extirq_data *priv, काष्ठा device_node *node)
-अणु
-	स्थिर __be32 *map;
+static int
+ls_extirq_parse_map(struct ls_extirq_data *priv, struct device_node *node)
+{
+	const __be32 *map;
 	u32 mapsize;
-	पूर्णांक ret;
+	int ret;
 
 	map = of_get_property(node, "interrupt-map", &mapsize);
-	अगर (!map)
-		वापस -ENOENT;
-	अगर (mapsize % माप(*map))
-		वापस -EINVAL;
-	mapsize /= माप(*map);
+	if (!map)
+		return -ENOENT;
+	if (mapsize % sizeof(*map))
+		return -EINVAL;
+	mapsize /= sizeof(*map);
 
-	जबतक (mapsize) अणु
-		काष्ठा device_node *ipar;
-		u32 hwirq, पूर्णांकsize, j;
+	while (mapsize) {
+		struct device_node *ipar;
+		u32 hwirq, intsize, j;
 
-		अगर (mapsize < 3)
-			वापस -EINVAL;
+		if (mapsize < 3)
+			return -EINVAL;
 		hwirq = be32_to_cpup(map);
-		अगर (hwirq >= MAXIRQ)
-			वापस -EINVAL;
+		if (hwirq >= MAXIRQ)
+			return -EINVAL;
 		priv->nirq = max(priv->nirq, hwirq + 1);
 
 		ipar = of_find_node_by_phandle(be32_to_cpup(map + 2));
 		map += 3;
 		mapsize -= 3;
-		अगर (!ipar)
-			वापस -EINVAL;
+		if (!ipar)
+			return -EINVAL;
 		priv->map[hwirq].fwnode = &ipar->fwnode;
-		ret = of_property_पढ़ो_u32(ipar, "#interrupt-cells", &पूर्णांकsize);
-		अगर (ret)
-			वापस ret;
+		ret = of_property_read_u32(ipar, "#interrupt-cells", &intsize);
+		if (ret)
+			return ret;
 
-		अगर (पूर्णांकsize > mapsize)
-			वापस -EINVAL;
+		if (intsize > mapsize)
+			return -EINVAL;
 
-		priv->map[hwirq].param_count = पूर्णांकsize;
-		क्रम (j = 0; j < पूर्णांकsize; ++j)
+		priv->map[hwirq].param_count = intsize;
+		for (j = 0; j < intsize; ++j)
 			priv->map[hwirq].param[j] = be32_to_cpup(map++);
-		mapsize -= पूर्णांकsize;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		mapsize -= intsize;
+	}
+	return 0;
+}
 
-अटल पूर्णांक __init
-ls_extirq_of_init(काष्ठा device_node *node, काष्ठा device_node *parent)
-अणु
+static int __init
+ls_extirq_of_init(struct device_node *node, struct device_node *parent)
+{
 
-	काष्ठा irq_करोमुख्य *करोमुख्य, *parent_करोमुख्य;
-	काष्ठा ls_extirq_data *priv;
-	पूर्णांक ret;
+	struct irq_domain *domain, *parent_domain;
+	struct ls_extirq_data *priv;
+	int ret;
 
-	parent_करोमुख्य = irq_find_host(parent);
-	अगर (!parent_करोमुख्य) अणु
+	parent_domain = irq_find_host(parent);
+	if (!parent_domain) {
 		pr_err("Cannot find parent domain\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	priv = kzalloc(माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->syscon = syscon_node_to_regmap(node->parent);
-	अगर (IS_ERR(priv->syscon)) अणु
+	if (IS_ERR(priv->syscon)) {
 		ret = PTR_ERR(priv->syscon);
 		pr_err("Failed to lookup parent regmap\n");
-		जाओ out;
-	पूर्ण
-	ret = of_property_पढ़ो_u32(node, "reg", &priv->पूर्णांकpcr);
-	अगर (ret) अणु
+		goto out;
+	}
+	ret = of_property_read_u32(node, "reg", &priv->intpcr);
+	if (ret) {
 		pr_err("Missing INTPCR offset value\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = ls_extirq_parse_map(priv, node);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	priv->is_ls1021a_or_ls1043a = of_device_is_compatible(node, "fsl,ls1021a-extirq") ||
 				      of_device_is_compatible(node, "fsl,ls1043a-extirq");
 
-	करोमुख्य = irq_करोमुख्य_add_hierarchy(parent_करोमुख्य, 0, priv->nirq, node,
-					  &extirq_करोमुख्य_ops, priv);
-	अगर (!करोमुख्य)
+	domain = irq_domain_add_hierarchy(parent_domain, 0, priv->nirq, node,
+					  &extirq_domain_ops, priv);
+	if (!domain)
 		ret = -ENOMEM;
 
 out:
-	अगर (ret)
-		kमुक्त(priv);
-	वापस ret;
-पूर्ण
+	if (ret)
+		kfree(priv);
+	return ret;
+}
 
 IRQCHIP_DECLARE(ls1021a_extirq, "fsl,ls1021a-extirq", ls_extirq_of_init);
 IRQCHIP_DECLARE(ls1043a_extirq, "fsl,ls1043a-extirq", ls_extirq_of_init);

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *    Copyright IBM Corp. 1999, 2006
  *    Author(s): Denis Joseph Barrow (djbarrow@de.ibm.com,barrow_dj@yahoo.com)
@@ -8,39 +7,39 @@
  * 
  *  Copyright (C) 1991, 1992  Linus Torvalds
  *
- *  1997-11-28  Modअगरied क्रम POSIX.1b संकेतs by Riअक्षरd Henderson
+ *  1997-11-28  Modified for POSIX.1b signals by Richard Henderson
  */
 
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/task_stack.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/entry-common.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/रुको.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/unistd.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/tty.h>
-#समावेश <linux/personality.h>
-#समावेश <linux/binfmts.h>
-#समावेश <linux/tracehook.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/compat.h>
-#समावेश <यंत्र/ucontext.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/lowcore.h>
-#समावेश <यंत्र/चयन_to.h>
-#समावेश "entry.h"
+#include <linux/sched.h>
+#include <linux/sched/task_stack.h>
+#include <linux/mm.h>
+#include <linux/smp.h>
+#include <linux/kernel.h>
+#include <linux/signal.h>
+#include <linux/entry-common.h>
+#include <linux/errno.h>
+#include <linux/wait.h>
+#include <linux/ptrace.h>
+#include <linux/unistd.h>
+#include <linux/stddef.h>
+#include <linux/tty.h>
+#include <linux/personality.h>
+#include <linux/binfmts.h>
+#include <linux/tracehook.h>
+#include <linux/syscalls.h>
+#include <linux/compat.h>
+#include <asm/ucontext.h>
+#include <linux/uaccess.h>
+#include <asm/lowcore.h>
+#include <asm/switch_to.h>
+#include "entry.h"
 
 /*
- * Layout of an old-style संकेत-frame:
+ * Layout of an old-style signal-frame:
  *	-----------------------------------------
  *	| save area (_SIGNAL_FRAMESIZE)		|
  *	-----------------------------------------
- *	| काष्ठा sigcontext			|
+ *	| struct sigcontext			|
  *	|	oldmask				|
  *	|	_sigregs *			|
  *	-----------------------------------------
@@ -48,7 +47,7 @@
  *	|	_s390_regs_common		|
  *	|	_s390_fp_regs			|
  *	-----------------------------------------
- *	| पूर्णांक signo				|
+ *	| int signo				|
  *	-----------------------------------------
  *	| _sigregs_ext with			|
  *	|	gprs_high 64 byte (opt)		|
@@ -58,32 +57,32 @@
  *	-----------------------------------------
  *	| __u16 svc_insn			|
  *	-----------------------------------------
- * The svc_insn entry with the sigवापस प्रणाली call opcode करोes not
- * have a fixed position and moves अगर gprs_high or vxrs exist.
+ * The svc_insn entry with the sigreturn system call opcode does not
+ * have a fixed position and moves if gprs_high or vxrs exist.
  * Future extensions will be added to _sigregs_ext.
  */
-काष्ठा sigframe
-अणु
+struct sigframe
+{
 	__u8 callee_used_stack[__SIGNAL_FRAMESIZE];
-	काष्ठा sigcontext sc;
+	struct sigcontext sc;
 	_sigregs sregs;
-	पूर्णांक signo;
+	int signo;
 	_sigregs_ext sregs_ext;
 	__u16 svc_insn;		/* Offset of svc_insn is NOT fixed! */
-पूर्ण;
+};
 
 /*
- * Layout of an rt संकेत-frame:
+ * Layout of an rt signal-frame:
  *	-----------------------------------------
  *	| save area (_SIGNAL_FRAMESIZE)		|
  *	-----------------------------------------
- *	| svc __NR_rt_sigवापस 2 byte		|
+ *	| svc __NR_rt_sigreturn 2 byte		|
  *	-----------------------------------------
- *	| काष्ठा siginfo			|
+ *	| struct siginfo			|
  *	-----------------------------------------
- *	| काष्ठा ucontext_extended with		|
- *	|	अचिन्हित दीर्घ uc_flags		|
- *	|	काष्ठा ucontext *uc_link	|
+ *	| struct ucontext_extended with		|
+ *	|	unsigned long uc_flags		|
+ *	|	struct ucontext *uc_link	|
  *	|	stack_t uc_stack		|
  *	|	_sigregs uc_mcontext with	|
  *	|		_s390_regs_common	|
@@ -97,450 +96,450 @@
  *	-----------------------------------------
  * Future extensions will be added to _sigregs_ext.
  */
-काष्ठा rt_sigframe
-अणु
+struct rt_sigframe
+{
 	__u8 callee_used_stack[__SIGNAL_FRAMESIZE];
 	__u16 svc_insn;
-	काष्ठा siginfo info;
-	काष्ठा ucontext_extended uc;
-पूर्ण;
+	struct siginfo info;
+	struct ucontext_extended uc;
+};
 
-/* Store रेजिस्टरs needed to create the संकेत frame */
-अटल व्योम store_sigregs(व्योम)
-अणु
-	save_access_regs(current->thपढ़ो.acrs);
+/* Store registers needed to create the signal frame */
+static void store_sigregs(void)
+{
+	save_access_regs(current->thread.acrs);
 	save_fpu_regs();
-पूर्ण
+}
 
-/* Load रेजिस्टरs after संकेत वापस */
-अटल व्योम load_sigregs(व्योम)
-अणु
-	restore_access_regs(current->thपढ़ो.acrs);
-पूर्ण
+/* Load registers after signal return */
+static void load_sigregs(void)
+{
+	restore_access_regs(current->thread.acrs);
+}
 
 /* Returns non-zero on fault. */
-अटल पूर्णांक save_sigregs(काष्ठा pt_regs *regs, _sigregs __user *sregs)
-अणु
+static int save_sigregs(struct pt_regs *regs, _sigregs __user *sregs)
+{
 	_sigregs user_sregs;
 
-	/* Copy a 'clean' PSW mask to the user to aव्योम leaking
-	   inक्रमmation about whether PER is currently on.  */
+	/* Copy a 'clean' PSW mask to the user to avoid leaking
+	   information about whether PER is currently on.  */
 	user_sregs.regs.psw.mask = PSW_USER_BITS |
 		(regs->psw.mask & (PSW_MASK_USER | PSW_MASK_RI));
 	user_sregs.regs.psw.addr = regs->psw.addr;
-	स_नकल(&user_sregs.regs.gprs, &regs->gprs, माप(sregs->regs.gprs));
-	स_नकल(&user_sregs.regs.acrs, current->thपढ़ो.acrs,
-	       माप(user_sregs.regs.acrs));
-	fpregs_store(&user_sregs.fpregs, &current->thपढ़ो.fpu);
-	अगर (__copy_to_user(sregs, &user_sregs, माप(_sigregs)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	memcpy(&user_sregs.regs.gprs, &regs->gprs, sizeof(sregs->regs.gprs));
+	memcpy(&user_sregs.regs.acrs, current->thread.acrs,
+	       sizeof(user_sregs.regs.acrs));
+	fpregs_store(&user_sregs.fpregs, &current->thread.fpu);
+	if (__copy_to_user(sregs, &user_sregs, sizeof(_sigregs)))
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक restore_sigregs(काष्ठा pt_regs *regs, _sigregs __user *sregs)
-अणु
+static int restore_sigregs(struct pt_regs *regs, _sigregs __user *sregs)
+{
 	_sigregs user_sregs;
 
-	/* Alwys make any pending restarted प्रणाली call वापस -EINTR */
-	current->restart_block.fn = करो_no_restart_syscall;
+	/* Alwys make any pending restarted system call return -EINTR */
+	current->restart_block.fn = do_no_restart_syscall;
 
-	अगर (__copy_from_user(&user_sregs, sregs, माप(user_sregs)))
-		वापस -EFAULT;
+	if (__copy_from_user(&user_sregs, sregs, sizeof(user_sregs)))
+		return -EFAULT;
 
-	अगर (!is_ri_task(current) && (user_sregs.regs.psw.mask & PSW_MASK_RI))
-		वापस -EINVAL;
+	if (!is_ri_task(current) && (user_sregs.regs.psw.mask & PSW_MASK_RI))
+		return -EINVAL;
 
-	/* Test the भग्नing-poपूर्णांक-control word. */
-	अगर (test_fp_ctl(user_sregs.fpregs.fpc))
-		वापस -EINVAL;
+	/* Test the floating-point-control word. */
+	if (test_fp_ctl(user_sregs.fpregs.fpc))
+		return -EINVAL;
 
 	/* Use regs->psw.mask instead of PSW_USER_BITS to preserve PER bit. */
 	regs->psw.mask = (regs->psw.mask & ~(PSW_MASK_USER | PSW_MASK_RI)) |
 		(user_sregs.regs.psw.mask & (PSW_MASK_USER | PSW_MASK_RI));
-	/* Check क्रम invalid user address space control. */
-	अगर ((regs->psw.mask & PSW_MASK_ASC) == PSW_ASC_HOME)
+	/* Check for invalid user address space control. */
+	if ((regs->psw.mask & PSW_MASK_ASC) == PSW_ASC_HOME)
 		regs->psw.mask = PSW_ASC_PRIMARY |
 			(regs->psw.mask & ~PSW_MASK_ASC);
-	/* Check क्रम invalid amode */
-	अगर (regs->psw.mask & PSW_MASK_EA)
+	/* Check for invalid amode */
+	if (regs->psw.mask & PSW_MASK_EA)
 		regs->psw.mask |= PSW_MASK_BA;
 	regs->psw.addr = user_sregs.regs.psw.addr;
-	स_नकल(&regs->gprs, &user_sregs.regs.gprs, माप(sregs->regs.gprs));
-	स_नकल(&current->thपढ़ो.acrs, &user_sregs.regs.acrs,
-	       माप(current->thपढ़ो.acrs));
+	memcpy(&regs->gprs, &user_sregs.regs.gprs, sizeof(sregs->regs.gprs));
+	memcpy(&current->thread.acrs, &user_sregs.regs.acrs,
+	       sizeof(current->thread.acrs));
 
-	fpregs_load(&user_sregs.fpregs, &current->thपढ़ो.fpu);
+	fpregs_load(&user_sregs.fpregs, &current->thread.fpu);
 
-	clear_pt_regs_flag(regs, PIF_SYSCALL); /* No दीर्घer in a प्रणाली call */
+	clear_pt_regs_flag(regs, PIF_SYSCALL); /* No longer in a system call */
 	clear_pt_regs_flag(regs, PIF_SYSCALL_RESTART);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Returns non-zero on fault. */
-अटल पूर्णांक save_sigregs_ext(काष्ठा pt_regs *regs,
+static int save_sigregs_ext(struct pt_regs *regs,
 			    _sigregs_ext __user *sregs_ext)
-अणु
+{
 	__u64 vxrs[__NUM_VXRS_LOW];
-	पूर्णांक i;
+	int i;
 
-	/* Save vector रेजिस्टरs to संकेत stack */
-	अगर (MACHINE_HAS_VX) अणु
-		क्रम (i = 0; i < __NUM_VXRS_LOW; i++)
-			vxrs[i] = *((__u64 *)(current->thपढ़ो.fpu.vxrs + i) + 1);
-		अगर (__copy_to_user(&sregs_ext->vxrs_low, vxrs,
-				   माप(sregs_ext->vxrs_low)) ||
+	/* Save vector registers to signal stack */
+	if (MACHINE_HAS_VX) {
+		for (i = 0; i < __NUM_VXRS_LOW; i++)
+			vxrs[i] = *((__u64 *)(current->thread.fpu.vxrs + i) + 1);
+		if (__copy_to_user(&sregs_ext->vxrs_low, vxrs,
+				   sizeof(sregs_ext->vxrs_low)) ||
 		    __copy_to_user(&sregs_ext->vxrs_high,
-				   current->thपढ़ो.fpu.vxrs + __NUM_VXRS_LOW,
-				   माप(sregs_ext->vxrs_high)))
-			वापस -EFAULT;
-	पूर्ण
-	वापस 0;
-पूर्ण
+				   current->thread.fpu.vxrs + __NUM_VXRS_LOW,
+				   sizeof(sregs_ext->vxrs_high)))
+			return -EFAULT;
+	}
+	return 0;
+}
 
-अटल पूर्णांक restore_sigregs_ext(काष्ठा pt_regs *regs,
+static int restore_sigregs_ext(struct pt_regs *regs,
 			       _sigregs_ext __user *sregs_ext)
-अणु
+{
 	__u64 vxrs[__NUM_VXRS_LOW];
-	पूर्णांक i;
+	int i;
 
-	/* Restore vector रेजिस्टरs from संकेत stack */
-	अगर (MACHINE_HAS_VX) अणु
-		अगर (__copy_from_user(vxrs, &sregs_ext->vxrs_low,
-				     माप(sregs_ext->vxrs_low)) ||
-		    __copy_from_user(current->thपढ़ो.fpu.vxrs + __NUM_VXRS_LOW,
+	/* Restore vector registers from signal stack */
+	if (MACHINE_HAS_VX) {
+		if (__copy_from_user(vxrs, &sregs_ext->vxrs_low,
+				     sizeof(sregs_ext->vxrs_low)) ||
+		    __copy_from_user(current->thread.fpu.vxrs + __NUM_VXRS_LOW,
 				     &sregs_ext->vxrs_high,
-				     माप(sregs_ext->vxrs_high)))
-			वापस -EFAULT;
-		क्रम (i = 0; i < __NUM_VXRS_LOW; i++)
-			*((__u64 *)(current->thपढ़ो.fpu.vxrs + i) + 1) = vxrs[i];
-	पूर्ण
-	वापस 0;
-पूर्ण
+				     sizeof(sregs_ext->vxrs_high)))
+			return -EFAULT;
+		for (i = 0; i < __NUM_VXRS_LOW; i++)
+			*((__u64 *)(current->thread.fpu.vxrs + i) + 1) = vxrs[i];
+	}
+	return 0;
+}
 
-SYSCALL_DEFINE0(sigवापस)
-अणु
-	काष्ठा pt_regs *regs = task_pt_regs(current);
-	काष्ठा sigframe __user *frame =
-		(काष्ठा sigframe __user *) regs->gprs[15];
+SYSCALL_DEFINE0(sigreturn)
+{
+	struct pt_regs *regs = task_pt_regs(current);
+	struct sigframe __user *frame =
+		(struct sigframe __user *) regs->gprs[15];
 	sigset_t set;
 
-	अगर (__copy_from_user(&set.sig, &frame->sc.oldmask, _SIGMASK_COPY_SIZE))
-		जाओ badframe;
+	if (__copy_from_user(&set.sig, &frame->sc.oldmask, _SIGMASK_COPY_SIZE))
+		goto badframe;
 	set_current_blocked(&set);
 	save_fpu_regs();
-	अगर (restore_sigregs(regs, &frame->sregs))
-		जाओ badframe;
-	अगर (restore_sigregs_ext(regs, &frame->sregs_ext))
-		जाओ badframe;
+	if (restore_sigregs(regs, &frame->sregs))
+		goto badframe;
+	if (restore_sigregs_ext(regs, &frame->sregs_ext))
+		goto badframe;
 	load_sigregs();
-	वापस regs->gprs[2];
+	return regs->gprs[2];
 badframe:
-	क्रमce_sig(संक_अंश);
-	वापस 0;
-पूर्ण
+	force_sig(SIGSEGV);
+	return 0;
+}
 
-SYSCALL_DEFINE0(rt_sigवापस)
-अणु
-	काष्ठा pt_regs *regs = task_pt_regs(current);
-	काष्ठा rt_sigframe __user *frame =
-		(काष्ठा rt_sigframe __user *)regs->gprs[15];
+SYSCALL_DEFINE0(rt_sigreturn)
+{
+	struct pt_regs *regs = task_pt_regs(current);
+	struct rt_sigframe __user *frame =
+		(struct rt_sigframe __user *)regs->gprs[15];
 	sigset_t set;
 
-	अगर (__copy_from_user(&set.sig, &frame->uc.uc_sigmask, माप(set)))
-		जाओ badframe;
+	if (__copy_from_user(&set.sig, &frame->uc.uc_sigmask, sizeof(set)))
+		goto badframe;
 	set_current_blocked(&set);
-	अगर (restore_altstack(&frame->uc.uc_stack))
-		जाओ badframe;
+	if (restore_altstack(&frame->uc.uc_stack))
+		goto badframe;
 	save_fpu_regs();
-	अगर (restore_sigregs(regs, &frame->uc.uc_mcontext))
-		जाओ badframe;
-	अगर (restore_sigregs_ext(regs, &frame->uc.uc_mcontext_ext))
-		जाओ badframe;
+	if (restore_sigregs(regs, &frame->uc.uc_mcontext))
+		goto badframe;
+	if (restore_sigregs_ext(regs, &frame->uc.uc_mcontext_ext))
+		goto badframe;
 	load_sigregs();
-	वापस regs->gprs[2];
+	return regs->gprs[2];
 badframe:
-	क्रमce_sig(संक_अंश);
-	वापस 0;
-पूर्ण
+	force_sig(SIGSEGV);
+	return 0;
+}
 
 /*
  * Determine which stack to use..
  */
-अटल अंतरभूत व्योम __user *
-get_sigframe(काष्ठा k_sigaction *ka, काष्ठा pt_regs * regs, माप_प्रकार frame_size)
-अणु
-	अचिन्हित दीर्घ sp;
+static inline void __user *
+get_sigframe(struct k_sigaction *ka, struct pt_regs * regs, size_t frame_size)
+{
+	unsigned long sp;
 
 	/* Default to using normal stack */
 	sp = regs->gprs[15];
 
-	/* Overflow on alternate संकेत stack gives संक_अंश. */
-	अगर (on_sig_stack(sp) && !on_sig_stack((sp - frame_size) & -8UL))
-		वापस (व्योम __user *) -1UL;
+	/* Overflow on alternate signal stack gives SIGSEGV. */
+	if (on_sig_stack(sp) && !on_sig_stack((sp - frame_size) & -8UL))
+		return (void __user *) -1UL;
 
-	/* This is the X/Open sanctioned संकेत stack चयनing.  */
-	अगर (ka->sa.sa_flags & SA_ONSTACK) अणु
-		अगर (! sas_ss_flags(sp))
+	/* This is the X/Open sanctioned signal stack switching.  */
+	if (ka->sa.sa_flags & SA_ONSTACK) {
+		if (! sas_ss_flags(sp))
 			sp = current->sas_ss_sp + current->sas_ss_size;
-	पूर्ण
+	}
 
-	वापस (व्योम __user *)((sp - frame_size) & -8ul);
-पूर्ण
+	return (void __user *)((sp - frame_size) & -8ul);
+}
 
-अटल पूर्णांक setup_frame(पूर्णांक sig, काष्ठा k_sigaction *ka,
-		       sigset_t *set, काष्ठा pt_regs * regs)
-अणु
-	काष्ठा sigframe __user *frame;
-	काष्ठा sigcontext sc;
-	अचिन्हित दीर्घ restorer;
-	माप_प्रकार frame_size;
+static int setup_frame(int sig, struct k_sigaction *ka,
+		       sigset_t *set, struct pt_regs * regs)
+{
+	struct sigframe __user *frame;
+	struct sigcontext sc;
+	unsigned long restorer;
+	size_t frame_size;
 
 	/*
-	 * gprs_high are only present क्रम a 31-bit task running on
-	 * a 64-bit kernel (see compat_संकेत.c) but the space क्रम
-	 * gprs_high need to be allocated अगर vector रेजिस्टरs are
-	 * included in the संकेत frame on a 31-bit प्रणाली.
+	 * gprs_high are only present for a 31-bit task running on
+	 * a 64-bit kernel (see compat_signal.c) but the space for
+	 * gprs_high need to be allocated if vector registers are
+	 * included in the signal frame on a 31-bit system.
 	 */
-	frame_size = माप(*frame) - माप(frame->sregs_ext);
-	अगर (MACHINE_HAS_VX)
-		frame_size += माप(frame->sregs_ext);
+	frame_size = sizeof(*frame) - sizeof(frame->sregs_ext);
+	if (MACHINE_HAS_VX)
+		frame_size += sizeof(frame->sregs_ext);
 	frame = get_sigframe(ka, regs, frame_size);
-	अगर (frame == (व्योम __user *) -1UL)
-		वापस -EFAULT;
+	if (frame == (void __user *) -1UL)
+		return -EFAULT;
 
 	/* Set up backchain. */
-	अगर (__put_user(regs->gprs[15], (addr_t __user *) frame))
-		वापस -EFAULT;
+	if (__put_user(regs->gprs[15], (addr_t __user *) frame))
+		return -EFAULT;
 
-	/* Create काष्ठा sigcontext on the संकेत stack */
-	स_नकल(&sc.oldmask, &set->sig, _SIGMASK_COPY_SIZE);
-	sc.sregs = (_sigregs __user __क्रमce *) &frame->sregs;
-	अगर (__copy_to_user(&frame->sc, &sc, माप(frame->sc)))
-		वापस -EFAULT;
+	/* Create struct sigcontext on the signal stack */
+	memcpy(&sc.oldmask, &set->sig, _SIGMASK_COPY_SIZE);
+	sc.sregs = (_sigregs __user __force *) &frame->sregs;
+	if (__copy_to_user(&frame->sc, &sc, sizeof(frame->sc)))
+		return -EFAULT;
 
-	/* Store रेजिस्टरs needed to create the संकेत frame */
+	/* Store registers needed to create the signal frame */
 	store_sigregs();
 
-	/* Create _sigregs on the संकेत stack */
-	अगर (save_sigregs(regs, &frame->sregs))
-		वापस -EFAULT;
+	/* Create _sigregs on the signal stack */
+	if (save_sigregs(regs, &frame->sregs))
+		return -EFAULT;
 
-	/* Place संकेत number on stack to allow backtrace from handler.  */
-	अगर (__put_user(regs->gprs[2], (पूर्णांक __user *) &frame->signo))
-		वापस -EFAULT;
+	/* Place signal number on stack to allow backtrace from handler.  */
+	if (__put_user(regs->gprs[2], (int __user *) &frame->signo))
+		return -EFAULT;
 
-	/* Create _sigregs_ext on the संकेत stack */
-	अगर (save_sigregs_ext(regs, &frame->sregs_ext))
-		वापस -EFAULT;
+	/* Create _sigregs_ext on the signal stack */
+	if (save_sigregs_ext(regs, &frame->sregs_ext))
+		return -EFAULT;
 
-	/* Set up to वापस from userspace.  If provided, use a stub
-	   alपढ़ोy in userspace.  */
-	अगर (ka->sa.sa_flags & SA_RESTORER) अणु
-		restorer = (अचिन्हित दीर्घ) ka->sa.sa_restorer;
-	पूर्ण अन्यथा अणु
-		/* Signal frame without vector रेजिस्टरs are लघु ! */
-		__u16 __user *svc = (व्योम __user *) frame + frame_size - 2;
-		अगर (__put_user(S390_SYSCALL_OPCODE | __NR_sigवापस, svc))
-			वापस -EFAULT;
-		restorer = (अचिन्हित दीर्घ) svc;
-	पूर्ण
+	/* Set up to return from userspace.  If provided, use a stub
+	   already in userspace.  */
+	if (ka->sa.sa_flags & SA_RESTORER) {
+		restorer = (unsigned long) ka->sa.sa_restorer;
+	} else {
+		/* Signal frame without vector registers are short ! */
+		__u16 __user *svc = (void __user *) frame + frame_size - 2;
+		if (__put_user(S390_SYSCALL_OPCODE | __NR_sigreturn, svc))
+			return -EFAULT;
+		restorer = (unsigned long) svc;
+	}
 
-	/* Set up रेजिस्टरs क्रम संकेत handler */
+	/* Set up registers for signal handler */
 	regs->gprs[14] = restorer;
-	regs->gprs[15] = (अचिन्हित दीर्घ) frame;
-	/* Force शेष amode and शेष user address space control. */
+	regs->gprs[15] = (unsigned long) frame;
+	/* Force default amode and default user address space control. */
 	regs->psw.mask = PSW_MASK_EA | PSW_MASK_BA |
 		(PSW_USER_BITS & PSW_MASK_ASC) |
 		(regs->psw.mask & ~PSW_MASK_ASC);
-	regs->psw.addr = (अचिन्हित दीर्घ) ka->sa.sa_handler;
+	regs->psw.addr = (unsigned long) ka->sa.sa_handler;
 
 	regs->gprs[2] = sig;
-	regs->gprs[3] = (अचिन्हित दीर्घ) &frame->sc;
+	regs->gprs[3] = (unsigned long) &frame->sc;
 
-	/* We क्रमgot to include these in the sigcontext.
-	   To aव्योम अवरोधing binary compatibility, they are passed as args. */
-	अगर (sig == संक_अंश || sig == SIGBUS || sig == संक_अवैध ||
-	    sig == SIGTRAP || sig == संक_भ_त्रुटि) अणु
-		/* set extra रेजिस्टरs only क्रम synchronous संकेतs */
-		regs->gprs[4] = regs->पूर्णांक_code & 127;
-		regs->gprs[5] = regs->पूर्णांक_parm_दीर्घ;
-		regs->gprs[6] = current->thपढ़ो.last_अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	/* We forgot to include these in the sigcontext.
+	   To avoid breaking binary compatibility, they are passed as args. */
+	if (sig == SIGSEGV || sig == SIGBUS || sig == SIGILL ||
+	    sig == SIGTRAP || sig == SIGFPE) {
+		/* set extra registers only for synchronous signals */
+		regs->gprs[4] = regs->int_code & 127;
+		regs->gprs[5] = regs->int_parm_long;
+		regs->gprs[6] = current->thread.last_break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक setup_rt_frame(काष्ठा kसंकेत *ksig, sigset_t *set,
-			  काष्ठा pt_regs *regs)
-अणु
-	काष्ठा rt_sigframe __user *frame;
-	अचिन्हित दीर्घ uc_flags, restorer;
-	माप_प्रकार frame_size;
+static int setup_rt_frame(struct ksignal *ksig, sigset_t *set,
+			  struct pt_regs *regs)
+{
+	struct rt_sigframe __user *frame;
+	unsigned long uc_flags, restorer;
+	size_t frame_size;
 
-	frame_size = माप(काष्ठा rt_sigframe) - माप(_sigregs_ext);
+	frame_size = sizeof(struct rt_sigframe) - sizeof(_sigregs_ext);
 	/*
-	 * gprs_high are only present क्रम a 31-bit task running on
-	 * a 64-bit kernel (see compat_संकेत.c) but the space क्रम
-	 * gprs_high need to be allocated अगर vector रेजिस्टरs are
-	 * included in the संकेत frame on a 31-bit प्रणाली.
+	 * gprs_high are only present for a 31-bit task running on
+	 * a 64-bit kernel (see compat_signal.c) but the space for
+	 * gprs_high need to be allocated if vector registers are
+	 * included in the signal frame on a 31-bit system.
 	 */
 	uc_flags = 0;
-	अगर (MACHINE_HAS_VX) अणु
-		frame_size += माप(_sigregs_ext);
+	if (MACHINE_HAS_VX) {
+		frame_size += sizeof(_sigregs_ext);
 		uc_flags |= UC_VXRS;
-	पूर्ण
+	}
 	frame = get_sigframe(&ksig->ka, regs, frame_size);
-	अगर (frame == (व्योम __user *) -1UL)
-		वापस -EFAULT;
+	if (frame == (void __user *) -1UL)
+		return -EFAULT;
 
 	/* Set up backchain. */
-	अगर (__put_user(regs->gprs[15], (addr_t __user *) frame))
-		वापस -EFAULT;
+	if (__put_user(regs->gprs[15], (addr_t __user *) frame))
+		return -EFAULT;
 
-	/* Set up to वापस from userspace.  If provided, use a stub
-	   alपढ़ोy in userspace.  */
-	अगर (ksig->ka.sa.sa_flags & SA_RESTORER) अणु
-		restorer = (अचिन्हित दीर्घ) ksig->ka.sa.sa_restorer;
-	पूर्ण अन्यथा अणु
+	/* Set up to return from userspace.  If provided, use a stub
+	   already in userspace.  */
+	if (ksig->ka.sa.sa_flags & SA_RESTORER) {
+		restorer = (unsigned long) ksig->ka.sa.sa_restorer;
+	} else {
 		__u16 __user *svc = &frame->svc_insn;
-		अगर (__put_user(S390_SYSCALL_OPCODE | __NR_rt_sigवापस, svc))
-			वापस -EFAULT;
-		restorer = (अचिन्हित दीर्घ) svc;
-	पूर्ण
+		if (__put_user(S390_SYSCALL_OPCODE | __NR_rt_sigreturn, svc))
+			return -EFAULT;
+		restorer = (unsigned long) svc;
+	}
 
-	/* Create siginfo on the संकेत stack */
-	अगर (copy_siginfo_to_user(&frame->info, &ksig->info))
-		वापस -EFAULT;
+	/* Create siginfo on the signal stack */
+	if (copy_siginfo_to_user(&frame->info, &ksig->info))
+		return -EFAULT;
 
-	/* Store रेजिस्टरs needed to create the संकेत frame */
+	/* Store registers needed to create the signal frame */
 	store_sigregs();
 
-	/* Create ucontext on the संकेत stack. */
-	अगर (__put_user(uc_flags, &frame->uc.uc_flags) ||
-	    __put_user(शून्य, &frame->uc.uc_link) ||
+	/* Create ucontext on the signal stack. */
+	if (__put_user(uc_flags, &frame->uc.uc_flags) ||
+	    __put_user(NULL, &frame->uc.uc_link) ||
 	    __save_altstack(&frame->uc.uc_stack, regs->gprs[15]) ||
 	    save_sigregs(regs, &frame->uc.uc_mcontext) ||
-	    __copy_to_user(&frame->uc.uc_sigmask, set, माप(*set)) ||
+	    __copy_to_user(&frame->uc.uc_sigmask, set, sizeof(*set)) ||
 	    save_sigregs_ext(regs, &frame->uc.uc_mcontext_ext))
-		वापस -EFAULT;
+		return -EFAULT;
 
-	/* Set up रेजिस्टरs क्रम संकेत handler */
+	/* Set up registers for signal handler */
 	regs->gprs[14] = restorer;
-	regs->gprs[15] = (अचिन्हित दीर्घ) frame;
-	/* Force शेष amode and शेष user address space control. */
+	regs->gprs[15] = (unsigned long) frame;
+	/* Force default amode and default user address space control. */
 	regs->psw.mask = PSW_MASK_EA | PSW_MASK_BA |
 		(PSW_USER_BITS & PSW_MASK_ASC) |
 		(regs->psw.mask & ~PSW_MASK_ASC);
-	regs->psw.addr = (अचिन्हित दीर्घ) ksig->ka.sa.sa_handler;
+	regs->psw.addr = (unsigned long) ksig->ka.sa.sa_handler;
 
 	regs->gprs[2] = ksig->sig;
-	regs->gprs[3] = (अचिन्हित दीर्घ) &frame->info;
-	regs->gprs[4] = (अचिन्हित दीर्घ) &frame->uc;
-	regs->gprs[5] = current->thपढ़ो.last_अवरोध;
-	वापस 0;
-पूर्ण
+	regs->gprs[3] = (unsigned long) &frame->info;
+	regs->gprs[4] = (unsigned long) &frame->uc;
+	regs->gprs[5] = current->thread.last_break;
+	return 0;
+}
 
-अटल व्योम handle_संकेत(काष्ठा kसंकेत *ksig, sigset_t *oldset,
-			  काष्ठा pt_regs *regs)
-अणु
-	पूर्णांक ret;
+static void handle_signal(struct ksignal *ksig, sigset_t *oldset,
+			  struct pt_regs *regs)
+{
+	int ret;
 
 	/* Set up the stack frame */
-	अगर (ksig->ka.sa.sa_flags & SA_SIGINFO)
+	if (ksig->ka.sa.sa_flags & SA_SIGINFO)
 		ret = setup_rt_frame(ksig, oldset, regs);
-	अन्यथा
+	else
 		ret = setup_frame(ksig->sig, &ksig->ka, oldset, regs);
 
-	संकेत_setup_करोne(ret, ksig, test_thपढ़ो_flag(TIF_SINGLE_STEP));
-पूर्ण
+	signal_setup_done(ret, ksig, test_thread_flag(TIF_SINGLE_STEP));
+}
 
 /*
  * Note that 'init' is a special process: it doesn't get signals it doesn't
- * want to handle. Thus you cannot समाप्त init even with a SIGKILL even by
+ * want to handle. Thus you cannot kill init even with a SIGKILL even by
  * mistake.
  *
- * Note that we go through the संकेतs twice: once to check the संकेतs that
- * the kernel can handle, and then we build all the user-level संकेत handling
+ * Note that we go through the signals twice: once to check the signals that
+ * the kernel can handle, and then we build all the user-level signal handling
  * stack-frames in one go after that.
  */
 
-व्योम arch_करो_संकेत_or_restart(काष्ठा pt_regs *regs, bool has_संकेत)
-अणु
-	काष्ठा kसंकेत ksig;
+void arch_do_signal_or_restart(struct pt_regs *regs, bool has_signal)
+{
+	struct ksignal ksig;
 	sigset_t *oldset = sigmask_to_save();
 
 	/*
-	 * Get संकेत to deliver. When running under ptrace, at this poपूर्णांक
-	 * the debugger may change all our रेजिस्टरs, including the प्रणाली
-	 * call inक्रमmation.
+	 * Get signal to deliver. When running under ptrace, at this point
+	 * the debugger may change all our registers, including the system
+	 * call information.
 	 */
-	current->thपढ़ो.प्रणाली_call =
-		test_pt_regs_flag(regs, PIF_SYSCALL) ? regs->पूर्णांक_code : 0;
+	current->thread.system_call =
+		test_pt_regs_flag(regs, PIF_SYSCALL) ? regs->int_code : 0;
 
-	अगर (has_संकेत && get_संकेत(&ksig)) अणु
-		/* Whee!  Actually deliver the संकेत.  */
-		अगर (current->thपढ़ो.प्रणाली_call) अणु
-			regs->पूर्णांक_code = current->thपढ़ो.प्रणाली_call;
-			/* Check क्रम प्रणाली call restarting. */
-			चयन (regs->gprs[2]) अणु
-			हाल -ERESTART_RESTARTBLOCK:
-			हाल -ERESTARTNOHAND:
+	if (has_signal && get_signal(&ksig)) {
+		/* Whee!  Actually deliver the signal.  */
+		if (current->thread.system_call) {
+			regs->int_code = current->thread.system_call;
+			/* Check for system call restarting. */
+			switch (regs->gprs[2]) {
+			case -ERESTART_RESTARTBLOCK:
+			case -ERESTARTNOHAND:
 				regs->gprs[2] = -EINTR;
-				अवरोध;
-			हाल -ERESTARTSYS:
-				अगर (!(ksig.ka.sa.sa_flags & SA_RESTART)) अणु
+				break;
+			case -ERESTARTSYS:
+				if (!(ksig.ka.sa.sa_flags & SA_RESTART)) {
 					regs->gprs[2] = -EINTR;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 				fallthrough;
-			हाल -ERESTARTNOINTR:
+			case -ERESTARTNOINTR:
 				regs->gprs[2] = regs->orig_gpr2;
 				regs->psw.addr =
-					__शुरुआत_psw(regs->psw,
-						     regs->पूर्णांक_code >> 16);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		/* No दीर्घer in a प्रणाली call */
+					__rewind_psw(regs->psw,
+						     regs->int_code >> 16);
+				break;
+			}
+		}
+		/* No longer in a system call */
 		clear_pt_regs_flag(regs, PIF_SYSCALL);
 		clear_pt_regs_flag(regs, PIF_SYSCALL_RESTART);
-		rseq_संकेत_deliver(&ksig, regs);
-		अगर (is_compat_task())
-			handle_संकेत32(&ksig, oldset, regs);
-		अन्यथा
-			handle_संकेत(&ksig, oldset, regs);
-		वापस;
-	पूर्ण
+		rseq_signal_deliver(&ksig, regs);
+		if (is_compat_task())
+			handle_signal32(&ksig, oldset, regs);
+		else
+			handle_signal(&ksig, oldset, regs);
+		return;
+	}
 
-	/* No handlers present - check क्रम प्रणाली call restart */
+	/* No handlers present - check for system call restart */
 	clear_pt_regs_flag(regs, PIF_SYSCALL);
 	clear_pt_regs_flag(regs, PIF_SYSCALL_RESTART);
-	अगर (current->thपढ़ो.प्रणाली_call) अणु
-		regs->पूर्णांक_code = current->thपढ़ो.प्रणाली_call;
-		चयन (regs->gprs[2]) अणु
-		हाल -ERESTART_RESTARTBLOCK:
+	if (current->thread.system_call) {
+		regs->int_code = current->thread.system_call;
+		switch (regs->gprs[2]) {
+		case -ERESTART_RESTARTBLOCK:
 			/* Restart with sys_restart_syscall */
-			regs->पूर्णांक_code = __NR_restart_syscall;
+			regs->int_code = __NR_restart_syscall;
 			fallthrough;
-		हाल -ERESTARTNOHAND:
-		हाल -ERESTARTSYS:
-		हाल -ERESTARTNOINTR:
-			/* Restart प्रणाली call with magic TIF bit. */
+		case -ERESTARTNOHAND:
+		case -ERESTARTSYS:
+		case -ERESTARTNOINTR:
+			/* Restart system call with magic TIF bit. */
 			regs->gprs[2] = regs->orig_gpr2;
 			set_pt_regs_flag(regs, PIF_SYSCALL_RESTART);
-			अगर (test_thपढ़ो_flag(TIF_SINGLE_STEP))
-				clear_thपढ़ो_flag(TIF_PER_TRAP);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			if (test_thread_flag(TIF_SINGLE_STEP))
+				clear_thread_flag(TIF_PER_TRAP);
+			break;
+		}
+	}
 
 	/*
-	 * If there's no संकेत to deliver, we just put the saved sigmask back.
+	 * If there's no signal to deliver, we just put the saved sigmask back.
 	 */
 	restore_saved_sigmask();
-पूर्ण
+}
 
-व्योम करो_notअगरy_resume(काष्ठा pt_regs *regs)
-अणु
-	tracehook_notअगरy_resume(regs);
-	rseq_handle_notअगरy_resume(शून्य, regs);
-पूर्ण
+void do_notify_resume(struct pt_regs *regs)
+{
+	tracehook_notify_resume(regs);
+	rseq_handle_notify_resume(NULL, regs);
+}

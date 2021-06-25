@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित SUN3X_TIME_H
-#घोषणा SUN3X_TIME_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef SUN3X_TIME_H
+#define SUN3X_TIME_H
 
-बाह्य पूर्णांक sun3x_hwclk(पूर्णांक set, काष्ठा rtc_समय *t);
-व्योम sun3x_sched_init(व्योम);
+extern int sun3x_hwclk(int set, struct rtc_time *t);
+void sun3x_sched_init(void);
 
-काष्ठा mostek_dt अणु
-	अस्थिर अचिन्हित अक्षर csr;
-	अस्थिर अचिन्हित अक्षर sec;
-	अस्थिर अचिन्हित अक्षर min;
-	अस्थिर अचिन्हित अक्षर hour;
-	अस्थिर अचिन्हित अक्षर wday;
-	अस्थिर अचिन्हित अक्षर mday;
-	अस्थिर अचिन्हित अक्षर month;
-	अस्थिर अचिन्हित अक्षर year;
-पूर्ण;
+struct mostek_dt {
+	volatile unsigned char csr;
+	volatile unsigned char sec;
+	volatile unsigned char min;
+	volatile unsigned char hour;
+	volatile unsigned char wday;
+	volatile unsigned char mday;
+	volatile unsigned char month;
+	volatile unsigned char year;
+};
 
-#पूर्ण_अगर
+#endif

@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * USB related definitions
  *
@@ -9,15 +8,15 @@
  * kind, whether express or implied.
  */
 
-#अगर_अघोषित __ASM_ARCH_USB_H
-#घोषणा __ASM_ARCH_USB_H
+#ifndef __ASM_ARCH_USB_H
+#define __ASM_ARCH_USB_H
 
-/* Passed as the platक्रमm data to the OHCI driver */
-काष्ठा	da8xx_ohci_root_hub अणु
-	/* Time from घातer on to घातer good (in 2 ms units) */
+/* Passed as the platform data to the OHCI driver */
+struct	da8xx_ohci_root_hub {
+	/* Time from power on to power good (in 2 ms units) */
 	u8	potpgt;
-पूर्ण;
+};
 
-व्योम davinci_setup_usb(अचिन्हित mA, अचिन्हित potpgt_ms);
+void davinci_setup_usb(unsigned mA, unsigned potpgt_ms);
 
-#पूर्ण_अगर	/* अगरndef __ASM_ARCH_USB_H */
+#endif	/* ifndef __ASM_ARCH_USB_H */

@@ -1,116 +1,115 @@
-<शैली गुरु>
 /*
  *   Copyright (c) 2011, 2012, Qualcomm Atheros Communications Inc.
  *   Copyright (c) 2014, I2SE GmbH
  *
- *   Permission to use, copy, modअगरy, and/or distribute this software
- *   क्रम any purpose with or without fee is hereby granted, provided
+ *   Permission to use, copy, modify, and/or distribute this software
+ *   for any purpose with or without fee is hereby granted, provided
  *   that the above copyright notice and this permission notice appear
  *   in all copies.
  *
  *   THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
  *   WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
  *   WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- *   THE AUTHOR BE LIABLE FOR ANY SPECIAL, सूचीECT, INसूचीECT, OR
+ *   THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
  *   CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
  *   LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
  *   NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  *   CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*   This module implements the Qualcomm Atheros SPI protocol क्रम
+/*   This module implements the Qualcomm Atheros SPI protocol for
  *   kernel-based SPI device; it is essentially an Ethernet-to-SPI
  *   serial converter;
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_net.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/types.h>
+#include <linux/errno.h>
+#include <linux/etherdevice.h>
+#include <linux/if_arp.h>
+#include <linux/if_ether.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/jiffies.h>
+#include <linux/kernel.h>
+#include <linux/kthread.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/netdevice.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_net.h>
+#include <linux/sched.h>
+#include <linux/skbuff.h>
+#include <linux/spi/spi.h>
+#include <linux/types.h>
 
-#समावेश "qca_7k.h"
-#समावेश "qca_7k_common.h"
-#समावेश "qca_debug.h"
-#समावेश "qca_spi.h"
+#include "qca_7k.h"
+#include "qca_7k_common.h"
+#include "qca_debug.h"
+#include "qca_spi.h"
 
-#घोषणा MAX_DMA_BURST_LEN 5000
+#define MAX_DMA_BURST_LEN 5000
 
 /*   Modules parameters     */
-#घोषणा QCASPI_CLK_SPEED_MIN 1000000
-#घोषणा QCASPI_CLK_SPEED_MAX 16000000
-#घोषणा QCASPI_CLK_SPEED     8000000
-अटल पूर्णांक qcaspi_clkspeed;
-module_param(qcaspi_clkspeed, पूर्णांक, 0);
+#define QCASPI_CLK_SPEED_MIN 1000000
+#define QCASPI_CLK_SPEED_MAX 16000000
+#define QCASPI_CLK_SPEED     8000000
+static int qcaspi_clkspeed;
+module_param(qcaspi_clkspeed, int, 0);
 MODULE_PARM_DESC(qcaspi_clkspeed, "SPI bus clock speed (Hz). Use 1000000-16000000.");
 
-#घोषणा QCASPI_BURST_LEN_MIN 1
-#घोषणा QCASPI_BURST_LEN_MAX MAX_DMA_BURST_LEN
-अटल पूर्णांक qcaspi_burst_len = MAX_DMA_BURST_LEN;
-module_param(qcaspi_burst_len, पूर्णांक, 0);
+#define QCASPI_BURST_LEN_MIN 1
+#define QCASPI_BURST_LEN_MAX MAX_DMA_BURST_LEN
+static int qcaspi_burst_len = MAX_DMA_BURST_LEN;
+module_param(qcaspi_burst_len, int, 0);
 MODULE_PARM_DESC(qcaspi_burst_len, "Number of data bytes per burst. Use 1-5000.");
 
-#घोषणा QCASPI_PLUGGABLE_MIN 0
-#घोषणा QCASPI_PLUGGABLE_MAX 1
-अटल पूर्णांक qcaspi_pluggable = QCASPI_PLUGGABLE_MIN;
-module_param(qcaspi_pluggable, पूर्णांक, 0);
+#define QCASPI_PLUGGABLE_MIN 0
+#define QCASPI_PLUGGABLE_MAX 1
+static int qcaspi_pluggable = QCASPI_PLUGGABLE_MIN;
+module_param(qcaspi_pluggable, int, 0);
 MODULE_PARM_DESC(qcaspi_pluggable, "Pluggable SPI connection (yes/no).");
 
-#घोषणा QCASPI_WRITE_VERIFY_MIN 0
-#घोषणा QCASPI_WRITE_VERIFY_MAX 3
-अटल पूर्णांक wr_verअगरy = QCASPI_WRITE_VERIFY_MIN;
-module_param(wr_verअगरy, पूर्णांक, 0);
-MODULE_PARM_DESC(wr_verअगरy, "SPI register write verify trails. Use 0-3.");
+#define QCASPI_WRITE_VERIFY_MIN 0
+#define QCASPI_WRITE_VERIFY_MAX 3
+static int wr_verify = QCASPI_WRITE_VERIFY_MIN;
+module_param(wr_verify, int, 0);
+MODULE_PARM_DESC(wr_verify, "SPI register write verify trails. Use 0-3.");
 
-#घोषणा QCASPI_TX_TIMEOUT (1 * HZ)
-#घोषणा QCASPI_QCA7K_REBOOT_TIME_MS 1000
+#define QCASPI_TX_TIMEOUT (1 * HZ)
+#define QCASPI_QCA7K_REBOOT_TIME_MS 1000
 
-अटल व्योम
-start_spi_पूर्णांकr_handling(काष्ठा qcaspi *qca, u16 *पूर्णांकr_cause)
-अणु
-	*पूर्णांकr_cause = 0;
+static void
+start_spi_intr_handling(struct qcaspi *qca, u16 *intr_cause)
+{
+	*intr_cause = 0;
 
-	qcaspi_ग_लिखो_रेजिस्टर(qca, SPI_REG_INTR_ENABLE, 0, wr_verअगरy);
-	qcaspi_पढ़ो_रेजिस्टर(qca, SPI_REG_INTR_CAUSE, पूर्णांकr_cause);
-	netdev_dbg(qca->net_dev, "interrupts: 0x%04x\n", *पूर्णांकr_cause);
-पूर्ण
+	qcaspi_write_register(qca, SPI_REG_INTR_ENABLE, 0, wr_verify);
+	qcaspi_read_register(qca, SPI_REG_INTR_CAUSE, intr_cause);
+	netdev_dbg(qca->net_dev, "interrupts: 0x%04x\n", *intr_cause);
+}
 
-अटल व्योम
-end_spi_पूर्णांकr_handling(काष्ठा qcaspi *qca, u16 पूर्णांकr_cause)
-अणु
-	u16 पूर्णांकr_enable = (SPI_INT_CPU_ON |
+static void
+end_spi_intr_handling(struct qcaspi *qca, u16 intr_cause)
+{
+	u16 intr_enable = (SPI_INT_CPU_ON |
 			   SPI_INT_PKT_AVLBL |
 			   SPI_INT_RDBUF_ERR |
 			   SPI_INT_WRBUF_ERR);
 
-	qcaspi_ग_लिखो_रेजिस्टर(qca, SPI_REG_INTR_CAUSE, पूर्णांकr_cause, 0);
-	qcaspi_ग_लिखो_रेजिस्टर(qca, SPI_REG_INTR_ENABLE, पूर्णांकr_enable, wr_verअगरy);
-	netdev_dbg(qca->net_dev, "acking int: 0x%04x\n", पूर्णांकr_cause);
-पूर्ण
+	qcaspi_write_register(qca, SPI_REG_INTR_CAUSE, intr_cause, 0);
+	qcaspi_write_register(qca, SPI_REG_INTR_ENABLE, intr_enable, wr_verify);
+	netdev_dbg(qca->net_dev, "acking int: 0x%04x\n", intr_cause);
+}
 
-अटल u32
-qcaspi_ग_लिखो_burst(काष्ठा qcaspi *qca, u8 *src, u32 len)
-अणु
+static u32
+qcaspi_write_burst(struct qcaspi *qca, u8 *src, u32 len)
+{
 	__be16 cmd;
-	काष्ठा spi_message msg;
-	काष्ठा spi_transfer transfer[2];
-	पूर्णांक ret;
+	struct spi_message msg;
+	struct spi_transfer transfer[2];
+	int ret;
 
-	स_रखो(&transfer, 0, माप(transfer));
+	memset(&transfer, 0, sizeof(transfer));
 	spi_message_init(&msg);
 
 	cmd = cpu_to_be16(QCA7K_SPI_WRITE | QCA7K_SPI_EXTERNAL);
@@ -123,22 +122,22 @@ qcaspi_ग_लिखो_burst(काष्ठा qcaspi *qca, u8 *src, u32 len)
 	spi_message_add_tail(&transfer[1], &msg);
 	ret = spi_sync(qca->spi_dev, &msg);
 
-	अगर (ret || (msg.actual_length != QCASPI_CMD_LEN + len)) अणु
+	if (ret || (msg.actual_length != QCASPI_CMD_LEN + len)) {
 		qcaspi_spi_error(qca);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल u32
-qcaspi_ग_लिखो_legacy(काष्ठा qcaspi *qca, u8 *src, u32 len)
-अणु
-	काष्ठा spi_message msg;
-	काष्ठा spi_transfer transfer;
-	पूर्णांक ret;
+static u32
+qcaspi_write_legacy(struct qcaspi *qca, u8 *src, u32 len)
+{
+	struct spi_message msg;
+	struct spi_transfer transfer;
+	int ret;
 
-	स_रखो(&transfer, 0, माप(transfer));
+	memset(&transfer, 0, sizeof(transfer));
 	spi_message_init(&msg);
 
 	transfer.tx_buf = src;
@@ -147,23 +146,23 @@ qcaspi_ग_लिखो_legacy(काष्ठा qcaspi *qca, u8 *src, u32 len)
 	spi_message_add_tail(&transfer, &msg);
 	ret = spi_sync(qca->spi_dev, &msg);
 
-	अगर (ret || (msg.actual_length != len)) अणु
+	if (ret || (msg.actual_length != len)) {
 		qcaspi_spi_error(qca);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल u32
-qcaspi_पढ़ो_burst(काष्ठा qcaspi *qca, u8 *dst, u32 len)
-अणु
-	काष्ठा spi_message msg;
+static u32
+qcaspi_read_burst(struct qcaspi *qca, u8 *dst, u32 len)
+{
+	struct spi_message msg;
 	__be16 cmd;
-	काष्ठा spi_transfer transfer[2];
-	पूर्णांक ret;
+	struct spi_transfer transfer[2];
+	int ret;
 
-	स_रखो(&transfer, 0, माप(transfer));
+	memset(&transfer, 0, sizeof(transfer));
 	spi_message_init(&msg);
 
 	cmd = cpu_to_be16(QCA7K_SPI_READ | QCA7K_SPI_EXTERNAL);
@@ -176,22 +175,22 @@ qcaspi_पढ़ो_burst(काष्ठा qcaspi *qca, u8 *dst, u32 len)
 	spi_message_add_tail(&transfer[1], &msg);
 	ret = spi_sync(qca->spi_dev, &msg);
 
-	अगर (ret || (msg.actual_length != QCASPI_CMD_LEN + len)) अणु
+	if (ret || (msg.actual_length != QCASPI_CMD_LEN + len)) {
 		qcaspi_spi_error(qca);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल u32
-qcaspi_पढ़ो_legacy(काष्ठा qcaspi *qca, u8 *dst, u32 len)
-अणु
-	काष्ठा spi_message msg;
-	काष्ठा spi_transfer transfer;
-	पूर्णांक ret;
+static u32
+qcaspi_read_legacy(struct qcaspi *qca, u8 *dst, u32 len)
+{
+	struct spi_message msg;
+	struct spi_transfer transfer;
+	int ret;
 
-	स_रखो(&transfer, 0, माप(transfer));
+	memset(&transfer, 0, sizeof(transfer));
 	spi_message_init(&msg);
 
 	transfer.rx_buf = dst;
@@ -200,45 +199,45 @@ qcaspi_पढ़ो_legacy(काष्ठा qcaspi *qca, u8 *dst, u32 len)
 	spi_message_add_tail(&transfer, &msg);
 	ret = spi_sync(qca->spi_dev, &msg);
 
-	अगर (ret || (msg.actual_length != len)) अणु
+	if (ret || (msg.actual_length != len)) {
 		qcaspi_spi_error(qca);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल पूर्णांक
-qcaspi_tx_cmd(काष्ठा qcaspi *qca, u16 cmd)
-अणु
+static int
+qcaspi_tx_cmd(struct qcaspi *qca, u16 cmd)
+{
 	__be16 tx_data;
-	काष्ठा spi_message msg;
-	काष्ठा spi_transfer transfer;
-	पूर्णांक ret;
+	struct spi_message msg;
+	struct spi_transfer transfer;
+	int ret;
 
-	स_रखो(&transfer, 0, माप(transfer));
+	memset(&transfer, 0, sizeof(transfer));
 
 	spi_message_init(&msg);
 
 	tx_data = cpu_to_be16(cmd);
-	transfer.len = माप(cmd);
+	transfer.len = sizeof(cmd);
 	transfer.tx_buf = &tx_data;
 	spi_message_add_tail(&transfer, &msg);
 
 	ret = spi_sync(qca->spi_dev, &msg);
 
-	अगर (!ret)
+	if (!ret)
 		ret = msg.status;
 
-	अगर (ret)
+	if (ret)
 		qcaspi_spi_error(qca);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-qcaspi_tx_frame(काष्ठा qcaspi *qca, काष्ठा sk_buff *skb)
-अणु
+static int
+qcaspi_tx_frame(struct qcaspi *qca, struct sk_buff *skb)
+{
 	u32 count;
 	u32 written;
 	u32 offset;
@@ -246,167 +245,167 @@ qcaspi_tx_frame(काष्ठा qcaspi *qca, काष्ठा sk_buff *skb)
 
 	len = skb->len;
 
-	qcaspi_ग_लिखो_रेजिस्टर(qca, SPI_REG_BFR_SIZE, len, wr_verअगरy);
-	अगर (qca->legacy_mode)
+	qcaspi_write_register(qca, SPI_REG_BFR_SIZE, len, wr_verify);
+	if (qca->legacy_mode)
 		qcaspi_tx_cmd(qca, QCA7K_SPI_WRITE | QCA7K_SPI_EXTERNAL);
 
 	offset = 0;
-	जबतक (len) अणु
+	while (len) {
 		count = len;
-		अगर (count > qca->burst_len)
+		if (count > qca->burst_len)
 			count = qca->burst_len;
 
-		अगर (qca->legacy_mode) अणु
-			written = qcaspi_ग_लिखो_legacy(qca,
+		if (qca->legacy_mode) {
+			written = qcaspi_write_legacy(qca,
 						      skb->data + offset,
 						      count);
-		पूर्ण अन्यथा अणु
-			written = qcaspi_ग_लिखो_burst(qca,
+		} else {
+			written = qcaspi_write_burst(qca,
 						     skb->data + offset,
 						     count);
-		पूर्ण
+		}
 
-		अगर (written != count)
-			वापस -1;
+		if (written != count)
+			return -1;
 
 		offset += count;
 		len -= count;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-qcaspi_transmit(काष्ठा qcaspi *qca)
-अणु
-	काष्ठा net_device_stats *n_stats = &qca->net_dev->stats;
+static int
+qcaspi_transmit(struct qcaspi *qca)
+{
+	struct net_device_stats *n_stats = &qca->net_dev->stats;
 	u16 available = 0;
 	u32 pkt_len;
 	u16 new_head;
 	u16 packets = 0;
 
-	अगर (qca->txr.skb[qca->txr.head] == शून्य)
-		वापस 0;
+	if (qca->txr.skb[qca->txr.head] == NULL)
+		return 0;
 
-	qcaspi_पढ़ो_रेजिस्टर(qca, SPI_REG_WRBUF_SPC_AVA, &available);
+	qcaspi_read_register(qca, SPI_REG_WRBUF_SPC_AVA, &available);
 
-	अगर (available > QCASPI_HW_BUF_LEN) अणु
-		/* This could only happen by पूर्णांकerferences on the SPI line.
+	if (available > QCASPI_HW_BUF_LEN) {
+		/* This could only happen by interferences on the SPI line.
 		 * So retry later ...
 		 */
 		qca->stats.buf_avail_err++;
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	जबतक (qca->txr.skb[qca->txr.head]) अणु
+	while (qca->txr.skb[qca->txr.head]) {
 		pkt_len = qca->txr.skb[qca->txr.head]->len + QCASPI_HW_PKT_LEN;
 
-		अगर (available < pkt_len) अणु
-			अगर (packets == 0)
-				qca->stats.ग_लिखो_buf_miss++;
-			अवरोध;
-		पूर्ण
+		if (available < pkt_len) {
+			if (packets == 0)
+				qca->stats.write_buf_miss++;
+			break;
+		}
 
-		अगर (qcaspi_tx_frame(qca, qca->txr.skb[qca->txr.head]) == -1) अणु
-			qca->stats.ग_लिखो_err++;
-			वापस -1;
-		पूर्ण
+		if (qcaspi_tx_frame(qca, qca->txr.skb[qca->txr.head]) == -1) {
+			qca->stats.write_err++;
+			return -1;
+		}
 
 		packets++;
 		n_stats->tx_packets++;
 		n_stats->tx_bytes += qca->txr.skb[qca->txr.head]->len;
 		available -= pkt_len;
 
-		/* हटाओ the skb from the queue */
-		/* XXX After inconsistent lock states netअगर_tx_lock()
-		 * has been replaced by netअगर_tx_lock_bh() and so on.
+		/* remove the skb from the queue */
+		/* XXX After inconsistent lock states netif_tx_lock()
+		 * has been replaced by netif_tx_lock_bh() and so on.
 		 */
-		netअगर_tx_lock_bh(qca->net_dev);
-		dev_kमुक्त_skb(qca->txr.skb[qca->txr.head]);
-		qca->txr.skb[qca->txr.head] = शून्य;
+		netif_tx_lock_bh(qca->net_dev);
+		dev_kfree_skb(qca->txr.skb[qca->txr.head]);
+		qca->txr.skb[qca->txr.head] = NULL;
 		qca->txr.size -= pkt_len;
 		new_head = qca->txr.head + 1;
-		अगर (new_head >= qca->txr.count)
+		if (new_head >= qca->txr.count)
 			new_head = 0;
 		qca->txr.head = new_head;
-		अगर (netअगर_queue_stopped(qca->net_dev))
-			netअगर_wake_queue(qca->net_dev);
-		netअगर_tx_unlock_bh(qca->net_dev);
-	पूर्ण
+		if (netif_queue_stopped(qca->net_dev))
+			netif_wake_queue(qca->net_dev);
+		netif_tx_unlock_bh(qca->net_dev);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-qcaspi_receive(काष्ठा qcaspi *qca)
-अणु
-	काष्ठा net_device *net_dev = qca->net_dev;
-	काष्ठा net_device_stats *n_stats = &net_dev->stats;
+static int
+qcaspi_receive(struct qcaspi *qca)
+{
+	struct net_device *net_dev = qca->net_dev;
+	struct net_device_stats *n_stats = &net_dev->stats;
 	u16 available = 0;
-	u32 bytes_पढ़ो;
+	u32 bytes_read;
 	u8 *cp;
 
-	/* Allocate rx SKB अगर we करोn't have one available. */
-	अगर (!qca->rx_skb) अणु
+	/* Allocate rx SKB if we don't have one available. */
+	if (!qca->rx_skb) {
 		qca->rx_skb = netdev_alloc_skb_ip_align(net_dev,
 							net_dev->mtu +
 							VLAN_ETH_HLEN);
-		अगर (!qca->rx_skb) अणु
+		if (!qca->rx_skb) {
 			netdev_dbg(net_dev, "out of RX resources\n");
 			qca->stats.out_of_mem++;
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			return -1;
+		}
+	}
 
 	/* Read the packet size. */
-	qcaspi_पढ़ो_रेजिस्टर(qca, SPI_REG_RDBUF_BYTE_AVA, &available);
+	qcaspi_read_register(qca, SPI_REG_RDBUF_BYTE_AVA, &available);
 
 	netdev_dbg(net_dev, "qcaspi_receive: SPI_REG_RDBUF_BYTE_AVA: Value: %08x\n",
 		   available);
 
-	अगर (available > QCASPI_HW_BUF_LEN + QCASPI_HW_PKT_LEN) अणु
-		/* This could only happen by पूर्णांकerferences on the SPI line.
+	if (available > QCASPI_HW_BUF_LEN + QCASPI_HW_PKT_LEN) {
+		/* This could only happen by interferences on the SPI line.
 		 * So retry later ...
 		 */
 		qca->stats.buf_avail_err++;
-		वापस -1;
-	पूर्ण अन्यथा अगर (available == 0) अणु
+		return -1;
+	} else if (available == 0) {
 		netdev_dbg(net_dev, "qcaspi_receive called without any data being available!\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	qcaspi_ग_लिखो_रेजिस्टर(qca, SPI_REG_BFR_SIZE, available, wr_verअगरy);
+	qcaspi_write_register(qca, SPI_REG_BFR_SIZE, available, wr_verify);
 
-	अगर (qca->legacy_mode)
+	if (qca->legacy_mode)
 		qcaspi_tx_cmd(qca, QCA7K_SPI_READ | QCA7K_SPI_EXTERNAL);
 
-	जबतक (available) अणु
+	while (available) {
 		u32 count = available;
 
-		अगर (count > qca->burst_len)
+		if (count > qca->burst_len)
 			count = qca->burst_len;
 
-		अगर (qca->legacy_mode) अणु
-			bytes_पढ़ो = qcaspi_पढ़ो_legacy(qca, qca->rx_buffer,
+		if (qca->legacy_mode) {
+			bytes_read = qcaspi_read_legacy(qca, qca->rx_buffer,
 							count);
-		पूर्ण अन्यथा अणु
-			bytes_पढ़ो = qcaspi_पढ़ो_burst(qca, qca->rx_buffer,
+		} else {
+			bytes_read = qcaspi_read_burst(qca, qca->rx_buffer,
 						       count);
-		पूर्ण
+		}
 
 		netdev_dbg(net_dev, "available: %d, byte read: %d\n",
-			   available, bytes_पढ़ो);
+			   available, bytes_read);
 
-		अगर (bytes_पढ़ो) अणु
-			available -= bytes_पढ़ो;
-		पूर्ण अन्यथा अणु
-			qca->stats.पढ़ो_err++;
-			वापस -1;
-		पूर्ण
+		if (bytes_read) {
+			available -= bytes_read;
+		} else {
+			qca->stats.read_err++;
+			return -1;
+		}
 
 		cp = qca->rx_buffer;
 
-		जबतक ((bytes_पढ़ो--) && (qca->rx_skb)) अणु
+		while ((bytes_read--) && (qca->rx_skb)) {
 			s32 retcode;
 
 			retcode = qcafrm_fsm_decode(&qca->frm_handle,
@@ -414,21 +413,21 @@ qcaspi_receive(काष्ठा qcaspi *qca)
 						    skb_tailroom(qca->rx_skb),
 						    *cp);
 			cp++;
-			चयन (retcode) अणु
-			हाल QCAFRM_GATHER:
-			हाल QCAFRM_NOHEAD:
-				अवरोध;
-			हाल QCAFRM_NOTAIL:
+			switch (retcode) {
+			case QCAFRM_GATHER:
+			case QCAFRM_NOHEAD:
+				break;
+			case QCAFRM_NOTAIL:
 				netdev_dbg(net_dev, "no RX tail\n");
 				n_stats->rx_errors++;
 				n_stats->rx_dropped++;
-				अवरोध;
-			हाल QCAFRM_INVLEN:
+				break;
+			case QCAFRM_INVLEN:
 				netdev_dbg(net_dev, "invalid RX length\n");
 				n_stats->rx_errors++;
 				n_stats->rx_dropped++;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				qca->rx_skb->dev = qca->net_dev;
 				n_stats->rx_packets++;
 				n_stats->rx_bytes += retcode;
@@ -436,328 +435,328 @@ qcaspi_receive(काष्ठा qcaspi *qca)
 				qca->rx_skb->protocol = eth_type_trans(
 					qca->rx_skb, qca->rx_skb->dev);
 				qca->rx_skb->ip_summed = CHECKSUM_UNNECESSARY;
-				netअगर_rx_ni(qca->rx_skb);
+				netif_rx_ni(qca->rx_skb);
 				qca->rx_skb = netdev_alloc_skb_ip_align(net_dev,
 					net_dev->mtu + VLAN_ETH_HLEN);
-				अगर (!qca->rx_skb) अणु
+				if (!qca->rx_skb) {
 					netdev_dbg(net_dev, "out of RX resources\n");
 					n_stats->rx_errors++;
 					qca->stats.out_of_mem++;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					break;
+				}
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*   Check that tx ring stores only so much bytes
- *   that fit पूर्णांकo the पूर्णांकernal QCA buffer.
+ *   that fit into the internal QCA buffer.
  */
 
-अटल पूर्णांक
-qcaspi_tx_ring_has_space(काष्ठा tx_ring *txr)
-अणु
-	अगर (txr->skb[txr->tail])
-		वापस 0;
+static int
+qcaspi_tx_ring_has_space(struct tx_ring *txr)
+{
+	if (txr->skb[txr->tail])
+		return 0;
 
-	वापस (txr->size + QCAFRM_MAX_LEN < QCASPI_HW_BUF_LEN) ? 1 : 0;
-पूर्ण
+	return (txr->size + QCAFRM_MAX_LEN < QCASPI_HW_BUF_LEN) ? 1 : 0;
+}
 
 /*   Flush the tx ring. This function is only safe to
- *   call from the qcaspi_spi_thपढ़ो.
+ *   call from the qcaspi_spi_thread.
  */
 
-अटल व्योम
-qcaspi_flush_tx_ring(काष्ठा qcaspi *qca)
-अणु
-	पूर्णांक i;
+static void
+qcaspi_flush_tx_ring(struct qcaspi *qca)
+{
+	int i;
 
-	/* XXX After inconsistent lock states netअगर_tx_lock()
-	 * has been replaced by netअगर_tx_lock_bh() and so on.
+	/* XXX After inconsistent lock states netif_tx_lock()
+	 * has been replaced by netif_tx_lock_bh() and so on.
 	 */
-	netअगर_tx_lock_bh(qca->net_dev);
-	क्रम (i = 0; i < TX_RING_MAX_LEN; i++) अणु
-		अगर (qca->txr.skb[i]) अणु
-			dev_kमुक्त_skb(qca->txr.skb[i]);
-			qca->txr.skb[i] = शून्य;
+	netif_tx_lock_bh(qca->net_dev);
+	for (i = 0; i < TX_RING_MAX_LEN; i++) {
+		if (qca->txr.skb[i]) {
+			dev_kfree_skb(qca->txr.skb[i]);
+			qca->txr.skb[i] = NULL;
 			qca->net_dev->stats.tx_dropped++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	qca->txr.tail = 0;
 	qca->txr.head = 0;
 	qca->txr.size = 0;
-	netअगर_tx_unlock_bh(qca->net_dev);
-पूर्ण
+	netif_tx_unlock_bh(qca->net_dev);
+}
 
-अटल व्योम
-qcaspi_qca7k_sync(काष्ठा qcaspi *qca, पूर्णांक event)
-अणु
+static void
+qcaspi_qca7k_sync(struct qcaspi *qca, int event)
+{
 	u16 signature = 0;
 	u16 spi_config;
 	u16 wrbuf_space = 0;
 
-	अगर (event == QCASPI_EVENT_CPUON) अणु
-		/* Read signature twice, अगर not valid
+	if (event == QCASPI_EVENT_CPUON) {
+		/* Read signature twice, if not valid
 		 * go back to unknown state.
 		 */
-		qcaspi_पढ़ो_रेजिस्टर(qca, SPI_REG_SIGNATURE, &signature);
-		qcaspi_पढ़ो_रेजिस्टर(qca, SPI_REG_SIGNATURE, &signature);
-		अगर (signature != QCASPI_GOOD_SIGNATURE) अणु
+		qcaspi_read_register(qca, SPI_REG_SIGNATURE, &signature);
+		qcaspi_read_register(qca, SPI_REG_SIGNATURE, &signature);
+		if (signature != QCASPI_GOOD_SIGNATURE) {
 			qca->sync = QCASPI_SYNC_UNKNOWN;
 			netdev_dbg(qca->net_dev, "sync: got CPU on, but signature was invalid, restart\n");
-		पूर्ण अन्यथा अणु
+		} else {
 			/* ensure that the WRBUF is empty */
-			qcaspi_पढ़ो_रेजिस्टर(qca, SPI_REG_WRBUF_SPC_AVA,
+			qcaspi_read_register(qca, SPI_REG_WRBUF_SPC_AVA,
 					     &wrbuf_space);
-			अगर (wrbuf_space != QCASPI_HW_BUF_LEN) अणु
+			if (wrbuf_space != QCASPI_HW_BUF_LEN) {
 				netdev_dbg(qca->net_dev, "sync: got CPU on, but wrbuf not empty. reset!\n");
 				qca->sync = QCASPI_SYNC_UNKNOWN;
-			पूर्ण अन्यथा अणु
+			} else {
 				netdev_dbg(qca->net_dev, "sync: got CPU on, now in sync\n");
 				qca->sync = QCASPI_SYNC_READY;
-				वापस;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return;
+			}
+		}
+	}
 
-	चयन (qca->sync) अणु
-	हाल QCASPI_SYNC_READY:
-		/* Read signature, अगर not valid go to unknown state. */
-		qcaspi_पढ़ो_रेजिस्टर(qca, SPI_REG_SIGNATURE, &signature);
-		अगर (signature != QCASPI_GOOD_SIGNATURE) अणु
+	switch (qca->sync) {
+	case QCASPI_SYNC_READY:
+		/* Read signature, if not valid go to unknown state. */
+		qcaspi_read_register(qca, SPI_REG_SIGNATURE, &signature);
+		if (signature != QCASPI_GOOD_SIGNATURE) {
 			qca->sync = QCASPI_SYNC_UNKNOWN;
 			netdev_dbg(qca->net_dev, "sync: bad signature, restart\n");
-			/* करोn't reset right away */
-			वापस;
-		पूर्ण
-		अवरोध;
-	हाल QCASPI_SYNC_UNKNOWN:
-		/* Read signature, अगर not valid stay in unknown state */
-		qcaspi_पढ़ो_रेजिस्टर(qca, SPI_REG_SIGNATURE, &signature);
-		अगर (signature != QCASPI_GOOD_SIGNATURE) अणु
+			/* don't reset right away */
+			return;
+		}
+		break;
+	case QCASPI_SYNC_UNKNOWN:
+		/* Read signature, if not valid stay in unknown state */
+		qcaspi_read_register(qca, SPI_REG_SIGNATURE, &signature);
+		if (signature != QCASPI_GOOD_SIGNATURE) {
 			netdev_dbg(qca->net_dev, "sync: could not read signature to reset device, retry.\n");
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		/* TODO: use GPIO to reset QCA7000 in legacy mode*/
 		netdev_dbg(qca->net_dev, "sync: resetting device.\n");
-		qcaspi_पढ़ो_रेजिस्टर(qca, SPI_REG_SPI_CONFIG, &spi_config);
+		qcaspi_read_register(qca, SPI_REG_SPI_CONFIG, &spi_config);
 		spi_config |= QCASPI_SLAVE_RESET_BIT;
-		qcaspi_ग_लिखो_रेजिस्टर(qca, SPI_REG_SPI_CONFIG, spi_config, 0);
+		qcaspi_write_register(qca, SPI_REG_SPI_CONFIG, spi_config, 0);
 
 		qca->sync = QCASPI_SYNC_RESET;
 		qca->stats.trig_reset++;
 		qca->reset_count = 0;
-		अवरोध;
-	हाल QCASPI_SYNC_RESET:
+		break;
+	case QCASPI_SYNC_RESET:
 		qca->reset_count++;
 		netdev_dbg(qca->net_dev, "sync: waiting for CPU on, count %u.\n",
 			   qca->reset_count);
-		अगर (qca->reset_count >= QCASPI_RESET_TIMEOUT) अणु
+		if (qca->reset_count >= QCASPI_RESET_TIMEOUT) {
 			/* reset did not seem to take place, try again */
 			qca->sync = QCASPI_SYNC_UNKNOWN;
-			qca->stats.reset_समयout++;
+			qca->stats.reset_timeout++;
 			netdev_dbg(qca->net_dev, "sync: reset timeout, restarting process.\n");
-		पूर्ण
-		अवरोध;
-	पूर्ण
-पूर्ण
+		}
+		break;
+	}
+}
 
-अटल पूर्णांक
-qcaspi_spi_thपढ़ो(व्योम *data)
-अणु
-	काष्ठा qcaspi *qca = data;
-	u16 पूर्णांकr_cause = 0;
+static int
+qcaspi_spi_thread(void *data)
+{
+	struct qcaspi *qca = data;
+	u16 intr_cause = 0;
 
 	netdev_info(qca->net_dev, "SPI thread created\n");
-	जबतक (!kthपढ़ो_should_stop()) अणु
+	while (!kthread_should_stop()) {
 		set_current_state(TASK_INTERRUPTIBLE);
-		अगर ((qca->पूर्णांकr_req == qca->पूर्णांकr_svc) &&
-		    (qca->txr.skb[qca->txr.head] == शून्य) &&
+		if ((qca->intr_req == qca->intr_svc) &&
+		    (qca->txr.skb[qca->txr.head] == NULL) &&
 		    (qca->sync == QCASPI_SYNC_READY))
 			schedule();
 
 		set_current_state(TASK_RUNNING);
 
 		netdev_dbg(qca->net_dev, "have work to do. int: %d, tx_skb: %p\n",
-			   qca->पूर्णांकr_req - qca->पूर्णांकr_svc,
+			   qca->intr_req - qca->intr_svc,
 			   qca->txr.skb[qca->txr.head]);
 
 		qcaspi_qca7k_sync(qca, QCASPI_EVENT_UPDATE);
 
-		अगर (qca->sync != QCASPI_SYNC_READY) अणु
+		if (qca->sync != QCASPI_SYNC_READY) {
 			netdev_dbg(qca->net_dev, "sync: not ready %u, turn off carrier and flush\n",
-				   (अचिन्हित पूर्णांक)qca->sync);
-			netअगर_stop_queue(qca->net_dev);
-			netअगर_carrier_off(qca->net_dev);
+				   (unsigned int)qca->sync);
+			netif_stop_queue(qca->net_dev);
+			netif_carrier_off(qca->net_dev);
 			qcaspi_flush_tx_ring(qca);
 			msleep(QCASPI_QCA7K_REBOOT_TIME_MS);
-		पूर्ण
+		}
 
-		अगर (qca->पूर्णांकr_svc != qca->पूर्णांकr_req) अणु
-			qca->पूर्णांकr_svc = qca->पूर्णांकr_req;
-			start_spi_पूर्णांकr_handling(qca, &पूर्णांकr_cause);
+		if (qca->intr_svc != qca->intr_req) {
+			qca->intr_svc = qca->intr_req;
+			start_spi_intr_handling(qca, &intr_cause);
 
-			अगर (पूर्णांकr_cause & SPI_INT_CPU_ON) अणु
+			if (intr_cause & SPI_INT_CPU_ON) {
 				qcaspi_qca7k_sync(qca, QCASPI_EVENT_CPUON);
 
 				/* not synced. */
-				अगर (qca->sync != QCASPI_SYNC_READY)
-					जारी;
+				if (qca->sync != QCASPI_SYNC_READY)
+					continue;
 
 				qca->stats.device_reset++;
-				netअगर_wake_queue(qca->net_dev);
-				netअगर_carrier_on(qca->net_dev);
-			पूर्ण
+				netif_wake_queue(qca->net_dev);
+				netif_carrier_on(qca->net_dev);
+			}
 
-			अगर (पूर्णांकr_cause & SPI_INT_RDBUF_ERR) अणु
+			if (intr_cause & SPI_INT_RDBUF_ERR) {
 				/* restart sync */
 				netdev_dbg(qca->net_dev, "===> rdbuf error!\n");
-				qca->stats.पढ़ो_buf_err++;
+				qca->stats.read_buf_err++;
 				qca->sync = QCASPI_SYNC_UNKNOWN;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			अगर (पूर्णांकr_cause & SPI_INT_WRBUF_ERR) अणु
+			if (intr_cause & SPI_INT_WRBUF_ERR) {
 				/* restart sync */
 				netdev_dbg(qca->net_dev, "===> wrbuf error!\n");
-				qca->stats.ग_लिखो_buf_err++;
+				qca->stats.write_buf_err++;
 				qca->sync = QCASPI_SYNC_UNKNOWN;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			/* can only handle other पूर्णांकerrupts
-			 * अगर sync has occurred
+			/* can only handle other interrupts
+			 * if sync has occurred
 			 */
-			अगर (qca->sync == QCASPI_SYNC_READY) अणु
-				अगर (पूर्णांकr_cause & SPI_INT_PKT_AVLBL)
+			if (qca->sync == QCASPI_SYNC_READY) {
+				if (intr_cause & SPI_INT_PKT_AVLBL)
 					qcaspi_receive(qca);
-			पूर्ण
+			}
 
-			end_spi_पूर्णांकr_handling(qca, पूर्णांकr_cause);
-		पूर्ण
+			end_spi_intr_handling(qca, intr_cause);
+		}
 
-		अगर (qca->sync == QCASPI_SYNC_READY)
+		if (qca->sync == QCASPI_SYNC_READY)
 			qcaspi_transmit(qca);
-	पूर्ण
+	}
 	set_current_state(TASK_RUNNING);
 	netdev_info(qca->net_dev, "SPI thread exit\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t
-qcaspi_पूर्णांकr_handler(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा qcaspi *qca = data;
+static irqreturn_t
+qcaspi_intr_handler(int irq, void *data)
+{
+	struct qcaspi *qca = data;
 
-	qca->पूर्णांकr_req++;
-	अगर (qca->spi_thपढ़ो &&
-	    qca->spi_thपढ़ो->state != TASK_RUNNING)
-		wake_up_process(qca->spi_thपढ़ो);
+	qca->intr_req++;
+	if (qca->spi_thread &&
+	    qca->spi_thread->state != TASK_RUNNING)
+		wake_up_process(qca->spi_thread);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक
-qcaspi_netdev_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा qcaspi *qca = netdev_priv(dev);
-	पूर्णांक ret = 0;
+static int
+qcaspi_netdev_open(struct net_device *dev)
+{
+	struct qcaspi *qca = netdev_priv(dev);
+	int ret = 0;
 
-	अगर (!qca)
-		वापस -EINVAL;
+	if (!qca)
+		return -EINVAL;
 
-	qca->पूर्णांकr_req = 1;
-	qca->पूर्णांकr_svc = 0;
+	qca->intr_req = 1;
+	qca->intr_svc = 0;
 	qca->sync = QCASPI_SYNC_UNKNOWN;
 	qcafrm_fsm_init_spi(&qca->frm_handle);
 
-	qca->spi_thपढ़ो = kthपढ़ो_run((व्योम *)qcaspi_spi_thपढ़ो,
+	qca->spi_thread = kthread_run((void *)qcaspi_spi_thread,
 				      qca, "%s", dev->name);
 
-	अगर (IS_ERR(qca->spi_thपढ़ो)) अणु
+	if (IS_ERR(qca->spi_thread)) {
 		netdev_err(dev, "%s: unable to start kernel thread.\n",
 			   QCASPI_DRV_NAME);
-		वापस PTR_ERR(qca->spi_thपढ़ो);
-	पूर्ण
+		return PTR_ERR(qca->spi_thread);
+	}
 
-	ret = request_irq(qca->spi_dev->irq, qcaspi_पूर्णांकr_handler, 0,
+	ret = request_irq(qca->spi_dev->irq, qcaspi_intr_handler, 0,
 			  dev->name, qca);
-	अगर (ret) अणु
+	if (ret) {
 		netdev_err(dev, "%s: unable to get IRQ %d (irqval=%d).\n",
 			   QCASPI_DRV_NAME, qca->spi_dev->irq, ret);
-		kthपढ़ो_stop(qca->spi_thपढ़ो);
-		वापस ret;
-	पूर्ण
+		kthread_stop(qca->spi_thread);
+		return ret;
+	}
 
-	/* SPI thपढ़ो takes care of TX queue */
+	/* SPI thread takes care of TX queue */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-qcaspi_netdev_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा qcaspi *qca = netdev_priv(dev);
+static int
+qcaspi_netdev_close(struct net_device *dev)
+{
+	struct qcaspi *qca = netdev_priv(dev);
 
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 
-	qcaspi_ग_लिखो_रेजिस्टर(qca, SPI_REG_INTR_ENABLE, 0, wr_verअगरy);
-	मुक्त_irq(qca->spi_dev->irq, qca);
+	qcaspi_write_register(qca, SPI_REG_INTR_ENABLE, 0, wr_verify);
+	free_irq(qca->spi_dev->irq, qca);
 
-	kthपढ़ो_stop(qca->spi_thपढ़ो);
-	qca->spi_thपढ़ो = शून्य;
+	kthread_stop(qca->spi_thread);
+	qca->spi_thread = NULL;
 	qcaspi_flush_tx_ring(qca);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल netdev_tx_t
-qcaspi_netdev_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
+static netdev_tx_t
+qcaspi_netdev_xmit(struct sk_buff *skb, struct net_device *dev)
+{
 	u32 frame_len;
-	u8 *pपंचांगp;
-	काष्ठा qcaspi *qca = netdev_priv(dev);
+	u8 *ptmp;
+	struct qcaspi *qca = netdev_priv(dev);
 	u16 new_tail;
-	काष्ठा sk_buff *tskb;
+	struct sk_buff *tskb;
 	u8 pad_len = 0;
 
-	अगर (skb->len < QCAFRM_MIN_LEN)
+	if (skb->len < QCAFRM_MIN_LEN)
 		pad_len = QCAFRM_MIN_LEN - skb->len;
 
-	अगर (qca->txr.skb[qca->txr.tail]) अणु
+	if (qca->txr.skb[qca->txr.tail]) {
 		netdev_warn(qca->net_dev, "queue was unexpectedly full!\n");
-		netअगर_stop_queue(qca->net_dev);
+		netif_stop_queue(qca->net_dev);
 		qca->stats.ring_full++;
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		return NETDEV_TX_BUSY;
+	}
 
-	अगर ((skb_headroom(skb) < QCAFRM_HEADER_LEN) ||
-	    (skb_tailroom(skb) < QCAFRM_FOOTER_LEN + pad_len)) अणु
+	if ((skb_headroom(skb) < QCAFRM_HEADER_LEN) ||
+	    (skb_tailroom(skb) < QCAFRM_FOOTER_LEN + pad_len)) {
 		tskb = skb_copy_expand(skb, QCAFRM_HEADER_LEN,
 				       QCAFRM_FOOTER_LEN + pad_len, GFP_ATOMIC);
-		अगर (!tskb) अणु
+		if (!tskb) {
 			qca->stats.out_of_mem++;
-			वापस NETDEV_TX_BUSY;
-		पूर्ण
-		dev_kमुक्त_skb(skb);
+			return NETDEV_TX_BUSY;
+		}
+		dev_kfree_skb(skb);
 		skb = tskb;
-	पूर्ण
+	}
 
 	frame_len = skb->len + pad_len;
 
-	pपंचांगp = skb_push(skb, QCAFRM_HEADER_LEN);
-	qcafrm_create_header(pपंचांगp, frame_len);
+	ptmp = skb_push(skb, QCAFRM_HEADER_LEN);
+	qcafrm_create_header(ptmp, frame_len);
 
-	अगर (pad_len) अणु
-		pपंचांगp = skb_put_zero(skb, pad_len);
-	पूर्ण
+	if (pad_len) {
+		ptmp = skb_put_zero(skb, pad_len);
+	}
 
-	pपंचांगp = skb_put(skb, QCAFRM_FOOTER_LEN);
-	qcafrm_create_footer(pपंचांगp);
+	ptmp = skb_put(skb, QCAFRM_FOOTER_LEN);
+	qcafrm_create_footer(ptmp);
 
 	netdev_dbg(qca->net_dev, "Tx-ing packet: Size: 0x%08x\n",
 		   skb->len);
@@ -765,100 +764,100 @@ qcaspi_netdev_xmit(काष्ठा sk_buff *skb, काष्ठा net_devic
 	qca->txr.size += skb->len + QCASPI_HW_PKT_LEN;
 
 	new_tail = qca->txr.tail + 1;
-	अगर (new_tail >= qca->txr.count)
+	if (new_tail >= qca->txr.count)
 		new_tail = 0;
 
 	qca->txr.skb[qca->txr.tail] = skb;
 	qca->txr.tail = new_tail;
 
-	अगर (!qcaspi_tx_ring_has_space(&qca->txr)) अणु
-		netअगर_stop_queue(qca->net_dev);
+	if (!qcaspi_tx_ring_has_space(&qca->txr)) {
+		netif_stop_queue(qca->net_dev);
 		qca->stats.ring_full++;
-	पूर्ण
+	}
 
-	netअगर_trans_update(dev);
+	netif_trans_update(dev);
 
-	अगर (qca->spi_thपढ़ो &&
-	    qca->spi_thपढ़ो->state != TASK_RUNNING)
-		wake_up_process(qca->spi_thपढ़ो);
+	if (qca->spi_thread &&
+	    qca->spi_thread->state != TASK_RUNNING)
+		wake_up_process(qca->spi_thread);
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-अटल व्योम
-qcaspi_netdev_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
-अणु
-	काष्ठा qcaspi *qca = netdev_priv(dev);
+static void
+qcaspi_netdev_tx_timeout(struct net_device *dev, unsigned int txqueue)
+{
+	struct qcaspi *qca = netdev_priv(dev);
 
 	netdev_info(qca->net_dev, "Transmit timeout at %ld, latency %ld\n",
-		    jअगरfies, jअगरfies - dev_trans_start(dev));
+		    jiffies, jiffies - dev_trans_start(dev));
 	qca->net_dev->stats.tx_errors++;
 	/* Trigger tx queue flush and QCA7000 reset */
 	qca->sync = QCASPI_SYNC_UNKNOWN;
 
-	अगर (qca->spi_thपढ़ो)
-		wake_up_process(qca->spi_thपढ़ो);
-पूर्ण
+	if (qca->spi_thread)
+		wake_up_process(qca->spi_thread);
+}
 
-अटल पूर्णांक
-qcaspi_netdev_init(काष्ठा net_device *dev)
-अणु
-	काष्ठा qcaspi *qca = netdev_priv(dev);
+static int
+qcaspi_netdev_init(struct net_device *dev)
+{
+	struct qcaspi *qca = netdev_priv(dev);
 
 	dev->mtu = QCAFRM_MAX_MTU;
 	dev->type = ARPHRD_ETHER;
 	qca->clkspeed = qcaspi_clkspeed;
 	qca->burst_len = qcaspi_burst_len;
-	qca->spi_thपढ़ो = शून्य;
+	qca->spi_thread = NULL;
 	qca->buffer_size = (dev->mtu + VLAN_ETH_HLEN + QCAFRM_HEADER_LEN +
 		QCAFRM_FOOTER_LEN + 4) * 4;
 
-	स_रखो(&qca->stats, 0, माप(काष्ठा qcaspi_stats));
+	memset(&qca->stats, 0, sizeof(struct qcaspi_stats));
 
-	qca->rx_buffer = kदो_स्मृति(qca->buffer_size, GFP_KERNEL);
-	अगर (!qca->rx_buffer)
-		वापस -ENOBUFS;
+	qca->rx_buffer = kmalloc(qca->buffer_size, GFP_KERNEL);
+	if (!qca->rx_buffer)
+		return -ENOBUFS;
 
 	qca->rx_skb = netdev_alloc_skb_ip_align(dev, qca->net_dev->mtu +
 						VLAN_ETH_HLEN);
-	अगर (!qca->rx_skb) अणु
-		kमुक्त(qca->rx_buffer);
+	if (!qca->rx_skb) {
+		kfree(qca->rx_buffer);
 		netdev_info(qca->net_dev, "Failed to allocate RX sk_buff.\n");
-		वापस -ENOBUFS;
-	पूर्ण
+		return -ENOBUFS;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-qcaspi_netdev_uninit(काष्ठा net_device *dev)
-अणु
-	काष्ठा qcaspi *qca = netdev_priv(dev);
+static void
+qcaspi_netdev_uninit(struct net_device *dev)
+{
+	struct qcaspi *qca = netdev_priv(dev);
 
-	kमुक्त(qca->rx_buffer);
+	kfree(qca->rx_buffer);
 	qca->buffer_size = 0;
-	dev_kमुक्त_skb(qca->rx_skb);
-पूर्ण
+	dev_kfree_skb(qca->rx_skb);
+}
 
-अटल स्थिर काष्ठा net_device_ops qcaspi_netdev_ops = अणु
-	.nकरो_init = qcaspi_netdev_init,
-	.nकरो_uninit = qcaspi_netdev_uninit,
-	.nकरो_खोलो = qcaspi_netdev_खोलो,
-	.nकरो_stop = qcaspi_netdev_बंद,
-	.nकरो_start_xmit = qcaspi_netdev_xmit,
-	.nकरो_set_mac_address = eth_mac_addr,
-	.nकरो_tx_समयout = qcaspi_netdev_tx_समयout,
-	.nकरो_validate_addr = eth_validate_addr,
-पूर्ण;
+static const struct net_device_ops qcaspi_netdev_ops = {
+	.ndo_init = qcaspi_netdev_init,
+	.ndo_uninit = qcaspi_netdev_uninit,
+	.ndo_open = qcaspi_netdev_open,
+	.ndo_stop = qcaspi_netdev_close,
+	.ndo_start_xmit = qcaspi_netdev_xmit,
+	.ndo_set_mac_address = eth_mac_addr,
+	.ndo_tx_timeout = qcaspi_netdev_tx_timeout,
+	.ndo_validate_addr = eth_validate_addr,
+};
 
-अटल व्योम
-qcaspi_netdev_setup(काष्ठा net_device *dev)
-अणु
-	काष्ठा qcaspi *qca = शून्य;
+static void
+qcaspi_netdev_setup(struct net_device *dev)
+{
+	struct qcaspi *qca = NULL;
 
 	dev->netdev_ops = &qcaspi_netdev_ops;
 	qcaspi_set_ethtool_ops(dev);
-	dev->watchकरोg_समयo = QCASPI_TX_TIMEOUT;
+	dev->watchdog_timeo = QCASPI_TX_TIMEOUT;
 	dev->priv_flags &= ~IFF_TX_SKB_SHARING;
 	dev->tx_queue_len = 100;
 
@@ -867,69 +866,69 @@ qcaspi_netdev_setup(काष्ठा net_device *dev)
 	dev->max_mtu = QCAFRM_MAX_MTU;
 
 	qca = netdev_priv(dev);
-	स_रखो(qca, 0, माप(काष्ठा qcaspi));
+	memset(qca, 0, sizeof(struct qcaspi));
 
-	स_रखो(&qca->txr, 0, माप(qca->txr));
+	memset(&qca->txr, 0, sizeof(qca->txr));
 	qca->txr.count = TX_RING_MAX_LEN;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा of_device_id qca_spi_of_match[] = अणु
-	अणु .compatible = "qca,qca7000" पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id qca_spi_of_match[] = {
+	{ .compatible = "qca,qca7000" },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, qca_spi_of_match);
 
-अटल पूर्णांक
-qca_spi_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा qcaspi *qca = शून्य;
-	काष्ठा net_device *qcaspi_devs = शून्य;
+static int
+qca_spi_probe(struct spi_device *spi)
+{
+	struct qcaspi *qca = NULL;
+	struct net_device *qcaspi_devs = NULL;
 	u8 legacy_mode = 0;
 	u16 signature;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!spi->dev.of_node) अणु
+	if (!spi->dev.of_node) {
 		dev_err(&spi->dev, "Missing device tree\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	legacy_mode = of_property_पढ़ो_bool(spi->dev.of_node,
+	legacy_mode = of_property_read_bool(spi->dev.of_node,
 					    "qca,legacy-mode");
 
-	अगर (qcaspi_clkspeed == 0) अणु
-		अगर (spi->max_speed_hz)
+	if (qcaspi_clkspeed == 0) {
+		if (spi->max_speed_hz)
 			qcaspi_clkspeed = spi->max_speed_hz;
-		अन्यथा
+		else
 			qcaspi_clkspeed = QCASPI_CLK_SPEED;
-	पूर्ण
+	}
 
-	अगर ((qcaspi_clkspeed < QCASPI_CLK_SPEED_MIN) ||
-	    (qcaspi_clkspeed > QCASPI_CLK_SPEED_MAX)) अणु
+	if ((qcaspi_clkspeed < QCASPI_CLK_SPEED_MIN) ||
+	    (qcaspi_clkspeed > QCASPI_CLK_SPEED_MAX)) {
 		dev_err(&spi->dev, "Invalid clkspeed: %d\n",
 			qcaspi_clkspeed);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((qcaspi_burst_len < QCASPI_BURST_LEN_MIN) ||
-	    (qcaspi_burst_len > QCASPI_BURST_LEN_MAX)) अणु
+	if ((qcaspi_burst_len < QCASPI_BURST_LEN_MIN) ||
+	    (qcaspi_burst_len > QCASPI_BURST_LEN_MAX)) {
 		dev_err(&spi->dev, "Invalid burst len: %d\n",
 			qcaspi_burst_len);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((qcaspi_pluggable < QCASPI_PLUGGABLE_MIN) ||
-	    (qcaspi_pluggable > QCASPI_PLUGGABLE_MAX)) अणु
+	if ((qcaspi_pluggable < QCASPI_PLUGGABLE_MIN) ||
+	    (qcaspi_pluggable > QCASPI_PLUGGABLE_MAX)) {
 		dev_err(&spi->dev, "Invalid pluggable: %d\n",
 			qcaspi_pluggable);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (wr_verअगरy < QCASPI_WRITE_VERIFY_MIN ||
-	    wr_verअगरy > QCASPI_WRITE_VERIFY_MAX) अणु
+	if (wr_verify < QCASPI_WRITE_VERIFY_MIN ||
+	    wr_verify > QCASPI_WRITE_VERIFY_MAX) {
 		dev_err(&spi->dev, "Invalid write verify: %d\n",
-			wr_verअगरy);
-		वापस -EINVAL;
-	पूर्ण
+			wr_verify);
+		return -EINVAL;
+	}
 
 	dev_info(&spi->dev, "ver=%s, clkspeed=%d, burst_len=%d, pluggable=%d\n",
 		 QCASPI_DRV_VERSION,
@@ -939,24 +938,24 @@ qca_spi_probe(काष्ठा spi_device *spi)
 
 	spi->mode = SPI_MODE_3;
 	spi->max_speed_hz = qcaspi_clkspeed;
-	अगर (spi_setup(spi) < 0) अणु
+	if (spi_setup(spi) < 0) {
 		dev_err(&spi->dev, "Unable to setup SPI device\n");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	qcaspi_devs = alloc_etherdev(माप(काष्ठा qcaspi));
-	अगर (!qcaspi_devs)
-		वापस -ENOMEM;
+	qcaspi_devs = alloc_etherdev(sizeof(struct qcaspi));
+	if (!qcaspi_devs)
+		return -ENOMEM;
 
 	qcaspi_netdev_setup(qcaspi_devs);
 	SET_NETDEV_DEV(qcaspi_devs, &spi->dev);
 
 	qca = netdev_priv(qcaspi_devs);
-	अगर (!qca) अणु
-		मुक्त_netdev(qcaspi_devs);
+	if (!qca) {
+		free_netdev(qcaspi_devs);
 		dev_err(&spi->dev, "Fail to retrieve private structure\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	qca->net_dev = qcaspi_devs;
 	qca->spi_dev = spi;
 	qca->legacy_mode = legacy_mode;
@@ -964,67 +963,67 @@ qca_spi_probe(काष्ठा spi_device *spi)
 	spi_set_drvdata(spi, qcaspi_devs);
 
 	ret = of_get_mac_address(spi->dev.of_node, qca->net_dev->dev_addr);
-	अगर (ret) अणु
-		eth_hw_addr_अक्रमom(qca->net_dev);
+	if (ret) {
+		eth_hw_addr_random(qca->net_dev);
 		dev_info(&spi->dev, "Using random MAC address: %pM\n",
 			 qca->net_dev->dev_addr);
-	पूर्ण
+	}
 
-	netअगर_carrier_off(qca->net_dev);
+	netif_carrier_off(qca->net_dev);
 
-	अगर (!qcaspi_pluggable) अणु
-		qcaspi_पढ़ो_रेजिस्टर(qca, SPI_REG_SIGNATURE, &signature);
-		qcaspi_पढ़ो_रेजिस्टर(qca, SPI_REG_SIGNATURE, &signature);
+	if (!qcaspi_pluggable) {
+		qcaspi_read_register(qca, SPI_REG_SIGNATURE, &signature);
+		qcaspi_read_register(qca, SPI_REG_SIGNATURE, &signature);
 
-		अगर (signature != QCASPI_GOOD_SIGNATURE) अणु
+		if (signature != QCASPI_GOOD_SIGNATURE) {
 			dev_err(&spi->dev, "Invalid signature (0x%04X)\n",
 				signature);
-			मुक्त_netdev(qcaspi_devs);
-			वापस -EFAULT;
-		पूर्ण
-	पूर्ण
+			free_netdev(qcaspi_devs);
+			return -EFAULT;
+		}
+	}
 
-	अगर (रेजिस्टर_netdev(qcaspi_devs)) अणु
+	if (register_netdev(qcaspi_devs)) {
 		dev_err(&spi->dev, "Unable to register net device %s\n",
 			qcaspi_devs->name);
-		मुक्त_netdev(qcaspi_devs);
-		वापस -EFAULT;
-	पूर्ण
+		free_netdev(qcaspi_devs);
+		return -EFAULT;
+	}
 
 	qcaspi_init_device_debugfs(qca);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-qca_spi_हटाओ(काष्ठा spi_device *spi)
-अणु
-	काष्ठा net_device *qcaspi_devs = spi_get_drvdata(spi);
-	काष्ठा qcaspi *qca = netdev_priv(qcaspi_devs);
+static int
+qca_spi_remove(struct spi_device *spi)
+{
+	struct net_device *qcaspi_devs = spi_get_drvdata(spi);
+	struct qcaspi *qca = netdev_priv(qcaspi_devs);
 
-	qcaspi_हटाओ_device_debugfs(qca);
+	qcaspi_remove_device_debugfs(qca);
 
-	unरेजिस्टर_netdev(qcaspi_devs);
-	मुक्त_netdev(qcaspi_devs);
+	unregister_netdev(qcaspi_devs);
+	free_netdev(qcaspi_devs);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा spi_device_id qca_spi_id[] = अणु
-	अणु "qca7000", 0 पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct spi_device_id qca_spi_id[] = {
+	{ "qca7000", 0 },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(spi, qca_spi_id);
 
-अटल काष्ठा spi_driver qca_spi_driver = अणु
-	.driver	= अणु
+static struct spi_driver qca_spi_driver = {
+	.driver	= {
 		.name	= QCASPI_DRV_NAME,
 		.of_match_table = qca_spi_of_match,
-	पूर्ण,
+	},
 	.id_table = qca_spi_id,
 	.probe    = qca_spi_probe,
-	.हटाओ   = qca_spi_हटाओ,
-पूर्ण;
+	.remove   = qca_spi_remove,
+};
 module_spi_driver(qca_spi_driver);
 
 MODULE_DESCRIPTION("Qualcomm Atheros QCA7000 SPI Driver");

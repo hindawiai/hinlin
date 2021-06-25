@@ -1,438 +1,437 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- *  Serial Port driver क्रम Aspeed VUART device
+ *  Serial Port driver for Aspeed VUART device
  *
- *    Copyright (C) 2016 Jeremy Kerr <jk@ozद_असल.org>, IBM Corp.
+ *    Copyright (C) 2016 Jeremy Kerr <jk@ozlabs.org>, IBM Corp.
  *    Copyright (C) 2006 Arnd Bergmann <arnd@arndb.de>, IBM Corp.
  */
-#समावेश <linux/device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_flip.h>
-#समावेश <linux/clk.h>
+#include <linux/device.h>
+#include <linux/module.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/of_platform.h>
+#include <linux/regmap.h>
+#include <linux/mfd/syscon.h>
+#include <linux/tty.h>
+#include <linux/tty_flip.h>
+#include <linux/clk.h>
 
-#समावेश "8250.h"
+#include "8250.h"
 
-#घोषणा ASPEED_VUART_GCRA		0x20
-#घोषणा ASPEED_VUART_GCRA_VUART_EN		BIT(0)
-#घोषणा ASPEED_VUART_GCRA_HOST_SIRQ_POLARITY	BIT(1)
-#घोषणा ASPEED_VUART_GCRA_DISABLE_HOST_TX_DISCARD BIT(5)
-#घोषणा ASPEED_VUART_GCRB		0x24
-#घोषणा ASPEED_VUART_GCRB_HOST_SIRQ_MASK	GENMASK(7, 4)
-#घोषणा ASPEED_VUART_GCRB_HOST_SIRQ_SHIFT	4
-#घोषणा ASPEED_VUART_ADDRL		0x28
-#घोषणा ASPEED_VUART_ADDRH		0x2c
+#define ASPEED_VUART_GCRA		0x20
+#define ASPEED_VUART_GCRA_VUART_EN		BIT(0)
+#define ASPEED_VUART_GCRA_HOST_SIRQ_POLARITY	BIT(1)
+#define ASPEED_VUART_GCRA_DISABLE_HOST_TX_DISCARD BIT(5)
+#define ASPEED_VUART_GCRB		0x24
+#define ASPEED_VUART_GCRB_HOST_SIRQ_MASK	GENMASK(7, 4)
+#define ASPEED_VUART_GCRB_HOST_SIRQ_SHIFT	4
+#define ASPEED_VUART_ADDRL		0x28
+#define ASPEED_VUART_ADDRH		0x2c
 
-#घोषणा ASPEED_VUART_DEFAULT_LPC_ADDR	0x3f8
-#घोषणा ASPEED_VUART_DEFAULT_SIRQ	4
-#घोषणा ASPEED_VUART_DEFAULT_SIRQ_POLARITY	IRQ_TYPE_LEVEL_LOW
+#define ASPEED_VUART_DEFAULT_LPC_ADDR	0x3f8
+#define ASPEED_VUART_DEFAULT_SIRQ	4
+#define ASPEED_VUART_DEFAULT_SIRQ_POLARITY	IRQ_TYPE_LEVEL_LOW
 
-काष्ठा aspeed_vuart अणु
-	काष्ठा device		*dev;
-	व्योम __iomem		*regs;
-	काष्ठा clk		*clk;
-	पूर्णांक			line;
-	काष्ठा समयr_list	unthrottle_समयr;
-	काष्ठा uart_8250_port	*port;
-पूर्ण;
+struct aspeed_vuart {
+	struct device		*dev;
+	void __iomem		*regs;
+	struct clk		*clk;
+	int			line;
+	struct timer_list	unthrottle_timer;
+	struct uart_8250_port	*port;
+};
 
 /*
- * If we fill the tty flip buffers, we throttle the data पढ़ोy पूर्णांकerrupt
- * to prevent dropped अक्षरacters. This समयout defines how दीर्घ we रुको
+ * If we fill the tty flip buffers, we throttle the data ready interrupt
+ * to prevent dropped characters. This timeout defines how long we wait
  * to (conditionally, depending on buffer state) unthrottle.
  */
-अटल स्थिर पूर्णांक unthrottle_समयout = HZ/10;
+static const int unthrottle_timeout = HZ/10;
 
 /*
  * The VUART is basically two UART 'front ends' connected by their FIFO
  * (no actual serial line in between). One is on the BMC side (management
  * controller) and one is on the host CPU side.
  *
- * It allows the BMC to provide to the host a "UART" that pipes पूर्णांकo
- * the BMC itself and can then be turned by the BMC पूर्णांकo a network console
- * of some sort क्रम example.
+ * It allows the BMC to provide to the host a "UART" that pipes into
+ * the BMC itself and can then be turned by the BMC into a network console
+ * of some sort for example.
  *
- * This driver is क्रम the BMC side. The sysfs files allow the BMC
- * userspace which owns the प्रणाली configuration policy, to specअगरy
- * at what IO port and पूर्णांकerrupt number the host side will appear
- * to the host on the Host <-> BMC LPC bus. It could be dअगरferent on a
- * dअगरferent प्रणाली (though most of them use 3f8/4).
+ * This driver is for the BMC side. The sysfs files allow the BMC
+ * userspace which owns the system configuration policy, to specify
+ * at what IO port and interrupt number the host side will appear
+ * to the host on the Host <-> BMC LPC bus. It could be different on a
+ * different system (though most of them use 3f8/4).
  */
 
-अटल sमाप_प्रकार lpc_address_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा aspeed_vuart *vuart = dev_get_drvdata(dev);
+static ssize_t lpc_address_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct aspeed_vuart *vuart = dev_get_drvdata(dev);
 	u16 addr;
 
-	addr = (पढ़ोb(vuart->regs + ASPEED_VUART_ADDRH) << 8) |
-		(पढ़ोb(vuart->regs + ASPEED_VUART_ADDRL));
+	addr = (readb(vuart->regs + ASPEED_VUART_ADDRH) << 8) |
+		(readb(vuart->regs + ASPEED_VUART_ADDRL));
 
-	वापस snम_लिखो(buf, PAGE_SIZE - 1, "0x%x\n", addr);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE - 1, "0x%x\n", addr);
+}
 
-अटल पूर्णांक aspeed_vuart_set_lpc_address(काष्ठा aspeed_vuart *vuart, u32 addr)
-अणु
-	अगर (addr > U16_MAX)
-		वापस -EINVAL;
+static int aspeed_vuart_set_lpc_address(struct aspeed_vuart *vuart, u32 addr)
+{
+	if (addr > U16_MAX)
+		return -EINVAL;
 
-	ग_लिखोb(addr >> 8, vuart->regs + ASPEED_VUART_ADDRH);
-	ग_लिखोb(addr >> 0, vuart->regs + ASPEED_VUART_ADDRL);
+	writeb(addr >> 8, vuart->regs + ASPEED_VUART_ADDRH);
+	writeb(addr >> 0, vuart->regs + ASPEED_VUART_ADDRL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार lpc_address_store(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr,
-				 स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा aspeed_vuart *vuart = dev_get_drvdata(dev);
+static ssize_t lpc_address_store(struct device *dev,
+				 struct device_attribute *attr,
+				 const char *buf, size_t count)
+{
+	struct aspeed_vuart *vuart = dev_get_drvdata(dev);
 	u32 val;
-	पूर्णांक err;
+	int err;
 
 	err = kstrtou32(buf, 0, &val);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = aspeed_vuart_set_lpc_address(vuart, val);
-	वापस err ? : count;
-पूर्ण
+	return err ? : count;
+}
 
-अटल DEVICE_ATTR_RW(lpc_address);
+static DEVICE_ATTR_RW(lpc_address);
 
-अटल sमाप_प्रकार sirq_show(काष्ठा device *dev,
-			 काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा aspeed_vuart *vuart = dev_get_drvdata(dev);
+static ssize_t sirq_show(struct device *dev,
+			 struct device_attribute *attr, char *buf)
+{
+	struct aspeed_vuart *vuart = dev_get_drvdata(dev);
 	u8 reg;
 
-	reg = पढ़ोb(vuart->regs + ASPEED_VUART_GCRB);
+	reg = readb(vuart->regs + ASPEED_VUART_GCRB);
 	reg &= ASPEED_VUART_GCRB_HOST_SIRQ_MASK;
 	reg >>= ASPEED_VUART_GCRB_HOST_SIRQ_SHIFT;
 
-	वापस snम_लिखो(buf, PAGE_SIZE - 1, "%u\n", reg);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE - 1, "%u\n", reg);
+}
 
-अटल पूर्णांक aspeed_vuart_set_sirq(काष्ठा aspeed_vuart *vuart, u32 sirq)
-अणु
+static int aspeed_vuart_set_sirq(struct aspeed_vuart *vuart, u32 sirq)
+{
 	u8 reg;
 
-	अगर (sirq > (ASPEED_VUART_GCRB_HOST_SIRQ_MASK >> ASPEED_VUART_GCRB_HOST_SIRQ_SHIFT))
-		वापस -EINVAL;
+	if (sirq > (ASPEED_VUART_GCRB_HOST_SIRQ_MASK >> ASPEED_VUART_GCRB_HOST_SIRQ_SHIFT))
+		return -EINVAL;
 
 	sirq <<= ASPEED_VUART_GCRB_HOST_SIRQ_SHIFT;
 	sirq &= ASPEED_VUART_GCRB_HOST_SIRQ_MASK;
 
-	reg = पढ़ोb(vuart->regs + ASPEED_VUART_GCRB);
+	reg = readb(vuart->regs + ASPEED_VUART_GCRB);
 	reg &= ~ASPEED_VUART_GCRB_HOST_SIRQ_MASK;
 	reg |= sirq;
-	ग_लिखोb(reg, vuart->regs + ASPEED_VUART_GCRB);
+	writeb(reg, vuart->regs + ASPEED_VUART_GCRB);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार sirq_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा aspeed_vuart *vuart = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ val;
-	पूर्णांक err;
+static ssize_t sirq_store(struct device *dev, struct device_attribute *attr,
+			  const char *buf, size_t count)
+{
+	struct aspeed_vuart *vuart = dev_get_drvdata(dev);
+	unsigned long val;
+	int err;
 
-	err = kम_से_अदीर्घ(buf, 0, &val);
-	अगर (err)
-		वापस err;
+	err = kstrtoul(buf, 0, &val);
+	if (err)
+		return err;
 
 	err = aspeed_vuart_set_sirq(vuart, val);
-	वापस err ? : count;
-पूर्ण
+	return err ? : count;
+}
 
-अटल DEVICE_ATTR_RW(sirq);
+static DEVICE_ATTR_RW(sirq);
 
-अटल sमाप_प्रकार sirq_polarity_show(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा aspeed_vuart *vuart = dev_get_drvdata(dev);
+static ssize_t sirq_polarity_show(struct device *dev,
+				  struct device_attribute *attr, char *buf)
+{
+	struct aspeed_vuart *vuart = dev_get_drvdata(dev);
 	u8 reg;
 
-	reg = पढ़ोb(vuart->regs + ASPEED_VUART_GCRA);
+	reg = readb(vuart->regs + ASPEED_VUART_GCRA);
 	reg &= ASPEED_VUART_GCRA_HOST_SIRQ_POLARITY;
 
-	वापस snम_लिखो(buf, PAGE_SIZE - 1, "%u\n", reg ? 1 : 0);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE - 1, "%u\n", reg ? 1 : 0);
+}
 
-अटल व्योम aspeed_vuart_set_sirq_polarity(काष्ठा aspeed_vuart *vuart,
+static void aspeed_vuart_set_sirq_polarity(struct aspeed_vuart *vuart,
 					   bool polarity)
-अणु
-	u8 reg = पढ़ोb(vuart->regs + ASPEED_VUART_GCRA);
+{
+	u8 reg = readb(vuart->regs + ASPEED_VUART_GCRA);
 
-	अगर (polarity)
+	if (polarity)
 		reg |= ASPEED_VUART_GCRA_HOST_SIRQ_POLARITY;
-	अन्यथा
+	else
 		reg &= ~ASPEED_VUART_GCRA_HOST_SIRQ_POLARITY;
 
-	ग_लिखोb(reg, vuart->regs + ASPEED_VUART_GCRA);
-पूर्ण
+	writeb(reg, vuart->regs + ASPEED_VUART_GCRA);
+}
 
-अटल sमाप_प्रकार sirq_polarity_store(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr,
-				   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा aspeed_vuart *vuart = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ val;
-	पूर्णांक err;
+static ssize_t sirq_polarity_store(struct device *dev,
+				   struct device_attribute *attr,
+				   const char *buf, size_t count)
+{
+	struct aspeed_vuart *vuart = dev_get_drvdata(dev);
+	unsigned long val;
+	int err;
 
-	err = kम_से_अदीर्घ(buf, 0, &val);
-	अगर (err)
-		वापस err;
+	err = kstrtoul(buf, 0, &val);
+	if (err)
+		return err;
 
 	aspeed_vuart_set_sirq_polarity(vuart, val != 0);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR_RW(sirq_polarity);
+static DEVICE_ATTR_RW(sirq_polarity);
 
-अटल काष्ठा attribute *aspeed_vuart_attrs[] = अणु
+static struct attribute *aspeed_vuart_attrs[] = {
 	&dev_attr_sirq.attr,
 	&dev_attr_sirq_polarity.attr,
 	&dev_attr_lpc_address.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group aspeed_vuart_attr_group = अणु
+static const struct attribute_group aspeed_vuart_attr_group = {
 	.attrs = aspeed_vuart_attrs,
-पूर्ण;
+};
 
-अटल व्योम aspeed_vuart_set_enabled(काष्ठा aspeed_vuart *vuart, bool enabled)
-अणु
-	u8 reg = पढ़ोb(vuart->regs + ASPEED_VUART_GCRA);
+static void aspeed_vuart_set_enabled(struct aspeed_vuart *vuart, bool enabled)
+{
+	u8 reg = readb(vuart->regs + ASPEED_VUART_GCRA);
 
-	अगर (enabled)
+	if (enabled)
 		reg |= ASPEED_VUART_GCRA_VUART_EN;
-	अन्यथा
+	else
 		reg &= ~ASPEED_VUART_GCRA_VUART_EN;
 
-	ग_लिखोb(reg, vuart->regs + ASPEED_VUART_GCRA);
-पूर्ण
+	writeb(reg, vuart->regs + ASPEED_VUART_GCRA);
+}
 
-अटल व्योम aspeed_vuart_set_host_tx_discard(काष्ठा aspeed_vuart *vuart,
+static void aspeed_vuart_set_host_tx_discard(struct aspeed_vuart *vuart,
 					     bool discard)
-अणु
+{
 	u8 reg;
 
-	reg = पढ़ोb(vuart->regs + ASPEED_VUART_GCRA);
+	reg = readb(vuart->regs + ASPEED_VUART_GCRA);
 
 	/* If the DISABLE_HOST_TX_DISCARD bit is set, discard is disabled */
-	अगर (!discard)
+	if (!discard)
 		reg |= ASPEED_VUART_GCRA_DISABLE_HOST_TX_DISCARD;
-	अन्यथा
+	else
 		reg &= ~ASPEED_VUART_GCRA_DISABLE_HOST_TX_DISCARD;
 
-	ग_लिखोb(reg, vuart->regs + ASPEED_VUART_GCRA);
-पूर्ण
+	writeb(reg, vuart->regs + ASPEED_VUART_GCRA);
+}
 
-अटल पूर्णांक aspeed_vuart_startup(काष्ठा uart_port *uart_port)
-अणु
-	काष्ठा uart_8250_port *uart_8250_port = up_to_u8250p(uart_port);
-	काष्ठा aspeed_vuart *vuart = uart_8250_port->port.निजी_data;
-	पूर्णांक rc;
+static int aspeed_vuart_startup(struct uart_port *uart_port)
+{
+	struct uart_8250_port *uart_8250_port = up_to_u8250p(uart_port);
+	struct aspeed_vuart *vuart = uart_8250_port->port.private_data;
+	int rc;
 
-	rc = serial8250_करो_startup(uart_port);
-	अगर (rc)
-		वापस rc;
+	rc = serial8250_do_startup(uart_port);
+	if (rc)
+		return rc;
 
 	aspeed_vuart_set_host_tx_discard(vuart, false);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम aspeed_vuart_shutकरोwn(काष्ठा uart_port *uart_port)
-अणु
-	काष्ठा uart_8250_port *uart_8250_port = up_to_u8250p(uart_port);
-	काष्ठा aspeed_vuart *vuart = uart_8250_port->port.निजी_data;
+static void aspeed_vuart_shutdown(struct uart_port *uart_port)
+{
+	struct uart_8250_port *uart_8250_port = up_to_u8250p(uart_port);
+	struct aspeed_vuart *vuart = uart_8250_port->port.private_data;
 
 	aspeed_vuart_set_host_tx_discard(vuart, true);
 
-	serial8250_करो_shutकरोwn(uart_port);
-पूर्ण
+	serial8250_do_shutdown(uart_port);
+}
 
-अटल व्योम __aspeed_vuart_set_throttle(काष्ठा uart_8250_port *up,
+static void __aspeed_vuart_set_throttle(struct uart_8250_port *up,
 		bool throttle)
-अणु
-	अचिन्हित अक्षर irqs = UART_IER_RLSI | UART_IER_RDI;
+{
+	unsigned char irqs = UART_IER_RLSI | UART_IER_RDI;
 
 	up->ier &= ~irqs;
-	अगर (!throttle)
+	if (!throttle)
 		up->ier |= irqs;
 	serial_out(up, UART_IER, up->ier);
-पूर्ण
-अटल व्योम aspeed_vuart_set_throttle(काष्ठा uart_port *port, bool throttle)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
-	अचिन्हित दीर्घ flags;
+}
+static void aspeed_vuart_set_throttle(struct uart_port *port, bool throttle)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
+	unsigned long flags;
 
 	spin_lock_irqsave(&port->lock, flags);
 	__aspeed_vuart_set_throttle(up, throttle);
 	spin_unlock_irqrestore(&port->lock, flags);
-पूर्ण
+}
 
-अटल व्योम aspeed_vuart_throttle(काष्ठा uart_port *port)
-अणु
+static void aspeed_vuart_throttle(struct uart_port *port)
+{
 	aspeed_vuart_set_throttle(port, true);
-पूर्ण
+}
 
-अटल व्योम aspeed_vuart_unthrottle(काष्ठा uart_port *port)
-अणु
+static void aspeed_vuart_unthrottle(struct uart_port *port)
+{
 	aspeed_vuart_set_throttle(port, false);
-पूर्ण
+}
 
-अटल व्योम aspeed_vuart_unthrottle_exp(काष्ठा समयr_list *समयr)
-अणु
-	काष्ठा aspeed_vuart *vuart = from_समयr(vuart, समयr, unthrottle_समयr);
-	काष्ठा uart_8250_port *up = vuart->port;
+static void aspeed_vuart_unthrottle_exp(struct timer_list *timer)
+{
+	struct aspeed_vuart *vuart = from_timer(vuart, timer, unthrottle_timer);
+	struct uart_8250_port *up = vuart->port;
 
-	अगर (!tty_buffer_space_avail(&up->port.state->port)) अणु
-		mod_समयr(&vuart->unthrottle_समयr,
-			  jअगरfies + unthrottle_समयout);
-		वापस;
-	पूर्ण
+	if (!tty_buffer_space_avail(&up->port.state->port)) {
+		mod_timer(&vuart->unthrottle_timer,
+			  jiffies + unthrottle_timeout);
+		return;
+	}
 
 	aspeed_vuart_unthrottle(&up->port);
-पूर्ण
+}
 
 /*
- * Custom पूर्णांकerrupt handler to manage finer-grained flow control. Although we
+ * Custom interrupt handler to manage finer-grained flow control. Although we
  * have throttle/unthrottle callbacks, we've seen that the VUART device can
- * deliver अक्षरacters faster than the ldisc has a chance to check buffer space
- * against the throttle threshold. This results in dropped अक्षरacters beक्रमe
+ * deliver characters faster than the ldisc has a chance to check buffer space
+ * against the throttle threshold. This results in dropped characters before
  * the throttle.
  *
- * We करो this by checking क्रम flip buffer space beक्रमe RX. If we have no space,
- * throttle now and schedule an unthrottle क्रम later, once the ldisc has had
+ * We do this by checking for flip buffer space before RX. If we have no space,
+ * throttle now and schedule an unthrottle for later, once the ldisc has had
  * a chance to drain the buffers.
  */
-अटल पूर्णांक aspeed_vuart_handle_irq(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
-	अचिन्हित पूर्णांक iir, lsr;
-	पूर्णांक space, count;
+static int aspeed_vuart_handle_irq(struct uart_port *port)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
+	unsigned int iir, lsr;
+	int space, count;
 
 	iir = serial_port_in(port, UART_IIR);
 
-	अगर (iir & UART_IIR_NO_INT)
-		वापस 0;
+	if (iir & UART_IIR_NO_INT)
+		return 0;
 
 	spin_lock(&port->lock);
 
 	lsr = serial_port_in(port, UART_LSR);
 
-	अगर (lsr & (UART_LSR_DR | UART_LSR_BI)) अणु
+	if (lsr & (UART_LSR_DR | UART_LSR_BI)) {
 		space = tty_buffer_space_avail(&port->state->port);
 
-		अगर (!space) अणु
+		if (!space) {
 			/* throttle and schedule an unthrottle later */
-			काष्ठा aspeed_vuart *vuart = port->निजी_data;
+			struct aspeed_vuart *vuart = port->private_data;
 			__aspeed_vuart_set_throttle(up, true);
 
-			अगर (!समयr_pending(&vuart->unthrottle_समयr)) अणु
+			if (!timer_pending(&vuart->unthrottle_timer)) {
 				vuart->port = up;
-				mod_समयr(&vuart->unthrottle_समयr,
-					  jअगरfies + unthrottle_समयout);
-			पूर्ण
+				mod_timer(&vuart->unthrottle_timer,
+					  jiffies + unthrottle_timeout);
+			}
 
-		पूर्ण अन्यथा अणु
+		} else {
 			count = min(space, 256);
 
-			करो अणु
-				serial8250_पढ़ो_अक्षर(up, lsr);
+			do {
+				serial8250_read_char(up, lsr);
 				lsr = serial_in(up, UART_LSR);
-				अगर (--count == 0)
-					अवरोध;
-			पूर्ण जबतक (lsr & (UART_LSR_DR | UART_LSR_BI));
+				if (--count == 0)
+					break;
+			} while (lsr & (UART_LSR_DR | UART_LSR_BI));
 
 			tty_flip_buffer_push(&port->state->port);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	serial8250_modem_status(up);
-	अगर (lsr & UART_LSR_THRE)
-		serial8250_tx_अक्षरs(up);
+	if (lsr & UART_LSR_THRE)
+		serial8250_tx_chars(up);
 
 	uart_unlock_and_check_sysrq(port);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम aspeed_vuart_स्वतः_configure_sirq_polarity(
-	काष्ठा aspeed_vuart *vuart, काष्ठा device_node *syscon_np,
+static void aspeed_vuart_auto_configure_sirq_polarity(
+	struct aspeed_vuart *vuart, struct device_node *syscon_np,
 	u32 reg_offset, u32 reg_mask)
-अणु
-	काष्ठा regmap *regmap;
+{
+	struct regmap *regmap;
 	u32 value;
 
 	regmap = syscon_node_to_regmap(syscon_np);
-	अगर (IS_ERR(regmap)) अणु
+	if (IS_ERR(regmap)) {
 		dev_warn(vuart->dev,
 			 "could not get regmap for aspeed,sirq-polarity-sense\n");
-		वापस;
-	पूर्ण
-	अगर (regmap_पढ़ो(regmap, reg_offset, &value)) अणु
+		return;
+	}
+	if (regmap_read(regmap, reg_offset, &value)) {
 		dev_warn(vuart->dev, "could not read hw strap table\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	aspeed_vuart_set_sirq_polarity(vuart, (value & reg_mask) == 0);
-पूर्ण
+}
 
-अटल पूर्णांक aspeed_vuart_map_irq_polarity(u32 dt)
-अणु
-	चयन (dt) अणु
-	हाल IRQ_TYPE_LEVEL_LOW:
-		वापस 0;
-	हाल IRQ_TYPE_LEVEL_HIGH:
-		वापस 1;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+static int aspeed_vuart_map_irq_polarity(u32 dt)
+{
+	switch (dt) {
+	case IRQ_TYPE_LEVEL_LOW:
+		return 0;
+	case IRQ_TYPE_LEVEL_HIGH:
+		return 1;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक aspeed_vuart_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा of_phandle_args sirq_polarity_sense_args;
-	काष्ठा uart_8250_port port;
-	काष्ठा aspeed_vuart *vuart;
-	काष्ठा device_node *np;
-	काष्ठा resource *res;
+static int aspeed_vuart_probe(struct platform_device *pdev)
+{
+	struct of_phandle_args sirq_polarity_sense_args;
+	struct uart_8250_port port;
+	struct aspeed_vuart *vuart;
+	struct device_node *np;
+	struct resource *res;
 	u32 clk, prop, sirq[2];
-	पूर्णांक rc, sirq_polarity;
+	int rc, sirq_polarity;
 
 	np = pdev->dev.of_node;
 
-	vuart = devm_kzalloc(&pdev->dev, माप(*vuart), GFP_KERNEL);
-	अगर (!vuart)
-		वापस -ENOMEM;
+	vuart = devm_kzalloc(&pdev->dev, sizeof(*vuart), GFP_KERNEL);
+	if (!vuart)
+		return -ENOMEM;
 
 	vuart->dev = &pdev->dev;
-	समयr_setup(&vuart->unthrottle_समयr, aspeed_vuart_unthrottle_exp, 0);
+	timer_setup(&vuart->unthrottle_timer, aspeed_vuart_unthrottle_exp, 0);
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	vuart->regs = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(vuart->regs))
-		वापस PTR_ERR(vuart->regs);
+	if (IS_ERR(vuart->regs))
+		return PTR_ERR(vuart->regs);
 
-	स_रखो(&port, 0, माप(port));
-	port.port.निजी_data = vuart;
+	memset(&port, 0, sizeof(port));
+	port.port.private_data = vuart;
 	port.port.membase = vuart->regs;
 	port.port.mapbase = res->start;
 	port.port.mapsize = resource_size(res);
 	port.port.startup = aspeed_vuart_startup;
-	port.port.shutकरोwn = aspeed_vuart_shutकरोwn;
+	port.port.shutdown = aspeed_vuart_shutdown;
 	port.port.throttle = aspeed_vuart_throttle;
 	port.port.unthrottle = aspeed_vuart_unthrottle;
 	port.port.status = UPSTAT_SYNC_FIFO;
@@ -441,44 +440,44 @@
 	port.bugs |= UART_BUG_TXRACE;
 
 	rc = sysfs_create_group(&vuart->dev->kobj, &aspeed_vuart_attr_group);
-	अगर (rc < 0)
-		वापस rc;
+	if (rc < 0)
+		return rc;
 
-	अगर (of_property_पढ़ो_u32(np, "clock-frequency", &clk)) अणु
-		vuart->clk = devm_clk_get(&pdev->dev, शून्य);
-		अगर (IS_ERR(vuart->clk)) अणु
+	if (of_property_read_u32(np, "clock-frequency", &clk)) {
+		vuart->clk = devm_clk_get(&pdev->dev, NULL);
+		if (IS_ERR(vuart->clk)) {
 			dev_warn(&pdev->dev,
 				"clk or clock-frequency not defined\n");
 			rc = PTR_ERR(vuart->clk);
-			जाओ err_sysfs_हटाओ;
-		पूर्ण
+			goto err_sysfs_remove;
+		}
 
 		rc = clk_prepare_enable(vuart->clk);
-		अगर (rc < 0)
-			जाओ err_sysfs_हटाओ;
+		if (rc < 0)
+			goto err_sysfs_remove;
 
 		clk = clk_get_rate(vuart->clk);
-	पूर्ण
+	}
 
 	/* If current-speed was set, then try not to change it. */
-	अगर (of_property_पढ़ो_u32(np, "current-speed", &prop) == 0)
-		port.port.custom_भागisor = clk / (16 * prop);
+	if (of_property_read_u32(np, "current-speed", &prop) == 0)
+		port.port.custom_divisor = clk / (16 * prop);
 
-	/* Check क्रम shअगरted address mapping */
-	अगर (of_property_पढ़ो_u32(np, "reg-offset", &prop) == 0)
+	/* Check for shifted address mapping */
+	if (of_property_read_u32(np, "reg-offset", &prop) == 0)
 		port.port.mapbase += prop;
 
-	/* Check क्रम रेजिस्टरs offset within the devices address range */
-	अगर (of_property_पढ़ो_u32(np, "reg-shift", &prop) == 0)
-		port.port.regshअगरt = prop;
+	/* Check for registers offset within the devices address range */
+	if (of_property_read_u32(np, "reg-shift", &prop) == 0)
+		port.port.regshift = prop;
 
-	/* Check क्रम fअगरo size */
-	अगर (of_property_पढ़ो_u32(np, "fifo-size", &prop) == 0)
-		port.port.fअगरosize = prop;
+	/* Check for fifo size */
+	if (of_property_read_u32(np, "fifo-size", &prop) == 0)
+		port.port.fifosize = prop;
 
-	/* Check क्रम a fixed line number */
+	/* Check for a fixed line number */
 	rc = of_alias_get_id(np, "serial");
-	अगर (rc >= 0)
+	if (rc >= 0)
 		port.port.line = rc;
 
 	port.port.irq = irq_of_parse_and_map(np, 0);
@@ -489,109 +488,109 @@
 	port.port.flags = UPF_SHARE_IRQ | UPF_BOOT_AUTOCONF
 		| UPF_FIXED_PORT | UPF_FIXED_TYPE | UPF_NO_THRE_TEST;
 
-	अगर (of_property_पढ़ो_bool(np, "no-loopback-test"))
+	if (of_property_read_bool(np, "no-loopback-test"))
 		port.port.flags |= UPF_SKIP_TEST;
 
-	अगर (port.port.fअगरosize)
+	if (port.port.fifosize)
 		port.capabilities = UART_CAP_FIFO;
 
-	अगर (of_property_पढ़ो_bool(np, "auto-flow-control"))
+	if (of_property_read_bool(np, "auto-flow-control"))
 		port.capabilities |= UART_CAP_AFE;
 
-	rc = serial8250_रेजिस्टर_8250_port(&port);
-	अगर (rc < 0)
-		जाओ err_clk_disable;
+	rc = serial8250_register_8250_port(&port);
+	if (rc < 0)
+		goto err_clk_disable;
 
 	vuart->line = rc;
 
 	rc = of_parse_phandle_with_fixed_args(
 		np, "aspeed,sirq-polarity-sense", 2, 0,
 		&sirq_polarity_sense_args);
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		dev_dbg(&pdev->dev,
 			"aspeed,sirq-polarity-sense property not found\n");
-	पूर्ण अन्यथा अणु
-		aspeed_vuart_स्वतः_configure_sirq_polarity(
+	} else {
+		aspeed_vuart_auto_configure_sirq_polarity(
 			vuart, sirq_polarity_sense_args.np,
 			sirq_polarity_sense_args.args[0],
 			BIT(sirq_polarity_sense_args.args[1]));
 		of_node_put(sirq_polarity_sense_args.np);
-	पूर्ण
+	}
 
-	rc = of_property_पढ़ो_u32(np, "aspeed,lpc-io-reg", &prop);
-	अगर (rc < 0)
+	rc = of_property_read_u32(np, "aspeed,lpc-io-reg", &prop);
+	if (rc < 0)
 		prop = ASPEED_VUART_DEFAULT_LPC_ADDR;
 
 	rc = aspeed_vuart_set_lpc_address(vuart, prop);
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		dev_err(&pdev->dev, "invalid value in aspeed,lpc-io-reg property\n");
-		जाओ err_clk_disable;
-	पूर्ण
+		goto err_clk_disable;
+	}
 
-	rc = of_property_पढ़ो_u32_array(np, "aspeed,lpc-interrupts", sirq, 2);
-	अगर (rc < 0) अणु
+	rc = of_property_read_u32_array(np, "aspeed,lpc-interrupts", sirq, 2);
+	if (rc < 0) {
 		sirq[0] = ASPEED_VUART_DEFAULT_SIRQ;
 		sirq[1] = ASPEED_VUART_DEFAULT_SIRQ_POLARITY;
-	पूर्ण
+	}
 
 	rc = aspeed_vuart_set_sirq(vuart, sirq[0]);
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		dev_err(&pdev->dev, "invalid sirq number in aspeed,lpc-interrupts property\n");
-		जाओ err_clk_disable;
-	पूर्ण
+		goto err_clk_disable;
+	}
 
 	sirq_polarity = aspeed_vuart_map_irq_polarity(sirq[1]);
-	अगर (sirq_polarity < 0) अणु
+	if (sirq_polarity < 0) {
 		dev_err(&pdev->dev, "invalid sirq polarity in aspeed,lpc-interrupts property\n");
 		rc = sirq_polarity;
-		जाओ err_clk_disable;
-	पूर्ण
+		goto err_clk_disable;
+	}
 
 	aspeed_vuart_set_sirq_polarity(vuart, sirq_polarity);
 
 	aspeed_vuart_set_enabled(vuart, true);
 	aspeed_vuart_set_host_tx_discard(vuart, true);
-	platक्रमm_set_drvdata(pdev, vuart);
+	platform_set_drvdata(pdev, vuart);
 
-	वापस 0;
+	return 0;
 
 err_clk_disable:
 	clk_disable_unprepare(vuart->clk);
 	irq_dispose_mapping(port.port.irq);
-err_sysfs_हटाओ:
-	sysfs_हटाओ_group(&vuart->dev->kobj, &aspeed_vuart_attr_group);
-	वापस rc;
-पूर्ण
+err_sysfs_remove:
+	sysfs_remove_group(&vuart->dev->kobj, &aspeed_vuart_attr_group);
+	return rc;
+}
 
-अटल पूर्णांक aspeed_vuart_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा aspeed_vuart *vuart = platक्रमm_get_drvdata(pdev);
+static int aspeed_vuart_remove(struct platform_device *pdev)
+{
+	struct aspeed_vuart *vuart = platform_get_drvdata(pdev);
 
-	del_समयr_sync(&vuart->unthrottle_समयr);
+	del_timer_sync(&vuart->unthrottle_timer);
 	aspeed_vuart_set_enabled(vuart, false);
-	serial8250_unरेजिस्टर_port(vuart->line);
-	sysfs_हटाओ_group(&vuart->dev->kobj, &aspeed_vuart_attr_group);
+	serial8250_unregister_port(vuart->line);
+	sysfs_remove_group(&vuart->dev->kobj, &aspeed_vuart_attr_group);
 	clk_disable_unprepare(vuart->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id aspeed_vuart_table[] = अणु
-	अणु .compatible = "aspeed,ast2400-vuart" पूर्ण,
-	अणु .compatible = "aspeed,ast2500-vuart" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id aspeed_vuart_table[] = {
+	{ .compatible = "aspeed,ast2400-vuart" },
+	{ .compatible = "aspeed,ast2500-vuart" },
+	{ },
+};
 
-अटल काष्ठा platक्रमm_driver aspeed_vuart_driver = अणु
-	.driver = अणु
+static struct platform_driver aspeed_vuart_driver = {
+	.driver = {
 		.name = "aspeed-vuart",
 		.of_match_table = aspeed_vuart_table,
-	पूर्ण,
+	},
 	.probe = aspeed_vuart_probe,
-	.हटाओ = aspeed_vuart_हटाओ,
-पूर्ण;
+	.remove = aspeed_vuart_remove,
+};
 
-module_platक्रमm_driver(aspeed_vuart_driver);
+module_platform_driver(aspeed_vuart_driver);
 
 MODULE_AUTHOR("Jeremy Kerr <jk@ozlabs.org>");
 MODULE_LICENSE("GPL");

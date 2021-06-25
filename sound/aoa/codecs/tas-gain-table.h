@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  This is the program used to generate below table.
 
-#समावेश <मानकपन.स>
-#समावेश <गणित.स>
-पूर्णांक मुख्य() अणु
-  पूर्णांक dB2;
-  म_लिखो("/" "* This file is only included exactly once!\n");
-  म_लिखो(" *\n");
-  म_लिखो(" * If they'd only tell us that generating this table was\n");
-  म_लिखो(" * as easy as calculating\n");
-  म_लिखो(" *      hwvalue = 1048576.0*exp(0.057564628*dB*2)\n");
-  म_लिखो(" * :) *" "/\n");
-  म_लिखो("static int tas_gaintable[] = {\n");
-  म_लिखो("	0x000000, /" "* -infinity dB *" "/\n");
-  क्रम (dB2=-140;dB2<=36;dB2++)
-    म_लिखो("	0x%.6x, /" "* %-02.1f dB *" "/\n", (पूर्णांक)(1048576.0*exp(0.057564628*dB2)), dB2/2.0);
-  म_लिखो("};\n\n");
-पूर्ण
+#include <stdio.h>
+#include <math.h>
+int main() {
+  int dB2;
+  printf("/" "* This file is only included exactly once!\n");
+  printf(" *\n");
+  printf(" * If they'd only tell us that generating this table was\n");
+  printf(" * as easy as calculating\n");
+  printf(" *      hwvalue = 1048576.0*exp(0.057564628*dB*2)\n");
+  printf(" * :) *" "/\n");
+  printf("static int tas_gaintable[] = {\n");
+  printf("	0x000000, /" "* -infinity dB *" "/\n");
+  for (dB2=-140;dB2<=36;dB2++)
+    printf("	0x%.6x, /" "* %-02.1f dB *" "/\n", (int)(1048576.0*exp(0.057564628*dB2)), dB2/2.0);
+  printf("};\n\n");
+}
 
 */
 
@@ -28,7 +27,7 @@
  * as easy as calculating
  *      hwvalue = 1048576.0*exp(0.057564628*dB*2)
  * :) */
-अटल स्थिर पूर्णांक tas_gaपूर्णांकable[] = अणु
+static const int tas_gaintable[] = {
 	0x000000, /* -infinity dB */
 	0x00014b, /* -70.0 dB */
 	0x00015f, /* -69.5 dB */
@@ -207,5 +206,5 @@
 	0x714575, /* 17.0 dB */
 	0x77fbaa, /* 17.5 dB */
 	0x7f17af, /* 18.0 dB */
-पूर्ण;
+};
 

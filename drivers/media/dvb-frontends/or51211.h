@@ -1,40 +1,39 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- *    Support क्रम OR51211 (pcHDTV HD-2000) - VSB
+ *    Support for OR51211 (pcHDTV HD-2000) - VSB
  *
  *    Copyright (C) 2005 Kirk Lapray <kirk_lapray@bigfoot.com>
 */
 
-#अगर_अघोषित OR51211_H
-#घोषणा OR51211_H
+#ifndef OR51211_H
+#define OR51211_H
 
-#समावेश <linux/dvb/frontend.h>
-#समावेश <linux/firmware.h>
+#include <linux/dvb/frontend.h>
+#include <linux/firmware.h>
 
-काष्ठा or51211_config
-अणु
+struct or51211_config
+{
 	/* The demodulator's i2c address */
 	u8 demod_address;
 
-	/* Request firmware क्रम device */
-	पूर्णांक (*request_firmware)(काष्ठा dvb_frontend* fe, स्थिर काष्ठा firmware **fw, अक्षर* name);
-	व्योम (*seपंचांगode)(काष्ठा dvb_frontend * fe, पूर्णांक mode);
-	व्योम (*reset)(काष्ठा dvb_frontend * fe);
-	व्योम (*sleep)(काष्ठा dvb_frontend * fe);
-पूर्ण;
+	/* Request firmware for device */
+	int (*request_firmware)(struct dvb_frontend* fe, const struct firmware **fw, char* name);
+	void (*setmode)(struct dvb_frontend * fe, int mode);
+	void (*reset)(struct dvb_frontend * fe);
+	void (*sleep)(struct dvb_frontend * fe);
+};
 
-#अगर IS_REACHABLE(CONFIG_DVB_OR51211)
-बाह्य काष्ठा dvb_frontend* or51211_attach(स्थिर काष्ठा or51211_config* config,
-					   काष्ठा i2c_adapter* i2c);
-#अन्यथा
-अटल अंतरभूत काष्ठा dvb_frontend* or51211_attach(स्थिर काष्ठा or51211_config* config,
-					   काष्ठा i2c_adapter* i2c)
-अणु
-	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर // CONFIG_DVB_OR51211
+#if IS_REACHABLE(CONFIG_DVB_OR51211)
+extern struct dvb_frontend* or51211_attach(const struct or51211_config* config,
+					   struct i2c_adapter* i2c);
+#else
+static inline struct dvb_frontend* or51211_attach(const struct or51211_config* config,
+					   struct i2c_adapter* i2c)
+{
+	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	return NULL;
+}
+#endif // CONFIG_DVB_OR51211
 
-#पूर्ण_अगर // OR51211_H
+#endif // OR51211_H
 

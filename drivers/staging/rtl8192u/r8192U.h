@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * This is part of rtl8187 OpenSource driver.
  * Copyright (C) Andrea Merello 2004-2005  <andrea.merello@gmail.com>
@@ -17,167 +16,167 @@
  * project Authors.
  */
 
-#अगर_अघोषित R8192U_H
-#घोषणा R8192U_H
+#ifndef R8192U_H
+#define R8192U_H
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/wireless.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/पन.स>
-#समावेश "ieee80211/ieee80211.h"
+#include <linux/compiler.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/ioport.h>
+#include <linux/sched.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/netdevice.h>
+#include <linux/usb.h>
+#include <linux/etherdevice.h>
+#include <linux/delay.h>
+#include <linux/rtnetlink.h>
+#include <linux/wireless.h>
+#include <linux/timer.h>
+#include <linux/proc_fs.h>
+#include <linux/if_arp.h>
+#include <linux/random.h>
+#include <linux/io.h>
+#include "ieee80211/ieee80211.h"
 
-#घोषणा RTL8192U
-#घोषणा RTL819XU_MODULE_NAME "rtl819xU"
+#define RTL8192U
+#define RTL819XU_MODULE_NAME "rtl819xU"
 /* HW security */
-#घोषणा MAX_KEY_LEN     61
-#घोषणा KEY_BUF_SIZE    5
+#define MAX_KEY_LEN     61
+#define KEY_BUF_SIZE    5
 
-#घोषणा	RX_SMOOTH_FACTOR		20
-#घोषणा DMESG(x, a...)  no_prपूर्णांकk(x, ##a)
-#घोषणा DMESGW(x, a...) no_prपूर्णांकk(x, ##a)
-#घोषणा DMESGE(x, a...) no_prपूर्णांकk(x, ##a)
-बाह्य u32 rt_global_debug_component;
-#घोषणा RT_TRACE(component, x, args...) \
-	करो अणु							\
-		अगर (rt_global_debug_component & (component))	\
+#define	RX_SMOOTH_FACTOR		20
+#define DMESG(x, a...)  no_printk(x, ##a)
+#define DMESGW(x, a...) no_printk(x, ##a)
+#define DMESGE(x, a...) no_printk(x, ##a)
+extern u32 rt_global_debug_component;
+#define RT_TRACE(component, x, args...) \
+	do {							\
+		if (rt_global_debug_component & (component))	\
 			pr_debug("RTL8192U: " x "\n", ##args);	\
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा COMP_TRACE              BIT(0)  /* Function call tracing. */
-#घोषणा COMP_DBG                BIT(1)
-#घोषणा COMP_INIT               BIT(2)  /* Driver initialization/halt/reset. */
+#define COMP_TRACE              BIT(0)  /* Function call tracing. */
+#define COMP_DBG                BIT(1)
+#define COMP_INIT               BIT(2)  /* Driver initialization/halt/reset. */
 
-#घोषणा COMP_RECV               BIT(3)  /* Receive data path. */
-#घोषणा COMP_SEND               BIT(4)  /* Send data path. */
-#घोषणा COMP_IO                 BIT(5)
+#define COMP_RECV               BIT(3)  /* Receive data path. */
+#define COMP_SEND               BIT(4)  /* Send data path. */
+#define COMP_IO                 BIT(5)
 /* 802.11 Power Save mode or System/Device Power state. */
-#घोषणा COMP_POWER              BIT(6)
+#define COMP_POWER              BIT(6)
 /* 802.11 link related: join/start BSS, leave BSS. */
-#घोषणा COMP_EPROM              BIT(7)
-#घोषणा COMP_SWBW               BIT(8)  /* Bandwidth चयन. */
-#घोषणा COMP_POWER_TRACKING     BIT(9)  /* 8190 TX Power Tracking */
-#घोषणा COMP_TURBO              BIT(10) /* Turbo Mode */
-#घोषणा COMP_QOS                BIT(11)
-#घोषणा COMP_RATE               BIT(12) /* Rate Adaptive mechanism */
-#घोषणा COMP_RM                 BIT(13) /* Radio Measurement */
-#घोषणा COMP_DIG                BIT(14)
-#घोषणा COMP_PHY                BIT(15)
-#घोषणा COMP_CH                 BIT(16) /* Channel setting debug */
-#घोषणा COMP_TXAGC              BIT(17) /* Tx घातer */
-#घोषणा COMP_HIPWR              BIT(18) /* High Power Mechanism */
-#घोषणा COMP_HALDM              BIT(19) /* HW Dynamic Mechanism */
-#घोषणा COMP_SEC                BIT(20) /* Event handling */
-#घोषणा COMP_LED                BIT(21)
-#घोषणा COMP_RF                 BIT(22)
-#घोषणा COMP_RXDESC             BIT(23) /* Rx desc inक्रमmation क्रम SD3 debug */
+#define COMP_EPROM              BIT(7)
+#define COMP_SWBW               BIT(8)  /* Bandwidth switch. */
+#define COMP_POWER_TRACKING     BIT(9)  /* 8190 TX Power Tracking */
+#define COMP_TURBO              BIT(10) /* Turbo Mode */
+#define COMP_QOS                BIT(11)
+#define COMP_RATE               BIT(12) /* Rate Adaptive mechanism */
+#define COMP_RM                 BIT(13) /* Radio Measurement */
+#define COMP_DIG                BIT(14)
+#define COMP_PHY                BIT(15)
+#define COMP_CH                 BIT(16) /* Channel setting debug */
+#define COMP_TXAGC              BIT(17) /* Tx power */
+#define COMP_HIPWR              BIT(18) /* High Power Mechanism */
+#define COMP_HALDM              BIT(19) /* HW Dynamic Mechanism */
+#define COMP_SEC                BIT(20) /* Event handling */
+#define COMP_LED                BIT(21)
+#define COMP_RF                 BIT(22)
+#define COMP_RXDESC             BIT(23) /* Rx desc information for SD3 debug */
 
-/* 11n or 8190 specअगरic code */
+/* 11n or 8190 specific code */
 
-#घोषणा COMP_FIRMWARE           BIT(24) /* Firmware करोwnloading */
-#घोषणा COMP_HT                 BIT(25) /* 802.11n HT related inक्रमmation */
-#घोषणा COMP_AMSDU              BIT(26) /* A-MSDU Debugging */
-#घोषणा COMP_SCAN               BIT(27)
-#घोषणा COMP_DOWN               BIT(29) /* rm driver module */
-#घोषणा COMP_RESET              BIT(30) /* Silent reset */
-#घोषणा COMP_ERR                BIT(31) /* Error out, always on */
+#define COMP_FIRMWARE           BIT(24) /* Firmware downloading */
+#define COMP_HT                 BIT(25) /* 802.11n HT related information */
+#define COMP_AMSDU              BIT(26) /* A-MSDU Debugging */
+#define COMP_SCAN               BIT(27)
+#define COMP_DOWN               BIT(29) /* rm driver module */
+#define COMP_RESET              BIT(30) /* Silent reset */
+#define COMP_ERR                BIT(31) /* Error out, always on */
 
-#घोषणा RTL819x_DEBUG
-#अगर_घोषित RTL819x_DEBUG
-#घोषणा RTL8192U_ASSERT(expr) \
-	करो अणु								\
-		अगर (!(expr)) अणु						\
+#define RTL819x_DEBUG
+#ifdef RTL819x_DEBUG
+#define RTL8192U_ASSERT(expr) \
+	do {								\
+		if (!(expr)) {						\
 			pr_debug("Assertion failed! %s, %s, %s, line = %d\n", \
-				 #expr, __खाता__, __func__, __LINE__);	\
-		पूर्ण							\
-	पूर्ण जबतक (0)
+				 #expr, __FILE__, __func__, __LINE__);	\
+		}							\
+	} while (0)
 /*
  * Debug out data buf.
- * If you want to prपूर्णांक DATA buffer related BA,
+ * If you want to print DATA buffer related BA,
  * please set ieee80211_debug_level to DATA|BA
  */
-#घोषणा RT_DEBUG_DATA(level, data, datalen) \
-	करो अणु								\
-		अगर ((rt_global_debug_component & (level)) == (level)) अणु	\
-			पूर्णांक i;						\
+#define RT_DEBUG_DATA(level, data, datalen) \
+	do {								\
+		if ((rt_global_debug_component & (level)) == (level)) {	\
+			int i;						\
 			u8 *pdata = (u8 *)data;				\
 			pr_debug("RTL8192U: %s()\n", __func__);		\
-			क्रम (i = 0; i < (पूर्णांक)(datalen); i++) अणु		\
-				prपूर्णांकk("%2x ", pdata[i]);               \
-				अगर ((i+1)%16 == 0)			\
-					prपूर्णांकk("\n");			\
-			पूर्ण						\
-			prपूर्णांकk("\n");					\
-		पूर्ण							\
-	पूर्ण जबतक (0)
-#अन्यथा
-#घोषणा RTL8192U_ASSERT(expr) करो अणुपूर्ण जबतक (0)
-#घोषणा RT_DEBUG_DATA(level, data, datalen) करो अणुपूर्ण जबतक (0)
-#पूर्ण_अगर /* RTL8169_DEBUG */
+			for (i = 0; i < (int)(datalen); i++) {		\
+				printk("%2x ", pdata[i]);               \
+				if ((i+1)%16 == 0)			\
+					printk("\n");			\
+			}						\
+			printk("\n");					\
+		}							\
+	} while (0)
+#else
+#define RTL8192U_ASSERT(expr) do {} while (0)
+#define RT_DEBUG_DATA(level, data, datalen) do {} while (0)
+#endif /* RTL8169_DEBUG */
 
 /* Queue Select Value in TxDesc */
-#घोषणा QSLT_BK                                 0x1
-#घोषणा QSLT_BE                                 0x0
-#घोषणा QSLT_VI                                 0x4
-#घोषणा QSLT_VO                                 0x6
-#घोषणा QSLT_BEACON                             0x10
-#घोषणा QSLT_HIGH                               0x11
-#घोषणा QSLT_MGNT                               0x12
-#घोषणा QSLT_CMD                                0x13
+#define QSLT_BK                                 0x1
+#define QSLT_BE                                 0x0
+#define QSLT_VI                                 0x4
+#define QSLT_VO                                 0x6
+#define QSLT_BEACON                             0x10
+#define QSLT_HIGH                               0x11
+#define QSLT_MGNT                               0x12
+#define QSLT_CMD                                0x13
 
-#घोषणा DESC90_RATE1M                           0x00
-#घोषणा DESC90_RATE2M                           0x01
-#घोषणा DESC90_RATE5_5M                         0x02
-#घोषणा DESC90_RATE11M                          0x03
-#घोषणा DESC90_RATE6M                           0x04
-#घोषणा DESC90_RATE9M                           0x05
-#घोषणा DESC90_RATE12M                          0x06
-#घोषणा DESC90_RATE18M                          0x07
-#घोषणा DESC90_RATE24M                          0x08
-#घोषणा DESC90_RATE36M                          0x09
-#घोषणा DESC90_RATE48M                          0x0a
-#घोषणा DESC90_RATE54M                          0x0b
-#घोषणा DESC90_RATEMCS0                         0x00
-#घोषणा DESC90_RATEMCS1                         0x01
-#घोषणा DESC90_RATEMCS2                         0x02
-#घोषणा DESC90_RATEMCS3                         0x03
-#घोषणा DESC90_RATEMCS4                         0x04
-#घोषणा DESC90_RATEMCS5                         0x05
-#घोषणा DESC90_RATEMCS6                         0x06
-#घोषणा DESC90_RATEMCS7                         0x07
-#घोषणा DESC90_RATEMCS8                         0x08
-#घोषणा DESC90_RATEMCS9                         0x09
-#घोषणा DESC90_RATEMCS10                        0x0a
-#घोषणा DESC90_RATEMCS11                        0x0b
-#घोषणा DESC90_RATEMCS12                        0x0c
-#घोषणा DESC90_RATEMCS13                        0x0d
-#घोषणा DESC90_RATEMCS14                        0x0e
-#घोषणा DESC90_RATEMCS15                        0x0f
-#घोषणा DESC90_RATEMCS32                        0x20
+#define DESC90_RATE1M                           0x00
+#define DESC90_RATE2M                           0x01
+#define DESC90_RATE5_5M                         0x02
+#define DESC90_RATE11M                          0x03
+#define DESC90_RATE6M                           0x04
+#define DESC90_RATE9M                           0x05
+#define DESC90_RATE12M                          0x06
+#define DESC90_RATE18M                          0x07
+#define DESC90_RATE24M                          0x08
+#define DESC90_RATE36M                          0x09
+#define DESC90_RATE48M                          0x0a
+#define DESC90_RATE54M                          0x0b
+#define DESC90_RATEMCS0                         0x00
+#define DESC90_RATEMCS1                         0x01
+#define DESC90_RATEMCS2                         0x02
+#define DESC90_RATEMCS3                         0x03
+#define DESC90_RATEMCS4                         0x04
+#define DESC90_RATEMCS5                         0x05
+#define DESC90_RATEMCS6                         0x06
+#define DESC90_RATEMCS7                         0x07
+#define DESC90_RATEMCS8                         0x08
+#define DESC90_RATEMCS9                         0x09
+#define DESC90_RATEMCS10                        0x0a
+#define DESC90_RATEMCS11                        0x0b
+#define DESC90_RATEMCS12                        0x0c
+#define DESC90_RATEMCS13                        0x0d
+#define DESC90_RATEMCS14                        0x0e
+#define DESC90_RATEMCS15                        0x0f
+#define DESC90_RATEMCS32                        0x20
 
-#घोषणा RTL819X_DEFAULT_RF_TYPE RF_1T2R
+#define RTL819X_DEFAULT_RF_TYPE RF_1T2R
 
-#घोषणा IEEE80211_WATCH_DOG_TIME    2000
-#घोषणा		PHY_Beacon_RSSI_SLID_WIN_MAX		10
+#define IEEE80211_WATCH_DOG_TIME    2000
+#define		PHY_Beacon_RSSI_SLID_WIN_MAX		10
 /* For Tx Power Tracking */
-#घोषणा		OFDM_Table_Length	19
-#घोषणा	CCK_Table_length	12
+#define		OFDM_Table_Length	19
+#define	CCK_Table_length	12
 
 /* For rtl819x */
-काष्ठा tx_desc_819x_usb अणु
+struct tx_desc_819x_usb {
 	/* DWORD 0 */
 	u16	PktSize;
 	u8	Offset;
@@ -213,9 +212,9 @@
 	u32	Reserved5;
 	u32	Reserved6;
 	u32	Reserved7;
-पूर्ण;
+};
 
-काष्ठा tx_desc_cmd_819x_usb अणु
+struct tx_desc_cmd_819x_usb {
 	/* DWORD 0 */
 	u16	Reserved0;
 	u8	Reserved1;
@@ -240,9 +239,9 @@
 	u32	Reserved6;
 	u32	Reserved7;
 	u32	Reserved8;
-पूर्ण;
+};
 
-काष्ठा tx_fwinfo_819x_usb अणु
+struct tx_fwinfo_819x_usb {
 	/* DOWRD 0 */
 	u8	TxRate:7;
 	u8	CtsEnable:1;
@@ -250,15 +249,15 @@
 	u8	RtsEnable:1;
 	u8	TxHT:1;
 	u8	Short:1;        /* Error out, always on */
-	u8	TxBandwidth:1;	/* Used क्रम HT MCS rate only */
-	u8	TxSubCarrier:2; /* Used क्रम legacy OFDM rate only */
+	u8	TxBandwidth:1;	/* Used for HT MCS rate only */
+	u8	TxSubCarrier:2; /* Used for legacy OFDM rate only */
 	u8	STBC:2;
 	u8	AllowAggregation:1;
 	/* Interpret RtsRate field as high throughput data rate */
 	u8	RtsHT:1;
-	u8	RtsShort:1;     /* Short PLCP क्रम CCK or लघु GI क्रम 11n MCS */
-	u8	RtsBandwidth:1;	/* Used क्रम HT MCS rate only */
-	u8	RtsSubcarrier:2;/* Used क्रम legacy OFDM rate only */
+	u8	RtsShort:1;     /* Short PLCP for CCK or short GI for 11n MCS */
+	u8	RtsBandwidth:1;	/* Used for HT MCS rate only */
+	u8	RtsSubcarrier:2;/* Used for legacy OFDM rate only */
 	u8	RtsSTBC:2;
 	/* Enable firmware to recalculate and assign packet duration */
 	u8	EnableCPUDur:1;
@@ -266,37 +265,37 @@
 	/* DWORD 1 */
 	u32	RxMF:2;
 	u32	RxAMD:3;
-	/* 1 indicate Tx info gathered by firmware and वापसed by Rx Cmd */
+	/* 1 indicate Tx info gathered by firmware and returned by Rx Cmd */
 	u32	TxPerPktInfoFeedback:1;
 	u32	Reserved1:2;
 	u32	TxAGCOffSet:4;
 	u32	TxAGCSign:1;
 	u32	Tx_INFO_RSVD:6;
 	u32	PacketID:13;
-पूर्ण;
+};
 
-काष्ठा rtl8192_rx_info अणु
-	काष्ठा urb *urb;
-	काष्ठा net_device *dev;
+struct rtl8192_rx_info {
+	struct urb *urb;
+	struct net_device *dev;
 	u8 out_pipe;
-पूर्ण;
+};
 
-काष्ठा rx_desc_819x_usb अणु
+struct rx_desc_819x_usb {
 	/* DOWRD 0 */
 	u16                 Length:14;
 	u16                 CRC32:1;
 	u16                 ICV:1;
 	u8                  RxDrvInfoSize;
-	u8                  Shअगरt:2;
+	u8                  Shift:2;
 	u8                  PHYStatus:1;
 	u8                  SWDec:1;
 	u8                  Reserved1:4;
 
 	/* DWORD 1 */
 	u32                 Reserved2;
-पूर्ण;
+};
 
-काष्ठा rx_drvinfo_819x_usb अणु
+struct rx_drvinfo_819x_usb {
 	/* DWORD 0 */
 	u16                 Reserved1:12;
 	u16                 PartAggr:1;
@@ -317,134 +316,134 @@
 	/* DWORD 1 */
 	u32                  TSFL;
 
-पूर्ण;
+};
 
 /* Support till 64 bit bus width OS */
-#घोषणा MAX_DEV_ADDR_SIZE		8
+#define MAX_DEV_ADDR_SIZE		8
 /* For RTL8190 */
-#घोषणा MAX_FIRMWARE_INFORMATION_SIZE   32
-#घोषणा MAX_802_11_HEADER_LENGTH        (40 + MAX_FIRMWARE_INFORMATION_SIZE)
-#घोषणा ENCRYPTION_MAX_OVERHEAD		128
-#घोषणा	USB_HWDESC_HEADER_LEN		माप(काष्ठा tx_desc_819x_usb)
-#घोषणा TX_PACKET_SHIFT_BYTES		(USB_HWDESC_HEADER_LEN + माप(काष्ठा tx_fwinfo_819x_usb))
-#घोषणा MAX_FRAGMENT_COUNT		8
-#अगर_घोषित USB_TX_DRIVER_AGGREGATION_ENABLE
-#घोषणा MAX_TRANSMIT_BUFFER_SIZE			32000
-#अन्यथा
-#घोषणा MAX_TRANSMIT_BUFFER_SIZE			8000
-#पूर्ण_अगर
-/* Octets क्रम crc32 (FCS, ICV) */
-#घोषणा scrclng					4
+#define MAX_FIRMWARE_INFORMATION_SIZE   32
+#define MAX_802_11_HEADER_LENGTH        (40 + MAX_FIRMWARE_INFORMATION_SIZE)
+#define ENCRYPTION_MAX_OVERHEAD		128
+#define	USB_HWDESC_HEADER_LEN		sizeof(struct tx_desc_819x_usb)
+#define TX_PACKET_SHIFT_BYTES		(USB_HWDESC_HEADER_LEN + sizeof(struct tx_fwinfo_819x_usb))
+#define MAX_FRAGMENT_COUNT		8
+#ifdef USB_TX_DRIVER_AGGREGATION_ENABLE
+#define MAX_TRANSMIT_BUFFER_SIZE			32000
+#else
+#define MAX_TRANSMIT_BUFFER_SIZE			8000
+#endif
+/* Octets for crc32 (FCS, ICV) */
+#define scrclng					4
 
-क्रमागत rf_op_type अणु
+enum rf_op_type {
 	RF_OP_By_SW_3wire = 0,
 	RF_OP_By_FW,
 	RF_OP_MAX
-पूर्ण;
+};
 
 /* 8190 Loopback Mode definition */
-प्रकार क्रमागत _rtl819xUsb_loopback अणु
+typedef enum _rtl819xUsb_loopback {
 	RTL819xU_NO_LOOPBACK = 0,
 	RTL819xU_MAC_LOOPBACK = 1,
 	RTL819xU_DMA_LOOPBACK = 2,
 	RTL819xU_CCK_LOOPBACK = 3,
-पूर्ण rtl819xUsb_loopback_e;
+} rtl819xUsb_loopback_e;
 
 /* due to rtl8192 firmware */
-प्रकार क्रमागत _desc_packet_type_e अणु
+typedef enum _desc_packet_type_e {
 	DESC_PACKET_TYPE_INIT = 0,
 	DESC_PACKET_TYPE_NORMAL = 1,
-पूर्ण desc_packet_type_e;
+} desc_packet_type_e;
 
-प्रकार क्रमागत _firmware_status अणु
+typedef enum _firmware_status {
 	FW_STATUS_0_INIT = 0,
 	FW_STATUS_1_MOVE_BOOT_CODE = 1,
 	FW_STATUS_2_MOVE_MAIN_CODE = 2,
 	FW_STATUS_3_TURNON_CPU = 3,
 	FW_STATUS_4_MOVE_DATA_CODE = 4,
 	FW_STATUS_5_READY = 5,
-पूर्ण firmware_status_e;
+} firmware_status_e;
 
-प्रकार काष्ठा _fw_seg_container अणु
+typedef struct _fw_seg_container {
 	u16	seg_size;
 	u8	*seg_ptr;
-पूर्ण fw_seg_container, *pfw_seg_container;
-प्रकार काष्ठा _rt_firmware अणु
+} fw_seg_container, *pfw_seg_container;
+typedef struct _rt_firmware {
 	firmware_status_e firmware_status;
 	u16               cmdpacket_frag_threshold;
-#घोषणा RTL8190_MAX_FIRMWARE_CODE_SIZE  64000
+#define RTL8190_MAX_FIRMWARE_CODE_SIZE  64000
 	u8                firmware_buf[RTL8190_MAX_FIRMWARE_CODE_SIZE];
 	u16               firmware_buf_size;
-पूर्ण rt_firmware, *prt_firmware;
+} rt_firmware, *prt_firmware;
 
 /* Add this to 9100 bytes to receive A-MSDU from RT-AP */
-#घोषणा MAX_RECEIVE_BUFFER_SIZE	9100
+#define MAX_RECEIVE_BUFFER_SIZE	9100
 
-प्रकार काष्ठा _rt_firmware_info_819xUsb अणु
+typedef struct _rt_firmware_info_819xUsb {
 	u8		sz_info[16];
-पूर्ण rt_firmware_info_819xUsb, *prt_firmware_info_819xUsb;
+} rt_firmware_info_819xUsb, *prt_firmware_info_819xUsb;
 
 /* Firmware Queue Layout */
-#घोषणा NUM_OF_FIRMWARE_QUEUE		10
-#घोषणा NUM_OF_PAGES_IN_FW		0x100
+#define NUM_OF_FIRMWARE_QUEUE		10
+#define NUM_OF_PAGES_IN_FW		0x100
 
-#अगर_घोषित USE_ONE_PIPE
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_BE	0x000
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_BK	0x000
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_VI	0x0ff
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_VO	0x000
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_HCCA	0
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_CMD	0x0
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_MGNT	0x00
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_HIGH	0
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_BCN	0x0
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_PUB	0x00
-#अन्यथा
+#ifdef USE_ONE_PIPE
+#define NUM_OF_PAGE_IN_FW_QUEUE_BE	0x000
+#define NUM_OF_PAGE_IN_FW_QUEUE_BK	0x000
+#define NUM_OF_PAGE_IN_FW_QUEUE_VI	0x0ff
+#define NUM_OF_PAGE_IN_FW_QUEUE_VO	0x000
+#define NUM_OF_PAGE_IN_FW_QUEUE_HCCA	0
+#define NUM_OF_PAGE_IN_FW_QUEUE_CMD	0x0
+#define NUM_OF_PAGE_IN_FW_QUEUE_MGNT	0x00
+#define NUM_OF_PAGE_IN_FW_QUEUE_HIGH	0
+#define NUM_OF_PAGE_IN_FW_QUEUE_BCN	0x0
+#define NUM_OF_PAGE_IN_FW_QUEUE_PUB	0x00
+#else
 
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_BE	0x020
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_BK	0x020
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_VI	0x040
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_VO	0x040
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_HCCA	0
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_CMD	0x4
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_MGNT	0x20
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_HIGH	0
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_BCN	0x4
-#घोषणा NUM_OF_PAGE_IN_FW_QUEUE_PUB	0x18
+#define NUM_OF_PAGE_IN_FW_QUEUE_BE	0x020
+#define NUM_OF_PAGE_IN_FW_QUEUE_BK	0x020
+#define NUM_OF_PAGE_IN_FW_QUEUE_VI	0x040
+#define NUM_OF_PAGE_IN_FW_QUEUE_VO	0x040
+#define NUM_OF_PAGE_IN_FW_QUEUE_HCCA	0
+#define NUM_OF_PAGE_IN_FW_QUEUE_CMD	0x4
+#define NUM_OF_PAGE_IN_FW_QUEUE_MGNT	0x20
+#define NUM_OF_PAGE_IN_FW_QUEUE_HIGH	0
+#define NUM_OF_PAGE_IN_FW_QUEUE_BCN	0x4
+#define NUM_OF_PAGE_IN_FW_QUEUE_PUB	0x18
 
-#पूर्ण_अगर
+#endif
 
-#घोषणा APPLIED_RESERVED_QUEUE_IN_FW	0x80000000
-#घोषणा RSVD_FW_QUEUE_PAGE_BK_SHIFT	0x00
-#घोषणा RSVD_FW_QUEUE_PAGE_BE_SHIFT	0x08
-#घोषणा RSVD_FW_QUEUE_PAGE_VI_SHIFT	0x10
-#घोषणा RSVD_FW_QUEUE_PAGE_VO_SHIFT	0x18
-#घोषणा RSVD_FW_QUEUE_PAGE_MGNT_SHIFT	0x10
-#घोषणा RSVD_FW_QUEUE_PAGE_CMD_SHIFT	0x08
-#घोषणा RSVD_FW_QUEUE_PAGE_BCN_SHIFT	0x00
-#घोषणा RSVD_FW_QUEUE_PAGE_PUB_SHIFT	0x08
+#define APPLIED_RESERVED_QUEUE_IN_FW	0x80000000
+#define RSVD_FW_QUEUE_PAGE_BK_SHIFT	0x00
+#define RSVD_FW_QUEUE_PAGE_BE_SHIFT	0x08
+#define RSVD_FW_QUEUE_PAGE_VI_SHIFT	0x10
+#define RSVD_FW_QUEUE_PAGE_VO_SHIFT	0x18
+#define RSVD_FW_QUEUE_PAGE_MGNT_SHIFT	0x10
+#define RSVD_FW_QUEUE_PAGE_CMD_SHIFT	0x08
+#define RSVD_FW_QUEUE_PAGE_BCN_SHIFT	0x00
+#define RSVD_FW_QUEUE_PAGE_PUB_SHIFT	0x08
 
 /*
  * =================================================================
  * =================================================================
  */
 
-#घोषणा EPROM_93c46 0
-#घोषणा EPROM_93c56 1
+#define EPROM_93c46 0
+#define EPROM_93c56 1
 
-#घोषणा DEFAULT_FRAG_THRESHOLD 2342U
-#घोषणा MIN_FRAG_THRESHOLD     256U
-#घोषणा DEFAULT_BEACONINTERVAL 0x64U
-#घोषणा DEFAULT_BEACON_ESSID "Rtl819xU"
+#define DEFAULT_FRAG_THRESHOLD 2342U
+#define MIN_FRAG_THRESHOLD     256U
+#define DEFAULT_BEACONINTERVAL 0x64U
+#define DEFAULT_BEACON_ESSID "Rtl819xU"
 
-#घोषणा DEFAULT_SSID ""
-#घोषणा DEFAULT_RETRY_RTS 7
-#घोषणा DEFAULT_RETRY_DATA 7
-#घोषणा PRISM_HDR_SIZE 64
+#define DEFAULT_SSID ""
+#define DEFAULT_RETRY_RTS 7
+#define DEFAULT_RETRY_DATA 7
+#define PRISM_HDR_SIZE 64
 
-#घोषणा		PHY_RSSI_SLID_WIN_MAX				100
+#define		PHY_RSSI_SLID_WIN_MAX				100
 
-प्रकार क्रमागत _WIRELESS_MODE अणु
+typedef enum _WIRELESS_MODE {
 	WIRELESS_MODE_UNKNOWN = 0x00,
 	WIRELESS_MODE_A = 0x01,
 	WIRELESS_MODE_B = 0x02,
@@ -452,132 +451,132 @@
 	WIRELESS_MODE_AUTO = 0x08,
 	WIRELESS_MODE_N_24G = 0x10,
 	WIRELESS_MODE_N_5G = 0x20
-पूर्ण WIRELESS_MODE;
+} WIRELESS_MODE;
 
-#घोषणा RTL_IOCTL_WPA_SUPPLICANT		(SIOCIWFIRSTPRIV + 30)
+#define RTL_IOCTL_WPA_SUPPLICANT		(SIOCIWFIRSTPRIV + 30)
 
-प्रकार काष्ठा buffer अणु
-	काष्ठा buffer *next;
+typedef struct buffer {
+	struct buffer *next;
 	u32 *buf;
 
-पूर्ण buffer;
+} buffer;
 
-प्रकार काष्ठा rtl_reg_debug अणु
-	अचिन्हित पूर्णांक  cmd;
-	काष्ठा अणु
-		अचिन्हित अक्षर type;
-		अचिन्हित अक्षर addr;
-		अचिन्हित अक्षर page;
-		अचिन्हित अक्षर length;
-	पूर्ण head;
-	अचिन्हित अक्षर buf[0xff];
-पूर्ण rtl_reg_debug;
+typedef struct rtl_reg_debug {
+	unsigned int  cmd;
+	struct {
+		unsigned char type;
+		unsigned char addr;
+		unsigned char page;
+		unsigned char length;
+	} head;
+	unsigned char buf[0xff];
+} rtl_reg_debug;
 
-प्रकार काष्ठा _rt_9x_tx_rate_history अणु
+typedef struct _rt_9x_tx_rate_history {
 	u32             cck[4];
 	u32             ofdm[8];
 	u32             ht_mcs[4][16];
-पूर्ण rt_tx_rahis_t, *prt_tx_rahis_t;
-प्रकार काष्ठा _RT_SMOOTH_DATA_4RF अणु
+} rt_tx_rahis_t, *prt_tx_rahis_t;
+typedef struct _RT_SMOOTH_DATA_4RF {
 	s8    elements[4][100]; /* array to store values */
 	u32     index;            /* index to current array to store */
 	u32     TotalNum;         /* num of valid elements */
 	u32     TotalVal[4];      /* sum of valid elements */
-पूर्ण RT_SMOOTH_DATA_4RF, *PRT_SMOOTH_DATA_4RF;
+} RT_SMOOTH_DATA_4RF, *PRT_SMOOTH_DATA_4RF;
 
-/* This maybe changed क्रम D-cut larger aggregation size */
-#घोषणा MAX_8192U_RX_SIZE			8192
+/* This maybe changed for D-cut larger aggregation size */
+#define MAX_8192U_RX_SIZE			8192
 /* Stats seems messed up, clean it ASAP */
-प्रकार काष्ठा Stats अणु
-	अचिन्हित दीर्घ txrdu;
-	अचिन्हित दीर्घ rxok;
-	अचिन्हित दीर्घ rxframgment;
-	अचिन्हित दीर्घ rxurberr;
-	अचिन्हित दीर्घ rxstaterr;
+typedef struct Stats {
+	unsigned long txrdu;
+	unsigned long rxok;
+	unsigned long rxframgment;
+	unsigned long rxurberr;
+	unsigned long rxstaterr;
 	/* 0: Total, 1: OK, 2: CRC, 3: ICV */
-	अचिन्हित दीर्घ received_rate_histogram[4][32];
+	unsigned long received_rate_histogram[4][32];
 	/* 0: Long preamble/GI, 1: Short preamble/GI */
-	अचिन्हित दीर्घ received_preamble_GI[2][32];
+	unsigned long received_preamble_GI[2][32];
 	/* level: (<4K), (4K~8K), (8K~16K), (16K~32K), (32K~64K) */
-	अचिन्हित दीर्घ rx_AMPDUsize_histogram[5];
+	unsigned long rx_AMPDUsize_histogram[5];
 	/* level: (<5), (5~10), (10~20), (20~40), (>40) */
-	अचिन्हित दीर्घ rx_AMPDUnum_histogram[5];
-	अचिन्हित दीर्घ numpacket_matchbssid;
-	अचिन्हित दीर्घ numpacket_toself;
-	अचिन्हित दीर्घ num_process_phyinfo;
-	अचिन्हित दीर्घ numqry_phystatus;
-	अचिन्हित दीर्घ numqry_phystatusCCK;
-	अचिन्हित दीर्घ numqry_phystatusHT;
+	unsigned long rx_AMPDUnum_histogram[5];
+	unsigned long numpacket_matchbssid;
+	unsigned long numpacket_toself;
+	unsigned long num_process_phyinfo;
+	unsigned long numqry_phystatus;
+	unsigned long numqry_phystatusCCK;
+	unsigned long numqry_phystatusHT;
 	/* 0: 20M, 1: funn40M, 2: upper20M, 3: lower20M, 4: duplicate */
-	अचिन्हित दीर्घ received_bwtype[5];
-	अचिन्हित दीर्घ txnperr;
-	अचिन्हित दीर्घ txnpdrop;
-	अचिन्हित दीर्घ txresumed;
-	अचिन्हित दीर्घ txnpokपूर्णांक;
-	अचिन्हित दीर्घ txoverflow;
-	अचिन्हित दीर्घ txlpokपूर्णांक;
-	अचिन्हित दीर्घ txlpdrop;
-	अचिन्हित दीर्घ txlperr;
-	अचिन्हित दीर्घ txbeokपूर्णांक;
-	अचिन्हित दीर्घ txbedrop;
-	अचिन्हित दीर्घ txbeerr;
-	अचिन्हित दीर्घ txbkokपूर्णांक;
-	अचिन्हित दीर्घ txbkdrop;
-	अचिन्हित दीर्घ txbkerr;
-	अचिन्हित दीर्घ txviokपूर्णांक;
-	अचिन्हित दीर्घ txvidrop;
-	अचिन्हित दीर्घ txvierr;
-	अचिन्हित दीर्घ txvookपूर्णांक;
-	अचिन्हित दीर्घ txvodrop;
-	अचिन्हित दीर्घ txvoerr;
-	अचिन्हित दीर्घ txbeaconokपूर्णांक;
-	अचिन्हित दीर्घ txbeacondrop;
-	अचिन्हित दीर्घ txbeaconerr;
-	अचिन्हित दीर्घ txmanageokपूर्णांक;
-	अचिन्हित दीर्घ txmanagedrop;
-	अचिन्हित दीर्घ txmanageerr;
-	अचिन्हित दीर्घ txdatapkt;
-	अचिन्हित दीर्घ txfeedback;
-	अचिन्हित दीर्घ txfeedbackok;
+	unsigned long received_bwtype[5];
+	unsigned long txnperr;
+	unsigned long txnpdrop;
+	unsigned long txresumed;
+	unsigned long txnpokint;
+	unsigned long txoverflow;
+	unsigned long txlpokint;
+	unsigned long txlpdrop;
+	unsigned long txlperr;
+	unsigned long txbeokint;
+	unsigned long txbedrop;
+	unsigned long txbeerr;
+	unsigned long txbkokint;
+	unsigned long txbkdrop;
+	unsigned long txbkerr;
+	unsigned long txviokint;
+	unsigned long txvidrop;
+	unsigned long txvierr;
+	unsigned long txvookint;
+	unsigned long txvodrop;
+	unsigned long txvoerr;
+	unsigned long txbeaconokint;
+	unsigned long txbeacondrop;
+	unsigned long txbeaconerr;
+	unsigned long txmanageokint;
+	unsigned long txmanagedrop;
+	unsigned long txmanageerr;
+	unsigned long txdatapkt;
+	unsigned long txfeedback;
+	unsigned long txfeedbackok;
 
-	अचिन्हित दीर्घ txoktotal;
-	अचिन्हित दीर्घ txokbytestotal;
-	अचिन्हित दीर्घ txokinperiod;
-	अचिन्हित दीर्घ txmulticast;
-	अचिन्हित दीर्घ txbytesmulticast;
-	अचिन्हित दीर्घ txbroadcast;
-	अचिन्हित दीर्घ txbytesbroadcast;
-	अचिन्हित दीर्घ txunicast;
-	अचिन्हित दीर्घ txbytesunicast;
+	unsigned long txoktotal;
+	unsigned long txokbytestotal;
+	unsigned long txokinperiod;
+	unsigned long txmulticast;
+	unsigned long txbytesmulticast;
+	unsigned long txbroadcast;
+	unsigned long txbytesbroadcast;
+	unsigned long txunicast;
+	unsigned long txbytesunicast;
 
-	अचिन्हित दीर्घ rxoktotal;
-	अचिन्हित दीर्घ rxbytesunicast;
-	अचिन्हित दीर्घ txfeedbackfail;
-	अचिन्हित दीर्घ txerrtotal;
-	अचिन्हित दीर्घ txerrbytestotal;
-	अचिन्हित दीर्घ txerrmulticast;
-	अचिन्हित दीर्घ txerrbroadcast;
-	अचिन्हित दीर्घ txerrunicast;
-	अचिन्हित दीर्घ txretrycount;
-	अचिन्हित दीर्घ txfeedbackretry;
+	unsigned long rxoktotal;
+	unsigned long rxbytesunicast;
+	unsigned long txfeedbackfail;
+	unsigned long txerrtotal;
+	unsigned long txerrbytestotal;
+	unsigned long txerrmulticast;
+	unsigned long txerrbroadcast;
+	unsigned long txerrunicast;
+	unsigned long txretrycount;
+	unsigned long txfeedbackretry;
 	u8	      last_packet_rate;
-	अचिन्हित दीर्घ slide_संकेत_strength[100];
-	अचिन्हित दीर्घ slide_evm[100];
-	/* For recording sliding winकरोw's RSSI value */
-	अचिन्हित दीर्घ slide_rssi_total;
-	/* For recording sliding winकरोw's EVM value */
-	अचिन्हित दीर्घ slide_evm_total;
-	/* Transक्रमmed in dbm. Beautअगरied संकेत strength क्रम UI, not correct */
-	दीर्घ संकेत_strength;
-	दीर्घ संकेत_quality;
-	दीर्घ last_संकेत_strength_inpercent;
+	unsigned long slide_signal_strength[100];
+	unsigned long slide_evm[100];
+	/* For recording sliding window's RSSI value */
+	unsigned long slide_rssi_total;
+	/* For recording sliding window's EVM value */
+	unsigned long slide_evm_total;
+	/* Transformed in dbm. Beautified signal strength for UI, not correct */
+	long signal_strength;
+	long signal_quality;
+	long last_signal_strength_inpercent;
 	/* Correct smoothed ss in dbm, only used in driver
-	 * to report real घातer now
+	 * to report real power now
 	 */
-	दीर्घ recv_संकेत_घातer;
+	long recv_signal_power;
 	u8 rx_rssi_percentage[4];
 	u8 rx_evm_percentage[2];
-	दीर्घ rxSNRdB[4];
+	long rxSNRdB[4];
 	rt_tx_rahis_t txrate;
 	/* For beacon RSSI */
 	u32 Slide_Beacon_pwdb[100];
@@ -585,31 +584,31 @@
 	RT_SMOOTH_DATA_4RF              cck_adc_pwdb;
 
 	u32	CurrentShowTxate;
-पूर्ण Stats;
+} Stats;
 
 /* Bandwidth Offset */
-#घोषणा HAL_PRIME_CHNL_OFFSET_DONT_CARE		0
-#घोषणा HAL_PRIME_CHNL_OFFSET_LOWER			1
-#घोषणा HAL_PRIME_CHNL_OFFSET_UPPER			2
+#define HAL_PRIME_CHNL_OFFSET_DONT_CARE		0
+#define HAL_PRIME_CHNL_OFFSET_LOWER			1
+#define HAL_PRIME_CHNL_OFFSET_UPPER			2
 
-प्रकार काष्ठा	ChnlAccessSetting अणु
+typedef struct	ChnlAccessSetting {
 	u16 SIFS_Timer;
 	u16 DIFS_Timer;
 	u16 SlotTimeTimer;
 	u16 EIFS_Timer;
 	u16 CWminIndex;
 	u16 CWmaxIndex;
-पूर्ण *PCHANNEL_ACCESS_SETTING, CHANNEL_ACCESS_SETTING;
+} *PCHANNEL_ACCESS_SETTING, CHANNEL_ACCESS_SETTING;
 
-प्रकार काष्ठा _BB_REGISTER_DEFINITION अणु
+typedef struct _BB_REGISTER_DEFINITION {
 	/* set software control:        0x870~0x877 [8 bytes]  */
-	u32 rfपूर्णांकfs;
-	/* पढ़ोback data:               0x8e0~0x8e7 [8 bytes]  */
-	u32 rfपूर्णांकfi;
+	u32 rfintfs;
+	/* readback data:               0x8e0~0x8e7 [8 bytes]  */
+	u32 rfintfi;
 	/* output data:                 0x860~0x86f [16 bytes] */
-	u32 rfपूर्णांकfo;
+	u32 rfintfo;
 	/* output enable:               0x860~0x86f [16 bytes] */
-	u32 rfपूर्णांकfe;
+	u32 rfintfe;
 	/* LSSI data:                   0x840~0x84f [16 bytes] */
 	u32 rf3wireOffset;
 	/* BB Band Select:              0x878~0x87f [8 bytes]  */
@@ -652,37 +651,37 @@
 	 *                              0xc94~0xc97, 0xc9c~0xc9f [16 bytes]
 	 */
 	u32 rfTxAFE;
-	/* LSSI RF पढ़ोback data:       0x8a0~0x8af [16 bytes] */
+	/* LSSI RF readback data:       0x8a0~0x8af [16 bytes] */
 	u32 rfLSSIReadBack;
-पूर्ण BB_REGISTER_DEFINITION_T, *PBB_REGISTER_DEFINITION_T;
+} BB_REGISTER_DEFINITION_T, *PBB_REGISTER_DEFINITION_T;
 
-प्रकार क्रमागत _RT_RF_TYPE_819xU अणु
+typedef enum _RT_RF_TYPE_819xU {
 	RF_TYPE_MIN = 0,
 	RF_8225,
 	RF_8256,
 	RF_8258,
 	RF_PSEUDO_11N = 4,
-पूर्ण RT_RF_TYPE_819xU, *PRT_RF_TYPE_819xU;
+} RT_RF_TYPE_819xU, *PRT_RF_TYPE_819xU;
 
 /* 2007/10/08 MH Define RATR state. */
-क्रमागत dynamic_ratr_state अणु
+enum dynamic_ratr_state {
 	DM_RATR_STA_HIGH = 0,
 	DM_RATR_STA_MIDDLE = 1,
 	DM_RATR_STA_LOW = 2,
 	DM_RATR_STA_MAX
-पूर्ण;
+};
 
-प्रकार काष्ठा _rate_adaptive अणु
+typedef struct _rate_adaptive {
 	u8				rate_adaptive_disabled;
-	क्रमागत dynamic_ratr_state		ratr_state;
+	enum dynamic_ratr_state		ratr_state;
 	u16				reserve;
 
-	u32				high_rssi_thresh_क्रम_ra;
-	u32				high2low_rssi_thresh_क्रम_ra;
-	u8				low2high_rssi_thresh_क्रम_ra40M;
-	u32				low_rssi_thresh_क्रम_ra40M;
-	u8				low2high_rssi_thresh_क्रम_ra20M;
-	u32				low_rssi_thresh_क्रम_ra20M;
+	u32				high_rssi_thresh_for_ra;
+	u32				high2low_rssi_thresh_for_ra;
+	u8				low2high_rssi_thresh_for_ra40M;
+	u32				low_rssi_thresh_for_ra40M;
+	u8				low2high_rssi_thresh_for_ra20M;
+	u32				low_rssi_thresh_for_ra20M;
 	u32				upper_rssi_threshold_ratr;
 	u32				middle_rssi_threshold_ratr;
 	u32				low_rssi_threshold_ratr;
@@ -690,34 +689,34 @@
 	u32				low_rssi_threshold_ratr_20M;
 	u8				ping_rssi_enable;
 	u32				ping_rssi_ratr;
-	u32				ping_rssi_thresh_क्रम_ra;
+	u32				ping_rssi_thresh_for_ra;
 	u32				last_ratr;
 
-पूर्ण rate_adaptive, *prate_adaptive;
+} rate_adaptive, *prate_adaptive;
 
-#घोषणा TxBBGainTableLength 37
-#घोषणा	CCKTxBBGainTableLength 23
+#define TxBBGainTableLength 37
+#define	CCKTxBBGainTableLength 23
 
-प्रकार काष्ठा _txbbgain_काष्ठा अणु
-	दीर्घ	txbb_iq_amplअगरygain;
+typedef struct _txbbgain_struct {
+	long	txbb_iq_amplifygain;
 	u32	txbbgain_value;
-पूर्ण txbbgain_काष्ठा, *ptxbbgain_काष्ठा;
+} txbbgain_struct, *ptxbbgain_struct;
 
-प्रकार काष्ठा _ccktxbbgain_काष्ठा अणु
-	/* The value is from a22 to a29, one byte one समय is much safer */
+typedef struct _ccktxbbgain_struct {
+	/* The value is from a22 to a29, one byte one time is much safer */
 	u8	ccktxbb_valuearray[8];
-पूर्ण ccktxbbgain_काष्ठा, *pccktxbbgain_काष्ठा;
+} ccktxbbgain_struct, *pccktxbbgain_struct;
 
-प्रकार काष्ठा _init_gain अणु
+typedef struct _init_gain {
 	u8				xaagccore1;
 	u8				xbagccore1;
 	u8				xcagccore1;
 	u8				xdagccore1;
 	u8				cca;
 
-पूर्ण init_gain, *pinit_gain;
+} init_gain, *pinit_gain;
 
-प्रकार काष्ठा _phy_ofdm_rx_status_report_819xusb अणु
+typedef struct _phy_ofdm_rx_status_report_819xusb {
 	u8	trsw_gain_X[4];
 	u8	pwdb_all;
 	u8	cfosho_X[4];
@@ -731,26 +730,26 @@
 	u8	max_ex_pwr;
 	u8	sgi_en;
 	u8  rxsc_sgien_exflg;
-पूर्ण phy_sts_ofdm_819xusb_t;
+} phy_sts_ofdm_819xusb_t;
 
-प्रकार काष्ठा _phy_cck_rx_status_report_819xusb अणु
-	/* For CCK rate descriptor. This is an अचिन्हित 8:1 variable.
-	 * LSB bit presend 0.5. And MSB 7 bts presend a चिन्हित value.
+typedef struct _phy_cck_rx_status_report_819xusb {
+	/* For CCK rate descriptor. This is an unsigned 8:1 variable.
+	 * LSB bit presend 0.5. And MSB 7 bts presend a signed value.
 	 * Range from -64~+63.5.
 	 */
 	u8	adc_pwdb_X[4];
 	u8	sq_rpt;
 	u8	cck_agc_rpt;
-पूर्ण phy_sts_cck_819xusb_t;
+} phy_sts_cck_819xusb_t;
 
-काष्ठा phy_ofdm_rx_status_rxsc_sgien_exपूर्णांकfflag अणु
+struct phy_ofdm_rx_status_rxsc_sgien_exintfflag {
 	u8			reserved:4;
 	u8			rxsc:2;
 	u8			sgi_en:1;
-	u8			ex_पूर्णांकf_flag:1;
-पूर्ण;
+	u8			ex_intf_flag:1;
+};
 
-प्रकार क्रमागत _RT_CUSTOMER_ID अणु
+typedef enum _RT_CUSTOMER_ID {
 	RT_CID_DEFAULT = 0,
 	RT_CID_8187_ALPHA0 = 1,
 	RT_CID_8187_SERCOMM_PS = 2,
@@ -765,7 +764,7 @@
 	RT_CID_Nettronix = 11,
 	RT_CID_DLINK = 12,
 	RT_CID_PRONET = 13,
-पूर्ण RT_CUSTOMER_ID, *PRT_CUSTOMER_ID;
+} RT_CUSTOMER_ID, *PRT_CUSTOMER_ID;
 
 /*
  * ==========================================================================
@@ -773,24 +772,24 @@
  * ==========================================================================
  */
 
-प्रकार	क्रमागत _LED_STRATEGY_8190 अणु
-	SW_LED_MODE0, /* SW control 1 LED via GPIO0. It is शेष option. */
-	SW_LED_MODE1, /* SW control क्रम PCI Express */
-	SW_LED_MODE2, /* SW control क्रम Cameo. */
-	SW_LED_MODE3, /* SW control क्रम RunTop. */
-	SW_LED_MODE4, /* SW control क्रम Netcore. */
-	/* HW control 2 LEDs, LED0 and LED1 (4 dअगरferent control modes) */
+typedef	enum _LED_STRATEGY_8190 {
+	SW_LED_MODE0, /* SW control 1 LED via GPIO0. It is default option. */
+	SW_LED_MODE1, /* SW control for PCI Express */
+	SW_LED_MODE2, /* SW control for Cameo. */
+	SW_LED_MODE3, /* SW control for RunTop. */
+	SW_LED_MODE4, /* SW control for Netcore. */
+	/* HW control 2 LEDs, LED0 and LED1 (4 different control modes) */
 	HW_LED,
-पूर्ण LED_STRATEGY_8190, *PLED_STRATEGY_8190;
+} LED_STRATEGY_8190, *PLED_STRATEGY_8190;
 
-प्रकार क्रमागत _RESET_TYPE अणु
+typedef enum _RESET_TYPE {
 	RESET_TYPE_NORESET = 0x00,
 	RESET_TYPE_NORMAL = 0x01,
 	RESET_TYPE_SILENT = 0x02
-पूर्ण RESET_TYPE;
+} RESET_TYPE;
 
 /* The simple tx command OP code. */
-प्रकार क्रमागत _tag_TxCmd_Config_Index अणु
+typedef enum _tag_TxCmd_Config_Index {
 	TXCMD_TXRA_HISTORY_CTRL				= 0xFF900000,
 	TXCMD_RESET_TX_PKT_BUFF				= 0xFF900001,
 	TXCMD_RESET_RX_PKT_BUFF				= 0xFF900002,
@@ -798,24 +797,24 @@
 	TXCMD_SET_RX_RSSI						= 0xFF900004,
 	TXCMD_SET_TX_PWR_TRACKING			= 0xFF900005,
 	TXCMD_XXXX_CTRL,
-पूर्ण DCMD_TXCMD_OP;
+} DCMD_TXCMD_OP;
 
-क्रमागत version_819xu अणु
+enum version_819xu {
 	VERSION_819XU_A, // A-cut
 	VERSION_819XU_B, // B-cut
 	VERSION_819XU_C,// C-cut
-पूर्ण;
+};
 
-//added क्रम dअगरferent RF type
-क्रमागत rt_rf_type अणु
+//added for different RF type
+enum rt_rf_type {
 	RF_1T2R = 0,
 	RF_2T4R,
-पूर्ण;
+};
 
-प्रकार काष्ठा r8192_priv अणु
-	काष्ठा usb_device *udev;
-	/* For मुख्यtain info from eeprom */
-	लघु epromtype;
+typedef struct r8192_priv {
+	struct usb_device *udev;
+	/* For maintain info from eeprom */
+	short epromtype;
 	u16 eeprom_vid;
 	u16 eeprom_pid;
 	u8  eeprom_CustomerID;
@@ -823,69 +822,69 @@
 	RT_CUSTOMER_ID CustomerID;
 	LED_STRATEGY_8190	LedStrategy;
 	u8  txqueue_to_outpipemap[9];
-	पूर्णांक irq;
-	काष्ठा ieee80211_device *ieee80211;
+	int irq;
+	struct ieee80211_device *ieee80211;
 
 	/* O: rtl8192, 1: rtl8185 V B/C, 2: rtl8185 V D */
-	लघु card_8192;
+	short card_8192;
 	/* If TCR reports card V B/C, this discriminates */
-	क्रमागत version_819xu card_8192_version;
-	लघु enable_gpio0;
-	क्रमागत card_type अणु
+	enum version_819xu card_8192_version;
+	short enable_gpio0;
+	enum card_type {
 		PCI, MINIPCI, CARDBUS, USB
-	पूर्ण card_type;
-	लघु hw_plcp_len;
-	लघु plcp_preamble_mode;
+	} card_type;
+	short hw_plcp_len;
+	short plcp_preamble_mode;
 
 	spinlock_t irq_lock;
 	spinlock_t tx_lock;
-	काष्ठा mutex mutex;
+	struct mutex mutex;
 
 	u16 irq_mask;
-	लघु chan;
-	लघु sens;
-	लघु max_sens;
+	short chan;
+	short sens;
+	short max_sens;
 
-	लघु up;
+	short up;
 	/* If 1, allow bad crc frame, reception in monitor mode */
-	लघु crcmon;
+	short crcmon;
 
-	काष्ठा mutex wx_mutex;
+	struct mutex wx_mutex;
 
-	क्रमागत rt_rf_type   rf_type;	    /* 0: 1T2R, 1: 2T4R */
+	enum rt_rf_type   rf_type;	    /* 0: 1T2R, 1: 2T4R */
 	RT_RF_TYPE_819xU rf_chip;
 
-	लघु (*rf_set_sens)(काष्ठा net_device *dev, लघु sens);
-	u8 (*rf_set_chan)(काष्ठा net_device *dev, u8 ch);
-	व्योम (*rf_बंद)(काष्ठा net_device *dev);
-	व्योम (*rf_init)(काष्ठा net_device *dev);
-	लघु promisc;
+	short (*rf_set_sens)(struct net_device *dev, short sens);
+	u8 (*rf_set_chan)(struct net_device *dev, u8 ch);
+	void (*rf_close)(struct net_device *dev);
+	void (*rf_init)(struct net_device *dev);
+	short promisc;
 	/* Stats */
-	काष्ठा Stats stats;
-	काष्ठा iw_statistics wstats;
+	struct Stats stats;
+	struct iw_statistics wstats;
 
 	/* RX stuff */
-	काष्ठा urb **rx_urb;
-	काष्ठा urb **rx_cmd_urb;
-#अगर_घोषित THOMAS_BEACON
+	struct urb **rx_urb;
+	struct urb **rx_cmd_urb;
+#ifdef THOMAS_BEACON
 	u32 *oldaddr;
-#पूर्ण_अगर
-#अगर_घोषित THOMAS_TASKLET
-	atomic_t irt_counter; /* count क्रम irq_rx_tasklet */
-#पूर्ण_अगर
-#अगर_घोषित JACKSON_NEW_RX
-	काष्ठा sk_buff **pp_rxskb;
-	पूर्णांक     rx_inx;
-#पूर्ण_अगर
+#endif
+#ifdef THOMAS_TASKLET
+	atomic_t irt_counter; /* count for irq_rx_tasklet */
+#endif
+#ifdef JACKSON_NEW_RX
+	struct sk_buff **pp_rxskb;
+	int     rx_inx;
+#endif
 
-	काष्ठा sk_buff_head rx_queue;
-	काष्ठा sk_buff_head skb_queue;
-	काष्ठा work_काष्ठा qos_activate;
-	लघु  tx_urb_index;
+	struct sk_buff_head rx_queue;
+	struct sk_buff_head skb_queue;
+	struct work_struct qos_activate;
+	short  tx_urb_index;
 	atomic_t tx_pending[0x10]; /* UART_PRIORITY + 1 */
 
-	काष्ठा tasklet_काष्ठा irq_rx_tasklet;
-	काष्ठा urb *rxurb_task;
+	struct tasklet_struct irq_rx_tasklet;
+	struct urb *rxurb_task;
 
 	/* Tx Related variables */
 	u16	ShortRetryLimit;
@@ -907,22 +906,22 @@
 	u8 retry_rts;
 	u16 rts;
 
-	काष्ठा	ChnlAccessSetting  ChannelAccessSetting;
-	काष्ठा work_काष्ठा reset_wq;
+	struct	ChnlAccessSetting  ChannelAccessSetting;
+	struct work_struct reset_wq;
 
 /**********************************************************/
 	/* For rtl819xUsb */
 	u16     basic_rate;
-	u8      लघु_preamble;
-	u8      slot_समय;
+	u8      short_preamble;
+	u8      slot_time;
 	bool	bDcut;
 	bool bCurrentRxAggrEnable;
-	क्रमागत rf_op_type Rf_Mode;	/* For Firmware RF -R/W चयन */
+	enum rf_op_type Rf_Mode;	/* For Firmware RF -R/W switch */
 	prt_firmware		pFirmware;
 	rtl819xUsb_loopback_e	LoopbackMode;
-	u16 EEPROMTxPowerDअगरf;
+	u16 EEPROMTxPowerDiff;
 	u8 EEPROMThermalMeter;
-	u8 EEPROMPwDअगरf;
+	u8 EEPROMPwDiff;
 	u8 EEPROMCrystalCap;
 	u8 EEPROM_Def_Ver;
 	u8 EEPROMTxPowerLevelCCK;		/* CCK channel 1~14 */
@@ -932,81 +931,81 @@
 
 	/* PHY related */
 	BB_REGISTER_DEFINITION_T PHYRegDef[4];	/* Radio A/B/C/D */
-	/* Read/ग_लिखो are allow क्रम following hardware inक्रमmation variables */
+	/* Read/write are allow for following hardware information variables */
 	u32	MCSTxPowerLevelOriginalOffset[6];
 	u32	CCKTxPowerLevelOriginalOffset;
 	u8	TxPowerLevelCCK[14];		/* CCK channel 1~14 */
 	u8	TxPowerLevelOFDM24G[14];	/* OFDM 2.4G channel 1~14 */
 	u8	TxPowerLevelOFDM5G[14];		/* OFDM 5G */
 	u32	Pwr_Track;
-	u8	TxPowerDअगरf;
-	u8	AntennaTxPwDअगरf[2]; /* Antenna gain offset, 0: B, 1: C, 2: D */
+	u8	TxPowerDiff;
+	u8	AntennaTxPwDiff[2]; /* Antenna gain offset, 0: B, 1: C, 2: D */
 	u8	CrystalCap;
 	u8	ThermalMeter[2];    /* index 0: RFIC0, index 1: RFIC1 */
 
 	u8	CckPwEnl;
 	/* Use to calculate PWBD */
 	u8	bCckHighPower;
-	दीर्घ	undecorated_smoothed_pwdb;
+	long	undecorated_smoothed_pwdb;
 
 	/* For set channel */
 	u8	SwChnlInProgress;
 	u8	SwChnlStage;
 	u8	SwChnlStep;
 	u8	SetBWModeInProgress;
-	क्रमागत ht_channel_width 	CurrentChannelBW;
+	enum ht_channel_width 	CurrentChannelBW;
 	u8      ChannelPlan;
 	/* 8190 40MHz mode */
 	/* Control channel sub-carrier */
 	u8	nCur40MhzPrimeSC;
-	/* Test क्रम लघुen RF configuration समय.
-	 * We save RF reg0 in this variable to reduce RF पढ़ोing.
+	/* Test for shorten RF configuration time.
+	 * We save RF reg0 in this variable to reduce RF reading.
 	 */
 	u32					RfReg0Value[4];
 	u8					NumTotalRFPath;
 	bool				brfpath_rxenable[4];
 	/* RF set related */
 	bool				SetRFPowerStateInProgress;
-	काष्ठा समयr_list watch_करोg_समयr;
+	struct timer_list watch_dog_timer;
 
 	/* For dynamic mechanism */
-	/* Tx Power Control क्रम Near/Far Range */
-	bool	bdynamic_txघातer;
+	/* Tx Power Control for Near/Far Range */
+	bool	bdynamic_txpower;
 	bool	bDynamicTxHighPower;
 	bool	bDynamicTxLowPower;
 	bool	bLastDTPFlag_High;
 	bool	bLastDTPFlag_Low;
 
 	bool	bstore_last_dtpflag;
-	/* Define to discriminate on High घातer State or
+	/* Define to discriminate on High power State or
 	 * on sitesurvey to change Tx gain index
 	 */
 	bool	bstart_txctrl_bydtp;
 	rate_adaptive rate_adaptive;
-	/* TX घातer tracking
+	/* TX power tracking
 	 * OPEN/CLOSE TX POWER TRACKING
 	 */
-	txbbgain_काष्ठा txbbgain_table[TxBBGainTableLength];
-	u8		txघातer_count; /* For 6 sec करो tracking again */
-	bool		btxघातer_trackingInit;
+	txbbgain_struct txbbgain_table[TxBBGainTableLength];
+	u8		txpower_count; /* For 6 sec do tracking again */
+	bool		btxpower_trackingInit;
 	u8		OFDM_index;
 	u8		CCK_index;
 	/* CCK TX Power Tracking */
-	ccktxbbgain_काष्ठा	cck_txbbgain_table[CCKTxBBGainTableLength];
-	ccktxbbgain_काष्ठा	cck_txbbgain_ch14_table[CCKTxBBGainTableLength];
-	u8 rfa_txघातertrackingindex;
-	u8 rfa_txघातertrackingindex_real;
-	u8 rfa_txघातertracking_शेष;
-	u8 rfc_txघातertrackingindex;
-	u8 rfc_txघातertrackingindex_real;
+	ccktxbbgain_struct	cck_txbbgain_table[CCKTxBBGainTableLength];
+	ccktxbbgain_struct	cck_txbbgain_ch14_table[CCKTxBBGainTableLength];
+	u8 rfa_txpowertrackingindex;
+	u8 rfa_txpowertrackingindex_real;
+	u8 rfa_txpowertracking_default;
+	u8 rfc_txpowertrackingindex;
+	u8 rfc_txpowertrackingindex_real;
 
 	s8 cck_present_attenuation;
-	u8 cck_present_attenuation_20Mशेष;
-	u8 cck_present_attenuation_40Mशेष;
-	s8 cck_present_attenuation_dअगरference;
-	bool btxघातer_tracking;
+	u8 cck_present_attenuation_20Mdefault;
+	u8 cck_present_attenuation_40Mdefault;
+	s8 cck_present_attenuation_difference;
+	bool btxpower_tracking;
 	bool bcck_in_ch14;
-	bool btxघातerdata_पढ़ोfromEEPORM;
+	bool btxpowerdata_readfromEEPORM;
 	u16	TSSI_13dBm;
 	init_gain initgain_backup;
 	u8 DefaultInitialGain[4];
@@ -1014,12 +1013,12 @@
 	bool		bis_any_nonbepkts;
 	bool		bcurrent_turbo_EDCA;
 	bool		bis_cur_rdlstate;
-	काष्ठा समयr_list fsync_समयr;
-	bool bfsync_processing;	/* 500ms Fsync समयr is active or not */
+	struct timer_list fsync_timer;
+	bool bfsync_processing;	/* 500ms Fsync timer is active or not */
 	u32	rate_record;
-	u32	rateCountDअगरfRecord;
-	u32	ContinueDअगरfCount;
-	bool bचयन_fsync;
+	u32	rateCountDiffRecord;
+	u32	ContinueDiffCount;
+	bool bswitch_fsync;
 
 	u8	framesync;
 	u32	framesyncC34;
@@ -1032,40 +1031,40 @@
 
 	u32 reset_count;
 	bool bpbc_pressed;
-	u32 txघातer_checkcnt;
-	u32 txघातer_tracking_callback_cnt;
-	u8 thermal_पढ़ो_val[40];
-	u8 thermal_पढ़ोback_index;
-	u32 ccktxघातer_adjustcnt_not_ch14;
-	u32 ccktxघातer_adjustcnt_ch14;
-	u8 tx_fwinfo_क्रमce_subcarriermode;
-	u8 tx_fwinfo_क्रमce_subcarrierval;
+	u32 txpower_checkcnt;
+	u32 txpower_tracking_callback_cnt;
+	u8 thermal_read_val[40];
+	u8 thermal_readback_index;
+	u32 ccktxpower_adjustcnt_not_ch14;
+	u32 ccktxpower_adjustcnt_ch14;
+	u8 tx_fwinfo_force_subcarriermode;
+	u8 tx_fwinfo_force_subcarrierval;
 	/* For silent reset */
 	RESET_TYPE	ResetProgress;
 	bool		bForcedSilentReset;
 	bool		bDisableNormalResetCheck;
 	u16		TxCounter;
 	u16		RxCounter;
-	पूर्णांक		IrpPendingCount;
+	int		IrpPendingCount;
 	bool		bResetInProgress;
-	bool		क्रमce_reset;
+	bool		force_reset;
 	u8		InitialGainOperateType;
 
-	u16		SअगरsTime;
+	u16		SifsTime;
 
 	/* Define work item */
 
-	काष्ठा delayed_work update_beacon_wq;
-	काष्ठा delayed_work watch_करोg_wq;
-	काष्ठा delayed_work txघातer_tracking_wq;
-	काष्ठा delayed_work rfpath_check_wq;
-	काष्ठा delayed_work gpio_change_rf_wq;
-	काष्ठा delayed_work initialgain_operate_wq;
-	काष्ठा workqueue_काष्ठा *priv_wq;
-पूर्ण r8192_priv;
+	struct delayed_work update_beacon_wq;
+	struct delayed_work watch_dog_wq;
+	struct delayed_work txpower_tracking_wq;
+	struct delayed_work rfpath_check_wq;
+	struct delayed_work gpio_change_rf_wq;
+	struct delayed_work initialgain_operate_wq;
+	struct workqueue_struct *priv_wq;
+} r8192_priv;
 
 /* For rtl8187B */
-प्रकार क्रमागतअणु
+typedef enum{
 	BULK_PRIORITY = 0x01,
 	LOW_PRIORITY,
 	NORM_PRIORITY,
@@ -1081,40 +1080,40 @@
 	RSVD4,
 	RSVD5,
 	UART_PRIORITY
-पूर्ण priority_t;
+} priority_t;
 
-प्रकार क्रमागत अणु
+typedef enum {
 	NIC_8192U = 1,
 	NIC_8190P = 2,
 	NIC_8192E = 3,
-पूर्ण nic_t;
+} nic_t;
 
-bool init_firmware(काष्ठा net_device *dev);
-लघु rtl819xU_tx_cmd(काष्ठा net_device *dev, काष्ठा sk_buff *skb);
-लघु rtl8192_tx(काष्ठा net_device *dev, काष्ठा sk_buff *skb);
+bool init_firmware(struct net_device *dev);
+short rtl819xU_tx_cmd(struct net_device *dev, struct sk_buff *skb);
+short rtl8192_tx(struct net_device *dev, struct sk_buff *skb);
 
-पूर्णांक पढ़ो_nic_byte(काष्ठा net_device *dev, पूर्णांक x, u8 *data);
-पूर्णांक पढ़ो_nic_byte_E(काष्ठा net_device *dev, पूर्णांक x, u8 *data);
-पूर्णांक पढ़ो_nic_dword(काष्ठा net_device *dev, पूर्णांक x, u32 *data);
-पूर्णांक पढ़ो_nic_word(काष्ठा net_device *dev, पूर्णांक x, u16 *data);
-पूर्णांक ग_लिखो_nic_byte(काष्ठा net_device *dev, पूर्णांक x, u8 y);
-पूर्णांक ग_लिखो_nic_byte_E(काष्ठा net_device *dev, पूर्णांक x, u8 y);
-पूर्णांक ग_लिखो_nic_word(काष्ठा net_device *dev, पूर्णांक x, u16 y);
-पूर्णांक ग_लिखो_nic_dword(काष्ठा net_device *dev, पूर्णांक x, u32 y);
-व्योम क्रमce_pci_posting(काष्ठा net_device *dev);
+int read_nic_byte(struct net_device *dev, int x, u8 *data);
+int read_nic_byte_E(struct net_device *dev, int x, u8 *data);
+int read_nic_dword(struct net_device *dev, int x, u32 *data);
+int read_nic_word(struct net_device *dev, int x, u16 *data);
+int write_nic_byte(struct net_device *dev, int x, u8 y);
+int write_nic_byte_E(struct net_device *dev, int x, u8 y);
+int write_nic_word(struct net_device *dev, int x, u16 y);
+int write_nic_dword(struct net_device *dev, int x, u32 y);
+void force_pci_posting(struct net_device *dev);
 
-व्योम rtl8192_rtx_disable(काष्ठा net_device *dev);
-व्योम rtl8192_rx_enable(काष्ठा net_device *dev);
+void rtl8192_rtx_disable(struct net_device *dev);
+void rtl8192_rx_enable(struct net_device *dev);
 
-व्योम rtl8192_update_msr(काष्ठा net_device *dev);
-पूर्णांक rtl8192_करोwn(काष्ठा net_device *dev);
-पूर्णांक rtl8192_up(काष्ठा net_device *dev);
-व्योम rtl8192_commit(काष्ठा net_device *dev);
-व्योम rtl8192_set_chan(काष्ठा net_device *dev, लघु ch);
-व्योम rtl8192_set_rxconf(काष्ठा net_device *dev);
-व्योम rtl819xusb_beacon_tx(काष्ठा net_device *dev, u16 tx_rate);
+void rtl8192_update_msr(struct net_device *dev);
+int rtl8192_down(struct net_device *dev);
+int rtl8192_up(struct net_device *dev);
+void rtl8192_commit(struct net_device *dev);
+void rtl8192_set_chan(struct net_device *dev, short ch);
+void rtl8192_set_rxconf(struct net_device *dev);
+void rtl819xusb_beacon_tx(struct net_device *dev, u16 tx_rate);
 
-व्योम EnableHWSecurityConfig8192(काष्ठा net_device *dev);
-व्योम setKey(काष्ठा net_device *dev, u8 EntryNo, u8 KeyIndex, u16 KeyType, u8 *MacAddr, u8 DefaultKey, u32 *KeyContent);
+void EnableHWSecurityConfig8192(struct net_device *dev);
+void setKey(struct net_device *dev, u8 EntryNo, u8 KeyIndex, u16 KeyType, u8 *MacAddr, u8 DefaultKey, u32 *KeyContent);
 
-#पूर्ण_अगर
+#endif

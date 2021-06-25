@@ -1,186 +1,185 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* ATM driver model support. */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kobject.h>
-#समावेश <linux/aपंचांगdev.h>
-#समावेश "common.h"
-#समावेश "resources.h"
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/kobject.h>
+#include <linux/atmdev.h>
+#include "common.h"
+#include "resources.h"
 
-#घोषणा to_aपंचांग_dev(cldev) container_of(cldev, काष्ठा aपंचांग_dev, class_dev)
+#define to_atm_dev(cldev) container_of(cldev, struct atm_dev, class_dev)
 
-अटल sमाप_प्रकार show_type(काष्ठा device *cdev,
-			 काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा aपंचांग_dev *adev = to_aपंचांग_dev(cdev);
+static ssize_t show_type(struct device *cdev,
+			 struct device_attribute *attr, char *buf)
+{
+	struct atm_dev *adev = to_atm_dev(cdev);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%s\n", adev->type);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%s\n", adev->type);
+}
 
-अटल sमाप_प्रकार show_address(काष्ठा device *cdev,
-			    काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा aपंचांग_dev *adev = to_aपंचांग_dev(cdev);
+static ssize_t show_address(struct device *cdev,
+			    struct device_attribute *attr, char *buf)
+{
+	struct atm_dev *adev = to_atm_dev(cdev);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%pM\n", adev->esi);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%pM\n", adev->esi);
+}
 
-अटल sमाप_प्रकार show_aपंचांगaddress(काष्ठा device *cdev,
-			       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा aपंचांग_dev *adev = to_aपंचांग_dev(cdev);
-	काष्ठा aपंचांग_dev_addr *aaddr;
-	पूर्णांक count = 0;
+static ssize_t show_atmaddress(struct device *cdev,
+			       struct device_attribute *attr, char *buf)
+{
+	unsigned long flags;
+	struct atm_dev *adev = to_atm_dev(cdev);
+	struct atm_dev_addr *aaddr;
+	int count = 0;
 
 	spin_lock_irqsave(&adev->lock, flags);
-	list_क्रम_each_entry(aaddr, &adev->local, entry) अणु
-		count += scnम_लिखो(buf + count, PAGE_SIZE - count,
+	list_for_each_entry(aaddr, &adev->local, entry) {
+		count += scnprintf(buf + count, PAGE_SIZE - count,
 				   "%1phN.%2phN.%10phN.%6phN.%1phN\n",
 				   &aaddr->addr.sas_addr.prv[0],
 				   &aaddr->addr.sas_addr.prv[1],
 				   &aaddr->addr.sas_addr.prv[3],
 				   &aaddr->addr.sas_addr.prv[13],
 				   &aaddr->addr.sas_addr.prv[19]);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&adev->lock, flags);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार show_aपंचांगindex(काष्ठा device *cdev,
-			     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा aपंचांग_dev *adev = to_aपंचांग_dev(cdev);
+static ssize_t show_atmindex(struct device *cdev,
+			     struct device_attribute *attr, char *buf)
+{
+	struct atm_dev *adev = to_atm_dev(cdev);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", adev->number);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%d\n", adev->number);
+}
 
-अटल sमाप_प्रकार show_carrier(काष्ठा device *cdev,
-			    काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा aपंचांग_dev *adev = to_aपंचांग_dev(cdev);
+static ssize_t show_carrier(struct device *cdev,
+			    struct device_attribute *attr, char *buf)
+{
+	struct atm_dev *adev = to_atm_dev(cdev);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n",
-			 adev->संकेत == ATM_PHY_SIG_LOST ? 0 : 1);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%d\n",
+			 adev->signal == ATM_PHY_SIG_LOST ? 0 : 1);
+}
 
-अटल sमाप_प्रकार show_link_rate(काष्ठा device *cdev,
-			      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा aपंचांग_dev *adev = to_aपंचांग_dev(cdev);
-	पूर्णांक link_rate;
+static ssize_t show_link_rate(struct device *cdev,
+			      struct device_attribute *attr, char *buf)
+{
+	struct atm_dev *adev = to_atm_dev(cdev);
+	int link_rate;
 
 	/* show the link rate, not the data rate */
-	चयन (adev->link_rate) अणु
-	हाल ATM_OC3_PCR:
+	switch (adev->link_rate) {
+	case ATM_OC3_PCR:
 		link_rate = 155520000;
-		अवरोध;
-	हाल ATM_OC12_PCR:
+		break;
+	case ATM_OC12_PCR:
 		link_rate = 622080000;
-		अवरोध;
-	हाल ATM_25_PCR:
+		break;
+	case ATM_25_PCR:
 		link_rate = 25600000;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		link_rate = adev->link_rate * 8 * 53;
-	पूर्ण
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", link_rate);
-पूर्ण
+	}
+	return scnprintf(buf, PAGE_SIZE, "%d\n", link_rate);
+}
 
-अटल DEVICE_ATTR(address, 0444, show_address, शून्य);
-अटल DEVICE_ATTR(aपंचांगaddress, 0444, show_aपंचांगaddress, शून्य);
-अटल DEVICE_ATTR(aपंचांगindex, 0444, show_aपंचांगindex, शून्य);
-अटल DEVICE_ATTR(carrier, 0444, show_carrier, शून्य);
-अटल DEVICE_ATTR(type, 0444, show_type, शून्य);
-अटल DEVICE_ATTR(link_rate, 0444, show_link_rate, शून्य);
+static DEVICE_ATTR(address, 0444, show_address, NULL);
+static DEVICE_ATTR(atmaddress, 0444, show_atmaddress, NULL);
+static DEVICE_ATTR(atmindex, 0444, show_atmindex, NULL);
+static DEVICE_ATTR(carrier, 0444, show_carrier, NULL);
+static DEVICE_ATTR(type, 0444, show_type, NULL);
+static DEVICE_ATTR(link_rate, 0444, show_link_rate, NULL);
 
-अटल काष्ठा device_attribute *aपंचांग_attrs[] = अणु
-	&dev_attr_aपंचांगaddress,
+static struct device_attribute *atm_attrs[] = {
+	&dev_attr_atmaddress,
 	&dev_attr_address,
-	&dev_attr_aपंचांगindex,
+	&dev_attr_atmindex,
 	&dev_attr_carrier,
 	&dev_attr_type,
 	&dev_attr_link_rate,
-	शून्य
-पूर्ण;
+	NULL
+};
 
 
-अटल पूर्णांक aपंचांग_uevent(काष्ठा device *cdev, काष्ठा kobj_uevent_env *env)
-अणु
-	काष्ठा aपंचांग_dev *adev;
+static int atm_uevent(struct device *cdev, struct kobj_uevent_env *env)
+{
+	struct atm_dev *adev;
 
-	अगर (!cdev)
-		वापस -ENODEV;
+	if (!cdev)
+		return -ENODEV;
 
-	adev = to_aपंचांग_dev(cdev);
-	अगर (!adev)
-		वापस -ENODEV;
+	adev = to_atm_dev(cdev);
+	if (!adev)
+		return -ENODEV;
 
-	अगर (add_uevent_var(env, "NAME=%s%d", adev->type, adev->number))
-		वापस -ENOMEM;
+	if (add_uevent_var(env, "NAME=%s%d", adev->type, adev->number))
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम aपंचांग_release(काष्ठा device *cdev)
-अणु
-	काष्ठा aपंचांग_dev *adev = to_aपंचांग_dev(cdev);
+static void atm_release(struct device *cdev)
+{
+	struct atm_dev *adev = to_atm_dev(cdev);
 
-	kमुक्त(adev);
-पूर्ण
+	kfree(adev);
+}
 
-अटल काष्ठा class aपंचांग_class = अणु
+static struct class atm_class = {
 	.name		= "atm",
-	.dev_release	= aपंचांग_release,
-	.dev_uevent		= aपंचांग_uevent,
-पूर्ण;
+	.dev_release	= atm_release,
+	.dev_uevent		= atm_uevent,
+};
 
-पूर्णांक aपंचांग_रेजिस्टर_sysfs(काष्ठा aपंचांग_dev *adev, काष्ठा device *parent)
-अणु
-	काष्ठा device *cdev = &adev->class_dev;
-	पूर्णांक i, j, err;
+int atm_register_sysfs(struct atm_dev *adev, struct device *parent)
+{
+	struct device *cdev = &adev->class_dev;
+	int i, j, err;
 
-	cdev->class = &aपंचांग_class;
+	cdev->class = &atm_class;
 	cdev->parent = parent;
 	dev_set_drvdata(cdev, adev);
 
 	dev_set_name(cdev, "%s%d", adev->type, adev->number);
-	err = device_रेजिस्टर(cdev);
-	अगर (err < 0)
-		वापस err;
+	err = device_register(cdev);
+	if (err < 0)
+		return err;
 
-	क्रम (i = 0; aपंचांग_attrs[i]; i++) अणु
-		err = device_create_file(cdev, aपंचांग_attrs[i]);
-		अगर (err)
-			जाओ err_out;
-	पूर्ण
+	for (i = 0; atm_attrs[i]; i++) {
+		err = device_create_file(cdev, atm_attrs[i]);
+		if (err)
+			goto err_out;
+	}
 
-	वापस 0;
+	return 0;
 
 err_out:
-	क्रम (j = 0; j < i; j++)
-		device_हटाओ_file(cdev, aपंचांग_attrs[j]);
+	for (j = 0; j < i; j++)
+		device_remove_file(cdev, atm_attrs[j]);
 	device_del(cdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम aपंचांग_unरेजिस्टर_sysfs(काष्ठा aपंचांग_dev *adev)
-अणु
-	काष्ठा device *cdev = &adev->class_dev;
+void atm_unregister_sysfs(struct atm_dev *adev)
+{
+	struct device *cdev = &adev->class_dev;
 
 	device_del(cdev);
-पूर्ण
+}
 
-पूर्णांक __init aपंचांग_sysfs_init(व्योम)
-अणु
-	वापस class_रेजिस्टर(&aपंचांग_class);
-पूर्ण
+int __init atm_sysfs_init(void)
+{
+	return class_register(&atm_class);
+}
 
-व्योम __निकास aपंचांग_sysfs_निकास(व्योम)
-अणु
-	class_unरेजिस्टर(&aपंचांग_class);
-पूर्ण
+void __exit atm_sysfs_exit(void)
+{
+	class_unregister(&atm_class);
+}

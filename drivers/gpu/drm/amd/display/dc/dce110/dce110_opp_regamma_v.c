@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,71 +23,71 @@
  *
  */
 
-#समावेश <linux/delay.h>
+#include <linux/delay.h>
 
-#समावेश "dm_services.h"
+#include "dm_services.h"
 
-/* include DCE11 रेजिस्टर header files */
-#समावेश "dce/dce_11_0_d.h"
-#समावेश "dce/dce_11_0_sh_mask.h"
+/* include DCE11 register header files */
+#include "dce/dce_11_0_d.h"
+#include "dce/dce_11_0_sh_mask.h"
 
-#समावेश "dce110_transform_v.h"
+#include "dce110_transform_v.h"
 
-अटल व्योम घातer_on_lut(काष्ठा transक्रमm *xfm,
-	bool घातer_on, bool inputgamma, bool regamma)
-अणु
-	uपूर्णांक32_t value = dm_पढ़ो_reg(xfm->ctx, mmDCFEV_MEM_PWR_CTRL);
-	पूर्णांक i;
+static void power_on_lut(struct transform *xfm,
+	bool power_on, bool inputgamma, bool regamma)
+{
+	uint32_t value = dm_read_reg(xfm->ctx, mmDCFEV_MEM_PWR_CTRL);
+	int i;
 
-	अगर (घातer_on) अणु
-		अगर (inputgamma)
+	if (power_on) {
+		if (inputgamma)
 			set_reg_field_value(
 				value,
 				1,
 				DCFEV_MEM_PWR_CTRL,
 				COL_MAN_INPUT_GAMMA_MEM_PWR_DIS);
-		अगर (regamma)
+		if (regamma)
 			set_reg_field_value(
 				value,
 				1,
 				DCFEV_MEM_PWR_CTRL,
 				COL_MAN_GAMMA_CORR_MEM_PWR_DIS);
-	पूर्ण अन्यथा अणु
-		अगर (inputgamma)
+	} else {
+		if (inputgamma)
 			set_reg_field_value(
 				value,
 				0,
 				DCFEV_MEM_PWR_CTRL,
 				COL_MAN_INPUT_GAMMA_MEM_PWR_DIS);
-		अगर (regamma)
+		if (regamma)
 			set_reg_field_value(
 				value,
 				0,
 				DCFEV_MEM_PWR_CTRL,
 				COL_MAN_GAMMA_CORR_MEM_PWR_DIS);
-	पूर्ण
+	}
 
-	dm_ग_लिखो_reg(xfm->ctx, mmDCFEV_MEM_PWR_CTRL, value);
+	dm_write_reg(xfm->ctx, mmDCFEV_MEM_PWR_CTRL, value);
 
-	क्रम (i = 0; i < 3; i++) अणु
-		value = dm_पढ़ो_reg(xfm->ctx, mmDCFEV_MEM_PWR_CTRL);
-		अगर (get_reg_field_value(value,
+	for (i = 0; i < 3; i++) {
+		value = dm_read_reg(xfm->ctx, mmDCFEV_MEM_PWR_CTRL);
+		if (get_reg_field_value(value,
 				DCFEV_MEM_PWR_CTRL,
 				COL_MAN_INPUT_GAMMA_MEM_PWR_DIS) &&
 			get_reg_field_value(value,
 					DCFEV_MEM_PWR_CTRL,
 					COL_MAN_GAMMA_CORR_MEM_PWR_DIS))
-			अवरोध;
+			break;
 
 		udelay(2);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम set_bypass_input_gamma(काष्ठा dce_transक्रमm *xfm_dce)
-अणु
-	uपूर्णांक32_t value;
+static void set_bypass_input_gamma(struct dce_transform *xfm_dce)
+{
+	uint32_t value;
 
-	value = dm_पढ़ो_reg(xfm_dce->base.ctx,
+	value = dm_read_reg(xfm_dce->base.ctx,
 			mmCOL_MAN_INPUT_GAMMA_CONTROL1);
 
 	set_reg_field_value(
@@ -97,13 +96,13 @@
 				COL_MAN_INPUT_GAMMA_CONTROL1,
 				INPUT_GAMMA_MODE);
 
-	dm_ग_लिखो_reg(xfm_dce->base.ctx,
+	dm_write_reg(xfm_dce->base.ctx,
 			mmCOL_MAN_INPUT_GAMMA_CONTROL1, value);
-पूर्ण
+}
 
-अटल व्योम configure_regamma_mode(काष्ठा dce_transक्रमm *xfm_dce, uपूर्णांक32_t mode)
-अणु
-	uपूर्णांक32_t value = 0;
+static void configure_regamma_mode(struct dce_transform *xfm_dce, uint32_t mode)
+{
+	uint32_t value = 0;
 
 	set_reg_field_value(
 				value,
@@ -111,18 +110,18 @@
 				GAMMA_CORR_CONTROL,
 				GAMMA_CORR_MODE);
 
-	dm_ग_लिखो_reg(xfm_dce->base.ctx, mmGAMMA_CORR_CONTROL, 0);
-पूर्ण
+	dm_write_reg(xfm_dce->base.ctx, mmGAMMA_CORR_CONTROL, 0);
+}
 
 /*
  *****************************************************************************
  *  Function: regamma_config_regions_and_segments
  *
- *     build regamma curve by using predefined hw poपूर्णांकs
- *     uses पूर्णांकerface parameters ,like EDID coeff.
+ *     build regamma curve by using predefined hw points
+ *     uses interface parameters ,like EDID coeff.
  *
- * @param   : parameters   पूर्णांकerface parameters
- *  @वापस व्योम
+ * @param   : parameters   interface parameters
+ *  @return void
  *
  *  @note
  *
@@ -130,16 +129,16 @@
  *
  *****************************************************************************
  */
-अटल व्योम regamma_config_regions_and_segments(
-	काष्ठा dce_transक्रमm *xfm_dce, स्थिर काष्ठा pwl_params *params)
-अणु
-	स्थिर काष्ठा gamma_curve *curve;
-	uपूर्णांक32_t value = 0;
+static void regamma_config_regions_and_segments(
+	struct dce_transform *xfm_dce, const struct pwl_params *params)
+{
+	const struct gamma_curve *curve;
+	uint32_t value = 0;
 
-	अणु
+	{
 		set_reg_field_value(
 			value,
-			params->arr_poपूर्णांकs[0].custom_भग्न_x,
+			params->arr_points[0].custom_float_x,
 			GAMMA_CORR_CNTLA_START_CNTL,
 			GAMMA_CORR_CNTLA_EXP_REGION_START);
 
@@ -149,52 +148,52 @@
 			GAMMA_CORR_CNTLA_START_CNTL,
 			GAMMA_CORR_CNTLA_EXP_REGION_START_SEGMENT);
 
-		dm_ग_लिखो_reg(xfm_dce->base.ctx, mmGAMMA_CORR_CNTLA_START_CNTL,
+		dm_write_reg(xfm_dce->base.ctx, mmGAMMA_CORR_CNTLA_START_CNTL,
 				value);
-	पूर्ण
-	अणु
+	}
+	{
 		value = 0;
 		set_reg_field_value(
 			value,
-			params->arr_poपूर्णांकs[0].custom_भग्न_slope,
+			params->arr_points[0].custom_float_slope,
 			GAMMA_CORR_CNTLA_SLOPE_CNTL,
 			GAMMA_CORR_CNTLA_EXP_REGION_LINEAR_SLOPE);
 
-		dm_ग_लिखो_reg(xfm_dce->base.ctx,
+		dm_write_reg(xfm_dce->base.ctx,
 			mmGAMMA_CORR_CNTLA_SLOPE_CNTL, value);
-	पूर्ण
-	अणु
+	}
+	{
 		value = 0;
 		set_reg_field_value(
 			value,
-			params->arr_poपूर्णांकs[1].custom_भग्न_x,
+			params->arr_points[1].custom_float_x,
 			GAMMA_CORR_CNTLA_END_CNTL1,
 			GAMMA_CORR_CNTLA_EXP_REGION_END);
 
-		dm_ग_लिखो_reg(xfm_dce->base.ctx,
+		dm_write_reg(xfm_dce->base.ctx,
 			mmGAMMA_CORR_CNTLA_END_CNTL1, value);
-	पूर्ण
-	अणु
+	}
+	{
 		value = 0;
 		set_reg_field_value(
 			value,
-			params->arr_poपूर्णांकs[1].custom_भग्न_slope,
+			params->arr_points[1].custom_float_slope,
 			GAMMA_CORR_CNTLA_END_CNTL2,
 			GAMMA_CORR_CNTLA_EXP_REGION_END_BASE);
 
 		set_reg_field_value(
 			value,
-			params->arr_poपूर्णांकs[1].custom_भग्न_y,
+			params->arr_points[1].custom_float_y,
 			GAMMA_CORR_CNTLA_END_CNTL2,
 			GAMMA_CORR_CNTLA_EXP_REGION_END_SLOPE);
 
-		dm_ग_लिखो_reg(xfm_dce->base.ctx,
+		dm_write_reg(xfm_dce->base.ctx,
 			mmGAMMA_CORR_CNTLA_END_CNTL2, value);
-	पूर्ण
+	}
 
-	curve = params->arr_curve_poपूर्णांकs;
+	curve = params->arr_curve_points;
 
-	अणु
+	{
 		value = 0;
 		set_reg_field_value(
 			value,
@@ -220,14 +219,14 @@
 			GAMMA_CORR_CNTLA_REGION_0_1,
 			GAMMA_CORR_CNTLA_EXP_REGION1_NUM_SEGMENTS);
 
-		dm_ग_लिखो_reg(
+		dm_write_reg(
 				xfm_dce->base.ctx,
 			mmGAMMA_CORR_CNTLA_REGION_0_1,
 			value);
-	पूर्ण
+	}
 
 	curve += 2;
-	अणु
+	{
 		value = 0;
 		set_reg_field_value(
 			value,
@@ -253,13 +252,13 @@
 			GAMMA_CORR_CNTLA_REGION_2_3,
 			GAMMA_CORR_CNTLA_EXP_REGION3_NUM_SEGMENTS);
 
-		dm_ग_लिखो_reg(xfm_dce->base.ctx,
+		dm_write_reg(xfm_dce->base.ctx,
 			mmGAMMA_CORR_CNTLA_REGION_2_3,
 			value);
-	पूर्ण
+	}
 
 	curve += 2;
-	अणु
+	{
 		value = 0;
 		set_reg_field_value(
 			value,
@@ -285,13 +284,13 @@
 			GAMMA_CORR_CNTLA_REGION_4_5,
 			GAMMA_CORR_CNTLA_EXP_REGION5_NUM_SEGMENTS);
 
-		dm_ग_लिखो_reg(xfm_dce->base.ctx,
+		dm_write_reg(xfm_dce->base.ctx,
 			mmGAMMA_CORR_CNTLA_REGION_4_5,
 			value);
-	पूर्ण
+	}
 
 	curve += 2;
-	अणु
+	{
 		value = 0;
 		set_reg_field_value(
 			value,
@@ -317,13 +316,13 @@
 			GAMMA_CORR_CNTLA_REGION_6_7,
 			GAMMA_CORR_CNTLA_EXP_REGION7_NUM_SEGMENTS);
 
-		dm_ग_लिखो_reg(xfm_dce->base.ctx,
+		dm_write_reg(xfm_dce->base.ctx,
 			mmGAMMA_CORR_CNTLA_REGION_6_7,
 			value);
-	पूर्ण
+	}
 
 	curve += 2;
-	अणु
+	{
 		value = 0;
 		set_reg_field_value(
 			value,
@@ -349,13 +348,13 @@
 			GAMMA_CORR_CNTLA_REGION_8_9,
 			GAMMA_CORR_CNTLA_EXP_REGION9_NUM_SEGMENTS);
 
-		dm_ग_लिखो_reg(xfm_dce->base.ctx,
+		dm_write_reg(xfm_dce->base.ctx,
 			mmGAMMA_CORR_CNTLA_REGION_8_9,
 			value);
-	पूर्ण
+	}
 
 	curve += 2;
-	अणु
+	{
 		value = 0;
 		set_reg_field_value(
 			value,
@@ -381,13 +380,13 @@
 			GAMMA_CORR_CNTLA_REGION_10_11,
 			GAMMA_CORR_CNTLA_EXP_REGION11_NUM_SEGMENTS);
 
-		dm_ग_लिखो_reg(xfm_dce->base.ctx,
+		dm_write_reg(xfm_dce->base.ctx,
 			mmGAMMA_CORR_CNTLA_REGION_10_11,
 			value);
-	पूर्ण
+	}
 
 	curve += 2;
-	अणु
+	{
 		value = 0;
 		set_reg_field_value(
 			value,
@@ -413,13 +412,13 @@
 			GAMMA_CORR_CNTLA_REGION_12_13,
 			GAMMA_CORR_CNTLA_EXP_REGION13_NUM_SEGMENTS);
 
-		dm_ग_लिखो_reg(xfm_dce->base.ctx,
+		dm_write_reg(xfm_dce->base.ctx,
 			mmGAMMA_CORR_CNTLA_REGION_12_13,
 			value);
-	पूर्ण
+	}
 
 	curve += 2;
-	अणु
+	{
 		value = 0;
 		set_reg_field_value(
 			value,
@@ -445,16 +444,16 @@
 			GAMMA_CORR_CNTLA_REGION_14_15,
 			GAMMA_CORR_CNTLA_EXP_REGION15_NUM_SEGMENTS);
 
-		dm_ग_लिखो_reg(xfm_dce->base.ctx,
+		dm_write_reg(xfm_dce->base.ctx,
 			mmGAMMA_CORR_CNTLA_REGION_14_15,
 			value);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम program_pwl(काष्ठा dce_transक्रमm *xfm_dce,
-		स्थिर काष्ठा pwl_params *params)
-अणु
-	uपूर्णांक32_t value = 0;
+static void program_pwl(struct dce_transform *xfm_dce,
+		const struct pwl_params *params)
+{
+	uint32_t value = 0;
 
 	set_reg_field_value(
 		value,
@@ -462,42 +461,42 @@
 		GAMMA_CORR_LUT_WRITE_EN_MASK,
 		GAMMA_CORR_LUT_WRITE_EN_MASK);
 
-	dm_ग_लिखो_reg(xfm_dce->base.ctx,
+	dm_write_reg(xfm_dce->base.ctx,
 		mmGAMMA_CORR_LUT_WRITE_EN_MASK, value);
 
-	dm_ग_लिखो_reg(xfm_dce->base.ctx,
+	dm_write_reg(xfm_dce->base.ctx,
 		mmGAMMA_CORR_LUT_INDEX, 0);
 
 	/* Program REGAMMA_LUT_DATA */
-	अणु
-		स्थिर uपूर्णांक32_t addr = mmGAMMA_CORR_LUT_DATA;
-		uपूर्णांक32_t i = 0;
-		स्थिर काष्ठा pwl_result_data *rgb =
+	{
+		const uint32_t addr = mmGAMMA_CORR_LUT_DATA;
+		uint32_t i = 0;
+		const struct pwl_result_data *rgb =
 				params->rgb_resulted;
 
-		जबतक (i != params->hw_poपूर्णांकs_num) अणु
-			dm_ग_लिखो_reg(xfm_dce->base.ctx, addr, rgb->red_reg);
-			dm_ग_लिखो_reg(xfm_dce->base.ctx, addr, rgb->green_reg);
-			dm_ग_लिखो_reg(xfm_dce->base.ctx, addr, rgb->blue_reg);
+		while (i != params->hw_points_num) {
+			dm_write_reg(xfm_dce->base.ctx, addr, rgb->red_reg);
+			dm_write_reg(xfm_dce->base.ctx, addr, rgb->green_reg);
+			dm_write_reg(xfm_dce->base.ctx, addr, rgb->blue_reg);
 
-			dm_ग_लिखो_reg(xfm_dce->base.ctx, addr,
+			dm_write_reg(xfm_dce->base.ctx, addr,
 				rgb->delta_red_reg);
-			dm_ग_लिखो_reg(xfm_dce->base.ctx, addr,
+			dm_write_reg(xfm_dce->base.ctx, addr,
 				rgb->delta_green_reg);
-			dm_ग_लिखो_reg(xfm_dce->base.ctx, addr,
+			dm_write_reg(xfm_dce->base.ctx, addr,
 				rgb->delta_blue_reg);
 
 			++rgb;
 			++i;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम dce110_opp_program_regamma_pwl_v(
-	काष्ठा transक्रमm *xfm,
-	स्थिर काष्ठा pwl_params *params)
-अणु
-	काष्ठा dce_transक्रमm *xfm_dce = TO_DCE_TRANSFORM(xfm);
+void dce110_opp_program_regamma_pwl_v(
+	struct transform *xfm,
+	const struct pwl_params *params)
+{
+	struct dce_transform *xfm_dce = TO_DCE_TRANSFORM(xfm);
 
 	/* Setup regions */
 	regamma_config_regions_and_segments(xfm_dce, params);
@@ -505,7 +504,7 @@
 	set_bypass_input_gamma(xfm_dce);
 
 	/* Power on gamma LUT memory */
-	घातer_on_lut(xfm, true, false, true);
+	power_on_lut(xfm, true, false, true);
 
 	/* Program PWL */
 	program_pwl(xfm_dce, params);
@@ -513,15 +512,15 @@
 	/* program regamma config */
 	configure_regamma_mode(xfm_dce, 1);
 
-	/* Power वापस to स्वतः back */
-	घातer_on_lut(xfm, false, false, true);
-पूर्ण
+	/* Power return to auto back */
+	power_on_lut(xfm, false, false, true);
+}
 
-व्योम dce110_opp_घातer_on_regamma_lut_v(
-	काष्ठा transक्रमm *xfm,
-	bool घातer_on)
-अणु
-	uपूर्णांक32_t value = dm_पढ़ो_reg(xfm->ctx, mmDCFEV_MEM_PWR_CTRL);
+void dce110_opp_power_on_regamma_lut_v(
+	struct transform *xfm,
+	bool power_on)
+{
+	uint32_t value = dm_read_reg(xfm->ctx, mmDCFEV_MEM_PWR_CTRL);
 
 	set_reg_field_value(
 		value,
@@ -531,7 +530,7 @@
 
 	set_reg_field_value(
 		value,
-		घातer_on,
+		power_on,
 		DCFEV_MEM_PWR_CTRL,
 		COL_MAN_GAMMA_CORR_MEM_PWR_DIS);
 
@@ -543,16 +542,16 @@
 
 	set_reg_field_value(
 		value,
-		घातer_on,
+		power_on,
 		DCFEV_MEM_PWR_CTRL,
 		COL_MAN_INPUT_GAMMA_MEM_PWR_DIS);
 
-	dm_ग_लिखो_reg(xfm->ctx, mmDCFEV_MEM_PWR_CTRL, value);
-पूर्ण
+	dm_write_reg(xfm->ctx, mmDCFEV_MEM_PWR_CTRL, value);
+}
 
-व्योम dce110_opp_set_regamma_mode_v(
-	काष्ठा transक्रमm *xfm,
-	क्रमागत opp_regamma mode)
-अणु
+void dce110_opp_set_regamma_mode_v(
+	struct transform *xfm,
+	enum opp_regamma mode)
+{
 	// TODO: need to implement the function
-पूर्ण
+}

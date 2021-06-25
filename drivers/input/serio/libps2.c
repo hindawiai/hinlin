@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * PS/2 driver library
  *
@@ -8,138 +7,138 @@
  */
 
 
-#समावेश <linux/delay.h>
-#समावेश <linux/module.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/input.h>
-#समावेश <linux/serपन.स>
-#समावेश <linux/i8042.h>
-#समावेश <linux/libps2.h>
+#include <linux/delay.h>
+#include <linux/module.h>
+#include <linux/sched.h>
+#include <linux/interrupt.h>
+#include <linux/input.h>
+#include <linux/serio.h>
+#include <linux/i8042.h>
+#include <linux/libps2.h>
 
-#घोषणा DRIVER_DESC	"PS/2 driver library"
+#define DRIVER_DESC	"PS/2 driver library"
 
 MODULE_AUTHOR("Dmitry Torokhov <dtor@mail.ru>");
 MODULE_DESCRIPTION("PS/2 driver library");
 MODULE_LICENSE("GPL");
 
-अटल पूर्णांक ps2_करो_sendbyte(काष्ठा ps2dev *ps2dev, u8 byte,
-			   अचिन्हित पूर्णांक समयout, अचिन्हित पूर्णांक max_attempts)
+static int ps2_do_sendbyte(struct ps2dev *ps2dev, u8 byte,
+			   unsigned int timeout, unsigned int max_attempts)
 	__releases(&ps2dev->serio->lock) __acquires(&ps2dev->serio->lock)
-अणु
-	पूर्णांक attempt = 0;
-	पूर्णांक error;
+{
+	int attempt = 0;
+	int error;
 
-	lockdep_निश्चित_held(&ps2dev->serio->lock);
+	lockdep_assert_held(&ps2dev->serio->lock);
 
-	करो अणु
+	do {
 		ps2dev->nak = 1;
 		ps2dev->flags |= PS2_FLAG_ACK;
 
-		serio_जारी_rx(ps2dev->serio);
+		serio_continue_rx(ps2dev->serio);
 
-		error = serio_ग_लिखो(ps2dev->serio, byte);
-		अगर (error)
+		error = serio_write(ps2dev->serio, byte);
+		if (error)
 			dev_dbg(&ps2dev->serio->dev,
 				"failed to write %#02x: %d\n", byte, error);
-		अन्यथा
-			रुको_event_समयout(ps2dev->रुको,
+		else
+			wait_event_timeout(ps2dev->wait,
 					   !(ps2dev->flags & PS2_FLAG_ACK),
-					   msecs_to_jअगरfies(समयout));
+					   msecs_to_jiffies(timeout));
 
-		serio_छोड़ो_rx(ps2dev->serio);
-	पूर्ण जबतक (ps2dev->nak == PS2_RET_NAK && ++attempt < max_attempts);
+		serio_pause_rx(ps2dev->serio);
+	} while (ps2dev->nak == PS2_RET_NAK && ++attempt < max_attempts);
 
 	ps2dev->flags &= ~PS2_FLAG_ACK;
 
-	अगर (!error) अणु
-		चयन (ps2dev->nak) अणु
-		हाल 0:
-			अवरोध;
-		हाल PS2_RET_NAK:
+	if (!error) {
+		switch (ps2dev->nak) {
+		case 0:
+			break;
+		case PS2_RET_NAK:
 			error = -EAGAIN;
-			अवरोध;
-		हाल PS2_RET_ERR:
+			break;
+		case PS2_RET_ERR:
 			error = -EPROTO;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			error = -EIO;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (error || attempt > 1)
+	if (error || attempt > 1)
 		dev_dbg(&ps2dev->serio->dev,
 			"%02x - %d (%x), attempt %d\n",
 			byte, error, ps2dev->nak, attempt);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * ps2_sendbyte() sends a byte to the device and रुकोs क्रम acknowledge.
- * It करोesn't handle retransmission, the caller is expected to handle
+ * ps2_sendbyte() sends a byte to the device and waits for acknowledge.
+ * It doesn't handle retransmission, the caller is expected to handle
  * it when needed.
  *
  * ps2_sendbyte() can only be called from a process context.
  */
 
-पूर्णांक ps2_sendbyte(काष्ठा ps2dev *ps2dev, u8 byte, अचिन्हित पूर्णांक समयout)
-अणु
-	पूर्णांक retval;
+int ps2_sendbyte(struct ps2dev *ps2dev, u8 byte, unsigned int timeout)
+{
+	int retval;
 
-	serio_छोड़ो_rx(ps2dev->serio);
+	serio_pause_rx(ps2dev->serio);
 
-	retval = ps2_करो_sendbyte(ps2dev, byte, समयout, 1);
+	retval = ps2_do_sendbyte(ps2dev, byte, timeout, 1);
 	dev_dbg(&ps2dev->serio->dev, "%02x - %x\n", byte, ps2dev->nak);
 
-	serio_जारी_rx(ps2dev->serio);
+	serio_continue_rx(ps2dev->serio);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 EXPORT_SYMBOL(ps2_sendbyte);
 
-व्योम ps2_begin_command(काष्ठा ps2dev *ps2dev)
-अणु
-	काष्ठा mutex *m = ps2dev->serio->ps2_cmd_mutex ?: &ps2dev->cmd_mutex;
+void ps2_begin_command(struct ps2dev *ps2dev)
+{
+	struct mutex *m = ps2dev->serio->ps2_cmd_mutex ?: &ps2dev->cmd_mutex;
 
 	mutex_lock(m);
-पूर्ण
+}
 EXPORT_SYMBOL(ps2_begin_command);
 
-व्योम ps2_end_command(काष्ठा ps2dev *ps2dev)
-अणु
-	काष्ठा mutex *m = ps2dev->serio->ps2_cmd_mutex ?: &ps2dev->cmd_mutex;
+void ps2_end_command(struct ps2dev *ps2dev)
+{
+	struct mutex *m = ps2dev->serio->ps2_cmd_mutex ?: &ps2dev->cmd_mutex;
 
 	mutex_unlock(m);
-पूर्ण
+}
 EXPORT_SYMBOL(ps2_end_command);
 
 /*
- * ps2_drain() रुकोs क्रम device to transmit requested number of bytes
+ * ps2_drain() waits for device to transmit requested number of bytes
  * and discards them.
  */
 
-व्योम ps2_drain(काष्ठा ps2dev *ps2dev, माप_प्रकार maxbytes, अचिन्हित पूर्णांक समयout)
-अणु
-	अगर (maxbytes > माप(ps2dev->cmdbuf)) अणु
+void ps2_drain(struct ps2dev *ps2dev, size_t maxbytes, unsigned int timeout)
+{
+	if (maxbytes > sizeof(ps2dev->cmdbuf)) {
 		WARN_ON(1);
-		maxbytes = माप(ps2dev->cmdbuf);
-	पूर्ण
+		maxbytes = sizeof(ps2dev->cmdbuf);
+	}
 
 	ps2_begin_command(ps2dev);
 
-	serio_छोड़ो_rx(ps2dev->serio);
+	serio_pause_rx(ps2dev->serio);
 	ps2dev->flags = PS2_FLAG_CMD;
 	ps2dev->cmdcnt = maxbytes;
-	serio_जारी_rx(ps2dev->serio);
+	serio_continue_rx(ps2dev->serio);
 
-	रुको_event_समयout(ps2dev->रुको,
+	wait_event_timeout(ps2dev->wait,
 			   !(ps2dev->flags & PS2_FLAG_CMD),
-			   msecs_to_jअगरfies(समयout));
+			   msecs_to_jiffies(timeout));
 
 	ps2_end_command(ps2dev);
-पूर्ण
+}
 EXPORT_SYMBOL(ps2_drain);
 
 /*
@@ -148,168 +147,168 @@ EXPORT_SYMBOL(ps2_drain);
  */
 
 bool ps2_is_keyboard_id(u8 id_byte)
-अणु
-	अटल स्थिर u8 keyboard_ids[] = अणु
+{
+	static const u8 keyboard_ids[] = {
 		0xab,	/* Regular keyboards		*/
 		0xac,	/* NCD Sun keyboard		*/
 		0x2b,	/* Trust keyboard, translated	*/
 		0x5d,	/* Trust keyboard		*/
 		0x60,	/* NMB SGI keyboard, translated */
 		0x47,	/* NMB SGI keyboard		*/
-	पूर्ण;
+	};
 
-	वापस स_प्रथम(keyboard_ids, id_byte, माप(keyboard_ids)) != शून्य;
-पूर्ण
+	return memchr(keyboard_ids, id_byte, sizeof(keyboard_ids)) != NULL;
+}
 EXPORT_SYMBOL(ps2_is_keyboard_id);
 
 /*
- * ps2_adjust_समयout() is called after receiving 1st byte of command
- * response and tries to reduce reमुख्यing समयout to speed up command
+ * ps2_adjust_timeout() is called after receiving 1st byte of command
+ * response and tries to reduce remaining timeout to speed up command
  * completion.
  */
 
-अटल पूर्णांक ps2_adjust_समयout(काष्ठा ps2dev *ps2dev,
-			      अचिन्हित पूर्णांक command, अचिन्हित पूर्णांक समयout)
-अणु
-	चयन (command) अणु
-	हाल PS2_CMD_RESET_BAT:
+static int ps2_adjust_timeout(struct ps2dev *ps2dev,
+			      unsigned int command, unsigned int timeout)
+{
+	switch (command) {
+	case PS2_CMD_RESET_BAT:
 		/*
 		 * Device has sent the first response byte after
-		 * reset command, reset is thus करोne, so we can
-		 * लघुen the समयout.
+		 * reset command, reset is thus done, so we can
+		 * shorten the timeout.
 		 * The next byte will come soon (keyboard) or not
 		 * at all (mouse).
 		 */
-		अगर (समयout > msecs_to_jअगरfies(100))
-			समयout = msecs_to_jअगरfies(100);
-		अवरोध;
+		if (timeout > msecs_to_jiffies(100))
+			timeout = msecs_to_jiffies(100);
+		break;
 
-	हाल PS2_CMD_GETID:
+	case PS2_CMD_GETID:
 		/*
 		 * Microsoft Natural Elite keyboard responds to
 		 * the GET ID command as it were a mouse, with
 		 * a single byte. Fail the command so atkbd will
 		 * use alternative probe to detect it.
 		 */
-		अगर (ps2dev->cmdbuf[1] == 0xaa) अणु
-			serio_छोड़ो_rx(ps2dev->serio);
+		if (ps2dev->cmdbuf[1] == 0xaa) {
+			serio_pause_rx(ps2dev->serio);
 			ps2dev->flags = 0;
-			serio_जारी_rx(ps2dev->serio);
-			समयout = 0;
-		पूर्ण
+			serio_continue_rx(ps2dev->serio);
+			timeout = 0;
+		}
 
 		/*
 		 * If device behind the port is not a keyboard there
 		 * won't be 2nd byte of ID response.
 		 */
-		अगर (!ps2_is_keyboard_id(ps2dev->cmdbuf[1])) अणु
-			serio_छोड़ो_rx(ps2dev->serio);
+		if (!ps2_is_keyboard_id(ps2dev->cmdbuf[1])) {
+			serio_pause_rx(ps2dev->serio);
 			ps2dev->flags = ps2dev->cmdcnt = 0;
-			serio_जारी_rx(ps2dev->serio);
-			समयout = 0;
-		पूर्ण
-		अवरोध;
+			serio_continue_rx(ps2dev->serio);
+			timeout = 0;
+		}
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	वापस समयout;
-पूर्ण
+	return timeout;
+}
 
 /*
  * ps2_command() sends a command and its parameters to the mouse,
- * then रुकोs क्रम the response and माला_दो it in the param array.
+ * then waits for the response and puts it in the param array.
  *
  * ps2_command() can only be called from a process context
  */
 
-पूर्णांक __ps2_command(काष्ठा ps2dev *ps2dev, u8 *param, अचिन्हित पूर्णांक command)
-अणु
-	अचिन्हित पूर्णांक समयout;
-	अचिन्हित पूर्णांक send = (command >> 12) & 0xf;
-	अचिन्हित पूर्णांक receive = (command >> 8) & 0xf;
-	पूर्णांक rc;
-	पूर्णांक i;
+int __ps2_command(struct ps2dev *ps2dev, u8 *param, unsigned int command)
+{
+	unsigned int timeout;
+	unsigned int send = (command >> 12) & 0xf;
+	unsigned int receive = (command >> 8) & 0xf;
+	int rc;
+	int i;
 	u8 send_param[16];
 
-	अगर (receive > माप(ps2dev->cmdbuf)) अणु
+	if (receive > sizeof(ps2dev->cmdbuf)) {
 		WARN_ON(1);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (send && !param) अणु
+	if (send && !param) {
 		WARN_ON(1);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	स_नकल(send_param, param, send);
+	memcpy(send_param, param, send);
 
-	serio_छोड़ो_rx(ps2dev->serio);
+	serio_pause_rx(ps2dev->serio);
 
 	ps2dev->flags = command == PS2_CMD_GETID ? PS2_FLAG_WAITID : 0;
 	ps2dev->cmdcnt = receive;
-	अगर (receive && param)
-		क्रम (i = 0; i < receive; i++)
+	if (receive && param)
+		for (i = 0; i < receive; i++)
 			ps2dev->cmdbuf[(receive - 1) - i] = param[i];
 
 	/* Signal that we are sending the command byte */
 	ps2dev->flags |= PS2_FLAG_ACK_CMD;
 
 	/*
-	 * Some devices (Synaptics) peक्रमm the reset beक्रमe
-	 * ACKing the reset command, and so it can take a दीर्घ
-	 * समय beक्रमe the ACK arrives.
+	 * Some devices (Synaptics) peform the reset before
+	 * ACKing the reset command, and so it can take a long
+	 * time before the ACK arrives.
 	 */
-	समयout = command == PS2_CMD_RESET_BAT ? 1000 : 200;
+	timeout = command == PS2_CMD_RESET_BAT ? 1000 : 200;
 
-	rc = ps2_करो_sendbyte(ps2dev, command & 0xff, समयout, 2);
-	अगर (rc)
-		जाओ out_reset_flags;
+	rc = ps2_do_sendbyte(ps2dev, command & 0xff, timeout, 2);
+	if (rc)
+		goto out_reset_flags;
 
-	/* Now we are sending command parameters, अगर any */
+	/* Now we are sending command parameters, if any */
 	ps2dev->flags &= ~PS2_FLAG_ACK_CMD;
 
-	क्रम (i = 0; i < send; i++) अणु
-		rc = ps2_करो_sendbyte(ps2dev, param[i], 200, 2);
-		अगर (rc)
-			जाओ out_reset_flags;
-	पूर्ण
+	for (i = 0; i < send; i++) {
+		rc = ps2_do_sendbyte(ps2dev, param[i], 200, 2);
+		if (rc)
+			goto out_reset_flags;
+	}
 
-	serio_जारी_rx(ps2dev->serio);
+	serio_continue_rx(ps2dev->serio);
 
 	/*
-	 * The reset command takes a दीर्घ समय to execute.
+	 * The reset command takes a long time to execute.
 	 */
-	समयout = msecs_to_jअगरfies(command == PS2_CMD_RESET_BAT ? 4000 : 500);
+	timeout = msecs_to_jiffies(command == PS2_CMD_RESET_BAT ? 4000 : 500);
 
-	समयout = रुको_event_समयout(ps2dev->रुको,
-				     !(ps2dev->flags & PS2_FLAG_CMD1), समयout);
+	timeout = wait_event_timeout(ps2dev->wait,
+				     !(ps2dev->flags & PS2_FLAG_CMD1), timeout);
 
-	अगर (ps2dev->cmdcnt && !(ps2dev->flags & PS2_FLAG_CMD1)) अणु
+	if (ps2dev->cmdcnt && !(ps2dev->flags & PS2_FLAG_CMD1)) {
 
-		समयout = ps2_adjust_समयout(ps2dev, command, समयout);
-		रुको_event_समयout(ps2dev->रुको,
-				   !(ps2dev->flags & PS2_FLAG_CMD), समयout);
-	पूर्ण
+		timeout = ps2_adjust_timeout(ps2dev, command, timeout);
+		wait_event_timeout(ps2dev->wait,
+				   !(ps2dev->flags & PS2_FLAG_CMD), timeout);
+	}
 
-	serio_छोड़ो_rx(ps2dev->serio);
+	serio_pause_rx(ps2dev->serio);
 
-	अगर (param)
-		क्रम (i = 0; i < receive; i++)
+	if (param)
+		for (i = 0; i < receive; i++)
 			param[i] = ps2dev->cmdbuf[(receive - 1) - i];
 
-	अगर (ps2dev->cmdcnt &&
-	    (command != PS2_CMD_RESET_BAT || ps2dev->cmdcnt != 1)) अणु
+	if (ps2dev->cmdcnt &&
+	    (command != PS2_CMD_RESET_BAT || ps2dev->cmdcnt != 1)) {
 		rc = -EPROTO;
-		जाओ out_reset_flags;
-	पूर्ण
+		goto out_reset_flags;
+	}
 
 	rc = 0;
 
  out_reset_flags:
 	ps2dev->flags = 0;
-	serio_जारी_rx(ps2dev->serio);
+	serio_continue_rx(ps2dev->serio);
 
 	dev_dbg(&ps2dev->serio->dev,
 		"%02x [%*ph] - %x/%08lx [%*ph]\n",
@@ -318,23 +317,23 @@ EXPORT_SYMBOL(ps2_is_keyboard_id);
 		receive, param ?: send_param);
 
 	/*
-	 * ps_command() handles resends itself, so करो not leak -EAGAIN
+	 * ps_command() handles resends itself, so do not leak -EAGAIN
 	 * to the callers.
 	 */
-	वापस rc != -EAGAIN ? rc : -EPROTO;
-पूर्ण
+	return rc != -EAGAIN ? rc : -EPROTO;
+}
 EXPORT_SYMBOL(__ps2_command);
 
-पूर्णांक ps2_command(काष्ठा ps2dev *ps2dev, u8 *param, अचिन्हित पूर्णांक command)
-अणु
-	पूर्णांक rc;
+int ps2_command(struct ps2dev *ps2dev, u8 *param, unsigned int command)
+{
+	int rc;
 
 	ps2_begin_command(ps2dev);
 	rc = __ps2_command(ps2dev, param, command);
 	ps2_end_command(ps2dev);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL(ps2_command);
 
 /*
@@ -345,148 +344,148 @@ EXPORT_SYMBOL(ps2_command);
  * is the command.
  */
 
-पूर्णांक ps2_sliced_command(काष्ठा ps2dev *ps2dev, u8 command)
-अणु
-	पूर्णांक i;
-	पूर्णांक retval;
+int ps2_sliced_command(struct ps2dev *ps2dev, u8 command)
+{
+	int i;
+	int retval;
 
 	ps2_begin_command(ps2dev);
 
-	retval = __ps2_command(ps2dev, शून्य, PS2_CMD_SETSCALE11);
-	अगर (retval)
-		जाओ out;
+	retval = __ps2_command(ps2dev, NULL, PS2_CMD_SETSCALE11);
+	if (retval)
+		goto out;
 
-	क्रम (i = 6; i >= 0; i -= 2) अणु
+	for (i = 6; i >= 0; i -= 2) {
 		u8 d = (command >> i) & 3;
 		retval = __ps2_command(ps2dev, &d, PS2_CMD_SETRES);
-		अगर (retval)
-			अवरोध;
-	पूर्ण
+		if (retval)
+			break;
+	}
 
 out:
 	dev_dbg(&ps2dev->serio->dev, "%02x - %d\n", command, retval);
 	ps2_end_command(ps2dev);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 EXPORT_SYMBOL(ps2_sliced_command);
 
 /*
- * ps2_init() initializes ps2dev काष्ठाure
+ * ps2_init() initializes ps2dev structure
  */
 
-व्योम ps2_init(काष्ठा ps2dev *ps2dev, काष्ठा serio *serio)
-अणु
+void ps2_init(struct ps2dev *ps2dev, struct serio *serio)
+{
 	mutex_init(&ps2dev->cmd_mutex);
 	lockdep_set_subclass(&ps2dev->cmd_mutex, serio->depth);
-	init_रुकोqueue_head(&ps2dev->रुको);
+	init_waitqueue_head(&ps2dev->wait);
 	ps2dev->serio = serio;
-पूर्ण
+}
 EXPORT_SYMBOL(ps2_init);
 
 /*
- * ps2_handle_ack() is supposed to be used in पूर्णांकerrupt handler
+ * ps2_handle_ack() is supposed to be used in interrupt handler
  * to properly process ACK/NAK of a command from a PS/2 device.
  */
 
-bool ps2_handle_ack(काष्ठा ps2dev *ps2dev, u8 data)
-अणु
-	चयन (data) अणु
-	हाल PS2_RET_ACK:
+bool ps2_handle_ack(struct ps2dev *ps2dev, u8 data)
+{
+	switch (data) {
+	case PS2_RET_ACK:
 		ps2dev->nak = 0;
-		अवरोध;
+		break;
 
-	हाल PS2_RET_NAK:
+	case PS2_RET_NAK:
 		ps2dev->flags |= PS2_FLAG_NAK;
 		ps2dev->nak = PS2_RET_NAK;
-		अवरोध;
+		break;
 
-	हाल PS2_RET_ERR:
-		अगर (ps2dev->flags & PS2_FLAG_NAK) अणु
+	case PS2_RET_ERR:
+		if (ps2dev->flags & PS2_FLAG_NAK) {
 			ps2dev->flags &= ~PS2_FLAG_NAK;
 			ps2dev->nak = PS2_RET_ERR;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		fallthrough;
 
 	/*
-	 * Workaround क्रम mice which करोn't ACK the Get ID command.
+	 * Workaround for mice which don't ACK the Get ID command.
 	 * These are valid mouse IDs that we recognize.
 	 */
-	हाल 0x00:
-	हाल 0x03:
-	हाल 0x04:
-		अगर (ps2dev->flags & PS2_FLAG_WAITID) अणु
+	case 0x00:
+	case 0x03:
+	case 0x04:
+		if (ps2dev->flags & PS2_FLAG_WAITID) {
 			ps2dev->nak = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		fallthrough;
-	शेष:
+	default:
 		/*
-		 * Do not संकेत errors अगर we get unexpected reply जबतक
-		 * रुकोing क्रम an ACK to the initial (first) command byte:
-		 * the device might not be quiesced yet and जारी
+		 * Do not signal errors if we get unexpected reply while
+		 * waiting for an ACK to the initial (first) command byte:
+		 * the device might not be quiesced yet and continue
 		 * delivering data.
 		 * Note that we reset PS2_FLAG_WAITID flag, so the workaround
-		 * क्रम mice not acknowledging the Get ID command only triggers
-		 * on the 1st byte; अगर device spews data we really want to see
+		 * for mice not acknowledging the Get ID command only triggers
+		 * on the 1st byte; if device spews data we really want to see
 		 * a real ACK from it.
 		 */
 		dev_dbg(&ps2dev->serio->dev, "unexpected %#02x\n", data);
 		ps2dev->flags &= ~PS2_FLAG_WAITID;
-		वापस ps2dev->flags & PS2_FLAG_ACK_CMD;
-	पूर्ण
+		return ps2dev->flags & PS2_FLAG_ACK_CMD;
+	}
 
-	अगर (!ps2dev->nak) अणु
+	if (!ps2dev->nak) {
 		ps2dev->flags &= ~PS2_FLAG_NAK;
-		अगर (ps2dev->cmdcnt)
+		if (ps2dev->cmdcnt)
 			ps2dev->flags |= PS2_FLAG_CMD | PS2_FLAG_CMD1;
-	पूर्ण
+	}
 
 	ps2dev->flags &= ~PS2_FLAG_ACK;
-	wake_up(&ps2dev->रुको);
+	wake_up(&ps2dev->wait);
 
-	अगर (data != PS2_RET_ACK)
+	if (data != PS2_RET_ACK)
 		ps2_handle_response(ps2dev, data);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL(ps2_handle_ack);
 
 /*
- * ps2_handle_response() is supposed to be used in पूर्णांकerrupt handler
- * to properly store device's response to a command and notअगरy process
- * रुकोing क्रम completion of the command.
+ * ps2_handle_response() is supposed to be used in interrupt handler
+ * to properly store device's response to a command and notify process
+ * waiting for completion of the command.
  */
 
-bool ps2_handle_response(काष्ठा ps2dev *ps2dev, u8 data)
-अणु
-	अगर (ps2dev->cmdcnt)
+bool ps2_handle_response(struct ps2dev *ps2dev, u8 data)
+{
+	if (ps2dev->cmdcnt)
 		ps2dev->cmdbuf[--ps2dev->cmdcnt] = data;
 
-	अगर (ps2dev->flags & PS2_FLAG_CMD1) अणु
+	if (ps2dev->flags & PS2_FLAG_CMD1) {
 		ps2dev->flags &= ~PS2_FLAG_CMD1;
-		अगर (ps2dev->cmdcnt)
-			wake_up(&ps2dev->रुको);
-	पूर्ण
+		if (ps2dev->cmdcnt)
+			wake_up(&ps2dev->wait);
+	}
 
-	अगर (!ps2dev->cmdcnt) अणु
+	if (!ps2dev->cmdcnt) {
 		ps2dev->flags &= ~PS2_FLAG_CMD;
-		wake_up(&ps2dev->रुको);
-	पूर्ण
+		wake_up(&ps2dev->wait);
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL(ps2_handle_response);
 
-व्योम ps2_cmd_पातed(काष्ठा ps2dev *ps2dev)
-अणु
-	अगर (ps2dev->flags & PS2_FLAG_ACK)
+void ps2_cmd_aborted(struct ps2dev *ps2dev)
+{
+	if (ps2dev->flags & PS2_FLAG_ACK)
 		ps2dev->nak = 1;
 
-	अगर (ps2dev->flags & (PS2_FLAG_ACK | PS2_FLAG_CMD))
-		wake_up(&ps2dev->रुको);
+	if (ps2dev->flags & (PS2_FLAG_ACK | PS2_FLAG_CMD))
+		wake_up(&ps2dev->wait);
 
 	/* reset all flags except last nack */
 	ps2dev->flags &= PS2_FLAG_NAK;
-पूर्ण
-EXPORT_SYMBOL(ps2_cmd_पातed);
+}
+EXPORT_SYMBOL(ps2_cmd_aborted);

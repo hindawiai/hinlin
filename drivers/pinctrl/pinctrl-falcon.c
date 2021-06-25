@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/drivers/pinctrl/pinmux-falcon.c
  *  based on linux/drivers/pinctrl/pinmux-pxa910.c
@@ -8,68 +7,68 @@
  *  Copyright (C) 2012 John Crispin <john@phrozen.org>
  */
 
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/export.h>
-#समावेश <linux/err.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/gpio/driver.h>
+#include <linux/interrupt.h>
+#include <linux/slab.h>
+#include <linux/export.h>
+#include <linux/err.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
+#include <linux/of_address.h>
+#include <linux/of_gpio.h>
+#include <linux/platform_device.h>
 
-#समावेश "pinctrl-lantiq.h"
+#include "pinctrl-lantiq.h"
 
-#समावेश <lantiq_soc.h>
+#include <lantiq_soc.h>
 
 /* Multiplexer Control Register */
-#घोषणा LTQ_PADC_MUX(x)         (x * 0x4)
+#define LTQ_PADC_MUX(x)         (x * 0x4)
 /* Pull Up Enable Register */
-#घोषणा LTQ_PADC_PUEN		0x80
+#define LTQ_PADC_PUEN		0x80
 /* Pull Down Enable Register */
-#घोषणा LTQ_PADC_PDEN		0x84
+#define LTQ_PADC_PDEN		0x84
 /* Slew Rate Control Register */
-#घोषणा LTQ_PADC_SRC		0x88
+#define LTQ_PADC_SRC		0x88
 /* Drive Current Control Register */
-#घोषणा LTQ_PADC_DCC		0x8C
+#define LTQ_PADC_DCC		0x8C
 /* Pad Control Availability Register */
-#घोषणा LTQ_PADC_AVAIL          0xF0
+#define LTQ_PADC_AVAIL          0xF0
 
-#घोषणा pad_r32(p, reg)		ltq_r32(p + reg)
-#घोषणा pad_w32(p, val, reg)	ltq_w32(val, p + reg)
-#घोषणा pad_w32_mask(c, clear, set, reg) \
+#define pad_r32(p, reg)		ltq_r32(p + reg)
+#define pad_w32(p, val, reg)	ltq_w32(val, p + reg)
+#define pad_w32_mask(c, clear, set, reg) \
 		pad_w32(c, (pad_r32(c, reg) & ~(clear)) | (set), reg)
 
-#घोषणा pad_getbit(m, r, p)	(!!(ltq_r32(m + r) & (1 << p)))
+#define pad_getbit(m, r, p)	(!!(ltq_r32(m + r) & (1 << p)))
 
-#घोषणा PORTS			5
-#घोषणा PINS			32
-#घोषणा PORT(x)                 (x / PINS)
-#घोषणा PORT_PIN(x)             (x % PINS)
+#define PORTS			5
+#define PINS			32
+#define PORT(x)                 (x / PINS)
+#define PORT_PIN(x)             (x % PINS)
 
-#घोषणा MFP_FALCON(a, f0, f1, f2, f3)		\
-अणु						\
+#define MFP_FALCON(a, f0, f1, f2, f3)		\
+{						\
 	.name = #a,				\
 	.pin = a,				\
-	.func = अणु				\
+	.func = {				\
 		FALCON_MUX_##f0,		\
 		FALCON_MUX_##f1,		\
 		FALCON_MUX_##f2,		\
 		FALCON_MUX_##f3,		\
-	पूर्ण,					\
-पूर्ण
+	},					\
+}
 
-#घोषणा GRP_MUX(a, m, p)	\
-अणु				\
+#define GRP_MUX(a, m, p)	\
+{				\
 	.name = a,		\
 	.mux = FALCON_MUX_##m,	\
 	.pins = p,		\
 	.npins = ARRAY_SIZE(p),	\
-पूर्ण
+}
 
-क्रमागत falcon_mux अणु
+enum falcon_mux {
 	FALCON_MUX_GPIO = 0,
 	FALCON_MUX_RST,
 	FALCON_MUX_NTR,
@@ -86,24 +85,24 @@
 	FALCON_MUX_MII,
 	FALCON_MUX_PHY,
 	FALCON_MUX_NONE = 0xffff,
-पूर्ण;
+};
 
-अटल काष्ठा pinctrl_pin_desc falcon_pads[PORTS * PINS];
-अटल पूर्णांक pad_count[PORTS];
+static struct pinctrl_pin_desc falcon_pads[PORTS * PINS];
+static int pad_count[PORTS];
 
-अटल व्योम lantiq_load_pin_desc(काष्ठा pinctrl_pin_desc *d, पूर्णांक bank, पूर्णांक len)
-अणु
-	पूर्णांक base = bank * PINS;
-	पूर्णांक i;
+static void lantiq_load_pin_desc(struct pinctrl_pin_desc *d, int bank, int len)
+{
+	int base = bank * PINS;
+	int i;
 
-	क्रम (i = 0; i < len; i++) अणु
+	for (i = 0; i < len; i++) {
 		d[i].number = base + i;
-		d[i].name = kaप्र_लिखो(GFP_KERNEL, "io%d", base + i);
-	पूर्ण
+		d[i].name = kasprintf(GFP_KERNEL, "io%d", base + i);
+	}
 	pad_count[bank] = len;
-पूर्ण
+}
 
-अटल काष्ठा ltq_mfp_pin falcon_mfp[] = अणु
+static struct ltq_mfp_pin falcon_mfp[] = {
 	/*	pin		f0	f1	f2	f3 */
 	MFP_FALCON(GPIO0,	RST,	GPIO,   NONE,   NONE),
 	MFP_FALCON(GPIO1,	GPIO,	GPIO,   NONE,   NONE),
@@ -159,27 +158,27 @@
 	MFP_FALCON(GPIO86,	MII,	GPIO,	NONE,	NONE),
 	MFP_FALCON(GPIO87,	MII,	GPIO,	NONE,	NONE),
 	MFP_FALCON(GPIO88,	PHY,	GPIO,	NONE,	NONE),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित pins_por[] = अणुGPIO0पूर्ण;
-अटल स्थिर अचिन्हित pins_ntr[] = अणुGPIO4पूर्ण;
-अटल स्थिर अचिन्हित pins_ntr8k[] = अणुGPIO5पूर्ण;
-अटल स्थिर अचिन्हित pins_pps[] = अणुGPIO5पूर्ण;
-अटल स्थिर अचिन्हित pins_hrst[] = अणुGPIO6पूर्ण;
-अटल स्थिर अचिन्हित pins_mdio[] = अणुGPIO7, GPIO8पूर्ण;
-अटल स्थिर अचिन्हित pins_bled[] = अणुGPIO9, GPIO10, GPIO11,
-					GPIO12, GPIO13, GPIO14पूर्ण;
-अटल स्थिर अचिन्हित pins_asc0[] = अणुGPIO32, GPIO33पूर्ण;
-अटल स्थिर अचिन्हित pins_spi[] = अणुGPIO34, GPIO35, GPIO36पूर्ण;
-अटल स्थिर अचिन्हित pins_spi_cs0[] = अणुGPIO37पूर्ण;
-अटल स्थिर अचिन्हित pins_spi_cs1[] = अणुGPIO38पूर्ण;
-अटल स्थिर अचिन्हित pins_i2c[] = अणुGPIO39, GPIO40पूर्ण;
-अटल स्थिर अचिन्हित pins_jtag[] = अणुGPIO41पूर्ण;
-अटल स्थिर अचिन्हित pins_slic[] = अणुGPIO43, GPIO44, GPIO45पूर्ण;
-अटल स्थिर अचिन्हित pins_pcm[] = अणुGPIO44, GPIO45पूर्ण;
-अटल स्थिर अचिन्हित pins_asc1[] = अणुGPIO44, GPIO45पूर्ण;
+static const unsigned pins_por[] = {GPIO0};
+static const unsigned pins_ntr[] = {GPIO4};
+static const unsigned pins_ntr8k[] = {GPIO5};
+static const unsigned pins_pps[] = {GPIO5};
+static const unsigned pins_hrst[] = {GPIO6};
+static const unsigned pins_mdio[] = {GPIO7, GPIO8};
+static const unsigned pins_bled[] = {GPIO9, GPIO10, GPIO11,
+					GPIO12, GPIO13, GPIO14};
+static const unsigned pins_asc0[] = {GPIO32, GPIO33};
+static const unsigned pins_spi[] = {GPIO34, GPIO35, GPIO36};
+static const unsigned pins_spi_cs0[] = {GPIO37};
+static const unsigned pins_spi_cs1[] = {GPIO38};
+static const unsigned pins_i2c[] = {GPIO39, GPIO40};
+static const unsigned pins_jtag[] = {GPIO41};
+static const unsigned pins_slic[] = {GPIO43, GPIO44, GPIO45};
+static const unsigned pins_pcm[] = {GPIO44, GPIO45};
+static const unsigned pins_asc1[] = {GPIO44, GPIO45};
 
-अटल काष्ठा ltq_pin_group falcon_grps[] = अणु
+static struct ltq_pin_group falcon_grps[] = {
 	GRP_MUX("por", RST, pins_por),
 	GRP_MUX("ntr", NTR, pins_ntr),
 	GRP_MUX("ntr8k", NTR, pins_ntr8k),
@@ -196,275 +195,275 @@
 	GRP_MUX("slic", SLIC, pins_slic),
 	GRP_MUX("pcm", PCM, pins_pcm),
 	GRP_MUX("asc1", ASC, pins_asc1),
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ltq_rst_grps[] = अणु"por", "hrst"पूर्ण;
-अटल स्थिर अक्षर * स्थिर ltq_ntr_grps[] = अणु"ntr", "ntr8k", "pps"पूर्ण;
-अटल स्थिर अक्षर * स्थिर ltq_mdio_grps[] = अणु"mdio"पूर्ण;
-अटल स्थिर अक्षर * स्थिर ltq_bled_grps[] = अणु"bootled"पूर्ण;
-अटल स्थिर अक्षर * स्थिर ltq_asc_grps[] = अणु"asc0", "asc1"पूर्ण;
-अटल स्थिर अक्षर * स्थिर ltq_spi_grps[] = अणु"spi", "spi cs0", "spi cs1"पूर्ण;
-अटल स्थिर अक्षर * स्थिर ltq_i2c_grps[] = अणु"i2c"पूर्ण;
-अटल स्थिर अक्षर * स्थिर ltq_jtag_grps[] = अणु"jtag"पूर्ण;
-अटल स्थिर अक्षर * स्थिर ltq_slic_grps[] = अणु"slic"पूर्ण;
-अटल स्थिर अक्षर * स्थिर ltq_pcm_grps[] = अणु"pcm"पूर्ण;
+static const char * const ltq_rst_grps[] = {"por", "hrst"};
+static const char * const ltq_ntr_grps[] = {"ntr", "ntr8k", "pps"};
+static const char * const ltq_mdio_grps[] = {"mdio"};
+static const char * const ltq_bled_grps[] = {"bootled"};
+static const char * const ltq_asc_grps[] = {"asc0", "asc1"};
+static const char * const ltq_spi_grps[] = {"spi", "spi cs0", "spi cs1"};
+static const char * const ltq_i2c_grps[] = {"i2c"};
+static const char * const ltq_jtag_grps[] = {"jtag"};
+static const char * const ltq_slic_grps[] = {"slic"};
+static const char * const ltq_pcm_grps[] = {"pcm"};
 
-अटल काष्ठा ltq_pmx_func falcon_funcs[] = अणु
-	अणु"rst",		ARRAY_AND_SIZE(ltq_rst_grps)पूर्ण,
-	अणु"ntr",		ARRAY_AND_SIZE(ltq_ntr_grps)पूर्ण,
-	अणु"mdio",	ARRAY_AND_SIZE(ltq_mdio_grps)पूर्ण,
-	अणु"led",		ARRAY_AND_SIZE(ltq_bled_grps)पूर्ण,
-	अणु"asc",		ARRAY_AND_SIZE(ltq_asc_grps)पूर्ण,
-	अणु"spi",		ARRAY_AND_SIZE(ltq_spi_grps)पूर्ण,
-	अणु"i2c",		ARRAY_AND_SIZE(ltq_i2c_grps)पूर्ण,
-	अणु"jtag",	ARRAY_AND_SIZE(ltq_jtag_grps)पूर्ण,
-	अणु"slic",	ARRAY_AND_SIZE(ltq_slic_grps)पूर्ण,
-	अणु"pcm",		ARRAY_AND_SIZE(ltq_pcm_grps)पूर्ण,
-पूर्ण;
+static struct ltq_pmx_func falcon_funcs[] = {
+	{"rst",		ARRAY_AND_SIZE(ltq_rst_grps)},
+	{"ntr",		ARRAY_AND_SIZE(ltq_ntr_grps)},
+	{"mdio",	ARRAY_AND_SIZE(ltq_mdio_grps)},
+	{"led",		ARRAY_AND_SIZE(ltq_bled_grps)},
+	{"asc",		ARRAY_AND_SIZE(ltq_asc_grps)},
+	{"spi",		ARRAY_AND_SIZE(ltq_spi_grps)},
+	{"i2c",		ARRAY_AND_SIZE(ltq_i2c_grps)},
+	{"jtag",	ARRAY_AND_SIZE(ltq_jtag_grps)},
+	{"slic",	ARRAY_AND_SIZE(ltq_slic_grps)},
+	{"pcm",		ARRAY_AND_SIZE(ltq_pcm_grps)},
+};
 
 
 
 
 /* ---------  pinconf related code --------- */
-अटल पूर्णांक falcon_pinconf_group_get(काष्ठा pinctrl_dev *pctrldev,
-				अचिन्हित group, अचिन्हित दीर्घ *config)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+static int falcon_pinconf_group_get(struct pinctrl_dev *pctrldev,
+				unsigned group, unsigned long *config)
+{
+	return -ENOTSUPP;
+}
 
-अटल पूर्णांक falcon_pinconf_group_set(काष्ठा pinctrl_dev *pctrldev,
-				अचिन्हित group, अचिन्हित दीर्घ *configs,
-				अचिन्हित num_configs)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+static int falcon_pinconf_group_set(struct pinctrl_dev *pctrldev,
+				unsigned group, unsigned long *configs,
+				unsigned num_configs)
+{
+	return -ENOTSUPP;
+}
 
-अटल पूर्णांक falcon_pinconf_get(काष्ठा pinctrl_dev *pctrldev,
-				अचिन्हित pin, अचिन्हित दीर्घ *config)
-अणु
-	काष्ठा ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
-	क्रमागत ltq_pinconf_param param = LTQ_PINCONF_UNPACK_PARAM(*config);
-	व्योम __iomem *mem = info->membase[PORT(pin)];
+static int falcon_pinconf_get(struct pinctrl_dev *pctrldev,
+				unsigned pin, unsigned long *config)
+{
+	struct ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
+	enum ltq_pinconf_param param = LTQ_PINCONF_UNPACK_PARAM(*config);
+	void __iomem *mem = info->membase[PORT(pin)];
 
-	चयन (param) अणु
-	हाल LTQ_PINCONF_PARAM_DRIVE_CURRENT:
+	switch (param) {
+	case LTQ_PINCONF_PARAM_DRIVE_CURRENT:
 		*config = LTQ_PINCONF_PACK(param,
 			!!pad_getbit(mem, LTQ_PADC_DCC, PORT_PIN(pin)));
-		अवरोध;
+		break;
 
-	हाल LTQ_PINCONF_PARAM_SLEW_RATE:
+	case LTQ_PINCONF_PARAM_SLEW_RATE:
 		*config = LTQ_PINCONF_PACK(param,
 			!!pad_getbit(mem, LTQ_PADC_SRC, PORT_PIN(pin)));
-		अवरोध;
+		break;
 
-	हाल LTQ_PINCONF_PARAM_PULL:
-		अगर (pad_getbit(mem, LTQ_PADC_PDEN, PORT_PIN(pin)))
+	case LTQ_PINCONF_PARAM_PULL:
+		if (pad_getbit(mem, LTQ_PADC_PDEN, PORT_PIN(pin)))
 			*config = LTQ_PINCONF_PACK(param, 1);
-		अन्यथा अगर (pad_getbit(mem, LTQ_PADC_PUEN, PORT_PIN(pin)))
+		else if (pad_getbit(mem, LTQ_PADC_PUEN, PORT_PIN(pin)))
 			*config = LTQ_PINCONF_PACK(param, 2);
-		अन्यथा
+		else
 			*config = LTQ_PINCONF_PACK(param, 0);
 
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -ENOTSUPP;
-	पूर्ण
+	default:
+		return -ENOTSUPP;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक falcon_pinconf_set(काष्ठा pinctrl_dev *pctrldev,
-			अचिन्हित pin, अचिन्हित दीर्घ *configs,
-			अचिन्हित num_configs)
-अणु
-	क्रमागत ltq_pinconf_param param;
-	पूर्णांक arg;
-	काष्ठा ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
-	व्योम __iomem *mem = info->membase[PORT(pin)];
+static int falcon_pinconf_set(struct pinctrl_dev *pctrldev,
+			unsigned pin, unsigned long *configs,
+			unsigned num_configs)
+{
+	enum ltq_pinconf_param param;
+	int arg;
+	struct ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
+	void __iomem *mem = info->membase[PORT(pin)];
 	u32 reg;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < num_configs; i++) अणु
+	for (i = 0; i < num_configs; i++) {
 		param = LTQ_PINCONF_UNPACK_PARAM(configs[i]);
 		arg = LTQ_PINCONF_UNPACK_ARG(configs[i]);
 
-		चयन (param) अणु
-		हाल LTQ_PINCONF_PARAM_DRIVE_CURRENT:
+		switch (param) {
+		case LTQ_PINCONF_PARAM_DRIVE_CURRENT:
 			reg = LTQ_PADC_DCC;
-			अवरोध;
+			break;
 
-		हाल LTQ_PINCONF_PARAM_SLEW_RATE:
+		case LTQ_PINCONF_PARAM_SLEW_RATE:
 			reg = LTQ_PADC_SRC;
-			अवरोध;
+			break;
 
-		हाल LTQ_PINCONF_PARAM_PULL:
-			अगर (arg == 1)
+		case LTQ_PINCONF_PARAM_PULL:
+			if (arg == 1)
 				reg = LTQ_PADC_PDEN;
-			अन्यथा
+			else
 				reg = LTQ_PADC_PUEN;
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			pr_err("%s: Invalid config param %04x\n",
 			pinctrl_dev_get_name(pctrldev), param);
-			वापस -ENOTSUPP;
-		पूर्ण
+			return -ENOTSUPP;
+		}
 
 		pad_w32(mem, BIT(PORT_PIN(pin)), reg);
-		अगर (!(pad_r32(mem, reg) & BIT(PORT_PIN(pin))))
-			वापस -ENOTSUPP;
-	पूर्ण /* क्रम each config */
+		if (!(pad_r32(mem, reg) & BIT(PORT_PIN(pin))))
+			return -ENOTSUPP;
+	} /* for each config */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम falcon_pinconf_dbg_show(काष्ठा pinctrl_dev *pctrldev,
-			काष्ठा seq_file *s, अचिन्हित offset)
-अणु
-	अचिन्हित दीर्घ config;
-	काष्ठा pin_desc *desc;
+static void falcon_pinconf_dbg_show(struct pinctrl_dev *pctrldev,
+			struct seq_file *s, unsigned offset)
+{
+	unsigned long config;
+	struct pin_desc *desc;
 
-	काष्ठा ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
-	पूर्णांक port = PORT(offset);
+	struct ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
+	int port = PORT(offset);
 
-	seq_म_लिखो(s, " (port %d) mux %d -- ", port,
+	seq_printf(s, " (port %d) mux %d -- ", port,
 		pad_r32(info->membase[port], LTQ_PADC_MUX(PORT_PIN(offset))));
 
 	config = LTQ_PINCONF_PACK(LTQ_PINCONF_PARAM_PULL, 0);
-	अगर (!falcon_pinconf_get(pctrldev, offset, &config))
-		seq_म_लिखो(s, "pull %d ",
-			(पूर्णांक)LTQ_PINCONF_UNPACK_ARG(config));
+	if (!falcon_pinconf_get(pctrldev, offset, &config))
+		seq_printf(s, "pull %d ",
+			(int)LTQ_PINCONF_UNPACK_ARG(config));
 
 	config = LTQ_PINCONF_PACK(LTQ_PINCONF_PARAM_DRIVE_CURRENT, 0);
-	अगर (!falcon_pinconf_get(pctrldev, offset, &config))
-		seq_म_लिखो(s, "drive-current %d ",
-			(पूर्णांक)LTQ_PINCONF_UNPACK_ARG(config));
+	if (!falcon_pinconf_get(pctrldev, offset, &config))
+		seq_printf(s, "drive-current %d ",
+			(int)LTQ_PINCONF_UNPACK_ARG(config));
 
 	config = LTQ_PINCONF_PACK(LTQ_PINCONF_PARAM_SLEW_RATE, 0);
-	अगर (!falcon_pinconf_get(pctrldev, offset, &config))
-		seq_म_लिखो(s, "slew-rate %d ",
-			(पूर्णांक)LTQ_PINCONF_UNPACK_ARG(config));
+	if (!falcon_pinconf_get(pctrldev, offset, &config))
+		seq_printf(s, "slew-rate %d ",
+			(int)LTQ_PINCONF_UNPACK_ARG(config));
 
 	desc = pin_desc_get(pctrldev, offset);
-	अगर (desc) अणु
-		अगर (desc->gpio_owner)
-			seq_म_लिखो(s, " owner: %s", desc->gpio_owner);
-	पूर्ण अन्यथा अणु
-		seq_म_लिखो(s, " not registered");
-	पूर्ण
-पूर्ण
+	if (desc) {
+		if (desc->gpio_owner)
+			seq_printf(s, " owner: %s", desc->gpio_owner);
+	} else {
+		seq_printf(s, " not registered");
+	}
+}
 
-अटल व्योम falcon_pinconf_group_dbg_show(काष्ठा pinctrl_dev *pctrldev,
-			काष्ठा seq_file *s, अचिन्हित selector)
-अणु
-पूर्ण
+static void falcon_pinconf_group_dbg_show(struct pinctrl_dev *pctrldev,
+			struct seq_file *s, unsigned selector)
+{
+}
 
-अटल स्थिर काष्ठा pinconf_ops falcon_pinconf_ops = अणु
+static const struct pinconf_ops falcon_pinconf_ops = {
 	.pin_config_get			= falcon_pinconf_get,
 	.pin_config_set			= falcon_pinconf_set,
 	.pin_config_group_get		= falcon_pinconf_group_get,
 	.pin_config_group_set		= falcon_pinconf_group_set,
 	.pin_config_dbg_show		= falcon_pinconf_dbg_show,
 	.pin_config_group_dbg_show	= falcon_pinconf_group_dbg_show,
-पूर्ण;
+};
 
-अटल काष्ठा pinctrl_desc falcon_pctrl_desc = अणु
+static struct pinctrl_desc falcon_pctrl_desc = {
 	.owner		= THIS_MODULE,
 	.pins		= falcon_pads,
 	.confops	= &falcon_pinconf_ops,
-पूर्ण;
+};
 
-अटल अंतरभूत पूर्णांक falcon_mux_apply(काष्ठा pinctrl_dev *pctrldev,
-			पूर्णांक mfp, पूर्णांक mux)
-अणु
-	काष्ठा ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
-	पूर्णांक port = PORT(info->mfp[mfp].pin);
+static inline int falcon_mux_apply(struct pinctrl_dev *pctrldev,
+			int mfp, int mux)
+{
+	struct ltq_pinmux_info *info = pinctrl_dev_get_drvdata(pctrldev);
+	int port = PORT(info->mfp[mfp].pin);
 
-	अगर ((port >= PORTS) || (!info->membase[port]))
-		वापस -ENODEV;
+	if ((port >= PORTS) || (!info->membase[port]))
+		return -ENODEV;
 
 	pad_w32(info->membase[port], mux,
 		LTQ_PADC_MUX(PORT_PIN(info->mfp[mfp].pin)));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा ltq_cfg_param falcon_cfg_params[] = अणु
-	अणु"lantiq,pull",			LTQ_PINCONF_PARAM_PULLपूर्ण,
-	अणु"lantiq,drive-current",	LTQ_PINCONF_PARAM_DRIVE_CURRENTपूर्ण,
-	अणु"lantiq,slew-rate",		LTQ_PINCONF_PARAM_SLEW_RATEपूर्ण,
-पूर्ण;
+static const struct ltq_cfg_param falcon_cfg_params[] = {
+	{"lantiq,pull",			LTQ_PINCONF_PARAM_PULL},
+	{"lantiq,drive-current",	LTQ_PINCONF_PARAM_DRIVE_CURRENT},
+	{"lantiq,slew-rate",		LTQ_PINCONF_PARAM_SLEW_RATE},
+};
 
-अटल काष्ठा ltq_pinmux_info falcon_info = अणु
+static struct ltq_pinmux_info falcon_info = {
 	.desc		= &falcon_pctrl_desc,
 	.apply_mux	= falcon_mux_apply,
 	.params		= falcon_cfg_params,
 	.num_params	= ARRAY_SIZE(falcon_cfg_params),
-पूर्ण;
+};
 
 
 
 
-/* --------- रेजिस्टर the pinctrl layer --------- */
+/* --------- register the pinctrl layer --------- */
 
-पूर्णांक pinctrl_falcon_get_range_size(पूर्णांक id)
-अणु
+int pinctrl_falcon_get_range_size(int id)
+{
 	u32 avail;
 
-	अगर ((id >= PORTS) || (!falcon_info.membase[id]))
-		वापस -EINVAL;
+	if ((id >= PORTS) || (!falcon_info.membase[id]))
+		return -EINVAL;
 
 	avail = pad_r32(falcon_info.membase[id], LTQ_PADC_AVAIL);
 
-	वापस fls(avail);
-पूर्ण
+	return fls(avail);
+}
 
-व्योम pinctrl_falcon_add_gpio_range(काष्ठा pinctrl_gpio_range *range)
-अणु
+void pinctrl_falcon_add_gpio_range(struct pinctrl_gpio_range *range)
+{
 	pinctrl_add_gpio_range(falcon_info.pctrl, range);
-पूर्ण
+}
 
-अटल पूर्णांक pinctrl_falcon_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np;
-	पूर्णांक pad_count = 0;
-	पूर्णांक ret = 0;
+static int pinctrl_falcon_probe(struct platform_device *pdev)
+{
+	struct device_node *np;
+	int pad_count = 0;
+	int ret = 0;
 
-	/* load and remap the pad resources of the dअगरferent banks */
-	क्रम_each_compatible_node(np, शून्य, "lantiq,pad-falcon") अणु
-		स्थिर __be32 *bank = of_get_property(np, "lantiq,bank", शून्य);
-		काष्ठा resource res;
-		काष्ठा platक्रमm_device *ppdev;
+	/* load and remap the pad resources of the different banks */
+	for_each_compatible_node(np, NULL, "lantiq,pad-falcon") {
+		const __be32 *bank = of_get_property(np, "lantiq,bank", NULL);
+		struct resource res;
+		struct platform_device *ppdev;
 		u32 avail;
-		पूर्णांक pins;
+		int pins;
 
-		अगर (!of_device_is_available(np))
-			जारी;
+		if (!of_device_is_available(np))
+			continue;
 
-		अगर (!bank || *bank >= PORTS)
-			जारी;
-		अगर (of_address_to_resource(np, 0, &res))
-			जारी;
+		if (!bank || *bank >= PORTS)
+			continue;
+		if (of_address_to_resource(np, 0, &res))
+			continue;
 
 		ppdev = of_find_device_by_node(np);
-		अगर (!ppdev) अणु
+		if (!ppdev) {
 			dev_err(&pdev->dev, "failed to find pad pdev\n");
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		falcon_info.clk[*bank] = clk_get(&ppdev->dev, शून्य);
+		falcon_info.clk[*bank] = clk_get(&ppdev->dev, NULL);
 		put_device(&ppdev->dev);
-		अगर (IS_ERR(falcon_info.clk[*bank])) अणु
+		if (IS_ERR(falcon_info.clk[*bank])) {
 			dev_err(&ppdev->dev, "failed to get clock\n");
 			of_node_put(np);
-			वापस PTR_ERR(falcon_info.clk[*bank]);
-		पूर्ण
+			return PTR_ERR(falcon_info.clk[*bank]);
+		}
 		falcon_info.membase[*bank] = devm_ioremap_resource(&pdev->dev,
 								   &res);
-		अगर (IS_ERR(falcon_info.membase[*bank])) अणु
+		if (IS_ERR(falcon_info.membase[*bank])) {
 			of_node_put(np);
-			वापस PTR_ERR(falcon_info.membase[*bank]);
-		पूर्ण
+			return PTR_ERR(falcon_info.membase[*bank]);
+		}
 
 		avail = pad_r32(falcon_info.membase[*bank],
 					LTQ_PADC_AVAIL);
@@ -474,7 +473,7 @@
 		clk_enable(falcon_info.clk[*bank]);
 		dev_dbg(&pdev->dev, "found %s with %d pads\n",
 				res.name, pins);
-	पूर्ण
+	}
 	dev_dbg(&pdev->dev, "found a total of %d pads\n", pad_count);
 	falcon_pctrl_desc.name	= dev_name(&pdev->dev);
 	falcon_pctrl_desc.npins	= pad_count;
@@ -486,29 +485,29 @@
 	falcon_info.funcs	= falcon_funcs;
 	falcon_info.num_funcs	= ARRAY_SIZE(falcon_funcs);
 
-	ret = ltq_pinctrl_रेजिस्टर(pdev, &falcon_info);
-	अगर (!ret)
+	ret = ltq_pinctrl_register(pdev, &falcon_info);
+	if (!ret)
 		dev_info(&pdev->dev, "Init done\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा of_device_id falcon_match[] = अणु
-	अणु .compatible = "lantiq,pinctrl-falcon" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id falcon_match[] = {
+	{ .compatible = "lantiq,pinctrl-falcon" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, falcon_match);
 
-अटल काष्ठा platक्रमm_driver pinctrl_falcon_driver = अणु
+static struct platform_driver pinctrl_falcon_driver = {
 	.probe = pinctrl_falcon_probe,
-	.driver = अणु
+	.driver = {
 		.name = "pinctrl-falcon",
 		.of_match_table = falcon_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-पूर्णांक __init pinctrl_falcon_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&pinctrl_falcon_driver);
-पूर्ण
+int __init pinctrl_falcon_init(void)
+{
+	return platform_driver_register(&pinctrl_falcon_driver);
+}
 
 core_initcall_sync(pinctrl_falcon_init);

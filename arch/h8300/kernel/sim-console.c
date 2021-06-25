@@ -1,32 +1,31 @@
-<शैली गुरु>
 /*
  * arch/h8300/kernel/sim-console.c
  *
- *  Copyright (C) 2015 Yoshinori Sato <ysato@users.sourceक्रमge.jp>
+ *  Copyright (C) 2015 Yoshinori Sato <ysato@users.sourceforge.jp>
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  */
-#समावेश <linux/console.h>
-#समावेश <linux/init.h>
-#समावेश <linux/serial_core.h>
+#include <linux/console.h>
+#include <linux/init.h>
+#include <linux/serial_core.h>
 
-अटल व्योम sim_ग_लिखो(काष्ठा console *con, स्थिर अक्षर *s, अचिन्हित n)
-अणु
-	रेजिस्टर स्थिर अक्षर *_ptr __यंत्र__("er1") = s;
-	रेजिस्टर स्थिर अचिन्हित _len __यंत्र__("er2") = n;
+static void sim_write(struct console *con, const char *s, unsigned n)
+{
+	register const char *_ptr __asm__("er1") = s;
+	register const unsigned _len __asm__("er2") = n;
 
-	__यंत्र__("sub.l er0,er0\n\t"		/* er0 = 1 (मानक_निकास) */
+	__asm__("sub.l er0,er0\n\t"		/* er0 = 1 (stdout) */
 		"inc.l #1,er0\n\t"
-		".byte 0x5e,0x00,0x00,0xc7\n\t" /* jsr @0xc7 (sys_ग_लिखो) */
+		".byte 0x5e,0x00,0x00,0xc7\n\t" /* jsr @0xc7 (sys_write) */
 		: : "g"(_ptr), "g"(_len):"er0");
-पूर्ण
+}
 
-अटल पूर्णांक __init sim_setup(काष्ठा earlycon_device *device, स्थिर अक्षर *opt)
-अणु
-	device->con->ग_लिखो = sim_ग_लिखो;
-	वापस 0;
-पूर्ण
+static int __init sim_setup(struct earlycon_device *device, const char *opt)
+{
+	device->con->write = sim_write;
+	return 0;
+}
 
 EARLYCON_DECLARE(h8sim, sim_setup);

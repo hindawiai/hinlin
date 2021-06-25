@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * (C) COPYRIGHT 2012-2013 ARM Limited. All rights reserved.
  *
@@ -10,137 +9,137 @@
  * Copyright (C) 2011 Texas Instruments
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/version.h>
-#समावेश <linux/dma-buf.h>
-#समावेश <linux/of_graph.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/version.h>
+#include <linux/dma-buf.h>
+#include <linux/of_graph.h>
 
-#समावेश <drm/drm_fb_cma_helper.h>
-#समावेश <drm/drm_fourcc.h>
-#समावेश <drm/drm_gem_atomic_helper.h>
-#समावेश <drm/drm_gem_cma_helper.h>
-#समावेश <drm/drm_vblank.h>
+#include <drm/drm_fb_cma_helper.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_gem_atomic_helper.h>
+#include <drm/drm_gem_cma_helper.h>
+#include <drm/drm_vblank.h>
 
-#समावेश "pl111_drm.h"
+#include "pl111_drm.h"
 
-irqवापस_t pl111_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा pl111_drm_dev_निजी *priv = data;
+irqreturn_t pl111_irq(int irq, void *data)
+{
+	struct pl111_drm_dev_private *priv = data;
 	u32 irq_stat;
-	irqवापस_t status = IRQ_NONE;
+	irqreturn_t status = IRQ_NONE;
 
-	irq_stat = पढ़ोl(priv->regs + CLCD_PL111_MIS);
+	irq_stat = readl(priv->regs + CLCD_PL111_MIS);
 
-	अगर (!irq_stat)
-		वापस IRQ_NONE;
+	if (!irq_stat)
+		return IRQ_NONE;
 
-	अगर (irq_stat & CLCD_IRQ_NEXTBASE_UPDATE) अणु
+	if (irq_stat & CLCD_IRQ_NEXTBASE_UPDATE) {
 		drm_crtc_handle_vblank(&priv->pipe.crtc);
 
 		status = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	/* Clear the पूर्णांकerrupt once करोne */
-	ग_लिखोl(irq_stat, priv->regs + CLCD_PL111_ICR);
+	/* Clear the interrupt once done */
+	writel(irq_stat, priv->regs + CLCD_PL111_ICR);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल क्रमागत drm_mode_status
-pl111_mode_valid(काष्ठा drm_simple_display_pipe *pipe,
-		 स्थिर काष्ठा drm_display_mode *mode)
-अणु
-	काष्ठा drm_device *drm = pipe->crtc.dev;
-	काष्ठा pl111_drm_dev_निजी *priv = drm->dev_निजी;
+static enum drm_mode_status
+pl111_mode_valid(struct drm_simple_display_pipe *pipe,
+		 const struct drm_display_mode *mode)
+{
+	struct drm_device *drm = pipe->crtc.dev;
+	struct pl111_drm_dev_private *priv = drm->dev_private;
 	u32 cpp = priv->variant->fb_bpp / 8;
 	u64 bw;
 
 	/*
-	 * We use the pixelघड़ी to also account क्रम पूर्णांकerlaced modes, the
+	 * We use the pixelclock to also account for interlaced modes, the
 	 * resulting bandwidth is in bytes per second.
 	 */
-	bw = mode->घड़ी * 1000ULL; /* In Hz */
+	bw = mode->clock * 1000ULL; /* In Hz */
 	bw = bw * mode->hdisplay * mode->vdisplay * cpp;
-	bw = भाग_u64(bw, mode->htotal * mode->vtotal);
+	bw = div_u64(bw, mode->htotal * mode->vtotal);
 
 	/*
-	 * If no bandwidth स्थिरraपूर्णांकs, anything goes, अन्यथा
-	 * check अगर we are too fast.
+	 * If no bandwidth constraints, anything goes, else
+	 * check if we are too fast.
 	 */
-	अगर (priv->memory_bw && (bw > priv->memory_bw)) अणु
+	if (priv->memory_bw && (bw > priv->memory_bw)) {
 		DRM_DEBUG_KMS("%d x %d @ %d Hz, %d cpp, bw %llu too fast\n",
 			      mode->hdisplay, mode->vdisplay,
-			      mode->घड़ी * 1000, cpp, bw);
+			      mode->clock * 1000, cpp, bw);
 
-		वापस MODE_BAD;
-	पूर्ण
+		return MODE_BAD;
+	}
 	DRM_DEBUG_KMS("%d x %d @ %d Hz, %d cpp, bw %llu bytes/s OK\n",
 		      mode->hdisplay, mode->vdisplay,
-		      mode->घड़ी * 1000, cpp, bw);
+		      mode->clock * 1000, cpp, bw);
 
-	वापस MODE_OK;
-पूर्ण
+	return MODE_OK;
+}
 
-अटल पूर्णांक pl111_display_check(काष्ठा drm_simple_display_pipe *pipe,
-			       काष्ठा drm_plane_state *pstate,
-			       काष्ठा drm_crtc_state *cstate)
-अणु
-	स्थिर काष्ठा drm_display_mode *mode = &cstate->mode;
-	काष्ठा drm_framebuffer *old_fb = pipe->plane.state->fb;
-	काष्ठा drm_framebuffer *fb = pstate->fb;
+static int pl111_display_check(struct drm_simple_display_pipe *pipe,
+			       struct drm_plane_state *pstate,
+			       struct drm_crtc_state *cstate)
+{
+	const struct drm_display_mode *mode = &cstate->mode;
+	struct drm_framebuffer *old_fb = pipe->plane.state->fb;
+	struct drm_framebuffer *fb = pstate->fb;
 
-	अगर (mode->hdisplay % 16)
-		वापस -EINVAL;
+	if (mode->hdisplay % 16)
+		return -EINVAL;
 
-	अगर (fb) अणु
+	if (fb) {
 		u32 offset = drm_fb_cma_get_gem_addr(fb, pstate, 0);
 
 		/* FB base address must be dword aligned. */
-		अगर (offset & 3)
-			वापस -EINVAL;
+		if (offset & 3)
+			return -EINVAL;
 
 		/* There's no pitch register -- the mode's hdisplay
 		 * controls it.
 		 */
-		अगर (fb->pitches[0] != mode->hdisplay * fb->क्रमmat->cpp[0])
-			वापस -EINVAL;
+		if (fb->pitches[0] != mode->hdisplay * fb->format->cpp[0])
+			return -EINVAL;
 
-		/* We can't change the FB क्रमmat in a flicker-मुक्त
+		/* We can't change the FB format in a flicker-free
 		 * manner (and only update it during CRTC enable).
 		 */
-		अगर (old_fb && old_fb->क्रमmat != fb->क्रमmat)
+		if (old_fb && old_fb->format != fb->format)
 			cstate->mode_changed = true;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pl111_display_enable(काष्ठा drm_simple_display_pipe *pipe,
-				 काष्ठा drm_crtc_state *cstate,
-				 काष्ठा drm_plane_state *plane_state)
-अणु
-	काष्ठा drm_crtc *crtc = &pipe->crtc;
-	काष्ठा drm_plane *plane = &pipe->plane;
-	काष्ठा drm_device *drm = crtc->dev;
-	काष्ठा pl111_drm_dev_निजी *priv = drm->dev_निजी;
-	स्थिर काष्ठा drm_display_mode *mode = &cstate->mode;
-	काष्ठा drm_framebuffer *fb = plane->state->fb;
-	काष्ठा drm_connector *connector = priv->connector;
-	काष्ठा drm_bridge *bridge = priv->bridge;
+static void pl111_display_enable(struct drm_simple_display_pipe *pipe,
+				 struct drm_crtc_state *cstate,
+				 struct drm_plane_state *plane_state)
+{
+	struct drm_crtc *crtc = &pipe->crtc;
+	struct drm_plane *plane = &pipe->plane;
+	struct drm_device *drm = crtc->dev;
+	struct pl111_drm_dev_private *priv = drm->dev_private;
+	const struct drm_display_mode *mode = &cstate->mode;
+	struct drm_framebuffer *fb = plane->state->fb;
+	struct drm_connector *connector = priv->connector;
+	struct drm_bridge *bridge = priv->bridge;
 	bool grayscale = false;
 	u32 cntl;
 	u32 ppl, hsw, hfp, hbp;
 	u32 lpp, vsw, vfp, vbp;
 	u32 cpl, tim2;
-	पूर्णांक ret;
+	int ret;
 
-	ret = clk_set_rate(priv->clk, mode->घड़ी * 1000);
-	अगर (ret) अणु
+	ret = clk_set_rate(priv->clk, mode->clock * 1000);
+	if (ret) {
 		dev_err(drm->dev,
 			"Failed to set pixel clock rate to %d: %d\n",
-			mode->घड़ी * 1000, ret);
-	पूर्ण
+			mode->clock * 1000, ret);
+	}
 
 	clk_prepare_enable(priv->clk);
 
@@ -156,12 +155,12 @@ pl111_mode_valid(काष्ठा drm_simple_display_pipe *pipe,
 
 	cpl = mode->hdisplay - 1;
 
-	ग_लिखोl((ppl << 2) |
+	writel((ppl << 2) |
 	       (hsw << 8) |
 	       (hfp << 16) |
 	       (hbp << 24),
 	       priv->regs + CLCD_TIM0);
-	ग_लिखोl(lpp |
+	writel(lpp |
 	       (vsw << 10) |
 	       (vfp << 16) |
 	       (vbp << 24),
@@ -169,173 +168,173 @@ pl111_mode_valid(काष्ठा drm_simple_display_pipe *pipe,
 
 	spin_lock(&priv->tim2_lock);
 
-	tim2 = पढ़ोl(priv->regs + CLCD_TIM2);
+	tim2 = readl(priv->regs + CLCD_TIM2);
 	tim2 &= (TIM2_BCD | TIM2_PCD_LO_MASK | TIM2_PCD_HI_MASK);
 
-	अगर (priv->variant->broken_घड़ीभागider)
+	if (priv->variant->broken_clockdivider)
 		tim2 |= TIM2_BCD;
 
-	अगर (mode->flags & DRM_MODE_FLAG_NHSYNC)
+	if (mode->flags & DRM_MODE_FLAG_NHSYNC)
 		tim2 |= TIM2_IHS;
 
-	अगर (mode->flags & DRM_MODE_FLAG_NVSYNC)
+	if (mode->flags & DRM_MODE_FLAG_NVSYNC)
 		tim2 |= TIM2_IVS;
 
-	अगर (connector) अणु
-		अगर (connector->display_info.bus_flags & DRM_BUS_FLAG_DE_LOW)
+	if (connector) {
+		if (connector->display_info.bus_flags & DRM_BUS_FLAG_DE_LOW)
 			tim2 |= TIM2_IOE;
 
-		अगर (connector->display_info.bus_flags &
+		if (connector->display_info.bus_flags &
 		    DRM_BUS_FLAG_PIXDATA_DRIVE_NEGEDGE)
 			tim2 |= TIM2_IPC;
 
-		अगर (connector->display_info.num_bus_क्रमmats == 1 &&
-		    connector->display_info.bus_क्रमmats[0] ==
+		if (connector->display_info.num_bus_formats == 1 &&
+		    connector->display_info.bus_formats[0] ==
 		    MEDIA_BUS_FMT_Y8_1X8)
 			grayscale = true;
 
 		/*
 		 * The AC pin bias frequency is set to max count when using
-		 * grayscale so at least once in a जबतक we will reverse
+		 * grayscale so at least once in a while we will reverse
 		 * polarity and get rid of any DC built up that could
 		 * damage the display.
 		 */
-		अगर (grayscale)
+		if (grayscale)
 			tim2 |= TIM2_ACB_MASK;
-	पूर्ण
+	}
 
-	अगर (bridge) अणु
-		स्थिर काष्ठा drm_bridge_timings *btimings = bridge->timings;
+	if (bridge) {
+		const struct drm_bridge_timings *btimings = bridge->timings;
 
 		/*
-		 * Here is when things get really fun. Someबार the bridge
-		 * timings are such that the संकेत out from PL11x is not
-		 * stable beक्रमe the receiving bridge (such as a dumb VGA DAC
+		 * Here is when things get really fun. Sometimes the bridge
+		 * timings are such that the signal out from PL11x is not
+		 * stable before the receiving bridge (such as a dumb VGA DAC
 		 * or similar) samples it. If that happens, we compensate by
 		 * the only method we have: output the data on the opposite
-		 * edge of the घड़ी so it is क्रम sure stable when it माला_लो
+		 * edge of the clock so it is for sure stable when it gets
 		 * sampled.
 		 *
-		 * The PL111 manual करोes not contain proper timining diagrams
-		 * or data क्रम these details, but we know from experiments
-		 * that the setup समय is more than 3000 picoseconds (3 ns).
-		 * If we have a bridge that requires the संकेत to be stable
-		 * earlier than 3000 ps beक्रमe the घड़ी pulse, we have to
-		 * output the data on the opposite edge to aव्योम flicker.
+		 * The PL111 manual does not contain proper timining diagrams
+		 * or data for these details, but we know from experiments
+		 * that the setup time is more than 3000 picoseconds (3 ns).
+		 * If we have a bridge that requires the signal to be stable
+		 * earlier than 3000 ps before the clock pulse, we have to
+		 * output the data on the opposite edge to avoid flicker.
 		 */
-		अगर (btimings && btimings->setup_समय_ps >= 3000)
+		if (btimings && btimings->setup_time_ps >= 3000)
 			tim2 ^= TIM2_IPC;
-	पूर्ण
+	}
 
 	tim2 |= cpl << 16;
-	ग_लिखोl(tim2, priv->regs + CLCD_TIM2);
+	writel(tim2, priv->regs + CLCD_TIM2);
 	spin_unlock(&priv->tim2_lock);
 
-	ग_लिखोl(0, priv->regs + CLCD_TIM3);
+	writel(0, priv->regs + CLCD_TIM3);
 
 	/*
-	 * Detect grayscale bus क्रमmat. We करो not support a grayscale mode
+	 * Detect grayscale bus format. We do not support a grayscale mode
 	 * toward userspace, instead we expose an RGB24 buffer and then the
 	 * hardware will activate its grayscaler to convert to the grayscale
-	 * क्रमmat.
+	 * format.
 	 */
-	अगर (grayscale)
+	if (grayscale)
 		cntl = CNTL_LCDEN | CNTL_LCDMONO8;
-	अन्यथा
+	else
 		/* Else we assume TFT display */
 		cntl = CNTL_LCDEN | CNTL_LCDTFT | CNTL_LCDVCOMP(1);
 
 	/* On the ST Micro variant, assume all 24 bits are connected */
-	अगर (priv->variant->st_biपंचांगux_control)
+	if (priv->variant->st_bitmux_control)
 		cntl |= CNTL_ST_CDWID_24;
 
 	/*
 	 * Note that the the ARM hardware's format reader takes 'r' from
-	 * the low bit, जबतक DRM क्रमmats list channels from high bit
-	 * to low bit as you पढ़ो left to right. The ST Micro version of
-	 * the PL110 (LCDC) however uses the standard DRM क्रमmat.
+	 * the low bit, while DRM formats list channels from high bit
+	 * to low bit as you read left to right. The ST Micro version of
+	 * the PL110 (LCDC) however uses the standard DRM format.
 	 */
-	चयन (fb->क्रमmat->क्रमmat) अणु
-	हाल DRM_FORMAT_BGR888:
+	switch (fb->format->format) {
+	case DRM_FORMAT_BGR888:
 		/* Only supported on the ST Micro variant */
-		अगर (priv->variant->st_biपंचांगux_control)
+		if (priv->variant->st_bitmux_control)
 			cntl |= CNTL_ST_LCDBPP24_PACKED | CNTL_BGR;
-		अवरोध;
-	हाल DRM_FORMAT_RGB888:
+		break;
+	case DRM_FORMAT_RGB888:
 		/* Only supported on the ST Micro variant */
-		अगर (priv->variant->st_biपंचांगux_control)
+		if (priv->variant->st_bitmux_control)
 			cntl |= CNTL_ST_LCDBPP24_PACKED;
-		अवरोध;
-	हाल DRM_FORMAT_ABGR8888:
-	हाल DRM_FORMAT_XBGR8888:
-		अगर (priv->variant->st_biपंचांगux_control)
+		break;
+	case DRM_FORMAT_ABGR8888:
+	case DRM_FORMAT_XBGR8888:
+		if (priv->variant->st_bitmux_control)
 			cntl |= CNTL_LCDBPP24 | CNTL_BGR;
-		अन्यथा
+		else
 			cntl |= CNTL_LCDBPP24;
-		अवरोध;
-	हाल DRM_FORMAT_ARGB8888:
-	हाल DRM_FORMAT_XRGB8888:
-		अगर (priv->variant->st_biपंचांगux_control)
+		break;
+	case DRM_FORMAT_ARGB8888:
+	case DRM_FORMAT_XRGB8888:
+		if (priv->variant->st_bitmux_control)
 			cntl |= CNTL_LCDBPP24;
-		अन्यथा
+		else
 			cntl |= CNTL_LCDBPP24 | CNTL_BGR;
-		अवरोध;
-	हाल DRM_FORMAT_BGR565:
-		अगर (priv->variant->is_pl110)
+		break;
+	case DRM_FORMAT_BGR565:
+		if (priv->variant->is_pl110)
 			cntl |= CNTL_LCDBPP16;
-		अन्यथा अगर (priv->variant->st_biपंचांगux_control)
+		else if (priv->variant->st_bitmux_control)
 			cntl |= CNTL_LCDBPP16 | CNTL_ST_1XBPP_565 | CNTL_BGR;
-		अन्यथा
+		else
 			cntl |= CNTL_LCDBPP16_565;
-		अवरोध;
-	हाल DRM_FORMAT_RGB565:
-		अगर (priv->variant->is_pl110)
+		break;
+	case DRM_FORMAT_RGB565:
+		if (priv->variant->is_pl110)
 			cntl |= CNTL_LCDBPP16 | CNTL_BGR;
-		अन्यथा अगर (priv->variant->st_biपंचांगux_control)
+		else if (priv->variant->st_bitmux_control)
 			cntl |= CNTL_LCDBPP16 | CNTL_ST_1XBPP_565;
-		अन्यथा
+		else
 			cntl |= CNTL_LCDBPP16_565 | CNTL_BGR;
-		अवरोध;
-	हाल DRM_FORMAT_ABGR1555:
-	हाल DRM_FORMAT_XBGR1555:
+		break;
+	case DRM_FORMAT_ABGR1555:
+	case DRM_FORMAT_XBGR1555:
 		cntl |= CNTL_LCDBPP16;
-		अगर (priv->variant->st_biपंचांगux_control)
+		if (priv->variant->st_bitmux_control)
 			cntl |= CNTL_ST_1XBPP_5551 | CNTL_BGR;
-		अवरोध;
-	हाल DRM_FORMAT_ARGB1555:
-	हाल DRM_FORMAT_XRGB1555:
+		break;
+	case DRM_FORMAT_ARGB1555:
+	case DRM_FORMAT_XRGB1555:
 		cntl |= CNTL_LCDBPP16;
-		अगर (priv->variant->st_biपंचांगux_control)
+		if (priv->variant->st_bitmux_control)
 			cntl |= CNTL_ST_1XBPP_5551;
-		अन्यथा
+		else
 			cntl |= CNTL_BGR;
-		अवरोध;
-	हाल DRM_FORMAT_ABGR4444:
-	हाल DRM_FORMAT_XBGR4444:
+		break;
+	case DRM_FORMAT_ABGR4444:
+	case DRM_FORMAT_XBGR4444:
 		cntl |= CNTL_LCDBPP16_444;
-		अगर (priv->variant->st_biपंचांगux_control)
+		if (priv->variant->st_bitmux_control)
 			cntl |= CNTL_ST_1XBPP_444 | CNTL_BGR;
-		अवरोध;
-	हाल DRM_FORMAT_ARGB4444:
-	हाल DRM_FORMAT_XRGB4444:
+		break;
+	case DRM_FORMAT_ARGB4444:
+	case DRM_FORMAT_XRGB4444:
 		cntl |= CNTL_LCDBPP16_444;
-		अगर (priv->variant->st_biपंचांगux_control)
+		if (priv->variant->st_bitmux_control)
 			cntl |= CNTL_ST_1XBPP_444;
-		अन्यथा
+		else
 			cntl |= CNTL_BGR;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ONCE(true, "Unknown FB format 0x%08x\n",
-			  fb->क्रमmat->क्रमmat);
-		अवरोध;
-	पूर्ण
+			  fb->format->format);
+		break;
+	}
 
-	/* The PL110 in Integrator/Versatile करोes the BGR routing बाह्यally */
-	अगर (priv->variant->बाह्यal_bgr)
+	/* The PL110 in Integrator/Versatile does the BGR routing externally */
+	if (priv->variant->external_bgr)
 		cntl &= ~CNTL_BGR;
 
 	/* Power sequence: first enable and chill */
-	ग_लिखोl(cntl, priv->regs + priv->ctrl);
+	writel(cntl, priv->regs + priv->ctrl);
 
 	/*
 	 * We expect this delay to stabilize the contrast
@@ -343,33 +342,33 @@ pl111_mode_valid(काष्ठा drm_simple_display_pipe *pipe,
 	 */
 	msleep(20);
 
-	अगर (priv->variant_display_enable)
-		priv->variant_display_enable(drm, fb->क्रमmat->क्रमmat);
+	if (priv->variant_display_enable)
+		priv->variant_display_enable(drm, fb->format->format);
 
 	/* Power Up */
 	cntl |= CNTL_LCDPWR;
-	ग_लिखोl(cntl, priv->regs + priv->ctrl);
+	writel(cntl, priv->regs + priv->ctrl);
 
-	अगर (!priv->variant->broken_vblank)
+	if (!priv->variant->broken_vblank)
 		drm_crtc_vblank_on(crtc);
-पूर्ण
+}
 
-अटल व्योम pl111_display_disable(काष्ठा drm_simple_display_pipe *pipe)
-अणु
-	काष्ठा drm_crtc *crtc = &pipe->crtc;
-	काष्ठा drm_device *drm = crtc->dev;
-	काष्ठा pl111_drm_dev_निजी *priv = drm->dev_निजी;
+static void pl111_display_disable(struct drm_simple_display_pipe *pipe)
+{
+	struct drm_crtc *crtc = &pipe->crtc;
+	struct drm_device *drm = crtc->dev;
+	struct pl111_drm_dev_private *priv = drm->dev_private;
 	u32 cntl;
 
-	अगर (!priv->variant->broken_vblank)
+	if (!priv->variant->broken_vblank)
 		drm_crtc_vblank_off(crtc);
 
 	/* Power Down */
-	cntl = पढ़ोl(priv->regs + priv->ctrl);
-	अगर (cntl & CNTL_LCDPWR) अणु
+	cntl = readl(priv->regs + priv->ctrl);
+	if (cntl & CNTL_LCDPWR) {
 		cntl &= ~CNTL_LCDPWR;
-		ग_लिखोl(cntl, priv->regs + priv->ctrl);
-	पूर्ण
+		writel(cntl, priv->regs + priv->ctrl);
+	}
 
 	/*
 	 * We expect this delay to stabilize the contrast voltage Vee as
@@ -377,221 +376,221 @@ pl111_mode_valid(काष्ठा drm_simple_display_pipe *pipe,
 	 */
 	msleep(20);
 
-	अगर (priv->variant_display_disable)
+	if (priv->variant_display_disable)
 		priv->variant_display_disable(drm);
 
 	/* Disable */
-	ग_लिखोl(0, priv->regs + priv->ctrl);
+	writel(0, priv->regs + priv->ctrl);
 
 	clk_disable_unprepare(priv->clk);
-पूर्ण
+}
 
-अटल व्योम pl111_display_update(काष्ठा drm_simple_display_pipe *pipe,
-				 काष्ठा drm_plane_state *old_pstate)
-अणु
-	काष्ठा drm_crtc *crtc = &pipe->crtc;
-	काष्ठा drm_device *drm = crtc->dev;
-	काष्ठा pl111_drm_dev_निजी *priv = drm->dev_निजी;
-	काष्ठा drm_pending_vblank_event *event = crtc->state->event;
-	काष्ठा drm_plane *plane = &pipe->plane;
-	काष्ठा drm_plane_state *pstate = plane->state;
-	काष्ठा drm_framebuffer *fb = pstate->fb;
+static void pl111_display_update(struct drm_simple_display_pipe *pipe,
+				 struct drm_plane_state *old_pstate)
+{
+	struct drm_crtc *crtc = &pipe->crtc;
+	struct drm_device *drm = crtc->dev;
+	struct pl111_drm_dev_private *priv = drm->dev_private;
+	struct drm_pending_vblank_event *event = crtc->state->event;
+	struct drm_plane *plane = &pipe->plane;
+	struct drm_plane_state *pstate = plane->state;
+	struct drm_framebuffer *fb = pstate->fb;
 
-	अगर (fb) अणु
+	if (fb) {
 		u32 addr = drm_fb_cma_get_gem_addr(fb, pstate, 0);
 
-		ग_लिखोl(addr, priv->regs + CLCD_UBAS);
-	पूर्ण
+		writel(addr, priv->regs + CLCD_UBAS);
+	}
 
-	अगर (event) अणु
-		crtc->state->event = शून्य;
+	if (event) {
+		crtc->state->event = NULL;
 
 		spin_lock_irq(&crtc->dev->event_lock);
-		अगर (crtc->state->active && drm_crtc_vblank_get(crtc) == 0)
+		if (crtc->state->active && drm_crtc_vblank_get(crtc) == 0)
 			drm_crtc_arm_vblank_event(crtc, event);
-		अन्यथा
+		else
 			drm_crtc_send_vblank_event(crtc, event);
 		spin_unlock_irq(&crtc->dev->event_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक pl111_display_enable_vblank(काष्ठा drm_simple_display_pipe *pipe)
-अणु
-	काष्ठा drm_crtc *crtc = &pipe->crtc;
-	काष्ठा drm_device *drm = crtc->dev;
-	काष्ठा pl111_drm_dev_निजी *priv = drm->dev_निजी;
+static int pl111_display_enable_vblank(struct drm_simple_display_pipe *pipe)
+{
+	struct drm_crtc *crtc = &pipe->crtc;
+	struct drm_device *drm = crtc->dev;
+	struct pl111_drm_dev_private *priv = drm->dev_private;
 
-	ग_लिखोl(CLCD_IRQ_NEXTBASE_UPDATE, priv->regs + priv->ienb);
+	writel(CLCD_IRQ_NEXTBASE_UPDATE, priv->regs + priv->ienb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pl111_display_disable_vblank(काष्ठा drm_simple_display_pipe *pipe)
-अणु
-	काष्ठा drm_crtc *crtc = &pipe->crtc;
-	काष्ठा drm_device *drm = crtc->dev;
-	काष्ठा pl111_drm_dev_निजी *priv = drm->dev_निजी;
+static void pl111_display_disable_vblank(struct drm_simple_display_pipe *pipe)
+{
+	struct drm_crtc *crtc = &pipe->crtc;
+	struct drm_device *drm = crtc->dev;
+	struct pl111_drm_dev_private *priv = drm->dev_private;
 
-	ग_लिखोl(0, priv->regs + priv->ienb);
-पूर्ण
+	writel(0, priv->regs + priv->ienb);
+}
 
-अटल काष्ठा drm_simple_display_pipe_funcs pl111_display_funcs = अणु
+static struct drm_simple_display_pipe_funcs pl111_display_funcs = {
 	.mode_valid = pl111_mode_valid,
 	.check = pl111_display_check,
 	.enable = pl111_display_enable,
 	.disable = pl111_display_disable,
 	.update = pl111_display_update,
 	.prepare_fb = drm_gem_simple_display_pipe_prepare_fb,
-पूर्ण;
+};
 
-अटल पूर्णांक pl111_clk_भाग_choose_भाग(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				    अचिन्हित दीर्घ *prate, bool set_parent)
-अणु
-	पूर्णांक best_भाग = 1, भाग;
-	काष्ठा clk_hw *parent = clk_hw_get_parent(hw);
-	अचिन्हित दीर्घ best_prate = 0;
-	अचिन्हित दीर्घ best_dअगरf = ~0ul;
-	पूर्णांक max_भाग = (1 << (TIM2_PCD_LO_BITS + TIM2_PCD_HI_BITS)) - 1;
+static int pl111_clk_div_choose_div(struct clk_hw *hw, unsigned long rate,
+				    unsigned long *prate, bool set_parent)
+{
+	int best_div = 1, div;
+	struct clk_hw *parent = clk_hw_get_parent(hw);
+	unsigned long best_prate = 0;
+	unsigned long best_diff = ~0ul;
+	int max_div = (1 << (TIM2_PCD_LO_BITS + TIM2_PCD_HI_BITS)) - 1;
 
-	क्रम (भाग = 1; भाग < max_भाग; भाग++) अणु
-		अचिन्हित दीर्घ this_prate, भाग_rate, dअगरf;
+	for (div = 1; div < max_div; div++) {
+		unsigned long this_prate, div_rate, diff;
 
-		अगर (set_parent)
-			this_prate = clk_hw_round_rate(parent, rate * भाग);
-		अन्यथा
+		if (set_parent)
+			this_prate = clk_hw_round_rate(parent, rate * div);
+		else
 			this_prate = *prate;
-		भाग_rate = DIV_ROUND_UP_ULL(this_prate, भाग);
-		dअगरf = असल(rate - भाग_rate);
+		div_rate = DIV_ROUND_UP_ULL(this_prate, div);
+		diff = abs(rate - div_rate);
 
-		अगर (dअगरf < best_dअगरf) अणु
-			best_भाग = भाग;
-			best_dअगरf = dअगरf;
+		if (diff < best_diff) {
+			best_div = div;
+			best_diff = diff;
 			best_prate = this_prate;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	*prate = best_prate;
-	वापस best_भाग;
-पूर्ण
+	return best_div;
+}
 
-अटल दीर्घ pl111_clk_भाग_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				     अचिन्हित दीर्घ *prate)
-अणु
-	पूर्णांक भाग = pl111_clk_भाग_choose_भाग(hw, rate, prate, true);
+static long pl111_clk_div_round_rate(struct clk_hw *hw, unsigned long rate,
+				     unsigned long *prate)
+{
+	int div = pl111_clk_div_choose_div(hw, rate, prate, true);
 
-	वापस DIV_ROUND_UP_ULL(*prate, भाग);
-पूर्ण
+	return DIV_ROUND_UP_ULL(*prate, div);
+}
 
-अटल अचिन्हित दीर्घ pl111_clk_भाग_recalc_rate(काष्ठा clk_hw *hw,
-					       अचिन्हित दीर्घ prate)
-अणु
-	काष्ठा pl111_drm_dev_निजी *priv =
-		container_of(hw, काष्ठा pl111_drm_dev_निजी, clk_भाग);
-	u32 tim2 = पढ़ोl(priv->regs + CLCD_TIM2);
-	पूर्णांक भाग;
+static unsigned long pl111_clk_div_recalc_rate(struct clk_hw *hw,
+					       unsigned long prate)
+{
+	struct pl111_drm_dev_private *priv =
+		container_of(hw, struct pl111_drm_dev_private, clk_div);
+	u32 tim2 = readl(priv->regs + CLCD_TIM2);
+	int div;
 
-	अगर (tim2 & TIM2_BCD)
-		वापस prate;
+	if (tim2 & TIM2_BCD)
+		return prate;
 
-	भाग = tim2 & TIM2_PCD_LO_MASK;
-	भाग |= (tim2 & TIM2_PCD_HI_MASK) >>
+	div = tim2 & TIM2_PCD_LO_MASK;
+	div |= (tim2 & TIM2_PCD_HI_MASK) >>
 		(TIM2_PCD_HI_SHIFT - TIM2_PCD_LO_BITS);
-	भाग += 2;
+	div += 2;
 
-	वापस DIV_ROUND_UP_ULL(prate, भाग);
-पूर्ण
+	return DIV_ROUND_UP_ULL(prate, div);
+}
 
-अटल पूर्णांक pl111_clk_भाग_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				  अचिन्हित दीर्घ prate)
-अणु
-	काष्ठा pl111_drm_dev_निजी *priv =
-		container_of(hw, काष्ठा pl111_drm_dev_निजी, clk_भाग);
-	पूर्णांक भाग = pl111_clk_भाग_choose_भाग(hw, rate, &prate, false);
+static int pl111_clk_div_set_rate(struct clk_hw *hw, unsigned long rate,
+				  unsigned long prate)
+{
+	struct pl111_drm_dev_private *priv =
+		container_of(hw, struct pl111_drm_dev_private, clk_div);
+	int div = pl111_clk_div_choose_div(hw, rate, &prate, false);
 	u32 tim2;
 
 	spin_lock(&priv->tim2_lock);
-	tim2 = पढ़ोl(priv->regs + CLCD_TIM2);
+	tim2 = readl(priv->regs + CLCD_TIM2);
 	tim2 &= ~(TIM2_BCD | TIM2_PCD_LO_MASK | TIM2_PCD_HI_MASK);
 
-	अगर (भाग == 1) अणु
+	if (div == 1) {
 		tim2 |= TIM2_BCD;
-	पूर्ण अन्यथा अणु
-		भाग -= 2;
-		tim2 |= भाग & TIM2_PCD_LO_MASK;
-		tim2 |= (भाग >> TIM2_PCD_LO_BITS) << TIM2_PCD_HI_SHIFT;
-	पूर्ण
+	} else {
+		div -= 2;
+		tim2 |= div & TIM2_PCD_LO_MASK;
+		tim2 |= (div >> TIM2_PCD_LO_BITS) << TIM2_PCD_HI_SHIFT;
+	}
 
-	ग_लिखोl(tim2, priv->regs + CLCD_TIM2);
+	writel(tim2, priv->regs + CLCD_TIM2);
 	spin_unlock(&priv->tim2_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops pl111_clk_भाग_ops = अणु
-	.recalc_rate = pl111_clk_भाग_recalc_rate,
-	.round_rate = pl111_clk_भाग_round_rate,
-	.set_rate = pl111_clk_भाग_set_rate,
-पूर्ण;
+static const struct clk_ops pl111_clk_div_ops = {
+	.recalc_rate = pl111_clk_div_recalc_rate,
+	.round_rate = pl111_clk_div_round_rate,
+	.set_rate = pl111_clk_div_set_rate,
+};
 
-अटल पूर्णांक
-pl111_init_घड़ी_भागider(काष्ठा drm_device *drm)
-अणु
-	काष्ठा pl111_drm_dev_निजी *priv = drm->dev_निजी;
-	काष्ठा clk *parent = devm_clk_get(drm->dev, "clcdclk");
-	काष्ठा clk_hw *भाग = &priv->clk_भाग;
-	स्थिर अक्षर *parent_name;
-	काष्ठा clk_init_data init = अणु
+static int
+pl111_init_clock_divider(struct drm_device *drm)
+{
+	struct pl111_drm_dev_private *priv = drm->dev_private;
+	struct clk *parent = devm_clk_get(drm->dev, "clcdclk");
+	struct clk_hw *div = &priv->clk_div;
+	const char *parent_name;
+	struct clk_init_data init = {
 		.name = "pl111_div",
-		.ops = &pl111_clk_भाग_ops,
+		.ops = &pl111_clk_div_ops,
 		.parent_names = &parent_name,
 		.num_parents = 1,
 		.flags = CLK_SET_RATE_PARENT,
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
-	अगर (IS_ERR(parent)) अणु
+	if (IS_ERR(parent)) {
 		dev_err(drm->dev, "CLCD: unable to get clcdclk.\n");
-		वापस PTR_ERR(parent);
-	पूर्ण
+		return PTR_ERR(parent);
+	}
 
 	spin_lock_init(&priv->tim2_lock);
 
-	/* If the घड़ी भागider is broken, use the parent directly */
-	अगर (priv->variant->broken_घड़ीभागider) अणु
+	/* If the clock divider is broken, use the parent directly */
+	if (priv->variant->broken_clockdivider) {
 		priv->clk = parent;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	parent_name = __clk_get_name(parent);
-	भाग->init = &init;
+	div->init = &init;
 
-	ret = devm_clk_hw_रेजिस्टर(drm->dev, भाग);
+	ret = devm_clk_hw_register(drm->dev, div);
 
-	priv->clk = भाग->clk;
-	वापस ret;
-पूर्ण
+	priv->clk = div->clk;
+	return ret;
+}
 
-पूर्णांक pl111_display_init(काष्ठा drm_device *drm)
-अणु
-	काष्ठा pl111_drm_dev_निजी *priv = drm->dev_निजी;
-	पूर्णांक ret;
+int pl111_display_init(struct drm_device *drm)
+{
+	struct pl111_drm_dev_private *priv = drm->dev_private;
+	int ret;
 
-	ret = pl111_init_घड़ी_भागider(drm);
-	अगर (ret)
-		वापस ret;
+	ret = pl111_init_clock_divider(drm);
+	if (ret)
+		return ret;
 
-	अगर (!priv->variant->broken_vblank) अणु
+	if (!priv->variant->broken_vblank) {
 		pl111_display_funcs.enable_vblank = pl111_display_enable_vblank;
 		pl111_display_funcs.disable_vblank = pl111_display_disable_vblank;
-	पूर्ण
+	}
 
 	ret = drm_simple_display_pipe_init(drm, &priv->pipe,
 					   &pl111_display_funcs,
-					   priv->variant->क्रमmats,
-					   priv->variant->nक्रमmats,
-					   शून्य,
+					   priv->variant->formats,
+					   priv->variant->nformats,
+					   NULL,
 					   priv->connector);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

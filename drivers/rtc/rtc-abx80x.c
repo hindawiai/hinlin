@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * A driver क्रम the I2C members of the Abracon AB x8xx RTC family,
+ * A driver for the I2C members of the Abracon AB x8xx RTC family,
  * and compatible: AB 1805 and AB 0805
  *
  * Copyright 2014-2015 Macq S.A.
@@ -11,692 +10,692 @@
  *
  */
 
-#समावेश <linux/bcd.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/watchकरोg.h>
+#include <linux/bcd.h>
+#include <linux/i2c.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/rtc.h>
+#include <linux/watchdog.h>
 
-#घोषणा ABX8XX_REG_HTH		0x00
-#घोषणा ABX8XX_REG_SC		0x01
-#घोषणा ABX8XX_REG_MN		0x02
-#घोषणा ABX8XX_REG_HR		0x03
-#घोषणा ABX8XX_REG_DA		0x04
-#घोषणा ABX8XX_REG_MO		0x05
-#घोषणा ABX8XX_REG_YR		0x06
-#घोषणा ABX8XX_REG_WD		0x07
+#define ABX8XX_REG_HTH		0x00
+#define ABX8XX_REG_SC		0x01
+#define ABX8XX_REG_MN		0x02
+#define ABX8XX_REG_HR		0x03
+#define ABX8XX_REG_DA		0x04
+#define ABX8XX_REG_MO		0x05
+#define ABX8XX_REG_YR		0x06
+#define ABX8XX_REG_WD		0x07
 
-#घोषणा ABX8XX_REG_AHTH		0x08
-#घोषणा ABX8XX_REG_ASC		0x09
-#घोषणा ABX8XX_REG_AMN		0x0a
-#घोषणा ABX8XX_REG_AHR		0x0b
-#घोषणा ABX8XX_REG_ADA		0x0c
-#घोषणा ABX8XX_REG_AMO		0x0d
-#घोषणा ABX8XX_REG_AWD		0x0e
+#define ABX8XX_REG_AHTH		0x08
+#define ABX8XX_REG_ASC		0x09
+#define ABX8XX_REG_AMN		0x0a
+#define ABX8XX_REG_AHR		0x0b
+#define ABX8XX_REG_ADA		0x0c
+#define ABX8XX_REG_AMO		0x0d
+#define ABX8XX_REG_AWD		0x0e
 
-#घोषणा ABX8XX_REG_STATUS	0x0f
-#घोषणा ABX8XX_STATUS_AF	BIT(2)
-#घोषणा ABX8XX_STATUS_BLF	BIT(4)
-#घोषणा ABX8XX_STATUS_WDT	BIT(6)
+#define ABX8XX_REG_STATUS	0x0f
+#define ABX8XX_STATUS_AF	BIT(2)
+#define ABX8XX_STATUS_BLF	BIT(4)
+#define ABX8XX_STATUS_WDT	BIT(6)
 
-#घोषणा ABX8XX_REG_CTRL1	0x10
-#घोषणा ABX8XX_CTRL_WRITE	BIT(0)
-#घोषणा ABX8XX_CTRL_ARST	BIT(2)
-#घोषणा ABX8XX_CTRL_12_24	BIT(6)
+#define ABX8XX_REG_CTRL1	0x10
+#define ABX8XX_CTRL_WRITE	BIT(0)
+#define ABX8XX_CTRL_ARST	BIT(2)
+#define ABX8XX_CTRL_12_24	BIT(6)
 
-#घोषणा ABX8XX_REG_CTRL2	0x11
-#घोषणा ABX8XX_CTRL2_RSVD	BIT(5)
+#define ABX8XX_REG_CTRL2	0x11
+#define ABX8XX_CTRL2_RSVD	BIT(5)
 
-#घोषणा ABX8XX_REG_IRQ		0x12
-#घोषणा ABX8XX_IRQ_AIE		BIT(2)
-#घोषणा ABX8XX_IRQ_IM_1_4	(0x3 << 5)
+#define ABX8XX_REG_IRQ		0x12
+#define ABX8XX_IRQ_AIE		BIT(2)
+#define ABX8XX_IRQ_IM_1_4	(0x3 << 5)
 
-#घोषणा ABX8XX_REG_CD_TIMER_CTL	0x18
+#define ABX8XX_REG_CD_TIMER_CTL	0x18
 
-#घोषणा ABX8XX_REG_OSC		0x1c
-#घोषणा ABX8XX_OSC_FOS		BIT(3)
-#घोषणा ABX8XX_OSC_BOS		BIT(4)
-#घोषणा ABX8XX_OSC_ACAL_512	BIT(5)
-#घोषणा ABX8XX_OSC_ACAL_1024	BIT(6)
+#define ABX8XX_REG_OSC		0x1c
+#define ABX8XX_OSC_FOS		BIT(3)
+#define ABX8XX_OSC_BOS		BIT(4)
+#define ABX8XX_OSC_ACAL_512	BIT(5)
+#define ABX8XX_OSC_ACAL_1024	BIT(6)
 
-#घोषणा ABX8XX_OSC_OSEL		BIT(7)
+#define ABX8XX_OSC_OSEL		BIT(7)
 
-#घोषणा ABX8XX_REG_OSS		0x1d
-#घोषणा ABX8XX_OSS_OF		BIT(1)
-#घोषणा ABX8XX_OSS_OMODE	BIT(4)
+#define ABX8XX_REG_OSS		0x1d
+#define ABX8XX_OSS_OF		BIT(1)
+#define ABX8XX_OSS_OMODE	BIT(4)
 
-#घोषणा ABX8XX_REG_WDT		0x1b
-#घोषणा ABX8XX_WDT_WDS		BIT(7)
-#घोषणा ABX8XX_WDT_BMB_MASK	0x7c
-#घोषणा ABX8XX_WDT_BMB_SHIFT	2
-#घोषणा ABX8XX_WDT_MAX_TIME	(ABX8XX_WDT_BMB_MASK >> ABX8XX_WDT_BMB_SHIFT)
-#घोषणा ABX8XX_WDT_WRB_MASK	0x03
-#घोषणा ABX8XX_WDT_WRB_1HZ	0x02
+#define ABX8XX_REG_WDT		0x1b
+#define ABX8XX_WDT_WDS		BIT(7)
+#define ABX8XX_WDT_BMB_MASK	0x7c
+#define ABX8XX_WDT_BMB_SHIFT	2
+#define ABX8XX_WDT_MAX_TIME	(ABX8XX_WDT_BMB_MASK >> ABX8XX_WDT_BMB_SHIFT)
+#define ABX8XX_WDT_WRB_MASK	0x03
+#define ABX8XX_WDT_WRB_1HZ	0x02
 
-#घोषणा ABX8XX_REG_CFG_KEY	0x1f
-#घोषणा ABX8XX_CFG_KEY_OSC	0xa1
-#घोषणा ABX8XX_CFG_KEY_MISC	0x9d
+#define ABX8XX_REG_CFG_KEY	0x1f
+#define ABX8XX_CFG_KEY_OSC	0xa1
+#define ABX8XX_CFG_KEY_MISC	0x9d
 
-#घोषणा ABX8XX_REG_ID0		0x28
+#define ABX8XX_REG_ID0		0x28
 
-#घोषणा ABX8XX_REG_OUT_CTRL	0x30
-#घोषणा ABX8XX_OUT_CTRL_EXDS	BIT(4)
+#define ABX8XX_REG_OUT_CTRL	0x30
+#define ABX8XX_OUT_CTRL_EXDS	BIT(4)
 
-#घोषणा ABX8XX_REG_TRICKLE	0x20
-#घोषणा ABX8XX_TRICKLE_CHARGE_ENABLE	0xa0
-#घोषणा ABX8XX_TRICKLE_STANDARD_DIODE	0x8
-#घोषणा ABX8XX_TRICKLE_SCHOTTKY_DIODE	0x4
+#define ABX8XX_REG_TRICKLE	0x20
+#define ABX8XX_TRICKLE_CHARGE_ENABLE	0xa0
+#define ABX8XX_TRICKLE_STANDARD_DIODE	0x8
+#define ABX8XX_TRICKLE_SCHOTTKY_DIODE	0x4
 
-अटल u8 trickle_resistors[] = अणु0, 3, 6, 11पूर्ण;
+static u8 trickle_resistors[] = {0, 3, 6, 11};
 
-क्रमागत abx80x_chip अणुAB0801, AB0803, AB0804, AB0805,
-	AB1801, AB1803, AB1804, AB1805, RV1805, ABX80Xपूर्ण;
+enum abx80x_chip {AB0801, AB0803, AB0804, AB0805,
+	AB1801, AB1803, AB1804, AB1805, RV1805, ABX80X};
 
-काष्ठा abx80x_cap अणु
+struct abx80x_cap {
 	u16 pn;
 	bool has_tc;
-	bool has_wकरोg;
-पूर्ण;
+	bool has_wdog;
+};
 
-अटल काष्ठा abx80x_cap abx80x_caps[] = अणु
-	[AB0801] = अणु.pn = 0x0801पूर्ण,
-	[AB0803] = अणु.pn = 0x0803पूर्ण,
-	[AB0804] = अणु.pn = 0x0804, .has_tc = true, .has_wकरोg = trueपूर्ण,
-	[AB0805] = अणु.pn = 0x0805, .has_tc = true, .has_wकरोg = trueपूर्ण,
-	[AB1801] = अणु.pn = 0x1801पूर्ण,
-	[AB1803] = अणु.pn = 0x1803पूर्ण,
-	[AB1804] = अणु.pn = 0x1804, .has_tc = true, .has_wकरोg = trueपूर्ण,
-	[AB1805] = अणु.pn = 0x1805, .has_tc = true, .has_wकरोg = trueपूर्ण,
-	[RV1805] = अणु.pn = 0x1805, .has_tc = true, .has_wकरोg = trueपूर्ण,
-	[ABX80X] = अणु.pn = 0पूर्ण
-पूर्ण;
+static struct abx80x_cap abx80x_caps[] = {
+	[AB0801] = {.pn = 0x0801},
+	[AB0803] = {.pn = 0x0803},
+	[AB0804] = {.pn = 0x0804, .has_tc = true, .has_wdog = true},
+	[AB0805] = {.pn = 0x0805, .has_tc = true, .has_wdog = true},
+	[AB1801] = {.pn = 0x1801},
+	[AB1803] = {.pn = 0x1803},
+	[AB1804] = {.pn = 0x1804, .has_tc = true, .has_wdog = true},
+	[AB1805] = {.pn = 0x1805, .has_tc = true, .has_wdog = true},
+	[RV1805] = {.pn = 0x1805, .has_tc = true, .has_wdog = true},
+	[ABX80X] = {.pn = 0}
+};
 
-काष्ठा abx80x_priv अणु
-	काष्ठा rtc_device *rtc;
-	काष्ठा i2c_client *client;
-	काष्ठा watchकरोg_device wकरोg;
-पूर्ण;
+struct abx80x_priv {
+	struct rtc_device *rtc;
+	struct i2c_client *client;
+	struct watchdog_device wdog;
+};
 
-अटल पूर्णांक abx80x_ग_लिखो_config_key(काष्ठा i2c_client *client, u8 key)
-अणु
-	अगर (i2c_smbus_ग_लिखो_byte_data(client, ABX8XX_REG_CFG_KEY, key) < 0) अणु
+static int abx80x_write_config_key(struct i2c_client *client, u8 key)
+{
+	if (i2c_smbus_write_byte_data(client, ABX8XX_REG_CFG_KEY, key) < 0) {
 		dev_err(&client->dev, "Unable to write configuration key\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक abx80x_is_rc_mode(काष्ठा i2c_client *client)
-अणु
-	पूर्णांक flags = 0;
+static int abx80x_is_rc_mode(struct i2c_client *client)
+{
+	int flags = 0;
 
-	flags =  i2c_smbus_पढ़ो_byte_data(client, ABX8XX_REG_OSS);
-	अगर (flags < 0) अणु
+	flags =  i2c_smbus_read_byte_data(client, ABX8XX_REG_OSS);
+	if (flags < 0) {
 		dev_err(&client->dev,
 			"Failed to read autocalibration attribute\n");
-		वापस flags;
-	पूर्ण
+		return flags;
+	}
 
-	वापस (flags & ABX8XX_OSS_OMODE) ? 1 : 0;
-पूर्ण
+	return (flags & ABX8XX_OSS_OMODE) ? 1 : 0;
+}
 
-अटल पूर्णांक abx80x_enable_trickle_अक्षरger(काष्ठा i2c_client *client,
+static int abx80x_enable_trickle_charger(struct i2c_client *client,
 					 u8 trickle_cfg)
-अणु
-	पूर्णांक err;
+{
+	int err;
 
 	/*
-	 * Write the configuration key रेजिस्टर to enable access to the Trickle
-	 * रेजिस्टर
+	 * Write the configuration key register to enable access to the Trickle
+	 * register
 	 */
-	अगर (abx80x_ग_लिखो_config_key(client, ABX8XX_CFG_KEY_MISC) < 0)
-		वापस -EIO;
+	if (abx80x_write_config_key(client, ABX8XX_CFG_KEY_MISC) < 0)
+		return -EIO;
 
-	err = i2c_smbus_ग_लिखो_byte_data(client, ABX8XX_REG_TRICKLE,
+	err = i2c_smbus_write_byte_data(client, ABX8XX_REG_TRICKLE,
 					ABX8XX_TRICKLE_CHARGE_ENABLE |
 					trickle_cfg);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(&client->dev, "Unable to write trickle register\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक abx80x_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	अचिन्हित अक्षर buf[8];
-	पूर्णांक err, flags, rc_mode = 0;
+static int abx80x_rtc_read_time(struct device *dev, struct rtc_time *tm)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	unsigned char buf[8];
+	int err, flags, rc_mode = 0;
 
 	/* Read the Oscillator Failure only in XT mode */
 	rc_mode = abx80x_is_rc_mode(client);
-	अगर (rc_mode < 0)
-		वापस rc_mode;
+	if (rc_mode < 0)
+		return rc_mode;
 
-	अगर (!rc_mode) अणु
-		flags = i2c_smbus_पढ़ो_byte_data(client, ABX8XX_REG_OSS);
-		अगर (flags < 0)
-			वापस flags;
+	if (!rc_mode) {
+		flags = i2c_smbus_read_byte_data(client, ABX8XX_REG_OSS);
+		if (flags < 0)
+			return flags;
 
-		अगर (flags & ABX8XX_OSS_OF) अणु
+		if (flags & ABX8XX_OSS_OF) {
 			dev_err(dev, "Oscillator failure, data is invalid.\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	err = i2c_smbus_पढ़ो_i2c_block_data(client, ABX8XX_REG_HTH,
-					    माप(buf), buf);
-	अगर (err < 0) अणु
+	err = i2c_smbus_read_i2c_block_data(client, ABX8XX_REG_HTH,
+					    sizeof(buf), buf);
+	if (err < 0) {
 		dev_err(&client->dev, "Unable to read date\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	पंचांग->पंचांग_sec = bcd2bin(buf[ABX8XX_REG_SC] & 0x7F);
-	पंचांग->पंचांग_min = bcd2bin(buf[ABX8XX_REG_MN] & 0x7F);
-	पंचांग->पंचांग_hour = bcd2bin(buf[ABX8XX_REG_HR] & 0x3F);
-	पंचांग->पंचांग_wday = buf[ABX8XX_REG_WD] & 0x7;
-	पंचांग->पंचांग_mday = bcd2bin(buf[ABX8XX_REG_DA] & 0x3F);
-	पंचांग->पंचांग_mon = bcd2bin(buf[ABX8XX_REG_MO] & 0x1F) - 1;
-	पंचांग->पंचांग_year = bcd2bin(buf[ABX8XX_REG_YR]) + 100;
+	tm->tm_sec = bcd2bin(buf[ABX8XX_REG_SC] & 0x7F);
+	tm->tm_min = bcd2bin(buf[ABX8XX_REG_MN] & 0x7F);
+	tm->tm_hour = bcd2bin(buf[ABX8XX_REG_HR] & 0x3F);
+	tm->tm_wday = buf[ABX8XX_REG_WD] & 0x7;
+	tm->tm_mday = bcd2bin(buf[ABX8XX_REG_DA] & 0x3F);
+	tm->tm_mon = bcd2bin(buf[ABX8XX_REG_MO] & 0x1F) - 1;
+	tm->tm_year = bcd2bin(buf[ABX8XX_REG_YR]) + 100;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक abx80x_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	अचिन्हित अक्षर buf[8];
-	पूर्णांक err, flags;
+static int abx80x_rtc_set_time(struct device *dev, struct rtc_time *tm)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	unsigned char buf[8];
+	int err, flags;
 
-	अगर (पंचांग->पंचांग_year < 100)
-		वापस -EINVAL;
+	if (tm->tm_year < 100)
+		return -EINVAL;
 
 	buf[ABX8XX_REG_HTH] = 0;
-	buf[ABX8XX_REG_SC] = bin2bcd(पंचांग->पंचांग_sec);
-	buf[ABX8XX_REG_MN] = bin2bcd(पंचांग->पंचांग_min);
-	buf[ABX8XX_REG_HR] = bin2bcd(पंचांग->पंचांग_hour);
-	buf[ABX8XX_REG_DA] = bin2bcd(पंचांग->पंचांग_mday);
-	buf[ABX8XX_REG_MO] = bin2bcd(पंचांग->पंचांग_mon + 1);
-	buf[ABX8XX_REG_YR] = bin2bcd(पंचांग->पंचांग_year - 100);
-	buf[ABX8XX_REG_WD] = पंचांग->पंचांग_wday;
+	buf[ABX8XX_REG_SC] = bin2bcd(tm->tm_sec);
+	buf[ABX8XX_REG_MN] = bin2bcd(tm->tm_min);
+	buf[ABX8XX_REG_HR] = bin2bcd(tm->tm_hour);
+	buf[ABX8XX_REG_DA] = bin2bcd(tm->tm_mday);
+	buf[ABX8XX_REG_MO] = bin2bcd(tm->tm_mon + 1);
+	buf[ABX8XX_REG_YR] = bin2bcd(tm->tm_year - 100);
+	buf[ABX8XX_REG_WD] = tm->tm_wday;
 
-	err = i2c_smbus_ग_लिखो_i2c_block_data(client, ABX8XX_REG_HTH,
-					     माप(buf), buf);
-	अगर (err < 0) अणु
+	err = i2c_smbus_write_i2c_block_data(client, ABX8XX_REG_HTH,
+					     sizeof(buf), buf);
+	if (err < 0) {
 		dev_err(&client->dev, "Unable to write to date registers\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	/* Clear the OF bit of Oscillator Status Register */
-	flags = i2c_smbus_पढ़ो_byte_data(client, ABX8XX_REG_OSS);
-	अगर (flags < 0)
-		वापस flags;
+	flags = i2c_smbus_read_byte_data(client, ABX8XX_REG_OSS);
+	if (flags < 0)
+		return flags;
 
-	err = i2c_smbus_ग_लिखो_byte_data(client, ABX8XX_REG_OSS,
+	err = i2c_smbus_write_byte_data(client, ABX8XX_REG_OSS,
 					flags & ~ABX8XX_OSS_OF);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(&client->dev, "Unable to write oscillator status register\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t abx80x_handle_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा i2c_client *client = dev_id;
-	काष्ठा abx80x_priv *priv = i2c_get_clientdata(client);
-	काष्ठा rtc_device *rtc = priv->rtc;
-	पूर्णांक status;
+static irqreturn_t abx80x_handle_irq(int irq, void *dev_id)
+{
+	struct i2c_client *client = dev_id;
+	struct abx80x_priv *priv = i2c_get_clientdata(client);
+	struct rtc_device *rtc = priv->rtc;
+	int status;
 
-	status = i2c_smbus_पढ़ो_byte_data(client, ABX8XX_REG_STATUS);
-	अगर (status < 0)
-		वापस IRQ_NONE;
+	status = i2c_smbus_read_byte_data(client, ABX8XX_REG_STATUS);
+	if (status < 0)
+		return IRQ_NONE;
 
-	अगर (status & ABX8XX_STATUS_AF)
+	if (status & ABX8XX_STATUS_AF)
 		rtc_update_irq(rtc, 1, RTC_AF | RTC_IRQF);
 
 	/*
-	 * It is unclear अगर we'll get an पूर्णांकerrupt beक्रमe the बाह्यal
+	 * It is unclear if we'll get an interrupt before the external
 	 * reset kicks in.
 	 */
-	अगर (status & ABX8XX_STATUS_WDT)
+	if (status & ABX8XX_STATUS_WDT)
 		dev_alert(&client->dev, "watchdog timeout interrupt.\n");
 
-	i2c_smbus_ग_लिखो_byte_data(client, ABX8XX_REG_STATUS, 0);
+	i2c_smbus_write_byte_data(client, ABX8XX_REG_STATUS, 0);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक abx80x_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *t)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	अचिन्हित अक्षर buf[7];
+static int abx80x_read_alarm(struct device *dev, struct rtc_wkalrm *t)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	unsigned char buf[7];
 
-	पूर्णांक irq_mask, err;
+	int irq_mask, err;
 
-	अगर (client->irq <= 0)
-		वापस -EINVAL;
+	if (client->irq <= 0)
+		return -EINVAL;
 
-	err = i2c_smbus_पढ़ो_i2c_block_data(client, ABX8XX_REG_ASC,
-					    माप(buf), buf);
-	अगर (err)
-		वापस err;
+	err = i2c_smbus_read_i2c_block_data(client, ABX8XX_REG_ASC,
+					    sizeof(buf), buf);
+	if (err)
+		return err;
 
-	irq_mask = i2c_smbus_पढ़ो_byte_data(client, ABX8XX_REG_IRQ);
-	अगर (irq_mask < 0)
-		वापस irq_mask;
+	irq_mask = i2c_smbus_read_byte_data(client, ABX8XX_REG_IRQ);
+	if (irq_mask < 0)
+		return irq_mask;
 
-	t->समय.पंचांग_sec = bcd2bin(buf[0] & 0x7F);
-	t->समय.पंचांग_min = bcd2bin(buf[1] & 0x7F);
-	t->समय.पंचांग_hour = bcd2bin(buf[2] & 0x3F);
-	t->समय.पंचांग_mday = bcd2bin(buf[3] & 0x3F);
-	t->समय.पंचांग_mon = bcd2bin(buf[4] & 0x1F) - 1;
-	t->समय.पंचांग_wday = buf[5] & 0x7;
+	t->time.tm_sec = bcd2bin(buf[0] & 0x7F);
+	t->time.tm_min = bcd2bin(buf[1] & 0x7F);
+	t->time.tm_hour = bcd2bin(buf[2] & 0x3F);
+	t->time.tm_mday = bcd2bin(buf[3] & 0x3F);
+	t->time.tm_mon = bcd2bin(buf[4] & 0x1F) - 1;
+	t->time.tm_wday = buf[5] & 0x7;
 
 	t->enabled = !!(irq_mask & ABX8XX_IRQ_AIE);
 	t->pending = (buf[6] & ABX8XX_STATUS_AF) && t->enabled;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक abx80x_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *t)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
+static int abx80x_set_alarm(struct device *dev, struct rtc_wkalrm *t)
+{
+	struct i2c_client *client = to_i2c_client(dev);
 	u8 alarm[6];
-	पूर्णांक err;
+	int err;
 
-	अगर (client->irq <= 0)
-		वापस -EINVAL;
+	if (client->irq <= 0)
+		return -EINVAL;
 
 	alarm[0] = 0x0;
-	alarm[1] = bin2bcd(t->समय.पंचांग_sec);
-	alarm[2] = bin2bcd(t->समय.पंचांग_min);
-	alarm[3] = bin2bcd(t->समय.पंचांग_hour);
-	alarm[4] = bin2bcd(t->समय.पंचांग_mday);
-	alarm[5] = bin2bcd(t->समय.पंचांग_mon + 1);
+	alarm[1] = bin2bcd(t->time.tm_sec);
+	alarm[2] = bin2bcd(t->time.tm_min);
+	alarm[3] = bin2bcd(t->time.tm_hour);
+	alarm[4] = bin2bcd(t->time.tm_mday);
+	alarm[5] = bin2bcd(t->time.tm_mon + 1);
 
-	err = i2c_smbus_ग_लिखो_i2c_block_data(client, ABX8XX_REG_AHTH,
-					     माप(alarm), alarm);
-	अगर (err < 0) अणु
+	err = i2c_smbus_write_i2c_block_data(client, ABX8XX_REG_AHTH,
+					     sizeof(alarm), alarm);
+	if (err < 0) {
 		dev_err(&client->dev, "Unable to write alarm registers\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (t->enabled) अणु
-		err = i2c_smbus_ग_लिखो_byte_data(client, ABX8XX_REG_IRQ,
+	if (t->enabled) {
+		err = i2c_smbus_write_byte_data(client, ABX8XX_REG_IRQ,
 						(ABX8XX_IRQ_IM_1_4 |
 						 ABX8XX_IRQ_AIE));
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक abx80x_rtc_set_स्वतःcalibration(काष्ठा device *dev,
-					  पूर्णांक स्वतःcalibration)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	पूर्णांक retval, flags = 0;
+static int abx80x_rtc_set_autocalibration(struct device *dev,
+					  int autocalibration)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	int retval, flags = 0;
 
-	अगर ((स्वतःcalibration != 0) && (स्वतःcalibration != 1024) &&
-	    (स्वतःcalibration != 512)) अणु
+	if ((autocalibration != 0) && (autocalibration != 1024) &&
+	    (autocalibration != 512)) {
 		dev_err(dev, "autocalibration value outside permitted range\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	flags = i2c_smbus_पढ़ो_byte_data(client, ABX8XX_REG_OSC);
-	अगर (flags < 0)
-		वापस flags;
+	flags = i2c_smbus_read_byte_data(client, ABX8XX_REG_OSC);
+	if (flags < 0)
+		return flags;
 
-	अगर (स्वतःcalibration == 0) अणु
+	if (autocalibration == 0) {
 		flags &= ~(ABX8XX_OSC_ACAL_512 | ABX8XX_OSC_ACAL_1024);
-	पूर्ण अन्यथा अगर (स्वतःcalibration == 1024) अणु
-		/* 1024 स्वतःcalibration is 0x10 */
+	} else if (autocalibration == 1024) {
+		/* 1024 autocalibration is 0x10 */
 		flags |= ABX8XX_OSC_ACAL_1024;
 		flags &= ~(ABX8XX_OSC_ACAL_512);
-	पूर्ण अन्यथा अणु
-		/* 512 स्वतःcalibration is 0x11 */
+	} else {
+		/* 512 autocalibration is 0x11 */
 		flags |= (ABX8XX_OSC_ACAL_1024 | ABX8XX_OSC_ACAL_512);
-	पूर्ण
+	}
 
-	/* Unlock ग_लिखो access to Oscillator Control Register */
-	अगर (abx80x_ग_लिखो_config_key(client, ABX8XX_CFG_KEY_OSC) < 0)
-		वापस -EIO;
+	/* Unlock write access to Oscillator Control Register */
+	if (abx80x_write_config_key(client, ABX8XX_CFG_KEY_OSC) < 0)
+		return -EIO;
 
-	retval = i2c_smbus_ग_लिखो_byte_data(client, ABX8XX_REG_OSC, flags);
+	retval = i2c_smbus_write_byte_data(client, ABX8XX_REG_OSC, flags);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक abx80x_rtc_get_स्वतःcalibration(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	पूर्णांक flags = 0, स्वतःcalibration;
+static int abx80x_rtc_get_autocalibration(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	int flags = 0, autocalibration;
 
-	flags =  i2c_smbus_पढ़ो_byte_data(client, ABX8XX_REG_OSC);
-	अगर (flags < 0)
-		वापस flags;
+	flags =  i2c_smbus_read_byte_data(client, ABX8XX_REG_OSC);
+	if (flags < 0)
+		return flags;
 
-	अगर (flags & ABX8XX_OSC_ACAL_512)
-		स्वतःcalibration = 512;
-	अन्यथा अगर (flags & ABX8XX_OSC_ACAL_1024)
-		स्वतःcalibration = 1024;
-	अन्यथा
-		स्वतःcalibration = 0;
+	if (flags & ABX8XX_OSC_ACAL_512)
+		autocalibration = 512;
+	else if (flags & ABX8XX_OSC_ACAL_1024)
+		autocalibration = 1024;
+	else
+		autocalibration = 0;
 
-	वापस स्वतःcalibration;
-पूर्ण
+	return autocalibration;
+}
 
-अटल sमाप_प्रकार स्वतःcalibration_store(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr,
-				     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक retval;
-	अचिन्हित दीर्घ स्वतःcalibration = 0;
+static ssize_t autocalibration_store(struct device *dev,
+				     struct device_attribute *attr,
+				     const char *buf, size_t count)
+{
+	int retval;
+	unsigned long autocalibration = 0;
 
-	retval = kम_से_अदीर्घ(buf, 10, &स्वतःcalibration);
-	अगर (retval < 0) अणु
+	retval = kstrtoul(buf, 10, &autocalibration);
+	if (retval < 0) {
 		dev_err(dev, "Failed to store RTC autocalibration attribute\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	retval = abx80x_rtc_set_स्वतःcalibration(dev->parent, स्वतःcalibration);
+	retval = abx80x_rtc_set_autocalibration(dev->parent, autocalibration);
 
-	वापस retval ? retval : count;
-पूर्ण
+	return retval ? retval : count;
+}
 
-अटल sमाप_प्रकार स्वतःcalibration_show(काष्ठा device *dev,
-				    काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	पूर्णांक स्वतःcalibration = 0;
+static ssize_t autocalibration_show(struct device *dev,
+				    struct device_attribute *attr, char *buf)
+{
+	int autocalibration = 0;
 
-	स्वतःcalibration = abx80x_rtc_get_स्वतःcalibration(dev->parent);
-	अगर (स्वतःcalibration < 0) अणु
+	autocalibration = abx80x_rtc_get_autocalibration(dev->parent);
+	if (autocalibration < 0) {
 		dev_err(dev, "Failed to read RTC autocalibration\n");
-		प्र_लिखो(buf, "0\n");
-		वापस स्वतःcalibration;
-	पूर्ण
+		sprintf(buf, "0\n");
+		return autocalibration;
+	}
 
-	वापस प्र_लिखो(buf, "%d\n", स्वतःcalibration);
-पूर्ण
+	return sprintf(buf, "%d\n", autocalibration);
+}
 
-अटल DEVICE_ATTR_RW(स्वतःcalibration);
+static DEVICE_ATTR_RW(autocalibration);
 
-अटल sमाप_प्रकार oscillator_store(काष्ठा device *dev,
-				काष्ठा device_attribute *attr,
-				स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev->parent);
-	पूर्णांक retval, flags, rc_mode = 0;
+static ssize_t oscillator_store(struct device *dev,
+				struct device_attribute *attr,
+				const char *buf, size_t count)
+{
+	struct i2c_client *client = to_i2c_client(dev->parent);
+	int retval, flags, rc_mode = 0;
 
-	अगर (म_भेदन(buf, "rc", 2) == 0) अणु
+	if (strncmp(buf, "rc", 2) == 0) {
 		rc_mode = 1;
-	पूर्ण अन्यथा अगर (म_भेदन(buf, "xtal", 4) == 0) अणु
+	} else if (strncmp(buf, "xtal", 4) == 0) {
 		rc_mode = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(dev, "Oscillator selection value outside permitted ones\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	flags =  i2c_smbus_पढ़ो_byte_data(client, ABX8XX_REG_OSC);
-	अगर (flags < 0)
-		वापस flags;
+	flags =  i2c_smbus_read_byte_data(client, ABX8XX_REG_OSC);
+	if (flags < 0)
+		return flags;
 
-	अगर (rc_mode == 0)
+	if (rc_mode == 0)
 		flags &= ~(ABX8XX_OSC_OSEL);
-	अन्यथा
+	else
 		flags |= (ABX8XX_OSC_OSEL);
 
-	/* Unlock ग_लिखो access on Oscillator Control रेजिस्टर */
-	अगर (abx80x_ग_लिखो_config_key(client, ABX8XX_CFG_KEY_OSC) < 0)
-		वापस -EIO;
+	/* Unlock write access on Oscillator Control register */
+	if (abx80x_write_config_key(client, ABX8XX_CFG_KEY_OSC) < 0)
+		return -EIO;
 
-	retval = i2c_smbus_ग_लिखो_byte_data(client, ABX8XX_REG_OSC, flags);
-	अगर (retval < 0) अणु
+	retval = i2c_smbus_write_byte_data(client, ABX8XX_REG_OSC, flags);
+	if (retval < 0) {
 		dev_err(dev, "Failed to write Oscillator Control register\n");
-		वापस retval;
-	पूर्ण
+		return retval;
+	}
 
-	वापस retval ? retval : count;
-पूर्ण
+	return retval ? retval : count;
+}
 
-अटल sमाप_प्रकार oscillator_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	पूर्णांक rc_mode = 0;
-	काष्ठा i2c_client *client = to_i2c_client(dev->parent);
+static ssize_t oscillator_show(struct device *dev,
+			       struct device_attribute *attr, char *buf)
+{
+	int rc_mode = 0;
+	struct i2c_client *client = to_i2c_client(dev->parent);
 
 	rc_mode = abx80x_is_rc_mode(client);
 
-	अगर (rc_mode < 0) अणु
+	if (rc_mode < 0) {
 		dev_err(dev, "Failed to read RTC oscillator selection\n");
-		प्र_लिखो(buf, "\n");
-		वापस rc_mode;
-	पूर्ण
+		sprintf(buf, "\n");
+		return rc_mode;
+	}
 
-	अगर (rc_mode)
-		वापस प्र_लिखो(buf, "rc\n");
-	अन्यथा
-		वापस प्र_लिखो(buf, "xtal\n");
-पूर्ण
+	if (rc_mode)
+		return sprintf(buf, "rc\n");
+	else
+		return sprintf(buf, "xtal\n");
+}
 
-अटल DEVICE_ATTR_RW(oscillator);
+static DEVICE_ATTR_RW(oscillator);
 
-अटल काष्ठा attribute *rtc_calib_attrs[] = अणु
-	&dev_attr_स्वतःcalibration.attr,
+static struct attribute *rtc_calib_attrs[] = {
+	&dev_attr_autocalibration.attr,
 	&dev_attr_oscillator.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group rtc_calib_attr_group = अणु
+static const struct attribute_group rtc_calib_attr_group = {
 	.attrs		= rtc_calib_attrs,
-पूर्ण;
+};
 
-अटल पूर्णांक abx80x_alarm_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enabled)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	पूर्णांक err;
+static int abx80x_alarm_irq_enable(struct device *dev, unsigned int enabled)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	int err;
 
-	अगर (enabled)
-		err = i2c_smbus_ग_लिखो_byte_data(client, ABX8XX_REG_IRQ,
+	if (enabled)
+		err = i2c_smbus_write_byte_data(client, ABX8XX_REG_IRQ,
 						(ABX8XX_IRQ_IM_1_4 |
 						 ABX8XX_IRQ_AIE));
-	अन्यथा
-		err = i2c_smbus_ग_लिखो_byte_data(client, ABX8XX_REG_IRQ,
+	else
+		err = i2c_smbus_write_byte_data(client, ABX8XX_REG_IRQ,
 						ABX8XX_IRQ_IM_1_4);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक abx80x_ioctl(काष्ठा device *dev, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	पूर्णांक status, पंचांगp;
+static int abx80x_ioctl(struct device *dev, unsigned int cmd, unsigned long arg)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	int status, tmp;
 
-	चयन (cmd) अणु
-	हाल RTC_VL_READ:
-		status = i2c_smbus_पढ़ो_byte_data(client, ABX8XX_REG_STATUS);
-		अगर (status < 0)
-			वापस status;
+	switch (cmd) {
+	case RTC_VL_READ:
+		status = i2c_smbus_read_byte_data(client, ABX8XX_REG_STATUS);
+		if (status < 0)
+			return status;
 
-		पंचांगp = status & ABX8XX_STATUS_BLF ? RTC_VL_BACKUP_LOW : 0;
+		tmp = status & ABX8XX_STATUS_BLF ? RTC_VL_BACKUP_LOW : 0;
 
-		वापस put_user(पंचांगp, (अचिन्हित पूर्णांक __user *)arg);
+		return put_user(tmp, (unsigned int __user *)arg);
 
-	हाल RTC_VL_CLR:
-		status = i2c_smbus_पढ़ो_byte_data(client, ABX8XX_REG_STATUS);
-		अगर (status < 0)
-			वापस status;
+	case RTC_VL_CLR:
+		status = i2c_smbus_read_byte_data(client, ABX8XX_REG_STATUS);
+		if (status < 0)
+			return status;
 
 		status &= ~ABX8XX_STATUS_BLF;
 
-		पंचांगp = i2c_smbus_ग_लिखो_byte_data(client, ABX8XX_REG_STATUS, 0);
-		अगर (पंचांगp < 0)
-			वापस पंचांगp;
+		tmp = i2c_smbus_write_byte_data(client, ABX8XX_REG_STATUS, 0);
+		if (tmp < 0)
+			return tmp;
 
-		वापस 0;
+		return 0;
 
-	शेष:
-		वापस -ENOIOCTLCMD;
-	पूर्ण
-पूर्ण
+	default:
+		return -ENOIOCTLCMD;
+	}
+}
 
-अटल स्थिर काष्ठा rtc_class_ops abx80x_rtc_ops = अणु
-	.पढ़ो_समय	= abx80x_rtc_पढ़ो_समय,
-	.set_समय	= abx80x_rtc_set_समय,
-	.पढ़ो_alarm	= abx80x_पढ़ो_alarm,
+static const struct rtc_class_ops abx80x_rtc_ops = {
+	.read_time	= abx80x_rtc_read_time,
+	.set_time	= abx80x_rtc_set_time,
+	.read_alarm	= abx80x_read_alarm,
 	.set_alarm	= abx80x_set_alarm,
 	.alarm_irq_enable = abx80x_alarm_irq_enable,
 	.ioctl		= abx80x_ioctl,
-पूर्ण;
+};
 
-अटल पूर्णांक abx80x_dt_trickle_cfg(काष्ठा i2c_client *client)
-अणु
-	काष्ठा device_node *np = client->dev.of_node;
-	स्थिर अक्षर *diode;
-	पूर्णांक trickle_cfg = 0;
-	पूर्णांक i, ret;
-	u32 पंचांगp;
+static int abx80x_dt_trickle_cfg(struct i2c_client *client)
+{
+	struct device_node *np = client->dev.of_node;
+	const char *diode;
+	int trickle_cfg = 0;
+	int i, ret;
+	u32 tmp;
 
-	ret = of_property_पढ़ो_string(np, "abracon,tc-diode", &diode);
-	अगर (ret)
-		वापस ret;
+	ret = of_property_read_string(np, "abracon,tc-diode", &diode);
+	if (ret)
+		return ret;
 
-	अगर (!म_भेद(diode, "standard")) अणु
+	if (!strcmp(diode, "standard")) {
 		trickle_cfg |= ABX8XX_TRICKLE_STANDARD_DIODE;
-	पूर्ण अन्यथा अगर (!म_भेद(diode, "schottky")) अणु
+	} else if (!strcmp(diode, "schottky")) {
 		trickle_cfg |= ABX8XX_TRICKLE_SCHOTTKY_DIODE;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_dbg(&client->dev, "Invalid tc-diode value: %s\n", diode);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = of_property_पढ़ो_u32(np, "abracon,tc-resistor", &पंचांगp);
-	अगर (ret)
-		वापस ret;
+	ret = of_property_read_u32(np, "abracon,tc-resistor", &tmp);
+	if (ret)
+		return ret;
 
-	क्रम (i = 0; i < माप(trickle_resistors); i++)
-		अगर (trickle_resistors[i] == पंचांगp)
-			अवरोध;
+	for (i = 0; i < sizeof(trickle_resistors); i++)
+		if (trickle_resistors[i] == tmp)
+			break;
 
-	अगर (i == माप(trickle_resistors)) अणु
-		dev_dbg(&client->dev, "Invalid tc-resistor value: %u\n", पंचांगp);
-		वापस -EINVAL;
-	पूर्ण
+	if (i == sizeof(trickle_resistors)) {
+		dev_dbg(&client->dev, "Invalid tc-resistor value: %u\n", tmp);
+		return -EINVAL;
+	}
 
-	वापस (trickle_cfg | i);
-पूर्ण
+	return (trickle_cfg | i);
+}
 
-#अगर_घोषित CONFIG_WATCHDOG
+#ifdef CONFIG_WATCHDOG
 
-अटल अंतरभूत u8 समयout_bits(अचिन्हित पूर्णांक समयout)
-अणु
-	वापस ((समयout << ABX8XX_WDT_BMB_SHIFT) & ABX8XX_WDT_BMB_MASK) |
+static inline u8 timeout_bits(unsigned int timeout)
+{
+	return ((timeout << ABX8XX_WDT_BMB_SHIFT) & ABX8XX_WDT_BMB_MASK) |
 		 ABX8XX_WDT_WRB_1HZ;
-पूर्ण
+}
 
-अटल पूर्णांक __abx80x_wकरोg_set_समयout(काष्ठा watchकरोg_device *wकरोg,
-				     अचिन्हित पूर्णांक समयout)
-अणु
-	काष्ठा abx80x_priv *priv = watchकरोg_get_drvdata(wकरोg);
-	u8 val = ABX8XX_WDT_WDS | समयout_bits(समयout);
+static int __abx80x_wdog_set_timeout(struct watchdog_device *wdog,
+				     unsigned int timeout)
+{
+	struct abx80x_priv *priv = watchdog_get_drvdata(wdog);
+	u8 val = ABX8XX_WDT_WDS | timeout_bits(timeout);
 
 	/*
-	 * Writing any समयout to the WDT रेजिस्टर resets the watchकरोg समयr.
+	 * Writing any timeout to the WDT register resets the watchdog timer.
 	 * Writing 0 disables it.
 	 */
-	वापस i2c_smbus_ग_लिखो_byte_data(priv->client, ABX8XX_REG_WDT, val);
-पूर्ण
+	return i2c_smbus_write_byte_data(priv->client, ABX8XX_REG_WDT, val);
+}
 
-अटल पूर्णांक abx80x_wकरोg_set_समयout(काष्ठा watchकरोg_device *wकरोg,
-				   अचिन्हित पूर्णांक new_समयout)
-अणु
-	पूर्णांक err = 0;
+static int abx80x_wdog_set_timeout(struct watchdog_device *wdog,
+				   unsigned int new_timeout)
+{
+	int err = 0;
 
-	अगर (watchकरोg_hw_running(wकरोg))
-		err = __abx80x_wकरोg_set_समयout(wकरोg, new_समयout);
+	if (watchdog_hw_running(wdog))
+		err = __abx80x_wdog_set_timeout(wdog, new_timeout);
 
-	अगर (err == 0)
-		wकरोg->समयout = new_समयout;
+	if (err == 0)
+		wdog->timeout = new_timeout;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक abx80x_wकरोg_ping(काष्ठा watchकरोg_device *wकरोg)
-अणु
-	वापस __abx80x_wकरोg_set_समयout(wकरोg, wकरोg->समयout);
-पूर्ण
+static int abx80x_wdog_ping(struct watchdog_device *wdog)
+{
+	return __abx80x_wdog_set_timeout(wdog, wdog->timeout);
+}
 
-अटल पूर्णांक abx80x_wकरोg_start(काष्ठा watchकरोg_device *wकरोg)
-अणु
-	वापस __abx80x_wकरोg_set_समयout(wकरोg, wकरोg->समयout);
-पूर्ण
+static int abx80x_wdog_start(struct watchdog_device *wdog)
+{
+	return __abx80x_wdog_set_timeout(wdog, wdog->timeout);
+}
 
-अटल पूर्णांक abx80x_wकरोg_stop(काष्ठा watchकरोg_device *wकरोg)
-अणु
-	वापस __abx80x_wकरोg_set_समयout(wकरोg, 0);
-पूर्ण
+static int abx80x_wdog_stop(struct watchdog_device *wdog)
+{
+	return __abx80x_wdog_set_timeout(wdog, 0);
+}
 
-अटल स्थिर काष्ठा watchकरोg_info abx80x_wकरोg_info = अणु
+static const struct watchdog_info abx80x_wdog_info = {
 	.identity = "abx80x watchdog",
 	.options = WDIOF_KEEPALIVEPING | WDIOF_SETTIMEOUT | WDIOF_MAGICCLOSE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा watchकरोg_ops abx80x_wकरोg_ops = अणु
+static const struct watchdog_ops abx80x_wdog_ops = {
 	.owner = THIS_MODULE,
-	.start = abx80x_wकरोg_start,
-	.stop = abx80x_wकरोg_stop,
-	.ping = abx80x_wकरोg_ping,
-	.set_समयout = abx80x_wकरोg_set_समयout,
-पूर्ण;
+	.start = abx80x_wdog_start,
+	.stop = abx80x_wdog_stop,
+	.ping = abx80x_wdog_ping,
+	.set_timeout = abx80x_wdog_set_timeout,
+};
 
-अटल पूर्णांक abx80x_setup_watchकरोg(काष्ठा abx80x_priv *priv)
-अणु
-	priv->wकरोg.parent = &priv->client->dev;
-	priv->wकरोg.ops = &abx80x_wकरोg_ops;
-	priv->wकरोg.info = &abx80x_wकरोg_info;
-	priv->wकरोg.min_समयout = 1;
-	priv->wकरोg.max_समयout = ABX8XX_WDT_MAX_TIME;
-	priv->wकरोg.समयout = ABX8XX_WDT_MAX_TIME;
+static int abx80x_setup_watchdog(struct abx80x_priv *priv)
+{
+	priv->wdog.parent = &priv->client->dev;
+	priv->wdog.ops = &abx80x_wdog_ops;
+	priv->wdog.info = &abx80x_wdog_info;
+	priv->wdog.min_timeout = 1;
+	priv->wdog.max_timeout = ABX8XX_WDT_MAX_TIME;
+	priv->wdog.timeout = ABX8XX_WDT_MAX_TIME;
 
-	watchकरोg_set_drvdata(&priv->wकरोg, priv);
+	watchdog_set_drvdata(&priv->wdog, priv);
 
-	वापस devm_watchकरोg_रेजिस्टर_device(&priv->client->dev, &priv->wकरोg);
-पूर्ण
-#अन्यथा
-अटल पूर्णांक abx80x_setup_watchकरोg(काष्ठा abx80x_priv *priv)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return devm_watchdog_register_device(&priv->client->dev, &priv->wdog);
+}
+#else
+static int abx80x_setup_watchdog(struct abx80x_priv *priv)
+{
+	return 0;
+}
+#endif
 
-अटल पूर्णांक abx80x_probe(काष्ठा i2c_client *client,
-			स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा device_node *np = client->dev.of_node;
-	काष्ठा abx80x_priv *priv;
-	पूर्णांक i, data, err, trickle_cfg = -EINVAL;
-	अक्षर buf[7];
-	अचिन्हित पूर्णांक part = id->driver_data;
-	अचिन्हित पूर्णांक partnumber;
-	अचिन्हित पूर्णांक majrev, minrev;
-	अचिन्हित पूर्णांक lot;
-	अचिन्हित पूर्णांक wafer;
-	अचिन्हित पूर्णांक uid;
+static int abx80x_probe(struct i2c_client *client,
+			const struct i2c_device_id *id)
+{
+	struct device_node *np = client->dev.of_node;
+	struct abx80x_priv *priv;
+	int i, data, err, trickle_cfg = -EINVAL;
+	char buf[7];
+	unsigned int part = id->driver_data;
+	unsigned int partnumber;
+	unsigned int majrev, minrev;
+	unsigned int lot;
+	unsigned int wafer;
+	unsigned int uid;
 
-	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C))
-		वापस -ENODEV;
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C))
+		return -ENODEV;
 
-	err = i2c_smbus_पढ़ो_i2c_block_data(client, ABX8XX_REG_ID0,
-					    माप(buf), buf);
-	अगर (err < 0) अणु
+	err = i2c_smbus_read_i2c_block_data(client, ABX8XX_REG_ID0,
+					    sizeof(buf), buf);
+	if (err < 0) {
 		dev_err(&client->dev, "Unable to read partnumber\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	partnumber = (buf[0] << 8) | buf[1];
 	majrev = buf[2] >> 3;
@@ -707,217 +706,217 @@
 	dev_info(&client->dev, "model %04x, revision %u.%u, lot %x, wafer %x, uid %x\n",
 		 partnumber, majrev, minrev, lot, wafer, uid);
 
-	data = i2c_smbus_पढ़ो_byte_data(client, ABX8XX_REG_CTRL1);
-	अगर (data < 0) अणु
+	data = i2c_smbus_read_byte_data(client, ABX8XX_REG_CTRL1);
+	if (data < 0) {
 		dev_err(&client->dev, "Unable to read control register\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	err = i2c_smbus_ग_लिखो_byte_data(client, ABX8XX_REG_CTRL1,
+	err = i2c_smbus_write_byte_data(client, ABX8XX_REG_CTRL1,
 					((data & ~(ABX8XX_CTRL_12_24 |
 						   ABX8XX_CTRL_ARST)) |
 					 ABX8XX_CTRL_WRITE));
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(&client->dev, "Unable to write control register\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	/* Configure RV1805 specअगरics */
-	अगर (part == RV1805) अणु
+	/* Configure RV1805 specifics */
+	if (part == RV1805) {
 		/*
-		 * Aव्योम accidentally entering test mode. This can happen
-		 * on the RV1805 in हाल the reserved bit 5 in control2
-		 * रेजिस्टर is set. RV-1805-C3 datasheet indicates that
+		 * Avoid accidentally entering test mode. This can happen
+		 * on the RV1805 in case the reserved bit 5 in control2
+		 * register is set. RV-1805-C3 datasheet indicates that
 		 * the bit should be cleared in section 11h - Control2.
 		 */
-		data = i2c_smbus_पढ़ो_byte_data(client, ABX8XX_REG_CTRL2);
-		अगर (data < 0) अणु
+		data = i2c_smbus_read_byte_data(client, ABX8XX_REG_CTRL2);
+		if (data < 0) {
 			dev_err(&client->dev,
 				"Unable to read control2 register\n");
-			वापस -EIO;
-		पूर्ण
+			return -EIO;
+		}
 
-		err = i2c_smbus_ग_लिखो_byte_data(client, ABX8XX_REG_CTRL2,
+		err = i2c_smbus_write_byte_data(client, ABX8XX_REG_CTRL2,
 						data & ~ABX8XX_CTRL2_RSVD);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			dev_err(&client->dev,
 				"Unable to write control2 register\n");
-			वापस -EIO;
-		पूर्ण
+			return -EIO;
+		}
 
 		/*
-		 * Aव्योम extra घातer leakage. The RV1805 uses smaller
+		 * Avoid extra power leakage. The RV1805 uses smaller
 		 * 10pin package and the EXTI input is not present.
-		 * Disable it to aव्योम leakage.
+		 * Disable it to avoid leakage.
 		 */
-		data = i2c_smbus_पढ़ो_byte_data(client, ABX8XX_REG_OUT_CTRL);
-		अगर (data < 0) अणु
+		data = i2c_smbus_read_byte_data(client, ABX8XX_REG_OUT_CTRL);
+		if (data < 0) {
 			dev_err(&client->dev,
 				"Unable to read output control register\n");
-			वापस -EIO;
-		पूर्ण
+			return -EIO;
+		}
 
 		/*
-		 * Write the configuration key रेजिस्टर to enable access to
-		 * the config2 रेजिस्टर
+		 * Write the configuration key register to enable access to
+		 * the config2 register
 		 */
-		अगर (abx80x_ग_लिखो_config_key(client, ABX8XX_CFG_KEY_MISC) < 0)
-			वापस -EIO;
+		if (abx80x_write_config_key(client, ABX8XX_CFG_KEY_MISC) < 0)
+			return -EIO;
 
-		err = i2c_smbus_ग_लिखो_byte_data(client, ABX8XX_REG_OUT_CTRL,
+		err = i2c_smbus_write_byte_data(client, ABX8XX_REG_OUT_CTRL,
 						data | ABX8XX_OUT_CTRL_EXDS);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			dev_err(&client->dev,
 				"Unable to write output control register\n");
-			वापस -EIO;
-		पूर्ण
-	पूर्ण
+			return -EIO;
+		}
+	}
 
-	/* part स्वतःdetection */
-	अगर (part == ABX80X) अणु
-		क्रम (i = 0; abx80x_caps[i].pn; i++)
-			अगर (partnumber == abx80x_caps[i].pn)
-				अवरोध;
-		अगर (abx80x_caps[i].pn == 0) अणु
+	/* part autodetection */
+	if (part == ABX80X) {
+		for (i = 0; abx80x_caps[i].pn; i++)
+			if (partnumber == abx80x_caps[i].pn)
+				break;
+		if (abx80x_caps[i].pn == 0) {
 			dev_err(&client->dev, "Unknown part: %04x\n",
 				partnumber);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		part = i;
-	पूर्ण
+	}
 
-	अगर (partnumber != abx80x_caps[part].pn) अणु
+	if (partnumber != abx80x_caps[part].pn) {
 		dev_err(&client->dev, "partnumber mismatch %04x != %04x\n",
 			partnumber, abx80x_caps[part].pn);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (np && abx80x_caps[part].has_tc)
+	if (np && abx80x_caps[part].has_tc)
 		trickle_cfg = abx80x_dt_trickle_cfg(client);
 
-	अगर (trickle_cfg > 0) अणु
+	if (trickle_cfg > 0) {
 		dev_info(&client->dev, "Enabling trickle charger: %02x\n",
 			 trickle_cfg);
-		abx80x_enable_trickle_अक्षरger(client, trickle_cfg);
-	पूर्ण
+		abx80x_enable_trickle_charger(client, trickle_cfg);
+	}
 
-	err = i2c_smbus_ग_लिखो_byte_data(client, ABX8XX_REG_CD_TIMER_CTL,
+	err = i2c_smbus_write_byte_data(client, ABX8XX_REG_CD_TIMER_CTL,
 					BIT(2));
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	priv = devm_kzalloc(&client->dev, माप(*priv), GFP_KERNEL);
-	अगर (priv == शून्य)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&client->dev, sizeof(*priv), GFP_KERNEL);
+	if (priv == NULL)
+		return -ENOMEM;
 
 	priv->rtc = devm_rtc_allocate_device(&client->dev);
-	अगर (IS_ERR(priv->rtc))
-		वापस PTR_ERR(priv->rtc);
+	if (IS_ERR(priv->rtc))
+		return PTR_ERR(priv->rtc);
 
 	priv->rtc->ops = &abx80x_rtc_ops;
 	priv->client = client;
 
 	i2c_set_clientdata(client, priv);
 
-	अगर (abx80x_caps[part].has_wकरोg) अणु
-		err = abx80x_setup_watchकरोg(priv);
-		अगर (err)
-			वापस err;
-	पूर्ण
+	if (abx80x_caps[part].has_wdog) {
+		err = abx80x_setup_watchdog(priv);
+		if (err)
+			return err;
+	}
 
-	अगर (client->irq > 0) अणु
+	if (client->irq > 0) {
 		dev_info(&client->dev, "IRQ %d supplied\n", client->irq);
-		err = devm_request_thपढ़ोed_irq(&client->dev, client->irq, शून्य,
+		err = devm_request_threaded_irq(&client->dev, client->irq, NULL,
 						abx80x_handle_irq,
 						IRQF_SHARED | IRQF_ONESHOT,
 						"abx8xx",
 						client);
-		अगर (err) अणु
+		if (err) {
 			dev_err(&client->dev, "unable to request IRQ, alarms disabled\n");
 			client->irq = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	err = rtc_add_group(priv->rtc, &rtc_calib_attr_group);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&client->dev, "Failed to create sysfs group: %d\n",
 			err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस devm_rtc_रेजिस्टर_device(priv->rtc);
-पूर्ण
+	return devm_rtc_register_device(priv->rtc);
+}
 
-अटल स्थिर काष्ठा i2c_device_id abx80x_id[] = अणु
-	अणु "abx80x", ABX80X पूर्ण,
-	अणु "ab0801", AB0801 पूर्ण,
-	अणु "ab0803", AB0803 पूर्ण,
-	अणु "ab0804", AB0804 पूर्ण,
-	अणु "ab0805", AB0805 पूर्ण,
-	अणु "ab1801", AB1801 पूर्ण,
-	अणु "ab1803", AB1803 पूर्ण,
-	अणु "ab1804", AB1804 पूर्ण,
-	अणु "ab1805", AB1805 पूर्ण,
-	अणु "rv1805", RV1805 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id abx80x_id[] = {
+	{ "abx80x", ABX80X },
+	{ "ab0801", AB0801 },
+	{ "ab0803", AB0803 },
+	{ "ab0804", AB0804 },
+	{ "ab0805", AB0805 },
+	{ "ab1801", AB1801 },
+	{ "ab1803", AB1803 },
+	{ "ab1804", AB1804 },
+	{ "ab1805", AB1805 },
+	{ "rv1805", RV1805 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, abx80x_id);
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id abx80x_of_match[] = अणु
-	अणु
+#ifdef CONFIG_OF
+static const struct of_device_id abx80x_of_match[] = {
+	{
 		.compatible = "abracon,abx80x",
-		.data = (व्योम *)ABX80X
-	पूर्ण,
-	अणु
+		.data = (void *)ABX80X
+	},
+	{
 		.compatible = "abracon,ab0801",
-		.data = (व्योम *)AB0801
-	पूर्ण,
-	अणु
+		.data = (void *)AB0801
+	},
+	{
 		.compatible = "abracon,ab0803",
-		.data = (व्योम *)AB0803
-	पूर्ण,
-	अणु
+		.data = (void *)AB0803
+	},
+	{
 		.compatible = "abracon,ab0804",
-		.data = (व्योम *)AB0804
-	पूर्ण,
-	अणु
+		.data = (void *)AB0804
+	},
+	{
 		.compatible = "abracon,ab0805",
-		.data = (व्योम *)AB0805
-	पूर्ण,
-	अणु
+		.data = (void *)AB0805
+	},
+	{
 		.compatible = "abracon,ab1801",
-		.data = (व्योम *)AB1801
-	पूर्ण,
-	अणु
+		.data = (void *)AB1801
+	},
+	{
 		.compatible = "abracon,ab1803",
-		.data = (व्योम *)AB1803
-	पूर्ण,
-	अणु
+		.data = (void *)AB1803
+	},
+	{
 		.compatible = "abracon,ab1804",
-		.data = (व्योम *)AB1804
-	पूर्ण,
-	अणु
+		.data = (void *)AB1804
+	},
+	{
 		.compatible = "abracon,ab1805",
-		.data = (व्योम *)AB1805
-	पूर्ण,
-	अणु
+		.data = (void *)AB1805
+	},
+	{
 		.compatible = "microcrystal,rv1805",
-		.data = (व्योम *)RV1805
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+		.data = (void *)RV1805
+	},
+	{ }
+};
 MODULE_DEVICE_TABLE(of, abx80x_of_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा i2c_driver abx80x_driver = अणु
-	.driver		= अणु
+static struct i2c_driver abx80x_driver = {
+	.driver		= {
 		.name	= "rtc-abx80x",
 		.of_match_table = of_match_ptr(abx80x_of_match),
-	पूर्ण,
+	},
 	.probe		= abx80x_probe,
 	.id_table	= abx80x_id,
-पूर्ण;
+};
 
 module_i2c_driver(abx80x_driver);
 

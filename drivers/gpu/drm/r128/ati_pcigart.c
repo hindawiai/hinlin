@@ -1,23 +1,22 @@
-<शैली गुरु>
 /*
- * \पile ati_pcigart.c
+ * \file ati_pcigart.c
  * ATI PCI GART support
  *
- * \चuthor Gareth Hughes <gareth@valinux.com>
+ * \author Gareth Hughes <gareth@valinux.com>
  */
 
 /*
  * Created: Wed Dec 13 21:52:19 2000 by gareth@valinux.com
  *
- * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, Calअगरornia.
+ * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -32,180 +31,180 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/pci.h>
+#include <linux/export.h>
+#include <linux/pci.h>
 
-#समावेश <drm/drm_device.h>
-#समावेश <drm/drm_legacy.h>
-#समावेश <drm/drm_prपूर्णांक.h>
+#include <drm/drm_device.h>
+#include <drm/drm_legacy.h>
+#include <drm/drm_print.h>
 
-#समावेश "ati_pcigart.h"
+#include "ati_pcigart.h"
 
 # define ATI_PCIGART_PAGE_SIZE		4096	/**< PCI GART page size */
 
-अटल पूर्णांक drm_ati_alloc_pcigart_table(काष्ठा drm_device *dev,
-				       काष्ठा drm_ati_pcigart_info *gart_info)
-अणु
+static int drm_ati_alloc_pcigart_table(struct drm_device *dev,
+				       struct drm_ati_pcigart_info *gart_info)
+{
 	gart_info->table_handle = drm_pci_alloc(dev, gart_info->table_size,
 						PAGE_SIZE);
-	अगर (gart_info->table_handle == शून्य)
-		वापस -ENOMEM;
+	if (gart_info->table_handle == NULL)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम drm_ati_मुक्त_pcigart_table(काष्ठा drm_device *dev,
-				       काष्ठा drm_ati_pcigart_info *gart_info)
-अणु
-	drm_pci_मुक्त(dev, gart_info->table_handle);
-	gart_info->table_handle = शून्य;
-पूर्ण
+static void drm_ati_free_pcigart_table(struct drm_device *dev,
+				       struct drm_ati_pcigart_info *gart_info)
+{
+	drm_pci_free(dev, gart_info->table_handle);
+	gart_info->table_handle = NULL;
+}
 
-पूर्णांक drm_ati_pcigart_cleanup(काष्ठा drm_device *dev, काष्ठा drm_ati_pcigart_info *gart_info)
-अणु
-	काष्ठा drm_sg_mem *entry = dev->sg;
-	अचिन्हित दीर्घ pages;
-	पूर्णांक i;
-	पूर्णांक max_pages;
+int drm_ati_pcigart_cleanup(struct drm_device *dev, struct drm_ati_pcigart_info *gart_info)
+{
+	struct drm_sg_mem *entry = dev->sg;
+	unsigned long pages;
+	int i;
+	int max_pages;
 
 	/* we need to support large memory configurations */
-	अगर (!entry) अणु
+	if (!entry) {
 		DRM_ERROR("no scatter/gather memory!\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (gart_info->bus_addr) अणु
+	if (gart_info->bus_addr) {
 
-		max_pages = (gart_info->table_size / माप(u32));
+		max_pages = (gart_info->table_size / sizeof(u32));
 		pages = (entry->pages <= max_pages)
 		  ? entry->pages : max_pages;
 
-		क्रम (i = 0; i < pages; i++) अणु
-			अगर (!entry->busaddr[i])
-				अवरोध;
+		for (i = 0; i < pages; i++) {
+			if (!entry->busaddr[i])
+				break;
 			pci_unmap_page(dev->pdev, entry->busaddr[i],
-					 PAGE_SIZE, PCI_DMA_BIसूचीECTIONAL);
-		पूर्ण
+					 PAGE_SIZE, PCI_DMA_BIDIRECTIONAL);
+		}
 
-		अगर (gart_info->gart_table_location == DRM_ATI_GART_MAIN)
+		if (gart_info->gart_table_location == DRM_ATI_GART_MAIN)
 			gart_info->bus_addr = 0;
-	पूर्ण
+	}
 
-	अगर (gart_info->gart_table_location == DRM_ATI_GART_MAIN &&
-	    gart_info->table_handle) अणु
-		drm_ati_मुक्त_pcigart_table(dev, gart_info);
-	पूर्ण
+	if (gart_info->gart_table_location == DRM_ATI_GART_MAIN &&
+	    gart_info->table_handle) {
+		drm_ati_free_pcigart_table(dev, gart_info);
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-पूर्णांक drm_ati_pcigart_init(काष्ठा drm_device *dev, काष्ठा drm_ati_pcigart_info *gart_info)
-अणु
-	काष्ठा drm_local_map *map = &gart_info->mapping;
-	काष्ठा drm_sg_mem *entry = dev->sg;
-	व्योम *address = शून्य;
-	अचिन्हित दीर्घ pages;
-	u32 *pci_gart = शून्य, page_base, gart_idx;
+int drm_ati_pcigart_init(struct drm_device *dev, struct drm_ati_pcigart_info *gart_info)
+{
+	struct drm_local_map *map = &gart_info->mapping;
+	struct drm_sg_mem *entry = dev->sg;
+	void *address = NULL;
+	unsigned long pages;
+	u32 *pci_gart = NULL, page_base, gart_idx;
 	dma_addr_t bus_address = 0;
-	पूर्णांक i, j, ret = -ENOMEM;
-	पूर्णांक max_ati_pages, max_real_pages;
+	int i, j, ret = -ENOMEM;
+	int max_ati_pages, max_real_pages;
 
-	अगर (!entry) अणु
+	if (!entry) {
 		DRM_ERROR("no scatter/gather memory!\n");
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (gart_info->gart_table_location == DRM_ATI_GART_MAIN) अणु
+	if (gart_info->gart_table_location == DRM_ATI_GART_MAIN) {
 		DRM_DEBUG("PCI: no table in VRAM: using normal RAM\n");
 
-		अगर (pci_set_dma_mask(dev->pdev, gart_info->table_mask)) अणु
+		if (pci_set_dma_mask(dev->pdev, gart_info->table_mask)) {
 			DRM_ERROR("fail to set dma mask to 0x%Lx\n",
-				  (अचिन्हित दीर्घ दीर्घ)gart_info->table_mask);
+				  (unsigned long long)gart_info->table_mask);
 			ret = -EFAULT;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 
 		ret = drm_ati_alloc_pcigart_table(dev, gart_info);
-		अगर (ret) अणु
+		if (ret) {
 			DRM_ERROR("cannot allocate PCI GART page!\n");
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 
 		pci_gart = gart_info->table_handle->vaddr;
 		address = gart_info->table_handle->vaddr;
 		bus_address = gart_info->table_handle->busaddr;
-	पूर्ण अन्यथा अणु
+	} else {
 		address = gart_info->addr;
 		bus_address = gart_info->bus_addr;
 		DRM_DEBUG("PCI: Gart Table: VRAM %08LX mapped at %08lX\n",
-			  (अचिन्हित दीर्घ दीर्घ)bus_address,
-			  (अचिन्हित दीर्घ)address);
-	पूर्ण
+			  (unsigned long long)bus_address,
+			  (unsigned long)address);
+	}
 
 
-	max_ati_pages = (gart_info->table_size / माप(u32));
+	max_ati_pages = (gart_info->table_size / sizeof(u32));
 	max_real_pages = max_ati_pages / (PAGE_SIZE / ATI_PCIGART_PAGE_SIZE);
 	pages = (entry->pages <= max_real_pages)
 	    ? entry->pages : max_real_pages;
 
-	अगर (gart_info->gart_table_location == DRM_ATI_GART_MAIN) अणु
-		स_रखो(pci_gart, 0, max_ati_pages * माप(u32));
-	पूर्ण अन्यथा अणु
-		स_रखो_io((व्योम __iomem *)map->handle, 0, max_ati_pages * माप(u32));
-	पूर्ण
+	if (gart_info->gart_table_location == DRM_ATI_GART_MAIN) {
+		memset(pci_gart, 0, max_ati_pages * sizeof(u32));
+	} else {
+		memset_io((void __iomem *)map->handle, 0, max_ati_pages * sizeof(u32));
+	}
 
 	gart_idx = 0;
-	क्रम (i = 0; i < pages; i++) अणु
+	for (i = 0; i < pages; i++) {
 		/* we need to support large memory configurations */
 		entry->busaddr[i] = pci_map_page(dev->pdev, entry->pagelist[i],
-						 0, PAGE_SIZE, PCI_DMA_BIसूचीECTIONAL);
-		अगर (pci_dma_mapping_error(dev->pdev, entry->busaddr[i])) अणु
+						 0, PAGE_SIZE, PCI_DMA_BIDIRECTIONAL);
+		if (pci_dma_mapping_error(dev->pdev, entry->busaddr[i])) {
 			DRM_ERROR("unable to map PCIGART pages!\n");
 			drm_ati_pcigart_cleanup(dev, gart_info);
-			address = शून्य;
+			address = NULL;
 			bus_address = 0;
 			ret = -ENOMEM;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 		page_base = (u32) entry->busaddr[i];
 
-		क्रम (j = 0; j < (PAGE_SIZE / ATI_PCIGART_PAGE_SIZE); j++) अणु
+		for (j = 0; j < (PAGE_SIZE / ATI_PCIGART_PAGE_SIZE); j++) {
 			u32 offset;
 			u32 val;
 
-			चयन(gart_info->gart_reg_अगर) अणु
-			हाल DRM_ATI_GART_IGP:
+			switch(gart_info->gart_reg_if) {
+			case DRM_ATI_GART_IGP:
 				val = page_base | 0xc;
-				अवरोध;
-			हाल DRM_ATI_GART_PCIE:
+				break;
+			case DRM_ATI_GART_PCIE:
 				val = (page_base >> 8) | 0xc;
-				अवरोध;
-			शेष:
-			हाल DRM_ATI_GART_PCI:
+				break;
+			default:
+			case DRM_ATI_GART_PCI:
 				val = page_base;
-				अवरोध;
-			पूर्ण
-			अगर (gart_info->gart_table_location ==
-			    DRM_ATI_GART_MAIN) अणु
+				break;
+			}
+			if (gart_info->gart_table_location ==
+			    DRM_ATI_GART_MAIN) {
 				pci_gart[gart_idx] = cpu_to_le32(val);
-			पूर्ण अन्यथा अणु
-				offset = gart_idx * माप(u32);
-				ग_लिखोl(val, (व्योम __iomem *)map->handle + offset);
-			पूर्ण
+			} else {
+				offset = gart_idx * sizeof(u32);
+				writel(val, (void __iomem *)map->handle + offset);
+			}
 			gart_idx++;
 			page_base += ATI_PCIGART_PAGE_SIZE;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	ret = 0;
 
-#अगर defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || defined(__x86_64__)
 	wbinvd();
-#अन्यथा
+#else
 	mb();
-#पूर्ण_अगर
+#endif
 
-      करोne:
+      done:
 	gart_info->addr = address;
 	gart_info->bus_addr = bus_address;
-	वापस ret;
-पूर्ण
+	return ret;
+}

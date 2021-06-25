@@ -1,31 +1,30 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2020 Intel Corporation
 
-#समावेश <linux/debugfs.h>
+#include <linux/debugfs.h>
 
-#समावेश "ufs-debugfs.h"
-#समावेश "ufshcd.h"
+#include "ufs-debugfs.h"
+#include "ufshcd.h"
 
-अटल काष्ठा dentry *ufs_debugfs_root;
+static struct dentry *ufs_debugfs_root;
 
-व्योम __init ufs_debugfs_init(व्योम)
-अणु
-	ufs_debugfs_root = debugfs_create_dir("ufshcd", शून्य);
-पूर्ण
+void __init ufs_debugfs_init(void)
+{
+	ufs_debugfs_root = debugfs_create_dir("ufshcd", NULL);
+}
 
-व्योम __निकास ufs_debugfs_निकास(व्योम)
-अणु
-	debugfs_हटाओ_recursive(ufs_debugfs_root);
-पूर्ण
+void __exit ufs_debugfs_exit(void)
+{
+	debugfs_remove_recursive(ufs_debugfs_root);
+}
 
-अटल पूर्णांक ufs_debugfs_stats_show(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा ufs_hba *hba = s->निजी;
-	काष्ठा ufs_event_hist *e = hba->ufs_stats.event;
+static int ufs_debugfs_stats_show(struct seq_file *s, void *data)
+{
+	struct ufs_hba *hba = s->private;
+	struct ufs_event_hist *e = hba->ufs_stats.event;
 
-#घोषणा PRT(fmt, typ) \
-	seq_म_लिखो(s, fmt, e[UFS_EVT_ ## typ].cnt)
+#define PRT(fmt, typ) \
+	seq_printf(s, fmt, e[UFS_EVT_ ## typ].cnt)
 
 	PRT("PHY Adapter Layer errors (except LINERESET): %llu\n", PA_ERR);
 	PRT("Data Link Layer errors: %llu\n", DL_ERR);
@@ -40,96 +39,96 @@
 	PRT("Logical Unit Resets: %llu\n", DEV_RESET);
 	PRT("Host Resets: %llu\n", HOST_RESET);
 	PRT("SCSI command aborts: %llu\n", ABORT);
-#अघोषित PRT
-	वापस 0;
-पूर्ण
+#undef PRT
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(ufs_debugfs_stats);
 
-अटल पूर्णांक ee_usr_mask_get(व्योम *data, u64 *val)
-अणु
-	काष्ठा ufs_hba *hba = data;
+static int ee_usr_mask_get(void *data, u64 *val)
+{
+	struct ufs_hba *hba = data;
 
 	*val = hba->ee_usr_mask;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ufs_debugfs_get_user_access(काष्ठा ufs_hba *hba)
+static int ufs_debugfs_get_user_access(struct ufs_hba *hba)
 __acquires(&hba->host_sem)
-अणु
-	करोwn(&hba->host_sem);
-	अगर (!ufshcd_is_user_access_allowed(hba)) अणु
+{
+	down(&hba->host_sem);
+	if (!ufshcd_is_user_access_allowed(hba)) {
 		up(&hba->host_sem);
-		वापस -EBUSY;
-	पूर्ण
-	pm_runसमय_get_sync(hba->dev);
-	वापस 0;
-पूर्ण
+		return -EBUSY;
+	}
+	pm_runtime_get_sync(hba->dev);
+	return 0;
+}
 
-अटल व्योम ufs_debugfs_put_user_access(काष्ठा ufs_hba *hba)
+static void ufs_debugfs_put_user_access(struct ufs_hba *hba)
 __releases(&hba->host_sem)
-अणु
-	pm_runसमय_put_sync(hba->dev);
+{
+	pm_runtime_put_sync(hba->dev);
 	up(&hba->host_sem);
-पूर्ण
+}
 
-अटल पूर्णांक ee_usr_mask_set(व्योम *data, u64 val)
-अणु
-	काष्ठा ufs_hba *hba = data;
-	पूर्णांक err;
+static int ee_usr_mask_set(void *data, u64 val)
+{
+	struct ufs_hba *hba = data;
+	int err;
 
-	अगर (val & ~(u64)MASK_EE_STATUS)
-		वापस -EINVAL;
+	if (val & ~(u64)MASK_EE_STATUS)
+		return -EINVAL;
 	err = ufs_debugfs_get_user_access(hba);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	err = ufshcd_update_ee_usr_mask(hba, val, MASK_EE_STATUS);
 	ufs_debugfs_put_user_access(hba);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 DEFINE_DEBUGFS_ATTRIBUTE(ee_usr_mask_fops, ee_usr_mask_get, ee_usr_mask_set, "%#llx\n");
 
-व्योम ufs_debugfs_exception_event(काष्ठा ufs_hba *hba, u16 status)
-अणु
+void ufs_debugfs_exception_event(struct ufs_hba *hba, u16 status)
+{
 	bool chgd = false;
 	u16 ee_ctrl_mask;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	अगर (!hba->debugfs_ee_rate_limit_ms || !status)
-		वापस;
+	if (!hba->debugfs_ee_rate_limit_ms || !status)
+		return;
 
 	mutex_lock(&hba->ee_ctrl_mutex);
 	ee_ctrl_mask = hba->ee_drv_mask | (hba->ee_usr_mask & ~status);
 	chgd = ee_ctrl_mask != hba->ee_ctrl_mask;
-	अगर (chgd) अणु
-		err = __ufshcd_ग_लिखो_ee_control(hba, ee_ctrl_mask);
-		अगर (err)
+	if (chgd) {
+		err = __ufshcd_write_ee_control(hba, ee_ctrl_mask);
+		if (err)
 			dev_err(hba->dev, "%s: failed to write ee control %d\n",
 				__func__, err);
-	पूर्ण
+	}
 	mutex_unlock(&hba->ee_ctrl_mutex);
 
-	अगर (chgd && !err) अणु
-		अचिन्हित दीर्घ delay = msecs_to_jअगरfies(hba->debugfs_ee_rate_limit_ms);
+	if (chgd && !err) {
+		unsigned long delay = msecs_to_jiffies(hba->debugfs_ee_rate_limit_ms);
 
-		queue_delayed_work(प्रणाली_मुक्तzable_wq, &hba->debugfs_ee_work, delay);
-	पूर्ण
-पूर्ण
+		queue_delayed_work(system_freezable_wq, &hba->debugfs_ee_work, delay);
+	}
+}
 
-अटल व्योम ufs_debugfs_restart_ee(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ufs_hba *hba = container_of(work, काष्ठा ufs_hba, debugfs_ee_work.work);
+static void ufs_debugfs_restart_ee(struct work_struct *work)
+{
+	struct ufs_hba *hba = container_of(work, struct ufs_hba, debugfs_ee_work.work);
 
-	अगर (!hba->ee_usr_mask || pm_runसमय_suspended(hba->dev) ||
+	if (!hba->ee_usr_mask || pm_runtime_suspended(hba->dev) ||
 	    ufs_debugfs_get_user_access(hba))
-		वापस;
-	ufshcd_ग_लिखो_ee_control(hba);
+		return;
+	ufshcd_write_ee_control(hba);
 	ufs_debugfs_put_user_access(hba);
-पूर्ण
+}
 
-व्योम ufs_debugfs_hba_init(काष्ठा ufs_hba *hba)
-अणु
-	/* Set शेष exception event rate limit period to 20ms */
+void ufs_debugfs_hba_init(struct ufs_hba *hba)
+{
+	/* Set default exception event rate limit period to 20ms */
 	hba->debugfs_ee_rate_limit_ms = 20;
 	INIT_DELAYED_WORK(&hba->debugfs_ee_work, ufs_debugfs_restart_ee);
 	hba->debugfs_root = debugfs_create_dir(dev_name(hba->dev), ufs_debugfs_root);
@@ -138,10 +137,10 @@ DEFINE_DEBUGFS_ATTRIBUTE(ee_usr_mask_fops, ee_usr_mask_get, ee_usr_mask_set, "%#
 			    hba, &ee_usr_mask_fops);
 	debugfs_create_u32("exception_event_rate_limit_ms", 0600, hba->debugfs_root,
 			   &hba->debugfs_ee_rate_limit_ms);
-पूर्ण
+}
 
-व्योम ufs_debugfs_hba_निकास(काष्ठा ufs_hba *hba)
-अणु
-	debugfs_हटाओ_recursive(hba->debugfs_root);
+void ufs_debugfs_hba_exit(struct ufs_hba *hba)
+{
+	debugfs_remove_recursive(hba->debugfs_root);
 	cancel_delayed_work_sync(&hba->debugfs_ee_work);
-पूर्ण
+}

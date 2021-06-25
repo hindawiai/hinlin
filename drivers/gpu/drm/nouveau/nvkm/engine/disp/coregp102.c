@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2016 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,17 +21,17 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#समावेश "channv50.h"
+#include "channv50.h"
 
-#समावेश <subdev/समयr.h>
+#include <subdev/timer.h>
 
-अटल पूर्णांक
-gp102_disp_core_init(काष्ठा nv50_disp_chan *chan)
-अणु
-	काष्ठा nvkm_subdev *subdev = &chan->disp->base.engine.subdev;
-	काष्ठा nvkm_device *device = subdev->device;
+static int
+gp102_disp_core_init(struct nv50_disp_chan *chan)
+{
+	struct nvkm_subdev *subdev = &chan->disp->base.engine.subdev;
+	struct nvkm_device *device = subdev->device;
 
-	/* initialise channel क्रम dma command submission */
+	/* initialise channel for dma command submission */
 	nvkm_wr32(device, 0x611494, chan->push);
 	nvkm_wr32(device, 0x611498, 0x00010000);
 	nvkm_wr32(device, 0x61149c, 0x00000001);
@@ -40,32 +39,32 @@ gp102_disp_core_init(काष्ठा nv50_disp_chan *chan)
 	nvkm_wr32(device, 0x640000, chan->suspend_put);
 	nvkm_wr32(device, 0x610490, 0x01000013);
 
-	/* रुको क्रम it to go inactive */
-	अगर (nvkm_msec(device, 2000,
-		अगर (!(nvkm_rd32(device, 0x610490) & 0x80000000))
-			अवरोध;
-	) < 0) अणु
+	/* wait for it to go inactive */
+	if (nvkm_msec(device, 2000,
+		if (!(nvkm_rd32(device, 0x610490) & 0x80000000))
+			break;
+	) < 0) {
 		nvkm_error(subdev, "core init: %08x\n",
 			   nvkm_rd32(device, 0x610490));
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा nv50_disp_chan_func
-gp102_disp_core_func = अणु
+static const struct nv50_disp_chan_func
+gp102_disp_core_func = {
 	.init = gp102_disp_core_init,
 	.fini = gf119_disp_core_fini,
-	.पूर्णांकr = gf119_disp_chan_पूर्णांकr,
+	.intr = gf119_disp_chan_intr,
 	.user = nv50_disp_chan_user,
 	.bind = gf119_disp_dmac_bind,
-पूर्ण;
+};
 
-पूर्णांक
-gp102_disp_core_new(स्थिर काष्ठा nvkm_oclass *oclass, व्योम *argv, u32 argc,
-		    काष्ठा nv50_disp *disp, काष्ठा nvkm_object **pobject)
-अणु
-	वापस nv50_disp_core_new_(&gp102_disp_core_func, &gk104_disp_core_mthd,
+int
+gp102_disp_core_new(const struct nvkm_oclass *oclass, void *argv, u32 argc,
+		    struct nv50_disp *disp, struct nvkm_object **pobject)
+{
+	return nv50_disp_core_new_(&gp102_disp_core_func, &gk104_disp_core_mthd,
 				   disp, 0, oclass, argv, argc, pobject);
-पूर्ण
+}

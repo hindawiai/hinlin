@@ -1,191 +1,190 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Read/ग_लिखो thपढ़ो of a guest agent क्रम virtio-trace
+ * Read/write thread of a guest agent for virtio-trace
  *
  * Copyright (C) 2012 Hitachi, Ltd.
  * Created by Yoshihiro Yunomae <yoshihiro.yunomae.ez@hitachi.com>
  *            Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
  */
 
-#घोषणा _GNU_SOURCE
-#समावेश <fcntl.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
-#समावेश <sys/syscall.h>
-#समावेश "trace-agent.h"
+#define _GNU_SOURCE
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/syscall.h>
+#include "trace-agent.h"
 
-#घोषणा READ_WAIT_USEC	100000
+#define READ_WAIT_USEC	100000
 
-व्योम *rw_thपढ़ो_info_new(व्योम)
-अणु
-	काष्ठा rw_thपढ़ो_info *rw_ti;
+void *rw_thread_info_new(void)
+{
+	struct rw_thread_info *rw_ti;
 
-	rw_ti = zalloc(माप(काष्ठा rw_thपढ़ो_info));
-	अगर (rw_ti == शून्य) अणु
+	rw_ti = zalloc(sizeof(struct rw_thread_info));
+	if (rw_ti == NULL) {
 		pr_err("rw_thread_info zalloc error\n");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+		exit(EXIT_FAILURE);
+	}
 
 	rw_ti->cpu_num = -1;
 	rw_ti->in_fd = -1;
 	rw_ti->out_fd = -1;
-	rw_ti->पढ़ो_pipe = -1;
-	rw_ti->ग_लिखो_pipe = -1;
+	rw_ti->read_pipe = -1;
+	rw_ti->write_pipe = -1;
 	rw_ti->pipe_size = PIPE_INIT;
 
-	वापस rw_ti;
-पूर्ण
+	return rw_ti;
+}
 
-व्योम *rw_thपढ़ो_init(पूर्णांक cpu, स्थिर अक्षर *in_path, स्थिर अक्षर *out_path,
-				bool मानक_निकास_flag, अचिन्हित दीर्घ pipe_size,
-				काष्ठा rw_thपढ़ो_info *rw_ti)
-अणु
-	पूर्णांक data_pipe[2];
+void *rw_thread_init(int cpu, const char *in_path, const char *out_path,
+				bool stdout_flag, unsigned long pipe_size,
+				struct rw_thread_info *rw_ti)
+{
+	int data_pipe[2];
 
 	rw_ti->cpu_num = cpu;
 
-	/* set पढ़ो(input) fd */
-	rw_ti->in_fd = खोलो(in_path, O_RDONLY);
-	अगर (rw_ti->in_fd == -1) अणु
+	/* set read(input) fd */
+	rw_ti->in_fd = open(in_path, O_RDONLY);
+	if (rw_ti->in_fd == -1) {
 		pr_err("Could not open in_fd (CPU:%d)\n", cpu);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	/* set ग_लिखो(output) fd */
-	अगर (!मानक_निकास_flag) अणु
+	/* set write(output) fd */
+	if (!stdout_flag) {
 		/* virtio-serial output mode */
-		rw_ti->out_fd = खोलो(out_path, O_WRONLY);
-		अगर (rw_ti->out_fd == -1) अणु
+		rw_ti->out_fd = open(out_path, O_WRONLY);
+		if (rw_ti->out_fd == -1) {
 			pr_err("Could not open out_fd (CPU:%d)\n", cpu);
-			जाओ error;
-		पूर्ण
-	पूर्ण अन्यथा
-		/* मानक_निकास mode */
-		rw_ti->out_fd = STDOUT_खाताNO;
+			goto error;
+		}
+	} else
+		/* stdout mode */
+		rw_ti->out_fd = STDOUT_FILENO;
 
-	अगर (pipe2(data_pipe, O_NONBLOCK) < 0) अणु
+	if (pipe2(data_pipe, O_NONBLOCK) < 0) {
 		pr_err("Could not create pipe in rw-thread(%d)\n", cpu);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	/*
-	 * Size of pipe is 64kB in शेष based on fs/pipe.c.
-	 * To पढ़ो/ग_लिखो trace data speedy, pipe size is changed.
+	 * Size of pipe is 64kB in default based on fs/pipe.c.
+	 * To read/write trace data speedy, pipe size is changed.
 	 */
-	अगर (fcntl(*data_pipe, F_SETPIPE_SZ, pipe_size) < 0) अणु
+	if (fcntl(*data_pipe, F_SETPIPE_SZ, pipe_size) < 0) {
 		pr_err("Could not change pipe size in rw-thread(%d)\n", cpu);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	rw_ti->पढ़ो_pipe = data_pipe[1];
-	rw_ti->ग_लिखो_pipe = data_pipe[0];
+	rw_ti->read_pipe = data_pipe[1];
+	rw_ti->write_pipe = data_pipe[0];
 	rw_ti->pipe_size = pipe_size;
 
-	वापस शून्य;
+	return NULL;
 
 error:
-	निकास(निकास_त्रुटि);
-पूर्ण
+	exit(EXIT_FAILURE);
+}
 
-/* Bind a thपढ़ो to a cpu */
-अटल व्योम bind_cpu(पूर्णांक cpu_num)
-अणु
+/* Bind a thread to a cpu */
+static void bind_cpu(int cpu_num)
+{
 	cpu_set_t mask;
 
 	CPU_ZERO(&mask);
 	CPU_SET(cpu_num, &mask);
 
-	/* bind my thपढ़ो to cpu_num by assigning zero to the first argument */
-	अगर (sched_setaffinity(0, माप(mask), &mask) == -1)
-		pr_err("Could not set CPU#%d affinity\n", (पूर्णांक)cpu_num);
-पूर्ण
+	/* bind my thread to cpu_num by assigning zero to the first argument */
+	if (sched_setaffinity(0, sizeof(mask), &mask) == -1)
+		pr_err("Could not set CPU#%d affinity\n", (int)cpu_num);
+}
 
-अटल व्योम *rw_thपढ़ो_मुख्य(व्योम *thपढ़ो_info)
-अणु
-	sमाप_प्रकार rlen, wlen;
-	sमाप_प्रकार ret;
-	काष्ठा rw_thपढ़ो_info *ts = (काष्ठा rw_thपढ़ो_info *)thपढ़ो_info;
+static void *rw_thread_main(void *thread_info)
+{
+	ssize_t rlen, wlen;
+	ssize_t ret;
+	struct rw_thread_info *ts = (struct rw_thread_info *)thread_info;
 
 	bind_cpu(ts->cpu_num);
 
-	जबतक (1) अणु
-		/* Wait क्रम a पढ़ो order of trace data by Host OS */
-		अगर (!global_run_operation) अणु
-			pthपढ़ो_mutex_lock(&mutex_notअगरy);
-			pthपढ़ो_cond_रुको(&cond_wakeup, &mutex_notअगरy);
-			pthपढ़ो_mutex_unlock(&mutex_notअगरy);
-		पूर्ण
+	while (1) {
+		/* Wait for a read order of trace data by Host OS */
+		if (!global_run_operation) {
+			pthread_mutex_lock(&mutex_notify);
+			pthread_cond_wait(&cond_wakeup, &mutex_notify);
+			pthread_mutex_unlock(&mutex_notify);
+		}
 
-		अगर (global_sig_receive)
-			अवरोध;
+		if (global_sig_receive)
+			break;
 
 		/*
-		 * Each thपढ़ो पढ़ो trace_pipe_raw of each cpu bounding the
-		 * thपढ़ो, so contention of multi-thपढ़ोs करोes not occur.
+		 * Each thread read trace_pipe_raw of each cpu bounding the
+		 * thread, so contention of multi-threads does not occur.
 		 */
-		rlen = splice(ts->in_fd, शून्य, ts->पढ़ो_pipe, शून्य,
+		rlen = splice(ts->in_fd, NULL, ts->read_pipe, NULL,
 				ts->pipe_size, SPLICE_F_MOVE | SPLICE_F_MORE);
 
-		अगर (rlen < 0) अणु
+		if (rlen < 0) {
 			pr_err("Splice_read in rw-thread(%d)\n", ts->cpu_num);
-			जाओ error;
-		पूर्ण अन्यथा अगर (rlen == 0) अणु
+			goto error;
+		} else if (rlen == 0) {
 			/*
-			 * If trace data करो not exist or are unपढ़ोable not
-			 * क्रम exceeding the page size, splice_पढ़ो वापसs
-			 * शून्य. Then, this रुकोs क्रम being filled the data in a
+			 * If trace data do not exist or are unreadable not
+			 * for exceeding the page size, splice_read returns
+			 * NULL. Then, this waits for being filled the data in a
 			 * ring-buffer.
 			 */
 			usleep(READ_WAIT_USEC);
 			pr_debug("Read retry(cpu:%d)\n", ts->cpu_num);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		wlen = 0;
 
-		करो अणु
-			ret = splice(ts->ग_लिखो_pipe, शून्य, ts->out_fd, शून्य,
+		do {
+			ret = splice(ts->write_pipe, NULL, ts->out_fd, NULL,
 					rlen - wlen,
 					SPLICE_F_MOVE | SPLICE_F_MORE);
 
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				pr_err("Splice_write in rw-thread(%d)\n",
 								ts->cpu_num);
-				जाओ error;
-			पूर्ण अन्यथा अगर (ret == 0)
+				goto error;
+			} else if (ret == 0)
 				/*
-				 * When host पढ़ोer is not in समय क्रम पढ़ोing
+				 * When host reader is not in time for reading
 				 * trace data, guest will be stopped. This is
-				 * because अक्षर dev in QEMU is not supported
-				 * non-blocking mode. Then, ग_लिखोr might be
-				 * sleep in that हाल.
-				 * This sleep will be हटाओd by supporting
+				 * because char dev in QEMU is not supported
+				 * non-blocking mode. Then, writer might be
+				 * sleep in that case.
+				 * This sleep will be removed by supporting
 				 * non-blocking mode.
 				 */
 				sleep(1);
 			wlen += ret;
-		पूर्ण जबतक (wlen < rlen);
-	पूर्ण
+		} while (wlen < rlen);
+	}
 
-	वापस शून्य;
+	return NULL;
 
 error:
-	निकास(निकास_त्रुटि);
-पूर्ण
+	exit(EXIT_FAILURE);
+}
 
 
-pthपढ़ो_t rw_thपढ़ो_run(काष्ठा rw_thपढ़ो_info *rw_ti)
-अणु
-	पूर्णांक ret;
-	pthपढ़ो_t rw_thपढ़ो_per_cpu;
+pthread_t rw_thread_run(struct rw_thread_info *rw_ti)
+{
+	int ret;
+	pthread_t rw_thread_per_cpu;
 
-	ret = pthपढ़ो_create(&rw_thपढ़ो_per_cpu, शून्य, rw_thपढ़ो_मुख्य, rw_ti);
-	अगर (ret != 0) अणु
+	ret = pthread_create(&rw_thread_per_cpu, NULL, rw_thread_main, rw_ti);
+	if (ret != 0) {
 		pr_err("Could not create a rw thread(%d)\n", rw_ti->cpu_num);
-		निकास(निकास_त्रुटि);
-	पूर्ण
+		exit(EXIT_FAILURE);
+	}
 
-	वापस rw_thपढ़ो_per_cpu;
-पूर्ण
+	return rw_thread_per_cpu;
+}

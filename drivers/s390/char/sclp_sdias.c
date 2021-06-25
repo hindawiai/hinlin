@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * SCLP "store data in absolute storage"
  *
@@ -7,116 +6,116 @@
  * Author(s): Michael Holzheu
  */
 
-#घोषणा KMSG_COMPONENT "sclp_sdias"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "sclp_sdias"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/completion.h>
-#समावेश <linux/sched.h>
-#समावेश <यंत्र/sclp.h>
-#समावेश <यंत्र/debug.h>
-#समावेश <यंत्र/ipl.h>
+#include <linux/completion.h>
+#include <linux/sched.h>
+#include <asm/sclp.h>
+#include <asm/debug.h>
+#include <asm/ipl.h>
 
-#समावेश "sclp_sdias.h"
-#समावेश "sclp.h"
-#समावेश "sclp_rw.h"
+#include "sclp_sdias.h"
+#include "sclp.h"
+#include "sclp_rw.h"
 
-#घोषणा TRACE(x...) debug_प्र_लिखो_event(sdias_dbf, 1, x)
+#define TRACE(x...) debug_sprintf_event(sdias_dbf, 1, x)
 
-#घोषणा SDIAS_RETRIES 300
+#define SDIAS_RETRIES 300
 
-अटल काष्ठा debug_info *sdias_dbf;
+static struct debug_info *sdias_dbf;
 
-अटल काष्ठा sclp_रेजिस्टर sclp_sdias_रेजिस्टर = अणु
+static struct sclp_register sclp_sdias_register = {
 	.send_mask = EVTYP_SDIAS_MASK,
-पूर्ण;
+};
 
-अटल काष्ठा sdias_sccb *sclp_sdias_sccb;
-अटल काष्ठा sdias_evbuf sdias_evbuf;
+static struct sdias_sccb *sclp_sdias_sccb;
+static struct sdias_evbuf sdias_evbuf;
 
-अटल DECLARE_COMPLETION(evbuf_accepted);
-अटल DECLARE_COMPLETION(evbuf_करोne);
-अटल DEFINE_MUTEX(sdias_mutex);
+static DECLARE_COMPLETION(evbuf_accepted);
+static DECLARE_COMPLETION(evbuf_done);
+static DEFINE_MUTEX(sdias_mutex);
 
 /*
- * Called by SCLP base when पढ़ो event data has been completed (async mode only)
+ * Called by SCLP base when read event data has been completed (async mode only)
  */
-अटल व्योम sclp_sdias_receiver_fn(काष्ठा evbuf_header *evbuf)
-अणु
-	स_नकल(&sdias_evbuf, evbuf,
-	       min_t(अचिन्हित दीर्घ, माप(sdias_evbuf), evbuf->length));
-	complete(&evbuf_करोne);
+static void sclp_sdias_receiver_fn(struct evbuf_header *evbuf)
+{
+	memcpy(&sdias_evbuf, evbuf,
+	       min_t(unsigned long, sizeof(sdias_evbuf), evbuf->length));
+	complete(&evbuf_done);
 	TRACE("sclp_sdias_receiver_fn done\n");
-पूर्ण
+}
 
 /*
  * Called by SCLP base when sdias event has been accepted
  */
-अटल व्योम sdias_callback(काष्ठा sclp_req *request, व्योम *data)
-अणु
+static void sdias_callback(struct sclp_req *request, void *data)
+{
 	complete(&evbuf_accepted);
 	TRACE("callback done\n");
-पूर्ण
+}
 
-अटल पूर्णांक sdias_sclp_send(काष्ठा sclp_req *req)
-अणु
-	काष्ठा sdias_sccb *sccb = sclp_sdias_sccb;
-	पूर्णांक retries;
-	पूर्णांक rc;
+static int sdias_sclp_send(struct sclp_req *req)
+{
+	struct sdias_sccb *sccb = sclp_sdias_sccb;
+	int retries;
+	int rc;
 
-	क्रम (retries = SDIAS_RETRIES; retries; retries--) अणु
+	for (retries = SDIAS_RETRIES; retries; retries--) {
 		TRACE("add request\n");
 		rc = sclp_add_request(req);
-		अगर (rc) अणु
-			/* not initiated, रुको some समय and retry */
+		if (rc) {
+			/* not initiated, wait some time and retry */
 			set_current_state(TASK_INTERRUPTIBLE);
 			TRACE("add request failed: rc = %i\n",rc);
-			schedule_समयout(msecs_to_jअगरfies(500));
-			जारी;
-		पूर्ण
-		/* initiated, रुको क्रम completion of service call */
-		रुको_क्रम_completion(&evbuf_accepted);
-		अगर (req->status == SCLP_REQ_FAILED) अणु
+			schedule_timeout(msecs_to_jiffies(500));
+			continue;
+		}
+		/* initiated, wait for completion of service call */
+		wait_for_completion(&evbuf_accepted);
+		if (req->status == SCLP_REQ_FAILED) {
 			TRACE("sclp request failed\n");
-			जारी;
-		पूर्ण
-		/* अगर not accepted, retry */
-		अगर (!(sccb->evbuf.hdr.flags & 0x80)) अणु
+			continue;
+		}
+		/* if not accepted, retry */
+		if (!(sccb->evbuf.hdr.flags & 0x80)) {
 			TRACE("sclp request failed: flags=%x\n",
 			      sccb->evbuf.hdr.flags);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		/*
-		 * क्रम the sync पूर्णांकerface the response is in the initial sccb
+		 * for the sync interface the response is in the initial sccb
 		 */
-		अगर (!sclp_sdias_रेजिस्टर.receiver_fn) अणु
-			स_नकल(&sdias_evbuf, &sccb->evbuf, माप(sdias_evbuf));
+		if (!sclp_sdias_register.receiver_fn) {
+			memcpy(&sdias_evbuf, &sccb->evbuf, sizeof(sdias_evbuf));
 			TRACE("sync request done\n");
-			वापस 0;
-		पूर्ण
-		/* otherwise we रुको क्रम completion */
-		रुको_क्रम_completion(&evbuf_करोne);
+			return 0;
+		}
+		/* otherwise we wait for completion */
+		wait_for_completion(&evbuf_done);
 		TRACE("request done\n");
-		वापस 0;
-	पूर्ण
-	वापस -EIO;
-पूर्ण
+		return 0;
+	}
+	return -EIO;
+}
 
 /*
  * Get number of blocks (4K) available in the HSA
  */
-पूर्णांक sclp_sdias_blk_count(व्योम)
-अणु
-	काष्ठा sdias_sccb *sccb = sclp_sdias_sccb;
-	काष्ठा sclp_req request;
-	पूर्णांक rc;
+int sclp_sdias_blk_count(void)
+{
+	struct sdias_sccb *sccb = sclp_sdias_sccb;
+	struct sclp_req request;
+	int rc;
 
 	mutex_lock(&sdias_mutex);
 
-	स_रखो(sccb, 0, माप(*sccb));
-	स_रखो(&request, 0, माप(request));
+	memset(sccb, 0, sizeof(*sccb));
+	memset(&request, 0, sizeof(request));
 
-	sccb->hdr.length = माप(*sccb);
-	sccb->evbuf.hdr.length = माप(काष्ठा sdias_evbuf);
+	sccb->hdr.length = sizeof(*sccb);
+	sccb->evbuf.hdr.length = sizeof(struct sdias_evbuf);
 	sccb->evbuf.hdr.type = EVTYP_SDIAS;
 	sccb->evbuf.event_qual = SDIAS_EQ_SIZE;
 	sccb->evbuf.data_id = SDIAS_DI_FCP_DUMP;
@@ -129,33 +128,33 @@
 	request.callback = sdias_callback;
 
 	rc = sdias_sclp_send(&request);
-	अगर (rc) अणु
+	if (rc) {
 		pr_err("sclp_send failed for get_nr_blocks\n");
-		जाओ out;
-	पूर्ण
-	अगर (sccb->hdr.response_code != 0x0020) अणु
+		goto out;
+	}
+	if (sccb->hdr.response_code != 0x0020) {
 		TRACE("send failed: %x\n", sccb->hdr.response_code);
 		rc = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (sdias_evbuf.event_status) अणु
-		हाल 0:
+	switch (sdias_evbuf.event_status) {
+		case 0:
 			rc = sdias_evbuf.blk_cnt;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			pr_err("SCLP error: %x\n", sdias_evbuf.event_status);
 			rc = -EIO;
-			जाओ out;
-	पूर्ण
+			goto out;
+	}
 	TRACE("%i blocks\n", rc);
 out:
 	mutex_unlock(&sdias_mutex);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * Copy from HSA to असलolute storage (not reentrant):
+ * Copy from HSA to absolute storage (not reentrant):
  *
  * @dest     : Address of buffer where data should be copied
  * @start_blk: Start Block (beginning with 1)
@@ -164,19 +163,19 @@ out:
  * Return Value: 0 : Requested 'number' of blocks of data copied
  *		 <0: ERROR - negative event status
  */
-पूर्णांक sclp_sdias_copy(व्योम *dest, पूर्णांक start_blk, पूर्णांक nr_blks)
-अणु
-	काष्ठा sdias_sccb *sccb = sclp_sdias_sccb;
-	काष्ठा sclp_req request;
-	पूर्णांक rc;
+int sclp_sdias_copy(void *dest, int start_blk, int nr_blks)
+{
+	struct sdias_sccb *sccb = sclp_sdias_sccb;
+	struct sclp_req request;
+	int rc;
 
 	mutex_lock(&sdias_mutex);
 
-	स_रखो(sccb, 0, माप(*sccb));
-	स_रखो(&request, 0, माप(request));
+	memset(sccb, 0, sizeof(*sccb));
+	memset(&request, 0, sizeof(request));
 
-	sccb->hdr.length = माप(*sccb);
-	sccb->evbuf.hdr.length = माप(काष्ठा sdias_evbuf);
+	sccb->hdr.length = sizeof(*sccb);
+	sccb->evbuf.hdr.length = sizeof(struct sdias_evbuf);
 	sccb->evbuf.hdr.type = EVTYP_SDIAS;
 	sccb->evbuf.hdr.flags = 0;
 	sccb->evbuf.event_qual = SDIAS_EQ_STORE_DATA;
@@ -185,7 +184,7 @@ out:
 	sccb->evbuf.asa_size = SDIAS_ASA_SIZE_64;
 	sccb->evbuf.event_status = 0;
 	sccb->evbuf.blk_cnt = nr_blks;
-	sccb->evbuf.asa = (अचिन्हित दीर्घ)dest;
+	sccb->evbuf.asa = (unsigned long)dest;
 	sccb->evbuf.fbn = start_blk;
 	sccb->evbuf.lbn = 0;
 	sccb->evbuf.dbs = 1;
@@ -196,83 +195,83 @@ out:
 	request.callback = sdias_callback;
 
 	rc = sdias_sclp_send(&request);
-	अगर (rc) अणु
+	if (rc) {
 		pr_err("sclp_send failed: %x\n", rc);
-		जाओ out;
-	पूर्ण
-	अगर (sccb->hdr.response_code != 0x0020) अणु
+		goto out;
+	}
+	if (sccb->hdr.response_code != 0x0020) {
 		TRACE("copy failed: %x\n", sccb->hdr.response_code);
 		rc = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (sdias_evbuf.event_status) अणु
-	हाल SDIAS_EVSTATE_ALL_STORED:
+	switch (sdias_evbuf.event_status) {
+	case SDIAS_EVSTATE_ALL_STORED:
 		TRACE("all stored\n");
-		अवरोध;
-	हाल SDIAS_EVSTATE_PART_STORED:
+		break;
+	case SDIAS_EVSTATE_PART_STORED:
 		TRACE("part stored: %i\n", sdias_evbuf.blk_cnt);
-		अवरोध;
-	हाल SDIAS_EVSTATE_NO_DATA:
+		break;
+	case SDIAS_EVSTATE_NO_DATA:
 		TRACE("no data\n");
 		fallthrough;
-	शेष:
+	default:
 		pr_err("Error from SCLP while copying hsa. Event status = %x\n",
 		       sdias_evbuf.event_status);
 		rc = -EIO;
-	पूर्ण
+	}
 out:
 	mutex_unlock(&sdias_mutex);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक __init sclp_sdias_रेजिस्टर_check(व्योम)
-अणु
-	पूर्णांक rc;
+static int __init sclp_sdias_register_check(void)
+{
+	int rc;
 
-	rc = sclp_रेजिस्टर(&sclp_sdias_रेजिस्टर);
-	अगर (rc)
-		वापस rc;
-	अगर (sclp_sdias_blk_count() == 0) अणु
-		sclp_unरेजिस्टर(&sclp_sdias_रेजिस्टर);
-		वापस -ENODEV;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	rc = sclp_register(&sclp_sdias_register);
+	if (rc)
+		return rc;
+	if (sclp_sdias_blk_count() == 0) {
+		sclp_unregister(&sclp_sdias_register);
+		return -ENODEV;
+	}
+	return 0;
+}
 
-अटल पूर्णांक __init sclp_sdias_init_sync(व्योम)
-अणु
+static int __init sclp_sdias_init_sync(void)
+{
 	TRACE("Try synchronous mode\n");
-	sclp_sdias_रेजिस्टर.receive_mask = 0;
-	sclp_sdias_रेजिस्टर.receiver_fn = शून्य;
-	वापस sclp_sdias_रेजिस्टर_check();
-पूर्ण
+	sclp_sdias_register.receive_mask = 0;
+	sclp_sdias_register.receiver_fn = NULL;
+	return sclp_sdias_register_check();
+}
 
-अटल पूर्णांक __init sclp_sdias_init_async(व्योम)
-अणु
+static int __init sclp_sdias_init_async(void)
+{
 	TRACE("Try asynchronous mode\n");
-	sclp_sdias_रेजिस्टर.receive_mask = EVTYP_SDIAS_MASK;
-	sclp_sdias_रेजिस्टर.receiver_fn = sclp_sdias_receiver_fn;
-	वापस sclp_sdias_रेजिस्टर_check();
-पूर्ण
+	sclp_sdias_register.receive_mask = EVTYP_SDIAS_MASK;
+	sclp_sdias_register.receiver_fn = sclp_sdias_receiver_fn;
+	return sclp_sdias_register_check();
+}
 
-पूर्णांक __init sclp_sdias_init(व्योम)
-अणु
-	अगर (!is_ipl_type_dump())
-		वापस 0;
-	sclp_sdias_sccb = (व्योम *) __get_मुक्त_page(GFP_KERNEL | GFP_DMA);
+int __init sclp_sdias_init(void)
+{
+	if (!is_ipl_type_dump())
+		return 0;
+	sclp_sdias_sccb = (void *) __get_free_page(GFP_KERNEL | GFP_DMA);
 	BUG_ON(!sclp_sdias_sccb);
-	sdias_dbf = debug_रेजिस्टर("dump_sdias", 4, 1, 4 * माप(दीर्घ));
-	debug_रेजिस्टर_view(sdias_dbf, &debug_प्र_लिखो_view);
+	sdias_dbf = debug_register("dump_sdias", 4, 1, 4 * sizeof(long));
+	debug_register_view(sdias_dbf, &debug_sprintf_view);
 	debug_set_level(sdias_dbf, 6);
-	अगर (sclp_sdias_init_sync() == 0)
-		जाओ out;
-	अगर (sclp_sdias_init_async() == 0)
-		जाओ out;
+	if (sclp_sdias_init_sync() == 0)
+		goto out;
+	if (sclp_sdias_init_async() == 0)
+		goto out;
 	TRACE("init failed\n");
-	मुक्त_page((अचिन्हित दीर्घ) sclp_sdias_sccb);
-	वापस -ENODEV;
+	free_page((unsigned long) sclp_sdias_sccb);
+	return -ENODEV;
 out:
 	TRACE("init done\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}

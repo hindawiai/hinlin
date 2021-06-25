@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PERF_PARSE_EVENTS_HYBRID_H
-#घोषणा __PERF_PARSE_EVENTS_HYBRID_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PERF_PARSE_EVENTS_HYBRID_H
+#define __PERF_PARSE_EVENTS_HYBRID_H
 
-#समावेश <linux/list.h>
-#समावेश <stdbool.h>
-#समावेश <linux/types.h>
-#समावेश <linux/perf_event.h>
-#समावेश <माला.स>
+#include <linux/list.h>
+#include <stdbool.h>
+#include <linux/types.h>
+#include <linux/perf_event.h>
+#include <string.h>
 
-पूर्णांक parse_events__add_numeric_hybrid(काष्ठा parse_events_state *parse_state,
-				     काष्ठा list_head *list,
-				     काष्ठा perf_event_attr *attr,
-				     अक्षर *name, काष्ठा list_head *config_terms,
+int parse_events__add_numeric_hybrid(struct parse_events_state *parse_state,
+				     struct list_head *list,
+				     struct perf_event_attr *attr,
+				     char *name, struct list_head *config_terms,
 				     bool *hybrid);
 
-पूर्णांक parse_events__add_cache_hybrid(काष्ठा list_head *list, पूर्णांक *idx,
-				   काष्ठा perf_event_attr *attr, अक्षर *name,
-				   काष्ठा list_head *config_terms,
+int parse_events__add_cache_hybrid(struct list_head *list, int *idx,
+				   struct perf_event_attr *attr, char *name,
+				   struct list_head *config_terms,
 				   bool *hybrid,
-				   काष्ठा parse_events_state *parse_state);
+				   struct parse_events_state *parse_state);
 
-#पूर्ण_अगर /* __PERF_PARSE_EVENTS_HYBRID_H */
+#endif /* __PERF_PARSE_EVENTS_HYBRID_H */

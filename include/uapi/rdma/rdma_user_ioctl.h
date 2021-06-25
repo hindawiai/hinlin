@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: ((GPL-2.0 WITH Linux-syscall-note) OR Linux-OpenIB) */
+/* SPDX-License-Identifier: ((GPL-2.0 WITH Linux-syscall-note) OR Linux-OpenIB) */
 /*
  * Copyright (c) 2016 Mellanox Technologies, LTD. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,55 +31,55 @@
  * SOFTWARE.
  */
 
-#अगर_अघोषित RDMA_USER_IOCTL_H
-#घोषणा RDMA_USER_IOCTL_H
+#ifndef RDMA_USER_IOCTL_H
+#define RDMA_USER_IOCTL_H
 
-#समावेश <rdma/ib_user_mad.h>
-#समावेश <rdma/hfi/hfi1_ioctl.h>
-#समावेश <rdma/rdma_user_ioctl_cmds.h>
+#include <rdma/ib_user_mad.h>
+#include <rdma/hfi/hfi1_ioctl.h>
+#include <rdma/rdma_user_ioctl_cmds.h>
 
-/* Legacy name, क्रम user space application which alपढ़ोy use it */
-#घोषणा IB_IOCTL_MAGIC		RDMA_IOCTL_MAGIC
+/* Legacy name, for user space application which already use it */
+#define IB_IOCTL_MAGIC		RDMA_IOCTL_MAGIC
 
 /*
  * General blocks assignments
- * It is बंदd on purpose - करो not expose it to user space
- * #घोषणा MAD_CMD_BASE		0x00
- * #घोषणा HFI1_CMD_BAS		0xE0
+ * It is closed on purpose - do not expose it to user space
+ * #define MAD_CMD_BASE		0x00
+ * #define HFI1_CMD_BAS		0xE0
  */
 
-/* MAD specअगरic section */
-#घोषणा IB_USER_MAD_REGISTER_AGENT	_IOWR(RDMA_IOCTL_MAGIC, 0x01, काष्ठा ib_user_mad_reg_req)
-#घोषणा IB_USER_MAD_UNREGISTER_AGENT	_IOW(RDMA_IOCTL_MAGIC,  0x02, __u32)
-#घोषणा IB_USER_MAD_ENABLE_PKEY		_IO(RDMA_IOCTL_MAGIC,   0x03)
-#घोषणा IB_USER_MAD_REGISTER_AGENT2	_IOWR(RDMA_IOCTL_MAGIC, 0x04, काष्ठा ib_user_mad_reg_req2)
+/* MAD specific section */
+#define IB_USER_MAD_REGISTER_AGENT	_IOWR(RDMA_IOCTL_MAGIC, 0x01, struct ib_user_mad_reg_req)
+#define IB_USER_MAD_UNREGISTER_AGENT	_IOW(RDMA_IOCTL_MAGIC,  0x02, __u32)
+#define IB_USER_MAD_ENABLE_PKEY		_IO(RDMA_IOCTL_MAGIC,   0x03)
+#define IB_USER_MAD_REGISTER_AGENT2	_IOWR(RDMA_IOCTL_MAGIC, 0x04, struct ib_user_mad_reg_req2)
 
-/* HFI specअगरic section */
+/* HFI specific section */
 /* allocate HFI and context */
-#घोषणा HFI1_IOCTL_ASSIGN_CTXT		_IOWR(RDMA_IOCTL_MAGIC, 0xE1, काष्ठा hfi1_user_info)
+#define HFI1_IOCTL_ASSIGN_CTXT		_IOWR(RDMA_IOCTL_MAGIC, 0xE1, struct hfi1_user_info)
 /* find out what resources we got */
-#घोषणा HFI1_IOCTL_CTXT_INFO		_IOW(RDMA_IOCTL_MAGIC,  0xE2, काष्ठा hfi1_ctxt_info)
+#define HFI1_IOCTL_CTXT_INFO		_IOW(RDMA_IOCTL_MAGIC,  0xE2, struct hfi1_ctxt_info)
 /* set up userspace */
-#घोषणा HFI1_IOCTL_USER_INFO		_IOW(RDMA_IOCTL_MAGIC,  0xE3, काष्ठा hfi1_base_info)
+#define HFI1_IOCTL_USER_INFO		_IOW(RDMA_IOCTL_MAGIC,  0xE3, struct hfi1_base_info)
 /* update expected TID entries */
-#घोषणा HFI1_IOCTL_TID_UPDATE		_IOWR(RDMA_IOCTL_MAGIC, 0xE4, काष्ठा hfi1_tid_info)
-/* मुक्त expected TID entries */
-#घोषणा HFI1_IOCTL_TID_FREE		_IOWR(RDMA_IOCTL_MAGIC, 0xE5, काष्ठा hfi1_tid_info)
-/* क्रमce an update of PIO credit */
-#घोषणा HFI1_IOCTL_CREDIT_UPD		_IO(RDMA_IOCTL_MAGIC,   0xE6)
+#define HFI1_IOCTL_TID_UPDATE		_IOWR(RDMA_IOCTL_MAGIC, 0xE4, struct hfi1_tid_info)
+/* free expected TID entries */
+#define HFI1_IOCTL_TID_FREE		_IOWR(RDMA_IOCTL_MAGIC, 0xE5, struct hfi1_tid_info)
+/* force an update of PIO credit */
+#define HFI1_IOCTL_CREDIT_UPD		_IO(RDMA_IOCTL_MAGIC,   0xE6)
 /* control receipt of packets */
-#घोषणा HFI1_IOCTL_RECV_CTRL		_IOW(RDMA_IOCTL_MAGIC,  0xE8, पूर्णांक)
+#define HFI1_IOCTL_RECV_CTRL		_IOW(RDMA_IOCTL_MAGIC,  0xE8, int)
 /* set the kind of polling we want */
-#घोषणा HFI1_IOCTL_POLL_TYPE		_IOW(RDMA_IOCTL_MAGIC,  0xE9, पूर्णांक)
+#define HFI1_IOCTL_POLL_TYPE		_IOW(RDMA_IOCTL_MAGIC,  0xE9, int)
 /* ack & clear user status bits */
-#घोषणा HFI1_IOCTL_ACK_EVENT		_IOW(RDMA_IOCTL_MAGIC,  0xEA, अचिन्हित दीर्घ)
+#define HFI1_IOCTL_ACK_EVENT		_IOW(RDMA_IOCTL_MAGIC,  0xEA, unsigned long)
 /* set context's pkey */
-#घोषणा HFI1_IOCTL_SET_PKEY		_IOW(RDMA_IOCTL_MAGIC,  0xEB, __u16)
+#define HFI1_IOCTL_SET_PKEY		_IOW(RDMA_IOCTL_MAGIC,  0xEB, __u16)
 /* reset context's HW send context */
-#घोषणा HFI1_IOCTL_CTXT_RESET		_IO(RDMA_IOCTL_MAGIC,   0xEC)
-/* पढ़ो TID cache invalidations */
-#घोषणा HFI1_IOCTL_TID_INVAL_READ	_IOWR(RDMA_IOCTL_MAGIC, 0xED, काष्ठा hfi1_tid_info)
+#define HFI1_IOCTL_CTXT_RESET		_IO(RDMA_IOCTL_MAGIC,   0xEC)
+/* read TID cache invalidations */
+#define HFI1_IOCTL_TID_INVAL_READ	_IOWR(RDMA_IOCTL_MAGIC, 0xED, struct hfi1_tid_info)
 /* get the version of the user cdev */
-#घोषणा HFI1_IOCTL_GET_VERS		_IOR(RDMA_IOCTL_MAGIC,  0xEE, पूर्णांक)
+#define HFI1_IOCTL_GET_VERS		_IOR(RDMA_IOCTL_MAGIC,  0xEE, int)
 
-#पूर्ण_अगर /* RDMA_USER_IOCTL_H */
+#endif /* RDMA_USER_IOCTL_H */

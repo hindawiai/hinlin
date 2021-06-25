@@ -1,29 +1,28 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- *  tअगरm.h - TI FlashMedia driver
+ *  tifm.h - TI FlashMedia driver
  *
  *  Copyright (C) 2006 Alex Dubov <oakad@yahoo.com>
  */
 
-#अगर_अघोषित _TIFM_H
-#घोषणा _TIFM_H
+#ifndef _TIFM_H
+#define _TIFM_H
 
-#समावेश <linux/spinlock.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/workqueue.h>
+#include <linux/spinlock.h>
+#include <linux/interrupt.h>
+#include <linux/delay.h>
+#include <linux/pci.h>
+#include <linux/workqueue.h>
 
-/* Host रेजिस्टरs (relative to pci base address): */
-क्रमागत अणु
+/* Host registers (relative to pci base address): */
+enum {
 	FM_SET_INTERRUPT_ENABLE   = 0x008,
 	FM_CLEAR_INTERRUPT_ENABLE = 0x00c,
 	FM_INTERRUPT_STATUS       = 0x014
-पूर्ण;
+};
 
-/* Socket रेजिस्टरs (relative to socket base address): */
-क्रमागत अणु
+/* Socket registers (relative to socket base address): */
+enum {
 	SOCK_CONTROL                   = 0x004,
 	SOCK_PRESENT_STATE             = 0x008,
 	SOCK_DMA_ADDRESS               = 0x00c,
@@ -56,106 +55,106 @@
 	SOCK_MS_STATUS                 = 0x18c,
 	SOCK_MS_SYSTEM                 = 0x190,
 	SOCK_FIFO_ACCESS               = 0x200
-पूर्ण;
+};
 
-#घोषणा TIFM_CTRL_LED             0x00000040
-#घोषणा TIFM_CTRL_FAST_CLK        0x00000100
-#घोषणा TIFM_CTRL_POWER_MASK      0x00000007
+#define TIFM_CTRL_LED             0x00000040
+#define TIFM_CTRL_FAST_CLK        0x00000100
+#define TIFM_CTRL_POWER_MASK      0x00000007
 
-#घोषणा TIFM_SOCK_STATE_OCCUPIED  0x00000008
-#घोषणा TIFM_SOCK_STATE_POWERED   0x00000080
+#define TIFM_SOCK_STATE_OCCUPIED  0x00000008
+#define TIFM_SOCK_STATE_POWERED   0x00000080
 
-#घोषणा TIFM_FIFO_ENABLE          0x00000001
-#घोषणा TIFM_FIFO_READY           0x00000001
-#घोषणा TIFM_FIFO_MORE            0x00000008
-#घोषणा TIFM_FIFO_INT_SETALL      0x0000ffff
-#घोषणा TIFM_FIFO_INTMASK         0x00000005
+#define TIFM_FIFO_ENABLE          0x00000001
+#define TIFM_FIFO_READY           0x00000001
+#define TIFM_FIFO_MORE            0x00000008
+#define TIFM_FIFO_INT_SETALL      0x0000ffff
+#define TIFM_FIFO_INTMASK         0x00000005
 
-#घोषणा TIFM_DMA_RESET            0x00000002
-#घोषणा TIFM_DMA_TX               0x00008000
-#घोषणा TIFM_DMA_EN               0x00000001
-#घोषणा TIFM_DMA_TSIZE            0x0000007f
+#define TIFM_DMA_RESET            0x00000002
+#define TIFM_DMA_TX               0x00008000
+#define TIFM_DMA_EN               0x00000001
+#define TIFM_DMA_TSIZE            0x0000007f
 
-#घोषणा TIFM_TYPE_XD 1
-#घोषणा TIFM_TYPE_MS 2
-#घोषणा TIFM_TYPE_SD 3
+#define TIFM_TYPE_XD 1
+#define TIFM_TYPE_MS 2
+#define TIFM_TYPE_SD 3
 
-काष्ठा tअगरm_device_id अणु
-	अचिन्हित अक्षर type;
-पूर्ण;
+struct tifm_device_id {
+	unsigned char type;
+};
 
-काष्ठा tअगरm_driver;
-काष्ठा tअगरm_dev अणु
-	अक्षर __iomem  *addr;
+struct tifm_driver;
+struct tifm_dev {
+	char __iomem  *addr;
 	spinlock_t    lock;
-	अचिन्हित अक्षर type;
-	अचिन्हित पूर्णांक  socket_id;
+	unsigned char type;
+	unsigned int  socket_id;
 
-	व्योम          (*card_event)(काष्ठा tअगरm_dev *sock);
-	व्योम          (*data_event)(काष्ठा tअगरm_dev *sock);
+	void          (*card_event)(struct tifm_dev *sock);
+	void          (*data_event)(struct tifm_dev *sock);
 
-	काष्ठा device dev;
-पूर्ण;
+	struct device dev;
+};
 
-काष्ठा tअगरm_driver अणु
-	काष्ठा tअगरm_device_id *id_table;
-	पूर्णांक                   (*probe)(काष्ठा tअगरm_dev *dev);
-	व्योम                  (*हटाओ)(काष्ठा tअगरm_dev *dev);
-	पूर्णांक                   (*suspend)(काष्ठा tअगरm_dev *dev,
+struct tifm_driver {
+	struct tifm_device_id *id_table;
+	int                   (*probe)(struct tifm_dev *dev);
+	void                  (*remove)(struct tifm_dev *dev);
+	int                   (*suspend)(struct tifm_dev *dev,
 					 pm_message_t state);
-	पूर्णांक                   (*resume)(काष्ठा tअगरm_dev *dev);
+	int                   (*resume)(struct tifm_dev *dev);
 
-	काष्ठा device_driver  driver;
-पूर्ण;
+	struct device_driver  driver;
+};
 
-काष्ठा tअगरm_adapter अणु
-	अक्षर __iomem        *addr;
+struct tifm_adapter {
+	char __iomem        *addr;
 	spinlock_t          lock;
-	अचिन्हित पूर्णांक        irq_status;
-	अचिन्हित पूर्णांक        socket_change_set;
-	अचिन्हित पूर्णांक        id;
-	अचिन्हित पूर्णांक        num_sockets;
-	काष्ठा completion   *finish_me;
+	unsigned int        irq_status;
+	unsigned int        socket_change_set;
+	unsigned int        id;
+	unsigned int        num_sockets;
+	struct completion   *finish_me;
 
-	काष्ठा work_काष्ठा  media_चयनer;
-	काष्ठा device	    dev;
+	struct work_struct  media_switcher;
+	struct device	    dev;
 
-	व्योम                (*eject)(काष्ठा tअगरm_adapter *fm,
-				     काष्ठा tअगरm_dev *sock);
-	पूर्णांक                 (*has_ms_pअगर)(काष्ठा tअगरm_adapter *fm,
-					  काष्ठा tअगरm_dev *sock);
+	void                (*eject)(struct tifm_adapter *fm,
+				     struct tifm_dev *sock);
+	int                 (*has_ms_pif)(struct tifm_adapter *fm,
+					  struct tifm_dev *sock);
 
-	काष्ठा tअगरm_dev     *sockets[];
-पूर्ण;
+	struct tifm_dev     *sockets[];
+};
 
-काष्ठा tअगरm_adapter *tअगरm_alloc_adapter(अचिन्हित पूर्णांक num_sockets,
-					काष्ठा device *dev);
-पूर्णांक tअगरm_add_adapter(काष्ठा tअगरm_adapter *fm);
-व्योम tअगरm_हटाओ_adapter(काष्ठा tअगरm_adapter *fm);
-व्योम tअगरm_मुक्त_adapter(काष्ठा tअगरm_adapter *fm);
+struct tifm_adapter *tifm_alloc_adapter(unsigned int num_sockets,
+					struct device *dev);
+int tifm_add_adapter(struct tifm_adapter *fm);
+void tifm_remove_adapter(struct tifm_adapter *fm);
+void tifm_free_adapter(struct tifm_adapter *fm);
 
-व्योम tअगरm_मुक्त_device(काष्ठा device *dev);
-काष्ठा tअगरm_dev *tअगरm_alloc_device(काष्ठा tअगरm_adapter *fm, अचिन्हित पूर्णांक id,
-				   अचिन्हित अक्षर type);
+void tifm_free_device(struct device *dev);
+struct tifm_dev *tifm_alloc_device(struct tifm_adapter *fm, unsigned int id,
+				   unsigned char type);
 
-पूर्णांक tअगरm_रेजिस्टर_driver(काष्ठा tअगरm_driver *drv);
-व्योम tअगरm_unरेजिस्टर_driver(काष्ठा tअगरm_driver *drv);
-व्योम tअगरm_eject(काष्ठा tअगरm_dev *sock);
-पूर्णांक tअगरm_has_ms_pअगर(काष्ठा tअगरm_dev *sock);
-पूर्णांक tअगरm_map_sg(काष्ठा tअगरm_dev *sock, काष्ठा scatterlist *sg, पूर्णांक nents,
-		पूर्णांक direction);
-व्योम tअगरm_unmap_sg(काष्ठा tअगरm_dev *sock, काष्ठा scatterlist *sg, पूर्णांक nents,
-		   पूर्णांक direction);
-व्योम tअगरm_queue_work(काष्ठा work_काष्ठा *work);
+int tifm_register_driver(struct tifm_driver *drv);
+void tifm_unregister_driver(struct tifm_driver *drv);
+void tifm_eject(struct tifm_dev *sock);
+int tifm_has_ms_pif(struct tifm_dev *sock);
+int tifm_map_sg(struct tifm_dev *sock, struct scatterlist *sg, int nents,
+		int direction);
+void tifm_unmap_sg(struct tifm_dev *sock, struct scatterlist *sg, int nents,
+		   int direction);
+void tifm_queue_work(struct work_struct *work);
 
-अटल अंतरभूत व्योम *tअगरm_get_drvdata(काष्ठा tअगरm_dev *dev)
-अणु
-	वापस dev_get_drvdata(&dev->dev);
-पूर्ण
+static inline void *tifm_get_drvdata(struct tifm_dev *dev)
+{
+	return dev_get_drvdata(&dev->dev);
+}
 
-अटल अंतरभूत व्योम tअगरm_set_drvdata(काष्ठा tअगरm_dev *dev, व्योम *data)
-अणु
+static inline void tifm_set_drvdata(struct tifm_dev *dev, void *data)
+{
 	dev_set_drvdata(&dev->dev, data);
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif

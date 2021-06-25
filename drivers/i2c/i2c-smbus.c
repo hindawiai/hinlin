@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * i2c-smbus.c - SMBus extensions to the I2C protocol
  *
@@ -7,85 +6,85 @@
  * Copyright (C) 2010-2019 Jean Delvare <jdelvare@suse.de>
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/i2c-smbus.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/workqueue.h>
+#include <linux/device.h>
+#include <linux/dmi.h>
+#include <linux/i2c.h>
+#include <linux/i2c-smbus.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of_irq.h>
+#include <linux/slab.h>
+#include <linux/workqueue.h>
 
-काष्ठा i2c_smbus_alert अणु
-	काष्ठा work_काष्ठा	alert;
-	काष्ठा i2c_client	*ara;		/* Alert response address */
-पूर्ण;
+struct i2c_smbus_alert {
+	struct work_struct	alert;
+	struct i2c_client	*ara;		/* Alert response address */
+};
 
-काष्ठा alert_data अणु
-	अचिन्हित लघु		addr;
-	क्रमागत i2c_alert_protocol	type;
-	अचिन्हित पूर्णांक		data;
-पूर्ण;
+struct alert_data {
+	unsigned short		addr;
+	enum i2c_alert_protocol	type;
+	unsigned int		data;
+};
 
-/* If this is the alerting device, notअगरy its driver */
-अटल पूर्णांक smbus_करो_alert(काष्ठा device *dev, व्योम *addrp)
-अणु
-	काष्ठा i2c_client *client = i2c_verअगरy_client(dev);
-	काष्ठा alert_data *data = addrp;
-	काष्ठा i2c_driver *driver;
+/* If this is the alerting device, notify its driver */
+static int smbus_do_alert(struct device *dev, void *addrp)
+{
+	struct i2c_client *client = i2c_verify_client(dev);
+	struct alert_data *data = addrp;
+	struct i2c_driver *driver;
 
-	अगर (!client || client->addr != data->addr)
-		वापस 0;
-	अगर (client->flags & I2C_CLIENT_TEN)
-		वापस 0;
+	if (!client || client->addr != data->addr)
+		return 0;
+	if (client->flags & I2C_CLIENT_TEN)
+		return 0;
 
 	/*
 	 * Drivers should either disable alerts, or provide at least
 	 * a minimal handler.  Lock so the driver won't change.
 	 */
 	device_lock(dev);
-	अगर (client->dev.driver) अणु
+	if (client->dev.driver) {
 		driver = to_i2c_driver(client->dev.driver);
-		अगर (driver->alert)
+		if (driver->alert)
 			driver->alert(client, data->type, data->data);
-		अन्यथा
+		else
 			dev_warn(&client->dev, "no driver alert()!\n");
-	पूर्ण अन्यथा
+	} else
 		dev_dbg(&client->dev, "alert with no driver\n");
 	device_unlock(dev);
 
 	/* Stop iterating after we find the device */
-	वापस -EBUSY;
-पूर्ण
+	return -EBUSY;
+}
 
 /*
  * The alert IRQ handler needs to hand work off to a task which can issue
  * SMBus calls, because those sleeping calls can't be made in IRQ context.
  */
-अटल irqवापस_t smbus_alert(पूर्णांक irq, व्योम *d)
-अणु
-	काष्ठा i2c_smbus_alert *alert = d;
-	काष्ठा i2c_client *ara;
+static irqreturn_t smbus_alert(int irq, void *d)
+{
+	struct i2c_smbus_alert *alert = d;
+	struct i2c_client *ara;
 
 	ara = alert->ara;
 
-	क्रम (;;) अणु
+	for (;;) {
 		s32 status;
-		काष्ठा alert_data data;
+		struct alert_data data;
 
 		/*
 		 * Devices with pending alerts reply in address order, low
 		 * to high, because of slave transmit arbitration.  After
-		 * responding, an SMBus device stops निश्चितing SMBALERT#.
+		 * responding, an SMBus device stops asserting SMBALERT#.
 		 *
-		 * Note that SMBus 2.0 reserves 10-bit addresses क्रम future
+		 * Note that SMBus 2.0 reserves 10-bit addresses for future
 		 * use.  We neither handle them, nor try to use PEC here.
 		 */
-		status = i2c_smbus_पढ़ो_byte(ara);
-		अगर (status < 0)
-			अवरोध;
+		status = i2c_smbus_read_byte(ara);
+		if (status < 0)
+			break;
 
 		data.data = status & 1;
 		data.addr = status >> 1;
@@ -94,317 +93,317 @@
 		dev_dbg(&ara->dev, "SMBALERT# from dev 0x%02x, flag %d\n",
 			data.addr, data.data);
 
-		/* Notअगरy driver क्रम the device which issued the alert */
-		device_क्रम_each_child(&ara->adapter->dev, &data,
-				      smbus_करो_alert);
-	पूर्ण
+		/* Notify driver for the device which issued the alert */
+		device_for_each_child(&ara->adapter->dev, &data,
+				      smbus_do_alert);
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम smbalert_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा i2c_smbus_alert *alert;
+static void smbalert_work(struct work_struct *work)
+{
+	struct i2c_smbus_alert *alert;
 
-	alert = container_of(work, काष्ठा i2c_smbus_alert, alert);
+	alert = container_of(work, struct i2c_smbus_alert, alert);
 
 	smbus_alert(0, alert);
 
-पूर्ण
+}
 
-/* Setup SMBALERT# infraकाष्ठाure */
-अटल पूर्णांक smbalert_probe(काष्ठा i2c_client *ara,
-			  स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा i2c_smbus_alert_setup *setup = dev_get_platdata(&ara->dev);
-	काष्ठा i2c_smbus_alert *alert;
-	काष्ठा i2c_adapter *adapter = ara->adapter;
-	पूर्णांक res, irq;
+/* Setup SMBALERT# infrastructure */
+static int smbalert_probe(struct i2c_client *ara,
+			  const struct i2c_device_id *id)
+{
+	struct i2c_smbus_alert_setup *setup = dev_get_platdata(&ara->dev);
+	struct i2c_smbus_alert *alert;
+	struct i2c_adapter *adapter = ara->adapter;
+	int res, irq;
 
-	alert = devm_kzalloc(&ara->dev, माप(काष्ठा i2c_smbus_alert),
+	alert = devm_kzalloc(&ara->dev, sizeof(struct i2c_smbus_alert),
 			     GFP_KERNEL);
-	अगर (!alert)
-		वापस -ENOMEM;
+	if (!alert)
+		return -ENOMEM;
 
-	अगर (setup) अणु
+	if (setup) {
 		irq = setup->irq;
-	पूर्ण अन्यथा अणु
+	} else {
 		irq = of_irq_get_byname(adapter->dev.of_node, "smbus_alert");
-		अगर (irq <= 0)
-			वापस irq;
-	पूर्ण
+		if (irq <= 0)
+			return irq;
+	}
 
 	INIT_WORK(&alert->alert, smbalert_work);
 	alert->ara = ara;
 
-	अगर (irq > 0) अणु
-		res = devm_request_thपढ़ोed_irq(&ara->dev, irq,
-						शून्य, smbus_alert,
+	if (irq > 0) {
+		res = devm_request_threaded_irq(&ara->dev, irq,
+						NULL, smbus_alert,
 						IRQF_SHARED | IRQF_ONESHOT,
 						"smbus_alert", alert);
-		अगर (res)
-			वापस res;
-	पूर्ण
+		if (res)
+			return res;
+	}
 
 	i2c_set_clientdata(ara, alert);
 	dev_info(&adapter->dev, "supports SMBALERT#\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* IRQ and memory resources are managed so they are मुक्तd स्वतःmatically */
-अटल पूर्णांक smbalert_हटाओ(काष्ठा i2c_client *ara)
-अणु
-	काष्ठा i2c_smbus_alert *alert = i2c_get_clientdata(ara);
+/* IRQ and memory resources are managed so they are freed automatically */
+static int smbalert_remove(struct i2c_client *ara)
+{
+	struct i2c_smbus_alert *alert = i2c_get_clientdata(ara);
 
 	cancel_work_sync(&alert->alert);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id smbalert_ids[] = अणु
-	अणु "smbus_alert", 0 पूर्ण,
-	अणु /* LIST END */ पूर्ण
-पूर्ण;
+static const struct i2c_device_id smbalert_ids[] = {
+	{ "smbus_alert", 0 },
+	{ /* LIST END */ }
+};
 MODULE_DEVICE_TABLE(i2c, smbalert_ids);
 
-अटल काष्ठा i2c_driver smbalert_driver = अणु
-	.driver = अणु
+static struct i2c_driver smbalert_driver = {
+	.driver = {
 		.name	= "smbus_alert",
-	पूर्ण,
+	},
 	.probe		= smbalert_probe,
-	.हटाओ		= smbalert_हटाओ,
+	.remove		= smbalert_remove,
 	.id_table	= smbalert_ids,
-पूर्ण;
+};
 
 /**
  * i2c_handle_smbus_alert - Handle an SMBus alert
  * @ara: the ARA client on the relevant adapter
  * Context: can't sleep
  *
- * Helper function to be called from an I2C bus driver's पूर्णांकerrupt
+ * Helper function to be called from an I2C bus driver's interrupt
  * handler. It will schedule the alert work, in turn calling the
  * corresponding I2C device driver's alert function.
  *
- * It is assumed that ara is a valid i2c client previously वापसed by
+ * It is assumed that ara is a valid i2c client previously returned by
  * i2c_new_smbus_alert_device().
  */
-पूर्णांक i2c_handle_smbus_alert(काष्ठा i2c_client *ara)
-अणु
-	काष्ठा i2c_smbus_alert *alert = i2c_get_clientdata(ara);
+int i2c_handle_smbus_alert(struct i2c_client *ara)
+{
+	struct i2c_smbus_alert *alert = i2c_get_clientdata(ara);
 
-	वापस schedule_work(&alert->alert);
-पूर्ण
+	return schedule_work(&alert->alert);
+}
 EXPORT_SYMBOL_GPL(i2c_handle_smbus_alert);
 
 module_i2c_driver(smbalert_driver);
 
-#अगर IS_ENABLED(CONFIG_I2C_SLAVE)
-#घोषणा SMBUS_HOST_NOTIFY_LEN	3
-काष्ठा i2c_slave_host_notअगरy_status अणु
+#if IS_ENABLED(CONFIG_I2C_SLAVE)
+#define SMBUS_HOST_NOTIFY_LEN	3
+struct i2c_slave_host_notify_status {
 	u8 index;
 	u8 addr;
-पूर्ण;
+};
 
-अटल पूर्णांक i2c_slave_host_notअगरy_cb(काष्ठा i2c_client *client,
-				    क्रमागत i2c_slave_event event, u8 *val)
-अणु
-	काष्ठा i2c_slave_host_notअगरy_status *status = client->dev.platक्रमm_data;
+static int i2c_slave_host_notify_cb(struct i2c_client *client,
+				    enum i2c_slave_event event, u8 *val)
+{
+	struct i2c_slave_host_notify_status *status = client->dev.platform_data;
 
-	चयन (event) अणु
-	हाल I2C_SLAVE_WRITE_RECEIVED:
+	switch (event) {
+	case I2C_SLAVE_WRITE_RECEIVED:
 		/* We only retrieve the first byte received (addr)
 		 * since there is currently no support to retrieve the data
 		 * parameter from the client.
 		 */
-		अगर (status->index == 0)
+		if (status->index == 0)
 			status->addr = *val;
-		अगर (status->index < U8_MAX)
+		if (status->index < U8_MAX)
 			status->index++;
-		अवरोध;
-	हाल I2C_SLAVE_STOP:
-		अगर (status->index == SMBUS_HOST_NOTIFY_LEN)
-			i2c_handle_smbus_host_notअगरy(client->adapter,
+		break;
+	case I2C_SLAVE_STOP:
+		if (status->index == SMBUS_HOST_NOTIFY_LEN)
+			i2c_handle_smbus_host_notify(client->adapter,
 						     status->addr);
 		fallthrough;
-	हाल I2C_SLAVE_WRITE_REQUESTED:
+	case I2C_SLAVE_WRITE_REQUESTED:
 		status->index = 0;
-		अवरोध;
-	हाल I2C_SLAVE_READ_REQUESTED:
-	हाल I2C_SLAVE_READ_PROCESSED:
+		break;
+	case I2C_SLAVE_READ_REQUESTED:
+	case I2C_SLAVE_READ_PROCESSED:
 		*val = 0xff;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * i2c_new_slave_host_notअगरy_device - get a client क्रम SMBus host-notअगरy support
+ * i2c_new_slave_host_notify_device - get a client for SMBus host-notify support
  * @adapter: the target adapter
  * Context: can sleep
  *
- * Setup handling of the SMBus host-notअगरy protocol on a given I2C bus segment.
+ * Setup handling of the SMBus host-notify protocol on a given I2C bus segment.
  *
- * Handling is करोne by creating a device and its callback and handling data
- * received via the SMBus host-notअगरy address (0x8)
+ * Handling is done by creating a device and its callback and handling data
+ * received via the SMBus host-notify address (0x8)
  *
- * This वापसs the client, which should be ultimately मुक्तd using
- * i2c_मुक्त_slave_host_notअगरy_device(); or an ERRPTR to indicate an error.
+ * This returns the client, which should be ultimately freed using
+ * i2c_free_slave_host_notify_device(); or an ERRPTR to indicate an error.
  */
-काष्ठा i2c_client *i2c_new_slave_host_notअगरy_device(काष्ठा i2c_adapter *adapter)
-अणु
-	काष्ठा i2c_board_info host_notअगरy_board_info = अणु
+struct i2c_client *i2c_new_slave_host_notify_device(struct i2c_adapter *adapter)
+{
+	struct i2c_board_info host_notify_board_info = {
 		I2C_BOARD_INFO("smbus_host_notify", 0x08),
 		.flags  = I2C_CLIENT_SLAVE,
-	पूर्ण;
-	काष्ठा i2c_slave_host_notअगरy_status *status;
-	काष्ठा i2c_client *client;
-	पूर्णांक ret;
+	};
+	struct i2c_slave_host_notify_status *status;
+	struct i2c_client *client;
+	int ret;
 
-	status = kzalloc(माप(काष्ठा i2c_slave_host_notअगरy_status),
+	status = kzalloc(sizeof(struct i2c_slave_host_notify_status),
 			 GFP_KERNEL);
-	अगर (!status)
-		वापस ERR_PTR(-ENOMEM);
+	if (!status)
+		return ERR_PTR(-ENOMEM);
 
-	host_notअगरy_board_info.platक्रमm_data = status;
+	host_notify_board_info.platform_data = status;
 
-	client = i2c_new_client_device(adapter, &host_notअगरy_board_info);
-	अगर (IS_ERR(client)) अणु
-		kमुक्त(status);
-		वापस client;
-	पूर्ण
+	client = i2c_new_client_device(adapter, &host_notify_board_info);
+	if (IS_ERR(client)) {
+		kfree(status);
+		return client;
+	}
 
-	ret = i2c_slave_रेजिस्टर(client, i2c_slave_host_notअगरy_cb);
-	अगर (ret) अणु
-		i2c_unरेजिस्टर_device(client);
-		kमुक्त(status);
-		वापस ERR_PTR(ret);
-	पूर्ण
+	ret = i2c_slave_register(client, i2c_slave_host_notify_cb);
+	if (ret) {
+		i2c_unregister_device(client);
+		kfree(status);
+		return ERR_PTR(ret);
+	}
 
-	वापस client;
-पूर्ण
-EXPORT_SYMBOL_GPL(i2c_new_slave_host_notअगरy_device);
+	return client;
+}
+EXPORT_SYMBOL_GPL(i2c_new_slave_host_notify_device);
 
 /**
- * i2c_मुक्त_slave_host_notअगरy_device - मुक्त the client क्रम SMBus host-notअगरy
+ * i2c_free_slave_host_notify_device - free the client for SMBus host-notify
  * support
- * @client: the client to मुक्त
+ * @client: the client to free
  * Context: can sleep
  *
- * Free the i2c_client allocated via i2c_new_slave_host_notअगरy_device
+ * Free the i2c_client allocated via i2c_new_slave_host_notify_device
  */
-व्योम i2c_मुक्त_slave_host_notअगरy_device(काष्ठा i2c_client *client)
-अणु
-	अगर (IS_ERR_OR_शून्य(client))
-		वापस;
+void i2c_free_slave_host_notify_device(struct i2c_client *client)
+{
+	if (IS_ERR_OR_NULL(client))
+		return;
 
-	i2c_slave_unरेजिस्टर(client);
-	kमुक्त(client->dev.platक्रमm_data);
-	i2c_unरेजिस्टर_device(client);
-पूर्ण
-EXPORT_SYMBOL_GPL(i2c_मुक्त_slave_host_notअगरy_device);
-#पूर्ण_अगर
+	i2c_slave_unregister(client);
+	kfree(client->dev.platform_data);
+	i2c_unregister_device(client);
+}
+EXPORT_SYMBOL_GPL(i2c_free_slave_host_notify_device);
+#endif
 
 /*
- * SPD is not part of SMBus but we include it here क्रम convenience as the
- * target प्रणालीs are the same.
- * Restrictions to स्वतःmatic SPD instantiation:
- *  - Only works अगर all filled slots have the same memory type
- *  - Only works क्रम DDR2, DDR3 and DDR4 क्रम now
- *  - Only works on प्रणालीs with 1 to 4 memory slots
+ * SPD is not part of SMBus but we include it here for convenience as the
+ * target systems are the same.
+ * Restrictions to automatic SPD instantiation:
+ *  - Only works if all filled slots have the same memory type
+ *  - Only works for DDR2, DDR3 and DDR4 for now
+ *  - Only works on systems with 1 to 4 memory slots
  */
-#अगर IS_ENABLED(CONFIG_DMI)
-व्योम i2c_रेजिस्टर_spd(काष्ठा i2c_adapter *adap)
-अणु
-	पूर्णांक n, slot_count = 0, dimm_count = 0;
+#if IS_ENABLED(CONFIG_DMI)
+void i2c_register_spd(struct i2c_adapter *adap)
+{
+	int n, slot_count = 0, dimm_count = 0;
 	u16 handle;
 	u8 common_mem_type = 0x0, mem_type;
 	u64 mem_size;
-	स्थिर अक्षर *name;
+	const char *name;
 
-	जबतक ((handle = dmi_memdev_handle(slot_count)) != 0xffff) अणु
+	while ((handle = dmi_memdev_handle(slot_count)) != 0xffff) {
 		slot_count++;
 
 		/* Skip empty slots */
 		mem_size = dmi_memdev_size(handle);
-		अगर (!mem_size)
-			जारी;
+		if (!mem_size)
+			continue;
 
 		/* Skip undefined memory type */
 		mem_type = dmi_memdev_type(handle);
-		अगर (mem_type <= 0x02)		/* Invalid, Other, Unknown */
-			जारी;
+		if (mem_type <= 0x02)		/* Invalid, Other, Unknown */
+			continue;
 
-		अगर (!common_mem_type) अणु
+		if (!common_mem_type) {
 			/* First filled slot */
 			common_mem_type = mem_type;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Check that all filled slots have the same type */
-			अगर (mem_type != common_mem_type) अणु
+			if (mem_type != common_mem_type) {
 				dev_warn(&adap->dev,
 					 "Different memory types mixed, not instantiating SPD\n");
-				वापस;
-			पूर्ण
-		पूर्ण
+				return;
+			}
+		}
 		dimm_count++;
-	पूर्ण
+	}
 
 	/* No useful DMI data, bail out */
-	अगर (!dimm_count)
-		वापस;
+	if (!dimm_count)
+		return;
 
 	dev_info(&adap->dev, "%d/%d memory slots populated (from DMI)\n",
 		 dimm_count, slot_count);
 
-	अगर (slot_count > 4) अणु
+	if (slot_count > 4) {
 		dev_warn(&adap->dev,
 			 "Systems with more than 4 memory slots not supported yet, not instantiating SPD\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	चयन (common_mem_type) अणु
-	हाल 0x13:	/* DDR2 */
-	हाल 0x18:	/* DDR3 */
-	हाल 0x1C:	/* LPDDR2 */
-	हाल 0x1D:	/* LPDDR3 */
+	switch (common_mem_type) {
+	case 0x13:	/* DDR2 */
+	case 0x18:	/* DDR3 */
+	case 0x1C:	/* LPDDR2 */
+	case 0x1D:	/* LPDDR3 */
 		name = "spd";
-		अवरोध;
-	हाल 0x1A:	/* DDR4 */
-	हाल 0x1E:	/* LPDDR4 */
+		break;
+	case 0x1A:	/* DDR4 */
+	case 0x1E:	/* LPDDR4 */
 		name = "ee1004";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_info(&adap->dev,
 			 "Memory type 0x%02x not supported yet, not instantiating SPD\n",
 			 common_mem_type);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * We करोn't know in which slots the memory modules are. We could
+	 * We don't know in which slots the memory modules are. We could
 	 * try to guess from the slot names, but that would be rather complex
 	 * and unreliable, so better probe all possible addresses until we
 	 * have found all memory modules.
 	 */
-	क्रम (n = 0; n < slot_count && dimm_count; n++) अणु
-		काष्ठा i2c_board_info info;
-		अचिन्हित लघु addr_list[2];
+	for (n = 0; n < slot_count && dimm_count; n++) {
+		struct i2c_board_info info;
+		unsigned short addr_list[2];
 
-		स_रखो(&info, 0, माप(काष्ठा i2c_board_info));
+		memset(&info, 0, sizeof(struct i2c_board_info));
 		strlcpy(info.type, name, I2C_NAME_SIZE);
 		addr_list[0] = 0x50 + n;
 		addr_list[1] = I2C_CLIENT_END;
 
-		अगर (!IS_ERR(i2c_new_scanned_device(adap, &info, addr_list, शून्य))) अणु
+		if (!IS_ERR(i2c_new_scanned_device(adap, &info, addr_list, NULL))) {
 			dev_info(&adap->dev,
 				 "Successfully instantiated SPD at 0x%hx\n",
 				 addr_list[0]);
 			dimm_count--;
-		पूर्ण
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(i2c_रेजिस्टर_spd);
-#पूर्ण_अगर
+		}
+	}
+}
+EXPORT_SYMBOL_GPL(i2c_register_spd);
+#endif
 
 MODULE_AUTHOR("Jean Delvare <jdelvare@suse.de>");
 MODULE_DESCRIPTION("SMBus protocol extensions support");

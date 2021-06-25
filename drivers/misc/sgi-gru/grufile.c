@@ -1,236 +1,235 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * SN Platक्रमm GRU Driver
+ * SN Platform GRU Driver
  *
- *              खाता OPERATIONS & DRIVER INITIALIZATION
+ *              FILE OPERATIONS & DRIVER INITIALIZATION
  *
- * This file supports the user प्रणाली call क्रम file खोलो, बंद, mmap, etc.
+ * This file supports the user system call for file open, close, mmap, etc.
  * This also incudes the driver initialization code.
  *
  *  (C) Copyright 2020 Hewlett Packard Enterprise Development LP
  *  Copyright (c) 2008-2014 Silicon Graphics, Inc.  All Rights Reserved.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/device.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/uaccess.h>
-#अगर_घोषित CONFIG_X86_64
-#समावेश <यंत्र/uv/uv_irq.h>
-#पूर्ण_अगर
-#समावेश <यंत्र/uv/uv.h>
-#समावेश "gru.h"
-#समावेश "grulib.h"
-#समावेश "grutables.h"
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/slab.h>
+#include <linux/mm.h>
+#include <linux/io.h>
+#include <linux/spinlock.h>
+#include <linux/device.h>
+#include <linux/miscdevice.h>
+#include <linux/interrupt.h>
+#include <linux/proc_fs.h>
+#include <linux/uaccess.h>
+#ifdef CONFIG_X86_64
+#include <asm/uv/uv_irq.h>
+#endif
+#include <asm/uv/uv.h>
+#include "gru.h"
+#include "grulib.h"
+#include "grutables.h"
 
-#समावेश <यंत्र/uv/uv_hub.h>
-#समावेश <यंत्र/uv/uv_mmrs.h>
+#include <asm/uv/uv_hub.h>
+#include <asm/uv/uv_mmrs.h>
 
-काष्ठा gru_blade_state *gru_base[GRU_MAX_BLADES] __पढ़ो_mostly;
-अचिन्हित दीर्घ gru_start_paddr __पढ़ो_mostly;
-व्योम *gru_start_vaddr __पढ़ो_mostly;
-अचिन्हित दीर्घ gru_end_paddr __पढ़ो_mostly;
-अचिन्हित पूर्णांक gru_max_gids __पढ़ो_mostly;
-काष्ठा gru_stats_s gru_stats;
+struct gru_blade_state *gru_base[GRU_MAX_BLADES] __read_mostly;
+unsigned long gru_start_paddr __read_mostly;
+void *gru_start_vaddr __read_mostly;
+unsigned long gru_end_paddr __read_mostly;
+unsigned int gru_max_gids __read_mostly;
+struct gru_stats_s gru_stats;
 
 /* Guaranteed user available resources on each node */
-अटल पूर्णांक max_user_cbrs, max_user_dsr_bytes;
+static int max_user_cbrs, max_user_dsr_bytes;
 
-अटल काष्ठा miscdevice gru_miscdev;
+static struct miscdevice gru_miscdev;
 
-अटल पूर्णांक gru_supported(व्योम)
-अणु
-	वापस is_uv_प्रणाली() &&
+static int gru_supported(void)
+{
+	return is_uv_system() &&
 		(uv_hub_info->hub_revision < UV3_HUB_REVISION_BASE);
-पूर्ण
+}
 
 /*
- * gru_vma_बंद
+ * gru_vma_close
  *
  * Called when unmapping a device mapping. Frees all gru resources
- * and tables beदीर्घing to the vma.
+ * and tables belonging to the vma.
  */
-अटल व्योम gru_vma_बंद(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा gru_vma_data *vdata;
-	काष्ठा gru_thपढ़ो_state *gts;
-	काष्ठा list_head *entry, *next;
+static void gru_vma_close(struct vm_area_struct *vma)
+{
+	struct gru_vma_data *vdata;
+	struct gru_thread_state *gts;
+	struct list_head *entry, *next;
 
-	अगर (!vma->vm_निजी_data)
-		वापस;
+	if (!vma->vm_private_data)
+		return;
 
-	vdata = vma->vm_निजी_data;
-	vma->vm_निजी_data = शून्य;
+	vdata = vma->vm_private_data;
+	vma->vm_private_data = NULL;
 	gru_dbg(grudev, "vma %p, file %p, vdata %p\n", vma, vma->vm_file,
 				vdata);
-	list_क्रम_each_safe(entry, next, &vdata->vd_head) अणु
+	list_for_each_safe(entry, next, &vdata->vd_head) {
 		gts =
-		    list_entry(entry, काष्ठा gru_thपढ़ो_state, ts_next);
+		    list_entry(entry, struct gru_thread_state, ts_next);
 		list_del(&gts->ts_next);
 		mutex_lock(&gts->ts_ctxlock);
-		अगर (gts->ts_gru)
+		if (gts->ts_gru)
 			gru_unload_context(gts, 0);
 		mutex_unlock(&gts->ts_ctxlock);
 		gts_drop(gts);
-	पूर्ण
-	kमुक्त(vdata);
-	STAT(vdata_मुक्त);
-पूर्ण
+	}
+	kfree(vdata);
+	STAT(vdata_free);
+}
 
 /*
  * gru_file_mmap
  *
  * Called when mmapping the device.  Initializes the vma with a fault handler
- * and निजी data काष्ठाure necessary to allocate, track, and मुक्त the
+ * and private data structure necessary to allocate, track, and free the
  * underlying pages.
  */
-अटल पूर्णांक gru_file_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	अगर ((vma->vm_flags & (VM_SHARED | VM_WRITE)) != (VM_SHARED | VM_WRITE))
-		वापस -EPERM;
+static int gru_file_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	if ((vma->vm_flags & (VM_SHARED | VM_WRITE)) != (VM_SHARED | VM_WRITE))
+		return -EPERM;
 
-	अगर (vma->vm_start & (GRU_GSEG_PAGESIZE - 1) ||
+	if (vma->vm_start & (GRU_GSEG_PAGESIZE - 1) ||
 				vma->vm_end & (GRU_GSEG_PAGESIZE - 1))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	vma->vm_flags |= VM_IO | VM_PFNMAP | VM_LOCKED |
 			 VM_DONTCOPY | VM_DONTEXPAND | VM_DONTDUMP;
 	vma->vm_page_prot = PAGE_SHARED;
 	vma->vm_ops = &gru_vm_ops;
 
-	vma->vm_निजी_data = gru_alloc_vma_data(vma, 0);
-	अगर (!vma->vm_निजी_data)
-		वापस -ENOMEM;
+	vma->vm_private_data = gru_alloc_vma_data(vma, 0);
+	if (!vma->vm_private_data)
+		return -ENOMEM;
 
 	gru_dbg(grudev, "file %p, vaddr 0x%lx, vma %p, vdata %p\n",
-		file, vma->vm_start, vma, vma->vm_निजी_data);
-	वापस 0;
-पूर्ण
+		file, vma->vm_start, vma, vma->vm_private_data);
+	return 0;
+}
 
 /*
  * Create a new GRU context
  */
-अटल पूर्णांक gru_create_new_context(अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा gru_create_context_req req;
-	काष्ठा vm_area_काष्ठा *vma;
-	काष्ठा gru_vma_data *vdata;
-	पूर्णांक ret = -EINVAL;
+static int gru_create_new_context(unsigned long arg)
+{
+	struct gru_create_context_req req;
+	struct vm_area_struct *vma;
+	struct gru_vma_data *vdata;
+	int ret = -EINVAL;
 
-	अगर (copy_from_user(&req, (व्योम __user *)arg, माप(req)))
-		वापस -EFAULT;
+	if (copy_from_user(&req, (void __user *)arg, sizeof(req)))
+		return -EFAULT;
 
-	अगर (req.data_segment_bytes > max_user_dsr_bytes)
-		वापस -EINVAL;
-	अगर (req.control_blocks > max_user_cbrs || !req.maximum_thपढ़ो_count)
-		वापस -EINVAL;
+	if (req.data_segment_bytes > max_user_dsr_bytes)
+		return -EINVAL;
+	if (req.control_blocks > max_user_cbrs || !req.maximum_thread_count)
+		return -EINVAL;
 
-	अगर (!(req.options & GRU_OPT_MISS_MASK))
+	if (!(req.options & GRU_OPT_MISS_MASK))
 		req.options |= GRU_OPT_MISS_FMM_INTR;
 
-	mmap_ग_लिखो_lock(current->mm);
+	mmap_write_lock(current->mm);
 	vma = gru_find_vma(req.gseg);
-	अगर (vma) अणु
-		vdata = vma->vm_निजी_data;
+	if (vma) {
+		vdata = vma->vm_private_data;
 		vdata->vd_user_options = req.options;
 		vdata->vd_dsr_au_count =
 		    GRU_DS_BYTES_TO_AU(req.data_segment_bytes);
 		vdata->vd_cbr_au_count = GRU_CB_COUNT_TO_AU(req.control_blocks);
 		vdata->vd_tlb_preload_count = req.tlb_preload_count;
 		ret = 0;
-	पूर्ण
-	mmap_ग_लिखो_unlock(current->mm);
+	}
+	mmap_write_unlock(current->mm);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Get GRU configuration info (temp - क्रम emulator testing)
+ * Get GRU configuration info (temp - for emulator testing)
  */
-अटल दीर्घ gru_get_config_info(अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा gru_config_info info;
-	पूर्णांक nodesperblade;
+static long gru_get_config_info(unsigned long arg)
+{
+	struct gru_config_info info;
+	int nodesperblade;
 
-	अगर (num_online_nodes() > 1 &&
+	if (num_online_nodes() > 1 &&
 			(uv_node_to_blade_id(1) == uv_node_to_blade_id(0)))
 		nodesperblade = 2;
-	अन्यथा
+	else
 		nodesperblade = 1;
-	स_रखो(&info, 0, माप(info));
+	memset(&info, 0, sizeof(info));
 	info.cpus = num_online_cpus();
 	info.nodes = num_online_nodes();
 	info.blades = info.nodes / nodesperblade;
 	info.chiplets = GRU_CHIPLETS_PER_BLADE * info.blades;
 
-	अगर (copy_to_user((व्योम __user *)arg, &info, माप(info)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user((void __user *)arg, &info, sizeof(info)))
+		return -EFAULT;
+	return 0;
+}
 
 /*
  * gru_file_unlocked_ioctl
  *
  * Called to update file attributes via IOCTL calls.
  */
-अटल दीर्घ gru_file_unlocked_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक req,
-				    अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक err = -EBADRQC;
+static long gru_file_unlocked_ioctl(struct file *file, unsigned int req,
+				    unsigned long arg)
+{
+	int err = -EBADRQC;
 
 	gru_dbg(grudev, "file %p, req 0x%x, 0x%lx\n", file, req, arg);
 
-	चयन (req) अणु
-	हाल GRU_CREATE_CONTEXT:
+	switch (req) {
+	case GRU_CREATE_CONTEXT:
 		err = gru_create_new_context(arg);
-		अवरोध;
-	हाल GRU_SET_CONTEXT_OPTION:
+		break;
+	case GRU_SET_CONTEXT_OPTION:
 		err = gru_set_context_option(arg);
-		अवरोध;
-	हाल GRU_USER_GET_EXCEPTION_DETAIL:
+		break;
+	case GRU_USER_GET_EXCEPTION_DETAIL:
 		err = gru_get_exception_detail(arg);
-		अवरोध;
-	हाल GRU_USER_UNLOAD_CONTEXT:
+		break;
+	case GRU_USER_UNLOAD_CONTEXT:
 		err = gru_user_unload_context(arg);
-		अवरोध;
-	हाल GRU_USER_FLUSH_TLB:
+		break;
+	case GRU_USER_FLUSH_TLB:
 		err = gru_user_flush_tlb(arg);
-		अवरोध;
-	हाल GRU_USER_CALL_OS:
+		break;
+	case GRU_USER_CALL_OS:
 		err = gru_handle_user_call_os(arg);
-		अवरोध;
-	हाल GRU_GET_GSEG_STATISTICS:
+		break;
+	case GRU_GET_GSEG_STATISTICS:
 		err = gru_get_gseg_statistics(arg);
-		अवरोध;
-	हाल GRU_KTEST:
+		break;
+	case GRU_KTEST:
 		err = gru_ktest(arg);
-		अवरोध;
-	हाल GRU_GET_CONFIG_INFO:
+		break;
+	case GRU_GET_CONFIG_INFO:
 		err = gru_get_config_info(arg);
-		अवरोध;
-	हाल GRU_DUMP_CHIPLET_STATE:
+		break;
+	case GRU_DUMP_CHIPLET_STATE:
 		err = gru_dump_chiplet_request(arg);
-		अवरोध;
-	पूर्ण
-	वापस err;
-पूर्ण
+		break;
+	}
+	return err;
+}
 
 /*
- * Called at init समय to build tables क्रम all GRUs that are present in the
- * प्रणाली.
+ * Called at init time to build tables for all GRUs that are present in the
+ * system.
  */
-अटल व्योम gru_init_chiplet(काष्ठा gru_state *gru, अचिन्हित दीर्घ paddr,
-			     व्योम *vaddr, पूर्णांक blade_id, पूर्णांक chiplet_id)
-अणु
+static void gru_init_chiplet(struct gru_state *gru, unsigned long paddr,
+			     void *vaddr, int blade_id, int chiplet_id)
+{
 	spin_lock_init(&gru->gs_lock);
 	spin_lock_init(&gru->gs_asid_lock);
 	gru->gs_gru_base_paddr = paddr;
@@ -243,42 +242,42 @@
 	gru->gs_dsr_map = (1UL << GRU_DSR_AU) - 1;
 	gru->gs_asid_limit = MAX_ASID;
 	gru_tgh_flush_init(gru);
-	अगर (gru->gs_gid >= gru_max_gids)
+	if (gru->gs_gid >= gru_max_gids)
 		gru_max_gids = gru->gs_gid + 1;
 	gru_dbg(grudev, "bid %d, gid %d, vaddr %p (0x%lx)\n",
 		blade_id, gru->gs_gid, gru->gs_gru_base_vaddr,
 		gru->gs_gru_base_paddr);
-पूर्ण
+}
 
-अटल पूर्णांक gru_init_tables(अचिन्हित दीर्घ gru_base_paddr, व्योम *gru_base_vaddr)
-अणु
-	पूर्णांक pnode, nid, bid, chip;
-	पूर्णांक cbrs, dsrbytes, n;
-	पूर्णांक order = get_order(माप(काष्ठा gru_blade_state));
-	काष्ठा page *page;
-	काष्ठा gru_state *gru;
-	अचिन्हित दीर्घ paddr;
-	व्योम *vaddr;
+static int gru_init_tables(unsigned long gru_base_paddr, void *gru_base_vaddr)
+{
+	int pnode, nid, bid, chip;
+	int cbrs, dsrbytes, n;
+	int order = get_order(sizeof(struct gru_blade_state));
+	struct page *page;
+	struct gru_state *gru;
+	unsigned long paddr;
+	void *vaddr;
 
 	max_user_cbrs = GRU_NUM_CB;
 	max_user_dsr_bytes = GRU_NUM_DSR_BYTES;
-	क्रम_each_possible_blade(bid) अणु
+	for_each_possible_blade(bid) {
 		pnode = uv_blade_to_pnode(bid);
-		nid = uv_blade_to_memory_nid(bid);/* -1 अगर no memory on blade */
+		nid = uv_blade_to_memory_nid(bid);/* -1 if no memory on blade */
 		page = alloc_pages_node(nid, GFP_KERNEL, order);
-		अगर (!page)
-			जाओ fail;
+		if (!page)
+			goto fail;
 		gru_base[bid] = page_address(page);
-		स_रखो(gru_base[bid], 0, माप(काष्ठा gru_blade_state));
+		memset(gru_base[bid], 0, sizeof(struct gru_blade_state));
 		gru_base[bid]->bs_lru_gru = &gru_base[bid]->bs_grus[0];
 		spin_lock_init(&gru_base[bid]->bs_lock);
 		init_rwsem(&gru_base[bid]->bs_kgts_sema);
 
 		dsrbytes = 0;
 		cbrs = 0;
-		क्रम (gru = gru_base[bid]->bs_grus, chip = 0;
+		for (gru = gru_base[bid]->bs_grus, chip = 0;
 				chip < GRU_CHIPLETS_PER_BLADE;
-				chip++, gru++) अणु
+				chip++, gru++) {
 			paddr = gru_chiplet_paddr(gru_base_paddr, pnode, chip);
 			vaddr = gru_chiplet_vaddr(gru_base_vaddr, pnode, chip);
 			gru_init_chiplet(gru, paddr, vaddr, bid, chip);
@@ -286,324 +285,324 @@
 			cbrs = max(cbrs, n);
 			n = hweight64(gru->gs_dsr_map) * GRU_DSR_AU_BYTES;
 			dsrbytes = max(dsrbytes, n);
-		पूर्ण
+		}
 		max_user_cbrs = min(max_user_cbrs, cbrs);
 		max_user_dsr_bytes = min(max_user_dsr_bytes, dsrbytes);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 fail:
-	क्रम (bid--; bid >= 0; bid--)
-		मुक्त_pages((अचिन्हित दीर्घ)gru_base[bid], order);
-	वापस -ENOMEM;
-पूर्ण
+	for (bid--; bid >= 0; bid--)
+		free_pages((unsigned long)gru_base[bid], order);
+	return -ENOMEM;
+}
 
-अटल व्योम gru_मुक्त_tables(व्योम)
-अणु
-	पूर्णांक bid;
-	पूर्णांक order = get_order(माप(काष्ठा gru_state) *
+static void gru_free_tables(void)
+{
+	int bid;
+	int order = get_order(sizeof(struct gru_state) *
 			      GRU_CHIPLETS_PER_BLADE);
 
-	क्रम (bid = 0; bid < GRU_MAX_BLADES; bid++)
-		मुक्त_pages((अचिन्हित दीर्घ)gru_base[bid], order);
-पूर्ण
+	for (bid = 0; bid < GRU_MAX_BLADES; bid++)
+		free_pages((unsigned long)gru_base[bid], order);
+}
 
-अटल अचिन्हित दीर्घ gru_chiplet_cpu_to_mmr(पूर्णांक chiplet, पूर्णांक cpu, पूर्णांक *corep)
-अणु
-	अचिन्हित दीर्घ mmr = 0;
-	पूर्णांक core;
+static unsigned long gru_chiplet_cpu_to_mmr(int chiplet, int cpu, int *corep)
+{
+	unsigned long mmr = 0;
+	int core;
 
 	/*
-	 * We target the cores of a blade and not the hyperthपढ़ोs themselves.
+	 * We target the cores of a blade and not the hyperthreads themselves.
 	 * There is a max of 8 cores per socket and 2 sockets per blade,
-	 * making क्रम a max total of 16 cores (i.e., 16 CPUs without
-	 * hyperthपढ़ोing and 32 CPUs with hyperthपढ़ोing).
+	 * making for a max total of 16 cores (i.e., 16 CPUs without
+	 * hyperthreading and 32 CPUs with hyperthreading).
 	 */
 	core = uv_cpu_core_number(cpu) + UV_MAX_INT_CORES * uv_cpu_socket_number(cpu);
-	अगर (core >= GRU_NUM_TFM || uv_cpu_ht_number(cpu))
-		वापस 0;
+	if (core >= GRU_NUM_TFM || uv_cpu_ht_number(cpu))
+		return 0;
 
-	अगर (chiplet == 0) अणु
+	if (chiplet == 0) {
 		mmr = UVH_GR0_TLB_INT0_CONFIG +
 		    core * (UVH_GR0_TLB_INT1_CONFIG - UVH_GR0_TLB_INT0_CONFIG);
-	पूर्ण अन्यथा अगर (chiplet == 1) अणु
+	} else if (chiplet == 1) {
 		mmr = UVH_GR1_TLB_INT0_CONFIG +
 		    core * (UVH_GR1_TLB_INT1_CONFIG - UVH_GR1_TLB_INT0_CONFIG);
-	पूर्ण अन्यथा अणु
+	} else {
 		BUG();
-	पूर्ण
+	}
 
 	*corep = core;
-	वापस mmr;
-पूर्ण
+	return mmr;
+}
 
-#अगर_घोषित CONFIG_IA64
+#ifdef CONFIG_IA64
 
-अटल पूर्णांक gru_irq_count[GRU_CHIPLETS_PER_BLADE];
+static int gru_irq_count[GRU_CHIPLETS_PER_BLADE];
 
-अटल व्योम gru_noop(काष्ठा irq_data *d)
-अणु
-पूर्ण
+static void gru_noop(struct irq_data *d)
+{
+}
 
-अटल काष्ठा irq_chip gru_chip[GRU_CHIPLETS_PER_BLADE] = अणु
-	[0 ... GRU_CHIPLETS_PER_BLADE - 1] अणु
+static struct irq_chip gru_chip[GRU_CHIPLETS_PER_BLADE] = {
+	[0 ... GRU_CHIPLETS_PER_BLADE - 1] {
 		.irq_mask	= gru_noop,
 		.irq_unmask	= gru_noop,
 		.irq_ack	= gru_noop
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल पूर्णांक gru_chiplet_setup_tlb_irq(पूर्णांक chiplet, अक्षर *irq_name,
-			irq_handler_t irq_handler, पूर्णांक cpu, पूर्णांक blade)
-अणु
-	अचिन्हित दीर्घ mmr;
-	पूर्णांक irq = IRQ_GRU + chiplet;
-	पूर्णांक ret, core;
+static int gru_chiplet_setup_tlb_irq(int chiplet, char *irq_name,
+			irq_handler_t irq_handler, int cpu, int blade)
+{
+	unsigned long mmr;
+	int irq = IRQ_GRU + chiplet;
+	int ret, core;
 
 	mmr = gru_chiplet_cpu_to_mmr(chiplet, cpu, &core);
-	अगर (mmr == 0)
-		वापस 0;
+	if (mmr == 0)
+		return 0;
 
-	अगर (gru_irq_count[chiplet] == 0) अणु
+	if (gru_irq_count[chiplet] == 0) {
 		gru_chip[chiplet].name = irq_name;
 		ret = irq_set_chip(irq, &gru_chip[chiplet]);
-		अगर (ret) अणु
-			prपूर्णांकk(KERN_ERR "%s: set_irq_chip failed, errno=%d\n",
+		if (ret) {
+			printk(KERN_ERR "%s: set_irq_chip failed, errno=%d\n",
 			       GRU_DRIVER_ID_STR, -ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		ret = request_irq(irq, irq_handler, 0, irq_name, शून्य);
-		अगर (ret) अणु
-			prपूर्णांकk(KERN_ERR "%s: request_irq failed, errno=%d\n",
+		ret = request_irq(irq, irq_handler, 0, irq_name, NULL);
+		if (ret) {
+			printk(KERN_ERR "%s: request_irq failed, errno=%d\n",
 			       GRU_DRIVER_ID_STR, -ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 	gru_irq_count[chiplet]++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम gru_chiplet_tearकरोwn_tlb_irq(पूर्णांक chiplet, पूर्णांक cpu, पूर्णांक blade)
-अणु
-	अचिन्हित दीर्घ mmr;
-	पूर्णांक core, irq = IRQ_GRU + chiplet;
+static void gru_chiplet_teardown_tlb_irq(int chiplet, int cpu, int blade)
+{
+	unsigned long mmr;
+	int core, irq = IRQ_GRU + chiplet;
 
-	अगर (gru_irq_count[chiplet] == 0)
-		वापस;
-
-	mmr = gru_chiplet_cpu_to_mmr(chiplet, cpu, &core);
-	अगर (mmr == 0)
-		वापस;
-
-	अगर (--gru_irq_count[chiplet] == 0)
-		मुक्त_irq(irq, शून्य);
-पूर्ण
-
-#या_अगर defined CONFIG_X86_64
-
-अटल पूर्णांक gru_chiplet_setup_tlb_irq(पूर्णांक chiplet, अक्षर *irq_name,
-			irq_handler_t irq_handler, पूर्णांक cpu, पूर्णांक blade)
-अणु
-	अचिन्हित दीर्घ mmr;
-	पूर्णांक irq, core;
-	पूर्णांक ret;
+	if (gru_irq_count[chiplet] == 0)
+		return;
 
 	mmr = gru_chiplet_cpu_to_mmr(chiplet, cpu, &core);
-	अगर (mmr == 0)
-		वापस 0;
+	if (mmr == 0)
+		return;
+
+	if (--gru_irq_count[chiplet] == 0)
+		free_irq(irq, NULL);
+}
+
+#elif defined CONFIG_X86_64
+
+static int gru_chiplet_setup_tlb_irq(int chiplet, char *irq_name,
+			irq_handler_t irq_handler, int cpu, int blade)
+{
+	unsigned long mmr;
+	int irq, core;
+	int ret;
+
+	mmr = gru_chiplet_cpu_to_mmr(chiplet, cpu, &core);
+	if (mmr == 0)
+		return 0;
 
 	irq = uv_setup_irq(irq_name, cpu, blade, mmr, UV_AFFINITY_CPU);
-	अगर (irq < 0) अणु
-		prपूर्णांकk(KERN_ERR "%s: uv_setup_irq failed, errno=%d\n",
+	if (irq < 0) {
+		printk(KERN_ERR "%s: uv_setup_irq failed, errno=%d\n",
 		       GRU_DRIVER_ID_STR, -irq);
-		वापस irq;
-	पूर्ण
+		return irq;
+	}
 
-	ret = request_irq(irq, irq_handler, 0, irq_name, शून्य);
-	अगर (ret) अणु
-		uv_tearकरोwn_irq(irq);
-		prपूर्णांकk(KERN_ERR "%s: request_irq failed, errno=%d\n",
+	ret = request_irq(irq, irq_handler, 0, irq_name, NULL);
+	if (ret) {
+		uv_teardown_irq(irq);
+		printk(KERN_ERR "%s: request_irq failed, errno=%d\n",
 		       GRU_DRIVER_ID_STR, -ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	gru_base[blade]->bs_grus[chiplet].gs_irq[core] = irq;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम gru_chiplet_tearकरोwn_tlb_irq(पूर्णांक chiplet, पूर्णांक cpu, पूर्णांक blade)
-अणु
-	पूर्णांक irq, core;
-	अचिन्हित दीर्घ mmr;
+static void gru_chiplet_teardown_tlb_irq(int chiplet, int cpu, int blade)
+{
+	int irq, core;
+	unsigned long mmr;
 
 	mmr = gru_chiplet_cpu_to_mmr(chiplet, cpu, &core);
-	अगर (mmr) अणु
+	if (mmr) {
 		irq = gru_base[blade]->bs_grus[chiplet].gs_irq[core];
-		अगर (irq) अणु
-			मुक्त_irq(irq, शून्य);
-			uv_tearकरोwn_irq(irq);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		if (irq) {
+			free_irq(irq, NULL);
+			uv_teardown_irq(irq);
+		}
+	}
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल व्योम gru_tearकरोwn_tlb_irqs(व्योम)
-अणु
-	पूर्णांक blade;
-	पूर्णांक cpu;
+static void gru_teardown_tlb_irqs(void)
+{
+	int blade;
+	int cpu;
 
-	क्रम_each_online_cpu(cpu) अणु
+	for_each_online_cpu(cpu) {
 		blade = uv_cpu_to_blade_id(cpu);
-		gru_chiplet_tearकरोwn_tlb_irq(0, cpu, blade);
-		gru_chiplet_tearकरोwn_tlb_irq(1, cpu, blade);
-	पूर्ण
-	क्रम_each_possible_blade(blade) अणु
-		अगर (uv_blade_nr_possible_cpus(blade))
-			जारी;
-		gru_chiplet_tearकरोwn_tlb_irq(0, 0, blade);
-		gru_chiplet_tearकरोwn_tlb_irq(1, 0, blade);
-	पूर्ण
-पूर्ण
+		gru_chiplet_teardown_tlb_irq(0, cpu, blade);
+		gru_chiplet_teardown_tlb_irq(1, cpu, blade);
+	}
+	for_each_possible_blade(blade) {
+		if (uv_blade_nr_possible_cpus(blade))
+			continue;
+		gru_chiplet_teardown_tlb_irq(0, 0, blade);
+		gru_chiplet_teardown_tlb_irq(1, 0, blade);
+	}
+}
 
-अटल पूर्णांक gru_setup_tlb_irqs(व्योम)
-अणु
-	पूर्णांक blade;
-	पूर्णांक cpu;
-	पूर्णांक ret;
+static int gru_setup_tlb_irqs(void)
+{
+	int blade;
+	int cpu;
+	int ret;
 
-	क्रम_each_online_cpu(cpu) अणु
+	for_each_online_cpu(cpu) {
 		blade = uv_cpu_to_blade_id(cpu);
-		ret = gru_chiplet_setup_tlb_irq(0, "GRU0_TLB", gru0_पूर्णांकr, cpu, blade);
-		अगर (ret != 0)
-			जाओ निकास1;
+		ret = gru_chiplet_setup_tlb_irq(0, "GRU0_TLB", gru0_intr, cpu, blade);
+		if (ret != 0)
+			goto exit1;
 
-		ret = gru_chiplet_setup_tlb_irq(1, "GRU1_TLB", gru1_पूर्णांकr, cpu, blade);
-		अगर (ret != 0)
-			जाओ निकास1;
-	पूर्ण
-	क्रम_each_possible_blade(blade) अणु
-		अगर (uv_blade_nr_possible_cpus(blade))
-			जारी;
-		ret = gru_chiplet_setup_tlb_irq(0, "GRU0_TLB", gru_पूर्णांकr_mblade, 0, blade);
-		अगर (ret != 0)
-			जाओ निकास1;
+		ret = gru_chiplet_setup_tlb_irq(1, "GRU1_TLB", gru1_intr, cpu, blade);
+		if (ret != 0)
+			goto exit1;
+	}
+	for_each_possible_blade(blade) {
+		if (uv_blade_nr_possible_cpus(blade))
+			continue;
+		ret = gru_chiplet_setup_tlb_irq(0, "GRU0_TLB", gru_intr_mblade, 0, blade);
+		if (ret != 0)
+			goto exit1;
 
-		ret = gru_chiplet_setup_tlb_irq(1, "GRU1_TLB", gru_पूर्णांकr_mblade, 0, blade);
-		अगर (ret != 0)
-			जाओ निकास1;
-	पूर्ण
+		ret = gru_chiplet_setup_tlb_irq(1, "GRU1_TLB", gru_intr_mblade, 0, blade);
+		if (ret != 0)
+			goto exit1;
+	}
 
-	वापस 0;
+	return 0;
 
-निकास1:
-	gru_tearकरोwn_tlb_irqs();
-	वापस ret;
-पूर्ण
+exit1:
+	gru_teardown_tlb_irqs();
+	return ret;
+}
 
 /*
  * gru_init
  *
- * Called at boot or module load समय to initialize the GRUs.
+ * Called at boot or module load time to initialize the GRUs.
  */
-अटल पूर्णांक __init gru_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init gru_init(void)
+{
+	int ret;
 
-	अगर (!gru_supported())
-		वापस 0;
+	if (!gru_supported())
+		return 0;
 
-#अगर defined CONFIG_IA64
+#if defined CONFIG_IA64
 	gru_start_paddr = 0xd000000000UL; /* ZZZZZZZZZZZZZZZZZZZ fixme */
-#अन्यथा
-	gru_start_paddr = uv_पढ़ो_local_mmr(UVH_RH_GAM_GRU_OVERLAY_CONFIG) &
+#else
+	gru_start_paddr = uv_read_local_mmr(UVH_RH_GAM_GRU_OVERLAY_CONFIG) &
 				0x7fffffffffffUL;
-#पूर्ण_अगर
+#endif
 	gru_start_vaddr = __va(gru_start_paddr);
 	gru_end_paddr = gru_start_paddr + GRU_MAX_BLADES * GRU_SIZE;
-	prपूर्णांकk(KERN_INFO "GRU space: 0x%lx - 0x%lx\n",
+	printk(KERN_INFO "GRU space: 0x%lx - 0x%lx\n",
 	       gru_start_paddr, gru_end_paddr);
-	ret = misc_रेजिस्टर(&gru_miscdev);
-	अगर (ret) अणु
-		prपूर्णांकk(KERN_ERR "%s: misc_register failed\n",
+	ret = misc_register(&gru_miscdev);
+	if (ret) {
+		printk(KERN_ERR "%s: misc_register failed\n",
 		       GRU_DRIVER_ID_STR);
-		जाओ निकास0;
-	पूर्ण
+		goto exit0;
+	}
 
 	ret = gru_proc_init();
-	अगर (ret) अणु
-		prपूर्णांकk(KERN_ERR "%s: proc init failed\n", GRU_DRIVER_ID_STR);
-		जाओ निकास1;
-	पूर्ण
+	if (ret) {
+		printk(KERN_ERR "%s: proc init failed\n", GRU_DRIVER_ID_STR);
+		goto exit1;
+	}
 
 	ret = gru_init_tables(gru_start_paddr, gru_start_vaddr);
-	अगर (ret) अणु
-		prपूर्णांकk(KERN_ERR "%s: init tables failed\n", GRU_DRIVER_ID_STR);
-		जाओ निकास2;
-	पूर्ण
+	if (ret) {
+		printk(KERN_ERR "%s: init tables failed\n", GRU_DRIVER_ID_STR);
+		goto exit2;
+	}
 
 	ret = gru_setup_tlb_irqs();
-	अगर (ret != 0)
-		जाओ निकास3;
+	if (ret != 0)
+		goto exit3;
 
 	gru_kservices_init();
 
-	prपूर्णांकk(KERN_INFO "%s: v%s\n", GRU_DRIVER_ID_STR,
+	printk(KERN_INFO "%s: v%s\n", GRU_DRIVER_ID_STR,
 	       GRU_DRIVER_VERSION_STR);
-	वापस 0;
+	return 0;
 
-निकास3:
-	gru_मुक्त_tables();
-निकास2:
-	gru_proc_निकास();
-निकास1:
-	misc_deरेजिस्टर(&gru_miscdev);
-निकास0:
-	वापस ret;
+exit3:
+	gru_free_tables();
+exit2:
+	gru_proc_exit();
+exit1:
+	misc_deregister(&gru_miscdev);
+exit0:
+	return ret;
 
-पूर्ण
+}
 
-अटल व्योम __निकास gru_निकास(व्योम)
-अणु
-	अगर (!gru_supported())
-		वापस;
+static void __exit gru_exit(void)
+{
+	if (!gru_supported())
+		return;
 
-	gru_tearकरोwn_tlb_irqs();
-	gru_kservices_निकास();
-	gru_मुक्त_tables();
-	misc_deरेजिस्टर(&gru_miscdev);
-	gru_proc_निकास();
-	mmu_notअगरier_synchronize();
-पूर्ण
+	gru_teardown_tlb_irqs();
+	gru_kservices_exit();
+	gru_free_tables();
+	misc_deregister(&gru_miscdev);
+	gru_proc_exit();
+	mmu_notifier_synchronize();
+}
 
-अटल स्थिर काष्ठा file_operations gru_fops = अणु
+static const struct file_operations gru_fops = {
 	.owner		= THIS_MODULE,
 	.unlocked_ioctl	= gru_file_unlocked_ioctl,
 	.mmap		= gru_file_mmap,
 	.llseek		= noop_llseek,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice gru_miscdev = अणु
+static struct miscdevice gru_miscdev = {
 	.minor		= MISC_DYNAMIC_MINOR,
 	.name		= "gru",
 	.fops		= &gru_fops,
-पूर्ण;
+};
 
-स्थिर काष्ठा vm_operations_काष्ठा gru_vm_ops = अणु
-	.बंद		= gru_vma_बंद,
+const struct vm_operations_struct gru_vm_ops = {
+	.close		= gru_vma_close,
 	.fault		= gru_fault,
-पूर्ण;
+};
 
-#अगर_अघोषित MODULE
+#ifndef MODULE
 fs_initcall(gru_init);
-#अन्यथा
+#else
 module_init(gru_init);
-#पूर्ण_अगर
-module_निकास(gru_निकास);
+#endif
+module_exit(gru_exit);
 
-module_param(gru_options, uदीर्घ, 0644);
+module_param(gru_options, ulong, 0644);
 MODULE_PARM_DESC(gru_options, "Various debug options");
 
 MODULE_AUTHOR("Silicon Graphics, Inc.");

@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _SKC_LINUX_KERNEL_H
-#घोषणा _SKC_LINUX_KERNEL_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _SKC_LINUX_KERNEL_H
+#define _SKC_LINUX_KERNEL_H
 
-#समावेश <मानककोष.स>
-#समावेश <stdbool.h>
+#include <stdlib.h>
+#include <stdbool.h>
 
-#समावेश <linux/prपूर्णांकk.h>
+#include <linux/printk.h>
 
-प्रकार अचिन्हित लघु u16;
-प्रकार अचिन्हित पूर्णांक   u32;
+typedef unsigned short u16;
+typedef unsigned int   u32;
 
-#घोषणा unlikely(cond)	(cond)
+#define unlikely(cond)	(cond)
 
-#घोषणा __init
-#घोषणा __initdata
+#define __init
+#define __initdata
 
-#पूर्ण_अगर
+#endif

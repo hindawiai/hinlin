@@ -1,476 +1,475 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2013 Facebook.  All rights reserved.
  */
 
-#समावेश <linux/types.h>
-#समावेश "btrfs-tests.h"
-#समावेश "../ctree.h"
-#समावेश "../transaction.h"
-#समावेश "../disk-io.h"
-#समावेश "../qgroup.h"
-#समावेश "../backref.h"
+#include <linux/types.h>
+#include "btrfs-tests.h"
+#include "../ctree.h"
+#include "../transaction.h"
+#include "../disk-io.h"
+#include "../qgroup.h"
+#include "../backref.h"
 
-अटल पूर्णांक insert_normal_tree_ref(काष्ठा btrfs_root *root, u64 bytenr,
+static int insert_normal_tree_ref(struct btrfs_root *root, u64 bytenr,
 				  u64 num_bytes, u64 parent, u64 root_objectid)
-अणु
-	काष्ठा btrfs_trans_handle trans;
-	काष्ठा btrfs_extent_item *item;
-	काष्ठा btrfs_extent_अंतरभूत_ref *iref;
-	काष्ठा btrfs_tree_block_info *block_info;
-	काष्ठा btrfs_path *path;
-	काष्ठा extent_buffer *leaf;
-	काष्ठा btrfs_key ins;
-	u32 size = माप(*item) + माप(*iref) + माप(*block_info);
-	पूर्णांक ret;
+{
+	struct btrfs_trans_handle trans;
+	struct btrfs_extent_item *item;
+	struct btrfs_extent_inline_ref *iref;
+	struct btrfs_tree_block_info *block_info;
+	struct btrfs_path *path;
+	struct extent_buffer *leaf;
+	struct btrfs_key ins;
+	u32 size = sizeof(*item) + sizeof(*iref) + sizeof(*block_info);
+	int ret;
 
-	btrfs_init_dummy_trans(&trans, शून्य);
+	btrfs_init_dummy_trans(&trans, NULL);
 
 	ins.objectid = bytenr;
 	ins.type = BTRFS_EXTENT_ITEM_KEY;
 	ins.offset = num_bytes;
 
 	path = btrfs_alloc_path();
-	अगर (!path) अणु
+	if (!path) {
 		test_std_err(TEST_ALLOC_ROOT);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ret = btrfs_insert_empty_item(&trans, root, path, &ins, size);
-	अगर (ret) अणु
+	if (ret) {
 		test_err("couldn't insert ref %d", ret);
-		btrfs_मुक्त_path(path);
-		वापस ret;
-	पूर्ण
+		btrfs_free_path(path);
+		return ret;
+	}
 
 	leaf = path->nodes[0];
-	item = btrfs_item_ptr(leaf, path->slots[0], काष्ठा btrfs_extent_item);
+	item = btrfs_item_ptr(leaf, path->slots[0], struct btrfs_extent_item);
 	btrfs_set_extent_refs(leaf, item, 1);
 	btrfs_set_extent_generation(leaf, item, 1);
 	btrfs_set_extent_flags(leaf, item, BTRFS_EXTENT_FLAG_TREE_BLOCK);
-	block_info = (काष्ठा btrfs_tree_block_info *)(item + 1);
+	block_info = (struct btrfs_tree_block_info *)(item + 1);
 	btrfs_set_tree_block_level(leaf, block_info, 0);
-	iref = (काष्ठा btrfs_extent_अंतरभूत_ref *)(block_info + 1);
-	अगर (parent > 0) अणु
-		btrfs_set_extent_अंतरभूत_ref_type(leaf, iref,
+	iref = (struct btrfs_extent_inline_ref *)(block_info + 1);
+	if (parent > 0) {
+		btrfs_set_extent_inline_ref_type(leaf, iref,
 						 BTRFS_SHARED_BLOCK_REF_KEY);
-		btrfs_set_extent_अंतरभूत_ref_offset(leaf, iref, parent);
-	पूर्ण अन्यथा अणु
-		btrfs_set_extent_अंतरभूत_ref_type(leaf, iref, BTRFS_TREE_BLOCK_REF_KEY);
-		btrfs_set_extent_अंतरभूत_ref_offset(leaf, iref, root_objectid);
-	पूर्ण
-	btrfs_मुक्त_path(path);
-	वापस 0;
-पूर्ण
+		btrfs_set_extent_inline_ref_offset(leaf, iref, parent);
+	} else {
+		btrfs_set_extent_inline_ref_type(leaf, iref, BTRFS_TREE_BLOCK_REF_KEY);
+		btrfs_set_extent_inline_ref_offset(leaf, iref, root_objectid);
+	}
+	btrfs_free_path(path);
+	return 0;
+}
 
-अटल पूर्णांक add_tree_ref(काष्ठा btrfs_root *root, u64 bytenr, u64 num_bytes,
+static int add_tree_ref(struct btrfs_root *root, u64 bytenr, u64 num_bytes,
 			u64 parent, u64 root_objectid)
-अणु
-	काष्ठा btrfs_trans_handle trans;
-	काष्ठा btrfs_extent_item *item;
-	काष्ठा btrfs_path *path;
-	काष्ठा btrfs_key key;
+{
+	struct btrfs_trans_handle trans;
+	struct btrfs_extent_item *item;
+	struct btrfs_path *path;
+	struct btrfs_key key;
 	u64 refs;
-	पूर्णांक ret;
+	int ret;
 
-	btrfs_init_dummy_trans(&trans, शून्य);
+	btrfs_init_dummy_trans(&trans, NULL);
 
 	key.objectid = bytenr;
 	key.type = BTRFS_EXTENT_ITEM_KEY;
 	key.offset = num_bytes;
 
 	path = btrfs_alloc_path();
-	अगर (!path) अणु
+	if (!path) {
 		test_std_err(TEST_ALLOC_ROOT);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ret = btrfs_search_slot(&trans, root, &key, path, 0, 1);
-	अगर (ret) अणु
+	if (ret) {
 		test_err("couldn't find extent ref");
-		btrfs_मुक्त_path(path);
-		वापस ret;
-	पूर्ण
+		btrfs_free_path(path);
+		return ret;
+	}
 
 	item = btrfs_item_ptr(path->nodes[0], path->slots[0],
-			      काष्ठा btrfs_extent_item);
+			      struct btrfs_extent_item);
 	refs = btrfs_extent_refs(path->nodes[0], item);
 	btrfs_set_extent_refs(path->nodes[0], item, refs + 1);
 	btrfs_release_path(path);
 
 	key.objectid = bytenr;
-	अगर (parent) अणु
+	if (parent) {
 		key.type = BTRFS_SHARED_BLOCK_REF_KEY;
 		key.offset = parent;
-	पूर्ण अन्यथा अणु
+	} else {
 		key.type = BTRFS_TREE_BLOCK_REF_KEY;
 		key.offset = root_objectid;
-	पूर्ण
+	}
 
 	ret = btrfs_insert_empty_item(&trans, root, path, &key, 0);
-	अगर (ret)
+	if (ret)
 		test_err("failed to insert backref");
-	btrfs_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	btrfs_free_path(path);
+	return ret;
+}
 
-अटल पूर्णांक हटाओ_extent_item(काष्ठा btrfs_root *root, u64 bytenr,
+static int remove_extent_item(struct btrfs_root *root, u64 bytenr,
 			      u64 num_bytes)
-अणु
-	काष्ठा btrfs_trans_handle trans;
-	काष्ठा btrfs_key key;
-	काष्ठा btrfs_path *path;
-	पूर्णांक ret;
+{
+	struct btrfs_trans_handle trans;
+	struct btrfs_key key;
+	struct btrfs_path *path;
+	int ret;
 
-	btrfs_init_dummy_trans(&trans, शून्य);
+	btrfs_init_dummy_trans(&trans, NULL);
 
 	key.objectid = bytenr;
 	key.type = BTRFS_EXTENT_ITEM_KEY;
 	key.offset = num_bytes;
 
 	path = btrfs_alloc_path();
-	अगर (!path) अणु
+	if (!path) {
 		test_std_err(TEST_ALLOC_ROOT);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ret = btrfs_search_slot(&trans, root, &key, path, -1, 1);
-	अगर (ret) अणु
+	if (ret) {
 		test_err("didn't find our key %d", ret);
-		btrfs_मुक्त_path(path);
-		वापस ret;
-	पूर्ण
+		btrfs_free_path(path);
+		return ret;
+	}
 	btrfs_del_item(&trans, root, path);
-	btrfs_मुक्त_path(path);
-	वापस 0;
-पूर्ण
+	btrfs_free_path(path);
+	return 0;
+}
 
-अटल पूर्णांक हटाओ_extent_ref(काष्ठा btrfs_root *root, u64 bytenr,
+static int remove_extent_ref(struct btrfs_root *root, u64 bytenr,
 			     u64 num_bytes, u64 parent, u64 root_objectid)
-अणु
-	काष्ठा btrfs_trans_handle trans;
-	काष्ठा btrfs_extent_item *item;
-	काष्ठा btrfs_path *path;
-	काष्ठा btrfs_key key;
+{
+	struct btrfs_trans_handle trans;
+	struct btrfs_extent_item *item;
+	struct btrfs_path *path;
+	struct btrfs_key key;
 	u64 refs;
-	पूर्णांक ret;
+	int ret;
 
-	btrfs_init_dummy_trans(&trans, शून्य);
+	btrfs_init_dummy_trans(&trans, NULL);
 
 	key.objectid = bytenr;
 	key.type = BTRFS_EXTENT_ITEM_KEY;
 	key.offset = num_bytes;
 
 	path = btrfs_alloc_path();
-	अगर (!path) अणु
+	if (!path) {
 		test_std_err(TEST_ALLOC_ROOT);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ret = btrfs_search_slot(&trans, root, &key, path, 0, 1);
-	अगर (ret) अणु
+	if (ret) {
 		test_err("couldn't find extent ref");
-		btrfs_मुक्त_path(path);
-		वापस ret;
-	पूर्ण
+		btrfs_free_path(path);
+		return ret;
+	}
 
 	item = btrfs_item_ptr(path->nodes[0], path->slots[0],
-			      काष्ठा btrfs_extent_item);
+			      struct btrfs_extent_item);
 	refs = btrfs_extent_refs(path->nodes[0], item);
 	btrfs_set_extent_refs(path->nodes[0], item, refs - 1);
 	btrfs_release_path(path);
 
 	key.objectid = bytenr;
-	अगर (parent) अणु
+	if (parent) {
 		key.type = BTRFS_SHARED_BLOCK_REF_KEY;
 		key.offset = parent;
-	पूर्ण अन्यथा अणु
+	} else {
 		key.type = BTRFS_TREE_BLOCK_REF_KEY;
 		key.offset = root_objectid;
-	पूर्ण
+	}
 
 	ret = btrfs_search_slot(&trans, root, &key, path, -1, 1);
-	अगर (ret) अणु
+	if (ret) {
 		test_err("couldn't find backref %d", ret);
-		btrfs_मुक्त_path(path);
-		वापस ret;
-	पूर्ण
+		btrfs_free_path(path);
+		return ret;
+	}
 	btrfs_del_item(&trans, root, path);
-	btrfs_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	btrfs_free_path(path);
+	return ret;
+}
 
-अटल पूर्णांक test_no_shared_qgroup(काष्ठा btrfs_root *root,
+static int test_no_shared_qgroup(struct btrfs_root *root,
 		u32 sectorsize, u32 nodesize)
-अणु
-	काष्ठा btrfs_trans_handle trans;
-	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
-	काष्ठा ulist *old_roots = शून्य;
-	काष्ठा ulist *new_roots = शून्य;
-	पूर्णांक ret;
+{
+	struct btrfs_trans_handle trans;
+	struct btrfs_fs_info *fs_info = root->fs_info;
+	struct ulist *old_roots = NULL;
+	struct ulist *new_roots = NULL;
+	int ret;
 
 	btrfs_init_dummy_trans(&trans, fs_info);
 
 	test_msg("running qgroup add/remove tests");
 	ret = btrfs_create_qgroup(&trans, BTRFS_FS_TREE_OBJECTID);
-	अगर (ret) अणु
+	if (ret) {
 		test_err("couldn't create a qgroup %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * Since the test trans करोesn't have the complicated delayed refs,
+	 * Since the test trans doesn't have the complicated delayed refs,
 	 * we can only call btrfs_qgroup_account_extent() directly to test
 	 * quota.
 	 */
 	ret = btrfs_find_all_roots(&trans, fs_info, nodesize, 0, &old_roots,
 			false);
-	अगर (ret) अणु
-		ulist_मुक्त(old_roots);
+	if (ret) {
+		ulist_free(old_roots);
 		test_err("couldn't find old roots: %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = insert_normal_tree_ref(root, nodesize, nodesize, 0,
 				BTRFS_FS_TREE_OBJECTID);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = btrfs_find_all_roots(&trans, fs_info, nodesize, 0, &new_roots,
 			false);
-	अगर (ret) अणु
-		ulist_मुक्त(old_roots);
-		ulist_मुक्त(new_roots);
+	if (ret) {
+		ulist_free(old_roots);
+		ulist_free(new_roots);
 		test_err("couldn't find old roots: %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = btrfs_qgroup_account_extent(&trans, nodesize, nodesize, old_roots,
 					  new_roots);
-	अगर (ret) अणु
+	if (ret) {
 		test_err("couldn't account space for a qgroup %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (btrfs_verअगरy_qgroup_counts(fs_info, BTRFS_FS_TREE_OBJECTID,
-				nodesize, nodesize)) अणु
+	if (btrfs_verify_qgroup_counts(fs_info, BTRFS_FS_TREE_OBJECTID,
+				nodesize, nodesize)) {
 		test_err("qgroup counts didn't match expected values");
-		वापस -EINVAL;
-	पूर्ण
-	old_roots = शून्य;
-	new_roots = शून्य;
+		return -EINVAL;
+	}
+	old_roots = NULL;
+	new_roots = NULL;
 
 	ret = btrfs_find_all_roots(&trans, fs_info, nodesize, 0, &old_roots,
 			false);
-	अगर (ret) अणु
-		ulist_मुक्त(old_roots);
+	if (ret) {
+		ulist_free(old_roots);
 		test_err("couldn't find old roots: %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = हटाओ_extent_item(root, nodesize, nodesize);
-	अगर (ret)
-		वापस -EINVAL;
+	ret = remove_extent_item(root, nodesize, nodesize);
+	if (ret)
+		return -EINVAL;
 
 	ret = btrfs_find_all_roots(&trans, fs_info, nodesize, 0, &new_roots,
 			false);
-	अगर (ret) अणु
-		ulist_मुक्त(old_roots);
-		ulist_मुक्त(new_roots);
+	if (ret) {
+		ulist_free(old_roots);
+		ulist_free(new_roots);
 		test_err("couldn't find old roots: %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = btrfs_qgroup_account_extent(&trans, nodesize, nodesize, old_roots,
 					  new_roots);
-	अगर (ret) अणु
+	if (ret) {
 		test_err("couldn't account space for a qgroup %d", ret);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (btrfs_verअगरy_qgroup_counts(fs_info, BTRFS_FS_TREE_OBJECTID, 0, 0)) अणु
+	if (btrfs_verify_qgroup_counts(fs_info, BTRFS_FS_TREE_OBJECTID, 0, 0)) {
 		test_err("qgroup counts didn't match expected values");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Add a ref क्रम two dअगरferent roots to make sure the shared value comes out
- * right, also हटाओ one of the roots and make sure the exclusive count is
+ * Add a ref for two different roots to make sure the shared value comes out
+ * right, also remove one of the roots and make sure the exclusive count is
  * adjusted properly.
  */
-अटल पूर्णांक test_multiple_refs(काष्ठा btrfs_root *root,
+static int test_multiple_refs(struct btrfs_root *root,
 		u32 sectorsize, u32 nodesize)
-अणु
-	काष्ठा btrfs_trans_handle trans;
-	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
-	काष्ठा ulist *old_roots = शून्य;
-	काष्ठा ulist *new_roots = शून्य;
-	पूर्णांक ret;
+{
+	struct btrfs_trans_handle trans;
+	struct btrfs_fs_info *fs_info = root->fs_info;
+	struct ulist *old_roots = NULL;
+	struct ulist *new_roots = NULL;
+	int ret;
 
 	btrfs_init_dummy_trans(&trans, fs_info);
 
 	test_msg("running qgroup multiple refs test");
 
 	/*
-	 * We have BTRFS_FS_TREE_OBJECTID created alपढ़ोy from the
+	 * We have BTRFS_FS_TREE_OBJECTID created already from the
 	 * previous test.
 	 */
 	ret = btrfs_create_qgroup(&trans, BTRFS_FIRST_FREE_OBJECTID);
-	अगर (ret) अणु
+	if (ret) {
 		test_err("couldn't create a qgroup %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = btrfs_find_all_roots(&trans, fs_info, nodesize, 0, &old_roots,
 			false);
-	अगर (ret) अणु
-		ulist_मुक्त(old_roots);
+	if (ret) {
+		ulist_free(old_roots);
 		test_err("couldn't find old roots: %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = insert_normal_tree_ref(root, nodesize, nodesize, 0,
 				BTRFS_FS_TREE_OBJECTID);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = btrfs_find_all_roots(&trans, fs_info, nodesize, 0, &new_roots,
 			false);
-	अगर (ret) अणु
-		ulist_मुक्त(old_roots);
-		ulist_मुक्त(new_roots);
+	if (ret) {
+		ulist_free(old_roots);
+		ulist_free(new_roots);
 		test_err("couldn't find old roots: %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = btrfs_qgroup_account_extent(&trans, nodesize, nodesize, old_roots,
 					  new_roots);
-	अगर (ret) अणु
+	if (ret) {
 		test_err("couldn't account space for a qgroup %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (btrfs_verअगरy_qgroup_counts(fs_info, BTRFS_FS_TREE_OBJECTID,
-				       nodesize, nodesize)) अणु
+	if (btrfs_verify_qgroup_counts(fs_info, BTRFS_FS_TREE_OBJECTID,
+				       nodesize, nodesize)) {
 		test_err("qgroup counts didn't match expected values");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = btrfs_find_all_roots(&trans, fs_info, nodesize, 0, &old_roots,
 			false);
-	अगर (ret) अणु
-		ulist_मुक्त(old_roots);
+	if (ret) {
+		ulist_free(old_roots);
 		test_err("couldn't find old roots: %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = add_tree_ref(root, nodesize, nodesize, 0,
 			BTRFS_FIRST_FREE_OBJECTID);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = btrfs_find_all_roots(&trans, fs_info, nodesize, 0, &new_roots,
 			false);
-	अगर (ret) अणु
-		ulist_मुक्त(old_roots);
-		ulist_मुक्त(new_roots);
+	if (ret) {
+		ulist_free(old_roots);
+		ulist_free(new_roots);
 		test_err("couldn't find old roots: %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = btrfs_qgroup_account_extent(&trans, nodesize, nodesize, old_roots,
 					  new_roots);
-	अगर (ret) अणु
+	if (ret) {
 		test_err("couldn't account space for a qgroup %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (btrfs_verअगरy_qgroup_counts(fs_info, BTRFS_FS_TREE_OBJECTID,
-					nodesize, 0)) अणु
+	if (btrfs_verify_qgroup_counts(fs_info, BTRFS_FS_TREE_OBJECTID,
+					nodesize, 0)) {
 		test_err("qgroup counts didn't match expected values");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (btrfs_verअगरy_qgroup_counts(fs_info, BTRFS_FIRST_FREE_OBJECTID,
-					nodesize, 0)) अणु
+	if (btrfs_verify_qgroup_counts(fs_info, BTRFS_FIRST_FREE_OBJECTID,
+					nodesize, 0)) {
 		test_err("qgroup counts didn't match expected values");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = btrfs_find_all_roots(&trans, fs_info, nodesize, 0, &old_roots,
 			false);
-	अगर (ret) अणु
-		ulist_मुक्त(old_roots);
+	if (ret) {
+		ulist_free(old_roots);
 		test_err("couldn't find old roots: %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = हटाओ_extent_ref(root, nodesize, nodesize, 0,
+	ret = remove_extent_ref(root, nodesize, nodesize, 0,
 				BTRFS_FIRST_FREE_OBJECTID);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = btrfs_find_all_roots(&trans, fs_info, nodesize, 0, &new_roots,
 			false);
-	अगर (ret) अणु
-		ulist_मुक्त(old_roots);
-		ulist_मुक्त(new_roots);
+	if (ret) {
+		ulist_free(old_roots);
+		ulist_free(new_roots);
 		test_err("couldn't find old roots: %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = btrfs_qgroup_account_extent(&trans, nodesize, nodesize, old_roots,
 					  new_roots);
-	अगर (ret) अणु
+	if (ret) {
 		test_err("couldn't account space for a qgroup %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (btrfs_verअगरy_qgroup_counts(fs_info, BTRFS_FIRST_FREE_OBJECTID,
-					0, 0)) अणु
+	if (btrfs_verify_qgroup_counts(fs_info, BTRFS_FIRST_FREE_OBJECTID,
+					0, 0)) {
 		test_err("qgroup counts didn't match expected values");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (btrfs_verअगरy_qgroup_counts(fs_info, BTRFS_FS_TREE_OBJECTID,
-					nodesize, nodesize)) अणु
+	if (btrfs_verify_qgroup_counts(fs_info, BTRFS_FS_TREE_OBJECTID,
+					nodesize, nodesize)) {
 		test_err("qgroup counts didn't match expected values");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक btrfs_test_qgroups(u32 sectorsize, u32 nodesize)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = शून्य;
-	काष्ठा btrfs_root *root;
-	काष्ठा btrfs_root *पंचांगp_root;
-	पूर्णांक ret = 0;
+int btrfs_test_qgroups(u32 sectorsize, u32 nodesize)
+{
+	struct btrfs_fs_info *fs_info = NULL;
+	struct btrfs_root *root;
+	struct btrfs_root *tmp_root;
+	int ret = 0;
 
 	fs_info = btrfs_alloc_dummy_fs_info(nodesize, sectorsize);
-	अगर (!fs_info) अणु
+	if (!fs_info) {
 		test_std_err(TEST_ALLOC_FS_INFO);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	root = btrfs_alloc_dummy_root(fs_info);
-	अगर (IS_ERR(root)) अणु
+	if (IS_ERR(root)) {
 		test_std_err(TEST_ALLOC_ROOT);
 		ret = PTR_ERR(root);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* We are using this root as our extent root */
 	root->fs_info->extent_root = root;
 
 	/*
 	 * Some of the paths we test assume we have a filled out fs_info, so we
-	 * just need to add the root in there so we करोn't panic.
+	 * just need to add the root in there so we don't panic.
 	 */
 	root->fs_info->tree_root = root;
 	root->fs_info->quota_root = root;
@@ -481,53 +480,53 @@
 	 * *cough*backref walking code*cough*
 	 */
 	root->node = alloc_test_extent_buffer(root->fs_info, nodesize);
-	अगर (IS_ERR(root->node)) अणु
+	if (IS_ERR(root->node)) {
 		test_err("couldn't allocate dummy buffer");
 		ret = PTR_ERR(root->node);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	btrfs_set_header_level(root->node, 0);
 	btrfs_set_header_nritems(root->node, 0);
 	root->alloc_bytenr += 2 * nodesize;
 
-	पंचांगp_root = btrfs_alloc_dummy_root(fs_info);
-	अगर (IS_ERR(पंचांगp_root)) अणु
+	tmp_root = btrfs_alloc_dummy_root(fs_info);
+	if (IS_ERR(tmp_root)) {
 		test_std_err(TEST_ALLOC_ROOT);
-		ret = PTR_ERR(पंचांगp_root);
-		जाओ out;
-	पूर्ण
+		ret = PTR_ERR(tmp_root);
+		goto out;
+	}
 
-	पंचांगp_root->root_key.objectid = BTRFS_FS_TREE_OBJECTID;
-	root->fs_info->fs_root = पंचांगp_root;
-	ret = btrfs_insert_fs_root(root->fs_info, पंचांगp_root);
-	अगर (ret) अणु
+	tmp_root->root_key.objectid = BTRFS_FS_TREE_OBJECTID;
+	root->fs_info->fs_root = tmp_root;
+	ret = btrfs_insert_fs_root(root->fs_info, tmp_root);
+	if (ret) {
 		test_err("couldn't insert fs root %d", ret);
-		जाओ out;
-	पूर्ण
-	btrfs_put_root(पंचांगp_root);
+		goto out;
+	}
+	btrfs_put_root(tmp_root);
 
-	पंचांगp_root = btrfs_alloc_dummy_root(fs_info);
-	अगर (IS_ERR(पंचांगp_root)) अणु
+	tmp_root = btrfs_alloc_dummy_root(fs_info);
+	if (IS_ERR(tmp_root)) {
 		test_std_err(TEST_ALLOC_ROOT);
-		ret = PTR_ERR(पंचांगp_root);
-		जाओ out;
-	पूर्ण
+		ret = PTR_ERR(tmp_root);
+		goto out;
+	}
 
-	पंचांगp_root->root_key.objectid = BTRFS_FIRST_FREE_OBJECTID;
-	ret = btrfs_insert_fs_root(root->fs_info, पंचांगp_root);
-	अगर (ret) अणु
+	tmp_root->root_key.objectid = BTRFS_FIRST_FREE_OBJECTID;
+	ret = btrfs_insert_fs_root(root->fs_info, tmp_root);
+	if (ret) {
 		test_err("couldn't insert fs root %d", ret);
-		जाओ out;
-	पूर्ण
-	btrfs_put_root(पंचांगp_root);
+		goto out;
+	}
+	btrfs_put_root(tmp_root);
 
 	test_msg("running qgroup tests");
 	ret = test_no_shared_qgroup(root, sectorsize, nodesize);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 	ret = test_multiple_refs(root, sectorsize, nodesize);
 out:
-	btrfs_मुक्त_dummy_root(root);
-	btrfs_मुक्त_dummy_fs_info(fs_info);
-	वापस ret;
-पूर्ण
+	btrfs_free_dummy_root(root);
+	btrfs_free_dummy_fs_info(fs_info);
+	return ret;
+}

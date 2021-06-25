@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_घोषित HAVE_ARCH_X86_64_SUPPORT
+#ifdef HAVE_ARCH_X86_64_SUPPORT
 
-#घोषणा MEMCPY_FN(fn, name, desc)		\
-	व्योम *fn(व्योम *, स्थिर व्योम *, माप_प्रकार);
+#define MEMCPY_FN(fn, name, desc)		\
+	void *fn(void *, const void *, size_t);
 
-#समावेश "mem-memcpy-x86-64-asm-def.h"
+#include "mem-memcpy-x86-64-asm-def.h"
 
-#अघोषित MEMCPY_FN
+#undef MEMCPY_FN
 
-#पूर्ण_अगर
+#endif
 

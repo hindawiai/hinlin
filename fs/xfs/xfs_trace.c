@@ -1,40 +1,39 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2009, Christoph Hellwig
  * All Rights Reserved.
  */
-#समावेश "xfs.h"
-#समावेश "xfs_fs.h"
-#समावेश "xfs_shared.h"
-#समावेश "xfs_bit.h"
-#समावेश "xfs_format.h"
-#समावेश "xfs_log_format.h"
-#समावेश "xfs_trans_resv.h"
-#समावेश "xfs_mount.h"
-#समावेश "xfs_defer.h"
-#समावेश "xfs_da_format.h"
-#समावेश "xfs_inode.h"
-#समावेश "xfs_btree.h"
-#समावेश "xfs_da_btree.h"
-#समावेश "xfs_alloc.h"
-#समावेश "xfs_bmap.h"
-#समावेश "xfs_attr.h"
-#समावेश "xfs_trans.h"
-#समावेश "xfs_log_priv.h"
-#समावेश "xfs_buf_item.h"
-#समावेश "xfs_quota.h"
-#समावेश "xfs_dquot_item.h"
-#समावेश "xfs_dquot.h"
-#समावेश "xfs_log_recover.h"
-#समावेश "xfs_filestream.h"
-#समावेश "xfs_fsmap.h"
-#समावेश "xfs_btree_staging.h"
-#समावेश "xfs_icache.h"
+#include "xfs.h"
+#include "xfs_fs.h"
+#include "xfs_shared.h"
+#include "xfs_bit.h"
+#include "xfs_format.h"
+#include "xfs_log_format.h"
+#include "xfs_trans_resv.h"
+#include "xfs_mount.h"
+#include "xfs_defer.h"
+#include "xfs_da_format.h"
+#include "xfs_inode.h"
+#include "xfs_btree.h"
+#include "xfs_da_btree.h"
+#include "xfs_alloc.h"
+#include "xfs_bmap.h"
+#include "xfs_attr.h"
+#include "xfs_trans.h"
+#include "xfs_log_priv.h"
+#include "xfs_buf_item.h"
+#include "xfs_quota.h"
+#include "xfs_dquot_item.h"
+#include "xfs_dquot.h"
+#include "xfs_log_recover.h"
+#include "xfs_filestream.h"
+#include "xfs_fsmap.h"
+#include "xfs_btree_staging.h"
+#include "xfs_icache.h"
 
 /*
- * We include this last to have the helpers above available क्रम the trace
+ * We include this last to have the helpers above available for the trace
  * event implementations.
  */
-#घोषणा CREATE_TRACE_POINTS
-#समावेश "xfs_trace.h"
+#define CREATE_TRACE_POINTS
+#include "xfs_trace.h"

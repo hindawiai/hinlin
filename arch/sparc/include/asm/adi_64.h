@@ -1,47 +1,46 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
-/* adi_64.h: ADI related data काष्ठाures
+/* SPDX-License-Identifier: GPL-2.0-only */
+/* adi_64.h: ADI related data structures
  *
  * Copyright (c) 2016 Oracle and/or its affiliates. All rights reserved.
  * Author: Khalid Aziz (khalid.aziz@oracle.com)
  */
-#अगर_अघोषित __ASM_SPARC64_ADI_H
-#घोषणा __ASM_SPARC64_ADI_H
+#ifndef __ASM_SPARC64_ADI_H
+#define __ASM_SPARC64_ADI_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-काष्ठा adi_caps अणु
+struct adi_caps {
 	__u64 blksz;
 	__u64 nbits;
 	__u64 ue_on_adi;
-पूर्ण;
+};
 
-काष्ठा adi_config अणु
+struct adi_config {
 	bool enabled;
-	काष्ठा adi_caps caps;
-पूर्ण;
+	struct adi_caps caps;
+};
 
-बाह्य काष्ठा adi_config adi_state;
+extern struct adi_config adi_state;
 
-बाह्य व्योम mdesc_adi_init(व्योम);
+extern void mdesc_adi_init(void);
 
-अटल अंतरभूत bool adi_capable(व्योम)
-अणु
-	वापस adi_state.enabled;
-पूर्ण
+static inline bool adi_capable(void)
+{
+	return adi_state.enabled;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ adi_blksize(व्योम)
-अणु
-	वापस adi_state.caps.blksz;
-पूर्ण
+static inline unsigned long adi_blksize(void)
+{
+	return adi_state.caps.blksz;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ adi_nbits(व्योम)
-अणु
-	वापस adi_state.caps.nbits;
-पूर्ण
+static inline unsigned long adi_nbits(void)
+{
+	return adi_state.caps.nbits;
+}
 
-#पूर्ण_अगर	/* __ASSEMBLY__ */
+#endif	/* __ASSEMBLY__ */
 
-#पूर्ण_अगर	/* !(__ASM_SPARC64_ADI_H) */
+#endif	/* !(__ASM_SPARC64_ADI_H) */

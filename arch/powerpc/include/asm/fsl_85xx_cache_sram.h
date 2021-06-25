@@ -1,36 +1,35 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright 2009 Freescale Semiconductor, Inc.
  *
- * Cache SRAM handling क्रम QorIQ platक्रमm
+ * Cache SRAM handling for QorIQ platform
  *
- * Author: Vivek Mahajan <vivek.mahajan@मुक्तscale.com>
+ * Author: Vivek Mahajan <vivek.mahajan@freescale.com>
 
- * This file is derived from the original work करोne
- * by Sylvain Munaut क्रम the Bestcomm SRAM allocator.
+ * This file is derived from the original work done
+ * by Sylvain Munaut for the Bestcomm SRAM allocator.
  */
 
-#अगर_अघोषित __ASM_POWERPC_FSL_85XX_CACHE_SRAM_H__
-#घोषणा __ASM_POWERPC_FSL_85XX_CACHE_SRAM_H__
+#ifndef __ASM_POWERPC_FSL_85XX_CACHE_SRAM_H__
+#define __ASM_POWERPC_FSL_85XX_CACHE_SRAM_H__
 
-#समावेश <यंत्र/rheap.h>
-#समावेश <linux/spinlock.h>
+#include <asm/rheap.h>
+#include <linux/spinlock.h>
 
 /*
  * Cache-SRAM
  */
 
-काष्ठा mpc85xx_cache_sram अणु
+struct mpc85xx_cache_sram {
 	phys_addr_t base_phys;
-	व्योम *base_virt;
-	अचिन्हित पूर्णांक size;
+	void *base_virt;
+	unsigned int size;
 	rh_info_t *rh;
 	spinlock_t lock;
-पूर्ण;
+};
 
-बाह्य व्योम mpc85xx_cache_sram_मुक्त(व्योम *ptr);
-बाह्य व्योम *mpc85xx_cache_sram_alloc(अचिन्हित पूर्णांक size,
-				  phys_addr_t *phys, अचिन्हित पूर्णांक align);
+extern void mpc85xx_cache_sram_free(void *ptr);
+extern void *mpc85xx_cache_sram_alloc(unsigned int size,
+				  phys_addr_t *phys, unsigned int align);
 
-#पूर्ण_अगर /* __AMS_POWERPC_FSL_85XX_CACHE_SRAM_H__ */
+#endif /* __AMS_POWERPC_FSL_85XX_CACHE_SRAM_H__ */

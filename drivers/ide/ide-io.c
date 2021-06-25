@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  *	IDE I/O functions
  *
  *	Basic PIO and command management functionality.
  *
- * This code was split off from ide.c. See ide.c क्रम history and original
+ * This code was split off from ide.c. See ide.c for history and original
  * copyrights.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2, or (at your option) any
  * later version.
@@ -15,891 +14,891 @@
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License क्रम more details.
+ * General Public License for more details.
  *
- * For the aव्योमance of करोubt the "preferred form" of this code is one which
- * is in an खोलो non patent encumbered क्रमmat. Where cryptographic key signing
- * क्रमms part of the process of creating an executable the inक्रमmation
+ * For the avoidance of doubt the "preferred form" of this code is one which
+ * is in an open non patent encumbered format. Where cryptographic key signing
+ * forms part of the process of creating an executable the information
  * including keys needed to generate an equivalently functional executable
  * are deemed to be part of the source code.
  */
  
  
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/major.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/genhd.h>
-#समावेश <linux/blkpg.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/ide.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/cdrom.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/device.h>
-#समावेश <linux/kmod.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/bitops.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/string.h>
+#include <linux/kernel.h>
+#include <linux/timer.h>
+#include <linux/mm.h>
+#include <linux/interrupt.h>
+#include <linux/major.h>
+#include <linux/errno.h>
+#include <linux/genhd.h>
+#include <linux/blkpg.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/pci.h>
+#include <linux/delay.h>
+#include <linux/ide.h>
+#include <linux/completion.h>
+#include <linux/reboot.h>
+#include <linux/cdrom.h>
+#include <linux/seq_file.h>
+#include <linux/device.h>
+#include <linux/kmod.h>
+#include <linux/scatterlist.h>
+#include <linux/bitops.h>
 
-#समावेश <यंत्र/byteorder.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/पन.स>
+#include <asm/byteorder.h>
+#include <asm/irq.h>
+#include <linux/uaccess.h>
+#include <asm/io.h>
 
-पूर्णांक ide_end_rq(ide_drive_t *drive, काष्ठा request *rq, blk_status_t error,
-	       अचिन्हित पूर्णांक nr_bytes)
-अणु
+int ide_end_rq(ide_drive_t *drive, struct request *rq, blk_status_t error,
+	       unsigned int nr_bytes)
+{
 	/*
-	 * decide whether to reenable DMA -- 3 is a अक्रमom magic क्रम now,
-	 * अगर we DMA समयout more than 3 बार, just stay in PIO
+	 * decide whether to reenable DMA -- 3 is a random magic for now,
+	 * if we DMA timeout more than 3 times, just stay in PIO
 	 */
-	अगर ((drive->dev_flags & IDE_DFLAG_DMA_PIO_RETRY) &&
-	    drive->retry_pio <= 3) अणु
+	if ((drive->dev_flags & IDE_DFLAG_DMA_PIO_RETRY) &&
+	    drive->retry_pio <= 3) {
 		drive->dev_flags &= ~IDE_DFLAG_DMA_PIO_RETRY;
 		ide_dma_on(drive);
-	पूर्ण
+	}
 
-	अगर (!blk_update_request(rq, error, nr_bytes)) अणु
-		अगर (rq == drive->sense_rq) अणु
-			drive->sense_rq = शून्य;
+	if (!blk_update_request(rq, error, nr_bytes)) {
+		if (rq == drive->sense_rq) {
+			drive->sense_rq = NULL;
 			drive->sense_rq_active = false;
-		पूर्ण
+		}
 
 		__blk_mq_end_request(rq, error);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 EXPORT_SYMBOL_GPL(ide_end_rq);
 
-व्योम ide_complete_cmd(ide_drive_t *drive, काष्ठा ide_cmd *cmd, u8 stat, u8 err)
-अणु
-	स्थिर काष्ठा ide_tp_ops *tp_ops = drive->hwअगर->tp_ops;
-	काष्ठा ide_taskfile *tf = &cmd->tf;
-	काष्ठा request *rq = cmd->rq;
+void ide_complete_cmd(ide_drive_t *drive, struct ide_cmd *cmd, u8 stat, u8 err)
+{
+	const struct ide_tp_ops *tp_ops = drive->hwif->tp_ops;
+	struct ide_taskfile *tf = &cmd->tf;
+	struct request *rq = cmd->rq;
 	u8 tf_cmd = tf->command;
 
 	tf->error = err;
 	tf->status = stat;
 
-	अगर (cmd->ftf_flags & IDE_FTFLAG_IN_DATA) अणु
+	if (cmd->ftf_flags & IDE_FTFLAG_IN_DATA) {
 		u8 data[2];
 
 		tp_ops->input_data(drive, cmd, data, 2);
 
 		cmd->tf.data  = data[0];
 		cmd->hob.data = data[1];
-	पूर्ण
+	}
 
-	ide_tf_पढ़ोback(drive, cmd);
+	ide_tf_readback(drive, cmd);
 
-	अगर ((cmd->tf_flags & IDE_TFLAG_CUSTOM_HANDLER) &&
-	    tf_cmd == ATA_CMD_IDLEIMMEDIATE) अणु
-		अगर (tf->lbal != 0xc4) अणु
-			prपूर्णांकk(KERN_ERR "%s: head unload failed!\n",
+	if ((cmd->tf_flags & IDE_TFLAG_CUSTOM_HANDLER) &&
+	    tf_cmd == ATA_CMD_IDLEIMMEDIATE) {
+		if (tf->lbal != 0xc4) {
+			printk(KERN_ERR "%s: head unload failed!\n",
 			       drive->name);
 			ide_tf_dump(drive->name, cmd);
-		पूर्ण अन्यथा
+		} else
 			drive->dev_flags |= IDE_DFLAG_PARKED;
-	पूर्ण
+	}
 
-	अगर (rq && ata_taskfile_request(rq)) अणु
-		काष्ठा ide_cmd *orig_cmd = ide_req(rq)->special;
+	if (rq && ata_taskfile_request(rq)) {
+		struct ide_cmd *orig_cmd = ide_req(rq)->special;
 
-		अगर (cmd->tf_flags & IDE_TFLAG_DYN)
-			kमुक्त(orig_cmd);
-		अन्यथा अगर (cmd != orig_cmd)
-			स_नकल(orig_cmd, cmd, माप(*cmd));
-	पूर्ण
-पूर्ण
+		if (cmd->tf_flags & IDE_TFLAG_DYN)
+			kfree(orig_cmd);
+		else if (cmd != orig_cmd)
+			memcpy(orig_cmd, cmd, sizeof(*cmd));
+	}
+}
 
-पूर्णांक ide_complete_rq(ide_drive_t *drive, blk_status_t error, अचिन्हित पूर्णांक nr_bytes)
-अणु
-	ide_hwअगर_t *hwअगर = drive->hwअगर;
-	काष्ठा request *rq = hwअगर->rq;
-	पूर्णांक rc;
+int ide_complete_rq(ide_drive_t *drive, blk_status_t error, unsigned int nr_bytes)
+{
+	ide_hwif_t *hwif = drive->hwif;
+	struct request *rq = hwif->rq;
+	int rc;
 
 	/*
-	 * अगर failfast is set on a request, override number of sectors
+	 * if failfast is set on a request, override number of sectors
 	 * and complete the whole request right now
 	 */
-	अगर (blk_noretry_request(rq) && error)
+	if (blk_noretry_request(rq) && error)
 		nr_bytes = blk_rq_sectors(rq) << 9;
 
 	rc = ide_end_rq(drive, rq, error, nr_bytes);
-	अगर (rc == 0)
-		hwअगर->rq = शून्य;
+	if (rc == 0)
+		hwif->rq = NULL;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL(ide_complete_rq);
 
-व्योम ide_समाप्त_rq(ide_drive_t *drive, काष्ठा request *rq)
-अणु
+void ide_kill_rq(ide_drive_t *drive, struct request *rq)
+{
 	u8 drv_req = ata_misc_request(rq) && rq->rq_disk;
 	u8 media = drive->media;
 
-	drive->failed_pc = शून्य;
+	drive->failed_pc = NULL;
 
-	अगर ((media == ide_floppy || media == ide_tape) && drv_req) अणु
+	if ((media == ide_floppy || media == ide_tape) && drv_req) {
 		scsi_req(rq)->result = 0;
-	पूर्ण अन्यथा अणु
-		अगर (media == ide_tape)
+	} else {
+		if (media == ide_tape)
 			scsi_req(rq)->result = IDE_DRV_ERROR_GENERAL;
-		अन्यथा अगर (blk_rq_is_passthrough(rq) && scsi_req(rq)->result == 0)
+		else if (blk_rq_is_passthrough(rq) && scsi_req(rq)->result == 0)
 			scsi_req(rq)->result = -EIO;
-	पूर्ण
+	}
 
 	ide_complete_rq(drive, BLK_STS_IOERR, blk_rq_bytes(rq));
-पूर्ण
+}
 
-अटल व्योम ide_tf_set_specअगरy_cmd(ide_drive_t *drive, काष्ठा ide_taskfile *tf)
-अणु
+static void ide_tf_set_specify_cmd(ide_drive_t *drive, struct ide_taskfile *tf)
+{
 	tf->nsect   = drive->sect;
 	tf->lbal    = drive->sect;
 	tf->lbam    = drive->cyl;
 	tf->lbah    = drive->cyl >> 8;
 	tf->device  = (drive->head - 1) | drive->select;
 	tf->command = ATA_CMD_INIT_DEV_PARAMS;
-पूर्ण
+}
 
-अटल व्योम ide_tf_set_restore_cmd(ide_drive_t *drive, काष्ठा ide_taskfile *tf)
-अणु
+static void ide_tf_set_restore_cmd(ide_drive_t *drive, struct ide_taskfile *tf)
+{
 	tf->nsect   = drive->sect;
 	tf->command = ATA_CMD_RESTORE;
-पूर्ण
+}
 
-अटल व्योम ide_tf_set_seपंचांगult_cmd(ide_drive_t *drive, काष्ठा ide_taskfile *tf)
-अणु
+static void ide_tf_set_setmult_cmd(ide_drive_t *drive, struct ide_taskfile *tf)
+{
 	tf->nsect   = drive->mult_req;
 	tf->command = ATA_CMD_SET_MULTI;
-पूर्ण
+}
 
 /**
- *	करो_special		-	issue some special commands
- *	@drive: drive the command is क्रम
+ *	do_special		-	issue some special commands
+ *	@drive: drive the command is for
  *
- *	करो_special() is used to issue ATA_CMD_INIT_DEV_PARAMS,
+ *	do_special() is used to issue ATA_CMD_INIT_DEV_PARAMS,
  *	ATA_CMD_RESTORE and ATA_CMD_SET_MULTI commands to a drive.
  */
 
-अटल ide_startstop_t करो_special(ide_drive_t *drive)
-अणु
-	काष्ठा ide_cmd cmd;
+static ide_startstop_t do_special(ide_drive_t *drive)
+{
+	struct ide_cmd cmd;
 
-#अगर_घोषित DEBUG
-	prपूर्णांकk(KERN_DEBUG "%s: %s: 0x%02x\n", drive->name, __func__,
+#ifdef DEBUG
+	printk(KERN_DEBUG "%s: %s: 0x%02x\n", drive->name, __func__,
 		drive->special_flags);
-#पूर्ण_अगर
-	अगर (drive->media != ide_disk) अणु
+#endif
+	if (drive->media != ide_disk) {
 		drive->special_flags = 0;
 		drive->mult_req = 0;
-		वापस ide_stopped;
-	पूर्ण
+		return ide_stopped;
+	}
 
-	स_रखो(&cmd, 0, माप(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.protocol = ATA_PROT_NODATA;
 
-	अगर (drive->special_flags & IDE_SFLAG_SET_GEOMETRY) अणु
+	if (drive->special_flags & IDE_SFLAG_SET_GEOMETRY) {
 		drive->special_flags &= ~IDE_SFLAG_SET_GEOMETRY;
-		ide_tf_set_specअगरy_cmd(drive, &cmd.tf);
-	पूर्ण अन्यथा अगर (drive->special_flags & IDE_SFLAG_RECALIBRATE) अणु
+		ide_tf_set_specify_cmd(drive, &cmd.tf);
+	} else if (drive->special_flags & IDE_SFLAG_RECALIBRATE) {
 		drive->special_flags &= ~IDE_SFLAG_RECALIBRATE;
 		ide_tf_set_restore_cmd(drive, &cmd.tf);
-	पूर्ण अन्यथा अगर (drive->special_flags & IDE_SFLAG_SET_MULTMODE) अणु
+	} else if (drive->special_flags & IDE_SFLAG_SET_MULTMODE) {
 		drive->special_flags &= ~IDE_SFLAG_SET_MULTMODE;
-		ide_tf_set_seपंचांगult_cmd(drive, &cmd.tf);
-	पूर्ण अन्यथा
+		ide_tf_set_setmult_cmd(drive, &cmd.tf);
+	} else
 		BUG();
 
 	cmd.valid.out.tf = IDE_VALID_OUT_TF | IDE_VALID_DEVICE;
 	cmd.valid.in.tf  = IDE_VALID_IN_TF  | IDE_VALID_DEVICE;
 	cmd.tf_flags = IDE_TFLAG_CUSTOM_HANDLER;
 
-	करो_rw_taskfile(drive, &cmd);
+	do_rw_taskfile(drive, &cmd);
 
-	वापस ide_started;
-पूर्ण
+	return ide_started;
+}
 
-व्योम ide_map_sg(ide_drive_t *drive, काष्ठा ide_cmd *cmd)
-अणु
-	ide_hwअगर_t *hwअगर = drive->hwअगर;
-	काष्ठा scatterlist *sg = hwअगर->sg_table, *last_sg = शून्य;
-	काष्ठा request *rq = cmd->rq;
+void ide_map_sg(ide_drive_t *drive, struct ide_cmd *cmd)
+{
+	ide_hwif_t *hwif = drive->hwif;
+	struct scatterlist *sg = hwif->sg_table, *last_sg = NULL;
+	struct request *rq = cmd->rq;
 
 	cmd->sg_nents = __blk_rq_map_sg(drive->queue, rq, sg, &last_sg);
-	अगर (blk_rq_bytes(rq) && (blk_rq_bytes(rq) & rq->q->dma_pad_mask))
+	if (blk_rq_bytes(rq) && (blk_rq_bytes(rq) & rq->q->dma_pad_mask))
 		last_sg->length +=
 			(rq->q->dma_pad_mask & ~blk_rq_bytes(rq)) + 1;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(ide_map_sg);
 
-व्योम ide_init_sg_cmd(काष्ठा ide_cmd *cmd, अचिन्हित पूर्णांक nr_bytes)
-अणु
+void ide_init_sg_cmd(struct ide_cmd *cmd, unsigned int nr_bytes)
+{
 	cmd->nbytes = cmd->nleft = nr_bytes;
 	cmd->cursg_ofs = 0;
-	cmd->cursg = शून्य;
-पूर्ण
+	cmd->cursg = NULL;
+}
 EXPORT_SYMBOL_GPL(ide_init_sg_cmd);
 
 /**
  *	execute_drive_command	-	issue special drive command
  *	@drive: the drive to issue the command on
- *	@rq: the request काष्ठाure holding the command
+ *	@rq: the request structure holding the command
  *
  *	execute_drive_cmd() issues a special drive command,  usually 
- *	initiated by ioctl() from the बाह्यal hdparm program. The
+ *	initiated by ioctl() from the external hdparm program. The
  *	command can be a drive command, drive task or taskfile 
- *	operation. Weirdly you can call it with शून्य to रुको क्रम
- *	all commands to finish. Don't करो this as that is due to change
+ *	operation. Weirdly you can call it with NULL to wait for
+ *	all commands to finish. Don't do this as that is due to change
  */
 
-अटल ide_startstop_t execute_drive_cmd (ide_drive_t *drive,
-		काष्ठा request *rq)
-अणु
-	काष्ठा ide_cmd *cmd = ide_req(rq)->special;
+static ide_startstop_t execute_drive_cmd (ide_drive_t *drive,
+		struct request *rq)
+{
+	struct ide_cmd *cmd = ide_req(rq)->special;
 
-	अगर (cmd) अणु
-		अगर (cmd->protocol == ATA_PROT_PIO) अणु
+	if (cmd) {
+		if (cmd->protocol == ATA_PROT_PIO) {
 			ide_init_sg_cmd(cmd, blk_rq_sectors(rq) << 9);
 			ide_map_sg(drive, cmd);
-		पूर्ण
+		}
 
-		वापस करो_rw_taskfile(drive, cmd);
-	पूर्ण
+		return do_rw_taskfile(drive, cmd);
+	}
 
  	/*
- 	 * शून्य is actually a valid way of रुकोing क्रम
+ 	 * NULL is actually a valid way of waiting for
  	 * all current requests to be flushed from the queue.
  	 */
-#अगर_घोषित DEBUG
- 	prपूर्णांकk("%s: DRIVE_CMD (null)\n", drive->name);
-#पूर्ण_अगर
+#ifdef DEBUG
+ 	printk("%s: DRIVE_CMD (null)\n", drive->name);
+#endif
 	scsi_req(rq)->result = 0;
 	ide_complete_rq(drive, BLK_STS_OK, blk_rq_bytes(rq));
 
- 	वापस ide_stopped;
-पूर्ण
+ 	return ide_stopped;
+}
 
-अटल ide_startstop_t ide_special_rq(ide_drive_t *drive, काष्ठा request *rq)
-अणु
+static ide_startstop_t ide_special_rq(ide_drive_t *drive, struct request *rq)
+{
 	u8 cmd = scsi_req(rq)->cmd[0];
 
-	चयन (cmd) अणु
-	हाल REQ_PARK_HEADS:
-	हाल REQ_UNPARK_HEADS:
-		वापस ide_करो_park_unpark(drive, rq);
-	हाल REQ_DEVSET_EXEC:
-		वापस ide_करो_devset(drive, rq);
-	हाल REQ_DRIVE_RESET:
-		वापस ide_करो_reset(drive);
-	शेष:
+	switch (cmd) {
+	case REQ_PARK_HEADS:
+	case REQ_UNPARK_HEADS:
+		return ide_do_park_unpark(drive, rq);
+	case REQ_DEVSET_EXEC:
+		return ide_do_devset(drive, rq);
+	case REQ_DRIVE_RESET:
+		return ide_do_reset(drive);
+	default:
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- *	start_request	-	start of I/O and command issuing क्रम IDE
+ *	start_request	-	start of I/O and command issuing for IDE
  *
  *	start_request() initiates handling of a new I/O request. It
- *	accepts commands and I/O (पढ़ो/ग_लिखो) requests.
+ *	accepts commands and I/O (read/write) requests.
  *
- *	FIXME: this function needs a नाम
+ *	FIXME: this function needs a rename
  */
  
-अटल ide_startstop_t start_request (ide_drive_t *drive, काष्ठा request *rq)
-अणु
+static ide_startstop_t start_request (ide_drive_t *drive, struct request *rq)
+{
 	ide_startstop_t startstop;
 
-#अगर_घोषित DEBUG
-	prपूर्णांकk("%s: start_request: current=0x%08lx\n",
-		drive->hwअगर->name, (अचिन्हित दीर्घ) rq);
-#पूर्ण_अगर
+#ifdef DEBUG
+	printk("%s: start_request: current=0x%08lx\n",
+		drive->hwif->name, (unsigned long) rq);
+#endif
 
-	/* bail early अगर we've exceeded max_failures */
-	अगर (drive->max_failures && (drive->failures > drive->max_failures)) अणु
+	/* bail early if we've exceeded max_failures */
+	if (drive->max_failures && (drive->failures > drive->max_failures)) {
 		rq->rq_flags |= RQF_FAILED;
-		जाओ समाप्त_rq;
-	पूर्ण
+		goto kill_rq;
+	}
 
-	अगर (drive->prep_rq && !drive->prep_rq(drive, rq))
-		वापस ide_stopped;
+	if (drive->prep_rq && !drive->prep_rq(drive, rq))
+		return ide_stopped;
 
-	अगर (ata_pm_request(rq))
+	if (ata_pm_request(rq))
 		ide_check_pm_state(drive, rq);
 
-	drive->hwअगर->tp_ops->dev_select(drive);
-	अगर (ide_रुको_stat(&startstop, drive, drive->पढ़ोy_stat,
-			  ATA_BUSY | ATA_DRQ, WAIT_READY)) अणु
-		prपूर्णांकk(KERN_ERR "%s: drive not ready for command\n", drive->name);
-		वापस startstop;
-	पूर्ण
+	drive->hwif->tp_ops->dev_select(drive);
+	if (ide_wait_stat(&startstop, drive, drive->ready_stat,
+			  ATA_BUSY | ATA_DRQ, WAIT_READY)) {
+		printk(KERN_ERR "%s: drive not ready for command\n", drive->name);
+		return startstop;
+	}
 
-	अगर (drive->special_flags == 0) अणु
-		काष्ठा ide_driver *drv;
+	if (drive->special_flags == 0) {
+		struct ide_driver *drv;
 
 		/*
 		 * We reset the drive so we need to issue a SETFEATURES.
-		 * Do it _after_ करो_special() restored device parameters.
+		 * Do it _after_ do_special() restored device parameters.
 		 */
-		अगर (drive->current_speed == 0xff)
+		if (drive->current_speed == 0xff)
 			ide_config_drive_speed(drive, drive->desired_speed);
 
-		अगर (ata_taskfile_request(rq))
-			वापस execute_drive_cmd(drive, rq);
-		अन्यथा अगर (ata_pm_request(rq)) अणु
-			काष्ठा ide_pm_state *pm = ide_req(rq)->special;
-#अगर_घोषित DEBUG_PM
-			prपूर्णांकk("%s: start_power_step(step: %d)\n",
+		if (ata_taskfile_request(rq))
+			return execute_drive_cmd(drive, rq);
+		else if (ata_pm_request(rq)) {
+			struct ide_pm_state *pm = ide_req(rq)->special;
+#ifdef DEBUG_PM
+			printk("%s: start_power_step(step: %d)\n",
 				drive->name, pm->pm_step);
-#पूर्ण_अगर
-			startstop = ide_start_घातer_step(drive, rq);
-			अगर (startstop == ide_stopped &&
+#endif
+			startstop = ide_start_power_step(drive, rq);
+			if (startstop == ide_stopped &&
 			    pm->pm_step == IDE_PM_COMPLETED)
 				ide_complete_pm_rq(drive, rq);
-			वापस startstop;
-		पूर्ण अन्यथा अगर (!rq->rq_disk && ata_misc_request(rq))
+			return startstop;
+		} else if (!rq->rq_disk && ata_misc_request(rq))
 			/*
-			 * TODO: Once all ULDs have been modअगरied to
-			 * check क्रम specअगरic op codes rather than
+			 * TODO: Once all ULDs have been modified to
+			 * check for specific op codes rather than
 			 * blindly accepting any special request, the
-			 * check क्रम ->rq_disk above may be replaced
+			 * check for ->rq_disk above may be replaced
 			 * by a more suitable mechanism or even
 			 * dropped entirely.
 			 */
-			वापस ide_special_rq(drive, rq);
+			return ide_special_rq(drive, rq);
 
-		drv = *(काष्ठा ide_driver **)rq->rq_disk->निजी_data;
+		drv = *(struct ide_driver **)rq->rq_disk->private_data;
 
-		वापस drv->करो_request(drive, rq, blk_rq_pos(rq));
-	पूर्ण
-	वापस करो_special(drive);
-समाप्त_rq:
-	ide_समाप्त_rq(drive, rq);
-	वापस ide_stopped;
-पूर्ण
+		return drv->do_request(drive, rq, blk_rq_pos(rq));
+	}
+	return do_special(drive);
+kill_rq:
+	ide_kill_rq(drive, rq);
+	return ide_stopped;
+}
 
 /**
- *	ide_stall_queue		-	छोड़ो an IDE device
+ *	ide_stall_queue		-	pause an IDE device
  *	@drive: drive to stall
- *	@समयout: समय to stall क्रम (jअगरfies)
+ *	@timeout: time to stall for (jiffies)
  *
  *	ide_stall_queue() can be used by a drive to give excess bandwidth back
- *	to the port by sleeping क्रम समयout jअगरfies.
+ *	to the port by sleeping for timeout jiffies.
  */
  
-व्योम ide_stall_queue (ide_drive_t *drive, अचिन्हित दीर्घ समयout)
-अणु
-	अगर (समयout > WAIT_WORSTCASE)
-		समयout = WAIT_WORSTCASE;
-	drive->sleep = समयout + jअगरfies;
+void ide_stall_queue (ide_drive_t *drive, unsigned long timeout)
+{
+	if (timeout > WAIT_WORSTCASE)
+		timeout = WAIT_WORSTCASE;
+	drive->sleep = timeout + jiffies;
 	drive->dev_flags |= IDE_DFLAG_SLEEPING;
-पूर्ण
+}
 EXPORT_SYMBOL(ide_stall_queue);
 
-अटल अंतरभूत पूर्णांक ide_lock_port(ide_hwअगर_t *hwअगर)
-अणु
-	अगर (hwअगर->busy)
-		वापस 1;
+static inline int ide_lock_port(ide_hwif_t *hwif)
+{
+	if (hwif->busy)
+		return 1;
 
-	hwअगर->busy = 1;
+	hwif->busy = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम ide_unlock_port(ide_hwअगर_t *hwअगर)
-अणु
-	hwअगर->busy = 0;
-पूर्ण
+static inline void ide_unlock_port(ide_hwif_t *hwif)
+{
+	hwif->busy = 0;
+}
 
-अटल अंतरभूत पूर्णांक ide_lock_host(काष्ठा ide_host *host, ide_hwअगर_t *hwअगर)
-अणु
-	पूर्णांक rc = 0;
+static inline int ide_lock_host(struct ide_host *host, ide_hwif_t *hwif)
+{
+	int rc = 0;
 
-	अगर (host->host_flags & IDE_HFLAG_SERIALIZE) अणु
+	if (host->host_flags & IDE_HFLAG_SERIALIZE) {
 		rc = test_and_set_bit_lock(IDE_HOST_BUSY, &host->host_busy);
-		अगर (rc == 0) अणु
-			अगर (host->get_lock)
-				host->get_lock(ide_पूर्णांकr, hwअगर);
-		पूर्ण
-	पूर्ण
-	वापस rc;
-पूर्ण
+		if (rc == 0) {
+			if (host->get_lock)
+				host->get_lock(ide_intr, hwif);
+		}
+	}
+	return rc;
+}
 
-अटल अंतरभूत व्योम ide_unlock_host(काष्ठा ide_host *host)
-अणु
-	अगर (host->host_flags & IDE_HFLAG_SERIALIZE) अणु
-		अगर (host->release_lock)
+static inline void ide_unlock_host(struct ide_host *host)
+{
+	if (host->host_flags & IDE_HFLAG_SERIALIZE) {
+		if (host->release_lock)
 			host->release_lock();
 		clear_bit_unlock(IDE_HOST_BUSY, &host->host_busy);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम ide_requeue_and_plug(ide_drive_t *drive, काष्ठा request *rq)
-अणु
-	काष्ठा request_queue *q = drive->queue;
+void ide_requeue_and_plug(ide_drive_t *drive, struct request *rq)
+{
+	struct request_queue *q = drive->queue;
 
 	/* Use 3ms as that was the old plug delay */
-	अगर (rq) अणु
+	if (rq) {
 		blk_mq_requeue_request(rq, false);
 		blk_mq_delay_kick_requeue_list(q, 3);
-	पूर्ण अन्यथा
+	} else
 		blk_mq_delay_run_hw_queue(q->queue_hw_ctx[0], 3);
-पूर्ण
+}
 
-blk_status_t ide_issue_rq(ide_drive_t *drive, काष्ठा request *rq,
+blk_status_t ide_issue_rq(ide_drive_t *drive, struct request *rq,
 			  bool local_requeue)
-अणु
-	ide_hwअगर_t *hwअगर = drive->hwअगर;
-	काष्ठा ide_host *host = hwअगर->host;
+{
+	ide_hwif_t *hwif = drive->hwif;
+	struct ide_host *host = hwif->host;
 	ide_startstop_t	startstop;
 
-	अगर (!blk_rq_is_passthrough(rq) && !(rq->rq_flags & RQF_DONTPREP)) अणु
+	if (!blk_rq_is_passthrough(rq) && !(rq->rq_flags & RQF_DONTPREP)) {
 		rq->rq_flags |= RQF_DONTPREP;
-		ide_req(rq)->special = शून्य;
-	पूर्ण
+		ide_req(rq)->special = NULL;
+	}
 
-	/* HLD करो_request() callback might sleep, make sure it's okay */
+	/* HLD do_request() callback might sleep, make sure it's okay */
 	might_sleep();
 
-	अगर (ide_lock_host(host, hwअगर))
-		वापस BLK_STS_DEV_RESOURCE;
+	if (ide_lock_host(host, hwif))
+		return BLK_STS_DEV_RESOURCE;
 
-	spin_lock_irq(&hwअगर->lock);
+	spin_lock_irq(&hwif->lock);
 
-	अगर (!ide_lock_port(hwअगर)) अणु
-		ide_hwअगर_t *prev_port;
+	if (!ide_lock_port(hwif)) {
+		ide_hwif_t *prev_port;
 
-		WARN_ON_ONCE(hwअगर->rq);
+		WARN_ON_ONCE(hwif->rq);
 repeat:
-		prev_port = hwअगर->host->cur_port;
-		अगर (drive->dev_flags & IDE_DFLAG_SLEEPING &&
-		    समय_after(drive->sleep, jअगरfies)) अणु
-			ide_unlock_port(hwअगर);
-			जाओ plug_device;
-		पूर्ण
+		prev_port = hwif->host->cur_port;
+		if (drive->dev_flags & IDE_DFLAG_SLEEPING &&
+		    time_after(drive->sleep, jiffies)) {
+			ide_unlock_port(hwif);
+			goto plug_device;
+		}
 
-		अगर ((hwअगर->host->host_flags & IDE_HFLAG_SERIALIZE) &&
-		    hwअगर != prev_port) अणु
+		if ((hwif->host->host_flags & IDE_HFLAG_SERIALIZE) &&
+		    hwif != prev_port) {
 			ide_drive_t *cur_dev =
-				prev_port ? prev_port->cur_dev : शून्य;
+				prev_port ? prev_port->cur_dev : NULL;
 
 			/*
-			 * set nIEN क्रम previous port, drives in the
-			 * quirk list may not like पूर्णांकr setups/cleanups
+			 * set nIEN for previous port, drives in the
+			 * quirk list may not like intr setups/cleanups
 			 */
-			अगर (cur_dev &&
+			if (cur_dev &&
 			    (cur_dev->dev_flags & IDE_DFLAG_NIEN_QUIRK) == 0)
-				prev_port->tp_ops->ग_लिखो_devctl(prev_port,
+				prev_port->tp_ops->write_devctl(prev_port,
 								ATA_NIEN |
 								ATA_DEVCTL_OBS);
 
-			hwअगर->host->cur_port = hwअगर;
-		पूर्ण
-		hwअगर->cur_dev = drive;
+			hwif->host->cur_port = hwif;
+		}
+		hwif->cur_dev = drive;
 		drive->dev_flags &= ~(IDE_DFLAG_SLEEPING | IDE_DFLAG_PARKED);
 
 		/*
-		 * Sanity: करोn't accept a request that isn't a PM request
-		 * अगर we are currently घातer managed. This is very important as
-		 * blk_stop_queue() करोesn't prevent the blk_fetch_request()
-		 * above to वापस us whatever is in the queue. Since we call
-		 * ide_करो_request() ourselves, we end up taking requests जबतक
+		 * Sanity: don't accept a request that isn't a PM request
+		 * if we are currently power managed. This is very important as
+		 * blk_stop_queue() doesn't prevent the blk_fetch_request()
+		 * above to return us whatever is in the queue. Since we call
+		 * ide_do_request() ourselves, we end up taking requests while
 		 * the queue is blocked...
 		 */
-		अगर ((drive->dev_flags & IDE_DFLAG_BLOCKED) &&
+		if ((drive->dev_flags & IDE_DFLAG_BLOCKED) &&
 		    ata_pm_request(rq) == 0 &&
-		    (rq->rq_flags & RQF_PM) == 0) अणु
-			/* there should be no pending command at this poपूर्णांक */
-			ide_unlock_port(hwअगर);
-			जाओ plug_device;
-		पूर्ण
+		    (rq->rq_flags & RQF_PM) == 0) {
+			/* there should be no pending command at this point */
+			ide_unlock_port(hwif);
+			goto plug_device;
+		}
 
 		scsi_req(rq)->resid_len = blk_rq_bytes(rq);
-		hwअगर->rq = rq;
+		hwif->rq = rq;
 
-		spin_unlock_irq(&hwअगर->lock);
+		spin_unlock_irq(&hwif->lock);
 		startstop = start_request(drive, rq);
-		spin_lock_irq(&hwअगर->lock);
+		spin_lock_irq(&hwif->lock);
 
-		अगर (startstop == ide_stopped) अणु
-			rq = hwअगर->rq;
-			hwअगर->rq = शून्य;
-			अगर (rq)
-				जाओ repeat;
-			ide_unlock_port(hwअगर);
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		if (startstop == ide_stopped) {
+			rq = hwif->rq;
+			hwif->rq = NULL;
+			if (rq)
+				goto repeat;
+			ide_unlock_port(hwif);
+			goto out;
+		}
+	} else {
 plug_device:
-		अगर (local_requeue)
+		if (local_requeue)
 			list_add(&rq->queuelist, &drive->rq_list);
-		spin_unlock_irq(&hwअगर->lock);
+		spin_unlock_irq(&hwif->lock);
 		ide_unlock_host(host);
-		अगर (!local_requeue)
+		if (!local_requeue)
 			ide_requeue_and_plug(drive, rq);
-		वापस BLK_STS_OK;
-	पूर्ण
+		return BLK_STS_OK;
+	}
 
 out:
-	spin_unlock_irq(&hwअगर->lock);
-	अगर (rq == शून्य)
+	spin_unlock_irq(&hwif->lock);
+	if (rq == NULL)
 		ide_unlock_host(host);
-	वापस BLK_STS_OK;
-पूर्ण
+	return BLK_STS_OK;
+}
 
 /*
  * Issue a new request to a device.
  */
-blk_status_t ide_queue_rq(काष्ठा blk_mq_hw_ctx *hctx,
-			  स्थिर काष्ठा blk_mq_queue_data *bd)
-अणु
+blk_status_t ide_queue_rq(struct blk_mq_hw_ctx *hctx,
+			  const struct blk_mq_queue_data *bd)
+{
 	ide_drive_t *drive = hctx->queue->queuedata;
-	ide_hwअगर_t *hwअगर = drive->hwअगर;
+	ide_hwif_t *hwif = drive->hwif;
 
-	spin_lock_irq(&hwअगर->lock);
-	अगर (drive->sense_rq_active) अणु
-		spin_unlock_irq(&hwअगर->lock);
-		वापस BLK_STS_DEV_RESOURCE;
-	पूर्ण
-	spin_unlock_irq(&hwअगर->lock);
+	spin_lock_irq(&hwif->lock);
+	if (drive->sense_rq_active) {
+		spin_unlock_irq(&hwif->lock);
+		return BLK_STS_DEV_RESOURCE;
+	}
+	spin_unlock_irq(&hwif->lock);
 
 	blk_mq_start_request(bd->rq);
-	वापस ide_issue_rq(drive, bd->rq, false);
-पूर्ण
+	return ide_issue_rq(drive, bd->rq, false);
+}
 
-अटल पूर्णांक drive_is_पढ़ोy(ide_drive_t *drive)
-अणु
-	ide_hwअगर_t *hwअगर = drive->hwअगर;
+static int drive_is_ready(ide_drive_t *drive)
+{
+	ide_hwif_t *hwif = drive->hwif;
 	u8 stat = 0;
 
-	अगर (drive->रुकोing_क्रम_dma)
-		वापस hwअगर->dma_ops->dma_test_irq(drive);
+	if (drive->waiting_for_dma)
+		return hwif->dma_ops->dma_test_irq(drive);
 
-	अगर (hwअगर->io_ports.ctl_addr &&
-	    (hwअगर->host_flags & IDE_HFLAG_BROKEN_ALTSTATUS) == 0)
-		stat = hwअगर->tp_ops->पढ़ो_altstatus(hwअगर);
-	अन्यथा
+	if (hwif->io_ports.ctl_addr &&
+	    (hwif->host_flags & IDE_HFLAG_BROKEN_ALTSTATUS) == 0)
+		stat = hwif->tp_ops->read_altstatus(hwif);
+	else
 		/* Note: this may clear a pending IRQ!! */
-		stat = hwअगर->tp_ops->पढ़ो_status(hwअगर);
+		stat = hwif->tp_ops->read_status(hwif);
 
-	अगर (stat & ATA_BUSY)
-		/* drive busy: definitely not पूर्णांकerrupting */
-		वापस 0;
+	if (stat & ATA_BUSY)
+		/* drive busy: definitely not interrupting */
+		return 0;
 
-	/* drive पढ़ोy: *might* be पूर्णांकerrupting */
-	वापस 1;
-पूर्ण
+	/* drive ready: *might* be interrupting */
+	return 1;
+}
 
 /**
- *	ide_समयr_expiry	-	handle lack of an IDE पूर्णांकerrupt
- *	@data: समयr callback magic (hwअगर)
+ *	ide_timer_expiry	-	handle lack of an IDE interrupt
+ *	@data: timer callback magic (hwif)
  *
- *	An IDE command has समयd out beक्रमe the expected drive वापस
- *	occurred. At this poपूर्णांक we attempt to clean up the current
+ *	An IDE command has timed out before the expected drive return
+ *	occurred. At this point we attempt to clean up the current
  *	mess. If the current handler includes an expiry handler then
  *	we invoke the expiry handler, and providing it is happy the
- *	work is करोne. If that fails we apply generic recovery rules
+ *	work is done. If that fails we apply generic recovery rules
  *	invoking the handler and checking the drive DMA status. We
  *	have an excessively incestuous relationship with the DMA
  *	logic that wants cleaning up.
  */
  
-व्योम ide_समयr_expiry (काष्ठा समयr_list *t)
-अणु
-	ide_hwअगर_t	*hwअगर = from_समयr(hwअगर, t, समयr);
+void ide_timer_expiry (struct timer_list *t)
+{
+	ide_hwif_t	*hwif = from_timer(hwif, t, timer);
 	ide_drive_t	*drive;
 	ide_handler_t	*handler;
-	अचिन्हित दीर्घ	flags;
-	पूर्णांक		रुको = -1;
-	पूर्णांक		plug_device = 0;
-	काष्ठा request	*rq_in_flight;
+	unsigned long	flags;
+	int		wait = -1;
+	int		plug_device = 0;
+	struct request	*rq_in_flight;
 
-	spin_lock_irqsave(&hwअगर->lock, flags);
+	spin_lock_irqsave(&hwif->lock, flags);
 
-	handler = hwअगर->handler;
+	handler = hwif->handler;
 
-	अगर (handler == शून्य || hwअगर->req_gen != hwअगर->req_gen_समयr) अणु
+	if (handler == NULL || hwif->req_gen != hwif->req_gen_timer) {
 		/*
-		 * Either a marginal समयout occurred
-		 * (got the पूर्णांकerrupt just as समयr expired),
+		 * Either a marginal timeout occurred
+		 * (got the interrupt just as timer expired),
 		 * or we were "sleeping" to give other devices a chance.
-		 * Either way, we करोn't really want to complain about anything.
+		 * Either way, we don't really want to complain about anything.
 		 */
-	पूर्ण अन्यथा अणु
-		ide_expiry_t *expiry = hwअगर->expiry;
+	} else {
+		ide_expiry_t *expiry = hwif->expiry;
 		ide_startstop_t startstop = ide_stopped;
 
-		drive = hwअगर->cur_dev;
+		drive = hwif->cur_dev;
 
-		अगर (expiry) अणु
-			रुको = expiry(drive);
-			अगर (रुको > 0) अणु /* जारी */
-				/* reset समयr */
-				hwअगर->समयr.expires = jअगरfies + रुको;
-				hwअगर->req_gen_समयr = hwअगर->req_gen;
-				add_समयr(&hwअगर->समयr);
-				spin_unlock_irqrestore(&hwअगर->lock, flags);
-				वापस;
-			पूर्ण
-		पूर्ण
-		hwअगर->handler = शून्य;
-		hwअगर->expiry = शून्य;
+		if (expiry) {
+			wait = expiry(drive);
+			if (wait > 0) { /* continue */
+				/* reset timer */
+				hwif->timer.expires = jiffies + wait;
+				hwif->req_gen_timer = hwif->req_gen;
+				add_timer(&hwif->timer);
+				spin_unlock_irqrestore(&hwif->lock, flags);
+				return;
+			}
+		}
+		hwif->handler = NULL;
+		hwif->expiry = NULL;
 		/*
-		 * We need to simulate a real पूर्णांकerrupt when invoking
+		 * We need to simulate a real interrupt when invoking
 		 * the handler() function, which means we need to
-		 * globally mask the specअगरic IRQ:
+		 * globally mask the specific IRQ:
 		 */
-		spin_unlock(&hwअगर->lock);
+		spin_unlock(&hwif->lock);
 		/* disable_irq_nosync ?? */
-		disable_irq(hwअगर->irq);
+		disable_irq(hwif->irq);
 
-		अगर (hwअगर->polling) अणु
+		if (hwif->polling) {
 			startstop = handler(drive);
-		पूर्ण अन्यथा अगर (drive_is_पढ़ोy(drive)) अणु
-			अगर (drive->रुकोing_क्रम_dma)
-				hwअगर->dma_ops->dma_lost_irq(drive);
-			अगर (hwअगर->port_ops && hwअगर->port_ops->clear_irq)
-				hwअगर->port_ops->clear_irq(drive);
+		} else if (drive_is_ready(drive)) {
+			if (drive->waiting_for_dma)
+				hwif->dma_ops->dma_lost_irq(drive);
+			if (hwif->port_ops && hwif->port_ops->clear_irq)
+				hwif->port_ops->clear_irq(drive);
 
-			prपूर्णांकk(KERN_WARNING "%s: lost interrupt\n",
+			printk(KERN_WARNING "%s: lost interrupt\n",
 				drive->name);
 			startstop = handler(drive);
-		पूर्ण अन्यथा अणु
-			अगर (drive->रुकोing_क्रम_dma)
-				startstop = ide_dma_समयout_retry(drive, रुको);
-			अन्यथा
+		} else {
+			if (drive->waiting_for_dma)
+				startstop = ide_dma_timeout_retry(drive, wait);
+			else
 				startstop = ide_error(drive, "irq timeout",
-					hwअगर->tp_ops->पढ़ो_status(hwअगर));
-		पूर्ण
-		/* Disable पूर्णांकerrupts again, `handler' might have enabled it */
-		spin_lock_irq(&hwअगर->lock);
-		enable_irq(hwअगर->irq);
-		अगर (startstop == ide_stopped && hwअगर->polling == 0) अणु
-			rq_in_flight = hwअगर->rq;
-			hwअगर->rq = शून्य;
-			ide_unlock_port(hwअगर);
+					hwif->tp_ops->read_status(hwif));
+		}
+		/* Disable interrupts again, `handler' might have enabled it */
+		spin_lock_irq(&hwif->lock);
+		enable_irq(hwif->irq);
+		if (startstop == ide_stopped && hwif->polling == 0) {
+			rq_in_flight = hwif->rq;
+			hwif->rq = NULL;
+			ide_unlock_port(hwif);
 			plug_device = 1;
-		पूर्ण
-	पूर्ण
-	spin_unlock_irqrestore(&hwअगर->lock, flags);
+		}
+	}
+	spin_unlock_irqrestore(&hwif->lock, flags);
 
-	अगर (plug_device) अणु
-		ide_unlock_host(hwअगर->host);
+	if (plug_device) {
+		ide_unlock_host(hwif->host);
 		ide_requeue_and_plug(drive, rq_in_flight);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- *	unexpected_पूर्णांकr		-	handle an unexpected IDE पूर्णांकerrupt
- *	@irq: पूर्णांकerrupt line
- *	@hwअगर: port being processed
+ *	unexpected_intr		-	handle an unexpected IDE interrupt
+ *	@irq: interrupt line
+ *	@hwif: port being processed
  *
- *	There's nothing really useful we can करो with an unexpected पूर्णांकerrupt,
- *	other than पढ़ोing the status रेजिस्टर (to clear it), and logging it.
- *	There should be no way that an irq can happen beक्रमe we're पढ़ोy क्रम it,
- *	so we needn't worry much about losing an "important" पूर्णांकerrupt here.
+ *	There's nothing really useful we can do with an unexpected interrupt,
+ *	other than reading the status register (to clear it), and logging it.
+ *	There should be no way that an irq can happen before we're ready for it,
+ *	so we needn't worry much about losing an "important" interrupt here.
  *
- *	On laptops (and "green" PCs), an unexpected पूर्णांकerrupt occurs whenever
- *	the drive enters "idle", "standby", or "sleep" mode, so अगर the status
- *	looks "good", we just ignore the पूर्णांकerrupt completely.
+ *	On laptops (and "green" PCs), an unexpected interrupt occurs whenever
+ *	the drive enters "idle", "standby", or "sleep" mode, so if the status
+ *	looks "good", we just ignore the interrupt completely.
  *
  *	This routine assumes __cli() is in effect when called.
  *
- *	If an unexpected पूर्णांकerrupt happens on irq15 जबतक we are handling irq14
- *	and अगर the two पूर्णांकerfaces are "serialized" (CMD640), then it looks like
- *	we could screw up by पूर्णांकerfering with a new request being set up क्रम 
+ *	If an unexpected interrupt happens on irq15 while we are handling irq14
+ *	and if the two interfaces are "serialized" (CMD640), then it looks like
+ *	we could screw up by interfering with a new request being set up for 
  *	irq15.
  *
  *	In reality, this is a non-issue.  The new command is not sent unless 
- *	the drive is पढ़ोy to accept one, in which हाल we know the drive is
- *	not trying to पूर्णांकerrupt us.  And ide_set_handler() is always invoked
- *	beक्रमe completing the issuance of any new drive command, so we will not
+ *	the drive is ready to accept one, in which case we know the drive is
+ *	not trying to interrupt us.  And ide_set_handler() is always invoked
+ *	before completing the issuance of any new drive command, so we will not
  *	be accidentally invoked as a result of any valid command completion
- *	पूर्णांकerrupt.
+ *	interrupt.
  */
 
-अटल व्योम unexpected_पूर्णांकr(पूर्णांक irq, ide_hwअगर_t *hwअगर)
-अणु
-	u8 stat = hwअगर->tp_ops->पढ़ो_status(hwअगर);
+static void unexpected_intr(int irq, ide_hwif_t *hwif)
+{
+	u8 stat = hwif->tp_ops->read_status(hwif);
 
-	अगर (!OK_STAT(stat, ATA_DRDY, BAD_STAT)) अणु
+	if (!OK_STAT(stat, ATA_DRDY, BAD_STAT)) {
 		/* Try to not flood the console with msgs */
-		अटल अचिन्हित दीर्घ last_msgसमय, count;
+		static unsigned long last_msgtime, count;
 		++count;
 
-		अगर (समय_after(jअगरfies, last_msgसमय + HZ)) अणु
-			last_msgसमय = jअगरfies;
-			prपूर्णांकk(KERN_ERR "%s: unexpected interrupt, "
+		if (time_after(jiffies, last_msgtime + HZ)) {
+			last_msgtime = jiffies;
+			printk(KERN_ERR "%s: unexpected interrupt, "
 				"status=0x%02x, count=%ld\n",
-				hwअगर->name, stat, count);
-		पूर्ण
-	पूर्ण
-पूर्ण
+				hwif->name, stat, count);
+		}
+	}
+}
 
 /**
- *	ide_पूर्णांकr	-	शेष IDE पूर्णांकerrupt handler
- *	@irq: पूर्णांकerrupt number
- *	@dev_id: hwअगर
+ *	ide_intr	-	default IDE interrupt handler
+ *	@irq: interrupt number
+ *	@dev_id: hwif
  *	@regs: unused weirdness from the kernel irq layer
  *
- *	This is the शेष IRQ handler क्रम the IDE layer. You should
- *	not need to override it. If you करो be aware it is subtle in
+ *	This is the default IRQ handler for the IDE layer. You should
+ *	not need to override it. If you do be aware it is subtle in
  *	places
  *
- *	hwअगर is the पूर्णांकerface in the group currently perक्रमming
- *	a command. hwअगर->cur_dev is the drive and hwअगर->handler is
+ *	hwif is the interface in the group currently performing
+ *	a command. hwif->cur_dev is the drive and hwif->handler is
  *	the IRQ handler to call. As we issue a command the handlers
  *	step through multiple states, reassigning the handler to the
  *	next step in the process. Unlike a smart SCSI controller IDE
- *	expects the मुख्य processor to sequence the various transfer
- *	stages. We also manage a poll समयr to catch up with most
- *	समयout situations. There are still a few where the handlers
- *	करोn't ever decide to give up.
+ *	expects the main processor to sequence the various transfer
+ *	stages. We also manage a poll timer to catch up with most
+ *	timeout situations. There are still a few where the handlers
+ *	don't ever decide to give up.
  *
- *	The handler eventually वापसs ide_stopped to indicate the
- *	request completed. At this poपूर्णांक we issue the next request
+ *	The handler eventually returns ide_stopped to indicate the
+ *	request completed. At this point we issue the next request
  *	on the port and the process begins again.
  */
 
-irqवापस_t ide_पूर्णांकr (पूर्णांक irq, व्योम *dev_id)
-अणु
-	ide_hwअगर_t *hwअगर = (ide_hwअगर_t *)dev_id;
-	काष्ठा ide_host *host = hwअगर->host;
+irqreturn_t ide_intr (int irq, void *dev_id)
+{
+	ide_hwif_t *hwif = (ide_hwif_t *)dev_id;
+	struct ide_host *host = hwif->host;
 	ide_drive_t *drive;
 	ide_handler_t *handler;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 	ide_startstop_t startstop;
-	irqवापस_t irq_ret = IRQ_NONE;
-	पूर्णांक plug_device = 0;
-	काष्ठा request *rq_in_flight;
+	irqreturn_t irq_ret = IRQ_NONE;
+	int plug_device = 0;
+	struct request *rq_in_flight;
 
-	अगर (host->host_flags & IDE_HFLAG_SERIALIZE) अणु
-		अगर (hwअगर != host->cur_port)
-			जाओ out_early;
-	पूर्ण
+	if (host->host_flags & IDE_HFLAG_SERIALIZE) {
+		if (hwif != host->cur_port)
+			goto out_early;
+	}
 
-	spin_lock_irqsave(&hwअगर->lock, flags);
+	spin_lock_irqsave(&hwif->lock, flags);
 
-	अगर (hwअगर->port_ops && hwअगर->port_ops->test_irq &&
-	    hwअगर->port_ops->test_irq(hwअगर) == 0)
-		जाओ out;
+	if (hwif->port_ops && hwif->port_ops->test_irq &&
+	    hwif->port_ops->test_irq(hwif) == 0)
+		goto out;
 
-	handler = hwअगर->handler;
+	handler = hwif->handler;
 
-	अगर (handler == शून्य || hwअगर->polling) अणु
+	if (handler == NULL || hwif->polling) {
 		/*
-		 * Not expecting an पूर्णांकerrupt from this drive.
+		 * Not expecting an interrupt from this drive.
 		 * That means this could be:
-		 *	(1) an पूर्णांकerrupt from another PCI device
+		 *	(1) an interrupt from another PCI device
 		 *	sharing the same PCI INT# as us.
 		 * or	(2) a drive just entered sleep or standby mode,
-		 *	and is पूर्णांकerrupting to let us know.
-		 * or	(3) a spurious पूर्णांकerrupt of unknown origin.
+		 *	and is interrupting to let us know.
+		 * or	(3) a spurious interrupt of unknown origin.
 		 *
-		 * For PCI, we cannot tell the dअगरference,
-		 * so in that हाल we just ignore it and hope it goes away.
+		 * For PCI, we cannot tell the difference,
+		 * so in that case we just ignore it and hope it goes away.
 		 */
-		अगर ((host->irq_flags & IRQF_SHARED) == 0) अणु
+		if ((host->irq_flags & IRQF_SHARED) == 0) {
 			/*
-			 * Probably not a shared PCI पूर्णांकerrupt,
-			 * so we can safely try to करो something about it:
+			 * Probably not a shared PCI interrupt,
+			 * so we can safely try to do something about it:
 			 */
-			unexpected_पूर्णांकr(irq, hwअगर);
-		पूर्ण अन्यथा अणु
+			unexpected_intr(irq, hwif);
+		} else {
 			/*
-			 * Whack the status रेजिस्टर, just in हाल
+			 * Whack the status register, just in case
 			 * we have a leftover pending IRQ.
 			 */
-			(व्योम)hwअगर->tp_ops->पढ़ो_status(hwअगर);
-		पूर्ण
-		जाओ out;
-	पूर्ण
+			(void)hwif->tp_ops->read_status(hwif);
+		}
+		goto out;
+	}
 
-	drive = hwअगर->cur_dev;
+	drive = hwif->cur_dev;
 
-	अगर (!drive_is_पढ़ोy(drive))
+	if (!drive_is_ready(drive))
 		/*
 		 * This happens regularly when we share a PCI IRQ with
-		 * another device.  Unक्रमtunately, it can also happen
-		 * with some buggy drives that trigger the IRQ beक्रमe
-		 * their status रेजिस्टर is up to date.  Hopefully we have
+		 * another device.  Unfortunately, it can also happen
+		 * with some buggy drives that trigger the IRQ before
+		 * their status register is up to date.  Hopefully we have
 		 * enough advance overhead that the latter isn't a problem.
 		 */
-		जाओ out;
+		goto out;
 
-	hwअगर->handler = शून्य;
-	hwअगर->expiry = शून्य;
-	hwअगर->req_gen++;
-	del_समयr(&hwअगर->समयr);
-	spin_unlock(&hwअगर->lock);
+	hwif->handler = NULL;
+	hwif->expiry = NULL;
+	hwif->req_gen++;
+	del_timer(&hwif->timer);
+	spin_unlock(&hwif->lock);
 
-	अगर (hwअगर->port_ops && hwअगर->port_ops->clear_irq)
-		hwअगर->port_ops->clear_irq(drive);
+	if (hwif->port_ops && hwif->port_ops->clear_irq)
+		hwif->port_ops->clear_irq(drive);
 
-	अगर (drive->dev_flags & IDE_DFLAG_UNMASK)
+	if (drive->dev_flags & IDE_DFLAG_UNMASK)
 		local_irq_enable_in_hardirq();
 
-	/* service this पूर्णांकerrupt, may set handler क्रम next पूर्णांकerrupt */
+	/* service this interrupt, may set handler for next interrupt */
 	startstop = handler(drive);
 
-	spin_lock_irq(&hwअगर->lock);
+	spin_lock_irq(&hwif->lock);
 	/*
-	 * Note that handler() may have set things up क्रम another
-	 * पूर्णांकerrupt to occur soon, but it cannot happen until
-	 * we निकास from this routine, because it will be the
+	 * Note that handler() may have set things up for another
+	 * interrupt to occur soon, but it cannot happen until
+	 * we exit from this routine, because it will be the
 	 * same irq as is currently being serviced here, and Linux
-	 * won't allow another of the same (on any CPU) until we वापस.
+	 * won't allow another of the same (on any CPU) until we return.
 	 */
-	अगर (startstop == ide_stopped && hwअगर->polling == 0) अणु
-		BUG_ON(hwअगर->handler);
-		rq_in_flight = hwअगर->rq;
-		hwअगर->rq = शून्य;
-		ide_unlock_port(hwअगर);
+	if (startstop == ide_stopped && hwif->polling == 0) {
+		BUG_ON(hwif->handler);
+		rq_in_flight = hwif->rq;
+		hwif->rq = NULL;
+		ide_unlock_port(hwif);
 		plug_device = 1;
-	पूर्ण
+	}
 	irq_ret = IRQ_HANDLED;
 out:
-	spin_unlock_irqrestore(&hwअगर->lock, flags);
+	spin_unlock_irqrestore(&hwif->lock, flags);
 out_early:
-	अगर (plug_device) अणु
-		ide_unlock_host(hwअगर->host);
+	if (plug_device) {
+		ide_unlock_host(hwif->host);
 		ide_requeue_and_plug(drive, rq_in_flight);
-	पूर्ण
+	}
 
-	वापस irq_ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(ide_पूर्णांकr);
+	return irq_ret;
+}
+EXPORT_SYMBOL_GPL(ide_intr);
 
-व्योम ide_pad_transfer(ide_drive_t *drive, पूर्णांक ग_लिखो, पूर्णांक len)
-अणु
-	ide_hwअगर_t *hwअगर = drive->hwअगर;
-	u8 buf[4] = अणु 0 पूर्ण;
+void ide_pad_transfer(ide_drive_t *drive, int write, int len)
+{
+	ide_hwif_t *hwif = drive->hwif;
+	u8 buf[4] = { 0 };
 
-	जबतक (len > 0) अणु
-		अगर (ग_लिखो)
-			hwअगर->tp_ops->output_data(drive, शून्य, buf, min(4, len));
-		अन्यथा
-			hwअगर->tp_ops->input_data(drive, शून्य, buf, min(4, len));
+	while (len > 0) {
+		if (write)
+			hwif->tp_ops->output_data(drive, NULL, buf, min(4, len));
+		else
+			hwif->tp_ops->input_data(drive, NULL, buf, min(4, len));
 		len -= 4;
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(ide_pad_transfer);
 
-व्योम ide_insert_request_head(ide_drive_t *drive, काष्ठा request *rq)
-अणु
+void ide_insert_request_head(ide_drive_t *drive, struct request *rq)
+{
 	drive->sense_rq_active = true;
 	list_add_tail(&rq->queuelist, &drive->rq_list);
 	kblockd_schedule_work(&drive->rq_work);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(ide_insert_request_head);

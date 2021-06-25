@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * opt3001.c - Texas Instruments OPT3001 Light Sensor
  *
@@ -9,79 +8,79 @@
  * Based on previous work from: Felipe Balbi <balbi@ti.com>
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
+#include <linux/bitops.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/i2c.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
+#include <linux/types.h>
 
-#समावेश <linux/iio/events.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
+#include <linux/iio/events.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
 
-#घोषणा OPT3001_RESULT		0x00
-#घोषणा OPT3001_CONFIGURATION	0x01
-#घोषणा OPT3001_LOW_LIMIT	0x02
-#घोषणा OPT3001_HIGH_LIMIT	0x03
-#घोषणा OPT3001_MANUFACTURER_ID	0x7e
-#घोषणा OPT3001_DEVICE_ID	0x7f
+#define OPT3001_RESULT		0x00
+#define OPT3001_CONFIGURATION	0x01
+#define OPT3001_LOW_LIMIT	0x02
+#define OPT3001_HIGH_LIMIT	0x03
+#define OPT3001_MANUFACTURER_ID	0x7e
+#define OPT3001_DEVICE_ID	0x7f
 
-#घोषणा OPT3001_CONFIGURATION_RN_MASK	(0xf << 12)
-#घोषणा OPT3001_CONFIGURATION_RN_AUTO	(0xc << 12)
+#define OPT3001_CONFIGURATION_RN_MASK	(0xf << 12)
+#define OPT3001_CONFIGURATION_RN_AUTO	(0xc << 12)
 
-#घोषणा OPT3001_CONFIGURATION_CT	BIT(11)
+#define OPT3001_CONFIGURATION_CT	BIT(11)
 
-#घोषणा OPT3001_CONFIGURATION_M_MASK	(3 << 9)
-#घोषणा OPT3001_CONFIGURATION_M_SHUTDOWN (0 << 9)
-#घोषणा OPT3001_CONFIGURATION_M_SINGLE	(1 << 9)
-#घोषणा OPT3001_CONFIGURATION_M_CONTINUOUS (2 << 9) /* also 3 << 9 */
+#define OPT3001_CONFIGURATION_M_MASK	(3 << 9)
+#define OPT3001_CONFIGURATION_M_SHUTDOWN (0 << 9)
+#define OPT3001_CONFIGURATION_M_SINGLE	(1 << 9)
+#define OPT3001_CONFIGURATION_M_CONTINUOUS (2 << 9) /* also 3 << 9 */
 
-#घोषणा OPT3001_CONFIGURATION_OVF	BIT(8)
-#घोषणा OPT3001_CONFIGURATION_CRF	BIT(7)
-#घोषणा OPT3001_CONFIGURATION_FH	BIT(6)
-#घोषणा OPT3001_CONFIGURATION_FL	BIT(5)
-#घोषणा OPT3001_CONFIGURATION_L		BIT(4)
-#घोषणा OPT3001_CONFIGURATION_POL	BIT(3)
-#घोषणा OPT3001_CONFIGURATION_ME	BIT(2)
+#define OPT3001_CONFIGURATION_OVF	BIT(8)
+#define OPT3001_CONFIGURATION_CRF	BIT(7)
+#define OPT3001_CONFIGURATION_FH	BIT(6)
+#define OPT3001_CONFIGURATION_FL	BIT(5)
+#define OPT3001_CONFIGURATION_L		BIT(4)
+#define OPT3001_CONFIGURATION_POL	BIT(3)
+#define OPT3001_CONFIGURATION_ME	BIT(2)
 
-#घोषणा OPT3001_CONFIGURATION_FC_MASK	(3 << 0)
+#define OPT3001_CONFIGURATION_FC_MASK	(3 << 0)
 
-/* The end-of-conversion enable is located in the low-limit रेजिस्टर */
-#घोषणा OPT3001_LOW_LIMIT_EOC_ENABLE	0xc000
+/* The end-of-conversion enable is located in the low-limit register */
+#define OPT3001_LOW_LIMIT_EOC_ENABLE	0xc000
 
-#घोषणा OPT3001_REG_EXPONENT(n)		((n) >> 12)
-#घोषणा OPT3001_REG_MANTISSA(n)		((n) & 0xfff)
+#define OPT3001_REG_EXPONENT(n)		((n) >> 12)
+#define OPT3001_REG_MANTISSA(n)		((n) & 0xfff)
 
-#घोषणा OPT3001_INT_TIME_LONG		800000
-#घोषणा OPT3001_INT_TIME_SHORT		100000
+#define OPT3001_INT_TIME_LONG		800000
+#define OPT3001_INT_TIME_SHORT		100000
 
 /*
- * Time to रुको क्रम conversion result to be पढ़ोy. The device datasheet
- * sect. 6.5 states results are पढ़ोy after total पूर्णांकegration समय plus 3ms.
- * This results in worst-हाल max values of 113ms or 883ms, respectively.
+ * Time to wait for conversion result to be ready. The device datasheet
+ * sect. 6.5 states results are ready after total integration time plus 3ms.
+ * This results in worst-case max values of 113ms or 883ms, respectively.
  * Add some slack to be on the safe side.
  */
-#घोषणा OPT3001_RESULT_READY_SHORT	150
-#घोषणा OPT3001_RESULT_READY_LONG	1000
+#define OPT3001_RESULT_READY_SHORT	150
+#define OPT3001_RESULT_READY_LONG	1000
 
-काष्ठा opt3001 अणु
-	काष्ठा i2c_client	*client;
-	काष्ठा device		*dev;
+struct opt3001 {
+	struct i2c_client	*client;
+	struct device		*dev;
 
-	काष्ठा mutex		lock;
+	struct mutex		lock;
 	bool			ok_to_ignore_lock;
-	bool			result_पढ़ोy;
-	रुको_queue_head_t	result_पढ़ोy_queue;
+	bool			result_ready;
+	wait_queue_head_t	result_ready_queue;
 	u16			result;
 
-	u32			पूर्णांक_समय;
+	u32			int_time;
 	u32			mode;
 
 	u16			high_thresh_mantissa;
@@ -91,391 +90,391 @@
 	u8			low_thresh_exp;
 
 	bool			use_irq;
-पूर्ण;
+};
 
-काष्ठा opt3001_scale अणु
-	पूर्णांक	val;
-	पूर्णांक	val2;
-पूर्ण;
+struct opt3001_scale {
+	int	val;
+	int	val2;
+};
 
-अटल स्थिर काष्ठा opt3001_scale opt3001_scales[] = अणु
-	अणु
+static const struct opt3001_scale opt3001_scales[] = {
+	{
 		.val = 40,
 		.val2 = 950000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.val = 81,
 		.val2 = 900000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.val = 163,
 		.val2 = 800000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.val = 327,
 		.val2 = 600000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.val = 655,
 		.val2 = 200000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.val = 1310,
 		.val2 = 400000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.val = 2620,
 		.val2 = 800000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.val = 5241,
 		.val2 = 600000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.val = 10483,
 		.val2 = 200000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.val = 20966,
 		.val2 = 400000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.val = 83865,
 		.val2 = 600000,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक opt3001_find_scale(स्थिर काष्ठा opt3001 *opt, पूर्णांक val,
-		पूर्णांक val2, u8 *exponent)
-अणु
-	पूर्णांक i;
+static int opt3001_find_scale(const struct opt3001 *opt, int val,
+		int val2, u8 *exponent)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(opt3001_scales); i++) अणु
-		स्थिर काष्ठा opt3001_scale *scale = &opt3001_scales[i];
+	for (i = 0; i < ARRAY_SIZE(opt3001_scales); i++) {
+		const struct opt3001_scale *scale = &opt3001_scales[i];
 
 		/*
-		 * Combine the पूर्णांकeger and micro parts क्रम comparison
-		 * purposes. Use milli lux precision to aव्योम 32-bit पूर्णांकeger
+		 * Combine the integer and micro parts for comparison
+		 * purposes. Use milli lux precision to avoid 32-bit integer
 		 * overflows.
 		 */
-		अगर ((val * 1000 + val2 / 1000) <=
-				(scale->val * 1000 + scale->val2 / 1000)) अणु
+		if ((val * 1000 + val2 / 1000) <=
+				(scale->val * 1000 + scale->val2 / 1000)) {
 			*exponent = i;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल व्योम opt3001_to_iio_ret(काष्ठा opt3001 *opt, u8 exponent,
-		u16 mantissa, पूर्णांक *val, पूर्णांक *val2)
-अणु
-	पूर्णांक lux;
+static void opt3001_to_iio_ret(struct opt3001 *opt, u8 exponent,
+		u16 mantissa, int *val, int *val2)
+{
+	int lux;
 
 	lux = 10 * (mantissa << exponent);
 	*val = lux / 1000;
 	*val2 = (lux - (*val * 1000)) * 1000;
-पूर्ण
+}
 
-अटल व्योम opt3001_set_mode(काष्ठा opt3001 *opt, u16 *reg, u16 mode)
-अणु
+static void opt3001_set_mode(struct opt3001 *opt, u16 *reg, u16 mode)
+{
 	*reg &= ~OPT3001_CONFIGURATION_M_MASK;
 	*reg |= mode;
 	opt->mode = mode;
-पूर्ण
+}
 
-अटल IIO_CONST_ATTR_INT_TIME_AVAIL("0.1 0.8");
+static IIO_CONST_ATTR_INT_TIME_AVAIL("0.1 0.8");
 
-अटल काष्ठा attribute *opt3001_attributes[] = अणु
-	&iio_स्थिर_attr_पूर्णांकegration_समय_available.dev_attr.attr,
-	शून्य
-पूर्ण;
+static struct attribute *opt3001_attributes[] = {
+	&iio_const_attr_integration_time_available.dev_attr.attr,
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group opt3001_attribute_group = अणु
+static const struct attribute_group opt3001_attribute_group = {
 	.attrs = opt3001_attributes,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_event_spec opt3001_event_spec[] = अणु
-	अणु
+static const struct iio_event_spec opt3001_event_spec[] = {
+	{
 		.type = IIO_EV_TYPE_THRESH,
-		.dir = IIO_EV_सूची_RISING,
+		.dir = IIO_EV_DIR_RISING,
 		.mask_separate = BIT(IIO_EV_INFO_VALUE) |
 			BIT(IIO_EV_INFO_ENABLE),
-	पूर्ण,
-	अणु
+	},
+	{
 		.type = IIO_EV_TYPE_THRESH,
-		.dir = IIO_EV_सूची_FALLING,
+		.dir = IIO_EV_DIR_FALLING,
 		.mask_separate = BIT(IIO_EV_INFO_VALUE) |
 			BIT(IIO_EV_INFO_ENABLE),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा iio_chan_spec opt3001_channels[] = अणु
-	अणु
+static const struct iio_chan_spec opt3001_channels[] = {
+	{
 		.type = IIO_LIGHT,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_PROCESSED) |
 				BIT(IIO_CHAN_INFO_INT_TIME),
 		.event_spec = opt3001_event_spec,
 		.num_event_specs = ARRAY_SIZE(opt3001_event_spec),
-	पूर्ण,
+	},
 	IIO_CHAN_SOFT_TIMESTAMP(1),
-पूर्ण;
+};
 
-अटल पूर्णांक opt3001_get_lux(काष्ठा opt3001 *opt, पूर्णांक *val, पूर्णांक *val2)
-अणु
-	पूर्णांक ret;
+static int opt3001_get_lux(struct opt3001 *opt, int *val, int *val2)
+{
+	int ret;
 	u16 mantissa;
 	u16 reg;
 	u8 exponent;
 	u16 value;
-	दीर्घ समयout;
+	long timeout;
 
-	अगर (opt->use_irq) अणु
+	if (opt->use_irq) {
 		/*
-		 * Enable the end-of-conversion पूर्णांकerrupt mechanism. Note that
-		 * करोing so will overग_लिखो the low-level limit value however we
+		 * Enable the end-of-conversion interrupt mechanism. Note that
+		 * doing so will overwrite the low-level limit value however we
 		 * will restore this value later on.
 		 */
-		ret = i2c_smbus_ग_लिखो_word_swapped(opt->client,
+		ret = i2c_smbus_write_word_swapped(opt->client,
 					OPT3001_LOW_LIMIT,
 					OPT3001_LOW_LIMIT_EOC_ENABLE);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(opt->dev, "failed to write register %02x\n",
 					OPT3001_LOW_LIMIT);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		/* Allow IRQ to access the device despite lock being set */
 		opt->ok_to_ignore_lock = true;
-	पूर्ण
+	}
 
-	/* Reset data-पढ़ोy indicator flag */
-	opt->result_पढ़ोy = false;
+	/* Reset data-ready indicator flag */
+	opt->result_ready = false;
 
-	/* Configure क्रम single-conversion mode and start a new conversion */
-	ret = i2c_smbus_पढ़ो_word_swapped(opt->client, OPT3001_CONFIGURATION);
-	अगर (ret < 0) अणु
+	/* Configure for single-conversion mode and start a new conversion */
+	ret = i2c_smbus_read_word_swapped(opt->client, OPT3001_CONFIGURATION);
+	if (ret < 0) {
 		dev_err(opt->dev, "failed to read register %02x\n",
 				OPT3001_CONFIGURATION);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	reg = ret;
 	opt3001_set_mode(opt, &reg, OPT3001_CONFIGURATION_M_SINGLE);
 
-	ret = i2c_smbus_ग_लिखो_word_swapped(opt->client, OPT3001_CONFIGURATION,
+	ret = i2c_smbus_write_word_swapped(opt->client, OPT3001_CONFIGURATION,
 			reg);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(opt->dev, "failed to write register %02x\n",
 				OPT3001_CONFIGURATION);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (opt->use_irq) अणु
-		/* Wait क्रम the IRQ to indicate the conversion is complete */
-		ret = रुको_event_समयout(opt->result_पढ़ोy_queue,
-				opt->result_पढ़ोy,
-				msecs_to_jअगरfies(OPT3001_RESULT_READY_LONG));
-	पूर्ण अन्यथा अणु
-		/* Sleep क्रम result पढ़ोy समय */
-		समयout = (opt->पूर्णांक_समय == OPT3001_INT_TIME_SHORT) ?
+	if (opt->use_irq) {
+		/* Wait for the IRQ to indicate the conversion is complete */
+		ret = wait_event_timeout(opt->result_ready_queue,
+				opt->result_ready,
+				msecs_to_jiffies(OPT3001_RESULT_READY_LONG));
+	} else {
+		/* Sleep for result ready time */
+		timeout = (opt->int_time == OPT3001_INT_TIME_SHORT) ?
 			OPT3001_RESULT_READY_SHORT : OPT3001_RESULT_READY_LONG;
-		msleep(समयout);
+		msleep(timeout);
 
-		/* Check result पढ़ोy flag */
-		ret = i2c_smbus_पढ़ो_word_swapped(opt->client,
+		/* Check result ready flag */
+		ret = i2c_smbus_read_word_swapped(opt->client,
 						  OPT3001_CONFIGURATION);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(opt->dev, "failed to read register %02x\n",
 				OPT3001_CONFIGURATION);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		अगर (!(ret & OPT3001_CONFIGURATION_CRF)) अणु
+		if (!(ret & OPT3001_CONFIGURATION_CRF)) {
 			ret = -ETIMEDOUT;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		/* Obtain value */
-		ret = i2c_smbus_पढ़ो_word_swapped(opt->client, OPT3001_RESULT);
-		अगर (ret < 0) अणु
+		ret = i2c_smbus_read_word_swapped(opt->client, OPT3001_RESULT);
+		if (ret < 0) {
 			dev_err(opt->dev, "failed to read register %02x\n",
 				OPT3001_RESULT);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 		opt->result = ret;
-		opt->result_पढ़ोy = true;
-	पूर्ण
+		opt->result_ready = true;
+	}
 
 err:
-	अगर (opt->use_irq)
-		/* Disallow IRQ to access the device जबतक lock is active */
+	if (opt->use_irq)
+		/* Disallow IRQ to access the device while lock is active */
 		opt->ok_to_ignore_lock = false;
 
-	अगर (ret == 0)
-		वापस -ETIMEDOUT;
-	अन्यथा अगर (ret < 0)
-		वापस ret;
+	if (ret == 0)
+		return -ETIMEDOUT;
+	else if (ret < 0)
+		return ret;
 
-	अगर (opt->use_irq) अणु
+	if (opt->use_irq) {
 		/*
-		 * Disable the end-of-conversion पूर्णांकerrupt mechanism by
+		 * Disable the end-of-conversion interrupt mechanism by
 		 * restoring the low-level limit value (clearing
 		 * OPT3001_LOW_LIMIT_EOC_ENABLE). Note that selectively clearing
 		 * those enable bits would affect the actual limit value due to
-		 * bit-overlap and thereक्रमe can't be करोne.
+		 * bit-overlap and therefore can't be done.
 		 */
 		value = (opt->low_thresh_exp << 12) | opt->low_thresh_mantissa;
-		ret = i2c_smbus_ग_लिखो_word_swapped(opt->client,
+		ret = i2c_smbus_write_word_swapped(opt->client,
 						   OPT3001_LOW_LIMIT,
 						   value);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(opt->dev, "failed to write register %02x\n",
 					OPT3001_LOW_LIMIT);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	exponent = OPT3001_REG_EXPONENT(opt->result);
 	mantissa = OPT3001_REG_MANTISSA(opt->result);
 
 	opt3001_to_iio_ret(opt, exponent, mantissa, val, val2);
 
-	वापस IIO_VAL_INT_PLUS_MICRO;
-पूर्ण
+	return IIO_VAL_INT_PLUS_MICRO;
+}
 
-अटल पूर्णांक opt3001_get_पूर्णांक_समय(काष्ठा opt3001 *opt, पूर्णांक *val, पूर्णांक *val2)
-अणु
+static int opt3001_get_int_time(struct opt3001 *opt, int *val, int *val2)
+{
 	*val = 0;
-	*val2 = opt->पूर्णांक_समय;
+	*val2 = opt->int_time;
 
-	वापस IIO_VAL_INT_PLUS_MICRO;
-पूर्ण
+	return IIO_VAL_INT_PLUS_MICRO;
+}
 
-अटल पूर्णांक opt3001_set_पूर्णांक_समय(काष्ठा opt3001 *opt, पूर्णांक समय)
-अणु
-	पूर्णांक ret;
+static int opt3001_set_int_time(struct opt3001 *opt, int time)
+{
+	int ret;
 	u16 reg;
 
-	ret = i2c_smbus_पढ़ो_word_swapped(opt->client, OPT3001_CONFIGURATION);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_read_word_swapped(opt->client, OPT3001_CONFIGURATION);
+	if (ret < 0) {
 		dev_err(opt->dev, "failed to read register %02x\n",
 				OPT3001_CONFIGURATION);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	reg = ret;
 
-	चयन (समय) अणु
-	हाल OPT3001_INT_TIME_SHORT:
+	switch (time) {
+	case OPT3001_INT_TIME_SHORT:
 		reg &= ~OPT3001_CONFIGURATION_CT;
-		opt->पूर्णांक_समय = OPT3001_INT_TIME_SHORT;
-		अवरोध;
-	हाल OPT3001_INT_TIME_LONG:
+		opt->int_time = OPT3001_INT_TIME_SHORT;
+		break;
+	case OPT3001_INT_TIME_LONG:
 		reg |= OPT3001_CONFIGURATION_CT;
-		opt->पूर्णांक_समय = OPT3001_INT_TIME_LONG;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		opt->int_time = OPT3001_INT_TIME_LONG;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस i2c_smbus_ग_लिखो_word_swapped(opt->client, OPT3001_CONFIGURATION,
+	return i2c_smbus_write_word_swapped(opt->client, OPT3001_CONFIGURATION,
 			reg);
-पूर्ण
+}
 
-अटल पूर्णांक opt3001_पढ़ो_raw(काष्ठा iio_dev *iio,
-		काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक *val, पूर्णांक *val2,
-		दीर्घ mask)
-अणु
-	काष्ठा opt3001 *opt = iio_priv(iio);
-	पूर्णांक ret;
+static int opt3001_read_raw(struct iio_dev *iio,
+		struct iio_chan_spec const *chan, int *val, int *val2,
+		long mask)
+{
+	struct opt3001 *opt = iio_priv(iio);
+	int ret;
 
-	अगर (opt->mode == OPT3001_CONFIGURATION_M_CONTINUOUS)
-		वापस -EBUSY;
+	if (opt->mode == OPT3001_CONFIGURATION_M_CONTINUOUS)
+		return -EBUSY;
 
-	अगर (chan->type != IIO_LIGHT)
-		वापस -EINVAL;
+	if (chan->type != IIO_LIGHT)
+		return -EINVAL;
 
 	mutex_lock(&opt->lock);
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_PROCESSED:
+	switch (mask) {
+	case IIO_CHAN_INFO_PROCESSED:
 		ret = opt3001_get_lux(opt, val, val2);
-		अवरोध;
-	हाल IIO_CHAN_INFO_INT_TIME:
-		ret = opt3001_get_पूर्णांक_समय(opt, val, val2);
-		अवरोध;
-	शेष:
+		break;
+	case IIO_CHAN_INFO_INT_TIME:
+		ret = opt3001_get_int_time(opt, val, val2);
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 
 	mutex_unlock(&opt->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक opt3001_ग_लिखो_raw(काष्ठा iio_dev *iio,
-		काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक val, पूर्णांक val2,
-		दीर्घ mask)
-अणु
-	काष्ठा opt3001 *opt = iio_priv(iio);
-	पूर्णांक ret;
+static int opt3001_write_raw(struct iio_dev *iio,
+		struct iio_chan_spec const *chan, int val, int val2,
+		long mask)
+{
+	struct opt3001 *opt = iio_priv(iio);
+	int ret;
 
-	अगर (opt->mode == OPT3001_CONFIGURATION_M_CONTINUOUS)
-		वापस -EBUSY;
+	if (opt->mode == OPT3001_CONFIGURATION_M_CONTINUOUS)
+		return -EBUSY;
 
-	अगर (chan->type != IIO_LIGHT)
-		वापस -EINVAL;
+	if (chan->type != IIO_LIGHT)
+		return -EINVAL;
 
-	अगर (mask != IIO_CHAN_INFO_INT_TIME)
-		वापस -EINVAL;
+	if (mask != IIO_CHAN_INFO_INT_TIME)
+		return -EINVAL;
 
-	अगर (val != 0)
-		वापस -EINVAL;
+	if (val != 0)
+		return -EINVAL;
 
 	mutex_lock(&opt->lock);
-	ret = opt3001_set_पूर्णांक_समय(opt, val2);
+	ret = opt3001_set_int_time(opt, val2);
 	mutex_unlock(&opt->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक opt3001_पढ़ो_event_value(काष्ठा iio_dev *iio,
-		स्थिर काष्ठा iio_chan_spec *chan, क्रमागत iio_event_type type,
-		क्रमागत iio_event_direction dir, क्रमागत iio_event_info info,
-		पूर्णांक *val, पूर्णांक *val2)
-अणु
-	काष्ठा opt3001 *opt = iio_priv(iio);
-	पूर्णांक ret = IIO_VAL_INT_PLUS_MICRO;
+static int opt3001_read_event_value(struct iio_dev *iio,
+		const struct iio_chan_spec *chan, enum iio_event_type type,
+		enum iio_event_direction dir, enum iio_event_info info,
+		int *val, int *val2)
+{
+	struct opt3001 *opt = iio_priv(iio);
+	int ret = IIO_VAL_INT_PLUS_MICRO;
 
 	mutex_lock(&opt->lock);
 
-	चयन (dir) अणु
-	हाल IIO_EV_सूची_RISING:
+	switch (dir) {
+	case IIO_EV_DIR_RISING:
 		opt3001_to_iio_ret(opt, opt->high_thresh_exp,
 				opt->high_thresh_mantissa, val, val2);
-		अवरोध;
-	हाल IIO_EV_सूची_FALLING:
+		break;
+	case IIO_EV_DIR_FALLING:
 		opt3001_to_iio_ret(opt, opt->low_thresh_exp,
 				opt->low_thresh_mantissa, val, val2);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 
 	mutex_unlock(&opt->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक opt3001_ग_लिखो_event_value(काष्ठा iio_dev *iio,
-		स्थिर काष्ठा iio_chan_spec *chan, क्रमागत iio_event_type type,
-		क्रमागत iio_event_direction dir, क्रमागत iio_event_info info,
-		पूर्णांक val, पूर्णांक val2)
-अणु
-	काष्ठा opt3001 *opt = iio_priv(iio);
-	पूर्णांक ret;
+static int opt3001_write_event_value(struct iio_dev *iio,
+		const struct iio_chan_spec *chan, enum iio_event_type type,
+		enum iio_event_direction dir, enum iio_event_info info,
+		int val, int val2)
+{
+	struct opt3001 *opt = iio_priv(iio);
+	int ret;
 
 	u16 mantissa;
 	u16 value;
@@ -483,371 +482,371 @@ err:
 
 	u8 exponent;
 
-	अगर (val < 0)
-		वापस -EINVAL;
+	if (val < 0)
+		return -EINVAL;
 
 	mutex_lock(&opt->lock);
 
 	ret = opt3001_find_scale(opt, val, val2, &exponent);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(opt->dev, "can't find scale for %d.%06u\n", val, val2);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	mantissa = (((val * 1000) + (val2 / 1000)) / 10) >> exponent;
 	value = (exponent << 12) | mantissa;
 
-	चयन (dir) अणु
-	हाल IIO_EV_सूची_RISING:
+	switch (dir) {
+	case IIO_EV_DIR_RISING:
 		reg = OPT3001_HIGH_LIMIT;
 		opt->high_thresh_mantissa = mantissa;
 		opt->high_thresh_exp = exponent;
-		अवरोध;
-	हाल IIO_EV_सूची_FALLING:
+		break;
+	case IIO_EV_DIR_FALLING:
 		reg = OPT3001_LOW_LIMIT;
 		opt->low_thresh_mantissa = mantissa;
 		opt->low_thresh_exp = exponent;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	ret = i2c_smbus_ग_लिखो_word_swapped(opt->client, reg, value);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_write_word_swapped(opt->client, reg, value);
+	if (ret < 0) {
 		dev_err(opt->dev, "failed to write register %02x\n", reg);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 err:
 	mutex_unlock(&opt->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक opt3001_पढ़ो_event_config(काष्ठा iio_dev *iio,
-		स्थिर काष्ठा iio_chan_spec *chan, क्रमागत iio_event_type type,
-		क्रमागत iio_event_direction dir)
-अणु
-	काष्ठा opt3001 *opt = iio_priv(iio);
+static int opt3001_read_event_config(struct iio_dev *iio,
+		const struct iio_chan_spec *chan, enum iio_event_type type,
+		enum iio_event_direction dir)
+{
+	struct opt3001 *opt = iio_priv(iio);
 
-	वापस opt->mode == OPT3001_CONFIGURATION_M_CONTINUOUS;
-पूर्ण
+	return opt->mode == OPT3001_CONFIGURATION_M_CONTINUOUS;
+}
 
-अटल पूर्णांक opt3001_ग_लिखो_event_config(काष्ठा iio_dev *iio,
-		स्थिर काष्ठा iio_chan_spec *chan, क्रमागत iio_event_type type,
-		क्रमागत iio_event_direction dir, पूर्णांक state)
-अणु
-	काष्ठा opt3001 *opt = iio_priv(iio);
-	पूर्णांक ret;
+static int opt3001_write_event_config(struct iio_dev *iio,
+		const struct iio_chan_spec *chan, enum iio_event_type type,
+		enum iio_event_direction dir, int state)
+{
+	struct opt3001 *opt = iio_priv(iio);
+	int ret;
 	u16 mode;
 	u16 reg;
 
-	अगर (state && opt->mode == OPT3001_CONFIGURATION_M_CONTINUOUS)
-		वापस 0;
+	if (state && opt->mode == OPT3001_CONFIGURATION_M_CONTINUOUS)
+		return 0;
 
-	अगर (!state && opt->mode == OPT3001_CONFIGURATION_M_SHUTDOWN)
-		वापस 0;
+	if (!state && opt->mode == OPT3001_CONFIGURATION_M_SHUTDOWN)
+		return 0;
 
 	mutex_lock(&opt->lock);
 
 	mode = state ? OPT3001_CONFIGURATION_M_CONTINUOUS
 		: OPT3001_CONFIGURATION_M_SHUTDOWN;
 
-	ret = i2c_smbus_पढ़ो_word_swapped(opt->client, OPT3001_CONFIGURATION);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_read_word_swapped(opt->client, OPT3001_CONFIGURATION);
+	if (ret < 0) {
 		dev_err(opt->dev, "failed to read register %02x\n",
 				OPT3001_CONFIGURATION);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	reg = ret;
 	opt3001_set_mode(opt, &reg, mode);
 
-	ret = i2c_smbus_ग_लिखो_word_swapped(opt->client, OPT3001_CONFIGURATION,
+	ret = i2c_smbus_write_word_swapped(opt->client, OPT3001_CONFIGURATION,
 			reg);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(opt->dev, "failed to write register %02x\n",
 				OPT3001_CONFIGURATION);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 err:
 	mutex_unlock(&opt->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा iio_info opt3001_info = अणु
+static const struct iio_info opt3001_info = {
 	.attrs = &opt3001_attribute_group,
-	.पढ़ो_raw = opt3001_पढ़ो_raw,
-	.ग_लिखो_raw = opt3001_ग_लिखो_raw,
-	.पढ़ो_event_value = opt3001_पढ़ो_event_value,
-	.ग_लिखो_event_value = opt3001_ग_लिखो_event_value,
-	.पढ़ो_event_config = opt3001_पढ़ो_event_config,
-	.ग_लिखो_event_config = opt3001_ग_लिखो_event_config,
-पूर्ण;
+	.read_raw = opt3001_read_raw,
+	.write_raw = opt3001_write_raw,
+	.read_event_value = opt3001_read_event_value,
+	.write_event_value = opt3001_write_event_value,
+	.read_event_config = opt3001_read_event_config,
+	.write_event_config = opt3001_write_event_config,
+};
 
-अटल पूर्णांक opt3001_पढ़ो_id(काष्ठा opt3001 *opt)
-अणु
-	अक्षर manufacturer[2];
+static int opt3001_read_id(struct opt3001 *opt)
+{
+	char manufacturer[2];
 	u16 device_id;
-	पूर्णांक ret;
+	int ret;
 
-	ret = i2c_smbus_पढ़ो_word_swapped(opt->client, OPT3001_MANUFACTURER_ID);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_read_word_swapped(opt->client, OPT3001_MANUFACTURER_ID);
+	if (ret < 0) {
 		dev_err(opt->dev, "failed to read register %02x\n",
 				OPT3001_MANUFACTURER_ID);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	manufacturer[0] = ret >> 8;
 	manufacturer[1] = ret & 0xff;
 
-	ret = i2c_smbus_पढ़ो_word_swapped(opt->client, OPT3001_DEVICE_ID);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_read_word_swapped(opt->client, OPT3001_DEVICE_ID);
+	if (ret < 0) {
 		dev_err(opt->dev, "failed to read register %02x\n",
 				OPT3001_DEVICE_ID);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	device_id = ret;
 
 	dev_info(opt->dev, "Found %c%c OPT%04x\n", manufacturer[0],
 			manufacturer[1], device_id);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक opt3001_configure(काष्ठा opt3001 *opt)
-अणु
-	पूर्णांक ret;
+static int opt3001_configure(struct opt3001 *opt)
+{
+	int ret;
 	u16 reg;
 
-	ret = i2c_smbus_पढ़ो_word_swapped(opt->client, OPT3001_CONFIGURATION);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_read_word_swapped(opt->client, OPT3001_CONFIGURATION);
+	if (ret < 0) {
 		dev_err(opt->dev, "failed to read register %02x\n",
 				OPT3001_CONFIGURATION);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	reg = ret;
 
-	/* Enable स्वतःmatic full-scale setting mode */
+	/* Enable automatic full-scale setting mode */
 	reg &= ~OPT3001_CONFIGURATION_RN_MASK;
 	reg |= OPT3001_CONFIGURATION_RN_AUTO;
 
-	/* Reflect status of the device's पूर्णांकegration समय setting */
-	अगर (reg & OPT3001_CONFIGURATION_CT)
-		opt->पूर्णांक_समय = OPT3001_INT_TIME_LONG;
-	अन्यथा
-		opt->पूर्णांक_समय = OPT3001_INT_TIME_SHORT;
+	/* Reflect status of the device's integration time setting */
+	if (reg & OPT3001_CONFIGURATION_CT)
+		opt->int_time = OPT3001_INT_TIME_LONG;
+	else
+		opt->int_time = OPT3001_INT_TIME_SHORT;
 
-	/* Ensure device is in shutकरोwn initially */
+	/* Ensure device is in shutdown initially */
 	opt3001_set_mode(opt, &reg, OPT3001_CONFIGURATION_M_SHUTDOWN);
 
-	/* Configure क्रम latched winकरोw-style comparison operation */
+	/* Configure for latched window-style comparison operation */
 	reg |= OPT3001_CONFIGURATION_L;
 	reg &= ~OPT3001_CONFIGURATION_POL;
 	reg &= ~OPT3001_CONFIGURATION_ME;
 	reg &= ~OPT3001_CONFIGURATION_FC_MASK;
 
-	ret = i2c_smbus_ग_लिखो_word_swapped(opt->client, OPT3001_CONFIGURATION,
+	ret = i2c_smbus_write_word_swapped(opt->client, OPT3001_CONFIGURATION,
 			reg);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(opt->dev, "failed to write register %02x\n",
 				OPT3001_CONFIGURATION);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = i2c_smbus_पढ़ो_word_swapped(opt->client, OPT3001_LOW_LIMIT);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_read_word_swapped(opt->client, OPT3001_LOW_LIMIT);
+	if (ret < 0) {
 		dev_err(opt->dev, "failed to read register %02x\n",
 				OPT3001_LOW_LIMIT);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	opt->low_thresh_mantissa = OPT3001_REG_MANTISSA(ret);
 	opt->low_thresh_exp = OPT3001_REG_EXPONENT(ret);
 
-	ret = i2c_smbus_पढ़ो_word_swapped(opt->client, OPT3001_HIGH_LIMIT);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_read_word_swapped(opt->client, OPT3001_HIGH_LIMIT);
+	if (ret < 0) {
 		dev_err(opt->dev, "failed to read register %02x\n",
 				OPT3001_HIGH_LIMIT);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	opt->high_thresh_mantissa = OPT3001_REG_MANTISSA(ret);
 	opt->high_thresh_exp = OPT3001_REG_EXPONENT(ret);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t opt3001_irq(पूर्णांक irq, व्योम *_iio)
-अणु
-	काष्ठा iio_dev *iio = _iio;
-	काष्ठा opt3001 *opt = iio_priv(iio);
-	पूर्णांक ret;
-	bool wake_result_पढ़ोy_queue = false;
+static irqreturn_t opt3001_irq(int irq, void *_iio)
+{
+	struct iio_dev *iio = _iio;
+	struct opt3001 *opt = iio_priv(iio);
+	int ret;
+	bool wake_result_ready_queue = false;
 
-	अगर (!opt->ok_to_ignore_lock)
+	if (!opt->ok_to_ignore_lock)
 		mutex_lock(&opt->lock);
 
-	ret = i2c_smbus_पढ़ो_word_swapped(opt->client, OPT3001_CONFIGURATION);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_read_word_swapped(opt->client, OPT3001_CONFIGURATION);
+	if (ret < 0) {
 		dev_err(opt->dev, "failed to read register %02x\n",
 				OPT3001_CONFIGURATION);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर ((ret & OPT3001_CONFIGURATION_M_MASK) ==
-			OPT3001_CONFIGURATION_M_CONTINUOUS) अणु
-		अगर (ret & OPT3001_CONFIGURATION_FH)
+	if ((ret & OPT3001_CONFIGURATION_M_MASK) ==
+			OPT3001_CONFIGURATION_M_CONTINUOUS) {
+		if (ret & OPT3001_CONFIGURATION_FH)
 			iio_push_event(iio,
 					IIO_UNMOD_EVENT_CODE(IIO_LIGHT, 0,
 							IIO_EV_TYPE_THRESH,
-							IIO_EV_सूची_RISING),
-					iio_get_समय_ns(iio));
-		अगर (ret & OPT3001_CONFIGURATION_FL)
+							IIO_EV_DIR_RISING),
+					iio_get_time_ns(iio));
+		if (ret & OPT3001_CONFIGURATION_FL)
 			iio_push_event(iio,
 					IIO_UNMOD_EVENT_CODE(IIO_LIGHT, 0,
 							IIO_EV_TYPE_THRESH,
-							IIO_EV_सूची_FALLING),
-					iio_get_समय_ns(iio));
-	पूर्ण अन्यथा अगर (ret & OPT3001_CONFIGURATION_CRF) अणु
-		ret = i2c_smbus_पढ़ो_word_swapped(opt->client, OPT3001_RESULT);
-		अगर (ret < 0) अणु
+							IIO_EV_DIR_FALLING),
+					iio_get_time_ns(iio));
+	} else if (ret & OPT3001_CONFIGURATION_CRF) {
+		ret = i2c_smbus_read_word_swapped(opt->client, OPT3001_RESULT);
+		if (ret < 0) {
 			dev_err(opt->dev, "failed to read register %02x\n",
 					OPT3001_RESULT);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		opt->result = ret;
-		opt->result_पढ़ोy = true;
-		wake_result_पढ़ोy_queue = true;
-	पूर्ण
+		opt->result_ready = true;
+		wake_result_ready_queue = true;
+	}
 
 out:
-	अगर (!opt->ok_to_ignore_lock)
+	if (!opt->ok_to_ignore_lock)
 		mutex_unlock(&opt->lock);
 
-	अगर (wake_result_पढ़ोy_queue)
-		wake_up(&opt->result_पढ़ोy_queue);
+	if (wake_result_ready_queue)
+		wake_up(&opt->result_ready_queue);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक opt3001_probe(काष्ठा i2c_client *client,
-		स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा device *dev = &client->dev;
+static int opt3001_probe(struct i2c_client *client,
+		const struct i2c_device_id *id)
+{
+	struct device *dev = &client->dev;
 
-	काष्ठा iio_dev *iio;
-	काष्ठा opt3001 *opt;
-	पूर्णांक irq = client->irq;
-	पूर्णांक ret;
+	struct iio_dev *iio;
+	struct opt3001 *opt;
+	int irq = client->irq;
+	int ret;
 
-	iio = devm_iio_device_alloc(dev, माप(*opt));
-	अगर (!iio)
-		वापस -ENOMEM;
+	iio = devm_iio_device_alloc(dev, sizeof(*opt));
+	if (!iio)
+		return -ENOMEM;
 
 	opt = iio_priv(iio);
 	opt->client = client;
 	opt->dev = dev;
 
 	mutex_init(&opt->lock);
-	init_रुकोqueue_head(&opt->result_पढ़ोy_queue);
+	init_waitqueue_head(&opt->result_ready_queue);
 	i2c_set_clientdata(client, iio);
 
-	ret = opt3001_पढ़ो_id(opt);
-	अगर (ret)
-		वापस ret;
+	ret = opt3001_read_id(opt);
+	if (ret)
+		return ret;
 
 	ret = opt3001_configure(opt);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	iio->name = client->name;
 	iio->channels = opt3001_channels;
 	iio->num_channels = ARRAY_SIZE(opt3001_channels);
-	iio->modes = INDIO_सूचीECT_MODE;
+	iio->modes = INDIO_DIRECT_MODE;
 	iio->info = &opt3001_info;
 
-	ret = devm_iio_device_रेजिस्टर(dev, iio);
-	अगर (ret) अणु
+	ret = devm_iio_device_register(dev, iio);
+	if (ret) {
 		dev_err(dev, "failed to register IIO device\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Make use of INT pin only अगर valid IRQ no. is given */
-	अगर (irq > 0) अणु
-		ret = request_thपढ़ोed_irq(irq, शून्य, opt3001_irq,
+	/* Make use of INT pin only if valid IRQ no. is given */
+	if (irq > 0) {
+		ret = request_threaded_irq(irq, NULL, opt3001_irq,
 				IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
 				"opt3001", iio);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "failed to request IRQ #%d\n", irq);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		opt->use_irq = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_dbg(opt->dev, "enabling interrupt-less operation\n");
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक opt3001_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा iio_dev *iio = i2c_get_clientdata(client);
-	काष्ठा opt3001 *opt = iio_priv(iio);
-	पूर्णांक ret;
+static int opt3001_remove(struct i2c_client *client)
+{
+	struct iio_dev *iio = i2c_get_clientdata(client);
+	struct opt3001 *opt = iio_priv(iio);
+	int ret;
 	u16 reg;
 
-	अगर (opt->use_irq)
-		मुक्त_irq(client->irq, iio);
+	if (opt->use_irq)
+		free_irq(client->irq, iio);
 
-	ret = i2c_smbus_पढ़ो_word_swapped(opt->client, OPT3001_CONFIGURATION);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_read_word_swapped(opt->client, OPT3001_CONFIGURATION);
+	if (ret < 0) {
 		dev_err(opt->dev, "failed to read register %02x\n",
 				OPT3001_CONFIGURATION);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	reg = ret;
 	opt3001_set_mode(opt, &reg, OPT3001_CONFIGURATION_M_SHUTDOWN);
 
-	ret = i2c_smbus_ग_लिखो_word_swapped(opt->client, OPT3001_CONFIGURATION,
+	ret = i2c_smbus_write_word_swapped(opt->client, OPT3001_CONFIGURATION,
 			reg);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(opt->dev, "failed to write register %02x\n",
 				OPT3001_CONFIGURATION);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id opt3001_id[] = अणु
-	अणु "opt3001", 0 पूर्ण,
-	अणु पूर्ण /* Terminating Entry */
-पूर्ण;
+static const struct i2c_device_id opt3001_id[] = {
+	{ "opt3001", 0 },
+	{ } /* Terminating Entry */
+};
 MODULE_DEVICE_TABLE(i2c, opt3001_id);
 
-अटल स्थिर काष्ठा of_device_id opt3001_of_match[] = अणु
-	अणु .compatible = "ti,opt3001" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id opt3001_of_match[] = {
+	{ .compatible = "ti,opt3001" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, opt3001_of_match);
 
-अटल काष्ठा i2c_driver opt3001_driver = अणु
+static struct i2c_driver opt3001_driver = {
 	.probe = opt3001_probe,
-	.हटाओ = opt3001_हटाओ,
+	.remove = opt3001_remove,
 	.id_table = opt3001_id,
 
-	.driver = अणु
+	.driver = {
 		.name = "opt3001",
 		.of_match_table = opt3001_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 module_i2c_driver(opt3001_driver);
 

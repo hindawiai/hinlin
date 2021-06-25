@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * NUMA memory policies क्रम Linux.
- * Copyright 2003,2004 Andi Kleen SuSE Lअसल
+ * NUMA memory policies for Linux.
+ * Copyright 2003,2004 Andi Kleen SuSE Labs
  */
-#अगर_अघोषित _LINUX_MEMPOLICY_H
-#घोषणा _LINUX_MEMPOLICY_H 1
+#ifndef _LINUX_MEMPOLICY_H
+#define _LINUX_MEMPOLICY_H 1
 
-#समावेश <linux/sched.h>
-#समावेश <linux/mmzone.h>
-#समावेश <linux/dax.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/nodemask.h>
-#समावेश <linux/pagemap.h>
-#समावेश <uapi/linux/mempolicy.h>
+#include <linux/sched.h>
+#include <linux/mmzone.h>
+#include <linux/dax.h>
+#include <linux/slab.h>
+#include <linux/rbtree.h>
+#include <linux/spinlock.h>
+#include <linux/nodemask.h>
+#include <linux/pagemap.h>
+#include <uapi/linux/mempolicy.h>
 
-काष्ठा mm_काष्ठा;
+struct mm_struct;
 
-#अगर_घोषित CONFIG_NUMA
+#ifdef CONFIG_NUMA
 
 /*
  * Describe a memory policy.
@@ -29,272 +28,272 @@
  * the process policy is used. Interrupts ignore the memory policy
  * of the current process.
  *
- * Locking policy क्रम पूर्णांकerleave:
+ * Locking policy for interleave:
  * In process context there is no locking because only the process accesses
- * its own state. All vma manipulation is somewhat रक्षित by a करोwn_पढ़ो on
+ * its own state. All vma manipulation is somewhat protected by a down_read on
  * mmap_lock.
  *
  * Freeing policy:
- * Mempolicy objects are reference counted.  A mempolicy will be मुक्तd when
+ * Mempolicy objects are reference counted.  A mempolicy will be freed when
  * mpol_put() decrements the reference count to zero.
  *
  * Duplicating policy objects:
- * mpol_dup() allocates a new mempolicy and copies the specअगरied mempolicy
+ * mpol_dup() allocates a new mempolicy and copies the specified mempolicy
  * to the new storage.  The reference count of the new object is initialized
  * to 1, representing the caller of mpol_dup().
  */
-काष्ठा mempolicy अणु
+struct mempolicy {
 	atomic_t refcnt;
-	अचिन्हित लघु mode; 	/* See MPOL_* above */
-	अचिन्हित लघु flags;	/* See set_mempolicy() MPOL_F_* above */
-	जोड़ अणु
-		लघु 		 preferred_node; /* preferred */
-		nodemask_t	 nodes;		/* पूर्णांकerleave/bind */
-		/* undefined क्रम शेष */
-	पूर्ण v;
-	जोड़ अणु
+	unsigned short mode; 	/* See MPOL_* above */
+	unsigned short flags;	/* See set_mempolicy() MPOL_F_* above */
+	union {
+		short 		 preferred_node; /* preferred */
+		nodemask_t	 nodes;		/* interleave/bind */
+		/* undefined for default */
+	} v;
+	union {
 		nodemask_t cpuset_mems_allowed;	/* relative to these nodes */
 		nodemask_t user_nodemask;	/* nodemask passed by user */
-	पूर्ण w;
-पूर्ण;
+	} w;
+};
 
 /*
- * Support क्रम managing mempolicy data objects (clone, copy, destroy)
- * The शेष fast path of a शून्य MPOL_DEFAULT policy is always अंतरभूतd.
+ * Support for managing mempolicy data objects (clone, copy, destroy)
+ * The default fast path of a NULL MPOL_DEFAULT policy is always inlined.
  */
 
-बाह्य व्योम __mpol_put(काष्ठा mempolicy *pol);
-अटल अंतरभूत व्योम mpol_put(काष्ठा mempolicy *pol)
-अणु
-	अगर (pol)
+extern void __mpol_put(struct mempolicy *pol);
+static inline void mpol_put(struct mempolicy *pol)
+{
+	if (pol)
 		__mpol_put(pol);
-पूर्ण
+}
 
 /*
  * Does mempolicy pol need explicit unref after use?
- * Currently only needed क्रम shared policies.
+ * Currently only needed for shared policies.
  */
-अटल अंतरभूत पूर्णांक mpol_needs_cond_ref(काष्ठा mempolicy *pol)
-अणु
-	वापस (pol && (pol->flags & MPOL_F_SHARED));
-पूर्ण
+static inline int mpol_needs_cond_ref(struct mempolicy *pol)
+{
+	return (pol && (pol->flags & MPOL_F_SHARED));
+}
 
-अटल अंतरभूत व्योम mpol_cond_put(काष्ठा mempolicy *pol)
-अणु
-	अगर (mpol_needs_cond_ref(pol))
+static inline void mpol_cond_put(struct mempolicy *pol)
+{
+	if (mpol_needs_cond_ref(pol))
 		__mpol_put(pol);
-पूर्ण
+}
 
-बाह्य काष्ठा mempolicy *__mpol_dup(काष्ठा mempolicy *pol);
-अटल अंतरभूत काष्ठा mempolicy *mpol_dup(काष्ठा mempolicy *pol)
-अणु
-	अगर (pol)
+extern struct mempolicy *__mpol_dup(struct mempolicy *pol);
+static inline struct mempolicy *mpol_dup(struct mempolicy *pol)
+{
+	if (pol)
 		pol = __mpol_dup(pol);
-	वापस pol;
-पूर्ण
+	return pol;
+}
 
-#घोषणा vma_policy(vma) ((vma)->vm_policy)
+#define vma_policy(vma) ((vma)->vm_policy)
 
-अटल अंतरभूत व्योम mpol_get(काष्ठा mempolicy *pol)
-अणु
-	अगर (pol)
+static inline void mpol_get(struct mempolicy *pol)
+{
+	if (pol)
 		atomic_inc(&pol->refcnt);
-पूर्ण
+}
 
-बाह्य bool __mpol_equal(काष्ठा mempolicy *a, काष्ठा mempolicy *b);
-अटल अंतरभूत bool mpol_equal(काष्ठा mempolicy *a, काष्ठा mempolicy *b)
-अणु
-	अगर (a == b)
-		वापस true;
-	वापस __mpol_equal(a, b);
-पूर्ण
+extern bool __mpol_equal(struct mempolicy *a, struct mempolicy *b);
+static inline bool mpol_equal(struct mempolicy *a, struct mempolicy *b)
+{
+	if (a == b)
+		return true;
+	return __mpol_equal(a, b);
+}
 
 /*
- * Tree of shared policies क्रम a shared memory region.
- * Maपूर्णांकain the policies in a pseuकरो mm that contains vmas. The vmas
- * carry the policy. As a special twist the pseuकरो mm is indexed in pages, not
+ * Tree of shared policies for a shared memory region.
+ * Maintain the policies in a pseudo mm that contains vmas. The vmas
+ * carry the policy. As a special twist the pseudo mm is indexed in pages, not
  * bytes, so that we can work with shared memory segments bigger than
- * अचिन्हित दीर्घ.
+ * unsigned long.
  */
 
-काष्ठा sp_node अणु
-	काष्ठा rb_node nd;
-	अचिन्हित दीर्घ start, end;
-	काष्ठा mempolicy *policy;
-पूर्ण;
+struct sp_node {
+	struct rb_node nd;
+	unsigned long start, end;
+	struct mempolicy *policy;
+};
 
-काष्ठा shared_policy अणु
-	काष्ठा rb_root root;
+struct shared_policy {
+	struct rb_root root;
 	rwlock_t lock;
-पूर्ण;
+};
 
-पूर्णांक vma_dup_policy(काष्ठा vm_area_काष्ठा *src, काष्ठा vm_area_काष्ठा *dst);
-व्योम mpol_shared_policy_init(काष्ठा shared_policy *sp, काष्ठा mempolicy *mpol);
-पूर्णांक mpol_set_shared_policy(काष्ठा shared_policy *info,
-				काष्ठा vm_area_काष्ठा *vma,
-				काष्ठा mempolicy *new);
-व्योम mpol_मुक्त_shared_policy(काष्ठा shared_policy *p);
-काष्ठा mempolicy *mpol_shared_policy_lookup(काष्ठा shared_policy *sp,
-					    अचिन्हित दीर्घ idx);
+int vma_dup_policy(struct vm_area_struct *src, struct vm_area_struct *dst);
+void mpol_shared_policy_init(struct shared_policy *sp, struct mempolicy *mpol);
+int mpol_set_shared_policy(struct shared_policy *info,
+				struct vm_area_struct *vma,
+				struct mempolicy *new);
+void mpol_free_shared_policy(struct shared_policy *p);
+struct mempolicy *mpol_shared_policy_lookup(struct shared_policy *sp,
+					    unsigned long idx);
 
-काष्ठा mempolicy *get_task_policy(काष्ठा task_काष्ठा *p);
-काष्ठा mempolicy *__get_vma_policy(काष्ठा vm_area_काष्ठा *vma,
-		अचिन्हित दीर्घ addr);
-bool vma_policy_mof(काष्ठा vm_area_काष्ठा *vma);
+struct mempolicy *get_task_policy(struct task_struct *p);
+struct mempolicy *__get_vma_policy(struct vm_area_struct *vma,
+		unsigned long addr);
+bool vma_policy_mof(struct vm_area_struct *vma);
 
-बाह्य व्योम numa_शेष_policy(व्योम);
-बाह्य व्योम numa_policy_init(व्योम);
-बाह्य व्योम mpol_rebind_task(काष्ठा task_काष्ठा *tsk, स्थिर nodemask_t *new);
-बाह्य व्योम mpol_rebind_mm(काष्ठा mm_काष्ठा *mm, nodemask_t *new);
+extern void numa_default_policy(void);
+extern void numa_policy_init(void);
+extern void mpol_rebind_task(struct task_struct *tsk, const nodemask_t *new);
+extern void mpol_rebind_mm(struct mm_struct *mm, nodemask_t *new);
 
-बाह्य पूर्णांक huge_node(काष्ठा vm_area_काष्ठा *vma,
-				अचिन्हित दीर्घ addr, gfp_t gfp_flags,
-				काष्ठा mempolicy **mpol, nodemask_t **nodemask);
-बाह्य bool init_nodemask_of_mempolicy(nodemask_t *mask);
-बाह्य bool mempolicy_nodemask_पूर्णांकersects(काष्ठा task_काष्ठा *tsk,
-				स्थिर nodemask_t *mask);
-बाह्य nodemask_t *policy_nodemask(gfp_t gfp, काष्ठा mempolicy *policy);
+extern int huge_node(struct vm_area_struct *vma,
+				unsigned long addr, gfp_t gfp_flags,
+				struct mempolicy **mpol, nodemask_t **nodemask);
+extern bool init_nodemask_of_mempolicy(nodemask_t *mask);
+extern bool mempolicy_nodemask_intersects(struct task_struct *tsk,
+				const nodemask_t *mask);
+extern nodemask_t *policy_nodemask(gfp_t gfp, struct mempolicy *policy);
 
-अटल अंतरभूत nodemask_t *policy_nodemask_current(gfp_t gfp)
-अणु
-	काष्ठा mempolicy *mpol = get_task_policy(current);
+static inline nodemask_t *policy_nodemask_current(gfp_t gfp)
+{
+	struct mempolicy *mpol = get_task_policy(current);
 
-	वापस policy_nodemask(gfp, mpol);
-पूर्ण
+	return policy_nodemask(gfp, mpol);
+}
 
-बाह्य अचिन्हित पूर्णांक mempolicy_slab_node(व्योम);
+extern unsigned int mempolicy_slab_node(void);
 
-बाह्य क्रमागत zone_type policy_zone;
+extern enum zone_type policy_zone;
 
-अटल अंतरभूत व्योम check_highest_zone(क्रमागत zone_type k)
-अणु
-	अगर (k > policy_zone && k != ZONE_MOVABLE)
+static inline void check_highest_zone(enum zone_type k)
+{
+	if (k > policy_zone && k != ZONE_MOVABLE)
 		policy_zone = k;
-पूर्ण
+}
 
-पूर्णांक करो_migrate_pages(काष्ठा mm_काष्ठा *mm, स्थिर nodemask_t *from,
-		     स्थिर nodemask_t *to, पूर्णांक flags);
+int do_migrate_pages(struct mm_struct *mm, const nodemask_t *from,
+		     const nodemask_t *to, int flags);
 
 
-#अगर_घोषित CONFIG_TMPFS
-बाह्य पूर्णांक mpol_parse_str(अक्षर *str, काष्ठा mempolicy **mpol);
-#पूर्ण_अगर
+#ifdef CONFIG_TMPFS
+extern int mpol_parse_str(char *str, struct mempolicy **mpol);
+#endif
 
-बाह्य व्योम mpol_to_str(अक्षर *buffer, पूर्णांक maxlen, काष्ठा mempolicy *pol);
+extern void mpol_to_str(char *buffer, int maxlen, struct mempolicy *pol);
 
-/* Check अगर a vma is migratable */
-बाह्य bool vma_migratable(काष्ठा vm_area_काष्ठा *vma);
+/* Check if a vma is migratable */
+extern bool vma_migratable(struct vm_area_struct *vma);
 
-बाह्य पूर्णांक mpol_misplaced(काष्ठा page *, काष्ठा vm_area_काष्ठा *, अचिन्हित दीर्घ);
-बाह्य व्योम mpol_put_task_policy(काष्ठा task_काष्ठा *);
+extern int mpol_misplaced(struct page *, struct vm_area_struct *, unsigned long);
+extern void mpol_put_task_policy(struct task_struct *);
 
-#अन्यथा
+#else
 
-काष्ठा mempolicy अणुपूर्ण;
+struct mempolicy {};
 
-अटल अंतरभूत bool mpol_equal(काष्ठा mempolicy *a, काष्ठा mempolicy *b)
-अणु
-	वापस true;
-पूर्ण
+static inline bool mpol_equal(struct mempolicy *a, struct mempolicy *b)
+{
+	return true;
+}
 
-अटल अंतरभूत व्योम mpol_put(काष्ठा mempolicy *p)
-अणु
-पूर्ण
+static inline void mpol_put(struct mempolicy *p)
+{
+}
 
-अटल अंतरभूत व्योम mpol_cond_put(काष्ठा mempolicy *pol)
-अणु
-पूर्ण
+static inline void mpol_cond_put(struct mempolicy *pol)
+{
+}
 
-अटल अंतरभूत व्योम mpol_get(काष्ठा mempolicy *pol)
-अणु
-पूर्ण
+static inline void mpol_get(struct mempolicy *pol)
+{
+}
 
-काष्ठा shared_policy अणुपूर्ण;
+struct shared_policy {};
 
-अटल अंतरभूत व्योम mpol_shared_policy_init(काष्ठा shared_policy *sp,
-						काष्ठा mempolicy *mpol)
-अणु
-पूर्ण
+static inline void mpol_shared_policy_init(struct shared_policy *sp,
+						struct mempolicy *mpol)
+{
+}
 
-अटल अंतरभूत व्योम mpol_मुक्त_shared_policy(काष्ठा shared_policy *p)
-अणु
-पूर्ण
+static inline void mpol_free_shared_policy(struct shared_policy *p)
+{
+}
 
-अटल अंतरभूत काष्ठा mempolicy *
-mpol_shared_policy_lookup(काष्ठा shared_policy *sp, अचिन्हित दीर्घ idx)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct mempolicy *
+mpol_shared_policy_lookup(struct shared_policy *sp, unsigned long idx)
+{
+	return NULL;
+}
 
-#घोषणा vma_policy(vma) शून्य
+#define vma_policy(vma) NULL
 
-अटल अंतरभूत पूर्णांक
-vma_dup_policy(काष्ठा vm_area_काष्ठा *src, काष्ठा vm_area_काष्ठा *dst)
-अणु
-	वापस 0;
-पूर्ण
+static inline int
+vma_dup_policy(struct vm_area_struct *src, struct vm_area_struct *dst)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम numa_policy_init(व्योम)
-अणु
-पूर्ण
+static inline void numa_policy_init(void)
+{
+}
 
-अटल अंतरभूत व्योम numa_शेष_policy(व्योम)
-अणु
-पूर्ण
+static inline void numa_default_policy(void)
+{
+}
 
-अटल अंतरभूत व्योम mpol_rebind_task(काष्ठा task_काष्ठा *tsk,
-				स्थिर nodemask_t *new)
-अणु
-पूर्ण
+static inline void mpol_rebind_task(struct task_struct *tsk,
+				const nodemask_t *new)
+{
+}
 
-अटल अंतरभूत व्योम mpol_rebind_mm(काष्ठा mm_काष्ठा *mm, nodemask_t *new)
-अणु
-पूर्ण
+static inline void mpol_rebind_mm(struct mm_struct *mm, nodemask_t *new)
+{
+}
 
-अटल अंतरभूत पूर्णांक huge_node(काष्ठा vm_area_काष्ठा *vma,
-				अचिन्हित दीर्घ addr, gfp_t gfp_flags,
-				काष्ठा mempolicy **mpol, nodemask_t **nodemask)
-अणु
-	*mpol = शून्य;
-	*nodemask = शून्य;
-	वापस 0;
-पूर्ण
+static inline int huge_node(struct vm_area_struct *vma,
+				unsigned long addr, gfp_t gfp_flags,
+				struct mempolicy **mpol, nodemask_t **nodemask)
+{
+	*mpol = NULL;
+	*nodemask = NULL;
+	return 0;
+}
 
-अटल अंतरभूत bool init_nodemask_of_mempolicy(nodemask_t *m)
-अणु
-	वापस false;
-पूर्ण
+static inline bool init_nodemask_of_mempolicy(nodemask_t *m)
+{
+	return false;
+}
 
-अटल अंतरभूत पूर्णांक करो_migrate_pages(काष्ठा mm_काष्ठा *mm, स्थिर nodemask_t *from,
-				   स्थिर nodemask_t *to, पूर्णांक flags)
-अणु
-	वापस 0;
-पूर्ण
+static inline int do_migrate_pages(struct mm_struct *mm, const nodemask_t *from,
+				   const nodemask_t *to, int flags)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम check_highest_zone(पूर्णांक k)
-अणु
-पूर्ण
+static inline void check_highest_zone(int k)
+{
+}
 
-#अगर_घोषित CONFIG_TMPFS
-अटल अंतरभूत पूर्णांक mpol_parse_str(अक्षर *str, काष्ठा mempolicy **mpol)
-अणु
-	वापस 1;	/* error */
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_TMPFS
+static inline int mpol_parse_str(char *str, struct mempolicy **mpol)
+{
+	return 1;	/* error */
+}
+#endif
 
-अटल अंतरभूत पूर्णांक mpol_misplaced(काष्ठा page *page, काष्ठा vm_area_काष्ठा *vma,
-				 अचिन्हित दीर्घ address)
-अणु
-	वापस -1; /* no node preference */
-पूर्ण
+static inline int mpol_misplaced(struct page *page, struct vm_area_struct *vma,
+				 unsigned long address)
+{
+	return -1; /* no node preference */
+}
 
-अटल अंतरभूत व्योम mpol_put_task_policy(काष्ठा task_काष्ठा *task)
-अणु
-पूर्ण
+static inline void mpol_put_task_policy(struct task_struct *task)
+{
+}
 
-अटल अंतरभूत nodemask_t *policy_nodemask_current(gfp_t gfp)
-अणु
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NUMA */
-#पूर्ण_अगर
+static inline nodemask_t *policy_nodemask_current(gfp_t gfp)
+{
+	return NULL;
+}
+#endif /* CONFIG_NUMA */
+#endif

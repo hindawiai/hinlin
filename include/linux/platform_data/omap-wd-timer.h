@@ -1,35 +1,34 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * OMAP2+ WDTIMER-specअगरic function prototypes
+ * OMAP2+ WDTIMER-specific function prototypes
  *
  * Copyright (C) 2012 Texas Instruments, Inc.
  * Paul Walmsley
  */
 
-#अगर_अघोषित __LINUX_PLATFORM_DATA_OMAP_WD_TIMER_H
-#घोषणा __LINUX_PLATFORM_DATA_OMAP_WD_TIMER_H
+#ifndef __LINUX_PLATFORM_DATA_OMAP_WD_TIMER_H
+#define __LINUX_PLATFORM_DATA_OMAP_WD_TIMER_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
 /*
  * Standardized OMAP reset source bits
  *
  * This is a subset of the ones listed in arch/arm/mach-omap2/prm.h
- * and are the only ones needed in the watchकरोg driver.
+ * and are the only ones needed in the watchdog driver.
  */
-#घोषणा OMAP_MPU_WD_RST_SRC_ID_SHIFT				3
+#define OMAP_MPU_WD_RST_SRC_ID_SHIFT				3
 
 /**
- * काष्ठा omap_wd_समयr_platक्रमm_data - WDTIMER पूर्णांकegration to the host SoC
- * @पढ़ो_reset_sources - fn ptr क्रम the SoC to indicate the last reset cause
+ * struct omap_wd_timer_platform_data - WDTIMER integration to the host SoC
+ * @read_reset_sources - fn ptr for the SoC to indicate the last reset cause
  *
- * The function poपूर्णांकed to by @पढ़ो_reset_sources must वापस its data
- * in a standard क्रमmat - search क्रम RST_SRC_ID_SHIFT in
+ * The function pointed to by @read_reset_sources must return its data
+ * in a standard format - search for RST_SRC_ID_SHIFT in
  * arch/arm/mach-omap2
  */
-काष्ठा omap_wd_समयr_platक्रमm_data अणु
-	u32 (*पढ़ो_reset_sources)(व्योम);
-पूर्ण;
+struct omap_wd_timer_platform_data {
+	u32 (*read_reset_sources)(void);
+};
 
-#पूर्ण_अगर
+#endif

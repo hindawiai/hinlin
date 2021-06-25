@@ -1,1150 +1,1149 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // Register map access API
 //
 // Copyright 2011 Wolfson Microelectronics plc
 //
-// Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
+// Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
 
-#समावेश <linux/device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/export.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/err.h>
-#समावेश <linux/property.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/log2.h>
-#समावेश <linux/hwspinlock.h>
-#समावेश <यंत्र/unaligned.h>
+#include <linux/device.h>
+#include <linux/slab.h>
+#include <linux/export.h>
+#include <linux/mutex.h>
+#include <linux/err.h>
+#include <linux/property.h>
+#include <linux/rbtree.h>
+#include <linux/sched.h>
+#include <linux/delay.h>
+#include <linux/log2.h>
+#include <linux/hwspinlock.h>
+#include <asm/unaligned.h>
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश "trace.h"
+#define CREATE_TRACE_POINTS
+#include "trace.h"
 
-#समावेश "internal.h"
+#include "internal.h"
 
 /*
- * Someबार क्रम failures during very early init the trace
- * infraकाष्ठाure isn't available early enough to be used.  For this
- * sort of problem defining LOG_DEVICE will add prपूर्णांकks क्रम basic
- * रेजिस्टर I/O on a specअगरic device.
+ * Sometimes for failures during very early init the trace
+ * infrastructure isn't available early enough to be used.  For this
+ * sort of problem defining LOG_DEVICE will add printks for basic
+ * register I/O on a specific device.
  */
-#अघोषित LOG_DEVICE
+#undef LOG_DEVICE
 
-#अगर_घोषित LOG_DEVICE
-अटल अंतरभूत bool regmap_should_log(काष्ठा regmap *map)
-अणु
-	वापस (map->dev && म_भेद(dev_name(map->dev), LOG_DEVICE) == 0);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत bool regmap_should_log(काष्ठा regmap *map) अणु वापस false; पूर्ण
-#पूर्ण_अगर
+#ifdef LOG_DEVICE
+static inline bool regmap_should_log(struct regmap *map)
+{
+	return (map->dev && strcmp(dev_name(map->dev), LOG_DEVICE) == 0);
+}
+#else
+static inline bool regmap_should_log(struct regmap *map) { return false; }
+#endif
 
 
-अटल पूर्णांक _regmap_update_bits(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-			       अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val,
-			       bool *change, bool क्रमce_ग_लिखो);
+static int _regmap_update_bits(struct regmap *map, unsigned int reg,
+			       unsigned int mask, unsigned int val,
+			       bool *change, bool force_write);
 
-अटल पूर्णांक _regmap_bus_reg_पढ़ो(व्योम *context, अचिन्हित पूर्णांक reg,
-				अचिन्हित पूर्णांक *val);
-अटल पूर्णांक _regmap_bus_पढ़ो(व्योम *context, अचिन्हित पूर्णांक reg,
-			    अचिन्हित पूर्णांक *val);
-अटल पूर्णांक _regmap_bus_क्रमmatted_ग_लिखो(व्योम *context, अचिन्हित पूर्णांक reg,
-				       अचिन्हित पूर्णांक val);
-अटल पूर्णांक _regmap_bus_reg_ग_लिखो(व्योम *context, अचिन्हित पूर्णांक reg,
-				 अचिन्हित पूर्णांक val);
-अटल पूर्णांक _regmap_bus_raw_ग_लिखो(व्योम *context, अचिन्हित पूर्णांक reg,
-				 अचिन्हित पूर्णांक val);
+static int _regmap_bus_reg_read(void *context, unsigned int reg,
+				unsigned int *val);
+static int _regmap_bus_read(void *context, unsigned int reg,
+			    unsigned int *val);
+static int _regmap_bus_formatted_write(void *context, unsigned int reg,
+				       unsigned int val);
+static int _regmap_bus_reg_write(void *context, unsigned int reg,
+				 unsigned int val);
+static int _regmap_bus_raw_write(void *context, unsigned int reg,
+				 unsigned int val);
 
-bool regmap_reg_in_ranges(अचिन्हित पूर्णांक reg,
-			  स्थिर काष्ठा regmap_range *ranges,
-			  अचिन्हित पूर्णांक nranges)
-अणु
-	स्थिर काष्ठा regmap_range *r;
-	पूर्णांक i;
+bool regmap_reg_in_ranges(unsigned int reg,
+			  const struct regmap_range *ranges,
+			  unsigned int nranges)
+{
+	const struct regmap_range *r;
+	int i;
 
-	क्रम (i = 0, r = ranges; i < nranges; i++, r++)
-		अगर (regmap_reg_in_range(reg, r))
-			वापस true;
-	वापस false;
-पूर्ण
+	for (i = 0, r = ranges; i < nranges; i++, r++)
+		if (regmap_reg_in_range(reg, r))
+			return true;
+	return false;
+}
 EXPORT_SYMBOL_GPL(regmap_reg_in_ranges);
 
-bool regmap_check_range_table(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-			      स्थिर काष्ठा regmap_access_table *table)
-अणु
+bool regmap_check_range_table(struct regmap *map, unsigned int reg,
+			      const struct regmap_access_table *table)
+{
 	/* Check "no ranges" first */
-	अगर (regmap_reg_in_ranges(reg, table->no_ranges, table->n_no_ranges))
-		वापस false;
+	if (regmap_reg_in_ranges(reg, table->no_ranges, table->n_no_ranges))
+		return false;
 
-	/* In हाल zero "yes ranges" are supplied, any reg is OK */
-	अगर (!table->n_yes_ranges)
-		वापस true;
+	/* In case zero "yes ranges" are supplied, any reg is OK */
+	if (!table->n_yes_ranges)
+		return true;
 
-	वापस regmap_reg_in_ranges(reg, table->yes_ranges,
+	return regmap_reg_in_ranges(reg, table->yes_ranges,
 				    table->n_yes_ranges);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(regmap_check_range_table);
 
-bool regmap_ग_लिखोable(काष्ठा regmap *map, अचिन्हित पूर्णांक reg)
-अणु
-	अगर (map->max_रेजिस्टर && reg > map->max_रेजिस्टर)
-		वापस false;
+bool regmap_writeable(struct regmap *map, unsigned int reg)
+{
+	if (map->max_register && reg > map->max_register)
+		return false;
 
-	अगर (map->ग_लिखोable_reg)
-		वापस map->ग_लिखोable_reg(map->dev, reg);
+	if (map->writeable_reg)
+		return map->writeable_reg(map->dev, reg);
 
-	अगर (map->wr_table)
-		वापस regmap_check_range_table(map, reg, map->wr_table);
+	if (map->wr_table)
+		return regmap_check_range_table(map, reg, map->wr_table);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-bool regmap_cached(काष्ठा regmap *map, अचिन्हित पूर्णांक reg)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक val;
+bool regmap_cached(struct regmap *map, unsigned int reg)
+{
+	int ret;
+	unsigned int val;
 
-	अगर (map->cache_type == REGCACHE_NONE)
-		वापस false;
+	if (map->cache_type == REGCACHE_NONE)
+		return false;
 
-	अगर (!map->cache_ops)
-		वापस false;
+	if (!map->cache_ops)
+		return false;
 
-	अगर (map->max_रेजिस्टर && reg > map->max_रेजिस्टर)
-		वापस false;
+	if (map->max_register && reg > map->max_register)
+		return false;
 
 	map->lock(map->lock_arg);
-	ret = regcache_पढ़ो(map, reg, &val);
+	ret = regcache_read(map, reg, &val);
 	map->unlock(map->lock_arg);
-	अगर (ret)
-		वापस false;
+	if (ret)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-bool regmap_पढ़ोable(काष्ठा regmap *map, अचिन्हित पूर्णांक reg)
-अणु
-	अगर (!map->reg_पढ़ो)
-		वापस false;
+bool regmap_readable(struct regmap *map, unsigned int reg)
+{
+	if (!map->reg_read)
+		return false;
 
-	अगर (map->max_रेजिस्टर && reg > map->max_रेजिस्टर)
-		वापस false;
+	if (map->max_register && reg > map->max_register)
+		return false;
 
-	अगर (map->क्रमmat.क्रमmat_ग_लिखो)
-		वापस false;
+	if (map->format.format_write)
+		return false;
 
-	अगर (map->पढ़ोable_reg)
-		वापस map->पढ़ोable_reg(map->dev, reg);
+	if (map->readable_reg)
+		return map->readable_reg(map->dev, reg);
 
-	अगर (map->rd_table)
-		वापस regmap_check_range_table(map, reg, map->rd_table);
+	if (map->rd_table)
+		return regmap_check_range_table(map, reg, map->rd_table);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-bool regmap_अस्थिर(काष्ठा regmap *map, अचिन्हित पूर्णांक reg)
-अणु
-	अगर (!map->क्रमmat.क्रमmat_ग_लिखो && !regmap_पढ़ोable(map, reg))
-		वापस false;
+bool regmap_volatile(struct regmap *map, unsigned int reg)
+{
+	if (!map->format.format_write && !regmap_readable(map, reg))
+		return false;
 
-	अगर (map->अस्थिर_reg)
-		वापस map->अस्थिर_reg(map->dev, reg);
+	if (map->volatile_reg)
+		return map->volatile_reg(map->dev, reg);
 
-	अगर (map->अस्थिर_table)
-		वापस regmap_check_range_table(map, reg, map->अस्थिर_table);
+	if (map->volatile_table)
+		return regmap_check_range_table(map, reg, map->volatile_table);
 
-	अगर (map->cache_ops)
-		वापस false;
-	अन्यथा
-		वापस true;
-पूर्ण
+	if (map->cache_ops)
+		return false;
+	else
+		return true;
+}
 
-bool regmap_precious(काष्ठा regmap *map, अचिन्हित पूर्णांक reg)
-अणु
-	अगर (!regmap_पढ़ोable(map, reg))
-		वापस false;
+bool regmap_precious(struct regmap *map, unsigned int reg)
+{
+	if (!regmap_readable(map, reg))
+		return false;
 
-	अगर (map->precious_reg)
-		वापस map->precious_reg(map->dev, reg);
+	if (map->precious_reg)
+		return map->precious_reg(map->dev, reg);
 
-	अगर (map->precious_table)
-		वापस regmap_check_range_table(map, reg, map->precious_table);
+	if (map->precious_table)
+		return regmap_check_range_table(map, reg, map->precious_table);
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-bool regmap_ग_लिखोable_noinc(काष्ठा regmap *map, अचिन्हित पूर्णांक reg)
-अणु
-	अगर (map->ग_लिखोable_noinc_reg)
-		वापस map->ग_लिखोable_noinc_reg(map->dev, reg);
+bool regmap_writeable_noinc(struct regmap *map, unsigned int reg)
+{
+	if (map->writeable_noinc_reg)
+		return map->writeable_noinc_reg(map->dev, reg);
 
-	अगर (map->wr_noinc_table)
-		वापस regmap_check_range_table(map, reg, map->wr_noinc_table);
+	if (map->wr_noinc_table)
+		return regmap_check_range_table(map, reg, map->wr_noinc_table);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-bool regmap_पढ़ोable_noinc(काष्ठा regmap *map, अचिन्हित पूर्णांक reg)
-अणु
-	अगर (map->पढ़ोable_noinc_reg)
-		वापस map->पढ़ोable_noinc_reg(map->dev, reg);
+bool regmap_readable_noinc(struct regmap *map, unsigned int reg)
+{
+	if (map->readable_noinc_reg)
+		return map->readable_noinc_reg(map->dev, reg);
 
-	अगर (map->rd_noinc_table)
-		वापस regmap_check_range_table(map, reg, map->rd_noinc_table);
+	if (map->rd_noinc_table)
+		return regmap_check_range_table(map, reg, map->rd_noinc_table);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool regmap_अस्थिर_range(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-	माप_प्रकार num)
-अणु
-	अचिन्हित पूर्णांक i;
+static bool regmap_volatile_range(struct regmap *map, unsigned int reg,
+	size_t num)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < num; i++)
-		अगर (!regmap_अस्थिर(map, reg + regmap_get_offset(map, i)))
-			वापस false;
+	for (i = 0; i < num; i++)
+		if (!regmap_volatile(map, reg + regmap_get_offset(map, i)))
+			return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम regmap_क्रमmat_12_20_ग_लिखो(काष्ठा regmap *map,
-				     अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val)
-अणु
+static void regmap_format_12_20_write(struct regmap *map,
+				     unsigned int reg, unsigned int val)
+{
 	u8 *out = map->work_buf;
 
 	out[0] = reg >> 4;
 	out[1] = (reg << 4) | (val >> 16);
 	out[2] = val >> 8;
 	out[3] = val;
-पूर्ण
+}
 
 
-अटल व्योम regmap_क्रमmat_2_6_ग_लिखो(काष्ठा regmap *map,
-				     अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val)
-अणु
+static void regmap_format_2_6_write(struct regmap *map,
+				     unsigned int reg, unsigned int val)
+{
 	u8 *out = map->work_buf;
 
 	*out = (reg << 6) | val;
-पूर्ण
+}
 
-अटल व्योम regmap_क्रमmat_4_12_ग_लिखो(काष्ठा regmap *map,
-				     अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val)
-अणु
+static void regmap_format_4_12_write(struct regmap *map,
+				     unsigned int reg, unsigned int val)
+{
 	__be16 *out = map->work_buf;
 	*out = cpu_to_be16((reg << 12) | val);
-पूर्ण
+}
 
-अटल व्योम regmap_क्रमmat_7_9_ग_लिखो(काष्ठा regmap *map,
-				    अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val)
-अणु
+static void regmap_format_7_9_write(struct regmap *map,
+				    unsigned int reg, unsigned int val)
+{
 	__be16 *out = map->work_buf;
 	*out = cpu_to_be16((reg << 9) | val);
-पूर्ण
+}
 
-अटल व्योम regmap_क्रमmat_10_14_ग_लिखो(काष्ठा regmap *map,
-				    अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val)
-अणु
+static void regmap_format_10_14_write(struct regmap *map,
+				    unsigned int reg, unsigned int val)
+{
 	u8 *out = map->work_buf;
 
 	out[2] = val;
 	out[1] = (val >> 8) | (reg << 6);
 	out[0] = reg >> 2;
-पूर्ण
+}
 
-अटल व्योम regmap_क्रमmat_8(व्योम *buf, अचिन्हित पूर्णांक val, अचिन्हित पूर्णांक shअगरt)
-अणु
+static void regmap_format_8(void *buf, unsigned int val, unsigned int shift)
+{
 	u8 *b = buf;
 
-	b[0] = val << shअगरt;
-पूर्ण
+	b[0] = val << shift;
+}
 
-अटल व्योम regmap_क्रमmat_16_be(व्योम *buf, अचिन्हित पूर्णांक val, अचिन्हित पूर्णांक shअगरt)
-अणु
-	put_unaligned_be16(val << shअगरt, buf);
-पूर्ण
+static void regmap_format_16_be(void *buf, unsigned int val, unsigned int shift)
+{
+	put_unaligned_be16(val << shift, buf);
+}
 
-अटल व्योम regmap_क्रमmat_16_le(व्योम *buf, अचिन्हित पूर्णांक val, अचिन्हित पूर्णांक shअगरt)
-अणु
-	put_unaligned_le16(val << shअगरt, buf);
-पूर्ण
+static void regmap_format_16_le(void *buf, unsigned int val, unsigned int shift)
+{
+	put_unaligned_le16(val << shift, buf);
+}
 
-अटल व्योम regmap_क्रमmat_16_native(व्योम *buf, अचिन्हित पूर्णांक val,
-				    अचिन्हित पूर्णांक shअगरt)
-अणु
-	u16 v = val << shअगरt;
+static void regmap_format_16_native(void *buf, unsigned int val,
+				    unsigned int shift)
+{
+	u16 v = val << shift;
 
-	स_नकल(buf, &v, माप(v));
-पूर्ण
+	memcpy(buf, &v, sizeof(v));
+}
 
-अटल व्योम regmap_क्रमmat_24(व्योम *buf, अचिन्हित पूर्णांक val, अचिन्हित पूर्णांक shअगरt)
-अणु
+static void regmap_format_24(void *buf, unsigned int val, unsigned int shift)
+{
 	u8 *b = buf;
 
-	val <<= shअगरt;
+	val <<= shift;
 
 	b[0] = val >> 16;
 	b[1] = val >> 8;
 	b[2] = val;
-पूर्ण
+}
 
-अटल व्योम regmap_क्रमmat_32_be(व्योम *buf, अचिन्हित पूर्णांक val, अचिन्हित पूर्णांक shअगरt)
-अणु
-	put_unaligned_be32(val << shअगरt, buf);
-पूर्ण
+static void regmap_format_32_be(void *buf, unsigned int val, unsigned int shift)
+{
+	put_unaligned_be32(val << shift, buf);
+}
 
-अटल व्योम regmap_क्रमmat_32_le(व्योम *buf, अचिन्हित पूर्णांक val, अचिन्हित पूर्णांक shअगरt)
-अणु
-	put_unaligned_le32(val << shअगरt, buf);
-पूर्ण
+static void regmap_format_32_le(void *buf, unsigned int val, unsigned int shift)
+{
+	put_unaligned_le32(val << shift, buf);
+}
 
-अटल व्योम regmap_क्रमmat_32_native(व्योम *buf, अचिन्हित पूर्णांक val,
-				    अचिन्हित पूर्णांक shअगरt)
-अणु
-	u32 v = val << shअगरt;
+static void regmap_format_32_native(void *buf, unsigned int val,
+				    unsigned int shift)
+{
+	u32 v = val << shift;
 
-	स_नकल(buf, &v, माप(v));
-पूर्ण
+	memcpy(buf, &v, sizeof(v));
+}
 
-#अगर_घोषित CONFIG_64BIT
-अटल व्योम regmap_क्रमmat_64_be(व्योम *buf, अचिन्हित पूर्णांक val, अचिन्हित पूर्णांक shअगरt)
-अणु
-	put_unaligned_be64((u64) val << shअगरt, buf);
-पूर्ण
+#ifdef CONFIG_64BIT
+static void regmap_format_64_be(void *buf, unsigned int val, unsigned int shift)
+{
+	put_unaligned_be64((u64) val << shift, buf);
+}
 
-अटल व्योम regmap_क्रमmat_64_le(व्योम *buf, अचिन्हित पूर्णांक val, अचिन्हित पूर्णांक shअगरt)
-अणु
-	put_unaligned_le64((u64) val << shअगरt, buf);
-पूर्ण
+static void regmap_format_64_le(void *buf, unsigned int val, unsigned int shift)
+{
+	put_unaligned_le64((u64) val << shift, buf);
+}
 
-अटल व्योम regmap_क्रमmat_64_native(व्योम *buf, अचिन्हित पूर्णांक val,
-				    अचिन्हित पूर्णांक shअगरt)
-अणु
-	u64 v = (u64) val << shअगरt;
+static void regmap_format_64_native(void *buf, unsigned int val,
+				    unsigned int shift)
+{
+	u64 v = (u64) val << shift;
 
-	स_नकल(buf, &v, माप(v));
-पूर्ण
-#पूर्ण_अगर
+	memcpy(buf, &v, sizeof(v));
+}
+#endif
 
-अटल व्योम regmap_parse_inplace_noop(व्योम *buf)
-अणु
-पूर्ण
+static void regmap_parse_inplace_noop(void *buf)
+{
+}
 
-अटल अचिन्हित पूर्णांक regmap_parse_8(स्थिर व्योम *buf)
-अणु
-	स्थिर u8 *b = buf;
+static unsigned int regmap_parse_8(const void *buf)
+{
+	const u8 *b = buf;
 
-	वापस b[0];
-पूर्ण
+	return b[0];
+}
 
-अटल अचिन्हित पूर्णांक regmap_parse_16_be(स्थिर व्योम *buf)
-अणु
-	वापस get_unaligned_be16(buf);
-पूर्ण
+static unsigned int regmap_parse_16_be(const void *buf)
+{
+	return get_unaligned_be16(buf);
+}
 
-अटल अचिन्हित पूर्णांक regmap_parse_16_le(स्थिर व्योम *buf)
-अणु
-	वापस get_unaligned_le16(buf);
-पूर्ण
+static unsigned int regmap_parse_16_le(const void *buf)
+{
+	return get_unaligned_le16(buf);
+}
 
-अटल व्योम regmap_parse_16_be_inplace(व्योम *buf)
-अणु
+static void regmap_parse_16_be_inplace(void *buf)
+{
 	u16 v = get_unaligned_be16(buf);
 
-	स_नकल(buf, &v, माप(v));
-पूर्ण
+	memcpy(buf, &v, sizeof(v));
+}
 
-अटल व्योम regmap_parse_16_le_inplace(व्योम *buf)
-अणु
+static void regmap_parse_16_le_inplace(void *buf)
+{
 	u16 v = get_unaligned_le16(buf);
 
-	स_नकल(buf, &v, माप(v));
-पूर्ण
+	memcpy(buf, &v, sizeof(v));
+}
 
-अटल अचिन्हित पूर्णांक regmap_parse_16_native(स्थिर व्योम *buf)
-अणु
+static unsigned int regmap_parse_16_native(const void *buf)
+{
 	u16 v;
 
-	स_नकल(&v, buf, माप(v));
-	वापस v;
-पूर्ण
+	memcpy(&v, buf, sizeof(v));
+	return v;
+}
 
-अटल अचिन्हित पूर्णांक regmap_parse_24(स्थिर व्योम *buf)
-अणु
-	स्थिर u8 *b = buf;
-	अचिन्हित पूर्णांक ret = b[2];
-	ret |= ((अचिन्हित पूर्णांक)b[1]) << 8;
-	ret |= ((अचिन्हित पूर्णांक)b[0]) << 16;
+static unsigned int regmap_parse_24(const void *buf)
+{
+	const u8 *b = buf;
+	unsigned int ret = b[2];
+	ret |= ((unsigned int)b[1]) << 8;
+	ret |= ((unsigned int)b[0]) << 16;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अचिन्हित पूर्णांक regmap_parse_32_be(स्थिर व्योम *buf)
-अणु
-	वापस get_unaligned_be32(buf);
-पूर्ण
+static unsigned int regmap_parse_32_be(const void *buf)
+{
+	return get_unaligned_be32(buf);
+}
 
-अटल अचिन्हित पूर्णांक regmap_parse_32_le(स्थिर व्योम *buf)
-अणु
-	वापस get_unaligned_le32(buf);
-पूर्ण
+static unsigned int regmap_parse_32_le(const void *buf)
+{
+	return get_unaligned_le32(buf);
+}
 
-अटल व्योम regmap_parse_32_be_inplace(व्योम *buf)
-अणु
+static void regmap_parse_32_be_inplace(void *buf)
+{
 	u32 v = get_unaligned_be32(buf);
 
-	स_नकल(buf, &v, माप(v));
-पूर्ण
+	memcpy(buf, &v, sizeof(v));
+}
 
-अटल व्योम regmap_parse_32_le_inplace(व्योम *buf)
-अणु
+static void regmap_parse_32_le_inplace(void *buf)
+{
 	u32 v = get_unaligned_le32(buf);
 
-	स_नकल(buf, &v, माप(v));
-पूर्ण
+	memcpy(buf, &v, sizeof(v));
+}
 
-अटल अचिन्हित पूर्णांक regmap_parse_32_native(स्थिर व्योम *buf)
-अणु
+static unsigned int regmap_parse_32_native(const void *buf)
+{
 	u32 v;
 
-	स_नकल(&v, buf, माप(v));
-	वापस v;
-पूर्ण
+	memcpy(&v, buf, sizeof(v));
+	return v;
+}
 
-#अगर_घोषित CONFIG_64BIT
-अटल अचिन्हित पूर्णांक regmap_parse_64_be(स्थिर व्योम *buf)
-अणु
-	वापस get_unaligned_be64(buf);
-पूर्ण
+#ifdef CONFIG_64BIT
+static unsigned int regmap_parse_64_be(const void *buf)
+{
+	return get_unaligned_be64(buf);
+}
 
-अटल अचिन्हित पूर्णांक regmap_parse_64_le(स्थिर व्योम *buf)
-अणु
-	वापस get_unaligned_le64(buf);
-पूर्ण
+static unsigned int regmap_parse_64_le(const void *buf)
+{
+	return get_unaligned_le64(buf);
+}
 
-अटल व्योम regmap_parse_64_be_inplace(व्योम *buf)
-अणु
+static void regmap_parse_64_be_inplace(void *buf)
+{
 	u64 v =  get_unaligned_be64(buf);
 
-	स_नकल(buf, &v, माप(v));
-पूर्ण
+	memcpy(buf, &v, sizeof(v));
+}
 
-अटल व्योम regmap_parse_64_le_inplace(व्योम *buf)
-अणु
+static void regmap_parse_64_le_inplace(void *buf)
+{
 	u64 v = get_unaligned_le64(buf);
 
-	स_नकल(buf, &v, माप(v));
-पूर्ण
+	memcpy(buf, &v, sizeof(v));
+}
 
-अटल अचिन्हित पूर्णांक regmap_parse_64_native(स्थिर व्योम *buf)
-अणु
+static unsigned int regmap_parse_64_native(const void *buf)
+{
 	u64 v;
 
-	स_नकल(&v, buf, माप(v));
-	वापस v;
-पूर्ण
-#पूर्ण_अगर
+	memcpy(&v, buf, sizeof(v));
+	return v;
+}
+#endif
 
-अटल व्योम regmap_lock_hwlock(व्योम *__map)
-अणु
-	काष्ठा regmap *map = __map;
+static void regmap_lock_hwlock(void *__map)
+{
+	struct regmap *map = __map;
 
-	hwspin_lock_समयout(map->hwlock, अच_पूर्णांक_उच्च);
-पूर्ण
+	hwspin_lock_timeout(map->hwlock, UINT_MAX);
+}
 
-अटल व्योम regmap_lock_hwlock_irq(व्योम *__map)
-अणु
-	काष्ठा regmap *map = __map;
+static void regmap_lock_hwlock_irq(void *__map)
+{
+	struct regmap *map = __map;
 
-	hwspin_lock_समयout_irq(map->hwlock, अच_पूर्णांक_उच्च);
-पूर्ण
+	hwspin_lock_timeout_irq(map->hwlock, UINT_MAX);
+}
 
-अटल व्योम regmap_lock_hwlock_irqsave(व्योम *__map)
-अणु
-	काष्ठा regmap *map = __map;
+static void regmap_lock_hwlock_irqsave(void *__map)
+{
+	struct regmap *map = __map;
 
-	hwspin_lock_समयout_irqsave(map->hwlock, अच_पूर्णांक_उच्च,
+	hwspin_lock_timeout_irqsave(map->hwlock, UINT_MAX,
 				    &map->spinlock_flags);
-पूर्ण
+}
 
-अटल व्योम regmap_unlock_hwlock(व्योम *__map)
-अणु
-	काष्ठा regmap *map = __map;
+static void regmap_unlock_hwlock(void *__map)
+{
+	struct regmap *map = __map;
 
 	hwspin_unlock(map->hwlock);
-पूर्ण
+}
 
-अटल व्योम regmap_unlock_hwlock_irq(व्योम *__map)
-अणु
-	काष्ठा regmap *map = __map;
+static void regmap_unlock_hwlock_irq(void *__map)
+{
+	struct regmap *map = __map;
 
 	hwspin_unlock_irq(map->hwlock);
-पूर्ण
+}
 
-अटल व्योम regmap_unlock_hwlock_irqrestore(व्योम *__map)
-अणु
-	काष्ठा regmap *map = __map;
+static void regmap_unlock_hwlock_irqrestore(void *__map)
+{
+	struct regmap *map = __map;
 
 	hwspin_unlock_irqrestore(map->hwlock, &map->spinlock_flags);
-पूर्ण
+}
 
-अटल व्योम regmap_lock_unlock_none(व्योम *__map)
-अणु
+static void regmap_lock_unlock_none(void *__map)
+{
 
-पूर्ण
+}
 
-अटल व्योम regmap_lock_mutex(व्योम *__map)
-अणु
-	काष्ठा regmap *map = __map;
+static void regmap_lock_mutex(void *__map)
+{
+	struct regmap *map = __map;
 	mutex_lock(&map->mutex);
-पूर्ण
+}
 
-अटल व्योम regmap_unlock_mutex(व्योम *__map)
-अणु
-	काष्ठा regmap *map = __map;
+static void regmap_unlock_mutex(void *__map)
+{
+	struct regmap *map = __map;
 	mutex_unlock(&map->mutex);
-पूर्ण
+}
 
-अटल व्योम regmap_lock_spinlock(व्योम *__map)
+static void regmap_lock_spinlock(void *__map)
 __acquires(&map->spinlock)
-अणु
-	काष्ठा regmap *map = __map;
-	अचिन्हित दीर्घ flags;
+{
+	struct regmap *map = __map;
+	unsigned long flags;
 
 	spin_lock_irqsave(&map->spinlock, flags);
 	map->spinlock_flags = flags;
-पूर्ण
+}
 
-अटल व्योम regmap_unlock_spinlock(व्योम *__map)
+static void regmap_unlock_spinlock(void *__map)
 __releases(&map->spinlock)
-अणु
-	काष्ठा regmap *map = __map;
+{
+	struct regmap *map = __map;
 	spin_unlock_irqrestore(&map->spinlock, map->spinlock_flags);
-पूर्ण
+}
 
-अटल व्योम dev_get_regmap_release(काष्ठा device *dev, व्योम *res)
-अणु
+static void dev_get_regmap_release(struct device *dev, void *res)
+{
 	/*
-	 * We करोn't actually have anything to करो here; the goal here
+	 * We don't actually have anything to do here; the goal here
 	 * is not to manage the regmap but to provide a simple way to
-	 * get the regmap back given a काष्ठा device.
+	 * get the regmap back given a struct device.
 	 */
-पूर्ण
+}
 
-अटल bool _regmap_range_add(काष्ठा regmap *map,
-			      काष्ठा regmap_range_node *data)
-अणु
-	काष्ठा rb_root *root = &map->range_tree;
-	काष्ठा rb_node **new = &(root->rb_node), *parent = शून्य;
+static bool _regmap_range_add(struct regmap *map,
+			      struct regmap_range_node *data)
+{
+	struct rb_root *root = &map->range_tree;
+	struct rb_node **new = &(root->rb_node), *parent = NULL;
 
-	जबतक (*new) अणु
-		काष्ठा regmap_range_node *this =
-			rb_entry(*new, काष्ठा regmap_range_node, node);
+	while (*new) {
+		struct regmap_range_node *this =
+			rb_entry(*new, struct regmap_range_node, node);
 
 		parent = *new;
-		अगर (data->range_max < this->range_min)
+		if (data->range_max < this->range_min)
 			new = &((*new)->rb_left);
-		अन्यथा अगर (data->range_min > this->range_max)
+		else if (data->range_min > this->range_max)
 			new = &((*new)->rb_right);
-		अन्यथा
-			वापस false;
-	पूर्ण
+		else
+			return false;
+	}
 
 	rb_link_node(&data->node, parent, new);
 	rb_insert_color(&data->node, root);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल काष्ठा regmap_range_node *_regmap_range_lookup(काष्ठा regmap *map,
-						      अचिन्हित पूर्णांक reg)
-अणु
-	काष्ठा rb_node *node = map->range_tree.rb_node;
+static struct regmap_range_node *_regmap_range_lookup(struct regmap *map,
+						      unsigned int reg)
+{
+	struct rb_node *node = map->range_tree.rb_node;
 
-	जबतक (node) अणु
-		काष्ठा regmap_range_node *this =
-			rb_entry(node, काष्ठा regmap_range_node, node);
+	while (node) {
+		struct regmap_range_node *this =
+			rb_entry(node, struct regmap_range_node, node);
 
-		अगर (reg < this->range_min)
+		if (reg < this->range_min)
 			node = node->rb_left;
-		अन्यथा अगर (reg > this->range_max)
+		else if (reg > this->range_max)
 			node = node->rb_right;
-		अन्यथा
-			वापस this;
-	पूर्ण
+		else
+			return this;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम regmap_range_निकास(काष्ठा regmap *map)
-अणु
-	काष्ठा rb_node *next;
-	काष्ठा regmap_range_node *range_node;
+static void regmap_range_exit(struct regmap *map)
+{
+	struct rb_node *next;
+	struct regmap_range_node *range_node;
 
 	next = rb_first(&map->range_tree);
-	जबतक (next) अणु
-		range_node = rb_entry(next, काष्ठा regmap_range_node, node);
+	while (next) {
+		range_node = rb_entry(next, struct regmap_range_node, node);
 		next = rb_next(&range_node->node);
 		rb_erase(&range_node->node, &map->range_tree);
-		kमुक्त(range_node);
-	पूर्ण
+		kfree(range_node);
+	}
 
-	kमुक्त(map->selector_work_buf);
-पूर्ण
+	kfree(map->selector_work_buf);
+}
 
-अटल पूर्णांक regmap_set_name(काष्ठा regmap *map, स्थिर काष्ठा regmap_config *config)
-अणु
-	अगर (config->name) अणु
-		स्थिर अक्षर *name = kstrdup_स्थिर(config->name, GFP_KERNEL);
+static int regmap_set_name(struct regmap *map, const struct regmap_config *config)
+{
+	if (config->name) {
+		const char *name = kstrdup_const(config->name, GFP_KERNEL);
 
-		अगर (!name)
-			वापस -ENOMEM;
+		if (!name)
+			return -ENOMEM;
 
-		kमुक्त_स्थिर(map->name);
+		kfree_const(map->name);
 		map->name = name;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक regmap_attach_dev(काष्ठा device *dev, काष्ठा regmap *map,
-		      स्थिर काष्ठा regmap_config *config)
-अणु
-	काष्ठा regmap **m;
-	पूर्णांक ret;
+int regmap_attach_dev(struct device *dev, struct regmap *map,
+		      const struct regmap_config *config)
+{
+	struct regmap **m;
+	int ret;
 
 	map->dev = dev;
 
 	ret = regmap_set_name(map, config);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	regmap_debugfs_init(map);
 
-	/* Add a devres resource क्रम dev_get_regmap() */
-	m = devres_alloc(dev_get_regmap_release, माप(*m), GFP_KERNEL);
-	अगर (!m) अणु
-		regmap_debugfs_निकास(map);
-		वापस -ENOMEM;
-	पूर्ण
+	/* Add a devres resource for dev_get_regmap() */
+	m = devres_alloc(dev_get_regmap_release, sizeof(*m), GFP_KERNEL);
+	if (!m) {
+		regmap_debugfs_exit(map);
+		return -ENOMEM;
+	}
 	*m = map;
 	devres_add(dev, m);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(regmap_attach_dev);
 
-अटल क्रमागत regmap_endian regmap_get_reg_endian(स्थिर काष्ठा regmap_bus *bus,
-					स्थिर काष्ठा regmap_config *config)
-अणु
-	क्रमागत regmap_endian endian;
+static enum regmap_endian regmap_get_reg_endian(const struct regmap_bus *bus,
+					const struct regmap_config *config)
+{
+	enum regmap_endian endian;
 
-	/* Retrieve the endianness specअगरication from the regmap config */
-	endian = config->reg_क्रमmat_endian;
+	/* Retrieve the endianness specification from the regmap config */
+	endian = config->reg_format_endian;
 
-	/* If the regmap config specअगरied a non-शेष value, use that */
-	अगर (endian != REGMAP_ENDIAN_DEFAULT)
-		वापस endian;
+	/* If the regmap config specified a non-default value, use that */
+	if (endian != REGMAP_ENDIAN_DEFAULT)
+		return endian;
 
-	/* Retrieve the endianness specअगरication from the bus config */
-	अगर (bus && bus->reg_क्रमmat_endian_शेष)
-		endian = bus->reg_क्रमmat_endian_शेष;
+	/* Retrieve the endianness specification from the bus config */
+	if (bus && bus->reg_format_endian_default)
+		endian = bus->reg_format_endian_default;
 
-	/* If the bus specअगरied a non-शेष value, use that */
-	अगर (endian != REGMAP_ENDIAN_DEFAULT)
-		वापस endian;
+	/* If the bus specified a non-default value, use that */
+	if (endian != REGMAP_ENDIAN_DEFAULT)
+		return endian;
 
-	/* Use this अगर no other value was found */
-	वापस REGMAP_ENDIAN_BIG;
-पूर्ण
+	/* Use this if no other value was found */
+	return REGMAP_ENDIAN_BIG;
+}
 
-क्रमागत regmap_endian regmap_get_val_endian(काष्ठा device *dev,
-					 स्थिर काष्ठा regmap_bus *bus,
-					 स्थिर काष्ठा regmap_config *config)
-अणु
-	काष्ठा fwnode_handle *fwnode = dev ? dev_fwnode(dev) : शून्य;
-	क्रमागत regmap_endian endian;
+enum regmap_endian regmap_get_val_endian(struct device *dev,
+					 const struct regmap_bus *bus,
+					 const struct regmap_config *config)
+{
+	struct fwnode_handle *fwnode = dev ? dev_fwnode(dev) : NULL;
+	enum regmap_endian endian;
 
-	/* Retrieve the endianness specअगरication from the regmap config */
-	endian = config->val_क्रमmat_endian;
+	/* Retrieve the endianness specification from the regmap config */
+	endian = config->val_format_endian;
 
-	/* If the regmap config specअगरied a non-शेष value, use that */
-	अगर (endian != REGMAP_ENDIAN_DEFAULT)
-		वापस endian;
+	/* If the regmap config specified a non-default value, use that */
+	if (endian != REGMAP_ENDIAN_DEFAULT)
+		return endian;
 
 	/* If the firmware node exist try to get endianness from it */
-	अगर (fwnode_property_पढ़ो_bool(fwnode, "big-endian"))
+	if (fwnode_property_read_bool(fwnode, "big-endian"))
 		endian = REGMAP_ENDIAN_BIG;
-	अन्यथा अगर (fwnode_property_पढ़ो_bool(fwnode, "little-endian"))
+	else if (fwnode_property_read_bool(fwnode, "little-endian"))
 		endian = REGMAP_ENDIAN_LITTLE;
-	अन्यथा अगर (fwnode_property_पढ़ो_bool(fwnode, "native-endian"))
+	else if (fwnode_property_read_bool(fwnode, "native-endian"))
 		endian = REGMAP_ENDIAN_NATIVE;
 
-	/* If the endianness was specअगरied in fwnode, use that */
-	अगर (endian != REGMAP_ENDIAN_DEFAULT)
-		वापस endian;
+	/* If the endianness was specified in fwnode, use that */
+	if (endian != REGMAP_ENDIAN_DEFAULT)
+		return endian;
 
-	/* Retrieve the endianness specअगरication from the bus config */
-	अगर (bus && bus->val_क्रमmat_endian_शेष)
-		endian = bus->val_क्रमmat_endian_शेष;
+	/* Retrieve the endianness specification from the bus config */
+	if (bus && bus->val_format_endian_default)
+		endian = bus->val_format_endian_default;
 
-	/* If the bus specअगरied a non-शेष value, use that */
-	अगर (endian != REGMAP_ENDIAN_DEFAULT)
-		वापस endian;
+	/* If the bus specified a non-default value, use that */
+	if (endian != REGMAP_ENDIAN_DEFAULT)
+		return endian;
 
-	/* Use this अगर no other value was found */
-	वापस REGMAP_ENDIAN_BIG;
-पूर्ण
+	/* Use this if no other value was found */
+	return REGMAP_ENDIAN_BIG;
+}
 EXPORT_SYMBOL_GPL(regmap_get_val_endian);
 
-काष्ठा regmap *__regmap_init(काष्ठा device *dev,
-			     स्थिर काष्ठा regmap_bus *bus,
-			     व्योम *bus_context,
-			     स्थिर काष्ठा regmap_config *config,
-			     काष्ठा lock_class_key *lock_key,
-			     स्थिर अक्षर *lock_name)
-अणु
-	काष्ठा regmap *map;
-	पूर्णांक ret = -EINVAL;
-	क्रमागत regmap_endian reg_endian, val_endian;
-	पूर्णांक i, j;
+struct regmap *__regmap_init(struct device *dev,
+			     const struct regmap_bus *bus,
+			     void *bus_context,
+			     const struct regmap_config *config,
+			     struct lock_class_key *lock_key,
+			     const char *lock_name)
+{
+	struct regmap *map;
+	int ret = -EINVAL;
+	enum regmap_endian reg_endian, val_endian;
+	int i, j;
 
-	अगर (!config)
-		जाओ err;
+	if (!config)
+		goto err;
 
-	map = kzalloc(माप(*map), GFP_KERNEL);
-	अगर (map == शून्य) अणु
+	map = kzalloc(sizeof(*map), GFP_KERNEL);
+	if (map == NULL) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = regmap_set_name(map, config);
-	अगर (ret)
-		जाओ err_map;
+	if (ret)
+		goto err_map;
 
 	ret = -EINVAL; /* Later error paths rely on this */
 
-	अगर (config->disable_locking) अणु
+	if (config->disable_locking) {
 		map->lock = map->unlock = regmap_lock_unlock_none;
 		map->can_sleep = config->can_sleep;
 		regmap_debugfs_disable(map);
-	पूर्ण अन्यथा अगर (config->lock && config->unlock) अणु
+	} else if (config->lock && config->unlock) {
 		map->lock = config->lock;
 		map->unlock = config->unlock;
 		map->lock_arg = config->lock_arg;
 		map->can_sleep = config->can_sleep;
-	पूर्ण अन्यथा अगर (config->use_hwlock) अणु
-		map->hwlock = hwspin_lock_request_specअगरic(config->hwlock_id);
-		अगर (!map->hwlock) अणु
+	} else if (config->use_hwlock) {
+		map->hwlock = hwspin_lock_request_specific(config->hwlock_id);
+		if (!map->hwlock) {
 			ret = -ENXIO;
-			जाओ err_name;
-		पूर्ण
+			goto err_name;
+		}
 
-		चयन (config->hwlock_mode) अणु
-		हाल HWLOCK_IRQSTATE:
+		switch (config->hwlock_mode) {
+		case HWLOCK_IRQSTATE:
 			map->lock = regmap_lock_hwlock_irqsave;
 			map->unlock = regmap_unlock_hwlock_irqrestore;
-			अवरोध;
-		हाल HWLOCK_IRQ:
+			break;
+		case HWLOCK_IRQ:
 			map->lock = regmap_lock_hwlock_irq;
 			map->unlock = regmap_unlock_hwlock_irq;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			map->lock = regmap_lock_hwlock;
 			map->unlock = regmap_unlock_hwlock;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		map->lock_arg = map;
-	पूर्ण अन्यथा अणु
-		अगर ((bus && bus->fast_io) ||
-		    config->fast_io) अणु
+	} else {
+		if ((bus && bus->fast_io) ||
+		    config->fast_io) {
 			spin_lock_init(&map->spinlock);
 			map->lock = regmap_lock_spinlock;
 			map->unlock = regmap_unlock_spinlock;
 			lockdep_set_class_and_name(&map->spinlock,
 						   lock_key, lock_name);
-		पूर्ण अन्यथा अणु
+		} else {
 			mutex_init(&map->mutex);
 			map->lock = regmap_lock_mutex;
 			map->unlock = regmap_unlock_mutex;
 			map->can_sleep = true;
 			lockdep_set_class_and_name(&map->mutex,
 						   lock_key, lock_name);
-		पूर्ण
+		}
 		map->lock_arg = map;
-	पूर्ण
+	}
 
 	/*
-	 * When we ग_लिखो in fast-paths with regmap_bulk_ग_लिखो() करोn't allocate
+	 * When we write in fast-paths with regmap_bulk_write() don't allocate
 	 * scratch buffers with sleeping allocations.
 	 */
-	अगर ((bus && bus->fast_io) || config->fast_io)
+	if ((bus && bus->fast_io) || config->fast_io)
 		map->alloc_flags = GFP_ATOMIC;
-	अन्यथा
+	else
 		map->alloc_flags = GFP_KERNEL;
 
-	map->क्रमmat.reg_bytes = DIV_ROUND_UP(config->reg_bits, 8);
-	map->क्रमmat.pad_bytes = config->pad_bits / 8;
-	map->क्रमmat.val_bytes = DIV_ROUND_UP(config->val_bits, 8);
-	map->क्रमmat.buf_size = DIV_ROUND_UP(config->reg_bits +
+	map->format.reg_bytes = DIV_ROUND_UP(config->reg_bits, 8);
+	map->format.pad_bytes = config->pad_bits / 8;
+	map->format.val_bytes = DIV_ROUND_UP(config->val_bits, 8);
+	map->format.buf_size = DIV_ROUND_UP(config->reg_bits +
 			config->val_bits + config->pad_bits, 8);
-	map->reg_shअगरt = config->pad_bits % 8;
-	अगर (config->reg_stride)
+	map->reg_shift = config->pad_bits % 8;
+	if (config->reg_stride)
 		map->reg_stride = config->reg_stride;
-	अन्यथा
+	else
 		map->reg_stride = 1;
-	अगर (is_घातer_of_2(map->reg_stride))
+	if (is_power_of_2(map->reg_stride))
 		map->reg_stride_order = ilog2(map->reg_stride);
-	अन्यथा
+	else
 		map->reg_stride_order = -1;
-	map->use_single_पढ़ो = config->use_single_पढ़ो || !bus || !bus->पढ़ो;
-	map->use_single_ग_लिखो = config->use_single_ग_लिखो || !bus || !bus->ग_लिखो;
-	map->can_multi_ग_लिखो = config->can_multi_ग_लिखो && bus && bus->ग_लिखो;
-	अगर (bus) अणु
-		map->max_raw_पढ़ो = bus->max_raw_पढ़ो;
-		map->max_raw_ग_लिखो = bus->max_raw_ग_लिखो;
-	पूर्ण
+	map->use_single_read = config->use_single_read || !bus || !bus->read;
+	map->use_single_write = config->use_single_write || !bus || !bus->write;
+	map->can_multi_write = config->can_multi_write && bus && bus->write;
+	if (bus) {
+		map->max_raw_read = bus->max_raw_read;
+		map->max_raw_write = bus->max_raw_write;
+	}
 	map->dev = dev;
 	map->bus = bus;
 	map->bus_context = bus_context;
-	map->max_रेजिस्टर = config->max_रेजिस्टर;
+	map->max_register = config->max_register;
 	map->wr_table = config->wr_table;
 	map->rd_table = config->rd_table;
-	map->अस्थिर_table = config->अस्थिर_table;
+	map->volatile_table = config->volatile_table;
 	map->precious_table = config->precious_table;
 	map->wr_noinc_table = config->wr_noinc_table;
 	map->rd_noinc_table = config->rd_noinc_table;
-	map->ग_लिखोable_reg = config->ग_लिखोable_reg;
-	map->पढ़ोable_reg = config->पढ़ोable_reg;
-	map->अस्थिर_reg = config->अस्थिर_reg;
+	map->writeable_reg = config->writeable_reg;
+	map->readable_reg = config->readable_reg;
+	map->volatile_reg = config->volatile_reg;
 	map->precious_reg = config->precious_reg;
-	map->ग_लिखोable_noinc_reg = config->ग_लिखोable_noinc_reg;
-	map->पढ़ोable_noinc_reg = config->पढ़ोable_noinc_reg;
+	map->writeable_noinc_reg = config->writeable_noinc_reg;
+	map->readable_noinc_reg = config->readable_noinc_reg;
 	map->cache_type = config->cache_type;
 
 	spin_lock_init(&map->async_lock);
 	INIT_LIST_HEAD(&map->async_list);
-	INIT_LIST_HEAD(&map->async_मुक्त);
-	init_रुकोqueue_head(&map->async_रुकोq);
+	INIT_LIST_HEAD(&map->async_free);
+	init_waitqueue_head(&map->async_waitq);
 
-	अगर (config->पढ़ो_flag_mask ||
-	    config->ग_लिखो_flag_mask ||
-	    config->zero_flag_mask) अणु
-		map->पढ़ो_flag_mask = config->पढ़ो_flag_mask;
-		map->ग_लिखो_flag_mask = config->ग_लिखो_flag_mask;
-	पूर्ण अन्यथा अगर (bus) अणु
-		map->पढ़ो_flag_mask = bus->पढ़ो_flag_mask;
-	पूर्ण
+	if (config->read_flag_mask ||
+	    config->write_flag_mask ||
+	    config->zero_flag_mask) {
+		map->read_flag_mask = config->read_flag_mask;
+		map->write_flag_mask = config->write_flag_mask;
+	} else if (bus) {
+		map->read_flag_mask = bus->read_flag_mask;
+	}
 
-	अगर (!bus) अणु
-		map->reg_पढ़ो  = config->reg_पढ़ो;
-		map->reg_ग_लिखो = config->reg_ग_लिखो;
+	if (!bus) {
+		map->reg_read  = config->reg_read;
+		map->reg_write = config->reg_write;
 
 		map->defer_caching = false;
-		जाओ skip_क्रमmat_initialization;
-	पूर्ण अन्यथा अगर (!bus->पढ़ो || !bus->ग_लिखो) अणु
-		map->reg_पढ़ो = _regmap_bus_reg_पढ़ो;
-		map->reg_ग_लिखो = _regmap_bus_reg_ग_लिखो;
+		goto skip_format_initialization;
+	} else if (!bus->read || !bus->write) {
+		map->reg_read = _regmap_bus_reg_read;
+		map->reg_write = _regmap_bus_reg_write;
 		map->reg_update_bits = bus->reg_update_bits;
 
 		map->defer_caching = false;
-		जाओ skip_क्रमmat_initialization;
-	पूर्ण अन्यथा अणु
-		map->reg_पढ़ो  = _regmap_bus_पढ़ो;
+		goto skip_format_initialization;
+	} else {
+		map->reg_read  = _regmap_bus_read;
 		map->reg_update_bits = bus->reg_update_bits;
-	पूर्ण
+	}
 
 	reg_endian = regmap_get_reg_endian(bus, config);
 	val_endian = regmap_get_val_endian(dev, bus, config);
 
-	चयन (config->reg_bits + map->reg_shअगरt) अणु
-	हाल 2:
-		चयन (config->val_bits) अणु
-		हाल 6:
-			map->क्रमmat.क्रमmat_ग_लिखो = regmap_क्रमmat_2_6_ग_लिखो;
-			अवरोध;
-		शेष:
-			जाओ err_hwlock;
-		पूर्ण
-		अवरोध;
+	switch (config->reg_bits + map->reg_shift) {
+	case 2:
+		switch (config->val_bits) {
+		case 6:
+			map->format.format_write = regmap_format_2_6_write;
+			break;
+		default:
+			goto err_hwlock;
+		}
+		break;
 
-	हाल 4:
-		चयन (config->val_bits) अणु
-		हाल 12:
-			map->क्रमmat.क्रमmat_ग_लिखो = regmap_क्रमmat_4_12_ग_लिखो;
-			अवरोध;
-		शेष:
-			जाओ err_hwlock;
-		पूर्ण
-		अवरोध;
+	case 4:
+		switch (config->val_bits) {
+		case 12:
+			map->format.format_write = regmap_format_4_12_write;
+			break;
+		default:
+			goto err_hwlock;
+		}
+		break;
 
-	हाल 7:
-		चयन (config->val_bits) अणु
-		हाल 9:
-			map->क्रमmat.क्रमmat_ग_लिखो = regmap_क्रमmat_7_9_ग_लिखो;
-			अवरोध;
-		शेष:
-			जाओ err_hwlock;
-		पूर्ण
-		अवरोध;
+	case 7:
+		switch (config->val_bits) {
+		case 9:
+			map->format.format_write = regmap_format_7_9_write;
+			break;
+		default:
+			goto err_hwlock;
+		}
+		break;
 
-	हाल 10:
-		चयन (config->val_bits) अणु
-		हाल 14:
-			map->क्रमmat.क्रमmat_ग_लिखो = regmap_क्रमmat_10_14_ग_लिखो;
-			अवरोध;
-		शेष:
-			जाओ err_hwlock;
-		पूर्ण
-		अवरोध;
+	case 10:
+		switch (config->val_bits) {
+		case 14:
+			map->format.format_write = regmap_format_10_14_write;
+			break;
+		default:
+			goto err_hwlock;
+		}
+		break;
 
-	हाल 12:
-		चयन (config->val_bits) अणु
-		हाल 20:
-			map->क्रमmat.क्रमmat_ग_लिखो = regmap_क्रमmat_12_20_ग_लिखो;
-			अवरोध;
-		शेष:
-			जाओ err_hwlock;
-		पूर्ण
-		अवरोध;
+	case 12:
+		switch (config->val_bits) {
+		case 20:
+			map->format.format_write = regmap_format_12_20_write;
+			break;
+		default:
+			goto err_hwlock;
+		}
+		break;
 
-	हाल 8:
-		map->क्रमmat.क्रमmat_reg = regmap_क्रमmat_8;
-		अवरोध;
+	case 8:
+		map->format.format_reg = regmap_format_8;
+		break;
 
-	हाल 16:
-		चयन (reg_endian) अणु
-		हाल REGMAP_ENDIAN_BIG:
-			map->क्रमmat.क्रमmat_reg = regmap_क्रमmat_16_be;
-			अवरोध;
-		हाल REGMAP_ENDIAN_LITTLE:
-			map->क्रमmat.क्रमmat_reg = regmap_क्रमmat_16_le;
-			अवरोध;
-		हाल REGMAP_ENDIAN_NATIVE:
-			map->क्रमmat.क्रमmat_reg = regmap_क्रमmat_16_native;
-			अवरोध;
-		शेष:
-			जाओ err_hwlock;
-		पूर्ण
-		अवरोध;
+	case 16:
+		switch (reg_endian) {
+		case REGMAP_ENDIAN_BIG:
+			map->format.format_reg = regmap_format_16_be;
+			break;
+		case REGMAP_ENDIAN_LITTLE:
+			map->format.format_reg = regmap_format_16_le;
+			break;
+		case REGMAP_ENDIAN_NATIVE:
+			map->format.format_reg = regmap_format_16_native;
+			break;
+		default:
+			goto err_hwlock;
+		}
+		break;
 
-	हाल 24:
-		अगर (reg_endian != REGMAP_ENDIAN_BIG)
-			जाओ err_hwlock;
-		map->क्रमmat.क्रमmat_reg = regmap_क्रमmat_24;
-		अवरोध;
+	case 24:
+		if (reg_endian != REGMAP_ENDIAN_BIG)
+			goto err_hwlock;
+		map->format.format_reg = regmap_format_24;
+		break;
 
-	हाल 32:
-		चयन (reg_endian) अणु
-		हाल REGMAP_ENDIAN_BIG:
-			map->क्रमmat.क्रमmat_reg = regmap_क्रमmat_32_be;
-			अवरोध;
-		हाल REGMAP_ENDIAN_LITTLE:
-			map->क्रमmat.क्रमmat_reg = regmap_क्रमmat_32_le;
-			अवरोध;
-		हाल REGMAP_ENDIAN_NATIVE:
-			map->क्रमmat.क्रमmat_reg = regmap_क्रमmat_32_native;
-			अवरोध;
-		शेष:
-			जाओ err_hwlock;
-		पूर्ण
-		अवरोध;
+	case 32:
+		switch (reg_endian) {
+		case REGMAP_ENDIAN_BIG:
+			map->format.format_reg = regmap_format_32_be;
+			break;
+		case REGMAP_ENDIAN_LITTLE:
+			map->format.format_reg = regmap_format_32_le;
+			break;
+		case REGMAP_ENDIAN_NATIVE:
+			map->format.format_reg = regmap_format_32_native;
+			break;
+		default:
+			goto err_hwlock;
+		}
+		break;
 
-#अगर_घोषित CONFIG_64BIT
-	हाल 64:
-		चयन (reg_endian) अणु
-		हाल REGMAP_ENDIAN_BIG:
-			map->क्रमmat.क्रमmat_reg = regmap_क्रमmat_64_be;
-			अवरोध;
-		हाल REGMAP_ENDIAN_LITTLE:
-			map->क्रमmat.क्रमmat_reg = regmap_क्रमmat_64_le;
-			अवरोध;
-		हाल REGMAP_ENDIAN_NATIVE:
-			map->क्रमmat.क्रमmat_reg = regmap_क्रमmat_64_native;
-			अवरोध;
-		शेष:
-			जाओ err_hwlock;
-		पूर्ण
-		अवरोध;
-#पूर्ण_अगर
+#ifdef CONFIG_64BIT
+	case 64:
+		switch (reg_endian) {
+		case REGMAP_ENDIAN_BIG:
+			map->format.format_reg = regmap_format_64_be;
+			break;
+		case REGMAP_ENDIAN_LITTLE:
+			map->format.format_reg = regmap_format_64_le;
+			break;
+		case REGMAP_ENDIAN_NATIVE:
+			map->format.format_reg = regmap_format_64_native;
+			break;
+		default:
+			goto err_hwlock;
+		}
+		break;
+#endif
 
-	शेष:
-		जाओ err_hwlock;
-	पूर्ण
+	default:
+		goto err_hwlock;
+	}
 
-	अगर (val_endian == REGMAP_ENDIAN_NATIVE)
-		map->क्रमmat.parse_inplace = regmap_parse_inplace_noop;
+	if (val_endian == REGMAP_ENDIAN_NATIVE)
+		map->format.parse_inplace = regmap_parse_inplace_noop;
 
-	चयन (config->val_bits) अणु
-	हाल 8:
-		map->क्रमmat.क्रमmat_val = regmap_क्रमmat_8;
-		map->क्रमmat.parse_val = regmap_parse_8;
-		map->क्रमmat.parse_inplace = regmap_parse_inplace_noop;
-		अवरोध;
-	हाल 16:
-		चयन (val_endian) अणु
-		हाल REGMAP_ENDIAN_BIG:
-			map->क्रमmat.क्रमmat_val = regmap_क्रमmat_16_be;
-			map->क्रमmat.parse_val = regmap_parse_16_be;
-			map->क्रमmat.parse_inplace = regmap_parse_16_be_inplace;
-			अवरोध;
-		हाल REGMAP_ENDIAN_LITTLE:
-			map->क्रमmat.क्रमmat_val = regmap_क्रमmat_16_le;
-			map->क्रमmat.parse_val = regmap_parse_16_le;
-			map->क्रमmat.parse_inplace = regmap_parse_16_le_inplace;
-			अवरोध;
-		हाल REGMAP_ENDIAN_NATIVE:
-			map->क्रमmat.क्रमmat_val = regmap_क्रमmat_16_native;
-			map->क्रमmat.parse_val = regmap_parse_16_native;
-			अवरोध;
-		शेष:
-			जाओ err_hwlock;
-		पूर्ण
-		अवरोध;
-	हाल 24:
-		अगर (val_endian != REGMAP_ENDIAN_BIG)
-			जाओ err_hwlock;
-		map->क्रमmat.क्रमmat_val = regmap_क्रमmat_24;
-		map->क्रमmat.parse_val = regmap_parse_24;
-		अवरोध;
-	हाल 32:
-		चयन (val_endian) अणु
-		हाल REGMAP_ENDIAN_BIG:
-			map->क्रमmat.क्रमmat_val = regmap_क्रमmat_32_be;
-			map->क्रमmat.parse_val = regmap_parse_32_be;
-			map->क्रमmat.parse_inplace = regmap_parse_32_be_inplace;
-			अवरोध;
-		हाल REGMAP_ENDIAN_LITTLE:
-			map->क्रमmat.क्रमmat_val = regmap_क्रमmat_32_le;
-			map->क्रमmat.parse_val = regmap_parse_32_le;
-			map->क्रमmat.parse_inplace = regmap_parse_32_le_inplace;
-			अवरोध;
-		हाल REGMAP_ENDIAN_NATIVE:
-			map->क्रमmat.क्रमmat_val = regmap_क्रमmat_32_native;
-			map->क्रमmat.parse_val = regmap_parse_32_native;
-			अवरोध;
-		शेष:
-			जाओ err_hwlock;
-		पूर्ण
-		अवरोध;
-#अगर_घोषित CONFIG_64BIT
-	हाल 64:
-		चयन (val_endian) अणु
-		हाल REGMAP_ENDIAN_BIG:
-			map->क्रमmat.क्रमmat_val = regmap_क्रमmat_64_be;
-			map->क्रमmat.parse_val = regmap_parse_64_be;
-			map->क्रमmat.parse_inplace = regmap_parse_64_be_inplace;
-			अवरोध;
-		हाल REGMAP_ENDIAN_LITTLE:
-			map->क्रमmat.क्रमmat_val = regmap_क्रमmat_64_le;
-			map->क्रमmat.parse_val = regmap_parse_64_le;
-			map->क्रमmat.parse_inplace = regmap_parse_64_le_inplace;
-			अवरोध;
-		हाल REGMAP_ENDIAN_NATIVE:
-			map->क्रमmat.क्रमmat_val = regmap_क्रमmat_64_native;
-			map->क्रमmat.parse_val = regmap_parse_64_native;
-			अवरोध;
-		शेष:
-			जाओ err_hwlock;
-		पूर्ण
-		अवरोध;
-#पूर्ण_अगर
-	पूर्ण
+	switch (config->val_bits) {
+	case 8:
+		map->format.format_val = regmap_format_8;
+		map->format.parse_val = regmap_parse_8;
+		map->format.parse_inplace = regmap_parse_inplace_noop;
+		break;
+	case 16:
+		switch (val_endian) {
+		case REGMAP_ENDIAN_BIG:
+			map->format.format_val = regmap_format_16_be;
+			map->format.parse_val = regmap_parse_16_be;
+			map->format.parse_inplace = regmap_parse_16_be_inplace;
+			break;
+		case REGMAP_ENDIAN_LITTLE:
+			map->format.format_val = regmap_format_16_le;
+			map->format.parse_val = regmap_parse_16_le;
+			map->format.parse_inplace = regmap_parse_16_le_inplace;
+			break;
+		case REGMAP_ENDIAN_NATIVE:
+			map->format.format_val = regmap_format_16_native;
+			map->format.parse_val = regmap_parse_16_native;
+			break;
+		default:
+			goto err_hwlock;
+		}
+		break;
+	case 24:
+		if (val_endian != REGMAP_ENDIAN_BIG)
+			goto err_hwlock;
+		map->format.format_val = regmap_format_24;
+		map->format.parse_val = regmap_parse_24;
+		break;
+	case 32:
+		switch (val_endian) {
+		case REGMAP_ENDIAN_BIG:
+			map->format.format_val = regmap_format_32_be;
+			map->format.parse_val = regmap_parse_32_be;
+			map->format.parse_inplace = regmap_parse_32_be_inplace;
+			break;
+		case REGMAP_ENDIAN_LITTLE:
+			map->format.format_val = regmap_format_32_le;
+			map->format.parse_val = regmap_parse_32_le;
+			map->format.parse_inplace = regmap_parse_32_le_inplace;
+			break;
+		case REGMAP_ENDIAN_NATIVE:
+			map->format.format_val = regmap_format_32_native;
+			map->format.parse_val = regmap_parse_32_native;
+			break;
+		default:
+			goto err_hwlock;
+		}
+		break;
+#ifdef CONFIG_64BIT
+	case 64:
+		switch (val_endian) {
+		case REGMAP_ENDIAN_BIG:
+			map->format.format_val = regmap_format_64_be;
+			map->format.parse_val = regmap_parse_64_be;
+			map->format.parse_inplace = regmap_parse_64_be_inplace;
+			break;
+		case REGMAP_ENDIAN_LITTLE:
+			map->format.format_val = regmap_format_64_le;
+			map->format.parse_val = regmap_parse_64_le;
+			map->format.parse_inplace = regmap_parse_64_le_inplace;
+			break;
+		case REGMAP_ENDIAN_NATIVE:
+			map->format.format_val = regmap_format_64_native;
+			map->format.parse_val = regmap_parse_64_native;
+			break;
+		default:
+			goto err_hwlock;
+		}
+		break;
+#endif
+	}
 
-	अगर (map->क्रमmat.क्रमmat_ग_लिखो) अणु
-		अगर ((reg_endian != REGMAP_ENDIAN_BIG) ||
+	if (map->format.format_write) {
+		if ((reg_endian != REGMAP_ENDIAN_BIG) ||
 		    (val_endian != REGMAP_ENDIAN_BIG))
-			जाओ err_hwlock;
-		map->use_single_ग_लिखो = true;
-	पूर्ण
+			goto err_hwlock;
+		map->use_single_write = true;
+	}
 
-	अगर (!map->क्रमmat.क्रमmat_ग_लिखो &&
-	    !(map->क्रमmat.क्रमmat_reg && map->क्रमmat.क्रमmat_val))
-		जाओ err_hwlock;
+	if (!map->format.format_write &&
+	    !(map->format.format_reg && map->format.format_val))
+		goto err_hwlock;
 
-	map->work_buf = kzalloc(map->क्रमmat.buf_size, GFP_KERNEL);
-	अगर (map->work_buf == शून्य) अणु
+	map->work_buf = kzalloc(map->format.buf_size, GFP_KERNEL);
+	if (map->work_buf == NULL) {
 		ret = -ENOMEM;
-		जाओ err_hwlock;
-	पूर्ण
+		goto err_hwlock;
+	}
 
-	अगर (map->क्रमmat.क्रमmat_ग_लिखो) अणु
+	if (map->format.format_write) {
 		map->defer_caching = false;
-		map->reg_ग_लिखो = _regmap_bus_क्रमmatted_ग_लिखो;
-	पूर्ण अन्यथा अगर (map->क्रमmat.क्रमmat_val) अणु
+		map->reg_write = _regmap_bus_formatted_write;
+	} else if (map->format.format_val) {
 		map->defer_caching = true;
-		map->reg_ग_लिखो = _regmap_bus_raw_ग_लिखो;
-	पूर्ण
+		map->reg_write = _regmap_bus_raw_write;
+	}
 
-skip_क्रमmat_initialization:
+skip_format_initialization:
 
 	map->range_tree = RB_ROOT;
-	क्रम (i = 0; i < config->num_ranges; i++) अणु
-		स्थिर काष्ठा regmap_range_cfg *range_cfg = &config->ranges[i];
-		काष्ठा regmap_range_node *new;
+	for (i = 0; i < config->num_ranges; i++) {
+		const struct regmap_range_cfg *range_cfg = &config->ranges[i];
+		struct regmap_range_node *new;
 
 		/* Sanity check */
-		अगर (range_cfg->range_max < range_cfg->range_min) अणु
+		if (range_cfg->range_max < range_cfg->range_min) {
 			dev_err(map->dev, "Invalid range %d: %d < %d\n", i,
 				range_cfg->range_max, range_cfg->range_min);
-			जाओ err_range;
-		पूर्ण
+			goto err_range;
+		}
 
-		अगर (range_cfg->range_max > map->max_रेजिस्टर) अणु
+		if (range_cfg->range_max > map->max_register) {
 			dev_err(map->dev, "Invalid range %d: %d > %d\n", i,
-				range_cfg->range_max, map->max_रेजिस्टर);
-			जाओ err_range;
-		पूर्ण
+				range_cfg->range_max, map->max_register);
+			goto err_range;
+		}
 
-		अगर (range_cfg->selector_reg > map->max_रेजिस्टर) अणु
+		if (range_cfg->selector_reg > map->max_register) {
 			dev_err(map->dev,
 				"Invalid range %d: selector out of map\n", i);
-			जाओ err_range;
-		पूर्ण
+			goto err_range;
+		}
 
-		अगर (range_cfg->winकरोw_len == 0) अणु
+		if (range_cfg->window_len == 0) {
 			dev_err(map->dev, "Invalid range %d: window_len 0\n",
 				i);
-			जाओ err_range;
-		पूर्ण
+			goto err_range;
+		}
 
-		/* Make sure, that this रेजिस्टर range has no selector
-		   or data winकरोw within its boundary */
-		क्रम (j = 0; j < config->num_ranges; j++) अणु
-			अचिन्हित sel_reg = config->ranges[j].selector_reg;
-			अचिन्हित win_min = config->ranges[j].winकरोw_start;
-			अचिन्हित win_max = win_min +
-					   config->ranges[j].winकरोw_len - 1;
+		/* Make sure, that this register range has no selector
+		   or data window within its boundary */
+		for (j = 0; j < config->num_ranges; j++) {
+			unsigned sel_reg = config->ranges[j].selector_reg;
+			unsigned win_min = config->ranges[j].window_start;
+			unsigned win_max = win_min +
+					   config->ranges[j].window_len - 1;
 
-			/* Allow data winकरोw inside its own भव range */
-			अगर (j == i)
-				जारी;
+			/* Allow data window inside its own virtual range */
+			if (j == i)
+				continue;
 
-			अगर (range_cfg->range_min <= sel_reg &&
-			    sel_reg <= range_cfg->range_max) अणु
+			if (range_cfg->range_min <= sel_reg &&
+			    sel_reg <= range_cfg->range_max) {
 				dev_err(map->dev,
 					"Range %d: selector for %d in window\n",
 					i, j);
-				जाओ err_range;
-			पूर्ण
+				goto err_range;
+			}
 
-			अगर (!(win_max < range_cfg->range_min ||
-			      win_min > range_cfg->range_max)) अणु
+			if (!(win_max < range_cfg->range_min ||
+			      win_min > range_cfg->range_max)) {
 				dev_err(map->dev,
 					"Range %d: window for %d in window\n",
 					i, j);
-				जाओ err_range;
-			पूर्ण
-		पूर्ण
+				goto err_range;
+			}
+		}
 
-		new = kzalloc(माप(*new), GFP_KERNEL);
-		अगर (new == शून्य) अणु
+		new = kzalloc(sizeof(*new), GFP_KERNEL);
+		if (new == NULL) {
 			ret = -ENOMEM;
-			जाओ err_range;
-		पूर्ण
+			goto err_range;
+		}
 
 		new->map = map;
 		new->name = range_cfg->name;
@@ -1152,391 +1151,391 @@ skip_क्रमmat_initialization:
 		new->range_max = range_cfg->range_max;
 		new->selector_reg = range_cfg->selector_reg;
 		new->selector_mask = range_cfg->selector_mask;
-		new->selector_shअगरt = range_cfg->selector_shअगरt;
-		new->winकरोw_start = range_cfg->winकरोw_start;
-		new->winकरोw_len = range_cfg->winकरोw_len;
+		new->selector_shift = range_cfg->selector_shift;
+		new->window_start = range_cfg->window_start;
+		new->window_len = range_cfg->window_len;
 
-		अगर (!_regmap_range_add(map, new)) अणु
+		if (!_regmap_range_add(map, new)) {
 			dev_err(map->dev, "Failed to add range %d\n", i);
-			kमुक्त(new);
-			जाओ err_range;
-		पूर्ण
+			kfree(new);
+			goto err_range;
+		}
 
-		अगर (map->selector_work_buf == शून्य) अणु
+		if (map->selector_work_buf == NULL) {
 			map->selector_work_buf =
-				kzalloc(map->क्रमmat.buf_size, GFP_KERNEL);
-			अगर (map->selector_work_buf == शून्य) अणु
+				kzalloc(map->format.buf_size, GFP_KERNEL);
+			if (map->selector_work_buf == NULL) {
 				ret = -ENOMEM;
-				जाओ err_range;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto err_range;
+			}
+		}
+	}
 
 	ret = regcache_init(map, config);
-	अगर (ret != 0)
-		जाओ err_range;
+	if (ret != 0)
+		goto err_range;
 
-	अगर (dev) अणु
+	if (dev) {
 		ret = regmap_attach_dev(dev, map, config);
-		अगर (ret != 0)
-			जाओ err_regcache;
-	पूर्ण अन्यथा अणु
+		if (ret != 0)
+			goto err_regcache;
+	} else {
 		regmap_debugfs_init(map);
-	पूर्ण
+	}
 
-	वापस map;
+	return map;
 
 err_regcache:
-	regcache_निकास(map);
+	regcache_exit(map);
 err_range:
-	regmap_range_निकास(map);
-	kमुक्त(map->work_buf);
+	regmap_range_exit(map);
+	kfree(map->work_buf);
 err_hwlock:
-	अगर (map->hwlock)
-		hwspin_lock_मुक्त(map->hwlock);
+	if (map->hwlock)
+		hwspin_lock_free(map->hwlock);
 err_name:
-	kमुक्त_स्थिर(map->name);
+	kfree_const(map->name);
 err_map:
-	kमुक्त(map);
+	kfree(map);
 err:
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 EXPORT_SYMBOL_GPL(__regmap_init);
 
-अटल व्योम devm_regmap_release(काष्ठा device *dev, व्योम *res)
-अणु
-	regmap_निकास(*(काष्ठा regmap **)res);
-पूर्ण
+static void devm_regmap_release(struct device *dev, void *res)
+{
+	regmap_exit(*(struct regmap **)res);
+}
 
-काष्ठा regmap *__devm_regmap_init(काष्ठा device *dev,
-				  स्थिर काष्ठा regmap_bus *bus,
-				  व्योम *bus_context,
-				  स्थिर काष्ठा regmap_config *config,
-				  काष्ठा lock_class_key *lock_key,
-				  स्थिर अक्षर *lock_name)
-अणु
-	काष्ठा regmap **ptr, *regmap;
+struct regmap *__devm_regmap_init(struct device *dev,
+				  const struct regmap_bus *bus,
+				  void *bus_context,
+				  const struct regmap_config *config,
+				  struct lock_class_key *lock_key,
+				  const char *lock_name)
+{
+	struct regmap **ptr, *regmap;
 
-	ptr = devres_alloc(devm_regmap_release, माप(*ptr), GFP_KERNEL);
-	अगर (!ptr)
-		वापस ERR_PTR(-ENOMEM);
+	ptr = devres_alloc(devm_regmap_release, sizeof(*ptr), GFP_KERNEL);
+	if (!ptr)
+		return ERR_PTR(-ENOMEM);
 
 	regmap = __regmap_init(dev, bus, bus_context, config,
 			       lock_key, lock_name);
-	अगर (!IS_ERR(regmap)) अणु
+	if (!IS_ERR(regmap)) {
 		*ptr = regmap;
 		devres_add(dev, ptr);
-	पूर्ण अन्यथा अणु
-		devres_मुक्त(ptr);
-	पूर्ण
+	} else {
+		devres_free(ptr);
+	}
 
-	वापस regmap;
-पूर्ण
+	return regmap;
+}
 EXPORT_SYMBOL_GPL(__devm_regmap_init);
 
-अटल व्योम regmap_field_init(काष्ठा regmap_field *rm_field,
-	काष्ठा regmap *regmap, काष्ठा reg_field reg_field)
-अणु
+static void regmap_field_init(struct regmap_field *rm_field,
+	struct regmap *regmap, struct reg_field reg_field)
+{
 	rm_field->regmap = regmap;
 	rm_field->reg = reg_field.reg;
-	rm_field->shअगरt = reg_field.lsb;
+	rm_field->shift = reg_field.lsb;
 	rm_field->mask = GENMASK(reg_field.msb, reg_field.lsb);
 	rm_field->id_size = reg_field.id_size;
 	rm_field->id_offset = reg_field.id_offset;
-पूर्ण
+}
 
 /**
- * devm_regmap_field_alloc() - Allocate and initialise a रेजिस्टर field.
+ * devm_regmap_field_alloc() - Allocate and initialise a register field.
  *
- * @dev: Device that will be पूर्णांकeracted with
- * @regmap: regmap bank in which this रेजिस्टर field is located.
+ * @dev: Device that will be interacted with
+ * @regmap: regmap bank in which this register field is located.
  * @reg_field: Register field with in the bank.
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer
- * to a काष्ठा regmap_field. The regmap_field will be स्वतःmatically मुक्तd
+ * The return value will be an ERR_PTR() on error or a valid pointer
+ * to a struct regmap_field. The regmap_field will be automatically freed
  * by the device management code.
  */
-काष्ठा regmap_field *devm_regmap_field_alloc(काष्ठा device *dev,
-		काष्ठा regmap *regmap, काष्ठा reg_field reg_field)
-अणु
-	काष्ठा regmap_field *rm_field = devm_kzalloc(dev,
-					माप(*rm_field), GFP_KERNEL);
-	अगर (!rm_field)
-		वापस ERR_PTR(-ENOMEM);
+struct regmap_field *devm_regmap_field_alloc(struct device *dev,
+		struct regmap *regmap, struct reg_field reg_field)
+{
+	struct regmap_field *rm_field = devm_kzalloc(dev,
+					sizeof(*rm_field), GFP_KERNEL);
+	if (!rm_field)
+		return ERR_PTR(-ENOMEM);
 
 	regmap_field_init(rm_field, regmap, reg_field);
 
-	वापस rm_field;
+	return rm_field;
 
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devm_regmap_field_alloc);
 
 
 /**
- * regmap_field_bulk_alloc() - Allocate and initialise a bulk रेजिस्टर field.
+ * regmap_field_bulk_alloc() - Allocate and initialise a bulk register field.
  *
- * @regmap: regmap bank in which this रेजिस्टर field is located.
- * @rm_field: regmap रेजिस्टर fields within the bank.
+ * @regmap: regmap bank in which this register field is located.
+ * @rm_field: regmap register fields within the bank.
  * @reg_field: Register fields within the bank.
- * @num_fields: Number of रेजिस्टर fields.
+ * @num_fields: Number of register fields.
  *
- * The वापस value will be an -ENOMEM on error or zero क्रम success.
- * Newly allocated regmap_fields should be मुक्तd by calling
- * regmap_field_bulk_मुक्त()
+ * The return value will be an -ENOMEM on error or zero for success.
+ * Newly allocated regmap_fields should be freed by calling
+ * regmap_field_bulk_free()
  */
-पूर्णांक regmap_field_bulk_alloc(काष्ठा regmap *regmap,
-			    काष्ठा regmap_field **rm_field,
-			    काष्ठा reg_field *reg_field,
-			    पूर्णांक num_fields)
-अणु
-	काष्ठा regmap_field *rf;
-	पूर्णांक i;
+int regmap_field_bulk_alloc(struct regmap *regmap,
+			    struct regmap_field **rm_field,
+			    struct reg_field *reg_field,
+			    int num_fields)
+{
+	struct regmap_field *rf;
+	int i;
 
-	rf = kसुस्मृति(num_fields, माप(*rf), GFP_KERNEL);
-	अगर (!rf)
-		वापस -ENOMEM;
+	rf = kcalloc(num_fields, sizeof(*rf), GFP_KERNEL);
+	if (!rf)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < num_fields; i++) अणु
+	for (i = 0; i < num_fields; i++) {
 		regmap_field_init(&rf[i], regmap, reg_field[i]);
 		rm_field[i] = &rf[i];
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(regmap_field_bulk_alloc);
 
 /**
- * devm_regmap_field_bulk_alloc() - Allocate and initialise a bulk रेजिस्टर
+ * devm_regmap_field_bulk_alloc() - Allocate and initialise a bulk register
  * fields.
  *
- * @dev: Device that will be पूर्णांकeracted with
- * @regmap: regmap bank in which this रेजिस्टर field is located.
- * @rm_field: regmap रेजिस्टर fields within the bank.
+ * @dev: Device that will be interacted with
+ * @regmap: regmap bank in which this register field is located.
+ * @rm_field: regmap register fields within the bank.
  * @reg_field: Register fields within the bank.
- * @num_fields: Number of रेजिस्टर fields.
+ * @num_fields: Number of register fields.
  *
- * The वापस value will be an -ENOMEM on error or zero क्रम success.
- * Newly allocated regmap_fields will be स्वतःmatically मुक्तd by the
+ * The return value will be an -ENOMEM on error or zero for success.
+ * Newly allocated regmap_fields will be automatically freed by the
  * device management code.
  */
-पूर्णांक devm_regmap_field_bulk_alloc(काष्ठा device *dev,
-				 काष्ठा regmap *regmap,
-				 काष्ठा regmap_field **rm_field,
-				 काष्ठा reg_field *reg_field,
-				 पूर्णांक num_fields)
-अणु
-	काष्ठा regmap_field *rf;
-	पूर्णांक i;
+int devm_regmap_field_bulk_alloc(struct device *dev,
+				 struct regmap *regmap,
+				 struct regmap_field **rm_field,
+				 struct reg_field *reg_field,
+				 int num_fields)
+{
+	struct regmap_field *rf;
+	int i;
 
-	rf = devm_kसुस्मृति(dev, num_fields, माप(*rf), GFP_KERNEL);
-	अगर (!rf)
-		वापस -ENOMEM;
+	rf = devm_kcalloc(dev, num_fields, sizeof(*rf), GFP_KERNEL);
+	if (!rf)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < num_fields; i++) अणु
+	for (i = 0; i < num_fields; i++) {
 		regmap_field_init(&rf[i], regmap, reg_field[i]);
 		rm_field[i] = &rf[i];
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(devm_regmap_field_bulk_alloc);
 
 /**
- * regmap_field_bulk_मुक्त() - Free रेजिस्टर field allocated using
+ * regmap_field_bulk_free() - Free register field allocated using
  *                       regmap_field_bulk_alloc.
  *
- * @field: regmap fields which should be मुक्तd.
+ * @field: regmap fields which should be freed.
  */
-व्योम regmap_field_bulk_मुक्त(काष्ठा regmap_field *field)
-अणु
-	kमुक्त(field);
-पूर्ण
-EXPORT_SYMBOL_GPL(regmap_field_bulk_मुक्त);
+void regmap_field_bulk_free(struct regmap_field *field)
+{
+	kfree(field);
+}
+EXPORT_SYMBOL_GPL(regmap_field_bulk_free);
 
 /**
- * devm_regmap_field_bulk_मुक्त() - Free a bulk रेजिस्टर field allocated using
+ * devm_regmap_field_bulk_free() - Free a bulk register field allocated using
  *                            devm_regmap_field_bulk_alloc.
  *
- * @dev: Device that will be पूर्णांकeracted with
- * @field: regmap field which should be मुक्तd.
+ * @dev: Device that will be interacted with
+ * @field: regmap field which should be freed.
  *
- * Free रेजिस्टर field allocated using devm_regmap_field_bulk_alloc(). Usually
+ * Free register field allocated using devm_regmap_field_bulk_alloc(). Usually
  * drivers need not call this function, as the memory allocated via devm
- * will be मुक्तd as per device-driver lअगरe-cycle.
+ * will be freed as per device-driver life-cycle.
  */
-व्योम devm_regmap_field_bulk_मुक्त(काष्ठा device *dev,
-				 काष्ठा regmap_field *field)
-अणु
-	devm_kमुक्त(dev, field);
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_regmap_field_bulk_मुक्त);
+void devm_regmap_field_bulk_free(struct device *dev,
+				 struct regmap_field *field)
+{
+	devm_kfree(dev, field);
+}
+EXPORT_SYMBOL_GPL(devm_regmap_field_bulk_free);
 
 /**
- * devm_regmap_field_मुक्त() - Free a रेजिस्टर field allocated using
+ * devm_regmap_field_free() - Free a register field allocated using
  *                            devm_regmap_field_alloc.
  *
- * @dev: Device that will be पूर्णांकeracted with
- * @field: regmap field which should be मुक्तd.
+ * @dev: Device that will be interacted with
+ * @field: regmap field which should be freed.
  *
- * Free रेजिस्टर field allocated using devm_regmap_field_alloc(). Usually
+ * Free register field allocated using devm_regmap_field_alloc(). Usually
  * drivers need not call this function, as the memory allocated via devm
- * will be मुक्तd as per device-driver lअगरe-cyle.
+ * will be freed as per device-driver life-cyle.
  */
-व्योम devm_regmap_field_मुक्त(काष्ठा device *dev,
-	काष्ठा regmap_field *field)
-अणु
-	devm_kमुक्त(dev, field);
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_regmap_field_मुक्त);
+void devm_regmap_field_free(struct device *dev,
+	struct regmap_field *field)
+{
+	devm_kfree(dev, field);
+}
+EXPORT_SYMBOL_GPL(devm_regmap_field_free);
 
 /**
- * regmap_field_alloc() - Allocate and initialise a रेजिस्टर field.
+ * regmap_field_alloc() - Allocate and initialise a register field.
  *
- * @regmap: regmap bank in which this रेजिस्टर field is located.
+ * @regmap: regmap bank in which this register field is located.
  * @reg_field: Register field with in the bank.
  *
- * The वापस value will be an ERR_PTR() on error or a valid poपूर्णांकer
- * to a काष्ठा regmap_field. The regmap_field should be मुक्तd by the
- * user once its finished working with it using regmap_field_मुक्त().
+ * The return value will be an ERR_PTR() on error or a valid pointer
+ * to a struct regmap_field. The regmap_field should be freed by the
+ * user once its finished working with it using regmap_field_free().
  */
-काष्ठा regmap_field *regmap_field_alloc(काष्ठा regmap *regmap,
-		काष्ठा reg_field reg_field)
-अणु
-	काष्ठा regmap_field *rm_field = kzalloc(माप(*rm_field), GFP_KERNEL);
+struct regmap_field *regmap_field_alloc(struct regmap *regmap,
+		struct reg_field reg_field)
+{
+	struct regmap_field *rm_field = kzalloc(sizeof(*rm_field), GFP_KERNEL);
 
-	अगर (!rm_field)
-		वापस ERR_PTR(-ENOMEM);
+	if (!rm_field)
+		return ERR_PTR(-ENOMEM);
 
 	regmap_field_init(rm_field, regmap, reg_field);
 
-	वापस rm_field;
-पूर्ण
+	return rm_field;
+}
 EXPORT_SYMBOL_GPL(regmap_field_alloc);
 
 /**
- * regmap_field_मुक्त() - Free रेजिस्टर field allocated using
+ * regmap_field_free() - Free register field allocated using
  *                       regmap_field_alloc.
  *
- * @field: regmap field which should be मुक्तd.
+ * @field: regmap field which should be freed.
  */
-व्योम regmap_field_मुक्त(काष्ठा regmap_field *field)
-अणु
-	kमुक्त(field);
-पूर्ण
-EXPORT_SYMBOL_GPL(regmap_field_मुक्त);
+void regmap_field_free(struct regmap_field *field)
+{
+	kfree(field);
+}
+EXPORT_SYMBOL_GPL(regmap_field_free);
 
 /**
- * regmap_reinit_cache() - Reinitialise the current रेजिस्टर cache
+ * regmap_reinit_cache() - Reinitialise the current register cache
  *
  * @map: Register map to operate on.
  * @config: New configuration.  Only the cache data will be used.
  *
- * Discard any existing रेजिस्टर cache क्रम the map and initialize a
- * new cache.  This can be used to restore the cache to शेषs or to
- * update the cache configuration to reflect runसमय discovery of the
+ * Discard any existing register cache for the map and initialize a
+ * new cache.  This can be used to restore the cache to defaults or to
+ * update the cache configuration to reflect runtime discovery of the
  * hardware.
  *
- * No explicit locking is करोne here, the user needs to ensure that
+ * No explicit locking is done here, the user needs to ensure that
  * this function will not race with other calls to regmap.
  */
-पूर्णांक regmap_reinit_cache(काष्ठा regmap *map, स्थिर काष्ठा regmap_config *config)
-अणु
-	पूर्णांक ret;
+int regmap_reinit_cache(struct regmap *map, const struct regmap_config *config)
+{
+	int ret;
 
-	regcache_निकास(map);
-	regmap_debugfs_निकास(map);
+	regcache_exit(map);
+	regmap_debugfs_exit(map);
 
-	map->max_रेजिस्टर = config->max_रेजिस्टर;
-	map->ग_लिखोable_reg = config->ग_लिखोable_reg;
-	map->पढ़ोable_reg = config->पढ़ोable_reg;
-	map->अस्थिर_reg = config->अस्थिर_reg;
+	map->max_register = config->max_register;
+	map->writeable_reg = config->writeable_reg;
+	map->readable_reg = config->readable_reg;
+	map->volatile_reg = config->volatile_reg;
 	map->precious_reg = config->precious_reg;
-	map->ग_लिखोable_noinc_reg = config->ग_लिखोable_noinc_reg;
-	map->पढ़ोable_noinc_reg = config->पढ़ोable_noinc_reg;
+	map->writeable_noinc_reg = config->writeable_noinc_reg;
+	map->readable_noinc_reg = config->readable_noinc_reg;
 	map->cache_type = config->cache_type;
 
 	ret = regmap_set_name(map, config);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	regmap_debugfs_init(map);
 
 	map->cache_bypass = false;
 	map->cache_only = false;
 
-	वापस regcache_init(map, config);
-पूर्ण
+	return regcache_init(map, config);
+}
 EXPORT_SYMBOL_GPL(regmap_reinit_cache);
 
 /**
- * regmap_निकास() - Free a previously allocated रेजिस्टर map
+ * regmap_exit() - Free a previously allocated register map
  *
  * @map: Register map to operate on.
  */
-व्योम regmap_निकास(काष्ठा regmap *map)
-अणु
-	काष्ठा regmap_async *async;
+void regmap_exit(struct regmap *map)
+{
+	struct regmap_async *async;
 
-	regcache_निकास(map);
-	regmap_debugfs_निकास(map);
-	regmap_range_निकास(map);
-	अगर (map->bus && map->bus->मुक्त_context)
-		map->bus->मुक्त_context(map->bus_context);
-	kमुक्त(map->work_buf);
-	जबतक (!list_empty(&map->async_मुक्त)) अणु
-		async = list_first_entry_or_null(&map->async_मुक्त,
-						 काष्ठा regmap_async,
+	regcache_exit(map);
+	regmap_debugfs_exit(map);
+	regmap_range_exit(map);
+	if (map->bus && map->bus->free_context)
+		map->bus->free_context(map->bus_context);
+	kfree(map->work_buf);
+	while (!list_empty(&map->async_free)) {
+		async = list_first_entry_or_null(&map->async_free,
+						 struct regmap_async,
 						 list);
 		list_del(&async->list);
-		kमुक्त(async->work_buf);
-		kमुक्त(async);
-	पूर्ण
-	अगर (map->hwlock)
-		hwspin_lock_मुक्त(map->hwlock);
-	अगर (map->lock == regmap_lock_mutex)
+		kfree(async->work_buf);
+		kfree(async);
+	}
+	if (map->hwlock)
+		hwspin_lock_free(map->hwlock);
+	if (map->lock == regmap_lock_mutex)
 		mutex_destroy(&map->mutex);
-	kमुक्त_स्थिर(map->name);
-	kमुक्त(map->patch);
-	kमुक्त(map);
-पूर्ण
-EXPORT_SYMBOL_GPL(regmap_निकास);
+	kfree_const(map->name);
+	kfree(map->patch);
+	kfree(map);
+}
+EXPORT_SYMBOL_GPL(regmap_exit);
 
-अटल पूर्णांक dev_get_regmap_match(काष्ठा device *dev, व्योम *res, व्योम *data)
-अणु
-	काष्ठा regmap **r = res;
-	अगर (!r || !*r) अणु
+static int dev_get_regmap_match(struct device *dev, void *res, void *data)
+{
+	struct regmap **r = res;
+	if (!r || !*r) {
 		WARN_ON(!r || !*r);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* If the user didn't specअगरy a name match any */
-	अगर (data)
-		वापस !म_भेद((*r)->name, data);
-	अन्यथा
-		वापस 1;
-पूर्ण
+	/* If the user didn't specify a name match any */
+	if (data)
+		return !strcmp((*r)->name, data);
+	else
+		return 1;
+}
 
 /**
- * dev_get_regmap() - Obtain the regmap (अगर any) क्रम a device
+ * dev_get_regmap() - Obtain the regmap (if any) for a device
  *
- * @dev: Device to retrieve the map क्रम
- * @name: Optional name क्रम the रेजिस्टर map, usually शून्य.
+ * @dev: Device to retrieve the map for
+ * @name: Optional name for the register map, usually NULL.
  *
- * Returns the regmap क्रम the device अगर one is present, or शून्य.  If
- * name is specअगरied then it must match the name specअगरied when
- * रेजिस्टरing the device, अगर it is शून्य then the first regmap found
- * will be used.  Devices with multiple रेजिस्टर maps are very rare,
- * generic code should normally not need to specअगरy a name.
+ * Returns the regmap for the device if one is present, or NULL.  If
+ * name is specified then it must match the name specified when
+ * registering the device, if it is NULL then the first regmap found
+ * will be used.  Devices with multiple register maps are very rare,
+ * generic code should normally not need to specify a name.
  */
-काष्ठा regmap *dev_get_regmap(काष्ठा device *dev, स्थिर अक्षर *name)
-अणु
-	काष्ठा regmap **r = devres_find(dev, dev_get_regmap_release,
-					dev_get_regmap_match, (व्योम *)name);
+struct regmap *dev_get_regmap(struct device *dev, const char *name)
+{
+	struct regmap **r = devres_find(dev, dev_get_regmap_release,
+					dev_get_regmap_match, (void *)name);
 
-	अगर (!r)
-		वापस शून्य;
-	वापस *r;
-पूर्ण
+	if (!r)
+		return NULL;
+	return *r;
+}
 EXPORT_SYMBOL_GPL(dev_get_regmap);
 
 /**
@@ -1544,1012 +1543,1012 @@ EXPORT_SYMBOL_GPL(dev_get_regmap);
  *
  * @map: Register map to operate on.
  *
- * Returns the underlying device that the regmap has been created क्रम.
+ * Returns the underlying device that the regmap has been created for.
  */
-काष्ठा device *regmap_get_device(काष्ठा regmap *map)
-अणु
-	वापस map->dev;
-पूर्ण
+struct device *regmap_get_device(struct regmap *map)
+{
+	return map->dev;
+}
 EXPORT_SYMBOL_GPL(regmap_get_device);
 
-अटल पूर्णांक _regmap_select_page(काष्ठा regmap *map, अचिन्हित पूर्णांक *reg,
-			       काष्ठा regmap_range_node *range,
-			       अचिन्हित पूर्णांक val_num)
-अणु
-	व्योम *orig_work_buf;
-	अचिन्हित पूर्णांक win_offset;
-	अचिन्हित पूर्णांक win_page;
+static int _regmap_select_page(struct regmap *map, unsigned int *reg,
+			       struct regmap_range_node *range,
+			       unsigned int val_num)
+{
+	void *orig_work_buf;
+	unsigned int win_offset;
+	unsigned int win_page;
 	bool page_chg;
-	पूर्णांक ret;
+	int ret;
 
-	win_offset = (*reg - range->range_min) % range->winकरोw_len;
-	win_page = (*reg - range->range_min) / range->winकरोw_len;
+	win_offset = (*reg - range->range_min) % range->window_len;
+	win_page = (*reg - range->range_min) / range->window_len;
 
-	अगर (val_num > 1) अणु
-		/* Bulk ग_लिखो shouldn't cross range boundary */
-		अगर (*reg + val_num - 1 > range->range_max)
-			वापस -EINVAL;
+	if (val_num > 1) {
+		/* Bulk write shouldn't cross range boundary */
+		if (*reg + val_num - 1 > range->range_max)
+			return -EINVAL;
 
 		/* ... or single page boundary */
-		अगर (val_num > range->winकरोw_len - win_offset)
-			वापस -EINVAL;
-	पूर्ण
+		if (val_num > range->window_len - win_offset)
+			return -EINVAL;
+	}
 
-	/* It is possible to have selector रेजिस्टर inside data winकरोw.
-	   In that हाल, selector रेजिस्टर is located on every page and
-	   it needs no page चयनing, when accessed alone. */
-	अगर (val_num > 1 ||
-	    range->winकरोw_start + win_offset != range->selector_reg) अणु
-		/* Use separate work_buf during page चयनing */
+	/* It is possible to have selector register inside data window.
+	   In that case, selector register is located on every page and
+	   it needs no page switching, when accessed alone. */
+	if (val_num > 1 ||
+	    range->window_start + win_offset != range->selector_reg) {
+		/* Use separate work_buf during page switching */
 		orig_work_buf = map->work_buf;
 		map->work_buf = map->selector_work_buf;
 
 		ret = _regmap_update_bits(map, range->selector_reg,
 					  range->selector_mask,
-					  win_page << range->selector_shअगरt,
+					  win_page << range->selector_shift,
 					  &page_chg, false);
 
 		map->work_buf = orig_work_buf;
 
-		अगर (ret != 0)
-			वापस ret;
-	पूर्ण
+		if (ret != 0)
+			return ret;
+	}
 
-	*reg = range->winकरोw_start + win_offset;
+	*reg = range->window_start + win_offset;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम regmap_set_work_buf_flag_mask(काष्ठा regmap *map, पूर्णांक max_bytes,
-					  अचिन्हित दीर्घ mask)
-अणु
+static void regmap_set_work_buf_flag_mask(struct regmap *map, int max_bytes,
+					  unsigned long mask)
+{
 	u8 *buf;
-	पूर्णांक i;
+	int i;
 
-	अगर (!mask || !map->work_buf)
-		वापस;
+	if (!mask || !map->work_buf)
+		return;
 
 	buf = map->work_buf;
 
-	क्रम (i = 0; i < max_bytes; i++)
+	for (i = 0; i < max_bytes; i++)
 		buf[i] |= (mask >> (8 * i)) & 0xff;
-पूर्ण
+}
 
-अटल पूर्णांक _regmap_raw_ग_लिखो_impl(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-				  स्थिर व्योम *val, माप_प्रकार val_len, bool noinc)
-अणु
-	काष्ठा regmap_range_node *range;
-	अचिन्हित दीर्घ flags;
-	व्योम *work_val = map->work_buf + map->क्रमmat.reg_bytes +
-		map->क्रमmat.pad_bytes;
-	व्योम *buf;
-	पूर्णांक ret = -ENOTSUPP;
-	माप_प्रकार len;
-	पूर्णांक i;
+static int _regmap_raw_write_impl(struct regmap *map, unsigned int reg,
+				  const void *val, size_t val_len, bool noinc)
+{
+	struct regmap_range_node *range;
+	unsigned long flags;
+	void *work_val = map->work_buf + map->format.reg_bytes +
+		map->format.pad_bytes;
+	void *buf;
+	int ret = -ENOTSUPP;
+	size_t len;
+	int i;
 
 	WARN_ON(!map->bus);
 
-	/* Check क्रम unwritable or noinc रेजिस्टरs in range
-	 * beक्रमe we start
+	/* Check for unwritable or noinc registers in range
+	 * before we start
 	 */
-	अगर (!regmap_ग_लिखोable_noinc(map, reg)) अणु
-		क्रम (i = 0; i < val_len / map->क्रमmat.val_bytes; i++) अणु
-			अचिन्हित पूर्णांक element =
+	if (!regmap_writeable_noinc(map, reg)) {
+		for (i = 0; i < val_len / map->format.val_bytes; i++) {
+			unsigned int element =
 				reg + regmap_get_offset(map, i);
-			अगर (!regmap_ग_लिखोable(map, element) ||
-				regmap_ग_लिखोable_noinc(map, element))
-				वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			if (!regmap_writeable(map, element) ||
+				regmap_writeable_noinc(map, element))
+				return -EINVAL;
+		}
+	}
 
-	अगर (!map->cache_bypass && map->क्रमmat.parse_val) अणु
-		अचिन्हित पूर्णांक ival;
-		पूर्णांक val_bytes = map->क्रमmat.val_bytes;
-		क्रम (i = 0; i < val_len / val_bytes; i++) अणु
-			ival = map->क्रमmat.parse_val(val + (i * val_bytes));
-			ret = regcache_ग_लिखो(map,
+	if (!map->cache_bypass && map->format.parse_val) {
+		unsigned int ival;
+		int val_bytes = map->format.val_bytes;
+		for (i = 0; i < val_len / val_bytes; i++) {
+			ival = map->format.parse_val(val + (i * val_bytes));
+			ret = regcache_write(map,
 					     reg + regmap_get_offset(map, i),
 					     ival);
-			अगर (ret) अणु
+			if (ret) {
 				dev_err(map->dev,
 					"Error in caching of register: %x ret: %d\n",
 					reg + i, ret);
-				वापस ret;
-			पूर्ण
-		पूर्ण
-		अगर (map->cache_only) अणु
+				return ret;
+			}
+		}
+		if (map->cache_only) {
 			map->cache_dirty = true;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	range = _regmap_range_lookup(map, reg);
-	अगर (range) अणु
-		पूर्णांक val_num = val_len / map->क्रमmat.val_bytes;
-		पूर्णांक win_offset = (reg - range->range_min) % range->winकरोw_len;
-		पूर्णांक win_residue = range->winकरोw_len - win_offset;
+	if (range) {
+		int val_num = val_len / map->format.val_bytes;
+		int win_offset = (reg - range->range_min) % range->window_len;
+		int win_residue = range->window_len - win_offset;
 
-		/* If the ग_लिखो goes beyond the end of the winकरोw split it */
-		जबतक (val_num > win_residue) अणु
+		/* If the write goes beyond the end of the window split it */
+		while (val_num > win_residue) {
 			dev_dbg(map->dev, "Writing window %d/%zu\n",
-				win_residue, val_len / map->क्रमmat.val_bytes);
-			ret = _regmap_raw_ग_लिखो_impl(map, reg, val,
+				win_residue, val_len / map->format.val_bytes);
+			ret = _regmap_raw_write_impl(map, reg, val,
 						     win_residue *
-						     map->क्रमmat.val_bytes, noinc);
-			अगर (ret != 0)
-				वापस ret;
+						     map->format.val_bytes, noinc);
+			if (ret != 0)
+				return ret;
 
 			reg += win_residue;
 			val_num -= win_residue;
-			val += win_residue * map->क्रमmat.val_bytes;
-			val_len -= win_residue * map->क्रमmat.val_bytes;
+			val += win_residue * map->format.val_bytes;
+			val_len -= win_residue * map->format.val_bytes;
 
 			win_offset = (reg - range->range_min) %
-				range->winकरोw_len;
-			win_residue = range->winकरोw_len - win_offset;
-		पूर्ण
+				range->window_len;
+			win_residue = range->window_len - win_offset;
+		}
 
 		ret = _regmap_select_page(map, &reg, range, noinc ? 1 : val_num);
-		अगर (ret != 0)
-			वापस ret;
-	पूर्ण
+		if (ret != 0)
+			return ret;
+	}
 
-	map->क्रमmat.क्रमmat_reg(map->work_buf, reg, map->reg_shअगरt);
-	regmap_set_work_buf_flag_mask(map, map->क्रमmat.reg_bytes,
-				      map->ग_लिखो_flag_mask);
+	map->format.format_reg(map->work_buf, reg, map->reg_shift);
+	regmap_set_work_buf_flag_mask(map, map->format.reg_bytes,
+				      map->write_flag_mask);
 
 	/*
 	 * Essentially all I/O mechanisms will be faster with a single
-	 * buffer to ग_लिखो.  Since रेजिस्टर syncs often generate raw
-	 * ग_लिखोs of single रेजिस्टरs optimise that हाल.
+	 * buffer to write.  Since register syncs often generate raw
+	 * writes of single registers optimise that case.
 	 */
-	अगर (val != work_val && val_len == map->क्रमmat.val_bytes) अणु
-		स_नकल(work_val, val, map->क्रमmat.val_bytes);
+	if (val != work_val && val_len == map->format.val_bytes) {
+		memcpy(work_val, val, map->format.val_bytes);
 		val = work_val;
-	पूर्ण
+	}
 
-	अगर (map->async && map->bus->async_ग_लिखो) अणु
-		काष्ठा regmap_async *async;
+	if (map->async && map->bus->async_write) {
+		struct regmap_async *async;
 
-		trace_regmap_async_ग_लिखो_start(map, reg, val_len);
+		trace_regmap_async_write_start(map, reg, val_len);
 
 		spin_lock_irqsave(&map->async_lock, flags);
-		async = list_first_entry_or_null(&map->async_मुक्त,
-						 काष्ठा regmap_async,
+		async = list_first_entry_or_null(&map->async_free,
+						 struct regmap_async,
 						 list);
-		अगर (async)
+		if (async)
 			list_del(&async->list);
 		spin_unlock_irqrestore(&map->async_lock, flags);
 
-		अगर (!async) अणु
+		if (!async) {
 			async = map->bus->async_alloc();
-			अगर (!async)
-				वापस -ENOMEM;
+			if (!async)
+				return -ENOMEM;
 
-			async->work_buf = kzalloc(map->क्रमmat.buf_size,
+			async->work_buf = kzalloc(map->format.buf_size,
 						  GFP_KERNEL | GFP_DMA);
-			अगर (!async->work_buf) अणु
-				kमुक्त(async);
-				वापस -ENOMEM;
-			पूर्ण
-		पूर्ण
+			if (!async->work_buf) {
+				kfree(async);
+				return -ENOMEM;
+			}
+		}
 
 		async->map = map;
 
 		/* If the caller supplied the value we can use it safely. */
-		स_नकल(async->work_buf, map->work_buf, map->क्रमmat.pad_bytes +
-		       map->क्रमmat.reg_bytes + map->क्रमmat.val_bytes);
+		memcpy(async->work_buf, map->work_buf, map->format.pad_bytes +
+		       map->format.reg_bytes + map->format.val_bytes);
 
 		spin_lock_irqsave(&map->async_lock, flags);
 		list_add_tail(&async->list, &map->async_list);
 		spin_unlock_irqrestore(&map->async_lock, flags);
 
-		अगर (val != work_val)
-			ret = map->bus->async_ग_लिखो(map->bus_context,
+		if (val != work_val)
+			ret = map->bus->async_write(map->bus_context,
 						    async->work_buf,
-						    map->क्रमmat.reg_bytes +
-						    map->क्रमmat.pad_bytes,
+						    map->format.reg_bytes +
+						    map->format.pad_bytes,
 						    val, val_len, async);
-		अन्यथा
-			ret = map->bus->async_ग_लिखो(map->bus_context,
+		else
+			ret = map->bus->async_write(map->bus_context,
 						    async->work_buf,
-						    map->क्रमmat.reg_bytes +
-						    map->क्रमmat.pad_bytes +
-						    val_len, शून्य, 0, async);
+						    map->format.reg_bytes +
+						    map->format.pad_bytes +
+						    val_len, NULL, 0, async);
 
-		अगर (ret != 0) अणु
+		if (ret != 0) {
 			dev_err(map->dev, "Failed to schedule write: %d\n",
 				ret);
 
 			spin_lock_irqsave(&map->async_lock, flags);
-			list_move(&async->list, &map->async_मुक्त);
+			list_move(&async->list, &map->async_free);
 			spin_unlock_irqrestore(&map->async_lock, flags);
-		पूर्ण
+		}
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	trace_regmap_hw_ग_लिखो_start(map, reg, val_len / map->क्रमmat.val_bytes);
+	trace_regmap_hw_write_start(map, reg, val_len / map->format.val_bytes);
 
-	/* If we're करोing a single रेजिस्टर ग_लिखो we can probably just
-	 * send the work_buf directly, otherwise try to करो a gather
-	 * ग_लिखो.
+	/* If we're doing a single register write we can probably just
+	 * send the work_buf directly, otherwise try to do a gather
+	 * write.
 	 */
-	अगर (val == work_val)
-		ret = map->bus->ग_लिखो(map->bus_context, map->work_buf,
-				      map->क्रमmat.reg_bytes +
-				      map->क्रमmat.pad_bytes +
+	if (val == work_val)
+		ret = map->bus->write(map->bus_context, map->work_buf,
+				      map->format.reg_bytes +
+				      map->format.pad_bytes +
 				      val_len);
-	अन्यथा अगर (map->bus->gather_ग_लिखो)
-		ret = map->bus->gather_ग_लिखो(map->bus_context, map->work_buf,
-					     map->क्रमmat.reg_bytes +
-					     map->क्रमmat.pad_bytes,
+	else if (map->bus->gather_write)
+		ret = map->bus->gather_write(map->bus_context, map->work_buf,
+					     map->format.reg_bytes +
+					     map->format.pad_bytes,
 					     val, val_len);
-	अन्यथा
+	else
 		ret = -ENOTSUPP;
 
 	/* If that didn't work fall back on linearising by hand. */
-	अगर (ret == -ENOTSUPP) अणु
-		len = map->क्रमmat.reg_bytes + map->क्रमmat.pad_bytes + val_len;
+	if (ret == -ENOTSUPP) {
+		len = map->format.reg_bytes + map->format.pad_bytes + val_len;
 		buf = kzalloc(len, GFP_KERNEL);
-		अगर (!buf)
-			वापस -ENOMEM;
+		if (!buf)
+			return -ENOMEM;
 
-		स_नकल(buf, map->work_buf, map->क्रमmat.reg_bytes);
-		स_नकल(buf + map->क्रमmat.reg_bytes + map->क्रमmat.pad_bytes,
+		memcpy(buf, map->work_buf, map->format.reg_bytes);
+		memcpy(buf + map->format.reg_bytes + map->format.pad_bytes,
 		       val, val_len);
-		ret = map->bus->ग_लिखो(map->bus_context, buf, len);
+		ret = map->bus->write(map->bus_context, buf, len);
 
-		kमुक्त(buf);
-	पूर्ण अन्यथा अगर (ret != 0 && !map->cache_bypass && map->क्रमmat.parse_val) अणु
-		/* regcache_drop_region() takes lock that we alपढ़ोy have,
+		kfree(buf);
+	} else if (ret != 0 && !map->cache_bypass && map->format.parse_val) {
+		/* regcache_drop_region() takes lock that we already have,
 		 * thus call map->cache_ops->drop() directly
 		 */
-		अगर (map->cache_ops && map->cache_ops->drop)
+		if (map->cache_ops && map->cache_ops->drop)
 			map->cache_ops->drop(map, reg, reg + 1);
-	पूर्ण
+	}
 
-	trace_regmap_hw_ग_लिखो_करोne(map, reg, val_len / map->क्रमmat.val_bytes);
+	trace_regmap_hw_write_done(map, reg, val_len / map->format.val_bytes);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * regmap_can_raw_ग_लिखो - Test अगर regmap_raw_ग_लिखो() is supported
+ * regmap_can_raw_write - Test if regmap_raw_write() is supported
  *
  * @map: Map to check.
  */
-bool regmap_can_raw_ग_लिखो(काष्ठा regmap *map)
-अणु
-	वापस map->bus && map->bus->ग_लिखो && map->क्रमmat.क्रमmat_val &&
-		map->क्रमmat.क्रमmat_reg;
-पूर्ण
-EXPORT_SYMBOL_GPL(regmap_can_raw_ग_लिखो);
+bool regmap_can_raw_write(struct regmap *map)
+{
+	return map->bus && map->bus->write && map->format.format_val &&
+		map->format.format_reg;
+}
+EXPORT_SYMBOL_GPL(regmap_can_raw_write);
 
 /**
- * regmap_get_raw_पढ़ो_max - Get the maximum size we can पढ़ो
+ * regmap_get_raw_read_max - Get the maximum size we can read
  *
  * @map: Map to check.
  */
-माप_प्रकार regmap_get_raw_पढ़ो_max(काष्ठा regmap *map)
-अणु
-	वापस map->max_raw_पढ़ो;
-पूर्ण
-EXPORT_SYMBOL_GPL(regmap_get_raw_पढ़ो_max);
+size_t regmap_get_raw_read_max(struct regmap *map)
+{
+	return map->max_raw_read;
+}
+EXPORT_SYMBOL_GPL(regmap_get_raw_read_max);
 
 /**
- * regmap_get_raw_ग_लिखो_max - Get the maximum size we can पढ़ो
+ * regmap_get_raw_write_max - Get the maximum size we can read
  *
  * @map: Map to check.
  */
-माप_प्रकार regmap_get_raw_ग_लिखो_max(काष्ठा regmap *map)
-अणु
-	वापस map->max_raw_ग_लिखो;
-पूर्ण
-EXPORT_SYMBOL_GPL(regmap_get_raw_ग_लिखो_max);
+size_t regmap_get_raw_write_max(struct regmap *map)
+{
+	return map->max_raw_write;
+}
+EXPORT_SYMBOL_GPL(regmap_get_raw_write_max);
 
-अटल पूर्णांक _regmap_bus_क्रमmatted_ग_लिखो(व्योम *context, अचिन्हित पूर्णांक reg,
-				       अचिन्हित पूर्णांक val)
-अणु
-	पूर्णांक ret;
-	काष्ठा regmap_range_node *range;
-	काष्ठा regmap *map = context;
+static int _regmap_bus_formatted_write(void *context, unsigned int reg,
+				       unsigned int val)
+{
+	int ret;
+	struct regmap_range_node *range;
+	struct regmap *map = context;
 
-	WARN_ON(!map->bus || !map->क्रमmat.क्रमmat_ग_लिखो);
+	WARN_ON(!map->bus || !map->format.format_write);
 
 	range = _regmap_range_lookup(map, reg);
-	अगर (range) अणु
+	if (range) {
 		ret = _regmap_select_page(map, &reg, range, 1);
-		अगर (ret != 0)
-			वापस ret;
-	पूर्ण
+		if (ret != 0)
+			return ret;
+	}
 
-	map->क्रमmat.क्रमmat_ग_लिखो(map, reg, val);
+	map->format.format_write(map, reg, val);
 
-	trace_regmap_hw_ग_लिखो_start(map, reg, 1);
+	trace_regmap_hw_write_start(map, reg, 1);
 
-	ret = map->bus->ग_लिखो(map->bus_context, map->work_buf,
-			      map->क्रमmat.buf_size);
+	ret = map->bus->write(map->bus_context, map->work_buf,
+			      map->format.buf_size);
 
-	trace_regmap_hw_ग_लिखो_करोne(map, reg, 1);
+	trace_regmap_hw_write_done(map, reg, 1);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक _regmap_bus_reg_ग_लिखो(व्योम *context, अचिन्हित पूर्णांक reg,
-				 अचिन्हित पूर्णांक val)
-अणु
-	काष्ठा regmap *map = context;
+static int _regmap_bus_reg_write(void *context, unsigned int reg,
+				 unsigned int val)
+{
+	struct regmap *map = context;
 
-	वापस map->bus->reg_ग_लिखो(map->bus_context, reg, val);
-पूर्ण
+	return map->bus->reg_write(map->bus_context, reg, val);
+}
 
-अटल पूर्णांक _regmap_bus_raw_ग_लिखो(व्योम *context, अचिन्हित पूर्णांक reg,
-				 अचिन्हित पूर्णांक val)
-अणु
-	काष्ठा regmap *map = context;
+static int _regmap_bus_raw_write(void *context, unsigned int reg,
+				 unsigned int val)
+{
+	struct regmap *map = context;
 
-	WARN_ON(!map->bus || !map->क्रमmat.क्रमmat_val);
+	WARN_ON(!map->bus || !map->format.format_val);
 
-	map->क्रमmat.क्रमmat_val(map->work_buf + map->क्रमmat.reg_bytes
-			       + map->क्रमmat.pad_bytes, val, 0);
-	वापस _regmap_raw_ग_लिखो_impl(map, reg,
+	map->format.format_val(map->work_buf + map->format.reg_bytes
+			       + map->format.pad_bytes, val, 0);
+	return _regmap_raw_write_impl(map, reg,
 				      map->work_buf +
-				      map->क्रमmat.reg_bytes +
-				      map->क्रमmat.pad_bytes,
-				      map->क्रमmat.val_bytes,
+				      map->format.reg_bytes +
+				      map->format.pad_bytes,
+				      map->format.val_bytes,
 				      false);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम *_regmap_map_get_context(काष्ठा regmap *map)
-अणु
-	वापस (map->bus) ? map : map->bus_context;
-पूर्ण
+static inline void *_regmap_map_get_context(struct regmap *map)
+{
+	return (map->bus) ? map : map->bus_context;
+}
 
-पूर्णांक _regmap_ग_लिखो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-		  अचिन्हित पूर्णांक val)
-अणु
-	पूर्णांक ret;
-	व्योम *context = _regmap_map_get_context(map);
+int _regmap_write(struct regmap *map, unsigned int reg,
+		  unsigned int val)
+{
+	int ret;
+	void *context = _regmap_map_get_context(map);
 
-	अगर (!regmap_ग_लिखोable(map, reg))
-		वापस -EIO;
+	if (!regmap_writeable(map, reg))
+		return -EIO;
 
-	अगर (!map->cache_bypass && !map->defer_caching) अणु
-		ret = regcache_ग_लिखो(map, reg, val);
-		अगर (ret != 0)
-			वापस ret;
-		अगर (map->cache_only) अणु
+	if (!map->cache_bypass && !map->defer_caching) {
+		ret = regcache_write(map, reg, val);
+		if (ret != 0)
+			return ret;
+		if (map->cache_only) {
 			map->cache_dirty = true;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	ret = map->reg_ग_लिखो(context, reg, val);
-	अगर (ret == 0) अणु
-		अगर (regmap_should_log(map))
+	ret = map->reg_write(context, reg, val);
+	if (ret == 0) {
+		if (regmap_should_log(map))
 			dev_info(map->dev, "%x <= %x\n", reg, val);
 
-		trace_regmap_reg_ग_लिखो(map, reg, val);
-	पूर्ण
+		trace_regmap_reg_write(map, reg, val);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * regmap_ग_लिखो() - Write a value to a single रेजिस्टर
+ * regmap_write() - Write a value to a single register
  *
- * @map: Register map to ग_लिखो to
- * @reg: Register to ग_लिखो to
+ * @map: Register map to write to
+ * @reg: Register to write to
  * @val: Value to be written
  *
- * A value of zero will be वापसed on success, a negative त्रुटि_सं will
- * be वापसed in error हालs.
+ * A value of zero will be returned on success, a negative errno will
+ * be returned in error cases.
  */
-पूर्णांक regmap_ग_लिखो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val)
-अणु
-	पूर्णांक ret;
+int regmap_write(struct regmap *map, unsigned int reg, unsigned int val)
+{
+	int ret;
 
-	अगर (!IS_ALIGNED(reg, map->reg_stride))
-		वापस -EINVAL;
+	if (!IS_ALIGNED(reg, map->reg_stride))
+		return -EINVAL;
 
 	map->lock(map->lock_arg);
 
-	ret = _regmap_ग_लिखो(map, reg, val);
+	ret = _regmap_write(map, reg, val);
 
 	map->unlock(map->lock_arg);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(regmap_ग_लिखो);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(regmap_write);
 
 /**
- * regmap_ग_लिखो_async() - Write a value to a single रेजिस्टर asynchronously
+ * regmap_write_async() - Write a value to a single register asynchronously
  *
- * @map: Register map to ग_लिखो to
- * @reg: Register to ग_लिखो to
+ * @map: Register map to write to
+ * @reg: Register to write to
  * @val: Value to be written
  *
- * A value of zero will be वापसed on success, a negative त्रुटि_सं will
- * be वापसed in error हालs.
+ * A value of zero will be returned on success, a negative errno will
+ * be returned in error cases.
  */
-पूर्णांक regmap_ग_लिखो_async(काष्ठा regmap *map, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val)
-अणु
-	पूर्णांक ret;
+int regmap_write_async(struct regmap *map, unsigned int reg, unsigned int val)
+{
+	int ret;
 
-	अगर (!IS_ALIGNED(reg, map->reg_stride))
-		वापस -EINVAL;
+	if (!IS_ALIGNED(reg, map->reg_stride))
+		return -EINVAL;
 
 	map->lock(map->lock_arg);
 
 	map->async = true;
 
-	ret = _regmap_ग_लिखो(map, reg, val);
+	ret = _regmap_write(map, reg, val);
 
 	map->async = false;
 
 	map->unlock(map->lock_arg);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(regmap_ग_लिखो_async);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(regmap_write_async);
 
-पूर्णांक _regmap_raw_ग_लिखो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-		      स्थिर व्योम *val, माप_प्रकार val_len, bool noinc)
-अणु
-	माप_प्रकार val_bytes = map->क्रमmat.val_bytes;
-	माप_प्रकार val_count = val_len / val_bytes;
-	माप_प्रकार chunk_count, chunk_bytes;
-	माप_प्रकार chunk_regs = val_count;
-	पूर्णांक ret, i;
+int _regmap_raw_write(struct regmap *map, unsigned int reg,
+		      const void *val, size_t val_len, bool noinc)
+{
+	size_t val_bytes = map->format.val_bytes;
+	size_t val_count = val_len / val_bytes;
+	size_t chunk_count, chunk_bytes;
+	size_t chunk_regs = val_count;
+	int ret, i;
 
-	अगर (!val_count)
-		वापस -EINVAL;
+	if (!val_count)
+		return -EINVAL;
 
-	अगर (map->use_single_ग_लिखो)
+	if (map->use_single_write)
 		chunk_regs = 1;
-	अन्यथा अगर (map->max_raw_ग_लिखो && val_len > map->max_raw_ग_लिखो)
-		chunk_regs = map->max_raw_ग_लिखो / val_bytes;
+	else if (map->max_raw_write && val_len > map->max_raw_write)
+		chunk_regs = map->max_raw_write / val_bytes;
 
 	chunk_count = val_count / chunk_regs;
 	chunk_bytes = chunk_regs * val_bytes;
 
 	/* Write as many bytes as possible with chunk_size */
-	क्रम (i = 0; i < chunk_count; i++) अणु
-		ret = _regmap_raw_ग_लिखो_impl(map, reg, val, chunk_bytes, noinc);
-		अगर (ret)
-			वापस ret;
+	for (i = 0; i < chunk_count; i++) {
+		ret = _regmap_raw_write_impl(map, reg, val, chunk_bytes, noinc);
+		if (ret)
+			return ret;
 
 		reg += regmap_get_offset(map, chunk_regs);
 		val += chunk_bytes;
 		val_len -= chunk_bytes;
-	पूर्ण
+	}
 
-	/* Write reमुख्यing bytes */
-	अगर (val_len)
-		ret = _regmap_raw_ग_लिखो_impl(map, reg, val, val_len, noinc);
+	/* Write remaining bytes */
+	if (val_len)
+		ret = _regmap_raw_write_impl(map, reg, val, val_len, noinc);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * regmap_raw_ग_लिखो() - Write raw values to one or more रेजिस्टरs
+ * regmap_raw_write() - Write raw values to one or more registers
  *
- * @map: Register map to ग_लिखो to
- * @reg: Initial रेजिस्टर to ग_लिखो to
- * @val: Block of data to be written, laid out क्रम direct transmission to the
+ * @map: Register map to write to
+ * @reg: Initial register to write to
+ * @val: Block of data to be written, laid out for direct transmission to the
  *       device
- * @val_len: Length of data poपूर्णांकed to by val.
+ * @val_len: Length of data pointed to by val.
  *
- * This function is पूर्णांकended to be used क्रम things like firmware
- * करोwnload where a large block of data needs to be transferred to the
- * device.  No क्रमmatting will be करोne on the data provided.
+ * This function is intended to be used for things like firmware
+ * download where a large block of data needs to be transferred to the
+ * device.  No formatting will be done on the data provided.
  *
- * A value of zero will be वापसed on success, a negative त्रुटि_सं will
- * be वापसed in error हालs.
+ * A value of zero will be returned on success, a negative errno will
+ * be returned in error cases.
  */
-पूर्णांक regmap_raw_ग_लिखो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-		     स्थिर व्योम *val, माप_प्रकार val_len)
-अणु
-	पूर्णांक ret;
+int regmap_raw_write(struct regmap *map, unsigned int reg,
+		     const void *val, size_t val_len)
+{
+	int ret;
 
-	अगर (!regmap_can_raw_ग_लिखो(map))
-		वापस -EINVAL;
-	अगर (val_len % map->क्रमmat.val_bytes)
-		वापस -EINVAL;
+	if (!regmap_can_raw_write(map))
+		return -EINVAL;
+	if (val_len % map->format.val_bytes)
+		return -EINVAL;
 
 	map->lock(map->lock_arg);
 
-	ret = _regmap_raw_ग_लिखो(map, reg, val, val_len, false);
+	ret = _regmap_raw_write(map, reg, val, val_len, false);
 
 	map->unlock(map->lock_arg);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(regmap_raw_ग_लिखो);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(regmap_raw_write);
 
 /**
- * regmap_noinc_ग_लिखो(): Write data from a रेजिस्टर without incrementing the
- *			रेजिस्टर number
+ * regmap_noinc_write(): Write data from a register without incrementing the
+ *			register number
  *
- * @map: Register map to ग_लिखो to
- * @reg: Register to ग_लिखो to
- * @val: Poपूर्णांकer to data buffer
+ * @map: Register map to write to
+ * @reg: Register to write to
+ * @val: Pointer to data buffer
  * @val_len: Length of output buffer in bytes.
  *
- * The regmap API usually assumes that bulk bus ग_लिखो operations will ग_लिखो a
- * range of रेजिस्टरs. Some devices have certain रेजिस्टरs क्रम which a ग_लिखो
- * operation can ग_लिखो to an पूर्णांकernal FIFO.
+ * The regmap API usually assumes that bulk bus write operations will write a
+ * range of registers. Some devices have certain registers for which a write
+ * operation can write to an internal FIFO.
  *
- * The target रेजिस्टर must be अस्थिर but रेजिस्टरs after it can be
- * completely unrelated cacheable रेजिस्टरs.
+ * The target register must be volatile but registers after it can be
+ * completely unrelated cacheable registers.
  *
- * This will attempt multiple ग_लिखोs as required to ग_लिखो val_len bytes.
+ * This will attempt multiple writes as required to write val_len bytes.
  *
- * A value of zero will be वापसed on success, a negative त्रुटि_सं will be
- * वापसed in error हालs.
+ * A value of zero will be returned on success, a negative errno will be
+ * returned in error cases.
  */
-पूर्णांक regmap_noinc_ग_लिखो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-		      स्थिर व्योम *val, माप_प्रकार val_len)
-अणु
-	माप_प्रकार ग_लिखो_len;
-	पूर्णांक ret;
+int regmap_noinc_write(struct regmap *map, unsigned int reg,
+		      const void *val, size_t val_len)
+{
+	size_t write_len;
+	int ret;
 
-	अगर (!map->bus)
-		वापस -EINVAL;
-	अगर (!map->bus->ग_लिखो)
-		वापस -ENOTSUPP;
-	अगर (val_len % map->क्रमmat.val_bytes)
-		वापस -EINVAL;
-	अगर (!IS_ALIGNED(reg, map->reg_stride))
-		वापस -EINVAL;
-	अगर (val_len == 0)
-		वापस -EINVAL;
+	if (!map->bus)
+		return -EINVAL;
+	if (!map->bus->write)
+		return -ENOTSUPP;
+	if (val_len % map->format.val_bytes)
+		return -EINVAL;
+	if (!IS_ALIGNED(reg, map->reg_stride))
+		return -EINVAL;
+	if (val_len == 0)
+		return -EINVAL;
 
 	map->lock(map->lock_arg);
 
-	अगर (!regmap_अस्थिर(map, reg) || !regmap_ग_लिखोable_noinc(map, reg)) अणु
+	if (!regmap_volatile(map, reg) || !regmap_writeable_noinc(map, reg)) {
 		ret = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	जबतक (val_len) अणु
-		अगर (map->max_raw_ग_लिखो && map->max_raw_ग_लिखो < val_len)
-			ग_लिखो_len = map->max_raw_ग_लिखो;
-		अन्यथा
-			ग_लिखो_len = val_len;
-		ret = _regmap_raw_ग_लिखो(map, reg, val, ग_लिखो_len, true);
-		अगर (ret)
-			जाओ out_unlock;
-		val = ((u8 *)val) + ग_लिखो_len;
-		val_len -= ग_लिखो_len;
-	पूर्ण
+	while (val_len) {
+		if (map->max_raw_write && map->max_raw_write < val_len)
+			write_len = map->max_raw_write;
+		else
+			write_len = val_len;
+		ret = _regmap_raw_write(map, reg, val, write_len, true);
+		if (ret)
+			goto out_unlock;
+		val = ((u8 *)val) + write_len;
+		val_len -= write_len;
+	}
 
 out_unlock:
 	map->unlock(map->lock_arg);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(regmap_noinc_ग_लिखो);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(regmap_noinc_write);
 
 /**
- * regmap_field_update_bits_base() - Perक्रमm a पढ़ो/modअगरy/ग_लिखो cycle a
- *                                   रेजिस्टर field.
+ * regmap_field_update_bits_base() - Perform a read/modify/write cycle a
+ *                                   register field.
  *
- * @field: Register field to ग_लिखो to
- * @mask: Biपंचांगask to change
+ * @field: Register field to write to
+ * @mask: Bitmask to change
  * @val: Value to be written
- * @change: Boolean indicating अगर a ग_लिखो was करोne
+ * @change: Boolean indicating if a write was done
  * @async: Boolean indicating asynchronously
- * @क्रमce: Boolean indicating use क्रमce update
+ * @force: Boolean indicating use force update
  *
- * Perक्रमm a पढ़ो/modअगरy/ग_लिखो cycle on the रेजिस्टर field with change,
- * async, क्रमce option.
+ * Perform a read/modify/write cycle on the register field with change,
+ * async, force option.
  *
- * A value of zero will be वापसed on success, a negative त्रुटि_सं will
- * be वापसed in error हालs.
+ * A value of zero will be returned on success, a negative errno will
+ * be returned in error cases.
  */
-पूर्णांक regmap_field_update_bits_base(काष्ठा regmap_field *field,
-				  अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val,
-				  bool *change, bool async, bool क्रमce)
-अणु
-	mask = (mask << field->shअगरt) & field->mask;
+int regmap_field_update_bits_base(struct regmap_field *field,
+				  unsigned int mask, unsigned int val,
+				  bool *change, bool async, bool force)
+{
+	mask = (mask << field->shift) & field->mask;
 
-	वापस regmap_update_bits_base(field->regmap, field->reg,
-				       mask, val << field->shअगरt,
-				       change, async, क्रमce);
-पूर्ण
+	return regmap_update_bits_base(field->regmap, field->reg,
+				       mask, val << field->shift,
+				       change, async, force);
+}
 EXPORT_SYMBOL_GPL(regmap_field_update_bits_base);
 
 /**
- * regmap_fields_update_bits_base() - Perक्रमm a पढ़ो/modअगरy/ग_लिखो cycle a
- *                                    रेजिस्टर field with port ID
+ * regmap_fields_update_bits_base() - Perform a read/modify/write cycle a
+ *                                    register field with port ID
  *
- * @field: Register field to ग_लिखो to
+ * @field: Register field to write to
  * @id: port ID
- * @mask: Biपंचांगask to change
+ * @mask: Bitmask to change
  * @val: Value to be written
- * @change: Boolean indicating अगर a ग_लिखो was करोne
+ * @change: Boolean indicating if a write was done
  * @async: Boolean indicating asynchronously
- * @क्रमce: Boolean indicating use क्रमce update
+ * @force: Boolean indicating use force update
  *
- * A value of zero will be वापसed on success, a negative त्रुटि_सं will
- * be वापसed in error हालs.
+ * A value of zero will be returned on success, a negative errno will
+ * be returned in error cases.
  */
-पूर्णांक regmap_fields_update_bits_base(काष्ठा regmap_field *field, अचिन्हित पूर्णांक id,
-				   अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val,
-				   bool *change, bool async, bool क्रमce)
-अणु
-	अगर (id >= field->id_size)
-		वापस -EINVAL;
+int regmap_fields_update_bits_base(struct regmap_field *field, unsigned int id,
+				   unsigned int mask, unsigned int val,
+				   bool *change, bool async, bool force)
+{
+	if (id >= field->id_size)
+		return -EINVAL;
 
-	mask = (mask << field->shअगरt) & field->mask;
+	mask = (mask << field->shift) & field->mask;
 
-	वापस regmap_update_bits_base(field->regmap,
+	return regmap_update_bits_base(field->regmap,
 				       field->reg + (field->id_offset * id),
-				       mask, val << field->shअगरt,
-				       change, async, क्रमce);
-पूर्ण
+				       mask, val << field->shift,
+				       change, async, force);
+}
 EXPORT_SYMBOL_GPL(regmap_fields_update_bits_base);
 
 /**
- * regmap_bulk_ग_लिखो() - Write multiple रेजिस्टरs to the device
+ * regmap_bulk_write() - Write multiple registers to the device
  *
- * @map: Register map to ग_लिखो to
- * @reg: First रेजिस्टर to be ग_लिखो from
- * @val: Block of data to be written, in native रेजिस्टर size क्रम device
- * @val_count: Number of रेजिस्टरs to ग_लिखो
+ * @map: Register map to write to
+ * @reg: First register to be write from
+ * @val: Block of data to be written, in native register size for device
+ * @val_count: Number of registers to write
  *
- * This function is पूर्णांकended to be used क्रम writing a large block of
+ * This function is intended to be used for writing a large block of
  * data to the device either in single transfer or multiple transfer.
  *
- * A value of zero will be वापसed on success, a negative त्रुटि_सं will
- * be वापसed in error हालs.
+ * A value of zero will be returned on success, a negative errno will
+ * be returned in error cases.
  */
-पूर्णांक regmap_bulk_ग_लिखो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg, स्थिर व्योम *val,
-		     माप_प्रकार val_count)
-अणु
-	पूर्णांक ret = 0, i;
-	माप_प्रकार val_bytes = map->क्रमmat.val_bytes;
+int regmap_bulk_write(struct regmap *map, unsigned int reg, const void *val,
+		     size_t val_count)
+{
+	int ret = 0, i;
+	size_t val_bytes = map->format.val_bytes;
 
-	अगर (!IS_ALIGNED(reg, map->reg_stride))
-		वापस -EINVAL;
+	if (!IS_ALIGNED(reg, map->reg_stride))
+		return -EINVAL;
 
 	/*
-	 * Some devices करोn't support bulk ग_लिखो, क्रम them we have a series of
-	 * single ग_लिखो operations.
+	 * Some devices don't support bulk write, for them we have a series of
+	 * single write operations.
 	 */
-	अगर (!map->bus || !map->क्रमmat.parse_inplace) अणु
+	if (!map->bus || !map->format.parse_inplace) {
 		map->lock(map->lock_arg);
-		क्रम (i = 0; i < val_count; i++) अणु
-			अचिन्हित पूर्णांक ival;
+		for (i = 0; i < val_count; i++) {
+			unsigned int ival;
 
-			चयन (val_bytes) अणु
-			हाल 1:
+			switch (val_bytes) {
+			case 1:
 				ival = *(u8 *)(val + (i * val_bytes));
-				अवरोध;
-			हाल 2:
+				break;
+			case 2:
 				ival = *(u16 *)(val + (i * val_bytes));
-				अवरोध;
-			हाल 4:
+				break;
+			case 4:
 				ival = *(u32 *)(val + (i * val_bytes));
-				अवरोध;
-#अगर_घोषित CONFIG_64BIT
-			हाल 8:
+				break;
+#ifdef CONFIG_64BIT
+			case 8:
 				ival = *(u64 *)(val + (i * val_bytes));
-				अवरोध;
-#पूर्ण_अगर
-			शेष:
+				break;
+#endif
+			default:
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
-			ret = _regmap_ग_लिखो(map,
+			ret = _regmap_write(map,
 					    reg + regmap_get_offset(map, i),
 					    ival);
-			अगर (ret != 0)
-				जाओ out;
-		पूर्ण
+			if (ret != 0)
+				goto out;
+		}
 out:
 		map->unlock(map->lock_arg);
-	पूर्ण अन्यथा अणु
-		व्योम *wval;
+	} else {
+		void *wval;
 
 		wval = kmemdup(val, val_count * val_bytes, map->alloc_flags);
-		अगर (!wval)
-			वापस -ENOMEM;
+		if (!wval)
+			return -ENOMEM;
 
-		क्रम (i = 0; i < val_count * val_bytes; i += val_bytes)
-			map->क्रमmat.parse_inplace(wval + i);
+		for (i = 0; i < val_count * val_bytes; i += val_bytes)
+			map->format.parse_inplace(wval + i);
 
-		ret = regmap_raw_ग_लिखो(map, reg, wval, val_bytes * val_count);
+		ret = regmap_raw_write(map, reg, wval, val_bytes * val_count);
 
-		kमुक्त(wval);
-	पूर्ण
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(regmap_bulk_ग_लिखो);
+		kfree(wval);
+	}
+	return ret;
+}
+EXPORT_SYMBOL_GPL(regmap_bulk_write);
 
 /*
- * _regmap_raw_multi_reg_ग_लिखो()
+ * _regmap_raw_multi_reg_write()
  *
- * the (रेजिस्टर,newvalue) pairs in regs have not been क्रमmatted, but
+ * the (register,newvalue) pairs in regs have not been formatted, but
  * they are all in the same page and have been changed to being page
- * relative. The page रेजिस्टर has been written अगर that was necessary.
+ * relative. The page register has been written if that was necessary.
  */
-अटल पूर्णांक _regmap_raw_multi_reg_ग_लिखो(काष्ठा regmap *map,
-				       स्थिर काष्ठा reg_sequence *regs,
-				       माप_प्रकार num_regs)
-अणु
-	पूर्णांक ret;
-	व्योम *buf;
-	पूर्णांक i;
+static int _regmap_raw_multi_reg_write(struct regmap *map,
+				       const struct reg_sequence *regs,
+				       size_t num_regs)
+{
+	int ret;
+	void *buf;
+	int i;
 	u8 *u8;
-	माप_प्रकार val_bytes = map->क्रमmat.val_bytes;
-	माप_प्रकार reg_bytes = map->क्रमmat.reg_bytes;
-	माप_प्रकार pad_bytes = map->क्रमmat.pad_bytes;
-	माप_प्रकार pair_size = reg_bytes + pad_bytes + val_bytes;
-	माप_प्रकार len = pair_size * num_regs;
+	size_t val_bytes = map->format.val_bytes;
+	size_t reg_bytes = map->format.reg_bytes;
+	size_t pad_bytes = map->format.pad_bytes;
+	size_t pair_size = reg_bytes + pad_bytes + val_bytes;
+	size_t len = pair_size * num_regs;
 
-	अगर (!len)
-		वापस -EINVAL;
+	if (!len)
+		return -EINVAL;
 
 	buf = kzalloc(len, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
 	/* We have to linearise by hand. */
 
 	u8 = buf;
 
-	क्रम (i = 0; i < num_regs; i++) अणु
-		अचिन्हित पूर्णांक reg = regs[i].reg;
-		अचिन्हित पूर्णांक val = regs[i].def;
-		trace_regmap_hw_ग_लिखो_start(map, reg, 1);
-		map->क्रमmat.क्रमmat_reg(u8, reg, map->reg_shअगरt);
+	for (i = 0; i < num_regs; i++) {
+		unsigned int reg = regs[i].reg;
+		unsigned int val = regs[i].def;
+		trace_regmap_hw_write_start(map, reg, 1);
+		map->format.format_reg(u8, reg, map->reg_shift);
 		u8 += reg_bytes + pad_bytes;
-		map->क्रमmat.क्रमmat_val(u8, val, 0);
+		map->format.format_val(u8, val, 0);
 		u8 += val_bytes;
-	पूर्ण
+	}
 	u8 = buf;
-	*u8 |= map->ग_लिखो_flag_mask;
+	*u8 |= map->write_flag_mask;
 
-	ret = map->bus->ग_लिखो(map->bus_context, buf, len);
+	ret = map->bus->write(map->bus_context, buf, len);
 
-	kमुक्त(buf);
+	kfree(buf);
 
-	क्रम (i = 0; i < num_regs; i++) अणु
-		पूर्णांक reg = regs[i].reg;
-		trace_regmap_hw_ग_लिखो_करोne(map, reg, 1);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	for (i = 0; i < num_regs; i++) {
+		int reg = regs[i].reg;
+		trace_regmap_hw_write_done(map, reg, 1);
+	}
+	return ret;
+}
 
-अटल अचिन्हित पूर्णांक _regmap_रेजिस्टर_page(काष्ठा regmap *map,
-					  अचिन्हित पूर्णांक reg,
-					  काष्ठा regmap_range_node *range)
-अणु
-	अचिन्हित पूर्णांक win_page = (reg - range->range_min) / range->winकरोw_len;
+static unsigned int _regmap_register_page(struct regmap *map,
+					  unsigned int reg,
+					  struct regmap_range_node *range)
+{
+	unsigned int win_page = (reg - range->range_min) / range->window_len;
 
-	वापस win_page;
-पूर्ण
+	return win_page;
+}
 
-अटल पूर्णांक _regmap_range_multi_paged_reg_ग_लिखो(काष्ठा regmap *map,
-					       काष्ठा reg_sequence *regs,
-					       माप_प्रकार num_regs)
-अणु
-	पूर्णांक ret;
-	पूर्णांक i, n;
-	काष्ठा reg_sequence *base;
-	अचिन्हित पूर्णांक this_page = 0;
-	अचिन्हित पूर्णांक page_change = 0;
+static int _regmap_range_multi_paged_reg_write(struct regmap *map,
+					       struct reg_sequence *regs,
+					       size_t num_regs)
+{
+	int ret;
+	int i, n;
+	struct reg_sequence *base;
+	unsigned int this_page = 0;
+	unsigned int page_change = 0;
 	/*
-	 * the set of रेजिस्टरs are not neccessarily in order, but
-	 * since the order of ग_लिखो must be preserved this algorithm
-	 * chops the set each समय the page changes. This also applies
-	 * अगर there is a delay required at any poपूर्णांक in the sequence.
+	 * the set of registers are not neccessarily in order, but
+	 * since the order of write must be preserved this algorithm
+	 * chops the set each time the page changes. This also applies
+	 * if there is a delay required at any point in the sequence.
 	 */
 	base = regs;
-	क्रम (i = 0, n = 0; i < num_regs; i++, n++) अणु
-		अचिन्हित पूर्णांक reg = regs[i].reg;
-		काष्ठा regmap_range_node *range;
+	for (i = 0, n = 0; i < num_regs; i++, n++) {
+		unsigned int reg = regs[i].reg;
+		struct regmap_range_node *range;
 
 		range = _regmap_range_lookup(map, reg);
-		अगर (range) अणु
-			अचिन्हित पूर्णांक win_page = _regmap_रेजिस्टर_page(map, reg,
+		if (range) {
+			unsigned int win_page = _regmap_register_page(map, reg,
 								      range);
 
-			अगर (i == 0)
+			if (i == 0)
 				this_page = win_page;
-			अगर (win_page != this_page) अणु
+			if (win_page != this_page) {
 				this_page = win_page;
 				page_change = 1;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/* If we have both a page change and a delay make sure to
-		 * ग_लिखो the regs and apply the delay beक्रमe we change the
+		 * write the regs and apply the delay before we change the
 		 * page.
 		 */
 
-		अगर (page_change || regs[i].delay_us) अणु
+		if (page_change || regs[i].delay_us) {
 
-				/* For situations where the first ग_लिखो requires
-				 * a delay we need to make sure we करोn't call
-				 * raw_multi_reg_ग_लिखो with n=0
-				 * This can't occur with page अवरोधs as we
-				 * never ग_लिखो on the first iteration
+				/* For situations where the first write requires
+				 * a delay we need to make sure we don't call
+				 * raw_multi_reg_write with n=0
+				 * This can't occur with page breaks as we
+				 * never write on the first iteration
 				 */
-				अगर (regs[i].delay_us && i == 0)
+				if (regs[i].delay_us && i == 0)
 					n = 1;
 
-				ret = _regmap_raw_multi_reg_ग_लिखो(map, base, n);
-				अगर (ret != 0)
-					वापस ret;
+				ret = _regmap_raw_multi_reg_write(map, base, n);
+				if (ret != 0)
+					return ret;
 
-				अगर (regs[i].delay_us) अणु
-					अगर (map->can_sleep)
+				if (regs[i].delay_us) {
+					if (map->can_sleep)
 						fsleep(regs[i].delay_us);
-					अन्यथा
+					else
 						udelay(regs[i].delay_us);
-				पूर्ण
+				}
 
 				base += n;
 				n = 0;
 
-				अगर (page_change) अणु
+				if (page_change) {
 					ret = _regmap_select_page(map,
 								  &base[n].reg,
 								  range, 1);
-					अगर (ret != 0)
-						वापस ret;
+					if (ret != 0)
+						return ret;
 
 					page_change = 0;
-				पूर्ण
+				}
 
-		पूर्ण
+		}
 
-	पूर्ण
-	अगर (n > 0)
-		वापस _regmap_raw_multi_reg_ग_लिखो(map, base, n);
-	वापस 0;
-पूर्ण
+	}
+	if (n > 0)
+		return _regmap_raw_multi_reg_write(map, base, n);
+	return 0;
+}
 
-अटल पूर्णांक _regmap_multi_reg_ग_लिखो(काष्ठा regmap *map,
-				   स्थिर काष्ठा reg_sequence *regs,
-				   माप_प्रकार num_regs)
-अणु
-	पूर्णांक i;
-	पूर्णांक ret;
+static int _regmap_multi_reg_write(struct regmap *map,
+				   const struct reg_sequence *regs,
+				   size_t num_regs)
+{
+	int i;
+	int ret;
 
-	अगर (!map->can_multi_ग_लिखो) अणु
-		क्रम (i = 0; i < num_regs; i++) अणु
-			ret = _regmap_ग_लिखो(map, regs[i].reg, regs[i].def);
-			अगर (ret != 0)
-				वापस ret;
+	if (!map->can_multi_write) {
+		for (i = 0; i < num_regs; i++) {
+			ret = _regmap_write(map, regs[i].reg, regs[i].def);
+			if (ret != 0)
+				return ret;
 
-			अगर (regs[i].delay_us) अणु
-				अगर (map->can_sleep)
+			if (regs[i].delay_us) {
+				if (map->can_sleep)
 					fsleep(regs[i].delay_us);
-				अन्यथा
+				else
 					udelay(regs[i].delay_us);
-			पूर्ण
-		पूर्ण
-		वापस 0;
-	पूर्ण
+			}
+		}
+		return 0;
+	}
 
-	अगर (!map->क्रमmat.parse_inplace)
-		वापस -EINVAL;
+	if (!map->format.parse_inplace)
+		return -EINVAL;
 
-	अगर (map->ग_लिखोable_reg)
-		क्रम (i = 0; i < num_regs; i++) अणु
-			पूर्णांक reg = regs[i].reg;
-			अगर (!map->ग_लिखोable_reg(map->dev, reg))
-				वापस -EINVAL;
-			अगर (!IS_ALIGNED(reg, map->reg_stride))
-				वापस -EINVAL;
-		पूर्ण
+	if (map->writeable_reg)
+		for (i = 0; i < num_regs; i++) {
+			int reg = regs[i].reg;
+			if (!map->writeable_reg(map->dev, reg))
+				return -EINVAL;
+			if (!IS_ALIGNED(reg, map->reg_stride))
+				return -EINVAL;
+		}
 
-	अगर (!map->cache_bypass) अणु
-		क्रम (i = 0; i < num_regs; i++) अणु
-			अचिन्हित पूर्णांक val = regs[i].def;
-			अचिन्हित पूर्णांक reg = regs[i].reg;
-			ret = regcache_ग_लिखो(map, reg, val);
-			अगर (ret) अणु
+	if (!map->cache_bypass) {
+		for (i = 0; i < num_regs; i++) {
+			unsigned int val = regs[i].def;
+			unsigned int reg = regs[i].reg;
+			ret = regcache_write(map, reg, val);
+			if (ret) {
 				dev_err(map->dev,
 				"Error in caching of register: %x ret: %d\n",
 								reg, ret);
-				वापस ret;
-			पूर्ण
-		पूर्ण
-		अगर (map->cache_only) अणु
+				return ret;
+			}
+		}
+		if (map->cache_only) {
 			map->cache_dirty = true;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	WARN_ON(!map->bus);
 
-	क्रम (i = 0; i < num_regs; i++) अणु
-		अचिन्हित पूर्णांक reg = regs[i].reg;
-		काष्ठा regmap_range_node *range;
+	for (i = 0; i < num_regs; i++) {
+		unsigned int reg = regs[i].reg;
+		struct regmap_range_node *range;
 
-		/* Coalesce all the ग_लिखोs between a page अवरोध or a delay
+		/* Coalesce all the writes between a page break or a delay
 		 * in a sequence
 		 */
 		range = _regmap_range_lookup(map, reg);
-		अगर (range || regs[i].delay_us) अणु
-			माप_प्रकार len = माप(काष्ठा reg_sequence)*num_regs;
-			काष्ठा reg_sequence *base = kmemdup(regs, len,
+		if (range || regs[i].delay_us) {
+			size_t len = sizeof(struct reg_sequence)*num_regs;
+			struct reg_sequence *base = kmemdup(regs, len,
 							   GFP_KERNEL);
-			अगर (!base)
-				वापस -ENOMEM;
-			ret = _regmap_range_multi_paged_reg_ग_लिखो(map, base,
+			if (!base)
+				return -ENOMEM;
+			ret = _regmap_range_multi_paged_reg_write(map, base,
 								  num_regs);
-			kमुक्त(base);
+			kfree(base);
 
-			वापस ret;
-		पूर्ण
-	पूर्ण
-	वापस _regmap_raw_multi_reg_ग_लिखो(map, regs, num_regs);
-पूर्ण
+			return ret;
+		}
+	}
+	return _regmap_raw_multi_reg_write(map, regs, num_regs);
+}
 
 /**
- * regmap_multi_reg_ग_लिखो() - Write multiple रेजिस्टरs to the device
+ * regmap_multi_reg_write() - Write multiple registers to the device
  *
- * @map: Register map to ग_लिखो to
- * @regs: Array of काष्ठाures containing रेजिस्टर,value to be written
- * @num_regs: Number of रेजिस्टरs to ग_लिखो
+ * @map: Register map to write to
+ * @regs: Array of structures containing register,value to be written
+ * @num_regs: Number of registers to write
  *
- * Write multiple रेजिस्टरs to the device where the set of रेजिस्टर, value
+ * Write multiple registers to the device where the set of register, value
  * pairs are supplied in any order, possibly not all in a single range.
  *
- * The 'normal' block ग_लिखो mode will send ultimately send data on the
- * target bus as R,V1,V2,V3,..,Vn where successively higher रेजिस्टरs are
- * addressed. However, this alternative block multi ग_लिखो mode will send
+ * The 'normal' block write mode will send ultimately send data on the
+ * target bus as R,V1,V2,V3,..,Vn where successively higher registers are
+ * addressed. However, this alternative block multi write mode will send
  * the data as R1,V1,R2,V2,..,Rn,Vn on the target bus. The target device
  * must of course support the mode.
  *
- * A value of zero will be वापसed on success, a negative त्रुटि_सं will be
- * वापसed in error हालs.
+ * A value of zero will be returned on success, a negative errno will be
+ * returned in error cases.
  */
-पूर्णांक regmap_multi_reg_ग_लिखो(काष्ठा regmap *map, स्थिर काष्ठा reg_sequence *regs,
-			   पूर्णांक num_regs)
-अणु
-	पूर्णांक ret;
+int regmap_multi_reg_write(struct regmap *map, const struct reg_sequence *regs,
+			   int num_regs)
+{
+	int ret;
 
 	map->lock(map->lock_arg);
 
-	ret = _regmap_multi_reg_ग_लिखो(map, regs, num_regs);
+	ret = _regmap_multi_reg_write(map, regs, num_regs);
 
 	map->unlock(map->lock_arg);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(regmap_multi_reg_ग_लिखो);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(regmap_multi_reg_write);
 
 /**
- * regmap_multi_reg_ग_लिखो_bypassed() - Write multiple रेजिस्टरs to the
+ * regmap_multi_reg_write_bypassed() - Write multiple registers to the
  *                                     device but not the cache
  *
- * @map: Register map to ग_लिखो to
- * @regs: Array of काष्ठाures containing रेजिस्टर,value to be written
- * @num_regs: Number of रेजिस्टरs to ग_लिखो
+ * @map: Register map to write to
+ * @regs: Array of structures containing register,value to be written
+ * @num_regs: Number of registers to write
  *
- * Write multiple रेजिस्टरs to the device but not the cache where the set
- * of रेजिस्टर are supplied in any order.
+ * Write multiple registers to the device but not the cache where the set
+ * of register are supplied in any order.
  *
- * This function is पूर्णांकended to be used क्रम writing a large block of data
- * atomically to the device in single transfer क्रम those I2C client devices
- * that implement this alternative block ग_लिखो mode.
+ * This function is intended to be used for writing a large block of data
+ * atomically to the device in single transfer for those I2C client devices
+ * that implement this alternative block write mode.
  *
- * A value of zero will be वापसed on success, a negative त्रुटि_सं will
- * be वापसed in error हालs.
+ * A value of zero will be returned on success, a negative errno will
+ * be returned in error cases.
  */
-पूर्णांक regmap_multi_reg_ग_लिखो_bypassed(काष्ठा regmap *map,
-				    स्थिर काष्ठा reg_sequence *regs,
-				    पूर्णांक num_regs)
-अणु
-	पूर्णांक ret;
+int regmap_multi_reg_write_bypassed(struct regmap *map,
+				    const struct reg_sequence *regs,
+				    int num_regs)
+{
+	int ret;
 	bool bypass;
 
 	map->lock(map->lock_arg);
@@ -2557,593 +2556,593 @@ EXPORT_SYMBOL_GPL(regmap_multi_reg_ग_लिखो);
 	bypass = map->cache_bypass;
 	map->cache_bypass = true;
 
-	ret = _regmap_multi_reg_ग_लिखो(map, regs, num_regs);
+	ret = _regmap_multi_reg_write(map, regs, num_regs);
 
 	map->cache_bypass = bypass;
 
 	map->unlock(map->lock_arg);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(regmap_multi_reg_ग_लिखो_bypassed);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(regmap_multi_reg_write_bypassed);
 
 /**
- * regmap_raw_ग_लिखो_async() - Write raw values to one or more रेजिस्टरs
+ * regmap_raw_write_async() - Write raw values to one or more registers
  *                            asynchronously
  *
- * @map: Register map to ग_लिखो to
- * @reg: Initial रेजिस्टर to ग_लिखो to
- * @val: Block of data to be written, laid out क्रम direct transmission to the
+ * @map: Register map to write to
+ * @reg: Initial register to write to
+ * @val: Block of data to be written, laid out for direct transmission to the
  *       device.  Must be valid until regmap_async_complete() is called.
- * @val_len: Length of data poपूर्णांकed to by val.
+ * @val_len: Length of data pointed to by val.
  *
- * This function is पूर्णांकended to be used क्रम things like firmware
- * करोwnload where a large block of data needs to be transferred to the
- * device.  No क्रमmatting will be करोne on the data provided.
+ * This function is intended to be used for things like firmware
+ * download where a large block of data needs to be transferred to the
+ * device.  No formatting will be done on the data provided.
  *
- * If supported by the underlying bus the ग_लिखो will be scheduled
+ * If supported by the underlying bus the write will be scheduled
  * asynchronously, helping maximise I/O speed on higher speed buses
  * like SPI.  regmap_async_complete() can be called to ensure that all
- * asynchrnous ग_लिखोs have been completed.
+ * asynchrnous writes have been completed.
  *
- * A value of zero will be वापसed on success, a negative त्रुटि_सं will
- * be वापसed in error हालs.
+ * A value of zero will be returned on success, a negative errno will
+ * be returned in error cases.
  */
-पूर्णांक regmap_raw_ग_लिखो_async(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-			   स्थिर व्योम *val, माप_प्रकार val_len)
-अणु
-	पूर्णांक ret;
+int regmap_raw_write_async(struct regmap *map, unsigned int reg,
+			   const void *val, size_t val_len)
+{
+	int ret;
 
-	अगर (val_len % map->क्रमmat.val_bytes)
-		वापस -EINVAL;
-	अगर (!IS_ALIGNED(reg, map->reg_stride))
-		वापस -EINVAL;
+	if (val_len % map->format.val_bytes)
+		return -EINVAL;
+	if (!IS_ALIGNED(reg, map->reg_stride))
+		return -EINVAL;
 
 	map->lock(map->lock_arg);
 
 	map->async = true;
 
-	ret = _regmap_raw_ग_लिखो(map, reg, val, val_len, false);
+	ret = _regmap_raw_write(map, reg, val, val_len, false);
 
 	map->async = false;
 
 	map->unlock(map->lock_arg);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(regmap_raw_ग_लिखो_async);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(regmap_raw_write_async);
 
-अटल पूर्णांक _regmap_raw_पढ़ो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg, व्योम *val,
-			    अचिन्हित पूर्णांक val_len, bool noinc)
-अणु
-	काष्ठा regmap_range_node *range;
-	पूर्णांक ret;
+static int _regmap_raw_read(struct regmap *map, unsigned int reg, void *val,
+			    unsigned int val_len, bool noinc)
+{
+	struct regmap_range_node *range;
+	int ret;
 
 	WARN_ON(!map->bus);
 
-	अगर (!map->bus || !map->bus->पढ़ो)
-		वापस -EINVAL;
+	if (!map->bus || !map->bus->read)
+		return -EINVAL;
 
 	range = _regmap_range_lookup(map, reg);
-	अगर (range) अणु
+	if (range) {
 		ret = _regmap_select_page(map, &reg, range,
-					  noinc ? 1 : val_len / map->क्रमmat.val_bytes);
-		अगर (ret != 0)
-			वापस ret;
-	पूर्ण
+					  noinc ? 1 : val_len / map->format.val_bytes);
+		if (ret != 0)
+			return ret;
+	}
 
-	map->क्रमmat.क्रमmat_reg(map->work_buf, reg, map->reg_shअगरt);
-	regmap_set_work_buf_flag_mask(map, map->क्रमmat.reg_bytes,
-				      map->पढ़ो_flag_mask);
-	trace_regmap_hw_पढ़ो_start(map, reg, val_len / map->क्रमmat.val_bytes);
+	map->format.format_reg(map->work_buf, reg, map->reg_shift);
+	regmap_set_work_buf_flag_mask(map, map->format.reg_bytes,
+				      map->read_flag_mask);
+	trace_regmap_hw_read_start(map, reg, val_len / map->format.val_bytes);
 
-	ret = map->bus->पढ़ो(map->bus_context, map->work_buf,
-			     map->क्रमmat.reg_bytes + map->क्रमmat.pad_bytes,
+	ret = map->bus->read(map->bus_context, map->work_buf,
+			     map->format.reg_bytes + map->format.pad_bytes,
 			     val, val_len);
 
-	trace_regmap_hw_पढ़ो_करोne(map, reg, val_len / map->क्रमmat.val_bytes);
+	trace_regmap_hw_read_done(map, reg, val_len / map->format.val_bytes);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक _regmap_bus_reg_पढ़ो(व्योम *context, अचिन्हित पूर्णांक reg,
-				अचिन्हित पूर्णांक *val)
-अणु
-	काष्ठा regmap *map = context;
+static int _regmap_bus_reg_read(void *context, unsigned int reg,
+				unsigned int *val)
+{
+	struct regmap *map = context;
 
-	वापस map->bus->reg_पढ़ो(map->bus_context, reg, val);
-पूर्ण
+	return map->bus->reg_read(map->bus_context, reg, val);
+}
 
-अटल पूर्णांक _regmap_bus_पढ़ो(व्योम *context, अचिन्हित पूर्णांक reg,
-			    अचिन्हित पूर्णांक *val)
-अणु
-	पूर्णांक ret;
-	काष्ठा regmap *map = context;
-	व्योम *work_val = map->work_buf + map->क्रमmat.reg_bytes +
-		map->क्रमmat.pad_bytes;
+static int _regmap_bus_read(void *context, unsigned int reg,
+			    unsigned int *val)
+{
+	int ret;
+	struct regmap *map = context;
+	void *work_val = map->work_buf + map->format.reg_bytes +
+		map->format.pad_bytes;
 
-	अगर (!map->क्रमmat.parse_val)
-		वापस -EINVAL;
+	if (!map->format.parse_val)
+		return -EINVAL;
 
-	ret = _regmap_raw_पढ़ो(map, reg, work_val, map->क्रमmat.val_bytes, false);
-	अगर (ret == 0)
-		*val = map->क्रमmat.parse_val(work_val);
+	ret = _regmap_raw_read(map, reg, work_val, map->format.val_bytes, false);
+	if (ret == 0)
+		*val = map->format.parse_val(work_val);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक _regmap_पढ़ो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-			अचिन्हित पूर्णांक *val)
-अणु
-	पूर्णांक ret;
-	व्योम *context = _regmap_map_get_context(map);
+static int _regmap_read(struct regmap *map, unsigned int reg,
+			unsigned int *val)
+{
+	int ret;
+	void *context = _regmap_map_get_context(map);
 
-	अगर (!map->cache_bypass) अणु
-		ret = regcache_पढ़ो(map, reg, val);
-		अगर (ret == 0)
-			वापस 0;
-	पूर्ण
+	if (!map->cache_bypass) {
+		ret = regcache_read(map, reg, val);
+		if (ret == 0)
+			return 0;
+	}
 
-	अगर (map->cache_only)
-		वापस -EBUSY;
+	if (map->cache_only)
+		return -EBUSY;
 
-	अगर (!regmap_पढ़ोable(map, reg))
-		वापस -EIO;
+	if (!regmap_readable(map, reg))
+		return -EIO;
 
-	ret = map->reg_पढ़ो(context, reg, val);
-	अगर (ret == 0) अणु
-		अगर (regmap_should_log(map))
+	ret = map->reg_read(context, reg, val);
+	if (ret == 0) {
+		if (regmap_should_log(map))
 			dev_info(map->dev, "%x => %x\n", reg, *val);
 
-		trace_regmap_reg_पढ़ो(map, reg, *val);
+		trace_regmap_reg_read(map, reg, *val);
 
-		अगर (!map->cache_bypass)
-			regcache_ग_लिखो(map, reg, *val);
-	पूर्ण
+		if (!map->cache_bypass)
+			regcache_write(map, reg, *val);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * regmap_पढ़ो() - Read a value from a single रेजिस्टर
+ * regmap_read() - Read a value from a single register
  *
- * @map: Register map to पढ़ो from
- * @reg: Register to be पढ़ो from
- * @val: Poपूर्णांकer to store पढ़ो value
+ * @map: Register map to read from
+ * @reg: Register to be read from
+ * @val: Pointer to store read value
  *
- * A value of zero will be वापसed on success, a negative त्रुटि_सं will
- * be वापसed in error हालs.
+ * A value of zero will be returned on success, a negative errno will
+ * be returned in error cases.
  */
-पूर्णांक regmap_पढ़ो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक *val)
-अणु
-	पूर्णांक ret;
+int regmap_read(struct regmap *map, unsigned int reg, unsigned int *val)
+{
+	int ret;
 
-	अगर (!IS_ALIGNED(reg, map->reg_stride))
-		वापस -EINVAL;
+	if (!IS_ALIGNED(reg, map->reg_stride))
+		return -EINVAL;
 
 	map->lock(map->lock_arg);
 
-	ret = _regmap_पढ़ो(map, reg, val);
+	ret = _regmap_read(map, reg, val);
 
 	map->unlock(map->lock_arg);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(regmap_पढ़ो);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(regmap_read);
 
 /**
- * regmap_raw_पढ़ो() - Read raw data from the device
+ * regmap_raw_read() - Read raw data from the device
  *
- * @map: Register map to पढ़ो from
- * @reg: First रेजिस्टर to be पढ़ो from
- * @val: Poपूर्णांकer to store पढ़ो value
- * @val_len: Size of data to पढ़ो
+ * @map: Register map to read from
+ * @reg: First register to be read from
+ * @val: Pointer to store read value
+ * @val_len: Size of data to read
  *
- * A value of zero will be वापसed on success, a negative त्रुटि_सं will
- * be वापसed in error हालs.
+ * A value of zero will be returned on success, a negative errno will
+ * be returned in error cases.
  */
-पूर्णांक regmap_raw_पढ़ो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg, व्योम *val,
-		    माप_प्रकार val_len)
-अणु
-	माप_प्रकार val_bytes = map->क्रमmat.val_bytes;
-	माप_प्रकार val_count = val_len / val_bytes;
-	अचिन्हित पूर्णांक v;
-	पूर्णांक ret, i;
+int regmap_raw_read(struct regmap *map, unsigned int reg, void *val,
+		    size_t val_len)
+{
+	size_t val_bytes = map->format.val_bytes;
+	size_t val_count = val_len / val_bytes;
+	unsigned int v;
+	int ret, i;
 
-	अगर (!map->bus)
-		वापस -EINVAL;
-	अगर (val_len % map->क्रमmat.val_bytes)
-		वापस -EINVAL;
-	अगर (!IS_ALIGNED(reg, map->reg_stride))
-		वापस -EINVAL;
-	अगर (val_count == 0)
-		वापस -EINVAL;
+	if (!map->bus)
+		return -EINVAL;
+	if (val_len % map->format.val_bytes)
+		return -EINVAL;
+	if (!IS_ALIGNED(reg, map->reg_stride))
+		return -EINVAL;
+	if (val_count == 0)
+		return -EINVAL;
 
 	map->lock(map->lock_arg);
 
-	अगर (regmap_अस्थिर_range(map, reg, val_count) || map->cache_bypass ||
-	    map->cache_type == REGCACHE_NONE) अणु
-		माप_प्रकार chunk_count, chunk_bytes;
-		माप_प्रकार chunk_regs = val_count;
+	if (regmap_volatile_range(map, reg, val_count) || map->cache_bypass ||
+	    map->cache_type == REGCACHE_NONE) {
+		size_t chunk_count, chunk_bytes;
+		size_t chunk_regs = val_count;
 
-		अगर (!map->bus->पढ़ो) अणु
+		if (!map->bus->read) {
 			ret = -ENOTSUPP;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (map->use_single_पढ़ो)
+		if (map->use_single_read)
 			chunk_regs = 1;
-		अन्यथा अगर (map->max_raw_पढ़ो && val_len > map->max_raw_पढ़ो)
-			chunk_regs = map->max_raw_पढ़ो / val_bytes;
+		else if (map->max_raw_read && val_len > map->max_raw_read)
+			chunk_regs = map->max_raw_read / val_bytes;
 
 		chunk_count = val_count / chunk_regs;
 		chunk_bytes = chunk_regs * val_bytes;
 
-		/* Read bytes that fit पूर्णांकo whole chunks */
-		क्रम (i = 0; i < chunk_count; i++) अणु
-			ret = _regmap_raw_पढ़ो(map, reg, val, chunk_bytes, false);
-			अगर (ret != 0)
-				जाओ out;
+		/* Read bytes that fit into whole chunks */
+		for (i = 0; i < chunk_count; i++) {
+			ret = _regmap_raw_read(map, reg, val, chunk_bytes, false);
+			if (ret != 0)
+				goto out;
 
 			reg += regmap_get_offset(map, chunk_regs);
 			val += chunk_bytes;
 			val_len -= chunk_bytes;
-		पूर्ण
+		}
 
-		/* Read reमुख्यing bytes */
-		अगर (val_len) अणु
-			ret = _regmap_raw_पढ़ो(map, reg, val, val_len, false);
-			अगर (ret != 0)
-				जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* Otherwise go word by word क्रम the cache; should be low
+		/* Read remaining bytes */
+		if (val_len) {
+			ret = _regmap_raw_read(map, reg, val, val_len, false);
+			if (ret != 0)
+				goto out;
+		}
+	} else {
+		/* Otherwise go word by word for the cache; should be low
 		 * cost as we expect to hit the cache.
 		 */
-		क्रम (i = 0; i < val_count; i++) अणु
-			ret = _regmap_पढ़ो(map, reg + regmap_get_offset(map, i),
+		for (i = 0; i < val_count; i++) {
+			ret = _regmap_read(map, reg + regmap_get_offset(map, i),
 					   &v);
-			अगर (ret != 0)
-				जाओ out;
+			if (ret != 0)
+				goto out;
 
-			map->क्रमmat.क्रमmat_val(val + (i * val_bytes), v, 0);
-		पूर्ण
-	पूर्ण
+			map->format.format_val(val + (i * val_bytes), v, 0);
+		}
+	}
 
  out:
 	map->unlock(map->lock_arg);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(regmap_raw_पढ़ो);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(regmap_raw_read);
 
 /**
- * regmap_noinc_पढ़ो(): Read data from a रेजिस्टर without incrementing the
- *			रेजिस्टर number
+ * regmap_noinc_read(): Read data from a register without incrementing the
+ *			register number
  *
- * @map: Register map to पढ़ो from
- * @reg: Register to पढ़ो from
- * @val: Poपूर्णांकer to data buffer
+ * @map: Register map to read from
+ * @reg: Register to read from
+ * @val: Pointer to data buffer
  * @val_len: Length of output buffer in bytes.
  *
- * The regmap API usually assumes that bulk bus पढ़ो operations will पढ़ो a
- * range of रेजिस्टरs. Some devices have certain रेजिस्टरs क्रम which a पढ़ो
- * operation पढ़ो will पढ़ो from an पूर्णांकernal FIFO.
+ * The regmap API usually assumes that bulk bus read operations will read a
+ * range of registers. Some devices have certain registers for which a read
+ * operation read will read from an internal FIFO.
  *
- * The target रेजिस्टर must be अस्थिर but रेजिस्टरs after it can be
- * completely unrelated cacheable रेजिस्टरs.
+ * The target register must be volatile but registers after it can be
+ * completely unrelated cacheable registers.
  *
- * This will attempt multiple पढ़ोs as required to पढ़ो val_len bytes.
+ * This will attempt multiple reads as required to read val_len bytes.
  *
- * A value of zero will be वापसed on success, a negative त्रुटि_सं will be
- * वापसed in error हालs.
+ * A value of zero will be returned on success, a negative errno will be
+ * returned in error cases.
  */
-पूर्णांक regmap_noinc_पढ़ो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-		      व्योम *val, माप_प्रकार val_len)
-अणु
-	माप_प्रकार पढ़ो_len;
-	पूर्णांक ret;
+int regmap_noinc_read(struct regmap *map, unsigned int reg,
+		      void *val, size_t val_len)
+{
+	size_t read_len;
+	int ret;
 
-	अगर (!map->bus)
-		वापस -EINVAL;
-	अगर (!map->bus->पढ़ो)
-		वापस -ENOTSUPP;
-	अगर (val_len % map->क्रमmat.val_bytes)
-		वापस -EINVAL;
-	अगर (!IS_ALIGNED(reg, map->reg_stride))
-		वापस -EINVAL;
-	अगर (val_len == 0)
-		वापस -EINVAL;
+	if (!map->bus)
+		return -EINVAL;
+	if (!map->bus->read)
+		return -ENOTSUPP;
+	if (val_len % map->format.val_bytes)
+		return -EINVAL;
+	if (!IS_ALIGNED(reg, map->reg_stride))
+		return -EINVAL;
+	if (val_len == 0)
+		return -EINVAL;
 
 	map->lock(map->lock_arg);
 
-	अगर (!regmap_अस्थिर(map, reg) || !regmap_पढ़ोable_noinc(map, reg)) अणु
+	if (!regmap_volatile(map, reg) || !regmap_readable_noinc(map, reg)) {
 		ret = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	जबतक (val_len) अणु
-		अगर (map->max_raw_पढ़ो && map->max_raw_पढ़ो < val_len)
-			पढ़ो_len = map->max_raw_पढ़ो;
-		अन्यथा
-			पढ़ो_len = val_len;
-		ret = _regmap_raw_पढ़ो(map, reg, val, पढ़ो_len, true);
-		अगर (ret)
-			जाओ out_unlock;
-		val = ((u8 *)val) + पढ़ो_len;
-		val_len -= पढ़ो_len;
-	पूर्ण
+	while (val_len) {
+		if (map->max_raw_read && map->max_raw_read < val_len)
+			read_len = map->max_raw_read;
+		else
+			read_len = val_len;
+		ret = _regmap_raw_read(map, reg, val, read_len, true);
+		if (ret)
+			goto out_unlock;
+		val = ((u8 *)val) + read_len;
+		val_len -= read_len;
+	}
 
 out_unlock:
 	map->unlock(map->lock_arg);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(regmap_noinc_पढ़ो);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(regmap_noinc_read);
 
 /**
- * regmap_field_पढ़ो(): Read a value to a single रेजिस्टर field
+ * regmap_field_read(): Read a value to a single register field
  *
- * @field: Register field to पढ़ो from
- * @val: Poपूर्णांकer to store पढ़ो value
+ * @field: Register field to read from
+ * @val: Pointer to store read value
  *
- * A value of zero will be वापसed on success, a negative त्रुटि_सं will
- * be वापसed in error हालs.
+ * A value of zero will be returned on success, a negative errno will
+ * be returned in error cases.
  */
-पूर्णांक regmap_field_पढ़ो(काष्ठा regmap_field *field, अचिन्हित पूर्णांक *val)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक reg_val;
-	ret = regmap_पढ़ो(field->regmap, field->reg, &reg_val);
-	अगर (ret != 0)
-		वापस ret;
+int regmap_field_read(struct regmap_field *field, unsigned int *val)
+{
+	int ret;
+	unsigned int reg_val;
+	ret = regmap_read(field->regmap, field->reg, &reg_val);
+	if (ret != 0)
+		return ret;
 
 	reg_val &= field->mask;
-	reg_val >>= field->shअगरt;
+	reg_val >>= field->shift;
 	*val = reg_val;
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(regmap_field_पढ़ो);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(regmap_field_read);
 
 /**
- * regmap_fields_पढ़ो() - Read a value to a single रेजिस्टर field with port ID
+ * regmap_fields_read() - Read a value to a single register field with port ID
  *
- * @field: Register field to पढ़ो from
+ * @field: Register field to read from
  * @id: port ID
- * @val: Poपूर्णांकer to store पढ़ो value
+ * @val: Pointer to store read value
  *
- * A value of zero will be वापसed on success, a negative त्रुटि_सं will
- * be वापसed in error हालs.
+ * A value of zero will be returned on success, a negative errno will
+ * be returned in error cases.
  */
-पूर्णांक regmap_fields_पढ़ो(काष्ठा regmap_field *field, अचिन्हित पूर्णांक id,
-		       अचिन्हित पूर्णांक *val)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक reg_val;
+int regmap_fields_read(struct regmap_field *field, unsigned int id,
+		       unsigned int *val)
+{
+	int ret;
+	unsigned int reg_val;
 
-	अगर (id >= field->id_size)
-		वापस -EINVAL;
+	if (id >= field->id_size)
+		return -EINVAL;
 
-	ret = regmap_पढ़ो(field->regmap,
+	ret = regmap_read(field->regmap,
 			  field->reg + (field->id_offset * id),
 			  &reg_val);
-	अगर (ret != 0)
-		वापस ret;
+	if (ret != 0)
+		return ret;
 
 	reg_val &= field->mask;
-	reg_val >>= field->shअगरt;
+	reg_val >>= field->shift;
 	*val = reg_val;
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(regmap_fields_पढ़ो);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(regmap_fields_read);
 
 /**
- * regmap_bulk_पढ़ो() - Read multiple रेजिस्टरs from the device
+ * regmap_bulk_read() - Read multiple registers from the device
  *
- * @map: Register map to पढ़ो from
- * @reg: First रेजिस्टर to be पढ़ो from
- * @val: Poपूर्णांकer to store पढ़ो value, in native रेजिस्टर size क्रम device
- * @val_count: Number of रेजिस्टरs to पढ़ो
+ * @map: Register map to read from
+ * @reg: First register to be read from
+ * @val: Pointer to store read value, in native register size for device
+ * @val_count: Number of registers to read
  *
- * A value of zero will be वापसed on success, a negative त्रुटि_सं will
- * be वापसed in error हालs.
+ * A value of zero will be returned on success, a negative errno will
+ * be returned in error cases.
  */
-पूर्णांक regmap_bulk_पढ़ो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg, व्योम *val,
-		     माप_प्रकार val_count)
-अणु
-	पूर्णांक ret, i;
-	माप_प्रकार val_bytes = map->क्रमmat.val_bytes;
-	bool vol = regmap_अस्थिर_range(map, reg, val_count);
+int regmap_bulk_read(struct regmap *map, unsigned int reg, void *val,
+		     size_t val_count)
+{
+	int ret, i;
+	size_t val_bytes = map->format.val_bytes;
+	bool vol = regmap_volatile_range(map, reg, val_count);
 
-	अगर (!IS_ALIGNED(reg, map->reg_stride))
-		वापस -EINVAL;
-	अगर (val_count == 0)
-		वापस -EINVAL;
+	if (!IS_ALIGNED(reg, map->reg_stride))
+		return -EINVAL;
+	if (val_count == 0)
+		return -EINVAL;
 
-	अगर (map->bus && map->क्रमmat.parse_inplace && (vol || map->cache_type == REGCACHE_NONE)) अणु
-		ret = regmap_raw_पढ़ो(map, reg, val, val_bytes * val_count);
-		अगर (ret != 0)
-			वापस ret;
+	if (map->bus && map->format.parse_inplace && (vol || map->cache_type == REGCACHE_NONE)) {
+		ret = regmap_raw_read(map, reg, val, val_bytes * val_count);
+		if (ret != 0)
+			return ret;
 
-		क्रम (i = 0; i < val_count * val_bytes; i += val_bytes)
-			map->क्रमmat.parse_inplace(val + i);
-	पूर्ण अन्यथा अणु
-#अगर_घोषित CONFIG_64BIT
+		for (i = 0; i < val_count * val_bytes; i += val_bytes)
+			map->format.parse_inplace(val + i);
+	} else {
+#ifdef CONFIG_64BIT
 		u64 *u64 = val;
-#पूर्ण_अगर
+#endif
 		u32 *u32 = val;
 		u16 *u16 = val;
 		u8 *u8 = val;
 
 		map->lock(map->lock_arg);
 
-		क्रम (i = 0; i < val_count; i++) अणु
-			अचिन्हित पूर्णांक ival;
+		for (i = 0; i < val_count; i++) {
+			unsigned int ival;
 
-			ret = _regmap_पढ़ो(map, reg + regmap_get_offset(map, i),
+			ret = _regmap_read(map, reg + regmap_get_offset(map, i),
 					   &ival);
-			अगर (ret != 0)
-				जाओ out;
+			if (ret != 0)
+				goto out;
 
-			चयन (map->क्रमmat.val_bytes) अणु
-#अगर_घोषित CONFIG_64BIT
-			हाल 8:
+			switch (map->format.val_bytes) {
+#ifdef CONFIG_64BIT
+			case 8:
 				u64[i] = ival;
-				अवरोध;
-#पूर्ण_अगर
-			हाल 4:
+				break;
+#endif
+			case 4:
 				u32[i] = ival;
-				अवरोध;
-			हाल 2:
+				break;
+			case 2:
 				u16[i] = ival;
-				अवरोध;
-			हाल 1:
+				break;
+			case 1:
 				u8[i] = ival;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
-		पूर्ण
+				goto out;
+			}
+		}
 
 out:
 		map->unlock(map->lock_arg);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(regmap_bulk_पढ़ो);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(regmap_bulk_read);
 
-अटल पूर्णांक _regmap_update_bits(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-			       अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val,
-			       bool *change, bool क्रमce_ग_लिखो)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक पंचांगp, orig;
+static int _regmap_update_bits(struct regmap *map, unsigned int reg,
+			       unsigned int mask, unsigned int val,
+			       bool *change, bool force_write)
+{
+	int ret;
+	unsigned int tmp, orig;
 
-	अगर (change)
+	if (change)
 		*change = false;
 
-	अगर (regmap_अस्थिर(map, reg) && map->reg_update_bits) अणु
+	if (regmap_volatile(map, reg) && map->reg_update_bits) {
 		ret = map->reg_update_bits(map->bus_context, reg, mask, val);
-		अगर (ret == 0 && change)
+		if (ret == 0 && change)
 			*change = true;
-	पूर्ण अन्यथा अणु
-		ret = _regmap_पढ़ो(map, reg, &orig);
-		अगर (ret != 0)
-			वापस ret;
+	} else {
+		ret = _regmap_read(map, reg, &orig);
+		if (ret != 0)
+			return ret;
 
-		पंचांगp = orig & ~mask;
-		पंचांगp |= val & mask;
+		tmp = orig & ~mask;
+		tmp |= val & mask;
 
-		अगर (क्रमce_ग_लिखो || (पंचांगp != orig)) अणु
-			ret = _regmap_ग_लिखो(map, reg, पंचांगp);
-			अगर (ret == 0 && change)
+		if (force_write || (tmp != orig)) {
+			ret = _regmap_write(map, reg, tmp);
+			if (ret == 0 && change)
 				*change = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * regmap_update_bits_base() - Perक्रमm a पढ़ो/modअगरy/ग_लिखो cycle on a रेजिस्टर
+ * regmap_update_bits_base() - Perform a read/modify/write cycle on a register
  *
  * @map: Register map to update
  * @reg: Register to update
- * @mask: Biपंचांगask to change
- * @val: New value क्रम biपंचांगask
- * @change: Boolean indicating अगर a ग_लिखो was करोne
+ * @mask: Bitmask to change
+ * @val: New value for bitmask
+ * @change: Boolean indicating if a write was done
  * @async: Boolean indicating asynchronously
- * @क्रमce: Boolean indicating use क्रमce update
+ * @force: Boolean indicating use force update
  *
- * Perक्रमm a पढ़ो/modअगरy/ग_लिखो cycle on a रेजिस्टर map with change, async, क्रमce
+ * Perform a read/modify/write cycle on a register map with change, async, force
  * options.
  *
  * If async is true:
  *
- * With most buses the पढ़ो must be करोne synchronously so this is most useful
- * क्रम devices with a cache which करो not need to पूर्णांकeract with the hardware to
- * determine the current रेजिस्टर value.
+ * With most buses the read must be done synchronously so this is most useful
+ * for devices with a cache which do not need to interact with the hardware to
+ * determine the current register value.
  *
- * Returns zero क्रम success, a negative number on error.
+ * Returns zero for success, a negative number on error.
  */
-पूर्णांक regmap_update_bits_base(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
-			    अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val,
-			    bool *change, bool async, bool क्रमce)
-अणु
-	पूर्णांक ret;
+int regmap_update_bits_base(struct regmap *map, unsigned int reg,
+			    unsigned int mask, unsigned int val,
+			    bool *change, bool async, bool force)
+{
+	int ret;
 
 	map->lock(map->lock_arg);
 
 	map->async = async;
 
-	ret = _regmap_update_bits(map, reg, mask, val, change, क्रमce);
+	ret = _regmap_update_bits(map, reg, mask, val, change, force);
 
 	map->async = false;
 
 	map->unlock(map->lock_arg);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(regmap_update_bits_base);
 
 /**
- * regmap_test_bits() - Check अगर all specअगरied bits are set in a रेजिस्टर.
+ * regmap_test_bits() - Check if all specified bits are set in a register.
  *
  * @map: Register map to operate on
- * @reg: Register to पढ़ो from
+ * @reg: Register to read from
  * @bits: Bits to test
  *
- * Returns 0 अगर at least one of the tested bits is not set, 1 अगर all tested
- * bits are set and a negative error number अगर the underlying regmap_पढ़ो()
+ * Returns 0 if at least one of the tested bits is not set, 1 if all tested
+ * bits are set and a negative error number if the underlying regmap_read()
  * fails.
  */
-पूर्णांक regmap_test_bits(काष्ठा regmap *map, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक bits)
-अणु
-	अचिन्हित पूर्णांक val, ret;
+int regmap_test_bits(struct regmap *map, unsigned int reg, unsigned int bits)
+{
+	unsigned int val, ret;
 
-	ret = regmap_पढ़ो(map, reg, &val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(map, reg, &val);
+	if (ret)
+		return ret;
 
-	वापस (val & bits) == bits;
-पूर्ण
+	return (val & bits) == bits;
+}
 EXPORT_SYMBOL_GPL(regmap_test_bits);
 
-व्योम regmap_async_complete_cb(काष्ठा regmap_async *async, पूर्णांक ret)
-अणु
-	काष्ठा regmap *map = async->map;
+void regmap_async_complete_cb(struct regmap_async *async, int ret)
+{
+	struct regmap *map = async->map;
 	bool wake;
 
 	trace_regmap_async_io_complete(map);
 
 	spin_lock(&map->async_lock);
-	list_move(&async->list, &map->async_मुक्त);
+	list_move(&async->list, &map->async_free);
 	wake = list_empty(&map->async_list);
 
-	अगर (ret != 0)
+	if (ret != 0)
 		map->async_ret = ret;
 
 	spin_unlock(&map->async_lock);
 
-	अगर (wake)
-		wake_up(&map->async_रुकोq);
-पूर्ण
+	if (wake)
+		wake_up(&map->async_waitq);
+}
 EXPORT_SYMBOL_GPL(regmap_async_complete_cb);
 
-अटल पूर्णांक regmap_async_is_करोne(काष्ठा regmap *map)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int regmap_async_is_done(struct regmap *map)
+{
+	unsigned long flags;
+	int ret;
 
 	spin_lock_irqsave(&map->async_lock, flags);
 	ret = list_empty(&map->async_list);
 	spin_unlock_irqrestore(&map->async_lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * regmap_async_complete - Ensure all asynchronous I/O has completed.
@@ -3151,70 +3150,70 @@ EXPORT_SYMBOL_GPL(regmap_async_complete_cb);
  * @map: Map to operate on.
  *
  * Blocks until any pending asynchronous I/O has completed.  Returns
- * an error code क्रम any failed I/O operations.
+ * an error code for any failed I/O operations.
  */
-पूर्णांक regmap_async_complete(काष्ठा regmap *map)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+int regmap_async_complete(struct regmap *map)
+{
+	unsigned long flags;
+	int ret;
 
-	/* Nothing to करो with no async support */
-	अगर (!map->bus || !map->bus->async_ग_लिखो)
-		वापस 0;
+	/* Nothing to do with no async support */
+	if (!map->bus || !map->bus->async_write)
+		return 0;
 
 	trace_regmap_async_complete_start(map);
 
-	रुको_event(map->async_रुकोq, regmap_async_is_करोne(map));
+	wait_event(map->async_waitq, regmap_async_is_done(map));
 
 	spin_lock_irqsave(&map->async_lock, flags);
 	ret = map->async_ret;
 	map->async_ret = 0;
 	spin_unlock_irqrestore(&map->async_lock, flags);
 
-	trace_regmap_async_complete_करोne(map);
+	trace_regmap_async_complete_done(map);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(regmap_async_complete);
 
 /**
- * regmap_रेजिस्टर_patch - Register and apply रेजिस्टर updates to be applied
+ * regmap_register_patch - Register and apply register updates to be applied
  *                         on device initialistion
  *
  * @map: Register map to apply updates to.
  * @regs: Values to update.
  * @num_regs: Number of entries in regs.
  *
- * Register a set of रेजिस्टर updates to be applied to the device
- * whenever the device रेजिस्टरs are synchronised with the cache and
+ * Register a set of register updates to be applied to the device
+ * whenever the device registers are synchronised with the cache and
  * apply them immediately.  Typically this is used to apply
- * corrections to be applied to the device शेषs on startup, such
- * as the updates some venकरोrs provide to unकरोcumented रेजिस्टरs.
+ * corrections to be applied to the device defaults on startup, such
+ * as the updates some vendors provide to undocumented registers.
  *
  * The caller must ensure that this function cannot be called
  * concurrently with either itself or regcache_sync().
  */
-पूर्णांक regmap_रेजिस्टर_patch(काष्ठा regmap *map, स्थिर काष्ठा reg_sequence *regs,
-			  पूर्णांक num_regs)
-अणु
-	काष्ठा reg_sequence *p;
-	पूर्णांक ret;
+int regmap_register_patch(struct regmap *map, const struct reg_sequence *regs,
+			  int num_regs)
+{
+	struct reg_sequence *p;
+	int ret;
 	bool bypass;
 
-	अगर (WARN_ONCE(num_regs <= 0, "invalid registers number (%d)\n",
+	if (WARN_ONCE(num_regs <= 0, "invalid registers number (%d)\n",
 	    num_regs))
-		वापस 0;
+		return 0;
 
-	p = kपुनः_स्मृति(map->patch,
-		     माप(काष्ठा reg_sequence) * (map->patch_regs + num_regs),
+	p = krealloc(map->patch,
+		     sizeof(struct reg_sequence) * (map->patch_regs + num_regs),
 		     GFP_KERNEL);
-	अगर (p) अणु
-		स_नकल(p + map->patch_regs, regs, num_regs * माप(*regs));
+	if (p) {
+		memcpy(p + map->patch_regs, regs, num_regs * sizeof(*regs));
 		map->patch = p;
 		map->patch_regs += num_regs;
-	पूर्ण अन्यथा अणु
-		वापस -ENOMEM;
-	पूर्ण
+	} else {
+		return -ENOMEM;
+	}
 
 	map->lock(map->lock_arg);
 
@@ -3223,7 +3222,7 @@ EXPORT_SYMBOL_GPL(regmap_async_complete);
 	map->cache_bypass = true;
 	map->async = true;
 
-	ret = _regmap_multi_reg_ग_लिखो(map, regs, num_regs);
+	ret = _regmap_multi_reg_write(map, regs, num_regs);
 
 	map->async = false;
 	map->cache_bypass = bypass;
@@ -3232,71 +3231,71 @@ EXPORT_SYMBOL_GPL(regmap_async_complete);
 
 	regmap_async_complete(map);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(regmap_रेजिस्टर_patch);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(regmap_register_patch);
 
 /**
- * regmap_get_val_bytes() - Report the size of a रेजिस्टर value
+ * regmap_get_val_bytes() - Report the size of a register value
  *
  * @map: Register map to operate on.
  *
- * Report the size of a रेजिस्टर value, मुख्यly पूर्णांकended to क्रम use by
- * generic infraकाष्ठाure built on top of regmap.
+ * Report the size of a register value, mainly intended to for use by
+ * generic infrastructure built on top of regmap.
  */
-पूर्णांक regmap_get_val_bytes(काष्ठा regmap *map)
-अणु
-	अगर (map->क्रमmat.क्रमmat_ग_लिखो)
-		वापस -EINVAL;
+int regmap_get_val_bytes(struct regmap *map)
+{
+	if (map->format.format_write)
+		return -EINVAL;
 
-	वापस map->क्रमmat.val_bytes;
-पूर्ण
+	return map->format.val_bytes;
+}
 EXPORT_SYMBOL_GPL(regmap_get_val_bytes);
 
 /**
- * regmap_get_max_रेजिस्टर() - Report the max रेजिस्टर value
+ * regmap_get_max_register() - Report the max register value
  *
  * @map: Register map to operate on.
  *
- * Report the max रेजिस्टर value, मुख्यly पूर्णांकended to क्रम use by
- * generic infraकाष्ठाure built on top of regmap.
+ * Report the max register value, mainly intended to for use by
+ * generic infrastructure built on top of regmap.
  */
-पूर्णांक regmap_get_max_रेजिस्टर(काष्ठा regmap *map)
-अणु
-	वापस map->max_रेजिस्टर ? map->max_रेजिस्टर : -EINVAL;
-पूर्ण
-EXPORT_SYMBOL_GPL(regmap_get_max_रेजिस्टर);
+int regmap_get_max_register(struct regmap *map)
+{
+	return map->max_register ? map->max_register : -EINVAL;
+}
+EXPORT_SYMBOL_GPL(regmap_get_max_register);
 
 /**
- * regmap_get_reg_stride() - Report the रेजिस्टर address stride
+ * regmap_get_reg_stride() - Report the register address stride
  *
  * @map: Register map to operate on.
  *
- * Report the रेजिस्टर address stride, मुख्यly पूर्णांकended to क्रम use by
- * generic infraकाष्ठाure built on top of regmap.
+ * Report the register address stride, mainly intended to for use by
+ * generic infrastructure built on top of regmap.
  */
-पूर्णांक regmap_get_reg_stride(काष्ठा regmap *map)
-अणु
-	वापस map->reg_stride;
-पूर्ण
+int regmap_get_reg_stride(struct regmap *map)
+{
+	return map->reg_stride;
+}
 EXPORT_SYMBOL_GPL(regmap_get_reg_stride);
 
-पूर्णांक regmap_parse_val(काष्ठा regmap *map, स्थिर व्योम *buf,
-			अचिन्हित पूर्णांक *val)
-अणु
-	अगर (!map->क्रमmat.parse_val)
-		वापस -EINVAL;
+int regmap_parse_val(struct regmap *map, const void *buf,
+			unsigned int *val)
+{
+	if (!map->format.parse_val)
+		return -EINVAL;
 
-	*val = map->क्रमmat.parse_val(buf);
+	*val = map->format.parse_val(buf);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(regmap_parse_val);
 
-अटल पूर्णांक __init regmap_initcall(व्योम)
-अणु
+static int __init regmap_initcall(void)
+{
 	regmap_debugfs_initcall();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 postcore_initcall(regmap_initcall);

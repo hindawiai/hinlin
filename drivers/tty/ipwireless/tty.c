@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * IPWireless 3G PCMCIA Network Driver
  *
@@ -10,92 +9,92 @@
  * Copyrighted as follows:
  *   Copyright (C) 2004 by Symmetric Systems Ltd (NZ)
  *
- * Various driver changes and reग_लिखोs, port to new kernels
+ * Various driver changes and rewrites, port to new kernels
  *   Copyright (C) 2006-2007 Jiri Kosina
  *
  * Misc code cleanups and updates
  *   Copyright (C) 2007 David Sterba
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/ppp_defs.h>
-#समावेश <linux/अगर.h>
-#समावेश <linux/ppp-ioctl.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/serial.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_driver.h>
-#समावेश <linux/tty_flip.h>
-#समावेश <linux/uaccess.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/ppp_defs.h>
+#include <linux/if.h>
+#include <linux/ppp-ioctl.h>
+#include <linux/sched.h>
+#include <linux/serial.h>
+#include <linux/slab.h>
+#include <linux/tty.h>
+#include <linux/tty_driver.h>
+#include <linux/tty_flip.h>
+#include <linux/uaccess.h>
 
-#समावेश "tty.h"
-#समावेश "network.h"
-#समावेश "hardware.h"
-#समावेश "main.h"
+#include "tty.h"
+#include "network.h"
+#include "hardware.h"
+#include "main.h"
 
-#घोषणा IPWIRELESS_PCMCIA_START 	(0)
-#घोषणा IPWIRELESS_PCMCIA_MINORS	(24)
-#घोषणा IPWIRELESS_PCMCIA_MINOR_RANGE	(8)
+#define IPWIRELESS_PCMCIA_START 	(0)
+#define IPWIRELESS_PCMCIA_MINORS	(24)
+#define IPWIRELESS_PCMCIA_MINOR_RANGE	(8)
 
-#घोषणा TTYTYPE_MODEM    (0)
-#घोषणा TTYTYPE_MONITOR  (1)
-#घोषणा TTYTYPE_RAS_RAW  (2)
+#define TTYTYPE_MODEM    (0)
+#define TTYTYPE_MONITOR  (1)
+#define TTYTYPE_RAS_RAW  (2)
 
-काष्ठा ipw_tty अणु
-	काष्ठा tty_port port;
-	पूर्णांक index;
-	काष्ठा ipw_hardware *hardware;
-	अचिन्हित पूर्णांक channel_idx;
-	अचिन्हित पूर्णांक secondary_channel_idx;
-	पूर्णांक tty_type;
-	काष्ठा ipw_network *network;
-	अचिन्हित पूर्णांक control_lines;
-	काष्ठा mutex ipw_tty_mutex;
-	पूर्णांक tx_bytes_queued;
-	पूर्णांक closing;
-पूर्ण;
+struct ipw_tty {
+	struct tty_port port;
+	int index;
+	struct ipw_hardware *hardware;
+	unsigned int channel_idx;
+	unsigned int secondary_channel_idx;
+	int tty_type;
+	struct ipw_network *network;
+	unsigned int control_lines;
+	struct mutex ipw_tty_mutex;
+	int tx_bytes_queued;
+	int closing;
+};
 
-अटल काष्ठा ipw_tty *ttys[IPWIRELESS_PCMCIA_MINORS];
+static struct ipw_tty *ttys[IPWIRELESS_PCMCIA_MINORS];
 
-अटल काष्ठा tty_driver *ipw_tty_driver;
+static struct tty_driver *ipw_tty_driver;
 
-अटल अक्षर *tty_type_name(पूर्णांक tty_type)
-अणु
-	अटल अक्षर *channel_names[] = अणु
+static char *tty_type_name(int tty_type)
+{
+	static char *channel_names[] = {
 		"modem",
 		"monitor",
 		"RAS-raw"
-	पूर्ण;
+	};
 
-	वापस channel_names[tty_type];
-पूर्ण
+	return channel_names[tty_type];
+}
 
-अटल काष्ठा ipw_tty *get_tty(पूर्णांक index)
-अणु
+static struct ipw_tty *get_tty(int index)
+{
 	/*
 	 * The 'ras_raw' channel is only available when 'loopback' mode
 	 * is enabled.
 	 * Number of minor starts with 16 (_RANGE * _RAS_RAW).
 	 */
-	अगर (!ipwireless_loopback && index >=
+	if (!ipwireless_loopback && index >=
 			 IPWIRELESS_PCMCIA_MINOR_RANGE * TTYTYPE_RAS_RAW)
-		वापस शून्य;
+		return NULL;
 
-	वापस ttys[index];
-पूर्ण
+	return ttys[index];
+}
 
-अटल पूर्णांक ipw_खोलो(काष्ठा tty_काष्ठा *linux_tty, काष्ठा file *filp)
-अणु
-	काष्ठा ipw_tty *tty = get_tty(linux_tty->index);
+static int ipw_open(struct tty_struct *linux_tty, struct file *filp)
+{
+	struct ipw_tty *tty = get_tty(linux_tty->index);
 
-	अगर (!tty)
-		वापस -ENODEV;
+	if (!tty)
+		return -ENODEV;
 
 	mutex_lock(&tty->ipw_tty_mutex);
-	अगर (tty->port.count == 0)
+	if (tty->port.count == 0)
 		tty->tx_bytes_queued = 0;
 
 	tty->port.count++;
@@ -103,345 +102,345 @@
 	tty->port.tty = linux_tty;
 	linux_tty->driver_data = tty;
 
-	अगर (tty->tty_type == TTYTYPE_MODEM)
-		ipwireless_ppp_खोलो(tty->network);
+	if (tty->tty_type == TTYTYPE_MODEM)
+		ipwireless_ppp_open(tty->network);
 
 	mutex_unlock(&tty->ipw_tty_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम करो_ipw_बंद(काष्ठा ipw_tty *tty)
-अणु
+static void do_ipw_close(struct ipw_tty *tty)
+{
 	tty->port.count--;
 
-	अगर (tty->port.count == 0) अणु
-		काष्ठा tty_काष्ठा *linux_tty = tty->port.tty;
+	if (tty->port.count == 0) {
+		struct tty_struct *linux_tty = tty->port.tty;
 
-		अगर (linux_tty != शून्य) अणु
-			tty->port.tty = शून्य;
-			linux_tty->driver_data = शून्य;
+		if (linux_tty != NULL) {
+			tty->port.tty = NULL;
+			linux_tty->driver_data = NULL;
 
-			अगर (tty->tty_type == TTYTYPE_MODEM)
-				ipwireless_ppp_बंद(tty->network);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			if (tty->tty_type == TTYTYPE_MODEM)
+				ipwireless_ppp_close(tty->network);
+		}
+	}
+}
 
-अटल व्योम ipw_hangup(काष्ठा tty_काष्ठा *linux_tty)
-अणु
-	काष्ठा ipw_tty *tty = linux_tty->driver_data;
+static void ipw_hangup(struct tty_struct *linux_tty)
+{
+	struct ipw_tty *tty = linux_tty->driver_data;
 
-	अगर (!tty)
-		वापस;
+	if (!tty)
+		return;
 
 	mutex_lock(&tty->ipw_tty_mutex);
-	अगर (tty->port.count == 0) अणु
+	if (tty->port.count == 0) {
 		mutex_unlock(&tty->ipw_tty_mutex);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	करो_ipw_बंद(tty);
+	do_ipw_close(tty);
 
 	mutex_unlock(&tty->ipw_tty_mutex);
-पूर्ण
+}
 
-अटल व्योम ipw_बंद(काष्ठा tty_काष्ठा *linux_tty, काष्ठा file *filp)
-अणु
+static void ipw_close(struct tty_struct *linux_tty, struct file *filp)
+{
 	ipw_hangup(linux_tty);
-पूर्ण
+}
 
 /* Take data received from hardware, and send it out the tty */
-व्योम ipwireless_tty_received(काष्ठा ipw_tty *tty, अचिन्हित अक्षर *data,
-			अचिन्हित पूर्णांक length)
-अणु
-	पूर्णांक work = 0;
+void ipwireless_tty_received(struct ipw_tty *tty, unsigned char *data,
+			unsigned int length)
+{
+	int work = 0;
 
 	mutex_lock(&tty->ipw_tty_mutex);
 
-	अगर (!tty->port.count) अणु
+	if (!tty->port.count) {
 		mutex_unlock(&tty->ipw_tty_mutex);
-		वापस;
-	पूर्ण
+		return;
+	}
 	mutex_unlock(&tty->ipw_tty_mutex);
 
 	work = tty_insert_flip_string(&tty->port, data, length);
 
-	अगर (work != length)
-		prपूर्णांकk(KERN_DEBUG IPWIRELESS_PCCARD_NAME
+	if (work != length)
+		printk(KERN_DEBUG IPWIRELESS_PCCARD_NAME
 				": %d chars not inserted to flip buffer!\n",
 				length - work);
 
-	अगर (work)
+	if (work)
 		tty_flip_buffer_push(&tty->port);
-पूर्ण
+}
 
-अटल व्योम ipw_ग_लिखो_packet_sent_callback(व्योम *callback_data,
-					   अचिन्हित पूर्णांक packet_length)
-अणु
-	काष्ठा ipw_tty *tty = callback_data;
+static void ipw_write_packet_sent_callback(void *callback_data,
+					   unsigned int packet_length)
+{
+	struct ipw_tty *tty = callback_data;
 
 	/*
 	 * Packet has been sent, so we subtract the number of bytes from our
 	 * tally of outstanding TX bytes.
 	 */
 	tty->tx_bytes_queued -= packet_length;
-पूर्ण
+}
 
-अटल पूर्णांक ipw_ग_लिखो(काष्ठा tty_काष्ठा *linux_tty,
-		     स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
-अणु
-	काष्ठा ipw_tty *tty = linux_tty->driver_data;
-	पूर्णांक room, ret;
+static int ipw_write(struct tty_struct *linux_tty,
+		     const unsigned char *buf, int count)
+{
+	struct ipw_tty *tty = linux_tty->driver_data;
+	int room, ret;
 
-	अगर (!tty)
-		वापस -ENODEV;
+	if (!tty)
+		return -ENODEV;
 
 	mutex_lock(&tty->ipw_tty_mutex);
-	अगर (!tty->port.count) अणु
+	if (!tty->port.count) {
 		mutex_unlock(&tty->ipw_tty_mutex);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	room = IPWIRELESS_TX_QUEUE_SIZE - tty->tx_bytes_queued;
-	अगर (room < 0)
+	if (room < 0)
 		room = 0;
-	/* Don't allow caller to ग_लिखो any more than we have room क्रम */
-	अगर (count > room)
+	/* Don't allow caller to write any more than we have room for */
+	if (count > room)
 		count = room;
 
-	अगर (count == 0) अणु
+	if (count == 0) {
 		mutex_unlock(&tty->ipw_tty_mutex);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	ret = ipwireless_send_packet(tty->hardware, IPW_CHANNEL_RAS,
 			       buf, count,
-			       ipw_ग_लिखो_packet_sent_callback, tty);
-	अगर (ret < 0) अणु
+			       ipw_write_packet_sent_callback, tty);
+	if (ret < 0) {
 		mutex_unlock(&tty->ipw_tty_mutex);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	tty->tx_bytes_queued += count;
 	mutex_unlock(&tty->ipw_tty_mutex);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक ipw_ग_लिखो_room(काष्ठा tty_काष्ठा *linux_tty)
-अणु
-	काष्ठा ipw_tty *tty = linux_tty->driver_data;
-	पूर्णांक room;
+static int ipw_write_room(struct tty_struct *linux_tty)
+{
+	struct ipw_tty *tty = linux_tty->driver_data;
+	int room;
 
 	/* FIXME: Exactly how is the tty object locked here .. */
-	अगर (!tty)
-		वापस 0;
+	if (!tty)
+		return 0;
 
-	अगर (!tty->port.count)
-		वापस 0;
+	if (!tty->port.count)
+		return 0;
 
 	room = IPWIRELESS_TX_QUEUE_SIZE - tty->tx_bytes_queued;
-	अगर (room < 0)
+	if (room < 0)
 		room = 0;
 
-	वापस room;
-पूर्ण
+	return room;
+}
 
-अटल पूर्णांक ipwireless_get_serial_info(काष्ठा tty_काष्ठा *linux_tty,
-				      काष्ठा serial_काष्ठा *ss)
-अणु
-	काष्ठा ipw_tty *tty = linux_tty->driver_data;
+static int ipwireless_get_serial_info(struct tty_struct *linux_tty,
+				      struct serial_struct *ss)
+{
+	struct ipw_tty *tty = linux_tty->driver_data;
 
-	अगर (!tty)
-		वापस -ENODEV;
+	if (!tty)
+		return -ENODEV;
 
-	अगर (!tty->port.count)
-		वापस -EINVAL;
+	if (!tty->port.count)
+		return -EINVAL;
 
 	ss->type = PORT_UNKNOWN;
 	ss->line = tty->index;
 	ss->baud_base = 115200;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ipwireless_set_serial_info(काष्ठा tty_काष्ठा *linux_tty,
-				      काष्ठा serial_काष्ठा *ss)
-अणु
-	वापस 0;	/* Keeps the PCMCIA scripts happy. */
-पूर्ण
+static int ipwireless_set_serial_info(struct tty_struct *linux_tty,
+				      struct serial_struct *ss)
+{
+	return 0;	/* Keeps the PCMCIA scripts happy. */
+}
 
-अटल पूर्णांक ipw_अक्षरs_in_buffer(काष्ठा tty_काष्ठा *linux_tty)
-अणु
-	काष्ठा ipw_tty *tty = linux_tty->driver_data;
+static int ipw_chars_in_buffer(struct tty_struct *linux_tty)
+{
+	struct ipw_tty *tty = linux_tty->driver_data;
 
-	अगर (!tty)
-		वापस 0;
+	if (!tty)
+		return 0;
 
-	अगर (!tty->port.count)
-		वापस 0;
+	if (!tty->port.count)
+		return 0;
 
-	वापस tty->tx_bytes_queued;
-पूर्ण
+	return tty->tx_bytes_queued;
+}
 
-अटल पूर्णांक get_control_lines(काष्ठा ipw_tty *tty)
-अणु
-	अचिन्हित पूर्णांक my = tty->control_lines;
-	अचिन्हित पूर्णांक out = 0;
+static int get_control_lines(struct ipw_tty *tty)
+{
+	unsigned int my = tty->control_lines;
+	unsigned int out = 0;
 
-	अगर (my & IPW_CONTROL_LINE_RTS)
+	if (my & IPW_CONTROL_LINE_RTS)
 		out |= TIOCM_RTS;
-	अगर (my & IPW_CONTROL_LINE_DTR)
+	if (my & IPW_CONTROL_LINE_DTR)
 		out |= TIOCM_DTR;
-	अगर (my & IPW_CONTROL_LINE_CTS)
+	if (my & IPW_CONTROL_LINE_CTS)
 		out |= TIOCM_CTS;
-	अगर (my & IPW_CONTROL_LINE_DSR)
+	if (my & IPW_CONTROL_LINE_DSR)
 		out |= TIOCM_DSR;
-	अगर (my & IPW_CONTROL_LINE_DCD)
+	if (my & IPW_CONTROL_LINE_DCD)
 		out |= TIOCM_CD;
 
-	वापस out;
-पूर्ण
+	return out;
+}
 
-अटल पूर्णांक set_control_lines(काष्ठा ipw_tty *tty, अचिन्हित पूर्णांक set,
-			     अचिन्हित पूर्णांक clear)
-अणु
-	पूर्णांक ret;
+static int set_control_lines(struct ipw_tty *tty, unsigned int set,
+			     unsigned int clear)
+{
+	int ret;
 
-	अगर (set & TIOCM_RTS) अणु
+	if (set & TIOCM_RTS) {
 		ret = ipwireless_set_RTS(tty->hardware, tty->channel_idx, 1);
-		अगर (ret)
-			वापस ret;
-		अगर (tty->secondary_channel_idx != -1) अणु
+		if (ret)
+			return ret;
+		if (tty->secondary_channel_idx != -1) {
 			ret = ipwireless_set_RTS(tty->hardware,
 					  tty->secondary_channel_idx, 1);
-			अगर (ret)
-				वापस ret;
-		पूर्ण
-	पूर्ण
-	अगर (set & TIOCM_DTR) अणु
+			if (ret)
+				return ret;
+		}
+	}
+	if (set & TIOCM_DTR) {
 		ret = ipwireless_set_DTR(tty->hardware, tty->channel_idx, 1);
-		अगर (ret)
-			वापस ret;
-		अगर (tty->secondary_channel_idx != -1) अणु
+		if (ret)
+			return ret;
+		if (tty->secondary_channel_idx != -1) {
 			ret = ipwireless_set_DTR(tty->hardware,
 					  tty->secondary_channel_idx, 1);
-			अगर (ret)
-				वापस ret;
-		पूर्ण
-	पूर्ण
-	अगर (clear & TIOCM_RTS) अणु
+			if (ret)
+				return ret;
+		}
+	}
+	if (clear & TIOCM_RTS) {
 		ret = ipwireless_set_RTS(tty->hardware, tty->channel_idx, 0);
-		अगर (tty->secondary_channel_idx != -1) अणु
+		if (tty->secondary_channel_idx != -1) {
 			ret = ipwireless_set_RTS(tty->hardware,
 					  tty->secondary_channel_idx, 0);
-			अगर (ret)
-				वापस ret;
-		पूर्ण
-	पूर्ण
-	अगर (clear & TIOCM_DTR) अणु
+			if (ret)
+				return ret;
+		}
+	}
+	if (clear & TIOCM_DTR) {
 		ret = ipwireless_set_DTR(tty->hardware, tty->channel_idx, 0);
-		अगर (tty->secondary_channel_idx != -1) अणु
+		if (tty->secondary_channel_idx != -1) {
 			ret = ipwireless_set_DTR(tty->hardware,
 					  tty->secondary_channel_idx, 0);
-			अगर (ret)
-				वापस ret;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			if (ret)
+				return ret;
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक ipw_tiocmget(काष्ठा tty_काष्ठा *linux_tty)
-अणु
-	काष्ठा ipw_tty *tty = linux_tty->driver_data;
+static int ipw_tiocmget(struct tty_struct *linux_tty)
+{
+	struct ipw_tty *tty = linux_tty->driver_data;
 	/* FIXME: Exactly how is the tty object locked here .. */
 
-	अगर (!tty)
-		वापस -ENODEV;
+	if (!tty)
+		return -ENODEV;
 
-	अगर (!tty->port.count)
-		वापस -EINVAL;
+	if (!tty->port.count)
+		return -EINVAL;
 
-	वापस get_control_lines(tty);
-पूर्ण
+	return get_control_lines(tty);
+}
 
-अटल पूर्णांक
-ipw_tiocmset(काष्ठा tty_काष्ठा *linux_tty,
-	     अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
-अणु
-	काष्ठा ipw_tty *tty = linux_tty->driver_data;
+static int
+ipw_tiocmset(struct tty_struct *linux_tty,
+	     unsigned int set, unsigned int clear)
+{
+	struct ipw_tty *tty = linux_tty->driver_data;
 	/* FIXME: Exactly how is the tty object locked here .. */
 
-	अगर (!tty)
-		वापस -ENODEV;
+	if (!tty)
+		return -ENODEV;
 
-	अगर (!tty->port.count)
-		वापस -EINVAL;
+	if (!tty->port.count)
+		return -EINVAL;
 
-	वापस set_control_lines(tty, set, clear);
-पूर्ण
+	return set_control_lines(tty, set, clear);
+}
 
-अटल पूर्णांक ipw_ioctl(काष्ठा tty_काष्ठा *linux_tty,
-		     अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा ipw_tty *tty = linux_tty->driver_data;
+static int ipw_ioctl(struct tty_struct *linux_tty,
+		     unsigned int cmd, unsigned long arg)
+{
+	struct ipw_tty *tty = linux_tty->driver_data;
 
-	अगर (!tty)
-		वापस -ENODEV;
+	if (!tty)
+		return -ENODEV;
 
-	अगर (!tty->port.count)
-		वापस -EINVAL;
+	if (!tty->port.count)
+		return -EINVAL;
 
 	/* FIXME: Exactly how is the tty object locked here .. */
-	अगर (tty->tty_type == TTYTYPE_MODEM) अणु
-		चयन (cmd) अणु
-		हाल PPPIOCGCHAN:
-			अणु
-				पूर्णांक chan = ipwireless_ppp_channel_index(
+	if (tty->tty_type == TTYTYPE_MODEM) {
+		switch (cmd) {
+		case PPPIOCGCHAN:
+			{
+				int chan = ipwireless_ppp_channel_index(
 							tty->network);
 
-				अगर (chan < 0)
-					वापस -ENODEV;
-				अगर (put_user(chan, (पूर्णांक __user *) arg))
-					वापस -EFAULT;
-			पूर्ण
-			वापस 0;
+				if (chan < 0)
+					return -ENODEV;
+				if (put_user(chan, (int __user *) arg))
+					return -EFAULT;
+			}
+			return 0;
 
-		हाल PPPIOCGUNIT:
-			अणु
-				पूर्णांक unit = ipwireless_ppp_unit_number(
+		case PPPIOCGUNIT:
+			{
+				int unit = ipwireless_ppp_unit_number(
 						tty->network);
 
-				अगर (unit < 0)
-					वापस -ENODEV;
-				अगर (put_user(unit, (पूर्णांक __user *) arg))
-					वापस -EFAULT;
-			पूर्ण
-			वापस 0;
+				if (unit < 0)
+					return -ENODEV;
+				if (put_user(unit, (int __user *) arg))
+					return -EFAULT;
+			}
+			return 0;
 
-		हाल FIONREAD:
-			अणु
-				पूर्णांक val = 0;
+		case FIONREAD:
+			{
+				int val = 0;
 
-				अगर (put_user(val, (पूर्णांक __user *) arg))
-					वापस -EFAULT;
-			पूर्ण
-			वापस 0;
-		हाल TCFLSH:
-			वापस tty_perक्रमm_flush(linux_tty, arg);
-		पूर्ण
-	पूर्ण
-	वापस -ENOIOCTLCMD;
-पूर्ण
+				if (put_user(val, (int __user *) arg))
+					return -EFAULT;
+			}
+			return 0;
+		case TCFLSH:
+			return tty_perform_flush(linux_tty, arg);
+		}
+	}
+	return -ENOIOCTLCMD;
+}
 
-अटल पूर्णांक add_tty(पूर्णांक j,
-		    काष्ठा ipw_hardware *hardware,
-		    काष्ठा ipw_network *network, पूर्णांक channel_idx,
-		    पूर्णांक secondary_channel_idx, पूर्णांक tty_type)
-अणु
-	ttys[j] = kzalloc(माप(काष्ठा ipw_tty), GFP_KERNEL);
-	अगर (!ttys[j])
-		वापस -ENOMEM;
+static int add_tty(int j,
+		    struct ipw_hardware *hardware,
+		    struct ipw_network *network, int channel_idx,
+		    int secondary_channel_idx, int tty_type)
+{
+	ttys[j] = kzalloc(sizeof(struct ipw_tty), GFP_KERNEL);
+	if (!ttys[j])
+		return -ENOMEM;
 	ttys[j]->index = j;
 	ttys[j]->hardware = hardware;
 	ttys[j]->channel_idx = channel_idx;
@@ -451,125 +450,125 @@ ipw_tiocmset(काष्ठा tty_काष्ठा *linux_tty,
 	mutex_init(&ttys[j]->ipw_tty_mutex);
 	tty_port_init(&ttys[j]->port);
 
-	tty_port_रेजिस्टर_device(&ttys[j]->port, ipw_tty_driver, j, शून्य);
+	tty_port_register_device(&ttys[j]->port, ipw_tty_driver, j, NULL);
 	ipwireless_associate_network_tty(network, channel_idx, ttys[j]);
 
-	अगर (secondary_channel_idx != -1)
+	if (secondary_channel_idx != -1)
 		ipwireless_associate_network_tty(network,
 						 secondary_channel_idx,
 						 ttys[j]);
-	/* check अगर we provide raw device (अगर loopback is enabled) */
-	अगर (get_tty(j))
-		prपूर्णांकk(KERN_INFO IPWIRELESS_PCCARD_NAME
+	/* check if we provide raw device (if loopback is enabled) */
+	if (get_tty(j))
+		printk(KERN_INFO IPWIRELESS_PCCARD_NAME
 		       ": registering %s device ttyIPWp%d\n",
 		       tty_type_name(tty_type), j);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा ipw_tty *ipwireless_tty_create(काष्ठा ipw_hardware *hardware,
-				      काष्ठा ipw_network *network)
-अणु
-	पूर्णांक i, j;
+struct ipw_tty *ipwireless_tty_create(struct ipw_hardware *hardware,
+				      struct ipw_network *network)
+{
+	int i, j;
 
-	क्रम (i = 0; i < IPWIRELESS_PCMCIA_MINOR_RANGE; i++) अणु
-		पूर्णांक allमुक्त = 1;
+	for (i = 0; i < IPWIRELESS_PCMCIA_MINOR_RANGE; i++) {
+		int allfree = 1;
 
-		क्रम (j = i; j < IPWIRELESS_PCMCIA_MINORS;
+		for (j = i; j < IPWIRELESS_PCMCIA_MINORS;
 				j += IPWIRELESS_PCMCIA_MINOR_RANGE)
-			अगर (ttys[j] != शून्य) अणु
-				allमुक्त = 0;
-				अवरोध;
-			पूर्ण
+			if (ttys[j] != NULL) {
+				allfree = 0;
+				break;
+			}
 
-		अगर (allमुक्त) अणु
+		if (allfree) {
 			j = i;
 
-			अगर (add_tty(j, hardware, network,
+			if (add_tty(j, hardware, network,
 					IPW_CHANNEL_DIALLER, IPW_CHANNEL_RAS,
 					TTYTYPE_MODEM))
-				वापस शून्य;
+				return NULL;
 
 			j += IPWIRELESS_PCMCIA_MINOR_RANGE;
-			अगर (add_tty(j, hardware, network,
+			if (add_tty(j, hardware, network,
 					IPW_CHANNEL_DIALLER, -1,
 					TTYTYPE_MONITOR))
-				वापस शून्य;
+				return NULL;
 
 			j += IPWIRELESS_PCMCIA_MINOR_RANGE;
-			अगर (add_tty(j, hardware, network,
+			if (add_tty(j, hardware, network,
 					IPW_CHANNEL_RAS, -1,
 					TTYTYPE_RAS_RAW))
-				वापस शून्य;
+				return NULL;
 
-			वापस ttys[i];
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+			return ttys[i];
+		}
+	}
+	return NULL;
+}
 
 /*
- * Must be called beक्रमe ipwireless_network_मुक्त().
+ * Must be called before ipwireless_network_free().
  */
-व्योम ipwireless_tty_मुक्त(काष्ठा ipw_tty *tty)
-अणु
-	पूर्णांक j;
-	काष्ठा ipw_network *network = ttys[tty->index]->network;
+void ipwireless_tty_free(struct ipw_tty *tty)
+{
+	int j;
+	struct ipw_network *network = ttys[tty->index]->network;
 
-	क्रम (j = tty->index; j < IPWIRELESS_PCMCIA_MINORS;
-			j += IPWIRELESS_PCMCIA_MINOR_RANGE) अणु
-		काष्ठा ipw_tty *ttyj = ttys[j];
+	for (j = tty->index; j < IPWIRELESS_PCMCIA_MINORS;
+			j += IPWIRELESS_PCMCIA_MINOR_RANGE) {
+		struct ipw_tty *ttyj = ttys[j];
 
-		अगर (ttyj) अणु
+		if (ttyj) {
 			mutex_lock(&ttyj->ipw_tty_mutex);
-			अगर (get_tty(j))
-				prपूर्णांकk(KERN_INFO IPWIRELESS_PCCARD_NAME
+			if (get_tty(j))
+				printk(KERN_INFO IPWIRELESS_PCCARD_NAME
 				       ": deregistering %s device ttyIPWp%d\n",
 				       tty_type_name(ttyj->tty_type), j);
 			ttyj->closing = 1;
-			अगर (ttyj->port.tty != शून्य) अणु
+			if (ttyj->port.tty != NULL) {
 				mutex_unlock(&ttyj->ipw_tty_mutex);
 				tty_vhangup(ttyj->port.tty);
 				/* FIXME: Exactly how is the tty object locked here
 				   against a parallel ioctl etc */
-				/* FIXME2: hangup करोes not mean all processes
+				/* FIXME2: hangup does not mean all processes
 				 * are gone */
 				mutex_lock(&ttyj->ipw_tty_mutex);
-			पूर्ण
-			जबतक (ttyj->port.count)
-				करो_ipw_बंद(ttyj);
+			}
+			while (ttyj->port.count)
+				do_ipw_close(ttyj);
 			ipwireless_disassociate_network_ttys(network,
 							     ttyj->channel_idx);
-			tty_unरेजिस्टर_device(ipw_tty_driver, j);
+			tty_unregister_device(ipw_tty_driver, j);
 			tty_port_destroy(&ttyj->port);
-			ttys[j] = शून्य;
+			ttys[j] = NULL;
 			mutex_unlock(&ttyj->ipw_tty_mutex);
-			kमुक्त(ttyj);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			kfree(ttyj);
+		}
+	}
+}
 
-अटल स्थिर काष्ठा tty_operations tty_ops = अणु
-	.खोलो = ipw_खोलो,
-	.बंद = ipw_बंद,
+static const struct tty_operations tty_ops = {
+	.open = ipw_open,
+	.close = ipw_close,
 	.hangup = ipw_hangup,
-	.ग_लिखो = ipw_ग_लिखो,
-	.ग_लिखो_room = ipw_ग_लिखो_room,
+	.write = ipw_write,
+	.write_room = ipw_write_room,
 	.ioctl = ipw_ioctl,
-	.अक्षरs_in_buffer = ipw_अक्षरs_in_buffer,
+	.chars_in_buffer = ipw_chars_in_buffer,
 	.tiocmget = ipw_tiocmget,
 	.tiocmset = ipw_tiocmset,
 	.set_serial = ipwireless_set_serial_info,
 	.get_serial = ipwireless_get_serial_info,
-पूर्ण;
+};
 
-पूर्णांक ipwireless_tty_init(व्योम)
-अणु
-	पूर्णांक result;
+int ipwireless_tty_init(void)
+{
+	int result;
 
 	ipw_tty_driver = alloc_tty_driver(IPWIRELESS_PCMCIA_MINORS);
-	अगर (!ipw_tty_driver)
-		वापस -ENOMEM;
+	if (!ipw_tty_driver)
+		return -ENOMEM;
 
 	ipw_tty_driver->driver_name = IPWIRELESS_PCCARD_NAME;
 	ipw_tty_driver->name = "ttyIPWp";
@@ -584,47 +583,47 @@ ipw_tiocmset(काष्ठा tty_काष्ठा *linux_tty,
 	ipw_tty_driver->init_termios.c_ispeed = 9600;
 	ipw_tty_driver->init_termios.c_ospeed = 9600;
 	tty_set_operations(ipw_tty_driver, &tty_ops);
-	result = tty_रेजिस्टर_driver(ipw_tty_driver);
-	अगर (result) अणु
-		prपूर्णांकk(KERN_ERR IPWIRELESS_PCCARD_NAME
+	result = tty_register_driver(ipw_tty_driver);
+	if (result) {
+		printk(KERN_ERR IPWIRELESS_PCCARD_NAME
 		       ": failed to register tty driver\n");
 		put_tty_driver(ipw_tty_driver);
-		वापस result;
-	पूर्ण
+		return result;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ipwireless_tty_release(व्योम)
-अणु
-	tty_unरेजिस्टर_driver(ipw_tty_driver);
+void ipwireless_tty_release(void)
+{
+	tty_unregister_driver(ipw_tty_driver);
 	put_tty_driver(ipw_tty_driver);
-पूर्ण
+}
 
-पूर्णांक ipwireless_tty_is_modem(काष्ठा ipw_tty *tty)
-अणु
-	वापस tty->tty_type == TTYTYPE_MODEM;
-पूर्ण
+int ipwireless_tty_is_modem(struct ipw_tty *tty)
+{
+	return tty->tty_type == TTYTYPE_MODEM;
+}
 
-व्योम
-ipwireless_tty_notअगरy_control_line_change(काष्ठा ipw_tty *tty,
-					  अचिन्हित पूर्णांक channel_idx,
-					  अचिन्हित पूर्णांक control_lines,
-					  अचिन्हित पूर्णांक changed_mask)
-अणु
-	अचिन्हित पूर्णांक old_control_lines = tty->control_lines;
+void
+ipwireless_tty_notify_control_line_change(struct ipw_tty *tty,
+					  unsigned int channel_idx,
+					  unsigned int control_lines,
+					  unsigned int changed_mask)
+{
+	unsigned int old_control_lines = tty->control_lines;
 
 	tty->control_lines = (tty->control_lines & ~changed_mask)
 		| (control_lines & changed_mask);
 
 	/*
-	 * If DCD is de-निश्चितed, we बंद the tty so pppd can tell that we
+	 * If DCD is de-asserted, we close the tty so pppd can tell that we
 	 * have gone offline.
 	 */
-	अगर ((old_control_lines & IPW_CONTROL_LINE_DCD)
+	if ((old_control_lines & IPW_CONTROL_LINE_DCD)
 			&& !(tty->control_lines & IPW_CONTROL_LINE_DCD)
-			&& tty->port.tty) अणु
+			&& tty->port.tty) {
 		tty_hangup(tty->port.tty);
-	पूर्ण
-पूर्ण
+	}
+}
 

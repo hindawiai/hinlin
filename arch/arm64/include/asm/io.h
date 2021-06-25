@@ -1,196 +1,195 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Based on arch/arm/include/यंत्र/पन.स
+ * Based on arch/arm/include/asm/io.h
  *
  * Copyright (C) 1996-2000 Russell King
  * Copyright (C) 2012 ARM Ltd.
  */
-#अगर_अघोषित __ASM_IO_H
-#घोषणा __ASM_IO_H
+#ifndef __ASM_IO_H
+#define __ASM_IO_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/pgtable.h>
+#include <linux/types.h>
+#include <linux/pgtable.h>
 
-#समावेश <यंत्र/byteorder.h>
-#समावेश <यंत्र/barrier.h>
-#समावेश <यंत्र/memory.h>
-#समावेश <यंत्र/early_ioremap.h>
-#समावेश <यंत्र/alternative.h>
-#समावेश <यंत्र/cpufeature.h>
+#include <asm/byteorder.h>
+#include <asm/barrier.h>
+#include <asm/memory.h>
+#include <asm/early_ioremap.h>
+#include <asm/alternative.h>
+#include <asm/cpufeature.h>
 
 /*
- * Generic IO पढ़ो/ग_लिखो.  These perक्रमm native-endian accesses.
+ * Generic IO read/write.  These perform native-endian accesses.
  */
-#घोषणा __raw_ग_लिखोb __raw_ग_लिखोb
-अटल अंतरभूत व्योम __raw_ग_लिखोb(u8 val, अस्थिर व्योम __iomem *addr)
-अणु
-	यंत्र अस्थिर("strb %w0, [%1]" : : "rZ" (val), "r" (addr));
-पूर्ण
+#define __raw_writeb __raw_writeb
+static inline void __raw_writeb(u8 val, volatile void __iomem *addr)
+{
+	asm volatile("strb %w0, [%1]" : : "rZ" (val), "r" (addr));
+}
 
-#घोषणा __raw_ग_लिखोw __raw_ग_लिखोw
-अटल अंतरभूत व्योम __raw_ग_लिखोw(u16 val, अस्थिर व्योम __iomem *addr)
-अणु
-	यंत्र अस्थिर("strh %w0, [%1]" : : "rZ" (val), "r" (addr));
-पूर्ण
+#define __raw_writew __raw_writew
+static inline void __raw_writew(u16 val, volatile void __iomem *addr)
+{
+	asm volatile("strh %w0, [%1]" : : "rZ" (val), "r" (addr));
+}
 
-#घोषणा __raw_ग_लिखोl __raw_ग_लिखोl
-अटल __always_अंतरभूत व्योम __raw_ग_लिखोl(u32 val, अस्थिर व्योम __iomem *addr)
-अणु
-	यंत्र अस्थिर("str %w0, [%1]" : : "rZ" (val), "r" (addr));
-पूर्ण
+#define __raw_writel __raw_writel
+static __always_inline void __raw_writel(u32 val, volatile void __iomem *addr)
+{
+	asm volatile("str %w0, [%1]" : : "rZ" (val), "r" (addr));
+}
 
-#घोषणा __raw_ग_लिखोq __raw_ग_लिखोq
-अटल अंतरभूत व्योम __raw_ग_लिखोq(u64 val, अस्थिर व्योम __iomem *addr)
-अणु
-	यंत्र अस्थिर("str %x0, [%1]" : : "rZ" (val), "r" (addr));
-पूर्ण
+#define __raw_writeq __raw_writeq
+static inline void __raw_writeq(u64 val, volatile void __iomem *addr)
+{
+	asm volatile("str %x0, [%1]" : : "rZ" (val), "r" (addr));
+}
 
-#घोषणा __raw_पढ़ोb __raw_पढ़ोb
-अटल अंतरभूत u8 __raw_पढ़ोb(स्थिर अस्थिर व्योम __iomem *addr)
-अणु
+#define __raw_readb __raw_readb
+static inline u8 __raw_readb(const volatile void __iomem *addr)
+{
 	u8 val;
-	यंत्र अस्थिर(ALTERNATIVE("ldrb %w0, [%1]",
+	asm volatile(ALTERNATIVE("ldrb %w0, [%1]",
 				 "ldarb %w0, [%1]",
 				 ARM64_WORKAROUND_DEVICE_LOAD_ACQUIRE)
 		     : "=r" (val) : "r" (addr));
-	वापस val;
-पूर्ण
+	return val;
+}
 
-#घोषणा __raw_पढ़ोw __raw_पढ़ोw
-अटल अंतरभूत u16 __raw_पढ़ोw(स्थिर अस्थिर व्योम __iomem *addr)
-अणु
+#define __raw_readw __raw_readw
+static inline u16 __raw_readw(const volatile void __iomem *addr)
+{
 	u16 val;
 
-	यंत्र अस्थिर(ALTERNATIVE("ldrh %w0, [%1]",
+	asm volatile(ALTERNATIVE("ldrh %w0, [%1]",
 				 "ldarh %w0, [%1]",
 				 ARM64_WORKAROUND_DEVICE_LOAD_ACQUIRE)
 		     : "=r" (val) : "r" (addr));
-	वापस val;
-पूर्ण
+	return val;
+}
 
-#घोषणा __raw_पढ़ोl __raw_पढ़ोl
-अटल __always_अंतरभूत u32 __raw_पढ़ोl(स्थिर अस्थिर व्योम __iomem *addr)
-अणु
+#define __raw_readl __raw_readl
+static __always_inline u32 __raw_readl(const volatile void __iomem *addr)
+{
 	u32 val;
-	यंत्र अस्थिर(ALTERNATIVE("ldr %w0, [%1]",
+	asm volatile(ALTERNATIVE("ldr %w0, [%1]",
 				 "ldar %w0, [%1]",
 				 ARM64_WORKAROUND_DEVICE_LOAD_ACQUIRE)
 		     : "=r" (val) : "r" (addr));
-	वापस val;
-पूर्ण
+	return val;
+}
 
-#घोषणा __raw_पढ़ोq __raw_पढ़ोq
-अटल अंतरभूत u64 __raw_पढ़ोq(स्थिर अस्थिर व्योम __iomem *addr)
-अणु
+#define __raw_readq __raw_readq
+static inline u64 __raw_readq(const volatile void __iomem *addr)
+{
 	u64 val;
-	यंत्र अस्थिर(ALTERNATIVE("ldr %0, [%1]",
+	asm volatile(ALTERNATIVE("ldr %0, [%1]",
 				 "ldar %0, [%1]",
 				 ARM64_WORKAROUND_DEVICE_LOAD_ACQUIRE)
 		     : "=r" (val) : "r" (addr));
-	वापस val;
-पूर्ण
+	return val;
+}
 
 /* IO barriers */
-#घोषणा __iormb(v)							\
-(अणु									\
-	अचिन्हित दीर्घ पंचांगp;						\
+#define __iormb(v)							\
+({									\
+	unsigned long tmp;						\
 									\
 	dma_rmb();								\
 									\
 	/*								\
-	 * Create a dummy control dependency from the IO पढ़ो to any	\
-	 * later inकाष्ठाions. This ensures that a subsequent call to	\
+	 * Create a dummy control dependency from the IO read to any	\
+	 * later instructions. This ensures that a subsequent call to	\
 	 * udelay() will be ordered due to the ISB in get_cycles().	\
 	 */								\
-	यंत्र अस्थिर("eor	%0, %1, %1\n"				\
+	asm volatile("eor	%0, %1, %1\n"				\
 		     "cbnz	%0, ."					\
-		     : "=r" (पंचांगp) : "r" ((अचिन्हित दीर्घ)(v))		\
+		     : "=r" (tmp) : "r" ((unsigned long)(v))		\
 		     : "memory");					\
-पूर्ण)
+})
 
-#घोषणा __io_par(v)		__iormb(v)
-#घोषणा __iowmb()		dma_wmb()
-#घोषणा __iomb()		dma_mb()
+#define __io_par(v)		__iormb(v)
+#define __iowmb()		dma_wmb()
+#define __iomb()		dma_mb()
 
 /*
  * Relaxed I/O memory access primitives. These follow the Device memory
- * ordering rules but करो not guarantee any ordering relative to Normal memory
+ * ordering rules but do not guarantee any ordering relative to Normal memory
  * accesses.
  */
-#घोषणा पढ़ोb_relaxed(c)	(अणु u8  __r = __raw_पढ़ोb(c); __r; पूर्ण)
-#घोषणा पढ़ोw_relaxed(c)	(अणु u16 __r = le16_to_cpu((__क्रमce __le16)__raw_पढ़ोw(c)); __r; पूर्ण)
-#घोषणा पढ़ोl_relaxed(c)	(अणु u32 __r = le32_to_cpu((__क्रमce __le32)__raw_पढ़ोl(c)); __r; पूर्ण)
-#घोषणा पढ़ोq_relaxed(c)	(अणु u64 __r = le64_to_cpu((__क्रमce __le64)__raw_पढ़ोq(c)); __r; पूर्ण)
+#define readb_relaxed(c)	({ u8  __r = __raw_readb(c); __r; })
+#define readw_relaxed(c)	({ u16 __r = le16_to_cpu((__force __le16)__raw_readw(c)); __r; })
+#define readl_relaxed(c)	({ u32 __r = le32_to_cpu((__force __le32)__raw_readl(c)); __r; })
+#define readq_relaxed(c)	({ u64 __r = le64_to_cpu((__force __le64)__raw_readq(c)); __r; })
 
-#घोषणा ग_लिखोb_relaxed(v,c)	((व्योम)__raw_ग_लिखोb((v),(c)))
-#घोषणा ग_लिखोw_relaxed(v,c)	((व्योम)__raw_ग_लिखोw((__क्रमce u16)cpu_to_le16(v),(c)))
-#घोषणा ग_लिखोl_relaxed(v,c)	((व्योम)__raw_ग_लिखोl((__क्रमce u32)cpu_to_le32(v),(c)))
-#घोषणा ग_लिखोq_relaxed(v,c)	((व्योम)__raw_ग_लिखोq((__क्रमce u64)cpu_to_le64(v),(c)))
+#define writeb_relaxed(v,c)	((void)__raw_writeb((v),(c)))
+#define writew_relaxed(v,c)	((void)__raw_writew((__force u16)cpu_to_le16(v),(c)))
+#define writel_relaxed(v,c)	((void)__raw_writel((__force u32)cpu_to_le32(v),(c)))
+#define writeq_relaxed(v,c)	((void)__raw_writeq((__force u64)cpu_to_le64(v),(c)))
 
 /*
  * I/O memory access primitives. Reads are ordered relative to any
  * following Normal memory access. Writes are ordered relative to any prior
  * Normal memory access.
  */
-#घोषणा पढ़ोb(c)		(अणु u8  __v = पढ़ोb_relaxed(c); __iormb(__v); __v; पूर्ण)
-#घोषणा पढ़ोw(c)		(अणु u16 __v = पढ़ोw_relaxed(c); __iormb(__v); __v; पूर्ण)
-#घोषणा पढ़ोl(c)		(अणु u32 __v = पढ़ोl_relaxed(c); __iormb(__v); __v; पूर्ण)
-#घोषणा पढ़ोq(c)		(अणु u64 __v = पढ़ोq_relaxed(c); __iormb(__v); __v; पूर्ण)
+#define readb(c)		({ u8  __v = readb_relaxed(c); __iormb(__v); __v; })
+#define readw(c)		({ u16 __v = readw_relaxed(c); __iormb(__v); __v; })
+#define readl(c)		({ u32 __v = readl_relaxed(c); __iormb(__v); __v; })
+#define readq(c)		({ u64 __v = readq_relaxed(c); __iormb(__v); __v; })
 
-#घोषणा ग_लिखोb(v,c)		(अणु __iowmb(); ग_लिखोb_relaxed((v),(c)); पूर्ण)
-#घोषणा ग_लिखोw(v,c)		(अणु __iowmb(); ग_लिखोw_relaxed((v),(c)); पूर्ण)
-#घोषणा ग_लिखोl(v,c)		(अणु __iowmb(); ग_लिखोl_relaxed((v),(c)); पूर्ण)
-#घोषणा ग_लिखोq(v,c)		(अणु __iowmb(); ग_लिखोq_relaxed((v),(c)); पूर्ण)
+#define writeb(v,c)		({ __iowmb(); writeb_relaxed((v),(c)); })
+#define writew(v,c)		({ __iowmb(); writew_relaxed((v),(c)); })
+#define writel(v,c)		({ __iowmb(); writel_relaxed((v),(c)); })
+#define writeq(v,c)		({ __iowmb(); writeq_relaxed((v),(c)); })
 
 /*
  *  I/O port access primitives.
  */
-#घोषणा arch_has_dev_port()	(1)
-#घोषणा IO_SPACE_LIMIT		(PCI_IO_SIZE - 1)
-#घोषणा PCI_IOBASE		((व्योम __iomem *)PCI_IO_START)
+#define arch_has_dev_port()	(1)
+#define IO_SPACE_LIMIT		(PCI_IO_SIZE - 1)
+#define PCI_IOBASE		((void __iomem *)PCI_IO_START)
 
 /*
  * String version of I/O memory access operations.
  */
-बाह्य व्योम __स_नकल_fromio(व्योम *, स्थिर अस्थिर व्योम __iomem *, माप_प्रकार);
-बाह्य व्योम __स_नकल_toio(अस्थिर व्योम __iomem *, स्थिर व्योम *, माप_प्रकार);
-बाह्य व्योम __स_रखो_io(अस्थिर व्योम __iomem *, पूर्णांक, माप_प्रकार);
+extern void __memcpy_fromio(void *, const volatile void __iomem *, size_t);
+extern void __memcpy_toio(volatile void __iomem *, const void *, size_t);
+extern void __memset_io(volatile void __iomem *, int, size_t);
 
-#घोषणा स_रखो_io(c,v,l)	__स_रखो_io((c),(v),(l))
-#घोषणा स_नकल_fromio(a,c,l)	__स_नकल_fromio((a),(c),(l))
-#घोषणा स_नकल_toio(c,a,l)	__स_नकल_toio((c),(a),(l))
+#define memset_io(c,v,l)	__memset_io((c),(v),(l))
+#define memcpy_fromio(a,c,l)	__memcpy_fromio((a),(c),(l))
+#define memcpy_toio(c,a,l)	__memcpy_toio((c),(a),(l))
 
 /*
  * I/O memory mapping functions.
  */
-बाह्य व्योम __iomem *__ioremap(phys_addr_t phys_addr, माप_प्रकार size, pgprot_t prot);
-बाह्य व्योम iounmap(अस्थिर व्योम __iomem *addr);
-बाह्य व्योम __iomem *ioremap_cache(phys_addr_t phys_addr, माप_प्रकार size);
+extern void __iomem *__ioremap(phys_addr_t phys_addr, size_t size, pgprot_t prot);
+extern void iounmap(volatile void __iomem *addr);
+extern void __iomem *ioremap_cache(phys_addr_t phys_addr, size_t size);
 
-#घोषणा ioremap(addr, size)		__ioremap((addr), (size), __pgprot(PROT_DEVICE_nGnRE))
-#घोषणा ioremap_wc(addr, size)		__ioremap((addr), (size), __pgprot(PROT_NORMAL_NC))
-#घोषणा ioremap_np(addr, size)		__ioremap((addr), (size), __pgprot(PROT_DEVICE_nGnRnE))
-
-/*
- * ioअणुपढ़ो,ग_लिखोपूर्णअणु16,32,64पूर्णbe() macros
- */
-#घोषणा ioपढ़ो16be(p)		(अणु __u16 __v = be16_to_cpu((__क्रमce __be16)__raw_पढ़ोw(p)); __iormb(__v); __v; पूर्ण)
-#घोषणा ioपढ़ो32be(p)		(अणु __u32 __v = be32_to_cpu((__क्रमce __be32)__raw_पढ़ोl(p)); __iormb(__v); __v; पूर्ण)
-#घोषणा ioपढ़ो64be(p)		(अणु __u64 __v = be64_to_cpu((__क्रमce __be64)__raw_पढ़ोq(p)); __iormb(__v); __v; पूर्ण)
-
-#घोषणा ioग_लिखो16be(v,p)	(अणु __iowmb(); __raw_ग_लिखोw((__क्रमce __u16)cpu_to_be16(v), p); पूर्ण)
-#घोषणा ioग_लिखो32be(v,p)	(अणु __iowmb(); __raw_ग_लिखोl((__क्रमce __u32)cpu_to_be32(v), p); पूर्ण)
-#घोषणा ioग_लिखो64be(v,p)	(अणु __iowmb(); __raw_ग_लिखोq((__क्रमce __u64)cpu_to_be64(v), p); पूर्ण)
-
-#समावेश <यंत्र-generic/पन.स>
+#define ioremap(addr, size)		__ioremap((addr), (size), __pgprot(PROT_DEVICE_nGnRE))
+#define ioremap_wc(addr, size)		__ioremap((addr), (size), __pgprot(PROT_NORMAL_NC))
+#define ioremap_np(addr, size)		__ioremap((addr), (size), __pgprot(PROT_DEVICE_nGnRnE))
 
 /*
- * More restrictive address range checking than the शेष implementation
- * (PHYS_OFFSET and PHYS_MASK taken पूर्णांकo account).
+ * io{read,write}{16,32,64}be() macros
  */
-#घोषणा ARCH_HAS_VALID_PHYS_ADDR_RANGE
-बाह्य पूर्णांक valid_phys_addr_range(phys_addr_t addr, माप_प्रकार size);
-बाह्य पूर्णांक valid_mmap_phys_addr_range(अचिन्हित दीर्घ pfn, माप_प्रकार size);
+#define ioread16be(p)		({ __u16 __v = be16_to_cpu((__force __be16)__raw_readw(p)); __iormb(__v); __v; })
+#define ioread32be(p)		({ __u32 __v = be32_to_cpu((__force __be32)__raw_readl(p)); __iormb(__v); __v; })
+#define ioread64be(p)		({ __u64 __v = be64_to_cpu((__force __be64)__raw_readq(p)); __iormb(__v); __v; })
 
-#पूर्ण_अगर	/* __ASM_IO_H */
+#define iowrite16be(v,p)	({ __iowmb(); __raw_writew((__force __u16)cpu_to_be16(v), p); })
+#define iowrite32be(v,p)	({ __iowmb(); __raw_writel((__force __u32)cpu_to_be32(v), p); })
+#define iowrite64be(v,p)	({ __iowmb(); __raw_writeq((__force __u64)cpu_to_be64(v), p); })
+
+#include <asm-generic/io.h>
+
+/*
+ * More restrictive address range checking than the default implementation
+ * (PHYS_OFFSET and PHYS_MASK taken into account).
+ */
+#define ARCH_HAS_VALID_PHYS_ADDR_RANGE
+extern int valid_phys_addr_range(phys_addr_t addr, size_t size);
+extern int valid_mmap_phys_addr_range(unsigned long pfn, size_t size);
+
+#endif	/* __ASM_IO_H */

@@ -1,105 +1,104 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  */
 
-#समावेश "peerlookup.h"
-#समावेश "peer.h"
-#समावेश "noise.h"
+#include "peerlookup.h"
+#include "peer.h"
+#include "noise.h"
 
-अटल काष्ठा hlist_head *pubkey_bucket(काष्ठा pubkey_hashtable *table,
-					स्थिर u8 pubkey[NOISE_PUBLIC_KEY_LEN])
-अणु
-	/* siphash gives us a secure 64bit number based on a अक्रमom key. Since
-	 * the bits are unअगरormly distributed, we can then mask off to get the
+static struct hlist_head *pubkey_bucket(struct pubkey_hashtable *table,
+					const u8 pubkey[NOISE_PUBLIC_KEY_LEN])
+{
+	/* siphash gives us a secure 64bit number based on a random key. Since
+	 * the bits are uniformly distributed, we can then mask off to get the
 	 * bits we need.
 	 */
-	स्थिर u64 hash = siphash(pubkey, NOISE_PUBLIC_KEY_LEN, &table->key);
+	const u64 hash = siphash(pubkey, NOISE_PUBLIC_KEY_LEN, &table->key);
 
-	वापस &table->hashtable[hash & (HASH_SIZE(table->hashtable) - 1)];
-पूर्ण
+	return &table->hashtable[hash & (HASH_SIZE(table->hashtable) - 1)];
+}
 
-काष्ठा pubkey_hashtable *wg_pubkey_hashtable_alloc(व्योम)
-अणु
-	काष्ठा pubkey_hashtable *table = kvदो_स्मृति(माप(*table), GFP_KERNEL);
+struct pubkey_hashtable *wg_pubkey_hashtable_alloc(void)
+{
+	struct pubkey_hashtable *table = kvmalloc(sizeof(*table), GFP_KERNEL);
 
-	अगर (!table)
-		वापस शून्य;
+	if (!table)
+		return NULL;
 
-	get_अक्रमom_bytes(&table->key, माप(table->key));
+	get_random_bytes(&table->key, sizeof(table->key));
 	hash_init(table->hashtable);
 	mutex_init(&table->lock);
-	वापस table;
-पूर्ण
+	return table;
+}
 
-व्योम wg_pubkey_hashtable_add(काष्ठा pubkey_hashtable *table,
-			     काष्ठा wg_peer *peer)
-अणु
+void wg_pubkey_hashtable_add(struct pubkey_hashtable *table,
+			     struct wg_peer *peer)
+{
 	mutex_lock(&table->lock);
 	hlist_add_head_rcu(&peer->pubkey_hash,
-			   pubkey_bucket(table, peer->handshake.remote_अटल));
+			   pubkey_bucket(table, peer->handshake.remote_static));
 	mutex_unlock(&table->lock);
-पूर्ण
+}
 
-व्योम wg_pubkey_hashtable_हटाओ(काष्ठा pubkey_hashtable *table,
-				काष्ठा wg_peer *peer)
-अणु
+void wg_pubkey_hashtable_remove(struct pubkey_hashtable *table,
+				struct wg_peer *peer)
+{
 	mutex_lock(&table->lock);
 	hlist_del_init_rcu(&peer->pubkey_hash);
 	mutex_unlock(&table->lock);
-पूर्ण
+}
 
 /* Returns a strong reference to a peer */
-काष्ठा wg_peer *
-wg_pubkey_hashtable_lookup(काष्ठा pubkey_hashtable *table,
-			   स्थिर u8 pubkey[NOISE_PUBLIC_KEY_LEN])
-अणु
-	काष्ठा wg_peer *iter_peer, *peer = शून्य;
+struct wg_peer *
+wg_pubkey_hashtable_lookup(struct pubkey_hashtable *table,
+			   const u8 pubkey[NOISE_PUBLIC_KEY_LEN])
+{
+	struct wg_peer *iter_peer, *peer = NULL;
 
-	rcu_पढ़ो_lock_bh();
-	hlist_क्रम_each_entry_rcu_bh(iter_peer, pubkey_bucket(table, pubkey),
-				    pubkey_hash) अणु
-		अगर (!स_भेद(pubkey, iter_peer->handshake.remote_अटल,
-			    NOISE_PUBLIC_KEY_LEN)) अणु
+	rcu_read_lock_bh();
+	hlist_for_each_entry_rcu_bh(iter_peer, pubkey_bucket(table, pubkey),
+				    pubkey_hash) {
+		if (!memcmp(pubkey, iter_peer->handshake.remote_static,
+			    NOISE_PUBLIC_KEY_LEN)) {
 			peer = iter_peer;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	peer = wg_peer_get_maybe_zero(peer);
-	rcu_पढ़ो_unlock_bh();
-	वापस peer;
-पूर्ण
+	rcu_read_unlock_bh();
+	return peer;
+}
 
-अटल काष्ठा hlist_head *index_bucket(काष्ठा index_hashtable *table,
-				       स्थिर __le32 index)
-अणु
-	/* Since the indices are अक्रमom and thus all bits are unअगरormly
+static struct hlist_head *index_bucket(struct index_hashtable *table,
+				       const __le32 index)
+{
+	/* Since the indices are random and thus all bits are uniformly
 	 * distributed, we can find its bucket simply by masking.
 	 */
-	वापस &table->hashtable[(__क्रमce u32)index &
+	return &table->hashtable[(__force u32)index &
 				 (HASH_SIZE(table->hashtable) - 1)];
-पूर्ण
+}
 
-काष्ठा index_hashtable *wg_index_hashtable_alloc(व्योम)
-अणु
-	काष्ठा index_hashtable *table = kvदो_स्मृति(माप(*table), GFP_KERNEL);
+struct index_hashtable *wg_index_hashtable_alloc(void)
+{
+	struct index_hashtable *table = kvmalloc(sizeof(*table), GFP_KERNEL);
 
-	अगर (!table)
-		वापस शून्य;
+	if (!table)
+		return NULL;
 
 	hash_init(table->hashtable);
 	spin_lock_init(&table->lock);
-	वापस table;
-पूर्ण
+	return table;
+}
 
 /* At the moment, we limit ourselves to 2^20 total peers, which generally might
  * amount to 2^20*3 items in this hashtable. The algorithm below works by
- * picking a अक्रमom number and testing it. We can see that these limits mean we
+ * picking a random number and testing it. We can see that these limits mean we
  * usually succeed pretty quickly:
  *
  * >>> def calculation(tries, size):
- * ...     वापस (size / 2**32)**(tries - 1) *  (1 - (size / 2**32))
+ * ...     return (size / 2**32)**(tries - 1) *  (1 - (size / 2**32))
  * ...
  * >>> calculation(1, 2**20 * 3)
  * 0.999267578125
@@ -110,48 +109,48 @@ wg_pubkey_hashtable_lookup(काष्ठा pubkey_hashtable *table,
  * >>> calculation(4, 2**20 * 3)
  * 3.9261394135792216e-10
  *
- * At the moment, we करोn't do any masking, so this algorithm isn't exactly
- * स्थिरant समय in either the अक्रमom guessing or in the hash list lookup. We
+ * At the moment, we don't do any masking, so this algorithm isn't exactly
+ * constant time in either the random guessing or in the hash list lookup. We
  * could require a minimum of 3 tries, which would successfully mask the
  * guessing. this would not, however, help with the growing hash lengths, which
- * is another thing to consider moving क्रमward.
+ * is another thing to consider moving forward.
  */
 
-__le32 wg_index_hashtable_insert(काष्ठा index_hashtable *table,
-				 काष्ठा index_hashtable_entry *entry)
-अणु
-	काष्ठा index_hashtable_entry *existing_entry;
+__le32 wg_index_hashtable_insert(struct index_hashtable *table,
+				 struct index_hashtable_entry *entry)
+{
+	struct index_hashtable_entry *existing_entry;
 
 	spin_lock_bh(&table->lock);
 	hlist_del_init_rcu(&entry->index_hash);
 	spin_unlock_bh(&table->lock);
 
-	rcu_पढ़ो_lock_bh();
+	rcu_read_lock_bh();
 
 search_unused_slot:
-	/* First we try to find an unused slot, अक्रमomly, जबतक unlocked. */
-	entry->index = (__क्रमce __le32)get_अक्रमom_u32();
-	hlist_क्रम_each_entry_rcu_bh(existing_entry,
+	/* First we try to find an unused slot, randomly, while unlocked. */
+	entry->index = (__force __le32)get_random_u32();
+	hlist_for_each_entry_rcu_bh(existing_entry,
 				    index_bucket(table, entry->index),
-				    index_hash) अणु
-		अगर (existing_entry->index == entry->index)
-			/* If it's alपढ़ोy in use, we जारी searching. */
-			जाओ search_unused_slot;
-	पूर्ण
+				    index_hash) {
+		if (existing_entry->index == entry->index)
+			/* If it's already in use, we continue searching. */
+			goto search_unused_slot;
+	}
 
-	/* Once we've found an unused slot, we lock it, and then द्विगुन-check
-	 * that nobody अन्यथा stole it from us.
+	/* Once we've found an unused slot, we lock it, and then double-check
+	 * that nobody else stole it from us.
 	 */
 	spin_lock_bh(&table->lock);
-	hlist_क्रम_each_entry_rcu_bh(existing_entry,
+	hlist_for_each_entry_rcu_bh(existing_entry,
 				    index_bucket(table, entry->index),
-				    index_hash) अणु
-		अगर (existing_entry->index == entry->index) अणु
+				    index_hash) {
+		if (existing_entry->index == entry->index) {
 			spin_unlock_bh(&table->lock);
 			/* If it was stolen, we start over. */
-			जाओ search_unused_slot;
-		पूर्ण
-	पूर्ण
+			goto search_unused_slot;
+		}
+	}
 	/* Otherwise, we know we have it exclusively (since we're locked),
 	 * so we insert.
 	 */
@@ -159,69 +158,69 @@ search_unused_slot:
 			   index_bucket(table, entry->index));
 	spin_unlock_bh(&table->lock);
 
-	rcu_पढ़ो_unlock_bh();
+	rcu_read_unlock_bh();
 
-	वापस entry->index;
-पूर्ण
+	return entry->index;
+}
 
-bool wg_index_hashtable_replace(काष्ठा index_hashtable *table,
-				काष्ठा index_hashtable_entry *old,
-				काष्ठा index_hashtable_entry *new)
-अणु
+bool wg_index_hashtable_replace(struct index_hashtable *table,
+				struct index_hashtable_entry *old,
+				struct index_hashtable_entry *new)
+{
 	bool ret;
 
 	spin_lock_bh(&table->lock);
 	ret = !hlist_unhashed(&old->index_hash);
-	अगर (unlikely(!ret))
-		जाओ out;
+	if (unlikely(!ret))
+		goto out;
 
 	new->index = old->index;
 	hlist_replace_rcu(&old->index_hash, &new->index_hash);
 
-	/* Calling init here शून्यs out index_hash, and in fact after this
-	 * function वापसs, it's theoretically possible क्रम this to get
-	 * reinserted अन्यथाwhere. That means the RCU lookup below might either
-	 * terminate early or jump between buckets, in which हाल the packet
-	 * simply माला_लो dropped, which isn't terrible.
+	/* Calling init here NULLs out index_hash, and in fact after this
+	 * function returns, it's theoretically possible for this to get
+	 * reinserted elsewhere. That means the RCU lookup below might either
+	 * terminate early or jump between buckets, in which case the packet
+	 * simply gets dropped, which isn't terrible.
 	 */
 	INIT_HLIST_NODE(&old->index_hash);
 out:
 	spin_unlock_bh(&table->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम wg_index_hashtable_हटाओ(काष्ठा index_hashtable *table,
-			       काष्ठा index_hashtable_entry *entry)
-अणु
+void wg_index_hashtable_remove(struct index_hashtable *table,
+			       struct index_hashtable_entry *entry)
+{
 	spin_lock_bh(&table->lock);
 	hlist_del_init_rcu(&entry->index_hash);
 	spin_unlock_bh(&table->lock);
-पूर्ण
+}
 
 /* Returns a strong reference to a entry->peer */
-काष्ठा index_hashtable_entry *
-wg_index_hashtable_lookup(काष्ठा index_hashtable *table,
-			  स्थिर क्रमागत index_hashtable_type type_mask,
-			  स्थिर __le32 index, काष्ठा wg_peer **peer)
-अणु
-	काष्ठा index_hashtable_entry *iter_entry, *entry = शून्य;
+struct index_hashtable_entry *
+wg_index_hashtable_lookup(struct index_hashtable *table,
+			  const enum index_hashtable_type type_mask,
+			  const __le32 index, struct wg_peer **peer)
+{
+	struct index_hashtable_entry *iter_entry, *entry = NULL;
 
-	rcu_पढ़ो_lock_bh();
-	hlist_क्रम_each_entry_rcu_bh(iter_entry, index_bucket(table, index),
-				    index_hash) अणु
-		अगर (iter_entry->index == index) अणु
-			अगर (likely(iter_entry->type & type_mask))
+	rcu_read_lock_bh();
+	hlist_for_each_entry_rcu_bh(iter_entry, index_bucket(table, index),
+				    index_hash) {
+		if (iter_entry->index == index) {
+			if (likely(iter_entry->type & type_mask))
 				entry = iter_entry;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (likely(entry)) अणु
+			break;
+		}
+	}
+	if (likely(entry)) {
 		entry->peer = wg_peer_get_maybe_zero(entry->peer);
-		अगर (likely(entry->peer))
+		if (likely(entry->peer))
 			*peer = entry->peer;
-		अन्यथा
-			entry = शून्य;
-	पूर्ण
-	rcu_पढ़ो_unlock_bh();
-	वापस entry;
-पूर्ण
+		else
+			entry = NULL;
+	}
+	rcu_read_unlock_bh();
+	return entry;
+}

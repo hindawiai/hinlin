@@ -1,43 +1,42 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _RTL871X_RECV_H_
-#घोषणा _RTL871X_RECV_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _RTL871X_RECV_H_
+#define _RTL871X_RECV_H_
 
-#समावेश "osdep_service.h"
-#समावेश "drv_types.h"
+#include "osdep_service.h"
+#include "drv_types.h"
 
-#घोषणा NR_RECVFRAME 256
+#define NR_RECVFRAME 256
 
-#घोषणा RXFRAME_ALIGN	8
-#घोषणा RXFRAME_ALIGN_SZ	(1 << RXFRAME_ALIGN)
+#define RXFRAME_ALIGN	8
+#define RXFRAME_ALIGN_SZ	(1 << RXFRAME_ALIGN)
 
-#घोषणा MAX_SUBFRAME_COUNT	64
+#define MAX_SUBFRAME_COUNT	64
 
-/* क्रम Rx reordering buffer control */
-काष्ठा recv_reorder_ctrl अणु
-	काष्ठा _adapter	*padapter;
+/* for Rx reordering buffer control */
+struct recv_reorder_ctrl {
+	struct _adapter	*padapter;
 	u16 indicate_seq; /* =wstart_b, init_value=0xffff */
 	u16 wend_b;
 	u8 wsize_b;
-	काष्ठा  __queue pending_recvframe_queue;
-	काष्ठा समयr_list reordering_ctrl_समयr;
-पूर्ण;
+	struct  __queue pending_recvframe_queue;
+	struct timer_list reordering_ctrl_timer;
+};
 
-काष्ठा	stainfo_rxcache	अणु
+struct	stainfo_rxcache	{
 	u16	tid_rxseq[16];
-पूर्ण;
+};
 
-#घोषणा		PHY_RSSI_SLID_WIN_MAX			100
-#घोषणा		PHY_LINKQUALITY_SLID_WIN_MAX		20
+#define		PHY_RSSI_SLID_WIN_MAX			100
+#define		PHY_LINKQUALITY_SLID_WIN_MAX		20
 
-काष्ठा smooth_rssi_data अणु
+struct smooth_rssi_data {
 	u32	elements[100];	/* array to store values */
 	u32	index;		/* index to current array to store */
 	u32	total_num;	/* num of valid elements */
 	u32	total_val;	/* sum of valid elements */
-पूर्ण;
+};
 
-काष्ठा rx_pkt_attrib अणु
+struct rx_pkt_attrib {
 	u8	amsdu;
 	u8	order;
 	u8	qos;
@@ -49,12 +48,12 @@
 	u8    mdata;
 	u8	privacy; /* in frame_ctrl field */
 	u8	bdecrypted;
-	पूर्णांक	hdrlen;	 /* the WLAN Header Len */
-	पूर्णांक	encrypt; /* 0 no encrypt. != 0 encrypt algorithm */
-	पूर्णांक	iv_len;
-	पूर्णांक	icv_len;
-	पूर्णांक	priority;
-	पूर्णांक	ack_policy;
+	int	hdrlen;	 /* the WLAN Header Len */
+	int	encrypt; /* 0 no encrypt. != 0 encrypt algorithm */
+	int	iv_len;
+	int	icv_len;
+	int	priority;
+	int	ack_policy;
 	u8	crc_err;
 	u8	dst[ETH_ALEN];
 	u8	src[ETH_ALEN];
@@ -64,154 +63,154 @@
 	u8	tcpchk_valid; /* 0: invalid, 1: valid */
 	u8	ip_chkrpt; /* 0: incorrect, 1: correct */
 	u8	tcp_chkrpt; /* 0: incorrect, 1: correct */
-	u8	संकेत_qual;
-	s8	rx_mimo_संकेत_qual[2];
+	u8	signal_qual;
+	s8	rx_mimo_signal_qual[2];
 	u8	mcs_rate;
 	u8	htc;
-	u8	संकेत_strength;
-पूर्ण;
+	u8	signal_strength;
+};
 
 /*
  * accesser of recv_priv: recv_entry(dispatch / passive level);
- * recv_thपढ़ो(passive) ; वापसpkt(dispatch)
+ * recv_thread(passive) ; returnpkt(dispatch)
  * ; halt(passive) ;
  *
  * using enter_critical section to protect
  */
-काष्ठा recv_priv अणु
+struct recv_priv {
 	spinlock_t lock;
-	काष्ठा  __queue	मुक्त_recv_queue;
-	काष्ठा  __queue	recv_pending_queue;
+	struct  __queue	free_recv_queue;
+	struct  __queue	recv_pending_queue;
 	u8 *pallocated_frame_buf;
 	u8 *precv_frame_buf;
-	uपूर्णांक मुक्त_recvframe_cnt;
-	काष्ठा _adapter	*adapter;
-	uपूर्णांक	rx_bytes;
-	uपूर्णांक	rx_pkts;
-	uपूर्णांक	rx_drop;
-	uपूर्णांक  rx_icv_err;
-	uपूर्णांक  rx_largepacket_crcerr;
-	uपूर्णांक  rx_smallpacket_crcerr;
-	uपूर्णांक  rx_middlepacket_crcerr;
+	uint free_recvframe_cnt;
+	struct _adapter	*adapter;
+	uint	rx_bytes;
+	uint	rx_pkts;
+	uint	rx_drop;
+	uint  rx_icv_err;
+	uint  rx_largepacket_crcerr;
+	uint  rx_smallpacket_crcerr;
+	uint  rx_middlepacket_crcerr;
 	u8  rx_pending_cnt;
-	uपूर्णांक	ff_hwaddr;
-	काष्ठा tasklet_काष्ठा recv_tasklet;
-	काष्ठा sk_buff_head मुक्त_recv_skb_queue;
-	काष्ठा sk_buff_head rx_skb_queue;
+	uint	ff_hwaddr;
+	struct tasklet_struct recv_tasklet;
+	struct sk_buff_head free_recv_skb_queue;
+	struct sk_buff_head rx_skb_queue;
 	u8 *pallocated_recv_buf;
 	u8 *precv_buf;    /* 4 alignment */
-	काष्ठा  __queue	मुक्त_recv_buf_queue;
-	u32	मुक्त_recv_buf_queue_cnt;
-	/* For the phy inक्रमmation */
+	struct  __queue	free_recv_buf_queue;
+	u32	free_recv_buf_queue_cnt;
+	/* For the phy information */
 	s8 rssi;
-	u8 संकेत;
+	u8 signal;
 	u8 noise;
 	u8 fw_rssi;
-	काष्ठा smooth_rssi_data संकेत_qual_data;
-	काष्ठा smooth_rssi_data संकेत_strength_data;
-पूर्ण;
+	struct smooth_rssi_data signal_qual_data;
+	struct smooth_rssi_data signal_strength_data;
+};
 
-काष्ठा sta_recv_priv अणु
+struct sta_recv_priv {
 	spinlock_t lock;
-	sपूर्णांक	option;
-	काष्ठा  __queue defrag_q; /* keeping the fragment frame until defrag */
-	काष्ठा	stainfo_rxcache rxcache;
-	uपूर्णांक	sta_rx_bytes;
-	uपूर्णांक	sta_rx_pkts;
-	uपूर्णांक	sta_rx_fail;
-पूर्ण;
+	sint	option;
+	struct  __queue defrag_q; /* keeping the fragment frame until defrag */
+	struct	stainfo_rxcache rxcache;
+	uint	sta_rx_bytes;
+	uint	sta_rx_pkts;
+	uint	sta_rx_fail;
+};
 
-#समावेश "rtl8712_recv.h"
+#include "rtl8712_recv.h"
 
-/* get a मुक्त recv_frame from pमुक्त_recv_queue */
-जोड़ recv_frame *r8712_alloc_recvframe(काष्ठा  __queue *pमुक्त_recv_queue);
-व्योम r8712_मुक्त_recvframe(जोड़ recv_frame *precvframe,
-			  काष्ठा  __queue *pमुक्त_recv_queue);
-व्योम r8712_मुक्त_recvframe_queue(काष्ठा  __queue *pframequeue,
-				 काष्ठा  __queue *pमुक्त_recv_queue);
-पूर्णांक r8712_wlanhdr_to_ethhdr(जोड़ recv_frame *precvframe);
-पूर्णांक recv_func(काष्ठा _adapter *padapter, व्योम *pcontext);
+/* get a free recv_frame from pfree_recv_queue */
+union recv_frame *r8712_alloc_recvframe(struct  __queue *pfree_recv_queue);
+void r8712_free_recvframe(union recv_frame *precvframe,
+			  struct  __queue *pfree_recv_queue);
+void r8712_free_recvframe_queue(struct  __queue *pframequeue,
+				 struct  __queue *pfree_recv_queue);
+int r8712_wlanhdr_to_ethhdr(union recv_frame *precvframe);
+int recv_func(struct _adapter *padapter, void *pcontext);
 
-अटल अंतरभूत u8 *get_rxmem(जोड़ recv_frame *precvframe)
-अणु
-	/* always वापस rx_head... */
-	अगर (!precvframe)
-		वापस शून्य;
-	वापस precvframe->u.hdr.rx_head;
-पूर्ण
+static inline u8 *get_rxmem(union recv_frame *precvframe)
+{
+	/* always return rx_head... */
+	if (!precvframe)
+		return NULL;
+	return precvframe->u.hdr.rx_head;
+}
 
-अटल अंतरभूत u8 *get_recvframe_data(जोड़ recv_frame *precvframe)
-अणु
-	/* always वापस rx_data */
-	अगर (!precvframe)
-		वापस शून्य;
-	वापस precvframe->u.hdr.rx_data;
-पूर्ण
+static inline u8 *get_recvframe_data(union recv_frame *precvframe)
+{
+	/* always return rx_data */
+	if (!precvframe)
+		return NULL;
+	return precvframe->u.hdr.rx_data;
+}
 
-अटल अंतरभूत u8 *recvframe_pull(जोड़ recv_frame *precvframe, sपूर्णांक sz)
-अणु
-	/* used क्रम extract sz bytes from rx_data, update rx_data and वापस
+static inline u8 *recvframe_pull(union recv_frame *precvframe, sint sz)
+{
+	/* used for extract sz bytes from rx_data, update rx_data and return
 	 * the updated rx_data to the caller
 	 */
-	अगर (!precvframe)
-		वापस शून्य;
+	if (!precvframe)
+		return NULL;
 	precvframe->u.hdr.rx_data += sz;
-	अगर (precvframe->u.hdr.rx_data > precvframe->u.hdr.rx_tail) अणु
+	if (precvframe->u.hdr.rx_data > precvframe->u.hdr.rx_tail) {
 		precvframe->u.hdr.rx_data -= sz;
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	precvframe->u.hdr.len -= sz;
-	वापस precvframe->u.hdr.rx_data;
-पूर्ण
+	return precvframe->u.hdr.rx_data;
+}
 
-अटल अंतरभूत u8 *recvframe_put(जोड़ recv_frame *precvframe, sपूर्णांक sz)
-अणु
-	/* used क्रम append sz bytes from ptr to rx_tail, update rx_tail and
-	 * वापस the updated rx_tail to the caller
+static inline u8 *recvframe_put(union recv_frame *precvframe, sint sz)
+{
+	/* used for append sz bytes from ptr to rx_tail, update rx_tail and
+	 * return the updated rx_tail to the caller
 	 * after putting, rx_tail must be still larger than rx_end.
 	 */
-	अगर (!precvframe)
-		वापस शून्य;
+	if (!precvframe)
+		return NULL;
 	precvframe->u.hdr.rx_tail += sz;
-	अगर (precvframe->u.hdr.rx_tail > precvframe->u.hdr.rx_end) अणु
+	if (precvframe->u.hdr.rx_tail > precvframe->u.hdr.rx_end) {
 		precvframe->u.hdr.rx_tail -= sz;
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	precvframe->u.hdr.len += sz;
-	वापस precvframe->u.hdr.rx_tail;
-पूर्ण
+	return precvframe->u.hdr.rx_tail;
+}
 
-अटल अंतरभूत u8 *recvframe_pull_tail(जोड़ recv_frame *precvframe, sपूर्णांक sz)
-अणु
+static inline u8 *recvframe_pull_tail(union recv_frame *precvframe, sint sz)
+{
 	/* rmv data from rx_tail (by yitsen)
-	 * used क्रम extract sz bytes from rx_end, update rx_end and वापस the
+	 * used for extract sz bytes from rx_end, update rx_end and return the
 	 * updated rx_end to the caller
 	 * after pulling, rx_end must be still larger than rx_data.
 	 */
-	अगर (!precvframe)
-		वापस शून्य;
+	if (!precvframe)
+		return NULL;
 	precvframe->u.hdr.rx_tail -= sz;
-	अगर (precvframe->u.hdr.rx_tail < precvframe->u.hdr.rx_data) अणु
+	if (precvframe->u.hdr.rx_tail < precvframe->u.hdr.rx_data) {
 		precvframe->u.hdr.rx_tail += sz;
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	precvframe->u.hdr.len -= sz;
-	वापस precvframe->u.hdr.rx_tail;
-पूर्ण
+	return precvframe->u.hdr.rx_tail;
+}
 
-काष्ठा sta_info;
+struct sta_info;
 
-व्योम	_r8712_init_sta_recv_priv(काष्ठा sta_recv_priv *psta_recvpriv);
-sपूर्णांक r8712_recvframe_chkmic(काष्ठा _adapter *adapter,
-			    जोड़ recv_frame *precvframe);
-जोड़ recv_frame *r8712_decryptor(काष्ठा _adapter *adapter,
-				  जोड़ recv_frame *precv_frame);
-जोड़ recv_frame *r8712_recvframe_chk_defrag(काष्ठा _adapter *adapter,
-					     जोड़ recv_frame *precv_frame);
-पूर्णांक r8712_validate_recv_frame(काष्ठा _adapter *adapter,
-			      जोड़ recv_frame *precv_frame);
-जोड़ recv_frame *r8712_portctrl(काष्ठा _adapter *adapter,
-				 जोड़ recv_frame *precv_frame);
+void	_r8712_init_sta_recv_priv(struct sta_recv_priv *psta_recvpriv);
+sint r8712_recvframe_chkmic(struct _adapter *adapter,
+			    union recv_frame *precvframe);
+union recv_frame *r8712_decryptor(struct _adapter *adapter,
+				  union recv_frame *precv_frame);
+union recv_frame *r8712_recvframe_chk_defrag(struct _adapter *adapter,
+					     union recv_frame *precv_frame);
+int r8712_validate_recv_frame(struct _adapter *adapter,
+			      union recv_frame *precv_frame);
+union recv_frame *r8712_portctrl(struct _adapter *adapter,
+				 union recv_frame *precv_frame);
 
-#पूर्ण_अगर
+#endif
 

@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/bpf.h>
-#समावेश <bpf/bpf_helpers.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_PROG_ARRAY);
-	__uपूर्णांक(max_entries, 3);
-	__uपूर्णांक(key_size, माप(__u32));
-	__uपूर्णांक(value_size, माप(__u32));
-पूर्ण jmp_table SEC(".maps");
+struct {
+	__uint(type, BPF_MAP_TYPE_PROG_ARRAY);
+	__uint(max_entries, 3);
+	__uint(key_size, sizeof(__u32));
+	__uint(value_size, sizeof(__u32));
+} jmp_table SEC(".maps");
 
-अटल अस्थिर पूर्णांक count;
+static volatile int count;
 
-__noअंतरभूत
-पूर्णांक subprog_tail_2(काष्ठा __sk_buff *skb)
-अणु
-	bpf_tail_call_अटल(skb, &jmp_table, 2);
-	वापस skb->len * 3;
-पूर्ण
+__noinline
+int subprog_tail_2(struct __sk_buff *skb)
+{
+	bpf_tail_call_static(skb, &jmp_table, 2);
+	return skb->len * 3;
+}
 
-__noअंतरभूत
-पूर्णांक subprog_tail_1(काष्ठा __sk_buff *skb)
-अणु
-	bpf_tail_call_अटल(skb, &jmp_table, 1);
-	वापस skb->len * 2;
-पूर्ण
+__noinline
+int subprog_tail_1(struct __sk_buff *skb)
+{
+	bpf_tail_call_static(skb, &jmp_table, 1);
+	return skb->len * 2;
+}
 
-__noअंतरभूत
-पूर्णांक subprog_tail(काष्ठा __sk_buff *skb)
-अणु
-	bpf_tail_call_अटल(skb, &jmp_table, 0);
-	वापस skb->len;
-पूर्ण
+__noinline
+int subprog_tail(struct __sk_buff *skb)
+{
+	bpf_tail_call_static(skb, &jmp_table, 0);
+	return skb->len;
+}
 
 SEC("classifier/1")
-पूर्णांक bpf_func_1(काष्ठा __sk_buff *skb)
-अणु
-	वापस subprog_tail_2(skb);
-पूर्ण
+int bpf_func_1(struct __sk_buff *skb)
+{
+	return subprog_tail_2(skb);
+}
 
 SEC("classifier/2")
-पूर्णांक bpf_func_2(काष्ठा __sk_buff *skb)
-अणु
+int bpf_func_2(struct __sk_buff *skb)
+{
 	count++;
-	वापस subprog_tail_2(skb);
-पूर्ण
+	return subprog_tail_2(skb);
+}
 
 SEC("classifier/0")
-पूर्णांक bpf_func_0(काष्ठा __sk_buff *skb)
-अणु
-	वापस subprog_tail_1(skb);
-पूर्ण
+int bpf_func_0(struct __sk_buff *skb)
+{
+	return subprog_tail_1(skb);
+}
 
 SEC("classifier")
-पूर्णांक entry(काष्ठा __sk_buff *skb)
-अणु
-	वापस subprog_tail(skb);
-पूर्ण
+int entry(struct __sk_buff *skb)
+{
+	return subprog_tail(skb);
+}
 
-अक्षर __license[] SEC("license") = "GPL";
-पूर्णांक _version SEC("version") = 1;
+char __license[] SEC("license") = "GPL";
+int _version SEC("version") = 1;

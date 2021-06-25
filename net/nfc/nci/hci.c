@@ -1,135 +1,134 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  The NFC Controller Interface is the communication protocol between an
  *  NFC Controller (NFCC) and a Device Host (DH).
- *  This is the HCI over NCI implementation, as specअगरied in the 10.2
- *  section of the NCI 1.1 specअगरication.
+ *  This is the HCI over NCI implementation, as specified in the 10.2
+ *  section of the NCI 1.1 specification.
  *
  *  Copyright (C) 2014  STMicroelectronics SAS. All rights reserved.
  */
 
-#समावेश <linux/skbuff.h>
+#include <linux/skbuff.h>
 
-#समावेश "../nfc.h"
-#समावेश <net/nfc/nci.h>
-#समावेश <net/nfc/nci_core.h>
-#समावेश <linux/nfc.h>
+#include "../nfc.h"
+#include <net/nfc/nci.h>
+#include <net/nfc/nci_core.h>
+#include <linux/nfc.h>
 
-काष्ठा nci_data अणु
+struct nci_data {
 	u8              conn_id;
 	u8              pipe;
 	u8              cmd;
-	स्थिर u8        *data;
+	const u8        *data;
 	u32             data_len;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा nci_hci_create_pipe_params अणु
+struct nci_hci_create_pipe_params {
 	u8 src_gate;
 	u8 dest_host;
 	u8 dest_gate;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा nci_hci_create_pipe_resp अणु
+struct nci_hci_create_pipe_resp {
 	u8 src_host;
 	u8 src_gate;
 	u8 dest_host;
 	u8 dest_gate;
 	u8 pipe;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा nci_hci_delete_pipe_noti अणु
+struct nci_hci_delete_pipe_noti {
 	u8 pipe;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा nci_hci_all_pipe_cleared_noti अणु
+struct nci_hci_all_pipe_cleared_noti {
 	u8 host;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा nci_hcp_message अणु
-	u8 header;      /* type -cmd,evt,rsp- + inकाष्ठाion */
+struct nci_hcp_message {
+	u8 header;      /* type -cmd,evt,rsp- + instruction */
 	u8 data[];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा nci_hcp_packet अणु
+struct nci_hcp_packet {
 	u8 header;      /* cbit+pipe */
-	काष्ठा nci_hcp_message message;
-पूर्ण __packed;
+	struct nci_hcp_message message;
+} __packed;
 
-#घोषणा NCI_HCI_ANY_SET_PARAMETER  0x01
-#घोषणा NCI_HCI_ANY_GET_PARAMETER  0x02
-#घोषणा NCI_HCI_ANY_CLOSE_PIPE     0x04
-#घोषणा NCI_HCI_ADM_CLEAR_ALL_PIPE 0x14
+#define NCI_HCI_ANY_SET_PARAMETER  0x01
+#define NCI_HCI_ANY_GET_PARAMETER  0x02
+#define NCI_HCI_ANY_CLOSE_PIPE     0x04
+#define NCI_HCI_ADM_CLEAR_ALL_PIPE 0x14
 
-#घोषणा NCI_HFP_NO_CHAINING        0x80
+#define NCI_HFP_NO_CHAINING        0x80
 
-#घोषणा NCI_NFCEE_ID_HCI                0x80
+#define NCI_NFCEE_ID_HCI                0x80
 
-#घोषणा NCI_EVT_HOT_PLUG           0x03
+#define NCI_EVT_HOT_PLUG           0x03
 
-#घोषणा NCI_HCI_ADMIN_PARAM_SESSION_IDENTITY       0x01
-#घोषणा NCI_HCI_ADM_CREATE_PIPE			0x10
-#घोषणा NCI_HCI_ADM_DELETE_PIPE			0x11
+#define NCI_HCI_ADMIN_PARAM_SESSION_IDENTITY       0x01
+#define NCI_HCI_ADM_CREATE_PIPE			0x10
+#define NCI_HCI_ADM_DELETE_PIPE			0x11
 
 /* HCP headers */
-#घोषणा NCI_HCI_HCP_PACKET_HEADER_LEN      1
-#घोषणा NCI_HCI_HCP_MESSAGE_HEADER_LEN     1
-#घोषणा NCI_HCI_HCP_HEADER_LEN             2
+#define NCI_HCI_HCP_PACKET_HEADER_LEN      1
+#define NCI_HCI_HCP_MESSAGE_HEADER_LEN     1
+#define NCI_HCI_HCP_HEADER_LEN             2
 
 /* HCP types */
-#घोषणा NCI_HCI_HCP_COMMAND        0x00
-#घोषणा NCI_HCI_HCP_EVENT          0x01
-#घोषणा NCI_HCI_HCP_RESPONSE       0x02
+#define NCI_HCI_HCP_COMMAND        0x00
+#define NCI_HCI_HCP_EVENT          0x01
+#define NCI_HCI_HCP_RESPONSE       0x02
 
-#घोषणा NCI_HCI_ADM_NOTIFY_PIPE_CREATED     0x12
-#घोषणा NCI_HCI_ADM_NOTIFY_PIPE_DELETED     0x13
-#घोषणा NCI_HCI_ADM_NOTIFY_ALL_PIPE_CLEARED 0x15
+#define NCI_HCI_ADM_NOTIFY_PIPE_CREATED     0x12
+#define NCI_HCI_ADM_NOTIFY_PIPE_DELETED     0x13
+#define NCI_HCI_ADM_NOTIFY_ALL_PIPE_CLEARED 0x15
 
-#घोषणा NCI_HCI_FRAGMENT           0x7f
-#घोषणा NCI_HCP_HEADER(type, instr) ((((type) & 0x03) << 6) |\
+#define NCI_HCI_FRAGMENT           0x7f
+#define NCI_HCP_HEADER(type, instr) ((((type) & 0x03) << 6) |\
 				      ((instr) & 0x3f))
 
-#घोषणा NCI_HCP_MSG_GET_TYPE(header) ((header & 0xc0) >> 6)
-#घोषणा NCI_HCP_MSG_GET_CMD(header)  (header & 0x3f)
-#घोषणा NCI_HCP_MSG_GET_PIPE(header) (header & 0x7f)
+#define NCI_HCP_MSG_GET_TYPE(header) ((header & 0xc0) >> 6)
+#define NCI_HCP_MSG_GET_CMD(header)  (header & 0x3f)
+#define NCI_HCP_MSG_GET_PIPE(header) (header & 0x7f)
 
-अटल पूर्णांक nci_hci_result_to_त्रुटि_सं(u8 result)
-अणु
-	चयन (result) अणु
-	हाल NCI_HCI_ANY_OK:
-		वापस 0;
-	हाल NCI_HCI_ANY_E_REG_PAR_UNKNOWN:
-		वापस -EOPNOTSUPP;
-	हाल NCI_HCI_ANY_E_TIMEOUT:
-		वापस -ETIME;
-	शेष:
-		वापस -1;
-	पूर्ण
-पूर्ण
+static int nci_hci_result_to_errno(u8 result)
+{
+	switch (result) {
+	case NCI_HCI_ANY_OK:
+		return 0;
+	case NCI_HCI_ANY_E_REG_PAR_UNKNOWN:
+		return -EOPNOTSUPP;
+	case NCI_HCI_ANY_E_TIMEOUT:
+		return -ETIME;
+	default:
+		return -1;
+	}
+}
 
 /* HCI core */
-अटल व्योम nci_hci_reset_pipes(काष्ठा nci_hci_dev *hdev)
-अणु
-	पूर्णांक i;
+static void nci_hci_reset_pipes(struct nci_hci_dev *hdev)
+{
+	int i;
 
-	क्रम (i = 0; i < NCI_HCI_MAX_PIPES; i++) अणु
+	for (i = 0; i < NCI_HCI_MAX_PIPES; i++) {
 		hdev->pipes[i].gate = NCI_HCI_INVALID_GATE;
 		hdev->pipes[i].host = NCI_HCI_INVALID_HOST;
-	पूर्ण
-	स_रखो(hdev->gate2pipe, NCI_HCI_INVALID_PIPE, माप(hdev->gate2pipe));
-पूर्ण
+	}
+	memset(hdev->gate2pipe, NCI_HCI_INVALID_PIPE, sizeof(hdev->gate2pipe));
+}
 
-अटल व्योम nci_hci_reset_pipes_per_host(काष्ठा nci_dev *ndev, u8 host)
-अणु
-	पूर्णांक i;
+static void nci_hci_reset_pipes_per_host(struct nci_dev *ndev, u8 host)
+{
+	int i;
 
-	क्रम (i = 0; i < NCI_HCI_MAX_PIPES; i++) अणु
-		अगर (ndev->hci_dev->pipes[i].host == host) अणु
+	for (i = 0; i < NCI_HCI_MAX_PIPES; i++) {
+		if (ndev->hci_dev->pipes[i].host == host) {
 			ndev->hci_dev->pipes[i].gate = NCI_HCI_INVALID_GATE;
 			ndev->hci_dev->pipes[i].host = NCI_HCI_INVALID_HOST;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /* Fragment HCI data over NCI packet.
  * NFC Forum NCI 10.2.2 Data Exchange:
@@ -137,105 +136,105 @@
  * valid HCP packets, as defined within [ETSI_102622]. Each Data Packet SHALL
  * contain a single HCP packet. NCI Segmentation and Reassembly SHALL NOT be
  * applied to Data Messages in either direction. The HCI fragmentation mechanism
- * is used अगर required.
+ * is used if required.
  */
-अटल पूर्णांक nci_hci_send_data(काष्ठा nci_dev *ndev, u8 pipe,
-			     स्थिर u8 data_type, स्थिर u8 *data,
-			     माप_प्रकार data_len)
-अणु
-	काष्ठा nci_conn_info    *conn_info;
-	काष्ठा sk_buff *skb;
-	पूर्णांक len, i, r;
+static int nci_hci_send_data(struct nci_dev *ndev, u8 pipe,
+			     const u8 data_type, const u8 *data,
+			     size_t data_len)
+{
+	struct nci_conn_info    *conn_info;
+	struct sk_buff *skb;
+	int len, i, r;
 	u8 cb = pipe;
 
 	conn_info = ndev->hci_dev->conn_info;
-	अगर (!conn_info)
-		वापस -EPROTO;
+	if (!conn_info)
+		return -EPROTO;
 
 	i = 0;
 	skb = nci_skb_alloc(ndev, conn_info->max_pkt_payload_len +
 			    NCI_DATA_HDR_SIZE, GFP_KERNEL);
-	अगर (!skb)
-		वापस -ENOMEM;
+	if (!skb)
+		return -ENOMEM;
 
 	skb_reserve(skb, NCI_DATA_HDR_SIZE + 2);
 	*(u8 *)skb_push(skb, 1) = data_type;
 
-	करो अणु
+	do {
 		len = conn_info->max_pkt_payload_len;
 
 		/* If last packet add NCI_HFP_NO_CHAINING */
-		अगर (i + conn_info->max_pkt_payload_len -
-		    (skb->len + 1) >= data_len) अणु
+		if (i + conn_info->max_pkt_payload_len -
+		    (skb->len + 1) >= data_len) {
 			cb |= NCI_HFP_NO_CHAINING;
 			len = data_len - i;
-		पूर्ण अन्यथा अणु
+		} else {
 			len = conn_info->max_pkt_payload_len - skb->len - 1;
-		पूर्ण
+		}
 
 		*(u8 *)skb_push(skb, 1) = cb;
 
-		अगर (len > 0)
+		if (len > 0)
 			skb_put_data(skb, data + i, len);
 
 		r = nci_send_data(ndev, conn_info->conn_id, skb);
-		अगर (r < 0)
-			वापस r;
+		if (r < 0)
+			return r;
 
 		i += len;
 
-		अगर (i < data_len) अणु
+		if (i < data_len) {
 			skb = nci_skb_alloc(ndev,
 					    conn_info->max_pkt_payload_len +
 					    NCI_DATA_HDR_SIZE, GFP_KERNEL);
-			अगर (!skb)
-				वापस -ENOMEM;
+			if (!skb)
+				return -ENOMEM;
 
 			skb_reserve(skb, NCI_DATA_HDR_SIZE + 1);
-		पूर्ण
-	पूर्ण जबतक (i < data_len);
+		}
+	} while (i < data_len);
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल व्योम nci_hci_send_data_req(काष्ठा nci_dev *ndev, अचिन्हित दीर्घ opt)
-अणु
-	काष्ठा nci_data *data = (काष्ठा nci_data *)opt;
+static void nci_hci_send_data_req(struct nci_dev *ndev, unsigned long opt)
+{
+	struct nci_data *data = (struct nci_data *)opt;
 
 	nci_hci_send_data(ndev, data->pipe, data->cmd,
 			  data->data, data->data_len);
-पूर्ण
+}
 
-पूर्णांक nci_hci_send_event(काष्ठा nci_dev *ndev, u8 gate, u8 event,
-		       स्थिर u8 *param, माप_प्रकार param_len)
-अणु
+int nci_hci_send_event(struct nci_dev *ndev, u8 gate, u8 event,
+		       const u8 *param, size_t param_len)
+{
 	u8 pipe = ndev->hci_dev->gate2pipe[gate];
 
-	अगर (pipe == NCI_HCI_INVALID_PIPE)
-		वापस -EADDRNOTAVAIL;
+	if (pipe == NCI_HCI_INVALID_PIPE)
+		return -EADDRNOTAVAIL;
 
-	वापस nci_hci_send_data(ndev, pipe,
+	return nci_hci_send_data(ndev, pipe,
 			NCI_HCP_HEADER(NCI_HCI_HCP_EVENT, event),
 			param, param_len);
-पूर्ण
+}
 EXPORT_SYMBOL(nci_hci_send_event);
 
-पूर्णांक nci_hci_send_cmd(काष्ठा nci_dev *ndev, u8 gate, u8 cmd,
-		     स्थिर u8 *param, माप_प्रकार param_len,
-		     काष्ठा sk_buff **skb)
-अणु
-	काष्ठा nci_hcp_message *message;
-	काष्ठा nci_conn_info   *conn_info;
-	काष्ठा nci_data data;
-	पूर्णांक r;
+int nci_hci_send_cmd(struct nci_dev *ndev, u8 gate, u8 cmd,
+		     const u8 *param, size_t param_len,
+		     struct sk_buff **skb)
+{
+	struct nci_hcp_message *message;
+	struct nci_conn_info   *conn_info;
+	struct nci_data data;
+	int r;
 	u8 pipe = ndev->hci_dev->gate2pipe[gate];
 
-	अगर (pipe == NCI_HCI_INVALID_PIPE)
-		वापस -EADDRNOTAVAIL;
+	if (pipe == NCI_HCI_INVALID_PIPE)
+		return -EADDRNOTAVAIL;
 
 	conn_info = ndev->hci_dev->conn_info;
-	अगर (!conn_info)
-		वापस -EPROTO;
+	if (!conn_info)
+		return -EPROTO;
 
 	data.conn_id = conn_info->conn_id;
 	data.pipe = pipe;
@@ -243,71 +242,71 @@ EXPORT_SYMBOL(nci_hci_send_event);
 	data.data = param;
 	data.data_len = param_len;
 
-	r = nci_request(ndev, nci_hci_send_data_req, (अचिन्हित दीर्घ)&data,
-			msecs_to_jअगरfies(NCI_DATA_TIMEOUT));
-	अगर (r == NCI_STATUS_OK) अणु
-		message = (काष्ठा nci_hcp_message *)conn_info->rx_skb->data;
-		r = nci_hci_result_to_त्रुटि_सं(
+	r = nci_request(ndev, nci_hci_send_data_req, (unsigned long)&data,
+			msecs_to_jiffies(NCI_DATA_TIMEOUT));
+	if (r == NCI_STATUS_OK) {
+		message = (struct nci_hcp_message *)conn_info->rx_skb->data;
+		r = nci_hci_result_to_errno(
 			NCI_HCP_MSG_GET_CMD(message->header));
 		skb_pull(conn_info->rx_skb, NCI_HCI_HCP_MESSAGE_HEADER_LEN);
 
-		अगर (!r && skb)
+		if (!r && skb)
 			*skb = conn_info->rx_skb;
-	पूर्ण
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 EXPORT_SYMBOL(nci_hci_send_cmd);
 
-पूर्णांक nci_hci_clear_all_pipes(काष्ठा nci_dev *ndev)
-अणु
-	पूर्णांक r;
+int nci_hci_clear_all_pipes(struct nci_dev *ndev)
+{
+	int r;
 
 	r = nci_hci_send_cmd(ndev, NCI_HCI_ADMIN_GATE,
-			     NCI_HCI_ADM_CLEAR_ALL_PIPE, शून्य, 0, शून्य);
-	अगर (r < 0)
-		वापस r;
+			     NCI_HCI_ADM_CLEAR_ALL_PIPE, NULL, 0, NULL);
+	if (r < 0)
+		return r;
 
 	nci_hci_reset_pipes(ndev->hci_dev);
-	वापस r;
-पूर्ण
+	return r;
+}
 EXPORT_SYMBOL(nci_hci_clear_all_pipes);
 
-अटल व्योम nci_hci_event_received(काष्ठा nci_dev *ndev, u8 pipe,
-				   u8 event, काष्ठा sk_buff *skb)
-अणु
-	अगर (ndev->ops->hci_event_received)
+static void nci_hci_event_received(struct nci_dev *ndev, u8 pipe,
+				   u8 event, struct sk_buff *skb)
+{
+	if (ndev->ops->hci_event_received)
 		ndev->ops->hci_event_received(ndev, pipe, event, skb);
-पूर्ण
+}
 
-अटल व्योम nci_hci_cmd_received(काष्ठा nci_dev *ndev, u8 pipe,
-				 u8 cmd, काष्ठा sk_buff *skb)
-अणु
+static void nci_hci_cmd_received(struct nci_dev *ndev, u8 pipe,
+				 u8 cmd, struct sk_buff *skb)
+{
 	u8 gate = ndev->hci_dev->pipes[pipe].gate;
 	u8 status = NCI_HCI_ANY_OK | ~NCI_HCI_FRAGMENT;
 	u8 dest_gate, new_pipe;
-	काष्ठा nci_hci_create_pipe_resp *create_info;
-	काष्ठा nci_hci_delete_pipe_noti *delete_info;
-	काष्ठा nci_hci_all_pipe_cleared_noti *cleared_info;
+	struct nci_hci_create_pipe_resp *create_info;
+	struct nci_hci_delete_pipe_noti *delete_info;
+	struct nci_hci_all_pipe_cleared_noti *cleared_info;
 
 	pr_debug("from gate %x pipe %x cmd %x\n", gate, pipe, cmd);
 
-	चयन (cmd) अणु
-	हाल NCI_HCI_ADM_NOTIFY_PIPE_CREATED:
-		अगर (skb->len != 5) अणु
+	switch (cmd) {
+	case NCI_HCI_ADM_NOTIFY_PIPE_CREATED:
+		if (skb->len != 5) {
 			status = NCI_HCI_ANY_E_NOK;
-			जाओ निकास;
-		पूर्ण
-		create_info = (काष्ठा nci_hci_create_pipe_resp *)skb->data;
+			goto exit;
+		}
+		create_info = (struct nci_hci_create_pipe_resp *)skb->data;
 		dest_gate = create_info->dest_gate;
 		new_pipe = create_info->pipe;
-		अगर (new_pipe >= NCI_HCI_MAX_PIPES) अणु
+		if (new_pipe >= NCI_HCI_MAX_PIPES) {
 			status = NCI_HCI_ANY_E_NOK;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
 		/* Save the new created pipe and bind with local gate,
-		 * the description क्रम skb->data[3] is destination gate id
+		 * the description for skb->data[3] is destination gate id
 		 * but since we received this cmd from host controller, we
 		 * are the destination and it is our local gate
 		 */
@@ -315,218 +314,218 @@ EXPORT_SYMBOL(nci_hci_clear_all_pipes);
 		ndev->hci_dev->pipes[new_pipe].gate = dest_gate;
 		ndev->hci_dev->pipes[new_pipe].host =
 						create_info->src_host;
-		अवरोध;
-	हाल NCI_HCI_ANY_OPEN_PIPE:
+		break;
+	case NCI_HCI_ANY_OPEN_PIPE:
 		/* If the pipe is not created report an error */
-		अगर (gate == NCI_HCI_INVALID_GATE) अणु
+		if (gate == NCI_HCI_INVALID_GATE) {
 			status = NCI_HCI_ANY_E_NOK;
-			जाओ निकास;
-		पूर्ण
-		अवरोध;
-	हाल NCI_HCI_ADM_NOTIFY_PIPE_DELETED:
-		अगर (skb->len != 1) अणु
+			goto exit;
+		}
+		break;
+	case NCI_HCI_ADM_NOTIFY_PIPE_DELETED:
+		if (skb->len != 1) {
 			status = NCI_HCI_ANY_E_NOK;
-			जाओ निकास;
-		पूर्ण
-		delete_info = (काष्ठा nci_hci_delete_pipe_noti *)skb->data;
-		अगर (delete_info->pipe >= NCI_HCI_MAX_PIPES) अणु
+			goto exit;
+		}
+		delete_info = (struct nci_hci_delete_pipe_noti *)skb->data;
+		if (delete_info->pipe >= NCI_HCI_MAX_PIPES) {
 			status = NCI_HCI_ANY_E_NOK;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
 		ndev->hci_dev->pipes[delete_info->pipe].gate =
 						NCI_HCI_INVALID_GATE;
 		ndev->hci_dev->pipes[delete_info->pipe].host =
 						NCI_HCI_INVALID_HOST;
-		अवरोध;
-	हाल NCI_HCI_ADM_NOTIFY_ALL_PIPE_CLEARED:
-		अगर (skb->len != 1) अणु
+		break;
+	case NCI_HCI_ADM_NOTIFY_ALL_PIPE_CLEARED:
+		if (skb->len != 1) {
 			status = NCI_HCI_ANY_E_NOK;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
 		cleared_info =
-			(काष्ठा nci_hci_all_pipe_cleared_noti *)skb->data;
+			(struct nci_hci_all_pipe_cleared_noti *)skb->data;
 		nci_hci_reset_pipes_per_host(ndev, cleared_info->host);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_debug("Discarded unknown cmd %x to gate %x\n", cmd, gate);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (ndev->ops->hci_cmd_received)
+	if (ndev->ops->hci_cmd_received)
 		ndev->ops->hci_cmd_received(ndev, pipe, cmd, skb);
 
-निकास:
-	nci_hci_send_data(ndev, pipe, status, शून्य, 0);
+exit:
+	nci_hci_send_data(ndev, pipe, status, NULL, 0);
 
-	kमुक्त_skb(skb);
-पूर्ण
+	kfree_skb(skb);
+}
 
-अटल व्योम nci_hci_resp_received(काष्ठा nci_dev *ndev, u8 pipe,
-				  काष्ठा sk_buff *skb)
-अणु
-	काष्ठा nci_conn_info    *conn_info;
+static void nci_hci_resp_received(struct nci_dev *ndev, u8 pipe,
+				  struct sk_buff *skb)
+{
+	struct nci_conn_info    *conn_info;
 
 	conn_info = ndev->hci_dev->conn_info;
-	अगर (!conn_info)
-		जाओ निकास;
+	if (!conn_info)
+		goto exit;
 
 	conn_info->rx_skb = skb;
 
-निकास:
+exit:
 	nci_req_complete(ndev, NCI_STATUS_OK);
-पूर्ण
+}
 
-/* Receive hcp message क्रम pipe, with type and cmd.
+/* Receive hcp message for pipe, with type and cmd.
  * skb contains optional message data only.
  */
-अटल व्योम nci_hci_hcp_message_rx(काष्ठा nci_dev *ndev, u8 pipe,
-				   u8 type, u8 inकाष्ठाion, काष्ठा sk_buff *skb)
-अणु
-	चयन (type) अणु
-	हाल NCI_HCI_HCP_RESPONSE:
+static void nci_hci_hcp_message_rx(struct nci_dev *ndev, u8 pipe,
+				   u8 type, u8 instruction, struct sk_buff *skb)
+{
+	switch (type) {
+	case NCI_HCI_HCP_RESPONSE:
 		nci_hci_resp_received(ndev, pipe, skb);
-		अवरोध;
-	हाल NCI_HCI_HCP_COMMAND:
-		nci_hci_cmd_received(ndev, pipe, inकाष्ठाion, skb);
-		अवरोध;
-	हाल NCI_HCI_HCP_EVENT:
-		nci_hci_event_received(ndev, pipe, inकाष्ठाion, skb);
-		अवरोध;
-	शेष:
+		break;
+	case NCI_HCI_HCP_COMMAND:
+		nci_hci_cmd_received(ndev, pipe, instruction, skb);
+		break;
+	case NCI_HCI_HCP_EVENT:
+		nci_hci_event_received(ndev, pipe, instruction, skb);
+		break;
+	default:
 		pr_err("UNKNOWN MSG Type %d, instruction=%d\n",
-		       type, inकाष्ठाion);
-		kमुक्त_skb(skb);
-		अवरोध;
-	पूर्ण
+		       type, instruction);
+		kfree_skb(skb);
+		break;
+	}
 
 	nci_req_complete(ndev, NCI_STATUS_OK);
-पूर्ण
+}
 
-अटल व्योम nci_hci_msg_rx_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा nci_hci_dev *hdev =
-		container_of(work, काष्ठा nci_hci_dev, msg_rx_work);
-	काष्ठा sk_buff *skb;
-	काष्ठा nci_hcp_message *message;
-	u8 pipe, type, inकाष्ठाion;
+static void nci_hci_msg_rx_work(struct work_struct *work)
+{
+	struct nci_hci_dev *hdev =
+		container_of(work, struct nci_hci_dev, msg_rx_work);
+	struct sk_buff *skb;
+	struct nci_hcp_message *message;
+	u8 pipe, type, instruction;
 
-	जबतक ((skb = skb_dequeue(&hdev->msg_rx_queue)) != शून्य) अणु
+	while ((skb = skb_dequeue(&hdev->msg_rx_queue)) != NULL) {
 		pipe = NCI_HCP_MSG_GET_PIPE(skb->data[0]);
 		skb_pull(skb, NCI_HCI_HCP_PACKET_HEADER_LEN);
-		message = (काष्ठा nci_hcp_message *)skb->data;
+		message = (struct nci_hcp_message *)skb->data;
 		type = NCI_HCP_MSG_GET_TYPE(message->header);
-		inकाष्ठाion = NCI_HCP_MSG_GET_CMD(message->header);
+		instruction = NCI_HCP_MSG_GET_CMD(message->header);
 		skb_pull(skb, NCI_HCI_HCP_MESSAGE_HEADER_LEN);
 
 		nci_hci_hcp_message_rx(hdev->ndev, pipe,
-				       type, inकाष्ठाion, skb);
-	पूर्ण
-पूर्ण
+				       type, instruction, skb);
+	}
+}
 
-व्योम nci_hci_data_received_cb(व्योम *context,
-			      काष्ठा sk_buff *skb, पूर्णांक err)
-अणु
-	काष्ठा nci_dev *ndev = (काष्ठा nci_dev *)context;
-	काष्ठा nci_hcp_packet *packet;
+void nci_hci_data_received_cb(void *context,
+			      struct sk_buff *skb, int err)
+{
+	struct nci_dev *ndev = (struct nci_dev *)context;
+	struct nci_hcp_packet *packet;
 	u8 pipe, type;
-	काष्ठा sk_buff *hcp_skb;
-	काष्ठा sk_buff *frag_skb;
-	पूर्णांक msg_len;
+	struct sk_buff *hcp_skb;
+	struct sk_buff *frag_skb;
+	int msg_len;
 
 	pr_debug("\n");
 
-	अगर (err) अणु
+	if (err) {
 		nci_req_complete(ndev, err);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	packet = (काष्ठा nci_hcp_packet *)skb->data;
-	अगर ((packet->header & ~NCI_HCI_FRAGMENT) == 0) अणु
+	packet = (struct nci_hcp_packet *)skb->data;
+	if ((packet->header & ~NCI_HCI_FRAGMENT) == 0) {
 		skb_queue_tail(&ndev->hci_dev->rx_hcp_frags, skb);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* it's the last fragment. Does it need re-aggregation? */
-	अगर (skb_queue_len(&ndev->hci_dev->rx_hcp_frags)) अणु
+	if (skb_queue_len(&ndev->hci_dev->rx_hcp_frags)) {
 		pipe = NCI_HCP_MSG_GET_PIPE(packet->header);
 		skb_queue_tail(&ndev->hci_dev->rx_hcp_frags, skb);
 
 		msg_len = 0;
-		skb_queue_walk(&ndev->hci_dev->rx_hcp_frags, frag_skb) अणु
+		skb_queue_walk(&ndev->hci_dev->rx_hcp_frags, frag_skb) {
 			msg_len += (frag_skb->len -
 				    NCI_HCI_HCP_PACKET_HEADER_LEN);
-		पूर्ण
+		}
 
 		hcp_skb = nfc_alloc_recv_skb(NCI_HCI_HCP_PACKET_HEADER_LEN +
 					     msg_len, GFP_KERNEL);
-		अगर (!hcp_skb) अणु
+		if (!hcp_skb) {
 			nci_req_complete(ndev, -ENOMEM);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		skb_put_u8(hcp_skb, pipe);
 
-		skb_queue_walk(&ndev->hci_dev->rx_hcp_frags, frag_skb) अणु
+		skb_queue_walk(&ndev->hci_dev->rx_hcp_frags, frag_skb) {
 			msg_len = frag_skb->len - NCI_HCI_HCP_PACKET_HEADER_LEN;
 			skb_put_data(hcp_skb,
 				     frag_skb->data + NCI_HCI_HCP_PACKET_HEADER_LEN,
 				     msg_len);
-		पूर्ण
+		}
 
 		skb_queue_purge(&ndev->hci_dev->rx_hcp_frags);
-	पूर्ण अन्यथा अणु
+	} else {
 		packet->header &= NCI_HCI_FRAGMENT;
 		hcp_skb = skb;
-	पूर्ण
+	}
 
-	/* अगर this is a response, dispatch immediately to
-	 * unblock रुकोing cmd context. Otherwise, enqueue to dispatch
+	/* if this is a response, dispatch immediately to
+	 * unblock waiting cmd context. Otherwise, enqueue to dispatch
 	 * in separate context where handler can also execute command.
 	 */
-	packet = (काष्ठा nci_hcp_packet *)hcp_skb->data;
+	packet = (struct nci_hcp_packet *)hcp_skb->data;
 	type = NCI_HCP_MSG_GET_TYPE(packet->message.header);
-	अगर (type == NCI_HCI_HCP_RESPONSE) अणु
+	if (type == NCI_HCI_HCP_RESPONSE) {
 		pipe = NCI_HCP_MSG_GET_PIPE(packet->header);
 		skb_pull(hcp_skb, NCI_HCI_HCP_PACKET_HEADER_LEN);
 		nci_hci_hcp_message_rx(ndev, pipe, type,
 				       NCI_STATUS_OK, hcp_skb);
-	पूर्ण अन्यथा अणु
+	} else {
 		skb_queue_tail(&ndev->hci_dev->msg_rx_queue, hcp_skb);
 		schedule_work(&ndev->hci_dev->msg_rx_work);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक nci_hci_खोलो_pipe(काष्ठा nci_dev *ndev, u8 pipe)
-अणु
-	काष्ठा nci_data data;
-	काष्ठा nci_conn_info    *conn_info;
+int nci_hci_open_pipe(struct nci_dev *ndev, u8 pipe)
+{
+	struct nci_data data;
+	struct nci_conn_info    *conn_info;
 
 	conn_info = ndev->hci_dev->conn_info;
-	अगर (!conn_info)
-		वापस -EPROTO;
+	if (!conn_info)
+		return -EPROTO;
 
 	data.conn_id = conn_info->conn_id;
 	data.pipe = pipe;
 	data.cmd = NCI_HCP_HEADER(NCI_HCI_HCP_COMMAND,
 				       NCI_HCI_ANY_OPEN_PIPE);
-	data.data = शून्य;
+	data.data = NULL;
 	data.data_len = 0;
 
-	वापस nci_request(ndev, nci_hci_send_data_req,
-			(अचिन्हित दीर्घ)&data,
-			msecs_to_jअगरfies(NCI_DATA_TIMEOUT));
-पूर्ण
-EXPORT_SYMBOL(nci_hci_खोलो_pipe);
+	return nci_request(ndev, nci_hci_send_data_req,
+			(unsigned long)&data,
+			msecs_to_jiffies(NCI_DATA_TIMEOUT));
+}
+EXPORT_SYMBOL(nci_hci_open_pipe);
 
-अटल u8 nci_hci_create_pipe(काष्ठा nci_dev *ndev, u8 dest_host,
-			      u8 dest_gate, पूर्णांक *result)
-अणु
+static u8 nci_hci_create_pipe(struct nci_dev *ndev, u8 dest_host,
+			      u8 dest_gate, int *result)
+{
 	u8 pipe;
-	काष्ठा sk_buff *skb;
-	काष्ठा nci_hci_create_pipe_params params;
-	काष्ठा nci_hci_create_pipe_resp *resp;
+	struct sk_buff *skb;
+	struct nci_hci_create_pipe_params params;
+	struct nci_hci_create_pipe_resp *resp;
 
 	pr_debug("gate=%d\n", dest_gate);
 
@@ -536,92 +535,92 @@ EXPORT_SYMBOL(nci_hci_खोलो_pipe);
 
 	*result = nci_hci_send_cmd(ndev, NCI_HCI_ADMIN_GATE,
 				   NCI_HCI_ADM_CREATE_PIPE,
-				   (u8 *)&params, माप(params), &skb);
-	अगर (*result < 0)
-		वापस NCI_HCI_INVALID_PIPE;
+				   (u8 *)&params, sizeof(params), &skb);
+	if (*result < 0)
+		return NCI_HCI_INVALID_PIPE;
 
-	resp = (काष्ठा nci_hci_create_pipe_resp *)skb->data;
+	resp = (struct nci_hci_create_pipe_resp *)skb->data;
 	pipe = resp->pipe;
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 
 	pr_debug("pipe created=%d\n", pipe);
 
-	वापस pipe;
-पूर्ण
+	return pipe;
+}
 
-अटल पूर्णांक nci_hci_delete_pipe(काष्ठा nci_dev *ndev, u8 pipe)
-अणु
+static int nci_hci_delete_pipe(struct nci_dev *ndev, u8 pipe)
+{
 	pr_debug("\n");
 
-	वापस nci_hci_send_cmd(ndev, NCI_HCI_ADMIN_GATE,
-				NCI_HCI_ADM_DELETE_PIPE, &pipe, 1, शून्य);
-पूर्ण
+	return nci_hci_send_cmd(ndev, NCI_HCI_ADMIN_GATE,
+				NCI_HCI_ADM_DELETE_PIPE, &pipe, 1, NULL);
+}
 
-पूर्णांक nci_hci_set_param(काष्ठा nci_dev *ndev, u8 gate, u8 idx,
-		      स्थिर u8 *param, माप_प्रकार param_len)
-अणु
-	काष्ठा nci_hcp_message *message;
-	काष्ठा nci_conn_info *conn_info;
-	काष्ठा nci_data data;
-	पूर्णांक r;
-	u8 *पंचांगp;
+int nci_hci_set_param(struct nci_dev *ndev, u8 gate, u8 idx,
+		      const u8 *param, size_t param_len)
+{
+	struct nci_hcp_message *message;
+	struct nci_conn_info *conn_info;
+	struct nci_data data;
+	int r;
+	u8 *tmp;
 	u8 pipe = ndev->hci_dev->gate2pipe[gate];
 
 	pr_debug("idx=%d to gate %d\n", idx, gate);
 
-	अगर (pipe == NCI_HCI_INVALID_PIPE)
-		वापस -EADDRNOTAVAIL;
+	if (pipe == NCI_HCI_INVALID_PIPE)
+		return -EADDRNOTAVAIL;
 
 	conn_info = ndev->hci_dev->conn_info;
-	अगर (!conn_info)
-		वापस -EPROTO;
+	if (!conn_info)
+		return -EPROTO;
 
-	पंचांगp = kदो_स्मृति(1 + param_len, GFP_KERNEL);
-	अगर (!पंचांगp)
-		वापस -ENOMEM;
+	tmp = kmalloc(1 + param_len, GFP_KERNEL);
+	if (!tmp)
+		return -ENOMEM;
 
-	*पंचांगp = idx;
-	स_नकल(पंचांगp + 1, param, param_len);
+	*tmp = idx;
+	memcpy(tmp + 1, param, param_len);
 
 	data.conn_id = conn_info->conn_id;
 	data.pipe = pipe;
 	data.cmd = NCI_HCP_HEADER(NCI_HCI_HCP_COMMAND,
 				       NCI_HCI_ANY_SET_PARAMETER);
-	data.data = पंचांगp;
+	data.data = tmp;
 	data.data_len = param_len + 1;
 
 	r = nci_request(ndev, nci_hci_send_data_req,
-			(अचिन्हित दीर्घ)&data,
-			msecs_to_jअगरfies(NCI_DATA_TIMEOUT));
-	अगर (r == NCI_STATUS_OK) अणु
-		message = (काष्ठा nci_hcp_message *)conn_info->rx_skb->data;
-		r = nci_hci_result_to_त्रुटि_सं(
+			(unsigned long)&data,
+			msecs_to_jiffies(NCI_DATA_TIMEOUT));
+	if (r == NCI_STATUS_OK) {
+		message = (struct nci_hcp_message *)conn_info->rx_skb->data;
+		r = nci_hci_result_to_errno(
 			NCI_HCP_MSG_GET_CMD(message->header));
 		skb_pull(conn_info->rx_skb, NCI_HCI_HCP_MESSAGE_HEADER_LEN);
-	पूर्ण
+	}
 
-	kमुक्त(पंचांगp);
-	वापस r;
-पूर्ण
+	kfree(tmp);
+	return r;
+}
 EXPORT_SYMBOL(nci_hci_set_param);
 
-पूर्णांक nci_hci_get_param(काष्ठा nci_dev *ndev, u8 gate, u8 idx,
-		      काष्ठा sk_buff **skb)
-अणु
-	काष्ठा nci_hcp_message *message;
-	काष्ठा nci_conn_info    *conn_info;
-	काष्ठा nci_data data;
-	पूर्णांक r;
+int nci_hci_get_param(struct nci_dev *ndev, u8 gate, u8 idx,
+		      struct sk_buff **skb)
+{
+	struct nci_hcp_message *message;
+	struct nci_conn_info    *conn_info;
+	struct nci_data data;
+	int r;
 	u8 pipe = ndev->hci_dev->gate2pipe[gate];
 
 	pr_debug("idx=%d to gate %d\n", idx, gate);
 
-	अगर (pipe == NCI_HCI_INVALID_PIPE)
-		वापस -EADDRNOTAVAIL;
+	if (pipe == NCI_HCI_INVALID_PIPE)
+		return -EADDRNOTAVAIL;
 
 	conn_info = ndev->hci_dev->conn_info;
-	अगर (!conn_info)
-		वापस -EPROTO;
+	if (!conn_info)
+		return -EPROTO;
 
 	data.conn_id = conn_info->conn_id;
 	data.pipe = pipe;
@@ -630,171 +629,171 @@ EXPORT_SYMBOL(nci_hci_set_param);
 	data.data = &idx;
 	data.data_len = 1;
 
-	r = nci_request(ndev, nci_hci_send_data_req, (अचिन्हित दीर्घ)&data,
-			msecs_to_jअगरfies(NCI_DATA_TIMEOUT));
+	r = nci_request(ndev, nci_hci_send_data_req, (unsigned long)&data,
+			msecs_to_jiffies(NCI_DATA_TIMEOUT));
 
-	अगर (r == NCI_STATUS_OK) अणु
-		message = (काष्ठा nci_hcp_message *)conn_info->rx_skb->data;
-		r = nci_hci_result_to_त्रुटि_सं(
+	if (r == NCI_STATUS_OK) {
+		message = (struct nci_hcp_message *)conn_info->rx_skb->data;
+		r = nci_hci_result_to_errno(
 			NCI_HCP_MSG_GET_CMD(message->header));
 		skb_pull(conn_info->rx_skb, NCI_HCI_HCP_MESSAGE_HEADER_LEN);
 
-		अगर (!r && skb)
+		if (!r && skb)
 			*skb = conn_info->rx_skb;
-	पूर्ण
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 EXPORT_SYMBOL(nci_hci_get_param);
 
-पूर्णांक nci_hci_connect_gate(काष्ठा nci_dev *ndev,
+int nci_hci_connect_gate(struct nci_dev *ndev,
 			 u8 dest_host, u8 dest_gate, u8 pipe)
-अणु
+{
 	bool pipe_created = false;
-	पूर्णांक r;
+	int r;
 
-	अगर (pipe == NCI_HCI_DO_NOT_OPEN_PIPE)
-		वापस 0;
+	if (pipe == NCI_HCI_DO_NOT_OPEN_PIPE)
+		return 0;
 
-	अगर (ndev->hci_dev->gate2pipe[dest_gate] != NCI_HCI_INVALID_PIPE)
-		वापस -EADDRINUSE;
+	if (ndev->hci_dev->gate2pipe[dest_gate] != NCI_HCI_INVALID_PIPE)
+		return -EADDRINUSE;
 
-	अगर (pipe != NCI_HCI_INVALID_PIPE)
-		जाओ खोलो_pipe;
+	if (pipe != NCI_HCI_INVALID_PIPE)
+		goto open_pipe;
 
-	चयन (dest_gate) अणु
-	हाल NCI_HCI_LINK_MGMT_GATE:
+	switch (dest_gate) {
+	case NCI_HCI_LINK_MGMT_GATE:
 		pipe = NCI_HCI_LINK_MGMT_PIPE;
-	अवरोध;
-	हाल NCI_HCI_ADMIN_GATE:
+	break;
+	case NCI_HCI_ADMIN_GATE:
 		pipe = NCI_HCI_ADMIN_PIPE;
-	अवरोध;
-	शेष:
+	break;
+	default:
 		pipe = nci_hci_create_pipe(ndev, dest_host, dest_gate, &r);
-		अगर (pipe == NCI_HCI_INVALID_PIPE)
-			वापस r;
+		if (pipe == NCI_HCI_INVALID_PIPE)
+			return r;
 		pipe_created = true;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-खोलो_pipe:
-	r = nci_hci_खोलो_pipe(ndev, pipe);
-	अगर (r < 0) अणु
-		अगर (pipe_created) अणु
-			अगर (nci_hci_delete_pipe(ndev, pipe) < 0) अणु
+open_pipe:
+	r = nci_hci_open_pipe(ndev, pipe);
+	if (r < 0) {
+		if (pipe_created) {
+			if (nci_hci_delete_pipe(ndev, pipe) < 0) {
 				/* TODO: Cannot clean by deleting pipe...
 				 * -> inconsistent state
 				 */
-			पूर्ण
-		पूर्ण
-		वापस r;
-	पूर्ण
+			}
+		}
+		return r;
+	}
 
 	ndev->hci_dev->pipes[pipe].gate = dest_gate;
 	ndev->hci_dev->pipes[pipe].host = dest_host;
 	ndev->hci_dev->gate2pipe[dest_gate] = pipe;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(nci_hci_connect_gate);
 
-अटल पूर्णांक nci_hci_dev_connect_gates(काष्ठा nci_dev *ndev,
+static int nci_hci_dev_connect_gates(struct nci_dev *ndev,
 				     u8 gate_count,
-				     काष्ठा nci_hci_gate *gates)
-अणु
-	पूर्णांक r;
+				     struct nci_hci_gate *gates)
+{
+	int r;
 
-	जबतक (gate_count--) अणु
+	while (gate_count--) {
 		r = nci_hci_connect_gate(ndev, gates->dest_host,
 					 gates->gate, gates->pipe);
-		अगर (r < 0)
-			वापस r;
+		if (r < 0)
+			return r;
 		gates++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक nci_hci_dev_session_init(काष्ठा nci_dev *ndev)
-अणु
-	काष्ठा nci_conn_info    *conn_info;
-	काष्ठा sk_buff *skb;
-	पूर्णांक r;
+int nci_hci_dev_session_init(struct nci_dev *ndev)
+{
+	struct nci_conn_info    *conn_info;
+	struct sk_buff *skb;
+	int r;
 
 	ndev->hci_dev->count_pipes = 0;
 	ndev->hci_dev->expected_pipes = 0;
 
 	conn_info = ndev->hci_dev->conn_info;
-	अगर (!conn_info)
-		वापस -EPROTO;
+	if (!conn_info)
+		return -EPROTO;
 
 	conn_info->data_exchange_cb = nci_hci_data_received_cb;
 	conn_info->data_exchange_cb_context = ndev;
 
 	nci_hci_reset_pipes(ndev->hci_dev);
 
-	अगर (ndev->hci_dev->init_data.gates[0].gate != NCI_HCI_ADMIN_GATE)
-		वापस -EPROTO;
+	if (ndev->hci_dev->init_data.gates[0].gate != NCI_HCI_ADMIN_GATE)
+		return -EPROTO;
 
 	r = nci_hci_connect_gate(ndev,
 				 ndev->hci_dev->init_data.gates[0].dest_host,
 				 ndev->hci_dev->init_data.gates[0].gate,
 				 ndev->hci_dev->init_data.gates[0].pipe);
-	अगर (r < 0)
-		वापस r;
+	if (r < 0)
+		return r;
 
 	r = nci_hci_get_param(ndev, NCI_HCI_ADMIN_GATE,
 			      NCI_HCI_ADMIN_PARAM_SESSION_IDENTITY, &skb);
-	अगर (r < 0)
-		वापस r;
+	if (r < 0)
+		return r;
 
-	अगर (skb->len &&
-	    skb->len == म_माप(ndev->hci_dev->init_data.session_id) &&
-	    !स_भेद(ndev->hci_dev->init_data.session_id, skb->data, skb->len) &&
-	    ndev->ops->hci_load_session) अणु
+	if (skb->len &&
+	    skb->len == strlen(ndev->hci_dev->init_data.session_id) &&
+	    !memcmp(ndev->hci_dev->init_data.session_id, skb->data, skb->len) &&
+	    ndev->ops->hci_load_session) {
 		/* Restore gate<->pipe table from some proprietary location. */
 		r = ndev->ops->hci_load_session(ndev);
-	पूर्ण अन्यथा अणु
+	} else {
 		r = nci_hci_clear_all_pipes(ndev);
-		अगर (r < 0)
-			जाओ निकास;
+		if (r < 0)
+			goto exit;
 
 		r = nci_hci_dev_connect_gates(ndev,
 					      ndev->hci_dev->init_data.gate_count,
 					      ndev->hci_dev->init_data.gates);
-		अगर (r < 0)
-			जाओ निकास;
+		if (r < 0)
+			goto exit;
 
 		r = nci_hci_set_param(ndev, NCI_HCI_ADMIN_GATE,
 				      NCI_HCI_ADMIN_PARAM_SESSION_IDENTITY,
 				      ndev->hci_dev->init_data.session_id,
-				      म_माप(ndev->hci_dev->init_data.session_id));
-	पूर्ण
+				      strlen(ndev->hci_dev->init_data.session_id));
+	}
 
-निकास:
-	kमुक्त_skb(skb);
+exit:
+	kfree_skb(skb);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 EXPORT_SYMBOL(nci_hci_dev_session_init);
 
-काष्ठा nci_hci_dev *nci_hci_allocate(काष्ठा nci_dev *ndev)
-अणु
-	काष्ठा nci_hci_dev *hdev;
+struct nci_hci_dev *nci_hci_allocate(struct nci_dev *ndev)
+{
+	struct nci_hci_dev *hdev;
 
-	hdev = kzalloc(माप(*hdev), GFP_KERNEL);
-	अगर (!hdev)
-		वापस शून्य;
+	hdev = kzalloc(sizeof(*hdev), GFP_KERNEL);
+	if (!hdev)
+		return NULL;
 
 	skb_queue_head_init(&hdev->rx_hcp_frags);
 	INIT_WORK(&hdev->msg_rx_work, nci_hci_msg_rx_work);
 	skb_queue_head_init(&hdev->msg_rx_queue);
 	hdev->ndev = ndev;
 
-	वापस hdev;
-पूर्ण
+	return hdev;
+}
 
-व्योम nci_hci_deallocate(काष्ठा nci_dev *ndev)
-अणु
-	kमुक्त(ndev->hci_dev);
-पूर्ण
+void nci_hci_deallocate(struct nci_dev *ndev)
+{
+	kfree(ndev->hci_dev);
+}

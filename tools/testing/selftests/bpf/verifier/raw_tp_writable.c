@@ -1,7 +1,6 @@
-<शैली गुरु>
-अणु
+{
 	"raw_tracepoint_writable: reject variable offset",
-	.insns = अणु
+	.insns = {
 		/* r6 is our tp buffer */
 		BPF_LDX_MEM(BPF_DW, BPF_REG_6, BPF_REG_1, 0),
 
@@ -15,11 +14,11 @@
 		BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0,
 			     BPF_FUNC_map_lookup_elem),
 
-		/* निकास clean अगर null */
+		/* exit clean if null */
 		BPF_JMP_IMM(BPF_JNE, BPF_REG_0, 0, 1),
 		BPF_EXIT_INSN(),
 
-		/* shअगरt the buffer poपूर्णांकer to a variable location */
+		/* shift the buffer pointer to a variable location */
 		BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_0, 0),
 		BPF_ALU64_REG(BPF_ADD, BPF_REG_6, BPF_REG_0),
 		/* clobber whatever's there */
@@ -28,9 +27,9 @@
 
 		BPF_MOV64_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 1, पूर्ण,
+	},
+	.fixup_map_hash_8b = { 1, },
 	.prog_type = BPF_PROG_TYPE_RAW_TRACEPOINT_WRITABLE,
 	.errstr = "R6 invalid variable buffer offset: off=0, var_off=(0x0; 0xffffffff)",
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
+},

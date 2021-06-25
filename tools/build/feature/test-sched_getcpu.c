@@ -1,13 +1,12 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#अगर_अघोषित _GNU_SOURCE
-#घोषणा _GNU_SOURCE
-#पूर्ण_अगर
-#समावेश <sched.h>
+// SPDX-License-Identifier: GPL-2.0
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+#include <sched.h>
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	वापस sched_अ_लोpu();
-पूर्ण
+int main(void)
+{
+	return sched_getcpu();
+}
 
-#अघोषित _GNU_SOURCE
+#undef _GNU_SOURCE

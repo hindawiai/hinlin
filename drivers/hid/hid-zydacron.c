@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
-*  HID driver क्रम zydacron remote control
+*  HID driver for zydacron remote control
 *
 *  Copyright (c) 2010 Don Prince <dhprince.devel@yahoo.co.uk>
 */
@@ -9,201 +8,201 @@
 /*
 */
 
-#समावेश <linux/device.h>
-#समावेश <linux/hid.h>
-#समावेश <linux/module.h>
+#include <linux/device.h>
+#include <linux/hid.h>
+#include <linux/module.h>
 
-#समावेश "hid-ids.h"
+#include "hid-ids.h"
 
-काष्ठा zc_device अणु
-	काष्ठा input_dev	*input_ep81;
-	अचिन्हित लघु		last_key[4];
-पूर्ण;
+struct zc_device {
+	struct input_dev	*input_ep81;
+	unsigned short		last_key[4];
+};
 
 
 /*
 * Zydacron remote control has an invalid HID report descriptor,
-* that needs fixing beक्रमe we can parse it.
+* that needs fixing before we can parse it.
 */
-अटल __u8 *zc_report_fixup(काष्ठा hid_device *hdev, __u8 *rdesc,
-	अचिन्हित पूर्णांक *rsize)
-अणु
-	अगर (*rsize >= 253 &&
+static __u8 *zc_report_fixup(struct hid_device *hdev, __u8 *rdesc,
+	unsigned int *rsize)
+{
+	if (*rsize >= 253 &&
 		rdesc[0x96] == 0xbc && rdesc[0x97] == 0xff &&
 		rdesc[0xca] == 0xbc && rdesc[0xcb] == 0xff &&
-		rdesc[0xe1] == 0xbc && rdesc[0xe2] == 0xff) अणु
+		rdesc[0xe1] == 0xbc && rdesc[0xe2] == 0xff) {
 			hid_info(hdev,
 				"fixing up zydacron remote control report descriptor\n");
 			rdesc[0x96] = rdesc[0xca] = rdesc[0xe1] = 0x0c;
 			rdesc[0x97] = rdesc[0xcb] = rdesc[0xe2] = 0x00;
-		पूर्ण
-	वापस rdesc;
-पूर्ण
+		}
+	return rdesc;
+}
 
-#घोषणा zc_map_key_clear(c) \
+#define zc_map_key_clear(c) \
 	hid_map_usage_clear(hi, usage, bit, max, EV_KEY, (c))
 
-अटल पूर्णांक zc_input_mapping(काष्ठा hid_device *hdev, काष्ठा hid_input *hi,
-	काष्ठा hid_field *field, काष्ठा hid_usage *usage,
-	अचिन्हित दीर्घ **bit, पूर्णांक *max)
-अणु
-	पूर्णांक i;
-	काष्ठा zc_device *zc = hid_get_drvdata(hdev);
+static int zc_input_mapping(struct hid_device *hdev, struct hid_input *hi,
+	struct hid_field *field, struct hid_usage *usage,
+	unsigned long **bit, int *max)
+{
+	int i;
+	struct zc_device *zc = hid_get_drvdata(hdev);
 	zc->input_ep81 = hi->input;
 
-	अगर ((usage->hid & HID_USAGE_PAGE) != HID_UP_CONSUMER)
-		वापस 0;
+	if ((usage->hid & HID_USAGE_PAGE) != HID_UP_CONSUMER)
+		return 0;
 
 	dbg_hid("zynacron input mapping event [0x%x]\n",
 		usage->hid & HID_USAGE);
 
-	चयन (usage->hid & HID_USAGE) अणु
+	switch (usage->hid & HID_USAGE) {
 	/* report 2 */
-	हाल 0x10:
+	case 0x10:
 		zc_map_key_clear(KEY_MODE);
-		अवरोध;
-	हाल 0x30:
+		break;
+	case 0x30:
 		zc_map_key_clear(KEY_SCREEN);
-		अवरोध;
-	हाल 0x70:
+		break;
+	case 0x70:
 		zc_map_key_clear(KEY_INFO);
-		अवरोध;
+		break;
 	/* report 3 */
-	हाल 0x04:
+	case 0x04:
 		zc_map_key_clear(KEY_RADIO);
-		अवरोध;
+		break;
 	/* report 4 */
-	हाल 0x0d:
+	case 0x0d:
 		zc_map_key_clear(KEY_PVR);
-		अवरोध;
-	हाल 0x25:
+		break;
+	case 0x25:
 		zc_map_key_clear(KEY_TV);
-		अवरोध;
-	हाल 0x47:
+		break;
+	case 0x47:
 		zc_map_key_clear(KEY_AUDIO);
-		अवरोध;
-	हाल 0x49:
+		break;
+	case 0x49:
 		zc_map_key_clear(KEY_AUX);
-		अवरोध;
-	हाल 0x4a:
+		break;
+	case 0x4a:
 		zc_map_key_clear(KEY_VIDEO);
-		अवरोध;
-	हाल 0x48:
+		break;
+	case 0x48:
 		zc_map_key_clear(KEY_DVD);
-		अवरोध;
-	हाल 0x24:
+		break;
+	case 0x24:
 		zc_map_key_clear(KEY_MENU);
-		अवरोध;
-	हाल 0x32:
+		break;
+	case 0x32:
 		zc_map_key_clear(KEY_TEXT);
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+		break;
+	default:
+		return 0;
+	}
 
-	क्रम (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
 		zc->last_key[i] = 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक zc_raw_event(काष्ठा hid_device *hdev, काष्ठा hid_report *report,
-	 u8 *data, पूर्णांक size)
-अणु
-	काष्ठा zc_device *zc = hid_get_drvdata(hdev);
-	पूर्णांक ret = 0;
-	अचिन्हित key;
-	अचिन्हित लघु index;
+static int zc_raw_event(struct hid_device *hdev, struct hid_report *report,
+	 u8 *data, int size)
+{
+	struct zc_device *zc = hid_get_drvdata(hdev);
+	int ret = 0;
+	unsigned key;
+	unsigned short index;
 
-	अगर (report->id == data[0]) अणु
+	if (report->id == data[0]) {
 
-		/* अवरोध keys */
-		क्रम (index = 0; index < 4; index++) अणु
+		/* break keys */
+		for (index = 0; index < 4; index++) {
 			key = zc->last_key[index];
-			अगर (key) अणु
+			if (key) {
 				input_event(zc->input_ep81, EV_KEY, key, 0);
 				zc->last_key[index] = 0;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		key = 0;
-		चयन (report->id) अणु
-		हाल 0x02:
-		हाल 0x03:
-			चयन (data[1]) अणु
-			हाल 0x10:
+		switch (report->id) {
+		case 0x02:
+		case 0x03:
+			switch (data[1]) {
+			case 0x10:
 				key = KEY_MODE;
 				index = 0;
-				अवरोध;
-			हाल 0x30:
+				break;
+			case 0x30:
 				key = KEY_SCREEN;
 				index = 1;
-				अवरोध;
-			हाल 0x70:
+				break;
+			case 0x70:
 				key = KEY_INFO;
 				index = 2;
-				अवरोध;
-			हाल 0x04:
+				break;
+			case 0x04:
 				key = KEY_RADIO;
 				index = 3;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			अगर (key) अणु
+			if (key) {
 				input_event(zc->input_ep81, EV_KEY, key, 1);
 				zc->last_key[index] = key;
-			पूर्ण
+			}
 
 			ret = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक zc_probe(काष्ठा hid_device *hdev, स्थिर काष्ठा hid_device_id *id)
-अणु
-	पूर्णांक ret;
-	काष्ठा zc_device *zc;
+static int zc_probe(struct hid_device *hdev, const struct hid_device_id *id)
+{
+	int ret;
+	struct zc_device *zc;
 
-	zc = devm_kzalloc(&hdev->dev, माप(*zc), GFP_KERNEL);
-	अगर (zc == शून्य) अणु
+	zc = devm_kzalloc(&hdev->dev, sizeof(*zc), GFP_KERNEL);
+	if (zc == NULL) {
 		hid_err(hdev, "can't alloc descriptor\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	hid_set_drvdata(hdev, zc);
 
 	ret = hid_parse(hdev);
-	अगर (ret) अणु
+	if (ret) {
 		hid_err(hdev, "parse failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = hid_hw_start(hdev, HID_CONNECT_DEFAULT);
-	अगर (ret) अणु
+	if (ret) {
 		hid_err(hdev, "hw start failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा hid_device_id zc_devices[] = अणु
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_ZYDACRON, USB_DEVICE_ID_ZYDACRON_REMOTE_CONTROL) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct hid_device_id zc_devices[] = {
+	{ HID_USB_DEVICE(USB_VENDOR_ID_ZYDACRON, USB_DEVICE_ID_ZYDACRON_REMOTE_CONTROL) },
+	{ }
+};
 MODULE_DEVICE_TABLE(hid, zc_devices);
 
-अटल काष्ठा hid_driver zc_driver = अणु
+static struct hid_driver zc_driver = {
 	.name = "zydacron",
 	.id_table = zc_devices,
 	.report_fixup = zc_report_fixup,
 	.input_mapping = zc_input_mapping,
 	.raw_event = zc_raw_event,
 	.probe = zc_probe,
-पूर्ण;
+};
 module_hid_driver(zc_driver);
 
 MODULE_LICENSE("GPL");

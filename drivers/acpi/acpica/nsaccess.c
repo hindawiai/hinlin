@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /*******************************************************************************
  *
- * Module Name: nsaccess - Top-level functions क्रम accessing ACPI namespace
+ * Module Name: nsaccess - Top-level functions for accessing ACPI namespace
  *
  ******************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "amlcode.h"
-#समावेश "acnamesp.h"
-#समावेश "acdispat.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "amlcode.h"
+#include "acnamesp.h"
+#include "acdispat.h"
 
-#अगर_घोषित ACPI_ASL_COMPILER
-#समावेश "acdisasm.h"
-#पूर्ण_अगर
+#ifdef ACPI_ASL_COMPILER
+#include "acdisasm.h"
+#endif
 
-#घोषणा _COMPONENT          ACPI_NAMESPACE
+#define _COMPONENT          ACPI_NAMESPACE
 ACPI_MODULE_NAME("nsaccess")
 
 /*******************************************************************************
@@ -27,41 +26,41 @@ ACPI_MODULE_NAME("nsaccess")
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Allocate and initialize the शेष root named objects
+ * DESCRIPTION: Allocate and initialize the default root named objects
  *
- * MUTEX:       Locks namespace क्रम entire execution
+ * MUTEX:       Locks namespace for entire execution
  *
  ******************************************************************************/
-acpi_status acpi_ns_root_initialize(व्योम)
-अणु
+acpi_status acpi_ns_root_initialize(void)
+{
 	acpi_status status;
-	स्थिर काष्ठा acpi_predefined_names *init_val = शून्य;
-	काष्ठा acpi_namespace_node *new_node;
-	काष्ठा acpi_namespace_node *prev_node = शून्य;
-	जोड़ acpi_opeअक्रम_object *obj_desc;
-	acpi_string val = शून्य;
+	const struct acpi_predefined_names *init_val = NULL;
+	struct acpi_namespace_node *new_node;
+	struct acpi_namespace_node *prev_node = NULL;
+	union acpi_operand_object *obj_desc;
+	acpi_string val = NULL;
 
 	ACPI_FUNCTION_TRACE(ns_root_initialize);
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_NAMESPACE);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	/*
-	 * The global root ptr is initially शून्य, so a non-शून्य value indicates
-	 * that acpi_ns_root_initialize() has alपढ़ोy been called; just वापस.
+	 * The global root ptr is initially NULL, so a non-NULL value indicates
+	 * that acpi_ns_root_initialize() has already been called; just return.
 	 */
-	अगर (acpi_gbl_root_node) अणु
+	if (acpi_gbl_root_node) {
 		status = AE_OK;
-		जाओ unlock_and_निकास;
-	पूर्ण
+		goto unlock_and_exit;
+	}
 
 	/*
-	 * Tell the rest of the subप्रणाली that the root is initialized
+	 * Tell the rest of the subsystem that the root is initialized
 	 * (This is OK because the namespace is locked)
 	 */
-	acpi_gbl_root_node = &acpi_gbl_root_node_काष्ठा;
+	acpi_gbl_root_node = &acpi_gbl_root_node_struct;
 
 	/* Enter the predefined names in the name table */
 
@@ -69,13 +68,13 @@ acpi_status acpi_ns_root_initialize(व्योम)
 			  "Entering predefined entries into namespace\n"));
 
 	/*
-	 * Create the initial (शेष) namespace.
+	 * Create the initial (default) namespace.
 	 * This namespace looks like something similar to this:
 	 *
 	 *   ACPI Namespace (from Namespace Root):
 	 *    0  _GPE Scope        00203160 00
 	 *    0  _PR_ Scope        002031D0 00
-	 *    0  _SB_ Device       00203240 00 Notअगरy Object: 0020ADD8
+	 *    0  _SB_ Device       00203240 00 Notify Object: 0020ADD8
 	 *    0  _SI_ Scope        002032B0 00
 	 *    0  _TZ_ Device       00203320 00
 	 *    0  _REV Integer      00203390 00 = 0000000000000002
@@ -83,15 +82,15 @@ acpi_status acpi_ns_root_initialize(व्योम)
 	 *    0  _GL_ Mutex        00203580 00 Object 002035F0
 	 *    0  _OSI Method       00203678 00 Args 1 Len 0000 Aml 00000000
 	 */
-	क्रम (init_val = acpi_gbl_pre_defined_names; init_val->name; init_val++) अणु
+	for (init_val = acpi_gbl_pre_defined_names; init_val->name; init_val++) {
 		status = AE_OK;
 
-		/* _OSI is optional क्रम now, will be permanent later */
+		/* _OSI is optional for now, will be permanent later */
 
-		अगर (!म_भेद(init_val->name, "_OSI")
-		    && !acpi_gbl_create_osi_method) अणु
-			जारी;
-		पूर्ण
+		if (!strcmp(init_val->name, "_OSI")
+		    && !acpi_gbl_create_osi_method) {
+			continue;
+		}
 
 		/*
 		 * Create, init, and link the new predefined name
@@ -101,92 +100,92 @@ acpi_status acpi_ns_root_initialize(व्योम)
 		 */
 		new_node =
 		    acpi_ns_create_node(*ACPI_CAST_PTR(u32, init_val->name));
-		अगर (!new_node) अणु
+		if (!new_node) {
 			status = AE_NO_MEMORY;
-			जाओ unlock_and_निकास;
-		पूर्ण
+			goto unlock_and_exit;
+		}
 
 		new_node->descriptor_type = ACPI_DESC_TYPE_NAMED;
 		new_node->type = init_val->type;
 
-		अगर (!prev_node) अणु
-			acpi_gbl_root_node_काष्ठा.child = new_node;
-		पूर्ण अन्यथा अणु
+		if (!prev_node) {
+			acpi_gbl_root_node_struct.child = new_node;
+		} else {
 			prev_node->peer = new_node;
-		पूर्ण
+		}
 
-		new_node->parent = &acpi_gbl_root_node_काष्ठा;
+		new_node->parent = &acpi_gbl_root_node_struct;
 		prev_node = new_node;
 
 		/*
-		 * Name entered successfully. If entry in pre_defined_names[] specअगरies
+		 * Name entered successfully. If entry in pre_defined_names[] specifies
 		 * an initial value, create the initial value.
 		 */
-		अगर (init_val->val) अणु
+		if (init_val->val) {
 			status = acpi_os_predefined_override(init_val, &val);
-			अगर (ACPI_FAILURE(status)) अणु
+			if (ACPI_FAILURE(status)) {
 				ACPI_ERROR((AE_INFO,
 					    "Could not override predefined %s",
 					    init_val->name));
-			पूर्ण
+			}
 
-			अगर (!val) अणु
+			if (!val) {
 				val = init_val->val;
-			पूर्ण
+			}
 
 			/*
 			 * Entry requests an initial value, allocate a
-			 * descriptor क्रम it.
+			 * descriptor for it.
 			 */
 			obj_desc =
-			    acpi_ut_create_पूर्णांकernal_object(init_val->type);
-			अगर (!obj_desc) अणु
+			    acpi_ut_create_internal_object(init_val->type);
+			if (!obj_desc) {
 				status = AE_NO_MEMORY;
-				जाओ unlock_and_निकास;
-			पूर्ण
+				goto unlock_and_exit;
+			}
 
 			/*
 			 * Convert value string from table entry to
-			 * पूर्णांकernal representation. Only types actually
-			 * used क्रम initial values are implemented here.
+			 * internal representation. Only types actually
+			 * used for initial values are implemented here.
 			 */
-			चयन (init_val->type) अणु
-			हाल ACPI_TYPE_METHOD:
+			switch (init_val->type) {
+			case ACPI_TYPE_METHOD:
 
 				obj_desc->method.param_count =
 				    (u8) ACPI_TO_INTEGER(val);
 				obj_desc->common.flags |= AOPOBJ_DATA_VALID;
 
-#अगर defined (ACPI_ASL_COMPILER)
+#if defined (ACPI_ASL_COMPILER)
 
-				/* Save the parameter count क्रम the iASL compiler */
+				/* Save the parameter count for the iASL compiler */
 
 				new_node->value = obj_desc->method.param_count;
-#अन्यथा
+#else
 				/* Mark this as a very SPECIAL method (_OSI) */
 
 				obj_desc->method.info_flags =
 				    ACPI_METHOD_INTERNAL_ONLY;
 				obj_desc->method.dispatch.implementation =
 				    acpi_ut_osi_implementation;
-#पूर्ण_अगर
-				अवरोध;
+#endif
+				break;
 
-			हाल ACPI_TYPE_INTEGER:
+			case ACPI_TYPE_INTEGER:
 
-				obj_desc->पूर्णांकeger.value = ACPI_TO_INTEGER(val);
-				अवरोध;
+				obj_desc->integer.value = ACPI_TO_INTEGER(val);
+				break;
 
-			हाल ACPI_TYPE_STRING:
+			case ACPI_TYPE_STRING:
 
-				/* Build an object around the अटल string */
+				/* Build an object around the static string */
 
-				obj_desc->string.length = (u32)म_माप(val);
-				obj_desc->string.poपूर्णांकer = val;
+				obj_desc->string.length = (u32)strlen(val);
+				obj_desc->string.pointer = val;
 				obj_desc->common.flags |= AOPOBJ_STATIC_POINTER;
-				अवरोध;
+				break;
 
-			हाल ACPI_TYPE_MUTEX:
+			case ACPI_TYPE_MUTEX:
 
 				obj_desc->mutex.node = new_node;
 				obj_desc->mutex.sync_level =
@@ -197,165 +196,165 @@ acpi_status acpi_ns_root_initialize(व्योम)
 				status =
 				    acpi_os_create_mutex(&obj_desc->mutex.
 							 os_mutex);
-				अगर (ACPI_FAILURE(status)) अणु
-					acpi_ut_हटाओ_reference(obj_desc);
-					जाओ unlock_and_निकास;
-				पूर्ण
+				if (ACPI_FAILURE(status)) {
+					acpi_ut_remove_reference(obj_desc);
+					goto unlock_and_exit;
+				}
 
-				/* Special हाल क्रम ACPI Global Lock */
+				/* Special case for ACPI Global Lock */
 
-				अगर (म_भेद(init_val->name, "_GL_") == 0) अणु
+				if (strcmp(init_val->name, "_GL_") == 0) {
 					acpi_gbl_global_lock_mutex = obj_desc;
 
-					/* Create additional counting semaphore क्रम global lock */
+					/* Create additional counting semaphore for global lock */
 
 					status =
 					    acpi_os_create_semaphore(1, 0,
 								     &acpi_gbl_global_lock_semaphore);
-					अगर (ACPI_FAILURE(status)) अणु
-						acpi_ut_हटाओ_reference
+					if (ACPI_FAILURE(status)) {
+						acpi_ut_remove_reference
 						    (obj_desc);
-						जाओ unlock_and_निकास;
-					पूर्ण
-				पूर्ण
-				अवरोध;
+						goto unlock_and_exit;
+					}
+				}
+				break;
 
-			शेष:
+			default:
 
 				ACPI_ERROR((AE_INFO,
 					    "Unsupported initial type value 0x%X",
 					    init_val->type));
-				acpi_ut_हटाओ_reference(obj_desc);
-				obj_desc = शून्य;
-				जारी;
-			पूर्ण
+				acpi_ut_remove_reference(obj_desc);
+				obj_desc = NULL;
+				continue;
+			}
 
-			/* Store poपूर्णांकer to value descriptor in the Node */
+			/* Store pointer to value descriptor in the Node */
 
 			status = acpi_ns_attach_object(new_node, obj_desc,
 						       obj_desc->common.type);
 
 			/* Remove local reference to the object */
 
-			acpi_ut_हटाओ_reference(obj_desc);
-		पूर्ण
-	पूर्ण
+			acpi_ut_remove_reference(obj_desc);
+		}
+	}
 
-unlock_and_निकास:
-	(व्योम)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
+unlock_and_exit:
+	(void)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
 
 	/* Save a handle to "_GPE", it is always present */
 
-	अगर (ACPI_SUCCESS(status)) अणु
-		status = acpi_ns_get_node(शून्य, "\\_GPE", ACPI_NS_NO_UPSEARCH,
+	if (ACPI_SUCCESS(status)) {
+		status = acpi_ns_get_node(NULL, "\\_GPE", ACPI_NS_NO_UPSEARCH,
 					  &acpi_gbl_fadt_gpe_device);
-	पूर्ण
+	}
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ns_lookup
  *
  * PARAMETERS:  scope_info      - Current scope info block
- *              pathname        - Search pathname, in पूर्णांकernal क्रमmat
+ *              pathname        - Search pathname, in internal format
  *                                (as represented in the AML stream)
  *              type            - Type associated with name
- *              पूर्णांकerpreter_mode - IMODE_LOAD_PASS2 => add name अगर not found
+ *              interpreter_mode - IMODE_LOAD_PASS2 => add name if not found
  *              flags           - Flags describing the search restrictions
  *              walk_state      - Current state of the walk
- *              वापस_node     - Where the Node is placed (अगर found
+ *              return_node     - Where the Node is placed (if found
  *                                or created successfully)
  *
  * RETURN:      Status
  *
  * DESCRIPTION: Find or enter the passed name in the name space.
- *              Log an error अगर name not found in Exec mode.
+ *              Log an error if name not found in Exec mode.
  *
  * MUTEX:       Assumes namespace is locked.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ns_lookup(जोड़ acpi_generic_state *scope_info,
-	       अक्षर *pathname,
+acpi_ns_lookup(union acpi_generic_state *scope_info,
+	       char *pathname,
 	       acpi_object_type type,
-	       acpi_पूर्णांकerpreter_mode पूर्णांकerpreter_mode,
+	       acpi_interpreter_mode interpreter_mode,
 	       u32 flags,
-	       काष्ठा acpi_walk_state *walk_state,
-	       काष्ठा acpi_namespace_node **वापस_node)
-अणु
+	       struct acpi_walk_state *walk_state,
+	       struct acpi_namespace_node **return_node)
+{
 	acpi_status status;
-	अक्षर *path = pathname;
-	अक्षर *बाह्यal_path;
-	काष्ठा acpi_namespace_node *prefix_node;
-	काष्ठा acpi_namespace_node *current_node = शून्य;
-	काष्ठा acpi_namespace_node *this_node = शून्य;
+	char *path = pathname;
+	char *external_path;
+	struct acpi_namespace_node *prefix_node;
+	struct acpi_namespace_node *current_node = NULL;
+	struct acpi_namespace_node *this_node = NULL;
 	u32 num_segments;
 	u32 num_carats;
 	acpi_name simple_name;
-	acpi_object_type type_to_check_क्रम;
+	acpi_object_type type_to_check_for;
 	acpi_object_type this_search_type;
 	u32 search_parent_flag = ACPI_NS_SEARCH_PARENT;
 	u32 local_flags;
-	acpi_पूर्णांकerpreter_mode local_पूर्णांकerpreter_mode;
+	acpi_interpreter_mode local_interpreter_mode;
 
 	ACPI_FUNCTION_TRACE(ns_lookup);
 
-	अगर (!वापस_node) अणु
-		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
-	पूर्ण
+	if (!return_node) {
+		return_ACPI_STATUS(AE_BAD_PARAMETER);
+	}
 
 	local_flags = flags &
 	    ~(ACPI_NS_ERROR_IF_FOUND | ACPI_NS_OVERRIDE_IF_FOUND |
 	      ACPI_NS_SEARCH_PARENT);
-	*वापस_node = ACPI_ENTRY_NOT_FOUND;
+	*return_node = ACPI_ENTRY_NOT_FOUND;
 	acpi_gbl_ns_lookup_count++;
 
-	अगर (!acpi_gbl_root_node) अणु
-		वापस_ACPI_STATUS(AE_NO_NAMESPACE);
-	पूर्ण
+	if (!acpi_gbl_root_node) {
+		return_ACPI_STATUS(AE_NO_NAMESPACE);
+	}
 
 	/* Get the prefix scope. A null scope means use the root scope */
 
-	अगर ((!scope_info) || (!scope_info->scope.node)) अणु
+	if ((!scope_info) || (!scope_info->scope.node)) {
 		ACPI_DEBUG_PRINT((ACPI_DB_NAMES,
 				  "Null scope prefix, using root node (%p)\n",
 				  acpi_gbl_root_node));
 
 		prefix_node = acpi_gbl_root_node;
-	पूर्ण अन्यथा अणु
+	} else {
 		prefix_node = scope_info->scope.node;
-		अगर (ACPI_GET_DESCRIPTOR_TYPE(prefix_node) !=
-		    ACPI_DESC_TYPE_NAMED) अणु
+		if (ACPI_GET_DESCRIPTOR_TYPE(prefix_node) !=
+		    ACPI_DESC_TYPE_NAMED) {
 			ACPI_ERROR((AE_INFO, "%p is not a namespace node [%s]",
 				    prefix_node,
 				    acpi_ut_get_descriptor_name(prefix_node)));
-			वापस_ACPI_STATUS(AE_AML_INTERNAL);
-		पूर्ण
+			return_ACPI_STATUS(AE_AML_INTERNAL);
+		}
 
-		अगर (!(flags & ACPI_NS_PREFIX_IS_SCOPE)) अणु
+		if (!(flags & ACPI_NS_PREFIX_IS_SCOPE)) {
 			/*
 			 * This node might not be a actual "scope" node (such as a
 			 * Device/Method, etc.)  It could be a Package or other object
 			 * node. Backup up the tree to find the containing scope node.
 			 */
-			जबतक (!acpi_ns_खोलोs_scope(prefix_node->type) &&
-			       prefix_node->type != ACPI_TYPE_ANY) अणु
+			while (!acpi_ns_opens_scope(prefix_node->type) &&
+			       prefix_node->type != ACPI_TYPE_ANY) {
 				prefix_node = prefix_node->parent;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	/* Save type. TBD: may be no दीर्घer necessary */
+	/* Save type. TBD: may be no longer necessary */
 
-	type_to_check_क्रम = type;
+	type_to_check_for = type;
 
 	/*
 	 * Begin examination of the actual pathname
 	 */
-	अगर (!pathname) अणु
+	if (!pathname) {
 
 		/* A Null name_path is allowed and refers to the root */
 
@@ -366,35 +365,35 @@ acpi_ns_lookup(जोड़ acpi_generic_state *scope_info,
 		ACPI_DEBUG_PRINT((ACPI_DB_NAMES,
 				  "Null Pathname (Zero segments), Flags=%X\n",
 				  flags));
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * Name poपूर्णांकer is valid (and must be in पूर्णांकernal name क्रमmat)
+		 * Name pointer is valid (and must be in internal name format)
 		 *
-		 * Check क्रम scope prefixes:
+		 * Check for scope prefixes:
 		 *
 		 * As represented in the AML stream, a namepath consists of an
 		 * optional scope prefix followed by a name segment part.
 		 *
 		 * If present, the scope prefix is either a Root Prefix (in
-		 * which हाल the name is fully qualअगरied), or one or more
-		 * Parent Prefixes (in which हाल the name's scope is relative
+		 * which case the name is fully qualified), or one or more
+		 * Parent Prefixes (in which case the name's scope is relative
 		 * to the current scope).
 		 */
-		अगर (*path == (u8) AML_ROOT_PREFIX) अणु
+		if (*path == (u8) AML_ROOT_PREFIX) {
 
-			/* Pathname is fully qualअगरied, start from the root */
+			/* Pathname is fully qualified, start from the root */
 
 			this_node = acpi_gbl_root_node;
 			search_parent_flag = ACPI_NS_NO_UPSEARCH;
 
-			/* Poपूर्णांक to name segment part */
+			/* Point to name segment part */
 
 			path++;
 
 			ACPI_DEBUG_PRINT((ACPI_DB_NAMES,
 					  "Path is absolute from root [%p]\n",
 					  this_node));
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Pathname is relative to current scope, start there */
 
 			ACPI_DEBUG_PRINT((ACPI_DB_NAMES,
@@ -404,18 +403,18 @@ acpi_ns_lookup(जोड़ acpi_generic_state *scope_info,
 
 			/*
 			 * Handle multiple Parent Prefixes (carat) by just getting
-			 * the parent node क्रम each prefix instance.
+			 * the parent node for each prefix instance.
 			 */
 			this_node = prefix_node;
 			num_carats = 0;
-			जबतक (*path == (u8) AML_PARENT_PREFIX) अणु
+			while (*path == (u8) AML_PARENT_PREFIX) {
 
-				/* Name is fully qualअगरied, no search rules apply */
+				/* Name is fully qualified, no search rules apply */
 
 				search_parent_flag = ACPI_NS_NO_UPSEARCH;
 
 				/*
-				 * Poपूर्णांक past this prefix to the name segment
+				 * Point past this prefix to the name segment
 				 * part or the next Parent Prefix
 				 */
 				path++;
@@ -424,34 +423,34 @@ acpi_ns_lookup(जोड़ acpi_generic_state *scope_info,
 
 				num_carats++;
 				this_node = this_node->parent;
-				अगर (!this_node) अणु
+				if (!this_node) {
 					/*
 					 * Current scope has no parent scope. Externalize
-					 * the पूर्णांकernal path क्रम error message.
+					 * the internal path for error message.
 					 */
 					status =
-					    acpi_ns_बाह्यalize_name
-					    (ACPI_UINT32_MAX, pathname, शून्य,
-					     &बाह्यal_path);
-					अगर (ACPI_SUCCESS(status)) अणु
+					    acpi_ns_externalize_name
+					    (ACPI_UINT32_MAX, pathname, NULL,
+					     &external_path);
+					if (ACPI_SUCCESS(status)) {
 						ACPI_ERROR((AE_INFO,
 							    "%s: Path has too many parent prefixes (^)",
-							    बाह्यal_path));
+							    external_path));
 
-						ACPI_FREE(बाह्यal_path);
-					पूर्ण
+						ACPI_FREE(external_path);
+					}
 
-					वापस_ACPI_STATUS(AE_NOT_FOUND);
-				पूर्ण
-			पूर्ण
+					return_ACPI_STATUS(AE_NOT_FOUND);
+				}
+			}
 
-			अगर (search_parent_flag == ACPI_NS_NO_UPSEARCH) अणु
+			if (search_parent_flag == ACPI_NS_NO_UPSEARCH) {
 				ACPI_DEBUG_PRINT((ACPI_DB_NAMES,
 						  "Search scope is [%4.4s], path has %u carat(s)\n",
 						  acpi_ut_get_node_name
 						  (this_node), num_carats));
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/*
 		 * Determine the number of ACPI name segments in this pathname.
@@ -463,13 +462,13 @@ acpi_ns_lookup(जोड़ acpi_generic_state *scope_info,
 		 *      number of segments and the segments themselves.
 		 *  - A single 4-byte name segment
 		 *
-		 * Examine the name prefix opcode, अगर any, to determine the number of
+		 * Examine the name prefix opcode, if any, to determine the number of
 		 * segments.
 		 */
-		चयन (*path) अणु
-		हाल 0:
+		switch (*path) {
+		case 0:
 			/*
-			 * Null name after a root or parent prefixes. We alपढ़ोy
+			 * Null name after a root or parent prefixes. We already
 			 * have the correct target node and there are no name segments.
 			 */
 			num_segments = 0;
@@ -478,15 +477,15 @@ acpi_ns_lookup(जोड़ acpi_generic_state *scope_info,
 			ACPI_DEBUG_PRINT((ACPI_DB_NAMES,
 					  "Prefix-only Pathname (Zero name segments), Flags=%X\n",
 					  flags));
-			अवरोध;
+			break;
 
-		हाल AML_DUAL_NAME_PREFIX:
+		case AML_DUAL_NAME_PREFIX:
 
-			/* More than one name_seg, search rules करो not apply */
+			/* More than one name_seg, search rules do not apply */
 
 			search_parent_flag = ACPI_NS_NO_UPSEARCH;
 
-			/* Two segments, poपूर्णांक to first name segment */
+			/* Two segments, point to first name segment */
 
 			num_segments = 2;
 			path++;
@@ -494,15 +493,15 @@ acpi_ns_lookup(जोड़ acpi_generic_state *scope_info,
 			ACPI_DEBUG_PRINT((ACPI_DB_NAMES,
 					  "Dual Pathname (2 segments, Flags=%X)\n",
 					  flags));
-			अवरोध;
+			break;
 
-		हाल AML_MULTI_NAME_PREFIX:
+		case AML_MULTI_NAME_PREFIX:
 
-			/* More than one name_seg, search rules करो not apply */
+			/* More than one name_seg, search rules do not apply */
 
 			search_parent_flag = ACPI_NS_NO_UPSEARCH;
 
-			/* Extract segment count, poपूर्णांक to first name segment */
+			/* Extract segment count, point to first name segment */
 
 			path++;
 			num_segments = (u32) (u8) * path;
@@ -511,236 +510,236 @@ acpi_ns_lookup(जोड़ acpi_generic_state *scope_info,
 			ACPI_DEBUG_PRINT((ACPI_DB_NAMES,
 					  "Multi Pathname (%u Segments, Flags=%X)\n",
 					  num_segments, flags));
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			/*
 			 * Not a Null name, no Dual or Multi prefix, hence there is
-			 * only one name segment and Pathname is alपढ़ोy poपूर्णांकing to it.
+			 * only one name segment and Pathname is already pointing to it.
 			 */
 			num_segments = 1;
 
 			ACPI_DEBUG_PRINT((ACPI_DB_NAMES,
 					  "Simple Pathname (1 segment, Flags=%X)\n",
 					  flags));
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		ACPI_DEBUG_EXEC(acpi_ns_prपूर्णांक_pathname(num_segments, path));
-	पूर्ण
+		ACPI_DEBUG_EXEC(acpi_ns_print_pathname(num_segments, path));
+	}
 
 	/*
-	 * Search namespace क्रम each segment of the name. Loop through and
-	 * verअगरy (or add to the namespace) each name segment.
+	 * Search namespace for each segment of the name. Loop through and
+	 * verify (or add to the namespace) each name segment.
 	 *
-	 * The object type is signअगरicant only at the last name
-	 * segment. (We करोn't care about the types aदीर्घ the path, only
+	 * The object type is significant only at the last name
+	 * segment. (We don't care about the types along the path, only
 	 * the type of the final target object.)
 	 */
 	this_search_type = ACPI_TYPE_ANY;
 	current_node = this_node;
 
-	जबतक (num_segments && current_node) अणु
+	while (num_segments && current_node) {
 		num_segments--;
-		अगर (!num_segments) अणु
+		if (!num_segments) {
 
 			/* This is the last segment, enable typechecking */
 
 			this_search_type = type;
 
 			/*
-			 * Only allow स्वतःmatic parent search (search rules) अगर the caller
-			 * requested it AND we have a single, non-fully-qualअगरied name_seg
+			 * Only allow automatic parent search (search rules) if the caller
+			 * requested it AND we have a single, non-fully-qualified name_seg
 			 */
-			अगर ((search_parent_flag != ACPI_NS_NO_UPSEARCH) &&
-			    (flags & ACPI_NS_SEARCH_PARENT)) अणु
+			if ((search_parent_flag != ACPI_NS_NO_UPSEARCH) &&
+			    (flags & ACPI_NS_SEARCH_PARENT)) {
 				local_flags |= ACPI_NS_SEARCH_PARENT;
-			पूर्ण
+			}
 
 			/* Set error flag according to caller */
 
-			अगर (flags & ACPI_NS_ERROR_IF_FOUND) अणु
+			if (flags & ACPI_NS_ERROR_IF_FOUND) {
 				local_flags |= ACPI_NS_ERROR_IF_FOUND;
-			पूर्ण
+			}
 
 			/* Set override flag according to caller */
 
-			अगर (flags & ACPI_NS_OVERRIDE_IF_FOUND) अणु
+			if (flags & ACPI_NS_OVERRIDE_IF_FOUND) {
 				local_flags |= ACPI_NS_OVERRIDE_IF_FOUND;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/* Handle opcodes that create a new name_seg via a full name_path */
 
-		local_पूर्णांकerpreter_mode = पूर्णांकerpreter_mode;
-		अगर ((flags & ACPI_NS_PREFIX_MUST_EXIST) && (num_segments > 0)) अणु
+		local_interpreter_mode = interpreter_mode;
+		if ((flags & ACPI_NS_PREFIX_MUST_EXIST) && (num_segments > 0)) {
 
-			/* Every element of the path must exist (except क्रम the final name_seg) */
+			/* Every element of the path must exist (except for the final name_seg) */
 
-			local_पूर्णांकerpreter_mode = ACPI_IMODE_EXECUTE;
-		पूर्ण
+			local_interpreter_mode = ACPI_IMODE_EXECUTE;
+		}
 
 		/* Extract one ACPI name from the front of the pathname */
 
 		ACPI_MOVE_32_TO_32(&simple_name, path);
 
-		/* Try to find the single (4 अक्षरacter) ACPI name */
+		/* Try to find the single (4 character) ACPI name */
 
 		status =
 		    acpi_ns_search_and_enter(simple_name, walk_state,
 					     current_node,
-					     local_पूर्णांकerpreter_mode,
+					     local_interpreter_mode,
 					     this_search_type, local_flags,
 					     &this_node);
-		अगर (ACPI_FAILURE(status)) अणु
-			अगर (status == AE_NOT_FOUND) अणु
-#अगर !defined ACPI_ASL_COMPILER	/* Note: iASL reports this error by itself, not needed here */
-				अगर (flags & ACPI_NS_PREFIX_MUST_EXIST) अणु
-					acpi_os_म_लिखो(ACPI_MSG_BIOS_ERROR
+		if (ACPI_FAILURE(status)) {
+			if (status == AE_NOT_FOUND) {
+#if !defined ACPI_ASL_COMPILER	/* Note: iASL reports this error by itself, not needed here */
+				if (flags & ACPI_NS_PREFIX_MUST_EXIST) {
+					acpi_os_printf(ACPI_MSG_BIOS_ERROR
 						       "Object does not exist: %4.4s\n",
-						       (अक्षर *)&simple_name);
-				पूर्ण
-#पूर्ण_अगर
+						       (char *)&simple_name);
+				}
+#endif
 				/* Name not found in ACPI namespace */
 
 				ACPI_DEBUG_PRINT((ACPI_DB_NAMES,
 						  "Name [%4.4s] not found in scope [%4.4s] %p\n",
-						  (अक्षर *)&simple_name,
-						  (अक्षर *)&current_node->name,
+						  (char *)&simple_name,
+						  (char *)&current_node->name,
 						  current_node));
-			पूर्ण
-#अगर_घोषित ACPI_EXEC_APP
-			अगर ((status == AE_ALREADY_EXISTS) &&
-			    (this_node->flags & ANOBJ_NODE_EARLY_INIT)) अणु
+			}
+#ifdef ACPI_EXEC_APP
+			if ((status == AE_ALREADY_EXISTS) &&
+			    (this_node->flags & ANOBJ_NODE_EARLY_INIT)) {
 				this_node->flags &= ~ANOBJ_NODE_EARLY_INIT;
 				status = AE_OK;
-			पूर्ण
-#पूर्ण_अगर
+			}
+#endif
 
-#अगर_घोषित ACPI_ASL_COMPILER
+#ifdef ACPI_ASL_COMPILER
 			/*
-			 * If this ACPI name alपढ़ोy exists within the namespace as an
-			 * बाह्यal declaration, then mark the बाह्यal as a conflicting
-			 * declaration and proceed to process the current node as अगर it did
+			 * If this ACPI name already exists within the namespace as an
+			 * external declaration, then mark the external as a conflicting
+			 * declaration and proceed to process the current node as if it did
 			 * not exist in the namespace. If this node is not processed as
 			 * normal, then it could cause improper namespace resolution
-			 * by failing to खोलो a new scope.
+			 * by failing to open a new scope.
 			 */
-			अगर (acpi_gbl_disयंत्र_flag &&
+			if (acpi_gbl_disasm_flag &&
 			    (status == AE_ALREADY_EXISTS) &&
 			    ((this_node->flags & ANOBJ_IS_EXTERNAL) ||
 			     (walk_state
-			      && walk_state->opcode == AML_EXTERNAL_OP))) अणु
+			      && walk_state->opcode == AML_EXTERNAL_OP))) {
 				this_node->flags &= ~ANOBJ_IS_EXTERNAL;
 				this_node->type = (u8)this_search_type;
-				अगर (walk_state->opcode != AML_EXTERNAL_OP) अणु
-					acpi_dm_mark_बाह्यal_conflict
+				if (walk_state->opcode != AML_EXTERNAL_OP) {
+					acpi_dm_mark_external_conflict
 					    (this_node);
-				पूर्ण
-				अवरोध;
-			पूर्ण
-#पूर्ण_अगर
+				}
+				break;
+			}
+#endif
 
-			*वापस_node = this_node;
-			वापस_ACPI_STATUS(status);
-		पूर्ण
+			*return_node = this_node;
+			return_ACPI_STATUS(status);
+		}
 
 		/* More segments to follow? */
 
-		अगर (num_segments > 0) अणु
+		if (num_segments > 0) {
 			/*
-			 * If we have an alias to an object that खोलोs a scope (such as a
+			 * If we have an alias to an object that opens a scope (such as a
 			 * device or processor), we need to dereference the alias here so
 			 * that we can access any children of the original node (via the
-			 * reमुख्यing segments).
+			 * remaining segments).
 			 */
-			अगर (this_node->type == ACPI_TYPE_LOCAL_ALIAS) अणु
-				अगर (!this_node->object) अणु
-					वापस_ACPI_STATUS(AE_NOT_EXIST);
-				पूर्ण
+			if (this_node->type == ACPI_TYPE_LOCAL_ALIAS) {
+				if (!this_node->object) {
+					return_ACPI_STATUS(AE_NOT_EXIST);
+				}
 
-				अगर (acpi_ns_खोलोs_scope
-				    (((काष्ठा acpi_namespace_node *)
-				      this_node->object)->type)) अणु
+				if (acpi_ns_opens_scope
+				    (((struct acpi_namespace_node *)
+				      this_node->object)->type)) {
 					this_node =
-					    (काष्ठा acpi_namespace_node *)
+					    (struct acpi_namespace_node *)
 					    this_node->object;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				}
+			}
+		}
 
-		/* Special handling क्रम the last segment (num_segments == 0) */
+		/* Special handling for the last segment (num_segments == 0) */
 
-		अन्यथा अणु
+		else {
 			/*
 			 * Sanity typecheck of the target object:
 			 *
 			 * If 1) This is the last segment (num_segments == 0)
-			 *    2) And we are looking क्रम a specअगरic type
-			 *       (Not checking क्रम TYPE_ANY)
+			 *    2) And we are looking for a specific type
+			 *       (Not checking for TYPE_ANY)
 			 *    3) Which is not an alias
 			 *    4) Which is not a local type (TYPE_SCOPE)
 			 *    5) And the type of target object is known (not TYPE_ANY)
-			 *    6) And target object करोes not match what we are looking क्रम
+			 *    6) And target object does not match what we are looking for
 			 *
 			 * Then we have a type mismatch. Just warn and ignore it.
 			 */
-			अगर ((type_to_check_क्रम != ACPI_TYPE_ANY) &&
-			    (type_to_check_क्रम != ACPI_TYPE_LOCAL_ALIAS) &&
-			    (type_to_check_क्रम != ACPI_TYPE_LOCAL_METHOD_ALIAS)
-			    && (type_to_check_क्रम != ACPI_TYPE_LOCAL_SCOPE)
+			if ((type_to_check_for != ACPI_TYPE_ANY) &&
+			    (type_to_check_for != ACPI_TYPE_LOCAL_ALIAS) &&
+			    (type_to_check_for != ACPI_TYPE_LOCAL_METHOD_ALIAS)
+			    && (type_to_check_for != ACPI_TYPE_LOCAL_SCOPE)
 			    && (this_node->type != ACPI_TYPE_ANY)
-			    && (this_node->type != type_to_check_क्रम)) अणु
+			    && (this_node->type != type_to_check_for)) {
 
 				/* Complain about a type mismatch */
 
 				ACPI_WARNING((AE_INFO,
 					      "NsLookup: Type mismatch on %4.4s (%s), searching for (%s)",
-					      ACPI_CAST_PTR(अक्षर, &simple_name),
+					      ACPI_CAST_PTR(char, &simple_name),
 					      acpi_ut_get_type_name(this_node->
 								    type),
 					      acpi_ut_get_type_name
-					      (type_to_check_क्रम)));
-			पूर्ण
+					      (type_to_check_for)));
+			}
 
 			/*
-			 * If this is the last name segment and we are not looking क्रम a
-			 * specअगरic type, but the type of found object is known, use that
-			 * type to (later) see अगर it खोलोs a scope.
+			 * If this is the last name segment and we are not looking for a
+			 * specific type, but the type of found object is known, use that
+			 * type to (later) see if it opens a scope.
 			 */
-			अगर (type == ACPI_TYPE_ANY) अणु
+			if (type == ACPI_TYPE_ANY) {
 				type = this_node->type;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		/* Poपूर्णांक to next name segment and make this node current */
+		/* Point to next name segment and make this node current */
 
 		path += ACPI_NAMESEG_SIZE;
 		current_node = this_node;
-	पूर्ण
+	}
 
-	/* Always check अगर we need to खोलो a new scope */
+	/* Always check if we need to open a new scope */
 
-	अगर (!(flags & ACPI_NS_DONT_OPEN_SCOPE) && (walk_state)) अणु
+	if (!(flags & ACPI_NS_DONT_OPEN_SCOPE) && (walk_state)) {
 		/*
-		 * If entry is a type which खोलोs a scope, push the new scope on the
+		 * If entry is a type which opens a scope, push the new scope on the
 		 * scope stack.
 		 */
-		अगर (acpi_ns_खोलोs_scope(type)) अणु
+		if (acpi_ns_opens_scope(type)) {
 			status =
 			    acpi_ds_scope_stack_push(this_node, type,
 						     walk_state);
-			अगर (ACPI_FAILURE(status)) अणु
-				वापस_ACPI_STATUS(status);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-#अगर_घोषित ACPI_EXEC_APP
-	अगर (flags & ACPI_NS_EARLY_INIT) अणु
+			if (ACPI_FAILURE(status)) {
+				return_ACPI_STATUS(status);
+			}
+		}
+	}
+#ifdef ACPI_EXEC_APP
+	if (flags & ACPI_NS_EARLY_INIT) {
 		this_node->flags |= ANOBJ_NODE_EARLY_INIT;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	*वापस_node = this_node;
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	*return_node = this_node;
+	return_ACPI_STATUS(AE_OK);
+}

@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _XT_CLASSIFY_H
-#घोषणा _XT_CLASSIFY_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _XT_CLASSIFY_H
+#define _XT_CLASSIFY_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा xt_classअगरy_target_info अणु
+struct xt_classify_target_info {
 	__u32 priority;
-पूर्ण;
+};
 
-#पूर्ण_अगर /*_XT_CLASSIFY_H */
+#endif /*_XT_CLASSIFY_H */

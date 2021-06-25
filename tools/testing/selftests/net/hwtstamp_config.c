@@ -1,60 +1,59 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* Test program क्रम SIOCअणुG,Sपूर्णHWTSTAMP
+// SPDX-License-Identifier: GPL-2.0
+/* Test program for SIOC{G,S}HWTSTAMP
  * Copyright 2013 Solarflare Communications
  * Author: Ben Hutchings
  */
 
-#समावेश <त्रुटिसं.स>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#समावेश <sys/socket.h>
-#समावेश <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
 
-#समावेश <linux/अगर.h>
-#समावेश <linux/net_tstamp.h>
-#समावेश <linux/sockios.h>
+#include <linux/if.h>
+#include <linux/net_tstamp.h>
+#include <linux/sockios.h>
 
-अटल पूर्णांक
-lookup_value(स्थिर अक्षर **names, पूर्णांक size, स्थिर अक्षर *name)
-अणु
-	पूर्णांक value;
+static int
+lookup_value(const char **names, int size, const char *name)
+{
+	int value;
 
-	क्रम (value = 0; value < size; value++)
-		अगर (names[value] && strहालcmp(names[value], name) == 0)
-			वापस value;
+	for (value = 0; value < size; value++)
+		if (names[value] && strcasecmp(names[value], name) == 0)
+			return value;
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल स्थिर अक्षर *
-lookup_name(स्थिर अक्षर **names, पूर्णांक size, पूर्णांक value)
-अणु
-	वापस (value >= 0 && value < size) ? names[value] : शून्य;
-पूर्ण
+static const char *
+lookup_name(const char **names, int size, int value)
+{
+	return (value >= 0 && value < size) ? names[value] : NULL;
+}
 
-अटल व्योम list_names(खाता *f, स्थिर अक्षर **names, पूर्णांक size)
-अणु
-	पूर्णांक value;
+static void list_names(FILE *f, const char **names, int size)
+{
+	int value;
 
-	क्रम (value = 0; value < size; value++)
-		अगर (names[value])
-			ख_लिखो(f, "    %s\n", names[value]);
-पूर्ण
+	for (value = 0; value < size; value++)
+		if (names[value])
+			fprintf(f, "    %s\n", names[value]);
+}
 
-अटल स्थिर अक्षर *tx_types[] = अणु
-#घोषणा TX_TYPE(name) [HWTSTAMP_TX_ ## name] = #name
+static const char *tx_types[] = {
+#define TX_TYPE(name) [HWTSTAMP_TX_ ## name] = #name
 	TX_TYPE(OFF),
 	TX_TYPE(ON),
 	TX_TYPE(ONESTEP_SYNC)
-#अघोषित TX_TYPE
-पूर्ण;
-#घोषणा N_TX_TYPES ((पूर्णांक)(माप(tx_types) / माप(tx_types[0])))
+#undef TX_TYPE
+};
+#define N_TX_TYPES ((int)(sizeof(tx_types) / sizeof(tx_types[0])))
 
-अटल स्थिर अक्षर *rx_filters[] = अणु
-#घोषणा RX_FILTER(name) [HWTSTAMP_FILTER_ ## name] = #name
+static const char *rx_filters[] = {
+#define RX_FILTER(name) [HWTSTAMP_FILTER_ ## name] = #name
 	RX_FILTER(NONE),
 	RX_FILTER(ALL),
 	RX_FILTER(SOME),
@@ -70,67 +69,67 @@ lookup_name(स्थिर अक्षर **names, पूर्णांक si
 	RX_FILTER(PTP_V2_EVENT),
 	RX_FILTER(PTP_V2_SYNC),
 	RX_FILTER(PTP_V2_DELAY_REQ),
-#अघोषित RX_FILTER
-पूर्ण;
-#घोषणा N_RX_FILTERS ((पूर्णांक)(माप(rx_filters) / माप(rx_filters[0])))
+#undef RX_FILTER
+};
+#define N_RX_FILTERS ((int)(sizeof(rx_filters) / sizeof(rx_filters[0])))
 
-अटल व्योम usage(व्योम)
-अणु
-	ख_माला_दो("Usage: hwtstamp_config if_name [tx_type rx_filter]\n"
+static void usage(void)
+{
+	fputs("Usage: hwtstamp_config if_name [tx_type rx_filter]\n"
 	      "tx_type is any of (case-insensitive):\n",
-	      मानक_त्रुटि);
-	list_names(मानक_त्रुटि, tx_types, N_TX_TYPES);
-	ख_माला_दो("rx_filter is any of (case-insensitive):\n", मानक_त्रुटि);
-	list_names(मानक_त्रुटि, rx_filters, N_RX_FILTERS);
-पूर्ण
+	      stderr);
+	list_names(stderr, tx_types, N_TX_TYPES);
+	fputs("rx_filter is any of (case-insensitive):\n", stderr);
+	list_names(stderr, rx_filters, N_RX_FILTERS);
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	काष्ठा अगरreq अगरr;
-	काष्ठा hwtstamp_config config;
-	स्थिर अक्षर *name;
-	पूर्णांक sock;
+int main(int argc, char **argv)
+{
+	struct ifreq ifr;
+	struct hwtstamp_config config;
+	const char *name;
+	int sock;
 
-	अगर ((argc != 2 && argc != 4) || (म_माप(argv[1]) >= IFNAMSIZ)) अणु
+	if ((argc != 2 && argc != 4) || (strlen(argv[1]) >= IFNAMSIZ)) {
 		usage();
-		वापस 2;
-	पूर्ण
+		return 2;
+	}
 
-	अगर (argc == 4) अणु
+	if (argc == 4) {
 		config.flags = 0;
 		config.tx_type = lookup_value(tx_types, N_TX_TYPES, argv[2]);
 		config.rx_filter = lookup_value(rx_filters, N_RX_FILTERS, argv[3]);
-		अगर (config.tx_type < 0 || config.rx_filter < 0) अणु
+		if (config.tx_type < 0 || config.rx_filter < 0) {
 			usage();
-			वापस 2;
-		पूर्ण
-	पूर्ण
+			return 2;
+		}
+	}
 
 	sock = socket(AF_INET, SOCK_DGRAM, 0);
-	अगर (sock < 0) अणु
-		लिखो_त्रुटि("socket");
-		वापस 1;
-	पूर्ण
+	if (sock < 0) {
+		perror("socket");
+		return 1;
+	}
 
-	म_नकल(अगरr.अगरr_name, argv[1]);
-	अगरr.अगरr_data = (caddr_t)&config;
+	strcpy(ifr.ifr_name, argv[1]);
+	ifr.ifr_data = (caddr_t)&config;
 
-	अगर (ioctl(sock, (argc == 2) ? SIOCGHWTSTAMP : SIOCSHWTSTAMP, &अगरr)) अणु
-		लिखो_त्रुटि("ioctl");
-		वापस 1;
-	पूर्ण
+	if (ioctl(sock, (argc == 2) ? SIOCGHWTSTAMP : SIOCSHWTSTAMP, &ifr)) {
+		perror("ioctl");
+		return 1;
+	}
 
-	म_लिखो("flags = %#x\n", config.flags);
+	printf("flags = %#x\n", config.flags);
 	name = lookup_name(tx_types, N_TX_TYPES, config.tx_type);
-	अगर (name)
-		म_लिखो("tx_type = %s\n", name);
-	अन्यथा
-		म_लिखो("tx_type = %d\n", config.tx_type);
+	if (name)
+		printf("tx_type = %s\n", name);
+	else
+		printf("tx_type = %d\n", config.tx_type);
 	name = lookup_name(rx_filters, N_RX_FILTERS, config.rx_filter);
-	अगर (name)
-		म_लिखो("rx_filter = %s\n", name);
-	अन्यथा
-		म_लिखो("rx_filter = %d\n", config.rx_filter);
+	if (name)
+		printf("rx_filter = %s\n", name);
+	else
+		printf("rx_filter = %d\n", config.rx_filter);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

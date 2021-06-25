@@ -1,85 +1,84 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
-#अगर_अघोषित __ASM_NDS32_IO_H
-#घोषणा __ASM_NDS32_IO_H
+#ifndef __ASM_NDS32_IO_H
+#define __ASM_NDS32_IO_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#घोषणा __raw_ग_लिखोb __raw_ग_लिखोb
-अटल अंतरभूत व्योम __raw_ग_लिखोb(u8 val, अस्थिर व्योम __iomem *addr)
-अणु
-	यंत्र अस्थिर("sbi %0, [%1]" : : "r" (val), "r" (addr));
-पूर्ण
+#define __raw_writeb __raw_writeb
+static inline void __raw_writeb(u8 val, volatile void __iomem *addr)
+{
+	asm volatile("sbi %0, [%1]" : : "r" (val), "r" (addr));
+}
 
-#घोषणा __raw_ग_लिखोw __raw_ग_लिखोw
-अटल अंतरभूत व्योम __raw_ग_लिखोw(u16 val, अस्थिर व्योम __iomem *addr)
-अणु
-	यंत्र अस्थिर("shi %0, [%1]" : : "r" (val), "r" (addr));
-पूर्ण
+#define __raw_writew __raw_writew
+static inline void __raw_writew(u16 val, volatile void __iomem *addr)
+{
+	asm volatile("shi %0, [%1]" : : "r" (val), "r" (addr));
+}
 
-#घोषणा __raw_ग_लिखोl __raw_ग_लिखोl
-अटल अंतरभूत व्योम __raw_ग_लिखोl(u32 val, अस्थिर व्योम __iomem *addr)
-अणु
-	यंत्र अस्थिर("swi %0, [%1]" : : "r" (val), "r" (addr));
-पूर्ण
+#define __raw_writel __raw_writel
+static inline void __raw_writel(u32 val, volatile void __iomem *addr)
+{
+	asm volatile("swi %0, [%1]" : : "r" (val), "r" (addr));
+}
 
-#घोषणा __raw_पढ़ोb __raw_पढ़ोb
-अटल अंतरभूत u8 __raw_पढ़ोb(स्थिर अस्थिर व्योम __iomem *addr)
-अणु
+#define __raw_readb __raw_readb
+static inline u8 __raw_readb(const volatile void __iomem *addr)
+{
 	u8 val;
 
-	यंत्र अस्थिर("lbi %0, [%1]" : "=r" (val) : "r" (addr));
-	वापस val;
-पूर्ण
+	asm volatile("lbi %0, [%1]" : "=r" (val) : "r" (addr));
+	return val;
+}
 
-#घोषणा __raw_पढ़ोw __raw_पढ़ोw
-अटल अंतरभूत u16 __raw_पढ़ोw(स्थिर अस्थिर व्योम __iomem *addr)
-अणु
+#define __raw_readw __raw_readw
+static inline u16 __raw_readw(const volatile void __iomem *addr)
+{
 	u16 val;
 
-	यंत्र अस्थिर("lhi %0, [%1]" : "=r" (val) : "r" (addr));
-	वापस val;
-पूर्ण
+	asm volatile("lhi %0, [%1]" : "=r" (val) : "r" (addr));
+	return val;
+}
 
-#घोषणा __raw_पढ़ोl __raw_पढ़ोl
-अटल अंतरभूत u32 __raw_पढ़ोl(स्थिर अस्थिर व्योम __iomem *addr)
-अणु
+#define __raw_readl __raw_readl
+static inline u32 __raw_readl(const volatile void __iomem *addr)
+{
 	u32 val;
 
-	यंत्र अस्थिर("lwi %0, [%1]" : "=r" (val) : "r" (addr));
-	वापस val;
-पूर्ण
+	asm volatile("lwi %0, [%1]" : "=r" (val) : "r" (addr));
+	return val;
+}
 
-#घोषणा __iormb()               rmb()
-#घोषणा __iowmb()               wmb()
+#define __iormb()               rmb()
+#define __iowmb()               wmb()
 
 /*
- * अणुपढ़ो,ग_लिखोपूर्णअणुb,w,l,qपूर्ण_relaxed() are like the regular version, but
+ * {read,write}{b,w,l,q}_relaxed() are like the regular version, but
  * are not guaranteed to provide ordering against spinlocks or memory
  * accesses.
  */
 
-#घोषणा पढ़ोb_relaxed(c)	(अणु u8  __v = __raw_पढ़ोb(c); __v; पूर्ण)
-#घोषणा पढ़ोw_relaxed(c)	(अणु u16 __v = le16_to_cpu((__क्रमce __le16)__raw_पढ़ोw(c)); __v; पूर्ण)
-#घोषणा पढ़ोl_relaxed(c)	(अणु u32 __v = le32_to_cpu((__क्रमce __le32)__raw_पढ़ोl(c)); __v; पूर्ण)
-#घोषणा ग_लिखोb_relaxed(v,c)	((व्योम)__raw_ग_लिखोb((v),(c)))
-#घोषणा ग_लिखोw_relaxed(v,c)	((व्योम)__raw_ग_लिखोw((__क्रमce u16)cpu_to_le16(v),(c)))
-#घोषणा ग_लिखोl_relaxed(v,c)	((व्योम)__raw_ग_लिखोl((__क्रमce u32)cpu_to_le32(v),(c)))
+#define readb_relaxed(c)	({ u8  __v = __raw_readb(c); __v; })
+#define readw_relaxed(c)	({ u16 __v = le16_to_cpu((__force __le16)__raw_readw(c)); __v; })
+#define readl_relaxed(c)	({ u32 __v = le32_to_cpu((__force __le32)__raw_readl(c)); __v; })
+#define writeb_relaxed(v,c)	((void)__raw_writeb((v),(c)))
+#define writew_relaxed(v,c)	((void)__raw_writew((__force u16)cpu_to_le16(v),(c)))
+#define writel_relaxed(v,c)	((void)__raw_writel((__force u32)cpu_to_le32(v),(c)))
 
 /*
- * अणुपढ़ो,ग_लिखोपूर्णअणुb,w,l,qपूर्ण() access little endian memory and वापस result in
+ * {read,write}{b,w,l,q}() access little endian memory and return result in
  * native endianness.
  */
-#घोषणा पढ़ोb(c)	(अणु u8  __v = पढ़ोb_relaxed(c); __iormb(); __v; पूर्ण)
-#घोषणा पढ़ोw(c)	(अणु u16 __v = पढ़ोw_relaxed(c); __iormb(); __v; पूर्ण)
-#घोषणा पढ़ोl(c)	(अणु u32 __v = पढ़ोl_relaxed(c); __iormb(); __v; पूर्ण)
+#define readb(c)	({ u8  __v = readb_relaxed(c); __iormb(); __v; })
+#define readw(c)	({ u16 __v = readw_relaxed(c); __iormb(); __v; })
+#define readl(c)	({ u32 __v = readl_relaxed(c); __iormb(); __v; })
 
-#घोषणा ग_लिखोb(v,c)	(अणु __iowmb(); ग_लिखोb_relaxed((v),(c)); पूर्ण)
-#घोषणा ग_लिखोw(v,c)	(अणु __iowmb(); ग_लिखोw_relaxed((v),(c)); पूर्ण)
-#घोषणा ग_लिखोl(v,c)	(अणु __iowmb(); ग_लिखोl_relaxed((v),(c)); पूर्ण)
+#define writeb(v,c)	({ __iowmb(); writeb_relaxed((v),(c)); })
+#define writew(v,c)	({ __iowmb(); writew_relaxed((v),(c)); })
+#define writel(v,c)	({ __iowmb(); writel_relaxed((v),(c)); })
 
-#समावेश <यंत्र-generic/पन.स>
+#include <asm-generic/io.h>
 
-#पूर्ण_अगर /* __ASM_NDS32_IO_H */
+#endif /* __ASM_NDS32_IO_H */

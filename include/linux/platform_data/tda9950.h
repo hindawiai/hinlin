@@ -1,17 +1,16 @@
-<शैली गुरु>
-#अगर_अघोषित LINUX_PLATFORM_DATA_TDA9950_H
-#घोषणा LINUX_PLATFORM_DATA_TDA9950_H
+#ifndef LINUX_PLATFORM_DATA_TDA9950_H
+#define LINUX_PLATFORM_DATA_TDA9950_H
 
-काष्ठा device;
+struct device;
 
-काष्ठा tda9950_glue अणु
-	काष्ठा device *parent;
-	अचिन्हित दीर्घ irq_flags;
-	व्योम *data;
-	पूर्णांक (*init)(व्योम *);
-	व्योम (*निकास)(व्योम *);
-	पूर्णांक (*खोलो)(व्योम *);
-	व्योम (*release)(व्योम *);
-पूर्ण;
+struct tda9950_glue {
+	struct device *parent;
+	unsigned long irq_flags;
+	void *data;
+	int (*init)(void *);
+	void (*exit)(void *);
+	int (*open)(void *);
+	void (*release)(void *);
+};
 
-#पूर्ण_अगर
+#endif

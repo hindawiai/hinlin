@@ -1,58 +1,57 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 1998-2009 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2008 S3 Graphics, Inc. All Rights Reserved.
 
  */
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/module.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/via-core.h>
-#समावेश <linux/via_i2c.h>
+#include <linux/compiler.h>
+#include <linux/module.h>
+#include <linux/seq_file.h>
+#include <linux/slab.h>
+#include <linux/stat.h>
+#include <linux/via-core.h>
+#include <linux/via_i2c.h>
 
-#घोषणा _MASTER_खाता
-#समावेश "global.h"
+#define _MASTER_FILE
+#include "global.h"
 
-अटल अक्षर *viafb_name = "Via";
-अटल u32 pseuकरो_pal[17];
+static char *viafb_name = "Via";
+static u32 pseudo_pal[17];
 
 /* video mode */
-अटल अक्षर *viafb_mode;
-अटल अक्षर *viafb_mode1;
-अटल पूर्णांक viafb_bpp = 32;
-अटल पूर्णांक viafb_bpp1 = 32;
+static char *viafb_mode;
+static char *viafb_mode1;
+static int viafb_bpp = 32;
+static int viafb_bpp1 = 32;
 
-अटल अचिन्हित पूर्णांक viafb_second_offset;
-अटल पूर्णांक viafb_second_size;
+static unsigned int viafb_second_offset;
+static int viafb_second_size;
 
-अटल पूर्णांक viafb_accel = 1;
+static int viafb_accel = 1;
 
-/* Added क्रम specअगरying active devices.*/
-अटल अक्षर *viafb_active_dev;
+/* Added for specifying active devices.*/
+static char *viafb_active_dev;
 
-/*Added क्रम specअगरy lcd output port*/
-अटल अक्षर *viafb_lcd_port = "";
-अटल अक्षर *viafb_dvi_port = "";
+/*Added for specify lcd output port*/
+static char *viafb_lcd_port = "";
+static char *viafb_dvi_port = "";
 
-अटल व्योम retrieve_device_setting(काष्ठा viafb_ioctl_setting
+static void retrieve_device_setting(struct viafb_ioctl_setting
 	*setting_info);
-अटल पूर्णांक viafb_pan_display(काष्ठा fb_var_screeninfo *var,
-	काष्ठा fb_info *info);
+static int viafb_pan_display(struct fb_var_screeninfo *var,
+	struct fb_info *info);
 
-अटल काष्ठा fb_ops viafb_ops;
+static struct fb_ops viafb_ops;
 
 /* supported output devices on each IGP
- * only CX700, VX800, VX855, VX900 were करोcumented
+ * only CX700, VX800, VX855, VX900 were documented
  * VIA_CRT should be everywhere
- * VIA_6C can be onle pre-CX700 (probably only on CLE266) as 6C is used क्रम PLL
+ * VIA_6C can be onle pre-CX700 (probably only on CLE266) as 6C is used for PLL
  * source selection on CX700 and later
- * K400 seems to support VIA_96, VIA_DVP1, VIA_LVDSअणु1,2पूर्ण as in viamode.c
+ * K400 seems to support VIA_96, VIA_DVP1, VIA_LVDS{1,2} as in viamode.c
  */
-अटल स्थिर u32 supported_odev_map[] = अणु
+static const u32 supported_odev_map[] = {
 	[UNICHROME_CLE266]	= VIA_CRT | VIA_LDVP0 | VIA_LDVP1,
 	[UNICHROME_K400]	= VIA_CRT | VIA_DVP0 | VIA_DVP1 | VIA_LVDS1
 				| VIA_LVDS2,
@@ -70,10 +69,10 @@
 	[UNICHROME_VX800]	= VIA_CRT | VIA_DVP1 | VIA_LVDS1 | VIA_LVDS2,
 	[UNICHROME_VX855]	= VIA_CRT | VIA_DVP1 | VIA_LVDS1 | VIA_LVDS2,
 	[UNICHROME_VX900]	= VIA_CRT | VIA_DVP1 | VIA_LVDS1 | VIA_LVDS2,
-पूर्ण;
+};
 
-अटल व्योम viafb_fill_var_color_info(काष्ठा fb_var_screeninfo *var, u8 depth)
-अणु
+static void viafb_fill_var_color_info(struct fb_var_screeninfo *var, u8 depth)
+{
 	var->grayscale = 0;
 	var->red.msb_right = 0;
 	var->green.msb_right = 0;
@@ -82,8 +81,8 @@
 	var->transp.length = 0;
 	var->transp.msb_right = 0;
 	var->nonstd = 0;
-	चयन (depth) अणु
-	हाल 8:
+	switch (depth) {
+	case 8:
 		var->bits_per_pixel = 8;
 		var->red.offset = 0;
 		var->green.offset = 0;
@@ -91,8 +90,8 @@
 		var->red.length = 8;
 		var->green.length = 8;
 		var->blue.length = 8;
-		अवरोध;
-	हाल 15:
+		break;
+	case 15:
 		var->bits_per_pixel = 16;
 		var->red.offset = 10;
 		var->green.offset = 5;
@@ -100,8 +99,8 @@
 		var->red.length = 5;
 		var->green.length = 5;
 		var->blue.length = 5;
-		अवरोध;
-	हाल 16:
+		break;
+	case 16:
 		var->bits_per_pixel = 16;
 		var->red.offset = 11;
 		var->green.offset = 5;
@@ -109,8 +108,8 @@
 		var->red.length = 5;
 		var->green.length = 6;
 		var->blue.length = 5;
-		अवरोध;
-	हाल 24:
+		break;
+	case 24:
 		var->bits_per_pixel = 32;
 		var->red.offset = 16;
 		var->green.offset = 8;
@@ -118,8 +117,8 @@
 		var->red.length = 8;
 		var->green.length = 8;
 		var->blue.length = 8;
-		अवरोध;
-	हाल 30:
+		break;
+	case 30:
 		var->bits_per_pixel = 32;
 		var->red.offset = 20;
 		var->green.offset = 10;
@@ -127,28 +126,28 @@
 		var->red.length = 10;
 		var->green.length = 10;
 		var->blue.length = 10;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम viafb_update_fix(काष्ठा fb_info *info)
-अणु
+static void viafb_update_fix(struct fb_info *info)
+{
 	u32 bpp = info->var.bits_per_pixel;
 
 	info->fix.visual =
 		bpp == 8 ? FB_VISUAL_PSEUDOCOLOR : FB_VISUAL_TRUECOLOR;
-	info->fix.line_length = ALIGN(info->var.xres_भव * bpp / 8,
+	info->fix.line_length = ALIGN(info->var.xres_virtual * bpp / 8,
 		VIA_PITCH_SIZE);
-पूर्ण
+}
 
-अटल व्योम viafb_setup_fixinfo(काष्ठा fb_fix_screeninfo *fix,
-	काष्ठा viafb_par *viaparinfo)
-अणु
-	स_रखो(fix, 0, माप(काष्ठा fb_fix_screeninfo));
-	म_नकल(fix->id, viafb_name);
+static void viafb_setup_fixinfo(struct fb_fix_screeninfo *fix,
+	struct viafb_par *viaparinfo)
+{
+	memset(fix, 0, sizeof(struct fb_fix_screeninfo));
+	strcpy(fix->id, viafb_name);
 
 	fix->smem_start = viaparinfo->fbmem;
-	fix->smem_len = viaparinfo->fbmem_मुक्त;
+	fix->smem_len = viaparinfo->fbmem_free;
 
 	fix->type = FB_TYPE_PACKED_PIXELS;
 	fix->type_aux = 0;
@@ -159,80 +158,80 @@
 
 	/* Just tell the accel name */
 	viafbinfo->fix.accel = FB_ACCEL_VIA_UNICHROME;
-पूर्ण
-अटल पूर्णांक viafb_खोलो(काष्ठा fb_info *info, पूर्णांक user)
-अणु
+}
+static int viafb_open(struct fb_info *info, int user)
+{
 	DEBUG_MSG(KERN_INFO "viafb_open!\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक viafb_release(काष्ठा fb_info *info, पूर्णांक user)
-अणु
+static int viafb_release(struct fb_info *info, int user)
+{
 	DEBUG_MSG(KERN_INFO "viafb_release!\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक get_var_refresh(काष्ठा fb_var_screeninfo *var)
-अणु
+static inline int get_var_refresh(struct fb_var_screeninfo *var)
+{
 	u32 htotal, vtotal;
 
 	htotal = var->left_margin + var->xres + var->right_margin
 		+ var->hsync_len;
 	vtotal = var->upper_margin + var->yres + var->lower_margin
 		+ var->vsync_len;
-	वापस PICOS2KHZ(var->pixघड़ी) * 1000 / (htotal * vtotal);
-पूर्ण
+	return PICOS2KHZ(var->pixclock) * 1000 / (htotal * vtotal);
+}
 
-अटल पूर्णांक viafb_check_var(काष्ठा fb_var_screeninfo *var,
-	काष्ठा fb_info *info)
-अणु
-	पूर्णांक depth, refresh;
-	काष्ठा viafb_par *ppar = info->par;
+static int viafb_check_var(struct fb_var_screeninfo *var,
+	struct fb_info *info)
+{
+	int depth, refresh;
+	struct viafb_par *ppar = info->par;
 	u32 line;
 
 	DEBUG_MSG(KERN_INFO "viafb_check_var!\n");
 	/* Sanity check */
-	/* HW neither support पूर्णांकerlacte nor द्विगुन-scaned mode */
-	अगर (var->vmode & FB_VMODE_INTERLACED || var->vmode & FB_VMODE_DOUBLE)
-		वापस -EINVAL;
+	/* HW neither support interlacte nor double-scaned mode */
+	if (var->vmode & FB_VMODE_INTERLACED || var->vmode & FB_VMODE_DOUBLE)
+		return -EINVAL;
 
 	/* the refresh rate is not important here, as we only want to know
 	 * whether the resolution exists
 	 */
-	अगर (!viafb_get_best_mode(var->xres, var->yres, 60)) अणु
+	if (!viafb_get_best_mode(var->xres, var->yres, 60)) {
 		DEBUG_MSG(KERN_INFO
 			  "viafb: Mode %dx%dx%d not supported!!\n",
 			  var->xres, var->yres, var->bits_per_pixel);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	depth = fb_get_color_depth(var, &info->fix);
-	अगर (!depth)
+	if (!depth)
 		depth = var->bits_per_pixel;
 
-	अगर (depth < 0 || depth > 32)
-		वापस -EINVAL;
-	अन्यथा अगर (!depth)
+	if (depth < 0 || depth > 32)
+		return -EINVAL;
+	else if (!depth)
 		depth = 24;
-	अन्यथा अगर (depth == 15 && viafb_dual_fb && ppar->iga_path == IGA1)
+	else if (depth == 15 && viafb_dual_fb && ppar->iga_path == IGA1)
 		depth = 15;
-	अन्यथा अगर (depth == 30)
+	else if (depth == 30)
 		depth = 30;
-	अन्यथा अगर (depth <= 8)
+	else if (depth <= 8)
 		depth = 8;
-	अन्यथा अगर (depth <= 16)
+	else if (depth <= 16)
 		depth = 16;
-	अन्यथा
+	else
 		depth = 24;
 
 	viafb_fill_var_color_info(var, depth);
-	अगर (var->xres_भव < var->xres)
-		var->xres_भव = var->xres;
+	if (var->xres_virtual < var->xres)
+		var->xres_virtual = var->xres;
 
-	line = ALIGN(var->xres_भव * var->bits_per_pixel / 8,
+	line = ALIGN(var->xres_virtual * var->bits_per_pixel / 8,
 		VIA_PITCH_SIZE);
-	अगर (line > VIA_PITCH_MAX || line * var->yres_भव > ppar->memsize)
-		वापस -EINVAL;
+	if (line > VIA_PITCH_MAX || line * var->yres_virtual > ppar->memsize)
+		return -EINVAL;
 
 	/* Based on var passed in to calculate the refresh,
 	 * because our driver use some modes special.
@@ -243,17 +242,17 @@
 	/* Adjust var according to our driver's own table */
 	viafb_fill_var_timing_info(var,
 		viafb_get_best_mode(var->xres, var->yres, refresh));
-	अगर (var->accel_flags & FB_ACCELF_TEXT &&
+	if (var->accel_flags & FB_ACCELF_TEXT &&
 		!ppar->shared->vdev->engine_mmio)
 		var->accel_flags = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक viafb_set_par(काष्ठा fb_info *info)
-अणु
-	काष्ठा viafb_par *viapar = info->par;
-	पूर्णांक refresh;
+static int viafb_set_par(struct fb_info *info)
+{
+	struct viafb_par *viapar = info->par;
+	int refresh;
 	DEBUG_MSG(KERN_INFO "viafb_set_par!\n");
 
 	viafb_update_fix(info);
@@ -261,59 +260,59 @@
 	viafb_update_device_setting(viafbinfo->var.xres, viafbinfo->var.yres,
 		viafbinfo->var.bits_per_pixel, 0);
 
-	अगर (viafb_dual_fb) अणु
+	if (viafb_dual_fb) {
 		viafb_update_device_setting(viafbinfo1->var.xres,
 			viafbinfo1->var.yres, viafbinfo1->var.bits_per_pixel,
 			1);
-	पूर्ण अन्यथा अगर (viafb_SAMM_ON == 1) अणु
+	} else if (viafb_SAMM_ON == 1) {
 		DEBUG_MSG(KERN_INFO
 		"viafb_second_xres = %d, viafb_second_yres = %d, bpp = %d\n",
 			  viafb_second_xres, viafb_second_yres, viafb_bpp1);
 
 		viafb_update_device_setting(viafb_second_xres,
 			viafb_second_yres, viafb_bpp1, 1);
-	पूर्ण
+	}
 
 	refresh = get_var_refresh(&info->var);
-	अगर (viafb_dual_fb && viapar->iga_path == IGA2) अणु
+	if (viafb_dual_fb && viapar->iga_path == IGA2) {
 		viafb_bpp1 = info->var.bits_per_pixel;
 		viafb_refresh1 = refresh;
-	पूर्ण अन्यथा अणु
+	} else {
 		viafb_bpp = info->var.bits_per_pixel;
 		viafb_refresh = refresh;
-	पूर्ण
+	}
 
-	अगर (info->var.accel_flags & FB_ACCELF_TEXT)
+	if (info->var.accel_flags & FB_ACCELF_TEXT)
 		info->flags &= ~FBINFO_HWACCEL_DISABLED;
-	अन्यथा
+	else
 		info->flags |= FBINFO_HWACCEL_DISABLED;
-	viafb_seपंचांगode();
+	viafb_setmode();
 	viafb_pan_display(&info->var, info);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Set one color रेजिस्टर */
-अटल पूर्णांक viafb_setcolreg(अचिन्हित regno, अचिन्हित red, अचिन्हित green,
-अचिन्हित blue, अचिन्हित transp, काष्ठा fb_info *info)
-अणु
-	काष्ठा viafb_par *viapar = info->par;
+/* Set one color register */
+static int viafb_setcolreg(unsigned regno, unsigned red, unsigned green,
+unsigned blue, unsigned transp, struct fb_info *info)
+{
+	struct viafb_par *viapar = info->par;
 	u32 r, g, b;
 
-	अगर (info->fix.visual == FB_VISUAL_PSEUDOCOLOR) अणु
-		अगर (regno > 255)
-			वापस -EINVAL;
+	if (info->fix.visual == FB_VISUAL_PSEUDOCOLOR) {
+		if (regno > 255)
+			return -EINVAL;
 
-		अगर (!viafb_dual_fb || viapar->iga_path == IGA1)
-			viafb_set_primary_color_रेजिस्टर(regno, red >> 8,
+		if (!viafb_dual_fb || viapar->iga_path == IGA1)
+			viafb_set_primary_color_register(regno, red >> 8,
 				green >> 8, blue >> 8);
 
-		अगर (!viafb_dual_fb || viapar->iga_path == IGA2)
-			viafb_set_secondary_color_रेजिस्टर(regno, red >> 8,
+		if (!viafb_dual_fb || viapar->iga_path == IGA2)
+			viafb_set_secondary_color_register(regno, red >> 8,
 				green >> 8, blue >> 8);
-	पूर्ण अन्यथा अणु
-		अगर (regno > 15)
-			वापस -EINVAL;
+	} else {
+		if (regno > 15)
+			return -EINVAL;
 
 		r = (red >> (16 - info->var.red.length))
 			<< info->var.red.offset;
@@ -321,183 +320,183 @@
 			<< info->var.blue.offset;
 		g = (green >> (16 - info->var.green.length))
 			<< info->var.green.offset;
-		((u32 *) info->pseuकरो_palette)[regno] = r | g | b;
-	पूर्ण
+		((u32 *) info->pseudo_palette)[regno] = r | g | b;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक viafb_pan_display(काष्ठा fb_var_screeninfo *var,
-	काष्ठा fb_info *info)
-अणु
-	काष्ठा viafb_par *viapar = info->par;
+static int viafb_pan_display(struct fb_var_screeninfo *var,
+	struct fb_info *info)
+{
+	struct viafb_par *viapar = info->par;
 	u32 vram_addr = viapar->vram_addr
 		+ var->yoffset * info->fix.line_length
 		+ var->xoffset * info->var.bits_per_pixel / 8;
 
 	DEBUG_MSG(KERN_DEBUG "viafb_pan_display, address = %d\n", vram_addr);
-	अगर (!viafb_dual_fb) अणु
+	if (!viafb_dual_fb) {
 		via_set_primary_address(vram_addr);
 		via_set_secondary_address(vram_addr);
-	पूर्ण अन्यथा अगर (viapar->iga_path == IGA1)
+	} else if (viapar->iga_path == IGA1)
 		via_set_primary_address(vram_addr);
-	अन्यथा
+	else
 		via_set_secondary_address(vram_addr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक viafb_blank(पूर्णांक blank_mode, काष्ठा fb_info *info)
-अणु
+static int viafb_blank(int blank_mode, struct fb_info *info)
+{
 	DEBUG_MSG(KERN_INFO "viafb_blank!\n");
 	/* clear DPMS setting */
 
-	चयन (blank_mode) अणु
-	हाल FB_BLANK_UNBLANK:
+	switch (blank_mode) {
+	case FB_BLANK_UNBLANK:
 		/* Screen: On, HSync: On, VSync: On */
-		/* control CRT monitor घातer management */
+		/* control CRT monitor power management */
 		via_set_state(VIA_CRT, VIA_STATE_ON);
-		अवरोध;
-	हाल FB_BLANK_HSYNC_SUSPEND:
+		break;
+	case FB_BLANK_HSYNC_SUSPEND:
 		/* Screen: Off, HSync: Off, VSync: On */
-		/* control CRT monitor घातer management */
+		/* control CRT monitor power management */
 		via_set_state(VIA_CRT, VIA_STATE_STANDBY);
-		अवरोध;
-	हाल FB_BLANK_VSYNC_SUSPEND:
+		break;
+	case FB_BLANK_VSYNC_SUSPEND:
 		/* Screen: Off, HSync: On, VSync: Off */
-		/* control CRT monitor घातer management */
+		/* control CRT monitor power management */
 		via_set_state(VIA_CRT, VIA_STATE_SUSPEND);
-		अवरोध;
-	हाल FB_BLANK_POWERDOWN:
+		break;
+	case FB_BLANK_POWERDOWN:
 		/* Screen: Off, HSync: Off, VSync: Off */
-		/* control CRT monitor घातer management */
+		/* control CRT monitor power management */
 		via_set_state(VIA_CRT, VIA_STATE_OFF);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक viafb_ioctl(काष्ठा fb_info *info, u_पूर्णांक cmd, u_दीर्घ arg)
-अणु
-	जोड़ अणु
-		काष्ठा viafb_ioctl_mode viamode;
-		काष्ठा viafb_ioctl_samm viasamm;
-		काष्ठा viafb_driver_version driver_version;
-		काष्ठा fb_var_screeninfo sec_var;
-		काष्ठा _panel_size_pos_info panel_pos_size_para;
-		काष्ठा viafb_ioctl_setting viafb_setting;
-		काष्ठा device_t active_dev;
-	पूर्ण u;
+static int viafb_ioctl(struct fb_info *info, u_int cmd, u_long arg)
+{
+	union {
+		struct viafb_ioctl_mode viamode;
+		struct viafb_ioctl_samm viasamm;
+		struct viafb_driver_version driver_version;
+		struct fb_var_screeninfo sec_var;
+		struct _panel_size_pos_info panel_pos_size_para;
+		struct viafb_ioctl_setting viafb_setting;
+		struct device_t active_dev;
+	} u;
 	u32 state_info = 0;
 	u32 *viafb_gamma_table;
-	अक्षर driver_name[] = "viafb";
+	char driver_name[] = "viafb";
 
 	u32 __user *argp = (u32 __user *) arg;
 	u32 gpu32;
 
 	DEBUG_MSG(KERN_INFO "viafb_ioctl: 0x%X !!\n", cmd);
-	prपूर्णांकk(KERN_WARNING "viafb_ioctl: Please avoid this interface as it is unstable and might change or vanish at any time!\n");
-	स_रखो(&u, 0, माप(u));
+	printk(KERN_WARNING "viafb_ioctl: Please avoid this interface as it is unstable and might change or vanish at any time!\n");
+	memset(&u, 0, sizeof(u));
 
-	चयन (cmd) अणु
-	हाल VIAFB_GET_CHIP_INFO:
-		अगर (copy_to_user(argp, viaparinfo->chip_info,
-				माप(काष्ठा chip_inक्रमmation)))
-			वापस -EFAULT;
-		अवरोध;
-	हाल VIAFB_GET_INFO_SIZE:
-		वापस put_user((u32)माप(काष्ठा viafb_ioctl_info), argp);
-	हाल VIAFB_GET_INFO:
-		वापस viafb_ioctl_get_viafb_info(arg);
-	हाल VIAFB_HOTPLUG:
-		वापस put_user(viafb_ioctl_hotplug(info->var.xres,
+	switch (cmd) {
+	case VIAFB_GET_CHIP_INFO:
+		if (copy_to_user(argp, viaparinfo->chip_info,
+				sizeof(struct chip_information)))
+			return -EFAULT;
+		break;
+	case VIAFB_GET_INFO_SIZE:
+		return put_user((u32)sizeof(struct viafb_ioctl_info), argp);
+	case VIAFB_GET_INFO:
+		return viafb_ioctl_get_viafb_info(arg);
+	case VIAFB_HOTPLUG:
+		return put_user(viafb_ioctl_hotplug(info->var.xres,
 					      info->var.yres,
 					      info->var.bits_per_pixel), argp);
-	हाल VIAFB_SET_HOTPLUG_FLAG:
-		अगर (copy_from_user(&gpu32, argp, माप(gpu32)))
-			वापस -EFAULT;
+	case VIAFB_SET_HOTPLUG_FLAG:
+		if (copy_from_user(&gpu32, argp, sizeof(gpu32)))
+			return -EFAULT;
 		viafb_hotplug = (gpu32) ? 1 : 0;
-		अवरोध;
-	हाल VIAFB_GET_RESOLUTION:
+		break;
+	case VIAFB_GET_RESOLUTION:
 		u.viamode.xres = (u32) viafb_hotplug_Xres;
 		u.viamode.yres = (u32) viafb_hotplug_Yres;
 		u.viamode.refresh = (u32) viafb_hotplug_refresh;
 		u.viamode.bpp = (u32) viafb_hotplug_bpp;
-		अगर (viafb_SAMM_ON == 1) अणु
+		if (viafb_SAMM_ON == 1) {
 			u.viamode.xres_sec = viafb_second_xres;
 			u.viamode.yres_sec = viafb_second_yres;
-			u.viamode.भव_xres_sec = viafb_dual_fb ? viafbinfo1->var.xres_भव : viafbinfo->var.xres_भव;
-			u.viamode.भव_yres_sec = viafb_dual_fb ? viafbinfo1->var.yres_भव : viafbinfo->var.yres_भव;
+			u.viamode.virtual_xres_sec = viafb_dual_fb ? viafbinfo1->var.xres_virtual : viafbinfo->var.xres_virtual;
+			u.viamode.virtual_yres_sec = viafb_dual_fb ? viafbinfo1->var.yres_virtual : viafbinfo->var.yres_virtual;
 			u.viamode.refresh_sec = viafb_refresh1;
 			u.viamode.bpp_sec = viafb_bpp1;
-		पूर्ण अन्यथा अणु
+		} else {
 			u.viamode.xres_sec = 0;
 			u.viamode.yres_sec = 0;
-			u.viamode.भव_xres_sec = 0;
-			u.viamode.भव_yres_sec = 0;
+			u.viamode.virtual_xres_sec = 0;
+			u.viamode.virtual_yres_sec = 0;
 			u.viamode.refresh_sec = 0;
 			u.viamode.bpp_sec = 0;
-		पूर्ण
-		अगर (copy_to_user(argp, &u.viamode, माप(u.viamode)))
-			वापस -EFAULT;
-		अवरोध;
-	हाल VIAFB_GET_SAMM_INFO:
+		}
+		if (copy_to_user(argp, &u.viamode, sizeof(u.viamode)))
+			return -EFAULT;
+		break;
+	case VIAFB_GET_SAMM_INFO:
 		u.viasamm.samm_status = viafb_SAMM_ON;
 
-		अगर (viafb_SAMM_ON == 1) अणु
-			अगर (viafb_dual_fb) अणु
-				u.viasamm.size_prim = viaparinfo->fbmem_मुक्त;
-				u.viasamm.size_sec = viaparinfo1->fbmem_मुक्त;
-			पूर्ण अन्यथा अणु
-				अगर (viafb_second_size) अणु
+		if (viafb_SAMM_ON == 1) {
+			if (viafb_dual_fb) {
+				u.viasamm.size_prim = viaparinfo->fbmem_free;
+				u.viasamm.size_sec = viaparinfo1->fbmem_free;
+			} else {
+				if (viafb_second_size) {
 					u.viasamm.size_prim =
-					    viaparinfo->fbmem_मुक्त -
+					    viaparinfo->fbmem_free -
 					    viafb_second_size * 1024 * 1024;
 					u.viasamm.size_sec =
 					    viafb_second_size * 1024 * 1024;
-				पूर्ण अन्यथा अणु
+				} else {
 					u.viasamm.size_prim =
-					    viaparinfo->fbmem_मुक्त >> 1;
+					    viaparinfo->fbmem_free >> 1;
 					u.viasamm.size_sec =
-					    (viaparinfo->fbmem_मुक्त >> 1);
-				पूर्ण
-			पूर्ण
+					    (viaparinfo->fbmem_free >> 1);
+				}
+			}
 			u.viasamm.mem_base = viaparinfo->fbmem;
 			u.viasamm.offset_sec = viafb_second_offset;
-		पूर्ण अन्यथा अणु
+		} else {
 			u.viasamm.size_prim =
 			    viaparinfo->memsize - viaparinfo->fbmem_used;
 			u.viasamm.size_sec = 0;
 			u.viasamm.mem_base = viaparinfo->fbmem;
 			u.viasamm.offset_sec = 0;
-		पूर्ण
+		}
 
-		अगर (copy_to_user(argp, &u.viasamm, माप(u.viasamm)))
-			वापस -EFAULT;
+		if (copy_to_user(argp, &u.viasamm, sizeof(u.viasamm)))
+			return -EFAULT;
 
-		अवरोध;
-	हाल VIAFB_TURN_ON_OUTPUT_DEVICE:
-		अगर (copy_from_user(&gpu32, argp, माप(gpu32)))
-			वापस -EFAULT;
-		अगर (gpu32 & CRT_Device)
+		break;
+	case VIAFB_TURN_ON_OUTPUT_DEVICE:
+		if (copy_from_user(&gpu32, argp, sizeof(gpu32)))
+			return -EFAULT;
+		if (gpu32 & CRT_Device)
 			via_set_state(VIA_CRT, VIA_STATE_ON);
-		अगर (gpu32 & DVI_Device)
+		if (gpu32 & DVI_Device)
 			viafb_dvi_enable();
-		अगर (gpu32 & LCD_Device)
+		if (gpu32 & LCD_Device)
 			viafb_lcd_enable();
-		अवरोध;
-	हाल VIAFB_TURN_OFF_OUTPUT_DEVICE:
-		अगर (copy_from_user(&gpu32, argp, माप(gpu32)))
-			वापस -EFAULT;
-		अगर (gpu32 & CRT_Device)
+		break;
+	case VIAFB_TURN_OFF_OUTPUT_DEVICE:
+		if (copy_from_user(&gpu32, argp, sizeof(gpu32)))
+			return -EFAULT;
+		if (gpu32 & CRT_Device)
 			via_set_state(VIA_CRT, VIA_STATE_OFF);
-		अगर (gpu32 & DVI_Device)
+		if (gpu32 & DVI_Device)
 			viafb_dvi_disable();
-		अगर (gpu32 & LCD_Device)
+		if (gpu32 & LCD_Device)
 			viafb_lcd_disable();
-		अवरोध;
-	हाल VIAFB_GET_DEVICE:
+		break;
+	case VIAFB_GET_DEVICE:
 		u.active_dev.crt = viafb_CRT_ON;
 		u.active_dev.dvi = viafb_DVI_ON;
 		u.active_dev.lcd = viafb_LCD_ON;
@@ -519,301 +518,301 @@
 		u.active_dev.refresh = viafb_refresh;
 		u.active_dev.refresh1 = viafb_refresh1;
 
-		u.active_dev.epia_dvi = viafb_platक्रमm_epia_dvi;
+		u.active_dev.epia_dvi = viafb_platform_epia_dvi;
 		u.active_dev.lcd_dual_edge = viafb_device_lcd_dualedge;
 		u.active_dev.bus_width = viafb_bus_width;
 
-		अगर (copy_to_user(argp, &u.active_dev, माप(u.active_dev)))
-			वापस -EFAULT;
-		अवरोध;
+		if (copy_to_user(argp, &u.active_dev, sizeof(u.active_dev)))
+			return -EFAULT;
+		break;
 
-	हाल VIAFB_GET_DRIVER_VERSION:
+	case VIAFB_GET_DRIVER_VERSION:
 		u.driver_version.iMajorNum = VERSION_MAJOR;
 		u.driver_version.iKernelNum = VERSION_KERNEL;
 		u.driver_version.iOSNum = VERSION_OS;
 		u.driver_version.iMinorNum = VERSION_MINOR;
 
-		अगर (copy_to_user(argp, &u.driver_version,
-			माप(u.driver_version)))
-			वापस -EFAULT;
+		if (copy_to_user(argp, &u.driver_version,
+			sizeof(u.driver_version)))
+			return -EFAULT;
 
-		अवरोध;
+		break;
 
-	हाल VIAFB_GET_DEVICE_INFO:
+	case VIAFB_GET_DEVICE_INFO:
 
 		retrieve_device_setting(&u.viafb_setting);
 
-		अगर (copy_to_user(argp, &u.viafb_setting,
-				 माप(u.viafb_setting)))
-			वापस -EFAULT;
+		if (copy_to_user(argp, &u.viafb_setting,
+				 sizeof(u.viafb_setting)))
+			return -EFAULT;
 
-		अवरोध;
+		break;
 
-	हाल VIAFB_GET_DEVICE_SUPPORT:
+	case VIAFB_GET_DEVICE_SUPPORT:
 		viafb_get_device_support_state(&state_info);
-		अगर (put_user(state_info, argp))
-			वापस -EFAULT;
-		अवरोध;
+		if (put_user(state_info, argp))
+			return -EFAULT;
+		break;
 
-	हाल VIAFB_GET_DEVICE_CONNECT:
+	case VIAFB_GET_DEVICE_CONNECT:
 		viafb_get_device_connect_state(&state_info);
-		अगर (put_user(state_info, argp))
-			वापस -EFAULT;
-		अवरोध;
+		if (put_user(state_info, argp))
+			return -EFAULT;
+		break;
 
-	हाल VIAFB_GET_PANEL_SUPPORT_EXPAND:
+	case VIAFB_GET_PANEL_SUPPORT_EXPAND:
 		state_info =
 		    viafb_lcd_get_support_expand_state(info->var.xres,
 						 info->var.yres);
-		अगर (put_user(state_info, argp))
-			वापस -EFAULT;
-		अवरोध;
+		if (put_user(state_info, argp))
+			return -EFAULT;
+		break;
 
-	हाल VIAFB_GET_DRIVER_NAME:
-		अगर (copy_to_user(argp, driver_name, माप(driver_name)))
-			वापस -EFAULT;
-		अवरोध;
+	case VIAFB_GET_DRIVER_NAME:
+		if (copy_to_user(argp, driver_name, sizeof(driver_name)))
+			return -EFAULT;
+		break;
 
-	हाल VIAFB_SET_GAMMA_LUT:
-		viafb_gamma_table = memdup_user(argp, 256 * माप(u32));
-		अगर (IS_ERR(viafb_gamma_table))
-			वापस PTR_ERR(viafb_gamma_table);
+	case VIAFB_SET_GAMMA_LUT:
+		viafb_gamma_table = memdup_user(argp, 256 * sizeof(u32));
+		if (IS_ERR(viafb_gamma_table))
+			return PTR_ERR(viafb_gamma_table);
 		viafb_set_gamma_table(viafb_bpp, viafb_gamma_table);
-		kमुक्त(viafb_gamma_table);
-		अवरोध;
+		kfree(viafb_gamma_table);
+		break;
 
-	हाल VIAFB_GET_GAMMA_LUT:
-		viafb_gamma_table = kदो_स्मृति_array(256, माप(u32),
+	case VIAFB_GET_GAMMA_LUT:
+		viafb_gamma_table = kmalloc_array(256, sizeof(u32),
 						  GFP_KERNEL);
-		अगर (!viafb_gamma_table)
-			वापस -ENOMEM;
+		if (!viafb_gamma_table)
+			return -ENOMEM;
 		viafb_get_gamma_table(viafb_gamma_table);
-		अगर (copy_to_user(argp, viafb_gamma_table,
-			256 * माप(u32))) अणु
-			kमुक्त(viafb_gamma_table);
-			वापस -EFAULT;
-		पूर्ण
-		kमुक्त(viafb_gamma_table);
-		अवरोध;
+		if (copy_to_user(argp, viafb_gamma_table,
+			256 * sizeof(u32))) {
+			kfree(viafb_gamma_table);
+			return -EFAULT;
+		}
+		kfree(viafb_gamma_table);
+		break;
 
-	हाल VIAFB_GET_GAMMA_SUPPORT_STATE:
+	case VIAFB_GET_GAMMA_SUPPORT_STATE:
 		viafb_get_gamma_support_state(viafb_bpp, &state_info);
-		अगर (put_user(state_info, argp))
-			वापस -EFAULT;
-		अवरोध;
-	हाल VIAFB_SYNC_SURFACE:
+		if (put_user(state_info, argp))
+			return -EFAULT;
+		break;
+	case VIAFB_SYNC_SURFACE:
 		DEBUG_MSG(KERN_INFO "lobo VIAFB_SYNC_SURFACE\n");
-		अवरोध;
-	हाल VIAFB_GET_DRIVER_CAPS:
-		अवरोध;
+		break;
+	case VIAFB_GET_DRIVER_CAPS:
+		break;
 
-	हाल VIAFB_GET_PANEL_MAX_SIZE:
-		अगर (copy_from_user(&u.panel_pos_size_para, argp,
-				   माप(u.panel_pos_size_para)))
-			वापस -EFAULT;
+	case VIAFB_GET_PANEL_MAX_SIZE:
+		if (copy_from_user(&u.panel_pos_size_para, argp,
+				   sizeof(u.panel_pos_size_para)))
+			return -EFAULT;
 		u.panel_pos_size_para.x = u.panel_pos_size_para.y = 0;
-		अगर (copy_to_user(argp, &u.panel_pos_size_para,
-		     माप(u.panel_pos_size_para)))
-			वापस -EFAULT;
-		अवरोध;
-	हाल VIAFB_GET_PANEL_MAX_POSITION:
-		अगर (copy_from_user(&u.panel_pos_size_para, argp,
-				   माप(u.panel_pos_size_para)))
-			वापस -EFAULT;
+		if (copy_to_user(argp, &u.panel_pos_size_para,
+		     sizeof(u.panel_pos_size_para)))
+			return -EFAULT;
+		break;
+	case VIAFB_GET_PANEL_MAX_POSITION:
+		if (copy_from_user(&u.panel_pos_size_para, argp,
+				   sizeof(u.panel_pos_size_para)))
+			return -EFAULT;
 		u.panel_pos_size_para.x = u.panel_pos_size_para.y = 0;
-		अगर (copy_to_user(argp, &u.panel_pos_size_para,
-				 माप(u.panel_pos_size_para)))
-			वापस -EFAULT;
-		अवरोध;
+		if (copy_to_user(argp, &u.panel_pos_size_para,
+				 sizeof(u.panel_pos_size_para)))
+			return -EFAULT;
+		break;
 
-	हाल VIAFB_GET_PANEL_POSITION:
-		अगर (copy_from_user(&u.panel_pos_size_para, argp,
-				   माप(u.panel_pos_size_para)))
-			वापस -EFAULT;
+	case VIAFB_GET_PANEL_POSITION:
+		if (copy_from_user(&u.panel_pos_size_para, argp,
+				   sizeof(u.panel_pos_size_para)))
+			return -EFAULT;
 		u.panel_pos_size_para.x = u.panel_pos_size_para.y = 0;
-		अगर (copy_to_user(argp, &u.panel_pos_size_para,
-				 माप(u.panel_pos_size_para)))
-			वापस -EFAULT;
-		अवरोध;
-	हाल VIAFB_GET_PANEL_SIZE:
-		अगर (copy_from_user(&u.panel_pos_size_para, argp,
-				   माप(u.panel_pos_size_para)))
-			वापस -EFAULT;
+		if (copy_to_user(argp, &u.panel_pos_size_para,
+				 sizeof(u.panel_pos_size_para)))
+			return -EFAULT;
+		break;
+	case VIAFB_GET_PANEL_SIZE:
+		if (copy_from_user(&u.panel_pos_size_para, argp,
+				   sizeof(u.panel_pos_size_para)))
+			return -EFAULT;
 		u.panel_pos_size_para.x = u.panel_pos_size_para.y = 0;
-		अगर (copy_to_user(argp, &u.panel_pos_size_para,
-				 माप(u.panel_pos_size_para)))
-			वापस -EFAULT;
-		अवरोध;
+		if (copy_to_user(argp, &u.panel_pos_size_para,
+				 sizeof(u.panel_pos_size_para)))
+			return -EFAULT;
+		break;
 
-	हाल VIAFB_SET_PANEL_POSITION:
-		अगर (copy_from_user(&u.panel_pos_size_para, argp,
-				   माप(u.panel_pos_size_para)))
-			वापस -EFAULT;
-		अवरोध;
-	हाल VIAFB_SET_PANEL_SIZE:
-		अगर (copy_from_user(&u.panel_pos_size_para, argp,
-				   माप(u.panel_pos_size_para)))
-			वापस -EFAULT;
-		अवरोध;
+	case VIAFB_SET_PANEL_POSITION:
+		if (copy_from_user(&u.panel_pos_size_para, argp,
+				   sizeof(u.panel_pos_size_para)))
+			return -EFAULT;
+		break;
+	case VIAFB_SET_PANEL_SIZE:
+		if (copy_from_user(&u.panel_pos_size_para, argp,
+				   sizeof(u.panel_pos_size_para)))
+			return -EFAULT;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम viafb_fillrect(काष्ठा fb_info *info,
-	स्थिर काष्ठा fb_fillrect *rect)
-अणु
-	काष्ठा viafb_par *viapar = info->par;
-	काष्ठा viafb_shared *shared = viapar->shared;
+static void viafb_fillrect(struct fb_info *info,
+	const struct fb_fillrect *rect)
+{
+	struct viafb_par *viapar = info->par;
+	struct viafb_shared *shared = viapar->shared;
 	u32 fg_color;
 	u8 rop;
 
-	अगर (info->flags & FBINFO_HWACCEL_DISABLED || !shared->hw_bitblt) अणु
+	if (info->flags & FBINFO_HWACCEL_DISABLED || !shared->hw_bitblt) {
 		cfb_fillrect(info, rect);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!rect->width || !rect->height)
-		वापस;
+	if (!rect->width || !rect->height)
+		return;
 
-	अगर (info->fix.visual == FB_VISUAL_TRUECOLOR)
-		fg_color = ((u32 *)info->pseuकरो_palette)[rect->color];
-	अन्यथा
+	if (info->fix.visual == FB_VISUAL_TRUECOLOR)
+		fg_color = ((u32 *)info->pseudo_palette)[rect->color];
+	else
 		fg_color = rect->color;
 
-	अगर (rect->rop == ROP_XOR)
+	if (rect->rop == ROP_XOR)
 		rop = 0x5A;
-	अन्यथा
+	else
 		rop = 0xF0;
 
 	DEBUG_MSG(KERN_DEBUG "viafb 2D engine: fillrect\n");
-	अगर (shared->hw_bitblt(shared->vdev->engine_mmio, VIA_BITBLT_FILL,
+	if (shared->hw_bitblt(shared->vdev->engine_mmio, VIA_BITBLT_FILL,
 		rect->width, rect->height, info->var.bits_per_pixel,
 		viapar->vram_addr, info->fix.line_length, rect->dx, rect->dy,
-		शून्य, 0, 0, 0, 0, fg_color, 0, rop))
+		NULL, 0, 0, 0, 0, fg_color, 0, rop))
 		cfb_fillrect(info, rect);
-पूर्ण
+}
 
-अटल व्योम viafb_copyarea(काष्ठा fb_info *info,
-	स्थिर काष्ठा fb_copyarea *area)
-अणु
-	काष्ठा viafb_par *viapar = info->par;
-	काष्ठा viafb_shared *shared = viapar->shared;
+static void viafb_copyarea(struct fb_info *info,
+	const struct fb_copyarea *area)
+{
+	struct viafb_par *viapar = info->par;
+	struct viafb_shared *shared = viapar->shared;
 
-	अगर (info->flags & FBINFO_HWACCEL_DISABLED || !shared->hw_bitblt) अणु
+	if (info->flags & FBINFO_HWACCEL_DISABLED || !shared->hw_bitblt) {
 		cfb_copyarea(info, area);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!area->width || !area->height)
-		वापस;
+	if (!area->width || !area->height)
+		return;
 
 	DEBUG_MSG(KERN_DEBUG "viafb 2D engine: copyarea\n");
-	अगर (shared->hw_bitblt(shared->vdev->engine_mmio, VIA_BITBLT_COLOR,
+	if (shared->hw_bitblt(shared->vdev->engine_mmio, VIA_BITBLT_COLOR,
 		area->width, area->height, info->var.bits_per_pixel,
 		viapar->vram_addr, info->fix.line_length, area->dx, area->dy,
-		शून्य, viapar->vram_addr, info->fix.line_length,
+		NULL, viapar->vram_addr, info->fix.line_length,
 		area->sx, area->sy, 0, 0, 0))
 		cfb_copyarea(info, area);
-पूर्ण
+}
 
-अटल व्योम viafb_imageblit(काष्ठा fb_info *info,
-	स्थिर काष्ठा fb_image *image)
-अणु
-	काष्ठा viafb_par *viapar = info->par;
-	काष्ठा viafb_shared *shared = viapar->shared;
+static void viafb_imageblit(struct fb_info *info,
+	const struct fb_image *image)
+{
+	struct viafb_par *viapar = info->par;
+	struct viafb_shared *shared = viapar->shared;
 	u32 fg_color = 0, bg_color = 0;
 	u8 op;
 
-	अगर (info->flags & FBINFO_HWACCEL_DISABLED || !shared->hw_bitblt ||
-		(image->depth != 1 && image->depth != viapar->depth)) अणु
+	if (info->flags & FBINFO_HWACCEL_DISABLED || !shared->hw_bitblt ||
+		(image->depth != 1 && image->depth != viapar->depth)) {
 		cfb_imageblit(info, image);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (image->depth == 1) अणु
+	if (image->depth == 1) {
 		op = VIA_BITBLT_MONO;
-		अगर (info->fix.visual == FB_VISUAL_TRUECOLOR) अणु
+		if (info->fix.visual == FB_VISUAL_TRUECOLOR) {
 			fg_color =
-				((u32 *)info->pseuकरो_palette)[image->fg_color];
+				((u32 *)info->pseudo_palette)[image->fg_color];
 			bg_color =
-				((u32 *)info->pseuकरो_palette)[image->bg_color];
-		पूर्ण अन्यथा अणु
+				((u32 *)info->pseudo_palette)[image->bg_color];
+		} else {
 			fg_color = image->fg_color;
 			bg_color = image->bg_color;
-		पूर्ण
-	पूर्ण अन्यथा
+		}
+	} else
 		op = VIA_BITBLT_COLOR;
 
 	DEBUG_MSG(KERN_DEBUG "viafb 2D engine: imageblit\n");
-	अगर (shared->hw_bitblt(shared->vdev->engine_mmio, op,
+	if (shared->hw_bitblt(shared->vdev->engine_mmio, op,
 		image->width, image->height, info->var.bits_per_pixel,
 		viapar->vram_addr, info->fix.line_length, image->dx, image->dy,
 		(u32 *)image->data, 0, 0, 0, 0, fg_color, bg_color, 0))
 		cfb_imageblit(info, image);
-पूर्ण
+}
 
-अटल पूर्णांक viafb_cursor(काष्ठा fb_info *info, काष्ठा fb_cursor *cursor)
-अणु
-	काष्ठा viafb_par *viapar = info->par;
-	व्योम __iomem *engine = viapar->shared->vdev->engine_mmio;
+static int viafb_cursor(struct fb_info *info, struct fb_cursor *cursor)
+{
+	struct viafb_par *viapar = info->par;
+	void __iomem *engine = viapar->shared->vdev->engine_mmio;
 	u32 temp, xx, yy, bg_color = 0, fg_color = 0,
 		chip_name = viapar->shared->chip_info.gfx_chip_name;
-	पूर्णांक i, j = 0, cur_size = 64;
+	int i, j = 0, cur_size = 64;
 
-	अगर (info->flags & FBINFO_HWACCEL_DISABLED || info != viafbinfo)
-		वापस -ENODEV;
+	if (info->flags & FBINFO_HWACCEL_DISABLED || info != viafbinfo)
+		return -ENODEV;
 
-	/* LCD ouput करोes not support hw cursors (at least on VN896) */
-	अगर ((chip_name == UNICHROME_CLE266 && viapar->iga_path == IGA2) ||
+	/* LCD ouput does not support hw cursors (at least on VN896) */
+	if ((chip_name == UNICHROME_CLE266 && viapar->iga_path == IGA2) ||
 		viafb_LCD_ON)
-		वापस -ENODEV;
+		return -ENODEV;
 
 	viafb_show_hw_cursor(info, HW_Cursor_OFF);
 
-	अगर (cursor->set & FB_CUR_SETHOT) अणु
+	if (cursor->set & FB_CUR_SETHOT) {
 		temp = (cursor->hot.x << 16) + cursor->hot.y;
-		ग_लिखोl(temp, engine + VIA_REG_CURSOR_ORG);
-	पूर्ण
+		writel(temp, engine + VIA_REG_CURSOR_ORG);
+	}
 
-	अगर (cursor->set & FB_CUR_SETPOS) अणु
+	if (cursor->set & FB_CUR_SETPOS) {
 		yy = cursor->image.dy - info->var.yoffset;
 		xx = cursor->image.dx - info->var.xoffset;
 		temp = yy & 0xFFFF;
 		temp |= (xx << 16);
-		ग_लिखोl(temp, engine + VIA_REG_CURSOR_POS);
-	पूर्ण
+		writel(temp, engine + VIA_REG_CURSOR_POS);
+	}
 
-	अगर (cursor->image.width <= 32 && cursor->image.height <= 32)
+	if (cursor->image.width <= 32 && cursor->image.height <= 32)
 		cur_size = 32;
-	अन्यथा अगर (cursor->image.width <= 64 && cursor->image.height <= 64)
+	else if (cursor->image.width <= 64 && cursor->image.height <= 64)
 		cur_size = 64;
-	अन्यथा अणु
-		prपूर्णांकk(KERN_WARNING "viafb_cursor: The cursor is too large "
+	else {
+		printk(KERN_WARNING "viafb_cursor: The cursor is too large "
 			"%dx%d", cursor->image.width, cursor->image.height);
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	अगर (cursor->set & FB_CUR_SETSIZE) अणु
-		temp = पढ़ोl(engine + VIA_REG_CURSOR_MODE);
-		अगर (cur_size == 32)
+	if (cursor->set & FB_CUR_SETSIZE) {
+		temp = readl(engine + VIA_REG_CURSOR_MODE);
+		if (cur_size == 32)
 			temp |= 0x2;
-		अन्यथा
+		else
 			temp &= ~0x2;
 
-		ग_लिखोl(temp, engine + VIA_REG_CURSOR_MODE);
-	पूर्ण
+		writel(temp, engine + VIA_REG_CURSOR_MODE);
+	}
 
-	अगर (cursor->set & FB_CUR_SETCMAP) अणु
+	if (cursor->set & FB_CUR_SETCMAP) {
 		fg_color = cursor->image.fg_color;
 		bg_color = cursor->image.bg_color;
-		अगर (chip_name == UNICHROME_CX700 ||
+		if (chip_name == UNICHROME_CX700 ||
 			chip_name == UNICHROME_VX800 ||
 			chip_name == UNICHROME_VX855 ||
-			chip_name == UNICHROME_VX900) अणु
+			chip_name == UNICHROME_VX900) {
 			fg_color =
 				((info->cmap.red[fg_color] & 0xFFC0) << 14) |
 				((info->cmap.green[fg_color] & 0xFFC0) << 4) |
@@ -822,7 +821,7 @@
 				((info->cmap.red[bg_color] & 0xFFC0) << 14) |
 				((info->cmap.green[bg_color] & 0xFFC0) << 4) |
 				((info->cmap.blue[bg_color] & 0xFFC0) >> 6);
-		पूर्ण अन्यथा अणु
+		} else {
 			fg_color =
 				((info->cmap.red[fg_color] & 0xFF00) << 8) |
 				(info->cmap.green[fg_color] & 0xFF00) |
@@ -831,138 +830,138 @@
 				((info->cmap.red[bg_color] & 0xFF00) << 8) |
 				(info->cmap.green[bg_color] & 0xFF00) |
 				((info->cmap.blue[bg_color] & 0xFF00) >> 8);
-		पूर्ण
+		}
 
-		ग_लिखोl(bg_color, engine + VIA_REG_CURSOR_BG);
-		ग_लिखोl(fg_color, engine + VIA_REG_CURSOR_FG);
-	पूर्ण
+		writel(bg_color, engine + VIA_REG_CURSOR_BG);
+		writel(fg_color, engine + VIA_REG_CURSOR_FG);
+	}
 
-	अगर (cursor->set & FB_CUR_SETSHAPE) अणु
-		काष्ठा अणु
+	if (cursor->set & FB_CUR_SETSHAPE) {
+		struct {
 			u8 data[CURSOR_SIZE];
 			u32 bak[CURSOR_SIZE / 4];
-		पूर्ण *cr_data = kzalloc(माप(*cr_data), GFP_ATOMIC);
-		पूर्णांक size = ((cursor->image.width + 7) >> 3) *
+		} *cr_data = kzalloc(sizeof(*cr_data), GFP_ATOMIC);
+		int size = ((cursor->image.width + 7) >> 3) *
 			cursor->image.height;
 
-		अगर (!cr_data)
-			वापस -ENOMEM;
+		if (!cr_data)
+			return -ENOMEM;
 
-		अगर (cur_size == 32) अणु
-			क्रम (i = 0; i < (CURSOR_SIZE / 4); i++) अणु
+		if (cur_size == 32) {
+			for (i = 0; i < (CURSOR_SIZE / 4); i++) {
 				cr_data->bak[i] = 0x0;
 				cr_data->bak[i + 1] = 0xFFFFFFFF;
 				i += 1;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			क्रम (i = 0; i < (CURSOR_SIZE / 4); i++) अणु
+			}
+		} else {
+			for (i = 0; i < (CURSOR_SIZE / 4); i++) {
 				cr_data->bak[i] = 0x0;
 				cr_data->bak[i + 1] = 0x0;
 				cr_data->bak[i + 2] = 0xFFFFFFFF;
 				cr_data->bak[i + 3] = 0xFFFFFFFF;
 				i += 3;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		चयन (cursor->rop) अणु
-		हाल ROP_XOR:
-			क्रम (i = 0; i < size; i++)
+		switch (cursor->rop) {
+		case ROP_XOR:
+			for (i = 0; i < size; i++)
 				cr_data->data[i] = cursor->mask[i];
-			अवरोध;
-		हाल ROP_COPY:
+			break;
+		case ROP_COPY:
 
-			क्रम (i = 0; i < size; i++)
+			for (i = 0; i < size; i++)
 				cr_data->data[i] = cursor->mask[i];
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+			break;
+		default:
+			break;
+		}
 
-		अगर (cur_size == 32) अणु
-			क्रम (i = 0; i < size; i++) अणु
+		if (cur_size == 32) {
+			for (i = 0; i < size; i++) {
 				cr_data->bak[j] = (u32) cr_data->data[i];
 				cr_data->bak[j + 1] = ~cr_data->bak[j];
 				j += 2;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			क्रम (i = 0; i < size; i++) अणु
+			}
+		} else {
+			for (i = 0; i < size; i++) {
 				cr_data->bak[j] = (u32) cr_data->data[i];
 				cr_data->bak[j + 1] = 0x0;
 				cr_data->bak[j + 2] = ~cr_data->bak[j];
 				cr_data->bak[j + 3] = ~cr_data->bak[j + 1];
 				j += 4;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		स_नकल_toio(viafbinfo->screen_base + viapar->shared->
+		memcpy_toio(viafbinfo->screen_base + viapar->shared->
 			cursor_vram_addr, cr_data->bak, CURSOR_SIZE);
-		kमुक्त(cr_data);
-	पूर्ण
+		kfree(cr_data);
+	}
 
-	अगर (cursor->enable)
+	if (cursor->enable)
 		viafb_show_hw_cursor(info, HW_Cursor_ON);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक viafb_sync(काष्ठा fb_info *info)
-अणु
-	अगर (!(info->flags & FBINFO_HWACCEL_DISABLED))
-		viafb_रुको_engine_idle(info);
-	वापस 0;
-पूर्ण
+static int viafb_sync(struct fb_info *info)
+{
+	if (!(info->flags & FBINFO_HWACCEL_DISABLED))
+		viafb_wait_engine_idle(info);
+	return 0;
+}
 
-अटल पूर्णांक get_primary_device(व्योम)
-अणु
-	पूर्णांक primary_device = 0;
+static int get_primary_device(void)
+{
+	int primary_device = 0;
 	/* Rule: device on iga1 path are the primary device. */
-	अगर (viafb_SAMM_ON) अणु
-		अगर (viafb_CRT_ON) अणु
-			अगर (viaparinfo->shared->iga1_devices & VIA_CRT) अणु
+	if (viafb_SAMM_ON) {
+		if (viafb_CRT_ON) {
+			if (viaparinfo->shared->iga1_devices & VIA_CRT) {
 				DEBUG_MSG(KERN_INFO "CRT IGA Path:%d\n", IGA1);
 				primary_device = CRT_Device;
-			पूर्ण
-		पूर्ण
-		अगर (viafb_DVI_ON) अणु
-			अगर (viaparinfo->पंचांगds_setting_info->iga_path == IGA1) अणु
+			}
+		}
+		if (viafb_DVI_ON) {
+			if (viaparinfo->tmds_setting_info->iga_path == IGA1) {
 				DEBUG_MSG(KERN_INFO "DVI IGA Path:%d\n",
 					viaparinfo->
-					पंचांगds_setting_info->iga_path);
+					tmds_setting_info->iga_path);
 				primary_device = DVI_Device;
-			पूर्ण
-		पूर्ण
-		अगर (viafb_LCD_ON) अणु
-			अगर (viaparinfo->lvds_setting_info->iga_path == IGA1) अणु
+			}
+		}
+		if (viafb_LCD_ON) {
+			if (viaparinfo->lvds_setting_info->iga_path == IGA1) {
 				DEBUG_MSG(KERN_INFO "LCD IGA Path:%d\n",
 					viaparinfo->
 					lvds_setting_info->iga_path);
 				primary_device = LCD_Device;
-			पूर्ण
-		पूर्ण
-		अगर (viafb_LCD2_ON) अणु
-			अगर (viaparinfo->lvds_setting_info2->iga_path == IGA1) अणु
+			}
+		}
+		if (viafb_LCD2_ON) {
+			if (viaparinfo->lvds_setting_info2->iga_path == IGA1) {
 				DEBUG_MSG(KERN_INFO "LCD2 IGA Path:%d\n",
 					viaparinfo->
 					lvds_setting_info2->iga_path);
 				primary_device = LCD2_Device;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस primary_device;
-पूर्ण
+			}
+		}
+	}
+	return primary_device;
+}
 
-अटल व्योम retrieve_device_setting(काष्ठा viafb_ioctl_setting
+static void retrieve_device_setting(struct viafb_ioctl_setting
 	*setting_info)
-अणु
+{
 
 	/* get device status */
-	अगर (viafb_CRT_ON == 1)
+	if (viafb_CRT_ON == 1)
 		setting_info->device_status = CRT_Device;
-	अगर (viafb_DVI_ON == 1)
+	if (viafb_DVI_ON == 1)
 		setting_info->device_status |= DVI_Device;
-	अगर (viafb_LCD_ON == 1)
+	if (viafb_LCD_ON == 1)
 		setting_info->device_status |= LCD_Device;
-	अगर (viafb_LCD2_ON == 1)
+	if (viafb_LCD2_ON == 1)
 		setting_info->device_status |= LCD2_Device;
 
 	setting_info->samm_status = viafb_SAMM_ON;
@@ -983,531 +982,531 @@
 	setting_info->lcd_attributes.display_center = viafb_lcd_dsp_method;
 	setting_info->lcd_attributes.panel_id = viafb_lcd_panel_id;
 	setting_info->lcd_attributes.lcd_mode = viafb_lcd_mode;
-पूर्ण
+}
 
-अटल पूर्णांक __init parse_active_dev(व्योम)
-अणु
+static int __init parse_active_dev(void)
+{
 	viafb_CRT_ON = STATE_OFF;
 	viafb_DVI_ON = STATE_OFF;
 	viafb_LCD_ON = STATE_OFF;
 	viafb_LCD2_ON = STATE_OFF;
-	/* 1. Modअगरy the active status of devices. */
+	/* 1. Modify the active status of devices. */
 	/* 2. Keep the order of devices, so we can set corresponding
-	   IGA path to devices in SAMM हाल. */
+	   IGA path to devices in SAMM case. */
 	/*    Note: The previous of active_dev is primary device,
 	   and the following is secondary device. */
-	अगर (!viafb_active_dev) अणु
-		अगर (machine_is_olpc()) अणु /* LCD only */
+	if (!viafb_active_dev) {
+		if (machine_is_olpc()) { /* LCD only */
 			viafb_LCD_ON = STATE_ON;
 			viafb_SAMM_ON = STATE_OFF;
-		पूर्ण अन्यथा अणु
+		} else {
 			viafb_CRT_ON = STATE_ON;
 			viafb_SAMM_ON = STATE_OFF;
-		पूर्ण
-	पूर्ण अन्यथा अगर (!म_भेद(viafb_active_dev, "CRT+DVI")) अणु
+		}
+	} else if (!strcmp(viafb_active_dev, "CRT+DVI")) {
 		/* CRT+DVI */
 		viafb_CRT_ON = STATE_ON;
 		viafb_DVI_ON = STATE_ON;
 		viafb_primary_dev = CRT_Device;
-	पूर्ण अन्यथा अगर (!म_भेद(viafb_active_dev, "DVI+CRT")) अणु
+	} else if (!strcmp(viafb_active_dev, "DVI+CRT")) {
 		/* DVI+CRT */
 		viafb_CRT_ON = STATE_ON;
 		viafb_DVI_ON = STATE_ON;
 		viafb_primary_dev = DVI_Device;
-	पूर्ण अन्यथा अगर (!म_भेद(viafb_active_dev, "CRT+LCD")) अणु
+	} else if (!strcmp(viafb_active_dev, "CRT+LCD")) {
 		/* CRT+LCD */
 		viafb_CRT_ON = STATE_ON;
 		viafb_LCD_ON = STATE_ON;
 		viafb_primary_dev = CRT_Device;
-	पूर्ण अन्यथा अगर (!म_भेद(viafb_active_dev, "LCD+CRT")) अणु
+	} else if (!strcmp(viafb_active_dev, "LCD+CRT")) {
 		/* LCD+CRT */
 		viafb_CRT_ON = STATE_ON;
 		viafb_LCD_ON = STATE_ON;
 		viafb_primary_dev = LCD_Device;
-	पूर्ण अन्यथा अगर (!म_भेद(viafb_active_dev, "DVI+LCD")) अणु
+	} else if (!strcmp(viafb_active_dev, "DVI+LCD")) {
 		/* DVI+LCD */
 		viafb_DVI_ON = STATE_ON;
 		viafb_LCD_ON = STATE_ON;
 		viafb_primary_dev = DVI_Device;
-	पूर्ण अन्यथा अगर (!म_भेद(viafb_active_dev, "LCD+DVI")) अणु
+	} else if (!strcmp(viafb_active_dev, "LCD+DVI")) {
 		/* LCD+DVI */
 		viafb_DVI_ON = STATE_ON;
 		viafb_LCD_ON = STATE_ON;
 		viafb_primary_dev = LCD_Device;
-	पूर्ण अन्यथा अगर (!म_भेद(viafb_active_dev, "LCD+LCD2")) अणु
+	} else if (!strcmp(viafb_active_dev, "LCD+LCD2")) {
 		viafb_LCD_ON = STATE_ON;
 		viafb_LCD2_ON = STATE_ON;
 		viafb_primary_dev = LCD_Device;
-	पूर्ण अन्यथा अगर (!म_भेद(viafb_active_dev, "LCD2+LCD")) अणु
+	} else if (!strcmp(viafb_active_dev, "LCD2+LCD")) {
 		viafb_LCD_ON = STATE_ON;
 		viafb_LCD2_ON = STATE_ON;
 		viafb_primary_dev = LCD2_Device;
-	पूर्ण अन्यथा अगर (!म_भेद(viafb_active_dev, "CRT")) अणु
+	} else if (!strcmp(viafb_active_dev, "CRT")) {
 		/* CRT only */
 		viafb_CRT_ON = STATE_ON;
 		viafb_SAMM_ON = STATE_OFF;
-	पूर्ण अन्यथा अगर (!म_भेद(viafb_active_dev, "DVI")) अणु
+	} else if (!strcmp(viafb_active_dev, "DVI")) {
 		/* DVI only */
 		viafb_DVI_ON = STATE_ON;
 		viafb_SAMM_ON = STATE_OFF;
-	पूर्ण अन्यथा अगर (!म_भेद(viafb_active_dev, "LCD")) अणु
+	} else if (!strcmp(viafb_active_dev, "LCD")) {
 		/* LCD only */
 		viafb_LCD_ON = STATE_ON;
 		viafb_SAMM_ON = STATE_OFF;
-	पूर्ण अन्यथा
-		वापस -EINVAL;
+	} else
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक parse_port(अक्षर *opt_str, पूर्णांक *output_पूर्णांकerface)
-अणु
-	अगर (!म_भेदन(opt_str, "DVP0", 4))
-		*output_पूर्णांकerface = INTERFACE_DVP0;
-	अन्यथा अगर (!म_भेदन(opt_str, "DVP1", 4))
-		*output_पूर्णांकerface = INTERFACE_DVP1;
-	अन्यथा अगर (!म_भेदन(opt_str, "DFP_HIGHLOW", 11))
-		*output_पूर्णांकerface = INTERFACE_DFP;
-	अन्यथा अगर (!म_भेदन(opt_str, "DFP_HIGH", 8))
-		*output_पूर्णांकerface = INTERFACE_DFP_HIGH;
-	अन्यथा अगर (!म_भेदन(opt_str, "DFP_LOW", 7))
-		*output_पूर्णांकerface = INTERFACE_DFP_LOW;
-	अन्यथा
-		*output_पूर्णांकerface = INTERFACE_NONE;
-	वापस 0;
-पूर्ण
+static int parse_port(char *opt_str, int *output_interface)
+{
+	if (!strncmp(opt_str, "DVP0", 4))
+		*output_interface = INTERFACE_DVP0;
+	else if (!strncmp(opt_str, "DVP1", 4))
+		*output_interface = INTERFACE_DVP1;
+	else if (!strncmp(opt_str, "DFP_HIGHLOW", 11))
+		*output_interface = INTERFACE_DFP;
+	else if (!strncmp(opt_str, "DFP_HIGH", 8))
+		*output_interface = INTERFACE_DFP_HIGH;
+	else if (!strncmp(opt_str, "DFP_LOW", 7))
+		*output_interface = INTERFACE_DFP_LOW;
+	else
+		*output_interface = INTERFACE_NONE;
+	return 0;
+}
 
-अटल व्योम parse_lcd_port(व्योम)
-अणु
+static void parse_lcd_port(void)
+{
 	parse_port(viafb_lcd_port, &viaparinfo->chip_info->lvds_chip_info.
-		output_पूर्णांकerface);
-	/*Initialize to aव्योम unexpected behavior */
-	viaparinfo->chip_info->lvds_chip_info2.output_पूर्णांकerface =
+		output_interface);
+	/*Initialize to avoid unexpected behavior */
+	viaparinfo->chip_info->lvds_chip_info2.output_interface =
 	INTERFACE_NONE;
 
 	DEBUG_MSG(KERN_INFO "parse_lcd_port: viafb_lcd_port:%s,interface:%d\n",
 		  viafb_lcd_port, viaparinfo->chip_info->lvds_chip_info.
-		  output_पूर्णांकerface);
-पूर्ण
+		  output_interface);
+}
 
-अटल व्योम parse_dvi_port(व्योम)
-अणु
-	parse_port(viafb_dvi_port, &viaparinfo->chip_info->पंचांगds_chip_info.
-		output_पूर्णांकerface);
+static void parse_dvi_port(void)
+{
+	parse_port(viafb_dvi_port, &viaparinfo->chip_info->tmds_chip_info.
+		output_interface);
 
 	DEBUG_MSG(KERN_INFO "parse_dvi_port: viafb_dvi_port:%s,interface:%d\n",
-		  viafb_dvi_port, viaparinfo->chip_info->पंचांगds_chip_info.
-		  output_पूर्णांकerface);
-पूर्ण
+		  viafb_dvi_port, viaparinfo->chip_info->tmds_chip_info.
+		  output_interface);
+}
 
-#अगर_घोषित CONFIG_FB_VIA_सूचीECT_PROCFS
+#ifdef CONFIG_FB_VIA_DIRECT_PROCFS
 
 /*
- * The proc fileप्रणाली पढ़ो/ग_लिखो function, a simple proc implement to
+ * The proc filesystem read/write function, a simple proc implement to
  * get/set the value of DPA  DVP0,   DVP0DataDriving,  DVP0ClockDriving, DVP1,
  * DVP1Driving, DFPHigh, DFPLow CR96,   SR2A[5], SR1B[1], SR2A[4], SR1E[2],
  * CR9B,    SR65,    CR97,    CR99
  */
-अटल पूर्णांक viafb_dvp0_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
+static int viafb_dvp0_proc_show(struct seq_file *m, void *v)
+{
 	u8 dvp0_data_dri = 0, dvp0_clk_dri = 0, dvp0 = 0;
 	dvp0_data_dri =
-	    (viafb_पढ़ो_reg(VIASR, SR2A) & BIT5) >> 4 |
-	    (viafb_पढ़ो_reg(VIASR, SR1B) & BIT1) >> 1;
+	    (viafb_read_reg(VIASR, SR2A) & BIT5) >> 4 |
+	    (viafb_read_reg(VIASR, SR1B) & BIT1) >> 1;
 	dvp0_clk_dri =
-	    (viafb_पढ़ो_reg(VIASR, SR2A) & BIT4) >> 3 |
-	    (viafb_पढ़ो_reg(VIASR, SR1E) & BIT2) >> 2;
-	dvp0 = viafb_पढ़ो_reg(VIACR, CR96) & 0x0f;
-	seq_म_लिखो(m, "%x %x %x\n", dvp0, dvp0_data_dri, dvp0_clk_dri);
-	वापस 0;
-पूर्ण
+	    (viafb_read_reg(VIASR, SR2A) & BIT4) >> 3 |
+	    (viafb_read_reg(VIASR, SR1E) & BIT2) >> 2;
+	dvp0 = viafb_read_reg(VIACR, CR96) & 0x0f;
+	seq_printf(m, "%x %x %x\n", dvp0, dvp0_data_dri, dvp0_clk_dri);
+	return 0;
+}
 
-अटल पूर्णांक viafb_dvp0_proc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, viafb_dvp0_proc_show, शून्य);
-पूर्ण
+static int viafb_dvp0_proc_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, viafb_dvp0_proc_show, NULL);
+}
 
-अटल sमाप_प्रकार viafb_dvp0_proc_ग_लिखो(काष्ठा file *file,
-	स्थिर अक्षर __user *buffer, माप_प्रकार count, loff_t *pos)
-अणु
-	अक्षर buf[20], *value, *pbuf;
+static ssize_t viafb_dvp0_proc_write(struct file *file,
+	const char __user *buffer, size_t count, loff_t *pos)
+{
+	char buf[20], *value, *pbuf;
 	u8 reg_val = 0;
-	अचिन्हित दीर्घ length, i;
-	अगर (count < 1)
-		वापस -EINVAL;
+	unsigned long length, i;
+	if (count < 1)
+		return -EINVAL;
 	length = count > 20 ? 20 : count;
-	अगर (copy_from_user(&buf[0], buffer, length))
-		वापस -EFAULT;
+	if (copy_from_user(&buf[0], buffer, length))
+		return -EFAULT;
 	buf[length - 1] = '\0';	/*Ensure end string */
 	pbuf = &buf[0];
-	क्रम (i = 0; i < 3; i++) अणु
+	for (i = 0; i < 3; i++) {
 		value = strsep(&pbuf, " ");
-		अगर (value != शून्य) अणु
-			अगर (kstrtou8(value, 0, &reg_val) < 0)
-				वापस -EINVAL;
+		if (value != NULL) {
+			if (kstrtou8(value, 0, &reg_val) < 0)
+				return -EINVAL;
 			DEBUG_MSG(KERN_INFO "DVP0:reg_val[%lu]=:%x\n", i,
 				  reg_val);
-			चयन (i) अणु
-			हाल 0:
-				viafb_ग_लिखो_reg_mask(CR96, VIACR,
+			switch (i) {
+			case 0:
+				viafb_write_reg_mask(CR96, VIACR,
 					reg_val, 0x0f);
-				अवरोध;
-			हाल 1:
-				viafb_ग_लिखो_reg_mask(SR2A, VIASR,
+				break;
+			case 1:
+				viafb_write_reg_mask(SR2A, VIASR,
 					reg_val << 4, BIT5);
-				viafb_ग_लिखो_reg_mask(SR1B, VIASR,
+				viafb_write_reg_mask(SR1B, VIASR,
 					reg_val << 1, BIT1);
-				अवरोध;
-			हाल 2:
-				viafb_ग_लिखो_reg_mask(SR2A, VIASR,
+				break;
+			case 2:
+				viafb_write_reg_mask(SR2A, VIASR,
 					reg_val << 3, BIT4);
-				viafb_ग_लिखो_reg_mask(SR1E, VIASR,
+				viafb_write_reg_mask(SR1E, VIASR,
 					reg_val << 2, BIT2);
-				अवरोध;
-			शेष:
-				अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस count;
-पूर्ण
+				break;
+			default:
+				break;
+			}
+		} else {
+			break;
+		}
+	}
+	return count;
+}
 
-अटल स्थिर काष्ठा proc_ops viafb_dvp0_proc_ops = अणु
-	.proc_खोलो	= viafb_dvp0_proc_खोलो,
-	.proc_पढ़ो	= seq_पढ़ो,
+static const struct proc_ops viafb_dvp0_proc_ops = {
+	.proc_open	= viafb_dvp0_proc_open,
+	.proc_read	= seq_read,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= single_release,
-	.proc_ग_लिखो	= viafb_dvp0_proc_ग_लिखो,
-पूर्ण;
+	.proc_write	= viafb_dvp0_proc_write,
+};
 
-अटल पूर्णांक viafb_dvp1_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
+static int viafb_dvp1_proc_show(struct seq_file *m, void *v)
+{
 	u8 dvp1 = 0, dvp1_data_dri = 0, dvp1_clk_dri = 0;
-	dvp1 = viafb_पढ़ो_reg(VIACR, CR9B) & 0x0f;
-	dvp1_data_dri = (viafb_पढ़ो_reg(VIASR, SR65) & 0x0c) >> 2;
-	dvp1_clk_dri = viafb_पढ़ो_reg(VIASR, SR65) & 0x03;
-	seq_म_लिखो(m, "%x %x %x\n", dvp1, dvp1_data_dri, dvp1_clk_dri);
-	वापस 0;
-पूर्ण
+	dvp1 = viafb_read_reg(VIACR, CR9B) & 0x0f;
+	dvp1_data_dri = (viafb_read_reg(VIASR, SR65) & 0x0c) >> 2;
+	dvp1_clk_dri = viafb_read_reg(VIASR, SR65) & 0x03;
+	seq_printf(m, "%x %x %x\n", dvp1, dvp1_data_dri, dvp1_clk_dri);
+	return 0;
+}
 
-अटल पूर्णांक viafb_dvp1_proc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, viafb_dvp1_proc_show, शून्य);
-पूर्ण
+static int viafb_dvp1_proc_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, viafb_dvp1_proc_show, NULL);
+}
 
-अटल sमाप_प्रकार viafb_dvp1_proc_ग_लिखो(काष्ठा file *file,
-	स्थिर अक्षर __user *buffer, माप_प्रकार count, loff_t *pos)
-अणु
-	अक्षर buf[20], *value, *pbuf;
+static ssize_t viafb_dvp1_proc_write(struct file *file,
+	const char __user *buffer, size_t count, loff_t *pos)
+{
+	char buf[20], *value, *pbuf;
 	u8 reg_val = 0;
-	अचिन्हित दीर्घ length, i;
-	अगर (count < 1)
-		वापस -EINVAL;
+	unsigned long length, i;
+	if (count < 1)
+		return -EINVAL;
 	length = count > 20 ? 20 : count;
-	अगर (copy_from_user(&buf[0], buffer, length))
-		वापस -EFAULT;
+	if (copy_from_user(&buf[0], buffer, length))
+		return -EFAULT;
 	buf[length - 1] = '\0';	/*Ensure end string */
 	pbuf = &buf[0];
-	क्रम (i = 0; i < 3; i++) अणु
+	for (i = 0; i < 3; i++) {
 		value = strsep(&pbuf, " ");
-		अगर (value != शून्य) अणु
-			अगर (kstrtou8(value, 0, &reg_val) < 0)
-				वापस -EINVAL;
-			चयन (i) अणु
-			हाल 0:
-				viafb_ग_लिखो_reg_mask(CR9B, VIACR,
+		if (value != NULL) {
+			if (kstrtou8(value, 0, &reg_val) < 0)
+				return -EINVAL;
+			switch (i) {
+			case 0:
+				viafb_write_reg_mask(CR9B, VIACR,
 					reg_val, 0x0f);
-				अवरोध;
-			हाल 1:
-				viafb_ग_लिखो_reg_mask(SR65, VIASR,
+				break;
+			case 1:
+				viafb_write_reg_mask(SR65, VIASR,
 					reg_val << 2, 0x0c);
-				अवरोध;
-			हाल 2:
-				viafb_ग_लिखो_reg_mask(SR65, VIASR,
+				break;
+			case 2:
+				viafb_write_reg_mask(SR65, VIASR,
 					reg_val, 0x03);
-				अवरोध;
-			शेष:
-				अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस count;
-पूर्ण
+				break;
+			default:
+				break;
+			}
+		} else {
+			break;
+		}
+	}
+	return count;
+}
 
-अटल स्थिर काष्ठा proc_ops viafb_dvp1_proc_ops = अणु
-	.proc_खोलो	= viafb_dvp1_proc_खोलो,
-	.proc_पढ़ो	= seq_पढ़ो,
+static const struct proc_ops viafb_dvp1_proc_ops = {
+	.proc_open	= viafb_dvp1_proc_open,
+	.proc_read	= seq_read,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= single_release,
-	.proc_ग_लिखो	= viafb_dvp1_proc_ग_लिखो,
-पूर्ण;
+	.proc_write	= viafb_dvp1_proc_write,
+};
 
-अटल पूर्णांक viafb_dfph_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
+static int viafb_dfph_proc_show(struct seq_file *m, void *v)
+{
 	u8 dfp_high = 0;
-	dfp_high = viafb_पढ़ो_reg(VIACR, CR97) & 0x0f;
-	seq_म_लिखो(m, "%x\n", dfp_high);
-	वापस 0;
-पूर्ण
+	dfp_high = viafb_read_reg(VIACR, CR97) & 0x0f;
+	seq_printf(m, "%x\n", dfp_high);
+	return 0;
+}
 
-अटल पूर्णांक viafb_dfph_proc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, viafb_dfph_proc_show, शून्य);
-पूर्ण
+static int viafb_dfph_proc_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, viafb_dfph_proc_show, NULL);
+}
 
-अटल sमाप_प्रकार viafb_dfph_proc_ग_लिखो(काष्ठा file *file,
-	स्थिर अक्षर __user *buffer, माप_प्रकार count, loff_t *pos)
-अणु
-	पूर्णांक err;
+static ssize_t viafb_dfph_proc_write(struct file *file,
+	const char __user *buffer, size_t count, loff_t *pos)
+{
+	int err;
 	u8 reg_val;
 	err = kstrtou8_from_user(buffer, count, 0, &reg_val);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	viafb_ग_लिखो_reg_mask(CR97, VIACR, reg_val, 0x0f);
-	वापस count;
-पूर्ण
+	viafb_write_reg_mask(CR97, VIACR, reg_val, 0x0f);
+	return count;
+}
 
-अटल स्थिर काष्ठा proc_ops viafb_dfph_proc_ops = अणु
-	.proc_खोलो	= viafb_dfph_proc_खोलो,
-	.proc_पढ़ो	= seq_पढ़ो,
+static const struct proc_ops viafb_dfph_proc_ops = {
+	.proc_open	= viafb_dfph_proc_open,
+	.proc_read	= seq_read,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= single_release,
-	.proc_ग_लिखो	= viafb_dfph_proc_ग_लिखो,
-पूर्ण;
+	.proc_write	= viafb_dfph_proc_write,
+};
 
-अटल पूर्णांक viafb_dfpl_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
+static int viafb_dfpl_proc_show(struct seq_file *m, void *v)
+{
 	u8 dfp_low = 0;
-	dfp_low = viafb_पढ़ो_reg(VIACR, CR99) & 0x0f;
-	seq_म_लिखो(m, "%x\n", dfp_low);
-	वापस 0;
-पूर्ण
+	dfp_low = viafb_read_reg(VIACR, CR99) & 0x0f;
+	seq_printf(m, "%x\n", dfp_low);
+	return 0;
+}
 
-अटल पूर्णांक viafb_dfpl_proc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, viafb_dfpl_proc_show, शून्य);
-पूर्ण
+static int viafb_dfpl_proc_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, viafb_dfpl_proc_show, NULL);
+}
 
-अटल sमाप_प्रकार viafb_dfpl_proc_ग_लिखो(काष्ठा file *file,
-	स्थिर अक्षर __user *buffer, माप_प्रकार count, loff_t *pos)
-अणु
-	पूर्णांक err;
+static ssize_t viafb_dfpl_proc_write(struct file *file,
+	const char __user *buffer, size_t count, loff_t *pos)
+{
+	int err;
 	u8 reg_val;
 	err = kstrtou8_from_user(buffer, count, 0, &reg_val);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	viafb_ग_लिखो_reg_mask(CR99, VIACR, reg_val, 0x0f);
-	वापस count;
-पूर्ण
+	viafb_write_reg_mask(CR99, VIACR, reg_val, 0x0f);
+	return count;
+}
 
-अटल स्थिर काष्ठा proc_ops viafb_dfpl_proc_ops = अणु
-	.proc_खोलो	= viafb_dfpl_proc_खोलो,
-	.proc_पढ़ो	= seq_पढ़ो,
+static const struct proc_ops viafb_dfpl_proc_ops = {
+	.proc_open	= viafb_dfpl_proc_open,
+	.proc_read	= seq_read,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= single_release,
-	.proc_ग_लिखो	= viafb_dfpl_proc_ग_लिखो,
-पूर्ण;
+	.proc_write	= viafb_dfpl_proc_write,
+};
 
-अटल पूर्णांक viafb_vt1636_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
+static int viafb_vt1636_proc_show(struct seq_file *m, void *v)
+{
 	u8 vt1636_08 = 0, vt1636_09 = 0;
-	चयन (viaparinfo->chip_info->lvds_chip_info.lvds_chip_name) अणु
-	हाल VT1636_LVDS:
+	switch (viaparinfo->chip_info->lvds_chip_info.lvds_chip_name) {
+	case VT1636_LVDS:
 		vt1636_08 =
-		    viafb_gpio_i2c_पढ़ो_lvds(viaparinfo->lvds_setting_info,
+		    viafb_gpio_i2c_read_lvds(viaparinfo->lvds_setting_info,
 		    &viaparinfo->chip_info->lvds_chip_info, 0x08) & 0x0f;
 		vt1636_09 =
-		    viafb_gpio_i2c_पढ़ो_lvds(viaparinfo->lvds_setting_info,
+		    viafb_gpio_i2c_read_lvds(viaparinfo->lvds_setting_info,
 		    &viaparinfo->chip_info->lvds_chip_info, 0x09) & 0x1f;
-		seq_म_लिखो(m, "%x %x\n", vt1636_08, vt1636_09);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	चयन (viaparinfo->chip_info->lvds_chip_info2.lvds_chip_name) अणु
-	हाल VT1636_LVDS:
+		seq_printf(m, "%x %x\n", vt1636_08, vt1636_09);
+		break;
+	default:
+		break;
+	}
+	switch (viaparinfo->chip_info->lvds_chip_info2.lvds_chip_name) {
+	case VT1636_LVDS:
 		vt1636_08 =
-		    viafb_gpio_i2c_पढ़ो_lvds(viaparinfo->lvds_setting_info2,
+		    viafb_gpio_i2c_read_lvds(viaparinfo->lvds_setting_info2,
 			&viaparinfo->chip_info->lvds_chip_info2, 0x08) & 0x0f;
 		vt1636_09 =
-		    viafb_gpio_i2c_पढ़ो_lvds(viaparinfo->lvds_setting_info2,
+		    viafb_gpio_i2c_read_lvds(viaparinfo->lvds_setting_info2,
 			&viaparinfo->chip_info->lvds_chip_info2, 0x09) & 0x1f;
-		seq_म_लिखो(m, " %x %x\n", vt1636_08, vt1636_09);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		seq_printf(m, " %x %x\n", vt1636_08, vt1636_09);
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक viafb_vt1636_proc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, viafb_vt1636_proc_show, शून्य);
-पूर्ण
+static int viafb_vt1636_proc_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, viafb_vt1636_proc_show, NULL);
+}
 
-अटल sमाप_प्रकार viafb_vt1636_proc_ग_लिखो(काष्ठा file *file,
-	स्थिर अक्षर __user *buffer, माप_प्रकार count, loff_t *pos)
-अणु
-	अक्षर buf[30], *value, *pbuf;
-	काष्ठा IODATA reg_val;
-	अचिन्हित दीर्घ length, i;
-	अगर (count < 1)
-		वापस -EINVAL;
+static ssize_t viafb_vt1636_proc_write(struct file *file,
+	const char __user *buffer, size_t count, loff_t *pos)
+{
+	char buf[30], *value, *pbuf;
+	struct IODATA reg_val;
+	unsigned long length, i;
+	if (count < 1)
+		return -EINVAL;
 	length = count > 30 ? 30 : count;
-	अगर (copy_from_user(&buf[0], buffer, length))
-		वापस -EFAULT;
+	if (copy_from_user(&buf[0], buffer, length))
+		return -EFAULT;
 	buf[length - 1] = '\0';	/*Ensure end string */
 	pbuf = &buf[0];
-	चयन (viaparinfo->chip_info->lvds_chip_info.lvds_chip_name) अणु
-	हाल VT1636_LVDS:
-		क्रम (i = 0; i < 2; i++) अणु
+	switch (viaparinfo->chip_info->lvds_chip_info.lvds_chip_name) {
+	case VT1636_LVDS:
+		for (i = 0; i < 2; i++) {
 			value = strsep(&pbuf, " ");
-			अगर (value != शून्य) अणु
-				अगर (kstrtou8(value, 0, &reg_val.Data) < 0)
-					वापस -EINVAL;
-				चयन (i) अणु
-				हाल 0:
+			if (value != NULL) {
+				if (kstrtou8(value, 0, &reg_val.Data) < 0)
+					return -EINVAL;
+				switch (i) {
+				case 0:
 					reg_val.Index = 0x08;
 					reg_val.Mask = 0x0f;
-					viafb_gpio_i2c_ग_लिखो_mask_lvds
+					viafb_gpio_i2c_write_mask_lvds
 					    (viaparinfo->lvds_setting_info,
 					    &viaparinfo->
 					    chip_info->lvds_chip_info,
 					     reg_val);
-					अवरोध;
-				हाल 1:
+					break;
+				case 1:
 					reg_val.Index = 0x09;
 					reg_val.Mask = 0x1f;
-					viafb_gpio_i2c_ग_लिखो_mask_lvds
+					viafb_gpio_i2c_write_mask_lvds
 					    (viaparinfo->lvds_setting_info,
 					    &viaparinfo->
 					    chip_info->lvds_chip_info,
 					     reg_val);
-					अवरोध;
-				शेष:
-					अवरोध;
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	चयन (viaparinfo->chip_info->lvds_chip_info2.lvds_chip_name) अणु
-	हाल VT1636_LVDS:
-		क्रम (i = 0; i < 2; i++) अणु
+					break;
+				default:
+					break;
+				}
+			} else {
+				break;
+			}
+		}
+		break;
+	default:
+		break;
+	}
+	switch (viaparinfo->chip_info->lvds_chip_info2.lvds_chip_name) {
+	case VT1636_LVDS:
+		for (i = 0; i < 2; i++) {
 			value = strsep(&pbuf, " ");
-			अगर (value != शून्य) अणु
-				अगर (kstrtou8(value, 0, &reg_val.Data) < 0)
-					वापस -EINVAL;
-				चयन (i) अणु
-				हाल 0:
+			if (value != NULL) {
+				if (kstrtou8(value, 0, &reg_val.Data) < 0)
+					return -EINVAL;
+				switch (i) {
+				case 0:
 					reg_val.Index = 0x08;
 					reg_val.Mask = 0x0f;
-					viafb_gpio_i2c_ग_लिखो_mask_lvds
+					viafb_gpio_i2c_write_mask_lvds
 					    (viaparinfo->lvds_setting_info2,
 					    &viaparinfo->
 					    chip_info->lvds_chip_info2,
 					     reg_val);
-					अवरोध;
-				हाल 1:
+					break;
+				case 1:
 					reg_val.Index = 0x09;
 					reg_val.Mask = 0x1f;
-					viafb_gpio_i2c_ग_लिखो_mask_lvds
+					viafb_gpio_i2c_write_mask_lvds
 					    (viaparinfo->lvds_setting_info2,
 					    &viaparinfo->
 					    chip_info->lvds_chip_info2,
 					     reg_val);
-					अवरोध;
-				शेष:
-					अवरोध;
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस count;
-पूर्ण
+					break;
+				default:
+					break;
+				}
+			} else {
+				break;
+			}
+		}
+		break;
+	default:
+		break;
+	}
+	return count;
+}
 
-अटल स्थिर काष्ठा proc_ops viafb_vt1636_proc_ops = अणु
-	.proc_खोलो	= viafb_vt1636_proc_खोलो,
-	.proc_पढ़ो	= seq_पढ़ो,
+static const struct proc_ops viafb_vt1636_proc_ops = {
+	.proc_open	= viafb_vt1636_proc_open,
+	.proc_read	= seq_read,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= single_release,
-	.proc_ग_लिखो	= viafb_vt1636_proc_ग_लिखो,
-पूर्ण;
+	.proc_write	= viafb_vt1636_proc_write,
+};
 
-#पूर्ण_अगर /* CONFIG_FB_VIA_सूचीECT_PROCFS */
+#endif /* CONFIG_FB_VIA_DIRECT_PROCFS */
 
-अटल पूर्णांक __maybe_unused viafb_sup_odev_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
+static int __maybe_unused viafb_sup_odev_proc_show(struct seq_file *m, void *v)
+{
 	via_odev_to_seq(m, supported_odev_map[
 		viaparinfo->shared->chip_info.gfx_chip_name]);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार odev_update(स्थिर अक्षर __user *buffer, माप_प्रकार count, u32 *odev)
-अणु
-	अक्षर buf[64], *ptr = buf;
+static ssize_t odev_update(const char __user *buffer, size_t count, u32 *odev)
+{
+	char buf[64], *ptr = buf;
 	u32 devices;
 	bool add, sub;
 
-	अगर (count < 1 || count > 63)
-		वापस -EINVAL;
-	अगर (copy_from_user(&buf[0], buffer, count))
-		वापस -EFAULT;
+	if (count < 1 || count > 63)
+		return -EINVAL;
+	if (copy_from_user(&buf[0], buffer, count))
+		return -EFAULT;
 	buf[count] = '\0';
 	add = buf[0] == '+';
 	sub = buf[0] == '-';
-	अगर (add || sub)
+	if (add || sub)
 		ptr++;
 	devices = via_parse_odev(ptr, &ptr);
-	अगर (*ptr == '\n')
+	if (*ptr == '\n')
 		ptr++;
-	अगर (*ptr != 0)
-		वापस -EINVAL;
-	अगर (add)
+	if (*ptr != 0)
+		return -EINVAL;
+	if (add)
 		*odev |= devices;
-	अन्यथा अगर (sub)
+	else if (sub)
 		*odev &= ~devices;
-	अन्यथा
+	else
 		*odev = devices;
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक viafb_iga1_odev_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
+static int viafb_iga1_odev_proc_show(struct seq_file *m, void *v)
+{
 	via_odev_to_seq(m, viaparinfo->shared->iga1_devices);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक viafb_iga1_odev_proc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, viafb_iga1_odev_proc_show, शून्य);
-पूर्ण
+static int viafb_iga1_odev_proc_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, viafb_iga1_odev_proc_show, NULL);
+}
 
-अटल sमाप_प्रकार viafb_iga1_odev_proc_ग_लिखो(काष्ठा file *file,
-	स्थिर अक्षर __user *buffer, माप_प्रकार count, loff_t *pos)
-अणु
+static ssize_t viafb_iga1_odev_proc_write(struct file *file,
+	const char __user *buffer, size_t count, loff_t *pos)
+{
 	u32 dev_on, dev_off, dev_old, dev_new;
-	sमाप_प्रकार res;
+	ssize_t res;
 
 	dev_old = dev_new = viaparinfo->shared->iga1_devices;
 	res = odev_update(buffer, count, &dev_new);
-	अगर (res != count)
-		वापस res;
+	if (res != count)
+		return res;
 	dev_off = dev_old & ~dev_new;
 	dev_on = dev_new & ~dev_old;
 	viaparinfo->shared->iga1_devices = dev_new;
@@ -1515,38 +1514,38 @@
 	via_set_state(dev_off, VIA_STATE_OFF);
 	via_set_source(dev_new, IGA1);
 	via_set_state(dev_on, VIA_STATE_ON);
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल स्थिर काष्ठा proc_ops viafb_iga1_odev_proc_ops = अणु
-	.proc_खोलो	= viafb_iga1_odev_proc_खोलो,
-	.proc_पढ़ो	= seq_पढ़ो,
+static const struct proc_ops viafb_iga1_odev_proc_ops = {
+	.proc_open	= viafb_iga1_odev_proc_open,
+	.proc_read	= seq_read,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= single_release,
-	.proc_ग_लिखो	= viafb_iga1_odev_proc_ग_लिखो,
-पूर्ण;
+	.proc_write	= viafb_iga1_odev_proc_write,
+};
 
-अटल पूर्णांक viafb_iga2_odev_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
+static int viafb_iga2_odev_proc_show(struct seq_file *m, void *v)
+{
 	via_odev_to_seq(m, viaparinfo->shared->iga2_devices);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक viafb_iga2_odev_proc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, viafb_iga2_odev_proc_show, शून्य);
-पूर्ण
+static int viafb_iga2_odev_proc_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, viafb_iga2_odev_proc_show, NULL);
+}
 
-अटल sमाप_प्रकार viafb_iga2_odev_proc_ग_लिखो(काष्ठा file *file,
-	स्थिर अक्षर __user *buffer, माप_प्रकार count, loff_t *pos)
-अणु
+static ssize_t viafb_iga2_odev_proc_write(struct file *file,
+	const char __user *buffer, size_t count, loff_t *pos)
+{
 	u32 dev_on, dev_off, dev_old, dev_new;
-	sमाप_प्रकार res;
+	ssize_t res;
 
 	dev_old = dev_new = viaparinfo->shared->iga2_devices;
 	res = odev_update(buffer, count, &dev_new);
-	अगर (res != count)
-		वापस res;
+	if (res != count)
+		return res;
 	dev_off = dev_old & ~dev_new;
 	dev_on = dev_new & ~dev_old;
 	viaparinfo->shared->iga2_devices = dev_new;
@@ -1554,203 +1553,203 @@
 	via_set_state(dev_off, VIA_STATE_OFF);
 	via_set_source(dev_new, IGA2);
 	via_set_state(dev_on, VIA_STATE_ON);
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल स्थिर काष्ठा proc_ops viafb_iga2_odev_proc_ops = अणु
-	.proc_खोलो	= viafb_iga2_odev_proc_खोलो,
-	.proc_पढ़ो	= seq_पढ़ो,
+static const struct proc_ops viafb_iga2_odev_proc_ops = {
+	.proc_open	= viafb_iga2_odev_proc_open,
+	.proc_read	= seq_read,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= single_release,
-	.proc_ग_लिखो	= viafb_iga2_odev_proc_ग_लिखो,
-पूर्ण;
+	.proc_write	= viafb_iga2_odev_proc_write,
+};
 
-#घोषणा IS_VT1636(lvds_chip)	((lvds_chip).lvds_chip_name == VT1636_LVDS)
-अटल व्योम viafb_init_proc(काष्ठा viafb_shared *shared)
-अणु
-	काष्ठा proc_dir_entry *iga1_entry, *iga2_entry,
-		*viafb_entry = proc_सूची_गढ़ो("viafb", शून्य);
+#define IS_VT1636(lvds_chip)	((lvds_chip).lvds_chip_name == VT1636_LVDS)
+static void viafb_init_proc(struct viafb_shared *shared)
+{
+	struct proc_dir_entry *iga1_entry, *iga2_entry,
+		*viafb_entry = proc_mkdir("viafb", NULL);
 
 	shared->proc_entry = viafb_entry;
-	अगर (viafb_entry) अणु
-#अगर_घोषित CONFIG_FB_VIA_सूचीECT_PROCFS
+	if (viafb_entry) {
+#ifdef CONFIG_FB_VIA_DIRECT_PROCFS
 		proc_create("dvp0", 0, viafb_entry, &viafb_dvp0_proc_ops);
 		proc_create("dvp1", 0, viafb_entry, &viafb_dvp1_proc_ops);
 		proc_create("dfph", 0, viafb_entry, &viafb_dfph_proc_ops);
 		proc_create("dfpl", 0, viafb_entry, &viafb_dfpl_proc_ops);
-		अगर (IS_VT1636(shared->chip_info.lvds_chip_info)
+		if (IS_VT1636(shared->chip_info.lvds_chip_info)
 			|| IS_VT1636(shared->chip_info.lvds_chip_info2))
 			proc_create("vt1636", 0, viafb_entry,
 				    &viafb_vt1636_proc_ops);
-#पूर्ण_अगर /* CONFIG_FB_VIA_सूचीECT_PROCFS */
+#endif /* CONFIG_FB_VIA_DIRECT_PROCFS */
 
 		proc_create_single("supported_output_devices", 0, viafb_entry,
 			viafb_sup_odev_proc_show);
-		iga1_entry = proc_सूची_गढ़ो("iga1", viafb_entry);
+		iga1_entry = proc_mkdir("iga1", viafb_entry);
 		shared->iga1_proc_entry = iga1_entry;
 		proc_create("output_devices", 0, iga1_entry,
 			    &viafb_iga1_odev_proc_ops);
-		iga2_entry = proc_सूची_गढ़ो("iga2", viafb_entry);
+		iga2_entry = proc_mkdir("iga2", viafb_entry);
 		shared->iga2_proc_entry = iga2_entry;
 		proc_create("output_devices", 0, iga2_entry,
 			    &viafb_iga2_odev_proc_ops);
-	पूर्ण
-पूर्ण
-अटल व्योम viafb_हटाओ_proc(काष्ठा viafb_shared *shared)
-अणु
-	काष्ठा proc_dir_entry *viafb_entry = shared->proc_entry;
+	}
+}
+static void viafb_remove_proc(struct viafb_shared *shared)
+{
+	struct proc_dir_entry *viafb_entry = shared->proc_entry;
 
-	अगर (!viafb_entry)
-		वापस;
+	if (!viafb_entry)
+		return;
 
-	हटाओ_proc_entry("output_devices", shared->iga2_proc_entry);
-	हटाओ_proc_entry("iga2", viafb_entry);
-	हटाओ_proc_entry("output_devices", shared->iga1_proc_entry);
-	हटाओ_proc_entry("iga1", viafb_entry);
-	हटाओ_proc_entry("supported_output_devices", viafb_entry);
+	remove_proc_entry("output_devices", shared->iga2_proc_entry);
+	remove_proc_entry("iga2", viafb_entry);
+	remove_proc_entry("output_devices", shared->iga1_proc_entry);
+	remove_proc_entry("iga1", viafb_entry);
+	remove_proc_entry("supported_output_devices", viafb_entry);
 
-#अगर_घोषित CONFIG_FB_VIA_सूचीECT_PROCFS
-	हटाओ_proc_entry("dvp0", viafb_entry);/* parent dir */
-	हटाओ_proc_entry("dvp1", viafb_entry);
-	हटाओ_proc_entry("dfph", viafb_entry);
-	हटाओ_proc_entry("dfpl", viafb_entry);
-	अगर (IS_VT1636(shared->chip_info.lvds_chip_info)
+#ifdef CONFIG_FB_VIA_DIRECT_PROCFS
+	remove_proc_entry("dvp0", viafb_entry);/* parent dir */
+	remove_proc_entry("dvp1", viafb_entry);
+	remove_proc_entry("dfph", viafb_entry);
+	remove_proc_entry("dfpl", viafb_entry);
+	if (IS_VT1636(shared->chip_info.lvds_chip_info)
 		|| IS_VT1636(shared->chip_info.lvds_chip_info2))
-		हटाओ_proc_entry("vt1636", viafb_entry);
-#पूर्ण_अगर /* CONFIG_FB_VIA_सूचीECT_PROCFS */
+		remove_proc_entry("vt1636", viafb_entry);
+#endif /* CONFIG_FB_VIA_DIRECT_PROCFS */
 
-	हटाओ_proc_entry("viafb", शून्य);
-पूर्ण
-#अघोषित IS_VT1636
+	remove_proc_entry("viafb", NULL);
+}
+#undef IS_VT1636
 
-अटल पूर्णांक parse_mode(स्थिर अक्षर *str, u32 devices, u32 *xres, u32 *yres)
-अणु
-	स्थिर काष्ठा fb_videomode *mode = शून्य;
-	अक्षर *ptr;
+static int parse_mode(const char *str, u32 devices, u32 *xres, u32 *yres)
+{
+	const struct fb_videomode *mode = NULL;
+	char *ptr;
 
-	अगर (!str) अणु
-		अगर (devices == VIA_CRT)
+	if (!str) {
+		if (devices == VIA_CRT)
 			mode = via_aux_get_preferred_mode(
 				viaparinfo->shared->i2c_26);
-		अन्यथा अगर (devices == VIA_DVP1)
+		else if (devices == VIA_DVP1)
 			mode = via_aux_get_preferred_mode(
 				viaparinfo->shared->i2c_31);
 
-		अगर (mode) अणु
+		if (mode) {
 			*xres = mode->xres;
 			*yres = mode->yres;
-		पूर्ण अन्यथा अगर (machine_is_olpc()) अणु
+		} else if (machine_is_olpc()) {
 			*xres = 1200;
 			*yres = 900;
-		पूर्ण अन्यथा अणु
+		} else {
 			*xres = 640;
 			*yres = 480;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+		}
+		return 0;
+	}
 
-	*xres = simple_म_से_अदीर्घ(str, &ptr, 10);
-	अगर (ptr[0] != 'x')
-		वापस -EINVAL;
+	*xres = simple_strtoul(str, &ptr, 10);
+	if (ptr[0] != 'x')
+		return -EINVAL;
 
-	*yres = simple_म_से_अदीर्घ(&ptr[1], &ptr, 10);
-	अगर (ptr[0])
-		वापस -EINVAL;
+	*yres = simple_strtoul(&ptr[1], &ptr, 10);
+	if (ptr[0])
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक viafb_suspend(व्योम *unused)
-अणु
+#ifdef CONFIG_PM
+static int viafb_suspend(void *unused)
+{
 	console_lock();
 	fb_set_suspend(viafbinfo, 1);
 	viafb_sync(viafbinfo);
 	console_unlock();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक viafb_resume(व्योम *unused)
-अणु
+static int viafb_resume(void *unused)
+{
 	console_lock();
-	अगर (viaparinfo->shared->vdev->engine_mmio)
+	if (viaparinfo->shared->vdev->engine_mmio)
 		viafb_reset_engine(viaparinfo);
 	viafb_set_par(viafbinfo);
-	अगर (viafb_dual_fb)
+	if (viafb_dual_fb)
 		viafb_set_par(viafbinfo1);
 	fb_set_suspend(viafbinfo, 0);
 
 	console_unlock();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा viafb_pm_hooks viafb_fb_pm_hooks = अणु
+static struct viafb_pm_hooks viafb_fb_pm_hooks = {
 	.suspend = viafb_suspend,
 	.resume = viafb_resume
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif
 
-अटल व्योम i2c_bus_probe(काष्ठा viafb_shared *shared)
-अणु
+static void i2c_bus_probe(struct viafb_shared *shared)
+{
 	/* should be always CRT */
-	prपूर्णांकk(KERN_INFO "viafb: Probing I2C bus 0x26\n");
+	printk(KERN_INFO "viafb: Probing I2C bus 0x26\n");
 	shared->i2c_26 = via_aux_probe(viafb_find_i2c_adapter(VIA_PORT_26));
 
 	/* seems to be usually DVP1 */
-	prपूर्णांकk(KERN_INFO "viafb: Probing I2C bus 0x31\n");
+	printk(KERN_INFO "viafb: Probing I2C bus 0x31\n");
 	shared->i2c_31 = via_aux_probe(viafb_find_i2c_adapter(VIA_PORT_31));
 
 	/* FIXME: what is this? */
-	अगर (!machine_is_olpc()) अणु
-		prपूर्णांकk(KERN_INFO "viafb: Probing I2C bus 0x2C\n");
+	if (!machine_is_olpc()) {
+		printk(KERN_INFO "viafb: Probing I2C bus 0x2C\n");
 		shared->i2c_2C = via_aux_probe(viafb_find_i2c_adapter(VIA_PORT_2C));
-	पूर्ण
+	}
 
-	prपूर्णांकk(KERN_INFO "viafb: Finished I2C bus probing");
-पूर्ण
+	printk(KERN_INFO "viafb: Finished I2C bus probing");
+}
 
-अटल व्योम i2c_bus_मुक्त(काष्ठा viafb_shared *shared)
-अणु
-	via_aux_मुक्त(shared->i2c_26);
-	via_aux_मुक्त(shared->i2c_31);
-	via_aux_मुक्त(shared->i2c_2C);
-पूर्ण
+static void i2c_bus_free(struct viafb_shared *shared)
+{
+	via_aux_free(shared->i2c_26);
+	via_aux_free(shared->i2c_31);
+	via_aux_free(shared->i2c_2C);
+}
 
-पूर्णांक via_fb_pci_probe(काष्ठा viafb_dev *vdev)
-अणु
-	u32 शेष_xres, शेष_yres;
-	काष्ठा fb_var_screeninfo शेष_var;
-	पूर्णांक rc;
+int via_fb_pci_probe(struct viafb_dev *vdev)
+{
+	u32 default_xres, default_yres;
+	struct fb_var_screeninfo default_var;
+	int rc;
 	u32 viafb_par_length;
 
 	DEBUG_MSG(KERN_INFO "VIAFB PCI Probe!!\n");
-	स_रखो(&शेष_var, 0, माप(शेष_var));
-	viafb_par_length = ALIGN(माप(काष्ठा viafb_par), BITS_PER_LONG/8);
+	memset(&default_var, 0, sizeof(default_var));
+	viafb_par_length = ALIGN(sizeof(struct viafb_par), BITS_PER_LONG/8);
 
 	/* Allocate fb_info and ***_par here, also including some other needed
 	 * variables
 	*/
 	viafbinfo = framebuffer_alloc(viafb_par_length +
-		ALIGN(माप(काष्ठा viafb_shared), BITS_PER_LONG/8),
+		ALIGN(sizeof(struct viafb_shared), BITS_PER_LONG/8),
 		&vdev->pdev->dev);
-	अगर (!viafbinfo)
-		वापस -ENOMEM;
+	if (!viafbinfo)
+		return -ENOMEM;
 
-	viaparinfo = (काष्ठा viafb_par *)viafbinfo->par;
+	viaparinfo = (struct viafb_par *)viafbinfo->par;
 	viaparinfo->shared = viafbinfo->par + viafb_par_length;
 	viaparinfo->shared->vdev = vdev;
 	viaparinfo->vram_addr = 0;
-	viaparinfo->पंचांगds_setting_info = &viaparinfo->shared->पंचांगds_setting_info;
+	viaparinfo->tmds_setting_info = &viaparinfo->shared->tmds_setting_info;
 	viaparinfo->lvds_setting_info = &viaparinfo->shared->lvds_setting_info;
 	viaparinfo->lvds_setting_info2 =
 		&viaparinfo->shared->lvds_setting_info2;
 	viaparinfo->chip_info = &viaparinfo->shared->chip_info;
 
 	i2c_bus_probe(viaparinfo->shared);
-	अगर (viafb_dual_fb)
+	if (viafb_dual_fb)
 		viafb_SAMM_ON = 1;
 	parse_lcd_port();
 	parse_dvi_port();
@@ -1763,7 +1762,7 @@
 	 */
 	viaparinfo->fbmem = vdev->fbmem_start;
 	viaparinfo->memsize = vdev->fbmem_len;
-	viaparinfo->fbmem_मुक्त = viaparinfo->memsize;
+	viaparinfo->fbmem_free = viaparinfo->memsize;
 	viaparinfo->fbmem_used = 0;
 	viafbinfo->screen_base = vdev->fbmem;
 
@@ -1773,50 +1772,50 @@
 	viafbinfo->fbops = &viafb_ops;
 	viafbinfo->flags = FBINFO_DEFAULT | FBINFO_HWACCEL_YPAN;
 
-	viafbinfo->pseuकरो_palette = pseuकरो_pal;
-	अगर (viafb_accel && !viafb_setup_engine(viafbinfo)) अणु
+	viafbinfo->pseudo_palette = pseudo_pal;
+	if (viafb_accel && !viafb_setup_engine(viafbinfo)) {
 		viafbinfo->flags |= FBINFO_HWACCEL_COPYAREA |
 			FBINFO_HWACCEL_FILLRECT |  FBINFO_HWACCEL_IMAGEBLIT;
-		शेष_var.accel_flags = FB_ACCELF_TEXT;
-	पूर्ण अन्यथा अणु
+		default_var.accel_flags = FB_ACCELF_TEXT;
+	} else {
 		viafbinfo->flags |= FBINFO_HWACCEL_DISABLED;
-		शेष_var.accel_flags = 0;
-	पूर्ण
+		default_var.accel_flags = 0;
+	}
 
-	अगर (viafb_second_size && (viafb_second_size < 8)) अणु
-		viafb_second_offset = viaparinfo->fbmem_मुक्त -
+	if (viafb_second_size && (viafb_second_size < 8)) {
+		viafb_second_offset = viaparinfo->fbmem_free -
 			viafb_second_size * 1024 * 1024;
-	पूर्ण अन्यथा अणु
+	} else {
 		viafb_second_size = 8;
-		viafb_second_offset = viaparinfo->fbmem_मुक्त -
+		viafb_second_offset = viaparinfo->fbmem_free -
 			viafb_second_size * 1024 * 1024;
-	पूर्ण
+	}
 
 	parse_mode(viafb_mode, viaparinfo->shared->iga1_devices,
-		&शेष_xres, &शेष_yres);
-	अगर (viafb_SAMM_ON == 1)
+		&default_xres, &default_yres);
+	if (viafb_SAMM_ON == 1)
 		parse_mode(viafb_mode1, viaparinfo->shared->iga2_devices,
 			&viafb_second_xres, &viafb_second_yres);
 
-	शेष_var.xres = शेष_xres;
-	शेष_var.yres = शेष_yres;
-	शेष_var.xres_भव = शेष_xres;
-	शेष_var.yres_भव = शेष_yres;
-	शेष_var.bits_per_pixel = viafb_bpp;
-	viafb_fill_var_timing_info(&शेष_var, viafb_get_best_mode(
-		शेष_var.xres, शेष_var.yres, viafb_refresh));
+	default_var.xres = default_xres;
+	default_var.yres = default_yres;
+	default_var.xres_virtual = default_xres;
+	default_var.yres_virtual = default_yres;
+	default_var.bits_per_pixel = viafb_bpp;
+	viafb_fill_var_timing_info(&default_var, viafb_get_best_mode(
+		default_var.xres, default_var.yres, viafb_refresh));
 	viafb_setup_fixinfo(&viafbinfo->fix, viaparinfo);
-	viafbinfo->var = शेष_var;
+	viafbinfo->var = default_var;
 
-	अगर (viafb_dual_fb) अणु
+	if (viafb_dual_fb) {
 		viafbinfo1 = framebuffer_alloc(viafb_par_length,
 				&vdev->pdev->dev);
-		अगर (!viafbinfo1) अणु
+		if (!viafbinfo1) {
 			rc = -ENOMEM;
-			जाओ out_fb_release;
-		पूर्ण
+			goto out_fb_release;
+		}
 		viaparinfo1 = viafbinfo1->par;
-		स_नकल(viaparinfo1, viaparinfo, viafb_par_length);
+		memcpy(viaparinfo1, viaparinfo, viafb_par_length);
 		viaparinfo1->vram_addr = viafb_second_offset;
 		viaparinfo1->memsize = viaparinfo->memsize -
 			viafb_second_offset;
@@ -1824,226 +1823,226 @@
 		viaparinfo1->fbmem = viaparinfo->fbmem + viafb_second_offset;
 
 		viaparinfo1->fbmem_used = viaparinfo->fbmem_used;
-		viaparinfo1->fbmem_मुक्त = viaparinfo1->memsize -
+		viaparinfo1->fbmem_free = viaparinfo1->memsize -
 			viaparinfo1->fbmem_used;
-		viaparinfo->fbmem_मुक्त = viaparinfo->memsize;
+		viaparinfo->fbmem_free = viaparinfo->memsize;
 		viaparinfo->fbmem_used = 0;
 
 		viaparinfo->iga_path = IGA1;
 		viaparinfo1->iga_path = IGA2;
-		स_नकल(viafbinfo1, viafbinfo, माप(काष्ठा fb_info));
+		memcpy(viafbinfo1, viafbinfo, sizeof(struct fb_info));
 		viafbinfo1->par = viaparinfo1;
 		viafbinfo1->screen_base = viafbinfo->screen_base +
 			viafb_second_offset;
 
-		शेष_var.xres = viafb_second_xres;
-		शेष_var.yres = viafb_second_yres;
-		शेष_var.xres_भव = viafb_second_xres;
-		शेष_var.yres_भव = viafb_second_yres;
-		शेष_var.bits_per_pixel = viafb_bpp1;
-		viafb_fill_var_timing_info(&शेष_var, viafb_get_best_mode(
-			शेष_var.xres, शेष_var.yres, viafb_refresh1));
+		default_var.xres = viafb_second_xres;
+		default_var.yres = viafb_second_yres;
+		default_var.xres_virtual = viafb_second_xres;
+		default_var.yres_virtual = viafb_second_yres;
+		default_var.bits_per_pixel = viafb_bpp1;
+		viafb_fill_var_timing_info(&default_var, viafb_get_best_mode(
+			default_var.xres, default_var.yres, viafb_refresh1));
 
 		viafb_setup_fixinfo(&viafbinfo1->fix, viaparinfo1);
-		viafb_check_var(&शेष_var, viafbinfo1);
-		viafbinfo1->var = शेष_var;
+		viafb_check_var(&default_var, viafbinfo1);
+		viafbinfo1->var = default_var;
 		viafb_update_fix(viafbinfo1);
 		viaparinfo1->depth = fb_get_color_depth(&viafbinfo1->var,
 			&viafbinfo1->fix);
-	पूर्ण
+	}
 
 	viafb_check_var(&viafbinfo->var, viafbinfo);
 	viafb_update_fix(viafbinfo);
 	viaparinfo->depth = fb_get_color_depth(&viafbinfo->var,
 		&viafbinfo->fix);
-	शेष_var.activate = FB_ACTIVATE_NOW;
+	default_var.activate = FB_ACTIVATE_NOW;
 	rc = fb_alloc_cmap(&viafbinfo->cmap, 256, 0);
-	अगर (rc)
-		जाओ out_fb1_release;
+	if (rc)
+		goto out_fb1_release;
 
-	अगर (viafb_dual_fb && (viafb_primary_dev == LCD_Device)
-	    && (viaparinfo->chip_info->gfx_chip_name == UNICHROME_CLE266)) अणु
-		rc = रेजिस्टर_framebuffer(viafbinfo1);
-		अगर (rc)
-			जाओ out_dealloc_cmap;
-	पूर्ण
-	rc = रेजिस्टर_framebuffer(viafbinfo);
-	अगर (rc)
-		जाओ out_fb1_unreg_lcd_cle266;
+	if (viafb_dual_fb && (viafb_primary_dev == LCD_Device)
+	    && (viaparinfo->chip_info->gfx_chip_name == UNICHROME_CLE266)) {
+		rc = register_framebuffer(viafbinfo1);
+		if (rc)
+			goto out_dealloc_cmap;
+	}
+	rc = register_framebuffer(viafbinfo);
+	if (rc)
+		goto out_fb1_unreg_lcd_cle266;
 
-	अगर (viafb_dual_fb && ((viafb_primary_dev != LCD_Device)
+	if (viafb_dual_fb && ((viafb_primary_dev != LCD_Device)
 			|| (viaparinfo->chip_info->gfx_chip_name !=
-			UNICHROME_CLE266))) अणु
-		rc = रेजिस्टर_framebuffer(viafbinfo1);
-		अगर (rc)
-			जाओ out_fb_unreg;
-	पूर्ण
+			UNICHROME_CLE266))) {
+		rc = register_framebuffer(viafbinfo1);
+		if (rc)
+			goto out_fb_unreg;
+	}
 	DEBUG_MSG(KERN_INFO "fb%d: %s frame buffer device %dx%d-%dbpp\n",
-		  viafbinfo->node, viafbinfo->fix.id, शेष_var.xres,
-		  शेष_var.yres, शेष_var.bits_per_pixel);
+		  viafbinfo->node, viafbinfo->fix.id, default_var.xres,
+		  default_var.yres, default_var.bits_per_pixel);
 
 	viafb_init_proc(viaparinfo->shared);
 	viafb_init_dac(IGA2);
 
-#अगर_घोषित CONFIG_PM
-	viafb_pm_रेजिस्टर(&viafb_fb_pm_hooks);
-#पूर्ण_अगर
-	वापस 0;
+#ifdef CONFIG_PM
+	viafb_pm_register(&viafb_fb_pm_hooks);
+#endif
+	return 0;
 
 out_fb_unreg:
-	unरेजिस्टर_framebuffer(viafbinfo);
+	unregister_framebuffer(viafbinfo);
 out_fb1_unreg_lcd_cle266:
-	अगर (viafb_dual_fb && (viafb_primary_dev == LCD_Device)
+	if (viafb_dual_fb && (viafb_primary_dev == LCD_Device)
 	    && (viaparinfo->chip_info->gfx_chip_name == UNICHROME_CLE266))
-		unरेजिस्टर_framebuffer(viafbinfo1);
+		unregister_framebuffer(viafbinfo1);
 out_dealloc_cmap:
 	fb_dealloc_cmap(&viafbinfo->cmap);
 out_fb1_release:
 	framebuffer_release(viafbinfo1);
 out_fb_release:
-	i2c_bus_मुक्त(viaparinfo->shared);
+	i2c_bus_free(viaparinfo->shared);
 	framebuffer_release(viafbinfo);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-व्योम via_fb_pci_हटाओ(काष्ठा pci_dev *pdev)
-अणु
+void via_fb_pci_remove(struct pci_dev *pdev)
+{
 	DEBUG_MSG(KERN_INFO "via_pci_remove!\n");
 	fb_dealloc_cmap(&viafbinfo->cmap);
-	unरेजिस्टर_framebuffer(viafbinfo);
-	अगर (viafb_dual_fb)
-		unरेजिस्टर_framebuffer(viafbinfo1);
-	viafb_हटाओ_proc(viaparinfo->shared);
-	i2c_bus_मुक्त(viaparinfo->shared);
+	unregister_framebuffer(viafbinfo);
+	if (viafb_dual_fb)
+		unregister_framebuffer(viafbinfo1);
+	viafb_remove_proc(viaparinfo->shared);
+	i2c_bus_free(viaparinfo->shared);
 	framebuffer_release(viafbinfo);
-	अगर (viafb_dual_fb)
+	if (viafb_dual_fb)
 		framebuffer_release(viafbinfo1);
-पूर्ण
+}
 
-#अगर_अघोषित MODULE
-अटल पूर्णांक __init viafb_setup(व्योम)
-अणु
-	अक्षर *this_opt;
-	अक्षर *options;
+#ifndef MODULE
+static int __init viafb_setup(void)
+{
+	char *this_opt;
+	char *options;
 
 	DEBUG_MSG(KERN_INFO "viafb_setup!\n");
 
-	अगर (fb_get_options("viafb", &options))
-		वापस -ENODEV;
+	if (fb_get_options("viafb", &options))
+		return -ENODEV;
 
-	अगर (!options || !*options)
-		वापस 0;
+	if (!options || !*options)
+		return 0;
 
-	जबतक ((this_opt = strsep(&options, ",")) != शून्य) अणु
-		अगर (!*this_opt)
-			जारी;
+	while ((this_opt = strsep(&options, ",")) != NULL) {
+		if (!*this_opt)
+			continue;
 
-		अगर (!म_भेदन(this_opt, "viafb_mode1=", 12)) अणु
+		if (!strncmp(this_opt, "viafb_mode1=", 12)) {
 			viafb_mode1 = kstrdup(this_opt + 12, GFP_KERNEL);
-		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "viafb_mode=", 11)) अणु
+		} else if (!strncmp(this_opt, "viafb_mode=", 11)) {
 			viafb_mode = kstrdup(this_opt + 11, GFP_KERNEL);
-		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "viafb_bpp1=", 11)) अणु
-			अगर (kstrtouपूर्णांक(this_opt + 11, 0, &viafb_bpp1) < 0)
-				वापस -EINVAL;
-		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "viafb_bpp=", 10)) अणु
-			अगर (kstrtouपूर्णांक(this_opt + 10, 0, &viafb_bpp) < 0)
-				वापस -EINVAL;
-		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "viafb_refresh1=", 15)) अणु
-			अगर (kstrtoपूर्णांक(this_opt + 15, 0, &viafb_refresh1) < 0)
-				वापस -EINVAL;
-		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "viafb_refresh=", 14)) अणु
-			अगर (kstrtoपूर्णांक(this_opt + 14, 0, &viafb_refresh) < 0)
-				वापस -EINVAL;
-		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "viafb_lcd_dsp_method=", 21)) अणु
-			अगर (kstrtoपूर्णांक(this_opt + 21, 0,
+		} else if (!strncmp(this_opt, "viafb_bpp1=", 11)) {
+			if (kstrtouint(this_opt + 11, 0, &viafb_bpp1) < 0)
+				return -EINVAL;
+		} else if (!strncmp(this_opt, "viafb_bpp=", 10)) {
+			if (kstrtouint(this_opt + 10, 0, &viafb_bpp) < 0)
+				return -EINVAL;
+		} else if (!strncmp(this_opt, "viafb_refresh1=", 15)) {
+			if (kstrtoint(this_opt + 15, 0, &viafb_refresh1) < 0)
+				return -EINVAL;
+		} else if (!strncmp(this_opt, "viafb_refresh=", 14)) {
+			if (kstrtoint(this_opt + 14, 0, &viafb_refresh) < 0)
+				return -EINVAL;
+		} else if (!strncmp(this_opt, "viafb_lcd_dsp_method=", 21)) {
+			if (kstrtoint(this_opt + 21, 0,
 				      &viafb_lcd_dsp_method) < 0)
-				वापस -EINVAL;
-		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "viafb_lcd_panel_id=", 19)) अणु
-			अगर (kstrtoपूर्णांक(this_opt + 19, 0,
+				return -EINVAL;
+		} else if (!strncmp(this_opt, "viafb_lcd_panel_id=", 19)) {
+			if (kstrtoint(this_opt + 19, 0,
 				      &viafb_lcd_panel_id) < 0)
-				वापस -EINVAL;
-		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "viafb_accel=", 12)) अणु
-			अगर (kstrtoपूर्णांक(this_opt + 12, 0, &viafb_accel) < 0)
-				वापस -EINVAL;
-		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "viafb_SAMM_ON=", 14)) अणु
-			अगर (kstrtoपूर्णांक(this_opt + 14, 0, &viafb_SAMM_ON) < 0)
-				वापस -EINVAL;
-		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "viafb_active_dev=", 17)) अणु
+				return -EINVAL;
+		} else if (!strncmp(this_opt, "viafb_accel=", 12)) {
+			if (kstrtoint(this_opt + 12, 0, &viafb_accel) < 0)
+				return -EINVAL;
+		} else if (!strncmp(this_opt, "viafb_SAMM_ON=", 14)) {
+			if (kstrtoint(this_opt + 14, 0, &viafb_SAMM_ON) < 0)
+				return -EINVAL;
+		} else if (!strncmp(this_opt, "viafb_active_dev=", 17)) {
 			viafb_active_dev = kstrdup(this_opt + 17, GFP_KERNEL);
-		पूर्ण अन्यथा अगर (!म_भेदन(this_opt,
-			"viafb_display_hardware_layout=", 30)) अणु
-			अगर (kstrtoपूर्णांक(this_opt + 30, 0,
+		} else if (!strncmp(this_opt,
+			"viafb_display_hardware_layout=", 30)) {
+			if (kstrtoint(this_opt + 30, 0,
 				      &viafb_display_hardware_layout) < 0)
-				वापस -EINVAL;
-		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "viafb_second_size=", 18)) अणु
-			अगर (kstrtoपूर्णांक(this_opt + 18, 0, &viafb_second_size) < 0)
-				वापस -EINVAL;
-		पूर्ण अन्यथा अगर (!म_भेदन(this_opt,
-			"viafb_platform_epia_dvi=", 24)) अणु
-			अगर (kstrtoपूर्णांक(this_opt + 24, 0,
-				      &viafb_platक्रमm_epia_dvi) < 0)
-				वापस -EINVAL;
-		पूर्ण अन्यथा अगर (!म_भेदन(this_opt,
-			"viafb_device_lcd_dualedge=", 26)) अणु
-			अगर (kstrtoपूर्णांक(this_opt + 26, 0,
+				return -EINVAL;
+		} else if (!strncmp(this_opt, "viafb_second_size=", 18)) {
+			if (kstrtoint(this_opt + 18, 0, &viafb_second_size) < 0)
+				return -EINVAL;
+		} else if (!strncmp(this_opt,
+			"viafb_platform_epia_dvi=", 24)) {
+			if (kstrtoint(this_opt + 24, 0,
+				      &viafb_platform_epia_dvi) < 0)
+				return -EINVAL;
+		} else if (!strncmp(this_opt,
+			"viafb_device_lcd_dualedge=", 26)) {
+			if (kstrtoint(this_opt + 26, 0,
 				      &viafb_device_lcd_dualedge) < 0)
-				वापस -EINVAL;
-		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "viafb_bus_width=", 16)) अणु
-			अगर (kstrtoपूर्णांक(this_opt + 16, 0, &viafb_bus_width) < 0)
-				वापस -EINVAL;
-		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "viafb_lcd_mode=", 15)) अणु
-			अगर (kstrtoपूर्णांक(this_opt + 15, 0, &viafb_lcd_mode) < 0)
-				वापस -EINVAL;
-		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "viafb_lcd_port=", 15)) अणु
+				return -EINVAL;
+		} else if (!strncmp(this_opt, "viafb_bus_width=", 16)) {
+			if (kstrtoint(this_opt + 16, 0, &viafb_bus_width) < 0)
+				return -EINVAL;
+		} else if (!strncmp(this_opt, "viafb_lcd_mode=", 15)) {
+			if (kstrtoint(this_opt + 15, 0, &viafb_lcd_mode) < 0)
+				return -EINVAL;
+		} else if (!strncmp(this_opt, "viafb_lcd_port=", 15)) {
 			viafb_lcd_port = kstrdup(this_opt + 15, GFP_KERNEL);
-		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "viafb_dvi_port=", 15)) अणु
+		} else if (!strncmp(this_opt, "viafb_dvi_port=", 15)) {
 			viafb_dvi_port = kstrdup(this_opt + 15, GFP_KERNEL);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+		}
+	}
+	return 0;
+}
+#endif
 
 /*
- * These are called out of via-core क्रम now.
+ * These are called out of via-core for now.
  */
-पूर्णांक __init viafb_init(व्योम)
-अणु
+int __init viafb_init(void)
+{
 	u32 dummy_x, dummy_y;
-	पूर्णांक r = 0;
+	int r = 0;
 
-	अगर (machine_is_olpc())
-		/* Apply XO-1.5-specअगरic configuration. */
+	if (machine_is_olpc())
+		/* Apply XO-1.5-specific configuration. */
 		viafb_lcd_panel_id = 23;
 
-#अगर_अघोषित MODULE
+#ifndef MODULE
 	r = viafb_setup();
-	अगर (r < 0)
-		वापस r;
-#पूर्ण_अगर
-	अगर (parse_mode(viafb_mode, 0, &dummy_x, &dummy_y)
+	if (r < 0)
+		return r;
+#endif
+	if (parse_mode(viafb_mode, 0, &dummy_x, &dummy_y)
 		|| !viafb_get_best_mode(dummy_x, dummy_y, viafb_refresh)
 		|| parse_mode(viafb_mode1, 0, &dummy_x, &dummy_y)
 		|| !viafb_get_best_mode(dummy_x, dummy_y, viafb_refresh1)
 		|| viafb_bpp < 0 || viafb_bpp > 32
 		|| viafb_bpp1 < 0 || viafb_bpp1 > 32
 		|| parse_active_dev())
-		वापस -EINVAL;
+		return -EINVAL;
 
-	prपूर्णांकk(KERN_INFO
+	printk(KERN_INFO
        "VIA Graphics Integration Chipset framebuffer %d.%d initializing\n",
 	       VERSION_MAJOR, VERSION_MINOR);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-व्योम __निकास viafb_निकास(व्योम)
-अणु
+void __exit viafb_exit(void)
+{
 	DEBUG_MSG(KERN_INFO "viafb_exit!\n");
-पूर्ण
+}
 
-अटल काष्ठा fb_ops viafb_ops = अणु
+static struct fb_ops viafb_ops = {
 	.owner = THIS_MODULE,
-	.fb_खोलो = viafb_खोलो,
+	.fb_open = viafb_open,
 	.fb_release = viafb_release,
 	.fb_check_var = viafb_check_var,
 	.fb_set_par = viafb_set_par,
@@ -2056,82 +2055,82 @@ out_fb_release:
 	.fb_cursor = viafb_cursor,
 	.fb_ioctl = viafb_ioctl,
 	.fb_sync = viafb_sync,
-पूर्ण;
+};
 
 
-#अगर_घोषित MODULE
-module_param(viafb_mode, अक्षरp, S_IRUSR);
+#ifdef MODULE
+module_param(viafb_mode, charp, S_IRUSR);
 MODULE_PARM_DESC(viafb_mode, "Set resolution (default=640x480)");
 
-module_param(viafb_mode1, अक्षरp, S_IRUSR);
+module_param(viafb_mode1, charp, S_IRUSR);
 MODULE_PARM_DESC(viafb_mode1, "Set resolution (default=640x480)");
 
-module_param(viafb_bpp, पूर्णांक, S_IRUSR);
+module_param(viafb_bpp, int, S_IRUSR);
 MODULE_PARM_DESC(viafb_bpp, "Set color depth (default=32bpp)");
 
-module_param(viafb_bpp1, पूर्णांक, S_IRUSR);
+module_param(viafb_bpp1, int, S_IRUSR);
 MODULE_PARM_DESC(viafb_bpp1, "Set color depth (default=32bpp)");
 
-module_param(viafb_refresh, पूर्णांक, S_IRUSR);
+module_param(viafb_refresh, int, S_IRUSR);
 MODULE_PARM_DESC(viafb_refresh,
 	"Set CRT viafb_refresh rate (default = 60)");
 
-module_param(viafb_refresh1, पूर्णांक, S_IRUSR);
+module_param(viafb_refresh1, int, S_IRUSR);
 MODULE_PARM_DESC(viafb_refresh1,
 	"Set CRT refresh rate (default = 60)");
 
-module_param(viafb_lcd_panel_id, पूर्णांक, S_IRUSR);
+module_param(viafb_lcd_panel_id, int, S_IRUSR);
 MODULE_PARM_DESC(viafb_lcd_panel_id,
 	"Set Flat Panel type(Default=1024x768)");
 
-module_param(viafb_lcd_dsp_method, पूर्णांक, S_IRUSR);
+module_param(viafb_lcd_dsp_method, int, S_IRUSR);
 MODULE_PARM_DESC(viafb_lcd_dsp_method,
 	"Set Flat Panel display scaling method.(Default=Expansion)");
 
-module_param(viafb_SAMM_ON, पूर्णांक, S_IRUSR);
+module_param(viafb_SAMM_ON, int, S_IRUSR);
 MODULE_PARM_DESC(viafb_SAMM_ON,
 	"Turn on/off flag of SAMM(Default=OFF)");
 
-module_param(viafb_accel, पूर्णांक, S_IRUSR);
+module_param(viafb_accel, int, S_IRUSR);
 MODULE_PARM_DESC(viafb_accel,
 	"Set 2D Hardware Acceleration: 0 = OFF, 1 = ON (default)");
 
-module_param(viafb_active_dev, अक्षरp, S_IRUSR);
+module_param(viafb_active_dev, charp, S_IRUSR);
 MODULE_PARM_DESC(viafb_active_dev, "Specify active devices.");
 
-module_param(viafb_display_hardware_layout, पूर्णांक, S_IRUSR);
+module_param(viafb_display_hardware_layout, int, S_IRUSR);
 MODULE_PARM_DESC(viafb_display_hardware_layout,
 	"Display Hardware Layout (LCD Only, DVI Only...,etc)");
 
-module_param(viafb_second_size, पूर्णांक, S_IRUSR);
+module_param(viafb_second_size, int, S_IRUSR);
 MODULE_PARM_DESC(viafb_second_size,
 	"Set secondary device memory size");
 
-module_param(viafb_dual_fb, पूर्णांक, S_IRUSR);
+module_param(viafb_dual_fb, int, S_IRUSR);
 MODULE_PARM_DESC(viafb_dual_fb,
 	"Turn on/off flag of dual framebuffer devices.(Default = OFF)");
 
-module_param(viafb_platक्रमm_epia_dvi, पूर्णांक, S_IRUSR);
-MODULE_PARM_DESC(viafb_platक्रमm_epia_dvi,
+module_param(viafb_platform_epia_dvi, int, S_IRUSR);
+MODULE_PARM_DESC(viafb_platform_epia_dvi,
 	"Turn on/off flag of DVI devices on EPIA board.(Default = OFF)");
 
-module_param(viafb_device_lcd_dualedge, पूर्णांक, S_IRUSR);
+module_param(viafb_device_lcd_dualedge, int, S_IRUSR);
 MODULE_PARM_DESC(viafb_device_lcd_dualedge,
 	"Turn on/off flag of dual edge panel.(Default = OFF)");
 
-module_param(viafb_bus_width, पूर्णांक, S_IRUSR);
+module_param(viafb_bus_width, int, S_IRUSR);
 MODULE_PARM_DESC(viafb_bus_width,
 	"Set bus width of panel.(Default = 12)");
 
-module_param(viafb_lcd_mode, पूर्णांक, S_IRUSR);
+module_param(viafb_lcd_mode, int, S_IRUSR);
 MODULE_PARM_DESC(viafb_lcd_mode,
 	"Set Flat Panel mode(Default=OPENLDI)");
 
-module_param(viafb_lcd_port, अक्षरp, S_IRUSR);
+module_param(viafb_lcd_port, charp, S_IRUSR);
 MODULE_PARM_DESC(viafb_lcd_port, "Specify LCD output port.");
 
-module_param(viafb_dvi_port, अक्षरp, S_IRUSR);
+module_param(viafb_dvi_port, charp, S_IRUSR);
 MODULE_PARM_DESC(viafb_dvi_port, "Specify DVI output port.");
 
 MODULE_LICENSE("GPL");
-#पूर्ण_अगर
+#endif

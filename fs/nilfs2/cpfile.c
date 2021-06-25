@@ -1,157 +1,156 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * cpfile.c - NILFS checkpoपूर्णांक file.
+ * cpfile.c - NILFS checkpoint file.
  *
  * Copyright (C) 2006-2008 Nippon Telegraph and Telephone Corporation.
  *
  * Written by Koji Sato.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश "mdt.h"
-#समावेश "cpfile.h"
+#include <linux/kernel.h>
+#include <linux/fs.h>
+#include <linux/string.h>
+#include <linux/buffer_head.h>
+#include <linux/errno.h>
+#include "mdt.h"
+#include "cpfile.h"
 
 
-अटल अंतरभूत अचिन्हित दीर्घ
-nilfs_cpfile_checkpoपूर्णांकs_per_block(स्थिर काष्ठा inode *cpfile)
-अणु
-	वापस NILFS_MDT(cpfile)->mi_entries_per_block;
-पूर्ण
+static inline unsigned long
+nilfs_cpfile_checkpoints_per_block(const struct inode *cpfile)
+{
+	return NILFS_MDT(cpfile)->mi_entries_per_block;
+}
 
 /* block number from the beginning of the file */
-अटल अचिन्हित दीर्घ
-nilfs_cpfile_get_blkoff(स्थिर काष्ठा inode *cpfile, __u64 cno)
-अणु
+static unsigned long
+nilfs_cpfile_get_blkoff(const struct inode *cpfile, __u64 cno)
+{
 	__u64 tcno = cno + NILFS_MDT(cpfile)->mi_first_entry_offset - 1;
 
-	करो_भाग(tcno, nilfs_cpfile_checkpoपूर्णांकs_per_block(cpfile));
-	वापस (अचिन्हित दीर्घ)tcno;
-पूर्ण
+	do_div(tcno, nilfs_cpfile_checkpoints_per_block(cpfile));
+	return (unsigned long)tcno;
+}
 
 /* offset in block */
-अटल अचिन्हित दीर्घ
-nilfs_cpfile_get_offset(स्थिर काष्ठा inode *cpfile, __u64 cno)
-अणु
+static unsigned long
+nilfs_cpfile_get_offset(const struct inode *cpfile, __u64 cno)
+{
 	__u64 tcno = cno + NILFS_MDT(cpfile)->mi_first_entry_offset - 1;
 
-	वापस करो_भाग(tcno, nilfs_cpfile_checkpoपूर्णांकs_per_block(cpfile));
-पूर्ण
+	return do_div(tcno, nilfs_cpfile_checkpoints_per_block(cpfile));
+}
 
-अटल __u64 nilfs_cpfile_first_checkpoपूर्णांक_in_block(स्थिर काष्ठा inode *cpfile,
-						    अचिन्हित दीर्घ blkoff)
-अणु
-	वापस (__u64)nilfs_cpfile_checkpoपूर्णांकs_per_block(cpfile) * blkoff
+static __u64 nilfs_cpfile_first_checkpoint_in_block(const struct inode *cpfile,
+						    unsigned long blkoff)
+{
+	return (__u64)nilfs_cpfile_checkpoints_per_block(cpfile) * blkoff
 		+ 1 - NILFS_MDT(cpfile)->mi_first_entry_offset;
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ
-nilfs_cpfile_checkpoपूर्णांकs_in_block(स्थिर काष्ठा inode *cpfile,
+static unsigned long
+nilfs_cpfile_checkpoints_in_block(const struct inode *cpfile,
 				  __u64 curr,
 				  __u64 max)
-अणु
-	वापस min_t(__u64,
-		     nilfs_cpfile_checkpoपूर्णांकs_per_block(cpfile) -
+{
+	return min_t(__u64,
+		     nilfs_cpfile_checkpoints_per_block(cpfile) -
 		     nilfs_cpfile_get_offset(cpfile, curr),
 		     max - curr);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक nilfs_cpfile_is_in_first(स्थिर काष्ठा inode *cpfile,
+static inline int nilfs_cpfile_is_in_first(const struct inode *cpfile,
 					   __u64 cno)
-अणु
-	वापस nilfs_cpfile_get_blkoff(cpfile, cno) == 0;
-पूर्ण
+{
+	return nilfs_cpfile_get_blkoff(cpfile, cno) == 0;
+}
 
-अटल अचिन्हित पूर्णांक
-nilfs_cpfile_block_add_valid_checkpoपूर्णांकs(स्थिर काष्ठा inode *cpfile,
-					 काष्ठा buffer_head *bh,
-					 व्योम *kaddr,
-					 अचिन्हित पूर्णांक n)
-अणु
-	काष्ठा nilfs_checkpoपूर्णांक *cp = kaddr + bh_offset(bh);
-	अचिन्हित पूर्णांक count;
+static unsigned int
+nilfs_cpfile_block_add_valid_checkpoints(const struct inode *cpfile,
+					 struct buffer_head *bh,
+					 void *kaddr,
+					 unsigned int n)
+{
+	struct nilfs_checkpoint *cp = kaddr + bh_offset(bh);
+	unsigned int count;
 
-	count = le32_to_cpu(cp->cp_checkpoपूर्णांकs_count) + n;
-	cp->cp_checkpoपूर्णांकs_count = cpu_to_le32(count);
-	वापस count;
-पूर्ण
+	count = le32_to_cpu(cp->cp_checkpoints_count) + n;
+	cp->cp_checkpoints_count = cpu_to_le32(count);
+	return count;
+}
 
-अटल अचिन्हित पूर्णांक
-nilfs_cpfile_block_sub_valid_checkpoपूर्णांकs(स्थिर काष्ठा inode *cpfile,
-					 काष्ठा buffer_head *bh,
-					 व्योम *kaddr,
-					 अचिन्हित पूर्णांक n)
-अणु
-	काष्ठा nilfs_checkpoपूर्णांक *cp = kaddr + bh_offset(bh);
-	अचिन्हित पूर्णांक count;
+static unsigned int
+nilfs_cpfile_block_sub_valid_checkpoints(const struct inode *cpfile,
+					 struct buffer_head *bh,
+					 void *kaddr,
+					 unsigned int n)
+{
+	struct nilfs_checkpoint *cp = kaddr + bh_offset(bh);
+	unsigned int count;
 
-	WARN_ON(le32_to_cpu(cp->cp_checkpoपूर्णांकs_count) < n);
-	count = le32_to_cpu(cp->cp_checkpoपूर्णांकs_count) - n;
-	cp->cp_checkpoपूर्णांकs_count = cpu_to_le32(count);
-	वापस count;
-पूर्ण
+	WARN_ON(le32_to_cpu(cp->cp_checkpoints_count) < n);
+	count = le32_to_cpu(cp->cp_checkpoints_count) - n;
+	cp->cp_checkpoints_count = cpu_to_le32(count);
+	return count;
+}
 
-अटल अंतरभूत काष्ठा nilfs_cpfile_header *
-nilfs_cpfile_block_get_header(स्थिर काष्ठा inode *cpfile,
-			      काष्ठा buffer_head *bh,
-			      व्योम *kaddr)
-अणु
-	वापस kaddr + bh_offset(bh);
-पूर्ण
+static inline struct nilfs_cpfile_header *
+nilfs_cpfile_block_get_header(const struct inode *cpfile,
+			      struct buffer_head *bh,
+			      void *kaddr)
+{
+	return kaddr + bh_offset(bh);
+}
 
-अटल काष्ठा nilfs_checkpoपूर्णांक *
-nilfs_cpfile_block_get_checkpoपूर्णांक(स्थिर काष्ठा inode *cpfile, __u64 cno,
-				  काष्ठा buffer_head *bh,
-				  व्योम *kaddr)
-अणु
-	वापस kaddr + bh_offset(bh) + nilfs_cpfile_get_offset(cpfile, cno) *
+static struct nilfs_checkpoint *
+nilfs_cpfile_block_get_checkpoint(const struct inode *cpfile, __u64 cno,
+				  struct buffer_head *bh,
+				  void *kaddr)
+{
+	return kaddr + bh_offset(bh) + nilfs_cpfile_get_offset(cpfile, cno) *
 		NILFS_MDT(cpfile)->mi_entry_size;
-पूर्ण
+}
 
-अटल व्योम nilfs_cpfile_block_init(काष्ठा inode *cpfile,
-				    काष्ठा buffer_head *bh,
-				    व्योम *kaddr)
-अणु
-	काष्ठा nilfs_checkpoपूर्णांक *cp = kaddr + bh_offset(bh);
-	माप_प्रकार cpsz = NILFS_MDT(cpfile)->mi_entry_size;
-	पूर्णांक n = nilfs_cpfile_checkpoपूर्णांकs_per_block(cpfile);
+static void nilfs_cpfile_block_init(struct inode *cpfile,
+				    struct buffer_head *bh,
+				    void *kaddr)
+{
+	struct nilfs_checkpoint *cp = kaddr + bh_offset(bh);
+	size_t cpsz = NILFS_MDT(cpfile)->mi_entry_size;
+	int n = nilfs_cpfile_checkpoints_per_block(cpfile);
 
-	जबतक (n-- > 0) अणु
-		nilfs_checkpoपूर्णांक_set_invalid(cp);
-		cp = (व्योम *)cp + cpsz;
-	पूर्ण
-पूर्ण
+	while (n-- > 0) {
+		nilfs_checkpoint_set_invalid(cp);
+		cp = (void *)cp + cpsz;
+	}
+}
 
-अटल अंतरभूत पूर्णांक nilfs_cpfile_get_header_block(काष्ठा inode *cpfile,
-						काष्ठा buffer_head **bhp)
-अणु
-	वापस nilfs_mdt_get_block(cpfile, 0, 0, शून्य, bhp);
-पूर्ण
+static inline int nilfs_cpfile_get_header_block(struct inode *cpfile,
+						struct buffer_head **bhp)
+{
+	return nilfs_mdt_get_block(cpfile, 0, 0, NULL, bhp);
+}
 
-अटल अंतरभूत पूर्णांक nilfs_cpfile_get_checkpoपूर्णांक_block(काष्ठा inode *cpfile,
+static inline int nilfs_cpfile_get_checkpoint_block(struct inode *cpfile,
 						    __u64 cno,
-						    पूर्णांक create,
-						    काष्ठा buffer_head **bhp)
-अणु
-	वापस nilfs_mdt_get_block(cpfile,
+						    int create,
+						    struct buffer_head **bhp)
+{
+	return nilfs_mdt_get_block(cpfile,
 				   nilfs_cpfile_get_blkoff(cpfile, cno),
 				   create, nilfs_cpfile_block_init, bhp);
-पूर्ण
+}
 
 /**
- * nilfs_cpfile_find_checkpoपूर्णांक_block - find and get a buffer on cpfile
+ * nilfs_cpfile_find_checkpoint_block - find and get a buffer on cpfile
  * @cpfile: inode of cpfile
- * @start_cno: start checkpoपूर्णांक number (inclusive)
- * @end_cno: end checkpoपूर्णांक number (inclusive)
- * @cnop: place to store the next checkpoपूर्णांक number
- * @bhp: place to store a poपूर्णांकer to buffer_head काष्ठा
+ * @start_cno: start checkpoint number (inclusive)
+ * @end_cno: end checkpoint number (inclusive)
+ * @cnop: place to store the next checkpoint number
+ * @bhp: place to store a pointer to buffer_head struct
  *
- * Return Value: On success, it वापसs 0. On error, the following negative
- * error code is वापसed.
+ * Return Value: On success, it returns 0. On error, the following negative
+ * error code is returned.
  *
  * %-ENOMEM - Insufficient memory available.
  *
@@ -159,259 +158,259 @@ nilfs_cpfile_block_get_checkpoपूर्णांक(स्थिर काष
  *
  * %-ENOENT - no block exists in the range.
  */
-अटल पूर्णांक nilfs_cpfile_find_checkpoपूर्णांक_block(काष्ठा inode *cpfile,
+static int nilfs_cpfile_find_checkpoint_block(struct inode *cpfile,
 					      __u64 start_cno, __u64 end_cno,
 					      __u64 *cnop,
-					      काष्ठा buffer_head **bhp)
-अणु
-	अचिन्हित दीर्घ start, end, blkoff;
-	पूर्णांक ret;
+					      struct buffer_head **bhp)
+{
+	unsigned long start, end, blkoff;
+	int ret;
 
-	अगर (unlikely(start_cno > end_cno))
-		वापस -ENOENT;
+	if (unlikely(start_cno > end_cno))
+		return -ENOENT;
 
 	start = nilfs_cpfile_get_blkoff(cpfile, start_cno);
 	end = nilfs_cpfile_get_blkoff(cpfile, end_cno);
 
 	ret = nilfs_mdt_find_block(cpfile, start, end, &blkoff, bhp);
-	अगर (!ret)
+	if (!ret)
 		*cnop = (blkoff == start) ? start_cno :
-			nilfs_cpfile_first_checkpoपूर्णांक_in_block(cpfile, blkoff);
-	वापस ret;
-पूर्ण
+			nilfs_cpfile_first_checkpoint_in_block(cpfile, blkoff);
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक nilfs_cpfile_delete_checkpoपूर्णांक_block(काष्ठा inode *cpfile,
+static inline int nilfs_cpfile_delete_checkpoint_block(struct inode *cpfile,
 						       __u64 cno)
-अणु
-	वापस nilfs_mdt_delete_block(cpfile,
+{
+	return nilfs_mdt_delete_block(cpfile,
 				      nilfs_cpfile_get_blkoff(cpfile, cno));
-पूर्ण
+}
 
 /**
- * nilfs_cpfile_get_checkpoपूर्णांक - get a checkpoपूर्णांक
- * @cpfile: inode of checkpoपूर्णांक file
- * @cno: checkpoपूर्णांक number
+ * nilfs_cpfile_get_checkpoint - get a checkpoint
+ * @cpfile: inode of checkpoint file
+ * @cno: checkpoint number
  * @create: create flag
- * @cpp: poपूर्णांकer to a checkpoपूर्णांक
- * @bhp: poपूर्णांकer to a buffer head
+ * @cpp: pointer to a checkpoint
+ * @bhp: pointer to a buffer head
  *
- * Description: nilfs_cpfile_get_checkpoपूर्णांक() acquires the checkpoपूर्णांक
- * specअगरied by @cno. A new checkpoपूर्णांक will be created अगर @cno is the current
- * checkpoपूर्णांक number and @create is nonzero.
+ * Description: nilfs_cpfile_get_checkpoint() acquires the checkpoint
+ * specified by @cno. A new checkpoint will be created if @cno is the current
+ * checkpoint number and @create is nonzero.
  *
- * Return Value: On success, 0 is वापसed, and the checkpoपूर्णांक and the
- * buffer head of the buffer on which the checkpoपूर्णांक is located are stored in
- * the place poपूर्णांकed by @cpp and @bhp, respectively. On error, one of the
- * following negative error codes is वापसed.
+ * Return Value: On success, 0 is returned, and the checkpoint and the
+ * buffer head of the buffer on which the checkpoint is located are stored in
+ * the place pointed by @cpp and @bhp, respectively. On error, one of the
+ * following negative error codes is returned.
  *
  * %-EIO - I/O error.
  *
  * %-ENOMEM - Insufficient amount of memory available.
  *
- * %-ENOENT - No such checkpoपूर्णांक.
+ * %-ENOENT - No such checkpoint.
  *
- * %-EINVAL - invalid checkpoपूर्णांक.
+ * %-EINVAL - invalid checkpoint.
  */
-पूर्णांक nilfs_cpfile_get_checkpoपूर्णांक(काष्ठा inode *cpfile,
+int nilfs_cpfile_get_checkpoint(struct inode *cpfile,
 				__u64 cno,
-				पूर्णांक create,
-				काष्ठा nilfs_checkpoपूर्णांक **cpp,
-				काष्ठा buffer_head **bhp)
-अणु
-	काष्ठा buffer_head *header_bh, *cp_bh;
-	काष्ठा nilfs_cpfile_header *header;
-	काष्ठा nilfs_checkpoपूर्णांक *cp;
-	व्योम *kaddr;
-	पूर्णांक ret;
+				int create,
+				struct nilfs_checkpoint **cpp,
+				struct buffer_head **bhp)
+{
+	struct buffer_head *header_bh, *cp_bh;
+	struct nilfs_cpfile_header *header;
+	struct nilfs_checkpoint *cp;
+	void *kaddr;
+	int ret;
 
-	अगर (unlikely(cno < 1 || cno > nilfs_mdt_cno(cpfile) ||
+	if (unlikely(cno < 1 || cno > nilfs_mdt_cno(cpfile) ||
 		     (cno < nilfs_mdt_cno(cpfile) && create)))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	करोwn_ग_लिखो(&NILFS_MDT(cpfile)->mi_sem);
+	down_write(&NILFS_MDT(cpfile)->mi_sem);
 
 	ret = nilfs_cpfile_get_header_block(cpfile, &header_bh);
-	अगर (ret < 0)
-		जाओ out_sem;
-	ret = nilfs_cpfile_get_checkpoपूर्णांक_block(cpfile, cno, create, &cp_bh);
-	अगर (ret < 0)
-		जाओ out_header;
+	if (ret < 0)
+		goto out_sem;
+	ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, create, &cp_bh);
+	if (ret < 0)
+		goto out_header;
 	kaddr = kmap(cp_bh->b_page);
-	cp = nilfs_cpfile_block_get_checkpoपूर्णांक(cpfile, cno, cp_bh, kaddr);
-	अगर (nilfs_checkpoपूर्णांक_invalid(cp)) अणु
-		अगर (!create) अणु
+	cp = nilfs_cpfile_block_get_checkpoint(cpfile, cno, cp_bh, kaddr);
+	if (nilfs_checkpoint_invalid(cp)) {
+		if (!create) {
 			kunmap(cp_bh->b_page);
-			brअन्यथा(cp_bh);
+			brelse(cp_bh);
 			ret = -ENOENT;
-			जाओ out_header;
-		पूर्ण
-		/* a newly-created checkpoपूर्णांक */
-		nilfs_checkpoपूर्णांक_clear_invalid(cp);
-		अगर (!nilfs_cpfile_is_in_first(cpfile, cno))
-			nilfs_cpfile_block_add_valid_checkpoपूर्णांकs(cpfile, cp_bh,
+			goto out_header;
+		}
+		/* a newly-created checkpoint */
+		nilfs_checkpoint_clear_invalid(cp);
+		if (!nilfs_cpfile_is_in_first(cpfile, cno))
+			nilfs_cpfile_block_add_valid_checkpoints(cpfile, cp_bh,
 								 kaddr, 1);
 		mark_buffer_dirty(cp_bh);
 
 		kaddr = kmap_atomic(header_bh->b_page);
 		header = nilfs_cpfile_block_get_header(cpfile, header_bh,
 						       kaddr);
-		le64_add_cpu(&header->ch_ncheckpoपूर्णांकs, 1);
+		le64_add_cpu(&header->ch_ncheckpoints, 1);
 		kunmap_atomic(kaddr);
 		mark_buffer_dirty(header_bh);
 		nilfs_mdt_mark_dirty(cpfile);
-	पूर्ण
+	}
 
-	अगर (cpp != शून्य)
+	if (cpp != NULL)
 		*cpp = cp;
 	*bhp = cp_bh;
 
  out_header:
-	brअन्यथा(header_bh);
+	brelse(header_bh);
 
  out_sem:
-	up_ग_लिखो(&NILFS_MDT(cpfile)->mi_sem);
-	वापस ret;
-पूर्ण
+	up_write(&NILFS_MDT(cpfile)->mi_sem);
+	return ret;
+}
 
 /**
- * nilfs_cpfile_put_checkpoपूर्णांक - put a checkpoपूर्णांक
- * @cpfile: inode of checkpoपूर्णांक file
- * @cno: checkpoपूर्णांक number
+ * nilfs_cpfile_put_checkpoint - put a checkpoint
+ * @cpfile: inode of checkpoint file
+ * @cno: checkpoint number
  * @bh: buffer head
  *
- * Description: nilfs_cpfile_put_checkpoपूर्णांक() releases the checkpoपूर्णांक
- * specअगरied by @cno. @bh must be the buffer head which has been वापसed by
- * a previous call to nilfs_cpfile_get_checkpoपूर्णांक() with @cno.
+ * Description: nilfs_cpfile_put_checkpoint() releases the checkpoint
+ * specified by @cno. @bh must be the buffer head which has been returned by
+ * a previous call to nilfs_cpfile_get_checkpoint() with @cno.
  */
-व्योम nilfs_cpfile_put_checkpoपूर्णांक(काष्ठा inode *cpfile, __u64 cno,
-				 काष्ठा buffer_head *bh)
-अणु
+void nilfs_cpfile_put_checkpoint(struct inode *cpfile, __u64 cno,
+				 struct buffer_head *bh)
+{
 	kunmap(bh->b_page);
-	brअन्यथा(bh);
-पूर्ण
+	brelse(bh);
+}
 
 /**
- * nilfs_cpfile_delete_checkpoपूर्णांकs - delete checkpoपूर्णांकs
- * @cpfile: inode of checkpoपूर्णांक file
- * @start: start checkpoपूर्णांक number
- * @end: end checkpoपूर्णांक number
+ * nilfs_cpfile_delete_checkpoints - delete checkpoints
+ * @cpfile: inode of checkpoint file
+ * @start: start checkpoint number
+ * @end: end checkpoint number
  *
- * Description: nilfs_cpfile_delete_checkpoपूर्णांकs() deletes the checkpoपूर्णांकs in
- * the period from @start to @end, excluding @end itself. The checkpoपूर्णांकs
- * which have been alपढ़ोy deleted are ignored.
+ * Description: nilfs_cpfile_delete_checkpoints() deletes the checkpoints in
+ * the period from @start to @end, excluding @end itself. The checkpoints
+ * which have been already deleted are ignored.
  *
- * Return Value: On success, 0 is वापसed. On error, one of the following
- * negative error codes is वापसed.
+ * Return Value: On success, 0 is returned. On error, one of the following
+ * negative error codes is returned.
  *
  * %-EIO - I/O error.
  *
  * %-ENOMEM - Insufficient amount of memory available.
  *
- * %-EINVAL - invalid checkpoपूर्णांकs.
+ * %-EINVAL - invalid checkpoints.
  */
-पूर्णांक nilfs_cpfile_delete_checkpoपूर्णांकs(काष्ठा inode *cpfile,
+int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
 				    __u64 start,
 				    __u64 end)
-अणु
-	काष्ठा buffer_head *header_bh, *cp_bh;
-	काष्ठा nilfs_cpfile_header *header;
-	काष्ठा nilfs_checkpoपूर्णांक *cp;
-	माप_प्रकार cpsz = NILFS_MDT(cpfile)->mi_entry_size;
+{
+	struct buffer_head *header_bh, *cp_bh;
+	struct nilfs_cpfile_header *header;
+	struct nilfs_checkpoint *cp;
+	size_t cpsz = NILFS_MDT(cpfile)->mi_entry_size;
 	__u64 cno;
-	व्योम *kaddr;
-	अचिन्हित दीर्घ tnicps;
-	पूर्णांक ret, ncps, nicps, nss, count, i;
+	void *kaddr;
+	unsigned long tnicps;
+	int ret, ncps, nicps, nss, count, i;
 
-	अगर (unlikely(start == 0 || start > end)) अणु
+	if (unlikely(start == 0 || start > end)) {
 		nilfs_err(cpfile->i_sb,
 			  "cannot delete checkpoints: invalid range [%llu, %llu)",
-			  (अचिन्हित दीर्घ दीर्घ)start, (अचिन्हित दीर्घ दीर्घ)end);
-		वापस -EINVAL;
-	पूर्ण
+			  (unsigned long long)start, (unsigned long long)end);
+		return -EINVAL;
+	}
 
-	करोwn_ग_लिखो(&NILFS_MDT(cpfile)->mi_sem);
+	down_write(&NILFS_MDT(cpfile)->mi_sem);
 
 	ret = nilfs_cpfile_get_header_block(cpfile, &header_bh);
-	अगर (ret < 0)
-		जाओ out_sem;
+	if (ret < 0)
+		goto out_sem;
 	tnicps = 0;
 	nss = 0;
 
-	क्रम (cno = start; cno < end; cno += ncps) अणु
-		ncps = nilfs_cpfile_checkpoपूर्णांकs_in_block(cpfile, cno, end);
-		ret = nilfs_cpfile_get_checkpoपूर्णांक_block(cpfile, cno, 0, &cp_bh);
-		अगर (ret < 0) अणु
-			अगर (ret != -ENOENT)
-				अवरोध;
+	for (cno = start; cno < end; cno += ncps) {
+		ncps = nilfs_cpfile_checkpoints_in_block(cpfile, cno, end);
+		ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0, &cp_bh);
+		if (ret < 0) {
+			if (ret != -ENOENT)
+				break;
 			/* skip hole */
 			ret = 0;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		kaddr = kmap_atomic(cp_bh->b_page);
-		cp = nilfs_cpfile_block_get_checkpoपूर्णांक(
+		cp = nilfs_cpfile_block_get_checkpoint(
 			cpfile, cno, cp_bh, kaddr);
 		nicps = 0;
-		क्रम (i = 0; i < ncps; i++, cp = (व्योम *)cp + cpsz) अणु
-			अगर (nilfs_checkpoपूर्णांक_snapshot(cp)) अणु
+		for (i = 0; i < ncps; i++, cp = (void *)cp + cpsz) {
+			if (nilfs_checkpoint_snapshot(cp)) {
 				nss++;
-			पूर्ण अन्यथा अगर (!nilfs_checkpoपूर्णांक_invalid(cp)) अणु
-				nilfs_checkpoपूर्णांक_set_invalid(cp);
+			} else if (!nilfs_checkpoint_invalid(cp)) {
+				nilfs_checkpoint_set_invalid(cp);
 				nicps++;
-			पूर्ण
-		पूर्ण
-		अगर (nicps > 0) अणु
+			}
+		}
+		if (nicps > 0) {
 			tnicps += nicps;
 			mark_buffer_dirty(cp_bh);
 			nilfs_mdt_mark_dirty(cpfile);
-			अगर (!nilfs_cpfile_is_in_first(cpfile, cno)) अणु
+			if (!nilfs_cpfile_is_in_first(cpfile, cno)) {
 				count =
-				  nilfs_cpfile_block_sub_valid_checkpoपूर्णांकs(
+				  nilfs_cpfile_block_sub_valid_checkpoints(
 						cpfile, cp_bh, kaddr, nicps);
-				अगर (count == 0) अणु
+				if (count == 0) {
 					/* make hole */
 					kunmap_atomic(kaddr);
-					brअन्यथा(cp_bh);
+					brelse(cp_bh);
 					ret =
-					  nilfs_cpfile_delete_checkpoपूर्णांक_block(
+					  nilfs_cpfile_delete_checkpoint_block(
 								   cpfile, cno);
-					अगर (ret == 0)
-						जारी;
+					if (ret == 0)
+						continue;
 					nilfs_err(cpfile->i_sb,
 						  "error %d deleting checkpoint block",
 						  ret);
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+					break;
+				}
+			}
+		}
 
 		kunmap_atomic(kaddr);
-		brअन्यथा(cp_bh);
-	पूर्ण
+		brelse(cp_bh);
+	}
 
-	अगर (tnicps > 0) अणु
+	if (tnicps > 0) {
 		kaddr = kmap_atomic(header_bh->b_page);
 		header = nilfs_cpfile_block_get_header(cpfile, header_bh,
 						       kaddr);
-		le64_add_cpu(&header->ch_ncheckpoपूर्णांकs, -(u64)tnicps);
+		le64_add_cpu(&header->ch_ncheckpoints, -(u64)tnicps);
 		mark_buffer_dirty(header_bh);
 		nilfs_mdt_mark_dirty(cpfile);
 		kunmap_atomic(kaddr);
-	पूर्ण
+	}
 
-	brअन्यथा(header_bh);
-	अगर (nss > 0)
+	brelse(header_bh);
+	if (nss > 0)
 		ret = -EBUSY;
 
  out_sem:
-	up_ग_लिखो(&NILFS_MDT(cpfile)->mi_sem);
-	वापस ret;
-पूर्ण
+	up_write(&NILFS_MDT(cpfile)->mi_sem);
+	return ret;
+}
 
-अटल व्योम nilfs_cpfile_checkpoपूर्णांक_to_cpinfo(काष्ठा inode *cpfile,
-					      काष्ठा nilfs_checkpoपूर्णांक *cp,
-					      काष्ठा nilfs_cpinfo *ci)
-अणु
+static void nilfs_cpfile_checkpoint_to_cpinfo(struct inode *cpfile,
+					      struct nilfs_checkpoint *cp,
+					      struct nilfs_cpinfo *ci)
+{
 	ci->ci_flags = le32_to_cpu(cp->cp_flags);
 	ci->ci_cno = le64_to_cpu(cp->cp_cno);
 	ci->ci_create = le64_to_cpu(cp->cp_create);
@@ -419,138 +418,138 @@ nilfs_cpfile_block_get_checkpoपूर्णांक(स्थिर काष
 	ci->ci_inodes_count = le64_to_cpu(cp->cp_inodes_count);
 	ci->ci_blocks_count = le64_to_cpu(cp->cp_blocks_count);
 	ci->ci_next = le64_to_cpu(cp->cp_snapshot_list.ssl_next);
-पूर्ण
+}
 
-अटल sमाप_प्रकार nilfs_cpfile_करो_get_cpinfo(काष्ठा inode *cpfile, __u64 *cnop,
-					  व्योम *buf, अचिन्हित पूर्णांक cisz,
-					  माप_प्रकार nci)
-अणु
-	काष्ठा nilfs_checkpoपूर्णांक *cp;
-	काष्ठा nilfs_cpinfo *ci = buf;
-	काष्ठा buffer_head *bh;
-	माप_प्रकार cpsz = NILFS_MDT(cpfile)->mi_entry_size;
+static ssize_t nilfs_cpfile_do_get_cpinfo(struct inode *cpfile, __u64 *cnop,
+					  void *buf, unsigned int cisz,
+					  size_t nci)
+{
+	struct nilfs_checkpoint *cp;
+	struct nilfs_cpinfo *ci = buf;
+	struct buffer_head *bh;
+	size_t cpsz = NILFS_MDT(cpfile)->mi_entry_size;
 	__u64 cur_cno = nilfs_mdt_cno(cpfile), cno = *cnop;
-	व्योम *kaddr;
-	पूर्णांक n, ret;
-	पूर्णांक ncps, i;
+	void *kaddr;
+	int n, ret;
+	int ncps, i;
 
-	अगर (cno == 0)
-		वापस -ENOENT; /* checkpoपूर्णांक number 0 is invalid */
-	करोwn_पढ़ो(&NILFS_MDT(cpfile)->mi_sem);
+	if (cno == 0)
+		return -ENOENT; /* checkpoint number 0 is invalid */
+	down_read(&NILFS_MDT(cpfile)->mi_sem);
 
-	क्रम (n = 0; n < nci; cno += ncps) अणु
-		ret = nilfs_cpfile_find_checkpoपूर्णांक_block(
+	for (n = 0; n < nci; cno += ncps) {
+		ret = nilfs_cpfile_find_checkpoint_block(
 			cpfile, cno, cur_cno - 1, &cno, &bh);
-		अगर (ret < 0) अणु
-			अगर (likely(ret == -ENOENT))
-				अवरोध;
-			जाओ out;
-		पूर्ण
-		ncps = nilfs_cpfile_checkpoपूर्णांकs_in_block(cpfile, cno, cur_cno);
+		if (ret < 0) {
+			if (likely(ret == -ENOENT))
+				break;
+			goto out;
+		}
+		ncps = nilfs_cpfile_checkpoints_in_block(cpfile, cno, cur_cno);
 
 		kaddr = kmap_atomic(bh->b_page);
-		cp = nilfs_cpfile_block_get_checkpoपूर्णांक(cpfile, cno, bh, kaddr);
-		क्रम (i = 0; i < ncps && n < nci; i++, cp = (व्योम *)cp + cpsz) अणु
-			अगर (!nilfs_checkpoपूर्णांक_invalid(cp)) अणु
-				nilfs_cpfile_checkpoपूर्णांक_to_cpinfo(cpfile, cp,
+		cp = nilfs_cpfile_block_get_checkpoint(cpfile, cno, bh, kaddr);
+		for (i = 0; i < ncps && n < nci; i++, cp = (void *)cp + cpsz) {
+			if (!nilfs_checkpoint_invalid(cp)) {
+				nilfs_cpfile_checkpoint_to_cpinfo(cpfile, cp,
 								  ci);
-				ci = (व्योम *)ci + cisz;
+				ci = (void *)ci + cisz;
 				n++;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		kunmap_atomic(kaddr);
-		brअन्यथा(bh);
-	पूर्ण
+		brelse(bh);
+	}
 
 	ret = n;
-	अगर (n > 0) अणु
-		ci = (व्योम *)ci - cisz;
+	if (n > 0) {
+		ci = (void *)ci - cisz;
 		*cnop = ci->ci_cno + 1;
-	पूर्ण
+	}
 
  out:
-	up_पढ़ो(&NILFS_MDT(cpfile)->mi_sem);
-	वापस ret;
-पूर्ण
+	up_read(&NILFS_MDT(cpfile)->mi_sem);
+	return ret;
+}
 
-अटल sमाप_प्रकार nilfs_cpfile_करो_get_ssinfo(काष्ठा inode *cpfile, __u64 *cnop,
-					  व्योम *buf, अचिन्हित पूर्णांक cisz,
-					  माप_प्रकार nci)
-अणु
-	काष्ठा buffer_head *bh;
-	काष्ठा nilfs_cpfile_header *header;
-	काष्ठा nilfs_checkpoपूर्णांक *cp;
-	काष्ठा nilfs_cpinfo *ci = buf;
+static ssize_t nilfs_cpfile_do_get_ssinfo(struct inode *cpfile, __u64 *cnop,
+					  void *buf, unsigned int cisz,
+					  size_t nci)
+{
+	struct buffer_head *bh;
+	struct nilfs_cpfile_header *header;
+	struct nilfs_checkpoint *cp;
+	struct nilfs_cpinfo *ci = buf;
 	__u64 curr = *cnop, next;
-	अचिन्हित दीर्घ curr_blkoff, next_blkoff;
-	व्योम *kaddr;
-	पूर्णांक n = 0, ret;
+	unsigned long curr_blkoff, next_blkoff;
+	void *kaddr;
+	int n = 0, ret;
 
-	करोwn_पढ़ो(&NILFS_MDT(cpfile)->mi_sem);
+	down_read(&NILFS_MDT(cpfile)->mi_sem);
 
-	अगर (curr == 0) अणु
+	if (curr == 0) {
 		ret = nilfs_cpfile_get_header_block(cpfile, &bh);
-		अगर (ret < 0)
-			जाओ out;
+		if (ret < 0)
+			goto out;
 		kaddr = kmap_atomic(bh->b_page);
 		header = nilfs_cpfile_block_get_header(cpfile, bh, kaddr);
 		curr = le64_to_cpu(header->ch_snapshot_list.ssl_next);
 		kunmap_atomic(kaddr);
-		brअन्यथा(bh);
-		अगर (curr == 0) अणु
+		brelse(bh);
+		if (curr == 0) {
 			ret = 0;
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अगर (unlikely(curr == ~(__u64)0)) अणु
+			goto out;
+		}
+	} else if (unlikely(curr == ~(__u64)0)) {
 		ret = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	curr_blkoff = nilfs_cpfile_get_blkoff(cpfile, curr);
-	ret = nilfs_cpfile_get_checkpoपूर्णांक_block(cpfile, curr, 0, &bh);
-	अगर (unlikely(ret < 0)) अणु
-		अगर (ret == -ENOENT)
+	ret = nilfs_cpfile_get_checkpoint_block(cpfile, curr, 0, &bh);
+	if (unlikely(ret < 0)) {
+		if (ret == -ENOENT)
 			ret = 0; /* No snapshots (started from a hole block) */
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	kaddr = kmap_atomic(bh->b_page);
-	जबतक (n < nci) अणु
-		cp = nilfs_cpfile_block_get_checkpoपूर्णांक(cpfile, curr, bh, kaddr);
+	while (n < nci) {
+		cp = nilfs_cpfile_block_get_checkpoint(cpfile, curr, bh, kaddr);
 		curr = ~(__u64)0; /* Terminator */
-		अगर (unlikely(nilfs_checkpoपूर्णांक_invalid(cp) ||
-			     !nilfs_checkpoपूर्णांक_snapshot(cp)))
-			अवरोध;
-		nilfs_cpfile_checkpoपूर्णांक_to_cpinfo(cpfile, cp, ci);
-		ci = (व्योम *)ci + cisz;
+		if (unlikely(nilfs_checkpoint_invalid(cp) ||
+			     !nilfs_checkpoint_snapshot(cp)))
+			break;
+		nilfs_cpfile_checkpoint_to_cpinfo(cpfile, cp, ci);
+		ci = (void *)ci + cisz;
 		n++;
 		next = le64_to_cpu(cp->cp_snapshot_list.ssl_next);
-		अगर (next == 0)
-			अवरोध; /* reach end of the snapshot list */
+		if (next == 0)
+			break; /* reach end of the snapshot list */
 
 		next_blkoff = nilfs_cpfile_get_blkoff(cpfile, next);
-		अगर (curr_blkoff != next_blkoff) अणु
+		if (curr_blkoff != next_blkoff) {
 			kunmap_atomic(kaddr);
-			brअन्यथा(bh);
-			ret = nilfs_cpfile_get_checkpoपूर्णांक_block(cpfile, next,
+			brelse(bh);
+			ret = nilfs_cpfile_get_checkpoint_block(cpfile, next,
 								0, &bh);
-			अगर (unlikely(ret < 0)) अणु
+			if (unlikely(ret < 0)) {
 				WARN_ON(ret == -ENOENT);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			kaddr = kmap_atomic(bh->b_page);
-		पूर्ण
+		}
 		curr = next;
 		curr_blkoff = next_blkoff;
-	पूर्ण
+	}
 	kunmap_atomic(kaddr);
-	brअन्यथा(bh);
+	brelse(bh);
 	*cnop = curr;
 	ret = n;
 
  out:
-	up_पढ़ो(&NILFS_MDT(cpfile)->mi_sem);
-	वापस ret;
-पूर्ण
+	up_read(&NILFS_MDT(cpfile)->mi_sem);
+	return ret;
+}
 
 /**
  * nilfs_cpfile_get_cpinfo -
@@ -560,96 +559,96 @@ nilfs_cpfile_block_get_checkpoपूर्णांक(स्थिर काष
  * @nci:
  */
 
-sमाप_प्रकार nilfs_cpfile_get_cpinfo(काष्ठा inode *cpfile, __u64 *cnop, पूर्णांक mode,
-				व्योम *buf, अचिन्हित पूर्णांक cisz, माप_प्रकार nci)
-अणु
-	चयन (mode) अणु
-	हाल NILFS_CHECKPOINT:
-		वापस nilfs_cpfile_करो_get_cpinfo(cpfile, cnop, buf, cisz, nci);
-	हाल NILFS_SNAPSHOT:
-		वापस nilfs_cpfile_करो_get_ssinfo(cpfile, cnop, buf, cisz, nci);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+ssize_t nilfs_cpfile_get_cpinfo(struct inode *cpfile, __u64 *cnop, int mode,
+				void *buf, unsigned int cisz, size_t nci)
+{
+	switch (mode) {
+	case NILFS_CHECKPOINT:
+		return nilfs_cpfile_do_get_cpinfo(cpfile, cnop, buf, cisz, nci);
+	case NILFS_SNAPSHOT:
+		return nilfs_cpfile_do_get_ssinfo(cpfile, cnop, buf, cisz, nci);
+	default:
+		return -EINVAL;
+	}
+}
 
 /**
- * nilfs_cpfile_delete_checkpoपूर्णांक -
+ * nilfs_cpfile_delete_checkpoint -
  * @cpfile:
  * @cno:
  */
-पूर्णांक nilfs_cpfile_delete_checkpoपूर्णांक(काष्ठा inode *cpfile, __u64 cno)
-अणु
-	काष्ठा nilfs_cpinfo ci;
+int nilfs_cpfile_delete_checkpoint(struct inode *cpfile, __u64 cno)
+{
+	struct nilfs_cpinfo ci;
 	__u64 tcno = cno;
-	sमाप_प्रकार nci;
+	ssize_t nci;
 
-	nci = nilfs_cpfile_करो_get_cpinfo(cpfile, &tcno, &ci, माप(ci), 1);
-	अगर (nci < 0)
-		वापस nci;
-	अन्यथा अगर (nci == 0 || ci.ci_cno != cno)
-		वापस -ENOENT;
-	अन्यथा अगर (nilfs_cpinfo_snapshot(&ci))
-		वापस -EBUSY;
+	nci = nilfs_cpfile_do_get_cpinfo(cpfile, &tcno, &ci, sizeof(ci), 1);
+	if (nci < 0)
+		return nci;
+	else if (nci == 0 || ci.ci_cno != cno)
+		return -ENOENT;
+	else if (nilfs_cpinfo_snapshot(&ci))
+		return -EBUSY;
 
-	वापस nilfs_cpfile_delete_checkpoपूर्णांकs(cpfile, cno, cno + 1);
-पूर्ण
+	return nilfs_cpfile_delete_checkpoints(cpfile, cno, cno + 1);
+}
 
-अटल काष्ठा nilfs_snapshot_list *
-nilfs_cpfile_block_get_snapshot_list(स्थिर काष्ठा inode *cpfile,
+static struct nilfs_snapshot_list *
+nilfs_cpfile_block_get_snapshot_list(const struct inode *cpfile,
 				     __u64 cno,
-				     काष्ठा buffer_head *bh,
-				     व्योम *kaddr)
-अणु
-	काष्ठा nilfs_cpfile_header *header;
-	काष्ठा nilfs_checkpoपूर्णांक *cp;
-	काष्ठा nilfs_snapshot_list *list;
+				     struct buffer_head *bh,
+				     void *kaddr)
+{
+	struct nilfs_cpfile_header *header;
+	struct nilfs_checkpoint *cp;
+	struct nilfs_snapshot_list *list;
 
-	अगर (cno != 0) अणु
-		cp = nilfs_cpfile_block_get_checkpoपूर्णांक(cpfile, cno, bh, kaddr);
+	if (cno != 0) {
+		cp = nilfs_cpfile_block_get_checkpoint(cpfile, cno, bh, kaddr);
 		list = &cp->cp_snapshot_list;
-	पूर्ण अन्यथा अणु
+	} else {
 		header = nilfs_cpfile_block_get_header(cpfile, bh, kaddr);
 		list = &header->ch_snapshot_list;
-	पूर्ण
-	वापस list;
-पूर्ण
+	}
+	return list;
+}
 
-अटल पूर्णांक nilfs_cpfile_set_snapshot(काष्ठा inode *cpfile, __u64 cno)
-अणु
-	काष्ठा buffer_head *header_bh, *curr_bh, *prev_bh, *cp_bh;
-	काष्ठा nilfs_cpfile_header *header;
-	काष्ठा nilfs_checkpoपूर्णांक *cp;
-	काष्ठा nilfs_snapshot_list *list;
+static int nilfs_cpfile_set_snapshot(struct inode *cpfile, __u64 cno)
+{
+	struct buffer_head *header_bh, *curr_bh, *prev_bh, *cp_bh;
+	struct nilfs_cpfile_header *header;
+	struct nilfs_checkpoint *cp;
+	struct nilfs_snapshot_list *list;
 	__u64 curr, prev;
-	अचिन्हित दीर्घ curr_blkoff, prev_blkoff;
-	व्योम *kaddr;
-	पूर्णांक ret;
+	unsigned long curr_blkoff, prev_blkoff;
+	void *kaddr;
+	int ret;
 
-	अगर (cno == 0)
-		वापस -ENOENT; /* checkpoपूर्णांक number 0 is invalid */
-	करोwn_ग_लिखो(&NILFS_MDT(cpfile)->mi_sem);
+	if (cno == 0)
+		return -ENOENT; /* checkpoint number 0 is invalid */
+	down_write(&NILFS_MDT(cpfile)->mi_sem);
 
-	ret = nilfs_cpfile_get_checkpoपूर्णांक_block(cpfile, cno, 0, &cp_bh);
-	अगर (ret < 0)
-		जाओ out_sem;
+	ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0, &cp_bh);
+	if (ret < 0)
+		goto out_sem;
 	kaddr = kmap_atomic(cp_bh->b_page);
-	cp = nilfs_cpfile_block_get_checkpoपूर्णांक(cpfile, cno, cp_bh, kaddr);
-	अगर (nilfs_checkpoपूर्णांक_invalid(cp)) अणु
+	cp = nilfs_cpfile_block_get_checkpoint(cpfile, cno, cp_bh, kaddr);
+	if (nilfs_checkpoint_invalid(cp)) {
 		ret = -ENOENT;
 		kunmap_atomic(kaddr);
-		जाओ out_cp;
-	पूर्ण
-	अगर (nilfs_checkpoपूर्णांक_snapshot(cp)) अणु
+		goto out_cp;
+	}
+	if (nilfs_checkpoint_snapshot(cp)) {
 		ret = 0;
 		kunmap_atomic(kaddr);
-		जाओ out_cp;
-	पूर्ण
+		goto out_cp;
+	}
 	kunmap_atomic(kaddr);
 
 	ret = nilfs_cpfile_get_header_block(cpfile, &header_bh);
-	अगर (ret < 0)
-		जाओ out_cp;
+	if (ret < 0)
+		goto out_cp;
 	kaddr = kmap_atomic(header_bh->b_page);
 	header = nilfs_cpfile_block_get_header(cpfile, header_bh, kaddr);
 	list = &header->ch_snapshot_list;
@@ -658,35 +657,35 @@ nilfs_cpfile_block_get_snapshot_list(स्थिर काष्ठा inode *c
 	curr = 0;
 	curr_blkoff = 0;
 	prev = le64_to_cpu(list->ssl_prev);
-	जबतक (prev > cno) अणु
+	while (prev > cno) {
 		prev_blkoff = nilfs_cpfile_get_blkoff(cpfile, prev);
 		curr = prev;
-		अगर (curr_blkoff != prev_blkoff) अणु
+		if (curr_blkoff != prev_blkoff) {
 			kunmap_atomic(kaddr);
-			brअन्यथा(curr_bh);
-			ret = nilfs_cpfile_get_checkpoपूर्णांक_block(cpfile, curr,
+			brelse(curr_bh);
+			ret = nilfs_cpfile_get_checkpoint_block(cpfile, curr,
 								0, &curr_bh);
-			अगर (ret < 0)
-				जाओ out_header;
+			if (ret < 0)
+				goto out_header;
 			kaddr = kmap_atomic(curr_bh->b_page);
-		पूर्ण
+		}
 		curr_blkoff = prev_blkoff;
-		cp = nilfs_cpfile_block_get_checkpoपूर्णांक(
+		cp = nilfs_cpfile_block_get_checkpoint(
 			cpfile, curr, curr_bh, kaddr);
 		list = &cp->cp_snapshot_list;
 		prev = le64_to_cpu(list->ssl_prev);
-	पूर्ण
+	}
 	kunmap_atomic(kaddr);
 
-	अगर (prev != 0) अणु
-		ret = nilfs_cpfile_get_checkpoपूर्णांक_block(cpfile, prev, 0,
+	if (prev != 0) {
+		ret = nilfs_cpfile_get_checkpoint_block(cpfile, prev, 0,
 							&prev_bh);
-		अगर (ret < 0)
-			जाओ out_curr;
-	पूर्ण अन्यथा अणु
+		if (ret < 0)
+			goto out_curr;
+	} else {
 		prev_bh = header_bh;
 		get_bh(prev_bh);
-	पूर्ण
+	}
 
 	kaddr = kmap_atomic(curr_bh->b_page);
 	list = nilfs_cpfile_block_get_snapshot_list(
@@ -695,10 +694,10 @@ nilfs_cpfile_block_get_snapshot_list(स्थिर काष्ठा inode *c
 	kunmap_atomic(kaddr);
 
 	kaddr = kmap_atomic(cp_bh->b_page);
-	cp = nilfs_cpfile_block_get_checkpoपूर्णांक(cpfile, cno, cp_bh, kaddr);
+	cp = nilfs_cpfile_block_get_checkpoint(cpfile, cno, cp_bh, kaddr);
 	cp->cp_snapshot_list.ssl_next = cpu_to_le64(curr);
 	cp->cp_snapshot_list.ssl_prev = cpu_to_le64(prev);
-	nilfs_checkpoपूर्णांक_set_snapshot(cp);
+	nilfs_checkpoint_set_snapshot(cp);
 	kunmap_atomic(kaddr);
 
 	kaddr = kmap_atomic(prev_bh->b_page);
@@ -718,51 +717,51 @@ nilfs_cpfile_block_get_snapshot_list(स्थिर काष्ठा inode *c
 	mark_buffer_dirty(header_bh);
 	nilfs_mdt_mark_dirty(cpfile);
 
-	brअन्यथा(prev_bh);
+	brelse(prev_bh);
 
  out_curr:
-	brअन्यथा(curr_bh);
+	brelse(curr_bh);
 
  out_header:
-	brअन्यथा(header_bh);
+	brelse(header_bh);
 
  out_cp:
-	brअन्यथा(cp_bh);
+	brelse(cp_bh);
 
  out_sem:
-	up_ग_लिखो(&NILFS_MDT(cpfile)->mi_sem);
-	वापस ret;
-पूर्ण
+	up_write(&NILFS_MDT(cpfile)->mi_sem);
+	return ret;
+}
 
-अटल पूर्णांक nilfs_cpfile_clear_snapshot(काष्ठा inode *cpfile, __u64 cno)
-अणु
-	काष्ठा buffer_head *header_bh, *next_bh, *prev_bh, *cp_bh;
-	काष्ठा nilfs_cpfile_header *header;
-	काष्ठा nilfs_checkpoपूर्णांक *cp;
-	काष्ठा nilfs_snapshot_list *list;
+static int nilfs_cpfile_clear_snapshot(struct inode *cpfile, __u64 cno)
+{
+	struct buffer_head *header_bh, *next_bh, *prev_bh, *cp_bh;
+	struct nilfs_cpfile_header *header;
+	struct nilfs_checkpoint *cp;
+	struct nilfs_snapshot_list *list;
 	__u64 next, prev;
-	व्योम *kaddr;
-	पूर्णांक ret;
+	void *kaddr;
+	int ret;
 
-	अगर (cno == 0)
-		वापस -ENOENT; /* checkpoपूर्णांक number 0 is invalid */
-	करोwn_ग_लिखो(&NILFS_MDT(cpfile)->mi_sem);
+	if (cno == 0)
+		return -ENOENT; /* checkpoint number 0 is invalid */
+	down_write(&NILFS_MDT(cpfile)->mi_sem);
 
-	ret = nilfs_cpfile_get_checkpoपूर्णांक_block(cpfile, cno, 0, &cp_bh);
-	अगर (ret < 0)
-		जाओ out_sem;
+	ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0, &cp_bh);
+	if (ret < 0)
+		goto out_sem;
 	kaddr = kmap_atomic(cp_bh->b_page);
-	cp = nilfs_cpfile_block_get_checkpoपूर्णांक(cpfile, cno, cp_bh, kaddr);
-	अगर (nilfs_checkpoपूर्णांक_invalid(cp)) अणु
+	cp = nilfs_cpfile_block_get_checkpoint(cpfile, cno, cp_bh, kaddr);
+	if (nilfs_checkpoint_invalid(cp)) {
 		ret = -ENOENT;
 		kunmap_atomic(kaddr);
-		जाओ out_cp;
-	पूर्ण
-	अगर (!nilfs_checkpoपूर्णांक_snapshot(cp)) अणु
+		goto out_cp;
+	}
+	if (!nilfs_checkpoint_snapshot(cp)) {
 		ret = 0;
 		kunmap_atomic(kaddr);
-		जाओ out_cp;
-	पूर्ण
+		goto out_cp;
+	}
 
 	list = &cp->cp_snapshot_list;
 	next = le64_to_cpu(list->ssl_next);
@@ -770,26 +769,26 @@ nilfs_cpfile_block_get_snapshot_list(स्थिर काष्ठा inode *c
 	kunmap_atomic(kaddr);
 
 	ret = nilfs_cpfile_get_header_block(cpfile, &header_bh);
-	अगर (ret < 0)
-		जाओ out_cp;
-	अगर (next != 0) अणु
-		ret = nilfs_cpfile_get_checkpoपूर्णांक_block(cpfile, next, 0,
+	if (ret < 0)
+		goto out_cp;
+	if (next != 0) {
+		ret = nilfs_cpfile_get_checkpoint_block(cpfile, next, 0,
 							&next_bh);
-		अगर (ret < 0)
-			जाओ out_header;
-	पूर्ण अन्यथा अणु
+		if (ret < 0)
+			goto out_header;
+	} else {
 		next_bh = header_bh;
 		get_bh(next_bh);
-	पूर्ण
-	अगर (prev != 0) अणु
-		ret = nilfs_cpfile_get_checkpoपूर्णांक_block(cpfile, prev, 0,
+	}
+	if (prev != 0) {
+		ret = nilfs_cpfile_get_checkpoint_block(cpfile, prev, 0,
 							&prev_bh);
-		अगर (ret < 0)
-			जाओ out_next;
-	पूर्ण अन्यथा अणु
+		if (ret < 0)
+			goto out_next;
+	} else {
 		prev_bh = header_bh;
 		get_bh(prev_bh);
-	पूर्ण
+	}
 
 	kaddr = kmap_atomic(next_bh->b_page);
 	list = nilfs_cpfile_block_get_snapshot_list(
@@ -804,10 +803,10 @@ nilfs_cpfile_block_get_snapshot_list(स्थिर काष्ठा inode *c
 	kunmap_atomic(kaddr);
 
 	kaddr = kmap_atomic(cp_bh->b_page);
-	cp = nilfs_cpfile_block_get_checkpoपूर्णांक(cpfile, cno, cp_bh, kaddr);
+	cp = nilfs_cpfile_block_get_checkpoint(cpfile, cno, cp_bh, kaddr);
 	cp->cp_snapshot_list.ssl_next = cpu_to_le64(0);
 	cp->cp_snapshot_list.ssl_prev = cpu_to_le64(0);
-	nilfs_checkpoपूर्णांक_clear_snapshot(cp);
+	nilfs_checkpoint_clear_snapshot(cp);
 	kunmap_atomic(kaddr);
 
 	kaddr = kmap_atomic(header_bh->b_page);
@@ -821,196 +820,196 @@ nilfs_cpfile_block_get_snapshot_list(स्थिर काष्ठा inode *c
 	mark_buffer_dirty(header_bh);
 	nilfs_mdt_mark_dirty(cpfile);
 
-	brअन्यथा(prev_bh);
+	brelse(prev_bh);
 
  out_next:
-	brअन्यथा(next_bh);
+	brelse(next_bh);
 
  out_header:
-	brअन्यथा(header_bh);
+	brelse(header_bh);
 
  out_cp:
-	brअन्यथा(cp_bh);
+	brelse(cp_bh);
 
  out_sem:
-	up_ग_लिखो(&NILFS_MDT(cpfile)->mi_sem);
-	वापस ret;
-पूर्ण
+	up_write(&NILFS_MDT(cpfile)->mi_sem);
+	return ret;
+}
 
 /**
  * nilfs_cpfile_is_snapshot -
- * @cpfile: inode of checkpoपूर्णांक file
- * @cno: checkpoपूर्णांक number
+ * @cpfile: inode of checkpoint file
+ * @cno: checkpoint number
  *
  * Description:
  *
- * Return Value: On success, 1 is वापसed अगर the checkpoपूर्णांक specअगरied by
- * @cno is a snapshot, or 0 अगर not. On error, one of the following negative
- * error codes is वापसed.
+ * Return Value: On success, 1 is returned if the checkpoint specified by
+ * @cno is a snapshot, or 0 if not. On error, one of the following negative
+ * error codes is returned.
  *
  * %-EIO - I/O error.
  *
  * %-ENOMEM - Insufficient amount of memory available.
  *
- * %-ENOENT - No such checkpoपूर्णांक.
+ * %-ENOENT - No such checkpoint.
  */
-पूर्णांक nilfs_cpfile_is_snapshot(काष्ठा inode *cpfile, __u64 cno)
-अणु
-	काष्ठा buffer_head *bh;
-	काष्ठा nilfs_checkpoपूर्णांक *cp;
-	व्योम *kaddr;
-	पूर्णांक ret;
+int nilfs_cpfile_is_snapshot(struct inode *cpfile, __u64 cno)
+{
+	struct buffer_head *bh;
+	struct nilfs_checkpoint *cp;
+	void *kaddr;
+	int ret;
 
 	/*
-	 * CP number is invalid अगर it's zero or larger than the
+	 * CP number is invalid if it's zero or larger than the
 	 * largest existing one.
 	 */
-	अगर (cno == 0 || cno >= nilfs_mdt_cno(cpfile))
-		वापस -ENOENT;
-	करोwn_पढ़ो(&NILFS_MDT(cpfile)->mi_sem);
+	if (cno == 0 || cno >= nilfs_mdt_cno(cpfile))
+		return -ENOENT;
+	down_read(&NILFS_MDT(cpfile)->mi_sem);
 
-	ret = nilfs_cpfile_get_checkpoपूर्णांक_block(cpfile, cno, 0, &bh);
-	अगर (ret < 0)
-		जाओ out;
+	ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0, &bh);
+	if (ret < 0)
+		goto out;
 	kaddr = kmap_atomic(bh->b_page);
-	cp = nilfs_cpfile_block_get_checkpoपूर्णांक(cpfile, cno, bh, kaddr);
-	अगर (nilfs_checkpoपूर्णांक_invalid(cp))
+	cp = nilfs_cpfile_block_get_checkpoint(cpfile, cno, bh, kaddr);
+	if (nilfs_checkpoint_invalid(cp))
 		ret = -ENOENT;
-	अन्यथा
-		ret = nilfs_checkpoपूर्णांक_snapshot(cp);
+	else
+		ret = nilfs_checkpoint_snapshot(cp);
 	kunmap_atomic(kaddr);
-	brअन्यथा(bh);
+	brelse(bh);
 
  out:
-	up_पढ़ो(&NILFS_MDT(cpfile)->mi_sem);
-	वापस ret;
-पूर्ण
+	up_read(&NILFS_MDT(cpfile)->mi_sem);
+	return ret;
+}
 
 /**
- * nilfs_cpfile_change_cpmode - change checkpoपूर्णांक mode
- * @cpfile: inode of checkpoपूर्णांक file
- * @cno: checkpoपूर्णांक number
- * @mode: mode of checkpoपूर्णांक
+ * nilfs_cpfile_change_cpmode - change checkpoint mode
+ * @cpfile: inode of checkpoint file
+ * @cno: checkpoint number
+ * @mode: mode of checkpoint
  *
- * Description: nilfs_change_cpmode() changes the mode of the checkpoपूर्णांक
- * specअगरied by @cno. The mode @mode is NILFS_CHECKPOINT or NILFS_SNAPSHOT.
+ * Description: nilfs_change_cpmode() changes the mode of the checkpoint
+ * specified by @cno. The mode @mode is NILFS_CHECKPOINT or NILFS_SNAPSHOT.
  *
- * Return Value: On success, 0 is वापसed. On error, one of the following
- * negative error codes is वापसed.
+ * Return Value: On success, 0 is returned. On error, one of the following
+ * negative error codes is returned.
  *
  * %-EIO - I/O error.
  *
  * %-ENOMEM - Insufficient amount of memory available.
  *
- * %-ENOENT - No such checkpoपूर्णांक.
+ * %-ENOENT - No such checkpoint.
  */
-पूर्णांक nilfs_cpfile_change_cpmode(काष्ठा inode *cpfile, __u64 cno, पूर्णांक mode)
-अणु
-	पूर्णांक ret;
+int nilfs_cpfile_change_cpmode(struct inode *cpfile, __u64 cno, int mode)
+{
+	int ret;
 
-	चयन (mode) अणु
-	हाल NILFS_CHECKPOINT:
-		अगर (nilfs_checkpoपूर्णांक_is_mounted(cpfile->i_sb, cno))
+	switch (mode) {
+	case NILFS_CHECKPOINT:
+		if (nilfs_checkpoint_is_mounted(cpfile->i_sb, cno))
 			/*
-			 * Current implementation करोes not have to protect
-			 * plain पढ़ो-only mounts since they are exclusive
-			 * with a पढ़ो/ग_लिखो mount and are रक्षित from the
+			 * Current implementation does not have to protect
+			 * plain read-only mounts since they are exclusive
+			 * with a read/write mount and are protected from the
 			 * cleaner.
 			 */
 			ret = -EBUSY;
-		अन्यथा
+		else
 			ret = nilfs_cpfile_clear_snapshot(cpfile, cno);
-		वापस ret;
-	हाल NILFS_SNAPSHOT:
-		वापस nilfs_cpfile_set_snapshot(cpfile, cno);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return ret;
+	case NILFS_SNAPSHOT:
+		return nilfs_cpfile_set_snapshot(cpfile, cno);
+	default:
+		return -EINVAL;
+	}
+}
 
 /**
- * nilfs_cpfile_get_stat - get checkpoपूर्णांक statistics
- * @cpfile: inode of checkpoपूर्णांक file
- * @cpstat: poपूर्णांकer to a काष्ठाure of checkpoपूर्णांक statistics
+ * nilfs_cpfile_get_stat - get checkpoint statistics
+ * @cpfile: inode of checkpoint file
+ * @cpstat: pointer to a structure of checkpoint statistics
  *
- * Description: nilfs_cpfile_get_stat() वापसs inक्रमmation about checkpoपूर्णांकs.
+ * Description: nilfs_cpfile_get_stat() returns information about checkpoints.
  *
- * Return Value: On success, 0 is वापसed, and checkpoपूर्णांकs inक्रमmation is
- * stored in the place poपूर्णांकed by @cpstat. On error, one of the following
- * negative error codes is वापसed.
+ * Return Value: On success, 0 is returned, and checkpoints information is
+ * stored in the place pointed by @cpstat. On error, one of the following
+ * negative error codes is returned.
  *
  * %-EIO - I/O error.
  *
  * %-ENOMEM - Insufficient amount of memory available.
  */
-पूर्णांक nilfs_cpfile_get_stat(काष्ठा inode *cpfile, काष्ठा nilfs_cpstat *cpstat)
-अणु
-	काष्ठा buffer_head *bh;
-	काष्ठा nilfs_cpfile_header *header;
-	व्योम *kaddr;
-	पूर्णांक ret;
+int nilfs_cpfile_get_stat(struct inode *cpfile, struct nilfs_cpstat *cpstat)
+{
+	struct buffer_head *bh;
+	struct nilfs_cpfile_header *header;
+	void *kaddr;
+	int ret;
 
-	करोwn_पढ़ो(&NILFS_MDT(cpfile)->mi_sem);
+	down_read(&NILFS_MDT(cpfile)->mi_sem);
 
 	ret = nilfs_cpfile_get_header_block(cpfile, &bh);
-	अगर (ret < 0)
-		जाओ out_sem;
+	if (ret < 0)
+		goto out_sem;
 	kaddr = kmap_atomic(bh->b_page);
 	header = nilfs_cpfile_block_get_header(cpfile, bh, kaddr);
 	cpstat->cs_cno = nilfs_mdt_cno(cpfile);
-	cpstat->cs_ncps = le64_to_cpu(header->ch_ncheckpoपूर्णांकs);
+	cpstat->cs_ncps = le64_to_cpu(header->ch_ncheckpoints);
 	cpstat->cs_nsss = le64_to_cpu(header->ch_nsnapshots);
 	kunmap_atomic(kaddr);
-	brअन्यथा(bh);
+	brelse(bh);
 
  out_sem:
-	up_पढ़ो(&NILFS_MDT(cpfile)->mi_sem);
-	वापस ret;
-पूर्ण
+	up_read(&NILFS_MDT(cpfile)->mi_sem);
+	return ret;
+}
 
 /**
- * nilfs_cpfile_पढ़ो - पढ़ो or get cpfile inode
+ * nilfs_cpfile_read - read or get cpfile inode
  * @sb: super block instance
- * @cpsize: size of a checkpoपूर्णांक entry
+ * @cpsize: size of a checkpoint entry
  * @raw_inode: on-disk cpfile inode
  * @inodep: buffer to store the inode
  */
-पूर्णांक nilfs_cpfile_पढ़ो(काष्ठा super_block *sb, माप_प्रकार cpsize,
-		      काष्ठा nilfs_inode *raw_inode, काष्ठा inode **inodep)
-अणु
-	काष्ठा inode *cpfile;
-	पूर्णांक err;
+int nilfs_cpfile_read(struct super_block *sb, size_t cpsize,
+		      struct nilfs_inode *raw_inode, struct inode **inodep)
+{
+	struct inode *cpfile;
+	int err;
 
-	अगर (cpsize > sb->s_blocksize) अणु
+	if (cpsize > sb->s_blocksize) {
 		nilfs_err(sb, "too large checkpoint size: %zu bytes", cpsize);
-		वापस -EINVAL;
-	पूर्ण अन्यथा अगर (cpsize < NILFS_MIN_CHECKPOINT_SIZE) अणु
+		return -EINVAL;
+	} else if (cpsize < NILFS_MIN_CHECKPOINT_SIZE) {
 		nilfs_err(sb, "too small checkpoint size: %zu bytes", cpsize);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	cpfile = nilfs_iget_locked(sb, शून्य, NILFS_CPखाता_INO);
-	अगर (unlikely(!cpfile))
-		वापस -ENOMEM;
-	अगर (!(cpfile->i_state & I_NEW))
-		जाओ out;
+	cpfile = nilfs_iget_locked(sb, NULL, NILFS_CPFILE_INO);
+	if (unlikely(!cpfile))
+		return -ENOMEM;
+	if (!(cpfile->i_state & I_NEW))
+		goto out;
 
 	err = nilfs_mdt_init(cpfile, NILFS_MDT_GFP, 0);
-	अगर (err)
-		जाओ failed;
+	if (err)
+		goto failed;
 
 	nilfs_mdt_set_entry_size(cpfile, cpsize,
-				 माप(काष्ठा nilfs_cpfile_header));
+				 sizeof(struct nilfs_cpfile_header));
 
-	err = nilfs_पढ़ो_inode_common(cpfile, raw_inode);
-	अगर (err)
-		जाओ failed;
+	err = nilfs_read_inode_common(cpfile, raw_inode);
+	if (err)
+		goto failed;
 
 	unlock_new_inode(cpfile);
  out:
 	*inodep = cpfile;
-	वापस 0;
+	return 0;
  failed:
 	iget_failed(cpfile);
-	वापस err;
-पूर्ण
+	return err;
+}

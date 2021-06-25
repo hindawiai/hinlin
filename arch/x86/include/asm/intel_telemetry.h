@@ -1,140 +1,139 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Intel SOC Telemetry Driver Header File
  * Copyright (C) 2015, Intel Corporation.
  * All Rights Reserved.
  */
-#अगर_अघोषित INTEL_TELEMETRY_H
-#घोषणा INTEL_TELEMETRY_H
+#ifndef INTEL_TELEMETRY_H
+#define INTEL_TELEMETRY_H
 
-#घोषणा TELEM_MAX_EVENTS_SRAM		28
-#घोषणा TELEM_MAX_OS_ALLOCATED_EVENTS	20
+#define TELEM_MAX_EVENTS_SRAM		28
+#define TELEM_MAX_OS_ALLOCATED_EVENTS	20
 
-#समावेश <यंत्र/पूर्णांकel_scu_ipc.h>
+#include <asm/intel_scu_ipc.h>
 
-क्रमागत telemetry_unit अणु
+enum telemetry_unit {
 	TELEM_PSS = 0,
 	TELEM_IOSS,
 	TELEM_UNIT_NONE
-पूर्ण;
+};
 
-काष्ठा telemetry_evtlog अणु
+struct telemetry_evtlog {
 	u32 telem_evtid;
 	u64 telem_evtlog;
-पूर्ण;
+};
 
-काष्ठा telemetry_evtconfig अणु
+struct telemetry_evtconfig {
 	/* Array of Event-IDs to Enable */
-	u32 *evपंचांगap;
+	u32 *evtmap;
 
-	/* Number of Events (<29) in evपंचांगap */
+	/* Number of Events (<29) in evtmap */
 	u8 num_evts;
 
 	/* Sampling period */
 	u8 period;
-पूर्ण;
+};
 
-काष्ठा telemetry_evपंचांगap अणु
-	स्थिर अक्षर *name;
+struct telemetry_evtmap {
+	const char *name;
 	u32 evt_id;
-पूर्ण;
+};
 
-काष्ठा telemetry_unit_config अणु
-	काष्ठा telemetry_evपंचांगap *telem_evts;
-	व्योम __iomem *regmap;
+struct telemetry_unit_config {
+	struct telemetry_evtmap *telem_evts;
+	void __iomem *regmap;
 	u8 ssram_evts_used;
 	u8 curr_period;
 	u8 max_period;
 	u8 min_period;
-पूर्ण;
+};
 
-काष्ठा telemetry_plt_config अणु
-	काष्ठा telemetry_unit_config pss_config;
-	काष्ठा telemetry_unit_config ioss_config;
-	काष्ठा mutex telem_trace_lock;
-	काष्ठा mutex telem_lock;
-	काष्ठा पूर्णांकel_pmc_dev *pmc;
-	काष्ठा पूर्णांकel_scu_ipc_dev *scu;
+struct telemetry_plt_config {
+	struct telemetry_unit_config pss_config;
+	struct telemetry_unit_config ioss_config;
+	struct mutex telem_trace_lock;
+	struct mutex telem_lock;
+	struct intel_pmc_dev *pmc;
+	struct intel_scu_ipc_dev *scu;
 	bool telem_in_use;
-पूर्ण;
+};
 
-काष्ठा telemetry_core_ops अणु
-	पूर्णांक (*get_sampling_period)(u8 *pss_min_period, u8 *pss_max_period,
+struct telemetry_core_ops {
+	int (*get_sampling_period)(u8 *pss_min_period, u8 *pss_max_period,
 				   u8 *ioss_min_period, u8 *ioss_max_period);
 
-	पूर्णांक (*get_eventconfig)(काष्ठा telemetry_evtconfig *pss_evtconfig,
-			       काष्ठा telemetry_evtconfig *ioss_evtconfig,
-			       पूर्णांक pss_len, पूर्णांक ioss_len);
+	int (*get_eventconfig)(struct telemetry_evtconfig *pss_evtconfig,
+			       struct telemetry_evtconfig *ioss_evtconfig,
+			       int pss_len, int ioss_len);
 
-	पूर्णांक (*update_events)(काष्ठा telemetry_evtconfig pss_evtconfig,
-			     काष्ठा telemetry_evtconfig ioss_evtconfig);
+	int (*update_events)(struct telemetry_evtconfig pss_evtconfig,
+			     struct telemetry_evtconfig ioss_evtconfig);
 
-	पूर्णांक (*set_sampling_period)(u8 pss_period, u8 ioss_period);
+	int (*set_sampling_period)(u8 pss_period, u8 ioss_period);
 
-	पूर्णांक (*get_trace_verbosity)(क्रमागत telemetry_unit telem_unit,
+	int (*get_trace_verbosity)(enum telemetry_unit telem_unit,
 				   u32 *verbosity);
 
-	पूर्णांक (*set_trace_verbosity)(क्रमागत telemetry_unit telem_unit,
+	int (*set_trace_verbosity)(enum telemetry_unit telem_unit,
 				   u32 verbosity);
 
-	पूर्णांक (*raw_पढ़ो_eventlog)(क्रमागत telemetry_unit telem_unit,
-				 काष्ठा telemetry_evtlog *evtlog,
-				 पूर्णांक len, पूर्णांक log_all_evts);
+	int (*raw_read_eventlog)(enum telemetry_unit telem_unit,
+				 struct telemetry_evtlog *evtlog,
+				 int len, int log_all_evts);
 
-	पूर्णांक (*पढ़ो_eventlog)(क्रमागत telemetry_unit telem_unit,
-			     काष्ठा telemetry_evtlog *evtlog,
-			     पूर्णांक len, पूर्णांक log_all_evts);
+	int (*read_eventlog)(enum telemetry_unit telem_unit,
+			     struct telemetry_evtlog *evtlog,
+			     int len, int log_all_evts);
 
-	पूर्णांक (*add_events)(u8 num_pss_evts, u8 num_ioss_evts,
-			  u32 *pss_evपंचांगap, u32 *ioss_evपंचांगap);
+	int (*add_events)(u8 num_pss_evts, u8 num_ioss_evts,
+			  u32 *pss_evtmap, u32 *ioss_evtmap);
 
-	पूर्णांक (*reset_events)(व्योम);
-पूर्ण;
+	int (*reset_events)(void);
+};
 
-पूर्णांक telemetry_set_pltdata(स्थिर काष्ठा telemetry_core_ops *ops,
-			  काष्ठा telemetry_plt_config *pltconfig);
+int telemetry_set_pltdata(const struct telemetry_core_ops *ops,
+			  struct telemetry_plt_config *pltconfig);
 
-पूर्णांक telemetry_clear_pltdata(व्योम);
+int telemetry_clear_pltdata(void);
 
-काष्ठा telemetry_plt_config *telemetry_get_pltdata(व्योम);
+struct telemetry_plt_config *telemetry_get_pltdata(void);
 
-पूर्णांक telemetry_get_evtname(क्रमागत telemetry_unit telem_unit,
-			  स्थिर अक्षर **name, पूर्णांक len);
+int telemetry_get_evtname(enum telemetry_unit telem_unit,
+			  const char **name, int len);
 
-पूर्णांक telemetry_update_events(काष्ठा telemetry_evtconfig pss_evtconfig,
-			    काष्ठा telemetry_evtconfig ioss_evtconfig);
+int telemetry_update_events(struct telemetry_evtconfig pss_evtconfig,
+			    struct telemetry_evtconfig ioss_evtconfig);
 
-पूर्णांक telemetry_add_events(u8 num_pss_evts, u8 num_ioss_evts,
-			 u32 *pss_evपंचांगap, u32 *ioss_evपंचांगap);
+int telemetry_add_events(u8 num_pss_evts, u8 num_ioss_evts,
+			 u32 *pss_evtmap, u32 *ioss_evtmap);
 
-पूर्णांक telemetry_reset_events(व्योम);
+int telemetry_reset_events(void);
 
-पूर्णांक telemetry_get_eventconfig(काष्ठा telemetry_evtconfig *pss_config,
-			      काष्ठा telemetry_evtconfig *ioss_config,
-			      पूर्णांक pss_len, पूर्णांक ioss_len);
+int telemetry_get_eventconfig(struct telemetry_evtconfig *pss_config,
+			      struct telemetry_evtconfig *ioss_config,
+			      int pss_len, int ioss_len);
 
-पूर्णांक telemetry_पढ़ो_events(क्रमागत telemetry_unit telem_unit,
-			  काष्ठा telemetry_evtlog *evtlog, पूर्णांक len);
+int telemetry_read_events(enum telemetry_unit telem_unit,
+			  struct telemetry_evtlog *evtlog, int len);
 
-पूर्णांक telemetry_raw_पढ़ो_events(क्रमागत telemetry_unit telem_unit,
-			      काष्ठा telemetry_evtlog *evtlog, पूर्णांक len);
+int telemetry_raw_read_events(enum telemetry_unit telem_unit,
+			      struct telemetry_evtlog *evtlog, int len);
 
-पूर्णांक telemetry_पढ़ो_eventlog(क्रमागत telemetry_unit telem_unit,
-			    काष्ठा telemetry_evtlog *evtlog, पूर्णांक len);
+int telemetry_read_eventlog(enum telemetry_unit telem_unit,
+			    struct telemetry_evtlog *evtlog, int len);
 
-पूर्णांक telemetry_raw_पढ़ो_eventlog(क्रमागत telemetry_unit telem_unit,
-				काष्ठा telemetry_evtlog *evtlog, पूर्णांक len);
+int telemetry_raw_read_eventlog(enum telemetry_unit telem_unit,
+				struct telemetry_evtlog *evtlog, int len);
 
-पूर्णांक telemetry_get_sampling_period(u8 *pss_min_period, u8 *pss_max_period,
+int telemetry_get_sampling_period(u8 *pss_min_period, u8 *pss_max_period,
 				  u8 *ioss_min_period, u8 *ioss_max_period);
 
-पूर्णांक telemetry_set_sampling_period(u8 pss_period, u8 ioss_period);
+int telemetry_set_sampling_period(u8 pss_period, u8 ioss_period);
 
-पूर्णांक telemetry_set_trace_verbosity(क्रमागत telemetry_unit telem_unit,
+int telemetry_set_trace_verbosity(enum telemetry_unit telem_unit,
 				  u32 verbosity);
 
-पूर्णांक telemetry_get_trace_verbosity(क्रमागत telemetry_unit telem_unit,
+int telemetry_get_trace_verbosity(enum telemetry_unit telem_unit,
 				  u32 *verbosity);
 
-#पूर्ण_अगर /* INTEL_TELEMETRY_H */
+#endif /* INTEL_TELEMETRY_H */

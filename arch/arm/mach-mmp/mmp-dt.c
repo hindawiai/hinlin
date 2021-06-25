@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/arch/arm/mach-mmp/mmp-dt.c
  *
@@ -7,43 +6,43 @@
  *  Author: Haojian Zhuang <haojian.zhuang@marvell.com>
  */
 
-#समावेश <linux/irqchip.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/of_clk.h>
-#समावेश <linux/घड़ीsource.h>
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/समय.स>
-#समावेश <यंत्र/hardware/cache-tauros2.h>
+#include <linux/irqchip.h>
+#include <linux/of_platform.h>
+#include <linux/of_clk.h>
+#include <linux/clocksource.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/time.h>
+#include <asm/hardware/cache-tauros2.h>
 
-#समावेश "common.h"
+#include "common.h"
 
-अटल स्थिर अक्षर *स्थिर pxa168_dt_board_compat[] __initस्थिर = अणु
+static const char *const pxa168_dt_board_compat[] __initconst = {
 	"mrvl,pxa168-aspenite",
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर अक्षर *स्थिर pxa910_dt_board_compat[] __initस्थिर = अणु
+static const char *const pxa910_dt_board_compat[] __initconst = {
 	"mrvl,pxa910-dkb",
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल व्योम __init mmp_init_समय(व्योम)
-अणु
-#अगर_घोषित CONFIG_CACHE_TAUROS2
+static void __init mmp_init_time(void)
+{
+#ifdef CONFIG_CACHE_TAUROS2
 	tauros2_init(0);
-#पूर्ण_अगर
-	of_clk_init(शून्य);
-	समयr_probe();
-पूर्ण
+#endif
+	of_clk_init(NULL);
+	timer_probe();
+}
 
 DT_MACHINE_START(PXA168_DT, "Marvell PXA168 (Device Tree Support)")
 	.map_io		= mmp_map_io,
-	.init_समय	= mmp_init_समय,
+	.init_time	= mmp_init_time,
 	.dt_compat	= pxa168_dt_board_compat,
 MACHINE_END
 
 DT_MACHINE_START(PXA910_DT, "Marvell PXA910 (Device Tree Support)")
 	.map_io		= mmp_map_io,
-	.init_समय	= mmp_init_समय,
+	.init_time	= mmp_init_time,
 	.dt_compat	= pxa910_dt_board_compat,
 MACHINE_END

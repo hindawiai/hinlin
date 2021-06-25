@@ -1,101 +1,100 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* 
  *    EISA "eeprom" support routines
  *
- *    Copyright (C) 2001 Thomas Bogenकरोerfer <tsbogend at parisc-linux.org>
+ *    Copyright (C) 2001 Thomas Bogendoerfer <tsbogend at parisc-linux.org>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/fs.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/eisa_eeprom.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/miscdevice.h>
+#include <linux/slab.h>
+#include <linux/fs.h>
+#include <asm/io.h>
+#include <linux/uaccess.h>
+#include <asm/eisa_eeprom.h>
 
-#घोषणा 	EISA_EEPROM_MINOR 241
+#define 	EISA_EEPROM_MINOR 241
 
-अटल loff_t eisa_eeprom_llseek(काष्ठा file *file, loff_t offset, पूर्णांक origin)
-अणु
-	वापस fixed_size_llseek(file, offset, origin, HPEE_MAX_LENGTH);
-पूर्ण
+static loff_t eisa_eeprom_llseek(struct file *file, loff_t offset, int origin)
+{
+	return fixed_size_llseek(file, offset, origin, HPEE_MAX_LENGTH);
+}
 
-अटल sमाप_प्रकार eisa_eeprom_पढ़ो(काष्ठा file * file,
-			      अक्षर __user *buf, माप_प्रकार count, loff_t *ppos )
-अणु
-	अचिन्हित अक्षर *पंचांगp;
-	sमाप_प्रकार ret;
-	पूर्णांक i;
+static ssize_t eisa_eeprom_read(struct file * file,
+			      char __user *buf, size_t count, loff_t *ppos )
+{
+	unsigned char *tmp;
+	ssize_t ret;
+	int i;
 	
-	अगर (*ppos < 0 || *ppos >= HPEE_MAX_LENGTH)
-		वापस 0;
+	if (*ppos < 0 || *ppos >= HPEE_MAX_LENGTH)
+		return 0;
 	
 	count = *ppos + count < HPEE_MAX_LENGTH ? count : HPEE_MAX_LENGTH - *ppos;
-	पंचांगp = kदो_स्मृति(count, GFP_KERNEL);
-	अगर (पंचांगp) अणु
-		क्रम (i = 0; i < count; i++)
-			पंचांगp[i] = पढ़ोb(eisa_eeprom_addr+(*ppos)++);
+	tmp = kmalloc(count, GFP_KERNEL);
+	if (tmp) {
+		for (i = 0; i < count; i++)
+			tmp[i] = readb(eisa_eeprom_addr+(*ppos)++);
 
-		अगर (copy_to_user (buf, पंचांगp, count))
+		if (copy_to_user (buf, tmp, count))
 			ret = -EFAULT;
-		अन्यथा
+		else
 			ret = count;
-		kमुक्त (पंचांगp);
-	पूर्ण अन्यथा
+		kfree (tmp);
+	} else
 		ret = -ENOMEM;
 	
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक eisa_eeprom_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	अगर (file->f_mode & FMODE_WRITE)
-		वापस -EINVAL;
+static int eisa_eeprom_open(struct inode *inode, struct file *file)
+{
+	if (file->f_mode & FMODE_WRITE)
+		return -EINVAL;
    
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक eisa_eeprom_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस 0;
-पूर्ण
+static int eisa_eeprom_release(struct inode *inode, struct file *file)
+{
+	return 0;
+}
 
 /*
  *	The various file operations we support.
  */
-अटल स्थिर काष्ठा file_operations eisa_eeprom_fops = अणु
+static const struct file_operations eisa_eeprom_fops = {
 	.owner =	THIS_MODULE,
 	.llseek =	eisa_eeprom_llseek,
-	.पढ़ो =		eisa_eeprom_पढ़ो,
-	.खोलो =		eisa_eeprom_खोलो,
+	.read =		eisa_eeprom_read,
+	.open =		eisa_eeprom_open,
 	.release =	eisa_eeprom_release,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice eisa_eeprom_dev = अणु
+static struct miscdevice eisa_eeprom_dev = {
 	EISA_EEPROM_MINOR,
 	"eisa_eeprom",
 	&eisa_eeprom_fops
-पूर्ण;
+};
 
-अटल पूर्णांक __init eisa_eeprom_init(व्योम)
-अणु
-	पूर्णांक retval;
+static int __init eisa_eeprom_init(void)
+{
+	int retval;
 
-	अगर (!eisa_eeprom_addr)
-		वापस -ENODEV;
+	if (!eisa_eeprom_addr)
+		return -ENODEV;
 
-	retval = misc_रेजिस्टर(&eisa_eeprom_dev);
-	अगर (retval < 0) अणु
-		prपूर्णांकk(KERN_ERR "EISA EEPROM: cannot register misc device.\n");
-		वापस retval;
-	पूर्ण
+	retval = misc_register(&eisa_eeprom_dev);
+	if (retval < 0) {
+		printk(KERN_ERR "EISA EEPROM: cannot register misc device.\n");
+		return retval;
+	}
 
-	prपूर्णांकk(KERN_INFO "EISA EEPROM at 0x%px\n", eisa_eeprom_addr);
-	वापस 0;
-पूर्ण
+	printk(KERN_INFO "EISA EEPROM at 0x%px\n", eisa_eeprom_addr);
+	return 0;
+}
 
 MODULE_LICENSE("GPL");
 

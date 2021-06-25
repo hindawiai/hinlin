@@ -1,8 +1,7 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * comedi/drivers/amplc_pci224.c
- * Driver क्रम Amplicon PCI224 and PCI234 AO boards.
+ * Driver for Amplicon PCI224 and PCI234 AO boards.
  *
  * Copyright (C) 2005 MEV Ltd. <https://www.mev.co.uk/>
  *
@@ -20,8 +19,8 @@
  *
  * Supports:
  *
- *   - ao_insn पढ़ो/ग_लिखो
- *   - ao_करो_cmd mode with the following sources:
+ *   - ao_insn read/write
+ *   - ao_do_cmd mode with the following sources:
  *
  *     - start_src         TRIG_INT        TRIG_EXT
  *     - scan_begin_src    TRIG_TIMER      TRIG_EXT
@@ -33,14 +32,14 @@
  *     channels.  The scan end count must equal the number of channels in
  *     the channel list.
  *
- *     There is only one बाह्यal trigger source so only one of start_src,
+ *     There is only one external trigger source so only one of start_src,
  *     scan_begin_src or stop_src may use TRIG_EXT.
  *
  * Configuration options:
  *   none
  *
  * Manual configuration of PCI cards is not supported; they are configured
- * स्वतःmatically.
+ * automatically.
  *
  * Output range selection - PCI224:
  *
@@ -48,14 +47,14 @@
  *   hardware-selectable according to jumper LK1.  All channels are set
  *   to the same range:
  *
- *   - LK1 position 1-2 (factory शेष) corresponds to the following
+ *   - LK1 position 1-2 (factory default) corresponds to the following
  *     comedi ranges:
  *
  *       0: [-10V,+10V]; 1: [-5V,+5V]; 2: [-2.5V,+2.5V], 3: [-1.25V,+1.25V],
  *       4: [0,+10V],    5: [0,+5V],   6: [0,+2.5V],     7: [0,+1.25V]
  *
  *   - LK1 position 2-3 corresponds to the following Comedi ranges, using
- *     an बाह्यal voltage reference:
+ *     an external voltage reference:
  *
  *       0: [-Vext,+Vext],
  *       1: [0,+Vext]
@@ -64,9 +63,9 @@
  *
  *   Output ranges on PCI234 are hardware-selectable according to jumper
  *   LK1 which affects all channels, and jumpers LK2, LK3, LK4 and LK5
- *   which affect channels 0, 1, 2 and 3 inभागidually.  LK1 chooses between
- *   an पूर्णांकernal 5V reference and an बाह्यal voltage reference (Vext).
- *   LK2/3/4/5 choose (per channel) to द्विगुन the reference or not according
+ *   which affect channels 0, 1, 2 and 3 individually.  LK1 chooses between
+ *   an internal 5V reference and an external voltage reference (Vext).
+ *   LK2/3/4/5 choose (per channel) to double the reference or not according
  *   to the following table:
  *
  *     LK1 position   LK2/3/4/5 pos  Comedi range
@@ -79,149 +78,149 @@
  * Caveats:
  *
  *   1) All channels on the PCI224 share the same range.  Any change to the
- *      range as a result of insn_ग_लिखो or a streaming command will affect
- *      the output voltages of all channels, including those not specअगरied
- *      by the inकाष्ठाion or command.
+ *      range as a result of insn_write or a streaming command will affect
+ *      the output voltages of all channels, including those not specified
+ *      by the instruction or command.
  *
  *   2) For the analog output command,  the first scan may be triggered
  *      falsely at the start of acquisition.  This occurs when the DAC scan
- *      trigger source is चयनed from 'none' to 'timer' (scan_begin_src =
+ *      trigger source is switched from 'none' to 'timer' (scan_begin_src =
  *      TRIG_TIMER) or 'external' (scan_begin_src == TRIG_EXT) at the start
  *      of acquisition and the trigger source is at logic level 1 at the
- *      समय of the चयन.  This is very likely क्रम TRIG_TIMER.  For
- *      TRIG_EXT, it depends on the state of the बाह्यal line and whether
- *      the CR_INVERT flag has been set.  The reमुख्यing scans are triggered
+ *      time of the switch.  This is very likely for TRIG_TIMER.  For
+ *      TRIG_EXT, it depends on the state of the external line and whether
+ *      the CR_INVERT flag has been set.  The remaining scans are triggered
  *      correctly.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/slab.h>
 
-#समावेश "../comedi_pci.h"
+#include "../comedi_pci.h"
 
-#समावेश "comedi_8254.h"
+#include "comedi_8254.h"
 
 /*
- * PCI224/234 i/o space 1 (PCIBAR2) रेजिस्टरs.
+ * PCI224/234 i/o space 1 (PCIBAR2) registers.
  */
-#घोषणा PCI224_Z2_BASE	0x14	/* 82C54 counter/समयr */
-#घोषणा PCI224_ZCLK_SCE	0x1A	/* Group Z Clock Configuration Register */
-#घोषणा PCI224_ZGAT_SCE	0x1D	/* Group Z Gate Configuration Register */
-#घोषणा PCI224_INT_SCE	0x1E	/* ISR Interrupt source mask रेजिस्टर */
+#define PCI224_Z2_BASE	0x14	/* 82C54 counter/timer */
+#define PCI224_ZCLK_SCE	0x1A	/* Group Z Clock Configuration Register */
+#define PCI224_ZGAT_SCE	0x1D	/* Group Z Gate Configuration Register */
+#define PCI224_INT_SCE	0x1E	/* ISR Interrupt source mask register */
 				/* /Interrupt status */
 
 /*
- * PCI224/234 i/o space 2 (PCIBAR3) 16-bit रेजिस्टरs.
+ * PCI224/234 i/o space 2 (PCIBAR3) 16-bit registers.
  */
-#घोषणा PCI224_DACDATA	0x00	/* (w-o) DAC FIFO data. */
-#घोषणा PCI224_SOFTTRIG	0x00	/* (r-o) DAC software scan trigger. */
-#घोषणा PCI224_DACCON	0x02	/* (r/w) DAC status/configuration. */
-#घोषणा PCI224_FIFOSIZ	0x04	/* (w-o) FIFO size क्रम wraparound mode. */
-#घोषणा PCI224_DACCEN	0x06	/* (w-o) DAC channel enable रेजिस्टर. */
+#define PCI224_DACDATA	0x00	/* (w-o) DAC FIFO data. */
+#define PCI224_SOFTTRIG	0x00	/* (r-o) DAC software scan trigger. */
+#define PCI224_DACCON	0x02	/* (r/w) DAC status/configuration. */
+#define PCI224_FIFOSIZ	0x04	/* (w-o) FIFO size for wraparound mode. */
+#define PCI224_DACCEN	0x06	/* (w-o) DAC channel enable register. */
 
 /*
  * DACCON values.
  */
 /* (r/w) Scan trigger. */
-#घोषणा PCI224_DACCON_TRIG(x)		(((x) & 0x7) << 0)
-#घोषणा PCI224_DACCON_TRIG_MASK		PCI224_DACCON_TRIG(7)
-#घोषणा PCI224_DACCON_TRIG_NONE		PCI224_DACCON_TRIG(0)	/* none */
-#घोषणा PCI224_DACCON_TRIG_SW		PCI224_DACCON_TRIG(1)	/* soft trig */
-#घोषणा PCI224_DACCON_TRIG_EXTP		PCI224_DACCON_TRIG(2)	/* ext + edge */
-#घोषणा PCI224_DACCON_TRIG_EXTN		PCI224_DACCON_TRIG(3)	/* ext - edge */
-#घोषणा PCI224_DACCON_TRIG_Z2CT0	PCI224_DACCON_TRIG(4)	/* Z2 CT0 out */
-#घोषणा PCI224_DACCON_TRIG_Z2CT1	PCI224_DACCON_TRIG(5)	/* Z2 CT1 out */
-#घोषणा PCI224_DACCON_TRIG_Z2CT2	PCI224_DACCON_TRIG(6)	/* Z2 CT2 out */
+#define PCI224_DACCON_TRIG(x)		(((x) & 0x7) << 0)
+#define PCI224_DACCON_TRIG_MASK		PCI224_DACCON_TRIG(7)
+#define PCI224_DACCON_TRIG_NONE		PCI224_DACCON_TRIG(0)	/* none */
+#define PCI224_DACCON_TRIG_SW		PCI224_DACCON_TRIG(1)	/* soft trig */
+#define PCI224_DACCON_TRIG_EXTP		PCI224_DACCON_TRIG(2)	/* ext + edge */
+#define PCI224_DACCON_TRIG_EXTN		PCI224_DACCON_TRIG(3)	/* ext - edge */
+#define PCI224_DACCON_TRIG_Z2CT0	PCI224_DACCON_TRIG(4)	/* Z2 CT0 out */
+#define PCI224_DACCON_TRIG_Z2CT1	PCI224_DACCON_TRIG(5)	/* Z2 CT1 out */
+#define PCI224_DACCON_TRIG_Z2CT2	PCI224_DACCON_TRIG(6)	/* Z2 CT2 out */
 /* (r/w) Polarity (PCI224 only, PCI234 always bipolar!). */
-#घोषणा PCI224_DACCON_POLAR(x)		(((x) & 0x1) << 3)
-#घोषणा PCI224_DACCON_POLAR_MASK	PCI224_DACCON_POLAR(1)
-#घोषणा PCI224_DACCON_POLAR_UNI		PCI224_DACCON_POLAR(0)	/* [0,+V] */
-#घोषणा PCI224_DACCON_POLAR_BI		PCI224_DACCON_POLAR(1)	/* [-V,+V] */
+#define PCI224_DACCON_POLAR(x)		(((x) & 0x1) << 3)
+#define PCI224_DACCON_POLAR_MASK	PCI224_DACCON_POLAR(1)
+#define PCI224_DACCON_POLAR_UNI		PCI224_DACCON_POLAR(0)	/* [0,+V] */
+#define PCI224_DACCON_POLAR_BI		PCI224_DACCON_POLAR(1)	/* [-V,+V] */
 /* (r/w) Internal Vref (PCI224 only, when LK1 in position 1-2). */
-#घोषणा PCI224_DACCON_VREF(x)		(((x) & 0x3) << 4)
-#घोषणा PCI224_DACCON_VREF_MASK		PCI224_DACCON_VREF(3)
-#घोषणा PCI224_DACCON_VREF_1_25		PCI224_DACCON_VREF(0)	/* 1.25V */
-#घोषणा PCI224_DACCON_VREF_2_5		PCI224_DACCON_VREF(1)	/* 2.5V */
-#घोषणा PCI224_DACCON_VREF_5		PCI224_DACCON_VREF(2)	/* 5V */
-#घोषणा PCI224_DACCON_VREF_10		PCI224_DACCON_VREF(3)	/* 10V */
-/* (r/w) Wraparound mode enable (to play back stored waveक्रमm). */
-#घोषणा PCI224_DACCON_FIFOWRAP		BIT(7)
+#define PCI224_DACCON_VREF(x)		(((x) & 0x3) << 4)
+#define PCI224_DACCON_VREF_MASK		PCI224_DACCON_VREF(3)
+#define PCI224_DACCON_VREF_1_25		PCI224_DACCON_VREF(0)	/* 1.25V */
+#define PCI224_DACCON_VREF_2_5		PCI224_DACCON_VREF(1)	/* 2.5V */
+#define PCI224_DACCON_VREF_5		PCI224_DACCON_VREF(2)	/* 5V */
+#define PCI224_DACCON_VREF_10		PCI224_DACCON_VREF(3)	/* 10V */
+/* (r/w) Wraparound mode enable (to play back stored waveform). */
+#define PCI224_DACCON_FIFOWRAP		BIT(7)
 /* (r/w) FIFO enable.  It MUST be set! */
-#घोषणा PCI224_DACCON_FIFOENAB		BIT(8)
-/* (r/w) FIFO पूर्णांकerrupt trigger level (most values are not very useful). */
-#घोषणा PCI224_DACCON_FIFOINTR(x)	(((x) & 0x7) << 9)
-#घोषणा PCI224_DACCON_FIFOINTR_MASK	PCI224_DACCON_FIFOINTR(7)
-#घोषणा PCI224_DACCON_FIFOINTR_EMPTY	PCI224_DACCON_FIFOINTR(0) /* empty */
-#घोषणा PCI224_DACCON_FIFOINTR_NEMPTY	PCI224_DACCON_FIFOINTR(1) /* !empty */
-#घोषणा PCI224_DACCON_FIFOINTR_NHALF	PCI224_DACCON_FIFOINTR(2) /* !half */
-#घोषणा PCI224_DACCON_FIFOINTR_HALF	PCI224_DACCON_FIFOINTR(3) /* half */
-#घोषणा PCI224_DACCON_FIFOINTR_NFULL	PCI224_DACCON_FIFOINTR(4) /* !full */
-#घोषणा PCI224_DACCON_FIFOINTR_FULL	PCI224_DACCON_FIFOINTR(5) /* full */
+#define PCI224_DACCON_FIFOENAB		BIT(8)
+/* (r/w) FIFO interrupt trigger level (most values are not very useful). */
+#define PCI224_DACCON_FIFOINTR(x)	(((x) & 0x7) << 9)
+#define PCI224_DACCON_FIFOINTR_MASK	PCI224_DACCON_FIFOINTR(7)
+#define PCI224_DACCON_FIFOINTR_EMPTY	PCI224_DACCON_FIFOINTR(0) /* empty */
+#define PCI224_DACCON_FIFOINTR_NEMPTY	PCI224_DACCON_FIFOINTR(1) /* !empty */
+#define PCI224_DACCON_FIFOINTR_NHALF	PCI224_DACCON_FIFOINTR(2) /* !half */
+#define PCI224_DACCON_FIFOINTR_HALF	PCI224_DACCON_FIFOINTR(3) /* half */
+#define PCI224_DACCON_FIFOINTR_NFULL	PCI224_DACCON_FIFOINTR(4) /* !full */
+#define PCI224_DACCON_FIFOINTR_FULL	PCI224_DACCON_FIFOINTR(5) /* full */
 /* (r-o) FIFO fill level. */
-#घोषणा PCI224_DACCON_FIFOFL(x)		(((x) & 0x7) << 12)
-#घोषणा PCI224_DACCON_FIFOFL_MASK	PCI224_DACCON_FIFOFL(7)
-#घोषणा PCI224_DACCON_FIFOFL_EMPTY	PCI224_DACCON_FIFOFL(1)	/* 0 */
-#घोषणा PCI224_DACCON_FIFOFL_ONETOHALF	PCI224_DACCON_FIFOFL(0)	/* 1-2048 */
-#घोषणा PCI224_DACCON_FIFOFL_HALFTOFULL	PCI224_DACCON_FIFOFL(4)	/* 2049-4095 */
-#घोषणा PCI224_DACCON_FIFOFL_FULL	PCI224_DACCON_FIFOFL(6)	/* 4096 */
+#define PCI224_DACCON_FIFOFL(x)		(((x) & 0x7) << 12)
+#define PCI224_DACCON_FIFOFL_MASK	PCI224_DACCON_FIFOFL(7)
+#define PCI224_DACCON_FIFOFL_EMPTY	PCI224_DACCON_FIFOFL(1)	/* 0 */
+#define PCI224_DACCON_FIFOFL_ONETOHALF	PCI224_DACCON_FIFOFL(0)	/* 1-2048 */
+#define PCI224_DACCON_FIFOFL_HALFTOFULL	PCI224_DACCON_FIFOFL(4)	/* 2049-4095 */
+#define PCI224_DACCON_FIFOFL_FULL	PCI224_DACCON_FIFOFL(6)	/* 4096 */
 /* (r-o) DAC busy flag. */
-#घोषणा PCI224_DACCON_BUSY		BIT(15)
+#define PCI224_DACCON_BUSY		BIT(15)
 /* (w-o) FIFO reset. */
-#घोषणा PCI224_DACCON_FIFORESET		BIT(12)
-/* (w-o) Global reset (not sure what it करोes). */
-#घोषणा PCI224_DACCON_GLOBALRESET	BIT(13)
+#define PCI224_DACCON_FIFORESET		BIT(12)
+/* (w-o) Global reset (not sure what it does). */
+#define PCI224_DACCON_GLOBALRESET	BIT(13)
 
 /*
  * DAC FIFO size.
  */
-#घोषणा PCI224_FIFO_SIZE	4096
+#define PCI224_FIFO_SIZE	4096
 
 /*
  * DAC FIFO guaranteed minimum room available, depending on reported fill level.
  * The maximum room available depends on the reported fill level and how much
  * has been written!
  */
-#घोषणा PCI224_FIFO_ROOM_EMPTY		PCI224_FIFO_SIZE
-#घोषणा PCI224_FIFO_ROOM_ONETOHALF	(PCI224_FIFO_SIZE / 2)
-#घोषणा PCI224_FIFO_ROOM_HALFTOFULL	1
-#घोषणा PCI224_FIFO_ROOM_FULL		0
+#define PCI224_FIFO_ROOM_EMPTY		PCI224_FIFO_SIZE
+#define PCI224_FIFO_ROOM_ONETOHALF	(PCI224_FIFO_SIZE / 2)
+#define PCI224_FIFO_ROOM_HALFTOFULL	1
+#define PCI224_FIFO_ROOM_FULL		0
 
 /*
- * Counter/समयr घड़ी input configuration sources.
+ * Counter/timer clock input configuration sources.
  */
-#घोषणा CLK_CLK		0	/* reserved (channel-specअगरic घड़ी) */
-#घोषणा CLK_10MHZ	1	/* पूर्णांकernal 10 MHz घड़ी */
-#घोषणा CLK_1MHZ	2	/* पूर्णांकernal 1 MHz घड़ी */
-#घोषणा CLK_100KHZ	3	/* पूर्णांकernal 100 kHz घड़ी */
-#घोषणा CLK_10KHZ	4	/* पूर्णांकernal 10 kHz घड़ी */
-#घोषणा CLK_1KHZ	5	/* पूर्णांकernal 1 kHz घड़ी */
-#घोषणा CLK_OUTNM1	6	/* output of channel-1 modulo total */
-#घोषणा CLK_EXT		7	/* बाह्यal घड़ी */
+#define CLK_CLK		0	/* reserved (channel-specific clock) */
+#define CLK_10MHZ	1	/* internal 10 MHz clock */
+#define CLK_1MHZ	2	/* internal 1 MHz clock */
+#define CLK_100KHZ	3	/* internal 100 kHz clock */
+#define CLK_10KHZ	4	/* internal 10 kHz clock */
+#define CLK_1KHZ	5	/* internal 1 kHz clock */
+#define CLK_OUTNM1	6	/* output of channel-1 modulo total */
+#define CLK_EXT		7	/* external clock */
 
-अटल अचिन्हित पूर्णांक pci224_clk_config(अचिन्हित पूर्णांक chan, अचिन्हित पूर्णांक src)
-अणु
-	वापस ((chan & 3) << 3) | (src & 7);
-पूर्ण
+static unsigned int pci224_clk_config(unsigned int chan, unsigned int src)
+{
+	return ((chan & 3) << 3) | (src & 7);
+}
 
 /*
- * Counter/समयr gate input configuration sources.
+ * Counter/timer gate input configuration sources.
  */
-#घोषणा GAT_VCC		0	/* VCC (i.e. enabled) */
-#घोषणा GAT_GND		1	/* GND (i.e. disabled) */
-#घोषणा GAT_EXT		2	/* reserved (बाह्यal gate input) */
-#घोषणा GAT_NOUTNM2	3	/* inverted output of channel-2 modulo total */
+#define GAT_VCC		0	/* VCC (i.e. enabled) */
+#define GAT_GND		1	/* GND (i.e. disabled) */
+#define GAT_EXT		2	/* reserved (external gate input) */
+#define GAT_NOUTNM2	3	/* inverted output of channel-2 modulo total */
 
-अटल अचिन्हित पूर्णांक pci224_gat_config(अचिन्हित पूर्णांक chan, अचिन्हित पूर्णांक src)
-अणु
-	वापस ((chan & 3) << 3) | (src & 7);
-पूर्ण
+static unsigned int pci224_gat_config(unsigned int chan, unsigned int src)
+{
+	return ((chan & 3) << 3) | (src & 7);
+}
 
 /*
- * Summary of CLK_OUTNM1 and GAT_NOUTNM2 connections क्रम PCI224 and PCI234:
+ * Summary of CLK_OUTNM1 and GAT_NOUTNM2 connections for PCI224 and PCI234:
  *
  *              Channel's       Channel's
- *              घड़ी input     gate input
+ *              clock input     gate input
  * Channel      CLK_OUTNM1      GAT_NOUTNM2
  * -------      ----------      -----------
  * Z2-CT0       Z2-CT2-OUT      /Z2-CT1-OUT
@@ -232,41 +231,41 @@
 /*
  * Interrupt enable/status bits
  */
-#घोषणा PCI224_INTR_EXT		0x01	/* rising edge on बाह्यal input */
-#घोषणा PCI224_INTR_DAC		0x04	/* DAC (FIFO) पूर्णांकerrupt */
-#घोषणा PCI224_INTR_Z2CT1	0x20	/* rising edge on Z2-CT1 output */
+#define PCI224_INTR_EXT		0x01	/* rising edge on external input */
+#define PCI224_INTR_DAC		0x04	/* DAC (FIFO) interrupt */
+#define PCI224_INTR_Z2CT1	0x20	/* rising edge on Z2-CT1 output */
 
-#घोषणा PCI224_INTR_EDGE_BITS	(PCI224_INTR_EXT | PCI224_INTR_Z2CT1)
-#घोषणा PCI224_INTR_LEVEL_BITS	PCI224_INTR_DACFIFO
+#define PCI224_INTR_EDGE_BITS	(PCI224_INTR_EXT | PCI224_INTR_Z2CT1)
+#define PCI224_INTR_LEVEL_BITS	PCI224_INTR_DACFIFO
 
 /*
  * Handy macros.
  */
 
 /* Combine old and new bits. */
-#घोषणा COMBINE(old, new, mask)	(((old) & ~(mask)) | ((new) & (mask)))
+#define COMBINE(old, new, mask)	(((old) & ~(mask)) | ((new) & (mask)))
 
 /* Current CPU.  XXX should this be hard_smp_processor_id()? */
-#घोषणा THISCPU		smp_processor_id()
+#define THISCPU		smp_processor_id()
 
-/* State bits क्रम use with atomic bit operations. */
-#घोषणा AO_CMD_STARTED	0
+/* State bits for use with atomic bit operations. */
+#define AO_CMD_STARTED	0
 
 /*
  * Range tables.
  */
 
 /*
- * The ranges क्रम PCI224.
+ * The ranges for PCI224.
  *
  * These are partly hardware-selectable by jumper LK1 and partly
  * software-selectable.
  *
  * All channels share the same hardware range.
  */
-अटल स्थिर काष्ठा comedi_lrange range_pci224 = अणु
-	10, अणु
-		/* jumper LK1 in position 1-2 (factory शेष) */
+static const struct comedi_lrange range_pci224 = {
+	10, {
+		/* jumper LK1 in position 1-2 (factory default) */
 		BIP_RANGE(10),
 		BIP_RANGE(5),
 		BIP_RANGE(2.5),
@@ -278,11 +277,11 @@
 		/* jumper LK1 in position 2-3 */
 		RANGE_ext(-1, 1),	/* bipolar [-Vext,+Vext] */
 		RANGE_ext(0, 1),	/* unipolar [0,+Vext] */
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर अचिन्हित लघु hwrange_pci224[10] = अणु
-	/* jumper LK1 in position 1-2 (factory शेष) */
+static const unsigned short hwrange_pci224[10] = {
+	/* jumper LK1 in position 1-2 (factory default) */
 	PCI224_DACCON_POLAR_BI | PCI224_DACCON_VREF_10,
 	PCI224_DACCON_POLAR_BI | PCI224_DACCON_VREF_5,
 	PCI224_DACCON_POLAR_BI | PCI224_DACCON_VREF_2_5,
@@ -294,22 +293,22 @@
 	/* jumper LK1 in position 2-3 */
 	PCI224_DACCON_POLAR_BI,
 	PCI224_DACCON_POLAR_UNI,
-पूर्ण;
+};
 
 /* Used to check all channels set to the same range on PCI224. */
-अटल स्थिर अचिन्हित अक्षर range_check_pci224[10] = अणु
+static const unsigned char range_check_pci224[10] = {
 	0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-पूर्ण;
+};
 
 /*
- * The ranges क्रम PCI234.
+ * The ranges for PCI234.
  *
  * These are all hardware-selectable by jumper LK1 affecting all channels,
  * and jumpers LK2, LK3, LK4 and LK5 affecting channels 0, 1, 2 and 3
- * inभागidually.
+ * individually.
  */
-अटल स्थिर काष्ठा comedi_lrange range_pci234 = अणु
-	4, अणु
+static const struct comedi_lrange range_pci234 = {
+	4, {
 		/* LK1: 1-2 (fact def), LK2/3/4/5: 2-3 (fac def) */
 		BIP_RANGE(10),
 		/* LK1: 1-2 (fact def), LK2/3/4/5: 1-2 */
@@ -318,79 +317,79 @@
 		RANGE_ext(-2, 2),	/* bipolar [-2*Vext,+2*Vext] */
 		/* LK1: 2-3, LK2/3/4/5: 1-2 */
 		RANGE_ext(-1, 1),	/* bipolar [-Vext,+Vext] */
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /* N.B. PCI234 ignores the polarity bit, but software uses it. */
-अटल स्थिर अचिन्हित लघु hwrange_pci234[4] = अणु
+static const unsigned short hwrange_pci234[4] = {
 	PCI224_DACCON_POLAR_BI,
 	PCI224_DACCON_POLAR_BI,
 	PCI224_DACCON_POLAR_BI,
 	PCI224_DACCON_POLAR_BI,
-पूर्ण;
+};
 
 /* Used to check all channels use same LK1 setting on PCI234. */
-अटल स्थिर अचिन्हित अक्षर range_check_pci234[4] = अणु
+static const unsigned char range_check_pci234[4] = {
 	0, 0, 1, 1,
-पूर्ण;
+};
 
 /*
  * Board descriptions.
  */
 
-क्रमागत pci224_model अणु pci224_model, pci234_model पूर्ण;
+enum pci224_model { pci224_model, pci234_model };
 
-काष्ठा pci224_board अणु
-	स्थिर अक्षर *name;
-	अचिन्हित पूर्णांक ao_chans;
-	अचिन्हित पूर्णांक ao_bits;
-	स्थिर काष्ठा comedi_lrange *ao_range;
-	स्थिर अचिन्हित लघु *ao_hwrange;
-	स्थिर अचिन्हित अक्षर *ao_range_check;
-पूर्ण;
+struct pci224_board {
+	const char *name;
+	unsigned int ao_chans;
+	unsigned int ao_bits;
+	const struct comedi_lrange *ao_range;
+	const unsigned short *ao_hwrange;
+	const unsigned char *ao_range_check;
+};
 
-अटल स्थिर काष्ठा pci224_board pci224_boards[] = अणु
-	[pci224_model] = अणु
+static const struct pci224_board pci224_boards[] = {
+	[pci224_model] = {
 		.name		= "pci224",
 		.ao_chans	= 16,
 		.ao_bits	= 12,
 		.ao_range	= &range_pci224,
 		.ao_hwrange	= &hwrange_pci224[0],
 		.ao_range_check	= &range_check_pci224[0],
-	पूर्ण,
-	[pci234_model] = अणु
+	},
+	[pci234_model] = {
 		.name		= "pci234",
 		.ao_chans	= 4,
 		.ao_bits	= 16,
 		.ao_range	= &range_pci234,
 		.ao_hwrange	= &hwrange_pci234[0],
 		.ao_range_check	= &range_check_pci234[0],
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा pci224_निजी अणु
-	अचिन्हित दीर्घ iobase1;
-	अचिन्हित दीर्घ state;
-	spinlock_t ao_spinlock;	/* spinlock क्रम AO command handling */
-	अचिन्हित लघु *ao_scan_vals;
-	अचिन्हित अक्षर *ao_scan_order;
-	पूर्णांक पूर्णांकr_cpuid;
-	लघु पूर्णांकr_running;
-	अचिन्हित लघु daccon;
-	अचिन्हित लघु ao_enab;	/* max 16 channels so 'short' will करो */
-	अचिन्हित अक्षर पूर्णांकsce;
-पूर्ण;
+struct pci224_private {
+	unsigned long iobase1;
+	unsigned long state;
+	spinlock_t ao_spinlock;	/* spinlock for AO command handling */
+	unsigned short *ao_scan_vals;
+	unsigned char *ao_scan_order;
+	int intr_cpuid;
+	short intr_running;
+	unsigned short daccon;
+	unsigned short ao_enab;	/* max 16 channels so 'short' will do */
+	unsigned char intsce;
+};
 
 /*
- * Called from the 'insn_write' function to perक्रमm a single ग_लिखो.
+ * Called from the 'insn_write' function to perform a single write.
  */
-अटल व्योम
-pci224_ao_set_data(काष्ठा comedi_device *dev, पूर्णांक chan, पूर्णांक range,
-		   अचिन्हित पूर्णांक data)
-अणु
-	स्थिर काष्ठा pci224_board *board = dev->board_ptr;
-	काष्ठा pci224_निजी *devpriv = dev->निजी;
-	अचिन्हित लघु mangled;
+static void
+pci224_ao_set_data(struct comedi_device *dev, int chan, int range,
+		   unsigned int data)
+{
+	const struct pci224_board *board = dev->board_ptr;
+	struct pci224_private *devpriv = dev->private;
+	unsigned short mangled;
 
 	/* Enable the channel. */
 	outw(1 << chan, dev->iobase + PCI224_DACCEN);
@@ -403,71 +402,71 @@ pci224_ao_set_data(काष्ठा comedi_device *dev, पूर्णां�
 	/*
 	 * Mangle the data.  The hardware expects:
 	 * - bipolar: 16-bit 2's complement
-	 * - unipolar: 16-bit अचिन्हित
+	 * - unipolar: 16-bit unsigned
 	 */
-	mangled = (अचिन्हित लघु)data << (16 - board->ao_bits);
-	अगर ((devpriv->daccon & PCI224_DACCON_POLAR_MASK) ==
-	    PCI224_DACCON_POLAR_BI) अणु
+	mangled = (unsigned short)data << (16 - board->ao_bits);
+	if ((devpriv->daccon & PCI224_DACCON_POLAR_MASK) ==
+	    PCI224_DACCON_POLAR_BI) {
 		mangled ^= 0x8000;
-	पूर्ण
+	}
 	/* Write mangled data to the FIFO. */
 	outw(mangled, dev->iobase + PCI224_DACDATA);
 	/* Trigger the conversion. */
 	inw(dev->iobase + PCI224_SOFTTRIG);
-पूर्ण
+}
 
-अटल पूर्णांक pci224_ao_insn_ग_लिखो(काष्ठा comedi_device *dev,
-				काष्ठा comedi_subdevice *s,
-				काष्ठा comedi_insn *insn,
-				अचिन्हित पूर्णांक *data)
-अणु
-	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
-	अचिन्हित पूर्णांक range = CR_RANGE(insn->chanspec);
-	अचिन्हित पूर्णांक val = s->पढ़ोback[chan];
-	पूर्णांक i;
+static int pci224_ao_insn_write(struct comedi_device *dev,
+				struct comedi_subdevice *s,
+				struct comedi_insn *insn,
+				unsigned int *data)
+{
+	unsigned int chan = CR_CHAN(insn->chanspec);
+	unsigned int range = CR_RANGE(insn->chanspec);
+	unsigned int val = s->readback[chan];
+	int i;
 
-	क्रम (i = 0; i < insn->n; i++) अणु
+	for (i = 0; i < insn->n; i++) {
 		val = data[i];
 		pci224_ao_set_data(dev, chan, range, val);
-	पूर्ण
-	s->पढ़ोback[chan] = val;
+	}
+	s->readback[chan] = val;
 
-	वापस insn->n;
-पूर्ण
+	return insn->n;
+}
 
 /*
  * Kills a command running on the AO subdevice.
  */
-अटल व्योम pci224_ao_stop(काष्ठा comedi_device *dev,
-			   काष्ठा comedi_subdevice *s)
-अणु
-	काष्ठा pci224_निजी *devpriv = dev->निजी;
-	अचिन्हित दीर्घ flags;
+static void pci224_ao_stop(struct comedi_device *dev,
+			   struct comedi_subdevice *s)
+{
+	struct pci224_private *devpriv = dev->private;
+	unsigned long flags;
 
-	अगर (!test_and_clear_bit(AO_CMD_STARTED, &devpriv->state))
-		वापस;
+	if (!test_and_clear_bit(AO_CMD_STARTED, &devpriv->state))
+		return;
 
 	spin_lock_irqsave(&devpriv->ao_spinlock, flags);
-	/* Kill the पूर्णांकerrupts. */
-	devpriv->पूर्णांकsce = 0;
+	/* Kill the interrupts. */
+	devpriv->intsce = 0;
 	outb(0, devpriv->iobase1 + PCI224_INT_SCE);
 	/*
 	 * Interrupt routine may or may not be running.  We may or may not
-	 * have been called from the पूर्णांकerrupt routine (directly or
+	 * have been called from the interrupt routine (directly or
 	 * indirectly via a comedi_events() callback routine).  It's highly
-	 * unlikely that we've been called from some other पूर्णांकerrupt routine
+	 * unlikely that we've been called from some other interrupt routine
 	 * but who knows what strange things coders get up to!
 	 *
-	 * If the पूर्णांकerrupt routine is currently running, रुको क्रम it to
-	 * finish, unless we appear to have been called via the पूर्णांकerrupt
+	 * If the interrupt routine is currently running, wait for it to
+	 * finish, unless we appear to have been called via the interrupt
 	 * routine.
 	 */
-	जबतक (devpriv->पूर्णांकr_running && devpriv->पूर्णांकr_cpuid != THISCPU) अणु
+	while (devpriv->intr_running && devpriv->intr_cpuid != THISCPU) {
 		spin_unlock_irqrestore(&devpriv->ao_spinlock, flags);
 		spin_lock_irqsave(&devpriv->ao_spinlock, flags);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&devpriv->ao_spinlock, flags);
-	/* Reconfigure DAC क्रम insn_ग_लिखो usage. */
+	/* Reconfigure DAC for insn_write usage. */
 	outw(0, dev->iobase + PCI224_DACCEN);	/* Disable channels. */
 	devpriv->daccon =
 	     COMBINE(devpriv->daccon,
@@ -475,108 +474,108 @@ pci224_ao_set_data(काष्ठा comedi_device *dev, पूर्णां�
 		     PCI224_DACCON_TRIG_MASK | PCI224_DACCON_FIFOINTR_MASK);
 	outw(devpriv->daccon | PCI224_DACCON_FIFORESET,
 	     dev->iobase + PCI224_DACCON);
-पूर्ण
+}
 
 /*
- * Handles start of acquisition क्रम the AO subdevice.
+ * Handles start of acquisition for the AO subdevice.
  */
-अटल व्योम pci224_ao_start(काष्ठा comedi_device *dev,
-			    काष्ठा comedi_subdevice *s)
-अणु
-	काष्ठा pci224_निजी *devpriv = dev->निजी;
-	काष्ठा comedi_cmd *cmd = &s->async->cmd;
-	अचिन्हित दीर्घ flags;
+static void pci224_ao_start(struct comedi_device *dev,
+			    struct comedi_subdevice *s)
+{
+	struct pci224_private *devpriv = dev->private;
+	struct comedi_cmd *cmd = &s->async->cmd;
+	unsigned long flags;
 
 	set_bit(AO_CMD_STARTED, &devpriv->state);
 
-	/* Enable पूर्णांकerrupts. */
+	/* Enable interrupts. */
 	spin_lock_irqsave(&devpriv->ao_spinlock, flags);
-	अगर (cmd->stop_src == TRIG_EXT)
-		devpriv->पूर्णांकsce = PCI224_INTR_EXT | PCI224_INTR_DAC;
-	अन्यथा
-		devpriv->पूर्णांकsce = PCI224_INTR_DAC;
+	if (cmd->stop_src == TRIG_EXT)
+		devpriv->intsce = PCI224_INTR_EXT | PCI224_INTR_DAC;
+	else
+		devpriv->intsce = PCI224_INTR_DAC;
 
-	outb(devpriv->पूर्णांकsce, devpriv->iobase1 + PCI224_INT_SCE);
+	outb(devpriv->intsce, devpriv->iobase1 + PCI224_INT_SCE);
 	spin_unlock_irqrestore(&devpriv->ao_spinlock, flags);
-पूर्ण
+}
 
 /*
- * Handles पूर्णांकerrupts from the DAC FIFO.
+ * Handles interrupts from the DAC FIFO.
  */
-अटल व्योम pci224_ao_handle_fअगरo(काष्ठा comedi_device *dev,
-				  काष्ठा comedi_subdevice *s)
-अणु
-	काष्ठा pci224_निजी *devpriv = dev->निजी;
-	काष्ठा comedi_cmd *cmd = &s->async->cmd;
-	अचिन्हित पूर्णांक num_scans = comedi_nscans_left(s, 0);
-	अचिन्हित पूर्णांक room;
-	अचिन्हित लघु dacstat;
-	अचिन्हित पूर्णांक i, n;
+static void pci224_ao_handle_fifo(struct comedi_device *dev,
+				  struct comedi_subdevice *s)
+{
+	struct pci224_private *devpriv = dev->private;
+	struct comedi_cmd *cmd = &s->async->cmd;
+	unsigned int num_scans = comedi_nscans_left(s, 0);
+	unsigned int room;
+	unsigned short dacstat;
+	unsigned int i, n;
 
 	/* Determine how much room is in the FIFO (in samples). */
 	dacstat = inw(dev->iobase + PCI224_DACCON);
-	चयन (dacstat & PCI224_DACCON_FIFOFL_MASK) अणु
-	हाल PCI224_DACCON_FIFOFL_EMPTY:
+	switch (dacstat & PCI224_DACCON_FIFOFL_MASK) {
+	case PCI224_DACCON_FIFOFL_EMPTY:
 		room = PCI224_FIFO_ROOM_EMPTY;
-		अगर (cmd->stop_src == TRIG_COUNT &&
-		    s->async->scans_करोne >= cmd->stop_arg) अणु
+		if (cmd->stop_src == TRIG_COUNT &&
+		    s->async->scans_done >= cmd->stop_arg) {
 			/* FIFO empty at end of counted acquisition. */
 			s->async->events |= COMEDI_CB_EOA;
 			comedi_handle_events(dev, s);
-			वापस;
-		पूर्ण
-		अवरोध;
-	हाल PCI224_DACCON_FIFOFL_ONETOHALF:
+			return;
+		}
+		break;
+	case PCI224_DACCON_FIFOFL_ONETOHALF:
 		room = PCI224_FIFO_ROOM_ONETOHALF;
-		अवरोध;
-	हाल PCI224_DACCON_FIFOFL_HALFTOFULL:
+		break;
+	case PCI224_DACCON_FIFOFL_HALFTOFULL:
 		room = PCI224_FIFO_ROOM_HALFTOFULL;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		room = PCI224_FIFO_ROOM_FULL;
-		अवरोध;
-	पूर्ण
-	अगर (room >= PCI224_FIFO_ROOM_ONETOHALF) अणु
+		break;
+	}
+	if (room >= PCI224_FIFO_ROOM_ONETOHALF) {
 		/* FIFO is less than half-full. */
-		अगर (num_scans == 0) अणु
+		if (num_scans == 0) {
 			/* Nothing left to put in the FIFO. */
 			dev_err(dev->class_dev, "AO buffer underrun\n");
 			s->async->events |= COMEDI_CB_OVERFLOW;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/* Determine how many new scans can be put in the FIFO. */
 	room /= cmd->chanlist_len;
 
 	/* Determine how many scans to process. */
-	अगर (num_scans > room)
+	if (num_scans > room)
 		num_scans = room;
 
 	/* Process scans. */
-	क्रम (n = 0; n < num_scans; n++) अणु
-		comedi_buf_पढ़ो_samples(s, &devpriv->ao_scan_vals[0],
+	for (n = 0; n < num_scans; n++) {
+		comedi_buf_read_samples(s, &devpriv->ao_scan_vals[0],
 					cmd->chanlist_len);
-		क्रम (i = 0; i < cmd->chanlist_len; i++) अणु
+		for (i = 0; i < cmd->chanlist_len; i++) {
 			outw(devpriv->ao_scan_vals[devpriv->ao_scan_order[i]],
 			     dev->iobase + PCI224_DACDATA);
-		पूर्ण
-	पूर्ण
-	अगर (cmd->stop_src == TRIG_COUNT &&
-	    s->async->scans_करोne >= cmd->stop_arg) अणु
+		}
+	}
+	if (cmd->stop_src == TRIG_COUNT &&
+	    s->async->scans_done >= cmd->stop_arg) {
 		/*
-		 * Change FIFO पूर्णांकerrupt trigger level to रुको
+		 * Change FIFO interrupt trigger level to wait
 		 * until FIFO is empty.
 		 */
 		devpriv->daccon = COMBINE(devpriv->daccon,
 					  PCI224_DACCON_FIFOINTR_EMPTY,
 					  PCI224_DACCON_FIFOINTR_MASK);
 		outw(devpriv->daccon, dev->iobase + PCI224_DACCON);
-	पूर्ण
-	अगर ((devpriv->daccon & PCI224_DACCON_TRIG_MASK) ==
-	    PCI224_DACCON_TRIG_NONE) अणु
-		अचिन्हित लघु trig;
+	}
+	if ((devpriv->daccon & PCI224_DACCON_TRIG_MASK) ==
+	    PCI224_DACCON_TRIG_NONE) {
+		unsigned short trig;
 
 		/*
-		 * This is the initial DAC FIFO पूर्णांकerrupt at the
+		 * This is the initial DAC FIFO interrupt at the
 		 * start of the acquisition.  The DAC's scan trigger
 		 * has been set to 'none' up until now.
 		 *
@@ -585,88 +584,88 @@ pci224_ao_set_data(काष्ठा comedi_device *dev, पूर्णां�
 		 * correct value.
 		 *
 		 * BUG: The first scan will be triggered immediately
-		 * अगर the scan trigger source is at logic level 1.
+		 * if the scan trigger source is at logic level 1.
 		 */
-		अगर (cmd->scan_begin_src == TRIG_TIMER) अणु
+		if (cmd->scan_begin_src == TRIG_TIMER) {
 			trig = PCI224_DACCON_TRIG_Z2CT0;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* cmd->scan_begin_src == TRIG_EXT */
-			अगर (cmd->scan_begin_arg & CR_INVERT)
+			if (cmd->scan_begin_arg & CR_INVERT)
 				trig = PCI224_DACCON_TRIG_EXTN;
-			अन्यथा
+			else
 				trig = PCI224_DACCON_TRIG_EXTP;
-		पूर्ण
+		}
 		devpriv->daccon =
 		    COMBINE(devpriv->daccon, trig, PCI224_DACCON_TRIG_MASK);
 		outw(devpriv->daccon, dev->iobase + PCI224_DACCON);
-	पूर्ण
+	}
 
 	comedi_handle_events(dev, s);
-पूर्ण
+}
 
-अटल पूर्णांक pci224_ao_पूर्णांकtrig_start(काष्ठा comedi_device *dev,
-				   काष्ठा comedi_subdevice *s,
-				   अचिन्हित पूर्णांक trig_num)
-अणु
-	काष्ठा comedi_cmd *cmd = &s->async->cmd;
+static int pci224_ao_inttrig_start(struct comedi_device *dev,
+				   struct comedi_subdevice *s,
+				   unsigned int trig_num)
+{
+	struct comedi_cmd *cmd = &s->async->cmd;
 
-	अगर (trig_num != cmd->start_arg)
-		वापस -EINVAL;
+	if (trig_num != cmd->start_arg)
+		return -EINVAL;
 
-	s->async->पूर्णांकtrig = शून्य;
+	s->async->inttrig = NULL;
 	pci224_ao_start(dev, s);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक pci224_ao_check_chanlist(काष्ठा comedi_device *dev,
-				    काष्ठा comedi_subdevice *s,
-				    काष्ठा comedi_cmd *cmd)
-अणु
-	स्थिर काष्ठा pci224_board *board = dev->board_ptr;
-	अचिन्हित पूर्णांक range_check_0;
-	अचिन्हित पूर्णांक chan_mask = 0;
-	पूर्णांक i;
+static int pci224_ao_check_chanlist(struct comedi_device *dev,
+				    struct comedi_subdevice *s,
+				    struct comedi_cmd *cmd)
+{
+	const struct pci224_board *board = dev->board_ptr;
+	unsigned int range_check_0;
+	unsigned int chan_mask = 0;
+	int i;
 
 	range_check_0 = board->ao_range_check[CR_RANGE(cmd->chanlist[0])];
-	क्रम (i = 0; i < cmd->chanlist_len; i++) अणु
-		अचिन्हित पूर्णांक chan = CR_CHAN(cmd->chanlist[i]);
+	for (i = 0; i < cmd->chanlist_len; i++) {
+		unsigned int chan = CR_CHAN(cmd->chanlist[i]);
 
-		अगर (chan_mask & (1 << chan)) अणु
+		if (chan_mask & (1 << chan)) {
 			dev_dbg(dev->class_dev,
 				"%s: entries in chanlist must contain no duplicate channels\n",
 				__func__);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		chan_mask |= 1 << chan;
 
-		अगर (board->ao_range_check[CR_RANGE(cmd->chanlist[i])] !=
-		    range_check_0) अणु
+		if (board->ao_range_check[CR_RANGE(cmd->chanlist[i])] !=
+		    range_check_0) {
 			dev_dbg(dev->class_dev,
 				"%s: entries in chanlist have incompatible ranges\n",
 				__func__);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा MAX_SCAN_PERIOD		0xFFFFFFFFU
-#घोषणा MIN_SCAN_PERIOD		2500
-#घोषणा CONVERT_PERIOD		625
+#define MAX_SCAN_PERIOD		0xFFFFFFFFU
+#define MIN_SCAN_PERIOD		2500
+#define CONVERT_PERIOD		625
 
 /*
- * 'do_cmdtest' function क्रम AO subdevice.
+ * 'do_cmdtest' function for AO subdevice.
  */
-अटल पूर्णांक
-pci224_ao_cmdtest(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s,
-		  काष्ठा comedi_cmd *cmd)
-अणु
-	पूर्णांक err = 0;
-	अचिन्हित पूर्णांक arg;
+static int
+pci224_ao_cmdtest(struct comedi_device *dev, struct comedi_subdevice *s,
+		  struct comedi_cmd *cmd)
+{
+	int err = 0;
+	unsigned int arg;
 
-	/* Step 1 : check अगर triggers are trivially valid */
+	/* Step 1 : check if triggers are trivially valid */
 
 	err |= comedi_check_trigger_src(&cmd->start_src, TRIG_INT | TRIG_EXT);
 	err |= comedi_check_trigger_src(&cmd->scan_begin_src,
@@ -676,8 +675,8 @@ pci224_ao_cmdtest(काष्ठा comedi_device *dev, काष्ठा come
 	err |= comedi_check_trigger_src(&cmd->stop_src,
 					TRIG_COUNT | TRIG_EXT | TRIG_NONE);
 
-	अगर (err)
-		वापस 1;
+	if (err)
+		return 1;
 
 	/* Step 2a : make sure trigger sources are unique */
 
@@ -688,130 +687,130 @@ pci224_ao_cmdtest(काष्ठा comedi_device *dev, काष्ठा come
 	/* Step 2b : and mutually compatible */
 
 	/*
-	 * There's only one बाह्यal trigger संकेत (which makes these
+	 * There's only one external trigger signal (which makes these
 	 * tests easier).  Only one thing can use it.
 	 */
 	arg = 0;
-	अगर (cmd->start_src & TRIG_EXT)
+	if (cmd->start_src & TRIG_EXT)
 		arg++;
-	अगर (cmd->scan_begin_src & TRIG_EXT)
+	if (cmd->scan_begin_src & TRIG_EXT)
 		arg++;
-	अगर (cmd->stop_src & TRIG_EXT)
+	if (cmd->stop_src & TRIG_EXT)
 		arg++;
-	अगर (arg > 1)
+	if (arg > 1)
 		err |= -EINVAL;
 
-	अगर (err)
-		वापस 2;
+	if (err)
+		return 2;
 
-	/* Step 3: check अगर arguments are trivially valid */
+	/* Step 3: check if arguments are trivially valid */
 
-	चयन (cmd->start_src) अणु
-	हाल TRIG_INT:
+	switch (cmd->start_src) {
+	case TRIG_INT:
 		err |= comedi_check_trigger_arg_is(&cmd->start_arg, 0);
-		अवरोध;
-	हाल TRIG_EXT:
-		/* Force to बाह्यal trigger 0. */
-		अगर (cmd->start_arg & ~CR_FLAGS_MASK) अणु
+		break;
+	case TRIG_EXT:
+		/* Force to external trigger 0. */
+		if (cmd->start_arg & ~CR_FLAGS_MASK) {
 			cmd->start_arg =
 			    COMBINE(cmd->start_arg, 0, ~CR_FLAGS_MASK);
 			err |= -EINVAL;
-		पूर्ण
+		}
 		/* The only flag allowed is CR_EDGE, which is ignored. */
-		अगर (cmd->start_arg & CR_FLAGS_MASK & ~CR_EDGE) अणु
+		if (cmd->start_arg & CR_FLAGS_MASK & ~CR_EDGE) {
 			cmd->start_arg = COMBINE(cmd->start_arg, 0,
 						 CR_FLAGS_MASK & ~CR_EDGE);
 			err |= -EINVAL;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	}
 
-	चयन (cmd->scan_begin_src) अणु
-	हाल TRIG_TIMER:
+	switch (cmd->scan_begin_src) {
+	case TRIG_TIMER:
 		err |= comedi_check_trigger_arg_max(&cmd->scan_begin_arg,
 						    MAX_SCAN_PERIOD);
 
 		arg = cmd->chanlist_len * CONVERT_PERIOD;
-		अगर (arg < MIN_SCAN_PERIOD)
+		if (arg < MIN_SCAN_PERIOD)
 			arg = MIN_SCAN_PERIOD;
 		err |= comedi_check_trigger_arg_min(&cmd->scan_begin_arg, arg);
-		अवरोध;
-	हाल TRIG_EXT:
-		/* Force to बाह्यal trigger 0. */
-		अगर (cmd->scan_begin_arg & ~CR_FLAGS_MASK) अणु
+		break;
+	case TRIG_EXT:
+		/* Force to external trigger 0. */
+		if (cmd->scan_begin_arg & ~CR_FLAGS_MASK) {
 			cmd->scan_begin_arg =
 			    COMBINE(cmd->scan_begin_arg, 0, ~CR_FLAGS_MASK);
 			err |= -EINVAL;
-		पूर्ण
+		}
 		/* Only allow flags CR_EDGE and CR_INVERT.  Ignore CR_EDGE. */
-		अगर (cmd->scan_begin_arg & CR_FLAGS_MASK &
-		    ~(CR_EDGE | CR_INVERT)) अणु
+		if (cmd->scan_begin_arg & CR_FLAGS_MASK &
+		    ~(CR_EDGE | CR_INVERT)) {
 			cmd->scan_begin_arg =
 			    COMBINE(cmd->scan_begin_arg, 0,
 				    CR_FLAGS_MASK & ~(CR_EDGE | CR_INVERT));
 			err |= -EINVAL;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	}
 
 	err |= comedi_check_trigger_arg_is(&cmd->convert_arg, 0);
 	err |= comedi_check_trigger_arg_is(&cmd->scan_end_arg,
 					   cmd->chanlist_len);
 
-	चयन (cmd->stop_src) अणु
-	हाल TRIG_COUNT:
+	switch (cmd->stop_src) {
+	case TRIG_COUNT:
 		err |= comedi_check_trigger_arg_min(&cmd->stop_arg, 1);
-		अवरोध;
-	हाल TRIG_EXT:
-		/* Force to बाह्यal trigger 0. */
-		अगर (cmd->stop_arg & ~CR_FLAGS_MASK) अणु
+		break;
+	case TRIG_EXT:
+		/* Force to external trigger 0. */
+		if (cmd->stop_arg & ~CR_FLAGS_MASK) {
 			cmd->stop_arg =
 			    COMBINE(cmd->stop_arg, 0, ~CR_FLAGS_MASK);
 			err |= -EINVAL;
-		पूर्ण
+		}
 		/* The only flag allowed is CR_EDGE, which is ignored. */
-		अगर (cmd->stop_arg & CR_FLAGS_MASK & ~CR_EDGE) अणु
+		if (cmd->stop_arg & CR_FLAGS_MASK & ~CR_EDGE) {
 			cmd->stop_arg =
 			    COMBINE(cmd->stop_arg, 0, CR_FLAGS_MASK & ~CR_EDGE);
-		पूर्ण
-		अवरोध;
-	हाल TRIG_NONE:
+		}
+		break;
+	case TRIG_NONE:
 		err |= comedi_check_trigger_arg_is(&cmd->stop_arg, 0);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (err)
-		वापस 3;
+	if (err)
+		return 3;
 
 	/* Step 4: fix up any arguments. */
 
-	अगर (cmd->scan_begin_src == TRIG_TIMER) अणु
+	if (cmd->scan_begin_src == TRIG_TIMER) {
 		arg = cmd->scan_begin_arg;
-		/* Use two समयrs. */
-		comedi_8254_cascade_ns_to_समयr(dev->pacer, &arg, cmd->flags);
+		/* Use two timers. */
+		comedi_8254_cascade_ns_to_timer(dev->pacer, &arg, cmd->flags);
 		err |= comedi_check_trigger_arg_is(&cmd->scan_begin_arg, arg);
-	पूर्ण
+	}
 
-	अगर (err)
-		वापस 4;
+	if (err)
+		return 4;
 
-	/* Step 5: check channel list अगर it exists */
-	अगर (cmd->chanlist && cmd->chanlist_len > 0)
+	/* Step 5: check channel list if it exists */
+	if (cmd->chanlist && cmd->chanlist_len > 0)
 		err |= pci224_ao_check_chanlist(dev, s, cmd);
 
-	अगर (err)
-		वापस 5;
+	if (err)
+		return 5;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pci224_ao_start_pacer(काष्ठा comedi_device *dev,
-				  काष्ठा comedi_subdevice *s)
-अणु
-	काष्ठा pci224_निजी *devpriv = dev->निजी;
+static void pci224_ao_start_pacer(struct comedi_device *dev,
+				  struct comedi_subdevice *s)
+{
+	struct pci224_private *devpriv = dev->private;
 
 	/*
-	 * The output of समयr Z2-0 will be used as the scan trigger
+	 * The output of timer Z2-0 will be used as the scan trigger
 	 * source.
 	 */
 	/* Make sure Z2-0 is gated on.  */
@@ -819,44 +818,44 @@ pci224_ao_cmdtest(काष्ठा comedi_device *dev, काष्ठा come
 	/* Cascading with Z2-2. */
 	/* Make sure Z2-2 is gated on.  */
 	outb(pci224_gat_config(2, GAT_VCC), devpriv->iobase1 + PCI224_ZGAT_SCE);
-	/* Z2-2 needs 10 MHz घड़ी. */
+	/* Z2-2 needs 10 MHz clock. */
 	outb(pci224_clk_config(2, CLK_10MHZ),
 	     devpriv->iobase1 + PCI224_ZCLK_SCE);
-	/* Z2-0 is घड़ीed from Z2-2's output. */
+	/* Z2-0 is clocked from Z2-2's output. */
 	outb(pci224_clk_config(0, CLK_OUTNM1),
 	     devpriv->iobase1 + PCI224_ZCLK_SCE);
 
 	comedi_8254_pacer_enable(dev->pacer, 2, 0, false);
-पूर्ण
+}
 
-अटल पूर्णांक pci224_ao_cmd(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s)
-अणु
-	स्थिर काष्ठा pci224_board *board = dev->board_ptr;
-	काष्ठा pci224_निजी *devpriv = dev->निजी;
-	काष्ठा comedi_cmd *cmd = &s->async->cmd;
-	पूर्णांक range;
-	अचिन्हित पूर्णांक i, j;
-	अचिन्हित पूर्णांक ch;
-	अचिन्हित पूर्णांक rank;
-	अचिन्हित दीर्घ flags;
+static int pci224_ao_cmd(struct comedi_device *dev, struct comedi_subdevice *s)
+{
+	const struct pci224_board *board = dev->board_ptr;
+	struct pci224_private *devpriv = dev->private;
+	struct comedi_cmd *cmd = &s->async->cmd;
+	int range;
+	unsigned int i, j;
+	unsigned int ch;
+	unsigned int rank;
+	unsigned long flags;
 
 	/* Cannot handle null/empty chanlist. */
-	अगर (!cmd->chanlist || cmd->chanlist_len == 0)
-		वापस -EINVAL;
+	if (!cmd->chanlist || cmd->chanlist_len == 0)
+		return -EINVAL;
 
 	/* Determine which channels are enabled and their load order.  */
 	devpriv->ao_enab = 0;
 
-	क्रम (i = 0; i < cmd->chanlist_len; i++) अणु
+	for (i = 0; i < cmd->chanlist_len; i++) {
 		ch = CR_CHAN(cmd->chanlist[i]);
 		devpriv->ao_enab |= 1U << ch;
 		rank = 0;
-		क्रम (j = 0; j < cmd->chanlist_len; j++) अणु
-			अगर (CR_CHAN(cmd->chanlist[j]) < ch)
+		for (j = 0; j < cmd->chanlist_len; j++) {
+			if (CR_CHAN(cmd->chanlist[j]) < ch)
 				rank++;
-		पूर्ण
+		}
 		devpriv->ao_scan_order[rank] = i;
-	पूर्ण
+	}
 
 	/* Set enabled channels. */
 	outw(devpriv->ao_enab, dev->iobase + PCI224_DACCEN);
@@ -867,10 +866,10 @@ pci224_ao_cmdtest(काष्ठा comedi_device *dev, काष्ठा come
 	/*
 	 * Set DAC range and polarity.
 	 * Set DAC scan trigger source to 'none'.
-	 * Set DAC FIFO पूर्णांकerrupt trigger level to 'not half full'.
+	 * Set DAC FIFO interrupt trigger level to 'not half full'.
 	 * Reset DAC FIFO.
 	 *
-	 * N.B. DAC FIFO पूर्णांकerrupts are currently disabled.
+	 * N.B. DAC FIFO interrupts are currently disabled.
 	 */
 	devpriv->daccon =
 	    COMBINE(devpriv->daccon,
@@ -881,144 +880,144 @@ pci224_ao_cmdtest(काष्ठा comedi_device *dev, काष्ठा come
 	outw(devpriv->daccon | PCI224_DACCON_FIFORESET,
 	     dev->iobase + PCI224_DACCON);
 
-	अगर (cmd->scan_begin_src == TRIG_TIMER) अणु
-		comedi_8254_update_भागisors(dev->pacer);
+	if (cmd->scan_begin_src == TRIG_TIMER) {
+		comedi_8254_update_divisors(dev->pacer);
 		pci224_ao_start_pacer(dev, s);
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&devpriv->ao_spinlock, flags);
-	अगर (cmd->start_src == TRIG_INT) अणु
-		s->async->पूर्णांकtrig = pci224_ao_पूर्णांकtrig_start;
-	पूर्ण अन्यथा अणु	/* TRIG_EXT */
-		/* Enable बाह्यal पूर्णांकerrupt trigger to start acquisition. */
-		devpriv->पूर्णांकsce |= PCI224_INTR_EXT;
-		outb(devpriv->पूर्णांकsce, devpriv->iobase1 + PCI224_INT_SCE);
-	पूर्ण
+	if (cmd->start_src == TRIG_INT) {
+		s->async->inttrig = pci224_ao_inttrig_start;
+	} else {	/* TRIG_EXT */
+		/* Enable external interrupt trigger to start acquisition. */
+		devpriv->intsce |= PCI224_INTR_EXT;
+		outb(devpriv->intsce, devpriv->iobase1 + PCI224_INT_SCE);
+	}
 	spin_unlock_irqrestore(&devpriv->ao_spinlock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * 'cancel' function क्रम AO subdevice.
+ * 'cancel' function for AO subdevice.
  */
-अटल पूर्णांक pci224_ao_cancel(काष्ठा comedi_device *dev,
-			    काष्ठा comedi_subdevice *s)
-अणु
+static int pci224_ao_cancel(struct comedi_device *dev,
+			    struct comedi_subdevice *s)
+{
 	pci224_ao_stop(dev, s);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * 'munge' data क्रम AO command.
+ * 'munge' data for AO command.
  */
-अटल व्योम
-pci224_ao_munge(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s,
-		व्योम *data, अचिन्हित पूर्णांक num_bytes, अचिन्हित पूर्णांक chan_index)
-अणु
-	स्थिर काष्ठा pci224_board *board = dev->board_ptr;
-	काष्ठा comedi_cmd *cmd = &s->async->cmd;
-	अचिन्हित लघु *array = data;
-	अचिन्हित पूर्णांक length = num_bytes / माप(*array);
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक shअगरt;
-	अचिन्हित पूर्णांक i;
+static void
+pci224_ao_munge(struct comedi_device *dev, struct comedi_subdevice *s,
+		void *data, unsigned int num_bytes, unsigned int chan_index)
+{
+	const struct pci224_board *board = dev->board_ptr;
+	struct comedi_cmd *cmd = &s->async->cmd;
+	unsigned short *array = data;
+	unsigned int length = num_bytes / sizeof(*array);
+	unsigned int offset;
+	unsigned int shift;
+	unsigned int i;
 
 	/* The hardware expects 16-bit numbers. */
-	shअगरt = 16 - board->ao_bits;
+	shift = 16 - board->ao_bits;
 	/* Channels will be all bipolar or all unipolar. */
-	अगर ((board->ao_hwrange[CR_RANGE(cmd->chanlist[0])] &
-	     PCI224_DACCON_POLAR_MASK) == PCI224_DACCON_POLAR_UNI) अणु
+	if ((board->ao_hwrange[CR_RANGE(cmd->chanlist[0])] &
+	     PCI224_DACCON_POLAR_MASK) == PCI224_DACCON_POLAR_UNI) {
 		/* Unipolar */
 		offset = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Bipolar */
 		offset = 32768;
-	पूर्ण
+	}
 	/* Munge the data. */
-	क्रम (i = 0; i < length; i++)
-		array[i] = (array[i] << shअगरt) - offset;
-पूर्ण
+	for (i = 0; i < length; i++)
+		array[i] = (array[i] << shift) - offset;
+}
 
 /*
  * Interrupt handler.
  */
-अटल irqवापस_t pci224_पूर्णांकerrupt(पूर्णांक irq, व्योम *d)
-अणु
-	काष्ठा comedi_device *dev = d;
-	काष्ठा pci224_निजी *devpriv = dev->निजी;
-	काष्ठा comedi_subdevice *s = dev->ग_लिखो_subdev;
-	काष्ठा comedi_cmd *cmd;
-	अचिन्हित अक्षर पूर्णांकstat, valid_पूर्णांकstat;
-	अचिन्हित अक्षर curenab;
-	पूर्णांक retval = 0;
-	अचिन्हित दीर्घ flags;
+static irqreturn_t pci224_interrupt(int irq, void *d)
+{
+	struct comedi_device *dev = d;
+	struct pci224_private *devpriv = dev->private;
+	struct comedi_subdevice *s = dev->write_subdev;
+	struct comedi_cmd *cmd;
+	unsigned char intstat, valid_intstat;
+	unsigned char curenab;
+	int retval = 0;
+	unsigned long flags;
 
-	पूर्णांकstat = inb(devpriv->iobase1 + PCI224_INT_SCE) & 0x3F;
-	अगर (पूर्णांकstat) अणु
+	intstat = inb(devpriv->iobase1 + PCI224_INT_SCE) & 0x3F;
+	if (intstat) {
 		retval = 1;
 		spin_lock_irqsave(&devpriv->ao_spinlock, flags);
-		valid_पूर्णांकstat = devpriv->पूर्णांकsce & पूर्णांकstat;
-		/* Temporarily disable पूर्णांकerrupt sources. */
-		curenab = devpriv->पूर्णांकsce & ~पूर्णांकstat;
+		valid_intstat = devpriv->intsce & intstat;
+		/* Temporarily disable interrupt sources. */
+		curenab = devpriv->intsce & ~intstat;
 		outb(curenab, devpriv->iobase1 + PCI224_INT_SCE);
-		devpriv->पूर्णांकr_running = 1;
-		devpriv->पूर्णांकr_cpuid = THISCPU;
+		devpriv->intr_running = 1;
+		devpriv->intr_cpuid = THISCPU;
 		spin_unlock_irqrestore(&devpriv->ao_spinlock, flags);
-		अगर (valid_पूर्णांकstat) अणु
+		if (valid_intstat) {
 			cmd = &s->async->cmd;
-			अगर (valid_पूर्णांकstat & PCI224_INTR_EXT) अणु
-				devpriv->पूर्णांकsce &= ~PCI224_INTR_EXT;
-				अगर (cmd->start_src == TRIG_EXT)
+			if (valid_intstat & PCI224_INTR_EXT) {
+				devpriv->intsce &= ~PCI224_INTR_EXT;
+				if (cmd->start_src == TRIG_EXT)
 					pci224_ao_start(dev, s);
-				अन्यथा अगर (cmd->stop_src == TRIG_EXT)
+				else if (cmd->stop_src == TRIG_EXT)
 					pci224_ao_stop(dev, s);
-			पूर्ण
-			अगर (valid_पूर्णांकstat & PCI224_INTR_DAC)
-				pci224_ao_handle_fअगरo(dev, s);
-		पूर्ण
-		/* Reenable पूर्णांकerrupt sources. */
+			}
+			if (valid_intstat & PCI224_INTR_DAC)
+				pci224_ao_handle_fifo(dev, s);
+		}
+		/* Reenable interrupt sources. */
 		spin_lock_irqsave(&devpriv->ao_spinlock, flags);
-		अगर (curenab != devpriv->पूर्णांकsce) अणु
-			outb(devpriv->पूर्णांकsce,
+		if (curenab != devpriv->intsce) {
+			outb(devpriv->intsce,
 			     devpriv->iobase1 + PCI224_INT_SCE);
-		पूर्ण
-		devpriv->पूर्णांकr_running = 0;
+		}
+		devpriv->intr_running = 0;
 		spin_unlock_irqrestore(&devpriv->ao_spinlock, flags);
-	पूर्ण
-	वापस IRQ_RETVAL(retval);
-पूर्ण
+	}
+	return IRQ_RETVAL(retval);
+}
 
-अटल पूर्णांक
-pci224_स्वतः_attach(काष्ठा comedi_device *dev, अचिन्हित दीर्घ context_model)
-अणु
-	काष्ठा pci_dev *pci_dev = comedi_to_pci_dev(dev);
-	स्थिर काष्ठा pci224_board *board = शून्य;
-	काष्ठा pci224_निजी *devpriv;
-	काष्ठा comedi_subdevice *s;
-	अचिन्हित पूर्णांक irq;
-	पूर्णांक ret;
+static int
+pci224_auto_attach(struct comedi_device *dev, unsigned long context_model)
+{
+	struct pci_dev *pci_dev = comedi_to_pci_dev(dev);
+	const struct pci224_board *board = NULL;
+	struct pci224_private *devpriv;
+	struct comedi_subdevice *s;
+	unsigned int irq;
+	int ret;
 
-	अगर (context_model < ARRAY_SIZE(pci224_boards))
+	if (context_model < ARRAY_SIZE(pci224_boards))
 		board = &pci224_boards[context_model];
-	अगर (!board || !board->name) अणु
+	if (!board || !board->name) {
 		dev_err(dev->class_dev,
 			"amplc_pci224: BUG! cannot determine board type!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	dev->board_ptr = board;
 	dev->board_name = board->name;
 
 	dev_info(dev->class_dev, "amplc_pci224: attach pci %s - %s\n",
 		 pci_name(pci_dev), dev->board_name);
 
-	devpriv = comedi_alloc_devpriv(dev, माप(*devpriv));
-	अगर (!devpriv)
-		वापस -ENOMEM;
+	devpriv = comedi_alloc_devpriv(dev, sizeof(*devpriv));
+	if (!devpriv)
+		return -ENOMEM;
 
 	ret = comedi_pci_enable(dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	spin_lock_init(&devpriv->ao_spinlock);
 
@@ -1026,23 +1025,23 @@ pci224_स्वतः_attach(काष्ठा comedi_device *dev, अचि�
 	dev->iobase = pci_resource_start(pci_dev, 3);
 	irq = pci_dev->irq;
 
-	/* Allocate buffer to hold values क्रम AO channel scan. */
-	devpriv->ao_scan_vals = kदो_स्मृति_array(board->ao_chans,
-					      माप(devpriv->ao_scan_vals[0]),
+	/* Allocate buffer to hold values for AO channel scan. */
+	devpriv->ao_scan_vals = kmalloc_array(board->ao_chans,
+					      sizeof(devpriv->ao_scan_vals[0]),
 					      GFP_KERNEL);
-	अगर (!devpriv->ao_scan_vals)
-		वापस -ENOMEM;
+	if (!devpriv->ao_scan_vals)
+		return -ENOMEM;
 
 	/* Allocate buffer to hold AO channel scan order. */
 	devpriv->ao_scan_order =
-				kदो_स्मृति_array(board->ao_chans,
-					      माप(devpriv->ao_scan_order[0]),
+				kmalloc_array(board->ao_chans,
+					      sizeof(devpriv->ao_scan_order[0]),
 					      GFP_KERNEL);
-	अगर (!devpriv->ao_scan_order)
-		वापस -ENOMEM;
+	if (!devpriv->ao_scan_order)
+		return -ENOMEM;
 
-	/* Disable पूर्णांकerrupt sources. */
-	devpriv->पूर्णांकsce = 0;
+	/* Disable interrupt sources. */
+	devpriv->intsce = 0;
 	outb(0, devpriv->iobase1 + PCI224_INT_SCE);
 
 	/* Initialize the DAC hardware. */
@@ -1056,12 +1055,12 @@ pci224_स्वतः_attach(काष्ठा comedi_device *dev, अचि�
 
 	dev->pacer = comedi_8254_init(devpriv->iobase1 + PCI224_Z2_BASE,
 				      I8254_OSC_BASE_10MHZ, I8254_IO8, 0);
-	अगर (!dev->pacer)
-		वापस -ENOMEM;
+	if (!dev->pacer)
+		return -ENOMEM;
 
 	ret = comedi_alloc_subdevices(dev, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	s = &dev->subdevices[0];
 	/* Analog output subdevice. */
@@ -1070,73 +1069,73 @@ pci224_स्वतः_attach(काष्ठा comedi_device *dev, अचि�
 	s->n_chan = board->ao_chans;
 	s->maxdata = (1 << board->ao_bits) - 1;
 	s->range_table = board->ao_range;
-	s->insn_ग_लिखो = pci224_ao_insn_ग_लिखो;
+	s->insn_write = pci224_ao_insn_write;
 	s->len_chanlist = s->n_chan;
-	dev->ग_लिखो_subdev = s;
-	s->करो_cmd = pci224_ao_cmd;
-	s->करो_cmdtest = pci224_ao_cmdtest;
+	dev->write_subdev = s;
+	s->do_cmd = pci224_ao_cmd;
+	s->do_cmdtest = pci224_ao_cmdtest;
 	s->cancel = pci224_ao_cancel;
 	s->munge = pci224_ao_munge;
 
-	ret = comedi_alloc_subdev_पढ़ोback(s);
-	अगर (ret)
-		वापस ret;
+	ret = comedi_alloc_subdev_readback(s);
+	if (ret)
+		return ret;
 
-	अगर (irq) अणु
-		ret = request_irq(irq, pci224_पूर्णांकerrupt, IRQF_SHARED,
+	if (irq) {
+		ret = request_irq(irq, pci224_interrupt, IRQF_SHARED,
 				  dev->board_name, dev);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(dev->class_dev,
 				"error! unable to allocate irq %u\n", irq);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		dev->irq = irq;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pci224_detach(काष्ठा comedi_device *dev)
-अणु
-	काष्ठा pci224_निजी *devpriv = dev->निजी;
+static void pci224_detach(struct comedi_device *dev)
+{
+	struct pci224_private *devpriv = dev->private;
 
 	comedi_pci_detach(dev);
-	अगर (devpriv) अणु
-		kमुक्त(devpriv->ao_scan_vals);
-		kमुक्त(devpriv->ao_scan_order);
-	पूर्ण
-पूर्ण
+	if (devpriv) {
+		kfree(devpriv->ao_scan_vals);
+		kfree(devpriv->ao_scan_order);
+	}
+}
 
-अटल काष्ठा comedi_driver amplc_pci224_driver = अणु
+static struct comedi_driver amplc_pci224_driver = {
 	.driver_name	= "amplc_pci224",
 	.module		= THIS_MODULE,
 	.detach		= pci224_detach,
-	.स्वतः_attach	= pci224_स्वतः_attach,
+	.auto_attach	= pci224_auto_attach,
 	.board_name	= &pci224_boards[0].name,
-	.offset		= माप(काष्ठा pci224_board),
+	.offset		= sizeof(struct pci224_board),
 	.num_names	= ARRAY_SIZE(pci224_boards),
-पूर्ण;
+};
 
-अटल पूर्णांक amplc_pci224_pci_probe(काष्ठा pci_dev *dev,
-				  स्थिर काष्ठा pci_device_id *id)
-अणु
-	वापस comedi_pci_स्वतः_config(dev, &amplc_pci224_driver,
+static int amplc_pci224_pci_probe(struct pci_dev *dev,
+				  const struct pci_device_id *id)
+{
+	return comedi_pci_auto_config(dev, &amplc_pci224_driver,
 				      id->driver_data);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा pci_device_id amplc_pci224_pci_table[] = अणु
-	अणु PCI_VDEVICE(AMPLICON, 0x0007), pci224_model पूर्ण,
-	अणु PCI_VDEVICE(AMPLICON, 0x0008), pci234_model पूर्ण,
-	अणु 0 पूर्ण
-पूर्ण;
+static const struct pci_device_id amplc_pci224_pci_table[] = {
+	{ PCI_VDEVICE(AMPLICON, 0x0007), pci224_model },
+	{ PCI_VDEVICE(AMPLICON, 0x0008), pci234_model },
+	{ 0 }
+};
 MODULE_DEVICE_TABLE(pci, amplc_pci224_pci_table);
 
-अटल काष्ठा pci_driver amplc_pci224_pci_driver = अणु
+static struct pci_driver amplc_pci224_pci_driver = {
 	.name		= "amplc_pci224",
 	.id_table	= amplc_pci224_pci_table,
 	.probe		= amplc_pci224_pci_probe,
-	.हटाओ		= comedi_pci_स्वतः_unconfig,
-पूर्ण;
+	.remove		= comedi_pci_auto_unconfig,
+};
 module_comedi_pci_driver(amplc_pci224_driver, amplc_pci224_pci_driver);
 
 MODULE_AUTHOR("Comedi https://www.comedi.org");

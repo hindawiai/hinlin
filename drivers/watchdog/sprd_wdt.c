@@ -1,381 +1,380 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Spपढ़ोtrum watchकरोg driver
- * Copyright (C) 2017 Spपढ़ोtrum - http://www.spपढ़ोtrum.com
+ * Spreadtrum watchdog driver
+ * Copyright (C) 2017 Spreadtrum - http://www.spreadtrum.com
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/watchकरोg.h>
+#include <linux/bitops.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/platform_device.h>
+#include <linux/watchdog.h>
 
-#घोषणा SPRD_WDT_LOAD_LOW		0x0
-#घोषणा SPRD_WDT_LOAD_HIGH		0x4
-#घोषणा SPRD_WDT_CTRL			0x8
-#घोषणा SPRD_WDT_INT_CLR		0xc
-#घोषणा SPRD_WDT_INT_RAW		0x10
-#घोषणा SPRD_WDT_INT_MSK		0x14
-#घोषणा SPRD_WDT_CNT_LOW		0x18
-#घोषणा SPRD_WDT_CNT_HIGH		0x1c
-#घोषणा SPRD_WDT_LOCK			0x20
-#घोषणा SPRD_WDT_IRQ_LOAD_LOW		0x2c
-#घोषणा SPRD_WDT_IRQ_LOAD_HIGH		0x30
+#define SPRD_WDT_LOAD_LOW		0x0
+#define SPRD_WDT_LOAD_HIGH		0x4
+#define SPRD_WDT_CTRL			0x8
+#define SPRD_WDT_INT_CLR		0xc
+#define SPRD_WDT_INT_RAW		0x10
+#define SPRD_WDT_INT_MSK		0x14
+#define SPRD_WDT_CNT_LOW		0x18
+#define SPRD_WDT_CNT_HIGH		0x1c
+#define SPRD_WDT_LOCK			0x20
+#define SPRD_WDT_IRQ_LOAD_LOW		0x2c
+#define SPRD_WDT_IRQ_LOAD_HIGH		0x30
 
 /* WDT_CTRL */
-#घोषणा SPRD_WDT_INT_EN_BIT		BIT(0)
-#घोषणा SPRD_WDT_CNT_EN_BIT		BIT(1)
-#घोषणा SPRD_WDT_NEW_VER_EN		BIT(2)
-#घोषणा SPRD_WDT_RST_EN_BIT		BIT(3)
+#define SPRD_WDT_INT_EN_BIT		BIT(0)
+#define SPRD_WDT_CNT_EN_BIT		BIT(1)
+#define SPRD_WDT_NEW_VER_EN		BIT(2)
+#define SPRD_WDT_RST_EN_BIT		BIT(3)
 
 /* WDT_INT_CLR */
-#घोषणा SPRD_WDT_INT_CLEAR_BIT		BIT(0)
-#घोषणा SPRD_WDT_RST_CLEAR_BIT		BIT(3)
+#define SPRD_WDT_INT_CLEAR_BIT		BIT(0)
+#define SPRD_WDT_RST_CLEAR_BIT		BIT(3)
 
 /* WDT_INT_RAW */
-#घोषणा SPRD_WDT_INT_RAW_BIT		BIT(0)
-#घोषणा SPRD_WDT_RST_RAW_BIT		BIT(3)
-#घोषणा SPRD_WDT_LD_BUSY_BIT		BIT(4)
+#define SPRD_WDT_INT_RAW_BIT		BIT(0)
+#define SPRD_WDT_RST_RAW_BIT		BIT(3)
+#define SPRD_WDT_LD_BUSY_BIT		BIT(4)
 
 /* 1s equal to 32768 counter steps */
-#घोषणा SPRD_WDT_CNT_STEP		32768
+#define SPRD_WDT_CNT_STEP		32768
 
-#घोषणा SPRD_WDT_UNLOCK_KEY		0xe551
-#घोषणा SPRD_WDT_MIN_TIMEOUT		3
-#घोषणा SPRD_WDT_MAX_TIMEOUT		60
+#define SPRD_WDT_UNLOCK_KEY		0xe551
+#define SPRD_WDT_MIN_TIMEOUT		3
+#define SPRD_WDT_MAX_TIMEOUT		60
 
-#घोषणा SPRD_WDT_CNT_HIGH_SHIFT		16
-#घोषणा SPRD_WDT_LOW_VALUE_MASK		GENMASK(15, 0)
-#घोषणा SPRD_WDT_LOAD_TIMEOUT		11
+#define SPRD_WDT_CNT_HIGH_SHIFT		16
+#define SPRD_WDT_LOW_VALUE_MASK		GENMASK(15, 0)
+#define SPRD_WDT_LOAD_TIMEOUT		11
 
-काष्ठा sprd_wdt अणु
-	व्योम __iomem *base;
-	काष्ठा watchकरोg_device wdd;
-	काष्ठा clk *enable;
-	काष्ठा clk *rtc_enable;
-	पूर्णांक irq;
-पूर्ण;
+struct sprd_wdt {
+	void __iomem *base;
+	struct watchdog_device wdd;
+	struct clk *enable;
+	struct clk *rtc_enable;
+	int irq;
+};
 
-अटल अंतरभूत काष्ठा sprd_wdt *to_sprd_wdt(काष्ठा watchकरोg_device *wdd)
-अणु
-	वापस container_of(wdd, काष्ठा sprd_wdt, wdd);
-पूर्ण
+static inline struct sprd_wdt *to_sprd_wdt(struct watchdog_device *wdd)
+{
+	return container_of(wdd, struct sprd_wdt, wdd);
+}
 
-अटल अंतरभूत व्योम sprd_wdt_lock(व्योम __iomem *addr)
-अणु
-	ग_लिखोl_relaxed(0x0, addr + SPRD_WDT_LOCK);
-पूर्ण
+static inline void sprd_wdt_lock(void __iomem *addr)
+{
+	writel_relaxed(0x0, addr + SPRD_WDT_LOCK);
+}
 
-अटल अंतरभूत व्योम sprd_wdt_unlock(व्योम __iomem *addr)
-अणु
-	ग_लिखोl_relaxed(SPRD_WDT_UNLOCK_KEY, addr + SPRD_WDT_LOCK);
-पूर्ण
+static inline void sprd_wdt_unlock(void __iomem *addr)
+{
+	writel_relaxed(SPRD_WDT_UNLOCK_KEY, addr + SPRD_WDT_LOCK);
+}
 
-अटल irqवापस_t sprd_wdt_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा sprd_wdt *wdt = (काष्ठा sprd_wdt *)dev_id;
+static irqreturn_t sprd_wdt_isr(int irq, void *dev_id)
+{
+	struct sprd_wdt *wdt = (struct sprd_wdt *)dev_id;
 
 	sprd_wdt_unlock(wdt->base);
-	ग_लिखोl_relaxed(SPRD_WDT_INT_CLEAR_BIT, wdt->base + SPRD_WDT_INT_CLR);
+	writel_relaxed(SPRD_WDT_INT_CLEAR_BIT, wdt->base + SPRD_WDT_INT_CLR);
 	sprd_wdt_lock(wdt->base);
-	watchकरोg_notअगरy_preसमयout(&wdt->wdd);
-	वापस IRQ_HANDLED;
-पूर्ण
+	watchdog_notify_pretimeout(&wdt->wdd);
+	return IRQ_HANDLED;
+}
 
-अटल u32 sprd_wdt_get_cnt_value(काष्ठा sprd_wdt *wdt)
-अणु
+static u32 sprd_wdt_get_cnt_value(struct sprd_wdt *wdt)
+{
 	u32 val;
 
-	val = पढ़ोl_relaxed(wdt->base + SPRD_WDT_CNT_HIGH) <<
+	val = readl_relaxed(wdt->base + SPRD_WDT_CNT_HIGH) <<
 		SPRD_WDT_CNT_HIGH_SHIFT;
-	val |= पढ़ोl_relaxed(wdt->base + SPRD_WDT_CNT_LOW) &
+	val |= readl_relaxed(wdt->base + SPRD_WDT_CNT_LOW) &
 		SPRD_WDT_LOW_VALUE_MASK;
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल पूर्णांक sprd_wdt_load_value(काष्ठा sprd_wdt *wdt, u32 समयout,
-			       u32 preसमयout)
-अणु
+static int sprd_wdt_load_value(struct sprd_wdt *wdt, u32 timeout,
+			       u32 pretimeout)
+{
 	u32 val, delay_cnt = 0;
-	u32 पंचांगr_step = समयout * SPRD_WDT_CNT_STEP;
-	u32 prपंचांगr_step = preसमयout * SPRD_WDT_CNT_STEP;
+	u32 tmr_step = timeout * SPRD_WDT_CNT_STEP;
+	u32 prtmr_step = pretimeout * SPRD_WDT_CNT_STEP;
 
 	/*
 	 * Checking busy bit to make sure the previous loading operation is
-	 * करोne. According to the specअगरication, the busy bit would be set
-	 * after a new loading operation and last 2 or 3 RTC घड़ी
+	 * done. According to the specification, the busy bit would be set
+	 * after a new loading operation and last 2 or 3 RTC clock
 	 * cycles (about 60us~92us).
 	 */
-	करो अणु
-		val = पढ़ोl_relaxed(wdt->base + SPRD_WDT_INT_RAW);
-		अगर (!(val & SPRD_WDT_LD_BUSY_BIT))
-			अवरोध;
+	do {
+		val = readl_relaxed(wdt->base + SPRD_WDT_INT_RAW);
+		if (!(val & SPRD_WDT_LD_BUSY_BIT))
+			break;
 
 		usleep_range(10, 100);
-	पूर्ण जबतक (delay_cnt++ < SPRD_WDT_LOAD_TIMEOUT);
+	} while (delay_cnt++ < SPRD_WDT_LOAD_TIMEOUT);
 
-	अगर (delay_cnt >= SPRD_WDT_LOAD_TIMEOUT)
-		वापस -EBUSY;
+	if (delay_cnt >= SPRD_WDT_LOAD_TIMEOUT)
+		return -EBUSY;
 
 	sprd_wdt_unlock(wdt->base);
-	ग_लिखोl_relaxed((पंचांगr_step >> SPRD_WDT_CNT_HIGH_SHIFT) &
+	writel_relaxed((tmr_step >> SPRD_WDT_CNT_HIGH_SHIFT) &
 		      SPRD_WDT_LOW_VALUE_MASK, wdt->base + SPRD_WDT_LOAD_HIGH);
-	ग_लिखोl_relaxed((पंचांगr_step & SPRD_WDT_LOW_VALUE_MASK),
+	writel_relaxed((tmr_step & SPRD_WDT_LOW_VALUE_MASK),
 		       wdt->base + SPRD_WDT_LOAD_LOW);
-	ग_लिखोl_relaxed((prपंचांगr_step >> SPRD_WDT_CNT_HIGH_SHIFT) &
+	writel_relaxed((prtmr_step >> SPRD_WDT_CNT_HIGH_SHIFT) &
 			SPRD_WDT_LOW_VALUE_MASK,
 		       wdt->base + SPRD_WDT_IRQ_LOAD_HIGH);
-	ग_लिखोl_relaxed(prपंचांगr_step & SPRD_WDT_LOW_VALUE_MASK,
+	writel_relaxed(prtmr_step & SPRD_WDT_LOW_VALUE_MASK,
 		       wdt->base + SPRD_WDT_IRQ_LOAD_LOW);
 	sprd_wdt_lock(wdt->base);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sprd_wdt_enable(काष्ठा sprd_wdt *wdt)
-अणु
+static int sprd_wdt_enable(struct sprd_wdt *wdt)
+{
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
 	ret = clk_prepare_enable(wdt->enable);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = clk_prepare_enable(wdt->rtc_enable);
-	अगर (ret) अणु
+	if (ret) {
 		clk_disable_unprepare(wdt->enable);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	sprd_wdt_unlock(wdt->base);
-	val = पढ़ोl_relaxed(wdt->base + SPRD_WDT_CTRL);
+	val = readl_relaxed(wdt->base + SPRD_WDT_CTRL);
 	val |= SPRD_WDT_NEW_VER_EN;
-	ग_लिखोl_relaxed(val, wdt->base + SPRD_WDT_CTRL);
+	writel_relaxed(val, wdt->base + SPRD_WDT_CTRL);
 	sprd_wdt_lock(wdt->base);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sprd_wdt_disable(व्योम *_data)
-अणु
-	काष्ठा sprd_wdt *wdt = _data;
+static void sprd_wdt_disable(void *_data)
+{
+	struct sprd_wdt *wdt = _data;
 
 	sprd_wdt_unlock(wdt->base);
-	ग_लिखोl_relaxed(0x0, wdt->base + SPRD_WDT_CTRL);
+	writel_relaxed(0x0, wdt->base + SPRD_WDT_CTRL);
 	sprd_wdt_lock(wdt->base);
 
 	clk_disable_unprepare(wdt->rtc_enable);
 	clk_disable_unprepare(wdt->enable);
-पूर्ण
+}
 
-अटल पूर्णांक sprd_wdt_start(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा sprd_wdt *wdt = to_sprd_wdt(wdd);
+static int sprd_wdt_start(struct watchdog_device *wdd)
+{
+	struct sprd_wdt *wdt = to_sprd_wdt(wdd);
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
-	ret = sprd_wdt_load_value(wdt, wdd->समयout, wdd->preसमयout);
-	अगर (ret)
-		वापस ret;
+	ret = sprd_wdt_load_value(wdt, wdd->timeout, wdd->pretimeout);
+	if (ret)
+		return ret;
 
 	sprd_wdt_unlock(wdt->base);
-	val = पढ़ोl_relaxed(wdt->base + SPRD_WDT_CTRL);
+	val = readl_relaxed(wdt->base + SPRD_WDT_CTRL);
 	val |= SPRD_WDT_CNT_EN_BIT | SPRD_WDT_INT_EN_BIT | SPRD_WDT_RST_EN_BIT;
-	ग_लिखोl_relaxed(val, wdt->base + SPRD_WDT_CTRL);
+	writel_relaxed(val, wdt->base + SPRD_WDT_CTRL);
 	sprd_wdt_lock(wdt->base);
 	set_bit(WDOG_HW_RUNNING, &wdd->status);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sprd_wdt_stop(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा sprd_wdt *wdt = to_sprd_wdt(wdd);
+static int sprd_wdt_stop(struct watchdog_device *wdd)
+{
+	struct sprd_wdt *wdt = to_sprd_wdt(wdd);
 	u32 val;
 
 	sprd_wdt_unlock(wdt->base);
-	val = पढ़ोl_relaxed(wdt->base + SPRD_WDT_CTRL);
+	val = readl_relaxed(wdt->base + SPRD_WDT_CTRL);
 	val &= ~(SPRD_WDT_CNT_EN_BIT | SPRD_WDT_RST_EN_BIT |
 		SPRD_WDT_INT_EN_BIT);
-	ग_लिखोl_relaxed(val, wdt->base + SPRD_WDT_CTRL);
+	writel_relaxed(val, wdt->base + SPRD_WDT_CTRL);
 	sprd_wdt_lock(wdt->base);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sprd_wdt_set_समयout(काष्ठा watchकरोg_device *wdd,
-				u32 समयout)
-अणु
-	काष्ठा sprd_wdt *wdt = to_sprd_wdt(wdd);
+static int sprd_wdt_set_timeout(struct watchdog_device *wdd,
+				u32 timeout)
+{
+	struct sprd_wdt *wdt = to_sprd_wdt(wdd);
 
-	अगर (समयout == wdd->समयout)
-		वापस 0;
+	if (timeout == wdd->timeout)
+		return 0;
 
-	wdd->समयout = समयout;
+	wdd->timeout = timeout;
 
-	वापस sprd_wdt_load_value(wdt, समयout, wdd->preसमयout);
-पूर्ण
+	return sprd_wdt_load_value(wdt, timeout, wdd->pretimeout);
+}
 
-अटल पूर्णांक sprd_wdt_set_preसमयout(काष्ठा watchकरोg_device *wdd,
-				   u32 new_preसमयout)
-अणु
-	काष्ठा sprd_wdt *wdt = to_sprd_wdt(wdd);
+static int sprd_wdt_set_pretimeout(struct watchdog_device *wdd,
+				   u32 new_pretimeout)
+{
+	struct sprd_wdt *wdt = to_sprd_wdt(wdd);
 
-	अगर (new_preसमयout < wdd->min_समयout)
-		वापस -EINVAL;
+	if (new_pretimeout < wdd->min_timeout)
+		return -EINVAL;
 
-	wdd->preसमयout = new_preसमयout;
+	wdd->pretimeout = new_pretimeout;
 
-	वापस sprd_wdt_load_value(wdt, wdd->समयout, new_preसमयout);
-पूर्ण
+	return sprd_wdt_load_value(wdt, wdd->timeout, new_pretimeout);
+}
 
-अटल u32 sprd_wdt_get_समयleft(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा sprd_wdt *wdt = to_sprd_wdt(wdd);
+static u32 sprd_wdt_get_timeleft(struct watchdog_device *wdd)
+{
+	struct sprd_wdt *wdt = to_sprd_wdt(wdd);
 	u32 val;
 
 	val = sprd_wdt_get_cnt_value(wdt);
-	वापस val / SPRD_WDT_CNT_STEP;
-पूर्ण
+	return val / SPRD_WDT_CNT_STEP;
+}
 
-अटल स्थिर काष्ठा watchकरोg_ops sprd_wdt_ops = अणु
+static const struct watchdog_ops sprd_wdt_ops = {
 	.owner = THIS_MODULE,
 	.start = sprd_wdt_start,
 	.stop = sprd_wdt_stop,
-	.set_समयout = sprd_wdt_set_समयout,
-	.set_preसमयout = sprd_wdt_set_preसमयout,
-	.get_समयleft = sprd_wdt_get_समयleft,
-पूर्ण;
+	.set_timeout = sprd_wdt_set_timeout,
+	.set_pretimeout = sprd_wdt_set_pretimeout,
+	.get_timeleft = sprd_wdt_get_timeleft,
+};
 
-अटल स्थिर काष्ठा watchकरोg_info sprd_wdt_info = अणु
+static const struct watchdog_info sprd_wdt_info = {
 	.options = WDIOF_SETTIMEOUT |
 		   WDIOF_PRETIMEOUT |
 		   WDIOF_MAGICCLOSE |
 		   WDIOF_KEEPALIVEPING,
 	.identity = "Spreadtrum Watchdog Timer",
-पूर्ण;
+};
 
-अटल पूर्णांक sprd_wdt_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा sprd_wdt *wdt;
-	पूर्णांक ret;
+static int sprd_wdt_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct sprd_wdt *wdt;
+	int ret;
 
-	wdt = devm_kzalloc(dev, माप(*wdt), GFP_KERNEL);
-	अगर (!wdt)
-		वापस -ENOMEM;
+	wdt = devm_kzalloc(dev, sizeof(*wdt), GFP_KERNEL);
+	if (!wdt)
+		return -ENOMEM;
 
-	wdt->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(wdt->base))
-		वापस PTR_ERR(wdt->base);
+	wdt->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(wdt->base))
+		return PTR_ERR(wdt->base);
 
 	wdt->enable = devm_clk_get(dev, "enable");
-	अगर (IS_ERR(wdt->enable)) अणु
+	if (IS_ERR(wdt->enable)) {
 		dev_err(dev, "can't get the enable clock\n");
-		वापस PTR_ERR(wdt->enable);
-	पूर्ण
+		return PTR_ERR(wdt->enable);
+	}
 
 	wdt->rtc_enable = devm_clk_get(dev, "rtc_enable");
-	अगर (IS_ERR(wdt->rtc_enable)) अणु
+	if (IS_ERR(wdt->rtc_enable)) {
 		dev_err(dev, "can't get the rtc enable clock\n");
-		वापस PTR_ERR(wdt->rtc_enable);
-	पूर्ण
+		return PTR_ERR(wdt->rtc_enable);
+	}
 
-	wdt->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (wdt->irq < 0)
-		वापस wdt->irq;
+	wdt->irq = platform_get_irq(pdev, 0);
+	if (wdt->irq < 0)
+		return wdt->irq;
 
 	ret = devm_request_irq(dev, wdt->irq, sprd_wdt_isr, IRQF_NO_SUSPEND,
-			       "sprd-wdt", (व्योम *)wdt);
-	अगर (ret) अणु
+			       "sprd-wdt", (void *)wdt);
+	if (ret) {
 		dev_err(dev, "failed to register irq\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	wdt->wdd.info = &sprd_wdt_info;
 	wdt->wdd.ops = &sprd_wdt_ops;
 	wdt->wdd.parent = dev;
-	wdt->wdd.min_समयout = SPRD_WDT_MIN_TIMEOUT;
-	wdt->wdd.max_समयout = SPRD_WDT_MAX_TIMEOUT;
-	wdt->wdd.समयout = SPRD_WDT_MAX_TIMEOUT;
+	wdt->wdd.min_timeout = SPRD_WDT_MIN_TIMEOUT;
+	wdt->wdd.max_timeout = SPRD_WDT_MAX_TIMEOUT;
+	wdt->wdd.timeout = SPRD_WDT_MAX_TIMEOUT;
 
 	ret = sprd_wdt_enable(wdt);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to enable wdt\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	ret = devm_add_action_or_reset(dev, sprd_wdt_disable, wdt);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to add wdt disable action\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	watchकरोg_set_nowayout(&wdt->wdd, WATCHDOG_NOWAYOUT);
-	watchकरोg_init_समयout(&wdt->wdd, 0, dev);
+	watchdog_set_nowayout(&wdt->wdd, WATCHDOG_NOWAYOUT);
+	watchdog_init_timeout(&wdt->wdd, 0, dev);
 
-	ret = devm_watchकरोg_रेजिस्टर_device(dev, &wdt->wdd);
-	अगर (ret) अणु
+	ret = devm_watchdog_register_device(dev, &wdt->wdd);
+	if (ret) {
 		sprd_wdt_disable(wdt);
-		वापस ret;
-	पूर्ण
-	platक्रमm_set_drvdata(pdev, wdt);
+		return ret;
+	}
+	platform_set_drvdata(pdev, wdt);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused sprd_wdt_pm_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा sprd_wdt *wdt = dev_get_drvdata(dev);
+static int __maybe_unused sprd_wdt_pm_suspend(struct device *dev)
+{
+	struct sprd_wdt *wdt = dev_get_drvdata(dev);
 
-	अगर (watchकरोg_active(&wdt->wdd))
+	if (watchdog_active(&wdt->wdd))
 		sprd_wdt_stop(&wdt->wdd);
 	sprd_wdt_disable(wdt);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused sprd_wdt_pm_resume(काष्ठा device *dev)
-अणु
-	काष्ठा sprd_wdt *wdt = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int __maybe_unused sprd_wdt_pm_resume(struct device *dev)
+{
+	struct sprd_wdt *wdt = dev_get_drvdata(dev);
+	int ret;
 
 	ret = sprd_wdt_enable(wdt);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (watchकरोg_active(&wdt->wdd))
+	if (watchdog_active(&wdt->wdd))
 		ret = sprd_wdt_start(&wdt->wdd);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops sprd_wdt_pm_ops = अणु
+static const struct dev_pm_ops sprd_wdt_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(sprd_wdt_pm_suspend,
 				sprd_wdt_pm_resume)
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id sprd_wdt_match_table[] = अणु
-	अणु .compatible = "sprd,sp9860-wdt", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id sprd_wdt_match_table[] = {
+	{ .compatible = "sprd,sp9860-wdt", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, sprd_wdt_match_table);
 
-अटल काष्ठा platक्रमm_driver sprd_watchकरोg_driver = अणु
+static struct platform_driver sprd_watchdog_driver = {
 	.probe	= sprd_wdt_probe,
-	.driver	= अणु
+	.driver	= {
 		.name = "sprd-wdt",
 		.of_match_table = sprd_wdt_match_table,
 		.pm = &sprd_wdt_pm_ops,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(sprd_watchकरोg_driver);
+	},
+};
+module_platform_driver(sprd_watchdog_driver);
 
 MODULE_AUTHOR("Eric Long <eric.long@spreadtrum.com>");
 MODULE_DESCRIPTION("Spreadtrum Watchdog Timer Controller Driver");

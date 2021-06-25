@@ -1,18 +1,17 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2020 NXP
  *
- * File containing client-side RPC functions क्रम the RM service. These
+ * File containing client-side RPC functions for the RM service. These
  * function are ported to clients that communicate to the SC.
  */
 
-#समावेश <linux/firmware/imx/svc/rm.h>
+#include <linux/firmware/imx/svc/rm.h>
 
-काष्ठा imx_sc_msg_rm_rsrc_owned अणु
-	काष्ठा imx_sc_rpc_msg hdr;
+struct imx_sc_msg_rm_rsrc_owned {
+	struct imx_sc_rpc_msg hdr;
 	u16 resource;
-पूर्ण __packed __aligned(4);
+} __packed __aligned(4);
 
 /*
  * This function check @resource is owned by current partition or not
@@ -20,12 +19,12 @@
  * @param[in]     ipc         IPC handle
  * @param[in]     resource    resource the control is associated with
  *
- * @वापस Returns 0 क्रम not owned and 1 क्रम owned.
+ * @return Returns 0 for not owned and 1 for owned.
  */
-bool imx_sc_rm_is_resource_owned(काष्ठा imx_sc_ipc *ipc, u16 resource)
-अणु
-	काष्ठा imx_sc_msg_rm_rsrc_owned msg;
-	काष्ठा imx_sc_rpc_msg *hdr = &msg.hdr;
+bool imx_sc_rm_is_resource_owned(struct imx_sc_ipc *ipc, u16 resource)
+{
+	struct imx_sc_msg_rm_rsrc_owned msg;
+	struct imx_sc_rpc_msg *hdr = &msg.hdr;
 
 	hdr->ver = IMX_SC_RPC_VERSION;
 	hdr->svc = IMX_SC_RPC_SVC_RM;
@@ -35,12 +34,12 @@ bool imx_sc_rm_is_resource_owned(काष्ठा imx_sc_ipc *ipc, u16 resourc
 	msg.resource = resource;
 
 	/*
-	 * SCU firmware only वापसs value 0 or 1
-	 * क्रम resource owned check which means not owned or owned.
+	 * SCU firmware only returns value 0 or 1
+	 * for resource owned check which means not owned or owned.
 	 * So it is always successful.
 	 */
 	imx_scu_call_rpc(ipc, &msg, true);
 
-	वापस hdr->func;
-पूर्ण
+	return hdr->func;
+}
 EXPORT_SYMBOL(imx_sc_rm_is_resource_owned);

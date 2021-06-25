@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * cs47l24.h  --  ALSA SoC Audio driver क्रम Cirrus Logic CS47L24
+ * cs47l24.h  --  ALSA SoC Audio driver for Cirrus Logic CS47L24
  *
  * Copyright 2015 Cirrus Logic Inc.
  *
- * Author: Riअक्षरd Fitzgerald <rf@खोलोsource.wolfsonmicro.com>
+ * Author: Richard Fitzgerald <rf@opensource.wolfsonmicro.com>
  */
 
-#अगर_अघोषित _CS47L24_H
-#घोषणा _CS47L24_H
+#ifndef _CS47L24_H
+#define _CS47L24_H
 
-#समावेश "arizona.h"
+#include "arizona.h"
 
-#घोषणा CS47L24_FLL1        1
-#घोषणा CS47L24_FLL2        2
-#घोषणा CS47L24_FLL1_REFCLK 3
-#घोषणा CS47L24_FLL2_REFCLK 4
+#define CS47L24_FLL1        1
+#define CS47L24_FLL2        2
+#define CS47L24_FLL1_REFCLK 3
+#define CS47L24_FLL2_REFCLK 4
 
-#पूर्ण_अगर
+#endif

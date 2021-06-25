@@ -1,474 +1,473 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Linux/PA-RISC Project (http://www.parisc-linux.org/)
  *
- * Floating-poपूर्णांक emulation code
+ * Floating-point emulation code
  *  Copyright (C) 2001 Hewlett-Packard (Paul Bame) <bame@debian.org>
  */
 
-#अगर_घोषित __NO_PA_HDRS
-    PA header file -- करो not include this header file क्रम non-PA builds.
-#पूर्ण_अगर
+#ifdef __NO_PA_HDRS
+    PA header file -- do not include this header file for non-PA builds.
+#endif
 
 /* 32-bit word grabbing functions */
-#घोषणा Sgl_firstword(value) Sall(value)
-#घोषणा Sgl_secondword(value) dummy_location
-#घोषणा Sgl_thirdword(value) dummy_location
-#घोषणा Sgl_fourthword(value) dummy_location
+#define Sgl_firstword(value) Sall(value)
+#define Sgl_secondword(value) dummy_location
+#define Sgl_thirdword(value) dummy_location
+#define Sgl_fourthword(value) dummy_location
 
-#घोषणा Sgl_sign(object) Ssign(object)
-#घोषणा Sgl_exponent(object) Sexponent(object)
-#घोषणा Sgl_signexponent(object) Ssignexponent(object)
-#घोषणा Sgl_mantissa(object) Smantissa(object)
-#घोषणा Sgl_exponenपंचांगantissa(object) Sexponenपंचांगantissa(object)
-#घोषणा Sgl_all(object) Sall(object)
+#define Sgl_sign(object) Ssign(object)
+#define Sgl_exponent(object) Sexponent(object)
+#define Sgl_signexponent(object) Ssignexponent(object)
+#define Sgl_mantissa(object) Smantissa(object)
+#define Sgl_exponentmantissa(object) Sexponentmantissa(object)
+#define Sgl_all(object) Sall(object)
 
-/* sgl_and_signs ANDs the sign bits of each argument and माला_दो the result
- * पूर्णांकo the first argument. sgl_or_signs ors those same sign bits */
-#घोषणा Sgl_and_signs( src1dst, src2)		\
-    Sall(src1dst) = (Sall(src2)|~((अचिन्हित पूर्णांक)1<<31)) & Sall(src1dst)
-#घोषणा Sgl_or_signs( src1dst, src2)		\
-    Sall(src1dst) = (Sall(src2)&((अचिन्हित पूर्णांक)1<<31)) | Sall(src1dst)
+/* sgl_and_signs ANDs the sign bits of each argument and puts the result
+ * into the first argument. sgl_or_signs ors those same sign bits */
+#define Sgl_and_signs( src1dst, src2)		\
+    Sall(src1dst) = (Sall(src2)|~((unsigned int)1<<31)) & Sall(src1dst)
+#define Sgl_or_signs( src1dst, src2)		\
+    Sall(src1dst) = (Sall(src2)&((unsigned int)1<<31)) | Sall(src1dst)
 
 /* The hidden bit is always the low bit of the exponent */
-#घोषणा Sgl_clear_exponent_set_hidden(srcdst) Deposit_sexponent(srcdst,1)
-#घोषणा Sgl_clear_signexponent_set_hidden(srcdst) \
+#define Sgl_clear_exponent_set_hidden(srcdst) Deposit_sexponent(srcdst,1)
+#define Sgl_clear_signexponent_set_hidden(srcdst) \
     Deposit_ssignexponent(srcdst,1)
-#घोषणा Sgl_clear_sign(srcdst) Sall(srcdst) &= ~((अचिन्हित पूर्णांक)1<<31)
-#घोषणा Sgl_clear_signexponent(srcdst) Sall(srcdst) &= 0x007fffff
+#define Sgl_clear_sign(srcdst) Sall(srcdst) &= ~((unsigned int)1<<31)
+#define Sgl_clear_signexponent(srcdst) Sall(srcdst) &= 0x007fffff
 
-/* varamount must be less than 32 क्रम the next three functions */
-#घोषणा Sgl_rightshअगरt(srcdst, varamount)	\
+/* varamount must be less than 32 for the next three functions */
+#define Sgl_rightshift(srcdst, varamount)	\
     Sall(srcdst) >>= varamount
-#घोषणा Sgl_leftshअगरt(srcdst, varamount)	\
+#define Sgl_leftshift(srcdst, varamount)	\
     Sall(srcdst) <<= varamount
-#घोषणा Sgl_rightshअगरt_exponenपंचांगantissa(srcdst, varamount) \
+#define Sgl_rightshift_exponentmantissa(srcdst, varamount) \
     Sall(srcdst) = \
-	(Sexponenपंचांगantissa(srcdst) >> varamount) | \
-	(Sall(srcdst) & ((अचिन्हित पूर्णांक)1<<31))
+	(Sexponentmantissa(srcdst) >> varamount) | \
+	(Sall(srcdst) & ((unsigned int)1<<31))
 
-#घोषणा Sgl_leftshअगरtby1_withextent(left,right,result) \
-    Shअगरtद्विगुन(Sall(left),Extall(right),31,Sall(result))
+#define Sgl_leftshiftby1_withextent(left,right,result) \
+    Shiftdouble(Sall(left),Extall(right),31,Sall(result))
     
-#घोषणा Sgl_rightshअगरtby1_withextent(left,right,dst)		\
-    Shअगरtद्विगुन(Sall(left),Extall(right),1,Extall(right))
-#घोषणा Sgl_arithrightshअगरtby1(srcdst)	\
-    Sall(srcdst) = (पूर्णांक)Sall(srcdst) >> 1
+#define Sgl_rightshiftby1_withextent(left,right,dst)		\
+    Shiftdouble(Sall(left),Extall(right),1,Extall(right))
+#define Sgl_arithrightshiftby1(srcdst)	\
+    Sall(srcdst) = (int)Sall(srcdst) >> 1
     
-/* Sign extend the sign bit with an पूर्णांकeger destination */
-#घोषणा Sgl_signextendedsign(value) Sचिन्हितsign(value)
+/* Sign extend the sign bit with an integer destination */
+#define Sgl_signextendedsign(value) Ssignedsign(value)
 
-#घोषणा Sgl_isone_hidden(sgl_value) (Shidden(sgl_value))
-#घोषणा Sgl_increment(sgl_value) Sall(sgl_value) += 1
-#घोषणा Sgl_increment_mantissa(sgl_value) \
+#define Sgl_isone_hidden(sgl_value) (Shidden(sgl_value))
+#define Sgl_increment(sgl_value) Sall(sgl_value) += 1
+#define Sgl_increment_mantissa(sgl_value) \
     Deposit_smantissa(sgl_value,sgl_value+1)
-#घोषणा Sgl_decrement(sgl_value) Sall(sgl_value) -= 1
+#define Sgl_decrement(sgl_value) Sall(sgl_value) -= 1
 
-#घोषणा Sgl_isone_sign(sgl_value) (Is_ssign(sgl_value)!=0)
-#घोषणा Sgl_isone_hiddenoverflow(sgl_value) \
+#define Sgl_isone_sign(sgl_value) (Is_ssign(sgl_value)!=0)
+#define Sgl_isone_hiddenoverflow(sgl_value) \
     (Is_shiddenoverflow(sgl_value)!=0)
-#घोषणा Sgl_isone_lowmantissa(sgl_value) (Is_slow(sgl_value)!=0)
-#घोषणा Sgl_isone_संकेतing(sgl_value) (Is_sसंकेतing(sgl_value)!=0)
-#घोषणा Sgl_is_संकेतingnan(sgl_value) (Sसंकेतingnan(sgl_value)==0x1ff)
-#घोषणा Sgl_isnotzero(sgl_value) (Sall(sgl_value)!=0)
-#घोषणा Sgl_isnotzero_hiddenhigh7mantissa(sgl_value) \
+#define Sgl_isone_lowmantissa(sgl_value) (Is_slow(sgl_value)!=0)
+#define Sgl_isone_signaling(sgl_value) (Is_ssignaling(sgl_value)!=0)
+#define Sgl_is_signalingnan(sgl_value) (Ssignalingnan(sgl_value)==0x1ff)
+#define Sgl_isnotzero(sgl_value) (Sall(sgl_value)!=0)
+#define Sgl_isnotzero_hiddenhigh7mantissa(sgl_value) \
     (Shiddenhigh7mantissa(sgl_value)!=0)
-#घोषणा Sgl_isnotzero_low4(sgl_value) (Slow4(sgl_value)!=0)
-#घोषणा Sgl_isnotzero_exponent(sgl_value) (Sexponent(sgl_value)!=0)
-#घोषणा Sgl_isnotzero_mantissa(sgl_value) (Smantissa(sgl_value)!=0)
-#घोषणा Sgl_isnotzero_exponenपंचांगantissa(sgl_value) \
-    (Sexponenपंचांगantissa(sgl_value)!=0)
-#घोषणा Sgl_iszero(sgl_value) (Sall(sgl_value)==0)
-#घोषणा Sgl_iszero_संकेतing(sgl_value) (Is_sसंकेतing(sgl_value)==0)
-#घोषणा Sgl_iszero_hidden(sgl_value) (Is_shidden(sgl_value)==0)
-#घोषणा Sgl_iszero_hiddenoverflow(sgl_value) \
+#define Sgl_isnotzero_low4(sgl_value) (Slow4(sgl_value)!=0)
+#define Sgl_isnotzero_exponent(sgl_value) (Sexponent(sgl_value)!=0)
+#define Sgl_isnotzero_mantissa(sgl_value) (Smantissa(sgl_value)!=0)
+#define Sgl_isnotzero_exponentmantissa(sgl_value) \
+    (Sexponentmantissa(sgl_value)!=0)
+#define Sgl_iszero(sgl_value) (Sall(sgl_value)==0)
+#define Sgl_iszero_signaling(sgl_value) (Is_ssignaling(sgl_value)==0)
+#define Sgl_iszero_hidden(sgl_value) (Is_shidden(sgl_value)==0)
+#define Sgl_iszero_hiddenoverflow(sgl_value) \
     (Is_shiddenoverflow(sgl_value)==0)
-#घोषणा Sgl_iszero_hiddenhigh3mantissa(sgl_value) \
+#define Sgl_iszero_hiddenhigh3mantissa(sgl_value) \
     (Shiddenhigh3mantissa(sgl_value)==0)
-#घोषणा Sgl_iszero_hiddenhigh7mantissa(sgl_value) \
+#define Sgl_iszero_hiddenhigh7mantissa(sgl_value) \
     (Shiddenhigh7mantissa(sgl_value)==0)
-#घोषणा Sgl_iszero_sign(sgl_value) (Is_ssign(sgl_value)==0)
-#घोषणा Sgl_iszero_exponent(sgl_value) (Sexponent(sgl_value)==0)
-#घोषणा Sgl_iszero_mantissa(sgl_value) (Smantissa(sgl_value)==0)
-#घोषणा Sgl_iszero_exponenपंचांगantissa(sgl_value) \
-    (Sexponenपंचांगantissa(sgl_value)==0)
-#घोषणा Sgl_isinfinity_exponent(sgl_value) 		\
-    (Sgl_exponent(sgl_value)==SGL_अनन्त_EXPONENT)
-#घोषणा Sgl_isnotinfinity_exponent(sgl_value) 		\
-    (Sgl_exponent(sgl_value)!=SGL_अनन्त_EXPONENT)
-#घोषणा Sgl_isinfinity(sgl_value)			\
-    (Sgl_exponent(sgl_value)==SGL_अनन्त_EXPONENT &&	\
+#define Sgl_iszero_sign(sgl_value) (Is_ssign(sgl_value)==0)
+#define Sgl_iszero_exponent(sgl_value) (Sexponent(sgl_value)==0)
+#define Sgl_iszero_mantissa(sgl_value) (Smantissa(sgl_value)==0)
+#define Sgl_iszero_exponentmantissa(sgl_value) \
+    (Sexponentmantissa(sgl_value)==0)
+#define Sgl_isinfinity_exponent(sgl_value) 		\
+    (Sgl_exponent(sgl_value)==SGL_INFINITY_EXPONENT)
+#define Sgl_isnotinfinity_exponent(sgl_value) 		\
+    (Sgl_exponent(sgl_value)!=SGL_INFINITY_EXPONENT)
+#define Sgl_isinfinity(sgl_value)			\
+    (Sgl_exponent(sgl_value)==SGL_INFINITY_EXPONENT &&	\
     Sgl_mantissa(sgl_value)==0)
-#घोषणा Sgl_isnan(sgl_value)				\
-    (Sgl_exponent(sgl_value)==SGL_अनन्त_EXPONENT &&	\
+#define Sgl_isnan(sgl_value)				\
+    (Sgl_exponent(sgl_value)==SGL_INFINITY_EXPONENT &&	\
     Sgl_mantissa(sgl_value)!=0)
-#घोषणा Sgl_isnotnan(sgl_value)				\
-    (Sgl_exponent(sgl_value)!=SGL_अनन्त_EXPONENT ||	\
+#define Sgl_isnotnan(sgl_value)				\
+    (Sgl_exponent(sgl_value)!=SGL_INFINITY_EXPONENT ||	\
     Sgl_mantissa(sgl_value)==0)
-#घोषणा Sgl_islessthan(sgl_op1,sgl_op2)			\
+#define Sgl_islessthan(sgl_op1,sgl_op2)			\
     (Sall(sgl_op1) < Sall(sgl_op2))
-#घोषणा Sgl_isgreaterthan(sgl_op1,sgl_op2)		\
+#define Sgl_isgreaterthan(sgl_op1,sgl_op2)		\
     (Sall(sgl_op1) > Sall(sgl_op2))
-#घोषणा Sgl_isnotlessthan(sgl_op1,sgl_op2)		\
+#define Sgl_isnotlessthan(sgl_op1,sgl_op2)		\
     (Sall(sgl_op1) >= Sall(sgl_op2))
-#घोषणा Sgl_isequal(sgl_op1,sgl_op2)			\
+#define Sgl_isequal(sgl_op1,sgl_op2)			\
     (Sall(sgl_op1) == Sall(sgl_op2))
 
-#घोषणा Sgl_leftshअगरtby8(sgl_value) \
+#define Sgl_leftshiftby8(sgl_value) \
     Sall(sgl_value) <<= 8
-#घोषणा Sgl_leftshअगरtby4(sgl_value) \
+#define Sgl_leftshiftby4(sgl_value) \
     Sall(sgl_value) <<= 4
-#घोषणा Sgl_leftshअगरtby3(sgl_value) \
+#define Sgl_leftshiftby3(sgl_value) \
     Sall(sgl_value) <<= 3
-#घोषणा Sgl_leftshअगरtby2(sgl_value) \
+#define Sgl_leftshiftby2(sgl_value) \
     Sall(sgl_value) <<= 2
-#घोषणा Sgl_leftshअगरtby1(sgl_value) \
+#define Sgl_leftshiftby1(sgl_value) \
     Sall(sgl_value) <<= 1
-#घोषणा Sgl_rightshअगरtby1(sgl_value) \
+#define Sgl_rightshiftby1(sgl_value) \
     Sall(sgl_value) >>= 1
-#घोषणा Sgl_rightshअगरtby4(sgl_value) \
+#define Sgl_rightshiftby4(sgl_value) \
     Sall(sgl_value) >>= 4
-#घोषणा Sgl_rightshअगरtby8(sgl_value) \
+#define Sgl_rightshiftby8(sgl_value) \
     Sall(sgl_value) >>= 8
     
-#घोषणा Sgl_ismagnitudeless(signlessleft,signlessright)			\
-/*  अचिन्हित पूर्णांक signlessleft, signlessright; */			\
+#define Sgl_ismagnitudeless(signlessleft,signlessright)			\
+/*  unsigned int signlessleft, signlessright; */			\
       (signlessleft < signlessright)  
     
 
-#घोषणा Sgl_copytoपूर्णांक_exponenपंचांगantissa(source,dest)     \
-    dest = Sexponenपंचांगantissa(source)
+#define Sgl_copytoint_exponentmantissa(source,dest)     \
+    dest = Sexponentmantissa(source)
 
 /* A quiet NaN has the high mantissa bit clear and at least on other (in this
- * हाल the adjacent bit) bit set. */
-#घोषणा Sgl_set_quiet(sgl_value) Deposit_shigh2mantissa(sgl_value,1)
-#घोषणा Sgl_set_exponent(sgl_value,exp) Deposit_sexponent(sgl_value,exp)
+ * case the adjacent bit) bit set. */
+#define Sgl_set_quiet(sgl_value) Deposit_shigh2mantissa(sgl_value,1)
+#define Sgl_set_exponent(sgl_value,exp) Deposit_sexponent(sgl_value,exp)
 
-#घोषणा Sgl_set_mantissa(dest,value) Deposit_smantissa(dest,value)
-#घोषणा Sgl_set_exponenपंचांगantissa(dest,value) \
-    Deposit_sexponenपंचांगantissa(dest,value)
+#define Sgl_set_mantissa(dest,value) Deposit_smantissa(dest,value)
+#define Sgl_set_exponentmantissa(dest,value) \
+    Deposit_sexponentmantissa(dest,value)
 
 /*  An infinity is represented with the max exponent and a zero mantissa */
-#घोषणा Sgl_setinfinity_exponent(sgl_value) \
-    Deposit_sexponent(sgl_value,SGL_अनन्त_EXPONENT)
-#घोषणा Sgl_setinfinity_exponenपंचांगantissa(sgl_value)	\
-    Deposit_sexponenपंचांगantissa(sgl_value, \
-	(SGL_अनन्त_EXPONENT << (32-(1+SGL_EXP_LENGTH))))
-#घोषणा Sgl_setinfinitypositive(sgl_value)		\
-    Sall(sgl_value) = (SGL_अनन्त_EXPONENT << (32-(1+SGL_EXP_LENGTH)))
-#घोषणा Sgl_setinfinitynegative(sgl_value)		\
-    Sall(sgl_value) = (SGL_अनन्त_EXPONENT << (32-(1+SGL_EXP_LENGTH))) \
-    | ((अचिन्हित पूर्णांक)1<<31)
-#घोषणा Sgl_setinfinity(sgl_value,sign)					\
-    Sall(sgl_value) = (SGL_अनन्त_EXPONENT << (32-(1+SGL_EXP_LENGTH))) | \
-     ((अचिन्हित पूर्णांक)sign << 31)
-#घोषणा Sgl_sethigh4bits(sgl_value, extsign)  \
+#define Sgl_setinfinity_exponent(sgl_value) \
+    Deposit_sexponent(sgl_value,SGL_INFINITY_EXPONENT)
+#define Sgl_setinfinity_exponentmantissa(sgl_value)	\
+    Deposit_sexponentmantissa(sgl_value, \
+	(SGL_INFINITY_EXPONENT << (32-(1+SGL_EXP_LENGTH))))
+#define Sgl_setinfinitypositive(sgl_value)		\
+    Sall(sgl_value) = (SGL_INFINITY_EXPONENT << (32-(1+SGL_EXP_LENGTH)))
+#define Sgl_setinfinitynegative(sgl_value)		\
+    Sall(sgl_value) = (SGL_INFINITY_EXPONENT << (32-(1+SGL_EXP_LENGTH))) \
+    | ((unsigned int)1<<31)
+#define Sgl_setinfinity(sgl_value,sign)					\
+    Sall(sgl_value) = (SGL_INFINITY_EXPONENT << (32-(1+SGL_EXP_LENGTH))) | \
+     ((unsigned int)sign << 31)
+#define Sgl_sethigh4bits(sgl_value, extsign)  \
     Deposit_shigh4(sgl_value,extsign)
-#घोषणा Sgl_set_sign(sgl_value,sign) Deposit_ssign(sgl_value,sign)
-#घोषणा Sgl_invert_sign(sgl_value)  \
+#define Sgl_set_sign(sgl_value,sign) Deposit_ssign(sgl_value,sign)
+#define Sgl_invert_sign(sgl_value)  \
     Deposit_ssign(sgl_value,~Ssign(sgl_value))
-#घोषणा Sgl_setone_sign(sgl_value) Deposit_ssign(sgl_value,1)
-#घोषणा Sgl_setone_lowmantissa(sgl_value) Deposit_slow(sgl_value,1)
-#घोषणा Sgl_setzero_sign(sgl_value)  Sall(sgl_value) &= 0x7fffffff
-#घोषणा Sgl_setzero_exponent(sgl_value) Sall(sgl_value) &= 0x807fffff
-#घोषणा Sgl_setzero_mantissa(sgl_value) Sall(sgl_value) &= 0xff800000
-#घोषणा Sgl_setzero_exponenपंचांगantissa(sgl_value)  Sall(sgl_value) &= 0x80000000
-#घोषणा Sgl_setzero(sgl_value) Sall(sgl_value) = 0
-#घोषणा Sgl_setnegativezero(sgl_value) Sall(sgl_value) = (अचिन्हित पूर्णांक)1 << 31
+#define Sgl_setone_sign(sgl_value) Deposit_ssign(sgl_value,1)
+#define Sgl_setone_lowmantissa(sgl_value) Deposit_slow(sgl_value,1)
+#define Sgl_setzero_sign(sgl_value)  Sall(sgl_value) &= 0x7fffffff
+#define Sgl_setzero_exponent(sgl_value) Sall(sgl_value) &= 0x807fffff
+#define Sgl_setzero_mantissa(sgl_value) Sall(sgl_value) &= 0xff800000
+#define Sgl_setzero_exponentmantissa(sgl_value)  Sall(sgl_value) &= 0x80000000
+#define Sgl_setzero(sgl_value) Sall(sgl_value) = 0
+#define Sgl_setnegativezero(sgl_value) Sall(sgl_value) = (unsigned int)1 << 31
 
-/* Use following macro क्रम both overflow & underflow conditions */
-#घोषणा ovfl -
-#घोषणा unfl +
-#घोषणा Sgl_setwrapped_exponent(sgl_value,exponent,op) \
+/* Use following macro for both overflow & underflow conditions */
+#define ovfl -
+#define unfl +
+#define Sgl_setwrapped_exponent(sgl_value,exponent,op) \
     Deposit_sexponent(sgl_value,(exponent op SGL_WRAP))
 
-#घोषणा Sgl_setlargestpositive(sgl_value) 				\
+#define Sgl_setlargestpositive(sgl_value) 				\
     Sall(sgl_value) = ((SGL_EMAX+SGL_BIAS) << (32-(1+SGL_EXP_LENGTH)))	\
                       | ((1<<(32-(1+SGL_EXP_LENGTH))) - 1 )
-#घोषणा Sgl_setlargestnegative(sgl_value)				\
+#define Sgl_setlargestnegative(sgl_value)				\
     Sall(sgl_value) = ((SGL_EMAX+SGL_BIAS) << (32-(1+SGL_EXP_LENGTH)))	\
                       | ((1<<(32-(1+SGL_EXP_LENGTH))) - 1 )		\
-		      | ((अचिन्हित पूर्णांक)1<<31)
+		      | ((unsigned int)1<<31)
 
-#घोषणा Sgl_setnegativeinfinity(sgl_value)	\
+#define Sgl_setnegativeinfinity(sgl_value)	\
     Sall(sgl_value) = 				\
-    ((1<<SGL_EXP_LENGTH) | SGL_अनन्त_EXPONENT) << (32-(1+SGL_EXP_LENGTH))
-#घोषणा Sgl_setlargest(sgl_value,sign) 					\
-    Sall(sgl_value) = (अचिन्हित पूर्णांक)sign << 31 |			\
+    ((1<<SGL_EXP_LENGTH) | SGL_INFINITY_EXPONENT) << (32-(1+SGL_EXP_LENGTH))
+#define Sgl_setlargest(sgl_value,sign) 					\
+    Sall(sgl_value) = (unsigned int)sign << 31 |			\
         (((SGL_EMAX+SGL_BIAS) << (32-(1+SGL_EXP_LENGTH)))		\
 	  | ((1 << (32-(1+SGL_EXP_LENGTH))) - 1 ))
-#घोषणा Sgl_setlargest_exponenपंचांगantissa(sgl_value)			\
-    Sall(sgl_value) = Sall(sgl_value) & ((अचिन्हित पूर्णांक)1<<31) |		\
+#define Sgl_setlargest_exponentmantissa(sgl_value)			\
+    Sall(sgl_value) = Sall(sgl_value) & ((unsigned int)1<<31) |		\
         (((SGL_EMAX+SGL_BIAS) << (32-(1+SGL_EXP_LENGTH)))		\
 	  | ((1 << (32-(1+SGL_EXP_LENGTH))) - 1 ))
 
-/* The high bit is always zero so arithmetic or logical shअगरts will work. */
-#घोषणा Sgl_right_align(srcdst,shअगरt,extent)				\
-    /* sgl_भग्नing_poपूर्णांक srcdst; पूर्णांक shअगरt; extension extent */	\
-    अगर (shअगरt < 32) अणु							\
-	Extall(extent) = Sall(srcdst) << (32-(shअगरt));			\
-    	Sall(srcdst) >>= shअगरt;						\
-    पूर्ण									\
-    अन्यथा अणु								\
+/* The high bit is always zero so arithmetic or logical shifts will work. */
+#define Sgl_right_align(srcdst,shift,extent)				\
+    /* sgl_floating_point srcdst; int shift; extension extent */	\
+    if (shift < 32) {							\
+	Extall(extent) = Sall(srcdst) << (32-(shift));			\
+    	Sall(srcdst) >>= shift;						\
+    }									\
+    else {								\
 	Extall(extent) = Sall(srcdst);					\
 	Sall(srcdst) = 0;						\
-    पूर्ण
-#घोषणा Sgl_hiddenhigh3mantissa(sgl_value) Shiddenhigh3mantissa(sgl_value)
-#घोषणा Sgl_hidden(sgl_value) Shidden(sgl_value)
-#घोषणा Sgl_lowmantissa(sgl_value) Slow(sgl_value)
+    }
+#define Sgl_hiddenhigh3mantissa(sgl_value) Shiddenhigh3mantissa(sgl_value)
+#define Sgl_hidden(sgl_value) Shidden(sgl_value)
+#define Sgl_lowmantissa(sgl_value) Slow(sgl_value)
 
 /* The left argument is never smaller than the right argument */
-#घोषणा Sgl_subtract(sgl_left,sgl_right,sgl_result) \
+#define Sgl_subtract(sgl_left,sgl_right,sgl_result) \
     Sall(sgl_result) = Sall(sgl_left) - Sall(sgl_right)
 
 /* Subtract right augmented with extension from left augmented with zeros and
- * store पूर्णांकo result and extension. */
-#घोषणा Sgl_subtract_withextension(left,right,extent,result)		\
-    /* sgl_भग्नing_poपूर्णांक left,right,result; extension extent */	\
+ * store into result and extension. */
+#define Sgl_subtract_withextension(left,right,extent,result)		\
+    /* sgl_floating_point left,right,result; extension extent */	\
   Sgl_subtract(left,right,result);					\
-  अगर((Extall(extent) = 0-Extall(extent)))				\
+  if((Extall(extent) = 0-Extall(extent)))				\
       Sall(result) = Sall(result)-1
 
-#घोषणा Sgl_addition(sgl_left,sgl_right,sgl_result) \
+#define Sgl_addition(sgl_left,sgl_right,sgl_result) \
     Sall(sgl_result) = Sall(sgl_left) + Sall(sgl_right)
 
-#घोषणा Sgl_xortoपूर्णांकp1(left,right,result)			\
+#define Sgl_xortointp1(left,right,result)			\
     result = Sall(left) XOR Sall(right);
 
-#घोषणा Sgl_xorfromपूर्णांकp1(left,right,result)			\
+#define Sgl_xorfromintp1(left,right,result)			\
     Sall(result) = left XOR Sall(right)
 
 /* Need to Initialize */
-#घोषणा Sgl_makequietnan(dest)						\
+#define Sgl_makequietnan(dest)						\
     Sall(dest) = ((SGL_EMAX+SGL_BIAS)+1)<< (32-(1+SGL_EXP_LENGTH))	\
                  | (1<<(32-(1+SGL_EXP_LENGTH+2)))
-#घोषणा Sgl_makeसंकेतingnan(dest)					\
+#define Sgl_makesignalingnan(dest)					\
     Sall(dest) = ((SGL_EMAX+SGL_BIAS)+1)<< (32-(1+SGL_EXP_LENGTH))	\
                  | (1<<(32-(1+SGL_EXP_LENGTH+1)))
 
-#घोषणा Sgl_normalize(sgl_opnd,exponent)			\
-	जबतक(Sgl_iszero_hiddenhigh7mantissa(sgl_opnd)) अणु	\
-		Sgl_leftshअगरtby8(sgl_opnd);			\
+#define Sgl_normalize(sgl_opnd,exponent)			\
+	while(Sgl_iszero_hiddenhigh7mantissa(sgl_opnd)) {	\
+		Sgl_leftshiftby8(sgl_opnd);			\
 		exponent -= 8;					\
-	पूर्ण							\
-	अगर(Sgl_iszero_hiddenhigh3mantissa(sgl_opnd)) अणु		\
-		Sgl_leftshअगरtby4(sgl_opnd);			\
+	}							\
+	if(Sgl_iszero_hiddenhigh3mantissa(sgl_opnd)) {		\
+		Sgl_leftshiftby4(sgl_opnd);			\
 		exponent -= 4;					\
-	पूर्ण							\
-	जबतक(Sgl_iszero_hidden(sgl_opnd)) अणु			\
-		Sgl_leftshअगरtby1(sgl_opnd);			\
+	}							\
+	while(Sgl_iszero_hidden(sgl_opnd)) {			\
+		Sgl_leftshiftby1(sgl_opnd);			\
 		exponent -= 1;					\
-	पूर्ण
+	}
 
-#घोषणा Sgl_setoverflow(sgl_opnd)				\
+#define Sgl_setoverflow(sgl_opnd)				\
 	/* set result to infinity or largest number */		\
-	चयन (Rounding_mode()) अणु				\
-		हाल ROUNDPLUS:					\
-			अगर (Sgl_isone_sign(sgl_opnd)) अणु		\
+	switch (Rounding_mode()) {				\
+		case ROUNDPLUS:					\
+			if (Sgl_isone_sign(sgl_opnd)) {		\
 				Sgl_setlargestnegative(sgl_opnd); \
-			पूर्ण					\
-			अन्यथा अणु					\
+			}					\
+			else {					\
 				Sgl_setinfinitypositive(sgl_opnd); \
-			पूर्ण					\
-			अवरोध;					\
-		हाल ROUNDMINUS:				\
-			अगर (Sgl_iszero_sign(sgl_opnd)) अणु	\
+			}					\
+			break;					\
+		case ROUNDMINUS:				\
+			if (Sgl_iszero_sign(sgl_opnd)) {	\
 				Sgl_setlargestpositive(sgl_opnd); \
-			पूर्ण					\
-			अन्यथा अणु					\
+			}					\
+			else {					\
 				Sgl_setinfinitynegative(sgl_opnd); \
-			पूर्ण					\
-			अवरोध;					\
-		हाल ROUNDNEAREST:				\
-			Sgl_setinfinity_exponenपंचांगantissa(sgl_opnd); \
-			अवरोध;					\
-		हाल ROUNDZERO:					\
-			Sgl_setlargest_exponenपंचांगantissa(sgl_opnd); \
-	पूर्ण
+			}					\
+			break;					\
+		case ROUNDNEAREST:				\
+			Sgl_setinfinity_exponentmantissa(sgl_opnd); \
+			break;					\
+		case ROUNDZERO:					\
+			Sgl_setlargest_exponentmantissa(sgl_opnd); \
+	}
 
-#घोषणा Sgl_denormalize(opnd,exponent,guard,sticky,inexact)		\
+#define Sgl_denormalize(opnd,exponent,guard,sticky,inexact)		\
 	Sgl_clear_signexponent_set_hidden(opnd);			\
-	अगर (exponent >= (1 - SGL_P)) अणु					\
+	if (exponent >= (1 - SGL_P)) {					\
 		guard = (Sall(opnd) >> -exponent) & 1;			\
-		अगर (exponent < 0) sticky |= Sall(opnd) << (32+exponent); \
+		if (exponent < 0) sticky |= Sall(opnd) << (32+exponent); \
 		inexact = guard | sticky;				\
 		Sall(opnd) >>= (1-exponent);				\
-	पूर्ण								\
-	अन्यथा अणु								\
+	}								\
+	else {								\
 		guard = 0;						\
 		sticky |= Sall(opnd);					\
 		inexact = sticky;					\
 		Sgl_setzero(opnd);					\
-	पूर्ण
+	}
 
 /* 
- * The fused multiply add inकाष्ठाions requires a single extended क्रमmat,
+ * The fused multiply add instructions requires a single extended format,
  * with 48 bits of mantissa.
  */
-#घोषणा SGLEXT_THRESHOLD 48
+#define SGLEXT_THRESHOLD 48
 
-#घोषणा Sglext_setzero(valA,valB)	\
+#define Sglext_setzero(valA,valB)	\
     Sextallp1(valA) = 0; Sextallp2(valB) = 0
 
-#घोषणा Sglext_isnotzero_mantissap2(valB) (Sextallp2(valB)!=0)
-#घोषणा Sglext_isone_lowp1(val) (Sextlowp1(val)!=0)
-#घोषणा Sglext_isone_highp2(val) (Sexthighp2(val)!=0)
-#घोषणा Sglext_isnotzero_low31p2(val) (Sextlow31p2(val)!=0)
-#घोषणा Sglext_iszero(valA,valB) (Sextallp1(valA)==0 && Sextallp2(valB)==0)
+#define Sglext_isnotzero_mantissap2(valB) (Sextallp2(valB)!=0)
+#define Sglext_isone_lowp1(val) (Sextlowp1(val)!=0)
+#define Sglext_isone_highp2(val) (Sexthighp2(val)!=0)
+#define Sglext_isnotzero_low31p2(val) (Sextlow31p2(val)!=0)
+#define Sglext_iszero(valA,valB) (Sextallp1(valA)==0 && Sextallp2(valB)==0)
 
-#घोषणा Sgl_copytoptr(src,destptr) *destptr = src
-#घोषणा Sgl_copyfromptr(srcptr,dest) dest = *srcptr
-#घोषणा Sglext_copy(srca,srcb,desta,destb) \
+#define Sgl_copytoptr(src,destptr) *destptr = src
+#define Sgl_copyfromptr(srcptr,dest) dest = *srcptr
+#define Sglext_copy(srca,srcb,desta,destb) \
     Sextallp1(desta) = Sextallp1(srca);	\
     Sextallp2(destb) = Sextallp2(srcb)
-#घोषणा Sgl_copyto_sglext(src1,dest1,dest2) \
+#define Sgl_copyto_sglext(src1,dest1,dest2) \
 	Sextallp1(dest1) = Sall(src1); Sextallp2(dest2) = 0
 
-#घोषणा Sglext_swap_lower(leftp2,rightp2)  \
+#define Sglext_swap_lower(leftp2,rightp2)  \
     Sextallp2(leftp2)  = Sextallp2(leftp2) XOR Sextallp2(rightp2);  \
     Sextallp2(rightp2) = Sextallp2(leftp2) XOR Sextallp2(rightp2);  \
     Sextallp2(leftp2)  = Sextallp2(leftp2) XOR Sextallp2(rightp2)
 
-#घोषणा Sglext_setone_lowmantissap2(value) Deposit_dlowp2(value,1)
+#define Sglext_setone_lowmantissap2(value) Deposit_dlowp2(value,1)
 
-/* The high bit is always zero so arithmetic or logical shअगरts will work. */
-#घोषणा Sglext_right_align(srcdstA,srcdstB,shअगरt) \
-  अणुपूर्णांक shअगरtamt, sticky;						\
-    shअगरtamt = shअगरt % 32;						\
+/* The high bit is always zero so arithmetic or logical shifts will work. */
+#define Sglext_right_align(srcdstA,srcdstB,shift) \
+  {int shiftamt, sticky;						\
+    shiftamt = shift % 32;						\
     sticky = 0;								\
-    चयन (shअगरt/32) अणु							\
-     हाल 0: अगर (shअगरtamt > 0) अणु					\
-	        sticky = Sextallp2(srcdstB) << 32 - (shअगरtamt);		\
-                Variable_shअगरt_द्विगुन(Sextallp1(srcdstA),		\
-		 Sextallp2(srcdstB),shअगरtamt,Sextallp2(srcdstB));	\
-	        Sextallp1(srcdstA) >>= shअगरtamt;			\
-	     पूर्ण								\
-	     अवरोध;							\
-     हाल 1: अगर (shअगरtamt > 0) अणु					\
-	        sticky = (Sextallp1(srcdstA) << 32 - (shअगरtamt)) |	\
+    switch (shift/32) {							\
+     case 0: if (shiftamt > 0) {					\
+	        sticky = Sextallp2(srcdstB) << 32 - (shiftamt);		\
+                Variable_shift_double(Sextallp1(srcdstA),		\
+		 Sextallp2(srcdstB),shiftamt,Sextallp2(srcdstB));	\
+	        Sextallp1(srcdstA) >>= shiftamt;			\
+	     }								\
+	     break;							\
+     case 1: if (shiftamt > 0) {					\
+	        sticky = (Sextallp1(srcdstA) << 32 - (shiftamt)) |	\
 			 Sextallp2(srcdstB);				\
-	     पूर्ण								\
-	     अन्यथा अणु							\
+	     }								\
+	     else {							\
 		sticky = Sextallp2(srcdstB);				\
-	     पूर्ण								\
-	     Sextallp2(srcdstB) = Sextallp1(srcdstA) >> shअगरtamt;	\
+	     }								\
+	     Sextallp2(srcdstB) = Sextallp1(srcdstA) >> shiftamt;	\
 	     Sextallp1(srcdstA) = 0;					\
-	     अवरोध;							\
-    पूर्ण									\
-    अगर (sticky) Sglext_setone_lowmantissap2(srcdstB);			\
-  पूर्ण
+	     break;							\
+    }									\
+    if (sticky) Sglext_setone_lowmantissap2(srcdstB);			\
+  }
 
 /* The left argument is never smaller than the right argument */
-#घोषणा Sglext_subtract(lefta,leftb,righta,rightb,resulta,resultb) \
-    अगर( Sextallp2(rightb) > Sextallp2(leftb) ) Sextallp1(lefta)--; \
+#define Sglext_subtract(lefta,leftb,righta,rightb,resulta,resultb) \
+    if( Sextallp2(rightb) > Sextallp2(leftb) ) Sextallp1(lefta)--; \
     Sextallp2(resultb) = Sextallp2(leftb) - Sextallp2(rightb);	\
     Sextallp1(resulta) = Sextallp1(lefta) - Sextallp1(righta)
 
-#घोषणा Sglext_addition(lefta,leftb,righta,rightb,resulta,resultb) \
+#define Sglext_addition(lefta,leftb,righta,rightb,resulta,resultb) \
     /* If the sum of the low words is less than either source, then \
-     * an overflow पूर्णांकo the next word occurred. */ \
-    अगर ((Sextallp2(resultb) = Sextallp2(leftb)+Sextallp2(rightb)) < \
+     * an overflow into the next word occurred. */ \
+    if ((Sextallp2(resultb) = Sextallp2(leftb)+Sextallp2(rightb)) < \
         Sextallp2(rightb)) \
 	    Sextallp1(resulta) = Sextallp1(lefta)+Sextallp1(righta)+1; \
-    अन्यथा Sextallp1(resulta) = Sextallp1(lefta)+Sextallp1(righta)
+    else Sextallp1(resulta) = Sextallp1(lefta)+Sextallp1(righta)
 
 
-#घोषणा Sglext_arithrightshअगरtby1(srcdstA,srcdstB)	\
-    Shअगरtद्विगुन(Sextallp1(srcdstA),Sextallp2(srcdstB),1,Sextallp2(srcdstB)); \
-    Sextallp1(srcdstA) = (पूर्णांक)Sextallp1(srcdstA) >> 1
+#define Sglext_arithrightshiftby1(srcdstA,srcdstB)	\
+    Shiftdouble(Sextallp1(srcdstA),Sextallp2(srcdstB),1,Sextallp2(srcdstB)); \
+    Sextallp1(srcdstA) = (int)Sextallp1(srcdstA) >> 1
    
-#घोषणा Sglext_leftshअगरtby8(valA,valB) \
-    Shअगरtद्विगुन(Sextallp1(valA),Sextallp2(valB),24,Sextallp1(valA)); \
+#define Sglext_leftshiftby8(valA,valB) \
+    Shiftdouble(Sextallp1(valA),Sextallp2(valB),24,Sextallp1(valA)); \
     Sextallp2(valB) <<= 8
-#घोषणा Sglext_leftshअगरtby4(valA,valB) \
-    Shअगरtद्विगुन(Sextallp1(valA),Sextallp2(valB),28,Sextallp1(valA)); \
+#define Sglext_leftshiftby4(valA,valB) \
+    Shiftdouble(Sextallp1(valA),Sextallp2(valB),28,Sextallp1(valA)); \
     Sextallp2(valB) <<= 4
-#घोषणा Sglext_leftshअगरtby3(valA,valB) \
-    Shअगरtद्विगुन(Sextallp1(valA),Sextallp2(valB),29,Sextallp1(valA)); \
+#define Sglext_leftshiftby3(valA,valB) \
+    Shiftdouble(Sextallp1(valA),Sextallp2(valB),29,Sextallp1(valA)); \
     Sextallp2(valB) <<= 3
-#घोषणा Sglext_leftshअगरtby2(valA,valB) \
-    Shअगरtद्विगुन(Sextallp1(valA),Sextallp2(valB),30,Sextallp1(valA)); \
+#define Sglext_leftshiftby2(valA,valB) \
+    Shiftdouble(Sextallp1(valA),Sextallp2(valB),30,Sextallp1(valA)); \
     Sextallp2(valB) <<= 2
-#घोषणा Sglext_leftshअगरtby1(valA,valB) \
-    Shअगरtद्विगुन(Sextallp1(valA),Sextallp2(valB),31,Sextallp1(valA)); \
+#define Sglext_leftshiftby1(valA,valB) \
+    Shiftdouble(Sextallp1(valA),Sextallp2(valB),31,Sextallp1(valA)); \
     Sextallp2(valB) <<= 1
 
-#घोषणा Sglext_rightshअगरtby4(valueA,valueB) \
-    Shअगरtद्विगुन(Sextallp1(valueA),Sextallp2(valueB),4,Sextallp2(valueB)); \
+#define Sglext_rightshiftby4(valueA,valueB) \
+    Shiftdouble(Sextallp1(valueA),Sextallp2(valueB),4,Sextallp2(valueB)); \
     Sextallp1(valueA) >>= 4
-#घोषणा Sglext_rightshअगरtby3(valueA,valueB) \
-    Shअगरtद्विगुन(Sextallp1(valueA),Sextallp2(valueB),3,Sextallp2(valueB)); \
+#define Sglext_rightshiftby3(valueA,valueB) \
+    Shiftdouble(Sextallp1(valueA),Sextallp2(valueB),3,Sextallp2(valueB)); \
     Sextallp1(valueA) >>= 3
-#घोषणा Sglext_rightshअगरtby1(valueA,valueB) \
-    Shअगरtद्विगुन(Sextallp1(valueA),Sextallp2(valueB),1,Sextallp2(valueB)); \
+#define Sglext_rightshiftby1(valueA,valueB) \
+    Shiftdouble(Sextallp1(valueA),Sextallp2(valueB),1,Sextallp2(valueB)); \
     Sextallp1(valueA) >>= 1
 
-#घोषणा Sglext_xortoपूर्णांकp1(left,right,result) Sgl_xortoपूर्णांकp1(left,right,result)
-#घोषणा Sglext_xorfromपूर्णांकp1(left,right,result) \
-	Sgl_xorfromपूर्णांकp1(left,right,result)
-#घोषणा Sglext_copytoपूर्णांक_exponenपंचांगantissa(src,dest) \
-	Sgl_copytoपूर्णांक_exponenपंचांगantissa(src,dest)
-#घोषणा Sglext_ismagnitudeless(signlessleft,signlessright) \
+#define Sglext_xortointp1(left,right,result) Sgl_xortointp1(left,right,result)
+#define Sglext_xorfromintp1(left,right,result) \
+	Sgl_xorfromintp1(left,right,result)
+#define Sglext_copytoint_exponentmantissa(src,dest) \
+	Sgl_copytoint_exponentmantissa(src,dest)
+#define Sglext_ismagnitudeless(signlessleft,signlessright) \
 	Sgl_ismagnitudeless(signlessleft,signlessright)
 
-#घोषणा Sglext_set_sign(dbl_value,sign)  Sgl_set_sign(dbl_value,sign)  
-#घोषणा Sglext_clear_signexponent_set_hidden(srcdst) \
+#define Sglext_set_sign(dbl_value,sign)  Sgl_set_sign(dbl_value,sign)  
+#define Sglext_clear_signexponent_set_hidden(srcdst) \
 	Sgl_clear_signexponent_set_hidden(srcdst) 
-#घोषणा Sglext_clear_signexponent(srcdst) Sgl_clear_signexponent(srcdst) 
-#घोषणा Sglext_clear_sign(srcdst) Sgl_clear_sign(srcdst) 
-#घोषणा Sglext_isone_hidden(dbl_value) Sgl_isone_hidden(dbl_value) 
+#define Sglext_clear_signexponent(srcdst) Sgl_clear_signexponent(srcdst) 
+#define Sglext_clear_sign(srcdst) Sgl_clear_sign(srcdst) 
+#define Sglext_isone_hidden(dbl_value) Sgl_isone_hidden(dbl_value) 
 
-#घोषणा Sglext_denormalize(opndp1,opndp2,exponent,is_tiny)		\
-  अणुपूर्णांक sticky;								\
+#define Sglext_denormalize(opndp1,opndp2,exponent,is_tiny)		\
+  {int sticky;								\
     is_tiny = TRUE;							\
-    अगर (exponent == 0 && Sextallp2(opndp2)) अणु				\
-	चयन (Rounding_mode()) अणु					\
-	हाल ROUNDPLUS:							\
-		अगर (Sgl_iszero_sign(opndp1))				\
-			अगर (Sgl_isone_hiddenoverflow(opndp1 + 1))	\
+    if (exponent == 0 && Sextallp2(opndp2)) {				\
+	switch (Rounding_mode()) {					\
+	case ROUNDPLUS:							\
+		if (Sgl_iszero_sign(opndp1))				\
+			if (Sgl_isone_hiddenoverflow(opndp1 + 1))	\
 				is_tiny = FALSE;			\
-		अवरोध;							\
-	हाल ROUNDMINUS:						\
-		अगर (Sgl_isone_sign(opndp1)) अणु				\
-			अगर (Sgl_isone_hiddenoverflow(opndp1 + 1))	\
+		break;							\
+	case ROUNDMINUS:						\
+		if (Sgl_isone_sign(opndp1)) {				\
+			if (Sgl_isone_hiddenoverflow(opndp1 + 1))	\
 				is_tiny = FALSE;			\
-		पूर्ण							\
-		अवरोध;							\
-	हाल ROUNDNEAREST:						\
-		अगर (Sglext_isone_highp2(opndp2) &&			\
+		}							\
+		break;							\
+	case ROUNDNEAREST:						\
+		if (Sglext_isone_highp2(opndp2) &&			\
 		    (Sglext_isone_lowp1(opndp1) || 			\
 		     Sglext_isnotzero_low31p2(opndp2)))			\
-			अगर (Sgl_isone_hiddenoverflow(opndp1 + 1))	\
+			if (Sgl_isone_hiddenoverflow(opndp1 + 1))	\
 				is_tiny = FALSE;			\
-		अवरोध;							\
-	पूर्ण								\
-    पूर्ण									\
+		break;							\
+	}								\
+    }									\
     Sglext_clear_signexponent_set_hidden(opndp1);			\
-    अगर (exponent >= (1-DBL_P)) अणु					\
-	अगर (exponent >= -31) अणु						\
-	    अगर (exponent > -31) अणु					\
+    if (exponent >= (1-DBL_P)) {					\
+	if (exponent >= -31) {						\
+	    if (exponent > -31) {					\
 		sticky = Sextallp2(opndp2) << 31+exponent;		\
-		Variable_shअगरt_द्विगुन(opndp1,opndp2,1-exponent,opndp2);	\
+		Variable_shift_double(opndp1,opndp2,1-exponent,opndp2);	\
 		Sextallp1(opndp1) >>= 1-exponent;			\
-	    पूर्ण								\
-	    अन्यथा अणु							\
+	    }								\
+	    else {							\
 		sticky = Sextallp2(opndp2);				\
 		Sextallp2(opndp2) = Sextallp1(opndp1);			\
 		Sextallp1(opndp1) = 0;					\
-	    पूर्ण								\
-	पूर्ण								\
-	अन्यथा अणु								\
+	    }								\
+	}								\
+	else {								\
 	    sticky = (Sextallp1(opndp1) << 31+exponent) | 		\
 		     Sextallp2(opndp2);					\
 	    Sextallp2(opndp2) = Sextallp1(opndp1) >> -31-exponent;	\
 	    Sextallp1(opndp1) = 0;					\
-	पूर्ण								\
-    पूर्ण									\
-    अन्यथा अणु								\
+	}								\
+    }									\
+    else {								\
 	sticky = Sextallp1(opndp1) | Sextallp2(opndp2);			\
 	Sglext_setzero(opndp1,opndp2);					\
-    पूर्ण									\
-    अगर (sticky) Sglext_setone_lowmantissap2(opndp2);			\
+    }									\
+    if (sticky) Sglext_setone_lowmantissap2(opndp2);			\
     exponent = 0;							\
-  पूर्ण
+  }

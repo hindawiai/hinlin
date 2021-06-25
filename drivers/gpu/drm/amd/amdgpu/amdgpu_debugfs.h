@@ -1,15 +1,14 @@
-<शैली गुरु>
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
  * Copyright 2009 Jerome Glisse.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -27,15 +26,15 @@
 /*
  * Debugfs
  */
-काष्ठा amdgpu_स्वतःdump अणु
-	काष्ठा completion		dumping;
-	काष्ठा रुको_queue_head		gpu_hang;
-पूर्ण;
+struct amdgpu_autodump {
+	struct completion		dumping;
+	struct wait_queue_head		gpu_hang;
+};
 
-पूर्णांक amdgpu_debugfs_regs_init(काष्ठा amdgpu_device *adev);
-पूर्णांक amdgpu_debugfs_init(काष्ठा amdgpu_device *adev);
-व्योम amdgpu_debugfs_fini(काष्ठा amdgpu_device *adev);
-व्योम amdgpu_debugfs_fence_init(काष्ठा amdgpu_device *adev);
-व्योम amdgpu_debugfs_firmware_init(काष्ठा amdgpu_device *adev);
-व्योम amdgpu_debugfs_gem_init(काष्ठा amdgpu_device *adev);
-पूर्णांक amdgpu_debugfs_रुको_dump(काष्ठा amdgpu_device *adev);
+int amdgpu_debugfs_regs_init(struct amdgpu_device *adev);
+int amdgpu_debugfs_init(struct amdgpu_device *adev);
+void amdgpu_debugfs_fini(struct amdgpu_device *adev);
+void amdgpu_debugfs_fence_init(struct amdgpu_device *adev);
+void amdgpu_debugfs_firmware_init(struct amdgpu_device *adev);
+void amdgpu_debugfs_gem_init(struct amdgpu_device *adev);
+int amdgpu_debugfs_wait_dump(struct amdgpu_device *adev);

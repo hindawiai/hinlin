@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2017-2018 Bartosz Golaszewski <brgl@bgdev.pl>
  * Copyright (C) 2020 Bartosz Golaszewski <bgolaszewski@baylibre.com>
  */
 
-#अगर_अघोषित _LINUX_IRQ_SIM_H
-#घोषणा _LINUX_IRQ_SIM_H
+#ifndef _LINUX_IRQ_SIM_H
+#define _LINUX_IRQ_SIM_H
 
-#समावेश <linux/device.h>
-#समावेश <linux/fwnode.h>
-#समावेश <linux/irqकरोमुख्य.h>
+#include <linux/device.h>
+#include <linux/fwnode.h>
+#include <linux/irqdomain.h>
 
 /*
- * Provides a framework क्रम allocating simulated पूर्णांकerrupts which can be
+ * Provides a framework for allocating simulated interrupts which can be
  * requested like normal irqs and enqueued from process context.
  */
 
-काष्ठा irq_करोमुख्य *irq_करोमुख्य_create_sim(काष्ठा fwnode_handle *fwnode,
-					 अचिन्हित पूर्णांक num_irqs);
-काष्ठा irq_करोमुख्य *devm_irq_करोमुख्य_create_sim(काष्ठा device *dev,
-					      काष्ठा fwnode_handle *fwnode,
-					      अचिन्हित पूर्णांक num_irqs);
-व्योम irq_करोमुख्य_हटाओ_sim(काष्ठा irq_करोमुख्य *करोमुख्य);
+struct irq_domain *irq_domain_create_sim(struct fwnode_handle *fwnode,
+					 unsigned int num_irqs);
+struct irq_domain *devm_irq_domain_create_sim(struct device *dev,
+					      struct fwnode_handle *fwnode,
+					      unsigned int num_irqs);
+void irq_domain_remove_sim(struct irq_domain *domain);
 
-#पूर्ण_अगर /* _LINUX_IRQ_SIM_H */
+#endif /* _LINUX_IRQ_SIM_H */

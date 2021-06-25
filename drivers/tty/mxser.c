@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  *          mxser.c  -- MOXA Smartio/Industio family multiport serial driver.
  *
@@ -7,287 +6,287 @@
  *	Copyright (C) 2006-2008  Jiri Slaby <jirislaby@gmail.com>
  *
  *      This code is loosely based on the 1.8 moxa driver which is based on
- *	Linux serial driver, written by Linus Torvalds, Theoकरोre T'so and
+ *	Linux serial driver, written by Linus Torvalds, Theodore T'so and
  *	others.
  *
- *	Fed through a cleanup, indent and हटाओ of non 2.6 code by Alan Cox
+ *	Fed through a cleanup, indent and remove of non 2.6 code by Alan Cox
  *	<alan@lxorguk.ukuu.org.uk>. The original 1.8 code is available on
  *	www.moxa.com.
  *	- Fixed x86_64 cleanness
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_flip.h>
-#समावेश <linux/serial.h>
-#समावेश <linux/serial_reg.h>
-#समावेश <linux/major.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/ratelimit.h>
+#include <linux/module.h>
+#include <linux/errno.h>
+#include <linux/signal.h>
+#include <linux/sched.h>
+#include <linux/timer.h>
+#include <linux/interrupt.h>
+#include <linux/tty.h>
+#include <linux/tty_flip.h>
+#include <linux/serial.h>
+#include <linux/serial_reg.h>
+#include <linux/major.h>
+#include <linux/string.h>
+#include <linux/fcntl.h>
+#include <linux/ptrace.h>
+#include <linux/ioport.h>
+#include <linux/mm.h>
+#include <linux/delay.h>
+#include <linux/pci.h>
+#include <linux/bitops.h>
+#include <linux/slab.h>
+#include <linux/ratelimit.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/irq.h>
-#समावेश <linux/uaccess.h>
+#include <asm/io.h>
+#include <asm/irq.h>
+#include <linux/uaccess.h>
 
-#समावेश "mxser.h"
+#include "mxser.h"
 
-#घोषणा	MXSER_VERSION	"2.0.5"		/* 1.14 */
-#घोषणा	MXSERMAJOR	 174
+#define	MXSER_VERSION	"2.0.5"		/* 1.14 */
+#define	MXSERMAJOR	 174
 
-#घोषणा MXSER_BOARDS		4	/* Max. boards */
-#घोषणा MXSER_PORTS_PER_BOARD	8	/* Max. ports per board */
-#घोषणा MXSER_PORTS		(MXSER_BOARDS * MXSER_PORTS_PER_BOARD)
-#घोषणा MXSER_ISR_PASS_LIMIT	100
+#define MXSER_BOARDS		4	/* Max. boards */
+#define MXSER_PORTS_PER_BOARD	8	/* Max. ports per board */
+#define MXSER_PORTS		(MXSER_BOARDS * MXSER_PORTS_PER_BOARD)
+#define MXSER_ISR_PASS_LIMIT	100
 
-/*CheckIsMoxaMust वापस value*/
-#घोषणा MOXA_OTHER_UART		0x00
-#घोषणा MOXA_MUST_MU150_HWID	0x01
-#घोषणा MOXA_MUST_MU860_HWID	0x02
+/*CheckIsMoxaMust return value*/
+#define MOXA_OTHER_UART		0x00
+#define MOXA_MUST_MU150_HWID	0x01
+#define MOXA_MUST_MU860_HWID	0x02
 
-#घोषणा WAKEUP_CHARS		256
+#define WAKEUP_CHARS		256
 
-#घोषणा UART_MCR_AFE		0x20
-#घोषणा UART_LSR_SPECIAL	0x1E
+#define UART_MCR_AFE		0x20
+#define UART_LSR_SPECIAL	0x1E
 
-#घोषणा PCI_DEVICE_ID_POS104UL	0x1044
-#घोषणा PCI_DEVICE_ID_CB108	0x1080
-#घोषणा PCI_DEVICE_ID_CP102UF	0x1023
-#घोषणा PCI_DEVICE_ID_CP112UL	0x1120
-#घोषणा PCI_DEVICE_ID_CB114	0x1142
-#घोषणा PCI_DEVICE_ID_CP114UL	0x1143
-#घोषणा PCI_DEVICE_ID_CB134I	0x1341
-#घोषणा PCI_DEVICE_ID_CP138U	0x1380
+#define PCI_DEVICE_ID_POS104UL	0x1044
+#define PCI_DEVICE_ID_CB108	0x1080
+#define PCI_DEVICE_ID_CP102UF	0x1023
+#define PCI_DEVICE_ID_CP112UL	0x1120
+#define PCI_DEVICE_ID_CB114	0x1142
+#define PCI_DEVICE_ID_CP114UL	0x1143
+#define PCI_DEVICE_ID_CB134I	0x1341
+#define PCI_DEVICE_ID_CP138U	0x1380
 
 
-#घोषणा C168_ASIC_ID    1
-#घोषणा C104_ASIC_ID    2
-#घोषणा C102_ASIC_ID	0xB
-#घोषणा CI132_ASIC_ID	4
-#घोषणा CI134_ASIC_ID	3
-#घोषणा CI104J_ASIC_ID  5
+#define C168_ASIC_ID    1
+#define C104_ASIC_ID    2
+#define C102_ASIC_ID	0xB
+#define CI132_ASIC_ID	4
+#define CI134_ASIC_ID	3
+#define CI104J_ASIC_ID  5
 
-#घोषणा MXSER_HIGHBAUD	1
-#घोषणा MXSER_HAS2	2
+#define MXSER_HIGHBAUD	1
+#define MXSER_HAS2	2
 
-/* This is only क्रम PCI */
-अटल स्थिर काष्ठा अणु
-	पूर्णांक type;
-	पूर्णांक tx_fअगरo;
-	पूर्णांक rx_fअगरo;
-	पूर्णांक xmit_fअगरo_size;
-	पूर्णांक rx_high_water;
-	पूर्णांक rx_trigger;
-	पूर्णांक rx_low_water;
-	दीर्घ max_baud;
-पूर्ण Gpci_uart_info[] = अणु
-	अणुMOXA_OTHER_UART, 16, 16, 16, 14, 14, 1, 921600Lपूर्ण,
-	अणुMOXA_MUST_MU150_HWID, 64, 64, 64, 48, 48, 16, 230400Lपूर्ण,
-	अणुMOXA_MUST_MU860_HWID, 128, 128, 128, 96, 96, 32, 921600Lपूर्ण
-पूर्ण;
-#घोषणा UART_INFO_NUM	ARRAY_SIZE(Gpci_uart_info)
+/* This is only for PCI */
+static const struct {
+	int type;
+	int tx_fifo;
+	int rx_fifo;
+	int xmit_fifo_size;
+	int rx_high_water;
+	int rx_trigger;
+	int rx_low_water;
+	long max_baud;
+} Gpci_uart_info[] = {
+	{MOXA_OTHER_UART, 16, 16, 16, 14, 14, 1, 921600L},
+	{MOXA_MUST_MU150_HWID, 64, 64, 64, 48, 48, 16, 230400L},
+	{MOXA_MUST_MU860_HWID, 128, 128, 128, 96, 96, 32, 921600L}
+};
+#define UART_INFO_NUM	ARRAY_SIZE(Gpci_uart_info)
 
-काष्ठा mxser_cardinfo अणु
-	अक्षर *name;
-	अचिन्हित पूर्णांक nports;
-	अचिन्हित पूर्णांक flags;
-पूर्ण;
+struct mxser_cardinfo {
+	char *name;
+	unsigned int nports;
+	unsigned int flags;
+};
 
-अटल स्थिर काष्ठा mxser_cardinfo mxser_cards[] = अणु
-/* 0*/	अणु "C168 series",	8, पूर्ण,
-	अणु "C104 series",	4, पूर्ण,
-	अणु "CI-104J series",	4, पूर्ण,
-	अणु "C168H/PCI series",	8, पूर्ण,
-	अणु "C104H/PCI series",	4, पूर्ण,
-/* 5*/	अणु "C102 series",	4, MXSER_HAS2 पूर्ण,	/* C102-ISA */
-	अणु "CI-132 series",	4, MXSER_HAS2 पूर्ण,
-	अणु "CI-134 series",	4, पूर्ण,
-	अणु "CP-132 series",	2, पूर्ण,
-	अणु "CP-114 series",	4, पूर्ण,
-/*10*/	अणु "CT-114 series",	4, पूर्ण,
-	अणु "CP-102 series",	2, MXSER_HIGHBAUD पूर्ण,
-	अणु "CP-104U series",	4, पूर्ण,
-	अणु "CP-168U series",	8, पूर्ण,
-	अणु "CP-132U series",	2, पूर्ण,
-/*15*/	अणु "CP-134U series",	4, पूर्ण,
-	अणु "CP-104JU series",	4, पूर्ण,
-	अणु "Moxa UC7000 Serial",	8, पूर्ण,		/* RC7000 */
-	अणु "CP-118U series",	8, पूर्ण,
-	अणु "CP-102UL series",	2, पूर्ण,
-/*20*/	अणु "CP-102U series",	2, पूर्ण,
-	अणु "CP-118EL series",	8, पूर्ण,
-	अणु "CP-168EL series",	8, पूर्ण,
-	अणु "CP-104EL series",	4, पूर्ण,
-	अणु "CB-108 series",	8, पूर्ण,
-/*25*/	अणु "CB-114 series",	4, पूर्ण,
-	अणु "CB-134I series",	4, पूर्ण,
-	अणु "CP-138U series",	8, पूर्ण,
-	अणु "POS-104UL series",	4, पूर्ण,
-	अणु "CP-114UL series",	4, पूर्ण,
-/*30*/	अणु "CP-102UF series",	2, पूर्ण,
-	अणु "CP-112UL series",	2, पूर्ण,
-पूर्ण;
+static const struct mxser_cardinfo mxser_cards[] = {
+/* 0*/	{ "C168 series",	8, },
+	{ "C104 series",	4, },
+	{ "CI-104J series",	4, },
+	{ "C168H/PCI series",	8, },
+	{ "C104H/PCI series",	4, },
+/* 5*/	{ "C102 series",	4, MXSER_HAS2 },	/* C102-ISA */
+	{ "CI-132 series",	4, MXSER_HAS2 },
+	{ "CI-134 series",	4, },
+	{ "CP-132 series",	2, },
+	{ "CP-114 series",	4, },
+/*10*/	{ "CT-114 series",	4, },
+	{ "CP-102 series",	2, MXSER_HIGHBAUD },
+	{ "CP-104U series",	4, },
+	{ "CP-168U series",	8, },
+	{ "CP-132U series",	2, },
+/*15*/	{ "CP-134U series",	4, },
+	{ "CP-104JU series",	4, },
+	{ "Moxa UC7000 Serial",	8, },		/* RC7000 */
+	{ "CP-118U series",	8, },
+	{ "CP-102UL series",	2, },
+/*20*/	{ "CP-102U series",	2, },
+	{ "CP-118EL series",	8, },
+	{ "CP-168EL series",	8, },
+	{ "CP-104EL series",	4, },
+	{ "CB-108 series",	8, },
+/*25*/	{ "CB-114 series",	4, },
+	{ "CB-134I series",	4, },
+	{ "CP-138U series",	8, },
+	{ "POS-104UL series",	4, },
+	{ "CP-114UL series",	4, },
+/*30*/	{ "CP-102UF series",	2, },
+	{ "CP-112UL series",	2, },
+};
 
-/* driver_data correspond to the lines in the काष्ठाure above
-   see also ISA probe function beक्रमe you change something */
-अटल स्थिर काष्ठा pci_device_id mxser_pcibrds[] = अणु
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_C168),	.driver_data = 3 पूर्ण,
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_C104),	.driver_data = 4 पूर्ण,
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP132),	.driver_data = 8 पूर्ण,
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP114),	.driver_data = 9 पूर्ण,
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CT114),	.driver_data = 10 पूर्ण,
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP102),	.driver_data = 11 पूर्ण,
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP104U),	.driver_data = 12 पूर्ण,
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP168U),	.driver_data = 13 पूर्ण,
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP132U),	.driver_data = 14 पूर्ण,
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP134U),	.driver_data = 15 पूर्ण,
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP104JU),.driver_data = 16 पूर्ण,
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_RC7000),	.driver_data = 17 पूर्ण,
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP118U),	.driver_data = 18 पूर्ण,
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP102UL),.driver_data = 19 पूर्ण,
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP102U),	.driver_data = 20 पूर्ण,
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP118EL),.driver_data = 21 पूर्ण,
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP168EL),.driver_data = 22 पूर्ण,
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP104EL),.driver_data = 23 पूर्ण,
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_CB108),	.driver_data = 24 पूर्ण,
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_CB114),	.driver_data = 25 पूर्ण,
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_CB134I),	.driver_data = 26 पूर्ण,
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_CP138U),	.driver_data = 27 पूर्ण,
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_POS104UL),	.driver_data = 28 पूर्ण,
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_CP114UL),	.driver_data = 29 पूर्ण,
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_CP102UF),	.driver_data = 30 पूर्ण,
-	अणु PCI_VDEVICE(MOXA, PCI_DEVICE_ID_CP112UL),	.driver_data = 31 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+/* driver_data correspond to the lines in the structure above
+   see also ISA probe function before you change something */
+static const struct pci_device_id mxser_pcibrds[] = {
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_C168),	.driver_data = 3 },
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_C104),	.driver_data = 4 },
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP132),	.driver_data = 8 },
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP114),	.driver_data = 9 },
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CT114),	.driver_data = 10 },
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP102),	.driver_data = 11 },
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP104U),	.driver_data = 12 },
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP168U),	.driver_data = 13 },
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP132U),	.driver_data = 14 },
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP134U),	.driver_data = 15 },
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP104JU),.driver_data = 16 },
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_RC7000),	.driver_data = 17 },
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP118U),	.driver_data = 18 },
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP102UL),.driver_data = 19 },
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP102U),	.driver_data = 20 },
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP118EL),.driver_data = 21 },
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP168EL),.driver_data = 22 },
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_MOXA_CP104EL),.driver_data = 23 },
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_CB108),	.driver_data = 24 },
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_CB114),	.driver_data = 25 },
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_CB134I),	.driver_data = 26 },
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_CP138U),	.driver_data = 27 },
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_POS104UL),	.driver_data = 28 },
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_CP114UL),	.driver_data = 29 },
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_CP102UF),	.driver_data = 30 },
+	{ PCI_VDEVICE(MOXA, PCI_DEVICE_ID_CP112UL),	.driver_data = 31 },
+	{ }
+};
 MODULE_DEVICE_TABLE(pci, mxser_pcibrds);
 
-अटल अचिन्हित दीर्घ ioaddr[MXSER_BOARDS];
-अटल पूर्णांक ttymajor = MXSERMAJOR;
+static unsigned long ioaddr[MXSER_BOARDS];
+static int ttymajor = MXSERMAJOR;
 
-/* Variables क्रम insmod */
+/* Variables for insmod */
 
 MODULE_AUTHOR("Casper Yang");
 MODULE_DESCRIPTION("MOXA Smartio/Industio Family Multiport Board Device Driver");
-module_param_hw_array(ioaddr, uदीर्घ, ioport, शून्य, 0);
+module_param_hw_array(ioaddr, ulong, ioport, NULL, 0);
 MODULE_PARM_DESC(ioaddr, "ISA io addresses to look for a moxa board");
-module_param(ttymajor, पूर्णांक, 0);
+module_param(ttymajor, int, 0);
 MODULE_LICENSE("GPL");
 
-काष्ठा mxser_log अणु
-	पूर्णांक tick;
-	अचिन्हित दीर्घ rxcnt[MXSER_PORTS];
-	अचिन्हित दीर्घ txcnt[MXSER_PORTS];
-पूर्ण;
+struct mxser_log {
+	int tick;
+	unsigned long rxcnt[MXSER_PORTS];
+	unsigned long txcnt[MXSER_PORTS];
+};
 
-काष्ठा mxser_mon अणु
-	अचिन्हित दीर्घ rxcnt;
-	अचिन्हित दीर्घ txcnt;
-	अचिन्हित दीर्घ up_rxcnt;
-	अचिन्हित दीर्घ up_txcnt;
-	पूर्णांक modem_status;
-	अचिन्हित अक्षर hold_reason;
-पूर्ण;
+struct mxser_mon {
+	unsigned long rxcnt;
+	unsigned long txcnt;
+	unsigned long up_rxcnt;
+	unsigned long up_txcnt;
+	int modem_status;
+	unsigned char hold_reason;
+};
 
-काष्ठा mxser_mon_ext अणु
-	अचिन्हित दीर्घ rx_cnt[32];
-	अचिन्हित दीर्घ tx_cnt[32];
-	अचिन्हित दीर्घ up_rxcnt[32];
-	अचिन्हित दीर्घ up_txcnt[32];
-	पूर्णांक modem_status[32];
+struct mxser_mon_ext {
+	unsigned long rx_cnt[32];
+	unsigned long tx_cnt[32];
+	unsigned long up_rxcnt[32];
+	unsigned long up_txcnt[32];
+	int modem_status[32];
 
-	दीर्घ baudrate[32];
-	पूर्णांक databits[32];
-	पूर्णांक stopbits[32];
-	पूर्णांक parity[32];
-	पूर्णांक flowctrl[32];
-	पूर्णांक fअगरo[32];
-	पूर्णांक अगरtype[32];
-पूर्ण;
+	long baudrate[32];
+	int databits[32];
+	int stopbits[32];
+	int parity[32];
+	int flowctrl[32];
+	int fifo[32];
+	int iftype[32];
+};
 
-काष्ठा mxser_board;
+struct mxser_board;
 
-काष्ठा mxser_port अणु
-	काष्ठा tty_port port;
-	काष्ठा mxser_board *board;
+struct mxser_port {
+	struct tty_port port;
+	struct mxser_board *board;
 
-	अचिन्हित दीर्घ ioaddr;
-	अचिन्हित दीर्घ opmode_ioaddr;
-	पूर्णांक max_baud;
+	unsigned long ioaddr;
+	unsigned long opmode_ioaddr;
+	int max_baud;
 
-	पूर्णांक rx_high_water;
-	पूर्णांक rx_trigger;		/* Rx fअगरo trigger level */
-	पूर्णांक rx_low_water;
-	पूर्णांक baud_base;		/* max. speed */
-	पूर्णांक type;		/* UART type */
+	int rx_high_water;
+	int rx_trigger;		/* Rx fifo trigger level */
+	int rx_low_water;
+	int baud_base;		/* max. speed */
+	int type;		/* UART type */
 
-	पूर्णांक x_अक्षर;		/* xon/xoff अक्षरacter */
-	पूर्णांक IER;		/* Interrupt Enable Register */
-	पूर्णांक MCR;		/* Modem control रेजिस्टर */
+	int x_char;		/* xon/xoff character */
+	int IER;		/* Interrupt Enable Register */
+	int MCR;		/* Modem control register */
 
-	अचिन्हित अक्षर stop_rx;
-	अचिन्हित अक्षर ldisc_stop_rx;
+	unsigned char stop_rx;
+	unsigned char ldisc_stop_rx;
 
-	पूर्णांक custom_भागisor;
-	अचिन्हित अक्षर err_shaकरोw;
+	int custom_divisor;
+	unsigned char err_shadow;
 
-	काष्ठा async_icount icount; /* kernel counters क्रम 4 input पूर्णांकerrupts */
-	अचिन्हित पूर्णांक समयout;
+	struct async_icount icount; /* kernel counters for 4 input interrupts */
+	unsigned int timeout;
 
-	पूर्णांक पढ़ो_status_mask;
-	पूर्णांक ignore_status_mask;
-	अचिन्हित पूर्णांक xmit_fअगरo_size;
-	पूर्णांक xmit_head;
-	पूर्णांक xmit_tail;
-	पूर्णांक xmit_cnt;
-	पूर्णांक closing;
+	int read_status_mask;
+	int ignore_status_mask;
+	unsigned int xmit_fifo_size;
+	int xmit_head;
+	int xmit_tail;
+	int xmit_cnt;
+	int closing;
 
-	काष्ठा ktermios normal_termios;
+	struct ktermios normal_termios;
 
-	काष्ठा mxser_mon mon_data;
+	struct mxser_mon mon_data;
 
 	spinlock_t slock;
-पूर्ण;
+};
 
-काष्ठा mxser_board अणु
-	अचिन्हित पूर्णांक idx;
-	पूर्णांक irq;
-	स्थिर काष्ठा mxser_cardinfo *info;
-	अचिन्हित दीर्घ vector;
-	अचिन्हित दीर्घ vector_mask;
+struct mxser_board {
+	unsigned int idx;
+	int irq;
+	const struct mxser_cardinfo *info;
+	unsigned long vector;
+	unsigned long vector_mask;
 
-	पूर्णांक chip_flag;
-	पूर्णांक uart_type;
+	int chip_flag;
+	int uart_type;
 
-	काष्ठा mxser_port ports[MXSER_PORTS_PER_BOARD];
-पूर्ण;
+	struct mxser_port ports[MXSER_PORTS_PER_BOARD];
+};
 
-काष्ठा mxser_mstatus अणु
+struct mxser_mstatus {
 	tcflag_t cflag;
-	पूर्णांक cts;
-	पूर्णांक dsr;
-	पूर्णांक ri;
-	पूर्णांक dcd;
-पूर्ण;
+	int cts;
+	int dsr;
+	int ri;
+	int dcd;
+};
 
-अटल काष्ठा mxser_board mxser_boards[MXSER_BOARDS];
-अटल काष्ठा tty_driver *mxvar_sdriver;
-अटल काष्ठा mxser_log mxvar_log;
-अटल पूर्णांक mxser_set_baud_method[MXSER_PORTS + 1];
+static struct mxser_board mxser_boards[MXSER_BOARDS];
+static struct tty_driver *mxvar_sdriver;
+static struct mxser_log mxvar_log;
+static int mxser_set_baud_method[MXSER_PORTS + 1];
 
-अटल व्योम mxser_enable_must_enchance_mode(अचिन्हित दीर्घ baseio)
-अणु
+static void mxser_enable_must_enchance_mode(unsigned long baseio)
+{
 	u8 oldlcr;
 	u8 efr;
 
@@ -299,11 +298,11 @@ MODULE_LICENSE("GPL");
 
 	outb(efr, baseio + MOXA_MUST_EFR_REGISTER);
 	outb(oldlcr, baseio + UART_LCR);
-पूर्ण
+}
 
-#अगर_घोषित	CONFIG_PCI
-अटल व्योम mxser_disable_must_enchance_mode(अचिन्हित दीर्घ baseio)
-अणु
+#ifdef	CONFIG_PCI
+static void mxser_disable_must_enchance_mode(unsigned long baseio)
+{
 	u8 oldlcr;
 	u8 efr;
 
@@ -315,11 +314,11 @@ MODULE_LICENSE("GPL");
 
 	outb(efr, baseio + MOXA_MUST_EFR_REGISTER);
 	outb(oldlcr, baseio + UART_LCR);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल व्योम mxser_set_must_xon1_value(अचिन्हित दीर्घ baseio, u8 value)
-अणु
+static void mxser_set_must_xon1_value(unsigned long baseio, u8 value)
+{
 	u8 oldlcr;
 	u8 efr;
 
@@ -333,10 +332,10 @@ MODULE_LICENSE("GPL");
 	outb(efr, baseio + MOXA_MUST_EFR_REGISTER);
 	outb(value, baseio + MOXA_MUST_XON1_REGISTER);
 	outb(oldlcr, baseio + UART_LCR);
-पूर्ण
+}
 
-अटल व्योम mxser_set_must_xoff1_value(अचिन्हित दीर्घ baseio, u8 value)
-अणु
+static void mxser_set_must_xoff1_value(unsigned long baseio, u8 value)
+{
 	u8 oldlcr;
 	u8 efr;
 
@@ -350,10 +349,10 @@ MODULE_LICENSE("GPL");
 	outb(efr, baseio + MOXA_MUST_EFR_REGISTER);
 	outb(value, baseio + MOXA_MUST_XOFF1_REGISTER);
 	outb(oldlcr, baseio + UART_LCR);
-पूर्ण
+}
 
-अटल व्योम mxser_set_must_fअगरo_value(काष्ठा mxser_port *info)
-अणु
+static void mxser_set_must_fifo_value(struct mxser_port *info)
+{
 	u8 oldlcr;
 	u8 efr;
 
@@ -369,10 +368,10 @@ MODULE_LICENSE("GPL");
 	outb((u8)info->rx_trigger, info->ioaddr + MOXA_MUST_RBRTI_REGISTER);
 	outb((u8)info->rx_low_water, info->ioaddr + MOXA_MUST_RBRTL_REGISTER);
 	outb(oldlcr, info->ioaddr + UART_LCR);
-पूर्ण
+}
 
-अटल व्योम mxser_set_must_क्रमागत_value(अचिन्हित दीर्घ baseio, u8 value)
-अणु
+static void mxser_set_must_enum_value(unsigned long baseio, u8 value)
+{
 	u8 oldlcr;
 	u8 efr;
 
@@ -386,11 +385,11 @@ MODULE_LICENSE("GPL");
 	outb(efr, baseio + MOXA_MUST_EFR_REGISTER);
 	outb(value, baseio + MOXA_MUST_ENUM_REGISTER);
 	outb(oldlcr, baseio + UART_LCR);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PCI
-अटल व्योम mxser_get_must_hardware_id(अचिन्हित दीर्घ baseio, u8 *pId)
-अणु
+#ifdef CONFIG_PCI
+static void mxser_get_must_hardware_id(unsigned long baseio, u8 *pId)
+{
 	u8 oldlcr;
 	u8 efr;
 
@@ -404,11 +403,11 @@ MODULE_LICENSE("GPL");
 	outb(efr, baseio + MOXA_MUST_EFR_REGISTER);
 	*pId = inb(baseio + MOXA_MUST_HWID_REGISTER);
 	outb(oldlcr, baseio + UART_LCR);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल व्योम SET_MOXA_MUST_NO_SOFTWARE_FLOW_CONTROL(अचिन्हित दीर्घ baseio)
-अणु
+static void SET_MOXA_MUST_NO_SOFTWARE_FLOW_CONTROL(unsigned long baseio)
+{
 	u8 oldlcr;
 	u8 efr;
 
@@ -420,10 +419,10 @@ MODULE_LICENSE("GPL");
 
 	outb(efr, baseio + MOXA_MUST_EFR_REGISTER);
 	outb(oldlcr, baseio + UART_LCR);
-पूर्ण
+}
 
-अटल व्योम mxser_enable_must_tx_software_flow_control(अचिन्हित दीर्घ baseio)
-अणु
+static void mxser_enable_must_tx_software_flow_control(unsigned long baseio)
+{
 	u8 oldlcr;
 	u8 efr;
 
@@ -436,10 +435,10 @@ MODULE_LICENSE("GPL");
 
 	outb(efr, baseio + MOXA_MUST_EFR_REGISTER);
 	outb(oldlcr, baseio + UART_LCR);
-पूर्ण
+}
 
-अटल व्योम mxser_disable_must_tx_software_flow_control(अचिन्हित दीर्घ baseio)
-अणु
+static void mxser_disable_must_tx_software_flow_control(unsigned long baseio)
+{
 	u8 oldlcr;
 	u8 efr;
 
@@ -451,10 +450,10 @@ MODULE_LICENSE("GPL");
 
 	outb(efr, baseio + MOXA_MUST_EFR_REGISTER);
 	outb(oldlcr, baseio + UART_LCR);
-पूर्ण
+}
 
-अटल व्योम mxser_enable_must_rx_software_flow_control(अचिन्हित दीर्घ baseio)
-अणु
+static void mxser_enable_must_rx_software_flow_control(unsigned long baseio)
+{
 	u8 oldlcr;
 	u8 efr;
 
@@ -467,10 +466,10 @@ MODULE_LICENSE("GPL");
 
 	outb(efr, baseio + MOXA_MUST_EFR_REGISTER);
 	outb(oldlcr, baseio + UART_LCR);
-पूर्ण
+}
 
-अटल व्योम mxser_disable_must_rx_software_flow_control(अचिन्हित दीर्घ baseio)
-अणु
+static void mxser_disable_must_rx_software_flow_control(unsigned long baseio)
+{
 	u8 oldlcr;
 	u8 efr;
 
@@ -482,431 +481,431 @@ MODULE_LICENSE("GPL");
 
 	outb(efr, baseio + MOXA_MUST_EFR_REGISTER);
 	outb(oldlcr, baseio + UART_LCR);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PCI
-अटल पूर्णांक CheckIsMoxaMust(अचिन्हित दीर्घ io)
-अणु
+#ifdef CONFIG_PCI
+static int CheckIsMoxaMust(unsigned long io)
+{
 	u8 oldmcr, hwid;
-	पूर्णांक i;
+	int i;
 
 	outb(0, io + UART_LCR);
 	mxser_disable_must_enchance_mode(io);
 	oldmcr = inb(io + UART_MCR);
 	outb(0, io + UART_MCR);
 	mxser_set_must_xon1_value(io, 0x11);
-	अगर ((hwid = inb(io + UART_MCR)) != 0) अणु
+	if ((hwid = inb(io + UART_MCR)) != 0) {
 		outb(oldmcr, io + UART_MCR);
-		वापस MOXA_OTHER_UART;
-	पूर्ण
+		return MOXA_OTHER_UART;
+	}
 
 	mxser_get_must_hardware_id(io, &hwid);
-	क्रम (i = 1; i < UART_INFO_NUM; i++) अणु /* 0 = OTHER_UART */
-		अगर (hwid == Gpci_uart_info[i].type)
-			वापस (पूर्णांक)hwid;
-	पूर्ण
-	वापस MOXA_OTHER_UART;
-पूर्ण
-#पूर्ण_अगर
+	for (i = 1; i < UART_INFO_NUM; i++) { /* 0 = OTHER_UART */
+		if (hwid == Gpci_uart_info[i].type)
+			return (int)hwid;
+	}
+	return MOXA_OTHER_UART;
+}
+#endif
 
-अटल व्योम process_txrx_fअगरo(काष्ठा mxser_port *info)
-अणु
-	पूर्णांक i;
+static void process_txrx_fifo(struct mxser_port *info)
+{
+	int i;
 
-	अगर ((info->type == PORT_16450) || (info->type == PORT_8250)) अणु
+	if ((info->type == PORT_16450) || (info->type == PORT_8250)) {
 		info->rx_trigger = 1;
 		info->rx_high_water = 1;
 		info->rx_low_water = 1;
-		info->xmit_fअगरo_size = 1;
-	पूर्ण अन्यथा
-		क्रम (i = 0; i < UART_INFO_NUM; i++)
-			अगर (info->board->chip_flag == Gpci_uart_info[i].type) अणु
+		info->xmit_fifo_size = 1;
+	} else
+		for (i = 0; i < UART_INFO_NUM; i++)
+			if (info->board->chip_flag == Gpci_uart_info[i].type) {
 				info->rx_trigger = Gpci_uart_info[i].rx_trigger;
 				info->rx_low_water = Gpci_uart_info[i].rx_low_water;
 				info->rx_high_water = Gpci_uart_info[i].rx_high_water;
-				info->xmit_fअगरo_size = Gpci_uart_info[i].xmit_fअगरo_size;
-				अवरोध;
-			पूर्ण
-पूर्ण
+				info->xmit_fifo_size = Gpci_uart_info[i].xmit_fifo_size;
+				break;
+			}
+}
 
-अटल अचिन्हित अक्षर mxser_get_msr(पूर्णांक baseaddr, पूर्णांक mode, पूर्णांक port)
-अणु
-	अटल अचिन्हित अक्षर mxser_msr[MXSER_PORTS + 1];
-	अचिन्हित अक्षर status = 0;
+static unsigned char mxser_get_msr(int baseaddr, int mode, int port)
+{
+	static unsigned char mxser_msr[MXSER_PORTS + 1];
+	unsigned char status = 0;
 
 	status = inb(baseaddr + UART_MSR);
 
 	mxser_msr[port] &= 0x0F;
 	mxser_msr[port] |= status;
 	status = mxser_msr[port];
-	अगर (mode)
+	if (mode)
 		mxser_msr[port] = 0;
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक mxser_carrier_उठाओd(काष्ठा tty_port *port)
-अणु
-	काष्ठा mxser_port *mp = container_of(port, काष्ठा mxser_port, port);
-	वापस (inb(mp->ioaddr + UART_MSR) & UART_MSR_DCD)?1:0;
-पूर्ण
+static int mxser_carrier_raised(struct tty_port *port)
+{
+	struct mxser_port *mp = container_of(port, struct mxser_port, port);
+	return (inb(mp->ioaddr + UART_MSR) & UART_MSR_DCD)?1:0;
+}
 
-अटल व्योम mxser_dtr_rts(काष्ठा tty_port *port, पूर्णांक on)
-अणु
-	काष्ठा mxser_port *mp = container_of(port, काष्ठा mxser_port, port);
-	अचिन्हित दीर्घ flags;
+static void mxser_dtr_rts(struct tty_port *port, int on)
+{
+	struct mxser_port *mp = container_of(port, struct mxser_port, port);
+	unsigned long flags;
 
 	spin_lock_irqsave(&mp->slock, flags);
-	अगर (on)
+	if (on)
 		outb(inb(mp->ioaddr + UART_MCR) |
 			UART_MCR_DTR | UART_MCR_RTS, mp->ioaddr + UART_MCR);
-	अन्यथा
+	else
 		outb(inb(mp->ioaddr + UART_MCR)&~(UART_MCR_DTR | UART_MCR_RTS),
 			mp->ioaddr + UART_MCR);
 	spin_unlock_irqrestore(&mp->slock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक mxser_set_baud(काष्ठा tty_काष्ठा *tty, दीर्घ newspd)
-अणु
-	काष्ठा mxser_port *info = tty->driver_data;
-	अचिन्हित पूर्णांक quot = 0, baud;
-	अचिन्हित अक्षर cval;
-	u64 समयout;
+static int mxser_set_baud(struct tty_struct *tty, long newspd)
+{
+	struct mxser_port *info = tty->driver_data;
+	unsigned int quot = 0, baud;
+	unsigned char cval;
+	u64 timeout;
 
-	अगर (!info->ioaddr)
-		वापस -1;
+	if (!info->ioaddr)
+		return -1;
 
-	अगर (newspd > info->max_baud)
-		वापस -1;
+	if (newspd > info->max_baud)
+		return -1;
 
-	अगर (newspd == 134) अणु
+	if (newspd == 134) {
 		quot = 2 * info->baud_base / 269;
 		tty_encode_baud_rate(tty, 134, 134);
-	पूर्ण अन्यथा अगर (newspd) अणु
+	} else if (newspd) {
 		quot = info->baud_base / newspd;
-		अगर (quot == 0)
+		if (quot == 0)
 			quot = 1;
 		baud = info->baud_base/quot;
 		tty_encode_baud_rate(tty, baud, baud);
-	पूर्ण अन्यथा अणु
+	} else {
 		quot = 0;
-	पूर्ण
+	}
 
 	/*
-	 * worst हाल (128 * 1000 * 10 * 18432) needs 35 bits, so भागide in the
-	 * u64 करोमुख्य
+	 * worst case (128 * 1000 * 10 * 18432) needs 35 bits, so divide in the
+	 * u64 domain
 	 */
-	समयout = (u64)info->xmit_fअगरo_size * HZ * 10 * quot;
-	करो_भाग(समयout, info->baud_base);
-	info->समयout = समयout + HZ / 50; /* Add .02 seconds of slop */
+	timeout = (u64)info->xmit_fifo_size * HZ * 10 * quot;
+	do_div(timeout, info->baud_base);
+	info->timeout = timeout + HZ / 50; /* Add .02 seconds of slop */
 
-	अगर (quot) अणु
+	if (quot) {
 		info->MCR |= UART_MCR_DTR;
 		outb(info->MCR, info->ioaddr + UART_MCR);
-	पूर्ण अन्यथा अणु
+	} else {
 		info->MCR &= ~UART_MCR_DTR;
 		outb(info->MCR, info->ioaddr + UART_MCR);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	cval = inb(info->ioaddr + UART_LCR);
 
 	outb(cval | UART_LCR_DLAB, info->ioaddr + UART_LCR);	/* set DLAB */
 
-	outb(quot & 0xff, info->ioaddr + UART_DLL);	/* LS of भागisor */
-	outb(quot >> 8, info->ioaddr + UART_DLM);	/* MS of भागisor */
+	outb(quot & 0xff, info->ioaddr + UART_DLL);	/* LS of divisor */
+	outb(quot >> 8, info->ioaddr + UART_DLM);	/* MS of divisor */
 	outb(cval, info->ioaddr + UART_LCR);	/* reset DLAB */
 
-#अगर_घोषित BOTHER
-	अगर (C_BAUD(tty) == BOTHER) अणु
+#ifdef BOTHER
+	if (C_BAUD(tty) == BOTHER) {
 		quot = info->baud_base % newspd;
 		quot *= 8;
-		अगर (quot % newspd > newspd / 2) अणु
+		if (quot % newspd > newspd / 2) {
 			quot /= newspd;
 			quot++;
-		पूर्ण अन्यथा
+		} else
 			quot /= newspd;
 
-		mxser_set_must_क्रमागत_value(info->ioaddr, quot);
-	पूर्ण अन्यथा
-#पूर्ण_अगर
-		mxser_set_must_क्रमागत_value(info->ioaddr, 0);
+		mxser_set_must_enum_value(info->ioaddr, quot);
+	} else
+#endif
+		mxser_set_must_enum_value(info->ioaddr, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * This routine is called to set the UART भागisor रेजिस्टरs to match
- * the specअगरied baud rate क्रम a serial port.
+ * This routine is called to set the UART divisor registers to match
+ * the specified baud rate for a serial port.
  */
-अटल व्योम mxser_change_speed(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा mxser_port *info = tty->driver_data;
-	अचिन्हित cflag, cval, fcr;
-	अचिन्हित अक्षर status;
+static void mxser_change_speed(struct tty_struct *tty)
+{
+	struct mxser_port *info = tty->driver_data;
+	unsigned cflag, cval, fcr;
+	unsigned char status;
 
 	cflag = tty->termios.c_cflag;
-	अगर (!info->ioaddr)
-		वापस;
+	if (!info->ioaddr)
+		return;
 
-	अगर (mxser_set_baud_method[tty->index] == 0)
+	if (mxser_set_baud_method[tty->index] == 0)
 		mxser_set_baud(tty, tty_get_baud_rate(tty));
 
 	/* byte size and parity */
-	चयन (cflag & CSIZE) अणु
-	हाल CS5:
+	switch (cflag & CSIZE) {
+	case CS5:
 		cval = 0x00;
-		अवरोध;
-	हाल CS6:
+		break;
+	case CS6:
 		cval = 0x01;
-		अवरोध;
-	हाल CS7:
+		break;
+	case CS7:
 		cval = 0x02;
-		अवरोध;
-	हाल CS8:
+		break;
+	case CS8:
 		cval = 0x03;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		cval = 0x00;
-		अवरोध;		/* too keep GCC shut... */
-	पूर्ण
-	अगर (cflag & CSTOPB)
+		break;		/* too keep GCC shut... */
+	}
+	if (cflag & CSTOPB)
 		cval |= 0x04;
-	अगर (cflag & PARENB)
+	if (cflag & PARENB)
 		cval |= UART_LCR_PARITY;
-	अगर (!(cflag & PARODD))
+	if (!(cflag & PARODD))
 		cval |= UART_LCR_EPAR;
-	अगर (cflag & CMSPAR)
+	if (cflag & CMSPAR)
 		cval |= UART_LCR_SPAR;
 
-	अगर ((info->type == PORT_8250) || (info->type == PORT_16450)) अणु
-		अगर (info->board->chip_flag) अणु
+	if ((info->type == PORT_8250) || (info->type == PORT_16450)) {
+		if (info->board->chip_flag) {
 			fcr = UART_FCR_ENABLE_FIFO;
 			fcr |= MOXA_MUST_FCR_GDA_MODE_ENABLE;
-			mxser_set_must_fअगरo_value(info);
-		पूर्ण अन्यथा
+			mxser_set_must_fifo_value(info);
+		} else
 			fcr = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		fcr = UART_FCR_ENABLE_FIFO;
-		अगर (info->board->chip_flag) अणु
+		if (info->board->chip_flag) {
 			fcr |= MOXA_MUST_FCR_GDA_MODE_ENABLE;
-			mxser_set_must_fअगरo_value(info);
-		पूर्ण अन्यथा अणु
-			चयन (info->rx_trigger) अणु
-			हाल 1:
+			mxser_set_must_fifo_value(info);
+		} else {
+			switch (info->rx_trigger) {
+			case 1:
 				fcr |= UART_FCR_TRIGGER_1;
-				अवरोध;
-			हाल 4:
+				break;
+			case 4:
 				fcr |= UART_FCR_TRIGGER_4;
-				अवरोध;
-			हाल 8:
+				break;
+			case 8:
 				fcr |= UART_FCR_TRIGGER_8;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				fcr |= UART_FCR_TRIGGER_14;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	/* CTS flow control flag and modem status पूर्णांकerrupts */
+	/* CTS flow control flag and modem status interrupts */
 	info->IER &= ~UART_IER_MSI;
 	info->MCR &= ~UART_MCR_AFE;
 	tty_port_set_cts_flow(&info->port, cflag & CRTSCTS);
-	अगर (cflag & CRTSCTS) अणु
+	if (cflag & CRTSCTS) {
 		info->IER |= UART_IER_MSI;
-		अगर ((info->type == PORT_16550A) || (info->board->chip_flag)) अणु
+		if ((info->type == PORT_16550A) || (info->board->chip_flag)) {
 			info->MCR |= UART_MCR_AFE;
-		पूर्ण अन्यथा अणु
+		} else {
 			status = inb(info->ioaddr + UART_MSR);
-			अगर (tty->hw_stopped) अणु
-				अगर (status & UART_MSR_CTS) अणु
+			if (tty->hw_stopped) {
+				if (status & UART_MSR_CTS) {
 					tty->hw_stopped = 0;
-					अगर (info->type != PORT_16550A &&
-							!info->board->chip_flag) अणु
+					if (info->type != PORT_16550A &&
+							!info->board->chip_flag) {
 						outb(info->IER & ~UART_IER_THRI,
 							info->ioaddr +
 							UART_IER);
 						info->IER |= UART_IER_THRI;
 						outb(info->IER, info->ioaddr +
 								UART_IER);
-					पूर्ण
+					}
 					tty_wakeup(tty);
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				अगर (!(status & UART_MSR_CTS)) अणु
+				}
+			} else {
+				if (!(status & UART_MSR_CTS)) {
 					tty->hw_stopped = 1;
-					अगर ((info->type != PORT_16550A) &&
-							(!info->board->chip_flag)) अणु
+					if ((info->type != PORT_16550A) &&
+							(!info->board->chip_flag)) {
 						info->IER &= ~UART_IER_THRI;
 						outb(info->IER, info->ioaddr +
 								UART_IER);
-					पूर्ण
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					}
+				}
+			}
+		}
+	}
 	outb(info->MCR, info->ioaddr + UART_MCR);
 	tty_port_set_check_carrier(&info->port, ~cflag & CLOCAL);
-	अगर (~cflag & CLOCAL)
+	if (~cflag & CLOCAL)
 		info->IER |= UART_IER_MSI;
 	outb(info->IER, info->ioaddr + UART_IER);
 
 	/*
 	 * Set up parity check flag
 	 */
-	info->पढ़ो_status_mask = UART_LSR_OE | UART_LSR_THRE | UART_LSR_DR;
-	अगर (I_INPCK(tty))
-		info->पढ़ो_status_mask |= UART_LSR_FE | UART_LSR_PE;
-	अगर (I_BRKINT(tty) || I_PARMRK(tty))
-		info->पढ़ो_status_mask |= UART_LSR_BI;
+	info->read_status_mask = UART_LSR_OE | UART_LSR_THRE | UART_LSR_DR;
+	if (I_INPCK(tty))
+		info->read_status_mask |= UART_LSR_FE | UART_LSR_PE;
+	if (I_BRKINT(tty) || I_PARMRK(tty))
+		info->read_status_mask |= UART_LSR_BI;
 
 	info->ignore_status_mask = 0;
 
-	अगर (I_IGNBRK(tty)) अणु
+	if (I_IGNBRK(tty)) {
 		info->ignore_status_mask |= UART_LSR_BI;
-		info->पढ़ो_status_mask |= UART_LSR_BI;
+		info->read_status_mask |= UART_LSR_BI;
 		/*
-		 * If we're ignore parity and अवरोध indicators, ignore
+		 * If we're ignore parity and break indicators, ignore
 		 * overruns too.  (For real raw support).
 		 */
-		अगर (I_IGNPAR(tty)) अणु
+		if (I_IGNPAR(tty)) {
 			info->ignore_status_mask |=
 						UART_LSR_OE |
 						UART_LSR_PE |
 						UART_LSR_FE;
-			info->पढ़ो_status_mask |=
+			info->read_status_mask |=
 						UART_LSR_OE |
 						UART_LSR_PE |
 						UART_LSR_FE;
-		पूर्ण
-	पूर्ण
-	अगर (info->board->chip_flag) अणु
+		}
+	}
+	if (info->board->chip_flag) {
 		mxser_set_must_xon1_value(info->ioaddr, START_CHAR(tty));
 		mxser_set_must_xoff1_value(info->ioaddr, STOP_CHAR(tty));
-		अगर (I_IXON(tty)) अणु
+		if (I_IXON(tty)) {
 			mxser_enable_must_rx_software_flow_control(
 					info->ioaddr);
-		पूर्ण अन्यथा अणु
+		} else {
 			mxser_disable_must_rx_software_flow_control(
 					info->ioaddr);
-		पूर्ण
-		अगर (I_IXOFF(tty)) अणु
+		}
+		if (I_IXOFF(tty)) {
 			mxser_enable_must_tx_software_flow_control(
 					info->ioaddr);
-		पूर्ण अन्यथा अणु
+		} else {
 			mxser_disable_must_tx_software_flow_control(
 					info->ioaddr);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 
 	outb(fcr, info->ioaddr + UART_FCR);	/* set fcr */
 	outb(cval, info->ioaddr + UART_LCR);
-पूर्ण
+}
 
-अटल व्योम mxser_check_modem_status(काष्ठा tty_काष्ठा *tty,
-				काष्ठा mxser_port *port, पूर्णांक status)
-अणु
+static void mxser_check_modem_status(struct tty_struct *tty,
+				struct mxser_port *port, int status)
+{
 	/* update input line counters */
-	अगर (status & UART_MSR_TERI)
+	if (status & UART_MSR_TERI)
 		port->icount.rng++;
-	अगर (status & UART_MSR_DDSR)
+	if (status & UART_MSR_DDSR)
 		port->icount.dsr++;
-	अगर (status & UART_MSR_DDCD)
+	if (status & UART_MSR_DDCD)
 		port->icount.dcd++;
-	अगर (status & UART_MSR_DCTS)
+	if (status & UART_MSR_DCTS)
 		port->icount.cts++;
 	port->mon_data.modem_status = status;
-	wake_up_पूर्णांकerruptible(&port->port.delta_msr_रुको);
+	wake_up_interruptible(&port->port.delta_msr_wait);
 
-	अगर (tty_port_check_carrier(&port->port) && (status & UART_MSR_DDCD)) अणु
-		अगर (status & UART_MSR_DCD)
-			wake_up_पूर्णांकerruptible(&port->port.खोलो_रुको);
-	पूर्ण
+	if (tty_port_check_carrier(&port->port) && (status & UART_MSR_DDCD)) {
+		if (status & UART_MSR_DCD)
+			wake_up_interruptible(&port->port.open_wait);
+	}
 
-	अगर (tty_port_cts_enabled(&port->port)) अणु
-		अगर (tty->hw_stopped) अणु
-			अगर (status & UART_MSR_CTS) अणु
+	if (tty_port_cts_enabled(&port->port)) {
+		if (tty->hw_stopped) {
+			if (status & UART_MSR_CTS) {
 				tty->hw_stopped = 0;
 
-				अगर ((port->type != PORT_16550A) &&
-						(!port->board->chip_flag)) अणु
+				if ((port->type != PORT_16550A) &&
+						(!port->board->chip_flag)) {
 					outb(port->IER & ~UART_IER_THRI,
 						port->ioaddr + UART_IER);
 					port->IER |= UART_IER_THRI;
 					outb(port->IER, port->ioaddr +
 							UART_IER);
-				पूर्ण
+				}
 				tty_wakeup(tty);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (!(status & UART_MSR_CTS)) अणु
+			}
+		} else {
+			if (!(status & UART_MSR_CTS)) {
 				tty->hw_stopped = 1;
-				अगर (port->type != PORT_16550A &&
-						!port->board->chip_flag) अणु
+				if (port->type != PORT_16550A &&
+						!port->board->chip_flag) {
 					port->IER &= ~UART_IER_THRI;
 					outb(port->IER, port->ioaddr +
 							UART_IER);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+				}
+			}
+		}
+	}
+}
 
-अटल पूर्णांक mxser_activate(काष्ठा tty_port *port, काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा mxser_port *info = container_of(port, काष्ठा mxser_port, port);
-	अचिन्हित दीर्घ page;
-	अचिन्हित दीर्घ flags;
+static int mxser_activate(struct tty_port *port, struct tty_struct *tty)
+{
+	struct mxser_port *info = container_of(port, struct mxser_port, port);
+	unsigned long page;
+	unsigned long flags;
 
-	page = __get_मुक्त_page(GFP_KERNEL);
-	अगर (!page)
-		वापस -ENOMEM;
+	page = __get_free_page(GFP_KERNEL);
+	if (!page)
+		return -ENOMEM;
 
 	spin_lock_irqsave(&info->slock, flags);
 
-	अगर (!info->ioaddr || !info->type) अणु
+	if (!info->ioaddr || !info->type) {
 		set_bit(TTY_IO_ERROR, &tty->flags);
-		मुक्त_page(page);
+		free_page(page);
 		spin_unlock_irqrestore(&info->slock, flags);
-		वापस 0;
-	पूर्ण
-	info->port.xmit_buf = (अचिन्हित अक्षर *) page;
+		return 0;
+	}
+	info->port.xmit_buf = (unsigned char *) page;
 
 	/*
 	 * Clear the FIFO buffers and disable them
 	 * (they will be reenabled in mxser_change_speed())
 	 */
-	अगर (info->board->chip_flag)
+	if (info->board->chip_flag)
 		outb((UART_FCR_CLEAR_RCVR |
 			UART_FCR_CLEAR_XMIT |
 			MOXA_MUST_FCR_GDA_MODE_ENABLE), info->ioaddr + UART_FCR);
-	अन्यथा
+	else
 		outb((UART_FCR_CLEAR_RCVR | UART_FCR_CLEAR_XMIT),
 			info->ioaddr + UART_FCR);
 
 	/*
-	 * At this poपूर्णांक there's no way the LSR could still be 0xFF;
-	 * अगर it is, then bail out, because there's likely no UART
+	 * At this point there's no way the LSR could still be 0xFF;
+	 * if it is, then bail out, because there's likely no UART
 	 * here.
 	 */
-	अगर (inb(info->ioaddr + UART_LSR) == 0xff) अणु
+	if (inb(info->ioaddr + UART_LSR) == 0xff) {
 		spin_unlock_irqrestore(&info->slock, flags);
-		अगर (capable(CAP_SYS_ADMIN)) अणु
+		if (capable(CAP_SYS_ADMIN)) {
 			set_bit(TTY_IO_ERROR, &tty->flags);
-			वापस 0;
-		पूर्ण अन्यथा
-			वापस -ENODEV;
-	पूर्ण
+			return 0;
+		} else
+			return -ENODEV;
+	}
 
 	/*
-	 * Clear the पूर्णांकerrupt रेजिस्टरs.
+	 * Clear the interrupt registers.
 	 */
-	(व्योम) inb(info->ioaddr + UART_LSR);
-	(व्योम) inb(info->ioaddr + UART_RX);
-	(व्योम) inb(info->ioaddr + UART_IIR);
-	(व्योम) inb(info->ioaddr + UART_MSR);
+	(void) inb(info->ioaddr + UART_LSR);
+	(void) inb(info->ioaddr + UART_RX);
+	(void) inb(info->ioaddr + UART_IIR);
+	(void) inb(info->ioaddr + UART_MSR);
 
 	/*
 	 * Now, initialize the UART
@@ -916,21 +915,21 @@ MODULE_LICENSE("GPL");
 	outb(info->MCR, info->ioaddr + UART_MCR);
 
 	/*
-	 * Finally, enable पूर्णांकerrupts
+	 * Finally, enable interrupts
 	 */
 	info->IER = UART_IER_MSI | UART_IER_RLSI | UART_IER_RDI;
 
-	अगर (info->board->chip_flag)
+	if (info->board->chip_flag)
 		info->IER |= MOXA_MUST_IER_EGDAI;
-	outb(info->IER, info->ioaddr + UART_IER);	/* enable पूर्णांकerrupts */
+	outb(info->IER, info->ioaddr + UART_IER);	/* enable interrupts */
 
 	/*
-	 * And clear the पूर्णांकerrupt रेजिस्टरs again क्रम luck.
+	 * And clear the interrupt registers again for luck.
 	 */
-	(व्योम) inb(info->ioaddr + UART_LSR);
-	(व्योम) inb(info->ioaddr + UART_RX);
-	(व्योम) inb(info->ioaddr + UART_IIR);
-	(व्योम) inb(info->ioaddr + UART_MSR);
+	(void) inb(info->ioaddr + UART_LSR);
+	(void) inb(info->ioaddr + UART_RX);
+	(void) inb(info->ioaddr + UART_IIR);
+	(void) inb(info->ioaddr + UART_MSR);
 
 	clear_bit(TTY_IO_ERROR, &tty->flags);
 	info->xmit_cnt = info->xmit_head = info->xmit_tail = 0;
@@ -941,82 +940,82 @@ MODULE_LICENSE("GPL");
 	mxser_change_speed(tty);
 	spin_unlock_irqrestore(&info->slock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * This routine will shutकरोwn a serial port
+ * This routine will shutdown a serial port
  */
-अटल व्योम mxser_shutकरोwn_port(काष्ठा tty_port *port)
-अणु
-	काष्ठा mxser_port *info = container_of(port, काष्ठा mxser_port, port);
-	अचिन्हित दीर्घ flags;
+static void mxser_shutdown_port(struct tty_port *port)
+{
+	struct mxser_port *info = container_of(port, struct mxser_port, port);
+	unsigned long flags;
 
 	spin_lock_irqsave(&info->slock, flags);
 
 	/*
-	 * clear delta_msr_रुको queue to aव्योम mem leaks: we may मुक्त the irq
+	 * clear delta_msr_wait queue to avoid mem leaks: we may free the irq
 	 * here so the queue might never be waken up
 	 */
-	wake_up_पूर्णांकerruptible(&info->port.delta_msr_रुको);
+	wake_up_interruptible(&info->port.delta_msr_wait);
 
 	/*
-	 * Free the xmit buffer, अगर necessary
+	 * Free the xmit buffer, if necessary
 	 */
-	अगर (info->port.xmit_buf) अणु
-		मुक्त_page((अचिन्हित दीर्घ) info->port.xmit_buf);
-		info->port.xmit_buf = शून्य;
-	पूर्ण
+	if (info->port.xmit_buf) {
+		free_page((unsigned long) info->port.xmit_buf);
+		info->port.xmit_buf = NULL;
+	}
 
 	info->IER = 0;
 	outb(0x00, info->ioaddr + UART_IER);
 
 	/* clear Rx/Tx FIFO's */
-	अगर (info->board->chip_flag)
+	if (info->board->chip_flag)
 		outb(UART_FCR_CLEAR_RCVR | UART_FCR_CLEAR_XMIT |
 				MOXA_MUST_FCR_GDA_MODE_ENABLE,
 				info->ioaddr + UART_FCR);
-	अन्यथा
+	else
 		outb(UART_FCR_CLEAR_RCVR | UART_FCR_CLEAR_XMIT,
 			info->ioaddr + UART_FCR);
 
-	/* पढ़ो data port to reset things */
-	(व्योम) inb(info->ioaddr + UART_RX);
+	/* read data port to reset things */
+	(void) inb(info->ioaddr + UART_RX);
 
 
-	अगर (info->board->chip_flag)
+	if (info->board->chip_flag)
 		SET_MOXA_MUST_NO_SOFTWARE_FLOW_CONTROL(info->ioaddr);
 
 	spin_unlock_irqrestore(&info->slock, flags);
-पूर्ण
+}
 
 /*
- * This routine is called whenever a serial port is खोलोed.  It
- * enables पूर्णांकerrupts क्रम a serial port, linking in its async काष्ठाure पूर्णांकo
- * the IRQ chain.   It also perक्रमms the serial-specअगरic
- * initialization क्रम the tty काष्ठाure.
+ * This routine is called whenever a serial port is opened.  It
+ * enables interrupts for a serial port, linking in its async structure into
+ * the IRQ chain.   It also performs the serial-specific
+ * initialization for the tty structure.
  */
-अटल पूर्णांक mxser_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा file *filp)
-अणु
-	काष्ठा mxser_port *info;
-	पूर्णांक line;
+static int mxser_open(struct tty_struct *tty, struct file *filp)
+{
+	struct mxser_port *info;
+	int line;
 
 	line = tty->index;
-	अगर (line == MXSER_PORTS)
-		वापस 0;
+	if (line == MXSER_PORTS)
+		return 0;
 	info = &mxser_boards[line / MXSER_PORTS_PER_BOARD].ports[line % MXSER_PORTS_PER_BOARD];
-	अगर (!info->ioaddr)
-		वापस -ENODEV;
+	if (!info->ioaddr)
+		return -ENODEV;
 
 	tty->driver_data = info;
-	वापस tty_port_खोलो(&info->port, tty, filp);
-पूर्ण
+	return tty_port_open(&info->port, tty, filp);
+}
 
-अटल व्योम mxser_flush_buffer(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा mxser_port *info = tty->driver_data;
-	अक्षर fcr;
-	अचिन्हित दीर्घ flags;
+static void mxser_flush_buffer(struct tty_struct *tty)
+{
+	struct mxser_port *info = tty->driver_data;
+	char fcr;
+	unsigned long flags;
 
 
 	spin_lock_irqsave(&info->slock, flags);
@@ -1030,84 +1029,84 @@ MODULE_LICENSE("GPL");
 	spin_unlock_irqrestore(&info->slock, flags);
 
 	tty_wakeup(tty);
-पूर्ण
+}
 
 
-अटल व्योम mxser_बंद_port(काष्ठा tty_port *port)
-अणु
-	काष्ठा mxser_port *info = container_of(port, काष्ठा mxser_port, port);
-	अचिन्हित दीर्घ समयout;
+static void mxser_close_port(struct tty_port *port)
+{
+	struct mxser_port *info = container_of(port, struct mxser_port, port);
+	unsigned long timeout;
 	/*
-	 * At this poपूर्णांक we stop accepting input.  To करो this, we
-	 * disable the receive line status पूर्णांकerrupts, and tell the
-	 * पूर्णांकerrupt driver to stop checking the data पढ़ोy bit in the
-	 * line status रेजिस्टर.
+	 * At this point we stop accepting input.  To do this, we
+	 * disable the receive line status interrupts, and tell the
+	 * interrupt driver to stop checking the data ready bit in the
+	 * line status register.
 	 */
 	info->IER &= ~UART_IER_RLSI;
-	अगर (info->board->chip_flag)
+	if (info->board->chip_flag)
 		info->IER &= ~MOXA_MUST_RECV_ISR;
 
 	outb(info->IER, info->ioaddr + UART_IER);
 	/*
-	 * Beक्रमe we drop DTR, make sure the UART transmitter
+	 * Before we drop DTR, make sure the UART transmitter
 	 * has completely drained; this is especially
-	 * important अगर there is a transmit FIFO!
+	 * important if there is a transmit FIFO!
 	 */
-	समयout = jअगरfies + HZ;
-	जबतक (!(inb(info->ioaddr + UART_LSR) & UART_LSR_TEMT)) अणु
-		schedule_समयout_पूर्णांकerruptible(5);
-		अगर (समय_after(jअगरfies, समयout))
-			अवरोध;
-	पूर्ण
-पूर्ण
+	timeout = jiffies + HZ;
+	while (!(inb(info->ioaddr + UART_LSR) & UART_LSR_TEMT)) {
+		schedule_timeout_interruptible(5);
+		if (time_after(jiffies, timeout))
+			break;
+	}
+}
 
 /*
- * This routine is called when the serial port माला_लो बंदd.  First, we
- * रुको क्रम the last reमुख्यing data to be sent.  Then, we unlink its
- * async काष्ठाure from the पूर्णांकerrupt chain अगर necessary, and we मुक्त
- * that IRQ अगर nothing is left in the chain.
+ * This routine is called when the serial port gets closed.  First, we
+ * wait for the last remaining data to be sent.  Then, we unlink its
+ * async structure from the interrupt chain if necessary, and we free
+ * that IRQ if nothing is left in the chain.
  */
-अटल व्योम mxser_बंद(काष्ठा tty_काष्ठा *tty, काष्ठा file *filp)
-अणु
-	काष्ठा mxser_port *info = tty->driver_data;
-	काष्ठा tty_port *port = &info->port;
+static void mxser_close(struct tty_struct *tty, struct file *filp)
+{
+	struct mxser_port *info = tty->driver_data;
+	struct tty_port *port = &info->port;
 
-	अगर (tty->index == MXSER_PORTS || info == शून्य)
-		वापस;
-	अगर (tty_port_बंद_start(port, tty, filp) == 0)
-		वापस;
+	if (tty->index == MXSER_PORTS || info == NULL)
+		return;
+	if (tty_port_close_start(port, tty, filp) == 0)
+		return;
 	info->closing = 1;
 	mutex_lock(&port->mutex);
-	mxser_बंद_port(port);
+	mxser_close_port(port);
 	mxser_flush_buffer(tty);
-	अगर (tty_port_initialized(port) && C_HUPCL(tty))
+	if (tty_port_initialized(port) && C_HUPCL(tty))
 		tty_port_lower_dtr_rts(port);
-	mxser_shutकरोwn_port(port);
+	mxser_shutdown_port(port);
 	tty_port_set_initialized(port, 0);
 	mutex_unlock(&port->mutex);
 	info->closing = 0;
-	/* Right now the tty_port set is करोne outside of the बंद_end helper
-	   as we करोn't yet have everyone using refcounts */	
-	tty_port_बंद_end(port, tty);
-	tty_port_tty_set(port, शून्य);
-पूर्ण
+	/* Right now the tty_port set is done outside of the close_end helper
+	   as we don't yet have everyone using refcounts */	
+	tty_port_close_end(port, tty);
+	tty_port_tty_set(port, NULL);
+}
 
-अटल पूर्णांक mxser_ग_लिखो(काष्ठा tty_काष्ठा *tty, स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
-अणु
-	पूर्णांक c, total = 0;
-	काष्ठा mxser_port *info = tty->driver_data;
-	अचिन्हित दीर्घ flags;
+static int mxser_write(struct tty_struct *tty, const unsigned char *buf, int count)
+{
+	int c, total = 0;
+	struct mxser_port *info = tty->driver_data;
+	unsigned long flags;
 
-	अगर (!info->port.xmit_buf)
-		वापस 0;
+	if (!info->port.xmit_buf)
+		return 0;
 
-	जबतक (1) अणु
-		c = min_t(पूर्णांक, count, min(SERIAL_XMIT_SIZE - info->xmit_cnt - 1,
+	while (1) {
+		c = min_t(int, count, min(SERIAL_XMIT_SIZE - info->xmit_cnt - 1,
 					  SERIAL_XMIT_SIZE - info->xmit_head));
-		अगर (c <= 0)
-			अवरोध;
+		if (c <= 0)
+			break;
 
-		स_नकल(info->port.xmit_buf + info->xmit_head, buf, c);
+		memcpy(info->port.xmit_buf + info->xmit_head, buf, c);
 		spin_lock_irqsave(&info->slock, flags);
 		info->xmit_head = (info->xmit_head + c) &
 				  (SERIAL_XMIT_SIZE - 1);
@@ -1117,63 +1116,63 @@ MODULE_LICENSE("GPL");
 		buf += c;
 		count -= c;
 		total += c;
-	पूर्ण
+	}
 
-	अगर (info->xmit_cnt && !tty->stopped) अणु
-		अगर (!tty->hw_stopped ||
+	if (info->xmit_cnt && !tty->stopped) {
+		if (!tty->hw_stopped ||
 				(info->type == PORT_16550A) ||
-				(info->board->chip_flag)) अणु
+				(info->board->chip_flag)) {
 			spin_lock_irqsave(&info->slock, flags);
 			outb(info->IER & ~UART_IER_THRI, info->ioaddr +
 					UART_IER);
 			info->IER |= UART_IER_THRI;
 			outb(info->IER, info->ioaddr + UART_IER);
 			spin_unlock_irqrestore(&info->slock, flags);
-		पूर्ण
-	पूर्ण
-	वापस total;
-पूर्ण
+		}
+	}
+	return total;
+}
 
-अटल पूर्णांक mxser_put_अक्षर(काष्ठा tty_काष्ठा *tty, अचिन्हित अक्षर ch)
-अणु
-	काष्ठा mxser_port *info = tty->driver_data;
-	अचिन्हित दीर्घ flags;
+static int mxser_put_char(struct tty_struct *tty, unsigned char ch)
+{
+	struct mxser_port *info = tty->driver_data;
+	unsigned long flags;
 
-	अगर (!info->port.xmit_buf)
-		वापस 0;
+	if (!info->port.xmit_buf)
+		return 0;
 
-	अगर (info->xmit_cnt >= SERIAL_XMIT_SIZE - 1)
-		वापस 0;
+	if (info->xmit_cnt >= SERIAL_XMIT_SIZE - 1)
+		return 0;
 
 	spin_lock_irqsave(&info->slock, flags);
 	info->port.xmit_buf[info->xmit_head++] = ch;
 	info->xmit_head &= SERIAL_XMIT_SIZE - 1;
 	info->xmit_cnt++;
 	spin_unlock_irqrestore(&info->slock, flags);
-	अगर (!tty->stopped) अणु
-		अगर (!tty->hw_stopped ||
+	if (!tty->stopped) {
+		if (!tty->hw_stopped ||
 				(info->type == PORT_16550A) ||
-				info->board->chip_flag) अणु
+				info->board->chip_flag) {
 			spin_lock_irqsave(&info->slock, flags);
 			outb(info->IER & ~UART_IER_THRI, info->ioaddr + UART_IER);
 			info->IER |= UART_IER_THRI;
 			outb(info->IER, info->ioaddr + UART_IER);
 			spin_unlock_irqrestore(&info->slock, flags);
-		पूर्ण
-	पूर्ण
-	वापस 1;
-पूर्ण
+		}
+	}
+	return 1;
+}
 
 
-अटल व्योम mxser_flush_अक्षरs(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा mxser_port *info = tty->driver_data;
-	अचिन्हित दीर्घ flags;
+static void mxser_flush_chars(struct tty_struct *tty)
+{
+	struct mxser_port *info = tty->driver_data;
+	unsigned long flags;
 
-	अगर (info->xmit_cnt <= 0 || tty->stopped || !info->port.xmit_buf ||
+	if (info->xmit_cnt <= 0 || tty->stopped || !info->port.xmit_buf ||
 			(tty->hw_stopped && info->type != PORT_16550A &&
 			 !info->board->chip_flag))
-		वापस;
+		return;
 
 	spin_lock_irqsave(&info->slock, flags);
 
@@ -1182,44 +1181,44 @@ MODULE_LICENSE("GPL");
 	outb(info->IER, info->ioaddr + UART_IER);
 
 	spin_unlock_irqrestore(&info->slock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक mxser_ग_लिखो_room(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा mxser_port *info = tty->driver_data;
-	पूर्णांक ret;
+static int mxser_write_room(struct tty_struct *tty)
+{
+	struct mxser_port *info = tty->driver_data;
+	int ret;
 
 	ret = SERIAL_XMIT_SIZE - info->xmit_cnt - 1;
-	वापस ret < 0 ? 0 : ret;
-पूर्ण
+	return ret < 0 ? 0 : ret;
+}
 
-अटल पूर्णांक mxser_अक्षरs_in_buffer(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा mxser_port *info = tty->driver_data;
-	वापस info->xmit_cnt;
-पूर्ण
+static int mxser_chars_in_buffer(struct tty_struct *tty)
+{
+	struct mxser_port *info = tty->driver_data;
+	return info->xmit_cnt;
+}
 
 /*
  * ------------------------------------------------------------
- * मित्रs of mxser_ioctl()
+ * friends of mxser_ioctl()
  * ------------------------------------------------------------
  */
-अटल पूर्णांक mxser_get_serial_info(काष्ठा tty_काष्ठा *tty,
-		काष्ठा serial_काष्ठा *ss)
-अणु
-	काष्ठा mxser_port *info = tty->driver_data;
-	काष्ठा tty_port *port = &info->port;
-	अचिन्हित पूर्णांक closing_रुको, बंद_delay;
+static int mxser_get_serial_info(struct tty_struct *tty,
+		struct serial_struct *ss)
+{
+	struct mxser_port *info = tty->driver_data;
+	struct tty_port *port = &info->port;
+	unsigned int closing_wait, close_delay;
 
-	अगर (tty->index == MXSER_PORTS)
-		वापस -ENOTTY;
+	if (tty->index == MXSER_PORTS)
+		return -ENOTTY;
 
 	mutex_lock(&port->mutex);
 
-	बंद_delay = jअगरfies_to_msecs(info->port.बंद_delay) / 10;
-	closing_रुको = info->port.closing_रुको;
-	अगर (closing_रुको != ASYNC_CLOSING_WAIT_NONE)
-		closing_रुको = jअगरfies_to_msecs(closing_रुको) / 10;
+	close_delay = jiffies_to_msecs(info->port.close_delay) / 10;
+	closing_wait = info->port.closing_wait;
+	if (closing_wait != ASYNC_CLOSING_WAIT_NONE)
+		closing_wait = jiffies_to_msecs(closing_wait) / 10;
 
 	ss->type = info->type,
 	ss->line = tty->index,
@@ -1227,216 +1226,216 @@ MODULE_LICENSE("GPL");
 	ss->irq = info->board->irq,
 	ss->flags = info->port.flags,
 	ss->baud_base = info->baud_base,
-	ss->बंद_delay = बंद_delay;
-	ss->closing_रुको = closing_रुको;
-	ss->custom_भागisor = info->custom_भागisor,
+	ss->close_delay = close_delay;
+	ss->closing_wait = closing_wait;
+	ss->custom_divisor = info->custom_divisor,
 	mutex_unlock(&port->mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mxser_set_serial_info(काष्ठा tty_काष्ठा *tty,
-		काष्ठा serial_काष्ठा *ss)
-अणु
-	काष्ठा mxser_port *info = tty->driver_data;
-	काष्ठा tty_port *port = &info->port;
+static int mxser_set_serial_info(struct tty_struct *tty,
+		struct serial_struct *ss)
+{
+	struct mxser_port *info = tty->driver_data;
+	struct tty_port *port = &info->port;
 	speed_t baud;
-	अचिन्हित दीर्घ sl_flags;
-	अचिन्हित पूर्णांक flags, बंद_delay, closing_रुको;
-	पूर्णांक retval = 0;
+	unsigned long sl_flags;
+	unsigned int flags, close_delay, closing_wait;
+	int retval = 0;
 
-	अगर (tty->index == MXSER_PORTS)
-		वापस -ENOTTY;
-	अगर (tty_io_error(tty))
-		वापस -EIO;
+	if (tty->index == MXSER_PORTS)
+		return -ENOTTY;
+	if (tty_io_error(tty))
+		return -EIO;
 
 	mutex_lock(&port->mutex);
-	अगर (!info->ioaddr) अणु
+	if (!info->ioaddr) {
 		mutex_unlock(&port->mutex);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (ss->irq != info->board->irq ||
-			ss->port != info->ioaddr) अणु
+	if (ss->irq != info->board->irq ||
+			ss->port != info->ioaddr) {
 		mutex_unlock(&port->mutex);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	flags = port->flags & ASYNC_SPD_MASK;
 
-	बंद_delay = msecs_to_jअगरfies(ss->बंद_delay * 10);
-	closing_रुको = ss->closing_रुको;
-	अगर (closing_रुको != ASYNC_CLOSING_WAIT_NONE)
-		closing_रुको = msecs_to_jअगरfies(closing_रुको * 10);
+	close_delay = msecs_to_jiffies(ss->close_delay * 10);
+	closing_wait = ss->closing_wait;
+	if (closing_wait != ASYNC_CLOSING_WAIT_NONE)
+		closing_wait = msecs_to_jiffies(closing_wait * 10);
 
-	अगर (!capable(CAP_SYS_ADMIN)) अणु
-		अगर ((ss->baud_base != info->baud_base) ||
-				(बंद_delay != info->port.बंद_delay) ||
-				(closing_रुको != info->port.closing_रुको) ||
-				((ss->flags & ~ASYNC_USR_MASK) != (info->port.flags & ~ASYNC_USR_MASK))) अणु
+	if (!capable(CAP_SYS_ADMIN)) {
+		if ((ss->baud_base != info->baud_base) ||
+				(close_delay != info->port.close_delay) ||
+				(closing_wait != info->port.closing_wait) ||
+				((ss->flags & ~ASYNC_USR_MASK) != (info->port.flags & ~ASYNC_USR_MASK))) {
 			mutex_unlock(&port->mutex);
-			वापस -EPERM;
-		पूर्ण
+			return -EPERM;
+		}
 		info->port.flags = ((info->port.flags & ~ASYNC_USR_MASK) |
 				(ss->flags & ASYNC_USR_MASK));
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * OK, past this poपूर्णांक, all the error checking has been करोne.
-		 * At this poपूर्णांक, we start making changes.....
+		 * OK, past this point, all the error checking has been done.
+		 * At this point, we start making changes.....
 		 */
 		port->flags = ((port->flags & ~ASYNC_FLAGS) |
 				(ss->flags & ASYNC_FLAGS));
-		port->बंद_delay = बंद_delay;
-		port->closing_रुको = closing_रुको;
-		अगर ((port->flags & ASYNC_SPD_MASK) == ASYNC_SPD_CUST &&
+		port->close_delay = close_delay;
+		port->closing_wait = closing_wait;
+		if ((port->flags & ASYNC_SPD_MASK) == ASYNC_SPD_CUST &&
 				(ss->baud_base != info->baud_base ||
-				ss->custom_भागisor !=
-				info->custom_भागisor)) अणु
-			अगर (ss->custom_भागisor == 0) अणु
+				ss->custom_divisor !=
+				info->custom_divisor)) {
+			if (ss->custom_divisor == 0) {
 				mutex_unlock(&port->mutex);
-				वापस -EINVAL;
-			पूर्ण
-			baud = ss->baud_base / ss->custom_भागisor;
+				return -EINVAL;
+			}
+			baud = ss->baud_base / ss->custom_divisor;
 			tty_encode_baud_rate(tty, baud, baud);
-		पूर्ण
+		}
 
 		info->type = ss->type;
 
-		process_txrx_fअगरo(info);
-	पूर्ण
+		process_txrx_fifo(info);
+	}
 
-	अगर (tty_port_initialized(port)) अणु
-		अगर (flags != (port->flags & ASYNC_SPD_MASK)) अणु
+	if (tty_port_initialized(port)) {
+		if (flags != (port->flags & ASYNC_SPD_MASK)) {
 			spin_lock_irqsave(&info->slock, sl_flags);
 			mxser_change_speed(tty);
 			spin_unlock_irqrestore(&info->slock, sl_flags);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		retval = mxser_activate(port, tty);
-		अगर (retval == 0)
+		if (retval == 0)
 			tty_port_set_initialized(port, 1);
-	पूर्ण
+	}
 	mutex_unlock(&port->mutex);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /*
- * mxser_get_lsr_info - get line status रेजिस्टर info
+ * mxser_get_lsr_info - get line status register info
  *
  * Purpose: Let user call ioctl() to get info when the UART physically
  *	    is emptied.  On bus types like RS485, the transmitter must
- *	    release the bus after transmitting. This must be करोne when
- *	    the transmit shअगरt रेजिस्टर is empty, not be करोne when the
- *	    transmit holding रेजिस्टर is empty.  This functionality
+ *	    release the bus after transmitting. This must be done when
+ *	    the transmit shift register is empty, not be done when the
+ *	    transmit holding register is empty.  This functionality
  *	    allows an RS485 driver to be written in user space.
  */
-अटल पूर्णांक mxser_get_lsr_info(काष्ठा mxser_port *info,
-		अचिन्हित पूर्णांक __user *value)
-अणु
-	अचिन्हित अक्षर status;
-	अचिन्हित पूर्णांक result;
-	अचिन्हित दीर्घ flags;
+static int mxser_get_lsr_info(struct mxser_port *info,
+		unsigned int __user *value)
+{
+	unsigned char status;
+	unsigned int result;
+	unsigned long flags;
 
 	spin_lock_irqsave(&info->slock, flags);
 	status = inb(info->ioaddr + UART_LSR);
 	spin_unlock_irqrestore(&info->slock, flags);
 	result = ((status & UART_LSR_TEMT) ? TIOCSER_TEMT : 0);
-	वापस put_user(result, value);
-पूर्ण
+	return put_user(result, value);
+}
 
-अटल पूर्णांक mxser_tiocmget(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा mxser_port *info = tty->driver_data;
-	अचिन्हित अक्षर control, status;
-	अचिन्हित दीर्घ flags;
+static int mxser_tiocmget(struct tty_struct *tty)
+{
+	struct mxser_port *info = tty->driver_data;
+	unsigned char control, status;
+	unsigned long flags;
 
 
-	अगर (tty->index == MXSER_PORTS)
-		वापस -ENOIOCTLCMD;
-	अगर (tty_io_error(tty))
-		वापस -EIO;
+	if (tty->index == MXSER_PORTS)
+		return -ENOIOCTLCMD;
+	if (tty_io_error(tty))
+		return -EIO;
 
 	control = info->MCR;
 
 	spin_lock_irqsave(&info->slock, flags);
 	status = inb(info->ioaddr + UART_MSR);
-	अगर (status & UART_MSR_ANY_DELTA)
+	if (status & UART_MSR_ANY_DELTA)
 		mxser_check_modem_status(tty, info, status);
 	spin_unlock_irqrestore(&info->slock, flags);
-	वापस ((control & UART_MCR_RTS) ? TIOCM_RTS : 0) |
+	return ((control & UART_MCR_RTS) ? TIOCM_RTS : 0) |
 		    ((control & UART_MCR_DTR) ? TIOCM_DTR : 0) |
 		    ((status & UART_MSR_DCD) ? TIOCM_CAR : 0) |
 		    ((status & UART_MSR_RI) ? TIOCM_RNG : 0) |
 		    ((status & UART_MSR_DSR) ? TIOCM_DSR : 0) |
 		    ((status & UART_MSR_CTS) ? TIOCM_CTS : 0);
-पूर्ण
+}
 
-अटल पूर्णांक mxser_tiocmset(काष्ठा tty_काष्ठा *tty,
-		अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
-अणु
-	काष्ठा mxser_port *info = tty->driver_data;
-	अचिन्हित दीर्घ flags;
+static int mxser_tiocmset(struct tty_struct *tty,
+		unsigned int set, unsigned int clear)
+{
+	struct mxser_port *info = tty->driver_data;
+	unsigned long flags;
 
 
-	अगर (tty->index == MXSER_PORTS)
-		वापस -ENOIOCTLCMD;
-	अगर (tty_io_error(tty))
-		वापस -EIO;
+	if (tty->index == MXSER_PORTS)
+		return -ENOIOCTLCMD;
+	if (tty_io_error(tty))
+		return -EIO;
 
 	spin_lock_irqsave(&info->slock, flags);
 
-	अगर (set & TIOCM_RTS)
+	if (set & TIOCM_RTS)
 		info->MCR |= UART_MCR_RTS;
-	अगर (set & TIOCM_DTR)
+	if (set & TIOCM_DTR)
 		info->MCR |= UART_MCR_DTR;
 
-	अगर (clear & TIOCM_RTS)
+	if (clear & TIOCM_RTS)
 		info->MCR &= ~UART_MCR_RTS;
-	अगर (clear & TIOCM_DTR)
+	if (clear & TIOCM_DTR)
 		info->MCR &= ~UART_MCR_DTR;
 
 	outb(info->MCR, info->ioaddr + UART_MCR);
 	spin_unlock_irqrestore(&info->slock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init mxser_program_mode(पूर्णांक port)
-अणु
-	पूर्णांक id, i, j, n;
+static int __init mxser_program_mode(int port)
+{
+	int id, i, j, n;
 
 	outb(0, port);
 	outb(0, port);
 	outb(0, port);
-	(व्योम)inb(port);
-	(व्योम)inb(port);
+	(void)inb(port);
+	(void)inb(port);
 	outb(0, port);
-	(व्योम)inb(port);
+	(void)inb(port);
 
 	id = inb(port + 1) & 0x1F;
-	अगर ((id != C168_ASIC_ID) &&
+	if ((id != C168_ASIC_ID) &&
 			(id != C104_ASIC_ID) &&
 			(id != C102_ASIC_ID) &&
 			(id != CI132_ASIC_ID) &&
 			(id != CI134_ASIC_ID) &&
 			(id != CI104J_ASIC_ID))
-		वापस -1;
-	क्रम (i = 0, j = 0; i < 4; i++) अणु
+		return -1;
+	for (i = 0, j = 0; i < 4; i++) {
 		n = inb(port + 2);
-		अगर (n == 'M') अणु
+		if (n == 'M') {
 			j = 1;
-		पूर्ण अन्यथा अगर ((j == 1) && (n == 1)) अणु
+		} else if ((j == 1) && (n == 1)) {
 			j = 2;
-			अवरोध;
-		पूर्ण अन्यथा
+			break;
+		} else
 			j = 0;
-	पूर्ण
-	अगर (j != 2)
+	}
+	if (j != 2)
 		id = -2;
-	वापस id;
-पूर्ण
+	return id;
+}
 
-अटल व्योम __init mxser_normal_mode(पूर्णांक port)
-अणु
-	पूर्णांक i, n;
+static void __init mxser_normal_mode(int port)
+{
+	int i, n;
 
 	outb(0xA5, port + 1);
 	outb(0x80, port + 3);
@@ -1444,163 +1443,163 @@ MODULE_LICENSE("GPL");
 	outb(0, port + 1);
 	outb(0x03, port + 3);	/* 8 data bits */
 	outb(0x13, port + 4);	/* loop back mode */
-	क्रम (i = 0; i < 16; i++) अणु
+	for (i = 0; i < 16; i++) {
 		n = inb(port + 5);
-		अगर ((n & 0x61) == 0x60)
-			अवरोध;
-		अगर ((n & 1) == 1)
-			(व्योम)inb(port);
-	पूर्ण
+		if ((n & 0x61) == 0x60)
+			break;
+		if ((n & 1) == 1)
+			(void)inb(port);
+	}
 	outb(0x00, port + 4);
-पूर्ण
+}
 
-#घोषणा CHIP_SK 	0x01	/* Serial Data Clock  in Eprom */
-#घोषणा CHIP_DO 	0x02	/* Serial Data Output in Eprom */
-#घोषणा CHIP_CS 	0x04	/* Serial Chip Select in Eprom */
-#घोषणा CHIP_DI 	0x08	/* Serial Data Input  in Eprom */
-#घोषणा EN_CCMD 	0x000	/* Chip's command रेजिस्टर     */
-#घोषणा EN0_RSARLO	0x008	/* Remote start address reg 0  */
-#घोषणा EN0_RSARHI	0x009	/* Remote start address reg 1  */
-#घोषणा EN0_RCNTLO	0x00A	/* Remote byte count reg WR    */
-#घोषणा EN0_RCNTHI	0x00B	/* Remote byte count reg WR    */
-#घोषणा EN0_DCFG	0x00E	/* Data configuration reg WR   */
-#घोषणा EN0_PORT	0x010	/* Rcv missed frame error counter RD */
-#घोषणा ENC_PAGE0	0x000	/* Select page 0 of chip रेजिस्टरs   */
-#घोषणा ENC_PAGE3	0x0C0	/* Select page 3 of chip रेजिस्टरs   */
-अटल पूर्णांक __init mxser_पढ़ो_रेजिस्टर(पूर्णांक port, अचिन्हित लघु *regs)
-अणु
-	पूर्णांक i, k, value, id;
-	अचिन्हित पूर्णांक j;
+#define CHIP_SK 	0x01	/* Serial Data Clock  in Eprom */
+#define CHIP_DO 	0x02	/* Serial Data Output in Eprom */
+#define CHIP_CS 	0x04	/* Serial Chip Select in Eprom */
+#define CHIP_DI 	0x08	/* Serial Data Input  in Eprom */
+#define EN_CCMD 	0x000	/* Chip's command register     */
+#define EN0_RSARLO	0x008	/* Remote start address reg 0  */
+#define EN0_RSARHI	0x009	/* Remote start address reg 1  */
+#define EN0_RCNTLO	0x00A	/* Remote byte count reg WR    */
+#define EN0_RCNTHI	0x00B	/* Remote byte count reg WR    */
+#define EN0_DCFG	0x00E	/* Data configuration reg WR   */
+#define EN0_PORT	0x010	/* Rcv missed frame error counter RD */
+#define ENC_PAGE0	0x000	/* Select page 0 of chip registers   */
+#define ENC_PAGE3	0x0C0	/* Select page 3 of chip registers   */
+static int __init mxser_read_register(int port, unsigned short *regs)
+{
+	int i, k, value, id;
+	unsigned int j;
 
 	id = mxser_program_mode(port);
-	अगर (id < 0)
-		वापस id;
-	क्रम (i = 0; i < 14; i++) अणु
+	if (id < 0)
+		return id;
+	for (i = 0; i < 14; i++) {
 		k = (i & 0x3F) | 0x180;
-		क्रम (j = 0x100; j > 0; j >>= 1) अणु
+		for (j = 0x100; j > 0; j >>= 1) {
 			outb(CHIP_CS, port);
-			अगर (k & j) अणु
+			if (k & j) {
 				outb(CHIP_CS | CHIP_DO, port);
-				outb(CHIP_CS | CHIP_DO | CHIP_SK, port);	/* A? bit of पढ़ो */
-			पूर्ण अन्यथा अणु
+				outb(CHIP_CS | CHIP_DO | CHIP_SK, port);	/* A? bit of read */
+			} else {
 				outb(CHIP_CS, port);
-				outb(CHIP_CS | CHIP_SK, port);	/* A? bit of पढ़ो */
-			पूर्ण
-		पूर्ण
-		(व्योम)inb(port);
+				outb(CHIP_CS | CHIP_SK, port);	/* A? bit of read */
+			}
+		}
+		(void)inb(port);
 		value = 0;
-		क्रम (k = 0, j = 0x8000; k < 16; k++, j >>= 1) अणु
+		for (k = 0, j = 0x8000; k < 16; k++, j >>= 1) {
 			outb(CHIP_CS, port);
 			outb(CHIP_CS | CHIP_SK, port);
-			अगर (inb(port) & CHIP_DI)
+			if (inb(port) & CHIP_DI)
 				value |= j;
-		पूर्ण
+		}
 		regs[i] = value;
 		outb(0, port);
-	पूर्ण
+	}
 	mxser_normal_mode(port);
-	वापस id;
-पूर्ण
+	return id;
+}
 
-अटल पूर्णांक mxser_ioctl_special(अचिन्हित पूर्णांक cmd, व्योम __user *argp)
-अणु
-	काष्ठा mxser_port *ip;
-	काष्ठा tty_port *port;
-	काष्ठा tty_काष्ठा *tty;
-	पूर्णांक result, status;
-	अचिन्हित पूर्णांक i, j;
-	पूर्णांक ret = 0;
+static int mxser_ioctl_special(unsigned int cmd, void __user *argp)
+{
+	struct mxser_port *ip;
+	struct tty_port *port;
+	struct tty_struct *tty;
+	int result, status;
+	unsigned int i, j;
+	int ret = 0;
 
-	चयन (cmd) अणु
-	हाल MOXA_GET_MAJOR:
-		prपूर्णांकk_ratelimited(KERN_WARNING "mxser: '%s' uses deprecated ioctl "
+	switch (cmd) {
+	case MOXA_GET_MAJOR:
+		printk_ratelimited(KERN_WARNING "mxser: '%s' uses deprecated ioctl "
 					"%x (GET_MAJOR), fix your userspace\n",
 					current->comm, cmd);
-		वापस put_user(ttymajor, (पूर्णांक __user *)argp);
+		return put_user(ttymajor, (int __user *)argp);
 
-	हाल MOXA_CHKPORTENABLE:
+	case MOXA_CHKPORTENABLE:
 		result = 0;
-		क्रम (i = 0; i < MXSER_BOARDS; i++)
-			क्रम (j = 0; j < MXSER_PORTS_PER_BOARD; j++)
-				अगर (mxser_boards[i].ports[j].ioaddr)
+		for (i = 0; i < MXSER_BOARDS; i++)
+			for (j = 0; j < MXSER_PORTS_PER_BOARD; j++)
+				if (mxser_boards[i].ports[j].ioaddr)
 					result |= (1 << i);
-		वापस put_user(result, (अचिन्हित दीर्घ __user *)argp);
-	हाल MOXA_GETDATACOUNT:
+		return put_user(result, (unsigned long __user *)argp);
+	case MOXA_GETDATACOUNT:
 		/* The receive side is locked by port->slock but it isn't
 		   clear that an exact snapshot is worth copying here */
-		अगर (copy_to_user(argp, &mxvar_log, माप(mxvar_log)))
+		if (copy_to_user(argp, &mxvar_log, sizeof(mxvar_log)))
 			ret = -EFAULT;
-		वापस ret;
-	हाल MOXA_GETMSTATUS: अणु
-		काष्ठा mxser_mstatus ms, __user *msu = argp;
-		क्रम (i = 0; i < MXSER_BOARDS; i++)
-			क्रम (j = 0; j < MXSER_PORTS_PER_BOARD; j++) अणु
+		return ret;
+	case MOXA_GETMSTATUS: {
+		struct mxser_mstatus ms, __user *msu = argp;
+		for (i = 0; i < MXSER_BOARDS; i++)
+			for (j = 0; j < MXSER_PORTS_PER_BOARD; j++) {
 				ip = &mxser_boards[i].ports[j];
 				port = &ip->port;
-				स_रखो(&ms, 0, माप(ms));
+				memset(&ms, 0, sizeof(ms));
 
 				mutex_lock(&port->mutex);
-				अगर (!ip->ioaddr)
-					जाओ copy;
+				if (!ip->ioaddr)
+					goto copy;
 				
 				tty = tty_port_tty_get(port);
 
-				अगर (!tty)
+				if (!tty)
 					ms.cflag = ip->normal_termios.c_cflag;
-				अन्यथा
+				else
 					ms.cflag = tty->termios.c_cflag;
 				tty_kref_put(tty);
 				spin_lock_irq(&ip->slock);
 				status = inb(ip->ioaddr + UART_MSR);
 				spin_unlock_irq(&ip->slock);
-				अगर (status & UART_MSR_DCD)
+				if (status & UART_MSR_DCD)
 					ms.dcd = 1;
-				अगर (status & UART_MSR_DSR)
+				if (status & UART_MSR_DSR)
 					ms.dsr = 1;
-				अगर (status & UART_MSR_CTS)
+				if (status & UART_MSR_CTS)
 					ms.cts = 1;
 			copy:
 				mutex_unlock(&port->mutex);
-				अगर (copy_to_user(msu, &ms, माप(ms)))
-					वापस -EFAULT;
+				if (copy_to_user(msu, &ms, sizeof(ms)))
+					return -EFAULT;
 				msu++;
-			पूर्ण
-		वापस 0;
-	पूर्ण
-	हाल MOXA_ASPP_MON_EXT: अणु
-		काष्ठा mxser_mon_ext *me; /* it's 2k, stack unमित्रly */
-		अचिन्हित पूर्णांक cflag, अगरlag, p;
+			}
+		return 0;
+	}
+	case MOXA_ASPP_MON_EXT: {
+		struct mxser_mon_ext *me; /* it's 2k, stack unfriendly */
+		unsigned int cflag, iflag, p;
 		u8 opmode;
 
-		me = kzalloc(माप(*me), GFP_KERNEL);
-		अगर (!me)
-			वापस -ENOMEM;
+		me = kzalloc(sizeof(*me), GFP_KERNEL);
+		if (!me)
+			return -ENOMEM;
 
-		क्रम (i = 0, p = 0; i < MXSER_BOARDS; i++) अणु
-			क्रम (j = 0; j < MXSER_PORTS_PER_BOARD; j++, p++) अणु
-				अगर (p >= ARRAY_SIZE(me->rx_cnt)) अणु
+		for (i = 0, p = 0; i < MXSER_BOARDS; i++) {
+			for (j = 0; j < MXSER_PORTS_PER_BOARD; j++, p++) {
+				if (p >= ARRAY_SIZE(me->rx_cnt)) {
 					i = MXSER_BOARDS;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 				ip = &mxser_boards[i].ports[j];
 				port = &ip->port;
 
 				mutex_lock(&port->mutex);
-				अगर (!ip->ioaddr) अणु
+				if (!ip->ioaddr) {
 					mutex_unlock(&port->mutex);
-					जारी;
-				पूर्ण
+					continue;
+				}
 
 				spin_lock_irq(&ip->slock);
 				status = mxser_get_msr(ip->ioaddr, 0, p);
 
-				अगर (status & UART_MSR_TERI)
+				if (status & UART_MSR_TERI)
 					ip->icount.rng++;
-				अगर (status & UART_MSR_DDSR)
+				if (status & UART_MSR_DDSR)
 					ip->icount.dsr++;
-				अगर (status & UART_MSR_DDCD)
+				if (status & UART_MSR_DDCD)
 					ip->icount.dcd++;
-				अगर (status & UART_MSR_DCTS)
+				if (status & UART_MSR_DCTS)
 					ip->icount.cts++;
 
 				ip->mon_data.modem_status = status;
@@ -1614,15 +1613,15 @@ MODULE_LICENSE("GPL");
 
 				tty = tty_port_tty_get(&ip->port);
 
-				अगर (!tty) अणु
+				if (!tty) {
 					cflag = ip->normal_termios.c_cflag;
-					अगरlag = ip->normal_termios.c_अगरlag;
+					iflag = ip->normal_termios.c_iflag;
 					me->baudrate[p] = tty_termios_baud_rate(&ip->normal_termios);
-				पूर्ण अन्यथा अणु
+				} else {
 					cflag = tty->termios.c_cflag;
-					अगरlag = tty->termios.c_अगरlag;
+					iflag = tty->termios.c_iflag;
 					me->baudrate[p] = tty_get_baud_rate(tty);
-				पूर्ण
+				}
 				tty_kref_put(tty);
 
 				me->databits[p] = cflag & CSIZE;
@@ -1630,42 +1629,42 @@ MODULE_LICENSE("GPL");
 				me->parity[p] = cflag & (PARENB | PARODD |
 						CMSPAR);
 
-				अगर (cflag & CRTSCTS)
+				if (cflag & CRTSCTS)
 					me->flowctrl[p] |= 0x03;
 
-				अगर (अगरlag & (IXON | IXOFF))
+				if (iflag & (IXON | IXOFF))
 					me->flowctrl[p] |= 0x0C;
 
-				अगर (ip->type == PORT_16550A)
-					me->fअगरo[p] = 1;
+				if (ip->type == PORT_16550A)
+					me->fifo[p] = 1;
 
-				अगर (ip->board->chip_flag == MOXA_MUST_MU860_HWID) अणु
+				if (ip->board->chip_flag == MOXA_MUST_MU860_HWID) {
 					opmode = inb(ip->opmode_ioaddr)>>((p % 4) * 2);
 					opmode &= OP_MODE_MASK;
-				पूर्ण अन्यथा अणु
+				} else {
 					opmode = RS232_MODE;
-				पूर्ण
-				me->अगरtype[p] = opmode;
+				}
+				me->iftype[p] = opmode;
 				mutex_unlock(&port->mutex);
-			पूर्ण
-		पूर्ण
-		अगर (copy_to_user(argp, me, माप(*me)))
+			}
+		}
+		if (copy_to_user(argp, me, sizeof(*me)))
 			ret = -EFAULT;
-		kमुक्त(me);
-		वापस ret;
-	पूर्ण
-	शेष:
-		वापस -ENOIOCTLCMD;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		kfree(me);
+		return ret;
+	}
+	default:
+		return -ENOIOCTLCMD;
+	}
+	return 0;
+}
 
-अटल पूर्णांक mxser_cflags_changed(काष्ठा mxser_port *info, अचिन्हित दीर्घ arg,
-		काष्ठा async_icount *cprev)
-अणु
-	काष्ठा async_icount cnow;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int mxser_cflags_changed(struct mxser_port *info, unsigned long arg,
+		struct async_icount *cprev)
+{
+	struct async_icount cnow;
+	unsigned long flags;
+	int ret;
 
 	spin_lock_irqsave(&info->slock, flags);
 	cnow = info->icount;	/* atomic copy */
@@ -1678,100 +1677,100 @@ MODULE_LICENSE("GPL");
 
 	*cprev = cnow;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mxser_ioctl(काष्ठा tty_काष्ठा *tty,
-		अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा mxser_port *info = tty->driver_data;
-	काष्ठा async_icount cnow;
-	अचिन्हित दीर्घ flags;
-	व्योम __user *argp = (व्योम __user *)arg;
+static int mxser_ioctl(struct tty_struct *tty,
+		unsigned int cmd, unsigned long arg)
+{
+	struct mxser_port *info = tty->driver_data;
+	struct async_icount cnow;
+	unsigned long flags;
+	void __user *argp = (void __user *)arg;
 
-	अगर (tty->index == MXSER_PORTS)
-		वापस mxser_ioctl_special(cmd, argp);
+	if (tty->index == MXSER_PORTS)
+		return mxser_ioctl_special(cmd, argp);
 
-	अगर (cmd == MOXA_SET_OP_MODE || cmd == MOXA_GET_OP_MODE) अणु
-		पूर्णांक p;
-		अचिन्हित दीर्घ opmode;
-		अटल अचिन्हित अक्षर ModeMask[] = अणु 0xfc, 0xf3, 0xcf, 0x3f पूर्ण;
-		पूर्णांक shअगरtbit;
-		अचिन्हित अक्षर val, mask;
+	if (cmd == MOXA_SET_OP_MODE || cmd == MOXA_GET_OP_MODE) {
+		int p;
+		unsigned long opmode;
+		static unsigned char ModeMask[] = { 0xfc, 0xf3, 0xcf, 0x3f };
+		int shiftbit;
+		unsigned char val, mask;
 
-		अगर (info->board->chip_flag != MOXA_MUST_MU860_HWID)
-			वापस -EFAULT;
+		if (info->board->chip_flag != MOXA_MUST_MU860_HWID)
+			return -EFAULT;
 
 		p = tty->index % 4;
-		अगर (cmd == MOXA_SET_OP_MODE) अणु
-			अगर (get_user(opmode, (पूर्णांक __user *) argp))
-				वापस -EFAULT;
-			अगर (opmode != RS232_MODE &&
+		if (cmd == MOXA_SET_OP_MODE) {
+			if (get_user(opmode, (int __user *) argp))
+				return -EFAULT;
+			if (opmode != RS232_MODE &&
 					opmode != RS485_2WIRE_MODE &&
 					opmode != RS422_MODE &&
 					opmode != RS485_4WIRE_MODE)
-				वापस -EFAULT;
+				return -EFAULT;
 			mask = ModeMask[p];
-			shअगरtbit = p * 2;
+			shiftbit = p * 2;
 			spin_lock_irq(&info->slock);
 			val = inb(info->opmode_ioaddr);
 			val &= mask;
-			val |= (opmode << shअगरtbit);
+			val |= (opmode << shiftbit);
 			outb(val, info->opmode_ioaddr);
 			spin_unlock_irq(&info->slock);
-		पूर्ण अन्यथा अणु
-			shअगरtbit = p * 2;
+		} else {
+			shiftbit = p * 2;
 			spin_lock_irq(&info->slock);
-			opmode = inb(info->opmode_ioaddr) >> shअगरtbit;
+			opmode = inb(info->opmode_ioaddr) >> shiftbit;
 			spin_unlock_irq(&info->slock);
 			opmode &= OP_MODE_MASK;
-			अगर (put_user(opmode, (पूर्णांक __user *)argp))
-				वापस -EFAULT;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+			if (put_user(opmode, (int __user *)argp))
+				return -EFAULT;
+		}
+		return 0;
+	}
 
-	अगर (cmd != TIOCMIWAIT && tty_io_error(tty))
-		वापस -EIO;
+	if (cmd != TIOCMIWAIT && tty_io_error(tty))
+		return -EIO;
 
-	चयन (cmd) अणु
-	हाल TIOCSERGETLSR:	/* Get line status रेजिस्टर */
-		वापस  mxser_get_lsr_info(info, argp);
+	switch (cmd) {
+	case TIOCSERGETLSR:	/* Get line status register */
+		return  mxser_get_lsr_info(info, argp);
 		/*
-		 * Wait क्रम any of the 4 modem inमाला_दो (DCD,RI,DSR,CTS) to change
-		 * - mask passed in arg क्रम lines of पूर्णांकerest
-		 *   (use |'ed TIOCM_RNG/DSR/CD/CTS क्रम masking)
+		 * Wait for any of the 4 modem inputs (DCD,RI,DSR,CTS) to change
+		 * - mask passed in arg for lines of interest
+		 *   (use |'ed TIOCM_RNG/DSR/CD/CTS for masking)
 		 * Caller should use TIOCGICOUNT to see which one it was
 		 */
-	हाल TIOCMIWAIT:
+	case TIOCMIWAIT:
 		spin_lock_irqsave(&info->slock, flags);
 		cnow = info->icount;	/* note the counters on entry */
 		spin_unlock_irqrestore(&info->slock, flags);
 
-		वापस रुको_event_पूर्णांकerruptible(info->port.delta_msr_रुको,
+		return wait_event_interruptible(info->port.delta_msr_wait,
 				mxser_cflags_changed(info, arg, &cnow));
-	हाल MOXA_HighSpeedOn:
-		वापस put_user(info->baud_base != 115200 ? 1 : 0, (पूर्णांक __user *)argp);
-	हाल MOXA_SDS_RSTICOUNTER:
+	case MOXA_HighSpeedOn:
+		return put_user(info->baud_base != 115200 ? 1 : 0, (int __user *)argp);
+	case MOXA_SDS_RSTICOUNTER:
 		spin_lock_irq(&info->slock);
 		info->mon_data.rxcnt = 0;
 		info->mon_data.txcnt = 0;
 		spin_unlock_irq(&info->slock);
-		वापस 0;
+		return 0;
 
-	हाल MOXA_ASPP_OQUEUE:अणु
-		पूर्णांक len, lsr;
+	case MOXA_ASPP_OQUEUE:{
+		int len, lsr;
 
-		len = mxser_अक्षरs_in_buffer(tty);
+		len = mxser_chars_in_buffer(tty);
 		spin_lock_irq(&info->slock);
 		lsr = inb(info->ioaddr + UART_LSR) & UART_LSR_THRE;
 		spin_unlock_irq(&info->slock);
 		len += (lsr ? 0 : 1);
 
-		वापस put_user(len, (पूर्णांक __user *)argp);
-	पूर्ण
-	हाल MOXA_ASPP_MON: अणु
-		पूर्णांक mcr, status;
+		return put_user(len, (int __user *)argp);
+	}
+	case MOXA_ASPP_MON: {
+		int mcr, status;
 
 		spin_lock_irq(&info->slock);
 		status = mxser_get_msr(info->ioaddr, 1, tty->index);
@@ -1780,62 +1779,62 @@ MODULE_LICENSE("GPL");
 		mcr = inb(info->ioaddr + UART_MCR);
 		spin_unlock_irq(&info->slock);
 
-		अगर (mcr & MOXA_MUST_MCR_XON_FLAG)
+		if (mcr & MOXA_MUST_MCR_XON_FLAG)
 			info->mon_data.hold_reason &= ~NPPI_NOTIFY_XOFFHOLD;
-		अन्यथा
+		else
 			info->mon_data.hold_reason |= NPPI_NOTIFY_XOFFHOLD;
 
-		अगर (mcr & MOXA_MUST_MCR_TX_XON)
+		if (mcr & MOXA_MUST_MCR_TX_XON)
 			info->mon_data.hold_reason &= ~NPPI_NOTIFY_XOFFXENT;
-		अन्यथा
+		else
 			info->mon_data.hold_reason |= NPPI_NOTIFY_XOFFXENT;
 
-		अगर (tty->hw_stopped)
+		if (tty->hw_stopped)
 			info->mon_data.hold_reason |= NPPI_NOTIFY_CTSHOLD;
-		अन्यथा
+		else
 			info->mon_data.hold_reason &= ~NPPI_NOTIFY_CTSHOLD;
 
-		अगर (copy_to_user(argp, &info->mon_data,
-				माप(काष्ठा mxser_mon)))
-			वापस -EFAULT;
+		if (copy_to_user(argp, &info->mon_data,
+				sizeof(struct mxser_mon)))
+			return -EFAULT;
 
-		वापस 0;
-	पूर्ण
-	हाल MOXA_ASPP_LSTATUS: अणु
-		अगर (put_user(info->err_shaकरोw, (अचिन्हित अक्षर __user *)argp))
-			वापस -EFAULT;
+		return 0;
+	}
+	case MOXA_ASPP_LSTATUS: {
+		if (put_user(info->err_shadow, (unsigned char __user *)argp))
+			return -EFAULT;
 
-		info->err_shaकरोw = 0;
-		वापस 0;
-	पूर्ण
-	हाल MOXA_SET_BAUD_METHOD: अणु
-		पूर्णांक method;
+		info->err_shadow = 0;
+		return 0;
+	}
+	case MOXA_SET_BAUD_METHOD: {
+		int method;
 
-		अगर (get_user(method, (पूर्णांक __user *)argp))
-			वापस -EFAULT;
+		if (get_user(method, (int __user *)argp))
+			return -EFAULT;
 		mxser_set_baud_method[tty->index] = method;
-		वापस put_user(method, (पूर्णांक __user *)argp);
-	पूर्ण
-	शेष:
-		वापस -ENOIOCTLCMD;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return put_user(method, (int __user *)argp);
+	}
+	default:
+		return -ENOIOCTLCMD;
+	}
+	return 0;
+}
 
 	/*
-	 * Get counter of input serial line पूर्णांकerrupts (DCD,RI,DSR,CTS)
-	 * Return: ग_लिखो counters to the user passed counter काष्ठा
-	 * NB: both 1->0 and 0->1 transitions are counted except क्रम
+	 * Get counter of input serial line interrupts (DCD,RI,DSR,CTS)
+	 * Return: write counters to the user passed counter struct
+	 * NB: both 1->0 and 0->1 transitions are counted except for
 	 *     RI where only 0->1 is counted.
 	 */
 
-अटल पूर्णांक mxser_get_icount(काष्ठा tty_काष्ठा *tty,
-		काष्ठा serial_icounter_काष्ठा *icount)
+static int mxser_get_icount(struct tty_struct *tty,
+		struct serial_icounter_struct *icount)
 
-अणु
-	काष्ठा mxser_port *info = tty->driver_data;
-	काष्ठा async_icount cnow;
-	अचिन्हित दीर्घ flags;
+{
+	struct mxser_port *info = tty->driver_data;
+	struct async_icount cnow;
+	unsigned long flags;
 
 	spin_lock_irqsave(&info->slock, flags);
 	cnow = info->icount;
@@ -1852,473 +1851,473 @@ MODULE_LICENSE("GPL");
 	icount->dsr = cnow.dsr;
 	icount->rng = cnow.rng;
 	icount->dcd = cnow.dcd;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mxser_stoprx(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा mxser_port *info = tty->driver_data;
+static void mxser_stoprx(struct tty_struct *tty)
+{
+	struct mxser_port *info = tty->driver_data;
 
 	info->ldisc_stop_rx = 1;
-	अगर (I_IXOFF(tty)) अणु
-		अगर (info->board->chip_flag) अणु
+	if (I_IXOFF(tty)) {
+		if (info->board->chip_flag) {
 			info->IER &= ~MOXA_MUST_RECV_ISR;
 			outb(info->IER, info->ioaddr + UART_IER);
-		पूर्ण अन्यथा अणु
-			info->x_अक्षर = STOP_CHAR(tty);
+		} else {
+			info->x_char = STOP_CHAR(tty);
 			outb(0, info->ioaddr + UART_IER);
 			info->IER |= UART_IER_THRI;
 			outb(info->IER, info->ioaddr + UART_IER);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (C_CRTSCTS(tty)) अणु
+	if (C_CRTSCTS(tty)) {
 		info->MCR &= ~UART_MCR_RTS;
 		outb(info->MCR, info->ioaddr + UART_MCR);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * This routine is called by the upper-layer tty layer to संकेत that
- * incoming अक्षरacters should be throttled.
+ * This routine is called by the upper-layer tty layer to signal that
+ * incoming characters should be throttled.
  */
-अटल व्योम mxser_throttle(काष्ठा tty_काष्ठा *tty)
-अणु
+static void mxser_throttle(struct tty_struct *tty)
+{
 	mxser_stoprx(tty);
-पूर्ण
+}
 
-अटल व्योम mxser_unthrottle(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा mxser_port *info = tty->driver_data;
+static void mxser_unthrottle(struct tty_struct *tty)
+{
+	struct mxser_port *info = tty->driver_data;
 
 	/* startrx */
 	info->ldisc_stop_rx = 0;
-	अगर (I_IXOFF(tty)) अणु
-		अगर (info->x_अक्षर)
-			info->x_अक्षर = 0;
-		अन्यथा अणु
-			अगर (info->board->chip_flag) अणु
+	if (I_IXOFF(tty)) {
+		if (info->x_char)
+			info->x_char = 0;
+		else {
+			if (info->board->chip_flag) {
 				info->IER |= MOXA_MUST_RECV_ISR;
 				outb(info->IER, info->ioaddr + UART_IER);
-			पूर्ण अन्यथा अणु
-				info->x_अक्षर = START_CHAR(tty);
+			} else {
+				info->x_char = START_CHAR(tty);
 				outb(0, info->ioaddr + UART_IER);
 				info->IER |= UART_IER_THRI;
 				outb(info->IER, info->ioaddr + UART_IER);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (C_CRTSCTS(tty)) अणु
+	if (C_CRTSCTS(tty)) {
 		info->MCR |= UART_MCR_RTS;
 		outb(info->MCR, info->ioaddr + UART_MCR);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * mxser_stop() and mxser_start()
  *
- * This routines are called beक्रमe setting or resetting tty->stopped.
- * They enable or disable transmitter पूर्णांकerrupts, as necessary.
+ * This routines are called before setting or resetting tty->stopped.
+ * They enable or disable transmitter interrupts, as necessary.
  */
-अटल व्योम mxser_stop(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा mxser_port *info = tty->driver_data;
-	अचिन्हित दीर्घ flags;
+static void mxser_stop(struct tty_struct *tty)
+{
+	struct mxser_port *info = tty->driver_data;
+	unsigned long flags;
 
 	spin_lock_irqsave(&info->slock, flags);
-	अगर (info->IER & UART_IER_THRI) अणु
+	if (info->IER & UART_IER_THRI) {
 		info->IER &= ~UART_IER_THRI;
 		outb(info->IER, info->ioaddr + UART_IER);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&info->slock, flags);
-पूर्ण
+}
 
-अटल व्योम mxser_start(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा mxser_port *info = tty->driver_data;
-	अचिन्हित दीर्घ flags;
+static void mxser_start(struct tty_struct *tty)
+{
+	struct mxser_port *info = tty->driver_data;
+	unsigned long flags;
 
 	spin_lock_irqsave(&info->slock, flags);
-	अगर (info->xmit_cnt && info->port.xmit_buf) अणु
+	if (info->xmit_cnt && info->port.xmit_buf) {
 		outb(info->IER & ~UART_IER_THRI, info->ioaddr + UART_IER);
 		info->IER |= UART_IER_THRI;
 		outb(info->IER, info->ioaddr + UART_IER);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&info->slock, flags);
-पूर्ण
+}
 
-अटल व्योम mxser_set_termios(काष्ठा tty_काष्ठा *tty, काष्ठा ktermios *old_termios)
-अणु
-	काष्ठा mxser_port *info = tty->driver_data;
-	अचिन्हित दीर्घ flags;
+static void mxser_set_termios(struct tty_struct *tty, struct ktermios *old_termios)
+{
+	struct mxser_port *info = tty->driver_data;
+	unsigned long flags;
 
 	spin_lock_irqsave(&info->slock, flags);
 	mxser_change_speed(tty);
 	spin_unlock_irqrestore(&info->slock, flags);
 
-	अगर ((old_termios->c_cflag & CRTSCTS) && !C_CRTSCTS(tty)) अणु
+	if ((old_termios->c_cflag & CRTSCTS) && !C_CRTSCTS(tty)) {
 		tty->hw_stopped = 0;
 		mxser_start(tty);
-	पूर्ण
+	}
 
 	/* Handle sw stopped */
-	अगर ((old_termios->c_अगरlag & IXON) && !I_IXON(tty)) अणु
+	if ((old_termios->c_iflag & IXON) && !I_IXON(tty)) {
 		tty->stopped = 0;
 
-		अगर (info->board->chip_flag) अणु
+		if (info->board->chip_flag) {
 			spin_lock_irqsave(&info->slock, flags);
 			mxser_disable_must_rx_software_flow_control(
 					info->ioaddr);
 			spin_unlock_irqrestore(&info->slock, flags);
-		पूर्ण
+		}
 
 		mxser_start(tty);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * mxser_रुको_until_sent() --- रुको until the transmitter is empty
+ * mxser_wait_until_sent() --- wait until the transmitter is empty
  */
-अटल व्योम mxser_रुको_until_sent(काष्ठा tty_काष्ठा *tty, पूर्णांक समयout)
-अणु
-	काष्ठा mxser_port *info = tty->driver_data;
-	अचिन्हित दीर्घ orig_jअगरfies, अक्षर_समय;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक lsr;
+static void mxser_wait_until_sent(struct tty_struct *tty, int timeout)
+{
+	struct mxser_port *info = tty->driver_data;
+	unsigned long orig_jiffies, char_time;
+	unsigned long flags;
+	int lsr;
 
-	अगर (info->type == PORT_UNKNOWN)
-		वापस;
+	if (info->type == PORT_UNKNOWN)
+		return;
 
-	अगर (info->xmit_fअगरo_size == 0)
-		वापस;		/* Just in हाल.... */
+	if (info->xmit_fifo_size == 0)
+		return;		/* Just in case.... */
 
-	orig_jअगरfies = jअगरfies;
+	orig_jiffies = jiffies;
 	/*
-	 * Set the check पूर्णांकerval to be 1/5 of the estimated समय to
-	 * send a single अक्षरacter, and make it at least 1.  The check
-	 * पूर्णांकerval should also be less than the समयout.
+	 * Set the check interval to be 1/5 of the estimated time to
+	 * send a single character, and make it at least 1.  The check
+	 * interval should also be less than the timeout.
 	 *
 	 * Note: we have to use pretty tight timings here to satisfy
 	 * the NIST-PCTS.
 	 */
-	अक्षर_समय = (info->समयout - HZ / 50) / info->xmit_fअगरo_size;
-	अक्षर_समय = अक्षर_समय / 5;
-	अगर (अक्षर_समय == 0)
-		अक्षर_समय = 1;
-	अगर (समयout && समयout < अक्षर_समय)
-		अक्षर_समय = समयout;
+	char_time = (info->timeout - HZ / 50) / info->xmit_fifo_size;
+	char_time = char_time / 5;
+	if (char_time == 0)
+		char_time = 1;
+	if (timeout && timeout < char_time)
+		char_time = timeout;
 	/*
 	 * If the transmitter hasn't cleared in twice the approximate
-	 * amount of समय to send the entire FIFO, it probably won't
-	 * ever clear.  This assumes the UART isn't करोing flow
-	 * control, which is currently the हाल.  Hence, अगर it ever
-	 * takes दीर्घer than info->समयout, this is probably due to a
-	 * UART bug of some kind.  So, we clamp the समयout parameter at
-	 * 2*info->समयout.
+	 * amount of time to send the entire FIFO, it probably won't
+	 * ever clear.  This assumes the UART isn't doing flow
+	 * control, which is currently the case.  Hence, if it ever
+	 * takes longer than info->timeout, this is probably due to a
+	 * UART bug of some kind.  So, we clamp the timeout parameter at
+	 * 2*info->timeout.
 	 */
-	अगर (!समयout || समयout > 2 * info->समयout)
-		समयout = 2 * info->समयout;
+	if (!timeout || timeout > 2 * info->timeout)
+		timeout = 2 * info->timeout;
 
 	spin_lock_irqsave(&info->slock, flags);
-	जबतक (!((lsr = inb(info->ioaddr + UART_LSR)) & UART_LSR_TEMT)) अणु
+	while (!((lsr = inb(info->ioaddr + UART_LSR)) & UART_LSR_TEMT)) {
 		spin_unlock_irqrestore(&info->slock, flags);
-		schedule_समयout_पूर्णांकerruptible(अक्षर_समय);
+		schedule_timeout_interruptible(char_time);
 		spin_lock_irqsave(&info->slock, flags);
-		अगर (संकेत_pending(current))
-			अवरोध;
-		अगर (समयout && समय_after(jअगरfies, orig_jअगरfies + समयout))
-			अवरोध;
-	पूर्ण
+		if (signal_pending(current))
+			break;
+		if (timeout && time_after(jiffies, orig_jiffies + timeout))
+			break;
+	}
 	spin_unlock_irqrestore(&info->slock, flags);
 	set_current_state(TASK_RUNNING);
-पूर्ण
+}
 
 /*
- * This routine is called by tty_hangup() when a hangup is संकेतed.
+ * This routine is called by tty_hangup() when a hangup is signaled.
  */
-अटल व्योम mxser_hangup(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा mxser_port *info = tty->driver_data;
+static void mxser_hangup(struct tty_struct *tty)
+{
+	struct mxser_port *info = tty->driver_data;
 
 	mxser_flush_buffer(tty);
 	tty_port_hangup(&info->port);
-पूर्ण
+}
 
 /*
- * mxser_rs_अवरोध() --- routine which turns the अवरोध handling on or off
+ * mxser_rs_break() --- routine which turns the break handling on or off
  */
-अटल पूर्णांक mxser_rs_अवरोध(काष्ठा tty_काष्ठा *tty, पूर्णांक अवरोध_state)
-अणु
-	काष्ठा mxser_port *info = tty->driver_data;
-	अचिन्हित दीर्घ flags;
+static int mxser_rs_break(struct tty_struct *tty, int break_state)
+{
+	struct mxser_port *info = tty->driver_data;
+	unsigned long flags;
 
 	spin_lock_irqsave(&info->slock, flags);
-	अगर (अवरोध_state == -1)
+	if (break_state == -1)
 		outb(inb(info->ioaddr + UART_LCR) | UART_LCR_SBC,
 			info->ioaddr + UART_LCR);
-	अन्यथा
+	else
 		outb(inb(info->ioaddr + UART_LCR) & ~UART_LCR_SBC,
 			info->ioaddr + UART_LCR);
 	spin_unlock_irqrestore(&info->slock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mxser_receive_अक्षरs(काष्ठा tty_काष्ठा *tty,
-				काष्ठा mxser_port *port, पूर्णांक *status)
-अणु
-	अचिन्हित अक्षर ch, gdl;
-	पूर्णांक ignored = 0;
-	पूर्णांक cnt = 0;
-	पूर्णांक recv_room;
-	पूर्णांक max = 256;
+static void mxser_receive_chars(struct tty_struct *tty,
+				struct mxser_port *port, int *status)
+{
+	unsigned char ch, gdl;
+	int ignored = 0;
+	int cnt = 0;
+	int recv_room;
+	int max = 256;
 
 	recv_room = tty->receive_room;
-	अगर (recv_room == 0 && !port->ldisc_stop_rx)
+	if (recv_room == 0 && !port->ldisc_stop_rx)
 		mxser_stoprx(tty);
-	अगर (port->board->chip_flag != MOXA_OTHER_UART) अणु
+	if (port->board->chip_flag != MOXA_OTHER_UART) {
 
-		अगर (*status & UART_LSR_SPECIAL)
-			जाओ पूर्णांकr_old;
-		अगर (port->board->chip_flag == MOXA_MUST_MU860_HWID &&
+		if (*status & UART_LSR_SPECIAL)
+			goto intr_old;
+		if (port->board->chip_flag == MOXA_MUST_MU860_HWID &&
 				(*status & MOXA_MUST_LSR_RERR))
-			जाओ पूर्णांकr_old;
-		अगर (*status & MOXA_MUST_LSR_RERR)
-			जाओ पूर्णांकr_old;
+			goto intr_old;
+		if (*status & MOXA_MUST_LSR_RERR)
+			goto intr_old;
 
 		gdl = inb(port->ioaddr + MOXA_MUST_GDL_REGISTER);
 
-		अगर (port->board->chip_flag == MOXA_MUST_MU150_HWID)
+		if (port->board->chip_flag == MOXA_MUST_MU150_HWID)
 			gdl &= MOXA_MUST_GDL_MASK;
-		अगर (gdl >= recv_room) अणु
-			अगर (!port->ldisc_stop_rx)
+		if (gdl >= recv_room) {
+			if (!port->ldisc_stop_rx)
 				mxser_stoprx(tty);
-		पूर्ण
-		जबतक (gdl--) अणु
+		}
+		while (gdl--) {
 			ch = inb(port->ioaddr + UART_RX);
-			tty_insert_flip_अक्षर(&port->port, ch, 0);
+			tty_insert_flip_char(&port->port, ch, 0);
 			cnt++;
-		पूर्ण
-		जाओ end_पूर्णांकr;
-	पूर्ण
-पूर्णांकr_old:
+		}
+		goto end_intr;
+	}
+intr_old:
 
-	करो अणु
-		अगर (max-- < 0)
-			अवरोध;
+	do {
+		if (max-- < 0)
+			break;
 
 		ch = inb(port->ioaddr + UART_RX);
-		अगर (port->board->chip_flag && (*status & UART_LSR_OE))
+		if (port->board->chip_flag && (*status & UART_LSR_OE))
 			outb(0x23, port->ioaddr + UART_FCR);
-		*status &= port->पढ़ो_status_mask;
-		अगर (*status & port->ignore_status_mask) अणु
-			अगर (++ignored > 100)
-				अवरोध;
-		पूर्ण अन्यथा अणु
-			अक्षर flag = 0;
-			अगर (*status & UART_LSR_SPECIAL) अणु
-				अगर (*status & UART_LSR_BI) अणु
+		*status &= port->read_status_mask;
+		if (*status & port->ignore_status_mask) {
+			if (++ignored > 100)
+				break;
+		} else {
+			char flag = 0;
+			if (*status & UART_LSR_SPECIAL) {
+				if (*status & UART_LSR_BI) {
 					flag = TTY_BREAK;
 					port->icount.brk++;
 
-					अगर (port->port.flags & ASYNC_SAK)
-						करो_SAK(tty);
-				पूर्ण अन्यथा अगर (*status & UART_LSR_PE) अणु
+					if (port->port.flags & ASYNC_SAK)
+						do_SAK(tty);
+				} else if (*status & UART_LSR_PE) {
 					flag = TTY_PARITY;
 					port->icount.parity++;
-				पूर्ण अन्यथा अगर (*status & UART_LSR_FE) अणु
+				} else if (*status & UART_LSR_FE) {
 					flag = TTY_FRAME;
 					port->icount.frame++;
-				पूर्ण अन्यथा अगर (*status & UART_LSR_OE) अणु
+				} else if (*status & UART_LSR_OE) {
 					flag = TTY_OVERRUN;
 					port->icount.overrun++;
-				पूर्ण अन्यथा
+				} else
 					flag = TTY_BREAK;
-			पूर्ण
-			tty_insert_flip_अक्षर(&port->port, ch, flag);
+			}
+			tty_insert_flip_char(&port->port, ch, flag);
 			cnt++;
-			अगर (cnt >= recv_room) अणु
-				अगर (!port->ldisc_stop_rx)
+			if (cnt >= recv_room) {
+				if (!port->ldisc_stop_rx)
 					mxser_stoprx(tty);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-		पूर्ण
+		}
 
-		अगर (port->board->chip_flag)
-			अवरोध;
+		if (port->board->chip_flag)
+			break;
 
 		*status = inb(port->ioaddr + UART_LSR);
-	पूर्ण जबतक (*status & UART_LSR_DR);
+	} while (*status & UART_LSR_DR);
 
-end_पूर्णांकr:
+end_intr:
 	mxvar_log.rxcnt[tty->index] += cnt;
 	port->mon_data.rxcnt += cnt;
 	port->mon_data.up_rxcnt += cnt;
 
 	tty_flip_buffer_push(&port->port);
-पूर्ण
+}
 
-अटल व्योम mxser_transmit_अक्षरs(काष्ठा tty_काष्ठा *tty, काष्ठा mxser_port *port)
-अणु
-	पूर्णांक count, cnt;
+static void mxser_transmit_chars(struct tty_struct *tty, struct mxser_port *port)
+{
+	int count, cnt;
 
-	अगर (port->x_अक्षर) अणु
-		outb(port->x_अक्षर, port->ioaddr + UART_TX);
-		port->x_अक्षर = 0;
+	if (port->x_char) {
+		outb(port->x_char, port->ioaddr + UART_TX);
+		port->x_char = 0;
 		mxvar_log.txcnt[tty->index]++;
 		port->mon_data.txcnt++;
 		port->mon_data.up_txcnt++;
 		port->icount.tx++;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (port->port.xmit_buf == शून्य)
-		वापस;
+	if (port->port.xmit_buf == NULL)
+		return;
 
-	अगर (port->xmit_cnt <= 0 || tty->stopped ||
+	if (port->xmit_cnt <= 0 || tty->stopped ||
 			(tty->hw_stopped &&
 			(port->type != PORT_16550A) &&
-			(!port->board->chip_flag))) अणु
+			(!port->board->chip_flag))) {
 		port->IER &= ~UART_IER_THRI;
 		outb(port->IER, port->ioaddr + UART_IER);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	cnt = port->xmit_cnt;
-	count = port->xmit_fअगरo_size;
-	करो अणु
+	count = port->xmit_fifo_size;
+	do {
 		outb(port->port.xmit_buf[port->xmit_tail++],
 			port->ioaddr + UART_TX);
 		port->xmit_tail = port->xmit_tail & (SERIAL_XMIT_SIZE - 1);
-		अगर (--port->xmit_cnt <= 0)
-			अवरोध;
-	पूर्ण जबतक (--count > 0);
+		if (--port->xmit_cnt <= 0)
+			break;
+	} while (--count > 0);
 	mxvar_log.txcnt[tty->index] += (cnt - port->xmit_cnt);
 
 	port->mon_data.txcnt += (cnt - port->xmit_cnt);
 	port->mon_data.up_txcnt += (cnt - port->xmit_cnt);
 	port->icount.tx += (cnt - port->xmit_cnt);
 
-	अगर (port->xmit_cnt < WAKEUP_CHARS)
+	if (port->xmit_cnt < WAKEUP_CHARS)
 		tty_wakeup(tty);
 
-	अगर (port->xmit_cnt <= 0) अणु
+	if (port->xmit_cnt <= 0) {
 		port->IER &= ~UART_IER_THRI;
 		outb(port->IER, port->ioaddr + UART_IER);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * This is the serial driver's generic पूर्णांकerrupt routine
+ * This is the serial driver's generic interrupt routine
  */
-अटल irqवापस_t mxser_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	पूर्णांक status, iir, i;
-	काष्ठा mxser_board *brd = शून्य;
-	काष्ठा mxser_port *port;
-	पूर्णांक max, irqbits, bits, msr;
-	अचिन्हित पूर्णांक पूर्णांक_cnt, pass_counter = 0;
-	पूर्णांक handled = IRQ_NONE;
-	काष्ठा tty_काष्ठा *tty;
+static irqreturn_t mxser_interrupt(int irq, void *dev_id)
+{
+	int status, iir, i;
+	struct mxser_board *brd = NULL;
+	struct mxser_port *port;
+	int max, irqbits, bits, msr;
+	unsigned int int_cnt, pass_counter = 0;
+	int handled = IRQ_NONE;
+	struct tty_struct *tty;
 
-	क्रम (i = 0; i < MXSER_BOARDS; i++)
-		अगर (dev_id == &mxser_boards[i]) अणु
+	for (i = 0; i < MXSER_BOARDS; i++)
+		if (dev_id == &mxser_boards[i]) {
 			brd = dev_id;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-	अगर (i == MXSER_BOARDS)
-		जाओ irq_stop;
-	अगर (brd == शून्य)
-		जाओ irq_stop;
+	if (i == MXSER_BOARDS)
+		goto irq_stop;
+	if (brd == NULL)
+		goto irq_stop;
 	max = brd->info->nports;
-	जबतक (pass_counter++ < MXSER_ISR_PASS_LIMIT) अणु
+	while (pass_counter++ < MXSER_ISR_PASS_LIMIT) {
 		irqbits = inb(brd->vector) & brd->vector_mask;
-		अगर (irqbits == brd->vector_mask)
-			अवरोध;
+		if (irqbits == brd->vector_mask)
+			break;
 
 		handled = IRQ_HANDLED;
-		क्रम (i = 0, bits = 1; i < max; i++, irqbits |= bits, bits <<= 1) अणु
-			अगर (irqbits == brd->vector_mask)
-				अवरोध;
-			अगर (bits & irqbits)
-				जारी;
+		for (i = 0, bits = 1; i < max; i++, irqbits |= bits, bits <<= 1) {
+			if (irqbits == brd->vector_mask)
+				break;
+			if (bits & irqbits)
+				continue;
 			port = &brd->ports[i];
 
-			पूर्णांक_cnt = 0;
+			int_cnt = 0;
 			spin_lock(&port->slock);
-			करो अणु
+			do {
 				iir = inb(port->ioaddr + UART_IIR);
-				अगर (iir & UART_IIR_NO_INT)
-					अवरोध;
+				if (iir & UART_IIR_NO_INT)
+					break;
 				iir &= MOXA_MUST_IIR_MASK;
 				tty = tty_port_tty_get(&port->port);
-				अगर (!tty || port->closing ||
-				    !tty_port_initialized(&port->port)) अणु
+				if (!tty || port->closing ||
+				    !tty_port_initialized(&port->port)) {
 					status = inb(port->ioaddr + UART_LSR);
 					outb(0x27, port->ioaddr + UART_FCR);
 					inb(port->ioaddr + UART_MSR);
 					tty_kref_put(tty);
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
 				status = inb(port->ioaddr + UART_LSR);
 
-				अगर (status & UART_LSR_PE)
-					port->err_shaकरोw |= NPPI_NOTIFY_PARITY;
-				अगर (status & UART_LSR_FE)
-					port->err_shaकरोw |= NPPI_NOTIFY_FRAMING;
-				अगर (status & UART_LSR_OE)
-					port->err_shaकरोw |=
+				if (status & UART_LSR_PE)
+					port->err_shadow |= NPPI_NOTIFY_PARITY;
+				if (status & UART_LSR_FE)
+					port->err_shadow |= NPPI_NOTIFY_FRAMING;
+				if (status & UART_LSR_OE)
+					port->err_shadow |=
 						NPPI_NOTIFY_HW_OVERRUN;
-				अगर (status & UART_LSR_BI)
-					port->err_shaकरोw |= NPPI_NOTIFY_BREAK;
+				if (status & UART_LSR_BI)
+					port->err_shadow |= NPPI_NOTIFY_BREAK;
 
-				अगर (port->board->chip_flag) अणु
-					अगर (iir == MOXA_MUST_IIR_GDA ||
+				if (port->board->chip_flag) {
+					if (iir == MOXA_MUST_IIR_GDA ||
 					    iir == MOXA_MUST_IIR_RDA ||
 					    iir == MOXA_MUST_IIR_RTO ||
 					    iir == MOXA_MUST_IIR_LSR)
-						mxser_receive_अक्षरs(tty, port,
+						mxser_receive_chars(tty, port,
 								&status);
 
-				पूर्ण अन्यथा अणु
-					status &= port->पढ़ो_status_mask;
-					अगर (status & UART_LSR_DR)
-						mxser_receive_अक्षरs(tty, port,
+				} else {
+					status &= port->read_status_mask;
+					if (status & UART_LSR_DR)
+						mxser_receive_chars(tty, port,
 								&status);
-				पूर्ण
+				}
 				msr = inb(port->ioaddr + UART_MSR);
-				अगर (msr & UART_MSR_ANY_DELTA)
+				if (msr & UART_MSR_ANY_DELTA)
 					mxser_check_modem_status(tty, port, msr);
 
-				अगर (port->board->chip_flag) अणु
-					अगर (iir == 0x02 && (status &
+				if (port->board->chip_flag) {
+					if (iir == 0x02 && (status &
 								UART_LSR_THRE))
-						mxser_transmit_अक्षरs(tty, port);
-				पूर्ण अन्यथा अणु
-					अगर (status & UART_LSR_THRE)
-						mxser_transmit_अक्षरs(tty, port);
-				पूर्ण
+						mxser_transmit_chars(tty, port);
+				} else {
+					if (status & UART_LSR_THRE)
+						mxser_transmit_chars(tty, port);
+				}
 				tty_kref_put(tty);
-			पूर्ण जबतक (पूर्णांक_cnt++ < MXSER_ISR_PASS_LIMIT);
+			} while (int_cnt++ < MXSER_ISR_PASS_LIMIT);
 			spin_unlock(&port->slock);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 irq_stop:
-	वापस handled;
-पूर्ण
+	return handled;
+}
 
-अटल स्थिर काष्ठा tty_operations mxser_ops = अणु
-	.खोलो = mxser_खोलो,
-	.बंद = mxser_बंद,
-	.ग_लिखो = mxser_ग_लिखो,
-	.put_अक्षर = mxser_put_अक्षर,
-	.flush_अक्षरs = mxser_flush_अक्षरs,
-	.ग_लिखो_room = mxser_ग_लिखो_room,
-	.अक्षरs_in_buffer = mxser_अक्षरs_in_buffer,
+static const struct tty_operations mxser_ops = {
+	.open = mxser_open,
+	.close = mxser_close,
+	.write = mxser_write,
+	.put_char = mxser_put_char,
+	.flush_chars = mxser_flush_chars,
+	.write_room = mxser_write_room,
+	.chars_in_buffer = mxser_chars_in_buffer,
 	.flush_buffer = mxser_flush_buffer,
 	.ioctl = mxser_ioctl,
 	.throttle = mxser_throttle,
@@ -2327,67 +2326,67 @@ irq_stop:
 	.stop = mxser_stop,
 	.start = mxser_start,
 	.hangup = mxser_hangup,
-	.अवरोध_ctl = mxser_rs_अवरोध,
-	.रुको_until_sent = mxser_रुको_until_sent,
+	.break_ctl = mxser_rs_break,
+	.wait_until_sent = mxser_wait_until_sent,
 	.tiocmget = mxser_tiocmget,
 	.tiocmset = mxser_tiocmset,
 	.set_serial = mxser_set_serial_info,
 	.get_serial = mxser_get_serial_info,
 	.get_icount = mxser_get_icount,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा tty_port_operations mxser_port_ops = अणु
-	.carrier_उठाओd = mxser_carrier_उठाओd,
+static const struct tty_port_operations mxser_port_ops = {
+	.carrier_raised = mxser_carrier_raised,
 	.dtr_rts = mxser_dtr_rts,
 	.activate = mxser_activate,
-	.shutकरोwn = mxser_shutकरोwn_port,
-पूर्ण;
+	.shutdown = mxser_shutdown_port,
+};
 
 /*
- * The MOXA Smartio/Industio serial driver boot-समय initialization code!
+ * The MOXA Smartio/Industio serial driver boot-time initialization code!
  */
 
-अटल bool allow_overlapping_vector;
+static bool allow_overlapping_vector;
 module_param(allow_overlapping_vector, bool, S_IRUGO);
 MODULE_PARM_DESC(allow_overlapping_vector, "whether we allow ISA cards to be configured such that vector overlabs IO ports (default=no)");
 
-अटल bool mxser_overlapping_vector(काष्ठा mxser_board *brd)
-अणु
-	वापस allow_overlapping_vector &&
+static bool mxser_overlapping_vector(struct mxser_board *brd)
+{
+	return allow_overlapping_vector &&
 		brd->vector >= brd->ports[0].ioaddr &&
 		brd->vector < brd->ports[0].ioaddr + 8 * brd->info->nports;
-पूर्ण
+}
 
-अटल पूर्णांक mxser_request_vector(काष्ठा mxser_board *brd)
-अणु
-	अगर (mxser_overlapping_vector(brd))
-		वापस 0;
-	वापस request_region(brd->vector, 1, "mxser(vector)") ? 0 : -EIO;
-पूर्ण
+static int mxser_request_vector(struct mxser_board *brd)
+{
+	if (mxser_overlapping_vector(brd))
+		return 0;
+	return request_region(brd->vector, 1, "mxser(vector)") ? 0 : -EIO;
+}
 
-अटल व्योम mxser_release_vector(काष्ठा mxser_board *brd)
-अणु
-	अगर (mxser_overlapping_vector(brd))
-		वापस;
+static void mxser_release_vector(struct mxser_board *brd)
+{
+	if (mxser_overlapping_vector(brd))
+		return;
 	release_region(brd->vector, 1);
-पूर्ण
+}
 
-अटल व्योम mxser_release_ISA_res(काष्ठा mxser_board *brd)
-अणु
+static void mxser_release_ISA_res(struct mxser_board *brd)
+{
 	release_region(brd->ports[0].ioaddr, 8 * brd->info->nports);
 	mxser_release_vector(brd);
-पूर्ण
+}
 
-अटल पूर्णांक mxser_initbrd(काष्ठा mxser_board *brd)
-अणु
-	काष्ठा mxser_port *info;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक retval;
+static int mxser_initbrd(struct mxser_board *brd)
+{
+	struct mxser_port *info;
+	unsigned int i;
+	int retval;
 
-	prपूर्णांकk(KERN_INFO "mxser: max. baud rate = %d bps\n",
+	printk(KERN_INFO "mxser: max. baud rate = %d bps\n",
 			brd->ports[0].max_baud);
 
-	क्रम (i = 0; i < brd->info->nports; i++) अणु
+	for (i = 0; i < brd->info->nports; i++) {
 		info = &brd->ports[i];
 		tty_port_init(&info->port);
 		info->port.ops = &mxser_port_ops;
@@ -2396,129 +2395,129 @@ MODULE_PARM_DESC(allow_overlapping_vector, "whether we allow ISA cards to be con
 		info->ldisc_stop_rx = 0;
 
 		/* Enhance mode enabled here */
-		अगर (brd->chip_flag != MOXA_OTHER_UART)
+		if (brd->chip_flag != MOXA_OTHER_UART)
 			mxser_enable_must_enchance_mode(info->ioaddr);
 
 		info->type = brd->uart_type;
 
-		process_txrx_fअगरo(info);
+		process_txrx_fifo(info);
 
-		info->custom_भागisor = info->baud_base * 16;
-		info->port.बंद_delay = 5 * HZ / 10;
-		info->port.closing_रुको = 30 * HZ;
+		info->custom_divisor = info->baud_base * 16;
+		info->port.close_delay = 5 * HZ / 10;
+		info->port.closing_wait = 30 * HZ;
 		info->normal_termios = mxvar_sdriver->init_termios;
-		स_रखो(&info->mon_data, 0, माप(काष्ठा mxser_mon));
-		info->err_shaकरोw = 0;
+		memset(&info->mon_data, 0, sizeof(struct mxser_mon));
+		info->err_shadow = 0;
 		spin_lock_init(&info->slock);
 
-		/* beक्रमe set INT ISR, disable all पूर्णांक */
+		/* before set INT ISR, disable all int */
 		outb(inb(info->ioaddr + UART_IER) & 0xf0,
 			info->ioaddr + UART_IER);
-	पूर्ण
+	}
 
-	retval = request_irq(brd->irq, mxser_पूर्णांकerrupt, IRQF_SHARED, "mxser",
+	retval = request_irq(brd->irq, mxser_interrupt, IRQF_SHARED, "mxser",
 			brd);
-	अगर (retval) अणु
-		क्रम (i = 0; i < brd->info->nports; i++)
+	if (retval) {
+		for (i = 0; i < brd->info->nports; i++)
 			tty_port_destroy(&brd->ports[i].port);
-		prपूर्णांकk(KERN_ERR "Board %s: Request irq failed, IRQ (%d) may "
+		printk(KERN_ERR "Board %s: Request irq failed, IRQ (%d) may "
 			"conflict with another device.\n",
 			brd->info->name, brd->irq);
-	पूर्ण
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम mxser_board_हटाओ(काष्ठा mxser_board *brd)
-अणु
-	अचिन्हित पूर्णांक i;
+static void mxser_board_remove(struct mxser_board *brd)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < brd->info->nports; i++) अणु
-		tty_unरेजिस्टर_device(mxvar_sdriver, brd->idx + i);
+	for (i = 0; i < brd->info->nports; i++) {
+		tty_unregister_device(mxvar_sdriver, brd->idx + i);
 		tty_port_destroy(&brd->ports[i].port);
-	पूर्ण
-	मुक्त_irq(brd->irq, brd);
-पूर्ण
+	}
+	free_irq(brd->irq, brd);
+}
 
-अटल पूर्णांक __init mxser_get_ISA_conf(पूर्णांक cap, काष्ठा mxser_board *brd)
-अणु
-	पूर्णांक id, i, bits, ret;
-	अचिन्हित लघु regs[16], irq;
-	अचिन्हित अक्षर scratch, scratch2;
+static int __init mxser_get_ISA_conf(int cap, struct mxser_board *brd)
+{
+	int id, i, bits, ret;
+	unsigned short regs[16], irq;
+	unsigned char scratch, scratch2;
 
 	brd->chip_flag = MOXA_OTHER_UART;
 
-	id = mxser_पढ़ो_रेजिस्टर(cap, regs);
-	चयन (id) अणु
-	हाल C168_ASIC_ID:
+	id = mxser_read_register(cap, regs);
+	switch (id) {
+	case C168_ASIC_ID:
 		brd->info = &mxser_cards[0];
-		अवरोध;
-	हाल C104_ASIC_ID:
+		break;
+	case C104_ASIC_ID:
 		brd->info = &mxser_cards[1];
-		अवरोध;
-	हाल CI104J_ASIC_ID:
+		break;
+	case CI104J_ASIC_ID:
 		brd->info = &mxser_cards[2];
-		अवरोध;
-	हाल C102_ASIC_ID:
+		break;
+	case C102_ASIC_ID:
 		brd->info = &mxser_cards[5];
-		अवरोध;
-	हाल CI132_ASIC_ID:
+		break;
+	case CI132_ASIC_ID:
 		brd->info = &mxser_cards[6];
-		अवरोध;
-	हाल CI134_ASIC_ID:
+		break;
+	case CI134_ASIC_ID:
 		brd->info = &mxser_cards[7];
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+		break;
+	default:
+		return 0;
+	}
 
 	irq = 0;
 	/* some ISA cards have 2 ports, but we want to see them as 4-port (why?)
-	   Flag-hack checks अगर configuration should be पढ़ो as 2-port here. */
-	अगर (brd->info->nports == 2 || (brd->info->flags & MXSER_HAS2)) अणु
+	   Flag-hack checks if configuration should be read as 2-port here. */
+	if (brd->info->nports == 2 || (brd->info->flags & MXSER_HAS2)) {
 		irq = regs[9] & 0xF000;
 		irq = irq | (irq >> 4);
-		अगर (irq != (regs[9] & 0xFF00))
-			जाओ err_irqconflict;
-	पूर्ण अन्यथा अगर (brd->info->nports == 4) अणु
-		irq = regs[9] & 0xF000;
-		irq = irq | (irq >> 4);
-		irq = irq | (irq >> 8);
-		अगर (irq != regs[9])
-			जाओ err_irqconflict;
-	पूर्ण अन्यथा अगर (brd->info->nports == 8) अणु
+		if (irq != (regs[9] & 0xFF00))
+			goto err_irqconflict;
+	} else if (brd->info->nports == 4) {
 		irq = regs[9] & 0xF000;
 		irq = irq | (irq >> 4);
 		irq = irq | (irq >> 8);
-		अगर ((irq != regs[9]) || (irq != regs[10]))
-			जाओ err_irqconflict;
-	पूर्ण
+		if (irq != regs[9])
+			goto err_irqconflict;
+	} else if (brd->info->nports == 8) {
+		irq = regs[9] & 0xF000;
+		irq = irq | (irq >> 4);
+		irq = irq | (irq >> 8);
+		if ((irq != regs[9]) || (irq != regs[10]))
+			goto err_irqconflict;
+	}
 
-	अगर (!irq) अणु
-		prपूर्णांकk(KERN_ERR "mxser: interrupt number unset\n");
-		वापस -EIO;
-	पूर्ण
-	brd->irq = ((पूर्णांक)(irq & 0xF000) >> 12);
-	क्रम (i = 0; i < 8; i++)
-		brd->ports[i].ioaddr = (पूर्णांक) regs[i + 1] & 0xFFF8;
-	अगर ((regs[12] & 0x80) == 0) अणु
-		prपूर्णांकk(KERN_ERR "mxser: invalid interrupt vector\n");
-		वापस -EIO;
-	पूर्ण
-	brd->vector = (पूर्णांक)regs[11];	/* पूर्णांकerrupt vector */
-	अगर (id == 1)
+	if (!irq) {
+		printk(KERN_ERR "mxser: interrupt number unset\n");
+		return -EIO;
+	}
+	brd->irq = ((int)(irq & 0xF000) >> 12);
+	for (i = 0; i < 8; i++)
+		brd->ports[i].ioaddr = (int) regs[i + 1] & 0xFFF8;
+	if ((regs[12] & 0x80) == 0) {
+		printk(KERN_ERR "mxser: invalid interrupt vector\n");
+		return -EIO;
+	}
+	brd->vector = (int)regs[11];	/* interrupt vector */
+	if (id == 1)
 		brd->vector_mask = 0x00FF;
-	अन्यथा
+	else
 		brd->vector_mask = 0x000F;
-	क्रम (i = 7, bits = 0x0100; i >= 0; i--, bits <<= 1) अणु
-		अगर (regs[12] & bits) अणु
+	for (i = 7, bits = 0x0100; i >= 0; i--, bits <<= 1) {
+		if (regs[12] & bits) {
 			brd->ports[i].baud_base = 921600;
 			brd->ports[i].max_baud = 921600;
-		पूर्ण अन्यथा अणु
+		} else {
 			brd->ports[i].baud_base = 115200;
 			brd->ports[i].max_baud = 115200;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	scratch2 = inb(cap + UART_LCR) & (~UART_LCR_DLAB);
 	outb(scratch2 | UART_LCR_DLAB, cap + UART_LCR);
 	outb(0, cap + UART_EFR);	/* EFR is the same as FCR */
@@ -2526,54 +2525,54 @@ MODULE_PARM_DESC(allow_overlapping_vector, "whether we allow ISA cards to be con
 	outb(UART_FCR_ENABLE_FIFO, cap + UART_FCR);
 	scratch = inb(cap + UART_IIR);
 
-	अगर (scratch & 0xC0)
+	if (scratch & 0xC0)
 		brd->uart_type = PORT_16550A;
-	अन्यथा
+	else
 		brd->uart_type = PORT_16450;
-	अगर (!request_region(brd->ports[0].ioaddr, 8 * brd->info->nports,
-			"mxser(IO)")) अणु
-		prपूर्णांकk(KERN_ERR "mxser: can't request ports I/O region: "
+	if (!request_region(brd->ports[0].ioaddr, 8 * brd->info->nports,
+			"mxser(IO)")) {
+		printk(KERN_ERR "mxser: can't request ports I/O region: "
 				"0x%.8lx-0x%.8lx\n",
 				brd->ports[0].ioaddr, brd->ports[0].ioaddr +
 				8 * brd->info->nports - 1);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	ret = mxser_request_vector(brd);
-	अगर (ret) अणु
+	if (ret) {
 		release_region(brd->ports[0].ioaddr, 8 * brd->info->nports);
-		prपूर्णांकk(KERN_ERR "mxser: can't request interrupt vector region: "
+		printk(KERN_ERR "mxser: can't request interrupt vector region: "
 				"0x%.8lx-0x%.8lx\n",
 				brd->ports[0].ioaddr, brd->ports[0].ioaddr +
 				8 * brd->info->nports - 1);
-		वापस ret;
-	पूर्ण
-	वापस brd->info->nports;
+		return ret;
+	}
+	return brd->info->nports;
 
 err_irqconflict:
-	prपूर्णांकk(KERN_ERR "mxser: invalid interrupt number\n");
-	वापस -EIO;
-पूर्ण
+	printk(KERN_ERR "mxser: invalid interrupt number\n");
+	return -EIO;
+}
 
-अटल पूर्णांक mxser_probe(काष्ठा pci_dev *pdev,
-		स्थिर काष्ठा pci_device_id *ent)
-अणु
-#अगर_घोषित CONFIG_PCI
-	काष्ठा mxser_board *brd;
-	अचिन्हित पूर्णांक i, j;
-	अचिन्हित दीर्घ ioaddress;
-	काष्ठा device *tty_dev;
-	पूर्णांक retval = -EINVAL;
+static int mxser_probe(struct pci_dev *pdev,
+		const struct pci_device_id *ent)
+{
+#ifdef CONFIG_PCI
+	struct mxser_board *brd;
+	unsigned int i, j;
+	unsigned long ioaddress;
+	struct device *tty_dev;
+	int retval = -EINVAL;
 
-	क्रम (i = 0; i < MXSER_BOARDS; i++)
-		अगर (mxser_boards[i].info == शून्य)
-			अवरोध;
+	for (i = 0; i < MXSER_BOARDS; i++)
+		if (mxser_boards[i].info == NULL)
+			break;
 
-	अगर (i >= MXSER_BOARDS) अणु
+	if (i >= MXSER_BOARDS) {
 		dev_err(&pdev->dev, "too many boards found (maximum %d), board "
 				"not configured\n", MXSER_BOARDS);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	brd = &mxser_boards[i];
 	brd->idx = i * MXSER_PORTS_PER_BOARD;
@@ -2582,26 +2581,26 @@ err_irqconflict:
 		pdev->bus->number, PCI_SLOT(pdev->devfn));
 
 	retval = pci_enable_device(pdev);
-	अगर (retval) अणु
+	if (retval) {
 		dev_err(&pdev->dev, "PCI enable failed\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/* io address */
 	ioaddress = pci_resource_start(pdev, 2);
 	retval = pci_request_region(pdev, 2, "mxser(IO)");
-	अगर (retval)
-		जाओ err_dis;
+	if (retval)
+		goto err_dis;
 
 	brd->info = &mxser_cards[ent->driver_data];
-	क्रम (i = 0; i < brd->info->nports; i++)
+	for (i = 0; i < brd->info->nports; i++)
 		brd->ports[i].ioaddr = ioaddress + 8 * i;
 
 	/* vector */
 	ioaddress = pci_resource_start(pdev, 3);
 	retval = pci_request_region(pdev, 3, "mxser(vector)");
-	अगर (retval)
-		जाओ err_zero;
+	if (retval)
+		goto err_zero;
 	brd->vector = ioaddress;
 
 	/* irq */
@@ -2611,110 +2610,110 @@ err_irqconflict:
 	brd->uart_type = PORT_16550A;
 	brd->vector_mask = 0;
 
-	क्रम (i = 0; i < brd->info->nports; i++) अणु
-		क्रम (j = 0; j < UART_INFO_NUM; j++) अणु
-			अगर (Gpci_uart_info[j].type == brd->chip_flag) अणु
+	for (i = 0; i < brd->info->nports; i++) {
+		for (j = 0; j < UART_INFO_NUM; j++) {
+			if (Gpci_uart_info[j].type == brd->chip_flag) {
 				brd->ports[i].max_baud =
 					Gpci_uart_info[j].max_baud;
 
 				/* exception....CP-102 */
-				अगर (brd->info->flags & MXSER_HIGHBAUD)
+				if (brd->info->flags & MXSER_HIGHBAUD)
 					brd->ports[i].max_baud = 921600;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	अगर (brd->chip_flag == MOXA_MUST_MU860_HWID) अणु
-		क्रम (i = 0; i < brd->info->nports; i++) अणु
-			अगर (i < 4)
+	if (brd->chip_flag == MOXA_MUST_MU860_HWID) {
+		for (i = 0; i < brd->info->nports; i++) {
+			if (i < 4)
 				brd->ports[i].opmode_ioaddr = ioaddress + 4;
-			अन्यथा
+			else
 				brd->ports[i].opmode_ioaddr = ioaddress + 0x0c;
-		पूर्ण
-		outb(0, ioaddress + 4);	/* शेष set to RS232 mode */
-		outb(0, ioaddress + 0x0c);	/* शेष set to RS232 mode */
-	पूर्ण
+		}
+		outb(0, ioaddress + 4);	/* default set to RS232 mode */
+		outb(0, ioaddress + 0x0c);	/* default set to RS232 mode */
+	}
 
-	क्रम (i = 0; i < brd->info->nports; i++) अणु
+	for (i = 0; i < brd->info->nports; i++) {
 		brd->vector_mask |= (1 << i);
 		brd->ports[i].baud_base = 921600;
-	पूर्ण
+	}
 
 	/* mxser_initbrd will hook ISR. */
 	retval = mxser_initbrd(brd);
-	अगर (retval)
-		जाओ err_rel3;
+	if (retval)
+		goto err_rel3;
 
-	क्रम (i = 0; i < brd->info->nports; i++) अणु
-		tty_dev = tty_port_रेजिस्टर_device(&brd->ports[i].port,
+	for (i = 0; i < brd->info->nports; i++) {
+		tty_dev = tty_port_register_device(&brd->ports[i].port,
 				mxvar_sdriver, brd->idx + i, &pdev->dev);
-		अगर (IS_ERR(tty_dev)) अणु
+		if (IS_ERR(tty_dev)) {
 			retval = PTR_ERR(tty_dev);
-			क्रम (; i > 0; i--)
-				tty_unरेजिस्टर_device(mxvar_sdriver,
+			for (; i > 0; i--)
+				tty_unregister_device(mxvar_sdriver,
 					brd->idx + i - 1);
-			जाओ err_relbrd;
-		पूर्ण
-	पूर्ण
+			goto err_relbrd;
+		}
+	}
 
 	pci_set_drvdata(pdev, brd);
 
-	वापस 0;
+	return 0;
 err_relbrd:
-	क्रम (i = 0; i < brd->info->nports; i++)
+	for (i = 0; i < brd->info->nports; i++)
 		tty_port_destroy(&brd->ports[i].port);
-	मुक्त_irq(brd->irq, brd);
+	free_irq(brd->irq, brd);
 err_rel3:
 	pci_release_region(pdev, 3);
 err_zero:
-	brd->info = शून्य;
+	brd->info = NULL;
 	pci_release_region(pdev, 2);
 err_dis:
 	pci_disable_device(pdev);
 err:
-	वापस retval;
-#अन्यथा
-	वापस -ENODEV;
-#पूर्ण_अगर
-पूर्ण
+	return retval;
+#else
+	return -ENODEV;
+#endif
+}
 
-अटल व्योम mxser_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-#अगर_घोषित CONFIG_PCI
-	काष्ठा mxser_board *brd = pci_get_drvdata(pdev);
+static void mxser_remove(struct pci_dev *pdev)
+{
+#ifdef CONFIG_PCI
+	struct mxser_board *brd = pci_get_drvdata(pdev);
 
-	mxser_board_हटाओ(brd);
+	mxser_board_remove(brd);
 
 	pci_release_region(pdev, 2);
 	pci_release_region(pdev, 3);
 	pci_disable_device(pdev);
-	brd->info = शून्य;
-#पूर्ण_अगर
-पूर्ण
+	brd->info = NULL;
+#endif
+}
 
-अटल काष्ठा pci_driver mxser_driver = अणु
+static struct pci_driver mxser_driver = {
 	.name = "mxser",
 	.id_table = mxser_pcibrds,
 	.probe = mxser_probe,
-	.हटाओ = mxser_हटाओ
-पूर्ण;
+	.remove = mxser_remove
+};
 
-अटल पूर्णांक __init mxser_module_init(व्योम)
-अणु
-	काष्ठा mxser_board *brd;
-	काष्ठा device *tty_dev;
-	अचिन्हित पूर्णांक b, i, m;
-	पूर्णांक retval;
+static int __init mxser_module_init(void)
+{
+	struct mxser_board *brd;
+	struct device *tty_dev;
+	unsigned int b, i, m;
+	int retval;
 
 	mxvar_sdriver = alloc_tty_driver(MXSER_PORTS + 1);
-	अगर (!mxvar_sdriver)
-		वापस -ENOMEM;
+	if (!mxvar_sdriver)
+		return -ENOMEM;
 
-	prपूर्णांकk(KERN_INFO "MOXA Smartio/Industio family driver version %s\n",
+	printk(KERN_INFO "MOXA Smartio/Industio family driver version %s\n",
 		MXSER_VERSION);
 
-	/* Initialize the tty_driver काष्ठाure */
+	/* Initialize the tty_driver structure */
 	mxvar_sdriver->name = "ttyMI";
 	mxvar_sdriver->major = ttymajor;
 	mxvar_sdriver->minor_start = 0;
@@ -2725,90 +2724,90 @@ err:
 	mxvar_sdriver->flags = TTY_DRIVER_REAL_RAW|TTY_DRIVER_DYNAMIC_DEV;
 	tty_set_operations(mxvar_sdriver, &mxser_ops);
 
-	retval = tty_रेजिस्टर_driver(mxvar_sdriver);
-	अगर (retval) अणु
-		prपूर्णांकk(KERN_ERR "Couldn't install MOXA Smartio/Industio family "
+	retval = tty_register_driver(mxvar_sdriver);
+	if (retval) {
+		printk(KERN_ERR "Couldn't install MOXA Smartio/Industio family "
 				"tty driver !\n");
-		जाओ err_put;
-	पूर्ण
+		goto err_put;
+	}
 
 	/* Start finding ISA boards here */
-	क्रम (m = 0, b = 0; b < MXSER_BOARDS; b++) अणु
-		अगर (!ioaddr[b])
-			जारी;
+	for (m = 0, b = 0; b < MXSER_BOARDS; b++) {
+		if (!ioaddr[b])
+			continue;
 
 		brd = &mxser_boards[m];
 		retval = mxser_get_ISA_conf(ioaddr[b], brd);
-		अगर (retval <= 0) अणु
-			brd->info = शून्य;
-			जारी;
-		पूर्ण
+		if (retval <= 0) {
+			brd->info = NULL;
+			continue;
+		}
 
-		prपूर्णांकk(KERN_INFO "mxser: found MOXA %s board (CAP=0x%lx)\n",
+		printk(KERN_INFO "mxser: found MOXA %s board (CAP=0x%lx)\n",
 				brd->info->name, ioaddr[b]);
 
 		/* mxser_initbrd will hook ISR. */
-		अगर (mxser_initbrd(brd) < 0) अणु
+		if (mxser_initbrd(brd) < 0) {
 			mxser_release_ISA_res(brd);
-			brd->info = शून्य;
-			जारी;
-		पूर्ण
+			brd->info = NULL;
+			continue;
+		}
 
 		brd->idx = m * MXSER_PORTS_PER_BOARD;
-		क्रम (i = 0; i < brd->info->nports; i++) अणु
-			tty_dev = tty_port_रेजिस्टर_device(&brd->ports[i].port,
-					mxvar_sdriver, brd->idx + i, शून्य);
-			अगर (IS_ERR(tty_dev)) अणु
-				क्रम (; i > 0; i--)
-					tty_unरेजिस्टर_device(mxvar_sdriver,
+		for (i = 0; i < brd->info->nports; i++) {
+			tty_dev = tty_port_register_device(&brd->ports[i].port,
+					mxvar_sdriver, brd->idx + i, NULL);
+			if (IS_ERR(tty_dev)) {
+				for (; i > 0; i--)
+					tty_unregister_device(mxvar_sdriver,
 						brd->idx + i - 1);
-				क्रम (i = 0; i < brd->info->nports; i++)
+				for (i = 0; i < brd->info->nports; i++)
 					tty_port_destroy(&brd->ports[i].port);
-				मुक्त_irq(brd->irq, brd);
+				free_irq(brd->irq, brd);
 				mxser_release_ISA_res(brd);
-				brd->info = शून्य;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (brd->info == शून्य)
-			जारी;
+				brd->info = NULL;
+				break;
+			}
+		}
+		if (brd->info == NULL)
+			continue;
 
 		m++;
-	पूर्ण
+	}
 
-	retval = pci_रेजिस्टर_driver(&mxser_driver);
-	अगर (retval) अणु
-		prपूर्णांकk(KERN_ERR "mxser: can't register pci driver\n");
-		अगर (!m) अणु
+	retval = pci_register_driver(&mxser_driver);
+	if (retval) {
+		printk(KERN_ERR "mxser: can't register pci driver\n");
+		if (!m) {
 			retval = -ENODEV;
-			जाओ err_unr;
-		पूर्ण /* अन्यथा: we have some ISA cards under control */
-	पूर्ण
+			goto err_unr;
+		} /* else: we have some ISA cards under control */
+	}
 
-	वापस 0;
+	return 0;
 err_unr:
-	tty_unरेजिस्टर_driver(mxvar_sdriver);
+	tty_unregister_driver(mxvar_sdriver);
 err_put:
 	put_tty_driver(mxvar_sdriver);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम __निकास mxser_module_निकास(व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
+static void __exit mxser_module_exit(void)
+{
+	unsigned int i;
 
-	pci_unरेजिस्टर_driver(&mxser_driver);
+	pci_unregister_driver(&mxser_driver);
 
-	क्रम (i = 0; i < MXSER_BOARDS; i++) /* ISA reमुख्यs */
-		अगर (mxser_boards[i].info != शून्य)
-			mxser_board_हटाओ(&mxser_boards[i]);
-	tty_unरेजिस्टर_driver(mxvar_sdriver);
+	for (i = 0; i < MXSER_BOARDS; i++) /* ISA remains */
+		if (mxser_boards[i].info != NULL)
+			mxser_board_remove(&mxser_boards[i]);
+	tty_unregister_driver(mxvar_sdriver);
 	put_tty_driver(mxvar_sdriver);
 
-	क्रम (i = 0; i < MXSER_BOARDS; i++)
-		अगर (mxser_boards[i].info != शून्य)
+	for (i = 0; i < MXSER_BOARDS; i++)
+		if (mxser_boards[i].info != NULL)
 			mxser_release_ISA_res(&mxser_boards[i]);
-पूर्ण
+}
 
 module_init(mxser_module_init);
-module_निकास(mxser_module_निकास);
+module_exit(mxser_module_exit);

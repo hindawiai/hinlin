@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * hypervisor.c - /sys/hypervisor subप्रणाली.
+ * hypervisor.c - /sys/hypervisor subsystem.
  *
  * Copyright (C) IBM Corp. 2006
- * Copyright (C) 2007 Greg Kroah-Harपंचांगan <gregkh@suse.de>
+ * Copyright (C) 2007 Greg Kroah-Hartman <gregkh@suse.de>
  * Copyright (C) 2007 Novell Inc.
  */
 
-#समावेश <linux/kobject.h>
-#समावेश <linux/device.h>
-#समावेश <linux/export.h>
-#समावेश "base.h"
+#include <linux/kobject.h>
+#include <linux/device.h>
+#include <linux/export.h>
+#include "base.h"
 
-काष्ठा kobject *hypervisor_kobj;
+struct kobject *hypervisor_kobj;
 EXPORT_SYMBOL_GPL(hypervisor_kobj);
 
-पूर्णांक __init hypervisor_init(व्योम)
-अणु
-	hypervisor_kobj = kobject_create_and_add("hypervisor", शून्य);
-	अगर (!hypervisor_kobj)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+int __init hypervisor_init(void)
+{
+	hypervisor_kobj = kobject_create_and_add("hypervisor", NULL);
+	if (!hypervisor_kobj)
+		return -ENOMEM;
+	return 0;
+}

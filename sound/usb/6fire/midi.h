@@ -1,38 +1,37 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Linux driver क्रम TerraTec DMX 6Fire USB
+ * Linux driver for TerraTec DMX 6Fire USB
  *
  * Author:	Torsten Schenk <torsten.schenk@zoho.com>
  * Created:	Jan 01, 2011
  * Copyright:	(C) Torsten Schenk
  */
 
-#अगर_अघोषित USB6FIRE_MIDI_H
-#घोषणा USB6FIRE_MIDI_H
+#ifndef USB6FIRE_MIDI_H
+#define USB6FIRE_MIDI_H
 
-#समावेश "common.h"
+#include "common.h"
 
-काष्ठा midi_runसमय अणु
-	काष्ठा sfire_chip *chip;
-	काष्ठा snd_rawmidi *instance;
+struct midi_runtime {
+	struct sfire_chip *chip;
+	struct snd_rawmidi *instance;
 
-	काष्ठा snd_rawmidi_substream *in;
-	अक्षर in_active;
+	struct snd_rawmidi_substream *in;
+	char in_active;
 
 	spinlock_t in_lock;
 	spinlock_t out_lock;
-	काष्ठा snd_rawmidi_substream *out;
-	काष्ठा urb out_urb;
+	struct snd_rawmidi_substream *out;
+	struct urb out_urb;
 	u8 out_serial; /* serial number of out packet */
 	u8 *out_buffer;
-	पूर्णांक buffer_offset;
+	int buffer_offset;
 
-	व्योम (*in_received)(काष्ठा midi_runसमय *rt, u8 *data, पूर्णांक length);
-पूर्ण;
+	void (*in_received)(struct midi_runtime *rt, u8 *data, int length);
+};
 
-पूर्णांक usb6fire_midi_init(काष्ठा sfire_chip *chip);
-व्योम usb6fire_midi_पात(काष्ठा sfire_chip *chip);
-व्योम usb6fire_midi_destroy(काष्ठा sfire_chip *chip);
-#पूर्ण_अगर /* USB6FIRE_MIDI_H */
+int usb6fire_midi_init(struct sfire_chip *chip);
+void usb6fire_midi_abort(struct sfire_chip *chip);
+void usb6fire_midi_destroy(struct sfire_chip *chip);
+#endif /* USB6FIRE_MIDI_H */
 

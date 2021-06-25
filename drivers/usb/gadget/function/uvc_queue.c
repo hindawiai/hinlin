@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  *	uvc_queue.c  --  USB Video Class driver - Buffers management
  *
  *	Copyright (C) 2005-2010
- *	    Laurent Pinअक्षरt (laurent.pinअक्षरt@ideasonboard.com)
+ *	    Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
-#समावेश <linux/atomic.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/videodev2.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/रुको.h>
+#include <linux/atomic.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/usb.h>
+#include <linux/videodev2.h>
+#include <linux/vmalloc.h>
+#include <linux/wait.h>
 
-#समावेश <media/v4l2-common.h>
-#समावेश <media/videobuf2-vदो_स्मृति.h>
+#include <media/v4l2-common.h>
+#include <media/videobuf2-vmalloc.h>
 
-#समावेश "uvc.h"
+#include "uvc.h"
 
 /* ------------------------------------------------------------------------
  * Video buffers queue management.
  *
- * Video queues is initialized by uvcg_queue_init(). The function perक्रमms
- * basic initialization of the uvc_video_queue काष्ठा and never fails.
+ * Video queues is initialized by uvcg_queue_init(). The function performs
+ * basic initialization of the uvc_video_queue struct and never fails.
  *
  * Video buffers are managed by videobuf2. The driver uses a mutex to protect
  * the videobuf2 queue operations by serializing calls to videobuf2 and a
@@ -38,312 +37,312 @@
  * videobuf2 queue operations
  */
 
-अटल पूर्णांक uvc_queue_setup(काष्ठा vb2_queue *vq,
-			   अचिन्हित पूर्णांक *nbuffers, अचिन्हित पूर्णांक *nplanes,
-			   अचिन्हित पूर्णांक sizes[], काष्ठा device *alloc_devs[])
-अणु
-	काष्ठा uvc_video_queue *queue = vb2_get_drv_priv(vq);
-	काष्ठा uvc_video *video = container_of(queue, काष्ठा uvc_video, queue);
+static int uvc_queue_setup(struct vb2_queue *vq,
+			   unsigned int *nbuffers, unsigned int *nplanes,
+			   unsigned int sizes[], struct device *alloc_devs[])
+{
+	struct uvc_video_queue *queue = vb2_get_drv_priv(vq);
+	struct uvc_video *video = container_of(queue, struct uvc_video, queue);
 
-	अगर (*nbuffers > UVC_MAX_VIDEO_BUFFERS)
+	if (*nbuffers > UVC_MAX_VIDEO_BUFFERS)
 		*nbuffers = UVC_MAX_VIDEO_BUFFERS;
 
 	*nplanes = 1;
 
 	sizes[0] = video->imagesize;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक uvc_buffer_prepare(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा uvc_video_queue *queue = vb2_get_drv_priv(vb->vb2_queue);
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा uvc_buffer *buf = container_of(vbuf, काष्ठा uvc_buffer, buf);
+static int uvc_buffer_prepare(struct vb2_buffer *vb)
+{
+	struct uvc_video_queue *queue = vb2_get_drv_priv(vb->vb2_queue);
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct uvc_buffer *buf = container_of(vbuf, struct uvc_buffer, buf);
 
-	अगर (vb->type == V4L2_BUF_TYPE_VIDEO_OUTPUT &&
-	    vb2_get_plane_payload(vb, 0) > vb2_plane_size(vb, 0)) अणु
+	if (vb->type == V4L2_BUF_TYPE_VIDEO_OUTPUT &&
+	    vb2_get_plane_payload(vb, 0) > vb2_plane_size(vb, 0)) {
 		uvc_trace(UVC_TRACE_CAPTURE, "[E] Bytes used out of bounds.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (unlikely(queue->flags & UVC_QUEUE_DISCONNECTED))
-		वापस -ENODEV;
+	if (unlikely(queue->flags & UVC_QUEUE_DISCONNECTED))
+		return -ENODEV;
 
 	buf->state = UVC_BUF_STATE_QUEUED;
 	buf->mem = vb2_plane_vaddr(vb, 0);
 	buf->length = vb2_plane_size(vb, 0);
-	अगर (vb->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+	if (vb->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
 		buf->bytesused = 0;
-	अन्यथा
+	else
 		buf->bytesused = vb2_get_plane_payload(vb, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम uvc_buffer_queue(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा uvc_video_queue *queue = vb2_get_drv_priv(vb->vb2_queue);
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा uvc_buffer *buf = container_of(vbuf, काष्ठा uvc_buffer, buf);
-	अचिन्हित दीर्घ flags;
+static void uvc_buffer_queue(struct vb2_buffer *vb)
+{
+	struct uvc_video_queue *queue = vb2_get_drv_priv(vb->vb2_queue);
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct uvc_buffer *buf = container_of(vbuf, struct uvc_buffer, buf);
+	unsigned long flags;
 
 	spin_lock_irqsave(&queue->irqlock, flags);
 
-	अगर (likely(!(queue->flags & UVC_QUEUE_DISCONNECTED))) अणु
+	if (likely(!(queue->flags & UVC_QUEUE_DISCONNECTED))) {
 		list_add_tail(&buf->queue, &queue->irqqueue);
-	पूर्ण अन्यथा अणु
-		/* If the device is disconnected वापस the buffer to userspace
+	} else {
+		/* If the device is disconnected return the buffer to userspace
 		 * directly. The next QBUF call will fail with -ENODEV.
 		 */
 		buf->state = UVC_BUF_STATE_ERROR;
-		vb2_buffer_करोne(vb, VB2_BUF_STATE_ERROR);
-	पूर्ण
+		vb2_buffer_done(vb, VB2_BUF_STATE_ERROR);
+	}
 
 	spin_unlock_irqrestore(&queue->irqlock, flags);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा vb2_ops uvc_queue_qops = अणु
+static const struct vb2_ops uvc_queue_qops = {
 	.queue_setup = uvc_queue_setup,
 	.buf_prepare = uvc_buffer_prepare,
 	.buf_queue = uvc_buffer_queue,
-	.रुको_prepare = vb2_ops_रुको_prepare,
-	.रुको_finish = vb2_ops_रुको_finish,
-पूर्ण;
+	.wait_prepare = vb2_ops_wait_prepare,
+	.wait_finish = vb2_ops_wait_finish,
+};
 
-पूर्णांक uvcg_queue_init(काष्ठा uvc_video_queue *queue, क्रमागत v4l2_buf_type type,
-		    काष्ठा mutex *lock)
-अणु
-	पूर्णांक ret;
+int uvcg_queue_init(struct uvc_video_queue *queue, enum v4l2_buf_type type,
+		    struct mutex *lock)
+{
+	int ret;
 
 	queue->queue.type = type;
 	queue->queue.io_modes = VB2_MMAP | VB2_USERPTR | VB2_DMABUF;
 	queue->queue.drv_priv = queue;
-	queue->queue.buf_काष्ठा_size = माप(काष्ठा uvc_buffer);
+	queue->queue.buf_struct_size = sizeof(struct uvc_buffer);
 	queue->queue.ops = &uvc_queue_qops;
 	queue->queue.lock = lock;
-	queue->queue.mem_ops = &vb2_vदो_स्मृति_memops;
-	queue->queue.बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC
-				     | V4L2_BUF_FLAG_TSTAMP_SRC_खातापूर्ण;
+	queue->queue.mem_ops = &vb2_vmalloc_memops;
+	queue->queue.timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC
+				     | V4L2_BUF_FLAG_TSTAMP_SRC_EOF;
 	ret = vb2_queue_init(&queue->queue);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	spin_lock_init(&queue->irqlock);
 	INIT_LIST_HEAD(&queue->irqqueue);
 	queue->flags = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Free the video buffers.
  */
-व्योम uvcg_मुक्त_buffers(काष्ठा uvc_video_queue *queue)
-अणु
+void uvcg_free_buffers(struct uvc_video_queue *queue)
+{
 	vb2_queue_release(&queue->queue);
-पूर्ण
+}
 
 /*
  * Allocate the video buffers.
  */
-पूर्णांक uvcg_alloc_buffers(काष्ठा uvc_video_queue *queue,
-			      काष्ठा v4l2_requestbuffers *rb)
-अणु
-	पूर्णांक ret;
+int uvcg_alloc_buffers(struct uvc_video_queue *queue,
+			      struct v4l2_requestbuffers *rb)
+{
+	int ret;
 
 	ret = vb2_reqbufs(&queue->queue, rb);
 
-	वापस ret ? ret : rb->count;
-पूर्ण
+	return ret ? ret : rb->count;
+}
 
-पूर्णांक uvcg_query_buffer(काष्ठा uvc_video_queue *queue, काष्ठा v4l2_buffer *buf)
-अणु
-	वापस vb2_querybuf(&queue->queue, buf);
-पूर्ण
+int uvcg_query_buffer(struct uvc_video_queue *queue, struct v4l2_buffer *buf)
+{
+	return vb2_querybuf(&queue->queue, buf);
+}
 
-पूर्णांक uvcg_queue_buffer(काष्ठा uvc_video_queue *queue, काष्ठा v4l2_buffer *buf)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+int uvcg_queue_buffer(struct uvc_video_queue *queue, struct v4l2_buffer *buf)
+{
+	unsigned long flags;
+	int ret;
 
-	ret = vb2_qbuf(&queue->queue, शून्य, buf);
-	अगर (ret < 0)
-		वापस ret;
+	ret = vb2_qbuf(&queue->queue, NULL, buf);
+	if (ret < 0)
+		return ret;
 
 	spin_lock_irqsave(&queue->irqlock, flags);
 	ret = (queue->flags & UVC_QUEUE_PAUSED) != 0;
 	queue->flags &= ~UVC_QUEUE_PAUSED;
 	spin_unlock_irqrestore(&queue->irqlock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Dequeue a video buffer. If nonblocking is false, block until a buffer is
  * available.
  */
-पूर्णांक uvcg_dequeue_buffer(काष्ठा uvc_video_queue *queue, काष्ठा v4l2_buffer *buf,
-			पूर्णांक nonblocking)
-अणु
-	वापस vb2_dqbuf(&queue->queue, buf, nonblocking);
-पूर्ण
+int uvcg_dequeue_buffer(struct uvc_video_queue *queue, struct v4l2_buffer *buf,
+			int nonblocking)
+{
+	return vb2_dqbuf(&queue->queue, buf, nonblocking);
+}
 
 /*
  * Poll the video queue.
  *
- * This function implements video queue polling and is पूर्णांकended to be used by
+ * This function implements video queue polling and is intended to be used by
  * the device poll handler.
  */
-__poll_t uvcg_queue_poll(काष्ठा uvc_video_queue *queue, काष्ठा file *file,
-			     poll_table *रुको)
-अणु
-	वापस vb2_poll(&queue->queue, file, रुको);
-पूर्ण
+__poll_t uvcg_queue_poll(struct uvc_video_queue *queue, struct file *file,
+			     poll_table *wait)
+{
+	return vb2_poll(&queue->queue, file, wait);
+}
 
-पूर्णांक uvcg_queue_mmap(काष्ठा uvc_video_queue *queue, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	वापस vb2_mmap(&queue->queue, vma);
-पूर्ण
+int uvcg_queue_mmap(struct uvc_video_queue *queue, struct vm_area_struct *vma)
+{
+	return vb2_mmap(&queue->queue, vma);
+}
 
-#अगर_अघोषित CONFIG_MMU
+#ifndef CONFIG_MMU
 /*
  * Get unmapped area.
  *
  * NO-MMU arch need this function to make mmap() work correctly.
  */
-अचिन्हित दीर्घ uvcg_queue_get_unmapped_area(काष्ठा uvc_video_queue *queue,
-					   अचिन्हित दीर्घ pgoff)
-अणु
-	वापस vb2_get_unmapped_area(&queue->queue, 0, 0, pgoff, 0);
-पूर्ण
-#पूर्ण_अगर
+unsigned long uvcg_queue_get_unmapped_area(struct uvc_video_queue *queue,
+					   unsigned long pgoff)
+{
+	return vb2_get_unmapped_area(&queue->queue, 0, 0, pgoff, 0);
+}
+#endif
 
 /*
  * Cancel the video buffers queue.
  *
  * Cancelling the queue marks all buffers on the irq queue as erroneous,
- * wakes them up and हटाओs them from the queue.
+ * wakes them up and removes them from the queue.
  *
  * If the disconnect parameter is set, further calls to uvc_queue_buffer will
  * fail with -ENODEV.
  *
- * This function acquires the irq spinlock and can be called from पूर्णांकerrupt
+ * This function acquires the irq spinlock and can be called from interrupt
  * context.
  */
-व्योम uvcg_queue_cancel(काष्ठा uvc_video_queue *queue, पूर्णांक disconnect)
-अणु
-	काष्ठा uvc_buffer *buf;
-	अचिन्हित दीर्घ flags;
+void uvcg_queue_cancel(struct uvc_video_queue *queue, int disconnect)
+{
+	struct uvc_buffer *buf;
+	unsigned long flags;
 
 	spin_lock_irqsave(&queue->irqlock, flags);
-	जबतक (!list_empty(&queue->irqqueue)) अणु
-		buf = list_first_entry(&queue->irqqueue, काष्ठा uvc_buffer,
+	while (!list_empty(&queue->irqqueue)) {
+		buf = list_first_entry(&queue->irqqueue, struct uvc_buffer,
 				       queue);
 		list_del(&buf->queue);
 		buf->state = UVC_BUF_STATE_ERROR;
-		vb2_buffer_करोne(&buf->buf.vb2_buf, VB2_BUF_STATE_ERROR);
-	पूर्ण
-	/* This must be रक्षित by the irqlock spinlock to aव्योम race
+		vb2_buffer_done(&buf->buf.vb2_buf, VB2_BUF_STATE_ERROR);
+	}
+	/* This must be protected by the irqlock spinlock to avoid race
 	 * conditions between uvc_queue_buffer and the disconnection event that
-	 * could result in an पूर्णांकerruptible रुको in uvc_dequeue_buffer. Do not
-	 * blindly replace this logic by checking क्रम the UVC_DEV_DISCONNECTED
+	 * could result in an interruptible wait in uvc_dequeue_buffer. Do not
+	 * blindly replace this logic by checking for the UVC_DEV_DISCONNECTED
 	 * state outside the queue code.
 	 */
-	अगर (disconnect)
+	if (disconnect)
 		queue->flags |= UVC_QUEUE_DISCONNECTED;
 	spin_unlock_irqrestore(&queue->irqlock, flags);
-पूर्ण
+}
 
 /*
  * Enable or disable the video buffers queue.
  *
- * The queue must be enabled beक्रमe starting video acquisition and must be
+ * The queue must be enabled before starting video acquisition and must be
  * disabled after stopping it. This ensures that the video buffers queue
- * state can be properly initialized beक्रमe buffers are accessed from the
- * पूर्णांकerrupt handler.
+ * state can be properly initialized before buffers are accessed from the
+ * interrupt handler.
  *
  * Enabling the video queue initializes parameters (such as sequence number,
- * sync pattern, ...). If the queue is alपढ़ोy enabled, वापस -EBUSY.
+ * sync pattern, ...). If the queue is already enabled, return -EBUSY.
  *
- * Disabling the video queue cancels the queue and हटाओs all buffers from
- * the मुख्य queue.
+ * Disabling the video queue cancels the queue and removes all buffers from
+ * the main queue.
  *
- * This function can't be called from पूर्णांकerrupt context. Use
+ * This function can't be called from interrupt context. Use
  * uvcg_queue_cancel() instead.
  */
-पूर्णांक uvcg_queue_enable(काष्ठा uvc_video_queue *queue, पूर्णांक enable)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+int uvcg_queue_enable(struct uvc_video_queue *queue, int enable)
+{
+	unsigned long flags;
+	int ret = 0;
 
-	अगर (enable) अणु
+	if (enable) {
 		ret = vb2_streamon(&queue->queue, queue->queue.type);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		queue->sequence = 0;
 		queue->buf_used = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = vb2_streamoff(&queue->queue, queue->queue.type);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		spin_lock_irqsave(&queue->irqlock, flags);
 		INIT_LIST_HEAD(&queue->irqqueue);
 
 		/*
 		 * FIXME: We need to clear the DISCONNECTED flag to ensure that
-		 * applications will be able to queue buffers क्रम the next
-		 * streaming run. However, clearing it here करोesn't guarantee
-		 * that the device will be reconnected in the meanसमय.
+		 * applications will be able to queue buffers for the next
+		 * streaming run. However, clearing it here doesn't guarantee
+		 * that the device will be reconnected in the meantime.
 		 */
 		queue->flags &= ~UVC_QUEUE_DISCONNECTED;
 		spin_unlock_irqrestore(&queue->irqlock, flags);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* called with &queue_irqlock held.. */
-काष्ठा uvc_buffer *uvcg_queue_next_buffer(काष्ठा uvc_video_queue *queue,
-					  काष्ठा uvc_buffer *buf)
-अणु
-	काष्ठा uvc_buffer *nextbuf;
+struct uvc_buffer *uvcg_queue_next_buffer(struct uvc_video_queue *queue,
+					  struct uvc_buffer *buf)
+{
+	struct uvc_buffer *nextbuf;
 
-	अगर ((queue->flags & UVC_QUEUE_DROP_INCOMPLETE) &&
-	     buf->length != buf->bytesused) अणु
+	if ((queue->flags & UVC_QUEUE_DROP_INCOMPLETE) &&
+	     buf->length != buf->bytesused) {
 		buf->state = UVC_BUF_STATE_QUEUED;
 		vb2_set_plane_payload(&buf->buf.vb2_buf, 0, 0);
-		वापस buf;
-	पूर्ण
+		return buf;
+	}
 
 	list_del(&buf->queue);
-	अगर (!list_empty(&queue->irqqueue))
-		nextbuf = list_first_entry(&queue->irqqueue, काष्ठा uvc_buffer,
+	if (!list_empty(&queue->irqqueue))
+		nextbuf = list_first_entry(&queue->irqqueue, struct uvc_buffer,
 					   queue);
-	अन्यथा
-		nextbuf = शून्य;
+	else
+		nextbuf = NULL;
 
 	buf->buf.field = V4L2_FIELD_NONE;
 	buf->buf.sequence = queue->sequence++;
-	buf->buf.vb2_buf.बारtamp = kसमय_get_ns();
+	buf->buf.vb2_buf.timestamp = ktime_get_ns();
 
 	vb2_set_plane_payload(&buf->buf.vb2_buf, 0, buf->bytesused);
-	vb2_buffer_करोne(&buf->buf.vb2_buf, VB2_BUF_STATE_DONE);
+	vb2_buffer_done(&buf->buf.vb2_buf, VB2_BUF_STATE_DONE);
 
-	वापस nextbuf;
-पूर्ण
+	return nextbuf;
+}
 
-काष्ठा uvc_buffer *uvcg_queue_head(काष्ठा uvc_video_queue *queue)
-अणु
-	काष्ठा uvc_buffer *buf = शून्य;
+struct uvc_buffer *uvcg_queue_head(struct uvc_video_queue *queue)
+{
+	struct uvc_buffer *buf = NULL;
 
-	अगर (!list_empty(&queue->irqqueue))
-		buf = list_first_entry(&queue->irqqueue, काष्ठा uvc_buffer,
+	if (!list_empty(&queue->irqqueue))
+		buf = list_first_entry(&queue->irqqueue, struct uvc_buffer,
 				       queue);
-	अन्यथा
+	else
 		queue->flags |= UVC_QUEUE_PAUSED;
 
-	वापस buf;
-पूर्ण
+	return buf;
+}
 

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Input driver to ExplorerPS/2 device driver module.
  *
@@ -7,287 +6,287 @@
  * Copyright (c) 2004      Dmitry Torokhov
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#घोषणा MOUSEDEV_MINOR_BASE	32
-#घोषणा MOUSEDEV_MINORS		31
-#घोषणा MOUSEDEV_MIX		63
+#define MOUSEDEV_MINOR_BASE	32
+#define MOUSEDEV_MINORS		31
+#define MOUSEDEV_MIX		63
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/input.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/major.h>
-#समावेश <linux/device.h>
-#समावेश <linux/cdev.h>
-#समावेश <linux/kernel.h>
+#include <linux/bitops.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/poll.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/input.h>
+#include <linux/random.h>
+#include <linux/major.h>
+#include <linux/device.h>
+#include <linux/cdev.h>
+#include <linux/kernel.h>
 
 MODULE_AUTHOR("Vojtech Pavlik <vojtech@ucw.cz>");
 MODULE_DESCRIPTION("Mouse (ExplorerPS/2) device interfaces");
 MODULE_LICENSE("GPL");
 
-#अगर_अघोषित CONFIG_INPUT_MOUSEDEV_SCREEN_X
-#घोषणा CONFIG_INPUT_MOUSEDEV_SCREEN_X	1024
-#पूर्ण_अगर
-#अगर_अघोषित CONFIG_INPUT_MOUSEDEV_SCREEN_Y
-#घोषणा CONFIG_INPUT_MOUSEDEV_SCREEN_Y	768
-#पूर्ण_अगर
+#ifndef CONFIG_INPUT_MOUSEDEV_SCREEN_X
+#define CONFIG_INPUT_MOUSEDEV_SCREEN_X	1024
+#endif
+#ifndef CONFIG_INPUT_MOUSEDEV_SCREEN_Y
+#define CONFIG_INPUT_MOUSEDEV_SCREEN_Y	768
+#endif
 
-अटल पूर्णांक xres = CONFIG_INPUT_MOUSEDEV_SCREEN_X;
-module_param(xres, uपूर्णांक, 0644);
+static int xres = CONFIG_INPUT_MOUSEDEV_SCREEN_X;
+module_param(xres, uint, 0644);
 MODULE_PARM_DESC(xres, "Horizontal screen resolution");
 
-अटल पूर्णांक yres = CONFIG_INPUT_MOUSEDEV_SCREEN_Y;
-module_param(yres, uपूर्णांक, 0644);
+static int yres = CONFIG_INPUT_MOUSEDEV_SCREEN_Y;
+module_param(yres, uint, 0644);
 MODULE_PARM_DESC(yres, "Vertical screen resolution");
 
-अटल अचिन्हित tap_समय = 200;
-module_param(tap_समय, uपूर्णांक, 0644);
-MODULE_PARM_DESC(tap_समय, "Tap time for touchpads in absolute mode (msecs)");
+static unsigned tap_time = 200;
+module_param(tap_time, uint, 0644);
+MODULE_PARM_DESC(tap_time, "Tap time for touchpads in absolute mode (msecs)");
 
-काष्ठा mousedev_hw_data अणु
-	पूर्णांक dx, dy, dz;
-	पूर्णांक x, y;
-	पूर्णांक असल_event;
-	अचिन्हित दीर्घ buttons;
-पूर्ण;
+struct mousedev_hw_data {
+	int dx, dy, dz;
+	int x, y;
+	int abs_event;
+	unsigned long buttons;
+};
 
-काष्ठा mousedev अणु
-	पूर्णांक खोलो;
-	काष्ठा input_handle handle;
-	रुको_queue_head_t रुको;
-	काष्ठा list_head client_list;
+struct mousedev {
+	int open;
+	struct input_handle handle;
+	wait_queue_head_t wait;
+	struct list_head client_list;
 	spinlock_t client_lock; /* protects client_list */
-	काष्ठा mutex mutex;
-	काष्ठा device dev;
-	काष्ठा cdev cdev;
+	struct mutex mutex;
+	struct device dev;
+	struct cdev cdev;
 	bool exist;
 
-	काष्ठा list_head mixdev_node;
-	bool खोलोed_by_mixdev;
+	struct list_head mixdev_node;
+	bool opened_by_mixdev;
 
-	काष्ठा mousedev_hw_data packet;
-	अचिन्हित पूर्णांक pkt_count;
-	पूर्णांक old_x[4], old_y[4];
-	पूर्णांक frac_dx, frac_dy;
-	अचिन्हित दीर्घ touch;
+	struct mousedev_hw_data packet;
+	unsigned int pkt_count;
+	int old_x[4], old_y[4];
+	int frac_dx, frac_dy;
+	unsigned long touch;
 
-	पूर्णांक (*खोलो_device)(काष्ठा mousedev *mousedev);
-	व्योम (*बंद_device)(काष्ठा mousedev *mousedev);
-पूर्ण;
+	int (*open_device)(struct mousedev *mousedev);
+	void (*close_device)(struct mousedev *mousedev);
+};
 
-क्रमागत mousedev_emul अणु
+enum mousedev_emul {
 	MOUSEDEV_EMUL_PS2,
 	MOUSEDEV_EMUL_IMPS,
 	MOUSEDEV_EMUL_EXPS
-पूर्ण;
+};
 
-काष्ठा mousedev_motion अणु
-	पूर्णांक dx, dy, dz;
-	अचिन्हित दीर्घ buttons;
-पूर्ण;
+struct mousedev_motion {
+	int dx, dy, dz;
+	unsigned long buttons;
+};
 
-#घोषणा PACKET_QUEUE_LEN	16
-काष्ठा mousedev_client अणु
-	काष्ठा fasync_काष्ठा *fasync;
-	काष्ठा mousedev *mousedev;
-	काष्ठा list_head node;
+#define PACKET_QUEUE_LEN	16
+struct mousedev_client {
+	struct fasync_struct *fasync;
+	struct mousedev *mousedev;
+	struct list_head node;
 
-	काष्ठा mousedev_motion packets[PACKET_QUEUE_LEN];
-	अचिन्हित पूर्णांक head, tail;
+	struct mousedev_motion packets[PACKET_QUEUE_LEN];
+	unsigned int head, tail;
 	spinlock_t packet_lock;
-	पूर्णांक pos_x, pos_y;
+	int pos_x, pos_y;
 
 	u8 ps2[6];
-	अचिन्हित अक्षर पढ़ोy, buffer, bufsiz;
-	अचिन्हित अक्षर imexseq, impsseq;
-	क्रमागत mousedev_emul mode;
-	अचिन्हित दीर्घ last_buttons;
-पूर्ण;
+	unsigned char ready, buffer, bufsiz;
+	unsigned char imexseq, impsseq;
+	enum mousedev_emul mode;
+	unsigned long last_buttons;
+};
 
-#घोषणा MOUSEDEV_SEQ_LEN	6
+#define MOUSEDEV_SEQ_LEN	6
 
-अटल अचिन्हित अक्षर mousedev_imps_seq[] = अणु 0xf3, 200, 0xf3, 100, 0xf3, 80 पूर्ण;
-अटल अचिन्हित अक्षर mousedev_imex_seq[] = अणु 0xf3, 200, 0xf3, 200, 0xf3, 80 पूर्ण;
+static unsigned char mousedev_imps_seq[] = { 0xf3, 200, 0xf3, 100, 0xf3, 80 };
+static unsigned char mousedev_imex_seq[] = { 0xf3, 200, 0xf3, 200, 0xf3, 80 };
 
-अटल काष्ठा mousedev *mousedev_mix;
-अटल LIST_HEAD(mousedev_mix_list);
+static struct mousedev *mousedev_mix;
+static LIST_HEAD(mousedev_mix_list);
 
-#घोषणा fx(i)  (mousedev->old_x[(mousedev->pkt_count - (i)) & 03])
-#घोषणा fy(i)  (mousedev->old_y[(mousedev->pkt_count - (i)) & 03])
+#define fx(i)  (mousedev->old_x[(mousedev->pkt_count - (i)) & 03])
+#define fy(i)  (mousedev->old_y[(mousedev->pkt_count - (i)) & 03])
 
-अटल व्योम mousedev_touchpad_event(काष्ठा input_dev *dev,
-				    काष्ठा mousedev *mousedev,
-				    अचिन्हित पूर्णांक code, पूर्णांक value)
-अणु
-	पूर्णांक size, पंचांगp;
-	क्रमागत अणु FRACTION_DENOM = 128 पूर्ण;
+static void mousedev_touchpad_event(struct input_dev *dev,
+				    struct mousedev *mousedev,
+				    unsigned int code, int value)
+{
+	int size, tmp;
+	enum { FRACTION_DENOM = 128 };
 
-	चयन (code) अणु
+	switch (code) {
 
-	हाल ABS_X:
+	case ABS_X:
 
 		fx(0) = value;
-		अगर (mousedev->touch && mousedev->pkt_count >= 2) अणु
-			size = input_असल_get_max(dev, ABS_X) -
-					input_असल_get_min(dev, ABS_X);
-			अगर (size == 0)
+		if (mousedev->touch && mousedev->pkt_count >= 2) {
+			size = input_abs_get_max(dev, ABS_X) -
+					input_abs_get_min(dev, ABS_X);
+			if (size == 0)
 				size = 256 * 2;
 
-			पंचांगp = ((value - fx(2)) * 256 * FRACTION_DENOM) / size;
-			पंचांगp += mousedev->frac_dx;
-			mousedev->packet.dx = पंचांगp / FRACTION_DENOM;
+			tmp = ((value - fx(2)) * 256 * FRACTION_DENOM) / size;
+			tmp += mousedev->frac_dx;
+			mousedev->packet.dx = tmp / FRACTION_DENOM;
 			mousedev->frac_dx =
-				पंचांगp - mousedev->packet.dx * FRACTION_DENOM;
-		पूर्ण
-		अवरोध;
+				tmp - mousedev->packet.dx * FRACTION_DENOM;
+		}
+		break;
 
-	हाल ABS_Y:
+	case ABS_Y:
 		fy(0) = value;
-		अगर (mousedev->touch && mousedev->pkt_count >= 2) अणु
-			/* use X size क्रम ABS_Y to keep the same scale */
-			size = input_असल_get_max(dev, ABS_X) -
-					input_असल_get_min(dev, ABS_X);
-			अगर (size == 0)
+		if (mousedev->touch && mousedev->pkt_count >= 2) {
+			/* use X size for ABS_Y to keep the same scale */
+			size = input_abs_get_max(dev, ABS_X) -
+					input_abs_get_min(dev, ABS_X);
+			if (size == 0)
 				size = 256 * 2;
 
-			पंचांगp = -((value - fy(2)) * 256 * FRACTION_DENOM) / size;
-			पंचांगp += mousedev->frac_dy;
-			mousedev->packet.dy = पंचांगp / FRACTION_DENOM;
-			mousedev->frac_dy = पंचांगp -
+			tmp = -((value - fy(2)) * 256 * FRACTION_DENOM) / size;
+			tmp += mousedev->frac_dy;
+			mousedev->packet.dy = tmp / FRACTION_DENOM;
+			mousedev->frac_dy = tmp -
 				mousedev->packet.dy * FRACTION_DENOM;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-पूर्ण
+		}
+		break;
+	}
+}
 
-अटल व्योम mousedev_असल_event(काष्ठा input_dev *dev, काष्ठा mousedev *mousedev,
-				अचिन्हित पूर्णांक code, पूर्णांक value)
-अणु
-	पूर्णांक min, max, size;
+static void mousedev_abs_event(struct input_dev *dev, struct mousedev *mousedev,
+				unsigned int code, int value)
+{
+	int min, max, size;
 
-	चयन (code) अणु
+	switch (code) {
 
-	हाल ABS_X:
-		min = input_असल_get_min(dev, ABS_X);
-		max = input_असल_get_max(dev, ABS_X);
+	case ABS_X:
+		min = input_abs_get_min(dev, ABS_X);
+		max = input_abs_get_max(dev, ABS_X);
 
 		size = max - min;
-		अगर (size == 0)
+		if (size == 0)
 			size = xres ? : 1;
 
 		value = clamp(value, min, max);
 
 		mousedev->packet.x = ((value - min) * xres) / size;
-		mousedev->packet.असल_event = 1;
-		अवरोध;
+		mousedev->packet.abs_event = 1;
+		break;
 
-	हाल ABS_Y:
-		min = input_असल_get_min(dev, ABS_Y);
-		max = input_असल_get_max(dev, ABS_Y);
+	case ABS_Y:
+		min = input_abs_get_min(dev, ABS_Y);
+		max = input_abs_get_max(dev, ABS_Y);
 
 		size = max - min;
-		अगर (size == 0)
+		if (size == 0)
 			size = yres ? : 1;
 
 		value = clamp(value, min, max);
 
 		mousedev->packet.y = yres - ((value - min) * yres) / size;
-		mousedev->packet.असल_event = 1;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		mousedev->packet.abs_event = 1;
+		break;
+	}
+}
 
-अटल व्योम mousedev_rel_event(काष्ठा mousedev *mousedev,
-				अचिन्हित पूर्णांक code, पूर्णांक value)
-अणु
-	चयन (code) अणु
-	हाल REL_X:
+static void mousedev_rel_event(struct mousedev *mousedev,
+				unsigned int code, int value)
+{
+	switch (code) {
+	case REL_X:
 		mousedev->packet.dx += value;
-		अवरोध;
+		break;
 
-	हाल REL_Y:
+	case REL_Y:
 		mousedev->packet.dy -= value;
-		अवरोध;
+		break;
 
-	हाल REL_WHEEL:
+	case REL_WHEEL:
 		mousedev->packet.dz -= value;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम mousedev_key_event(काष्ठा mousedev *mousedev,
-				अचिन्हित पूर्णांक code, पूर्णांक value)
-अणु
-	पूर्णांक index;
+static void mousedev_key_event(struct mousedev *mousedev,
+				unsigned int code, int value)
+{
+	int index;
 
-	चयन (code) अणु
+	switch (code) {
 
-	हाल BTN_TOUCH:
-	हाल BTN_0:
-	हाल BTN_LEFT:		index = 0; अवरोध;
+	case BTN_TOUCH:
+	case BTN_0:
+	case BTN_LEFT:		index = 0; break;
 
-	हाल BTN_STYLUS:
-	हाल BTN_1:
-	हाल BTN_RIGHT:		index = 1; अवरोध;
+	case BTN_STYLUS:
+	case BTN_1:
+	case BTN_RIGHT:		index = 1; break;
 
-	हाल BTN_2:
-	हाल BTN_FORWARD:
-	हाल BTN_STYLUS2:
-	हाल BTN_MIDDLE:	index = 2; अवरोध;
+	case BTN_2:
+	case BTN_FORWARD:
+	case BTN_STYLUS2:
+	case BTN_MIDDLE:	index = 2; break;
 
-	हाल BTN_3:
-	हाल BTN_BACK:
-	हाल BTN_SIDE:		index = 3; अवरोध;
+	case BTN_3:
+	case BTN_BACK:
+	case BTN_SIDE:		index = 3; break;
 
-	हाल BTN_4:
-	हाल BTN_EXTRA:		index = 4; अवरोध;
+	case BTN_4:
+	case BTN_EXTRA:		index = 4; break;
 
-	शेष:		वापस;
-	पूर्ण
+	default:		return;
+	}
 
-	अगर (value) अणु
+	if (value) {
 		set_bit(index, &mousedev->packet.buttons);
 		set_bit(index, &mousedev_mix->packet.buttons);
-	पूर्ण अन्यथा अणु
+	} else {
 		clear_bit(index, &mousedev->packet.buttons);
 		clear_bit(index, &mousedev_mix->packet.buttons);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mousedev_notअगरy_पढ़ोers(काष्ठा mousedev *mousedev,
-				    काष्ठा mousedev_hw_data *packet)
-अणु
-	काष्ठा mousedev_client *client;
-	काष्ठा mousedev_motion *p;
-	अचिन्हित पूर्णांक new_head;
-	पूर्णांक wake_पढ़ोers = 0;
+static void mousedev_notify_readers(struct mousedev *mousedev,
+				    struct mousedev_hw_data *packet)
+{
+	struct mousedev_client *client;
+	struct mousedev_motion *p;
+	unsigned int new_head;
+	int wake_readers = 0;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(client, &mousedev->client_list, node) अणु
+	rcu_read_lock();
+	list_for_each_entry_rcu(client, &mousedev->client_list, node) {
 
-		/* Just acquire the lock, पूर्णांकerrupts alपढ़ोy disabled */
+		/* Just acquire the lock, interrupts already disabled */
 		spin_lock(&client->packet_lock);
 
 		p = &client->packets[client->head];
-		अगर (client->पढ़ोy && p->buttons != mousedev->packet.buttons) अणु
+		if (client->ready && p->buttons != mousedev->packet.buttons) {
 			new_head = (client->head + 1) % PACKET_QUEUE_LEN;
-			अगर (new_head != client->tail) अणु
+			if (new_head != client->tail) {
 				p = &client->packets[client->head = new_head];
-				स_रखो(p, 0, माप(काष्ठा mousedev_motion));
-			पूर्ण
-		पूर्ण
+				memset(p, 0, sizeof(struct mousedev_motion));
+			}
+		}
 
-		अगर (packet->असल_event) अणु
+		if (packet->abs_event) {
 			p->dx += packet->x - client->pos_x;
 			p->dy += packet->y - client->pos_y;
 			client->pos_x = packet->x;
 			client->pos_y = packet->y;
-		पूर्ण
+		}
 
 		client->pos_x += packet->dx;
 		client->pos_x = clamp_val(client->pos_x, 0, xres);
@@ -300,29 +299,29 @@ MODULE_PARM_DESC(tap_समय, "Tap time for touchpads in absolute mode (msecs)
 		p->dz += packet->dz;
 		p->buttons = mousedev->packet.buttons;
 
-		अगर (p->dx || p->dy || p->dz ||
+		if (p->dx || p->dy || p->dz ||
 		    p->buttons != client->last_buttons)
-			client->पढ़ोy = 1;
+			client->ready = 1;
 
 		spin_unlock(&client->packet_lock);
 
-		अगर (client->पढ़ोy) अणु
-			समाप्त_fasync(&client->fasync, SIGIO, POLL_IN);
-			wake_पढ़ोers = 1;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		if (client->ready) {
+			kill_fasync(&client->fasync, SIGIO, POLL_IN);
+			wake_readers = 1;
+		}
+	}
+	rcu_read_unlock();
 
-	अगर (wake_पढ़ोers)
-		wake_up_पूर्णांकerruptible(&mousedev->रुको);
-पूर्ण
+	if (wake_readers)
+		wake_up_interruptible(&mousedev->wait);
+}
 
-अटल व्योम mousedev_touchpad_touch(काष्ठा mousedev *mousedev, पूर्णांक value)
-अणु
-	अगर (!value) अणु
-		अगर (mousedev->touch &&
-		    समय_beक्रमe(jअगरfies,
-				mousedev->touch + msecs_to_jअगरfies(tap_समय))) अणु
+static void mousedev_touchpad_touch(struct mousedev *mousedev, int value)
+{
+	if (!value) {
+		if (mousedev->touch &&
+		    time_before(jiffies,
+				mousedev->touch + msecs_to_jiffies(tap_time))) {
 			/*
 			 * Toggle left button to emulate tap.
 			 * We rely on the fact that mousedev_mix always has 0
@@ -330,223 +329,223 @@ MODULE_PARM_DESC(tap_समय, "Tap time for touchpads in absolute mode (msecs)
 			 */
 			set_bit(0, &mousedev->packet.buttons);
 			set_bit(0, &mousedev_mix->packet.buttons);
-			mousedev_notअगरy_पढ़ोers(mousedev, &mousedev_mix->packet);
-			mousedev_notअगरy_पढ़ोers(mousedev_mix,
+			mousedev_notify_readers(mousedev, &mousedev_mix->packet);
+			mousedev_notify_readers(mousedev_mix,
 						&mousedev_mix->packet);
 			clear_bit(0, &mousedev->packet.buttons);
 			clear_bit(0, &mousedev_mix->packet.buttons);
-		पूर्ण
+		}
 		mousedev->touch = mousedev->pkt_count = 0;
 		mousedev->frac_dx = 0;
 		mousedev->frac_dy = 0;
 
-	पूर्ण अन्यथा अगर (!mousedev->touch)
-		mousedev->touch = jअगरfies;
-पूर्ण
+	} else if (!mousedev->touch)
+		mousedev->touch = jiffies;
+}
 
-अटल व्योम mousedev_event(काष्ठा input_handle *handle,
-			   अचिन्हित पूर्णांक type, अचिन्हित पूर्णांक code, पूर्णांक value)
-अणु
-	काष्ठा mousedev *mousedev = handle->निजी;
+static void mousedev_event(struct input_handle *handle,
+			   unsigned int type, unsigned int code, int value)
+{
+	struct mousedev *mousedev = handle->private;
 
-	चयन (type) अणु
+	switch (type) {
 
-	हाल EV_ABS:
+	case EV_ABS:
 		/* Ignore joysticks */
-		अगर (test_bit(BTN_TRIGGER, handle->dev->keybit))
-			वापस;
+		if (test_bit(BTN_TRIGGER, handle->dev->keybit))
+			return;
 
-		अगर (test_bit(BTN_TOOL_FINGER, handle->dev->keybit))
+		if (test_bit(BTN_TOOL_FINGER, handle->dev->keybit))
 			mousedev_touchpad_event(handle->dev,
 						mousedev, code, value);
-		अन्यथा
-			mousedev_असल_event(handle->dev, mousedev, code, value);
+		else
+			mousedev_abs_event(handle->dev, mousedev, code, value);
 
-		अवरोध;
+		break;
 
-	हाल EV_REL:
+	case EV_REL:
 		mousedev_rel_event(mousedev, code, value);
-		अवरोध;
+		break;
 
-	हाल EV_KEY:
-		अगर (value != 2) अणु
-			अगर (code == BTN_TOUCH &&
+	case EV_KEY:
+		if (value != 2) {
+			if (code == BTN_TOUCH &&
 			    test_bit(BTN_TOOL_FINGER, handle->dev->keybit))
 				mousedev_touchpad_touch(mousedev, value);
-			अन्यथा
+			else
 				mousedev_key_event(mousedev, code, value);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल EV_SYN:
-		अगर (code == SYN_REPORT) अणु
-			अगर (mousedev->touch) अणु
+	case EV_SYN:
+		if (code == SYN_REPORT) {
+			if (mousedev->touch) {
 				mousedev->pkt_count++;
 				/*
-				 * Input प्रणाली eats duplicate events,
-				 * but we need all of them to करो correct
-				 * averaging so apply present one क्रमward
+				 * Input system eats duplicate events,
+				 * but we need all of them to do correct
+				 * averaging so apply present one forward
 				 */
 				fx(0) = fx(1);
 				fy(0) = fy(1);
-			पूर्ण
+			}
 
-			mousedev_notअगरy_पढ़ोers(mousedev, &mousedev->packet);
-			mousedev_notअगरy_पढ़ोers(mousedev_mix, &mousedev->packet);
+			mousedev_notify_readers(mousedev, &mousedev->packet);
+			mousedev_notify_readers(mousedev_mix, &mousedev->packet);
 
 			mousedev->packet.dx = mousedev->packet.dy =
 				mousedev->packet.dz = 0;
-			mousedev->packet.असल_event = 0;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-पूर्ण
+			mousedev->packet.abs_event = 0;
+		}
+		break;
+	}
+}
 
-अटल पूर्णांक mousedev_fasync(पूर्णांक fd, काष्ठा file *file, पूर्णांक on)
-अणु
-	काष्ठा mousedev_client *client = file->निजी_data;
+static int mousedev_fasync(int fd, struct file *file, int on)
+{
+	struct mousedev_client *client = file->private_data;
 
-	वापस fasync_helper(fd, file, on, &client->fasync);
-पूर्ण
+	return fasync_helper(fd, file, on, &client->fasync);
+}
 
-अटल व्योम mousedev_मुक्त(काष्ठा device *dev)
-अणु
-	काष्ठा mousedev *mousedev = container_of(dev, काष्ठा mousedev, dev);
+static void mousedev_free(struct device *dev)
+{
+	struct mousedev *mousedev = container_of(dev, struct mousedev, dev);
 
 	input_put_device(mousedev->handle.dev);
-	kमुक्त(mousedev);
-पूर्ण
+	kfree(mousedev);
+}
 
-अटल पूर्णांक mousedev_खोलो_device(काष्ठा mousedev *mousedev)
-अणु
-	पूर्णांक retval;
+static int mousedev_open_device(struct mousedev *mousedev)
+{
+	int retval;
 
-	retval = mutex_lock_पूर्णांकerruptible(&mousedev->mutex);
-	अगर (retval)
-		वापस retval;
+	retval = mutex_lock_interruptible(&mousedev->mutex);
+	if (retval)
+		return retval;
 
-	अगर (!mousedev->exist)
+	if (!mousedev->exist)
 		retval = -ENODEV;
-	अन्यथा अगर (!mousedev->खोलो++) अणु
-		retval = input_खोलो_device(&mousedev->handle);
-		अगर (retval)
-			mousedev->खोलो--;
-	पूर्ण
+	else if (!mousedev->open++) {
+		retval = input_open_device(&mousedev->handle);
+		if (retval)
+			mousedev->open--;
+	}
 
 	mutex_unlock(&mousedev->mutex);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम mousedev_बंद_device(काष्ठा mousedev *mousedev)
-अणु
+static void mousedev_close_device(struct mousedev *mousedev)
+{
 	mutex_lock(&mousedev->mutex);
 
-	अगर (mousedev->exist && !--mousedev->खोलो)
-		input_बंद_device(&mousedev->handle);
+	if (mousedev->exist && !--mousedev->open)
+		input_close_device(&mousedev->handle);
 
 	mutex_unlock(&mousedev->mutex);
-पूर्ण
+}
 
 /*
  * Open all available devices so they can all be multiplexed in one.
  * stream. Note that this function is called with mousedev_mix->mutex
  * held.
  */
-अटल पूर्णांक mixdev_खोलो_devices(काष्ठा mousedev *mixdev)
-अणु
-	पूर्णांक error;
+static int mixdev_open_devices(struct mousedev *mixdev)
+{
+	int error;
 
-	error = mutex_lock_पूर्णांकerruptible(&mixdev->mutex);
-	अगर (error)
-		वापस error;
+	error = mutex_lock_interruptible(&mixdev->mutex);
+	if (error)
+		return error;
 
-	अगर (!mixdev->खोलो++) अणु
-		काष्ठा mousedev *mousedev;
+	if (!mixdev->open++) {
+		struct mousedev *mousedev;
 
-		list_क्रम_each_entry(mousedev, &mousedev_mix_list, mixdev_node) अणु
-			अगर (!mousedev->खोलोed_by_mixdev) अणु
-				अगर (mousedev_खोलो_device(mousedev))
-					जारी;
+		list_for_each_entry(mousedev, &mousedev_mix_list, mixdev_node) {
+			if (!mousedev->opened_by_mixdev) {
+				if (mousedev_open_device(mousedev))
+					continue;
 
-				mousedev->खोलोed_by_mixdev = true;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				mousedev->opened_by_mixdev = true;
+			}
+		}
+	}
 
 	mutex_unlock(&mixdev->mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Close all devices that were खोलोed as part of multiplexed
+ * Close all devices that were opened as part of multiplexed
  * device. Note that this function is called with mousedev_mix->mutex
  * held.
  */
-अटल व्योम mixdev_बंद_devices(काष्ठा mousedev *mixdev)
-अणु
+static void mixdev_close_devices(struct mousedev *mixdev)
+{
 	mutex_lock(&mixdev->mutex);
 
-	अगर (!--mixdev->खोलो) अणु
-		काष्ठा mousedev *mousedev;
+	if (!--mixdev->open) {
+		struct mousedev *mousedev;
 
-		list_क्रम_each_entry(mousedev, &mousedev_mix_list, mixdev_node) अणु
-			अगर (mousedev->खोलोed_by_mixdev) अणु
-				mousedev->खोलोed_by_mixdev = false;
-				mousedev_बंद_device(mousedev);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+		list_for_each_entry(mousedev, &mousedev_mix_list, mixdev_node) {
+			if (mousedev->opened_by_mixdev) {
+				mousedev->opened_by_mixdev = false;
+				mousedev_close_device(mousedev);
+			}
+		}
+	}
 
 	mutex_unlock(&mixdev->mutex);
-पूर्ण
+}
 
 
-अटल व्योम mousedev_attach_client(काष्ठा mousedev *mousedev,
-				   काष्ठा mousedev_client *client)
-अणु
+static void mousedev_attach_client(struct mousedev *mousedev,
+				   struct mousedev_client *client)
+{
 	spin_lock(&mousedev->client_lock);
 	list_add_tail_rcu(&client->node, &mousedev->client_list);
 	spin_unlock(&mousedev->client_lock);
-पूर्ण
+}
 
-अटल व्योम mousedev_detach_client(काष्ठा mousedev *mousedev,
-				   काष्ठा mousedev_client *client)
-अणु
+static void mousedev_detach_client(struct mousedev *mousedev,
+				   struct mousedev_client *client)
+{
 	spin_lock(&mousedev->client_lock);
 	list_del_rcu(&client->node);
 	spin_unlock(&mousedev->client_lock);
 	synchronize_rcu();
-पूर्ण
+}
 
-अटल पूर्णांक mousedev_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा mousedev_client *client = file->निजी_data;
-	काष्ठा mousedev *mousedev = client->mousedev;
+static int mousedev_release(struct inode *inode, struct file *file)
+{
+	struct mousedev_client *client = file->private_data;
+	struct mousedev *mousedev = client->mousedev;
 
 	mousedev_detach_client(mousedev, client);
-	kमुक्त(client);
+	kfree(client);
 
-	mousedev->बंद_device(mousedev);
+	mousedev->close_device(mousedev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mousedev_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा mousedev_client *client;
-	काष्ठा mousedev *mousedev;
-	पूर्णांक error;
+static int mousedev_open(struct inode *inode, struct file *file)
+{
+	struct mousedev_client *client;
+	struct mousedev *mousedev;
+	int error;
 
-#अगर_घोषित CONFIG_INPUT_MOUSEDEV_PSAUX
-	अगर (imajor(inode) == MISC_MAJOR)
+#ifdef CONFIG_INPUT_MOUSEDEV_PSAUX
+	if (imajor(inode) == MISC_MAJOR)
 		mousedev = mousedev_mix;
-	अन्यथा
-#पूर्ण_अगर
-		mousedev = container_of(inode->i_cdev, काष्ठा mousedev, cdev);
+	else
+#endif
+		mousedev = container_of(inode->i_cdev, struct mousedev, cdev);
 
-	client = kzalloc(माप(काष्ठा mousedev_client), GFP_KERNEL);
-	अगर (!client)
-		वापस -ENOMEM;
+	client = kzalloc(sizeof(struct mousedev_client), GFP_KERNEL);
+	if (!client)
+		return -ENOMEM;
 
 	spin_lock_init(&client->packet_lock);
 	client->pos_x = xres / 2;
@@ -554,24 +553,24 @@ MODULE_PARM_DESC(tap_समय, "Tap time for touchpads in absolute mode (msecs)
 	client->mousedev = mousedev;
 	mousedev_attach_client(mousedev, client);
 
-	error = mousedev->खोलो_device(mousedev);
-	अगर (error)
-		जाओ err_मुक्त_client;
+	error = mousedev->open_device(mousedev);
+	if (error)
+		goto err_free_client;
 
-	file->निजी_data = client;
-	stream_खोलो(inode, file);
+	file->private_data = client;
+	stream_open(inode, file);
 
-	वापस 0;
+	return 0;
 
- err_मुक्त_client:
+ err_free_client:
 	mousedev_detach_client(mousedev, client);
-	kमुक्त(client);
-	वापस error;
-पूर्ण
+	kfree(client);
+	return error;
+}
 
-अटल व्योम mousedev_packet(काष्ठा mousedev_client *client, u8 *ps2_data)
-अणु
-	काष्ठा mousedev_motion *p = &client->packets[client->tail];
+static void mousedev_packet(struct mousedev_client *client, u8 *ps2_data)
+{
+	struct mousedev_motion *p = &client->packets[client->tail];
 	s8 dx, dy, dz;
 
 	dx = clamp_val(p->dx, -127, 127);
@@ -586,16 +585,16 @@ MODULE_PARM_DESC(tap_समय, "Tap time for touchpads in absolute mode (msecs)
 	ps2_data[1] = dx;
 	ps2_data[2] = dy;
 
-	चयन (client->mode) अणु
-	हाल MOUSEDEV_EMUL_EXPS:
+	switch (client->mode) {
+	case MOUSEDEV_EMUL_EXPS:
 		dz = clamp_val(p->dz, -7, 7);
 		p->dz -= dz;
 
 		ps2_data[3] = (dz & 0x0f) | ((p->buttons & 0x18) << 1);
 		client->bufsiz = 4;
-		अवरोध;
+		break;
 
-	हाल MOUSEDEV_EMUL_IMPS:
+	case MOUSEDEV_EMUL_IMPS:
 		dz = clamp_val(p->dz, -127, 127);
 		p->dz -= dz;
 
@@ -604,261 +603,261 @@ MODULE_PARM_DESC(tap_समय, "Tap time for touchpads in absolute mode (msecs)
 		ps2_data[3] = dz;
 
 		client->bufsiz = 4;
-		अवरोध;
+		break;
 
-	हाल MOUSEDEV_EMUL_PS2:
-	शेष:
+	case MOUSEDEV_EMUL_PS2:
+	default:
 		p->dz = 0;
 
 		ps2_data[0] |= ((p->buttons & 0x10) >> 3) |
 			       ((p->buttons & 0x08) >> 1);
 
 		client->bufsiz = 3;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (!p->dx && !p->dy && !p->dz) अणु
-		अगर (client->tail == client->head) अणु
-			client->पढ़ोy = 0;
+	if (!p->dx && !p->dy && !p->dz) {
+		if (client->tail == client->head) {
+			client->ready = 0;
 			client->last_buttons = p->buttons;
-		पूर्ण अन्यथा
+		} else
 			client->tail = (client->tail + 1) % PACKET_QUEUE_LEN;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mousedev_generate_response(काष्ठा mousedev_client *client,
-					पूर्णांक command)
-अणु
+static void mousedev_generate_response(struct mousedev_client *client,
+					int command)
+{
 	client->ps2[0] = 0xfa; /* ACK */
 
-	चयन (command) अणु
+	switch (command) {
 
-	हाल 0xeb: /* Poll */
+	case 0xeb: /* Poll */
 		mousedev_packet(client, &client->ps2[1]);
-		client->bufsiz++; /* account क्रम leading ACK */
-		अवरोध;
+		client->bufsiz++; /* account for leading ACK */
+		break;
 
-	हाल 0xf2: /* Get ID */
-		चयन (client->mode) अणु
-		हाल MOUSEDEV_EMUL_PS2:
+	case 0xf2: /* Get ID */
+		switch (client->mode) {
+		case MOUSEDEV_EMUL_PS2:
 			client->ps2[1] = 0;
-			अवरोध;
-		हाल MOUSEDEV_EMUL_IMPS:
+			break;
+		case MOUSEDEV_EMUL_IMPS:
 			client->ps2[1] = 3;
-			अवरोध;
-		हाल MOUSEDEV_EMUL_EXPS:
+			break;
+		case MOUSEDEV_EMUL_EXPS:
 			client->ps2[1] = 4;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		client->bufsiz = 2;
-		अवरोध;
+		break;
 
-	हाल 0xe9: /* Get info */
+	case 0xe9: /* Get info */
 		client->ps2[1] = 0x60; client->ps2[2] = 3; client->ps2[3] = 200;
 		client->bufsiz = 4;
-		अवरोध;
+		break;
 
-	हाल 0xff: /* Reset */
+	case 0xff: /* Reset */
 		client->impsseq = client->imexseq = 0;
 		client->mode = MOUSEDEV_EMUL_PS2;
 		client->ps2[1] = 0xaa; client->ps2[2] = 0x00;
 		client->bufsiz = 3;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		client->bufsiz = 1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	client->buffer = client->bufsiz;
-पूर्ण
+}
 
-अटल sमाप_प्रकार mousedev_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer,
-				माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा mousedev_client *client = file->निजी_data;
-	अचिन्हित अक्षर c;
-	अचिन्हित पूर्णांक i;
+static ssize_t mousedev_write(struct file *file, const char __user *buffer,
+				size_t count, loff_t *ppos)
+{
+	struct mousedev_client *client = file->private_data;
+	unsigned char c;
+	unsigned int i;
 
-	क्रम (i = 0; i < count; i++) अणु
+	for (i = 0; i < count; i++) {
 
-		अगर (get_user(c, buffer + i))
-			वापस -EFAULT;
+		if (get_user(c, buffer + i))
+			return -EFAULT;
 
 		spin_lock_irq(&client->packet_lock);
 
-		अगर (c == mousedev_imex_seq[client->imexseq]) अणु
-			अगर (++client->imexseq == MOUSEDEV_SEQ_LEN) अणु
+		if (c == mousedev_imex_seq[client->imexseq]) {
+			if (++client->imexseq == MOUSEDEV_SEQ_LEN) {
 				client->imexseq = 0;
 				client->mode = MOUSEDEV_EMUL_EXPS;
-			पूर्ण
-		पूर्ण अन्यथा
+			}
+		} else
 			client->imexseq = 0;
 
-		अगर (c == mousedev_imps_seq[client->impsseq]) अणु
-			अगर (++client->impsseq == MOUSEDEV_SEQ_LEN) अणु
+		if (c == mousedev_imps_seq[client->impsseq]) {
+			if (++client->impsseq == MOUSEDEV_SEQ_LEN) {
 				client->impsseq = 0;
 				client->mode = MOUSEDEV_EMUL_IMPS;
-			पूर्ण
-		पूर्ण अन्यथा
+			}
+		} else
 			client->impsseq = 0;
 
 		mousedev_generate_response(client, c);
 
 		spin_unlock_irq(&client->packet_lock);
 		cond_resched();
-	पूर्ण
+	}
 
-	समाप्त_fasync(&client->fasync, SIGIO, POLL_IN);
-	wake_up_पूर्णांकerruptible(&client->mousedev->रुको);
+	kill_fasync(&client->fasync, SIGIO, POLL_IN);
+	wake_up_interruptible(&client->mousedev->wait);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार mousedev_पढ़ो(काष्ठा file *file, अक्षर __user *buffer,
-			     माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा mousedev_client *client = file->निजी_data;
-	काष्ठा mousedev *mousedev = client->mousedev;
-	u8 data[माप(client->ps2)];
-	पूर्णांक retval = 0;
+static ssize_t mousedev_read(struct file *file, char __user *buffer,
+			     size_t count, loff_t *ppos)
+{
+	struct mousedev_client *client = file->private_data;
+	struct mousedev *mousedev = client->mousedev;
+	u8 data[sizeof(client->ps2)];
+	int retval = 0;
 
-	अगर (!client->पढ़ोy && !client->buffer && mousedev->exist &&
+	if (!client->ready && !client->buffer && mousedev->exist &&
 	    (file->f_flags & O_NONBLOCK))
-		वापस -EAGAIN;
+		return -EAGAIN;
 
-	retval = रुको_event_पूर्णांकerruptible(mousedev->रुको,
-			!mousedev->exist || client->पढ़ोy || client->buffer);
-	अगर (retval)
-		वापस retval;
+	retval = wait_event_interruptible(mousedev->wait,
+			!mousedev->exist || client->ready || client->buffer);
+	if (retval)
+		return retval;
 
-	अगर (!mousedev->exist)
-		वापस -ENODEV;
+	if (!mousedev->exist)
+		return -ENODEV;
 
 	spin_lock_irq(&client->packet_lock);
 
-	अगर (!client->buffer && client->पढ़ोy) अणु
+	if (!client->buffer && client->ready) {
 		mousedev_packet(client, client->ps2);
 		client->buffer = client->bufsiz;
-	पूर्ण
+	}
 
-	अगर (count > client->buffer)
+	if (count > client->buffer)
 		count = client->buffer;
 
-	स_नकल(data, client->ps2 + client->bufsiz - client->buffer, count);
+	memcpy(data, client->ps2 + client->bufsiz - client->buffer, count);
 	client->buffer -= count;
 
 	spin_unlock_irq(&client->packet_lock);
 
-	अगर (copy_to_user(buffer, data, count))
-		वापस -EFAULT;
+	if (copy_to_user(buffer, data, count))
+		return -EFAULT;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /* No kernel lock - fine */
-अटल __poll_t mousedev_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा mousedev_client *client = file->निजी_data;
-	काष्ठा mousedev *mousedev = client->mousedev;
+static __poll_t mousedev_poll(struct file *file, poll_table *wait)
+{
+	struct mousedev_client *client = file->private_data;
+	struct mousedev *mousedev = client->mousedev;
 	__poll_t mask;
 
-	poll_रुको(file, &mousedev->रुको, रुको);
+	poll_wait(file, &mousedev->wait, wait);
 
 	mask = mousedev->exist ? EPOLLOUT | EPOLLWRNORM : EPOLLHUP | EPOLLERR;
-	अगर (client->पढ़ोy || client->buffer)
+	if (client->ready || client->buffer)
 		mask |= EPOLLIN | EPOLLRDNORM;
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल स्थिर काष्ठा file_operations mousedev_fops = अणु
+static const struct file_operations mousedev_fops = {
 	.owner		= THIS_MODULE,
-	.पढ़ो		= mousedev_पढ़ो,
-	.ग_लिखो		= mousedev_ग_लिखो,
+	.read		= mousedev_read,
+	.write		= mousedev_write,
 	.poll		= mousedev_poll,
-	.खोलो		= mousedev_खोलो,
+	.open		= mousedev_open,
 	.release	= mousedev_release,
 	.fasync		= mousedev_fasync,
 	.llseek		= noop_llseek,
-पूर्ण;
+};
 
 /*
- * Mark device non-existent. This disables ग_लिखोs, ioctls and
- * prevents new users from खोलोing the device. Alपढ़ोy posted
- * blocking पढ़ोs will stay, however new ones will fail.
+ * Mark device non-existent. This disables writes, ioctls and
+ * prevents new users from opening the device. Already posted
+ * blocking reads will stay, however new ones will fail.
  */
-अटल व्योम mousedev_mark_dead(काष्ठा mousedev *mousedev)
-अणु
+static void mousedev_mark_dead(struct mousedev *mousedev)
+{
 	mutex_lock(&mousedev->mutex);
 	mousedev->exist = false;
 	mutex_unlock(&mousedev->mutex);
-पूर्ण
+}
 
 /*
- * Wake up users रुकोing क्रम IO so they can disconnect from
+ * Wake up users waiting for IO so they can disconnect from
  * dead device.
  */
-अटल व्योम mousedev_hangup(काष्ठा mousedev *mousedev)
-अणु
-	काष्ठा mousedev_client *client;
+static void mousedev_hangup(struct mousedev *mousedev)
+{
+	struct mousedev_client *client;
 
 	spin_lock(&mousedev->client_lock);
-	list_क्रम_each_entry(client, &mousedev->client_list, node)
-		समाप्त_fasync(&client->fasync, SIGIO, POLL_HUP);
+	list_for_each_entry(client, &mousedev->client_list, node)
+		kill_fasync(&client->fasync, SIGIO, POLL_HUP);
 	spin_unlock(&mousedev->client_lock);
 
-	wake_up_पूर्णांकerruptible(&mousedev->रुको);
-पूर्ण
+	wake_up_interruptible(&mousedev->wait);
+}
 
-अटल व्योम mousedev_cleanup(काष्ठा mousedev *mousedev)
-अणु
-	काष्ठा input_handle *handle = &mousedev->handle;
+static void mousedev_cleanup(struct mousedev *mousedev)
+{
+	struct input_handle *handle = &mousedev->handle;
 
 	mousedev_mark_dead(mousedev);
 	mousedev_hangup(mousedev);
 
-	/* mousedev is marked dead so no one अन्यथा accesses mousedev->खोलो */
-	अगर (mousedev->खोलो)
-		input_बंद_device(handle);
-पूर्ण
+	/* mousedev is marked dead so no one else accesses mousedev->open */
+	if (mousedev->open)
+		input_close_device(handle);
+}
 
-अटल पूर्णांक mousedev_reserve_minor(bool mixdev)
-अणु
-	पूर्णांक minor;
+static int mousedev_reserve_minor(bool mixdev)
+{
+	int minor;
 
-	अगर (mixdev) अणु
+	if (mixdev) {
 		minor = input_get_new_minor(MOUSEDEV_MIX, 1, false);
-		अगर (minor < 0)
+		if (minor < 0)
 			pr_err("failed to reserve mixdev minor: %d\n", minor);
-	पूर्ण अन्यथा अणु
+	} else {
 		minor = input_get_new_minor(MOUSEDEV_MINOR_BASE,
 					    MOUSEDEV_MINORS, true);
-		अगर (minor < 0)
+		if (minor < 0)
 			pr_err("failed to reserve new minor: %d\n", minor);
-	पूर्ण
+	}
 
-	वापस minor;
-पूर्ण
+	return minor;
+}
 
-अटल काष्ठा mousedev *mousedev_create(काष्ठा input_dev *dev,
-					काष्ठा input_handler *handler,
+static struct mousedev *mousedev_create(struct input_dev *dev,
+					struct input_handler *handler,
 					bool mixdev)
-अणु
-	काष्ठा mousedev *mousedev;
-	पूर्णांक minor;
-	पूर्णांक error;
+{
+	struct mousedev *mousedev;
+	int minor;
+	int error;
 
 	minor = mousedev_reserve_minor(mixdev);
-	अगर (minor < 0) अणु
+	if (minor < 0) {
 		error = minor;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
-	mousedev = kzalloc(माप(काष्ठा mousedev), GFP_KERNEL);
-	अगर (!mousedev) अणु
+	mousedev = kzalloc(sizeof(struct mousedev), GFP_KERNEL);
+	if (!mousedev) {
 		error = -ENOMEM;
-		जाओ err_मुक्त_minor;
-	पूर्ण
+		goto err_free_minor;
+	}
 
 	INIT_LIST_HEAD(&mousedev->client_list);
 	INIT_LIST_HEAD(&mousedev->mixdev_node);
@@ -866,192 +865,192 @@ MODULE_PARM_DESC(tap_समय, "Tap time for touchpads in absolute mode (msecs)
 	mutex_init(&mousedev->mutex);
 	lockdep_set_subclass(&mousedev->mutex,
 			     mixdev ? SINGLE_DEPTH_NESTING : 0);
-	init_रुकोqueue_head(&mousedev->रुको);
+	init_waitqueue_head(&mousedev->wait);
 
-	अगर (mixdev) अणु
+	if (mixdev) {
 		dev_set_name(&mousedev->dev, "mice");
 
-		mousedev->खोलो_device = mixdev_खोलो_devices;
-		mousedev->बंद_device = mixdev_बंद_devices;
-	पूर्ण अन्यथा अणु
-		पूर्णांक dev_no = minor;
-		/* Normalize device number अगर it falls पूर्णांकo legacy range */
-		अगर (dev_no < MOUSEDEV_MINOR_BASE + MOUSEDEV_MINORS)
+		mousedev->open_device = mixdev_open_devices;
+		mousedev->close_device = mixdev_close_devices;
+	} else {
+		int dev_no = minor;
+		/* Normalize device number if it falls into legacy range */
+		if (dev_no < MOUSEDEV_MINOR_BASE + MOUSEDEV_MINORS)
 			dev_no -= MOUSEDEV_MINOR_BASE;
 		dev_set_name(&mousedev->dev, "mouse%d", dev_no);
 
-		mousedev->खोलो_device = mousedev_खोलो_device;
-		mousedev->बंद_device = mousedev_बंद_device;
-	पूर्ण
+		mousedev->open_device = mousedev_open_device;
+		mousedev->close_device = mousedev_close_device;
+	}
 
 	mousedev->exist = true;
 	mousedev->handle.dev = input_get_device(dev);
 	mousedev->handle.name = dev_name(&mousedev->dev);
 	mousedev->handle.handler = handler;
-	mousedev->handle.निजी = mousedev;
+	mousedev->handle.private = mousedev;
 
 	mousedev->dev.class = &input_class;
-	अगर (dev)
+	if (dev)
 		mousedev->dev.parent = &dev->dev;
 	mousedev->dev.devt = MKDEV(INPUT_MAJOR, minor);
-	mousedev->dev.release = mousedev_मुक्त;
+	mousedev->dev.release = mousedev_free;
 	device_initialize(&mousedev->dev);
 
-	अगर (!mixdev) अणु
-		error = input_रेजिस्टर_handle(&mousedev->handle);
-		अगर (error)
-			जाओ err_मुक्त_mousedev;
-	पूर्ण
+	if (!mixdev) {
+		error = input_register_handle(&mousedev->handle);
+		if (error)
+			goto err_free_mousedev;
+	}
 
 	cdev_init(&mousedev->cdev, &mousedev_fops);
 
 	error = cdev_device_add(&mousedev->cdev, &mousedev->dev);
-	अगर (error)
-		जाओ err_cleanup_mousedev;
+	if (error)
+		goto err_cleanup_mousedev;
 
-	वापस mousedev;
+	return mousedev;
 
  err_cleanup_mousedev:
 	mousedev_cleanup(mousedev);
-	अगर (!mixdev)
-		input_unरेजिस्टर_handle(&mousedev->handle);
- err_मुक्त_mousedev:
+	if (!mixdev)
+		input_unregister_handle(&mousedev->handle);
+ err_free_mousedev:
 	put_device(&mousedev->dev);
- err_मुक्त_minor:
-	input_मुक्त_minor(minor);
+ err_free_minor:
+	input_free_minor(minor);
  err_out:
-	वापस ERR_PTR(error);
-पूर्ण
+	return ERR_PTR(error);
+}
 
-अटल व्योम mousedev_destroy(काष्ठा mousedev *mousedev)
-अणु
+static void mousedev_destroy(struct mousedev *mousedev)
+{
 	cdev_device_del(&mousedev->cdev, &mousedev->dev);
 	mousedev_cleanup(mousedev);
-	input_मुक्त_minor(MINOR(mousedev->dev.devt));
-	अगर (mousedev != mousedev_mix)
-		input_unरेजिस्टर_handle(&mousedev->handle);
+	input_free_minor(MINOR(mousedev->dev.devt));
+	if (mousedev != mousedev_mix)
+		input_unregister_handle(&mousedev->handle);
 	put_device(&mousedev->dev);
-पूर्ण
+}
 
-अटल पूर्णांक mixdev_add_device(काष्ठा mousedev *mousedev)
-अणु
-	पूर्णांक retval;
+static int mixdev_add_device(struct mousedev *mousedev)
+{
+	int retval;
 
-	retval = mutex_lock_पूर्णांकerruptible(&mousedev_mix->mutex);
-	अगर (retval)
-		वापस retval;
+	retval = mutex_lock_interruptible(&mousedev_mix->mutex);
+	if (retval)
+		return retval;
 
-	अगर (mousedev_mix->खोलो) अणु
-		retval = mousedev_खोलो_device(mousedev);
-		अगर (retval)
-			जाओ out;
+	if (mousedev_mix->open) {
+		retval = mousedev_open_device(mousedev);
+		if (retval)
+			goto out;
 
-		mousedev->खोलोed_by_mixdev = true;
-	पूर्ण
+		mousedev->opened_by_mixdev = true;
+	}
 
 	get_device(&mousedev->dev);
 	list_add_tail(&mousedev->mixdev_node, &mousedev_mix_list);
 
  out:
 	mutex_unlock(&mousedev_mix->mutex);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम mixdev_हटाओ_device(काष्ठा mousedev *mousedev)
-अणु
+static void mixdev_remove_device(struct mousedev *mousedev)
+{
 	mutex_lock(&mousedev_mix->mutex);
 
-	अगर (mousedev->खोलोed_by_mixdev) अणु
-		mousedev->खोलोed_by_mixdev = false;
-		mousedev_बंद_device(mousedev);
-	पूर्ण
+	if (mousedev->opened_by_mixdev) {
+		mousedev->opened_by_mixdev = false;
+		mousedev_close_device(mousedev);
+	}
 
 	list_del_init(&mousedev->mixdev_node);
 	mutex_unlock(&mousedev_mix->mutex);
 
 	put_device(&mousedev->dev);
-पूर्ण
+}
 
-अटल पूर्णांक mousedev_connect(काष्ठा input_handler *handler,
-			    काष्ठा input_dev *dev,
-			    स्थिर काष्ठा input_device_id *id)
-अणु
-	काष्ठा mousedev *mousedev;
-	पूर्णांक error;
+static int mousedev_connect(struct input_handler *handler,
+			    struct input_dev *dev,
+			    const struct input_device_id *id)
+{
+	struct mousedev *mousedev;
+	int error;
 
 	mousedev = mousedev_create(dev, handler, false);
-	अगर (IS_ERR(mousedev))
-		वापस PTR_ERR(mousedev);
+	if (IS_ERR(mousedev))
+		return PTR_ERR(mousedev);
 
 	error = mixdev_add_device(mousedev);
-	अगर (error) अणु
+	if (error) {
 		mousedev_destroy(mousedev);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mousedev_disconnect(काष्ठा input_handle *handle)
-अणु
-	काष्ठा mousedev *mousedev = handle->निजी;
+static void mousedev_disconnect(struct input_handle *handle)
+{
+	struct mousedev *mousedev = handle->private;
 
-	mixdev_हटाओ_device(mousedev);
+	mixdev_remove_device(mousedev);
 	mousedev_destroy(mousedev);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा input_device_id mousedev_ids[] = अणु
-	अणु
+static const struct input_device_id mousedev_ids[] = {
+	{
 		.flags = INPUT_DEVICE_ID_MATCH_EVBIT |
 				INPUT_DEVICE_ID_MATCH_KEYBIT |
 				INPUT_DEVICE_ID_MATCH_RELBIT,
-		.evbit = अणु BIT_MASK(EV_KEY) | BIT_MASK(EV_REL) पूर्ण,
-		.keybit = अणु [BIT_WORD(BTN_LEFT)] = BIT_MASK(BTN_LEFT) पूर्ण,
-		.relbit = अणु BIT_MASK(REL_X) | BIT_MASK(REL_Y) पूर्ण,
-	पूर्ण,	/* A mouse like device, at least one button,
+		.evbit = { BIT_MASK(EV_KEY) | BIT_MASK(EV_REL) },
+		.keybit = { [BIT_WORD(BTN_LEFT)] = BIT_MASK(BTN_LEFT) },
+		.relbit = { BIT_MASK(REL_X) | BIT_MASK(REL_Y) },
+	},	/* A mouse like device, at least one button,
 		   two relative axes */
-	अणु
+	{
 		.flags = INPUT_DEVICE_ID_MATCH_EVBIT |
 				INPUT_DEVICE_ID_MATCH_RELBIT,
-		.evbit = अणु BIT_MASK(EV_KEY) | BIT_MASK(EV_REL) पूर्ण,
-		.relbit = अणु BIT_MASK(REL_WHEEL) पूर्ण,
-	पूर्ण,	/* A separate scrollwheel */
-	अणु
+		.evbit = { BIT_MASK(EV_KEY) | BIT_MASK(EV_REL) },
+		.relbit = { BIT_MASK(REL_WHEEL) },
+	},	/* A separate scrollwheel */
+	{
 		.flags = INPUT_DEVICE_ID_MATCH_EVBIT |
 				INPUT_DEVICE_ID_MATCH_KEYBIT |
 				INPUT_DEVICE_ID_MATCH_ABSBIT,
-		.evbit = अणु BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS) पूर्ण,
-		.keybit = अणु [BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH) पूर्ण,
-		.असलbit = अणु BIT_MASK(ABS_X) | BIT_MASK(ABS_Y) पूर्ण,
-	पूर्ण,	/* A tablet like device, at least touch detection,
-		   two असलolute axes */
-	अणु
+		.evbit = { BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS) },
+		.keybit = { [BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH) },
+		.absbit = { BIT_MASK(ABS_X) | BIT_MASK(ABS_Y) },
+	},	/* A tablet like device, at least touch detection,
+		   two absolute axes */
+	{
 		.flags = INPUT_DEVICE_ID_MATCH_EVBIT |
 				INPUT_DEVICE_ID_MATCH_KEYBIT |
 				INPUT_DEVICE_ID_MATCH_ABSBIT,
-		.evbit = अणु BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS) पूर्ण,
-		.keybit = अणु [BIT_WORD(BTN_TOOL_FINGER)] =
-				BIT_MASK(BTN_TOOL_FINGER) पूर्ण,
-		.असलbit = अणु BIT_MASK(ABS_X) | BIT_MASK(ABS_Y) |
+		.evbit = { BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS) },
+		.keybit = { [BIT_WORD(BTN_TOOL_FINGER)] =
+				BIT_MASK(BTN_TOOL_FINGER) },
+		.absbit = { BIT_MASK(ABS_X) | BIT_MASK(ABS_Y) |
 				BIT_MASK(ABS_PRESSURE) |
-				BIT_MASK(ABS_TOOL_WIDTH) पूर्ण,
-	पूर्ण,	/* A touchpad */
-	अणु
+				BIT_MASK(ABS_TOOL_WIDTH) },
+	},	/* A touchpad */
+	{
 		.flags = INPUT_DEVICE_ID_MATCH_EVBIT |
 			INPUT_DEVICE_ID_MATCH_KEYBIT |
 			INPUT_DEVICE_ID_MATCH_ABSBIT,
-		.evbit = अणु BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS) पूर्ण,
-		.keybit = अणु [BIT_WORD(BTN_LEFT)] = BIT_MASK(BTN_LEFT) पूर्ण,
-		.असलbit = अणु BIT_MASK(ABS_X) | BIT_MASK(ABS_Y) पूर्ण,
-	पूर्ण,	/* Mouse-like device with असलolute X and Y but ordinary
-		   clicks, like hp ILO2 High Perक्रमmance mouse */
+		.evbit = { BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS) },
+		.keybit = { [BIT_WORD(BTN_LEFT)] = BIT_MASK(BTN_LEFT) },
+		.absbit = { BIT_MASK(ABS_X) | BIT_MASK(ABS_Y) },
+	},	/* Mouse-like device with absolute X and Y but ordinary
+		   clicks, like hp ILO2 High Performance mouse */
 
-	अणु पूर्ण,	/* Terminating entry */
-पूर्ण;
+	{ },	/* Terminating entry */
+};
 
 MODULE_DEVICE_TABLE(input, mousedev_ids);
 
-अटल काष्ठा input_handler mousedev_handler = अणु
+static struct input_handler mousedev_handler = {
 	.event		= mousedev_event,
 	.connect	= mousedev_connect,
 	.disconnect	= mousedev_disconnect,
@@ -1059,68 +1058,68 @@ MODULE_DEVICE_TABLE(input, mousedev_ids);
 	.minor		= MOUSEDEV_MINOR_BASE,
 	.name		= "mousedev",
 	.id_table	= mousedev_ids,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_INPUT_MOUSEDEV_PSAUX
-#समावेश <linux/miscdevice.h>
+#ifdef CONFIG_INPUT_MOUSEDEV_PSAUX
+#include <linux/miscdevice.h>
 
-अटल काष्ठा miscdevice psaux_mouse = अणु
+static struct miscdevice psaux_mouse = {
 	.minor	= PSMOUSE_MINOR,
 	.name	= "psaux",
 	.fops	= &mousedev_fops,
-पूर्ण;
+};
 
-अटल bool psaux_रेजिस्टरed;
+static bool psaux_registered;
 
-अटल व्योम __init mousedev_psaux_रेजिस्टर(व्योम)
-अणु
-	पूर्णांक error;
+static void __init mousedev_psaux_register(void)
+{
+	int error;
 
-	error = misc_रेजिस्टर(&psaux_mouse);
-	अगर (error)
+	error = misc_register(&psaux_mouse);
+	if (error)
 		pr_warn("could not register psaux device, error: %d\n",
 			   error);
-	अन्यथा
-		psaux_रेजिस्टरed = true;
-पूर्ण
+	else
+		psaux_registered = true;
+}
 
-अटल व्योम __निकास mousedev_psaux_unरेजिस्टर(व्योम)
-अणु
-	अगर (psaux_रेजिस्टरed)
-		misc_deरेजिस्टर(&psaux_mouse);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम mousedev_psaux_रेजिस्टर(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम mousedev_psaux_unरेजिस्टर(व्योम) अणु पूर्ण
-#पूर्ण_अगर
+static void __exit mousedev_psaux_unregister(void)
+{
+	if (psaux_registered)
+		misc_deregister(&psaux_mouse);
+}
+#else
+static inline void mousedev_psaux_register(void) { }
+static inline void mousedev_psaux_unregister(void) { }
+#endif
 
-अटल पूर्णांक __init mousedev_init(व्योम)
-अणु
-	पूर्णांक error;
+static int __init mousedev_init(void)
+{
+	int error;
 
-	mousedev_mix = mousedev_create(शून्य, &mousedev_handler, true);
-	अगर (IS_ERR(mousedev_mix))
-		वापस PTR_ERR(mousedev_mix);
+	mousedev_mix = mousedev_create(NULL, &mousedev_handler, true);
+	if (IS_ERR(mousedev_mix))
+		return PTR_ERR(mousedev_mix);
 
-	error = input_रेजिस्टर_handler(&mousedev_handler);
-	अगर (error) अणु
+	error = input_register_handler(&mousedev_handler);
+	if (error) {
 		mousedev_destroy(mousedev_mix);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	mousedev_psaux_रेजिस्टर();
+	mousedev_psaux_register();
 
 	pr_info("PS/2 mouse device common for all mice\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास mousedev_निकास(व्योम)
-अणु
-	mousedev_psaux_unरेजिस्टर();
-	input_unरेजिस्टर_handler(&mousedev_handler);
+static void __exit mousedev_exit(void)
+{
+	mousedev_psaux_unregister();
+	input_unregister_handler(&mousedev_handler);
 	mousedev_destroy(mousedev_mix);
-पूर्ण
+}
 
 module_init(mousedev_init);
-module_निकास(mousedev_निकास);
+module_exit(mousedev_exit);

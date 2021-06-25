@@ -1,29 +1,28 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * HID driver क्रम Maltron L90
+ * HID driver for Maltron L90
  *
  * Copyright (c) 1999 Andreas Gal
  * Copyright (c) 2000-2005 Vojtech Pavlik <vojtech@suse.cz>
- * Copyright (c) 2005 Michael Haboustak <mike-@cinci.rr.com> क्रम Concept2, Inc
+ * Copyright (c) 2005 Michael Haboustak <mike-@cinci.rr.com> for Concept2, Inc
  * Copyright (c) 2008 Jiri Slaby
  * Copyright (c) 2012 David Dillow <dave@thedillows.org>
  * Copyright (c) 2006-2013 Jiri Kosina
  * Copyright (c) 2013 Colin Leitner <colin.leitner@gmail.com>
  * Copyright (c) 2014-2016 Frank Praznik <frank.praznik@gmail.com>
- * Copyright (c) 2010 Riअक्षरd Nauber <Riअक्षरd.Nauber@gmail.com>
+ * Copyright (c) 2010 Richard Nauber <Richard.Nauber@gmail.com>
  * Copyright (c) 2016 Yuxuan Shui <yshuiv7@gmail.com>
  * Copyright (c) 2018 William Whistler <wtbw@wtbw.co.uk>
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/hid.h>
-#समावेश <linux/module.h>
+#include <linux/device.h>
+#include <linux/hid.h>
+#include <linux/module.h>
 
-#समावेश "hid-ids.h"
+#include "hid-ids.h"
 
 /* The original buggy USB descriptor */
-अटल u8 maltron_rdesc_o[] = अणु
+static u8 maltron_rdesc_o[] = {
 	0x05, 0x01,        /* Usage Page (Generic Desktop Ctrls) */
 	0x09, 0x80,        /* Usage (Sys Control)                */
 	0xA1, 0x01,        /* Collection (Application)           */
@@ -47,11 +46,11 @@
 	0x85, 0x03,        /*   Report ID (3)                    */
 	0x95, 0x01,        /*   Report Count (1)                 */
 	0x75, 0x10,        /*   Report Size (16)                 */
-	0x19, 0x00,        /*   Usage Minimum (Unasचिन्हित)       */
+	0x19, 0x00,        /*   Usage Minimum (Unassigned)       */
 	0x2A, 0xFF, 0x7F,  /*   Usage Maximum (0x7FFF)           */
 	0x81, 0x00,        /*   Input (Data,Array,Abs)           */
 	0xC0,              /* End Collection                     */
-	0x06, 0x7F, 0xFF,  /* Usage Page (Venकरोr Defined 0xFF7F) */
+	0x06, 0x7F, 0xFF,  /* Usage Page (Vendor Defined 0xFF7F) */
 	0x09, 0x01,        /* Usage (0x01)                       */
 	0xA1, 0x01,        /* Collection (Application)           */
 	0x85, 0x04,        /*   Report ID (4)                    */
@@ -77,10 +76,10 @@
 	0x95, 0x01,        /*   Report Count (1)                 */
 	0x91, 0x01,        /*   Output (Const,Array,Abs)         */
 	0xC0               /* End Collection                     */
-पूर्ण;
+};
 
 /* The patched descriptor, allowing media key events to be accepted as valid */
-अटल u8 maltron_rdesc[] = अणु
+static u8 maltron_rdesc[] = {
 	0x05, 0x01,        /* Usage Page (Generic Desktop Ctrls) */
 	0x09, 0x80,        /* Usage (Sys Control)                */
 	0xA1, 0x01,        /* Collection (Application)           */
@@ -106,11 +105,11 @@
 	0x26, 0xFF, 0x7F,  /*   Logical Maximum (32767)          - changed */
 	0x95, 0x01,        /*   Report Count (1)                 */
 	0x75, 0x10,        /*   Report Size (16)                 */
-	0x19, 0x00,        /*   Usage Minimum (Unasचिन्हित)       */
+	0x19, 0x00,        /*   Usage Minimum (Unassigned)       */
 	0x2A, 0xFF, 0x7F,  /*   Usage Maximum (0x7FFF)           */
 	0x81, 0x00,        /*   Input (Data,Array,Abs)           */
 	0xC0,              /* End Collection                     */
-	0x06, 0x7F, 0xFF,  /* Usage Page (Venकरोr Defined 0xFF7F) */
+	0x06, 0x7F, 0xFF,  /* Usage Page (Vendor Defined 0xFF7F) */
 	0x09, 0x01,        /* Usage (0x01)                       */
 	0xA1, 0x01,        /* Collection (Application)           */
 	0x85, 0x04,        /*   Report ID (4)                    */
@@ -136,31 +135,31 @@
 	0x95, 0x01,        /*   Report Count (1)                 */
 	0x91, 0x01,        /*   Output (Const,Array,Abs)         */
 	0xC0               /* End Collection                     */
-पूर्ण;
+};
 
-अटल __u8 *maltron_report_fixup(काष्ठा hid_device *hdev, __u8 *rdesc,
-				  अचिन्हित पूर्णांक *rsize)
-अणु
-	अगर (*rsize == माप(maltron_rdesc_o) &&
-	    !स_भेद(maltron_rdesc_o, rdesc, माप(maltron_rdesc_o))) अणु
+static __u8 *maltron_report_fixup(struct hid_device *hdev, __u8 *rdesc,
+				  unsigned int *rsize)
+{
+	if (*rsize == sizeof(maltron_rdesc_o) &&
+	    !memcmp(maltron_rdesc_o, rdesc, sizeof(maltron_rdesc_o))) {
 		hid_info(hdev, "Replacing Maltron L90 keyboard report descriptor\n");
-		*rsize = माप(maltron_rdesc);
-		वापस maltron_rdesc;
-	पूर्ण
-	वापस rdesc;
-पूर्ण
+		*rsize = sizeof(maltron_rdesc);
+		return maltron_rdesc;
+	}
+	return rdesc;
+}
 
-अटल स्थिर काष्ठा hid_device_id maltron_devices[] = अणु
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_ALCOR, USB_DEVICE_ID_ALCOR_MALTRON_KB)पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct hid_device_id maltron_devices[] = {
+	{ HID_USB_DEVICE(USB_VENDOR_ID_ALCOR, USB_DEVICE_ID_ALCOR_MALTRON_KB)},
+	{ }
+};
 MODULE_DEVICE_TABLE(hid, maltron_devices);
 
-अटल काष्ठा hid_driver maltron_driver = अणु
+static struct hid_driver maltron_driver = {
 	.name = "maltron",
 	.id_table = maltron_devices,
 	.report_fixup = maltron_report_fixup
-पूर्ण;
+};
 module_hid_driver(maltron_driver);
 
 MODULE_LICENSE("GPL");

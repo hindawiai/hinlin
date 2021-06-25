@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Linux Socket Filter - Kernel level socket filtering
  *
  * Based on the design of the Berkeley Packet Filter. The new
- * पूर्णांकernal क्रमmat has been deचिन्हित by PLUMgrid:
+ * internal format has been designed by PLUMgrid:
  *
  *	Copyright (c) 2011 - 2014 PLUMgrid, http://plumgrid.com
  *
@@ -18,86 +17,86 @@
  * Kris Katterjohn - Added many additional checks in bpf_check_classic()
  */
 
-#समावेश <uapi/linux/btf.h>
-#समावेश <linux/filter.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/moduleloader.h>
-#समावेश <linux/bpf.h>
-#समावेश <linux/btf.h>
-#समावेश <linux/objtool.h>
-#समावेश <linux/rbtree_latch.h>
-#समावेश <linux/kallsyms.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/extable.h>
-#समावेश <linux/log2.h>
-#समावेश <यंत्र/unaligned.h>
+#include <uapi/linux/btf.h>
+#include <linux/filter.h>
+#include <linux/skbuff.h>
+#include <linux/vmalloc.h>
+#include <linux/random.h>
+#include <linux/moduleloader.h>
+#include <linux/bpf.h>
+#include <linux/btf.h>
+#include <linux/objtool.h>
+#include <linux/rbtree_latch.h>
+#include <linux/kallsyms.h>
+#include <linux/rcupdate.h>
+#include <linux/perf_event.h>
+#include <linux/extable.h>
+#include <linux/log2.h>
+#include <asm/unaligned.h>
 
 /* Registers */
-#घोषणा BPF_R0	regs[BPF_REG_0]
-#घोषणा BPF_R1	regs[BPF_REG_1]
-#घोषणा BPF_R2	regs[BPF_REG_2]
-#घोषणा BPF_R3	regs[BPF_REG_3]
-#घोषणा BPF_R4	regs[BPF_REG_4]
-#घोषणा BPF_R5	regs[BPF_REG_5]
-#घोषणा BPF_R6	regs[BPF_REG_6]
-#घोषणा BPF_R7	regs[BPF_REG_7]
-#घोषणा BPF_R8	regs[BPF_REG_8]
-#घोषणा BPF_R9	regs[BPF_REG_9]
-#घोषणा BPF_R10	regs[BPF_REG_10]
+#define BPF_R0	regs[BPF_REG_0]
+#define BPF_R1	regs[BPF_REG_1]
+#define BPF_R2	regs[BPF_REG_2]
+#define BPF_R3	regs[BPF_REG_3]
+#define BPF_R4	regs[BPF_REG_4]
+#define BPF_R5	regs[BPF_REG_5]
+#define BPF_R6	regs[BPF_REG_6]
+#define BPF_R7	regs[BPF_REG_7]
+#define BPF_R8	regs[BPF_REG_8]
+#define BPF_R9	regs[BPF_REG_9]
+#define BPF_R10	regs[BPF_REG_10]
 
-/* Named रेजिस्टरs */
-#घोषणा DST	regs[insn->dst_reg]
-#घोषणा SRC	regs[insn->src_reg]
-#घोषणा FP	regs[BPF_REG_FP]
-#घोषणा AX	regs[BPF_REG_AX]
-#घोषणा ARG1	regs[BPF_REG_ARG1]
-#घोषणा CTX	regs[BPF_REG_CTX]
-#घोषणा IMM	insn->imm
+/* Named registers */
+#define DST	regs[insn->dst_reg]
+#define SRC	regs[insn->src_reg]
+#define FP	regs[BPF_REG_FP]
+#define AX	regs[BPF_REG_AX]
+#define ARG1	regs[BPF_REG_ARG1]
+#define CTX	regs[BPF_REG_CTX]
+#define IMM	insn->imm
 
 /* No hurry in this branch
  *
- * Exported क्रम the bpf jit load helper.
+ * Exported for the bpf jit load helper.
  */
-व्योम *bpf_पूर्णांकernal_load_poपूर्णांकer_neg_helper(स्थिर काष्ठा sk_buff *skb, पूर्णांक k, अचिन्हित पूर्णांक size)
-अणु
-	u8 *ptr = शून्य;
+void *bpf_internal_load_pointer_neg_helper(const struct sk_buff *skb, int k, unsigned int size)
+{
+	u8 *ptr = NULL;
 
-	अगर (k >= SKF_NET_OFF)
+	if (k >= SKF_NET_OFF)
 		ptr = skb_network_header(skb) + k - SKF_NET_OFF;
-	अन्यथा अगर (k >= SKF_LL_OFF)
+	else if (k >= SKF_LL_OFF)
 		ptr = skb_mac_header(skb) + k - SKF_LL_OFF;
 
-	अगर (ptr >= skb->head && ptr + size <= skb_tail_poपूर्णांकer(skb))
-		वापस ptr;
+	if (ptr >= skb->head && ptr + size <= skb_tail_pointer(skb))
+		return ptr;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-काष्ठा bpf_prog *bpf_prog_alloc_no_stats(अचिन्हित पूर्णांक size, gfp_t gfp_extra_flags)
-अणु
+struct bpf_prog *bpf_prog_alloc_no_stats(unsigned int size, gfp_t gfp_extra_flags)
+{
 	gfp_t gfp_flags = GFP_KERNEL_ACCOUNT | __GFP_ZERO | gfp_extra_flags;
-	काष्ठा bpf_prog_aux *aux;
-	काष्ठा bpf_prog *fp;
+	struct bpf_prog_aux *aux;
+	struct bpf_prog *fp;
 
 	size = round_up(size, PAGE_SIZE);
-	fp = __vदो_स्मृति(size, gfp_flags);
-	अगर (fp == शून्य)
-		वापस शून्य;
+	fp = __vmalloc(size, gfp_flags);
+	if (fp == NULL)
+		return NULL;
 
-	aux = kzalloc(माप(*aux), GFP_KERNEL_ACCOUNT | gfp_extra_flags);
-	अगर (aux == शून्य) अणु
-		vमुक्त(fp);
-		वापस शून्य;
-	पूर्ण
-	fp->active = alloc_percpu_gfp(पूर्णांक, GFP_KERNEL_ACCOUNT | gfp_extra_flags);
-	अगर (!fp->active) अणु
-		vमुक्त(fp);
-		kमुक्त(aux);
-		वापस शून्य;
-	पूर्ण
+	aux = kzalloc(sizeof(*aux), GFP_KERNEL_ACCOUNT | gfp_extra_flags);
+	if (aux == NULL) {
+		vfree(fp);
+		return NULL;
+	}
+	fp->active = alloc_percpu_gfp(int, GFP_KERNEL_ACCOUNT | gfp_extra_flags);
+	if (!fp->active) {
+		vfree(fp);
+		kfree(aux);
+		return NULL;
+	}
 
 	fp->pages = size / PAGE_SIZE;
 	fp->aux = aux;
@@ -108,77 +107,77 @@
 	mutex_init(&fp->aux->used_maps_mutex);
 	mutex_init(&fp->aux->dst_mutex);
 
-	वापस fp;
-पूर्ण
+	return fp;
+}
 
-काष्ठा bpf_prog *bpf_prog_alloc(अचिन्हित पूर्णांक size, gfp_t gfp_extra_flags)
-अणु
+struct bpf_prog *bpf_prog_alloc(unsigned int size, gfp_t gfp_extra_flags)
+{
 	gfp_t gfp_flags = GFP_KERNEL_ACCOUNT | __GFP_ZERO | gfp_extra_flags;
-	काष्ठा bpf_prog *prog;
-	पूर्णांक cpu;
+	struct bpf_prog *prog;
+	int cpu;
 
 	prog = bpf_prog_alloc_no_stats(size, gfp_extra_flags);
-	अगर (!prog)
-		वापस शून्य;
+	if (!prog)
+		return NULL;
 
-	prog->stats = alloc_percpu_gfp(काष्ठा bpf_prog_stats, gfp_flags);
-	अगर (!prog->stats) अणु
-		मुक्त_percpu(prog->active);
-		kमुक्त(prog->aux);
-		vमुक्त(prog);
-		वापस शून्य;
-	पूर्ण
+	prog->stats = alloc_percpu_gfp(struct bpf_prog_stats, gfp_flags);
+	if (!prog->stats) {
+		free_percpu(prog->active);
+		kfree(prog->aux);
+		vfree(prog);
+		return NULL;
+	}
 
-	क्रम_each_possible_cpu(cpu) अणु
-		काष्ठा bpf_prog_stats *pstats;
+	for_each_possible_cpu(cpu) {
+		struct bpf_prog_stats *pstats;
 
 		pstats = per_cpu_ptr(prog->stats, cpu);
 		u64_stats_init(&pstats->syncp);
-	पूर्ण
-	वापस prog;
-पूर्ण
+	}
+	return prog;
+}
 EXPORT_SYMBOL_GPL(bpf_prog_alloc);
 
-पूर्णांक bpf_prog_alloc_jited_linfo(काष्ठा bpf_prog *prog)
-अणु
-	अगर (!prog->aux->nr_linfo || !prog->jit_requested)
-		वापस 0;
+int bpf_prog_alloc_jited_linfo(struct bpf_prog *prog)
+{
+	if (!prog->aux->nr_linfo || !prog->jit_requested)
+		return 0;
 
-	prog->aux->jited_linfo = kvसुस्मृति(prog->aux->nr_linfo,
-					  माप(*prog->aux->jited_linfo),
+	prog->aux->jited_linfo = kvcalloc(prog->aux->nr_linfo,
+					  sizeof(*prog->aux->jited_linfo),
 					  GFP_KERNEL_ACCOUNT | __GFP_NOWARN);
-	अगर (!prog->aux->jited_linfo)
-		वापस -ENOMEM;
+	if (!prog->aux->jited_linfo)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम bpf_prog_jit_attempt_करोne(काष्ठा bpf_prog *prog)
-अणु
-	अगर (prog->aux->jited_linfo &&
-	    (!prog->jited || !prog->aux->jited_linfo[0])) अणु
-		kvमुक्त(prog->aux->jited_linfo);
-		prog->aux->jited_linfo = शून्य;
-	पूर्ण
+void bpf_prog_jit_attempt_done(struct bpf_prog *prog)
+{
+	if (prog->aux->jited_linfo &&
+	    (!prog->jited || !prog->aux->jited_linfo[0])) {
+		kvfree(prog->aux->jited_linfo);
+		prog->aux->jited_linfo = NULL;
+	}
 
-	kमुक्त(prog->aux->kfunc_tab);
-	prog->aux->kfunc_tab = शून्य;
-पूर्ण
+	kfree(prog->aux->kfunc_tab);
+	prog->aux->kfunc_tab = NULL;
+}
 
 /* The jit engine is responsible to provide an array
- * क्रम insn_off to the jited_off mapping (insn_to_jit_off).
+ * for insn_off to the jited_off mapping (insn_to_jit_off).
  *
  * The idx to this array is the insn_off.  Hence, the insn_off
- * here is relative to the prog itself instead of the मुख्य prog.
- * This array has one entry क्रम each xlated bpf insn.
+ * here is relative to the prog itself instead of the main prog.
+ * This array has one entry for each xlated bpf insn.
  *
  * jited_off is the byte off to the last byte of the jited insn.
  *
  * Hence, with
  * insn_start:
  *      The first bpf insn off of the prog.  The insn off
- *      here is relative to the मुख्य prog.
- *      e.g. अगर prog is a subprog, insn_start > 0
+ *      here is relative to the main prog.
+ *      e.g. if prog is a subprog, insn_start > 0
  * linfo_idx:
  *      The prog's idx to prog->aux->linfo and jited_linfo
  *
@@ -189,16 +188,16 @@ EXPORT_SYMBOL_GPL(bpf_prog_alloc);
  * jited_linfo[i] = prog->bpf_func +
  *	insn_to_jit_off[linfo[i].insn_off - insn_start - 1]
  */
-व्योम bpf_prog_fill_jited_linfo(काष्ठा bpf_prog *prog,
-			       स्थिर u32 *insn_to_jit_off)
-अणु
+void bpf_prog_fill_jited_linfo(struct bpf_prog *prog,
+			       const u32 *insn_to_jit_off)
+{
 	u32 linfo_idx, insn_start, insn_end, nr_linfo, i;
-	स्थिर काष्ठा bpf_line_info *linfo;
-	व्योम **jited_linfo;
+	const struct bpf_line_info *linfo;
+	void **jited_linfo;
 
-	अगर (!prog->aux->jited_linfo)
+	if (!prog->aux->jited_linfo)
 		/* Userspace did not provide linfo */
-		वापस;
+		return;
 
 	linfo_idx = prog->aux->linfo_idx;
 	linfo = &prog->aux->linfo[linfo_idx];
@@ -210,993 +209,993 @@ EXPORT_SYMBOL_GPL(bpf_prog_alloc);
 
 	nr_linfo = prog->aux->nr_linfo - linfo_idx;
 
-	क्रम (i = 1; i < nr_linfo && linfo[i].insn_off < insn_end; i++)
-		/* The verअगरier ensures that linfo[i].insn_off is
+	for (i = 1; i < nr_linfo && linfo[i].insn_off < insn_end; i++)
+		/* The verifier ensures that linfo[i].insn_off is
 		 * strictly increasing
 		 */
 		jited_linfo[i] = prog->bpf_func +
 			insn_to_jit_off[linfo[i].insn_off - insn_start - 1];
-पूर्ण
+}
 
-काष्ठा bpf_prog *bpf_prog_पुनः_स्मृति(काष्ठा bpf_prog *fp_old, अचिन्हित पूर्णांक size,
+struct bpf_prog *bpf_prog_realloc(struct bpf_prog *fp_old, unsigned int size,
 				  gfp_t gfp_extra_flags)
-अणु
+{
 	gfp_t gfp_flags = GFP_KERNEL_ACCOUNT | __GFP_ZERO | gfp_extra_flags;
-	काष्ठा bpf_prog *fp;
+	struct bpf_prog *fp;
 	u32 pages;
 
 	size = round_up(size, PAGE_SIZE);
 	pages = size / PAGE_SIZE;
-	अगर (pages <= fp_old->pages)
-		वापस fp_old;
+	if (pages <= fp_old->pages)
+		return fp_old;
 
-	fp = __vदो_स्मृति(size, gfp_flags);
-	अगर (fp) अणु
-		स_नकल(fp, fp_old, fp_old->pages * PAGE_SIZE);
+	fp = __vmalloc(size, gfp_flags);
+	if (fp) {
+		memcpy(fp, fp_old, fp_old->pages * PAGE_SIZE);
 		fp->pages = pages;
 		fp->aux->prog = fp;
 
 		/* We keep fp->aux from fp_old around in the new
-		 * पुनः_स्मृतिated काष्ठाure.
+		 * reallocated structure.
 		 */
-		fp_old->aux = शून्य;
-		fp_old->stats = शून्य;
-		fp_old->active = शून्य;
-		__bpf_prog_मुक्त(fp_old);
-	पूर्ण
+		fp_old->aux = NULL;
+		fp_old->stats = NULL;
+		fp_old->active = NULL;
+		__bpf_prog_free(fp_old);
+	}
 
-	वापस fp;
-पूर्ण
+	return fp;
+}
 
-व्योम __bpf_prog_मुक्त(काष्ठा bpf_prog *fp)
-अणु
-	अगर (fp->aux) अणु
+void __bpf_prog_free(struct bpf_prog *fp)
+{
+	if (fp->aux) {
 		mutex_destroy(&fp->aux->used_maps_mutex);
 		mutex_destroy(&fp->aux->dst_mutex);
-		kमुक्त(fp->aux->poke_tab);
-		kमुक्त(fp->aux);
-	पूर्ण
-	मुक्त_percpu(fp->stats);
-	मुक्त_percpu(fp->active);
-	vमुक्त(fp);
-पूर्ण
+		kfree(fp->aux->poke_tab);
+		kfree(fp->aux);
+	}
+	free_percpu(fp->stats);
+	free_percpu(fp->active);
+	vfree(fp);
+}
 
-पूर्णांक bpf_prog_calc_tag(काष्ठा bpf_prog *fp)
-अणु
-	स्थिर u32 bits_offset = SHA1_BLOCK_SIZE - माप(__be64);
+int bpf_prog_calc_tag(struct bpf_prog *fp)
+{
+	const u32 bits_offset = SHA1_BLOCK_SIZE - sizeof(__be64);
 	u32 raw_size = bpf_prog_tag_scratch_size(fp);
 	u32 digest[SHA1_DIGEST_WORDS];
 	u32 ws[SHA1_WORKSPACE_WORDS];
 	u32 i, bsize, psize, blocks;
-	काष्ठा bpf_insn *dst;
+	struct bpf_insn *dst;
 	bool was_ld_map;
-	u8 *raw, *toकरो;
+	u8 *raw, *todo;
 	__be32 *result;
 	__be64 *bits;
 
-	raw = vदो_स्मृति(raw_size);
-	अगर (!raw)
-		वापस -ENOMEM;
+	raw = vmalloc(raw_size);
+	if (!raw)
+		return -ENOMEM;
 
 	sha1_init(digest);
-	स_रखो(ws, 0, माप(ws));
+	memset(ws, 0, sizeof(ws));
 
-	/* We need to take out the map fd क्रम the digest calculation
+	/* We need to take out the map fd for the digest calculation
 	 * since they are unstable from user space side.
 	 */
-	dst = (व्योम *)raw;
-	क्रम (i = 0, was_ld_map = false; i < fp->len; i++) अणु
+	dst = (void *)raw;
+	for (i = 0, was_ld_map = false; i < fp->len; i++) {
 		dst[i] = fp->insnsi[i];
-		अगर (!was_ld_map &&
+		if (!was_ld_map &&
 		    dst[i].code == (BPF_LD | BPF_IMM | BPF_DW) &&
 		    (dst[i].src_reg == BPF_PSEUDO_MAP_FD ||
-		     dst[i].src_reg == BPF_PSEUDO_MAP_VALUE)) अणु
+		     dst[i].src_reg == BPF_PSEUDO_MAP_VALUE)) {
 			was_ld_map = true;
 			dst[i].imm = 0;
-		पूर्ण अन्यथा अगर (was_ld_map &&
+		} else if (was_ld_map &&
 			   dst[i].code == 0 &&
 			   dst[i].dst_reg == 0 &&
 			   dst[i].src_reg == 0 &&
-			   dst[i].off == 0) अणु
+			   dst[i].off == 0) {
 			was_ld_map = false;
 			dst[i].imm = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			was_ld_map = false;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	psize = bpf_prog_insn_size(fp);
-	स_रखो(&raw[psize], 0, raw_size - psize);
+	memset(&raw[psize], 0, raw_size - psize);
 	raw[psize++] = 0x80;
 
 	bsize  = round_up(psize, SHA1_BLOCK_SIZE);
 	blocks = bsize / SHA1_BLOCK_SIZE;
-	toकरो   = raw;
-	अगर (bsize - psize >= माप(__be64)) अणु
-		bits = (__be64 *)(toकरो + bsize - माप(__be64));
-	पूर्ण अन्यथा अणु
-		bits = (__be64 *)(toकरो + bsize + bits_offset);
+	todo   = raw;
+	if (bsize - psize >= sizeof(__be64)) {
+		bits = (__be64 *)(todo + bsize - sizeof(__be64));
+	} else {
+		bits = (__be64 *)(todo + bsize + bits_offset);
 		blocks++;
-	पूर्ण
+	}
 	*bits = cpu_to_be64((psize - 1) << 3);
 
-	जबतक (blocks--) अणु
-		sha1_transक्रमm(digest, toकरो, ws);
-		toकरो += SHA1_BLOCK_SIZE;
-	पूर्ण
+	while (blocks--) {
+		sha1_transform(digest, todo, ws);
+		todo += SHA1_BLOCK_SIZE;
+	}
 
-	result = (__क्रमce __be32 *)digest;
-	क्रम (i = 0; i < SHA1_DIGEST_WORDS; i++)
+	result = (__force __be32 *)digest;
+	for (i = 0; i < SHA1_DIGEST_WORDS; i++)
 		result[i] = cpu_to_be32(digest[i]);
-	स_नकल(fp->tag, result, माप(fp->tag));
+	memcpy(fp->tag, result, sizeof(fp->tag));
 
-	vमुक्त(raw);
-	वापस 0;
-पूर्ण
+	vfree(raw);
+	return 0;
+}
 
-अटल पूर्णांक bpf_adj_delta_to_imm(काष्ठा bpf_insn *insn, u32 pos, s32 end_old,
-				s32 end_new, s32 curr, स्थिर bool probe_pass)
-अणु
-	स्थिर s64 imm_min = S32_MIN, imm_max = S32_MAX;
+static int bpf_adj_delta_to_imm(struct bpf_insn *insn, u32 pos, s32 end_old,
+				s32 end_new, s32 curr, const bool probe_pass)
+{
+	const s64 imm_min = S32_MIN, imm_max = S32_MAX;
 	s32 delta = end_new - end_old;
 	s64 imm = insn->imm;
 
-	अगर (curr < pos && curr + imm + 1 >= end_old)
+	if (curr < pos && curr + imm + 1 >= end_old)
 		imm += delta;
-	अन्यथा अगर (curr >= end_new && curr + imm + 1 < end_new)
+	else if (curr >= end_new && curr + imm + 1 < end_new)
 		imm -= delta;
-	अगर (imm < imm_min || imm > imm_max)
-		वापस -दुस्फल;
-	अगर (!probe_pass)
+	if (imm < imm_min || imm > imm_max)
+		return -ERANGE;
+	if (!probe_pass)
 		insn->imm = imm;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bpf_adj_delta_to_off(काष्ठा bpf_insn *insn, u32 pos, s32 end_old,
-				s32 end_new, s32 curr, स्थिर bool probe_pass)
-अणु
-	स्थिर s32 off_min = S16_MIN, off_max = S16_MAX;
+static int bpf_adj_delta_to_off(struct bpf_insn *insn, u32 pos, s32 end_old,
+				s32 end_new, s32 curr, const bool probe_pass)
+{
+	const s32 off_min = S16_MIN, off_max = S16_MAX;
 	s32 delta = end_new - end_old;
 	s32 off = insn->off;
 
-	अगर (curr < pos && curr + off + 1 >= end_old)
+	if (curr < pos && curr + off + 1 >= end_old)
 		off += delta;
-	अन्यथा अगर (curr >= end_new && curr + off + 1 < end_new)
+	else if (curr >= end_new && curr + off + 1 < end_new)
 		off -= delta;
-	अगर (off < off_min || off > off_max)
-		वापस -दुस्फल;
-	अगर (!probe_pass)
+	if (off < off_min || off > off_max)
+		return -ERANGE;
+	if (!probe_pass)
 		insn->off = off;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bpf_adj_branches(काष्ठा bpf_prog *prog, u32 pos, s32 end_old,
-			    s32 end_new, स्थिर bool probe_pass)
-अणु
+static int bpf_adj_branches(struct bpf_prog *prog, u32 pos, s32 end_old,
+			    s32 end_new, const bool probe_pass)
+{
 	u32 i, insn_cnt = prog->len + (probe_pass ? end_new - end_old : 0);
-	काष्ठा bpf_insn *insn = prog->insnsi;
-	पूर्णांक ret = 0;
+	struct bpf_insn *insn = prog->insnsi;
+	int ret = 0;
 
-	क्रम (i = 0; i < insn_cnt; i++, insn++) अणु
+	for (i = 0; i < insn_cnt; i++, insn++) {
 		u8 code;
 
 		/* In the probing pass we still operate on the original,
-		 * unpatched image in order to check overflows beक्रमe we
-		 * करो any other adjusपंचांगents. Thereक्रमe skip the patchlet.
+		 * unpatched image in order to check overflows before we
+		 * do any other adjustments. Therefore skip the patchlet.
 		 */
-		अगर (probe_pass && i == pos) अणु
+		if (probe_pass && i == pos) {
 			i = end_new;
 			insn = prog->insnsi + end_old;
-		पूर्ण
+		}
 		code = insn->code;
-		अगर ((BPF_CLASS(code) != BPF_JMP &&
+		if ((BPF_CLASS(code) != BPF_JMP &&
 		     BPF_CLASS(code) != BPF_JMP32) ||
 		    BPF_OP(code) == BPF_EXIT)
-			जारी;
-		/* Adjust offset of jmps अगर we cross patch boundaries. */
-		अगर (BPF_OP(code) == BPF_CALL) अणु
-			अगर (insn->src_reg != BPF_PSEUDO_CALL)
-				जारी;
+			continue;
+		/* Adjust offset of jmps if we cross patch boundaries. */
+		if (BPF_OP(code) == BPF_CALL) {
+			if (insn->src_reg != BPF_PSEUDO_CALL)
+				continue;
 			ret = bpf_adj_delta_to_imm(insn, pos, end_old,
 						   end_new, i, probe_pass);
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = bpf_adj_delta_to_off(insn, pos, end_old,
 						   end_new, i, probe_pass);
-		पूर्ण
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+		}
+		if (ret)
+			break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम bpf_adj_linfo(काष्ठा bpf_prog *prog, u32 off, u32 delta)
-अणु
-	काष्ठा bpf_line_info *linfo;
+static void bpf_adj_linfo(struct bpf_prog *prog, u32 off, u32 delta)
+{
+	struct bpf_line_info *linfo;
 	u32 i, nr_linfo;
 
 	nr_linfo = prog->aux->nr_linfo;
-	अगर (!nr_linfo || !delta)
-		वापस;
+	if (!nr_linfo || !delta)
+		return;
 
 	linfo = prog->aux->linfo;
 
-	क्रम (i = 0; i < nr_linfo; i++)
-		अगर (off < linfo[i].insn_off)
-			अवरोध;
+	for (i = 0; i < nr_linfo; i++)
+		if (off < linfo[i].insn_off)
+			break;
 
 	/* Push all off < linfo[i].insn_off by delta */
-	क्रम (; i < nr_linfo; i++)
+	for (; i < nr_linfo; i++)
 		linfo[i].insn_off += delta;
-पूर्ण
+}
 
-काष्ठा bpf_prog *bpf_patch_insn_single(काष्ठा bpf_prog *prog, u32 off,
-				       स्थिर काष्ठा bpf_insn *patch, u32 len)
-अणु
+struct bpf_prog *bpf_patch_insn_single(struct bpf_prog *prog, u32 off,
+				       const struct bpf_insn *patch, u32 len)
+{
 	u32 insn_adj_cnt, insn_rest, insn_delta = len - 1;
-	स्थिर u32 cnt_max = S16_MAX;
-	काष्ठा bpf_prog *prog_adj;
-	पूर्णांक err;
+	const u32 cnt_max = S16_MAX;
+	struct bpf_prog *prog_adj;
+	int err;
 
-	/* Since our patchlet करोesn't expand the image, we're करोne. */
-	अगर (insn_delta == 0) अणु
-		स_नकल(prog->insnsi + off, patch, माप(*patch));
-		वापस prog;
-	पूर्ण
+	/* Since our patchlet doesn't expand the image, we're done. */
+	if (insn_delta == 0) {
+		memcpy(prog->insnsi + off, patch, sizeof(*patch));
+		return prog;
+	}
 
 	insn_adj_cnt = prog->len + insn_delta;
 
 	/* Reject anything that would potentially let the insn->off
 	 * target overflow when we have excessive program expansions.
-	 * We need to probe here beक्रमe we करो any पुनः_स्मृतिation where
+	 * We need to probe here before we do any reallocation where
 	 * we afterwards may not fail anymore.
 	 */
-	अगर (insn_adj_cnt > cnt_max &&
+	if (insn_adj_cnt > cnt_max &&
 	    (err = bpf_adj_branches(prog, off, off + 1, off + len, true)))
-		वापस ERR_PTR(err);
+		return ERR_PTR(err);
 
-	/* Several new inकाष्ठाions need to be inserted. Make room
-	 * क्रम them. Likely, there's no need क्रम a new allocation as
+	/* Several new instructions need to be inserted. Make room
+	 * for them. Likely, there's no need for a new allocation as
 	 * last page could have large enough tailroom.
 	 */
-	prog_adj = bpf_prog_पुनः_स्मृति(prog, bpf_prog_size(insn_adj_cnt),
+	prog_adj = bpf_prog_realloc(prog, bpf_prog_size(insn_adj_cnt),
 				    GFP_USER);
-	अगर (!prog_adj)
-		वापस ERR_PTR(-ENOMEM);
+	if (!prog_adj)
+		return ERR_PTR(-ENOMEM);
 
 	prog_adj->len = insn_adj_cnt;
 
 	/* Patching happens in 3 steps:
 	 *
-	 * 1) Move over tail of insnsi from next inकाष्ठाion onwards,
+	 * 1) Move over tail of insnsi from next instruction onwards,
 	 *    so we can patch the single target insn with one or more
 	 *    new ones (patching is always from 1 to n insns, n > 0).
-	 * 2) Inject new inकाष्ठाions at the target location.
-	 * 3) Adjust branch offsets अगर necessary.
+	 * 2) Inject new instructions at the target location.
+	 * 3) Adjust branch offsets if necessary.
 	 */
 	insn_rest = insn_adj_cnt - off - len;
 
-	स_हटाओ(prog_adj->insnsi + off + len, prog_adj->insnsi + off + 1,
-		माप(*patch) * insn_rest);
-	स_नकल(prog_adj->insnsi + off, patch, माप(*patch) * len);
+	memmove(prog_adj->insnsi + off + len, prog_adj->insnsi + off + 1,
+		sizeof(*patch) * insn_rest);
+	memcpy(prog_adj->insnsi + off, patch, sizeof(*patch) * len);
 
-	/* We are guaranteed to not fail at this poपूर्णांक, otherwise
+	/* We are guaranteed to not fail at this point, otherwise
 	 * the ship has sailed to reverse to the original state. An
-	 * overflow cannot happen at this poपूर्णांक.
+	 * overflow cannot happen at this point.
 	 */
 	BUG_ON(bpf_adj_branches(prog_adj, off, off + 1, off + len, false));
 
 	bpf_adj_linfo(prog_adj, off, insn_delta);
 
-	वापस prog_adj;
-पूर्ण
+	return prog_adj;
+}
 
-पूर्णांक bpf_हटाओ_insns(काष्ठा bpf_prog *prog, u32 off, u32 cnt)
-अणु
+int bpf_remove_insns(struct bpf_prog *prog, u32 off, u32 cnt)
+{
 	/* Branch offsets can't overflow when program is shrinking, no need
 	 * to call bpf_adj_branches(..., true) here
 	 */
-	स_हटाओ(prog->insnsi + off, prog->insnsi + off + cnt,
-		माप(काष्ठा bpf_insn) * (prog->len - off - cnt));
+	memmove(prog->insnsi + off, prog->insnsi + off + cnt,
+		sizeof(struct bpf_insn) * (prog->len - off - cnt));
 	prog->len -= cnt;
 
-	वापस WARN_ON_ONCE(bpf_adj_branches(prog, off, off + cnt, off, false));
-पूर्ण
+	return WARN_ON_ONCE(bpf_adj_branches(prog, off, off + cnt, off, false));
+}
 
-अटल व्योम bpf_prog_kallsyms_del_subprogs(काष्ठा bpf_prog *fp)
-अणु
-	पूर्णांक i;
+static void bpf_prog_kallsyms_del_subprogs(struct bpf_prog *fp)
+{
+	int i;
 
-	क्रम (i = 0; i < fp->aux->func_cnt; i++)
+	for (i = 0; i < fp->aux->func_cnt; i++)
 		bpf_prog_kallsyms_del(fp->aux->func[i]);
-पूर्ण
+}
 
-व्योम bpf_prog_kallsyms_del_all(काष्ठा bpf_prog *fp)
-अणु
+void bpf_prog_kallsyms_del_all(struct bpf_prog *fp)
+{
 	bpf_prog_kallsyms_del_subprogs(fp);
 	bpf_prog_kallsyms_del(fp);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_BPF_JIT
+#ifdef CONFIG_BPF_JIT
 /* All BPF JIT sysctl knobs here. */
-पूर्णांक bpf_jit_enable   __पढ़ो_mostly = IS_BUILTIN(CONFIG_BPF_JIT_DEFAULT_ON);
-पूर्णांक bpf_jit_kallsyms __पढ़ो_mostly = IS_BUILTIN(CONFIG_BPF_JIT_DEFAULT_ON);
-पूर्णांक bpf_jit_harden   __पढ़ो_mostly;
-दीर्घ bpf_jit_limit   __पढ़ो_mostly;
+int bpf_jit_enable   __read_mostly = IS_BUILTIN(CONFIG_BPF_JIT_DEFAULT_ON);
+int bpf_jit_kallsyms __read_mostly = IS_BUILTIN(CONFIG_BPF_JIT_DEFAULT_ON);
+int bpf_jit_harden   __read_mostly;
+long bpf_jit_limit   __read_mostly;
 
-अटल व्योम
-bpf_prog_ksym_set_addr(काष्ठा bpf_prog *prog)
-अणु
-	स्थिर काष्ठा bpf_binary_header *hdr = bpf_jit_binary_hdr(prog);
-	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)hdr;
+static void
+bpf_prog_ksym_set_addr(struct bpf_prog *prog)
+{
+	const struct bpf_binary_header *hdr = bpf_jit_binary_hdr(prog);
+	unsigned long addr = (unsigned long)hdr;
 
 	WARN_ON_ONCE(!bpf_prog_ebpf_jited(prog));
 
-	prog->aux->ksym.start = (अचिन्हित दीर्घ) prog->bpf_func;
+	prog->aux->ksym.start = (unsigned long) prog->bpf_func;
 	prog->aux->ksym.end   = addr + hdr->pages * PAGE_SIZE;
-पूर्ण
+}
 
-अटल व्योम
-bpf_prog_ksym_set_name(काष्ठा bpf_prog *prog)
-अणु
-	अक्षर *sym = prog->aux->ksym.name;
-	स्थिर अक्षर *end = sym + KSYM_NAME_LEN;
-	स्थिर काष्ठा btf_type *type;
-	स्थिर अक्षर *func_name;
+static void
+bpf_prog_ksym_set_name(struct bpf_prog *prog)
+{
+	char *sym = prog->aux->ksym.name;
+	const char *end = sym + KSYM_NAME_LEN;
+	const struct btf_type *type;
+	const char *func_name;
 
-	BUILD_BUG_ON(माप("bpf_prog_") +
-		     माप(prog->tag) * 2 +
+	BUILD_BUG_ON(sizeof("bpf_prog_") +
+		     sizeof(prog->tag) * 2 +
 		     /* name has been null terminated.
-		      * We should need +1 क्रम the '_' preceding
-		      * the name.  However, the null अक्षरacter
-		      * is द्विगुन counted between the name and the
-		      * माप("bpf_prog_") above, so we omit
+		      * We should need +1 for the '_' preceding
+		      * the name.  However, the null character
+		      * is double counted between the name and the
+		      * sizeof("bpf_prog_") above, so we omit
 		      * the +1 here.
 		      */
-		     माप(prog->aux->name) > KSYM_NAME_LEN);
+		     sizeof(prog->aux->name) > KSYM_NAME_LEN);
 
-	sym += snम_लिखो(sym, KSYM_NAME_LEN, "bpf_prog_");
-	sym  = bin2hex(sym, prog->tag, माप(prog->tag));
+	sym += snprintf(sym, KSYM_NAME_LEN, "bpf_prog_");
+	sym  = bin2hex(sym, prog->tag, sizeof(prog->tag));
 
-	/* prog->aux->name will be ignored अगर full btf name is available */
-	अगर (prog->aux->func_info_cnt) अणु
+	/* prog->aux->name will be ignored if full btf name is available */
+	if (prog->aux->func_info_cnt) {
 		type = btf_type_by_id(prog->aux->btf,
 				      prog->aux->func_info[prog->aux->func_idx].type_id);
 		func_name = btf_name_by_offset(prog->aux->btf, type->name_off);
-		snम_लिखो(sym, (माप_प्रकार)(end - sym), "_%s", func_name);
-		वापस;
-	पूर्ण
+		snprintf(sym, (size_t)(end - sym), "_%s", func_name);
+		return;
+	}
 
-	अगर (prog->aux->name[0])
-		snम_लिखो(sym, (माप_प्रकार)(end - sym), "_%s", prog->aux->name);
-	अन्यथा
+	if (prog->aux->name[0])
+		snprintf(sym, (size_t)(end - sym), "_%s", prog->aux->name);
+	else
 		*sym = 0;
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ bpf_get_ksym_start(काष्ठा latch_tree_node *n)
-अणु
-	वापस container_of(n, काष्ठा bpf_ksym, tnode)->start;
-पूर्ण
+static unsigned long bpf_get_ksym_start(struct latch_tree_node *n)
+{
+	return container_of(n, struct bpf_ksym, tnode)->start;
+}
 
-अटल __always_अंतरभूत bool bpf_tree_less(काष्ठा latch_tree_node *a,
-					  काष्ठा latch_tree_node *b)
-अणु
-	वापस bpf_get_ksym_start(a) < bpf_get_ksym_start(b);
-पूर्ण
+static __always_inline bool bpf_tree_less(struct latch_tree_node *a,
+					  struct latch_tree_node *b)
+{
+	return bpf_get_ksym_start(a) < bpf_get_ksym_start(b);
+}
 
-अटल __always_अंतरभूत पूर्णांक bpf_tree_comp(व्योम *key, काष्ठा latch_tree_node *n)
-अणु
-	अचिन्हित दीर्घ val = (अचिन्हित दीर्घ)key;
-	स्थिर काष्ठा bpf_ksym *ksym;
+static __always_inline int bpf_tree_comp(void *key, struct latch_tree_node *n)
+{
+	unsigned long val = (unsigned long)key;
+	const struct bpf_ksym *ksym;
 
-	ksym = container_of(n, काष्ठा bpf_ksym, tnode);
+	ksym = container_of(n, struct bpf_ksym, tnode);
 
-	अगर (val < ksym->start)
-		वापस -1;
-	अगर (val >= ksym->end)
-		वापस  1;
+	if (val < ksym->start)
+		return -1;
+	if (val >= ksym->end)
+		return  1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा latch_tree_ops bpf_tree_ops = अणु
+static const struct latch_tree_ops bpf_tree_ops = {
 	.less	= bpf_tree_less,
 	.comp	= bpf_tree_comp,
-पूर्ण;
+};
 
-अटल DEFINE_SPINLOCK(bpf_lock);
-अटल LIST_HEAD(bpf_kallsyms);
-अटल काष्ठा latch_tree_root bpf_tree __cacheline_aligned;
+static DEFINE_SPINLOCK(bpf_lock);
+static LIST_HEAD(bpf_kallsyms);
+static struct latch_tree_root bpf_tree __cacheline_aligned;
 
-व्योम bpf_ksym_add(काष्ठा bpf_ksym *ksym)
-अणु
+void bpf_ksym_add(struct bpf_ksym *ksym)
+{
 	spin_lock_bh(&bpf_lock);
 	WARN_ON_ONCE(!list_empty(&ksym->lnode));
 	list_add_tail_rcu(&ksym->lnode, &bpf_kallsyms);
 	latch_tree_insert(&ksym->tnode, &bpf_tree, &bpf_tree_ops);
 	spin_unlock_bh(&bpf_lock);
-पूर्ण
+}
 
-अटल व्योम __bpf_ksym_del(काष्ठा bpf_ksym *ksym)
-अणु
-	अगर (list_empty(&ksym->lnode))
-		वापस;
+static void __bpf_ksym_del(struct bpf_ksym *ksym)
+{
+	if (list_empty(&ksym->lnode))
+		return;
 
 	latch_tree_erase(&ksym->tnode, &bpf_tree, &bpf_tree_ops);
 	list_del_rcu(&ksym->lnode);
-पूर्ण
+}
 
-व्योम bpf_ksym_del(काष्ठा bpf_ksym *ksym)
-अणु
+void bpf_ksym_del(struct bpf_ksym *ksym)
+{
 	spin_lock_bh(&bpf_lock);
 	__bpf_ksym_del(ksym);
 	spin_unlock_bh(&bpf_lock);
-पूर्ण
+}
 
-अटल bool bpf_prog_kallsyms_candidate(स्थिर काष्ठा bpf_prog *fp)
-अणु
-	वापस fp->jited && !bpf_prog_was_classic(fp);
-पूर्ण
+static bool bpf_prog_kallsyms_candidate(const struct bpf_prog *fp)
+{
+	return fp->jited && !bpf_prog_was_classic(fp);
+}
 
-अटल bool bpf_prog_kallsyms_verअगरy_off(स्थिर काष्ठा bpf_prog *fp)
-अणु
-	वापस list_empty(&fp->aux->ksym.lnode) ||
+static bool bpf_prog_kallsyms_verify_off(const struct bpf_prog *fp)
+{
+	return list_empty(&fp->aux->ksym.lnode) ||
 	       fp->aux->ksym.lnode.prev == LIST_POISON2;
-पूर्ण
+}
 
-व्योम bpf_prog_kallsyms_add(काष्ठा bpf_prog *fp)
-अणु
-	अगर (!bpf_prog_kallsyms_candidate(fp) ||
+void bpf_prog_kallsyms_add(struct bpf_prog *fp)
+{
+	if (!bpf_prog_kallsyms_candidate(fp) ||
 	    !bpf_capable())
-		वापस;
+		return;
 
 	bpf_prog_ksym_set_addr(fp);
 	bpf_prog_ksym_set_name(fp);
 	fp->aux->ksym.prog = true;
 
 	bpf_ksym_add(&fp->aux->ksym);
-पूर्ण
+}
 
-व्योम bpf_prog_kallsyms_del(काष्ठा bpf_prog *fp)
-अणु
-	अगर (!bpf_prog_kallsyms_candidate(fp))
-		वापस;
+void bpf_prog_kallsyms_del(struct bpf_prog *fp)
+{
+	if (!bpf_prog_kallsyms_candidate(fp))
+		return;
 
 	bpf_ksym_del(&fp->aux->ksym);
-पूर्ण
+}
 
-अटल काष्ठा bpf_ksym *bpf_ksym_find(अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा latch_tree_node *n;
+static struct bpf_ksym *bpf_ksym_find(unsigned long addr)
+{
+	struct latch_tree_node *n;
 
-	n = latch_tree_find((व्योम *)addr, &bpf_tree, &bpf_tree_ops);
-	वापस n ? container_of(n, काष्ठा bpf_ksym, tnode) : शून्य;
-पूर्ण
+	n = latch_tree_find((void *)addr, &bpf_tree, &bpf_tree_ops);
+	return n ? container_of(n, struct bpf_ksym, tnode) : NULL;
+}
 
-स्थिर अक्षर *__bpf_address_lookup(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ *size,
-				 अचिन्हित दीर्घ *off, अक्षर *sym)
-अणु
-	काष्ठा bpf_ksym *ksym;
-	अक्षर *ret = शून्य;
+const char *__bpf_address_lookup(unsigned long addr, unsigned long *size,
+				 unsigned long *off, char *sym)
+{
+	struct bpf_ksym *ksym;
+	char *ret = NULL;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	ksym = bpf_ksym_find(addr);
-	अगर (ksym) अणु
-		अचिन्हित दीर्घ symbol_start = ksym->start;
-		अचिन्हित दीर्घ symbol_end = ksym->end;
+	if (ksym) {
+		unsigned long symbol_start = ksym->start;
+		unsigned long symbol_end = ksym->end;
 
-		म_नकलन(sym, ksym->name, KSYM_NAME_LEN);
+		strncpy(sym, ksym->name, KSYM_NAME_LEN);
 
 		ret = sym;
-		अगर (size)
+		if (size)
 			*size = symbol_end - symbol_start;
-		अगर (off)
+		if (off)
 			*off  = addr - symbol_start;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-bool is_bpf_text_address(अचिन्हित दीर्घ addr)
-अणु
+bool is_bpf_text_address(unsigned long addr)
+{
 	bool ret;
 
-	rcu_पढ़ो_lock();
-	ret = bpf_ksym_find(addr) != शून्य;
-	rcu_पढ़ो_unlock();
+	rcu_read_lock();
+	ret = bpf_ksym_find(addr) != NULL;
+	rcu_read_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा bpf_prog *bpf_prog_ksym_find(अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा bpf_ksym *ksym = bpf_ksym_find(addr);
+static struct bpf_prog *bpf_prog_ksym_find(unsigned long addr)
+{
+	struct bpf_ksym *ksym = bpf_ksym_find(addr);
 
-	वापस ksym && ksym->prog ?
-	       container_of(ksym, काष्ठा bpf_prog_aux, ksym)->prog :
-	       शून्य;
-पूर्ण
+	return ksym && ksym->prog ?
+	       container_of(ksym, struct bpf_prog_aux, ksym)->prog :
+	       NULL;
+}
 
-स्थिर काष्ठा exception_table_entry *search_bpf_extables(अचिन्हित दीर्घ addr)
-अणु
-	स्थिर काष्ठा exception_table_entry *e = शून्य;
-	काष्ठा bpf_prog *prog;
+const struct exception_table_entry *search_bpf_extables(unsigned long addr)
+{
+	const struct exception_table_entry *e = NULL;
+	struct bpf_prog *prog;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	prog = bpf_prog_ksym_find(addr);
-	अगर (!prog)
-		जाओ out;
-	अगर (!prog->aux->num_exentries)
-		जाओ out;
+	if (!prog)
+		goto out;
+	if (!prog->aux->num_exentries)
+		goto out;
 
 	e = search_extable(prog->aux->extable, prog->aux->num_exentries, addr);
 out:
-	rcu_पढ़ो_unlock();
-	वापस e;
-पूर्ण
+	rcu_read_unlock();
+	return e;
+}
 
-पूर्णांक bpf_get_kallsym(अचिन्हित पूर्णांक symnum, अचिन्हित दीर्घ *value, अक्षर *type,
-		    अक्षर *sym)
-अणु
-	काष्ठा bpf_ksym *ksym;
-	अचिन्हित पूर्णांक it = 0;
-	पूर्णांक ret = -दुस्फल;
+int bpf_get_kallsym(unsigned int symnum, unsigned long *value, char *type,
+		    char *sym)
+{
+	struct bpf_ksym *ksym;
+	unsigned int it = 0;
+	int ret = -ERANGE;
 
-	अगर (!bpf_jit_kallsyms_enabled())
-		वापस ret;
+	if (!bpf_jit_kallsyms_enabled())
+		return ret;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(ksym, &bpf_kallsyms, lnode) अणु
-		अगर (it++ != symnum)
-			जारी;
+	rcu_read_lock();
+	list_for_each_entry_rcu(ksym, &bpf_kallsyms, lnode) {
+		if (it++ != symnum)
+			continue;
 
-		म_नकलन(sym, ksym->name, KSYM_NAME_LEN);
+		strncpy(sym, ksym->name, KSYM_NAME_LEN);
 
 		*value = ksym->start;
 		*type  = BPF_SYM_ELF_TYPE;
 
 		ret = 0;
-		अवरोध;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		break;
+	}
+	rcu_read_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक bpf_jit_add_poke_descriptor(काष्ठा bpf_prog *prog,
-				काष्ठा bpf_jit_poke_descriptor *poke)
-अणु
-	काष्ठा bpf_jit_poke_descriptor *tab = prog->aux->poke_tab;
-	अटल स्थिर u32 poke_tab_max = 1024;
+int bpf_jit_add_poke_descriptor(struct bpf_prog *prog,
+				struct bpf_jit_poke_descriptor *poke)
+{
+	struct bpf_jit_poke_descriptor *tab = prog->aux->poke_tab;
+	static const u32 poke_tab_max = 1024;
 	u32 slot = prog->aux->size_poke_tab;
 	u32 size = slot + 1;
 
-	अगर (size > poke_tab_max)
-		वापस -ENOSPC;
-	अगर (poke->tailcall_target || poke->tailcall_target_stable ||
+	if (size > poke_tab_max)
+		return -ENOSPC;
+	if (poke->tailcall_target || poke->tailcall_target_stable ||
 	    poke->tailcall_bypass || poke->adj_off || poke->bypass_addr)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	चयन (poke->reason) अणु
-	हाल BPF_POKE_REASON_TAIL_CALL:
-		अगर (!poke->tail_call.map)
-			वापस -EINVAL;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (poke->reason) {
+	case BPF_POKE_REASON_TAIL_CALL:
+		if (!poke->tail_call.map)
+			return -EINVAL;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	tab = kपुनः_स्मृति(tab, size * माप(*poke), GFP_KERNEL);
-	अगर (!tab)
-		वापस -ENOMEM;
+	tab = krealloc(tab, size * sizeof(*poke), GFP_KERNEL);
+	if (!tab)
+		return -ENOMEM;
 
-	स_नकल(&tab[slot], poke, माप(*poke));
+	memcpy(&tab[slot], poke, sizeof(*poke));
 	prog->aux->size_poke_tab = size;
 	prog->aux->poke_tab = tab;
 
-	वापस slot;
-पूर्ण
+	return slot;
+}
 
-अटल atomic_दीर्घ_t bpf_jit_current;
+static atomic_long_t bpf_jit_current;
 
-/* Can be overridden by an arch's JIT compiler अगर it has a custom,
- * dedicated BPF backend memory area, or अगर neither of the two
+/* Can be overridden by an arch's JIT compiler if it has a custom,
+ * dedicated BPF backend memory area, or if neither of the two
  * below apply.
  */
-u64 __weak bpf_jit_alloc_exec_limit(व्योम)
-अणु
-#अगर defined(MODULES_VADDR)
-	वापस MODULES_END - MODULES_VADDR;
-#अन्यथा
-	वापस VMALLOC_END - VMALLOC_START;
-#पूर्ण_अगर
-पूर्ण
+u64 __weak bpf_jit_alloc_exec_limit(void)
+{
+#if defined(MODULES_VADDR)
+	return MODULES_END - MODULES_VADDR;
+#else
+	return VMALLOC_END - VMALLOC_START;
+#endif
+}
 
-अटल पूर्णांक __init bpf_jit_अक्षरge_init(व्योम)
-अणु
+static int __init bpf_jit_charge_init(void)
+{
 	/* Only used as heuristic here to derive limit. */
 	bpf_jit_limit = min_t(u64, round_up(bpf_jit_alloc_exec_limit() >> 2,
-					    PAGE_SIZE), दीर्घ_उच्च);
-	वापस 0;
-पूर्ण
-pure_initcall(bpf_jit_अक्षरge_init);
+					    PAGE_SIZE), LONG_MAX);
+	return 0;
+}
+pure_initcall(bpf_jit_charge_init);
 
-पूर्णांक bpf_jit_अक्षरge_modmem(u32 pages)
-अणु
-	अगर (atomic_दीर्घ_add_वापस(pages, &bpf_jit_current) >
-	    (bpf_jit_limit >> PAGE_SHIFT)) अणु
-		अगर (!capable(CAP_SYS_ADMIN)) अणु
-			atomic_दीर्घ_sub(pages, &bpf_jit_current);
-			वापस -EPERM;
-		पूर्ण
-	पूर्ण
+int bpf_jit_charge_modmem(u32 pages)
+{
+	if (atomic_long_add_return(pages, &bpf_jit_current) >
+	    (bpf_jit_limit >> PAGE_SHIFT)) {
+		if (!capable(CAP_SYS_ADMIN)) {
+			atomic_long_sub(pages, &bpf_jit_current);
+			return -EPERM;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम bpf_jit_unअक्षरge_modmem(u32 pages)
-अणु
-	atomic_दीर्घ_sub(pages, &bpf_jit_current);
-पूर्ण
+void bpf_jit_uncharge_modmem(u32 pages)
+{
+	atomic_long_sub(pages, &bpf_jit_current);
+}
 
-व्योम *__weak bpf_jit_alloc_exec(अचिन्हित दीर्घ size)
-अणु
-	वापस module_alloc(size);
-पूर्ण
+void *__weak bpf_jit_alloc_exec(unsigned long size)
+{
+	return module_alloc(size);
+}
 
-व्योम __weak bpf_jit_मुक्त_exec(व्योम *addr)
-अणु
-	module_memमुक्त(addr);
-पूर्ण
+void __weak bpf_jit_free_exec(void *addr)
+{
+	module_memfree(addr);
+}
 
-काष्ठा bpf_binary_header *
-bpf_jit_binary_alloc(अचिन्हित पूर्णांक proglen, u8 **image_ptr,
-		     अचिन्हित पूर्णांक alignment,
+struct bpf_binary_header *
+bpf_jit_binary_alloc(unsigned int proglen, u8 **image_ptr,
+		     unsigned int alignment,
 		     bpf_jit_fill_hole_t bpf_fill_ill_insns)
-अणु
-	काष्ठा bpf_binary_header *hdr;
+{
+	struct bpf_binary_header *hdr;
 	u32 size, hole, start, pages;
 
-	WARN_ON_ONCE(!is_घातer_of_2(alignment) ||
+	WARN_ON_ONCE(!is_power_of_2(alignment) ||
 		     alignment > BPF_IMAGE_ALIGNMENT);
 
-	/* Most of BPF filters are really small, but अगर some of them
+	/* Most of BPF filters are really small, but if some of them
 	 * fill a page, allow at least 128 extra bytes to insert a
-	 * अक्रमom section of illegal inकाष्ठाions.
+	 * random section of illegal instructions.
 	 */
-	size = round_up(proglen + माप(*hdr) + 128, PAGE_SIZE);
+	size = round_up(proglen + sizeof(*hdr) + 128, PAGE_SIZE);
 	pages = size / PAGE_SIZE;
 
-	अगर (bpf_jit_अक्षरge_modmem(pages))
-		वापस शून्य;
+	if (bpf_jit_charge_modmem(pages))
+		return NULL;
 	hdr = bpf_jit_alloc_exec(size);
-	अगर (!hdr) अणु
-		bpf_jit_unअक्षरge_modmem(pages);
-		वापस शून्य;
-	पूर्ण
+	if (!hdr) {
+		bpf_jit_uncharge_modmem(pages);
+		return NULL;
+	}
 
-	/* Fill space with illegal/arch-dep inकाष्ठाions. */
+	/* Fill space with illegal/arch-dep instructions. */
 	bpf_fill_ill_insns(hdr, size);
 
 	hdr->pages = pages;
-	hole = min_t(अचिन्हित पूर्णांक, size - (proglen + माप(*hdr)),
-		     PAGE_SIZE - माप(*hdr));
-	start = (get_अक्रमom_पूर्णांक() % hole) & ~(alignment - 1);
+	hole = min_t(unsigned int, size - (proglen + sizeof(*hdr)),
+		     PAGE_SIZE - sizeof(*hdr));
+	start = (get_random_int() % hole) & ~(alignment - 1);
 
-	/* Leave a अक्रमom number of inकाष्ठाions beक्रमe BPF code. */
+	/* Leave a random number of instructions before BPF code. */
 	*image_ptr = &hdr->image[start];
 
-	वापस hdr;
-पूर्ण
+	return hdr;
+}
 
-व्योम bpf_jit_binary_मुक्त(काष्ठा bpf_binary_header *hdr)
-अणु
+void bpf_jit_binary_free(struct bpf_binary_header *hdr)
+{
 	u32 pages = hdr->pages;
 
-	bpf_jit_मुक्त_exec(hdr);
-	bpf_jit_unअक्षरge_modmem(pages);
-पूर्ण
+	bpf_jit_free_exec(hdr);
+	bpf_jit_uncharge_modmem(pages);
+}
 
-/* This symbol is only overridden by archs that have dअगरferent
+/* This symbol is only overridden by archs that have different
  * requirements than the usual eBPF JITs, f.e. when they only
- * implement cBPF JIT, करो not set images पढ़ो-only, etc.
+ * implement cBPF JIT, do not set images read-only, etc.
  */
-व्योम __weak bpf_jit_मुक्त(काष्ठा bpf_prog *fp)
-अणु
-	अगर (fp->jited) अणु
-		काष्ठा bpf_binary_header *hdr = bpf_jit_binary_hdr(fp);
+void __weak bpf_jit_free(struct bpf_prog *fp)
+{
+	if (fp->jited) {
+		struct bpf_binary_header *hdr = bpf_jit_binary_hdr(fp);
 
-		bpf_jit_binary_मुक्त(hdr);
+		bpf_jit_binary_free(hdr);
 
-		WARN_ON_ONCE(!bpf_prog_kallsyms_verअगरy_off(fp));
-	पूर्ण
+		WARN_ON_ONCE(!bpf_prog_kallsyms_verify_off(fp));
+	}
 
-	bpf_prog_unlock_मुक्त(fp);
-पूर्ण
+	bpf_prog_unlock_free(fp);
+}
 
-पूर्णांक bpf_jit_get_func_addr(स्थिर काष्ठा bpf_prog *prog,
-			  स्थिर काष्ठा bpf_insn *insn, bool extra_pass,
+int bpf_jit_get_func_addr(const struct bpf_prog *prog,
+			  const struct bpf_insn *insn, bool extra_pass,
 			  u64 *func_addr, bool *func_addr_fixed)
-अणु
+{
 	s16 off = insn->off;
 	s32 imm = insn->imm;
 	u8 *addr;
 
 	*func_addr_fixed = insn->src_reg != BPF_PSEUDO_CALL;
-	अगर (!*func_addr_fixed) अणु
+	if (!*func_addr_fixed) {
 		/* Place-holder address till the last pass has collected
-		 * all addresses क्रम JITed subprograms in which हाल we
+		 * all addresses for JITed subprograms in which case we
 		 * can pick them up from prog->aux.
 		 */
-		अगर (!extra_pass)
-			addr = शून्य;
-		अन्यथा अगर (prog->aux->func &&
+		if (!extra_pass)
+			addr = NULL;
+		else if (prog->aux->func &&
 			 off >= 0 && off < prog->aux->func_cnt)
 			addr = (u8 *)prog->aux->func[off]->bpf_func;
-		अन्यथा
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
+		else
+			return -EINVAL;
+	} else {
 		/* Address of a BPF helper call. Since part of the core
 		 * kernel, it's always at a fixed location. __bpf_call_base
 		 * and the helper with imm relative to it are both in core
 		 * kernel.
 		 */
 		addr = (u8 *)__bpf_call_base + imm;
-	पूर्ण
+	}
 
-	*func_addr = (अचिन्हित दीर्घ)addr;
-	वापस 0;
-पूर्ण
+	*func_addr = (unsigned long)addr;
+	return 0;
+}
 
-अटल पूर्णांक bpf_jit_blind_insn(स्थिर काष्ठा bpf_insn *from,
-			      स्थिर काष्ठा bpf_insn *aux,
-			      काष्ठा bpf_insn *to_buff,
+static int bpf_jit_blind_insn(const struct bpf_insn *from,
+			      const struct bpf_insn *aux,
+			      struct bpf_insn *to_buff,
 			      bool emit_zext)
-अणु
-	काष्ठा bpf_insn *to = to_buff;
-	u32 imm_rnd = get_अक्रमom_पूर्णांक();
+{
+	struct bpf_insn *to = to_buff;
+	u32 imm_rnd = get_random_int();
 	s16 off;
 
 	BUILD_BUG_ON(BPF_REG_AX  + 1 != MAX_BPF_JIT_REG);
 	BUILD_BUG_ON(MAX_BPF_REG + 1 != MAX_BPF_JIT_REG);
 
-	/* Constraपूर्णांकs on AX रेजिस्टर:
+	/* Constraints on AX register:
 	 *
-	 * AX रेजिस्टर is inaccessible from user space. It is mapped in
-	 * all JITs, and used here क्रम स्थिरant blinding reग_लिखोs. It is
+	 * AX register is inaccessible from user space. It is mapped in
+	 * all JITs, and used here for constant blinding rewrites. It is
 	 * typically "stateless" meaning its contents are only valid within
-	 * the executed inकाष्ठाion, but not across several inकाष्ठाions.
+	 * the executed instruction, but not across several instructions.
 	 * There are a few exceptions however which are further detailed
 	 * below.
 	 *
-	 * Constant blinding is only used by JITs, not in the पूर्णांकerpreter.
-	 * The पूर्णांकerpreter uses AX in some occasions as a local temporary
-	 * रेजिस्टर e.g. in DIV or MOD inकाष्ठाions.
+	 * Constant blinding is only used by JITs, not in the interpreter.
+	 * The interpreter uses AX in some occasions as a local temporary
+	 * register e.g. in DIV or MOD instructions.
 	 *
-	 * In restricted circumstances, the verअगरier can also use the AX
-	 * रेजिस्टर क्रम reग_लिखोs as दीर्घ as they करो not पूर्णांकerfere with
-	 * the above हालs!
+	 * In restricted circumstances, the verifier can also use the AX
+	 * register for rewrites as long as they do not interfere with
+	 * the above cases!
 	 */
-	अगर (from->dst_reg == BPF_REG_AX || from->src_reg == BPF_REG_AX)
-		जाओ out;
+	if (from->dst_reg == BPF_REG_AX || from->src_reg == BPF_REG_AX)
+		goto out;
 
-	अगर (from->imm == 0 &&
+	if (from->imm == 0 &&
 	    (from->code == (BPF_ALU   | BPF_MOV | BPF_K) ||
-	     from->code == (BPF_ALU64 | BPF_MOV | BPF_K))) अणु
+	     from->code == (BPF_ALU64 | BPF_MOV | BPF_K))) {
 		*to++ = BPF_ALU64_REG(BPF_XOR, from->dst_reg, from->dst_reg);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (from->code) अणु
-	हाल BPF_ALU | BPF_ADD | BPF_K:
-	हाल BPF_ALU | BPF_SUB | BPF_K:
-	हाल BPF_ALU | BPF_AND | BPF_K:
-	हाल BPF_ALU | BPF_OR  | BPF_K:
-	हाल BPF_ALU | BPF_XOR | BPF_K:
-	हाल BPF_ALU | BPF_MUL | BPF_K:
-	हाल BPF_ALU | BPF_MOV | BPF_K:
-	हाल BPF_ALU | BPF_DIV | BPF_K:
-	हाल BPF_ALU | BPF_MOD | BPF_K:
+	switch (from->code) {
+	case BPF_ALU | BPF_ADD | BPF_K:
+	case BPF_ALU | BPF_SUB | BPF_K:
+	case BPF_ALU | BPF_AND | BPF_K:
+	case BPF_ALU | BPF_OR  | BPF_K:
+	case BPF_ALU | BPF_XOR | BPF_K:
+	case BPF_ALU | BPF_MUL | BPF_K:
+	case BPF_ALU | BPF_MOV | BPF_K:
+	case BPF_ALU | BPF_DIV | BPF_K:
+	case BPF_ALU | BPF_MOD | BPF_K:
 		*to++ = BPF_ALU32_IMM(BPF_MOV, BPF_REG_AX, imm_rnd ^ from->imm);
 		*to++ = BPF_ALU32_IMM(BPF_XOR, BPF_REG_AX, imm_rnd);
 		*to++ = BPF_ALU32_REG(from->code, from->dst_reg, BPF_REG_AX);
-		अवरोध;
+		break;
 
-	हाल BPF_ALU64 | BPF_ADD | BPF_K:
-	हाल BPF_ALU64 | BPF_SUB | BPF_K:
-	हाल BPF_ALU64 | BPF_AND | BPF_K:
-	हाल BPF_ALU64 | BPF_OR  | BPF_K:
-	हाल BPF_ALU64 | BPF_XOR | BPF_K:
-	हाल BPF_ALU64 | BPF_MUL | BPF_K:
-	हाल BPF_ALU64 | BPF_MOV | BPF_K:
-	हाल BPF_ALU64 | BPF_DIV | BPF_K:
-	हाल BPF_ALU64 | BPF_MOD | BPF_K:
+	case BPF_ALU64 | BPF_ADD | BPF_K:
+	case BPF_ALU64 | BPF_SUB | BPF_K:
+	case BPF_ALU64 | BPF_AND | BPF_K:
+	case BPF_ALU64 | BPF_OR  | BPF_K:
+	case BPF_ALU64 | BPF_XOR | BPF_K:
+	case BPF_ALU64 | BPF_MUL | BPF_K:
+	case BPF_ALU64 | BPF_MOV | BPF_K:
+	case BPF_ALU64 | BPF_DIV | BPF_K:
+	case BPF_ALU64 | BPF_MOD | BPF_K:
 		*to++ = BPF_ALU64_IMM(BPF_MOV, BPF_REG_AX, imm_rnd ^ from->imm);
 		*to++ = BPF_ALU64_IMM(BPF_XOR, BPF_REG_AX, imm_rnd);
 		*to++ = BPF_ALU64_REG(from->code, from->dst_reg, BPF_REG_AX);
-		अवरोध;
+		break;
 
-	हाल BPF_JMP | BPF_JEQ  | BPF_K:
-	हाल BPF_JMP | BPF_JNE  | BPF_K:
-	हाल BPF_JMP | BPF_JGT  | BPF_K:
-	हाल BPF_JMP | BPF_JLT  | BPF_K:
-	हाल BPF_JMP | BPF_JGE  | BPF_K:
-	हाल BPF_JMP | BPF_JLE  | BPF_K:
-	हाल BPF_JMP | BPF_JSGT | BPF_K:
-	हाल BPF_JMP | BPF_JSLT | BPF_K:
-	हाल BPF_JMP | BPF_JSGE | BPF_K:
-	हाल BPF_JMP | BPF_JSLE | BPF_K:
-	हाल BPF_JMP | BPF_JSET | BPF_K:
-		/* Accommodate क्रम extra offset in हाल of a backjump. */
+	case BPF_JMP | BPF_JEQ  | BPF_K:
+	case BPF_JMP | BPF_JNE  | BPF_K:
+	case BPF_JMP | BPF_JGT  | BPF_K:
+	case BPF_JMP | BPF_JLT  | BPF_K:
+	case BPF_JMP | BPF_JGE  | BPF_K:
+	case BPF_JMP | BPF_JLE  | BPF_K:
+	case BPF_JMP | BPF_JSGT | BPF_K:
+	case BPF_JMP | BPF_JSLT | BPF_K:
+	case BPF_JMP | BPF_JSGE | BPF_K:
+	case BPF_JMP | BPF_JSLE | BPF_K:
+	case BPF_JMP | BPF_JSET | BPF_K:
+		/* Accommodate for extra offset in case of a backjump. */
 		off = from->off;
-		अगर (off < 0)
+		if (off < 0)
 			off -= 2;
 		*to++ = BPF_ALU64_IMM(BPF_MOV, BPF_REG_AX, imm_rnd ^ from->imm);
 		*to++ = BPF_ALU64_IMM(BPF_XOR, BPF_REG_AX, imm_rnd);
 		*to++ = BPF_JMP_REG(from->code, from->dst_reg, BPF_REG_AX, off);
-		अवरोध;
+		break;
 
-	हाल BPF_JMP32 | BPF_JEQ  | BPF_K:
-	हाल BPF_JMP32 | BPF_JNE  | BPF_K:
-	हाल BPF_JMP32 | BPF_JGT  | BPF_K:
-	हाल BPF_JMP32 | BPF_JLT  | BPF_K:
-	हाल BPF_JMP32 | BPF_JGE  | BPF_K:
-	हाल BPF_JMP32 | BPF_JLE  | BPF_K:
-	हाल BPF_JMP32 | BPF_JSGT | BPF_K:
-	हाल BPF_JMP32 | BPF_JSLT | BPF_K:
-	हाल BPF_JMP32 | BPF_JSGE | BPF_K:
-	हाल BPF_JMP32 | BPF_JSLE | BPF_K:
-	हाल BPF_JMP32 | BPF_JSET | BPF_K:
-		/* Accommodate क्रम extra offset in हाल of a backjump. */
+	case BPF_JMP32 | BPF_JEQ  | BPF_K:
+	case BPF_JMP32 | BPF_JNE  | BPF_K:
+	case BPF_JMP32 | BPF_JGT  | BPF_K:
+	case BPF_JMP32 | BPF_JLT  | BPF_K:
+	case BPF_JMP32 | BPF_JGE  | BPF_K:
+	case BPF_JMP32 | BPF_JLE  | BPF_K:
+	case BPF_JMP32 | BPF_JSGT | BPF_K:
+	case BPF_JMP32 | BPF_JSLT | BPF_K:
+	case BPF_JMP32 | BPF_JSGE | BPF_K:
+	case BPF_JMP32 | BPF_JSLE | BPF_K:
+	case BPF_JMP32 | BPF_JSET | BPF_K:
+		/* Accommodate for extra offset in case of a backjump. */
 		off = from->off;
-		अगर (off < 0)
+		if (off < 0)
 			off -= 2;
 		*to++ = BPF_ALU32_IMM(BPF_MOV, BPF_REG_AX, imm_rnd ^ from->imm);
 		*to++ = BPF_ALU32_IMM(BPF_XOR, BPF_REG_AX, imm_rnd);
 		*to++ = BPF_JMP32_REG(from->code, from->dst_reg, BPF_REG_AX,
 				      off);
-		अवरोध;
+		break;
 
-	हाल BPF_LD | BPF_IMM | BPF_DW:
+	case BPF_LD | BPF_IMM | BPF_DW:
 		*to++ = BPF_ALU64_IMM(BPF_MOV, BPF_REG_AX, imm_rnd ^ aux[1].imm);
 		*to++ = BPF_ALU64_IMM(BPF_XOR, BPF_REG_AX, imm_rnd);
 		*to++ = BPF_ALU64_IMM(BPF_LSH, BPF_REG_AX, 32);
 		*to++ = BPF_ALU64_REG(BPF_MOV, aux[0].dst_reg, BPF_REG_AX);
-		अवरोध;
-	हाल 0: /* Part 2 of BPF_LD | BPF_IMM | BPF_DW. */
+		break;
+	case 0: /* Part 2 of BPF_LD | BPF_IMM | BPF_DW. */
 		*to++ = BPF_ALU32_IMM(BPF_MOV, BPF_REG_AX, imm_rnd ^ aux[0].imm);
 		*to++ = BPF_ALU32_IMM(BPF_XOR, BPF_REG_AX, imm_rnd);
-		अगर (emit_zext)
+		if (emit_zext)
 			*to++ = BPF_ZEXT_REG(BPF_REG_AX);
 		*to++ = BPF_ALU64_REG(BPF_OR,  aux[0].dst_reg, BPF_REG_AX);
-		अवरोध;
+		break;
 
-	हाल BPF_ST | BPF_MEM | BPF_DW:
-	हाल BPF_ST | BPF_MEM | BPF_W:
-	हाल BPF_ST | BPF_MEM | BPF_H:
-	हाल BPF_ST | BPF_MEM | BPF_B:
+	case BPF_ST | BPF_MEM | BPF_DW:
+	case BPF_ST | BPF_MEM | BPF_W:
+	case BPF_ST | BPF_MEM | BPF_H:
+	case BPF_ST | BPF_MEM | BPF_B:
 		*to++ = BPF_ALU64_IMM(BPF_MOV, BPF_REG_AX, imm_rnd ^ from->imm);
 		*to++ = BPF_ALU64_IMM(BPF_XOR, BPF_REG_AX, imm_rnd);
 		*to++ = BPF_STX_MEM(from->code, from->dst_reg, BPF_REG_AX, from->off);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 out:
-	वापस to - to_buff;
-पूर्ण
+	return to - to_buff;
+}
 
-अटल काष्ठा bpf_prog *bpf_prog_clone_create(काष्ठा bpf_prog *fp_other,
+static struct bpf_prog *bpf_prog_clone_create(struct bpf_prog *fp_other,
 					      gfp_t gfp_extra_flags)
-अणु
+{
 	gfp_t gfp_flags = GFP_KERNEL | __GFP_ZERO | gfp_extra_flags;
-	काष्ठा bpf_prog *fp;
+	struct bpf_prog *fp;
 
-	fp = __vदो_स्मृति(fp_other->pages * PAGE_SIZE, gfp_flags);
-	अगर (fp != शून्य) अणु
-		/* aux->prog still poपूर्णांकs to the fp_other one, so
+	fp = __vmalloc(fp_other->pages * PAGE_SIZE, gfp_flags);
+	if (fp != NULL) {
+		/* aux->prog still points to the fp_other one, so
 		 * when promoting the clone to the real program,
 		 * this still needs to be adapted.
 		 */
-		स_नकल(fp, fp_other, fp_other->pages * PAGE_SIZE);
-	पूर्ण
+		memcpy(fp, fp_other, fp_other->pages * PAGE_SIZE);
+	}
 
-	वापस fp;
-पूर्ण
+	return fp;
+}
 
-अटल व्योम bpf_prog_clone_मुक्त(काष्ठा bpf_prog *fp)
-अणु
-	/* aux was stolen by the other clone, so we cannot मुक्त
-	 * it from this path! It will be मुक्तd eventually by the
+static void bpf_prog_clone_free(struct bpf_prog *fp)
+{
+	/* aux was stolen by the other clone, so we cannot free
+	 * it from this path! It will be freed eventually by the
 	 * other program on release.
 	 *
-	 * At this poपूर्णांक, we करोn't need a deferred release since
+	 * At this point, we don't need a deferred release since
 	 * clone is guaranteed to not be locked.
 	 */
-	fp->aux = शून्य;
-	fp->stats = शून्य;
-	fp->active = शून्य;
-	__bpf_prog_मुक्त(fp);
-पूर्ण
+	fp->aux = NULL;
+	fp->stats = NULL;
+	fp->active = NULL;
+	__bpf_prog_free(fp);
+}
 
-व्योम bpf_jit_prog_release_other(काष्ठा bpf_prog *fp, काष्ठा bpf_prog *fp_other)
-अणु
-	/* We have to repoपूर्णांक aux->prog to self, as we करोn't
+void bpf_jit_prog_release_other(struct bpf_prog *fp, struct bpf_prog *fp_other)
+{
+	/* We have to repoint aux->prog to self, as we don't
 	 * know whether fp here is the clone or the original.
 	 */
 	fp->aux->prog = fp;
-	bpf_prog_clone_मुक्त(fp_other);
-पूर्ण
+	bpf_prog_clone_free(fp_other);
+}
 
-काष्ठा bpf_prog *bpf_jit_blind_स्थिरants(काष्ठा bpf_prog *prog)
-अणु
-	काष्ठा bpf_insn insn_buff[16], aux[2];
-	काष्ठा bpf_prog *clone, *पंचांगp;
-	पूर्णांक insn_delta, insn_cnt;
-	काष्ठा bpf_insn *insn;
-	पूर्णांक i, rewritten;
+struct bpf_prog *bpf_jit_blind_constants(struct bpf_prog *prog)
+{
+	struct bpf_insn insn_buff[16], aux[2];
+	struct bpf_prog *clone, *tmp;
+	int insn_delta, insn_cnt;
+	struct bpf_insn *insn;
+	int i, rewritten;
 
-	अगर (!bpf_jit_blinding_enabled(prog) || prog->blinded)
-		वापस prog;
+	if (!bpf_jit_blinding_enabled(prog) || prog->blinded)
+		return prog;
 
 	clone = bpf_prog_clone_create(prog, GFP_USER);
-	अगर (!clone)
-		वापस ERR_PTR(-ENOMEM);
+	if (!clone)
+		return ERR_PTR(-ENOMEM);
 
 	insn_cnt = clone->len;
 	insn = clone->insnsi;
 
-	क्रम (i = 0; i < insn_cnt; i++, insn++) अणु
+	for (i = 0; i < insn_cnt; i++, insn++) {
 		/* We temporarily need to hold the original ld64 insn
 		 * so that we can still access the first part in the
 		 * second blinding run.
 		 */
-		अगर (insn[0].code == (BPF_LD | BPF_IMM | BPF_DW) &&
+		if (insn[0].code == (BPF_LD | BPF_IMM | BPF_DW) &&
 		    insn[1].code == 0)
-			स_नकल(aux, insn, माप(aux));
+			memcpy(aux, insn, sizeof(aux));
 
 		rewritten = bpf_jit_blind_insn(insn, aux, insn_buff,
-						clone->aux->verअगरier_zext);
-		अगर (!rewritten)
-			जारी;
+						clone->aux->verifier_zext);
+		if (!rewritten)
+			continue;
 
-		पंचांगp = bpf_patch_insn_single(clone, i, insn_buff, rewritten);
-		अगर (IS_ERR(पंचांगp)) अणु
-			/* Patching may have repoपूर्णांकed aux->prog during
-			 * पुनः_स्मृति from the original one, so we need to
+		tmp = bpf_patch_insn_single(clone, i, insn_buff, rewritten);
+		if (IS_ERR(tmp)) {
+			/* Patching may have repointed aux->prog during
+			 * realloc from the original one, so we need to
 			 * fix it up here on error.
 			 */
 			bpf_jit_prog_release_other(prog, clone);
-			वापस पंचांगp;
-		पूर्ण
+			return tmp;
+		}
 
-		clone = पंचांगp;
+		clone = tmp;
 		insn_delta = rewritten - 1;
 
 		/* Walk new program and skip insns we just inserted. */
 		insn = clone->insnsi + i + insn_delta;
 		insn_cnt += insn_delta;
 		i        += insn_delta;
-	पूर्ण
+	}
 
 	clone->blinded = 1;
-	वापस clone;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_BPF_JIT */
+	return clone;
+}
+#endif /* CONFIG_BPF_JIT */
 
-/* Base function क्रम offset calculation. Needs to go पूर्णांकo .text section,
- * thereक्रमe keeping it non-अटल as well; will also be used by JITs
- * anyway later on, so करो not let the compiler omit it. This also needs
- * to go पूर्णांकo kallsyms क्रम correlation from e.g. bpftool, so naming
+/* Base function for offset calculation. Needs to go into .text section,
+ * therefore keeping it non-static as well; will also be used by JITs
+ * anyway later on, so do not let the compiler omit it. This also needs
+ * to go into kallsyms for correlation from e.g. bpftool, so naming
  * must not change.
  */
-noअंतरभूत u64 __bpf_call_base(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
-अणु
-	वापस 0;
-पूर्ण
+noinline u64 __bpf_call_base(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
+{
+	return 0;
+}
 EXPORT_SYMBOL_GPL(__bpf_call_base);
 
 /* All UAPI available opcodes. */
-#घोषणा BPF_INSN_MAP(INSN_2, INSN_3)		\
+#define BPF_INSN_MAP(INSN_2, INSN_3)		\
 	/* 32 bit ALU operations. */		\
 	/*   Register based. */			\
 	INSN_3(ALU, ADD,  X),			\
@@ -1255,11 +1254,11 @@ EXPORT_SYMBOL_GPL(__bpf_call_base);
 	INSN_3(ALU64, ARSH, K),			\
 	INSN_3(ALU64, DIV,  K),			\
 	INSN_3(ALU64, MOD,  K),			\
-	/* Call inकाष्ठाion. */			\
+	/* Call instruction. */			\
 	INSN_2(JMP, CALL),			\
-	/* Exit inकाष्ठाion. */			\
+	/* Exit instruction. */			\
 	INSN_2(JMP, EXIT),			\
-	/* 32-bit Jump inकाष्ठाions. */		\
+	/* 32-bit Jump instructions. */		\
 	/*   Register based. */			\
 	INSN_3(JMP32, JEQ,  X),			\
 	INSN_3(JMP32, JNE,  X),			\
@@ -1284,7 +1283,7 @@ EXPORT_SYMBOL_GPL(__bpf_call_base);
 	INSN_3(JMP32, JSGE, K),			\
 	INSN_3(JMP32, JSLE, K),			\
 	INSN_3(JMP32, JSET, K),			\
-	/* Jump inकाष्ठाions. */		\
+	/* Jump instructions. */		\
 	/*   Register based. */			\
 	INSN_3(JMP, JEQ,  X),			\
 	INSN_3(JMP, JNE,  X),			\
@@ -1310,7 +1309,7 @@ EXPORT_SYMBOL_GPL(__bpf_call_base);
 	INSN_3(JMP, JSLE, K),			\
 	INSN_3(JMP, JSET, K),			\
 	INSN_2(JMP, JA),			\
-	/* Store inकाष्ठाions. */		\
+	/* Store instructions. */		\
 	/*   Register based. */			\
 	INSN_3(STX, MEM,  B),			\
 	INSN_3(STX, MEM,  H),			\
@@ -1323,7 +1322,7 @@ EXPORT_SYMBOL_GPL(__bpf_call_base);
 	INSN_3(ST, MEM, H),			\
 	INSN_3(ST, MEM, W),			\
 	INSN_3(ST, MEM, DW),			\
-	/* Load inकाष्ठाions. */		\
+	/* Load instructions. */		\
 	/*   Register based. */			\
 	INSN_3(LDX, MEM, B),			\
 	INSN_3(LDX, MEM, H),			\
@@ -1333,12 +1332,12 @@ EXPORT_SYMBOL_GPL(__bpf_call_base);
 	INSN_3(LD, IMM, DW)
 
 bool bpf_opcode_in_insntable(u8 code)
-अणु
-#घोषणा BPF_INSN_2_TBL(x, y)    [BPF_##x | BPF_##y] = true
-#घोषणा BPF_INSN_3_TBL(x, y, z) [BPF_##x | BPF_##y | BPF_##z] = true
-	अटल स्थिर bool खुला_insntable[256] = अणु
+{
+#define BPF_INSN_2_TBL(x, y)    [BPF_##x | BPF_##y] = true
+#define BPF_INSN_3_TBL(x, y, z) [BPF_##x | BPF_##y | BPF_##z] = true
+	static const bool public_insntable[256] = {
 		[0 ... 255] = false,
-		/* Now overग_लिखो non-शेषs ... */
+		/* Now overwrite non-defaults ... */
 		BPF_INSN_MAP(BPF_INSN_2_TBL, BPF_INSN_3_TBL),
 		/* UAPI exposed, but rewritten opcodes. cBPF carry-over. */
 		[BPF_LD | BPF_ABS | BPF_B] = true,
@@ -1347,33 +1346,33 @@ bool bpf_opcode_in_insntable(u8 code)
 		[BPF_LD | BPF_IND | BPF_B] = true,
 		[BPF_LD | BPF_IND | BPF_H] = true,
 		[BPF_LD | BPF_IND | BPF_W] = true,
-	पूर्ण;
-#अघोषित BPF_INSN_3_TBL
-#अघोषित BPF_INSN_2_TBL
-	वापस खुला_insntable[code];
-पूर्ण
+	};
+#undef BPF_INSN_3_TBL
+#undef BPF_INSN_2_TBL
+	return public_insntable[code];
+}
 
-#अगर_अघोषित CONFIG_BPF_JIT_ALWAYS_ON
-u64 __weak bpf_probe_पढ़ो_kernel(व्योम *dst, u32 size, स्थिर व्योम *unsafe_ptr)
-अणु
-	स_रखो(dst, 0, size);
-	वापस -EFAULT;
-पूर्ण
+#ifndef CONFIG_BPF_JIT_ALWAYS_ON
+u64 __weak bpf_probe_read_kernel(void *dst, u32 size, const void *unsafe_ptr)
+{
+	memset(dst, 0, size);
+	return -EFAULT;
+}
 
 /**
  *	__bpf_prog_run - run eBPF program on a given context
- *	@regs: is the array of MAX_BPF_EXT_REG eBPF pseuकरो-रेजिस्टरs
- *	@insn: is the array of eBPF inकाष्ठाions
+ *	@regs: is the array of MAX_BPF_EXT_REG eBPF pseudo-registers
+ *	@insn: is the array of eBPF instructions
  *
- * Decode and execute eBPF inकाष्ठाions.
+ * Decode and execute eBPF instructions.
  */
-अटल u64 ___bpf_prog_run(u64 *regs, स्थिर काष्ठा bpf_insn *insn)
-अणु
-#घोषणा BPF_INSN_2_LBL(x, y)    [BPF_##x | BPF_##y] = &&x##_##y
-#घोषणा BPF_INSN_3_LBL(x, y, z) [BPF_##x | BPF_##y | BPF_##z] = &&x##_##y##_##z
-	अटल स्थिर व्योम * स्थिर jumptable[256] __annotate_jump_table = अणु
-		[0 ... 255] = &&शेष_label,
-		/* Now overग_लिखो non-शेषs ... */
+static u64 ___bpf_prog_run(u64 *regs, const struct bpf_insn *insn)
+{
+#define BPF_INSN_2_LBL(x, y)    [BPF_##x | BPF_##y] = &&x##_##y
+#define BPF_INSN_3_LBL(x, y, z) [BPF_##x | BPF_##y | BPF_##z] = &&x##_##y##_##z
+	static const void * const jumptable[256] __annotate_jump_table = {
+		[0 ... 255] = &&default_label,
+		/* Now overwrite non-defaults ... */
 		BPF_INSN_MAP(BPF_INSN_2_LBL, BPF_INSN_3_LBL),
 		/* Non-UAPI available opcodes. */
 		[BPF_JMP | BPF_CALL_ARGS] = &&JMP_CALL_ARGS,
@@ -1382,19 +1381,19 @@ u64 __weak bpf_probe_पढ़ो_kernel(व्योम *dst, u32 size, स्�
 		[BPF_LDX | BPF_PROBE_MEM | BPF_H] = &&LDX_PROBE_MEM_H,
 		[BPF_LDX | BPF_PROBE_MEM | BPF_W] = &&LDX_PROBE_MEM_W,
 		[BPF_LDX | BPF_PROBE_MEM | BPF_DW] = &&LDX_PROBE_MEM_DW,
-	पूर्ण;
-#अघोषित BPF_INSN_3_LBL
-#अघोषित BPF_INSN_2_LBL
+	};
+#undef BPF_INSN_3_LBL
+#undef BPF_INSN_2_LBL
 	u32 tail_call_cnt = 0;
 
-#घोषणा CONT	 (अणु insn++; जाओ select_insn; पूर्ण)
-#घोषणा CONT_JMP (अणु insn++; जाओ select_insn; पूर्ण)
+#define CONT	 ({ insn++; goto select_insn; })
+#define CONT_JMP ({ insn++; goto select_insn; })
 
 select_insn:
-	जाओ *jumptable[insn->code];
+	goto *jumptable[insn->code];
 
 	/* ALU */
-#घोषणा ALU(OPCODE, OP)			\
+#define ALU(OPCODE, OP)			\
 	ALU64_##OPCODE##_X:		\
 		DST = DST OP SRC;	\
 		CONT;			\
@@ -1416,7 +1415,7 @@ select_insn:
 	ALU(RSH, >>)
 	ALU(XOR,  ^)
 	ALU(MUL,  *)
-#अघोषित ALU
+#undef ALU
 	ALU_NEG:
 		DST = (u32) -DST;
 		CONT;
@@ -1452,69 +1451,69 @@ select_insn:
 		(*(s64 *) &DST) >>= IMM;
 		CONT;
 	ALU64_MOD_X:
-		भाग64_u64_rem(DST, SRC, &AX);
+		div64_u64_rem(DST, SRC, &AX);
 		DST = AX;
 		CONT;
 	ALU_MOD_X:
 		AX = (u32) DST;
-		DST = करो_भाग(AX, (u32) SRC);
+		DST = do_div(AX, (u32) SRC);
 		CONT;
 	ALU64_MOD_K:
-		भाग64_u64_rem(DST, IMM, &AX);
+		div64_u64_rem(DST, IMM, &AX);
 		DST = AX;
 		CONT;
 	ALU_MOD_K:
 		AX = (u32) DST;
-		DST = करो_भाग(AX, (u32) IMM);
+		DST = do_div(AX, (u32) IMM);
 		CONT;
 	ALU64_DIV_X:
-		DST = भाग64_u64(DST, SRC);
+		DST = div64_u64(DST, SRC);
 		CONT;
 	ALU_DIV_X:
 		AX = (u32) DST;
-		करो_भाग(AX, (u32) SRC);
+		do_div(AX, (u32) SRC);
 		DST = (u32) AX;
 		CONT;
 	ALU64_DIV_K:
-		DST = भाग64_u64(DST, IMM);
+		DST = div64_u64(DST, IMM);
 		CONT;
 	ALU_DIV_K:
 		AX = (u32) DST;
-		करो_भाग(AX, (u32) IMM);
+		do_div(AX, (u32) IMM);
 		DST = (u32) AX;
 		CONT;
 	ALU_END_TO_BE:
-		चयन (IMM) अणु
-		हाल 16:
-			DST = (__क्रमce u16) cpu_to_be16(DST);
-			अवरोध;
-		हाल 32:
-			DST = (__क्रमce u32) cpu_to_be32(DST);
-			अवरोध;
-		हाल 64:
-			DST = (__क्रमce u64) cpu_to_be64(DST);
-			अवरोध;
-		पूर्ण
+		switch (IMM) {
+		case 16:
+			DST = (__force u16) cpu_to_be16(DST);
+			break;
+		case 32:
+			DST = (__force u32) cpu_to_be32(DST);
+			break;
+		case 64:
+			DST = (__force u64) cpu_to_be64(DST);
+			break;
+		}
 		CONT;
 	ALU_END_TO_LE:
-		चयन (IMM) अणु
-		हाल 16:
-			DST = (__क्रमce u16) cpu_to_le16(DST);
-			अवरोध;
-		हाल 32:
-			DST = (__क्रमce u32) cpu_to_le32(DST);
-			अवरोध;
-		हाल 64:
-			DST = (__क्रमce u64) cpu_to_le64(DST);
-			अवरोध;
-		पूर्ण
+		switch (IMM) {
+		case 16:
+			DST = (__force u16) cpu_to_le16(DST);
+			break;
+		case 32:
+			DST = (__force u32) cpu_to_le32(DST);
+			break;
+		case 64:
+			DST = (__force u64) cpu_to_le64(DST);
+			break;
+		}
 		CONT;
 
 	/* CALL */
 	JMP_CALL:
-		/* Function call scratches BPF_R1-BPF_R5 रेजिस्टरs,
-		 * preserves BPF_R6-BPF_R9, and stores वापस value
-		 * पूर्णांकo BPF_R0.
+		/* Function call scratches BPF_R1-BPF_R5 registers,
+		 * preserves BPF_R6-BPF_R9, and stores return value
+		 * into BPF_R0.
 		 */
 		BPF_R0 = (__bpf_call_base + insn->imm)(BPF_R1, BPF_R2, BPF_R3,
 						       BPF_R4, BPF_R5);
@@ -1527,63 +1526,63 @@ select_insn:
 							    insn + insn->off + 1);
 		CONT;
 
-	JMP_TAIL_CALL: अणु
-		काष्ठा bpf_map *map = (काष्ठा bpf_map *) (अचिन्हित दीर्घ) BPF_R2;
-		काष्ठा bpf_array *array = container_of(map, काष्ठा bpf_array, map);
-		काष्ठा bpf_prog *prog;
+	JMP_TAIL_CALL: {
+		struct bpf_map *map = (struct bpf_map *) (unsigned long) BPF_R2;
+		struct bpf_array *array = container_of(map, struct bpf_array, map);
+		struct bpf_prog *prog;
 		u32 index = BPF_R3;
 
-		अगर (unlikely(index >= array->map.max_entries))
-			जाओ out;
-		अगर (unlikely(tail_call_cnt > MAX_TAIL_CALL_CNT))
-			जाओ out;
+		if (unlikely(index >= array->map.max_entries))
+			goto out;
+		if (unlikely(tail_call_cnt > MAX_TAIL_CALL_CNT))
+			goto out;
 
 		tail_call_cnt++;
 
 		prog = READ_ONCE(array->ptrs[index]);
-		अगर (!prog)
-			जाओ out;
+		if (!prog)
+			goto out;
 
-		/* ARG1 at this poपूर्णांक is guaranteed to poपूर्णांक to CTX from
-		 * the verअगरier side due to the fact that the tail call is
+		/* ARG1 at this point is guaranteed to point to CTX from
+		 * the verifier side due to the fact that the tail call is
 		 * handled like a helper, that is, bpf_tail_call_proto,
 		 * where arg1_type is ARG_PTR_TO_CTX.
 		 */
 		insn = prog->insnsi;
-		जाओ select_insn;
+		goto select_insn;
 out:
 		CONT;
-	पूर्ण
+	}
 	JMP_JA:
 		insn += insn->off;
 		CONT;
 	JMP_EXIT:
-		वापस BPF_R0;
+		return BPF_R0;
 	/* JMP */
-#घोषणा COND_JMP(SIGN, OPCODE, CMP_OP)				\
+#define COND_JMP(SIGN, OPCODE, CMP_OP)				\
 	JMP_##OPCODE##_X:					\
-		अगर ((SIGN##64) DST CMP_OP (SIGN##64) SRC) अणु	\
+		if ((SIGN##64) DST CMP_OP (SIGN##64) SRC) {	\
 			insn += insn->off;			\
 			CONT_JMP;				\
-		पूर्ण						\
+		}						\
 		CONT;						\
 	JMP32_##OPCODE##_X:					\
-		अगर ((SIGN##32) DST CMP_OP (SIGN##32) SRC) अणु	\
+		if ((SIGN##32) DST CMP_OP (SIGN##32) SRC) {	\
 			insn += insn->off;			\
 			CONT_JMP;				\
-		पूर्ण						\
+		}						\
 		CONT;						\
 	JMP_##OPCODE##_K:					\
-		अगर ((SIGN##64) DST CMP_OP (SIGN##64) IMM) अणु	\
+		if ((SIGN##64) DST CMP_OP (SIGN##64) IMM) {	\
 			insn += insn->off;			\
 			CONT_JMP;				\
-		पूर्ण						\
+		}						\
 		CONT;						\
 	JMP32_##OPCODE##_K:					\
-		अगर ((SIGN##32) DST CMP_OP (SIGN##32) IMM) अणु	\
+		if ((SIGN##32) DST CMP_OP (SIGN##32) IMM) {	\
 			insn += insn->off;			\
 			CONT_JMP;				\
-		पूर्ण						\
+		}						\
 		CONT;
 	COND_JMP(u, JEQ, ==)
 	COND_JMP(u, JNE, !=)
@@ -1596,137 +1595,137 @@ out:
 	COND_JMP(s, JSLT, <)
 	COND_JMP(s, JSGE, >=)
 	COND_JMP(s, JSLE, <=)
-#अघोषित COND_JMP
+#undef COND_JMP
 	/* STX and ST and LDX*/
-#घोषणा LDST(SIZEOP, SIZE)						\
+#define LDST(SIZEOP, SIZE)						\
 	STX_MEM_##SIZEOP:						\
-		*(SIZE *)(अचिन्हित दीर्घ) (DST + insn->off) = SRC;	\
+		*(SIZE *)(unsigned long) (DST + insn->off) = SRC;	\
 		CONT;							\
 	ST_MEM_##SIZEOP:						\
-		*(SIZE *)(अचिन्हित दीर्घ) (DST + insn->off) = IMM;	\
+		*(SIZE *)(unsigned long) (DST + insn->off) = IMM;	\
 		CONT;							\
 	LDX_MEM_##SIZEOP:						\
-		DST = *(SIZE *)(अचिन्हित दीर्घ) (SRC + insn->off);	\
+		DST = *(SIZE *)(unsigned long) (SRC + insn->off);	\
 		CONT;
 
 	LDST(B,   u8)
 	LDST(H,  u16)
 	LDST(W,  u32)
 	LDST(DW, u64)
-#अघोषित LDST
-#घोषणा LDX_PROBE(SIZEOP, SIZE)							\
+#undef LDST
+#define LDX_PROBE(SIZEOP, SIZE)							\
 	LDX_PROBE_MEM_##SIZEOP:							\
-		bpf_probe_पढ़ो_kernel(&DST, SIZE, (स्थिर व्योम *)(दीर्घ) (SRC + insn->off));	\
+		bpf_probe_read_kernel(&DST, SIZE, (const void *)(long) (SRC + insn->off));	\
 		CONT;
 	LDX_PROBE(B,  1)
 	LDX_PROBE(H,  2)
 	LDX_PROBE(W,  4)
 	LDX_PROBE(DW, 8)
-#अघोषित LDX_PROBE
+#undef LDX_PROBE
 
-#घोषणा ATOMIC_ALU_OP(BOP, KOP)						\
-		हाल BOP:						\
-			अगर (BPF_SIZE(insn->code) == BPF_W)		\
-				atomic_##KOP((u32) SRC, (atomic_t *)(अचिन्हित दीर्घ) \
+#define ATOMIC_ALU_OP(BOP, KOP)						\
+		case BOP:						\
+			if (BPF_SIZE(insn->code) == BPF_W)		\
+				atomic_##KOP((u32) SRC, (atomic_t *)(unsigned long) \
 					     (DST + insn->off));	\
-			अन्यथा						\
-				atomic64_##KOP((u64) SRC, (atomic64_t *)(अचिन्हित दीर्घ) \
+			else						\
+				atomic64_##KOP((u64) SRC, (atomic64_t *)(unsigned long) \
 					       (DST + insn->off));	\
-			अवरोध;						\
-		हाल BOP | BPF_FETCH:					\
-			अगर (BPF_SIZE(insn->code) == BPF_W)		\
+			break;						\
+		case BOP | BPF_FETCH:					\
+			if (BPF_SIZE(insn->code) == BPF_W)		\
 				SRC = (u32) atomic_fetch_##KOP(		\
 					(u32) SRC,			\
-					(atomic_t *)(अचिन्हित दीर्घ) (DST + insn->off)); \
-			अन्यथा						\
+					(atomic_t *)(unsigned long) (DST + insn->off)); \
+			else						\
 				SRC = (u64) atomic64_fetch_##KOP(	\
 					(u64) SRC,			\
-					(atomic64_t *)(अचिन्हित दीर्घ) (DST + insn->off)); \
-			अवरोध;
+					(atomic64_t *)(unsigned long) (DST + insn->off)); \
+			break;
 
 	STX_ATOMIC_DW:
 	STX_ATOMIC_W:
-		चयन (IMM) अणु
+		switch (IMM) {
 		ATOMIC_ALU_OP(BPF_ADD, add)
 		ATOMIC_ALU_OP(BPF_AND, and)
 		ATOMIC_ALU_OP(BPF_OR, or)
 		ATOMIC_ALU_OP(BPF_XOR, xor)
-#अघोषित ATOMIC_ALU_OP
+#undef ATOMIC_ALU_OP
 
-		हाल BPF_XCHG:
-			अगर (BPF_SIZE(insn->code) == BPF_W)
+		case BPF_XCHG:
+			if (BPF_SIZE(insn->code) == BPF_W)
 				SRC = (u32) atomic_xchg(
-					(atomic_t *)(अचिन्हित दीर्घ) (DST + insn->off),
+					(atomic_t *)(unsigned long) (DST + insn->off),
 					(u32) SRC);
-			अन्यथा
+			else
 				SRC = (u64) atomic64_xchg(
-					(atomic64_t *)(अचिन्हित दीर्घ) (DST + insn->off),
+					(atomic64_t *)(unsigned long) (DST + insn->off),
 					(u64) SRC);
-			अवरोध;
-		हाल BPF_CMPXCHG:
-			अगर (BPF_SIZE(insn->code) == BPF_W)
+			break;
+		case BPF_CMPXCHG:
+			if (BPF_SIZE(insn->code) == BPF_W)
 				BPF_R0 = (u32) atomic_cmpxchg(
-					(atomic_t *)(अचिन्हित दीर्घ) (DST + insn->off),
+					(atomic_t *)(unsigned long) (DST + insn->off),
 					(u32) BPF_R0, (u32) SRC);
-			अन्यथा
+			else
 				BPF_R0 = (u64) atomic64_cmpxchg(
-					(atomic64_t *)(अचिन्हित दीर्घ) (DST + insn->off),
+					(atomic64_t *)(unsigned long) (DST + insn->off),
 					(u64) BPF_R0, (u64) SRC);
-			अवरोध;
+			break;
 
-		शेष:
-			जाओ शेष_label;
-		पूर्ण
+		default:
+			goto default_label;
+		}
 		CONT;
 
-	शेष_label:
+	default_label:
 		/* If we ever reach this, we have a bug somewhere. Die hard here
-		 * instead of just वापसing 0; we could be somewhere in a subprog,
-		 * so execution could जारी otherwise which we करो /not/ want.
+		 * instead of just returning 0; we could be somewhere in a subprog,
+		 * so execution could continue otherwise which we do /not/ want.
 		 *
-		 * Note, verअगरier whitelists all opcodes in bpf_opcode_in_insntable().
+		 * Note, verifier whitelists all opcodes in bpf_opcode_in_insntable().
 		 */
 		pr_warn("BPF interpreter: unknown opcode %02x (imm: 0x%x)\n",
 			insn->code, insn->imm);
 		BUG_ON(1);
-		वापस 0;
-पूर्ण
+		return 0;
+}
 
-#घोषणा PROG_NAME(stack_size) __bpf_prog_run##stack_size
-#घोषणा DEFINE_BPF_PROG_RUN(stack_size) \
-अटल अचिन्हित पूर्णांक PROG_NAME(stack_size)(स्थिर व्योम *ctx, स्थिर काष्ठा bpf_insn *insn) \
-अणु \
-	u64 stack[stack_size / माप(u64)]; \
+#define PROG_NAME(stack_size) __bpf_prog_run##stack_size
+#define DEFINE_BPF_PROG_RUN(stack_size) \
+static unsigned int PROG_NAME(stack_size)(const void *ctx, const struct bpf_insn *insn) \
+{ \
+	u64 stack[stack_size / sizeof(u64)]; \
 	u64 regs[MAX_BPF_EXT_REG]; \
 \
-	FP = (u64) (अचिन्हित दीर्घ) &stack[ARRAY_SIZE(stack)]; \
-	ARG1 = (u64) (अचिन्हित दीर्घ) ctx; \
-	वापस ___bpf_prog_run(regs, insn); \
-पूर्ण
+	FP = (u64) (unsigned long) &stack[ARRAY_SIZE(stack)]; \
+	ARG1 = (u64) (unsigned long) ctx; \
+	return ___bpf_prog_run(regs, insn); \
+}
 
-#घोषणा PROG_NAME_ARGS(stack_size) __bpf_prog_run_args##stack_size
-#घोषणा DEFINE_BPF_PROG_RUN_ARGS(stack_size) \
-अटल u64 PROG_NAME_ARGS(stack_size)(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5, \
-				      स्थिर काष्ठा bpf_insn *insn) \
-अणु \
-	u64 stack[stack_size / माप(u64)]; \
+#define PROG_NAME_ARGS(stack_size) __bpf_prog_run_args##stack_size
+#define DEFINE_BPF_PROG_RUN_ARGS(stack_size) \
+static u64 PROG_NAME_ARGS(stack_size)(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5, \
+				      const struct bpf_insn *insn) \
+{ \
+	u64 stack[stack_size / sizeof(u64)]; \
 	u64 regs[MAX_BPF_EXT_REG]; \
 \
-	FP = (u64) (अचिन्हित दीर्घ) &stack[ARRAY_SIZE(stack)]; \
+	FP = (u64) (unsigned long) &stack[ARRAY_SIZE(stack)]; \
 	BPF_R1 = r1; \
 	BPF_R2 = r2; \
 	BPF_R3 = r3; \
 	BPF_R4 = r4; \
 	BPF_R5 = r5; \
-	वापस ___bpf_prog_run(regs, insn); \
-पूर्ण
+	return ___bpf_prog_run(regs, insn); \
+}
 
-#घोषणा EVAL1(FN, X) FN(X)
-#घोषणा EVAL2(FN, X, Y...) FN(X) EVAL1(FN, Y)
-#घोषणा EVAL3(FN, X, Y...) FN(X) EVAL2(FN, Y)
-#घोषणा EVAL4(FN, X, Y...) FN(X) EVAL3(FN, Y)
-#घोषणा EVAL5(FN, X, Y...) FN(X) EVAL4(FN, Y)
-#घोषणा EVAL6(FN, X, Y...) FN(X) EVAL5(FN, Y)
+#define EVAL1(FN, X) FN(X)
+#define EVAL2(FN, X, Y...) FN(X) EVAL1(FN, Y)
+#define EVAL3(FN, X, Y...) FN(X) EVAL2(FN, Y)
+#define EVAL4(FN, X, Y...) FN(X) EVAL3(FN, Y)
+#define EVAL5(FN, X, Y...) FN(X) EVAL4(FN, Y)
+#define EVAL6(FN, X, Y...) FN(X) EVAL5(FN, Y)
 
 EVAL6(DEFINE_BPF_PROG_RUN, 32, 64, 96, 128, 160, 192);
 EVAL6(DEFINE_BPF_PROG_RUN, 224, 256, 288, 320, 352, 384);
@@ -1736,288 +1735,288 @@ EVAL6(DEFINE_BPF_PROG_RUN_ARGS, 32, 64, 96, 128, 160, 192);
 EVAL6(DEFINE_BPF_PROG_RUN_ARGS, 224, 256, 288, 320, 352, 384);
 EVAL4(DEFINE_BPF_PROG_RUN_ARGS, 416, 448, 480, 512);
 
-#घोषणा PROG_NAME_LIST(stack_size) PROG_NAME(stack_size),
+#define PROG_NAME_LIST(stack_size) PROG_NAME(stack_size),
 
-अटल अचिन्हित पूर्णांक (*पूर्णांकerpreters[])(स्थिर व्योम *ctx,
-				      स्थिर काष्ठा bpf_insn *insn) = अणु
+static unsigned int (*interpreters[])(const void *ctx,
+				      const struct bpf_insn *insn) = {
 EVAL6(PROG_NAME_LIST, 32, 64, 96, 128, 160, 192)
 EVAL6(PROG_NAME_LIST, 224, 256, 288, 320, 352, 384)
 EVAL4(PROG_NAME_LIST, 416, 448, 480, 512)
-पूर्ण;
-#अघोषित PROG_NAME_LIST
-#घोषणा PROG_NAME_LIST(stack_size) PROG_NAME_ARGS(stack_size),
-अटल u64 (*पूर्णांकerpreters_args[])(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5,
-				  स्थिर काष्ठा bpf_insn *insn) = अणु
+};
+#undef PROG_NAME_LIST
+#define PROG_NAME_LIST(stack_size) PROG_NAME_ARGS(stack_size),
+static u64 (*interpreters_args[])(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5,
+				  const struct bpf_insn *insn) = {
 EVAL6(PROG_NAME_LIST, 32, 64, 96, 128, 160, 192)
 EVAL6(PROG_NAME_LIST, 224, 256, 288, 320, 352, 384)
 EVAL4(PROG_NAME_LIST, 416, 448, 480, 512)
-पूर्ण;
-#अघोषित PROG_NAME_LIST
+};
+#undef PROG_NAME_LIST
 
-व्योम bpf_patch_call_args(काष्ठा bpf_insn *insn, u32 stack_depth)
-अणु
+void bpf_patch_call_args(struct bpf_insn *insn, u32 stack_depth)
+{
 	stack_depth = max_t(u32, stack_depth, 1);
 	insn->off = (s16) insn->imm;
-	insn->imm = पूर्णांकerpreters_args[(round_up(stack_depth, 32) / 32) - 1] -
+	insn->imm = interpreters_args[(round_up(stack_depth, 32) / 32) - 1] -
 		__bpf_call_base_args;
 	insn->code = BPF_JMP | BPF_CALL_ARGS;
-पूर्ण
+}
 
-#अन्यथा
-अटल अचिन्हित पूर्णांक __bpf_prog_ret0_warn(स्थिर व्योम *ctx,
-					 स्थिर काष्ठा bpf_insn *insn)
-अणु
-	/* If this handler ever माला_लो executed, then BPF_JIT_ALWAYS_ON
+#else
+static unsigned int __bpf_prog_ret0_warn(const void *ctx,
+					 const struct bpf_insn *insn)
+{
+	/* If this handler ever gets executed, then BPF_JIT_ALWAYS_ON
 	 * is not working properly, so warn about it!
 	 */
 	WARN_ON_ONCE(1);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-bool bpf_prog_array_compatible(काष्ठा bpf_array *array,
-			       स्थिर काष्ठा bpf_prog *fp)
-अणु
-	अगर (fp->kprobe_override)
-		वापस false;
+bool bpf_prog_array_compatible(struct bpf_array *array,
+			       const struct bpf_prog *fp)
+{
+	if (fp->kprobe_override)
+		return false;
 
-	अगर (!array->aux->type) अणु
-		/* There's no owner yet where we could check क्रम
+	if (!array->aux->type) {
+		/* There's no owner yet where we could check for
 		 * compatibility.
 		 */
 		array->aux->type  = fp->type;
 		array->aux->jited = fp->jited;
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस array->aux->type  == fp->type &&
+	return array->aux->type  == fp->type &&
 	       array->aux->jited == fp->jited;
-पूर्ण
+}
 
-अटल पूर्णांक bpf_check_tail_call(स्थिर काष्ठा bpf_prog *fp)
-अणु
-	काष्ठा bpf_prog_aux *aux = fp->aux;
-	पूर्णांक i, ret = 0;
+static int bpf_check_tail_call(const struct bpf_prog *fp)
+{
+	struct bpf_prog_aux *aux = fp->aux;
+	int i, ret = 0;
 
 	mutex_lock(&aux->used_maps_mutex);
-	क्रम (i = 0; i < aux->used_map_cnt; i++) अणु
-		काष्ठा bpf_map *map = aux->used_maps[i];
-		काष्ठा bpf_array *array;
+	for (i = 0; i < aux->used_map_cnt; i++) {
+		struct bpf_map *map = aux->used_maps[i];
+		struct bpf_array *array;
 
-		अगर (map->map_type != BPF_MAP_TYPE_PROG_ARRAY)
-			जारी;
+		if (map->map_type != BPF_MAP_TYPE_PROG_ARRAY)
+			continue;
 
-		array = container_of(map, काष्ठा bpf_array, map);
-		अगर (!bpf_prog_array_compatible(array, fp)) अणु
+		array = container_of(map, struct bpf_array, map);
+		if (!bpf_prog_array_compatible(array, fp)) {
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 out:
 	mutex_unlock(&aux->used_maps_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम bpf_prog_select_func(काष्ठा bpf_prog *fp)
-अणु
-#अगर_अघोषित CONFIG_BPF_JIT_ALWAYS_ON
+static void bpf_prog_select_func(struct bpf_prog *fp)
+{
+#ifndef CONFIG_BPF_JIT_ALWAYS_ON
 	u32 stack_depth = max_t(u32, fp->aux->stack_depth, 1);
 
-	fp->bpf_func = पूर्णांकerpreters[(round_up(stack_depth, 32) / 32) - 1];
-#अन्यथा
+	fp->bpf_func = interpreters[(round_up(stack_depth, 32) / 32) - 1];
+#else
 	fp->bpf_func = __bpf_prog_ret0_warn;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 /**
- *	bpf_prog_select_runसमय - select exec runसमय क्रम BPF program
- *	@fp: bpf_prog populated with पूर्णांकernal BPF program
- *	@err: poपूर्णांकer to error variable
+ *	bpf_prog_select_runtime - select exec runtime for BPF program
+ *	@fp: bpf_prog populated with internal BPF program
+ *	@err: pointer to error variable
  *
- * Try to JIT eBPF program, अगर JIT is not available, use पूर्णांकerpreter.
+ * Try to JIT eBPF program, if JIT is not available, use interpreter.
  * The BPF program will be executed via BPF_PROG_RUN() macro.
  */
-काष्ठा bpf_prog *bpf_prog_select_runसमय(काष्ठा bpf_prog *fp, पूर्णांक *err)
-अणु
-	/* In हाल of BPF to BPF calls, verअगरier did all the prep
+struct bpf_prog *bpf_prog_select_runtime(struct bpf_prog *fp, int *err)
+{
+	/* In case of BPF to BPF calls, verifier did all the prep
 	 * work with regards to JITing, etc.
 	 */
 	bool jit_needed = false;
 
-	अगर (fp->bpf_func)
-		जाओ finalize;
+	if (fp->bpf_func)
+		goto finalize;
 
-	अगर (IS_ENABLED(CONFIG_BPF_JIT_ALWAYS_ON) ||
+	if (IS_ENABLED(CONFIG_BPF_JIT_ALWAYS_ON) ||
 	    bpf_prog_has_kfunc_call(fp))
 		jit_needed = true;
 
 	bpf_prog_select_func(fp);
 
-	/* eBPF JITs can reग_लिखो the program in हाल स्थिरant
-	 * blinding is active. However, in हाल of error during
-	 * blinding, bpf_पूर्णांक_jit_compile() must always वापस a
-	 * valid program, which in this हाल would simply not
-	 * be JITed, but falls back to the पूर्णांकerpreter.
+	/* eBPF JITs can rewrite the program in case constant
+	 * blinding is active. However, in case of error during
+	 * blinding, bpf_int_jit_compile() must always return a
+	 * valid program, which in this case would simply not
+	 * be JITed, but falls back to the interpreter.
 	 */
-	अगर (!bpf_prog_is_dev_bound(fp->aux)) अणु
+	if (!bpf_prog_is_dev_bound(fp->aux)) {
 		*err = bpf_prog_alloc_jited_linfo(fp);
-		अगर (*err)
-			वापस fp;
+		if (*err)
+			return fp;
 
-		fp = bpf_पूर्णांक_jit_compile(fp);
-		bpf_prog_jit_attempt_करोne(fp);
-		अगर (!fp->jited && jit_needed) अणु
+		fp = bpf_int_jit_compile(fp);
+		bpf_prog_jit_attempt_done(fp);
+		if (!fp->jited && jit_needed) {
 			*err = -ENOTSUPP;
-			वापस fp;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return fp;
+		}
+	} else {
 		*err = bpf_prog_offload_compile(fp);
-		अगर (*err)
-			वापस fp;
-	पूर्ण
+		if (*err)
+			return fp;
+	}
 
 finalize:
 	bpf_prog_lock_ro(fp);
 
-	/* The tail call compatibility check can only be करोne at
-	 * this late stage as we need to determine, अगर we deal
+	/* The tail call compatibility check can only be done at
+	 * this late stage as we need to determine, if we deal
 	 * with JITed or non JITed program concatenations and not
 	 * all eBPF JITs might immediately support all features.
 	 */
 	*err = bpf_check_tail_call(fp);
 
-	वापस fp;
-पूर्ण
-EXPORT_SYMBOL_GPL(bpf_prog_select_runसमय);
+	return fp;
+}
+EXPORT_SYMBOL_GPL(bpf_prog_select_runtime);
 
-अटल अचिन्हित पूर्णांक __bpf_prog_ret1(स्थिर व्योम *ctx,
-				    स्थिर काष्ठा bpf_insn *insn)
-अणु
-	वापस 1;
-पूर्ण
+static unsigned int __bpf_prog_ret1(const void *ctx,
+				    const struct bpf_insn *insn)
+{
+	return 1;
+}
 
-अटल काष्ठा bpf_prog_dummy अणु
-	काष्ठा bpf_prog prog;
-पूर्ण dummy_bpf_prog = अणु
-	.prog = अणु
+static struct bpf_prog_dummy {
+	struct bpf_prog prog;
+} dummy_bpf_prog = {
+	.prog = {
 		.bpf_func = __bpf_prog_ret1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-/* to aव्योम allocating empty bpf_prog_array क्रम cgroups that
- * करोn't have bpf program attached use one global 'empty_prog_array'
- * It will not be modअगरied the caller of bpf_prog_array_alloc()
+/* to avoid allocating empty bpf_prog_array for cgroups that
+ * don't have bpf program attached use one global 'empty_prog_array'
+ * It will not be modified the caller of bpf_prog_array_alloc()
  * (since caller requested prog_cnt == 0)
- * that poपूर्णांकer should be 'freed' by bpf_prog_array_मुक्त()
+ * that pointer should be 'freed' by bpf_prog_array_free()
  */
-अटल काष्ठा अणु
-	काष्ठा bpf_prog_array hdr;
-	काष्ठा bpf_prog *null_prog;
-पूर्ण empty_prog_array = अणु
-	.null_prog = शून्य,
-पूर्ण;
+static struct {
+	struct bpf_prog_array hdr;
+	struct bpf_prog *null_prog;
+} empty_prog_array = {
+	.null_prog = NULL,
+};
 
-काष्ठा bpf_prog_array *bpf_prog_array_alloc(u32 prog_cnt, gfp_t flags)
-अणु
-	अगर (prog_cnt)
-		वापस kzalloc(माप(काष्ठा bpf_prog_array) +
-			       माप(काष्ठा bpf_prog_array_item) *
+struct bpf_prog_array *bpf_prog_array_alloc(u32 prog_cnt, gfp_t flags)
+{
+	if (prog_cnt)
+		return kzalloc(sizeof(struct bpf_prog_array) +
+			       sizeof(struct bpf_prog_array_item) *
 			       (prog_cnt + 1),
 			       flags);
 
-	वापस &empty_prog_array.hdr;
-पूर्ण
+	return &empty_prog_array.hdr;
+}
 
-व्योम bpf_prog_array_मुक्त(काष्ठा bpf_prog_array *progs)
-अणु
-	अगर (!progs || progs == &empty_prog_array.hdr)
-		वापस;
-	kमुक्त_rcu(progs, rcu);
-पूर्ण
+void bpf_prog_array_free(struct bpf_prog_array *progs)
+{
+	if (!progs || progs == &empty_prog_array.hdr)
+		return;
+	kfree_rcu(progs, rcu);
+}
 
-पूर्णांक bpf_prog_array_length(काष्ठा bpf_prog_array *array)
-अणु
-	काष्ठा bpf_prog_array_item *item;
+int bpf_prog_array_length(struct bpf_prog_array *array)
+{
+	struct bpf_prog_array_item *item;
 	u32 cnt = 0;
 
-	क्रम (item = array->items; item->prog; item++)
-		अगर (item->prog != &dummy_bpf_prog.prog)
+	for (item = array->items; item->prog; item++)
+		if (item->prog != &dummy_bpf_prog.prog)
 			cnt++;
-	वापस cnt;
-पूर्ण
+	return cnt;
+}
 
-bool bpf_prog_array_is_empty(काष्ठा bpf_prog_array *array)
-अणु
-	काष्ठा bpf_prog_array_item *item;
+bool bpf_prog_array_is_empty(struct bpf_prog_array *array)
+{
+	struct bpf_prog_array_item *item;
 
-	क्रम (item = array->items; item->prog; item++)
-		अगर (item->prog != &dummy_bpf_prog.prog)
-			वापस false;
-	वापस true;
-पूर्ण
+	for (item = array->items; item->prog; item++)
+		if (item->prog != &dummy_bpf_prog.prog)
+			return false;
+	return true;
+}
 
-अटल bool bpf_prog_array_copy_core(काष्ठा bpf_prog_array *array,
+static bool bpf_prog_array_copy_core(struct bpf_prog_array *array,
 				     u32 *prog_ids,
 				     u32 request_cnt)
-अणु
-	काष्ठा bpf_prog_array_item *item;
-	पूर्णांक i = 0;
+{
+	struct bpf_prog_array_item *item;
+	int i = 0;
 
-	क्रम (item = array->items; item->prog; item++) अणु
-		अगर (item->prog == &dummy_bpf_prog.prog)
-			जारी;
+	for (item = array->items; item->prog; item++) {
+		if (item->prog == &dummy_bpf_prog.prog)
+			continue;
 		prog_ids[i] = item->prog->aux->id;
-		अगर (++i == request_cnt) अणु
+		if (++i == request_cnt) {
 			item++;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस !!(item->prog);
-पूर्ण
+	return !!(item->prog);
+}
 
-पूर्णांक bpf_prog_array_copy_to_user(काष्ठा bpf_prog_array *array,
+int bpf_prog_array_copy_to_user(struct bpf_prog_array *array,
 				__u32 __user *prog_ids, u32 cnt)
-अणु
-	अचिन्हित दीर्घ err = 0;
+{
+	unsigned long err = 0;
 	bool nospc;
 	u32 *ids;
 
-	/* users of this function are करोing:
+	/* users of this function are doing:
 	 * cnt = bpf_prog_array_length();
-	 * अगर (cnt > 0)
+	 * if (cnt > 0)
 	 *     bpf_prog_array_copy_to_user(..., cnt);
-	 * so below kसुस्मृति करोesn't need extra cnt > 0 check.
+	 * so below kcalloc doesn't need extra cnt > 0 check.
 	 */
-	ids = kसुस्मृति(cnt, माप(u32), GFP_USER | __GFP_NOWARN);
-	अगर (!ids)
-		वापस -ENOMEM;
+	ids = kcalloc(cnt, sizeof(u32), GFP_USER | __GFP_NOWARN);
+	if (!ids)
+		return -ENOMEM;
 	nospc = bpf_prog_array_copy_core(array, ids, cnt);
-	err = copy_to_user(prog_ids, ids, cnt * माप(u32));
-	kमुक्त(ids);
-	अगर (err)
-		वापस -EFAULT;
-	अगर (nospc)
-		वापस -ENOSPC;
-	वापस 0;
-पूर्ण
+	err = copy_to_user(prog_ids, ids, cnt * sizeof(u32));
+	kfree(ids);
+	if (err)
+		return -EFAULT;
+	if (nospc)
+		return -ENOSPC;
+	return 0;
+}
 
-व्योम bpf_prog_array_delete_safe(काष्ठा bpf_prog_array *array,
-				काष्ठा bpf_prog *old_prog)
-अणु
-	काष्ठा bpf_prog_array_item *item;
+void bpf_prog_array_delete_safe(struct bpf_prog_array *array,
+				struct bpf_prog *old_prog)
+{
+	struct bpf_prog_array_item *item;
 
-	क्रम (item = array->items; item->prog; item++)
-		अगर (item->prog == old_prog) अणु
+	for (item = array->items; item->prog; item++)
+		if (item->prog == old_prog) {
 			WRITE_ONCE(item->prog, &dummy_bpf_prog.prog);
-			अवरोध;
-		पूर्ण
-पूर्ण
+			break;
+		}
+}
 
 /**
  * bpf_prog_array_delete_safe_at() - Replaces the program at the given
- *                                   index पूर्णांकo the program array with
+ *                                   index into the program array with
  *                                   a dummy no-op program.
  * @array: a bpf_prog_array
  * @index: the index of the program to replace
@@ -2027,355 +2026,355 @@ bool bpf_prog_array_is_empty(काष्ठा bpf_prog_array *array)
  *
  * Return:
  * * 0		- Success
- * * -EINVAL	- Invalid index value. Must be a non-negative पूर्णांकeger.
+ * * -EINVAL	- Invalid index value. Must be a non-negative integer.
  * * -ENOENT	- Index out of range
  */
-पूर्णांक bpf_prog_array_delete_safe_at(काष्ठा bpf_prog_array *array, पूर्णांक index)
-अणु
-	वापस bpf_prog_array_update_at(array, index, &dummy_bpf_prog.prog);
-पूर्ण
+int bpf_prog_array_delete_safe_at(struct bpf_prog_array *array, int index)
+{
+	return bpf_prog_array_update_at(array, index, &dummy_bpf_prog.prog);
+}
 
 /**
  * bpf_prog_array_update_at() - Updates the program at the given index
- *                              पूर्णांकo the program array.
+ *                              into the program array.
  * @array: a bpf_prog_array
  * @index: the index of the program to update
- * @prog: the program to insert पूर्णांकo the array
+ * @prog: the program to insert into the array
  *
  * Skips over dummy programs, by not counting them, when calculating
  * the position of the program to update.
  *
  * Return:
  * * 0		- Success
- * * -EINVAL	- Invalid index value. Must be a non-negative पूर्णांकeger.
+ * * -EINVAL	- Invalid index value. Must be a non-negative integer.
  * * -ENOENT	- Index out of range
  */
-पूर्णांक bpf_prog_array_update_at(काष्ठा bpf_prog_array *array, पूर्णांक index,
-			     काष्ठा bpf_prog *prog)
-अणु
-	काष्ठा bpf_prog_array_item *item;
+int bpf_prog_array_update_at(struct bpf_prog_array *array, int index,
+			     struct bpf_prog *prog)
+{
+	struct bpf_prog_array_item *item;
 
-	अगर (unlikely(index < 0))
-		वापस -EINVAL;
+	if (unlikely(index < 0))
+		return -EINVAL;
 
-	क्रम (item = array->items; item->prog; item++) अणु
-		अगर (item->prog == &dummy_bpf_prog.prog)
-			जारी;
-		अगर (!index) अणु
+	for (item = array->items; item->prog; item++) {
+		if (item->prog == &dummy_bpf_prog.prog)
+			continue;
+		if (!index) {
 			WRITE_ONCE(item->prog, prog);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		index--;
-	पूर्ण
-	वापस -ENOENT;
-पूर्ण
+	}
+	return -ENOENT;
+}
 
-पूर्णांक bpf_prog_array_copy(काष्ठा bpf_prog_array *old_array,
-			काष्ठा bpf_prog *exclude_prog,
-			काष्ठा bpf_prog *include_prog,
-			काष्ठा bpf_prog_array **new_array)
-अणु
-	पूर्णांक new_prog_cnt, carry_prog_cnt = 0;
-	काष्ठा bpf_prog_array_item *existing;
-	काष्ठा bpf_prog_array *array;
+int bpf_prog_array_copy(struct bpf_prog_array *old_array,
+			struct bpf_prog *exclude_prog,
+			struct bpf_prog *include_prog,
+			struct bpf_prog_array **new_array)
+{
+	int new_prog_cnt, carry_prog_cnt = 0;
+	struct bpf_prog_array_item *existing;
+	struct bpf_prog_array *array;
 	bool found_exclude = false;
-	पूर्णांक new_prog_idx = 0;
+	int new_prog_idx = 0;
 
 	/* Figure out how many existing progs we need to carry over to
 	 * the new array.
 	 */
-	अगर (old_array) अणु
+	if (old_array) {
 		existing = old_array->items;
-		क्रम (; existing->prog; existing++) अणु
-			अगर (existing->prog == exclude_prog) अणु
+		for (; existing->prog; existing++) {
+			if (existing->prog == exclude_prog) {
 				found_exclude = true;
-				जारी;
-			पूर्ण
-			अगर (existing->prog != &dummy_bpf_prog.prog)
+				continue;
+			}
+			if (existing->prog != &dummy_bpf_prog.prog)
 				carry_prog_cnt++;
-			अगर (existing->prog == include_prog)
-				वापस -EEXIST;
-		पूर्ण
-	पूर्ण
+			if (existing->prog == include_prog)
+				return -EEXIST;
+		}
+	}
 
-	अगर (exclude_prog && !found_exclude)
-		वापस -ENOENT;
+	if (exclude_prog && !found_exclude)
+		return -ENOENT;
 
-	/* How many progs (not शून्य) will be in the new array? */
+	/* How many progs (not NULL) will be in the new array? */
 	new_prog_cnt = carry_prog_cnt;
-	अगर (include_prog)
+	if (include_prog)
 		new_prog_cnt += 1;
 
-	/* Do we have any prog (not शून्य) in the new array? */
-	अगर (!new_prog_cnt) अणु
-		*new_array = शून्य;
-		वापस 0;
-	पूर्ण
+	/* Do we have any prog (not NULL) in the new array? */
+	if (!new_prog_cnt) {
+		*new_array = NULL;
+		return 0;
+	}
 
-	/* +1 as the end of prog_array is marked with शून्य */
+	/* +1 as the end of prog_array is marked with NULL */
 	array = bpf_prog_array_alloc(new_prog_cnt + 1, GFP_KERNEL);
-	अगर (!array)
-		वापस -ENOMEM;
+	if (!array)
+		return -ENOMEM;
 
 	/* Fill in the new prog array */
-	अगर (carry_prog_cnt) अणु
+	if (carry_prog_cnt) {
 		existing = old_array->items;
-		क्रम (; existing->prog; existing++)
-			अगर (existing->prog != exclude_prog &&
-			    existing->prog != &dummy_bpf_prog.prog) अणु
+		for (; existing->prog; existing++)
+			if (existing->prog != exclude_prog &&
+			    existing->prog != &dummy_bpf_prog.prog) {
 				array->items[new_prog_idx++].prog =
 					existing->prog;
-			पूर्ण
-	पूर्ण
-	अगर (include_prog)
+			}
+	}
+	if (include_prog)
 		array->items[new_prog_idx++].prog = include_prog;
-	array->items[new_prog_idx].prog = शून्य;
+	array->items[new_prog_idx].prog = NULL;
 	*new_array = array;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक bpf_prog_array_copy_info(काष्ठा bpf_prog_array *array,
+int bpf_prog_array_copy_info(struct bpf_prog_array *array,
 			     u32 *prog_ids, u32 request_cnt,
 			     u32 *prog_cnt)
-अणु
+{
 	u32 cnt = 0;
 
-	अगर (array)
+	if (array)
 		cnt = bpf_prog_array_length(array);
 
 	*prog_cnt = cnt;
 
-	/* वापस early अगर user requested only program count or nothing to copy */
-	अगर (!request_cnt || !cnt)
-		वापस 0;
+	/* return early if user requested only program count or nothing to copy */
+	if (!request_cnt || !cnt)
+		return 0;
 
 	/* this function is called under trace/bpf_trace.c: bpf_event_mutex */
-	वापस bpf_prog_array_copy_core(array, prog_ids, request_cnt) ? -ENOSPC
+	return bpf_prog_array_copy_core(array, prog_ids, request_cnt) ? -ENOSPC
 								     : 0;
-पूर्ण
+}
 
-व्योम __bpf_मुक्त_used_maps(काष्ठा bpf_prog_aux *aux,
-			  काष्ठा bpf_map **used_maps, u32 len)
-अणु
-	काष्ठा bpf_map *map;
+void __bpf_free_used_maps(struct bpf_prog_aux *aux,
+			  struct bpf_map **used_maps, u32 len)
+{
+	struct bpf_map *map;
 	u32 i;
 
-	क्रम (i = 0; i < len; i++) अणु
+	for (i = 0; i < len; i++) {
 		map = used_maps[i];
-		अगर (map->ops->map_poke_untrack)
+		if (map->ops->map_poke_untrack)
 			map->ops->map_poke_untrack(map, aux);
 		bpf_map_put(map);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम bpf_मुक्त_used_maps(काष्ठा bpf_prog_aux *aux)
-अणु
-	__bpf_मुक्त_used_maps(aux, aux->used_maps, aux->used_map_cnt);
-	kमुक्त(aux->used_maps);
-पूर्ण
+static void bpf_free_used_maps(struct bpf_prog_aux *aux)
+{
+	__bpf_free_used_maps(aux, aux->used_maps, aux->used_map_cnt);
+	kfree(aux->used_maps);
+}
 
-व्योम __bpf_मुक्त_used_btfs(काष्ठा bpf_prog_aux *aux,
-			  काष्ठा btf_mod_pair *used_btfs, u32 len)
-अणु
-#अगर_घोषित CONFIG_BPF_SYSCALL
-	काष्ठा btf_mod_pair *btf_mod;
+void __bpf_free_used_btfs(struct bpf_prog_aux *aux,
+			  struct btf_mod_pair *used_btfs, u32 len)
+{
+#ifdef CONFIG_BPF_SYSCALL
+	struct btf_mod_pair *btf_mod;
 	u32 i;
 
-	क्रम (i = 0; i < len; i++) अणु
+	for (i = 0; i < len; i++) {
 		btf_mod = &used_btfs[i];
-		अगर (btf_mod->module)
+		if (btf_mod->module)
 			module_put(btf_mod->module);
 		btf_put(btf_mod->btf);
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+	}
+#endif
+}
 
-अटल व्योम bpf_मुक्त_used_btfs(काष्ठा bpf_prog_aux *aux)
-अणु
-	__bpf_मुक्त_used_btfs(aux, aux->used_btfs, aux->used_btf_cnt);
-	kमुक्त(aux->used_btfs);
-पूर्ण
+static void bpf_free_used_btfs(struct bpf_prog_aux *aux)
+{
+	__bpf_free_used_btfs(aux, aux->used_btfs, aux->used_btf_cnt);
+	kfree(aux->used_btfs);
+}
 
-अटल व्योम bpf_prog_मुक्त_deferred(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा bpf_prog_aux *aux;
-	पूर्णांक i;
+static void bpf_prog_free_deferred(struct work_struct *work)
+{
+	struct bpf_prog_aux *aux;
+	int i;
 
-	aux = container_of(work, काष्ठा bpf_prog_aux, work);
-	bpf_मुक्त_used_maps(aux);
-	bpf_मुक्त_used_btfs(aux);
-	अगर (bpf_prog_is_dev_bound(aux))
+	aux = container_of(work, struct bpf_prog_aux, work);
+	bpf_free_used_maps(aux);
+	bpf_free_used_btfs(aux);
+	if (bpf_prog_is_dev_bound(aux))
 		bpf_prog_offload_destroy(aux->prog);
-#अगर_घोषित CONFIG_PERF_EVENTS
-	अगर (aux->prog->has_callchain_buf)
+#ifdef CONFIG_PERF_EVENTS
+	if (aux->prog->has_callchain_buf)
 		put_callchain_buffers();
-#पूर्ण_अगर
-	अगर (aux->dst_trampoline)
+#endif
+	if (aux->dst_trampoline)
 		bpf_trampoline_put(aux->dst_trampoline);
-	क्रम (i = 0; i < aux->func_cnt; i++)
-		bpf_jit_मुक्त(aux->func[i]);
-	अगर (aux->func_cnt) अणु
-		kमुक्त(aux->func);
-		bpf_prog_unlock_मुक्त(aux->prog);
-	पूर्ण अन्यथा अणु
-		bpf_jit_मुक्त(aux->prog);
-	पूर्ण
-पूर्ण
+	for (i = 0; i < aux->func_cnt; i++)
+		bpf_jit_free(aux->func[i]);
+	if (aux->func_cnt) {
+		kfree(aux->func);
+		bpf_prog_unlock_free(aux->prog);
+	} else {
+		bpf_jit_free(aux->prog);
+	}
+}
 
-/* Free पूर्णांकernal BPF program */
-व्योम bpf_prog_मुक्त(काष्ठा bpf_prog *fp)
-अणु
-	काष्ठा bpf_prog_aux *aux = fp->aux;
+/* Free internal BPF program */
+void bpf_prog_free(struct bpf_prog *fp)
+{
+	struct bpf_prog_aux *aux = fp->aux;
 
-	अगर (aux->dst_prog)
+	if (aux->dst_prog)
 		bpf_prog_put(aux->dst_prog);
-	INIT_WORK(&aux->work, bpf_prog_मुक्त_deferred);
+	INIT_WORK(&aux->work, bpf_prog_free_deferred);
 	schedule_work(&aux->work);
-पूर्ण
-EXPORT_SYMBOL_GPL(bpf_prog_मुक्त);
+}
+EXPORT_SYMBOL_GPL(bpf_prog_free);
 
-/* RNG क्रम unpriviledged user space with separated state from pअक्रमom_u32(). */
-अटल DEFINE_PER_CPU(काष्ठा rnd_state, bpf_user_rnd_state);
+/* RNG for unpriviledged user space with separated state from prandom_u32(). */
+static DEFINE_PER_CPU(struct rnd_state, bpf_user_rnd_state);
 
-व्योम bpf_user_rnd_init_once(व्योम)
-अणु
-	pअक्रमom_init_once(&bpf_user_rnd_state);
-पूर्ण
+void bpf_user_rnd_init_once(void)
+{
+	prandom_init_once(&bpf_user_rnd_state);
+}
 
 BPF_CALL_0(bpf_user_rnd_u32)
-अणु
+{
 	/* Should someone ever have the rather unwise idea to use some
-	 * of the रेजिस्टरs passed पूर्णांकo this function, then note that
+	 * of the registers passed into this function, then note that
 	 * this function is called from native eBPF and classic-to-eBPF
-	 * transक्रमmations. Register assignments from both sides are
-	 * dअगरferent, f.e. classic always sets fn(ctx, A, X) here.
+	 * transformations. Register assignments from both sides are
+	 * different, f.e. classic always sets fn(ctx, A, X) here.
 	 */
-	काष्ठा rnd_state *state;
+	struct rnd_state *state;
 	u32 res;
 
 	state = &get_cpu_var(bpf_user_rnd_state);
-	res = pअक्रमom_u32_state(state);
+	res = prandom_u32_state(state);
 	put_cpu_var(bpf_user_rnd_state);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
 BPF_CALL_0(bpf_get_raw_cpu_id)
-अणु
-	वापस raw_smp_processor_id();
-पूर्ण
+{
+	return raw_smp_processor_id();
+}
 
-/* Weak definitions of helper functions in हाल we करोn't have bpf syscall. */
-स्थिर काष्ठा bpf_func_proto bpf_map_lookup_elem_proto __weak;
-स्थिर काष्ठा bpf_func_proto bpf_map_update_elem_proto __weak;
-स्थिर काष्ठा bpf_func_proto bpf_map_delete_elem_proto __weak;
-स्थिर काष्ठा bpf_func_proto bpf_map_push_elem_proto __weak;
-स्थिर काष्ठा bpf_func_proto bpf_map_pop_elem_proto __weak;
-स्थिर काष्ठा bpf_func_proto bpf_map_peek_elem_proto __weak;
-स्थिर काष्ठा bpf_func_proto bpf_spin_lock_proto __weak;
-स्थिर काष्ठा bpf_func_proto bpf_spin_unlock_proto __weak;
-स्थिर काष्ठा bpf_func_proto bpf_jअगरfies64_proto __weak;
+/* Weak definitions of helper functions in case we don't have bpf syscall. */
+const struct bpf_func_proto bpf_map_lookup_elem_proto __weak;
+const struct bpf_func_proto bpf_map_update_elem_proto __weak;
+const struct bpf_func_proto bpf_map_delete_elem_proto __weak;
+const struct bpf_func_proto bpf_map_push_elem_proto __weak;
+const struct bpf_func_proto bpf_map_pop_elem_proto __weak;
+const struct bpf_func_proto bpf_map_peek_elem_proto __weak;
+const struct bpf_func_proto bpf_spin_lock_proto __weak;
+const struct bpf_func_proto bpf_spin_unlock_proto __weak;
+const struct bpf_func_proto bpf_jiffies64_proto __weak;
 
-स्थिर काष्ठा bpf_func_proto bpf_get_pअक्रमom_u32_proto __weak;
-स्थिर काष्ठा bpf_func_proto bpf_get_smp_processor_id_proto __weak;
-स्थिर काष्ठा bpf_func_proto bpf_get_numa_node_id_proto __weak;
-स्थिर काष्ठा bpf_func_proto bpf_kसमय_get_ns_proto __weak;
-स्थिर काष्ठा bpf_func_proto bpf_kसमय_get_boot_ns_proto __weak;
-स्थिर काष्ठा bpf_func_proto bpf_kसमय_get_coarse_ns_proto __weak;
+const struct bpf_func_proto bpf_get_prandom_u32_proto __weak;
+const struct bpf_func_proto bpf_get_smp_processor_id_proto __weak;
+const struct bpf_func_proto bpf_get_numa_node_id_proto __weak;
+const struct bpf_func_proto bpf_ktime_get_ns_proto __weak;
+const struct bpf_func_proto bpf_ktime_get_boot_ns_proto __weak;
+const struct bpf_func_proto bpf_ktime_get_coarse_ns_proto __weak;
 
-स्थिर काष्ठा bpf_func_proto bpf_get_current_pid_tgid_proto __weak;
-स्थिर काष्ठा bpf_func_proto bpf_get_current_uid_gid_proto __weak;
-स्थिर काष्ठा bpf_func_proto bpf_get_current_comm_proto __weak;
-स्थिर काष्ठा bpf_func_proto bpf_get_current_cgroup_id_proto __weak;
-स्थिर काष्ठा bpf_func_proto bpf_get_current_ancestor_cgroup_id_proto __weak;
-स्थिर काष्ठा bpf_func_proto bpf_get_local_storage_proto __weak;
-स्थिर काष्ठा bpf_func_proto bpf_get_ns_current_pid_tgid_proto __weak;
-स्थिर काष्ठा bpf_func_proto bpf_snम_लिखो_btf_proto __weak;
-स्थिर काष्ठा bpf_func_proto bpf_seq_म_लिखो_btf_proto __weak;
+const struct bpf_func_proto bpf_get_current_pid_tgid_proto __weak;
+const struct bpf_func_proto bpf_get_current_uid_gid_proto __weak;
+const struct bpf_func_proto bpf_get_current_comm_proto __weak;
+const struct bpf_func_proto bpf_get_current_cgroup_id_proto __weak;
+const struct bpf_func_proto bpf_get_current_ancestor_cgroup_id_proto __weak;
+const struct bpf_func_proto bpf_get_local_storage_proto __weak;
+const struct bpf_func_proto bpf_get_ns_current_pid_tgid_proto __weak;
+const struct bpf_func_proto bpf_snprintf_btf_proto __weak;
+const struct bpf_func_proto bpf_seq_printf_btf_proto __weak;
 
-स्थिर काष्ठा bpf_func_proto * __weak bpf_get_trace_prपूर्णांकk_proto(व्योम)
-अणु
-	वापस शून्य;
-पूर्ण
+const struct bpf_func_proto * __weak bpf_get_trace_printk_proto(void)
+{
+	return NULL;
+}
 
 u64 __weak
-bpf_event_output(काष्ठा bpf_map *map, u64 flags, व्योम *meta, u64 meta_size,
-		 व्योम *ctx, u64 ctx_size, bpf_ctx_copy_t ctx_copy)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+bpf_event_output(struct bpf_map *map, u64 flags, void *meta, u64 meta_size,
+		 void *ctx, u64 ctx_size, bpf_ctx_copy_t ctx_copy)
+{
+	return -ENOTSUPP;
+}
 EXPORT_SYMBOL_GPL(bpf_event_output);
 
 /* Always built-in helper functions. */
-स्थिर काष्ठा bpf_func_proto bpf_tail_call_proto = अणु
-	.func		= शून्य,
+const struct bpf_func_proto bpf_tail_call_proto = {
+	.func		= NULL,
 	.gpl_only	= false,
 	.ret_type	= RET_VOID,
 	.arg1_type	= ARG_PTR_TO_CTX,
 	.arg2_type	= ARG_CONST_MAP_PTR,
 	.arg3_type	= ARG_ANYTHING,
-पूर्ण;
+};
 
-/* Stub क्रम JITs that only support cBPF. eBPF programs are पूर्णांकerpreted.
- * It is encouraged to implement bpf_पूर्णांक_jit_compile() instead, so that
+/* Stub for JITs that only support cBPF. eBPF programs are interpreted.
+ * It is encouraged to implement bpf_int_jit_compile() instead, so that
  * eBPF and implicitly also cBPF can get JITed!
  */
-काष्ठा bpf_prog * __weak bpf_पूर्णांक_jit_compile(काष्ठा bpf_prog *prog)
-अणु
-	वापस prog;
-पूर्ण
+struct bpf_prog * __weak bpf_int_jit_compile(struct bpf_prog *prog)
+{
+	return prog;
+}
 
-/* Stub क्रम JITs that support eBPF. All cBPF code माला_लो transक्रमmed पूर्णांकo
- * eBPF by the kernel and is later compiled by bpf_पूर्णांक_jit_compile().
+/* Stub for JITs that support eBPF. All cBPF code gets transformed into
+ * eBPF by the kernel and is later compiled by bpf_int_jit_compile().
  */
-व्योम __weak bpf_jit_compile(काष्ठा bpf_prog *prog)
-अणु
-पूर्ण
+void __weak bpf_jit_compile(struct bpf_prog *prog)
+{
+}
 
-bool __weak bpf_helper_changes_pkt_data(व्योम *func)
-अणु
-	वापस false;
-पूर्ण
+bool __weak bpf_helper_changes_pkt_data(void *func)
+{
+	return false;
+}
 
-/* Return TRUE अगर the JIT backend wants verअगरier to enable sub-रेजिस्टर usage
- * analysis code and wants explicit zero extension inserted by verअगरier.
- * Otherwise, वापस FALSE.
+/* Return TRUE if the JIT backend wants verifier to enable sub-register usage
+ * analysis code and wants explicit zero extension inserted by verifier.
+ * Otherwise, return FALSE.
  *
- * The verअगरier inserts an explicit zero extension after BPF_CMPXCHGs even अगर
- * you करोn't override this. JITs that don't want these extra insns can detect
+ * The verifier inserts an explicit zero extension after BPF_CMPXCHGs even if
+ * you don't override this. JITs that don't want these extra insns can detect
  * them using insn_is_zext.
  */
-bool __weak bpf_jit_needs_zext(व्योम)
-अणु
-	वापस false;
-पूर्ण
+bool __weak bpf_jit_needs_zext(void)
+{
+	return false;
+}
 
-bool __weak bpf_jit_supports_kfunc_call(व्योम)
-अणु
-	वापस false;
-पूर्ण
+bool __weak bpf_jit_supports_kfunc_call(void)
+{
+	return false;
+}
 
-/* To execute LD_ABS/LD_IND inकाष्ठाions __bpf_prog_run() may call
- * skb_copy_bits(), so provide a weak definition of it क्रम NET-less config.
+/* To execute LD_ABS/LD_IND instructions __bpf_prog_run() may call
+ * skb_copy_bits(), so provide a weak definition of it for NET-less config.
  */
-पूर्णांक __weak skb_copy_bits(स्थिर काष्ठा sk_buff *skb, पूर्णांक offset, व्योम *to,
-			 पूर्णांक len)
-अणु
-	वापस -EFAULT;
-पूर्ण
+int __weak skb_copy_bits(const struct sk_buff *skb, int offset, void *to,
+			 int len)
+{
+	return -EFAULT;
+}
 
-पूर्णांक __weak bpf_arch_text_poke(व्योम *ip, क्रमागत bpf_text_poke_type t,
-			      व्योम *addr1, व्योम *addr2)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+int __weak bpf_arch_text_poke(void *ip, enum bpf_text_poke_type t,
+			      void *addr1, void *addr2)
+{
+	return -ENOTSUPP;
+}
 
 DEFINE_STATIC_KEY_FALSE(bpf_stats_enabled_key);
 EXPORT_SYMBOL(bpf_stats_enabled_key);
 
-/* All definitions of tracepoपूर्णांकs related to BPF. */
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <linux/bpf_trace.h>
+/* All definitions of tracepoints related to BPF. */
+#define CREATE_TRACE_POINTS
+#include <linux/bpf_trace.h>
 
 EXPORT_TRACEPOINT_SYMBOL_GPL(xdp_exception);
 EXPORT_TRACEPOINT_SYMBOL_GPL(xdp_bulk_tx);

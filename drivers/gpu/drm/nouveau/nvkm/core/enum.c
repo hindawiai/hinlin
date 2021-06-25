@@ -1,15 +1,14 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2010 Nouveau Project
  *
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining
- * a copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -25,33 +24,33 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#समावेश <core/क्रमागत.h>
+#include <core/enum.h>
 
-स्थिर काष्ठा nvkm_क्रमागत *
-nvkm_क्रमागत_find(स्थिर काष्ठा nvkm_क्रमागत *en, u32 value)
-अणु
-	जबतक (en->name) अणु
-		अगर (en->value == value)
-			वापस en;
+const struct nvkm_enum *
+nvkm_enum_find(const struct nvkm_enum *en, u32 value)
+{
+	while (en->name) {
+		if (en->value == value)
+			return en;
 		en++;
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-व्योम
-nvkm_snprपूर्णांकbf(अक्षर *data, पूर्णांक size, स्थिर काष्ठा nvkm_bitfield *bf, u32 value)
-अणु
+void
+nvkm_snprintbf(char *data, int size, const struct nvkm_bitfield *bf, u32 value)
+{
 	bool space = false;
-	जबतक (size >= 1 && bf->name) अणु
-		अगर (value & bf->mask) अणु
-			पूर्णांक this = snम_लिखो(data, size, "%s%s",
+	while (size >= 1 && bf->name) {
+		if (value & bf->mask) {
+			int this = snprintf(data, size, "%s%s",
 					    space ? " " : "", bf->name);
 			size -= this;
 			data += this;
 			space = true;
-		पूर्ण
+		}
 		bf++;
-	पूर्ण
+	}
 	data[0] = '\0';
-पूर्ण
+}

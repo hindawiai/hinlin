@@ -1,600 +1,599 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * drivers/net/macsec.c - MACsec device
  *
  * Copyright (c) 2015 Sabrina Dubroca <sd@queasysnail.net>
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/module.h>
-#समावेश <crypto/aead.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/refcount.h>
-#समावेश <net/genetlink.h>
-#समावेश <net/sock.h>
-#समावेश <net/gro_cells.h>
-#समावेश <net/macsec.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/byteorder/generic.h>
-#समावेश <linux/अगर_arp.h>
+#include <linux/types.h>
+#include <linux/skbuff.h>
+#include <linux/socket.h>
+#include <linux/module.h>
+#include <crypto/aead.h>
+#include <linux/etherdevice.h>
+#include <linux/netdevice.h>
+#include <linux/rtnetlink.h>
+#include <linux/refcount.h>
+#include <net/genetlink.h>
+#include <net/sock.h>
+#include <net/gro_cells.h>
+#include <net/macsec.h>
+#include <linux/phy.h>
+#include <linux/byteorder/generic.h>
+#include <linux/if_arp.h>
 
-#समावेश <uapi/linux/अगर_macsec.h>
+#include <uapi/linux/if_macsec.h>
 
-#घोषणा MACSEC_SCI_LEN 8
+#define MACSEC_SCI_LEN 8
 
 /* SecTAG length = macsec_eth_header without the optional SCI */
-#घोषणा MACSEC_TAG_LEN 6
+#define MACSEC_TAG_LEN 6
 
-काष्ठा macsec_eth_header अणु
-	काष्ठा ethhdr eth;
+struct macsec_eth_header {
+	struct ethhdr eth;
 	/* SecTAG */
 	u8  tci_an;
-#अगर defined(__LITTLE_ENDIAN_BITFIELD)
-	u8  लघु_length:6,
+#if defined(__LITTLE_ENDIAN_BITFIELD)
+	u8  short_length:6,
 		  unused:2;
-#या_अगर defined(__BIG_ENDIAN_BITFIELD)
+#elif defined(__BIG_ENDIAN_BITFIELD)
 	u8        unused:2,
-	    लघु_length:6;
-#अन्यथा
-#त्रुटि	"Please fix <asm/byteorder.h>"
-#पूर्ण_अगर
+	    short_length:6;
+#else
+#error	"Please fix <asm/byteorder.h>"
+#endif
 	__be32 packet_number;
 	u8 secure_channel_id[8]; /* optional */
-पूर्ण __packed;
+} __packed;
 
-#घोषणा MACSEC_TCI_VERSION 0x80
-#घोषणा MACSEC_TCI_ES      0x40 /* end station */
-#घोषणा MACSEC_TCI_SC      0x20 /* SCI present */
-#घोषणा MACSEC_TCI_SCB     0x10 /* epon */
-#घोषणा MACSEC_TCI_E       0x08 /* encryption */
-#घोषणा MACSEC_TCI_C       0x04 /* changed text */
-#घोषणा MACSEC_AN_MASK     0x03 /* association number */
-#घोषणा MACSEC_TCI_CONFID  (MACSEC_TCI_E | MACSEC_TCI_C)
+#define MACSEC_TCI_VERSION 0x80
+#define MACSEC_TCI_ES      0x40 /* end station */
+#define MACSEC_TCI_SC      0x20 /* SCI present */
+#define MACSEC_TCI_SCB     0x10 /* epon */
+#define MACSEC_TCI_E       0x08 /* encryption */
+#define MACSEC_TCI_C       0x04 /* changed text */
+#define MACSEC_AN_MASK     0x03 /* association number */
+#define MACSEC_TCI_CONFID  (MACSEC_TCI_E | MACSEC_TCI_C)
 
 /* minimum secure data length deemed "not short", see IEEE 802.1AE-2006 9.7 */
-#घोषणा MIN_NON_SHORT_LEN 48
+#define MIN_NON_SHORT_LEN 48
 
-#घोषणा GCM_AES_IV_LEN 12
-#घोषणा DEFAULT_ICV_LEN 16
+#define GCM_AES_IV_LEN 12
+#define DEFAULT_ICV_LEN 16
 
-#घोषणा क्रम_each_rxsc(secy, sc)				\
-	क्रम (sc = rcu_dereference_bh(secy->rx_sc);	\
+#define for_each_rxsc(secy, sc)				\
+	for (sc = rcu_dereference_bh(secy->rx_sc);	\
 	     sc;					\
 	     sc = rcu_dereference_bh(sc->next))
-#घोषणा क्रम_each_rxsc_rtnl(secy, sc)			\
-	क्रम (sc = rtnl_dereference(secy->rx_sc);	\
+#define for_each_rxsc_rtnl(secy, sc)			\
+	for (sc = rtnl_dereference(secy->rx_sc);	\
 	     sc;					\
 	     sc = rtnl_dereference(sc->next))
 
-#घोषणा pn_same_half(pn1, pn2) (!(((pn1) >> 31) ^ ((pn2) >> 31)))
+#define pn_same_half(pn1, pn2) (!(((pn1) >> 31) ^ ((pn2) >> 31)))
 
-काष्ठा gcm_iv_xpn अणु
-	जोड़ अणु
-		u8 लघु_secure_channel_id[4];
+struct gcm_iv_xpn {
+	union {
+		u8 short_secure_channel_id[4];
 		ssci_t ssci;
-	पूर्ण;
+	};
 	__be64 pn;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा gcm_iv अणु
-	जोड़ अणु
+struct gcm_iv {
+	union {
 		u8 secure_channel_id[8];
 		sci_t sci;
-	पूर्ण;
+	};
 	__be32 pn;
-पूर्ण;
+};
 
-#घोषणा MACSEC_VALIDATE_DEFAULT MACSEC_VALIDATE_STRICT
+#define MACSEC_VALIDATE_DEFAULT MACSEC_VALIDATE_STRICT
 
-काष्ठा pcpu_secy_stats अणु
-	काष्ठा macsec_dev_stats stats;
-	काष्ठा u64_stats_sync syncp;
-पूर्ण;
+struct pcpu_secy_stats {
+	struct macsec_dev_stats stats;
+	struct u64_stats_sync syncp;
+};
 
 /**
- * काष्ठा macsec_dev - निजी data
+ * struct macsec_dev - private data
  * @secy: SecY config
- * @real_dev: poपूर्णांकer to underlying netdevice
+ * @real_dev: pointer to underlying netdevice
  * @stats: MACsec device stats
  * @secys: linked list of SecY's on the underlying device
- * @gro_cells: poपूर्णांकer to the Generic Receive Offload cell
+ * @gro_cells: pointer to the Generic Receive Offload cell
  * @offload: status of offloading on the MACsec device
  */
-काष्ठा macsec_dev अणु
-	काष्ठा macsec_secy secy;
-	काष्ठा net_device *real_dev;
-	काष्ठा pcpu_secy_stats __percpu *stats;
-	काष्ठा list_head secys;
-	काष्ठा gro_cells gro_cells;
-	क्रमागत macsec_offload offload;
-पूर्ण;
+struct macsec_dev {
+	struct macsec_secy secy;
+	struct net_device *real_dev;
+	struct pcpu_secy_stats __percpu *stats;
+	struct list_head secys;
+	struct gro_cells gro_cells;
+	enum macsec_offload offload;
+};
 
 /**
- * काष्ठा macsec_rxh_data - rx_handler निजी argument
+ * struct macsec_rxh_data - rx_handler private argument
  * @secys: linked list of SecY's on this underlying device
  */
-काष्ठा macsec_rxh_data अणु
-	काष्ठा list_head secys;
-पूर्ण;
+struct macsec_rxh_data {
+	struct list_head secys;
+};
 
-अटल काष्ठा macsec_dev *macsec_priv(स्थिर काष्ठा net_device *dev)
-अणु
-	वापस (काष्ठा macsec_dev *)netdev_priv(dev);
-पूर्ण
+static struct macsec_dev *macsec_priv(const struct net_device *dev)
+{
+	return (struct macsec_dev *)netdev_priv(dev);
+}
 
-अटल काष्ठा macsec_rxh_data *macsec_data_rcu(स्थिर काष्ठा net_device *dev)
-अणु
-	वापस rcu_dereference_bh(dev->rx_handler_data);
-पूर्ण
+static struct macsec_rxh_data *macsec_data_rcu(const struct net_device *dev)
+{
+	return rcu_dereference_bh(dev->rx_handler_data);
+}
 
-अटल काष्ठा macsec_rxh_data *macsec_data_rtnl(स्थिर काष्ठा net_device *dev)
-अणु
-	वापस rtnl_dereference(dev->rx_handler_data);
-पूर्ण
+static struct macsec_rxh_data *macsec_data_rtnl(const struct net_device *dev)
+{
+	return rtnl_dereference(dev->rx_handler_data);
+}
 
-काष्ठा macsec_cb अणु
-	काष्ठा aead_request *req;
-	जोड़ अणु
-		काष्ठा macsec_tx_sa *tx_sa;
-		काष्ठा macsec_rx_sa *rx_sa;
-	पूर्ण;
+struct macsec_cb {
+	struct aead_request *req;
+	union {
+		struct macsec_tx_sa *tx_sa;
+		struct macsec_rx_sa *rx_sa;
+	};
 	u8 assoc_num;
 	bool valid;
 	bool has_sci;
-पूर्ण;
+};
 
-अटल काष्ठा macsec_rx_sa *macsec_rxsa_get(काष्ठा macsec_rx_sa __rcu *ptr)
-अणु
-	काष्ठा macsec_rx_sa *sa = rcu_dereference_bh(ptr);
+static struct macsec_rx_sa *macsec_rxsa_get(struct macsec_rx_sa __rcu *ptr)
+{
+	struct macsec_rx_sa *sa = rcu_dereference_bh(ptr);
 
-	अगर (!sa || !sa->active)
-		वापस शून्य;
+	if (!sa || !sa->active)
+		return NULL;
 
-	अगर (!refcount_inc_not_zero(&sa->refcnt))
-		वापस शून्य;
+	if (!refcount_inc_not_zero(&sa->refcnt))
+		return NULL;
 
-	वापस sa;
-पूर्ण
+	return sa;
+}
 
-अटल व्योम मुक्त_rx_sc_rcu(काष्ठा rcu_head *head)
-अणु
-	काष्ठा macsec_rx_sc *rx_sc = container_of(head, काष्ठा macsec_rx_sc, rcu_head);
+static void free_rx_sc_rcu(struct rcu_head *head)
+{
+	struct macsec_rx_sc *rx_sc = container_of(head, struct macsec_rx_sc, rcu_head);
 
-	मुक्त_percpu(rx_sc->stats);
-	kमुक्त(rx_sc);
-पूर्ण
+	free_percpu(rx_sc->stats);
+	kfree(rx_sc);
+}
 
-अटल काष्ठा macsec_rx_sc *macsec_rxsc_get(काष्ठा macsec_rx_sc *sc)
-अणु
-	वापस refcount_inc_not_zero(&sc->refcnt) ? sc : शून्य;
-पूर्ण
+static struct macsec_rx_sc *macsec_rxsc_get(struct macsec_rx_sc *sc)
+{
+	return refcount_inc_not_zero(&sc->refcnt) ? sc : NULL;
+}
 
-अटल व्योम macsec_rxsc_put(काष्ठा macsec_rx_sc *sc)
-अणु
-	अगर (refcount_dec_and_test(&sc->refcnt))
-		call_rcu(&sc->rcu_head, मुक्त_rx_sc_rcu);
-पूर्ण
+static void macsec_rxsc_put(struct macsec_rx_sc *sc)
+{
+	if (refcount_dec_and_test(&sc->refcnt))
+		call_rcu(&sc->rcu_head, free_rx_sc_rcu);
+}
 
-अटल व्योम मुक्त_rxsa(काष्ठा rcu_head *head)
-अणु
-	काष्ठा macsec_rx_sa *sa = container_of(head, काष्ठा macsec_rx_sa, rcu);
+static void free_rxsa(struct rcu_head *head)
+{
+	struct macsec_rx_sa *sa = container_of(head, struct macsec_rx_sa, rcu);
 
-	crypto_मुक्त_aead(sa->key.tfm);
-	मुक्त_percpu(sa->stats);
-	kमुक्त(sa);
-पूर्ण
+	crypto_free_aead(sa->key.tfm);
+	free_percpu(sa->stats);
+	kfree(sa);
+}
 
-अटल व्योम macsec_rxsa_put(काष्ठा macsec_rx_sa *sa)
-अणु
-	अगर (refcount_dec_and_test(&sa->refcnt))
-		call_rcu(&sa->rcu, मुक्त_rxsa);
-पूर्ण
+static void macsec_rxsa_put(struct macsec_rx_sa *sa)
+{
+	if (refcount_dec_and_test(&sa->refcnt))
+		call_rcu(&sa->rcu, free_rxsa);
+}
 
-अटल काष्ठा macsec_tx_sa *macsec_txsa_get(काष्ठा macsec_tx_sa __rcu *ptr)
-अणु
-	काष्ठा macsec_tx_sa *sa = rcu_dereference_bh(ptr);
+static struct macsec_tx_sa *macsec_txsa_get(struct macsec_tx_sa __rcu *ptr)
+{
+	struct macsec_tx_sa *sa = rcu_dereference_bh(ptr);
 
-	अगर (!sa || !sa->active)
-		वापस शून्य;
+	if (!sa || !sa->active)
+		return NULL;
 
-	अगर (!refcount_inc_not_zero(&sa->refcnt))
-		वापस शून्य;
+	if (!refcount_inc_not_zero(&sa->refcnt))
+		return NULL;
 
-	वापस sa;
-पूर्ण
+	return sa;
+}
 
-अटल व्योम मुक्त_txsa(काष्ठा rcu_head *head)
-अणु
-	काष्ठा macsec_tx_sa *sa = container_of(head, काष्ठा macsec_tx_sa, rcu);
+static void free_txsa(struct rcu_head *head)
+{
+	struct macsec_tx_sa *sa = container_of(head, struct macsec_tx_sa, rcu);
 
-	crypto_मुक्त_aead(sa->key.tfm);
-	मुक्त_percpu(sa->stats);
-	kमुक्त(sa);
-पूर्ण
+	crypto_free_aead(sa->key.tfm);
+	free_percpu(sa->stats);
+	kfree(sa);
+}
 
-अटल व्योम macsec_txsa_put(काष्ठा macsec_tx_sa *sa)
-अणु
-	अगर (refcount_dec_and_test(&sa->refcnt))
-		call_rcu(&sa->rcu, मुक्त_txsa);
-पूर्ण
+static void macsec_txsa_put(struct macsec_tx_sa *sa)
+{
+	if (refcount_dec_and_test(&sa->refcnt))
+		call_rcu(&sa->rcu, free_txsa);
+}
 
-अटल काष्ठा macsec_cb *macsec_skb_cb(काष्ठा sk_buff *skb)
-अणु
-	BUILD_BUG_ON(माप(काष्ठा macsec_cb) > माप(skb->cb));
-	वापस (काष्ठा macsec_cb *)skb->cb;
-पूर्ण
+static struct macsec_cb *macsec_skb_cb(struct sk_buff *skb)
+{
+	BUILD_BUG_ON(sizeof(struct macsec_cb) > sizeof(skb->cb));
+	return (struct macsec_cb *)skb->cb;
+}
 
-#घोषणा MACSEC_PORT_ES (htons(0x0001))
-#घोषणा MACSEC_PORT_SCB (0x0000)
-#घोषणा MACSEC_UNDEF_SCI ((__क्रमce sci_t)0xffffffffffffffffULL)
-#घोषणा MACSEC_UNDEF_SSCI ((__क्रमce ssci_t)0xffffffff)
+#define MACSEC_PORT_ES (htons(0x0001))
+#define MACSEC_PORT_SCB (0x0000)
+#define MACSEC_UNDEF_SCI ((__force sci_t)0xffffffffffffffffULL)
+#define MACSEC_UNDEF_SSCI ((__force ssci_t)0xffffffff)
 
-#घोषणा MACSEC_GCM_AES_128_SAK_LEN 16
-#घोषणा MACSEC_GCM_AES_256_SAK_LEN 32
+#define MACSEC_GCM_AES_128_SAK_LEN 16
+#define MACSEC_GCM_AES_256_SAK_LEN 32
 
-#घोषणा DEFAULT_SAK_LEN MACSEC_GCM_AES_128_SAK_LEN
-#घोषणा DEFAULT_XPN false
-#घोषणा DEFAULT_SEND_SCI true
-#घोषणा DEFAULT_ENCRYPT false
-#घोषणा DEFAULT_ENCODING_SA 0
+#define DEFAULT_SAK_LEN MACSEC_GCM_AES_128_SAK_LEN
+#define DEFAULT_XPN false
+#define DEFAULT_SEND_SCI true
+#define DEFAULT_ENCRYPT false
+#define DEFAULT_ENCODING_SA 0
 
-अटल bool send_sci(स्थिर काष्ठा macsec_secy *secy)
-अणु
-	स्थिर काष्ठा macsec_tx_sc *tx_sc = &secy->tx_sc;
+static bool send_sci(const struct macsec_secy *secy)
+{
+	const struct macsec_tx_sc *tx_sc = &secy->tx_sc;
 
-	वापस tx_sc->send_sci ||
+	return tx_sc->send_sci ||
 		(secy->n_rx_sc > 1 && !tx_sc->end_station && !tx_sc->scb);
-पूर्ण
+}
 
-अटल sci_t make_sci(u8 *addr, __be16 port)
-अणु
+static sci_t make_sci(u8 *addr, __be16 port)
+{
 	sci_t sci;
 
-	स_नकल(&sci, addr, ETH_ALEN);
-	स_नकल(((अक्षर *)&sci) + ETH_ALEN, &port, माप(port));
+	memcpy(&sci, addr, ETH_ALEN);
+	memcpy(((char *)&sci) + ETH_ALEN, &port, sizeof(port));
 
-	वापस sci;
-पूर्ण
+	return sci;
+}
 
-अटल sci_t macsec_frame_sci(काष्ठा macsec_eth_header *hdr, bool sci_present)
-अणु
+static sci_t macsec_frame_sci(struct macsec_eth_header *hdr, bool sci_present)
+{
 	sci_t sci;
 
-	अगर (sci_present)
-		स_नकल(&sci, hdr->secure_channel_id,
-		       माप(hdr->secure_channel_id));
-	अन्यथा
+	if (sci_present)
+		memcpy(&sci, hdr->secure_channel_id,
+		       sizeof(hdr->secure_channel_id));
+	else
 		sci = make_sci(hdr->eth.h_source, MACSEC_PORT_ES);
 
-	वापस sci;
-पूर्ण
+	return sci;
+}
 
-अटल अचिन्हित पूर्णांक macsec_sectag_len(bool sci_present)
-अणु
-	वापस MACSEC_TAG_LEN + (sci_present ? MACSEC_SCI_LEN : 0);
-पूर्ण
+static unsigned int macsec_sectag_len(bool sci_present)
+{
+	return MACSEC_TAG_LEN + (sci_present ? MACSEC_SCI_LEN : 0);
+}
 
-अटल अचिन्हित पूर्णांक macsec_hdr_len(bool sci_present)
-अणु
-	वापस macsec_sectag_len(sci_present) + ETH_HLEN;
-पूर्ण
+static unsigned int macsec_hdr_len(bool sci_present)
+{
+	return macsec_sectag_len(sci_present) + ETH_HLEN;
+}
 
-अटल अचिन्हित पूर्णांक macsec_extra_len(bool sci_present)
-अणु
-	वापस macsec_sectag_len(sci_present) + माप(__be16);
-पूर्ण
+static unsigned int macsec_extra_len(bool sci_present)
+{
+	return macsec_sectag_len(sci_present) + sizeof(__be16);
+}
 
 /* Fill SecTAG according to IEEE 802.1AE-2006 10.5.3 */
-अटल व्योम macsec_fill_sectag(काष्ठा macsec_eth_header *h,
-			       स्थिर काष्ठा macsec_secy *secy, u32 pn,
+static void macsec_fill_sectag(struct macsec_eth_header *h,
+			       const struct macsec_secy *secy, u32 pn,
 			       bool sci_present)
-अणु
-	स्थिर काष्ठा macsec_tx_sc *tx_sc = &secy->tx_sc;
+{
+	const struct macsec_tx_sc *tx_sc = &secy->tx_sc;
 
-	स_रखो(&h->tci_an, 0, macsec_sectag_len(sci_present));
+	memset(&h->tci_an, 0, macsec_sectag_len(sci_present));
 	h->eth.h_proto = htons(ETH_P_MACSEC);
 
-	अगर (sci_present) अणु
+	if (sci_present) {
 		h->tci_an |= MACSEC_TCI_SC;
-		स_नकल(&h->secure_channel_id, &secy->sci,
-		       माप(h->secure_channel_id));
-	पूर्ण अन्यथा अणु
-		अगर (tx_sc->end_station)
+		memcpy(&h->secure_channel_id, &secy->sci,
+		       sizeof(h->secure_channel_id));
+	} else {
+		if (tx_sc->end_station)
 			h->tci_an |= MACSEC_TCI_ES;
-		अगर (tx_sc->scb)
+		if (tx_sc->scb)
 			h->tci_an |= MACSEC_TCI_SCB;
-	पूर्ण
+	}
 
 	h->packet_number = htonl(pn);
 
-	/* with GCM, C/E clear क्रम !encrypt, both set क्रम encrypt */
-	अगर (tx_sc->encrypt)
+	/* with GCM, C/E clear for !encrypt, both set for encrypt */
+	if (tx_sc->encrypt)
 		h->tci_an |= MACSEC_TCI_CONFID;
-	अन्यथा अगर (secy->icv_len != DEFAULT_ICV_LEN)
+	else if (secy->icv_len != DEFAULT_ICV_LEN)
 		h->tci_an |= MACSEC_TCI_C;
 
 	h->tci_an |= tx_sc->encoding_sa;
-पूर्ण
+}
 
-अटल व्योम macsec_set_लघुlen(काष्ठा macsec_eth_header *h, माप_प्रकार data_len)
-अणु
-	अगर (data_len < MIN_NON_SHORT_LEN)
-		h->लघु_length = data_len;
-पूर्ण
+static void macsec_set_shortlen(struct macsec_eth_header *h, size_t data_len)
+{
+	if (data_len < MIN_NON_SHORT_LEN)
+		h->short_length = data_len;
+}
 
-/* Checks अगर a MACsec पूर्णांकerface is being offloaded to an hardware engine */
-अटल bool macsec_is_offloaded(काष्ठा macsec_dev *macsec)
-अणु
-	अगर (macsec->offload == MACSEC_OFFLOAD_MAC ||
+/* Checks if a MACsec interface is being offloaded to an hardware engine */
+static bool macsec_is_offloaded(struct macsec_dev *macsec)
+{
+	if (macsec->offload == MACSEC_OFFLOAD_MAC ||
 	    macsec->offload == MACSEC_OFFLOAD_PHY)
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-/* Checks अगर underlying layers implement MACsec offloading functions. */
-अटल bool macsec_check_offload(क्रमागत macsec_offload offload,
-				 काष्ठा macsec_dev *macsec)
-अणु
-	अगर (!macsec || !macsec->real_dev)
-		वापस false;
+/* Checks if underlying layers implement MACsec offloading functions. */
+static bool macsec_check_offload(enum macsec_offload offload,
+				 struct macsec_dev *macsec)
+{
+	if (!macsec || !macsec->real_dev)
+		return false;
 
-	अगर (offload == MACSEC_OFFLOAD_PHY)
-		वापस macsec->real_dev->phydev &&
+	if (offload == MACSEC_OFFLOAD_PHY)
+		return macsec->real_dev->phydev &&
 		       macsec->real_dev->phydev->macsec_ops;
-	अन्यथा अगर (offload == MACSEC_OFFLOAD_MAC)
-		वापस macsec->real_dev->features & NETIF_F_HW_MACSEC &&
+	else if (offload == MACSEC_OFFLOAD_MAC)
+		return macsec->real_dev->features & NETIF_F_HW_MACSEC &&
 		       macsec->real_dev->macsec_ops;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल स्थिर काष्ठा macsec_ops *__macsec_get_ops(क्रमागत macsec_offload offload,
-						 काष्ठा macsec_dev *macsec,
-						 काष्ठा macsec_context *ctx)
-अणु
-	अगर (ctx) अणु
-		स_रखो(ctx, 0, माप(*ctx));
+static const struct macsec_ops *__macsec_get_ops(enum macsec_offload offload,
+						 struct macsec_dev *macsec,
+						 struct macsec_context *ctx)
+{
+	if (ctx) {
+		memset(ctx, 0, sizeof(*ctx));
 		ctx->offload = offload;
 
-		अगर (offload == MACSEC_OFFLOAD_PHY)
+		if (offload == MACSEC_OFFLOAD_PHY)
 			ctx->phydev = macsec->real_dev->phydev;
-		अन्यथा अगर (offload == MACSEC_OFFLOAD_MAC)
+		else if (offload == MACSEC_OFFLOAD_MAC)
 			ctx->netdev = macsec->real_dev;
-	पूर्ण
+	}
 
-	अगर (offload == MACSEC_OFFLOAD_PHY)
-		वापस macsec->real_dev->phydev->macsec_ops;
-	अन्यथा
-		वापस macsec->real_dev->macsec_ops;
-पूर्ण
+	if (offload == MACSEC_OFFLOAD_PHY)
+		return macsec->real_dev->phydev->macsec_ops;
+	else
+		return macsec->real_dev->macsec_ops;
+}
 
-/* Returns a poपूर्णांकer to the MACsec ops काष्ठा अगर any and updates the MACsec
- * context device reference अगर provided.
+/* Returns a pointer to the MACsec ops struct if any and updates the MACsec
+ * context device reference if provided.
  */
-अटल स्थिर काष्ठा macsec_ops *macsec_get_ops(काष्ठा macsec_dev *macsec,
-					       काष्ठा macsec_context *ctx)
-अणु
-	अगर (!macsec_check_offload(macsec->offload, macsec))
-		वापस शून्य;
+static const struct macsec_ops *macsec_get_ops(struct macsec_dev *macsec,
+					       struct macsec_context *ctx)
+{
+	if (!macsec_check_offload(macsec->offload, macsec))
+		return NULL;
 
-	वापस __macsec_get_ops(macsec->offload, macsec, ctx);
-पूर्ण
+	return __macsec_get_ops(macsec->offload, macsec, ctx);
+}
 
 /* validate MACsec packet according to IEEE 802.1AE-2018 9.12 */
-अटल bool macsec_validate_skb(काष्ठा sk_buff *skb, u16 icv_len, bool xpn)
-अणु
-	काष्ठा macsec_eth_header *h = (काष्ठा macsec_eth_header *)skb->data;
-	पूर्णांक len = skb->len - 2 * ETH_ALEN;
-	पूर्णांक extra_len = macsec_extra_len(!!(h->tci_an & MACSEC_TCI_SC)) + icv_len;
+static bool macsec_validate_skb(struct sk_buff *skb, u16 icv_len, bool xpn)
+{
+	struct macsec_eth_header *h = (struct macsec_eth_header *)skb->data;
+	int len = skb->len - 2 * ETH_ALEN;
+	int extra_len = macsec_extra_len(!!(h->tci_an & MACSEC_TCI_SC)) + icv_len;
 
 	/* a) It comprises at least 17 octets */
-	अगर (skb->len <= 16)
-		वापस false;
+	if (skb->len <= 16)
+		return false;
 
-	/* b) MACsec EtherType: alपढ़ोy checked */
+	/* b) MACsec EtherType: already checked */
 
 	/* c) V bit is clear */
-	अगर (h->tci_an & MACSEC_TCI_VERSION)
-		वापस false;
+	if (h->tci_an & MACSEC_TCI_VERSION)
+		return false;
 
 	/* d) ES or SCB => !SC */
-	अगर ((h->tci_an & MACSEC_TCI_ES || h->tci_an & MACSEC_TCI_SCB) &&
+	if ((h->tci_an & MACSEC_TCI_ES || h->tci_an & MACSEC_TCI_SCB) &&
 	    (h->tci_an & MACSEC_TCI_SC))
-		वापस false;
+		return false;
 
 	/* e) Bits 7 and 8 of octet 4 of the SecTAG are clear */
-	अगर (h->unused)
-		वापस false;
+	if (h->unused)
+		return false;
 
-	/* rx.pn != 0 अगर not XPN (figure 10-5 with 802.11AEbw-2013 amendment) */
-	अगर (!h->packet_number && !xpn)
-		वापस false;
+	/* rx.pn != 0 if not XPN (figure 10-5 with 802.11AEbw-2013 amendment) */
+	if (!h->packet_number && !xpn)
+		return false;
 
 	/* length check, f) g) h) i) */
-	अगर (h->लघु_length)
-		वापस len == extra_len + h->लघु_length;
-	वापस len >= extra_len + MIN_NON_SHORT_LEN;
-पूर्ण
+	if (h->short_length)
+		return len == extra_len + h->short_length;
+	return len >= extra_len + MIN_NON_SHORT_LEN;
+}
 
-#घोषणा MACSEC_NEEDED_HEADROOM (macsec_extra_len(true))
-#घोषणा MACSEC_NEEDED_TAILROOM MACSEC_STD_ICV_LEN
+#define MACSEC_NEEDED_HEADROOM (macsec_extra_len(true))
+#define MACSEC_NEEDED_TAILROOM MACSEC_STD_ICV_LEN
 
-अटल व्योम macsec_fill_iv_xpn(अचिन्हित अक्षर *iv, ssci_t ssci, u64 pn,
+static void macsec_fill_iv_xpn(unsigned char *iv, ssci_t ssci, u64 pn,
 			       salt_t salt)
-अणु
-	काष्ठा gcm_iv_xpn *gcm_iv = (काष्ठा gcm_iv_xpn *)iv;
+{
+	struct gcm_iv_xpn *gcm_iv = (struct gcm_iv_xpn *)iv;
 
 	gcm_iv->ssci = ssci ^ salt.ssci;
 	gcm_iv->pn = cpu_to_be64(pn) ^ salt.pn;
-पूर्ण
+}
 
-अटल व्योम macsec_fill_iv(अचिन्हित अक्षर *iv, sci_t sci, u32 pn)
-अणु
-	काष्ठा gcm_iv *gcm_iv = (काष्ठा gcm_iv *)iv;
+static void macsec_fill_iv(unsigned char *iv, sci_t sci, u32 pn)
+{
+	struct gcm_iv *gcm_iv = (struct gcm_iv *)iv;
 
 	gcm_iv->sci = sci;
 	gcm_iv->pn = htonl(pn);
-पूर्ण
+}
 
-अटल काष्ठा macsec_eth_header *macsec_ethhdr(काष्ठा sk_buff *skb)
-अणु
-	वापस (काष्ठा macsec_eth_header *)skb_mac_header(skb);
-पूर्ण
+static struct macsec_eth_header *macsec_ethhdr(struct sk_buff *skb)
+{
+	return (struct macsec_eth_header *)skb_mac_header(skb);
+}
 
-अटल sci_t dev_to_sci(काष्ठा net_device *dev, __be16 port)
-अणु
-	वापस make_sci(dev->dev_addr, port);
-पूर्ण
+static sci_t dev_to_sci(struct net_device *dev, __be16 port)
+{
+	return make_sci(dev->dev_addr, port);
+}
 
-अटल व्योम __macsec_pn_wrapped(काष्ठा macsec_secy *secy,
-				काष्ठा macsec_tx_sa *tx_sa)
-अणु
+static void __macsec_pn_wrapped(struct macsec_secy *secy,
+				struct macsec_tx_sa *tx_sa)
+{
 	pr_debug("PN wrapped, transitioning to !oper\n");
 	tx_sa->active = false;
-	अगर (secy->protect_frames)
+	if (secy->protect_frames)
 		secy->operational = false;
-पूर्ण
+}
 
-व्योम macsec_pn_wrapped(काष्ठा macsec_secy *secy, काष्ठा macsec_tx_sa *tx_sa)
-अणु
+void macsec_pn_wrapped(struct macsec_secy *secy, struct macsec_tx_sa *tx_sa)
+{
 	spin_lock_bh(&tx_sa->lock);
 	__macsec_pn_wrapped(secy, tx_sa);
 	spin_unlock_bh(&tx_sa->lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(macsec_pn_wrapped);
 
-अटल pn_t tx_sa_update_pn(काष्ठा macsec_tx_sa *tx_sa,
-			    काष्ठा macsec_secy *secy)
-अणु
+static pn_t tx_sa_update_pn(struct macsec_tx_sa *tx_sa,
+			    struct macsec_secy *secy)
+{
 	pn_t pn;
 
 	spin_lock_bh(&tx_sa->lock);
 
 	pn = tx_sa->next_pn_halves;
-	अगर (secy->xpn)
+	if (secy->xpn)
 		tx_sa->next_pn++;
-	अन्यथा
+	else
 		tx_sa->next_pn_halves.lower++;
 
-	अगर (tx_sa->next_pn == 0)
+	if (tx_sa->next_pn == 0)
 		__macsec_pn_wrapped(secy, tx_sa);
 	spin_unlock_bh(&tx_sa->lock);
 
-	वापस pn;
-पूर्ण
+	return pn;
+}
 
-अटल व्योम macsec_encrypt_finish(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा macsec_dev *macsec = netdev_priv(dev);
+static void macsec_encrypt_finish(struct sk_buff *skb, struct net_device *dev)
+{
+	struct macsec_dev *macsec = netdev_priv(dev);
 
 	skb->dev = macsec->real_dev;
 	skb_reset_mac_header(skb);
 	skb->protocol = eth_hdr(skb)->h_proto;
-पूर्ण
+}
 
-अटल व्योम macsec_count_tx(काष्ठा sk_buff *skb, काष्ठा macsec_tx_sc *tx_sc,
-			    काष्ठा macsec_tx_sa *tx_sa)
-अणु
-	काष्ठा pcpu_tx_sc_stats *txsc_stats = this_cpu_ptr(tx_sc->stats);
+static void macsec_count_tx(struct sk_buff *skb, struct macsec_tx_sc *tx_sc,
+			    struct macsec_tx_sa *tx_sa)
+{
+	struct pcpu_tx_sc_stats *txsc_stats = this_cpu_ptr(tx_sc->stats);
 
 	u64_stats_update_begin(&txsc_stats->syncp);
-	अगर (tx_sc->encrypt) अणु
+	if (tx_sc->encrypt) {
 		txsc_stats->stats.OutOctetsEncrypted += skb->len;
 		txsc_stats->stats.OutPktsEncrypted++;
 		this_cpu_inc(tx_sa->stats->OutPktsEncrypted);
-	पूर्ण अन्यथा अणु
+	} else {
 		txsc_stats->stats.OutOctetsProtected += skb->len;
 		txsc_stats->stats.OutPktsProtected++;
 		this_cpu_inc(tx_sa->stats->OutPktsProtected);
-	पूर्ण
+	}
 	u64_stats_update_end(&txsc_stats->syncp);
-पूर्ण
+}
 
-अटल व्योम count_tx(काष्ठा net_device *dev, पूर्णांक ret, पूर्णांक len)
-अणु
-	अगर (likely(ret == NET_XMIT_SUCCESS || ret == NET_XMIT_CN)) अणु
-		काष्ठा pcpu_sw_netstats *stats = this_cpu_ptr(dev->tstats);
+static void count_tx(struct net_device *dev, int ret, int len)
+{
+	if (likely(ret == NET_XMIT_SUCCESS || ret == NET_XMIT_CN)) {
+		struct pcpu_sw_netstats *stats = this_cpu_ptr(dev->tstats);
 
 		u64_stats_update_begin(&stats->syncp);
 		stats->tx_packets++;
 		stats->tx_bytes += len;
 		u64_stats_update_end(&stats->syncp);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम macsec_encrypt_करोne(काष्ठा crypto_async_request *base, पूर्णांक err)
-अणु
-	काष्ठा sk_buff *skb = base->data;
-	काष्ठा net_device *dev = skb->dev;
-	काष्ठा macsec_dev *macsec = macsec_priv(dev);
-	काष्ठा macsec_tx_sa *sa = macsec_skb_cb(skb)->tx_sa;
-	पूर्णांक len, ret;
+static void macsec_encrypt_done(struct crypto_async_request *base, int err)
+{
+	struct sk_buff *skb = base->data;
+	struct net_device *dev = skb->dev;
+	struct macsec_dev *macsec = macsec_priv(dev);
+	struct macsec_tx_sa *sa = macsec_skb_cb(skb)->tx_sa;
+	int len, ret;
 
-	aead_request_मुक्त(macsec_skb_cb(skb)->req);
+	aead_request_free(macsec_skb_cb(skb)->req);
 
-	rcu_पढ़ो_lock_bh();
+	rcu_read_lock_bh();
 	macsec_encrypt_finish(skb, dev);
 	macsec_count_tx(skb, &macsec->secy.tx_sc, macsec_skb_cb(skb)->tx_sa);
 	len = skb->len;
 	ret = dev_queue_xmit(skb);
 	count_tx(dev, ret, len);
-	rcu_पढ़ो_unlock_bh();
+	rcu_read_unlock_bh();
 
 	macsec_txsa_put(sa);
 	dev_put(dev);
-पूर्ण
+}
 
-अटल काष्ठा aead_request *macsec_alloc_req(काष्ठा crypto_aead *tfm,
-					     अचिन्हित अक्षर **iv,
-					     काष्ठा scatterlist **sg,
-					     पूर्णांक num_frags)
-अणु
-	माप_प्रकार size, iv_offset, sg_offset;
-	काष्ठा aead_request *req;
-	व्योम *पंचांगp;
+static struct aead_request *macsec_alloc_req(struct crypto_aead *tfm,
+					     unsigned char **iv,
+					     struct scatterlist **sg,
+					     int num_frags)
+{
+	size_t size, iv_offset, sg_offset;
+	struct aead_request *req;
+	void *tmp;
 
-	size = माप(काष्ठा aead_request) + crypto_aead_reqsize(tfm);
+	size = sizeof(struct aead_request) + crypto_aead_reqsize(tfm);
 	iv_offset = size;
 	size += GCM_AES_IV_LEN;
 
-	size = ALIGN(size, __alignof__(काष्ठा scatterlist));
+	size = ALIGN(size, __alignof__(struct scatterlist));
 	sg_offset = size;
-	size += माप(काष्ठा scatterlist) * num_frags;
+	size += sizeof(struct scatterlist) * num_frags;
 
-	पंचांगp = kदो_स्मृति(size, GFP_ATOMIC);
-	अगर (!पंचांगp)
-		वापस शून्य;
+	tmp = kmalloc(size, GFP_ATOMIC);
+	if (!tmp)
+		return NULL;
 
-	*iv = (अचिन्हित अक्षर *)(पंचांगp + iv_offset);
-	*sg = (काष्ठा scatterlist *)(पंचांगp + sg_offset);
-	req = पंचांगp;
+	*iv = (unsigned char *)(tmp + iv_offset);
+	*sg = (struct scatterlist *)(tmp + sg_offset);
+	req = tmp;
 
 	aead_request_set_tfm(req, tfm);
 
-	वापस req;
-पूर्ण
+	return req;
+}
 
-अटल काष्ठा sk_buff *macsec_encrypt(काष्ठा sk_buff *skb,
-				      काष्ठा net_device *dev)
-अणु
-	पूर्णांक ret;
-	काष्ठा scatterlist *sg;
-	काष्ठा sk_buff *trailer;
-	अचिन्हित अक्षर *iv;
-	काष्ठा ethhdr *eth;
-	काष्ठा macsec_eth_header *hh;
-	माप_प्रकार unरक्षित_len;
-	काष्ठा aead_request *req;
-	काष्ठा macsec_secy *secy;
-	काष्ठा macsec_tx_sc *tx_sc;
-	काष्ठा macsec_tx_sa *tx_sa;
-	काष्ठा macsec_dev *macsec = macsec_priv(dev);
+static struct sk_buff *macsec_encrypt(struct sk_buff *skb,
+				      struct net_device *dev)
+{
+	int ret;
+	struct scatterlist *sg;
+	struct sk_buff *trailer;
+	unsigned char *iv;
+	struct ethhdr *eth;
+	struct macsec_eth_header *hh;
+	size_t unprotected_len;
+	struct aead_request *req;
+	struct macsec_secy *secy;
+	struct macsec_tx_sc *tx_sc;
+	struct macsec_tx_sa *tx_sa;
+	struct macsec_dev *macsec = macsec_priv(dev);
 	bool sci_present;
 	pn_t pn;
 
@@ -603,524 +602,524 @@ EXPORT_SYMBOL_GPL(macsec_pn_wrapped);
 
 	/* 10.5.1 TX SA assignment */
 	tx_sa = macsec_txsa_get(tx_sc->sa[tx_sc->encoding_sa]);
-	अगर (!tx_sa) अणु
+	if (!tx_sa) {
 		secy->operational = false;
-		kमुक्त_skb(skb);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		kfree_skb(skb);
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (unlikely(skb_headroom(skb) < MACSEC_NEEDED_HEADROOM ||
-		     skb_tailroom(skb) < MACSEC_NEEDED_TAILROOM)) अणु
-		काष्ठा sk_buff *nskb = skb_copy_expand(skb,
+	if (unlikely(skb_headroom(skb) < MACSEC_NEEDED_HEADROOM ||
+		     skb_tailroom(skb) < MACSEC_NEEDED_TAILROOM)) {
+		struct sk_buff *nskb = skb_copy_expand(skb,
 						       MACSEC_NEEDED_HEADROOM,
 						       MACSEC_NEEDED_TAILROOM,
 						       GFP_ATOMIC);
-		अगर (likely(nskb)) अणु
+		if (likely(nskb)) {
 			consume_skb(skb);
 			skb = nskb;
-		पूर्ण अन्यथा अणु
+		} else {
 			macsec_txsa_put(tx_sa);
-			kमुक्त_skb(skb);
-			वापस ERR_PTR(-ENOMEM);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			kfree_skb(skb);
+			return ERR_PTR(-ENOMEM);
+		}
+	} else {
 		skb = skb_unshare(skb, GFP_ATOMIC);
-		अगर (!skb) अणु
+		if (!skb) {
 			macsec_txsa_put(tx_sa);
-			वापस ERR_PTR(-ENOMEM);
-		पूर्ण
-	पूर्ण
+			return ERR_PTR(-ENOMEM);
+		}
+	}
 
-	unरक्षित_len = skb->len;
+	unprotected_len = skb->len;
 	eth = eth_hdr(skb);
 	sci_present = send_sci(secy);
 	hh = skb_push(skb, macsec_extra_len(sci_present));
-	स_हटाओ(hh, eth, 2 * ETH_ALEN);
+	memmove(hh, eth, 2 * ETH_ALEN);
 
 	pn = tx_sa_update_pn(tx_sa, secy);
-	अगर (pn.full64 == 0) अणु
+	if (pn.full64 == 0) {
 		macsec_txsa_put(tx_sa);
-		kमुक्त_skb(skb);
-		वापस ERR_PTR(-ENOLINK);
-	पूर्ण
+		kfree_skb(skb);
+		return ERR_PTR(-ENOLINK);
+	}
 	macsec_fill_sectag(hh, secy, pn.lower, sci_present);
-	macsec_set_लघुlen(hh, unरक्षित_len - 2 * ETH_ALEN);
+	macsec_set_shortlen(hh, unprotected_len - 2 * ETH_ALEN);
 
 	skb_put(skb, secy->icv_len);
 
-	अगर (skb->len - ETH_HLEN > macsec_priv(dev)->real_dev->mtu) अणु
-		काष्ठा pcpu_secy_stats *secy_stats = this_cpu_ptr(macsec->stats);
+	if (skb->len - ETH_HLEN > macsec_priv(dev)->real_dev->mtu) {
+		struct pcpu_secy_stats *secy_stats = this_cpu_ptr(macsec->stats);
 
 		u64_stats_update_begin(&secy_stats->syncp);
 		secy_stats->stats.OutPktsTooLong++;
 		u64_stats_update_end(&secy_stats->syncp);
 
 		macsec_txsa_put(tx_sa);
-		kमुक्त_skb(skb);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		kfree_skb(skb);
+		return ERR_PTR(-EINVAL);
+	}
 
 	ret = skb_cow_data(skb, 0, &trailer);
-	अगर (unlikely(ret < 0)) अणु
+	if (unlikely(ret < 0)) {
 		macsec_txsa_put(tx_sa);
-		kमुक्त_skb(skb);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		kfree_skb(skb);
+		return ERR_PTR(ret);
+	}
 
 	req = macsec_alloc_req(tx_sa->key.tfm, &iv, &sg, ret);
-	अगर (!req) अणु
+	if (!req) {
 		macsec_txsa_put(tx_sa);
-		kमुक्त_skb(skb);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		kfree_skb(skb);
+		return ERR_PTR(-ENOMEM);
+	}
 
-	अगर (secy->xpn)
+	if (secy->xpn)
 		macsec_fill_iv_xpn(iv, tx_sa->ssci, pn.full64, tx_sa->key.salt);
-	अन्यथा
+	else
 		macsec_fill_iv(iv, secy->sci, pn.lower);
 
 	sg_init_table(sg, ret);
 	ret = skb_to_sgvec(skb, sg, 0, skb->len);
-	अगर (unlikely(ret < 0)) अणु
-		aead_request_मुक्त(req);
+	if (unlikely(ret < 0)) {
+		aead_request_free(req);
 		macsec_txsa_put(tx_sa);
-		kमुक्त_skb(skb);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		kfree_skb(skb);
+		return ERR_PTR(ret);
+	}
 
-	अगर (tx_sc->encrypt) अणु
-		पूर्णांक len = skb->len - macsec_hdr_len(sci_present) -
+	if (tx_sc->encrypt) {
+		int len = skb->len - macsec_hdr_len(sci_present) -
 			  secy->icv_len;
 		aead_request_set_crypt(req, sg, sg, len, iv);
 		aead_request_set_ad(req, macsec_hdr_len(sci_present));
-	पूर्ण अन्यथा अणु
+	} else {
 		aead_request_set_crypt(req, sg, sg, 0, iv);
 		aead_request_set_ad(req, skb->len - secy->icv_len);
-	पूर्ण
+	}
 
 	macsec_skb_cb(skb)->req = req;
 	macsec_skb_cb(skb)->tx_sa = tx_sa;
-	aead_request_set_callback(req, 0, macsec_encrypt_करोne, skb);
+	aead_request_set_callback(req, 0, macsec_encrypt_done, skb);
 
 	dev_hold(skb->dev);
 	ret = crypto_aead_encrypt(req);
-	अगर (ret == -EINPROGRESS) अणु
-		वापस ERR_PTR(ret);
-	पूर्ण अन्यथा अगर (ret != 0) अणु
+	if (ret == -EINPROGRESS) {
+		return ERR_PTR(ret);
+	} else if (ret != 0) {
 		dev_put(skb->dev);
-		kमुक्त_skb(skb);
-		aead_request_मुक्त(req);
+		kfree_skb(skb);
+		aead_request_free(req);
 		macsec_txsa_put(tx_sa);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
 	dev_put(skb->dev);
-	aead_request_मुक्त(req);
+	aead_request_free(req);
 	macsec_txsa_put(tx_sa);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल bool macsec_post_decrypt(काष्ठा sk_buff *skb, काष्ठा macsec_secy *secy, u32 pn)
-अणु
-	काष्ठा macsec_rx_sa *rx_sa = macsec_skb_cb(skb)->rx_sa;
-	काष्ठा pcpu_rx_sc_stats *rxsc_stats = this_cpu_ptr(rx_sa->sc->stats);
-	काष्ठा macsec_eth_header *hdr = macsec_ethhdr(skb);
+static bool macsec_post_decrypt(struct sk_buff *skb, struct macsec_secy *secy, u32 pn)
+{
+	struct macsec_rx_sa *rx_sa = macsec_skb_cb(skb)->rx_sa;
+	struct pcpu_rx_sc_stats *rxsc_stats = this_cpu_ptr(rx_sa->sc->stats);
+	struct macsec_eth_header *hdr = macsec_ethhdr(skb);
 	u32 lowest_pn = 0;
 
 	spin_lock(&rx_sa->lock);
-	अगर (rx_sa->next_pn_halves.lower >= secy->replay_winकरोw)
-		lowest_pn = rx_sa->next_pn_halves.lower - secy->replay_winकरोw;
+	if (rx_sa->next_pn_halves.lower >= secy->replay_window)
+		lowest_pn = rx_sa->next_pn_halves.lower - secy->replay_window;
 
-	/* Now perक्रमm replay protection check again
+	/* Now perform replay protection check again
 	 * (see IEEE 802.1AE-2006 figure 10-5)
 	 */
-	अगर (secy->replay_protect && pn < lowest_pn &&
-	    (!secy->xpn || pn_same_half(pn, lowest_pn))) अणु
+	if (secy->replay_protect && pn < lowest_pn &&
+	    (!secy->xpn || pn_same_half(pn, lowest_pn))) {
 		spin_unlock(&rx_sa->lock);
 		u64_stats_update_begin(&rxsc_stats->syncp);
 		rxsc_stats->stats.InPktsLate++;
 		u64_stats_update_end(&rxsc_stats->syncp);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (secy->validate_frames != MACSEC_VALIDATE_DISABLED) अणु
+	if (secy->validate_frames != MACSEC_VALIDATE_DISABLED) {
 		u64_stats_update_begin(&rxsc_stats->syncp);
-		अगर (hdr->tci_an & MACSEC_TCI_E)
+		if (hdr->tci_an & MACSEC_TCI_E)
 			rxsc_stats->stats.InOctetsDecrypted += skb->len;
-		अन्यथा
+		else
 			rxsc_stats->stats.InOctetsValidated += skb->len;
 		u64_stats_update_end(&rxsc_stats->syncp);
-	पूर्ण
+	}
 
-	अगर (!macsec_skb_cb(skb)->valid) अणु
+	if (!macsec_skb_cb(skb)->valid) {
 		spin_unlock(&rx_sa->lock);
 
 		/* 10.6.5 */
-		अगर (hdr->tci_an & MACSEC_TCI_C ||
-		    secy->validate_frames == MACSEC_VALIDATE_STRICT) अणु
+		if (hdr->tci_an & MACSEC_TCI_C ||
+		    secy->validate_frames == MACSEC_VALIDATE_STRICT) {
 			u64_stats_update_begin(&rxsc_stats->syncp);
 			rxsc_stats->stats.InPktsNotValid++;
 			u64_stats_update_end(&rxsc_stats->syncp);
-			वापस false;
-		पूर्ण
+			return false;
+		}
 
 		u64_stats_update_begin(&rxsc_stats->syncp);
-		अगर (secy->validate_frames == MACSEC_VALIDATE_CHECK) अणु
+		if (secy->validate_frames == MACSEC_VALIDATE_CHECK) {
 			rxsc_stats->stats.InPktsInvalid++;
 			this_cpu_inc(rx_sa->stats->InPktsInvalid);
-		पूर्ण अन्यथा अगर (pn < lowest_pn) अणु
+		} else if (pn < lowest_pn) {
 			rxsc_stats->stats.InPktsDelayed++;
-		पूर्ण अन्यथा अणु
+		} else {
 			rxsc_stats->stats.InPktsUnchecked++;
-		पूर्ण
+		}
 		u64_stats_update_end(&rxsc_stats->syncp);
-	पूर्ण अन्यथा अणु
+	} else {
 		u64_stats_update_begin(&rxsc_stats->syncp);
-		अगर (pn < lowest_pn) अणु
+		if (pn < lowest_pn) {
 			rxsc_stats->stats.InPktsDelayed++;
-		पूर्ण अन्यथा अणु
+		} else {
 			rxsc_stats->stats.InPktsOK++;
 			this_cpu_inc(rx_sa->stats->InPktsOK);
-		पूर्ण
+		}
 		u64_stats_update_end(&rxsc_stats->syncp);
 
 		// Instead of "pn >=" - to support pn overflow in xpn
-		अगर (pn + 1 > rx_sa->next_pn_halves.lower) अणु
+		if (pn + 1 > rx_sa->next_pn_halves.lower) {
 			rx_sa->next_pn_halves.lower = pn + 1;
-		पूर्ण अन्यथा अगर (secy->xpn &&
-			   !pn_same_half(pn, rx_sa->next_pn_halves.lower)) अणु
+		} else if (secy->xpn &&
+			   !pn_same_half(pn, rx_sa->next_pn_halves.lower)) {
 			rx_sa->next_pn_halves.upper++;
 			rx_sa->next_pn_halves.lower = pn + 1;
-		पूर्ण
+		}
 
 		spin_unlock(&rx_sa->lock);
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम macsec_reset_skb(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
+static void macsec_reset_skb(struct sk_buff *skb, struct net_device *dev)
+{
 	skb->pkt_type = PACKET_HOST;
 	skb->protocol = eth_type_trans(skb, dev);
 
 	skb_reset_network_header(skb);
-	अगर (!skb_transport_header_was_set(skb))
+	if (!skb_transport_header_was_set(skb))
 		skb_reset_transport_header(skb);
 	skb_reset_mac_len(skb);
-पूर्ण
+}
 
-अटल व्योम macsec_finalize_skb(काष्ठा sk_buff *skb, u8 icv_len, u8 hdr_len)
-अणु
+static void macsec_finalize_skb(struct sk_buff *skb, u8 icv_len, u8 hdr_len)
+{
 	skb->ip_summed = CHECKSUM_NONE;
-	स_हटाओ(skb->data + hdr_len, skb->data, 2 * ETH_ALEN);
+	memmove(skb->data + hdr_len, skb->data, 2 * ETH_ALEN);
 	skb_pull(skb, hdr_len);
 	pskb_trim_unique(skb, skb->len - icv_len);
-पूर्ण
+}
 
-अटल व्योम count_rx(काष्ठा net_device *dev, पूर्णांक len)
-अणु
-	काष्ठा pcpu_sw_netstats *stats = this_cpu_ptr(dev->tstats);
+static void count_rx(struct net_device *dev, int len)
+{
+	struct pcpu_sw_netstats *stats = this_cpu_ptr(dev->tstats);
 
 	u64_stats_update_begin(&stats->syncp);
 	stats->rx_packets++;
 	stats->rx_bytes += len;
 	u64_stats_update_end(&stats->syncp);
-पूर्ण
+}
 
-अटल व्योम macsec_decrypt_करोne(काष्ठा crypto_async_request *base, पूर्णांक err)
-अणु
-	काष्ठा sk_buff *skb = base->data;
-	काष्ठा net_device *dev = skb->dev;
-	काष्ठा macsec_dev *macsec = macsec_priv(dev);
-	काष्ठा macsec_rx_sa *rx_sa = macsec_skb_cb(skb)->rx_sa;
-	काष्ठा macsec_rx_sc *rx_sc = rx_sa->sc;
-	पूर्णांक len;
+static void macsec_decrypt_done(struct crypto_async_request *base, int err)
+{
+	struct sk_buff *skb = base->data;
+	struct net_device *dev = skb->dev;
+	struct macsec_dev *macsec = macsec_priv(dev);
+	struct macsec_rx_sa *rx_sa = macsec_skb_cb(skb)->rx_sa;
+	struct macsec_rx_sc *rx_sc = rx_sa->sc;
+	int len;
 	u32 pn;
 
-	aead_request_मुक्त(macsec_skb_cb(skb)->req);
+	aead_request_free(macsec_skb_cb(skb)->req);
 
-	अगर (!err)
+	if (!err)
 		macsec_skb_cb(skb)->valid = true;
 
-	rcu_पढ़ो_lock_bh();
+	rcu_read_lock_bh();
 	pn = ntohl(macsec_ethhdr(skb)->packet_number);
-	अगर (!macsec_post_decrypt(skb, &macsec->secy, pn)) अणु
-		rcu_पढ़ो_unlock_bh();
-		kमुक्त_skb(skb);
-		जाओ out;
-	पूर्ण
+	if (!macsec_post_decrypt(skb, &macsec->secy, pn)) {
+		rcu_read_unlock_bh();
+		kfree_skb(skb);
+		goto out;
+	}
 
 	macsec_finalize_skb(skb, macsec->secy.icv_len,
 			    macsec_extra_len(macsec_skb_cb(skb)->has_sci));
 	macsec_reset_skb(skb, macsec->secy.netdev);
 
 	len = skb->len;
-	अगर (gro_cells_receive(&macsec->gro_cells, skb) == NET_RX_SUCCESS)
+	if (gro_cells_receive(&macsec->gro_cells, skb) == NET_RX_SUCCESS)
 		count_rx(dev, len);
 
-	rcu_पढ़ो_unlock_bh();
+	rcu_read_unlock_bh();
 
 out:
 	macsec_rxsa_put(rx_sa);
 	macsec_rxsc_put(rx_sc);
 	dev_put(dev);
-पूर्ण
+}
 
-अटल काष्ठा sk_buff *macsec_decrypt(काष्ठा sk_buff *skb,
-				      काष्ठा net_device *dev,
-				      काष्ठा macsec_rx_sa *rx_sa,
+static struct sk_buff *macsec_decrypt(struct sk_buff *skb,
+				      struct net_device *dev,
+				      struct macsec_rx_sa *rx_sa,
 				      sci_t sci,
-				      काष्ठा macsec_secy *secy)
-अणु
-	पूर्णांक ret;
-	काष्ठा scatterlist *sg;
-	काष्ठा sk_buff *trailer;
-	अचिन्हित अक्षर *iv;
-	काष्ठा aead_request *req;
-	काष्ठा macsec_eth_header *hdr;
+				      struct macsec_secy *secy)
+{
+	int ret;
+	struct scatterlist *sg;
+	struct sk_buff *trailer;
+	unsigned char *iv;
+	struct aead_request *req;
+	struct macsec_eth_header *hdr;
 	u32 hdr_pn;
 	u16 icv_len = secy->icv_len;
 
 	macsec_skb_cb(skb)->valid = false;
 	skb = skb_share_check(skb, GFP_ATOMIC);
-	अगर (!skb)
-		वापस ERR_PTR(-ENOMEM);
+	if (!skb)
+		return ERR_PTR(-ENOMEM);
 
 	ret = skb_cow_data(skb, 0, &trailer);
-	अगर (unlikely(ret < 0)) अणु
-		kमुक्त_skb(skb);
-		वापस ERR_PTR(ret);
-	पूर्ण
+	if (unlikely(ret < 0)) {
+		kfree_skb(skb);
+		return ERR_PTR(ret);
+	}
 	req = macsec_alloc_req(rx_sa->key.tfm, &iv, &sg, ret);
-	अगर (!req) अणु
-		kमुक्त_skb(skb);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	if (!req) {
+		kfree_skb(skb);
+		return ERR_PTR(-ENOMEM);
+	}
 
-	hdr = (काष्ठा macsec_eth_header *)skb->data;
+	hdr = (struct macsec_eth_header *)skb->data;
 	hdr_pn = ntohl(hdr->packet_number);
 
-	अगर (secy->xpn) अणु
+	if (secy->xpn) {
 		pn_t recovered_pn = rx_sa->next_pn_halves;
 
 		recovered_pn.lower = hdr_pn;
-		अगर (hdr_pn < rx_sa->next_pn_halves.lower &&
+		if (hdr_pn < rx_sa->next_pn_halves.lower &&
 		    !pn_same_half(hdr_pn, rx_sa->next_pn_halves.lower))
 			recovered_pn.upper++;
 
 		macsec_fill_iv_xpn(iv, rx_sa->ssci, recovered_pn.full64,
 				   rx_sa->key.salt);
-	पूर्ण अन्यथा अणु
+	} else {
 		macsec_fill_iv(iv, sci, hdr_pn);
-	पूर्ण
+	}
 
 	sg_init_table(sg, ret);
 	ret = skb_to_sgvec(skb, sg, 0, skb->len);
-	अगर (unlikely(ret < 0)) अणु
-		aead_request_मुक्त(req);
-		kमुक्त_skb(skb);
-		वापस ERR_PTR(ret);
-	पूर्ण
+	if (unlikely(ret < 0)) {
+		aead_request_free(req);
+		kfree_skb(skb);
+		return ERR_PTR(ret);
+	}
 
-	अगर (hdr->tci_an & MACSEC_TCI_E) अणु
+	if (hdr->tci_an & MACSEC_TCI_E) {
 		/* confidentiality: ethernet + macsec header
 		 * authenticated, encrypted payload
 		 */
-		पूर्णांक len = skb->len - macsec_hdr_len(macsec_skb_cb(skb)->has_sci);
+		int len = skb->len - macsec_hdr_len(macsec_skb_cb(skb)->has_sci);
 
 		aead_request_set_crypt(req, sg, sg, len, iv);
 		aead_request_set_ad(req, macsec_hdr_len(macsec_skb_cb(skb)->has_sci));
 		skb = skb_unshare(skb, GFP_ATOMIC);
-		अगर (!skb) अणु
-			aead_request_मुक्त(req);
-			वापस ERR_PTR(-ENOMEM);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* पूर्णांकegrity only: all headers + data authenticated */
+		if (!skb) {
+			aead_request_free(req);
+			return ERR_PTR(-ENOMEM);
+		}
+	} else {
+		/* integrity only: all headers + data authenticated */
 		aead_request_set_crypt(req, sg, sg, icv_len, iv);
 		aead_request_set_ad(req, skb->len - icv_len);
-	पूर्ण
+	}
 
 	macsec_skb_cb(skb)->req = req;
 	skb->dev = dev;
-	aead_request_set_callback(req, 0, macsec_decrypt_करोne, skb);
+	aead_request_set_callback(req, 0, macsec_decrypt_done, skb);
 
 	dev_hold(dev);
 	ret = crypto_aead_decrypt(req);
-	अगर (ret == -EINPROGRESS) अणु
-		वापस ERR_PTR(ret);
-	पूर्ण अन्यथा अगर (ret != 0) अणु
+	if (ret == -EINPROGRESS) {
+		return ERR_PTR(ret);
+	} else if (ret != 0) {
 		/* decryption/authentication failed
-		 * 10.6 अगर validateFrames is disabled, deliver anyway
+		 * 10.6 if validateFrames is disabled, deliver anyway
 		 */
-		अगर (ret != -EBADMSG) अणु
-			kमुक्त_skb(skb);
+		if (ret != -EBADMSG) {
+			kfree_skb(skb);
 			skb = ERR_PTR(ret);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		macsec_skb_cb(skb)->valid = true;
-	पूर्ण
+	}
 	dev_put(dev);
 
-	aead_request_मुक्त(req);
+	aead_request_free(req);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल काष्ठा macsec_rx_sc *find_rx_sc(काष्ठा macsec_secy *secy, sci_t sci)
-अणु
-	काष्ठा macsec_rx_sc *rx_sc;
+static struct macsec_rx_sc *find_rx_sc(struct macsec_secy *secy, sci_t sci)
+{
+	struct macsec_rx_sc *rx_sc;
 
-	क्रम_each_rxsc(secy, rx_sc) अणु
-		अगर (rx_sc->sci == sci)
-			वापस rx_sc;
-	पूर्ण
+	for_each_rxsc(secy, rx_sc) {
+		if (rx_sc->sci == sci)
+			return rx_sc;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा macsec_rx_sc *find_rx_sc_rtnl(काष्ठा macsec_secy *secy, sci_t sci)
-अणु
-	काष्ठा macsec_rx_sc *rx_sc;
+static struct macsec_rx_sc *find_rx_sc_rtnl(struct macsec_secy *secy, sci_t sci)
+{
+	struct macsec_rx_sc *rx_sc;
 
-	क्रम_each_rxsc_rtnl(secy, rx_sc) अणु
-		अगर (rx_sc->sci == sci)
-			वापस rx_sc;
-	पूर्ण
+	for_each_rxsc_rtnl(secy, rx_sc) {
+		if (rx_sc->sci == sci)
+			return rx_sc;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल क्रमागत rx_handler_result handle_not_macsec(काष्ठा sk_buff *skb)
-अणु
-	/* Deliver to the uncontrolled port by शेष */
-	क्रमागत rx_handler_result ret = RX_HANDLER_PASS;
-	काष्ठा ethhdr *hdr = eth_hdr(skb);
-	काष्ठा macsec_rxh_data *rxd;
-	काष्ठा macsec_dev *macsec;
+static enum rx_handler_result handle_not_macsec(struct sk_buff *skb)
+{
+	/* Deliver to the uncontrolled port by default */
+	enum rx_handler_result ret = RX_HANDLER_PASS;
+	struct ethhdr *hdr = eth_hdr(skb);
+	struct macsec_rxh_data *rxd;
+	struct macsec_dev *macsec;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	rxd = macsec_data_rcu(skb->dev);
 
-	list_क्रम_each_entry_rcu(macsec, &rxd->secys, secys) अणु
-		काष्ठा sk_buff *nskb;
-		काष्ठा pcpu_secy_stats *secy_stats = this_cpu_ptr(macsec->stats);
-		काष्ठा net_device *ndev = macsec->secy.netdev;
+	list_for_each_entry_rcu(macsec, &rxd->secys, secys) {
+		struct sk_buff *nskb;
+		struct pcpu_secy_stats *secy_stats = this_cpu_ptr(macsec->stats);
+		struct net_device *ndev = macsec->secy.netdev;
 
 		/* If h/w offloading is enabled, HW decodes frames and strips
 		 * the SecTAG, so we have to deduce which port to deliver to.
 		 */
-		अगर (macsec_is_offloaded(macsec) && netअगर_running(ndev)) अणु
-			अगर (ether_addr_equal_64bits(hdr->h_dest,
-						    ndev->dev_addr)) अणु
-				/* exact match, भागert skb to this port */
+		if (macsec_is_offloaded(macsec) && netif_running(ndev)) {
+			if (ether_addr_equal_64bits(hdr->h_dest,
+						    ndev->dev_addr)) {
+				/* exact match, divert skb to this port */
 				skb->dev = ndev;
 				skb->pkt_type = PACKET_HOST;
 				ret = RX_HANDLER_ANOTHER;
-				जाओ out;
-			पूर्ण अन्यथा अगर (is_multicast_ether_addr_64bits(
-					   hdr->h_dest)) अणु
+				goto out;
+			} else if (is_multicast_ether_addr_64bits(
+					   hdr->h_dest)) {
 				/* multicast frame, deliver on this port too */
 				nskb = skb_clone(skb, GFP_ATOMIC);
-				अगर (!nskb)
-					अवरोध;
+				if (!nskb)
+					break;
 
 				nskb->dev = ndev;
-				अगर (ether_addr_equal_64bits(hdr->h_dest,
+				if (ether_addr_equal_64bits(hdr->h_dest,
 							    ndev->broadcast))
 					nskb->pkt_type = PACKET_BROADCAST;
-				अन्यथा
+				else
 					nskb->pkt_type = PACKET_MULTICAST;
 
-				netअगर_rx(nskb);
-			पूर्ण
-			जारी;
-		पूर्ण
+				netif_rx(nskb);
+			}
+			continue;
+		}
 
 		/* 10.6 If the management control validateFrames is not
 		 * Strict, frames without a SecTAG are received, counted, and
 		 * delivered to the Controlled Port
 		 */
-		अगर (macsec->secy.validate_frames == MACSEC_VALIDATE_STRICT) अणु
+		if (macsec->secy.validate_frames == MACSEC_VALIDATE_STRICT) {
 			u64_stats_update_begin(&secy_stats->syncp);
 			secy_stats->stats.InPktsNoTag++;
 			u64_stats_update_end(&secy_stats->syncp);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* deliver on this port */
 		nskb = skb_clone(skb, GFP_ATOMIC);
-		अगर (!nskb)
-			अवरोध;
+		if (!nskb)
+			break;
 
 		nskb->dev = ndev;
 
-		अगर (netअगर_rx(nskb) == NET_RX_SUCCESS) अणु
+		if (netif_rx(nskb) == NET_RX_SUCCESS) {
 			u64_stats_update_begin(&secy_stats->syncp);
 			secy_stats->stats.InPktsUntagged++;
 			u64_stats_update_end(&secy_stats->syncp);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 out:
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+	rcu_read_unlock();
+	return ret;
+}
 
-अटल rx_handler_result_t macsec_handle_frame(काष्ठा sk_buff **pskb)
-अणु
-	काष्ठा sk_buff *skb = *pskb;
-	काष्ठा net_device *dev = skb->dev;
-	काष्ठा macsec_eth_header *hdr;
-	काष्ठा macsec_secy *secy = शून्य;
-	काष्ठा macsec_rx_sc *rx_sc;
-	काष्ठा macsec_rx_sa *rx_sa;
-	काष्ठा macsec_rxh_data *rxd;
-	काष्ठा macsec_dev *macsec;
-	अचिन्हित पूर्णांक len;
+static rx_handler_result_t macsec_handle_frame(struct sk_buff **pskb)
+{
+	struct sk_buff *skb = *pskb;
+	struct net_device *dev = skb->dev;
+	struct macsec_eth_header *hdr;
+	struct macsec_secy *secy = NULL;
+	struct macsec_rx_sc *rx_sc;
+	struct macsec_rx_sa *rx_sa;
+	struct macsec_rxh_data *rxd;
+	struct macsec_dev *macsec;
+	unsigned int len;
 	sci_t sci;
 	u32 hdr_pn;
 	bool cbit;
-	काष्ठा pcpu_rx_sc_stats *rxsc_stats;
-	काष्ठा pcpu_secy_stats *secy_stats;
+	struct pcpu_rx_sc_stats *rxsc_stats;
+	struct pcpu_secy_stats *secy_stats;
 	bool pulled_sci;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (skb_headroom(skb) < ETH_HLEN)
-		जाओ drop_direct;
+	if (skb_headroom(skb) < ETH_HLEN)
+		goto drop_direct;
 
 	hdr = macsec_ethhdr(skb);
-	अगर (hdr->eth.h_proto != htons(ETH_P_MACSEC))
-		वापस handle_not_macsec(skb);
+	if (hdr->eth.h_proto != htons(ETH_P_MACSEC))
+		return handle_not_macsec(skb);
 
 	skb = skb_unshare(skb, GFP_ATOMIC);
 	*pskb = skb;
-	अगर (!skb)
-		वापस RX_HANDLER_CONSUMED;
+	if (!skb)
+		return RX_HANDLER_CONSUMED;
 
 	pulled_sci = pskb_may_pull(skb, macsec_extra_len(true));
-	अगर (!pulled_sci) अणु
-		अगर (!pskb_may_pull(skb, macsec_extra_len(false)))
-			जाओ drop_direct;
-	पूर्ण
+	if (!pulled_sci) {
+		if (!pskb_may_pull(skb, macsec_extra_len(false)))
+			goto drop_direct;
+	}
 
 	hdr = macsec_ethhdr(skb);
 
 	/* Frames with a SecTAG that has the TCI E bit set but the C
 	 * bit clear are discarded, as this reserved encoding is used
-	 * to identअगरy frames with a SecTAG that are not to be
+	 * to identify frames with a SecTAG that are not to be
 	 * delivered to the Controlled Port.
 	 */
-	अगर ((hdr->tci_an & (MACSEC_TCI_C | MACSEC_TCI_E)) == MACSEC_TCI_E)
-		वापस RX_HANDLER_PASS;
+	if ((hdr->tci_an & (MACSEC_TCI_C | MACSEC_TCI_E)) == MACSEC_TCI_E)
+		return RX_HANDLER_PASS;
 
 	/* now, pull the extra length */
-	अगर (hdr->tci_an & MACSEC_TCI_SC) अणु
-		अगर (!pulled_sci)
-			जाओ drop_direct;
-	पूर्ण
+	if (hdr->tci_an & MACSEC_TCI_SC) {
+		if (!pulled_sci)
+			goto drop_direct;
+	}
 
 	/* ethernet header is part of crypto processing */
 	skb_push(skb, ETH_HLEN);
@@ -1129,218 +1128,218 @@ out:
 	macsec_skb_cb(skb)->assoc_num = hdr->tci_an & MACSEC_AN_MASK;
 	sci = macsec_frame_sci(hdr, macsec_skb_cb(skb)->has_sci);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	rxd = macsec_data_rcu(skb->dev);
 
-	list_क्रम_each_entry_rcu(macsec, &rxd->secys, secys) अणु
-		काष्ठा macsec_rx_sc *sc = find_rx_sc(&macsec->secy, sci);
+	list_for_each_entry_rcu(macsec, &rxd->secys, secys) {
+		struct macsec_rx_sc *sc = find_rx_sc(&macsec->secy, sci);
 
-		sc = sc ? macsec_rxsc_get(sc) : शून्य;
+		sc = sc ? macsec_rxsc_get(sc) : NULL;
 
-		अगर (sc) अणु
+		if (sc) {
 			secy = &macsec->secy;
 			rx_sc = sc;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!secy)
-		जाओ nosci;
+	if (!secy)
+		goto nosci;
 
 	dev = secy->netdev;
 	macsec = macsec_priv(dev);
 	secy_stats = this_cpu_ptr(macsec->stats);
 	rxsc_stats = this_cpu_ptr(rx_sc->stats);
 
-	अगर (!macsec_validate_skb(skb, secy->icv_len, secy->xpn)) अणु
+	if (!macsec_validate_skb(skb, secy->icv_len, secy->xpn)) {
 		u64_stats_update_begin(&secy_stats->syncp);
 		secy_stats->stats.InPktsBadTag++;
 		u64_stats_update_end(&secy_stats->syncp);
-		जाओ drop_nosa;
-	पूर्ण
+		goto drop_nosa;
+	}
 
 	rx_sa = macsec_rxsa_get(rx_sc->sa[macsec_skb_cb(skb)->assoc_num]);
-	अगर (!rx_sa) अणु
-		/* 10.6.1 अगर the SA is not in use */
+	if (!rx_sa) {
+		/* 10.6.1 if the SA is not in use */
 
 		/* If validateFrames is Strict or the C bit in the
 		 * SecTAG is set, discard
 		 */
-		अगर (hdr->tci_an & MACSEC_TCI_C ||
-		    secy->validate_frames == MACSEC_VALIDATE_STRICT) अणु
+		if (hdr->tci_an & MACSEC_TCI_C ||
+		    secy->validate_frames == MACSEC_VALIDATE_STRICT) {
 			u64_stats_update_begin(&rxsc_stats->syncp);
 			rxsc_stats->stats.InPktsNotUsingSA++;
 			u64_stats_update_end(&rxsc_stats->syncp);
-			जाओ drop_nosa;
-		पूर्ण
+			goto drop_nosa;
+		}
 
 		/* not Strict, the frame (with the SecTAG and ICV
-		 * हटाओd) is delivered to the Controlled Port.
+		 * removed) is delivered to the Controlled Port.
 		 */
 		u64_stats_update_begin(&rxsc_stats->syncp);
 		rxsc_stats->stats.InPktsUnusedSA++;
 		u64_stats_update_end(&rxsc_stats->syncp);
-		जाओ deliver;
-	पूर्ण
+		goto deliver;
+	}
 
-	/* First, PN check to aव्योम decrypting obviously wrong packets */
+	/* First, PN check to avoid decrypting obviously wrong packets */
 	hdr_pn = ntohl(hdr->packet_number);
-	अगर (secy->replay_protect) अणु
+	if (secy->replay_protect) {
 		bool late;
 
 		spin_lock(&rx_sa->lock);
-		late = rx_sa->next_pn_halves.lower >= secy->replay_winकरोw &&
-		       hdr_pn < (rx_sa->next_pn_halves.lower - secy->replay_winकरोw);
+		late = rx_sa->next_pn_halves.lower >= secy->replay_window &&
+		       hdr_pn < (rx_sa->next_pn_halves.lower - secy->replay_window);
 
-		अगर (secy->xpn)
+		if (secy->xpn)
 			late = late && pn_same_half(rx_sa->next_pn_halves.lower, hdr_pn);
 		spin_unlock(&rx_sa->lock);
 
-		अगर (late) अणु
+		if (late) {
 			u64_stats_update_begin(&rxsc_stats->syncp);
 			rxsc_stats->stats.InPktsLate++;
 			u64_stats_update_end(&rxsc_stats->syncp);
-			जाओ drop;
-		पूर्ण
-	पूर्ण
+			goto drop;
+		}
+	}
 
 	macsec_skb_cb(skb)->rx_sa = rx_sa;
 
 	/* Disabled && !changed text => skip validation */
-	अगर (hdr->tci_an & MACSEC_TCI_C ||
+	if (hdr->tci_an & MACSEC_TCI_C ||
 	    secy->validate_frames != MACSEC_VALIDATE_DISABLED)
 		skb = macsec_decrypt(skb, dev, rx_sa, sci, secy);
 
-	अगर (IS_ERR(skb)) अणु
+	if (IS_ERR(skb)) {
 		/* the decrypt callback needs the reference */
-		अगर (PTR_ERR(skb) != -EINPROGRESS) अणु
+		if (PTR_ERR(skb) != -EINPROGRESS) {
 			macsec_rxsa_put(rx_sa);
 			macsec_rxsc_put(rx_sc);
-		पूर्ण
-		rcu_पढ़ो_unlock();
-		*pskb = शून्य;
-		वापस RX_HANDLER_CONSUMED;
-	पूर्ण
+		}
+		rcu_read_unlock();
+		*pskb = NULL;
+		return RX_HANDLER_CONSUMED;
+	}
 
-	अगर (!macsec_post_decrypt(skb, secy, hdr_pn))
-		जाओ drop;
+	if (!macsec_post_decrypt(skb, secy, hdr_pn))
+		goto drop;
 
 deliver:
 	macsec_finalize_skb(skb, secy->icv_len,
 			    macsec_extra_len(macsec_skb_cb(skb)->has_sci));
 	macsec_reset_skb(skb, secy->netdev);
 
-	अगर (rx_sa)
+	if (rx_sa)
 		macsec_rxsa_put(rx_sa);
 	macsec_rxsc_put(rx_sc);
 
 	skb_orphan(skb);
 	len = skb->len;
 	ret = gro_cells_receive(&macsec->gro_cells, skb);
-	अगर (ret == NET_RX_SUCCESS)
+	if (ret == NET_RX_SUCCESS)
 		count_rx(dev, len);
-	अन्यथा
+	else
 		macsec->secy.netdev->stats.rx_dropped++;
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	*pskb = शून्य;
-	वापस RX_HANDLER_CONSUMED;
+	*pskb = NULL;
+	return RX_HANDLER_CONSUMED;
 
 drop:
 	macsec_rxsa_put(rx_sa);
 drop_nosa:
 	macsec_rxsc_put(rx_sc);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 drop_direct:
-	kमुक्त_skb(skb);
-	*pskb = शून्य;
-	वापस RX_HANDLER_CONSUMED;
+	kfree_skb(skb);
+	*pskb = NULL;
+	return RX_HANDLER_CONSUMED;
 
 nosci:
-	/* 10.6.1 अगर the SC is not found */
+	/* 10.6.1 if the SC is not found */
 	cbit = !!(hdr->tci_an & MACSEC_TCI_C);
-	अगर (!cbit)
+	if (!cbit)
 		macsec_finalize_skb(skb, DEFAULT_ICV_LEN,
 				    macsec_extra_len(macsec_skb_cb(skb)->has_sci));
 
-	list_क्रम_each_entry_rcu(macsec, &rxd->secys, secys) अणु
-		काष्ठा sk_buff *nskb;
+	list_for_each_entry_rcu(macsec, &rxd->secys, secys) {
+		struct sk_buff *nskb;
 
 		secy_stats = this_cpu_ptr(macsec->stats);
 
 		/* If validateFrames is Strict or the C bit in the
 		 * SecTAG is set, discard
 		 */
-		अगर (cbit ||
-		    macsec->secy.validate_frames == MACSEC_VALIDATE_STRICT) अणु
+		if (cbit ||
+		    macsec->secy.validate_frames == MACSEC_VALIDATE_STRICT) {
 			u64_stats_update_begin(&secy_stats->syncp);
 			secy_stats->stats.InPktsNoSCI++;
 			u64_stats_update_end(&secy_stats->syncp);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* not strict, the frame (with the SecTAG and ICV
-		 * हटाओd) is delivered to the Controlled Port.
+		 * removed) is delivered to the Controlled Port.
 		 */
 		nskb = skb_clone(skb, GFP_ATOMIC);
-		अगर (!nskb)
-			अवरोध;
+		if (!nskb)
+			break;
 
 		macsec_reset_skb(nskb, macsec->secy.netdev);
 
-		ret = netअगर_rx(nskb);
-		अगर (ret == NET_RX_SUCCESS) अणु
+		ret = netif_rx(nskb);
+		if (ret == NET_RX_SUCCESS) {
 			u64_stats_update_begin(&secy_stats->syncp);
 			secy_stats->stats.InPktsUnknownSCI++;
 			u64_stats_update_end(&secy_stats->syncp);
-		पूर्ण अन्यथा अणु
+		} else {
 			macsec->secy.netdev->stats.rx_dropped++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 	*pskb = skb;
-	वापस RX_HANDLER_PASS;
-पूर्ण
+	return RX_HANDLER_PASS;
+}
 
-अटल काष्ठा crypto_aead *macsec_alloc_tfm(अक्षर *key, पूर्णांक key_len, पूर्णांक icv_len)
-अणु
-	काष्ठा crypto_aead *tfm;
-	पूर्णांक ret;
+static struct crypto_aead *macsec_alloc_tfm(char *key, int key_len, int icv_len)
+{
+	struct crypto_aead *tfm;
+	int ret;
 
 	/* Pick a sync gcm(aes) cipher to ensure order is preserved. */
 	tfm = crypto_alloc_aead("gcm(aes)", 0, CRYPTO_ALG_ASYNC);
 
-	अगर (IS_ERR(tfm))
-		वापस tfm;
+	if (IS_ERR(tfm))
+		return tfm;
 
 	ret = crypto_aead_setkey(tfm, key, key_len);
-	अगर (ret < 0)
-		जाओ fail;
+	if (ret < 0)
+		goto fail;
 
 	ret = crypto_aead_setauthsize(tfm, icv_len);
-	अगर (ret < 0)
-		जाओ fail;
+	if (ret < 0)
+		goto fail;
 
-	वापस tfm;
+	return tfm;
 fail:
-	crypto_मुक्त_aead(tfm);
-	वापस ERR_PTR(ret);
-पूर्ण
+	crypto_free_aead(tfm);
+	return ERR_PTR(ret);
+}
 
-अटल पूर्णांक init_rx_sa(काष्ठा macsec_rx_sa *rx_sa, अक्षर *sak, पूर्णांक key_len,
-		      पूर्णांक icv_len)
-अणु
-	rx_sa->stats = alloc_percpu(काष्ठा macsec_rx_sa_stats);
-	अगर (!rx_sa->stats)
-		वापस -ENOMEM;
+static int init_rx_sa(struct macsec_rx_sa *rx_sa, char *sak, int key_len,
+		      int icv_len)
+{
+	rx_sa->stats = alloc_percpu(struct macsec_rx_sa_stats);
+	if (!rx_sa->stats)
+		return -ENOMEM;
 
 	rx_sa->key.tfm = macsec_alloc_tfm(sak, key_len, icv_len);
-	अगर (IS_ERR(rx_sa->key.tfm)) अणु
-		मुक्त_percpu(rx_sa->stats);
-		वापस PTR_ERR(rx_sa->key.tfm);
-	पूर्ण
+	if (IS_ERR(rx_sa->key.tfm)) {
+		free_percpu(rx_sa->stats);
+		return PTR_ERR(rx_sa->key.tfm);
+	}
 
 	rx_sa->ssci = MACSEC_UNDEF_SSCI;
 	rx_sa->active = false;
@@ -1348,1388 +1347,1388 @@ fail:
 	refcount_set(&rx_sa->refcnt, 1);
 	spin_lock_init(&rx_sa->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम clear_rx_sa(काष्ठा macsec_rx_sa *rx_sa)
-अणु
+static void clear_rx_sa(struct macsec_rx_sa *rx_sa)
+{
 	rx_sa->active = false;
 
 	macsec_rxsa_put(rx_sa);
-पूर्ण
+}
 
-अटल व्योम मुक्त_rx_sc(काष्ठा macsec_rx_sc *rx_sc)
-अणु
-	पूर्णांक i;
+static void free_rx_sc(struct macsec_rx_sc *rx_sc)
+{
+	int i;
 
-	क्रम (i = 0; i < MACSEC_NUM_AN; i++) अणु
-		काष्ठा macsec_rx_sa *sa = rtnl_dereference(rx_sc->sa[i]);
+	for (i = 0; i < MACSEC_NUM_AN; i++) {
+		struct macsec_rx_sa *sa = rtnl_dereference(rx_sc->sa[i]);
 
-		RCU_INIT_POINTER(rx_sc->sa[i], शून्य);
-		अगर (sa)
+		RCU_INIT_POINTER(rx_sc->sa[i], NULL);
+		if (sa)
 			clear_rx_sa(sa);
-	पूर्ण
+	}
 
 	macsec_rxsc_put(rx_sc);
-पूर्ण
+}
 
-अटल काष्ठा macsec_rx_sc *del_rx_sc(काष्ठा macsec_secy *secy, sci_t sci)
-अणु
-	काष्ठा macsec_rx_sc *rx_sc, __rcu **rx_scp;
+static struct macsec_rx_sc *del_rx_sc(struct macsec_secy *secy, sci_t sci)
+{
+	struct macsec_rx_sc *rx_sc, __rcu **rx_scp;
 
-	क्रम (rx_scp = &secy->rx_sc, rx_sc = rtnl_dereference(*rx_scp);
+	for (rx_scp = &secy->rx_sc, rx_sc = rtnl_dereference(*rx_scp);
 	     rx_sc;
-	     rx_scp = &rx_sc->next, rx_sc = rtnl_dereference(*rx_scp)) अणु
-		अगर (rx_sc->sci == sci) अणु
-			अगर (rx_sc->active)
+	     rx_scp = &rx_sc->next, rx_sc = rtnl_dereference(*rx_scp)) {
+		if (rx_sc->sci == sci) {
+			if (rx_sc->active)
 				secy->n_rx_sc--;
-			rcu_assign_poपूर्णांकer(*rx_scp, rx_sc->next);
-			वापस rx_sc;
-		पूर्ण
-	पूर्ण
+			rcu_assign_pointer(*rx_scp, rx_sc->next);
+			return rx_sc;
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा macsec_rx_sc *create_rx_sc(काष्ठा net_device *dev, sci_t sci)
-अणु
-	काष्ठा macsec_rx_sc *rx_sc;
-	काष्ठा macsec_dev *macsec;
-	काष्ठा net_device *real_dev = macsec_priv(dev)->real_dev;
-	काष्ठा macsec_rxh_data *rxd = macsec_data_rtnl(real_dev);
-	काष्ठा macsec_secy *secy;
+static struct macsec_rx_sc *create_rx_sc(struct net_device *dev, sci_t sci)
+{
+	struct macsec_rx_sc *rx_sc;
+	struct macsec_dev *macsec;
+	struct net_device *real_dev = macsec_priv(dev)->real_dev;
+	struct macsec_rxh_data *rxd = macsec_data_rtnl(real_dev);
+	struct macsec_secy *secy;
 
-	list_क्रम_each_entry(macsec, &rxd->secys, secys) अणु
-		अगर (find_rx_sc_rtnl(&macsec->secy, sci))
-			वापस ERR_PTR(-EEXIST);
-	पूर्ण
+	list_for_each_entry(macsec, &rxd->secys, secys) {
+		if (find_rx_sc_rtnl(&macsec->secy, sci))
+			return ERR_PTR(-EEXIST);
+	}
 
-	rx_sc = kzalloc(माप(*rx_sc), GFP_KERNEL);
-	अगर (!rx_sc)
-		वापस ERR_PTR(-ENOMEM);
+	rx_sc = kzalloc(sizeof(*rx_sc), GFP_KERNEL);
+	if (!rx_sc)
+		return ERR_PTR(-ENOMEM);
 
-	rx_sc->stats = netdev_alloc_pcpu_stats(काष्ठा pcpu_rx_sc_stats);
-	अगर (!rx_sc->stats) अणु
-		kमुक्त(rx_sc);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	rx_sc->stats = netdev_alloc_pcpu_stats(struct pcpu_rx_sc_stats);
+	if (!rx_sc->stats) {
+		kfree(rx_sc);
+		return ERR_PTR(-ENOMEM);
+	}
 
 	rx_sc->sci = sci;
 	rx_sc->active = true;
 	refcount_set(&rx_sc->refcnt, 1);
 
 	secy = &macsec_priv(dev)->secy;
-	rcu_assign_poपूर्णांकer(rx_sc->next, secy->rx_sc);
-	rcu_assign_poपूर्णांकer(secy->rx_sc, rx_sc);
+	rcu_assign_pointer(rx_sc->next, secy->rx_sc);
+	rcu_assign_pointer(secy->rx_sc, rx_sc);
 
-	अगर (rx_sc->active)
+	if (rx_sc->active)
 		secy->n_rx_sc++;
 
-	वापस rx_sc;
-पूर्ण
+	return rx_sc;
+}
 
-अटल पूर्णांक init_tx_sa(काष्ठा macsec_tx_sa *tx_sa, अक्षर *sak, पूर्णांक key_len,
-		      पूर्णांक icv_len)
-अणु
-	tx_sa->stats = alloc_percpu(काष्ठा macsec_tx_sa_stats);
-	अगर (!tx_sa->stats)
-		वापस -ENOMEM;
+static int init_tx_sa(struct macsec_tx_sa *tx_sa, char *sak, int key_len,
+		      int icv_len)
+{
+	tx_sa->stats = alloc_percpu(struct macsec_tx_sa_stats);
+	if (!tx_sa->stats)
+		return -ENOMEM;
 
 	tx_sa->key.tfm = macsec_alloc_tfm(sak, key_len, icv_len);
-	अगर (IS_ERR(tx_sa->key.tfm)) अणु
-		मुक्त_percpu(tx_sa->stats);
-		वापस PTR_ERR(tx_sa->key.tfm);
-	पूर्ण
+	if (IS_ERR(tx_sa->key.tfm)) {
+		free_percpu(tx_sa->stats);
+		return PTR_ERR(tx_sa->key.tfm);
+	}
 
 	tx_sa->ssci = MACSEC_UNDEF_SSCI;
 	tx_sa->active = false;
 	refcount_set(&tx_sa->refcnt, 1);
 	spin_lock_init(&tx_sa->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम clear_tx_sa(काष्ठा macsec_tx_sa *tx_sa)
-अणु
+static void clear_tx_sa(struct macsec_tx_sa *tx_sa)
+{
 	tx_sa->active = false;
 
 	macsec_txsa_put(tx_sa);
-पूर्ण
+}
 
-अटल काष्ठा genl_family macsec_fam;
+static struct genl_family macsec_fam;
 
-अटल काष्ठा net_device *get_dev_from_nl(काष्ठा net *net,
-					  काष्ठा nlattr **attrs)
-अणु
-	पूर्णांक अगरindex = nla_get_u32(attrs[MACSEC_ATTR_IFINDEX]);
-	काष्ठा net_device *dev;
+static struct net_device *get_dev_from_nl(struct net *net,
+					  struct nlattr **attrs)
+{
+	int ifindex = nla_get_u32(attrs[MACSEC_ATTR_IFINDEX]);
+	struct net_device *dev;
 
-	dev = __dev_get_by_index(net, अगरindex);
-	अगर (!dev)
-		वापस ERR_PTR(-ENODEV);
+	dev = __dev_get_by_index(net, ifindex);
+	if (!dev)
+		return ERR_PTR(-ENODEV);
 
-	अगर (!netअगर_is_macsec(dev))
-		वापस ERR_PTR(-ENODEV);
+	if (!netif_is_macsec(dev))
+		return ERR_PTR(-ENODEV);
 
-	वापस dev;
-पूर्ण
+	return dev;
+}
 
-अटल क्रमागत macsec_offload nla_get_offload(स्थिर काष्ठा nlattr *nla)
-अणु
-	वापस (__क्रमce क्रमागत macsec_offload)nla_get_u8(nla);
-पूर्ण
+static enum macsec_offload nla_get_offload(const struct nlattr *nla)
+{
+	return (__force enum macsec_offload)nla_get_u8(nla);
+}
 
-अटल sci_t nla_get_sci(स्थिर काष्ठा nlattr *nla)
-अणु
-	वापस (__क्रमce sci_t)nla_get_u64(nla);
-पूर्ण
+static sci_t nla_get_sci(const struct nlattr *nla)
+{
+	return (__force sci_t)nla_get_u64(nla);
+}
 
-अटल पूर्णांक nla_put_sci(काष्ठा sk_buff *skb, पूर्णांक attrtype, sci_t value,
-		       पूर्णांक padattr)
-अणु
-	वापस nla_put_u64_64bit(skb, attrtype, (__क्रमce u64)value, padattr);
-पूर्ण
+static int nla_put_sci(struct sk_buff *skb, int attrtype, sci_t value,
+		       int padattr)
+{
+	return nla_put_u64_64bit(skb, attrtype, (__force u64)value, padattr);
+}
 
-अटल ssci_t nla_get_ssci(स्थिर काष्ठा nlattr *nla)
-अणु
-	वापस (__क्रमce ssci_t)nla_get_u32(nla);
-पूर्ण
+static ssci_t nla_get_ssci(const struct nlattr *nla)
+{
+	return (__force ssci_t)nla_get_u32(nla);
+}
 
-अटल पूर्णांक nla_put_ssci(काष्ठा sk_buff *skb, पूर्णांक attrtype, ssci_t value)
-अणु
-	वापस nla_put_u32(skb, attrtype, (__क्रमce u64)value);
-पूर्ण
+static int nla_put_ssci(struct sk_buff *skb, int attrtype, ssci_t value)
+{
+	return nla_put_u32(skb, attrtype, (__force u64)value);
+}
 
-अटल काष्ठा macsec_tx_sa *get_txsa_from_nl(काष्ठा net *net,
-					     काष्ठा nlattr **attrs,
-					     काष्ठा nlattr **tb_sa,
-					     काष्ठा net_device **devp,
-					     काष्ठा macsec_secy **secyp,
-					     काष्ठा macsec_tx_sc **scp,
+static struct macsec_tx_sa *get_txsa_from_nl(struct net *net,
+					     struct nlattr **attrs,
+					     struct nlattr **tb_sa,
+					     struct net_device **devp,
+					     struct macsec_secy **secyp,
+					     struct macsec_tx_sc **scp,
 					     u8 *assoc_num)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा macsec_secy *secy;
-	काष्ठा macsec_tx_sc *tx_sc;
-	काष्ठा macsec_tx_sa *tx_sa;
+{
+	struct net_device *dev;
+	struct macsec_secy *secy;
+	struct macsec_tx_sc *tx_sc;
+	struct macsec_tx_sa *tx_sa;
 
-	अगर (!tb_sa[MACSEC_SA_ATTR_AN])
-		वापस ERR_PTR(-EINVAL);
+	if (!tb_sa[MACSEC_SA_ATTR_AN])
+		return ERR_PTR(-EINVAL);
 
 	*assoc_num = nla_get_u8(tb_sa[MACSEC_SA_ATTR_AN]);
 
 	dev = get_dev_from_nl(net, attrs);
-	अगर (IS_ERR(dev))
-		वापस ERR_CAST(dev);
+	if (IS_ERR(dev))
+		return ERR_CAST(dev);
 
-	अगर (*assoc_num >= MACSEC_NUM_AN)
-		वापस ERR_PTR(-EINVAL);
+	if (*assoc_num >= MACSEC_NUM_AN)
+		return ERR_PTR(-EINVAL);
 
 	secy = &macsec_priv(dev)->secy;
 	tx_sc = &secy->tx_sc;
 
 	tx_sa = rtnl_dereference(tx_sc->sa[*assoc_num]);
-	अगर (!tx_sa)
-		वापस ERR_PTR(-ENODEV);
+	if (!tx_sa)
+		return ERR_PTR(-ENODEV);
 
 	*devp = dev;
 	*scp = tx_sc;
 	*secyp = secy;
-	वापस tx_sa;
-पूर्ण
+	return tx_sa;
+}
 
-अटल काष्ठा macsec_rx_sc *get_rxsc_from_nl(काष्ठा net *net,
-					     काष्ठा nlattr **attrs,
-					     काष्ठा nlattr **tb_rxsc,
-					     काष्ठा net_device **devp,
-					     काष्ठा macsec_secy **secyp)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा macsec_secy *secy;
-	काष्ठा macsec_rx_sc *rx_sc;
+static struct macsec_rx_sc *get_rxsc_from_nl(struct net *net,
+					     struct nlattr **attrs,
+					     struct nlattr **tb_rxsc,
+					     struct net_device **devp,
+					     struct macsec_secy **secyp)
+{
+	struct net_device *dev;
+	struct macsec_secy *secy;
+	struct macsec_rx_sc *rx_sc;
 	sci_t sci;
 
 	dev = get_dev_from_nl(net, attrs);
-	अगर (IS_ERR(dev))
-		वापस ERR_CAST(dev);
+	if (IS_ERR(dev))
+		return ERR_CAST(dev);
 
 	secy = &macsec_priv(dev)->secy;
 
-	अगर (!tb_rxsc[MACSEC_RXSC_ATTR_SCI])
-		वापस ERR_PTR(-EINVAL);
+	if (!tb_rxsc[MACSEC_RXSC_ATTR_SCI])
+		return ERR_PTR(-EINVAL);
 
 	sci = nla_get_sci(tb_rxsc[MACSEC_RXSC_ATTR_SCI]);
 	rx_sc = find_rx_sc_rtnl(secy, sci);
-	अगर (!rx_sc)
-		वापस ERR_PTR(-ENODEV);
+	if (!rx_sc)
+		return ERR_PTR(-ENODEV);
 
 	*secyp = secy;
 	*devp = dev;
 
-	वापस rx_sc;
-पूर्ण
+	return rx_sc;
+}
 
-अटल काष्ठा macsec_rx_sa *get_rxsa_from_nl(काष्ठा net *net,
-					     काष्ठा nlattr **attrs,
-					     काष्ठा nlattr **tb_rxsc,
-					     काष्ठा nlattr **tb_sa,
-					     काष्ठा net_device **devp,
-					     काष्ठा macsec_secy **secyp,
-					     काष्ठा macsec_rx_sc **scp,
+static struct macsec_rx_sa *get_rxsa_from_nl(struct net *net,
+					     struct nlattr **attrs,
+					     struct nlattr **tb_rxsc,
+					     struct nlattr **tb_sa,
+					     struct net_device **devp,
+					     struct macsec_secy **secyp,
+					     struct macsec_rx_sc **scp,
 					     u8 *assoc_num)
-अणु
-	काष्ठा macsec_rx_sc *rx_sc;
-	काष्ठा macsec_rx_sa *rx_sa;
+{
+	struct macsec_rx_sc *rx_sc;
+	struct macsec_rx_sa *rx_sa;
 
-	अगर (!tb_sa[MACSEC_SA_ATTR_AN])
-		वापस ERR_PTR(-EINVAL);
+	if (!tb_sa[MACSEC_SA_ATTR_AN])
+		return ERR_PTR(-EINVAL);
 
 	*assoc_num = nla_get_u8(tb_sa[MACSEC_SA_ATTR_AN]);
-	अगर (*assoc_num >= MACSEC_NUM_AN)
-		वापस ERR_PTR(-EINVAL);
+	if (*assoc_num >= MACSEC_NUM_AN)
+		return ERR_PTR(-EINVAL);
 
 	rx_sc = get_rxsc_from_nl(net, attrs, tb_rxsc, devp, secyp);
-	अगर (IS_ERR(rx_sc))
-		वापस ERR_CAST(rx_sc);
+	if (IS_ERR(rx_sc))
+		return ERR_CAST(rx_sc);
 
 	rx_sa = rtnl_dereference(rx_sc->sa[*assoc_num]);
-	अगर (!rx_sa)
-		वापस ERR_PTR(-ENODEV);
+	if (!rx_sa)
+		return ERR_PTR(-ENODEV);
 
 	*scp = rx_sc;
-	वापस rx_sa;
-पूर्ण
+	return rx_sa;
+}
 
-अटल स्थिर काष्ठा nla_policy macsec_genl_policy[NUM_MACSEC_ATTR] = अणु
-	[MACSEC_ATTR_IFINDEX] = अणु .type = NLA_U32 पूर्ण,
-	[MACSEC_ATTR_RXSC_CONFIG] = अणु .type = NLA_NESTED पूर्ण,
-	[MACSEC_ATTR_SA_CONFIG] = अणु .type = NLA_NESTED पूर्ण,
-	[MACSEC_ATTR_OFFLOAD] = अणु .type = NLA_NESTED पूर्ण,
-पूर्ण;
+static const struct nla_policy macsec_genl_policy[NUM_MACSEC_ATTR] = {
+	[MACSEC_ATTR_IFINDEX] = { .type = NLA_U32 },
+	[MACSEC_ATTR_RXSC_CONFIG] = { .type = NLA_NESTED },
+	[MACSEC_ATTR_SA_CONFIG] = { .type = NLA_NESTED },
+	[MACSEC_ATTR_OFFLOAD] = { .type = NLA_NESTED },
+};
 
-अटल स्थिर काष्ठा nla_policy macsec_genl_rxsc_policy[NUM_MACSEC_RXSC_ATTR] = अणु
-	[MACSEC_RXSC_ATTR_SCI] = अणु .type = NLA_U64 पूर्ण,
-	[MACSEC_RXSC_ATTR_ACTIVE] = अणु .type = NLA_U8 पूर्ण,
-पूर्ण;
+static const struct nla_policy macsec_genl_rxsc_policy[NUM_MACSEC_RXSC_ATTR] = {
+	[MACSEC_RXSC_ATTR_SCI] = { .type = NLA_U64 },
+	[MACSEC_RXSC_ATTR_ACTIVE] = { .type = NLA_U8 },
+};
 
-अटल स्थिर काष्ठा nla_policy macsec_genl_sa_policy[NUM_MACSEC_SA_ATTR] = अणु
-	[MACSEC_SA_ATTR_AN] = अणु .type = NLA_U8 पूर्ण,
-	[MACSEC_SA_ATTR_ACTIVE] = अणु .type = NLA_U8 पूर्ण,
+static const struct nla_policy macsec_genl_sa_policy[NUM_MACSEC_SA_ATTR] = {
+	[MACSEC_SA_ATTR_AN] = { .type = NLA_U8 },
+	[MACSEC_SA_ATTR_ACTIVE] = { .type = NLA_U8 },
 	[MACSEC_SA_ATTR_PN] = NLA_POLICY_MIN_LEN(4),
-	[MACSEC_SA_ATTR_KEYID] = अणु .type = NLA_BINARY,
-				   .len = MACSEC_KEYID_LEN, पूर्ण,
-	[MACSEC_SA_ATTR_KEY] = अणु .type = NLA_BINARY,
-				 .len = MACSEC_MAX_KEY_LEN, पूर्ण,
-	[MACSEC_SA_ATTR_SSCI] = अणु .type = NLA_U32 पूर्ण,
-	[MACSEC_SA_ATTR_SALT] = अणु .type = NLA_BINARY,
-				  .len = MACSEC_SALT_LEN, पूर्ण,
-पूर्ण;
+	[MACSEC_SA_ATTR_KEYID] = { .type = NLA_BINARY,
+				   .len = MACSEC_KEYID_LEN, },
+	[MACSEC_SA_ATTR_KEY] = { .type = NLA_BINARY,
+				 .len = MACSEC_MAX_KEY_LEN, },
+	[MACSEC_SA_ATTR_SSCI] = { .type = NLA_U32 },
+	[MACSEC_SA_ATTR_SALT] = { .type = NLA_BINARY,
+				  .len = MACSEC_SALT_LEN, },
+};
 
-अटल स्थिर काष्ठा nla_policy macsec_genl_offload_policy[NUM_MACSEC_OFFLOAD_ATTR] = अणु
-	[MACSEC_OFFLOAD_ATTR_TYPE] = अणु .type = NLA_U8 पूर्ण,
-पूर्ण;
+static const struct nla_policy macsec_genl_offload_policy[NUM_MACSEC_OFFLOAD_ATTR] = {
+	[MACSEC_OFFLOAD_ATTR_TYPE] = { .type = NLA_U8 },
+};
 
 /* Offloads an operation to a device driver */
-अटल पूर्णांक macsec_offload(पूर्णांक (* स्थिर func)(काष्ठा macsec_context *),
-			  काष्ठा macsec_context *ctx)
-अणु
-	पूर्णांक ret;
+static int macsec_offload(int (* const func)(struct macsec_context *),
+			  struct macsec_context *ctx)
+{
+	int ret;
 
-	अगर (unlikely(!func))
-		वापस 0;
+	if (unlikely(!func))
+		return 0;
 
-	अगर (ctx->offload == MACSEC_OFFLOAD_PHY)
+	if (ctx->offload == MACSEC_OFFLOAD_PHY)
 		mutex_lock(&ctx->phydev->lock);
 
-	/* Phase I: prepare. The drive should fail here अगर there are going to be
+	/* Phase I: prepare. The drive should fail here if there are going to be
 	 * issues in the commit phase.
 	 */
 	ctx->prepare = true;
 	ret = (*func)(ctx);
-	अगर (ret)
-		जाओ phy_unlock;
+	if (ret)
+		goto phy_unlock;
 
 	/* Phase II: commit. This step cannot fail. */
 	ctx->prepare = false;
 	ret = (*func)(ctx);
 	/* This should never happen: commit is not allowed to fail */
-	अगर (unlikely(ret))
+	if (unlikely(ret))
 		WARN(1, "MACsec offloading commit failed (%d)\n", ret);
 
 phy_unlock:
-	अगर (ctx->offload == MACSEC_OFFLOAD_PHY)
+	if (ctx->offload == MACSEC_OFFLOAD_PHY)
 		mutex_unlock(&ctx->phydev->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक parse_sa_config(काष्ठा nlattr **attrs, काष्ठा nlattr **tb_sa)
-अणु
-	अगर (!attrs[MACSEC_ATTR_SA_CONFIG])
-		वापस -EINVAL;
+static int parse_sa_config(struct nlattr **attrs, struct nlattr **tb_sa)
+{
+	if (!attrs[MACSEC_ATTR_SA_CONFIG])
+		return -EINVAL;
 
-	अगर (nla_parse_nested_deprecated(tb_sa, MACSEC_SA_ATTR_MAX, attrs[MACSEC_ATTR_SA_CONFIG], macsec_genl_sa_policy, शून्य))
-		वापस -EINVAL;
+	if (nla_parse_nested_deprecated(tb_sa, MACSEC_SA_ATTR_MAX, attrs[MACSEC_ATTR_SA_CONFIG], macsec_genl_sa_policy, NULL))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक parse_rxsc_config(काष्ठा nlattr **attrs, काष्ठा nlattr **tb_rxsc)
-अणु
-	अगर (!attrs[MACSEC_ATTR_RXSC_CONFIG])
-		वापस -EINVAL;
+static int parse_rxsc_config(struct nlattr **attrs, struct nlattr **tb_rxsc)
+{
+	if (!attrs[MACSEC_ATTR_RXSC_CONFIG])
+		return -EINVAL;
 
-	अगर (nla_parse_nested_deprecated(tb_rxsc, MACSEC_RXSC_ATTR_MAX, attrs[MACSEC_ATTR_RXSC_CONFIG], macsec_genl_rxsc_policy, शून्य))
-		वापस -EINVAL;
+	if (nla_parse_nested_deprecated(tb_rxsc, MACSEC_RXSC_ATTR_MAX, attrs[MACSEC_ATTR_RXSC_CONFIG], macsec_genl_rxsc_policy, NULL))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool validate_add_rxsa(काष्ठा nlattr **attrs)
-अणु
-	अगर (!attrs[MACSEC_SA_ATTR_AN] ||
+static bool validate_add_rxsa(struct nlattr **attrs)
+{
+	if (!attrs[MACSEC_SA_ATTR_AN] ||
 	    !attrs[MACSEC_SA_ATTR_KEY] ||
 	    !attrs[MACSEC_SA_ATTR_KEYID])
-		वापस false;
+		return false;
 
-	अगर (nla_get_u8(attrs[MACSEC_SA_ATTR_AN]) >= MACSEC_NUM_AN)
-		वापस false;
+	if (nla_get_u8(attrs[MACSEC_SA_ATTR_AN]) >= MACSEC_NUM_AN)
+		return false;
 
-	अगर (attrs[MACSEC_SA_ATTR_PN] &&
+	if (attrs[MACSEC_SA_ATTR_PN] &&
 	    *(u64 *)nla_data(attrs[MACSEC_SA_ATTR_PN]) == 0)
-		वापस false;
+		return false;
 
-	अगर (attrs[MACSEC_SA_ATTR_ACTIVE]) अणु
-		अगर (nla_get_u8(attrs[MACSEC_SA_ATTR_ACTIVE]) > 1)
-			वापस false;
-	पूर्ण
+	if (attrs[MACSEC_SA_ATTR_ACTIVE]) {
+		if (nla_get_u8(attrs[MACSEC_SA_ATTR_ACTIVE]) > 1)
+			return false;
+	}
 
-	अगर (nla_len(attrs[MACSEC_SA_ATTR_KEYID]) != MACSEC_KEYID_LEN)
-		वापस false;
+	if (nla_len(attrs[MACSEC_SA_ATTR_KEYID]) != MACSEC_KEYID_LEN)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक macsec_add_rxsa(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा nlattr **attrs = info->attrs;
-	काष्ठा macsec_secy *secy;
-	काष्ठा macsec_rx_sc *rx_sc;
-	काष्ठा macsec_rx_sa *rx_sa;
-	अचिन्हित अक्षर assoc_num;
-	पूर्णांक pn_len;
-	काष्ठा nlattr *tb_rxsc[MACSEC_RXSC_ATTR_MAX + 1];
-	काष्ठा nlattr *tb_sa[MACSEC_SA_ATTR_MAX + 1];
-	पूर्णांक err;
+static int macsec_add_rxsa(struct sk_buff *skb, struct genl_info *info)
+{
+	struct net_device *dev;
+	struct nlattr **attrs = info->attrs;
+	struct macsec_secy *secy;
+	struct macsec_rx_sc *rx_sc;
+	struct macsec_rx_sa *rx_sa;
+	unsigned char assoc_num;
+	int pn_len;
+	struct nlattr *tb_rxsc[MACSEC_RXSC_ATTR_MAX + 1];
+	struct nlattr *tb_sa[MACSEC_SA_ATTR_MAX + 1];
+	int err;
 
-	अगर (!attrs[MACSEC_ATTR_IFINDEX])
-		वापस -EINVAL;
+	if (!attrs[MACSEC_ATTR_IFINDEX])
+		return -EINVAL;
 
-	अगर (parse_sa_config(attrs, tb_sa))
-		वापस -EINVAL;
+	if (parse_sa_config(attrs, tb_sa))
+		return -EINVAL;
 
-	अगर (parse_rxsc_config(attrs, tb_rxsc))
-		वापस -EINVAL;
+	if (parse_rxsc_config(attrs, tb_rxsc))
+		return -EINVAL;
 
-	अगर (!validate_add_rxsa(tb_sa))
-		वापस -EINVAL;
+	if (!validate_add_rxsa(tb_sa))
+		return -EINVAL;
 
 	rtnl_lock();
 	rx_sc = get_rxsc_from_nl(genl_info_net(info), attrs, tb_rxsc, &dev, &secy);
-	अगर (IS_ERR(rx_sc)) अणु
+	if (IS_ERR(rx_sc)) {
 		rtnl_unlock();
-		वापस PTR_ERR(rx_sc);
-	पूर्ण
+		return PTR_ERR(rx_sc);
+	}
 
 	assoc_num = nla_get_u8(tb_sa[MACSEC_SA_ATTR_AN]);
 
-	अगर (nla_len(tb_sa[MACSEC_SA_ATTR_KEY]) != secy->key_len) अणु
+	if (nla_len(tb_sa[MACSEC_SA_ATTR_KEY]) != secy->key_len) {
 		pr_notice("macsec: nl: add_rxsa: bad key length: %d != %d\n",
 			  nla_len(tb_sa[MACSEC_SA_ATTR_KEY]), secy->key_len);
 		rtnl_unlock();
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	pn_len = secy->xpn ? MACSEC_XPN_PN_LEN : MACSEC_DEFAULT_PN_LEN;
-	अगर (nla_len(tb_sa[MACSEC_SA_ATTR_PN]) != pn_len) अणु
+	if (nla_len(tb_sa[MACSEC_SA_ATTR_PN]) != pn_len) {
 		pr_notice("macsec: nl: add_rxsa: bad pn length: %d != %d\n",
 			  nla_len(tb_sa[MACSEC_SA_ATTR_PN]), pn_len);
 		rtnl_unlock();
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (secy->xpn) अणु
-		अगर (!tb_sa[MACSEC_SA_ATTR_SSCI] || !tb_sa[MACSEC_SA_ATTR_SALT]) अणु
+	if (secy->xpn) {
+		if (!tb_sa[MACSEC_SA_ATTR_SSCI] || !tb_sa[MACSEC_SA_ATTR_SALT]) {
 			rtnl_unlock();
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (nla_len(tb_sa[MACSEC_SA_ATTR_SALT]) != MACSEC_SALT_LEN) अणु
+		if (nla_len(tb_sa[MACSEC_SA_ATTR_SALT]) != MACSEC_SALT_LEN) {
 			pr_notice("macsec: nl: add_rxsa: bad salt length: %d != %d\n",
 				  nla_len(tb_sa[MACSEC_SA_ATTR_SALT]),
 				  MACSEC_SA_ATTR_SALT);
 			rtnl_unlock();
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 	rx_sa = rtnl_dereference(rx_sc->sa[assoc_num]);
-	अगर (rx_sa) अणु
+	if (rx_sa) {
 		rtnl_unlock();
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	rx_sa = kदो_स्मृति(माप(*rx_sa), GFP_KERNEL);
-	अगर (!rx_sa) अणु
+	rx_sa = kmalloc(sizeof(*rx_sa), GFP_KERNEL);
+	if (!rx_sa) {
 		rtnl_unlock();
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	err = init_rx_sa(rx_sa, nla_data(tb_sa[MACSEC_SA_ATTR_KEY]),
 			 secy->key_len, secy->icv_len);
-	अगर (err < 0) अणु
-		kमुक्त(rx_sa);
+	if (err < 0) {
+		kfree(rx_sa);
 		rtnl_unlock();
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (tb_sa[MACSEC_SA_ATTR_PN]) अणु
+	if (tb_sa[MACSEC_SA_ATTR_PN]) {
 		spin_lock_bh(&rx_sa->lock);
 		rx_sa->next_pn = nla_get_u64(tb_sa[MACSEC_SA_ATTR_PN]);
 		spin_unlock_bh(&rx_sa->lock);
-	पूर्ण
+	}
 
-	अगर (tb_sa[MACSEC_SA_ATTR_ACTIVE])
+	if (tb_sa[MACSEC_SA_ATTR_ACTIVE])
 		rx_sa->active = !!nla_get_u8(tb_sa[MACSEC_SA_ATTR_ACTIVE]);
 
 	rx_sa->sc = rx_sc;
 
 	/* If h/w offloading is available, propagate to the device */
-	अगर (macsec_is_offloaded(netdev_priv(dev))) अणु
-		स्थिर काष्ठा macsec_ops *ops;
-		काष्ठा macsec_context ctx;
+	if (macsec_is_offloaded(netdev_priv(dev))) {
+		const struct macsec_ops *ops;
+		struct macsec_context ctx;
 
 		ops = macsec_get_ops(netdev_priv(dev), &ctx);
-		अगर (!ops) अणु
+		if (!ops) {
 			err = -EOPNOTSUPP;
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
 		ctx.sa.assoc_num = assoc_num;
 		ctx.sa.rx_sa = rx_sa;
 		ctx.secy = secy;
-		स_नकल(ctx.sa.key, nla_data(tb_sa[MACSEC_SA_ATTR_KEY]),
+		memcpy(ctx.sa.key, nla_data(tb_sa[MACSEC_SA_ATTR_KEY]),
 		       MACSEC_KEYID_LEN);
 
-		err = macsec_offload(ops->mकरो_add_rxsa, &ctx);
-		अगर (err)
-			जाओ cleanup;
-	पूर्ण
+		err = macsec_offload(ops->mdo_add_rxsa, &ctx);
+		if (err)
+			goto cleanup;
+	}
 
-	अगर (secy->xpn) अणु
+	if (secy->xpn) {
 		rx_sa->ssci = nla_get_ssci(tb_sa[MACSEC_SA_ATTR_SSCI]);
-		nla_स_नकल(rx_sa->key.salt.bytes, tb_sa[MACSEC_SA_ATTR_SALT],
+		nla_memcpy(rx_sa->key.salt.bytes, tb_sa[MACSEC_SA_ATTR_SALT],
 			   MACSEC_SALT_LEN);
-	पूर्ण
+	}
 
-	nla_स_नकल(rx_sa->key.id, tb_sa[MACSEC_SA_ATTR_KEYID], MACSEC_KEYID_LEN);
-	rcu_assign_poपूर्णांकer(rx_sc->sa[assoc_num], rx_sa);
+	nla_memcpy(rx_sa->key.id, tb_sa[MACSEC_SA_ATTR_KEYID], MACSEC_KEYID_LEN);
+	rcu_assign_pointer(rx_sc->sa[assoc_num], rx_sa);
 
 	rtnl_unlock();
 
-	वापस 0;
+	return 0;
 
 cleanup:
-	kमुक्त(rx_sa);
+	kfree(rx_sa);
 	rtnl_unlock();
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल bool validate_add_rxsc(काष्ठा nlattr **attrs)
-अणु
-	अगर (!attrs[MACSEC_RXSC_ATTR_SCI])
-		वापस false;
+static bool validate_add_rxsc(struct nlattr **attrs)
+{
+	if (!attrs[MACSEC_RXSC_ATTR_SCI])
+		return false;
 
-	अगर (attrs[MACSEC_RXSC_ATTR_ACTIVE]) अणु
-		अगर (nla_get_u8(attrs[MACSEC_RXSC_ATTR_ACTIVE]) > 1)
-			वापस false;
-	पूर्ण
+	if (attrs[MACSEC_RXSC_ATTR_ACTIVE]) {
+		if (nla_get_u8(attrs[MACSEC_RXSC_ATTR_ACTIVE]) > 1)
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक macsec_add_rxsc(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा net_device *dev;
+static int macsec_add_rxsc(struct sk_buff *skb, struct genl_info *info)
+{
+	struct net_device *dev;
 	sci_t sci = MACSEC_UNDEF_SCI;
-	काष्ठा nlattr **attrs = info->attrs;
-	काष्ठा macsec_rx_sc *rx_sc;
-	काष्ठा nlattr *tb_rxsc[MACSEC_RXSC_ATTR_MAX + 1];
-	काष्ठा macsec_secy *secy;
+	struct nlattr **attrs = info->attrs;
+	struct macsec_rx_sc *rx_sc;
+	struct nlattr *tb_rxsc[MACSEC_RXSC_ATTR_MAX + 1];
+	struct macsec_secy *secy;
 	bool was_active;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!attrs[MACSEC_ATTR_IFINDEX])
-		वापस -EINVAL;
+	if (!attrs[MACSEC_ATTR_IFINDEX])
+		return -EINVAL;
 
-	अगर (parse_rxsc_config(attrs, tb_rxsc))
-		वापस -EINVAL;
+	if (parse_rxsc_config(attrs, tb_rxsc))
+		return -EINVAL;
 
-	अगर (!validate_add_rxsc(tb_rxsc))
-		वापस -EINVAL;
+	if (!validate_add_rxsc(tb_rxsc))
+		return -EINVAL;
 
 	rtnl_lock();
 	dev = get_dev_from_nl(genl_info_net(info), attrs);
-	अगर (IS_ERR(dev)) अणु
+	if (IS_ERR(dev)) {
 		rtnl_unlock();
-		वापस PTR_ERR(dev);
-	पूर्ण
+		return PTR_ERR(dev);
+	}
 
 	secy = &macsec_priv(dev)->secy;
 	sci = nla_get_sci(tb_rxsc[MACSEC_RXSC_ATTR_SCI]);
 
 	rx_sc = create_rx_sc(dev, sci);
-	अगर (IS_ERR(rx_sc)) अणु
+	if (IS_ERR(rx_sc)) {
 		rtnl_unlock();
-		वापस PTR_ERR(rx_sc);
-	पूर्ण
+		return PTR_ERR(rx_sc);
+	}
 
 	was_active = rx_sc->active;
-	अगर (tb_rxsc[MACSEC_RXSC_ATTR_ACTIVE])
+	if (tb_rxsc[MACSEC_RXSC_ATTR_ACTIVE])
 		rx_sc->active = !!nla_get_u8(tb_rxsc[MACSEC_RXSC_ATTR_ACTIVE]);
 
-	अगर (macsec_is_offloaded(netdev_priv(dev))) अणु
-		स्थिर काष्ठा macsec_ops *ops;
-		काष्ठा macsec_context ctx;
+	if (macsec_is_offloaded(netdev_priv(dev))) {
+		const struct macsec_ops *ops;
+		struct macsec_context ctx;
 
 		ops = macsec_get_ops(netdev_priv(dev), &ctx);
-		अगर (!ops) अणु
+		if (!ops) {
 			ret = -EOPNOTSUPP;
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
 		ctx.rx_sc = rx_sc;
 		ctx.secy = secy;
 
-		ret = macsec_offload(ops->mकरो_add_rxsc, &ctx);
-		अगर (ret)
-			जाओ cleanup;
-	पूर्ण
+		ret = macsec_offload(ops->mdo_add_rxsc, &ctx);
+		if (ret)
+			goto cleanup;
+	}
 
 	rtnl_unlock();
 
-	वापस 0;
+	return 0;
 
 cleanup:
 	rx_sc->active = was_active;
 	rtnl_unlock();
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool validate_add_txsa(काष्ठा nlattr **attrs)
-अणु
-	अगर (!attrs[MACSEC_SA_ATTR_AN] ||
+static bool validate_add_txsa(struct nlattr **attrs)
+{
+	if (!attrs[MACSEC_SA_ATTR_AN] ||
 	    !attrs[MACSEC_SA_ATTR_PN] ||
 	    !attrs[MACSEC_SA_ATTR_KEY] ||
 	    !attrs[MACSEC_SA_ATTR_KEYID])
-		वापस false;
+		return false;
 
-	अगर (nla_get_u8(attrs[MACSEC_SA_ATTR_AN]) >= MACSEC_NUM_AN)
-		वापस false;
+	if (nla_get_u8(attrs[MACSEC_SA_ATTR_AN]) >= MACSEC_NUM_AN)
+		return false;
 
-	अगर (nla_get_u32(attrs[MACSEC_SA_ATTR_PN]) == 0)
-		वापस false;
+	if (nla_get_u32(attrs[MACSEC_SA_ATTR_PN]) == 0)
+		return false;
 
-	अगर (attrs[MACSEC_SA_ATTR_ACTIVE]) अणु
-		अगर (nla_get_u8(attrs[MACSEC_SA_ATTR_ACTIVE]) > 1)
-			वापस false;
-	पूर्ण
+	if (attrs[MACSEC_SA_ATTR_ACTIVE]) {
+		if (nla_get_u8(attrs[MACSEC_SA_ATTR_ACTIVE]) > 1)
+			return false;
+	}
 
-	अगर (nla_len(attrs[MACSEC_SA_ATTR_KEYID]) != MACSEC_KEYID_LEN)
-		वापस false;
+	if (nla_len(attrs[MACSEC_SA_ATTR_KEYID]) != MACSEC_KEYID_LEN)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक macsec_add_txsa(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा nlattr **attrs = info->attrs;
-	काष्ठा macsec_secy *secy;
-	काष्ठा macsec_tx_sc *tx_sc;
-	काष्ठा macsec_tx_sa *tx_sa;
-	अचिन्हित अक्षर assoc_num;
-	पूर्णांक pn_len;
-	काष्ठा nlattr *tb_sa[MACSEC_SA_ATTR_MAX + 1];
+static int macsec_add_txsa(struct sk_buff *skb, struct genl_info *info)
+{
+	struct net_device *dev;
+	struct nlattr **attrs = info->attrs;
+	struct macsec_secy *secy;
+	struct macsec_tx_sc *tx_sc;
+	struct macsec_tx_sa *tx_sa;
+	unsigned char assoc_num;
+	int pn_len;
+	struct nlattr *tb_sa[MACSEC_SA_ATTR_MAX + 1];
 	bool was_operational;
-	पूर्णांक err;
+	int err;
 
-	अगर (!attrs[MACSEC_ATTR_IFINDEX])
-		वापस -EINVAL;
+	if (!attrs[MACSEC_ATTR_IFINDEX])
+		return -EINVAL;
 
-	अगर (parse_sa_config(attrs, tb_sa))
-		वापस -EINVAL;
+	if (parse_sa_config(attrs, tb_sa))
+		return -EINVAL;
 
-	अगर (!validate_add_txsa(tb_sa))
-		वापस -EINVAL;
+	if (!validate_add_txsa(tb_sa))
+		return -EINVAL;
 
 	rtnl_lock();
 	dev = get_dev_from_nl(genl_info_net(info), attrs);
-	अगर (IS_ERR(dev)) अणु
+	if (IS_ERR(dev)) {
 		rtnl_unlock();
-		वापस PTR_ERR(dev);
-	पूर्ण
+		return PTR_ERR(dev);
+	}
 
 	secy = &macsec_priv(dev)->secy;
 	tx_sc = &secy->tx_sc;
 
 	assoc_num = nla_get_u8(tb_sa[MACSEC_SA_ATTR_AN]);
 
-	अगर (nla_len(tb_sa[MACSEC_SA_ATTR_KEY]) != secy->key_len) अणु
+	if (nla_len(tb_sa[MACSEC_SA_ATTR_KEY]) != secy->key_len) {
 		pr_notice("macsec: nl: add_txsa: bad key length: %d != %d\n",
 			  nla_len(tb_sa[MACSEC_SA_ATTR_KEY]), secy->key_len);
 		rtnl_unlock();
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	pn_len = secy->xpn ? MACSEC_XPN_PN_LEN : MACSEC_DEFAULT_PN_LEN;
-	अगर (nla_len(tb_sa[MACSEC_SA_ATTR_PN]) != pn_len) अणु
+	if (nla_len(tb_sa[MACSEC_SA_ATTR_PN]) != pn_len) {
 		pr_notice("macsec: nl: add_txsa: bad pn length: %d != %d\n",
 			  nla_len(tb_sa[MACSEC_SA_ATTR_PN]), pn_len);
 		rtnl_unlock();
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (secy->xpn) अणु
-		अगर (!tb_sa[MACSEC_SA_ATTR_SSCI] || !tb_sa[MACSEC_SA_ATTR_SALT]) अणु
+	if (secy->xpn) {
+		if (!tb_sa[MACSEC_SA_ATTR_SSCI] || !tb_sa[MACSEC_SA_ATTR_SALT]) {
 			rtnl_unlock();
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (nla_len(tb_sa[MACSEC_SA_ATTR_SALT]) != MACSEC_SALT_LEN) अणु
+		if (nla_len(tb_sa[MACSEC_SA_ATTR_SALT]) != MACSEC_SALT_LEN) {
 			pr_notice("macsec: nl: add_txsa: bad salt length: %d != %d\n",
 				  nla_len(tb_sa[MACSEC_SA_ATTR_SALT]),
 				  MACSEC_SA_ATTR_SALT);
 			rtnl_unlock();
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 	tx_sa = rtnl_dereference(tx_sc->sa[assoc_num]);
-	अगर (tx_sa) अणु
+	if (tx_sa) {
 		rtnl_unlock();
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	tx_sa = kदो_स्मृति(माप(*tx_sa), GFP_KERNEL);
-	अगर (!tx_sa) अणु
+	tx_sa = kmalloc(sizeof(*tx_sa), GFP_KERNEL);
+	if (!tx_sa) {
 		rtnl_unlock();
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	err = init_tx_sa(tx_sa, nla_data(tb_sa[MACSEC_SA_ATTR_KEY]),
 			 secy->key_len, secy->icv_len);
-	अगर (err < 0) अणु
-		kमुक्त(tx_sa);
+	if (err < 0) {
+		kfree(tx_sa);
 		rtnl_unlock();
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	spin_lock_bh(&tx_sa->lock);
 	tx_sa->next_pn = nla_get_u64(tb_sa[MACSEC_SA_ATTR_PN]);
 	spin_unlock_bh(&tx_sa->lock);
 
-	अगर (tb_sa[MACSEC_SA_ATTR_ACTIVE])
+	if (tb_sa[MACSEC_SA_ATTR_ACTIVE])
 		tx_sa->active = !!nla_get_u8(tb_sa[MACSEC_SA_ATTR_ACTIVE]);
 
 	was_operational = secy->operational;
-	अगर (assoc_num == tx_sc->encoding_sa && tx_sa->active)
+	if (assoc_num == tx_sc->encoding_sa && tx_sa->active)
 		secy->operational = true;
 
 	/* If h/w offloading is available, propagate to the device */
-	अगर (macsec_is_offloaded(netdev_priv(dev))) अणु
-		स्थिर काष्ठा macsec_ops *ops;
-		काष्ठा macsec_context ctx;
+	if (macsec_is_offloaded(netdev_priv(dev))) {
+		const struct macsec_ops *ops;
+		struct macsec_context ctx;
 
 		ops = macsec_get_ops(netdev_priv(dev), &ctx);
-		अगर (!ops) अणु
+		if (!ops) {
 			err = -EOPNOTSUPP;
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
 		ctx.sa.assoc_num = assoc_num;
 		ctx.sa.tx_sa = tx_sa;
 		ctx.secy = secy;
-		स_नकल(ctx.sa.key, nla_data(tb_sa[MACSEC_SA_ATTR_KEY]),
+		memcpy(ctx.sa.key, nla_data(tb_sa[MACSEC_SA_ATTR_KEY]),
 		       MACSEC_KEYID_LEN);
 
-		err = macsec_offload(ops->mकरो_add_txsa, &ctx);
-		अगर (err)
-			जाओ cleanup;
-	पूर्ण
+		err = macsec_offload(ops->mdo_add_txsa, &ctx);
+		if (err)
+			goto cleanup;
+	}
 
-	अगर (secy->xpn) अणु
+	if (secy->xpn) {
 		tx_sa->ssci = nla_get_ssci(tb_sa[MACSEC_SA_ATTR_SSCI]);
-		nla_स_नकल(tx_sa->key.salt.bytes, tb_sa[MACSEC_SA_ATTR_SALT],
+		nla_memcpy(tx_sa->key.salt.bytes, tb_sa[MACSEC_SA_ATTR_SALT],
 			   MACSEC_SALT_LEN);
-	पूर्ण
+	}
 
-	nla_स_नकल(tx_sa->key.id, tb_sa[MACSEC_SA_ATTR_KEYID], MACSEC_KEYID_LEN);
-	rcu_assign_poपूर्णांकer(tx_sc->sa[assoc_num], tx_sa);
+	nla_memcpy(tx_sa->key.id, tb_sa[MACSEC_SA_ATTR_KEYID], MACSEC_KEYID_LEN);
+	rcu_assign_pointer(tx_sc->sa[assoc_num], tx_sa);
 
 	rtnl_unlock();
 
-	वापस 0;
+	return 0;
 
 cleanup:
 	secy->operational = was_operational;
-	kमुक्त(tx_sa);
+	kfree(tx_sa);
 	rtnl_unlock();
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक macsec_del_rxsa(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा nlattr **attrs = info->attrs;
-	काष्ठा net_device *dev;
-	काष्ठा macsec_secy *secy;
-	काष्ठा macsec_rx_sc *rx_sc;
-	काष्ठा macsec_rx_sa *rx_sa;
+static int macsec_del_rxsa(struct sk_buff *skb, struct genl_info *info)
+{
+	struct nlattr **attrs = info->attrs;
+	struct net_device *dev;
+	struct macsec_secy *secy;
+	struct macsec_rx_sc *rx_sc;
+	struct macsec_rx_sa *rx_sa;
 	u8 assoc_num;
-	काष्ठा nlattr *tb_rxsc[MACSEC_RXSC_ATTR_MAX + 1];
-	काष्ठा nlattr *tb_sa[MACSEC_SA_ATTR_MAX + 1];
-	पूर्णांक ret;
+	struct nlattr *tb_rxsc[MACSEC_RXSC_ATTR_MAX + 1];
+	struct nlattr *tb_sa[MACSEC_SA_ATTR_MAX + 1];
+	int ret;
 
-	अगर (!attrs[MACSEC_ATTR_IFINDEX])
-		वापस -EINVAL;
+	if (!attrs[MACSEC_ATTR_IFINDEX])
+		return -EINVAL;
 
-	अगर (parse_sa_config(attrs, tb_sa))
-		वापस -EINVAL;
+	if (parse_sa_config(attrs, tb_sa))
+		return -EINVAL;
 
-	अगर (parse_rxsc_config(attrs, tb_rxsc))
-		वापस -EINVAL;
+	if (parse_rxsc_config(attrs, tb_rxsc))
+		return -EINVAL;
 
 	rtnl_lock();
 	rx_sa = get_rxsa_from_nl(genl_info_net(info), attrs, tb_rxsc, tb_sa,
 				 &dev, &secy, &rx_sc, &assoc_num);
-	अगर (IS_ERR(rx_sa)) अणु
+	if (IS_ERR(rx_sa)) {
 		rtnl_unlock();
-		वापस PTR_ERR(rx_sa);
-	पूर्ण
+		return PTR_ERR(rx_sa);
+	}
 
-	अगर (rx_sa->active) अणु
+	if (rx_sa->active) {
 		rtnl_unlock();
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	/* If h/w offloading is available, propagate to the device */
-	अगर (macsec_is_offloaded(netdev_priv(dev))) अणु
-		स्थिर काष्ठा macsec_ops *ops;
-		काष्ठा macsec_context ctx;
+	if (macsec_is_offloaded(netdev_priv(dev))) {
+		const struct macsec_ops *ops;
+		struct macsec_context ctx;
 
 		ops = macsec_get_ops(netdev_priv(dev), &ctx);
-		अगर (!ops) अणु
+		if (!ops) {
 			ret = -EOPNOTSUPP;
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
 		ctx.sa.assoc_num = assoc_num;
 		ctx.sa.rx_sa = rx_sa;
 		ctx.secy = secy;
 
-		ret = macsec_offload(ops->mकरो_del_rxsa, &ctx);
-		अगर (ret)
-			जाओ cleanup;
-	पूर्ण
+		ret = macsec_offload(ops->mdo_del_rxsa, &ctx);
+		if (ret)
+			goto cleanup;
+	}
 
-	RCU_INIT_POINTER(rx_sc->sa[assoc_num], शून्य);
+	RCU_INIT_POINTER(rx_sc->sa[assoc_num], NULL);
 	clear_rx_sa(rx_sa);
 
 	rtnl_unlock();
 
-	वापस 0;
+	return 0;
 
 cleanup:
 	rtnl_unlock();
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक macsec_del_rxsc(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा nlattr **attrs = info->attrs;
-	काष्ठा net_device *dev;
-	काष्ठा macsec_secy *secy;
-	काष्ठा macsec_rx_sc *rx_sc;
+static int macsec_del_rxsc(struct sk_buff *skb, struct genl_info *info)
+{
+	struct nlattr **attrs = info->attrs;
+	struct net_device *dev;
+	struct macsec_secy *secy;
+	struct macsec_rx_sc *rx_sc;
 	sci_t sci;
-	काष्ठा nlattr *tb_rxsc[MACSEC_RXSC_ATTR_MAX + 1];
-	पूर्णांक ret;
+	struct nlattr *tb_rxsc[MACSEC_RXSC_ATTR_MAX + 1];
+	int ret;
 
-	अगर (!attrs[MACSEC_ATTR_IFINDEX])
-		वापस -EINVAL;
+	if (!attrs[MACSEC_ATTR_IFINDEX])
+		return -EINVAL;
 
-	अगर (parse_rxsc_config(attrs, tb_rxsc))
-		वापस -EINVAL;
+	if (parse_rxsc_config(attrs, tb_rxsc))
+		return -EINVAL;
 
-	अगर (!tb_rxsc[MACSEC_RXSC_ATTR_SCI])
-		वापस -EINVAL;
+	if (!tb_rxsc[MACSEC_RXSC_ATTR_SCI])
+		return -EINVAL;
 
 	rtnl_lock();
 	dev = get_dev_from_nl(genl_info_net(info), info->attrs);
-	अगर (IS_ERR(dev)) अणु
+	if (IS_ERR(dev)) {
 		rtnl_unlock();
-		वापस PTR_ERR(dev);
-	पूर्ण
+		return PTR_ERR(dev);
+	}
 
 	secy = &macsec_priv(dev)->secy;
 	sci = nla_get_sci(tb_rxsc[MACSEC_RXSC_ATTR_SCI]);
 
 	rx_sc = del_rx_sc(secy, sci);
-	अगर (!rx_sc) अणु
+	if (!rx_sc) {
 		rtnl_unlock();
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* If h/w offloading is available, propagate to the device */
-	अगर (macsec_is_offloaded(netdev_priv(dev))) अणु
-		स्थिर काष्ठा macsec_ops *ops;
-		काष्ठा macsec_context ctx;
+	if (macsec_is_offloaded(netdev_priv(dev))) {
+		const struct macsec_ops *ops;
+		struct macsec_context ctx;
 
 		ops = macsec_get_ops(netdev_priv(dev), &ctx);
-		अगर (!ops) अणु
+		if (!ops) {
 			ret = -EOPNOTSUPP;
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
 		ctx.rx_sc = rx_sc;
 		ctx.secy = secy;
-		ret = macsec_offload(ops->mकरो_del_rxsc, &ctx);
-		अगर (ret)
-			जाओ cleanup;
-	पूर्ण
+		ret = macsec_offload(ops->mdo_del_rxsc, &ctx);
+		if (ret)
+			goto cleanup;
+	}
 
-	मुक्त_rx_sc(rx_sc);
+	free_rx_sc(rx_sc);
 	rtnl_unlock();
 
-	वापस 0;
+	return 0;
 
 cleanup:
 	rtnl_unlock();
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक macsec_del_txsa(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा nlattr **attrs = info->attrs;
-	काष्ठा net_device *dev;
-	काष्ठा macsec_secy *secy;
-	काष्ठा macsec_tx_sc *tx_sc;
-	काष्ठा macsec_tx_sa *tx_sa;
+static int macsec_del_txsa(struct sk_buff *skb, struct genl_info *info)
+{
+	struct nlattr **attrs = info->attrs;
+	struct net_device *dev;
+	struct macsec_secy *secy;
+	struct macsec_tx_sc *tx_sc;
+	struct macsec_tx_sa *tx_sa;
 	u8 assoc_num;
-	काष्ठा nlattr *tb_sa[MACSEC_SA_ATTR_MAX + 1];
-	पूर्णांक ret;
+	struct nlattr *tb_sa[MACSEC_SA_ATTR_MAX + 1];
+	int ret;
 
-	अगर (!attrs[MACSEC_ATTR_IFINDEX])
-		वापस -EINVAL;
+	if (!attrs[MACSEC_ATTR_IFINDEX])
+		return -EINVAL;
 
-	अगर (parse_sa_config(attrs, tb_sa))
-		वापस -EINVAL;
+	if (parse_sa_config(attrs, tb_sa))
+		return -EINVAL;
 
 	rtnl_lock();
 	tx_sa = get_txsa_from_nl(genl_info_net(info), attrs, tb_sa,
 				 &dev, &secy, &tx_sc, &assoc_num);
-	अगर (IS_ERR(tx_sa)) अणु
+	if (IS_ERR(tx_sa)) {
 		rtnl_unlock();
-		वापस PTR_ERR(tx_sa);
-	पूर्ण
+		return PTR_ERR(tx_sa);
+	}
 
-	अगर (tx_sa->active) अणु
+	if (tx_sa->active) {
 		rtnl_unlock();
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	/* If h/w offloading is available, propagate to the device */
-	अगर (macsec_is_offloaded(netdev_priv(dev))) अणु
-		स्थिर काष्ठा macsec_ops *ops;
-		काष्ठा macsec_context ctx;
+	if (macsec_is_offloaded(netdev_priv(dev))) {
+		const struct macsec_ops *ops;
+		struct macsec_context ctx;
 
 		ops = macsec_get_ops(netdev_priv(dev), &ctx);
-		अगर (!ops) अणु
+		if (!ops) {
 			ret = -EOPNOTSUPP;
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
 		ctx.sa.assoc_num = assoc_num;
 		ctx.sa.tx_sa = tx_sa;
 		ctx.secy = secy;
 
-		ret = macsec_offload(ops->mकरो_del_txsa, &ctx);
-		अगर (ret)
-			जाओ cleanup;
-	पूर्ण
+		ret = macsec_offload(ops->mdo_del_txsa, &ctx);
+		if (ret)
+			goto cleanup;
+	}
 
-	RCU_INIT_POINTER(tx_sc->sa[assoc_num], शून्य);
+	RCU_INIT_POINTER(tx_sc->sa[assoc_num], NULL);
 	clear_tx_sa(tx_sa);
 
 	rtnl_unlock();
 
-	वापस 0;
+	return 0;
 
 cleanup:
 	rtnl_unlock();
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool validate_upd_sa(काष्ठा nlattr **attrs)
-अणु
-	अगर (!attrs[MACSEC_SA_ATTR_AN] ||
+static bool validate_upd_sa(struct nlattr **attrs)
+{
+	if (!attrs[MACSEC_SA_ATTR_AN] ||
 	    attrs[MACSEC_SA_ATTR_KEY] ||
 	    attrs[MACSEC_SA_ATTR_KEYID] ||
 	    attrs[MACSEC_SA_ATTR_SSCI] ||
 	    attrs[MACSEC_SA_ATTR_SALT])
-		वापस false;
+		return false;
 
-	अगर (nla_get_u8(attrs[MACSEC_SA_ATTR_AN]) >= MACSEC_NUM_AN)
-		वापस false;
+	if (nla_get_u8(attrs[MACSEC_SA_ATTR_AN]) >= MACSEC_NUM_AN)
+		return false;
 
-	अगर (attrs[MACSEC_SA_ATTR_PN] && nla_get_u32(attrs[MACSEC_SA_ATTR_PN]) == 0)
-		वापस false;
+	if (attrs[MACSEC_SA_ATTR_PN] && nla_get_u32(attrs[MACSEC_SA_ATTR_PN]) == 0)
+		return false;
 
-	अगर (attrs[MACSEC_SA_ATTR_ACTIVE]) अणु
-		अगर (nla_get_u8(attrs[MACSEC_SA_ATTR_ACTIVE]) > 1)
-			वापस false;
-	पूर्ण
+	if (attrs[MACSEC_SA_ATTR_ACTIVE]) {
+		if (nla_get_u8(attrs[MACSEC_SA_ATTR_ACTIVE]) > 1)
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक macsec_upd_txsa(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा nlattr **attrs = info->attrs;
-	काष्ठा net_device *dev;
-	काष्ठा macsec_secy *secy;
-	काष्ठा macsec_tx_sc *tx_sc;
-	काष्ठा macsec_tx_sa *tx_sa;
+static int macsec_upd_txsa(struct sk_buff *skb, struct genl_info *info)
+{
+	struct nlattr **attrs = info->attrs;
+	struct net_device *dev;
+	struct macsec_secy *secy;
+	struct macsec_tx_sc *tx_sc;
+	struct macsec_tx_sa *tx_sa;
 	u8 assoc_num;
-	काष्ठा nlattr *tb_sa[MACSEC_SA_ATTR_MAX + 1];
+	struct nlattr *tb_sa[MACSEC_SA_ATTR_MAX + 1];
 	bool was_operational, was_active;
 	pn_t prev_pn;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	prev_pn.full64 = 0;
 
-	अगर (!attrs[MACSEC_ATTR_IFINDEX])
-		वापस -EINVAL;
+	if (!attrs[MACSEC_ATTR_IFINDEX])
+		return -EINVAL;
 
-	अगर (parse_sa_config(attrs, tb_sa))
-		वापस -EINVAL;
+	if (parse_sa_config(attrs, tb_sa))
+		return -EINVAL;
 
-	अगर (!validate_upd_sa(tb_sa))
-		वापस -EINVAL;
+	if (!validate_upd_sa(tb_sa))
+		return -EINVAL;
 
 	rtnl_lock();
 	tx_sa = get_txsa_from_nl(genl_info_net(info), attrs, tb_sa,
 				 &dev, &secy, &tx_sc, &assoc_num);
-	अगर (IS_ERR(tx_sa)) अणु
+	if (IS_ERR(tx_sa)) {
 		rtnl_unlock();
-		वापस PTR_ERR(tx_sa);
-	पूर्ण
+		return PTR_ERR(tx_sa);
+	}
 
-	अगर (tb_sa[MACSEC_SA_ATTR_PN]) अणु
-		पूर्णांक pn_len;
+	if (tb_sa[MACSEC_SA_ATTR_PN]) {
+		int pn_len;
 
 		pn_len = secy->xpn ? MACSEC_XPN_PN_LEN : MACSEC_DEFAULT_PN_LEN;
-		अगर (nla_len(tb_sa[MACSEC_SA_ATTR_PN]) != pn_len) अणु
+		if (nla_len(tb_sa[MACSEC_SA_ATTR_PN]) != pn_len) {
 			pr_notice("macsec: nl: upd_txsa: bad pn length: %d != %d\n",
 				  nla_len(tb_sa[MACSEC_SA_ATTR_PN]), pn_len);
 			rtnl_unlock();
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		spin_lock_bh(&tx_sa->lock);
 		prev_pn = tx_sa->next_pn_halves;
 		tx_sa->next_pn = nla_get_u64(tb_sa[MACSEC_SA_ATTR_PN]);
 		spin_unlock_bh(&tx_sa->lock);
-	पूर्ण
+	}
 
 	was_active = tx_sa->active;
-	अगर (tb_sa[MACSEC_SA_ATTR_ACTIVE])
+	if (tb_sa[MACSEC_SA_ATTR_ACTIVE])
 		tx_sa->active = nla_get_u8(tb_sa[MACSEC_SA_ATTR_ACTIVE]);
 
 	was_operational = secy->operational;
-	अगर (assoc_num == tx_sc->encoding_sa)
+	if (assoc_num == tx_sc->encoding_sa)
 		secy->operational = tx_sa->active;
 
 	/* If h/w offloading is available, propagate to the device */
-	अगर (macsec_is_offloaded(netdev_priv(dev))) अणु
-		स्थिर काष्ठा macsec_ops *ops;
-		काष्ठा macsec_context ctx;
+	if (macsec_is_offloaded(netdev_priv(dev))) {
+		const struct macsec_ops *ops;
+		struct macsec_context ctx;
 
 		ops = macsec_get_ops(netdev_priv(dev), &ctx);
-		अगर (!ops) अणु
+		if (!ops) {
 			ret = -EOPNOTSUPP;
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
 		ctx.sa.assoc_num = assoc_num;
 		ctx.sa.tx_sa = tx_sa;
 		ctx.secy = secy;
 
-		ret = macsec_offload(ops->mकरो_upd_txsa, &ctx);
-		अगर (ret)
-			जाओ cleanup;
-	पूर्ण
+		ret = macsec_offload(ops->mdo_upd_txsa, &ctx);
+		if (ret)
+			goto cleanup;
+	}
 
 	rtnl_unlock();
 
-	वापस 0;
+	return 0;
 
 cleanup:
-	अगर (tb_sa[MACSEC_SA_ATTR_PN]) अणु
+	if (tb_sa[MACSEC_SA_ATTR_PN]) {
 		spin_lock_bh(&tx_sa->lock);
 		tx_sa->next_pn_halves = prev_pn;
 		spin_unlock_bh(&tx_sa->lock);
-	पूर्ण
+	}
 	tx_sa->active = was_active;
 	secy->operational = was_operational;
 	rtnl_unlock();
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक macsec_upd_rxsa(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा nlattr **attrs = info->attrs;
-	काष्ठा net_device *dev;
-	काष्ठा macsec_secy *secy;
-	काष्ठा macsec_rx_sc *rx_sc;
-	काष्ठा macsec_rx_sa *rx_sa;
+static int macsec_upd_rxsa(struct sk_buff *skb, struct genl_info *info)
+{
+	struct nlattr **attrs = info->attrs;
+	struct net_device *dev;
+	struct macsec_secy *secy;
+	struct macsec_rx_sc *rx_sc;
+	struct macsec_rx_sa *rx_sa;
 	u8 assoc_num;
-	काष्ठा nlattr *tb_rxsc[MACSEC_RXSC_ATTR_MAX + 1];
-	काष्ठा nlattr *tb_sa[MACSEC_SA_ATTR_MAX + 1];
+	struct nlattr *tb_rxsc[MACSEC_RXSC_ATTR_MAX + 1];
+	struct nlattr *tb_sa[MACSEC_SA_ATTR_MAX + 1];
 	bool was_active;
 	pn_t prev_pn;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	prev_pn.full64 = 0;
 
-	अगर (!attrs[MACSEC_ATTR_IFINDEX])
-		वापस -EINVAL;
+	if (!attrs[MACSEC_ATTR_IFINDEX])
+		return -EINVAL;
 
-	अगर (parse_rxsc_config(attrs, tb_rxsc))
-		वापस -EINVAL;
+	if (parse_rxsc_config(attrs, tb_rxsc))
+		return -EINVAL;
 
-	अगर (parse_sa_config(attrs, tb_sa))
-		वापस -EINVAL;
+	if (parse_sa_config(attrs, tb_sa))
+		return -EINVAL;
 
-	अगर (!validate_upd_sa(tb_sa))
-		वापस -EINVAL;
+	if (!validate_upd_sa(tb_sa))
+		return -EINVAL;
 
 	rtnl_lock();
 	rx_sa = get_rxsa_from_nl(genl_info_net(info), attrs, tb_rxsc, tb_sa,
 				 &dev, &secy, &rx_sc, &assoc_num);
-	अगर (IS_ERR(rx_sa)) अणु
+	if (IS_ERR(rx_sa)) {
 		rtnl_unlock();
-		वापस PTR_ERR(rx_sa);
-	पूर्ण
+		return PTR_ERR(rx_sa);
+	}
 
-	अगर (tb_sa[MACSEC_SA_ATTR_PN]) अणु
-		पूर्णांक pn_len;
+	if (tb_sa[MACSEC_SA_ATTR_PN]) {
+		int pn_len;
 
 		pn_len = secy->xpn ? MACSEC_XPN_PN_LEN : MACSEC_DEFAULT_PN_LEN;
-		अगर (nla_len(tb_sa[MACSEC_SA_ATTR_PN]) != pn_len) अणु
+		if (nla_len(tb_sa[MACSEC_SA_ATTR_PN]) != pn_len) {
 			pr_notice("macsec: nl: upd_rxsa: bad pn length: %d != %d\n",
 				  nla_len(tb_sa[MACSEC_SA_ATTR_PN]), pn_len);
 			rtnl_unlock();
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		spin_lock_bh(&rx_sa->lock);
 		prev_pn = rx_sa->next_pn_halves;
 		rx_sa->next_pn = nla_get_u64(tb_sa[MACSEC_SA_ATTR_PN]);
 		spin_unlock_bh(&rx_sa->lock);
-	पूर्ण
+	}
 
 	was_active = rx_sa->active;
-	अगर (tb_sa[MACSEC_SA_ATTR_ACTIVE])
+	if (tb_sa[MACSEC_SA_ATTR_ACTIVE])
 		rx_sa->active = nla_get_u8(tb_sa[MACSEC_SA_ATTR_ACTIVE]);
 
 	/* If h/w offloading is available, propagate to the device */
-	अगर (macsec_is_offloaded(netdev_priv(dev))) अणु
-		स्थिर काष्ठा macsec_ops *ops;
-		काष्ठा macsec_context ctx;
+	if (macsec_is_offloaded(netdev_priv(dev))) {
+		const struct macsec_ops *ops;
+		struct macsec_context ctx;
 
 		ops = macsec_get_ops(netdev_priv(dev), &ctx);
-		अगर (!ops) अणु
+		if (!ops) {
 			ret = -EOPNOTSUPP;
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
 		ctx.sa.assoc_num = assoc_num;
 		ctx.sa.rx_sa = rx_sa;
 		ctx.secy = secy;
 
-		ret = macsec_offload(ops->mकरो_upd_rxsa, &ctx);
-		अगर (ret)
-			जाओ cleanup;
-	पूर्ण
+		ret = macsec_offload(ops->mdo_upd_rxsa, &ctx);
+		if (ret)
+			goto cleanup;
+	}
 
 	rtnl_unlock();
-	वापस 0;
+	return 0;
 
 cleanup:
-	अगर (tb_sa[MACSEC_SA_ATTR_PN]) अणु
+	if (tb_sa[MACSEC_SA_ATTR_PN]) {
 		spin_lock_bh(&rx_sa->lock);
 		rx_sa->next_pn_halves = prev_pn;
 		spin_unlock_bh(&rx_sa->lock);
-	पूर्ण
+	}
 	rx_sa->active = was_active;
 	rtnl_unlock();
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक macsec_upd_rxsc(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा nlattr **attrs = info->attrs;
-	काष्ठा net_device *dev;
-	काष्ठा macsec_secy *secy;
-	काष्ठा macsec_rx_sc *rx_sc;
-	काष्ठा nlattr *tb_rxsc[MACSEC_RXSC_ATTR_MAX + 1];
-	अचिन्हित पूर्णांक prev_n_rx_sc;
+static int macsec_upd_rxsc(struct sk_buff *skb, struct genl_info *info)
+{
+	struct nlattr **attrs = info->attrs;
+	struct net_device *dev;
+	struct macsec_secy *secy;
+	struct macsec_rx_sc *rx_sc;
+	struct nlattr *tb_rxsc[MACSEC_RXSC_ATTR_MAX + 1];
+	unsigned int prev_n_rx_sc;
 	bool was_active;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!attrs[MACSEC_ATTR_IFINDEX])
-		वापस -EINVAL;
+	if (!attrs[MACSEC_ATTR_IFINDEX])
+		return -EINVAL;
 
-	अगर (parse_rxsc_config(attrs, tb_rxsc))
-		वापस -EINVAL;
+	if (parse_rxsc_config(attrs, tb_rxsc))
+		return -EINVAL;
 
-	अगर (!validate_add_rxsc(tb_rxsc))
-		वापस -EINVAL;
+	if (!validate_add_rxsc(tb_rxsc))
+		return -EINVAL;
 
 	rtnl_lock();
 	rx_sc = get_rxsc_from_nl(genl_info_net(info), attrs, tb_rxsc, &dev, &secy);
-	अगर (IS_ERR(rx_sc)) अणु
+	if (IS_ERR(rx_sc)) {
 		rtnl_unlock();
-		वापस PTR_ERR(rx_sc);
-	पूर्ण
+		return PTR_ERR(rx_sc);
+	}
 
 	was_active = rx_sc->active;
 	prev_n_rx_sc = secy->n_rx_sc;
-	अगर (tb_rxsc[MACSEC_RXSC_ATTR_ACTIVE]) अणु
+	if (tb_rxsc[MACSEC_RXSC_ATTR_ACTIVE]) {
 		bool new = !!nla_get_u8(tb_rxsc[MACSEC_RXSC_ATTR_ACTIVE]);
 
-		अगर (rx_sc->active != new)
+		if (rx_sc->active != new)
 			secy->n_rx_sc += new ? 1 : -1;
 
 		rx_sc->active = new;
-	पूर्ण
+	}
 
 	/* If h/w offloading is available, propagate to the device */
-	अगर (macsec_is_offloaded(netdev_priv(dev))) अणु
-		स्थिर काष्ठा macsec_ops *ops;
-		काष्ठा macsec_context ctx;
+	if (macsec_is_offloaded(netdev_priv(dev))) {
+		const struct macsec_ops *ops;
+		struct macsec_context ctx;
 
 		ops = macsec_get_ops(netdev_priv(dev), &ctx);
-		अगर (!ops) अणु
+		if (!ops) {
 			ret = -EOPNOTSUPP;
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
 		ctx.rx_sc = rx_sc;
 		ctx.secy = secy;
 
-		ret = macsec_offload(ops->mकरो_upd_rxsc, &ctx);
-		अगर (ret)
-			जाओ cleanup;
-	पूर्ण
+		ret = macsec_offload(ops->mdo_upd_rxsc, &ctx);
+		if (ret)
+			goto cleanup;
+	}
 
 	rtnl_unlock();
 
-	वापस 0;
+	return 0;
 
 cleanup:
 	secy->n_rx_sc = prev_n_rx_sc;
 	rx_sc->active = was_active;
 	rtnl_unlock();
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool macsec_is_configured(काष्ठा macsec_dev *macsec)
-अणु
-	काष्ठा macsec_secy *secy = &macsec->secy;
-	काष्ठा macsec_tx_sc *tx_sc = &secy->tx_sc;
-	पूर्णांक i;
+static bool macsec_is_configured(struct macsec_dev *macsec)
+{
+	struct macsec_secy *secy = &macsec->secy;
+	struct macsec_tx_sc *tx_sc = &secy->tx_sc;
+	int i;
 
-	अगर (secy->n_rx_sc > 0)
-		वापस true;
+	if (secy->n_rx_sc > 0)
+		return true;
 
-	क्रम (i = 0; i < MACSEC_NUM_AN; i++)
-		अगर (tx_sc->sa[i])
-			वापस true;
+	for (i = 0; i < MACSEC_NUM_AN; i++)
+		if (tx_sc->sa[i])
+			return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक macsec_upd_offload(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा nlattr *tb_offload[MACSEC_OFFLOAD_ATTR_MAX + 1];
-	क्रमागत macsec_offload offload, prev_offload;
-	पूर्णांक (*func)(काष्ठा macsec_context *ctx);
-	काष्ठा nlattr **attrs = info->attrs;
-	काष्ठा net_device *dev;
-	स्थिर काष्ठा macsec_ops *ops;
-	काष्ठा macsec_context ctx;
-	काष्ठा macsec_dev *macsec;
-	पूर्णांक ret;
+static int macsec_upd_offload(struct sk_buff *skb, struct genl_info *info)
+{
+	struct nlattr *tb_offload[MACSEC_OFFLOAD_ATTR_MAX + 1];
+	enum macsec_offload offload, prev_offload;
+	int (*func)(struct macsec_context *ctx);
+	struct nlattr **attrs = info->attrs;
+	struct net_device *dev;
+	const struct macsec_ops *ops;
+	struct macsec_context ctx;
+	struct macsec_dev *macsec;
+	int ret;
 
-	अगर (!attrs[MACSEC_ATTR_IFINDEX])
-		वापस -EINVAL;
+	if (!attrs[MACSEC_ATTR_IFINDEX])
+		return -EINVAL;
 
-	अगर (!attrs[MACSEC_ATTR_OFFLOAD])
-		वापस -EINVAL;
+	if (!attrs[MACSEC_ATTR_OFFLOAD])
+		return -EINVAL;
 
-	अगर (nla_parse_nested_deprecated(tb_offload, MACSEC_OFFLOAD_ATTR_MAX,
+	if (nla_parse_nested_deprecated(tb_offload, MACSEC_OFFLOAD_ATTR_MAX,
 					attrs[MACSEC_ATTR_OFFLOAD],
-					macsec_genl_offload_policy, शून्य))
-		वापस -EINVAL;
+					macsec_genl_offload_policy, NULL))
+		return -EINVAL;
 
 	dev = get_dev_from_nl(genl_info_net(info), attrs);
-	अगर (IS_ERR(dev))
-		वापस PTR_ERR(dev);
+	if (IS_ERR(dev))
+		return PTR_ERR(dev);
 	macsec = macsec_priv(dev);
 
-	अगर (!tb_offload[MACSEC_OFFLOAD_ATTR_TYPE])
-		वापस -EINVAL;
+	if (!tb_offload[MACSEC_OFFLOAD_ATTR_TYPE])
+		return -EINVAL;
 
 	offload = nla_get_u8(tb_offload[MACSEC_OFFLOAD_ATTR_TYPE]);
-	अगर (macsec->offload == offload)
-		वापस 0;
+	if (macsec->offload == offload)
+		return 0;
 
-	/* Check अगर the offloading mode is supported by the underlying layers */
-	अगर (offload != MACSEC_OFFLOAD_OFF &&
+	/* Check if the offloading mode is supported by the underlying layers */
+	if (offload != MACSEC_OFFLOAD_OFF &&
 	    !macsec_check_offload(offload, macsec))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	/* Check अगर the net device is busy. */
-	अगर (netअगर_running(dev))
-		वापस -EBUSY;
+	/* Check if the net device is busy. */
+	if (netif_running(dev))
+		return -EBUSY;
 
 	rtnl_lock();
 
 	prev_offload = macsec->offload;
 	macsec->offload = offload;
 
-	/* Check अगर the device alपढ़ोy has rules configured: we करो not support
+	/* Check if the device already has rules configured: we do not support
 	 * rules migration.
 	 */
-	अगर (macsec_is_configured(macsec)) अणु
+	if (macsec_is_configured(macsec)) {
 		ret = -EBUSY;
-		जाओ rollback;
-	पूर्ण
+		goto rollback;
+	}
 
 	ops = __macsec_get_ops(offload == MACSEC_OFFLOAD_OFF ? prev_offload : offload,
 			       macsec, &ctx);
-	अगर (!ops) अणु
+	if (!ops) {
 		ret = -EOPNOTSUPP;
-		जाओ rollback;
-	पूर्ण
+		goto rollback;
+	}
 
-	अगर (prev_offload == MACSEC_OFFLOAD_OFF)
-		func = ops->mकरो_add_secy;
-	अन्यथा
-		func = ops->mकरो_del_secy;
+	if (prev_offload == MACSEC_OFFLOAD_OFF)
+		func = ops->mdo_add_secy;
+	else
+		func = ops->mdo_del_secy;
 
 	ctx.secy = &macsec->secy;
 	ret = macsec_offload(func, &ctx);
-	अगर (ret)
-		जाओ rollback;
+	if (ret)
+		goto rollback;
 
-	/* Force features update, since they are dअगरferent क्रम SW MACSec and
-	 * HW offloading हालs.
+	/* Force features update, since they are different for SW MACSec and
+	 * HW offloading cases.
 	 */
 	netdev_update_features(dev);
 
 	rtnl_unlock();
-	वापस 0;
+	return 0;
 
 rollback:
 	macsec->offload = prev_offload;
 
 	rtnl_unlock();
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम get_tx_sa_stats(काष्ठा net_device *dev, पूर्णांक an,
-			    काष्ठा macsec_tx_sa *tx_sa,
-			    काष्ठा macsec_tx_sa_stats *sum)
-अणु
-	काष्ठा macsec_dev *macsec = macsec_priv(dev);
-	पूर्णांक cpu;
+static void get_tx_sa_stats(struct net_device *dev, int an,
+			    struct macsec_tx_sa *tx_sa,
+			    struct macsec_tx_sa_stats *sum)
+{
+	struct macsec_dev *macsec = macsec_priv(dev);
+	int cpu;
 
 	/* If h/w offloading is available, propagate to the device */
-	अगर (macsec_is_offloaded(macsec)) अणु
-		स्थिर काष्ठा macsec_ops *ops;
-		काष्ठा macsec_context ctx;
+	if (macsec_is_offloaded(macsec)) {
+		const struct macsec_ops *ops;
+		struct macsec_context ctx;
 
 		ops = macsec_get_ops(macsec, &ctx);
-		अगर (ops) अणु
+		if (ops) {
 			ctx.sa.assoc_num = an;
 			ctx.sa.tx_sa = tx_sa;
 			ctx.stats.tx_sa_stats = sum;
 			ctx.secy = &macsec_priv(dev)->secy;
-			macsec_offload(ops->mकरो_get_tx_sa_stats, &ctx);
-		पूर्ण
-		वापस;
-	पूर्ण
+			macsec_offload(ops->mdo_get_tx_sa_stats, &ctx);
+		}
+		return;
+	}
 
-	क्रम_each_possible_cpu(cpu) अणु
-		स्थिर काष्ठा macsec_tx_sa_stats *stats =
+	for_each_possible_cpu(cpu) {
+		const struct macsec_tx_sa_stats *stats =
 			per_cpu_ptr(tx_sa->stats, cpu);
 
 		sum->OutPktsProtected += stats->OutPktsProtected;
 		sum->OutPktsEncrypted += stats->OutPktsEncrypted;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक copy_tx_sa_stats(काष्ठा sk_buff *skb, काष्ठा macsec_tx_sa_stats *sum)
-अणु
-	अगर (nla_put_u32(skb, MACSEC_SA_STATS_ATTR_OUT_PKTS_PROTECTED,
+static int copy_tx_sa_stats(struct sk_buff *skb, struct macsec_tx_sa_stats *sum)
+{
+	if (nla_put_u32(skb, MACSEC_SA_STATS_ATTR_OUT_PKTS_PROTECTED,
 			sum->OutPktsProtected) ||
 	    nla_put_u32(skb, MACSEC_SA_STATS_ATTR_OUT_PKTS_ENCRYPTED,
 			sum->OutPktsEncrypted))
-		वापस -EMSGSIZE;
+		return -EMSGSIZE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम get_rx_sa_stats(काष्ठा net_device *dev,
-			    काष्ठा macsec_rx_sc *rx_sc, पूर्णांक an,
-			    काष्ठा macsec_rx_sa *rx_sa,
-			    काष्ठा macsec_rx_sa_stats *sum)
-अणु
-	काष्ठा macsec_dev *macsec = macsec_priv(dev);
-	पूर्णांक cpu;
+static void get_rx_sa_stats(struct net_device *dev,
+			    struct macsec_rx_sc *rx_sc, int an,
+			    struct macsec_rx_sa *rx_sa,
+			    struct macsec_rx_sa_stats *sum)
+{
+	struct macsec_dev *macsec = macsec_priv(dev);
+	int cpu;
 
 	/* If h/w offloading is available, propagate to the device */
-	अगर (macsec_is_offloaded(macsec)) अणु
-		स्थिर काष्ठा macsec_ops *ops;
-		काष्ठा macsec_context ctx;
+	if (macsec_is_offloaded(macsec)) {
+		const struct macsec_ops *ops;
+		struct macsec_context ctx;
 
 		ops = macsec_get_ops(macsec, &ctx);
-		अगर (ops) अणु
+		if (ops) {
 			ctx.sa.assoc_num = an;
 			ctx.sa.rx_sa = rx_sa;
 			ctx.stats.rx_sa_stats = sum;
 			ctx.secy = &macsec_priv(dev)->secy;
 			ctx.rx_sc = rx_sc;
-			macsec_offload(ops->mकरो_get_rx_sa_stats, &ctx);
-		पूर्ण
-		वापस;
-	पूर्ण
+			macsec_offload(ops->mdo_get_rx_sa_stats, &ctx);
+		}
+		return;
+	}
 
-	क्रम_each_possible_cpu(cpu) अणु
-		स्थिर काष्ठा macsec_rx_sa_stats *stats =
+	for_each_possible_cpu(cpu) {
+		const struct macsec_rx_sa_stats *stats =
 			per_cpu_ptr(rx_sa->stats, cpu);
 
 		sum->InPktsOK         += stats->InPktsOK;
@@ -2737,13 +2736,13 @@ rollback:
 		sum->InPktsNotValid   += stats->InPktsNotValid;
 		sum->InPktsNotUsingSA += stats->InPktsNotUsingSA;
 		sum->InPktsUnusedSA   += stats->InPktsUnusedSA;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक copy_rx_sa_stats(काष्ठा sk_buff *skb,
-			    काष्ठा macsec_rx_sa_stats *sum)
-अणु
-	अगर (nla_put_u32(skb, MACSEC_SA_STATS_ATTR_IN_PKTS_OK, sum->InPktsOK) ||
+static int copy_rx_sa_stats(struct sk_buff *skb,
+			    struct macsec_rx_sa_stats *sum)
+{
+	if (nla_put_u32(skb, MACSEC_SA_STATS_ATTR_IN_PKTS_OK, sum->InPktsOK) ||
 	    nla_put_u32(skb, MACSEC_SA_STATS_ATTR_IN_PKTS_INVALID,
 			sum->InPktsInvalid) ||
 	    nla_put_u32(skb, MACSEC_SA_STATS_ATTR_IN_PKTS_NOT_VALID,
@@ -2752,60 +2751,60 @@ rollback:
 			sum->InPktsNotUsingSA) ||
 	    nla_put_u32(skb, MACSEC_SA_STATS_ATTR_IN_PKTS_UNUSED_SA,
 			sum->InPktsUnusedSA))
-		वापस -EMSGSIZE;
+		return -EMSGSIZE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम get_rx_sc_stats(काष्ठा net_device *dev,
-			    काष्ठा macsec_rx_sc *rx_sc,
-			    काष्ठा macsec_rx_sc_stats *sum)
-अणु
-	काष्ठा macsec_dev *macsec = macsec_priv(dev);
-	पूर्णांक cpu;
+static void get_rx_sc_stats(struct net_device *dev,
+			    struct macsec_rx_sc *rx_sc,
+			    struct macsec_rx_sc_stats *sum)
+{
+	struct macsec_dev *macsec = macsec_priv(dev);
+	int cpu;
 
 	/* If h/w offloading is available, propagate to the device */
-	अगर (macsec_is_offloaded(macsec)) अणु
-		स्थिर काष्ठा macsec_ops *ops;
-		काष्ठा macsec_context ctx;
+	if (macsec_is_offloaded(macsec)) {
+		const struct macsec_ops *ops;
+		struct macsec_context ctx;
 
 		ops = macsec_get_ops(macsec, &ctx);
-		अगर (ops) अणु
+		if (ops) {
 			ctx.stats.rx_sc_stats = sum;
 			ctx.secy = &macsec_priv(dev)->secy;
 			ctx.rx_sc = rx_sc;
-			macsec_offload(ops->mकरो_get_rx_sc_stats, &ctx);
-		पूर्ण
-		वापस;
-	पूर्ण
+			macsec_offload(ops->mdo_get_rx_sc_stats, &ctx);
+		}
+		return;
+	}
 
-	क्रम_each_possible_cpu(cpu) अणु
-		स्थिर काष्ठा pcpu_rx_sc_stats *stats;
-		काष्ठा macsec_rx_sc_stats पंचांगp;
-		अचिन्हित पूर्णांक start;
+	for_each_possible_cpu(cpu) {
+		const struct pcpu_rx_sc_stats *stats;
+		struct macsec_rx_sc_stats tmp;
+		unsigned int start;
 
 		stats = per_cpu_ptr(rx_sc->stats, cpu);
-		करो अणु
+		do {
 			start = u64_stats_fetch_begin_irq(&stats->syncp);
-			स_नकल(&पंचांगp, &stats->stats, माप(पंचांगp));
-		पूर्ण जबतक (u64_stats_fetch_retry_irq(&stats->syncp, start));
+			memcpy(&tmp, &stats->stats, sizeof(tmp));
+		} while (u64_stats_fetch_retry_irq(&stats->syncp, start));
 
-		sum->InOctetsValidated += पंचांगp.InOctetsValidated;
-		sum->InOctetsDecrypted += पंचांगp.InOctetsDecrypted;
-		sum->InPktsUnchecked   += पंचांगp.InPktsUnchecked;
-		sum->InPktsDelayed     += पंचांगp.InPktsDelayed;
-		sum->InPktsOK          += पंचांगp.InPktsOK;
-		sum->InPktsInvalid     += पंचांगp.InPktsInvalid;
-		sum->InPktsLate        += पंचांगp.InPktsLate;
-		sum->InPktsNotValid    += पंचांगp.InPktsNotValid;
-		sum->InPktsNotUsingSA  += पंचांगp.InPktsNotUsingSA;
-		sum->InPktsUnusedSA    += पंचांगp.InPktsUnusedSA;
-	पूर्ण
-पूर्ण
+		sum->InOctetsValidated += tmp.InOctetsValidated;
+		sum->InOctetsDecrypted += tmp.InOctetsDecrypted;
+		sum->InPktsUnchecked   += tmp.InPktsUnchecked;
+		sum->InPktsDelayed     += tmp.InPktsDelayed;
+		sum->InPktsOK          += tmp.InPktsOK;
+		sum->InPktsInvalid     += tmp.InPktsInvalid;
+		sum->InPktsLate        += tmp.InPktsLate;
+		sum->InPktsNotValid    += tmp.InPktsNotValid;
+		sum->InPktsNotUsingSA  += tmp.InPktsNotUsingSA;
+		sum->InPktsUnusedSA    += tmp.InPktsUnusedSA;
+	}
+}
 
-अटल पूर्णांक copy_rx_sc_stats(काष्ठा sk_buff *skb, काष्ठा macsec_rx_sc_stats *sum)
-अणु
-	अगर (nla_put_u64_64bit(skb, MACSEC_RXSC_STATS_ATTR_IN_OCTETS_VALIDATED,
+static int copy_rx_sc_stats(struct sk_buff *skb, struct macsec_rx_sc_stats *sum)
+{
+	if (nla_put_u64_64bit(skb, MACSEC_RXSC_STATS_ATTR_IN_OCTETS_VALIDATED,
 			      sum->InOctetsValidated,
 			      MACSEC_RXSC_STATS_ATTR_PAD) ||
 	    nla_put_u64_64bit(skb, MACSEC_RXSC_STATS_ATTR_IN_OCTETS_DECRYPTED,
@@ -2835,52 +2834,52 @@ rollback:
 	    nla_put_u64_64bit(skb, MACSEC_RXSC_STATS_ATTR_IN_PKTS_UNUSED_SA,
 			      sum->InPktsUnusedSA,
 			      MACSEC_RXSC_STATS_ATTR_PAD))
-		वापस -EMSGSIZE;
+		return -EMSGSIZE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम get_tx_sc_stats(काष्ठा net_device *dev,
-			    काष्ठा macsec_tx_sc_stats *sum)
-अणु
-	काष्ठा macsec_dev *macsec = macsec_priv(dev);
-	पूर्णांक cpu;
+static void get_tx_sc_stats(struct net_device *dev,
+			    struct macsec_tx_sc_stats *sum)
+{
+	struct macsec_dev *macsec = macsec_priv(dev);
+	int cpu;
 
 	/* If h/w offloading is available, propagate to the device */
-	अगर (macsec_is_offloaded(macsec)) अणु
-		स्थिर काष्ठा macsec_ops *ops;
-		काष्ठा macsec_context ctx;
+	if (macsec_is_offloaded(macsec)) {
+		const struct macsec_ops *ops;
+		struct macsec_context ctx;
 
 		ops = macsec_get_ops(macsec, &ctx);
-		अगर (ops) अणु
+		if (ops) {
 			ctx.stats.tx_sc_stats = sum;
 			ctx.secy = &macsec_priv(dev)->secy;
-			macsec_offload(ops->mकरो_get_tx_sc_stats, &ctx);
-		पूर्ण
-		वापस;
-	पूर्ण
+			macsec_offload(ops->mdo_get_tx_sc_stats, &ctx);
+		}
+		return;
+	}
 
-	क्रम_each_possible_cpu(cpu) अणु
-		स्थिर काष्ठा pcpu_tx_sc_stats *stats;
-		काष्ठा macsec_tx_sc_stats पंचांगp;
-		अचिन्हित पूर्णांक start;
+	for_each_possible_cpu(cpu) {
+		const struct pcpu_tx_sc_stats *stats;
+		struct macsec_tx_sc_stats tmp;
+		unsigned int start;
 
 		stats = per_cpu_ptr(macsec_priv(dev)->secy.tx_sc.stats, cpu);
-		करो अणु
+		do {
 			start = u64_stats_fetch_begin_irq(&stats->syncp);
-			स_नकल(&पंचांगp, &stats->stats, माप(पंचांगp));
-		पूर्ण जबतक (u64_stats_fetch_retry_irq(&stats->syncp, start));
+			memcpy(&tmp, &stats->stats, sizeof(tmp));
+		} while (u64_stats_fetch_retry_irq(&stats->syncp, start));
 
-		sum->OutPktsProtected   += पंचांगp.OutPktsProtected;
-		sum->OutPktsEncrypted   += पंचांगp.OutPktsEncrypted;
-		sum->OutOctetsProtected += पंचांगp.OutOctetsProtected;
-		sum->OutOctetsEncrypted += पंचांगp.OutOctetsEncrypted;
-	पूर्ण
-पूर्ण
+		sum->OutPktsProtected   += tmp.OutPktsProtected;
+		sum->OutPktsEncrypted   += tmp.OutPktsEncrypted;
+		sum->OutOctetsProtected += tmp.OutOctetsProtected;
+		sum->OutOctetsEncrypted += tmp.OutOctetsEncrypted;
+	}
+}
 
-अटल पूर्णांक copy_tx_sc_stats(काष्ठा sk_buff *skb, काष्ठा macsec_tx_sc_stats *sum)
-अणु
-	अगर (nla_put_u64_64bit(skb, MACSEC_TXSC_STATS_ATTR_OUT_PKTS_PROTECTED,
+static int copy_tx_sc_stats(struct sk_buff *skb, struct macsec_tx_sc_stats *sum)
+{
+	if (nla_put_u64_64bit(skb, MACSEC_TXSC_STATS_ATTR_OUT_PKTS_PROTECTED,
 			      sum->OutPktsProtected,
 			      MACSEC_TXSC_STATS_ATTR_PAD) ||
 	    nla_put_u64_64bit(skb, MACSEC_TXSC_STATS_ATTR_OUT_PKTS_ENCRYPTED,
@@ -2892,55 +2891,55 @@ rollback:
 	    nla_put_u64_64bit(skb, MACSEC_TXSC_STATS_ATTR_OUT_OCTETS_ENCRYPTED,
 			      sum->OutOctetsEncrypted,
 			      MACSEC_TXSC_STATS_ATTR_PAD))
-		वापस -EMSGSIZE;
+		return -EMSGSIZE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम get_secy_stats(काष्ठा net_device *dev, काष्ठा macsec_dev_stats *sum)
-अणु
-	काष्ठा macsec_dev *macsec = macsec_priv(dev);
-	पूर्णांक cpu;
+static void get_secy_stats(struct net_device *dev, struct macsec_dev_stats *sum)
+{
+	struct macsec_dev *macsec = macsec_priv(dev);
+	int cpu;
 
 	/* If h/w offloading is available, propagate to the device */
-	अगर (macsec_is_offloaded(macsec)) अणु
-		स्थिर काष्ठा macsec_ops *ops;
-		काष्ठा macsec_context ctx;
+	if (macsec_is_offloaded(macsec)) {
+		const struct macsec_ops *ops;
+		struct macsec_context ctx;
 
 		ops = macsec_get_ops(macsec, &ctx);
-		अगर (ops) अणु
+		if (ops) {
 			ctx.stats.dev_stats = sum;
 			ctx.secy = &macsec_priv(dev)->secy;
-			macsec_offload(ops->mकरो_get_dev_stats, &ctx);
-		पूर्ण
-		वापस;
-	पूर्ण
+			macsec_offload(ops->mdo_get_dev_stats, &ctx);
+		}
+		return;
+	}
 
-	क्रम_each_possible_cpu(cpu) अणु
-		स्थिर काष्ठा pcpu_secy_stats *stats;
-		काष्ठा macsec_dev_stats पंचांगp;
-		अचिन्हित पूर्णांक start;
+	for_each_possible_cpu(cpu) {
+		const struct pcpu_secy_stats *stats;
+		struct macsec_dev_stats tmp;
+		unsigned int start;
 
 		stats = per_cpu_ptr(macsec_priv(dev)->stats, cpu);
-		करो अणु
+		do {
 			start = u64_stats_fetch_begin_irq(&stats->syncp);
-			स_नकल(&पंचांगp, &stats->stats, माप(पंचांगp));
-		पूर्ण जबतक (u64_stats_fetch_retry_irq(&stats->syncp, start));
+			memcpy(&tmp, &stats->stats, sizeof(tmp));
+		} while (u64_stats_fetch_retry_irq(&stats->syncp, start));
 
-		sum->OutPktsUntagged  += पंचांगp.OutPktsUntagged;
-		sum->InPktsUntagged   += पंचांगp.InPktsUntagged;
-		sum->OutPktsTooLong   += पंचांगp.OutPktsTooLong;
-		sum->InPktsNoTag      += पंचांगp.InPktsNoTag;
-		sum->InPktsBadTag     += पंचांगp.InPktsBadTag;
-		sum->InPktsUnknownSCI += पंचांगp.InPktsUnknownSCI;
-		sum->InPktsNoSCI      += पंचांगp.InPktsNoSCI;
-		sum->InPktsOverrun    += पंचांगp.InPktsOverrun;
-	पूर्ण
-पूर्ण
+		sum->OutPktsUntagged  += tmp.OutPktsUntagged;
+		sum->InPktsUntagged   += tmp.InPktsUntagged;
+		sum->OutPktsTooLong   += tmp.OutPktsTooLong;
+		sum->InPktsNoTag      += tmp.InPktsNoTag;
+		sum->InPktsBadTag     += tmp.InPktsBadTag;
+		sum->InPktsUnknownSCI += tmp.InPktsUnknownSCI;
+		sum->InPktsNoSCI      += tmp.InPktsNoSCI;
+		sum->InPktsOverrun    += tmp.InPktsOverrun;
+	}
+}
 
-अटल पूर्णांक copy_secy_stats(काष्ठा sk_buff *skb, काष्ठा macsec_dev_stats *sum)
-अणु
-	अगर (nla_put_u64_64bit(skb, MACSEC_SECY_STATS_ATTR_OUT_PKTS_UNTAGGED,
+static int copy_secy_stats(struct sk_buff *skb, struct macsec_dev_stats *sum)
+{
+	if (nla_put_u64_64bit(skb, MACSEC_SECY_STATS_ATTR_OUT_PKTS_UNTAGGED,
 			      sum->OutPktsUntagged,
 			      MACSEC_SECY_STATS_ATTR_PAD) ||
 	    nla_put_u64_64bit(skb, MACSEC_SECY_STATS_ATTR_IN_PKTS_UNTAGGED,
@@ -2964,33 +2963,33 @@ rollback:
 	    nla_put_u64_64bit(skb, MACSEC_SECY_STATS_ATTR_IN_PKTS_OVERRUN,
 			      sum->InPktsOverrun,
 			      MACSEC_SECY_STATS_ATTR_PAD))
-		वापस -EMSGSIZE;
+		return -EMSGSIZE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nla_put_secy(काष्ठा macsec_secy *secy, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा macsec_tx_sc *tx_sc = &secy->tx_sc;
-	काष्ठा nlattr *secy_nest = nla_nest_start_noflag(skb,
+static int nla_put_secy(struct macsec_secy *secy, struct sk_buff *skb)
+{
+	struct macsec_tx_sc *tx_sc = &secy->tx_sc;
+	struct nlattr *secy_nest = nla_nest_start_noflag(skb,
 							 MACSEC_ATTR_SECY);
 	u64 csid;
 
-	अगर (!secy_nest)
-		वापस 1;
+	if (!secy_nest)
+		return 1;
 
-	चयन (secy->key_len) अणु
-	हाल MACSEC_GCM_AES_128_SAK_LEN:
+	switch (secy->key_len) {
+	case MACSEC_GCM_AES_128_SAK_LEN:
 		csid = secy->xpn ? MACSEC_CIPHER_ID_GCM_AES_XPN_128 : MACSEC_DEFAULT_CIPHER_ID;
-		अवरोध;
-	हाल MACSEC_GCM_AES_256_SAK_LEN:
+		break;
+	case MACSEC_GCM_AES_256_SAK_LEN:
 		csid = secy->xpn ? MACSEC_CIPHER_ID_GCM_AES_XPN_256 : MACSEC_CIPHER_ID_GCM_AES_256;
-		अवरोध;
-	शेष:
-		जाओ cancel;
-	पूर्ण
+		break;
+	default:
+		goto cancel;
+	}
 
-	अगर (nla_put_sci(skb, MACSEC_SECY_ATTR_SCI, secy->sci,
+	if (nla_put_sci(skb, MACSEC_SECY_ATTR_SCI, secy->sci,
 			MACSEC_SECY_ATTR_PAD) ||
 	    nla_put_u64_64bit(skb, MACSEC_SECY_ATTR_CIPHER_SUITE,
 			      csid, MACSEC_SECY_ATTR_PAD) ||
@@ -3004,261 +3003,261 @@ rollback:
 	    nla_put_u8(skb, MACSEC_SECY_ATTR_ES, tx_sc->end_station) ||
 	    nla_put_u8(skb, MACSEC_SECY_ATTR_SCB, tx_sc->scb) ||
 	    nla_put_u8(skb, MACSEC_SECY_ATTR_ENCODING_SA, tx_sc->encoding_sa))
-		जाओ cancel;
+		goto cancel;
 
-	अगर (secy->replay_protect) अणु
-		अगर (nla_put_u32(skb, MACSEC_SECY_ATTR_WINDOW, secy->replay_winकरोw))
-			जाओ cancel;
-	पूर्ण
+	if (secy->replay_protect) {
+		if (nla_put_u32(skb, MACSEC_SECY_ATTR_WINDOW, secy->replay_window))
+			goto cancel;
+	}
 
 	nla_nest_end(skb, secy_nest);
-	वापस 0;
+	return 0;
 
 cancel:
 	nla_nest_cancel(skb, secy_nest);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल noअंतरभूत_क्रम_stack पूर्णांक
-dump_secy(काष्ठा macsec_secy *secy, काष्ठा net_device *dev,
-	  काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा macsec_tx_sc_stats tx_sc_stats = अणु0, पूर्ण;
-	काष्ठा macsec_tx_sa_stats tx_sa_stats = अणु0, पूर्ण;
-	काष्ठा macsec_rx_sc_stats rx_sc_stats = अणु0, पूर्ण;
-	काष्ठा macsec_rx_sa_stats rx_sa_stats = अणु0, पूर्ण;
-	काष्ठा macsec_dev *macsec = netdev_priv(dev);
-	काष्ठा macsec_dev_stats dev_stats = अणु0, पूर्ण;
-	काष्ठा macsec_tx_sc *tx_sc = &secy->tx_sc;
-	काष्ठा nlattr *txsa_list, *rxsc_list;
-	काष्ठा macsec_rx_sc *rx_sc;
-	काष्ठा nlattr *attr;
-	व्योम *hdr;
-	पूर्णांक i, j;
+static noinline_for_stack int
+dump_secy(struct macsec_secy *secy, struct net_device *dev,
+	  struct sk_buff *skb, struct netlink_callback *cb)
+{
+	struct macsec_tx_sc_stats tx_sc_stats = {0, };
+	struct macsec_tx_sa_stats tx_sa_stats = {0, };
+	struct macsec_rx_sc_stats rx_sc_stats = {0, };
+	struct macsec_rx_sa_stats rx_sa_stats = {0, };
+	struct macsec_dev *macsec = netdev_priv(dev);
+	struct macsec_dev_stats dev_stats = {0, };
+	struct macsec_tx_sc *tx_sc = &secy->tx_sc;
+	struct nlattr *txsa_list, *rxsc_list;
+	struct macsec_rx_sc *rx_sc;
+	struct nlattr *attr;
+	void *hdr;
+	int i, j;
 
 	hdr = genlmsg_put(skb, NETLINK_CB(cb->skb).portid, cb->nlh->nlmsg_seq,
 			  &macsec_fam, NLM_F_MULTI, MACSEC_CMD_GET_TXSC);
-	अगर (!hdr)
-		वापस -EMSGSIZE;
+	if (!hdr)
+		return -EMSGSIZE;
 
 	genl_dump_check_consistent(cb, hdr);
 
-	अगर (nla_put_u32(skb, MACSEC_ATTR_IFINDEX, dev->अगरindex))
-		जाओ nla_put_failure;
+	if (nla_put_u32(skb, MACSEC_ATTR_IFINDEX, dev->ifindex))
+		goto nla_put_failure;
 
 	attr = nla_nest_start_noflag(skb, MACSEC_ATTR_OFFLOAD);
-	अगर (!attr)
-		जाओ nla_put_failure;
-	अगर (nla_put_u8(skb, MACSEC_OFFLOAD_ATTR_TYPE, macsec->offload))
-		जाओ nla_put_failure;
+	if (!attr)
+		goto nla_put_failure;
+	if (nla_put_u8(skb, MACSEC_OFFLOAD_ATTR_TYPE, macsec->offload))
+		goto nla_put_failure;
 	nla_nest_end(skb, attr);
 
-	अगर (nla_put_secy(secy, skb))
-		जाओ nla_put_failure;
+	if (nla_put_secy(secy, skb))
+		goto nla_put_failure;
 
 	attr = nla_nest_start_noflag(skb, MACSEC_ATTR_TXSC_STATS);
-	अगर (!attr)
-		जाओ nla_put_failure;
+	if (!attr)
+		goto nla_put_failure;
 
 	get_tx_sc_stats(dev, &tx_sc_stats);
-	अगर (copy_tx_sc_stats(skb, &tx_sc_stats)) अणु
+	if (copy_tx_sc_stats(skb, &tx_sc_stats)) {
 		nla_nest_cancel(skb, attr);
-		जाओ nla_put_failure;
-	पूर्ण
+		goto nla_put_failure;
+	}
 	nla_nest_end(skb, attr);
 
 	attr = nla_nest_start_noflag(skb, MACSEC_ATTR_SECY_STATS);
-	अगर (!attr)
-		जाओ nla_put_failure;
+	if (!attr)
+		goto nla_put_failure;
 	get_secy_stats(dev, &dev_stats);
-	अगर (copy_secy_stats(skb, &dev_stats)) अणु
+	if (copy_secy_stats(skb, &dev_stats)) {
 		nla_nest_cancel(skb, attr);
-		जाओ nla_put_failure;
-	पूर्ण
+		goto nla_put_failure;
+	}
 	nla_nest_end(skb, attr);
 
 	txsa_list = nla_nest_start_noflag(skb, MACSEC_ATTR_TXSA_LIST);
-	अगर (!txsa_list)
-		जाओ nla_put_failure;
-	क्रम (i = 0, j = 1; i < MACSEC_NUM_AN; i++) अणु
-		काष्ठा macsec_tx_sa *tx_sa = rtnl_dereference(tx_sc->sa[i]);
-		काष्ठा nlattr *txsa_nest;
+	if (!txsa_list)
+		goto nla_put_failure;
+	for (i = 0, j = 1; i < MACSEC_NUM_AN; i++) {
+		struct macsec_tx_sa *tx_sa = rtnl_dereference(tx_sc->sa[i]);
+		struct nlattr *txsa_nest;
 		u64 pn;
-		पूर्णांक pn_len;
+		int pn_len;
 
-		अगर (!tx_sa)
-			जारी;
+		if (!tx_sa)
+			continue;
 
 		txsa_nest = nla_nest_start_noflag(skb, j++);
-		अगर (!txsa_nest) अणु
+		if (!txsa_nest) {
 			nla_nest_cancel(skb, txsa_list);
-			जाओ nla_put_failure;
-		पूर्ण
+			goto nla_put_failure;
+		}
 
 		attr = nla_nest_start_noflag(skb, MACSEC_SA_ATTR_STATS);
-		अगर (!attr) अणु
+		if (!attr) {
 			nla_nest_cancel(skb, txsa_nest);
 			nla_nest_cancel(skb, txsa_list);
-			जाओ nla_put_failure;
-		पूर्ण
-		स_रखो(&tx_sa_stats, 0, माप(tx_sa_stats));
+			goto nla_put_failure;
+		}
+		memset(&tx_sa_stats, 0, sizeof(tx_sa_stats));
 		get_tx_sa_stats(dev, i, tx_sa, &tx_sa_stats);
-		अगर (copy_tx_sa_stats(skb, &tx_sa_stats)) अणु
+		if (copy_tx_sa_stats(skb, &tx_sa_stats)) {
 			nla_nest_cancel(skb, attr);
 			nla_nest_cancel(skb, txsa_nest);
 			nla_nest_cancel(skb, txsa_list);
-			जाओ nla_put_failure;
-		पूर्ण
+			goto nla_put_failure;
+		}
 		nla_nest_end(skb, attr);
 
-		अगर (secy->xpn) अणु
+		if (secy->xpn) {
 			pn = tx_sa->next_pn;
 			pn_len = MACSEC_XPN_PN_LEN;
-		पूर्ण अन्यथा अणु
+		} else {
 			pn = tx_sa->next_pn_halves.lower;
 			pn_len = MACSEC_DEFAULT_PN_LEN;
-		पूर्ण
+		}
 
-		अगर (nla_put_u8(skb, MACSEC_SA_ATTR_AN, i) ||
+		if (nla_put_u8(skb, MACSEC_SA_ATTR_AN, i) ||
 		    nla_put(skb, MACSEC_SA_ATTR_PN, pn_len, &pn) ||
 		    nla_put(skb, MACSEC_SA_ATTR_KEYID, MACSEC_KEYID_LEN, tx_sa->key.id) ||
 		    (secy->xpn && nla_put_ssci(skb, MACSEC_SA_ATTR_SSCI, tx_sa->ssci)) ||
-		    nla_put_u8(skb, MACSEC_SA_ATTR_ACTIVE, tx_sa->active)) अणु
+		    nla_put_u8(skb, MACSEC_SA_ATTR_ACTIVE, tx_sa->active)) {
 			nla_nest_cancel(skb, txsa_nest);
 			nla_nest_cancel(skb, txsa_list);
-			जाओ nla_put_failure;
-		पूर्ण
+			goto nla_put_failure;
+		}
 
 		nla_nest_end(skb, txsa_nest);
-	पूर्ण
+	}
 	nla_nest_end(skb, txsa_list);
 
 	rxsc_list = nla_nest_start_noflag(skb, MACSEC_ATTR_RXSC_LIST);
-	अगर (!rxsc_list)
-		जाओ nla_put_failure;
+	if (!rxsc_list)
+		goto nla_put_failure;
 
 	j = 1;
-	क्रम_each_rxsc_rtnl(secy, rx_sc) अणु
-		पूर्णांक k;
-		काष्ठा nlattr *rxsa_list;
-		काष्ठा nlattr *rxsc_nest = nla_nest_start_noflag(skb, j++);
+	for_each_rxsc_rtnl(secy, rx_sc) {
+		int k;
+		struct nlattr *rxsa_list;
+		struct nlattr *rxsc_nest = nla_nest_start_noflag(skb, j++);
 
-		अगर (!rxsc_nest) अणु
+		if (!rxsc_nest) {
 			nla_nest_cancel(skb, rxsc_list);
-			जाओ nla_put_failure;
-		पूर्ण
+			goto nla_put_failure;
+		}
 
-		अगर (nla_put_u8(skb, MACSEC_RXSC_ATTR_ACTIVE, rx_sc->active) ||
+		if (nla_put_u8(skb, MACSEC_RXSC_ATTR_ACTIVE, rx_sc->active) ||
 		    nla_put_sci(skb, MACSEC_RXSC_ATTR_SCI, rx_sc->sci,
-				MACSEC_RXSC_ATTR_PAD)) अणु
+				MACSEC_RXSC_ATTR_PAD)) {
 			nla_nest_cancel(skb, rxsc_nest);
 			nla_nest_cancel(skb, rxsc_list);
-			जाओ nla_put_failure;
-		पूर्ण
+			goto nla_put_failure;
+		}
 
 		attr = nla_nest_start_noflag(skb, MACSEC_RXSC_ATTR_STATS);
-		अगर (!attr) अणु
+		if (!attr) {
 			nla_nest_cancel(skb, rxsc_nest);
 			nla_nest_cancel(skb, rxsc_list);
-			जाओ nla_put_failure;
-		पूर्ण
-		स_रखो(&rx_sc_stats, 0, माप(rx_sc_stats));
+			goto nla_put_failure;
+		}
+		memset(&rx_sc_stats, 0, sizeof(rx_sc_stats));
 		get_rx_sc_stats(dev, rx_sc, &rx_sc_stats);
-		अगर (copy_rx_sc_stats(skb, &rx_sc_stats)) अणु
+		if (copy_rx_sc_stats(skb, &rx_sc_stats)) {
 			nla_nest_cancel(skb, attr);
 			nla_nest_cancel(skb, rxsc_nest);
 			nla_nest_cancel(skb, rxsc_list);
-			जाओ nla_put_failure;
-		पूर्ण
+			goto nla_put_failure;
+		}
 		nla_nest_end(skb, attr);
 
 		rxsa_list = nla_nest_start_noflag(skb,
 						  MACSEC_RXSC_ATTR_SA_LIST);
-		अगर (!rxsa_list) अणु
+		if (!rxsa_list) {
 			nla_nest_cancel(skb, rxsc_nest);
 			nla_nest_cancel(skb, rxsc_list);
-			जाओ nla_put_failure;
-		पूर्ण
+			goto nla_put_failure;
+		}
 
-		क्रम (i = 0, k = 1; i < MACSEC_NUM_AN; i++) अणु
-			काष्ठा macsec_rx_sa *rx_sa = rtnl_dereference(rx_sc->sa[i]);
-			काष्ठा nlattr *rxsa_nest;
+		for (i = 0, k = 1; i < MACSEC_NUM_AN; i++) {
+			struct macsec_rx_sa *rx_sa = rtnl_dereference(rx_sc->sa[i]);
+			struct nlattr *rxsa_nest;
 			u64 pn;
-			पूर्णांक pn_len;
+			int pn_len;
 
-			अगर (!rx_sa)
-				जारी;
+			if (!rx_sa)
+				continue;
 
 			rxsa_nest = nla_nest_start_noflag(skb, k++);
-			अगर (!rxsa_nest) अणु
+			if (!rxsa_nest) {
 				nla_nest_cancel(skb, rxsa_list);
 				nla_nest_cancel(skb, rxsc_nest);
 				nla_nest_cancel(skb, rxsc_list);
-				जाओ nla_put_failure;
-			पूर्ण
+				goto nla_put_failure;
+			}
 
 			attr = nla_nest_start_noflag(skb,
 						     MACSEC_SA_ATTR_STATS);
-			अगर (!attr) अणु
+			if (!attr) {
 				nla_nest_cancel(skb, rxsa_list);
 				nla_nest_cancel(skb, rxsc_nest);
 				nla_nest_cancel(skb, rxsc_list);
-				जाओ nla_put_failure;
-			पूर्ण
-			स_रखो(&rx_sa_stats, 0, माप(rx_sa_stats));
+				goto nla_put_failure;
+			}
+			memset(&rx_sa_stats, 0, sizeof(rx_sa_stats));
 			get_rx_sa_stats(dev, rx_sc, i, rx_sa, &rx_sa_stats);
-			अगर (copy_rx_sa_stats(skb, &rx_sa_stats)) अणु
+			if (copy_rx_sa_stats(skb, &rx_sa_stats)) {
 				nla_nest_cancel(skb, attr);
 				nla_nest_cancel(skb, rxsa_list);
 				nla_nest_cancel(skb, rxsc_nest);
 				nla_nest_cancel(skb, rxsc_list);
-				जाओ nla_put_failure;
-			पूर्ण
+				goto nla_put_failure;
+			}
 			nla_nest_end(skb, attr);
 
-			अगर (secy->xpn) अणु
+			if (secy->xpn) {
 				pn = rx_sa->next_pn;
 				pn_len = MACSEC_XPN_PN_LEN;
-			पूर्ण अन्यथा अणु
+			} else {
 				pn = rx_sa->next_pn_halves.lower;
 				pn_len = MACSEC_DEFAULT_PN_LEN;
-			पूर्ण
+			}
 
-			अगर (nla_put_u8(skb, MACSEC_SA_ATTR_AN, i) ||
+			if (nla_put_u8(skb, MACSEC_SA_ATTR_AN, i) ||
 			    nla_put(skb, MACSEC_SA_ATTR_PN, pn_len, &pn) ||
 			    nla_put(skb, MACSEC_SA_ATTR_KEYID, MACSEC_KEYID_LEN, rx_sa->key.id) ||
 			    (secy->xpn && nla_put_ssci(skb, MACSEC_SA_ATTR_SSCI, rx_sa->ssci)) ||
-			    nla_put_u8(skb, MACSEC_SA_ATTR_ACTIVE, rx_sa->active)) अणु
+			    nla_put_u8(skb, MACSEC_SA_ATTR_ACTIVE, rx_sa->active)) {
 				nla_nest_cancel(skb, rxsa_nest);
 				nla_nest_cancel(skb, rxsc_nest);
 				nla_nest_cancel(skb, rxsc_list);
-				जाओ nla_put_failure;
-			पूर्ण
+				goto nla_put_failure;
+			}
 			nla_nest_end(skb, rxsa_nest);
-		पूर्ण
+		}
 
 		nla_nest_end(skb, rxsa_list);
 		nla_nest_end(skb, rxsc_nest);
-	पूर्ण
+	}
 
 	nla_nest_end(skb, rxsc_list);
 
 	genlmsg_end(skb, hdr);
 
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	genlmsg_cancel(skb, hdr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक macsec_generation = 1; /* रक्षित by RTNL */
+static int macsec_generation = 1; /* protected by RTNL */
 
-अटल पूर्णांक macsec_dump_txsc(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा net *net = sock_net(skb->sk);
-	काष्ठा net_device *dev;
-	पूर्णांक dev_idx, d;
+static int macsec_dump_txsc(struct sk_buff *skb, struct netlink_callback *cb)
+{
+	struct net *net = sock_net(skb->sk);
+	struct net_device *dev;
+	int dev_idx, d;
 
 	dev_idx = cb->args[0];
 
@@ -3267,97 +3266,97 @@ nla_put_failure:
 
 	cb->seq = macsec_generation;
 
-	क्रम_each_netdev(net, dev) अणु
-		काष्ठा macsec_secy *secy;
+	for_each_netdev(net, dev) {
+		struct macsec_secy *secy;
 
-		अगर (d < dev_idx)
-			जाओ next;
+		if (d < dev_idx)
+			goto next;
 
-		अगर (!netअगर_is_macsec(dev))
-			जाओ next;
+		if (!netif_is_macsec(dev))
+			goto next;
 
 		secy = &macsec_priv(dev)->secy;
-		अगर (dump_secy(secy, dev, skb, cb) < 0)
-			जाओ करोne;
+		if (dump_secy(secy, dev, skb, cb) < 0)
+			goto done;
 next:
 		d++;
-	पूर्ण
+	}
 
-करोne:
+done:
 	rtnl_unlock();
 	cb->args[0] = d;
-	वापस skb->len;
-पूर्ण
+	return skb->len;
+}
 
-अटल स्थिर काष्ठा genl_small_ops macsec_genl_ops[] = अणु
-	अणु
+static const struct genl_small_ops macsec_genl_ops[] = {
+	{
 		.cmd = MACSEC_CMD_GET_TXSC,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 		.dumpit = macsec_dump_txsc,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = MACSEC_CMD_ADD_RXSC,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = macsec_add_rxsc,
+		.doit = macsec_add_rxsc,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = MACSEC_CMD_DEL_RXSC,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = macsec_del_rxsc,
+		.doit = macsec_del_rxsc,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = MACSEC_CMD_UPD_RXSC,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = macsec_upd_rxsc,
+		.doit = macsec_upd_rxsc,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = MACSEC_CMD_ADD_TXSA,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = macsec_add_txsa,
+		.doit = macsec_add_txsa,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = MACSEC_CMD_DEL_TXSA,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = macsec_del_txsa,
+		.doit = macsec_del_txsa,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = MACSEC_CMD_UPD_TXSA,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = macsec_upd_txsa,
+		.doit = macsec_upd_txsa,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = MACSEC_CMD_ADD_RXSA,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = macsec_add_rxsa,
+		.doit = macsec_add_rxsa,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = MACSEC_CMD_DEL_RXSA,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = macsec_del_rxsa,
+		.doit = macsec_del_rxsa,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = MACSEC_CMD_UPD_RXSA,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = macsec_upd_rxsa,
+		.doit = macsec_upd_rxsa,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = MACSEC_CMD_UPD_OFFLOAD,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = macsec_upd_offload,
+		.doit = macsec_upd_offload,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा genl_family macsec_fam __ro_after_init = अणु
+static struct genl_family macsec_fam __ro_after_init = {
 	.name		= MACSEC_GENL_NAME,
 	.hdrsize	= 0,
 	.version	= MACSEC_GENL_VERSION,
@@ -3367,23 +3366,23 @@ next:
 	.module		= THIS_MODULE,
 	.small_ops	= macsec_genl_ops,
 	.n_small_ops	= ARRAY_SIZE(macsec_genl_ops),
-पूर्ण;
+};
 
-अटल netdev_tx_t macsec_start_xmit(काष्ठा sk_buff *skb,
-				     काष्ठा net_device *dev)
-अणु
-	काष्ठा macsec_dev *macsec = netdev_priv(dev);
-	काष्ठा macsec_secy *secy = &macsec->secy;
-	काष्ठा pcpu_secy_stats *secy_stats;
-	पूर्णांक ret, len;
+static netdev_tx_t macsec_start_xmit(struct sk_buff *skb,
+				     struct net_device *dev)
+{
+	struct macsec_dev *macsec = netdev_priv(dev);
+	struct macsec_secy *secy = &macsec->secy;
+	struct pcpu_secy_stats *secy_stats;
+	int ret, len;
 
-	अगर (macsec_is_offloaded(netdev_priv(dev))) अणु
+	if (macsec_is_offloaded(netdev_priv(dev))) {
 		skb->dev = macsec->real_dev;
-		वापस dev_queue_xmit(skb);
-	पूर्ण
+		return dev_queue_xmit(skb);
+	}
 
 	/* 10.5 */
-	अगर (!secy->protect_frames) अणु
+	if (!secy->protect_frames) {
 		secy_stats = this_cpu_ptr(macsec->stats);
 		u64_stats_update_begin(&secy_stats->syncp);
 		secy_stats->stats.OutPktsUntagged++;
@@ -3392,21 +3391,21 @@ next:
 		len = skb->len;
 		ret = dev_queue_xmit(skb);
 		count_tx(dev, ret, len);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (!secy->operational) अणु
-		kमुक्त_skb(skb);
+	if (!secy->operational) {
+		kfree_skb(skb);
 		dev->stats.tx_dropped++;
-		वापस NETDEV_TX_OK;
-	पूर्ण
+		return NETDEV_TX_OK;
+	}
 
 	skb = macsec_encrypt(skb, dev);
-	अगर (IS_ERR(skb)) अणु
-		अगर (PTR_ERR(skb) != -EINPROGRESS)
+	if (IS_ERR(skb)) {
+		if (PTR_ERR(skb) != -EINPROGRESS)
 			dev->stats.tx_dropped++;
-		वापस NETDEV_TX_OK;
-	पूर्ण
+		return NETDEV_TX_OK;
+	}
 
 	macsec_count_tx(skb, &macsec->secy.tx_sc, macsec_skb_cb(skb)->tx_sa);
 
@@ -3414,203 +3413,203 @@ next:
 	len = skb->len;
 	ret = dev_queue_xmit(skb);
 	count_tx(dev, ret, len);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा SW_MACSEC_FEATURES \
+#define SW_MACSEC_FEATURES \
 	(NETIF_F_SG | NETIF_F_HIGHDMA | NETIF_F_FRAGLIST)
 
-/* If h/w offloading is enabled, use real device features save क्रम
+/* If h/w offloading is enabled, use real device features save for
  *   VLAN_FEATURES - they require additional ops
  *   HW_MACSEC - no reason to report it
  */
-#घोषणा REAL_DEV_FEATURES(dev) \
+#define REAL_DEV_FEATURES(dev) \
 	((dev)->features & ~(NETIF_F_VLAN_FEATURES | NETIF_F_HW_MACSEC))
 
-अटल पूर्णांक macsec_dev_init(काष्ठा net_device *dev)
-अणु
-	काष्ठा macsec_dev *macsec = macsec_priv(dev);
-	काष्ठा net_device *real_dev = macsec->real_dev;
-	पूर्णांक err;
+static int macsec_dev_init(struct net_device *dev)
+{
+	struct macsec_dev *macsec = macsec_priv(dev);
+	struct net_device *real_dev = macsec->real_dev;
+	int err;
 
-	dev->tstats = netdev_alloc_pcpu_stats(काष्ठा pcpu_sw_netstats);
-	अगर (!dev->tstats)
-		वापस -ENOMEM;
+	dev->tstats = netdev_alloc_pcpu_stats(struct pcpu_sw_netstats);
+	if (!dev->tstats)
+		return -ENOMEM;
 
 	err = gro_cells_init(&macsec->gro_cells, dev);
-	अगर (err) अणु
-		मुक्त_percpu(dev->tstats);
-		वापस err;
-	पूर्ण
+	if (err) {
+		free_percpu(dev->tstats);
+		return err;
+	}
 
-	अगर (macsec_is_offloaded(macsec)) अणु
+	if (macsec_is_offloaded(macsec)) {
 		dev->features = REAL_DEV_FEATURES(real_dev);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev->features = real_dev->features & SW_MACSEC_FEATURES;
 		dev->features |= NETIF_F_LLTX | NETIF_F_GSO_SOFTWARE;
-	पूर्ण
+	}
 
 	dev->needed_headroom = real_dev->needed_headroom +
 			       MACSEC_NEEDED_HEADROOM;
 	dev->needed_tailroom = real_dev->needed_tailroom +
 			       MACSEC_NEEDED_TAILROOM;
 
-	अगर (is_zero_ether_addr(dev->dev_addr))
+	if (is_zero_ether_addr(dev->dev_addr))
 		eth_hw_addr_inherit(dev, real_dev);
-	अगर (is_zero_ether_addr(dev->broadcast))
-		स_नकल(dev->broadcast, real_dev->broadcast, dev->addr_len);
+	if (is_zero_ether_addr(dev->broadcast))
+		memcpy(dev->broadcast, real_dev->broadcast, dev->addr_len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम macsec_dev_uninit(काष्ठा net_device *dev)
-अणु
-	काष्ठा macsec_dev *macsec = macsec_priv(dev);
+static void macsec_dev_uninit(struct net_device *dev)
+{
+	struct macsec_dev *macsec = macsec_priv(dev);
 
 	gro_cells_destroy(&macsec->gro_cells);
-	मुक्त_percpu(dev->tstats);
-पूर्ण
+	free_percpu(dev->tstats);
+}
 
-अटल netdev_features_t macsec_fix_features(काष्ठा net_device *dev,
+static netdev_features_t macsec_fix_features(struct net_device *dev,
 					     netdev_features_t features)
-अणु
-	काष्ठा macsec_dev *macsec = macsec_priv(dev);
-	काष्ठा net_device *real_dev = macsec->real_dev;
+{
+	struct macsec_dev *macsec = macsec_priv(dev);
+	struct net_device *real_dev = macsec->real_dev;
 
-	अगर (macsec_is_offloaded(macsec))
-		वापस REAL_DEV_FEATURES(real_dev);
+	if (macsec_is_offloaded(macsec))
+		return REAL_DEV_FEATURES(real_dev);
 
 	features &= (real_dev->features & SW_MACSEC_FEATURES) |
 		    NETIF_F_GSO_SOFTWARE | NETIF_F_SOFT_FEATURES;
 	features |= NETIF_F_LLTX;
 
-	वापस features;
-पूर्ण
+	return features;
+}
 
-अटल पूर्णांक macsec_dev_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा macsec_dev *macsec = macsec_priv(dev);
-	काष्ठा net_device *real_dev = macsec->real_dev;
-	पूर्णांक err;
+static int macsec_dev_open(struct net_device *dev)
+{
+	struct macsec_dev *macsec = macsec_priv(dev);
+	struct net_device *real_dev = macsec->real_dev;
+	int err;
 
 	err = dev_uc_add(real_dev, dev->dev_addr);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (dev->flags & IFF_ALLMULTI) अणु
+	if (dev->flags & IFF_ALLMULTI) {
 		err = dev_set_allmulti(real_dev, 1);
-		अगर (err < 0)
-			जाओ del_unicast;
-	पूर्ण
+		if (err < 0)
+			goto del_unicast;
+	}
 
-	अगर (dev->flags & IFF_PROMISC) अणु
+	if (dev->flags & IFF_PROMISC) {
 		err = dev_set_promiscuity(real_dev, 1);
-		अगर (err < 0)
-			जाओ clear_allmulti;
-	पूर्ण
+		if (err < 0)
+			goto clear_allmulti;
+	}
 
 	/* If h/w offloading is available, propagate to the device */
-	अगर (macsec_is_offloaded(macsec)) अणु
-		स्थिर काष्ठा macsec_ops *ops;
-		काष्ठा macsec_context ctx;
+	if (macsec_is_offloaded(macsec)) {
+		const struct macsec_ops *ops;
+		struct macsec_context ctx;
 
 		ops = macsec_get_ops(netdev_priv(dev), &ctx);
-		अगर (!ops) अणु
+		if (!ops) {
 			err = -EOPNOTSUPP;
-			जाओ clear_allmulti;
-		पूर्ण
+			goto clear_allmulti;
+		}
 
 		ctx.secy = &macsec->secy;
-		err = macsec_offload(ops->mकरो_dev_खोलो, &ctx);
-		अगर (err)
-			जाओ clear_allmulti;
-	पूर्ण
+		err = macsec_offload(ops->mdo_dev_open, &ctx);
+		if (err)
+			goto clear_allmulti;
+	}
 
-	अगर (netअगर_carrier_ok(real_dev))
-		netअगर_carrier_on(dev);
+	if (netif_carrier_ok(real_dev))
+		netif_carrier_on(dev);
 
-	वापस 0;
+	return 0;
 clear_allmulti:
-	अगर (dev->flags & IFF_ALLMULTI)
+	if (dev->flags & IFF_ALLMULTI)
 		dev_set_allmulti(real_dev, -1);
 del_unicast:
 	dev_uc_del(real_dev, dev->dev_addr);
-	netअगर_carrier_off(dev);
-	वापस err;
-पूर्ण
+	netif_carrier_off(dev);
+	return err;
+}
 
-अटल पूर्णांक macsec_dev_stop(काष्ठा net_device *dev)
-अणु
-	काष्ठा macsec_dev *macsec = macsec_priv(dev);
-	काष्ठा net_device *real_dev = macsec->real_dev;
+static int macsec_dev_stop(struct net_device *dev)
+{
+	struct macsec_dev *macsec = macsec_priv(dev);
+	struct net_device *real_dev = macsec->real_dev;
 
-	netअगर_carrier_off(dev);
+	netif_carrier_off(dev);
 
 	/* If h/w offloading is available, propagate to the device */
-	अगर (macsec_is_offloaded(macsec)) अणु
-		स्थिर काष्ठा macsec_ops *ops;
-		काष्ठा macsec_context ctx;
+	if (macsec_is_offloaded(macsec)) {
+		const struct macsec_ops *ops;
+		struct macsec_context ctx;
 
 		ops = macsec_get_ops(macsec, &ctx);
-		अगर (ops) अणु
+		if (ops) {
 			ctx.secy = &macsec->secy;
-			macsec_offload(ops->mकरो_dev_stop, &ctx);
-		पूर्ण
-	पूर्ण
+			macsec_offload(ops->mdo_dev_stop, &ctx);
+		}
+	}
 
 	dev_mc_unsync(real_dev, dev);
 	dev_uc_unsync(real_dev, dev);
 
-	अगर (dev->flags & IFF_ALLMULTI)
+	if (dev->flags & IFF_ALLMULTI)
 		dev_set_allmulti(real_dev, -1);
 
-	अगर (dev->flags & IFF_PROMISC)
+	if (dev->flags & IFF_PROMISC)
 		dev_set_promiscuity(real_dev, -1);
 
 	dev_uc_del(real_dev, dev->dev_addr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम macsec_dev_change_rx_flags(काष्ठा net_device *dev, पूर्णांक change)
-अणु
-	काष्ठा net_device *real_dev = macsec_priv(dev)->real_dev;
+static void macsec_dev_change_rx_flags(struct net_device *dev, int change)
+{
+	struct net_device *real_dev = macsec_priv(dev)->real_dev;
 
-	अगर (!(dev->flags & IFF_UP))
-		वापस;
+	if (!(dev->flags & IFF_UP))
+		return;
 
-	अगर (change & IFF_ALLMULTI)
+	if (change & IFF_ALLMULTI)
 		dev_set_allmulti(real_dev, dev->flags & IFF_ALLMULTI ? 1 : -1);
 
-	अगर (change & IFF_PROMISC)
+	if (change & IFF_PROMISC)
 		dev_set_promiscuity(real_dev,
 				    dev->flags & IFF_PROMISC ? 1 : -1);
-पूर्ण
+}
 
-अटल व्योम macsec_dev_set_rx_mode(काष्ठा net_device *dev)
-अणु
-	काष्ठा net_device *real_dev = macsec_priv(dev)->real_dev;
+static void macsec_dev_set_rx_mode(struct net_device *dev)
+{
+	struct net_device *real_dev = macsec_priv(dev)->real_dev;
 
 	dev_mc_sync(real_dev, dev);
 	dev_uc_sync(real_dev, dev);
-पूर्ण
+}
 
-अटल पूर्णांक macsec_set_mac_address(काष्ठा net_device *dev, व्योम *p)
-अणु
-	काष्ठा macsec_dev *macsec = macsec_priv(dev);
-	काष्ठा net_device *real_dev = macsec->real_dev;
-	काष्ठा sockaddr *addr = p;
-	पूर्णांक err;
+static int macsec_set_mac_address(struct net_device *dev, void *p)
+{
+	struct macsec_dev *macsec = macsec_priv(dev);
+	struct net_device *real_dev = macsec->real_dev;
+	struct sockaddr *addr = p;
+	int err;
 
-	अगर (!is_valid_ether_addr(addr->sa_data))
-		वापस -EADDRNOTAVAIL;
+	if (!is_valid_ether_addr(addr->sa_data))
+		return -EADDRNOTAVAIL;
 
-	अगर (!(dev->flags & IFF_UP))
-		जाओ out;
+	if (!(dev->flags & IFF_UP))
+		goto out;
 
 	err = dev_uc_add(real_dev, addr->sa_data);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	dev_uc_del(real_dev, dev->dev_addr);
 
@@ -3619,348 +3618,348 @@ out:
 	macsec->secy.sci = dev_to_sci(dev, MACSEC_PORT_ES);
 
 	/* If h/w offloading is available, propagate to the device */
-	अगर (macsec_is_offloaded(macsec)) अणु
-		स्थिर काष्ठा macsec_ops *ops;
-		काष्ठा macsec_context ctx;
+	if (macsec_is_offloaded(macsec)) {
+		const struct macsec_ops *ops;
+		struct macsec_context ctx;
 
 		ops = macsec_get_ops(macsec, &ctx);
-		अगर (ops) अणु
+		if (ops) {
 			ctx.secy = &macsec->secy;
-			macsec_offload(ops->mकरो_upd_secy, &ctx);
-		पूर्ण
-	पूर्ण
+			macsec_offload(ops->mdo_upd_secy, &ctx);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक macsec_change_mtu(काष्ठा net_device *dev, पूर्णांक new_mtu)
-अणु
-	काष्ठा macsec_dev *macsec = macsec_priv(dev);
-	अचिन्हित पूर्णांक extra = macsec->secy.icv_len + macsec_extra_len(true);
+static int macsec_change_mtu(struct net_device *dev, int new_mtu)
+{
+	struct macsec_dev *macsec = macsec_priv(dev);
+	unsigned int extra = macsec->secy.icv_len + macsec_extra_len(true);
 
-	अगर (macsec->real_dev->mtu - extra < new_mtu)
-		वापस -दुस्फल;
+	if (macsec->real_dev->mtu - extra < new_mtu)
+		return -ERANGE;
 
 	dev->mtu = new_mtu;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम macsec_get_stats64(काष्ठा net_device *dev,
-			       काष्ठा rtnl_link_stats64 *s)
-अणु
-	अगर (!dev->tstats)
-		वापस;
+static void macsec_get_stats64(struct net_device *dev,
+			       struct rtnl_link_stats64 *s)
+{
+	if (!dev->tstats)
+		return;
 
 	dev_fetch_sw_netstats(s, dev->tstats);
 
 	s->rx_dropped = dev->stats.rx_dropped;
 	s->tx_dropped = dev->stats.tx_dropped;
-पूर्ण
+}
 
-अटल पूर्णांक macsec_get_अगरlink(स्थिर काष्ठा net_device *dev)
-अणु
-	वापस macsec_priv(dev)->real_dev->अगरindex;
-पूर्ण
+static int macsec_get_iflink(const struct net_device *dev)
+{
+	return macsec_priv(dev)->real_dev->ifindex;
+}
 
-अटल स्थिर काष्ठा net_device_ops macsec_netdev_ops = अणु
-	.nकरो_init		= macsec_dev_init,
-	.nकरो_uninit		= macsec_dev_uninit,
-	.nकरो_खोलो		= macsec_dev_खोलो,
-	.nकरो_stop		= macsec_dev_stop,
-	.nकरो_fix_features	= macsec_fix_features,
-	.nकरो_change_mtu		= macsec_change_mtu,
-	.nकरो_set_rx_mode	= macsec_dev_set_rx_mode,
-	.nकरो_change_rx_flags	= macsec_dev_change_rx_flags,
-	.nकरो_set_mac_address	= macsec_set_mac_address,
-	.nकरो_start_xmit		= macsec_start_xmit,
-	.nकरो_get_stats64	= macsec_get_stats64,
-	.nकरो_get_अगरlink		= macsec_get_अगरlink,
-पूर्ण;
+static const struct net_device_ops macsec_netdev_ops = {
+	.ndo_init		= macsec_dev_init,
+	.ndo_uninit		= macsec_dev_uninit,
+	.ndo_open		= macsec_dev_open,
+	.ndo_stop		= macsec_dev_stop,
+	.ndo_fix_features	= macsec_fix_features,
+	.ndo_change_mtu		= macsec_change_mtu,
+	.ndo_set_rx_mode	= macsec_dev_set_rx_mode,
+	.ndo_change_rx_flags	= macsec_dev_change_rx_flags,
+	.ndo_set_mac_address	= macsec_set_mac_address,
+	.ndo_start_xmit		= macsec_start_xmit,
+	.ndo_get_stats64	= macsec_get_stats64,
+	.ndo_get_iflink		= macsec_get_iflink,
+};
 
-अटल स्थिर काष्ठा device_type macsec_type = अणु
+static const struct device_type macsec_type = {
 	.name = "macsec",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा nla_policy macsec_rtnl_policy[IFLA_MACSEC_MAX + 1] = अणु
-	[IFLA_MACSEC_SCI] = अणु .type = NLA_U64 पूर्ण,
-	[IFLA_MACSEC_PORT] = अणु .type = NLA_U16 पूर्ण,
-	[IFLA_MACSEC_ICV_LEN] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_MACSEC_CIPHER_SUITE] = अणु .type = NLA_U64 पूर्ण,
-	[IFLA_MACSEC_WINDOW] = अणु .type = NLA_U32 पूर्ण,
-	[IFLA_MACSEC_ENCODING_SA] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_MACSEC_ENCRYPT] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_MACSEC_PROTECT] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_MACSEC_INC_SCI] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_MACSEC_ES] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_MACSEC_SCB] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_MACSEC_REPLAY_PROTECT] = अणु .type = NLA_U8 पूर्ण,
-	[IFLA_MACSEC_VALIDATION] = अणु .type = NLA_U8 पूर्ण,
-पूर्ण;
+static const struct nla_policy macsec_rtnl_policy[IFLA_MACSEC_MAX + 1] = {
+	[IFLA_MACSEC_SCI] = { .type = NLA_U64 },
+	[IFLA_MACSEC_PORT] = { .type = NLA_U16 },
+	[IFLA_MACSEC_ICV_LEN] = { .type = NLA_U8 },
+	[IFLA_MACSEC_CIPHER_SUITE] = { .type = NLA_U64 },
+	[IFLA_MACSEC_WINDOW] = { .type = NLA_U32 },
+	[IFLA_MACSEC_ENCODING_SA] = { .type = NLA_U8 },
+	[IFLA_MACSEC_ENCRYPT] = { .type = NLA_U8 },
+	[IFLA_MACSEC_PROTECT] = { .type = NLA_U8 },
+	[IFLA_MACSEC_INC_SCI] = { .type = NLA_U8 },
+	[IFLA_MACSEC_ES] = { .type = NLA_U8 },
+	[IFLA_MACSEC_SCB] = { .type = NLA_U8 },
+	[IFLA_MACSEC_REPLAY_PROTECT] = { .type = NLA_U8 },
+	[IFLA_MACSEC_VALIDATION] = { .type = NLA_U8 },
+};
 
-अटल व्योम macsec_मुक्त_netdev(काष्ठा net_device *dev)
-अणु
-	काष्ठा macsec_dev *macsec = macsec_priv(dev);
+static void macsec_free_netdev(struct net_device *dev)
+{
+	struct macsec_dev *macsec = macsec_priv(dev);
 
-	मुक्त_percpu(macsec->stats);
-	मुक्त_percpu(macsec->secy.tx_sc.stats);
+	free_percpu(macsec->stats);
+	free_percpu(macsec->secy.tx_sc.stats);
 
-पूर्ण
+}
 
-अटल व्योम macsec_setup(काष्ठा net_device *dev)
-अणु
+static void macsec_setup(struct net_device *dev)
+{
 	ether_setup(dev);
 	dev->min_mtu = 0;
 	dev->max_mtu = ETH_MAX_MTU;
 	dev->priv_flags |= IFF_NO_QUEUE;
 	dev->netdev_ops = &macsec_netdev_ops;
-	dev->needs_मुक्त_netdev = true;
-	dev->priv_deकाष्ठाor = macsec_मुक्त_netdev;
+	dev->needs_free_netdev = true;
+	dev->priv_destructor = macsec_free_netdev;
 	SET_NETDEV_DEVTYPE(dev, &macsec_type);
 
 	eth_zero_addr(dev->broadcast);
-पूर्ण
+}
 
-अटल पूर्णांक macsec_changelink_common(काष्ठा net_device *dev,
-				    काष्ठा nlattr *data[])
-अणु
-	काष्ठा macsec_secy *secy;
-	काष्ठा macsec_tx_sc *tx_sc;
+static int macsec_changelink_common(struct net_device *dev,
+				    struct nlattr *data[])
+{
+	struct macsec_secy *secy;
+	struct macsec_tx_sc *tx_sc;
 
 	secy = &macsec_priv(dev)->secy;
 	tx_sc = &secy->tx_sc;
 
-	अगर (data[IFLA_MACSEC_ENCODING_SA]) अणु
-		काष्ठा macsec_tx_sa *tx_sa;
+	if (data[IFLA_MACSEC_ENCODING_SA]) {
+		struct macsec_tx_sa *tx_sa;
 
 		tx_sc->encoding_sa = nla_get_u8(data[IFLA_MACSEC_ENCODING_SA]);
 		tx_sa = rtnl_dereference(tx_sc->sa[tx_sc->encoding_sa]);
 
 		secy->operational = tx_sa && tx_sa->active;
-	पूर्ण
+	}
 
-	अगर (data[IFLA_MACSEC_WINDOW])
-		secy->replay_winकरोw = nla_get_u32(data[IFLA_MACSEC_WINDOW]);
+	if (data[IFLA_MACSEC_WINDOW])
+		secy->replay_window = nla_get_u32(data[IFLA_MACSEC_WINDOW]);
 
-	अगर (data[IFLA_MACSEC_ENCRYPT])
+	if (data[IFLA_MACSEC_ENCRYPT])
 		tx_sc->encrypt = !!nla_get_u8(data[IFLA_MACSEC_ENCRYPT]);
 
-	अगर (data[IFLA_MACSEC_PROTECT])
+	if (data[IFLA_MACSEC_PROTECT])
 		secy->protect_frames = !!nla_get_u8(data[IFLA_MACSEC_PROTECT]);
 
-	अगर (data[IFLA_MACSEC_INC_SCI])
+	if (data[IFLA_MACSEC_INC_SCI])
 		tx_sc->send_sci = !!nla_get_u8(data[IFLA_MACSEC_INC_SCI]);
 
-	अगर (data[IFLA_MACSEC_ES])
+	if (data[IFLA_MACSEC_ES])
 		tx_sc->end_station = !!nla_get_u8(data[IFLA_MACSEC_ES]);
 
-	अगर (data[IFLA_MACSEC_SCB])
+	if (data[IFLA_MACSEC_SCB])
 		tx_sc->scb = !!nla_get_u8(data[IFLA_MACSEC_SCB]);
 
-	अगर (data[IFLA_MACSEC_REPLAY_PROTECT])
+	if (data[IFLA_MACSEC_REPLAY_PROTECT])
 		secy->replay_protect = !!nla_get_u8(data[IFLA_MACSEC_REPLAY_PROTECT]);
 
-	अगर (data[IFLA_MACSEC_VALIDATION])
+	if (data[IFLA_MACSEC_VALIDATION])
 		secy->validate_frames = nla_get_u8(data[IFLA_MACSEC_VALIDATION]);
 
-	अगर (data[IFLA_MACSEC_CIPHER_SUITE]) अणु
-		चयन (nla_get_u64(data[IFLA_MACSEC_CIPHER_SUITE])) अणु
-		हाल MACSEC_CIPHER_ID_GCM_AES_128:
-		हाल MACSEC_DEFAULT_CIPHER_ID:
+	if (data[IFLA_MACSEC_CIPHER_SUITE]) {
+		switch (nla_get_u64(data[IFLA_MACSEC_CIPHER_SUITE])) {
+		case MACSEC_CIPHER_ID_GCM_AES_128:
+		case MACSEC_DEFAULT_CIPHER_ID:
 			secy->key_len = MACSEC_GCM_AES_128_SAK_LEN;
 			secy->xpn = false;
-			अवरोध;
-		हाल MACSEC_CIPHER_ID_GCM_AES_256:
+			break;
+		case MACSEC_CIPHER_ID_GCM_AES_256:
 			secy->key_len = MACSEC_GCM_AES_256_SAK_LEN;
 			secy->xpn = false;
-			अवरोध;
-		हाल MACSEC_CIPHER_ID_GCM_AES_XPN_128:
+			break;
+		case MACSEC_CIPHER_ID_GCM_AES_XPN_128:
 			secy->key_len = MACSEC_GCM_AES_128_SAK_LEN;
 			secy->xpn = true;
-			अवरोध;
-		हाल MACSEC_CIPHER_ID_GCM_AES_XPN_256:
+			break;
+		case MACSEC_CIPHER_ID_GCM_AES_XPN_256:
 			secy->key_len = MACSEC_GCM_AES_256_SAK_LEN;
 			secy->xpn = true;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक macsec_changelink(काष्ठा net_device *dev, काष्ठा nlattr *tb[],
-			     काष्ठा nlattr *data[],
-			     काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा macsec_dev *macsec = macsec_priv(dev);
-	काष्ठा macsec_tx_sc tx_sc;
-	काष्ठा macsec_secy secy;
-	पूर्णांक ret;
+static int macsec_changelink(struct net_device *dev, struct nlattr *tb[],
+			     struct nlattr *data[],
+			     struct netlink_ext_ack *extack)
+{
+	struct macsec_dev *macsec = macsec_priv(dev);
+	struct macsec_tx_sc tx_sc;
+	struct macsec_secy secy;
+	int ret;
 
-	अगर (!data)
-		वापस 0;
+	if (!data)
+		return 0;
 
-	अगर (data[IFLA_MACSEC_CIPHER_SUITE] ||
+	if (data[IFLA_MACSEC_CIPHER_SUITE] ||
 	    data[IFLA_MACSEC_ICV_LEN] ||
 	    data[IFLA_MACSEC_SCI] ||
 	    data[IFLA_MACSEC_PORT])
-		वापस -EINVAL;
+		return -EINVAL;
 
-	/* Keep a copy of unmodअगरied secy and tx_sc, in हाल the offload
+	/* Keep a copy of unmodified secy and tx_sc, in case the offload
 	 * propagation fails, to revert macsec_changelink_common.
 	 */
-	स_नकल(&secy, &macsec->secy, माप(secy));
-	स_नकल(&tx_sc, &macsec->secy.tx_sc, माप(tx_sc));
+	memcpy(&secy, &macsec->secy, sizeof(secy));
+	memcpy(&tx_sc, &macsec->secy.tx_sc, sizeof(tx_sc));
 
 	ret = macsec_changelink_common(dev, data);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* If h/w offloading is available, propagate to the device */
-	अगर (macsec_is_offloaded(macsec)) अणु
-		स्थिर काष्ठा macsec_ops *ops;
-		काष्ठा macsec_context ctx;
-		पूर्णांक ret;
+	if (macsec_is_offloaded(macsec)) {
+		const struct macsec_ops *ops;
+		struct macsec_context ctx;
+		int ret;
 
 		ops = macsec_get_ops(netdev_priv(dev), &ctx);
-		अगर (!ops) अणु
+		if (!ops) {
 			ret = -EOPNOTSUPP;
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
 		ctx.secy = &macsec->secy;
-		ret = macsec_offload(ops->mकरो_upd_secy, &ctx);
-		अगर (ret)
-			जाओ cleanup;
-	पूर्ण
+		ret = macsec_offload(ops->mdo_upd_secy, &ctx);
+		if (ret)
+			goto cleanup;
+	}
 
-	वापस 0;
+	return 0;
 
 cleanup:
-	स_नकल(&macsec->secy.tx_sc, &tx_sc, माप(tx_sc));
-	स_नकल(&macsec->secy, &secy, माप(secy));
+	memcpy(&macsec->secy.tx_sc, &tx_sc, sizeof(tx_sc));
+	memcpy(&macsec->secy, &secy, sizeof(secy));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम macsec_del_dev(काष्ठा macsec_dev *macsec)
-अणु
-	पूर्णांक i;
+static void macsec_del_dev(struct macsec_dev *macsec)
+{
+	int i;
 
-	जबतक (macsec->secy.rx_sc) अणु
-		काष्ठा macsec_rx_sc *rx_sc = rtnl_dereference(macsec->secy.rx_sc);
+	while (macsec->secy.rx_sc) {
+		struct macsec_rx_sc *rx_sc = rtnl_dereference(macsec->secy.rx_sc);
 
-		rcu_assign_poपूर्णांकer(macsec->secy.rx_sc, rx_sc->next);
-		मुक्त_rx_sc(rx_sc);
-	पूर्ण
+		rcu_assign_pointer(macsec->secy.rx_sc, rx_sc->next);
+		free_rx_sc(rx_sc);
+	}
 
-	क्रम (i = 0; i < MACSEC_NUM_AN; i++) अणु
-		काष्ठा macsec_tx_sa *sa = rtnl_dereference(macsec->secy.tx_sc.sa[i]);
+	for (i = 0; i < MACSEC_NUM_AN; i++) {
+		struct macsec_tx_sa *sa = rtnl_dereference(macsec->secy.tx_sc.sa[i]);
 
-		अगर (sa) अणु
-			RCU_INIT_POINTER(macsec->secy.tx_sc.sa[i], शून्य);
+		if (sa) {
+			RCU_INIT_POINTER(macsec->secy.tx_sc.sa[i], NULL);
 			clear_tx_sa(sa);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम macsec_common_dellink(काष्ठा net_device *dev, काष्ठा list_head *head)
-अणु
-	काष्ठा macsec_dev *macsec = macsec_priv(dev);
-	काष्ठा net_device *real_dev = macsec->real_dev;
+static void macsec_common_dellink(struct net_device *dev, struct list_head *head)
+{
+	struct macsec_dev *macsec = macsec_priv(dev);
+	struct net_device *real_dev = macsec->real_dev;
 
-	unरेजिस्टर_netdevice_queue(dev, head);
+	unregister_netdevice_queue(dev, head);
 	list_del_rcu(&macsec->secys);
 	macsec_del_dev(macsec);
 	netdev_upper_dev_unlink(real_dev, dev);
 
 	macsec_generation++;
-पूर्ण
+}
 
-अटल व्योम macsec_dellink(काष्ठा net_device *dev, काष्ठा list_head *head)
-अणु
-	काष्ठा macsec_dev *macsec = macsec_priv(dev);
-	काष्ठा net_device *real_dev = macsec->real_dev;
-	काष्ठा macsec_rxh_data *rxd = macsec_data_rtnl(real_dev);
+static void macsec_dellink(struct net_device *dev, struct list_head *head)
+{
+	struct macsec_dev *macsec = macsec_priv(dev);
+	struct net_device *real_dev = macsec->real_dev;
+	struct macsec_rxh_data *rxd = macsec_data_rtnl(real_dev);
 
 	/* If h/w offloading is available, propagate to the device */
-	अगर (macsec_is_offloaded(macsec)) अणु
-		स्थिर काष्ठा macsec_ops *ops;
-		काष्ठा macsec_context ctx;
+	if (macsec_is_offloaded(macsec)) {
+		const struct macsec_ops *ops;
+		struct macsec_context ctx;
 
 		ops = macsec_get_ops(netdev_priv(dev), &ctx);
-		अगर (ops) अणु
+		if (ops) {
 			ctx.secy = &macsec->secy;
-			macsec_offload(ops->mकरो_del_secy, &ctx);
-		पूर्ण
-	पूर्ण
+			macsec_offload(ops->mdo_del_secy, &ctx);
+		}
+	}
 
 	macsec_common_dellink(dev, head);
 
-	अगर (list_empty(&rxd->secys)) अणु
-		netdev_rx_handler_unरेजिस्टर(real_dev);
-		kमुक्त(rxd);
-	पूर्ण
-पूर्ण
+	if (list_empty(&rxd->secys)) {
+		netdev_rx_handler_unregister(real_dev);
+		kfree(rxd);
+	}
+}
 
-अटल पूर्णांक रेजिस्टर_macsec_dev(काष्ठा net_device *real_dev,
-			       काष्ठा net_device *dev)
-अणु
-	काष्ठा macsec_dev *macsec = macsec_priv(dev);
-	काष्ठा macsec_rxh_data *rxd = macsec_data_rtnl(real_dev);
+static int register_macsec_dev(struct net_device *real_dev,
+			       struct net_device *dev)
+{
+	struct macsec_dev *macsec = macsec_priv(dev);
+	struct macsec_rxh_data *rxd = macsec_data_rtnl(real_dev);
 
-	अगर (!rxd) अणु
-		पूर्णांक err;
+	if (!rxd) {
+		int err;
 
-		rxd = kदो_स्मृति(माप(*rxd), GFP_KERNEL);
-		अगर (!rxd)
-			वापस -ENOMEM;
+		rxd = kmalloc(sizeof(*rxd), GFP_KERNEL);
+		if (!rxd)
+			return -ENOMEM;
 
 		INIT_LIST_HEAD(&rxd->secys);
 
-		err = netdev_rx_handler_रेजिस्टर(real_dev, macsec_handle_frame,
+		err = netdev_rx_handler_register(real_dev, macsec_handle_frame,
 						 rxd);
-		अगर (err < 0) अणु
-			kमुक्त(rxd);
-			वापस err;
-		पूर्ण
-	पूर्ण
+		if (err < 0) {
+			kfree(rxd);
+			return err;
+		}
+	}
 
 	list_add_tail_rcu(&macsec->secys, &rxd->secys);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool sci_exists(काष्ठा net_device *dev, sci_t sci)
-अणु
-	काष्ठा macsec_rxh_data *rxd = macsec_data_rtnl(dev);
-	काष्ठा macsec_dev *macsec;
+static bool sci_exists(struct net_device *dev, sci_t sci)
+{
+	struct macsec_rxh_data *rxd = macsec_data_rtnl(dev);
+	struct macsec_dev *macsec;
 
-	list_क्रम_each_entry(macsec, &rxd->secys, secys) अणु
-		अगर (macsec->secy.sci == sci)
-			वापस true;
-	पूर्ण
+	list_for_each_entry(macsec, &rxd->secys, secys) {
+		if (macsec->secy.sci == sci)
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक macsec_add_dev(काष्ठा net_device *dev, sci_t sci, u8 icv_len)
-अणु
-	काष्ठा macsec_dev *macsec = macsec_priv(dev);
-	काष्ठा macsec_secy *secy = &macsec->secy;
+static int macsec_add_dev(struct net_device *dev, sci_t sci, u8 icv_len)
+{
+	struct macsec_dev *macsec = macsec_priv(dev);
+	struct macsec_secy *secy = &macsec->secy;
 
-	macsec->stats = netdev_alloc_pcpu_stats(काष्ठा pcpu_secy_stats);
-	अगर (!macsec->stats)
-		वापस -ENOMEM;
+	macsec->stats = netdev_alloc_pcpu_stats(struct pcpu_secy_stats);
+	if (!macsec->stats)
+		return -ENOMEM;
 
-	secy->tx_sc.stats = netdev_alloc_pcpu_stats(काष्ठा pcpu_tx_sc_stats);
-	अगर (!secy->tx_sc.stats) अणु
-		मुक्त_percpu(macsec->stats);
-		वापस -ENOMEM;
-	पूर्ण
+	secy->tx_sc.stats = netdev_alloc_pcpu_stats(struct pcpu_tx_sc_stats);
+	if (!secy->tx_sc.stats) {
+		free_percpu(macsec->stats);
+		return -ENOMEM;
+	}
 
-	अगर (sci == MACSEC_UNDEF_SCI)
+	if (sci == MACSEC_UNDEF_SCI)
 		sci = dev_to_sci(dev, MACSEC_PORT_ES);
 
 	secy->netdev = dev;
@@ -3980,212 +3979,212 @@ cleanup:
 	secy->tx_sc.end_station = false;
 	secy->tx_sc.scb = false;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा lock_class_key macsec_netdev_addr_lock_key;
+static struct lock_class_key macsec_netdev_addr_lock_key;
 
-अटल पूर्णांक macsec_newlink(काष्ठा net *net, काष्ठा net_device *dev,
-			  काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
-			  काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा macsec_dev *macsec = macsec_priv(dev);
+static int macsec_newlink(struct net *net, struct net_device *dev,
+			  struct nlattr *tb[], struct nlattr *data[],
+			  struct netlink_ext_ack *extack)
+{
+	struct macsec_dev *macsec = macsec_priv(dev);
 	rx_handler_func_t *rx_handler;
 	u8 icv_len = DEFAULT_ICV_LEN;
-	काष्ठा net_device *real_dev;
-	पूर्णांक err, mtu;
+	struct net_device *real_dev;
+	int err, mtu;
 	sci_t sci;
 
-	अगर (!tb[IFLA_LINK])
-		वापस -EINVAL;
+	if (!tb[IFLA_LINK])
+		return -EINVAL;
 	real_dev = __dev_get_by_index(net, nla_get_u32(tb[IFLA_LINK]));
-	अगर (!real_dev)
-		वापस -ENODEV;
-	अगर (real_dev->type != ARPHRD_ETHER)
-		वापस -EINVAL;
+	if (!real_dev)
+		return -ENODEV;
+	if (real_dev->type != ARPHRD_ETHER)
+		return -EINVAL;
 
 	dev->priv_flags |= IFF_MACSEC;
 
 	macsec->real_dev = real_dev;
 
-	अगर (data && data[IFLA_MACSEC_OFFLOAD])
+	if (data && data[IFLA_MACSEC_OFFLOAD])
 		macsec->offload = nla_get_offload(data[IFLA_MACSEC_OFFLOAD]);
-	अन्यथा
-		/* MACsec offloading is off by शेष */
+	else
+		/* MACsec offloading is off by default */
 		macsec->offload = MACSEC_OFFLOAD_OFF;
 
-	/* Check अगर the offloading mode is supported by the underlying layers */
-	अगर (macsec->offload != MACSEC_OFFLOAD_OFF &&
+	/* Check if the offloading mode is supported by the underlying layers */
+	if (macsec->offload != MACSEC_OFFLOAD_OFF &&
 	    !macsec_check_offload(macsec->offload, macsec))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	अगर (data && data[IFLA_MACSEC_ICV_LEN])
+	if (data && data[IFLA_MACSEC_ICV_LEN])
 		icv_len = nla_get_u8(data[IFLA_MACSEC_ICV_LEN]);
 	mtu = real_dev->mtu - icv_len - macsec_extra_len(true);
-	अगर (mtu < 0)
+	if (mtu < 0)
 		dev->mtu = 0;
-	अन्यथा
+	else
 		dev->mtu = mtu;
 
 	rx_handler = rtnl_dereference(real_dev->rx_handler);
-	अगर (rx_handler && rx_handler != macsec_handle_frame)
-		वापस -EBUSY;
+	if (rx_handler && rx_handler != macsec_handle_frame)
+		return -EBUSY;
 
-	err = रेजिस्टर_netdevice(dev);
-	अगर (err < 0)
-		वापस err;
+	err = register_netdevice(dev);
+	if (err < 0)
+		return err;
 
 	netdev_lockdep_set_classes(dev);
 	lockdep_set_class(&dev->addr_list_lock,
 			  &macsec_netdev_addr_lock_key);
 
 	err = netdev_upper_dev_link(real_dev, dev, extack);
-	अगर (err < 0)
-		जाओ unरेजिस्टर;
+	if (err < 0)
+		goto unregister;
 
-	/* need to be alपढ़ोy रेजिस्टरed so that ->init has run and
+	/* need to be already registered so that ->init has run and
 	 * the MAC addr is set
 	 */
-	अगर (data && data[IFLA_MACSEC_SCI])
+	if (data && data[IFLA_MACSEC_SCI])
 		sci = nla_get_sci(data[IFLA_MACSEC_SCI]);
-	अन्यथा अगर (data && data[IFLA_MACSEC_PORT])
+	else if (data && data[IFLA_MACSEC_PORT])
 		sci = dev_to_sci(dev, nla_get_be16(data[IFLA_MACSEC_PORT]));
-	अन्यथा
+	else
 		sci = dev_to_sci(dev, MACSEC_PORT_ES);
 
-	अगर (rx_handler && sci_exists(real_dev, sci)) अणु
+	if (rx_handler && sci_exists(real_dev, sci)) {
 		err = -EBUSY;
-		जाओ unlink;
-	पूर्ण
+		goto unlink;
+	}
 
 	err = macsec_add_dev(dev, sci, icv_len);
-	अगर (err)
-		जाओ unlink;
+	if (err)
+		goto unlink;
 
-	अगर (data) अणु
+	if (data) {
 		err = macsec_changelink_common(dev, data);
-		अगर (err)
-			जाओ del_dev;
-	पूर्ण
+		if (err)
+			goto del_dev;
+	}
 
 	/* If h/w offloading is available, propagate to the device */
-	अगर (macsec_is_offloaded(macsec)) अणु
-		स्थिर काष्ठा macsec_ops *ops;
-		काष्ठा macsec_context ctx;
+	if (macsec_is_offloaded(macsec)) {
+		const struct macsec_ops *ops;
+		struct macsec_context ctx;
 
 		ops = macsec_get_ops(macsec, &ctx);
-		अगर (ops) अणु
+		if (ops) {
 			ctx.secy = &macsec->secy;
-			err = macsec_offload(ops->mकरो_add_secy, &ctx);
-			अगर (err)
-				जाओ del_dev;
-		पूर्ण
-	पूर्ण
+			err = macsec_offload(ops->mdo_add_secy, &ctx);
+			if (err)
+				goto del_dev;
+		}
+	}
 
-	err = रेजिस्टर_macsec_dev(real_dev, dev);
-	अगर (err < 0)
-		जाओ del_dev;
+	err = register_macsec_dev(real_dev, dev);
+	if (err < 0)
+		goto del_dev;
 
-	netअगर_stacked_transfer_operstate(real_dev, dev);
+	netif_stacked_transfer_operstate(real_dev, dev);
 	linkwatch_fire_event(dev);
 
 	macsec_generation++;
 
-	वापस 0;
+	return 0;
 
 del_dev:
 	macsec_del_dev(macsec);
 unlink:
 	netdev_upper_dev_unlink(real_dev, dev);
-unरेजिस्टर:
-	unरेजिस्टर_netdevice(dev);
-	वापस err;
-पूर्ण
+unregister:
+	unregister_netdevice(dev);
+	return err;
+}
 
-अटल पूर्णांक macsec_validate_attr(काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
-				काष्ठा netlink_ext_ack *extack)
-अणु
+static int macsec_validate_attr(struct nlattr *tb[], struct nlattr *data[],
+				struct netlink_ext_ack *extack)
+{
 	u64 csid = MACSEC_DEFAULT_CIPHER_ID;
 	u8 icv_len = DEFAULT_ICV_LEN;
-	पूर्णांक flag;
+	int flag;
 	bool es, scb, sci;
 
-	अगर (!data)
-		वापस 0;
+	if (!data)
+		return 0;
 
-	अगर (data[IFLA_MACSEC_CIPHER_SUITE])
+	if (data[IFLA_MACSEC_CIPHER_SUITE])
 		csid = nla_get_u64(data[IFLA_MACSEC_CIPHER_SUITE]);
 
-	अगर (data[IFLA_MACSEC_ICV_LEN]) अणु
+	if (data[IFLA_MACSEC_ICV_LEN]) {
 		icv_len = nla_get_u8(data[IFLA_MACSEC_ICV_LEN]);
-		अगर (icv_len != DEFAULT_ICV_LEN) अणु
-			अक्षर dummy_key[DEFAULT_SAK_LEN] = अणु 0 पूर्ण;
-			काष्ठा crypto_aead *dummy_tfm;
+		if (icv_len != DEFAULT_ICV_LEN) {
+			char dummy_key[DEFAULT_SAK_LEN] = { 0 };
+			struct crypto_aead *dummy_tfm;
 
 			dummy_tfm = macsec_alloc_tfm(dummy_key,
 						     DEFAULT_SAK_LEN,
 						     icv_len);
-			अगर (IS_ERR(dummy_tfm))
-				वापस PTR_ERR(dummy_tfm);
-			crypto_मुक्त_aead(dummy_tfm);
-		पूर्ण
-	पूर्ण
+			if (IS_ERR(dummy_tfm))
+				return PTR_ERR(dummy_tfm);
+			crypto_free_aead(dummy_tfm);
+		}
+	}
 
-	चयन (csid) अणु
-	हाल MACSEC_CIPHER_ID_GCM_AES_128:
-	हाल MACSEC_CIPHER_ID_GCM_AES_256:
-	हाल MACSEC_CIPHER_ID_GCM_AES_XPN_128:
-	हाल MACSEC_CIPHER_ID_GCM_AES_XPN_256:
-	हाल MACSEC_DEFAULT_CIPHER_ID:
-		अगर (icv_len < MACSEC_MIN_ICV_LEN ||
+	switch (csid) {
+	case MACSEC_CIPHER_ID_GCM_AES_128:
+	case MACSEC_CIPHER_ID_GCM_AES_256:
+	case MACSEC_CIPHER_ID_GCM_AES_XPN_128:
+	case MACSEC_CIPHER_ID_GCM_AES_XPN_256:
+	case MACSEC_DEFAULT_CIPHER_ID:
+		if (icv_len < MACSEC_MIN_ICV_LEN ||
 		    icv_len > MACSEC_STD_ICV_LEN)
-			वापस -EINVAL;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+			return -EINVAL;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (data[IFLA_MACSEC_ENCODING_SA]) अणु
-		अगर (nla_get_u8(data[IFLA_MACSEC_ENCODING_SA]) >= MACSEC_NUM_AN)
-			वापस -EINVAL;
-	पूर्ण
+	if (data[IFLA_MACSEC_ENCODING_SA]) {
+		if (nla_get_u8(data[IFLA_MACSEC_ENCODING_SA]) >= MACSEC_NUM_AN)
+			return -EINVAL;
+	}
 
-	क्रम (flag = IFLA_MACSEC_ENCODING_SA + 1;
+	for (flag = IFLA_MACSEC_ENCODING_SA + 1;
 	     flag < IFLA_MACSEC_VALIDATION;
-	     flag++) अणु
-		अगर (data[flag]) अणु
-			अगर (nla_get_u8(data[flag]) > 1)
-				वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+	     flag++) {
+		if (data[flag]) {
+			if (nla_get_u8(data[flag]) > 1)
+				return -EINVAL;
+		}
+	}
 
 	es  = data[IFLA_MACSEC_ES] ? nla_get_u8(data[IFLA_MACSEC_ES]) : false;
 	sci = data[IFLA_MACSEC_INC_SCI] ? nla_get_u8(data[IFLA_MACSEC_INC_SCI]) : false;
 	scb = data[IFLA_MACSEC_SCB] ? nla_get_u8(data[IFLA_MACSEC_SCB]) : false;
 
-	अगर ((sci && (scb || es)) || (scb && es))
-		वापस -EINVAL;
+	if ((sci && (scb || es)) || (scb && es))
+		return -EINVAL;
 
-	अगर (data[IFLA_MACSEC_VALIDATION] &&
+	if (data[IFLA_MACSEC_VALIDATION] &&
 	    nla_get_u8(data[IFLA_MACSEC_VALIDATION]) > MACSEC_VALIDATE_MAX)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर ((data[IFLA_MACSEC_REPLAY_PROTECT] &&
+	if ((data[IFLA_MACSEC_REPLAY_PROTECT] &&
 	     nla_get_u8(data[IFLA_MACSEC_REPLAY_PROTECT])) &&
 	    !data[IFLA_MACSEC_WINDOW])
-		वापस -EINVAL;
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा net *macsec_get_link_net(स्थिर काष्ठा net_device *dev)
-अणु
-	वापस dev_net(macsec_priv(dev)->real_dev);
-पूर्ण
+static struct net *macsec_get_link_net(const struct net_device *dev)
+{
+	return dev_net(macsec_priv(dev)->real_dev);
+}
 
-अटल माप_प्रकार macsec_get_size(स्थिर काष्ठा net_device *dev)
-अणु
-	वापस  nla_total_size_64bit(8) + /* IFLA_MACSEC_SCI */
+static size_t macsec_get_size(const struct net_device *dev)
+{
+	return  nla_total_size_64bit(8) + /* IFLA_MACSEC_SCI */
 		nla_total_size(1) + /* IFLA_MACSEC_ICV_LEN */
 		nla_total_size_64bit(8) + /* IFLA_MACSEC_CIPHER_SUITE */
 		nla_total_size(4) + /* IFLA_MACSEC_WINDOW */
@@ -4198,27 +4197,27 @@ unरेजिस्टर:
 		nla_total_size(1) + /* IFLA_MACSEC_REPLAY_PROTECT */
 		nla_total_size(1) + /* IFLA_MACSEC_VALIDATION */
 		0;
-पूर्ण
+}
 
-अटल पूर्णांक macsec_fill_info(काष्ठा sk_buff *skb,
-			    स्थिर काष्ठा net_device *dev)
-अणु
-	काष्ठा macsec_secy *secy = &macsec_priv(dev)->secy;
-	काष्ठा macsec_tx_sc *tx_sc = &secy->tx_sc;
+static int macsec_fill_info(struct sk_buff *skb,
+			    const struct net_device *dev)
+{
+	struct macsec_secy *secy = &macsec_priv(dev)->secy;
+	struct macsec_tx_sc *tx_sc = &secy->tx_sc;
 	u64 csid;
 
-	चयन (secy->key_len) अणु
-	हाल MACSEC_GCM_AES_128_SAK_LEN:
+	switch (secy->key_len) {
+	case MACSEC_GCM_AES_128_SAK_LEN:
 		csid = secy->xpn ? MACSEC_CIPHER_ID_GCM_AES_XPN_128 : MACSEC_DEFAULT_CIPHER_ID;
-		अवरोध;
-	हाल MACSEC_GCM_AES_256_SAK_LEN:
+		break;
+	case MACSEC_GCM_AES_256_SAK_LEN:
 		csid = secy->xpn ? MACSEC_CIPHER_ID_GCM_AES_XPN_256 : MACSEC_CIPHER_ID_GCM_AES_256;
-		अवरोध;
-	शेष:
-		जाओ nla_put_failure;
-	पूर्ण
+		break;
+	default:
+		goto nla_put_failure;
+	}
 
-	अगर (nla_put_sci(skb, IFLA_MACSEC_SCI, secy->sci,
+	if (nla_put_sci(skb, IFLA_MACSEC_SCI, secy->sci,
 			IFLA_MACSEC_PAD) ||
 	    nla_put_u8(skb, IFLA_MACSEC_ICV_LEN, secy->icv_len) ||
 	    nla_put_u64_64bit(skb, IFLA_MACSEC_CIPHER_SUITE,
@@ -4232,22 +4231,22 @@ unरेजिस्टर:
 	    nla_put_u8(skb, IFLA_MACSEC_REPLAY_PROTECT, secy->replay_protect) ||
 	    nla_put_u8(skb, IFLA_MACSEC_VALIDATION, secy->validate_frames) ||
 	    0)
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (secy->replay_protect) अणु
-		अगर (nla_put_u32(skb, IFLA_MACSEC_WINDOW, secy->replay_winकरोw))
-			जाओ nla_put_failure;
-	पूर्ण
+	if (secy->replay_protect) {
+		if (nla_put_u32(skb, IFLA_MACSEC_WINDOW, secy->replay_window))
+			goto nla_put_failure;
+	}
 
-	वापस 0;
+	return 0;
 
 nla_put_failure:
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल काष्ठा rtnl_link_ops macsec_link_ops __पढ़ो_mostly = अणु
+static struct rtnl_link_ops macsec_link_ops __read_mostly = {
 	.kind		= "macsec",
-	.priv_size	= माप(काष्ठा macsec_dev),
+	.priv_size	= sizeof(struct macsec_dev),
 	.maxtype	= IFLA_MACSEC_MAX,
 	.policy		= macsec_rtnl_policy,
 	.setup		= macsec_setup,
@@ -4258,111 +4257,111 @@ nla_put_failure:
 	.get_size	= macsec_get_size,
 	.fill_info	= macsec_fill_info,
 	.get_link_net	= macsec_get_link_net,
-पूर्ण;
+};
 
-अटल bool is_macsec_master(काष्ठा net_device *dev)
-अणु
-	वापस rcu_access_poपूर्णांकer(dev->rx_handler) == macsec_handle_frame;
-पूर्ण
+static bool is_macsec_master(struct net_device *dev)
+{
+	return rcu_access_pointer(dev->rx_handler) == macsec_handle_frame;
+}
 
-अटल पूर्णांक macsec_notअगरy(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ event,
-			 व्योम *ptr)
-अणु
-	काष्ठा net_device *real_dev = netdev_notअगरier_info_to_dev(ptr);
+static int macsec_notify(struct notifier_block *this, unsigned long event,
+			 void *ptr)
+{
+	struct net_device *real_dev = netdev_notifier_info_to_dev(ptr);
 	LIST_HEAD(head);
 
-	अगर (!is_macsec_master(real_dev))
-		वापस NOTIFY_DONE;
+	if (!is_macsec_master(real_dev))
+		return NOTIFY_DONE;
 
-	चयन (event) अणु
-	हाल NETDEV_DOWN:
-	हाल NETDEV_UP:
-	हाल NETDEV_CHANGE: अणु
-		काष्ठा macsec_dev *m, *n;
-		काष्ठा macsec_rxh_data *rxd;
-
-		rxd = macsec_data_rtnl(real_dev);
-		list_क्रम_each_entry_safe(m, n, &rxd->secys, secys) अणु
-			काष्ठा net_device *dev = m->secy.netdev;
-
-			netअगर_stacked_transfer_operstate(real_dev, dev);
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	हाल NETDEV_UNREGISTER: अणु
-		काष्ठा macsec_dev *m, *n;
-		काष्ठा macsec_rxh_data *rxd;
+	switch (event) {
+	case NETDEV_DOWN:
+	case NETDEV_UP:
+	case NETDEV_CHANGE: {
+		struct macsec_dev *m, *n;
+		struct macsec_rxh_data *rxd;
 
 		rxd = macsec_data_rtnl(real_dev);
-		list_क्रम_each_entry_safe(m, n, &rxd->secys, secys) अणु
+		list_for_each_entry_safe(m, n, &rxd->secys, secys) {
+			struct net_device *dev = m->secy.netdev;
+
+			netif_stacked_transfer_operstate(real_dev, dev);
+		}
+		break;
+	}
+	case NETDEV_UNREGISTER: {
+		struct macsec_dev *m, *n;
+		struct macsec_rxh_data *rxd;
+
+		rxd = macsec_data_rtnl(real_dev);
+		list_for_each_entry_safe(m, n, &rxd->secys, secys) {
 			macsec_common_dellink(m->secy.netdev, &head);
-		पूर्ण
+		}
 
-		netdev_rx_handler_unरेजिस्टर(real_dev);
-		kमुक्त(rxd);
+		netdev_rx_handler_unregister(real_dev);
+		kfree(rxd);
 
-		unरेजिस्टर_netdevice_many(&head);
-		अवरोध;
-	पूर्ण
-	हाल NETDEV_CHANGEMTU: अणु
-		काष्ठा macsec_dev *m;
-		काष्ठा macsec_rxh_data *rxd;
+		unregister_netdevice_many(&head);
+		break;
+	}
+	case NETDEV_CHANGEMTU: {
+		struct macsec_dev *m;
+		struct macsec_rxh_data *rxd;
 
 		rxd = macsec_data_rtnl(real_dev);
-		list_क्रम_each_entry(m, &rxd->secys, secys) अणु
-			काष्ठा net_device *dev = m->secy.netdev;
-			अचिन्हित पूर्णांक mtu = real_dev->mtu - (m->secy.icv_len +
+		list_for_each_entry(m, &rxd->secys, secys) {
+			struct net_device *dev = m->secy.netdev;
+			unsigned int mtu = real_dev->mtu - (m->secy.icv_len +
 							    macsec_extra_len(true));
 
-			अगर (dev->mtu > mtu)
+			if (dev->mtu > mtu)
 				dev_set_mtu(dev, mtu);
-		पूर्ण
-	पूर्ण
-	पूर्ण
+		}
+	}
+	}
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
-अटल काष्ठा notअगरier_block macsec_notअगरier = अणु
-	.notअगरier_call = macsec_notअगरy,
-पूर्ण;
+static struct notifier_block macsec_notifier = {
+	.notifier_call = macsec_notify,
+};
 
-अटल पूर्णांक __init macsec_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init macsec_init(void)
+{
+	int err;
 
 	pr_info("MACsec IEEE 802.1AE\n");
-	err = रेजिस्टर_netdevice_notअगरier(&macsec_notअगरier);
-	अगर (err)
-		वापस err;
+	err = register_netdevice_notifier(&macsec_notifier);
+	if (err)
+		return err;
 
-	err = rtnl_link_रेजिस्टर(&macsec_link_ops);
-	अगर (err)
-		जाओ notअगरier;
+	err = rtnl_link_register(&macsec_link_ops);
+	if (err)
+		goto notifier;
 
-	err = genl_रेजिस्टर_family(&macsec_fam);
-	अगर (err)
-		जाओ rtnl;
+	err = genl_register_family(&macsec_fam);
+	if (err)
+		goto rtnl;
 
-	वापस 0;
+	return 0;
 
 rtnl:
-	rtnl_link_unरेजिस्टर(&macsec_link_ops);
-notअगरier:
-	unरेजिस्टर_netdevice_notअगरier(&macsec_notअगरier);
-	वापस err;
-पूर्ण
+	rtnl_link_unregister(&macsec_link_ops);
+notifier:
+	unregister_netdevice_notifier(&macsec_notifier);
+	return err;
+}
 
-अटल व्योम __निकास macsec_निकास(व्योम)
-अणु
-	genl_unरेजिस्टर_family(&macsec_fam);
-	rtnl_link_unरेजिस्टर(&macsec_link_ops);
-	unरेजिस्टर_netdevice_notअगरier(&macsec_notअगरier);
+static void __exit macsec_exit(void)
+{
+	genl_unregister_family(&macsec_fam);
+	rtnl_link_unregister(&macsec_link_ops);
+	unregister_netdevice_notifier(&macsec_notifier);
 	rcu_barrier();
-पूर्ण
+}
 
 module_init(macsec_init);
-module_निकास(macsec_निकास);
+module_exit(macsec_exit);
 
 MODULE_ALIAS_RTNL_LINK("macsec");
 MODULE_ALIAS_GENL_FAMILY("macsec");

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
 * Filename: rsxx.h
 *
@@ -9,26 +8,26 @@
 * (C) Copyright 2013 IBM Corporation
 */
 
-#अगर_अघोषित __RSXX_H__
-#घोषणा __RSXX_H__
+#ifndef __RSXX_H__
+#define __RSXX_H__
 
 /*----------------- IOCTL Definitions -------------------*/
 
-#घोषणा RSXX_MAX_DATA 8
+#define RSXX_MAX_DATA 8
 
-काष्ठा rsxx_reg_access अणु
+struct rsxx_reg_access {
 	__u32 addr;
 	__u32 cnt;
 	__u32 stat;
 	__u32 stream;
 	__u32 data[RSXX_MAX_DATA];
-पूर्ण;
+};
 
-#घोषणा RSXX_MAX_REG_CNT	(RSXX_MAX_DATA * (माप(__u32)))
+#define RSXX_MAX_REG_CNT	(RSXX_MAX_DATA * (sizeof(__u32)))
 
-#घोषणा RSXX_IOC_MAGIC 'r'
+#define RSXX_IOC_MAGIC 'r'
 
-#घोषणा RSXX_GETREG _IOWR(RSXX_IOC_MAGIC, 0x20, काष्ठा rsxx_reg_access)
-#घोषणा RSXX_SETREG _IOWR(RSXX_IOC_MAGIC, 0x21, काष्ठा rsxx_reg_access)
+#define RSXX_GETREG _IOWR(RSXX_IOC_MAGIC, 0x20, struct rsxx_reg_access)
+#define RSXX_SETREG _IOWR(RSXX_IOC_MAGIC, 0x21, struct rsxx_reg_access)
 
-#पूर्ण_अगर /* __RSXX_H_ */
+#endif /* __RSXX_H_ */

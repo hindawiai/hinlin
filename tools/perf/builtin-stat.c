@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * builtin-stat.c
  *
- * Builtin stat command: Give a precise perक्रमmance counters summary
- * overview about any workload, CPU or specअगरic PID.
+ * Builtin stat command: Give a precise performance counters summary
+ * overview about any workload, CPU or specific PID.
  *
  * Sample output:
 
@@ -12,96 +11,96 @@
 
   Time: 0.118
 
-  Perक्रमmance counter stats क्रम './hackbench 10':
+  Performance counter stats for './hackbench 10':
 
-       1708.761321 task-घड़ी                #   11.037 CPUs utilized
-            41,190 context-चयनes          #    0.024 M/sec
+       1708.761321 task-clock                #   11.037 CPUs utilized
+            41,190 context-switches          #    0.024 M/sec
              6,735 CPU-migrations            #    0.004 M/sec
             17,318 page-faults               #    0.010 M/sec
      5,205,202,243 cycles                    #    3.046 GHz
      3,856,436,920 stalled-cycles-frontend   #   74.09% frontend cycles idle
      1,600,790,871 stalled-cycles-backend    #   30.75% backend  cycles idle
-     2,603,501,247 inकाष्ठाions              #    0.50  insns per cycle
+     2,603,501,247 instructions              #    0.50  insns per cycle
                                              #    1.48  stalled cycles per insn
        484,357,498 branches                  #  283.455 M/sec
          6,388,934 branch-misses             #    1.32% of all branches
 
-        0.154822978  seconds समय elapsed
+        0.154822978  seconds time elapsed
 
  *
  * Copyright (C) 2008-2011, Red Hat Inc, Ingo Molnar <mingo@redhat.com>
  *
  * Improvements and fixes by:
  *
- *   Arjan van de Ven <arjan@linux.पूर्णांकel.com>
- *   Yanmin Zhang <yanmin.zhang@पूर्णांकel.com>
- *   Wu Fengguang <fengguang.wu@पूर्णांकel.com>
+ *   Arjan van de Ven <arjan@linux.intel.com>
+ *   Yanmin Zhang <yanmin.zhang@intel.com>
+ *   Wu Fengguang <fengguang.wu@intel.com>
  *   Mike Galbraith <efault@gmx.de>
  *   Paul Mackerras <paulus@samba.org>
  *   Jaswinder Singh Rajput <jaswinder@kernel.org>
  */
 
-#समावेश "builtin.h"
-#समावेश "perf.h"
-#समावेश "util/cgroup.h"
-#समावेश <subcmd/parse-options.h>
-#समावेश "util/parse-events.h"
-#समावेश "util/pmu.h"
-#समावेश "util/event.h"
-#समावेश "util/evlist.h"
-#समावेश "util/evlist-hybrid.h"
-#समावेश "util/evsel.h"
-#समावेश "util/debug.h"
-#समावेश "util/color.h"
-#समावेश "util/stat.h"
-#समावेश "util/header.h"
-#समावेश "util/cpumap.h"
-#समावेश "util/thread_map.h"
-#समावेश "util/counts.h"
-#समावेश "util/topdown.h"
-#समावेश "util/session.h"
-#समावेश "util/tool.h"
-#समावेश "util/string2.h"
-#समावेश "util/metricgroup.h"
-#समावेश "util/synthetic-events.h"
-#समावेश "util/target.h"
-#समावेश "util/time-utils.h"
-#समावेश "util/top.h"
-#समावेश "util/affinity.h"
-#समावेश "util/pfm.h"
-#समावेश "util/bpf_counter.h"
-#समावेश "util/iostat.h"
-#समावेश "util/pmu-hybrid.h"
-#समावेश "asm/bug.h"
+#include "builtin.h"
+#include "perf.h"
+#include "util/cgroup.h"
+#include <subcmd/parse-options.h>
+#include "util/parse-events.h"
+#include "util/pmu.h"
+#include "util/event.h"
+#include "util/evlist.h"
+#include "util/evlist-hybrid.h"
+#include "util/evsel.h"
+#include "util/debug.h"
+#include "util/color.h"
+#include "util/stat.h"
+#include "util/header.h"
+#include "util/cpumap.h"
+#include "util/thread_map.h"
+#include "util/counts.h"
+#include "util/topdown.h"
+#include "util/session.h"
+#include "util/tool.h"
+#include "util/string2.h"
+#include "util/metricgroup.h"
+#include "util/synthetic-events.h"
+#include "util/target.h"
+#include "util/time-utils.h"
+#include "util/top.h"
+#include "util/affinity.h"
+#include "util/pfm.h"
+#include "util/bpf_counter.h"
+#include "util/iostat.h"
+#include "util/pmu-hybrid.h"
+#include "asm/bug.h"
 
-#समावेश <linux/समय64.h>
-#समावेश <linux/zभाग.स>
-#समावेश <api/fs/fs.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <संकेत.स>
-#समावेश <मानककोष.स>
-#समावेश <sys/prctl.h>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <क्षेत्र.स>
-#समावेश <गणित.स>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/रुको.h>
-#समावेश <unistd.h>
-#समावेश <sys/समय.स>
-#समावेश <sys/resource.h>
-#समावेश <linux/err.h>
+#include <linux/time64.h>
+#include <linux/zalloc.h>
+#include <api/fs/fs.h>
+#include <errno.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <sys/prctl.h>
+#include <inttypes.h>
+#include <locale.h>
+#include <math.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <linux/err.h>
 
-#समावेश <linux/प्रकार.स>
-#समावेश <perf/evlist.h>
+#include <linux/ctype.h>
+#include <perf/evlist.h>
 
-#घोषणा DEFAULT_SEPARATOR	" "
-#घोषणा FREEZE_ON_SMI_PATH	"devices/cpu/freeze_on_smi"
+#define DEFAULT_SEPARATOR	" "
+#define FREEZE_ON_SMI_PATH	"devices/cpu/freeze_on_smi"
 
-अटल व्योम prपूर्णांक_counters(काष्ठा बारpec *ts, पूर्णांक argc, स्थिर अक्षर **argv);
+static void print_counters(struct timespec *ts, int argc, const char **argv);
 
-/* Default events used क्रम perf stat -T */
-अटल स्थिर अक्षर *transaction_attrs = अणु
+/* Default events used for perf stat -T */
+static const char *transaction_attrs = {
 	"task-clock,"
 	"{"
 	"instructions,"
@@ -111,10 +110,10 @@
 	"cpu/el-start/,"
 	"cpu/cycles-ct/"
 	"}"
-पूर्ण;
+};
 
-/* More limited version when the CPU करोes not have all events. */
-अटल स्थिर अक्षर * transaction_limited_attrs = अणु
+/* More limited version when the CPU does not have all events. */
+static const char * transaction_limited_attrs = {
 	"task-clock,"
 	"{"
 	"instructions,"
@@ -122,27 +121,27 @@
 	"cpu/cycles-t/,"
 	"cpu/tx-start/"
 	"}"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * topकरोwn_attrs[] = अणु
+static const char * topdown_attrs[] = {
 	"topdown-total-slots",
 	"topdown-slots-retired",
 	"topdown-recovery-bubbles",
 	"topdown-fetch-bubbles",
 	"topdown-slots-issued",
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर अक्षर *topकरोwn_metric_attrs[] = अणु
+static const char *topdown_metric_attrs[] = {
 	"slots",
 	"topdown-retiring",
 	"topdown-bad-spec",
 	"topdown-fe-bound",
 	"topdown-be-bound",
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर अक्षर *topकरोwn_metric_L2_attrs[] = अणु
+static const char *topdown_metric_L2_attrs[] = {
 	"slots",
 	"topdown-retiring",
 	"topdown-bad-spec",
@@ -152,591 +151,591 @@
 	"topdown-br-mispredict",
 	"topdown-fetch-lat",
 	"topdown-mem-bound",
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर अक्षर *smi_cost_attrs = अणु
+static const char *smi_cost_attrs = {
 	"{"
 	"msr/aperf/,"
 	"msr/smi/,"
 	"cycles"
 	"}"
-पूर्ण;
+};
 
-अटल काष्ठा evlist	*evsel_list;
-अटल bool all_counters_use_bpf = true;
+static struct evlist	*evsel_list;
+static bool all_counters_use_bpf = true;
 
-अटल काष्ठा target target = अणु
-	.uid	= अच_पूर्णांक_उच्च,
-पूर्ण;
+static struct target target = {
+	.uid	= UINT_MAX,
+};
 
-#घोषणा METRIC_ONLY_LEN 20
+#define METRIC_ONLY_LEN 20
 
-अटल अस्थिर pid_t		child_pid			= -1;
-अटल पूर्णांक			detailed_run			=  0;
-अटल bool			transaction_run;
-अटल bool			topकरोwn_run			= false;
-अटल bool			smi_cost			= false;
-अटल bool			smi_reset			= false;
-अटल पूर्णांक			big_num_opt			=  -1;
-अटल bool			group				= false;
-अटल स्थिर अक्षर		*pre_cmd			= शून्य;
-अटल स्थिर अक्षर		*post_cmd			= शून्य;
-अटल bool			sync_run			= false;
-अटल bool			क्रमever				= false;
-अटल bool			क्रमce_metric_only		= false;
-अटल काष्ठा बारpec		ref_समय;
-अटल bool			append_file;
-अटल bool			पूर्णांकerval_count;
-अटल स्थिर अक्षर		*output_name;
-अटल पूर्णांक			output_fd;
+static volatile pid_t		child_pid			= -1;
+static int			detailed_run			=  0;
+static bool			transaction_run;
+static bool			topdown_run			= false;
+static bool			smi_cost			= false;
+static bool			smi_reset			= false;
+static int			big_num_opt			=  -1;
+static bool			group				= false;
+static const char		*pre_cmd			= NULL;
+static const char		*post_cmd			= NULL;
+static bool			sync_run			= false;
+static bool			forever				= false;
+static bool			force_metric_only		= false;
+static struct timespec		ref_time;
+static bool			append_file;
+static bool			interval_count;
+static const char		*output_name;
+static int			output_fd;
 
-काष्ठा perf_stat अणु
+struct perf_stat {
 	bool			 record;
-	काष्ठा perf_data	 data;
-	काष्ठा perf_session	*session;
+	struct perf_data	 data;
+	struct perf_session	*session;
 	u64			 bytes_written;
-	काष्ठा perf_tool	 tool;
+	struct perf_tool	 tool;
 	bool			 maps_allocated;
-	काष्ठा perf_cpu_map	*cpus;
-	काष्ठा perf_thपढ़ो_map *thपढ़ोs;
-	क्रमागत aggr_mode		 aggr_mode;
-पूर्ण;
+	struct perf_cpu_map	*cpus;
+	struct perf_thread_map *threads;
+	enum aggr_mode		 aggr_mode;
+};
 
-अटल काष्ठा perf_stat		perf_stat;
-#घोषणा STAT_RECORD		perf_stat.record
+static struct perf_stat		perf_stat;
+#define STAT_RECORD		perf_stat.record
 
-अटल अस्थिर पूर्णांक करोne = 0;
+static volatile int done = 0;
 
-अटल काष्ठा perf_stat_config stat_config = अणु
+static struct perf_stat_config stat_config = {
 	.aggr_mode		= AGGR_GLOBAL,
 	.scale			= true,
-	.unit_width		= 4, /* म_माप("unit") */
+	.unit_width		= 4, /* strlen("unit") */
 	.run_count		= 1,
 	.metric_only_len	= METRIC_ONLY_LEN,
-	.wallसमय_nsecs_stats	= &wallसमय_nsecs_stats,
+	.walltime_nsecs_stats	= &walltime_nsecs_stats,
 	.big_num		= true,
 	.ctl_fd			= -1,
 	.ctl_fd_ack		= -1,
 	.iostat_run		= false,
-पूर्ण;
+};
 
-अटल bool cpus_map_matched(काष्ठा evsel *a, काष्ठा evsel *b)
-अणु
-	अगर (!a->core.cpus && !b->core.cpus)
-		वापस true;
+static bool cpus_map_matched(struct evsel *a, struct evsel *b)
+{
+	if (!a->core.cpus && !b->core.cpus)
+		return true;
 
-	अगर (!a->core.cpus || !b->core.cpus)
-		वापस false;
+	if (!a->core.cpus || !b->core.cpus)
+		return false;
 
-	अगर (a->core.cpus->nr != b->core.cpus->nr)
-		वापस false;
+	if (a->core.cpus->nr != b->core.cpus->nr)
+		return false;
 
-	क्रम (पूर्णांक i = 0; i < a->core.cpus->nr; i++) अणु
-		अगर (a->core.cpus->map[i] != b->core.cpus->map[i])
-			वापस false;
-	पूर्ण
+	for (int i = 0; i < a->core.cpus->nr; i++) {
+		if (a->core.cpus->map[i] != b->core.cpus->map[i])
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम evlist__check_cpu_maps(काष्ठा evlist *evlist)
-अणु
-	काष्ठा evsel *evsel, *pos, *leader;
-	अक्षर buf[1024];
+static void evlist__check_cpu_maps(struct evlist *evlist)
+{
+	struct evsel *evsel, *pos, *leader;
+	char buf[1024];
 
-	अगर (evlist__has_hybrid(evlist))
+	if (evlist__has_hybrid(evlist))
 		evlist__warn_hybrid_group(evlist);
 
-	evlist__क्रम_each_entry(evlist, evsel) अणु
+	evlist__for_each_entry(evlist, evsel) {
 		leader = evsel->leader;
 
 		/* Check that leader matches cpus with each member. */
-		अगर (leader == evsel)
-			जारी;
-		अगर (cpus_map_matched(leader, evsel))
-			जारी;
+		if (leader == evsel)
+			continue;
+		if (cpus_map_matched(leader, evsel))
+			continue;
 
 		/* If there's mismatch disable the group and warn user. */
 		WARN_ONCE(1, "WARNING: grouped events cpus do not match, disabling group:\n");
-		evsel__group_desc(leader, buf, माप(buf));
+		evsel__group_desc(leader, buf, sizeof(buf));
 		pr_warning("  %s\n", buf);
 
-		अगर (verbose) अणु
-			cpu_map__snprपूर्णांक(leader->core.cpus, buf, माप(buf));
+		if (verbose) {
+			cpu_map__snprint(leader->core.cpus, buf, sizeof(buf));
 			pr_warning("     %s: %s\n", leader->name, buf);
-			cpu_map__snprपूर्णांक(evsel->core.cpus, buf, माप(buf));
+			cpu_map__snprint(evsel->core.cpus, buf, sizeof(buf));
 			pr_warning("     %s: %s\n", evsel->name, buf);
-		पूर्ण
+		}
 
-		क्रम_each_group_evsel(pos, leader) अणु
+		for_each_group_evsel(pos, leader) {
 			pos->leader = pos;
 			pos->core.nr_members = 0;
-		पूर्ण
+		}
 		evsel->leader->core.nr_members = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम dअगरf_बारpec(काष्ठा बारpec *r, काष्ठा बारpec *a,
-				 काष्ठा बारpec *b)
-अणु
+static inline void diff_timespec(struct timespec *r, struct timespec *a,
+				 struct timespec *b)
+{
 	r->tv_sec = a->tv_sec - b->tv_sec;
-	अगर (a->tv_nsec < b->tv_nsec) अणु
+	if (a->tv_nsec < b->tv_nsec) {
 		r->tv_nsec = a->tv_nsec + NSEC_PER_SEC - b->tv_nsec;
 		r->tv_sec--;
-	पूर्ण अन्यथा अणु
+	} else {
 		r->tv_nsec = a->tv_nsec - b->tv_nsec ;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम perf_stat__reset_stats(व्योम)
-अणु
-	पूर्णांक i;
+static void perf_stat__reset_stats(void)
+{
+	int i;
 
 	evlist__reset_stats(evsel_list);
-	perf_stat__reset_shaकरोw_stats();
+	perf_stat__reset_shadow_stats();
 
-	क्रम (i = 0; i < stat_config.stats_num; i++)
-		perf_stat__reset_shaकरोw_per_stat(&stat_config.stats[i]);
-पूर्ण
+	for (i = 0; i < stat_config.stats_num; i++)
+		perf_stat__reset_shadow_per_stat(&stat_config.stats[i]);
+}
 
-अटल पूर्णांक process_synthesized_event(काष्ठा perf_tool *tool __maybe_unused,
-				     जोड़ perf_event *event,
-				     काष्ठा perf_sample *sample __maybe_unused,
-				     काष्ठा machine *machine __maybe_unused)
-अणु
-	अगर (perf_data__ग_लिखो(&perf_stat.data, event, event->header.size) < 0) अणु
+static int process_synthesized_event(struct perf_tool *tool __maybe_unused,
+				     union perf_event *event,
+				     struct perf_sample *sample __maybe_unused,
+				     struct machine *machine __maybe_unused)
+{
+	if (perf_data__write(&perf_stat.data, event, event->header.size) < 0) {
 		pr_err("failed to write perf data, error: %m\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	perf_stat.bytes_written += event->header.size;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ग_लिखो_stat_round_event(u64 पंचांग, u64 type)
-अणु
-	वापस perf_event__synthesize_stat_round(शून्य, पंचांग, type,
+static int write_stat_round_event(u64 tm, u64 type)
+{
+	return perf_event__synthesize_stat_round(NULL, tm, type,
 						 process_synthesized_event,
-						 शून्य);
-पूर्ण
+						 NULL);
+}
 
-#घोषणा WRITE_STAT_ROUND_EVENT(समय, पूर्णांकerval) \
-	ग_लिखो_stat_round_event(समय, PERF_STAT_ROUND_TYPE__ ## पूर्णांकerval)
+#define WRITE_STAT_ROUND_EVENT(time, interval) \
+	write_stat_round_event(time, PERF_STAT_ROUND_TYPE__ ## interval)
 
-#घोषणा SID(e, x, y) xyarray__entry(e->core.sample_id, x, y)
+#define SID(e, x, y) xyarray__entry(e->core.sample_id, x, y)
 
-अटल पूर्णांक evsel__ग_लिखो_stat_event(काष्ठा evsel *counter, u32 cpu, u32 thपढ़ो,
-				   काष्ठा perf_counts_values *count)
-अणु
-	काष्ठा perf_sample_id *sid = SID(counter, cpu, thपढ़ो);
+static int evsel__write_stat_event(struct evsel *counter, u32 cpu, u32 thread,
+				   struct perf_counts_values *count)
+{
+	struct perf_sample_id *sid = SID(counter, cpu, thread);
 
-	वापस perf_event__synthesize_stat(शून्य, cpu, thपढ़ो, sid->id, count,
-					   process_synthesized_event, शून्य);
-पूर्ण
+	return perf_event__synthesize_stat(NULL, cpu, thread, sid->id, count,
+					   process_synthesized_event, NULL);
+}
 
-अटल पूर्णांक पढ़ो_single_counter(काष्ठा evsel *counter, पूर्णांक cpu,
-			       पूर्णांक thपढ़ो, काष्ठा बारpec *rs)
-अणु
-	अगर (counter->tool_event == PERF_TOOL_DURATION_TIME) अणु
+static int read_single_counter(struct evsel *counter, int cpu,
+			       int thread, struct timespec *rs)
+{
+	if (counter->tool_event == PERF_TOOL_DURATION_TIME) {
 		u64 val = rs->tv_nsec + rs->tv_sec*1000000000ULL;
-		काष्ठा perf_counts_values *count =
-			perf_counts(counter->counts, cpu, thपढ़ो);
+		struct perf_counts_values *count =
+			perf_counts(counter->counts, cpu, thread);
 		count->ena = count->run = val;
 		count->val = val;
-		वापस 0;
-	पूर्ण
-	वापस evsel__पढ़ो_counter(counter, cpu, thपढ़ो);
-पूर्ण
+		return 0;
+	}
+	return evsel__read_counter(counter, cpu, thread);
+}
 
 /*
  * Read out the results of a single counter:
- * करो not aggregate counts across CPUs in प्रणाली-wide mode
+ * do not aggregate counts across CPUs in system-wide mode
  */
-अटल पूर्णांक पढ़ो_counter_cpu(काष्ठा evsel *counter, काष्ठा बारpec *rs, पूर्णांक cpu)
-अणु
-	पूर्णांक nthपढ़ोs = perf_thपढ़ो_map__nr(evsel_list->core.thपढ़ोs);
-	पूर्णांक thपढ़ो;
+static int read_counter_cpu(struct evsel *counter, struct timespec *rs, int cpu)
+{
+	int nthreads = perf_thread_map__nr(evsel_list->core.threads);
+	int thread;
 
-	अगर (!counter->supported)
-		वापस -ENOENT;
+	if (!counter->supported)
+		return -ENOENT;
 
-	अगर (counter->core.प्रणाली_wide)
-		nthपढ़ोs = 1;
+	if (counter->core.system_wide)
+		nthreads = 1;
 
-	क्रम (thपढ़ो = 0; thपढ़ो < nthपढ़ोs; thपढ़ो++) अणु
-		काष्ठा perf_counts_values *count;
+	for (thread = 0; thread < nthreads; thread++) {
+		struct perf_counts_values *count;
 
-		count = perf_counts(counter->counts, cpu, thपढ़ो);
+		count = perf_counts(counter->counts, cpu, thread);
 
 		/*
-		 * The leader's group पढ़ो loads data पूर्णांकo its group members
-		 * (via evsel__पढ़ो_counter()) and sets their count->loaded.
+		 * The leader's group read loads data into its group members
+		 * (via evsel__read_counter()) and sets their count->loaded.
 		 */
-		अगर (!perf_counts__is_loaded(counter->counts, cpu, thपढ़ो) &&
-		    पढ़ो_single_counter(counter, cpu, thपढ़ो, rs)) अणु
+		if (!perf_counts__is_loaded(counter->counts, cpu, thread) &&
+		    read_single_counter(counter, cpu, thread, rs)) {
 			counter->counts->scaled = -1;
-			perf_counts(counter->counts, cpu, thपढ़ो)->ena = 0;
-			perf_counts(counter->counts, cpu, thपढ़ो)->run = 0;
-			वापस -1;
-		पूर्ण
+			perf_counts(counter->counts, cpu, thread)->ena = 0;
+			perf_counts(counter->counts, cpu, thread)->run = 0;
+			return -1;
+		}
 
-		perf_counts__set_loaded(counter->counts, cpu, thपढ़ो, false);
+		perf_counts__set_loaded(counter->counts, cpu, thread, false);
 
-		अगर (STAT_RECORD) अणु
-			अगर (evsel__ग_लिखो_stat_event(counter, cpu, thपढ़ो, count)) अणु
+		if (STAT_RECORD) {
+			if (evsel__write_stat_event(counter, cpu, thread, count)) {
 				pr_err("failed to write stat event\n");
-				वापस -1;
-			पूर्ण
-		पूर्ण
+				return -1;
+			}
+		}
 
-		अगर (verbose > 1) अणु
-			ख_लिखो(stat_config.output,
+		if (verbose > 1) {
+			fprintf(stat_config.output,
 				"%s: %d: %" PRIu64 " %" PRIu64 " %" PRIu64 "\n",
 					evsel__name(counter),
 					cpu,
 					count->val, count->ena, count->run);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पढ़ो_affinity_counters(काष्ठा बारpec *rs)
-अणु
-	काष्ठा evsel *counter;
-	काष्ठा affinity affinity;
-	पूर्णांक i, ncpus, cpu;
+static int read_affinity_counters(struct timespec *rs)
+{
+	struct evsel *counter;
+	struct affinity affinity;
+	int i, ncpus, cpu;
 
-	अगर (all_counters_use_bpf)
-		वापस 0;
+	if (all_counters_use_bpf)
+		return 0;
 
-	अगर (affinity__setup(&affinity) < 0)
-		वापस -1;
+	if (affinity__setup(&affinity) < 0)
+		return -1;
 
 	ncpus = perf_cpu_map__nr(evsel_list->core.all_cpus);
-	अगर (!target__has_cpu(&target) || target__has_per_thपढ़ो(&target))
+	if (!target__has_cpu(&target) || target__has_per_thread(&target))
 		ncpus = 1;
-	evlist__क्रम_each_cpu(evsel_list, i, cpu) अणु
-		अगर (i >= ncpus)
-			अवरोध;
+	evlist__for_each_cpu(evsel_list, i, cpu) {
+		if (i >= ncpus)
+			break;
 		affinity__set(&affinity, cpu);
 
-		evlist__क्रम_each_entry(evsel_list, counter) अणु
-			अगर (evsel__cpu_iter_skip(counter, cpu))
-				जारी;
-			अगर (evsel__is_bpf(counter))
-				जारी;
-			अगर (!counter->err) अणु
-				counter->err = पढ़ो_counter_cpu(counter, rs,
+		evlist__for_each_entry(evsel_list, counter) {
+			if (evsel__cpu_iter_skip(counter, cpu))
+				continue;
+			if (evsel__is_bpf(counter))
+				continue;
+			if (!counter->err) {
+				counter->err = read_counter_cpu(counter, rs,
 								counter->cpu_iter - 1);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	affinity__cleanup(&affinity);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पढ़ो_bpf_map_counters(व्योम)
-अणु
-	काष्ठा evsel *counter;
-	पूर्णांक err;
+static int read_bpf_map_counters(void)
+{
+	struct evsel *counter;
+	int err;
 
-	evlist__क्रम_each_entry(evsel_list, counter) अणु
-		अगर (!evsel__is_bpf(counter))
-			जारी;
+	evlist__for_each_entry(evsel_list, counter) {
+		if (!evsel__is_bpf(counter))
+			continue;
 
-		err = bpf_counter__पढ़ो(counter);
-		अगर (err)
-			वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		err = bpf_counter__read(counter);
+		if (err)
+			return err;
+	}
+	return 0;
+}
 
-अटल व्योम पढ़ो_counters(काष्ठा बारpec *rs)
-अणु
-	काष्ठा evsel *counter;
+static void read_counters(struct timespec *rs)
+{
+	struct evsel *counter;
 
-	अगर (!stat_config.stop_पढ़ो_counter) अणु
-		अगर (पढ़ो_bpf_map_counters() ||
-		    पढ़ो_affinity_counters(rs))
-			वापस;
-	पूर्ण
+	if (!stat_config.stop_read_counter) {
+		if (read_bpf_map_counters() ||
+		    read_affinity_counters(rs))
+			return;
+	}
 
-	evlist__क्रम_each_entry(evsel_list, counter) अणु
-		अगर (counter->err)
+	evlist__for_each_entry(evsel_list, counter) {
+		if (counter->err)
 			pr_debug("failed to read counter %s\n", counter->name);
-		अगर (counter->err == 0 && perf_stat_process_counter(&stat_config, counter))
+		if (counter->err == 0 && perf_stat_process_counter(&stat_config, counter))
 			pr_warning("failed to process counter %s\n", counter->name);
 		counter->err = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक runसमय_stat_new(काष्ठा perf_stat_config *config, पूर्णांक nthपढ़ोs)
-अणु
-	पूर्णांक i;
+static int runtime_stat_new(struct perf_stat_config *config, int nthreads)
+{
+	int i;
 
-	config->stats = सुस्मृति(nthपढ़ोs, माप(काष्ठा runसमय_stat));
-	अगर (!config->stats)
-		वापस -1;
+	config->stats = calloc(nthreads, sizeof(struct runtime_stat));
+	if (!config->stats)
+		return -1;
 
-	config->stats_num = nthपढ़ोs;
+	config->stats_num = nthreads;
 
-	क्रम (i = 0; i < nthपढ़ोs; i++)
-		runसमय_stat__init(&config->stats[i]);
+	for (i = 0; i < nthreads; i++)
+		runtime_stat__init(&config->stats[i]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम runसमय_stat_delete(काष्ठा perf_stat_config *config)
-अणु
-	पूर्णांक i;
+static void runtime_stat_delete(struct perf_stat_config *config)
+{
+	int i;
 
-	अगर (!config->stats)
-		वापस;
+	if (!config->stats)
+		return;
 
-	क्रम (i = 0; i < config->stats_num; i++)
-		runसमय_stat__निकास(&config->stats[i]);
+	for (i = 0; i < config->stats_num; i++)
+		runtime_stat__exit(&config->stats[i]);
 
-	zमुक्त(&config->stats);
-पूर्ण
+	zfree(&config->stats);
+}
 
-अटल व्योम runसमय_stat_reset(काष्ठा perf_stat_config *config)
-अणु
-	पूर्णांक i;
+static void runtime_stat_reset(struct perf_stat_config *config)
+{
+	int i;
 
-	अगर (!config->stats)
-		वापस;
+	if (!config->stats)
+		return;
 
-	क्रम (i = 0; i < config->stats_num; i++)
-		perf_stat__reset_shaकरोw_per_stat(&config->stats[i]);
-पूर्ण
+	for (i = 0; i < config->stats_num; i++)
+		perf_stat__reset_shadow_per_stat(&config->stats[i]);
+}
 
-अटल व्योम process_पूर्णांकerval(व्योम)
-अणु
-	काष्ठा बारpec ts, rs;
+static void process_interval(void)
+{
+	struct timespec ts, rs;
 
-	घड़ी_समय_लो(CLOCK_MONOTONIC, &ts);
-	dअगरf_बारpec(&rs, &ts, &ref_समय);
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	diff_timespec(&rs, &ts, &ref_time);
 
-	perf_stat__reset_shaकरोw_per_stat(&rt_stat);
-	runसमय_stat_reset(&stat_config);
-	पढ़ो_counters(&rs);
+	perf_stat__reset_shadow_per_stat(&rt_stat);
+	runtime_stat_reset(&stat_config);
+	read_counters(&rs);
 
-	अगर (STAT_RECORD) अणु
-		अगर (WRITE_STAT_ROUND_EVENT(rs.tv_sec * NSEC_PER_SEC + rs.tv_nsec, INTERVAL))
+	if (STAT_RECORD) {
+		if (WRITE_STAT_ROUND_EVENT(rs.tv_sec * NSEC_PER_SEC + rs.tv_nsec, INTERVAL))
 			pr_err("failed to write stat round event\n");
-	पूर्ण
+	}
 
-	init_stats(&wallसमय_nsecs_stats);
-	update_stats(&wallसमय_nsecs_stats, stat_config.पूर्णांकerval * 1000000ULL);
-	prपूर्णांक_counters(&rs, 0, शून्य);
-पूर्ण
+	init_stats(&walltime_nsecs_stats);
+	update_stats(&walltime_nsecs_stats, stat_config.interval * 1000000ULL);
+	print_counters(&rs, 0, NULL);
+}
 
-अटल bool handle_पूर्णांकerval(अचिन्हित पूर्णांक पूर्णांकerval, पूर्णांक *बार)
-अणु
-	अगर (पूर्णांकerval) अणु
-		process_पूर्णांकerval();
-		अगर (पूर्णांकerval_count && !(--(*बार)))
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+static bool handle_interval(unsigned int interval, int *times)
+{
+	if (interval) {
+		process_interval();
+		if (interval_count && !(--(*times)))
+			return true;
+	}
+	return false;
+}
 
-अटल पूर्णांक enable_counters(व्योम)
-अणु
-	काष्ठा evsel *evsel;
-	पूर्णांक err;
+static int enable_counters(void)
+{
+	struct evsel *evsel;
+	int err;
 
-	evlist__क्रम_each_entry(evsel_list, evsel) अणु
-		अगर (!evsel__is_bpf(evsel))
-			जारी;
+	evlist__for_each_entry(evsel_list, evsel) {
+		if (!evsel__is_bpf(evsel))
+			continue;
 
 		err = bpf_counter__enable(evsel);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (stat_config.initial_delay < 0) अणु
+	if (stat_config.initial_delay < 0) {
 		pr_info(EVLIST_DISABLED_MSG);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (stat_config.initial_delay > 0) अणु
+	if (stat_config.initial_delay > 0) {
 		pr_info(EVLIST_DISABLED_MSG);
 		usleep(stat_config.initial_delay * USEC_PER_MSEC);
-	पूर्ण
+	}
 
 	/*
-	 * We need to enable counters only अगर:
-	 * - we करोn't have tracee (attaching to task or cpu)
+	 * We need to enable counters only if:
+	 * - we don't have tracee (attaching to task or cpu)
 	 * - we have initial delay configured
 	 */
-	अगर (!target__none(&target) || stat_config.initial_delay) अणु
-		अगर (!all_counters_use_bpf)
+	if (!target__none(&target) || stat_config.initial_delay) {
+		if (!all_counters_use_bpf)
 			evlist__enable(evsel_list);
-		अगर (stat_config.initial_delay > 0)
+		if (stat_config.initial_delay > 0)
 			pr_info(EVLIST_ENABLED_MSG);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल व्योम disable_counters(व्योम)
-अणु
-	काष्ठा evsel *counter;
+static void disable_counters(void)
+{
+	struct evsel *counter;
 
 	/*
-	 * If we करोn't have tracee (attaching to task or cpu), counters may
+	 * If we don't have tracee (attaching to task or cpu), counters may
 	 * still be running. To get accurate group ratios, we must stop groups
-	 * from counting beक्रमe पढ़ोing their स्थिरituent counters.
+	 * from counting before reading their constituent counters.
 	 */
-	अगर (!target__none(&target)) अणु
-		evlist__क्रम_each_entry(evsel_list, counter)
+	if (!target__none(&target)) {
+		evlist__for_each_entry(evsel_list, counter)
 			bpf_counter__disable(counter);
-		अगर (!all_counters_use_bpf)
+		if (!all_counters_use_bpf)
 			evlist__disable(evsel_list);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अस्थिर पूर्णांक workload_exec_त्रुटि_सं;
+static volatile int workload_exec_errno;
 
 /*
  * evlist__prepare_workload will send a SIGUSR1
- * अगर the विभाजन fails, since we asked by setting its
- * want_संकेत to true.
+ * if the fork fails, since we asked by setting its
+ * want_signal to true.
  */
-अटल व्योम workload_exec_failed_संकेत(पूर्णांक signo __maybe_unused, siginfo_t *info,
-					व्योम *ucontext __maybe_unused)
-अणु
-	workload_exec_त्रुटि_सं = info->si_value.sival_पूर्णांक;
-पूर्ण
+static void workload_exec_failed_signal(int signo __maybe_unused, siginfo_t *info,
+					void *ucontext __maybe_unused)
+{
+	workload_exec_errno = info->si_value.sival_int;
+}
 
-अटल bool evsel__should_store_id(काष्ठा evsel *counter)
-अणु
-	वापस STAT_RECORD || counter->core.attr.पढ़ो_क्रमmat & PERF_FORMAT_ID;
-पूर्ण
+static bool evsel__should_store_id(struct evsel *counter)
+{
+	return STAT_RECORD || counter->core.attr.read_format & PERF_FORMAT_ID;
+}
 
-अटल bool is_target_alive(काष्ठा target *_target,
-			    काष्ठा perf_thपढ़ो_map *thपढ़ोs)
-अणु
-	काष्ठा stat st;
-	पूर्णांक i;
+static bool is_target_alive(struct target *_target,
+			    struct perf_thread_map *threads)
+{
+	struct stat st;
+	int i;
 
-	अगर (!target__has_task(_target))
-		वापस true;
+	if (!target__has_task(_target))
+		return true;
 
-	क्रम (i = 0; i < thपढ़ोs->nr; i++) अणु
-		अक्षर path[PATH_MAX];
+	for (i = 0; i < threads->nr; i++) {
+		char path[PATH_MAX];
 
-		scnम_लिखो(path, PATH_MAX, "%s/%d", procfs__mountpoपूर्णांक(),
-			  thपढ़ोs->map[i].pid);
+		scnprintf(path, PATH_MAX, "%s/%d", procfs__mountpoint(),
+			  threads->map[i].pid);
 
-		अगर (!stat(path, &st))
-			वापस true;
-	पूर्ण
+		if (!stat(path, &st))
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम process_evlist(काष्ठा evlist *evlist, अचिन्हित पूर्णांक पूर्णांकerval)
-अणु
-	क्रमागत evlist_ctl_cmd cmd = EVLIST_CTL_CMD_UNSUPPORTED;
+static void process_evlist(struct evlist *evlist, unsigned int interval)
+{
+	enum evlist_ctl_cmd cmd = EVLIST_CTL_CMD_UNSUPPORTED;
 
-	अगर (evlist__ctlfd_process(evlist, &cmd) > 0) अणु
-		चयन (cmd) अणु
-		हाल EVLIST_CTL_CMD_ENABLE:
-			अगर (पूर्णांकerval)
-				process_पूर्णांकerval();
-			अवरोध;
-		हाल EVLIST_CTL_CMD_DISABLE:
-			अगर (पूर्णांकerval)
-				process_पूर्णांकerval();
-			अवरोध;
-		हाल EVLIST_CTL_CMD_SNAPSHOT:
-		हाल EVLIST_CTL_CMD_ACK:
-		हाल EVLIST_CTL_CMD_UNSUPPORTED:
-		हाल EVLIST_CTL_CMD_EVLIST:
-		हाल EVLIST_CTL_CMD_STOP:
-		हाल EVLIST_CTL_CMD_PING:
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+	if (evlist__ctlfd_process(evlist, &cmd) > 0) {
+		switch (cmd) {
+		case EVLIST_CTL_CMD_ENABLE:
+			if (interval)
+				process_interval();
+			break;
+		case EVLIST_CTL_CMD_DISABLE:
+			if (interval)
+				process_interval();
+			break;
+		case EVLIST_CTL_CMD_SNAPSHOT:
+		case EVLIST_CTL_CMD_ACK:
+		case EVLIST_CTL_CMD_UNSUPPORTED:
+		case EVLIST_CTL_CMD_EVLIST:
+		case EVLIST_CTL_CMD_STOP:
+		case EVLIST_CTL_CMD_PING:
+		default:
+			break;
+		}
+	}
+}
 
-अटल व्योम compute_tts(काष्ठा बारpec *समय_start, काष्ठा बारpec *समय_stop,
-			पूर्णांक *समय_प्रकारo_sleep)
-अणु
-	पूर्णांक tts = *समय_प्रकारo_sleep;
-	काष्ठा बारpec समय_dअगरf;
+static void compute_tts(struct timespec *time_start, struct timespec *time_stop,
+			int *time_to_sleep)
+{
+	int tts = *time_to_sleep;
+	struct timespec time_diff;
 
-	dअगरf_बारpec(&समय_dअगरf, समय_stop, समय_start);
+	diff_timespec(&time_diff, time_stop, time_start);
 
-	tts -= समय_dअगरf.tv_sec * MSEC_PER_SEC +
-	       समय_dअगरf.tv_nsec / NSEC_PER_MSEC;
+	tts -= time_diff.tv_sec * MSEC_PER_SEC +
+	       time_diff.tv_nsec / NSEC_PER_MSEC;
 
-	अगर (tts < 0)
+	if (tts < 0)
 		tts = 0;
 
-	*समय_प्रकारo_sleep = tts;
-पूर्ण
+	*time_to_sleep = tts;
+}
 
-अटल पूर्णांक dispatch_events(bool विभाजनs, पूर्णांक समयout, पूर्णांक पूर्णांकerval, पूर्णांक *बार)
-अणु
-	पूर्णांक child_निकासed = 0, status = 0;
-	पूर्णांक समय_प्रकारo_sleep, sleep_समय;
-	काष्ठा बारpec समय_start, समय_stop;
+static int dispatch_events(bool forks, int timeout, int interval, int *times)
+{
+	int child_exited = 0, status = 0;
+	int time_to_sleep, sleep_time;
+	struct timespec time_start, time_stop;
 
-	अगर (पूर्णांकerval)
-		sleep_समय = पूर्णांकerval;
-	अन्यथा अगर (समयout)
-		sleep_समय = समयout;
-	अन्यथा
-		sleep_समय = 1000;
+	if (interval)
+		sleep_time = interval;
+	else if (timeout)
+		sleep_time = timeout;
+	else
+		sleep_time = 1000;
 
-	समय_प्रकारo_sleep = sleep_समय;
+	time_to_sleep = sleep_time;
 
-	जबतक (!करोne) अणु
-		अगर (विभाजनs)
-			child_निकासed = रुकोpid(child_pid, &status, WNOHANG);
-		अन्यथा
-			child_निकासed = !is_target_alive(&target, evsel_list->core.thपढ़ोs) ? 1 : 0;
+	while (!done) {
+		if (forks)
+			child_exited = waitpid(child_pid, &status, WNOHANG);
+		else
+			child_exited = !is_target_alive(&target, evsel_list->core.threads) ? 1 : 0;
 
-		अगर (child_निकासed)
-			अवरोध;
+		if (child_exited)
+			break;
 
-		घड़ी_समय_लो(CLOCK_MONOTONIC, &समय_start);
-		अगर (!(evlist__poll(evsel_list, समय_प्रकारo_sleep) > 0)) अणु /* poll समयout or EINTR */
-			अगर (समयout || handle_पूर्णांकerval(पूर्णांकerval, बार))
-				अवरोध;
-			समय_प्रकारo_sleep = sleep_समय;
-		पूर्ण अन्यथा अणु /* fd revent */
-			process_evlist(evsel_list, पूर्णांकerval);
-			घड़ी_समय_लो(CLOCK_MONOTONIC, &समय_stop);
-			compute_tts(&समय_start, &समय_stop, &समय_प्रकारo_sleep);
-		पूर्ण
-	पूर्ण
+		clock_gettime(CLOCK_MONOTONIC, &time_start);
+		if (!(evlist__poll(evsel_list, time_to_sleep) > 0)) { /* poll timeout or EINTR */
+			if (timeout || handle_interval(interval, times))
+				break;
+			time_to_sleep = sleep_time;
+		} else { /* fd revent */
+			process_evlist(evsel_list, interval);
+			clock_gettime(CLOCK_MONOTONIC, &time_stop);
+			compute_tts(&time_start, &time_stop, &time_to_sleep);
+		}
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-क्रमागत counter_recovery अणु
+enum counter_recovery {
 	COUNTER_SKIP,
 	COUNTER_RETRY,
 	COUNTER_FATAL,
-पूर्ण;
+};
 
-अटल क्रमागत counter_recovery stat_handle_error(काष्ठा evsel *counter)
-अणु
-	अक्षर msg[बफ_मान];
+static enum counter_recovery stat_handle_error(struct evsel *counter)
+{
+	char msg[BUFSIZ];
 	/*
-	 * PPC वापसs ENXIO क्रम HW counters until 2.6.37
+	 * PPC returns ENXIO for HW counters until 2.6.37
 	 * (behavior changed with commit b0a873e).
 	 */
-	अगर (त्रुटि_सं == EINVAL || त्रुटि_सं == ENOSYS ||
-	    त्रुटि_सं == ENOENT || त्रुटि_सं == EOPNOTSUPP ||
-	    त्रुटि_सं == ENXIO) अणु
-		अगर (verbose > 0)
+	if (errno == EINVAL || errno == ENOSYS ||
+	    errno == ENOENT || errno == EOPNOTSUPP ||
+	    errno == ENXIO) {
+		if (verbose > 0)
 			ui__warning("%s event is not supported by the kernel.\n",
 				    evsel__name(counter));
 		counter->supported = false;
@@ -746,428 +745,428 @@
 		 */
 		counter->errored = true;
 
-		अगर ((counter->leader != counter) ||
+		if ((counter->leader != counter) ||
 		    !(counter->leader->core.nr_members > 1))
-			वापस COUNTER_SKIP;
-	पूर्ण अन्यथा अगर (evsel__fallback(counter, त्रुटि_सं, msg, माप(msg))) अणु
-		अगर (verbose > 0)
+			return COUNTER_SKIP;
+	} else if (evsel__fallback(counter, errno, msg, sizeof(msg))) {
+		if (verbose > 0)
 			ui__warning("%s\n", msg);
-		वापस COUNTER_RETRY;
-	पूर्ण अन्यथा अगर (target__has_per_thपढ़ो(&target) &&
-		   evsel_list->core.thपढ़ोs &&
-		   evsel_list->core.thपढ़ोs->err_thपढ़ो != -1) अणु
+		return COUNTER_RETRY;
+	} else if (target__has_per_thread(&target) &&
+		   evsel_list->core.threads &&
+		   evsel_list->core.threads->err_thread != -1) {
 		/*
-		 * For global --per-thपढ़ो हाल, skip current
-		 * error thपढ़ो.
+		 * For global --per-thread case, skip current
+		 * error thread.
 		 */
-		अगर (!thपढ़ो_map__हटाओ(evsel_list->core.thपढ़ोs,
-					evsel_list->core.thपढ़ोs->err_thपढ़ो)) अणु
-			evsel_list->core.thपढ़ोs->err_thपढ़ो = -1;
-			वापस COUNTER_RETRY;
-		पूर्ण
-	पूर्ण
+		if (!thread_map__remove(evsel_list->core.threads,
+					evsel_list->core.threads->err_thread)) {
+			evsel_list->core.threads->err_thread = -1;
+			return COUNTER_RETRY;
+		}
+	}
 
-	evsel__खोलो_म_त्रुटि(counter, &target, त्रुटि_सं, msg, माप(msg));
+	evsel__open_strerror(counter, &target, errno, msg, sizeof(msg));
 	ui__error("%s\n", msg);
 
-	अगर (child_pid != -1)
-		समाप्त(child_pid, संक_इति);
-	वापस COUNTER_FATAL;
-पूर्ण
+	if (child_pid != -1)
+		kill(child_pid, SIGTERM);
+	return COUNTER_FATAL;
+}
 
-अटल पूर्णांक __run_perf_stat(पूर्णांक argc, स्थिर अक्षर **argv, पूर्णांक run_idx)
-अणु
-	पूर्णांक पूर्णांकerval = stat_config.पूर्णांकerval;
-	पूर्णांक बार = stat_config.बार;
-	पूर्णांक समयout = stat_config.समयout;
-	अक्षर msg[बफ_मान];
-	अचिन्हित दीर्घ दीर्घ t0, t1;
-	काष्ठा evsel *counter;
-	माप_प्रकार l;
-	पूर्णांक status = 0;
-	स्थिर bool विभाजनs = (argc > 0);
+static int __run_perf_stat(int argc, const char **argv, int run_idx)
+{
+	int interval = stat_config.interval;
+	int times = stat_config.times;
+	int timeout = stat_config.timeout;
+	char msg[BUFSIZ];
+	unsigned long long t0, t1;
+	struct evsel *counter;
+	size_t l;
+	int status = 0;
+	const bool forks = (argc > 0);
 	bool is_pipe = STAT_RECORD ? perf_stat.data.is_pipe : false;
-	काष्ठा affinity affinity;
-	पूर्णांक i, cpu, err;
+	struct affinity affinity;
+	int i, cpu, err;
 	bool second_pass = false;
 
-	अगर (विभाजनs) अणु
-		अगर (evlist__prepare_workload(evsel_list, &target, argv, is_pipe, workload_exec_failed_संकेत) < 0) अणु
-			लिखो_त्रुटि("failed to prepare workload");
-			वापस -1;
-		पूर्ण
+	if (forks) {
+		if (evlist__prepare_workload(evsel_list, &target, argv, is_pipe, workload_exec_failed_signal) < 0) {
+			perror("failed to prepare workload");
+			return -1;
+		}
 		child_pid = evsel_list->workload.pid;
-	पूर्ण
+	}
 
-	अगर (group)
+	if (group)
 		evlist__set_leader(evsel_list);
 
-	अगर (affinity__setup(&affinity) < 0)
-		वापस -1;
+	if (affinity__setup(&affinity) < 0)
+		return -1;
 
-	evlist__क्रम_each_entry(evsel_list, counter) अणु
-		अगर (bpf_counter__load(counter, &target))
-			वापस -1;
-		अगर (!evsel__is_bpf(counter))
+	evlist__for_each_entry(evsel_list, counter) {
+		if (bpf_counter__load(counter, &target))
+			return -1;
+		if (!evsel__is_bpf(counter))
 			all_counters_use_bpf = false;
-	पूर्ण
+	}
 
-	evlist__क्रम_each_cpu (evsel_list, i, cpu) अणु
+	evlist__for_each_cpu (evsel_list, i, cpu) {
 		/*
-		 * bperf calls evsel__खोलो_per_cpu() in bperf__load(), so
+		 * bperf calls evsel__open_per_cpu() in bperf__load(), so
 		 * no need to call it again here.
 		 */
-		अगर (target.use_bpf)
-			अवरोध;
+		if (target.use_bpf)
+			break;
 		affinity__set(&affinity, cpu);
 
-		evlist__क्रम_each_entry(evsel_list, counter) अणु
-			अगर (evsel__cpu_iter_skip(counter, cpu))
-				जारी;
-			अगर (counter->reset_group || counter->errored)
-				जारी;
-			अगर (evsel__is_bpf(counter))
-				जारी;
+		evlist__for_each_entry(evsel_list, counter) {
+			if (evsel__cpu_iter_skip(counter, cpu))
+				continue;
+			if (counter->reset_group || counter->errored)
+				continue;
+			if (evsel__is_bpf(counter))
+				continue;
 try_again:
-			अगर (create_perf_stat_counter(counter, &stat_config, &target,
-						     counter->cpu_iter - 1) < 0) अणु
+			if (create_perf_stat_counter(counter, &stat_config, &target,
+						     counter->cpu_iter - 1) < 0) {
 
 				/*
-				 * Weak group failed. We cannot just unकरो this here
+				 * Weak group failed. We cannot just undo this here
 				 * because earlier CPUs might be in group mode, and the kernel
-				 * करोesn't support mixing group and non group पढ़ोs. Defer
+				 * doesn't support mixing group and non group reads. Defer
 				 * it to later.
 				 * Don't close here because we're in the wrong affinity.
 				 */
-				अगर ((त्रुटि_सं == EINVAL || त्रुटि_सं == EBADF) &&
+				if ((errno == EINVAL || errno == EBADF) &&
 				    counter->leader != counter &&
-				    counter->weak_group) अणु
+				    counter->weak_group) {
 					evlist__reset_weak_group(evsel_list, counter, false);
-					निश्चित(counter->reset_group);
+					assert(counter->reset_group);
 					second_pass = true;
-					जारी;
-				पूर्ण
+					continue;
+				}
 
-				चयन (stat_handle_error(counter)) अणु
-				हाल COUNTER_FATAL:
-					वापस -1;
-				हाल COUNTER_RETRY:
-					जाओ try_again;
-				हाल COUNTER_SKIP:
-					जारी;
-				शेष:
-					अवरोध;
-				पूर्ण
+				switch (stat_handle_error(counter)) {
+				case COUNTER_FATAL:
+					return -1;
+				case COUNTER_RETRY:
+					goto try_again;
+				case COUNTER_SKIP:
+					continue;
+				default:
+					break;
+				}
 
-			पूर्ण
+			}
 			counter->supported = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (second_pass) अणु
+	if (second_pass) {
 		/*
-		 * Now reकरो all the weak group after closing them,
-		 * and also बंद errored counters.
+		 * Now redo all the weak group after closing them,
+		 * and also close errored counters.
 		 */
 
-		evlist__क्रम_each_cpu(evsel_list, i, cpu) अणु
+		evlist__for_each_cpu(evsel_list, i, cpu) {
 			affinity__set(&affinity, cpu);
-			/* First बंद errored or weak retry */
-			evlist__क्रम_each_entry(evsel_list, counter) अणु
-				अगर (!counter->reset_group && !counter->errored)
-					जारी;
-				अगर (evsel__cpu_iter_skip_no_inc(counter, cpu))
-					जारी;
-				perf_evsel__बंद_cpu(&counter->core, counter->cpu_iter);
-			पूर्ण
-			/* Now reखोलो weak */
-			evlist__क्रम_each_entry(evsel_list, counter) अणु
-				अगर (!counter->reset_group && !counter->errored)
-					जारी;
-				अगर (evsel__cpu_iter_skip(counter, cpu))
-					जारी;
-				अगर (!counter->reset_group)
-					जारी;
+			/* First close errored or weak retry */
+			evlist__for_each_entry(evsel_list, counter) {
+				if (!counter->reset_group && !counter->errored)
+					continue;
+				if (evsel__cpu_iter_skip_no_inc(counter, cpu))
+					continue;
+				perf_evsel__close_cpu(&counter->core, counter->cpu_iter);
+			}
+			/* Now reopen weak */
+			evlist__for_each_entry(evsel_list, counter) {
+				if (!counter->reset_group && !counter->errored)
+					continue;
+				if (evsel__cpu_iter_skip(counter, cpu))
+					continue;
+				if (!counter->reset_group)
+					continue;
 try_again_reset:
 				pr_debug2("reopening weak %s\n", evsel__name(counter));
-				अगर (create_perf_stat_counter(counter, &stat_config, &target,
-							     counter->cpu_iter - 1) < 0) अणु
+				if (create_perf_stat_counter(counter, &stat_config, &target,
+							     counter->cpu_iter - 1) < 0) {
 
-					चयन (stat_handle_error(counter)) अणु
-					हाल COUNTER_FATAL:
-						वापस -1;
-					हाल COUNTER_RETRY:
-						जाओ try_again_reset;
-					हाल COUNTER_SKIP:
-						जारी;
-					शेष:
-						अवरोध;
-					पूर्ण
-				पूर्ण
+					switch (stat_handle_error(counter)) {
+					case COUNTER_FATAL:
+						return -1;
+					case COUNTER_RETRY:
+						goto try_again_reset;
+					case COUNTER_SKIP:
+						continue;
+					default:
+						break;
+					}
+				}
 				counter->supported = true;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	affinity__cleanup(&affinity);
 
-	evlist__क्रम_each_entry(evsel_list, counter) अणु
-		अगर (!counter->supported) अणु
-			perf_evsel__मुक्त_fd(&counter->core);
-			जारी;
-		पूर्ण
+	evlist__for_each_entry(evsel_list, counter) {
+		if (!counter->supported) {
+			perf_evsel__free_fd(&counter->core);
+			continue;
+		}
 
-		l = म_माप(counter->unit);
-		अगर (l > stat_config.unit_width)
+		l = strlen(counter->unit);
+		if (l > stat_config.unit_width)
 			stat_config.unit_width = l;
 
-		अगर (evsel__should_store_id(counter) &&
+		if (evsel__should_store_id(counter) &&
 		    evsel__store_ids(counter, evsel_list))
-			वापस -1;
-	पूर्ण
+			return -1;
+	}
 
-	अगर (evlist__apply_filters(evsel_list, &counter)) अणु
+	if (evlist__apply_filters(evsel_list, &counter)) {
 		pr_err("failed to set filter \"%s\" on event %s with %d (%s)\n",
-			counter->filter, evsel__name(counter), त्रुटि_सं,
-			str_error_r(त्रुटि_सं, msg, माप(msg)));
-		वापस -1;
-	पूर्ण
+			counter->filter, evsel__name(counter), errno,
+			str_error_r(errno, msg, sizeof(msg)));
+		return -1;
+	}
 
-	अगर (STAT_RECORD) अणु
-		पूर्णांक fd = perf_data__fd(&perf_stat.data);
+	if (STAT_RECORD) {
+		int fd = perf_data__fd(&perf_stat.data);
 
-		अगर (is_pipe) अणु
-			err = perf_header__ग_लिखो_pipe(perf_data__fd(&perf_stat.data));
-		पूर्ण अन्यथा अणु
-			err = perf_session__ग_लिखो_header(perf_stat.session, evsel_list,
+		if (is_pipe) {
+			err = perf_header__write_pipe(perf_data__fd(&perf_stat.data));
+		} else {
+			err = perf_session__write_header(perf_stat.session, evsel_list,
 							 fd, false);
-		पूर्ण
+		}
 
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 
-		err = perf_event__synthesize_stat_events(&stat_config, शून्य, evsel_list,
+		err = perf_event__synthesize_stat_events(&stat_config, NULL, evsel_list,
 							 process_synthesized_event, is_pipe);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
 	/*
 	 * Enable counters and exec the command:
 	 */
-	अगर (विभाजनs) अणु
+	if (forks) {
 		evlist__start_workload(evsel_list);
 		err = enable_counters();
-		अगर (err)
-			वापस -1;
+		if (err)
+			return -1;
 
-		t0 = rdघड़ी();
-		घड़ी_समय_लो(CLOCK_MONOTONIC, &ref_समय);
+		t0 = rdclock();
+		clock_gettime(CLOCK_MONOTONIC, &ref_time);
 
-		अगर (पूर्णांकerval || समयout || evlist__ctlfd_initialized(evsel_list))
-			status = dispatch_events(विभाजनs, समयout, पूर्णांकerval, &बार);
-		अगर (child_pid != -1) अणु
-			अगर (समयout)
-				समाप्त(child_pid, संक_इति);
-			रुको4(child_pid, &status, 0, &stat_config.ru_data);
-		पूर्ण
+		if (interval || timeout || evlist__ctlfd_initialized(evsel_list))
+			status = dispatch_events(forks, timeout, interval, &times);
+		if (child_pid != -1) {
+			if (timeout)
+				kill(child_pid, SIGTERM);
+			wait4(child_pid, &status, 0, &stat_config.ru_data);
+		}
 
-		अगर (workload_exec_त्रुटि_सं) अणु
-			स्थिर अक्षर *emsg = str_error_r(workload_exec_त्रुटि_सं, msg, माप(msg));
+		if (workload_exec_errno) {
+			const char *emsg = str_error_r(workload_exec_errno, msg, sizeof(msg));
 			pr_err("Workload failed: %s\n", emsg);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
-		अगर (WIFSIGNALED(status))
-			pसंकेत(WTERMSIG(status), argv[0]);
-	पूर्ण अन्यथा अणु
+		if (WIFSIGNALED(status))
+			psignal(WTERMSIG(status), argv[0]);
+	} else {
 		err = enable_counters();
-		अगर (err)
-			वापस -1;
+		if (err)
+			return -1;
 
-		t0 = rdघड़ी();
-		घड़ी_समय_लो(CLOCK_MONOTONIC, &ref_समय);
+		t0 = rdclock();
+		clock_gettime(CLOCK_MONOTONIC, &ref_time);
 
-		status = dispatch_events(विभाजनs, समयout, पूर्णांकerval, &बार);
-	पूर्ण
+		status = dispatch_events(forks, timeout, interval, &times);
+	}
 
 	disable_counters();
 
-	t1 = rdघड़ी();
+	t1 = rdclock();
 
-	अगर (stat_config.wallसमय_run_table)
-		stat_config.wallसमय_run[run_idx] = t1 - t0;
+	if (stat_config.walltime_run_table)
+		stat_config.walltime_run[run_idx] = t1 - t0;
 
-	अगर (पूर्णांकerval && stat_config.summary) अणु
-		stat_config.पूर्णांकerval = 0;
-		stat_config.stop_पढ़ो_counter = true;
-		init_stats(&wallसमय_nsecs_stats);
-		update_stats(&wallसमय_nsecs_stats, t1 - t0);
+	if (interval && stat_config.summary) {
+		stat_config.interval = 0;
+		stat_config.stop_read_counter = true;
+		init_stats(&walltime_nsecs_stats);
+		update_stats(&walltime_nsecs_stats, t1 - t0);
 
-		अगर (stat_config.aggr_mode == AGGR_GLOBAL)
+		if (stat_config.aggr_mode == AGGR_GLOBAL)
 			evlist__save_aggr_prev_raw_counts(evsel_list);
 
 		evlist__copy_prev_raw_counts(evsel_list);
 		evlist__reset_prev_raw_counts(evsel_list);
-		runसमय_stat_reset(&stat_config);
-		perf_stat__reset_shaकरोw_per_stat(&rt_stat);
-	पूर्ण अन्यथा
-		update_stats(&wallसमय_nsecs_stats, t1 - t0);
+		runtime_stat_reset(&stat_config);
+		perf_stat__reset_shadow_per_stat(&rt_stat);
+	} else
+		update_stats(&walltime_nsecs_stats, t1 - t0);
 
 	/*
 	 * Closing a group leader splits the group, and as we only disable
-	 * group leaders, results in reमुख्यing events becoming enabled. To
-	 * aव्योम arbitrary skew, we must पढ़ो all counters beक्रमe closing any
+	 * group leaders, results in remaining events becoming enabled. To
+	 * avoid arbitrary skew, we must read all counters before closing any
 	 * group leaders.
 	 */
-	पढ़ो_counters(&(काष्ठा बारpec) अणु .tv_nsec = t1-t0 पूर्ण);
+	read_counters(&(struct timespec) { .tv_nsec = t1-t0 });
 
 	/*
 	 * We need to keep evsel_list alive, because it's processed
-	 * later the evsel_list will be बंदd after.
+	 * later the evsel_list will be closed after.
 	 */
-	अगर (!STAT_RECORD)
-		evlist__बंद(evsel_list);
+	if (!STAT_RECORD)
+		evlist__close(evsel_list);
 
-	वापस WEXITSTATUS(status);
-पूर्ण
+	return WEXITSTATUS(status);
+}
 
-अटल पूर्णांक run_perf_stat(पूर्णांक argc, स्थिर अक्षर **argv, पूर्णांक run_idx)
-अणु
-	पूर्णांक ret;
+static int run_perf_stat(int argc, const char **argv, int run_idx)
+{
+	int ret;
 
-	अगर (pre_cmd) अणु
-		ret = प्रणाली(pre_cmd);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (pre_cmd) {
+		ret = system(pre_cmd);
+		if (ret)
+			return ret;
+	}
 
-	अगर (sync_run)
+	if (sync_run)
 		sync();
 
 	ret = __run_perf_stat(argc, argv, run_idx);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (post_cmd) अणु
-		ret = प्रणाली(post_cmd);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (post_cmd) {
+		ret = system(post_cmd);
+		if (ret)
+			return ret;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम prपूर्णांक_counters(काष्ठा बारpec *ts, पूर्णांक argc, स्थिर अक्षर **argv)
-अणु
-	/* Do not prपूर्णांक anything अगर we record to the pipe. */
-	अगर (STAT_RECORD && perf_stat.data.is_pipe)
-		वापस;
-	अगर (stat_config.quiet)
-		वापस;
+static void print_counters(struct timespec *ts, int argc, const char **argv)
+{
+	/* Do not print anything if we record to the pipe. */
+	if (STAT_RECORD && perf_stat.data.is_pipe)
+		return;
+	if (stat_config.quiet)
+		return;
 
-	evlist__prपूर्णांक_counters(evsel_list, &stat_config, &target, ts, argc, argv);
-पूर्ण
+	evlist__print_counters(evsel_list, &stat_config, &target, ts, argc, argv);
+}
 
-अटल अस्थिर पूर्णांक signr = -1;
+static volatile int signr = -1;
 
-अटल व्योम skip_संकेत(पूर्णांक signo)
-अणु
-	अगर ((child_pid == -1) || stat_config.पूर्णांकerval)
-		करोne = 1;
+static void skip_signal(int signo)
+{
+	if ((child_pid == -1) || stat_config.interval)
+		done = 1;
 
 	signr = signo;
 	/*
 	 * render child_pid harmless
-	 * won't send संक_इति to a अक्रमom
-	 * process in हाल of race condition
+	 * won't send SIGTERM to a random
+	 * process in case of race condition
 	 * and fast PID recycling
 	 */
 	child_pid = -1;
-पूर्ण
+}
 
-अटल व्योम sig_निकास_पर(व्योम)
-अणु
+static void sig_atexit(void)
+{
 	sigset_t set, oset;
 
 	/*
-	 * aव्योम race condition with SIGCHLD handler
-	 * in skip_संकेत() which is modअगरying child_pid
-	 * goal is to aव्योम send संक_इति to a अक्रमom
+	 * avoid race condition with SIGCHLD handler
+	 * in skip_signal() which is modifying child_pid
+	 * goal is to avoid send SIGTERM to a random
 	 * process
 	 */
 	sigemptyset(&set);
 	sigaddset(&set, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &set, &oset);
 
-	अगर (child_pid != -1)
-		समाप्त(child_pid, संक_इति);
+	if (child_pid != -1)
+		kill(child_pid, SIGTERM);
 
-	sigprocmask(SIG_SETMASK, &oset, शून्य);
+	sigprocmask(SIG_SETMASK, &oset, NULL);
 
-	अगर (signr == -1)
-		वापस;
+	if (signr == -1)
+		return;
 
-	संकेत(signr, संक_पूर्व);
-	समाप्त(getpid(), signr);
-पूर्ण
+	signal(signr, SIG_DFL);
+	kill(getpid(), signr);
+}
 
-व्योम perf_stat__set_big_num(पूर्णांक set)
-अणु
+void perf_stat__set_big_num(int set)
+{
 	stat_config.big_num = (set != 0);
-पूर्ण
+}
 
-व्योम perf_stat__set_no_csv_summary(पूर्णांक set)
-अणु
+void perf_stat__set_no_csv_summary(int set)
+{
 	stat_config.no_csv_summary = (set != 0);
-पूर्ण
+}
 
-अटल पूर्णांक stat__set_big_num(स्थिर काष्ठा option *opt __maybe_unused,
-			     स्थिर अक्षर *s __maybe_unused, पूर्णांक unset)
-अणु
+static int stat__set_big_num(const struct option *opt __maybe_unused,
+			     const char *s __maybe_unused, int unset)
+{
 	big_num_opt = unset ? 0 : 1;
 	perf_stat__set_big_num(!unset);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक enable_metric_only(स्थिर काष्ठा option *opt __maybe_unused,
-			      स्थिर अक्षर *s __maybe_unused, पूर्णांक unset)
-अणु
-	क्रमce_metric_only = true;
+static int enable_metric_only(const struct option *opt __maybe_unused,
+			      const char *s __maybe_unused, int unset)
+{
+	force_metric_only = true;
 	stat_config.metric_only = !unset;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक parse_metric_groups(स्थिर काष्ठा option *opt,
-			       स्थिर अक्षर *str,
-			       पूर्णांक unset __maybe_unused)
-अणु
-	वापस metricgroup__parse_groups(opt, str,
+static int parse_metric_groups(const struct option *opt,
+			       const char *str,
+			       int unset __maybe_unused)
+{
+	return metricgroup__parse_groups(opt, str,
 					 stat_config.metric_no_group,
 					 stat_config.metric_no_merge,
 					 &stat_config.metric_events);
-पूर्ण
+}
 
-अटल पूर्णांक parse_control_option(स्थिर काष्ठा option *opt,
-				स्थिर अक्षर *str,
-				पूर्णांक unset __maybe_unused)
-अणु
-	काष्ठा perf_stat_config *config = opt->value;
+static int parse_control_option(const struct option *opt,
+				const char *str,
+				int unset __maybe_unused)
+{
+	struct perf_stat_config *config = opt->value;
 
-	वापस evlist__parse_control(str, &config->ctl_fd, &config->ctl_fd_ack, &config->ctl_fd_बंद);
-पूर्ण
+	return evlist__parse_control(str, &config->ctl_fd, &config->ctl_fd_ack, &config->ctl_fd_close);
+}
 
-अटल पूर्णांक parse_stat_cgroups(स्थिर काष्ठा option *opt,
-			      स्थिर अक्षर *str, पूर्णांक unset)
-अणु
-	अगर (stat_config.cgroup_list) अणु
+static int parse_stat_cgroups(const struct option *opt,
+			      const char *str, int unset)
+{
+	if (stat_config.cgroup_list) {
 		pr_err("--cgroup and --for-each-cgroup cannot be used together\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस parse_cgroups(opt, str, unset);
-पूर्ण
+	return parse_cgroups(opt, str, unset);
+}
 
-अटल काष्ठा option stat_options[] = अणु
+static struct option stat_options[] = {
 	OPT_BOOLEAN('T', "transaction", &transaction_run,
 		    "hardware transaction statistics"),
 	OPT_CALLBACK('e', "event", &evsel_list, "event",
@@ -1181,15 +1180,15 @@ try_again_reset:
 		   "stat events on existing process id"),
 	OPT_STRING('t', "tid", &target.tid, "tid",
 		   "stat events on existing thread id"),
-#अगर_घोषित HAVE_BPF_SKEL
+#ifdef HAVE_BPF_SKEL
 	OPT_STRING('b', "bpf-prog", &target.bpf_str, "bpf-prog-id",
 		   "stat events on existing bpf program id"),
 	OPT_BOOLEAN(0, "bpf-counters", &target.use_bpf,
 		    "use bpf program to count events"),
 	OPT_STRING(0, "bpf-attr-map", &target.attr_map, "attr-map-path",
 		   "path to perf_event_attr map"),
-#पूर्ण_अगर
-	OPT_BOOLEAN('a', "all-cpus", &target.प्रणाली_wide,
+#endif
+	OPT_BOOLEAN('a', "all-cpus", &target.system_wide,
 		    "system-wide collection from all CPUs"),
 	OPT_BOOLEAN('g', "group", &group,
 		    "put the counters into a counter group"),
@@ -1199,7 +1198,7 @@ try_again_reset:
 		    "be more verbose (show counter open errors, etc)"),
 	OPT_INTEGER('r', "repeat", &stat_config.run_count,
 		    "repeat command and print average + stddev (max: 100, forever: 0)"),
-	OPT_BOOLEAN(0, "table", &stat_config.wallसमय_run_table,
+	OPT_BOOLEAN(0, "table", &stat_config.walltime_run_table,
 		    "display details about each run (only with -r option)"),
 	OPT_BOOLEAN('n', "null", &stat_config.null_run,
 		    "null run - dont start any counters"),
@@ -1207,7 +1206,7 @@ try_again_reset:
 		    "detailed run - start a lot of events"),
 	OPT_BOOLEAN('S', "sync", &sync_run,
 		    "call sync() before starting a run"),
-	OPT_CALLBACK_NOOPT('B', "big-num", शून्य, शून्य,
+	OPT_CALLBACK_NOOPT('B', "big-num", NULL, NULL,
 			   "print large numbers with thousands\' separators",
 			   stat__set_big_num),
 	OPT_STRING('C', "cpu", &target.cpu_list, "cpu",
@@ -1229,14 +1228,14 @@ try_again_reset:
 			"command to run prior to the measured command"),
 	OPT_STRING(0, "post", &post_cmd, "command",
 			"command to run after to the measured command"),
-	OPT_UINTEGER('I', "interval-print", &stat_config.पूर्णांकerval,
+	OPT_UINTEGER('I', "interval-print", &stat_config.interval,
 		    "print counts at regular interval in ms "
 		    "(overhead is possible for values <= 100ms)"),
-	OPT_INTEGER(0, "interval-count", &stat_config.बार,
+	OPT_INTEGER(0, "interval-count", &stat_config.times,
 		    "print counts for fixed number of times"),
-	OPT_BOOLEAN(0, "interval-clear", &stat_config.पूर्णांकerval_clear,
+	OPT_BOOLEAN(0, "interval-clear", &stat_config.interval_clear,
 		    "clear screen in between new interval"),
-	OPT_UINTEGER(0, "timeout", &stat_config.समयout,
+	OPT_UINTEGER(0, "timeout", &stat_config.timeout,
 		    "stop workload and print counts after a timeout period in ms (>= 10ms)"),
 	OPT_SET_UINT(0, "per-socket", &stat_config.aggr_mode,
 		     "aggregate counts per processor socket", AGGR_SOCKET),
@@ -1250,15 +1249,15 @@ try_again_reset:
 		     "aggregate counts per numa node", AGGR_NODE),
 	OPT_INTEGER('D', "delay", &stat_config.initial_delay,
 		    "ms to wait before starting measurement after program start (-1: start with events disabled)"),
-	OPT_CALLBACK_NOOPT(0, "metric-only", &stat_config.metric_only, शून्य,
+	OPT_CALLBACK_NOOPT(0, "metric-only", &stat_config.metric_only, NULL,
 			"Only print computed metrics. No raw values", enable_metric_only),
 	OPT_BOOLEAN(0, "metric-no-group", &stat_config.metric_no_group,
 		       "don't group metric events, impacts multiplexing"),
 	OPT_BOOLEAN(0, "metric-no-merge", &stat_config.metric_no_merge,
 		       "don't try to share events between metrics in a group"),
-	OPT_BOOLEAN(0, "topdown", &topकरोwn_run,
+	OPT_BOOLEAN(0, "topdown", &topdown_run,
 			"measure top-down statistics"),
-	OPT_UINTEGER(0, "td-level", &stat_config.topकरोwn_level,
+	OPT_UINTEGER(0, "td-level", &stat_config.topdown_level,
 			"Set the metrics level for the top-down statistics (0: max level)"),
 	OPT_BOOLEAN(0, "smi-cost", &smi_cost,
 			"measure SMI cost"),
@@ -1271,7 +1270,7 @@ try_again_reset:
 	OPT_BOOLEAN_FLAG(0, "all-user", &stat_config.all_user,
 			 "Configure all used events to run in user space.",
 			 PARSE_OPT_EXCLUSIVE),
-	OPT_BOOLEAN(0, "percore-show-thread", &stat_config.percore_show_thपढ़ो,
+	OPT_BOOLEAN(0, "percore-show-thread", &stat_config.percore_show_thread,
 		    "Use with 'percore' event qualifier to show the event "
 		    "counts of one hardware thread by sum up total hardware "
 		    "threads of same physical core"),
@@ -1281,11 +1280,11 @@ try_again_reset:
 		       "don't print 'summary' for CSV summary output"),
 	OPT_BOOLEAN(0, "quiet", &stat_config.quiet,
 			"don't print output (useful with record)"),
-#अगर_घोषित HAVE_LIBPFM
+#ifdef HAVE_LIBPFM
 	OPT_CALLBACK(0, "pfm-events", &evsel_list, "event",
 		"libpfm4 event selector. use 'perf list' to list available events",
 		parse_libpfm_events_option),
-#पूर्ण_अगर
+#endif
 	OPT_CALLBACK(0, "control", &stat_config, "fd:ctl-fd[,ack-fd] or fifo:ctl-fifo[,ack-fifo]",
 		     "Listen on ctl-fd descriptor for command to control measurement ('enable': enable events, 'disable': disable events).\n"
 		     "\t\t\t  Optionally send control command completion ('ack\\n') to ack-fd descriptor.\n"
@@ -1295,135 +1294,135 @@ try_again_reset:
 			    "measure I/O performance metrics provided by arch/platform",
 			    iostat_parse),
 	OPT_END()
-पूर्ण;
+};
 
-अटल काष्ठा aggr_cpu_id perf_stat__get_socket(काष्ठा perf_stat_config *config __maybe_unused,
-				 काष्ठा perf_cpu_map *map, पूर्णांक cpu)
-अणु
-	वापस cpu_map__get_socket(map, cpu, शून्य);
-पूर्ण
+static struct aggr_cpu_id perf_stat__get_socket(struct perf_stat_config *config __maybe_unused,
+				 struct perf_cpu_map *map, int cpu)
+{
+	return cpu_map__get_socket(map, cpu, NULL);
+}
 
-अटल काष्ठा aggr_cpu_id perf_stat__get_die(काष्ठा perf_stat_config *config __maybe_unused,
-			      काष्ठा perf_cpu_map *map, पूर्णांक cpu)
-अणु
-	वापस cpu_map__get_die(map, cpu, शून्य);
-पूर्ण
+static struct aggr_cpu_id perf_stat__get_die(struct perf_stat_config *config __maybe_unused,
+			      struct perf_cpu_map *map, int cpu)
+{
+	return cpu_map__get_die(map, cpu, NULL);
+}
 
-अटल काष्ठा aggr_cpu_id perf_stat__get_core(काष्ठा perf_stat_config *config __maybe_unused,
-			       काष्ठा perf_cpu_map *map, पूर्णांक cpu)
-अणु
-	वापस cpu_map__get_core(map, cpu, शून्य);
-पूर्ण
+static struct aggr_cpu_id perf_stat__get_core(struct perf_stat_config *config __maybe_unused,
+			       struct perf_cpu_map *map, int cpu)
+{
+	return cpu_map__get_core(map, cpu, NULL);
+}
 
-अटल काष्ठा aggr_cpu_id perf_stat__get_node(काष्ठा perf_stat_config *config __maybe_unused,
-			       काष्ठा perf_cpu_map *map, पूर्णांक cpu)
-अणु
-	वापस cpu_map__get_node(map, cpu, शून्य);
-पूर्ण
+static struct aggr_cpu_id perf_stat__get_node(struct perf_stat_config *config __maybe_unused,
+			       struct perf_cpu_map *map, int cpu)
+{
+	return cpu_map__get_node(map, cpu, NULL);
+}
 
-अटल काष्ठा aggr_cpu_id perf_stat__get_aggr(काष्ठा perf_stat_config *config,
-			       aggr_get_id_t get_id, काष्ठा perf_cpu_map *map, पूर्णांक idx)
-अणु
-	पूर्णांक cpu;
-	काष्ठा aggr_cpu_id id = cpu_map__empty_aggr_cpu_id();
+static struct aggr_cpu_id perf_stat__get_aggr(struct perf_stat_config *config,
+			       aggr_get_id_t get_id, struct perf_cpu_map *map, int idx)
+{
+	int cpu;
+	struct aggr_cpu_id id = cpu_map__empty_aggr_cpu_id();
 
-	अगर (idx >= map->nr)
-		वापस id;
+	if (idx >= map->nr)
+		return id;
 
 	cpu = map->map[idx];
 
-	अगर (cpu_map__aggr_cpu_id_is_empty(config->cpus_aggr_map->map[cpu]))
+	if (cpu_map__aggr_cpu_id_is_empty(config->cpus_aggr_map->map[cpu]))
 		config->cpus_aggr_map->map[cpu] = get_id(config, map, idx);
 
 	id = config->cpus_aggr_map->map[cpu];
-	वापस id;
-पूर्ण
+	return id;
+}
 
-अटल काष्ठा aggr_cpu_id perf_stat__get_socket_cached(काष्ठा perf_stat_config *config,
-					काष्ठा perf_cpu_map *map, पूर्णांक idx)
-अणु
-	वापस perf_stat__get_aggr(config, perf_stat__get_socket, map, idx);
-पूर्ण
+static struct aggr_cpu_id perf_stat__get_socket_cached(struct perf_stat_config *config,
+					struct perf_cpu_map *map, int idx)
+{
+	return perf_stat__get_aggr(config, perf_stat__get_socket, map, idx);
+}
 
-अटल काष्ठा aggr_cpu_id perf_stat__get_die_cached(काष्ठा perf_stat_config *config,
-					काष्ठा perf_cpu_map *map, पूर्णांक idx)
-अणु
-	वापस perf_stat__get_aggr(config, perf_stat__get_die, map, idx);
-पूर्ण
+static struct aggr_cpu_id perf_stat__get_die_cached(struct perf_stat_config *config,
+					struct perf_cpu_map *map, int idx)
+{
+	return perf_stat__get_aggr(config, perf_stat__get_die, map, idx);
+}
 
-अटल काष्ठा aggr_cpu_id perf_stat__get_core_cached(काष्ठा perf_stat_config *config,
-				      काष्ठा perf_cpu_map *map, पूर्णांक idx)
-अणु
-	वापस perf_stat__get_aggr(config, perf_stat__get_core, map, idx);
-पूर्ण
+static struct aggr_cpu_id perf_stat__get_core_cached(struct perf_stat_config *config,
+				      struct perf_cpu_map *map, int idx)
+{
+	return perf_stat__get_aggr(config, perf_stat__get_core, map, idx);
+}
 
-अटल काष्ठा aggr_cpu_id perf_stat__get_node_cached(काष्ठा perf_stat_config *config,
-				      काष्ठा perf_cpu_map *map, पूर्णांक idx)
-अणु
-	वापस perf_stat__get_aggr(config, perf_stat__get_node, map, idx);
-पूर्ण
+static struct aggr_cpu_id perf_stat__get_node_cached(struct perf_stat_config *config,
+				      struct perf_cpu_map *map, int idx)
+{
+	return perf_stat__get_aggr(config, perf_stat__get_node, map, idx);
+}
 
-अटल bool term_percore_set(व्योम)
-अणु
-	काष्ठा evsel *counter;
+static bool term_percore_set(void)
+{
+	struct evsel *counter;
 
-	evlist__क्रम_each_entry(evsel_list, counter) अणु
-		अगर (counter->percore)
-			वापस true;
-	पूर्ण
+	evlist__for_each_entry(evsel_list, counter) {
+		if (counter->percore)
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक perf_stat_init_aggr_mode(व्योम)
-अणु
-	पूर्णांक nr;
+static int perf_stat_init_aggr_mode(void)
+{
+	int nr;
 
-	चयन (stat_config.aggr_mode) अणु
-	हाल AGGR_SOCKET:
-		अगर (cpu_map__build_socket_map(evsel_list->core.cpus, &stat_config.aggr_map)) अणु
-			लिखो_त्रुटि("cannot build socket map");
-			वापस -1;
-		पूर्ण
+	switch (stat_config.aggr_mode) {
+	case AGGR_SOCKET:
+		if (cpu_map__build_socket_map(evsel_list->core.cpus, &stat_config.aggr_map)) {
+			perror("cannot build socket map");
+			return -1;
+		}
 		stat_config.aggr_get_id = perf_stat__get_socket_cached;
-		अवरोध;
-	हाल AGGR_DIE:
-		अगर (cpu_map__build_die_map(evsel_list->core.cpus, &stat_config.aggr_map)) अणु
-			लिखो_त्रुटि("cannot build die map");
-			वापस -1;
-		पूर्ण
+		break;
+	case AGGR_DIE:
+		if (cpu_map__build_die_map(evsel_list->core.cpus, &stat_config.aggr_map)) {
+			perror("cannot build die map");
+			return -1;
+		}
 		stat_config.aggr_get_id = perf_stat__get_die_cached;
-		अवरोध;
-	हाल AGGR_CORE:
-		अगर (cpu_map__build_core_map(evsel_list->core.cpus, &stat_config.aggr_map)) अणु
-			लिखो_त्रुटि("cannot build core map");
-			वापस -1;
-		पूर्ण
+		break;
+	case AGGR_CORE:
+		if (cpu_map__build_core_map(evsel_list->core.cpus, &stat_config.aggr_map)) {
+			perror("cannot build core map");
+			return -1;
+		}
 		stat_config.aggr_get_id = perf_stat__get_core_cached;
-		अवरोध;
-	हाल AGGR_NODE:
-		अगर (cpu_map__build_node_map(evsel_list->core.cpus, &stat_config.aggr_map)) अणु
-			लिखो_त्रुटि("cannot build core map");
-			वापस -1;
-		पूर्ण
+		break;
+	case AGGR_NODE:
+		if (cpu_map__build_node_map(evsel_list->core.cpus, &stat_config.aggr_map)) {
+			perror("cannot build core map");
+			return -1;
+		}
 		stat_config.aggr_get_id = perf_stat__get_node_cached;
-		अवरोध;
-	हाल AGGR_NONE:
-		अगर (term_percore_set()) अणु
-			अगर (cpu_map__build_core_map(evsel_list->core.cpus,
-						    &stat_config.aggr_map)) अणु
-				लिखो_त्रुटि("cannot build core map");
-				वापस -1;
-			पूर्ण
+		break;
+	case AGGR_NONE:
+		if (term_percore_set()) {
+			if (cpu_map__build_core_map(evsel_list->core.cpus,
+						    &stat_config.aggr_map)) {
+				perror("cannot build core map");
+				return -1;
+			}
 			stat_config.aggr_get_id = perf_stat__get_core_cached;
-		पूर्ण
-		अवरोध;
-	हाल AGGR_GLOBAL:
-	हाल AGGR_THREAD:
-	हाल AGGR_UNSET:
-	शेष:
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	case AGGR_GLOBAL:
+	case AGGR_THREAD:
+	case AGGR_UNSET:
+	default:
+		break;
+	}
 
 	/*
 	 * The evsel_list->cpus is the base we operate on,
@@ -1432,66 +1431,66 @@ try_again_reset:
 	 */
 	nr = perf_cpu_map__max(evsel_list->core.cpus);
 	stat_config.cpus_aggr_map = cpu_aggr_map__empty_new(nr + 1);
-	वापस stat_config.cpus_aggr_map ? 0 : -ENOMEM;
-पूर्ण
+	return stat_config.cpus_aggr_map ? 0 : -ENOMEM;
+}
 
-अटल व्योम cpu_aggr_map__delete(काष्ठा cpu_aggr_map *map)
-अणु
-	अगर (map) अणु
-		WARN_ONCE(refcount_पढ़ो(&map->refcnt) != 0,
+static void cpu_aggr_map__delete(struct cpu_aggr_map *map)
+{
+	if (map) {
+		WARN_ONCE(refcount_read(&map->refcnt) != 0,
 			  "cpu_aggr_map refcnt unbalanced\n");
-		मुक्त(map);
-	पूर्ण
-पूर्ण
+		free(map);
+	}
+}
 
-अटल व्योम cpu_aggr_map__put(काष्ठा cpu_aggr_map *map)
-अणु
-	अगर (map && refcount_dec_and_test(&map->refcnt))
+static void cpu_aggr_map__put(struct cpu_aggr_map *map)
+{
+	if (map && refcount_dec_and_test(&map->refcnt))
 		cpu_aggr_map__delete(map);
-पूर्ण
+}
 
-अटल व्योम perf_stat__निकास_aggr_mode(व्योम)
-अणु
+static void perf_stat__exit_aggr_mode(void)
+{
 	cpu_aggr_map__put(stat_config.aggr_map);
 	cpu_aggr_map__put(stat_config.cpus_aggr_map);
-	stat_config.aggr_map = शून्य;
-	stat_config.cpus_aggr_map = शून्य;
-पूर्ण
+	stat_config.aggr_map = NULL;
+	stat_config.cpus_aggr_map = NULL;
+}
 
-अटल अंतरभूत पूर्णांक perf_env__get_cpu(काष्ठा perf_env *env, काष्ठा perf_cpu_map *map, पूर्णांक idx)
-अणु
-	पूर्णांक cpu;
+static inline int perf_env__get_cpu(struct perf_env *env, struct perf_cpu_map *map, int idx)
+{
+	int cpu;
 
-	अगर (idx > map->nr)
-		वापस -1;
+	if (idx > map->nr)
+		return -1;
 
 	cpu = map->map[idx];
 
-	अगर (cpu >= env->nr_cpus_avail)
-		वापस -1;
+	if (cpu >= env->nr_cpus_avail)
+		return -1;
 
-	वापस cpu;
-पूर्ण
+	return cpu;
+}
 
-अटल काष्ठा aggr_cpu_id perf_env__get_socket(काष्ठा perf_cpu_map *map, पूर्णांक idx, व्योम *data)
-अणु
-	काष्ठा perf_env *env = data;
-	पूर्णांक cpu = perf_env__get_cpu(env, map, idx);
-	काष्ठा aggr_cpu_id id = cpu_map__empty_aggr_cpu_id();
+static struct aggr_cpu_id perf_env__get_socket(struct perf_cpu_map *map, int idx, void *data)
+{
+	struct perf_env *env = data;
+	int cpu = perf_env__get_cpu(env, map, idx);
+	struct aggr_cpu_id id = cpu_map__empty_aggr_cpu_id();
 
-	अगर (cpu != -1)
+	if (cpu != -1)
 		id.socket = env->cpu[cpu].socket_id;
 
-	वापस id;
-पूर्ण
+	return id;
+}
 
-अटल काष्ठा aggr_cpu_id perf_env__get_die(काष्ठा perf_cpu_map *map, पूर्णांक idx, व्योम *data)
-अणु
-	काष्ठा perf_env *env = data;
-	काष्ठा aggr_cpu_id id = cpu_map__empty_aggr_cpu_id();
-	पूर्णांक cpu = perf_env__get_cpu(env, map, idx);
+static struct aggr_cpu_id perf_env__get_die(struct perf_cpu_map *map, int idx, void *data)
+{
+	struct perf_env *env = data;
+	struct aggr_cpu_id id = cpu_map__empty_aggr_cpu_id();
+	int cpu = perf_env__get_cpu(env, map, idx);
 
-	अगर (cpu != -1) अणु
+	if (cpu != -1) {
 		/*
 		 * die_id is relative to socket, so start
 		 * with the socket ID and then add die to
@@ -1499,18 +1498,18 @@ try_again_reset:
 		 */
 		id.socket = env->cpu[cpu].socket_id;
 		id.die = env->cpu[cpu].die_id;
-	पूर्ण
+	}
 
-	वापस id;
-पूर्ण
+	return id;
+}
 
-अटल काष्ठा aggr_cpu_id perf_env__get_core(काष्ठा perf_cpu_map *map, पूर्णांक idx, व्योम *data)
-अणु
-	काष्ठा perf_env *env = data;
-	काष्ठा aggr_cpu_id id = cpu_map__empty_aggr_cpu_id();
-	पूर्णांक cpu = perf_env__get_cpu(env, map, idx);
+static struct aggr_cpu_id perf_env__get_core(struct perf_cpu_map *map, int idx, void *data)
+{
+	struct perf_env *env = data;
+	struct aggr_cpu_id id = cpu_map__empty_aggr_cpu_id();
+	int cpu = perf_env__get_cpu(env, map, idx);
 
-	अगर (cpu != -1) अणु
+	if (cpu != -1) {
 		/*
 		 * core_id is relative to socket and die,
 		 * we need a global id. So we set
@@ -1519,625 +1518,625 @@ try_again_reset:
 		id.socket = env->cpu[cpu].socket_id;
 		id.die = env->cpu[cpu].die_id;
 		id.core = env->cpu[cpu].core_id;
-	पूर्ण
+	}
 
-	वापस id;
-पूर्ण
+	return id;
+}
 
-अटल काष्ठा aggr_cpu_id perf_env__get_node(काष्ठा perf_cpu_map *map, पूर्णांक idx, व्योम *data)
-अणु
-	पूर्णांक cpu = perf_env__get_cpu(data, map, idx);
-	काष्ठा aggr_cpu_id id = cpu_map__empty_aggr_cpu_id();
+static struct aggr_cpu_id perf_env__get_node(struct perf_cpu_map *map, int idx, void *data)
+{
+	int cpu = perf_env__get_cpu(data, map, idx);
+	struct aggr_cpu_id id = cpu_map__empty_aggr_cpu_id();
 
 	id.node = perf_env__numa_node(data, cpu);
-	वापस id;
-पूर्ण
+	return id;
+}
 
-अटल पूर्णांक perf_env__build_socket_map(काष्ठा perf_env *env, काष्ठा perf_cpu_map *cpus,
-				      काष्ठा cpu_aggr_map **sockp)
-अणु
-	वापस cpu_map__build_map(cpus, sockp, perf_env__get_socket, env);
-पूर्ण
+static int perf_env__build_socket_map(struct perf_env *env, struct perf_cpu_map *cpus,
+				      struct cpu_aggr_map **sockp)
+{
+	return cpu_map__build_map(cpus, sockp, perf_env__get_socket, env);
+}
 
-अटल पूर्णांक perf_env__build_die_map(काष्ठा perf_env *env, काष्ठा perf_cpu_map *cpus,
-				   काष्ठा cpu_aggr_map **diep)
-अणु
-	वापस cpu_map__build_map(cpus, diep, perf_env__get_die, env);
-पूर्ण
+static int perf_env__build_die_map(struct perf_env *env, struct perf_cpu_map *cpus,
+				   struct cpu_aggr_map **diep)
+{
+	return cpu_map__build_map(cpus, diep, perf_env__get_die, env);
+}
 
-अटल पूर्णांक perf_env__build_core_map(काष्ठा perf_env *env, काष्ठा perf_cpu_map *cpus,
-				    काष्ठा cpu_aggr_map **corep)
-अणु
-	वापस cpu_map__build_map(cpus, corep, perf_env__get_core, env);
-पूर्ण
+static int perf_env__build_core_map(struct perf_env *env, struct perf_cpu_map *cpus,
+				    struct cpu_aggr_map **corep)
+{
+	return cpu_map__build_map(cpus, corep, perf_env__get_core, env);
+}
 
-अटल पूर्णांक perf_env__build_node_map(काष्ठा perf_env *env, काष्ठा perf_cpu_map *cpus,
-				    काष्ठा cpu_aggr_map **nodep)
-अणु
-	वापस cpu_map__build_map(cpus, nodep, perf_env__get_node, env);
-पूर्ण
+static int perf_env__build_node_map(struct perf_env *env, struct perf_cpu_map *cpus,
+				    struct cpu_aggr_map **nodep)
+{
+	return cpu_map__build_map(cpus, nodep, perf_env__get_node, env);
+}
 
-अटल काष्ठा aggr_cpu_id perf_stat__get_socket_file(काष्ठा perf_stat_config *config __maybe_unused,
-				      काष्ठा perf_cpu_map *map, पूर्णांक idx)
-अणु
-	वापस perf_env__get_socket(map, idx, &perf_stat.session->header.env);
-पूर्ण
-अटल काष्ठा aggr_cpu_id perf_stat__get_die_file(काष्ठा perf_stat_config *config __maybe_unused,
-				   काष्ठा perf_cpu_map *map, पूर्णांक idx)
-अणु
-	वापस perf_env__get_die(map, idx, &perf_stat.session->header.env);
-पूर्ण
+static struct aggr_cpu_id perf_stat__get_socket_file(struct perf_stat_config *config __maybe_unused,
+				      struct perf_cpu_map *map, int idx)
+{
+	return perf_env__get_socket(map, idx, &perf_stat.session->header.env);
+}
+static struct aggr_cpu_id perf_stat__get_die_file(struct perf_stat_config *config __maybe_unused,
+				   struct perf_cpu_map *map, int idx)
+{
+	return perf_env__get_die(map, idx, &perf_stat.session->header.env);
+}
 
-अटल काष्ठा aggr_cpu_id perf_stat__get_core_file(काष्ठा perf_stat_config *config __maybe_unused,
-				    काष्ठा perf_cpu_map *map, पूर्णांक idx)
-अणु
-	वापस perf_env__get_core(map, idx, &perf_stat.session->header.env);
-पूर्ण
+static struct aggr_cpu_id perf_stat__get_core_file(struct perf_stat_config *config __maybe_unused,
+				    struct perf_cpu_map *map, int idx)
+{
+	return perf_env__get_core(map, idx, &perf_stat.session->header.env);
+}
 
-अटल काष्ठा aggr_cpu_id perf_stat__get_node_file(काष्ठा perf_stat_config *config __maybe_unused,
-				    काष्ठा perf_cpu_map *map, पूर्णांक idx)
-अणु
-	वापस perf_env__get_node(map, idx, &perf_stat.session->header.env);
-पूर्ण
+static struct aggr_cpu_id perf_stat__get_node_file(struct perf_stat_config *config __maybe_unused,
+				    struct perf_cpu_map *map, int idx)
+{
+	return perf_env__get_node(map, idx, &perf_stat.session->header.env);
+}
 
-अटल पूर्णांक perf_stat_init_aggr_mode_file(काष्ठा perf_stat *st)
-अणु
-	काष्ठा perf_env *env = &st->session->header.env;
+static int perf_stat_init_aggr_mode_file(struct perf_stat *st)
+{
+	struct perf_env *env = &st->session->header.env;
 
-	चयन (stat_config.aggr_mode) अणु
-	हाल AGGR_SOCKET:
-		अगर (perf_env__build_socket_map(env, evsel_list->core.cpus, &stat_config.aggr_map)) अणु
-			लिखो_त्रुटि("cannot build socket map");
-			वापस -1;
-		पूर्ण
+	switch (stat_config.aggr_mode) {
+	case AGGR_SOCKET:
+		if (perf_env__build_socket_map(env, evsel_list->core.cpus, &stat_config.aggr_map)) {
+			perror("cannot build socket map");
+			return -1;
+		}
 		stat_config.aggr_get_id = perf_stat__get_socket_file;
-		अवरोध;
-	हाल AGGR_DIE:
-		अगर (perf_env__build_die_map(env, evsel_list->core.cpus, &stat_config.aggr_map)) अणु
-			लिखो_त्रुटि("cannot build die map");
-			वापस -1;
-		पूर्ण
+		break;
+	case AGGR_DIE:
+		if (perf_env__build_die_map(env, evsel_list->core.cpus, &stat_config.aggr_map)) {
+			perror("cannot build die map");
+			return -1;
+		}
 		stat_config.aggr_get_id = perf_stat__get_die_file;
-		अवरोध;
-	हाल AGGR_CORE:
-		अगर (perf_env__build_core_map(env, evsel_list->core.cpus, &stat_config.aggr_map)) अणु
-			लिखो_त्रुटि("cannot build core map");
-			वापस -1;
-		पूर्ण
+		break;
+	case AGGR_CORE:
+		if (perf_env__build_core_map(env, evsel_list->core.cpus, &stat_config.aggr_map)) {
+			perror("cannot build core map");
+			return -1;
+		}
 		stat_config.aggr_get_id = perf_stat__get_core_file;
-		अवरोध;
-	हाल AGGR_NODE:
-		अगर (perf_env__build_node_map(env, evsel_list->core.cpus, &stat_config.aggr_map)) अणु
-			लिखो_त्रुटि("cannot build core map");
-			वापस -1;
-		पूर्ण
+		break;
+	case AGGR_NODE:
+		if (perf_env__build_node_map(env, evsel_list->core.cpus, &stat_config.aggr_map)) {
+			perror("cannot build core map");
+			return -1;
+		}
 		stat_config.aggr_get_id = perf_stat__get_node_file;
-		अवरोध;
-	हाल AGGR_NONE:
-	हाल AGGR_GLOBAL:
-	हाल AGGR_THREAD:
-	हाल AGGR_UNSET:
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	case AGGR_NONE:
+	case AGGR_GLOBAL:
+	case AGGR_THREAD:
+	case AGGR_UNSET:
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Add शेष attributes, अगर there were no attributes specअगरied or
- * अगर -d/--detailed, -d -d or -d -d -d is used:
+ * Add default attributes, if there were no attributes specified or
+ * if -d/--detailed, -d -d or -d -d -d is used:
  */
-अटल पूर्णांक add_शेष_attributes(व्योम)
-अणु
-	पूर्णांक err;
-	काष्ठा perf_event_attr शेष_attrs0[] = अणु
+static int add_default_attributes(void)
+{
+	int err;
+	struct perf_event_attr default_attrs0[] = {
 
-  अणु .type = PERF_TYPE_SOFTWARE, .config = PERF_COUNT_SW_TASK_CLOCK		पूर्ण,
-  अणु .type = PERF_TYPE_SOFTWARE, .config = PERF_COUNT_SW_CONTEXT_SWITCHES	पूर्ण,
-  अणु .type = PERF_TYPE_SOFTWARE, .config = PERF_COUNT_SW_CPU_MIGRATIONS		पूर्ण,
-  अणु .type = PERF_TYPE_SOFTWARE, .config = PERF_COUNT_SW_PAGE_FAULTS		पूर्ण,
+  { .type = PERF_TYPE_SOFTWARE, .config = PERF_COUNT_SW_TASK_CLOCK		},
+  { .type = PERF_TYPE_SOFTWARE, .config = PERF_COUNT_SW_CONTEXT_SWITCHES	},
+  { .type = PERF_TYPE_SOFTWARE, .config = PERF_COUNT_SW_CPU_MIGRATIONS		},
+  { .type = PERF_TYPE_SOFTWARE, .config = PERF_COUNT_SW_PAGE_FAULTS		},
 
-  अणु .type = PERF_TYPE_HARDWARE, .config = PERF_COUNT_HW_CPU_CYCLES		पूर्ण,
-पूर्ण;
-	काष्ठा perf_event_attr frontend_attrs[] = अणु
-  अणु .type = PERF_TYPE_HARDWARE, .config = PERF_COUNT_HW_STALLED_CYCLES_FRONTEND	पूर्ण,
-पूर्ण;
-	काष्ठा perf_event_attr backend_attrs[] = अणु
-  अणु .type = PERF_TYPE_HARDWARE, .config = PERF_COUNT_HW_STALLED_CYCLES_BACKEND	पूर्ण,
-पूर्ण;
-	काष्ठा perf_event_attr शेष_attrs1[] = अणु
-  अणु .type = PERF_TYPE_HARDWARE, .config = PERF_COUNT_HW_INSTRUCTIONS		पूर्ण,
-  अणु .type = PERF_TYPE_HARDWARE, .config = PERF_COUNT_HW_BRANCH_INSTRUCTIONS	पूर्ण,
-  अणु .type = PERF_TYPE_HARDWARE, .config = PERF_COUNT_HW_BRANCH_MISSES		पूर्ण,
+  { .type = PERF_TYPE_HARDWARE, .config = PERF_COUNT_HW_CPU_CYCLES		},
+};
+	struct perf_event_attr frontend_attrs[] = {
+  { .type = PERF_TYPE_HARDWARE, .config = PERF_COUNT_HW_STALLED_CYCLES_FRONTEND	},
+};
+	struct perf_event_attr backend_attrs[] = {
+  { .type = PERF_TYPE_HARDWARE, .config = PERF_COUNT_HW_STALLED_CYCLES_BACKEND	},
+};
+	struct perf_event_attr default_attrs1[] = {
+  { .type = PERF_TYPE_HARDWARE, .config = PERF_COUNT_HW_INSTRUCTIONS		},
+  { .type = PERF_TYPE_HARDWARE, .config = PERF_COUNT_HW_BRANCH_INSTRUCTIONS	},
+  { .type = PERF_TYPE_HARDWARE, .config = PERF_COUNT_HW_BRANCH_MISSES		},
 
-पूर्ण;
-	काष्ठा perf_event_attr शेष_sw_attrs[] = अणु
-  अणु .type = PERF_TYPE_SOFTWARE, .config = PERF_COUNT_SW_TASK_CLOCK		पूर्ण,
-  अणु .type = PERF_TYPE_SOFTWARE, .config = PERF_COUNT_SW_CONTEXT_SWITCHES	पूर्ण,
-  अणु .type = PERF_TYPE_SOFTWARE, .config = PERF_COUNT_SW_CPU_MIGRATIONS		पूर्ण,
-  अणु .type = PERF_TYPE_SOFTWARE, .config = PERF_COUNT_SW_PAGE_FAULTS		पूर्ण,
-पूर्ण;
+};
+	struct perf_event_attr default_sw_attrs[] = {
+  { .type = PERF_TYPE_SOFTWARE, .config = PERF_COUNT_SW_TASK_CLOCK		},
+  { .type = PERF_TYPE_SOFTWARE, .config = PERF_COUNT_SW_CONTEXT_SWITCHES	},
+  { .type = PERF_TYPE_SOFTWARE, .config = PERF_COUNT_SW_CPU_MIGRATIONS		},
+  { .type = PERF_TYPE_SOFTWARE, .config = PERF_COUNT_SW_PAGE_FAULTS		},
+};
 
 /*
  * Detailed stats (-d), covering the L1 and last level data caches:
  */
-	काष्ठा perf_event_attr detailed_attrs[] = अणु
+	struct perf_event_attr detailed_attrs[] = {
 
-  अणु .type = PERF_TYPE_HW_CACHE,
+  { .type = PERF_TYPE_HW_CACHE,
     .config =
 	 PERF_COUNT_HW_CACHE_L1D		<<  0  |
 	(PERF_COUNT_HW_CACHE_OP_READ		<<  8) |
-	(PERF_COUNT_HW_CACHE_RESULT_ACCESS	<< 16)				पूर्ण,
+	(PERF_COUNT_HW_CACHE_RESULT_ACCESS	<< 16)				},
 
-  अणु .type = PERF_TYPE_HW_CACHE,
+  { .type = PERF_TYPE_HW_CACHE,
     .config =
 	 PERF_COUNT_HW_CACHE_L1D		<<  0  |
 	(PERF_COUNT_HW_CACHE_OP_READ		<<  8) |
-	(PERF_COUNT_HW_CACHE_RESULT_MISS	<< 16)				पूर्ण,
+	(PERF_COUNT_HW_CACHE_RESULT_MISS	<< 16)				},
 
-  अणु .type = PERF_TYPE_HW_CACHE,
+  { .type = PERF_TYPE_HW_CACHE,
     .config =
 	 PERF_COUNT_HW_CACHE_LL			<<  0  |
 	(PERF_COUNT_HW_CACHE_OP_READ		<<  8) |
-	(PERF_COUNT_HW_CACHE_RESULT_ACCESS	<< 16)				पूर्ण,
+	(PERF_COUNT_HW_CACHE_RESULT_ACCESS	<< 16)				},
 
-  अणु .type = PERF_TYPE_HW_CACHE,
+  { .type = PERF_TYPE_HW_CACHE,
     .config =
 	 PERF_COUNT_HW_CACHE_LL			<<  0  |
 	(PERF_COUNT_HW_CACHE_OP_READ		<<  8) |
-	(PERF_COUNT_HW_CACHE_RESULT_MISS	<< 16)				पूर्ण,
-पूर्ण;
+	(PERF_COUNT_HW_CACHE_RESULT_MISS	<< 16)				},
+};
 
 /*
- * Very detailed stats (-d -d), covering the inकाष्ठाion cache and the TLB caches:
+ * Very detailed stats (-d -d), covering the instruction cache and the TLB caches:
  */
-	काष्ठा perf_event_attr very_detailed_attrs[] = अणु
+	struct perf_event_attr very_detailed_attrs[] = {
 
-  अणु .type = PERF_TYPE_HW_CACHE,
+  { .type = PERF_TYPE_HW_CACHE,
     .config =
 	 PERF_COUNT_HW_CACHE_L1I		<<  0  |
 	(PERF_COUNT_HW_CACHE_OP_READ		<<  8) |
-	(PERF_COUNT_HW_CACHE_RESULT_ACCESS	<< 16)				पूर्ण,
+	(PERF_COUNT_HW_CACHE_RESULT_ACCESS	<< 16)				},
 
-  अणु .type = PERF_TYPE_HW_CACHE,
+  { .type = PERF_TYPE_HW_CACHE,
     .config =
 	 PERF_COUNT_HW_CACHE_L1I		<<  0  |
 	(PERF_COUNT_HW_CACHE_OP_READ		<<  8) |
-	(PERF_COUNT_HW_CACHE_RESULT_MISS	<< 16)				पूर्ण,
+	(PERF_COUNT_HW_CACHE_RESULT_MISS	<< 16)				},
 
-  अणु .type = PERF_TYPE_HW_CACHE,
+  { .type = PERF_TYPE_HW_CACHE,
     .config =
 	 PERF_COUNT_HW_CACHE_DTLB		<<  0  |
 	(PERF_COUNT_HW_CACHE_OP_READ		<<  8) |
-	(PERF_COUNT_HW_CACHE_RESULT_ACCESS	<< 16)				पूर्ण,
+	(PERF_COUNT_HW_CACHE_RESULT_ACCESS	<< 16)				},
 
-  अणु .type = PERF_TYPE_HW_CACHE,
+  { .type = PERF_TYPE_HW_CACHE,
     .config =
 	 PERF_COUNT_HW_CACHE_DTLB		<<  0  |
 	(PERF_COUNT_HW_CACHE_OP_READ		<<  8) |
-	(PERF_COUNT_HW_CACHE_RESULT_MISS	<< 16)				पूर्ण,
+	(PERF_COUNT_HW_CACHE_RESULT_MISS	<< 16)				},
 
-  अणु .type = PERF_TYPE_HW_CACHE,
+  { .type = PERF_TYPE_HW_CACHE,
     .config =
 	 PERF_COUNT_HW_CACHE_ITLB		<<  0  |
 	(PERF_COUNT_HW_CACHE_OP_READ		<<  8) |
-	(PERF_COUNT_HW_CACHE_RESULT_ACCESS	<< 16)				पूर्ण,
+	(PERF_COUNT_HW_CACHE_RESULT_ACCESS	<< 16)				},
 
-  अणु .type = PERF_TYPE_HW_CACHE,
+  { .type = PERF_TYPE_HW_CACHE,
     .config =
 	 PERF_COUNT_HW_CACHE_ITLB		<<  0  |
 	(PERF_COUNT_HW_CACHE_OP_READ		<<  8) |
-	(PERF_COUNT_HW_CACHE_RESULT_MISS	<< 16)				पूर्ण,
+	(PERF_COUNT_HW_CACHE_RESULT_MISS	<< 16)				},
 
-पूर्ण;
+};
 
 /*
  * Very, very detailed stats (-d -d -d), adding prefetch events:
  */
-	काष्ठा perf_event_attr very_very_detailed_attrs[] = अणु
+	struct perf_event_attr very_very_detailed_attrs[] = {
 
-  अणु .type = PERF_TYPE_HW_CACHE,
+  { .type = PERF_TYPE_HW_CACHE,
     .config =
 	 PERF_COUNT_HW_CACHE_L1D		<<  0  |
 	(PERF_COUNT_HW_CACHE_OP_PREFETCH	<<  8) |
-	(PERF_COUNT_HW_CACHE_RESULT_ACCESS	<< 16)				पूर्ण,
+	(PERF_COUNT_HW_CACHE_RESULT_ACCESS	<< 16)				},
 
-  अणु .type = PERF_TYPE_HW_CACHE,
+  { .type = PERF_TYPE_HW_CACHE,
     .config =
 	 PERF_COUNT_HW_CACHE_L1D		<<  0  |
 	(PERF_COUNT_HW_CACHE_OP_PREFETCH	<<  8) |
-	(PERF_COUNT_HW_CACHE_RESULT_MISS	<< 16)				पूर्ण,
-पूर्ण;
-	काष्ठा parse_events_error errinfo;
+	(PERF_COUNT_HW_CACHE_RESULT_MISS	<< 16)				},
+};
+	struct parse_events_error errinfo;
 
-	/* Set attrs अगर no event is selected and !null_run: */
-	अगर (stat_config.null_run)
-		वापस 0;
+	/* Set attrs if no event is selected and !null_run: */
+	if (stat_config.null_run)
+		return 0;
 
-	bzero(&errinfo, माप(errinfo));
-	अगर (transaction_run) अणु
-		/* Handle -T as -M transaction. Once platक्रमm specअगरic metrics
+	bzero(&errinfo, sizeof(errinfo));
+	if (transaction_run) {
+		/* Handle -T as -M transaction. Once platform specific metrics
 		 * support has been added to the json files, all architectures
 		 * will use this approach. To determine transaction support
-		 * on an architecture test क्रम such a metric name.
+		 * on an architecture test for such a metric name.
 		 */
-		अगर (metricgroup__has_metric("transaction")) अणु
-			काष्ठा option opt = अणु .value = &evsel_list पूर्ण;
+		if (metricgroup__has_metric("transaction")) {
+			struct option opt = { .value = &evsel_list };
 
-			वापस metricgroup__parse_groups(&opt, "transaction",
+			return metricgroup__parse_groups(&opt, "transaction",
 							 stat_config.metric_no_group,
 							stat_config.metric_no_merge,
 							 &stat_config.metric_events);
-		पूर्ण
+		}
 
-		अगर (pmu_have_event("cpu", "cycles-ct") &&
+		if (pmu_have_event("cpu", "cycles-ct") &&
 		    pmu_have_event("cpu", "el-start"))
 			err = parse_events(evsel_list, transaction_attrs,
 					   &errinfo);
-		अन्यथा
+		else
 			err = parse_events(evsel_list,
 					   transaction_limited_attrs,
 					   &errinfo);
-		अगर (err) अणु
-			ख_लिखो(मानक_त्रुटि, "Cannot set up transaction events\n");
-			parse_events_prपूर्णांक_error(&errinfo, transaction_attrs);
-			वापस -1;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+		if (err) {
+			fprintf(stderr, "Cannot set up transaction events\n");
+			parse_events_print_error(&errinfo, transaction_attrs);
+			return -1;
+		}
+		return 0;
+	}
 
-	अगर (smi_cost) अणु
-		पूर्णांक smi;
+	if (smi_cost) {
+		int smi;
 
-		अगर (sysfs__पढ़ो_पूर्णांक(FREEZE_ON_SMI_PATH, &smi) < 0) अणु
-			ख_लिखो(मानक_त्रुटि, "freeze_on_smi is not supported.\n");
-			वापस -1;
-		पूर्ण
+		if (sysfs__read_int(FREEZE_ON_SMI_PATH, &smi) < 0) {
+			fprintf(stderr, "freeze_on_smi is not supported.\n");
+			return -1;
+		}
 
-		अगर (!smi) अणु
-			अगर (sysfs__ग_लिखो_पूर्णांक(FREEZE_ON_SMI_PATH, 1) < 0) अणु
-				ख_लिखो(मानक_त्रुटि, "Failed to set freeze_on_smi.\n");
-				वापस -1;
-			पूर्ण
+		if (!smi) {
+			if (sysfs__write_int(FREEZE_ON_SMI_PATH, 1) < 0) {
+				fprintf(stderr, "Failed to set freeze_on_smi.\n");
+				return -1;
+			}
 			smi_reset = true;
-		पूर्ण
+		}
 
-		अगर (pmu_have_event("msr", "aperf") &&
-		    pmu_have_event("msr", "smi")) अणु
-			अगर (!क्रमce_metric_only)
+		if (pmu_have_event("msr", "aperf") &&
+		    pmu_have_event("msr", "smi")) {
+			if (!force_metric_only)
 				stat_config.metric_only = true;
 			err = parse_events(evsel_list, smi_cost_attrs, &errinfo);
-		पूर्ण अन्यथा अणु
-			ख_लिखो(मानक_त्रुटि, "To measure SMI cost, it needs "
+		} else {
+			fprintf(stderr, "To measure SMI cost, it needs "
 				"msr/aperf/, msr/smi/ and cpu/cycles/ support\n");
-			parse_events_prपूर्णांक_error(&errinfo, smi_cost_attrs);
-			वापस -1;
-		पूर्ण
-		अगर (err) अणु
-			parse_events_prपूर्णांक_error(&errinfo, smi_cost_attrs);
-			ख_लिखो(मानक_त्रुटि, "Cannot set up SMI cost events\n");
-			वापस -1;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+			parse_events_print_error(&errinfo, smi_cost_attrs);
+			return -1;
+		}
+		if (err) {
+			parse_events_print_error(&errinfo, smi_cost_attrs);
+			fprintf(stderr, "Cannot set up SMI cost events\n");
+			return -1;
+		}
+		return 0;
+	}
 
-	अगर (topकरोwn_run) अणु
-		स्थिर अक्षर **metric_attrs = topकरोwn_metric_attrs;
-		अचिन्हित पूर्णांक max_level = 1;
-		अक्षर *str = शून्य;
+	if (topdown_run) {
+		const char **metric_attrs = topdown_metric_attrs;
+		unsigned int max_level = 1;
+		char *str = NULL;
 		bool warn = false;
 
-		अगर (!क्रमce_metric_only)
+		if (!force_metric_only)
 			stat_config.metric_only = true;
 
-		अगर (pmu_have_event("cpu", topकरोwn_metric_L2_attrs[5])) अणु
-			metric_attrs = topकरोwn_metric_L2_attrs;
+		if (pmu_have_event("cpu", topdown_metric_L2_attrs[5])) {
+			metric_attrs = topdown_metric_L2_attrs;
 			max_level = 2;
-		पूर्ण
+		}
 
-		अगर (stat_config.topकरोwn_level > max_level) अणु
+		if (stat_config.topdown_level > max_level) {
 			pr_err("Invalid top-down metrics level. The max level is %u.\n", max_level);
-			वापस -1;
-		पूर्ण अन्यथा अगर (!stat_config.topकरोwn_level)
-			stat_config.topकरोwn_level = max_level;
+			return -1;
+		} else if (!stat_config.topdown_level)
+			stat_config.topdown_level = max_level;
 
-		अगर (topकरोwn_filter_events(metric_attrs, &str, 1) < 0) अणु
+		if (topdown_filter_events(metric_attrs, &str, 1) < 0) {
 			pr_err("Out of memory\n");
-			वापस -1;
-		पूर्ण
-		अगर (metric_attrs[0] && str) अणु
-			अगर (!stat_config.पूर्णांकerval && !stat_config.metric_only) अणु
-				ख_लिखो(stat_config.output,
+			return -1;
+		}
+		if (metric_attrs[0] && str) {
+			if (!stat_config.interval && !stat_config.metric_only) {
+				fprintf(stat_config.output,
 					"Topdown accuracy may decrease when measuring long periods.\n"
 					"Please print the result regularly, e.g. -I1000\n");
-			पूर्ण
-			जाओ setup_metrics;
-		पूर्ण
+			}
+			goto setup_metrics;
+		}
 
-		zमुक्त(&str);
+		zfree(&str);
 
-		अगर (stat_config.aggr_mode != AGGR_GLOBAL &&
-		    stat_config.aggr_mode != AGGR_CORE) अणु
+		if (stat_config.aggr_mode != AGGR_GLOBAL &&
+		    stat_config.aggr_mode != AGGR_CORE) {
 			pr_err("top down event configuration requires --per-core mode\n");
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 		stat_config.aggr_mode = AGGR_CORE;
-		अगर (nr_cgroups || !target__has_cpu(&target)) अणु
+		if (nr_cgroups || !target__has_cpu(&target)) {
 			pr_err("top down event configuration requires system-wide mode (-a)\n");
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
-		अगर (topकरोwn_filter_events(topकरोwn_attrs, &str,
-				arch_topकरोwn_check_group(&warn)) < 0) अणु
+		if (topdown_filter_events(topdown_attrs, &str,
+				arch_topdown_check_group(&warn)) < 0) {
 			pr_err("Out of memory\n");
-			वापस -1;
-		पूर्ण
-		अगर (topकरोwn_attrs[0] && str) अणु
-			अगर (warn)
-				arch_topकरोwn_group_warn();
+			return -1;
+		}
+		if (topdown_attrs[0] && str) {
+			if (warn)
+				arch_topdown_group_warn();
 setup_metrics:
 			err = parse_events(evsel_list, str, &errinfo);
-			अगर (err) अणु
-				ख_लिखो(मानक_त्रुटि,
+			if (err) {
+				fprintf(stderr,
 					"Cannot set up top down events %s: %d\n",
 					str, err);
-				parse_events_prपूर्णांक_error(&errinfo, str);
-				मुक्त(str);
-				वापस -1;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			ख_लिखो(मानक_त्रुटि, "System does not support topdown\n");
-			वापस -1;
-		पूर्ण
-		मुक्त(str);
-	पूर्ण
+				parse_events_print_error(&errinfo, str);
+				free(str);
+				return -1;
+			}
+		} else {
+			fprintf(stderr, "System does not support topdown\n");
+			return -1;
+		}
+		free(str);
+	}
 
-	अगर (!evsel_list->core.nr_entries) अणु
-		अगर (perf_pmu__has_hybrid()) अणु
-			स्थिर अक्षर *hybrid_str = "cycles,instructions,branches,branch-misses";
+	if (!evsel_list->core.nr_entries) {
+		if (perf_pmu__has_hybrid()) {
+			const char *hybrid_str = "cycles,instructions,branches,branch-misses";
 
-			अगर (target__has_cpu(&target))
-				शेष_sw_attrs[0].config = PERF_COUNT_SW_CPU_CLOCK;
+			if (target__has_cpu(&target))
+				default_sw_attrs[0].config = PERF_COUNT_SW_CPU_CLOCK;
 
-			अगर (evlist__add_शेष_attrs(evsel_list,
-						      शेष_sw_attrs) < 0) अणु
-				वापस -1;
-			पूर्ण
+			if (evlist__add_default_attrs(evsel_list,
+						      default_sw_attrs) < 0) {
+				return -1;
+			}
 
 			err = parse_events(evsel_list, hybrid_str, &errinfo);
-			अगर (err) अणु
-				ख_लिखो(मानक_त्रुटि,
+			if (err) {
+				fprintf(stderr,
 					"Cannot set up hybrid events %s: %d\n",
 					hybrid_str, err);
-				parse_events_prपूर्णांक_error(&errinfo, hybrid_str);
-				वापस -1;
-			पूर्ण
-			वापस err;
-		पूर्ण
+				parse_events_print_error(&errinfo, hybrid_str);
+				return -1;
+			}
+			return err;
+		}
 
-		अगर (target__has_cpu(&target))
-			शेष_attrs0[0].config = PERF_COUNT_SW_CPU_CLOCK;
+		if (target__has_cpu(&target))
+			default_attrs0[0].config = PERF_COUNT_SW_CPU_CLOCK;
 
-		अगर (evlist__add_शेष_attrs(evsel_list, शेष_attrs0) < 0)
-			वापस -1;
-		अगर (pmu_have_event("cpu", "stalled-cycles-frontend")) अणु
-			अगर (evlist__add_शेष_attrs(evsel_list, frontend_attrs) < 0)
-				वापस -1;
-		पूर्ण
-		अगर (pmu_have_event("cpu", "stalled-cycles-backend")) अणु
-			अगर (evlist__add_शेष_attrs(evsel_list, backend_attrs) < 0)
-				वापस -1;
-		पूर्ण
-		अगर (evlist__add_शेष_attrs(evsel_list, शेष_attrs1) < 0)
-			वापस -1;
+		if (evlist__add_default_attrs(evsel_list, default_attrs0) < 0)
+			return -1;
+		if (pmu_have_event("cpu", "stalled-cycles-frontend")) {
+			if (evlist__add_default_attrs(evsel_list, frontend_attrs) < 0)
+				return -1;
+		}
+		if (pmu_have_event("cpu", "stalled-cycles-backend")) {
+			if (evlist__add_default_attrs(evsel_list, backend_attrs) < 0)
+				return -1;
+		}
+		if (evlist__add_default_attrs(evsel_list, default_attrs1) < 0)
+			return -1;
 
-		अगर (arch_evlist__add_शेष_attrs(evsel_list) < 0)
-			वापस -1;
-	पूर्ण
+		if (arch_evlist__add_default_attrs(evsel_list) < 0)
+			return -1;
+	}
 
 	/* Detailed events get appended to the event list: */
 
-	अगर (detailed_run <  1)
-		वापस 0;
+	if (detailed_run <  1)
+		return 0;
 
 	/* Append detailed run extra attributes: */
-	अगर (evlist__add_शेष_attrs(evsel_list, detailed_attrs) < 0)
-		वापस -1;
+	if (evlist__add_default_attrs(evsel_list, detailed_attrs) < 0)
+		return -1;
 
-	अगर (detailed_run < 2)
-		वापस 0;
+	if (detailed_run < 2)
+		return 0;
 
 	/* Append very detailed run extra attributes: */
-	अगर (evlist__add_शेष_attrs(evsel_list, very_detailed_attrs) < 0)
-		वापस -1;
+	if (evlist__add_default_attrs(evsel_list, very_detailed_attrs) < 0)
+		return -1;
 
-	अगर (detailed_run < 3)
-		वापस 0;
+	if (detailed_run < 3)
+		return 0;
 
 	/* Append very, very detailed run extra attributes: */
-	वापस evlist__add_शेष_attrs(evsel_list, very_very_detailed_attrs);
-पूर्ण
+	return evlist__add_default_attrs(evsel_list, very_very_detailed_attrs);
+}
 
-अटल स्थिर अक्षर * स्थिर stat_record_usage[] = अणु
+static const char * const stat_record_usage[] = {
 	"perf stat record [<options>]",
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल व्योम init_features(काष्ठा perf_session *session)
-अणु
-	पूर्णांक feat;
+static void init_features(struct perf_session *session)
+{
+	int feat;
 
-	क्रम (feat = HEADER_FIRST_FEATURE; feat < HEADER_LAST_FEATURE; feat++)
+	for (feat = HEADER_FIRST_FEATURE; feat < HEADER_LAST_FEATURE; feat++)
 		perf_header__set_feat(&session->header, feat);
 
-	perf_header__clear_feat(&session->header, HEADER_सूची_FORMAT);
+	perf_header__clear_feat(&session->header, HEADER_DIR_FORMAT);
 	perf_header__clear_feat(&session->header, HEADER_BUILD_ID);
 	perf_header__clear_feat(&session->header, HEADER_TRACING_DATA);
 	perf_header__clear_feat(&session->header, HEADER_BRANCH_STACK);
 	perf_header__clear_feat(&session->header, HEADER_AUXTRACE);
-पूर्ण
+}
 
-अटल पूर्णांक __cmd_record(पूर्णांक argc, स्थिर अक्षर **argv)
-अणु
-	काष्ठा perf_session *session;
-	काष्ठा perf_data *data = &perf_stat.data;
+static int __cmd_record(int argc, const char **argv)
+{
+	struct perf_session *session;
+	struct perf_data *data = &perf_stat.data;
 
 	argc = parse_options(argc, argv, stat_options, stat_record_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 
-	अगर (output_name)
+	if (output_name)
 		data->path = output_name;
 
-	अगर (stat_config.run_count != 1 || क्रमever) अणु
+	if (stat_config.run_count != 1 || forever) {
 		pr_err("Cannot use -r option with perf stat record.\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	session = perf_session__new(data, false, शून्य);
-	अगर (IS_ERR(session)) अणु
+	session = perf_session__new(data, false, NULL);
+	if (IS_ERR(session)) {
 		pr_err("Perf session creation failed\n");
-		वापस PTR_ERR(session);
-	पूर्ण
+		return PTR_ERR(session);
+	}
 
 	init_features(session);
 
 	session->evlist   = evsel_list;
 	perf_stat.session = session;
 	perf_stat.record  = true;
-	वापस argc;
-पूर्ण
+	return argc;
+}
 
-अटल पूर्णांक process_stat_round_event(काष्ठा perf_session *session,
-				    जोड़ perf_event *event)
-अणु
-	काष्ठा perf_record_stat_round *stat_round = &event->stat_round;
-	काष्ठा evsel *counter;
-	काष्ठा बारpec tsh, *ts = शून्य;
-	स्थिर अक्षर **argv = session->header.env.cmdline_argv;
-	पूर्णांक argc = session->header.env.nr_cmdline;
+static int process_stat_round_event(struct perf_session *session,
+				    union perf_event *event)
+{
+	struct perf_record_stat_round *stat_round = &event->stat_round;
+	struct evsel *counter;
+	struct timespec tsh, *ts = NULL;
+	const char **argv = session->header.env.cmdline_argv;
+	int argc = session->header.env.nr_cmdline;
 
-	evlist__क्रम_each_entry(evsel_list, counter)
+	evlist__for_each_entry(evsel_list, counter)
 		perf_stat_process_counter(&stat_config, counter);
 
-	अगर (stat_round->type == PERF_STAT_ROUND_TYPE__FINAL)
-		update_stats(&wallसमय_nsecs_stats, stat_round->समय);
+	if (stat_round->type == PERF_STAT_ROUND_TYPE__FINAL)
+		update_stats(&walltime_nsecs_stats, stat_round->time);
 
-	अगर (stat_config.पूर्णांकerval && stat_round->समय) अणु
-		tsh.tv_sec  = stat_round->समय / NSEC_PER_SEC;
-		tsh.tv_nsec = stat_round->समय % NSEC_PER_SEC;
+	if (stat_config.interval && stat_round->time) {
+		tsh.tv_sec  = stat_round->time / NSEC_PER_SEC;
+		tsh.tv_nsec = stat_round->time % NSEC_PER_SEC;
 		ts = &tsh;
-	पूर्ण
+	}
 
-	prपूर्णांक_counters(ts, argc, argv);
-	वापस 0;
-पूर्ण
+	print_counters(ts, argc, argv);
+	return 0;
+}
 
-अटल
-पूर्णांक process_stat_config_event(काष्ठा perf_session *session,
-			      जोड़ perf_event *event)
-अणु
-	काष्ठा perf_tool *tool = session->tool;
-	काष्ठा perf_stat *st = container_of(tool, काष्ठा perf_stat, tool);
+static
+int process_stat_config_event(struct perf_session *session,
+			      union perf_event *event)
+{
+	struct perf_tool *tool = session->tool;
+	struct perf_stat *st = container_of(tool, struct perf_stat, tool);
 
-	perf_event__पढ़ो_stat_config(&stat_config, &event->stat_config);
+	perf_event__read_stat_config(&stat_config, &event->stat_config);
 
-	अगर (perf_cpu_map__empty(st->cpus)) अणु
-		अगर (st->aggr_mode != AGGR_UNSET)
+	if (perf_cpu_map__empty(st->cpus)) {
+		if (st->aggr_mode != AGGR_UNSET)
 			pr_warning("warning: processing task data, aggregation mode not set\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (st->aggr_mode != AGGR_UNSET)
+	if (st->aggr_mode != AGGR_UNSET)
 		stat_config.aggr_mode = st->aggr_mode;
 
-	अगर (perf_stat.data.is_pipe)
+	if (perf_stat.data.is_pipe)
 		perf_stat_init_aggr_mode();
-	अन्यथा
+	else
 		perf_stat_init_aggr_mode_file(st);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक set_maps(काष्ठा perf_stat *st)
-अणु
-	अगर (!st->cpus || !st->thपढ़ोs)
-		वापस 0;
+static int set_maps(struct perf_stat *st)
+{
+	if (!st->cpus || !st->threads)
+		return 0;
 
-	अगर (WARN_ONCE(st->maps_allocated, "stats double allocation\n"))
-		वापस -EINVAL;
+	if (WARN_ONCE(st->maps_allocated, "stats double allocation\n"))
+		return -EINVAL;
 
-	perf_evlist__set_maps(&evsel_list->core, st->cpus, st->thपढ़ोs);
+	perf_evlist__set_maps(&evsel_list->core, st->cpus, st->threads);
 
-	अगर (evlist__alloc_stats(evsel_list, true))
-		वापस -ENOMEM;
+	if (evlist__alloc_stats(evsel_list, true))
+		return -ENOMEM;
 
 	st->maps_allocated = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल
-पूर्णांक process_thपढ़ो_map_event(काष्ठा perf_session *session,
-			     जोड़ perf_event *event)
-अणु
-	काष्ठा perf_tool *tool = session->tool;
-	काष्ठा perf_stat *st = container_of(tool, काष्ठा perf_stat, tool);
+static
+int process_thread_map_event(struct perf_session *session,
+			     union perf_event *event)
+{
+	struct perf_tool *tool = session->tool;
+	struct perf_stat *st = container_of(tool, struct perf_stat, tool);
 
-	अगर (st->thपढ़ोs) अणु
+	if (st->threads) {
 		pr_warning("Extra thread map event, ignoring.\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	st->thपढ़ोs = thपढ़ो_map__new_event(&event->thपढ़ो_map);
-	अगर (!st->thपढ़ोs)
-		वापस -ENOMEM;
+	st->threads = thread_map__new_event(&event->thread_map);
+	if (!st->threads)
+		return -ENOMEM;
 
-	वापस set_maps(st);
-पूर्ण
+	return set_maps(st);
+}
 
-अटल
-पूर्णांक process_cpu_map_event(काष्ठा perf_session *session,
-			  जोड़ perf_event *event)
-अणु
-	काष्ठा perf_tool *tool = session->tool;
-	काष्ठा perf_stat *st = container_of(tool, काष्ठा perf_stat, tool);
-	काष्ठा perf_cpu_map *cpus;
+static
+int process_cpu_map_event(struct perf_session *session,
+			  union perf_event *event)
+{
+	struct perf_tool *tool = session->tool;
+	struct perf_stat *st = container_of(tool, struct perf_stat, tool);
+	struct perf_cpu_map *cpus;
 
-	अगर (st->cpus) अणु
+	if (st->cpus) {
 		pr_warning("Extra cpu map event, ignoring.\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	cpus = cpu_map__new_data(&event->cpu_map.data);
-	अगर (!cpus)
-		वापस -ENOMEM;
+	if (!cpus)
+		return -ENOMEM;
 
 	st->cpus = cpus;
-	वापस set_maps(st);
-पूर्ण
+	return set_maps(st);
+}
 
-अटल स्थिर अक्षर * स्थिर stat_report_usage[] = अणु
+static const char * const stat_report_usage[] = {
 	"perf stat report [<options>]",
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा perf_stat perf_stat = अणु
-	.tool = अणु
+static struct perf_stat perf_stat = {
+	.tool = {
 		.attr		= perf_event__process_attr,
 		.event_update	= perf_event__process_event_update,
-		.thपढ़ो_map	= process_thपढ़ो_map_event,
+		.thread_map	= process_thread_map_event,
 		.cpu_map	= process_cpu_map_event,
 		.stat_config	= process_stat_config_event,
 		.stat		= perf_event__process_stat_event,
 		.stat_round	= process_stat_round_event,
-	पूर्ण,
+	},
 	.aggr_mode = AGGR_UNSET,
-पूर्ण;
+};
 
-अटल पूर्णांक __cmd_report(पूर्णांक argc, स्थिर अक्षर **argv)
-अणु
-	काष्ठा perf_session *session;
-	स्थिर काष्ठा option options[] = अणु
+static int __cmd_report(int argc, const char **argv)
+{
+	struct perf_session *session;
+	const struct option options[] = {
 	OPT_STRING('i', "input", &input_name, "file", "input file name"),
 	OPT_SET_UINT(0, "per-socket", &perf_stat.aggr_mode,
 		     "aggregate counts per processor socket", AGGR_SOCKET),
@@ -2150,87 +2149,87 @@ setup_metrics:
 	OPT_SET_UINT('A', "no-aggr", &perf_stat.aggr_mode,
 		     "disable CPU count aggregation", AGGR_NONE),
 	OPT_END()
-	पूर्ण;
-	काष्ठा stat st;
-	पूर्णांक ret;
+	};
+	struct stat st;
+	int ret;
 
 	argc = parse_options(argc, argv, options, stat_report_usage, 0);
 
-	अगर (!input_name || !म_माप(input_name)) अणु
-		अगर (!ख_स्थिति(STDIN_खाताNO, &st) && S_ISFIFO(st.st_mode))
+	if (!input_name || !strlen(input_name)) {
+		if (!fstat(STDIN_FILENO, &st) && S_ISFIFO(st.st_mode))
 			input_name = "-";
-		अन्यथा
+		else
 			input_name = "perf.data";
-	पूर्ण
+	}
 
 	perf_stat.data.path = input_name;
 	perf_stat.data.mode = PERF_DATA_MODE_READ;
 
 	session = perf_session__new(&perf_stat.data, false, &perf_stat.tool);
-	अगर (IS_ERR(session))
-		वापस PTR_ERR(session);
+	if (IS_ERR(session))
+		return PTR_ERR(session);
 
 	perf_stat.session  = session;
-	stat_config.output = मानक_त्रुटि;
+	stat_config.output = stderr;
 	evsel_list         = session->evlist;
 
 	ret = perf_session__process_events(session);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	perf_session__delete(session);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम setup_प्रणाली_wide(पूर्णांक विभाजनs)
-अणु
+static void setup_system_wide(int forks)
+{
 	/*
-	 * Make प्रणाली wide (-a) the शेष target अगर
-	 * no target was specअगरied and one of following
+	 * Make system wide (-a) the default target if
+	 * no target was specified and one of following
 	 * conditions is met:
 	 *
-	 *   - there's no workload specअगरied
-	 *   - there is workload specअगरied but all requested
-	 *     events are प्रणाली wide events
+	 *   - there's no workload specified
+	 *   - there is workload specified but all requested
+	 *     events are system wide events
 	 */
-	अगर (!target__none(&target))
-		वापस;
+	if (!target__none(&target))
+		return;
 
-	अगर (!विभाजनs)
-		target.प्रणाली_wide = true;
-	अन्यथा अणु
-		काष्ठा evsel *counter;
+	if (!forks)
+		target.system_wide = true;
+	else {
+		struct evsel *counter;
 
-		evlist__क्रम_each_entry(evsel_list, counter) अणु
-			अगर (!counter->core.प्रणाली_wide &&
-			    म_भेद(counter->name, "duration_time")) अणु
-				वापस;
-			पूर्ण
-		पूर्ण
+		evlist__for_each_entry(evsel_list, counter) {
+			if (!counter->core.system_wide &&
+			    strcmp(counter->name, "duration_time")) {
+				return;
+			}
+		}
 
-		अगर (evsel_list->core.nr_entries)
-			target.प्रणाली_wide = true;
-	पूर्ण
-पूर्ण
+		if (evsel_list->core.nr_entries)
+			target.system_wide = true;
+	}
+}
 
-पूर्णांक cmd_stat(पूर्णांक argc, स्थिर अक्षर **argv)
-अणु
-	स्थिर अक्षर * स्थिर stat_usage[] = अणु
+int cmd_stat(int argc, const char **argv)
+{
+	const char * const stat_usage[] = {
 		"perf stat [<options>] [<command>]",
-		शून्य
-	पूर्ण;
-	पूर्णांक status = -EINVAL, run_idx, err;
-	स्थिर अक्षर *mode;
-	खाता *output = मानक_त्रुटि;
-	अचिन्हित पूर्णांक पूर्णांकerval, समयout;
-	स्थिर अक्षर * स्थिर stat_subcommands[] = अणु "record", "report" पूर्ण;
-	अक्षर errbuf[बफ_मान];
+		NULL
+	};
+	int status = -EINVAL, run_idx, err;
+	const char *mode;
+	FILE *output = stderr;
+	unsigned int interval, timeout;
+	const char * const stat_subcommands[] = { "record", "report" };
+	char errbuf[BUFSIZ];
 
-	रखो_क्षेत्र(LC_ALL, "");
+	setlocale(LC_ALL, "");
 
 	evsel_list = evlist__new();
-	अगर (evsel_list == शून्य)
-		वापस -ENOMEM;
+	if (evsel_list == NULL)
+		return -ENOMEM;
 
 	parse_events__shrink_config_terms();
 
@@ -2240,363 +2239,363 @@ setup_metrics:
 	set_option_flag(stat_options, 'G', "cgroup", PARSE_OPT_NONEG);
 
 	argc = parse_options_subcommand(argc, argv, stat_options, stat_subcommands,
-					(स्थिर अक्षर **) stat_usage,
+					(const char **) stat_usage,
 					PARSE_OPT_STOP_AT_NON_OPTION);
 	perf_stat__collect_metric_expr(evsel_list);
-	perf_stat__init_shaकरोw_stats();
+	perf_stat__init_shadow_stats();
 
-	अगर (stat_config.csv_sep) अणु
+	if (stat_config.csv_sep) {
 		stat_config.csv_output = true;
-		अगर (!म_भेद(stat_config.csv_sep, "\\t"))
+		if (!strcmp(stat_config.csv_sep, "\\t"))
 			stat_config.csv_sep = "\t";
-	पूर्ण अन्यथा
+	} else
 		stat_config.csv_sep = DEFAULT_SEPARATOR;
 
-	अगर (argc && !म_भेदन(argv[0], "rec", 3)) अणु
+	if (argc && !strncmp(argv[0], "rec", 3)) {
 		argc = __cmd_record(argc, argv);
-		अगर (argc < 0)
-			वापस -1;
-	पूर्ण अन्यथा अगर (argc && !म_भेदन(argv[0], "rep", 3))
-		वापस __cmd_report(argc, argv);
+		if (argc < 0)
+			return -1;
+	} else if (argc && !strncmp(argv[0], "rep", 3))
+		return __cmd_report(argc, argv);
 
-	पूर्णांकerval = stat_config.पूर्णांकerval;
-	समयout = stat_config.समयout;
+	interval = stat_config.interval;
+	timeout = stat_config.timeout;
 
 	/*
-	 * For record command the -o is alपढ़ोy taken care of.
+	 * For record command the -o is already taken care of.
 	 */
-	अगर (!STAT_RECORD && output_name && म_भेद(output_name, "-"))
-		output = शून्य;
+	if (!STAT_RECORD && output_name && strcmp(output_name, "-"))
+		output = NULL;
 
-	अगर (output_name && output_fd) अणु
-		ख_लिखो(मानक_त्रुटि, "cannot use both --output and --log-fd\n");
+	if (output_name && output_fd) {
+		fprintf(stderr, "cannot use both --output and --log-fd\n");
 		parse_options_usage(stat_usage, stat_options, "o", 1);
-		parse_options_usage(शून्य, stat_options, "log-fd", 0);
-		जाओ out;
-	पूर्ण
+		parse_options_usage(NULL, stat_options, "log-fd", 0);
+		goto out;
+	}
 
-	अगर (stat_config.metric_only && stat_config.aggr_mode == AGGR_THREAD) अणु
-		ख_लिखो(मानक_त्रुटि, "--metric-only is not supported with --per-thread\n");
-		जाओ out;
-	पूर्ण
+	if (stat_config.metric_only && stat_config.aggr_mode == AGGR_THREAD) {
+		fprintf(stderr, "--metric-only is not supported with --per-thread\n");
+		goto out;
+	}
 
-	अगर (stat_config.metric_only && stat_config.run_count > 1) अणु
-		ख_लिखो(मानक_त्रुटि, "--metric-only is not supported with -r\n");
-		जाओ out;
-	पूर्ण
+	if (stat_config.metric_only && stat_config.run_count > 1) {
+		fprintf(stderr, "--metric-only is not supported with -r\n");
+		goto out;
+	}
 
-	अगर (stat_config.wallसमय_run_table && stat_config.run_count <= 1) अणु
-		ख_लिखो(मानक_त्रुटि, "--table is only supported with -r\n");
+	if (stat_config.walltime_run_table && stat_config.run_count <= 1) {
+		fprintf(stderr, "--table is only supported with -r\n");
 		parse_options_usage(stat_usage, stat_options, "r", 1);
-		parse_options_usage(शून्य, stat_options, "table", 0);
-		जाओ out;
-	पूर्ण
+		parse_options_usage(NULL, stat_options, "table", 0);
+		goto out;
+	}
 
-	अगर (output_fd < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "argument to --log-fd must be a > 0\n");
+	if (output_fd < 0) {
+		fprintf(stderr, "argument to --log-fd must be a > 0\n");
 		parse_options_usage(stat_usage, stat_options, "log-fd", 0);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!output && !stat_config.quiet) अणु
-		काष्ठा बारpec पंचांग;
+	if (!output && !stat_config.quiet) {
+		struct timespec tm;
 		mode = append_file ? "a" : "w";
 
-		output = ख_खोलो(output_name, mode);
-		अगर (!output) अणु
-			लिखो_त्रुटि("failed to create output file");
-			वापस -1;
-		पूर्ण
-		घड़ी_समय_लो(CLOCK_REALTIME, &पंचांग);
-		ख_लिखो(output, "# started on %s\n", स_समय(&पंचांग.tv_sec));
-	पूर्ण अन्यथा अगर (output_fd > 0) अणु
+		output = fopen(output_name, mode);
+		if (!output) {
+			perror("failed to create output file");
+			return -1;
+		}
+		clock_gettime(CLOCK_REALTIME, &tm);
+		fprintf(output, "# started on %s\n", ctime(&tm.tv_sec));
+	} else if (output_fd > 0) {
 		mode = append_file ? "a" : "w";
-		output = fकरोpen(output_fd, mode);
-		अगर (!output) अणु
-			लिखो_त्रुटि("Failed opening logfd");
-			वापस -त्रुटि_सं;
-		पूर्ण
-	पूर्ण
+		output = fdopen(output_fd, mode);
+		if (!output) {
+			perror("Failed opening logfd");
+			return -errno;
+		}
+	}
 
 	stat_config.output = output;
 
 	/*
-	 * let the spपढ़ोsheet करो the pretty-prपूर्णांकing
+	 * let the spreadsheet do the pretty-printing
 	 */
-	अगर (stat_config.csv_output) अणु
+	if (stat_config.csv_output) {
 		/* User explicitly passed -B? */
-		अगर (big_num_opt == 1) अणु
-			ख_लिखो(मानक_त्रुटि, "-B option not supported with -x\n");
+		if (big_num_opt == 1) {
+			fprintf(stderr, "-B option not supported with -x\n");
 			parse_options_usage(stat_usage, stat_options, "B", 1);
-			parse_options_usage(शून्य, stat_options, "x", 1);
-			जाओ out;
-		पूर्ण अन्यथा /* Nope, so disable big number क्रमmatting */
+			parse_options_usage(NULL, stat_options, "x", 1);
+			goto out;
+		} else /* Nope, so disable big number formatting */
 			stat_config.big_num = false;
-	पूर्ण अन्यथा अगर (big_num_opt == 0) /* User passed --no-big-num */
+	} else if (big_num_opt == 0) /* User passed --no-big-num */
 		stat_config.big_num = false;
 
 	err = target__validate(&target);
-	अगर (err) अणु
-		target__म_त्रुटि(&target, err, errbuf, बफ_मान);
+	if (err) {
+		target__strerror(&target, err, errbuf, BUFSIZ);
 		pr_warning("%s\n", errbuf);
-	पूर्ण
+	}
 
-	setup_प्रणाली_wide(argc);
+	setup_system_wide(argc);
 
 	/*
-	 * Display user/प्रणाली बार only क्रम single
-	 * run and when there's specअगरied tracee.
+	 * Display user/system times only for single
+	 * run and when there's specified tracee.
 	 */
-	अगर ((stat_config.run_count == 1) && target__none(&target))
+	if ((stat_config.run_count == 1) && target__none(&target))
 		stat_config.ru_display = true;
 
-	अगर (stat_config.run_count < 0) अणु
+	if (stat_config.run_count < 0) {
 		pr_err("Run count must be a positive number\n");
 		parse_options_usage(stat_usage, stat_options, "r", 1);
-		जाओ out;
-	पूर्ण अन्यथा अगर (stat_config.run_count == 0) अणु
-		क्रमever = true;
+		goto out;
+	} else if (stat_config.run_count == 0) {
+		forever = true;
 		stat_config.run_count = 1;
-	पूर्ण
+	}
 
-	अगर (stat_config.wallसमय_run_table) अणु
-		stat_config.wallसमय_run = zalloc(stat_config.run_count * माप(stat_config.wallसमय_run[0]));
-		अगर (!stat_config.wallसमय_run) अणु
+	if (stat_config.walltime_run_table) {
+		stat_config.walltime_run = zalloc(stat_config.run_count * sizeof(stat_config.walltime_run[0]));
+		if (!stat_config.walltime_run) {
 			pr_err("failed to setup -r option");
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर ((stat_config.aggr_mode == AGGR_THREAD) &&
-		!target__has_task(&target)) अणु
-		अगर (!target.प्रणाली_wide || target.cpu_list) अणु
-			ख_लिखो(मानक_त्रुटि, "The --per-thread option is only "
+	if ((stat_config.aggr_mode == AGGR_THREAD) &&
+		!target__has_task(&target)) {
+		if (!target.system_wide || target.cpu_list) {
+			fprintf(stderr, "The --per-thread option is only "
 				"available when monitoring via -p -t -a "
 				"options or only --per-thread.\n");
-			parse_options_usage(शून्य, stat_options, "p", 1);
-			parse_options_usage(शून्य, stat_options, "t", 1);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			parse_options_usage(NULL, stat_options, "p", 1);
+			parse_options_usage(NULL, stat_options, "t", 1);
+			goto out;
+		}
+	}
 
 	/*
-	 * no_aggr, cgroup are क्रम प्रणाली-wide only
-	 * --per-thपढ़ो is aggregated per thपढ़ो, we करोnt mix it with cpu mode
+	 * no_aggr, cgroup are for system-wide only
+	 * --per-thread is aggregated per thread, we dont mix it with cpu mode
 	 */
-	अगर (((stat_config.aggr_mode != AGGR_GLOBAL &&
+	if (((stat_config.aggr_mode != AGGR_GLOBAL &&
 	      stat_config.aggr_mode != AGGR_THREAD) || nr_cgroups) &&
-	    !target__has_cpu(&target)) अणु
-		ख_लिखो(मानक_त्रुटि, "both cgroup and no-aggregation "
+	    !target__has_cpu(&target)) {
+		fprintf(stderr, "both cgroup and no-aggregation "
 			"modes only available in system-wide mode\n");
 
 		parse_options_usage(stat_usage, stat_options, "G", 1);
-		parse_options_usage(शून्य, stat_options, "A", 1);
-		parse_options_usage(शून्य, stat_options, "a", 1);
-		जाओ out;
-	पूर्ण
+		parse_options_usage(NULL, stat_options, "A", 1);
+		parse_options_usage(NULL, stat_options, "a", 1);
+		goto out;
+	}
 
-	अगर (stat_config.iostat_run) अणु
+	if (stat_config.iostat_run) {
 		status = iostat_prepare(evsel_list, &stat_config);
-		अगर (status)
-			जाओ out;
-		अगर (iostat_mode == IOSTAT_LIST) अणु
+		if (status)
+			goto out;
+		if (iostat_mode == IOSTAT_LIST) {
 			iostat_list(evsel_list, &stat_config);
-			जाओ out;
-		पूर्ण अन्यथा अगर (verbose)
+			goto out;
+		} else if (verbose)
 			iostat_list(evsel_list, &stat_config);
-	पूर्ण
+	}
 
-	अगर (add_शेष_attributes())
-		जाओ out;
+	if (add_default_attributes())
+		goto out;
 
-	अगर (stat_config.cgroup_list) अणु
-		अगर (nr_cgroups > 0) अणु
+	if (stat_config.cgroup_list) {
+		if (nr_cgroups > 0) {
 			pr_err("--cgroup and --for-each-cgroup cannot be used together\n");
 			parse_options_usage(stat_usage, stat_options, "G", 1);
-			parse_options_usage(शून्य, stat_options, "for-each-cgroup", 0);
-			जाओ out;
-		पूर्ण
+			parse_options_usage(NULL, stat_options, "for-each-cgroup", 0);
+			goto out;
+		}
 
-		अगर (evlist__expand_cgroup(evsel_list, stat_config.cgroup_list,
-					  &stat_config.metric_events, true) < 0) अणु
+		if (evlist__expand_cgroup(evsel_list, stat_config.cgroup_list,
+					  &stat_config.metric_events, true) < 0) {
 			parse_options_usage(stat_usage, stat_options,
 					    "for-each-cgroup", 0);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर ((stat_config.aggr_mode == AGGR_THREAD) && (target.प्रणाली_wide))
-		target.per_thपढ़ो = true;
+	if ((stat_config.aggr_mode == AGGR_THREAD) && (target.system_wide))
+		target.per_thread = true;
 
-	अगर (evlist__create_maps(evsel_list, &target) < 0) अणु
-		अगर (target__has_task(&target)) अणु
+	if (evlist__create_maps(evsel_list, &target) < 0) {
+		if (target__has_task(&target)) {
 			pr_err("Problems finding threads of monitor\n");
 			parse_options_usage(stat_usage, stat_options, "p", 1);
-			parse_options_usage(शून्य, stat_options, "t", 1);
-		पूर्ण अन्यथा अगर (target__has_cpu(&target)) अणु
-			लिखो_त्रुटि("failed to parse CPUs map");
+			parse_options_usage(NULL, stat_options, "t", 1);
+		} else if (target__has_cpu(&target)) {
+			perror("failed to parse CPUs map");
 			parse_options_usage(stat_usage, stat_options, "C", 1);
-			parse_options_usage(शून्य, stat_options, "a", 1);
-		पूर्ण
-		जाओ out;
-	पूर्ण
+			parse_options_usage(NULL, stat_options, "a", 1);
+		}
+		goto out;
+	}
 
 	evlist__check_cpu_maps(evsel_list);
 
-	अगर (perf_pmu__has_hybrid())
+	if (perf_pmu__has_hybrid())
 		stat_config.no_merge = true;
 
 	/*
-	 * Initialize thपढ़ो_map with comm names,
-	 * so we could prपूर्णांक it out on output.
+	 * Initialize thread_map with comm names,
+	 * so we could print it out on output.
 	 */
-	अगर (stat_config.aggr_mode == AGGR_THREAD) अणु
-		thपढ़ो_map__पढ़ो_comms(evsel_list->core.thपढ़ोs);
-		अगर (target.प्रणाली_wide) अणु
-			अगर (runसमय_stat_new(&stat_config,
-				perf_thपढ़ो_map__nr(evsel_list->core.thपढ़ोs))) अणु
-				जाओ out;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+	if (stat_config.aggr_mode == AGGR_THREAD) {
+		thread_map__read_comms(evsel_list->core.threads);
+		if (target.system_wide) {
+			if (runtime_stat_new(&stat_config,
+				perf_thread_map__nr(evsel_list->core.threads))) {
+				goto out;
+			}
+		}
+	}
 
-	अगर (stat_config.aggr_mode == AGGR_NODE)
+	if (stat_config.aggr_mode == AGGR_NODE)
 		cpu__setup_cpunode_map();
 
-	अगर (stat_config.बार && पूर्णांकerval)
-		पूर्णांकerval_count = true;
-	अन्यथा अगर (stat_config.बार && !पूर्णांकerval) अणु
+	if (stat_config.times && interval)
+		interval_count = true;
+	else if (stat_config.times && !interval) {
 		pr_err("interval-count option should be used together with "
 				"interval-print.\n");
 		parse_options_usage(stat_usage, stat_options, "interval-count", 0);
 		parse_options_usage(stat_usage, stat_options, "I", 1);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (समयout && समयout < 100) अणु
-		अगर (समयout < 10) अणु
+	if (timeout && timeout < 100) {
+		if (timeout < 10) {
 			pr_err("timeout must be >= 10ms.\n");
 			parse_options_usage(stat_usage, stat_options, "timeout", 0);
-			जाओ out;
-		पूर्ण अन्यथा
+			goto out;
+		} else
 			pr_warning("timeout < 100ms. "
 				   "The overhead percentage could be high in some cases. "
 				   "Please proceed with caution.\n");
-	पूर्ण
-	अगर (समयout && पूर्णांकerval) अणु
+	}
+	if (timeout && interval) {
 		pr_err("timeout option is not supported with interval-print.\n");
 		parse_options_usage(stat_usage, stat_options, "timeout", 0);
 		parse_options_usage(stat_usage, stat_options, "I", 1);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (evlist__alloc_stats(evsel_list, पूर्णांकerval))
-		जाओ out;
+	if (evlist__alloc_stats(evsel_list, interval))
+		goto out;
 
-	अगर (perf_stat_init_aggr_mode())
-		जाओ out;
+	if (perf_stat_init_aggr_mode())
+		goto out;
 
 	/*
 	 * Set sample_type to PERF_SAMPLE_IDENTIFIER, which should be harmless
-	 * जबतक aव्योमing that older tools show confusing messages.
+	 * while avoiding that older tools show confusing messages.
 	 *
-	 * However क्रम pipe sessions we need to keep it zero,
+	 * However for pipe sessions we need to keep it zero,
 	 * because script's perf_evsel__check_attr is triggered
 	 * by attr->sample_type != 0, and we can't run it on
 	 * stat sessions.
 	 */
-	stat_config.identअगरier = !(STAT_RECORD && perf_stat.data.is_pipe);
+	stat_config.identifier = !(STAT_RECORD && perf_stat.data.is_pipe);
 
 	/*
-	 * We करोnt want to block the संकेतs - that would cause
+	 * We dont want to block the signals - that would cause
 	 * child tasks to inherit that and Ctrl-C would not work.
-	 * What we want is क्रम Ctrl-C to work in the exec()-ed
+	 * What we want is for Ctrl-C to work in the exec()-ed
 	 * task, but being ignored by perf stat itself:
 	 */
-	निकास_पर(sig_निकास_पर);
-	अगर (!क्रमever)
-		संकेत(संक_विघ्न,  skip_संकेत);
-	संकेत(SIGCHLD, skip_संकेत);
-	संकेत(SIGALRM, skip_संकेत);
-	संकेत(SIGABRT, skip_संकेत);
+	atexit(sig_atexit);
+	if (!forever)
+		signal(SIGINT,  skip_signal);
+	signal(SIGCHLD, skip_signal);
+	signal(SIGALRM, skip_signal);
+	signal(SIGABRT, skip_signal);
 
-	अगर (evlist__initialize_ctlfd(evsel_list, stat_config.ctl_fd, stat_config.ctl_fd_ack))
-		जाओ out;
+	if (evlist__initialize_ctlfd(evsel_list, stat_config.ctl_fd, stat_config.ctl_fd_ack))
+		goto out;
 
 	status = 0;
-	क्रम (run_idx = 0; क्रमever || run_idx < stat_config.run_count; run_idx++) अणु
-		अगर (stat_config.run_count != 1 && verbose > 0)
-			ख_लिखो(output, "[ perf stat: executing run #%d ... ]\n",
+	for (run_idx = 0; forever || run_idx < stat_config.run_count; run_idx++) {
+		if (stat_config.run_count != 1 && verbose > 0)
+			fprintf(output, "[ perf stat: executing run #%d ... ]\n",
 				run_idx + 1);
 
-		अगर (run_idx != 0)
+		if (run_idx != 0)
 			evlist__reset_prev_raw_counts(evsel_list);
 
 		status = run_perf_stat(argc, argv, run_idx);
-		अगर (क्रमever && status != -1 && !पूर्णांकerval) अणु
-			prपूर्णांक_counters(शून्य, argc, argv);
+		if (forever && status != -1 && !interval) {
+			print_counters(NULL, argc, argv);
 			perf_stat__reset_stats();
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!क्रमever && status != -1 && (!पूर्णांकerval || stat_config.summary))
-		prपूर्णांक_counters(शून्य, argc, argv);
+	if (!forever && status != -1 && (!interval || stat_config.summary))
+		print_counters(NULL, argc, argv);
 
 	evlist__finalize_ctlfd(evsel_list);
 
-	अगर (STAT_RECORD) अणु
+	if (STAT_RECORD) {
 		/*
 		 * We synthesize the kernel mmap record just so that older tools
-		 * करोn't emit warnings about not being able to resolve symbols
+		 * don't emit warnings about not being able to resolve symbols
 		 * due to /proc/sys/kernel/kptr_restrict settings and instead provide
 		 * a saner message about no samples being in the perf.data file.
 		 *
 		 * This also serves to suppress a warning about f_header.data.size == 0
-		 * in header.c at the moment 'perf stat record' माला_लो पूर्णांकroduced, which
-		 * is not really needed once we start adding the stat specअगरic PERF_RECORD_
+		 * in header.c at the moment 'perf stat record' gets introduced, which
+		 * is not really needed once we start adding the stat specific PERF_RECORD_
 		 * records, but the need to suppress the kptr_restrict messages in older
-		 * tools reमुख्य  -acme
+		 * tools remain  -acme
 		 */
-		पूर्णांक fd = perf_data__fd(&perf_stat.data);
+		int fd = perf_data__fd(&perf_stat.data);
 
-		err = perf_event__synthesize_kernel_mmap((व्योम *)&perf_stat,
+		err = perf_event__synthesize_kernel_mmap((void *)&perf_stat,
 							 process_synthesized_event,
 							 &perf_stat.session->machines.host);
-		अगर (err) अणु
+		if (err) {
 			pr_warning("Couldn't synthesize the kernel mmap record, harmless, "
 				   "older tools may produce warnings about this file\n.");
-		पूर्ण
+		}
 
-		अगर (!पूर्णांकerval) अणु
-			अगर (WRITE_STAT_ROUND_EVENT(wallसमय_nsecs_stats.max, FINAL))
+		if (!interval) {
+			if (WRITE_STAT_ROUND_EVENT(walltime_nsecs_stats.max, FINAL))
 				pr_err("failed to write stat round event\n");
-		पूर्ण
+		}
 
-		अगर (!perf_stat.data.is_pipe) अणु
+		if (!perf_stat.data.is_pipe) {
 			perf_stat.session->header.data_size += perf_stat.bytes_written;
-			perf_session__ग_लिखो_header(perf_stat.session, evsel_list, fd, true);
-		पूर्ण
+			perf_session__write_header(perf_stat.session, evsel_list, fd, true);
+		}
 
-		evlist__बंद(evsel_list);
+		evlist__close(evsel_list);
 		perf_session__delete(perf_stat.session);
-	पूर्ण
+	}
 
-	perf_stat__निकास_aggr_mode();
-	evlist__मुक्त_stats(evsel_list);
+	perf_stat__exit_aggr_mode();
+	evlist__free_stats(evsel_list);
 out:
-	अगर (stat_config.iostat_run)
+	if (stat_config.iostat_run)
 		iostat_release(evsel_list);
 
-	zमुक्त(&stat_config.wallसमय_run);
+	zfree(&stat_config.walltime_run);
 
-	अगर (smi_cost && smi_reset)
-		sysfs__ग_लिखो_पूर्णांक(FREEZE_ON_SMI_PATH, 0);
+	if (smi_cost && smi_reset)
+		sysfs__write_int(FREEZE_ON_SMI_PATH, 0);
 
 	evlist__delete(evsel_list);
 
-	metricgroup__rblist_निकास(&stat_config.metric_events);
-	runसमय_stat_delete(&stat_config);
-	evlist__बंद_control(stat_config.ctl_fd, stat_config.ctl_fd_ack, &stat_config.ctl_fd_बंद);
+	metricgroup__rblist_exit(&stat_config.metric_events);
+	runtime_stat_delete(&stat_config);
+	evlist__close_control(stat_config.ctl_fd, stat_config.ctl_fd_ack, &stat_config.ctl_fd_close);
 
-	वापस status;
-पूर्ण
+	return status;
+}

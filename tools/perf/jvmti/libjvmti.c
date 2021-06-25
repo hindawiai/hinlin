@@ -1,421 +1,420 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/compiler.h>
-#समावेश <linux/माला.स>
-#समावेश <sys/types.h>
-#समावेश <मानकपन.स>
-#समावेश <माला.स>
-#समावेश <मानककोष.स>
-#समावेश <err.h>
-#समावेश <jvmti.h>
-#अगर_घोषित HAVE_JVMTI_CMLR
-#समावेश <jvmticmlr.h>
-#पूर्ण_अगर
-#समावेश <सीमा.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/compiler.h>
+#include <linux/string.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <err.h>
+#include <jvmti.h>
+#ifdef HAVE_JVMTI_CMLR
+#include <jvmticmlr.h>
+#endif
+#include <limits.h>
 
-#समावेश "jvmti_agent.h"
+#include "jvmti_agent.h"
 
-अटल पूर्णांक has_line_numbers;
-व्योम *jvmti_agent;
+static int has_line_numbers;
+void *jvmti_agent;
 
-अटल व्योम prपूर्णांक_error(jvmtiEnv *jvmti, स्थिर अक्षर *msg, jvmtiError ret)
-अणु
-	अक्षर *err_msg = शून्य;
+static void print_error(jvmtiEnv *jvmti, const char *msg, jvmtiError ret)
+{
+	char *err_msg = NULL;
 	jvmtiError err;
 	err = (*jvmti)->GetErrorName(jvmti, ret, &err_msg);
-	अगर (err == JVMTI_ERROR_NONE) अणु
+	if (err == JVMTI_ERROR_NONE) {
 		warnx("%s failed with %s", msg, err_msg);
-		(*jvmti)->Deallocate(jvmti, (अचिन्हित अक्षर *)err_msg);
-	पूर्ण अन्यथा अणु
+		(*jvmti)->Deallocate(jvmti, (unsigned char *)err_msg);
+	} else {
 		warnx("%s failed with an unknown error %d", msg, ret);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अगर_घोषित HAVE_JVMTI_CMLR
-अटल jvmtiError
-करो_get_line_number(jvmtiEnv *jvmti, व्योम *pc, jmethodID m, jपूर्णांक bci,
+#ifdef HAVE_JVMTI_CMLR
+static jvmtiError
+do_get_line_number(jvmtiEnv *jvmti, void *pc, jmethodID m, jint bci,
 		   jvmti_line_info_t *tab)
-अणु
-	jपूर्णांक i, nr_lines = 0;
-	jvmtiLineNumberEntry *loc_tab = शून्य;
+{
+	jint i, nr_lines = 0;
+	jvmtiLineNumberEntry *loc_tab = NULL;
 	jvmtiError ret;
-	jपूर्णांक src_line = -1;
+	jint src_line = -1;
 
 	ret = (*jvmti)->GetLineNumberTable(jvmti, m, &nr_lines, &loc_tab);
-	अगर (ret == JVMTI_ERROR_ABSENT_INFORMATION || ret == JVMTI_ERROR_NATIVE_METHOD) अणु
-		/* No debug inक्रमmation क्रम this method */
-		वापस ret;
-	पूर्ण अन्यथा अगर (ret != JVMTI_ERROR_NONE) अणु
-		prपूर्णांक_error(jvmti, "GetLineNumberTable", ret);
-		वापस ret;
-	पूर्ण
+	if (ret == JVMTI_ERROR_ABSENT_INFORMATION || ret == JVMTI_ERROR_NATIVE_METHOD) {
+		/* No debug information for this method */
+		return ret;
+	} else if (ret != JVMTI_ERROR_NONE) {
+		print_error(jvmti, "GetLineNumberTable", ret);
+		return ret;
+	}
 
-	क्रम (i = 0; i < nr_lines && loc_tab[i].start_location <= bci; i++) अणु
+	for (i = 0; i < nr_lines && loc_tab[i].start_location <= bci; i++) {
 		src_line = i;
-	पूर्ण
+	}
 
-	अगर (src_line != -1) अणु
-		tab->pc = (अचिन्हित दीर्घ)pc;
+	if (src_line != -1) {
+		tab->pc = (unsigned long)pc;
 		tab->line_number = loc_tab[src_line].line_number;
 		tab->discrim = 0; /* not yet used */
 		tab->methodID = m;
 
 		ret = JVMTI_ERROR_NONE;
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = JVMTI_ERROR_ABSENT_INFORMATION;
-	पूर्ण
+	}
 
-	(*jvmti)->Deallocate(jvmti, (अचिन्हित अक्षर *)loc_tab);
+	(*jvmti)->Deallocate(jvmti, (unsigned char *)loc_tab);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल jvmtiError
-get_line_numbers(jvmtiEnv *jvmti, स्थिर व्योम *compile_info, jvmti_line_info_t **tab, पूर्णांक *nr_lines)
-अणु
-	स्थिर jvmtiCompiledMethodLoadRecordHeader *hdr;
+static jvmtiError
+get_line_numbers(jvmtiEnv *jvmti, const void *compile_info, jvmti_line_info_t **tab, int *nr_lines)
+{
+	const jvmtiCompiledMethodLoadRecordHeader *hdr;
 	jvmtiCompiledMethodLoadInlineRecord *rec;
 	PCStackInfo *c;
-	jपूर्णांक ret;
-	पूर्णांक nr_total = 0;
-	पूर्णांक i, lines_total = 0;
+	jint ret;
+	int nr_total = 0;
+	int i, lines_total = 0;
 
-	अगर (!(tab && nr_lines))
-		वापस JVMTI_ERROR_शून्य_POINTER;
+	if (!(tab && nr_lines))
+		return JVMTI_ERROR_NULL_POINTER;
 
 	/*
 	 * Phase 1 -- get the number of lines necessary
 	 */
-	क्रम (hdr = compile_info; hdr != शून्य; hdr = hdr->next) अणु
-		अगर (hdr->kind == JVMTI_CMLR_INLINE_INFO) अणु
+	for (hdr = compile_info; hdr != NULL; hdr = hdr->next) {
+		if (hdr->kind == JVMTI_CMLR_INLINE_INFO) {
 			rec = (jvmtiCompiledMethodLoadInlineRecord *)hdr;
 			nr_total += rec->numpcs;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (nr_total == 0)
-		वापस JVMTI_ERROR_NOT_FOUND;
+	if (nr_total == 0)
+		return JVMTI_ERROR_NOT_FOUND;
 
 	/*
 	 * Phase 2 -- allocate big enough line table
 	 */
-	*tab = दो_स्मृति(nr_total * माप(**tab));
-	अगर (!*tab)
-		वापस JVMTI_ERROR_OUT_OF_MEMORY;
+	*tab = malloc(nr_total * sizeof(**tab));
+	if (!*tab)
+		return JVMTI_ERROR_OUT_OF_MEMORY;
 
-	क्रम (hdr = compile_info; hdr != शून्य; hdr = hdr->next) अणु
-		अगर (hdr->kind == JVMTI_CMLR_INLINE_INFO) अणु
+	for (hdr = compile_info; hdr != NULL; hdr = hdr->next) {
+		if (hdr->kind == JVMTI_CMLR_INLINE_INFO) {
 			rec = (jvmtiCompiledMethodLoadInlineRecord *)hdr;
-			क्रम (i = 0; i < rec->numpcs; i++) अणु
+			for (i = 0; i < rec->numpcs; i++) {
 				c = rec->pcinfo + i;
                                 /*
-                                 * c->methods is the stack of अंतरभूतd method calls
+                                 * c->methods is the stack of inlined method calls
                                  * at c->pc. [0] is the leaf method. Caller frames
                                  * are ignored at the moment.
                                  */
-				ret = करो_get_line_number(jvmti, c->pc,
+				ret = do_get_line_number(jvmti, c->pc,
 							 c->methods[0],
 							 c->bcis[0],
 							 *tab + lines_total);
-				अगर (ret == JVMTI_ERROR_NONE)
+				if (ret == JVMTI_ERROR_NONE)
 					lines_total++;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	*nr_lines = lines_total;
-	वापस JVMTI_ERROR_NONE;
-पूर्ण
-#अन्यथा /* HAVE_JVMTI_CMLR */
+	return JVMTI_ERROR_NONE;
+}
+#else /* HAVE_JVMTI_CMLR */
 
-अटल jvmtiError
-get_line_numbers(jvmtiEnv *jvmti __maybe_unused, स्थिर व्योम *compile_info __maybe_unused,
-		 jvmti_line_info_t **tab __maybe_unused, पूर्णांक *nr_lines __maybe_unused)
-अणु
-	वापस JVMTI_ERROR_NONE;
-पूर्ण
-#पूर्ण_अगर /* HAVE_JVMTI_CMLR */
+static jvmtiError
+get_line_numbers(jvmtiEnv *jvmti __maybe_unused, const void *compile_info __maybe_unused,
+		 jvmti_line_info_t **tab __maybe_unused, int *nr_lines __maybe_unused)
+{
+	return JVMTI_ERROR_NONE;
+}
+#endif /* HAVE_JVMTI_CMLR */
 
-अटल व्योम
-copy_class_filename(स्थिर अक्षर * class_sign, स्थिर अक्षर * file_name, अक्षर * result, माप_प्रकार max_length)
-अणु
+static void
+copy_class_filename(const char * class_sign, const char * file_name, char * result, size_t max_length)
+{
 	/*
 	* Assume path name is class hierarchy, this is a common practice with Java programs
 	*/
-	अगर (*class_sign == 'L') अणु
-		पूर्णांक j, i = 0;
-		अक्षर *p = म_खोजप(class_sign, '/');
-		अगर (p) अणु
+	if (*class_sign == 'L') {
+		int j, i = 0;
+		char *p = strrchr(class_sign, '/');
+		if (p) {
 			/* drop the 'L' prefix and copy up to the final '/' */
-			क्रम (i = 0; i < (p - class_sign); i++)
+			for (i = 0; i < (p - class_sign); i++)
 				result[i] = class_sign[i+1];
-		पूर्ण
+		}
 		/*
-		* append file name, we use loops and not string ops to aव्योम modअगरying
-		* class_sign which is used later क्रम the symbol name
+		* append file name, we use loops and not string ops to avoid modifying
+		* class_sign which is used later for the symbol name
 		*/
-		क्रम (j = 0; i < (max_length - 1) && file_name && j < म_माप(file_name); j++, i++)
+		for (j = 0; i < (max_length - 1) && file_name && j < strlen(file_name); j++, i++)
 			result[i] = file_name[j];
 
 		result[i] = '\0';
-	पूर्ण अन्यथा अणु
-		/* fallback हाल */
+	} else {
+		/* fallback case */
 		strlcpy(result, file_name, max_length);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल jvmtiError
-get_source_filename(jvmtiEnv *jvmti, jmethodID methodID, अक्षर ** buffer)
-अणु
+static jvmtiError
+get_source_filename(jvmtiEnv *jvmti, jmethodID methodID, char ** buffer)
+{
 	jvmtiError ret;
 	jclass decl_class;
-	अक्षर *file_name = शून्य;
-	अक्षर *class_sign = शून्य;
-	अक्षर fn[PATH_MAX];
-	माप_प्रकार len;
+	char *file_name = NULL;
+	char *class_sign = NULL;
+	char fn[PATH_MAX];
+	size_t len;
 
 	ret = (*jvmti)->GetMethodDeclaringClass(jvmti, methodID, &decl_class);
-	अगर (ret != JVMTI_ERROR_NONE) अणु
-		prपूर्णांक_error(jvmti, "GetMethodDeclaringClass", ret);
-		वापस ret;
-	पूर्ण
+	if (ret != JVMTI_ERROR_NONE) {
+		print_error(jvmti, "GetMethodDeclaringClass", ret);
+		return ret;
+	}
 
 	ret = (*jvmti)->GetSourceFileName(jvmti, decl_class, &file_name);
-	अगर (ret != JVMTI_ERROR_NONE) अणु
-		prपूर्णांक_error(jvmti, "GetSourceFileName", ret);
-		वापस ret;
-	पूर्ण
+	if (ret != JVMTI_ERROR_NONE) {
+		print_error(jvmti, "GetSourceFileName", ret);
+		return ret;
+	}
 
-	ret = (*jvmti)->GetClassSignature(jvmti, decl_class, &class_sign, शून्य);
-	अगर (ret != JVMTI_ERROR_NONE) अणु
-		prपूर्णांक_error(jvmti, "GetClassSignature", ret);
-		जाओ मुक्त_file_name_error;
-	पूर्ण
+	ret = (*jvmti)->GetClassSignature(jvmti, decl_class, &class_sign, NULL);
+	if (ret != JVMTI_ERROR_NONE) {
+		print_error(jvmti, "GetClassSignature", ret);
+		goto free_file_name_error;
+	}
 
 	copy_class_filename(class_sign, file_name, fn, PATH_MAX);
-	len = म_माप(fn);
-	*buffer = दो_स्मृति((len + 1) * माप(अक्षर));
-	अगर (!*buffer) अणु
-		prपूर्णांक_error(jvmti, "GetClassSignature", ret);
+	len = strlen(fn);
+	*buffer = malloc((len + 1) * sizeof(char));
+	if (!*buffer) {
+		print_error(jvmti, "GetClassSignature", ret);
 		ret = JVMTI_ERROR_OUT_OF_MEMORY;
-		जाओ मुक्त_class_sign_error;
-	पूर्ण
-	म_नकल(*buffer, fn);
+		goto free_class_sign_error;
+	}
+	strcpy(*buffer, fn);
 	ret = JVMTI_ERROR_NONE;
 
-मुक्त_class_sign_error:
-	(*jvmti)->Deallocate(jvmti, (अचिन्हित अक्षर *)class_sign);
-मुक्त_file_name_error:
-	(*jvmti)->Deallocate(jvmti, (अचिन्हित अक्षर *)file_name);
+free_class_sign_error:
+	(*jvmti)->Deallocate(jvmti, (unsigned char *)class_sign);
+free_file_name_error:
+	(*jvmti)->Deallocate(jvmti, (unsigned char *)file_name);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल jvmtiError
-fill_source_filenames(jvmtiEnv *jvmti, पूर्णांक nr_lines,
-		      स्थिर jvmti_line_info_t * line_tab,
-		      अक्षर ** file_names)
-अणु
-	पूर्णांक index;
+static jvmtiError
+fill_source_filenames(jvmtiEnv *jvmti, int nr_lines,
+		      const jvmti_line_info_t * line_tab,
+		      char ** file_names)
+{
+	int index;
 	jvmtiError ret;
 
-	क्रम (index = 0; index < nr_lines; ++index) अणु
+	for (index = 0; index < nr_lines; ++index) {
 		ret = get_source_filename(jvmti, line_tab[index].methodID, &(file_names[index]));
-		अगर (ret != JVMTI_ERROR_NONE)
-			वापस ret;
-	पूर्ण
+		if (ret != JVMTI_ERROR_NONE)
+			return ret;
+	}
 
-	वापस JVMTI_ERROR_NONE;
-पूर्ण
+	return JVMTI_ERROR_NONE;
+}
 
-अटल व्योम JNICALL
+static void JNICALL
 compiled_method_load_cb(jvmtiEnv *jvmti,
 			jmethodID method,
-			jपूर्णांक code_size,
-			व्योम स्थिर *code_addr,
-			jपूर्णांक map_length,
-			jvmtiAddrLocationMap स्थिर *map,
-			स्थिर व्योम *compile_info)
-अणु
-	jvmti_line_info_t *line_tab = शून्य;
-	अक्षर ** line_file_names = शून्य;
+			jint code_size,
+			void const *code_addr,
+			jint map_length,
+			jvmtiAddrLocationMap const *map,
+			const void *compile_info)
+{
+	jvmti_line_info_t *line_tab = NULL;
+	char ** line_file_names = NULL;
 	jclass decl_class;
-	अक्षर *class_sign = शून्य;
-	अक्षर *func_name = शून्य;
-	अक्षर *func_sign = शून्य;
-	uपूर्णांक64_t addr = (uपूर्णांक64_t)(uपूर्णांकptr_t)code_addr;
+	char *class_sign = NULL;
+	char *func_name = NULL;
+	char *func_sign = NULL;
+	uint64_t addr = (uint64_t)(uintptr_t)code_addr;
 	jvmtiError ret;
-	पूर्णांक nr_lines = 0; /* in line_tab[] */
-	माप_प्रकार len;
-	पूर्णांक output_debug_info = 0;
+	int nr_lines = 0; /* in line_tab[] */
+	size_t len;
+	int output_debug_info = 0;
 
 	ret = (*jvmti)->GetMethodDeclaringClass(jvmti, method,
 						&decl_class);
-	अगर (ret != JVMTI_ERROR_NONE) अणु
-		prपूर्णांक_error(jvmti, "GetMethodDeclaringClass", ret);
-		वापस;
-	पूर्ण
+	if (ret != JVMTI_ERROR_NONE) {
+		print_error(jvmti, "GetMethodDeclaringClass", ret);
+		return;
+	}
 
-	अगर (has_line_numbers && map && map_length) अणु
+	if (has_line_numbers && map && map_length) {
 		ret = get_line_numbers(jvmti, compile_info, &line_tab, &nr_lines);
-		अगर (ret != JVMTI_ERROR_NONE) अणु
-			अगर (ret != JVMTI_ERROR_NOT_FOUND) अणु
+		if (ret != JVMTI_ERROR_NONE) {
+			if (ret != JVMTI_ERROR_NOT_FOUND) {
 				warnx("jvmti: cannot get line table for method");
-			पूर्ण
+			}
 			nr_lines = 0;
-		पूर्ण अन्यथा अगर (nr_lines > 0) अणु
-			line_file_names = दो_स्मृति(माप(अक्षर*) * nr_lines);
-			अगर (!line_file_names) अणु
+		} else if (nr_lines > 0) {
+			line_file_names = malloc(sizeof(char*) * nr_lines);
+			if (!line_file_names) {
 				warnx("jvmti: cannot allocate space for line table method names");
-			पूर्ण अन्यथा अणु
-				स_रखो(line_file_names, 0, माप(अक्षर*) * nr_lines);
+			} else {
+				memset(line_file_names, 0, sizeof(char*) * nr_lines);
 				ret = fill_source_filenames(jvmti, nr_lines, line_tab, line_file_names);
-				अगर (ret != JVMTI_ERROR_NONE) अणु
+				if (ret != JVMTI_ERROR_NONE) {
 					warnx("jvmti: fill_source_filenames failed");
-				पूर्ण अन्यथा अणु
+				} else {
 					output_debug_info = 1;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				}
+			}
+		}
+	}
 
 	ret = (*jvmti)->GetClassSignature(jvmti, decl_class,
-					  &class_sign, शून्य);
-	अगर (ret != JVMTI_ERROR_NONE) अणु
-		prपूर्णांक_error(jvmti, "GetClassSignature", ret);
-		जाओ error;
-	पूर्ण
+					  &class_sign, NULL);
+	if (ret != JVMTI_ERROR_NONE) {
+		print_error(jvmti, "GetClassSignature", ret);
+		goto error;
+	}
 
 	ret = (*jvmti)->GetMethodName(jvmti, method, &func_name,
-				      &func_sign, शून्य);
-	अगर (ret != JVMTI_ERROR_NONE) अणु
-		prपूर्णांक_error(jvmti, "GetMethodName", ret);
-		जाओ error;
-	पूर्ण
+				      &func_sign, NULL);
+	if (ret != JVMTI_ERROR_NONE) {
+		print_error(jvmti, "GetMethodName", ret);
+		goto error;
+	}
 
 	/*
-	 * ग_लिखो source line info record अगर we have it
+	 * write source line info record if we have it
 	 */
-	अगर (output_debug_info)
-		अगर (jvmti_ग_लिखो_debug_info(jvmti_agent, addr, nr_lines, line_tab, (स्थिर अक्षर * स्थिर *) line_file_names))
+	if (output_debug_info)
+		if (jvmti_write_debug_info(jvmti_agent, addr, nr_lines, line_tab, (const char * const *) line_file_names))
 			warnx("jvmti: write_debug_info() failed");
 
-	len = म_माप(func_name) + म_माप(class_sign) + म_माप(func_sign) + 2;
-	अणु
-		अक्षर str[len];
-		snम_लिखो(str, len, "%s%s%s", class_sign, func_name, func_sign);
+	len = strlen(func_name) + strlen(class_sign) + strlen(func_sign) + 2;
+	{
+		char str[len];
+		snprintf(str, len, "%s%s%s", class_sign, func_name, func_sign);
 
-		अगर (jvmti_ग_लिखो_code(jvmti_agent, str, addr, code_addr, code_size))
+		if (jvmti_write_code(jvmti_agent, str, addr, code_addr, code_size))
 			warnx("jvmti: write_code() failed");
-	पूर्ण
+	}
 error:
-	(*jvmti)->Deallocate(jvmti, (अचिन्हित अक्षर *)func_name);
-	(*jvmti)->Deallocate(jvmti, (अचिन्हित अक्षर *)func_sign);
-	(*jvmti)->Deallocate(jvmti, (अचिन्हित अक्षर *)class_sign);
-	मुक्त(line_tab);
-	जबतक (line_file_names && (nr_lines > 0)) अणु
-	    अगर (line_file_names[nr_lines - 1]) अणु
-	        मुक्त(line_file_names[nr_lines - 1]);
-	    पूर्ण
+	(*jvmti)->Deallocate(jvmti, (unsigned char *)func_name);
+	(*jvmti)->Deallocate(jvmti, (unsigned char *)func_sign);
+	(*jvmti)->Deallocate(jvmti, (unsigned char *)class_sign);
+	free(line_tab);
+	while (line_file_names && (nr_lines > 0)) {
+	    if (line_file_names[nr_lines - 1]) {
+	        free(line_file_names[nr_lines - 1]);
+	    }
 	    nr_lines -= 1;
-	पूर्ण
-	मुक्त(line_file_names);
-पूर्ण
+	}
+	free(line_file_names);
+}
 
-अटल व्योम JNICALL
+static void JNICALL
 code_generated_cb(jvmtiEnv *jvmti,
-		  अक्षर स्थिर *name,
-		  व्योम स्थिर *code_addr,
-		  jपूर्णांक code_size)
-अणु
-	uपूर्णांक64_t addr = (uपूर्णांक64_t)(अचिन्हित दीर्घ)code_addr;
-	पूर्णांक ret;
+		  char const *name,
+		  void const *code_addr,
+		  jint code_size)
+{
+	uint64_t addr = (uint64_t)(unsigned long)code_addr;
+	int ret;
 
-	ret = jvmti_ग_लिखो_code(jvmti_agent, name, addr, code_addr, code_size);
-	अगर (ret)
+	ret = jvmti_write_code(jvmti_agent, name, addr, code_addr, code_size);
+	if (ret)
 		warnx("jvmti: write_code() failed for code_generated");
-पूर्ण
+}
 
-JNIEXPORT jपूर्णांक JNICALL
-Agent_OnLoad(JavaVM *jvm, अक्षर *options, व्योम *reserved __maybe_unused)
-अणु
+JNIEXPORT jint JNICALL
+Agent_OnLoad(JavaVM *jvm, char *options, void *reserved __maybe_unused)
+{
 	jvmtiEventCallbacks cb;
 	jvmtiCapabilities caps1;
-	jvmtiJlocationFormat क्रमmat;
-	jvmtiEnv *jvmti = शून्य;
-	jपूर्णांक ret;
+	jvmtiJlocationFormat format;
+	jvmtiEnv *jvmti = NULL;
+	jint ret;
 
-	jvmti_agent = jvmti_खोलो();
-	अगर (!jvmti_agent) अणु
+	jvmti_agent = jvmti_open();
+	if (!jvmti_agent) {
 		warnx("jvmti: open_agent failed");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	/*
-	 * Request a JVMTI पूर्णांकerface version 1 environment
+	 * Request a JVMTI interface version 1 environment
 	 */
-	ret = (*jvm)->GetEnv(jvm, (व्योम *)&jvmti, JVMTI_VERSION_1);
-	अगर (ret != JNI_OK) अणु
+	ret = (*jvm)->GetEnv(jvm, (void *)&jvmti, JVMTI_VERSION_1);
+	if (ret != JNI_OK) {
 		warnx("jvmti: jvmti version 1 not supported");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	/*
 	 * acquire method_load capability, we require it
 	 * request line numbers (optional)
 	 */
-	स_रखो(&caps1, 0, माप(caps1));
+	memset(&caps1, 0, sizeof(caps1));
 	caps1.can_generate_compiled_method_load_events = 1;
 
 	ret = (*jvmti)->AddCapabilities(jvmti, &caps1);
-	अगर (ret != JVMTI_ERROR_NONE) अणु
-		prपूर्णांक_error(jvmti, "AddCapabilities", ret);
-		वापस -1;
-	पूर्ण
-	ret = (*jvmti)->GetJLocationFormat(jvmti, &क्रमmat);
-        अगर (ret == JVMTI_ERROR_NONE && क्रमmat == JVMTI_JLOCATION_JVMBCI) अणु
-                स_रखो(&caps1, 0, माप(caps1));
+	if (ret != JVMTI_ERROR_NONE) {
+		print_error(jvmti, "AddCapabilities", ret);
+		return -1;
+	}
+	ret = (*jvmti)->GetJLocationFormat(jvmti, &format);
+        if (ret == JVMTI_ERROR_NONE && format == JVMTI_JLOCATION_JVMBCI) {
+                memset(&caps1, 0, sizeof(caps1));
                 caps1.can_get_line_numbers = 1;
                 caps1.can_get_source_file_name = 1;
 		ret = (*jvmti)->AddCapabilities(jvmti, &caps1);
-                अगर (ret == JVMTI_ERROR_NONE)
+                if (ret == JVMTI_ERROR_NONE)
                         has_line_numbers = 1;
-        पूर्ण अन्यथा अगर (ret != JVMTI_ERROR_NONE)
-		prपूर्णांक_error(jvmti, "GetJLocationFormat", ret);
+        } else if (ret != JVMTI_ERROR_NONE)
+		print_error(jvmti, "GetJLocationFormat", ret);
 
 
-	स_रखो(&cb, 0, माप(cb));
+	memset(&cb, 0, sizeof(cb));
 
 	cb.CompiledMethodLoad   = compiled_method_load_cb;
 	cb.DynamicCodeGenerated = code_generated_cb;
 
-	ret = (*jvmti)->SetEventCallbacks(jvmti, &cb, माप(cb));
-	अगर (ret != JVMTI_ERROR_NONE) अणु
-		prपूर्णांक_error(jvmti, "SetEventCallbacks", ret);
-		वापस -1;
-	पूर्ण
+	ret = (*jvmti)->SetEventCallbacks(jvmti, &cb, sizeof(cb));
+	if (ret != JVMTI_ERROR_NONE) {
+		print_error(jvmti, "SetEventCallbacks", ret);
+		return -1;
+	}
 
-	ret = (*jvmti)->SetEventNotअगरicationMode(jvmti, JVMTI_ENABLE,
-			JVMTI_EVENT_COMPILED_METHOD_LOAD, शून्य);
-	अगर (ret != JVMTI_ERROR_NONE) अणु
-		prपूर्णांक_error(jvmti, "SetEventNotificationMode(METHOD_LOAD)", ret);
-		वापस -1;
-	पूर्ण
+	ret = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
+			JVMTI_EVENT_COMPILED_METHOD_LOAD, NULL);
+	if (ret != JVMTI_ERROR_NONE) {
+		print_error(jvmti, "SetEventNotificationMode(METHOD_LOAD)", ret);
+		return -1;
+	}
 
-	ret = (*jvmti)->SetEventNotअगरicationMode(jvmti, JVMTI_ENABLE,
-			JVMTI_EVENT_DYNAMIC_CODE_GENERATED, शून्य);
-	अगर (ret != JVMTI_ERROR_NONE) अणु
-		prपूर्णांक_error(jvmti, "SetEventNotificationMode(CODE_GENERATED)", ret);
-		वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	ret = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
+			JVMTI_EVENT_DYNAMIC_CODE_GENERATED, NULL);
+	if (ret != JVMTI_ERROR_NONE) {
+		print_error(jvmti, "SetEventNotificationMode(CODE_GENERATED)", ret);
+		return -1;
+	}
+	return 0;
+}
 
-JNIEXPORT व्योम JNICALL
+JNIEXPORT void JNICALL
 Agent_OnUnload(JavaVM *jvm __maybe_unused)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
-	ret = jvmti_बंद(jvmti_agent);
-	अगर (ret)
+	ret = jvmti_close(jvmti_agent);
+	if (ret)
 		errx(1, "Error: op_close_agent()");
-पूर्ण
+}

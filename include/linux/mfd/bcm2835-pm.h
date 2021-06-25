@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 
-#अगर_अघोषित BCM2835_MFD_PM_H
-#घोषणा BCM2835_MFD_PM_H
+#ifndef BCM2835_MFD_PM_H
+#define BCM2835_MFD_PM_H
 
-#समावेश <linux/regmap.h>
+#include <linux/regmap.h>
 
-काष्ठा bcm2835_pm अणु
-	काष्ठा device *dev;
-	व्योम __iomem *base;
-	व्योम __iomem *asb;
-पूर्ण;
+struct bcm2835_pm {
+	struct device *dev;
+	void __iomem *base;
+	void __iomem *asb;
+};
 
-#पूर्ण_अगर /* BCM2835_MFD_PM_H */
+#endif /* BCM2835_MFD_PM_H */

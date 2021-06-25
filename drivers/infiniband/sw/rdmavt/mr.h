@@ -1,45 +1,44 @@
-<शैली गुरु>
-#अगर_अघोषित DEF_RVTMR_H
-#घोषणा DEF_RVTMR_H
+#ifndef DEF_RVTMR_H
+#define DEF_RVTMR_H
 
 /*
  * Copyright(c) 2016 Intel Corporation.
  *
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may करो so under either license.
+ * redistributing this file, you may do so under either license.
  *
  * GPL LICENSE SUMMARY
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License क्रम more details.
+ * General Public License for more details.
  *
  * BSD LICENSE
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  *
  *  - Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- *  - Redistributions in binary क्रमm must reproduce the above copyright
+ *  - Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the करोcumentation and/or other materials provided with the
+ *    the documentation and/or other materials provided with the
  *    distribution.
  *  - Neither the name of Intel Corporation nor the names of its
- *    contributors may be used to enकरोrse or promote products derived
- *    from this software without specअगरic prior written permission.
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -49,31 +48,31 @@
  *
  */
 
-#समावेश <rdma/rdma_vt.h>
+#include <rdma/rdma_vt.h>
 
-काष्ठा rvt_mr अणु
-	काष्ठा ib_mr ibmr;
-	काष्ठा ib_umem *umem;
-	काष्ठा rvt_mregion mr;  /* must be last */
-पूर्ण;
+struct rvt_mr {
+	struct ib_mr ibmr;
+	struct ib_umem *umem;
+	struct rvt_mregion mr;  /* must be last */
+};
 
-अटल अंतरभूत काष्ठा rvt_mr *to_imr(काष्ठा ib_mr *ibmr)
-अणु
-	वापस container_of(ibmr, काष्ठा rvt_mr, ibmr);
-पूर्ण
+static inline struct rvt_mr *to_imr(struct ib_mr *ibmr)
+{
+	return container_of(ibmr, struct rvt_mr, ibmr);
+}
 
-पूर्णांक rvt_driver_mr_init(काष्ठा rvt_dev_info *rdi);
-व्योम rvt_mr_निकास(काष्ठा rvt_dev_info *rdi);
+int rvt_driver_mr_init(struct rvt_dev_info *rdi);
+void rvt_mr_exit(struct rvt_dev_info *rdi);
 
 /* Mem Regions */
-काष्ठा ib_mr *rvt_get_dma_mr(काष्ठा ib_pd *pd, पूर्णांक acc);
-काष्ठा ib_mr *rvt_reg_user_mr(काष्ठा ib_pd *pd, u64 start, u64 length,
-			      u64 virt_addr, पूर्णांक mr_access_flags,
-			      काष्ठा ib_udata *udata);
-पूर्णांक rvt_dereg_mr(काष्ठा ib_mr *ibmr, काष्ठा ib_udata *udata);
-काष्ठा ib_mr *rvt_alloc_mr(काष्ठा ib_pd *pd, क्रमागत ib_mr_type mr_type,
+struct ib_mr *rvt_get_dma_mr(struct ib_pd *pd, int acc);
+struct ib_mr *rvt_reg_user_mr(struct ib_pd *pd, u64 start, u64 length,
+			      u64 virt_addr, int mr_access_flags,
+			      struct ib_udata *udata);
+int rvt_dereg_mr(struct ib_mr *ibmr, struct ib_udata *udata);
+struct ib_mr *rvt_alloc_mr(struct ib_pd *pd, enum ib_mr_type mr_type,
 			   u32 max_num_sg);
-पूर्णांक rvt_map_mr_sg(काष्ठा ib_mr *ibmr, काष्ठा scatterlist *sg,
-		  पूर्णांक sg_nents, अचिन्हित पूर्णांक *sg_offset);
+int rvt_map_mr_sg(struct ib_mr *ibmr, struct scatterlist *sg,
+		  int sg_nents, unsigned int *sg_offset);
 
-#पूर्ण_अगर          /* DEF_RVTMR_H */
+#endif          /* DEF_RVTMR_H */

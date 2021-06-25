@@ -1,55 +1,54 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM hda_पूर्णांकel
-#घोषणा TRACE_INCLUDE_खाता hda_पूर्णांकel_trace
+/* SPDX-License-Identifier: GPL-2.0 */
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM hda_intel
+#define TRACE_INCLUDE_FILE hda_intel_trace
 
-#अगर !defined(_TRACE_HDA_INTEL_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_HDA_INTEL_H
+#if !defined(_TRACE_HDA_INTEL_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_HDA_INTEL_H
 
-#समावेश <linux/tracepoपूर्णांक.h>
+#include <linux/tracepoint.h>
 
 DECLARE_EVENT_CLASS(hda_pm,
-	TP_PROTO(काष्ठा azx *chip),
+	TP_PROTO(struct azx *chip),
 
 	TP_ARGS(chip),
 
 	TP_STRUCT__entry(
-		__field(पूर्णांक, dev_index)
+		__field(int, dev_index)
 	),
 
 	TP_fast_assign(
 		__entry->dev_index = (chip)->dev_index;
 	),
 
-	TP_prपूर्णांकk("card index: %d", __entry->dev_index)
+	TP_printk("card index: %d", __entry->dev_index)
 );
 
 DEFINE_EVENT(hda_pm, azx_suspend,
-	TP_PROTO(काष्ठा azx *chip),
+	TP_PROTO(struct azx *chip),
 	TP_ARGS(chip)
 );
 
 DEFINE_EVENT(hda_pm, azx_resume,
-	TP_PROTO(काष्ठा azx *chip),
+	TP_PROTO(struct azx *chip),
 	TP_ARGS(chip)
 );
 
-#अगर_घोषित CONFIG_PM
-DEFINE_EVENT(hda_pm, azx_runसमय_suspend,
-	TP_PROTO(काष्ठा azx *chip),
+#ifdef CONFIG_PM
+DEFINE_EVENT(hda_pm, azx_runtime_suspend,
+	TP_PROTO(struct azx *chip),
 	TP_ARGS(chip)
 );
 
-DEFINE_EVENT(hda_pm, azx_runसमय_resume,
-	TP_PROTO(काष्ठा azx *chip),
+DEFINE_EVENT(hda_pm, azx_runtime_resume,
+	TP_PROTO(struct azx *chip),
 	TP_ARGS(chip)
 );
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर /* _TRACE_HDA_INTEL_H */
+#endif /* _TRACE_HDA_INTEL_H */
 
 /* This part must be outside protection */
-#अघोषित TRACE_INCLUDE_PATH
-#घोषणा TRACE_INCLUDE_PATH .
-#समावेश <trace/define_trace.h>
+#undef TRACE_INCLUDE_PATH
+#define TRACE_INCLUDE_PATH .
+#include <trace/define_trace.h>

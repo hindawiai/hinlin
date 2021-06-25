@@ -1,66 +1,65 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: LGPL-2.1 OR MIT */
+/* SPDX-License-Identifier: LGPL-2.1 OR MIT */
 /*
  * rseq-skip.h
  *
  * (C) Copyright 2017-2018 - Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
  */
 
-अटल अंतरभूत __attribute__((always_अंतरभूत))
-पूर्णांक rseq_cmpeqv_storev(पूर्णांकptr_t *v, पूर्णांकptr_t expect, पूर्णांकptr_t newv, पूर्णांक cpu)
-अणु
-	वापस -1;
-पूर्ण
+static inline __attribute__((always_inline))
+int rseq_cmpeqv_storev(intptr_t *v, intptr_t expect, intptr_t newv, int cpu)
+{
+	return -1;
+}
 
-अटल अंतरभूत __attribute__((always_अंतरभूत))
-पूर्णांक rseq_cmpnev_storeoffp_load(पूर्णांकptr_t *v, पूर्णांकptr_t expectnot,
-			       off_t voffp, पूर्णांकptr_t *load, पूर्णांक cpu)
-अणु
-	वापस -1;
-पूर्ण
+static inline __attribute__((always_inline))
+int rseq_cmpnev_storeoffp_load(intptr_t *v, intptr_t expectnot,
+			       off_t voffp, intptr_t *load, int cpu)
+{
+	return -1;
+}
 
-अटल अंतरभूत __attribute__((always_अंतरभूत))
-पूर्णांक rseq_addv(पूर्णांकptr_t *v, पूर्णांकptr_t count, पूर्णांक cpu)
-अणु
-	वापस -1;
-पूर्ण
+static inline __attribute__((always_inline))
+int rseq_addv(intptr_t *v, intptr_t count, int cpu)
+{
+	return -1;
+}
 
-अटल अंतरभूत __attribute__((always_अंतरभूत))
-पूर्णांक rseq_cmpeqv_trystorev_storev(पूर्णांकptr_t *v, पूर्णांकptr_t expect,
-				 पूर्णांकptr_t *v2, पूर्णांकptr_t newv2,
-				 पूर्णांकptr_t newv, पूर्णांक cpu)
-अणु
-	वापस -1;
-पूर्ण
+static inline __attribute__((always_inline))
+int rseq_cmpeqv_trystorev_storev(intptr_t *v, intptr_t expect,
+				 intptr_t *v2, intptr_t newv2,
+				 intptr_t newv, int cpu)
+{
+	return -1;
+}
 
-अटल अंतरभूत __attribute__((always_अंतरभूत))
-पूर्णांक rseq_cmpeqv_trystorev_storev_release(पूर्णांकptr_t *v, पूर्णांकptr_t expect,
-					 पूर्णांकptr_t *v2, पूर्णांकptr_t newv2,
-					 पूर्णांकptr_t newv, पूर्णांक cpu)
-अणु
-	वापस -1;
-पूर्ण
+static inline __attribute__((always_inline))
+int rseq_cmpeqv_trystorev_storev_release(intptr_t *v, intptr_t expect,
+					 intptr_t *v2, intptr_t newv2,
+					 intptr_t newv, int cpu)
+{
+	return -1;
+}
 
-अटल अंतरभूत __attribute__((always_अंतरभूत))
-पूर्णांक rseq_cmpeqv_cmpeqv_storev(पूर्णांकptr_t *v, पूर्णांकptr_t expect,
-			      पूर्णांकptr_t *v2, पूर्णांकptr_t expect2,
-			      पूर्णांकptr_t newv, पूर्णांक cpu)
-अणु
-	वापस -1;
-पूर्ण
+static inline __attribute__((always_inline))
+int rseq_cmpeqv_cmpeqv_storev(intptr_t *v, intptr_t expect,
+			      intptr_t *v2, intptr_t expect2,
+			      intptr_t newv, int cpu)
+{
+	return -1;
+}
 
-अटल अंतरभूत __attribute__((always_अंतरभूत))
-पूर्णांक rseq_cmpeqv_tryस_नकल_storev(पूर्णांकptr_t *v, पूर्णांकptr_t expect,
-				 व्योम *dst, व्योम *src, माप_प्रकार len,
-				 पूर्णांकptr_t newv, पूर्णांक cpu)
-अणु
-	वापस -1;
-पूर्ण
+static inline __attribute__((always_inline))
+int rseq_cmpeqv_trymemcpy_storev(intptr_t *v, intptr_t expect,
+				 void *dst, void *src, size_t len,
+				 intptr_t newv, int cpu)
+{
+	return -1;
+}
 
-अटल अंतरभूत __attribute__((always_अंतरभूत))
-पूर्णांक rseq_cmpeqv_tryस_नकल_storev_release(पूर्णांकptr_t *v, पूर्णांकptr_t expect,
-					 व्योम *dst, व्योम *src, माप_प्रकार len,
-					 पूर्णांकptr_t newv, पूर्णांक cpu)
-अणु
-	वापस -1;
-पूर्ण
+static inline __attribute__((always_inline))
+int rseq_cmpeqv_trymemcpy_storev_release(intptr_t *v, intptr_t expect,
+					 void *dst, void *src, size_t len,
+					 intptr_t newv, int cpu)
+{
+	return -1;
+}

@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Renesas R-Car USB2.0 घड़ी selector
+ * Renesas R-Car USB2.0 clock selector
  *
  * Copyright (C) 2017 Renesas Electronics Corp.
  *
@@ -10,209 +9,209 @@
  * Copyright (C) 2015 Glider bvba
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/device.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/reset.h>
-#समावेश <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include <linux/device.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/pm.h>
+#include <linux/pm_runtime.h>
+#include <linux/reset.h>
+#include <linux/slab.h>
 
-#घोषणा USB20_CLKSET0		0x00
-#घोषणा CLKSET0_INTCLK_EN	BIT(11)
-#घोषणा CLKSET0_PRIVATE		BIT(0)
-#घोषणा CLKSET0_EXTAL_ONLY	(CLKSET0_INTCLK_EN | CLKSET0_PRIVATE)
+#define USB20_CLKSET0		0x00
+#define CLKSET0_INTCLK_EN	BIT(11)
+#define CLKSET0_PRIVATE		BIT(0)
+#define CLKSET0_EXTAL_ONLY	(CLKSET0_INTCLK_EN | CLKSET0_PRIVATE)
 
-अटल स्थिर काष्ठा clk_bulk_data rcar_usb2_घड़ीs[] = अणु
-	अणु .id = "ehci_ohci", पूर्ण,
-	अणु .id = "hs-usb-if", पूर्ण,
-पूर्ण;
+static const struct clk_bulk_data rcar_usb2_clocks[] = {
+	{ .id = "ehci_ohci", },
+	{ .id = "hs-usb-if", },
+};
 
-काष्ठा usb2_घड़ी_sel_priv अणु
-	व्योम __iomem *base;
-	काष्ठा clk_hw hw;
-	काष्ठा clk_bulk_data clks[ARRAY_SIZE(rcar_usb2_घड़ीs)];
-	काष्ठा reset_control *rsts;
+struct usb2_clock_sel_priv {
+	void __iomem *base;
+	struct clk_hw hw;
+	struct clk_bulk_data clks[ARRAY_SIZE(rcar_usb2_clocks)];
+	struct reset_control *rsts;
 	bool extal;
 	bool xtal;
-पूर्ण;
-#घोषणा to_priv(_hw)	container_of(_hw, काष्ठा usb2_घड़ी_sel_priv, hw)
+};
+#define to_priv(_hw)	container_of(_hw, struct usb2_clock_sel_priv, hw)
 
-अटल व्योम usb2_घड़ी_sel_enable_extal_only(काष्ठा usb2_घड़ी_sel_priv *priv)
-अणु
-	u16 val = पढ़ोw(priv->base + USB20_CLKSET0);
+static void usb2_clock_sel_enable_extal_only(struct usb2_clock_sel_priv *priv)
+{
+	u16 val = readw(priv->base + USB20_CLKSET0);
 
 	pr_debug("%s: enter %d %d %x\n", __func__,
 		 priv->extal, priv->xtal, val);
 
-	अगर (priv->extal && !priv->xtal && val != CLKSET0_EXTAL_ONLY)
-		ग_लिखोw(CLKSET0_EXTAL_ONLY, priv->base + USB20_CLKSET0);
-पूर्ण
+	if (priv->extal && !priv->xtal && val != CLKSET0_EXTAL_ONLY)
+		writew(CLKSET0_EXTAL_ONLY, priv->base + USB20_CLKSET0);
+}
 
-अटल व्योम usb2_घड़ी_sel_disable_extal_only(काष्ठा usb2_घड़ी_sel_priv *priv)
-अणु
-	अगर (priv->extal && !priv->xtal)
-		ग_लिखोw(CLKSET0_PRIVATE, priv->base + USB20_CLKSET0);
-पूर्ण
+static void usb2_clock_sel_disable_extal_only(struct usb2_clock_sel_priv *priv)
+{
+	if (priv->extal && !priv->xtal)
+		writew(CLKSET0_PRIVATE, priv->base + USB20_CLKSET0);
+}
 
-अटल पूर्णांक usb2_घड़ी_sel_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा usb2_घड़ी_sel_priv *priv = to_priv(hw);
-	पूर्णांक ret;
+static int usb2_clock_sel_enable(struct clk_hw *hw)
+{
+	struct usb2_clock_sel_priv *priv = to_priv(hw);
+	int ret;
 
-	ret = reset_control_deनिश्चित(priv->rsts);
-	अगर (ret)
-		वापस ret;
+	ret = reset_control_deassert(priv->rsts);
+	if (ret)
+		return ret;
 
 	ret = clk_bulk_prepare_enable(ARRAY_SIZE(priv->clks), priv->clks);
-	अगर (ret) अणु
-		reset_control_निश्चित(priv->rsts);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		reset_control_assert(priv->rsts);
+		return ret;
+	}
 
-	usb2_घड़ी_sel_enable_extal_only(priv);
+	usb2_clock_sel_enable_extal_only(priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम usb2_घड़ी_sel_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा usb2_घड़ी_sel_priv *priv = to_priv(hw);
+static void usb2_clock_sel_disable(struct clk_hw *hw)
+{
+	struct usb2_clock_sel_priv *priv = to_priv(hw);
 
-	usb2_घड़ी_sel_disable_extal_only(priv);
+	usb2_clock_sel_disable_extal_only(priv);
 
 	clk_bulk_disable_unprepare(ARRAY_SIZE(priv->clks), priv->clks);
-	reset_control_निश्चित(priv->rsts);
-पूर्ण
+	reset_control_assert(priv->rsts);
+}
 
 /*
  * This module seems a mux, but this driver assumes a gate because
- * ehci/ohci platक्रमm drivers करोn't support clk_set_parent() क्रम now.
- * If this driver acts as a gate, ehci/ohci-platक्रमm drivers करोn't need
- * any modअगरication.
+ * ehci/ohci platform drivers don't support clk_set_parent() for now.
+ * If this driver acts as a gate, ehci/ohci-platform drivers don't need
+ * any modification.
  */
-अटल स्थिर काष्ठा clk_ops usb2_घड़ी_sel_घड़ी_ops = अणु
-	.enable = usb2_घड़ी_sel_enable,
-	.disable = usb2_घड़ी_sel_disable,
-पूर्ण;
+static const struct clk_ops usb2_clock_sel_clock_ops = {
+	.enable = usb2_clock_sel_enable,
+	.disable = usb2_clock_sel_disable,
+};
 
-अटल स्थिर काष्ठा of_device_id rcar_usb2_घड़ी_sel_match[] = अणु
-	अणु .compatible = "renesas,rcar-gen3-usb2-clock-sel" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id rcar_usb2_clock_sel_match[] = {
+	{ .compatible = "renesas,rcar-gen3-usb2-clock-sel" },
+	{ }
+};
 
-अटल पूर्णांक rcar_usb2_घड़ी_sel_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा usb2_घड़ी_sel_priv *priv = dev_get_drvdata(dev);
+static int rcar_usb2_clock_sel_suspend(struct device *dev)
+{
+	struct usb2_clock_sel_priv *priv = dev_get_drvdata(dev);
 
-	usb2_घड़ी_sel_disable_extal_only(priv);
-	pm_runसमय_put(dev);
+	usb2_clock_sel_disable_extal_only(priv);
+	pm_runtime_put(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rcar_usb2_घड़ी_sel_resume(काष्ठा device *dev)
-अणु
-	काष्ठा usb2_घड़ी_sel_priv *priv = dev_get_drvdata(dev);
+static int rcar_usb2_clock_sel_resume(struct device *dev)
+{
+	struct usb2_clock_sel_priv *priv = dev_get_drvdata(dev);
 
-	pm_runसमय_get_sync(dev);
-	usb2_घड़ी_sel_enable_extal_only(priv);
+	pm_runtime_get_sync(dev);
+	usb2_clock_sel_enable_extal_only(priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rcar_usb2_घड़ी_sel_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा usb2_घड़ी_sel_priv *priv = platक्रमm_get_drvdata(pdev);
+static int rcar_usb2_clock_sel_remove(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct usb2_clock_sel_priv *priv = platform_get_drvdata(pdev);
 
 	of_clk_del_provider(dev->of_node);
-	clk_hw_unरेजिस्टर(&priv->hw);
-	pm_runसमय_put(dev);
-	pm_runसमय_disable(dev);
+	clk_hw_unregister(&priv->hw);
+	pm_runtime_put(dev);
+	pm_runtime_disable(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rcar_usb2_घड़ी_sel_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा usb2_घड़ी_sel_priv *priv;
-	काष्ठा clk *clk;
-	काष्ठा clk_init_data init = अणुपूर्ण;
-	पूर्णांक ret;
+static int rcar_usb2_clock_sel_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *np = dev->of_node;
+	struct usb2_clock_sel_priv *priv;
+	struct clk *clk;
+	struct clk_init_data init = {};
+	int ret;
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	priv->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(priv->base))
-		वापस PTR_ERR(priv->base);
+	priv->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(priv->base))
+		return PTR_ERR(priv->base);
 
-	स_नकल(priv->clks, rcar_usb2_घड़ीs, माप(priv->clks));
+	memcpy(priv->clks, rcar_usb2_clocks, sizeof(priv->clks));
 	ret = devm_clk_bulk_get(dev, ARRAY_SIZE(priv->clks), priv->clks);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	priv->rsts = devm_reset_control_array_get_shared(dev);
-	अगर (IS_ERR(priv->rsts))
-		वापस PTR_ERR(priv->rsts);
+	if (IS_ERR(priv->rsts))
+		return PTR_ERR(priv->rsts);
 
-	pm_runसमय_enable(dev);
-	pm_runसमय_get_sync(dev);
+	pm_runtime_enable(dev);
+	pm_runtime_get_sync(dev);
 
 	clk = devm_clk_get(dev, "usb_extal");
-	अगर (!IS_ERR(clk) && !clk_prepare_enable(clk)) अणु
+	if (!IS_ERR(clk) && !clk_prepare_enable(clk)) {
 		priv->extal = !!clk_get_rate(clk);
 		clk_disable_unprepare(clk);
-	पूर्ण
+	}
 	clk = devm_clk_get(dev, "usb_xtal");
-	अगर (!IS_ERR(clk) && !clk_prepare_enable(clk)) अणु
+	if (!IS_ERR(clk) && !clk_prepare_enable(clk)) {
 		priv->xtal = !!clk_get_rate(clk);
 		clk_disable_unprepare(clk);
-	पूर्ण
+	}
 
-	अगर (!priv->extal && !priv->xtal) अणु
+	if (!priv->extal && !priv->xtal) {
 		dev_err(dev, "This driver needs usb_extal or usb_xtal\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 	dev_set_drvdata(dev, priv);
 
 	init.name = "rcar_usb2_clock_sel";
-	init.ops = &usb2_घड़ी_sel_घड़ी_ops;
+	init.ops = &usb2_clock_sel_clock_ops;
 	priv->hw.init = &init;
 
-	clk = clk_रेजिस्टर(शून्य, &priv->hw);
-	अगर (IS_ERR(clk))
-		वापस PTR_ERR(clk);
+	clk = clk_register(NULL, &priv->hw);
+	if (IS_ERR(clk))
+		return PTR_ERR(clk);
 
-	वापस of_clk_add_hw_provider(np, of_clk_hw_simple_get, &priv->hw);
-पूर्ण
+	return of_clk_add_hw_provider(np, of_clk_hw_simple_get, &priv->hw);
+}
 
-अटल स्थिर काष्ठा dev_pm_ops rcar_usb2_घड़ी_sel_pm_ops = अणु
-	.suspend	= rcar_usb2_घड़ी_sel_suspend,
-	.resume		= rcar_usb2_घड़ी_sel_resume,
-पूर्ण;
+static const struct dev_pm_ops rcar_usb2_clock_sel_pm_ops = {
+	.suspend	= rcar_usb2_clock_sel_suspend,
+	.resume		= rcar_usb2_clock_sel_resume,
+};
 
-अटल काष्ठा platक्रमm_driver rcar_usb2_घड़ी_sel_driver = अणु
-	.driver		= अणु
+static struct platform_driver rcar_usb2_clock_sel_driver = {
+	.driver		= {
 		.name	= "rcar-usb2-clock-sel",
-		.of_match_table = rcar_usb2_घड़ी_sel_match,
-		.pm	= &rcar_usb2_घड़ी_sel_pm_ops,
-	पूर्ण,
-	.probe		= rcar_usb2_घड़ी_sel_probe,
-	.हटाओ		= rcar_usb2_घड़ी_sel_हटाओ,
-पूर्ण;
-builtin_platक्रमm_driver(rcar_usb2_घड़ी_sel_driver);
+		.of_match_table = rcar_usb2_clock_sel_match,
+		.pm	= &rcar_usb2_clock_sel_pm_ops,
+	},
+	.probe		= rcar_usb2_clock_sel_probe,
+	.remove		= rcar_usb2_clock_sel_remove,
+};
+builtin_platform_driver(rcar_usb2_clock_sel_driver);
 
 MODULE_DESCRIPTION("Renesas R-Car USB2 clock selector Driver");
 MODULE_LICENSE("GPL v2");

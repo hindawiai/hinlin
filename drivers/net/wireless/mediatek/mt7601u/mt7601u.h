@@ -1,100 +1,99 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (C) 2014 Felix Fietkau <nbd@खोलोwrt.org>
+ * Copyright (C) 2014 Felix Fietkau <nbd@openwrt.org>
  * Copyright (C) 2015 Jakub Kicinski <kubakici@wp.pl>
  */
 
-#अगर_अघोषित MT7601U_H
-#घोषणा MT7601U_H
+#ifndef MT7601U_H
+#define MT7601U_H
 
-#समावेश <linux/bitfield.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/device.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/completion.h>
-#समावेश <net/mac80211.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/average.h>
+#include <linux/bitfield.h>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include <linux/mutex.h>
+#include <linux/usb.h>
+#include <linux/completion.h>
+#include <net/mac80211.h>
+#include <linux/debugfs.h>
+#include <linux/average.h>
 
-#समावेश "regs.h"
+#include "regs.h"
 
-#घोषणा MT_CALIBRATE_INTERVAL		(4 * HZ)
+#define MT_CALIBRATE_INTERVAL		(4 * HZ)
 
-#घोषणा MT_FREQ_CAL_INIT_DELAY		(30 * HZ)
-#घोषणा MT_FREQ_CAL_CHECK_INTERVAL	(10 * HZ)
-#घोषणा MT_FREQ_CAL_ADJ_INTERVAL	(HZ / 2)
+#define MT_FREQ_CAL_INIT_DELAY		(30 * HZ)
+#define MT_FREQ_CAL_CHECK_INTERVAL	(10 * HZ)
+#define MT_FREQ_CAL_ADJ_INTERVAL	(HZ / 2)
 
-#घोषणा MT_BBP_REG_VERSION		0x00
+#define MT_BBP_REG_VERSION		0x00
 
-#घोषणा MT_USB_AGGR_SIZE_LIMIT		28 /* * 1024B */
-#घोषणा MT_USB_AGGR_TIMEOUT		0x80 /* * 33ns */
-#घोषणा MT_RX_ORDER			3
-#घोषणा MT_RX_URB_SIZE			(PAGE_SIZE << MT_RX_ORDER)
+#define MT_USB_AGGR_SIZE_LIMIT		28 /* * 1024B */
+#define MT_USB_AGGR_TIMEOUT		0x80 /* * 33ns */
+#define MT_RX_ORDER			3
+#define MT_RX_URB_SIZE			(PAGE_SIZE << MT_RX_ORDER)
 
-काष्ठा mt7601u_dma_buf अणु
-	काष्ठा urb *urb;
-	व्योम *buf;
+struct mt7601u_dma_buf {
+	struct urb *urb;
+	void *buf;
 	dma_addr_t dma;
-	माप_प्रकार len;
-पूर्ण;
+	size_t len;
+};
 
-काष्ठा mt7601u_mcu अणु
-	काष्ठा mutex mutex;
+struct mt7601u_mcu {
+	struct mutex mutex;
 
 	u8 msg_seq;
 
-	काष्ठा mt7601u_dma_buf resp;
-	काष्ठा completion resp_cmpl;
-पूर्ण;
+	struct mt7601u_dma_buf resp;
+	struct completion resp_cmpl;
+};
 
-काष्ठा mt7601u_freq_cal अणु
-	काष्ठा delayed_work work;
+struct mt7601u_freq_cal {
+	struct delayed_work work;
 	u8 freq;
 	bool enabled;
 	bool adjusting;
-पूर्ण;
+};
 
-काष्ठा mac_stats अणु
+struct mac_stats {
 	u64 rx_stat[6];
 	u64 tx_stat[6];
 	u64 aggr_stat[2];
 	u64 aggr_n[32];
 	u64 zero_len_del[2];
-पूर्ण;
+};
 
-#घोषणा N_RX_ENTRIES	16
-काष्ठा mt7601u_rx_queue अणु
-	काष्ठा mt7601u_dev *dev;
+#define N_RX_ENTRIES	16
+struct mt7601u_rx_queue {
+	struct mt7601u_dev *dev;
 
-	काष्ठा mt7601u_dma_buf_rx अणु
-		काष्ठा urb *urb;
-		काष्ठा page *p;
-	पूर्ण e[N_RX_ENTRIES];
+	struct mt7601u_dma_buf_rx {
+		struct urb *urb;
+		struct page *p;
+	} e[N_RX_ENTRIES];
 
-	अचिन्हित पूर्णांक start;
-	अचिन्हित पूर्णांक end;
-	अचिन्हित पूर्णांक entries;
-	अचिन्हित पूर्णांक pending;
-पूर्ण;
+	unsigned int start;
+	unsigned int end;
+	unsigned int entries;
+	unsigned int pending;
+};
 
-#घोषणा N_TX_ENTRIES	64
+#define N_TX_ENTRIES	64
 
-काष्ठा mt7601u_tx_queue अणु
-	काष्ठा mt7601u_dev *dev;
+struct mt7601u_tx_queue {
+	struct mt7601u_dev *dev;
 
-	काष्ठा mt7601u_dma_buf_tx अणु
-		काष्ठा urb *urb;
-		काष्ठा sk_buff *skb;
-	पूर्ण e[N_TX_ENTRIES];
+	struct mt7601u_dma_buf_tx {
+		struct urb *urb;
+		struct sk_buff *skb;
+	} e[N_TX_ENTRIES];
 
-	अचिन्हित पूर्णांक start;
-	अचिन्हित पूर्णांक end;
-	अचिन्हित पूर्णांक entries;
-	अचिन्हित पूर्णांक used;
-	अचिन्हित पूर्णांक fअगरo_seq;
-पूर्ण;
+	unsigned int start;
+	unsigned int end;
+	unsigned int entries;
+	unsigned int used;
+	unsigned int fifo_seq;
+};
 
 /* WCID allocation:
  *     0: mcast wcid
@@ -103,26 +102,26 @@
  * ...7e: group wcids
  *    7f: reserved
  */
-#घोषणा N_WCIDS		128
-#घोषणा GROUP_WCID(idx)	(N_WCIDS - 2 - idx)
+#define N_WCIDS		128
+#define GROUP_WCID(idx)	(N_WCIDS - 2 - idx)
 
-काष्ठा mt7601u_eeprom_params;
+struct mt7601u_eeprom_params;
 
-#घोषणा MT_EE_TEMPERATURE_SLOPE		39
-#घोषणा MT_FREQ_OFFSET_INVALID		-128
+#define MT_EE_TEMPERATURE_SLOPE		39
+#define MT_FREQ_OFFSET_INVALID		-128
 
-क्रमागत mt_temp_mode अणु
+enum mt_temp_mode {
 	MT_TEMP_MODE_NORMAL,
 	MT_TEMP_MODE_HIGH,
 	MT_TEMP_MODE_LOW,
-पूर्ण;
+};
 
-क्रमागत mt_bw अणु
+enum mt_bw {
 	MT_BW_20,
 	MT_BW_40,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	MT7601U_STATE_INITIALIZED,
 	MT7601U_STATE_REMOVED,
 	MT7601U_STATE_WLAN_RUNNING,
@@ -130,12 +129,12 @@
 	MT7601U_STATE_SCANNING,
 	MT7601U_STATE_READING_STATS,
 	MT7601U_STATE_MORE_STATS,
-पूर्ण;
+};
 
 DECLARE_EWMA(rssi, 10, 4);
 
 /**
- * काष्ठा mt7601u_dev - adapter काष्ठाure
+ * struct mt7601u_dev - adapter structure
  * @lock:		protects @wcid->tx_rate.
  * @mac_lock:		locks out mac80211's tx status and rx paths.
  * @tx_lock:		protects @tx_q and changes of MT7601U_STATE_*_STATS
@@ -143,50 +142,50 @@ DECLARE_EWMA(rssi, 10, 4);
  * @rx_lock:		protects @rx_q.
  * @con_mon_lock:	protects @ap_bssid, @bcn_*, @avg_rssi.
  * @mutex:		ensures exclusive access from mac80211 callbacks.
- * @venकरोr_req_mutex:	protects @vend_buf, ensures atomicity of पढ़ो/ग_लिखो
+ * @vendor_req_mutex:	protects @vend_buf, ensures atomicity of read/write
  *			accesses
- * @reg_atomic_mutex:	ensures atomicity of indirect रेजिस्टर accesses
+ * @reg_atomic_mutex:	ensures atomicity of indirect register accesses
  *			(accesses to RF and BBP).
  * @hw_atomic_mutex:	ensures exclusive access to HW during critical
- *			operations (घातer management, channel चयन).
+ *			operations (power management, channel switch).
  */
-काष्ठा mt7601u_dev अणु
-	काष्ठा ieee80211_hw *hw;
-	काष्ठा device *dev;
+struct mt7601u_dev {
+	struct ieee80211_hw *hw;
+	struct device *dev;
 
-	अचिन्हित दीर्घ state;
+	unsigned long state;
 
-	काष्ठा mutex mutex;
+	struct mutex mutex;
 
-	अचिन्हित दीर्घ wcid_mask[N_WCIDS / BITS_PER_LONG];
+	unsigned long wcid_mask[N_WCIDS / BITS_PER_LONG];
 
-	काष्ठा cfg80211_chan_def chandef;
-	काष्ठा ieee80211_supported_band *sband_2g;
+	struct cfg80211_chan_def chandef;
+	struct ieee80211_supported_band *sband_2g;
 
-	काष्ठा mt7601u_mcu mcu;
+	struct mt7601u_mcu mcu;
 
-	काष्ठा delayed_work cal_work;
-	काष्ठा delayed_work mac_work;
+	struct delayed_work cal_work;
+	struct delayed_work mac_work;
 
-	काष्ठा workqueue_काष्ठा *stat_wq;
-	काष्ठा delayed_work stat_work;
+	struct workqueue_struct *stat_wq;
+	struct delayed_work stat_work;
 
-	काष्ठा mt76_wcid *mon_wcid;
-	काष्ठा mt76_wcid __rcu *wcid[N_WCIDS];
+	struct mt76_wcid *mon_wcid;
+	struct mt76_wcid __rcu *wcid[N_WCIDS];
 
 	spinlock_t lock;
 	spinlock_t mac_lock;
 
-	स्थिर u16 *beacon_offsets;
+	const u16 *beacon_offsets;
 
 	u8 macaddr[ETH_ALEN];
-	काष्ठा mt7601u_eeprom_params *ee;
+	struct mt7601u_eeprom_params *ee;
 
-	काष्ठा mutex venकरोr_req_mutex;
-	व्योम *vend_buf;
+	struct mutex vendor_req_mutex;
+	void *vend_buf;
 
-	काष्ठा mutex reg_atomic_mutex;
-	काष्ठा mutex hw_atomic_mutex;
+	struct mutex reg_atomic_mutex;
+	struct mutex hw_atomic_mutex;
 
 	u32 rxfilter;
 	u32 debugfs_reg;
@@ -198,16 +197,16 @@ DECLARE_EWMA(rssi, 10, 4);
 
 	/* TX */
 	spinlock_t tx_lock;
-	काष्ठा tasklet_काष्ठा tx_tasklet;
-	काष्ठा mt7601u_tx_queue *tx_q;
-	काष्ठा sk_buff_head tx_skb_करोne;
+	struct tasklet_struct tx_tasklet;
+	struct mt7601u_tx_queue *tx_q;
+	struct sk_buff_head tx_skb_done;
 
 	atomic_t avg_ampdu_len;
 
 	/* RX */
 	spinlock_t rx_lock;
-	काष्ठा tasklet_काष्ठा rx_tasklet;
-	काष्ठा mt7601u_rx_queue rx_q;
+	struct tasklet_struct rx_tasklet;
+	struct mt7601u_rx_queue rx_q;
 
 	/* Connection monitoring things */
 	spinlock_t con_mon_lock;
@@ -216,23 +215,23 @@ DECLARE_EWMA(rssi, 10, 4);
 	s8 bcn_freq_off;
 	u8 bcn_phy_mode;
 
-	काष्ठा ewma_rssi avg_rssi;
+	struct ewma_rssi avg_rssi;
 
 	u8 agc_save;
 
-	काष्ठा mt7601u_freq_cal freq_cal;
+	struct mt7601u_freq_cal freq_cal;
 
-	bool tssi_पढ़ो_trig;
+	bool tssi_read_trig;
 
 	s8 tssi_init;
 	s8 tssi_init_hvga;
 	s16 tssi_init_hvga_offset_db;
 
-	पूर्णांक prev_pwr_dअगरf;
+	int prev_pwr_diff;
 
-	क्रमागत mt_temp_mode temp_mode;
-	पूर्णांक curr_temp;
-	पूर्णांक dpd_temp;
+	enum mt_temp_mode temp_mode;
+	int curr_temp;
+	int dpd_temp;
 	s8 raw_temp;
 	bool pll_lock_protect;
 
@@ -242,152 +241,152 @@ DECLARE_EWMA(rssi, 10, 4);
 	/* PA mode */
 	u32 rf_pa_mode[2];
 
-	काष्ठा mac_stats stats;
-पूर्ण;
+	struct mac_stats stats;
+};
 
-काष्ठा mt7601u_tssi_params अणु
-	अक्षर tssi0;
-	पूर्णांक trgt_घातer;
-पूर्ण;
+struct mt7601u_tssi_params {
+	char tssi0;
+	int trgt_power;
+};
 
-काष्ठा mt76_wcid अणु
+struct mt76_wcid {
 	u8 idx;
 	u8 hw_key_idx;
 
 	u16 tx_rate;
 	bool tx_rate_set;
 	u8 tx_rate_nss;
-पूर्ण;
+};
 
-काष्ठा mt76_vअगर अणु
+struct mt76_vif {
 	u8 idx;
 
-	काष्ठा mt76_wcid group_wcid;
-पूर्ण;
+	struct mt76_wcid group_wcid;
+};
 
-काष्ठा mt76_sta अणु
-	काष्ठा mt76_wcid wcid;
+struct mt76_sta {
+	struct mt76_wcid wcid;
 	u16 agg_ssn[IEEE80211_NUM_TIDS];
-पूर्ण;
+};
 
-काष्ठा mt76_reg_pair अणु
+struct mt76_reg_pair {
 	u32 reg;
 	u32 value;
-पूर्ण;
+};
 
-काष्ठा mt7601u_rxwi;
+struct mt7601u_rxwi;
 
-बाह्य स्थिर काष्ठा ieee80211_ops mt7601u_ops;
+extern const struct ieee80211_ops mt7601u_ops;
 
-व्योम mt7601u_init_debugfs(काष्ठा mt7601u_dev *dev);
+void mt7601u_init_debugfs(struct mt7601u_dev *dev);
 
-u32 mt7601u_rr(काष्ठा mt7601u_dev *dev, u32 offset);
-व्योम mt7601u_wr(काष्ठा mt7601u_dev *dev, u32 offset, u32 val);
-u32 mt7601u_rmw(काष्ठा mt7601u_dev *dev, u32 offset, u32 mask, u32 val);
-u32 mt7601u_rmc(काष्ठा mt7601u_dev *dev, u32 offset, u32 mask, u32 val);
-व्योम mt7601u_wr_copy(काष्ठा mt7601u_dev *dev, u32 offset,
-		     स्थिर व्योम *data, पूर्णांक len);
+u32 mt7601u_rr(struct mt7601u_dev *dev, u32 offset);
+void mt7601u_wr(struct mt7601u_dev *dev, u32 offset, u32 val);
+u32 mt7601u_rmw(struct mt7601u_dev *dev, u32 offset, u32 mask, u32 val);
+u32 mt7601u_rmc(struct mt7601u_dev *dev, u32 offset, u32 mask, u32 val);
+void mt7601u_wr_copy(struct mt7601u_dev *dev, u32 offset,
+		     const void *data, int len);
 
-पूर्णांक mt7601u_रुको_asic_पढ़ोy(काष्ठा mt7601u_dev *dev);
-bool mt76_poll(काष्ठा mt7601u_dev *dev, u32 offset, u32 mask, u32 val,
-	       पूर्णांक समयout);
-bool mt76_poll_msec(काष्ठा mt7601u_dev *dev, u32 offset, u32 mask, u32 val,
-		    पूर्णांक समयout);
+int mt7601u_wait_asic_ready(struct mt7601u_dev *dev);
+bool mt76_poll(struct mt7601u_dev *dev, u32 offset, u32 mask, u32 val,
+	       int timeout);
+bool mt76_poll_msec(struct mt7601u_dev *dev, u32 offset, u32 mask, u32 val,
+		    int timeout);
 
 /* Compatibility with mt76 */
-#घोषणा mt76_rmw_field(_dev, _reg, _field, _val)	\
+#define mt76_rmw_field(_dev, _reg, _field, _val)	\
 	mt76_rmw(_dev, _reg, _field, FIELD_PREP(_field, _val))
 
-अटल अंतरभूत u32 mt76_rr(काष्ठा mt7601u_dev *dev, u32 offset)
-अणु
-	वापस mt7601u_rr(dev, offset);
-पूर्ण
+static inline u32 mt76_rr(struct mt7601u_dev *dev, u32 offset)
+{
+	return mt7601u_rr(dev, offset);
+}
 
-अटल अंतरभूत व्योम mt76_wr(काष्ठा mt7601u_dev *dev, u32 offset, u32 val)
-अणु
-	वापस mt7601u_wr(dev, offset, val);
-पूर्ण
+static inline void mt76_wr(struct mt7601u_dev *dev, u32 offset, u32 val)
+{
+	return mt7601u_wr(dev, offset, val);
+}
 
-अटल अंतरभूत u32
-mt76_rmw(काष्ठा mt7601u_dev *dev, u32 offset, u32 mask, u32 val)
-अणु
-	वापस mt7601u_rmw(dev, offset, mask, val);
-पूर्ण
+static inline u32
+mt76_rmw(struct mt7601u_dev *dev, u32 offset, u32 mask, u32 val)
+{
+	return mt7601u_rmw(dev, offset, mask, val);
+}
 
-अटल अंतरभूत u32 mt76_set(काष्ठा mt7601u_dev *dev, u32 offset, u32 val)
-अणु
-	वापस mt76_rmw(dev, offset, 0, val);
-पूर्ण
+static inline u32 mt76_set(struct mt7601u_dev *dev, u32 offset, u32 val)
+{
+	return mt76_rmw(dev, offset, 0, val);
+}
 
-अटल अंतरभूत u32 mt76_clear(काष्ठा mt7601u_dev *dev, u32 offset, u32 val)
-अणु
-	वापस mt76_rmw(dev, offset, val, 0);
-पूर्ण
+static inline u32 mt76_clear(struct mt7601u_dev *dev, u32 offset, u32 val)
+{
+	return mt76_rmw(dev, offset, val, 0);
+}
 
-पूर्णांक mt7601u_ग_लिखो_reg_pairs(काष्ठा mt7601u_dev *dev, u32 base,
-			    स्थिर काष्ठा mt76_reg_pair *data, पूर्णांक len);
-पूर्णांक mt7601u_burst_ग_लिखो_regs(काष्ठा mt7601u_dev *dev, u32 offset,
-			     स्थिर u32 *data, पूर्णांक n);
-व्योम mt7601u_addr_wr(काष्ठा mt7601u_dev *dev, स्थिर u32 offset, स्थिर u8 *addr);
+int mt7601u_write_reg_pairs(struct mt7601u_dev *dev, u32 base,
+			    const struct mt76_reg_pair *data, int len);
+int mt7601u_burst_write_regs(struct mt7601u_dev *dev, u32 offset,
+			     const u32 *data, int n);
+void mt7601u_addr_wr(struct mt7601u_dev *dev, const u32 offset, const u8 *addr);
 
 /* Init */
-काष्ठा mt7601u_dev *mt7601u_alloc_device(काष्ठा device *dev);
-पूर्णांक mt7601u_init_hardware(काष्ठा mt7601u_dev *dev);
-पूर्णांक mt7601u_रेजिस्टर_device(काष्ठा mt7601u_dev *dev);
-व्योम mt7601u_cleanup(काष्ठा mt7601u_dev *dev);
+struct mt7601u_dev *mt7601u_alloc_device(struct device *dev);
+int mt7601u_init_hardware(struct mt7601u_dev *dev);
+int mt7601u_register_device(struct mt7601u_dev *dev);
+void mt7601u_cleanup(struct mt7601u_dev *dev);
 
-पूर्णांक mt7601u_mac_start(काष्ठा mt7601u_dev *dev);
-व्योम mt7601u_mac_stop(काष्ठा mt7601u_dev *dev);
+int mt7601u_mac_start(struct mt7601u_dev *dev);
+void mt7601u_mac_stop(struct mt7601u_dev *dev);
 
 /* PHY */
-पूर्णांक mt7601u_phy_init(काष्ठा mt7601u_dev *dev);
-पूर्णांक mt7601u_रुको_bbp_पढ़ोy(काष्ठा mt7601u_dev *dev);
-व्योम mt7601u_set_rx_path(काष्ठा mt7601u_dev *dev, u8 path);
-व्योम mt7601u_set_tx_dac(काष्ठा mt7601u_dev *dev, u8 path);
-पूर्णांक mt7601u_bbp_set_bw(काष्ठा mt7601u_dev *dev, पूर्णांक bw);
-व्योम mt7601u_agc_save(काष्ठा mt7601u_dev *dev);
-व्योम mt7601u_agc_restore(काष्ठा mt7601u_dev *dev);
-पूर्णांक mt7601u_phy_set_channel(काष्ठा mt7601u_dev *dev,
-			    काष्ठा cfg80211_chan_def *chandef);
-व्योम mt7601u_phy_recalibrate_after_assoc(काष्ठा mt7601u_dev *dev);
-पूर्णांक mt7601u_phy_get_rssi(काष्ठा mt7601u_dev *dev,
-			 काष्ठा mt7601u_rxwi *rxwi, u16 rate);
-व्योम mt7601u_phy_con_cal_onoff(काष्ठा mt7601u_dev *dev,
-			       काष्ठा ieee80211_bss_conf *info);
+int mt7601u_phy_init(struct mt7601u_dev *dev);
+int mt7601u_wait_bbp_ready(struct mt7601u_dev *dev);
+void mt7601u_set_rx_path(struct mt7601u_dev *dev, u8 path);
+void mt7601u_set_tx_dac(struct mt7601u_dev *dev, u8 path);
+int mt7601u_bbp_set_bw(struct mt7601u_dev *dev, int bw);
+void mt7601u_agc_save(struct mt7601u_dev *dev);
+void mt7601u_agc_restore(struct mt7601u_dev *dev);
+int mt7601u_phy_set_channel(struct mt7601u_dev *dev,
+			    struct cfg80211_chan_def *chandef);
+void mt7601u_phy_recalibrate_after_assoc(struct mt7601u_dev *dev);
+int mt7601u_phy_get_rssi(struct mt7601u_dev *dev,
+			 struct mt7601u_rxwi *rxwi, u16 rate);
+void mt7601u_phy_con_cal_onoff(struct mt7601u_dev *dev,
+			       struct ieee80211_bss_conf *info);
 
 /* MAC */
-व्योम mt7601u_mac_work(काष्ठा work_काष्ठा *work);
-व्योम mt7601u_mac_set_protection(काष्ठा mt7601u_dev *dev, bool legacy_prot,
-				पूर्णांक ht_mode);
-व्योम mt7601u_mac_set_लघु_preamble(काष्ठा mt7601u_dev *dev, bool लघु_preamb);
-व्योम mt7601u_mac_config_tsf(काष्ठा mt7601u_dev *dev, bool enable, पूर्णांक पूर्णांकerval);
-व्योम
-mt7601u_mac_wcid_setup(काष्ठा mt7601u_dev *dev, u8 idx, u8 vअगर_idx, u8 *mac);
-व्योम mt7601u_mac_set_ampdu_factor(काष्ठा mt7601u_dev *dev);
+void mt7601u_mac_work(struct work_struct *work);
+void mt7601u_mac_set_protection(struct mt7601u_dev *dev, bool legacy_prot,
+				int ht_mode);
+void mt7601u_mac_set_short_preamble(struct mt7601u_dev *dev, bool short_preamb);
+void mt7601u_mac_config_tsf(struct mt7601u_dev *dev, bool enable, int interval);
+void
+mt7601u_mac_wcid_setup(struct mt7601u_dev *dev, u8 idx, u8 vif_idx, u8 *mac);
+void mt7601u_mac_set_ampdu_factor(struct mt7601u_dev *dev);
 
 /* TX */
-व्योम mt7601u_tx(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_tx_control *control,
-		काष्ठा sk_buff *skb);
-पूर्णांक mt7601u_conf_tx(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
-		    u16 queue, स्थिर काष्ठा ieee80211_tx_queue_params *params);
-व्योम mt7601u_tx_status(काष्ठा mt7601u_dev *dev, काष्ठा sk_buff *skb);
-व्योम mt7601u_tx_stat(काष्ठा work_काष्ठा *work);
+void mt7601u_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
+		struct sk_buff *skb);
+int mt7601u_conf_tx(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+		    u16 queue, const struct ieee80211_tx_queue_params *params);
+void mt7601u_tx_status(struct mt7601u_dev *dev, struct sk_buff *skb);
+void mt7601u_tx_stat(struct work_struct *work);
 
 /* util */
-व्योम mt76_हटाओ_hdr_pad(काष्ठा sk_buff *skb);
-पूर्णांक mt76_insert_hdr_pad(काष्ठा sk_buff *skb);
+void mt76_remove_hdr_pad(struct sk_buff *skb);
+int mt76_insert_hdr_pad(struct sk_buff *skb);
 
-u32 mt7601u_bbp_set_ctrlch(काष्ठा mt7601u_dev *dev, bool below);
+u32 mt7601u_bbp_set_ctrlch(struct mt7601u_dev *dev, bool below);
 
-अटल अंतरभूत u32 mt7601u_mac_set_ctrlch(काष्ठा mt7601u_dev *dev, bool below)
-अणु
-	वापस mt7601u_rmc(dev, MT_TX_BAND_CFG, 1, below);
-पूर्ण
+static inline u32 mt7601u_mac_set_ctrlch(struct mt7601u_dev *dev, bool below)
+{
+	return mt7601u_rmc(dev, MT_TX_BAND_CFG, 1, below);
+}
 
-पूर्णांक mt7601u_dma_init(काष्ठा mt7601u_dev *dev);
-व्योम mt7601u_dma_cleanup(काष्ठा mt7601u_dev *dev);
+int mt7601u_dma_init(struct mt7601u_dev *dev);
+void mt7601u_dma_cleanup(struct mt7601u_dev *dev);
 
-पूर्णांक mt7601u_dma_enqueue_tx(काष्ठा mt7601u_dev *dev, काष्ठा sk_buff *skb,
-			   काष्ठा mt76_wcid *wcid, पूर्णांक hw_q);
+int mt7601u_dma_enqueue_tx(struct mt7601u_dev *dev, struct sk_buff *skb,
+			   struct mt76_wcid *wcid, int hw_q);
 
-#पूर्ण_अगर
+#endif

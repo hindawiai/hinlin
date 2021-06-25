@@ -1,97 +1,96 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /***************************************************************************
  * Linux PPP over X - Generic PPP transport layer sockets
  * Linux PPP over Ethernet (PPPoE) Socket Implementation (RFC 2516) 
  *
  * This file supplies definitions required by the PPP over Ethernet driver
- * (pppox.c).  All version inक्रमmation wrt this file is located in pppox.c
+ * (pppox.c).  All version information wrt this file is located in pppox.c
  *
  * License:
  */
-#अगर_अघोषित __LINUX_IF_PPPOX_H
-#घोषणा __LINUX_IF_PPPOX_H
+#ifndef __LINUX_IF_PPPOX_H
+#define __LINUX_IF_PPPOX_H
 
-#समावेश <linux/अगर.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/ppp_channel.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/workqueue.h>
-#समावेश <uapi/linux/अगर_pppox.h>
+#include <linux/if.h>
+#include <linux/netdevice.h>
+#include <linux/ppp_channel.h>
+#include <linux/skbuff.h>
+#include <linux/workqueue.h>
+#include <uapi/linux/if_pppox.h>
 
-अटल अंतरभूत काष्ठा pppoe_hdr *pppoe_hdr(स्थिर काष्ठा sk_buff *skb)
-अणु
-	वापस (काष्ठा pppoe_hdr *)skb_network_header(skb);
-पूर्ण
+static inline struct pppoe_hdr *pppoe_hdr(const struct sk_buff *skb)
+{
+	return (struct pppoe_hdr *)skb_network_header(skb);
+}
 
-काष्ठा pppoe_opt अणु
-	काष्ठा net_device      *dev;	  /* device associated with socket*/
-	पूर्णांक			अगरindex;  /* अगरindex of device associated with socket */
-	काष्ठा pppoe_addr	pa;	  /* what this socket is bound to*/
-	काष्ठा sockaddr_pppox	relay;	  /* what socket data will be
+struct pppoe_opt {
+	struct net_device      *dev;	  /* device associated with socket*/
+	int			ifindex;  /* ifindex of device associated with socket */
+	struct pppoe_addr	pa;	  /* what this socket is bound to*/
+	struct sockaddr_pppox	relay;	  /* what socket data will be
 					     relayed to (PPPoE relaying) */
-	काष्ठा work_काष्ठा      padt_work;/* Work item क्रम handling PADT */
-पूर्ण;
+	struct work_struct      padt_work;/* Work item for handling PADT */
+};
 
-काष्ठा pptp_opt अणु
-	काष्ठा pptp_addr src_addr;
-	काष्ठा pptp_addr dst_addr;
+struct pptp_opt {
+	struct pptp_addr src_addr;
+	struct pptp_addr dst_addr;
 	u32 ack_sent, ack_recv;
 	u32 seq_sent, seq_recv;
-	पूर्णांक ppp_flags;
-पूर्ण;
-#समावेश <net/sock.h>
+	int ppp_flags;
+};
+#include <net/sock.h>
 
-काष्ठा pppox_sock अणु
-	/* काष्ठा sock must be the first member of pppox_sock */
-	काष्ठा sock sk;
-	काष्ठा ppp_channel chan;
-	काष्ठा pppox_sock	*next;	  /* क्रम hash table */
-	जोड़ अणु
-		काष्ठा pppoe_opt pppoe;
-		काष्ठा pptp_opt  pptp;
-	पूर्ण proto;
+struct pppox_sock {
+	/* struct sock must be the first member of pppox_sock */
+	struct sock sk;
+	struct ppp_channel chan;
+	struct pppox_sock	*next;	  /* for hash table */
+	union {
+		struct pppoe_opt pppoe;
+		struct pptp_opt  pptp;
+	} proto;
 	__be16			num;
-पूर्ण;
-#घोषणा pppoe_dev	proto.pppoe.dev
-#घोषणा pppoe_अगरindex	proto.pppoe.अगरindex
-#घोषणा pppoe_pa	proto.pppoe.pa
-#घोषणा pppoe_relay	proto.pppoe.relay
+};
+#define pppoe_dev	proto.pppoe.dev
+#define pppoe_ifindex	proto.pppoe.ifindex
+#define pppoe_pa	proto.pppoe.pa
+#define pppoe_relay	proto.pppoe.relay
 
-अटल अंतरभूत काष्ठा pppox_sock *pppox_sk(काष्ठा sock *sk)
-अणु
-	वापस (काष्ठा pppox_sock *)sk;
-पूर्ण
+static inline struct pppox_sock *pppox_sk(struct sock *sk)
+{
+	return (struct pppox_sock *)sk;
+}
 
-अटल अंतरभूत काष्ठा sock *sk_pppox(काष्ठा pppox_sock *po)
-अणु
-	वापस (काष्ठा sock *)po;
-पूर्ण
+static inline struct sock *sk_pppox(struct pppox_sock *po)
+{
+	return (struct sock *)po;
+}
 
-काष्ठा module;
+struct module;
 
-काष्ठा pppox_proto अणु
-	पूर्णांक		(*create)(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक kern);
-	पूर्णांक		(*ioctl)(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd,
-				 अचिन्हित दीर्घ arg);
-	काष्ठा module	*owner;
-पूर्ण;
+struct pppox_proto {
+	int		(*create)(struct net *net, struct socket *sock, int kern);
+	int		(*ioctl)(struct socket *sock, unsigned int cmd,
+				 unsigned long arg);
+	struct module	*owner;
+};
 
-बाह्य पूर्णांक रेजिस्टर_pppox_proto(पूर्णांक proto_num, स्थिर काष्ठा pppox_proto *pp);
-बाह्य व्योम unरेजिस्टर_pppox_proto(पूर्णांक proto_num);
-बाह्य व्योम pppox_unbind_sock(काष्ठा sock *sk);/* delete ppp-channel binding */
-बाह्य पूर्णांक pppox_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
-बाह्य पूर्णांक pppox_compat_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
+extern int register_pppox_proto(int proto_num, const struct pppox_proto *pp);
+extern void unregister_pppox_proto(int proto_num);
+extern void pppox_unbind_sock(struct sock *sk);/* delete ppp-channel binding */
+extern int pppox_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg);
+extern int pppox_compat_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg);
 
-#घोषणा PPPOEIOCSFWD32    _IOW(0xB1 ,0, compat_माप_प्रकार)
+#define PPPOEIOCSFWD32    _IOW(0xB1 ,0, compat_size_t)
 
 /* PPPoX socket states */
-क्रमागत अणु
+enum {
     PPPOX_NONE		= 0,  /* initial state */
     PPPOX_CONNECTED	= 1,  /* connection established ==TCP_ESTABLISHED */
     PPPOX_BOUND		= 2,  /* bound to ppp device */
-    PPPOX_RELAY		= 4,  /* क्रमwarding is enabled */
+    PPPOX_RELAY		= 4,  /* forwarding is enabled */
     PPPOX_DEAD		= 16  /* dead, useless, please clean me up!*/
-पूर्ण;
+};
 
-#पूर्ण_अगर /* !(__LINUX_IF_PPPOX_H) */
+#endif /* !(__LINUX_IF_PPPOX_H) */

@@ -1,55 +1,54 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Driver क्रम ADC module on the Cirrus Logic EP93xx series of SoCs
+ * Driver for ADC module on the Cirrus Logic EP93xx series of SoCs
  *
  * Copyright (C) 2015 Alexander Sverdlin
  *
  * The driver uses polling to get the conversion status. According to EP93xx
- * datasheets, पढ़ोing ADCResult रेजिस्टर starts the conversion, but user is also
- * responsible क्रम ensuring that delay between adjacent conversion triggers is
- * दीर्घ enough so that maximum allowed conversion rate is not exceeded. This
+ * datasheets, reading ADCResult register starts the conversion, but user is also
+ * responsible for ensuring that delay between adjacent conversion triggers is
+ * long enough so that maximum allowed conversion rate is not exceeded. This
  * basically renders IRQ mode unusable.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/पन.स>
-#समावेश <linux/irqflags.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/iio/iio.h>
+#include <linux/io.h>
+#include <linux/irqflags.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/platform_device.h>
 
 /*
- * This code could benefit from real HR Timers, but jअगरfy granularity would
- * lower ADC conversion rate करोwn to CONFIG_HZ, so we fallback to busy रुको
- * in such हाल.
+ * This code could benefit from real HR Timers, but jiffy granularity would
+ * lower ADC conversion rate down to CONFIG_HZ, so we fallback to busy wait
+ * in such case.
  *
  * HR Timers-based version loads CPU only up to 10% during back to back ADC
- * conversion, जबतक busy रुको-based version consumes whole CPU घातer.
+ * conversion, while busy wait-based version consumes whole CPU power.
  */
-#अगर_घोषित CONFIG_HIGH_RES_TIMERS
-#घोषणा ep93xx_adc_delay(usmin, usmax) usleep_range(usmin, usmax)
-#अन्यथा
-#घोषणा ep93xx_adc_delay(usmin, usmax) udelay(usmin)
-#पूर्ण_अगर
+#ifdef CONFIG_HIGH_RES_TIMERS
+#define ep93xx_adc_delay(usmin, usmax) usleep_range(usmin, usmax)
+#else
+#define ep93xx_adc_delay(usmin, usmax) udelay(usmin)
+#endif
 
-#घोषणा EP93XX_ADC_RESULT	0x08
-#घोषणा   EP93XX_ADC_SDR	BIT(31)
-#घोषणा EP93XX_ADC_SWITCH	0x18
-#घोषणा EP93XX_ADC_SW_LOCK	0x20
+#define EP93XX_ADC_RESULT	0x08
+#define   EP93XX_ADC_SDR	BIT(31)
+#define EP93XX_ADC_SWITCH	0x18
+#define EP93XX_ADC_SW_LOCK	0x20
 
-काष्ठा ep93xx_adc_priv अणु
-	काष्ठा clk *clk;
-	व्योम __iomem *base;
-	पूर्णांक lastch;
-	काष्ठा mutex lock;
-पूर्ण;
+struct ep93xx_adc_priv {
+	struct clk *clk;
+	void __iomem *base;
+	int lastch;
+	struct mutex lock;
+};
 
-#घोषणा EP93XX_ADC_CH(index, dname, swcfg) अणु			\
+#define EP93XX_ADC_CH(index, dname, swcfg) {			\
 	.type = IIO_VOLTAGE,					\
 	.indexed = 1,						\
 	.channel = index,					\
@@ -58,14 +57,14 @@
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),		\
 	.info_mask_shared_by_all = BIT(IIO_CHAN_INFO_SCALE) |	\
 				   BIT(IIO_CHAN_INFO_OFFSET),	\
-पूर्ण
+}
 
 /*
- * Numbering scheme क्रम channels 0..4 is defined in EP9301 and EP9302 datasheets.
+ * Numbering scheme for channels 0..4 is defined in EP9301 and EP9302 datasheets.
  * EP9307, EP9312 and EP9312 have 3 channels more (total 8), but the numbering is
- * not defined. So the last three are numbered अक्रमomly, let's say.
+ * not defined. So the last three are numbered randomly, let's say.
  */
-अटल स्थिर काष्ठा iio_chan_spec ep93xx_adc_channels[8] = अणु
+static const struct iio_chan_spec ep93xx_adc_channels[8] = {
 	EP93XX_ADC_CH(0, "YM",	0x608),
 	EP93XX_ADC_CH(1, "SXP",	0x680),
 	EP93XX_ADC_CH(2, "SXM",	0x640),
@@ -74,105 +73,105 @@
 	EP93XX_ADC_CH(5, "XP",	0x601),
 	EP93XX_ADC_CH(6, "XM",	0x602),
 	EP93XX_ADC_CH(7, "YP",	0x604),
-पूर्ण;
+};
 
-अटल पूर्णांक ep93xx_पढ़ो_raw(काष्ठा iio_dev *iiodev,
-			   काष्ठा iio_chan_spec स्थिर *channel, पूर्णांक *value,
-			   पूर्णांक *shअगरt, दीर्घ mask)
-अणु
-	काष्ठा ep93xx_adc_priv *priv = iio_priv(iiodev);
-	अचिन्हित दीर्घ समयout;
-	पूर्णांक ret;
+static int ep93xx_read_raw(struct iio_dev *iiodev,
+			   struct iio_chan_spec const *channel, int *value,
+			   int *shift, long mask)
+{
+	struct ep93xx_adc_priv *priv = iio_priv(iiodev);
+	unsigned long timeout;
+	int ret;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
 		mutex_lock(&priv->lock);
-		अगर (priv->lastch != channel->channel) अणु
+		if (priv->lastch != channel->channel) {
 			priv->lastch = channel->channel;
 			/*
-			 * Switch रेजिस्टर is software-locked, unlocking must be
-			 * immediately followed by ग_लिखो
+			 * Switch register is software-locked, unlocking must be
+			 * immediately followed by write
 			 */
 			local_irq_disable();
-			ग_लिखोl_relaxed(0xAA, priv->base + EP93XX_ADC_SW_LOCK);
-			ग_लिखोl_relaxed(channel->address,
+			writel_relaxed(0xAA, priv->base + EP93XX_ADC_SW_LOCK);
+			writel_relaxed(channel->address,
 				       priv->base + EP93XX_ADC_SWITCH);
 			local_irq_enable();
 			/*
-			 * Settling delay depends on module घड़ी and could be
+			 * Settling delay depends on module clock and could be
 			 * 2ms or 500us
 			 */
 			ep93xx_adc_delay(2000, 2000);
-		पूर्ण
+		}
 		/* Start the conversion, eventually discarding old result */
-		पढ़ोl_relaxed(priv->base + EP93XX_ADC_RESULT);
+		readl_relaxed(priv->base + EP93XX_ADC_RESULT);
 		/* Ensure maximum conversion rate is not exceeded */
 		ep93xx_adc_delay(DIV_ROUND_UP(1000000, 925),
 				 DIV_ROUND_UP(1000000, 925));
-		/* At this poपूर्णांक conversion must be completed, but anyway... */
+		/* At this point conversion must be completed, but anyway... */
 		ret = IIO_VAL_INT;
-		समयout = jअगरfies + msecs_to_jअगरfies(1) + 1;
-		जबतक (1) अणु
+		timeout = jiffies + msecs_to_jiffies(1) + 1;
+		while (1) {
 			u32 t;
 
-			t = पढ़ोl_relaxed(priv->base + EP93XX_ADC_RESULT);
-			अगर (t & EP93XX_ADC_SDR) अणु
+			t = readl_relaxed(priv->base + EP93XX_ADC_RESULT);
+			if (t & EP93XX_ADC_SDR) {
 				*value = sign_extend32(t, 15);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			अगर (समय_after(jअगरfies, समयout)) अणु
+			if (time_after(jiffies, timeout)) {
 				dev_err(&iiodev->dev, "Conversion timeout\n");
 				ret = -ETIMEDOUT;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			cpu_relax();
-		पूर्ण
+		}
 		mutex_unlock(&priv->lock);
-		वापस ret;
+		return ret;
 
-	हाल IIO_CHAN_INFO_OFFSET:
+	case IIO_CHAN_INFO_OFFSET:
 		/* According to datasheet, range is -25000..25000 */
 		*value = 25000;
-		वापस IIO_VAL_INT;
+		return IIO_VAL_INT;
 
-	हाल IIO_CHAN_INFO_SCALE:
+	case IIO_CHAN_INFO_SCALE:
 		/* Typical supply voltage is 3.3v */
 		*value = (1ULL << 32) * 3300 / 50000;
-		*shअगरt = 32;
-		वापस IIO_VAL_FRACTIONAL_LOG2;
-	पूर्ण
+		*shift = 32;
+		return IIO_VAL_FRACTIONAL_LOG2;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा iio_info ep93xx_adc_info = अणु
-	.पढ़ो_raw = ep93xx_पढ़ो_raw,
-पूर्ण;
+static const struct iio_info ep93xx_adc_info = {
+	.read_raw = ep93xx_read_raw,
+};
 
-अटल पूर्णांक ep93xx_adc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret;
-	काष्ठा iio_dev *iiodev;
-	काष्ठा ep93xx_adc_priv *priv;
-	काष्ठा clk *pclk;
-	काष्ठा resource *res;
+static int ep93xx_adc_probe(struct platform_device *pdev)
+{
+	int ret;
+	struct iio_dev *iiodev;
+	struct ep93xx_adc_priv *priv;
+	struct clk *pclk;
+	struct resource *res;
 
-	iiodev = devm_iio_device_alloc(&pdev->dev, माप(*priv));
-	अगर (!iiodev)
-		वापस -ENOMEM;
+	iiodev = devm_iio_device_alloc(&pdev->dev, sizeof(*priv));
+	if (!iiodev)
+		return -ENOMEM;
 	priv = iio_priv(iiodev);
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	priv->base = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(priv->base)) अणु
+	if (IS_ERR(priv->base)) {
 		dev_err(&pdev->dev, "Cannot map memory resource\n");
-		वापस PTR_ERR(priv->base);
-	पूर्ण
+		return PTR_ERR(priv->base);
+	}
 
 	iiodev->name = dev_name(&pdev->dev);
-	iiodev->modes = INDIO_सूचीECT_MODE;
+	iiodev->modes = INDIO_DIRECT_MODE;
 	iiodev->info = &ep93xx_adc_info;
 	iiodev->num_channels = ARRAY_SIZE(ep93xx_adc_channels);
 	iiodev->channels = ep93xx_adc_channels;
@@ -180,66 +179,66 @@
 	priv->lastch = -1;
 	mutex_init(&priv->lock);
 
-	platक्रमm_set_drvdata(pdev, iiodev);
+	platform_set_drvdata(pdev, iiodev);
 
-	priv->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(priv->clk)) अणु
+	priv->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(priv->clk)) {
 		dev_err(&pdev->dev, "Cannot obtain clock\n");
-		वापस PTR_ERR(priv->clk);
-	पूर्ण
+		return PTR_ERR(priv->clk);
+	}
 
 	pclk = clk_get_parent(priv->clk);
-	अगर (!pclk) अणु
+	if (!pclk) {
 		dev_warn(&pdev->dev, "Cannot obtain parent clock\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * This is actually a place क्रम improvement:
-		 * EP93xx ADC supports two घड़ी भागisors -- 4 and 16,
+		 * This is actually a place for improvement:
+		 * EP93xx ADC supports two clock divisors -- 4 and 16,
 		 * resulting in conversion rates 3750 and 925 samples per second
-		 * with 500us or 2ms settling समय respectively.
-		 * One might find this पूर्णांकeresting enough to be configurable.
+		 * with 500us or 2ms settling time respectively.
+		 * One might find this interesting enough to be configurable.
 		 */
 		ret = clk_set_rate(priv->clk, clk_get_rate(pclk) / 16);
-		अगर (ret)
+		if (ret)
 			dev_warn(&pdev->dev, "Cannot set clock rate\n");
 		/*
 		 * We can tolerate rate setting failure because the module should
-		 * work in any हाल.
+		 * work in any case.
 		 */
-	पूर्ण
+	}
 
 	ret = clk_enable(priv->clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Cannot enable clock\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = iio_device_रेजिस्टर(iiodev);
-	अगर (ret)
+	ret = iio_device_register(iiodev);
+	if (ret)
 		clk_disable(priv->clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ep93xx_adc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा iio_dev *iiodev = platक्रमm_get_drvdata(pdev);
-	काष्ठा ep93xx_adc_priv *priv = iio_priv(iiodev);
+static int ep93xx_adc_remove(struct platform_device *pdev)
+{
+	struct iio_dev *iiodev = platform_get_drvdata(pdev);
+	struct ep93xx_adc_priv *priv = iio_priv(iiodev);
 
-	iio_device_unरेजिस्टर(iiodev);
+	iio_device_unregister(iiodev);
 	clk_disable(priv->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver ep93xx_adc_driver = अणु
-	.driver = अणु
+static struct platform_driver ep93xx_adc_driver = {
+	.driver = {
 		.name = "ep93xx-adc",
-	पूर्ण,
+	},
 	.probe = ep93xx_adc_probe,
-	.हटाओ = ep93xx_adc_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(ep93xx_adc_driver);
+	.remove = ep93xx_adc_remove,
+};
+module_platform_driver(ep93xx_adc_driver);
 
 MODULE_AUTHOR("Alexander Sverdlin <alexander.sverdlin@gmail.com>");
 MODULE_DESCRIPTION("Cirrus Logic EP93XX ADC driver");

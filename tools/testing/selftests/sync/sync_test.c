@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  *  sync test runner
  *  Copyright 2015-2016 Collabora Ltd.
@@ -7,12 +6,12 @@
  *
  *  Copyright 2012 Google, Inc
  *
- *  Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- *  copy of this software and associated करोcumentation files (the "Software"),
+ *  Permission is hereby granted, free of charge, to any person obtaining a
+ *  copy of this software and associated documentation files (the "Software"),
  *  to deal in the Software without restriction, including without limitation
- *  the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ *  the rights to use, copy, modify, merge, publish, distribute, sublicense,
  *  and/or sell copies of the Software, and to permit persons to whom the
- *  Software is furnished to करो so, subject to the following conditions:
+ *  Software is furnished to do so, subject to the following conditions:
  *
  *  The above copyright notice and this permission notice shall be included in
  *  all copies or substantial portions of the Software.
@@ -26,90 +25,90 @@
  *  OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#समावेश <मानकपन.स>
-#समावेश <unistd.h>
-#समावेश <मानककोष.स>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/रुको.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <माला.स>
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+#include <errno.h>
+#include <string.h>
 
-#समावेश "../kselftest.h"
-#समावेश "synctest.h"
+#include "../kselftest.h"
+#include "synctest.h"
 
-अटल पूर्णांक run_test(पूर्णांक (*test)(व्योम), अक्षर *name)
-अणु
-	पूर्णांक result;
+static int run_test(int (*test)(void), char *name)
+{
+	int result;
 	pid_t childpid;
-	पूर्णांक ret;
+	int ret;
 
-	ख_साफ(मानक_निकास);
-	childpid = विभाजन();
+	fflush(stdout);
+	childpid = fork();
 
-	अगर (childpid) अणु
-		रुकोpid(childpid, &result, 0);
-		अगर (WIFEXITED(result)) अणु
+	if (childpid) {
+		waitpid(childpid, &result, 0);
+		if (WIFEXITED(result)) {
 			ret = WEXITSTATUS(result);
-			अगर (!ret)
+			if (!ret)
 				ksft_test_result_pass("[RUN]\t%s\n", name);
-			अन्यथा
+			else
 				ksft_test_result_fail("[RUN]\t%s\n", name);
-			वापस ret;
-		पूर्ण
-		वापस 1;
-	पूर्ण
+			return ret;
+		}
+		return 1;
+	}
 
-	निकास(test());
-पूर्ण
+	exit(test());
+}
 
-अटल व्योम sync_api_supported(व्योम)
-अणु
-	काष्ठा stat sbuf;
-	पूर्णांक ret;
+static void sync_api_supported(void)
+{
+	struct stat sbuf;
+	int ret;
 
 	ret = stat("/sys/kernel/debug/sync/sw_sync", &sbuf);
-	अगर (!ret)
-		वापस;
+	if (!ret)
+		return;
 
-	अगर (त्रुटि_सं == ENOENT)
-		ksft_निकास_skip("Sync framework not supported by kernel\n");
+	if (errno == ENOENT)
+		ksft_exit_skip("Sync framework not supported by kernel\n");
 
-	अगर (त्रुटि_सं == EACCES)
-		ksft_निकास_skip("Run Sync test as root.\n");
+	if (errno == EACCES)
+		ksft_exit_skip("Run Sync test as root.\n");
 
-	ksft_निकास_fail_msg("stat failed on /sys/kernel/debug/sync/sw_sync: %s",
-				म_त्रुटि(त्रुटि_सं));
-पूर्ण
+	ksft_exit_fail_msg("stat failed on /sys/kernel/debug/sync/sw_sync: %s",
+				strerror(errno));
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	पूर्णांक err;
+int main(void)
+{
+	int err;
 
-	ksft_prपूर्णांक_header();
+	ksft_print_header();
 
 	sync_api_supported();
 	ksft_set_plan(3 + 7);
 
-	ksft_prपूर्णांक_msg("[RUN]\tTesting sync framework\n");
+	ksft_print_msg("[RUN]\tTesting sync framework\n");
 
-	RUN_TEST(test_alloc_समयline);
+	RUN_TEST(test_alloc_timeline);
 	RUN_TEST(test_alloc_fence);
 	RUN_TEST(test_alloc_fence_negative);
 
-	RUN_TEST(test_fence_one_समयline_रुको);
-	RUN_TEST(test_fence_one_समयline_merge);
+	RUN_TEST(test_fence_one_timeline_wait);
+	RUN_TEST(test_fence_one_timeline_merge);
 	RUN_TEST(test_fence_merge_same_fence);
-	RUN_TEST(test_fence_multi_समयline_रुको);
-	RUN_TEST(test_stress_two_thपढ़ोs_shared_समयline);
+	RUN_TEST(test_fence_multi_timeline_wait);
+	RUN_TEST(test_stress_two_threads_shared_timeline);
 	RUN_TEST(test_consumer_stress_multi_producer_single_consumer);
-	RUN_TEST(test_merge_stress_अक्रमom_merge);
+	RUN_TEST(test_merge_stress_random_merge);
 
 	err = ksft_get_fail_cnt();
-	अगर (err)
-		ksft_निकास_fail_msg("%d out of %d sync tests failed\n",
+	if (err)
+		ksft_exit_fail_msg("%d out of %d sync tests failed\n",
 					err, ksft_test_num());
 
-	/* need this वापस to keep gcc happy */
-	वापस ksft_निकास_pass();
-पूर्ण
+	/* need this return to keep gcc happy */
+	return ksft_exit_pass();
+}

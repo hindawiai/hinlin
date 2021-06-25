@@ -1,31 +1,30 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
 /* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  * Copyright (C) 2019-2020 Linaro Ltd.
  */
-#अगर_अघोषित _IPA_ENDPOINT_H_
-#घोषणा _IPA_ENDPOINT_H_
+#ifndef _IPA_ENDPOINT_H_
+#define _IPA_ENDPOINT_H_
 
-#समावेश <linux/types.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/अगर_ether.h>
+#include <linux/types.h>
+#include <linux/workqueue.h>
+#include <linux/if_ether.h>
 
-#समावेश "gsi.h"
-#समावेश "ipa_reg.h"
+#include "gsi.h"
+#include "ipa_reg.h"
 
-काष्ठा net_device;
-काष्ठा sk_buff;
+struct net_device;
+struct sk_buff;
 
-काष्ठा ipa;
-काष्ठा ipa_gsi_endpoपूर्णांक_data;
+struct ipa;
+struct ipa_gsi_endpoint_data;
 
-/* Non-zero granularity of counter used to implement aggregation समयout */
-#घोषणा IPA_AGGR_GRANULARITY		500	/* microseconds */
+/* Non-zero granularity of counter used to implement aggregation timeout */
+#define IPA_AGGR_GRANULARITY		500	/* microseconds */
 
-#घोषणा IPA_MTU			ETH_DATA_LEN
+#define IPA_MTU			ETH_DATA_LEN
 
-क्रमागत ipa_endpoपूर्णांक_name अणु
+enum ipa_endpoint_name {
 	IPA_ENDPOINT_AP_COMMAND_TX,
 	IPA_ENDPOINT_AP_LAN_RX,
 	IPA_ENDPOINT_AP_MODEM_TX,
@@ -37,82 +36,82 @@
 	IPA_ENDPOINT_MODEM_AP_RX,
 	IPA_ENDPOINT_MODEM_DL_NLO_TX,
 	IPA_ENDPOINT_COUNT,	/* Number of names (not an index) */
-पूर्ण;
+};
 
-#घोषणा IPA_ENDPOपूर्णांक_उच्च		32	/* Max supported by driver */
+#define IPA_ENDPOINT_MAX		32	/* Max supported by driver */
 
 /**
- * काष्ठा ipa_endpoपूर्णांक - IPA endpoपूर्णांक inक्रमmation
- * @ipa:		IPA poपूर्णांकer
- * @ee_id:		Execution environmnent endpoपूर्णांक is associated with
- * @channel_id:		GSI channel used by the endpoपूर्णांक
- * @endpoपूर्णांक_id:	IPA endpoपूर्णांक number
- * @toward_ipa:		Endpoपूर्णांक direction (true = TX, false = RX)
- * @data:		Endpoपूर्णांक configuration data
+ * struct ipa_endpoint - IPA endpoint information
+ * @ipa:		IPA pointer
+ * @ee_id:		Execution environmnent endpoint is associated with
+ * @channel_id:		GSI channel used by the endpoint
+ * @endpoint_id:	IPA endpoint number
+ * @toward_ipa:		Endpoint direction (true = TX, false = RX)
+ * @data:		Endpoint configuration data
  * @trans_tre_max:	Maximum number of TRE descriptors per transaction
- * @evt_ring_id:	GSI event ring used by the endpoपूर्णांक
- * @netdev:		Network device poपूर्णांकer, अगर endpoपूर्णांक uses one
+ * @evt_ring_id:	GSI event ring used by the endpoint
+ * @netdev:		Network device pointer, if endpoint uses one
  * @replenish_enabled:	Whether receive buffer replenishing is enabled
- * @replenish_पढ़ोy:	Number of replenish transactions without करोorbell
- * @replenish_saved:	Replenish requests held जबतक disabled
+ * @replenish_ready:	Number of replenish transactions without doorbell
+ * @replenish_saved:	Replenish requests held while disabled
  * @replenish_backlog:	Number of buffers needed to fill hardware queue
- * @replenish_work:	Work item used क्रम repeated replenish failures
+ * @replenish_work:	Work item used for repeated replenish failures
  */
-काष्ठा ipa_endpoपूर्णांक अणु
-	काष्ठा ipa *ipa;
-	क्रमागत gsi_ee_id ee_id;
+struct ipa_endpoint {
+	struct ipa *ipa;
+	enum gsi_ee_id ee_id;
 	u32 channel_id;
-	u32 endpoपूर्णांक_id;
+	u32 endpoint_id;
 	bool toward_ipa;
-	स्थिर काष्ठा ipa_endpoपूर्णांक_config_data *data;
+	const struct ipa_endpoint_config_data *data;
 
 	u32 trans_tre_max;
 	u32 evt_ring_id;
 
-	/* Net device this endpoपूर्णांक is associated with, अगर any */
-	काष्ठा net_device *netdev;
+	/* Net device this endpoint is associated with, if any */
+	struct net_device *netdev;
 
-	/* Receive buffer replenishing क्रम RX endpoपूर्णांकs */
+	/* Receive buffer replenishing for RX endpoints */
 	bool replenish_enabled;
-	u32 replenish_पढ़ोy;
+	u32 replenish_ready;
 	atomic_t replenish_saved;
 	atomic_t replenish_backlog;
-	काष्ठा delayed_work replenish_work;		/* global wq */
-पूर्ण;
+	struct delayed_work replenish_work;		/* global wq */
+};
 
-व्योम ipa_endpoपूर्णांक_modem_hol_block_clear_all(काष्ठा ipa *ipa);
+void ipa_endpoint_modem_hol_block_clear_all(struct ipa *ipa);
 
-व्योम ipa_endpoपूर्णांक_modem_छोड़ो_all(काष्ठा ipa *ipa, bool enable);
+void ipa_endpoint_modem_pause_all(struct ipa *ipa, bool enable);
 
-पूर्णांक ipa_endpoपूर्णांक_modem_exception_reset_all(काष्ठा ipa *ipa);
+int ipa_endpoint_modem_exception_reset_all(struct ipa *ipa);
 
-पूर्णांक ipa_endpoपूर्णांक_skb_tx(काष्ठा ipa_endpoपूर्णांक *endpoपूर्णांक, काष्ठा sk_buff *skb);
+int ipa_endpoint_skb_tx(struct ipa_endpoint *endpoint, struct sk_buff *skb);
 
-पूर्णांक ipa_endpoपूर्णांक_enable_one(काष्ठा ipa_endpoपूर्णांक *endpoपूर्णांक);
-व्योम ipa_endpoपूर्णांक_disable_one(काष्ठा ipa_endpoपूर्णांक *endpoपूर्णांक);
+int ipa_endpoint_enable_one(struct ipa_endpoint *endpoint);
+void ipa_endpoint_disable_one(struct ipa_endpoint *endpoint);
 
-व्योम ipa_endpoपूर्णांक_suspend_one(काष्ठा ipa_endpoपूर्णांक *endpoपूर्णांक);
-व्योम ipa_endpoपूर्णांक_resume_one(काष्ठा ipa_endpoपूर्णांक *endpoपूर्णांक);
+void ipa_endpoint_suspend_one(struct ipa_endpoint *endpoint);
+void ipa_endpoint_resume_one(struct ipa_endpoint *endpoint);
 
-व्योम ipa_endpoपूर्णांक_suspend(काष्ठा ipa *ipa);
-व्योम ipa_endpoपूर्णांक_resume(काष्ठा ipa *ipa);
+void ipa_endpoint_suspend(struct ipa *ipa);
+void ipa_endpoint_resume(struct ipa *ipa);
 
-व्योम ipa_endpoपूर्णांक_setup(काष्ठा ipa *ipa);
-व्योम ipa_endpoपूर्णांक_tearकरोwn(काष्ठा ipa *ipa);
+void ipa_endpoint_setup(struct ipa *ipa);
+void ipa_endpoint_teardown(struct ipa *ipa);
 
-पूर्णांक ipa_endpoपूर्णांक_config(काष्ठा ipa *ipa);
-व्योम ipa_endpoपूर्णांक_deconfig(काष्ठा ipa *ipa);
+int ipa_endpoint_config(struct ipa *ipa);
+void ipa_endpoint_deconfig(struct ipa *ipa);
 
-व्योम ipa_endpoपूर्णांक_शेष_route_set(काष्ठा ipa *ipa, u32 endpoपूर्णांक_id);
-व्योम ipa_endpoपूर्णांक_शेष_route_clear(काष्ठा ipa *ipa);
+void ipa_endpoint_default_route_set(struct ipa *ipa, u32 endpoint_id);
+void ipa_endpoint_default_route_clear(struct ipa *ipa);
 
-u32 ipa_endpoपूर्णांक_init(काष्ठा ipa *ipa, u32 count,
-		      स्थिर काष्ठा ipa_gsi_endpoपूर्णांक_data *data);
-व्योम ipa_endpoपूर्णांक_निकास(काष्ठा ipa *ipa);
+u32 ipa_endpoint_init(struct ipa *ipa, u32 count,
+		      const struct ipa_gsi_endpoint_data *data);
+void ipa_endpoint_exit(struct ipa *ipa);
 
-व्योम ipa_endpoपूर्णांक_trans_complete(काष्ठा ipa_endpoपूर्णांक *ipa,
-				 काष्ठा gsi_trans *trans);
-व्योम ipa_endpoपूर्णांक_trans_release(काष्ठा ipa_endpoपूर्णांक *ipa,
-				काष्ठा gsi_trans *trans);
+void ipa_endpoint_trans_complete(struct ipa_endpoint *ipa,
+				 struct gsi_trans *trans);
+void ipa_endpoint_trans_release(struct ipa_endpoint *ipa,
+				struct gsi_trans *trans);
 
-#पूर्ण_अगर /* _IPA_ENDPOINT_H_ */
+#endif /* _IPA_ENDPOINT_H_ */

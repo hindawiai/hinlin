@@ -1,64 +1,63 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * FPU रेजिस्टर's regset असलtraction, क्रम ptrace, core dumps, etc.
+ * FPU register's regset abstraction, for ptrace, core dumps, etc.
  */
-#समावेश <यंत्र/fpu/पूर्णांकernal.h>
-#समावेश <यंत्र/fpu/संकेत.स>
-#समावेश <यंत्र/fpu/regset.h>
-#समावेश <यंत्र/fpu/xstate.h>
-#समावेश <linux/sched/task_stack.h>
+#include <asm/fpu/internal.h>
+#include <asm/fpu/signal.h>
+#include <asm/fpu/regset.h>
+#include <asm/fpu/xstate.h>
+#include <linux/sched/task_stack.h>
 
 /*
  * The xstateregs_active() routine is the same as the regset_fpregs_active() routine,
- * as the "regset->n" क्रम the xstate regset will be updated based on the feature
+ * as the "regset->n" for the xstate regset will be updated based on the feature
  * capabilities supported by the xsave.
  */
-पूर्णांक regset_fpregs_active(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset)
-अणु
-	वापस regset->n;
-पूर्ण
+int regset_fpregs_active(struct task_struct *target, const struct user_regset *regset)
+{
+	return regset->n;
+}
 
-पूर्णांक regset_xregset_fpregs_active(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset)
-अणु
-	अगर (boot_cpu_has(X86_FEATURE_FXSR))
-		वापस regset->n;
-	अन्यथा
-		वापस 0;
-पूर्ण
+int regset_xregset_fpregs_active(struct task_struct *target, const struct user_regset *regset)
+{
+	if (boot_cpu_has(X86_FEATURE_FXSR))
+		return regset->n;
+	else
+		return 0;
+}
 
-पूर्णांक xfpregs_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
-		काष्ठा membuf to)
-अणु
-	काष्ठा fpu *fpu = &target->thपढ़ो.fpu;
+int xfpregs_get(struct task_struct *target, const struct user_regset *regset,
+		struct membuf to)
+{
+	struct fpu *fpu = &target->thread.fpu;
 
-	अगर (!boot_cpu_has(X86_FEATURE_FXSR))
-		वापस -ENODEV;
+	if (!boot_cpu_has(X86_FEATURE_FXSR))
+		return -ENODEV;
 
-	fpu__prepare_पढ़ो(fpu);
+	fpu__prepare_read(fpu);
 	fpstate_sanitize_xstate(fpu);
 
-	वापस membuf_ग_लिखो(&to, &fpu->state.fxsave, माप(काष्ठा fxregs_state));
-पूर्ण
+	return membuf_write(&to, &fpu->state.fxsave, sizeof(struct fxregs_state));
+}
 
-पूर्णांक xfpregs_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
-		अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
-		स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
-अणु
-	काष्ठा fpu *fpu = &target->thपढ़ो.fpu;
-	पूर्णांक ret;
+int xfpregs_set(struct task_struct *target, const struct user_regset *regset,
+		unsigned int pos, unsigned int count,
+		const void *kbuf, const void __user *ubuf)
+{
+	struct fpu *fpu = &target->thread.fpu;
+	int ret;
 
-	अगर (!boot_cpu_has(X86_FEATURE_FXSR))
-		वापस -ENODEV;
+	if (!boot_cpu_has(X86_FEATURE_FXSR))
+		return -ENODEV;
 
-	fpu__prepare_ग_लिखो(fpu);
+	fpu__prepare_write(fpu);
 	fpstate_sanitize_xstate(fpu);
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
 				 &fpu->state.fxsave, 0, -1);
 
 	/*
-	 * mxcsr reserved bits must be masked to zero क्रम security reasons.
+	 * mxcsr reserved bits must be masked to zero for security reasons.
 	 */
 	fpu->state.fxsave.mxcsr &= mxcsr_feature_mask;
 
@@ -66,286 +65,286 @@
 	 * update the header bits in the xsave header, indicating the
 	 * presence of FP and SSE state.
 	 */
-	अगर (boot_cpu_has(X86_FEATURE_XSAVE))
+	if (boot_cpu_has(X86_FEATURE_XSAVE))
 		fpu->state.xsave.header.xfeatures |= XFEATURE_MASK_FPSSE;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक xstateregs_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
-		काष्ठा membuf to)
-अणु
-	काष्ठा fpu *fpu = &target->thपढ़ो.fpu;
-	काष्ठा xregs_state *xsave;
+int xstateregs_get(struct task_struct *target, const struct user_regset *regset,
+		struct membuf to)
+{
+	struct fpu *fpu = &target->thread.fpu;
+	struct xregs_state *xsave;
 
-	अगर (!boot_cpu_has(X86_FEATURE_XSAVE))
-		वापस -ENODEV;
+	if (!boot_cpu_has(X86_FEATURE_XSAVE))
+		return -ENODEV;
 
 	xsave = &fpu->state.xsave;
 
-	fpu__prepare_पढ़ो(fpu);
+	fpu__prepare_read(fpu);
 
-	अगर (using_compacted_क्रमmat()) अणु
+	if (using_compacted_format()) {
 		copy_xstate_to_kernel(to, xsave);
-		वापस 0;
-	पूर्ण अन्यथा अणु
+		return 0;
+	} else {
 		fpstate_sanitize_xstate(fpu);
 		/*
-		 * Copy the 48 bytes defined by the software पूर्णांकo the xsave
-		 * area in the thपढ़ो काष्ठा, so that we can copy the whole
+		 * Copy the 48 bytes defined by the software into the xsave
+		 * area in the thread struct, so that we can copy the whole
 		 * area to user using one user_regset_copyout().
 		 */
-		स_नकल(&xsave->i387.sw_reserved, xstate_fx_sw_bytes, माप(xstate_fx_sw_bytes));
+		memcpy(&xsave->i387.sw_reserved, xstate_fx_sw_bytes, sizeof(xstate_fx_sw_bytes));
 
 		/*
 		 * Copy the xstate memory layout.
 		 */
-		वापस membuf_ग_लिखो(&to, xsave, fpu_user_xstate_size);
-	पूर्ण
-पूर्ण
+		return membuf_write(&to, xsave, fpu_user_xstate_size);
+	}
+}
 
-पूर्णांक xstateregs_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
-		  अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
-		  स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
-अणु
-	काष्ठा fpu *fpu = &target->thपढ़ो.fpu;
-	काष्ठा xregs_state *xsave;
-	पूर्णांक ret;
+int xstateregs_set(struct task_struct *target, const struct user_regset *regset,
+		  unsigned int pos, unsigned int count,
+		  const void *kbuf, const void __user *ubuf)
+{
+	struct fpu *fpu = &target->thread.fpu;
+	struct xregs_state *xsave;
+	int ret;
 
-	अगर (!boot_cpu_has(X86_FEATURE_XSAVE))
-		वापस -ENODEV;
+	if (!boot_cpu_has(X86_FEATURE_XSAVE))
+		return -ENODEV;
 
 	/*
-	 * A whole standard-क्रमmat XSAVE buffer is needed:
+	 * A whole standard-format XSAVE buffer is needed:
 	 */
-	अगर ((pos != 0) || (count < fpu_user_xstate_size))
-		वापस -EFAULT;
+	if ((pos != 0) || (count < fpu_user_xstate_size))
+		return -EFAULT;
 
 	xsave = &fpu->state.xsave;
 
-	fpu__prepare_ग_लिखो(fpu);
+	fpu__prepare_write(fpu);
 
-	अगर (using_compacted_क्रमmat()) अणु
-		अगर (kbuf)
+	if (using_compacted_format()) {
+		if (kbuf)
 			ret = copy_kernel_to_xstate(xsave, kbuf);
-		अन्यथा
+		else
 			ret = copy_user_to_xstate(xsave, ubuf);
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, xsave, 0, -1);
-		अगर (!ret)
+		if (!ret)
 			ret = validate_user_xstate_header(&xsave->header);
-	पूर्ण
+	}
 
 	/*
-	 * mxcsr reserved bits must be masked to zero क्रम security reasons.
+	 * mxcsr reserved bits must be masked to zero for security reasons.
 	 */
 	xsave->i387.mxcsr &= mxcsr_feature_mask;
 
 	/*
-	 * In हाल of failure, mark all states as init:
+	 * In case of failure, mark all states as init:
 	 */
-	अगर (ret)
+	if (ret)
 		fpstate_init(&fpu->state);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर defined CONFIG_X86_32 || defined CONFIG_IA32_EMULATION
+#if defined CONFIG_X86_32 || defined CONFIG_IA32_EMULATION
 
 /*
  * FPU tag word conversions.
  */
 
-अटल अंतरभूत अचिन्हित लघु twd_i387_to_fxsr(अचिन्हित लघु twd)
-अणु
-	अचिन्हित पूर्णांक पंचांगp; /* to aव्योम 16 bit prefixes in the code */
+static inline unsigned short twd_i387_to_fxsr(unsigned short twd)
+{
+	unsigned int tmp; /* to avoid 16 bit prefixes in the code */
 
-	/* Transक्रमm each pair of bits पूर्णांकo 01 (valid) or 00 (empty) */
-	पंचांगp = ~twd;
-	पंचांगp = (पंचांगp | (पंचांगp>>1)) & 0x5555; /* 0V0V0V0V0V0V0V0V */
+	/* Transform each pair of bits into 01 (valid) or 00 (empty) */
+	tmp = ~twd;
+	tmp = (tmp | (tmp>>1)) & 0x5555; /* 0V0V0V0V0V0V0V0V */
 	/* and move the valid bits to the lower byte. */
-	पंचांगp = (पंचांगp | (पंचांगp >> 1)) & 0x3333; /* 00VV00VV00VV00VV */
-	पंचांगp = (पंचांगp | (पंचांगp >> 2)) & 0x0f0f; /* 0000VVVV0000VVVV */
-	पंचांगp = (पंचांगp | (पंचांगp >> 4)) & 0x00ff; /* 00000000VVVVVVVV */
+	tmp = (tmp | (tmp >> 1)) & 0x3333; /* 00VV00VV00VV00VV */
+	tmp = (tmp | (tmp >> 2)) & 0x0f0f; /* 0000VVVV0000VVVV */
+	tmp = (tmp | (tmp >> 4)) & 0x00ff; /* 00000000VVVVVVVV */
 
-	वापस पंचांगp;
-पूर्ण
+	return tmp;
+}
 
-#घोषणा FPREG_ADDR(f, n)	((व्योम *)&(f)->st_space + (n) * 16)
-#घोषणा FP_EXP_TAG_VALID	0
-#घोषणा FP_EXP_TAG_ZERO		1
-#घोषणा FP_EXP_TAG_SPECIAL	2
-#घोषणा FP_EXP_TAG_EMPTY	3
+#define FPREG_ADDR(f, n)	((void *)&(f)->st_space + (n) * 16)
+#define FP_EXP_TAG_VALID	0
+#define FP_EXP_TAG_ZERO		1
+#define FP_EXP_TAG_SPECIAL	2
+#define FP_EXP_TAG_EMPTY	3
 
-अटल अंतरभूत u32 twd_fxsr_to_i387(काष्ठा fxregs_state *fxsave)
-अणु
-	काष्ठा _fpxreg *st;
+static inline u32 twd_fxsr_to_i387(struct fxregs_state *fxsave)
+{
+	struct _fpxreg *st;
 	u32 tos = (fxsave->swd >> 11) & 7;
-	u32 twd = (अचिन्हित दीर्घ) fxsave->twd;
+	u32 twd = (unsigned long) fxsave->twd;
 	u32 tag;
 	u32 ret = 0xffff0000u;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < 8; i++, twd >>= 1) अणु
-		अगर (twd & 0x1) अणु
+	for (i = 0; i < 8; i++, twd >>= 1) {
+		if (twd & 0x1) {
 			st = FPREG_ADDR(fxsave, (i - tos) & 7);
 
-			चयन (st->exponent & 0x7fff) अणु
-			हाल 0x7fff:
+			switch (st->exponent & 0x7fff) {
+			case 0x7fff:
 				tag = FP_EXP_TAG_SPECIAL;
-				अवरोध;
-			हाल 0x0000:
-				अगर (!st->signअगरicand[0] &&
-				    !st->signअगरicand[1] &&
-				    !st->signअगरicand[2] &&
-				    !st->signअगरicand[3])
+				break;
+			case 0x0000:
+				if (!st->significand[0] &&
+				    !st->significand[1] &&
+				    !st->significand[2] &&
+				    !st->significand[3])
 					tag = FP_EXP_TAG_ZERO;
-				अन्यथा
+				else
 					tag = FP_EXP_TAG_SPECIAL;
-				अवरोध;
-			शेष:
-				अगर (st->signअगरicand[3] & 0x8000)
+				break;
+			default:
+				if (st->significand[3] & 0x8000)
 					tag = FP_EXP_TAG_VALID;
-				अन्यथा
+				else
 					tag = FP_EXP_TAG_SPECIAL;
-				अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				break;
+			}
+		} else {
 			tag = FP_EXP_TAG_EMPTY;
-		पूर्ण
+		}
 		ret |= tag << (2 * i);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 /*
- * FXSR भग्नing poपूर्णांक environment conversions.
+ * FXSR floating point environment conversions.
  */
 
-व्योम
-convert_from_fxsr(काष्ठा user_i387_ia32_काष्ठा *env, काष्ठा task_काष्ठा *tsk)
-अणु
-	काष्ठा fxregs_state *fxsave = &tsk->thपढ़ो.fpu.state.fxsave;
-	काष्ठा _fpreg *to = (काष्ठा _fpreg *) &env->st_space[0];
-	काष्ठा _fpxreg *from = (काष्ठा _fpxreg *) &fxsave->st_space[0];
-	पूर्णांक i;
+void
+convert_from_fxsr(struct user_i387_ia32_struct *env, struct task_struct *tsk)
+{
+	struct fxregs_state *fxsave = &tsk->thread.fpu.state.fxsave;
+	struct _fpreg *to = (struct _fpreg *) &env->st_space[0];
+	struct _fpxreg *from = (struct _fpxreg *) &fxsave->st_space[0];
+	int i;
 
 	env->cwd = fxsave->cwd | 0xffff0000u;
 	env->swd = fxsave->swd | 0xffff0000u;
 	env->twd = twd_fxsr_to_i387(fxsave);
 
-#अगर_घोषित CONFIG_X86_64
+#ifdef CONFIG_X86_64
 	env->fip = fxsave->rip;
 	env->foo = fxsave->rdp;
 	/*
-	 * should be actually ds/cs at fpu exception समय, but
-	 * that inक्रमmation is not available in 64bit mode.
+	 * should be actually ds/cs at fpu exception time, but
+	 * that information is not available in 64bit mode.
 	 */
 	env->fcs = task_pt_regs(tsk)->cs;
-	अगर (tsk == current) अणु
+	if (tsk == current) {
 		savesegment(ds, env->fos);
-	पूर्ण अन्यथा अणु
-		env->fos = tsk->thपढ़ो.ds;
-	पूर्ण
+	} else {
+		env->fos = tsk->thread.ds;
+	}
 	env->fos |= 0xffff0000;
-#अन्यथा
+#else
 	env->fip = fxsave->fip;
 	env->fcs = (u16) fxsave->fcs | ((u32) fxsave->fop << 16);
 	env->foo = fxsave->foo;
 	env->fos = fxsave->fos;
-#पूर्ण_अगर
+#endif
 
-	क्रम (i = 0; i < 8; ++i)
-		स_नकल(&to[i], &from[i], माप(to[0]));
-पूर्ण
+	for (i = 0; i < 8; ++i)
+		memcpy(&to[i], &from[i], sizeof(to[0]));
+}
 
-व्योम convert_to_fxsr(काष्ठा fxregs_state *fxsave,
-		     स्थिर काष्ठा user_i387_ia32_काष्ठा *env)
+void convert_to_fxsr(struct fxregs_state *fxsave,
+		     const struct user_i387_ia32_struct *env)
 
-अणु
-	काष्ठा _fpreg *from = (काष्ठा _fpreg *) &env->st_space[0];
-	काष्ठा _fpxreg *to = (काष्ठा _fpxreg *) &fxsave->st_space[0];
-	पूर्णांक i;
+{
+	struct _fpreg *from = (struct _fpreg *) &env->st_space[0];
+	struct _fpxreg *to = (struct _fpxreg *) &fxsave->st_space[0];
+	int i;
 
 	fxsave->cwd = env->cwd;
 	fxsave->swd = env->swd;
 	fxsave->twd = twd_i387_to_fxsr(env->twd);
 	fxsave->fop = (u16) ((u32) env->fcs >> 16);
-#अगर_घोषित CONFIG_X86_64
+#ifdef CONFIG_X86_64
 	fxsave->rip = env->fip;
 	fxsave->rdp = env->foo;
 	/* cs and ds ignored */
-#अन्यथा
+#else
 	fxsave->fip = env->fip;
 	fxsave->fcs = (env->fcs & 0xffff);
 	fxsave->foo = env->foo;
 	fxsave->fos = env->fos;
-#पूर्ण_अगर
+#endif
 
-	क्रम (i = 0; i < 8; ++i)
-		स_नकल(&to[i], &from[i], माप(from[0]));
-पूर्ण
+	for (i = 0; i < 8; ++i)
+		memcpy(&to[i], &from[i], sizeof(from[0]));
+}
 
-पूर्णांक fpregs_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
-	       काष्ठा membuf to)
-अणु
-	काष्ठा fpu *fpu = &target->thपढ़ो.fpu;
-	काष्ठा user_i387_ia32_काष्ठा env;
+int fpregs_get(struct task_struct *target, const struct user_regset *regset,
+	       struct membuf to)
+{
+	struct fpu *fpu = &target->thread.fpu;
+	struct user_i387_ia32_struct env;
 
-	fpu__prepare_पढ़ो(fpu);
+	fpu__prepare_read(fpu);
 
-	अगर (!boot_cpu_has(X86_FEATURE_FPU))
-		वापस fpregs_soft_get(target, regset, to);
+	if (!boot_cpu_has(X86_FEATURE_FPU))
+		return fpregs_soft_get(target, regset, to);
 
-	अगर (!boot_cpu_has(X86_FEATURE_FXSR)) अणु
-		वापस membuf_ग_लिखो(&to, &fpu->state.fsave,
-				    माप(काष्ठा fregs_state));
-	पूर्ण
+	if (!boot_cpu_has(X86_FEATURE_FXSR)) {
+		return membuf_write(&to, &fpu->state.fsave,
+				    sizeof(struct fregs_state));
+	}
 
 	fpstate_sanitize_xstate(fpu);
 
-	अगर (to.left == माप(env)) अणु
+	if (to.left == sizeof(env)) {
 		convert_from_fxsr(to.p, target);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	convert_from_fxsr(&env, target);
-	वापस membuf_ग_लिखो(&to, &env, माप(env));
-पूर्ण
+	return membuf_write(&to, &env, sizeof(env));
+}
 
-पूर्णांक fpregs_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
-	       अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
-	       स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
-अणु
-	काष्ठा fpu *fpu = &target->thपढ़ो.fpu;
-	काष्ठा user_i387_ia32_काष्ठा env;
-	पूर्णांक ret;
+int fpregs_set(struct task_struct *target, const struct user_regset *regset,
+	       unsigned int pos, unsigned int count,
+	       const void *kbuf, const void __user *ubuf)
+{
+	struct fpu *fpu = &target->thread.fpu;
+	struct user_i387_ia32_struct env;
+	int ret;
 
-	fpu__prepare_ग_लिखो(fpu);
+	fpu__prepare_write(fpu);
 	fpstate_sanitize_xstate(fpu);
 
-	अगर (!boot_cpu_has(X86_FEATURE_FPU))
-		वापस fpregs_soft_set(target, regset, pos, count, kbuf, ubuf);
+	if (!boot_cpu_has(X86_FEATURE_FPU))
+		return fpregs_soft_set(target, regset, pos, count, kbuf, ubuf);
 
-	अगर (!boot_cpu_has(X86_FEATURE_FXSR))
-		वापस user_regset_copyin(&pos, &count, &kbuf, &ubuf,
+	if (!boot_cpu_has(X86_FEATURE_FXSR))
+		return user_regset_copyin(&pos, &count, &kbuf, &ubuf,
 					  &fpu->state.fsave, 0,
 					  -1);
 
-	अगर (pos > 0 || count < माप(env))
+	if (pos > 0 || count < sizeof(env))
 		convert_from_fxsr(&env, target);
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &env, 0, -1);
-	अगर (!ret)
-		convert_to_fxsr(&target->thपढ़ो.fpu.state.fxsave, &env);
+	if (!ret)
+		convert_to_fxsr(&target->thread.fpu.state.fxsave, &env);
 
 	/*
 	 * update the header bit in the xsave header, indicating the
 	 * presence of FP.
 	 */
-	अगर (boot_cpu_has(X86_FEATURE_XSAVE))
+	if (boot_cpu_has(X86_FEATURE_XSAVE))
 		fpu->state.xsave.header.xfeatures |= XFEATURE_MASK_FP;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#पूर्ण_अगर	/* CONFIG_X86_32 || CONFIG_IA32_EMULATION */
+#endif	/* CONFIG_X86_32 || CONFIG_IA32_EMULATION */

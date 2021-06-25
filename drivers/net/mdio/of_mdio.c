@@ -1,207 +1,206 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * OF helpers क्रम the MDIO (Ethernet PHY) API
+ * OF helpers for the MDIO (Ethernet PHY) API
  *
  * Copyright (c) 2009 Secret Lab Technologies, Ltd.
  *
- * This file provides helper functions क्रम extracting PHY device inक्रमmation
+ * This file provides helper functions for extracting PHY device information
  * out of the OpenFirmware device tree and using it to populate an mii_bus.
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_mdपन.स>
-#समावेश <linux/of_net.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/phy_fixed.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/netdevice.h>
+#include <linux/of.h>
+#include <linux/of_irq.h>
+#include <linux/of_mdio.h>
+#include <linux/of_net.h>
+#include <linux/phy.h>
+#include <linux/phy_fixed.h>
 
-#घोषणा DEFAULT_GPIO_RESET_DELAY	10	/* in microseconds */
+#define DEFAULT_GPIO_RESET_DELAY	10	/* in microseconds */
 
 MODULE_AUTHOR("Grant Likely <grant.likely@secretlab.ca>");
 MODULE_LICENSE("GPL");
 
-/* Extract the clause 22 phy ID from the compatible string of the क्रमm
+/* Extract the clause 22 phy ID from the compatible string of the form
  * ethernet-phy-idAAAA.BBBB */
-अटल पूर्णांक of_get_phy_id(काष्ठा device_node *device, u32 *phy_id)
-अणु
-	काष्ठा property *prop;
-	स्थिर अक्षर *cp;
-	अचिन्हित पूर्णांक upper, lower;
+static int of_get_phy_id(struct device_node *device, u32 *phy_id)
+{
+	struct property *prop;
+	const char *cp;
+	unsigned int upper, lower;
 
-	of_property_क्रम_each_string(device, "compatible", prop, cp) अणु
-		अगर (माला_पूछो(cp, "ethernet-phy-id%4x.%4x", &upper, &lower) == 2) अणु
+	of_property_for_each_string(device, "compatible", prop, cp) {
+		if (sscanf(cp, "ethernet-phy-id%4x.%4x", &upper, &lower) == 2) {
 			*phy_id = ((upper & 0xFFFF) << 16) | (lower & 0xFFFF);
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+			return 0;
+		}
+	}
+	return -EINVAL;
+}
 
-अटल काष्ठा mii_बारtamper *of_find_mii_बारtamper(काष्ठा device_node *node)
-अणु
-	काष्ठा of_phandle_args arg;
-	पूर्णांक err;
+static struct mii_timestamper *of_find_mii_timestamper(struct device_node *node)
+{
+	struct of_phandle_args arg;
+	int err;
 
 	err = of_parse_phandle_with_fixed_args(node, "timestamper", 1, 0, &arg);
 
-	अगर (err == -ENOENT)
-		वापस शून्य;
-	अन्यथा अगर (err)
-		वापस ERR_PTR(err);
+	if (err == -ENOENT)
+		return NULL;
+	else if (err)
+		return ERR_PTR(err);
 
-	अगर (arg.args_count != 1)
-		वापस ERR_PTR(-EINVAL);
+	if (arg.args_count != 1)
+		return ERR_PTR(-EINVAL);
 
-	वापस रेजिस्टर_mii_बारtamper(arg.np, arg.args[0]);
-पूर्ण
+	return register_mii_timestamper(arg.np, arg.args[0]);
+}
 
-पूर्णांक of_mdiobus_phy_device_रेजिस्टर(काष्ठा mii_bus *mdio, काष्ठा phy_device *phy,
-			      काष्ठा device_node *child, u32 addr)
-अणु
-	पूर्णांक rc;
+int of_mdiobus_phy_device_register(struct mii_bus *mdio, struct phy_device *phy,
+			      struct device_node *child, u32 addr)
+{
+	int rc;
 
 	rc = of_irq_get(child, 0);
-	अगर (rc == -EPROBE_DEFER)
-		वापस rc;
+	if (rc == -EPROBE_DEFER)
+		return rc;
 
-	अगर (rc > 0) अणु
+	if (rc > 0) {
 		phy->irq = rc;
 		mdio->irq[addr] = rc;
-	पूर्ण अन्यथा अणु
+	} else {
 		phy->irq = mdio->irq[addr];
-	पूर्ण
+	}
 
-	अगर (of_property_पढ़ो_bool(child, "broken-turn-around"))
+	if (of_property_read_bool(child, "broken-turn-around"))
 		mdio->phy_ignore_ta_mask |= 1 << addr;
 
-	of_property_पढ़ो_u32(child, "reset-assert-us",
-			     &phy->mdio.reset_निश्चित_delay);
-	of_property_पढ़ो_u32(child, "reset-deassert-us",
-			     &phy->mdio.reset_deनिश्चित_delay);
+	of_property_read_u32(child, "reset-assert-us",
+			     &phy->mdio.reset_assert_delay);
+	of_property_read_u32(child, "reset-deassert-us",
+			     &phy->mdio.reset_deassert_delay);
 
-	/* Associate the OF node with the device काष्ठाure so it
+	/* Associate the OF node with the device structure so it
 	 * can be looked up later */
 	of_node_get(child);
 	phy->mdio.dev.of_node = child;
 	phy->mdio.dev.fwnode = of_fwnode_handle(child);
 
-	/* All data is now stored in the phy काष्ठा;
-	 * रेजिस्टर it */
-	rc = phy_device_रेजिस्टर(phy);
-	अगर (rc) अणु
+	/* All data is now stored in the phy struct;
+	 * register it */
+	rc = phy_device_register(phy);
+	if (rc) {
 		of_node_put(child);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	dev_dbg(&mdio->dev, "registered phy %pOFn at address %i\n",
 		child, addr);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(of_mdiobus_phy_device_रेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL(of_mdiobus_phy_device_register);
 
-अटल पूर्णांक of_mdiobus_रेजिस्टर_phy(काष्ठा mii_bus *mdio,
-				    काष्ठा device_node *child, u32 addr)
-अणु
-	काष्ठा mii_बारtamper *mii_ts;
-	काष्ठा phy_device *phy;
+static int of_mdiobus_register_phy(struct mii_bus *mdio,
+				    struct device_node *child, u32 addr)
+{
+	struct mii_timestamper *mii_ts;
+	struct phy_device *phy;
 	bool is_c45;
-	पूर्णांक rc;
+	int rc;
 	u32 phy_id;
 
-	mii_ts = of_find_mii_बारtamper(child);
-	अगर (IS_ERR(mii_ts))
-		वापस PTR_ERR(mii_ts);
+	mii_ts = of_find_mii_timestamper(child);
+	if (IS_ERR(mii_ts))
+		return PTR_ERR(mii_ts);
 
 	is_c45 = of_device_is_compatible(child,
 					 "ethernet-phy-ieee802.3-c45");
 
-	अगर (!is_c45 && !of_get_phy_id(child, &phy_id))
-		phy = phy_device_create(mdio, addr, phy_id, 0, शून्य);
-	अन्यथा
+	if (!is_c45 && !of_get_phy_id(child, &phy_id))
+		phy = phy_device_create(mdio, addr, phy_id, 0, NULL);
+	else
 		phy = get_phy_device(mdio, addr, is_c45);
-	अगर (IS_ERR(phy)) अणु
-		अगर (mii_ts)
-			unरेजिस्टर_mii_बारtamper(mii_ts);
-		वापस PTR_ERR(phy);
-	पूर्ण
+	if (IS_ERR(phy)) {
+		if (mii_ts)
+			unregister_mii_timestamper(mii_ts);
+		return PTR_ERR(phy);
+	}
 
-	rc = of_mdiobus_phy_device_रेजिस्टर(mdio, phy, child, addr);
-	अगर (rc) अणु
-		अगर (mii_ts)
-			unरेजिस्टर_mii_बारtamper(mii_ts);
-		phy_device_मुक्त(phy);
-		वापस rc;
-	पूर्ण
+	rc = of_mdiobus_phy_device_register(mdio, phy, child, addr);
+	if (rc) {
+		if (mii_ts)
+			unregister_mii_timestamper(mii_ts);
+		phy_device_free(phy);
+		return rc;
+	}
 
-	/* phy->mii_ts may alपढ़ोy be defined by the PHY driver. A
-	 * mii_बारtamper probed via the device tree will still have
+	/* phy->mii_ts may already be defined by the PHY driver. A
+	 * mii_timestamper probed via the device tree will still have
 	 * precedence.
 	 */
-	अगर (mii_ts)
+	if (mii_ts)
 		phy->mii_ts = mii_ts;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक of_mdiobus_रेजिस्टर_device(काष्ठा mii_bus *mdio,
-				      काष्ठा device_node *child, u32 addr)
-अणु
-	काष्ठा mdio_device *mdiodev;
-	पूर्णांक rc;
+static int of_mdiobus_register_device(struct mii_bus *mdio,
+				      struct device_node *child, u32 addr)
+{
+	struct mdio_device *mdiodev;
+	int rc;
 
 	mdiodev = mdio_device_create(mdio, addr);
-	अगर (IS_ERR(mdiodev))
-		वापस PTR_ERR(mdiodev);
+	if (IS_ERR(mdiodev))
+		return PTR_ERR(mdiodev);
 
-	/* Associate the OF node with the device काष्ठाure so it
+	/* Associate the OF node with the device structure so it
 	 * can be looked up later.
 	 */
 	of_node_get(child);
 	mdiodev->dev.of_node = child;
 	mdiodev->dev.fwnode = of_fwnode_handle(child);
 
-	/* All data is now stored in the mdiodev काष्ठा; रेजिस्टर it. */
-	rc = mdio_device_रेजिस्टर(mdiodev);
-	अगर (rc) अणु
-		mdio_device_मुक्त(mdiodev);
+	/* All data is now stored in the mdiodev struct; register it. */
+	rc = mdio_device_register(mdiodev);
+	if (rc) {
+		mdio_device_free(mdiodev);
 		of_node_put(child);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	dev_dbg(&mdio->dev, "registered mdio device %pOFn at address %i\n",
 		child, addr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* The following is a list of PHY compatible strings which appear in
  * some DTBs. The compatible string is never matched against a PHY
- * driver, so is poपूर्णांकless. We only expect devices which are not PHYs
+ * driver, so is pointless. We only expect devices which are not PHYs
  * to have a compatible string, so they can be matched to an MDIO
- * driver.  Encourage users to upgrade their DT blobs to हटाओ these.
+ * driver.  Encourage users to upgrade their DT blobs to remove these.
  */
-अटल स्थिर काष्ठा of_device_id whitelist_phys[] = अणु
-	अणु .compatible = "brcm,40nm-ephy" पूर्ण,
-	अणु .compatible = "broadcom,bcm5241" पूर्ण,
-	अणु .compatible = "marvell,88E1111", पूर्ण,
-	अणु .compatible = "marvell,88e1116", पूर्ण,
-	अणु .compatible = "marvell,88e1118", पूर्ण,
-	अणु .compatible = "marvell,88e1145", पूर्ण,
-	अणु .compatible = "marvell,88e1149r", पूर्ण,
-	अणु .compatible = "marvell,88e1310", पूर्ण,
-	अणु .compatible = "marvell,88E1510", पूर्ण,
-	अणु .compatible = "marvell,88E1514", पूर्ण,
-	अणु .compatible = "moxa,moxart-rtl8201cp", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id whitelist_phys[] = {
+	{ .compatible = "brcm,40nm-ephy" },
+	{ .compatible = "broadcom,bcm5241" },
+	{ .compatible = "marvell,88E1111", },
+	{ .compatible = "marvell,88e1116", },
+	{ .compatible = "marvell,88e1118", },
+	{ .compatible = "marvell,88e1145", },
+	{ .compatible = "marvell,88e1149r", },
+	{ .compatible = "marvell,88e1310", },
+	{ .compatible = "marvell,88E1510", },
+	{ .compatible = "marvell,88E1514", },
+	{ .compatible = "moxa,moxart-rtl8201cp", },
+	{}
+};
 
 /*
- * Return true अगर the child node is क्रम a phy. It must either:
+ * Return true if the child node is for a phy. It must either:
  * o Compatible string of "ethernet-phy-idX.X"
  * o Compatible string of "ethernet-phy-ieee802.3-c45"
  * o Compatible string of "ethernet-phy-ieee802.3-c22"
@@ -211,56 +210,56 @@ EXPORT_SYMBOL(of_mdiobus_phy_device_रेजिस्टर);
  * A device which is not a phy is expected to have a compatible string
  * indicating what sort of device it is.
  */
-bool of_mdiobus_child_is_phy(काष्ठा device_node *child)
-अणु
+bool of_mdiobus_child_is_phy(struct device_node *child)
+{
 	u32 phy_id;
 
-	अगर (of_get_phy_id(child, &phy_id) != -EINVAL)
-		वापस true;
+	if (of_get_phy_id(child, &phy_id) != -EINVAL)
+		return true;
 
-	अगर (of_device_is_compatible(child, "ethernet-phy-ieee802.3-c45"))
-		वापस true;
+	if (of_device_is_compatible(child, "ethernet-phy-ieee802.3-c45"))
+		return true;
 
-	अगर (of_device_is_compatible(child, "ethernet-phy-ieee802.3-c22"))
-		वापस true;
+	if (of_device_is_compatible(child, "ethernet-phy-ieee802.3-c22"))
+		return true;
 
-	अगर (of_match_node(whitelist_phys, child)) अणु
+	if (of_match_node(whitelist_phys, child)) {
 		pr_warn(FW_WARN
 			"%pOF: Whitelisted compatible string. Please remove\n",
 			child);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	अगर (!of_find_property(child, "compatible", शून्य))
-		वापस true;
+	if (!of_find_property(child, "compatible", NULL))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 EXPORT_SYMBOL(of_mdiobus_child_is_phy);
 
 /**
- * of_mdiobus_रेजिस्टर - Register mii_bus and create PHYs from the device tree
- * @mdio: poपूर्णांकer to mii_bus काष्ठाure
- * @np: poपूर्णांकer to device_node of MDIO bus.
+ * of_mdiobus_register - Register mii_bus and create PHYs from the device tree
+ * @mdio: pointer to mii_bus structure
+ * @np: pointer to device_node of MDIO bus.
  *
- * This function रेजिस्टरs the mii_bus काष्ठाure and रेजिस्टरs a phy_device
- * क्रम each child node of @np.
+ * This function registers the mii_bus structure and registers a phy_device
+ * for each child node of @np.
  */
-पूर्णांक of_mdiobus_रेजिस्टर(काष्ठा mii_bus *mdio, काष्ठा device_node *np)
-अणु
-	काष्ठा device_node *child;
+int of_mdiobus_register(struct mii_bus *mdio, struct device_node *np)
+{
+	struct device_node *child;
 	bool scanphys = false;
-	पूर्णांक addr, rc;
+	int addr, rc;
 
-	अगर (!np)
-		वापस mdiobus_रेजिस्टर(mdio);
+	if (!np)
+		return mdiobus_register(mdio);
 
-	/* Do not जारी अगर the node is disabled */
-	अगर (!of_device_is_available(np))
-		वापस -ENODEV;
+	/* Do not continue if the node is disabled */
+	if (!of_device_is_available(np))
+		return -ENODEV;
 
-	/* Mask out all PHYs from स्वतः probing.  Instead the PHYs listed in
-	 * the device tree are populated after the bus has been रेजिस्टरed */
+	/* Mask out all PHYs from auto probing.  Instead the PHYs listed in
+	 * the device tree are populated after the bus has been registered */
 	mdio->phy_mask = ~0;
 
 	mdio->dev.of_node = np;
@@ -268,296 +267,296 @@ EXPORT_SYMBOL(of_mdiobus_child_is_phy);
 
 	/* Get bus level PHY reset GPIO details */
 	mdio->reset_delay_us = DEFAULT_GPIO_RESET_DELAY;
-	of_property_पढ़ो_u32(np, "reset-delay-us", &mdio->reset_delay_us);
+	of_property_read_u32(np, "reset-delay-us", &mdio->reset_delay_us);
 	mdio->reset_post_delay_us = 0;
-	of_property_पढ़ो_u32(np, "reset-post-delay-us", &mdio->reset_post_delay_us);
+	of_property_read_u32(np, "reset-post-delay-us", &mdio->reset_post_delay_us);
 
 	/* Register the MDIO bus */
-	rc = mdiobus_रेजिस्टर(mdio);
-	अगर (rc)
-		वापस rc;
+	rc = mdiobus_register(mdio);
+	if (rc)
+		return rc;
 
-	/* Loop over the child nodes and रेजिस्टर a phy_device क्रम each phy */
-	क्रम_each_available_child_of_node(np, child) अणु
+	/* Loop over the child nodes and register a phy_device for each phy */
+	for_each_available_child_of_node(np, child) {
 		addr = of_mdio_parse_addr(&mdio->dev, child);
-		अगर (addr < 0) अणु
+		if (addr < 0) {
 			scanphys = true;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (of_mdiobus_child_is_phy(child))
-			rc = of_mdiobus_रेजिस्टर_phy(mdio, child, addr);
-		अन्यथा
-			rc = of_mdiobus_रेजिस्टर_device(mdio, child, addr);
+		if (of_mdiobus_child_is_phy(child))
+			rc = of_mdiobus_register_phy(mdio, child, addr);
+		else
+			rc = of_mdiobus_register_device(mdio, child, addr);
 
-		अगर (rc == -ENODEV)
+		if (rc == -ENODEV)
 			dev_err(&mdio->dev,
 				"MDIO device at address %d is missing.\n",
 				addr);
-		अन्यथा अगर (rc)
-			जाओ unरेजिस्टर;
-	पूर्ण
+		else if (rc)
+			goto unregister;
+	}
 
-	अगर (!scanphys)
-		वापस 0;
+	if (!scanphys)
+		return 0;
 
-	/* स्वतः scan क्रम PHYs with empty reg property */
-	क्रम_each_available_child_of_node(np, child) अणु
+	/* auto scan for PHYs with empty reg property */
+	for_each_available_child_of_node(np, child) {
 		/* Skip PHYs with reg property set */
-		अगर (of_find_property(child, "reg", शून्य))
-			जारी;
+		if (of_find_property(child, "reg", NULL))
+			continue;
 
-		क्रम (addr = 0; addr < PHY_MAX_ADDR; addr++) अणु
-			/* skip alपढ़ोy रेजिस्टरed PHYs */
-			अगर (mdiobus_is_रेजिस्टरed_device(mdio, addr))
-				जारी;
+		for (addr = 0; addr < PHY_MAX_ADDR; addr++) {
+			/* skip already registered PHYs */
+			if (mdiobus_is_registered_device(mdio, addr))
+				continue;
 
 			/* be noisy to encourage people to set reg property */
 			dev_info(&mdio->dev, "scan phy %pOFn at address %i\n",
 				 child, addr);
 
-			अगर (of_mdiobus_child_is_phy(child)) अणु
-				/* -ENODEV is the वापस code that PHYLIB has
+			if (of_mdiobus_child_is_phy(child)) {
+				/* -ENODEV is the return code that PHYLIB has
 				 * standardized on to indicate that bus
-				 * scanning should जारी.
+				 * scanning should continue.
 				 */
-				rc = of_mdiobus_रेजिस्टर_phy(mdio, child, addr);
-				अगर (!rc)
-					अवरोध;
-				अगर (rc != -ENODEV)
-					जाओ unरेजिस्टर;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				rc = of_mdiobus_register_phy(mdio, child, addr);
+				if (!rc)
+					break;
+				if (rc != -ENODEV)
+					goto unregister;
+			}
+		}
+	}
 
-	वापस 0;
+	return 0;
 
-unरेजिस्टर:
-	mdiobus_unरेजिस्टर(mdio);
-	वापस rc;
-पूर्ण
-EXPORT_SYMBOL(of_mdiobus_रेजिस्टर);
+unregister:
+	mdiobus_unregister(mdio);
+	return rc;
+}
+EXPORT_SYMBOL(of_mdiobus_register);
 
 /**
  * of_mdio_find_device - Given a device tree node, find the mdio_device
- * @np: poपूर्णांकer to the mdio_device's device tree node
+ * @np: pointer to the mdio_device's device tree node
  *
- * If successful, वापसs a poपूर्णांकer to the mdio_device with the embedded
- * काष्ठा device refcount incremented by one, or शून्य on failure.
+ * If successful, returns a pointer to the mdio_device with the embedded
+ * struct device refcount incremented by one, or NULL on failure.
  * The caller should call put_device() on the mdio_device after its use
  */
-काष्ठा mdio_device *of_mdio_find_device(काष्ठा device_node *np)
-अणु
-	काष्ठा device *d;
+struct mdio_device *of_mdio_find_device(struct device_node *np)
+{
+	struct device *d;
 
-	अगर (!np)
-		वापस शून्य;
+	if (!np)
+		return NULL;
 
 	d = bus_find_device_by_of_node(&mdio_bus_type, np);
-	अगर (!d)
-		वापस शून्य;
+	if (!d)
+		return NULL;
 
-	वापस to_mdio_device(d);
-पूर्ण
+	return to_mdio_device(d);
+}
 EXPORT_SYMBOL(of_mdio_find_device);
 
 /**
  * of_phy_find_device - Give a PHY node, find the phy_device
- * @phy_np: Poपूर्णांकer to the phy's device tree node
+ * @phy_np: Pointer to the phy's device tree node
  *
- * If successful, वापसs a poपूर्णांकer to the phy_device with the embedded
- * काष्ठा device refcount incremented by one, or शून्य on failure.
+ * If successful, returns a pointer to the phy_device with the embedded
+ * struct device refcount incremented by one, or NULL on failure.
  */
-काष्ठा phy_device *of_phy_find_device(काष्ठा device_node *phy_np)
-अणु
-	काष्ठा mdio_device *mdiodev;
+struct phy_device *of_phy_find_device(struct device_node *phy_np)
+{
+	struct mdio_device *mdiodev;
 
 	mdiodev = of_mdio_find_device(phy_np);
-	अगर (!mdiodev)
-		वापस शून्य;
+	if (!mdiodev)
+		return NULL;
 
-	अगर (mdiodev->flags & MDIO_DEVICE_FLAG_PHY)
-		वापस to_phy_device(&mdiodev->dev);
+	if (mdiodev->flags & MDIO_DEVICE_FLAG_PHY)
+		return to_phy_device(&mdiodev->dev);
 
 	put_device(&mdiodev->dev);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL(of_phy_find_device);
 
 /**
  * of_phy_connect - Connect to the phy described in the device tree
- * @dev: poपूर्णांकer to net_device claiming the phy
- * @phy_np: Poपूर्णांकer to device tree node क्रम the PHY
- * @hndlr: Link state callback क्रम the network device
+ * @dev: pointer to net_device claiming the phy
+ * @phy_np: Pointer to device tree node for the PHY
+ * @hndlr: Link state callback for the network device
  * @flags: flags to pass to the PHY
- * @अगरace: PHY data पूर्णांकerface type
+ * @iface: PHY data interface type
  *
- * If successful, वापसs a poपूर्णांकer to the phy_device with the embedded
- * काष्ठा device refcount incremented by one, or शून्य on failure. The
+ * If successful, returns a pointer to the phy_device with the embedded
+ * struct device refcount incremented by one, or NULL on failure. The
  * refcount must be dropped by calling phy_disconnect() or phy_detach().
  */
-काष्ठा phy_device *of_phy_connect(काष्ठा net_device *dev,
-				  काष्ठा device_node *phy_np,
-				  व्योम (*hndlr)(काष्ठा net_device *), u32 flags,
-				  phy_पूर्णांकerface_t अगरace)
-अणु
-	काष्ठा phy_device *phy = of_phy_find_device(phy_np);
-	पूर्णांक ret;
+struct phy_device *of_phy_connect(struct net_device *dev,
+				  struct device_node *phy_np,
+				  void (*hndlr)(struct net_device *), u32 flags,
+				  phy_interface_t iface)
+{
+	struct phy_device *phy = of_phy_find_device(phy_np);
+	int ret;
 
-	अगर (!phy)
-		वापस शून्य;
+	if (!phy)
+		return NULL;
 
 	phy->dev_flags |= flags;
 
-	ret = phy_connect_direct(dev, phy, hndlr, अगरace);
+	ret = phy_connect_direct(dev, phy, hndlr, iface);
 
 	/* refcount is held by phy_connect_direct() on success */
 	put_device(&phy->mdio.dev);
 
-	वापस ret ? शून्य : phy;
-पूर्ण
+	return ret ? NULL : phy;
+}
 EXPORT_SYMBOL(of_phy_connect);
 
 /**
  * of_phy_get_and_connect
  * - Get phy node and connect to the phy described in the device tree
- * @dev: poपूर्णांकer to net_device claiming the phy
- * @np: Poपूर्णांकer to device tree node क्रम the net_device claiming the phy
- * @hndlr: Link state callback क्रम the network device
+ * @dev: pointer to net_device claiming the phy
+ * @np: Pointer to device tree node for the net_device claiming the phy
+ * @hndlr: Link state callback for the network device
  *
- * If successful, वापसs a poपूर्णांकer to the phy_device with the embedded
- * काष्ठा device refcount incremented by one, or शून्य on failure. The
+ * If successful, returns a pointer to the phy_device with the embedded
+ * struct device refcount incremented by one, or NULL on failure. The
  * refcount must be dropped by calling phy_disconnect() or phy_detach().
  */
-काष्ठा phy_device *of_phy_get_and_connect(काष्ठा net_device *dev,
-					  काष्ठा device_node *np,
-					  व्योम (*hndlr)(काष्ठा net_device *))
-अणु
-	phy_पूर्णांकerface_t अगरace;
-	काष्ठा device_node *phy_np;
-	काष्ठा phy_device *phy;
-	पूर्णांक ret;
+struct phy_device *of_phy_get_and_connect(struct net_device *dev,
+					  struct device_node *np,
+					  void (*hndlr)(struct net_device *))
+{
+	phy_interface_t iface;
+	struct device_node *phy_np;
+	struct phy_device *phy;
+	int ret;
 
-	ret = of_get_phy_mode(np, &अगरace);
-	अगर (ret)
-		वापस शून्य;
-	अगर (of_phy_is_fixed_link(np)) अणु
-		ret = of_phy_रेजिस्टर_fixed_link(np);
-		अगर (ret < 0) अणु
+	ret = of_get_phy_mode(np, &iface);
+	if (ret)
+		return NULL;
+	if (of_phy_is_fixed_link(np)) {
+		ret = of_phy_register_fixed_link(np);
+		if (ret < 0) {
 			netdev_err(dev, "broken fixed-link specification\n");
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 		phy_np = of_node_get(np);
-	पूर्ण अन्यथा अणु
+	} else {
 		phy_np = of_parse_phandle(np, "phy-handle", 0);
-		अगर (!phy_np)
-			वापस शून्य;
-	पूर्ण
+		if (!phy_np)
+			return NULL;
+	}
 
-	phy = of_phy_connect(dev, phy_np, hndlr, 0, अगरace);
+	phy = of_phy_connect(dev, phy_np, hndlr, 0, iface);
 
 	of_node_put(phy_np);
 
-	वापस phy;
-पूर्ण
+	return phy;
+}
 EXPORT_SYMBOL(of_phy_get_and_connect);
 
 /*
- * of_phy_is_fixed_link() and of_phy_रेजिस्टर_fixed_link() must
+ * of_phy_is_fixed_link() and of_phy_register_fixed_link() must
  * support two DT bindings:
  * - the old DT binding, where 'fixed-link' was a property with 5
- *   cells encoding various inक्रमmations about the fixed PHY
+ *   cells encoding various informations about the fixed PHY
  * - the new DT binding, where 'fixed-link' is a sub-node of the
  *   Ethernet device.
  */
-bool of_phy_is_fixed_link(काष्ठा device_node *np)
-अणु
-	काष्ठा device_node *dn;
-	पूर्णांक len, err;
-	स्थिर अक्षर *managed;
+bool of_phy_is_fixed_link(struct device_node *np)
+{
+	struct device_node *dn;
+	int len, err;
+	const char *managed;
 
 	/* New binding */
 	dn = of_get_child_by_name(np, "fixed-link");
-	अगर (dn) अणु
+	if (dn) {
 		of_node_put(dn);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	err = of_property_पढ़ो_string(np, "managed", &managed);
-	अगर (err == 0 && म_भेद(managed, "auto") != 0)
-		वापस true;
+	err = of_property_read_string(np, "managed", &managed);
+	if (err == 0 && strcmp(managed, "auto") != 0)
+		return true;
 
 	/* Old binding */
-	अगर (of_get_property(np, "fixed-link", &len) &&
-	    len == (5 * माप(__be32)))
-		वापस true;
+	if (of_get_property(np, "fixed-link", &len) &&
+	    len == (5 * sizeof(__be32)))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 EXPORT_SYMBOL(of_phy_is_fixed_link);
 
-पूर्णांक of_phy_रेजिस्टर_fixed_link(काष्ठा device_node *np)
-अणु
-	काष्ठा fixed_phy_status status = अणुपूर्ण;
-	काष्ठा device_node *fixed_link_node;
+int of_phy_register_fixed_link(struct device_node *np)
+{
+	struct fixed_phy_status status = {};
+	struct device_node *fixed_link_node;
 	u32 fixed_link_prop[5];
-	स्थिर अक्षर *managed;
+	const char *managed;
 
-	अगर (of_property_पढ़ो_string(np, "managed", &managed) == 0 &&
-	    म_भेद(managed, "in-band-status") == 0) अणु
+	if (of_property_read_string(np, "managed", &managed) == 0 &&
+	    strcmp(managed, "in-band-status") == 0) {
 		/* status is zeroed, namely its .link member */
-		जाओ रेजिस्टर_phy;
-	पूर्ण
+		goto register_phy;
+	}
 
 	/* New binding */
 	fixed_link_node = of_get_child_by_name(np, "fixed-link");
-	अगर (fixed_link_node) अणु
+	if (fixed_link_node) {
 		status.link = 1;
-		status.duplex = of_property_पढ़ो_bool(fixed_link_node,
+		status.duplex = of_property_read_bool(fixed_link_node,
 						      "full-duplex");
-		अगर (of_property_पढ़ो_u32(fixed_link_node, "speed",
-					 &status.speed)) अणु
+		if (of_property_read_u32(fixed_link_node, "speed",
+					 &status.speed)) {
 			of_node_put(fixed_link_node);
-			वापस -EINVAL;
-		पूर्ण
-		status.छोड़ो = of_property_पढ़ो_bool(fixed_link_node, "pause");
-		status.asym_छोड़ो = of_property_पढ़ो_bool(fixed_link_node,
+			return -EINVAL;
+		}
+		status.pause = of_property_read_bool(fixed_link_node, "pause");
+		status.asym_pause = of_property_read_bool(fixed_link_node,
 							  "asym-pause");
 		of_node_put(fixed_link_node);
 
-		जाओ रेजिस्टर_phy;
-	पूर्ण
+		goto register_phy;
+	}
 
 	/* Old binding */
-	अगर (of_property_पढ़ो_u32_array(np, "fixed-link", fixed_link_prop,
-				       ARRAY_SIZE(fixed_link_prop)) == 0) अणु
+	if (of_property_read_u32_array(np, "fixed-link", fixed_link_prop,
+				       ARRAY_SIZE(fixed_link_prop)) == 0) {
 		status.link = 1;
 		status.duplex = fixed_link_prop[1];
 		status.speed  = fixed_link_prop[2];
-		status.छोड़ो  = fixed_link_prop[3];
-		status.asym_छोड़ो = fixed_link_prop[4];
-		जाओ रेजिस्टर_phy;
-	पूर्ण
+		status.pause  = fixed_link_prop[3];
+		status.asym_pause = fixed_link_prop[4];
+		goto register_phy;
+	}
 
-	वापस -ENODEV;
+	return -ENODEV;
 
-रेजिस्टर_phy:
-	वापस PTR_ERR_OR_ZERO(fixed_phy_रेजिस्टर(PHY_POLL, &status, np));
-पूर्ण
-EXPORT_SYMBOL(of_phy_रेजिस्टर_fixed_link);
+register_phy:
+	return PTR_ERR_OR_ZERO(fixed_phy_register(PHY_POLL, &status, np));
+}
+EXPORT_SYMBOL(of_phy_register_fixed_link);
 
-व्योम of_phy_deरेजिस्टर_fixed_link(काष्ठा device_node *np)
-अणु
-	काष्ठा phy_device *phydev;
+void of_phy_deregister_fixed_link(struct device_node *np)
+{
+	struct phy_device *phydev;
 
 	phydev = of_phy_find_device(np);
-	अगर (!phydev)
-		वापस;
+	if (!phydev)
+		return;
 
-	fixed_phy_unरेजिस्टर(phydev);
+	fixed_phy_unregister(phydev);
 
 	put_device(&phydev->mdio.dev);	/* of_phy_find_device() */
-	phy_device_मुक्त(phydev);	/* fixed_phy_रेजिस्टर() */
-पूर्ण
-EXPORT_SYMBOL(of_phy_deरेजिस्टर_fixed_link);
+	phy_device_free(phydev);	/* fixed_phy_register() */
+}
+EXPORT_SYMBOL(of_phy_deregister_fixed_link);

@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * Equalizer Load-balancer क्रम serial network पूर्णांकerfaces.
+ * Equalizer Load-balancer for serial network interfaces.
  *
  * (c) Copyright 1995 Simon "Guru Aleph-Null" Janes
  * NCM: Network and Communications Management, Inc.
@@ -18,39 +17,39 @@
  *    Phone: 1-703-847-0040 ext 103
  */
 
-#अगर_अघोषित _UAPI_LINUX_IF_EQL_H
-#घोषणा _UAPI_LINUX_IF_EQL_H
+#ifndef _UAPI_LINUX_IF_EQL_H
+#define _UAPI_LINUX_IF_EQL_H
 
-#घोषणा EQL_DEFAULT_SLAVE_PRIORITY 28800
-#घोषणा EQL_DEFAULT_MAX_SLAVES     4
-#घोषणा EQL_DEFAULT_MTU            576
-#घोषणा EQL_DEFAULT_RESCHED_IVAL   HZ
+#define EQL_DEFAULT_SLAVE_PRIORITY 28800
+#define EQL_DEFAULT_MAX_SLAVES     4
+#define EQL_DEFAULT_MTU            576
+#define EQL_DEFAULT_RESCHED_IVAL   HZ
 
-#घोषणा EQL_ENSLAVE     (SIOCDEVPRIVATE)
-#घोषणा EQL_EMANCIPATE  (SIOCDEVPRIVATE + 1)
+#define EQL_ENSLAVE     (SIOCDEVPRIVATE)
+#define EQL_EMANCIPATE  (SIOCDEVPRIVATE + 1)
 
-#घोषणा EQL_GETSLAVECFG (SIOCDEVPRIVATE + 2)
-#घोषणा EQL_SETSLAVECFG (SIOCDEVPRIVATE + 3)
+#define EQL_GETSLAVECFG (SIOCDEVPRIVATE + 2)
+#define EQL_SETSLAVECFG (SIOCDEVPRIVATE + 3)
 
-#घोषणा EQL_GETMASTRCFG (SIOCDEVPRIVATE + 4)
-#घोषणा EQL_SETMASTRCFG (SIOCDEVPRIVATE + 5)
-
-
-प्रकार काष्ठा master_config अणु
-	अक्षर	master_name[16];
-	पूर्णांक	max_slaves;
-	पूर्णांक	min_slaves;
-पूर्ण master_config_t;
-
-प्रकार काष्ठा slave_config अणु
-	अक्षर	slave_name[16];
-	दीर्घ	priority;
-पूर्ण slave_config_t;
-
-प्रकार काष्ठा slaving_request अणु
-	अक्षर	slave_name[16];
-	दीर्घ	priority;
-पूर्ण slaving_request_t;
+#define EQL_GETMASTRCFG (SIOCDEVPRIVATE + 4)
+#define EQL_SETMASTRCFG (SIOCDEVPRIVATE + 5)
 
 
-#पूर्ण_अगर /* _UAPI_LINUX_IF_EQL_H */
+typedef struct master_config {
+	char	master_name[16];
+	int	max_slaves;
+	int	min_slaves;
+} master_config_t;
+
+typedef struct slave_config {
+	char	slave_name[16];
+	long	priority;
+} slave_config_t;
+
+typedef struct slaving_request {
+	char	slave_name[16];
+	long	priority;
+} slaving_request_t;
+
+
+#endif /* _UAPI_LINUX_IF_EQL_H */

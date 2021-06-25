@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * OSS compatible sequencer driver
  *
@@ -8,128 +7,128 @@
  * Copyright (C) 1998,99 Takashi Iwai <tiwai@suse.de>
  */
 
-#समावेश "seq_oss_timer.h"
-#समावेश "seq_oss_event.h"
-#समावेश <sound/seq_oss_legacy.h>
-#समावेश <linux/slab.h>
+#include "seq_oss_timer.h"
+#include "seq_oss_event.h"
+#include <sound/seq_oss_legacy.h>
+#include <linux/slab.h>
 
 /*
  */
-#घोषणा MIN_OSS_TEMPO		8
-#घोषणा MAX_OSS_TEMPO		360
-#घोषणा MIN_OSS_TIMEBASE	1
-#घोषणा MAX_OSS_TIMEBASE	1000
+#define MIN_OSS_TEMPO		8
+#define MAX_OSS_TEMPO		360
+#define MIN_OSS_TIMEBASE	1
+#define MAX_OSS_TIMEBASE	1000
 
 /*
  */
-अटल व्योम calc_alsa_tempo(काष्ठा seq_oss_समयr *समयr);
-अटल पूर्णांक send_समयr_event(काष्ठा seq_oss_devinfo *dp, पूर्णांक type, पूर्णांक value);
+static void calc_alsa_tempo(struct seq_oss_timer *timer);
+static int send_timer_event(struct seq_oss_devinfo *dp, int type, int value);
 
 
 /*
- * create and रेजिस्टर a new समयr.
- * अगर queue is not started yet, start it.
+ * create and register a new timer.
+ * if queue is not started yet, start it.
  */
-काष्ठा seq_oss_समयr *
-snd_seq_oss_समयr_new(काष्ठा seq_oss_devinfo *dp)
-अणु
-	काष्ठा seq_oss_समयr *rec;
+struct seq_oss_timer *
+snd_seq_oss_timer_new(struct seq_oss_devinfo *dp)
+{
+	struct seq_oss_timer *rec;
 
-	rec = kzalloc(माप(*rec), GFP_KERNEL);
-	अगर (rec == शून्य)
-		वापस शून्य;
+	rec = kzalloc(sizeof(*rec), GFP_KERNEL);
+	if (rec == NULL)
+		return NULL;
 
 	rec->dp = dp;
 	rec->cur_tick = 0;
-	rec->realसमय = 0;
+	rec->realtime = 0;
 	rec->running = 0;
 	rec->oss_tempo = 60;
-	rec->oss_समयbase = 100;
+	rec->oss_timebase = 100;
 	calc_alsa_tempo(rec);
 
-	वापस rec;
-पूर्ण
+	return rec;
+}
 
 
 /*
- * delete समयr.
- * अगर no more समयr exists, stop the queue.
+ * delete timer.
+ * if no more timer exists, stop the queue.
  */
-व्योम
-snd_seq_oss_समयr_delete(काष्ठा seq_oss_समयr *rec)
-अणु
-	अगर (rec) अणु
-		snd_seq_oss_समयr_stop(rec);
-		kमुक्त(rec);
-	पूर्ण
-पूर्ण
+void
+snd_seq_oss_timer_delete(struct seq_oss_timer *rec)
+{
+	if (rec) {
+		snd_seq_oss_timer_stop(rec);
+		kfree(rec);
+	}
+}
 
 
 /*
  * process one timing event
- * वापस 1 : event proceseed -- skip this event
- *        0 : not a समयr event -- enqueue this event
+ * return 1 : event proceseed -- skip this event
+ *        0 : not a timer event -- enqueue this event
  */
-पूर्णांक
-snd_seq_oss_process_समयr_event(काष्ठा seq_oss_समयr *rec, जोड़ evrec *ev)
-अणु
-	असलसमय_प्रकार parm = ev->t.समय;
+int
+snd_seq_oss_process_timer_event(struct seq_oss_timer *rec, union evrec *ev)
+{
+	abstime_t parm = ev->t.time;
 
-	अगर (ev->t.code == EV_TIMING) अणु
-		चयन (ev->t.cmd) अणु
-		हाल TMR_WAIT_REL:
+	if (ev->t.code == EV_TIMING) {
+		switch (ev->t.cmd) {
+		case TMR_WAIT_REL:
 			parm += rec->cur_tick;
-			rec->realसमय = 0;
+			rec->realtime = 0;
 			fallthrough;
-		हाल TMR_WAIT_ABS:
-			अगर (parm == 0) अणु
-				rec->realसमय = 1;
-			पूर्ण अन्यथा अगर (parm >= rec->cur_tick) अणु
-				rec->realसमय = 0;
+		case TMR_WAIT_ABS:
+			if (parm == 0) {
+				rec->realtime = 1;
+			} else if (parm >= rec->cur_tick) {
+				rec->realtime = 0;
 				rec->cur_tick = parm;
-			पूर्ण
-			वापस 1;	/* skip this event */
+			}
+			return 1;	/* skip this event */
 			
-		हाल TMR_START:
-			snd_seq_oss_समयr_start(rec);
-			वापस 1;
+		case TMR_START:
+			snd_seq_oss_timer_start(rec);
+			return 1;
 
-		पूर्ण
-	पूर्ण अन्यथा अगर (ev->s.code == SEQ_WAIT) अणु
-		/* समय = from 1 to 3 bytes */
+		}
+	} else if (ev->s.code == SEQ_WAIT) {
+		/* time = from 1 to 3 bytes */
 		parm = (ev->echo >> 8) & 0xffffff;
-		अगर (parm > rec->cur_tick) अणु
-			/* set next event समय */
+		if (parm > rec->cur_tick) {
+			/* set next event time */
 			rec->cur_tick = parm;
-			rec->realसमय = 0;
-		पूर्ण
-		वापस 1;
-	पूर्ण
+			rec->realtime = 0;
+		}
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  * convert tempo units
  */
-अटल व्योम
-calc_alsa_tempo(काष्ठा seq_oss_समयr *समयr)
-अणु
-	समयr->tempo = (60 * 1000000) / समयr->oss_tempo;
-	समयr->ppq = समयr->oss_समयbase;
-पूर्ण
+static void
+calc_alsa_tempo(struct seq_oss_timer *timer)
+{
+	timer->tempo = (60 * 1000000) / timer->oss_tempo;
+	timer->ppq = timer->oss_timebase;
+}
 
 
 /*
- * dispatch a समयr event
+ * dispatch a timer event
  */
-अटल पूर्णांक
-send_समयr_event(काष्ठा seq_oss_devinfo *dp, पूर्णांक type, पूर्णांक value)
-अणु
-	काष्ठा snd_seq_event ev;
+static int
+send_timer_event(struct seq_oss_devinfo *dp, int type, int value)
+{
+	struct snd_seq_event ev;
 
-	स_रखो(&ev, 0, माप(ev));
+	memset(&ev, 0, sizeof(ev));
 	ev.type = type;
 	ev.source.client = dp->cseq;
 	ev.source.port = 0;
@@ -138,128 +137,128 @@ send_समयr_event(काष्ठा seq_oss_devinfo *dp, पूर्णा
 	ev.queue = dp->queue;
 	ev.data.queue.queue = dp->queue;
 	ev.data.queue.param.value = value;
-	वापस snd_seq_kernel_client_dispatch(dp->cseq, &ev, 1, 0);
-पूर्ण
+	return snd_seq_kernel_client_dispatch(dp->cseq, &ev, 1, 0);
+}
 
 /*
  * set queue tempo and start queue
  */
-पूर्णांक
-snd_seq_oss_समयr_start(काष्ठा seq_oss_समयr *समयr)
-अणु
-	काष्ठा seq_oss_devinfo *dp = समयr->dp;
-	काष्ठा snd_seq_queue_tempo पंचांगprec;
+int
+snd_seq_oss_timer_start(struct seq_oss_timer *timer)
+{
+	struct seq_oss_devinfo *dp = timer->dp;
+	struct snd_seq_queue_tempo tmprec;
 
-	अगर (समयr->running)
-		snd_seq_oss_समयr_stop(समयr);
+	if (timer->running)
+		snd_seq_oss_timer_stop(timer);
 
-	स_रखो(&पंचांगprec, 0, माप(पंचांगprec));
-	पंचांगprec.queue = dp->queue;
-	पंचांगprec.ppq = समयr->ppq;
-	पंचांगprec.tempo = समयr->tempo;
-	snd_seq_set_queue_tempo(dp->cseq, &पंचांगprec);
+	memset(&tmprec, 0, sizeof(tmprec));
+	tmprec.queue = dp->queue;
+	tmprec.ppq = timer->ppq;
+	tmprec.tempo = timer->tempo;
+	snd_seq_set_queue_tempo(dp->cseq, &tmprec);
 
-	send_समयr_event(dp, SNDRV_SEQ_EVENT_START, 0);
-	समयr->running = 1;
-	समयr->cur_tick = 0;
-	वापस 0;
-पूर्ण
+	send_timer_event(dp, SNDRV_SEQ_EVENT_START, 0);
+	timer->running = 1;
+	timer->cur_tick = 0;
+	return 0;
+}
 
 
 /*
  * stop queue
  */
-पूर्णांक
-snd_seq_oss_समयr_stop(काष्ठा seq_oss_समयr *समयr)
-अणु
-	अगर (! समयr->running)
-		वापस 0;
-	send_समयr_event(समयr->dp, SNDRV_SEQ_EVENT_STOP, 0);
-	समयr->running = 0;
-	वापस 0;
-पूर्ण
+int
+snd_seq_oss_timer_stop(struct seq_oss_timer *timer)
+{
+	if (! timer->running)
+		return 0;
+	send_timer_event(timer->dp, SNDRV_SEQ_EVENT_STOP, 0);
+	timer->running = 0;
+	return 0;
+}
 
 
 /*
- * जारी queue
+ * continue queue
  */
-पूर्णांक
-snd_seq_oss_समयr_जारी(काष्ठा seq_oss_समयr *समयr)
-अणु
-	अगर (समयr->running)
-		वापस 0;
-	send_समयr_event(समयr->dp, SNDRV_SEQ_EVENT_CONTINUE, 0);
-	समयr->running = 1;
-	वापस 0;
-पूर्ण
+int
+snd_seq_oss_timer_continue(struct seq_oss_timer *timer)
+{
+	if (timer->running)
+		return 0;
+	send_timer_event(timer->dp, SNDRV_SEQ_EVENT_CONTINUE, 0);
+	timer->running = 1;
+	return 0;
+}
 
 
 /*
  * change queue tempo
  */
-पूर्णांक
-snd_seq_oss_समयr_tempo(काष्ठा seq_oss_समयr *समयr, पूर्णांक value)
-अणु
-	अगर (value < MIN_OSS_TEMPO)
+int
+snd_seq_oss_timer_tempo(struct seq_oss_timer *timer, int value)
+{
+	if (value < MIN_OSS_TEMPO)
 		value = MIN_OSS_TEMPO;
-	अन्यथा अगर (value > MAX_OSS_TEMPO)
+	else if (value > MAX_OSS_TEMPO)
 		value = MAX_OSS_TEMPO;
-	समयr->oss_tempo = value;
-	calc_alsa_tempo(समयr);
-	अगर (समयr->running)
-		send_समयr_event(समयr->dp, SNDRV_SEQ_EVENT_TEMPO, समयr->tempo);
-	वापस 0;
-पूर्ण
+	timer->oss_tempo = value;
+	calc_alsa_tempo(timer);
+	if (timer->running)
+		send_timer_event(timer->dp, SNDRV_SEQ_EVENT_TEMPO, timer->tempo);
+	return 0;
+}
 
 
 /*
  * ioctls
  */
-पूर्णांक
-snd_seq_oss_समयr_ioctl(काष्ठा seq_oss_समयr *समयr, अचिन्हित पूर्णांक cmd, पूर्णांक __user *arg)
-अणु
-	पूर्णांक value;
+int
+snd_seq_oss_timer_ioctl(struct seq_oss_timer *timer, unsigned int cmd, int __user *arg)
+{
+	int value;
 
-	अगर (cmd == SNDCTL_SEQ_CTRLRATE) अणु
-		/* अगर *arg == 0, just वापस the current rate */
-		अगर (get_user(value, arg))
-			वापस -EFAULT;
-		अगर (value)
-			वापस -EINVAL;
-		value = ((समयr->oss_tempo * समयr->oss_समयbase) + 30) / 60;
-		वापस put_user(value, arg) ? -EFAULT : 0;
-	पूर्ण
+	if (cmd == SNDCTL_SEQ_CTRLRATE) {
+		/* if *arg == 0, just return the current rate */
+		if (get_user(value, arg))
+			return -EFAULT;
+		if (value)
+			return -EINVAL;
+		value = ((timer->oss_tempo * timer->oss_timebase) + 30) / 60;
+		return put_user(value, arg) ? -EFAULT : 0;
+	}
 
-	अगर (समयr->dp->seq_mode == SNDRV_SEQ_OSS_MODE_SYNTH)
-		वापस 0;
+	if (timer->dp->seq_mode == SNDRV_SEQ_OSS_MODE_SYNTH)
+		return 0;
 
-	चयन (cmd) अणु
-	हाल SNDCTL_TMR_START:
-		वापस snd_seq_oss_समयr_start(समयr);
-	हाल SNDCTL_TMR_STOP:
-		वापस snd_seq_oss_समयr_stop(समयr);
-	हाल SNDCTL_TMR_CONTINUE:
-		वापस snd_seq_oss_समयr_जारी(समयr);
-	हाल SNDCTL_TMR_TEMPO:
-		अगर (get_user(value, arg))
-			वापस -EFAULT;
-		वापस snd_seq_oss_समयr_tempo(समयr, value);
-	हाल SNDCTL_TMR_TIMEBASE:
-		अगर (get_user(value, arg))
-			वापस -EFAULT;
-		अगर (value < MIN_OSS_TIMEBASE)
+	switch (cmd) {
+	case SNDCTL_TMR_START:
+		return snd_seq_oss_timer_start(timer);
+	case SNDCTL_TMR_STOP:
+		return snd_seq_oss_timer_stop(timer);
+	case SNDCTL_TMR_CONTINUE:
+		return snd_seq_oss_timer_continue(timer);
+	case SNDCTL_TMR_TEMPO:
+		if (get_user(value, arg))
+			return -EFAULT;
+		return snd_seq_oss_timer_tempo(timer, value);
+	case SNDCTL_TMR_TIMEBASE:
+		if (get_user(value, arg))
+			return -EFAULT;
+		if (value < MIN_OSS_TIMEBASE)
 			value = MIN_OSS_TIMEBASE;
-		अन्यथा अगर (value > MAX_OSS_TIMEBASE)
+		else if (value > MAX_OSS_TIMEBASE)
 			value = MAX_OSS_TIMEBASE;
-		समयr->oss_समयbase = value;
-		calc_alsa_tempo(समयr);
-		वापस 0;
+		timer->oss_timebase = value;
+		calc_alsa_tempo(timer);
+		return 0;
 
-	हाल SNDCTL_TMR_METRONOME:
-	हाल SNDCTL_TMR_SELECT:
-	हाल SNDCTL_TMR_SOURCE:
+	case SNDCTL_TMR_METRONOME:
+	case SNDCTL_TMR_SELECT:
+	case SNDCTL_TMR_SOURCE:
 		/* not supported */
-		वापस 0;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 0;
+	}
+	return 0;
+}

@@ -1,90 +1,89 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2019 Facebook
-#समावेश <linux/bpf.h>
-#समावेश <linux/version.h>
-#समावेश <bpf/bpf_helpers.h>
+#include <linux/bpf.h>
+#include <linux/version.h>
+#include <bpf/bpf_helpers.h>
 
-काष्ठा hmap_elem अणु
-	अस्थिर पूर्णांक cnt;
-	काष्ठा bpf_spin_lock lock;
-	पूर्णांक test_padding;
-पूर्ण;
+struct hmap_elem {
+	volatile int cnt;
+	struct bpf_spin_lock lock;
+	int test_padding;
+};
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_HASH);
-	__uपूर्णांक(max_entries, 1);
-	__type(key, पूर्णांक);
-	__type(value, काष्ठा hmap_elem);
-पूर्ण hmap SEC(".maps");
+struct {
+	__uint(type, BPF_MAP_TYPE_HASH);
+	__uint(max_entries, 1);
+	__type(key, int);
+	__type(value, struct hmap_elem);
+} hmap SEC(".maps");
 
-काष्ठा cls_elem अणु
-	काष्ठा bpf_spin_lock lock;
-	अस्थिर पूर्णांक cnt;
-पूर्ण;
+struct cls_elem {
+	struct bpf_spin_lock lock;
+	volatile int cnt;
+};
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_CGROUP_STORAGE);
-	__type(key, काष्ठा bpf_cgroup_storage_key);
-	__type(value, काष्ठा cls_elem);
-पूर्ण cls_map SEC(".maps");
+struct {
+	__uint(type, BPF_MAP_TYPE_CGROUP_STORAGE);
+	__type(key, struct bpf_cgroup_storage_key);
+	__type(value, struct cls_elem);
+} cls_map SEC(".maps");
 
-काष्ठा bpf_vqueue अणु
-	काष्ठा bpf_spin_lock lock;
+struct bpf_vqueue {
+	struct bpf_spin_lock lock;
 	/* 4 byte hole */
-	अचिन्हित दीर्घ दीर्घ lastसमय;
-	पूर्णांक credit;
-	अचिन्हित पूर्णांक rate;
-पूर्ण;
+	unsigned long long lasttime;
+	int credit;
+	unsigned int rate;
+};
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_ARRAY);
-	__uपूर्णांक(max_entries, 1);
-	__type(key, पूर्णांक);
-	__type(value, काष्ठा bpf_vqueue);
-पूर्ण vqueue SEC(".maps");
+struct {
+	__uint(type, BPF_MAP_TYPE_ARRAY);
+	__uint(max_entries, 1);
+	__type(key, int);
+	__type(value, struct bpf_vqueue);
+} vqueue SEC(".maps");
 
-#घोषणा CREDIT_PER_NS(delta, rate) (((delta) * rate) >> 20)
+#define CREDIT_PER_NS(delta, rate) (((delta) * rate) >> 20)
 
 SEC("spin_lock_demo")
-पूर्णांक bpf_sping_lock_test(काष्ठा __sk_buff *skb)
-अणु
-	अस्थिर पूर्णांक credit = 0, max_credit = 100, pkt_len = 64;
-	काष्ठा hmap_elem zero = अणुपूर्ण, *val;
-	अचिन्हित दीर्घ दीर्घ curसमय;
-	काष्ठा bpf_vqueue *q;
-	काष्ठा cls_elem *cls;
-	पूर्णांक key = 0;
-	पूर्णांक err = 0;
+int bpf_sping_lock_test(struct __sk_buff *skb)
+{
+	volatile int credit = 0, max_credit = 100, pkt_len = 64;
+	struct hmap_elem zero = {}, *val;
+	unsigned long long curtime;
+	struct bpf_vqueue *q;
+	struct cls_elem *cls;
+	int key = 0;
+	int err = 0;
 
 	val = bpf_map_lookup_elem(&hmap, &key);
-	अगर (!val) अणु
+	if (!val) {
 		bpf_map_update_elem(&hmap, &key, &zero, 0);
 		val = bpf_map_lookup_elem(&hmap, &key);
-		अगर (!val) अणु
+		if (!val) {
 			err = 1;
-			जाओ err;
-		पूर्ण
-	पूर्ण
-	/* spin_lock in hash map run समय test */
+			goto err;
+		}
+	}
+	/* spin_lock in hash map run time test */
 	bpf_spin_lock(&val->lock);
-	अगर (val->cnt)
+	if (val->cnt)
 		val->cnt--;
-	अन्यथा
+	else
 		val->cnt++;
-	अगर (val->cnt != 0 && val->cnt != 1)
+	if (val->cnt != 0 && val->cnt != 1)
 		err = 1;
 	bpf_spin_unlock(&val->lock);
 
-	/* spin_lock in array. भव queue demo */
+	/* spin_lock in array. virtual queue demo */
 	q = bpf_map_lookup_elem(&vqueue, &key);
-	अगर (!q)
-		जाओ err;
-	curसमय = bpf_kसमय_get_ns();
+	if (!q)
+		goto err;
+	curtime = bpf_ktime_get_ns();
 	bpf_spin_lock(&q->lock);
-	q->credit += CREDIT_PER_NS(curसमय - q->lastसमय, q->rate);
-	q->lastसमय = curसमय;
-	अगर (q->credit > max_credit)
+	q->credit += CREDIT_PER_NS(curtime - q->lasttime, q->rate);
+	q->lasttime = curtime;
+	if (q->credit > max_credit)
 		q->credit = max_credit;
 	q->credit -= pkt_len;
 	credit = q->credit;
@@ -97,6 +96,6 @@ SEC("spin_lock_demo")
 	bpf_spin_unlock(&cls->lock);
 
 err:
-	वापस err;
-पूर्ण
-अक्षर _license[] SEC("license") = "GPL";
+	return err;
+}
+char _license[] SEC("license") = "GPL";

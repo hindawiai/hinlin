@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_START_KERNEL_H
-#घोषणा _LINUX_START_KERNEL_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_START_KERNEL_H
+#define _LINUX_START_KERNEL_H
 
-#समावेश <linux/linkage.h>
-#समावेश <linux/init.h>
+#include <linux/linkage.h>
+#include <linux/init.h>
 
-/* Define the prototype क्रम start_kernel here, rather than cluttering
-   up something अन्यथा. */
+/* Define the prototype for start_kernel here, rather than cluttering
+   up something else. */
 
-बाह्य यंत्रlinkage व्योम __init start_kernel(व्योम);
-बाह्य व्योम __init arch_call_rest_init(व्योम);
-बाह्य व्योम __ref rest_init(व्योम);
+extern asmlinkage void __init start_kernel(void);
+extern void __init arch_call_rest_init(void);
+extern void __ref rest_init(void);
 
-#पूर्ण_अगर /* _LINUX_START_KERNEL_H */
+#endif /* _LINUX_START_KERNEL_H */

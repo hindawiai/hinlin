@@ -1,71 +1,70 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#घोषणा USE_DVICHIP
-#अगर_घोषित USE_DVICHIP
+// SPDX-License-Identifier: GPL-2.0
+#define USE_DVICHIP
+#ifdef USE_DVICHIP
 
-#समावेश "ddk750_sii164.h"
-#समावेश "ddk750_hwi2c.h"
+#include "ddk750_sii164.h"
+#include "ddk750_hwi2c.h"
 
 /* I2C Address of each SII164 chip */
-#घोषणा SII164_I2C_ADDRESS                  0x70
+#define SII164_I2C_ADDRESS                  0x70
 
 /* Define this definition to use hardware i2c. */
-#घोषणा USE_HW_I2C
+#define USE_HW_I2C
 
-#अगर_घोषित USE_HW_I2C
-    #घोषणा i2cWriteReg sm750_hw_i2c_ग_लिखो_reg
-    #घोषणा i2cReadReg  sm750_hw_i2c_पढ़ो_reg
-#अन्यथा
-    #घोषणा i2cWriteReg sm750_sw_i2c_ग_लिखो_reg
-    #घोषणा i2cReadReg  sm750_sw_i2c_पढ़ो_reg
-#पूर्ण_अगर
+#ifdef USE_HW_I2C
+    #define i2cWriteReg sm750_hw_i2c_write_reg
+    #define i2cReadReg  sm750_hw_i2c_read_reg
+#else
+    #define i2cWriteReg sm750_sw_i2c_write_reg
+    #define i2cReadReg  sm750_sw_i2c_read_reg
+#endif
 
-/* SII164 Venकरोr and Device ID */
-#घोषणा SII164_VENDOR_ID                    0x0001
-#घोषणा SII164_DEVICE_ID                    0x0006
+/* SII164 Vendor and Device ID */
+#define SII164_VENDOR_ID                    0x0001
+#define SII164_DEVICE_ID                    0x0006
 
-#अगर_घोषित SII164_FULL_FUNCTIONS
+#ifdef SII164_FULL_FUNCTIONS
 /* Name of the DVI Controller chip */
-अटल अक्षर *gDviCtrlChipName = "Silicon Image SiI 164";
-#पूर्ण_अगर
+static char *gDviCtrlChipName = "Silicon Image SiI 164";
+#endif
 
 /*
- *  sii164GetVenकरोrID
- *      This function माला_लो the venकरोr ID of the DVI controller chip.
+ *  sii164GetVendorID
+ *      This function gets the vendor ID of the DVI controller chip.
  *
  *  Output:
- *      Venकरोr ID
+ *      Vendor ID
  */
-अचिन्हित लघु sii164GetVenकरोrID(व्योम)
-अणु
-	अचिन्हित लघु venकरोrID;
+unsigned short sii164GetVendorID(void)
+{
+	unsigned short vendorID;
 
-	venकरोrID = ((अचिन्हित लघु)i2cReadReg(SII164_I2C_ADDRESS,
+	vendorID = ((unsigned short)i2cReadReg(SII164_I2C_ADDRESS,
 					       SII164_VENDOR_ID_HIGH) << 8) |
-		   (अचिन्हित लघु)i2cReadReg(SII164_I2C_ADDRESS,
+		   (unsigned short)i2cReadReg(SII164_I2C_ADDRESS,
 					      SII164_VENDOR_ID_LOW);
 
-	वापस venकरोrID;
-पूर्ण
+	return vendorID;
+}
 
 /*
  *  sii164GetDeviceID
- *      This function माला_लो the device ID of the DVI controller chip.
+ *      This function gets the device ID of the DVI controller chip.
  *
  *  Output:
  *      Device ID
  */
-अचिन्हित लघु sii164GetDeviceID(व्योम)
-अणु
-	अचिन्हित लघु deviceID;
+unsigned short sii164GetDeviceID(void)
+{
+	unsigned short deviceID;
 
-	deviceID = ((अचिन्हित लघु)i2cReadReg(SII164_I2C_ADDRESS,
+	deviceID = ((unsigned short)i2cReadReg(SII164_I2C_ADDRESS,
 					       SII164_DEVICE_ID_HIGH) << 8) |
-		   (अचिन्हित लघु)i2cReadReg(SII164_I2C_ADDRESS,
+		   (unsigned short)i2cReadReg(SII164_I2C_ADDRESS,
 					      SII164_DEVICE_ID_LOW);
 
-	वापस deviceID;
-पूर्ण
+	return deviceID;
+}
 
 /*
  *  DVI.C will handle all SiI164 chip stuffs and try its best to make code
@@ -112,121 +111,121 @@
  *      pll_filter_enable     - PLL Filter Enable
  *                               0 = Disable PLL Filter
  *                               1 = Enable PLL Filter
- *      pll_filter_value      - PLL Filter अक्षरacteristics:
+ *      pll_filter_value      - PLL Filter characteristics:
  *                               0~7 (recommended value is 4)
  *
  *  Output:
  *      0   - Success
  *     -1   - Fail.
  */
-दीर्घ sii164InitChip(अचिन्हित अक्षर edge_select,
-		    अचिन्हित अक्षर bus_select,
-		    अचिन्हित अक्षर dual_edge_clk_select,
-		    अचिन्हित अक्षर hsync_enable,
-		    अचिन्हित अक्षर vsync_enable,
-		    अचिन्हित अक्षर deskew_enable,
-		    अचिन्हित अक्षर deskew_setting,
-		    अचिन्हित अक्षर continuous_sync_enable,
-		    अचिन्हित अक्षर pll_filter_enable,
-		    अचिन्हित अक्षर pll_filter_value)
-अणु
-	अचिन्हित अक्षर config;
+long sii164InitChip(unsigned char edge_select,
+		    unsigned char bus_select,
+		    unsigned char dual_edge_clk_select,
+		    unsigned char hsync_enable,
+		    unsigned char vsync_enable,
+		    unsigned char deskew_enable,
+		    unsigned char deskew_setting,
+		    unsigned char continuous_sync_enable,
+		    unsigned char pll_filter_enable,
+		    unsigned char pll_filter_value)
+{
+	unsigned char config;
 
 	/* Initialize the i2c bus */
-#अगर_घोषित USE_HW_I2C
+#ifdef USE_HW_I2C
 	/* Use fast mode. */
 	sm750_hw_i2c_init(1);
-#अन्यथा
+#else
 	sm750_sw_i2c_init(DEFAULT_I2C_SCL, DEFAULT_I2C_SDA);
-#पूर्ण_अगर
+#endif
 
-	/* Check अगर SII164 Chip exists */
-	अगर ((sii164GetVenकरोrID() == SII164_VENDOR_ID) &&
-	    (sii164GetDeviceID() == SII164_DEVICE_ID)) अणु
+	/* Check if SII164 Chip exists */
+	if ((sii164GetVendorID() == SII164_VENDOR_ID) &&
+	    (sii164GetDeviceID() == SII164_DEVICE_ID)) {
 		/*
 		 *  Initialize SII164 controller chip.
 		 */
 
 		/* Select the edge */
-		अगर (edge_select == 0)
+		if (edge_select == 0)
 			config = SII164_CONFIGURATION_LATCH_FALLING;
-		अन्यथा
+		else
 			config = SII164_CONFIGURATION_LATCH_RISING;
 
 		/* Select bus wide */
-		अगर (bus_select == 0)
+		if (bus_select == 0)
 			config |= SII164_CONFIGURATION_BUS_12BITS;
-		अन्यथा
+		else
 			config |= SII164_CONFIGURATION_BUS_24BITS;
 
 		/* Select Dual/Single Edge Clock */
-		अगर (dual_edge_clk_select == 0)
+		if (dual_edge_clk_select == 0)
 			config |= SII164_CONFIGURATION_CLOCK_SINGLE;
-		अन्यथा
+		else
 			config |= SII164_CONFIGURATION_CLOCK_DUAL;
 
 		/* Select HSync Enable */
-		अगर (hsync_enable == 0)
+		if (hsync_enable == 0)
 			config |= SII164_CONFIGURATION_HSYNC_FORCE_LOW;
-		अन्यथा
+		else
 			config |= SII164_CONFIGURATION_HSYNC_AS_IS;
 
 		/* Select VSync Enable */
-		अगर (vsync_enable == 0)
+		if (vsync_enable == 0)
 			config |= SII164_CONFIGURATION_VSYNC_FORCE_LOW;
-		अन्यथा
+		else
 			config |= SII164_CONFIGURATION_VSYNC_AS_IS;
 
 		i2cWriteReg(SII164_I2C_ADDRESS, SII164_CONFIGURATION, config);
 
 		/*
-		 * De-skew enabled with शेष 111b value.
-		 * This fixes some artअगरacts problem in some mode on board 2.2.
-		 * Somehow this fix करोes not affect board 2.1.
+		 * De-skew enabled with default 111b value.
+		 * This fixes some artifacts problem in some mode on board 2.2.
+		 * Somehow this fix does not affect board 2.1.
 		 */
-		अगर (deskew_enable == 0)
+		if (deskew_enable == 0)
 			config = SII164_DESKEW_DISABLE;
-		अन्यथा
+		else
 			config = SII164_DESKEW_ENABLE;
 
-		चयन (deskew_setting) अणु
-		हाल 0:
+		switch (deskew_setting) {
+		case 0:
 			config |= SII164_DESKEW_1_STEP;
-			अवरोध;
-		हाल 1:
+			break;
+		case 1:
 			config |= SII164_DESKEW_2_STEP;
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			config |= SII164_DESKEW_3_STEP;
-			अवरोध;
-		हाल 3:
+			break;
+		case 3:
 			config |= SII164_DESKEW_4_STEP;
-			अवरोध;
-		हाल 4:
+			break;
+		case 4:
 			config |= SII164_DESKEW_5_STEP;
-			अवरोध;
-		हाल 5:
+			break;
+		case 5:
 			config |= SII164_DESKEW_6_STEP;
-			अवरोध;
-		हाल 6:
+			break;
+		case 6:
 			config |= SII164_DESKEW_7_STEP;
-			अवरोध;
-		हाल 7:
+			break;
+		case 7:
 			config |= SII164_DESKEW_8_STEP;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		i2cWriteReg(SII164_I2C_ADDRESS, SII164_DESKEW, config);
 
 		/* Enable/Disable Continuous Sync. */
-		अगर (continuous_sync_enable == 0)
+		if (continuous_sync_enable == 0)
 			config = SII164_PLL_FILTER_SYNC_CONTINUOUS_DISABLE;
-		अन्यथा
+		else
 			config = SII164_PLL_FILTER_SYNC_CONTINUOUS_ENABLE;
 
 		/* Enable/Disable PLL Filter */
-		अगर (pll_filter_enable == 0)
+		if (pll_filter_enable == 0)
 			config |= SII164_PLL_FILTER_DISABLE;
-		अन्यथा
+		else
 			config |= SII164_PLL_FILTER_ENABLE;
 
 		/* Set the PLL Filter value */
@@ -239,95 +238,95 @@
 		config |= SII164_CONFIGURATION_POWER_NORMAL;
 		i2cWriteReg(SII164_I2C_ADDRESS, SII164_CONFIGURATION, config);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Return -1 अगर initialization fails. */
-	वापस -1;
-पूर्ण
+	/* Return -1 if initialization fails. */
+	return -1;
+}
 
 /* below sii164 function is not necessary */
 
-#अगर_घोषित SII164_FULL_FUNCTIONS
+#ifdef SII164_FULL_FUNCTIONS
 
 /*
  *  sii164ResetChip
  *      This function resets the DVI Controller Chip.
  */
-व्योम sii164ResetChip(व्योम)
-अणु
-	/* Power करोwn */
+void sii164ResetChip(void)
+{
+	/* Power down */
 	sii164SetPower(0);
 	sii164SetPower(1);
-पूर्ण
+}
 
 /*
  * sii164GetChipString
- *      This function वापसs a अक्षर string name of the current DVI Controller
+ *      This function returns a char string name of the current DVI Controller
  *      chip.
  *
- *      It's convenient क्रम application need to display the chip name.
+ *      It's convenient for application need to display the chip name.
  */
-अक्षर *sii164GetChipString(व्योम)
-अणु
-	वापस gDviCtrlChipName;
-पूर्ण
+char *sii164GetChipString(void)
+{
+	return gDviCtrlChipName;
+}
 
 /*
  *  sii164SetPower
- *      This function sets the घातer configuration of the DVI Controller Chip.
+ *      This function sets the power configuration of the DVI Controller Chip.
  *
  *  Input:
- *      घातerUp - Flag to set the घातer करोwn or up
+ *      powerUp - Flag to set the power down or up
  */
-व्योम sii164SetPower(अचिन्हित अक्षर घातerUp)
-अणु
-	अचिन्हित अक्षर config;
+void sii164SetPower(unsigned char powerUp)
+{
+	unsigned char config;
 
 	config = i2cReadReg(SII164_I2C_ADDRESS, SII164_CONFIGURATION);
-	अगर (घातerUp == 1) अणु
+	if (powerUp == 1) {
 		/* Power up the chip */
 		config &= ~SII164_CONFIGURATION_POWER_MASK;
 		config |= SII164_CONFIGURATION_POWER_NORMAL;
 		i2cWriteReg(SII164_I2C_ADDRESS, SII164_CONFIGURATION, config);
-	पूर्ण अन्यथा अणु
-		/* Power करोwn the chip */
+	} else {
+		/* Power down the chip */
 		config &= ~SII164_CONFIGURATION_POWER_MASK;
 		config |= SII164_CONFIGURATION_POWER_DOWN;
 		i2cWriteReg(SII164_I2C_ADDRESS, SII164_CONFIGURATION, config);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  *  sii164SelectHotPlugDetectionMode
  *      This function selects the mode of the hot plug detection.
  */
-अटल
-व्योम sii164SelectHotPlugDetectionMode(क्रमागत sii164_hot_plug_mode hotPlugMode)
-अणु
-	अचिन्हित अक्षर detectReg;
+static
+void sii164SelectHotPlugDetectionMode(enum sii164_hot_plug_mode hotPlugMode)
+{
+	unsigned char detectReg;
 
 	detectReg = i2cReadReg(SII164_I2C_ADDRESS, SII164_DETECT) &
 		    ~SII164_DETECT_MONITOR_SENSE_OUTPUT_FLAG;
-	चयन (hotPlugMode) अणु
-	हाल SII164_HOTPLUG_DISABLE:
+	switch (hotPlugMode) {
+	case SII164_HOTPLUG_DISABLE:
 		detectReg |= SII164_DETECT_MONITOR_SENSE_OUTPUT_HIGH;
-		अवरोध;
-	हाल SII164_HOTPLUG_USE_MDI:
+		break;
+	case SII164_HOTPLUG_USE_MDI:
 		detectReg &= ~SII164_DETECT_INTERRUPT_MASK;
 		detectReg |= SII164_DETECT_INTERRUPT_BY_HTPLG_PIN;
 		detectReg |= SII164_DETECT_MONITOR_SENSE_OUTPUT_MDI;
-		अवरोध;
-	हाल SII164_HOTPLUG_USE_RSEN:
+		break;
+	case SII164_HOTPLUG_USE_RSEN:
 		detectReg |= SII164_DETECT_MONITOR_SENSE_OUTPUT_RSEN;
-		अवरोध;
-	हाल SII164_HOTPLUG_USE_HTPLG:
+		break;
+	case SII164_HOTPLUG_USE_HTPLG:
 		detectReg |= SII164_DETECT_MONITOR_SENSE_OUTPUT_HTPLG;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	i2cWriteReg(SII164_I2C_ADDRESS, SII164_DETECT, detectReg);
-पूर्ण
+}
 
 /*
  *  sii164EnableHotPlugDetection
@@ -335,75 +334,75 @@
  *
  *  enableHotPlug   - Enable (=1) / disable (=0) Hot Plug detection
  */
-व्योम sii164EnableHotPlugDetection(अचिन्हित अक्षर enableHotPlug)
-अणु
-	अचिन्हित अक्षर detectReg;
+void sii164EnableHotPlugDetection(unsigned char enableHotPlug)
+{
+	unsigned char detectReg;
 
 	detectReg = i2cReadReg(SII164_I2C_ADDRESS, SII164_DETECT);
 
 	/* Depending on each DVI controller, need to enable the hot plug based
-	 * on each inभागidual chip design.
+	 * on each individual chip design.
 	 */
-	अगर (enableHotPlug != 0)
+	if (enableHotPlug != 0)
 		sii164SelectHotPlugDetectionMode(SII164_HOTPLUG_USE_MDI);
-	अन्यथा
+	else
 		sii164SelectHotPlugDetectionMode(SII164_HOTPLUG_DISABLE);
-पूर्ण
+}
 
 /*
  *  sii164IsConnected
- *      Check अगर the DVI Monitor is connected.
+ *      Check if the DVI Monitor is connected.
  *
  *  Output:
  *      0   - Not Connected
  *      1   - Connected
  */
-अचिन्हित अक्षर sii164IsConnected(व्योम)
-अणु
-	अचिन्हित अक्षर hotPlugValue;
+unsigned char sii164IsConnected(void)
+{
+	unsigned char hotPlugValue;
 
 	hotPlugValue = i2cReadReg(SII164_I2C_ADDRESS, SII164_DETECT) &
 		       SII164_DETECT_HOT_PLUG_STATUS_MASK;
-	अगर (hotPlugValue == SII164_DETECT_HOT_PLUG_STATUS_ON)
-		वापस 1;
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (hotPlugValue == SII164_DETECT_HOT_PLUG_STATUS_ON)
+		return 1;
+	else
+		return 0;
+}
 
 /*
  *  sii164CheckInterrupt
- *      Checks अगर पूर्णांकerrupt has occurred.
+ *      Checks if interrupt has occurred.
  *
  *  Output:
- *      0   - No पूर्णांकerrupt
+ *      0   - No interrupt
  *      1   - Interrupt occurs
  */
-अचिन्हित अक्षर sii164CheckInterrupt(व्योम)
-अणु
-	अचिन्हित अक्षर detectReg;
+unsigned char sii164CheckInterrupt(void)
+{
+	unsigned char detectReg;
 
 	detectReg = i2cReadReg(SII164_I2C_ADDRESS, SII164_DETECT) &
 		    SII164_DETECT_MONITOR_STATE_MASK;
-	अगर (detectReg == SII164_DETECT_MONITOR_STATE_CHANGE)
-		वापस 1;
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (detectReg == SII164_DETECT_MONITOR_STATE_CHANGE)
+		return 1;
+	else
+		return 0;
+}
 
 /*
  *  sii164ClearInterrupt
- *      Clear the hot plug पूर्णांकerrupt.
+ *      Clear the hot plug interrupt.
  */
-व्योम sii164ClearInterrupt(व्योम)
-अणु
-	अचिन्हित अक्षर detectReg;
+void sii164ClearInterrupt(void)
+{
+	unsigned char detectReg;
 
-	/* Clear the MDI पूर्णांकerrupt */
+	/* Clear the MDI interrupt */
 	detectReg = i2cReadReg(SII164_I2C_ADDRESS, SII164_DETECT);
 	i2cWriteReg(SII164_I2C_ADDRESS, SII164_DETECT,
 		    detectReg | SII164_DETECT_MONITOR_STATE_CLEAR);
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर
+#endif

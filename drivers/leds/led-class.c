@@ -1,270 +1,269 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * LED Class Core
  *
  * Copyright (C) 2005 John Lenz <lenz@cs.wisc.edu>
- * Copyright (C) 2005-2007 Riअक्षरd Purdie <rpurdie@खोलोedhand.com>
+ * Copyright (C) 2005-2007 Richard Purdie <rpurdie@openedhand.com>
  */
 
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/property.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/समयr.h>
-#समावेश <uapi/linux/uleds.h>
-#समावेश <linux/of.h>
-#समावेश "leds.h"
+#include <linux/ctype.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/leds.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/property.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/timer.h>
+#include <uapi/linux/uleds.h>
+#include <linux/of.h>
+#include "leds.h"
 
-अटल काष्ठा class *leds_class;
+static struct class *leds_class;
 
-अटल sमाप_प्रकार brightness_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा led_classdev *led_cdev = dev_get_drvdata(dev);
+static ssize_t brightness_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
 
-	/* no lock needed क्रम this */
+	/* no lock needed for this */
 	led_update_brightness(led_cdev);
 
-	वापस प्र_लिखो(buf, "%u\n", led_cdev->brightness);
-पूर्ण
+	return sprintf(buf, "%u\n", led_cdev->brightness);
+}
 
-अटल sमाप_प्रकार brightness_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा led_classdev *led_cdev = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ state;
-	sमाप_प्रकार ret;
+static ssize_t brightness_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t size)
+{
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
+	unsigned long state;
+	ssize_t ret;
 
 	mutex_lock(&led_cdev->led_access);
 
-	अगर (led_sysfs_is_disabled(led_cdev)) अणु
+	if (led_sysfs_is_disabled(led_cdev)) {
 		ret = -EBUSY;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	ret = kम_से_अदीर्घ(buf, 10, &state);
-	अगर (ret)
-		जाओ unlock;
+	ret = kstrtoul(buf, 10, &state);
+	if (ret)
+		goto unlock;
 
-	अगर (state == LED_OFF)
-		led_trigger_हटाओ(led_cdev);
+	if (state == LED_OFF)
+		led_trigger_remove(led_cdev);
 	led_set_brightness(led_cdev, state);
 	flush_work(&led_cdev->set_brightness_work);
 
 	ret = size;
 unlock:
 	mutex_unlock(&led_cdev->led_access);
-	वापस ret;
-पूर्ण
-अटल DEVICE_ATTR_RW(brightness);
+	return ret;
+}
+static DEVICE_ATTR_RW(brightness);
 
-अटल sमाप_प्रकार max_brightness_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा led_classdev *led_cdev = dev_get_drvdata(dev);
+static ssize_t max_brightness_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%u\n", led_cdev->max_brightness);
-पूर्ण
-अटल DEVICE_ATTR_RO(max_brightness);
+	return sprintf(buf, "%u\n", led_cdev->max_brightness);
+}
+static DEVICE_ATTR_RO(max_brightness);
 
-#अगर_घोषित CONFIG_LEDS_TRIGGERS
-अटल BIN_ATTR(trigger, 0644, led_trigger_पढ़ो, led_trigger_ग_लिखो, 0);
-अटल काष्ठा bin_attribute *led_trigger_bin_attrs[] = अणु
+#ifdef CONFIG_LEDS_TRIGGERS
+static BIN_ATTR(trigger, 0644, led_trigger_read, led_trigger_write, 0);
+static struct bin_attribute *led_trigger_bin_attrs[] = {
 	&bin_attr_trigger,
-	शून्य,
-पूर्ण;
-अटल स्थिर काष्ठा attribute_group led_trigger_group = अणु
+	NULL,
+};
+static const struct attribute_group led_trigger_group = {
 	.bin_attrs = led_trigger_bin_attrs,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल काष्ठा attribute *led_class_attrs[] = अणु
+static struct attribute *led_class_attrs[] = {
 	&dev_attr_brightness.attr,
 	&dev_attr_max_brightness.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group led_group = अणु
+static const struct attribute_group led_group = {
 	.attrs = led_class_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *led_groups[] = अणु
+static const struct attribute_group *led_groups[] = {
 	&led_group,
-#अगर_घोषित CONFIG_LEDS_TRIGGERS
+#ifdef CONFIG_LEDS_TRIGGERS
 	&led_trigger_group,
-#पूर्ण_अगर
-	शून्य,
-पूर्ण;
+#endif
+	NULL,
+};
 
-#अगर_घोषित CONFIG_LEDS_BRIGHTNESS_HW_CHANGED
-अटल sमाप_प्रकार brightness_hw_changed_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा led_classdev *led_cdev = dev_get_drvdata(dev);
+#ifdef CONFIG_LEDS_BRIGHTNESS_HW_CHANGED
+static ssize_t brightness_hw_changed_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
 
-	अगर (led_cdev->brightness_hw_changed == -1)
-		वापस -ENODATA;
+	if (led_cdev->brightness_hw_changed == -1)
+		return -ENODATA;
 
-	वापस प्र_लिखो(buf, "%u\n", led_cdev->brightness_hw_changed);
-पूर्ण
+	return sprintf(buf, "%u\n", led_cdev->brightness_hw_changed);
+}
 
-अटल DEVICE_ATTR_RO(brightness_hw_changed);
+static DEVICE_ATTR_RO(brightness_hw_changed);
 
-अटल पूर्णांक led_add_brightness_hw_changed(काष्ठा led_classdev *led_cdev)
-अणु
-	काष्ठा device *dev = led_cdev->dev;
-	पूर्णांक ret;
+static int led_add_brightness_hw_changed(struct led_classdev *led_cdev)
+{
+	struct device *dev = led_cdev->dev;
+	int ret;
 
 	ret = device_create_file(dev, &dev_attr_brightness_hw_changed);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Error creating brightness_hw_changed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	led_cdev->brightness_hw_changed_kn =
 		sysfs_get_dirent(dev->kobj.sd, "brightness_hw_changed");
-	अगर (!led_cdev->brightness_hw_changed_kn) अणु
+	if (!led_cdev->brightness_hw_changed_kn) {
 		dev_err(dev, "Error getting brightness_hw_changed kn\n");
-		device_हटाओ_file(dev, &dev_attr_brightness_hw_changed);
-		वापस -ENXIO;
-	पूर्ण
+		device_remove_file(dev, &dev_attr_brightness_hw_changed);
+		return -ENXIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम led_हटाओ_brightness_hw_changed(काष्ठा led_classdev *led_cdev)
-अणु
+static void led_remove_brightness_hw_changed(struct led_classdev *led_cdev)
+{
 	sysfs_put(led_cdev->brightness_hw_changed_kn);
-	device_हटाओ_file(led_cdev->dev, &dev_attr_brightness_hw_changed);
-पूर्ण
+	device_remove_file(led_cdev->dev, &dev_attr_brightness_hw_changed);
+}
 
-व्योम led_classdev_notअगरy_brightness_hw_changed(काष्ठा led_classdev *led_cdev, अचिन्हित पूर्णांक brightness)
-अणु
-	अगर (WARN_ON(!led_cdev->brightness_hw_changed_kn))
-		वापस;
+void led_classdev_notify_brightness_hw_changed(struct led_classdev *led_cdev, unsigned int brightness)
+{
+	if (WARN_ON(!led_cdev->brightness_hw_changed_kn))
+		return;
 
 	led_cdev->brightness_hw_changed = brightness;
-	sysfs_notअगरy_dirent(led_cdev->brightness_hw_changed_kn);
-पूर्ण
-EXPORT_SYMBOL_GPL(led_classdev_notअगरy_brightness_hw_changed);
-#अन्यथा
-अटल पूर्णांक led_add_brightness_hw_changed(काष्ठा led_classdev *led_cdev)
-अणु
-	वापस 0;
-पूर्ण
-अटल व्योम led_हटाओ_brightness_hw_changed(काष्ठा led_classdev *led_cdev)
-अणु
-पूर्ण
-#पूर्ण_अगर
+	sysfs_notify_dirent(led_cdev->brightness_hw_changed_kn);
+}
+EXPORT_SYMBOL_GPL(led_classdev_notify_brightness_hw_changed);
+#else
+static int led_add_brightness_hw_changed(struct led_classdev *led_cdev)
+{
+	return 0;
+}
+static void led_remove_brightness_hw_changed(struct led_classdev *led_cdev)
+{
+}
+#endif
 
 /**
  * led_classdev_suspend - suspend an led_classdev.
  * @led_cdev: the led_classdev to suspend.
  */
-व्योम led_classdev_suspend(काष्ठा led_classdev *led_cdev)
-अणु
+void led_classdev_suspend(struct led_classdev *led_cdev)
+{
 	led_cdev->flags |= LED_SUSPENDED;
 	led_set_brightness_nopm(led_cdev, 0);
 	flush_work(&led_cdev->set_brightness_work);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(led_classdev_suspend);
 
 /**
  * led_classdev_resume - resume an led_classdev.
  * @led_cdev: the led_classdev to resume.
  */
-व्योम led_classdev_resume(काष्ठा led_classdev *led_cdev)
-अणु
+void led_classdev_resume(struct led_classdev *led_cdev)
+{
 	led_set_brightness_nopm(led_cdev, led_cdev->brightness);
 
-	अगर (led_cdev->flash_resume)
+	if (led_cdev->flash_resume)
 		led_cdev->flash_resume(led_cdev);
 
 	led_cdev->flags &= ~LED_SUSPENDED;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(led_classdev_resume);
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक led_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा led_classdev *led_cdev = dev_get_drvdata(dev);
+#ifdef CONFIG_PM_SLEEP
+static int led_suspend(struct device *dev)
+{
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
 
-	अगर (led_cdev->flags & LED_CORE_SUSPENDRESUME)
+	if (led_cdev->flags & LED_CORE_SUSPENDRESUME)
 		led_classdev_suspend(led_cdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक led_resume(काष्ठा device *dev)
-अणु
-	काष्ठा led_classdev *led_cdev = dev_get_drvdata(dev);
+static int led_resume(struct device *dev)
+{
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
 
-	अगर (led_cdev->flags & LED_CORE_SUSPENDRESUME)
+	if (led_cdev->flags & LED_CORE_SUSPENDRESUME)
 		led_classdev_resume(led_cdev);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(leds_class_dev_pm_ops, led_suspend, led_resume);
+static SIMPLE_DEV_PM_OPS(leds_class_dev_pm_ops, led_suspend, led_resume);
 
 /**
  * of_led_get() - request a LED device via the LED framework
  * @np: device node to get the LED device from
  * @index: the index of the LED
  *
- * Returns the LED device parsed from the phandle specअगरied in the "leds"
+ * Returns the LED device parsed from the phandle specified in the "leds"
  * property of a device tree node or a negative error-code on failure.
  */
-काष्ठा led_classdev *of_led_get(काष्ठा device_node *np, पूर्णांक index)
-अणु
-	काष्ठा device *led_dev;
-	काष्ठा led_classdev *led_cdev;
-	काष्ठा device_node *led_node;
+struct led_classdev *of_led_get(struct device_node *np, int index)
+{
+	struct device *led_dev;
+	struct led_classdev *led_cdev;
+	struct device_node *led_node;
 
 	led_node = of_parse_phandle(np, "leds", index);
-	अगर (!led_node)
-		वापस ERR_PTR(-ENOENT);
+	if (!led_node)
+		return ERR_PTR(-ENOENT);
 
 	led_dev = class_find_device_by_of_node(leds_class, led_node);
 	of_node_put(led_node);
 
-	अगर (!led_dev)
-		वापस ERR_PTR(-EPROBE_DEFER);
+	if (!led_dev)
+		return ERR_PTR(-EPROBE_DEFER);
 
 	led_cdev = dev_get_drvdata(led_dev);
 
-	अगर (!try_module_get(led_cdev->dev->parent->driver->owner))
-		वापस ERR_PTR(-ENODEV);
+	if (!try_module_get(led_cdev->dev->parent->driver->owner))
+		return ERR_PTR(-ENODEV);
 
-	वापस led_cdev;
-पूर्ण
+	return led_cdev;
+}
 EXPORT_SYMBOL_GPL(of_led_get);
 
 /**
  * led_put() - release a LED device
  * @led_cdev: LED device
  */
-व्योम led_put(काष्ठा led_classdev *led_cdev)
-अणु
+void led_put(struct led_classdev *led_cdev)
+{
 	module_put(led_cdev->dev->parent->driver->owner);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(led_put);
 
-अटल व्योम devm_led_release(काष्ठा device *dev, व्योम *res)
-अणु
-	काष्ठा led_classdev **p = res;
+static void devm_led_release(struct device *dev, void *res)
+{
+	struct led_classdev **p = res;
 
 	led_put(*p);
-पूर्ण
+}
 
 /**
  * devm_of_led_get - Resource-managed request of a LED device
@@ -272,177 +271,177 @@ EXPORT_SYMBOL_GPL(led_put);
  * @index:	index of the LED to obtain in the consumer
  *
  * The device node of the device is parse to find the request LED device.
- * The LED device वापसed from this function is स्वतःmatically released
+ * The LED device returned from this function is automatically released
  * on driver detach.
  *
- * @वापस a poपूर्णांकer to a LED device or ERR_PTR(त्रुटि_सं) on failure.
+ * @return a pointer to a LED device or ERR_PTR(errno) on failure.
  */
-काष्ठा led_classdev *__must_check devm_of_led_get(काष्ठा device *dev,
-						  पूर्णांक index)
-अणु
-	काष्ठा led_classdev *led;
-	काष्ठा led_classdev **dr;
+struct led_classdev *__must_check devm_of_led_get(struct device *dev,
+						  int index)
+{
+	struct led_classdev *led;
+	struct led_classdev **dr;
 
-	अगर (!dev)
-		वापस ERR_PTR(-EINVAL);
+	if (!dev)
+		return ERR_PTR(-EINVAL);
 
 	/* Not using device tree? */
-	अगर (!IS_ENABLED(CONFIG_OF) || !dev->of_node)
-		वापस ERR_PTR(-ENOTSUPP);
+	if (!IS_ENABLED(CONFIG_OF) || !dev->of_node)
+		return ERR_PTR(-ENOTSUPP);
 
 	led = of_led_get(dev->of_node, index);
-	अगर (IS_ERR(led))
-		वापस led;
+	if (IS_ERR(led))
+		return led;
 
-	dr = devres_alloc(devm_led_release, माप(काष्ठा led_classdev *),
+	dr = devres_alloc(devm_led_release, sizeof(struct led_classdev *),
 			  GFP_KERNEL);
-	अगर (!dr) अणु
+	if (!dr) {
 		led_put(led);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 
 	*dr = led;
 	devres_add(dev, dr);
 
-	वापस led;
-पूर्ण
+	return led;
+}
 EXPORT_SYMBOL_GPL(devm_of_led_get);
 
-अटल पूर्णांक led_classdev_next_name(स्थिर अक्षर *init_name, अक्षर *name,
-				  माप_प्रकार len)
-अणु
-	अचिन्हित पूर्णांक i = 0;
-	पूर्णांक ret = 0;
-	काष्ठा device *dev;
+static int led_classdev_next_name(const char *init_name, char *name,
+				  size_t len)
+{
+	unsigned int i = 0;
+	int ret = 0;
+	struct device *dev;
 
 	strlcpy(name, init_name, len);
 
-	जबतक ((ret < len) &&
-	       (dev = class_find_device_by_name(leds_class, name))) अणु
+	while ((ret < len) &&
+	       (dev = class_find_device_by_name(leds_class, name))) {
 		put_device(dev);
-		ret = snम_लिखो(name, len, "%s_%u", init_name, ++i);
-	पूर्ण
+		ret = snprintf(name, len, "%s_%u", init_name, ++i);
+	}
 
-	अगर (ret >= len)
-		वापस -ENOMEM;
+	if (ret >= len)
+		return -ENOMEM;
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
 /**
- * led_classdev_रेजिस्टर_ext - रेजिस्टर a new object of led_classdev class
+ * led_classdev_register_ext - register a new object of led_classdev class
  *			       with init data.
  *
  * @parent: parent of LED device
- * @led_cdev: the led_classdev काष्ठाure क्रम this device.
+ * @led_cdev: the led_classdev structure for this device.
  * @init_data: LED class device initialization data
  */
-पूर्णांक led_classdev_रेजिस्टर_ext(काष्ठा device *parent,
-			      काष्ठा led_classdev *led_cdev,
-			      काष्ठा led_init_data *init_data)
-अणु
-	अक्षर composed_name[LED_MAX_NAME_SIZE];
-	अक्षर final_name[LED_MAX_NAME_SIZE];
-	स्थिर अक्षर *proposed_name = composed_name;
-	पूर्णांक ret;
+int led_classdev_register_ext(struct device *parent,
+			      struct led_classdev *led_cdev,
+			      struct led_init_data *init_data)
+{
+	char composed_name[LED_MAX_NAME_SIZE];
+	char final_name[LED_MAX_NAME_SIZE];
+	const char *proposed_name = composed_name;
+	int ret;
 
-	अगर (init_data) अणु
-		अगर (init_data->devname_mandatory && !init_data->devicename) अणु
+	if (init_data) {
+		if (init_data->devname_mandatory && !init_data->devicename) {
 			dev_err(parent, "Mandatory device name is missing");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		ret = led_compose_name(parent, init_data, composed_name);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
-		अगर (init_data->fwnode)
-			fwnode_property_पढ़ो_string(init_data->fwnode,
+		if (init_data->fwnode)
+			fwnode_property_read_string(init_data->fwnode,
 				"linux,default-trigger",
-				&led_cdev->शेष_trigger);
-	पूर्ण अन्यथा अणु
+				&led_cdev->default_trigger);
+	} else {
 		proposed_name = led_cdev->name;
-	पूर्ण
+	}
 
-	ret = led_classdev_next_name(proposed_name, final_name, माप(final_name));
-	अगर (ret < 0)
-		वापस ret;
+	ret = led_classdev_next_name(proposed_name, final_name, sizeof(final_name));
+	if (ret < 0)
+		return ret;
 
 	mutex_init(&led_cdev->led_access);
 	mutex_lock(&led_cdev->led_access);
 	led_cdev->dev = device_create_with_groups(leds_class, parent, 0,
 				led_cdev, led_cdev->groups, "%s", final_name);
-	अगर (IS_ERR(led_cdev->dev)) अणु
+	if (IS_ERR(led_cdev->dev)) {
 		mutex_unlock(&led_cdev->led_access);
-		वापस PTR_ERR(led_cdev->dev);
-	पूर्ण
-	अगर (init_data && init_data->fwnode) अणु
+		return PTR_ERR(led_cdev->dev);
+	}
+	if (init_data && init_data->fwnode) {
 		led_cdev->dev->fwnode = init_data->fwnode;
 		led_cdev->dev->of_node = to_of_node(init_data->fwnode);
-	पूर्ण
+	}
 
-	अगर (ret)
+	if (ret)
 		dev_warn(parent, "Led %s renamed to %s due to name collision",
 				proposed_name, dev_name(led_cdev->dev));
 
-	अगर (led_cdev->flags & LED_BRIGHT_HW_CHANGED) अणु
+	if (led_cdev->flags & LED_BRIGHT_HW_CHANGED) {
 		ret = led_add_brightness_hw_changed(led_cdev);
-		अगर (ret) अणु
-			device_unरेजिस्टर(led_cdev->dev);
-			led_cdev->dev = शून्य;
+		if (ret) {
+			device_unregister(led_cdev->dev);
+			led_cdev->dev = NULL;
 			mutex_unlock(&led_cdev->led_access);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	led_cdev->work_flags = 0;
-#अगर_घोषित CONFIG_LEDS_TRIGGERS
+#ifdef CONFIG_LEDS_TRIGGERS
 	init_rwsem(&led_cdev->trigger_lock);
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_LEDS_BRIGHTNESS_HW_CHANGED
+#endif
+#ifdef CONFIG_LEDS_BRIGHTNESS_HW_CHANGED
 	led_cdev->brightness_hw_changed = -1;
-#पूर्ण_अगर
+#endif
 	/* add to the list of leds */
-	करोwn_ग_लिखो(&leds_list_lock);
+	down_write(&leds_list_lock);
 	list_add_tail(&led_cdev->node, &leds_list);
-	up_ग_लिखो(&leds_list_lock);
+	up_write(&leds_list_lock);
 
-	अगर (!led_cdev->max_brightness)
+	if (!led_cdev->max_brightness)
 		led_cdev->max_brightness = LED_FULL;
 
 	led_update_brightness(led_cdev);
 
 	led_init_core(led_cdev);
 
-#अगर_घोषित CONFIG_LEDS_TRIGGERS
-	led_trigger_set_शेष(led_cdev);
-#पूर्ण_अगर
+#ifdef CONFIG_LEDS_TRIGGERS
+	led_trigger_set_default(led_cdev);
+#endif
 
 	mutex_unlock(&led_cdev->led_access);
 
 	dev_dbg(parent, "Registered led device: %s\n",
 			led_cdev->name);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(led_classdev_रेजिस्टर_ext);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(led_classdev_register_ext);
 
 /**
- * led_classdev_unरेजिस्टर - unरेजिस्टरs a object of led_properties class.
- * @led_cdev: the led device to unरेजिस्टर
+ * led_classdev_unregister - unregisters a object of led_properties class.
+ * @led_cdev: the led device to unregister
  *
- * Unरेजिस्टरs a previously रेजिस्टरed via led_classdev_रेजिस्टर object.
+ * Unregisters a previously registered via led_classdev_register object.
  */
-व्योम led_classdev_unरेजिस्टर(काष्ठा led_classdev *led_cdev)
-अणु
-	अगर (IS_ERR_OR_शून्य(led_cdev->dev))
-		वापस;
+void led_classdev_unregister(struct led_classdev *led_cdev)
+{
+	if (IS_ERR_OR_NULL(led_cdev->dev))
+		return;
 
-#अगर_घोषित CONFIG_LEDS_TRIGGERS
-	करोwn_ग_लिखो(&led_cdev->trigger_lock);
-	अगर (led_cdev->trigger)
-		led_trigger_set(led_cdev, शून्य);
-	up_ग_लिखो(&led_cdev->trigger_lock);
-#पूर्ण_अगर
+#ifdef CONFIG_LEDS_TRIGGERS
+	down_write(&led_cdev->trigger_lock);
+	if (led_cdev->trigger)
+		led_trigger_set(led_cdev, NULL);
+	up_write(&led_cdev->trigger_lock);
+#endif
 
 	led_cdev->flags |= LED_UNREGISTERING;
 
@@ -453,96 +452,96 @@ EXPORT_SYMBOL_GPL(led_classdev_रेजिस्टर_ext);
 
 	flush_work(&led_cdev->set_brightness_work);
 
-	अगर (led_cdev->flags & LED_BRIGHT_HW_CHANGED)
-		led_हटाओ_brightness_hw_changed(led_cdev);
+	if (led_cdev->flags & LED_BRIGHT_HW_CHANGED)
+		led_remove_brightness_hw_changed(led_cdev);
 
-	device_unरेजिस्टर(led_cdev->dev);
+	device_unregister(led_cdev->dev);
 
-	करोwn_ग_लिखो(&leds_list_lock);
+	down_write(&leds_list_lock);
 	list_del(&led_cdev->node);
-	up_ग_लिखो(&leds_list_lock);
+	up_write(&leds_list_lock);
 
 	mutex_destroy(&led_cdev->led_access);
-पूर्ण
-EXPORT_SYMBOL_GPL(led_classdev_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(led_classdev_unregister);
 
-अटल व्योम devm_led_classdev_release(काष्ठा device *dev, व्योम *res)
-अणु
-	led_classdev_unरेजिस्टर(*(काष्ठा led_classdev **)res);
-पूर्ण
+static void devm_led_classdev_release(struct device *dev, void *res)
+{
+	led_classdev_unregister(*(struct led_classdev **)res);
+}
 
 /**
- * devm_led_classdev_रेजिस्टर_ext - resource managed led_classdev_रेजिस्टर_ext()
+ * devm_led_classdev_register_ext - resource managed led_classdev_register_ext()
  *
  * @parent: parent of LED device
- * @led_cdev: the led_classdev काष्ठाure क्रम this device.
+ * @led_cdev: the led_classdev structure for this device.
  * @init_data: LED class device initialization data
  */
-पूर्णांक devm_led_classdev_रेजिस्टर_ext(काष्ठा device *parent,
-				   काष्ठा led_classdev *led_cdev,
-				   काष्ठा led_init_data *init_data)
-अणु
-	काष्ठा led_classdev **dr;
-	पूर्णांक rc;
+int devm_led_classdev_register_ext(struct device *parent,
+				   struct led_classdev *led_cdev,
+				   struct led_init_data *init_data)
+{
+	struct led_classdev **dr;
+	int rc;
 
-	dr = devres_alloc(devm_led_classdev_release, माप(*dr), GFP_KERNEL);
-	अगर (!dr)
-		वापस -ENOMEM;
+	dr = devres_alloc(devm_led_classdev_release, sizeof(*dr), GFP_KERNEL);
+	if (!dr)
+		return -ENOMEM;
 
-	rc = led_classdev_रेजिस्टर_ext(parent, led_cdev, init_data);
-	अगर (rc) अणु
-		devres_मुक्त(dr);
-		वापस rc;
-	पूर्ण
+	rc = led_classdev_register_ext(parent, led_cdev, init_data);
+	if (rc) {
+		devres_free(dr);
+		return rc;
+	}
 
 	*dr = led_cdev;
 	devres_add(parent, dr);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_led_classdev_रेजिस्टर_ext);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(devm_led_classdev_register_ext);
 
-अटल पूर्णांक devm_led_classdev_match(काष्ठा device *dev, व्योम *res, व्योम *data)
-अणु
-	काष्ठा led_classdev **p = res;
+static int devm_led_classdev_match(struct device *dev, void *res, void *data)
+{
+	struct led_classdev **p = res;
 
-	अगर (WARN_ON(!p || !*p))
-		वापस 0;
+	if (WARN_ON(!p || !*p))
+		return 0;
 
-	वापस *p == data;
-पूर्ण
+	return *p == data;
+}
 
 /**
- * devm_led_classdev_unरेजिस्टर() - resource managed led_classdev_unरेजिस्टर()
- * @parent: The device to unरेजिस्टर.
- * @led_cdev: the led_classdev काष्ठाure क्रम this device.
+ * devm_led_classdev_unregister() - resource managed led_classdev_unregister()
+ * @parent: The device to unregister.
+ * @led_cdev: the led_classdev structure for this device.
  */
-व्योम devm_led_classdev_unरेजिस्टर(काष्ठा device *dev,
-				  काष्ठा led_classdev *led_cdev)
-अणु
+void devm_led_classdev_unregister(struct device *dev,
+				  struct led_classdev *led_cdev)
+{
 	WARN_ON(devres_release(dev,
 			       devm_led_classdev_release,
 			       devm_led_classdev_match, led_cdev));
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_led_classdev_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(devm_led_classdev_unregister);
 
-अटल पूर्णांक __init leds_init(व्योम)
-अणु
+static int __init leds_init(void)
+{
 	leds_class = class_create(THIS_MODULE, "leds");
-	अगर (IS_ERR(leds_class))
-		वापस PTR_ERR(leds_class);
+	if (IS_ERR(leds_class))
+		return PTR_ERR(leds_class);
 	leds_class->pm = &leds_class_dev_pm_ops;
 	leds_class->dev_groups = led_groups;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास leds_निकास(व्योम)
-अणु
+static void __exit leds_exit(void)
+{
 	class_destroy(leds_class);
-पूर्ण
+}
 
 subsys_initcall(leds_init);
-module_निकास(leds_निकास);
+module_exit(leds_exit);
 
 MODULE_AUTHOR("John Lenz, Richard Purdie");
 MODULE_LICENSE("GPL");

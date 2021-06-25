@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_SORT_H
-#घोषणा _LINUX_SORT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_SORT_H
+#define _LINUX_SORT_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-व्योम sort_r(व्योम *base, माप_प्रकार num, माप_प्रकार size,
+void sort_r(void *base, size_t num, size_t size,
 	    cmp_r_func_t cmp_func,
 	    swap_func_t swap_func,
-	    स्थिर व्योम *priv);
+	    const void *priv);
 
-व्योम sort(व्योम *base, माप_प्रकार num, माप_प्रकार size,
+void sort(void *base, size_t num, size_t size,
 	  cmp_func_t cmp_func,
 	  swap_func_t swap_func);
 
-#पूर्ण_अगर
+#endif

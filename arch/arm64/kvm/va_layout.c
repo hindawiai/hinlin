@@ -1,65 +1,64 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2017 ARM Ltd.
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  */
 
-#समावेश <linux/kvm_host.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/memblock.h>
-#समावेश <यंत्र/alternative.h>
-#समावेश <यंत्र/debug-monitors.h>
-#समावेश <यंत्र/insn.h>
-#समावेश <यंत्र/kvm_mmu.h>
-#समावेश <यंत्र/memory.h>
+#include <linux/kvm_host.h>
+#include <linux/random.h>
+#include <linux/memblock.h>
+#include <asm/alternative.h>
+#include <asm/debug-monitors.h>
+#include <asm/insn.h>
+#include <asm/kvm_mmu.h>
+#include <asm/memory.h>
 
 /*
  * The LSB of the HYP VA tag
  */
-अटल u8 tag_lsb;
+static u8 tag_lsb;
 /*
  * The HYP VA tag value with the region bit
  */
-अटल u64 tag_val;
-अटल u64 va_mask;
+static u64 tag_val;
+static u64 va_mask;
 
 /*
  * Compute HYP VA by using the same computation as kern_hyp_va().
  */
-अटल u64 __early_kern_hyp_va(u64 addr)
-अणु
+static u64 __early_kern_hyp_va(u64 addr)
+{
 	addr &= va_mask;
 	addr |= tag_val << tag_lsb;
-	वापस addr;
-पूर्ण
+	return addr;
+}
 
 /*
- * Store a hyp VA <-> PA offset पूर्णांकo a EL2-owned variable.
+ * Store a hyp VA <-> PA offset into a EL2-owned variable.
  */
-अटल व्योम init_hyp_physvirt_offset(व्योम)
-अणु
+static void init_hyp_physvirt_offset(void)
+{
 	u64 kern_va, hyp_va;
 
-	/* Compute the offset from the hyp VA and PA of a अक्रमom symbol. */
+	/* Compute the offset from the hyp VA and PA of a random symbol. */
 	kern_va = (u64)lm_alias(__hyp_text_start);
 	hyp_va = __early_kern_hyp_va(kern_va);
 	hyp_physvirt_offset = (s64)__pa(kern_va) - (s64)hyp_va;
-पूर्ण
+}
 
 /*
- * We want to generate a hyp VA with the following क्रमmat (with V ==
+ * We want to generate a hyp VA with the following format (with V ==
  * vabits_actual):
  *
  *  63 ... V |     V-1    | V-2 .. tag_lsb | tag_lsb - 1 .. 0
  *  ---------------------------------------------------------
- * | 0000000 | hyp_va_msb |   अक्रमom tag   |  kern linear VA |
+ * | 0000000 | hyp_va_msb |   random tag   |  kern linear VA |
  *           |--------- tag_val -----------|----- va_mask ---|
  *
- * which करोes not conflict with the idmap regions.
+ * which does not conflict with the idmap regions.
  */
-__init व्योम kvm_compute_layout(व्योम)
-अणु
+__init void kvm_compute_layout(void)
+{
 	phys_addr_t idmap_addr = __pa_symbol(__hyp_idmap_text_start);
 	u64 hyp_va_msb;
 
@@ -73,129 +72,129 @@ __init व्योम kvm_compute_layout(व्योम)
 	va_mask = GENMASK_ULL(tag_lsb - 1, 0);
 	tag_val = hyp_va_msb;
 
-	अगर (IS_ENABLED(CONFIG_RANDOMIZE_BASE) && tag_lsb != (vabits_actual - 1)) अणु
-		/* We have some मुक्त bits to insert a अक्रमom tag. */
-		tag_val |= get_अक्रमom_दीर्घ() & GENMASK_ULL(vabits_actual - 2, tag_lsb);
-	पूर्ण
+	if (IS_ENABLED(CONFIG_RANDOMIZE_BASE) && tag_lsb != (vabits_actual - 1)) {
+		/* We have some free bits to insert a random tag. */
+		tag_val |= get_random_long() & GENMASK_ULL(vabits_actual - 2, tag_lsb);
+	}
 	tag_val >>= tag_lsb;
 
 	init_hyp_physvirt_offset();
-पूर्ण
+}
 
 /*
  * The .hyp.reloc ELF section contains a list of kimg positions that
  * contains kimg VAs but will be accessed only in hyp execution context.
- * Convert them to hyp VAs. See gen-hyprel.c क्रम more details.
+ * Convert them to hyp VAs. See gen-hyprel.c for more details.
  */
-__init व्योम kvm_apply_hyp_relocations(व्योम)
-अणु
-	पूर्णांक32_t *rel;
-	पूर्णांक32_t *begin = (पूर्णांक32_t *)__hyp_reloc_begin;
-	पूर्णांक32_t *end = (पूर्णांक32_t *)__hyp_reloc_end;
+__init void kvm_apply_hyp_relocations(void)
+{
+	int32_t *rel;
+	int32_t *begin = (int32_t *)__hyp_reloc_begin;
+	int32_t *end = (int32_t *)__hyp_reloc_end;
 
-	क्रम (rel = begin; rel < end; ++rel) अणु
-		uपूर्णांकptr_t *ptr, kimg_va;
+	for (rel = begin; rel < end; ++rel) {
+		uintptr_t *ptr, kimg_va;
 
 		/*
 		 * Each entry contains a 32-bit relative offset from itself
 		 * to a kimg VA position.
 		 */
-		ptr = (uपूर्णांकptr_t *)lm_alias((अक्षर *)rel + *rel);
+		ptr = (uintptr_t *)lm_alias((char *)rel + *rel);
 
 		/* Read the kimg VA value at the relocation address. */
 		kimg_va = *ptr;
 
 		/* Convert to hyp VA and store back to the relocation address. */
-		*ptr = __early_kern_hyp_va((uपूर्णांकptr_t)lm_alias(kimg_va));
-	पूर्ण
-पूर्ण
+		*ptr = __early_kern_hyp_va((uintptr_t)lm_alias(kimg_va));
+	}
+}
 
-अटल u32 compute_inकाष्ठाion(पूर्णांक n, u32 rd, u32 rn)
-अणु
+static u32 compute_instruction(int n, u32 rd, u32 rn)
+{
 	u32 insn = AARCH64_BREAK_FAULT;
 
-	चयन (n) अणु
-	हाल 0:
+	switch (n) {
+	case 0:
 		insn = aarch64_insn_gen_logical_immediate(AARCH64_INSN_LOGIC_AND,
 							  AARCH64_INSN_VARIANT_64BIT,
 							  rn, rd, va_mask);
-		अवरोध;
+		break;
 
-	हाल 1:
+	case 1:
 		/* ROR is a variant of EXTR with Rm = Rn */
 		insn = aarch64_insn_gen_extr(AARCH64_INSN_VARIANT_64BIT,
 					     rn, rn, rd,
 					     tag_lsb);
-		अवरोध;
+		break;
 
-	हाल 2:
+	case 2:
 		insn = aarch64_insn_gen_add_sub_imm(rd, rn,
 						    tag_val & GENMASK(11, 0),
 						    AARCH64_INSN_VARIANT_64BIT,
 						    AARCH64_INSN_ADSB_ADD);
-		अवरोध;
+		break;
 
-	हाल 3:
+	case 3:
 		insn = aarch64_insn_gen_add_sub_imm(rd, rn,
 						    tag_val & GENMASK(23, 12),
 						    AARCH64_INSN_VARIANT_64BIT,
 						    AARCH64_INSN_ADSB_ADD);
-		अवरोध;
+		break;
 
-	हाल 4:
+	case 4:
 		/* ROR is a variant of EXTR with Rm = Rn */
 		insn = aarch64_insn_gen_extr(AARCH64_INSN_VARIANT_64BIT,
 					     rn, rn, rd, 64 - tag_lsb);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस insn;
-पूर्ण
+	return insn;
+}
 
-व्योम __init kvm_update_va_mask(काष्ठा alt_instr *alt,
-			       __le32 *origptr, __le32 *updptr, पूर्णांक nr_inst)
-अणु
-	पूर्णांक i;
+void __init kvm_update_va_mask(struct alt_instr *alt,
+			       __le32 *origptr, __le32 *updptr, int nr_inst)
+{
+	int i;
 
 	BUG_ON(nr_inst != 5);
 
-	क्रम (i = 0; i < nr_inst; i++) अणु
+	for (i = 0; i < nr_inst; i++) {
 		u32 rd, rn, insn, oinsn;
 
 		/*
-		 * VHE करोesn't need any address translation, let's NOP
+		 * VHE doesn't need any address translation, let's NOP
 		 * everything.
 		 *
-		 * Alternatively, अगर the tag is zero (because the layout
-		 * dictates it and we करोn't have any spare bits in the
+		 * Alternatively, if the tag is zero (because the layout
+		 * dictates it and we don't have any spare bits in the
 		 * address), NOP everything after masking the kernel VA.
 		 */
-		अगर (has_vhe() || (!tag_val && i > 0)) अणु
+		if (has_vhe() || (!tag_val && i > 0)) {
 			updptr[i] = cpu_to_le32(aarch64_insn_gen_nop());
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		oinsn = le32_to_cpu(origptr[i]);
-		rd = aarch64_insn_decode_रेजिस्टर(AARCH64_INSN_REGTYPE_RD, oinsn);
-		rn = aarch64_insn_decode_रेजिस्टर(AARCH64_INSN_REGTYPE_RN, oinsn);
+		rd = aarch64_insn_decode_register(AARCH64_INSN_REGTYPE_RD, oinsn);
+		rn = aarch64_insn_decode_register(AARCH64_INSN_REGTYPE_RN, oinsn);
 
-		insn = compute_inकाष्ठाion(i, rd, rn);
+		insn = compute_instruction(i, rd, rn);
 		BUG_ON(insn == AARCH64_BREAK_FAULT);
 
 		updptr[i] = cpu_to_le32(insn);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम kvm_patch_vector_branch(काष्ठा alt_instr *alt,
-			     __le32 *origptr, __le32 *updptr, पूर्णांक nr_inst)
-अणु
+void kvm_patch_vector_branch(struct alt_instr *alt,
+			     __le32 *origptr, __le32 *updptr, int nr_inst)
+{
 	u64 addr;
 	u32 insn;
 
 	BUG_ON(nr_inst != 4);
 
-	अगर (!cpus_have_स्थिर_cap(ARM64_SPECTRE_V3A) || WARN_ON_ONCE(has_vhe()))
-		वापस;
+	if (!cpus_have_const_cap(ARM64_SPECTRE_V3A) || WARN_ON_ONCE(has_vhe()))
+		return;
 
 	/*
 	 * Compute HYP VA by using the same computation as kern_hyp_va()
@@ -206,8 +205,8 @@ __init व्योम kvm_apply_hyp_relocations(व्योम)
 	addr |= ((u64)origptr & GENMASK_ULL(10, 7));
 
 	/*
-	 * Branch over the preamble in order to aव्योम the initial store on
-	 * the stack (which we alपढ़ोy perक्रमm in the hardening vectors).
+	 * Branch over the preamble in order to avoid the initial store on
+	 * the stack (which we already perform in the hardening vectors).
 	 */
 	addr += KVM_VECTOR_PREAMBLE;
 
@@ -239,17 +238,17 @@ __init व्योम kvm_apply_hyp_relocations(व्योम)
 	insn = aarch64_insn_gen_branch_reg(AARCH64_INSN_REG_0,
 					   AARCH64_INSN_BRANCH_NOLINK);
 	*updptr++ = cpu_to_le32(insn);
-पूर्ण
+}
 
-अटल व्योम generate_mov_q(u64 val, __le32 *origptr, __le32 *updptr, पूर्णांक nr_inst)
-अणु
+static void generate_mov_q(u64 val, __le32 *origptr, __le32 *updptr, int nr_inst)
+{
 	u32 insn, oinsn, rd;
 
 	BUG_ON(nr_inst != 4);
 
-	/* Compute target रेजिस्टर */
+	/* Compute target register */
 	oinsn = le32_to_cpu(*origptr);
-	rd = aarch64_insn_decode_रेजिस्टर(AARCH64_INSN_REGTYPE_RD, oinsn);
+	rd = aarch64_insn_decode_register(AARCH64_INSN_REGTYPE_RD, oinsn);
 
 	/* movz rd, #(val & 0xffff) */
 	insn = aarch64_insn_gen_movewide(rd,
@@ -282,17 +281,17 @@ __init व्योम kvm_apply_hyp_relocations(व्योम)
 					 AARCH64_INSN_VARIANT_64BIT,
 					 AARCH64_INSN_MOVEWIDE_KEEP);
 	*updptr++ = cpu_to_le32(insn);
-पूर्ण
+}
 
-व्योम kvm_get_kimage_voffset(काष्ठा alt_instr *alt,
-			    __le32 *origptr, __le32 *updptr, पूर्णांक nr_inst)
-अणु
+void kvm_get_kimage_voffset(struct alt_instr *alt,
+			    __le32 *origptr, __le32 *updptr, int nr_inst)
+{
 	generate_mov_q(kimage_voffset, origptr, updptr, nr_inst);
-पूर्ण
+}
 
-व्योम kvm_compute_final_ctr_el0(काष्ठा alt_instr *alt,
-			       __le32 *origptr, __le32 *updptr, पूर्णांक nr_inst)
-अणु
-	generate_mov_q(पढ़ो_sanitised_ftr_reg(SYS_CTR_EL0),
+void kvm_compute_final_ctr_el0(struct alt_instr *alt,
+			       __le32 *origptr, __le32 *updptr, int nr_inst)
+{
+	generate_mov_q(read_sanitised_ftr_reg(SYS_CTR_EL0),
 		       origptr, updptr, nr_inst);
-पूर्ण
+}

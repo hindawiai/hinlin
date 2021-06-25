@@ -1,4 +1,3 @@
-<शैली गुरु>
 /***********************license start************************************
  * Copyright (c) 2003-2017 Cavium, Inc.
  * All rights reserved.
@@ -8,23 +7,23 @@
  * This file is provided under the terms of the Cavium License (see below)
  * or under the terms of GNU General Public License, Version 2, as
  * published by the Free Software Foundation. When using or redistributing
- * this file, you may करो so under either license.
+ * this file, you may do so under either license.
  *
- * Cavium License:  Redistribution and use in source and binary क्रमms, with
- * or without modअगरication, are permitted provided that the following
+ * Cavium License:  Redistribution and use in source and binary forms, with
+ * or without modification, are permitted provided that the following
  * conditions are met:
  *
  *  * Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  *
- *  * Redistributions in binary क्रमm must reproduce the above
+ *  * Redistributions in binary form must reproduce the above
  *    copyright notice, this list of conditions and the following
- *    disclaimer in the करोcumentation and/or other materials provided
+ *    disclaimer in the documentation and/or other materials provided
  *    with the distribution.
  *
  *  * Neither the name of Cavium Inc. nor the names of its contributors may be
- *    used to enकरोrse or promote products derived from this software without
- *    specअगरic prior written permission.
+ *    used to endorse or promote products derived from this software without
+ *    specific prior written permission.
  *
  * This Software, including technical data, may be subject to U.S. export
  * control laws, including the U.S. Export Administration Act and its
@@ -44,53 +43,53 @@
  * WITH YOU.
  ***********************license end**************************************/
 
-#समावेश "common.h"
-#समावेश "zip_deflate.h"
+#include "common.h"
+#include "zip_deflate.h"
 
 /**
  * zip_cmd_queue_consumed - Calculates the space consumed in the command queue.
  *
- * @zip_dev: Poपूर्णांकer to zip device काष्ठाure
+ * @zip_dev: Pointer to zip device structure
  * @queue:   Queue number
  *
  * Return: Bytes consumed in the command queue buffer.
  */
-अटल अंतरभूत u32 zip_cmd_queue_consumed(काष्ठा zip_device *zip_dev, पूर्णांक queue)
-अणु
-	वापस ((zip_dev->iq[queue].sw_head - zip_dev->iq[queue].sw_tail) *
-		माप(u64 *));
-पूर्ण
+static inline u32 zip_cmd_queue_consumed(struct zip_device *zip_dev, int queue)
+{
+	return ((zip_dev->iq[queue].sw_head - zip_dev->iq[queue].sw_tail) *
+		sizeof(u64 *));
+}
 
 /**
- * zip_load_instr - Submits the inकाष्ठाion पूर्णांकo the ZIP command queue
- * @instr:      Poपूर्णांकer to the inकाष्ठाion to be submitted
- * @zip_dev:    Poपूर्णांकer to ZIP device काष्ठाure to which the inकाष्ठाion is to
+ * zip_load_instr - Submits the instruction into the ZIP command queue
+ * @instr:      Pointer to the instruction to be submitted
+ * @zip_dev:    Pointer to ZIP device structure to which the instruction is to
  *              be submitted
  *
- * This function copies the ZIP inकाष्ठाion to the command queue and rings the
- * करोorbell to notअगरy the engine of the inकाष्ठाion submission. The command
- * queue is मुख्यtained in a circular fashion. When there is space क्रम exactly
- * one inकाष्ठाion in the queue, next chunk poपूर्णांकer of the queue is made to
- * poपूर्णांक to the head of the queue, thus मुख्यtaining a circular queue.
+ * This function copies the ZIP instruction to the command queue and rings the
+ * doorbell to notify the engine of the instruction submission. The command
+ * queue is maintained in a circular fashion. When there is space for exactly
+ * one instruction in the queue, next chunk pointer of the queue is made to
+ * point to the head of the queue, thus maintaining a circular queue.
  *
- * Return: Queue number to which the inकाष्ठाion was submitted
+ * Return: Queue number to which the instruction was submitted
  */
-u32 zip_load_instr(जोड़ zip_inst_s *instr,
-		   काष्ठा zip_device *zip_dev)
-अणु
-	जोड़ zip_quex_करोorbell dbell;
+u32 zip_load_instr(union zip_inst_s *instr,
+		   struct zip_device *zip_dev)
+{
+	union zip_quex_doorbell dbell;
 	u32 queue = 0;
 	u32 consumed = 0;
-	u64 *ncb_ptr = शून्य;
-	जोड़ zip_nptr_s ncp;
+	u64 *ncb_ptr = NULL;
+	union zip_nptr_s ncp;
 
 	/*
-	 * Distribute the inकाष्ठाions between the enabled queues based on
+	 * Distribute the instructions between the enabled queues based on
 	 * the CPU id.
 	 */
-	अगर (raw_smp_processor_id() % 2 == 0)
+	if (raw_smp_processor_id() % 2 == 0)
 		queue = 0;
-	अन्यथा
+	else
 		queue = 1;
 
 	zip_dbg("CPU Core: %d Queue number:%d", raw_smp_processor_id(), queue);
@@ -100,26 +99,26 @@ u32 zip_load_instr(जोड़ zip_inst_s *instr,
 
 	/*
 	 * Command Queue implementation
-	 * 1. If there is place क्रम new inकाष्ठाions, push the cmd at sw_head.
-	 * 2. If there is place क्रम exactly one inकाष्ठाion, push the new cmd
-	 *    at the sw_head. Make sw_head poपूर्णांक to the sw_tail to make it
+	 * 1. If there is place for new instructions, push the cmd at sw_head.
+	 * 2. If there is place for exactly one instruction, push the new cmd
+	 *    at the sw_head. Make sw_head point to the sw_tail to make it
 	 *    circular. Write sw_head's physical address to the "Next-Chunk
 	 *    Buffer Ptr" to make it cmd_hw_tail.
-	 * 3. Ring the करोor bell.
+	 * 3. Ring the door bell.
 	 */
 	zip_dbg("sw_head : %lx", zip_dev->iq[queue].sw_head);
 	zip_dbg("sw_tail : %lx", zip_dev->iq[queue].sw_tail);
 
 	consumed = zip_cmd_queue_consumed(zip_dev, queue);
-	/* Check अगर there is space to push just one cmd */
-	अगर ((consumed + 128) == (ZIP_CMD_QBUF_SIZE - 8)) अणु
+	/* Check if there is space to push just one cmd */
+	if ((consumed + 128) == (ZIP_CMD_QBUF_SIZE - 8)) {
 		zip_dbg("Cmd queue space available for single command");
-		/* Space क्रम one cmd, pust it and make it circular queue */
-		स_नकल((u8 *)zip_dev->iq[queue].sw_head, (u8 *)instr,
-		       माप(जोड़ zip_inst_s));
+		/* Space for one cmd, pust it and make it circular queue */
+		memcpy((u8 *)zip_dev->iq[queue].sw_head, (u8 *)instr,
+		       sizeof(union zip_inst_s));
 		zip_dev->iq[queue].sw_head += 16; /* 16 64_bit words = 128B */
 
-		/* Now, poपूर्णांक the "Next-Chunk Buffer Ptr" to sw_head */
+		/* Now, point the "Next-Chunk Buffer Ptr" to sw_head */
 		ncb_ptr = zip_dev->iq[queue].sw_head;
 
 		zip_dbg("ncb addr :0x%lx sw_head addr :0x%lx",
@@ -127,8 +126,8 @@ u32 zip_load_instr(जोड़ zip_inst_s *instr,
 
 		/* Using Circular command queue */
 		zip_dev->iq[queue].sw_head = zip_dev->iq[queue].sw_tail;
-		/* Mark this buffer क्रम मुक्त */
-		zip_dev->iq[queue].मुक्त_flag = 1;
+		/* Mark this buffer for free */
+		zip_dev->iq[queue].free_flag = 1;
 
 		/* Write new chunk buffer address at "Next-Chunk Buffer Ptr" */
 		ncp.u_reg64 = 0ull;
@@ -139,15 +138,15 @@ u32 zip_load_instr(जोड़ zip_inst_s *instr,
 
 		zip_dev->iq[queue].pend_cnt++;
 
-	पूर्ण अन्यथा अणु
+	} else {
 		zip_dbg("Enough space is available for commands");
 		/* Push this cmd to cmd queue buffer */
-		स_नकल((u8 *)zip_dev->iq[queue].sw_head, (u8 *)instr,
-		       माप(जोड़ zip_inst_s));
+		memcpy((u8 *)zip_dev->iq[queue].sw_head, (u8 *)instr,
+		       sizeof(union zip_inst_s));
 		zip_dev->iq[queue].sw_head += 16; /* 16 64_bit words = 128B */
 
 		zip_dev->iq[queue].pend_cnt++;
-	पूर्ण
+	}
 	zip_dbg("sw_head :0x%lx sw_tail :0x%lx hw_tail :0x%lx",
 		zip_dev->iq[queue].sw_head, zip_dev->iq[queue].sw_tail,
 		zip_dev->iq[queue].hw_tail);
@@ -155,43 +154,43 @@ u32 zip_load_instr(जोड़ zip_inst_s *instr,
 	zip_dbg(" Pushed the new cmd : pend_cnt : %d",
 		zip_dev->iq[queue].pend_cnt);
 
-	/* Ring the करोorbell */
+	/* Ring the doorbell */
 	dbell.u_reg64     = 0ull;
 	dbell.s.dbell_cnt = 1;
-	zip_reg_ग_लिखो(dbell.u_reg64,
+	zip_reg_write(dbell.u_reg64,
 		      (zip_dev->reg_base + ZIP_QUEX_DOORBELL(queue)));
 
 	/* Unlock cmd buffer lock */
 	spin_unlock(&zip_dev->iq[queue].lock);
 
-	वापस queue;
-पूर्ण
+	return queue;
+}
 
 /**
  * zip_update_cmd_bufs - Updates the queue statistics after posting the
- *                       inकाष्ठाion
- * @zip_dev: Poपूर्णांकer to zip device काष्ठाure
+ *                       instruction
+ * @zip_dev: Pointer to zip device structure
  * @queue:   Queue number
  */
-व्योम zip_update_cmd_bufs(काष्ठा zip_device *zip_dev, u32 queue)
-अणु
+void zip_update_cmd_bufs(struct zip_device *zip_dev, u32 queue)
+{
 	/* Take cmd buffer lock */
 	spin_lock(&zip_dev->iq[queue].lock);
 
-	/* Check अगर the previous buffer can be मुक्तd */
-	अगर (zip_dev->iq[queue].मुक्त_flag == 1) अणु
+	/* Check if the previous buffer can be freed */
+	if (zip_dev->iq[queue].free_flag == 1) {
 		zip_dbg("Free flag. Free cmd buffer, adjust sw head and tail");
-		/* Reset the मुक्त flag */
-		zip_dev->iq[queue].मुक्त_flag = 0;
+		/* Reset the free flag */
+		zip_dev->iq[queue].free_flag = 0;
 
-		/* Poपूर्णांक the hw_tail to start of the new chunk buffer */
+		/* Point the hw_tail to start of the new chunk buffer */
 		zip_dev->iq[queue].hw_tail = zip_dev->iq[queue].sw_head;
-	पूर्ण अन्यथा अणु
+	} else {
 		zip_dbg("Free flag not set. increment hw tail");
 		zip_dev->iq[queue].hw_tail += 16; /* 16 64_bit words = 128B */
-	पूर्ण
+	}
 
-	zip_dev->iq[queue].करोne_cnt++;
+	zip_dev->iq[queue].done_cnt++;
 	zip_dev->iq[queue].pend_cnt--;
 
 	zip_dbg("sw_head :0x%lx sw_tail :0x%lx hw_tail :0x%lx",
@@ -200,4 +199,4 @@ u32 zip_load_instr(जोड़ zip_inst_s *instr,
 	zip_dbg(" Got CC : pend_cnt : %d\n", zip_dev->iq[queue].pend_cnt);
 
 	spin_unlock(&zip_dev->iq[queue].lock);
-पूर्ण
+}

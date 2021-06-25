@@ -1,109 +1,108 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * page-types: Tool क्रम querying page flags
+ * page-types: Tool for querying page flags
  *
  * Copyright (C) 2009 Intel corporation
  *
- * Authors: Wu Fengguang <fengguang.wu@पूर्णांकel.com>
+ * Authors: Wu Fengguang <fengguang.wu@intel.com>
  */
 
-#घोषणा _खाता_OFFSET_BITS 64
-#घोषणा _GNU_SOURCE
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
-#समावेश <मानक_निवेशt.h>
-#समावेश <मानकतर्क.स>
-#समावेश <माला.स>
-#समावेश <getopt.h>
-#समावेश <सीमा.स>
-#समावेश <निश्चित.स>
-#समावेश <ftw.h>
-#समावेश <समय.स>
-#समावेश <समलाँघ.स>
-#समावेश <संकेत.स>
-#समावेश <sys/types.h>
-#समावेश <sys/त्रुटिसं.स>
-#समावेश <sys/fcntl.h>
-#समावेश <sys/mount.h>
-#समावेश <sys/statfs.h>
-#समावेश <sys/mman.h>
-#समावेश "../../include/uapi/linux/magic.h"
-#समावेश "../../include/uapi/linux/kernel-page-flags.h"
-#समावेश <api/fs/fs.h>
+#define _FILE_OFFSET_BITS 64
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdint.h>
+#include <stdarg.h>
+#include <string.h>
+#include <getopt.h>
+#include <limits.h>
+#include <assert.h>
+#include <ftw.h>
+#include <time.h>
+#include <setjmp.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <sys/errno.h>
+#include <sys/fcntl.h>
+#include <sys/mount.h>
+#include <sys/statfs.h>
+#include <sys/mman.h>
+#include "../../include/uapi/linux/magic.h"
+#include "../../include/uapi/linux/kernel-page-flags.h"
+#include <api/fs/fs.h>
 
-#अगर_अघोषित MAX_PATH
+#ifndef MAX_PATH
 # define MAX_PATH 256
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित STR
+#ifndef STR
 # define _STR(x) #x
 # define STR(x) _STR(x)
-#पूर्ण_अगर
+#endif
 
 /*
  * pagemap kernel ABI bits
  */
 
-#घोषणा PM_ENTRY_BYTES		8
-#घोषणा PM_PFRAME_BITS		55
-#घोषणा PM_PFRAME_MASK		((1LL << PM_PFRAME_BITS) - 1)
-#घोषणा PM_PFRAME(x)		((x) & PM_PFRAME_MASK)
-#घोषणा MAX_SWAPखाताS_SHIFT	5
-#घोषणा PM_SWAP_OFFSET(x)	(((x) & PM_PFRAME_MASK) >> MAX_SWAPखाताS_SHIFT)
-#घोषणा PM_SOFT_सूचीTY		(1ULL << 55)
-#घोषणा PM_MMAP_EXCLUSIVE	(1ULL << 56)
-#घोषणा PM_खाता			(1ULL << 61)
-#घोषणा PM_SWAP			(1ULL << 62)
-#घोषणा PM_PRESENT		(1ULL << 63)
+#define PM_ENTRY_BYTES		8
+#define PM_PFRAME_BITS		55
+#define PM_PFRAME_MASK		((1LL << PM_PFRAME_BITS) - 1)
+#define PM_PFRAME(x)		((x) & PM_PFRAME_MASK)
+#define MAX_SWAPFILES_SHIFT	5
+#define PM_SWAP_OFFSET(x)	(((x) & PM_PFRAME_MASK) >> MAX_SWAPFILES_SHIFT)
+#define PM_SOFT_DIRTY		(1ULL << 55)
+#define PM_MMAP_EXCLUSIVE	(1ULL << 56)
+#define PM_FILE			(1ULL << 61)
+#define PM_SWAP			(1ULL << 62)
+#define PM_PRESENT		(1ULL << 63)
 
 /*
  * kernel page flags
  */
 
-#घोषणा KPF_BYTES		8
-#घोषणा PROC_KPAGEFLAGS		"/proc/kpageflags"
-#घोषणा PROC_KPAGECOUNT		"/proc/kpagecount"
-#घोषणा PROC_KPAGECGROUP	"/proc/kpagecgroup"
+#define KPF_BYTES		8
+#define PROC_KPAGEFLAGS		"/proc/kpageflags"
+#define PROC_KPAGECOUNT		"/proc/kpagecount"
+#define PROC_KPAGECGROUP	"/proc/kpagecgroup"
 
-#घोषणा SYS_KERNEL_MM_PAGE_IDLE "/sys/kernel/mm/page_idle/bitmap"
+#define SYS_KERNEL_MM_PAGE_IDLE "/sys/kernel/mm/page_idle/bitmap"
 
 /* [32-] kernel hacking assistances */
-#घोषणा KPF_RESERVED		32
-#घोषणा KPF_MLOCKED		33
-#घोषणा KPF_MAPPEDTODISK	34
-#घोषणा KPF_PRIVATE		35
-#घोषणा KPF_PRIVATE_2		36
-#घोषणा KPF_OWNER_PRIVATE	37
-#घोषणा KPF_ARCH		38
-#घोषणा KPF_UNCACHED		39
-#घोषणा KPF_SOFTसूचीTY		40
-#घोषणा KPF_ARCH_2		41
+#define KPF_RESERVED		32
+#define KPF_MLOCKED		33
+#define KPF_MAPPEDTODISK	34
+#define KPF_PRIVATE		35
+#define KPF_PRIVATE_2		36
+#define KPF_OWNER_PRIVATE	37
+#define KPF_ARCH		38
+#define KPF_UNCACHED		39
+#define KPF_SOFTDIRTY		40
+#define KPF_ARCH_2		41
 
-/* [48-] take some arbitrary मुक्त slots क्रम expanding overloaded flags
+/* [48-] take some arbitrary free slots for expanding overloaded flags
  * not part of kernel API
  */
-#घोषणा KPF_READAHEAD		48
-#घोषणा KPF_SLOB_FREE		49
-#घोषणा KPF_SLUB_FROZEN		50
-#घोषणा KPF_SLUB_DEBUG		51
-#घोषणा KPF_खाता		61
-#घोषणा KPF_SWAP		62
-#घोषणा KPF_MMAP_EXCLUSIVE	63
+#define KPF_READAHEAD		48
+#define KPF_SLOB_FREE		49
+#define KPF_SLUB_FROZEN		50
+#define KPF_SLUB_DEBUG		51
+#define KPF_FILE		61
+#define KPF_SWAP		62
+#define KPF_MMAP_EXCLUSIVE	63
 
-#घोषणा KPF_ALL_BITS		((uपूर्णांक64_t)~0ULL)
-#घोषणा KPF_HACKERS_BITS	(0xffffULL << 32)
-#घोषणा KPF_OVERLOADED_BITS	(0xffffULL << 48)
-#घोषणा BIT(name)		(1ULL << KPF_##name)
-#घोषणा BITS_COMPOUND		(BIT(COMPOUND_HEAD) | BIT(COMPOUND_TAIL))
+#define KPF_ALL_BITS		((uint64_t)~0ULL)
+#define KPF_HACKERS_BITS	(0xffffULL << 32)
+#define KPF_OVERLOADED_BITS	(0xffffULL << 48)
+#define BIT(name)		(1ULL << KPF_##name)
+#define BITS_COMPOUND		(BIT(COMPOUND_HEAD) | BIT(COMPOUND_TAIL))
 
-अटल स्थिर अक्षर * स्थिर page_flag_names[] = अणु
+static const char * const page_flag_names[] = {
 	[KPF_LOCKED]		= "L:locked",
 	[KPF_ERROR]		= "E:error",
 	[KPF_REFERENCED]	= "R:referenced",
 	[KPF_UPTODATE]		= "U:uptodate",
-	[KPF_सूचीTY]		= "D:dirty",
+	[KPF_DIRTY]		= "D:dirty",
 	[KPF_LRU]		= "l:lru",
 	[KPF_ACTIVE]		= "A:active",
 	[KPF_SLAB]		= "S:slab",
@@ -136,7 +135,7 @@
 	[KPF_OWNER_PRIVATE]	= "O:owner_private",
 	[KPF_ARCH]		= "h:arch",
 	[KPF_UNCACHED]		= "c:uncached",
-	[KPF_SOFTसूचीTY]		= "f:softdirty",
+	[KPF_SOFTDIRTY]		= "f:softdirty",
 	[KPF_ARCH_2]		= "H:arch_2",
 
 	[KPF_READAHEAD]		= "I:readahead",
@@ -144,261 +143,261 @@
 	[KPF_SLUB_FROZEN]	= "A:slub_frozen",
 	[KPF_SLUB_DEBUG]	= "E:slub_debug",
 
-	[KPF_खाता]		= "F:file",
+	[KPF_FILE]		= "F:file",
 	[KPF_SWAP]		= "w:swap",
 	[KPF_MMAP_EXCLUSIVE]	= "1:mmap_exclusive",
-पूर्ण;
+};
 
 
 /*
- * data काष्ठाures
+ * data structures
  */
 
-अटल पूर्णांक		opt_raw;	/* क्रम kernel developers */
-अटल पूर्णांक		opt_list;	/* list pages (in ranges) */
-अटल पूर्णांक		opt_mark_idle;	/* set accessed bit */
-अटल पूर्णांक		opt_no_summary;	/* करोn't show summary */
-अटल pid_t		opt_pid;	/* process to walk */
-स्थिर अक्षर		*opt_file;	/* file or directory path */
-अटल uपूर्णांक64_t		opt_cgroup;	/* cgroup inode */
-अटल पूर्णांक		opt_list_cgroup;/* list page cgroup */
-अटल पूर्णांक		opt_list_mapcnt;/* list page map count */
-अटल स्थिर अक्षर	*opt_kpageflags;/* kpageflags file to parse */
+static int		opt_raw;	/* for kernel developers */
+static int		opt_list;	/* list pages (in ranges) */
+static int		opt_mark_idle;	/* set accessed bit */
+static int		opt_no_summary;	/* don't show summary */
+static pid_t		opt_pid;	/* process to walk */
+const char		*opt_file;	/* file or directory path */
+static uint64_t		opt_cgroup;	/* cgroup inode */
+static int		opt_list_cgroup;/* list page cgroup */
+static int		opt_list_mapcnt;/* list page map count */
+static const char	*opt_kpageflags;/* kpageflags file to parse */
 
-#घोषणा MAX_ADDR_RANGES	1024
-अटल पूर्णांक		nr_addr_ranges;
-अटल अचिन्हित दीर्घ	opt_offset[MAX_ADDR_RANGES];
-अटल अचिन्हित दीर्घ	opt_size[MAX_ADDR_RANGES];
+#define MAX_ADDR_RANGES	1024
+static int		nr_addr_ranges;
+static unsigned long	opt_offset[MAX_ADDR_RANGES];
+static unsigned long	opt_size[MAX_ADDR_RANGES];
 
-#घोषणा MAX_VMAS	10240
-अटल पूर्णांक		nr_vmas;
-अटल अचिन्हित दीर्घ	pg_start[MAX_VMAS];
-अटल अचिन्हित दीर्घ	pg_end[MAX_VMAS];
+#define MAX_VMAS	10240
+static int		nr_vmas;
+static unsigned long	pg_start[MAX_VMAS];
+static unsigned long	pg_end[MAX_VMAS];
 
-#घोषणा MAX_BIT_FILTERS	64
-अटल पूर्णांक		nr_bit_filters;
-अटल uपूर्णांक64_t		opt_mask[MAX_BIT_FILTERS];
-अटल uपूर्णांक64_t		opt_bits[MAX_BIT_FILTERS];
+#define MAX_BIT_FILTERS	64
+static int		nr_bit_filters;
+static uint64_t		opt_mask[MAX_BIT_FILTERS];
+static uint64_t		opt_bits[MAX_BIT_FILTERS];
 
-अटल पूर्णांक		page_size;
+static int		page_size;
 
-अटल पूर्णांक		pagemap_fd;
-अटल पूर्णांक		kpageflags_fd;
-अटल पूर्णांक		kpagecount_fd = -1;
-अटल पूर्णांक		kpagecgroup_fd = -1;
-अटल पूर्णांक		page_idle_fd = -1;
+static int		pagemap_fd;
+static int		kpageflags_fd;
+static int		kpagecount_fd = -1;
+static int		kpagecgroup_fd = -1;
+static int		page_idle_fd = -1;
 
-अटल पूर्णांक		opt_hwpoison;
-अटल पूर्णांक		opt_unpoison;
+static int		opt_hwpoison;
+static int		opt_unpoison;
 
-अटल स्थिर अक्षर	*hwpoison_debug_fs;
-अटल पूर्णांक		hwpoison_inject_fd;
-अटल पूर्णांक		hwpoison_क्रमget_fd;
+static const char	*hwpoison_debug_fs;
+static int		hwpoison_inject_fd;
+static int		hwpoison_forget_fd;
 
-#घोषणा HASH_SHIFT	13
-#घोषणा HASH_SIZE	(1 << HASH_SHIFT)
-#घोषणा HASH_MASK	(HASH_SIZE - 1)
-#घोषणा HASH_KEY(flags)	(flags & HASH_MASK)
+#define HASH_SHIFT	13
+#define HASH_SIZE	(1 << HASH_SHIFT)
+#define HASH_MASK	(HASH_SIZE - 1)
+#define HASH_KEY(flags)	(flags & HASH_MASK)
 
-अटल अचिन्हित दीर्घ	total_pages;
-अटल अचिन्हित दीर्घ	nr_pages[HASH_SIZE];
-अटल uपूर्णांक64_t		page_flags[HASH_SIZE];
+static unsigned long	total_pages;
+static unsigned long	nr_pages[HASH_SIZE];
+static uint64_t		page_flags[HASH_SIZE];
 
 
 /*
  * helper functions
  */
 
-#घोषणा ARRAY_SIZE(x) (माप(x) / माप((x)[0]))
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
-#घोषणा min_t(type, x, y) (अणु			\
+#define min_t(type, x, y) ({			\
 	type __min1 = (x);			\
 	type __min2 = (y);			\
-	__min1 < __min2 ? __min1 : __min2; पूर्ण)
+	__min1 < __min2 ? __min1 : __min2; })
 
-#घोषणा max_t(type, x, y) (अणु			\
+#define max_t(type, x, y) ({			\
 	type __max1 = (x);			\
 	type __max2 = (y);			\
-	__max1 > __max2 ? __max1 : __max2; पूर्ण)
+	__max1 > __max2 ? __max1 : __max2; })
 
-अटल अचिन्हित दीर्घ pages2mb(अचिन्हित दीर्घ pages)
-अणु
-	वापस (pages * page_size) >> 20;
-पूर्ण
+static unsigned long pages2mb(unsigned long pages)
+{
+	return (pages * page_size) >> 20;
+}
 
-अटल व्योम fatal(स्थिर अक्षर *x, ...)
-अणु
-	बहु_सूची ap;
+static void fatal(const char *x, ...)
+{
+	va_list ap;
 
-	बहु_शुरू(ap, x);
-	भख_लिखो(मानक_त्रुटि, x, ap);
-	बहु_पूर्ण(ap);
-	निकास(निकास_त्रुटि);
-पूर्ण
+	va_start(ap, x);
+	vfprintf(stderr, x, ap);
+	va_end(ap);
+	exit(EXIT_FAILURE);
+}
 
-अटल पूर्णांक checked_खोलो(स्थिर अक्षर *pathname, पूर्णांक flags)
-अणु
-	पूर्णांक fd = खोलो(pathname, flags);
+static int checked_open(const char *pathname, int flags)
+{
+	int fd = open(pathname, flags);
 
-	अगर (fd < 0) अणु
-		लिखो_त्रुटि(pathname);
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	if (fd < 0) {
+		perror(pathname);
+		exit(EXIT_FAILURE);
+	}
 
-	वापस fd;
-पूर्ण
+	return fd;
+}
 
 /*
  * pagemap/kpageflags routines
  */
 
-अटल अचिन्हित दीर्घ करो_u64_पढ़ो(पूर्णांक fd, स्थिर अक्षर *name,
-				 uपूर्णांक64_t *buf,
-				 अचिन्हित दीर्घ index,
-				 अचिन्हित दीर्घ count)
-अणु
-	दीर्घ bytes;
+static unsigned long do_u64_read(int fd, const char *name,
+				 uint64_t *buf,
+				 unsigned long index,
+				 unsigned long count)
+{
+	long bytes;
 
-	अगर (index > अच_दीर्घ_उच्च / 8)
+	if (index > ULONG_MAX / 8)
 		fatal("index overflow: %lu\n", index);
 
-	bytes = pपढ़ो(fd, buf, count * 8, (off_t)index * 8);
-	अगर (bytes < 0) अणु
-		लिखो_त्रुटि(name);
-		निकास(निकास_त्रुटि);
-	पूर्ण
-	अगर (bytes % 8)
+	bytes = pread(fd, buf, count * 8, (off_t)index * 8);
+	if (bytes < 0) {
+		perror(name);
+		exit(EXIT_FAILURE);
+	}
+	if (bytes % 8)
 		fatal("partial read: %lu bytes\n", bytes);
 
-	वापस bytes / 8;
-पूर्ण
+	return bytes / 8;
+}
 
-अटल अचिन्हित दीर्घ kpageflags_पढ़ो(uपूर्णांक64_t *buf,
-				     अचिन्हित दीर्घ index,
-				     अचिन्हित दीर्घ pages)
-अणु
-	वापस करो_u64_पढ़ो(kpageflags_fd, opt_kpageflags, buf, index, pages);
-पूर्ण
+static unsigned long kpageflags_read(uint64_t *buf,
+				     unsigned long index,
+				     unsigned long pages)
+{
+	return do_u64_read(kpageflags_fd, opt_kpageflags, buf, index, pages);
+}
 
-अटल अचिन्हित दीर्घ kpagecgroup_पढ़ो(uपूर्णांक64_t *buf,
-				      अचिन्हित दीर्घ index,
-				      अचिन्हित दीर्घ pages)
-अणु
-	अगर (kpagecgroup_fd < 0)
-		वापस pages;
+static unsigned long kpagecgroup_read(uint64_t *buf,
+				      unsigned long index,
+				      unsigned long pages)
+{
+	if (kpagecgroup_fd < 0)
+		return pages;
 
-	वापस करो_u64_पढ़ो(kpagecgroup_fd, opt_kpageflags, buf, index, pages);
-पूर्ण
+	return do_u64_read(kpagecgroup_fd, opt_kpageflags, buf, index, pages);
+}
 
-अटल अचिन्हित दीर्घ kpagecount_पढ़ो(uपूर्णांक64_t *buf,
-				     अचिन्हित दीर्घ index,
-				     अचिन्हित दीर्घ pages)
-अणु
-	वापस kpagecount_fd < 0 ? pages :
-		करो_u64_पढ़ो(kpagecount_fd, PROC_KPAGECOUNT,
+static unsigned long kpagecount_read(uint64_t *buf,
+				     unsigned long index,
+				     unsigned long pages)
+{
+	return kpagecount_fd < 0 ? pages :
+		do_u64_read(kpagecount_fd, PROC_KPAGECOUNT,
 			    buf, index, pages);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ pagemap_पढ़ो(uपूर्णांक64_t *buf,
-				  अचिन्हित दीर्घ index,
-				  अचिन्हित दीर्घ pages)
-अणु
-	वापस करो_u64_पढ़ो(pagemap_fd, "/proc/pid/pagemap", buf, index, pages);
-पूर्ण
+static unsigned long pagemap_read(uint64_t *buf,
+				  unsigned long index,
+				  unsigned long pages)
+{
+	return do_u64_read(pagemap_fd, "/proc/pid/pagemap", buf, index, pages);
+}
 
-अटल अचिन्हित दीर्घ pagemap_pfn(uपूर्णांक64_t val)
-अणु
-	अचिन्हित दीर्घ pfn;
+static unsigned long pagemap_pfn(uint64_t val)
+{
+	unsigned long pfn;
 
-	अगर (val & PM_PRESENT)
+	if (val & PM_PRESENT)
 		pfn = PM_PFRAME(val);
-	अन्यथा
+	else
 		pfn = 0;
 
-	वापस pfn;
-पूर्ण
+	return pfn;
+}
 
-अटल अचिन्हित दीर्घ pagemap_swap_offset(uपूर्णांक64_t val)
-अणु
-	वापस val & PM_SWAP ? PM_SWAP_OFFSET(val) : 0;
-पूर्ण
+static unsigned long pagemap_swap_offset(uint64_t val)
+{
+	return val & PM_SWAP ? PM_SWAP_OFFSET(val) : 0;
+}
 
 /*
  * page flag names
  */
 
-अटल अक्षर *page_flag_name(uपूर्णांक64_t flags)
-अणु
-	अटल अक्षर buf[65];
-	पूर्णांक present;
-	माप_प्रकार i, j;
+static char *page_flag_name(uint64_t flags)
+{
+	static char buf[65];
+	int present;
+	size_t i, j;
 
-	क्रम (i = 0, j = 0; i < ARRAY_SIZE(page_flag_names); i++) अणु
+	for (i = 0, j = 0; i < ARRAY_SIZE(page_flag_names); i++) {
 		present = (flags >> i) & 1;
-		अगर (!page_flag_names[i]) अणु
-			अगर (present)
+		if (!page_flag_names[i]) {
+			if (present)
 				fatal("unknown flag bit %d\n", i);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		buf[j++] = present ? page_flag_names[i][0] : '_';
-	पूर्ण
+	}
 
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
-अटल अक्षर *page_flag_दीर्घname(uपूर्णांक64_t flags)
-अणु
-	अटल अक्षर buf[1024];
-	माप_प्रकार i, n;
+static char *page_flag_longname(uint64_t flags)
+{
+	static char buf[1024];
+	size_t i, n;
 
-	क्रम (i = 0, n = 0; i < ARRAY_SIZE(page_flag_names); i++) अणु
-		अगर (!page_flag_names[i])
-			जारी;
-		अगर ((flags >> i) & 1)
-			n += snम_लिखो(buf + n, माप(buf) - n, "%s,",
+	for (i = 0, n = 0; i < ARRAY_SIZE(page_flag_names); i++) {
+		if (!page_flag_names[i])
+			continue;
+		if ((flags >> i) & 1)
+			n += snprintf(buf + n, sizeof(buf) - n, "%s,",
 					page_flag_names[i] + 2);
-	पूर्ण
-	अगर (n)
+	}
+	if (n)
 		n--;
 	buf[n] = '\0';
 
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
 
 /*
  * page list and summary
  */
 
-अटल व्योम show_page_range(अचिन्हित दीर्घ voffset, अचिन्हित दीर्घ offset,
-			    अचिन्हित दीर्घ size, uपूर्णांक64_t flags,
-			    uपूर्णांक64_t cgroup, uपूर्णांक64_t mapcnt)
-अणु
-	अटल uपूर्णांक64_t      flags0;
-	अटल uपूर्णांक64_t	     cgroup0;
-	अटल uपूर्णांक64_t      mapcnt0;
-	अटल अचिन्हित दीर्घ voff;
-	अटल अचिन्हित दीर्घ index;
-	अटल अचिन्हित दीर्घ count;
+static void show_page_range(unsigned long voffset, unsigned long offset,
+			    unsigned long size, uint64_t flags,
+			    uint64_t cgroup, uint64_t mapcnt)
+{
+	static uint64_t      flags0;
+	static uint64_t	     cgroup0;
+	static uint64_t      mapcnt0;
+	static unsigned long voff;
+	static unsigned long index;
+	static unsigned long count;
 
-	अगर (flags == flags0 && cgroup == cgroup0 && mapcnt == mapcnt0 &&
-	    offset == index + count && size && voffset == voff + count) अणु
+	if (flags == flags0 && cgroup == cgroup0 && mapcnt == mapcnt0 &&
+	    offset == index + count && size && voffset == voff + count) {
 		count += size;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (count) अणु
-		अगर (opt_pid)
-			म_लिखो("%lx\t", voff);
-		अगर (opt_file)
-			म_लिखो("%lu\t", voff);
-		अगर (opt_list_cgroup)
-			म_लिखो("@%llu\t", (अचिन्हित दीर्घ दीर्घ)cgroup0);
-		अगर (opt_list_mapcnt)
-			म_लिखो("%lu\t", mapcnt0);
-		म_लिखो("%lx\t%lx\t%s\n",
+	if (count) {
+		if (opt_pid)
+			printf("%lx\t", voff);
+		if (opt_file)
+			printf("%lu\t", voff);
+		if (opt_list_cgroup)
+			printf("@%llu\t", (unsigned long long)cgroup0);
+		if (opt_list_mapcnt)
+			printf("%lu\t", mapcnt0);
+		printf("%lx\t%lx\t%s\n",
 				index, count, page_flag_name(flags0));
-	पूर्ण
+	}
 
 	flags0 = flags;
 	cgroup0 = cgroup;
@@ -406,424 +405,424 @@
 	index  = offset;
 	voff   = voffset;
 	count  = size;
-पूर्ण
+}
 
-अटल व्योम flush_page_range(व्योम)
-अणु
+static void flush_page_range(void)
+{
 	show_page_range(0, 0, 0, 0, 0, 0);
-पूर्ण
+}
 
-अटल व्योम show_page(अचिन्हित दीर्घ voffset, अचिन्हित दीर्घ offset,
-		      uपूर्णांक64_t flags, uपूर्णांक64_t cgroup, uपूर्णांक64_t mapcnt)
-अणु
-	अगर (opt_pid)
-		म_लिखो("%lx\t", voffset);
-	अगर (opt_file)
-		म_लिखो("%lu\t", voffset);
-	अगर (opt_list_cgroup)
-		म_लिखो("@%llu\t", (अचिन्हित दीर्घ दीर्घ)cgroup);
-	अगर (opt_list_mapcnt)
-		म_लिखो("%lu\t", mapcnt);
+static void show_page(unsigned long voffset, unsigned long offset,
+		      uint64_t flags, uint64_t cgroup, uint64_t mapcnt)
+{
+	if (opt_pid)
+		printf("%lx\t", voffset);
+	if (opt_file)
+		printf("%lu\t", voffset);
+	if (opt_list_cgroup)
+		printf("@%llu\t", (unsigned long long)cgroup);
+	if (opt_list_mapcnt)
+		printf("%lu\t", mapcnt);
 
-	म_लिखो("%lx\t%s\n", offset, page_flag_name(flags));
-पूर्ण
+	printf("%lx\t%s\n", offset, page_flag_name(flags));
+}
 
-अटल व्योम show_summary(व्योम)
-अणु
-	माप_प्रकार i;
+static void show_summary(void)
+{
+	size_t i;
 
-	म_लिखो("             flags\tpage-count       MB"
+	printf("             flags\tpage-count       MB"
 		"  symbolic-flags\t\t\tlong-symbolic-flags\n");
 
-	क्रम (i = 0; i < ARRAY_SIZE(nr_pages); i++) अणु
-		अगर (nr_pages[i])
-			म_लिखो("0x%016llx\t%10lu %8lu  %s\t%s\n",
-				(अचिन्हित दीर्घ दीर्घ)page_flags[i],
+	for (i = 0; i < ARRAY_SIZE(nr_pages); i++) {
+		if (nr_pages[i])
+			printf("0x%016llx\t%10lu %8lu  %s\t%s\n",
+				(unsigned long long)page_flags[i],
 				nr_pages[i],
 				pages2mb(nr_pages[i]),
 				page_flag_name(page_flags[i]),
-				page_flag_दीर्घname(page_flags[i]));
-	पूर्ण
+				page_flag_longname(page_flags[i]));
+	}
 
-	म_लिखो("             total\t%10lu %8lu\n",
+	printf("             total\t%10lu %8lu\n",
 			total_pages, pages2mb(total_pages));
-पूर्ण
+}
 
 
 /*
  * page flag filters
  */
 
-अटल पूर्णांक bit_mask_ok(uपूर्णांक64_t flags)
-अणु
-	पूर्णांक i;
+static int bit_mask_ok(uint64_t flags)
+{
+	int i;
 
-	क्रम (i = 0; i < nr_bit_filters; i++) अणु
-		अगर (opt_bits[i] == KPF_ALL_BITS) अणु
-			अगर ((flags & opt_mask[i]) == 0)
-				वापस 0;
-		पूर्ण अन्यथा अणु
-			अगर ((flags & opt_mask[i]) != opt_bits[i])
-				वापस 0;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < nr_bit_filters; i++) {
+		if (opt_bits[i] == KPF_ALL_BITS) {
+			if ((flags & opt_mask[i]) == 0)
+				return 0;
+		} else {
+			if ((flags & opt_mask[i]) != opt_bits[i])
+				return 0;
+		}
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल uपूर्णांक64_t expand_overloaded_flags(uपूर्णांक64_t flags, uपूर्णांक64_t pme)
-अणु
+static uint64_t expand_overloaded_flags(uint64_t flags, uint64_t pme)
+{
 	/* SLOB/SLUB overload several page flags */
-	अगर (flags & BIT(SLAB)) अणु
-		अगर (flags & BIT(PRIVATE))
+	if (flags & BIT(SLAB)) {
+		if (flags & BIT(PRIVATE))
 			flags ^= BIT(PRIVATE) | BIT(SLOB_FREE);
-		अगर (flags & BIT(ACTIVE))
+		if (flags & BIT(ACTIVE))
 			flags ^= BIT(ACTIVE) | BIT(SLUB_FROZEN);
-		अगर (flags & BIT(ERROR))
+		if (flags & BIT(ERROR))
 			flags ^= BIT(ERROR) | BIT(SLUB_DEBUG);
-	पूर्ण
+	}
 
-	/* PG_reclaim is overloaded as PG_पढ़ोahead in the पढ़ो path */
-	अगर ((flags & (BIT(RECLAIM) | BIT(WRITEBACK))) == BIT(RECLAIM))
+	/* PG_reclaim is overloaded as PG_readahead in the read path */
+	if ((flags & (BIT(RECLAIM) | BIT(WRITEBACK))) == BIT(RECLAIM))
 		flags ^= BIT(RECLAIM) | BIT(READAHEAD);
 
-	अगर (pme & PM_SOFT_सूचीTY)
-		flags |= BIT(SOFTसूचीTY);
-	अगर (pme & PM_खाता)
-		flags |= BIT(खाता);
-	अगर (pme & PM_SWAP)
+	if (pme & PM_SOFT_DIRTY)
+		flags |= BIT(SOFTDIRTY);
+	if (pme & PM_FILE)
+		flags |= BIT(FILE);
+	if (pme & PM_SWAP)
 		flags |= BIT(SWAP);
-	अगर (pme & PM_MMAP_EXCLUSIVE)
+	if (pme & PM_MMAP_EXCLUSIVE)
 		flags |= BIT(MMAP_EXCLUSIVE);
 
-	वापस flags;
-पूर्ण
+	return flags;
+}
 
-अटल uपूर्णांक64_t well_known_flags(uपूर्णांक64_t flags)
-अणु
-	/* hide flags पूर्णांकended only क्रम kernel hacker */
+static uint64_t well_known_flags(uint64_t flags)
+{
+	/* hide flags intended only for kernel hacker */
 	flags &= ~KPF_HACKERS_BITS;
 
 	/* hide non-hugeTLB compound pages */
-	अगर ((flags & BITS_COMPOUND) && !(flags & BIT(HUGE)))
+	if ((flags & BITS_COMPOUND) && !(flags & BIT(HUGE)))
 		flags &= ~BITS_COMPOUND;
 
-	वापस flags;
-पूर्ण
+	return flags;
+}
 
-अटल uपूर्णांक64_t kpageflags_flags(uपूर्णांक64_t flags, uपूर्णांक64_t pme)
-अणु
-	अगर (opt_raw)
+static uint64_t kpageflags_flags(uint64_t flags, uint64_t pme)
+{
+	if (opt_raw)
 		flags = expand_overloaded_flags(flags, pme);
-	अन्यथा
+	else
 		flags = well_known_flags(flags);
 
-	वापस flags;
-पूर्ण
+	return flags;
+}
 
 /*
  * page actions
  */
 
-अटल व्योम prepare_hwpoison_fd(व्योम)
-अणु
-	अक्षर buf[MAX_PATH + 1];
+static void prepare_hwpoison_fd(void)
+{
+	char buf[MAX_PATH + 1];
 
 	hwpoison_debug_fs = debugfs__mount();
-	अगर (!hwpoison_debug_fs) अणु
-		लिखो_त्रुटि("mount debugfs");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	if (!hwpoison_debug_fs) {
+		perror("mount debugfs");
+		exit(EXIT_FAILURE);
+	}
 
-	अगर (opt_hwpoison && !hwpoison_inject_fd) अणु
-		snम_लिखो(buf, MAX_PATH, "%s/hwpoison/corrupt-pfn",
+	if (opt_hwpoison && !hwpoison_inject_fd) {
+		snprintf(buf, MAX_PATH, "%s/hwpoison/corrupt-pfn",
 			hwpoison_debug_fs);
-		hwpoison_inject_fd = checked_खोलो(buf, O_WRONLY);
-	पूर्ण
+		hwpoison_inject_fd = checked_open(buf, O_WRONLY);
+	}
 
-	अगर (opt_unpoison && !hwpoison_क्रमget_fd) अणु
-		snम_लिखो(buf, MAX_PATH, "%s/hwpoison/unpoison-pfn",
+	if (opt_unpoison && !hwpoison_forget_fd) {
+		snprintf(buf, MAX_PATH, "%s/hwpoison/unpoison-pfn",
 			hwpoison_debug_fs);
-		hwpoison_क्रमget_fd = checked_खोलो(buf, O_WRONLY);
-	पूर्ण
-पूर्ण
+		hwpoison_forget_fd = checked_open(buf, O_WRONLY);
+	}
+}
 
-अटल पूर्णांक hwpoison_page(अचिन्हित दीर्घ offset)
-अणु
-	अक्षर buf[100];
-	पूर्णांक len;
+static int hwpoison_page(unsigned long offset)
+{
+	char buf[100];
+	int len;
 
-	len = प्र_लिखो(buf, "0x%lx\n", offset);
-	len = ग_लिखो(hwpoison_inject_fd, buf, len);
-	अगर (len < 0) अणु
-		लिखो_त्रुटि("hwpoison inject");
-		वापस len;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	len = sprintf(buf, "0x%lx\n", offset);
+	len = write(hwpoison_inject_fd, buf, len);
+	if (len < 0) {
+		perror("hwpoison inject");
+		return len;
+	}
+	return 0;
+}
 
-अटल पूर्णांक unpoison_page(अचिन्हित दीर्घ offset)
-अणु
-	अक्षर buf[100];
-	पूर्णांक len;
+static int unpoison_page(unsigned long offset)
+{
+	char buf[100];
+	int len;
 
-	len = प्र_लिखो(buf, "0x%lx\n", offset);
-	len = ग_लिखो(hwpoison_क्रमget_fd, buf, len);
-	अगर (len < 0) अणु
-		लिखो_त्रुटि("hwpoison forget");
-		वापस len;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	len = sprintf(buf, "0x%lx\n", offset);
+	len = write(hwpoison_forget_fd, buf, len);
+	if (len < 0) {
+		perror("hwpoison forget");
+		return len;
+	}
+	return 0;
+}
 
-अटल पूर्णांक mark_page_idle(अचिन्हित दीर्घ offset)
-अणु
-	अटल अचिन्हित दीर्घ off;
-	अटल uपूर्णांक64_t buf;
-	पूर्णांक len;
+static int mark_page_idle(unsigned long offset)
+{
+	static unsigned long off;
+	static uint64_t buf;
+	int len;
 
-	अगर ((offset / 64 == off / 64) || buf == 0) अणु
+	if ((offset / 64 == off / 64) || buf == 0) {
 		buf |= 1UL << (offset % 64);
 		off = offset;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	len = pग_लिखो(page_idle_fd, &buf, 8, 8 * (off / 64));
-	अगर (len < 0) अणु
-		लिखो_त्रुटि("mark page idle");
-		वापस len;
-	पूर्ण
+	len = pwrite(page_idle_fd, &buf, 8, 8 * (off / 64));
+	if (len < 0) {
+		perror("mark page idle");
+		return len;
+	}
 
 	buf = 1UL << (offset % 64);
 	off = offset;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * page frame walker
  */
 
-अटल माप_प्रकार hash_slot(uपूर्णांक64_t flags)
-अणु
-	माप_प्रकार k = HASH_KEY(flags);
-	माप_प्रकार i;
+static size_t hash_slot(uint64_t flags)
+{
+	size_t k = HASH_KEY(flags);
+	size_t i;
 
-	/* Explicitly reserve slot 0 क्रम flags 0: the following logic
+	/* Explicitly reserve slot 0 for flags 0: the following logic
 	 * cannot distinguish an unoccupied slot from slot (flags==0).
 	 */
-	अगर (flags == 0)
-		वापस 0;
+	if (flags == 0)
+		return 0;
 
-	/* search through the reमुख्यing (HASH_SIZE-1) slots */
-	क्रम (i = 1; i < ARRAY_SIZE(page_flags); i++, k++) अणु
-		अगर (!k || k >= ARRAY_SIZE(page_flags))
+	/* search through the remaining (HASH_SIZE-1) slots */
+	for (i = 1; i < ARRAY_SIZE(page_flags); i++, k++) {
+		if (!k || k >= ARRAY_SIZE(page_flags))
 			k = 1;
-		अगर (page_flags[k] == 0) अणु
+		if (page_flags[k] == 0) {
 			page_flags[k] = flags;
-			वापस k;
-		पूर्ण
-		अगर (page_flags[k] == flags)
-			वापस k;
-	पूर्ण
+			return k;
+		}
+		if (page_flags[k] == flags)
+			return k;
+	}
 
 	fatal("hash table full: bump up HASH_SHIFT?\n");
-	निकास(निकास_त्रुटि);
-पूर्ण
+	exit(EXIT_FAILURE);
+}
 
-अटल व्योम add_page(अचिन्हित दीर्घ voffset, अचिन्हित दीर्घ offset,
-		     uपूर्णांक64_t flags, uपूर्णांक64_t cgroup, uपूर्णांक64_t mapcnt,
-		     uपूर्णांक64_t pme)
-अणु
+static void add_page(unsigned long voffset, unsigned long offset,
+		     uint64_t flags, uint64_t cgroup, uint64_t mapcnt,
+		     uint64_t pme)
+{
 	flags = kpageflags_flags(flags, pme);
 
-	अगर (!bit_mask_ok(flags))
-		वापस;
+	if (!bit_mask_ok(flags))
+		return;
 
-	अगर (opt_cgroup && cgroup != (uपूर्णांक64_t)opt_cgroup)
-		वापस;
+	if (opt_cgroup && cgroup != (uint64_t)opt_cgroup)
+		return;
 
-	अगर (opt_hwpoison)
+	if (opt_hwpoison)
 		hwpoison_page(offset);
-	अगर (opt_unpoison)
+	if (opt_unpoison)
 		unpoison_page(offset);
 
-	अगर (opt_mark_idle)
+	if (opt_mark_idle)
 		mark_page_idle(offset);
 
-	अगर (opt_list == 1)
+	if (opt_list == 1)
 		show_page_range(voffset, offset, 1, flags, cgroup, mapcnt);
-	अन्यथा अगर (opt_list == 2)
+	else if (opt_list == 2)
 		show_page(voffset, offset, flags, cgroup, mapcnt);
 
 	nr_pages[hash_slot(flags)]++;
 	total_pages++;
-पूर्ण
+}
 
-#घोषणा KPAGEFLAGS_BATCH	(64 << 10)	/* 64k pages */
-अटल व्योम walk_pfn(अचिन्हित दीर्घ voffset,
-		     अचिन्हित दीर्घ index,
-		     अचिन्हित दीर्घ count,
-		     uपूर्णांक64_t pme)
-अणु
-	uपूर्णांक64_t buf[KPAGEFLAGS_BATCH];
-	uपूर्णांक64_t cgi[KPAGEFLAGS_BATCH];
-	uपूर्णांक64_t cnt[KPAGEFLAGS_BATCH];
-	अचिन्हित दीर्घ batch;
-	अचिन्हित दीर्घ pages;
-	अचिन्हित दीर्घ i;
+#define KPAGEFLAGS_BATCH	(64 << 10)	/* 64k pages */
+static void walk_pfn(unsigned long voffset,
+		     unsigned long index,
+		     unsigned long count,
+		     uint64_t pme)
+{
+	uint64_t buf[KPAGEFLAGS_BATCH];
+	uint64_t cgi[KPAGEFLAGS_BATCH];
+	uint64_t cnt[KPAGEFLAGS_BATCH];
+	unsigned long batch;
+	unsigned long pages;
+	unsigned long i;
 
 	/*
-	 * kpagecgroup_पढ़ो() पढ़ोs only अगर kpagecgroup were खोलोed, but
+	 * kpagecgroup_read() reads only if kpagecgroup were opened, but
 	 * /proc/kpagecgroup might even not exist, so it's better to fill
 	 * them with zeros here.
 	 */
-	अगर (count == 1)
+	if (count == 1)
 		cgi[0] = 0;
-	अन्यथा
-		स_रखो(cgi, 0, माप cgi);
+	else
+		memset(cgi, 0, sizeof cgi);
 
-	जबतक (count) अणु
-		batch = min_t(अचिन्हित दीर्घ, count, KPAGEFLAGS_BATCH);
-		pages = kpageflags_पढ़ो(buf, index, batch);
-		अगर (pages == 0)
-			अवरोध;
+	while (count) {
+		batch = min_t(unsigned long, count, KPAGEFLAGS_BATCH);
+		pages = kpageflags_read(buf, index, batch);
+		if (pages == 0)
+			break;
 
-		अगर (kpagecgroup_पढ़ो(cgi, index, pages) != pages)
+		if (kpagecgroup_read(cgi, index, pages) != pages)
 			fatal("kpagecgroup returned fewer pages than expected");
 
-		अगर (kpagecount_पढ़ो(cnt, index, pages) != pages)
+		if (kpagecount_read(cnt, index, pages) != pages)
 			fatal("kpagecount returned fewer pages than expected");
 
-		क्रम (i = 0; i < pages; i++)
+		for (i = 0; i < pages; i++)
 			add_page(voffset + i, index + i,
 				 buf[i], cgi[i], cnt[i], pme);
 
 		index += pages;
 		count -= pages;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम walk_swap(अचिन्हित दीर्घ voffset, uपूर्णांक64_t pme)
-अणु
-	uपूर्णांक64_t flags = kpageflags_flags(0, pme);
+static void walk_swap(unsigned long voffset, uint64_t pme)
+{
+	uint64_t flags = kpageflags_flags(0, pme);
 
-	अगर (!bit_mask_ok(flags))
-		वापस;
+	if (!bit_mask_ok(flags))
+		return;
 
-	अगर (opt_cgroup)
-		वापस;
+	if (opt_cgroup)
+		return;
 
-	अगर (opt_list == 1)
+	if (opt_list == 1)
 		show_page_range(voffset, pagemap_swap_offset(pme),
 				1, flags, 0, 0);
-	अन्यथा अगर (opt_list == 2)
+	else if (opt_list == 2)
 		show_page(voffset, pagemap_swap_offset(pme), flags, 0, 0);
 
 	nr_pages[hash_slot(flags)]++;
 	total_pages++;
-पूर्ण
+}
 
-#घोषणा PAGEMAP_BATCH	(64 << 10)
-अटल व्योम walk_vma(अचिन्हित दीर्घ index, अचिन्हित दीर्घ count)
-अणु
-	uपूर्णांक64_t buf[PAGEMAP_BATCH];
-	अचिन्हित दीर्घ batch;
-	अचिन्हित दीर्घ pages;
-	अचिन्हित दीर्घ pfn;
-	अचिन्हित दीर्घ i;
+#define PAGEMAP_BATCH	(64 << 10)
+static void walk_vma(unsigned long index, unsigned long count)
+{
+	uint64_t buf[PAGEMAP_BATCH];
+	unsigned long batch;
+	unsigned long pages;
+	unsigned long pfn;
+	unsigned long i;
 
-	जबतक (count) अणु
-		batch = min_t(अचिन्हित दीर्घ, count, PAGEMAP_BATCH);
-		pages = pagemap_पढ़ो(buf, index, batch);
-		अगर (pages == 0)
-			अवरोध;
+	while (count) {
+		batch = min_t(unsigned long, count, PAGEMAP_BATCH);
+		pages = pagemap_read(buf, index, batch);
+		if (pages == 0)
+			break;
 
-		क्रम (i = 0; i < pages; i++) अणु
+		for (i = 0; i < pages; i++) {
 			pfn = pagemap_pfn(buf[i]);
-			अगर (pfn)
+			if (pfn)
 				walk_pfn(index + i, pfn, 1, buf[i]);
-			अगर (buf[i] & PM_SWAP)
+			if (buf[i] & PM_SWAP)
 				walk_swap(index + i, buf[i]);
-		पूर्ण
+		}
 
 		index += pages;
 		count -= pages;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम walk_task(अचिन्हित दीर्घ index, अचिन्हित दीर्घ count)
-अणु
-	स्थिर अचिन्हित दीर्घ end = index + count;
-	अचिन्हित दीर्घ start;
-	पूर्णांक i = 0;
+static void walk_task(unsigned long index, unsigned long count)
+{
+	const unsigned long end = index + count;
+	unsigned long start;
+	int i = 0;
 
-	जबतक (index < end) अणु
+	while (index < end) {
 
-		जबतक (pg_end[i] <= index)
-			अगर (++i >= nr_vmas)
-				वापस;
-		अगर (pg_start[i] >= end)
-			वापस;
+		while (pg_end[i] <= index)
+			if (++i >= nr_vmas)
+				return;
+		if (pg_start[i] >= end)
+			return;
 
-		start = max_t(अचिन्हित दीर्घ, pg_start[i], index);
-		index = min_t(अचिन्हित दीर्घ, pg_end[i], end);
+		start = max_t(unsigned long, pg_start[i], index);
+		index = min_t(unsigned long, pg_end[i], end);
 
-		निश्चित(start < index);
+		assert(start < index);
 		walk_vma(start, index - start);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम add_addr_range(अचिन्हित दीर्घ offset, अचिन्हित दीर्घ size)
-अणु
-	अगर (nr_addr_ranges >= MAX_ADDR_RANGES)
+static void add_addr_range(unsigned long offset, unsigned long size)
+{
+	if (nr_addr_ranges >= MAX_ADDR_RANGES)
 		fatal("too many addr ranges\n");
 
 	opt_offset[nr_addr_ranges] = offset;
-	opt_size[nr_addr_ranges] = min_t(अचिन्हित दीर्घ, size, अच_दीर्घ_उच्च-offset);
+	opt_size[nr_addr_ranges] = min_t(unsigned long, size, ULONG_MAX-offset);
 	nr_addr_ranges++;
-पूर्ण
+}
 
-अटल व्योम walk_addr_ranges(व्योम)
-अणु
-	पूर्णांक i;
+static void walk_addr_ranges(void)
+{
+	int i;
 
-	kpageflags_fd = checked_खोलो(opt_kpageflags, O_RDONLY);
+	kpageflags_fd = checked_open(opt_kpageflags, O_RDONLY);
 
-	अगर (!nr_addr_ranges)
-		add_addr_range(0, अच_दीर्घ_उच्च);
+	if (!nr_addr_ranges)
+		add_addr_range(0, ULONG_MAX);
 
-	क्रम (i = 0; i < nr_addr_ranges; i++)
-		अगर (!opt_pid)
+	for (i = 0; i < nr_addr_ranges; i++)
+		if (!opt_pid)
 			walk_pfn(opt_offset[i], opt_offset[i], opt_size[i], 0);
-		अन्यथा
+		else
 			walk_task(opt_offset[i], opt_size[i]);
 
-	अगर (opt_mark_idle)
+	if (opt_mark_idle)
 		mark_page_idle(0);
 
-	बंद(kpageflags_fd);
-पूर्ण
+	close(kpageflags_fd);
+}
 
 
 /*
- * user पूर्णांकerface
+ * user interface
  */
 
-अटल स्थिर अक्षर *page_flag_type(uपूर्णांक64_t flag)
-अणु
-	अगर (flag & KPF_HACKERS_BITS)
-		वापस "(r)";
-	अगर (flag & KPF_OVERLOADED_BITS)
-		वापस "(o)";
-	वापस "   ";
-पूर्ण
+static const char *page_flag_type(uint64_t flag)
+{
+	if (flag & KPF_HACKERS_BITS)
+		return "(r)";
+	if (flag & KPF_OVERLOADED_BITS)
+		return "(o)";
+	return "   ";
+}
 
-अटल व्योम usage(व्योम)
-अणु
-	माप_प्रकार i, j;
+static void usage(void)
+{
+	size_t i, j;
 
-	म_लिखो(
+	printf(
 "page-types [options]\n"
 "            -r|--raw                   Raw mode, for kernel developers\n"
 "            -d|--describe flags        Describe flags\n"
@@ -860,516 +859,516 @@
 "bit-names:\n"
 	);
 
-	क्रम (i = 0, j = 0; i < ARRAY_SIZE(page_flag_names); i++) अणु
-		अगर (!page_flag_names[i])
-			जारी;
-		म_लिखो("%16s%s", page_flag_names[i] + 2,
+	for (i = 0, j = 0; i < ARRAY_SIZE(page_flag_names); i++) {
+		if (!page_flag_names[i])
+			continue;
+		printf("%16s%s", page_flag_names[i] + 2,
 				 page_flag_type(1ULL << i));
-		अगर (++j > 3) अणु
+		if (++j > 3) {
 			j = 0;
-			अक्षर_दो('\n');
-		पूर्ण
-	पूर्ण
-	म_लिखो("\n                                   "
+			putchar('\n');
+		}
+	}
+	printf("\n                                   "
 		"(r) raw mode bits  (o) overloaded bits\n");
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ दीर्घ parse_number(स्थिर अक्षर *str)
-अणु
-	अचिन्हित दीर्घ दीर्घ n;
+static unsigned long long parse_number(const char *str)
+{
+	unsigned long long n;
 
-	n = म_से_दीर्घl(str, शून्य, 0);
+	n = strtoll(str, NULL, 0);
 
-	अगर (n == 0 && str[0] != '0')
+	if (n == 0 && str[0] != '0')
 		fatal("invalid name or number: %s\n", str);
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल व्योम parse_pid(स्थिर अक्षर *str)
-अणु
-	खाता *file;
-	अक्षर buf[5000];
+static void parse_pid(const char *str)
+{
+	FILE *file;
+	char buf[5000];
 
 	opt_pid = parse_number(str);
 
-	प्र_लिखो(buf, "/proc/%d/pagemap", opt_pid);
-	pagemap_fd = checked_खोलो(buf, O_RDONLY);
+	sprintf(buf, "/proc/%d/pagemap", opt_pid);
+	pagemap_fd = checked_open(buf, O_RDONLY);
 
-	प्र_लिखो(buf, "/proc/%d/maps", opt_pid);
-	file = ख_खोलो(buf, "r");
-	अगर (!file) अणु
-		लिखो_त्रुटि(buf);
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	sprintf(buf, "/proc/%d/maps", opt_pid);
+	file = fopen(buf, "r");
+	if (!file) {
+		perror(buf);
+		exit(EXIT_FAILURE);
+	}
 
-	जबतक (ख_माला_लो(buf, माप(buf), file) != शून्य) अणु
-		अचिन्हित दीर्घ vm_start;
-		अचिन्हित दीर्घ vm_end;
-		अचिन्हित दीर्घ दीर्घ pgoff;
-		पूर्णांक major, minor;
-		अक्षर r, w, x, s;
-		अचिन्हित दीर्घ ino;
-		पूर्णांक n;
+	while (fgets(buf, sizeof(buf), file) != NULL) {
+		unsigned long vm_start;
+		unsigned long vm_end;
+		unsigned long long pgoff;
+		int major, minor;
+		char r, w, x, s;
+		unsigned long ino;
+		int n;
 
-		n = माला_पूछो(buf, "%lx-%lx %c%c%c%c %llx %x:%x %lu",
+		n = sscanf(buf, "%lx-%lx %c%c%c%c %llx %x:%x %lu",
 			   &vm_start,
 			   &vm_end,
 			   &r, &w, &x, &s,
 			   &pgoff,
 			   &major, &minor,
 			   &ino);
-		अगर (n < 10) अणु
-			ख_लिखो(मानक_त्रुटि, "unexpected line: %s\n", buf);
-			जारी;
-		पूर्ण
+		if (n < 10) {
+			fprintf(stderr, "unexpected line: %s\n", buf);
+			continue;
+		}
 		pg_start[nr_vmas] = vm_start / page_size;
 		pg_end[nr_vmas] = vm_end / page_size;
-		अगर (++nr_vmas >= MAX_VMAS) अणु
-			ख_लिखो(मानक_त्रुटि, "too many VMAs\n");
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	ख_बंद(file);
-पूर्ण
+		if (++nr_vmas >= MAX_VMAS) {
+			fprintf(stderr, "too many VMAs\n");
+			break;
+		}
+	}
+	fclose(file);
+}
 
-अटल व्योम show_file(स्थिर अक्षर *name, स्थिर काष्ठा stat *st)
-अणु
-	अचिन्हित दीर्घ दीर्घ size = st->st_size;
-	अक्षर aसमय[64], mसमय[64];
-	दीर्घ now = समय(शून्य);
+static void show_file(const char *name, const struct stat *st)
+{
+	unsigned long long size = st->st_size;
+	char atime[64], mtime[64];
+	long now = time(NULL);
 
-	म_लिखो("%s\tInode: %u\tSize: %llu (%llu pages)\n",
-			name, (अचिन्हित)st->st_ino,
+	printf("%s\tInode: %u\tSize: %llu (%llu pages)\n",
+			name, (unsigned)st->st_ino,
 			size, (size + page_size - 1) / page_size);
 
-	स_माला(aसमय, माप(aसमय), "%c", स_स्थानीय(&st->st_aसमय));
-	स_माला(mसमय, माप(mसमय), "%c", स_स्थानीय(&st->st_mसमय));
+	strftime(atime, sizeof(atime), "%c", localtime(&st->st_atime));
+	strftime(mtime, sizeof(mtime), "%c", localtime(&st->st_mtime));
 
-	म_लिखो("Modify: %s (%ld seconds ago)\nAccess: %s (%ld seconds ago)\n",
-			mसमय, now - st->st_mसमय,
-			aसमय, now - st->st_aसमय);
-पूर्ण
+	printf("Modify: %s (%ld seconds ago)\nAccess: %s (%ld seconds ago)\n",
+			mtime, now - st->st_mtime,
+			atime, now - st->st_atime);
+}
 
-अटल sigलाँघ_बफ sigbus_jmp;
+static sigjmp_buf sigbus_jmp;
 
-अटल व्योम * अस्थिर sigbus_addr;
+static void * volatile sigbus_addr;
 
-अटल व्योम sigbus_handler(पूर्णांक sig, siginfo_t *info, व्योम *ucontex)
-अणु
-	(व्योम)sig;
-	(व्योम)ucontex;
-	sigbus_addr = info ? info->si_addr : शून्य;
-	sigदीर्घ_लाँघ(sigbus_jmp, 1);
-पूर्ण
+static void sigbus_handler(int sig, siginfo_t *info, void *ucontex)
+{
+	(void)sig;
+	(void)ucontex;
+	sigbus_addr = info ? info->si_addr : NULL;
+	siglongjmp(sigbus_jmp, 1);
+}
 
-अटल काष्ठा sigaction sigbus_action = अणु
+static struct sigaction sigbus_action = {
 	.sa_sigaction = sigbus_handler,
 	.sa_flags = SA_SIGINFO,
-पूर्ण;
+};
 
-अटल व्योम walk_file(स्थिर अक्षर *name, स्थिर काष्ठा stat *st)
-अणु
-	uपूर्णांक8_t vec[PAGEMAP_BATCH];
-	uपूर्णांक64_t buf[PAGEMAP_BATCH], flags;
-	uपूर्णांक64_t cgroup = 0;
-	uपूर्णांक64_t mapcnt = 0;
-	अचिन्हित दीर्घ nr_pages, pfn, i;
+static void walk_file(const char *name, const struct stat *st)
+{
+	uint8_t vec[PAGEMAP_BATCH];
+	uint64_t buf[PAGEMAP_BATCH], flags;
+	uint64_t cgroup = 0;
+	uint64_t mapcnt = 0;
+	unsigned long nr_pages, pfn, i;
 	off_t off, end = st->st_size;
-	पूर्णांक fd;
-	sमाप_प्रकार len;
-	व्योम *ptr;
-	पूर्णांक first = 1;
+	int fd;
+	ssize_t len;
+	void *ptr;
+	int first = 1;
 
-	fd = checked_खोलो(name, O_RDONLY|O_NOATIME|O_NOFOLLOW);
+	fd = checked_open(name, O_RDONLY|O_NOATIME|O_NOFOLLOW);
 
-	क्रम (off = 0; off < end; off += len) अणु
+	for (off = 0; off < end; off += len) {
 		nr_pages = (end - off + page_size - 1) / page_size;
-		अगर (nr_pages > PAGEMAP_BATCH)
+		if (nr_pages > PAGEMAP_BATCH)
 			nr_pages = PAGEMAP_BATCH;
 		len = nr_pages * page_size;
 
-		ptr = mmap(शून्य, len, PROT_READ, MAP_SHARED, fd, off);
-		अगर (ptr == MAP_FAILED)
+		ptr = mmap(NULL, len, PROT_READ, MAP_SHARED, fd, off);
+		if (ptr == MAP_FAILED)
 			fatal("mmap failed: %s", name);
 
 		/* determine cached pages */
-		अगर (mincore(ptr, len, vec))
+		if (mincore(ptr, len, vec))
 			fatal("mincore failed: %s", name);
 
-		/* turn off पढ़ोahead */
-		अगर (madvise(ptr, len, MADV_RANDOM))
+		/* turn off readahead */
+		if (madvise(ptr, len, MADV_RANDOM))
 			fatal("madvice failed: %s", name);
 
-		अगर (sigबनाओ_लाँघ(sigbus_jmp, 1)) अणु
+		if (sigsetjmp(sigbus_jmp, 1)) {
 			end = off + sigbus_addr ? sigbus_addr - ptr : 0;
-			ख_लिखो(मानक_त्रुटि, "got sigbus at offset %lld: %s\n",
-					(दीर्घ दीर्घ)end, name);
-			जाओ got_sigbus;
-		पूर्ण
+			fprintf(stderr, "got sigbus at offset %lld: %s\n",
+					(long long)end, name);
+			goto got_sigbus;
+		}
 
 		/* populate ptes */
-		क्रम (i = 0; i < nr_pages ; i++) अणु
-			अगर (vec[i] & 1)
-				(व्योम)*(अस्थिर पूर्णांक *)(ptr + i * page_size);
-		पूर्ण
+		for (i = 0; i < nr_pages ; i++) {
+			if (vec[i] & 1)
+				(void)*(volatile int *)(ptr + i * page_size);
+		}
 got_sigbus:
 
 		/* turn off harvesting reference bits */
-		अगर (madvise(ptr, len, MADV_SEQUENTIAL))
+		if (madvise(ptr, len, MADV_SEQUENTIAL))
 			fatal("madvice failed: %s", name);
 
-		अगर (pagemap_पढ़ो(buf, (अचिन्हित दीर्घ)ptr / page_size,
+		if (pagemap_read(buf, (unsigned long)ptr / page_size,
 					nr_pages) != nr_pages)
 			fatal("cannot read pagemap");
 
 		munmap(ptr, len);
 
-		क्रम (i = 0; i < nr_pages; i++) अणु
+		for (i = 0; i < nr_pages; i++) {
 			pfn = pagemap_pfn(buf[i]);
-			अगर (!pfn)
-				जारी;
-			अगर (!kpageflags_पढ़ो(&flags, pfn, 1))
-				जारी;
-			अगर (!kpagecgroup_पढ़ो(&cgroup, pfn, 1))
+			if (!pfn)
+				continue;
+			if (!kpageflags_read(&flags, pfn, 1))
+				continue;
+			if (!kpagecgroup_read(&cgroup, pfn, 1))
 				fatal("kpagecgroup_read failed");
-			अगर (!kpagecount_पढ़ो(&mapcnt, pfn, 1))
+			if (!kpagecount_read(&mapcnt, pfn, 1))
 				fatal("kpagecount_read failed");
-			अगर (first && opt_list) अणु
+			if (first && opt_list) {
 				first = 0;
 				flush_page_range();
 				show_file(name, st);
-			पूर्ण
+			}
 			add_page(off / page_size + i, pfn,
 				 flags, cgroup, mapcnt, buf[i]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	बंद(fd);
-पूर्ण
+	close(fd);
+}
 
-पूर्णांक walk_tree(स्थिर अक्षर *name, स्थिर काष्ठा stat *st, पूर्णांक type, काष्ठा FTW *f)
-अणु
-	(व्योम)f;
-	चयन (type) अणु
-	हाल FTW_F:
-		अगर (S_ISREG(st->st_mode))
+int walk_tree(const char *name, const struct stat *st, int type, struct FTW *f)
+{
+	(void)f;
+	switch (type) {
+	case FTW_F:
+		if (S_ISREG(st->st_mode))
 			walk_file(name, st);
-		अवरोध;
-	हाल FTW_DNR:
-		ख_लिखो(मानक_त्रुटि, "cannot read dir: %s\n", name);
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	case FTW_DNR:
+		fprintf(stderr, "cannot read dir: %s\n", name);
+		break;
+	}
+	return 0;
+}
 
-अटल व्योम walk_page_cache(व्योम)
-अणु
-	काष्ठा stat st;
+static void walk_page_cache(void)
+{
+	struct stat st;
 
-	kpageflags_fd = checked_खोलो(opt_kpageflags, O_RDONLY);
-	pagemap_fd = checked_खोलो("/proc/self/pagemap", O_RDONLY);
-	sigaction(SIGBUS, &sigbus_action, शून्य);
+	kpageflags_fd = checked_open(opt_kpageflags, O_RDONLY);
+	pagemap_fd = checked_open("/proc/self/pagemap", O_RDONLY);
+	sigaction(SIGBUS, &sigbus_action, NULL);
 
-	अगर (stat(opt_file, &st))
+	if (stat(opt_file, &st))
 		fatal("stat failed: %s\n", opt_file);
 
-	अगर (S_ISREG(st.st_mode)) अणु
+	if (S_ISREG(st.st_mode)) {
 		walk_file(opt_file, &st);
-	पूर्ण अन्यथा अगर (S_ISसूची(st.st_mode)) अणु
-		/* करो not follow symlinks and mountpoपूर्णांकs */
-		अगर (nftw(opt_file, walk_tree, 64, FTW_MOUNT | FTW_PHYS) < 0)
+	} else if (S_ISDIR(st.st_mode)) {
+		/* do not follow symlinks and mountpoints */
+		if (nftw(opt_file, walk_tree, 64, FTW_MOUNT | FTW_PHYS) < 0)
 			fatal("nftw failed: %s\n", opt_file);
-	पूर्ण अन्यथा
+	} else
 		fatal("unhandled file type: %s\n", opt_file);
 
-	बंद(kpageflags_fd);
-	बंद(pagemap_fd);
-	संकेत(SIGBUS, संक_पूर्व);
-पूर्ण
+	close(kpageflags_fd);
+	close(pagemap_fd);
+	signal(SIGBUS, SIG_DFL);
+}
 
-अटल व्योम parse_file(स्थिर अक्षर *name)
-अणु
+static void parse_file(const char *name)
+{
 	opt_file = name;
-पूर्ण
+}
 
-अटल व्योम parse_cgroup(स्थिर अक्षर *path)
-अणु
-	अगर (path[0] == '@') अणु
+static void parse_cgroup(const char *path)
+{
+	if (path[0] == '@') {
 		opt_cgroup = parse_number(path + 1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	काष्ठा stat st;
+	struct stat st;
 
-	अगर (stat(path, &st))
+	if (stat(path, &st))
 		fatal("stat failed: %s: %m\n", path);
 
-	अगर (!S_ISसूची(st.st_mode))
+	if (!S_ISDIR(st.st_mode))
 		fatal("cgroup supposed to be a directory: %s\n", path);
 
 	opt_cgroup = st.st_ino;
-पूर्ण
+}
 
-अटल व्योम parse_addr_range(स्थिर अक्षर *optarg)
-अणु
-	अचिन्हित दीर्घ offset;
-	अचिन्हित दीर्घ size;
-	अक्षर *p;
+static void parse_addr_range(const char *optarg)
+{
+	unsigned long offset;
+	unsigned long size;
+	char *p;
 
-	p = म_अक्षर(optarg, ',');
-	अगर (!p)
-		p = म_अक्षर(optarg, '+');
+	p = strchr(optarg, ',');
+	if (!p)
+		p = strchr(optarg, '+');
 
-	अगर (p == optarg) अणु
+	if (p == optarg) {
 		offset = 0;
 		size   = parse_number(p + 1);
-	पूर्ण अन्यथा अगर (p) अणु
+	} else if (p) {
 		offset = parse_number(optarg);
-		अगर (p[1] == '\0')
-			size = अच_दीर्घ_उच्च;
-		अन्यथा अणु
+		if (p[1] == '\0')
+			size = ULONG_MAX;
+		else {
 			size = parse_number(p + 1);
-			अगर (*p == ',') अणु
-				अगर (size < offset)
+			if (*p == ',') {
+				if (size < offset)
 					fatal("invalid range: %lu,%lu\n",
 							offset, size);
 				size -= offset;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			}
+		}
+	} else {
 		offset = parse_number(optarg);
 		size   = 1;
-	पूर्ण
+	}
 
 	add_addr_range(offset, size);
-पूर्ण
+}
 
-अटल व्योम add_bits_filter(uपूर्णांक64_t mask, uपूर्णांक64_t bits)
-अणु
-	अगर (nr_bit_filters >= MAX_BIT_FILTERS)
+static void add_bits_filter(uint64_t mask, uint64_t bits)
+{
+	if (nr_bit_filters >= MAX_BIT_FILTERS)
 		fatal("too much bit filters\n");
 
 	opt_mask[nr_bit_filters] = mask;
 	opt_bits[nr_bit_filters] = bits;
 	nr_bit_filters++;
-पूर्ण
+}
 
-अटल uपूर्णांक64_t parse_flag_name(स्थिर अक्षर *str, पूर्णांक len)
-अणु
-	माप_प्रकार i;
+static uint64_t parse_flag_name(const char *str, int len)
+{
+	size_t i;
 
-	अगर (!*str || !len)
-		वापस 0;
+	if (!*str || !len)
+		return 0;
 
-	अगर (len <= 8 && !म_भेदन(str, "compound", len))
-		वापस BITS_COMPOUND;
+	if (len <= 8 && !strncmp(str, "compound", len))
+		return BITS_COMPOUND;
 
-	क्रम (i = 0; i < ARRAY_SIZE(page_flag_names); i++) अणु
-		अगर (!page_flag_names[i])
-			जारी;
-		अगर (!म_भेदन(str, page_flag_names[i] + 2, len))
-			वापस 1ULL << i;
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(page_flag_names); i++) {
+		if (!page_flag_names[i])
+			continue;
+		if (!strncmp(str, page_flag_names[i] + 2, len))
+			return 1ULL << i;
+	}
 
-	वापस parse_number(str);
-पूर्ण
+	return parse_number(str);
+}
 
-अटल uपूर्णांक64_t parse_flag_names(स्थिर अक्षर *str, पूर्णांक all)
-अणु
-	स्थिर अक्षर *p    = str;
-	uपूर्णांक64_t   flags = 0;
+static uint64_t parse_flag_names(const char *str, int all)
+{
+	const char *p    = str;
+	uint64_t   flags = 0;
 
-	जबतक (1) अणु
-		अगर (*p == ',' || *p == '=' || *p == '\0') अणु
-			अगर ((*str != '~') || (*str == '~' && all && *++str))
+	while (1) {
+		if (*p == ',' || *p == '=' || *p == '\0') {
+			if ((*str != '~') || (*str == '~' && all && *++str))
 				flags |= parse_flag_name(str, p - str);
-			अगर (*p != ',')
-				अवरोध;
+			if (*p != ',')
+				break;
 			str = p + 1;
-		पूर्ण
+		}
 		p++;
-	पूर्ण
+	}
 
-	वापस flags;
-पूर्ण
+	return flags;
+}
 
-अटल व्योम parse_bits_mask(स्थिर अक्षर *optarg)
-अणु
-	uपूर्णांक64_t mask;
-	uपूर्णांक64_t bits;
-	स्थिर अक्षर *p;
+static void parse_bits_mask(const char *optarg)
+{
+	uint64_t mask;
+	uint64_t bits;
+	const char *p;
 
-	p = म_अक्षर(optarg, '=');
-	अगर (p == optarg) अणु
+	p = strchr(optarg, '=');
+	if (p == optarg) {
 		mask = KPF_ALL_BITS;
 		bits = parse_flag_names(p + 1, 0);
-	पूर्ण अन्यथा अगर (p) अणु
+	} else if (p) {
 		mask = parse_flag_names(optarg, 0);
 		bits = parse_flag_names(p + 1, 0);
-	पूर्ण अन्यथा अगर (म_अक्षर(optarg, '~')) अणु
+	} else if (strchr(optarg, '~')) {
 		mask = parse_flag_names(optarg, 1);
 		bits = parse_flag_names(optarg, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		mask = parse_flag_names(optarg, 0);
 		bits = KPF_ALL_BITS;
-	पूर्ण
+	}
 
 	add_bits_filter(mask, bits);
-पूर्ण
+}
 
-अटल व्योम parse_kpageflags(स्थिर अक्षर *name)
-अणु
+static void parse_kpageflags(const char *name)
+{
 	opt_kpageflags = name;
-पूर्ण
+}
 
-अटल व्योम describe_flags(स्थिर अक्षर *optarg)
-अणु
-	uपूर्णांक64_t flags = parse_flag_names(optarg, 0);
+static void describe_flags(const char *optarg)
+{
+	uint64_t flags = parse_flag_names(optarg, 0);
 
-	म_लिखो("0x%016llx\t%s\t%s\n",
-		(अचिन्हित दीर्घ दीर्घ)flags,
+	printf("0x%016llx\t%s\t%s\n",
+		(unsigned long long)flags,
 		page_flag_name(flags),
-		page_flag_दीर्घname(flags));
-पूर्ण
+		page_flag_longname(flags));
+}
 
-अटल स्थिर काष्ठा option opts[] = अणु
-	अणु "raw"       , 0, शून्य, 'r' पूर्ण,
-	अणु "pid"       , 1, शून्य, 'p' पूर्ण,
-	अणु "file"      , 1, शून्य, 'f' पूर्ण,
-	अणु "addr"      , 1, शून्य, 'a' पूर्ण,
-	अणु "bits"      , 1, शून्य, 'b' पूर्ण,
-	अणु "cgroup"    , 1, शून्य, 'c' पूर्ण,
-	अणु "describe"  , 1, शून्य, 'd' पूर्ण,
-	अणु "mark-idle" , 0, शून्य, 'i' पूर्ण,
-	अणु "list"      , 0, शून्य, 'l' पूर्ण,
-	अणु "list-each" , 0, शून्य, 'L' पूर्ण,
-	अणु "list-cgroup", 0, शून्य, 'C' पूर्ण,
-	अणु "list-mapcnt", 0, शून्य, 'M' पूर्ण,
-	अणु "no-summary", 0, शून्य, 'N' पूर्ण,
-	अणु "hwpoison"  , 0, शून्य, 'X' पूर्ण,
-	अणु "unpoison"  , 0, शून्य, 'x' पूर्ण,
-	अणु "kpageflags", 0, शून्य, 'F' पूर्ण,
-	अणु "help"      , 0, शून्य, 'h' पूर्ण,
-	अणु शून्य        , 0, शून्य, 0 पूर्ण
-पूर्ण;
+static const struct option opts[] = {
+	{ "raw"       , 0, NULL, 'r' },
+	{ "pid"       , 1, NULL, 'p' },
+	{ "file"      , 1, NULL, 'f' },
+	{ "addr"      , 1, NULL, 'a' },
+	{ "bits"      , 1, NULL, 'b' },
+	{ "cgroup"    , 1, NULL, 'c' },
+	{ "describe"  , 1, NULL, 'd' },
+	{ "mark-idle" , 0, NULL, 'i' },
+	{ "list"      , 0, NULL, 'l' },
+	{ "list-each" , 0, NULL, 'L' },
+	{ "list-cgroup", 0, NULL, 'C' },
+	{ "list-mapcnt", 0, NULL, 'M' },
+	{ "no-summary", 0, NULL, 'N' },
+	{ "hwpoison"  , 0, NULL, 'X' },
+	{ "unpoison"  , 0, NULL, 'x' },
+	{ "kpageflags", 0, NULL, 'F' },
+	{ "help"      , 0, NULL, 'h' },
+	{ NULL        , 0, NULL, 0 }
+};
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	पूर्णांक c;
+int main(int argc, char *argv[])
+{
+	int c;
 
 	page_size = getpagesize();
 
-	जबतक ((c = getopt_दीर्घ(argc, argv,
+	while ((c = getopt_long(argc, argv,
 				"rp:f:a:b:d:c:CilLMNXxF:h",
-				opts, शून्य)) != -1) अणु
-		चयन (c) अणु
-		हाल 'r':
+				opts, NULL)) != -1) {
+		switch (c) {
+		case 'r':
 			opt_raw = 1;
-			अवरोध;
-		हाल 'p':
+			break;
+		case 'p':
 			parse_pid(optarg);
-			अवरोध;
-		हाल 'f':
+			break;
+		case 'f':
 			parse_file(optarg);
-			अवरोध;
-		हाल 'a':
+			break;
+		case 'a':
 			parse_addr_range(optarg);
-			अवरोध;
-		हाल 'b':
+			break;
+		case 'b':
 			parse_bits_mask(optarg);
-			अवरोध;
-		हाल 'c':
+			break;
+		case 'c':
 			parse_cgroup(optarg);
-			अवरोध;
-		हाल 'C':
+			break;
+		case 'C':
 			opt_list_cgroup = 1;
-			अवरोध;
-		हाल 'd':
+			break;
+		case 'd':
 			describe_flags(optarg);
-			निकास(0);
-		हाल 'i':
+			exit(0);
+		case 'i':
 			opt_mark_idle = 1;
-			अवरोध;
-		हाल 'l':
+			break;
+		case 'l':
 			opt_list = 1;
-			अवरोध;
-		हाल 'L':
+			break;
+		case 'L':
 			opt_list = 2;
-			अवरोध;
-		हाल 'M':
+			break;
+		case 'M':
 			opt_list_mapcnt = 1;
-			अवरोध;
-		हाल 'N':
+			break;
+		case 'N':
 			opt_no_summary = 1;
-			अवरोध;
-		हाल 'X':
+			break;
+		case 'X':
 			opt_hwpoison = 1;
 			prepare_hwpoison_fd();
-			अवरोध;
-		हाल 'x':
+			break;
+		case 'x':
 			opt_unpoison = 1;
 			prepare_hwpoison_fd();
-			अवरोध;
-		हाल 'F':
+			break;
+		case 'F':
 			parse_kpageflags(optarg);
-			अवरोध;
-		हाल 'h':
+			break;
+		case 'h':
 			usage();
-			निकास(0);
-		शेष:
+			exit(0);
+		default:
 			usage();
-			निकास(1);
-		पूर्ण
-	पूर्ण
+			exit(1);
+		}
+	}
 
-	अगर (!opt_kpageflags)
+	if (!opt_kpageflags)
 		opt_kpageflags = PROC_KPAGEFLAGS;
 
-	अगर (opt_cgroup || opt_list_cgroup)
-		kpagecgroup_fd = checked_खोलो(PROC_KPAGECGROUP, O_RDONLY);
+	if (opt_cgroup || opt_list_cgroup)
+		kpagecgroup_fd = checked_open(PROC_KPAGECGROUP, O_RDONLY);
 
-	अगर (opt_list && opt_list_mapcnt)
-		kpagecount_fd = checked_खोलो(PROC_KPAGECOUNT, O_RDONLY);
+	if (opt_list && opt_list_mapcnt)
+		kpagecount_fd = checked_open(PROC_KPAGECOUNT, O_RDONLY);
 
-	अगर (opt_mark_idle && opt_file)
-		page_idle_fd = checked_खोलो(SYS_KERNEL_MM_PAGE_IDLE, O_RDWR);
+	if (opt_mark_idle && opt_file)
+		page_idle_fd = checked_open(SYS_KERNEL_MM_PAGE_IDLE, O_RDWR);
 
-	अगर (opt_list && opt_pid)
-		म_लिखो("voffset\t");
-	अगर (opt_list && opt_file)
-		म_लिखो("foffset\t");
-	अगर (opt_list && opt_list_cgroup)
-		म_लिखो("cgroup\t");
-	अगर (opt_list && opt_list_mapcnt)
-		म_लिखो("map-cnt\t");
+	if (opt_list && opt_pid)
+		printf("voffset\t");
+	if (opt_list && opt_file)
+		printf("foffset\t");
+	if (opt_list && opt_list_cgroup)
+		printf("cgroup\t");
+	if (opt_list && opt_list_mapcnt)
+		printf("map-cnt\t");
 
-	अगर (opt_list == 1)
-		म_लिखो("offset\tlen\tflags\n");
-	अगर (opt_list == 2)
-		म_लिखो("offset\tflags\n");
+	if (opt_list == 1)
+		printf("offset\tlen\tflags\n");
+	if (opt_list == 2)
+		printf("offset\tflags\n");
 
-	अगर (opt_file)
+	if (opt_file)
 		walk_page_cache();
-	अन्यथा
+	else
 		walk_addr_ranges();
 
-	अगर (opt_list == 1)
+	if (opt_list == 1)
 		flush_page_range();
 
-	अगर (opt_no_summary)
-		वापस 0;
+	if (opt_no_summary)
+		return 0;
 
-	अगर (opt_list)
-		म_लिखो("\n\n");
+	if (opt_list)
+		printf("\n\n");
 
 	show_summary();
 
-	अगर (opt_list_mapcnt)
-		बंद(kpagecount_fd);
+	if (opt_list_mapcnt)
+		close(kpagecount_fd);
 
-	अगर (page_idle_fd >= 0)
-		बंद(page_idle_fd);
+	if (page_idle_fd >= 0)
+		close(page_idle_fd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

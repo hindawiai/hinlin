@@ -1,280 +1,279 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _M68K_TLBFLUSH_H
-#घोषणा _M68K_TLBFLUSH_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _M68K_TLBFLUSH_H
+#define _M68K_TLBFLUSH_H
 
-#अगर_घोषित CONFIG_MMU
-#अगर_अघोषित CONFIG_SUN3
+#ifdef CONFIG_MMU
+#ifndef CONFIG_SUN3
 
-#समावेश <यंत्र/current.h>
-#समावेश <यंत्र/mcfmmu.h>
+#include <asm/current.h>
+#include <asm/mcfmmu.h>
 
-अटल अंतरभूत व्योम flush_tlb_kernel_page(व्योम *addr)
-अणु
-	अगर (CPU_IS_COLDFIRE) अणु
-		mmu_ग_लिखो(MMUOR, MMUOR_CNL);
-	पूर्ण अन्यथा अगर (CPU_IS_040_OR_060) अणु
+static inline void flush_tlb_kernel_page(void *addr)
+{
+	if (CPU_IS_COLDFIRE) {
+		mmu_write(MMUOR, MMUOR_CNL);
+	} else if (CPU_IS_040_OR_060) {
 		mm_segment_t old_fs = get_fs();
 		set_fs(KERNEL_DS);
-		__यंत्र__ __अस्थिर__(".chip 68040\n\t"
+		__asm__ __volatile__(".chip 68040\n\t"
 				     "pflush (%0)\n\t"
 				     ".chip 68k"
 				     : : "a" (addr));
 		set_fs(old_fs);
-	पूर्ण अन्यथा अगर (CPU_IS_020_OR_030)
-		__यंत्र__ __अस्थिर__("pflush #4,#4,(%0)" : : "a" (addr));
-पूर्ण
+	} else if (CPU_IS_020_OR_030)
+		__asm__ __volatile__("pflush #4,#4,(%0)" : : "a" (addr));
+}
 
 /*
  * flush all user-space atc entries.
  */
-अटल अंतरभूत व्योम __flush_tlb(व्योम)
-अणु
-	अगर (CPU_IS_COLDFIRE) अणु
-		mmu_ग_लिखो(MMUOR, MMUOR_CNL);
-	पूर्ण अन्यथा अगर (CPU_IS_040_OR_060) अणु
-		__यंत्र__ __अस्थिर__(".chip 68040\n\t"
+static inline void __flush_tlb(void)
+{
+	if (CPU_IS_COLDFIRE) {
+		mmu_write(MMUOR, MMUOR_CNL);
+	} else if (CPU_IS_040_OR_060) {
+		__asm__ __volatile__(".chip 68040\n\t"
 				     "pflushan\n\t"
 				     ".chip 68k");
-	पूर्ण अन्यथा अगर (CPU_IS_020_OR_030) अणु
-		__यंत्र__ __अस्थिर__("pflush #0,#4");
-	पूर्ण
-पूर्ण
+	} else if (CPU_IS_020_OR_030) {
+		__asm__ __volatile__("pflush #0,#4");
+	}
+}
 
-अटल अंतरभूत व्योम __flush_tlb040_one(अचिन्हित दीर्घ addr)
-अणु
-	__यंत्र__ __अस्थिर__(".chip 68040\n\t"
+static inline void __flush_tlb040_one(unsigned long addr)
+{
+	__asm__ __volatile__(".chip 68040\n\t"
 			     "pflush (%0)\n\t"
 			     ".chip 68k"
 			     : : "a" (addr));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम __flush_tlb_one(अचिन्हित दीर्घ addr)
-अणु
-	अगर (CPU_IS_COLDFIRE)
-		mmu_ग_लिखो(MMUOR, MMUOR_CNL);
-	अन्यथा अगर (CPU_IS_040_OR_060)
+static inline void __flush_tlb_one(unsigned long addr)
+{
+	if (CPU_IS_COLDFIRE)
+		mmu_write(MMUOR, MMUOR_CNL);
+	else if (CPU_IS_040_OR_060)
 		__flush_tlb040_one(addr);
-	अन्यथा अगर (CPU_IS_020_OR_030)
-		__यंत्र__ __अस्थिर__("pflush #0,#4,(%0)" : : "a" (addr));
-पूर्ण
+	else if (CPU_IS_020_OR_030)
+		__asm__ __volatile__("pflush #0,#4,(%0)" : : "a" (addr));
+}
 
-#घोषणा flush_tlb() __flush_tlb()
+#define flush_tlb() __flush_tlb()
 
 /*
  * flush all atc entries (both kernel and user-space entries).
  */
-अटल अंतरभूत व्योम flush_tlb_all(व्योम)
-अणु
-	अगर (CPU_IS_COLDFIRE) अणु
-		mmu_ग_लिखो(MMUOR, MMUOR_CNL);
-	पूर्ण अन्यथा अगर (CPU_IS_040_OR_060) अणु
-		__यंत्र__ __अस्थिर__(".chip 68040\n\t"
+static inline void flush_tlb_all(void)
+{
+	if (CPU_IS_COLDFIRE) {
+		mmu_write(MMUOR, MMUOR_CNL);
+	} else if (CPU_IS_040_OR_060) {
+		__asm__ __volatile__(".chip 68040\n\t"
 				     "pflusha\n\t"
 				     ".chip 68k");
-	पूर्ण अन्यथा अगर (CPU_IS_020_OR_030) अणु
-		__यंत्र__ __अस्थिर__("pflusha");
-	पूर्ण
-पूर्ण
+	} else if (CPU_IS_020_OR_030) {
+		__asm__ __volatile__("pflusha");
+	}
+}
 
-अटल अंतरभूत व्योम flush_tlb_mm(काष्ठा mm_काष्ठा *mm)
-अणु
-	अगर (mm == current->active_mm)
+static inline void flush_tlb_mm(struct mm_struct *mm)
+{
+	if (mm == current->active_mm)
 		__flush_tlb();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम flush_tlb_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr)
-अणु
-	अगर (vma->vm_mm == current->active_mm) अणु
-		mm_segment_t old_fs = क्रमce_uaccess_begin();
+static inline void flush_tlb_page(struct vm_area_struct *vma, unsigned long addr)
+{
+	if (vma->vm_mm == current->active_mm) {
+		mm_segment_t old_fs = force_uaccess_begin();
 
 		__flush_tlb_one(addr);
-		क्रमce_uaccess_end(old_fs);
-	पूर्ण
-पूर्ण
+		force_uaccess_end(old_fs);
+	}
+}
 
-अटल अंतरभूत व्योम flush_tlb_range(काष्ठा vm_area_काष्ठा *vma,
-				   अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-	अगर (vma->vm_mm == current->active_mm)
+static inline void flush_tlb_range(struct vm_area_struct *vma,
+				   unsigned long start, unsigned long end)
+{
+	if (vma->vm_mm == current->active_mm)
 		__flush_tlb();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम flush_tlb_kernel_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
+static inline void flush_tlb_kernel_range(unsigned long start, unsigned long end)
+{
 	flush_tlb_all();
-पूर्ण
+}
 
-#अन्यथा
+#else
 
 
 /* Reserved PMEGs. */
-बाह्य अक्षर sun3_reserved_pmeg[SUN3_PMEGS_NUM];
-बाह्य अचिन्हित दीर्घ pmeg_vaddr[SUN3_PMEGS_NUM];
-बाह्य अचिन्हित अक्षर pmeg_alloc[SUN3_PMEGS_NUM];
-बाह्य अचिन्हित अक्षर pmeg_ctx[SUN3_PMEGS_NUM];
+extern char sun3_reserved_pmeg[SUN3_PMEGS_NUM];
+extern unsigned long pmeg_vaddr[SUN3_PMEGS_NUM];
+extern unsigned char pmeg_alloc[SUN3_PMEGS_NUM];
+extern unsigned char pmeg_ctx[SUN3_PMEGS_NUM];
 
 /* Flush all userspace mappings one by one...  (why no flush command,
    sun?) */
-अटल अंतरभूत व्योम flush_tlb_all(व्योम)
-अणु
-       अचिन्हित दीर्घ addr;
-       अचिन्हित अक्षर ctx, oldctx;
+static inline void flush_tlb_all(void)
+{
+       unsigned long addr;
+       unsigned char ctx, oldctx;
 
        oldctx = sun3_get_context();
-       क्रम(addr = 0x00000000; addr < TASK_SIZE; addr += SUN3_PMEG_SIZE) अणु
-	       क्रम(ctx = 0; ctx < 8; ctx++) अणु
+       for(addr = 0x00000000; addr < TASK_SIZE; addr += SUN3_PMEG_SIZE) {
+	       for(ctx = 0; ctx < 8; ctx++) {
 		       sun3_put_context(ctx);
 		       sun3_put_segmap(addr, SUN3_INVALID_PMEG);
-	       पूर्ण
-       पूर्ण
+	       }
+       }
 
        sun3_put_context(oldctx);
        /* erase all of the userspace pmeg maps, we've clobbered them
 	  all anyway */
-       क्रम(addr = 0; addr < SUN3_INVALID_PMEG; addr++) अणु
-	       अगर(pmeg_alloc[addr] == 1) अणु
+       for(addr = 0; addr < SUN3_INVALID_PMEG; addr++) {
+	       if(pmeg_alloc[addr] == 1) {
 		       pmeg_alloc[addr] = 0;
 		       pmeg_ctx[addr] = 0;
 		       pmeg_vaddr[addr] = 0;
-	       पूर्ण
-       पूर्ण
+	       }
+       }
 
-पूर्ण
+}
 
 /* Clear user TLB entries within the context named in mm */
-अटल अंतरभूत व्योम flush_tlb_mm (काष्ठा mm_काष्ठा *mm)
-अणु
-     अचिन्हित अक्षर oldctx;
-     अचिन्हित अक्षर seg;
-     अचिन्हित दीर्घ i;
+static inline void flush_tlb_mm (struct mm_struct *mm)
+{
+     unsigned char oldctx;
+     unsigned char seg;
+     unsigned long i;
 
      oldctx = sun3_get_context();
      sun3_put_context(mm->context);
 
-     क्रम(i = 0; i < TASK_SIZE; i += SUN3_PMEG_SIZE) अणु
+     for(i = 0; i < TASK_SIZE; i += SUN3_PMEG_SIZE) {
 	     seg = sun3_get_segmap(i);
-	     अगर(seg == SUN3_INVALID_PMEG)
-		     जारी;
+	     if(seg == SUN3_INVALID_PMEG)
+		     continue;
 
 	     sun3_put_segmap(i, SUN3_INVALID_PMEG);
 	     pmeg_alloc[seg] = 0;
 	     pmeg_ctx[seg] = 0;
 	     pmeg_vaddr[seg] = 0;
-     पूर्ण
+     }
 
      sun3_put_context(oldctx);
 
-पूर्ण
+}
 
-/* Flush a single TLB page. In this हाल, we're limited to flushing a
+/* Flush a single TLB page. In this case, we're limited to flushing a
    single PMEG */
-अटल अंतरभूत व्योम flush_tlb_page (काष्ठा vm_area_काष्ठा *vma,
-				   अचिन्हित दीर्घ addr)
-अणु
-	अचिन्हित अक्षर oldctx;
-	अचिन्हित अक्षर i;
+static inline void flush_tlb_page (struct vm_area_struct *vma,
+				   unsigned long addr)
+{
+	unsigned char oldctx;
+	unsigned char i;
 
 	oldctx = sun3_get_context();
 	sun3_put_context(vma->vm_mm->context);
 	addr &= ~SUN3_PMEG_MASK;
-	अगर((i = sun3_get_segmap(addr)) != SUN3_INVALID_PMEG)
-	अणु
+	if((i = sun3_get_segmap(addr)) != SUN3_INVALID_PMEG)
+	{
 		pmeg_alloc[i] = 0;
 		pmeg_ctx[i] = 0;
 		pmeg_vaddr[i] = 0;
 		sun3_put_segmap (addr,  SUN3_INVALID_PMEG);
-	पूर्ण
+	}
 	sun3_put_context(oldctx);
 
-पूर्ण
+}
 /* Flush a range of pages from TLB. */
 
-अटल अंतरभूत व्योम flush_tlb_range (काष्ठा vm_area_काष्ठा *vma,
-		      अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
-	अचिन्हित अक्षर seg, oldctx;
+static inline void flush_tlb_range (struct vm_area_struct *vma,
+		      unsigned long start, unsigned long end)
+{
+	struct mm_struct *mm = vma->vm_mm;
+	unsigned char seg, oldctx;
 
 	start &= ~SUN3_PMEG_MASK;
 
 	oldctx = sun3_get_context();
 	sun3_put_context(mm->context);
 
-	जबतक(start < end)
-	अणु
-		अगर((seg = sun3_get_segmap(start)) == SUN3_INVALID_PMEG)
-		     जाओ next;
-		अगर(pmeg_ctx[seg] == mm->context) अणु
+	while(start < end)
+	{
+		if((seg = sun3_get_segmap(start)) == SUN3_INVALID_PMEG)
+		     goto next;
+		if(pmeg_ctx[seg] == mm->context) {
 			pmeg_alloc[seg] = 0;
 			pmeg_ctx[seg] = 0;
 			pmeg_vaddr[seg] = 0;
-		पूर्ण
+		}
 		sun3_put_segmap(start, SUN3_INVALID_PMEG);
 	next:
 		start += SUN3_PMEG_SIZE;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम flush_tlb_kernel_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
+static inline void flush_tlb_kernel_range(unsigned long start, unsigned long end)
+{
 	flush_tlb_all();
-पूर्ण
+}
 
 /* Flush kernel page from TLB. */
-अटल अंतरभूत व्योम flush_tlb_kernel_page (अचिन्हित दीर्घ addr)
-अणु
+static inline void flush_tlb_kernel_page (unsigned long addr)
+{
 	sun3_put_segmap (addr & ~(SUN3_PMEG_SIZE - 1), SUN3_INVALID_PMEG);
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif
 
-#अन्यथा /* !CONFIG_MMU */
+#else /* !CONFIG_MMU */
 
 /*
  * flush all user-space atc entries.
  */
-अटल अंतरभूत व्योम __flush_tlb(व्योम)
-अणु
+static inline void __flush_tlb(void)
+{
 	BUG();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम __flush_tlb_one(अचिन्हित दीर्घ addr)
-अणु
+static inline void __flush_tlb_one(unsigned long addr)
+{
 	BUG();
-पूर्ण
+}
 
-#घोषणा flush_tlb() __flush_tlb()
+#define flush_tlb() __flush_tlb()
 
 /*
  * flush all atc entries (both kernel and user-space entries).
  */
-अटल अंतरभूत व्योम flush_tlb_all(व्योम)
-अणु
+static inline void flush_tlb_all(void)
+{
 	BUG();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम flush_tlb_mm(काष्ठा mm_काष्ठा *mm)
-अणु
+static inline void flush_tlb_mm(struct mm_struct *mm)
+{
 	BUG();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम flush_tlb_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr)
-अणु
+static inline void flush_tlb_page(struct vm_area_struct *vma, unsigned long addr)
+{
 	BUG();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम flush_tlb_range(काष्ठा mm_काष्ठा *mm,
-				   अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
+static inline void flush_tlb_range(struct mm_struct *mm,
+				   unsigned long start, unsigned long end)
+{
 	BUG();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम flush_tlb_kernel_page(अचिन्हित दीर्घ addr)
-अणु
+static inline void flush_tlb_kernel_page(unsigned long addr)
+{
 	BUG();
-पूर्ण
+}
 
-#पूर्ण_अगर /* CONFIG_MMU */
+#endif /* CONFIG_MMU */
 
-#पूर्ण_अगर /* _M68K_TLBFLUSH_H */
+#endif /* _M68K_TLBFLUSH_H */

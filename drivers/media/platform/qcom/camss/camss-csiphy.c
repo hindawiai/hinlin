@@ -1,236 +1,235 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * camss-csiphy.c
  *
- * Qualcomm MSM Camera Subप्रणाली - CSIPHY Module
+ * Qualcomm MSM Camera Subsystem - CSIPHY Module
  *
  * Copyright (c) 2011-2015, The Linux Foundation. All rights reserved.
  * Copyright (C) 2016-2018 Linaro Ltd.
  */
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <media/media-entity.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-subdev.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <media/media-entity.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-subdev.h>
 
-#समावेश "camss-csiphy.h"
-#समावेश "camss.h"
+#include "camss-csiphy.h"
+#include "camss.h"
 
-#घोषणा MSM_CSIPHY_NAME "msm_csiphy"
+#define MSM_CSIPHY_NAME "msm_csiphy"
 
-काष्ठा csiphy_क्रमmat अणु
+struct csiphy_format {
 	u32 code;
 	u8 bpp;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा csiphy_क्रमmat csiphy_क्रमmats_8x16[] = अणु
-	अणु MEDIA_BUS_FMT_UYVY8_2X8, 8 पूर्ण,
-	अणु MEDIA_BUS_FMT_VYUY8_2X8, 8 पूर्ण,
-	अणु MEDIA_BUS_FMT_YUYV8_2X8, 8 पूर्ण,
-	अणु MEDIA_BUS_FMT_YVYU8_2X8, 8 पूर्ण,
-	अणु MEDIA_BUS_FMT_SBGGR8_1X8, 8 पूर्ण,
-	अणु MEDIA_BUS_FMT_SGBRG8_1X8, 8 पूर्ण,
-	अणु MEDIA_BUS_FMT_SGRBG8_1X8, 8 पूर्ण,
-	अणु MEDIA_BUS_FMT_SRGGB8_1X8, 8 पूर्ण,
-	अणु MEDIA_BUS_FMT_SBGGR10_1X10, 10 पूर्ण,
-	अणु MEDIA_BUS_FMT_SGBRG10_1X10, 10 पूर्ण,
-	अणु MEDIA_BUS_FMT_SGRBG10_1X10, 10 पूर्ण,
-	अणु MEDIA_BUS_FMT_SRGGB10_1X10, 10 पूर्ण,
-	अणु MEDIA_BUS_FMT_SBGGR12_1X12, 12 पूर्ण,
-	अणु MEDIA_BUS_FMT_SGBRG12_1X12, 12 पूर्ण,
-	अणु MEDIA_BUS_FMT_SGRBG12_1X12, 12 पूर्ण,
-	अणु MEDIA_BUS_FMT_SRGGB12_1X12, 12 पूर्ण,
-	अणु MEDIA_BUS_FMT_Y10_1X10, 10 पूर्ण,
-पूर्ण;
+static const struct csiphy_format csiphy_formats_8x16[] = {
+	{ MEDIA_BUS_FMT_UYVY8_2X8, 8 },
+	{ MEDIA_BUS_FMT_VYUY8_2X8, 8 },
+	{ MEDIA_BUS_FMT_YUYV8_2X8, 8 },
+	{ MEDIA_BUS_FMT_YVYU8_2X8, 8 },
+	{ MEDIA_BUS_FMT_SBGGR8_1X8, 8 },
+	{ MEDIA_BUS_FMT_SGBRG8_1X8, 8 },
+	{ MEDIA_BUS_FMT_SGRBG8_1X8, 8 },
+	{ MEDIA_BUS_FMT_SRGGB8_1X8, 8 },
+	{ MEDIA_BUS_FMT_SBGGR10_1X10, 10 },
+	{ MEDIA_BUS_FMT_SGBRG10_1X10, 10 },
+	{ MEDIA_BUS_FMT_SGRBG10_1X10, 10 },
+	{ MEDIA_BUS_FMT_SRGGB10_1X10, 10 },
+	{ MEDIA_BUS_FMT_SBGGR12_1X12, 12 },
+	{ MEDIA_BUS_FMT_SGBRG12_1X12, 12 },
+	{ MEDIA_BUS_FMT_SGRBG12_1X12, 12 },
+	{ MEDIA_BUS_FMT_SRGGB12_1X12, 12 },
+	{ MEDIA_BUS_FMT_Y10_1X10, 10 },
+};
 
-अटल स्थिर काष्ठा csiphy_क्रमmat csiphy_क्रमmats_8x96[] = अणु
-	अणु MEDIA_BUS_FMT_UYVY8_2X8, 8 पूर्ण,
-	अणु MEDIA_BUS_FMT_VYUY8_2X8, 8 पूर्ण,
-	अणु MEDIA_BUS_FMT_YUYV8_2X8, 8 पूर्ण,
-	अणु MEDIA_BUS_FMT_YVYU8_2X8, 8 पूर्ण,
-	अणु MEDIA_BUS_FMT_SBGGR8_1X8, 8 पूर्ण,
-	अणु MEDIA_BUS_FMT_SGBRG8_1X8, 8 पूर्ण,
-	अणु MEDIA_BUS_FMT_SGRBG8_1X8, 8 पूर्ण,
-	अणु MEDIA_BUS_FMT_SRGGB8_1X8, 8 पूर्ण,
-	अणु MEDIA_BUS_FMT_SBGGR10_1X10, 10 पूर्ण,
-	अणु MEDIA_BUS_FMT_SGBRG10_1X10, 10 पूर्ण,
-	अणु MEDIA_BUS_FMT_SGRBG10_1X10, 10 पूर्ण,
-	अणु MEDIA_BUS_FMT_SRGGB10_1X10, 10 पूर्ण,
-	अणु MEDIA_BUS_FMT_SBGGR12_1X12, 12 पूर्ण,
-	अणु MEDIA_BUS_FMT_SGBRG12_1X12, 12 पूर्ण,
-	अणु MEDIA_BUS_FMT_SGRBG12_1X12, 12 पूर्ण,
-	अणु MEDIA_BUS_FMT_SRGGB12_1X12, 12 पूर्ण,
-	अणु MEDIA_BUS_FMT_SBGGR14_1X14, 14 पूर्ण,
-	अणु MEDIA_BUS_FMT_SGBRG14_1X14, 14 पूर्ण,
-	अणु MEDIA_BUS_FMT_SGRBG14_1X14, 14 पूर्ण,
-	अणु MEDIA_BUS_FMT_SRGGB14_1X14, 14 पूर्ण,
-	अणु MEDIA_BUS_FMT_Y10_1X10, 10 पूर्ण,
-पूर्ण;
+static const struct csiphy_format csiphy_formats_8x96[] = {
+	{ MEDIA_BUS_FMT_UYVY8_2X8, 8 },
+	{ MEDIA_BUS_FMT_VYUY8_2X8, 8 },
+	{ MEDIA_BUS_FMT_YUYV8_2X8, 8 },
+	{ MEDIA_BUS_FMT_YVYU8_2X8, 8 },
+	{ MEDIA_BUS_FMT_SBGGR8_1X8, 8 },
+	{ MEDIA_BUS_FMT_SGBRG8_1X8, 8 },
+	{ MEDIA_BUS_FMT_SGRBG8_1X8, 8 },
+	{ MEDIA_BUS_FMT_SRGGB8_1X8, 8 },
+	{ MEDIA_BUS_FMT_SBGGR10_1X10, 10 },
+	{ MEDIA_BUS_FMT_SGBRG10_1X10, 10 },
+	{ MEDIA_BUS_FMT_SGRBG10_1X10, 10 },
+	{ MEDIA_BUS_FMT_SRGGB10_1X10, 10 },
+	{ MEDIA_BUS_FMT_SBGGR12_1X12, 12 },
+	{ MEDIA_BUS_FMT_SGBRG12_1X12, 12 },
+	{ MEDIA_BUS_FMT_SGRBG12_1X12, 12 },
+	{ MEDIA_BUS_FMT_SRGGB12_1X12, 12 },
+	{ MEDIA_BUS_FMT_SBGGR14_1X14, 14 },
+	{ MEDIA_BUS_FMT_SGBRG14_1X14, 14 },
+	{ MEDIA_BUS_FMT_SGRBG14_1X14, 14 },
+	{ MEDIA_BUS_FMT_SRGGB14_1X14, 14 },
+	{ MEDIA_BUS_FMT_Y10_1X10, 10 },
+};
 
-अटल स्थिर काष्ठा csiphy_क्रमmat csiphy_क्रमmats_sdm845[] = अणु
-	अणु MEDIA_BUS_FMT_UYVY8_2X8, 8 पूर्ण,
-	अणु MEDIA_BUS_FMT_VYUY8_2X8, 8 पूर्ण,
-	अणु MEDIA_BUS_FMT_YUYV8_2X8, 8 पूर्ण,
-	अणु MEDIA_BUS_FMT_YVYU8_2X8, 8 पूर्ण,
-	अणु MEDIA_BUS_FMT_SBGGR8_1X8, 8 पूर्ण,
-	अणु MEDIA_BUS_FMT_SGBRG8_1X8, 8 पूर्ण,
-	अणु MEDIA_BUS_FMT_SGRBG8_1X8, 8 पूर्ण,
-	अणु MEDIA_BUS_FMT_SRGGB8_1X8, 8 पूर्ण,
-	अणु MEDIA_BUS_FMT_SBGGR10_1X10, 10 पूर्ण,
-	अणु MEDIA_BUS_FMT_SGBRG10_1X10, 10 पूर्ण,
-	अणु MEDIA_BUS_FMT_SGRBG10_1X10, 10 पूर्ण,
-	अणु MEDIA_BUS_FMT_SRGGB10_1X10, 10 पूर्ण,
-	अणु MEDIA_BUS_FMT_SBGGR12_1X12, 12 पूर्ण,
-	अणु MEDIA_BUS_FMT_SGBRG12_1X12, 12 पूर्ण,
-	अणु MEDIA_BUS_FMT_SGRBG12_1X12, 12 पूर्ण,
-	अणु MEDIA_BUS_FMT_SRGGB12_1X12, 12 पूर्ण,
-	अणु MEDIA_BUS_FMT_SBGGR14_1X14, 14 पूर्ण,
-	अणु MEDIA_BUS_FMT_SGBRG14_1X14, 14 पूर्ण,
-	अणु MEDIA_BUS_FMT_SGRBG14_1X14, 14 पूर्ण,
-	अणु MEDIA_BUS_FMT_SRGGB14_1X14, 14 पूर्ण,
-	अणु MEDIA_BUS_FMT_Y10_1X10, 10 पूर्ण,
-पूर्ण;
+static const struct csiphy_format csiphy_formats_sdm845[] = {
+	{ MEDIA_BUS_FMT_UYVY8_2X8, 8 },
+	{ MEDIA_BUS_FMT_VYUY8_2X8, 8 },
+	{ MEDIA_BUS_FMT_YUYV8_2X8, 8 },
+	{ MEDIA_BUS_FMT_YVYU8_2X8, 8 },
+	{ MEDIA_BUS_FMT_SBGGR8_1X8, 8 },
+	{ MEDIA_BUS_FMT_SGBRG8_1X8, 8 },
+	{ MEDIA_BUS_FMT_SGRBG8_1X8, 8 },
+	{ MEDIA_BUS_FMT_SRGGB8_1X8, 8 },
+	{ MEDIA_BUS_FMT_SBGGR10_1X10, 10 },
+	{ MEDIA_BUS_FMT_SGBRG10_1X10, 10 },
+	{ MEDIA_BUS_FMT_SGRBG10_1X10, 10 },
+	{ MEDIA_BUS_FMT_SRGGB10_1X10, 10 },
+	{ MEDIA_BUS_FMT_SBGGR12_1X12, 12 },
+	{ MEDIA_BUS_FMT_SGBRG12_1X12, 12 },
+	{ MEDIA_BUS_FMT_SGRBG12_1X12, 12 },
+	{ MEDIA_BUS_FMT_SRGGB12_1X12, 12 },
+	{ MEDIA_BUS_FMT_SBGGR14_1X14, 14 },
+	{ MEDIA_BUS_FMT_SGBRG14_1X14, 14 },
+	{ MEDIA_BUS_FMT_SGRBG14_1X14, 14 },
+	{ MEDIA_BUS_FMT_SRGGB14_1X14, 14 },
+	{ MEDIA_BUS_FMT_Y10_1X10, 10 },
+};
 
 /*
- * csiphy_get_bpp - map media bus क्रमmat to bits per pixel
- * @क्रमmats: supported media bus क्रमmats array
- * @nक्रमmats: size of @क्रमmats array
- * @code: media bus क्रमmat code
+ * csiphy_get_bpp - map media bus format to bits per pixel
+ * @formats: supported media bus formats array
+ * @nformats: size of @formats array
+ * @code: media bus format code
  *
  * Return number of bits per pixel
  */
-अटल u8 csiphy_get_bpp(स्थिर काष्ठा csiphy_क्रमmat *क्रमmats,
-			 अचिन्हित पूर्णांक nक्रमmats, u32 code)
-अणु
-	अचिन्हित पूर्णांक i;
+static u8 csiphy_get_bpp(const struct csiphy_format *formats,
+			 unsigned int nformats, u32 code)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < nक्रमmats; i++)
-		अगर (code == क्रमmats[i].code)
-			वापस क्रमmats[i].bpp;
+	for (i = 0; i < nformats; i++)
+		if (code == formats[i].code)
+			return formats[i].bpp;
 
 	WARN(1, "Unknown format\n");
 
-	वापस क्रमmats[0].bpp;
-पूर्ण
+	return formats[0].bpp;
+}
 
 /*
- * csiphy_set_घड़ी_rates - Calculate and set घड़ी rates on CSIPHY module
+ * csiphy_set_clock_rates - Calculate and set clock rates on CSIPHY module
  * @csiphy: CSIPHY device
  */
-अटल पूर्णांक csiphy_set_घड़ी_rates(काष्ठा csiphy_device *csiphy)
-अणु
-	काष्ठा device *dev = csiphy->camss->dev;
+static int csiphy_set_clock_rates(struct csiphy_device *csiphy)
+{
+	struct device *dev = csiphy->camss->dev;
 	s64 link_freq;
-	पूर्णांक i, j;
-	पूर्णांक ret;
+	int i, j;
+	int ret;
 
-	u8 bpp = csiphy_get_bpp(csiphy->क्रमmats, csiphy->nक्रमmats,
+	u8 bpp = csiphy_get_bpp(csiphy->formats, csiphy->nformats,
 				csiphy->fmt[MSM_CSIPHY_PAD_SINK].code);
 	u8 num_lanes = csiphy->cfg.csi2->lane_cfg.num_data;
 
 	link_freq = camss_get_link_freq(&csiphy->subdev.entity, bpp, num_lanes);
-	अगर (link_freq < 0)
+	if (link_freq < 0)
 		link_freq  = 0;
 
-	क्रम (i = 0; i < csiphy->nघड़ीs; i++) अणु
-		काष्ठा camss_घड़ी *घड़ी = &csiphy->घड़ी[i];
+	for (i = 0; i < csiphy->nclocks; i++) {
+		struct camss_clock *clock = &csiphy->clock[i];
 
-		अगर (csiphy->rate_set[i]) अणु
+		if (csiphy->rate_set[i]) {
 			u64 min_rate = link_freq / 4;
-			दीर्घ round_rate;
+			long round_rate;
 
-			camss_add_घड़ी_margin(&min_rate);
+			camss_add_clock_margin(&min_rate);
 
-			क्रम (j = 0; j < घड़ी->nfreqs; j++)
-				अगर (min_rate < घड़ी->freq[j])
-					अवरोध;
+			for (j = 0; j < clock->nfreqs; j++)
+				if (min_rate < clock->freq[j])
+					break;
 
-			अगर (j == घड़ी->nfreqs) अणु
+			if (j == clock->nfreqs) {
 				dev_err(dev,
 					"Pixel clock is too high for CSIPHY\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
-			/* अगर sensor pixel घड़ी is not available */
-			/* set highest possible CSIPHY घड़ी rate */
-			अगर (min_rate == 0)
-				j = घड़ी->nfreqs - 1;
+			/* if sensor pixel clock is not available */
+			/* set highest possible CSIPHY clock rate */
+			if (min_rate == 0)
+				j = clock->nfreqs - 1;
 
-			round_rate = clk_round_rate(घड़ी->clk, घड़ी->freq[j]);
-			अगर (round_rate < 0) अणु
+			round_rate = clk_round_rate(clock->clk, clock->freq[j]);
+			if (round_rate < 0) {
 				dev_err(dev, "clk round rate failed: %ld\n",
 					round_rate);
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
-			csiphy->समयr_clk_rate = round_rate;
+			csiphy->timer_clk_rate = round_rate;
 
-			ret = clk_set_rate(घड़ी->clk, csiphy->समयr_clk_rate);
-			अगर (ret < 0) अणु
+			ret = clk_set_rate(clock->clk, csiphy->timer_clk_rate);
+			if (ret < 0) {
 				dev_err(dev, "clk set rate failed: %d\n", ret);
-				वापस ret;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return ret;
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * csiphy_set_घातer - Power on/off CSIPHY module
+ * csiphy_set_power - Power on/off CSIPHY module
  * @sd: CSIPHY V4L2 subdevice
- * @on: Requested घातer state
+ * @on: Requested power state
  *
  * Return 0 on success or a negative error code otherwise
  */
-अटल पूर्णांक csiphy_set_घातer(काष्ठा v4l2_subdev *sd, पूर्णांक on)
-अणु
-	काष्ठा csiphy_device *csiphy = v4l2_get_subdevdata(sd);
-	काष्ठा device *dev = csiphy->camss->dev;
+static int csiphy_set_power(struct v4l2_subdev *sd, int on)
+{
+	struct csiphy_device *csiphy = v4l2_get_subdevdata(sd);
+	struct device *dev = csiphy->camss->dev;
 
-	अगर (on) अणु
-		पूर्णांक ret;
+	if (on) {
+		int ret;
 
-		ret = pm_runसमय_get_sync(dev);
-		अगर (ret < 0) अणु
-			pm_runसमय_put_sync(dev);
-			वापस ret;
-		पूर्ण
+		ret = pm_runtime_get_sync(dev);
+		if (ret < 0) {
+			pm_runtime_put_sync(dev);
+			return ret;
+		}
 
-		ret = csiphy_set_घड़ी_rates(csiphy);
-		अगर (ret < 0) अणु
-			pm_runसमय_put_sync(dev);
-			वापस ret;
-		पूर्ण
+		ret = csiphy_set_clock_rates(csiphy);
+		if (ret < 0) {
+			pm_runtime_put_sync(dev);
+			return ret;
+		}
 
-		ret = camss_enable_घड़ीs(csiphy->nघड़ीs, csiphy->घड़ी, dev);
-		अगर (ret < 0) अणु
-			pm_runसमय_put_sync(dev);
-			वापस ret;
-		पूर्ण
+		ret = camss_enable_clocks(csiphy->nclocks, csiphy->clock, dev);
+		if (ret < 0) {
+			pm_runtime_put_sync(dev);
+			return ret;
+		}
 
 		enable_irq(csiphy->irq);
 
 		csiphy->ops->reset(csiphy);
 
-		csiphy->ops->hw_version_पढ़ो(csiphy, dev);
-	पूर्ण अन्यथा अणु
+		csiphy->ops->hw_version_read(csiphy, dev);
+	} else {
 		disable_irq(csiphy->irq);
 
-		camss_disable_घड़ीs(csiphy->nघड़ीs, csiphy->घड़ी);
+		camss_disable_clocks(csiphy->nclocks, csiphy->clock);
 
-		pm_runसमय_put_sync(dev);
-	पूर्ण
+		pm_runtime_put_sync(dev);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * csiphy_get_lane_mask - Calculate CSI2 lane mask configuration parameter
@@ -238,65 +237,65 @@
  *
  * Return lane mask
  */
-अटल u8 csiphy_get_lane_mask(काष्ठा csiphy_lanes_cfg *lane_cfg)
-अणु
+static u8 csiphy_get_lane_mask(struct csiphy_lanes_cfg *lane_cfg)
+{
 	u8 lane_mask;
-	पूर्णांक i;
+	int i;
 
 	lane_mask = 1 << lane_cfg->clk.pos;
 
-	क्रम (i = 0; i < lane_cfg->num_data; i++)
+	for (i = 0; i < lane_cfg->num_data; i++)
 		lane_mask |= 1 << lane_cfg->data[i].pos;
 
-	वापस lane_mask;
-पूर्ण
+	return lane_mask;
+}
 
 /*
  * csiphy_stream_on - Enable streaming on CSIPHY module
  * @csiphy: CSIPHY device
  *
  * Helper function to enable streaming on CSIPHY module.
- * Main configuration of CSIPHY module is also करोne here.
+ * Main configuration of CSIPHY module is also done here.
  *
  * Return 0 on success or a negative error code otherwise
  */
-अटल पूर्णांक csiphy_stream_on(काष्ठा csiphy_device *csiphy)
-अणु
-	काष्ठा csiphy_config *cfg = &csiphy->cfg;
+static int csiphy_stream_on(struct csiphy_device *csiphy)
+{
+	struct csiphy_config *cfg = &csiphy->cfg;
 	s64 link_freq;
 	u8 lane_mask = csiphy_get_lane_mask(&cfg->csi2->lane_cfg);
-	u8 bpp = csiphy_get_bpp(csiphy->क्रमmats, csiphy->nक्रमmats,
+	u8 bpp = csiphy_get_bpp(csiphy->formats, csiphy->nformats,
 				csiphy->fmt[MSM_CSIPHY_PAD_SINK].code);
 	u8 num_lanes = csiphy->cfg.csi2->lane_cfg.num_data;
 	u8 val;
 
 	link_freq = camss_get_link_freq(&csiphy->subdev.entity, bpp, num_lanes);
 
-	अगर (link_freq < 0) अणु
+	if (link_freq < 0) {
 		dev_err(csiphy->camss->dev,
 			"Cannot get CSI2 transmitter's link frequency\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (csiphy->base_clk_mux) अणु
-		val = पढ़ोl_relaxed(csiphy->base_clk_mux);
-		अगर (cfg->combo_mode && (lane_mask & 0x18) == 0x18) अणु
+	if (csiphy->base_clk_mux) {
+		val = readl_relaxed(csiphy->base_clk_mux);
+		if (cfg->combo_mode && (lane_mask & 0x18) == 0x18) {
 			val &= ~0xf0;
 			val |= cfg->csid_id << 4;
-		पूर्ण अन्यथा अणु
+		} else {
 			val &= ~0xf;
 			val |= cfg->csid_id;
-		पूर्ण
-		ग_लिखोl_relaxed(val, csiphy->base_clk_mux);
+		}
+		writel_relaxed(val, csiphy->base_clk_mux);
 
-		/* Enक्रमce reg ग_लिखो ordering between clk mux & lane enabling */
+		/* Enforce reg write ordering between clk mux & lane enabling */
 		wmb();
-	पूर्ण
+	}
 
 	csiphy->ops->lanes_enable(csiphy, cfg, link_freq, lane_mask);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * csiphy_stream_off - Disable streaming on CSIPHY module
@@ -304,10 +303,10 @@
  *
  * Helper function to disable streaming on CSIPHY module
  */
-अटल व्योम csiphy_stream_off(काष्ठा csiphy_device *csiphy)
-अणु
+static void csiphy_stream_off(struct csiphy_device *csiphy)
+{
 	csiphy->ops->lanes_disable(csiphy, &csiphy->cfg);
-पूर्ण
+}
 
 
 /*
@@ -317,66 +316,66 @@
  *
  * Return 0 on success or a negative error code otherwise
  */
-अटल पूर्णांक csiphy_set_stream(काष्ठा v4l2_subdev *sd, पूर्णांक enable)
-अणु
-	काष्ठा csiphy_device *csiphy = v4l2_get_subdevdata(sd);
-	पूर्णांक ret = 0;
+static int csiphy_set_stream(struct v4l2_subdev *sd, int enable)
+{
+	struct csiphy_device *csiphy = v4l2_get_subdevdata(sd);
+	int ret = 0;
 
-	अगर (enable)
+	if (enable)
 		ret = csiphy_stream_on(csiphy);
-	अन्यथा
+	else
 		csiphy_stream_off(csiphy);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * __csiphy_get_क्रमmat - Get poपूर्णांकer to क्रमmat काष्ठाure
+ * __csiphy_get_format - Get pointer to format structure
  * @csiphy: CSIPHY device
  * @cfg: V4L2 subdev pad configuration
- * @pad: pad from which क्रमmat is requested
- * @which: TRY or ACTIVE क्रमmat
+ * @pad: pad from which format is requested
+ * @which: TRY or ACTIVE format
  *
- * Return poपूर्णांकer to TRY or ACTIVE क्रमmat काष्ठाure
+ * Return pointer to TRY or ACTIVE format structure
  */
-अटल काष्ठा v4l2_mbus_framefmt *
-__csiphy_get_क्रमmat(काष्ठा csiphy_device *csiphy,
-		    काष्ठा v4l2_subdev_pad_config *cfg,
-		    अचिन्हित पूर्णांक pad,
-		    क्रमागत v4l2_subdev_क्रमmat_whence which)
-अणु
-	अगर (which == V4L2_SUBDEV_FORMAT_TRY)
-		वापस v4l2_subdev_get_try_क्रमmat(&csiphy->subdev, cfg, pad);
+static struct v4l2_mbus_framefmt *
+__csiphy_get_format(struct csiphy_device *csiphy,
+		    struct v4l2_subdev_pad_config *cfg,
+		    unsigned int pad,
+		    enum v4l2_subdev_format_whence which)
+{
+	if (which == V4L2_SUBDEV_FORMAT_TRY)
+		return v4l2_subdev_get_try_format(&csiphy->subdev, cfg, pad);
 
-	वापस &csiphy->fmt[pad];
-पूर्ण
+	return &csiphy->fmt[pad];
+}
 
 /*
- * csiphy_try_क्रमmat - Handle try क्रमmat by pad subdev method
+ * csiphy_try_format - Handle try format by pad subdev method
  * @csiphy: CSIPHY device
  * @cfg: V4L2 subdev pad configuration
- * @pad: pad on which क्रमmat is requested
- * @fmt: poपूर्णांकer to v4l2 क्रमmat काष्ठाure
- * @which: wanted subdev क्रमmat
+ * @pad: pad on which format is requested
+ * @fmt: pointer to v4l2 format structure
+ * @which: wanted subdev format
  */
-अटल व्योम csiphy_try_क्रमmat(काष्ठा csiphy_device *csiphy,
-			      काष्ठा v4l2_subdev_pad_config *cfg,
-			      अचिन्हित पूर्णांक pad,
-			      काष्ठा v4l2_mbus_framefmt *fmt,
-			      क्रमागत v4l2_subdev_क्रमmat_whence which)
-अणु
-	अचिन्हित पूर्णांक i;
+static void csiphy_try_format(struct csiphy_device *csiphy,
+			      struct v4l2_subdev_pad_config *cfg,
+			      unsigned int pad,
+			      struct v4l2_mbus_framefmt *fmt,
+			      enum v4l2_subdev_format_whence which)
+{
+	unsigned int i;
 
-	चयन (pad) अणु
-	हाल MSM_CSIPHY_PAD_SINK:
-		/* Set क्रमmat on sink pad */
+	switch (pad) {
+	case MSM_CSIPHY_PAD_SINK:
+		/* Set format on sink pad */
 
-		क्रम (i = 0; i < csiphy->nक्रमmats; i++)
-			अगर (fmt->code == csiphy->क्रमmats[i].code)
-				अवरोध;
+		for (i = 0; i < csiphy->nformats; i++)
+			if (fmt->code == csiphy->formats[i].code)
+				break;
 
-		/* If not found, use UYVY as शेष */
-		अगर (i >= csiphy->nक्रमmats)
+		/* If not found, use UYVY as default */
+		if (i >= csiphy->nformats)
 			fmt->code = MEDIA_BUS_FMT_UYVY8_2X8;
 
 		fmt->width = clamp_t(u32, fmt->width, 1, 8191);
@@ -385,334 +384,334 @@ __csiphy_get_क्रमmat(काष्ठा csiphy_device *csiphy,
 		fmt->field = V4L2_FIELD_NONE;
 		fmt->colorspace = V4L2_COLORSPACE_SRGB;
 
-		अवरोध;
+		break;
 
-	हाल MSM_CSIPHY_PAD_SRC:
-		/* Set and वापस a क्रमmat same as sink pad */
+	case MSM_CSIPHY_PAD_SRC:
+		/* Set and return a format same as sink pad */
 
-		*fmt = *__csiphy_get_क्रमmat(csiphy, cfg, MSM_CSID_PAD_SINK,
+		*fmt = *__csiphy_get_format(csiphy, cfg, MSM_CSID_PAD_SINK,
 					    which);
 
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 /*
- * csiphy_क्रमागत_mbus_code - Handle pixel क्रमmat क्रमागतeration
+ * csiphy_enum_mbus_code - Handle pixel format enumeration
  * @sd: CSIPHY V4L2 subdevice
  * @cfg: V4L2 subdev pad configuration
- * @code: poपूर्णांकer to v4l2_subdev_mbus_code_क्रमागत काष्ठाure
- * वापस -EINVAL or zero on success
+ * @code: pointer to v4l2_subdev_mbus_code_enum structure
+ * return -EINVAL or zero on success
  */
-अटल पूर्णांक csiphy_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
-				 काष्ठा v4l2_subdev_pad_config *cfg,
-				 काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
-अणु
-	काष्ठा csiphy_device *csiphy = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
+static int csiphy_enum_mbus_code(struct v4l2_subdev *sd,
+				 struct v4l2_subdev_pad_config *cfg,
+				 struct v4l2_subdev_mbus_code_enum *code)
+{
+	struct csiphy_device *csiphy = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt *format;
 
-	अगर (code->pad == MSM_CSIPHY_PAD_SINK) अणु
-		अगर (code->index >= csiphy->nक्रमmats)
-			वापस -EINVAL;
+	if (code->pad == MSM_CSIPHY_PAD_SINK) {
+		if (code->index >= csiphy->nformats)
+			return -EINVAL;
 
-		code->code = csiphy->क्रमmats[code->index].code;
-	पूर्ण अन्यथा अणु
-		अगर (code->index > 0)
-			वापस -EINVAL;
+		code->code = csiphy->formats[code->index].code;
+	} else {
+		if (code->index > 0)
+			return -EINVAL;
 
-		क्रमmat = __csiphy_get_क्रमmat(csiphy, cfg, MSM_CSIPHY_PAD_SINK,
+		format = __csiphy_get_format(csiphy, cfg, MSM_CSIPHY_PAD_SINK,
 					     code->which);
 
-		code->code = क्रमmat->code;
-	पूर्ण
+		code->code = format->code;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * csiphy_क्रमागत_frame_size - Handle frame size क्रमागतeration
+ * csiphy_enum_frame_size - Handle frame size enumeration
  * @sd: CSIPHY V4L2 subdevice
  * @cfg: V4L2 subdev pad configuration
- * @fse: poपूर्णांकer to v4l2_subdev_frame_size_क्रमागत काष्ठाure
- * वापस -EINVAL or zero on success
+ * @fse: pointer to v4l2_subdev_frame_size_enum structure
+ * return -EINVAL or zero on success
  */
-अटल पूर्णांक csiphy_क्रमागत_frame_size(काष्ठा v4l2_subdev *sd,
-				  काष्ठा v4l2_subdev_pad_config *cfg,
-				  काष्ठा v4l2_subdev_frame_size_क्रमागत *fse)
-अणु
-	काष्ठा csiphy_device *csiphy = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt क्रमmat;
+static int csiphy_enum_frame_size(struct v4l2_subdev *sd,
+				  struct v4l2_subdev_pad_config *cfg,
+				  struct v4l2_subdev_frame_size_enum *fse)
+{
+	struct csiphy_device *csiphy = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt format;
 
-	अगर (fse->index != 0)
-		वापस -EINVAL;
+	if (fse->index != 0)
+		return -EINVAL;
 
-	क्रमmat.code = fse->code;
-	क्रमmat.width = 1;
-	क्रमmat.height = 1;
-	csiphy_try_क्रमmat(csiphy, cfg, fse->pad, &क्रमmat, fse->which);
-	fse->min_width = क्रमmat.width;
-	fse->min_height = क्रमmat.height;
+	format.code = fse->code;
+	format.width = 1;
+	format.height = 1;
+	csiphy_try_format(csiphy, cfg, fse->pad, &format, fse->which);
+	fse->min_width = format.width;
+	fse->min_height = format.height;
 
-	अगर (क्रमmat.code != fse->code)
-		वापस -EINVAL;
+	if (format.code != fse->code)
+		return -EINVAL;
 
-	क्रमmat.code = fse->code;
-	क्रमmat.width = -1;
-	क्रमmat.height = -1;
-	csiphy_try_क्रमmat(csiphy, cfg, fse->pad, &क्रमmat, fse->which);
-	fse->max_width = क्रमmat.width;
-	fse->max_height = क्रमmat.height;
+	format.code = fse->code;
+	format.width = -1;
+	format.height = -1;
+	csiphy_try_format(csiphy, cfg, fse->pad, &format, fse->which);
+	fse->max_width = format.width;
+	fse->max_height = format.height;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * csiphy_get_क्रमmat - Handle get क्रमmat by pads subdev method
+ * csiphy_get_format - Handle get format by pads subdev method
  * @sd: CSIPHY V4L2 subdevice
  * @cfg: V4L2 subdev pad configuration
- * @fmt: poपूर्णांकer to v4l2 subdev क्रमmat काष्ठाure
+ * @fmt: pointer to v4l2 subdev format structure
  *
  * Return -EINVAL or zero on success
  */
-अटल पूर्णांक csiphy_get_क्रमmat(काष्ठा v4l2_subdev *sd,
-			     काष्ठा v4l2_subdev_pad_config *cfg,
-			     काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा csiphy_device *csiphy = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
+static int csiphy_get_format(struct v4l2_subdev *sd,
+			     struct v4l2_subdev_pad_config *cfg,
+			     struct v4l2_subdev_format *fmt)
+{
+	struct csiphy_device *csiphy = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt *format;
 
-	क्रमmat = __csiphy_get_क्रमmat(csiphy, cfg, fmt->pad, fmt->which);
-	अगर (क्रमmat == शून्य)
-		वापस -EINVAL;
+	format = __csiphy_get_format(csiphy, cfg, fmt->pad, fmt->which);
+	if (format == NULL)
+		return -EINVAL;
 
-	fmt->क्रमmat = *क्रमmat;
+	fmt->format = *format;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * csiphy_set_क्रमmat - Handle set क्रमmat by pads subdev method
+ * csiphy_set_format - Handle set format by pads subdev method
  * @sd: CSIPHY V4L2 subdevice
  * @cfg: V4L2 subdev pad configuration
- * @fmt: poपूर्णांकer to v4l2 subdev क्रमmat काष्ठाure
+ * @fmt: pointer to v4l2 subdev format structure
  *
  * Return -EINVAL or zero on success
  */
-अटल पूर्णांक csiphy_set_क्रमmat(काष्ठा v4l2_subdev *sd,
-			     काष्ठा v4l2_subdev_pad_config *cfg,
-			     काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा csiphy_device *csiphy = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
+static int csiphy_set_format(struct v4l2_subdev *sd,
+			     struct v4l2_subdev_pad_config *cfg,
+			     struct v4l2_subdev_format *fmt)
+{
+	struct csiphy_device *csiphy = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt *format;
 
-	क्रमmat = __csiphy_get_क्रमmat(csiphy, cfg, fmt->pad, fmt->which);
-	अगर (क्रमmat == शून्य)
-		वापस -EINVAL;
+	format = __csiphy_get_format(csiphy, cfg, fmt->pad, fmt->which);
+	if (format == NULL)
+		return -EINVAL;
 
-	csiphy_try_क्रमmat(csiphy, cfg, fmt->pad, &fmt->क्रमmat, fmt->which);
-	*क्रमmat = fmt->क्रमmat;
+	csiphy_try_format(csiphy, cfg, fmt->pad, &fmt->format, fmt->which);
+	*format = fmt->format;
 
-	/* Propagate the क्रमmat from sink to source */
-	अगर (fmt->pad == MSM_CSIPHY_PAD_SINK) अणु
-		क्रमmat = __csiphy_get_क्रमmat(csiphy, cfg, MSM_CSIPHY_PAD_SRC,
+	/* Propagate the format from sink to source */
+	if (fmt->pad == MSM_CSIPHY_PAD_SINK) {
+		format = __csiphy_get_format(csiphy, cfg, MSM_CSIPHY_PAD_SRC,
 					     fmt->which);
 
-		*क्रमmat = fmt->क्रमmat;
-		csiphy_try_क्रमmat(csiphy, cfg, MSM_CSIPHY_PAD_SRC, क्रमmat,
+		*format = fmt->format;
+		csiphy_try_format(csiphy, cfg, MSM_CSIPHY_PAD_SRC, format,
 				  fmt->which);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * csiphy_init_क्रमmats - Initialize क्रमmats on all pads
+ * csiphy_init_formats - Initialize formats on all pads
  * @sd: CSIPHY V4L2 subdevice
  * @fh: V4L2 subdev file handle
  *
- * Initialize all pad क्रमmats with शेष values.
+ * Initialize all pad formats with default values.
  *
  * Return 0 on success or a negative error code otherwise
  */
-अटल पूर्णांक csiphy_init_क्रमmats(काष्ठा v4l2_subdev *sd,
-			       काष्ठा v4l2_subdev_fh *fh)
-अणु
-	काष्ठा v4l2_subdev_क्रमmat क्रमmat = अणु
+static int csiphy_init_formats(struct v4l2_subdev *sd,
+			       struct v4l2_subdev_fh *fh)
+{
+	struct v4l2_subdev_format format = {
 		.pad = MSM_CSIPHY_PAD_SINK,
 		.which = fh ? V4L2_SUBDEV_FORMAT_TRY :
 			      V4L2_SUBDEV_FORMAT_ACTIVE,
-		.क्रमmat = अणु
+		.format = {
 			.code = MEDIA_BUS_FMT_UYVY8_2X8,
 			.width = 1920,
 			.height = 1080
-		पूर्ण
-	पूर्ण;
+		}
+	};
 
-	वापस csiphy_set_क्रमmat(sd, fh ? fh->pad : शून्य, &क्रमmat);
-पूर्ण
+	return csiphy_set_format(sd, fh ? fh->pad : NULL, &format);
+}
 
 /*
- * msm_csiphy_subdev_init - Initialize CSIPHY device काष्ठाure and resources
+ * msm_csiphy_subdev_init - Initialize CSIPHY device structure and resources
  * @csiphy: CSIPHY device
  * @res: CSIPHY module resources table
  * @id: CSIPHY module id
  *
  * Return 0 on success or a negative error code otherwise
  */
-पूर्णांक msm_csiphy_subdev_init(काष्ठा camss *camss,
-			   काष्ठा csiphy_device *csiphy,
-			   स्थिर काष्ठा resources *res, u8 id)
-अणु
-	काष्ठा device *dev = camss->dev;
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा resource *r;
-	पूर्णांक i, j;
-	पूर्णांक ret;
+int msm_csiphy_subdev_init(struct camss *camss,
+			   struct csiphy_device *csiphy,
+			   const struct resources *res, u8 id)
+{
+	struct device *dev = camss->dev;
+	struct platform_device *pdev = to_platform_device(dev);
+	struct resource *r;
+	int i, j;
+	int ret;
 
 	csiphy->camss = camss;
 	csiphy->id = id;
 	csiphy->cfg.combo_mode = 0;
 
-	अगर (camss->version == CAMSS_8x16) अणु
+	if (camss->version == CAMSS_8x16) {
 		csiphy->ops = &csiphy_ops_2ph_1_0;
-		csiphy->क्रमmats = csiphy_क्रमmats_8x16;
-		csiphy->nक्रमmats = ARRAY_SIZE(csiphy_क्रमmats_8x16);
-	पूर्ण अन्यथा अगर (camss->version == CAMSS_8x96 ||
-		   camss->version == CAMSS_660) अणु
+		csiphy->formats = csiphy_formats_8x16;
+		csiphy->nformats = ARRAY_SIZE(csiphy_formats_8x16);
+	} else if (camss->version == CAMSS_8x96 ||
+		   camss->version == CAMSS_660) {
 		csiphy->ops = &csiphy_ops_3ph_1_0;
-		csiphy->क्रमmats = csiphy_क्रमmats_8x96;
-		csiphy->nक्रमmats = ARRAY_SIZE(csiphy_क्रमmats_8x96);
-	पूर्ण अन्यथा अगर (camss->version == CAMSS_845) अणु
+		csiphy->formats = csiphy_formats_8x96;
+		csiphy->nformats = ARRAY_SIZE(csiphy_formats_8x96);
+	} else if (camss->version == CAMSS_845) {
 		csiphy->ops = &csiphy_ops_3ph_1_0;
-		csiphy->क्रमmats = csiphy_क्रमmats_sdm845;
-		csiphy->nक्रमmats = ARRAY_SIZE(csiphy_क्रमmats_sdm845);
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+		csiphy->formats = csiphy_formats_sdm845;
+		csiphy->nformats = ARRAY_SIZE(csiphy_formats_sdm845);
+	} else {
+		return -EINVAL;
+	}
 
 	/* Memory */
 
-	r = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, res->reg[0]);
+	r = platform_get_resource_byname(pdev, IORESOURCE_MEM, res->reg[0]);
 	csiphy->base = devm_ioremap_resource(dev, r);
-	अगर (IS_ERR(csiphy->base))
-		वापस PTR_ERR(csiphy->base);
+	if (IS_ERR(csiphy->base))
+		return PTR_ERR(csiphy->base);
 
-	अगर (camss->version == CAMSS_8x16 ||
-	    camss->version == CAMSS_8x96) अणु
-		r = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM,
+	if (camss->version == CAMSS_8x16 ||
+	    camss->version == CAMSS_8x96) {
+		r = platform_get_resource_byname(pdev, IORESOURCE_MEM,
 						 res->reg[1]);
 		csiphy->base_clk_mux = devm_ioremap_resource(dev, r);
-		अगर (IS_ERR(csiphy->base_clk_mux))
-			वापस PTR_ERR(csiphy->base_clk_mux);
-	पूर्ण अन्यथा अणु
-		csiphy->base_clk_mux = शून्य;
-	पूर्ण
+		if (IS_ERR(csiphy->base_clk_mux))
+			return PTR_ERR(csiphy->base_clk_mux);
+	} else {
+		csiphy->base_clk_mux = NULL;
+	}
 
 	/* Interrupt */
 
-	r = platक्रमm_get_resource_byname(pdev, IORESOURCE_IRQ,
-					 res->पूर्णांकerrupt[0]);
-	अगर (!r) अणु
+	r = platform_get_resource_byname(pdev, IORESOURCE_IRQ,
+					 res->interrupt[0]);
+	if (!r) {
 		dev_err(dev, "missing IRQ\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	csiphy->irq = r->start;
-	snम_लिखो(csiphy->irq_name, माप(csiphy->irq_name), "%s_%s%d",
+	snprintf(csiphy->irq_name, sizeof(csiphy->irq_name), "%s_%s%d",
 		 dev_name(dev), MSM_CSIPHY_NAME, csiphy->id);
 
 	ret = devm_request_irq(dev, csiphy->irq, csiphy->ops->isr,
 			       IRQF_TRIGGER_RISING, csiphy->irq_name, csiphy);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "request_irq failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	disable_irq(csiphy->irq);
 
 	/* Clocks */
 
-	csiphy->nघड़ीs = 0;
-	जबतक (res->घड़ी[csiphy->nघड़ीs])
-		csiphy->nघड़ीs++;
+	csiphy->nclocks = 0;
+	while (res->clock[csiphy->nclocks])
+		csiphy->nclocks++;
 
-	csiphy->घड़ी = devm_kसुस्मृति(dev,
-				     csiphy->nघड़ीs, माप(*csiphy->घड़ी),
+	csiphy->clock = devm_kcalloc(dev,
+				     csiphy->nclocks, sizeof(*csiphy->clock),
 				     GFP_KERNEL);
-	अगर (!csiphy->घड़ी)
-		वापस -ENOMEM;
+	if (!csiphy->clock)
+		return -ENOMEM;
 
-	csiphy->rate_set = devm_kसुस्मृति(dev,
-					csiphy->nघड़ीs,
-					माप(*csiphy->rate_set),
+	csiphy->rate_set = devm_kcalloc(dev,
+					csiphy->nclocks,
+					sizeof(*csiphy->rate_set),
 					GFP_KERNEL);
-	अगर (!csiphy->rate_set)
-		वापस -ENOMEM;
+	if (!csiphy->rate_set)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < csiphy->nघड़ीs; i++) अणु
-		काष्ठा camss_घड़ी *घड़ी = &csiphy->घड़ी[i];
+	for (i = 0; i < csiphy->nclocks; i++) {
+		struct camss_clock *clock = &csiphy->clock[i];
 
-		घड़ी->clk = devm_clk_get(dev, res->घड़ी[i]);
-		अगर (IS_ERR(घड़ी->clk))
-			वापस PTR_ERR(घड़ी->clk);
+		clock->clk = devm_clk_get(dev, res->clock[i]);
+		if (IS_ERR(clock->clk))
+			return PTR_ERR(clock->clk);
 
-		घड़ी->name = res->घड़ी[i];
+		clock->name = res->clock[i];
 
-		घड़ी->nfreqs = 0;
-		जबतक (res->घड़ी_rate[i][घड़ी->nfreqs])
-			घड़ी->nfreqs++;
+		clock->nfreqs = 0;
+		while (res->clock_rate[i][clock->nfreqs])
+			clock->nfreqs++;
 
-		अगर (!घड़ी->nfreqs) अणु
-			घड़ी->freq = शून्य;
-			जारी;
-		पूर्ण
+		if (!clock->nfreqs) {
+			clock->freq = NULL;
+			continue;
+		}
 
-		घड़ी->freq = devm_kसुस्मृति(dev,
-					   घड़ी->nfreqs,
-					   माप(*घड़ी->freq),
+		clock->freq = devm_kcalloc(dev,
+					   clock->nfreqs,
+					   sizeof(*clock->freq),
 					   GFP_KERNEL);
-		अगर (!घड़ी->freq)
-			वापस -ENOMEM;
+		if (!clock->freq)
+			return -ENOMEM;
 
-		क्रम (j = 0; j < घड़ी->nfreqs; j++)
-			घड़ी->freq[j] = res->घड़ी_rate[i][j];
+		for (j = 0; j < clock->nfreqs; j++)
+			clock->freq[j] = res->clock_rate[i][j];
 
-		अगर (!म_भेद(घड़ी->name, "csiphy0_timer") ||
-		    !म_भेद(घड़ी->name, "csiphy1_timer") ||
-		    !म_भेद(घड़ी->name, "csiphy2_timer"))
+		if (!strcmp(clock->name, "csiphy0_timer") ||
+		    !strcmp(clock->name, "csiphy1_timer") ||
+		    !strcmp(clock->name, "csiphy2_timer"))
 			csiphy->rate_set[i] = true;
 
-		अगर (camss->version == CAMSS_660 &&
-		    (!म_भेद(घड़ी->name, "csi0_phy") ||
-		     !म_भेद(घड़ी->name, "csi1_phy") ||
-		     !म_भेद(घड़ी->name, "csi2_phy")))
+		if (camss->version == CAMSS_660 &&
+		    (!strcmp(clock->name, "csi0_phy") ||
+		     !strcmp(clock->name, "csi1_phy") ||
+		     !strcmp(clock->name, "csi2_phy")))
 			csiphy->rate_set[i] = true;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * csiphy_link_setup - Setup CSIPHY connections
- * @entity: Poपूर्णांकer to media entity काष्ठाure
- * @local: Poपूर्णांकer to local pad
- * @remote: Poपूर्णांकer to remote pad
+ * @entity: Pointer to media entity structure
+ * @local: Pointer to local pad
+ * @remote: Pointer to remote pad
  * @flags: Link flags
  *
- * Rवापस 0 on success
+ * Rreturn 0 on success
  */
-अटल पूर्णांक csiphy_link_setup(काष्ठा media_entity *entity,
-			     स्थिर काष्ठा media_pad *local,
-			     स्थिर काष्ठा media_pad *remote, u32 flags)
-अणु
-	अगर ((local->flags & MEDIA_PAD_FL_SOURCE) &&
-	    (flags & MEDIA_LNK_FL_ENABLED)) अणु
-		काष्ठा v4l2_subdev *sd;
-		काष्ठा csiphy_device *csiphy;
-		काष्ठा csid_device *csid;
+static int csiphy_link_setup(struct media_entity *entity,
+			     const struct media_pad *local,
+			     const struct media_pad *remote, u32 flags)
+{
+	if ((local->flags & MEDIA_PAD_FL_SOURCE) &&
+	    (flags & MEDIA_LNK_FL_ENABLED)) {
+		struct v4l2_subdev *sd;
+		struct csiphy_device *csiphy;
+		struct csid_device *csid;
 
-		अगर (media_entity_remote_pad(local))
-			वापस -EBUSY;
+		if (media_entity_remote_pad(local))
+			return -EBUSY;
 
 		sd = media_entity_to_v4l2_subdev(entity);
 		csiphy = v4l2_get_subdevdata(sd);
@@ -721,68 +720,68 @@ __csiphy_get_क्रमmat(काष्ठा csiphy_device *csiphy,
 		csid = v4l2_get_subdevdata(sd);
 
 		csiphy->cfg.csid_id = csid->id;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_core_ops csiphy_core_ops = अणु
-	.s_घातer = csiphy_set_घातer,
-पूर्ण;
+static const struct v4l2_subdev_core_ops csiphy_core_ops = {
+	.s_power = csiphy_set_power,
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_video_ops csiphy_video_ops = अणु
+static const struct v4l2_subdev_video_ops csiphy_video_ops = {
 	.s_stream = csiphy_set_stream,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_pad_ops csiphy_pad_ops = अणु
-	.क्रमागत_mbus_code = csiphy_क्रमागत_mbus_code,
-	.क्रमागत_frame_size = csiphy_क्रमागत_frame_size,
-	.get_fmt = csiphy_get_क्रमmat,
-	.set_fmt = csiphy_set_क्रमmat,
-पूर्ण;
+static const struct v4l2_subdev_pad_ops csiphy_pad_ops = {
+	.enum_mbus_code = csiphy_enum_mbus_code,
+	.enum_frame_size = csiphy_enum_frame_size,
+	.get_fmt = csiphy_get_format,
+	.set_fmt = csiphy_set_format,
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops csiphy_v4l2_ops = अणु
+static const struct v4l2_subdev_ops csiphy_v4l2_ops = {
 	.core = &csiphy_core_ops,
 	.video = &csiphy_video_ops,
 	.pad = &csiphy_pad_ops,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_पूर्णांकernal_ops csiphy_v4l2_पूर्णांकernal_ops = अणु
-	.खोलो = csiphy_init_क्रमmats,
-पूर्ण;
+static const struct v4l2_subdev_internal_ops csiphy_v4l2_internal_ops = {
+	.open = csiphy_init_formats,
+};
 
-अटल स्थिर काष्ठा media_entity_operations csiphy_media_ops = अणु
+static const struct media_entity_operations csiphy_media_ops = {
 	.link_setup = csiphy_link_setup,
 	.link_validate = v4l2_subdev_link_validate,
-पूर्ण;
+};
 
 /*
- * msm_csiphy_रेजिस्टर_entity - Register subdev node क्रम CSIPHY module
+ * msm_csiphy_register_entity - Register subdev node for CSIPHY module
  * @csiphy: CSIPHY device
  * @v4l2_dev: V4L2 device
  *
  * Return 0 on success or a negative error code otherwise
  */
-पूर्णांक msm_csiphy_रेजिस्टर_entity(काष्ठा csiphy_device *csiphy,
-			       काष्ठा v4l2_device *v4l2_dev)
-अणु
-	काष्ठा v4l2_subdev *sd = &csiphy->subdev;
-	काष्ठा media_pad *pads = csiphy->pads;
-	काष्ठा device *dev = csiphy->camss->dev;
-	पूर्णांक ret;
+int msm_csiphy_register_entity(struct csiphy_device *csiphy,
+			       struct v4l2_device *v4l2_dev)
+{
+	struct v4l2_subdev *sd = &csiphy->subdev;
+	struct media_pad *pads = csiphy->pads;
+	struct device *dev = csiphy->camss->dev;
+	int ret;
 
 	v4l2_subdev_init(sd, &csiphy_v4l2_ops);
-	sd->पूर्णांकernal_ops = &csiphy_v4l2_पूर्णांकernal_ops;
+	sd->internal_ops = &csiphy_v4l2_internal_ops;
 	sd->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
-	snम_लिखो(sd->name, ARRAY_SIZE(sd->name), "%s%d",
+	snprintf(sd->name, ARRAY_SIZE(sd->name), "%s%d",
 		 MSM_CSIPHY_NAME, csiphy->id);
 	v4l2_set_subdevdata(sd, csiphy);
 
-	ret = csiphy_init_क्रमmats(sd, शून्य);
-	अगर (ret < 0) अणु
+	ret = csiphy_init_formats(sd, NULL);
+	if (ret < 0) {
 		dev_err(dev, "Failed to init format: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	pads[MSM_CSIPHY_PAD_SINK].flags = MEDIA_PAD_FL_SINK;
 	pads[MSM_CSIPHY_PAD_SRC].flags = MEDIA_PAD_FL_SOURCE;
@@ -790,26 +789,26 @@ __csiphy_get_क्रमmat(काष्ठा csiphy_device *csiphy,
 	sd->entity.function = MEDIA_ENT_F_PROC_VIDEO_PIXEL_FORMATTER;
 	sd->entity.ops = &csiphy_media_ops;
 	ret = media_entity_pads_init(&sd->entity, MSM_CSIPHY_PADS_NUM, pads);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "Failed to init media entity: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = v4l2_device_रेजिस्टर_subdev(v4l2_dev, sd);
-	अगर (ret < 0) अणु
+	ret = v4l2_device_register_subdev(v4l2_dev, sd);
+	if (ret < 0) {
 		dev_err(dev, "Failed to register subdev: %d\n", ret);
 		media_entity_cleanup(&sd->entity);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * msm_csiphy_unरेजिस्टर_entity - Unरेजिस्टर CSIPHY module subdev node
+ * msm_csiphy_unregister_entity - Unregister CSIPHY module subdev node
  * @csiphy: CSIPHY device
  */
-व्योम msm_csiphy_unरेजिस्टर_entity(काष्ठा csiphy_device *csiphy)
-अणु
-	v4l2_device_unरेजिस्टर_subdev(&csiphy->subdev);
+void msm_csiphy_unregister_entity(struct csiphy_device *csiphy)
+{
+	v4l2_device_unregister_subdev(&csiphy->subdev);
 	media_entity_cleanup(&csiphy->subdev.entity);
-पूर्ण
+}

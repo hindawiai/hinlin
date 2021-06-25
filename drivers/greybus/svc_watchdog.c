@@ -1,198 +1,197 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * SVC Greybus "watchdog" driver.
  *
  * Copyright 2016 Google Inc.
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/suspend.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/greybus.h>
+#include <linux/delay.h>
+#include <linux/suspend.h>
+#include <linux/workqueue.h>
+#include <linux/greybus.h>
 
-#घोषणा SVC_WATCHDOG_PERIOD	(2 * HZ)
+#define SVC_WATCHDOG_PERIOD	(2 * HZ)
 
-काष्ठा gb_svc_watchकरोg अणु
-	काष्ठा delayed_work	work;
-	काष्ठा gb_svc		*svc;
+struct gb_svc_watchdog {
+	struct delayed_work	work;
+	struct gb_svc		*svc;
 	bool			enabled;
-	काष्ठा notअगरier_block pm_notअगरier;
-पूर्ण;
+	struct notifier_block pm_notifier;
+};
 
-अटल काष्ठा delayed_work reset_work;
+static struct delayed_work reset_work;
 
-अटल पूर्णांक svc_watchकरोg_pm_notअगरier(काष्ठा notअगरier_block *notअगरier,
-				    अचिन्हित दीर्घ pm_event, व्योम *unused)
-अणु
-	काष्ठा gb_svc_watchकरोg *watchकरोg =
-		container_of(notअगरier, काष्ठा gb_svc_watchकरोg, pm_notअगरier);
+static int svc_watchdog_pm_notifier(struct notifier_block *notifier,
+				    unsigned long pm_event, void *unused)
+{
+	struct gb_svc_watchdog *watchdog =
+		container_of(notifier, struct gb_svc_watchdog, pm_notifier);
 
-	चयन (pm_event) अणु
-	हाल PM_SUSPEND_PREPARE:
-		gb_svc_watchकरोg_disable(watchकरोg->svc);
-		अवरोध;
-	हाल PM_POST_SUSPEND:
-		gb_svc_watchकरोg_enable(watchकरोg->svc);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (pm_event) {
+	case PM_SUSPEND_PREPARE:
+		gb_svc_watchdog_disable(watchdog->svc);
+		break;
+	case PM_POST_SUSPEND:
+		gb_svc_watchdog_enable(watchdog->svc);
+		break;
+	default:
+		break;
+	}
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल व्योम greybus_reset(काष्ठा work_काष्ठा *work)
-अणु
-	अटल अक्षर स्थिर start_path[] = "/system/bin/start";
-	अटल अक्षर *envp[] = अणु
+static void greybus_reset(struct work_struct *work)
+{
+	static char const start_path[] = "/system/bin/start";
+	static char *envp[] = {
 		"HOME=/",
 		"PATH=/sbin:/vendor/bin:/system/sbin:/system/bin:/system/xbin",
-		शून्य,
-	पूर्ण;
-	अटल अक्षर *argv[] = अणु
-		(अक्षर *)start_path,
+		NULL,
+	};
+	static char *argv[] = {
+		(char *)start_path,
 		"unipro_reset",
-		शून्य,
-	पूर्ण;
+		NULL,
+	};
 
 	pr_err("svc_watchdog: calling \"%s %s\" to reset greybus network!\n",
 	       argv[0], argv[1]);
 	call_usermodehelper(start_path, argv, envp, UMH_WAIT_EXEC);
-पूर्ण
+}
 
-अटल व्योम करो_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा gb_svc_watchकरोg *watchकरोg;
-	काष्ठा gb_svc *svc;
-	पूर्णांक retval;
+static void do_work(struct work_struct *work)
+{
+	struct gb_svc_watchdog *watchdog;
+	struct gb_svc *svc;
+	int retval;
 
-	watchकरोg = container_of(work, काष्ठा gb_svc_watchकरोg, work.work);
-	svc = watchकरोg->svc;
+	watchdog = container_of(work, struct gb_svc_watchdog, work.work);
+	svc = watchdog->svc;
 
 	dev_dbg(&svc->dev, "%s: ping.\n", __func__);
 	retval = gb_svc_ping(svc);
-	अगर (retval) अणु
+	if (retval) {
 		/*
 		 * Something went really wrong, let's warn userspace and then
 		 * pull the plug and reset the whole greybus network.
-		 * We need to करो this outside of this workqueue as we will be
-		 * tearing करोwn the svc device itself.  So queue up
-		 * yet-another-callback to करो that.
+		 * We need to do this outside of this workqueue as we will be
+		 * tearing down the svc device itself.  So queue up
+		 * yet-another-callback to do that.
 		 */
 		dev_err(&svc->dev,
 			"SVC ping has returned %d, something is wrong!!!\n",
 			retval);
 
-		अगर (svc->action == GB_SVC_WATCHDOG_BITE_PANIC_KERNEL) अणु
+		if (svc->action == GB_SVC_WATCHDOG_BITE_PANIC_KERNEL) {
 			panic("SVC is not responding\n");
-		पूर्ण अन्यथा अगर (svc->action == GB_SVC_WATCHDOG_BITE_RESET_UNIPRO) अणु
+		} else if (svc->action == GB_SVC_WATCHDOG_BITE_RESET_UNIPRO) {
 			dev_err(&svc->dev, "Resetting the greybus network, watch out!!!\n");
 
 			INIT_DELAYED_WORK(&reset_work, greybus_reset);
 			schedule_delayed_work(&reset_work, HZ / 2);
 
 			/*
-			 * Disable ourselves, we करोn't want to trip again unless
+			 * Disable ourselves, we don't want to trip again unless
 			 * userspace wants us to.
 			 */
-			watchकरोg->enabled = false;
-		पूर्ण
-	पूर्ण
+			watchdog->enabled = false;
+		}
+	}
 
-	/* resubmit our work to happen again, अगर we are still "alive" */
-	अगर (watchकरोg->enabled)
-		schedule_delayed_work(&watchकरोg->work, SVC_WATCHDOG_PERIOD);
-पूर्ण
+	/* resubmit our work to happen again, if we are still "alive" */
+	if (watchdog->enabled)
+		schedule_delayed_work(&watchdog->work, SVC_WATCHDOG_PERIOD);
+}
 
-पूर्णांक gb_svc_watchकरोg_create(काष्ठा gb_svc *svc)
-अणु
-	काष्ठा gb_svc_watchकरोg *watchकरोg;
-	पूर्णांक retval;
+int gb_svc_watchdog_create(struct gb_svc *svc)
+{
+	struct gb_svc_watchdog *watchdog;
+	int retval;
 
-	अगर (svc->watchकरोg)
-		वापस 0;
+	if (svc->watchdog)
+		return 0;
 
-	watchकरोg = kदो_स्मृति(माप(*watchकरोg), GFP_KERNEL);
-	अगर (!watchकरोg)
-		वापस -ENOMEM;
+	watchdog = kmalloc(sizeof(*watchdog), GFP_KERNEL);
+	if (!watchdog)
+		return -ENOMEM;
 
-	watchकरोg->enabled = false;
-	watchकरोg->svc = svc;
-	INIT_DELAYED_WORK(&watchकरोg->work, करो_work);
-	svc->watchकरोg = watchकरोg;
+	watchdog->enabled = false;
+	watchdog->svc = svc;
+	INIT_DELAYED_WORK(&watchdog->work, do_work);
+	svc->watchdog = watchdog;
 
-	watchकरोg->pm_notअगरier.notअगरier_call = svc_watchकरोg_pm_notअगरier;
-	retval = रेजिस्टर_pm_notअगरier(&watchकरोg->pm_notअगरier);
-	अगर (retval) अणु
+	watchdog->pm_notifier.notifier_call = svc_watchdog_pm_notifier;
+	retval = register_pm_notifier(&watchdog->pm_notifier);
+	if (retval) {
 		dev_err(&svc->dev, "error registering pm notifier(%d)\n",
 			retval);
-		जाओ svc_watchकरोg_create_err;
-	पूर्ण
+		goto svc_watchdog_create_err;
+	}
 
-	retval = gb_svc_watchकरोg_enable(svc);
-	अगर (retval) अणु
+	retval = gb_svc_watchdog_enable(svc);
+	if (retval) {
 		dev_err(&svc->dev, "error enabling watchdog (%d)\n", retval);
-		unरेजिस्टर_pm_notअगरier(&watchकरोg->pm_notअगरier);
-		जाओ svc_watchकरोg_create_err;
-	पूर्ण
-	वापस retval;
+		unregister_pm_notifier(&watchdog->pm_notifier);
+		goto svc_watchdog_create_err;
+	}
+	return retval;
 
-svc_watchकरोg_create_err:
-	svc->watchकरोg = शून्य;
-	kमुक्त(watchकरोg);
+svc_watchdog_create_err:
+	svc->watchdog = NULL;
+	kfree(watchdog);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-व्योम gb_svc_watchकरोg_destroy(काष्ठा gb_svc *svc)
-अणु
-	काष्ठा gb_svc_watchकरोg *watchकरोg = svc->watchकरोg;
+void gb_svc_watchdog_destroy(struct gb_svc *svc)
+{
+	struct gb_svc_watchdog *watchdog = svc->watchdog;
 
-	अगर (!watchकरोg)
-		वापस;
+	if (!watchdog)
+		return;
 
-	unरेजिस्टर_pm_notअगरier(&watchकरोg->pm_notअगरier);
-	gb_svc_watchकरोg_disable(svc);
-	svc->watchकरोg = शून्य;
-	kमुक्त(watchकरोg);
-पूर्ण
+	unregister_pm_notifier(&watchdog->pm_notifier);
+	gb_svc_watchdog_disable(svc);
+	svc->watchdog = NULL;
+	kfree(watchdog);
+}
 
-bool gb_svc_watchकरोg_enabled(काष्ठा gb_svc *svc)
-अणु
-	अगर (!svc || !svc->watchकरोg)
-		वापस false;
-	वापस svc->watchकरोg->enabled;
-पूर्ण
+bool gb_svc_watchdog_enabled(struct gb_svc *svc)
+{
+	if (!svc || !svc->watchdog)
+		return false;
+	return svc->watchdog->enabled;
+}
 
-पूर्णांक gb_svc_watchकरोg_enable(काष्ठा gb_svc *svc)
-अणु
-	काष्ठा gb_svc_watchकरोg *watchकरोg;
+int gb_svc_watchdog_enable(struct gb_svc *svc)
+{
+	struct gb_svc_watchdog *watchdog;
 
-	अगर (!svc->watchकरोg)
-		वापस -ENODEV;
+	if (!svc->watchdog)
+		return -ENODEV;
 
-	watchकरोg = svc->watchकरोg;
-	अगर (watchकरोg->enabled)
-		वापस 0;
+	watchdog = svc->watchdog;
+	if (watchdog->enabled)
+		return 0;
 
-	watchकरोg->enabled = true;
-	schedule_delayed_work(&watchकरोg->work, SVC_WATCHDOG_PERIOD);
-	वापस 0;
-पूर्ण
+	watchdog->enabled = true;
+	schedule_delayed_work(&watchdog->work, SVC_WATCHDOG_PERIOD);
+	return 0;
+}
 
-पूर्णांक gb_svc_watchकरोg_disable(काष्ठा gb_svc *svc)
-अणु
-	काष्ठा gb_svc_watchकरोg *watchकरोg;
+int gb_svc_watchdog_disable(struct gb_svc *svc)
+{
+	struct gb_svc_watchdog *watchdog;
 
-	अगर (!svc->watchकरोg)
-		वापस -ENODEV;
+	if (!svc->watchdog)
+		return -ENODEV;
 
-	watchकरोg = svc->watchकरोg;
-	अगर (!watchकरोg->enabled)
-		वापस 0;
+	watchdog = svc->watchdog;
+	if (!watchdog->enabled)
+		return 0;
 
-	watchकरोg->enabled = false;
-	cancel_delayed_work_sync(&watchकरोg->work);
-	वापस 0;
-पूर्ण
+	watchdog->enabled = false;
+	cancel_delayed_work_sync(&watchdog->work);
+	return 0;
+}

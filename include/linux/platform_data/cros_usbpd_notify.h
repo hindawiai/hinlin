@@ -1,18 +1,17 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * ChromeOS EC Power Delivery Notअगरier Driver
+ * ChromeOS EC Power Delivery Notifier Driver
  *
  * Copyright 2020 Google LLC
  */
 
-#अगर_अघोषित __LINUX_PLATFORM_DATA_CROS_USBPD_NOTIFY_H
-#घोषणा __LINUX_PLATFORM_DATA_CROS_USBPD_NOTIFY_H
+#ifndef __LINUX_PLATFORM_DATA_CROS_USBPD_NOTIFY_H
+#define __LINUX_PLATFORM_DATA_CROS_USBPD_NOTIFY_H
 
-#समावेश <linux/notअगरier.h>
+#include <linux/notifier.h>
 
-पूर्णांक cros_usbpd_रेजिस्टर_notअगरy(काष्ठा notअगरier_block *nb);
+int cros_usbpd_register_notify(struct notifier_block *nb);
 
-व्योम cros_usbpd_unरेजिस्टर_notअगरy(काष्ठा notअगरier_block *nb);
+void cros_usbpd_unregister_notify(struct notifier_block *nb);
 
-#पूर्ण_अगर  /* __LINUX_PLATFORM_DATA_CROS_USBPD_NOTIFY_H */
+#endif  /* __LINUX_PLATFORM_DATA_CROS_USBPD_NOTIFY_H */

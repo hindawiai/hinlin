@@ -1,50 +1,49 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#घोषणा _IEEE80211_C
+#define _IEEE80211_C
 
-#समावेश <drv_types.h>
-#समावेश <rtw_debug.h>
-#समावेश <linux/of.h>
-#समावेश <यंत्र/unaligned.h>
+#include <drv_types.h>
+#include <rtw_debug.h>
+#include <linux/of.h>
+#include <asm/unaligned.h>
 
-u8 RTW_WPA_OUI_TYPE[] = अणु 0x00, 0x50, 0xf2, 1 पूर्ण;
+u8 RTW_WPA_OUI_TYPE[] = { 0x00, 0x50, 0xf2, 1 };
 u16 RTW_WPA_VERSION = 1;
-u8 WPA_AUTH_KEY_MGMT_NONE[] = अणु 0x00, 0x50, 0xf2, 0 पूर्ण;
-u8 WPA_AUTH_KEY_MGMT_UNSPEC_802_1X[] = अणु 0x00, 0x50, 0xf2, 1 पूर्ण;
-u8 WPA_AUTH_KEY_MGMT_PSK_OVER_802_1X[] = अणु 0x00, 0x50, 0xf2, 2 पूर्ण;
-u8 WPA_CIPHER_SUITE_NONE[] = अणु 0x00, 0x50, 0xf2, 0 पूर्ण;
-u8 WPA_CIPHER_SUITE_WEP40[] = अणु 0x00, 0x50, 0xf2, 1 पूर्ण;
-u8 WPA_CIPHER_SUITE_TKIP[] = अणु 0x00, 0x50, 0xf2, 2 पूर्ण;
-u8 WPA_CIPHER_SUITE_WRAP[] = अणु 0x00, 0x50, 0xf2, 3 पूर्ण;
-u8 WPA_CIPHER_SUITE_CCMP[] = अणु 0x00, 0x50, 0xf2, 4 पूर्ण;
-u8 WPA_CIPHER_SUITE_WEP104[] = अणु 0x00, 0x50, 0xf2, 5 पूर्ण;
+u8 WPA_AUTH_KEY_MGMT_NONE[] = { 0x00, 0x50, 0xf2, 0 };
+u8 WPA_AUTH_KEY_MGMT_UNSPEC_802_1X[] = { 0x00, 0x50, 0xf2, 1 };
+u8 WPA_AUTH_KEY_MGMT_PSK_OVER_802_1X[] = { 0x00, 0x50, 0xf2, 2 };
+u8 WPA_CIPHER_SUITE_NONE[] = { 0x00, 0x50, 0xf2, 0 };
+u8 WPA_CIPHER_SUITE_WEP40[] = { 0x00, 0x50, 0xf2, 1 };
+u8 WPA_CIPHER_SUITE_TKIP[] = { 0x00, 0x50, 0xf2, 2 };
+u8 WPA_CIPHER_SUITE_WRAP[] = { 0x00, 0x50, 0xf2, 3 };
+u8 WPA_CIPHER_SUITE_CCMP[] = { 0x00, 0x50, 0xf2, 4 };
+u8 WPA_CIPHER_SUITE_WEP104[] = { 0x00, 0x50, 0xf2, 5 };
 
 u16 RSN_VERSION_BSD = 1;
-u8 RSN_AUTH_KEY_MGMT_UNSPEC_802_1X[] = अणु 0x00, 0x0f, 0xac, 1 पूर्ण;
-u8 RSN_AUTH_KEY_MGMT_PSK_OVER_802_1X[] = अणु 0x00, 0x0f, 0xac, 2 पूर्ण;
-u8 RSN_CIPHER_SUITE_NONE[] = अणु 0x00, 0x0f, 0xac, 0 पूर्ण;
-u8 RSN_CIPHER_SUITE_WEP40[] = अणु 0x00, 0x0f, 0xac, 1 पूर्ण;
-u8 RSN_CIPHER_SUITE_TKIP[] = अणु 0x00, 0x0f, 0xac, 2 पूर्ण;
-u8 RSN_CIPHER_SUITE_WRAP[] = अणु 0x00, 0x0f, 0xac, 3 पूर्ण;
-u8 RSN_CIPHER_SUITE_CCMP[] = अणु 0x00, 0x0f, 0xac, 4 पूर्ण;
-u8 RSN_CIPHER_SUITE_WEP104[] = अणु 0x00, 0x0f, 0xac, 5 पूर्ण;
+u8 RSN_AUTH_KEY_MGMT_UNSPEC_802_1X[] = { 0x00, 0x0f, 0xac, 1 };
+u8 RSN_AUTH_KEY_MGMT_PSK_OVER_802_1X[] = { 0x00, 0x0f, 0xac, 2 };
+u8 RSN_CIPHER_SUITE_NONE[] = { 0x00, 0x0f, 0xac, 0 };
+u8 RSN_CIPHER_SUITE_WEP40[] = { 0x00, 0x0f, 0xac, 1 };
+u8 RSN_CIPHER_SUITE_TKIP[] = { 0x00, 0x0f, 0xac, 2 };
+u8 RSN_CIPHER_SUITE_WRAP[] = { 0x00, 0x0f, 0xac, 3 };
+u8 RSN_CIPHER_SUITE_CCMP[] = { 0x00, 0x0f, 0xac, 4 };
+u8 RSN_CIPHER_SUITE_WEP104[] = { 0x00, 0x0f, 0xac, 5 };
 /*  */
-/*  क्रम adhoc-master to generate ie and provide supported-rate to fw */
+/*  for adhoc-master to generate ie and provide supported-rate to fw */
 /*  */
 
-अटल u8 WIFI_CCKRATES[] = अणु
+static u8 WIFI_CCKRATES[] = {
 		(IEEE80211_CCK_RATE_1MB | IEEE80211_BASIC_RATE_MASK),
 		(IEEE80211_CCK_RATE_2MB | IEEE80211_BASIC_RATE_MASK),
 		(IEEE80211_CCK_RATE_5MB | IEEE80211_BASIC_RATE_MASK),
 		(IEEE80211_CCK_RATE_11MB | IEEE80211_BASIC_RATE_MASK)
-पूर्ण;
+};
 
-अटल u8 WIFI_OFDMRATES[] = अणु
+static u8 WIFI_OFDMRATES[] = {
 		(IEEE80211_OFDM_RATE_6MB),
 		(IEEE80211_OFDM_RATE_9MB),
 		(IEEE80211_OFDM_RATE_12MB),
@@ -53,169 +52,169 @@ u8 RSN_CIPHER_SUITE_WEP104[] = अणु 0x00, 0x0f, 0xac, 5 पूर्ण;
 		IEEE80211_OFDM_RATE_36MB,
 		IEEE80211_OFDM_RATE_48MB,
 		IEEE80211_OFDM_RATE_54MB
-पूर्ण;
+};
 
-पूर्णांक rtw_get_bit_value_from_ieee_value(u8 val)
-अणु
-	अचिन्हित अक्षर करोt11_rate_table[] = अणु2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108, 0पूर्ण; /*  last element must be zero!! */
-	पूर्णांक i = 0;
+int rtw_get_bit_value_from_ieee_value(u8 val)
+{
+	unsigned char dot11_rate_table[] = {2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108, 0}; /*  last element must be zero!! */
+	int i = 0;
 
-	जबतक (करोt11_rate_table[i] != 0) अणु
-		अगर (करोt11_rate_table[i] == val)
-			वापस BIT(i);
+	while (dot11_rate_table[i] != 0) {
+		if (dot11_rate_table[i] == val)
+			return BIT(i);
 		i++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 bool rtw_is_cckrates_included(u8 *rate)
-अणु
-	जबतक (*rate) अणु
+{
+	while (*rate) {
 		u8 r = *rate & 0x7f;
 
-		अगर (r == 2 || r == 4 || r == 11 || r == 22)
-			वापस true;
+		if (r == 2 || r == 4 || r == 11 || r == 22)
+			return true;
 		rate++;
-	पूर्ण
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 bool rtw_is_cckratesonly_included(u8 *rate)
-अणु
-	जबतक (*rate) अणु
+{
+	while (*rate) {
 		u8 r = *rate & 0x7f;
 
-		अगर (r != 2 && r != 4 && r != 11 && r != 22)
-			वापस false;
+		if (r != 2 && r != 4 && r != 11 && r != 22)
+			return false;
 		rate++;
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-पूर्णांक rtw_check_network_type(अचिन्हित अक्षर *rate, पूर्णांक ratelen, पूर्णांक channel)
-अणु
-	अगर (channel > 14) अणु
-		अगर (rtw_is_cckrates_included(rate))
-			वापस WIRELESS_INVALID;
-		अन्यथा
-			वापस WIRELESS_11A;
-	पूर्ण अन्यथा अणु /*  could be pure B, pure G, or B/G */
-		अगर (rtw_is_cckratesonly_included(rate))
-			वापस WIRELESS_11B;
-		अन्यथा अगर (rtw_is_cckrates_included(rate))
-			वापस	WIRELESS_11BG;
-		अन्यथा
-			वापस WIRELESS_11G;
-	पूर्ण
-पूर्ण
+int rtw_check_network_type(unsigned char *rate, int ratelen, int channel)
+{
+	if (channel > 14) {
+		if (rtw_is_cckrates_included(rate))
+			return WIRELESS_INVALID;
+		else
+			return WIRELESS_11A;
+	} else { /*  could be pure B, pure G, or B/G */
+		if (rtw_is_cckratesonly_included(rate))
+			return WIRELESS_11B;
+		else if (rtw_is_cckrates_included(rate))
+			return	WIRELESS_11BG;
+		else
+			return WIRELESS_11G;
+	}
+}
 
-u8 *rtw_set_fixed_ie(अचिन्हित अक्षर *pbuf, अचिन्हित पूर्णांक len, अचिन्हित अक्षर *source,
-				अचिन्हित पूर्णांक *frlen)
-अणु
-	स_नकल((व्योम *)pbuf, (व्योम *)source, len);
+u8 *rtw_set_fixed_ie(unsigned char *pbuf, unsigned int len, unsigned char *source,
+				unsigned int *frlen)
+{
+	memcpy((void *)pbuf, (void *)source, len);
 	*frlen = *frlen + len;
-	वापस pbuf + len;
-पूर्ण
+	return pbuf + len;
+}
 
 /*  rtw_set_ie will update frame length */
 u8 *rtw_set_ie(u8 *pbuf,
-	       चिन्हित पूर्णांक index,
-	       uपूर्णांक len,
+	       signed int index,
+	       uint len,
 	       u8 *source,
-	       uपूर्णांक *frlen) /* frame length */
-अणु
+	       uint *frlen) /* frame length */
+{
 	*pbuf = (u8)index;
 
 	*(pbuf + 1) = (u8)len;
 
-	अगर (len > 0)
-		स_नकल((व्योम *)(pbuf + 2), (व्योम *)source, len);
+	if (len > 0)
+		memcpy((void *)(pbuf + 2), (void *)source, len);
 
 	*frlen = *frlen + (len + 2);
 
-	वापस pbuf + len + 2;
-पूर्ण
+	return pbuf + len + 2;
+}
 
 /*----------------------------------------------------------------------------
-index: the inक्रमmation element id index, limit is the limit क्रम search
+index: the information element id index, limit is the limit for search
 -----------------------------------------------------------------------------*/
-u8 *rtw_get_ie(u8 *pbuf, चिन्हित पूर्णांक index, चिन्हित पूर्णांक *len, चिन्हित पूर्णांक limit)
-अणु
-	चिन्हित पूर्णांक पंचांगp, i;
+u8 *rtw_get_ie(u8 *pbuf, signed int index, signed int *len, signed int limit)
+{
+	signed int tmp, i;
 	u8 *p;
 
-	अगर (limit < 1)
-		वापस शून्य;
+	if (limit < 1)
+		return NULL;
 
 	p = pbuf;
 	i = 0;
 	*len = 0;
-	जबतक (1) अणु
-		अगर (*p == index) अणु
+	while (1) {
+		if (*p == index) {
 			*len = *(p + 1);
-			वापस p;
-		पूर्ण अन्यथा अणु
-			पंचांगp = *(p + 1);
-			p += (पंचांगp + 2);
-			i += (पंचांगp + 2);
-		पूर्ण
-		अगर (i >= limit)
-			अवरोध;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+			return p;
+		} else {
+			tmp = *(p + 1);
+			p += (tmp + 2);
+			i += (tmp + 2);
+		}
+		if (i >= limit)
+			break;
+	}
+	return NULL;
+}
 
 /**
- * rtw_get_ie_ex - Search specअगरic IE from a series of IEs
+ * rtw_get_ie_ex - Search specific IE from a series of IEs
  * @in_ie: Address of IEs to search
  * @in_len: Length limit from in_ie
  * @eid: Element ID to match
  * @oui: OUI to match
  * @oui_len: OUI length
- * @ie: If not शून्य and the specअगरic IE is found, the IE will be copied to the buf starting from the specअगरic IE
- * @ielen: If not शून्य and the specअगरic IE is found, will set to the length of the entire IE
+ * @ie: If not NULL and the specific IE is found, the IE will be copied to the buf starting from the specific IE
+ * @ielen: If not NULL and the specific IE is found, will set to the length of the entire IE
  *
- * Returns: The address of the specअगरic IE found, or शून्य
+ * Returns: The address of the specific IE found, or NULL
  */
-u8 *rtw_get_ie_ex(u8 *in_ie, uपूर्णांक in_len, u8 eid, u8 *oui, u8 oui_len, u8 *ie, uपूर्णांक *ielen)
-अणु
-	uपूर्णांक cnt;
-	u8 *target_ie = शून्य;
+u8 *rtw_get_ie_ex(u8 *in_ie, uint in_len, u8 eid, u8 *oui, u8 oui_len, u8 *ie, uint *ielen)
+{
+	uint cnt;
+	u8 *target_ie = NULL;
 
-	अगर (ielen)
+	if (ielen)
 		*ielen = 0;
 
-	अगर (!in_ie || in_len <= 0)
-		वापस target_ie;
+	if (!in_ie || in_len <= 0)
+		return target_ie;
 
 	cnt = 0;
 
-	जबतक (cnt < in_len) अणु
-		अगर (eid == in_ie[cnt]
-			&& (!oui || !स_भेद(&in_ie[cnt+2], oui, oui_len))) अणु
+	while (cnt < in_len) {
+		if (eid == in_ie[cnt]
+			&& (!oui || !memcmp(&in_ie[cnt+2], oui, oui_len))) {
 			target_ie = &in_ie[cnt];
 
-			अगर (ie)
-				स_नकल(ie, &in_ie[cnt], in_ie[cnt+1]+2);
+			if (ie)
+				memcpy(ie, &in_ie[cnt], in_ie[cnt+1]+2);
 
-			अगर (ielen)
+			if (ielen)
 				*ielen = in_ie[cnt+1]+2;
 
-			अवरोध;
-		पूर्ण अन्यथा अणु
-			cnt += in_ie[cnt+1]+2; /* जाओ next */
-		पूर्ण
-	पूर्ण
+			break;
+		} else {
+			cnt += in_ie[cnt+1]+2; /* goto next */
+		}
+	}
 
-	वापस target_ie;
-पूर्ण
+	return target_ie;
+}
 
 /**
- * rtw_ies_हटाओ_ie - Find matching IEs and हटाओ
+ * rtw_ies_remove_ie - Find matching IEs and remove
  * @ies: Address of IEs to search
- * @ies_len: Poपूर्णांकer of length of ies, will update to new length
+ * @ies_len: Pointer of length of ies, will update to new length
  * @offset: The offset to start search
  * @eid: Element ID to match
  * @oui: OUI to match
@@ -223,91 +222,91 @@ u8 *rtw_get_ie_ex(u8 *in_ie, uपूर्णांक in_len, u8 eid, u8 *oui, 
  *
  * Returns: _SUCCESS: ies is updated, _FAIL: not updated
  */
-पूर्णांक rtw_ies_हटाओ_ie(u8 *ies, uपूर्णांक *ies_len, uपूर्णांक offset, u8 eid, u8 *oui, u8 oui_len)
-अणु
-	पूर्णांक ret = _FAIL;
+int rtw_ies_remove_ie(u8 *ies, uint *ies_len, uint offset, u8 eid, u8 *oui, u8 oui_len)
+{
+	int ret = _FAIL;
 	u8 *target_ie;
 	u32 target_ielen;
 	u8 *start;
-	uपूर्णांक search_len;
+	uint search_len;
 
-	अगर (!ies || !ies_len || *ies_len <= offset)
-		जाओ निकास;
+	if (!ies || !ies_len || *ies_len <= offset)
+		goto exit;
 
 	start = ies + offset;
 	search_len = *ies_len - offset;
 
-	जबतक (1) अणु
-		target_ie = rtw_get_ie_ex(start, search_len, eid, oui, oui_len, शून्य, &target_ielen);
-		अगर (target_ie && target_ielen) अणु
-			u8 buf[MAX_IE_SZ] = अणु0पूर्ण;
-			u8 *reमुख्य_ies = target_ie + target_ielen;
-			uपूर्णांक reमुख्य_len = search_len - (reमुख्य_ies - start);
+	while (1) {
+		target_ie = rtw_get_ie_ex(start, search_len, eid, oui, oui_len, NULL, &target_ielen);
+		if (target_ie && target_ielen) {
+			u8 buf[MAX_IE_SZ] = {0};
+			u8 *remain_ies = target_ie + target_ielen;
+			uint remain_len = search_len - (remain_ies - start);
 
-			स_नकल(buf, reमुख्य_ies, reमुख्य_len);
-			स_नकल(target_ie, buf, reमुख्य_len);
+			memcpy(buf, remain_ies, remain_len);
+			memcpy(target_ie, buf, remain_len);
 			*ies_len = *ies_len - target_ielen;
 			ret = _SUCCESS;
 
 			start = target_ie;
-			search_len = reमुख्य_len;
-		पूर्ण अन्यथा अणु
-			अवरोध;
-		पूर्ण
-	पूर्ण
-निकास:
-	वापस ret;
-पूर्ण
+			search_len = remain_len;
+		} else {
+			break;
+		}
+	}
+exit:
+	return ret;
+}
 
-व्योम rtw_set_supported_rate(u8 *SupportedRates, uपूर्णांक mode)
-अणु
-	स_रखो(SupportedRates, 0, NDIS_802_11_LENGTH_RATES_EX);
+void rtw_set_supported_rate(u8 *SupportedRates, uint mode)
+{
+	memset(SupportedRates, 0, NDIS_802_11_LENGTH_RATES_EX);
 
-	चयन (mode) अणु
-	हाल WIRELESS_11B:
-		स_नकल(SupportedRates, WIFI_CCKRATES, IEEE80211_CCK_RATE_LEN);
-		अवरोध;
+	switch (mode) {
+	case WIRELESS_11B:
+		memcpy(SupportedRates, WIFI_CCKRATES, IEEE80211_CCK_RATE_LEN);
+		break;
 
-	हाल WIRELESS_11G:
-	हाल WIRELESS_11A:
-	हाल WIRELESS_11_5N:
-	हाल WIRELESS_11A_5N:/* Toकरो: no basic rate क्रम ofdm ? */
-	हाल WIRELESS_11_5AC:
-		स_नकल(SupportedRates, WIFI_OFDMRATES, IEEE80211_NUM_OFDM_RATESLEN);
-		अवरोध;
+	case WIRELESS_11G:
+	case WIRELESS_11A:
+	case WIRELESS_11_5N:
+	case WIRELESS_11A_5N:/* Todo: no basic rate for ofdm ? */
+	case WIRELESS_11_5AC:
+		memcpy(SupportedRates, WIFI_OFDMRATES, IEEE80211_NUM_OFDM_RATESLEN);
+		break;
 
-	हाल WIRELESS_11BG:
-	हाल WIRELESS_11G_24N:
-	हाल WIRELESS_11_24N:
-	हाल WIRELESS_11BG_24N:
-		स_नकल(SupportedRates, WIFI_CCKRATES, IEEE80211_CCK_RATE_LEN);
-		स_नकल(SupportedRates + IEEE80211_CCK_RATE_LEN, WIFI_OFDMRATES, IEEE80211_NUM_OFDM_RATESLEN);
-		अवरोध;
-	पूर्ण
-पूर्ण
+	case WIRELESS_11BG:
+	case WIRELESS_11G_24N:
+	case WIRELESS_11_24N:
+	case WIRELESS_11BG_24N:
+		memcpy(SupportedRates, WIFI_CCKRATES, IEEE80211_CCK_RATE_LEN);
+		memcpy(SupportedRates + IEEE80211_CCK_RATE_LEN, WIFI_OFDMRATES, IEEE80211_NUM_OFDM_RATESLEN);
+		break;
+	}
+}
 
-uपूर्णांक rtw_get_rateset_len(u8 *rateset)
-अणु
-	uपूर्णांक i;
+uint rtw_get_rateset_len(u8 *rateset)
+{
+	uint i;
 
-	क्रम (i = 0; i < 13; i++)
-		अगर (rateset[i] == 0)
-			अवरोध;
-	वापस i;
-पूर्ण
+	for (i = 0; i < 13; i++)
+		if (rateset[i] == 0)
+			break;
+	return i;
+}
 
-पूर्णांक rtw_generate_ie(काष्ठा registry_priv *pregistrypriv)
-अणु
+int rtw_generate_ie(struct registry_priv *pregistrypriv)
+{
 	u8 wireless_mode;
-	पूर्णांक	sz = 0, rateLen;
-	काष्ठा wlan_bssid_ex *pdev_network = &pregistrypriv->dev_network;
+	int	sz = 0, rateLen;
+	struct wlan_bssid_ex *pdev_network = &pregistrypriv->dev_network;
 	u8 *ie = pdev_network->IEs;
 
-	/* बारtamp will be inserted by hardware */
+	/* timestamp will be inserted by hardware */
 	sz += 8;
 	ie += sz;
 
-	/* beacon पूर्णांकerval : 2bytes */
+	/* beacon interval : 2bytes */
 	*(__le16 *)ie = cpu_to_le16((u16)pdev_network->Configuration.BeaconPeriod);/* BCN_INTERVAL; */
 	sz += 2;
 	ie += 2;
@@ -317,10 +316,10 @@ uपूर्णांक rtw_get_rateset_len(u8 *rateset)
 
 	*(__le16 *)ie |= cpu_to_le16(WLAN_CAPABILITY_IBSS);
 
-	अगर (pregistrypriv->preamble == PREAMBLE_SHORT)
+	if (pregistrypriv->preamble == PREAMBLE_SHORT)
 		*(__le16 *)ie |= cpu_to_le16(WLAN_CAPABILITY_SHORT_PREAMBLE);
 
-	अगर (pdev_network->Privacy)
+	if (pdev_network->Privacy)
 		*(__le16 *)ie |= cpu_to_le16(WLAN_CAPABILITY_PRIVACY);
 
 	sz += 2;
@@ -330,152 +329,152 @@ uपूर्णांक rtw_get_rateset_len(u8 *rateset)
 	ie = rtw_set_ie(ie, WLAN_EID_SSID, pdev_network->Ssid.SsidLength, pdev_network->Ssid.Ssid, &sz);
 
 	/* supported rates */
-	अगर (pregistrypriv->wireless_mode == WIRELESS_11ABGN) अणु
-		अगर (pdev_network->Configuration.DSConfig > 14)
+	if (pregistrypriv->wireless_mode == WIRELESS_11ABGN) {
+		if (pdev_network->Configuration.DSConfig > 14)
 			wireless_mode = WIRELESS_11A_5N;
-		अन्यथा
+		else
 			wireless_mode = WIRELESS_11BG_24N;
-	पूर्ण अन्यथा अणु
+	} else {
 		wireless_mode = pregistrypriv->wireless_mode;
-	पूर्ण
+	}
 
 	rtw_set_supported_rate(pdev_network->SupportedRates, wireless_mode);
 
 	rateLen = rtw_get_rateset_len(pdev_network->SupportedRates);
 
-	अगर (rateLen > 8) अणु
+	if (rateLen > 8) {
 		ie = rtw_set_ie(ie, WLAN_EID_SUPP_RATES, 8, pdev_network->SupportedRates, &sz);
 		/* ie = rtw_set_ie(ie, WLAN_EID_EXT_SUPP_RATES, (rateLen - 8), (pdev_network->SupportedRates + 8), &sz); */
-	पूर्ण अन्यथा अणु
+	} else {
 		ie = rtw_set_ie(ie, WLAN_EID_SUPP_RATES, rateLen, pdev_network->SupportedRates, &sz);
-	पूर्ण
+	}
 
 	/* DS parameter set */
 	ie = rtw_set_ie(ie, WLAN_EID_DS_PARAMS, 1, (u8 *)&(pdev_network->Configuration.DSConfig), &sz);
 
 	/* IBSS Parameter Set */
 
-	ie = rtw_set_ie(ie, WLAN_EID_IBSS_PARAMS, 2, (u8 *)&(pdev_network->Configuration.ATIMWinकरोw), &sz);
+	ie = rtw_set_ie(ie, WLAN_EID_IBSS_PARAMS, 2, (u8 *)&(pdev_network->Configuration.ATIMWindow), &sz);
 
-	अगर (rateLen > 8) अणु
+	if (rateLen > 8) {
 		ie = rtw_set_ie(ie, WLAN_EID_EXT_SUPP_RATES, (rateLen - 8), (pdev_network->SupportedRates + 8), &sz);
-	पूर्ण
+	}
 
 	/* HT Cap. */
-	अगर (((pregistrypriv->wireless_mode&WIRELESS_11_5N) || (pregistrypriv->wireless_mode&WIRELESS_11_24N))
-		&& (pregistrypriv->ht_enable == true)) अणु
-		/* toकरो: */
-	पूर्ण
+	if (((pregistrypriv->wireless_mode&WIRELESS_11_5N) || (pregistrypriv->wireless_mode&WIRELESS_11_24N))
+		&& (pregistrypriv->ht_enable == true)) {
+		/* todo: */
+	}
 
 	/* pdev_network->IELength =  sz; update IELength */
 
-	/* वापस _SUCCESS; */
+	/* return _SUCCESS; */
 
-	वापस sz;
-पूर्ण
+	return sz;
+}
 
-अचिन्हित अक्षर *rtw_get_wpa_ie(अचिन्हित अक्षर *pie, पूर्णांक *wpa_ie_len, पूर्णांक limit)
-अणु
-	पूर्णांक len;
+unsigned char *rtw_get_wpa_ie(unsigned char *pie, int *wpa_ie_len, int limit)
+{
+	int len;
 	u16 val16;
-	अचिन्हित अक्षर wpa_oui_type[] = अणु0x00, 0x50, 0xf2, 0x01पूर्ण;
+	unsigned char wpa_oui_type[] = {0x00, 0x50, 0xf2, 0x01};
 	u8 *pbuf = pie;
-	पूर्णांक limit_new = limit;
-	__le16 le_पंचांगp;
+	int limit_new = limit;
+	__le16 le_tmp;
 
-	जबतक (1) अणु
+	while (1) {
 		pbuf = rtw_get_ie(pbuf, WLAN_EID_VENDOR_SPECIFIC, &len, limit_new);
 
-		अगर (pbuf) अणु
-			/* check अगर oui matches... */
-			अगर (स_भेद((pbuf + 2), wpa_oui_type, माप(wpa_oui_type))) अणु
-				जाओ check_next_ie;
-			पूर्ण
+		if (pbuf) {
+			/* check if oui matches... */
+			if (memcmp((pbuf + 2), wpa_oui_type, sizeof(wpa_oui_type))) {
+				goto check_next_ie;
+			}
 
 			/* check version... */
-			स_नकल((u8 *)&le_पंचांगp, (pbuf + 6), माप(val16));
+			memcpy((u8 *)&le_tmp, (pbuf + 6), sizeof(val16));
 
-			val16 = le16_to_cpu(le_पंचांगp);
-			अगर (val16 != 0x0001)
-				जाओ check_next_ie;
+			val16 = le16_to_cpu(le_tmp);
+			if (val16 != 0x0001)
+				goto check_next_ie;
 
 			*wpa_ie_len = *(pbuf + 1);
 
-			वापस pbuf;
+			return pbuf;
 
-		पूर्ण अन्यथा अणु
+		} else {
 			*wpa_ie_len = 0;
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 
 check_next_ie:
 
 		limit_new = limit - (pbuf - pie) - 2 - len;
 
-		अगर (limit_new <= 0)
-			अवरोध;
+		if (limit_new <= 0)
+			break;
 
 		pbuf += (2 + len);
-	पूर्ण
+	}
 
 	*wpa_ie_len = 0;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अचिन्हित अक्षर *rtw_get_wpa2_ie(अचिन्हित अक्षर *pie, पूर्णांक *rsn_ie_len, पूर्णांक limit)
-अणु
-	वापस rtw_get_ie(pie, WLAN_EID_RSN, rsn_ie_len, limit);
-पूर्ण
+unsigned char *rtw_get_wpa2_ie(unsigned char *pie, int *rsn_ie_len, int limit)
+{
+	return rtw_get_ie(pie, WLAN_EID_RSN, rsn_ie_len, limit);
+}
 
-पूर्णांक rtw_get_wpa_cipher_suite(u8 *s)
-अणु
-	अगर (!स_भेद(s, WPA_CIPHER_SUITE_NONE, WPA_SELECTOR_LEN))
-		वापस WPA_CIPHER_NONE;
-	अगर (!स_भेद(s, WPA_CIPHER_SUITE_WEP40, WPA_SELECTOR_LEN))
-		वापस WPA_CIPHER_WEP40;
-	अगर (!स_भेद(s, WPA_CIPHER_SUITE_TKIP, WPA_SELECTOR_LEN))
-		वापस WPA_CIPHER_TKIP;
-	अगर (!स_भेद(s, WPA_CIPHER_SUITE_CCMP, WPA_SELECTOR_LEN))
-		वापस WPA_CIPHER_CCMP;
-	अगर (!स_भेद(s, WPA_CIPHER_SUITE_WEP104, WPA_SELECTOR_LEN))
-		वापस WPA_CIPHER_WEP104;
+int rtw_get_wpa_cipher_suite(u8 *s)
+{
+	if (!memcmp(s, WPA_CIPHER_SUITE_NONE, WPA_SELECTOR_LEN))
+		return WPA_CIPHER_NONE;
+	if (!memcmp(s, WPA_CIPHER_SUITE_WEP40, WPA_SELECTOR_LEN))
+		return WPA_CIPHER_WEP40;
+	if (!memcmp(s, WPA_CIPHER_SUITE_TKIP, WPA_SELECTOR_LEN))
+		return WPA_CIPHER_TKIP;
+	if (!memcmp(s, WPA_CIPHER_SUITE_CCMP, WPA_SELECTOR_LEN))
+		return WPA_CIPHER_CCMP;
+	if (!memcmp(s, WPA_CIPHER_SUITE_WEP104, WPA_SELECTOR_LEN))
+		return WPA_CIPHER_WEP104;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक rtw_get_wpa2_cipher_suite(u8 *s)
-अणु
-	अगर (!स_भेद(s, RSN_CIPHER_SUITE_NONE, RSN_SELECTOR_LEN))
-		वापस WPA_CIPHER_NONE;
-	अगर (!स_भेद(s, RSN_CIPHER_SUITE_WEP40, RSN_SELECTOR_LEN))
-		वापस WPA_CIPHER_WEP40;
-	अगर (!स_भेद(s, RSN_CIPHER_SUITE_TKIP, RSN_SELECTOR_LEN))
-		वापस WPA_CIPHER_TKIP;
-	अगर (!स_भेद(s, RSN_CIPHER_SUITE_CCMP, RSN_SELECTOR_LEN))
-		वापस WPA_CIPHER_CCMP;
-	अगर (!स_भेद(s, RSN_CIPHER_SUITE_WEP104, RSN_SELECTOR_LEN))
-		वापस WPA_CIPHER_WEP104;
+int rtw_get_wpa2_cipher_suite(u8 *s)
+{
+	if (!memcmp(s, RSN_CIPHER_SUITE_NONE, RSN_SELECTOR_LEN))
+		return WPA_CIPHER_NONE;
+	if (!memcmp(s, RSN_CIPHER_SUITE_WEP40, RSN_SELECTOR_LEN))
+		return WPA_CIPHER_WEP40;
+	if (!memcmp(s, RSN_CIPHER_SUITE_TKIP, RSN_SELECTOR_LEN))
+		return WPA_CIPHER_TKIP;
+	if (!memcmp(s, RSN_CIPHER_SUITE_CCMP, RSN_SELECTOR_LEN))
+		return WPA_CIPHER_CCMP;
+	if (!memcmp(s, RSN_CIPHER_SUITE_WEP104, RSN_SELECTOR_LEN))
+		return WPA_CIPHER_WEP104;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक rtw_parse_wpa_ie(u8 *wpa_ie, पूर्णांक wpa_ie_len, पूर्णांक *group_cipher, पूर्णांक *pairwise_cipher, पूर्णांक *is_8021x)
-अणु
-	पूर्णांक i, ret = _SUCCESS;
-	पूर्णांक left, count;
+int rtw_parse_wpa_ie(u8 *wpa_ie, int wpa_ie_len, int *group_cipher, int *pairwise_cipher, int *is_8021x)
+{
+	int i, ret = _SUCCESS;
+	int left, count;
 	u8 *pos;
-	u8 SUITE_1X[4] = अणु0x00, 0x50, 0xf2, 1पूर्ण;
+	u8 SUITE_1X[4] = {0x00, 0x50, 0xf2, 1};
 
-	अगर (wpa_ie_len <= 0) अणु
+	if (wpa_ie_len <= 0) {
 		/* No WPA IE - fail silently */
-		वापस _FAIL;
-	पूर्ण
+		return _FAIL;
+	}
 
-	अगर ((*wpa_ie != WLAN_EID_VENDOR_SPECIFIC) || (*(wpa_ie+1) != (u8)(wpa_ie_len - 2)) ||
-	   (स_भेद(wpa_ie+2, RTW_WPA_OUI_TYPE, WPA_SELECTOR_LEN))) अणु
-		वापस _FAIL;
-	पूर्ण
+	if ((*wpa_ie != WLAN_EID_VENDOR_SPECIFIC) || (*(wpa_ie+1) != (u8)(wpa_ie_len - 2)) ||
+	   (memcmp(wpa_ie+2, RTW_WPA_OUI_TYPE, WPA_SELECTOR_LEN))) {
+		return _FAIL;
+	}
 
 	pos = wpa_ie;
 
@@ -483,741 +482,741 @@ check_next_ie:
 	left = wpa_ie_len - 8;
 
 	/* group_cipher */
-	अगर (left >= WPA_SELECTOR_LEN) अणु
+	if (left >= WPA_SELECTOR_LEN) {
 		*group_cipher = rtw_get_wpa_cipher_suite(pos);
 
 		pos += WPA_SELECTOR_LEN;
 		left -= WPA_SELECTOR_LEN;
 
-	पूर्ण अन्यथा अगर (left > 0)
-		वापस _FAIL;
+	} else if (left > 0)
+		return _FAIL;
 
 	/* pairwise_cipher */
-	अगर (left >= 2) अणु
+	if (left >= 2) {
 		/* count = le16_to_cpu(*(u16*)pos); */
 		count = get_unaligned_le16(pos);
 		pos += 2;
 		left -= 2;
 
-		अगर (count == 0 || left < count * WPA_SELECTOR_LEN)
-			वापस _FAIL;
+		if (count == 0 || left < count * WPA_SELECTOR_LEN)
+			return _FAIL;
 
-		क्रम (i = 0; i < count; i++) अणु
+		for (i = 0; i < count; i++) {
 			*pairwise_cipher |= rtw_get_wpa_cipher_suite(pos);
 
 			pos += WPA_SELECTOR_LEN;
 			left -= WPA_SELECTOR_LEN;
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा अगर (left == 1)
-		वापस _FAIL;
+	} else if (left == 1)
+		return _FAIL;
 
-	अगर (is_8021x) अणु
-		अगर (left >= 6) अणु
+	if (is_8021x) {
+		if (left >= 6) {
 			pos += 2;
-			अगर (!स_भेद(pos, SUITE_1X, 4)) अणु
+			if (!memcmp(pos, SUITE_1X, 4)) {
 				*is_8021x = 1;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक rtw_parse_wpa2_ie(u8 *rsn_ie, पूर्णांक rsn_ie_len, पूर्णांक *group_cipher, पूर्णांक *pairwise_cipher, पूर्णांक *is_8021x)
-अणु
-	पूर्णांक i, ret = _SUCCESS;
-	पूर्णांक left, count;
+int rtw_parse_wpa2_ie(u8 *rsn_ie, int rsn_ie_len, int *group_cipher, int *pairwise_cipher, int *is_8021x)
+{
+	int i, ret = _SUCCESS;
+	int left, count;
 	u8 *pos;
-	u8 SUITE_1X[4] = अणु0x00, 0x0f, 0xac, 0x01पूर्ण;
+	u8 SUITE_1X[4] = {0x00, 0x0f, 0xac, 0x01};
 
-	अगर (rsn_ie_len <= 0) अणु
+	if (rsn_ie_len <= 0) {
 		/* No RSN IE - fail silently */
-		वापस _FAIL;
-	पूर्ण
+		return _FAIL;
+	}
 
-	अगर ((*rsn_ie != WLAN_EID_RSN) || (*(rsn_ie+1) != (u8)(rsn_ie_len - 2))) अणु
-		वापस _FAIL;
-	पूर्ण
+	if ((*rsn_ie != WLAN_EID_RSN) || (*(rsn_ie+1) != (u8)(rsn_ie_len - 2))) {
+		return _FAIL;
+	}
 
 	pos = rsn_ie;
 	pos += 4;
 	left = rsn_ie_len - 4;
 
 	/* group_cipher */
-	अगर (left >= RSN_SELECTOR_LEN) अणु
+	if (left >= RSN_SELECTOR_LEN) {
 		*group_cipher = rtw_get_wpa2_cipher_suite(pos);
 
 		pos += RSN_SELECTOR_LEN;
 		left -= RSN_SELECTOR_LEN;
 
-	पूर्ण अन्यथा अगर (left > 0)
-		वापस _FAIL;
+	} else if (left > 0)
+		return _FAIL;
 
 	/* pairwise_cipher */
-	अगर (left >= 2) अणु
+	if (left >= 2) {
 	  /* count = le16_to_cpu(*(u16*)pos); */
 		count = get_unaligned_le16(pos);
 		pos += 2;
 		left -= 2;
 
-		अगर (count == 0 || left < count * RSN_SELECTOR_LEN)
-			वापस _FAIL;
+		if (count == 0 || left < count * RSN_SELECTOR_LEN)
+			return _FAIL;
 
-		क्रम (i = 0; i < count; i++) अणु
+		for (i = 0; i < count; i++) {
 			*pairwise_cipher |= rtw_get_wpa2_cipher_suite(pos);
 
 			pos += RSN_SELECTOR_LEN;
 			left -= RSN_SELECTOR_LEN;
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा अगर (left == 1)
-		वापस _FAIL;
+	} else if (left == 1)
+		return _FAIL;
 
-	अगर (is_8021x) अणु
-		अगर (left >= 6) अणु
+	if (is_8021x) {
+		if (left >= 6) {
 			pos += 2;
-			अगर (!स_भेद(pos, SUITE_1X, 4))
+			if (!memcmp(pos, SUITE_1X, 4))
 				*is_8021x = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* अगरdef CONFIG_WAPI_SUPPORT */
-पूर्णांक rtw_get_wapi_ie(u8 *in_ie, uपूर्णांक in_len, u8 *wapi_ie, u16 *wapi_len)
-अणु
-	पूर्णांक len = 0;
+/* ifdef CONFIG_WAPI_SUPPORT */
+int rtw_get_wapi_ie(u8 *in_ie, uint in_len, u8 *wapi_ie, u16 *wapi_len)
+{
+	int len = 0;
 	u8 authmode;
-	uपूर्णांक	cnt;
-	u8 wapi_oui1[4] = अणु0x0, 0x14, 0x72, 0x01पूर्ण;
-	u8 wapi_oui2[4] = अणु0x0, 0x14, 0x72, 0x02पूर्ण;
+	uint	cnt;
+	u8 wapi_oui1[4] = {0x0, 0x14, 0x72, 0x01};
+	u8 wapi_oui2[4] = {0x0, 0x14, 0x72, 0x02};
 
-	अगर (wapi_len)
+	if (wapi_len)
 		*wapi_len = 0;
 
-	अगर (!in_ie || in_len <= 0)
-		वापस len;
+	if (!in_ie || in_len <= 0)
+		return len;
 
 	cnt = (_TIMESTAMP_ + _BEACON_ITERVAL_ + _CAPABILITY_);
 
-	जबतक (cnt < in_len) अणु
+	while (cnt < in_len) {
 		authmode = in_ie[cnt];
 
-		/* अगर (authmode == WLAN_EID_BSS_AC_ACCESS_DELAY) */
-		अगर (authmode == WLAN_EID_BSS_AC_ACCESS_DELAY && (!स_भेद(&in_ie[cnt+6], wapi_oui1, 4) ||
-					!स_भेद(&in_ie[cnt+6], wapi_oui2, 4))) अणु
-			अगर (wapi_ie)
-				स_नकल(wapi_ie, &in_ie[cnt], in_ie[cnt+1]+2);
+		/* if (authmode == WLAN_EID_BSS_AC_ACCESS_DELAY) */
+		if (authmode == WLAN_EID_BSS_AC_ACCESS_DELAY && (!memcmp(&in_ie[cnt+6], wapi_oui1, 4) ||
+					!memcmp(&in_ie[cnt+6], wapi_oui2, 4))) {
+			if (wapi_ie)
+				memcpy(wapi_ie, &in_ie[cnt], in_ie[cnt+1]+2);
 
-			अगर (wapi_len)
+			if (wapi_len)
 				*wapi_len = in_ie[cnt+1]+2;
 
 			cnt += in_ie[cnt+1]+2;  /* get next */
-		पूर्ण अन्यथा अणु
+		} else {
 			cnt += in_ie[cnt+1]+2;   /* get next */
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (wapi_len)
+	if (wapi_len)
 		len = *wapi_len;
 
-	वापस len;
-पूर्ण
-/* endअगर */
+	return len;
+}
+/* endif */
 
-व्योम rtw_get_sec_ie(u8 *in_ie, uपूर्णांक in_len, u8 *rsn_ie, u16 *rsn_len, u8 *wpa_ie, u16 *wpa_len)
-अणु
+void rtw_get_sec_ie(u8 *in_ie, uint in_len, u8 *rsn_ie, u16 *rsn_len, u8 *wpa_ie, u16 *wpa_len)
+{
 	u8 authmode;
-	u8 wpa_oui[4] = अणु0x0, 0x50, 0xf2, 0x01पूर्ण;
-	uपूर्णांक	cnt;
+	u8 wpa_oui[4] = {0x0, 0x50, 0xf2, 0x01};
+	uint	cnt;
 
 	/* Search required WPA or WPA2 IE and copy to sec_ie[ ] */
 
 	cnt = (_TIMESTAMP_ + _BEACON_ITERVAL_ + _CAPABILITY_);
 
-	जबतक (cnt < in_len) अणु
+	while (cnt < in_len) {
 		authmode = in_ie[cnt];
 
-		अगर ((authmode == WLAN_EID_VENDOR_SPECIFIC) && (!स_भेद(&in_ie[cnt+2], &wpa_oui[0], 4))) अणु
-			अगर (wpa_ie)
-				स_नकल(wpa_ie, &in_ie[cnt], in_ie[cnt+1]+2);
+		if ((authmode == WLAN_EID_VENDOR_SPECIFIC) && (!memcmp(&in_ie[cnt+2], &wpa_oui[0], 4))) {
+			if (wpa_ie)
+				memcpy(wpa_ie, &in_ie[cnt], in_ie[cnt+1]+2);
 
 			*wpa_len = in_ie[cnt + 1] + 2;
 			cnt += in_ie[cnt + 1] + 2;  /* get next */
-		पूर्ण अन्यथा अणु
-			अगर (authmode == WLAN_EID_RSN) अणु
-				अगर (rsn_ie)
-					स_नकल(rsn_ie, &in_ie[cnt], in_ie[cnt + 1] + 2);
+		} else {
+			if (authmode == WLAN_EID_RSN) {
+				if (rsn_ie)
+					memcpy(rsn_ie, &in_ie[cnt], in_ie[cnt + 1] + 2);
 
 				*rsn_len = in_ie[cnt+1]+2;
 				cnt += in_ie[cnt+1]+2;  /* get next */
-			पूर्ण अन्यथा अणु
+			} else {
 				cnt += in_ie[cnt+1]+2;   /* get next */
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-u8 rtw_is_wps_ie(u8 *ie_ptr, uपूर्णांक *wps_ielen)
-अणु
+u8 rtw_is_wps_ie(u8 *ie_ptr, uint *wps_ielen)
+{
 	u8 match = false;
-	u8 eid, wps_oui[4] = अणु0x0, 0x50, 0xf2, 0x04पूर्ण;
+	u8 eid, wps_oui[4] = {0x0, 0x50, 0xf2, 0x04};
 
-	अगर (!ie_ptr)
-		वापस match;
+	if (!ie_ptr)
+		return match;
 
 	eid = ie_ptr[0];
 
-	अगर ((eid == WLAN_EID_VENDOR_SPECIFIC) && (!स_भेद(&ie_ptr[2], wps_oui, 4))) अणु
+	if ((eid == WLAN_EID_VENDOR_SPECIFIC) && (!memcmp(&ie_ptr[2], wps_oui, 4))) {
 		*wps_ielen = ie_ptr[1]+2;
 		match = true;
-	पूर्ण
-	वापस match;
-पूर्ण
+	}
+	return match;
+}
 
 /**
  * rtw_get_wps_ie - Search WPS IE from a series of IEs
  * @in_ie: Address of IEs to search
  * @in_len: Length limit from in_ie
- * @wps_ie: If not शून्य and WPS IE is found, WPS IE will be copied to the buf starting from wps_ie
- * @wps_ielen: If not शून्य and WPS IE is found, will set to the length of the entire WPS IE
+ * @wps_ie: If not NULL and WPS IE is found, WPS IE will be copied to the buf starting from wps_ie
+ * @wps_ielen: If not NULL and WPS IE is found, will set to the length of the entire WPS IE
  *
- * Returns: The address of the WPS IE found, or शून्य
+ * Returns: The address of the WPS IE found, or NULL
  */
-u8 *rtw_get_wps_ie(u8 *in_ie, uपूर्णांक in_len, u8 *wps_ie, uपूर्णांक *wps_ielen)
-अणु
-	uपूर्णांक cnt;
-	u8 *wpsie_ptr = शून्य;
-	u8 eid, wps_oui[4] = अणु0x0, 0x50, 0xf2, 0x04पूर्ण;
+u8 *rtw_get_wps_ie(u8 *in_ie, uint in_len, u8 *wps_ie, uint *wps_ielen)
+{
+	uint cnt;
+	u8 *wpsie_ptr = NULL;
+	u8 eid, wps_oui[4] = {0x0, 0x50, 0xf2, 0x04};
 
-	अगर (wps_ielen)
+	if (wps_ielen)
 		*wps_ielen = 0;
 
-	अगर (!in_ie || in_len <= 0)
-		वापस wpsie_ptr;
+	if (!in_ie || in_len <= 0)
+		return wpsie_ptr;
 
 	cnt = 0;
 
-	जबतक (cnt < in_len) अणु
+	while (cnt < in_len) {
 		eid = in_ie[cnt];
 
-		अगर ((eid == WLAN_EID_VENDOR_SPECIFIC) && (!स_भेद(&in_ie[cnt+2], wps_oui, 4))) अणु
+		if ((eid == WLAN_EID_VENDOR_SPECIFIC) && (!memcmp(&in_ie[cnt+2], wps_oui, 4))) {
 			wpsie_ptr = &in_ie[cnt];
 
-			अगर (wps_ie)
-				स_नकल(wps_ie, &in_ie[cnt], in_ie[cnt+1]+2);
+			if (wps_ie)
+				memcpy(wps_ie, &in_ie[cnt], in_ie[cnt+1]+2);
 
-			अगर (wps_ielen)
+			if (wps_ielen)
 				*wps_ielen = in_ie[cnt+1]+2;
 
 			cnt += in_ie[cnt+1]+2;
 
-			अवरोध;
-		पूर्ण अन्यथा अणु
-			cnt += in_ie[cnt+1]+2; /* जाओ next */
-		पूर्ण
-	पूर्ण
+			break;
+		} else {
+			cnt += in_ie[cnt+1]+2; /* goto next */
+		}
+	}
 
-	वापस wpsie_ptr;
-पूर्ण
+	return wpsie_ptr;
+}
 
 /**
- * rtw_get_wps_attr - Search a specअगरic WPS attribute from a given WPS IE
+ * rtw_get_wps_attr - Search a specific WPS attribute from a given WPS IE
  * @wps_ie: Address of WPS IE to search
  * @wps_ielen: Length limit from wps_ie
  * @target_attr_id: The attribute ID of WPS attribute to search
- * @buf_attr: If not शून्य and the WPS attribute is found, WPS attribute will be copied to the buf starting from buf_attr
- * @len_attr: If not शून्य and the WPS attribute is found, will set to the length of the entire WPS attribute
+ * @buf_attr: If not NULL and the WPS attribute is found, WPS attribute will be copied to the buf starting from buf_attr
+ * @len_attr: If not NULL and the WPS attribute is found, will set to the length of the entire WPS attribute
  *
- * Returns: the address of the specअगरic WPS attribute found, or शून्य
+ * Returns: the address of the specific WPS attribute found, or NULL
  */
-u8 *rtw_get_wps_attr(u8 *wps_ie, uपूर्णांक wps_ielen, u16 target_attr_id, u8 *buf_attr, u32 *len_attr)
-अणु
-	u8 *attr_ptr = शून्य;
-	u8 *target_attr_ptr = शून्य;
-	u8 wps_oui[4] = अणु0x00, 0x50, 0xF2, 0x04पूर्ण;
+u8 *rtw_get_wps_attr(u8 *wps_ie, uint wps_ielen, u16 target_attr_id, u8 *buf_attr, u32 *len_attr)
+{
+	u8 *attr_ptr = NULL;
+	u8 *target_attr_ptr = NULL;
+	u8 wps_oui[4] = {0x00, 0x50, 0xF2, 0x04};
 
-	अगर (len_attr)
+	if (len_attr)
 		*len_attr = 0;
 
-	अगर ((wps_ie[0] != WLAN_EID_VENDOR_SPECIFIC) ||
-		(स_भेद(wps_ie + 2, wps_oui, 4))) अणु
-		वापस attr_ptr;
-	पूर्ण
+	if ((wps_ie[0] != WLAN_EID_VENDOR_SPECIFIC) ||
+		(memcmp(wps_ie + 2, wps_oui, 4))) {
+		return attr_ptr;
+	}
 
 	/*  6 = 1(Element ID) + 1(Length) + 4(WPS OUI) */
-	attr_ptr = wps_ie + 6; /* जाओ first attr */
+	attr_ptr = wps_ie + 6; /* goto first attr */
 
-	जबतक (attr_ptr - wps_ie < wps_ielen) अणु
+	while (attr_ptr - wps_ie < wps_ielen) {
 		/*  4 = 2(Attribute ID) + 2(Length) */
 		u16 attr_id = get_unaligned_be16(attr_ptr);
 		u16 attr_data_len = get_unaligned_be16(attr_ptr + 2);
 		u16 attr_len = attr_data_len + 4;
 
-		अगर (attr_id == target_attr_id) अणु
+		if (attr_id == target_attr_id) {
 			target_attr_ptr = attr_ptr;
 
-			अगर (buf_attr)
-				स_नकल(buf_attr, attr_ptr, attr_len);
+			if (buf_attr)
+				memcpy(buf_attr, attr_ptr, attr_len);
 
-			अगर (len_attr)
+			if (len_attr)
 				*len_attr = attr_len;
 
-			अवरोध;
-		पूर्ण अन्यथा अणु
-			attr_ptr += attr_len; /* जाओ next */
-		पूर्ण
-	पूर्ण
+			break;
+		} else {
+			attr_ptr += attr_len; /* goto next */
+		}
+	}
 
-	वापस target_attr_ptr;
-पूर्ण
+	return target_attr_ptr;
+}
 
 /**
- * rtw_get_wps_attr_content - Search a specअगरic WPS attribute content from a given WPS IE
+ * rtw_get_wps_attr_content - Search a specific WPS attribute content from a given WPS IE
  * @wps_ie: Address of WPS IE to search
  * @wps_ielen: Length limit from wps_ie
  * @target_attr_id: The attribute ID of WPS attribute to search
- * @buf_content: If not शून्य and the WPS attribute is found, WPS attribute content will be copied to the buf starting from buf_content
- * @len_content: If not शून्य and the WPS attribute is found, will set to the length of the WPS attribute content
+ * @buf_content: If not NULL and the WPS attribute is found, WPS attribute content will be copied to the buf starting from buf_content
+ * @len_content: If not NULL and the WPS attribute is found, will set to the length of the WPS attribute content
  *
- * Returns: the address of the specअगरic WPS attribute content found, or शून्य
+ * Returns: the address of the specific WPS attribute content found, or NULL
  */
-u8 *rtw_get_wps_attr_content(u8 *wps_ie, uपूर्णांक wps_ielen, u16 target_attr_id, u8 *buf_content, uपूर्णांक *len_content)
-अणु
+u8 *rtw_get_wps_attr_content(u8 *wps_ie, uint wps_ielen, u16 target_attr_id, u8 *buf_content, uint *len_content)
+{
 	u8 *attr_ptr;
 	u32 attr_len;
 
-	अगर (len_content)
+	if (len_content)
 		*len_content = 0;
 
-	attr_ptr = rtw_get_wps_attr(wps_ie, wps_ielen, target_attr_id, शून्य, &attr_len);
+	attr_ptr = rtw_get_wps_attr(wps_ie, wps_ielen, target_attr_id, NULL, &attr_len);
 
-	अगर (attr_ptr && attr_len) अणु
-		अगर (buf_content)
-			स_नकल(buf_content, attr_ptr+4, attr_len-4);
+	if (attr_ptr && attr_len) {
+		if (buf_content)
+			memcpy(buf_content, attr_ptr+4, attr_len-4);
 
-		अगर (len_content)
+		if (len_content)
 			*len_content = attr_len-4;
 
-		वापस attr_ptr+4;
-	पूर्ण
+		return attr_ptr+4;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक rtw_ieee802_11_parse_venकरोr_specअगरic(u8 *pos, uपूर्णांक elen,
-					    काष्ठा rtw_ieee802_11_elems *elems,
-					    पूर्णांक show_errors)
-अणु
-	अचिन्हित पूर्णांक oui;
+static int rtw_ieee802_11_parse_vendor_specific(u8 *pos, uint elen,
+					    struct rtw_ieee802_11_elems *elems,
+					    int show_errors)
+{
+	unsigned int oui;
 
-	/* first 3 bytes in venकरोr specअगरic inक्रमmation element are the IEEE
-	 * OUI of the venकरोr. The following byte is used a venकरोr specअगरic
+	/* first 3 bytes in vendor specific information element are the IEEE
+	 * OUI of the vendor. The following byte is used a vendor specific
 	 * sub-type. */
-	अगर (elen < 4)
-		वापस -1;
+	if (elen < 4)
+		return -1;
 
 	oui = get_unaligned_be24(pos);
-	चयन (oui) अणु
-	हाल OUI_MICROSOFT:
-		/* Microsoft/Wi-Fi inक्रमmation elements are further typed and
+	switch (oui) {
+	case OUI_MICROSOFT:
+		/* Microsoft/Wi-Fi information elements are further typed and
 		 * subtyped */
-		चयन (pos[3]) अणु
-		हाल 1:
+		switch (pos[3]) {
+		case 1:
 			/* Microsoft OUI (00:50:F2) with OUI Type 1:
-			 * real WPA inक्रमmation element */
+			 * real WPA information element */
 			elems->wpa_ie = pos;
 			elems->wpa_ie_len = elen;
-			अवरोध;
-		हाल WME_OUI_TYPE: /* this is a Wi-Fi WME info. element */
-			अगर (elen < 5)
-				वापस -1;
+			break;
+		case WME_OUI_TYPE: /* this is a Wi-Fi WME info. element */
+			if (elen < 5)
+				return -1;
 
-			चयन (pos[4]) अणु
-			हाल WME_OUI_SUBTYPE_INFORMATION_ELEMENT:
-			हाल WME_OUI_SUBTYPE_PARAMETER_ELEMENT:
+			switch (pos[4]) {
+			case WME_OUI_SUBTYPE_INFORMATION_ELEMENT:
+			case WME_OUI_SUBTYPE_PARAMETER_ELEMENT:
 				elems->wme = pos;
 				elems->wme_len = elen;
-				अवरोध;
-			हाल WME_OUI_SUBTYPE_TSPEC_ELEMENT:
+				break;
+			case WME_OUI_SUBTYPE_TSPEC_ELEMENT:
 				elems->wme_tspec = pos;
 				elems->wme_tspec_len = elen;
-				अवरोध;
-			शेष:
-				वापस -1;
-			पूर्ण
-			अवरोध;
-		हाल 4:
+				break;
+			default:
+				return -1;
+			}
+			break;
+		case 4:
 			/* Wi-Fi Protected Setup (WPS) IE */
 			elems->wps_ie = pos;
 			elems->wps_ie_len = elen;
-			अवरोध;
-		शेष:
-			वापस -1;
-		पूर्ण
-		अवरोध;
+			break;
+		default:
+			return -1;
+		}
+		break;
 
-	हाल OUI_BROADCOM:
-		चयन (pos[3]) अणु
-		हाल VENDOR_HT_CAPAB_OUI_TYPE:
-			elems->venकरोr_ht_cap = pos;
-			elems->venकरोr_ht_cap_len = elen;
-			अवरोध;
-		शेष:
-			वापस -1;
-		पूर्ण
-		अवरोध;
+	case OUI_BROADCOM:
+		switch (pos[3]) {
+		case VENDOR_HT_CAPAB_OUI_TYPE:
+			elems->vendor_ht_cap = pos;
+			elems->vendor_ht_cap_len = elen;
+			break;
+		default:
+			return -1;
+		}
+		break;
 
-	शेष:
-		वापस -1;
-	पूर्ण
+	default:
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ieee802_11_parse_elems - Parse inक्रमmation elements in management frames
- * @start: Poपूर्णांकer to the start of IEs
+ * ieee802_11_parse_elems - Parse information elements in management frames
+ * @start: Pointer to the start of IEs
  * @len: Length of IE buffer in octets
- * @elems: Data काष्ठाure क्रम parsed elements
+ * @elems: Data structure for parsed elements
  * @show_errors: Whether to show parsing errors in debug log
  * Returns: Parsing result
  */
-क्रमागत ParseRes rtw_ieee802_11_parse_elems(u8 *start, uपूर्णांक len,
-				काष्ठा rtw_ieee802_11_elems *elems,
-				पूर्णांक show_errors)
-अणु
-	uपूर्णांक left = len;
+enum ParseRes rtw_ieee802_11_parse_elems(u8 *start, uint len,
+				struct rtw_ieee802_11_elems *elems,
+				int show_errors)
+{
+	uint left = len;
 	u8 *pos = start;
-	पूर्णांक unknown = 0;
+	int unknown = 0;
 
-	स_रखो(elems, 0, माप(*elems));
+	memset(elems, 0, sizeof(*elems));
 
-	जबतक (left >= 2) अणु
+	while (left >= 2) {
 		u8 id, elen;
 
 		id = *pos++;
 		elen = *pos++;
 		left -= 2;
 
-		अगर (elen > left)
-			वापस ParseFailed;
+		if (elen > left)
+			return ParseFailed;
 
-		चयन (id) अणु
-		हाल WLAN_EID_SSID:
+		switch (id) {
+		case WLAN_EID_SSID:
 			elems->ssid = pos;
 			elems->ssid_len = elen;
-			अवरोध;
-		हाल WLAN_EID_SUPP_RATES:
+			break;
+		case WLAN_EID_SUPP_RATES:
 			elems->supp_rates = pos;
 			elems->supp_rates_len = elen;
-			अवरोध;
-		हाल WLAN_EID_FH_PARAMS:
+			break;
+		case WLAN_EID_FH_PARAMS:
 			elems->fh_params = pos;
 			elems->fh_params_len = elen;
-			अवरोध;
-		हाल WLAN_EID_DS_PARAMS:
+			break;
+		case WLAN_EID_DS_PARAMS:
 			elems->ds_params = pos;
 			elems->ds_params_len = elen;
-			अवरोध;
-		हाल WLAN_EID_CF_PARAMS:
+			break;
+		case WLAN_EID_CF_PARAMS:
 			elems->cf_params = pos;
 			elems->cf_params_len = elen;
-			अवरोध;
-		हाल WLAN_EID_TIM:
+			break;
+		case WLAN_EID_TIM:
 			elems->tim = pos;
 			elems->tim_len = elen;
-			अवरोध;
-		हाल WLAN_EID_IBSS_PARAMS:
+			break;
+		case WLAN_EID_IBSS_PARAMS:
 			elems->ibss_params = pos;
 			elems->ibss_params_len = elen;
-			अवरोध;
-		हाल WLAN_EID_CHALLENGE:
+			break;
+		case WLAN_EID_CHALLENGE:
 			elems->challenge = pos;
 			elems->challenge_len = elen;
-			अवरोध;
-		हाल WLAN_EID_ERP_INFO:
+			break;
+		case WLAN_EID_ERP_INFO:
 			elems->erp_info = pos;
 			elems->erp_info_len = elen;
-			अवरोध;
-		हाल WLAN_EID_EXT_SUPP_RATES:
+			break;
+		case WLAN_EID_EXT_SUPP_RATES:
 			elems->ext_supp_rates = pos;
 			elems->ext_supp_rates_len = elen;
-			अवरोध;
-		हाल WLAN_EID_VENDOR_SPECIFIC:
-			अगर (rtw_ieee802_11_parse_venकरोr_specअगरic(pos, elen,
+			break;
+		case WLAN_EID_VENDOR_SPECIFIC:
+			if (rtw_ieee802_11_parse_vendor_specific(pos, elen,
 							     elems,
 							     show_errors))
 				unknown++;
-			अवरोध;
-		हाल WLAN_EID_RSN:
+			break;
+		case WLAN_EID_RSN:
 			elems->rsn_ie = pos;
 			elems->rsn_ie_len = elen;
-			अवरोध;
-		हाल WLAN_EID_PWR_CAPABILITY:
-			elems->घातer_cap = pos;
-			elems->घातer_cap_len = elen;
-			अवरोध;
-		हाल WLAN_EID_SUPPORTED_CHANNELS:
+			break;
+		case WLAN_EID_PWR_CAPABILITY:
+			elems->power_cap = pos;
+			elems->power_cap_len = elen;
+			break;
+		case WLAN_EID_SUPPORTED_CHANNELS:
 			elems->supp_channels = pos;
 			elems->supp_channels_len = elen;
-			अवरोध;
-		हाल WLAN_EID_MOBILITY_DOMAIN:
+			break;
+		case WLAN_EID_MOBILITY_DOMAIN:
 			elems->mdie = pos;
 			elems->mdie_len = elen;
-			अवरोध;
-		हाल WLAN_EID_FAST_BSS_TRANSITION:
+			break;
+		case WLAN_EID_FAST_BSS_TRANSITION:
 			elems->ftie = pos;
 			elems->ftie_len = elen;
-			अवरोध;
-		हाल WLAN_EID_TIMEOUT_INTERVAL:
-			elems->समयout_पूर्णांक = pos;
-			elems->समयout_पूर्णांक_len = elen;
-			अवरोध;
-		हाल WLAN_EID_HT_CAPABILITY:
+			break;
+		case WLAN_EID_TIMEOUT_INTERVAL:
+			elems->timeout_int = pos;
+			elems->timeout_int_len = elen;
+			break;
+		case WLAN_EID_HT_CAPABILITY:
 			elems->ht_capabilities = pos;
 			elems->ht_capabilities_len = elen;
-			अवरोध;
-		हाल WLAN_EID_HT_OPERATION:
+			break;
+		case WLAN_EID_HT_OPERATION:
 			elems->ht_operation = pos;
 			elems->ht_operation_len = elen;
-			अवरोध;
-		हाल WLAN_EID_VHT_CAPABILITY:
+			break;
+		case WLAN_EID_VHT_CAPABILITY:
 			elems->vht_capabilities = pos;
 			elems->vht_capabilities_len = elen;
-			अवरोध;
-		हाल WLAN_EID_VHT_OPERATION:
+			break;
+		case WLAN_EID_VHT_OPERATION:
 			elems->vht_operation = pos;
 			elems->vht_operation_len = elen;
-			अवरोध;
-		हाल WLAN_EID_OPMODE_NOTIF:
-			elems->vht_op_mode_notअगरy = pos;
-			elems->vht_op_mode_notअगरy_len = elen;
-			अवरोध;
-		शेष:
+			break;
+		case WLAN_EID_OPMODE_NOTIF:
+			elems->vht_op_mode_notify = pos;
+			elems->vht_op_mode_notify_len = elen;
+			break;
+		default:
 			unknown++;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		left -= elen;
 		pos += elen;
-	पूर्ण
+	}
 
-	अगर (left)
-		वापस ParseFailed;
+	if (left)
+		return ParseFailed;
 
-	वापस unknown ? ParseUnknown : ParseOK;
-पूर्ण
+	return unknown ? ParseUnknown : ParseOK;
+}
 
-व्योम rtw_macaddr_cfg(काष्ठा device *dev, u8 *mac_addr)
-अणु
+void rtw_macaddr_cfg(struct device *dev, u8 *mac_addr)
+{
 	u8 mac[ETH_ALEN];
-	काष्ठा device_node *np = dev->of_node;
-	स्थिर अचिन्हित अक्षर *addr;
-	पूर्णांक len;
+	struct device_node *np = dev->of_node;
+	const unsigned char *addr;
+	int len;
 
-	अगर (!mac_addr)
-		वापस;
+	if (!mac_addr)
+		return;
 
-	अगर (rtw_iniपंचांगac && mac_pton(rtw_iniपंचांगac, mac)) अणु
-		/* Users specअगरy the mac address */
+	if (rtw_initmac && mac_pton(rtw_initmac, mac)) {
+		/* Users specify the mac address */
 		ether_addr_copy(mac_addr, mac);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Use the mac address stored in the Efuse */
 		ether_addr_copy(mac, mac_addr);
-	पूर्ण
+	}
 
-	अगर (is_broadcast_ether_addr(mac) || is_zero_ether_addr(mac)) अणु
+	if (is_broadcast_ether_addr(mac) || is_zero_ether_addr(mac)) {
 		addr = of_get_property(np, "local-mac-address", &len);
 
-		अगर (addr && len == ETH_ALEN) अणु
+		if (addr && len == ETH_ALEN) {
 			ether_addr_copy(mac_addr, addr);
-		पूर्ण अन्यथा अणु
-			eth_अक्रमom_addr(mac_addr);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		} else {
+			eth_random_addr(mac_addr);
+		}
+	}
+}
 
-अटल पूर्णांक rtw_get_cipher_info(काष्ठा wlan_network *pnetwork)
-अणु
+static int rtw_get_cipher_info(struct wlan_network *pnetwork)
+{
 	u32 wpa_ielen;
-	अचिन्हित अक्षर *pbuf;
-	पूर्णांक group_cipher = 0, pairwise_cipher = 0, is8021x = 0;
-	पूर्णांक ret = _FAIL;
+	unsigned char *pbuf;
+	int group_cipher = 0, pairwise_cipher = 0, is8021x = 0;
+	int ret = _FAIL;
 
 	pbuf = rtw_get_wpa_ie(&pnetwork->network.IEs[12], &wpa_ielen, pnetwork->network.IELength-12);
 
-	अगर (pbuf && (wpa_ielen > 0)) अणु
-		अगर (_SUCCESS == rtw_parse_wpa_ie(pbuf, wpa_ielen+2, &group_cipher, &pairwise_cipher, &is8021x)) अणु
+	if (pbuf && (wpa_ielen > 0)) {
+		if (_SUCCESS == rtw_parse_wpa_ie(pbuf, wpa_ielen+2, &group_cipher, &pairwise_cipher, &is8021x)) {
 			pnetwork->BcnInfo.pairwise_cipher = pairwise_cipher;
 			pnetwork->BcnInfo.group_cipher = group_cipher;
 			pnetwork->BcnInfo.is_8021x = is8021x;
 			ret = _SUCCESS;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		pbuf = rtw_get_wpa2_ie(&pnetwork->network.IEs[12], &wpa_ielen, pnetwork->network.IELength-12);
 
-		अगर (pbuf && (wpa_ielen > 0)) अणु
-			अगर (_SUCCESS == rtw_parse_wpa2_ie(pbuf, wpa_ielen+2, &group_cipher, &pairwise_cipher, &is8021x)) अणु
+		if (pbuf && (wpa_ielen > 0)) {
+			if (_SUCCESS == rtw_parse_wpa2_ie(pbuf, wpa_ielen+2, &group_cipher, &pairwise_cipher, &is8021x)) {
 				pnetwork->BcnInfo.pairwise_cipher = pairwise_cipher;
 				pnetwork->BcnInfo.group_cipher = group_cipher;
 				pnetwork->BcnInfo.is_8021x = is8021x;
 				ret = _SUCCESS;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम rtw_get_bcn_info(काष्ठा wlan_network *pnetwork)
-अणु
-	अचिन्हित लघु cap = 0;
+void rtw_get_bcn_info(struct wlan_network *pnetwork)
+{
+	unsigned short cap = 0;
 	u8 bencrypt = 0;
 	/* u8 wpa_ie[255], rsn_ie[255]; */
 	u16 wpa_len = 0, rsn_len = 0;
-	काष्ठा HT_info_element *pht_info = शून्य;
-	काष्ठा ieee80211_ht_cap *pht_cap = शून्य;
-	अचिन्हित पूर्णांक		len;
-	अचिन्हित अक्षर 	*p;
+	struct HT_info_element *pht_info = NULL;
+	struct ieee80211_ht_cap *pht_cap = NULL;
+	unsigned int		len;
+	unsigned char 	*p;
 	__le16 le_cap;
 
-	स_नकल((u8 *)&le_cap, rtw_get_capability_from_ie(pnetwork->network.IEs), 2);
+	memcpy((u8 *)&le_cap, rtw_get_capability_from_ie(pnetwork->network.IEs), 2);
 	cap = le16_to_cpu(le_cap);
-	अगर (cap & WLAN_CAPABILITY_PRIVACY) अणु
+	if (cap & WLAN_CAPABILITY_PRIVACY) {
 		bencrypt = 1;
 		pnetwork->network.Privacy = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		pnetwork->BcnInfo.encryp_protocol = ENCRYP_PROTOCOL_OPENSYS;
-	पूर्ण
-	rtw_get_sec_ie(pnetwork->network.IEs, pnetwork->network.IELength, शून्य, &rsn_len, शून्य, &wpa_len);
+	}
+	rtw_get_sec_ie(pnetwork->network.IEs, pnetwork->network.IELength, NULL, &rsn_len, NULL, &wpa_len);
 
-	अगर (rsn_len > 0) अणु
+	if (rsn_len > 0) {
 		pnetwork->BcnInfo.encryp_protocol = ENCRYP_PROTOCOL_WPA2;
-	पूर्ण अन्यथा अगर (wpa_len > 0) अणु
+	} else if (wpa_len > 0) {
 		pnetwork->BcnInfo.encryp_protocol = ENCRYP_PROTOCOL_WPA;
-	पूर्ण अन्यथा अणु
-		अगर (bencrypt)
+	} else {
+		if (bencrypt)
 			pnetwork->BcnInfo.encryp_protocol = ENCRYP_PROTOCOL_WEP;
-	पूर्ण
+	}
 	rtw_get_cipher_info(pnetwork);
 
 	/* get bwmode and ch_offset */
 	/* parsing HT_CAP_IE */
 	p = rtw_get_ie(pnetwork->network.IEs + _FIXED_IE_LENGTH_, WLAN_EID_HT_CAPABILITY, &len, pnetwork->network.IELength - _FIXED_IE_LENGTH_);
-	अगर (p && len > 0) अणु
-			pht_cap = (काष्ठा ieee80211_ht_cap *)(p + 2);
+	if (p && len > 0) {
+			pht_cap = (struct ieee80211_ht_cap *)(p + 2);
 			pnetwork->BcnInfo.ht_cap_info = le16_to_cpu(pht_cap->cap_info);
-	पूर्ण अन्यथा अणु
+	} else {
 			pnetwork->BcnInfo.ht_cap_info = 0;
-	पूर्ण
+	}
 	/* parsing HT_INFO_IE */
 	p = rtw_get_ie(pnetwork->network.IEs + _FIXED_IE_LENGTH_, WLAN_EID_HT_OPERATION, &len, pnetwork->network.IELength - _FIXED_IE_LENGTH_);
-	अगर (p && len > 0) अणु
-			pht_info = (काष्ठा HT_info_element *)(p + 2);
+	if (p && len > 0) {
+			pht_info = (struct HT_info_element *)(p + 2);
 			pnetwork->BcnInfo.ht_info_infos_0 = pht_info->infos[0];
-	पूर्ण अन्यथा अणु
+	} else {
 			pnetwork->BcnInfo.ht_info_infos_0 = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* show MCS rate, unit: 100Kbps */
-u16 rtw_mcs_rate(u8 rf_type, u8 bw_40MHz, u8 लघु_GI, अचिन्हित अक्षर *MCS_rate)
-अणु
+u16 rtw_mcs_rate(u8 rf_type, u8 bw_40MHz, u8 short_GI, unsigned char *MCS_rate)
+{
 	u16 max_rate = 0;
 
-	अगर (rf_type == RF_1T1R) अणु
-		अगर (MCS_rate[0] & BIT(7))
-			max_rate = (bw_40MHz) ? ((लघु_GI)?1500:1350):((लघु_GI)?722:650);
-		अन्यथा अगर (MCS_rate[0] & BIT(6))
-			max_rate = (bw_40MHz) ? ((लघु_GI)?1350:1215):((लघु_GI)?650:585);
-		अन्यथा अगर (MCS_rate[0] & BIT(5))
-			max_rate = (bw_40MHz) ? ((लघु_GI)?1200:1080):((लघु_GI)?578:520);
-		अन्यथा अगर (MCS_rate[0] & BIT(4))
-			max_rate = (bw_40MHz) ? ((लघु_GI)?900:810):((लघु_GI)?433:390);
-		अन्यथा अगर (MCS_rate[0] & BIT(3))
-			max_rate = (bw_40MHz) ? ((लघु_GI)?600:540):((लघु_GI)?289:260);
-		अन्यथा अगर (MCS_rate[0] & BIT(2))
-			max_rate = (bw_40MHz) ? ((लघु_GI)?450:405):((लघु_GI)?217:195);
-		अन्यथा अगर (MCS_rate[0] & BIT(1))
-			max_rate = (bw_40MHz) ? ((लघु_GI)?300:270):((लघु_GI)?144:130);
-		अन्यथा अगर (MCS_rate[0] & BIT(0))
-			max_rate = (bw_40MHz) ? ((लघु_GI)?150:135):((लघु_GI)?72:65);
-	पूर्ण अन्यथा अणु
-		अगर (MCS_rate[1]) अणु
-			अगर (MCS_rate[1] & BIT(7))
-				max_rate = (bw_40MHz) ? ((लघु_GI)?3000:2700):((लघु_GI)?1444:1300);
-			अन्यथा अगर (MCS_rate[1] & BIT(6))
-				max_rate = (bw_40MHz) ? ((लघु_GI)?2700:2430):((लघु_GI)?1300:1170);
-			अन्यथा अगर (MCS_rate[1] & BIT(5))
-				max_rate = (bw_40MHz) ? ((लघु_GI)?2400:2160):((लघु_GI)?1156:1040);
-			अन्यथा अगर (MCS_rate[1] & BIT(4))
-				max_rate = (bw_40MHz) ? ((लघु_GI)?1800:1620):((लघु_GI)?867:780);
-			अन्यथा अगर (MCS_rate[1] & BIT(3))
-				max_rate = (bw_40MHz) ? ((लघु_GI)?1200:1080):((लघु_GI)?578:520);
-			अन्यथा अगर (MCS_rate[1] & BIT(2))
-				max_rate = (bw_40MHz) ? ((लघु_GI)?900:810):((लघु_GI)?433:390);
-			अन्यथा अगर (MCS_rate[1] & BIT(1))
-				max_rate = (bw_40MHz) ? ((लघु_GI)?600:540):((लघु_GI)?289:260);
-			अन्यथा अगर (MCS_rate[1] & BIT(0))
-				max_rate = (bw_40MHz) ? ((लघु_GI)?300:270):((लघु_GI)?144:130);
-		पूर्ण अन्यथा अणु
-			अगर (MCS_rate[0] & BIT(7))
-				max_rate = (bw_40MHz) ? ((लघु_GI)?1500:1350):((लघु_GI)?722:650);
-			अन्यथा अगर (MCS_rate[0] & BIT(6))
-				max_rate = (bw_40MHz) ? ((लघु_GI)?1350:1215):((लघु_GI)?650:585);
-			अन्यथा अगर (MCS_rate[0] & BIT(5))
-				max_rate = (bw_40MHz) ? ((लघु_GI)?1200:1080):((लघु_GI)?578:520);
-			अन्यथा अगर (MCS_rate[0] & BIT(4))
-				max_rate = (bw_40MHz) ? ((लघु_GI)?900:810):((लघु_GI)?433:390);
-			अन्यथा अगर (MCS_rate[0] & BIT(3))
-				max_rate = (bw_40MHz) ? ((लघु_GI)?600:540):((लघु_GI)?289:260);
-			अन्यथा अगर (MCS_rate[0] & BIT(2))
-				max_rate = (bw_40MHz) ? ((लघु_GI)?450:405):((लघु_GI)?217:195);
-			अन्यथा अगर (MCS_rate[0] & BIT(1))
-				max_rate = (bw_40MHz) ? ((लघु_GI)?300:270):((लघु_GI)?144:130);
-			अन्यथा अगर (MCS_rate[0] & BIT(0))
-				max_rate = (bw_40MHz) ? ((लघु_GI)?150:135):((लघु_GI)?72:65);
-		पूर्ण
-	पूर्ण
-	वापस max_rate;
-पूर्ण
+	if (rf_type == RF_1T1R) {
+		if (MCS_rate[0] & BIT(7))
+			max_rate = (bw_40MHz) ? ((short_GI)?1500:1350):((short_GI)?722:650);
+		else if (MCS_rate[0] & BIT(6))
+			max_rate = (bw_40MHz) ? ((short_GI)?1350:1215):((short_GI)?650:585);
+		else if (MCS_rate[0] & BIT(5))
+			max_rate = (bw_40MHz) ? ((short_GI)?1200:1080):((short_GI)?578:520);
+		else if (MCS_rate[0] & BIT(4))
+			max_rate = (bw_40MHz) ? ((short_GI)?900:810):((short_GI)?433:390);
+		else if (MCS_rate[0] & BIT(3))
+			max_rate = (bw_40MHz) ? ((short_GI)?600:540):((short_GI)?289:260);
+		else if (MCS_rate[0] & BIT(2))
+			max_rate = (bw_40MHz) ? ((short_GI)?450:405):((short_GI)?217:195);
+		else if (MCS_rate[0] & BIT(1))
+			max_rate = (bw_40MHz) ? ((short_GI)?300:270):((short_GI)?144:130);
+		else if (MCS_rate[0] & BIT(0))
+			max_rate = (bw_40MHz) ? ((short_GI)?150:135):((short_GI)?72:65);
+	} else {
+		if (MCS_rate[1]) {
+			if (MCS_rate[1] & BIT(7))
+				max_rate = (bw_40MHz) ? ((short_GI)?3000:2700):((short_GI)?1444:1300);
+			else if (MCS_rate[1] & BIT(6))
+				max_rate = (bw_40MHz) ? ((short_GI)?2700:2430):((short_GI)?1300:1170);
+			else if (MCS_rate[1] & BIT(5))
+				max_rate = (bw_40MHz) ? ((short_GI)?2400:2160):((short_GI)?1156:1040);
+			else if (MCS_rate[1] & BIT(4))
+				max_rate = (bw_40MHz) ? ((short_GI)?1800:1620):((short_GI)?867:780);
+			else if (MCS_rate[1] & BIT(3))
+				max_rate = (bw_40MHz) ? ((short_GI)?1200:1080):((short_GI)?578:520);
+			else if (MCS_rate[1] & BIT(2))
+				max_rate = (bw_40MHz) ? ((short_GI)?900:810):((short_GI)?433:390);
+			else if (MCS_rate[1] & BIT(1))
+				max_rate = (bw_40MHz) ? ((short_GI)?600:540):((short_GI)?289:260);
+			else if (MCS_rate[1] & BIT(0))
+				max_rate = (bw_40MHz) ? ((short_GI)?300:270):((short_GI)?144:130);
+		} else {
+			if (MCS_rate[0] & BIT(7))
+				max_rate = (bw_40MHz) ? ((short_GI)?1500:1350):((short_GI)?722:650);
+			else if (MCS_rate[0] & BIT(6))
+				max_rate = (bw_40MHz) ? ((short_GI)?1350:1215):((short_GI)?650:585);
+			else if (MCS_rate[0] & BIT(5))
+				max_rate = (bw_40MHz) ? ((short_GI)?1200:1080):((short_GI)?578:520);
+			else if (MCS_rate[0] & BIT(4))
+				max_rate = (bw_40MHz) ? ((short_GI)?900:810):((short_GI)?433:390);
+			else if (MCS_rate[0] & BIT(3))
+				max_rate = (bw_40MHz) ? ((short_GI)?600:540):((short_GI)?289:260);
+			else if (MCS_rate[0] & BIT(2))
+				max_rate = (bw_40MHz) ? ((short_GI)?450:405):((short_GI)?217:195);
+			else if (MCS_rate[0] & BIT(1))
+				max_rate = (bw_40MHz) ? ((short_GI)?300:270):((short_GI)?144:130);
+			else if (MCS_rate[0] & BIT(0))
+				max_rate = (bw_40MHz) ? ((short_GI)?150:135):((short_GI)?72:65);
+		}
+	}
+	return max_rate;
+}
 
-पूर्णांक rtw_action_frame_parse(स्थिर u8 *frame, u32 frame_len, u8 *category, u8 *action)
-अणु
-	स्थिर u8 *frame_body = frame + माप(काष्ठा ieee80211_hdr_3addr);
+int rtw_action_frame_parse(const u8 *frame, u32 frame_len, u8 *category, u8 *action)
+{
+	const u8 *frame_body = frame + sizeof(struct ieee80211_hdr_3addr);
 	u16 fc;
 	u8 c;
 	u8 a = ACT_PUBLIC_MAX;
 
-	fc = le16_to_cpu(((काष्ठा ieee80211_hdr_3addr *)frame)->frame_control);
+	fc = le16_to_cpu(((struct ieee80211_hdr_3addr *)frame)->frame_control);
 
-	अगर ((fc & (IEEE80211_FCTL_FTYPE|IEEE80211_FCTL_STYPE))
+	if ((fc & (IEEE80211_FCTL_FTYPE|IEEE80211_FCTL_STYPE))
 		!= (IEEE80211_FTYPE_MGMT|IEEE80211_STYPE_ACTION)
-	) अणु
-		वापस false;
-	पूर्ण
+	) {
+		return false;
+	}
 
 	c = frame_body[0];
 
-	चयन (c) अणु
-	हाल RTW_WLAN_CATEGORY_P2P: /* venकरोr-specअगरic */
-		अवरोध;
-	शेष:
+	switch (c) {
+	case RTW_WLAN_CATEGORY_P2P: /* vendor-specific */
+		break;
+	default:
 		a = frame_body[1];
-	पूर्ण
+	}
 
-	अगर (category)
+	if (category)
 		*category = c;
-	अगर (action)
+	if (action)
 		*action = a;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल स्थिर अक्षर *_action_खुला_str[] = अणु
+static const char *_action_public_str[] = {
 	"ACT_PUB_BSSCOEXIST",
 	"ACT_PUB_DSE_ENABLE",
 	"ACT_PUB_DSE_DEENABLE",
@@ -1235,10 +1234,10 @@ u16 rtw_mcs_rate(u8 rf_type, u8 bw_40MHz, u8 लघु_GI, अचिन्हि
 	"ACT_PUB_TDLS_DISCOVERY_RSP",
 	"ACT_PUB_LOCATION_TRACK",
 	"ACT_PUB_RSVD",
-पूर्ण;
+};
 
-स्थिर अक्षर *action_खुला_str(u8 action)
-अणु
+const char *action_public_str(u8 action)
+{
 	action = (action >= ACT_PUBLIC_MAX) ? ACT_PUBLIC_MAX : action;
-	वापस _action_खुला_str[action];
-पूर्ण
+	return _action_public_str[action];
+}

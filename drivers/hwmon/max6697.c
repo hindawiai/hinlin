@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2012 Guenter Roeck <linux@roeck-us.net>
  *
@@ -7,487 +6,487 @@
  * Copyright (c) 2011 David George <david.george@ska.ac.za>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/hwmon-sysfs.h>
-#समावेश <linux/err.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/jiffies.h>
+#include <linux/i2c.h>
+#include <linux/hwmon.h>
+#include <linux/hwmon-sysfs.h>
+#include <linux/err.h>
+#include <linux/mutex.h>
+#include <linux/of_device.h>
+#include <linux/of.h>
 
-#समावेश <linux/platक्रमm_data/max6697.h>
+#include <linux/platform_data/max6697.h>
 
-क्रमागत chips अणु max6581, max6602, max6622, max6636, max6689, max6693, max6694,
-	     max6697, max6698, max6699 पूर्ण;
+enum chips { max6581, max6602, max6622, max6636, max6689, max6693, max6694,
+	     max6697, max6698, max6699 };
 
 /* Report local sensor as temp1 */
 
-अटल स्थिर u8 MAX6697_REG_TEMP[] = अणु
-			0x07, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x08 पूर्ण;
-अटल स्थिर u8 MAX6697_REG_TEMP_EXT[] = अणु
-			0x57, 0x09, 0x52, 0x53, 0x54, 0x55, 0x56, 0 पूर्ण;
-अटल स्थिर u8 MAX6697_REG_MAX[] = अणु
-			0x17, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x18 पूर्ण;
-अटल स्थिर u8 MAX6697_REG_CRIT[] = अणु
-			0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27 पूर्ण;
+static const u8 MAX6697_REG_TEMP[] = {
+			0x07, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x08 };
+static const u8 MAX6697_REG_TEMP_EXT[] = {
+			0x57, 0x09, 0x52, 0x53, 0x54, 0x55, 0x56, 0 };
+static const u8 MAX6697_REG_MAX[] = {
+			0x17, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x18 };
+static const u8 MAX6697_REG_CRIT[] = {
+			0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27 };
 
 /*
- * Map device tree / platक्रमm data रेजिस्टर bit map to chip bit map.
- * Applies to alert रेजिस्टर and over-temperature रेजिस्टर.
+ * Map device tree / platform data register bit map to chip bit map.
+ * Applies to alert register and over-temperature register.
  */
-#घोषणा MAX6697_ALERT_MAP_BITS(reg)	((((reg) & 0x7e) >> 1) | \
+#define MAX6697_ALERT_MAP_BITS(reg)	((((reg) & 0x7e) >> 1) | \
 				 (((reg) & 0x01) << 6) | ((reg) & 0x80))
-#घोषणा MAX6697_OVERT_MAP_BITS(reg) (((reg) >> 1) | (((reg) & 0x01) << 7))
+#define MAX6697_OVERT_MAP_BITS(reg) (((reg) >> 1) | (((reg) & 0x01) << 7))
 
-#घोषणा MAX6697_REG_STAT(n)		(0x44 + (n))
+#define MAX6697_REG_STAT(n)		(0x44 + (n))
 
-#घोषणा MAX6697_REG_CONFIG		0x41
-#घोषणा MAX6581_CONF_EXTENDED		(1 << 1)
-#घोषणा MAX6693_CONF_BETA		(1 << 2)
-#घोषणा MAX6697_CONF_RESISTANCE		(1 << 3)
-#घोषणा MAX6697_CONF_TIMEOUT		(1 << 5)
-#घोषणा MAX6697_REG_ALERT_MASK		0x42
-#घोषणा MAX6697_REG_OVERT_MASK		0x43
+#define MAX6697_REG_CONFIG		0x41
+#define MAX6581_CONF_EXTENDED		(1 << 1)
+#define MAX6693_CONF_BETA		(1 << 2)
+#define MAX6697_CONF_RESISTANCE		(1 << 3)
+#define MAX6697_CONF_TIMEOUT		(1 << 5)
+#define MAX6697_REG_ALERT_MASK		0x42
+#define MAX6697_REG_OVERT_MASK		0x43
 
-#घोषणा MAX6581_REG_RESISTANCE		0x4a
-#घोषणा MAX6581_REG_IDEALITY		0x4b
-#घोषणा MAX6581_REG_IDEALITY_SELECT	0x4c
-#घोषणा MAX6581_REG_OFFSET		0x4d
-#घोषणा MAX6581_REG_OFFSET_SELECT	0x4e
-#घोषणा MAX6581_OFFSET_MIN		-31750
-#घोषणा MAX6581_OFFSET_MAX		31750
+#define MAX6581_REG_RESISTANCE		0x4a
+#define MAX6581_REG_IDEALITY		0x4b
+#define MAX6581_REG_IDEALITY_SELECT	0x4c
+#define MAX6581_REG_OFFSET		0x4d
+#define MAX6581_REG_OFFSET_SELECT	0x4e
+#define MAX6581_OFFSET_MIN		-31750
+#define MAX6581_OFFSET_MAX		31750
 
-#घोषणा MAX6697_CONV_TIME		156	/* ms per channel, worst हाल */
+#define MAX6697_CONV_TIME		156	/* ms per channel, worst case */
 
-काष्ठा max6697_chip_data अणु
-	पूर्णांक channels;
+struct max6697_chip_data {
+	int channels;
 	u32 have_ext;
 	u32 have_crit;
 	u32 have_fault;
 	u8 valid_conf;
-	स्थिर u8 *alarm_map;
-पूर्ण;
+	const u8 *alarm_map;
+};
 
-काष्ठा max6697_data अणु
-	काष्ठा i2c_client *client;
+struct max6697_data {
+	struct i2c_client *client;
 
-	क्रमागत chips type;
-	स्थिर काष्ठा max6697_chip_data *chip;
+	enum chips type;
+	const struct max6697_chip_data *chip;
 
-	पूर्णांक update_पूर्णांकerval;	/* in milli-seconds */
-	पूर्णांक temp_offset;	/* in degrees C */
+	int update_interval;	/* in milli-seconds */
+	int temp_offset;	/* in degrees C */
 
-	काष्ठा mutex update_lock;
-	अचिन्हित दीर्घ last_updated;	/* In jअगरfies */
-	bool valid;		/* true अगर following fields are valid */
+	struct mutex update_lock;
+	unsigned long last_updated;	/* In jiffies */
+	bool valid;		/* true if following fields are valid */
 
 	/* 1x local and up to 7x remote */
 	u8 temp[8][4];		/* [nr][0]=temp [1]=ext [2]=max [3]=crit */
-#घोषणा MAX6697_TEMP_INPUT	0
-#घोषणा MAX6697_TEMP_EXT	1
-#घोषणा MAX6697_TEMP_MAX	2
-#घोषणा MAX6697_TEMP_CRIT	3
+#define MAX6697_TEMP_INPUT	0
+#define MAX6697_TEMP_EXT	1
+#define MAX6697_TEMP_MAX	2
+#define MAX6697_TEMP_CRIT	3
 	u32 alarms;
-पूर्ण;
+};
 
-/* Diode fault status bits on MAX6581 are right shअगरted by one bit */
-अटल स्थिर u8 max6581_alarm_map[] = अणु
+/* Diode fault status bits on MAX6581 are right shifted by one bit */
+static const u8 max6581_alarm_map[] = {
 	 0, 0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15,
-	 16, 17, 18, 19, 20, 21, 22, 23 पूर्ण;
+	 16, 17, 18, 19, 20, 21, 22, 23 };
 
-अटल स्थिर काष्ठा max6697_chip_data max6697_chip_data[] = अणु
-	[max6581] = अणु
+static const struct max6697_chip_data max6697_chip_data[] = {
+	[max6581] = {
 		.channels = 8,
 		.have_crit = 0xff,
 		.have_ext = 0x7f,
 		.have_fault = 0xfe,
 		.valid_conf = MAX6581_CONF_EXTENDED | MAX6697_CONF_TIMEOUT,
 		.alarm_map = max6581_alarm_map,
-	पूर्ण,
-	[max6602] = अणु
+	},
+	[max6602] = {
 		.channels = 5,
 		.have_crit = 0x12,
 		.have_ext = 0x02,
 		.have_fault = 0x1e,
 		.valid_conf = MAX6697_CONF_RESISTANCE | MAX6697_CONF_TIMEOUT,
-	पूर्ण,
-	[max6622] = अणु
+	},
+	[max6622] = {
 		.channels = 5,
 		.have_crit = 0x12,
 		.have_ext = 0x02,
 		.have_fault = 0x1e,
 		.valid_conf = MAX6697_CONF_RESISTANCE | MAX6697_CONF_TIMEOUT,
-	पूर्ण,
-	[max6636] = अणु
+	},
+	[max6636] = {
 		.channels = 7,
 		.have_crit = 0x72,
 		.have_ext = 0x02,
 		.have_fault = 0x7e,
 		.valid_conf = MAX6697_CONF_RESISTANCE | MAX6697_CONF_TIMEOUT,
-	पूर्ण,
-	[max6689] = अणु
+	},
+	[max6689] = {
 		.channels = 7,
 		.have_crit = 0x72,
 		.have_ext = 0x02,
 		.have_fault = 0x7e,
 		.valid_conf = MAX6697_CONF_RESISTANCE | MAX6697_CONF_TIMEOUT,
-	पूर्ण,
-	[max6693] = अणु
+	},
+	[max6693] = {
 		.channels = 7,
 		.have_crit = 0x72,
 		.have_ext = 0x02,
 		.have_fault = 0x7e,
 		.valid_conf = MAX6697_CONF_RESISTANCE | MAX6693_CONF_BETA |
 		  MAX6697_CONF_TIMEOUT,
-	पूर्ण,
-	[max6694] = अणु
+	},
+	[max6694] = {
 		.channels = 5,
 		.have_crit = 0x12,
 		.have_ext = 0x02,
 		.have_fault = 0x1e,
 		.valid_conf = MAX6697_CONF_RESISTANCE | MAX6693_CONF_BETA |
 		  MAX6697_CONF_TIMEOUT,
-	पूर्ण,
-	[max6697] = अणु
+	},
+	[max6697] = {
 		.channels = 7,
 		.have_crit = 0x72,
 		.have_ext = 0x02,
 		.have_fault = 0x7e,
 		.valid_conf = MAX6697_CONF_RESISTANCE | MAX6697_CONF_TIMEOUT,
-	पूर्ण,
-	[max6698] = अणु
+	},
+	[max6698] = {
 		.channels = 7,
 		.have_crit = 0x72,
 		.have_ext = 0x02,
 		.have_fault = 0x0e,
 		.valid_conf = MAX6697_CONF_RESISTANCE | MAX6697_CONF_TIMEOUT,
-	पूर्ण,
-	[max6699] = अणु
+	},
+	[max6699] = {
 		.channels = 5,
 		.have_crit = 0x12,
 		.have_ext = 0x02,
 		.have_fault = 0x1e,
 		.valid_conf = MAX6697_CONF_RESISTANCE | MAX6697_CONF_TIMEOUT,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल अंतरभूत पूर्णांक max6581_offset_to_millic(पूर्णांक val)
-अणु
-	वापस sign_extend32(val, 7) * 250;
-पूर्ण
+static inline int max6581_offset_to_millic(int val)
+{
+	return sign_extend32(val, 7) * 250;
+}
 
-अटल काष्ठा max6697_data *max6697_update_device(काष्ठा device *dev)
-अणु
-	काष्ठा max6697_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	काष्ठा max6697_data *ret = data;
-	पूर्णांक val;
-	पूर्णांक i;
+static struct max6697_data *max6697_update_device(struct device *dev)
+{
+	struct max6697_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	struct max6697_data *ret = data;
+	int val;
+	int i;
 	u32 alarms;
 
 	mutex_lock(&data->update_lock);
 
-	अगर (data->valid &&
-	    !समय_after(jअगरfies, data->last_updated
-			+ msecs_to_jअगरfies(data->update_पूर्णांकerval)))
-		जाओ पात;
+	if (data->valid &&
+	    !time_after(jiffies, data->last_updated
+			+ msecs_to_jiffies(data->update_interval)))
+		goto abort;
 
-	क्रम (i = 0; i < data->chip->channels; i++) अणु
-		अगर (data->chip->have_ext & (1 << i)) अणु
-			val = i2c_smbus_पढ़ो_byte_data(client,
+	for (i = 0; i < data->chip->channels; i++) {
+		if (data->chip->have_ext & (1 << i)) {
+			val = i2c_smbus_read_byte_data(client,
 						       MAX6697_REG_TEMP_EXT[i]);
-			अगर (unlikely(val < 0)) अणु
+			if (unlikely(val < 0)) {
 				ret = ERR_PTR(val);
-				जाओ पात;
-			पूर्ण
+				goto abort;
+			}
 			data->temp[i][MAX6697_TEMP_EXT] = val;
-		पूर्ण
+		}
 
-		val = i2c_smbus_पढ़ो_byte_data(client, MAX6697_REG_TEMP[i]);
-		अगर (unlikely(val < 0)) अणु
+		val = i2c_smbus_read_byte_data(client, MAX6697_REG_TEMP[i]);
+		if (unlikely(val < 0)) {
 			ret = ERR_PTR(val);
-			जाओ पात;
-		पूर्ण
+			goto abort;
+		}
 		data->temp[i][MAX6697_TEMP_INPUT] = val;
 
-		val = i2c_smbus_पढ़ो_byte_data(client, MAX6697_REG_MAX[i]);
-		अगर (unlikely(val < 0)) अणु
+		val = i2c_smbus_read_byte_data(client, MAX6697_REG_MAX[i]);
+		if (unlikely(val < 0)) {
 			ret = ERR_PTR(val);
-			जाओ पात;
-		पूर्ण
+			goto abort;
+		}
 		data->temp[i][MAX6697_TEMP_MAX] = val;
 
-		अगर (data->chip->have_crit & (1 << i)) अणु
-			val = i2c_smbus_पढ़ो_byte_data(client,
+		if (data->chip->have_crit & (1 << i)) {
+			val = i2c_smbus_read_byte_data(client,
 						       MAX6697_REG_CRIT[i]);
-			अगर (unlikely(val < 0)) अणु
+			if (unlikely(val < 0)) {
 				ret = ERR_PTR(val);
-				जाओ पात;
-			पूर्ण
+				goto abort;
+			}
 			data->temp[i][MAX6697_TEMP_CRIT] = val;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	alarms = 0;
-	क्रम (i = 0; i < 3; i++) अणु
-		val = i2c_smbus_पढ़ो_byte_data(client, MAX6697_REG_STAT(i));
-		अगर (unlikely(val < 0)) अणु
+	for (i = 0; i < 3; i++) {
+		val = i2c_smbus_read_byte_data(client, MAX6697_REG_STAT(i));
+		if (unlikely(val < 0)) {
 			ret = ERR_PTR(val);
-			जाओ पात;
-		पूर्ण
+			goto abort;
+		}
 		alarms = (alarms << 8) | val;
-	पूर्ण
+	}
 	data->alarms = alarms;
-	data->last_updated = jअगरfies;
+	data->last_updated = jiffies;
 	data->valid = true;
-पात:
+abort:
 	mutex_unlock(&data->update_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार temp_input_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	पूर्णांक index = to_sensor_dev_attr(devattr)->index;
-	काष्ठा max6697_data *data = max6697_update_device(dev);
-	पूर्णांक temp;
+static ssize_t temp_input_show(struct device *dev,
+			       struct device_attribute *devattr, char *buf)
+{
+	int index = to_sensor_dev_attr(devattr)->index;
+	struct max6697_data *data = max6697_update_device(dev);
+	int temp;
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
 	temp = (data->temp[index][MAX6697_TEMP_INPUT] - data->temp_offset) << 3;
 	temp |= data->temp[index][MAX6697_TEMP_EXT] >> 5;
 
-	वापस प्र_लिखो(buf, "%d\n", temp * 125);
-पूर्ण
+	return sprintf(buf, "%d\n", temp * 125);
+}
 
-अटल sमाप_प्रकार temp_show(काष्ठा device *dev, काष्ठा device_attribute *devattr,
-			 अक्षर *buf)
-अणु
-	पूर्णांक nr = to_sensor_dev_attr_2(devattr)->nr;
-	पूर्णांक index = to_sensor_dev_attr_2(devattr)->index;
-	काष्ठा max6697_data *data = max6697_update_device(dev);
-	पूर्णांक temp;
+static ssize_t temp_show(struct device *dev, struct device_attribute *devattr,
+			 char *buf)
+{
+	int nr = to_sensor_dev_attr_2(devattr)->nr;
+	int index = to_sensor_dev_attr_2(devattr)->index;
+	struct max6697_data *data = max6697_update_device(dev);
+	int temp;
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
 	temp = data->temp[nr][index];
 	temp -= data->temp_offset;
 
-	वापस प्र_लिखो(buf, "%d\n", temp * 1000);
-पूर्ण
+	return sprintf(buf, "%d\n", temp * 1000);
+}
 
-अटल sमाप_प्रकार alarm_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  अक्षर *buf)
-अणु
-	पूर्णांक index = to_sensor_dev_attr(attr)->index;
-	काष्ठा max6697_data *data = max6697_update_device(dev);
+static ssize_t alarm_show(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	int index = to_sensor_dev_attr(attr)->index;
+	struct max6697_data *data = max6697_update_device(dev);
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
-	अगर (data->chip->alarm_map)
+	if (data->chip->alarm_map)
 		index = data->chip->alarm_map[index];
 
-	वापस प्र_लिखो(buf, "%u\n", (data->alarms >> index) & 0x1);
-पूर्ण
+	return sprintf(buf, "%u\n", (data->alarms >> index) & 0x1);
+}
 
-अटल sमाप_प्रकार temp_store(काष्ठा device *dev,
-			  काष्ठा device_attribute *devattr, स्थिर अक्षर *buf,
-			  माप_प्रकार count)
-अणु
-	पूर्णांक nr = to_sensor_dev_attr_2(devattr)->nr;
-	पूर्णांक index = to_sensor_dev_attr_2(devattr)->index;
-	काष्ठा max6697_data *data = dev_get_drvdata(dev);
-	दीर्घ temp;
-	पूर्णांक ret;
+static ssize_t temp_store(struct device *dev,
+			  struct device_attribute *devattr, const char *buf,
+			  size_t count)
+{
+	int nr = to_sensor_dev_attr_2(devattr)->nr;
+	int index = to_sensor_dev_attr_2(devattr)->index;
+	struct max6697_data *data = dev_get_drvdata(dev);
+	long temp;
+	int ret;
 
-	ret = kम_से_दीर्घ(buf, 10, &temp);
-	अगर (ret < 0)
-		वापस ret;
+	ret = kstrtol(buf, 10, &temp);
+	if (ret < 0)
+		return ret;
 
 	mutex_lock(&data->update_lock);
 	temp = DIV_ROUND_CLOSEST(temp, 1000) + data->temp_offset;
 	temp = clamp_val(temp, 0, data->type == max6581 ? 255 : 127);
 	data->temp[nr][index] = temp;
-	ret = i2c_smbus_ग_लिखो_byte_data(data->client,
+	ret = i2c_smbus_write_byte_data(data->client,
 					index == 2 ? MAX6697_REG_MAX[nr]
 						   : MAX6697_REG_CRIT[nr],
 					temp);
 	mutex_unlock(&data->update_lock);
 
-	वापस ret < 0 ? ret : count;
-पूर्ण
+	return ret < 0 ? ret : count;
+}
 
-अटल sमाप_प्रकार offset_store(काष्ठा device *dev, काष्ठा device_attribute *devattr, स्थिर अक्षर *buf,
-			    माप_प्रकार count)
-अणु
-	पूर्णांक val, ret, index, select;
-	काष्ठा max6697_data *data;
+static ssize_t offset_store(struct device *dev, struct device_attribute *devattr, const char *buf,
+			    size_t count)
+{
+	int val, ret, index, select;
+	struct max6697_data *data;
 	bool channel_enabled;
-	दीर्घ temp;
+	long temp;
 
 	index = to_sensor_dev_attr(devattr)->index;
 	data = dev_get_drvdata(dev);
-	ret = kम_से_दीर्घ(buf, 10, &temp);
-	अगर (ret < 0)
-		वापस ret;
+	ret = kstrtol(buf, 10, &temp);
+	if (ret < 0)
+		return ret;
 
 	mutex_lock(&data->update_lock);
-	select = i2c_smbus_पढ़ो_byte_data(data->client, MAX6581_REG_OFFSET_SELECT);
-	अगर (select < 0) अणु
+	select = i2c_smbus_read_byte_data(data->client, MAX6581_REG_OFFSET_SELECT);
+	if (select < 0) {
 		ret = select;
-		जाओ पात;
-	पूर्ण
+		goto abort;
+	}
 	channel_enabled = (select & (1 << (index - 1)));
 	temp = clamp_val(temp, MAX6581_OFFSET_MIN, MAX6581_OFFSET_MAX);
 	val = DIV_ROUND_CLOSEST(temp, 250);
-	/* disable the offset क्रम channel अगर the new offset is 0 */
-	अगर (val == 0) अणु
-		अगर (channel_enabled)
-			ret = i2c_smbus_ग_लिखो_byte_data(data->client, MAX6581_REG_OFFSET_SELECT,
+	/* disable the offset for channel if the new offset is 0 */
+	if (val == 0) {
+		if (channel_enabled)
+			ret = i2c_smbus_write_byte_data(data->client, MAX6581_REG_OFFSET_SELECT,
 							select & ~(1 << (index - 1)));
 		ret = ret < 0 ? ret : count;
-		जाओ पात;
-	पूर्ण
-	अगर (!channel_enabled) अणु
-		ret = i2c_smbus_ग_लिखो_byte_data(data->client, MAX6581_REG_OFFSET_SELECT,
+		goto abort;
+	}
+	if (!channel_enabled) {
+		ret = i2c_smbus_write_byte_data(data->client, MAX6581_REG_OFFSET_SELECT,
 						select | (1 << (index - 1)));
-		अगर (ret < 0)
-			जाओ पात;
-	पूर्ण
-	ret = i2c_smbus_ग_लिखो_byte_data(data->client, MAX6581_REG_OFFSET, val);
+		if (ret < 0)
+			goto abort;
+	}
+	ret = i2c_smbus_write_byte_data(data->client, MAX6581_REG_OFFSET, val);
 	ret = ret < 0 ? ret : count;
 
-पात:
+abort:
 	mutex_unlock(&data->update_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार offset_show(काष्ठा device *dev, काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा max6697_data *data;
-	पूर्णांक select, ret, index;
+static ssize_t offset_show(struct device *dev, struct device_attribute *devattr, char *buf)
+{
+	struct max6697_data *data;
+	int select, ret, index;
 
 	index = to_sensor_dev_attr(devattr)->index;
 	data = dev_get_drvdata(dev);
 	mutex_lock(&data->update_lock);
-	select = i2c_smbus_पढ़ो_byte_data(data->client, MAX6581_REG_OFFSET_SELECT);
-	अगर (select < 0)
+	select = i2c_smbus_read_byte_data(data->client, MAX6581_REG_OFFSET_SELECT);
+	if (select < 0)
 		ret = select;
-	अन्यथा अगर (select & (1 << (index - 1)))
-		ret = i2c_smbus_पढ़ो_byte_data(data->client, MAX6581_REG_OFFSET);
-	अन्यथा
+	else if (select & (1 << (index - 1)))
+		ret = i2c_smbus_read_byte_data(data->client, MAX6581_REG_OFFSET);
+	else
 		ret = 0;
 	mutex_unlock(&data->update_lock);
-	वापस ret < 0 ? ret : प्र_लिखो(buf, "%d\n", max6581_offset_to_millic(ret));
-पूर्ण
+	return ret < 0 ? ret : sprintf(buf, "%d\n", max6581_offset_to_millic(ret));
+}
 
-अटल SENSOR_DEVICE_ATTR_RO(temp1_input, temp_input, 0);
-अटल SENSOR_DEVICE_ATTR_2_RW(temp1_max, temp, 0, MAX6697_TEMP_MAX);
-अटल SENSOR_DEVICE_ATTR_2_RW(temp1_crit, temp, 0, MAX6697_TEMP_CRIT);
+static SENSOR_DEVICE_ATTR_RO(temp1_input, temp_input, 0);
+static SENSOR_DEVICE_ATTR_2_RW(temp1_max, temp, 0, MAX6697_TEMP_MAX);
+static SENSOR_DEVICE_ATTR_2_RW(temp1_crit, temp, 0, MAX6697_TEMP_CRIT);
 
-अटल SENSOR_DEVICE_ATTR_RO(temp2_input, temp_input, 1);
-अटल SENSOR_DEVICE_ATTR_2_RW(temp2_max, temp, 1, MAX6697_TEMP_MAX);
-अटल SENSOR_DEVICE_ATTR_2_RW(temp2_crit, temp, 1, MAX6697_TEMP_CRIT);
+static SENSOR_DEVICE_ATTR_RO(temp2_input, temp_input, 1);
+static SENSOR_DEVICE_ATTR_2_RW(temp2_max, temp, 1, MAX6697_TEMP_MAX);
+static SENSOR_DEVICE_ATTR_2_RW(temp2_crit, temp, 1, MAX6697_TEMP_CRIT);
 
-अटल SENSOR_DEVICE_ATTR_RO(temp3_input, temp_input, 2);
-अटल SENSOR_DEVICE_ATTR_2_RW(temp3_max, temp, 2, MAX6697_TEMP_MAX);
-अटल SENSOR_DEVICE_ATTR_2_RW(temp3_crit, temp, 2, MAX6697_TEMP_CRIT);
+static SENSOR_DEVICE_ATTR_RO(temp3_input, temp_input, 2);
+static SENSOR_DEVICE_ATTR_2_RW(temp3_max, temp, 2, MAX6697_TEMP_MAX);
+static SENSOR_DEVICE_ATTR_2_RW(temp3_crit, temp, 2, MAX6697_TEMP_CRIT);
 
-अटल SENSOR_DEVICE_ATTR_RO(temp4_input, temp_input, 3);
-अटल SENSOR_DEVICE_ATTR_2_RW(temp4_max, temp, 3, MAX6697_TEMP_MAX);
-अटल SENSOR_DEVICE_ATTR_2_RW(temp4_crit, temp, 3, MAX6697_TEMP_CRIT);
+static SENSOR_DEVICE_ATTR_RO(temp4_input, temp_input, 3);
+static SENSOR_DEVICE_ATTR_2_RW(temp4_max, temp, 3, MAX6697_TEMP_MAX);
+static SENSOR_DEVICE_ATTR_2_RW(temp4_crit, temp, 3, MAX6697_TEMP_CRIT);
 
-अटल SENSOR_DEVICE_ATTR_RO(temp5_input, temp_input, 4);
-अटल SENSOR_DEVICE_ATTR_2_RW(temp5_max, temp, 4, MAX6697_TEMP_MAX);
-अटल SENSOR_DEVICE_ATTR_2_RW(temp5_crit, temp, 4, MAX6697_TEMP_CRIT);
+static SENSOR_DEVICE_ATTR_RO(temp5_input, temp_input, 4);
+static SENSOR_DEVICE_ATTR_2_RW(temp5_max, temp, 4, MAX6697_TEMP_MAX);
+static SENSOR_DEVICE_ATTR_2_RW(temp5_crit, temp, 4, MAX6697_TEMP_CRIT);
 
-अटल SENSOR_DEVICE_ATTR_RO(temp6_input, temp_input, 5);
-अटल SENSOR_DEVICE_ATTR_2_RW(temp6_max, temp, 5, MAX6697_TEMP_MAX);
-अटल SENSOR_DEVICE_ATTR_2_RW(temp6_crit, temp, 5, MAX6697_TEMP_CRIT);
+static SENSOR_DEVICE_ATTR_RO(temp6_input, temp_input, 5);
+static SENSOR_DEVICE_ATTR_2_RW(temp6_max, temp, 5, MAX6697_TEMP_MAX);
+static SENSOR_DEVICE_ATTR_2_RW(temp6_crit, temp, 5, MAX6697_TEMP_CRIT);
 
-अटल SENSOR_DEVICE_ATTR_RO(temp7_input, temp_input, 6);
-अटल SENSOR_DEVICE_ATTR_2_RW(temp7_max, temp, 6, MAX6697_TEMP_MAX);
-अटल SENSOR_DEVICE_ATTR_2_RW(temp7_crit, temp, 6, MAX6697_TEMP_CRIT);
+static SENSOR_DEVICE_ATTR_RO(temp7_input, temp_input, 6);
+static SENSOR_DEVICE_ATTR_2_RW(temp7_max, temp, 6, MAX6697_TEMP_MAX);
+static SENSOR_DEVICE_ATTR_2_RW(temp7_crit, temp, 6, MAX6697_TEMP_CRIT);
 
-अटल SENSOR_DEVICE_ATTR_RO(temp8_input, temp_input, 7);
-अटल SENSOR_DEVICE_ATTR_2_RW(temp8_max, temp, 7, MAX6697_TEMP_MAX);
-अटल SENSOR_DEVICE_ATTR_2_RW(temp8_crit, temp, 7, MAX6697_TEMP_CRIT);
+static SENSOR_DEVICE_ATTR_RO(temp8_input, temp_input, 7);
+static SENSOR_DEVICE_ATTR_2_RW(temp8_max, temp, 7, MAX6697_TEMP_MAX);
+static SENSOR_DEVICE_ATTR_2_RW(temp8_crit, temp, 7, MAX6697_TEMP_CRIT);
 
-अटल SENSOR_DEVICE_ATTR_RO(temp1_max_alarm, alarm, 22);
-अटल SENSOR_DEVICE_ATTR_RO(temp2_max_alarm, alarm, 16);
-अटल SENSOR_DEVICE_ATTR_RO(temp3_max_alarm, alarm, 17);
-अटल SENSOR_DEVICE_ATTR_RO(temp4_max_alarm, alarm, 18);
-अटल SENSOR_DEVICE_ATTR_RO(temp5_max_alarm, alarm, 19);
-अटल SENSOR_DEVICE_ATTR_RO(temp6_max_alarm, alarm, 20);
-अटल SENSOR_DEVICE_ATTR_RO(temp7_max_alarm, alarm, 21);
-अटल SENSOR_DEVICE_ATTR_RO(temp8_max_alarm, alarm, 23);
+static SENSOR_DEVICE_ATTR_RO(temp1_max_alarm, alarm, 22);
+static SENSOR_DEVICE_ATTR_RO(temp2_max_alarm, alarm, 16);
+static SENSOR_DEVICE_ATTR_RO(temp3_max_alarm, alarm, 17);
+static SENSOR_DEVICE_ATTR_RO(temp4_max_alarm, alarm, 18);
+static SENSOR_DEVICE_ATTR_RO(temp5_max_alarm, alarm, 19);
+static SENSOR_DEVICE_ATTR_RO(temp6_max_alarm, alarm, 20);
+static SENSOR_DEVICE_ATTR_RO(temp7_max_alarm, alarm, 21);
+static SENSOR_DEVICE_ATTR_RO(temp8_max_alarm, alarm, 23);
 
-अटल SENSOR_DEVICE_ATTR_RO(temp1_crit_alarm, alarm, 14);
-अटल SENSOR_DEVICE_ATTR_RO(temp2_crit_alarm, alarm, 8);
-अटल SENSOR_DEVICE_ATTR_RO(temp3_crit_alarm, alarm, 9);
-अटल SENSOR_DEVICE_ATTR_RO(temp4_crit_alarm, alarm, 10);
-अटल SENSOR_DEVICE_ATTR_RO(temp5_crit_alarm, alarm, 11);
-अटल SENSOR_DEVICE_ATTR_RO(temp6_crit_alarm, alarm, 12);
-अटल SENSOR_DEVICE_ATTR_RO(temp7_crit_alarm, alarm, 13);
-अटल SENSOR_DEVICE_ATTR_RO(temp8_crit_alarm, alarm, 15);
+static SENSOR_DEVICE_ATTR_RO(temp1_crit_alarm, alarm, 14);
+static SENSOR_DEVICE_ATTR_RO(temp2_crit_alarm, alarm, 8);
+static SENSOR_DEVICE_ATTR_RO(temp3_crit_alarm, alarm, 9);
+static SENSOR_DEVICE_ATTR_RO(temp4_crit_alarm, alarm, 10);
+static SENSOR_DEVICE_ATTR_RO(temp5_crit_alarm, alarm, 11);
+static SENSOR_DEVICE_ATTR_RO(temp6_crit_alarm, alarm, 12);
+static SENSOR_DEVICE_ATTR_RO(temp7_crit_alarm, alarm, 13);
+static SENSOR_DEVICE_ATTR_RO(temp8_crit_alarm, alarm, 15);
 
-अटल SENSOR_DEVICE_ATTR_RO(temp2_fault, alarm, 1);
-अटल SENSOR_DEVICE_ATTR_RO(temp3_fault, alarm, 2);
-अटल SENSOR_DEVICE_ATTR_RO(temp4_fault, alarm, 3);
-अटल SENSOR_DEVICE_ATTR_RO(temp5_fault, alarm, 4);
-अटल SENSOR_DEVICE_ATTR_RO(temp6_fault, alarm, 5);
-अटल SENSOR_DEVICE_ATTR_RO(temp7_fault, alarm, 6);
-अटल SENSOR_DEVICE_ATTR_RO(temp8_fault, alarm, 7);
+static SENSOR_DEVICE_ATTR_RO(temp2_fault, alarm, 1);
+static SENSOR_DEVICE_ATTR_RO(temp3_fault, alarm, 2);
+static SENSOR_DEVICE_ATTR_RO(temp4_fault, alarm, 3);
+static SENSOR_DEVICE_ATTR_RO(temp5_fault, alarm, 4);
+static SENSOR_DEVICE_ATTR_RO(temp6_fault, alarm, 5);
+static SENSOR_DEVICE_ATTR_RO(temp7_fault, alarm, 6);
+static SENSOR_DEVICE_ATTR_RO(temp8_fault, alarm, 7);
 
-/* There is no offset क्रम local temperature so starting from temp2 */
-अटल SENSOR_DEVICE_ATTR_RW(temp2_offset, offset, 1);
-अटल SENSOR_DEVICE_ATTR_RW(temp3_offset, offset, 2);
-अटल SENSOR_DEVICE_ATTR_RW(temp4_offset, offset, 3);
-अटल SENSOR_DEVICE_ATTR_RW(temp5_offset, offset, 4);
-अटल SENSOR_DEVICE_ATTR_RW(temp6_offset, offset, 5);
-अटल SENSOR_DEVICE_ATTR_RW(temp7_offset, offset, 6);
-अटल SENSOR_DEVICE_ATTR_RW(temp8_offset, offset, 7);
+/* There is no offset for local temperature so starting from temp2 */
+static SENSOR_DEVICE_ATTR_RW(temp2_offset, offset, 1);
+static SENSOR_DEVICE_ATTR_RW(temp3_offset, offset, 2);
+static SENSOR_DEVICE_ATTR_RW(temp4_offset, offset, 3);
+static SENSOR_DEVICE_ATTR_RW(temp5_offset, offset, 4);
+static SENSOR_DEVICE_ATTR_RW(temp6_offset, offset, 5);
+static SENSOR_DEVICE_ATTR_RW(temp7_offset, offset, 6);
+static SENSOR_DEVICE_ATTR_RW(temp8_offset, offset, 7);
 
-अटल DEVICE_ATTR(dummy, 0, शून्य, शून्य);
+static DEVICE_ATTR(dummy, 0, NULL, NULL);
 
-अटल umode_t max6697_is_visible(काष्ठा kobject *kobj, काष्ठा attribute *attr,
-				  पूर्णांक index)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा max6697_data *data = dev_get_drvdata(dev);
-	स्थिर काष्ठा max6697_chip_data *chip = data->chip;
-	पूर्णांक channel = index / 7;	/* channel number */
-	पूर्णांक nr = index % 7;		/* attribute index within channel */
+static umode_t max6697_is_visible(struct kobject *kobj, struct attribute *attr,
+				  int index)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct max6697_data *data = dev_get_drvdata(dev);
+	const struct max6697_chip_data *chip = data->chip;
+	int channel = index / 7;	/* channel number */
+	int nr = index % 7;		/* attribute index within channel */
 
-	अगर (channel >= chip->channels)
-		वापस 0;
+	if (channel >= chip->channels)
+		return 0;
 
-	अगर ((nr == 3 || nr == 4) && !(chip->have_crit & (1 << channel)))
-		वापस 0;
-	अगर (nr == 5 && !(chip->have_fault & (1 << channel)))
-		वापस 0;
+	if ((nr == 3 || nr == 4) && !(chip->have_crit & (1 << channel)))
+		return 0;
+	if (nr == 5 && !(chip->have_fault & (1 << channel)))
+		return 0;
 	/* offset reg is only supported on max6581 remote channels */
-	अगर (nr == 6)
-		अगर (data->type != max6581 || channel == 0)
-			वापस 0;
+	if (nr == 6)
+		if (data->type != max6581 || channel == 0)
+			return 0;
 
-	वापस attr->mode;
-पूर्ण
+	return attr->mode;
+}
 
 /*
- * max6697_is_visible uses the index पूर्णांकo the following array to determine
- * अगर attributes should be created or not. Any change in order or content
+ * max6697_is_visible uses the index into the following array to determine
+ * if attributes should be created or not. Any change in order or content
  * must be matched in max6697_is_visible.
  */
-अटल काष्ठा attribute *max6697_attributes[] = अणु
+static struct attribute *max6697_attributes[] = {
 	&sensor_dev_attr_temp1_input.dev_attr.attr,
 	&sensor_dev_attr_temp1_max.dev_attr.attr,
 	&sensor_dev_attr_temp1_max_alarm.dev_attr.attr,
@@ -551,245 +550,245 @@
 	&sensor_dev_attr_temp8_crit_alarm.dev_attr.attr,
 	&sensor_dev_attr_temp8_fault.dev_attr.attr,
 	&sensor_dev_attr_temp8_offset.dev_attr.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group max6697_group = अणु
+static const struct attribute_group max6697_group = {
 	.attrs = max6697_attributes, .is_visible = max6697_is_visible,
-पूर्ण;
+};
 __ATTRIBUTE_GROUPS(max6697);
 
-अटल व्योम max6697_get_config_of(काष्ठा device_node *node,
-				  काष्ठा max6697_platक्रमm_data *pdata)
-अणु
-	पूर्णांक len;
-	स्थिर __be32 *prop;
+static void max6697_get_config_of(struct device_node *node,
+				  struct max6697_platform_data *pdata)
+{
+	int len;
+	const __be32 *prop;
 
-	pdata->smbus_समयout_disable =
-		of_property_पढ़ो_bool(node, "smbus-timeout-disable");
+	pdata->smbus_timeout_disable =
+		of_property_read_bool(node, "smbus-timeout-disable");
 	pdata->extended_range_enable =
-		of_property_पढ़ो_bool(node, "extended-range-enable");
+		of_property_read_bool(node, "extended-range-enable");
 	pdata->beta_compensation =
-		of_property_पढ़ो_bool(node, "beta-compensation-enable");
+		of_property_read_bool(node, "beta-compensation-enable");
 
 	prop = of_get_property(node, "alert-mask", &len);
-	अगर (prop && len == माप(u32))
+	if (prop && len == sizeof(u32))
 		pdata->alert_mask = be32_to_cpu(prop[0]);
 	prop = of_get_property(node, "over-temperature-mask", &len);
-	अगर (prop && len == माप(u32))
+	if (prop && len == sizeof(u32))
 		pdata->over_temperature_mask = be32_to_cpu(prop[0]);
 	prop = of_get_property(node, "resistance-cancellation", &len);
-	अगर (prop) अणु
-		अगर (len == माप(u32))
+	if (prop) {
+		if (len == sizeof(u32))
 			pdata->resistance_cancellation = be32_to_cpu(prop[0]);
-		अन्यथा
+		else
 			pdata->resistance_cancellation = 0xfe;
-	पूर्ण
+	}
 	prop = of_get_property(node, "transistor-ideality", &len);
-	अगर (prop && len == 2 * माप(u32)) अणु
+	if (prop && len == 2 * sizeof(u32)) {
 			pdata->ideality_mask = be32_to_cpu(prop[0]);
 			pdata->ideality_value = be32_to_cpu(prop[1]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक max6697_init_chip(काष्ठा max6697_data *data,
-			     काष्ठा i2c_client *client)
-अणु
-	काष्ठा max6697_platक्रमm_data *pdata = dev_get_platdata(&client->dev);
-	काष्ठा max6697_platक्रमm_data p;
-	स्थिर काष्ठा max6697_chip_data *chip = data->chip;
-	पूर्णांक factor = chip->channels;
-	पूर्णांक ret, reg;
+static int max6697_init_chip(struct max6697_data *data,
+			     struct i2c_client *client)
+{
+	struct max6697_platform_data *pdata = dev_get_platdata(&client->dev);
+	struct max6697_platform_data p;
+	const struct max6697_chip_data *chip = data->chip;
+	int factor = chip->channels;
+	int ret, reg;
 
 	/*
-	 * Don't touch configuration अगर neither platक्रमm data nor OF
-	 * configuration was specअगरied. If that is the हाल, use the
+	 * Don't touch configuration if neither platform data nor OF
+	 * configuration was specified. If that is the case, use the
 	 * current chip configuration.
 	 */
-	अगर (!pdata && !client->dev.of_node) अणु
-		reg = i2c_smbus_पढ़ो_byte_data(client, MAX6697_REG_CONFIG);
-		अगर (reg < 0)
-			वापस reg;
-		अगर (data->type == max6581) अणु
-			अगर (reg & MAX6581_CONF_EXTENDED)
+	if (!pdata && !client->dev.of_node) {
+		reg = i2c_smbus_read_byte_data(client, MAX6697_REG_CONFIG);
+		if (reg < 0)
+			return reg;
+		if (data->type == max6581) {
+			if (reg & MAX6581_CONF_EXTENDED)
 				data->temp_offset = 64;
-			reg = i2c_smbus_पढ़ो_byte_data(client,
+			reg = i2c_smbus_read_byte_data(client,
 						       MAX6581_REG_RESISTANCE);
-			अगर (reg < 0)
-				वापस reg;
+			if (reg < 0)
+				return reg;
 			factor += hweight8(reg);
-		पूर्ण अन्यथा अणु
-			अगर (reg & MAX6697_CONF_RESISTANCE)
+		} else {
+			if (reg & MAX6697_CONF_RESISTANCE)
 				factor++;
-		पूर्ण
-		जाओ करोne;
-	पूर्ण
+		}
+		goto done;
+	}
 
-	अगर (client->dev.of_node) अणु
-		स_रखो(&p, 0, माप(p));
+	if (client->dev.of_node) {
+		memset(&p, 0, sizeof(p));
 		max6697_get_config_of(client->dev.of_node, &p);
 		pdata = &p;
-	पूर्ण
+	}
 
 	reg = 0;
-	अगर (pdata->smbus_समयout_disable &&
-	    (chip->valid_conf & MAX6697_CONF_TIMEOUT)) अणु
+	if (pdata->smbus_timeout_disable &&
+	    (chip->valid_conf & MAX6697_CONF_TIMEOUT)) {
 		reg |= MAX6697_CONF_TIMEOUT;
-	पूर्ण
-	अगर (pdata->extended_range_enable &&
-	    (chip->valid_conf & MAX6581_CONF_EXTENDED)) अणु
+	}
+	if (pdata->extended_range_enable &&
+	    (chip->valid_conf & MAX6581_CONF_EXTENDED)) {
 		reg |= MAX6581_CONF_EXTENDED;
 		data->temp_offset = 64;
-	पूर्ण
-	अगर (pdata->resistance_cancellation &&
-	    (chip->valid_conf & MAX6697_CONF_RESISTANCE)) अणु
+	}
+	if (pdata->resistance_cancellation &&
+	    (chip->valid_conf & MAX6697_CONF_RESISTANCE)) {
 		reg |= MAX6697_CONF_RESISTANCE;
 		factor++;
-	पूर्ण
-	अगर (pdata->beta_compensation &&
-	    (chip->valid_conf & MAX6693_CONF_BETA)) अणु
+	}
+	if (pdata->beta_compensation &&
+	    (chip->valid_conf & MAX6693_CONF_BETA)) {
 		reg |= MAX6693_CONF_BETA;
-	पूर्ण
+	}
 
-	ret = i2c_smbus_ग_लिखो_byte_data(client, MAX6697_REG_CONFIG, reg);
-	अगर (ret < 0)
-		वापस ret;
+	ret = i2c_smbus_write_byte_data(client, MAX6697_REG_CONFIG, reg);
+	if (ret < 0)
+		return ret;
 
-	ret = i2c_smbus_ग_लिखो_byte_data(client, MAX6697_REG_ALERT_MASK,
+	ret = i2c_smbus_write_byte_data(client, MAX6697_REG_ALERT_MASK,
 				MAX6697_ALERT_MAP_BITS(pdata->alert_mask));
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = i2c_smbus_ग_लिखो_byte_data(client, MAX6697_REG_OVERT_MASK,
+	ret = i2c_smbus_write_byte_data(client, MAX6697_REG_OVERT_MASK,
 			MAX6697_OVERT_MAP_BITS(pdata->over_temperature_mask));
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (data->type == max6581) अणु
+	if (data->type == max6581) {
 		factor += hweight8(pdata->resistance_cancellation >> 1);
-		ret = i2c_smbus_ग_लिखो_byte_data(client, MAX6581_REG_RESISTANCE,
+		ret = i2c_smbus_write_byte_data(client, MAX6581_REG_RESISTANCE,
 					pdata->resistance_cancellation >> 1);
-		अगर (ret < 0)
-			वापस ret;
-		ret = i2c_smbus_ग_लिखो_byte_data(client, MAX6581_REG_IDEALITY,
+		if (ret < 0)
+			return ret;
+		ret = i2c_smbus_write_byte_data(client, MAX6581_REG_IDEALITY,
 						pdata->ideality_value);
-		अगर (ret < 0)
-			वापस ret;
-		ret = i2c_smbus_ग_लिखो_byte_data(client,
+		if (ret < 0)
+			return ret;
+		ret = i2c_smbus_write_byte_data(client,
 						MAX6581_REG_IDEALITY_SELECT,
 						pdata->ideality_mask >> 1);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
-करोne:
-	data->update_पूर्णांकerval = factor * MAX6697_CONV_TIME;
-	वापस 0;
-पूर्ण
+		if (ret < 0)
+			return ret;
+	}
+done:
+	data->update_interval = factor * MAX6697_CONV_TIME;
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id max6697_id[];
+static const struct i2c_device_id max6697_id[];
 
-अटल पूर्णांक max6697_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा i2c_adapter *adapter = client->adapter;
-	काष्ठा device *dev = &client->dev;
-	काष्ठा max6697_data *data;
-	काष्ठा device *hwmon_dev;
-	पूर्णांक err;
+static int max6697_probe(struct i2c_client *client)
+{
+	struct i2c_adapter *adapter = client->adapter;
+	struct device *dev = &client->dev;
+	struct max6697_data *data;
+	struct device *hwmon_dev;
+	int err;
 
-	अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		वापस -ENODEV;
+	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
+		return -ENODEV;
 
-	data = devm_kzalloc(dev, माप(काष्ठा max6697_data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(dev, sizeof(struct max6697_data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
-	अगर (client->dev.of_node)
-		data->type = (क्रमागत chips)of_device_get_match_data(&client->dev);
-	अन्यथा
+	if (client->dev.of_node)
+		data->type = (enum chips)of_device_get_match_data(&client->dev);
+	else
 		data->type = i2c_match_id(max6697_id, client)->driver_data;
 	data->chip = &max6697_chip_data[data->type];
 	data->client = client;
 	mutex_init(&data->update_lock);
 
 	err = max6697_init_chip(data, client);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_groups(dev, client->name,
+	hwmon_dev = devm_hwmon_device_register_with_groups(dev, client->name,
 							   data,
 							   max6697_groups);
-	वापस PTR_ERR_OR_ZERO(hwmon_dev);
-पूर्ण
+	return PTR_ERR_OR_ZERO(hwmon_dev);
+}
 
-अटल स्थिर काष्ठा i2c_device_id max6697_id[] = अणु
-	अणु "max6581", max6581 पूर्ण,
-	अणु "max6602", max6602 पूर्ण,
-	अणु "max6622", max6622 पूर्ण,
-	अणु "max6636", max6636 पूर्ण,
-	अणु "max6689", max6689 पूर्ण,
-	अणु "max6693", max6693 पूर्ण,
-	अणु "max6694", max6694 पूर्ण,
-	अणु "max6697", max6697 पूर्ण,
-	अणु "max6698", max6698 पूर्ण,
-	अणु "max6699", max6699 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id max6697_id[] = {
+	{ "max6581", max6581 },
+	{ "max6602", max6602 },
+	{ "max6622", max6622 },
+	{ "max6636", max6636 },
+	{ "max6689", max6689 },
+	{ "max6693", max6693 },
+	{ "max6694", max6694 },
+	{ "max6697", max6697 },
+	{ "max6698", max6698 },
+	{ "max6699", max6699 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, max6697_id);
 
-अटल स्थिर काष्ठा of_device_id __maybe_unused max6697_of_match[] = अणु
-	अणु
+static const struct of_device_id __maybe_unused max6697_of_match[] = {
+	{
 		.compatible = "maxim,max6581",
-		.data = (व्योम *)max6581
-	पूर्ण,
-	अणु
+		.data = (void *)max6581
+	},
+	{
 		.compatible = "maxim,max6602",
-		.data = (व्योम *)max6602
-	पूर्ण,
-	अणु
+		.data = (void *)max6602
+	},
+	{
 		.compatible = "maxim,max6622",
-		.data = (व्योम *)max6622
-	पूर्ण,
-	अणु
+		.data = (void *)max6622
+	},
+	{
 		.compatible = "maxim,max6636",
-		.data = (व्योम *)max6636
-	पूर्ण,
-	अणु
+		.data = (void *)max6636
+	},
+	{
 		.compatible = "maxim,max6689",
-		.data = (व्योम *)max6689
-	पूर्ण,
-	अणु
+		.data = (void *)max6689
+	},
+	{
 		.compatible = "maxim,max6693",
-		.data = (व्योम *)max6693
-	पूर्ण,
-	अणु
+		.data = (void *)max6693
+	},
+	{
 		.compatible = "maxim,max6694",
-		.data = (व्योम *)max6694
-	पूर्ण,
-	अणु
+		.data = (void *)max6694
+	},
+	{
 		.compatible = "maxim,max6697",
-		.data = (व्योम *)max6697
-	पूर्ण,
-	अणु
+		.data = (void *)max6697
+	},
+	{
 		.compatible = "maxim,max6698",
-		.data = (व्योम *)max6698
-	पूर्ण,
-	अणु
+		.data = (void *)max6698
+	},
+	{
 		.compatible = "maxim,max6699",
-		.data = (व्योम *)max6699
-	पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+		.data = (void *)max6699
+	},
+	{ },
+};
 MODULE_DEVICE_TABLE(of, max6697_of_match);
 
-अटल काष्ठा i2c_driver max6697_driver = अणु
+static struct i2c_driver max6697_driver = {
 	.class = I2C_CLASS_HWMON,
-	.driver = अणु
+	.driver = {
 		.name	= "max6697",
 		.of_match_table = of_match_ptr(max6697_of_match),
-	पूर्ण,
+	},
 	.probe_new = max6697_probe,
 	.id_table = max6697_id,
-पूर्ण;
+};
 
 module_i2c_driver(max6697_driver);
 

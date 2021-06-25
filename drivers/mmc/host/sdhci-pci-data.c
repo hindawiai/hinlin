@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/module.h>
-#समावेश <linux/mmc/sdhci-pci-data.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/module.h>
+#include <linux/mmc/sdhci-pci-data.h>
 
-काष्ठा sdhci_pci_data *(*sdhci_pci_get_data)(काष्ठा pci_dev *pdev, पूर्णांक slotno);
+struct sdhci_pci_data *(*sdhci_pci_get_data)(struct pci_dev *pdev, int slotno);
 EXPORT_SYMBOL_GPL(sdhci_pci_get_data);

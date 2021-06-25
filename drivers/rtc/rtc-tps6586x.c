@@ -1,339 +1,338 @@
-<शैली गुरु>
 /*
- * rtc-tps6586x.c: RTC driver क्रम TI PMIC TPS6586X
+ * rtc-tps6586x.c: RTC driver for TI PMIC TPS6586X
  *
  * Copyright (c) 2012, NVIDIA Corporation.
  *
  * Author: Laxman Dewangan <ldewangan@nvidia.com>
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License as
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any kind,
  * whether express or implied; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License क्रम more details.
+ * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307, USA
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mfd/tps6586x.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/rtc.h>
-#समावेश <linux/slab.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/irq.h>
+#include <linux/kernel.h>
+#include <linux/mfd/tps6586x.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/rtc.h>
+#include <linux/slab.h>
 
-#घोषणा RTC_CTRL			0xc0
-#घोषणा POR_RESET_N			BIT(7)
-#घोषणा OSC_SRC_SEL			BIT(6)
-#घोषणा RTC_ENABLE			BIT(5)	/* enables alarm */
-#घोषणा RTC_BUF_ENABLE			BIT(4)	/* 32 KHz buffer enable */
-#घोषणा PRE_BYPASS			BIT(3)	/* 0=1KHz or 1=32KHz updates */
-#घोषणा CL_SEL_MASK			(BIT(2)|BIT(1))
-#घोषणा CL_SEL_POS			1
-#घोषणा RTC_ALARM1_HI			0xc1
-#घोषणा RTC_COUNT4			0xc6
+#define RTC_CTRL			0xc0
+#define POR_RESET_N			BIT(7)
+#define OSC_SRC_SEL			BIT(6)
+#define RTC_ENABLE			BIT(5)	/* enables alarm */
+#define RTC_BUF_ENABLE			BIT(4)	/* 32 KHz buffer enable */
+#define PRE_BYPASS			BIT(3)	/* 0=1KHz or 1=32KHz updates */
+#define CL_SEL_MASK			(BIT(2)|BIT(1))
+#define CL_SEL_POS			1
+#define RTC_ALARM1_HI			0xc1
+#define RTC_COUNT4			0xc6
 
-/* start a PMU RTC access by पढ़ोing the रेजिस्टर prior to the RTC_COUNT4 */
-#घोषणा RTC_COUNT4_DUMMYREAD		0xc5
+/* start a PMU RTC access by reading the register prior to the RTC_COUNT4 */
+#define RTC_COUNT4_DUMMYREAD		0xc5
 
 /*only 14-bits width in second*/
-#घोषणा ALM1_VALID_RANGE_IN_SEC		0x3FFF
+#define ALM1_VALID_RANGE_IN_SEC		0x3FFF
 
-#घोषणा TPS6586X_RTC_CL_SEL_1_5PF	0x0
-#घोषणा TPS6586X_RTC_CL_SEL_6_5PF	0x1
-#घोषणा TPS6586X_RTC_CL_SEL_7_5PF	0x2
-#घोषणा TPS6586X_RTC_CL_SEL_12_5PF	0x3
+#define TPS6586X_RTC_CL_SEL_1_5PF	0x0
+#define TPS6586X_RTC_CL_SEL_6_5PF	0x1
+#define TPS6586X_RTC_CL_SEL_7_5PF	0x2
+#define TPS6586X_RTC_CL_SEL_12_5PF	0x3
 
-काष्ठा tps6586x_rtc अणु
-	काष्ठा device		*dev;
-	काष्ठा rtc_device	*rtc;
-	पूर्णांक			irq;
+struct tps6586x_rtc {
+	struct device		*dev;
+	struct rtc_device	*rtc;
+	int			irq;
 	bool			irq_en;
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा device *to_tps6586x_dev(काष्ठा device *dev)
-अणु
-	वापस dev->parent;
-पूर्ण
+static inline struct device *to_tps6586x_dev(struct device *dev)
+{
+	return dev->parent;
+}
 
-अटल पूर्णांक tps6586x_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा device *tps_dev = to_tps6586x_dev(dev);
-	अचिन्हित दीर्घ दीर्घ ticks = 0;
-	समय64_t seconds;
+static int tps6586x_rtc_read_time(struct device *dev, struct rtc_time *tm)
+{
+	struct device *tps_dev = to_tps6586x_dev(dev);
+	unsigned long long ticks = 0;
+	time64_t seconds;
 	u8 buff[6];
-	पूर्णांक ret;
-	पूर्णांक i;
+	int ret;
+	int i;
 
-	ret = tps6586x_पढ़ोs(tps_dev, RTC_COUNT4_DUMMYREAD, माप(buff), buff);
-	अगर (ret < 0) अणु
+	ret = tps6586x_reads(tps_dev, RTC_COUNT4_DUMMYREAD, sizeof(buff), buff);
+	if (ret < 0) {
 		dev_err(dev, "read counter failed with err %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	क्रम (i = 1; i < माप(buff); i++) अणु
+	for (i = 1; i < sizeof(buff); i++) {
 		ticks <<= 8;
 		ticks |= buff[i];
-	पूर्ण
+	}
 
 	seconds = ticks >> 10;
-	rtc_समय64_to_पंचांग(seconds, पंचांग);
+	rtc_time64_to_tm(seconds, tm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tps6586x_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा device *tps_dev = to_tps6586x_dev(dev);
-	अचिन्हित दीर्घ दीर्घ ticks;
-	समय64_t seconds;
+static int tps6586x_rtc_set_time(struct device *dev, struct rtc_time *tm)
+{
+	struct device *tps_dev = to_tps6586x_dev(dev);
+	unsigned long long ticks;
+	time64_t seconds;
 	u8 buff[5];
-	पूर्णांक ret;
+	int ret;
 
-	seconds = rtc_पंचांग_to_समय64(पंचांग);
+	seconds = rtc_tm_to_time64(tm);
 
-	ticks = (अचिन्हित दीर्घ दीर्घ)seconds << 10;
+	ticks = (unsigned long long)seconds << 10;
 	buff[0] = (ticks >> 32) & 0xff;
 	buff[1] = (ticks >> 24) & 0xff;
 	buff[2] = (ticks >> 16) & 0xff;
 	buff[3] = (ticks >> 8) & 0xff;
 	buff[4] = ticks & 0xff;
 
-	/* Disable RTC beक्रमe changing समय */
+	/* Disable RTC before changing time */
 	ret = tps6586x_clr_bits(tps_dev, RTC_CTRL, RTC_ENABLE);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "failed to clear RTC_ENABLE\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = tps6586x_ग_लिखोs(tps_dev, RTC_COUNT4, माप(buff), buff);
-	अगर (ret < 0) अणु
+	ret = tps6586x_writes(tps_dev, RTC_COUNT4, sizeof(buff), buff);
+	if (ret < 0) {
 		dev_err(dev, "failed to program new time\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Enable RTC */
 	ret = tps6586x_set_bits(tps_dev, RTC_CTRL, RTC_ENABLE);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "failed to set RTC_ENABLE\n");
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret;
+	}
+	return 0;
+}
 
-अटल पूर्णांक tps6586x_rtc_alarm_irq_enable(काष्ठा device *dev,
-			 अचिन्हित पूर्णांक enabled)
-अणु
-	काष्ठा tps6586x_rtc *rtc = dev_get_drvdata(dev);
+static int tps6586x_rtc_alarm_irq_enable(struct device *dev,
+			 unsigned int enabled)
+{
+	struct tps6586x_rtc *rtc = dev_get_drvdata(dev);
 
-	अगर (enabled && !rtc->irq_en) अणु
+	if (enabled && !rtc->irq_en) {
 		enable_irq(rtc->irq);
 		rtc->irq_en = true;
-	पूर्ण अन्यथा अगर (!enabled && rtc->irq_en)  अणु
+	} else if (!enabled && rtc->irq_en)  {
 		disable_irq(rtc->irq);
 		rtc->irq_en = false;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक tps6586x_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	काष्ठा device *tps_dev = to_tps6586x_dev(dev);
-	समय64_t seconds;
-	अचिन्हित दीर्घ ticks;
-	अचिन्हित दीर्घ rtc_current_समय;
-	अचिन्हित दीर्घ दीर्घ rticks = 0;
+static int tps6586x_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	struct device *tps_dev = to_tps6586x_dev(dev);
+	time64_t seconds;
+	unsigned long ticks;
+	unsigned long rtc_current_time;
+	unsigned long long rticks = 0;
 	u8 buff[3];
 	u8 rbuff[6];
-	पूर्णांक ret;
-	पूर्णांक i;
+	int ret;
+	int i;
 
-	seconds = rtc_पंचांग_to_समय64(&alrm->समय);
+	seconds = rtc_tm_to_time64(&alrm->time);
 
 	ret = tps6586x_rtc_alarm_irq_enable(dev, alrm->enabled);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "can't set alarm irq, err %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = tps6586x_पढ़ोs(tps_dev, RTC_COUNT4_DUMMYREAD,
-			माप(rbuff), rbuff);
-	अगर (ret < 0) अणु
+	ret = tps6586x_reads(tps_dev, RTC_COUNT4_DUMMYREAD,
+			sizeof(rbuff), rbuff);
+	if (ret < 0) {
 		dev_err(dev, "read counter failed with err %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	क्रम (i = 1; i < माप(rbuff); i++) अणु
+	for (i = 1; i < sizeof(rbuff); i++) {
 		rticks <<= 8;
 		rticks |= rbuff[i];
-	पूर्ण
+	}
 
-	rtc_current_समय = rticks >> 10;
-	अगर ((seconds - rtc_current_समय) > ALM1_VALID_RANGE_IN_SEC)
-		seconds = rtc_current_समय - 1;
+	rtc_current_time = rticks >> 10;
+	if ((seconds - rtc_current_time) > ALM1_VALID_RANGE_IN_SEC)
+		seconds = rtc_current_time - 1;
 
-	ticks = (अचिन्हित दीर्घ दीर्घ)seconds << 10;
+	ticks = (unsigned long long)seconds << 10;
 	buff[0] = (ticks >> 16) & 0xff;
 	buff[1] = (ticks >> 8) & 0xff;
 	buff[2] = ticks & 0xff;
 
-	ret = tps6586x_ग_लिखोs(tps_dev, RTC_ALARM1_HI, माप(buff), buff);
-	अगर (ret)
+	ret = tps6586x_writes(tps_dev, RTC_ALARM1_HI, sizeof(buff), buff);
+	if (ret)
 		dev_err(dev, "programming alarm failed with err %d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tps6586x_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	काष्ठा device *tps_dev = to_tps6586x_dev(dev);
-	अचिन्हित दीर्घ ticks;
-	समय64_t seconds;
+static int tps6586x_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	struct device *tps_dev = to_tps6586x_dev(dev);
+	unsigned long ticks;
+	time64_t seconds;
 	u8 buff[3];
-	पूर्णांक ret;
+	int ret;
 
-	ret = tps6586x_पढ़ोs(tps_dev, RTC_ALARM1_HI, माप(buff), buff);
-	अगर (ret) अणु
+	ret = tps6586x_reads(tps_dev, RTC_ALARM1_HI, sizeof(buff), buff);
+	if (ret) {
 		dev_err(dev, "read RTC_ALARM1_HI failed with err %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ticks = (buff[0] << 16) | (buff[1] << 8) | buff[2];
 	seconds = ticks >> 10;
 
-	rtc_समय64_to_पंचांग(seconds, &alrm->समय);
-	वापस 0;
-पूर्ण
+	rtc_time64_to_tm(seconds, &alrm->time);
+	return 0;
+}
 
-अटल स्थिर काष्ठा rtc_class_ops tps6586x_rtc_ops = अणु
-	.पढ़ो_समय	= tps6586x_rtc_पढ़ो_समय,
-	.set_समय	= tps6586x_rtc_set_समय,
+static const struct rtc_class_ops tps6586x_rtc_ops = {
+	.read_time	= tps6586x_rtc_read_time,
+	.set_time	= tps6586x_rtc_set_time,
 	.set_alarm	= tps6586x_rtc_set_alarm,
-	.पढ़ो_alarm	= tps6586x_rtc_पढ़ो_alarm,
+	.read_alarm	= tps6586x_rtc_read_alarm,
 	.alarm_irq_enable = tps6586x_rtc_alarm_irq_enable,
-पूर्ण;
+};
 
-अटल irqवापस_t tps6586x_rtc_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा tps6586x_rtc *rtc = data;
+static irqreturn_t tps6586x_rtc_irq(int irq, void *data)
+{
+	struct tps6586x_rtc *rtc = data;
 
 	rtc_update_irq(rtc->rtc, 1, RTC_IRQF | RTC_AF);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक tps6586x_rtc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *tps_dev = to_tps6586x_dev(&pdev->dev);
-	काष्ठा tps6586x_rtc *rtc;
-	पूर्णांक ret;
+static int tps6586x_rtc_probe(struct platform_device *pdev)
+{
+	struct device *tps_dev = to_tps6586x_dev(&pdev->dev);
+	struct tps6586x_rtc *rtc;
+	int ret;
 
-	rtc = devm_kzalloc(&pdev->dev, माप(*rtc), GFP_KERNEL);
-	अगर (!rtc)
-		वापस -ENOMEM;
+	rtc = devm_kzalloc(&pdev->dev, sizeof(*rtc), GFP_KERNEL);
+	if (!rtc)
+		return -ENOMEM;
 
 	rtc->dev = &pdev->dev;
-	rtc->irq = platक्रमm_get_irq(pdev, 0);
+	rtc->irq = platform_get_irq(pdev, 0);
 
 	/* 1 kHz tick mode, enable tick counting */
 	ret = tps6586x_update(tps_dev, RTC_CTRL,
 		RTC_ENABLE | OSC_SRC_SEL |
 		((TPS6586X_RTC_CL_SEL_1_5PF << CL_SEL_POS) & CL_SEL_MASK),
 		RTC_ENABLE | OSC_SRC_SEL | PRE_BYPASS | CL_SEL_MASK);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "unable to start counter\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	device_init_wakeup(&pdev->dev, 1);
 
-	platक्रमm_set_drvdata(pdev, rtc);
+	platform_set_drvdata(pdev, rtc);
 	rtc->rtc = devm_rtc_allocate_device(&pdev->dev);
-	अगर (IS_ERR(rtc->rtc)) अणु
+	if (IS_ERR(rtc->rtc)) {
 		ret = PTR_ERR(rtc->rtc);
-		जाओ fail_rtc_रेजिस्टर;
-	पूर्ण
+		goto fail_rtc_register;
+	}
 
 	rtc->rtc->ops = &tps6586x_rtc_ops;
 	rtc->rtc->range_max = (1ULL << 30) - 1; /* 30-bit seconds */
-	rtc->rtc->start_secs = स_गढ़ो64(2009, 1, 1, 0, 0, 0);
-	rtc->rtc->set_start_समय = true;
+	rtc->rtc->start_secs = mktime64(2009, 1, 1, 0, 0, 0);
+	rtc->rtc->set_start_time = true;
 
 	irq_set_status_flags(rtc->irq, IRQ_NOAUTOEN);
 
-	ret = devm_request_thपढ़ोed_irq(&pdev->dev, rtc->irq, शून्य,
+	ret = devm_request_threaded_irq(&pdev->dev, rtc->irq, NULL,
 				tps6586x_rtc_irq,
 				IRQF_ONESHOT,
 				dev_name(&pdev->dev), rtc);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "request IRQ(%d) failed with ret %d\n",
 				rtc->irq, ret);
-		जाओ fail_rtc_रेजिस्टर;
-	पूर्ण
+		goto fail_rtc_register;
+	}
 
-	ret = devm_rtc_रेजिस्टर_device(rtc->rtc);
-	अगर (ret)
-		जाओ fail_rtc_रेजिस्टर;
+	ret = devm_rtc_register_device(rtc->rtc);
+	if (ret)
+		goto fail_rtc_register;
 
-	वापस 0;
+	return 0;
 
-fail_rtc_रेजिस्टर:
+fail_rtc_register:
 	tps6586x_update(tps_dev, RTC_CTRL, 0,
 		RTC_ENABLE | OSC_SRC_SEL | PRE_BYPASS | CL_SEL_MASK);
-	वापस ret;
-पूर्ण;
+	return ret;
+};
 
-अटल पूर्णांक tps6586x_rtc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *tps_dev = to_tps6586x_dev(&pdev->dev);
+static int tps6586x_rtc_remove(struct platform_device *pdev)
+{
+	struct device *tps_dev = to_tps6586x_dev(&pdev->dev);
 
 	tps6586x_update(tps_dev, RTC_CTRL, 0,
 		RTC_ENABLE | OSC_SRC_SEL | PRE_BYPASS | CL_SEL_MASK);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक tps6586x_rtc_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा tps6586x_rtc *rtc = dev_get_drvdata(dev);
+#ifdef CONFIG_PM_SLEEP
+static int tps6586x_rtc_suspend(struct device *dev)
+{
+	struct tps6586x_rtc *rtc = dev_get_drvdata(dev);
 
-	अगर (device_may_wakeup(dev))
+	if (device_may_wakeup(dev))
 		enable_irq_wake(rtc->irq);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tps6586x_rtc_resume(काष्ठा device *dev)
-अणु
-	काष्ठा tps6586x_rtc *rtc = dev_get_drvdata(dev);
+static int tps6586x_rtc_resume(struct device *dev)
+{
+	struct tps6586x_rtc *rtc = dev_get_drvdata(dev);
 
-	अगर (device_may_wakeup(dev))
+	if (device_may_wakeup(dev))
 		disable_irq_wake(rtc->irq);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(tps6586x_pm_ops, tps6586x_rtc_suspend,
+static SIMPLE_DEV_PM_OPS(tps6586x_pm_ops, tps6586x_rtc_suspend,
 			tps6586x_rtc_resume);
 
-अटल काष्ठा platक्रमm_driver tps6586x_rtc_driver = अणु
-	.driver	= अणु
+static struct platform_driver tps6586x_rtc_driver = {
+	.driver	= {
 		.name	= "tps6586x-rtc",
 		.pm	= &tps6586x_pm_ops,
-	पूर्ण,
+	},
 	.probe	= tps6586x_rtc_probe,
-	.हटाओ	= tps6586x_rtc_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(tps6586x_rtc_driver);
+	.remove	= tps6586x_rtc_remove,
+};
+module_platform_driver(tps6586x_rtc_driver);
 
 MODULE_ALIAS("platform:tps6586x-rtc");
 MODULE_DESCRIPTION("TI TPS6586x RTC driver");

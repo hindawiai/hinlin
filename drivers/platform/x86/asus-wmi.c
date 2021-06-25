@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Asus PC WMI hotkey driver
  *
  * Copyright(C) 2010 Intel Corporation.
- * Copyright(C) 2010-2011 Corentin Chary <corentin.अक्षरy@gmail.com>
+ * Copyright(C) 2010-2011 Corentin Chary <corentin.chary@gmail.com>
  *
  * Portions based on wistron_btns.c:
  * Copyright (C) 2005 Miloslav Trmac <mitr@volny.cz>
@@ -12,200 +11,200 @@
  * Copyright (C) 2005 Dmitry Torokhov <dtor@mail.ru>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/input.h>
-#समावेश <linux/input/sparse-keymap.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/backlight.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/rfसमाप्त.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/pci_hotplug.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/hwmon-sysfs.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/platक्रमm_data/x86/asus-wmi.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/units.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/input.h>
+#include <linux/input/sparse-keymap.h>
+#include <linux/fb.h>
+#include <linux/backlight.h>
+#include <linux/leds.h>
+#include <linux/rfkill.h>
+#include <linux/pci.h>
+#include <linux/pci_hotplug.h>
+#include <linux/power_supply.h>
+#include <linux/hwmon.h>
+#include <linux/hwmon-sysfs.h>
+#include <linux/debugfs.h>
+#include <linux/seq_file.h>
+#include <linux/platform_data/x86/asus-wmi.h>
+#include <linux/platform_device.h>
+#include <linux/acpi.h>
+#include <linux/dmi.h>
+#include <linux/units.h>
 
-#समावेश <acpi/battery.h>
-#समावेश <acpi/video.h>
+#include <acpi/battery.h>
+#include <acpi/video.h>
 
-#समावेश "asus-wmi.h"
+#include "asus-wmi.h"
 
 MODULE_AUTHOR("Corentin Chary <corentin.chary@gmail.com>, "
 	      "Yong Wang <yong.y.wang@intel.com>");
 MODULE_DESCRIPTION("Asus Generic WMI Driver");
 MODULE_LICENSE("GPL");
 
-अटल bool fnlock_शेष = true;
-module_param(fnlock_शेष, bool, 0444);
+static bool fnlock_default = true;
+module_param(fnlock_default, bool, 0444);
 
-#घोषणा to_asus_wmi_driver(pdrv)					\
-	(container_of((pdrv), काष्ठा asus_wmi_driver, platक्रमm_driver))
+#define to_asus_wmi_driver(pdrv)					\
+	(container_of((pdrv), struct asus_wmi_driver, platform_driver))
 
-#घोषणा ASUS_WMI_MGMT_GUID	"97845ED0-4E6D-11DE-8A39-0800200C9A66"
+#define ASUS_WMI_MGMT_GUID	"97845ED0-4E6D-11DE-8A39-0800200C9A66"
 
-#घोषणा NOTIFY_BRNUP_MIN		0x11
-#घोषणा NOTIFY_BRNUP_MAX		0x1f
-#घोषणा NOTIFY_BRNDOWN_MIN		0x20
-#घोषणा NOTIFY_BRNDOWN_MAX		0x2e
-#घोषणा NOTIFY_FNLOCK_TOGGLE		0x4e
-#घोषणा NOTIFY_KBD_DOCK_CHANGE		0x75
-#घोषणा NOTIFY_KBD_BRTUP		0xc4
-#घोषणा NOTIFY_KBD_BRTDWN		0xc5
-#घोषणा NOTIFY_KBD_BRTTOGGLE		0xc7
-#घोषणा NOTIFY_KBD_FBM			0x99
-#घोषणा NOTIFY_KBD_TTP			0xae
-#घोषणा NOTIFY_LID_FLIP			0xfa
+#define NOTIFY_BRNUP_MIN		0x11
+#define NOTIFY_BRNUP_MAX		0x1f
+#define NOTIFY_BRNDOWN_MIN		0x20
+#define NOTIFY_BRNDOWN_MAX		0x2e
+#define NOTIFY_FNLOCK_TOGGLE		0x4e
+#define NOTIFY_KBD_DOCK_CHANGE		0x75
+#define NOTIFY_KBD_BRTUP		0xc4
+#define NOTIFY_KBD_BRTDWN		0xc5
+#define NOTIFY_KBD_BRTTOGGLE		0xc7
+#define NOTIFY_KBD_FBM			0x99
+#define NOTIFY_KBD_TTP			0xae
+#define NOTIFY_LID_FLIP			0xfa
 
-#घोषणा ASUS_WMI_FNLOCK_BIOS_DISABLED	BIT(0)
+#define ASUS_WMI_FNLOCK_BIOS_DISABLED	BIT(0)
 
-#घोषणा ASUS_FAN_DESC			"cpu_fan"
-#घोषणा ASUS_FAN_MFUN			0x13
-#घोषणा ASUS_FAN_SFUN_READ		0x06
-#घोषणा ASUS_FAN_SFUN_WRITE		0x07
+#define ASUS_FAN_DESC			"cpu_fan"
+#define ASUS_FAN_MFUN			0x13
+#define ASUS_FAN_SFUN_READ		0x06
+#define ASUS_FAN_SFUN_WRITE		0x07
 
 /* Based on standard hwmon pwmX_enable values */
-#घोषणा ASUS_FAN_CTRL_FULLSPEED		0
-#घोषणा ASUS_FAN_CTRL_MANUAL		1
-#घोषणा ASUS_FAN_CTRL_AUTO		2
+#define ASUS_FAN_CTRL_FULLSPEED		0
+#define ASUS_FAN_CTRL_MANUAL		1
+#define ASUS_FAN_CTRL_AUTO		2
 
-#घोषणा ASUS_FAN_BOOST_MODE_NORMAL		0
-#घोषणा ASUS_FAN_BOOST_MODE_OVERBOOST		1
-#घोषणा ASUS_FAN_BOOST_MODE_OVERBOOST_MASK	0x01
-#घोषणा ASUS_FAN_BOOST_MODE_SILENT		2
-#घोषणा ASUS_FAN_BOOST_MODE_SILENT_MASK		0x02
-#घोषणा ASUS_FAN_BOOST_MODES_MASK		0x03
+#define ASUS_FAN_BOOST_MODE_NORMAL		0
+#define ASUS_FAN_BOOST_MODE_OVERBOOST		1
+#define ASUS_FAN_BOOST_MODE_OVERBOOST_MASK	0x01
+#define ASUS_FAN_BOOST_MODE_SILENT		2
+#define ASUS_FAN_BOOST_MODE_SILENT_MASK		0x02
+#define ASUS_FAN_BOOST_MODES_MASK		0x03
 
-#घोषणा ASUS_THROTTLE_THERMAL_POLICY_DEFAULT	0
-#घोषणा ASUS_THROTTLE_THERMAL_POLICY_OVERBOOST	1
-#घोषणा ASUS_THROTTLE_THERMAL_POLICY_SILENT	2
+#define ASUS_THROTTLE_THERMAL_POLICY_DEFAULT	0
+#define ASUS_THROTTLE_THERMAL_POLICY_OVERBOOST	1
+#define ASUS_THROTTLE_THERMAL_POLICY_SILENT	2
 
-#घोषणा USB_INTEL_XUSB2PR		0xD0
-#घोषणा PCI_DEVICE_ID_INTEL_LYNXPOINT_LP_XHCI	0x9c31
+#define USB_INTEL_XUSB2PR		0xD0
+#define PCI_DEVICE_ID_INTEL_LYNXPOINT_LP_XHCI	0x9c31
 
-#घोषणा ASUS_ACPI_UID_ASUSWMI		"ASUSWMI"
-#घोषणा ASUS_ACPI_UID_ATK		"ATK"
+#define ASUS_ACPI_UID_ASUSWMI		"ASUSWMI"
+#define ASUS_ACPI_UID_ATK		"ATK"
 
-#घोषणा WMI_EVENT_QUEUE_SIZE		0x10
-#घोषणा WMI_EVENT_QUEUE_END		0x1
-#घोषणा WMI_EVENT_MASK			0xFFFF
+#define WMI_EVENT_QUEUE_SIZE		0x10
+#define WMI_EVENT_QUEUE_END		0x1
+#define WMI_EVENT_MASK			0xFFFF
 /* The WMI hotkey event value is always the same. */
-#घोषणा WMI_EVENT_VALUE_ATK		0xFF
+#define WMI_EVENT_VALUE_ATK		0xFF
 
-#घोषणा WMI_EVENT_MASK			0xFFFF
+#define WMI_EVENT_MASK			0xFFFF
 
-अटल स्थिर अक्षर * स्थिर ashs_ids[] = अणु "ATK4001", "ATK4002", शून्य पूर्ण;
+static const char * const ashs_ids[] = { "ATK4001", "ATK4002", NULL };
 
-अटल bool ashs_present(व्योम)
-अणु
-	पूर्णांक i = 0;
-	जबतक (ashs_ids[i]) अणु
-		अगर (acpi_dev_found(ashs_ids[i++]))
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+static bool ashs_present(void)
+{
+	int i = 0;
+	while (ashs_ids[i]) {
+		if (acpi_dev_found(ashs_ids[i++]))
+			return true;
+	}
+	return false;
+}
 
-काष्ठा bios_args अणु
+struct bios_args {
 	u32 arg0;
 	u32 arg1;
 	u32 arg2; /* At least TUF Gaming series uses 3 dword input buffer. */
 	u32 arg4;
 	u32 arg5;
-पूर्ण __packed;
+} __packed;
 
 /*
- * Struct that's used क्रम all methods called via AGFN. Naming is
+ * Struct that's used for all methods called via AGFN. Naming is
  * identically to the AML code.
  */
-काष्ठा agfn_args अणु
+struct agfn_args {
 	u16 mfun; /* probably "Multi-function" to be called */
 	u16 sfun; /* probably "Sub-function" to be called */
-	u16 len;  /* size of the hole काष्ठा, including subfunction fields */
+	u16 len;  /* size of the hole struct, including subfunction fields */
 	u8 stas;  /* not used by now */
 	u8 err;   /* zero on success */
-पूर्ण __packed;
+} __packed;
 
-/* काष्ठा used क्रम calling fan पढ़ो and ग_लिखो methods */
-काष्ठा agfn_fan_args अणु
-	काष्ठा agfn_args agfn;	/* common fields */
-	u8 fan;			/* fan number: 0: set स्वतः mode 1: 1st fan */
-	u32 speed;		/* पढ़ो: RPM/100 - ग_लिखो: 0-255 */
-पूर्ण __packed;
+/* struct used for calling fan read and write methods */
+struct agfn_fan_args {
+	struct agfn_args agfn;	/* common fields */
+	u8 fan;			/* fan number: 0: set auto mode 1: 1st fan */
+	u32 speed;		/* read: RPM/100 - write: 0-255 */
+} __packed;
 
 /*
- * <platक्रमm>/    - debugfs root directory
+ * <platform>/    - debugfs root directory
  *   dev_id      - current dev_id
  *   ctrl_param  - current ctrl_param
  *   method_id   - current method_id
- *   devs        - call DEVS(dev_id, ctrl_param) and prपूर्णांक result
- *   dsts        - call DSTS(dev_id)  and prपूर्णांक result
- *   call        - call method_id(dev_id, ctrl_param) and prपूर्णांक result
+ *   devs        - call DEVS(dev_id, ctrl_param) and print result
+ *   dsts        - call DSTS(dev_id)  and print result
+ *   call        - call method_id(dev_id, ctrl_param) and print result
  */
-काष्ठा asus_wmi_debug अणु
-	काष्ठा dentry *root;
+struct asus_wmi_debug {
+	struct dentry *root;
 	u32 method_id;
 	u32 dev_id;
 	u32 ctrl_param;
-पूर्ण;
+};
 
-काष्ठा asus_rfसमाप्त अणु
-	काष्ठा asus_wmi *asus;
-	काष्ठा rfसमाप्त *rfसमाप्त;
+struct asus_rfkill {
+	struct asus_wmi *asus;
+	struct rfkill *rfkill;
 	u32 dev_id;
-पूर्ण;
+};
 
-क्रमागत fan_type अणु
+enum fan_type {
 	FAN_TYPE_NONE = 0,
-	FAN_TYPE_AGFN,		/* deprecated on newer platक्रमms */
+	FAN_TYPE_AGFN,		/* deprecated on newer platforms */
 	FAN_TYPE_SPEC83,	/* starting in Spec 8.3, use CPU_FAN_CTRL */
-पूर्ण;
+};
 
-काष्ठा asus_wmi अणु
-	पूर्णांक dsts_id;
-	पूर्णांक spec;
-	पूर्णांक sfun;
+struct asus_wmi {
+	int dsts_id;
+	int spec;
+	int sfun;
 	bool wmi_event_queue;
 
-	काष्ठा input_dev *inputdev;
-	काष्ठा backlight_device *backlight_device;
-	काष्ठा platक्रमm_device *platक्रमm_device;
+	struct input_dev *inputdev;
+	struct backlight_device *backlight_device;
+	struct platform_device *platform_device;
 
-	काष्ठा led_classdev wlan_led;
-	पूर्णांक wlan_led_wk;
-	काष्ठा led_classdev tpd_led;
-	पूर्णांक tpd_led_wk;
-	काष्ठा led_classdev kbd_led;
-	पूर्णांक kbd_led_wk;
-	काष्ठा led_classdev lightbar_led;
-	पूर्णांक lightbar_led_wk;
-	काष्ठा workqueue_काष्ठा *led_workqueue;
-	काष्ठा work_काष्ठा tpd_led_work;
-	काष्ठा work_काष्ठा wlan_led_work;
-	काष्ठा work_काष्ठा lightbar_led_work;
+	struct led_classdev wlan_led;
+	int wlan_led_wk;
+	struct led_classdev tpd_led;
+	int tpd_led_wk;
+	struct led_classdev kbd_led;
+	int kbd_led_wk;
+	struct led_classdev lightbar_led;
+	int lightbar_led_wk;
+	struct workqueue_struct *led_workqueue;
+	struct work_struct tpd_led_work;
+	struct work_struct wlan_led_work;
+	struct work_struct lightbar_led_work;
 
-	काष्ठा asus_rfसमाप्त wlan;
-	काष्ठा asus_rfसमाप्त bluetooth;
-	काष्ठा asus_rfसमाप्त wimax;
-	काष्ठा asus_rfसमाप्त wwan3g;
-	काष्ठा asus_rfसमाप्त gps;
-	काष्ठा asus_rfसमाप्त uwb;
+	struct asus_rfkill wlan;
+	struct asus_rfkill bluetooth;
+	struct asus_rfkill wimax;
+	struct asus_rfkill wwan3g;
+	struct asus_rfkill gps;
+	struct asus_rfkill uwb;
 
-	क्रमागत fan_type fan_type;
-	पूर्णांक fan_pwm_mode;
-	पूर्णांक agfn_pwm;
+	enum fan_type fan_type;
+	int fan_pwm_mode;
+	int agfn_pwm;
 
 	bool fan_boost_mode_available;
 	u8 fan_boost_mode_mask;
@@ -214,68 +213,68 @@ module_param(fnlock_शेष, bool, 0444);
 	bool throttle_thermal_policy_available;
 	u8 throttle_thermal_policy_mode;
 
-	// The RSOC controls the maximum अक्षरging percentage.
+	// The RSOC controls the maximum charging percentage.
 	bool battery_rsoc_available;
 
-	काष्ठा hotplug_slot hotplug_slot;
-	काष्ठा mutex hotplug_lock;
-	काष्ठा mutex wmi_lock;
-	काष्ठा workqueue_काष्ठा *hotplug_workqueue;
-	काष्ठा work_काष्ठा hotplug_work;
+	struct hotplug_slot hotplug_slot;
+	struct mutex hotplug_lock;
+	struct mutex wmi_lock;
+	struct workqueue_struct *hotplug_workqueue;
+	struct work_struct hotplug_work;
 
 	bool fnlock_locked;
 
-	काष्ठा asus_wmi_debug debug;
+	struct asus_wmi_debug debug;
 
-	काष्ठा asus_wmi_driver *driver;
-पूर्ण;
+	struct asus_wmi_driver *driver;
+};
 
 /* WMI ************************************************************************/
 
-अटल पूर्णांक asus_wmi_evaluate_method3(u32 method_id,
+static int asus_wmi_evaluate_method3(u32 method_id,
 		u32 arg0, u32 arg1, u32 arg2, u32 *retval)
-अणु
-	काष्ठा bios_args args = अणु
+{
+	struct bios_args args = {
 		.arg0 = arg0,
 		.arg1 = arg1,
 		.arg2 = arg2,
-	पूर्ण;
-	काष्ठा acpi_buffer input = अणु (acpi_size) माप(args), &args पूर्ण;
-	काष्ठा acpi_buffer output = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	};
+	struct acpi_buffer input = { (acpi_size) sizeof(args), &args };
+	struct acpi_buffer output = { ACPI_ALLOCATE_BUFFER, NULL };
 	acpi_status status;
-	जोड़ acpi_object *obj;
-	u32 पंचांगp = 0;
+	union acpi_object *obj;
+	u32 tmp = 0;
 
 	status = wmi_evaluate_method(ASUS_WMI_MGMT_GUID, 0, method_id,
 				     &input, &output);
 
-	अगर (ACPI_FAILURE(status))
-		वापस -EIO;
+	if (ACPI_FAILURE(status))
+		return -EIO;
 
-	obj = (जोड़ acpi_object *)output.poपूर्णांकer;
-	अगर (obj && obj->type == ACPI_TYPE_INTEGER)
-		पंचांगp = (u32) obj->पूर्णांकeger.value;
+	obj = (union acpi_object *)output.pointer;
+	if (obj && obj->type == ACPI_TYPE_INTEGER)
+		tmp = (u32) obj->integer.value;
 
-	अगर (retval)
-		*retval = पंचांगp;
+	if (retval)
+		*retval = tmp;
 
-	kमुक्त(obj);
+	kfree(obj);
 
-	अगर (पंचांगp == ASUS_WMI_UNSUPPORTED_METHOD)
-		वापस -ENODEV;
+	if (tmp == ASUS_WMI_UNSUPPORTED_METHOD)
+		return -ENODEV;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक asus_wmi_evaluate_method(u32 method_id, u32 arg0, u32 arg1, u32 *retval)
-अणु
-	वापस asus_wmi_evaluate_method3(method_id, arg0, arg1, 0, retval);
-पूर्ण
+int asus_wmi_evaluate_method(u32 method_id, u32 arg0, u32 arg1, u32 *retval)
+{
+	return asus_wmi_evaluate_method3(method_id, arg0, arg1, 0, retval);
+}
 EXPORT_SYMBOL_GPL(asus_wmi_evaluate_method);
 
-अटल पूर्णांक asus_wmi_evaluate_method_agfn(स्थिर काष्ठा acpi_buffer args)
-अणु
-	काष्ठा acpi_buffer input;
+static int asus_wmi_evaluate_method_agfn(const struct acpi_buffer args)
+{
+	struct acpi_buffer input;
 	u64 phys_addr;
 	u32 retval;
 	u32 status;
@@ -284,298 +283,298 @@ EXPORT_SYMBOL_GPL(asus_wmi_evaluate_method);
 	 * Copy to dma capable address otherwise memory corruption occurs as
 	 * bios has to be able to access it.
 	 */
-	input.poपूर्णांकer = kmemdup(args.poपूर्णांकer, args.length, GFP_DMA | GFP_KERNEL);
+	input.pointer = kmemdup(args.pointer, args.length, GFP_DMA | GFP_KERNEL);
 	input.length = args.length;
-	अगर (!input.poपूर्णांकer)
-		वापस -ENOMEM;
-	phys_addr = virt_to_phys(input.poपूर्णांकer);
+	if (!input.pointer)
+		return -ENOMEM;
+	phys_addr = virt_to_phys(input.pointer);
 
 	status = asus_wmi_evaluate_method(ASUS_WMI_METHODID_AGFN,
 					phys_addr, 0, &retval);
-	अगर (!status)
-		स_नकल(args.poपूर्णांकer, input.poपूर्णांकer, args.length);
+	if (!status)
+		memcpy(args.pointer, input.pointer, args.length);
 
-	kमुक्त(input.poपूर्णांकer);
-	अगर (status)
-		वापस -ENXIO;
+	kfree(input.pointer);
+	if (status)
+		return -ENXIO;
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक asus_wmi_get_devstate(काष्ठा asus_wmi *asus, u32 dev_id, u32 *retval)
-अणु
-	वापस asus_wmi_evaluate_method(asus->dsts_id, dev_id, 0, retval);
-पूर्ण
+static int asus_wmi_get_devstate(struct asus_wmi *asus, u32 dev_id, u32 *retval)
+{
+	return asus_wmi_evaluate_method(asus->dsts_id, dev_id, 0, retval);
+}
 
-अटल पूर्णांक asus_wmi_set_devstate(u32 dev_id, u32 ctrl_param,
+static int asus_wmi_set_devstate(u32 dev_id, u32 ctrl_param,
 				 u32 *retval)
-अणु
-	वापस asus_wmi_evaluate_method(ASUS_WMI_METHODID_DEVS, dev_id,
+{
+	return asus_wmi_evaluate_method(ASUS_WMI_METHODID_DEVS, dev_id,
 					ctrl_param, retval);
-पूर्ण
+}
 
-/* Helper क्रम special devices with magic वापस codes */
-अटल पूर्णांक asus_wmi_get_devstate_bits(काष्ठा asus_wmi *asus,
+/* Helper for special devices with magic return codes */
+static int asus_wmi_get_devstate_bits(struct asus_wmi *asus,
 				      u32 dev_id, u32 mask)
-अणु
+{
 	u32 retval = 0;
-	पूर्णांक err;
+	int err;
 
 	err = asus_wmi_get_devstate(asus, dev_id, &retval);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (!(retval & ASUS_WMI_DSTS_PRESENCE_BIT))
-		वापस -ENODEV;
+	if (!(retval & ASUS_WMI_DSTS_PRESENCE_BIT))
+		return -ENODEV;
 
-	अगर (mask == ASUS_WMI_DSTS_STATUS_BIT) अणु
-		अगर (retval & ASUS_WMI_DSTS_UNKNOWN_BIT)
-			वापस -ENODEV;
-	पूर्ण
+	if (mask == ASUS_WMI_DSTS_STATUS_BIT) {
+		if (retval & ASUS_WMI_DSTS_UNKNOWN_BIT)
+			return -ENODEV;
+	}
 
-	वापस retval & mask;
-पूर्ण
+	return retval & mask;
+}
 
-अटल पूर्णांक asus_wmi_get_devstate_simple(काष्ठा asus_wmi *asus, u32 dev_id)
-अणु
-	वापस asus_wmi_get_devstate_bits(asus, dev_id,
+static int asus_wmi_get_devstate_simple(struct asus_wmi *asus, u32 dev_id)
+{
+	return asus_wmi_get_devstate_bits(asus, dev_id,
 					  ASUS_WMI_DSTS_STATUS_BIT);
-पूर्ण
+}
 
-अटल bool asus_wmi_dev_is_present(काष्ठा asus_wmi *asus, u32 dev_id)
-अणु
+static bool asus_wmi_dev_is_present(struct asus_wmi *asus, u32 dev_id)
+{
 	u32 retval;
-	पूर्णांक status = asus_wmi_get_devstate(asus, dev_id, &retval);
+	int status = asus_wmi_get_devstate(asus, dev_id, &retval);
 
-	वापस status == 0 && (retval & ASUS_WMI_DSTS_PRESENCE_BIT);
-पूर्ण
+	return status == 0 && (retval & ASUS_WMI_DSTS_PRESENCE_BIT);
+}
 
 /* Input **********************************************************************/
 
-अटल पूर्णांक asus_wmi_input_init(काष्ठा asus_wmi *asus)
-अणु
-	पूर्णांक err, result;
+static int asus_wmi_input_init(struct asus_wmi *asus)
+{
+	int err, result;
 
 	asus->inputdev = input_allocate_device();
-	अगर (!asus->inputdev)
-		वापस -ENOMEM;
+	if (!asus->inputdev)
+		return -ENOMEM;
 
 	asus->inputdev->name = asus->driver->input_name;
 	asus->inputdev->phys = asus->driver->input_phys;
 	asus->inputdev->id.bustype = BUS_HOST;
-	asus->inputdev->dev.parent = &asus->platक्रमm_device->dev;
+	asus->inputdev->dev.parent = &asus->platform_device->dev;
 	set_bit(EV_REP, asus->inputdev->evbit);
 
-	err = sparse_keymap_setup(asus->inputdev, asus->driver->keymap, शून्य);
-	अगर (err)
-		जाओ err_मुक्त_dev;
+	err = sparse_keymap_setup(asus->inputdev, asus->driver->keymap, NULL);
+	if (err)
+		goto err_free_dev;
 
-	अगर (asus->driver->quirks->use_kbd_करोck_devid) अणु
+	if (asus->driver->quirks->use_kbd_dock_devid) {
 		result = asus_wmi_get_devstate_simple(asus, ASUS_WMI_DEVID_KBD_DOCK);
-		अगर (result >= 0) अणु
+		if (result >= 0) {
 			input_set_capability(asus->inputdev, EV_SW, SW_TABLET_MODE);
-			input_report_चयन(asus->inputdev, SW_TABLET_MODE, !result);
-		पूर्ण अन्यथा अगर (result != -ENODEV) अणु
+			input_report_switch(asus->inputdev, SW_TABLET_MODE, !result);
+		} else if (result != -ENODEV) {
 			pr_err("Error checking for keyboard-dock: %d\n", result);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (asus->driver->quirks->use_lid_flip_devid) अणु
+	if (asus->driver->quirks->use_lid_flip_devid) {
 		result = asus_wmi_get_devstate_simple(asus, ASUS_WMI_DEVID_LID_FLIP);
-		अगर (result < 0)
+		if (result < 0)
 			asus->driver->quirks->use_lid_flip_devid = 0;
-		अगर (result >= 0) अणु
+		if (result >= 0) {
 			input_set_capability(asus->inputdev, EV_SW, SW_TABLET_MODE);
-			input_report_चयन(asus->inputdev, SW_TABLET_MODE, result);
-		पूर्ण अन्यथा अगर (result == -ENODEV) अणु
+			input_report_switch(asus->inputdev, SW_TABLET_MODE, result);
+		} else if (result == -ENODEV) {
 			pr_err("This device has lid_flip quirk but got ENODEV checking it. This is a bug.");
-		पूर्ण अन्यथा अणु
+		} else {
 			pr_err("Error checking for lid-flip: %d\n", result);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	err = input_रेजिस्टर_device(asus->inputdev);
-	अगर (err)
-		जाओ err_मुक्त_dev;
+	err = input_register_device(asus->inputdev);
+	if (err)
+		goto err_free_dev;
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_dev:
-	input_मुक्त_device(asus->inputdev);
-	वापस err;
-पूर्ण
+err_free_dev:
+	input_free_device(asus->inputdev);
+	return err;
+}
 
-अटल व्योम asus_wmi_input_निकास(काष्ठा asus_wmi *asus)
-अणु
-	अगर (asus->inputdev)
-		input_unरेजिस्टर_device(asus->inputdev);
+static void asus_wmi_input_exit(struct asus_wmi *asus)
+{
+	if (asus->inputdev)
+		input_unregister_device(asus->inputdev);
 
-	asus->inputdev = शून्य;
-पूर्ण
+	asus->inputdev = NULL;
+}
 
 /* Tablet mode ****************************************************************/
 
-अटल व्योम lid_flip_tablet_mode_get_state(काष्ठा asus_wmi *asus)
-अणु
-	पूर्णांक result = asus_wmi_get_devstate_simple(asus, ASUS_WMI_DEVID_LID_FLIP);
+static void lid_flip_tablet_mode_get_state(struct asus_wmi *asus)
+{
+	int result = asus_wmi_get_devstate_simple(asus, ASUS_WMI_DEVID_LID_FLIP);
 
-	अगर (result >= 0) अणु
-		input_report_चयन(asus->inputdev, SW_TABLET_MODE, result);
+	if (result >= 0) {
+		input_report_switch(asus->inputdev, SW_TABLET_MODE, result);
 		input_sync(asus->inputdev);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Battery ********************************************************************/
 
-/* The battery maximum अक्षरging percentage */
-अटल पूर्णांक अक्षरge_end_threshold;
+/* The battery maximum charging percentage */
+static int charge_end_threshold;
 
-अटल sमाप_प्रकार अक्षरge_control_end_threshold_store(काष्ठा device *dev,
-						  काष्ठा device_attribute *attr,
-						  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक value, ret, rv;
+static ssize_t charge_control_end_threshold_store(struct device *dev,
+						  struct device_attribute *attr,
+						  const char *buf, size_t count)
+{
+	int value, ret, rv;
 
-	ret = kstrtouपूर्णांक(buf, 10, &value);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtouint(buf, 10, &value);
+	if (ret)
+		return ret;
 
-	अगर (value < 0 || value > 100)
-		वापस -EINVAL;
+	if (value < 0 || value > 100)
+		return -EINVAL;
 
 	ret = asus_wmi_set_devstate(ASUS_WMI_DEVID_RSOC, value, &rv);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (rv != 1)
-		वापस -EIO;
+	if (rv != 1)
+		return -EIO;
 
-	/* There isn't any method in the DSDT to पढ़ो the threshold, so we
+	/* There isn't any method in the DSDT to read the threshold, so we
 	 * save the threshold.
 	 */
-	अक्षरge_end_threshold = value;
-	वापस count;
-पूर्ण
+	charge_end_threshold = value;
+	return count;
+}
 
-अटल sमाप_प्रकार अक्षरge_control_end_threshold_show(काष्ठा device *device,
-						 काष्ठा device_attribute *attr,
-						 अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", अक्षरge_end_threshold);
-पूर्ण
+static ssize_t charge_control_end_threshold_show(struct device *device,
+						 struct device_attribute *attr,
+						 char *buf)
+{
+	return sprintf(buf, "%d\n", charge_end_threshold);
+}
 
-अटल DEVICE_ATTR_RW(अक्षरge_control_end_threshold);
+static DEVICE_ATTR_RW(charge_control_end_threshold);
 
-अटल पूर्णांक asus_wmi_battery_add(काष्ठा घातer_supply *battery)
-अणु
-	/* The WMI method करोes not provide a way to specअगरic a battery, so we
+static int asus_wmi_battery_add(struct power_supply *battery)
+{
+	/* The WMI method does not provide a way to specific a battery, so we
 	 * just assume it is the first battery.
 	 * Note: On some newer ASUS laptops (Zenbook UM431DA), the primary/first
 	 * battery is named BATT.
 	 */
-	अगर (म_भेद(battery->desc->name, "BAT0") != 0 &&
-	    म_भेद(battery->desc->name, "BAT1") != 0 &&
-	    म_भेद(battery->desc->name, "BATC") != 0 &&
-	    म_भेद(battery->desc->name, "BATT") != 0)
-		वापस -ENODEV;
+	if (strcmp(battery->desc->name, "BAT0") != 0 &&
+	    strcmp(battery->desc->name, "BAT1") != 0 &&
+	    strcmp(battery->desc->name, "BATC") != 0 &&
+	    strcmp(battery->desc->name, "BATT") != 0)
+		return -ENODEV;
 
-	अगर (device_create_file(&battery->dev,
-	    &dev_attr_अक्षरge_control_end_threshold))
-		वापस -ENODEV;
+	if (device_create_file(&battery->dev,
+	    &dev_attr_charge_control_end_threshold))
+		return -ENODEV;
 
-	/* The अक्षरge threshold is only reset when the प्रणाली is घातer cycled,
+	/* The charge threshold is only reset when the system is power cycled,
 	 * and we can't get the current threshold so let set it to 100% when
 	 * a battery is added.
 	 */
-	asus_wmi_set_devstate(ASUS_WMI_DEVID_RSOC, 100, शून्य);
-	अक्षरge_end_threshold = 100;
+	asus_wmi_set_devstate(ASUS_WMI_DEVID_RSOC, 100, NULL);
+	charge_end_threshold = 100;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक asus_wmi_battery_हटाओ(काष्ठा घातer_supply *battery)
-अणु
-	device_हटाओ_file(&battery->dev,
-			   &dev_attr_अक्षरge_control_end_threshold);
-	वापस 0;
-पूर्ण
+static int asus_wmi_battery_remove(struct power_supply *battery)
+{
+	device_remove_file(&battery->dev,
+			   &dev_attr_charge_control_end_threshold);
+	return 0;
+}
 
-अटल काष्ठा acpi_battery_hook battery_hook = अणु
+static struct acpi_battery_hook battery_hook = {
 	.add_battery = asus_wmi_battery_add,
-	.हटाओ_battery = asus_wmi_battery_हटाओ,
+	.remove_battery = asus_wmi_battery_remove,
 	.name = "ASUS Battery Extension",
-पूर्ण;
+};
 
-अटल व्योम asus_wmi_battery_init(काष्ठा asus_wmi *asus)
-अणु
+static void asus_wmi_battery_init(struct asus_wmi *asus)
+{
 	asus->battery_rsoc_available = false;
-	अगर (asus_wmi_dev_is_present(asus, ASUS_WMI_DEVID_RSOC)) अणु
+	if (asus_wmi_dev_is_present(asus, ASUS_WMI_DEVID_RSOC)) {
 		asus->battery_rsoc_available = true;
-		battery_hook_रेजिस्टर(&battery_hook);
-	पूर्ण
-पूर्ण
+		battery_hook_register(&battery_hook);
+	}
+}
 
-अटल व्योम asus_wmi_battery_निकास(काष्ठा asus_wmi *asus)
-अणु
-	अगर (asus->battery_rsoc_available)
-		battery_hook_unरेजिस्टर(&battery_hook);
-पूर्ण
+static void asus_wmi_battery_exit(struct asus_wmi *asus)
+{
+	if (asus->battery_rsoc_available)
+		battery_hook_unregister(&battery_hook);
+}
 
 /* LEDs ***********************************************************************/
 
 /*
  * These functions actually update the LED's, and are called from a
- * workqueue. By करोing this as separate work rather than when the LED
- * subप्रणाली asks, we aव्योम messing with the Asus ACPI stuff during a
- * potentially bad समय, such as a समयr पूर्णांकerrupt.
+ * workqueue. By doing this as separate work rather than when the LED
+ * subsystem asks, we avoid messing with the Asus ACPI stuff during a
+ * potentially bad time, such as a timer interrupt.
  */
-अटल व्योम tpd_led_update(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक ctrl_param;
-	काष्ठा asus_wmi *asus;
+static void tpd_led_update(struct work_struct *work)
+{
+	int ctrl_param;
+	struct asus_wmi *asus;
 
-	asus = container_of(work, काष्ठा asus_wmi, tpd_led_work);
+	asus = container_of(work, struct asus_wmi, tpd_led_work);
 
 	ctrl_param = asus->tpd_led_wk;
-	asus_wmi_set_devstate(ASUS_WMI_DEVID_TOUCHPAD_LED, ctrl_param, शून्य);
-पूर्ण
+	asus_wmi_set_devstate(ASUS_WMI_DEVID_TOUCHPAD_LED, ctrl_param, NULL);
+}
 
-अटल व्योम tpd_led_set(काष्ठा led_classdev *led_cdev,
-			क्रमागत led_brightness value)
-अणु
-	काष्ठा asus_wmi *asus;
+static void tpd_led_set(struct led_classdev *led_cdev,
+			enum led_brightness value)
+{
+	struct asus_wmi *asus;
 
-	asus = container_of(led_cdev, काष्ठा asus_wmi, tpd_led);
+	asus = container_of(led_cdev, struct asus_wmi, tpd_led);
 
 	asus->tpd_led_wk = !!value;
 	queue_work(asus->led_workqueue, &asus->tpd_led_work);
-पूर्ण
+}
 
-अटल पूर्णांक पढ़ो_tpd_led_state(काष्ठा asus_wmi *asus)
-अणु
-	वापस asus_wmi_get_devstate_simple(asus, ASUS_WMI_DEVID_TOUCHPAD_LED);
-पूर्ण
+static int read_tpd_led_state(struct asus_wmi *asus)
+{
+	return asus_wmi_get_devstate_simple(asus, ASUS_WMI_DEVID_TOUCHPAD_LED);
+}
 
-अटल क्रमागत led_brightness tpd_led_get(काष्ठा led_classdev *led_cdev)
-अणु
-	काष्ठा asus_wmi *asus;
+static enum led_brightness tpd_led_get(struct led_classdev *led_cdev)
+{
+	struct asus_wmi *asus;
 
-	asus = container_of(led_cdev, काष्ठा asus_wmi, tpd_led);
+	asus = container_of(led_cdev, struct asus_wmi, tpd_led);
 
-	वापस पढ़ो_tpd_led_state(asus);
-पूर्ण
+	return read_tpd_led_state(asus);
+}
 
-अटल व्योम kbd_led_update(काष्ठा asus_wmi *asus)
-अणु
-	पूर्णांक ctrl_param = 0;
+static void kbd_led_update(struct asus_wmi *asus)
+{
+	int ctrl_param = 0;
 
 	ctrl_param = 0x80 | (asus->kbd_led_wk & 0x7F);
-	asus_wmi_set_devstate(ASUS_WMI_DEVID_KBD_BACKLIGHT, ctrl_param, शून्य);
-पूर्ण
+	asus_wmi_set_devstate(ASUS_WMI_DEVID_KBD_BACKLIGHT, ctrl_param, NULL);
+}
 
-अटल पूर्णांक kbd_led_पढ़ो(काष्ठा asus_wmi *asus, पूर्णांक *level, पूर्णांक *env)
-अणु
-	पूर्णांक retval;
+static int kbd_led_read(struct asus_wmi *asus, int *level, int *env)
+{
+	int retval;
 
 	/*
 	 * bits 0-2: level
@@ -587,158 +586,158 @@ err_मुक्त_dev:
 					    0xFFFF);
 
 	/* Unknown status is considered as off */
-	अगर (retval == 0x8000)
+	if (retval == 0x8000)
 		retval = 0;
 
-	अगर (retval < 0)
-		वापस retval;
+	if (retval < 0)
+		return retval;
 
-	अगर (level)
+	if (level)
 		*level = retval & 0x7F;
-	अगर (env)
+	if (env)
 		*env = (retval >> 8) & 0x7F;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम करो_kbd_led_set(काष्ठा led_classdev *led_cdev, पूर्णांक value)
-अणु
-	काष्ठा asus_wmi *asus;
-	पूर्णांक max_level;
+static void do_kbd_led_set(struct led_classdev *led_cdev, int value)
+{
+	struct asus_wmi *asus;
+	int max_level;
 
-	asus = container_of(led_cdev, काष्ठा asus_wmi, kbd_led);
+	asus = container_of(led_cdev, struct asus_wmi, kbd_led);
 	max_level = asus->kbd_led.max_brightness;
 
 	asus->kbd_led_wk = clamp_val(value, 0, max_level);
 	kbd_led_update(asus);
-पूर्ण
+}
 
-अटल व्योम kbd_led_set(काष्ठा led_classdev *led_cdev,
-			क्रमागत led_brightness value)
-अणु
-	/* Prevent disabling keyboard backlight on module unरेजिस्टर */
-	अगर (led_cdev->flags & LED_UNREGISTERING)
-		वापस;
+static void kbd_led_set(struct led_classdev *led_cdev,
+			enum led_brightness value)
+{
+	/* Prevent disabling keyboard backlight on module unregister */
+	if (led_cdev->flags & LED_UNREGISTERING)
+		return;
 
-	करो_kbd_led_set(led_cdev, value);
-पूर्ण
+	do_kbd_led_set(led_cdev, value);
+}
 
-अटल व्योम kbd_led_set_by_kbd(काष्ठा asus_wmi *asus, क्रमागत led_brightness value)
-अणु
-	काष्ठा led_classdev *led_cdev = &asus->kbd_led;
+static void kbd_led_set_by_kbd(struct asus_wmi *asus, enum led_brightness value)
+{
+	struct led_classdev *led_cdev = &asus->kbd_led;
 
-	करो_kbd_led_set(led_cdev, value);
-	led_classdev_notअगरy_brightness_hw_changed(led_cdev, asus->kbd_led_wk);
-पूर्ण
+	do_kbd_led_set(led_cdev, value);
+	led_classdev_notify_brightness_hw_changed(led_cdev, asus->kbd_led_wk);
+}
 
-अटल क्रमागत led_brightness kbd_led_get(काष्ठा led_classdev *led_cdev)
-अणु
-	काष्ठा asus_wmi *asus;
-	पूर्णांक retval, value;
+static enum led_brightness kbd_led_get(struct led_classdev *led_cdev)
+{
+	struct asus_wmi *asus;
+	int retval, value;
 
-	asus = container_of(led_cdev, काष्ठा asus_wmi, kbd_led);
+	asus = container_of(led_cdev, struct asus_wmi, kbd_led);
 
-	retval = kbd_led_पढ़ो(asus, &value, शून्य);
-	अगर (retval < 0)
-		वापस retval;
+	retval = kbd_led_read(asus, &value, NULL);
+	if (retval < 0)
+		return retval;
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल पूर्णांक wlan_led_unknown_state(काष्ठा asus_wmi *asus)
-अणु
+static int wlan_led_unknown_state(struct asus_wmi *asus)
+{
 	u32 result;
 
 	asus_wmi_get_devstate(asus, ASUS_WMI_DEVID_WIRELESS_LED, &result);
 
-	वापस result & ASUS_WMI_DSTS_UNKNOWN_BIT;
-पूर्ण
+	return result & ASUS_WMI_DSTS_UNKNOWN_BIT;
+}
 
-अटल व्योम wlan_led_update(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक ctrl_param;
-	काष्ठा asus_wmi *asus;
+static void wlan_led_update(struct work_struct *work)
+{
+	int ctrl_param;
+	struct asus_wmi *asus;
 
-	asus = container_of(work, काष्ठा asus_wmi, wlan_led_work);
+	asus = container_of(work, struct asus_wmi, wlan_led_work);
 
 	ctrl_param = asus->wlan_led_wk;
-	asus_wmi_set_devstate(ASUS_WMI_DEVID_WIRELESS_LED, ctrl_param, शून्य);
-पूर्ण
+	asus_wmi_set_devstate(ASUS_WMI_DEVID_WIRELESS_LED, ctrl_param, NULL);
+}
 
-अटल व्योम wlan_led_set(काष्ठा led_classdev *led_cdev,
-			 क्रमागत led_brightness value)
-अणु
-	काष्ठा asus_wmi *asus;
+static void wlan_led_set(struct led_classdev *led_cdev,
+			 enum led_brightness value)
+{
+	struct asus_wmi *asus;
 
-	asus = container_of(led_cdev, काष्ठा asus_wmi, wlan_led);
+	asus = container_of(led_cdev, struct asus_wmi, wlan_led);
 
 	asus->wlan_led_wk = !!value;
 	queue_work(asus->led_workqueue, &asus->wlan_led_work);
-पूर्ण
+}
 
-अटल क्रमागत led_brightness wlan_led_get(काष्ठा led_classdev *led_cdev)
-अणु
-	काष्ठा asus_wmi *asus;
+static enum led_brightness wlan_led_get(struct led_classdev *led_cdev)
+{
+	struct asus_wmi *asus;
 	u32 result;
 
-	asus = container_of(led_cdev, काष्ठा asus_wmi, wlan_led);
+	asus = container_of(led_cdev, struct asus_wmi, wlan_led);
 	asus_wmi_get_devstate(asus, ASUS_WMI_DEVID_WIRELESS_LED, &result);
 
-	वापस result & ASUS_WMI_DSTS_BRIGHTNESS_MASK;
-पूर्ण
+	return result & ASUS_WMI_DSTS_BRIGHTNESS_MASK;
+}
 
-अटल व्योम lightbar_led_update(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा asus_wmi *asus;
-	पूर्णांक ctrl_param;
+static void lightbar_led_update(struct work_struct *work)
+{
+	struct asus_wmi *asus;
+	int ctrl_param;
 
-	asus = container_of(work, काष्ठा asus_wmi, lightbar_led_work);
+	asus = container_of(work, struct asus_wmi, lightbar_led_work);
 
 	ctrl_param = asus->lightbar_led_wk;
-	asus_wmi_set_devstate(ASUS_WMI_DEVID_LIGHTBAR, ctrl_param, शून्य);
-पूर्ण
+	asus_wmi_set_devstate(ASUS_WMI_DEVID_LIGHTBAR, ctrl_param, NULL);
+}
 
-अटल व्योम lightbar_led_set(काष्ठा led_classdev *led_cdev,
-			     क्रमागत led_brightness value)
-अणु
-	काष्ठा asus_wmi *asus;
+static void lightbar_led_set(struct led_classdev *led_cdev,
+			     enum led_brightness value)
+{
+	struct asus_wmi *asus;
 
-	asus = container_of(led_cdev, काष्ठा asus_wmi, lightbar_led);
+	asus = container_of(led_cdev, struct asus_wmi, lightbar_led);
 
 	asus->lightbar_led_wk = !!value;
 	queue_work(asus->led_workqueue, &asus->lightbar_led_work);
-पूर्ण
+}
 
-अटल क्रमागत led_brightness lightbar_led_get(काष्ठा led_classdev *led_cdev)
-अणु
-	काष्ठा asus_wmi *asus;
+static enum led_brightness lightbar_led_get(struct led_classdev *led_cdev)
+{
+	struct asus_wmi *asus;
 	u32 result;
 
-	asus = container_of(led_cdev, काष्ठा asus_wmi, lightbar_led);
+	asus = container_of(led_cdev, struct asus_wmi, lightbar_led);
 	asus_wmi_get_devstate(asus, ASUS_WMI_DEVID_LIGHTBAR, &result);
 
-	वापस result & ASUS_WMI_DSTS_LIGHTBAR_MASK;
-पूर्ण
+	return result & ASUS_WMI_DSTS_LIGHTBAR_MASK;
+}
 
-अटल व्योम asus_wmi_led_निकास(काष्ठा asus_wmi *asus)
-अणु
-	led_classdev_unरेजिस्टर(&asus->kbd_led);
-	led_classdev_unरेजिस्टर(&asus->tpd_led);
-	led_classdev_unरेजिस्टर(&asus->wlan_led);
-	led_classdev_unरेजिस्टर(&asus->lightbar_led);
+static void asus_wmi_led_exit(struct asus_wmi *asus)
+{
+	led_classdev_unregister(&asus->kbd_led);
+	led_classdev_unregister(&asus->tpd_led);
+	led_classdev_unregister(&asus->wlan_led);
+	led_classdev_unregister(&asus->lightbar_led);
 
-	अगर (asus->led_workqueue)
+	if (asus->led_workqueue)
 		destroy_workqueue(asus->led_workqueue);
-पूर्ण
+}
 
-अटल पूर्णांक asus_wmi_led_init(काष्ठा asus_wmi *asus)
-अणु
-	पूर्णांक rv = 0, led_val;
+static int asus_wmi_led_init(struct asus_wmi *asus)
+{
+	int rv = 0, led_val;
 
-	asus->led_workqueue = create_singlethपढ़ो_workqueue("led_workqueue");
-	अगर (!asus->led_workqueue)
-		वापस -ENOMEM;
+	asus->led_workqueue = create_singlethread_workqueue("led_workqueue");
+	if (!asus->led_workqueue)
+		return -ENOMEM;
 
-	अगर (पढ़ो_tpd_led_state(asus) >= 0) अणु
+	if (read_tpd_led_state(asus) >= 0) {
 		INIT_WORK(&asus->tpd_led_work, tpd_led_update);
 
 		asus->tpd_led.name = "asus::touchpad";
@@ -746,13 +745,13 @@ err_मुक्त_dev:
 		asus->tpd_led.brightness_get = tpd_led_get;
 		asus->tpd_led.max_brightness = 1;
 
-		rv = led_classdev_रेजिस्टर(&asus->platक्रमm_device->dev,
+		rv = led_classdev_register(&asus->platform_device->dev,
 					   &asus->tpd_led);
-		अगर (rv)
-			जाओ error;
-	पूर्ण
+		if (rv)
+			goto error;
+	}
 
-	अगर (!kbd_led_पढ़ो(asus, &led_val, शून्य)) अणु
+	if (!kbd_led_read(asus, &led_val, NULL)) {
 		asus->kbd_led_wk = led_val;
 		asus->kbd_led.name = "asus::kbd_backlight";
 		asus->kbd_led.flags = LED_BRIGHT_HW_CHANGED;
@@ -760,31 +759,31 @@ err_मुक्त_dev:
 		asus->kbd_led.brightness_get = kbd_led_get;
 		asus->kbd_led.max_brightness = 3;
 
-		rv = led_classdev_रेजिस्टर(&asus->platक्रमm_device->dev,
+		rv = led_classdev_register(&asus->platform_device->dev,
 					   &asus->kbd_led);
-		अगर (rv)
-			जाओ error;
-	पूर्ण
+		if (rv)
+			goto error;
+	}
 
-	अगर (asus_wmi_dev_is_present(asus, ASUS_WMI_DEVID_WIRELESS_LED)
-			&& (asus->driver->quirks->wapf > 0)) अणु
+	if (asus_wmi_dev_is_present(asus, ASUS_WMI_DEVID_WIRELESS_LED)
+			&& (asus->driver->quirks->wapf > 0)) {
 		INIT_WORK(&asus->wlan_led_work, wlan_led_update);
 
 		asus->wlan_led.name = "asus::wlan";
 		asus->wlan_led.brightness_set = wlan_led_set;
-		अगर (!wlan_led_unknown_state(asus))
+		if (!wlan_led_unknown_state(asus))
 			asus->wlan_led.brightness_get = wlan_led_get;
 		asus->wlan_led.flags = LED_CORE_SUSPENDRESUME;
 		asus->wlan_led.max_brightness = 1;
-		asus->wlan_led.शेष_trigger = "asus-wlan";
+		asus->wlan_led.default_trigger = "asus-wlan";
 
-		rv = led_classdev_रेजिस्टर(&asus->platक्रमm_device->dev,
+		rv = led_classdev_register(&asus->platform_device->dev,
 					   &asus->wlan_led);
-		अगर (rv)
-			जाओ error;
-	पूर्ण
+		if (rv)
+			goto error;
+	}
 
-	अगर (asus_wmi_dev_is_present(asus, ASUS_WMI_DEVID_LIGHTBAR)) अणु
+	if (asus_wmi_dev_is_present(asus, ASUS_WMI_DEVID_LIGHTBAR)) {
 		INIT_WORK(&asus->lightbar_led_work, lightbar_led_update);
 
 		asus->lightbar_led.name = "asus::lightbar";
@@ -792,900 +791,900 @@ err_मुक्त_dev:
 		asus->lightbar_led.brightness_get = lightbar_led_get;
 		asus->lightbar_led.max_brightness = 1;
 
-		rv = led_classdev_रेजिस्टर(&asus->platक्रमm_device->dev,
+		rv = led_classdev_register(&asus->platform_device->dev,
 					   &asus->lightbar_led);
-	पूर्ण
+	}
 
 error:
-	अगर (rv)
-		asus_wmi_led_निकास(asus);
+	if (rv)
+		asus_wmi_led_exit(asus);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
 /* RF *************************************************************************/
 
 /*
- * PCI hotplug (क्रम wlan rfसमाप्त)
+ * PCI hotplug (for wlan rfkill)
  */
-अटल bool asus_wlan_rfसमाप्त_blocked(काष्ठा asus_wmi *asus)
-अणु
-	पूर्णांक result = asus_wmi_get_devstate_simple(asus, ASUS_WMI_DEVID_WLAN);
+static bool asus_wlan_rfkill_blocked(struct asus_wmi *asus)
+{
+	int result = asus_wmi_get_devstate_simple(asus, ASUS_WMI_DEVID_WLAN);
 
-	अगर (result < 0)
-		वापस false;
-	वापस !result;
-पूर्ण
+	if (result < 0)
+		return false;
+	return !result;
+}
 
-अटल व्योम asus_rfसमाप्त_hotplug(काष्ठा asus_wmi *asus)
-अणु
-	काष्ठा pci_dev *dev;
-	काष्ठा pci_bus *bus;
+static void asus_rfkill_hotplug(struct asus_wmi *asus)
+{
+	struct pci_dev *dev;
+	struct pci_bus *bus;
 	bool blocked;
-	bool असलent;
+	bool absent;
 	u32 l;
 
 	mutex_lock(&asus->wmi_lock);
-	blocked = asus_wlan_rfसमाप्त_blocked(asus);
+	blocked = asus_wlan_rfkill_blocked(asus);
 	mutex_unlock(&asus->wmi_lock);
 
 	mutex_lock(&asus->hotplug_lock);
-	pci_lock_rescan_हटाओ();
+	pci_lock_rescan_remove();
 
-	अगर (asus->wlan.rfसमाप्त)
-		rfसमाप्त_set_sw_state(asus->wlan.rfसमाप्त, blocked);
+	if (asus->wlan.rfkill)
+		rfkill_set_sw_state(asus->wlan.rfkill, blocked);
 
-	अगर (asus->hotplug_slot.ops) अणु
+	if (asus->hotplug_slot.ops) {
 		bus = pci_find_bus(0, 1);
-		अगर (!bus) अणु
+		if (!bus) {
 			pr_warn("Unable to find PCI bus 1?\n");
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 
-		अगर (pci_bus_पढ़ो_config_dword(bus, 0, PCI_VENDOR_ID, &l)) अणु
+		if (pci_bus_read_config_dword(bus, 0, PCI_VENDOR_ID, &l)) {
 			pr_err("Unable to read PCI config space?\n");
-			जाओ out_unlock;
-		पूर्ण
-		असलent = (l == 0xffffffff);
+			goto out_unlock;
+		}
+		absent = (l == 0xffffffff);
 
-		अगर (blocked != असलent) अणु
+		if (blocked != absent) {
 			pr_warn("BIOS says wireless lan is %s, "
 				"but the pci device is %s\n",
 				blocked ? "blocked" : "unblocked",
-				असलent ? "absent" : "present");
+				absent ? "absent" : "present");
 			pr_warn("skipped wireless hotplug as probably "
 				"inappropriate for this model\n");
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 
-		अगर (!blocked) अणु
+		if (!blocked) {
 			dev = pci_get_slot(bus, 0);
-			अगर (dev) अणु
-				/* Device alपढ़ोy present */
+			if (dev) {
+				/* Device already present */
 				pci_dev_put(dev);
-				जाओ out_unlock;
-			पूर्ण
+				goto out_unlock;
+			}
 			dev = pci_scan_single_device(bus, 0);
-			अगर (dev) अणु
+			if (dev) {
 				pci_bus_assign_resources(bus);
 				pci_bus_add_device(dev);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			dev = pci_get_slot(bus, 0);
-			अगर (dev) अणु
-				pci_stop_and_हटाओ_bus_device(dev);
+			if (dev) {
+				pci_stop_and_remove_bus_device(dev);
 				pci_dev_put(dev);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 out_unlock:
-	pci_unlock_rescan_हटाओ();
+	pci_unlock_rescan_remove();
 	mutex_unlock(&asus->hotplug_lock);
-पूर्ण
+}
 
-अटल व्योम asus_rfसमाप्त_notअगरy(acpi_handle handle, u32 event, व्योम *data)
-अणु
-	काष्ठा asus_wmi *asus = data;
+static void asus_rfkill_notify(acpi_handle handle, u32 event, void *data)
+{
+	struct asus_wmi *asus = data;
 
-	अगर (event != ACPI_NOTIFY_BUS_CHECK)
-		वापस;
+	if (event != ACPI_NOTIFY_BUS_CHECK)
+		return;
 
 	/*
-	 * We can't call directly asus_rfसमाप्त_hotplug because most
-	 * of the समय WMBC is still being executed and not reetrant.
+	 * We can't call directly asus_rfkill_hotplug because most
+	 * of the time WMBC is still being executed and not reetrant.
 	 * There is currently no way to tell ACPICA that  we want this
-	 * method to be serialized, we schedule a asus_rfसमाप्त_hotplug
+	 * method to be serialized, we schedule a asus_rfkill_hotplug
 	 * call later, in a safer context.
 	 */
 	queue_work(asus->hotplug_workqueue, &asus->hotplug_work);
-पूर्ण
+}
 
-अटल पूर्णांक asus_रेजिस्टर_rfसमाप्त_notअगरier(काष्ठा asus_wmi *asus, अक्षर *node)
-अणु
+static int asus_register_rfkill_notifier(struct asus_wmi *asus, char *node)
+{
 	acpi_status status;
 	acpi_handle handle;
 
-	status = acpi_get_handle(शून्य, node, &handle);
-	अगर (ACPI_FAILURE(status))
-		वापस -ENODEV;
+	status = acpi_get_handle(NULL, node, &handle);
+	if (ACPI_FAILURE(status))
+		return -ENODEV;
 
-	status = acpi_install_notअगरy_handler(handle, ACPI_SYSTEM_NOTIFY,
-					     asus_rfसमाप्त_notअगरy, asus);
-	अगर (ACPI_FAILURE(status))
+	status = acpi_install_notify_handler(handle, ACPI_SYSTEM_NOTIFY,
+					     asus_rfkill_notify, asus);
+	if (ACPI_FAILURE(status))
 		pr_warn("Failed to register notify on %s\n", node);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम asus_unरेजिस्टर_rfसमाप्त_notअगरier(काष्ठा asus_wmi *asus, अक्षर *node)
-अणु
+static void asus_unregister_rfkill_notifier(struct asus_wmi *asus, char *node)
+{
 	acpi_status status = AE_OK;
 	acpi_handle handle;
 
-	status = acpi_get_handle(शून्य, node, &handle);
-	अगर (ACPI_FAILURE(status))
-		वापस;
+	status = acpi_get_handle(NULL, node, &handle);
+	if (ACPI_FAILURE(status))
+		return;
 
-	status = acpi_हटाओ_notअगरy_handler(handle, ACPI_SYSTEM_NOTIFY,
-					    asus_rfसमाप्त_notअगरy);
-	अगर (ACPI_FAILURE(status))
+	status = acpi_remove_notify_handler(handle, ACPI_SYSTEM_NOTIFY,
+					    asus_rfkill_notify);
+	if (ACPI_FAILURE(status))
 		pr_err("Error removing rfkill notify handler %s\n", node);
-पूर्ण
+}
 
-अटल पूर्णांक asus_get_adapter_status(काष्ठा hotplug_slot *hotplug_slot,
+static int asus_get_adapter_status(struct hotplug_slot *hotplug_slot,
 				   u8 *value)
-अणु
-	काष्ठा asus_wmi *asus = container_of(hotplug_slot,
-					     काष्ठा asus_wmi, hotplug_slot);
-	पूर्णांक result = asus_wmi_get_devstate_simple(asus, ASUS_WMI_DEVID_WLAN);
+{
+	struct asus_wmi *asus = container_of(hotplug_slot,
+					     struct asus_wmi, hotplug_slot);
+	int result = asus_wmi_get_devstate_simple(asus, ASUS_WMI_DEVID_WLAN);
 
-	अगर (result < 0)
-		वापस result;
+	if (result < 0)
+		return result;
 
 	*value = !!result;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा hotplug_slot_ops asus_hotplug_slot_ops = अणु
+static const struct hotplug_slot_ops asus_hotplug_slot_ops = {
 	.get_adapter_status = asus_get_adapter_status,
-	.get_घातer_status = asus_get_adapter_status,
-पूर्ण;
+	.get_power_status = asus_get_adapter_status,
+};
 
-अटल व्योम asus_hotplug_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा asus_wmi *asus;
+static void asus_hotplug_work(struct work_struct *work)
+{
+	struct asus_wmi *asus;
 
-	asus = container_of(work, काष्ठा asus_wmi, hotplug_work);
-	asus_rfसमाप्त_hotplug(asus);
-पूर्ण
+	asus = container_of(work, struct asus_wmi, hotplug_work);
+	asus_rfkill_hotplug(asus);
+}
 
-अटल पूर्णांक asus_setup_pci_hotplug(काष्ठा asus_wmi *asus)
-अणु
-	पूर्णांक ret = -ENOMEM;
-	काष्ठा pci_bus *bus = pci_find_bus(0, 1);
+static int asus_setup_pci_hotplug(struct asus_wmi *asus)
+{
+	int ret = -ENOMEM;
+	struct pci_bus *bus = pci_find_bus(0, 1);
 
-	अगर (!bus) अणु
+	if (!bus) {
 		pr_err("Unable to find wifi PCI bus\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	asus->hotplug_workqueue =
-	    create_singlethपढ़ो_workqueue("hotplug_workqueue");
-	अगर (!asus->hotplug_workqueue)
-		जाओ error_workqueue;
+	    create_singlethread_workqueue("hotplug_workqueue");
+	if (!asus->hotplug_workqueue)
+		goto error_workqueue;
 
 	INIT_WORK(&asus->hotplug_work, asus_hotplug_work);
 
 	asus->hotplug_slot.ops = &asus_hotplug_slot_ops;
 
-	ret = pci_hp_रेजिस्टर(&asus->hotplug_slot, bus, 0, "asus-wifi");
-	अगर (ret) अणु
+	ret = pci_hp_register(&asus->hotplug_slot, bus, 0, "asus-wifi");
+	if (ret) {
 		pr_err("Unable to register hotplug slot - %d\n", ret);
-		जाओ error_रेजिस्टर;
-	पूर्ण
+		goto error_register;
+	}
 
-	वापस 0;
+	return 0;
 
-error_रेजिस्टर:
-	asus->hotplug_slot.ops = शून्य;
+error_register:
+	asus->hotplug_slot.ops = NULL;
 	destroy_workqueue(asus->hotplug_workqueue);
 error_workqueue:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Rfसमाप्त devices
+ * Rfkill devices
  */
-अटल पूर्णांक asus_rfसमाप्त_set(व्योम *data, bool blocked)
-अणु
-	काष्ठा asus_rfसमाप्त *priv = data;
+static int asus_rfkill_set(void *data, bool blocked)
+{
+	struct asus_rfkill *priv = data;
 	u32 ctrl_param = !blocked;
 	u32 dev_id = priv->dev_id;
 
 	/*
 	 * If the user bit is set, BIOS can't set and record the wlan status,
-	 * it will report the value पढ़ो from id ASUS_WMI_DEVID_WLAN_LED
-	 * जबतक we query the wlan status through WMI(ASUS_WMI_DEVID_WLAN).
+	 * it will report the value read from id ASUS_WMI_DEVID_WLAN_LED
+	 * while we query the wlan status through WMI(ASUS_WMI_DEVID_WLAN).
 	 * So, we have to record wlan status in id ASUS_WMI_DEVID_WLAN_LED
-	 * जबतक setting the wlan status through WMI.
-	 * This is also the behavior that winकरोws app will करो.
+	 * while setting the wlan status through WMI.
+	 * This is also the behavior that windows app will do.
 	 */
-	अगर ((dev_id == ASUS_WMI_DEVID_WLAN) &&
+	if ((dev_id == ASUS_WMI_DEVID_WLAN) &&
 	     priv->asus->driver->wlan_ctrl_by_user)
 		dev_id = ASUS_WMI_DEVID_WLAN_LED;
 
-	वापस asus_wmi_set_devstate(dev_id, ctrl_param, शून्य);
-पूर्ण
+	return asus_wmi_set_devstate(dev_id, ctrl_param, NULL);
+}
 
-अटल व्योम asus_rfसमाप्त_query(काष्ठा rfसमाप्त *rfसमाप्त, व्योम *data)
-अणु
-	काष्ठा asus_rfसमाप्त *priv = data;
-	पूर्णांक result;
+static void asus_rfkill_query(struct rfkill *rfkill, void *data)
+{
+	struct asus_rfkill *priv = data;
+	int result;
 
 	result = asus_wmi_get_devstate_simple(priv->asus, priv->dev_id);
 
-	अगर (result < 0)
-		वापस;
+	if (result < 0)
+		return;
 
-	rfसमाप्त_set_sw_state(priv->rfसमाप्त, !result);
-पूर्ण
+	rfkill_set_sw_state(priv->rfkill, !result);
+}
 
-अटल पूर्णांक asus_rfसमाप्त_wlan_set(व्योम *data, bool blocked)
-अणु
-	काष्ठा asus_rfसमाप्त *priv = data;
-	काष्ठा asus_wmi *asus = priv->asus;
-	पूर्णांक ret;
+static int asus_rfkill_wlan_set(void *data, bool blocked)
+{
+	struct asus_rfkill *priv = data;
+	struct asus_wmi *asus = priv->asus;
+	int ret;
 
 	/*
-	 * This handler is enabled only अगर hotplug is enabled.
-	 * In this हाल, the asus_wmi_set_devstate() will
-	 * trigger a wmi notअगरication and we need to रुको
-	 * this call to finish beक्रमe being able to call
+	 * This handler is enabled only if hotplug is enabled.
+	 * In this case, the asus_wmi_set_devstate() will
+	 * trigger a wmi notification and we need to wait
+	 * this call to finish before being able to call
 	 * any wmi method
 	 */
 	mutex_lock(&asus->wmi_lock);
-	ret = asus_rfसमाप्त_set(data, blocked);
+	ret = asus_rfkill_set(data, blocked);
 	mutex_unlock(&asus->wmi_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा rfसमाप्त_ops asus_rfसमाप्त_wlan_ops = अणु
-	.set_block = asus_rfसमाप्त_wlan_set,
-	.query = asus_rfसमाप्त_query,
-पूर्ण;
+static const struct rfkill_ops asus_rfkill_wlan_ops = {
+	.set_block = asus_rfkill_wlan_set,
+	.query = asus_rfkill_query,
+};
 
-अटल स्थिर काष्ठा rfसमाप्त_ops asus_rfसमाप्त_ops = अणु
-	.set_block = asus_rfसमाप्त_set,
-	.query = asus_rfसमाप्त_query,
-पूर्ण;
+static const struct rfkill_ops asus_rfkill_ops = {
+	.set_block = asus_rfkill_set,
+	.query = asus_rfkill_query,
+};
 
-अटल पूर्णांक asus_new_rfसमाप्त(काष्ठा asus_wmi *asus,
-			   काष्ठा asus_rfसमाप्त *arfसमाप्त,
-			   स्थिर अक्षर *name, क्रमागत rfसमाप्त_type type, पूर्णांक dev_id)
-अणु
-	पूर्णांक result = asus_wmi_get_devstate_simple(asus, dev_id);
-	काष्ठा rfसमाप्त **rfसमाप्त = &arfसमाप्त->rfसमाप्त;
+static int asus_new_rfkill(struct asus_wmi *asus,
+			   struct asus_rfkill *arfkill,
+			   const char *name, enum rfkill_type type, int dev_id)
+{
+	int result = asus_wmi_get_devstate_simple(asus, dev_id);
+	struct rfkill **rfkill = &arfkill->rfkill;
 
-	अगर (result < 0)
-		वापस result;
+	if (result < 0)
+		return result;
 
-	arfसमाप्त->dev_id = dev_id;
-	arfसमाप्त->asus = asus;
+	arfkill->dev_id = dev_id;
+	arfkill->asus = asus;
 
-	अगर (dev_id == ASUS_WMI_DEVID_WLAN &&
+	if (dev_id == ASUS_WMI_DEVID_WLAN &&
 	    asus->driver->quirks->hotplug_wireless)
-		*rfसमाप्त = rfसमाप्त_alloc(name, &asus->platक्रमm_device->dev, type,
-				       &asus_rfसमाप्त_wlan_ops, arfसमाप्त);
-	अन्यथा
-		*rfसमाप्त = rfसमाप्त_alloc(name, &asus->platक्रमm_device->dev, type,
-				       &asus_rfसमाप्त_ops, arfसमाप्त);
+		*rfkill = rfkill_alloc(name, &asus->platform_device->dev, type,
+				       &asus_rfkill_wlan_ops, arfkill);
+	else
+		*rfkill = rfkill_alloc(name, &asus->platform_device->dev, type,
+				       &asus_rfkill_ops, arfkill);
 
-	अगर (!*rfसमाप्त)
-		वापस -EINVAL;
+	if (!*rfkill)
+		return -EINVAL;
 
-	अगर ((dev_id == ASUS_WMI_DEVID_WLAN) &&
+	if ((dev_id == ASUS_WMI_DEVID_WLAN) &&
 			(asus->driver->quirks->wapf > 0))
-		rfसमाप्त_set_led_trigger_name(*rfसमाप्त, "asus-wlan");
+		rfkill_set_led_trigger_name(*rfkill, "asus-wlan");
 
-	rfसमाप्त_init_sw_state(*rfसमाप्त, !result);
-	result = rfसमाप्त_रेजिस्टर(*rfसमाप्त);
-	अगर (result) अणु
-		rfसमाप्त_destroy(*rfसमाप्त);
-		*rfसमाप्त = शून्य;
-		वापस result;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	rfkill_init_sw_state(*rfkill, !result);
+	result = rfkill_register(*rfkill);
+	if (result) {
+		rfkill_destroy(*rfkill);
+		*rfkill = NULL;
+		return result;
+	}
+	return 0;
+}
 
-अटल व्योम asus_wmi_rfसमाप्त_निकास(काष्ठा asus_wmi *asus)
-अणु
-	अगर (asus->driver->wlan_ctrl_by_user && ashs_present())
-		वापस;
+static void asus_wmi_rfkill_exit(struct asus_wmi *asus)
+{
+	if (asus->driver->wlan_ctrl_by_user && ashs_present())
+		return;
 
-	asus_unरेजिस्टर_rfसमाप्त_notअगरier(asus, "\\_SB.PCI0.P0P5");
-	asus_unरेजिस्टर_rfसमाप्त_notअगरier(asus, "\\_SB.PCI0.P0P6");
-	asus_unरेजिस्टर_rfसमाप्त_notअगरier(asus, "\\_SB.PCI0.P0P7");
-	अगर (asus->wlan.rfसमाप्त) अणु
-		rfसमाप्त_unरेजिस्टर(asus->wlan.rfसमाप्त);
-		rfसमाप्त_destroy(asus->wlan.rfसमाप्त);
-		asus->wlan.rfसमाप्त = शून्य;
-	पूर्ण
+	asus_unregister_rfkill_notifier(asus, "\\_SB.PCI0.P0P5");
+	asus_unregister_rfkill_notifier(asus, "\\_SB.PCI0.P0P6");
+	asus_unregister_rfkill_notifier(asus, "\\_SB.PCI0.P0P7");
+	if (asus->wlan.rfkill) {
+		rfkill_unregister(asus->wlan.rfkill);
+		rfkill_destroy(asus->wlan.rfkill);
+		asus->wlan.rfkill = NULL;
+	}
 	/*
-	 * Refresh pci hotplug in हाल the rfसमाप्त state was changed after
-	 * asus_unरेजिस्टर_rfसमाप्त_notअगरier()
+	 * Refresh pci hotplug in case the rfkill state was changed after
+	 * asus_unregister_rfkill_notifier()
 	 */
-	asus_rfसमाप्त_hotplug(asus);
-	अगर (asus->hotplug_slot.ops)
-		pci_hp_deरेजिस्टर(&asus->hotplug_slot);
-	अगर (asus->hotplug_workqueue)
+	asus_rfkill_hotplug(asus);
+	if (asus->hotplug_slot.ops)
+		pci_hp_deregister(&asus->hotplug_slot);
+	if (asus->hotplug_workqueue)
 		destroy_workqueue(asus->hotplug_workqueue);
 
-	अगर (asus->bluetooth.rfसमाप्त) अणु
-		rfसमाप्त_unरेजिस्टर(asus->bluetooth.rfसमाप्त);
-		rfसमाप्त_destroy(asus->bluetooth.rfसमाप्त);
-		asus->bluetooth.rfसमाप्त = शून्य;
-	पूर्ण
-	अगर (asus->wimax.rfसमाप्त) अणु
-		rfसमाप्त_unरेजिस्टर(asus->wimax.rfसमाप्त);
-		rfसमाप्त_destroy(asus->wimax.rfसमाप्त);
-		asus->wimax.rfसमाप्त = शून्य;
-	पूर्ण
-	अगर (asus->wwan3g.rfसमाप्त) अणु
-		rfसमाप्त_unरेजिस्टर(asus->wwan3g.rfसमाप्त);
-		rfसमाप्त_destroy(asus->wwan3g.rfसमाप्त);
-		asus->wwan3g.rfसमाप्त = शून्य;
-	पूर्ण
-	अगर (asus->gps.rfसमाप्त) अणु
-		rfसमाप्त_unरेजिस्टर(asus->gps.rfसमाप्त);
-		rfसमाप्त_destroy(asus->gps.rfसमाप्त);
-		asus->gps.rfसमाप्त = शून्य;
-	पूर्ण
-	अगर (asus->uwb.rfसमाप्त) अणु
-		rfसमाप्त_unरेजिस्टर(asus->uwb.rfसमाप्त);
-		rfसमाप्त_destroy(asus->uwb.rfसमाप्त);
-		asus->uwb.rfसमाप्त = शून्य;
-	पूर्ण
-पूर्ण
+	if (asus->bluetooth.rfkill) {
+		rfkill_unregister(asus->bluetooth.rfkill);
+		rfkill_destroy(asus->bluetooth.rfkill);
+		asus->bluetooth.rfkill = NULL;
+	}
+	if (asus->wimax.rfkill) {
+		rfkill_unregister(asus->wimax.rfkill);
+		rfkill_destroy(asus->wimax.rfkill);
+		asus->wimax.rfkill = NULL;
+	}
+	if (asus->wwan3g.rfkill) {
+		rfkill_unregister(asus->wwan3g.rfkill);
+		rfkill_destroy(asus->wwan3g.rfkill);
+		asus->wwan3g.rfkill = NULL;
+	}
+	if (asus->gps.rfkill) {
+		rfkill_unregister(asus->gps.rfkill);
+		rfkill_destroy(asus->gps.rfkill);
+		asus->gps.rfkill = NULL;
+	}
+	if (asus->uwb.rfkill) {
+		rfkill_unregister(asus->uwb.rfkill);
+		rfkill_destroy(asus->uwb.rfkill);
+		asus->uwb.rfkill = NULL;
+	}
+}
 
-अटल पूर्णांक asus_wmi_rfसमाप्त_init(काष्ठा asus_wmi *asus)
-अणु
-	पूर्णांक result = 0;
+static int asus_wmi_rfkill_init(struct asus_wmi *asus)
+{
+	int result = 0;
 
 	mutex_init(&asus->hotplug_lock);
 	mutex_init(&asus->wmi_lock);
 
-	result = asus_new_rfसमाप्त(asus, &asus->wlan, "asus-wlan",
+	result = asus_new_rfkill(asus, &asus->wlan, "asus-wlan",
 				 RFKILL_TYPE_WLAN, ASUS_WMI_DEVID_WLAN);
 
-	अगर (result && result != -ENODEV)
-		जाओ निकास;
+	if (result && result != -ENODEV)
+		goto exit;
 
-	result = asus_new_rfसमाप्त(asus, &asus->bluetooth,
+	result = asus_new_rfkill(asus, &asus->bluetooth,
 				 "asus-bluetooth", RFKILL_TYPE_BLUETOOTH,
 				 ASUS_WMI_DEVID_BLUETOOTH);
 
-	अगर (result && result != -ENODEV)
-		जाओ निकास;
+	if (result && result != -ENODEV)
+		goto exit;
 
-	result = asus_new_rfसमाप्त(asus, &asus->wimax, "asus-wimax",
+	result = asus_new_rfkill(asus, &asus->wimax, "asus-wimax",
 				 RFKILL_TYPE_WIMAX, ASUS_WMI_DEVID_WIMAX);
 
-	अगर (result && result != -ENODEV)
-		जाओ निकास;
+	if (result && result != -ENODEV)
+		goto exit;
 
-	result = asus_new_rfसमाप्त(asus, &asus->wwan3g, "asus-wwan3g",
+	result = asus_new_rfkill(asus, &asus->wwan3g, "asus-wwan3g",
 				 RFKILL_TYPE_WWAN, ASUS_WMI_DEVID_WWAN3G);
 
-	अगर (result && result != -ENODEV)
-		जाओ निकास;
+	if (result && result != -ENODEV)
+		goto exit;
 
-	result = asus_new_rfसमाप्त(asus, &asus->gps, "asus-gps",
+	result = asus_new_rfkill(asus, &asus->gps, "asus-gps",
 				 RFKILL_TYPE_GPS, ASUS_WMI_DEVID_GPS);
 
-	अगर (result && result != -ENODEV)
-		जाओ निकास;
+	if (result && result != -ENODEV)
+		goto exit;
 
-	result = asus_new_rfसमाप्त(asus, &asus->uwb, "asus-uwb",
+	result = asus_new_rfkill(asus, &asus->uwb, "asus-uwb",
 				 RFKILL_TYPE_UWB, ASUS_WMI_DEVID_UWB);
 
-	अगर (result && result != -ENODEV)
-		जाओ निकास;
+	if (result && result != -ENODEV)
+		goto exit;
 
-	अगर (!asus->driver->quirks->hotplug_wireless)
-		जाओ निकास;
+	if (!asus->driver->quirks->hotplug_wireless)
+		goto exit;
 
 	result = asus_setup_pci_hotplug(asus);
 	/*
-	 * If we get -EBUSY then something अन्यथा is handling the PCI hotplug -
-	 * करोn't fail in this हाल
+	 * If we get -EBUSY then something else is handling the PCI hotplug -
+	 * don't fail in this case
 	 */
-	अगर (result == -EBUSY)
+	if (result == -EBUSY)
 		result = 0;
 
-	asus_रेजिस्टर_rfसमाप्त_notअगरier(asus, "\\_SB.PCI0.P0P5");
-	asus_रेजिस्टर_rfसमाप्त_notअगरier(asus, "\\_SB.PCI0.P0P6");
-	asus_रेजिस्टर_rfसमाप्त_notअगरier(asus, "\\_SB.PCI0.P0P7");
+	asus_register_rfkill_notifier(asus, "\\_SB.PCI0.P0P5");
+	asus_register_rfkill_notifier(asus, "\\_SB.PCI0.P0P6");
+	asus_register_rfkill_notifier(asus, "\\_SB.PCI0.P0P7");
 	/*
-	 * Refresh pci hotplug in हाल the rfसमाप्त state was changed during
+	 * Refresh pci hotplug in case the rfkill state was changed during
 	 * setup.
 	 */
-	asus_rfसमाप्त_hotplug(asus);
+	asus_rfkill_hotplug(asus);
 
-निकास:
-	अगर (result && result != -ENODEV)
-		asus_wmi_rfसमाप्त_निकास(asus);
+exit:
+	if (result && result != -ENODEV)
+		asus_wmi_rfkill_exit(asus);
 
-	अगर (result == -ENODEV)
+	if (result == -ENODEV)
 		result = 0;
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /* Quirks *********************************************************************/
 
-अटल व्योम asus_wmi_set_xusb2pr(काष्ठा asus_wmi *asus)
-अणु
-	काष्ठा pci_dev *xhci_pdev;
+static void asus_wmi_set_xusb2pr(struct asus_wmi *asus)
+{
+	struct pci_dev *xhci_pdev;
 	u32 orig_ports_available;
 	u32 ports_available = asus->driver->quirks->xusb2pr;
 
 	xhci_pdev = pci_get_device(PCI_VENDOR_ID_INTEL,
 			PCI_DEVICE_ID_INTEL_LYNXPOINT_LP_XHCI,
-			शून्य);
+			NULL);
 
-	अगर (!xhci_pdev)
-		वापस;
+	if (!xhci_pdev)
+		return;
 
-	pci_पढ़ो_config_dword(xhci_pdev, USB_INTEL_XUSB2PR,
+	pci_read_config_dword(xhci_pdev, USB_INTEL_XUSB2PR,
 				&orig_ports_available);
 
-	pci_ग_लिखो_config_dword(xhci_pdev, USB_INTEL_XUSB2PR,
+	pci_write_config_dword(xhci_pdev, USB_INTEL_XUSB2PR,
 				cpu_to_le32(ports_available));
 
 	pr_info("set USB_INTEL_XUSB2PR old: 0x%04x, new: 0x%04x\n",
 			orig_ports_available, ports_available);
-पूर्ण
+}
 
 /*
- * Some devices करोnt support or have borcken get_als method
+ * Some devices dont support or have borcken get_als method
  * but still support set method.
  */
-अटल व्योम asus_wmi_set_als(व्योम)
-अणु
-	asus_wmi_set_devstate(ASUS_WMI_DEVID_ALS_ENABLE, 1, शून्य);
-पूर्ण
+static void asus_wmi_set_als(void)
+{
+	asus_wmi_set_devstate(ASUS_WMI_DEVID_ALS_ENABLE, 1, NULL);
+}
 
 /* Hwmon device ***************************************************************/
 
-अटल पूर्णांक asus_agfn_fan_speed_पढ़ो(काष्ठा asus_wmi *asus, पूर्णांक fan,
-					  पूर्णांक *speed)
-अणु
-	काष्ठा agfn_fan_args args = अणु
-		.agfn.len = माप(args),
+static int asus_agfn_fan_speed_read(struct asus_wmi *asus, int fan,
+					  int *speed)
+{
+	struct agfn_fan_args args = {
+		.agfn.len = sizeof(args),
 		.agfn.mfun = ASUS_FAN_MFUN,
 		.agfn.sfun = ASUS_FAN_SFUN_READ,
 		.fan = fan,
 		.speed = 0,
-	पूर्ण;
-	काष्ठा acpi_buffer input = अणु (acpi_size) माप(args), &args पूर्ण;
-	पूर्णांक status;
+	};
+	struct acpi_buffer input = { (acpi_size) sizeof(args), &args };
+	int status;
 
-	अगर (fan != 1)
-		वापस -EINVAL;
+	if (fan != 1)
+		return -EINVAL;
 
 	status = asus_wmi_evaluate_method_agfn(input);
 
-	अगर (status || args.agfn.err)
-		वापस -ENXIO;
+	if (status || args.agfn.err)
+		return -ENXIO;
 
-	अगर (speed)
+	if (speed)
 		*speed = args.speed;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक asus_agfn_fan_speed_ग_लिखो(काष्ठा asus_wmi *asus, पूर्णांक fan,
-				     पूर्णांक *speed)
-अणु
-	काष्ठा agfn_fan_args args = अणु
-		.agfn.len = माप(args),
+static int asus_agfn_fan_speed_write(struct asus_wmi *asus, int fan,
+				     int *speed)
+{
+	struct agfn_fan_args args = {
+		.agfn.len = sizeof(args),
 		.agfn.mfun = ASUS_FAN_MFUN,
 		.agfn.sfun = ASUS_FAN_SFUN_WRITE,
 		.fan = fan,
 		.speed = speed ?  *speed : 0,
-	पूर्ण;
-	काष्ठा acpi_buffer input = अणु (acpi_size) माप(args), &args पूर्ण;
-	पूर्णांक status;
+	};
+	struct acpi_buffer input = { (acpi_size) sizeof(args), &args };
+	int status;
 
-	/* 1: क्रम setting 1st fan's speed 0: setting स्वतः mode */
-	अगर (fan != 1 && fan != 0)
-		वापस -EINVAL;
+	/* 1: for setting 1st fan's speed 0: setting auto mode */
+	if (fan != 1 && fan != 0)
+		return -EINVAL;
 
 	status = asus_wmi_evaluate_method_agfn(input);
 
-	अगर (status || args.agfn.err)
-		वापस -ENXIO;
+	if (status || args.agfn.err)
+		return -ENXIO;
 
-	अगर (speed && fan == 1)
+	if (speed && fan == 1)
 		asus->agfn_pwm = *speed;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Check अगर we can पढ़ो the speed of one fan. If true we assume we can also
+ * Check if we can read the speed of one fan. If true we assume we can also
  * control it.
  */
-अटल bool asus_wmi_has_agfn_fan(काष्ठा asus_wmi *asus)
-अणु
-	पूर्णांक status;
-	पूर्णांक speed;
+static bool asus_wmi_has_agfn_fan(struct asus_wmi *asus)
+{
+	int status;
+	int speed;
 	u32 value;
 
-	status = asus_agfn_fan_speed_पढ़ो(asus, 1, &speed);
-	अगर (status != 0)
-		वापस false;
+	status = asus_agfn_fan_speed_read(asus, 1, &speed);
+	if (status != 0)
+		return false;
 
 	status = asus_wmi_get_devstate(asus, ASUS_WMI_DEVID_FAN_CTRL, &value);
-	अगर (status != 0)
-		वापस false;
+	if (status != 0)
+		return false;
 
 	/*
 	 * We need to find a better way, probably using sfun,
 	 * bits or spec ...
-	 * Currently we disable it अगर:
-	 * - ASUS_WMI_UNSUPPORTED_METHOD is वापसed
+	 * Currently we disable it if:
+	 * - ASUS_WMI_UNSUPPORTED_METHOD is returned
 	 * - reverved bits are non-zero
 	 * - sfun and presence bit are not set
 	 */
-	वापस !(value == ASUS_WMI_UNSUPPORTED_METHOD || value & 0xFFF80000
+	return !(value == ASUS_WMI_UNSUPPORTED_METHOD || value & 0xFFF80000
 		 || (!asus->sfun && !(value & ASUS_WMI_DSTS_PRESENCE_BIT)));
-पूर्ण
+}
 
-अटल पूर्णांक asus_fan_set_स्वतः(काष्ठा asus_wmi *asus)
-अणु
-	पूर्णांक status;
+static int asus_fan_set_auto(struct asus_wmi *asus)
+{
+	int status;
 	u32 retval;
 
-	चयन (asus->fan_type) अणु
-	हाल FAN_TYPE_SPEC83:
+	switch (asus->fan_type) {
+	case FAN_TYPE_SPEC83:
 		status = asus_wmi_set_devstate(ASUS_WMI_DEVID_CPU_FAN_CTRL,
 					       0, &retval);
-		अगर (status)
-			वापस status;
+		if (status)
+			return status;
 
-		अगर (retval != 1)
-			वापस -EIO;
-		अवरोध;
+		if (retval != 1)
+			return -EIO;
+		break;
 
-	हाल FAN_TYPE_AGFN:
-		status = asus_agfn_fan_speed_ग_लिखो(asus, 0, शून्य);
-		अगर (status)
-			वापस -ENXIO;
-		अवरोध;
+	case FAN_TYPE_AGFN:
+		status = asus_agfn_fan_speed_write(asus, 0, NULL);
+		if (status)
+			return -ENXIO;
+		break;
 
-	शेष:
-		वापस -ENXIO;
-	पूर्ण
+	default:
+		return -ENXIO;
+	}
 
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार pwm1_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr,
-			       अक्षर *buf)
-अणु
-	काष्ठा asus_wmi *asus = dev_get_drvdata(dev);
-	पूर्णांक err;
-	पूर्णांक value;
+static ssize_t pwm1_show(struct device *dev,
+			       struct device_attribute *attr,
+			       char *buf)
+{
+	struct asus_wmi *asus = dev_get_drvdata(dev);
+	int err;
+	int value;
 
-	/* If we alपढ़ोy set a value then just वापस it */
-	अगर (asus->agfn_pwm >= 0)
-		वापस प्र_लिखो(buf, "%d\n", asus->agfn_pwm);
+	/* If we already set a value then just return it */
+	if (asus->agfn_pwm >= 0)
+		return sprintf(buf, "%d\n", asus->agfn_pwm);
 
 	/*
-	 * If we haven't set alपढ़ोy set a value through the AGFN पूर्णांकerface,
-	 * we पढ़ो a current value through the (now-deprecated) FAN_CTRL device.
+	 * If we haven't set already set a value through the AGFN interface,
+	 * we read a current value through the (now-deprecated) FAN_CTRL device.
 	 */
 	err = asus_wmi_get_devstate(asus, ASUS_WMI_DEVID_FAN_CTRL, &value);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	value &= 0xFF;
 
-	अगर (value == 1) /* Low Speed */
+	if (value == 1) /* Low Speed */
 		value = 85;
-	अन्यथा अगर (value == 2)
+	else if (value == 2)
 		value = 170;
-	अन्यथा अगर (value == 3)
+	else if (value == 3)
 		value = 255;
-	अन्यथा अगर (value) अणु
+	else if (value) {
 		pr_err("Unknown fan speed %#x\n", value);
 		value = -1;
-	पूर्ण
+	}
 
-	वापस प्र_लिखो(buf, "%d\n", value);
-पूर्ण
+	return sprintf(buf, "%d\n", value);
+}
 
-अटल sमाप_प्रकार pwm1_store(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr,
-				     स्थिर अक्षर *buf, माप_प्रकार count) अणु
-	काष्ठा asus_wmi *asus = dev_get_drvdata(dev);
-	पूर्णांक value;
-	पूर्णांक state;
-	पूर्णांक ret;
+static ssize_t pwm1_store(struct device *dev,
+				     struct device_attribute *attr,
+				     const char *buf, size_t count) {
+	struct asus_wmi *asus = dev_get_drvdata(dev);
+	int value;
+	int state;
+	int ret;
 
-	ret = kstrtouपूर्णांक(buf, 10, &value);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtouint(buf, 10, &value);
+	if (ret)
+		return ret;
 
 	value = clamp(value, 0, 255);
 
-	state = asus_agfn_fan_speed_ग_लिखो(asus, 1, &value);
-	अगर (state)
+	state = asus_agfn_fan_speed_write(asus, 1, &value);
+	if (state)
 		pr_warn("Setting fan speed failed: %d\n", state);
-	अन्यथा
+	else
 		asus->fan_pwm_mode = ASUS_FAN_CTRL_MANUAL;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार fan1_input_show(काष्ठा device *dev,
-					काष्ठा device_attribute *attr,
-					अक्षर *buf)
-अणु
-	काष्ठा asus_wmi *asus = dev_get_drvdata(dev);
-	पूर्णांक value;
-	पूर्णांक ret;
+static ssize_t fan1_input_show(struct device *dev,
+					struct device_attribute *attr,
+					char *buf)
+{
+	struct asus_wmi *asus = dev_get_drvdata(dev);
+	int value;
+	int ret;
 
-	चयन (asus->fan_type) अणु
-	हाल FAN_TYPE_SPEC83:
+	switch (asus->fan_type) {
+	case FAN_TYPE_SPEC83:
 		ret = asus_wmi_get_devstate(asus, ASUS_WMI_DEVID_CPU_FAN_CTRL,
 					    &value);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		value &= 0xffff;
-		अवरोध;
+		break;
 
-	हाल FAN_TYPE_AGFN:
-		/* no speed पढ़ोable on manual mode */
-		अगर (asus->fan_pwm_mode == ASUS_FAN_CTRL_MANUAL)
-			वापस -ENXIO;
+	case FAN_TYPE_AGFN:
+		/* no speed readable on manual mode */
+		if (asus->fan_pwm_mode == ASUS_FAN_CTRL_MANUAL)
+			return -ENXIO;
 
-		ret = asus_agfn_fan_speed_पढ़ो(asus, 1, &value);
-		अगर (ret) अणु
+		ret = asus_agfn_fan_speed_read(asus, 1, &value);
+		if (ret) {
 			pr_warn("reading fan speed failed: %d\n", ret);
-			वापस -ENXIO;
-		पूर्ण
-		अवरोध;
+			return -ENXIO;
+		}
+		break;
 
-	शेष:
-		वापस -ENXIO;
-	पूर्ण
+	default:
+		return -ENXIO;
+	}
 
-	वापस प्र_लिखो(buf, "%d\n", value < 0 ? -1 : value*100);
-पूर्ण
+	return sprintf(buf, "%d\n", value < 0 ? -1 : value*100);
+}
 
-अटल sमाप_प्रकार pwm1_enable_show(काष्ठा device *dev,
-						 काष्ठा device_attribute *attr,
-						 अक्षर *buf)
-अणु
-	काष्ठा asus_wmi *asus = dev_get_drvdata(dev);
+static ssize_t pwm1_enable_show(struct device *dev,
+						 struct device_attribute *attr,
+						 char *buf)
+{
+	struct asus_wmi *asus = dev_get_drvdata(dev);
 
 	/*
-	 * Just पढ़ो back the cached pwm mode.
+	 * Just read back the cached pwm mode.
 	 *
 	 * For the CPU_FAN device, the spec indicates that we should be
-	 * able to पढ़ो the device status and consult bit 19 to see अगर we
-	 * are in Full On or Automatic mode. However, this करोes not work
+	 * able to read the device status and consult bit 19 to see if we
+	 * are in Full On or Automatic mode. However, this does not work
 	 * in practice on X532FL at least (the bit is always 0) and there's
 	 * also nothing in the DSDT to indicate that this behaviour exists.
 	 */
-	वापस प्र_लिखो(buf, "%d\n", asus->fan_pwm_mode);
-पूर्ण
+	return sprintf(buf, "%d\n", asus->fan_pwm_mode);
+}
 
-अटल sमाप_प्रकार pwm1_enable_store(काष्ठा device *dev,
-						  काष्ठा device_attribute *attr,
-						  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा asus_wmi *asus = dev_get_drvdata(dev);
-	पूर्णांक status = 0;
-	पूर्णांक state;
-	पूर्णांक value;
-	पूर्णांक ret;
+static ssize_t pwm1_enable_store(struct device *dev,
+						  struct device_attribute *attr,
+						  const char *buf, size_t count)
+{
+	struct asus_wmi *asus = dev_get_drvdata(dev);
+	int status = 0;
+	int state;
+	int value;
+	int ret;
 	u32 retval;
 
-	ret = kstrtouपूर्णांक(buf, 10, &state);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtouint(buf, 10, &state);
+	if (ret)
+		return ret;
 
-	अगर (asus->fan_type == FAN_TYPE_SPEC83) अणु
-		चयन (state) अणु /* standard करोcumented hwmon values */
-		हाल ASUS_FAN_CTRL_FULLSPEED:
+	if (asus->fan_type == FAN_TYPE_SPEC83) {
+		switch (state) { /* standard documented hwmon values */
+		case ASUS_FAN_CTRL_FULLSPEED:
 			value = 1;
-			अवरोध;
-		हाल ASUS_FAN_CTRL_AUTO:
+			break;
+		case ASUS_FAN_CTRL_AUTO:
 			value = 0;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
 
 		ret = asus_wmi_set_devstate(ASUS_WMI_DEVID_CPU_FAN_CTRL,
 					    value, &retval);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		अगर (retval != 1)
-			वापस -EIO;
-	पूर्ण अन्यथा अगर (asus->fan_type == FAN_TYPE_AGFN) अणु
-		चयन (state) अणु
-		हाल ASUS_FAN_CTRL_MANUAL:
-			अवरोध;
+		if (retval != 1)
+			return -EIO;
+	} else if (asus->fan_type == FAN_TYPE_AGFN) {
+		switch (state) {
+		case ASUS_FAN_CTRL_MANUAL:
+			break;
 
-		हाल ASUS_FAN_CTRL_AUTO:
-			status = asus_fan_set_स्वतः(asus);
-			अगर (status)
-				वापस status;
-			अवरोध;
+		case ASUS_FAN_CTRL_AUTO:
+			status = asus_fan_set_auto(asus);
+			if (status)
+				return status;
+			break;
 
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+		default:
+			return -EINVAL;
+		}
+	}
 
 	asus->fan_pwm_mode = state;
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार fan1_label_show(काष्ठा device *dev,
-					  काष्ठा device_attribute *attr,
-					  अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%s\n", ASUS_FAN_DESC);
-पूर्ण
+static ssize_t fan1_label_show(struct device *dev,
+					  struct device_attribute *attr,
+					  char *buf)
+{
+	return sprintf(buf, "%s\n", ASUS_FAN_DESC);
+}
 
-अटल sमाप_प्रकार asus_hwmon_temp1(काष्ठा device *dev,
-				काष्ठा device_attribute *attr,
-				अक्षर *buf)
-अणु
-	काष्ठा asus_wmi *asus = dev_get_drvdata(dev);
+static ssize_t asus_hwmon_temp1(struct device *dev,
+				struct device_attribute *attr,
+				char *buf)
+{
+	struct asus_wmi *asus = dev_get_drvdata(dev);
 	u32 value;
-	पूर्णांक err;
+	int err;
 
 	err = asus_wmi_get_devstate(asus, ASUS_WMI_DEVID_THERMAL_CTRL, &value);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस प्र_लिखो(buf, "%ld\n",
+	return sprintf(buf, "%ld\n",
 		       deci_kelvin_to_millicelsius(value & 0xFFFF));
-पूर्ण
+}
 
 /* Fan1 */
-अटल DEVICE_ATTR_RW(pwm1);
-अटल DEVICE_ATTR_RW(pwm1_enable);
-अटल DEVICE_ATTR_RO(fan1_input);
-अटल DEVICE_ATTR_RO(fan1_label);
+static DEVICE_ATTR_RW(pwm1);
+static DEVICE_ATTR_RW(pwm1_enable);
+static DEVICE_ATTR_RO(fan1_input);
+static DEVICE_ATTR_RO(fan1_label);
 
 /* Temperature */
-अटल DEVICE_ATTR(temp1_input, S_IRUGO, asus_hwmon_temp1, शून्य);
+static DEVICE_ATTR(temp1_input, S_IRUGO, asus_hwmon_temp1, NULL);
 
-अटल काष्ठा attribute *hwmon_attributes[] = अणु
+static struct attribute *hwmon_attributes[] = {
 	&dev_attr_pwm1.attr,
 	&dev_attr_pwm1_enable.attr,
 	&dev_attr_fan1_input.attr,
 	&dev_attr_fan1_label.attr,
 
 	&dev_attr_temp1_input.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल umode_t asus_hwmon_sysfs_is_visible(काष्ठा kobject *kobj,
-					  काष्ठा attribute *attr, पूर्णांक idx)
-अणु
-	काष्ठा device *dev = container_of(kobj, काष्ठा device, kobj);
-	काष्ठा asus_wmi *asus = dev_get_drvdata(dev->parent);
+static umode_t asus_hwmon_sysfs_is_visible(struct kobject *kobj,
+					  struct attribute *attr, int idx)
+{
+	struct device *dev = container_of(kobj, struct device, kobj);
+	struct asus_wmi *asus = dev_get_drvdata(dev->parent);
 	u32 value = ASUS_WMI_UNSUPPORTED_METHOD;
 
-	अगर (attr == &dev_attr_pwm1.attr) अणु
-		अगर (asus->fan_type != FAN_TYPE_AGFN)
-			वापस 0;
-	पूर्ण अन्यथा अगर (attr == &dev_attr_fan1_input.attr
+	if (attr == &dev_attr_pwm1.attr) {
+		if (asus->fan_type != FAN_TYPE_AGFN)
+			return 0;
+	} else if (attr == &dev_attr_fan1_input.attr
 	    || attr == &dev_attr_fan1_label.attr
-	    || attr == &dev_attr_pwm1_enable.attr) अणु
-		अगर (asus->fan_type == FAN_TYPE_NONE)
-			वापस 0;
-	पूर्ण अन्यथा अगर (attr == &dev_attr_temp1_input.attr) अणु
-		पूर्णांक err = asus_wmi_get_devstate(asus,
+	    || attr == &dev_attr_pwm1_enable.attr) {
+		if (asus->fan_type == FAN_TYPE_NONE)
+			return 0;
+	} else if (attr == &dev_attr_temp1_input.attr) {
+		int err = asus_wmi_get_devstate(asus,
 						ASUS_WMI_DEVID_THERMAL_CTRL,
 						&value);
 
-		अगर (err < 0)
-			वापस 0; /* can't वापस negative here */
+		if (err < 0)
+			return 0; /* can't return negative here */
 
 		/*
-		 * If the temperature value in deci-Kelvin is near the असलolute
+		 * If the temperature value in deci-Kelvin is near the absolute
 		 * zero temperature, something is clearly wrong
 		 */
-		अगर (value == 0 || value == 1)
-			वापस 0;
-	पूर्ण
+		if (value == 0 || value == 1)
+			return 0;
+	}
 
-	वापस attr->mode;
-पूर्ण
+	return attr->mode;
+}
 
-अटल स्थिर काष्ठा attribute_group hwmon_attribute_group = अणु
+static const struct attribute_group hwmon_attribute_group = {
 	.is_visible = asus_hwmon_sysfs_is_visible,
 	.attrs = hwmon_attributes
-पूर्ण;
+};
 __ATTRIBUTE_GROUPS(hwmon_attribute);
 
-अटल पूर्णांक asus_wmi_hwmon_init(काष्ठा asus_wmi *asus)
-अणु
-	काष्ठा device *dev = &asus->platक्रमm_device->dev;
-	काष्ठा device *hwmon;
+static int asus_wmi_hwmon_init(struct asus_wmi *asus)
+{
+	struct device *dev = &asus->platform_device->dev;
+	struct device *hwmon;
 
-	hwmon = devm_hwmon_device_रेजिस्टर_with_groups(dev, "asus", asus,
+	hwmon = devm_hwmon_device_register_with_groups(dev, "asus", asus,
 			hwmon_attribute_groups);
 
-	अगर (IS_ERR(hwmon)) अणु
+	if (IS_ERR(hwmon)) {
 		pr_err("Could not register asus hwmon device\n");
-		वापस PTR_ERR(hwmon);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return PTR_ERR(hwmon);
+	}
+	return 0;
+}
 
-अटल पूर्णांक asus_wmi_fan_init(काष्ठा asus_wmi *asus)
-अणु
+static int asus_wmi_fan_init(struct asus_wmi *asus)
+{
 	asus->fan_type = FAN_TYPE_NONE;
 	asus->agfn_pwm = -1;
 
-	अगर (asus_wmi_dev_is_present(asus, ASUS_WMI_DEVID_CPU_FAN_CTRL))
+	if (asus_wmi_dev_is_present(asus, ASUS_WMI_DEVID_CPU_FAN_CTRL))
 		asus->fan_type = FAN_TYPE_SPEC83;
-	अन्यथा अगर (asus_wmi_has_agfn_fan(asus))
+	else if (asus_wmi_has_agfn_fan(asus))
 		asus->fan_type = FAN_TYPE_AGFN;
 
-	अगर (asus->fan_type == FAN_TYPE_NONE)
-		वापस -ENODEV;
+	if (asus->fan_type == FAN_TYPE_NONE)
+		return -ENODEV;
 
-	asus_fan_set_स्वतः(asus);
+	asus_fan_set_auto(asus);
 	asus->fan_pwm_mode = ASUS_FAN_CTRL_AUTO;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Fan mode *******************************************************************/
 
-अटल पूर्णांक fan_boost_mode_check_present(काष्ठा asus_wmi *asus)
-अणु
+static int fan_boost_mode_check_present(struct asus_wmi *asus)
+{
 	u32 result;
-	पूर्णांक err;
+	int err;
 
 	asus->fan_boost_mode_available = false;
 
 	err = asus_wmi_get_devstate(asus, ASUS_WMI_DEVID_FAN_BOOST_MODE,
 				    &result);
-	अगर (err) अणु
-		अगर (err == -ENODEV)
-			वापस 0;
-		अन्यथा
-			वापस err;
-	पूर्ण
+	if (err) {
+		if (err == -ENODEV)
+			return 0;
+		else
+			return err;
+	}
 
-	अगर ((result & ASUS_WMI_DSTS_PRESENCE_BIT) &&
-			(result & ASUS_FAN_BOOST_MODES_MASK)) अणु
+	if ((result & ASUS_WMI_DSTS_PRESENCE_BIT) &&
+			(result & ASUS_FAN_BOOST_MODES_MASK)) {
 		asus->fan_boost_mode_available = true;
 		asus->fan_boost_mode_mask = result & ASUS_FAN_BOOST_MODES_MASK;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fan_boost_mode_ग_लिखो(काष्ठा asus_wmi *asus)
-अणु
-	पूर्णांक err;
+static int fan_boost_mode_write(struct asus_wmi *asus)
+{
+	int err;
 	u8 value;
 	u32 retval;
 
@@ -1695,113 +1694,113 @@ __ATTRIBUTE_GROUPS(hwmon_attribute);
 	err = asus_wmi_set_devstate(ASUS_WMI_DEVID_FAN_BOOST_MODE, value,
 				    &retval);
 
-	sysfs_notअगरy(&asus->platक्रमm_device->dev.kobj, शून्य,
+	sysfs_notify(&asus->platform_device->dev.kobj, NULL,
 			"fan_boost_mode");
 
-	अगर (err) अणु
+	if (err) {
 		pr_warn("Failed to set fan boost mode: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (retval != 1) अणु
+	if (retval != 1) {
 		pr_warn("Failed to set fan boost mode (retval): 0x%x\n",
 			retval);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fan_boost_mode_चयन_next(काष्ठा asus_wmi *asus)
-अणु
+static int fan_boost_mode_switch_next(struct asus_wmi *asus)
+{
 	u8 mask = asus->fan_boost_mode_mask;
 
-	अगर (asus->fan_boost_mode == ASUS_FAN_BOOST_MODE_NORMAL) अणु
-		अगर (mask & ASUS_FAN_BOOST_MODE_OVERBOOST_MASK)
+	if (asus->fan_boost_mode == ASUS_FAN_BOOST_MODE_NORMAL) {
+		if (mask & ASUS_FAN_BOOST_MODE_OVERBOOST_MASK)
 			asus->fan_boost_mode = ASUS_FAN_BOOST_MODE_OVERBOOST;
-		अन्यथा अगर (mask & ASUS_FAN_BOOST_MODE_SILENT_MASK)
+		else if (mask & ASUS_FAN_BOOST_MODE_SILENT_MASK)
 			asus->fan_boost_mode = ASUS_FAN_BOOST_MODE_SILENT;
-	पूर्ण अन्यथा अगर (asus->fan_boost_mode == ASUS_FAN_BOOST_MODE_OVERBOOST) अणु
-		अगर (mask & ASUS_FAN_BOOST_MODE_SILENT_MASK)
+	} else if (asus->fan_boost_mode == ASUS_FAN_BOOST_MODE_OVERBOOST) {
+		if (mask & ASUS_FAN_BOOST_MODE_SILENT_MASK)
 			asus->fan_boost_mode = ASUS_FAN_BOOST_MODE_SILENT;
-		अन्यथा
+		else
 			asus->fan_boost_mode = ASUS_FAN_BOOST_MODE_NORMAL;
-	पूर्ण अन्यथा अणु
+	} else {
 		asus->fan_boost_mode = ASUS_FAN_BOOST_MODE_NORMAL;
-	पूर्ण
+	}
 
-	वापस fan_boost_mode_ग_लिखो(asus);
-पूर्ण
+	return fan_boost_mode_write(asus);
+}
 
-अटल sमाप_प्रकार fan_boost_mode_show(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा asus_wmi *asus = dev_get_drvdata(dev);
+static ssize_t fan_boost_mode_show(struct device *dev,
+				   struct device_attribute *attr, char *buf)
+{
+	struct asus_wmi *asus = dev_get_drvdata(dev);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", asus->fan_boost_mode);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%d\n", asus->fan_boost_mode);
+}
 
-अटल sमाप_प्रकार fan_boost_mode_store(काष्ठा device *dev,
-				    काष्ठा device_attribute *attr,
-				    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक result;
+static ssize_t fan_boost_mode_store(struct device *dev,
+				    struct device_attribute *attr,
+				    const char *buf, size_t count)
+{
+	int result;
 	u8 new_mode;
-	काष्ठा asus_wmi *asus = dev_get_drvdata(dev);
+	struct asus_wmi *asus = dev_get_drvdata(dev);
 	u8 mask = asus->fan_boost_mode_mask;
 
 	result = kstrtou8(buf, 10, &new_mode);
-	अगर (result < 0) अणु
+	if (result < 0) {
 		pr_warn("Trying to store invalid value\n");
-		वापस result;
-	पूर्ण
+		return result;
+	}
 
-	अगर (new_mode == ASUS_FAN_BOOST_MODE_OVERBOOST) अणु
-		अगर (!(mask & ASUS_FAN_BOOST_MODE_OVERBOOST_MASK))
-			वापस -EINVAL;
-	पूर्ण अन्यथा अगर (new_mode == ASUS_FAN_BOOST_MODE_SILENT) अणु
-		अगर (!(mask & ASUS_FAN_BOOST_MODE_SILENT_MASK))
-			वापस -EINVAL;
-	पूर्ण अन्यथा अगर (new_mode != ASUS_FAN_BOOST_MODE_NORMAL) अणु
-		वापस -EINVAL;
-	पूर्ण
+	if (new_mode == ASUS_FAN_BOOST_MODE_OVERBOOST) {
+		if (!(mask & ASUS_FAN_BOOST_MODE_OVERBOOST_MASK))
+			return -EINVAL;
+	} else if (new_mode == ASUS_FAN_BOOST_MODE_SILENT) {
+		if (!(mask & ASUS_FAN_BOOST_MODE_SILENT_MASK))
+			return -EINVAL;
+	} else if (new_mode != ASUS_FAN_BOOST_MODE_NORMAL) {
+		return -EINVAL;
+	}
 
 	asus->fan_boost_mode = new_mode;
-	fan_boost_mode_ग_लिखो(asus);
+	fan_boost_mode_write(asus);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 // Fan boost mode: 0 - normal, 1 - overboost, 2 - silent
-अटल DEVICE_ATTR_RW(fan_boost_mode);
+static DEVICE_ATTR_RW(fan_boost_mode);
 
 /* Throttle thermal policy ****************************************************/
 
-अटल पूर्णांक throttle_thermal_policy_check_present(काष्ठा asus_wmi *asus)
-अणु
+static int throttle_thermal_policy_check_present(struct asus_wmi *asus)
+{
 	u32 result;
-	पूर्णांक err;
+	int err;
 
 	asus->throttle_thermal_policy_available = false;
 
 	err = asus_wmi_get_devstate(asus,
 				    ASUS_WMI_DEVID_THROTTLE_THERMAL_POLICY,
 				    &result);
-	अगर (err) अणु
-		अगर (err == -ENODEV)
-			वापस 0;
-		वापस err;
-	पूर्ण
+	if (err) {
+		if (err == -ENODEV)
+			return 0;
+		return err;
+	}
 
-	अगर (result & ASUS_WMI_DSTS_PRESENCE_BIT)
+	if (result & ASUS_WMI_DSTS_PRESENCE_BIT)
 		asus->throttle_thermal_policy_available = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक throttle_thermal_policy_ग_लिखो(काष्ठा asus_wmi *asus)
-अणु
-	पूर्णांक err;
+static int throttle_thermal_policy_write(struct asus_wmi *asus)
+{
+	int err;
 	u8 value;
 	u32 retval;
 
@@ -1810,401 +1809,401 @@ __ATTRIBUTE_GROUPS(hwmon_attribute);
 	err = asus_wmi_set_devstate(ASUS_WMI_DEVID_THROTTLE_THERMAL_POLICY,
 				    value, &retval);
 
-	sysfs_notअगरy(&asus->platक्रमm_device->dev.kobj, शून्य,
+	sysfs_notify(&asus->platform_device->dev.kobj, NULL,
 			"throttle_thermal_policy");
 
-	अगर (err) अणु
+	if (err) {
 		pr_warn("Failed to set throttle thermal policy: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (retval != 1) अणु
+	if (retval != 1) {
 		pr_warn("Failed to set throttle thermal policy (retval): 0x%x\n",
 			retval);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक throttle_thermal_policy_set_शेष(काष्ठा asus_wmi *asus)
-अणु
-	अगर (!asus->throttle_thermal_policy_available)
-		वापस 0;
+static int throttle_thermal_policy_set_default(struct asus_wmi *asus)
+{
+	if (!asus->throttle_thermal_policy_available)
+		return 0;
 
 	asus->throttle_thermal_policy_mode = ASUS_THROTTLE_THERMAL_POLICY_DEFAULT;
-	वापस throttle_thermal_policy_ग_लिखो(asus);
-पूर्ण
+	return throttle_thermal_policy_write(asus);
+}
 
-अटल पूर्णांक throttle_thermal_policy_चयन_next(काष्ठा asus_wmi *asus)
-अणु
+static int throttle_thermal_policy_switch_next(struct asus_wmi *asus)
+{
 	u8 new_mode = asus->throttle_thermal_policy_mode + 1;
 
-	अगर (new_mode > ASUS_THROTTLE_THERMAL_POLICY_SILENT)
+	if (new_mode > ASUS_THROTTLE_THERMAL_POLICY_SILENT)
 		new_mode = ASUS_THROTTLE_THERMAL_POLICY_DEFAULT;
 
 	asus->throttle_thermal_policy_mode = new_mode;
-	वापस throttle_thermal_policy_ग_लिखो(asus);
-पूर्ण
+	return throttle_thermal_policy_write(asus);
+}
 
-अटल sमाप_प्रकार throttle_thermal_policy_show(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा asus_wmi *asus = dev_get_drvdata(dev);
+static ssize_t throttle_thermal_policy_show(struct device *dev,
+				   struct device_attribute *attr, char *buf)
+{
+	struct asus_wmi *asus = dev_get_drvdata(dev);
 	u8 mode = asus->throttle_thermal_policy_mode;
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", mode);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%d\n", mode);
+}
 
-अटल sमाप_प्रकार throttle_thermal_policy_store(काष्ठा device *dev,
-				    काष्ठा device_attribute *attr,
-				    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक result;
+static ssize_t throttle_thermal_policy_store(struct device *dev,
+				    struct device_attribute *attr,
+				    const char *buf, size_t count)
+{
+	int result;
 	u8 new_mode;
-	काष्ठा asus_wmi *asus = dev_get_drvdata(dev);
+	struct asus_wmi *asus = dev_get_drvdata(dev);
 
 	result = kstrtou8(buf, 10, &new_mode);
-	अगर (result < 0)
-		वापस result;
+	if (result < 0)
+		return result;
 
-	अगर (new_mode > ASUS_THROTTLE_THERMAL_POLICY_SILENT)
-		वापस -EINVAL;
+	if (new_mode > ASUS_THROTTLE_THERMAL_POLICY_SILENT)
+		return -EINVAL;
 
 	asus->throttle_thermal_policy_mode = new_mode;
-	throttle_thermal_policy_ग_लिखो(asus);
+	throttle_thermal_policy_write(asus);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-// Throttle thermal policy: 0 - शेष, 1 - overboost, 2 - silent
-अटल DEVICE_ATTR_RW(throttle_thermal_policy);
+// Throttle thermal policy: 0 - default, 1 - overboost, 2 - silent
+static DEVICE_ATTR_RW(throttle_thermal_policy);
 
 /* Backlight ******************************************************************/
 
-अटल पूर्णांक पढ़ो_backlight_घातer(काष्ठा asus_wmi *asus)
-अणु
-	पूर्णांक ret;
+static int read_backlight_power(struct asus_wmi *asus)
+{
+	int ret;
 
-	अगर (asus->driver->quirks->store_backlight_घातer)
-		ret = !asus->driver->panel_घातer;
-	अन्यथा
+	if (asus->driver->quirks->store_backlight_power)
+		ret = !asus->driver->panel_power;
+	else
 		ret = asus_wmi_get_devstate_simple(asus,
 						   ASUS_WMI_DEVID_BACKLIGHT);
 
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस ret ? FB_BLANK_UNBLANK : FB_BLANK_POWERDOWN;
-पूर्ण
+	return ret ? FB_BLANK_UNBLANK : FB_BLANK_POWERDOWN;
+}
 
-अटल पूर्णांक पढ़ो_brightness_max(काष्ठा asus_wmi *asus)
-अणु
+static int read_brightness_max(struct asus_wmi *asus)
+{
 	u32 retval;
-	पूर्णांक err;
+	int err;
 
 	err = asus_wmi_get_devstate(asus, ASUS_WMI_DEVID_BRIGHTNESS, &retval);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	retval = retval & ASUS_WMI_DSTS_MAX_BRIGTH_MASK;
 	retval >>= 8;
 
-	अगर (!retval)
-		वापस -ENODEV;
+	if (!retval)
+		return -ENODEV;
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक पढ़ो_brightness(काष्ठा backlight_device *bd)
-अणु
-	काष्ठा asus_wmi *asus = bl_get_data(bd);
+static int read_brightness(struct backlight_device *bd)
+{
+	struct asus_wmi *asus = bl_get_data(bd);
 	u32 retval;
-	पूर्णांक err;
+	int err;
 
 	err = asus_wmi_get_devstate(asus, ASUS_WMI_DEVID_BRIGHTNESS, &retval);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस retval & ASUS_WMI_DSTS_BRIGHTNESS_MASK;
-पूर्ण
+	return retval & ASUS_WMI_DSTS_BRIGHTNESS_MASK;
+}
 
-अटल u32 get_scalar_command(काष्ठा backlight_device *bd)
-अणु
-	काष्ठा asus_wmi *asus = bl_get_data(bd);
+static u32 get_scalar_command(struct backlight_device *bd)
+{
+	struct asus_wmi *asus = bl_get_data(bd);
 	u32 ctrl_param = 0;
 
-	अगर ((asus->driver->brightness < bd->props.brightness) ||
+	if ((asus->driver->brightness < bd->props.brightness) ||
 	    bd->props.brightness == bd->props.max_brightness)
 		ctrl_param = 0x00008001;
-	अन्यथा अगर ((asus->driver->brightness > bd->props.brightness) ||
+	else if ((asus->driver->brightness > bd->props.brightness) ||
 		 bd->props.brightness == 0)
 		ctrl_param = 0x00008000;
 
 	asus->driver->brightness = bd->props.brightness;
 
-	वापस ctrl_param;
-पूर्ण
+	return ctrl_param;
+}
 
-अटल पूर्णांक update_bl_status(काष्ठा backlight_device *bd)
-अणु
-	काष्ठा asus_wmi *asus = bl_get_data(bd);
+static int update_bl_status(struct backlight_device *bd)
+{
+	struct asus_wmi *asus = bl_get_data(bd);
 	u32 ctrl_param;
-	पूर्णांक घातer, err = 0;
+	int power, err = 0;
 
-	घातer = पढ़ो_backlight_घातer(asus);
-	अगर (घातer != -ENODEV && bd->props.घातer != घातer) अणु
-		ctrl_param = !!(bd->props.घातer == FB_BLANK_UNBLANK);
+	power = read_backlight_power(asus);
+	if (power != -ENODEV && bd->props.power != power) {
+		ctrl_param = !!(bd->props.power == FB_BLANK_UNBLANK);
 		err = asus_wmi_set_devstate(ASUS_WMI_DEVID_BACKLIGHT,
-					    ctrl_param, शून्य);
-		अगर (asus->driver->quirks->store_backlight_घातer)
-			asus->driver->panel_घातer = bd->props.घातer;
+					    ctrl_param, NULL);
+		if (asus->driver->quirks->store_backlight_power)
+			asus->driver->panel_power = bd->props.power;
 
 		/* When using scalar brightness, updating the brightness
-		 * will mess with the backlight घातer */
-		अगर (asus->driver->quirks->scalar_panel_brightness)
-			वापस err;
-	पूर्ण
+		 * will mess with the backlight power */
+		if (asus->driver->quirks->scalar_panel_brightness)
+			return err;
+	}
 
-	अगर (asus->driver->quirks->scalar_panel_brightness)
+	if (asus->driver->quirks->scalar_panel_brightness)
 		ctrl_param = get_scalar_command(bd);
-	अन्यथा
+	else
 		ctrl_param = bd->props.brightness;
 
 	err = asus_wmi_set_devstate(ASUS_WMI_DEVID_BRIGHTNESS,
-				    ctrl_param, शून्य);
+				    ctrl_param, NULL);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा backlight_ops asus_wmi_bl_ops = अणु
-	.get_brightness = पढ़ो_brightness,
+static const struct backlight_ops asus_wmi_bl_ops = {
+	.get_brightness = read_brightness,
 	.update_status = update_bl_status,
-पूर्ण;
+};
 
-अटल पूर्णांक asus_wmi_backlight_notअगरy(काष्ठा asus_wmi *asus, पूर्णांक code)
-अणु
-	काष्ठा backlight_device *bd = asus->backlight_device;
-	पूर्णांक old = bd->props.brightness;
-	पूर्णांक new = old;
+static int asus_wmi_backlight_notify(struct asus_wmi *asus, int code)
+{
+	struct backlight_device *bd = asus->backlight_device;
+	int old = bd->props.brightness;
+	int new = old;
 
-	अगर (code >= NOTIFY_BRNUP_MIN && code <= NOTIFY_BRNUP_MAX)
+	if (code >= NOTIFY_BRNUP_MIN && code <= NOTIFY_BRNUP_MAX)
 		new = code - NOTIFY_BRNUP_MIN + 1;
-	अन्यथा अगर (code >= NOTIFY_BRNDOWN_MIN && code <= NOTIFY_BRNDOWN_MAX)
+	else if (code >= NOTIFY_BRNDOWN_MIN && code <= NOTIFY_BRNDOWN_MAX)
 		new = code - NOTIFY_BRNDOWN_MIN;
 
 	bd->props.brightness = new;
 	backlight_update_status(bd);
-	backlight_क्रमce_update(bd, BACKLIGHT_UPDATE_HOTKEY);
+	backlight_force_update(bd, BACKLIGHT_UPDATE_HOTKEY);
 
-	वापस old;
-पूर्ण
+	return old;
+}
 
-अटल पूर्णांक asus_wmi_backlight_init(काष्ठा asus_wmi *asus)
-अणु
-	काष्ठा backlight_device *bd;
-	काष्ठा backlight_properties props;
-	पूर्णांक max;
-	पूर्णांक घातer;
+static int asus_wmi_backlight_init(struct asus_wmi *asus)
+{
+	struct backlight_device *bd;
+	struct backlight_properties props;
+	int max;
+	int power;
 
-	max = पढ़ो_brightness_max(asus);
-	अगर (max < 0)
-		वापस max;
+	max = read_brightness_max(asus);
+	if (max < 0)
+		return max;
 
-	घातer = पढ़ो_backlight_घातer(asus);
-	अगर (घातer == -ENODEV)
-		घातer = FB_BLANK_UNBLANK;
-	अन्यथा अगर (घातer < 0)
-		वापस घातer;
+	power = read_backlight_power(asus);
+	if (power == -ENODEV)
+		power = FB_BLANK_UNBLANK;
+	else if (power < 0)
+		return power;
 
-	स_रखो(&props, 0, माप(काष्ठा backlight_properties));
+	memset(&props, 0, sizeof(struct backlight_properties));
 	props.type = BACKLIGHT_PLATFORM;
 	props.max_brightness = max;
-	bd = backlight_device_रेजिस्टर(asus->driver->name,
-				       &asus->platक्रमm_device->dev, asus,
+	bd = backlight_device_register(asus->driver->name,
+				       &asus->platform_device->dev, asus,
 				       &asus_wmi_bl_ops, &props);
-	अगर (IS_ERR(bd)) अणु
+	if (IS_ERR(bd)) {
 		pr_err("Could not register backlight device\n");
-		वापस PTR_ERR(bd);
-	पूर्ण
+		return PTR_ERR(bd);
+	}
 
 	asus->backlight_device = bd;
 
-	अगर (asus->driver->quirks->store_backlight_घातer)
-		asus->driver->panel_घातer = घातer;
+	if (asus->driver->quirks->store_backlight_power)
+		asus->driver->panel_power = power;
 
-	bd->props.brightness = पढ़ो_brightness(bd);
-	bd->props.घातer = घातer;
+	bd->props.brightness = read_brightness(bd);
+	bd->props.power = power;
 	backlight_update_status(bd);
 
 	asus->driver->brightness = bd->props.brightness;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम asus_wmi_backlight_निकास(काष्ठा asus_wmi *asus)
-अणु
-	backlight_device_unरेजिस्टर(asus->backlight_device);
+static void asus_wmi_backlight_exit(struct asus_wmi *asus)
+{
+	backlight_device_unregister(asus->backlight_device);
 
-	asus->backlight_device = शून्य;
-पूर्ण
+	asus->backlight_device = NULL;
+}
 
-अटल पूर्णांक is_display_toggle(पूर्णांक code)
-अणु
+static int is_display_toggle(int code)
+{
 	/* display toggle keys */
-	अगर ((code >= 0x61 && code <= 0x67) ||
+	if ((code >= 0x61 && code <= 0x67) ||
 	    (code >= 0x8c && code <= 0x93) ||
 	    (code >= 0xa0 && code <= 0xa7) ||
 	    (code >= 0xd0 && code <= 0xd5))
-		वापस 1;
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Fn-lock ********************************************************************/
 
-अटल bool asus_wmi_has_fnlock_key(काष्ठा asus_wmi *asus)
-अणु
+static bool asus_wmi_has_fnlock_key(struct asus_wmi *asus)
+{
 	u32 result;
 
 	asus_wmi_get_devstate(asus, ASUS_WMI_DEVID_FNLOCK, &result);
 
-	वापस (result & ASUS_WMI_DSTS_PRESENCE_BIT) &&
+	return (result & ASUS_WMI_DSTS_PRESENCE_BIT) &&
 		!(result & ASUS_WMI_FNLOCK_BIOS_DISABLED);
-पूर्ण
+}
 
-अटल व्योम asus_wmi_fnlock_update(काष्ठा asus_wmi *asus)
-अणु
-	पूर्णांक mode = asus->fnlock_locked;
+static void asus_wmi_fnlock_update(struct asus_wmi *asus)
+{
+	int mode = asus->fnlock_locked;
 
-	asus_wmi_set_devstate(ASUS_WMI_DEVID_FNLOCK, mode, शून्य);
-पूर्ण
+	asus_wmi_set_devstate(ASUS_WMI_DEVID_FNLOCK, mode, NULL);
+}
 
 /* WMI events *****************************************************************/
 
-अटल पूर्णांक asus_wmi_get_event_code(u32 value)
-अणु
-	काष्ठा acpi_buffer response = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
-	जोड़ acpi_object *obj;
+static int asus_wmi_get_event_code(u32 value)
+{
+	struct acpi_buffer response = { ACPI_ALLOCATE_BUFFER, NULL };
+	union acpi_object *obj;
 	acpi_status status;
-	पूर्णांक code;
+	int code;
 
 	status = wmi_get_event_data(value, &response);
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		pr_warn("Failed to get WMI notify code: %s\n",
-				acpi_क्रमmat_exception(status));
-		वापस -EIO;
-	पूर्ण
+				acpi_format_exception(status));
+		return -EIO;
+	}
 
-	obj = (जोड़ acpi_object *)response.poपूर्णांकer;
+	obj = (union acpi_object *)response.pointer;
 
-	अगर (obj && obj->type == ACPI_TYPE_INTEGER)
-		code = (पूर्णांक)(obj->पूर्णांकeger.value & WMI_EVENT_MASK);
-	अन्यथा
+	if (obj && obj->type == ACPI_TYPE_INTEGER)
+		code = (int)(obj->integer.value & WMI_EVENT_MASK);
+	else
 		code = -EIO;
 
-	kमुक्त(obj);
-	वापस code;
-पूर्ण
+	kfree(obj);
+	return code;
+}
 
-अटल व्योम asus_wmi_handle_event_code(पूर्णांक code, काष्ठा asus_wmi *asus)
-अणु
-	अचिन्हित पूर्णांक key_value = 1;
-	bool स्वतःrelease = 1;
-	पूर्णांक result, orig_code;
+static void asus_wmi_handle_event_code(int code, struct asus_wmi *asus)
+{
+	unsigned int key_value = 1;
+	bool autorelease = 1;
+	int result, orig_code;
 
 	orig_code = code;
 
-	अगर (asus->driver->key_filter) अणु
+	if (asus->driver->key_filter) {
 		asus->driver->key_filter(asus->driver, &code, &key_value,
-					 &स्वतःrelease);
-		अगर (code == ASUS_WMI_KEY_IGNORE)
-			वापस;
-	पूर्ण
+					 &autorelease);
+		if (code == ASUS_WMI_KEY_IGNORE)
+			return;
+	}
 
-	अगर (code >= NOTIFY_BRNUP_MIN && code <= NOTIFY_BRNUP_MAX)
+	if (code >= NOTIFY_BRNUP_MIN && code <= NOTIFY_BRNUP_MAX)
 		code = ASUS_WMI_BRN_UP;
-	अन्यथा अगर (code >= NOTIFY_BRNDOWN_MIN && code <= NOTIFY_BRNDOWN_MAX)
+	else if (code >= NOTIFY_BRNDOWN_MIN && code <= NOTIFY_BRNDOWN_MAX)
 		code = ASUS_WMI_BRN_DOWN;
 
-	अगर (code == ASUS_WMI_BRN_DOWN || code == ASUS_WMI_BRN_UP) अणु
-		अगर (acpi_video_get_backlight_type() == acpi_backlight_venकरोr) अणु
-			asus_wmi_backlight_notअगरy(asus, orig_code);
-			वापस;
-		पूर्ण
-	पूर्ण
+	if (code == ASUS_WMI_BRN_DOWN || code == ASUS_WMI_BRN_UP) {
+		if (acpi_video_get_backlight_type() == acpi_backlight_vendor) {
+			asus_wmi_backlight_notify(asus, orig_code);
+			return;
+		}
+	}
 
-	अगर (code == NOTIFY_KBD_BRTUP) अणु
+	if (code == NOTIFY_KBD_BRTUP) {
 		kbd_led_set_by_kbd(asus, asus->kbd_led_wk + 1);
-		वापस;
-	पूर्ण
-	अगर (code == NOTIFY_KBD_BRTDWN) अणु
+		return;
+	}
+	if (code == NOTIFY_KBD_BRTDWN) {
 		kbd_led_set_by_kbd(asus, asus->kbd_led_wk - 1);
-		वापस;
-	पूर्ण
-	अगर (code == NOTIFY_KBD_BRTTOGGLE) अणु
-		अगर (asus->kbd_led_wk == asus->kbd_led.max_brightness)
+		return;
+	}
+	if (code == NOTIFY_KBD_BRTTOGGLE) {
+		if (asus->kbd_led_wk == asus->kbd_led.max_brightness)
 			kbd_led_set_by_kbd(asus, 0);
-		अन्यथा
+		else
 			kbd_led_set_by_kbd(asus, asus->kbd_led_wk + 1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (code == NOTIFY_FNLOCK_TOGGLE) अणु
+	if (code == NOTIFY_FNLOCK_TOGGLE) {
 		asus->fnlock_locked = !asus->fnlock_locked;
 		asus_wmi_fnlock_update(asus);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (asus->driver->quirks->use_kbd_करोck_devid && code == NOTIFY_KBD_DOCK_CHANGE) अणु
+	if (asus->driver->quirks->use_kbd_dock_devid && code == NOTIFY_KBD_DOCK_CHANGE) {
 		result = asus_wmi_get_devstate_simple(asus,
 						      ASUS_WMI_DEVID_KBD_DOCK);
-		अगर (result >= 0) अणु
-			input_report_चयन(asus->inputdev, SW_TABLET_MODE,
+		if (result >= 0) {
+			input_report_switch(asus->inputdev, SW_TABLET_MODE,
 					    !result);
 			input_sync(asus->inputdev);
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 
-	अगर (asus->driver->quirks->use_lid_flip_devid && code == NOTIFY_LID_FLIP) अणु
+	if (asus->driver->quirks->use_lid_flip_devid && code == NOTIFY_LID_FLIP) {
 		lid_flip_tablet_mode_get_state(asus);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (asus->fan_boost_mode_available && code == NOTIFY_KBD_FBM) अणु
-		fan_boost_mode_चयन_next(asus);
-		वापस;
-	पूर्ण
+	if (asus->fan_boost_mode_available && code == NOTIFY_KBD_FBM) {
+		fan_boost_mode_switch_next(asus);
+		return;
+	}
 
-	अगर (asus->throttle_thermal_policy_available && code == NOTIFY_KBD_TTP) अणु
-		throttle_thermal_policy_चयन_next(asus);
-		वापस;
-	पूर्ण
+	if (asus->throttle_thermal_policy_available && code == NOTIFY_KBD_TTP) {
+		throttle_thermal_policy_switch_next(asus);
+		return;
+	}
 
-	अगर (is_display_toggle(code) && asus->driver->quirks->no_display_toggle)
-		वापस;
+	if (is_display_toggle(code) && asus->driver->quirks->no_display_toggle)
+		return;
 
-	अगर (!sparse_keymap_report_event(asus->inputdev, code,
-					key_value, स्वतःrelease))
+	if (!sparse_keymap_report_event(asus->inputdev, code,
+					key_value, autorelease))
 		pr_info("Unknown key %x pressed\n", code);
-पूर्ण
+}
 
-अटल व्योम asus_wmi_notअगरy(u32 value, व्योम *context)
-अणु
-	काष्ठा asus_wmi *asus = context;
-	पूर्णांक code;
-	पूर्णांक i;
+static void asus_wmi_notify(u32 value, void *context)
+{
+	struct asus_wmi *asus = context;
+	int code;
+	int i;
 
-	क्रम (i = 0; i < WMI_EVENT_QUEUE_SIZE + 1; i++) अणु
+	for (i = 0; i < WMI_EVENT_QUEUE_SIZE + 1; i++) {
 		code = asus_wmi_get_event_code(value);
-		अगर (code < 0) अणु
+		if (code < 0) {
 			pr_warn("Failed to get notify code: %d\n", code);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		अगर (code == WMI_EVENT_QUEUE_END || code == WMI_EVENT_MASK)
-			वापस;
+		if (code == WMI_EVENT_QUEUE_END || code == WMI_EVENT_MASK)
+			return;
 
 		asus_wmi_handle_event_code(code, asus);
 
@@ -2212,90 +2211,90 @@ __ATTRIBUTE_GROUPS(hwmon_attribute);
 		 * Double check that queue is present:
 		 * ATK (with queue) uses 0xff, ASUSWMI (without) 0xd2.
 		 */
-		अगर (!asus->wmi_event_queue || value != WMI_EVENT_VALUE_ATK)
-			वापस;
-	पूर्ण
+		if (!asus->wmi_event_queue || value != WMI_EVENT_VALUE_ATK)
+			return;
+	}
 
 	pr_warn("Failed to process event queue, last code: 0x%x\n", code);
-पूर्ण
+}
 
-अटल पूर्णांक asus_wmi_notअगरy_queue_flush(काष्ठा asus_wmi *asus)
-अणु
-	पूर्णांक code;
-	पूर्णांक i;
+static int asus_wmi_notify_queue_flush(struct asus_wmi *asus)
+{
+	int code;
+	int i;
 
-	क्रम (i = 0; i < WMI_EVENT_QUEUE_SIZE + 1; i++) अणु
+	for (i = 0; i < WMI_EVENT_QUEUE_SIZE + 1; i++) {
 		code = asus_wmi_get_event_code(WMI_EVENT_VALUE_ATK);
-		अगर (code < 0) अणु
+		if (code < 0) {
 			pr_warn("Failed to get event during flush: %d\n", code);
-			वापस code;
-		पूर्ण
+			return code;
+		}
 
-		अगर (code == WMI_EVENT_QUEUE_END || code == WMI_EVENT_MASK)
-			वापस 0;
-	पूर्ण
+		if (code == WMI_EVENT_QUEUE_END || code == WMI_EVENT_MASK)
+			return 0;
+	}
 
 	pr_warn("Failed to flush event queue\n");
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
 /* Sysfs **********************************************************************/
 
-अटल sमाप_प्रकार store_sys_wmi(काष्ठा asus_wmi *asus, पूर्णांक devid,
-			     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
+static ssize_t store_sys_wmi(struct asus_wmi *asus, int devid,
+			     const char *buf, size_t count)
+{
 	u32 retval;
-	पूर्णांक err, value;
+	int err, value;
 
 	value = asus_wmi_get_devstate_simple(asus, devid);
-	अगर (value < 0)
-		वापस value;
+	if (value < 0)
+		return value;
 
-	err = kstrtoपूर्णांक(buf, 0, &value);
-	अगर (err)
-		वापस err;
+	err = kstrtoint(buf, 0, &value);
+	if (err)
+		return err;
 
 	err = asus_wmi_set_devstate(devid, value, &retval);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार show_sys_wmi(काष्ठा asus_wmi *asus, पूर्णांक devid, अक्षर *buf)
-अणु
-	पूर्णांक value = asus_wmi_get_devstate_simple(asus, devid);
+static ssize_t show_sys_wmi(struct asus_wmi *asus, int devid, char *buf)
+{
+	int value = asus_wmi_get_devstate_simple(asus, devid);
 
-	अगर (value < 0)
-		वापस value;
+	if (value < 0)
+		return value;
 
-	वापस प्र_लिखो(buf, "%d\n", value);
-पूर्ण
+	return sprintf(buf, "%d\n", value);
+}
 
-#घोषणा ASUS_WMI_CREATE_DEVICE_ATTR(_name, _mode, _cm)			\
-	अटल sमाप_प्रकार show_##_name(काष्ठा device *dev,			\
-				    काष्ठा device_attribute *attr,	\
-				    अक्षर *buf)				\
-	अणु								\
-		काष्ठा asus_wmi *asus = dev_get_drvdata(dev);		\
+#define ASUS_WMI_CREATE_DEVICE_ATTR(_name, _mode, _cm)			\
+	static ssize_t show_##_name(struct device *dev,			\
+				    struct device_attribute *attr,	\
+				    char *buf)				\
+	{								\
+		struct asus_wmi *asus = dev_get_drvdata(dev);		\
 									\
-		वापस show_sys_wmi(asus, _cm, buf);			\
-	पूर्ण								\
-	अटल sमाप_प्रकार store_##_name(काष्ठा device *dev,		\
-				     काष्ठा device_attribute *attr,	\
-				     स्थिर अक्षर *buf, माप_प्रकार count)	\
-	अणु								\
-		काष्ठा asus_wmi *asus = dev_get_drvdata(dev);		\
+		return show_sys_wmi(asus, _cm, buf);			\
+	}								\
+	static ssize_t store_##_name(struct device *dev,		\
+				     struct device_attribute *attr,	\
+				     const char *buf, size_t count)	\
+	{								\
+		struct asus_wmi *asus = dev_get_drvdata(dev);		\
 									\
-		वापस store_sys_wmi(asus, _cm, buf, count);		\
-	पूर्ण								\
-	अटल काष्ठा device_attribute dev_attr_##_name = अणु		\
-		.attr = अणु						\
-			.name = __stringअगरy(_name),			\
-			.mode = _mode पूर्ण,				\
+		return store_sys_wmi(asus, _cm, buf, count);		\
+	}								\
+	static struct device_attribute dev_attr_##_name = {		\
+		.attr = {						\
+			.name = __stringify(_name),			\
+			.mode = _mode },				\
 		.show   = show_##_name,					\
 		.store  = store_##_name,				\
-	पूर्ण
+	}
 
 ASUS_WMI_CREATE_DEVICE_ATTR(touchpad, 0644, ASUS_WMI_DEVID_TOUCHPAD);
 ASUS_WMI_CREATE_DEVICE_ATTR(camera, 0644, ASUS_WMI_DEVID_CAMERA);
@@ -2303,28 +2302,28 @@ ASUS_WMI_CREATE_DEVICE_ATTR(cardr, 0644, ASUS_WMI_DEVID_CARDREADER);
 ASUS_WMI_CREATE_DEVICE_ATTR(lid_resume, 0644, ASUS_WMI_DEVID_LID_RESUME);
 ASUS_WMI_CREATE_DEVICE_ATTR(als_enable, 0644, ASUS_WMI_DEVID_ALS_ENABLE);
 
-अटल sमाप_प्रकार cpufv_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक value, rv;
+static ssize_t cpufv_store(struct device *dev, struct device_attribute *attr,
+			   const char *buf, size_t count)
+{
+	int value, rv;
 
-	rv = kstrtoपूर्णांक(buf, 0, &value);
-	अगर (rv)
-		वापस rv;
+	rv = kstrtoint(buf, 0, &value);
+	if (rv)
+		return rv;
 
-	अगर (value < 0 || value > 2)
-		वापस -EINVAL;
+	if (value < 0 || value > 2)
+		return -EINVAL;
 
-	rv = asus_wmi_evaluate_method(ASUS_WMI_METHODID_CFVS, value, 0, शून्य);
-	अगर (rv < 0)
-		वापस rv;
+	rv = asus_wmi_evaluate_method(ASUS_WMI_METHODID_CFVS, value, 0, NULL);
+	if (rv < 0)
+		return rv;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR_WO(cpufv);
+static DEVICE_ATTR_WO(cpufv);
 
-अटल काष्ठा attribute *platक्रमm_attributes[] = अणु
+static struct attribute *platform_attributes[] = {
 	&dev_attr_cpufv.attr,
 	&dev_attr_camera.attr,
 	&dev_attr_cardr.attr,
@@ -2333,238 +2332,238 @@ ASUS_WMI_CREATE_DEVICE_ATTR(als_enable, 0644, ASUS_WMI_DEVID_ALS_ENABLE);
 	&dev_attr_als_enable.attr,
 	&dev_attr_fan_boost_mode.attr,
 	&dev_attr_throttle_thermal_policy.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल umode_t asus_sysfs_is_visible(काष्ठा kobject *kobj,
-				    काष्ठा attribute *attr, पूर्णांक idx)
-अणु
-	काष्ठा device *dev = container_of(kobj, काष्ठा device, kobj);
-	काष्ठा asus_wmi *asus = dev_get_drvdata(dev);
+static umode_t asus_sysfs_is_visible(struct kobject *kobj,
+				    struct attribute *attr, int idx)
+{
+	struct device *dev = container_of(kobj, struct device, kobj);
+	struct asus_wmi *asus = dev_get_drvdata(dev);
 	bool ok = true;
-	पूर्णांक devid = -1;
+	int devid = -1;
 
-	अगर (attr == &dev_attr_camera.attr)
+	if (attr == &dev_attr_camera.attr)
 		devid = ASUS_WMI_DEVID_CAMERA;
-	अन्यथा अगर (attr == &dev_attr_cardr.attr)
+	else if (attr == &dev_attr_cardr.attr)
 		devid = ASUS_WMI_DEVID_CARDREADER;
-	अन्यथा अगर (attr == &dev_attr_touchpad.attr)
+	else if (attr == &dev_attr_touchpad.attr)
 		devid = ASUS_WMI_DEVID_TOUCHPAD;
-	अन्यथा अगर (attr == &dev_attr_lid_resume.attr)
+	else if (attr == &dev_attr_lid_resume.attr)
 		devid = ASUS_WMI_DEVID_LID_RESUME;
-	अन्यथा अगर (attr == &dev_attr_als_enable.attr)
+	else if (attr == &dev_attr_als_enable.attr)
 		devid = ASUS_WMI_DEVID_ALS_ENABLE;
-	अन्यथा अगर (attr == &dev_attr_fan_boost_mode.attr)
+	else if (attr == &dev_attr_fan_boost_mode.attr)
 		ok = asus->fan_boost_mode_available;
-	अन्यथा अगर (attr == &dev_attr_throttle_thermal_policy.attr)
+	else if (attr == &dev_attr_throttle_thermal_policy.attr)
 		ok = asus->throttle_thermal_policy_available;
 
-	अगर (devid != -1)
+	if (devid != -1)
 		ok = !(asus_wmi_get_devstate_simple(asus, devid) < 0);
 
-	वापस ok ? attr->mode : 0;
-पूर्ण
+	return ok ? attr->mode : 0;
+}
 
-अटल स्थिर काष्ठा attribute_group platक्रमm_attribute_group = अणु
+static const struct attribute_group platform_attribute_group = {
 	.is_visible = asus_sysfs_is_visible,
-	.attrs = platक्रमm_attributes
-पूर्ण;
+	.attrs = platform_attributes
+};
 
-अटल व्योम asus_wmi_sysfs_निकास(काष्ठा platक्रमm_device *device)
-अणु
-	sysfs_हटाओ_group(&device->dev.kobj, &platक्रमm_attribute_group);
-पूर्ण
+static void asus_wmi_sysfs_exit(struct platform_device *device)
+{
+	sysfs_remove_group(&device->dev.kobj, &platform_attribute_group);
+}
 
-अटल पूर्णांक asus_wmi_sysfs_init(काष्ठा platक्रमm_device *device)
-अणु
-	वापस sysfs_create_group(&device->dev.kobj, &platक्रमm_attribute_group);
-पूर्ण
+static int asus_wmi_sysfs_init(struct platform_device *device)
+{
+	return sysfs_create_group(&device->dev.kobj, &platform_attribute_group);
+}
 
-/* Platक्रमm device ************************************************************/
+/* Platform device ************************************************************/
 
-अटल पूर्णांक asus_wmi_platक्रमm_init(काष्ठा asus_wmi *asus)
-अणु
-	काष्ठा device *dev = &asus->platक्रमm_device->dev;
-	अक्षर *wmi_uid;
-	पूर्णांक rv;
+static int asus_wmi_platform_init(struct asus_wmi *asus)
+{
+	struct device *dev = &asus->platform_device->dev;
+	char *wmi_uid;
+	int rv;
 
 	/* INIT enable hotkeys on some models */
-	अगर (!asus_wmi_evaluate_method(ASUS_WMI_METHODID_INIT, 0, 0, &rv))
+	if (!asus_wmi_evaluate_method(ASUS_WMI_METHODID_INIT, 0, 0, &rv))
 		pr_info("Initialization: %#x\n", rv);
 
-	/* We करोn't know yet what to करो with this version... */
-	अगर (!asus_wmi_evaluate_method(ASUS_WMI_METHODID_SPEC, 0, 0x9, &rv)) अणु
+	/* We don't know yet what to do with this version... */
+	if (!asus_wmi_evaluate_method(ASUS_WMI_METHODID_SPEC, 0, 0x9, &rv)) {
 		pr_info("BIOS WMI version: %d.%d\n", rv >> 16, rv & 0xFF);
 		asus->spec = rv;
-	पूर्ण
+	}
 
 	/*
 	 * The SFUN method probably allows the original driver to get the list
 	 * of features supported by a given model. For now, 0x0100 or 0x0800
-	 * bit signअगरies that the laptop is equipped with a Wi-Fi MiniPCI card.
-	 * The signअगरicance of others is yet to be found.
+	 * bit signifies that the laptop is equipped with a Wi-Fi MiniPCI card.
+	 * The significance of others is yet to be found.
 	 */
-	अगर (!asus_wmi_evaluate_method(ASUS_WMI_METHODID_SFUN, 0, 0, &rv)) अणु
+	if (!asus_wmi_evaluate_method(ASUS_WMI_METHODID_SFUN, 0, 0, &rv)) {
 		pr_info("SFUN value: %#x\n", rv);
 		asus->sfun = rv;
-	पूर्ण
+	}
 
 	/*
-	 * Eee PC and Notebooks seems to have dअगरferent method_id क्रम DSTS,
+	 * Eee PC and Notebooks seems to have different method_id for DSTS,
 	 * but it may also be related to the BIOS's SPEC.
-	 * Note, on most Eeepc, there is no way to check अगर a method exist
-	 * or note, जबतक on notebooks, they वापसs 0xFFFFFFFE on failure,
-	 * but once again, SPEC may probably be used क्रम that kind of things.
+	 * Note, on most Eeepc, there is no way to check if a method exist
+	 * or note, while on notebooks, they returns 0xFFFFFFFE on failure,
+	 * but once again, SPEC may probably be used for that kind of things.
 	 *
-	 * Additionally at least TUF Gaming series laptops वापस nothing क्रम
+	 * Additionally at least TUF Gaming series laptops return nothing for
 	 * unknown methods, so the detection in this way is not possible.
 	 *
 	 * There is strong indication that only ACPI WMI devices that have _UID
 	 * equal to "ASUSWMI" use DCTS whereas those with "ATK" use DSTS.
 	 */
 	wmi_uid = wmi_get_acpi_device_uid(ASUS_WMI_MGMT_GUID);
-	अगर (!wmi_uid)
-		वापस -ENODEV;
+	if (!wmi_uid)
+		return -ENODEV;
 
-	अगर (!म_भेद(wmi_uid, ASUS_ACPI_UID_ASUSWMI)) अणु
+	if (!strcmp(wmi_uid, ASUS_ACPI_UID_ASUSWMI)) {
 		dev_info(dev, "Detected ASUSWMI, use DCTS\n");
 		asus->dsts_id = ASUS_WMI_METHODID_DCTS;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_info(dev, "Detected %s, not ASUSWMI, use DSTS\n", wmi_uid);
 		asus->dsts_id = ASUS_WMI_METHODID_DSTS;
-	पूर्ण
+	}
 
 	/*
-	 * Some devices can have multiple event codes stored in a queue beक्रमe
-	 * the module load अगर it was unloaded पूर्णांकermittently after calling
-	 * the INIT method (enables event handling). The WMI notअगरy handler is
+	 * Some devices can have multiple event codes stored in a queue before
+	 * the module load if it was unloaded intermittently after calling
+	 * the INIT method (enables event handling). The WMI notify handler is
 	 * expected to retrieve all event codes until a retrieved code equals
 	 * queue end marker (One or Ones). Old codes are flushed from the queue
 	 * upon module load. Not enabling this when it should be has minimal
-	 * visible impact so fall back अगर anything goes wrong.
+	 * visible impact so fall back if anything goes wrong.
 	 */
 	wmi_uid = wmi_get_acpi_device_uid(asus->driver->event_guid);
-	अगर (wmi_uid && !म_भेद(wmi_uid, ASUS_ACPI_UID_ATK)) अणु
+	if (wmi_uid && !strcmp(wmi_uid, ASUS_ACPI_UID_ATK)) {
 		dev_info(dev, "Detected ATK, enable event queue\n");
 
-		अगर (!asus_wmi_notअगरy_queue_flush(asus))
+		if (!asus_wmi_notify_queue_flush(asus))
 			asus->wmi_event_queue = true;
-	पूर्ण
+	}
 
 	/* CWAP allow to define the behavior of the Fn+F2 key,
-	 * this method करोesn't seems to be present on Eee PCs */
-	अगर (asus->driver->quirks->wapf >= 0)
+	 * this method doesn't seems to be present on Eee PCs */
+	if (asus->driver->quirks->wapf >= 0)
 		asus_wmi_set_devstate(ASUS_WMI_DEVID_CWAP,
-				      asus->driver->quirks->wapf, शून्य);
+				      asus->driver->quirks->wapf, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* debugfs ********************************************************************/
 
-काष्ठा asus_wmi_debugfs_node अणु
-	काष्ठा asus_wmi *asus;
-	अक्षर *name;
-	पूर्णांक (*show) (काष्ठा seq_file *m, व्योम *data);
-पूर्ण;
+struct asus_wmi_debugfs_node {
+	struct asus_wmi *asus;
+	char *name;
+	int (*show) (struct seq_file *m, void *data);
+};
 
-अटल पूर्णांक show_dsts(काष्ठा seq_file *m, व्योम *data)
-अणु
-	काष्ठा asus_wmi *asus = m->निजी;
-	पूर्णांक err;
+static int show_dsts(struct seq_file *m, void *data)
+{
+	struct asus_wmi *asus = m->private;
+	int err;
 	u32 retval = -1;
 
 	err = asus_wmi_get_devstate(asus, asus->debug.dev_id, &retval);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	seq_म_लिखो(m, "DSTS(%#x) = %#x\n", asus->debug.dev_id, retval);
+	seq_printf(m, "DSTS(%#x) = %#x\n", asus->debug.dev_id, retval);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक show_devs(काष्ठा seq_file *m, व्योम *data)
-अणु
-	काष्ठा asus_wmi *asus = m->निजी;
-	पूर्णांक err;
+static int show_devs(struct seq_file *m, void *data)
+{
+	struct asus_wmi *asus = m->private;
+	int err;
 	u32 retval = -1;
 
 	err = asus_wmi_set_devstate(asus->debug.dev_id, asus->debug.ctrl_param,
 				    &retval);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	seq_म_लिखो(m, "DEVS(%#x, %#x) = %#x\n", asus->debug.dev_id,
+	seq_printf(m, "DEVS(%#x, %#x) = %#x\n", asus->debug.dev_id,
 		   asus->debug.ctrl_param, retval);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक show_call(काष्ठा seq_file *m, व्योम *data)
-अणु
-	काष्ठा asus_wmi *asus = m->निजी;
-	काष्ठा bios_args args = अणु
+static int show_call(struct seq_file *m, void *data)
+{
+	struct asus_wmi *asus = m->private;
+	struct bios_args args = {
 		.arg0 = asus->debug.dev_id,
 		.arg1 = asus->debug.ctrl_param,
-	पूर्ण;
-	काष्ठा acpi_buffer input = अणु (acpi_size) माप(args), &args पूर्ण;
-	काष्ठा acpi_buffer output = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
-	जोड़ acpi_object *obj;
+	};
+	struct acpi_buffer input = { (acpi_size) sizeof(args), &args };
+	struct acpi_buffer output = { ACPI_ALLOCATE_BUFFER, NULL };
+	union acpi_object *obj;
 	acpi_status status;
 
 	status = wmi_evaluate_method(ASUS_WMI_MGMT_GUID,
 				     0, asus->debug.method_id,
 				     &input, &output);
 
-	अगर (ACPI_FAILURE(status))
-		वापस -EIO;
+	if (ACPI_FAILURE(status))
+		return -EIO;
 
-	obj = (जोड़ acpi_object *)output.poपूर्णांकer;
-	अगर (obj && obj->type == ACPI_TYPE_INTEGER)
-		seq_म_लिखो(m, "%#x(%#x, %#x) = %#x\n", asus->debug.method_id,
+	obj = (union acpi_object *)output.pointer;
+	if (obj && obj->type == ACPI_TYPE_INTEGER)
+		seq_printf(m, "%#x(%#x, %#x) = %#x\n", asus->debug.method_id,
 			   asus->debug.dev_id, asus->debug.ctrl_param,
-			   (u32) obj->पूर्णांकeger.value);
-	अन्यथा
-		seq_म_लिखो(m, "%#x(%#x, %#x) = t:%d\n", asus->debug.method_id,
+			   (u32) obj->integer.value);
+	else
+		seq_printf(m, "%#x(%#x, %#x) = t:%d\n", asus->debug.method_id,
 			   asus->debug.dev_id, asus->debug.ctrl_param,
 			   obj ? obj->type : -1);
 
-	kमुक्त(obj);
+	kfree(obj);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा asus_wmi_debugfs_node asus_wmi_debug_files[] = अणु
-	अणुशून्य, "devs", show_devsपूर्ण,
-	अणुशून्य, "dsts", show_dstsपूर्ण,
-	अणुशून्य, "call", show_callपूर्ण,
-पूर्ण;
+static struct asus_wmi_debugfs_node asus_wmi_debug_files[] = {
+	{NULL, "devs", show_devs},
+	{NULL, "dsts", show_dsts},
+	{NULL, "call", show_call},
+};
 
-अटल पूर्णांक asus_wmi_debugfs_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा asus_wmi_debugfs_node *node = inode->i_निजी;
+static int asus_wmi_debugfs_open(struct inode *inode, struct file *file)
+{
+	struct asus_wmi_debugfs_node *node = inode->i_private;
 
-	वापस single_खोलो(file, node->show, node->asus);
-पूर्ण
+	return single_open(file, node->show, node->asus);
+}
 
-अटल स्थिर काष्ठा file_operations asus_wmi_debugfs_io_ops = अणु
+static const struct file_operations asus_wmi_debugfs_io_ops = {
 	.owner = THIS_MODULE,
-	.खोलो = asus_wmi_debugfs_खोलो,
-	.पढ़ो = seq_पढ़ो,
+	.open = asus_wmi_debugfs_open,
+	.read = seq_read,
 	.llseek = seq_lseek,
 	.release = single_release,
-पूर्ण;
+};
 
-अटल व्योम asus_wmi_debugfs_निकास(काष्ठा asus_wmi *asus)
-अणु
-	debugfs_हटाओ_recursive(asus->debug.root);
-पूर्ण
+static void asus_wmi_debugfs_exit(struct asus_wmi *asus)
+{
+	debugfs_remove_recursive(asus->debug.root);
+}
 
-अटल व्योम asus_wmi_debugfs_init(काष्ठा asus_wmi *asus)
-अणु
-	पूर्णांक i;
+static void asus_wmi_debugfs_init(struct asus_wmi *asus)
+{
+	int i;
 
-	asus->debug.root = debugfs_create_dir(asus->driver->name, शून्य);
+	asus->debug.root = debugfs_create_dir(asus->driver->name, NULL);
 
 	debugfs_create_x32("method_id", S_IRUGO | S_IWUSR, asus->debug.root,
 			   &asus->debug.method_id);
@@ -2575,321 +2574,321 @@ ASUS_WMI_CREATE_DEVICE_ATTR(als_enable, 0644, ASUS_WMI_DEVID_ALS_ENABLE);
 	debugfs_create_x32("ctrl_param", S_IRUGO | S_IWUSR, asus->debug.root,
 			   &asus->debug.ctrl_param);
 
-	क्रम (i = 0; i < ARRAY_SIZE(asus_wmi_debug_files); i++) अणु
-		काष्ठा asus_wmi_debugfs_node *node = &asus_wmi_debug_files[i];
+	for (i = 0; i < ARRAY_SIZE(asus_wmi_debug_files); i++) {
+		struct asus_wmi_debugfs_node *node = &asus_wmi_debug_files[i];
 
 		node->asus = asus;
 		debugfs_create_file(node->name, S_IFREG | S_IRUGO,
 				    asus->debug.root, node,
 				    &asus_wmi_debugfs_io_ops);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Init / निकास ****************************************************************/
+/* Init / exit ****************************************************************/
 
-अटल पूर्णांक asus_wmi_add(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा platक्रमm_driver *pdrv = to_platक्रमm_driver(pdev->dev.driver);
-	काष्ठा asus_wmi_driver *wdrv = to_asus_wmi_driver(pdrv);
-	काष्ठा asus_wmi *asus;
-	स्थिर अक्षर *chassis_type;
+static int asus_wmi_add(struct platform_device *pdev)
+{
+	struct platform_driver *pdrv = to_platform_driver(pdev->dev.driver);
+	struct asus_wmi_driver *wdrv = to_asus_wmi_driver(pdrv);
+	struct asus_wmi *asus;
+	const char *chassis_type;
 	acpi_status status;
-	पूर्णांक err;
+	int err;
 	u32 result;
 
-	asus = kzalloc(माप(काष्ठा asus_wmi), GFP_KERNEL);
-	अगर (!asus)
-		वापस -ENOMEM;
+	asus = kzalloc(sizeof(struct asus_wmi), GFP_KERNEL);
+	if (!asus)
+		return -ENOMEM;
 
 	asus->driver = wdrv;
-	asus->platक्रमm_device = pdev;
-	wdrv->platक्रमm_device = pdev;
-	platक्रमm_set_drvdata(asus->platक्रमm_device, asus);
+	asus->platform_device = pdev;
+	wdrv->platform_device = pdev;
+	platform_set_drvdata(asus->platform_device, asus);
 
-	अगर (wdrv->detect_quirks)
+	if (wdrv->detect_quirks)
 		wdrv->detect_quirks(asus->driver);
 
-	err = asus_wmi_platक्रमm_init(asus);
-	अगर (err)
-		जाओ fail_platक्रमm;
+	err = asus_wmi_platform_init(asus);
+	if (err)
+		goto fail_platform;
 
 	err = fan_boost_mode_check_present(asus);
-	अगर (err)
-		जाओ fail_fan_boost_mode;
+	if (err)
+		goto fail_fan_boost_mode;
 
 	err = throttle_thermal_policy_check_present(asus);
-	अगर (err)
-		जाओ fail_throttle_thermal_policy;
-	अन्यथा
-		throttle_thermal_policy_set_शेष(asus);
+	if (err)
+		goto fail_throttle_thermal_policy;
+	else
+		throttle_thermal_policy_set_default(asus);
 
-	err = asus_wmi_sysfs_init(asus->platक्रमm_device);
-	अगर (err)
-		जाओ fail_sysfs;
+	err = asus_wmi_sysfs_init(asus->platform_device);
+	if (err)
+		goto fail_sysfs;
 
 	err = asus_wmi_input_init(asus);
-	अगर (err)
-		जाओ fail_input;
+	if (err)
+		goto fail_input;
 
 	err = asus_wmi_fan_init(asus); /* probably no problems on error */
 
 	err = asus_wmi_hwmon_init(asus);
-	अगर (err)
-		जाओ fail_hwmon;
+	if (err)
+		goto fail_hwmon;
 
 	err = asus_wmi_led_init(asus);
-	अगर (err)
-		जाओ fail_leds;
+	if (err)
+		goto fail_leds;
 
 	asus_wmi_get_devstate(asus, ASUS_WMI_DEVID_WLAN, &result);
-	अगर (result & (ASUS_WMI_DSTS_PRESENCE_BIT | ASUS_WMI_DSTS_USER_BIT))
+	if (result & (ASUS_WMI_DSTS_PRESENCE_BIT | ASUS_WMI_DSTS_USER_BIT))
 		asus->driver->wlan_ctrl_by_user = 1;
 
-	अगर (!(asus->driver->wlan_ctrl_by_user && ashs_present())) अणु
-		err = asus_wmi_rfसमाप्त_init(asus);
-		अगर (err)
-			जाओ fail_rfसमाप्त;
-	पूर्ण
+	if (!(asus->driver->wlan_ctrl_by_user && ashs_present())) {
+		err = asus_wmi_rfkill_init(asus);
+		if (err)
+			goto fail_rfkill;
+	}
 
-	अगर (asus->driver->quirks->wmi_क्रमce_als_set)
+	if (asus->driver->quirks->wmi_force_als_set)
 		asus_wmi_set_als();
 
-	/* Some Asus desktop boards export an acpi-video backlight पूर्णांकerface,
+	/* Some Asus desktop boards export an acpi-video backlight interface,
 	   stop this from showing up */
-	chassis_type = dmi_get_प्रणाली_info(DMI_CHASSIS_TYPE);
-	अगर (chassis_type && !म_भेद(chassis_type, "3"))
-		acpi_video_set_dmi_backlight_type(acpi_backlight_venकरोr);
+	chassis_type = dmi_get_system_info(DMI_CHASSIS_TYPE);
+	if (chassis_type && !strcmp(chassis_type, "3"))
+		acpi_video_set_dmi_backlight_type(acpi_backlight_vendor);
 
-	अगर (asus->driver->quirks->wmi_backlight_घातer)
-		acpi_video_set_dmi_backlight_type(acpi_backlight_venकरोr);
+	if (asus->driver->quirks->wmi_backlight_power)
+		acpi_video_set_dmi_backlight_type(acpi_backlight_vendor);
 
-	अगर (asus->driver->quirks->wmi_backlight_native)
+	if (asus->driver->quirks->wmi_backlight_native)
 		acpi_video_set_dmi_backlight_type(acpi_backlight_native);
 
-	अगर (asus->driver->quirks->xusb2pr)
+	if (asus->driver->quirks->xusb2pr)
 		asus_wmi_set_xusb2pr(asus);
 
-	अगर (acpi_video_get_backlight_type() == acpi_backlight_venकरोr) अणु
+	if (acpi_video_get_backlight_type() == acpi_backlight_vendor) {
 		err = asus_wmi_backlight_init(asus);
-		अगर (err && err != -ENODEV)
-			जाओ fail_backlight;
-	पूर्ण अन्यथा अगर (asus->driver->quirks->wmi_backlight_set_devstate)
-		err = asus_wmi_set_devstate(ASUS_WMI_DEVID_BACKLIGHT, 2, शून्य);
+		if (err && err != -ENODEV)
+			goto fail_backlight;
+	} else if (asus->driver->quirks->wmi_backlight_set_devstate)
+		err = asus_wmi_set_devstate(ASUS_WMI_DEVID_BACKLIGHT, 2, NULL);
 
-	अगर (asus_wmi_has_fnlock_key(asus)) अणु
-		asus->fnlock_locked = fnlock_शेष;
+	if (asus_wmi_has_fnlock_key(asus)) {
+		asus->fnlock_locked = fnlock_default;
 		asus_wmi_fnlock_update(asus);
-	पूर्ण
+	}
 
-	status = wmi_install_notअगरy_handler(asus->driver->event_guid,
-					    asus_wmi_notअगरy, asus);
-	अगर (ACPI_FAILURE(status)) अणु
+	status = wmi_install_notify_handler(asus->driver->event_guid,
+					    asus_wmi_notify, asus);
+	if (ACPI_FAILURE(status)) {
 		pr_err("Unable to register notify handler - %d\n", status);
 		err = -ENODEV;
-		जाओ fail_wmi_handler;
-	पूर्ण
+		goto fail_wmi_handler;
+	}
 
 	asus_wmi_battery_init(asus);
 
 	asus_wmi_debugfs_init(asus);
 
-	वापस 0;
+	return 0;
 
 fail_wmi_handler:
-	asus_wmi_backlight_निकास(asus);
+	asus_wmi_backlight_exit(asus);
 fail_backlight:
-	asus_wmi_rfसमाप्त_निकास(asus);
-fail_rfसमाप्त:
-	asus_wmi_led_निकास(asus);
+	asus_wmi_rfkill_exit(asus);
+fail_rfkill:
+	asus_wmi_led_exit(asus);
 fail_leds:
 fail_hwmon:
-	asus_wmi_input_निकास(asus);
+	asus_wmi_input_exit(asus);
 fail_input:
-	asus_wmi_sysfs_निकास(asus->platक्रमm_device);
+	asus_wmi_sysfs_exit(asus->platform_device);
 fail_sysfs:
 fail_throttle_thermal_policy:
 fail_fan_boost_mode:
-fail_platक्रमm:
-	kमुक्त(asus);
-	वापस err;
-पूर्ण
+fail_platform:
+	kfree(asus);
+	return err;
+}
 
-अटल पूर्णांक asus_wmi_हटाओ(काष्ठा platक्रमm_device *device)
-अणु
-	काष्ठा asus_wmi *asus;
+static int asus_wmi_remove(struct platform_device *device)
+{
+	struct asus_wmi *asus;
 
-	asus = platक्रमm_get_drvdata(device);
-	wmi_हटाओ_notअगरy_handler(asus->driver->event_guid);
-	asus_wmi_backlight_निकास(asus);
-	asus_wmi_input_निकास(asus);
-	asus_wmi_led_निकास(asus);
-	asus_wmi_rfसमाप्त_निकास(asus);
-	asus_wmi_debugfs_निकास(asus);
-	asus_wmi_sysfs_निकास(asus->platक्रमm_device);
-	asus_fan_set_स्वतः(asus);
-	asus_wmi_battery_निकास(asus);
+	asus = platform_get_drvdata(device);
+	wmi_remove_notify_handler(asus->driver->event_guid);
+	asus_wmi_backlight_exit(asus);
+	asus_wmi_input_exit(asus);
+	asus_wmi_led_exit(asus);
+	asus_wmi_rfkill_exit(asus);
+	asus_wmi_debugfs_exit(asus);
+	asus_wmi_sysfs_exit(asus->platform_device);
+	asus_fan_set_auto(asus);
+	asus_wmi_battery_exit(asus);
 
-	kमुक्त(asus);
-	वापस 0;
-पूर्ण
+	kfree(asus);
+	return 0;
+}
 
-/* Platक्रमm driver - hibernate/resume callbacks *******************************/
+/* Platform driver - hibernate/resume callbacks *******************************/
 
-अटल पूर्णांक asus_hotk_thaw(काष्ठा device *device)
-अणु
-	काष्ठा asus_wmi *asus = dev_get_drvdata(device);
+static int asus_hotk_thaw(struct device *device)
+{
+	struct asus_wmi *asus = dev_get_drvdata(device);
 
-	अगर (asus->wlan.rfसमाप्त) अणु
+	if (asus->wlan.rfkill) {
 		bool wlan;
 
 		/*
 		 * Work around bios bug - acpi _PTS turns off the wireless led
 		 * during suspend.  Normally it restores it on resume, but
-		 * we should kick it ourselves in हाल hibernation is पातed.
+		 * we should kick it ourselves in case hibernation is aborted.
 		 */
 		wlan = asus_wmi_get_devstate_simple(asus, ASUS_WMI_DEVID_WLAN);
-		asus_wmi_set_devstate(ASUS_WMI_DEVID_WLAN, wlan, शून्य);
-	पूर्ण
+		asus_wmi_set_devstate(ASUS_WMI_DEVID_WLAN, wlan, NULL);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक asus_hotk_resume(काष्ठा device *device)
-अणु
-	काष्ठा asus_wmi *asus = dev_get_drvdata(device);
+static int asus_hotk_resume(struct device *device)
+{
+	struct asus_wmi *asus = dev_get_drvdata(device);
 
-	अगर (!IS_ERR_OR_शून्य(asus->kbd_led.dev))
+	if (!IS_ERR_OR_NULL(asus->kbd_led.dev))
 		kbd_led_update(asus);
 
-	अगर (asus_wmi_has_fnlock_key(asus))
+	if (asus_wmi_has_fnlock_key(asus))
 		asus_wmi_fnlock_update(asus);
 
-	अगर (asus->driver->quirks->use_lid_flip_devid)
+	if (asus->driver->quirks->use_lid_flip_devid)
 		lid_flip_tablet_mode_get_state(asus);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक asus_hotk_restore(काष्ठा device *device)
-अणु
-	काष्ठा asus_wmi *asus = dev_get_drvdata(device);
-	पूर्णांक bl;
+static int asus_hotk_restore(struct device *device)
+{
+	struct asus_wmi *asus = dev_get_drvdata(device);
+	int bl;
 
-	/* Refresh both wlan rfसमाप्त state and pci hotplug */
-	अगर (asus->wlan.rfसमाप्त)
-		asus_rfसमाप्त_hotplug(asus);
+	/* Refresh both wlan rfkill state and pci hotplug */
+	if (asus->wlan.rfkill)
+		asus_rfkill_hotplug(asus);
 
-	अगर (asus->bluetooth.rfसमाप्त) अणु
+	if (asus->bluetooth.rfkill) {
 		bl = !asus_wmi_get_devstate_simple(asus,
 						   ASUS_WMI_DEVID_BLUETOOTH);
-		rfसमाप्त_set_sw_state(asus->bluetooth.rfसमाप्त, bl);
-	पूर्ण
-	अगर (asus->wimax.rfसमाप्त) अणु
+		rfkill_set_sw_state(asus->bluetooth.rfkill, bl);
+	}
+	if (asus->wimax.rfkill) {
 		bl = !asus_wmi_get_devstate_simple(asus, ASUS_WMI_DEVID_WIMAX);
-		rfसमाप्त_set_sw_state(asus->wimax.rfसमाप्त, bl);
-	पूर्ण
-	अगर (asus->wwan3g.rfसमाप्त) अणु
+		rfkill_set_sw_state(asus->wimax.rfkill, bl);
+	}
+	if (asus->wwan3g.rfkill) {
 		bl = !asus_wmi_get_devstate_simple(asus, ASUS_WMI_DEVID_WWAN3G);
-		rfसमाप्त_set_sw_state(asus->wwan3g.rfसमाप्त, bl);
-	पूर्ण
-	अगर (asus->gps.rfसमाप्त) अणु
+		rfkill_set_sw_state(asus->wwan3g.rfkill, bl);
+	}
+	if (asus->gps.rfkill) {
 		bl = !asus_wmi_get_devstate_simple(asus, ASUS_WMI_DEVID_GPS);
-		rfसमाप्त_set_sw_state(asus->gps.rfसमाप्त, bl);
-	पूर्ण
-	अगर (asus->uwb.rfसमाप्त) अणु
+		rfkill_set_sw_state(asus->gps.rfkill, bl);
+	}
+	if (asus->uwb.rfkill) {
 		bl = !asus_wmi_get_devstate_simple(asus, ASUS_WMI_DEVID_UWB);
-		rfसमाप्त_set_sw_state(asus->uwb.rfसमाप्त, bl);
-	पूर्ण
-	अगर (!IS_ERR_OR_शून्य(asus->kbd_led.dev))
+		rfkill_set_sw_state(asus->uwb.rfkill, bl);
+	}
+	if (!IS_ERR_OR_NULL(asus->kbd_led.dev))
 		kbd_led_update(asus);
 
-	अगर (asus_wmi_has_fnlock_key(asus))
+	if (asus_wmi_has_fnlock_key(asus))
 		asus_wmi_fnlock_update(asus);
 
-	अगर (asus->driver->quirks->use_lid_flip_devid)
+	if (asus->driver->quirks->use_lid_flip_devid)
 		lid_flip_tablet_mode_get_state(asus);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops asus_pm_ops = अणु
+static const struct dev_pm_ops asus_pm_ops = {
 	.thaw = asus_hotk_thaw,
 	.restore = asus_hotk_restore,
 	.resume = asus_hotk_resume,
-पूर्ण;
+};
 
 /* Registration ***************************************************************/
 
-अटल पूर्णांक asus_wmi_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा platक्रमm_driver *pdrv = to_platक्रमm_driver(pdev->dev.driver);
-	काष्ठा asus_wmi_driver *wdrv = to_asus_wmi_driver(pdrv);
-	पूर्णांक ret;
+static int asus_wmi_probe(struct platform_device *pdev)
+{
+	struct platform_driver *pdrv = to_platform_driver(pdev->dev.driver);
+	struct asus_wmi_driver *wdrv = to_asus_wmi_driver(pdrv);
+	int ret;
 
-	अगर (!wmi_has_guid(ASUS_WMI_MGMT_GUID)) अणु
+	if (!wmi_has_guid(ASUS_WMI_MGMT_GUID)) {
 		pr_warn("ASUS Management GUID not found\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (wdrv->event_guid && !wmi_has_guid(wdrv->event_guid)) अणु
+	if (wdrv->event_guid && !wmi_has_guid(wdrv->event_guid)) {
 		pr_warn("ASUS Event GUID not found\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (wdrv->probe) अणु
+	if (wdrv->probe) {
 		ret = wdrv->probe(pdev);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस asus_wmi_add(pdev);
-पूर्ण
+	return asus_wmi_add(pdev);
+}
 
-अटल bool used;
+static bool used;
 
-पूर्णांक __init_or_module asus_wmi_रेजिस्टर_driver(काष्ठा asus_wmi_driver *driver)
-अणु
-	काष्ठा platक्रमm_driver *platक्रमm_driver;
-	काष्ठा platक्रमm_device *platक्रमm_device;
+int __init_or_module asus_wmi_register_driver(struct asus_wmi_driver *driver)
+{
+	struct platform_driver *platform_driver;
+	struct platform_device *platform_device;
 
-	अगर (used)
-		वापस -EBUSY;
+	if (used)
+		return -EBUSY;
 
-	platक्रमm_driver = &driver->platक्रमm_driver;
-	platक्रमm_driver->हटाओ = asus_wmi_हटाओ;
-	platक्रमm_driver->driver.owner = driver->owner;
-	platक्रमm_driver->driver.name = driver->name;
-	platक्रमm_driver->driver.pm = &asus_pm_ops;
+	platform_driver = &driver->platform_driver;
+	platform_driver->remove = asus_wmi_remove;
+	platform_driver->driver.owner = driver->owner;
+	platform_driver->driver.name = driver->name;
+	platform_driver->driver.pm = &asus_pm_ops;
 
-	platक्रमm_device = platक्रमm_create_bundle(platक्रमm_driver,
+	platform_device = platform_create_bundle(platform_driver,
 						 asus_wmi_probe,
-						 शून्य, 0, शून्य, 0);
-	अगर (IS_ERR(platक्रमm_device))
-		वापस PTR_ERR(platक्रमm_device);
+						 NULL, 0, NULL, 0);
+	if (IS_ERR(platform_device))
+		return PTR_ERR(platform_device);
 
 	used = true;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(asus_wmi_रेजिस्टर_driver);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(asus_wmi_register_driver);
 
-व्योम asus_wmi_unरेजिस्टर_driver(काष्ठा asus_wmi_driver *driver)
-अणु
-	platक्रमm_device_unरेजिस्टर(driver->platक्रमm_device);
-	platक्रमm_driver_unरेजिस्टर(&driver->platक्रमm_driver);
+void asus_wmi_unregister_driver(struct asus_wmi_driver *driver)
+{
+	platform_device_unregister(driver->platform_device);
+	platform_driver_unregister(&driver->platform_driver);
 	used = false;
-पूर्ण
-EXPORT_SYMBOL_GPL(asus_wmi_unरेजिस्टर_driver);
+}
+EXPORT_SYMBOL_GPL(asus_wmi_unregister_driver);
 
-अटल पूर्णांक __init asus_wmi_init(व्योम)
-अणु
+static int __init asus_wmi_init(void)
+{
 	pr_info("ASUS WMI generic driver loaded\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास asus_wmi_निकास(व्योम)
-अणु
+static void __exit asus_wmi_exit(void)
+{
 	pr_info("ASUS WMI generic driver unloaded\n");
-पूर्ण
+}
 
 module_init(asus_wmi_init);
-module_निकास(asus_wmi_निकास);
+module_exit(asus_wmi_exit);

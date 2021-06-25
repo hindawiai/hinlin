@@ -1,140 +1,139 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Framework क्रम userspace DMA-BUF allocations
+ * Framework for userspace DMA-BUF allocations
  *
  * Copyright (C) 2011 Google, Inc.
  * Copyright (C) 2019 Linaro Ltd.
  */
 
-#समावेश <linux/cdev.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/device.h>
-#समावेश <linux/dma-buf.h>
-#समावेश <linux/err.h>
-#समावेश <linux/xarray.h>
-#समावेश <linux/list.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/dma-heap.h>
-#समावेश <uapi/linux/dma-heap.h>
+#include <linux/cdev.h>
+#include <linux/debugfs.h>
+#include <linux/device.h>
+#include <linux/dma-buf.h>
+#include <linux/err.h>
+#include <linux/xarray.h>
+#include <linux/list.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <linux/syscalls.h>
+#include <linux/dma-heap.h>
+#include <uapi/linux/dma-heap.h>
 
-#घोषणा DEVNAME "dma_heap"
+#define DEVNAME "dma_heap"
 
-#घोषणा NUM_HEAP_MINORS 128
+#define NUM_HEAP_MINORS 128
 
 /**
- * काष्ठा dma_heap - represents a dmabuf heap in the प्रणाली
- * @name:		used क्रम debugging/device-node name
- * @ops:		ops काष्ठा क्रम this heap
+ * struct dma_heap - represents a dmabuf heap in the system
+ * @name:		used for debugging/device-node name
+ * @ops:		ops struct for this heap
  * @heap_devt		heap device node
  * @list		list head connecting to list of heaps
- * @heap_cdev		heap अक्षर device
+ * @heap_cdev		heap char device
  *
  * Represents a heap of memory from which buffers can be made.
  */
-काष्ठा dma_heap अणु
-	स्थिर अक्षर *name;
-	स्थिर काष्ठा dma_heap_ops *ops;
-	व्योम *priv;
+struct dma_heap {
+	const char *name;
+	const struct dma_heap_ops *ops;
+	void *priv;
 	dev_t heap_devt;
-	काष्ठा list_head list;
-	काष्ठा cdev heap_cdev;
-पूर्ण;
+	struct list_head list;
+	struct cdev heap_cdev;
+};
 
-अटल LIST_HEAD(heap_list);
-अटल DEFINE_MUTEX(heap_list_lock);
-अटल dev_t dma_heap_devt;
-अटल काष्ठा class *dma_heap_class;
-अटल DEFINE_XARRAY_ALLOC(dma_heap_minors);
+static LIST_HEAD(heap_list);
+static DEFINE_MUTEX(heap_list_lock);
+static dev_t dma_heap_devt;
+static struct class *dma_heap_class;
+static DEFINE_XARRAY_ALLOC(dma_heap_minors);
 
-अटल पूर्णांक dma_heap_buffer_alloc(काष्ठा dma_heap *heap, माप_प्रकार len,
-				 अचिन्हित पूर्णांक fd_flags,
-				 अचिन्हित पूर्णांक heap_flags)
-अणु
-	काष्ठा dma_buf *dmabuf;
-	पूर्णांक fd;
+static int dma_heap_buffer_alloc(struct dma_heap *heap, size_t len,
+				 unsigned int fd_flags,
+				 unsigned int heap_flags)
+{
+	struct dma_buf *dmabuf;
+	int fd;
 
 	/*
 	 * Allocations from all heaps have to begin
 	 * and end on page boundaries.
 	 */
 	len = PAGE_ALIGN(len);
-	अगर (!len)
-		वापस -EINVAL;
+	if (!len)
+		return -EINVAL;
 
 	dmabuf = heap->ops->allocate(heap, len, fd_flags, heap_flags);
-	अगर (IS_ERR(dmabuf))
-		वापस PTR_ERR(dmabuf);
+	if (IS_ERR(dmabuf))
+		return PTR_ERR(dmabuf);
 
 	fd = dma_buf_fd(dmabuf, fd_flags);
-	अगर (fd < 0) अणु
+	if (fd < 0) {
 		dma_buf_put(dmabuf);
-		/* just वापस, as put will call release and that will मुक्त */
-	पूर्ण
-	वापस fd;
-पूर्ण
+		/* just return, as put will call release and that will free */
+	}
+	return fd;
+}
 
-अटल पूर्णांक dma_heap_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा dma_heap *heap;
+static int dma_heap_open(struct inode *inode, struct file *file)
+{
+	struct dma_heap *heap;
 
 	heap = xa_load(&dma_heap_minors, iminor(inode));
-	अगर (!heap) अणु
+	if (!heap) {
 		pr_err("dma_heap: minor %d unknown.\n", iminor(inode));
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* instance data as context */
-	file->निजी_data = heap;
-	nonseekable_खोलो(inode, file);
+	file->private_data = heap;
+	nonseekable_open(inode, file);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ dma_heap_ioctl_allocate(काष्ठा file *file, व्योम *data)
-अणु
-	काष्ठा dma_heap_allocation_data *heap_allocation = data;
-	काष्ठा dma_heap *heap = file->निजी_data;
-	पूर्णांक fd;
+static long dma_heap_ioctl_allocate(struct file *file, void *data)
+{
+	struct dma_heap_allocation_data *heap_allocation = data;
+	struct dma_heap *heap = file->private_data;
+	int fd;
 
-	अगर (heap_allocation->fd)
-		वापस -EINVAL;
+	if (heap_allocation->fd)
+		return -EINVAL;
 
-	अगर (heap_allocation->fd_flags & ~DMA_HEAP_VALID_FD_FLAGS)
-		वापस -EINVAL;
+	if (heap_allocation->fd_flags & ~DMA_HEAP_VALID_FD_FLAGS)
+		return -EINVAL;
 
-	अगर (heap_allocation->heap_flags & ~DMA_HEAP_VALID_HEAP_FLAGS)
-		वापस -EINVAL;
+	if (heap_allocation->heap_flags & ~DMA_HEAP_VALID_HEAP_FLAGS)
+		return -EINVAL;
 
 	fd = dma_heap_buffer_alloc(heap, heap_allocation->len,
 				   heap_allocation->fd_flags,
 				   heap_allocation->heap_flags);
-	अगर (fd < 0)
-		वापस fd;
+	if (fd < 0)
+		return fd;
 
 	heap_allocation->fd = fd;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक dma_heap_ioctl_cmds[] = अणु
+static unsigned int dma_heap_ioctl_cmds[] = {
 	DMA_HEAP_IOCTL_ALLOC,
-पूर्ण;
+};
 
-अटल दीर्घ dma_heap_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक ucmd,
-			   अचिन्हित दीर्घ arg)
-अणु
-	अक्षर stack_kdata[128];
-	अक्षर *kdata = stack_kdata;
-	अचिन्हित पूर्णांक kcmd;
-	अचिन्हित पूर्णांक in_size, out_size, drv_size, ksize;
-	पूर्णांक nr = _IOC_NR(ucmd);
-	पूर्णांक ret = 0;
+static long dma_heap_ioctl(struct file *file, unsigned int ucmd,
+			   unsigned long arg)
+{
+	char stack_kdata[128];
+	char *kdata = stack_kdata;
+	unsigned int kcmd;
+	unsigned int in_size, out_size, drv_size, ksize;
+	int nr = _IOC_NR(ucmd);
+	int ret = 0;
 
-	अगर (nr >= ARRAY_SIZE(dma_heap_ioctl_cmds))
-		वापस -EINVAL;
+	if (nr >= ARRAY_SIZE(dma_heap_ioctl_cmds))
+		return -EINVAL;
 
 	/* Get the kernel ioctl cmd that matches */
 	kcmd = dma_heap_ioctl_cmds[nr];
@@ -143,110 +142,110 @@
 	drv_size = _IOC_SIZE(kcmd);
 	out_size = _IOC_SIZE(ucmd);
 	in_size = out_size;
-	अगर ((ucmd & kcmd & IOC_IN) == 0)
+	if ((ucmd & kcmd & IOC_IN) == 0)
 		in_size = 0;
-	अगर ((ucmd & kcmd & IOC_OUT) == 0)
+	if ((ucmd & kcmd & IOC_OUT) == 0)
 		out_size = 0;
 	ksize = max(max(in_size, out_size), drv_size);
 
-	/* If necessary, allocate buffer क्रम ioctl argument */
-	अगर (ksize > माप(stack_kdata)) अणु
-		kdata = kदो_स्मृति(ksize, GFP_KERNEL);
-		अगर (!kdata)
-			वापस -ENOMEM;
-	पूर्ण
+	/* If necessary, allocate buffer for ioctl argument */
+	if (ksize > sizeof(stack_kdata)) {
+		kdata = kmalloc(ksize, GFP_KERNEL);
+		if (!kdata)
+			return -ENOMEM;
+	}
 
-	अगर (copy_from_user(kdata, (व्योम __user *)arg, in_size) != 0) अणु
+	if (copy_from_user(kdata, (void __user *)arg, in_size) != 0) {
 		ret = -EFAULT;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	/* zero out any dअगरference between the kernel/user काष्ठाure size */
-	अगर (ksize > in_size)
-		स_रखो(kdata + in_size, 0, ksize - in_size);
+	/* zero out any difference between the kernel/user structure size */
+	if (ksize > in_size)
+		memset(kdata + in_size, 0, ksize - in_size);
 
-	चयन (kcmd) अणु
-	हाल DMA_HEAP_IOCTL_ALLOC:
+	switch (kcmd) {
+	case DMA_HEAP_IOCTL_ALLOC:
 		ret = dma_heap_ioctl_allocate(file, kdata);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -ENOTTY;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (copy_to_user((व्योम __user *)arg, kdata, out_size) != 0)
+	if (copy_to_user((void __user *)arg, kdata, out_size) != 0)
 		ret = -EFAULT;
 err:
-	अगर (kdata != stack_kdata)
-		kमुक्त(kdata);
-	वापस ret;
-पूर्ण
+	if (kdata != stack_kdata)
+		kfree(kdata);
+	return ret;
+}
 
-अटल स्थिर काष्ठा file_operations dma_heap_fops = अणु
+static const struct file_operations dma_heap_fops = {
 	.owner          = THIS_MODULE,
-	.खोलो		= dma_heap_खोलो,
+	.open		= dma_heap_open,
 	.unlocked_ioctl = dma_heap_ioctl,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.compat_ioctl	= dma_heap_ioctl,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
 /**
- * dma_heap_get_drvdata() - get per-subdriver data क्रम the heap
- * @heap: DMA-Heap to retrieve निजी data क्रम
+ * dma_heap_get_drvdata() - get per-subdriver data for the heap
+ * @heap: DMA-Heap to retrieve private data for
  *
  * Returns:
- * The per-subdriver data क्रम the heap.
+ * The per-subdriver data for the heap.
  */
-व्योम *dma_heap_get_drvdata(काष्ठा dma_heap *heap)
-अणु
-	वापस heap->priv;
-पूर्ण
+void *dma_heap_get_drvdata(struct dma_heap *heap)
+{
+	return heap->priv;
+}
 
 /**
  * dma_heap_get_name() - get heap name
- * @heap: DMA-Heap to retrieve निजी data क्रम
+ * @heap: DMA-Heap to retrieve private data for
  *
  * Returns:
- * The अक्षर* क्रम the heap name.
+ * The char* for the heap name.
  */
-स्थिर अक्षर *dma_heap_get_name(काष्ठा dma_heap *heap)
-अणु
-	वापस heap->name;
-पूर्ण
+const char *dma_heap_get_name(struct dma_heap *heap)
+{
+	return heap->name;
+}
 
-काष्ठा dma_heap *dma_heap_add(स्थिर काष्ठा dma_heap_export_info *exp_info)
-अणु
-	काष्ठा dma_heap *heap, *h, *err_ret;
-	काष्ठा device *dev_ret;
-	अचिन्हित पूर्णांक minor;
-	पूर्णांक ret;
+struct dma_heap *dma_heap_add(const struct dma_heap_export_info *exp_info)
+{
+	struct dma_heap *heap, *h, *err_ret;
+	struct device *dev_ret;
+	unsigned int minor;
+	int ret;
 
-	अगर (!exp_info->name || !म_भेद(exp_info->name, "")) अणु
+	if (!exp_info->name || !strcmp(exp_info->name, "")) {
 		pr_err("dma_heap: Cannot add heap without a name\n");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (!exp_info->ops || !exp_info->ops->allocate) अणु
+	if (!exp_info->ops || !exp_info->ops->allocate) {
 		pr_err("dma_heap: Cannot add heap with invalid ops struct\n");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
 	/* check the name is unique */
 	mutex_lock(&heap_list_lock);
-	list_क्रम_each_entry(h, &heap_list, list) अणु
-		अगर (!म_भेद(h->name, exp_info->name)) अणु
+	list_for_each_entry(h, &heap_list, list) {
+		if (!strcmp(h->name, exp_info->name)) {
 			mutex_unlock(&heap_list_lock);
 			pr_err("dma_heap: Already registered heap named %s\n",
 			       exp_info->name);
-			वापस ERR_PTR(-EINVAL);
-		पूर्ण
-	पूर्ण
+			return ERR_PTR(-EINVAL);
+		}
+	}
 	mutex_unlock(&heap_list_lock);
 
-	heap = kzalloc(माप(*heap), GFP_KERNEL);
-	अगर (!heap)
-		वापस ERR_PTR(-ENOMEM);
+	heap = kzalloc(sizeof(*heap), GFP_KERNEL);
+	if (!heap)
+		return ERR_PTR(-ENOMEM);
 
 	heap->name = exp_info->name;
 	heap->ops = exp_info->ops;
@@ -255,69 +254,69 @@ err:
 	/* Find unused minor number */
 	ret = xa_alloc(&dma_heap_minors, &minor, heap,
 		       XA_LIMIT(0, NUM_HEAP_MINORS - 1), GFP_KERNEL);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_err("dma_heap: Unable to get minor number for heap\n");
 		err_ret = ERR_PTR(ret);
-		जाओ err0;
-	पूर्ण
+		goto err0;
+	}
 
 	/* Create device */
 	heap->heap_devt = MKDEV(MAJOR(dma_heap_devt), minor);
 
 	cdev_init(&heap->heap_cdev, &dma_heap_fops);
 	ret = cdev_add(&heap->heap_cdev, heap->heap_devt, 1);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_err("dma_heap: Unable to add char device\n");
 		err_ret = ERR_PTR(ret);
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 
 	dev_ret = device_create(dma_heap_class,
-				शून्य,
+				NULL,
 				heap->heap_devt,
-				शून्य,
+				NULL,
 				heap->name);
-	अगर (IS_ERR(dev_ret)) अणु
+	if (IS_ERR(dev_ret)) {
 		pr_err("dma_heap: Unable to create device\n");
 		err_ret = ERR_CAST(dev_ret);
-		जाओ err2;
-	पूर्ण
+		goto err2;
+	}
 	/* Add heap to the list */
 	mutex_lock(&heap_list_lock);
 	list_add(&heap->list, &heap_list);
 	mutex_unlock(&heap_list_lock);
 
-	वापस heap;
+	return heap;
 
 err2:
 	cdev_del(&heap->heap_cdev);
 err1:
 	xa_erase(&dma_heap_minors, minor);
 err0:
-	kमुक्त(heap);
-	वापस err_ret;
-पूर्ण
+	kfree(heap);
+	return err_ret;
+}
 
-अटल अक्षर *dma_heap_devnode(काष्ठा device *dev, umode_t *mode)
-अणु
-	वापस kaप्र_लिखो(GFP_KERNEL, "dma_heap/%s", dev_name(dev));
-पूर्ण
+static char *dma_heap_devnode(struct device *dev, umode_t *mode)
+{
+	return kasprintf(GFP_KERNEL, "dma_heap/%s", dev_name(dev));
+}
 
-अटल पूर्णांक dma_heap_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int dma_heap_init(void)
+{
+	int ret;
 
 	ret = alloc_chrdev_region(&dma_heap_devt, 0, NUM_HEAP_MINORS, DEVNAME);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	dma_heap_class = class_create(THIS_MODULE, DEVNAME);
-	अगर (IS_ERR(dma_heap_class)) अणु
-		unरेजिस्टर_chrdev_region(dma_heap_devt, NUM_HEAP_MINORS);
-		वापस PTR_ERR(dma_heap_class);
-	पूर्ण
+	if (IS_ERR(dma_heap_class)) {
+		unregister_chrdev_region(dma_heap_devt, NUM_HEAP_MINORS);
+		return PTR_ERR(dma_heap_class);
+	}
 	dma_heap_class->devnode = dma_heap_devnode;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 subsys_initcall(dma_heap_init);

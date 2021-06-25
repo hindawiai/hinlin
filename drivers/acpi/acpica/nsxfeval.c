@@ -1,24 +1,23 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /*******************************************************************************
  *
- * Module Name: nsxfeval - Public पूर्णांकerfaces to the ACPI subप्रणाली
- *                         ACPI Object evaluation पूर्णांकerfaces
+ * Module Name: nsxfeval - Public interfaces to the ACPI subsystem
+ *                         ACPI Object evaluation interfaces
  *
  ******************************************************************************/
 
-#घोषणा EXPORT_ACPI_INTERFACES
+#define EXPORT_ACPI_INTERFACES
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acnamesp.h"
-#समावेश "acinterp.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acnamesp.h"
+#include "acinterp.h"
 
-#घोषणा _COMPONENT          ACPI_NAMESPACE
+#define _COMPONENT          ACPI_NAMESPACE
 ACPI_MODULE_NAME("nsxfeval")
 
 /* Local prototypes */
-अटल व्योम acpi_ns_resolve_references(काष्ठा acpi_evaluate_info *info);
+static void acpi_ns_resolve_references(struct acpi_evaluate_info *info);
 
 /*******************************************************************************
  *
@@ -26,17 +25,17 @@ ACPI_MODULE_NAME("nsxfeval")
  *
  * PARAMETERS:  handle              - Object handle (optional)
  *              pathname            - Object pathname (optional)
- *              बाह्यal_params     - List of parameters to pass to a method,
- *                                    terminated by शून्य. May be शून्य
- *                                    अगर no parameters are being passed.
- *              वापस_buffer       - Where to put the object's वापस value (अगर
- *                                    any). If शून्य, no value is वापसed.
- *              वापस_type         - Expected type of वापस object
+ *              external_params     - List of parameters to pass to a method,
+ *                                    terminated by NULL. May be NULL
+ *                                    if no parameters are being passed.
+ *              return_buffer       - Where to put the object's return value (if
+ *                                    any). If NULL, no value is returned.
+ *              return_type         - Expected type of return object
  *
  * RETURN:      Status
  *
  * DESCRIPTION: Find and evaluate the given object, passing the given
- *              parameters अगर necessary. One of "Handle" or "Pathname" must
+ *              parameters if necessary. One of "Handle" or "Pathname" must
  *              be valid (non-null)
  *
  ******************************************************************************/
@@ -44,100 +43,100 @@ ACPI_MODULE_NAME("nsxfeval")
 acpi_status
 acpi_evaluate_object_typed(acpi_handle handle,
 			   acpi_string pathname,
-			   काष्ठा acpi_object_list *बाह्यal_params,
-			   काष्ठा acpi_buffer *वापस_buffer,
-			   acpi_object_type वापस_type)
-अणु
+			   struct acpi_object_list *external_params,
+			   struct acpi_buffer *return_buffer,
+			   acpi_object_type return_type)
+{
 	acpi_status status;
-	u8 मुक्त_buffer_on_error = FALSE;
+	u8 free_buffer_on_error = FALSE;
 	acpi_handle target_handle;
-	अक्षर *full_pathname;
+	char *full_pathname;
 
 	ACPI_FUNCTION_TRACE(acpi_evaluate_object_typed);
 
 	/* Return buffer must be valid */
 
-	अगर (!वापस_buffer) अणु
-		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
-	पूर्ण
+	if (!return_buffer) {
+		return_ACPI_STATUS(AE_BAD_PARAMETER);
+	}
 
-	अगर (वापस_buffer->length == ACPI_ALLOCATE_BUFFER) अणु
-		मुक्त_buffer_on_error = TRUE;
-	पूर्ण
+	if (return_buffer->length == ACPI_ALLOCATE_BUFFER) {
+		free_buffer_on_error = TRUE;
+	}
 
-	/* Get a handle here, in order to build an error message अगर needed */
+	/* Get a handle here, in order to build an error message if needed */
 
 	target_handle = handle;
-	अगर (pathname) अणु
+	if (pathname) {
 		status = acpi_get_handle(handle, pathname, &target_handle);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस_ACPI_STATUS(status);
-		पूर्ण
-	पूर्ण
+		if (ACPI_FAILURE(status)) {
+			return_ACPI_STATUS(status);
+		}
+	}
 
-	full_pathname = acpi_ns_get_बाह्यal_pathname(target_handle);
-	अगर (!full_pathname) अणु
-		वापस_ACPI_STATUS(AE_NO_MEMORY);
-	पूर्ण
+	full_pathname = acpi_ns_get_external_pathname(target_handle);
+	if (!full_pathname) {
+		return_ACPI_STATUS(AE_NO_MEMORY);
+	}
 
 	/* Evaluate the object */
 
-	status = acpi_evaluate_object(target_handle, शून्य, बाह्यal_params,
-				      वापस_buffer);
-	अगर (ACPI_FAILURE(status)) अणु
-		जाओ निकास;
-	पूर्ण
+	status = acpi_evaluate_object(target_handle, NULL, external_params,
+				      return_buffer);
+	if (ACPI_FAILURE(status)) {
+		goto exit;
+	}
 
 	/* Type ANY means "don't care about return value type" */
 
-	अगर (वापस_type == ACPI_TYPE_ANY) अणु
-		जाओ निकास;
-	पूर्ण
+	if (return_type == ACPI_TYPE_ANY) {
+		goto exit;
+	}
 
-	अगर (वापस_buffer->length == 0) अणु
+	if (return_buffer->length == 0) {
 
-		/* Error because caller specअगरically asked क्रम a वापस value */
+		/* Error because caller specifically asked for a return value */
 
 		ACPI_ERROR((AE_INFO, "%s did not return any object",
 			    full_pathname));
-		status = AE_शून्य_OBJECT;
-		जाओ निकास;
-	पूर्ण
+		status = AE_NULL_OBJECT;
+		goto exit;
+	}
 
-	/* Examine the object type वापसed from evaluate_object */
+	/* Examine the object type returned from evaluate_object */
 
-	अगर (((जोड़ acpi_object *)वापस_buffer->poपूर्णांकer)->type == वापस_type) अणु
-		जाओ निकास;
-	पूर्ण
+	if (((union acpi_object *)return_buffer->pointer)->type == return_type) {
+		goto exit;
+	}
 
-	/* Return object type करोes not match requested type */
+	/* Return object type does not match requested type */
 
 	ACPI_ERROR((AE_INFO,
 		    "Incorrect return type from %s - received [%s], requested [%s]",
 		    full_pathname,
-		    acpi_ut_get_type_name(((जोड़ acpi_object *)वापस_buffer->
-					   poपूर्णांकer)->type),
-		    acpi_ut_get_type_name(वापस_type)));
+		    acpi_ut_get_type_name(((union acpi_object *)return_buffer->
+					   pointer)->type),
+		    acpi_ut_get_type_name(return_type)));
 
-	अगर (मुक्त_buffer_on_error) अणु
+	if (free_buffer_on_error) {
 		/*
 		 * Free a buffer created via ACPI_ALLOCATE_BUFFER.
-		 * Note: We use acpi_os_मुक्त here because acpi_os_allocate was used
+		 * Note: We use acpi_os_free here because acpi_os_allocate was used
 		 * to allocate the buffer. This purposefully bypasses the
 		 * (optionally enabled) allocation tracking mechanism since we
-		 * only want to track पूर्णांकernal allocations.
+		 * only want to track internal allocations.
 		 */
-		acpi_os_मुक्त(वापस_buffer->poपूर्णांकer);
-		वापस_buffer->poपूर्णांकer = शून्य;
-	पूर्ण
+		acpi_os_free(return_buffer->pointer);
+		return_buffer->pointer = NULL;
+	}
 
-	वापस_buffer->length = 0;
+	return_buffer->length = 0;
 	status = AE_TYPE;
 
-निकास:
+exit:
 	ACPI_FREE(full_pathname);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 ACPI_EXPORT_SYMBOL(acpi_evaluate_object_typed)
 
@@ -147,91 +146,91 @@ ACPI_EXPORT_SYMBOL(acpi_evaluate_object_typed)
  *
  * PARAMETERS:  handle              - Object handle (optional)
  *              pathname            - Object pathname (optional)
- *              बाह्यal_params     - List of parameters to pass to method,
- *                                    terminated by शून्य. May be शून्य
- *                                    अगर no parameters are being passed.
- *              वापस_buffer       - Where to put method's वापस value (अगर
- *                                    any). If शून्य, no value is वापसed.
+ *              external_params     - List of parameters to pass to method,
+ *                                    terminated by NULL. May be NULL
+ *                                    if no parameters are being passed.
+ *              return_buffer       - Where to put method's return value (if
+ *                                    any). If NULL, no value is returned.
  *
  * RETURN:      Status
  *
  * DESCRIPTION: Find and evaluate the given object, passing the given
- *              parameters अगर necessary. One of "Handle" or "Pathname" must
+ *              parameters if necessary. One of "Handle" or "Pathname" must
  *              be valid (non-null)
  *
  ******************************************************************************/
 acpi_status
 acpi_evaluate_object(acpi_handle handle,
 		     acpi_string pathname,
-		     काष्ठा acpi_object_list *बाह्यal_params,
-		     काष्ठा acpi_buffer *वापस_buffer)
-अणु
+		     struct acpi_object_list *external_params,
+		     struct acpi_buffer *return_buffer)
+{
 	acpi_status status;
-	काष्ठा acpi_evaluate_info *info;
+	struct acpi_evaluate_info *info;
 	acpi_size buffer_space_needed;
 	u32 i;
 
 	ACPI_FUNCTION_TRACE(acpi_evaluate_object);
 
-	/* Allocate and initialize the evaluation inक्रमmation block */
+	/* Allocate and initialize the evaluation information block */
 
-	info = ACPI_ALLOCATE_ZEROED(माप(काष्ठा acpi_evaluate_info));
-	अगर (!info) अणु
-		वापस_ACPI_STATUS(AE_NO_MEMORY);
-	पूर्ण
+	info = ACPI_ALLOCATE_ZEROED(sizeof(struct acpi_evaluate_info));
+	if (!info) {
+		return_ACPI_STATUS(AE_NO_MEMORY);
+	}
 
 	/* Convert and validate the device handle */
 
 	info->prefix_node = acpi_ns_validate_handle(handle);
-	अगर (!info->prefix_node) अणु
+	if (!info->prefix_node) {
 		status = AE_BAD_PARAMETER;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	/*
-	 * Get the actual namespace node क्रम the target object.
-	 * Handles these हालs:
+	 * Get the actual namespace node for the target object.
+	 * Handles these cases:
 	 *
-	 * 1) Null node, valid pathname from root (असलolute path)
+	 * 1) Null node, valid pathname from root (absolute path)
 	 * 2) Node and valid pathname (path relative to Node)
 	 * 3) Node, Null pathname
 	 */
-	अगर ((pathname) && (ACPI_IS_ROOT_PREFIX(pathname[0]))) अणु
+	if ((pathname) && (ACPI_IS_ROOT_PREFIX(pathname[0]))) {
 
-		/* The path is fully qualअगरied, just evaluate by name */
+		/* The path is fully qualified, just evaluate by name */
 
-		info->prefix_node = शून्य;
-	पूर्ण अन्यथा अगर (!handle) अणु
+		info->prefix_node = NULL;
+	} else if (!handle) {
 		/*
-		 * A handle is optional अगरf a fully qualअगरied pathname is specअगरied.
-		 * Since we've alपढ़ोy handled fully qualअगरied names above, this is
+		 * A handle is optional iff a fully qualified pathname is specified.
+		 * Since we've already handled fully qualified names above, this is
 		 * an error.
 		 */
-		अगर (!pathname) अणु
+		if (!pathname) {
 			ACPI_DEBUG_PRINT((ACPI_DB_INFO,
 					  "Both Handle and Pathname are NULL"));
-		पूर्ण अन्यथा अणु
+		} else {
 			ACPI_DEBUG_PRINT((ACPI_DB_INFO,
 					  "Null Handle with relative pathname [%s]",
 					  pathname));
-		पूर्ण
+		}
 
 		status = AE_BAD_PARAMETER;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	info->relative_pathname = pathname;
 
 	/*
-	 * Convert all बाह्यal objects passed as arguments to the
-	 * पूर्णांकernal version(s).
+	 * Convert all external objects passed as arguments to the
+	 * internal version(s).
 	 */
-	अगर (बाह्यal_params && बाह्यal_params->count) अणु
-		info->param_count = (u16)बाह्यal_params->count;
+	if (external_params && external_params->count) {
+		info->param_count = (u16)external_params->count;
 
 		/* Warn on impossible argument count */
 
-		अगर (info->param_count > ACPI_METHOD_NUM_ARGS) अणु
+		if (info->param_count > ACPI_METHOD_NUM_ARGS) {
 			ACPI_WARN_PREDEFINED((AE_INFO, pathname,
 					      ACPI_WARN_ALWAYS,
 					      "Excess arguments (%u) - using only %u",
@@ -239,58 +238,58 @@ acpi_evaluate_object(acpi_handle handle,
 					      ACPI_METHOD_NUM_ARGS));
 
 			info->param_count = ACPI_METHOD_NUM_ARGS;
-		पूर्ण
+		}
 
 		/*
-		 * Allocate a new parameter block क्रम the पूर्णांकernal objects
-		 * Add 1 to count to allow क्रम null terminated पूर्णांकernal list
+		 * Allocate a new parameter block for the internal objects
+		 * Add 1 to count to allow for null terminated internal list
 		 */
 		info->parameters = ACPI_ALLOCATE_ZEROED(((acpi_size)info->
 							 param_count +
-							 1) * माप(व्योम *));
-		अगर (!info->parameters) अणु
+							 1) * sizeof(void *));
+		if (!info->parameters) {
 			status = AE_NO_MEMORY;
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
-		/* Convert each बाह्यal object in the list to an पूर्णांकernal object */
+		/* Convert each external object in the list to an internal object */
 
-		क्रम (i = 0; i < info->param_count; i++) अणु
+		for (i = 0; i < info->param_count; i++) {
 			status =
-			    acpi_ut_copy_eobject_to_iobject(&बाह्यal_params->
-							    poपूर्णांकer[i],
+			    acpi_ut_copy_eobject_to_iobject(&external_params->
+							    pointer[i],
 							    &info->
 							    parameters[i]);
-			अगर (ACPI_FAILURE(status)) अणु
-				जाओ cleanup;
-			पूर्ण
-		पूर्ण
+			if (ACPI_FAILURE(status)) {
+				goto cleanup;
+			}
+		}
 
-		info->parameters[info->param_count] = शून्य;
-	पूर्ण
+		info->parameters[info->param_count] = NULL;
+	}
 
-#अगर_घोषित _FUTURE_FEATURE
+#ifdef _FUTURE_FEATURE
 
 	/*
-	 * Begin incoming argument count analysis. Check क्रम too few args
+	 * Begin incoming argument count analysis. Check for too few args
 	 * and too many args.
 	 */
-	चयन (acpi_ns_get_type(info->node)) अणु
-	हाल ACPI_TYPE_METHOD:
+	switch (acpi_ns_get_type(info->node)) {
+	case ACPI_TYPE_METHOD:
 
 		/* Check incoming argument count against the method definition */
 
-		अगर (info->obj_desc->method.param_count > info->param_count) अणु
+		if (info->obj_desc->method.param_count > info->param_count) {
 			ACPI_ERROR((AE_INFO,
 				    "Insufficient arguments (%u) - %u are required",
 				    info->param_count,
 				    info->obj_desc->method.param_count));
 
 			status = AE_MISSING_ARGUMENTS;
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
-		अन्यथा अगर (info->obj_desc->method.param_count < info->param_count) अणु
+		else if (info->obj_desc->method.param_count < info->param_count) {
 			ACPI_WARNING((AE_INFO,
 				      "Excess arguments (%u) - only %u are required",
 				      info->param_count,
@@ -299,108 +298,108 @@ acpi_evaluate_object(acpi_handle handle,
 			/* Just pass the required number of arguments */
 
 			info->param_count = info->obj_desc->method.param_count;
-		पूर्ण
+		}
 
 		/*
-		 * Any incoming बाह्यal objects to be passed as arguments to the
-		 * method must be converted to पूर्णांकernal objects
+		 * Any incoming external objects to be passed as arguments to the
+		 * method must be converted to internal objects
 		 */
-		अगर (info->param_count) अणु
+		if (info->param_count) {
 			/*
-			 * Allocate a new parameter block क्रम the पूर्णांकernal objects
-			 * Add 1 to count to allow क्रम null terminated पूर्णांकernal list
+			 * Allocate a new parameter block for the internal objects
+			 * Add 1 to count to allow for null terminated internal list
 			 */
 			info->parameters = ACPI_ALLOCATE_ZEROED(((acpi_size)
 								 info->
 								 param_count +
 								 1) *
-								माप(व्योम *));
-			अगर (!info->parameters) अणु
+								sizeof(void *));
+			if (!info->parameters) {
 				status = AE_NO_MEMORY;
-				जाओ cleanup;
-			पूर्ण
+				goto cleanup;
+			}
 
-			/* Convert each बाह्यal object in the list to an पूर्णांकernal object */
+			/* Convert each external object in the list to an internal object */
 
-			क्रम (i = 0; i < info->param_count; i++) अणु
+			for (i = 0; i < info->param_count; i++) {
 				status =
 				    acpi_ut_copy_eobject_to_iobject
-				    (&बाह्यal_params->poपूर्णांकer[i],
+				    (&external_params->pointer[i],
 				     &info->parameters[i]);
-				अगर (ACPI_FAILURE(status)) अणु
-					जाओ cleanup;
-				पूर्ण
-			पूर्ण
+				if (ACPI_FAILURE(status)) {
+					goto cleanup;
+				}
+			}
 
-			info->parameters[info->param_count] = शून्य;
-		पूर्ण
-		अवरोध;
+			info->parameters[info->param_count] = NULL;
+		}
+		break;
 
-	शेष:
+	default:
 
-		/* Warn अगर arguments passed to an object that is not a method */
+		/* Warn if arguments passed to an object that is not a method */
 
-		अगर (info->param_count) अणु
+		if (info->param_count) {
 			ACPI_WARNING((AE_INFO,
 				      "%u arguments were passed to a non-method ACPI object",
 				      info->param_count));
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	}
 
-#पूर्ण_अगर
+#endif
 
 	/* Now we can evaluate the object */
 
 	status = acpi_ns_evaluate(info);
 
 	/*
-	 * If we are expecting a वापस value, and all went well above,
-	 * copy the वापस value to an बाह्यal object.
+	 * If we are expecting a return value, and all went well above,
+	 * copy the return value to an external object.
 	 */
-	अगर (!वापस_buffer) अणु
-		जाओ cleanup_वापस_object;
-	पूर्ण
+	if (!return_buffer) {
+		goto cleanup_return_object;
+	}
 
-	अगर (!info->वापस_object) अणु
-		वापस_buffer->length = 0;
-		जाओ cleanup;
-	पूर्ण
+	if (!info->return_object) {
+		return_buffer->length = 0;
+		goto cleanup;
+	}
 
-	अगर (ACPI_GET_DESCRIPTOR_TYPE(info->वापस_object) ==
-	    ACPI_DESC_TYPE_NAMED) अणु
+	if (ACPI_GET_DESCRIPTOR_TYPE(info->return_object) ==
+	    ACPI_DESC_TYPE_NAMED) {
 		/*
-		 * If we received a NS Node as a वापस object, this means that
-		 * the object we are evaluating has nothing पूर्णांकeresting to
-		 * वापस (such as a mutex, etc.)  We वापस an error because
-		 * these types are essentially unsupported by this पूर्णांकerface.
-		 * We करोn't check up front because this makes it easier to add
-		 * support क्रम various types at a later date अगर necessary.
+		 * If we received a NS Node as a return object, this means that
+		 * the object we are evaluating has nothing interesting to
+		 * return (such as a mutex, etc.)  We return an error because
+		 * these types are essentially unsupported by this interface.
+		 * We don't check up front because this makes it easier to add
+		 * support for various types at a later date if necessary.
 		 */
 		status = AE_TYPE;
-		info->वापस_object = शून्य;	/* No need to delete a NS Node */
-		वापस_buffer->length = 0;
-	पूर्ण
+		info->return_object = NULL;	/* No need to delete a NS Node */
+		return_buffer->length = 0;
+	}
 
-	अगर (ACPI_FAILURE(status)) अणु
-		जाओ cleanup_वापस_object;
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		goto cleanup_return_object;
+	}
 
 	/* Dereference Index and ref_of references */
 
 	acpi_ns_resolve_references(info);
 
-	/* Get the size of the वापसed object */
+	/* Get the size of the returned object */
 
-	status = acpi_ut_get_object_size(info->वापस_object,
+	status = acpi_ut_get_object_size(info->return_object,
 					 &buffer_space_needed);
-	अगर (ACPI_SUCCESS(status)) अणु
+	if (ACPI_SUCCESS(status)) {
 
 		/* Validate/Allocate/Clear caller buffer */
 
-		status = acpi_ut_initialize_buffer(वापस_buffer,
+		status = acpi_ut_initialize_buffer(return_buffer,
 						   buffer_space_needed);
-		अगर (ACPI_FAILURE(status)) अणु
+		if (ACPI_FAILURE(status)) {
 			/*
 			 * Caller's buffer is too small or a new one can't
 			 * be allocated
@@ -408,45 +407,45 @@ acpi_evaluate_object(acpi_handle handle,
 			ACPI_DEBUG_PRINT((ACPI_DB_INFO,
 					  "Needed buffer size %X, %s\n",
 					  (u32)buffer_space_needed,
-					  acpi_क्रमmat_exception(status)));
-		पूर्ण अन्यथा अणु
-			/* We have enough space क्रम the object, build it */
+					  acpi_format_exception(status)));
+		} else {
+			/* We have enough space for the object, build it */
 
 			status =
-			    acpi_ut_copy_iobject_to_eobject(info->वापस_object,
-							    वापस_buffer);
-		पूर्ण
-	पूर्ण
+			    acpi_ut_copy_iobject_to_eobject(info->return_object,
+							    return_buffer);
+		}
+	}
 
-cleanup_वापस_object:
+cleanup_return_object:
 
-	अगर (info->वापस_object) अणु
+	if (info->return_object) {
 		/*
-		 * Delete the पूर्णांकernal वापस object. NOTE: Interpreter must be
-		 * locked to aव्योम race condition.
+		 * Delete the internal return object. NOTE: Interpreter must be
+		 * locked to avoid race condition.
 		 */
-		acpi_ex_enter_पूर्णांकerpreter();
+		acpi_ex_enter_interpreter();
 
-		/* Remove one reference on the वापस object (should delete it) */
+		/* Remove one reference on the return object (should delete it) */
 
-		acpi_ut_हटाओ_reference(info->वापस_object);
-		acpi_ex_निकास_पूर्णांकerpreter();
-	पूर्ण
+		acpi_ut_remove_reference(info->return_object);
+		acpi_ex_exit_interpreter();
+	}
 
 cleanup:
 
-	/* Free the input parameter list (अगर we created one) */
+	/* Free the input parameter list (if we created one) */
 
-	अगर (info->parameters) अणु
+	if (info->parameters) {
 
 		/* Free the allocated parameter block */
 
-		acpi_ut_delete_पूर्णांकernal_object_list(info->parameters);
-	पूर्ण
+		acpi_ut_delete_internal_object_list(info->parameters);
+	}
 
 	ACPI_FREE(info);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 ACPI_EXPORT_SYMBOL(acpi_evaluate_object)
 
@@ -456,73 +455,73 @@ ACPI_EXPORT_SYMBOL(acpi_evaluate_object)
  *
  * PARAMETERS:  info                    - Evaluation info block
  *
- * RETURN:      Info->वापस_object is replaced with the dereferenced object
+ * RETURN:      Info->return_object is replaced with the dereferenced object
  *
- * DESCRIPTION: Dereference certain reference objects. Called beक्रमe an
- *              पूर्णांकernal वापस object is converted to an बाह्यal जोड़ acpi_object.
+ * DESCRIPTION: Dereference certain reference objects. Called before an
+ *              internal return object is converted to an external union acpi_object.
  *
- * Perक्रमms an स्वतःmatic dereference of Index and ref_of reference objects.
- * These reference objects are not supported by the जोड़ acpi_object, so this is a
- * last resort efक्रमt to वापस something useful. Also, provides compatibility
+ * Performs an automatic dereference of Index and ref_of reference objects.
+ * These reference objects are not supported by the union acpi_object, so this is a
+ * last resort effort to return something useful. Also, provides compatibility
  * with other ACPI implementations.
  *
- * NOTE: करोes not handle references within वापसed package objects or nested
- * references, but this support could be added later अगर found to be necessary.
+ * NOTE: does not handle references within returned package objects or nested
+ * references, but this support could be added later if found to be necessary.
  *
  ******************************************************************************/
-अटल व्योम acpi_ns_resolve_references(काष्ठा acpi_evaluate_info *info)
-अणु
-	जोड़ acpi_opeअक्रम_object *obj_desc = शून्य;
-	काष्ठा acpi_namespace_node *node;
+static void acpi_ns_resolve_references(struct acpi_evaluate_info *info)
+{
+	union acpi_operand_object *obj_desc = NULL;
+	struct acpi_namespace_node *node;
 
-	/* We are पूर्णांकerested in reference objects only */
+	/* We are interested in reference objects only */
 
-	अगर ((info->वापस_object)->common.type != ACPI_TYPE_LOCAL_REFERENCE) अणु
-		वापस;
-	पूर्ण
+	if ((info->return_object)->common.type != ACPI_TYPE_LOCAL_REFERENCE) {
+		return;
+	}
 
 	/*
 	 * Two types of references are supported - those created by Index and
-	 * ref_of चालकs. A name reference (AML_NAMEPATH_OP) can be converted
-	 * to a जोड़ acpi_object, so it is not dereferenced here. A ddb_handle
+	 * ref_of operators. A name reference (AML_NAMEPATH_OP) can be converted
+	 * to a union acpi_object, so it is not dereferenced here. A ddb_handle
 	 * (AML_LOAD_OP) cannot be dereferenced, nor can it be converted to
-	 * a जोड़ acpi_object.
+	 * a union acpi_object.
 	 */
-	चयन (info->वापस_object->reference.class) अणु
-	हाल ACPI_REFCLASS_INDEX:
+	switch (info->return_object->reference.class) {
+	case ACPI_REFCLASS_INDEX:
 
-		obj_desc = *(info->वापस_object->reference.where);
-		अवरोध;
+		obj_desc = *(info->return_object->reference.where);
+		break;
 
-	हाल ACPI_REFCLASS_REFOF:
+	case ACPI_REFCLASS_REFOF:
 
-		node = info->वापस_object->reference.object;
-		अगर (node) अणु
+		node = info->return_object->reference.object;
+		if (node) {
 			obj_desc = node->object;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	शेष:
+	default:
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Replace the existing reference object */
 
-	अगर (obj_desc) अणु
+	if (obj_desc) {
 		acpi_ut_add_reference(obj_desc);
-		acpi_ut_हटाओ_reference(info->वापस_object);
-		info->वापस_object = obj_desc;
-	पूर्ण
+		acpi_ut_remove_reference(info->return_object);
+		info->return_object = obj_desc;
+	}
 
-	वापस;
-पूर्ण
+	return;
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_walk_namespace
  *
- * PARAMETERS:  type                - acpi_object_type to search क्रम
+ * PARAMETERS:  type                - acpi_object_type to search for
  *              start_object        - Handle in namespace where search begins
  *              max_depth           - Depth to which search is to reach
  *              descending_callback - Called during tree descent
@@ -530,23 +529,23 @@ ACPI_EXPORT_SYMBOL(acpi_evaluate_object)
  *              ascending_callback  - Called during tree ascent
  *                                    when an object of "Type" is found
  *              context             - Passed to user function(s) above
- *              वापस_value        - Location where वापस value of
- *                                    user_function is put अगर terminated early
+ *              return_value        - Location where return value of
+ *                                    user_function is put if terminated early
  *
- * RETURNS      Return value from the user_function अगर terminated early.
- *              Otherwise, वापसs शून्य.
+ * RETURNS      Return value from the user_function if terminated early.
+ *              Otherwise, returns NULL.
  *
- * DESCRIPTION: Perक्रमms a modअगरied depth-first walk of the namespace tree,
- *              starting (and ending) at the object specअगरied by start_handle.
+ * DESCRIPTION: Performs a modified depth-first walk of the namespace tree,
+ *              starting (and ending) at the object specified by start_handle.
  *              The callback function is called whenever an object that matches
- *              the type parameter is found. If the callback function वापसs
+ *              the type parameter is found. If the callback function returns
  *              a non-zero value, the search is terminated immediately and this
- *              value is वापसed to the caller.
+ *              value is returned to the caller.
  *
- *              The poपूर्णांक of this procedure is to provide a generic namespace
+ *              The point of this procedure is to provide a generic namespace
  *              walk routine that can be called from multiple places to
  *              provide multiple services; the callback function(s) can be
- *              tailored to each task, whether it is a prपूर्णांक function,
+ *              tailored to each task, whether it is a print function,
  *              a compare function, etc.
  *
  ******************************************************************************/
@@ -557,65 +556,65 @@ acpi_walk_namespace(acpi_object_type type,
 		    u32 max_depth,
 		    acpi_walk_callback descending_callback,
 		    acpi_walk_callback ascending_callback,
-		    व्योम *context, व्योम **वापस_value)
-अणु
+		    void *context, void **return_value)
+{
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE(acpi_walk_namespace);
 
 	/* Parameter validation */
 
-	अगर ((type > ACPI_TYPE_LOCAL_MAX) ||
-	    (!max_depth) || (!descending_callback && !ascending_callback)) अणु
-		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
-	पूर्ण
+	if ((type > ACPI_TYPE_LOCAL_MAX) ||
+	    (!max_depth) || (!descending_callback && !ascending_callback)) {
+		return_ACPI_STATUS(AE_BAD_PARAMETER);
+	}
 
 	/*
-	 * Need to acquire the namespace पढ़ोer lock to prevent पूर्णांकerference
+	 * Need to acquire the namespace reader lock to prevent interference
 	 * with any concurrent table unloads (which causes the deletion of
 	 * namespace objects). We cannot allow the deletion of a namespace node
-	 * जबतक the user function is using it. The exception to this are the
+	 * while the user function is using it. The exception to this are the
 	 * nodes created and deleted during control method execution -- these
 	 * nodes are marked as temporary nodes and are ignored by the namespace
-	 * walk. Thus, control methods can be executed जबतक holding the
+	 * walk. Thus, control methods can be executed while holding the
 	 * namespace deletion lock (and the user function can execute control
 	 * methods.)
 	 */
-	status = acpi_ut_acquire_पढ़ो_lock(&acpi_gbl_namespace_rw_lock);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	status = acpi_ut_acquire_read_lock(&acpi_gbl_namespace_rw_lock);
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	/*
 	 * Lock the namespace around the walk. The namespace will be
 	 * unlocked/locked around each call to the user function - since the user
-	 * function must be allowed to make ACPICA calls itself (क्रम example, it
-	 * will typically execute control methods during device क्रमागतeration.)
+	 * function must be allowed to make ACPICA calls itself (for example, it
+	 * will typically execute control methods during device enumeration.)
 	 */
 	status = acpi_ut_acquire_mutex(ACPI_MTX_NAMESPACE);
-	अगर (ACPI_FAILURE(status)) अणु
-		जाओ unlock_and_निकास;
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		goto unlock_and_exit;
+	}
 
 	/* Now we can validate the starting node */
 
-	अगर (!acpi_ns_validate_handle(start_object)) अणु
+	if (!acpi_ns_validate_handle(start_object)) {
 		status = AE_BAD_PARAMETER;
-		जाओ unlock_and_निकास2;
-	पूर्ण
+		goto unlock_and_exit2;
+	}
 
 	status = acpi_ns_walk_namespace(type, start_object, max_depth,
 					ACPI_NS_WALK_UNLOCK,
 					descending_callback, ascending_callback,
-					context, वापस_value);
+					context, return_value);
 
-unlock_and_निकास2:
-	(व्योम)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
+unlock_and_exit2:
+	(void)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
 
-unlock_and_निकास:
-	(व्योम)acpi_ut_release_पढ़ो_lock(&acpi_gbl_namespace_rw_lock);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+unlock_and_exit:
+	(void)acpi_ut_release_read_lock(&acpi_gbl_namespace_rw_lock);
+	return_ACPI_STATUS(status);
+}
 
 ACPI_EXPORT_SYMBOL(acpi_walk_namespace)
 
@@ -628,161 +627,161 @@ ACPI_EXPORT_SYMBOL(acpi_walk_namespace)
  * RETURN:      Status
  *
  * DESCRIPTION: Takes callbacks from walk_namespace and filters out all non-
- *              present devices, or अगर they specअगरied a HID, it filters based
+ *              present devices, or if they specified a HID, it filters based
  *              on that.
  *
  ******************************************************************************/
-अटल acpi_status
+static acpi_status
 acpi_ns_get_device_callback(acpi_handle obj_handle,
 			    u32 nesting_level,
-			    व्योम *context, व्योम **वापस_value)
-अणु
-	काष्ठा acpi_get_devices_info *info = context;
+			    void *context, void **return_value)
+{
+	struct acpi_get_devices_info *info = context;
 	acpi_status status;
-	काष्ठा acpi_namespace_node *node;
+	struct acpi_namespace_node *node;
 	u32 flags;
-	काष्ठा acpi_pnp_device_id *hid;
-	काष्ठा acpi_pnp_device_id_list *cid;
+	struct acpi_pnp_device_id *hid;
+	struct acpi_pnp_device_id_list *cid;
 	u32 i;
 	u8 found;
-	पूर्णांक no_match;
+	int no_match;
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_NAMESPACE);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस (status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return (status);
+	}
 
 	node = acpi_ns_validate_handle(obj_handle);
 	status = acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस (status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return (status);
+	}
 
-	अगर (!node) अणु
-		वापस (AE_BAD_PARAMETER);
-	पूर्ण
+	if (!node) {
+		return (AE_BAD_PARAMETER);
+	}
 
 	/*
 	 * First, filter based on the device HID and CID.
 	 *
-	 * 01/2010: For this हाल where a specअगरic HID is requested, we करोn't
+	 * 01/2010: For this case where a specific HID is requested, we don't
 	 * want to run _STA until we have an actual HID match. Thus, we will
-	 * not unnecessarily execute _STA on devices क्रम which the caller
-	 * करोesn't care about. Previously, _STA was executed unconditionally
+	 * not unnecessarily execute _STA on devices for which the caller
+	 * doesn't care about. Previously, _STA was executed unconditionally
 	 * on all devices found here.
 	 *
-	 * A side-effect of this change is that now we will जारी to search
-	 * क्रम a matching HID even under device trees where the parent device
-	 * would have वापसed a _STA that indicates it is not present or
-	 * not functioning (thus पातing the search on that branch).
+	 * A side-effect of this change is that now we will continue to search
+	 * for a matching HID even under device trees where the parent device
+	 * would have returned a _STA that indicates it is not present or
+	 * not functioning (thus aborting the search on that branch).
 	 */
-	अगर (info->hid != शून्य) अणु
+	if (info->hid != NULL) {
 		status = acpi_ut_execute_HID(node, &hid);
-		अगर (status == AE_NOT_FOUND) अणु
-			वापस (AE_OK);
-		पूर्ण अन्यथा अगर (ACPI_FAILURE(status)) अणु
-			वापस (AE_CTRL_DEPTH);
-		पूर्ण
+		if (status == AE_NOT_FOUND) {
+			return (AE_OK);
+		} else if (ACPI_FAILURE(status)) {
+			return (AE_CTRL_DEPTH);
+		}
 
-		no_match = म_भेद(hid->string, info->hid);
+		no_match = strcmp(hid->string, info->hid);
 		ACPI_FREE(hid);
 
-		अगर (no_match) अणु
+		if (no_match) {
 			/*
-			 * HID करोes not match, attempt match within the
+			 * HID does not match, attempt match within the
 			 * list of Compatible IDs (CIDs)
 			 */
 			status = acpi_ut_execute_CID(node, &cid);
-			अगर (status == AE_NOT_FOUND) अणु
-				वापस (AE_OK);
-			पूर्ण अन्यथा अगर (ACPI_FAILURE(status)) अणु
-				वापस (AE_CTRL_DEPTH);
-			पूर्ण
+			if (status == AE_NOT_FOUND) {
+				return (AE_OK);
+			} else if (ACPI_FAILURE(status)) {
+				return (AE_CTRL_DEPTH);
+			}
 
 			/* Walk the CID list */
 
 			found = FALSE;
-			क्रम (i = 0; i < cid->count; i++) अणु
-				अगर (म_भेद(cid->ids[i].string, info->hid) == 0) अणु
+			for (i = 0; i < cid->count; i++) {
+				if (strcmp(cid->ids[i].string, info->hid) == 0) {
 
 					/* Found a matching CID */
 
 					found = TRUE;
-					अवरोध;
-				पूर्ण
-			पूर्ण
+					break;
+				}
+			}
 
 			ACPI_FREE(cid);
-			अगर (!found) अणु
-				वापस (AE_OK);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			if (!found) {
+				return (AE_OK);
+			}
+		}
+	}
 
-	/* Run _STA to determine अगर device is present */
+	/* Run _STA to determine if device is present */
 
 	status = acpi_ut_execute_STA(node, &flags);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस (AE_CTRL_DEPTH);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return (AE_CTRL_DEPTH);
+	}
 
-	अगर (!(flags & ACPI_STA_DEVICE_PRESENT) &&
-	    !(flags & ACPI_STA_DEVICE_FUNCTIONING)) अणु
+	if (!(flags & ACPI_STA_DEVICE_PRESENT) &&
+	    !(flags & ACPI_STA_DEVICE_FUNCTIONING)) {
 		/*
 		 * Don't examine the children of the device only when the
 		 * device is neither present nor functional. See ACPI spec,
-		 * description of _STA क्रम more inक्रमmation.
+		 * description of _STA for more information.
 		 */
-		वापस (AE_CTRL_DEPTH);
-	पूर्ण
+		return (AE_CTRL_DEPTH);
+	}
 
 	/* We have a valid device, invoke the user function */
 
 	status = info->user_function(obj_handle, nesting_level,
-				     info->context, वापस_value);
-	वापस (status);
-पूर्ण
+				     info->context, return_value);
+	return (status);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_get_devices
  *
- * PARAMETERS:  HID                 - HID to search क्रम. Can be शून्य.
+ * PARAMETERS:  HID                 - HID to search for. Can be NULL.
  *              user_function       - Called when a matching object is found
  *              context             - Passed to user function
- *              वापस_value        - Location where वापस value of
- *                                    user_function is put अगर terminated early
+ *              return_value        - Location where return value of
+ *                                    user_function is put if terminated early
  *
- * RETURNS      Return value from the user_function अगर terminated early.
- *              Otherwise, वापसs शून्य.
+ * RETURNS      Return value from the user_function if terminated early.
+ *              Otherwise, returns NULL.
  *
- * DESCRIPTION: Perक्रमms a modअगरied depth-first walk of the namespace tree,
- *              starting (and ending) at the object specअगरied by start_handle.
+ * DESCRIPTION: Performs a modified depth-first walk of the namespace tree,
+ *              starting (and ending) at the object specified by start_handle.
  *              The user_function is called whenever an object of type
- *              Device is found. If the user function वापसs
+ *              Device is found. If the user function returns
  *              a non-zero value, the search is terminated immediately and this
- *              value is वापसed to the caller.
+ *              value is returned to the caller.
  *
- *              This is a wrapper क्रम walk_namespace, but the callback perक्रमms
+ *              This is a wrapper for walk_namespace, but the callback performs
  *              additional filtering. Please see acpi_ns_get_device_callback.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_get_devices(स्थिर अक्षर *HID,
+acpi_get_devices(const char *HID,
 		 acpi_walk_callback user_function,
-		 व्योम *context, व्योम **वापस_value)
-अणु
+		 void *context, void **return_value)
+{
 	acpi_status status;
-	काष्ठा acpi_get_devices_info info;
+	struct acpi_get_devices_info info;
 
 	ACPI_FUNCTION_TRACE(acpi_get_devices);
 
 	/* Parameter validation */
 
-	अगर (!user_function) अणु
-		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
-	पूर्ण
+	if (!user_function) {
+		return_ACPI_STATUS(AE_BAD_PARAMETER);
+	}
 
 	/*
 	 * We're going to call their callback from OUR callback, so we need
@@ -799,18 +798,18 @@ acpi_get_devices(स्थिर अक्षर *HID,
 	 * must be allowed to make Acpi calls itself.
 	 */
 	status = acpi_ut_acquire_mutex(ACPI_MTX_NAMESPACE);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	status = acpi_ns_walk_namespace(ACPI_TYPE_DEVICE, ACPI_ROOT_OBJECT,
 					ACPI_UINT32_MAX, ACPI_NS_WALK_UNLOCK,
-					acpi_ns_get_device_callback, शून्य,
-					&info, वापस_value);
+					acpi_ns_get_device_callback, NULL,
+					&info, return_value);
 
-	(व्योम)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	(void)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
+	return_ACPI_STATUS(status);
+}
 
 ACPI_EXPORT_SYMBOL(acpi_get_devices)
 
@@ -819,8 +818,8 @@ ACPI_EXPORT_SYMBOL(acpi_get_devices)
  * FUNCTION:    acpi_attach_data
  *
  * PARAMETERS:  obj_handle          - Namespace node
- *              handler             - Handler क्रम this attachment
- *              data                - Poपूर्णांकer to data to be attached
+ *              handler             - Handler for this attachment
+ *              data                - Pointer to data to be attached
  *
  * RETURN:      Status
  *
@@ -829,36 +828,36 @@ ACPI_EXPORT_SYMBOL(acpi_get_devices)
  ******************************************************************************/
 acpi_status
 acpi_attach_data(acpi_handle obj_handle,
-		 acpi_object_handler handler, व्योम *data)
-अणु
-	काष्ठा acpi_namespace_node *node;
+		 acpi_object_handler handler, void *data)
+{
+	struct acpi_namespace_node *node;
 	acpi_status status;
 
 	/* Parameter validation */
 
-	अगर (!obj_handle || !handler || !data) अणु
-		वापस (AE_BAD_PARAMETER);
-	पूर्ण
+	if (!obj_handle || !handler || !data) {
+		return (AE_BAD_PARAMETER);
+	}
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_NAMESPACE);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस (status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return (status);
+	}
 
 	/* Convert and validate the handle */
 
 	node = acpi_ns_validate_handle(obj_handle);
-	अगर (!node) अणु
+	if (!node) {
 		status = AE_BAD_PARAMETER;
-		जाओ unlock_and_निकास;
-	पूर्ण
+		goto unlock_and_exit;
+	}
 
 	status = acpi_ns_attach_data(node, handler, data);
 
-unlock_and_निकास:
-	(व्योम)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
-	वापस (status);
-पूर्ण
+unlock_and_exit:
+	(void)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
+	return (status);
+}
 
 ACPI_EXPORT_SYMBOL(acpi_attach_data)
 
@@ -876,35 +875,35 @@ ACPI_EXPORT_SYMBOL(acpi_attach_data)
  ******************************************************************************/
 acpi_status
 acpi_detach_data(acpi_handle obj_handle, acpi_object_handler handler)
-अणु
-	काष्ठा acpi_namespace_node *node;
+{
+	struct acpi_namespace_node *node;
 	acpi_status status;
 
 	/* Parameter validation */
 
-	अगर (!obj_handle || !handler) अणु
-		वापस (AE_BAD_PARAMETER);
-	पूर्ण
+	if (!obj_handle || !handler) {
+		return (AE_BAD_PARAMETER);
+	}
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_NAMESPACE);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस (status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return (status);
+	}
 
 	/* Convert and validate the handle */
 
 	node = acpi_ns_validate_handle(obj_handle);
-	अगर (!node) अणु
+	if (!node) {
 		status = AE_BAD_PARAMETER;
-		जाओ unlock_and_निकास;
-	पूर्ण
+		goto unlock_and_exit;
+	}
 
 	status = acpi_ns_detach_data(node, handler);
 
-unlock_and_निकास:
-	(व्योम)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
-	वापस (status);
-पूर्ण
+unlock_and_exit:
+	(void)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
+	return (status);
+}
 
 ACPI_EXPORT_SYMBOL(acpi_detach_data)
 
@@ -914,50 +913,50 @@ ACPI_EXPORT_SYMBOL(acpi_detach_data)
  *
  * PARAMETERS:  obj_handle          - Namespace node
  *              handler             - Handler used in call to attach_data
- *              data                - Where the data is वापसed
- *              callback            - function to execute beक्रमe वापसing
+ *              data                - Where the data is returned
+ *              callback            - function to execute before returning
  *
  * RETURN:      Status
  *
  * DESCRIPTION: Retrieve data that was previously attached to a namespace node
- *              and execute a callback beक्रमe वापसing.
+ *              and execute a callback before returning.
  *
  ******************************************************************************/
 acpi_status
 acpi_get_data_full(acpi_handle obj_handle, acpi_object_handler handler,
-		   व्योम **data, व्योम (*callback)(व्योम *))
-अणु
-	काष्ठा acpi_namespace_node *node;
+		   void **data, void (*callback)(void *))
+{
+	struct acpi_namespace_node *node;
 	acpi_status status;
 
 	/* Parameter validation */
 
-	अगर (!obj_handle || !handler || !data) अणु
-		वापस (AE_BAD_PARAMETER);
-	पूर्ण
+	if (!obj_handle || !handler || !data) {
+		return (AE_BAD_PARAMETER);
+	}
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_NAMESPACE);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस (status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return (status);
+	}
 
 	/* Convert and validate the handle */
 
 	node = acpi_ns_validate_handle(obj_handle);
-	अगर (!node) अणु
+	if (!node) {
 		status = AE_BAD_PARAMETER;
-		जाओ unlock_and_निकास;
-	पूर्ण
+		goto unlock_and_exit;
+	}
 
 	status = acpi_ns_get_attached_data(node, handler, data);
-	अगर (ACPI_SUCCESS(status) && callback) अणु
+	if (ACPI_SUCCESS(status) && callback) {
 		callback(*data);
-	पूर्ण
+	}
 
-unlock_and_निकास:
-	(व्योम)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
-	वापस (status);
-पूर्ण
+unlock_and_exit:
+	(void)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
+	return (status);
+}
 
 ACPI_EXPORT_SYMBOL(acpi_get_data_full)
 
@@ -967,7 +966,7 @@ ACPI_EXPORT_SYMBOL(acpi_get_data_full)
  *
  * PARAMETERS:  obj_handle          - Namespace node
  *              handler             - Handler used in call to attach_data
- *              data                - Where the data is वापसed
+ *              data                - Where the data is returned
  *
  * RETURN:      Status
  *
@@ -975,9 +974,9 @@ ACPI_EXPORT_SYMBOL(acpi_get_data_full)
  *
  ******************************************************************************/
 acpi_status
-acpi_get_data(acpi_handle obj_handle, acpi_object_handler handler, व्योम **data)
-अणु
-	वापस acpi_get_data_full(obj_handle, handler, data, शून्य);
-पूर्ण
+acpi_get_data(acpi_handle obj_handle, acpi_object_handler handler, void **data)
+{
+	return acpi_get_data_full(obj_handle, handler, data, NULL);
+}
 
 ACPI_EXPORT_SYMBOL(acpi_get_data)

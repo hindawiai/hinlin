@@ -1,221 +1,220 @@
-<शैली गुरु>
 /*
- * Timer device implementation क्रम SGI UV platक्रमm.
+ * Timer device implementation for SGI UV platform.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (c) 2009 Silicon Graphics, Inc.  All rights reserved.
  *
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/ioctl.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/mmसमयr.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/posix-समयrs.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/math64.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/ioctl.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/errno.h>
+#include <linux/mm.h>
+#include <linux/fs.h>
+#include <linux/mmtimer.h>
+#include <linux/miscdevice.h>
+#include <linux/posix-timers.h>
+#include <linux/interrupt.h>
+#include <linux/time.h>
+#include <linux/math64.h>
 
-#समावेश <यंत्र/genapic.h>
-#समावेश <यंत्र/uv/uv_hub.h>
-#समावेश <यंत्र/uv/मूलप्रण.स>
-#समावेश <यंत्र/uv/uv.h>
+#include <asm/genapic.h>
+#include <asm/uv/uv_hub.h>
+#include <asm/uv/bios.h>
+#include <asm/uv/uv.h>
 
 MODULE_AUTHOR("Dimitri Sivanich <sivanich@sgi.com>");
 MODULE_DESCRIPTION("SGI UV Memory Mapped RTC Timer");
 MODULE_LICENSE("GPL");
 
 /* name of the device, usually in /dev */
-#घोषणा UV_MMTIMER_NAME "mmtimer"
-#घोषणा UV_MMTIMER_DESC "SGI UV Memory Mapped RTC Timer"
-#घोषणा UV_MMTIMER_VERSION "1.0"
+#define UV_MMTIMER_NAME "mmtimer"
+#define UV_MMTIMER_DESC "SGI UV Memory Mapped RTC Timer"
+#define UV_MMTIMER_VERSION "1.0"
 
-अटल दीर्घ uv_mmसमयr_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-						अचिन्हित दीर्घ arg);
-अटल पूर्णांक uv_mmसमयr_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma);
+static long uv_mmtimer_ioctl(struct file *file, unsigned int cmd,
+						unsigned long arg);
+static int uv_mmtimer_mmap(struct file *file, struct vm_area_struct *vma);
 
 /*
  * Period in femtoseconds (10^-15 s)
  */
-अटल अचिन्हित दीर्घ uv_mmसमयr_femtoperiod;
+static unsigned long uv_mmtimer_femtoperiod;
 
-अटल स्थिर काष्ठा file_operations uv_mmसमयr_fops = अणु
+static const struct file_operations uv_mmtimer_fops = {
 	.owner = THIS_MODULE,
-	.mmap =	uv_mmसमयr_mmap,
-	.unlocked_ioctl = uv_mmसमयr_ioctl,
+	.mmap =	uv_mmtimer_mmap,
+	.unlocked_ioctl = uv_mmtimer_ioctl,
 	.llseek = noop_llseek,
-पूर्ण;
+};
 
 /**
- * uv_mmसमयr_ioctl - ioctl पूर्णांकerface क्रम /dev/uv_mmसमयr
- * @file: file काष्ठाure क्रम the device
+ * uv_mmtimer_ioctl - ioctl interface for /dev/uv_mmtimer
+ * @file: file structure for the device
  * @cmd: command to execute
  * @arg: optional argument to command
  *
- * Executes the command specअगरied by @cmd.  Returns 0 क्रम success, < 0 क्रम
+ * Executes the command specified by @cmd.  Returns 0 for success, < 0 for
  * failure.
  *
  * Valid commands:
  *
- * %MMTIMER_GETOFFSET - Should वापस the offset (relative to the start
- * of the page where the रेजिस्टरs are mapped) क्रम the counter in question.
+ * %MMTIMER_GETOFFSET - Should return the offset (relative to the start
+ * of the page where the registers are mapped) for the counter in question.
  *
- * %MMTIMER_GETRES - Returns the resolution of the घड़ी in femto (10^-15)
+ * %MMTIMER_GETRES - Returns the resolution of the clock in femto (10^-15)
  * seconds
  *
- * %MMTIMER_GETFREQ - Copies the frequency of the घड़ी in Hz to the address
- * specअगरied by @arg
+ * %MMTIMER_GETFREQ - Copies the frequency of the clock in Hz to the address
+ * specified by @arg
  *
- * %MMTIMER_GETBITS - Returns the number of bits in the घड़ी's counter
+ * %MMTIMER_GETBITS - Returns the number of bits in the clock's counter
  *
- * %MMTIMER_MMAPAVAIL - Returns 1 अगर रेजिस्टरs can be mmap'd पूर्णांकo userspace
+ * %MMTIMER_MMAPAVAIL - Returns 1 if registers can be mmap'd into userspace
  *
  * %MMTIMER_GETCOUNTER - Gets the current value in the counter and places it
- * in the address specअगरied by @arg.
+ * in the address specified by @arg.
  */
-अटल दीर्घ uv_mmसमयr_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-						अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक ret = 0;
+static long uv_mmtimer_ioctl(struct file *file, unsigned int cmd,
+						unsigned long arg)
+{
+	int ret = 0;
 
-	चयन (cmd) अणु
-	हाल MMTIMER_GETOFFSET:	/* offset of the counter */
+	switch (cmd) {
+	case MMTIMER_GETOFFSET:	/* offset of the counter */
 		/*
-		 * Starting with HUB rev 2.0, the UV RTC रेजिस्टर is
+		 * Starting with HUB rev 2.0, the UV RTC register is
 		 * replicated across all cachelines of it's own page.
-		 * This allows faster simultaneous पढ़ोs from a given socket.
+		 * This allows faster simultaneous reads from a given socket.
 		 *
-		 * The offset वापसed is in 64 bit units.
+		 * The offset returned is in 64 bit units.
 		 */
-		अगर (uv_get_min_hub_revision_id() == 1)
+		if (uv_get_min_hub_revision_id() == 1)
 			ret = 0;
-		अन्यथा
+		else
 			ret = ((uv_blade_processor_id() * L1_CACHE_BYTES) %
 					PAGE_SIZE) / 8;
-		अवरोध;
+		break;
 
-	हाल MMTIMER_GETRES: /* resolution of the घड़ी in 10^-15 s */
-		अगर (copy_to_user((अचिन्हित दीर्घ __user *)arg,
-				&uv_mmसमयr_femtoperiod, माप(अचिन्हित दीर्घ)))
+	case MMTIMER_GETRES: /* resolution of the clock in 10^-15 s */
+		if (copy_to_user((unsigned long __user *)arg,
+				&uv_mmtimer_femtoperiod, sizeof(unsigned long)))
 			ret = -EFAULT;
-		अवरोध;
+		break;
 
-	हाल MMTIMER_GETFREQ: /* frequency in Hz */
-		अगर (copy_to_user((अचिन्हित दीर्घ __user *)arg,
+	case MMTIMER_GETFREQ: /* frequency in Hz */
+		if (copy_to_user((unsigned long __user *)arg,
 				&sn_rtc_cycles_per_second,
-				माप(अचिन्हित दीर्घ)))
+				sizeof(unsigned long)))
 			ret = -EFAULT;
-		अवरोध;
+		break;
 
-	हाल MMTIMER_GETBITS: /* number of bits in the घड़ी */
+	case MMTIMER_GETBITS: /* number of bits in the clock */
 		ret = hweight64(UVH_RTC_REAL_TIME_CLOCK_MASK);
-		अवरोध;
+		break;
 
-	हाल MMTIMER_MMAPAVAIL:
+	case MMTIMER_MMAPAVAIL:
 		ret = 1;
-		अवरोध;
+		break;
 
-	हाल MMTIMER_GETCOUNTER:
-		अगर (copy_to_user((अचिन्हित दीर्घ __user *)arg,
-				(अचिन्हित दीर्घ *)uv_local_mmr_address(UVH_RTC),
-				माप(अचिन्हित दीर्घ)))
+	case MMTIMER_GETCOUNTER:
+		if (copy_to_user((unsigned long __user *)arg,
+				(unsigned long *)uv_local_mmr_address(UVH_RTC),
+				sizeof(unsigned long)))
 			ret = -EFAULT;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -ENOTTY;
-		अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		break;
+	}
+	return ret;
+}
 
 /**
- * uv_mmसमयr_mmap - maps the घड़ी's रेजिस्टरs पूर्णांकo userspace
- * @file: file काष्ठाure क्रम the device
- * @vma: VMA to map the रेजिस्टरs पूर्णांकo
+ * uv_mmtimer_mmap - maps the clock's registers into userspace
+ * @file: file structure for the device
+ * @vma: VMA to map the registers into
  *
- * Calls remap_pfn_range() to map the घड़ी's रेजिस्टरs पूर्णांकo
+ * Calls remap_pfn_range() to map the clock's registers into
  * the calling process' address space.
  */
-अटल पूर्णांक uv_mmसमयr_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	अचिन्हित दीर्घ uv_mmसमयr_addr;
+static int uv_mmtimer_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	unsigned long uv_mmtimer_addr;
 
-	अगर (vma->vm_end - vma->vm_start != PAGE_SIZE)
-		वापस -EINVAL;
+	if (vma->vm_end - vma->vm_start != PAGE_SIZE)
+		return -EINVAL;
 
-	अगर (vma->vm_flags & VM_WRITE)
-		वापस -EPERM;
+	if (vma->vm_flags & VM_WRITE)
+		return -EPERM;
 
-	अगर (PAGE_SIZE > (1 << 16))
-		वापस -ENOSYS;
+	if (PAGE_SIZE > (1 << 16))
+		return -ENOSYS;
 
 	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 
-	uv_mmसमयr_addr = UV_LOCAL_MMR_BASE | UVH_RTC;
-	uv_mmसमयr_addr &= ~(PAGE_SIZE - 1);
-	uv_mmसमयr_addr &= 0xfffffffffffffffUL;
+	uv_mmtimer_addr = UV_LOCAL_MMR_BASE | UVH_RTC;
+	uv_mmtimer_addr &= ~(PAGE_SIZE - 1);
+	uv_mmtimer_addr &= 0xfffffffffffffffUL;
 
-	अगर (remap_pfn_range(vma, vma->vm_start, uv_mmसमयr_addr >> PAGE_SHIFT,
-					PAGE_SIZE, vma->vm_page_prot)) अणु
-		prपूर्णांकk(KERN_ERR "remap_pfn_range failed in uv_mmtimer_mmap\n");
-		वापस -EAGAIN;
-	पूर्ण
+	if (remap_pfn_range(vma, vma->vm_start, uv_mmtimer_addr >> PAGE_SHIFT,
+					PAGE_SIZE, vma->vm_page_prot)) {
+		printk(KERN_ERR "remap_pfn_range failed in uv_mmtimer_mmap\n");
+		return -EAGAIN;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा miscdevice uv_mmसमयr_miscdev = अणु
+static struct miscdevice uv_mmtimer_miscdev = {
 	MISC_DYNAMIC_MINOR,
 	UV_MMTIMER_NAME,
-	&uv_mmसमयr_fops
-पूर्ण;
+	&uv_mmtimer_fops
+};
 
 
 /**
- * uv_mmसमयr_init - device initialization routine
+ * uv_mmtimer_init - device initialization routine
  *
- * Does initial setup क्रम the uv_mmसमयr device.
+ * Does initial setup for the uv_mmtimer device.
  */
-अटल पूर्णांक __init uv_mmसमयr_init(व्योम)
-अणु
-	अगर (!is_uv_प्रणाली()) अणु
-		prपूर्णांकk(KERN_ERR "%s: Hardware unsupported\n", UV_MMTIMER_NAME);
-		वापस -1;
-	पूर्ण
+static int __init uv_mmtimer_init(void)
+{
+	if (!is_uv_system()) {
+		printk(KERN_ERR "%s: Hardware unsupported\n", UV_MMTIMER_NAME);
+		return -1;
+	}
 
 	/*
 	 * Sanity check the cycles/sec variable
 	 */
-	अगर (sn_rtc_cycles_per_second < 100000) अणु
-		prपूर्णांकk(KERN_ERR "%s: unable to determine clock frequency\n",
+	if (sn_rtc_cycles_per_second < 100000) {
+		printk(KERN_ERR "%s: unable to determine clock frequency\n",
 		       UV_MMTIMER_NAME);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	uv_mmसमयr_femtoperiod = ((अचिन्हित दीर्घ)1E15 +
+	uv_mmtimer_femtoperiod = ((unsigned long)1E15 +
 				sn_rtc_cycles_per_second / 2) /
 				sn_rtc_cycles_per_second;
 
-	अगर (misc_रेजिस्टर(&uv_mmसमयr_miscdev)) अणु
-		prपूर्णांकk(KERN_ERR "%s: failed to register device\n",
+	if (misc_register(&uv_mmtimer_miscdev)) {
+		printk(KERN_ERR "%s: failed to register device\n",
 		       UV_MMTIMER_NAME);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	prपूर्णांकk(KERN_INFO "%s: v%s, %ld MHz\n", UV_MMTIMER_DESC,
+	printk(KERN_INFO "%s: v%s, %ld MHz\n", UV_MMTIMER_DESC,
 		UV_MMTIMER_VERSION,
-		sn_rtc_cycles_per_second/(अचिन्हित दीर्घ)1E6);
+		sn_rtc_cycles_per_second/(unsigned long)1E6);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-module_init(uv_mmसमयr_init);
+module_init(uv_mmtimer_init);

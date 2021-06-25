@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,22 +20,22 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#समावेश "amdgpu.h"
-#समावेश "amdgpu_ras.h"
-#समावेश "mmhub_v1_7.h"
+#include "amdgpu.h"
+#include "amdgpu_ras.h"
+#include "mmhub_v1_7.h"
 
-#समावेश "mmhub/mmhub_1_7_offset.h"
-#समावेश "mmhub/mmhub_1_7_sh_mask.h"
-#समावेश "vega10_enum.h"
+#include "mmhub/mmhub_1_7_offset.h"
+#include "mmhub/mmhub_1_7_sh_mask.h"
+#include "vega10_enum.h"
 
-#समावेश "soc15_common.h"
-#समावेश "soc15.h"
+#include "soc15_common.h"
+#include "soc15.h"
 
-#घोषणा regVM_L2_CNTL3_DEFAULT	0x80100007
-#घोषणा regVM_L2_CNTL4_DEFAULT	0x000000c1
+#define regVM_L2_CNTL3_DEFAULT	0x80100007
+#define regVM_L2_CNTL4_DEFAULT	0x000000c1
 
-अटल u64 mmhub_v1_7_get_fb_location(काष्ठा amdgpu_device *adev)
-अणु
+static u64 mmhub_v1_7_get_fb_location(struct amdgpu_device *adev)
+{
 	u64 base = RREG32_SOC15(MMHUB, 0, regMC_VM_FB_LOCATION_BASE);
 	u64 top = RREG32_SOC15(MMHUB, 0, regMC_VM_FB_LOCATION_TOP);
 
@@ -49,36 +48,36 @@
 	adev->gmc.fb_start = base;
 	adev->gmc.fb_end = top;
 
-	वापस base;
-पूर्ण
+	return base;
+}
 
-अटल व्योम mmhub_v1_7_setup_vm_pt_regs(काष्ठा amdgpu_device *adev, uपूर्णांक32_t vmid,
-				uपूर्णांक64_t page_table_base)
-अणु
-	काष्ठा amdgpu_vmhub *hub = &adev->vmhub[AMDGPU_MMHUB_0];
+static void mmhub_v1_7_setup_vm_pt_regs(struct amdgpu_device *adev, uint32_t vmid,
+				uint64_t page_table_base)
+{
+	struct amdgpu_vmhub *hub = &adev->vmhub[AMDGPU_MMHUB_0];
 
 	WREG32_SOC15_OFFSET(MMHUB, 0, regVM_CONTEXT0_PAGE_TABLE_BASE_ADDR_LO32,
 			hub->ctx_addr_distance * vmid, lower_32_bits(page_table_base));
 
 	WREG32_SOC15_OFFSET(MMHUB, 0, regVM_CONTEXT0_PAGE_TABLE_BASE_ADDR_HI32,
 			hub->ctx_addr_distance * vmid, upper_32_bits(page_table_base));
-पूर्ण
+}
 
-अटल व्योम mmhub_v1_7_init_gart_aperture_regs(काष्ठा amdgpu_device *adev)
-अणु
-	uपूर्णांक64_t pt_base;
+static void mmhub_v1_7_init_gart_aperture_regs(struct amdgpu_device *adev)
+{
+	uint64_t pt_base;
 
-	अगर (adev->gmc.pdb0_bo)
+	if (adev->gmc.pdb0_bo)
 		pt_base = amdgpu_gmc_pd_addr(adev->gmc.pdb0_bo);
-	अन्यथा
+	else
 		pt_base = amdgpu_gmc_pd_addr(adev->gart.bo);
 
 	mmhub_v1_7_setup_vm_pt_regs(adev, 0, pt_base);
 
-	/* If use GART क्रम FB translation, vmid0 page table covers both
-	 * vram and प्रणाली memory (gart)
+	/* If use GART for FB translation, vmid0 page table covers both
+	 * vram and system memory (gart)
 	 */
-	अगर (adev->gmc.pdb0_bo) अणु
+	if (adev->gmc.pdb0_bo) {
 		WREG32_SOC15(MMHUB, 0, regVM_CONTEXT0_PAGE_TABLE_START_ADDR_LO32,
 				(u32)(adev->gmc.fb_start >> 12));
 		WREG32_SOC15(MMHUB, 0, regVM_CONTEXT0_PAGE_TABLE_START_ADDR_HI32,
@@ -89,7 +88,7 @@
 		WREG32_SOC15(MMHUB, 0, regVM_CONTEXT0_PAGE_TABLE_END_ADDR_HI32,
 				(u32)(adev->gmc.gart_end >> 44));
 
-	पूर्ण अन्यथा अणु
+	} else {
 		WREG32_SOC15(MMHUB, 0, regVM_CONTEXT0_PAGE_TABLE_START_ADDR_LO32,
 				(u32)(adev->gmc.gart_start >> 12));
 		WREG32_SOC15(MMHUB, 0, regVM_CONTEXT0_PAGE_TABLE_START_ADDR_HI32,
@@ -99,41 +98,41 @@
 				(u32)(adev->gmc.gart_end >> 12));
 		WREG32_SOC15(MMHUB, 0, regVM_CONTEXT0_PAGE_TABLE_END_ADDR_HI32,
 				(u32)(adev->gmc.gart_end >> 44));
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mmhub_v1_7_init_प्रणाली_aperture_regs(काष्ठा amdgpu_device *adev)
-अणु
-	uपूर्णांक64_t value;
-	uपूर्णांक32_t पंचांगp;
+static void mmhub_v1_7_init_system_aperture_regs(struct amdgpu_device *adev)
+{
+	uint64_t value;
+	uint32_t tmp;
 
 	/* Program the AGP BAR */
 	WREG32_SOC15(MMHUB, 0, regMC_VM_AGP_BASE, 0);
 	WREG32_SOC15(MMHUB, 0, regMC_VM_AGP_BOT, adev->gmc.agp_start >> 24);
 	WREG32_SOC15(MMHUB, 0, regMC_VM_AGP_TOP, adev->gmc.agp_end >> 24);
 
-	/* Program the प्रणाली aperture low logical page number. */
+	/* Program the system aperture low logical page number. */
 	WREG32_SOC15(MMHUB, 0, regMC_VM_SYSTEM_APERTURE_LOW_ADDR,
 		     min(adev->gmc.fb_start, adev->gmc.agp_start) >> 18);
 
 	WREG32_SOC15(MMHUB, 0, regMC_VM_SYSTEM_APERTURE_HIGH_ADDR,
 		     max(adev->gmc.fb_end, adev->gmc.agp_end) >> 18);
 
-	/* In the हाल squeezing vram पूर्णांकo GART aperture, we करोn't use
+	/* In the case squeezing vram into GART aperture, we don't use
 	 * FB aperture and AGP aperture. Disable them.
 	 */
-	अगर (adev->gmc.pdb0_bo) अणु
+	if (adev->gmc.pdb0_bo) {
 		WREG32_SOC15(MMHUB, 0, regMC_VM_AGP_BOT, 0xFFFFFF);
 		WREG32_SOC15(MMHUB, 0, regMC_VM_AGP_TOP, 0);
 		WREG32_SOC15(MMHUB, 0, regMC_VM_FB_LOCATION_TOP, 0);
 		WREG32_SOC15(MMHUB, 0, regMC_VM_FB_LOCATION_BASE, 0x00FFFFFF);
 		WREG32_SOC15(MMHUB, 0, regMC_VM_SYSTEM_APERTURE_LOW_ADDR, 0x3FFFFFFF);
 		WREG32_SOC15(MMHUB, 0, regMC_VM_SYSTEM_APERTURE_HIGH_ADDR, 0);
-	पूर्ण
-	अगर (amdgpu_sriov_vf(adev))
-		वापस;
+	}
+	if (amdgpu_sriov_vf(adev))
+		return;
 
-	/* Set शेष page address. */
+	/* Set default page address. */
 	value = amdgpu_gmc_vram_mc2pa(adev, adev->vram_scratch.gpu_addr);
 	WREG32_SOC15(MMHUB, 0, regMC_VM_SYSTEM_APERTURE_DEFAULT_ADDR_LSB,
 		     (u32)(value >> 12));
@@ -146,103 +145,103 @@
 	WREG32_SOC15(MMHUB, 0, regVM_L2_PROTECTION_FAULT_DEFAULT_ADDR_HI32,
 		     (u32)((u64)adev->dummy_page_addr >> 44));
 
-	पंचांगp = RREG32_SOC15(MMHUB, 0, regVM_L2_PROTECTION_FAULT_CNTL2);
-	पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_PROTECTION_FAULT_CNTL2,
+	tmp = RREG32_SOC15(MMHUB, 0, regVM_L2_PROTECTION_FAULT_CNTL2);
+	tmp = REG_SET_FIELD(tmp, VM_L2_PROTECTION_FAULT_CNTL2,
 			    ACTIVE_PAGE_MIGRATION_PTE_READ_RETRY, 1);
-	WREG32_SOC15(MMHUB, 0, regVM_L2_PROTECTION_FAULT_CNTL2, पंचांगp);
-पूर्ण
+	WREG32_SOC15(MMHUB, 0, regVM_L2_PROTECTION_FAULT_CNTL2, tmp);
+}
 
-अटल व्योम mmhub_v1_7_init_tlb_regs(काष्ठा amdgpu_device *adev)
-अणु
-	uपूर्णांक32_t पंचांगp;
+static void mmhub_v1_7_init_tlb_regs(struct amdgpu_device *adev)
+{
+	uint32_t tmp;
 
 	/* Setup TLB control */
-	पंचांगp = RREG32_SOC15(MMHUB, 0, regMC_VM_MX_L1_TLB_CNTL);
+	tmp = RREG32_SOC15(MMHUB, 0, regMC_VM_MX_L1_TLB_CNTL);
 
-	पंचांगp = REG_SET_FIELD(पंचांगp, MC_VM_MX_L1_TLB_CNTL, ENABLE_L1_TLB, 1);
-	पंचांगp = REG_SET_FIELD(पंचांगp, MC_VM_MX_L1_TLB_CNTL, SYSTEM_ACCESS_MODE, 3);
-	पंचांगp = REG_SET_FIELD(पंचांगp, MC_VM_MX_L1_TLB_CNTL,
+	tmp = REG_SET_FIELD(tmp, MC_VM_MX_L1_TLB_CNTL, ENABLE_L1_TLB, 1);
+	tmp = REG_SET_FIELD(tmp, MC_VM_MX_L1_TLB_CNTL, SYSTEM_ACCESS_MODE, 3);
+	tmp = REG_SET_FIELD(tmp, MC_VM_MX_L1_TLB_CNTL,
 			    ENABLE_ADVANCED_DRIVER_MODEL, 1);
-	पंचांगp = REG_SET_FIELD(पंचांगp, MC_VM_MX_L1_TLB_CNTL,
+	tmp = REG_SET_FIELD(tmp, MC_VM_MX_L1_TLB_CNTL,
 			    SYSTEM_APERTURE_UNMAPPED_ACCESS, 0);
-	पंचांगp = REG_SET_FIELD(पंचांगp, MC_VM_MX_L1_TLB_CNTL, ECO_BITS, 0);
-	पंचांगp = REG_SET_FIELD(पंचांगp, MC_VM_MX_L1_TLB_CNTL,
-			    MTYPE, MTYPE_UC);/* XXX क्रम emulation. */
-	पंचांगp = REG_SET_FIELD(पंचांगp, MC_VM_MX_L1_TLB_CNTL, ATC_EN, 1);
+	tmp = REG_SET_FIELD(tmp, MC_VM_MX_L1_TLB_CNTL, ECO_BITS, 0);
+	tmp = REG_SET_FIELD(tmp, MC_VM_MX_L1_TLB_CNTL,
+			    MTYPE, MTYPE_UC);/* XXX for emulation. */
+	tmp = REG_SET_FIELD(tmp, MC_VM_MX_L1_TLB_CNTL, ATC_EN, 1);
 
-	WREG32_SOC15(MMHUB, 0, regMC_VM_MX_L1_TLB_CNTL, पंचांगp);
-पूर्ण
+	WREG32_SOC15(MMHUB, 0, regMC_VM_MX_L1_TLB_CNTL, tmp);
+}
 
-अटल व्योम mmhub_v1_7_init_cache_regs(काष्ठा amdgpu_device *adev)
-अणु
-	uपूर्णांक32_t पंचांगp;
+static void mmhub_v1_7_init_cache_regs(struct amdgpu_device *adev)
+{
+	uint32_t tmp;
 
-	अगर (amdgpu_sriov_vf(adev))
-		वापस;
+	if (amdgpu_sriov_vf(adev))
+		return;
 
 	/* Setup L2 cache */
-	पंचांगp = RREG32_SOC15(MMHUB, 0, regVM_L2_CNTL);
-	पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_CNTL, ENABLE_L2_CACHE, 1);
-	पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_CNTL, ENABLE_L2_FRAGMENT_PROCESSING, 1);
-	/* XXX क्रम emulation, Refer to बंदd source code.*/
-	पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_CNTL, L2_PDE0_CACHE_TAG_GENERATION_MODE,
+	tmp = RREG32_SOC15(MMHUB, 0, regVM_L2_CNTL);
+	tmp = REG_SET_FIELD(tmp, VM_L2_CNTL, ENABLE_L2_CACHE, 1);
+	tmp = REG_SET_FIELD(tmp, VM_L2_CNTL, ENABLE_L2_FRAGMENT_PROCESSING, 1);
+	/* XXX for emulation, Refer to closed source code.*/
+	tmp = REG_SET_FIELD(tmp, VM_L2_CNTL, L2_PDE0_CACHE_TAG_GENERATION_MODE,
 			    0);
-	पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_CNTL, PDE_FAULT_CLASSIFICATION, 0);
-	पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_CNTL, CONTEXT1_IDENTITY_ACCESS_MODE, 1);
-	पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_CNTL, IDENTITY_MODE_FRAGMENT_SIZE, 0);
-	WREG32_SOC15(MMHUB, 0, regVM_L2_CNTL, पंचांगp);
+	tmp = REG_SET_FIELD(tmp, VM_L2_CNTL, PDE_FAULT_CLASSIFICATION, 0);
+	tmp = REG_SET_FIELD(tmp, VM_L2_CNTL, CONTEXT1_IDENTITY_ACCESS_MODE, 1);
+	tmp = REG_SET_FIELD(tmp, VM_L2_CNTL, IDENTITY_MODE_FRAGMENT_SIZE, 0);
+	WREG32_SOC15(MMHUB, 0, regVM_L2_CNTL, tmp);
 
-	पंचांगp = RREG32_SOC15(MMHUB, 0, regVM_L2_CNTL2);
-	पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_CNTL2, INVALIDATE_ALL_L1_TLBS, 1);
-	पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_CNTL2, INVALIDATE_L2_CACHE, 1);
-	WREG32_SOC15(MMHUB, 0, regVM_L2_CNTL2, पंचांगp);
+	tmp = RREG32_SOC15(MMHUB, 0, regVM_L2_CNTL2);
+	tmp = REG_SET_FIELD(tmp, VM_L2_CNTL2, INVALIDATE_ALL_L1_TLBS, 1);
+	tmp = REG_SET_FIELD(tmp, VM_L2_CNTL2, INVALIDATE_L2_CACHE, 1);
+	WREG32_SOC15(MMHUB, 0, regVM_L2_CNTL2, tmp);
 
-	पंचांगp = regVM_L2_CNTL3_DEFAULT;
-	अगर (adev->gmc.translate_further) अणु
-		पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_CNTL3, BANK_SELECT, 12);
-		पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_CNTL3,
+	tmp = regVM_L2_CNTL3_DEFAULT;
+	if (adev->gmc.translate_further) {
+		tmp = REG_SET_FIELD(tmp, VM_L2_CNTL3, BANK_SELECT, 12);
+		tmp = REG_SET_FIELD(tmp, VM_L2_CNTL3,
 				    L2_CACHE_BIGK_FRAGMENT_SIZE, 9);
-	पूर्ण अन्यथा अणु
-		पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_CNTL3, BANK_SELECT, 9);
-		पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_CNTL3,
+	} else {
+		tmp = REG_SET_FIELD(tmp, VM_L2_CNTL3, BANK_SELECT, 9);
+		tmp = REG_SET_FIELD(tmp, VM_L2_CNTL3,
 				    L2_CACHE_BIGK_FRAGMENT_SIZE, 6);
-	पूर्ण
-	WREG32_SOC15(MMHUB, 0, regVM_L2_CNTL3, पंचांगp);
+	}
+	WREG32_SOC15(MMHUB, 0, regVM_L2_CNTL3, tmp);
 
-	पंचांगp = regVM_L2_CNTL4_DEFAULT;
-	अगर (adev->gmc.xgmi.connected_to_cpu) अणु
-		पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_CNTL4,
+	tmp = regVM_L2_CNTL4_DEFAULT;
+	if (adev->gmc.xgmi.connected_to_cpu) {
+		tmp = REG_SET_FIELD(tmp, VM_L2_CNTL4,
 				    VMC_TAP_PDE_REQUEST_PHYSICAL, 1);
-		पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_CNTL4,
+		tmp = REG_SET_FIELD(tmp, VM_L2_CNTL4,
 				    VMC_TAP_PTE_REQUEST_PHYSICAL, 1);
-	पूर्ण अन्यथा अणु
-		पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_CNTL4,
+	} else {
+		tmp = REG_SET_FIELD(tmp, VM_L2_CNTL4,
 				    VMC_TAP_PDE_REQUEST_PHYSICAL, 0);
-		पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_CNTL4,
+		tmp = REG_SET_FIELD(tmp, VM_L2_CNTL4,
 				    VMC_TAP_PTE_REQUEST_PHYSICAL, 0);
-	पूर्ण
-	WREG32_SOC15(MMHUB, 0, regVM_L2_CNTL4, पंचांगp);
-पूर्ण
+	}
+	WREG32_SOC15(MMHUB, 0, regVM_L2_CNTL4, tmp);
+}
 
-अटल व्योम mmhub_v1_7_enable_प्रणाली_करोमुख्य(काष्ठा amdgpu_device *adev)
-अणु
-	uपूर्णांक32_t पंचांगp;
+static void mmhub_v1_7_enable_system_domain(struct amdgpu_device *adev)
+{
+	uint32_t tmp;
 
-	पंचांगp = RREG32_SOC15(MMHUB, 0, regVM_CONTEXT0_CNTL);
-	पंचांगp = REG_SET_FIELD(पंचांगp, VM_CONTEXT0_CNTL, ENABLE_CONTEXT, 1);
-	पंचांगp = REG_SET_FIELD(पंचांगp, VM_CONTEXT0_CNTL, PAGE_TABLE_DEPTH,
+	tmp = RREG32_SOC15(MMHUB, 0, regVM_CONTEXT0_CNTL);
+	tmp = REG_SET_FIELD(tmp, VM_CONTEXT0_CNTL, ENABLE_CONTEXT, 1);
+	tmp = REG_SET_FIELD(tmp, VM_CONTEXT0_CNTL, PAGE_TABLE_DEPTH,
 			adev->gmc.vmid0_page_table_depth);
-	पंचांगp = REG_SET_FIELD(पंचांगp, VM_CONTEXT0_CNTL, PAGE_TABLE_BLOCK_SIZE,
+	tmp = REG_SET_FIELD(tmp, VM_CONTEXT0_CNTL, PAGE_TABLE_BLOCK_SIZE,
 			adev->gmc.vmid0_page_table_block_size);
-	पंचांगp = REG_SET_FIELD(पंचांगp, VM_CONTEXT0_CNTL,
+	tmp = REG_SET_FIELD(tmp, VM_CONTEXT0_CNTL,
 			    RETRY_PERMISSION_OR_INVALID_PAGE_FAULT, 0);
-	WREG32_SOC15(MMHUB, 0, regVM_CONTEXT0_CNTL, पंचांगp);
-पूर्ण
+	WREG32_SOC15(MMHUB, 0, regVM_CONTEXT0_CNTL, tmp);
+}
 
-अटल व्योम mmhub_v1_7_disable_identity_aperture(काष्ठा amdgpu_device *adev)
-अणु
-	अगर (amdgpu_sriov_vf(adev))
-		वापस;
+static void mmhub_v1_7_disable_identity_aperture(struct amdgpu_device *adev)
+{
+	if (amdgpu_sriov_vf(adev))
+		return;
 
 	WREG32_SOC15(MMHUB, 0, regVM_L2_CONTEXT1_IDENTITY_APERTURE_LOW_ADDR_LO32,
 		     0XFFFFFFFF);
@@ -258,51 +257,51 @@
 		     0);
 	WREG32_SOC15(MMHUB, 0, regVM_L2_CONTEXT_IDENTITY_PHYSICAL_OFFSET_HI32,
 		     0);
-पूर्ण
+}
 
-अटल व्योम mmhub_v1_7_setup_vmid_config(काष्ठा amdgpu_device *adev)
-अणु
-	काष्ठा amdgpu_vmhub *hub = &adev->vmhub[AMDGPU_MMHUB_0];
-	अचिन्हित num_level, block_size;
-	uपूर्णांक32_t पंचांगp;
-	पूर्णांक i;
+static void mmhub_v1_7_setup_vmid_config(struct amdgpu_device *adev)
+{
+	struct amdgpu_vmhub *hub = &adev->vmhub[AMDGPU_MMHUB_0];
+	unsigned num_level, block_size;
+	uint32_t tmp;
+	int i;
 
 	num_level = adev->vm_manager.num_level;
 	block_size = adev->vm_manager.block_size;
-	अगर (adev->gmc.translate_further)
+	if (adev->gmc.translate_further)
 		num_level -= 1;
-	अन्यथा
+	else
 		block_size -= 9;
 
-	क्रम (i = 0; i <= 14; i++) अणु
-		पंचांगp = RREG32_SOC15_OFFSET(MMHUB, 0, regVM_CONTEXT1_CNTL, i);
-		पंचांगp = REG_SET_FIELD(पंचांगp, VM_CONTEXT1_CNTL, ENABLE_CONTEXT, 1);
-		पंचांगp = REG_SET_FIELD(पंचांगp, VM_CONTEXT1_CNTL, PAGE_TABLE_DEPTH,
+	for (i = 0; i <= 14; i++) {
+		tmp = RREG32_SOC15_OFFSET(MMHUB, 0, regVM_CONTEXT1_CNTL, i);
+		tmp = REG_SET_FIELD(tmp, VM_CONTEXT1_CNTL, ENABLE_CONTEXT, 1);
+		tmp = REG_SET_FIELD(tmp, VM_CONTEXT1_CNTL, PAGE_TABLE_DEPTH,
 				    num_level);
-		पंचांगp = REG_SET_FIELD(पंचांगp, VM_CONTEXT1_CNTL,
+		tmp = REG_SET_FIELD(tmp, VM_CONTEXT1_CNTL,
 				    RANGE_PROTECTION_FAULT_ENABLE_DEFAULT, 1);
-		पंचांगp = REG_SET_FIELD(पंचांगp, VM_CONTEXT1_CNTL,
+		tmp = REG_SET_FIELD(tmp, VM_CONTEXT1_CNTL,
 				    DUMMY_PAGE_PROTECTION_FAULT_ENABLE_DEFAULT,
 				    1);
-		पंचांगp = REG_SET_FIELD(पंचांगp, VM_CONTEXT1_CNTL,
+		tmp = REG_SET_FIELD(tmp, VM_CONTEXT1_CNTL,
 				    PDE0_PROTECTION_FAULT_ENABLE_DEFAULT, 1);
-		पंचांगp = REG_SET_FIELD(पंचांगp, VM_CONTEXT1_CNTL,
+		tmp = REG_SET_FIELD(tmp, VM_CONTEXT1_CNTL,
 				    VALID_PROTECTION_FAULT_ENABLE_DEFAULT, 1);
-		पंचांगp = REG_SET_FIELD(पंचांगp, VM_CONTEXT1_CNTL,
+		tmp = REG_SET_FIELD(tmp, VM_CONTEXT1_CNTL,
 				    READ_PROTECTION_FAULT_ENABLE_DEFAULT, 1);
-		पंचांगp = REG_SET_FIELD(पंचांगp, VM_CONTEXT1_CNTL,
+		tmp = REG_SET_FIELD(tmp, VM_CONTEXT1_CNTL,
 				    WRITE_PROTECTION_FAULT_ENABLE_DEFAULT, 1);
-		पंचांगp = REG_SET_FIELD(पंचांगp, VM_CONTEXT1_CNTL,
+		tmp = REG_SET_FIELD(tmp, VM_CONTEXT1_CNTL,
 				    EXECUTE_PROTECTION_FAULT_ENABLE_DEFAULT, 1);
-		पंचांगp = REG_SET_FIELD(पंचांगp, VM_CONTEXT1_CNTL,
+		tmp = REG_SET_FIELD(tmp, VM_CONTEXT1_CNTL,
 				    PAGE_TABLE_BLOCK_SIZE,
 				    block_size);
 		/* Send no-retry XNACK on fault to suppress VM fault storm. */
-		पंचांगp = REG_SET_FIELD(पंचांगp, VM_CONTEXT1_CNTL,
+		tmp = REG_SET_FIELD(tmp, VM_CONTEXT1_CNTL,
 				    RETRY_PERMISSION_OR_INVALID_PAGE_FAULT,
 				    !adev->gmc.noretry);
 		WREG32_SOC15_OFFSET(MMHUB, 0, regVM_CONTEXT1_CNTL,
-				    i * hub->ctx_distance, पंचांगp);
+				    i * hub->ctx_distance, tmp);
 		WREG32_SOC15_OFFSET(MMHUB, 0, regVM_CONTEXT1_PAGE_TABLE_START_ADDR_LO32,
 				    i * hub->ctx_addr_distance, 0);
 		WREG32_SOC15_OFFSET(MMHUB, 0, regVM_CONTEXT1_PAGE_TABLE_START_ADDR_HI32,
@@ -313,130 +312,130 @@
 		WREG32_SOC15_OFFSET(MMHUB, 0, regVM_CONTEXT1_PAGE_TABLE_END_ADDR_HI32,
 				    i * hub->ctx_addr_distance,
 				    upper_32_bits(adev->vm_manager.max_pfn - 1));
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mmhub_v1_7_program_invalidation(काष्ठा amdgpu_device *adev)
-अणु
-	काष्ठा amdgpu_vmhub *hub = &adev->vmhub[AMDGPU_MMHUB_0];
-	अचिन्हित i;
+static void mmhub_v1_7_program_invalidation(struct amdgpu_device *adev)
+{
+	struct amdgpu_vmhub *hub = &adev->vmhub[AMDGPU_MMHUB_0];
+	unsigned i;
 
-	क्रम (i = 0; i < 18; ++i) अणु
+	for (i = 0; i < 18; ++i) {
 		WREG32_SOC15_OFFSET(MMHUB, 0, regVM_INVALIDATE_ENG0_ADDR_RANGE_LO32,
 				    i * hub->eng_addr_distance, 0xffffffff);
 		WREG32_SOC15_OFFSET(MMHUB, 0, regVM_INVALIDATE_ENG0_ADDR_RANGE_HI32,
 				    i * hub->eng_addr_distance, 0x1f);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक mmhub_v1_7_gart_enable(काष्ठा amdgpu_device *adev)
-अणु
-	अगर (amdgpu_sriov_vf(adev)) अणु
+static int mmhub_v1_7_gart_enable(struct amdgpu_device *adev)
+{
+	if (amdgpu_sriov_vf(adev)) {
 		/*
-		 * MC_VM_FB_LOCATION_BASE/TOP is शून्य क्रम VF, becuase they are
-		 * VF copy रेजिस्टरs so vbios post करोesn't program them, क्रम
+		 * MC_VM_FB_LOCATION_BASE/TOP is NULL for VF, becuase they are
+		 * VF copy registers so vbios post doesn't program them, for
 		 * SRIOV driver need to program them
 		 */
 		WREG32_SOC15(MMHUB, 0, regMC_VM_FB_LOCATION_BASE,
 			     adev->gmc.vram_start >> 24);
 		WREG32_SOC15(MMHUB, 0, regMC_VM_FB_LOCATION_TOP,
 			     adev->gmc.vram_end >> 24);
-	पूर्ण
+	}
 
 	/* GART Enable. */
 	mmhub_v1_7_init_gart_aperture_regs(adev);
-	mmhub_v1_7_init_प्रणाली_aperture_regs(adev);
+	mmhub_v1_7_init_system_aperture_regs(adev);
 	mmhub_v1_7_init_tlb_regs(adev);
 	mmhub_v1_7_init_cache_regs(adev);
 
-	mmhub_v1_7_enable_प्रणाली_करोमुख्य(adev);
+	mmhub_v1_7_enable_system_domain(adev);
 	mmhub_v1_7_disable_identity_aperture(adev);
 	mmhub_v1_7_setup_vmid_config(adev);
 	mmhub_v1_7_program_invalidation(adev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mmhub_v1_7_gart_disable(काष्ठा amdgpu_device *adev)
-अणु
-	काष्ठा amdgpu_vmhub *hub = &adev->vmhub[AMDGPU_MMHUB_0];
-	u32 पंचांगp;
+static void mmhub_v1_7_gart_disable(struct amdgpu_device *adev)
+{
+	struct amdgpu_vmhub *hub = &adev->vmhub[AMDGPU_MMHUB_0];
+	u32 tmp;
 	u32 i;
 
 	/* Disable all tables */
-	क्रम (i = 0; i < 16; i++)
+	for (i = 0; i < 16; i++)
 		WREG32_SOC15_OFFSET(MMHUB, 0, regVM_CONTEXT0_CNTL,
 				    i * hub->ctx_distance, 0);
 
 	/* Setup TLB control */
-	पंचांगp = RREG32_SOC15(MMHUB, 0, regMC_VM_MX_L1_TLB_CNTL);
-	पंचांगp = REG_SET_FIELD(पंचांगp, MC_VM_MX_L1_TLB_CNTL, ENABLE_L1_TLB, 0);
-	पंचांगp = REG_SET_FIELD(पंचांगp,
+	tmp = RREG32_SOC15(MMHUB, 0, regMC_VM_MX_L1_TLB_CNTL);
+	tmp = REG_SET_FIELD(tmp, MC_VM_MX_L1_TLB_CNTL, ENABLE_L1_TLB, 0);
+	tmp = REG_SET_FIELD(tmp,
 				MC_VM_MX_L1_TLB_CNTL,
 				ENABLE_ADVANCED_DRIVER_MODEL,
 				0);
-	WREG32_SOC15(MMHUB, 0, regMC_VM_MX_L1_TLB_CNTL, पंचांगp);
+	WREG32_SOC15(MMHUB, 0, regMC_VM_MX_L1_TLB_CNTL, tmp);
 
-	अगर (!amdgpu_sriov_vf(adev)) अणु
+	if (!amdgpu_sriov_vf(adev)) {
 		/* Setup L2 cache */
-		पंचांगp = RREG32_SOC15(MMHUB, 0, regVM_L2_CNTL);
-		पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_CNTL, ENABLE_L2_CACHE, 0);
-		WREG32_SOC15(MMHUB, 0, regVM_L2_CNTL, पंचांगp);
+		tmp = RREG32_SOC15(MMHUB, 0, regVM_L2_CNTL);
+		tmp = REG_SET_FIELD(tmp, VM_L2_CNTL, ENABLE_L2_CACHE, 0);
+		WREG32_SOC15(MMHUB, 0, regVM_L2_CNTL, tmp);
 		WREG32_SOC15(MMHUB, 0, regVM_L2_CNTL3, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * mmhub_v1_7_set_fault_enable_शेष - update GART/VM fault handling
+ * mmhub_v1_7_set_fault_enable_default - update GART/VM fault handling
  *
- * @adev: amdgpu_device poपूर्णांकer
- * @value: true redirects VM faults to the शेष page
+ * @adev: amdgpu_device pointer
+ * @value: true redirects VM faults to the default page
  */
-अटल व्योम mmhub_v1_7_set_fault_enable_शेष(काष्ठा amdgpu_device *adev, bool value)
-अणु
-	u32 पंचांगp;
+static void mmhub_v1_7_set_fault_enable_default(struct amdgpu_device *adev, bool value)
+{
+	u32 tmp;
 
-	अगर (amdgpu_sriov_vf(adev))
-		वापस;
+	if (amdgpu_sriov_vf(adev))
+		return;
 
-	पंचांगp = RREG32_SOC15(MMHUB, 0, regVM_L2_PROTECTION_FAULT_CNTL);
-	पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_PROTECTION_FAULT_CNTL,
+	tmp = RREG32_SOC15(MMHUB, 0, regVM_L2_PROTECTION_FAULT_CNTL);
+	tmp = REG_SET_FIELD(tmp, VM_L2_PROTECTION_FAULT_CNTL,
 			RANGE_PROTECTION_FAULT_ENABLE_DEFAULT, value);
-	पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_PROTECTION_FAULT_CNTL,
+	tmp = REG_SET_FIELD(tmp, VM_L2_PROTECTION_FAULT_CNTL,
 			PDE0_PROTECTION_FAULT_ENABLE_DEFAULT, value);
-	पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_PROTECTION_FAULT_CNTL,
+	tmp = REG_SET_FIELD(tmp, VM_L2_PROTECTION_FAULT_CNTL,
 			PDE1_PROTECTION_FAULT_ENABLE_DEFAULT, value);
-	पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_PROTECTION_FAULT_CNTL,
+	tmp = REG_SET_FIELD(tmp, VM_L2_PROTECTION_FAULT_CNTL,
 			PDE2_PROTECTION_FAULT_ENABLE_DEFAULT, value);
-	पंचांगp = REG_SET_FIELD(पंचांगp,
+	tmp = REG_SET_FIELD(tmp,
 			VM_L2_PROTECTION_FAULT_CNTL,
 			TRANSLATE_FURTHER_PROTECTION_FAULT_ENABLE_DEFAULT,
 			value);
-	पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_PROTECTION_FAULT_CNTL,
+	tmp = REG_SET_FIELD(tmp, VM_L2_PROTECTION_FAULT_CNTL,
 			NACK_PROTECTION_FAULT_ENABLE_DEFAULT, value);
-	पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_PROTECTION_FAULT_CNTL,
+	tmp = REG_SET_FIELD(tmp, VM_L2_PROTECTION_FAULT_CNTL,
 			DUMMY_PAGE_PROTECTION_FAULT_ENABLE_DEFAULT, value);
-	पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_PROTECTION_FAULT_CNTL,
+	tmp = REG_SET_FIELD(tmp, VM_L2_PROTECTION_FAULT_CNTL,
 			VALID_PROTECTION_FAULT_ENABLE_DEFAULT, value);
-	पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_PROTECTION_FAULT_CNTL,
+	tmp = REG_SET_FIELD(tmp, VM_L2_PROTECTION_FAULT_CNTL,
 			READ_PROTECTION_FAULT_ENABLE_DEFAULT, value);
-	पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_PROTECTION_FAULT_CNTL,
+	tmp = REG_SET_FIELD(tmp, VM_L2_PROTECTION_FAULT_CNTL,
 			WRITE_PROTECTION_FAULT_ENABLE_DEFAULT, value);
-	पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_PROTECTION_FAULT_CNTL,
+	tmp = REG_SET_FIELD(tmp, VM_L2_PROTECTION_FAULT_CNTL,
 			EXECUTE_PROTECTION_FAULT_ENABLE_DEFAULT, value);
-	अगर (!value) अणु
-		पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_PROTECTION_FAULT_CNTL,
+	if (!value) {
+		tmp = REG_SET_FIELD(tmp, VM_L2_PROTECTION_FAULT_CNTL,
 				CRASH_ON_NO_RETRY_FAULT, 1);
-		पंचांगp = REG_SET_FIELD(पंचांगp, VM_L2_PROTECTION_FAULT_CNTL,
+		tmp = REG_SET_FIELD(tmp, VM_L2_PROTECTION_FAULT_CNTL,
 				CRASH_ON_RETRY_FAULT, 1);
-    पूर्ण
+    }
 
-	WREG32_SOC15(MMHUB, 0, regVM_L2_PROTECTION_FAULT_CNTL, पंचांगp);
-पूर्ण
+	WREG32_SOC15(MMHUB, 0, regVM_L2_PROTECTION_FAULT_CNTL, tmp);
+}
 
-अटल व्योम mmhub_v1_7_init(काष्ठा amdgpu_device *adev)
-अणु
-	काष्ठा amdgpu_vmhub *hub = &adev->vmhub[AMDGPU_MMHUB_0];
+static void mmhub_v1_7_init(struct amdgpu_device *adev)
+{
+	struct amdgpu_vmhub *hub = &adev->vmhub[AMDGPU_MMHUB_0];
 
 	hub->ctx0_ptb_addr_lo32 =
 		SOC15_REG_OFFSET(MMHUB, 0,
@@ -462,19 +461,19 @@
 	hub->eng_addr_distance = regVM_INVALIDATE_ENG1_ADDR_RANGE_LO32 -
 		regVM_INVALIDATE_ENG0_ADDR_RANGE_LO32;
 
-पूर्ण
+}
 
-अटल व्योम mmhub_v1_7_update_medium_grain_घड़ी_gating(काष्ठा amdgpu_device *adev,
+static void mmhub_v1_7_update_medium_grain_clock_gating(struct amdgpu_device *adev,
 							bool enable)
-अणु
-	uपूर्णांक32_t def, data, def1, data1, def2 = 0, data2 = 0;
+{
+	uint32_t def, data, def1, data1, def2 = 0, data2 = 0;
 
 	def  = data  = RREG32_SOC15(MMHUB, 0, regATC_L2_MISC_CG);
 
 	def1 = data1 = RREG32_SOC15(MMHUB, 0, regDAGB0_CNTL_MISC2);
 	def2 = data2 = RREG32_SOC15(MMHUB, 0, regDAGB1_CNTL_MISC2);
 
-	अगर (enable) अणु
+	if (enable) {
 		data |= ATC_L2_MISC_CG__ENABLE_MASK;
 
 		data1 &= ~(DAGB0_CNTL_MISC2__DISABLE_WRREQ_CG_MASK |
@@ -490,7 +489,7 @@
 		           DAGB1_CNTL_MISC2__DISABLE_RDRET_CG_MASK |
 		           DAGB1_CNTL_MISC2__DISABLE_TLBWR_CG_MASK |
 		           DAGB1_CNTL_MISC2__DISABLE_TLBRD_CG_MASK);
-	पूर्ण अन्यथा अणु
+	} else {
 		data &= ~ATC_L2_MISC_CG__ENABLE_MASK;
 
 		data1 |= (DAGB0_CNTL_MISC2__DISABLE_WRREQ_CG_MASK |
@@ -506,58 +505,58 @@
 		          DAGB1_CNTL_MISC2__DISABLE_RDRET_CG_MASK |
 		          DAGB1_CNTL_MISC2__DISABLE_TLBWR_CG_MASK |
 		          DAGB1_CNTL_MISC2__DISABLE_TLBRD_CG_MASK);
-	पूर्ण
+	}
 
-	अगर (def != data)
+	if (def != data)
 		WREG32_SOC15(MMHUB, 0, regATC_L2_MISC_CG, data);
 
-	अगर (def1 != data1)
+	if (def1 != data1)
 		WREG32_SOC15(MMHUB, 0, regDAGB0_CNTL_MISC2, data1);
 
-	अगर (def2 != data2)
+	if (def2 != data2)
 		WREG32_SOC15(MMHUB, 0, regDAGB1_CNTL_MISC2, data2);
-पूर्ण
+}
 
-अटल व्योम mmhub_v1_7_update_medium_grain_light_sleep(काष्ठा amdgpu_device *adev,
+static void mmhub_v1_7_update_medium_grain_light_sleep(struct amdgpu_device *adev,
 						       bool enable)
-अणु
-	uपूर्णांक32_t def, data;
+{
+	uint32_t def, data;
 
 	def = data = RREG32_SOC15(MMHUB, 0, regATC_L2_MISC_CG);
 
-	अगर (enable)
+	if (enable)
 		data |= ATC_L2_MISC_CG__MEM_LS_ENABLE_MASK;
-	अन्यथा
+	else
 		data &= ~ATC_L2_MISC_CG__MEM_LS_ENABLE_MASK;
 
-	अगर (def != data)
+	if (def != data)
 		WREG32_SOC15(MMHUB, 0, regATC_L2_MISC_CG, data);
-पूर्ण
+}
 
-अटल पूर्णांक mmhub_v1_7_set_घड़ीgating(काष्ठा amdgpu_device *adev,
-			       क्रमागत amd_घड़ीgating_state state)
-अणु
-	अगर (amdgpu_sriov_vf(adev))
-		वापस 0;
+static int mmhub_v1_7_set_clockgating(struct amdgpu_device *adev,
+			       enum amd_clockgating_state state)
+{
+	if (amdgpu_sriov_vf(adev))
+		return 0;
 
-	/* Change state only अगर MCCG support is enabled through driver */
-	अगर (adev->cg_flags & AMD_CG_SUPPORT_MC_MGCG)
-		mmhub_v1_7_update_medium_grain_घड़ी_gating(adev,
+	/* Change state only if MCCG support is enabled through driver */
+	if (adev->cg_flags & AMD_CG_SUPPORT_MC_MGCG)
+		mmhub_v1_7_update_medium_grain_clock_gating(adev,
 				state == AMD_CG_STATE_GATE);
 
-	/* Change state only अगर LS support is enabled through driver */
-	अगर (adev->cg_flags & AMD_CG_SUPPORT_MC_LS)
+	/* Change state only if LS support is enabled through driver */
+	if (adev->cg_flags & AMD_CG_SUPPORT_MC_LS)
 		mmhub_v1_7_update_medium_grain_light_sleep(adev,
 				state == AMD_CG_STATE_GATE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mmhub_v1_7_get_घड़ीgating(काष्ठा amdgpu_device *adev, u32 *flags)
-अणु
-	पूर्णांक data, data1;
+static void mmhub_v1_7_get_clockgating(struct amdgpu_device *adev, u32 *flags)
+{
+	int data, data1;
 
-	अगर (amdgpu_sriov_vf(adev))
+	if (amdgpu_sriov_vf(adev))
 		*flags = 0;
 
 	data = RREG32_SOC15(MMHUB, 0, regATC_L2_MISC_CG);
@@ -565,7 +564,7 @@
 	data1 = RREG32_SOC15(MMHUB, 0, regDAGB0_CNTL_MISC2);
 
 	/* AMD_CG_SUPPORT_MC_MGCG */
-	अगर ((data & ATC_L2_MISC_CG__ENABLE_MASK) &&
+	if ((data & ATC_L2_MISC_CG__ENABLE_MASK) &&
 	    !(data1 & (DAGB0_CNTL_MISC2__DISABLE_WRREQ_CG_MASK |
 		       DAGB0_CNTL_MISC2__DISABLE_WRRET_CG_MASK |
 		       DAGB0_CNTL_MISC2__DISABLE_RDREQ_CG_MASK |
@@ -575,760 +574,760 @@
 		*flags |= AMD_CG_SUPPORT_MC_MGCG;
 
 	/* AMD_CG_SUPPORT_MC_LS */
-	अगर (data & ATC_L2_MISC_CG__MEM_LS_ENABLE_MASK)
+	if (data & ATC_L2_MISC_CG__MEM_LS_ENABLE_MASK)
 		*flags |= AMD_CG_SUPPORT_MC_LS;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा soc15_ras_field_entry mmhub_v1_7_ras_fields[] = अणु
+static const struct soc15_ras_field_entry mmhub_v1_7_ras_fields[] = {
 	/* MMHUB Range 0 */
-	अणु "MMEA0_DRAMRD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT),
+	{ "MMEA0_DRAMRD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT, DRAMRD_CMDMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT, DRAMRD_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA0_DRAMWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT),
+	},
+	{ "MMEA0_DRAMWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT, DRAMWR_CMDMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT, DRAMWR_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA0_DRAMWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT),
+	},
+	{ "MMEA0_DRAMWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT, DRAMWR_DATAMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT, DRAMWR_DATAMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA0_RRET_TAGMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT),
+	},
+	{ "MMEA0_RRET_TAGMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT, RRET_TAGMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT, RRET_TAGMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA0_WRET_TAGMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT),
+	},
+	{ "MMEA0_WRET_TAGMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT, WRET_TAGMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT, WRET_TAGMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA0_IOWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT),
+	},
+	{ "MMEA0_IOWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT, IOWR_DATAMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT, IOWR_DATAMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA0_DRAMRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT),
+	},
+	{ "MMEA0_DRAMRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT, DRAMRD_PAGEMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA0_DRAMWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT),
+	},
+	{ "MMEA0_DRAMWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT, DRAMWR_PAGEMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA0_IORD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT),
+	},
+	{ "MMEA0_IORD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT, IORD_CMDMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA0_IOWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT),
+	},
+	{ "MMEA0_IOWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT, IOWR_CMDMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA0_GMIRD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT2),
+	},
+	{ "MMEA0_GMIRD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT2, GMIRD_CMDMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT2, GMIRD_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA0_GMIWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT2),
+	},
+	{ "MMEA0_GMIWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT2, GMIWR_CMDMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT2, GMIWR_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA0_GMIWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT2),
+	},
+	{ "MMEA0_GMIWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT2, GMIWR_DATAMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT2, GMIWR_DATAMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA0_GMIRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT2),
+	},
+	{ "MMEA0_GMIRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT2, GMIRD_PAGEMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA0_GMIWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT2),
+	},
+	{ "MMEA0_GMIWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT2, GMIWR_PAGEMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA0_MAM_D0MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT2),
+	},
+	{ "MMEA0_MAM_D0MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT2, MAM_D0MEM_SED_COUNT),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT2, MAM_D0MEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA0_MAM_D1MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT2),
+	},
+	{ "MMEA0_MAM_D1MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT2, MAM_D1MEM_SED_COUNT),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT2, MAM_D1MEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA0_MAM_D2MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT2),
+	},
+	{ "MMEA0_MAM_D2MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT2, MAM_D2MEM_SED_COUNT),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT2, MAM_D2MEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA0_MAM_D3MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT2),
+	},
+	{ "MMEA0_MAM_D3MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT2, MAM_D3MEM_SED_COUNT),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT2, MAM_D3MEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA0_DRAMRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT3),
+	},
+	{ "MMEA0_DRAMRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA0_EDC_CNT3, DRAMRD_PAGEMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA0_DRAMWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT3),
+	},
+	{ "MMEA0_DRAMWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA0_EDC_CNT3, DRAMWR_PAGEMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA0_IORD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT3),
+	},
+	{ "MMEA0_IORD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA0_EDC_CNT3, IORD_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA0_IOWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT3),
+	},
+	{ "MMEA0_IOWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA0_EDC_CNT3, IOWR_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA0_GMIRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT3),
+	},
+	{ "MMEA0_GMIRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA0_EDC_CNT3, GMIRD_PAGEMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA0_GMIWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT3),
+	},
+	{ "MMEA0_GMIWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA0_EDC_CNT3, GMIWR_PAGEMEM_DED_COUNT),
-	पूर्ण,
+	},
 
 	/* MMHUB Range 1 */
-	अणु "MMEA1_DRAMRD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT),
+	{ "MMEA1_DRAMRD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT, DRAMRD_CMDMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT, DRAMRD_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA1_DRAMWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT),
+	},
+	{ "MMEA1_DRAMWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT, DRAMWR_CMDMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT, DRAMWR_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA1_DRAMWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT),
+	},
+	{ "MMEA1_DRAMWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT, DRAMWR_DATAMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT, DRAMWR_DATAMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA1_RRET_TAGMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT),
+	},
+	{ "MMEA1_RRET_TAGMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT, RRET_TAGMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT, RRET_TAGMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA1_WRET_TAGMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT),
+	},
+	{ "MMEA1_WRET_TAGMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT, WRET_TAGMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT, WRET_TAGMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA1_IOWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT),
+	},
+	{ "MMEA1_IOWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT, IOWR_DATAMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT, IOWR_DATAMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA1_DRAMRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT),
+	},
+	{ "MMEA1_DRAMRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT, DRAMRD_PAGEMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA1_DRAMWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT),
+	},
+	{ "MMEA1_DRAMWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT, DRAMWR_PAGEMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA1_IORD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT),
+	},
+	{ "MMEA1_IORD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT, IORD_CMDMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA1_IOWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT),
+	},
+	{ "MMEA1_IOWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT, IOWR_CMDMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA1_GMIRD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT2),
+	},
+	{ "MMEA1_GMIRD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT2, GMIRD_CMDMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT2, GMIRD_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA1_GMIWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT2),
+	},
+	{ "MMEA1_GMIWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT2, GMIWR_CMDMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT2, GMIWR_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA1_GMIWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT2),
+	},
+	{ "MMEA1_GMIWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT2, GMIWR_DATAMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT2, GMIWR_DATAMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA1_GMIRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT2),
+	},
+	{ "MMEA1_GMIRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT2, GMIRD_PAGEMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA1_GMIWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT2),
+	},
+	{ "MMEA1_GMIWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT2, GMIWR_PAGEMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA1_MAM_D0MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT2),
+	},
+	{ "MMEA1_MAM_D0MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT2, MAM_D0MEM_SED_COUNT),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT2, MAM_D0MEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA1_MAM_D1MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT2),
+	},
+	{ "MMEA1_MAM_D1MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT2, MAM_D1MEM_SED_COUNT),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT2, MAM_D1MEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA1_MAM_D2MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT2),
+	},
+	{ "MMEA1_MAM_D2MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT2, MAM_D2MEM_SED_COUNT),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT2, MAM_D2MEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA1_MAM_D3MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT2),
+	},
+	{ "MMEA1_MAM_D3MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT2, MAM_D3MEM_SED_COUNT),
 	SOC15_REG_FIELD(MMEA1_EDC_CNT2, MAM_D3MEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA1_DRAMRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT3),
+	},
+	{ "MMEA1_DRAMRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA1_EDC_CNT3, DRAMRD_PAGEMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA1_DRAMWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT3),
+	},
+	{ "MMEA1_DRAMWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA1_EDC_CNT3, DRAMWR_PAGEMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA1_IORD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT3),
+	},
+	{ "MMEA1_IORD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA1_EDC_CNT3, IORD_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA1_IOWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT3),
+	},
+	{ "MMEA1_IOWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA1_EDC_CNT3, IOWR_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA1_GMIRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT3),
+	},
+	{ "MMEA1_GMIRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA1_EDC_CNT3, GMIRD_PAGEMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA1_GMIWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT3),
+	},
+	{ "MMEA1_GMIWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA1_EDC_CNT3, GMIWR_PAGEMEM_DED_COUNT),
-	पूर्ण,
+	},
 
 	/* MMHAB Range 2*/
-	अणु "MMEA2_DRAMRD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT),
+	{ "MMEA2_DRAMRD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT, DRAMRD_CMDMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT, DRAMRD_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA2_DRAMWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT),
+	},
+	{ "MMEA2_DRAMWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT, DRAMWR_CMDMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT, DRAMWR_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA2_DRAMWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT),
+	},
+	{ "MMEA2_DRAMWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT, DRAMWR_DATAMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT, DRAMWR_DATAMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA2_RRET_TAGMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT),
+	},
+	{ "MMEA2_RRET_TAGMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT, RRET_TAGMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT, RRET_TAGMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA2_WRET_TAGMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT),
+	},
+	{ "MMEA2_WRET_TAGMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT, WRET_TAGMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT, WRET_TAGMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA2_IOWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT),
+	},
+	{ "MMEA2_IOWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT, IOWR_DATAMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT, IOWR_DATAMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA2_DRAMRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT),
+	},
+	{ "MMEA2_DRAMRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT, DRAMRD_PAGEMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA2_DRAMWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT),
+	},
+	{ "MMEA2_DRAMWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT, DRAMWR_PAGEMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA2_IORD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT),
+	},
+	{ "MMEA2_IORD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT, IORD_CMDMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA2_IOWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT),
+	},
+	{ "MMEA2_IOWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT, IOWR_CMDMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA2_GMIRD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT2),
+	},
+	{ "MMEA2_GMIRD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT2, GMIRD_CMDMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT2, GMIRD_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA2_GMIWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT2),
+	},
+	{ "MMEA2_GMIWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT2, GMIWR_CMDMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT2, GMIWR_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA2_GMIWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT2),
+	},
+	{ "MMEA2_GMIWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT2, GMIWR_DATAMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT2, GMIWR_DATAMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA2_GMIRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT2),
+	},
+	{ "MMEA2_GMIRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT2, GMIRD_PAGEMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA2_GMIWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT2),
+	},
+	{ "MMEA2_GMIWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT2, GMIWR_PAGEMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA2_MAM_D0MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT2),
+	},
+	{ "MMEA2_MAM_D0MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT2, MAM_D0MEM_SED_COUNT),
 	SOC15_REG_FIELD(MMEA0_EDC_CNT2, MAM_D0MEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA2_MAM_D1MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT2),
+	},
+	{ "MMEA2_MAM_D1MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT2, MAM_D1MEM_SED_COUNT),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT2, MAM_D1MEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA2_MAM_D2MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT2),
+	},
+	{ "MMEA2_MAM_D2MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT2, MAM_D2MEM_SED_COUNT),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT2, MAM_D2MEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA2_MAM_D3MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT2),
+	},
+	{ "MMEA2_MAM_D3MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT2, MAM_D3MEM_SED_COUNT),
 	SOC15_REG_FIELD(MMEA2_EDC_CNT2, MAM_D3MEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA2_DRAMRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT3),
+	},
+	{ "MMEA2_DRAMRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA2_EDC_CNT3, DRAMRD_PAGEMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA2_DRAMWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT3),
+	},
+	{ "MMEA2_DRAMWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA2_EDC_CNT3, DRAMWR_PAGEMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA2_IORD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT3),
+	},
+	{ "MMEA2_IORD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA2_EDC_CNT3, IORD_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA2_IOWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT3),
+	},
+	{ "MMEA2_IOWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA2_EDC_CNT3, IOWR_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA2_GMIRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT3),
+	},
+	{ "MMEA2_GMIRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA2_EDC_CNT3, GMIRD_PAGEMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA2_GMIWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT3),
+	},
+	{ "MMEA2_GMIWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA2_EDC_CNT3, GMIWR_PAGEMEM_DED_COUNT),
-	पूर्ण,
+	},
 
 	/* MMHUB Rang 3 */
-	अणु "MMEA3_DRAMRD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT),
+	{ "MMEA3_DRAMRD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT, DRAMRD_CMDMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT, DRAMRD_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA3_DRAMWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT),
+	},
+	{ "MMEA3_DRAMWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT, DRAMWR_CMDMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT, DRAMWR_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA3_DRAMWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT),
+	},
+	{ "MMEA3_DRAMWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT, DRAMWR_DATAMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT, DRAMWR_DATAMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA3_RRET_TAGMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT),
+	},
+	{ "MMEA3_RRET_TAGMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT, RRET_TAGMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT, RRET_TAGMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA3_WRET_TAGMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT),
+	},
+	{ "MMEA3_WRET_TAGMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT, WRET_TAGMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT, WRET_TAGMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA3_IOWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT),
+	},
+	{ "MMEA3_IOWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT),
         SOC15_REG_FIELD(MMEA3_EDC_CNT, IOWR_DATAMEM_SEC_COUNT),
         SOC15_REG_FIELD(MMEA3_EDC_CNT, IOWR_DATAMEM_DED_COUNT),
-        पूर्ण,
-	अणु "MMEA3_DRAMRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT),
+        },
+	{ "MMEA3_DRAMRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT, DRAMRD_PAGEMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA3_DRAMWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT),
+	},
+	{ "MMEA3_DRAMWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT, DRAMWR_PAGEMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA3_IORD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT),
+	},
+	{ "MMEA3_IORD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT, IORD_CMDMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA3_IOWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT),
+	},
+	{ "MMEA3_IOWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT, IOWR_CMDMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA3_GMIRD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT2),
+	},
+	{ "MMEA3_GMIRD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT2, GMIRD_CMDMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT2, GMIRD_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA3_GMIWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT2),
+	},
+	{ "MMEA3_GMIWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT2, GMIWR_CMDMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT2, GMIWR_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA3_GMIWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT2),
+	},
+	{ "MMEA3_GMIWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT2, GMIWR_DATAMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT2, GMIWR_DATAMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA3_GMIRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT2),
+	},
+	{ "MMEA3_GMIRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT2, GMIRD_PAGEMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA3_GMIWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT2),
+	},
+	{ "MMEA3_GMIWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT2, GMIWR_PAGEMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA3_MAM_D0MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT2),
+	},
+	{ "MMEA3_MAM_D0MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT2, MAM_D0MEM_SED_COUNT),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT2, MAM_D0MEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA3_MAM_D1MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT2),
+	},
+	{ "MMEA3_MAM_D1MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT2, MAM_D1MEM_SED_COUNT),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT2, MAM_D1MEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA3_MAM_D2MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT2),
+	},
+	{ "MMEA3_MAM_D2MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT2, MAM_D2MEM_SED_COUNT),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT2, MAM_D2MEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA3_MAM_D3MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT2),
+	},
+	{ "MMEA3_MAM_D3MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT2, MAM_D3MEM_SED_COUNT),
 	SOC15_REG_FIELD(MMEA3_EDC_CNT2, MAM_D3MEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA3_DRAMRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT3),
+	},
+	{ "MMEA3_DRAMRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA3_EDC_CNT3, DRAMRD_PAGEMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA3_DRAMWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT3),
+	},
+	{ "MMEA3_DRAMWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA3_EDC_CNT3, DRAMWR_PAGEMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA3_IORD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT3),
+	},
+	{ "MMEA3_IORD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA3_EDC_CNT3, IORD_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA3_IOWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT3),
+	},
+	{ "MMEA3_IOWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA3_EDC_CNT3, IOWR_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA3_GMIRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT3),
+	},
+	{ "MMEA3_GMIRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA3_EDC_CNT3, GMIRD_PAGEMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA3_GMIWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT3),
+	},
+	{ "MMEA3_GMIWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA3_EDC_CNT3, GMIWR_PAGEMEM_DED_COUNT),
-	पूर्ण,
+	},
 
 	/* MMHUB Range 4 */
-	अणु "MMEA4_DRAMRD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT),
+	{ "MMEA4_DRAMRD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT, DRAMRD_CMDMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT, DRAMRD_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA4_DRAMWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT),
+	},
+	{ "MMEA4_DRAMWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT, DRAMWR_CMDMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT, DRAMWR_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA4_DRAMWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT),
+	},
+	{ "MMEA4_DRAMWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT, DRAMWR_DATAMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT, DRAMWR_DATAMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA4_RRET_TAGMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT),
+	},
+	{ "MMEA4_RRET_TAGMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT, RRET_TAGMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT, RRET_TAGMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA4_WRET_TAGMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT),
+	},
+	{ "MMEA4_WRET_TAGMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT, WRET_TAGMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT, WRET_TAGMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA4_IOWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT),
+	},
+	{ "MMEA4_IOWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT, IOWR_DATAMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT, IOWR_DATAMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA4_DRAMRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT),
+	},
+	{ "MMEA4_DRAMRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT, DRAMRD_PAGEMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA4_DRAMWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT),
+	},
+	{ "MMEA4_DRAMWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT, DRAMWR_PAGEMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA4_IORD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT),
+	},
+	{ "MMEA4_IORD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT, IORD_CMDMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA4_IOWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT),
+	},
+	{ "MMEA4_IOWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT, IOWR_CMDMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA4_GMIRD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT2),
+	},
+	{ "MMEA4_GMIRD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT2, GMIRD_CMDMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT2, GMIRD_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA4_GMIWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT2),
+	},
+	{ "MMEA4_GMIWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT2, GMIWR_CMDMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT2, GMIWR_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA4_GMIWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT2),
+	},
+	{ "MMEA4_GMIWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT2, GMIWR_DATAMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT2, GMIWR_DATAMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA4_GMIRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT2),
+	},
+	{ "MMEA4_GMIRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT2, GMIRD_PAGEMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA4_GMIWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT2),
+	},
+	{ "MMEA4_GMIWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT2, GMIWR_PAGEMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA4_MAM_D0MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT2),
+	},
+	{ "MMEA4_MAM_D0MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT2, MAM_D0MEM_SED_COUNT),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT2, MAM_D0MEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA4_MAM_D1MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT2),
+	},
+	{ "MMEA4_MAM_D1MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT2, MAM_D1MEM_SED_COUNT),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT2, MAM_D1MEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA4_MAM_D2MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT2),
+	},
+	{ "MMEA4_MAM_D2MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT2, MAM_D2MEM_SED_COUNT),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT2, MAM_D2MEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA4_MAM_D3MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT2),
+	},
+	{ "MMEA4_MAM_D3MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT2, MAM_D3MEM_SED_COUNT),
 	SOC15_REG_FIELD(MMEA4_EDC_CNT2, MAM_D3MEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA4_DRAMRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT3),
+	},
+	{ "MMEA4_DRAMRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA4_EDC_CNT3, DRAMRD_PAGEMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA4_DRAMWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT3),
+	},
+	{ "MMEA4_DRAMWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA4_EDC_CNT3, DRAMWR_PAGEMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA4_IORD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT3),
+	},
+	{ "MMEA4_IORD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA4_EDC_CNT3, IORD_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA4_IOWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT3),
+	},
+	{ "MMEA4_IOWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA4_EDC_CNT3, IOWR_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA4_GMIRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT3),
+	},
+	{ "MMEA4_GMIRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA4_EDC_CNT3, GMIRD_PAGEMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA4_GMIWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT3),
+	},
+	{ "MMEA4_GMIWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA4_EDC_CNT3, GMIWR_PAGEMEM_DED_COUNT),
-	पूर्ण,
+	},
 
 	/* MMHUAB Range 5 */
-	अणु "MMEA5_DRAMRD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT),
+	{ "MMEA5_DRAMRD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT, DRAMRD_CMDMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT, DRAMRD_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA5_DRAMWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT),
+	},
+	{ "MMEA5_DRAMWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT, DRAMWR_CMDMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT, DRAMWR_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA5_DRAMWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT),
+	},
+	{ "MMEA5_DRAMWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT, DRAMWR_DATAMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT, DRAMWR_DATAMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA5_RRET_TAGMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT),
+	},
+	{ "MMEA5_RRET_TAGMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT, RRET_TAGMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT, RRET_TAGMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA5_WRET_TAGMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT),
+	},
+	{ "MMEA5_WRET_TAGMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT, WRET_TAGMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT, WRET_TAGMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA5_IOWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT),
+	},
+	{ "MMEA5_IOWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT, IOWR_DATAMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT, IOWR_DATAMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA5_DRAMRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT),
+	},
+	{ "MMEA5_DRAMRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT, DRAMRD_PAGEMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA5_DRAMWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT),
+	},
+	{ "MMEA5_DRAMWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT, DRAMWR_PAGEMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA5_IORD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT),
+	},
+	{ "MMEA5_IORD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT, IORD_CMDMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA5_IOWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT),
+	},
+	{ "MMEA5_IOWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT, IOWR_CMDMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA5_GMIRD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT2),
+	},
+	{ "MMEA5_GMIRD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT2, GMIRD_CMDMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT2, GMIRD_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA5_GMIWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT2),
+	},
+	{ "MMEA5_GMIWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT2, GMIWR_CMDMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT2, GMIWR_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA5_GMIWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT2),
+	},
+	{ "MMEA5_GMIWR_DATAMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT2, GMIWR_DATAMEM_SEC_COUNT),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT2, GMIWR_DATAMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA5_GMIRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT2),
+	},
+	{ "MMEA5_GMIRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT2, GMIRD_PAGEMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA5_GMIWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT2),
+	},
+	{ "MMEA5_GMIWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT2, GMIWR_PAGEMEM_SED_COUNT),
 	0, 0,
-	पूर्ण,
-	अणु "MMEA5_MAM_D0MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT2),
+	},
+	{ "MMEA5_MAM_D0MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT2, MAM_D0MEM_SED_COUNT),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT2, MAM_D0MEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA5_MAM_D1MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT2),
+	},
+	{ "MMEA5_MAM_D1MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT2, MAM_D1MEM_SED_COUNT),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT2, MAM_D1MEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA5_MAM_D2MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT2),
+	},
+	{ "MMEA5_MAM_D2MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT2, MAM_D2MEM_SED_COUNT),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT2, MAM_D2MEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA5_MAM_D3MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT2),
+	},
+	{ "MMEA5_MAM_D3MEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT2),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT2, MAM_D3MEM_SED_COUNT),
 	SOC15_REG_FIELD(MMEA5_EDC_CNT2, MAM_D3MEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA5_DRAMRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT3),
+	},
+	{ "MMEA5_DRAMRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA5_EDC_CNT3, DRAMRD_PAGEMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA5_DRAMWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT3),
+	},
+	{ "MMEA5_DRAMWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA5_EDC_CNT3, DRAMWR_PAGEMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA5_IORD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT3),
+	},
+	{ "MMEA5_IORD_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA5_EDC_CNT3, IORD_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA5_IOWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT3),
+	},
+	{ "MMEA5_IOWR_CMDMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA5_EDC_CNT3, IOWR_CMDMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA5_GMIRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT3),
+	},
+	{ "MMEA5_GMIRD_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA5_EDC_CNT3, GMIRD_PAGEMEM_DED_COUNT),
-	पूर्ण,
-	अणु "MMEA5_GMIWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT3),
+	},
+	{ "MMEA5_GMIWR_PAGEMEM", SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT3),
 	0, 0,
 	SOC15_REG_FIELD(MMEA5_EDC_CNT3, GMIWR_PAGEMEM_DED_COUNT),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा soc15_reg_entry mmhub_v1_7_edc_cnt_regs[] = अणु
-	अणु SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT), 0, 0, 0 पूर्ण,
-	अणु SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT2), 0, 0, 0 पूर्ण,
-	अणु SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT3), 0, 0, 0 पूर्ण,
-	अणु SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT), 0, 0, 0 पूर्ण,
-	अणु SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT2), 0, 0, 0 पूर्ण,
-	अणु SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT3), 0, 0, 0 पूर्ण,
-	अणु SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT), 0, 0, 0 पूर्ण,
-	अणु SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT2), 0, 0, 0 पूर्ण,
-	अणु SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT3), 0, 0, 0 पूर्ण,
-	अणु SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT), 0, 0, 0 पूर्ण,
-	अणु SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT2), 0, 0, 0 पूर्ण,
-	अणु SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT3), 0, 0, 0 पूर्ण,
-	अणु SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT), 0, 0, 0 पूर्ण,
-	अणु SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT2), 0, 0, 0 पूर्ण,
-	अणु SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT3), 0, 0, 0 पूर्ण,
-	अणु SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT), 0, 0, 0 पूर्ण,
-	अणु SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT2), 0, 0, 0 पूर्ण,
-	अणु SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT3), 0, 0, 0 पूर्ण,
-पूर्ण;
+static const struct soc15_reg_entry mmhub_v1_7_edc_cnt_regs[] = {
+	{ SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT), 0, 0, 0 },
+	{ SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT2), 0, 0, 0 },
+	{ SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_EDC_CNT3), 0, 0, 0 },
+	{ SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT), 0, 0, 0 },
+	{ SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT2), 0, 0, 0 },
+	{ SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_EDC_CNT3), 0, 0, 0 },
+	{ SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT), 0, 0, 0 },
+	{ SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT2), 0, 0, 0 },
+	{ SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_EDC_CNT3), 0, 0, 0 },
+	{ SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT), 0, 0, 0 },
+	{ SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT2), 0, 0, 0 },
+	{ SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_EDC_CNT3), 0, 0, 0 },
+	{ SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT), 0, 0, 0 },
+	{ SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT2), 0, 0, 0 },
+	{ SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_EDC_CNT3), 0, 0, 0 },
+	{ SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT), 0, 0, 0 },
+	{ SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT2), 0, 0, 0 },
+	{ SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_EDC_CNT3), 0, 0, 0 },
+};
 
-अटल पूर्णांक mmhub_v1_7_get_ras_error_count(काष्ठा amdgpu_device *adev,
-					  स्थिर काष्ठा soc15_reg_entry *reg,
-					  uपूर्णांक32_t value,
-					  uपूर्णांक32_t *sec_count,
-					  uपूर्णांक32_t *ded_count)
-अणु
-	uपूर्णांक32_t i;
-	uपूर्णांक32_t sec_cnt, ded_cnt;
+static int mmhub_v1_7_get_ras_error_count(struct amdgpu_device *adev,
+					  const struct soc15_reg_entry *reg,
+					  uint32_t value,
+					  uint32_t *sec_count,
+					  uint32_t *ded_count)
+{
+	uint32_t i;
+	uint32_t sec_cnt, ded_cnt;
 
-	क्रम (i = 0; i < ARRAY_SIZE(mmhub_v1_7_ras_fields); i++) अणु
-		अगर(mmhub_v1_7_ras_fields[i].reg_offset != reg->reg_offset)
-			जारी;
+	for (i = 0; i < ARRAY_SIZE(mmhub_v1_7_ras_fields); i++) {
+		if(mmhub_v1_7_ras_fields[i].reg_offset != reg->reg_offset)
+			continue;
 
 		sec_cnt = (value &
 				mmhub_v1_7_ras_fields[i].sec_count_mask) >>
-				mmhub_v1_7_ras_fields[i].sec_count_shअगरt;
-		अगर (sec_cnt) अणु
+				mmhub_v1_7_ras_fields[i].sec_count_shift;
+		if (sec_cnt) {
 			dev_info(adev->dev, "MMHUB SubBlock %s, SEC %d\n",
 				 mmhub_v1_7_ras_fields[i].name,
 				 sec_cnt);
 			*sec_count += sec_cnt;
-		पूर्ण
+		}
 
 		ded_cnt = (value &
 				mmhub_v1_7_ras_fields[i].ded_count_mask) >>
-				mmhub_v1_7_ras_fields[i].ded_count_shअगरt;
-		अगर (ded_cnt) अणु
+				mmhub_v1_7_ras_fields[i].ded_count_shift;
+		if (ded_cnt) {
 			dev_info(adev->dev, "MMHUB SubBlock %s, DED %d\n",
 				 mmhub_v1_7_ras_fields[i].name,
 				 ded_cnt);
 			*ded_count += ded_cnt;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mmhub_v1_7_query_ras_error_count(काष्ठा amdgpu_device *adev,
-					     व्योम *ras_error_status)
-अणु
-	काष्ठा ras_err_data *err_data = (काष्ठा ras_err_data *)ras_error_status;
-	uपूर्णांक32_t sec_count = 0, ded_count = 0;
-	uपूर्णांक32_t i;
-	uपूर्णांक32_t reg_value;
+static void mmhub_v1_7_query_ras_error_count(struct amdgpu_device *adev,
+					     void *ras_error_status)
+{
+	struct ras_err_data *err_data = (struct ras_err_data *)ras_error_status;
+	uint32_t sec_count = 0, ded_count = 0;
+	uint32_t i;
+	uint32_t reg_value;
 
 	err_data->ue_count = 0;
 	err_data->ce_count = 0;
 
-	क्रम (i = 0; i < ARRAY_SIZE(mmhub_v1_7_edc_cnt_regs); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(mmhub_v1_7_edc_cnt_regs); i++) {
 		reg_value =
 			RREG32(SOC15_REG_ENTRY_OFFSET(mmhub_v1_7_edc_cnt_regs[i]));
-		अगर (reg_value)
+		if (reg_value)
 			mmhub_v1_7_get_ras_error_count(adev, &mmhub_v1_7_edc_cnt_regs[i],
 				reg_value, &sec_count, &ded_count);
-	पूर्ण
+	}
 
 	err_data->ce_count += sec_count;
 	err_data->ue_count += ded_count;
-पूर्ण
+}
 
-अटल व्योम mmhub_v1_7_reset_ras_error_count(काष्ठा amdgpu_device *adev)
-अणु
-	uपूर्णांक32_t i;
+static void mmhub_v1_7_reset_ras_error_count(struct amdgpu_device *adev)
+{
+	uint32_t i;
 
-	/* ग_लिखो 0 to reset the edc counters */
-	अगर (amdgpu_ras_is_supported(adev, AMDGPU_RAS_BLOCK__MMHUB)) अणु
-		क्रम (i = 0; i < ARRAY_SIZE(mmhub_v1_7_edc_cnt_regs); i++)
+	/* write 0 to reset the edc counters */
+	if (amdgpu_ras_is_supported(adev, AMDGPU_RAS_BLOCK__MMHUB)) {
+		for (i = 0; i < ARRAY_SIZE(mmhub_v1_7_edc_cnt_regs); i++)
 			WREG32(SOC15_REG_ENTRY_OFFSET(mmhub_v1_7_edc_cnt_regs[i]), 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा soc15_reg_entry mmhub_v1_7_ea_err_status_regs[] = अणु
-	अणु SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_ERR_STATUS), 0, 0, 0 पूर्ण,
-	अणु SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_ERR_STATUS), 0, 0, 0 पूर्ण,
-	अणु SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_ERR_STATUS), 0, 0, 0 पूर्ण,
-	अणु SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_ERR_STATUS), 0, 0, 0 पूर्ण,
-	अणु SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_ERR_STATUS), 0, 0, 0 पूर्ण,
-	अणु SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_ERR_STATUS), 0, 0, 0 पूर्ण,
-पूर्ण;
+static const struct soc15_reg_entry mmhub_v1_7_ea_err_status_regs[] = {
+	{ SOC15_REG_ENTRY(MMHUB, 0, regMMEA0_ERR_STATUS), 0, 0, 0 },
+	{ SOC15_REG_ENTRY(MMHUB, 0, regMMEA1_ERR_STATUS), 0, 0, 0 },
+	{ SOC15_REG_ENTRY(MMHUB, 0, regMMEA2_ERR_STATUS), 0, 0, 0 },
+	{ SOC15_REG_ENTRY(MMHUB, 0, regMMEA3_ERR_STATUS), 0, 0, 0 },
+	{ SOC15_REG_ENTRY(MMHUB, 0, regMMEA4_ERR_STATUS), 0, 0, 0 },
+	{ SOC15_REG_ENTRY(MMHUB, 0, regMMEA5_ERR_STATUS), 0, 0, 0 },
+};
 
-अटल व्योम mmhub_v1_7_query_ras_error_status(काष्ठा amdgpu_device *adev)
-अणु
-	पूर्णांक i;
-	uपूर्णांक32_t reg_value;
+static void mmhub_v1_7_query_ras_error_status(struct amdgpu_device *adev)
+{
+	int i;
+	uint32_t reg_value;
 
-	अगर (!amdgpu_ras_is_supported(adev, AMDGPU_RAS_BLOCK__MMHUB))
-		वापस;
+	if (!amdgpu_ras_is_supported(adev, AMDGPU_RAS_BLOCK__MMHUB))
+		return;
 
-	क्रम (i = 0; i < ARRAY_SIZE(mmhub_v1_7_ea_err_status_regs); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(mmhub_v1_7_ea_err_status_regs); i++) {
 		reg_value =
 			RREG32(SOC15_REG_ENTRY_OFFSET(mmhub_v1_7_ea_err_status_regs[i]));
-		अगर (REG_GET_FIELD(reg_value, MMEA0_ERR_STATUS, SDP_RDRSP_STATUS) ||
+		if (REG_GET_FIELD(reg_value, MMEA0_ERR_STATUS, SDP_RDRSP_STATUS) ||
 		    REG_GET_FIELD(reg_value, MMEA0_ERR_STATUS, SDP_WRRSP_STATUS) ||
-		    REG_GET_FIELD(reg_value, MMEA0_ERR_STATUS, SDP_RDRSP_DATAPARITY_ERROR)) अणु
+		    REG_GET_FIELD(reg_value, MMEA0_ERR_STATUS, SDP_RDRSP_DATAPARITY_ERROR)) {
 			dev_warn(adev->dev, "MMHUB EA err detected at instance: %d, status: 0x%x!\n",
 					i, reg_value);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-स्थिर काष्ठा amdgpu_mmhub_ras_funcs mmhub_v1_7_ras_funcs = अणु
+const struct amdgpu_mmhub_ras_funcs mmhub_v1_7_ras_funcs = {
 	.ras_late_init = amdgpu_mmhub_ras_late_init,
 	.ras_fini = amdgpu_mmhub_ras_fini,
 	.query_ras_error_count = mmhub_v1_7_query_ras_error_count,
 	.reset_ras_error_count = mmhub_v1_7_reset_ras_error_count,
 	.query_ras_error_status = mmhub_v1_7_query_ras_error_status,
-पूर्ण;
+};
 
-स्थिर काष्ठा amdgpu_mmhub_funcs mmhub_v1_7_funcs = अणु
+const struct amdgpu_mmhub_funcs mmhub_v1_7_funcs = {
 	.get_fb_location = mmhub_v1_7_get_fb_location,
 	.init = mmhub_v1_7_init,
 	.gart_enable = mmhub_v1_7_gart_enable,
-	.set_fault_enable_शेष = mmhub_v1_7_set_fault_enable_शेष,
+	.set_fault_enable_default = mmhub_v1_7_set_fault_enable_default,
 	.gart_disable = mmhub_v1_7_gart_disable,
-	.set_घड़ीgating = mmhub_v1_7_set_घड़ीgating,
-	.get_घड़ीgating = mmhub_v1_7_get_घड़ीgating,
+	.set_clockgating = mmhub_v1_7_set_clockgating,
+	.get_clockgating = mmhub_v1_7_get_clockgating,
 	.setup_vm_pt_regs = mmhub_v1_7_setup_vm_pt_regs,
-पूर्ण;
+};

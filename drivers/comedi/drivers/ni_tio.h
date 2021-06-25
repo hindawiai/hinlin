@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Header file क्रम NI general purpose counter support code (ni_tio.c)
+ * Header file for NI general purpose counter support code (ni_tio.c)
  *
  * COMEDI - Linux Control and Measurement Device Interface
  */
 
-#अगर_अघोषित _COMEDI_NI_TIO_H
-#घोषणा _COMEDI_NI_TIO_H
+#ifndef _COMEDI_NI_TIO_H
+#define _COMEDI_NI_TIO_H
 
-#समावेश "../comedidev.h"
+#include "../comedidev.h"
 
-क्रमागत ni_gpct_रेजिस्टर अणु
+enum ni_gpct_register {
 	NITIO_G0_AUTO_INC,
 	NITIO_G1_AUTO_INC,
 	NITIO_G2_AUTO_INC,
@@ -83,100 +82,100 @@
 	NITIO_G2_INT_ENA,
 	NITIO_G3_INT_ENA,
 	NITIO_NUM_REGS,
-पूर्ण;
+};
 
-क्रमागत ni_gpct_variant अणु
+enum ni_gpct_variant {
 	ni_gpct_variant_e_series,
 	ni_gpct_variant_m_series,
 	ni_gpct_variant_660x
-पूर्ण;
+};
 
-काष्ठा ni_gpct अणु
-	काष्ठा ni_gpct_device *counter_dev;
-	अचिन्हित पूर्णांक counter_index;
-	अचिन्हित पूर्णांक chip_index;
-	u64 घड़ी_period_ps;	/* घड़ी period in picoseconds */
-	काष्ठा mite_channel *mite_chan;
+struct ni_gpct {
+	struct ni_gpct_device *counter_dev;
+	unsigned int counter_index;
+	unsigned int chip_index;
+	u64 clock_period_ps;	/* clock period in picoseconds */
+	struct mite_channel *mite_chan;
 	spinlock_t lock;	/* protects 'mite_chan' */
-पूर्ण;
+};
 
-काष्ठा ni_gpct_device अणु
-	काष्ठा comedi_device *dev;
-	व्योम (*ग_लिखो)(काष्ठा ni_gpct *counter, अचिन्हित पूर्णांक value,
-		      क्रमागत ni_gpct_रेजिस्टर);
-	अचिन्हित पूर्णांक (*पढ़ो)(काष्ठा ni_gpct *counter, क्रमागत ni_gpct_रेजिस्टर);
-	क्रमागत ni_gpct_variant variant;
-	काष्ठा ni_gpct *counters;
-	अचिन्हित पूर्णांक num_counters;
-	अचिन्हित पूर्णांक num_chips;
-	अचिन्हित पूर्णांक (*regs)[NITIO_NUM_REGS]; /* [num_chips][NITIO_NUM_REGS] */
+struct ni_gpct_device {
+	struct comedi_device *dev;
+	void (*write)(struct ni_gpct *counter, unsigned int value,
+		      enum ni_gpct_register);
+	unsigned int (*read)(struct ni_gpct *counter, enum ni_gpct_register);
+	enum ni_gpct_variant variant;
+	struct ni_gpct *counters;
+	unsigned int num_counters;
+	unsigned int num_chips;
+	unsigned int (*regs)[NITIO_NUM_REGS]; /* [num_chips][NITIO_NUM_REGS] */
 	spinlock_t regs_lock;		/* protects 'regs' */
-	स्थिर काष्ठा ni_route_tables *routing_tables; /* link to routes */
-पूर्ण;
+	const struct ni_route_tables *routing_tables; /* link to routes */
+};
 
-काष्ठा ni_gpct_device *
-ni_gpct_device_स्थिरruct(काष्ठा comedi_device *dev,
-			 व्योम (*ग_लिखो)(काष्ठा ni_gpct *counter,
-				       अचिन्हित पूर्णांक value,
-				       क्रमागत ni_gpct_रेजिस्टर),
-			 अचिन्हित पूर्णांक (*पढ़ो)(काष्ठा ni_gpct *counter,
-					      क्रमागत ni_gpct_रेजिस्टर),
-			 क्रमागत ni_gpct_variant,
-			 अचिन्हित पूर्णांक num_counters,
-			 अचिन्हित पूर्णांक counters_per_chip,
-			 स्थिर काष्ठा ni_route_tables *routing_tables);
-व्योम ni_gpct_device_destroy(काष्ठा ni_gpct_device *counter_dev);
-व्योम ni_tio_init_counter(काष्ठा ni_gpct *counter);
-पूर्णांक ni_tio_insn_पढ़ो(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s,
-		     काष्ठा comedi_insn *insn, अचिन्हित पूर्णांक *data);
-पूर्णांक ni_tio_insn_config(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s,
-		       काष्ठा comedi_insn *insn, अचिन्हित पूर्णांक *data);
-पूर्णांक ni_tio_insn_ग_लिखो(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s,
-		      काष्ठा comedi_insn *insn, अचिन्हित पूर्णांक *data);
-पूर्णांक ni_tio_cmd(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s);
-पूर्णांक ni_tio_cmdtest(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s,
-		   काष्ठा comedi_cmd *cmd);
-पूर्णांक ni_tio_cancel(काष्ठा ni_gpct *counter);
-व्योम ni_tio_handle_पूर्णांकerrupt(काष्ठा ni_gpct *counter,
-			     काष्ठा comedi_subdevice *s);
-व्योम ni_tio_set_mite_channel(काष्ठा ni_gpct *counter,
-			     काष्ठा mite_channel *mite_chan);
-व्योम ni_tio_acknowledge(काष्ठा ni_gpct *counter);
+struct ni_gpct_device *
+ni_gpct_device_construct(struct comedi_device *dev,
+			 void (*write)(struct ni_gpct *counter,
+				       unsigned int value,
+				       enum ni_gpct_register),
+			 unsigned int (*read)(struct ni_gpct *counter,
+					      enum ni_gpct_register),
+			 enum ni_gpct_variant,
+			 unsigned int num_counters,
+			 unsigned int counters_per_chip,
+			 const struct ni_route_tables *routing_tables);
+void ni_gpct_device_destroy(struct ni_gpct_device *counter_dev);
+void ni_tio_init_counter(struct ni_gpct *counter);
+int ni_tio_insn_read(struct comedi_device *dev, struct comedi_subdevice *s,
+		     struct comedi_insn *insn, unsigned int *data);
+int ni_tio_insn_config(struct comedi_device *dev, struct comedi_subdevice *s,
+		       struct comedi_insn *insn, unsigned int *data);
+int ni_tio_insn_write(struct comedi_device *dev, struct comedi_subdevice *s,
+		      struct comedi_insn *insn, unsigned int *data);
+int ni_tio_cmd(struct comedi_device *dev, struct comedi_subdevice *s);
+int ni_tio_cmdtest(struct comedi_device *dev, struct comedi_subdevice *s,
+		   struct comedi_cmd *cmd);
+int ni_tio_cancel(struct ni_gpct *counter);
+void ni_tio_handle_interrupt(struct ni_gpct *counter,
+			     struct comedi_subdevice *s);
+void ni_tio_set_mite_channel(struct ni_gpct *counter,
+			     struct mite_channel *mite_chan);
+void ni_tio_acknowledge(struct ni_gpct *counter);
 
 /*
- * Retrieves the रेजिस्टर value of the current source of the output selector क्रम
+ * Retrieves the register value of the current source of the output selector for
  * the given destination.
  *
- * If the terminal क्रम the destination is not alपढ़ोy configured as an output,
- * this function वापसs -EINVAL as error.
+ * If the terminal for the destination is not already configured as an output,
+ * this function returns -EINVAL as error.
  *
- * Return: the रेजिस्टर value of the destination output selector;
- *         -EINVAL अगर terminal is not configured क्रम output.
+ * Return: the register value of the destination output selector;
+ *         -EINVAL if terminal is not configured for output.
  */
-पूर्णांक ni_tio_get_routing(काष्ठा ni_gpct_device *counter_dev,
-		       अचिन्हित पूर्णांक destination);
+int ni_tio_get_routing(struct ni_gpct_device *counter_dev,
+		       unsigned int destination);
 
 /*
- * Sets the रेजिस्टर value of the selector MUX क्रम the given destination.
- * @counter_dev:Poपूर्णांकer to general counter device.
- * @destination:Device-global identअगरier of route destination.
- * @रेजिस्टर_value:
+ * Sets the register value of the selector MUX for the given destination.
+ * @counter_dev:Pointer to general counter device.
+ * @destination:Device-global identifier of route destination.
+ * @register_value:
  *		The first several bits of this value should store the desired
- *		value to ग_लिखो to the रेजिस्टर.  All other bits are क्रम
- *		transmitting inक्रमmation that modअगरy the mode of the particular
+ *		value to write to the register.  All other bits are for
+ *		transmitting information that modify the mode of the particular
  *		destination/gate.  These mode bits might include a bitwise or of
  *		CR_INVERT and CR_EDGE.  Note that the calling function should
- *		have alपढ़ोy validated the correctness of this value.
+ *		have already validated the correctness of this value.
  */
-पूर्णांक ni_tio_set_routing(काष्ठा ni_gpct_device *counter_dev,
-		       अचिन्हित पूर्णांक destination, अचिन्हित पूर्णांक रेजिस्टर_value);
+int ni_tio_set_routing(struct ni_gpct_device *counter_dev,
+		       unsigned int destination, unsigned int register_value);
 
 /*
- * Sets the given destination MUX to its शेष value or disable it.
+ * Sets the given destination MUX to its default value or disable it.
  *
- * Return: 0 अगर successful; -EINVAL अगर terminal is unknown.
+ * Return: 0 if successful; -EINVAL if terminal is unknown.
  */
-पूर्णांक ni_tio_unset_routing(काष्ठा ni_gpct_device *counter_dev,
-			 अचिन्हित पूर्णांक destination);
+int ni_tio_unset_routing(struct ni_gpct_device *counter_dev,
+			 unsigned int destination);
 
-#पूर्ण_अगर /* _COMEDI_NI_TIO_H */
+#endif /* _COMEDI_NI_TIO_H */

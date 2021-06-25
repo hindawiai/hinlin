@@ -1,132 +1,131 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (C) 2019 Chelsio Communications.  All rights reserved. */
 
-#समावेश "cxgb4.h"
-#समावेश "cxgb4_tc_matchall.h"
-#समावेश "sched.h"
-#समावेश "cxgb4_uld.h"
-#समावेश "cxgb4_filter.h"
-#समावेश "cxgb4_tc_flower.h"
+#include "cxgb4.h"
+#include "cxgb4_tc_matchall.h"
+#include "sched.h"
+#include "cxgb4_uld.h"
+#include "cxgb4_filter.h"
+#include "cxgb4_tc_flower.h"
 
-अटल पूर्णांक cxgb4_matchall_egress_validate(काष्ठा net_device *dev,
-					  काष्ठा tc_cls_matchall_offload *cls)
-अणु
-	काष्ठा netlink_ext_ack *extack = cls->common.extack;
-	काष्ठा flow_action *actions = &cls->rule->action;
-	काष्ठा port_info *pi = netdev2pinfo(dev);
-	काष्ठा flow_action_entry *entry;
-	काष्ठा ch_sched_queue qe;
-	काष्ठा sched_class *e;
+static int cxgb4_matchall_egress_validate(struct net_device *dev,
+					  struct tc_cls_matchall_offload *cls)
+{
+	struct netlink_ext_ack *extack = cls->common.extack;
+	struct flow_action *actions = &cls->rule->action;
+	struct port_info *pi = netdev2pinfo(dev);
+	struct flow_action_entry *entry;
+	struct ch_sched_queue qe;
+	struct sched_class *e;
 	u64 max_link_rate;
 	u32 i, speed;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!flow_action_has_entries(actions)) अणु
+	if (!flow_action_has_entries(actions)) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Egress MATCHALL offload needs at least 1 policing action");
-		वापस -EINVAL;
-	पूर्ण अन्यथा अगर (!flow_offload_has_one_action(actions)) अणु
+		return -EINVAL;
+	} else if (!flow_offload_has_one_action(actions)) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Egress MATCHALL offload only supports 1 policing action");
-		वापस -EINVAL;
-	पूर्ण अन्यथा अगर (pi->tc_block_shared) अणु
+		return -EINVAL;
+	} else if (pi->tc_block_shared) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Egress MATCHALL offload not supported with shared blocks");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = t4_get_link_params(pi, शून्य, &speed, शून्य);
-	अगर (ret) अणु
+	ret = t4_get_link_params(pi, NULL, &speed, NULL);
+	if (ret) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Failed to get max speed supported by the link");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Convert from Mbps to bps */
 	max_link_rate = (u64)speed * 1000 * 1000;
 
-	flow_action_क्रम_each(i, entry, actions) अणु
-		चयन (entry->id) अणु
-		हाल FLOW_ACTION_POLICE:
-			अगर (entry->police.rate_pkt_ps) अणु
+	flow_action_for_each(i, entry, actions) {
+		switch (entry->id) {
+		case FLOW_ACTION_POLICE:
+			if (entry->police.rate_pkt_ps) {
 				NL_SET_ERR_MSG_MOD(extack,
 						   "QoS offload not support packets per second");
-				वापस -EOPNOTSUPP;
-			पूर्ण
+				return -EOPNOTSUPP;
+			}
 			/* Convert bytes per second to bits per second */
-			अगर (entry->police.rate_bytes_ps * 8 > max_link_rate) अणु
+			if (entry->police.rate_bytes_ps * 8 > max_link_rate) {
 				NL_SET_ERR_MSG_MOD(extack,
 						   "Specified policing max rate is larger than underlying link speed");
-				वापस -दुस्फल;
-			पूर्ण
-			अवरोध;
-		शेष:
+				return -ERANGE;
+			}
+			break;
+		default:
 			NL_SET_ERR_MSG_MOD(extack,
 					   "Only policing action supported with Egress MATCHALL offload");
-			वापस -EOPNOTSUPP;
-		पूर्ण
-	पूर्ण
+			return -EOPNOTSUPP;
+		}
+	}
 
-	क्रम (i = 0; i < pi->nqsets; i++) अणु
-		स_रखो(&qe, 0, माप(qe));
+	for (i = 0; i < pi->nqsets; i++) {
+		memset(&qe, 0, sizeof(qe));
 		qe.queue = i;
 
 		e = cxgb4_sched_queue_lookup(dev, &qe);
-		अगर (e && e->info.u.params.level != SCHED_CLASS_LEVEL_CH_RL) अणु
+		if (e && e->info.u.params.level != SCHED_CLASS_LEVEL_CH_RL) {
 			NL_SET_ERR_MSG_MOD(extack,
 					   "Some queues are already bound to different class");
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण
+			return -EBUSY;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cxgb4_matchall_tc_bind_queues(काष्ठा net_device *dev, u32 tc)
-अणु
-	काष्ठा port_info *pi = netdev2pinfo(dev);
-	काष्ठा ch_sched_queue qe;
-	पूर्णांक ret;
+static int cxgb4_matchall_tc_bind_queues(struct net_device *dev, u32 tc)
+{
+	struct port_info *pi = netdev2pinfo(dev);
+	struct ch_sched_queue qe;
+	int ret;
 	u32 i;
 
-	क्रम (i = 0; i < pi->nqsets; i++) अणु
+	for (i = 0; i < pi->nqsets; i++) {
 		qe.queue = i;
 		qe.class = tc;
 		ret = cxgb4_sched_class_bind(dev, &qe, SCHED_QUEUE);
-		अगर (ret)
-			जाओ out_मुक्त;
-	पूर्ण
+		if (ret)
+			goto out_free;
+	}
 
-	वापस 0;
+	return 0;
 
-out_मुक्त:
-	जबतक (i--) अणु
+out_free:
+	while (i--) {
 		qe.queue = i;
 		qe.class = SCHED_CLS_NONE;
 		cxgb4_sched_class_unbind(dev, &qe, SCHED_QUEUE);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम cxgb4_matchall_tc_unbind_queues(काष्ठा net_device *dev)
-अणु
-	काष्ठा port_info *pi = netdev2pinfo(dev);
-	काष्ठा ch_sched_queue qe;
+static void cxgb4_matchall_tc_unbind_queues(struct net_device *dev)
+{
+	struct port_info *pi = netdev2pinfo(dev);
+	struct ch_sched_queue qe;
 	u32 i;
 
-	क्रम (i = 0; i < pi->nqsets; i++) अणु
+	for (i = 0; i < pi->nqsets; i++) {
 		qe.queue = i;
 		qe.class = SCHED_CLS_NONE;
 		cxgb4_sched_class_unbind(dev, &qe, SCHED_QUEUE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक cxgb4_matchall_alloc_tc(काष्ठा net_device *dev,
-				   काष्ठा tc_cls_matchall_offload *cls)
-अणु
-	काष्ठा ch_sched_params p = अणु
+static int cxgb4_matchall_alloc_tc(struct net_device *dev,
+				   struct tc_cls_matchall_offload *cls)
+{
+	struct ch_sched_params p = {
 		.type = SCHED_CLASS_TYPE_PACKET,
 		.u.params.level = SCHED_CLASS_LEVEL_CH_RL,
 		.u.params.mode = SCHED_CLASS_MODE_CLASS,
@@ -136,156 +135,156 @@ out_मुक्त:
 		.u.params.minrate = 0,
 		.u.params.weight = 0,
 		.u.params.pktsize = dev->mtu,
-	पूर्ण;
-	काष्ठा netlink_ext_ack *extack = cls->common.extack;
-	काष्ठा cxgb4_tc_port_matchall *tc_port_matchall;
-	काष्ठा port_info *pi = netdev2pinfo(dev);
-	काष्ठा adapter *adap = netdev2adap(dev);
-	काष्ठा flow_action_entry *entry;
-	काष्ठा sched_class *e;
-	पूर्णांक ret;
+	};
+	struct netlink_ext_ack *extack = cls->common.extack;
+	struct cxgb4_tc_port_matchall *tc_port_matchall;
+	struct port_info *pi = netdev2pinfo(dev);
+	struct adapter *adap = netdev2adap(dev);
+	struct flow_action_entry *entry;
+	struct sched_class *e;
+	int ret;
 	u32 i;
 
 	tc_port_matchall = &adap->tc_matchall->port_matchall[pi->port_id];
 
-	flow_action_क्रम_each(i, entry, &cls->rule->action)
-		अगर (entry->id == FLOW_ACTION_POLICE)
-			अवरोध;
-	अगर (entry->police.rate_pkt_ps) अणु
+	flow_action_for_each(i, entry, &cls->rule->action)
+		if (entry->id == FLOW_ACTION_POLICE)
+			break;
+	if (entry->police.rate_pkt_ps) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "QoS offload not support packets per second");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 	/* Convert from bytes per second to Kbps */
-	p.u.params.maxrate = भाग_u64(entry->police.rate_bytes_ps * 8, 1000);
+	p.u.params.maxrate = div_u64(entry->police.rate_bytes_ps * 8, 1000);
 	p.u.params.channel = pi->tx_chan;
 	e = cxgb4_sched_class_alloc(dev, &p);
-	अगर (!e) अणु
+	if (!e) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "No free traffic class available for policing action");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ret = cxgb4_matchall_tc_bind_queues(dev, e->idx);
-	अगर (ret) अणु
+	if (ret) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Could not bind queues to traffic class");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	tc_port_matchall->egress.hwtc = e->idx;
 	tc_port_matchall->egress.cookie = cls->cookie;
 	tc_port_matchall->egress.state = CXGB4_MATCHALL_STATE_ENABLED;
-	वापस 0;
+	return 0;
 
-out_मुक्त:
-	cxgb4_sched_class_मुक्त(dev, e->idx);
-	वापस ret;
-पूर्ण
+out_free:
+	cxgb4_sched_class_free(dev, e->idx);
+	return ret;
+}
 
-अटल व्योम cxgb4_matchall_मुक्त_tc(काष्ठा net_device *dev)
-अणु
-	काष्ठा cxgb4_tc_port_matchall *tc_port_matchall;
-	काष्ठा port_info *pi = netdev2pinfo(dev);
-	काष्ठा adapter *adap = netdev2adap(dev);
+static void cxgb4_matchall_free_tc(struct net_device *dev)
+{
+	struct cxgb4_tc_port_matchall *tc_port_matchall;
+	struct port_info *pi = netdev2pinfo(dev);
+	struct adapter *adap = netdev2adap(dev);
 
 	tc_port_matchall = &adap->tc_matchall->port_matchall[pi->port_id];
 	cxgb4_matchall_tc_unbind_queues(dev);
-	cxgb4_sched_class_मुक्त(dev, tc_port_matchall->egress.hwtc);
+	cxgb4_sched_class_free(dev, tc_port_matchall->egress.hwtc);
 
 	tc_port_matchall->egress.hwtc = SCHED_CLS_NONE;
 	tc_port_matchall->egress.cookie = 0;
 	tc_port_matchall->egress.state = CXGB4_MATCHALL_STATE_DISABLED;
-पूर्ण
+}
 
-अटल पूर्णांक cxgb4_matchall_mirror_alloc(काष्ठा net_device *dev,
-				       काष्ठा tc_cls_matchall_offload *cls)
-अणु
-	काष्ठा netlink_ext_ack *extack = cls->common.extack;
-	काष्ठा cxgb4_tc_port_matchall *tc_port_matchall;
-	काष्ठा port_info *pi = netdev2pinfo(dev);
-	काष्ठा adapter *adap = netdev2adap(dev);
-	काष्ठा flow_action_entry *act;
-	पूर्णांक ret;
+static int cxgb4_matchall_mirror_alloc(struct net_device *dev,
+				       struct tc_cls_matchall_offload *cls)
+{
+	struct netlink_ext_ack *extack = cls->common.extack;
+	struct cxgb4_tc_port_matchall *tc_port_matchall;
+	struct port_info *pi = netdev2pinfo(dev);
+	struct adapter *adap = netdev2adap(dev);
+	struct flow_action_entry *act;
+	int ret;
 	u32 i;
 
 	tc_port_matchall = &adap->tc_matchall->port_matchall[pi->port_id];
-	flow_action_क्रम_each(i, act, &cls->rule->action) अणु
-		अगर (act->id == FLOW_ACTION_MIRRED) अणु
+	flow_action_for_each(i, act, &cls->rule->action) {
+		if (act->id == FLOW_ACTION_MIRRED) {
 			ret = cxgb4_port_mirror_alloc(dev);
-			अगर (ret) अणु
+			if (ret) {
 				NL_SET_ERR_MSG_MOD(extack,
 						   "Couldn't allocate mirror");
-				वापस ret;
-			पूर्ण
+				return ret;
+			}
 
 			tc_port_matchall->ingress.viid_mirror = pi->viid_mirror;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम cxgb4_matchall_mirror_मुक्त(काष्ठा net_device *dev)
-अणु
-	काष्ठा cxgb4_tc_port_matchall *tc_port_matchall;
-	काष्ठा port_info *pi = netdev2pinfo(dev);
-	काष्ठा adapter *adap = netdev2adap(dev);
+static void cxgb4_matchall_mirror_free(struct net_device *dev)
+{
+	struct cxgb4_tc_port_matchall *tc_port_matchall;
+	struct port_info *pi = netdev2pinfo(dev);
+	struct adapter *adap = netdev2adap(dev);
 
 	tc_port_matchall = &adap->tc_matchall->port_matchall[pi->port_id];
-	अगर (!tc_port_matchall->ingress.viid_mirror)
-		वापस;
+	if (!tc_port_matchall->ingress.viid_mirror)
+		return;
 
-	cxgb4_port_mirror_मुक्त(dev);
+	cxgb4_port_mirror_free(dev);
 	tc_port_matchall->ingress.viid_mirror = 0;
-पूर्ण
+}
 
-अटल पूर्णांक cxgb4_matchall_del_filter(काष्ठा net_device *dev, u8 filter_type)
-अणु
-	काष्ठा cxgb4_tc_port_matchall *tc_port_matchall;
-	काष्ठा port_info *pi = netdev2pinfo(dev);
-	काष्ठा adapter *adap = netdev2adap(dev);
-	पूर्णांक ret;
+static int cxgb4_matchall_del_filter(struct net_device *dev, u8 filter_type)
+{
+	struct cxgb4_tc_port_matchall *tc_port_matchall;
+	struct port_info *pi = netdev2pinfo(dev);
+	struct adapter *adap = netdev2adap(dev);
+	int ret;
 
 	tc_port_matchall = &adap->tc_matchall->port_matchall[pi->port_id];
 	ret = cxgb4_del_filter(dev, tc_port_matchall->ingress.tid[filter_type],
 			       &tc_port_matchall->ingress.fs[filter_type]);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	tc_port_matchall->ingress.tid[filter_type] = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cxgb4_matchall_add_filter(काष्ठा net_device *dev,
-				     काष्ठा tc_cls_matchall_offload *cls,
+static int cxgb4_matchall_add_filter(struct net_device *dev,
+				     struct tc_cls_matchall_offload *cls,
 				     u8 filter_type)
-अणु
-	काष्ठा netlink_ext_ack *extack = cls->common.extack;
-	काष्ठा cxgb4_tc_port_matchall *tc_port_matchall;
-	काष्ठा port_info *pi = netdev2pinfo(dev);
-	काष्ठा adapter *adap = netdev2adap(dev);
-	काष्ठा ch_filter_specअगरication *fs;
-	पूर्णांक ret, fidx;
+{
+	struct netlink_ext_ack *extack = cls->common.extack;
+	struct cxgb4_tc_port_matchall *tc_port_matchall;
+	struct port_info *pi = netdev2pinfo(dev);
+	struct adapter *adap = netdev2adap(dev);
+	struct ch_filter_specification *fs;
+	int ret, fidx;
 
-	/* Get a मुक्त filter entry TID, where we can insert this new
-	 * rule. Only insert rule अगर its prio करोesn't conflict with
+	/* Get a free filter entry TID, where we can insert this new
+	 * rule. Only insert rule if its prio doesn't conflict with
 	 * existing rules.
 	 */
-	fidx = cxgb4_get_मुक्त_ftid(dev, filter_type ? PF_INET6 : PF_INET,
+	fidx = cxgb4_get_free_ftid(dev, filter_type ? PF_INET6 : PF_INET,
 				   false, cls->common.prio);
-	अगर (fidx < 0) अणु
+	if (fidx < 0) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "No free LETCAM index available");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	tc_port_matchall = &adap->tc_matchall->port_matchall[pi->port_id];
 	fs = &tc_port_matchall->ingress.fs[filter_type];
-	स_रखो(fs, 0, माप(*fs));
+	memset(fs, 0, sizeof(*fs));
 
-	अगर (fidx < adap->tids.nhpftids)
+	if (fidx < adap->tids.nhpftids)
 		fs->prio = 1;
 	fs->tc_prio = cls->common.prio;
 	fs->tc_cookie = cls->cookie;
@@ -299,166 +298,166 @@ out_मुक्त:
 	cxgb4_process_flow_actions(dev, &cls->rule->action, fs);
 
 	ret = cxgb4_set_filter(dev, fidx, fs);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	tc_port_matchall->ingress.tid[filter_type] = fidx;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cxgb4_matchall_alloc_filter(काष्ठा net_device *dev,
-				       काष्ठा tc_cls_matchall_offload *cls)
-अणु
-	काष्ठा cxgb4_tc_port_matchall *tc_port_matchall;
-	काष्ठा port_info *pi = netdev2pinfo(dev);
-	काष्ठा adapter *adap = netdev2adap(dev);
-	पूर्णांक ret, i;
+static int cxgb4_matchall_alloc_filter(struct net_device *dev,
+				       struct tc_cls_matchall_offload *cls)
+{
+	struct cxgb4_tc_port_matchall *tc_port_matchall;
+	struct port_info *pi = netdev2pinfo(dev);
+	struct adapter *adap = netdev2adap(dev);
+	int ret, i;
 
 	tc_port_matchall = &adap->tc_matchall->port_matchall[pi->port_id];
 
 	ret = cxgb4_matchall_mirror_alloc(dev, cls);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	क्रम (i = 0; i < CXGB4_FILTER_TYPE_MAX; i++) अणु
+	for (i = 0; i < CXGB4_FILTER_TYPE_MAX; i++) {
 		ret = cxgb4_matchall_add_filter(dev, cls, i);
-		अगर (ret)
-			जाओ out_मुक्त;
-	पूर्ण
+		if (ret)
+			goto out_free;
+	}
 
 	tc_port_matchall->ingress.state = CXGB4_MATCHALL_STATE_ENABLED;
-	वापस 0;
+	return 0;
 
-out_मुक्त:
-	जबतक (i-- > 0)
+out_free:
+	while (i-- > 0)
 		cxgb4_matchall_del_filter(dev, i);
 
-	cxgb4_matchall_mirror_मुक्त(dev);
-	वापस ret;
-पूर्ण
+	cxgb4_matchall_mirror_free(dev);
+	return ret;
+}
 
-अटल पूर्णांक cxgb4_matchall_मुक्त_filter(काष्ठा net_device *dev)
-अणु
-	काष्ठा cxgb4_tc_port_matchall *tc_port_matchall;
-	काष्ठा port_info *pi = netdev2pinfo(dev);
-	काष्ठा adapter *adap = netdev2adap(dev);
-	पूर्णांक ret;
+static int cxgb4_matchall_free_filter(struct net_device *dev)
+{
+	struct cxgb4_tc_port_matchall *tc_port_matchall;
+	struct port_info *pi = netdev2pinfo(dev);
+	struct adapter *adap = netdev2adap(dev);
+	int ret;
 	u8 i;
 
 	tc_port_matchall = &adap->tc_matchall->port_matchall[pi->port_id];
 
-	क्रम (i = 0; i < CXGB4_FILTER_TYPE_MAX; i++) अणु
+	for (i = 0; i < CXGB4_FILTER_TYPE_MAX; i++) {
 		ret = cxgb4_matchall_del_filter(dev, i);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	cxgb4_matchall_mirror_मुक्त(dev);
+	cxgb4_matchall_mirror_free(dev);
 
 	tc_port_matchall->ingress.packets = 0;
 	tc_port_matchall->ingress.bytes = 0;
 	tc_port_matchall->ingress.last_used = 0;
 	tc_port_matchall->ingress.state = CXGB4_MATCHALL_STATE_DISABLED;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक cxgb4_tc_matchall_replace(काष्ठा net_device *dev,
-			      काष्ठा tc_cls_matchall_offload *cls_matchall,
+int cxgb4_tc_matchall_replace(struct net_device *dev,
+			      struct tc_cls_matchall_offload *cls_matchall,
 			      bool ingress)
-अणु
-	काष्ठा netlink_ext_ack *extack = cls_matchall->common.extack;
-	काष्ठा cxgb4_tc_port_matchall *tc_port_matchall;
-	काष्ठा port_info *pi = netdev2pinfo(dev);
-	काष्ठा adapter *adap = netdev2adap(dev);
-	पूर्णांक ret;
+{
+	struct netlink_ext_ack *extack = cls_matchall->common.extack;
+	struct cxgb4_tc_port_matchall *tc_port_matchall;
+	struct port_info *pi = netdev2pinfo(dev);
+	struct adapter *adap = netdev2adap(dev);
+	int ret;
 
 	tc_port_matchall = &adap->tc_matchall->port_matchall[pi->port_id];
-	अगर (ingress) अणु
-		अगर (tc_port_matchall->ingress.state ==
-		    CXGB4_MATCHALL_STATE_ENABLED) अणु
+	if (ingress) {
+		if (tc_port_matchall->ingress.state ==
+		    CXGB4_MATCHALL_STATE_ENABLED) {
 			NL_SET_ERR_MSG_MOD(extack,
 					   "Only 1 Ingress MATCHALL can be offloaded");
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		ret = cxgb4_validate_flow_actions(dev,
 						  &cls_matchall->rule->action,
 						  extack, 1);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		वापस cxgb4_matchall_alloc_filter(dev, cls_matchall);
-	पूर्ण
+		return cxgb4_matchall_alloc_filter(dev, cls_matchall);
+	}
 
-	अगर (tc_port_matchall->egress.state == CXGB4_MATCHALL_STATE_ENABLED) अणु
+	if (tc_port_matchall->egress.state == CXGB4_MATCHALL_STATE_ENABLED) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Only 1 Egress MATCHALL can be offloaded");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ret = cxgb4_matchall_egress_validate(dev, cls_matchall);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस cxgb4_matchall_alloc_tc(dev, cls_matchall);
-पूर्ण
+	return cxgb4_matchall_alloc_tc(dev, cls_matchall);
+}
 
-पूर्णांक cxgb4_tc_matchall_destroy(काष्ठा net_device *dev,
-			      काष्ठा tc_cls_matchall_offload *cls_matchall,
+int cxgb4_tc_matchall_destroy(struct net_device *dev,
+			      struct tc_cls_matchall_offload *cls_matchall,
 			      bool ingress)
-अणु
-	काष्ठा cxgb4_tc_port_matchall *tc_port_matchall;
-	काष्ठा port_info *pi = netdev2pinfo(dev);
-	काष्ठा adapter *adap = netdev2adap(dev);
+{
+	struct cxgb4_tc_port_matchall *tc_port_matchall;
+	struct port_info *pi = netdev2pinfo(dev);
+	struct adapter *adap = netdev2adap(dev);
 
 	tc_port_matchall = &adap->tc_matchall->port_matchall[pi->port_id];
-	अगर (ingress) अणु
+	if (ingress) {
 		/* All the filter types of this matchall rule save the
-		 * same cookie. So, checking क्रम the first one is
+		 * same cookie. So, checking for the first one is
 		 * enough.
 		 */
-		अगर (cls_matchall->cookie !=
+		if (cls_matchall->cookie !=
 		    tc_port_matchall->ingress.fs[0].tc_cookie)
-			वापस -ENOENT;
+			return -ENOENT;
 
-		वापस cxgb4_matchall_मुक्त_filter(dev);
-	पूर्ण
+		return cxgb4_matchall_free_filter(dev);
+	}
 
-	अगर (cls_matchall->cookie != tc_port_matchall->egress.cookie)
-		वापस -ENOENT;
+	if (cls_matchall->cookie != tc_port_matchall->egress.cookie)
+		return -ENOENT;
 
-	cxgb4_matchall_मुक्त_tc(dev);
-	वापस 0;
-पूर्ण
+	cxgb4_matchall_free_tc(dev);
+	return 0;
+}
 
-पूर्णांक cxgb4_tc_matchall_stats(काष्ठा net_device *dev,
-			    काष्ठा tc_cls_matchall_offload *cls_matchall)
-अणु
-	u64 पंचांगp_packets, पंचांगp_bytes, packets = 0, bytes = 0;
-	काष्ठा cxgb4_tc_port_matchall *tc_port_matchall;
-	काष्ठा cxgb4_matchall_ingress_entry *ingress;
-	काष्ठा port_info *pi = netdev2pinfo(dev);
-	काष्ठा adapter *adap = netdev2adap(dev);
-	पूर्णांक ret;
+int cxgb4_tc_matchall_stats(struct net_device *dev,
+			    struct tc_cls_matchall_offload *cls_matchall)
+{
+	u64 tmp_packets, tmp_bytes, packets = 0, bytes = 0;
+	struct cxgb4_tc_port_matchall *tc_port_matchall;
+	struct cxgb4_matchall_ingress_entry *ingress;
+	struct port_info *pi = netdev2pinfo(dev);
+	struct adapter *adap = netdev2adap(dev);
+	int ret;
 	u8 i;
 
 	tc_port_matchall = &adap->tc_matchall->port_matchall[pi->port_id];
-	अगर (tc_port_matchall->ingress.state == CXGB4_MATCHALL_STATE_DISABLED)
-		वापस -ENOENT;
+	if (tc_port_matchall->ingress.state == CXGB4_MATCHALL_STATE_DISABLED)
+		return -ENOENT;
 
 	ingress = &tc_port_matchall->ingress;
-	क्रम (i = 0; i < CXGB4_FILTER_TYPE_MAX; i++) अणु
+	for (i = 0; i < CXGB4_FILTER_TYPE_MAX; i++) {
 		ret = cxgb4_get_filter_counters(dev, ingress->tid[i],
-						&पंचांगp_packets, &पंचांगp_bytes,
+						&tmp_packets, &tmp_bytes,
 						ingress->fs[i].hash);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		packets += पंचांगp_packets;
-		bytes += पंचांगp_bytes;
-	पूर्ण
+		packets += tmp_packets;
+		bytes += tmp_bytes;
+	}
 
-	अगर (tc_port_matchall->ingress.packets != packets) अणु
+	if (tc_port_matchall->ingress.packets != packets) {
 		flow_stats_update(&cls_matchall->stats,
 				  bytes - tc_port_matchall->ingress.bytes,
 				  packets - tc_port_matchall->ingress.packets,
@@ -467,67 +466,67 @@ out_मुक्त:
 
 		tc_port_matchall->ingress.packets = packets;
 		tc_port_matchall->ingress.bytes = bytes;
-		tc_port_matchall->ingress.last_used = jअगरfies;
-	पूर्ण
+		tc_port_matchall->ingress.last_used = jiffies;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम cxgb4_matchall_disable_offload(काष्ठा net_device *dev)
-अणु
-	काष्ठा cxgb4_tc_port_matchall *tc_port_matchall;
-	काष्ठा port_info *pi = netdev2pinfo(dev);
-	काष्ठा adapter *adap = netdev2adap(dev);
+static void cxgb4_matchall_disable_offload(struct net_device *dev)
+{
+	struct cxgb4_tc_port_matchall *tc_port_matchall;
+	struct port_info *pi = netdev2pinfo(dev);
+	struct adapter *adap = netdev2adap(dev);
 
 	tc_port_matchall = &adap->tc_matchall->port_matchall[pi->port_id];
-	अगर (tc_port_matchall->egress.state == CXGB4_MATCHALL_STATE_ENABLED)
-		cxgb4_matchall_मुक्त_tc(dev);
+	if (tc_port_matchall->egress.state == CXGB4_MATCHALL_STATE_ENABLED)
+		cxgb4_matchall_free_tc(dev);
 
-	अगर (tc_port_matchall->ingress.state == CXGB4_MATCHALL_STATE_ENABLED)
-		cxgb4_matchall_मुक्त_filter(dev);
-पूर्ण
+	if (tc_port_matchall->ingress.state == CXGB4_MATCHALL_STATE_ENABLED)
+		cxgb4_matchall_free_filter(dev);
+}
 
-पूर्णांक cxgb4_init_tc_matchall(काष्ठा adapter *adap)
-अणु
-	काष्ठा cxgb4_tc_port_matchall *tc_port_matchall;
-	काष्ठा cxgb4_tc_matchall *tc_matchall;
-	पूर्णांक ret;
+int cxgb4_init_tc_matchall(struct adapter *adap)
+{
+	struct cxgb4_tc_port_matchall *tc_port_matchall;
+	struct cxgb4_tc_matchall *tc_matchall;
+	int ret;
 
-	tc_matchall = kzalloc(माप(*tc_matchall), GFP_KERNEL);
-	अगर (!tc_matchall)
-		वापस -ENOMEM;
+	tc_matchall = kzalloc(sizeof(*tc_matchall), GFP_KERNEL);
+	if (!tc_matchall)
+		return -ENOMEM;
 
-	tc_port_matchall = kसुस्मृति(adap->params.nports,
-				   माप(*tc_port_matchall),
+	tc_port_matchall = kcalloc(adap->params.nports,
+				   sizeof(*tc_port_matchall),
 				   GFP_KERNEL);
-	अगर (!tc_port_matchall) अणु
+	if (!tc_port_matchall) {
 		ret = -ENOMEM;
-		जाओ out_मुक्त_matchall;
-	पूर्ण
+		goto out_free_matchall;
+	}
 
 	tc_matchall->port_matchall = tc_port_matchall;
 	adap->tc_matchall = tc_matchall;
-	वापस 0;
+	return 0;
 
-out_मुक्त_matchall:
-	kमुक्त(tc_matchall);
-	वापस ret;
-पूर्ण
+out_free_matchall:
+	kfree(tc_matchall);
+	return ret;
+}
 
-व्योम cxgb4_cleanup_tc_matchall(काष्ठा adapter *adap)
-अणु
+void cxgb4_cleanup_tc_matchall(struct adapter *adap)
+{
 	u8 i;
 
-	अगर (adap->tc_matchall) अणु
-		अगर (adap->tc_matchall->port_matchall) अणु
-			क्रम (i = 0; i < adap->params.nports; i++) अणु
-				काष्ठा net_device *dev = adap->port[i];
+	if (adap->tc_matchall) {
+		if (adap->tc_matchall->port_matchall) {
+			for (i = 0; i < adap->params.nports; i++) {
+				struct net_device *dev = adap->port[i];
 
-				अगर (dev)
+				if (dev)
 					cxgb4_matchall_disable_offload(dev);
-			पूर्ण
-			kमुक्त(adap->tc_matchall->port_matchall);
-		पूर्ण
-		kमुक्त(adap->tc_matchall);
-	पूर्ण
-पूर्ण
+			}
+			kfree(adap->tc_matchall->port_matchall);
+		}
+		kfree(adap->tc_matchall);
+	}
+}

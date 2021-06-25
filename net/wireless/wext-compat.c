@@ -1,126 +1,125 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * cfg80211 - wext compat code
  *
  * This is temporary code until all wireless functionality is migrated
- * पूर्णांकo cfg80211, when that happens all the exports here go away and
- * we directly assign the wireless handlers of wireless पूर्णांकerfaces.
+ * into cfg80211, when that happens all the exports here go away and
+ * we directly assign the wireless handlers of wireless interfaces.
  *
  * Copyright 2008-2009	Johannes Berg <johannes@sipsolutions.net>
  * Copyright (C) 2019-2021 Intel Corporation
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/wireless.h>
-#समावेश <linux/nl80211.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/slab.h>
-#समावेश <net/iw_handler.h>
-#समावेश <net/cfg80211.h>
-#समावेश <net/cfg80211-wext.h>
-#समावेश "wext-compat.h"
-#समावेश "core.h"
-#समावेश "rdev-ops.h"
+#include <linux/export.h>
+#include <linux/wireless.h>
+#include <linux/nl80211.h>
+#include <linux/if_arp.h>
+#include <linux/etherdevice.h>
+#include <linux/slab.h>
+#include <net/iw_handler.h>
+#include <net/cfg80211.h>
+#include <net/cfg80211-wext.h>
+#include "wext-compat.h"
+#include "core.h"
+#include "rdev-ops.h"
 
-पूर्णांक cfg80211_wext_giwname(काष्ठा net_device *dev,
-			  काष्ठा iw_request_info *info,
-			  अक्षर *name, अक्षर *extra)
-अणु
-	म_नकल(name, "IEEE 802.11");
-	वापस 0;
-पूर्ण
+int cfg80211_wext_giwname(struct net_device *dev,
+			  struct iw_request_info *info,
+			  char *name, char *extra)
+{
+	strcpy(name, "IEEE 802.11");
+	return 0;
+}
 EXPORT_WEXT_HANDLER(cfg80211_wext_giwname);
 
-पूर्णांक cfg80211_wext_siwmode(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			  u32 *mode, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev;
-	काष्ठा vअगर_params vअगरparams;
-	क्रमागत nl80211_अगरtype type;
-	पूर्णांक ret;
+int cfg80211_wext_siwmode(struct net_device *dev, struct iw_request_info *info,
+			  u32 *mode, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct cfg80211_registered_device *rdev;
+	struct vif_params vifparams;
+	enum nl80211_iftype type;
+	int ret;
 
 	rdev = wiphy_to_rdev(wdev->wiphy);
 
-	चयन (*mode) अणु
-	हाल IW_MODE_INFRA:
+	switch (*mode) {
+	case IW_MODE_INFRA:
 		type = NL80211_IFTYPE_STATION;
-		अवरोध;
-	हाल IW_MODE_ADHOC:
+		break;
+	case IW_MODE_ADHOC:
 		type = NL80211_IFTYPE_ADHOC;
-		अवरोध;
-	हाल IW_MODE_MONITOR:
+		break;
+	case IW_MODE_MONITOR:
 		type = NL80211_IFTYPE_MONITOR;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (type == wdev->अगरtype)
-		वापस 0;
+	if (type == wdev->iftype)
+		return 0;
 
-	स_रखो(&vअगरparams, 0, माप(vअगरparams));
+	memset(&vifparams, 0, sizeof(vifparams));
 
 	wiphy_lock(wdev->wiphy);
-	ret = cfg80211_change_अगरace(rdev, dev, type, &vअगरparams);
+	ret = cfg80211_change_iface(rdev, dev, type, &vifparams);
 	wiphy_unlock(wdev->wiphy);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_WEXT_HANDLER(cfg80211_wext_siwmode);
 
-पूर्णांक cfg80211_wext_giwmode(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			  u32 *mode, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
+int cfg80211_wext_giwmode(struct net_device *dev, struct iw_request_info *info,
+			  u32 *mode, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
 
-	अगर (!wdev)
-		वापस -EOPNOTSUPP;
+	if (!wdev)
+		return -EOPNOTSUPP;
 
-	चयन (wdev->अगरtype) अणु
-	हाल NL80211_IFTYPE_AP:
+	switch (wdev->iftype) {
+	case NL80211_IFTYPE_AP:
 		*mode = IW_MODE_MASTER;
-		अवरोध;
-	हाल NL80211_IFTYPE_STATION:
+		break;
+	case NL80211_IFTYPE_STATION:
 		*mode = IW_MODE_INFRA;
-		अवरोध;
-	हाल NL80211_IFTYPE_ADHOC:
+		break;
+	case NL80211_IFTYPE_ADHOC:
 		*mode = IW_MODE_ADHOC;
-		अवरोध;
-	हाल NL80211_IFTYPE_MONITOR:
+		break;
+	case NL80211_IFTYPE_MONITOR:
 		*mode = IW_MODE_MONITOR;
-		अवरोध;
-	हाल NL80211_IFTYPE_WDS:
+		break;
+	case NL80211_IFTYPE_WDS:
 		*mode = IW_MODE_REPEAT;
-		अवरोध;
-	हाल NL80211_IFTYPE_AP_VLAN:
+		break;
+	case NL80211_IFTYPE_AP_VLAN:
 		*mode = IW_MODE_SECOND;		/* FIXME */
-		अवरोध;
-	शेष:
+		break;
+	default:
 		*mode = IW_MODE_AUTO;
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	}
+	return 0;
+}
 EXPORT_WEXT_HANDLER(cfg80211_wext_giwmode);
 
 
-पूर्णांक cfg80211_wext_giwrange(काष्ठा net_device *dev,
-			   काष्ठा iw_request_info *info,
-			   काष्ठा iw_poपूर्णांक *data, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा iw_range *range = (काष्ठा iw_range *) extra;
-	क्रमागत nl80211_band band;
-	पूर्णांक i, c = 0;
+int cfg80211_wext_giwrange(struct net_device *dev,
+			   struct iw_request_info *info,
+			   struct iw_point *data, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct iw_range *range = (struct iw_range *) extra;
+	enum nl80211_band band;
+	int i, c = 0;
 
-	अगर (!wdev)
-		वापस -EOPNOTSUPP;
+	if (!wdev)
+		return -EOPNOTSUPP;
 
-	data->length = माप(काष्ठा iw_range);
-	स_रखो(range, 0, माप(काष्ठा iw_range));
+	data->length = sizeof(struct iw_range);
+	memset(range, 0, sizeof(struct iw_range));
 
 	range->we_version_compiled = WIRELESS_EXT;
 	range->we_version_source = 21;
@@ -137,75 +136,75 @@ EXPORT_WEXT_HANDLER(cfg80211_wext_giwmode);
 
 	range->max_qual.updated = IW_QUAL_NOISE_INVALID;
 
-	चयन (wdev->wiphy->संकेत_type) अणु
-	हाल CFG80211_SIGNAL_TYPE_NONE:
-		अवरोध;
-	हाल CFG80211_SIGNAL_TYPE_MBM:
+	switch (wdev->wiphy->signal_type) {
+	case CFG80211_SIGNAL_TYPE_NONE:
+		break;
+	case CFG80211_SIGNAL_TYPE_MBM:
 		range->max_qual.level = (u8)-110;
 		range->max_qual.qual = 70;
 		range->avg_qual.qual = 35;
 		range->max_qual.updated |= IW_QUAL_DBM;
 		range->max_qual.updated |= IW_QUAL_QUAL_UPDATED;
 		range->max_qual.updated |= IW_QUAL_LEVEL_UPDATED;
-		अवरोध;
-	हाल CFG80211_SIGNAL_TYPE_UNSPEC:
+		break;
+	case CFG80211_SIGNAL_TYPE_UNSPEC:
 		range->max_qual.level = 100;
 		range->max_qual.qual = 100;
 		range->avg_qual.qual = 50;
 		range->max_qual.updated |= IW_QUAL_QUAL_UPDATED;
 		range->max_qual.updated |= IW_QUAL_LEVEL_UPDATED;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	range->avg_qual.level = range->max_qual.level / 2;
 	range->avg_qual.noise = range->max_qual.noise / 2;
 	range->avg_qual.updated = range->max_qual.updated;
 
-	क्रम (i = 0; i < wdev->wiphy->n_cipher_suites; i++) अणु
-		चयन (wdev->wiphy->cipher_suites[i]) अणु
-		हाल WLAN_CIPHER_SUITE_TKIP:
+	for (i = 0; i < wdev->wiphy->n_cipher_suites; i++) {
+		switch (wdev->wiphy->cipher_suites[i]) {
+		case WLAN_CIPHER_SUITE_TKIP:
 			range->enc_capa |= (IW_ENC_CAPA_CIPHER_TKIP |
 					    IW_ENC_CAPA_WPA);
-			अवरोध;
+			break;
 
-		हाल WLAN_CIPHER_SUITE_CCMP:
+		case WLAN_CIPHER_SUITE_CCMP:
 			range->enc_capa |= (IW_ENC_CAPA_CIPHER_CCMP |
 					    IW_ENC_CAPA_WPA2);
-			अवरोध;
+			break;
 
-		हाल WLAN_CIPHER_SUITE_WEP40:
+		case WLAN_CIPHER_SUITE_WEP40:
 			range->encoding_size[range->num_encoding_sizes++] =
 				WLAN_KEY_LEN_WEP40;
-			अवरोध;
+			break;
 
-		हाल WLAN_CIPHER_SUITE_WEP104:
+		case WLAN_CIPHER_SUITE_WEP104:
 			range->encoding_size[range->num_encoding_sizes++] =
 				WLAN_KEY_LEN_WEP104;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	क्रम (band = 0; band < NUM_NL80211_BANDS; band ++) अणु
-		काष्ठा ieee80211_supported_band *sband;
+	for (band = 0; band < NUM_NL80211_BANDS; band ++) {
+		struct ieee80211_supported_band *sband;
 
 		sband = wdev->wiphy->bands[band];
 
-		अगर (!sband)
-			जारी;
+		if (!sband)
+			continue;
 
-		क्रम (i = 0; i < sband->n_channels && c < IW_MAX_FREQUENCIES; i++) अणु
-			काष्ठा ieee80211_channel *chan = &sband->channels[i];
+		for (i = 0; i < sband->n_channels && c < IW_MAX_FREQUENCIES; i++) {
+			struct ieee80211_channel *chan = &sband->channels[i];
 
-			अगर (!(chan->flags & IEEE80211_CHAN_DISABLED)) अणु
+			if (!(chan->flags & IEEE80211_CHAN_DISABLED)) {
 				range->freq[c].i =
 					ieee80211_frequency_to_channel(
 						chan->center_freq);
 				range->freq[c].m = chan->center_freq;
 				range->freq[c].e = 6;
 				c++;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	range->num_channels = c;
 	range->num_frequency = c;
 
@@ -213,1388 +212,1388 @@ EXPORT_WEXT_HANDLER(cfg80211_wext_giwmode);
 	IW_EVENT_CAPA_SET(range->event_capa, SIOCGIWAP);
 	IW_EVENT_CAPA_SET(range->event_capa, SIOCGIWSCAN);
 
-	अगर (wdev->wiphy->max_scan_ssids > 0)
+	if (wdev->wiphy->max_scan_ssids > 0)
 		range->scan_capa |= IW_SCAN_CAPA_ESSID;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_WEXT_HANDLER(cfg80211_wext_giwrange);
 
 
 /**
- * cfg80211_wext_freq - get wext frequency क्रम non-"auto"
+ * cfg80211_wext_freq - get wext frequency for non-"auto"
  * @freq: the wext freq encoding
  *
- * Returns a frequency, or a negative error code, or 0 क्रम स्वतः.
+ * Returns a frequency, or a negative error code, or 0 for auto.
  */
-पूर्णांक cfg80211_wext_freq(काष्ठा iw_freq *freq)
-अणु
+int cfg80211_wext_freq(struct iw_freq *freq)
+{
 	/*
-	 * Parse frequency - वापस 0 क्रम स्वतः and
-	 * -EINVAL क्रम impossible things.
+	 * Parse frequency - return 0 for auto and
+	 * -EINVAL for impossible things.
 	 */
-	अगर (freq->e == 0) अणु
-		क्रमागत nl80211_band band = NL80211_BAND_2GHZ;
-		अगर (freq->m < 0)
-			वापस 0;
-		अगर (freq->m > 14)
+	if (freq->e == 0) {
+		enum nl80211_band band = NL80211_BAND_2GHZ;
+		if (freq->m < 0)
+			return 0;
+		if (freq->m > 14)
 			band = NL80211_BAND_5GHZ;
-		वापस ieee80211_channel_to_frequency(freq->m, band);
-	पूर्ण अन्यथा अणु
-		पूर्णांक i, भाग = 1000000;
-		क्रम (i = 0; i < freq->e; i++)
-			भाग /= 10;
-		अगर (भाग <= 0)
-			वापस -EINVAL;
-		वापस freq->m / भाग;
-	पूर्ण
-पूर्ण
+		return ieee80211_channel_to_frequency(freq->m, band);
+	} else {
+		int i, div = 1000000;
+		for (i = 0; i < freq->e; i++)
+			div /= 10;
+		if (div <= 0)
+			return -EINVAL;
+		return freq->m / div;
+	}
+}
 
-पूर्णांक cfg80211_wext_siwrts(काष्ठा net_device *dev,
-			 काष्ठा iw_request_info *info,
-			 काष्ठा iw_param *rts, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
+int cfg80211_wext_siwrts(struct net_device *dev,
+			 struct iw_request_info *info,
+			 struct iw_param *rts, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
 	u32 orts = wdev->wiphy->rts_threshold;
-	पूर्णांक err;
+	int err;
 
 	wiphy_lock(&rdev->wiphy);
-	अगर (rts->disabled || !rts->fixed) अणु
+	if (rts->disabled || !rts->fixed) {
 		wdev->wiphy->rts_threshold = (u32) -1;
-	पूर्ण अन्यथा अगर (rts->value < 0) अणु
+	} else if (rts->value < 0) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण अन्यथा अणु
+		goto out;
+	} else {
 		wdev->wiphy->rts_threshold = rts->value;
-	पूर्ण
+	}
 
 	err = rdev_set_wiphy_params(rdev, WIPHY_PARAM_RTS_THRESHOLD);
 
-	अगर (err)
+	if (err)
 		wdev->wiphy->rts_threshold = orts;
 
 out:
 	wiphy_unlock(&rdev->wiphy);
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_WEXT_HANDLER(cfg80211_wext_siwrts);
 
-पूर्णांक cfg80211_wext_giwrts(काष्ठा net_device *dev,
-			 काष्ठा iw_request_info *info,
-			 काष्ठा iw_param *rts, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
+int cfg80211_wext_giwrts(struct net_device *dev,
+			 struct iw_request_info *info,
+			 struct iw_param *rts, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
 
 	rts->value = wdev->wiphy->rts_threshold;
 	rts->disabled = rts->value == (u32) -1;
 	rts->fixed = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_WEXT_HANDLER(cfg80211_wext_giwrts);
 
-पूर्णांक cfg80211_wext_siwfrag(काष्ठा net_device *dev,
-			  काष्ठा iw_request_info *info,
-			  काष्ठा iw_param *frag, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
+int cfg80211_wext_siwfrag(struct net_device *dev,
+			  struct iw_request_info *info,
+			  struct iw_param *frag, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
 	u32 ofrag = wdev->wiphy->frag_threshold;
-	पूर्णांक err;
+	int err;
 
 	wiphy_lock(&rdev->wiphy);
-	अगर (frag->disabled || !frag->fixed) अणु
+	if (frag->disabled || !frag->fixed) {
 		wdev->wiphy->frag_threshold = (u32) -1;
-	पूर्ण अन्यथा अगर (frag->value < 256) अणु
+	} else if (frag->value < 256) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण अन्यथा अणु
+		goto out;
+	} else {
 		/* Fragment length must be even, so strip LSB. */
 		wdev->wiphy->frag_threshold = frag->value & ~0x1;
-	पूर्ण
+	}
 
 	err = rdev_set_wiphy_params(rdev, WIPHY_PARAM_FRAG_THRESHOLD);
-	अगर (err)
+	if (err)
 		wdev->wiphy->frag_threshold = ofrag;
 out:
 	wiphy_unlock(&rdev->wiphy);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_WEXT_HANDLER(cfg80211_wext_siwfrag);
 
-पूर्णांक cfg80211_wext_giwfrag(काष्ठा net_device *dev,
-			  काष्ठा iw_request_info *info,
-			  काष्ठा iw_param *frag, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
+int cfg80211_wext_giwfrag(struct net_device *dev,
+			  struct iw_request_info *info,
+			  struct iw_param *frag, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
 
 	frag->value = wdev->wiphy->frag_threshold;
 	frag->disabled = frag->value == (u32) -1;
 	frag->fixed = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_WEXT_HANDLER(cfg80211_wext_giwfrag);
 
-अटल पूर्णांक cfg80211_wext_siwretry(काष्ठा net_device *dev,
-				  काष्ठा iw_request_info *info,
-				  काष्ठा iw_param *retry, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
+static int cfg80211_wext_siwretry(struct net_device *dev,
+				  struct iw_request_info *info,
+				  struct iw_param *retry, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
 	u32 changed = 0;
-	u8 oदीर्घ = wdev->wiphy->retry_दीर्घ;
-	u8 oलघु = wdev->wiphy->retry_लघु;
-	पूर्णांक err;
+	u8 olong = wdev->wiphy->retry_long;
+	u8 oshort = wdev->wiphy->retry_short;
+	int err;
 
-	अगर (retry->disabled || retry->value < 1 || retry->value > 255 ||
+	if (retry->disabled || retry->value < 1 || retry->value > 255 ||
 	    (retry->flags & IW_RETRY_TYPE) != IW_RETRY_LIMIT)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	wiphy_lock(&rdev->wiphy);
-	अगर (retry->flags & IW_RETRY_LONG) अणु
-		wdev->wiphy->retry_दीर्घ = retry->value;
+	if (retry->flags & IW_RETRY_LONG) {
+		wdev->wiphy->retry_long = retry->value;
 		changed |= WIPHY_PARAM_RETRY_LONG;
-	पूर्ण अन्यथा अगर (retry->flags & IW_RETRY_SHORT) अणु
-		wdev->wiphy->retry_लघु = retry->value;
+	} else if (retry->flags & IW_RETRY_SHORT) {
+		wdev->wiphy->retry_short = retry->value;
 		changed |= WIPHY_PARAM_RETRY_SHORT;
-	पूर्ण अन्यथा अणु
-		wdev->wiphy->retry_लघु = retry->value;
-		wdev->wiphy->retry_दीर्घ = retry->value;
+	} else {
+		wdev->wiphy->retry_short = retry->value;
+		wdev->wiphy->retry_long = retry->value;
 		changed |= WIPHY_PARAM_RETRY_LONG;
 		changed |= WIPHY_PARAM_RETRY_SHORT;
-	पूर्ण
+	}
 
 	err = rdev_set_wiphy_params(rdev, changed);
-	अगर (err) अणु
-		wdev->wiphy->retry_लघु = oलघु;
-		wdev->wiphy->retry_दीर्घ = oदीर्घ;
-	पूर्ण
+	if (err) {
+		wdev->wiphy->retry_short = oshort;
+		wdev->wiphy->retry_long = olong;
+	}
 	wiphy_unlock(&rdev->wiphy);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक cfg80211_wext_giwretry(काष्ठा net_device *dev,
-			   काष्ठा iw_request_info *info,
-			   काष्ठा iw_param *retry, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
+int cfg80211_wext_giwretry(struct net_device *dev,
+			   struct iw_request_info *info,
+			   struct iw_param *retry, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
 
 	retry->disabled = 0;
 
-	अगर (retry->flags == 0 || (retry->flags & IW_RETRY_SHORT)) अणु
+	if (retry->flags == 0 || (retry->flags & IW_RETRY_SHORT)) {
 		/*
-		 * First वापस लघु value, iwconfig will ask दीर्घ value
-		 * later अगर needed
+		 * First return short value, iwconfig will ask long value
+		 * later if needed
 		 */
 		retry->flags |= IW_RETRY_LIMIT | IW_RETRY_SHORT;
-		retry->value = wdev->wiphy->retry_लघु;
-		अगर (wdev->wiphy->retry_दीर्घ == wdev->wiphy->retry_लघु)
+		retry->value = wdev->wiphy->retry_short;
+		if (wdev->wiphy->retry_long == wdev->wiphy->retry_short)
 			retry->flags |= IW_RETRY_LONG;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (retry->flags & IW_RETRY_LONG) अणु
+	if (retry->flags & IW_RETRY_LONG) {
 		retry->flags = IW_RETRY_LIMIT | IW_RETRY_LONG;
-		retry->value = wdev->wiphy->retry_दीर्घ;
-	पूर्ण
+		retry->value = wdev->wiphy->retry_long;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_WEXT_HANDLER(cfg80211_wext_giwretry);
 
-अटल पूर्णांक __cfg80211_set_encryption(काष्ठा cfg80211_रेजिस्टरed_device *rdev,
-				     काष्ठा net_device *dev, bool pairwise,
-				     स्थिर u8 *addr, bool हटाओ, bool tx_key,
-				     पूर्णांक idx, काष्ठा key_params *params)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	पूर्णांक err, i;
+static int __cfg80211_set_encryption(struct cfg80211_registered_device *rdev,
+				     struct net_device *dev, bool pairwise,
+				     const u8 *addr, bool remove, bool tx_key,
+				     int idx, struct key_params *params)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	int err, i;
 	bool rejoin = false;
 
-	अगर (pairwise && !addr)
-		वापस -EINVAL;
+	if (pairwise && !addr)
+		return -EINVAL;
 
 	/*
-	 * In many हालs we won't actually need this, but it's better
-	 * to करो it first in हाल the allocation fails. Don't use wext.
+	 * In many cases we won't actually need this, but it's better
+	 * to do it first in case the allocation fails. Don't use wext.
 	 */
-	अगर (!wdev->wext.keys) अणु
-		wdev->wext.keys = kzalloc(माप(*wdev->wext.keys),
+	if (!wdev->wext.keys) {
+		wdev->wext.keys = kzalloc(sizeof(*wdev->wext.keys),
 					  GFP_KERNEL);
-		अगर (!wdev->wext.keys)
-			वापस -ENOMEM;
-		क्रम (i = 0; i < CFG80211_MAX_WEP_KEYS; i++)
+		if (!wdev->wext.keys)
+			return -ENOMEM;
+		for (i = 0; i < CFG80211_MAX_WEP_KEYS; i++)
 			wdev->wext.keys->params[i].key =
 				wdev->wext.keys->data[i];
-	पूर्ण
+	}
 
-	अगर (wdev->अगरtype != NL80211_IFTYPE_ADHOC &&
-	    wdev->अगरtype != NL80211_IFTYPE_STATION)
-		वापस -EOPNOTSUPP;
+	if (wdev->iftype != NL80211_IFTYPE_ADHOC &&
+	    wdev->iftype != NL80211_IFTYPE_STATION)
+		return -EOPNOTSUPP;
 
-	अगर (params->cipher == WLAN_CIPHER_SUITE_AES_CMAC) अणु
-		अगर (!wdev->current_bss)
-			वापस -ENOLINK;
+	if (params->cipher == WLAN_CIPHER_SUITE_AES_CMAC) {
+		if (!wdev->current_bss)
+			return -ENOLINK;
 
-		अगर (!rdev->ops->set_शेष_mgmt_key)
-			वापस -EOPNOTSUPP;
+		if (!rdev->ops->set_default_mgmt_key)
+			return -EOPNOTSUPP;
 
-		अगर (idx < 4 || idx > 5)
-			वापस -EINVAL;
-	पूर्ण अन्यथा अगर (idx < 0 || idx > 3)
-		वापस -EINVAL;
+		if (idx < 4 || idx > 5)
+			return -EINVAL;
+	} else if (idx < 0 || idx > 3)
+		return -EINVAL;
 
-	अगर (हटाओ) अणु
+	if (remove) {
 		err = 0;
-		अगर (wdev->current_bss) अणु
+		if (wdev->current_bss) {
 			/*
 			 * If removing the current TX key, we will need to
 			 * join a new IBSS without the privacy bit clear.
 			 */
-			अगर (idx == wdev->wext.शेष_key &&
-			    wdev->अगरtype == NL80211_IFTYPE_ADHOC) अणु
+			if (idx == wdev->wext.default_key &&
+			    wdev->iftype == NL80211_IFTYPE_ADHOC) {
 				__cfg80211_leave_ibss(rdev, wdev->netdev, true);
 				rejoin = true;
-			पूर्ण
+			}
 
-			अगर (!pairwise && addr &&
+			if (!pairwise && addr &&
 			    !(rdev->wiphy.flags & WIPHY_FLAG_IBSS_RSN))
 				err = -ENOENT;
-			अन्यथा
+			else
 				err = rdev_del_key(rdev, dev, idx, pairwise,
 						   addr);
-		पूर्ण
+		}
 		wdev->wext.connect.privacy = false;
 		/*
 		 * Applications using wireless extensions expect to be
-		 * able to delete keys that करोn't exist, so allow that.
+		 * able to delete keys that don't exist, so allow that.
 		 */
-		अगर (err == -ENOENT)
+		if (err == -ENOENT)
 			err = 0;
-		अगर (!err) अणु
-			अगर (!addr && idx < 4) अणु
-				स_रखो(wdev->wext.keys->data[idx], 0,
-				       माप(wdev->wext.keys->data[idx]));
+		if (!err) {
+			if (!addr && idx < 4) {
+				memset(wdev->wext.keys->data[idx], 0,
+				       sizeof(wdev->wext.keys->data[idx]));
 				wdev->wext.keys->params[idx].key_len = 0;
 				wdev->wext.keys->params[idx].cipher = 0;
-			पूर्ण
-			अगर (idx == wdev->wext.शेष_key)
-				wdev->wext.शेष_key = -1;
-			अन्यथा अगर (idx == wdev->wext.शेष_mgmt_key)
-				wdev->wext.शेष_mgmt_key = -1;
-		पूर्ण
+			}
+			if (idx == wdev->wext.default_key)
+				wdev->wext.default_key = -1;
+			else if (idx == wdev->wext.default_mgmt_key)
+				wdev->wext.default_mgmt_key = -1;
+		}
 
-		अगर (!err && rejoin)
+		if (!err && rejoin)
 			err = cfg80211_ibss_wext_join(rdev, wdev);
 
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (addr)
+	if (addr)
 		tx_key = false;
 
-	अगर (cfg80211_validate_key_settings(rdev, params, idx, pairwise, addr))
-		वापस -EINVAL;
+	if (cfg80211_validate_key_settings(rdev, params, idx, pairwise, addr))
+		return -EINVAL;
 
 	err = 0;
-	अगर (wdev->current_bss)
+	if (wdev->current_bss)
 		err = rdev_add_key(rdev, dev, idx, pairwise, addr, params);
-	अन्यथा अगर (params->cipher != WLAN_CIPHER_SUITE_WEP40 &&
+	else if (params->cipher != WLAN_CIPHER_SUITE_WEP40 &&
 		 params->cipher != WLAN_CIPHER_SUITE_WEP104)
-		वापस -EINVAL;
-	अगर (err)
-		वापस err;
+		return -EINVAL;
+	if (err)
+		return err;
 
 	/*
 	 * We only need to store WEP keys, since they're the only keys that
-	 * can be set beक्रमe a connection is established and persist after
+	 * can be set before a connection is established and persist after
 	 * disconnecting.
 	 */
-	अगर (!addr && (params->cipher == WLAN_CIPHER_SUITE_WEP40 ||
-		      params->cipher == WLAN_CIPHER_SUITE_WEP104)) अणु
+	if (!addr && (params->cipher == WLAN_CIPHER_SUITE_WEP40 ||
+		      params->cipher == WLAN_CIPHER_SUITE_WEP104)) {
 		wdev->wext.keys->params[idx] = *params;
-		स_नकल(wdev->wext.keys->data[idx],
+		memcpy(wdev->wext.keys->data[idx],
 			params->key, params->key_len);
 		wdev->wext.keys->params[idx].key =
 			wdev->wext.keys->data[idx];
-	पूर्ण
+	}
 
-	अगर ((params->cipher == WLAN_CIPHER_SUITE_WEP40 ||
+	if ((params->cipher == WLAN_CIPHER_SUITE_WEP40 ||
 	     params->cipher == WLAN_CIPHER_SUITE_WEP104) &&
-	    (tx_key || (!addr && wdev->wext.शेष_key == -1))) अणु
-		अगर (wdev->current_bss) अणु
+	    (tx_key || (!addr && wdev->wext.default_key == -1))) {
+		if (wdev->current_bss) {
 			/*
 			 * If we are getting a new TX key from not having
-			 * had one beक्रमe we need to join a new IBSS with
+			 * had one before we need to join a new IBSS with
 			 * the privacy bit set.
 			 */
-			अगर (wdev->अगरtype == NL80211_IFTYPE_ADHOC &&
-			    wdev->wext.शेष_key == -1) अणु
+			if (wdev->iftype == NL80211_IFTYPE_ADHOC &&
+			    wdev->wext.default_key == -1) {
 				__cfg80211_leave_ibss(rdev, wdev->netdev, true);
 				rejoin = true;
-			पूर्ण
-			err = rdev_set_शेष_key(rdev, dev, idx, true, true);
-		पूर्ण
-		अगर (!err) अणु
-			wdev->wext.शेष_key = idx;
-			अगर (rejoin)
+			}
+			err = rdev_set_default_key(rdev, dev, idx, true, true);
+		}
+		if (!err) {
+			wdev->wext.default_key = idx;
+			if (rejoin)
 				err = cfg80211_ibss_wext_join(rdev, wdev);
-		पूर्ण
-		वापस err;
-	पूर्ण
+		}
+		return err;
+	}
 
-	अगर (params->cipher == WLAN_CIPHER_SUITE_AES_CMAC &&
-	    (tx_key || (!addr && wdev->wext.शेष_mgmt_key == -1))) अणु
-		अगर (wdev->current_bss)
-			err = rdev_set_शेष_mgmt_key(rdev, dev, idx);
-		अगर (!err)
-			wdev->wext.शेष_mgmt_key = idx;
-		वापस err;
-	पूर्ण
+	if (params->cipher == WLAN_CIPHER_SUITE_AES_CMAC &&
+	    (tx_key || (!addr && wdev->wext.default_mgmt_key == -1))) {
+		if (wdev->current_bss)
+			err = rdev_set_default_mgmt_key(rdev, dev, idx);
+		if (!err)
+			wdev->wext.default_mgmt_key = idx;
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cfg80211_set_encryption(काष्ठा cfg80211_रेजिस्टरed_device *rdev,
-				   काष्ठा net_device *dev, bool pairwise,
-				   स्थिर u8 *addr, bool हटाओ, bool tx_key,
-				   पूर्णांक idx, काष्ठा key_params *params)
-अणु
-	पूर्णांक err;
+static int cfg80211_set_encryption(struct cfg80211_registered_device *rdev,
+				   struct net_device *dev, bool pairwise,
+				   const u8 *addr, bool remove, bool tx_key,
+				   int idx, struct key_params *params)
+{
+	int err;
 
 	wdev_lock(dev->ieee80211_ptr);
 	err = __cfg80211_set_encryption(rdev, dev, pairwise, addr,
-					हटाओ, tx_key, idx, params);
+					remove, tx_key, idx, params);
 	wdev_unlock(dev->ieee80211_ptr);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक cfg80211_wext_siwencode(काष्ठा net_device *dev,
-				   काष्ठा iw_request_info *info,
-				   काष्ठा iw_poपूर्णांक *erq, अक्षर *keybuf)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
-	पूर्णांक idx, err;
-	bool हटाओ = false;
-	काष्ठा key_params params;
+static int cfg80211_wext_siwencode(struct net_device *dev,
+				   struct iw_request_info *info,
+				   struct iw_point *erq, char *keybuf)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
+	int idx, err;
+	bool remove = false;
+	struct key_params params;
 
-	अगर (wdev->अगरtype != NL80211_IFTYPE_STATION &&
-	    wdev->अगरtype != NL80211_IFTYPE_ADHOC)
-		वापस -EOPNOTSUPP;
+	if (wdev->iftype != NL80211_IFTYPE_STATION &&
+	    wdev->iftype != NL80211_IFTYPE_ADHOC)
+		return -EOPNOTSUPP;
 
-	/* no use -- only MFP (set_शेष_mgmt_key) is optional */
-	अगर (!rdev->ops->del_key ||
+	/* no use -- only MFP (set_default_mgmt_key) is optional */
+	if (!rdev->ops->del_key ||
 	    !rdev->ops->add_key ||
-	    !rdev->ops->set_शेष_key)
-		वापस -EOPNOTSUPP;
+	    !rdev->ops->set_default_key)
+		return -EOPNOTSUPP;
 
 	wiphy_lock(&rdev->wiphy);
 	idx = erq->flags & IW_ENCODE_INDEX;
-	अगर (idx == 0) अणु
-		idx = wdev->wext.शेष_key;
-		अगर (idx < 0)
+	if (idx == 0) {
+		idx = wdev->wext.default_key;
+		if (idx < 0)
 			idx = 0;
-	पूर्ण अन्यथा अगर (idx < 1 || idx > 4) अणु
+	} else if (idx < 1 || idx > 4) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण अन्यथा अणु
+		goto out;
+	} else {
 		idx--;
-	पूर्ण
+	}
 
-	अगर (erq->flags & IW_ENCODE_DISABLED)
-		हटाओ = true;
-	अन्यथा अगर (erq->length == 0) अणु
-		/* No key data - just set the शेष TX key index */
+	if (erq->flags & IW_ENCODE_DISABLED)
+		remove = true;
+	else if (erq->length == 0) {
+		/* No key data - just set the default TX key index */
 		err = 0;
 		wdev_lock(wdev);
-		अगर (wdev->current_bss)
-			err = rdev_set_शेष_key(rdev, dev, idx, true,
+		if (wdev->current_bss)
+			err = rdev_set_default_key(rdev, dev, idx, true,
 						   true);
-		अगर (!err)
-			wdev->wext.शेष_key = idx;
+		if (!err)
+			wdev->wext.default_key = idx;
 		wdev_unlock(wdev);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	स_रखो(&params, 0, माप(params));
+	memset(&params, 0, sizeof(params));
 	params.key = keybuf;
 	params.key_len = erq->length;
-	अगर (erq->length == 5) अणु
+	if (erq->length == 5) {
 		params.cipher = WLAN_CIPHER_SUITE_WEP40;
-	पूर्ण अन्यथा अगर (erq->length == 13) अणु
+	} else if (erq->length == 13) {
 		params.cipher = WLAN_CIPHER_SUITE_WEP104;
-	पूर्ण अन्यथा अगर (!हटाओ) अणु
+	} else if (!remove) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	err = cfg80211_set_encryption(rdev, dev, false, शून्य, हटाओ,
-				      wdev->wext.शेष_key == -1,
+	err = cfg80211_set_encryption(rdev, dev, false, NULL, remove,
+				      wdev->wext.default_key == -1,
 				      idx, &params);
 out:
 	wiphy_unlock(&rdev->wiphy);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक cfg80211_wext_siwencodeext(काष्ठा net_device *dev,
-				      काष्ठा iw_request_info *info,
-				      काष्ठा iw_poपूर्णांक *erq, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
-	काष्ठा iw_encode_ext *ext = (काष्ठा iw_encode_ext *) extra;
-	स्थिर u8 *addr;
-	पूर्णांक idx;
-	bool हटाओ = false;
-	काष्ठा key_params params;
+static int cfg80211_wext_siwencodeext(struct net_device *dev,
+				      struct iw_request_info *info,
+				      struct iw_point *erq, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
+	struct iw_encode_ext *ext = (struct iw_encode_ext *) extra;
+	const u8 *addr;
+	int idx;
+	bool remove = false;
+	struct key_params params;
 	u32 cipher;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (wdev->अगरtype != NL80211_IFTYPE_STATION &&
-	    wdev->अगरtype != NL80211_IFTYPE_ADHOC)
-		वापस -EOPNOTSUPP;
+	if (wdev->iftype != NL80211_IFTYPE_STATION &&
+	    wdev->iftype != NL80211_IFTYPE_ADHOC)
+		return -EOPNOTSUPP;
 
-	/* no use -- only MFP (set_शेष_mgmt_key) is optional */
-	अगर (!rdev->ops->del_key ||
+	/* no use -- only MFP (set_default_mgmt_key) is optional */
+	if (!rdev->ops->del_key ||
 	    !rdev->ops->add_key ||
-	    !rdev->ops->set_शेष_key)
-		वापस -EOPNOTSUPP;
+	    !rdev->ops->set_default_key)
+		return -EOPNOTSUPP;
 
-	चयन (ext->alg) अणु
-	हाल IW_ENCODE_ALG_NONE:
-		हटाओ = true;
+	switch (ext->alg) {
+	case IW_ENCODE_ALG_NONE:
+		remove = true;
 		cipher = 0;
-		अवरोध;
-	हाल IW_ENCODE_ALG_WEP:
-		अगर (ext->key_len == 5)
+		break;
+	case IW_ENCODE_ALG_WEP:
+		if (ext->key_len == 5)
 			cipher = WLAN_CIPHER_SUITE_WEP40;
-		अन्यथा अगर (ext->key_len == 13)
+		else if (ext->key_len == 13)
 			cipher = WLAN_CIPHER_SUITE_WEP104;
-		अन्यथा
-			वापस -EINVAL;
-		अवरोध;
-	हाल IW_ENCODE_ALG_TKIP:
+		else
+			return -EINVAL;
+		break;
+	case IW_ENCODE_ALG_TKIP:
 		cipher = WLAN_CIPHER_SUITE_TKIP;
-		अवरोध;
-	हाल IW_ENCODE_ALG_CCMP:
+		break;
+	case IW_ENCODE_ALG_CCMP:
 		cipher = WLAN_CIPHER_SUITE_CCMP;
-		अवरोध;
-	हाल IW_ENCODE_ALG_AES_CMAC:
+		break;
+	case IW_ENCODE_ALG_AES_CMAC:
 		cipher = WLAN_CIPHER_SUITE_AES_CMAC;
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
-	अगर (erq->flags & IW_ENCODE_DISABLED)
-		हटाओ = true;
+	if (erq->flags & IW_ENCODE_DISABLED)
+		remove = true;
 
 	idx = erq->flags & IW_ENCODE_INDEX;
-	अगर (cipher == WLAN_CIPHER_SUITE_AES_CMAC) अणु
-		अगर (idx < 4 || idx > 5) अणु
-			idx = wdev->wext.शेष_mgmt_key;
-			अगर (idx < 0)
-				वापस -EINVAL;
-		पूर्ण अन्यथा
+	if (cipher == WLAN_CIPHER_SUITE_AES_CMAC) {
+		if (idx < 4 || idx > 5) {
+			idx = wdev->wext.default_mgmt_key;
+			if (idx < 0)
+				return -EINVAL;
+		} else
 			idx--;
-	पूर्ण अन्यथा अणु
-		अगर (idx < 1 || idx > 4) अणु
-			idx = wdev->wext.शेष_key;
-			अगर (idx < 0)
-				वापस -EINVAL;
-		पूर्ण अन्यथा
+	} else {
+		if (idx < 1 || idx > 4) {
+			idx = wdev->wext.default_key;
+			if (idx < 0)
+				return -EINVAL;
+		} else
 			idx--;
-	पूर्ण
+	}
 
 	addr = ext->addr.sa_data;
-	अगर (is_broadcast_ether_addr(addr))
-		addr = शून्य;
+	if (is_broadcast_ether_addr(addr))
+		addr = NULL;
 
-	स_रखो(&params, 0, माप(params));
+	memset(&params, 0, sizeof(params));
 	params.key = ext->key;
 	params.key_len = ext->key_len;
 	params.cipher = cipher;
 
-	अगर (ext->ext_flags & IW_ENCODE_EXT_RX_SEQ_VALID) अणु
+	if (ext->ext_flags & IW_ENCODE_EXT_RX_SEQ_VALID) {
 		params.seq = ext->rx_seq;
 		params.seq_len = 6;
-	पूर्ण
+	}
 
 	wiphy_lock(wdev->wiphy);
 	ret = cfg80211_set_encryption(
 			rdev, dev,
 			!(ext->ext_flags & IW_ENCODE_EXT_GROUP_KEY),
-			addr, हटाओ,
+			addr, remove,
 			ext->ext_flags & IW_ENCODE_EXT_SET_TX_KEY,
 			idx, &params);
 	wiphy_unlock(wdev->wiphy);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cfg80211_wext_giwencode(काष्ठा net_device *dev,
-				   काष्ठा iw_request_info *info,
-				   काष्ठा iw_poपूर्णांक *erq, अक्षर *keybuf)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	पूर्णांक idx;
+static int cfg80211_wext_giwencode(struct net_device *dev,
+				   struct iw_request_info *info,
+				   struct iw_point *erq, char *keybuf)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	int idx;
 
-	अगर (wdev->अगरtype != NL80211_IFTYPE_STATION &&
-	    wdev->अगरtype != NL80211_IFTYPE_ADHOC)
-		वापस -EOPNOTSUPP;
+	if (wdev->iftype != NL80211_IFTYPE_STATION &&
+	    wdev->iftype != NL80211_IFTYPE_ADHOC)
+		return -EOPNOTSUPP;
 
 	idx = erq->flags & IW_ENCODE_INDEX;
-	अगर (idx == 0) अणु
-		idx = wdev->wext.शेष_key;
-		अगर (idx < 0)
+	if (idx == 0) {
+		idx = wdev->wext.default_key;
+		if (idx < 0)
 			idx = 0;
-	पूर्ण अन्यथा अगर (idx < 1 || idx > 4)
-		वापस -EINVAL;
-	अन्यथा
+	} else if (idx < 1 || idx > 4)
+		return -EINVAL;
+	else
 		idx--;
 
 	erq->flags = idx + 1;
 
-	अगर (!wdev->wext.keys || !wdev->wext.keys->params[idx].cipher) अणु
+	if (!wdev->wext.keys || !wdev->wext.keys->params[idx].cipher) {
 		erq->flags |= IW_ENCODE_DISABLED;
 		erq->length = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	erq->length = min_t(माप_प्रकार, erq->length,
+	erq->length = min_t(size_t, erq->length,
 			    wdev->wext.keys->params[idx].key_len);
-	स_नकल(keybuf, wdev->wext.keys->params[idx].key, erq->length);
+	memcpy(keybuf, wdev->wext.keys->params[idx].key, erq->length);
 	erq->flags |= IW_ENCODE_ENABLED;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cfg80211_wext_siwfreq(काष्ठा net_device *dev,
-				 काष्ठा iw_request_info *info,
-				 काष्ठा iw_freq *wextfreq, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
-	काष्ठा cfg80211_chan_def chandef = अणु
+static int cfg80211_wext_siwfreq(struct net_device *dev,
+				 struct iw_request_info *info,
+				 struct iw_freq *wextfreq, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
+	struct cfg80211_chan_def chandef = {
 		.width = NL80211_CHAN_WIDTH_20_NOHT,
-	पूर्ण;
-	पूर्णांक freq, ret;
+	};
+	int freq, ret;
 
 	wiphy_lock(&rdev->wiphy);
 
-	चयन (wdev->अगरtype) अणु
-	हाल NL80211_IFTYPE_STATION:
+	switch (wdev->iftype) {
+	case NL80211_IFTYPE_STATION:
 		ret = cfg80211_mgd_wext_siwfreq(dev, info, wextfreq, extra);
-		अवरोध;
-	हाल NL80211_IFTYPE_ADHOC:
+		break;
+	case NL80211_IFTYPE_ADHOC:
 		ret = cfg80211_ibss_wext_siwfreq(dev, info, wextfreq, extra);
-		अवरोध;
-	हाल NL80211_IFTYPE_MONITOR:
+		break;
+	case NL80211_IFTYPE_MONITOR:
 		freq = cfg80211_wext_freq(wextfreq);
-		अगर (freq < 0) अणु
+		if (freq < 0) {
 			ret = freq;
-			अवरोध;
-		पूर्ण
-		अगर (freq == 0) अणु
+			break;
+		}
+		if (freq == 0) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		chandef.center_freq1 = freq;
 		chandef.chan = ieee80211_get_channel(&rdev->wiphy, freq);
-		अगर (!chandef.chan) अणु
+		if (!chandef.chan) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ret = cfg80211_set_monitor_channel(rdev, &chandef);
-		अवरोध;
-	हाल NL80211_IFTYPE_MESH_POINT:
+		break;
+	case NL80211_IFTYPE_MESH_POINT:
 		freq = cfg80211_wext_freq(wextfreq);
-		अगर (freq < 0) अणु
+		if (freq < 0) {
 			ret = freq;
-			अवरोध;
-		पूर्ण
-		अगर (freq == 0) अणु
+			break;
+		}
+		if (freq == 0) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		chandef.center_freq1 = freq;
 		chandef.chan = ieee80211_get_channel(&rdev->wiphy, freq);
-		अगर (!chandef.chan) अणु
+		if (!chandef.chan) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ret = cfg80211_set_mesh_channel(rdev, wdev, &chandef);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EOPNOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	wiphy_unlock(&rdev->wiphy);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cfg80211_wext_giwfreq(काष्ठा net_device *dev,
-				 काष्ठा iw_request_info *info,
-				 काष्ठा iw_freq *freq, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
-	काष्ठा cfg80211_chan_def chandef = अणुपूर्ण;
-	पूर्णांक ret;
+static int cfg80211_wext_giwfreq(struct net_device *dev,
+				 struct iw_request_info *info,
+				 struct iw_freq *freq, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
+	struct cfg80211_chan_def chandef = {};
+	int ret;
 
 	wiphy_lock(&rdev->wiphy);
-	चयन (wdev->अगरtype) अणु
-	हाल NL80211_IFTYPE_STATION:
+	switch (wdev->iftype) {
+	case NL80211_IFTYPE_STATION:
 		ret = cfg80211_mgd_wext_giwfreq(dev, info, freq, extra);
-		अवरोध;
-	हाल NL80211_IFTYPE_ADHOC:
+		break;
+	case NL80211_IFTYPE_ADHOC:
 		ret = cfg80211_ibss_wext_giwfreq(dev, info, freq, extra);
-		अवरोध;
-	हाल NL80211_IFTYPE_MONITOR:
-		अगर (!rdev->ops->get_channel) अणु
+		break;
+	case NL80211_IFTYPE_MONITOR:
+		if (!rdev->ops->get_channel) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		ret = rdev_get_channel(rdev, wdev, &chandef);
-		अगर (ret)
-			अवरोध;
+		if (ret)
+			break;
 		freq->m = chandef.chan->center_freq;
 		freq->e = 6;
 		ret = 0;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	wiphy_unlock(&rdev->wiphy);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cfg80211_wext_siwtxघातer(काष्ठा net_device *dev,
-				    काष्ठा iw_request_info *info,
-				    जोड़ iwreq_data *data, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
-	क्रमागत nl80211_tx_घातer_setting type;
-	पूर्णांक dbm = 0;
-	पूर्णांक ret;
+static int cfg80211_wext_siwtxpower(struct net_device *dev,
+				    struct iw_request_info *info,
+				    union iwreq_data *data, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
+	enum nl80211_tx_power_setting type;
+	int dbm = 0;
+	int ret;
 
-	अगर ((data->txघातer.flags & IW_TXPOW_TYPE) != IW_TXPOW_DBM)
-		वापस -EINVAL;
-	अगर (data->txघातer.flags & IW_TXPOW_RANGE)
-		वापस -EINVAL;
+	if ((data->txpower.flags & IW_TXPOW_TYPE) != IW_TXPOW_DBM)
+		return -EINVAL;
+	if (data->txpower.flags & IW_TXPOW_RANGE)
+		return -EINVAL;
 
-	अगर (!rdev->ops->set_tx_घातer)
-		वापस -EOPNOTSUPP;
+	if (!rdev->ops->set_tx_power)
+		return -EOPNOTSUPP;
 
 	/* only change when not disabling */
-	अगर (!data->txघातer.disabled) अणु
-		rfसमाप्त_set_sw_state(rdev->rfसमाप्त, false);
+	if (!data->txpower.disabled) {
+		rfkill_set_sw_state(rdev->rfkill, false);
 
-		अगर (data->txघातer.fixed) अणु
+		if (data->txpower.fixed) {
 			/*
-			 * wext करोesn't support negative values, see
-			 * below where it's क्रम स्वतःmatic
+			 * wext doesn't support negative values, see
+			 * below where it's for automatic
 			 */
-			अगर (data->txघातer.value < 0)
-				वापस -EINVAL;
-			dbm = data->txघातer.value;
+			if (data->txpower.value < 0)
+				return -EINVAL;
+			dbm = data->txpower.value;
 			type = NL80211_TX_POWER_FIXED;
-			/* TODO: करो regulatory check! */
-		पूर्ण अन्यथा अणु
+			/* TODO: do regulatory check! */
+		} else {
 			/*
-			 * Automatic घातer level setting, max being the value
+			 * Automatic power level setting, max being the value
 			 * passed in from userland.
 			 */
-			अगर (data->txघातer.value < 0) अणु
+			if (data->txpower.value < 0) {
 				type = NL80211_TX_POWER_AUTOMATIC;
-			पूर्ण अन्यथा अणु
-				dbm = data->txघातer.value;
+			} else {
+				dbm = data->txpower.value;
 				type = NL80211_TX_POWER_LIMITED;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (rfसमाप्त_set_sw_state(rdev->rfसमाप्त, true))
-			schedule_work(&rdev->rfसमाप्त_block);
-		वापस 0;
-	पूर्ण
+			}
+		}
+	} else {
+		if (rfkill_set_sw_state(rdev->rfkill, true))
+			schedule_work(&rdev->rfkill_block);
+		return 0;
+	}
 
 	wiphy_lock(&rdev->wiphy);
-	ret = rdev_set_tx_घातer(rdev, wdev, type, DBM_TO_MBM(dbm));
+	ret = rdev_set_tx_power(rdev, wdev, type, DBM_TO_MBM(dbm));
 	wiphy_unlock(&rdev->wiphy);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cfg80211_wext_giwtxघातer(काष्ठा net_device *dev,
-				    काष्ठा iw_request_info *info,
-				    जोड़ iwreq_data *data, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
-	पूर्णांक err, val;
+static int cfg80211_wext_giwtxpower(struct net_device *dev,
+				    struct iw_request_info *info,
+				    union iwreq_data *data, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
+	int err, val;
 
-	अगर ((data->txघातer.flags & IW_TXPOW_TYPE) != IW_TXPOW_DBM)
-		वापस -EINVAL;
-	अगर (data->txघातer.flags & IW_TXPOW_RANGE)
-		वापस -EINVAL;
+	if ((data->txpower.flags & IW_TXPOW_TYPE) != IW_TXPOW_DBM)
+		return -EINVAL;
+	if (data->txpower.flags & IW_TXPOW_RANGE)
+		return -EINVAL;
 
-	अगर (!rdev->ops->get_tx_घातer)
-		वापस -EOPNOTSUPP;
+	if (!rdev->ops->get_tx_power)
+		return -EOPNOTSUPP;
 
 	wiphy_lock(&rdev->wiphy);
-	err = rdev_get_tx_घातer(rdev, wdev, &val);
+	err = rdev_get_tx_power(rdev, wdev, &val);
 	wiphy_unlock(&rdev->wiphy);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* well... oh well */
-	data->txघातer.fixed = 1;
-	data->txघातer.disabled = rfसमाप्त_blocked(rdev->rfसमाप्त);
-	data->txघातer.value = val;
-	data->txघातer.flags = IW_TXPOW_DBM;
+	data->txpower.fixed = 1;
+	data->txpower.disabled = rfkill_blocked(rdev->rfkill);
+	data->txpower.value = val;
+	data->txpower.flags = IW_TXPOW_DBM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cfg80211_set_auth_alg(काष्ठा wireless_dev *wdev,
+static int cfg80211_set_auth_alg(struct wireless_dev *wdev,
 				 s32 auth_alg)
-अणु
-	पूर्णांक nr_alg = 0;
+{
+	int nr_alg = 0;
 
-	अगर (!auth_alg)
-		वापस -EINVAL;
+	if (!auth_alg)
+		return -EINVAL;
 
-	अगर (auth_alg & ~(IW_AUTH_ALG_OPEN_SYSTEM |
+	if (auth_alg & ~(IW_AUTH_ALG_OPEN_SYSTEM |
 			 IW_AUTH_ALG_SHARED_KEY |
 			 IW_AUTH_ALG_LEAP))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (auth_alg & IW_AUTH_ALG_OPEN_SYSTEM) अणु
+	if (auth_alg & IW_AUTH_ALG_OPEN_SYSTEM) {
 		nr_alg++;
 		wdev->wext.connect.auth_type = NL80211_AUTHTYPE_OPEN_SYSTEM;
-	पूर्ण
+	}
 
-	अगर (auth_alg & IW_AUTH_ALG_SHARED_KEY) अणु
+	if (auth_alg & IW_AUTH_ALG_SHARED_KEY) {
 		nr_alg++;
 		wdev->wext.connect.auth_type = NL80211_AUTHTYPE_SHARED_KEY;
-	पूर्ण
+	}
 
-	अगर (auth_alg & IW_AUTH_ALG_LEAP) अणु
+	if (auth_alg & IW_AUTH_ALG_LEAP) {
 		nr_alg++;
 		wdev->wext.connect.auth_type = NL80211_AUTHTYPE_NETWORK_EAP;
-	पूर्ण
+	}
 
-	अगर (nr_alg > 1)
+	if (nr_alg > 1)
 		wdev->wext.connect.auth_type = NL80211_AUTHTYPE_AUTOMATIC;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cfg80211_set_wpa_version(काष्ठा wireless_dev *wdev, u32 wpa_versions)
-अणु
-	अगर (wpa_versions & ~(IW_AUTH_WPA_VERSION_WPA |
+static int cfg80211_set_wpa_version(struct wireless_dev *wdev, u32 wpa_versions)
+{
+	if (wpa_versions & ~(IW_AUTH_WPA_VERSION_WPA |
 			     IW_AUTH_WPA_VERSION_WPA2|
 		             IW_AUTH_WPA_VERSION_DISABLED))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर ((wpa_versions & IW_AUTH_WPA_VERSION_DISABLED) &&
+	if ((wpa_versions & IW_AUTH_WPA_VERSION_DISABLED) &&
 	    (wpa_versions & (IW_AUTH_WPA_VERSION_WPA|
 			     IW_AUTH_WPA_VERSION_WPA2)))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (wpa_versions & IW_AUTH_WPA_VERSION_DISABLED)
+	if (wpa_versions & IW_AUTH_WPA_VERSION_DISABLED)
 		wdev->wext.connect.crypto.wpa_versions &=
 			~(NL80211_WPA_VERSION_1|NL80211_WPA_VERSION_2);
 
-	अगर (wpa_versions & IW_AUTH_WPA_VERSION_WPA)
+	if (wpa_versions & IW_AUTH_WPA_VERSION_WPA)
 		wdev->wext.connect.crypto.wpa_versions |=
 			NL80211_WPA_VERSION_1;
 
-	अगर (wpa_versions & IW_AUTH_WPA_VERSION_WPA2)
+	if (wpa_versions & IW_AUTH_WPA_VERSION_WPA2)
 		wdev->wext.connect.crypto.wpa_versions |=
 			NL80211_WPA_VERSION_2;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cfg80211_set_cipher_group(काष्ठा wireless_dev *wdev, u32 cipher)
-अणु
-	अगर (cipher & IW_AUTH_CIPHER_WEP40)
+static int cfg80211_set_cipher_group(struct wireless_dev *wdev, u32 cipher)
+{
+	if (cipher & IW_AUTH_CIPHER_WEP40)
 		wdev->wext.connect.crypto.cipher_group =
 			WLAN_CIPHER_SUITE_WEP40;
-	अन्यथा अगर (cipher & IW_AUTH_CIPHER_WEP104)
+	else if (cipher & IW_AUTH_CIPHER_WEP104)
 		wdev->wext.connect.crypto.cipher_group =
 			WLAN_CIPHER_SUITE_WEP104;
-	अन्यथा अगर (cipher & IW_AUTH_CIPHER_TKIP)
+	else if (cipher & IW_AUTH_CIPHER_TKIP)
 		wdev->wext.connect.crypto.cipher_group =
 			WLAN_CIPHER_SUITE_TKIP;
-	अन्यथा अगर (cipher & IW_AUTH_CIPHER_CCMP)
+	else if (cipher & IW_AUTH_CIPHER_CCMP)
 		wdev->wext.connect.crypto.cipher_group =
 			WLAN_CIPHER_SUITE_CCMP;
-	अन्यथा अगर (cipher & IW_AUTH_CIPHER_AES_CMAC)
+	else if (cipher & IW_AUTH_CIPHER_AES_CMAC)
 		wdev->wext.connect.crypto.cipher_group =
 			WLAN_CIPHER_SUITE_AES_CMAC;
-	अन्यथा अगर (cipher & IW_AUTH_CIPHER_NONE)
+	else if (cipher & IW_AUTH_CIPHER_NONE)
 		wdev->wext.connect.crypto.cipher_group = 0;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cfg80211_set_cipher_pairwise(काष्ठा wireless_dev *wdev, u32 cipher)
-अणु
-	पूर्णांक nr_ciphers = 0;
+static int cfg80211_set_cipher_pairwise(struct wireless_dev *wdev, u32 cipher)
+{
+	int nr_ciphers = 0;
 	u32 *ciphers_pairwise = wdev->wext.connect.crypto.ciphers_pairwise;
 
-	अगर (cipher & IW_AUTH_CIPHER_WEP40) अणु
+	if (cipher & IW_AUTH_CIPHER_WEP40) {
 		ciphers_pairwise[nr_ciphers] = WLAN_CIPHER_SUITE_WEP40;
 		nr_ciphers++;
-	पूर्ण
+	}
 
-	अगर (cipher & IW_AUTH_CIPHER_WEP104) अणु
+	if (cipher & IW_AUTH_CIPHER_WEP104) {
 		ciphers_pairwise[nr_ciphers] = WLAN_CIPHER_SUITE_WEP104;
 		nr_ciphers++;
-	पूर्ण
+	}
 
-	अगर (cipher & IW_AUTH_CIPHER_TKIP) अणु
+	if (cipher & IW_AUTH_CIPHER_TKIP) {
 		ciphers_pairwise[nr_ciphers] = WLAN_CIPHER_SUITE_TKIP;
 		nr_ciphers++;
-	पूर्ण
+	}
 
-	अगर (cipher & IW_AUTH_CIPHER_CCMP) अणु
+	if (cipher & IW_AUTH_CIPHER_CCMP) {
 		ciphers_pairwise[nr_ciphers] = WLAN_CIPHER_SUITE_CCMP;
 		nr_ciphers++;
-	पूर्ण
+	}
 
-	अगर (cipher & IW_AUTH_CIPHER_AES_CMAC) अणु
+	if (cipher & IW_AUTH_CIPHER_AES_CMAC) {
 		ciphers_pairwise[nr_ciphers] = WLAN_CIPHER_SUITE_AES_CMAC;
 		nr_ciphers++;
-	पूर्ण
+	}
 
 	BUILD_BUG_ON(NL80211_MAX_NR_CIPHER_SUITES < 5);
 
 	wdev->wext.connect.crypto.n_ciphers_pairwise = nr_ciphers;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक cfg80211_set_key_mgt(काष्ठा wireless_dev *wdev, u32 key_mgt)
-अणु
-	पूर्णांक nr_akm_suites = 0;
+static int cfg80211_set_key_mgt(struct wireless_dev *wdev, u32 key_mgt)
+{
+	int nr_akm_suites = 0;
 
-	अगर (key_mgt & ~(IW_AUTH_KEY_MGMT_802_1X |
+	if (key_mgt & ~(IW_AUTH_KEY_MGMT_802_1X |
 			IW_AUTH_KEY_MGMT_PSK))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (key_mgt & IW_AUTH_KEY_MGMT_802_1X) अणु
+	if (key_mgt & IW_AUTH_KEY_MGMT_802_1X) {
 		wdev->wext.connect.crypto.akm_suites[nr_akm_suites] =
 			WLAN_AKM_SUITE_8021X;
 		nr_akm_suites++;
-	पूर्ण
+	}
 
-	अगर (key_mgt & IW_AUTH_KEY_MGMT_PSK) अणु
+	if (key_mgt & IW_AUTH_KEY_MGMT_PSK) {
 		wdev->wext.connect.crypto.akm_suites[nr_akm_suites] =
 			WLAN_AKM_SUITE_PSK;
 		nr_akm_suites++;
-	पूर्ण
+	}
 
 	wdev->wext.connect.crypto.n_akm_suites = nr_akm_suites;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cfg80211_wext_siwauth(काष्ठा net_device *dev,
-				 काष्ठा iw_request_info *info,
-				 काष्ठा iw_param *data, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
+static int cfg80211_wext_siwauth(struct net_device *dev,
+				 struct iw_request_info *info,
+				 struct iw_param *data, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
 
-	अगर (wdev->अगरtype != NL80211_IFTYPE_STATION)
-		वापस -EOPNOTSUPP;
+	if (wdev->iftype != NL80211_IFTYPE_STATION)
+		return -EOPNOTSUPP;
 
-	चयन (data->flags & IW_AUTH_INDEX) अणु
-	हाल IW_AUTH_PRIVACY_INVOKED:
+	switch (data->flags & IW_AUTH_INDEX) {
+	case IW_AUTH_PRIVACY_INVOKED:
 		wdev->wext.connect.privacy = data->value;
-		वापस 0;
-	हाल IW_AUTH_WPA_VERSION:
-		वापस cfg80211_set_wpa_version(wdev, data->value);
-	हाल IW_AUTH_CIPHER_GROUP:
-		वापस cfg80211_set_cipher_group(wdev, data->value);
-	हाल IW_AUTH_KEY_MGMT:
-		वापस cfg80211_set_key_mgt(wdev, data->value);
-	हाल IW_AUTH_CIPHER_PAIRWISE:
-		वापस cfg80211_set_cipher_pairwise(wdev, data->value);
-	हाल IW_AUTH_80211_AUTH_ALG:
-		वापस cfg80211_set_auth_alg(wdev, data->value);
-	हाल IW_AUTH_WPA_ENABLED:
-	हाल IW_AUTH_RX_UNENCRYPTED_EAPOL:
-	हाल IW_AUTH_DROP_UNENCRYPTED:
-	हाल IW_AUTH_MFP:
-		वापस 0;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+		return 0;
+	case IW_AUTH_WPA_VERSION:
+		return cfg80211_set_wpa_version(wdev, data->value);
+	case IW_AUTH_CIPHER_GROUP:
+		return cfg80211_set_cipher_group(wdev, data->value);
+	case IW_AUTH_KEY_MGMT:
+		return cfg80211_set_key_mgt(wdev, data->value);
+	case IW_AUTH_CIPHER_PAIRWISE:
+		return cfg80211_set_cipher_pairwise(wdev, data->value);
+	case IW_AUTH_80211_AUTH_ALG:
+		return cfg80211_set_auth_alg(wdev, data->value);
+	case IW_AUTH_WPA_ENABLED:
+	case IW_AUTH_RX_UNENCRYPTED_EAPOL:
+	case IW_AUTH_DROP_UNENCRYPTED:
+	case IW_AUTH_MFP:
+		return 0;
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल पूर्णांक cfg80211_wext_giwauth(काष्ठा net_device *dev,
-				 काष्ठा iw_request_info *info,
-				 काष्ठा iw_param *data, अक्षर *extra)
-अणु
-	/* XXX: what करो we need? */
+static int cfg80211_wext_giwauth(struct net_device *dev,
+				 struct iw_request_info *info,
+				 struct iw_param *data, char *extra)
+{
+	/* XXX: what do we need? */
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक cfg80211_wext_siwघातer(काष्ठा net_device *dev,
-				  काष्ठा iw_request_info *info,
-				  काष्ठा iw_param *wrq, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
+static int cfg80211_wext_siwpower(struct net_device *dev,
+				  struct iw_request_info *info,
+				  struct iw_param *wrq, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
 	bool ps = wdev->ps;
-	पूर्णांक समयout = wdev->ps_समयout;
-	पूर्णांक err;
+	int timeout = wdev->ps_timeout;
+	int err;
 
-	अगर (wdev->अगरtype != NL80211_IFTYPE_STATION)
-		वापस -EINVAL;
+	if (wdev->iftype != NL80211_IFTYPE_STATION)
+		return -EINVAL;
 
-	अगर (!rdev->ops->set_घातer_mgmt)
-		वापस -EOPNOTSUPP;
+	if (!rdev->ops->set_power_mgmt)
+		return -EOPNOTSUPP;
 
-	अगर (wrq->disabled) अणु
+	if (wrq->disabled) {
 		ps = false;
-	पूर्ण अन्यथा अणु
-		चयन (wrq->flags & IW_POWER_MODE) अणु
-		हाल IW_POWER_ON:       /* If not specअगरied */
-		हाल IW_POWER_MODE:     /* If set all mask */
-		हाल IW_POWER_ALL_R:    /* If explicitely state all */
+	} else {
+		switch (wrq->flags & IW_POWER_MODE) {
+		case IW_POWER_ON:       /* If not specified */
+		case IW_POWER_MODE:     /* If set all mask */
+		case IW_POWER_ALL_R:    /* If explicitely state all */
 			ps = true;
-			अवरोध;
-		शेष:                /* Otherwise we ignore */
-			वापस -EINVAL;
-		पूर्ण
+			break;
+		default:                /* Otherwise we ignore */
+			return -EINVAL;
+		}
 
-		अगर (wrq->flags & ~(IW_POWER_MODE | IW_POWER_TIMEOUT))
-			वापस -EINVAL;
+		if (wrq->flags & ~(IW_POWER_MODE | IW_POWER_TIMEOUT))
+			return -EINVAL;
 
-		अगर (wrq->flags & IW_POWER_TIMEOUT)
-			समयout = wrq->value / 1000;
-	पूर्ण
+		if (wrq->flags & IW_POWER_TIMEOUT)
+			timeout = wrq->value / 1000;
+	}
 
 	wiphy_lock(&rdev->wiphy);
-	err = rdev_set_घातer_mgmt(rdev, dev, ps, समयout);
+	err = rdev_set_power_mgmt(rdev, dev, ps, timeout);
 	wiphy_unlock(&rdev->wiphy);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	wdev->ps = ps;
-	wdev->ps_समयout = समयout;
+	wdev->ps_timeout = timeout;
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
-अटल पूर्णांक cfg80211_wext_giwघातer(काष्ठा net_device *dev,
-				  काष्ठा iw_request_info *info,
-				  काष्ठा iw_param *wrq, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
+static int cfg80211_wext_giwpower(struct net_device *dev,
+				  struct iw_request_info *info,
+				  struct iw_param *wrq, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
 
 	wrq->disabled = !wdev->ps;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cfg80211_wext_siwrate(काष्ठा net_device *dev,
-				 काष्ठा iw_request_info *info,
-				 काष्ठा iw_param *rate, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
-	काष्ठा cfg80211_bitrate_mask mask;
+static int cfg80211_wext_siwrate(struct net_device *dev,
+				 struct iw_request_info *info,
+				 struct iw_param *rate, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
+	struct cfg80211_bitrate_mask mask;
 	u32 fixed, maxrate;
-	काष्ठा ieee80211_supported_band *sband;
-	पूर्णांक band, ridx, ret;
+	struct ieee80211_supported_band *sband;
+	int band, ridx, ret;
 	bool match = false;
 
-	अगर (!rdev->ops->set_bitrate_mask)
-		वापस -EOPNOTSUPP;
+	if (!rdev->ops->set_bitrate_mask)
+		return -EOPNOTSUPP;
 
-	स_रखो(&mask, 0, माप(mask));
+	memset(&mask, 0, sizeof(mask));
 	fixed = 0;
 	maxrate = (u32)-1;
 
-	अगर (rate->value < 0) अणु
+	if (rate->value < 0) {
 		/* nothing */
-	पूर्ण अन्यथा अगर (rate->fixed) अणु
+	} else if (rate->fixed) {
 		fixed = rate->value / 100000;
-	पूर्ण अन्यथा अणु
+	} else {
 		maxrate = rate->value / 100000;
-	पूर्ण
+	}
 
-	क्रम (band = 0; band < NUM_NL80211_BANDS; band++) अणु
+	for (band = 0; band < NUM_NL80211_BANDS; band++) {
 		sband = wdev->wiphy->bands[band];
-		अगर (sband == शून्य)
-			जारी;
-		क्रम (ridx = 0; ridx < sband->n_bitrates; ridx++) अणु
-			काष्ठा ieee80211_rate *srate = &sband->bitrates[ridx];
-			अगर (fixed == srate->bitrate) अणु
+		if (sband == NULL)
+			continue;
+		for (ridx = 0; ridx < sband->n_bitrates; ridx++) {
+			struct ieee80211_rate *srate = &sband->bitrates[ridx];
+			if (fixed == srate->bitrate) {
 				mask.control[band].legacy = 1 << ridx;
 				match = true;
-				अवरोध;
-			पूर्ण
-			अगर (srate->bitrate <= maxrate) अणु
+				break;
+			}
+			if (srate->bitrate <= maxrate) {
 				mask.control[band].legacy |= 1 << ridx;
 				match = true;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (!match)
-		वापस -EINVAL;
+	if (!match)
+		return -EINVAL;
 
 	wiphy_lock(&rdev->wiphy);
-	ret = rdev_set_bitrate_mask(rdev, dev, शून्य, &mask);
+	ret = rdev_set_bitrate_mask(rdev, dev, NULL, &mask);
 	wiphy_unlock(&rdev->wiphy);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cfg80211_wext_giwrate(काष्ठा net_device *dev,
-				 काष्ठा iw_request_info *info,
-				 काष्ठा iw_param *rate, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
-	काष्ठा station_info sinfo = अणुपूर्ण;
+static int cfg80211_wext_giwrate(struct net_device *dev,
+				 struct iw_request_info *info,
+				 struct iw_param *rate, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
+	struct station_info sinfo = {};
 	u8 addr[ETH_ALEN];
-	पूर्णांक err;
+	int err;
 
-	अगर (wdev->अगरtype != NL80211_IFTYPE_STATION)
-		वापस -EOPNOTSUPP;
+	if (wdev->iftype != NL80211_IFTYPE_STATION)
+		return -EOPNOTSUPP;
 
-	अगर (!rdev->ops->get_station)
-		वापस -EOPNOTSUPP;
+	if (!rdev->ops->get_station)
+		return -EOPNOTSUPP;
 
 	err = 0;
 	wdev_lock(wdev);
-	अगर (wdev->current_bss)
-		स_नकल(addr, wdev->current_bss->pub.bssid, ETH_ALEN);
-	अन्यथा
+	if (wdev->current_bss)
+		memcpy(addr, wdev->current_bss->pub.bssid, ETH_ALEN);
+	else
 		err = -EOPNOTSUPP;
 	wdev_unlock(wdev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	wiphy_lock(&rdev->wiphy);
 	err = rdev_get_station(rdev, dev, addr, &sinfo);
 	wiphy_unlock(&rdev->wiphy);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (!(sinfo.filled & BIT_ULL(NL80211_STA_INFO_TX_BITRATE))) अणु
+	if (!(sinfo.filled & BIT_ULL(NL80211_STA_INFO_TX_BITRATE))) {
 		err = -EOPNOTSUPP;
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
 	rate->value = 100000 * cfg80211_calculate_bitrate(&sinfo.txrate);
 
-मुक्त:
+free:
 	cfg80211_sinfo_release_content(&sinfo);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* Get wireless statistics.  Called by /proc/net/wireless and by SIOCGIWSTATS */
-अटल काष्ठा iw_statistics *cfg80211_wireless_stats(काष्ठा net_device *dev)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
-	/* we are under RTNL - globally locked - so can use अटल काष्ठाs */
-	अटल काष्ठा iw_statistics wstats;
-	अटल काष्ठा station_info sinfo = अणुपूर्ण;
+static struct iw_statistics *cfg80211_wireless_stats(struct net_device *dev)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
+	/* we are under RTNL - globally locked - so can use static structs */
+	static struct iw_statistics wstats;
+	static struct station_info sinfo = {};
 	u8 bssid[ETH_ALEN];
-	पूर्णांक ret;
+	int ret;
 
-	अगर (dev->ieee80211_ptr->अगरtype != NL80211_IFTYPE_STATION)
-		वापस शून्य;
+	if (dev->ieee80211_ptr->iftype != NL80211_IFTYPE_STATION)
+		return NULL;
 
-	अगर (!rdev->ops->get_station)
-		वापस शून्य;
+	if (!rdev->ops->get_station)
+		return NULL;
 
-	/* Grab BSSID of current BSS, अगर any */
+	/* Grab BSSID of current BSS, if any */
 	wdev_lock(wdev);
-	अगर (!wdev->current_bss) अणु
+	if (!wdev->current_bss) {
 		wdev_unlock(wdev);
-		वापस शून्य;
-	पूर्ण
-	स_नकल(bssid, wdev->current_bss->pub.bssid, ETH_ALEN);
+		return NULL;
+	}
+	memcpy(bssid, wdev->current_bss->pub.bssid, ETH_ALEN);
 	wdev_unlock(wdev);
 
-	स_रखो(&sinfo, 0, माप(sinfo));
+	memset(&sinfo, 0, sizeof(sinfo));
 
 	wiphy_lock(&rdev->wiphy);
 	ret = rdev_get_station(rdev, dev, bssid, &sinfo);
 	wiphy_unlock(&rdev->wiphy);
 
-	अगर (ret)
-		वापस शून्य;
+	if (ret)
+		return NULL;
 
-	स_रखो(&wstats, 0, माप(wstats));
+	memset(&wstats, 0, sizeof(wstats));
 
-	चयन (rdev->wiphy.संकेत_type) अणु
-	हाल CFG80211_SIGNAL_TYPE_MBM:
-		अगर (sinfo.filled & BIT_ULL(NL80211_STA_INFO_SIGNAL)) अणु
-			पूर्णांक sig = sinfo.संकेत;
+	switch (rdev->wiphy.signal_type) {
+	case CFG80211_SIGNAL_TYPE_MBM:
+		if (sinfo.filled & BIT_ULL(NL80211_STA_INFO_SIGNAL)) {
+			int sig = sinfo.signal;
 			wstats.qual.updated |= IW_QUAL_LEVEL_UPDATED;
 			wstats.qual.updated |= IW_QUAL_QUAL_UPDATED;
 			wstats.qual.updated |= IW_QUAL_DBM;
 			wstats.qual.level = sig;
-			अगर (sig < -110)
+			if (sig < -110)
 				sig = -110;
-			अन्यथा अगर (sig > -40)
+			else if (sig > -40)
 				sig = -40;
 			wstats.qual.qual = sig + 110;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		fallthrough;
-	हाल CFG80211_SIGNAL_TYPE_UNSPEC:
-		अगर (sinfo.filled & BIT_ULL(NL80211_STA_INFO_SIGNAL)) अणु
+	case CFG80211_SIGNAL_TYPE_UNSPEC:
+		if (sinfo.filled & BIT_ULL(NL80211_STA_INFO_SIGNAL)) {
 			wstats.qual.updated |= IW_QUAL_LEVEL_UPDATED;
 			wstats.qual.updated |= IW_QUAL_QUAL_UPDATED;
-			wstats.qual.level = sinfo.संकेत;
-			wstats.qual.qual = sinfo.संकेत;
-			अवरोध;
-		पूर्ण
+			wstats.qual.level = sinfo.signal;
+			wstats.qual.qual = sinfo.signal;
+			break;
+		}
 		fallthrough;
-	शेष:
+	default:
 		wstats.qual.updated |= IW_QUAL_LEVEL_INVALID;
 		wstats.qual.updated |= IW_QUAL_QUAL_INVALID;
-	पूर्ण
+	}
 
 	wstats.qual.updated |= IW_QUAL_NOISE_INVALID;
-	अगर (sinfo.filled & BIT_ULL(NL80211_STA_INFO_RX_DROP_MISC))
+	if (sinfo.filled & BIT_ULL(NL80211_STA_INFO_RX_DROP_MISC))
 		wstats.discard.misc = sinfo.rx_dropped_misc;
-	अगर (sinfo.filled & BIT_ULL(NL80211_STA_INFO_TX_FAILED))
+	if (sinfo.filled & BIT_ULL(NL80211_STA_INFO_TX_FAILED))
 		wstats.discard.retries = sinfo.tx_failed;
 
 	cfg80211_sinfo_release_content(&sinfo);
 
-	वापस &wstats;
-पूर्ण
+	return &wstats;
+}
 
-अटल पूर्णांक cfg80211_wext_siwap(काष्ठा net_device *dev,
-			       काष्ठा iw_request_info *info,
-			       काष्ठा sockaddr *ap_addr, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
-	पूर्णांक ret;
+static int cfg80211_wext_siwap(struct net_device *dev,
+			       struct iw_request_info *info,
+			       struct sockaddr *ap_addr, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
+	int ret;
 
 	wiphy_lock(&rdev->wiphy);
-	चयन (wdev->अगरtype) अणु
-	हाल NL80211_IFTYPE_ADHOC:
+	switch (wdev->iftype) {
+	case NL80211_IFTYPE_ADHOC:
 		ret = cfg80211_ibss_wext_siwap(dev, info, ap_addr, extra);
-		अवरोध;
-	हाल NL80211_IFTYPE_STATION:
+		break;
+	case NL80211_IFTYPE_STATION:
 		ret = cfg80211_mgd_wext_siwap(dev, info, ap_addr, extra);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EOPNOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	wiphy_unlock(&rdev->wiphy);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cfg80211_wext_giwap(काष्ठा net_device *dev,
-			       काष्ठा iw_request_info *info,
-			       काष्ठा sockaddr *ap_addr, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
-	पूर्णांक ret;
+static int cfg80211_wext_giwap(struct net_device *dev,
+			       struct iw_request_info *info,
+			       struct sockaddr *ap_addr, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
+	int ret;
 
 	wiphy_lock(&rdev->wiphy);
-	चयन (wdev->अगरtype) अणु
-	हाल NL80211_IFTYPE_ADHOC:
+	switch (wdev->iftype) {
+	case NL80211_IFTYPE_ADHOC:
 		ret = cfg80211_ibss_wext_giwap(dev, info, ap_addr, extra);
-		अवरोध;
-	हाल NL80211_IFTYPE_STATION:
+		break;
+	case NL80211_IFTYPE_STATION:
 		ret = cfg80211_mgd_wext_giwap(dev, info, ap_addr, extra);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EOPNOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	wiphy_unlock(&rdev->wiphy);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cfg80211_wext_siwessid(काष्ठा net_device *dev,
-				  काष्ठा iw_request_info *info,
-				  काष्ठा iw_poपूर्णांक *data, अक्षर *ssid)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
-	पूर्णांक ret;
+static int cfg80211_wext_siwessid(struct net_device *dev,
+				  struct iw_request_info *info,
+				  struct iw_point *data, char *ssid)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
+	int ret;
 
 	wiphy_lock(&rdev->wiphy);
-	चयन (wdev->अगरtype) अणु
-	हाल NL80211_IFTYPE_ADHOC:
+	switch (wdev->iftype) {
+	case NL80211_IFTYPE_ADHOC:
 		ret = cfg80211_ibss_wext_siwessid(dev, info, data, ssid);
-		अवरोध;
-	हाल NL80211_IFTYPE_STATION:
+		break;
+	case NL80211_IFTYPE_STATION:
 		ret = cfg80211_mgd_wext_siwessid(dev, info, data, ssid);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EOPNOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	wiphy_unlock(&rdev->wiphy);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cfg80211_wext_giwessid(काष्ठा net_device *dev,
-				  काष्ठा iw_request_info *info,
-				  काष्ठा iw_poपूर्णांक *data, अक्षर *ssid)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
-	पूर्णांक ret;
+static int cfg80211_wext_giwessid(struct net_device *dev,
+				  struct iw_request_info *info,
+				  struct iw_point *data, char *ssid)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
+	int ret;
 
 	data->flags = 0;
 	data->length = 0;
 
 	wiphy_lock(&rdev->wiphy);
-	चयन (wdev->अगरtype) अणु
-	हाल NL80211_IFTYPE_ADHOC:
+	switch (wdev->iftype) {
+	case NL80211_IFTYPE_ADHOC:
 		ret = cfg80211_ibss_wext_giwessid(dev, info, data, ssid);
-		अवरोध;
-	हाल NL80211_IFTYPE_STATION:
+		break;
+	case NL80211_IFTYPE_STATION:
 		ret = cfg80211_mgd_wext_giwessid(dev, info, data, ssid);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EOPNOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	wiphy_unlock(&rdev->wiphy);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cfg80211_wext_siwpmksa(काष्ठा net_device *dev,
-				  काष्ठा iw_request_info *info,
-				  काष्ठा iw_poपूर्णांक *data, अक्षर *extra)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
-	काष्ठा cfg80211_pmksa cfg_pmksa;
-	काष्ठा iw_pmksa *pmksa = (काष्ठा iw_pmksa *)extra;
-	पूर्णांक ret;
+static int cfg80211_wext_siwpmksa(struct net_device *dev,
+				  struct iw_request_info *info,
+				  struct iw_point *data, char *extra)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
+	struct cfg80211_pmksa cfg_pmksa;
+	struct iw_pmksa *pmksa = (struct iw_pmksa *)extra;
+	int ret;
 
-	स_रखो(&cfg_pmksa, 0, माप(काष्ठा cfg80211_pmksa));
+	memset(&cfg_pmksa, 0, sizeof(struct cfg80211_pmksa));
 
-	अगर (wdev->अगरtype != NL80211_IFTYPE_STATION)
-		वापस -EINVAL;
+	if (wdev->iftype != NL80211_IFTYPE_STATION)
+		return -EINVAL;
 
 	cfg_pmksa.bssid = pmksa->bssid.sa_data;
 	cfg_pmksa.pmkid = pmksa->pmkid;
 
 	wiphy_lock(&rdev->wiphy);
-	चयन (pmksa->cmd) अणु
-	हाल IW_PMKSA_ADD:
-		अगर (!rdev->ops->set_pmksa) अणु
+	switch (pmksa->cmd) {
+	case IW_PMKSA_ADD:
+		if (!rdev->ops->set_pmksa) {
 			ret = -EOPNOTSUPP;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		ret = rdev_set_pmksa(rdev, dev, &cfg_pmksa);
-		अवरोध;
-	हाल IW_PMKSA_REMOVE:
-		अगर (!rdev->ops->del_pmksa) अणु
+		break;
+	case IW_PMKSA_REMOVE:
+		if (!rdev->ops->del_pmksa) {
 			ret = -EOPNOTSUPP;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		ret = rdev_del_pmksa(rdev, dev, &cfg_pmksa);
-		अवरोध;
-	हाल IW_PMKSA_FLUSH:
-		अगर (!rdev->ops->flush_pmksa) अणु
+		break;
+	case IW_PMKSA_FLUSH:
+		if (!rdev->ops->flush_pmksa) {
 			ret = -EOPNOTSUPP;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		ret = rdev_flush_pmksa(rdev, dev);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EOPNOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	wiphy_unlock(&rdev->wiphy);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा DEFINE_WEXT_COMPAT_STUB(func, type)			\
-	अटल पूर्णांक __ ## func(काष्ठा net_device *dev,		\
-			      काष्ठा iw_request_info *info,	\
-			      जोड़ iwreq_data *wrqu,		\
-			      अक्षर *extra)			\
-	अणु							\
-		वापस func(dev, info, (type *)wrqu, extra);	\
-	पूर्ण
+#define DEFINE_WEXT_COMPAT_STUB(func, type)			\
+	static int __ ## func(struct net_device *dev,		\
+			      struct iw_request_info *info,	\
+			      union iwreq_data *wrqu,		\
+			      char *extra)			\
+	{							\
+		return func(dev, info, (type *)wrqu, extra);	\
+	}
 
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwname, अक्षर)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwfreq, काष्ठा iw_freq)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwfreq, काष्ठा iw_freq)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwname, char)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwfreq, struct iw_freq)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwfreq, struct iw_freq)
 DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwmode, u32)
 DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwmode, u32)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwrange, काष्ठा iw_poपूर्णांक)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwap, काष्ठा sockaddr)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwap, काष्ठा sockaddr)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwmlme, काष्ठा iw_poपूर्णांक)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwscan, काष्ठा iw_poपूर्णांक)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwessid, काष्ठा iw_poपूर्णांक)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwessid, काष्ठा iw_poपूर्णांक)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwrate, काष्ठा iw_param)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwrate, काष्ठा iw_param)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwrts, काष्ठा iw_param)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwrts, काष्ठा iw_param)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwfrag, काष्ठा iw_param)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwfrag, काष्ठा iw_param)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwretry, काष्ठा iw_param)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwretry, काष्ठा iw_param)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwencode, काष्ठा iw_poपूर्णांक)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwencode, काष्ठा iw_poपूर्णांक)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwघातer, काष्ठा iw_param)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwघातer, काष्ठा iw_param)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwgenie, काष्ठा iw_poपूर्णांक)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwauth, काष्ठा iw_param)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwauth, काष्ठा iw_param)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwencodeext, काष्ठा iw_poपूर्णांक)
-DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwpmksa, काष्ठा iw_poपूर्णांक)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwrange, struct iw_point)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwap, struct sockaddr)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwap, struct sockaddr)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwmlme, struct iw_point)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwscan, struct iw_point)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwessid, struct iw_point)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwessid, struct iw_point)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwrate, struct iw_param)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwrate, struct iw_param)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwrts, struct iw_param)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwrts, struct iw_param)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwfrag, struct iw_param)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwfrag, struct iw_param)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwretry, struct iw_param)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwretry, struct iw_param)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwencode, struct iw_point)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwencode, struct iw_point)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwpower, struct iw_param)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwpower, struct iw_param)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwgenie, struct iw_point)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_giwauth, struct iw_param)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwauth, struct iw_param)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwencodeext, struct iw_point)
+DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwpmksa, struct iw_point)
 
-अटल स्थिर iw_handler cfg80211_handlers[] = अणु
+static const iw_handler cfg80211_handlers[] = {
 	[IW_IOCTL_IDX(SIOCGIWNAME)]	= __cfg80211_wext_giwname,
 	[IW_IOCTL_IDX(SIOCSIWFREQ)]	= __cfg80211_wext_siwfreq,
 	[IW_IOCTL_IDX(SIOCGIWFREQ)]	= __cfg80211_wext_giwfreq,
@@ -1614,23 +1613,23 @@ DEFINE_WEXT_COMPAT_STUB(cfg80211_wext_siwpmksa, काष्ठा iw_poपू�
 	[IW_IOCTL_IDX(SIOCGIWRTS)]	= __cfg80211_wext_giwrts,
 	[IW_IOCTL_IDX(SIOCSIWFRAG)]	= __cfg80211_wext_siwfrag,
 	[IW_IOCTL_IDX(SIOCGIWFRAG)]	= __cfg80211_wext_giwfrag,
-	[IW_IOCTL_IDX(SIOCSIWTXPOW)]	= cfg80211_wext_siwtxघातer,
-	[IW_IOCTL_IDX(SIOCGIWTXPOW)]	= cfg80211_wext_giwtxघातer,
+	[IW_IOCTL_IDX(SIOCSIWTXPOW)]	= cfg80211_wext_siwtxpower,
+	[IW_IOCTL_IDX(SIOCGIWTXPOW)]	= cfg80211_wext_giwtxpower,
 	[IW_IOCTL_IDX(SIOCSIWRETRY)]	= __cfg80211_wext_siwretry,
 	[IW_IOCTL_IDX(SIOCGIWRETRY)]	= __cfg80211_wext_giwretry,
 	[IW_IOCTL_IDX(SIOCSIWENCODE)]	= __cfg80211_wext_siwencode,
 	[IW_IOCTL_IDX(SIOCGIWENCODE)]	= __cfg80211_wext_giwencode,
-	[IW_IOCTL_IDX(SIOCSIWPOWER)]	= __cfg80211_wext_siwघातer,
-	[IW_IOCTL_IDX(SIOCGIWPOWER)]	= __cfg80211_wext_giwघातer,
+	[IW_IOCTL_IDX(SIOCSIWPOWER)]	= __cfg80211_wext_siwpower,
+	[IW_IOCTL_IDX(SIOCGIWPOWER)]	= __cfg80211_wext_giwpower,
 	[IW_IOCTL_IDX(SIOCSIWGENIE)]	= __cfg80211_wext_siwgenie,
 	[IW_IOCTL_IDX(SIOCSIWAUTH)]	= __cfg80211_wext_siwauth,
 	[IW_IOCTL_IDX(SIOCGIWAUTH)]	= __cfg80211_wext_giwauth,
 	[IW_IOCTL_IDX(SIOCSIWENCODEEXT)]= __cfg80211_wext_siwencodeext,
 	[IW_IOCTL_IDX(SIOCSIWPMKSA)]	= __cfg80211_wext_siwpmksa,
-पूर्ण;
+};
 
-स्थिर काष्ठा iw_handler_def cfg80211_wext_handler = अणु
+const struct iw_handler_def cfg80211_wext_handler = {
 	.num_standard		= ARRAY_SIZE(cfg80211_handlers),
 	.standard		= cfg80211_handlers,
 	.get_wireless_stats = cfg80211_wireless_stats,
-पूर्ण;
+};

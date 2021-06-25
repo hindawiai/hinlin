@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * comedi_parport.c
- * Comedi driver क्रम standard parallel port
+ * Comedi driver for standard parallel port
  *
- * For more inक्रमmation see:
- *	http://retired.beyondlogic.org/spp/parallel.hपंचांग
+ * For more information see:
+ *	http://retired.beyondlogic.org/spp/parallel.htm
  *
  * COMEDI - Linux Control and Measurement Device Interface
  * Copyright (C) 1998,2001 David A. Schleef <ds@schleef.org>
@@ -24,7 +23,7 @@
  * computers.
  *
  * Option list:
- *   0: I/O port base क्रम the parallel port.
+ *   0: I/O port base for the parallel port.
  *   1: IRQ (optional)
  *
  * Parallel Port Lines:
@@ -44,112 +43,112 @@
  *	 11      1       4    DI   busy
  *	 12      1       2    DI   paper out
  *	 13      1       1    DI   select in
- *	 14      2       1    DO   स्वतः LF
+ *	 14      2       1    DO   auto LF
  *	 15      1       0    DI   error
  *	 16      2       2    DO   init
- *	 17      2       3    DO   select prपूर्णांकer
+ *	 17      2       3    DO   select printer
  *	18-25                      ground
  *
  * When an IRQ is configured subdevice 3 pretends to be a digital
- * input subdevice, but it always वापसs 0 when पढ़ो. However, अगर
+ * input subdevice, but it always returns 0 when read. However, if
  * you run a command with scan_begin_src=TRIG_EXT, it uses pin 10
- * as a बाह्यal trigger, which can be used to wake up tasks.
+ * as a external trigger, which can be used to wake up tasks.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
 
-#समावेश "../comedidev.h"
+#include "../comedidev.h"
 
 /*
  * Register map
  */
-#घोषणा PARPORT_DATA_REG	0x00
-#घोषणा PARPORT_STATUS_REG	0x01
-#घोषणा PARPORT_CTRL_REG	0x02
-#घोषणा PARPORT_CTRL_IRQ_ENA	BIT(4)
-#घोषणा PARPORT_CTRL_BIसूची_ENA	BIT(5)
+#define PARPORT_DATA_REG	0x00
+#define PARPORT_STATUS_REG	0x01
+#define PARPORT_CTRL_REG	0x02
+#define PARPORT_CTRL_IRQ_ENA	BIT(4)
+#define PARPORT_CTRL_BIDIR_ENA	BIT(5)
 
-अटल पूर्णांक parport_data_reg_insn_bits(काष्ठा comedi_device *dev,
-				      काष्ठा comedi_subdevice *s,
-				      काष्ठा comedi_insn *insn,
-				      अचिन्हित पूर्णांक *data)
-अणु
-	अगर (comedi_dio_update_state(s, data))
+static int parport_data_reg_insn_bits(struct comedi_device *dev,
+				      struct comedi_subdevice *s,
+				      struct comedi_insn *insn,
+				      unsigned int *data)
+{
+	if (comedi_dio_update_state(s, data))
 		outb(s->state, dev->iobase + PARPORT_DATA_REG);
 
 	data[1] = inb(dev->iobase + PARPORT_DATA_REG);
 
-	वापस insn->n;
-पूर्ण
+	return insn->n;
+}
 
-अटल पूर्णांक parport_data_reg_insn_config(काष्ठा comedi_device *dev,
-					काष्ठा comedi_subdevice *s,
-					काष्ठा comedi_insn *insn,
-					अचिन्हित पूर्णांक *data)
-अणु
-	अचिन्हित पूर्णांक ctrl;
-	पूर्णांक ret;
+static int parport_data_reg_insn_config(struct comedi_device *dev,
+					struct comedi_subdevice *s,
+					struct comedi_insn *insn,
+					unsigned int *data)
+{
+	unsigned int ctrl;
+	int ret;
 
 	ret = comedi_dio_insn_config(dev, s, insn, data, 0xff);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ctrl = inb(dev->iobase + PARPORT_CTRL_REG);
-	अगर (s->io_bits)
-		ctrl &= ~PARPORT_CTRL_BIसूची_ENA;
-	अन्यथा
-		ctrl |= PARPORT_CTRL_BIसूची_ENA;
+	if (s->io_bits)
+		ctrl &= ~PARPORT_CTRL_BIDIR_ENA;
+	else
+		ctrl |= PARPORT_CTRL_BIDIR_ENA;
 	outb(ctrl, dev->iobase + PARPORT_CTRL_REG);
 
-	वापस insn->n;
-पूर्ण
+	return insn->n;
+}
 
-अटल पूर्णांक parport_status_reg_insn_bits(काष्ठा comedi_device *dev,
-					काष्ठा comedi_subdevice *s,
-					काष्ठा comedi_insn *insn,
-					अचिन्हित पूर्णांक *data)
-अणु
+static int parport_status_reg_insn_bits(struct comedi_device *dev,
+					struct comedi_subdevice *s,
+					struct comedi_insn *insn,
+					unsigned int *data)
+{
 	data[1] = inb(dev->iobase + PARPORT_STATUS_REG) >> 3;
 
-	वापस insn->n;
-पूर्ण
+	return insn->n;
+}
 
-अटल पूर्णांक parport_ctrl_reg_insn_bits(काष्ठा comedi_device *dev,
-				      काष्ठा comedi_subdevice *s,
-				      काष्ठा comedi_insn *insn,
-				      अचिन्हित पूर्णांक *data)
-अणु
-	अचिन्हित पूर्णांक ctrl;
+static int parport_ctrl_reg_insn_bits(struct comedi_device *dev,
+				      struct comedi_subdevice *s,
+				      struct comedi_insn *insn,
+				      unsigned int *data)
+{
+	unsigned int ctrl;
 
-	अगर (comedi_dio_update_state(s, data)) अणु
+	if (comedi_dio_update_state(s, data)) {
 		ctrl = inb(dev->iobase + PARPORT_CTRL_REG);
-		ctrl &= (PARPORT_CTRL_IRQ_ENA | PARPORT_CTRL_BIसूची_ENA);
+		ctrl &= (PARPORT_CTRL_IRQ_ENA | PARPORT_CTRL_BIDIR_ENA);
 		ctrl |= s->state;
 		outb(ctrl, dev->iobase + PARPORT_CTRL_REG);
-	पूर्ण
+	}
 
 	data[1] = s->state;
 
-	वापस insn->n;
-पूर्ण
+	return insn->n;
+}
 
-अटल पूर्णांक parport_पूर्णांकr_insn_bits(काष्ठा comedi_device *dev,
-				  काष्ठा comedi_subdevice *s,
-				  काष्ठा comedi_insn *insn,
-				  अचिन्हित पूर्णांक *data)
-अणु
+static int parport_intr_insn_bits(struct comedi_device *dev,
+				  struct comedi_subdevice *s,
+				  struct comedi_insn *insn,
+				  unsigned int *data)
+{
 	data[1] = 0;
-	वापस insn->n;
-पूर्ण
+	return insn->n;
+}
 
-अटल पूर्णांक parport_पूर्णांकr_cmdtest(काष्ठा comedi_device *dev,
-				काष्ठा comedi_subdevice *s,
-				काष्ठा comedi_cmd *cmd)
-अणु
-	पूर्णांक err = 0;
+static int parport_intr_cmdtest(struct comedi_device *dev,
+				struct comedi_subdevice *s,
+				struct comedi_cmd *cmd)
+{
+	int err = 0;
 
-	/* Step 1 : check अगर triggers are trivially valid */
+	/* Step 1 : check if triggers are trivially valid */
 
 	err |= comedi_check_trigger_src(&cmd->start_src, TRIG_NOW);
 	err |= comedi_check_trigger_src(&cmd->scan_begin_src, TRIG_EXT);
@@ -157,13 +156,13 @@
 	err |= comedi_check_trigger_src(&cmd->scan_end_src, TRIG_COUNT);
 	err |= comedi_check_trigger_src(&cmd->stop_src, TRIG_NONE);
 
-	अगर (err)
-		वापस 1;
+	if (err)
+		return 1;
 
 	/* Step 2a : make sure trigger sources are unique */
 	/* Step 2b : and mutually compatible */
 
-	/* Step 3: check अगर arguments are trivially valid */
+	/* Step 3: check if arguments are trivially valid */
 
 	err |= comedi_check_trigger_arg_is(&cmd->start_arg, 0);
 	err |= comedi_check_trigger_arg_is(&cmd->scan_begin_arg, 0);
@@ -172,79 +171,79 @@
 					   cmd->chanlist_len);
 	err |= comedi_check_trigger_arg_is(&cmd->stop_arg, 0);
 
-	अगर (err)
-		वापस 3;
+	if (err)
+		return 3;
 
 	/* Step 4: fix up any arguments */
 
-	/* Step 5: check channel list अगर it exists */
+	/* Step 5: check channel list if it exists */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक parport_पूर्णांकr_cmd(काष्ठा comedi_device *dev,
-			    काष्ठा comedi_subdevice *s)
-अणु
-	अचिन्हित पूर्णांक ctrl;
+static int parport_intr_cmd(struct comedi_device *dev,
+			    struct comedi_subdevice *s)
+{
+	unsigned int ctrl;
 
 	ctrl = inb(dev->iobase + PARPORT_CTRL_REG);
 	ctrl |= PARPORT_CTRL_IRQ_ENA;
 	outb(ctrl, dev->iobase + PARPORT_CTRL_REG);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक parport_पूर्णांकr_cancel(काष्ठा comedi_device *dev,
-			       काष्ठा comedi_subdevice *s)
-अणु
-	अचिन्हित पूर्णांक ctrl;
+static int parport_intr_cancel(struct comedi_device *dev,
+			       struct comedi_subdevice *s)
+{
+	unsigned int ctrl;
 
 	ctrl = inb(dev->iobase + PARPORT_CTRL_REG);
 	ctrl &= ~PARPORT_CTRL_IRQ_ENA;
 	outb(ctrl, dev->iobase + PARPORT_CTRL_REG);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t parport_पूर्णांकerrupt(पूर्णांक irq, व्योम *d)
-अणु
-	काष्ठा comedi_device *dev = d;
-	काष्ठा comedi_subdevice *s = dev->पढ़ो_subdev;
-	अचिन्हित पूर्णांक ctrl;
-	अचिन्हित लघु val = 0;
+static irqreturn_t parport_interrupt(int irq, void *d)
+{
+	struct comedi_device *dev = d;
+	struct comedi_subdevice *s = dev->read_subdev;
+	unsigned int ctrl;
+	unsigned short val = 0;
 
 	ctrl = inb(dev->iobase + PARPORT_CTRL_REG);
-	अगर (!(ctrl & PARPORT_CTRL_IRQ_ENA))
-		वापस IRQ_NONE;
+	if (!(ctrl & PARPORT_CTRL_IRQ_ENA))
+		return IRQ_NONE;
 
-	comedi_buf_ग_लिखो_samples(s, &val, 1);
+	comedi_buf_write_samples(s, &val, 1);
 	comedi_handle_events(dev, s);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक parport_attach(काष्ठा comedi_device *dev,
-			  काष्ठा comedi_devconfig *it)
-अणु
-	काष्ठा comedi_subdevice *s;
-	पूर्णांक ret;
+static int parport_attach(struct comedi_device *dev,
+			  struct comedi_devconfig *it)
+{
+	struct comedi_subdevice *s;
+	int ret;
 
 	ret = comedi_request_region(dev, it->options[0], 0x03);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (it->options[1]) अणु
-		ret = request_irq(it->options[1], parport_पूर्णांकerrupt, 0,
+	if (it->options[1]) {
+		ret = request_irq(it->options[1], parport_interrupt, 0,
 				  dev->board_name, dev);
-		अगर (ret == 0)
+		if (ret == 0)
 			dev->irq = it->options[1];
-	पूर्ण
+	}
 
 	ret = comedi_alloc_subdevices(dev, dev->irq ? 4 : 3);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Digial I/O subdevice - Parallel port DATA रेजिस्टर */
+	/* Digial I/O subdevice - Parallel port DATA register */
 	s = &dev->subdevices[0];
 	s->type		= COMEDI_SUBD_DIO;
 	s->subdev_flags	= SDF_READABLE | SDF_WRITABLE;
@@ -254,7 +253,7 @@
 	s->insn_bits	= parport_data_reg_insn_bits;
 	s->insn_config	= parport_data_reg_insn_config;
 
-	/* Digial Input subdevice - Parallel port STATUS रेजिस्टर */
+	/* Digial Input subdevice - Parallel port STATUS register */
 	s = &dev->subdevices[1];
 	s->type		= COMEDI_SUBD_DI;
 	s->subdev_flags	= SDF_READABLE;
@@ -263,7 +262,7 @@
 	s->range_table	= &range_digital;
 	s->insn_bits	= parport_status_reg_insn_bits;
 
-	/* Digial Output subdevice - Parallel port CONTROL रेजिस्टर */
+	/* Digial Output subdevice - Parallel port CONTROL register */
 	s = &dev->subdevices[2];
 	s->type		= COMEDI_SUBD_DO;
 	s->subdev_flags	= SDF_WRITABLE;
@@ -272,34 +271,34 @@
 	s->range_table	= &range_digital;
 	s->insn_bits	= parport_ctrl_reg_insn_bits;
 
-	अगर (dev->irq) अणु
+	if (dev->irq) {
 		/* Digial Input subdevice - Interrupt support */
 		s = &dev->subdevices[3];
-		dev->पढ़ो_subdev = s;
+		dev->read_subdev = s;
 		s->type		= COMEDI_SUBD_DI;
 		s->subdev_flags	= SDF_READABLE | SDF_CMD_READ;
 		s->n_chan	= 1;
 		s->maxdata	= 1;
 		s->range_table	= &range_digital;
-		s->insn_bits	= parport_पूर्णांकr_insn_bits;
+		s->insn_bits	= parport_intr_insn_bits;
 		s->len_chanlist	= 1;
-		s->करो_cmdtest	= parport_पूर्णांकr_cmdtest;
-		s->करो_cmd	= parport_पूर्णांकr_cmd;
-		s->cancel	= parport_पूर्णांकr_cancel;
-	पूर्ण
+		s->do_cmdtest	= parport_intr_cmdtest;
+		s->do_cmd	= parport_intr_cmd;
+		s->cancel	= parport_intr_cancel;
+	}
 
 	outb(0, dev->iobase + PARPORT_DATA_REG);
 	outb(0, dev->iobase + PARPORT_CTRL_REG);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा comedi_driver parport_driver = अणु
+static struct comedi_driver parport_driver = {
 	.driver_name	= "comedi_parport",
 	.module		= THIS_MODULE,
 	.attach		= parport_attach,
 	.detach		= comedi_legacy_detach,
-पूर्ण;
+};
 module_comedi_driver(parport_driver);
 
 MODULE_AUTHOR("Comedi https://www.comedi.org");

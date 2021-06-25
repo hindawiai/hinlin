@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * reservations.c
  *
@@ -9,81 +8,81 @@
  *
  * Copyright (C) 1992, 1993, 1994, 1995
  * Remy Card (card@masi.ibp.fr)
- * Laborम_से_पre MASI - Institut Blaise Pascal
+ * Laboratoire MASI - Institut Blaise Pascal
  * Universite Pierre et Marie Curie (Paris VI)
  *
  * The rest is copyright (C) 2010 Novell.  All rights reserved.
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/types.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/bitops.h>
-#समावेश <linux/list.h>
+#include <linux/fs.h>
+#include <linux/types.h>
+#include <linux/highmem.h>
+#include <linux/bitops.h>
+#include <linux/list.h>
 
-#समावेश <cluster/masklog.h>
+#include <cluster/masklog.h>
 
-#समावेश "ocfs2.h"
-#समावेश "ocfs2_trace.h"
+#include "ocfs2.h"
+#include "ocfs2_trace.h"
 
-#अगर_घोषित CONFIG_OCFS2_DEBUG_FS
-#घोषणा OCFS2_CHECK_RESERVATIONS
-#पूर्ण_अगर
+#ifdef CONFIG_OCFS2_DEBUG_FS
+#define OCFS2_CHECK_RESERVATIONS
+#endif
 
-अटल DEFINE_SPINLOCK(resv_lock);
+static DEFINE_SPINLOCK(resv_lock);
 
-पूर्णांक ocfs2_dir_resv_allowed(काष्ठा ocfs2_super *osb)
-अणु
-	वापस (osb->osb_resv_level && osb->osb_dir_resv_level);
-पूर्ण
+int ocfs2_dir_resv_allowed(struct ocfs2_super *osb)
+{
+	return (osb->osb_resv_level && osb->osb_dir_resv_level);
+}
 
-अटल अचिन्हित पूर्णांक ocfs2_resv_winकरोw_bits(काष्ठा ocfs2_reservation_map *resmap,
-					   काष्ठा ocfs2_alloc_reservation *resv)
-अणु
-	काष्ठा ocfs2_super *osb = resmap->m_osb;
-	अचिन्हित पूर्णांक bits;
+static unsigned int ocfs2_resv_window_bits(struct ocfs2_reservation_map *resmap,
+					   struct ocfs2_alloc_reservation *resv)
+{
+	struct ocfs2_super *osb = resmap->m_osb;
+	unsigned int bits;
 
-	अगर (!(resv->r_flags & OCFS2_RESV_FLAG_सूची)) अणु
+	if (!(resv->r_flags & OCFS2_RESV_FLAG_DIR)) {
 		/* 8, 16, 32, 64, 128, 256, 512, 1024 */
 		bits = 4 << osb->osb_resv_level;
-	पूर्ण अन्यथा अणु
+	} else {
 		bits = 4 << osb->osb_dir_resv_level;
-	पूर्ण
-	वापस bits;
-पूर्ण
+	}
+	return bits;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक ocfs2_resv_end(काष्ठा ocfs2_alloc_reservation *resv)
-अणु
-	अगर (resv->r_len)
-		वापस resv->r_start + resv->r_len - 1;
-	वापस resv->r_start;
-पूर्ण
+static inline unsigned int ocfs2_resv_end(struct ocfs2_alloc_reservation *resv)
+{
+	if (resv->r_len)
+		return resv->r_start + resv->r_len - 1;
+	return resv->r_start;
+}
 
-अटल अंतरभूत पूर्णांक ocfs2_resv_empty(काष्ठा ocfs2_alloc_reservation *resv)
-अणु
-	वापस !!(resv->r_len == 0);
-पूर्ण
+static inline int ocfs2_resv_empty(struct ocfs2_alloc_reservation *resv)
+{
+	return !!(resv->r_len == 0);
+}
 
-अटल अंतरभूत पूर्णांक ocfs2_resmap_disabled(काष्ठा ocfs2_reservation_map *resmap)
-अणु
-	अगर (resmap->m_osb->osb_resv_level == 0)
-		वापस 1;
-	वापस 0;
-पूर्ण
+static inline int ocfs2_resmap_disabled(struct ocfs2_reservation_map *resmap)
+{
+	if (resmap->m_osb->osb_resv_level == 0)
+		return 1;
+	return 0;
+}
 
-अटल व्योम ocfs2_dump_resv(काष्ठा ocfs2_reservation_map *resmap)
-अणु
-	काष्ठा ocfs2_super *osb = resmap->m_osb;
-	काष्ठा rb_node *node;
-	काष्ठा ocfs2_alloc_reservation *resv;
-	पूर्णांक i = 0;
+static void ocfs2_dump_resv(struct ocfs2_reservation_map *resmap)
+{
+	struct ocfs2_super *osb = resmap->m_osb;
+	struct rb_node *node;
+	struct ocfs2_alloc_reservation *resv;
+	int i = 0;
 
 	mlog(ML_NOTICE, "Dumping resmap for device %s. Bitmap length: %u\n",
-	     osb->dev_str, resmap->m_biपंचांगap_len);
+	     osb->dev_str, resmap->m_bitmap_len);
 
 	node = rb_first(&resmap->m_reservations);
-	जबतक (node) अणु
-		resv = rb_entry(node, काष्ठा ocfs2_alloc_reservation, r_node);
+	while (node) {
+		resv = rb_entry(node, struct ocfs2_alloc_reservation, r_node);
 
 		mlog(ML_NOTICE, "start: %u\tend: %u\tlen: %u\tlast_start: %u"
 		     "\tlast_len: %u\n", resv->r_start,
@@ -92,246 +91,246 @@
 
 		node = rb_next(node);
 		i++;
-	पूर्ण
+	}
 
 	mlog(ML_NOTICE, "%d reservations found. LRU follows\n", i);
 
 	i = 0;
-	list_क्रम_each_entry(resv, &resmap->m_lru, r_lru) अणु
+	list_for_each_entry(resv, &resmap->m_lru, r_lru) {
 		mlog(ML_NOTICE, "LRU(%d) start: %u\tend: %u\tlen: %u\t"
 		     "last_start: %u\tlast_len: %u\n", i, resv->r_start,
 		     ocfs2_resv_end(resv), resv->r_len, resv->r_last_start,
 		     resv->r_last_len);
 
 		i++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अगर_घोषित OCFS2_CHECK_RESERVATIONS
-अटल पूर्णांक ocfs2_validate_resmap_bits(काष्ठा ocfs2_reservation_map *resmap,
-				      पूर्णांक i,
-				      काष्ठा ocfs2_alloc_reservation *resv)
-अणु
-	अक्षर *disk_biपंचांगap = resmap->m_disk_biपंचांगap;
-	अचिन्हित पूर्णांक start = resv->r_start;
-	अचिन्हित पूर्णांक end = ocfs2_resv_end(resv);
+#ifdef OCFS2_CHECK_RESERVATIONS
+static int ocfs2_validate_resmap_bits(struct ocfs2_reservation_map *resmap,
+				      int i,
+				      struct ocfs2_alloc_reservation *resv)
+{
+	char *disk_bitmap = resmap->m_disk_bitmap;
+	unsigned int start = resv->r_start;
+	unsigned int end = ocfs2_resv_end(resv);
 
-	जबतक (start <= end) अणु
-		अगर (ocfs2_test_bit(start, disk_biपंचांगap)) अणु
+	while (start <= end) {
+		if (ocfs2_test_bit(start, disk_bitmap)) {
 			mlog(ML_ERROR,
 			     "reservation %d covers an allocated area "
 			     "starting at bit %u!\n", i, start);
-			वापस 1;
-		पूर्ण
+			return 1;
+		}
 
 		start++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल व्योम ocfs2_check_resmap(काष्ठा ocfs2_reservation_map *resmap)
-अणु
-	अचिन्हित पूर्णांक off = 0;
-	पूर्णांक i = 0;
-	काष्ठा rb_node *node;
-	काष्ठा ocfs2_alloc_reservation *resv;
+static void ocfs2_check_resmap(struct ocfs2_reservation_map *resmap)
+{
+	unsigned int off = 0;
+	int i = 0;
+	struct rb_node *node;
+	struct ocfs2_alloc_reservation *resv;
 
 	node = rb_first(&resmap->m_reservations);
-	जबतक (node) अणु
-		resv = rb_entry(node, काष्ठा ocfs2_alloc_reservation, r_node);
+	while (node) {
+		resv = rb_entry(node, struct ocfs2_alloc_reservation, r_node);
 
-		अगर (i > 0 && resv->r_start <= off) अणु
+		if (i > 0 && resv->r_start <= off) {
 			mlog(ML_ERROR, "reservation %d has bad start off!\n",
 			     i);
-			जाओ bad;
-		पूर्ण
+			goto bad;
+		}
 
-		अगर (resv->r_len == 0) अणु
+		if (resv->r_len == 0) {
 			mlog(ML_ERROR, "reservation %d has no length!\n",
 			     i);
-			जाओ bad;
-		पूर्ण
+			goto bad;
+		}
 
-		अगर (resv->r_start > ocfs2_resv_end(resv)) अणु
+		if (resv->r_start > ocfs2_resv_end(resv)) {
 			mlog(ML_ERROR, "reservation %d has invalid range!\n",
 			     i);
-			जाओ bad;
-		पूर्ण
+			goto bad;
+		}
 
-		अगर (ocfs2_resv_end(resv) >= resmap->m_biपंचांगap_len) अणु
+		if (ocfs2_resv_end(resv) >= resmap->m_bitmap_len) {
 			mlog(ML_ERROR, "reservation %d extends past bitmap!\n",
 			     i);
-			जाओ bad;
-		पूर्ण
+			goto bad;
+		}
 
-		अगर (ocfs2_validate_resmap_bits(resmap, i, resv))
-			जाओ bad;
+		if (ocfs2_validate_resmap_bits(resmap, i, resv))
+			goto bad;
 
 		off = ocfs2_resv_end(resv);
 		node = rb_next(node);
 
 		i++;
-	पूर्ण
-	वापस;
+	}
+	return;
 
 bad:
 	ocfs2_dump_resv(resmap);
 	BUG();
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम ocfs2_check_resmap(काष्ठा ocfs2_reservation_map *resmap)
-अणु
+}
+#else
+static inline void ocfs2_check_resmap(struct ocfs2_reservation_map *resmap)
+{
 
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-व्योम ocfs2_resv_init_once(काष्ठा ocfs2_alloc_reservation *resv)
-अणु
-	स_रखो(resv, 0, माप(*resv));
+void ocfs2_resv_init_once(struct ocfs2_alloc_reservation *resv)
+{
+	memset(resv, 0, sizeof(*resv));
 	INIT_LIST_HEAD(&resv->r_lru);
-पूर्ण
+}
 
-व्योम ocfs2_resv_set_type(काष्ठा ocfs2_alloc_reservation *resv,
-			 अचिन्हित पूर्णांक flags)
-अणु
+void ocfs2_resv_set_type(struct ocfs2_alloc_reservation *resv,
+			 unsigned int flags)
+{
 	BUG_ON(flags & ~OCFS2_RESV_TYPES);
 
 	resv->r_flags |= flags;
-पूर्ण
+}
 
-पूर्णांक ocfs2_resmap_init(काष्ठा ocfs2_super *osb,
-		      काष्ठा ocfs2_reservation_map *resmap)
-अणु
-	स_रखो(resmap, 0, माप(*resmap));
+int ocfs2_resmap_init(struct ocfs2_super *osb,
+		      struct ocfs2_reservation_map *resmap)
+{
+	memset(resmap, 0, sizeof(*resmap));
 
 	resmap->m_osb = osb;
 	resmap->m_reservations = RB_ROOT;
-	/* m_biपंचांगap_len is initialized to zero by the above स_रखो. */
+	/* m_bitmap_len is initialized to zero by the above memset. */
 	INIT_LIST_HEAD(&resmap->m_lru);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ocfs2_resv_mark_lru(काष्ठा ocfs2_reservation_map *resmap,
-				काष्ठा ocfs2_alloc_reservation *resv)
-अणु
-	निश्चित_spin_locked(&resv_lock);
+static void ocfs2_resv_mark_lru(struct ocfs2_reservation_map *resmap,
+				struct ocfs2_alloc_reservation *resv)
+{
+	assert_spin_locked(&resv_lock);
 
-	अगर (!list_empty(&resv->r_lru))
+	if (!list_empty(&resv->r_lru))
 		list_del_init(&resv->r_lru);
 
 	list_add_tail(&resv->r_lru, &resmap->m_lru);
-पूर्ण
+}
 
-अटल व्योम __ocfs2_resv_trunc(काष्ठा ocfs2_alloc_reservation *resv)
-अणु
+static void __ocfs2_resv_trunc(struct ocfs2_alloc_reservation *resv)
+{
 	resv->r_len = 0;
 	resv->r_start = 0;
-पूर्ण
+}
 
-अटल व्योम ocfs2_resv_हटाओ(काष्ठा ocfs2_reservation_map *resmap,
-			      काष्ठा ocfs2_alloc_reservation *resv)
-अणु
-	अगर (resv->r_flags & OCFS2_RESV_FLAG_INUSE) अणु
+static void ocfs2_resv_remove(struct ocfs2_reservation_map *resmap,
+			      struct ocfs2_alloc_reservation *resv)
+{
+	if (resv->r_flags & OCFS2_RESV_FLAG_INUSE) {
 		list_del_init(&resv->r_lru);
 		rb_erase(&resv->r_node, &resmap->m_reservations);
 		resv->r_flags &= ~OCFS2_RESV_FLAG_INUSE;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __ocfs2_resv_discard(काष्ठा ocfs2_reservation_map *resmap,
-				 काष्ठा ocfs2_alloc_reservation *resv)
-अणु
-	निश्चित_spin_locked(&resv_lock);
+static void __ocfs2_resv_discard(struct ocfs2_reservation_map *resmap,
+				 struct ocfs2_alloc_reservation *resv)
+{
+	assert_spin_locked(&resv_lock);
 
 	__ocfs2_resv_trunc(resv);
 	/*
-	 * last_len and last_start no दीर्घer make sense अगर
+	 * last_len and last_start no longer make sense if
 	 * we're changing the range of our allocations.
 	 */
 	resv->r_last_len = resv->r_last_start = 0;
 
-	ocfs2_resv_हटाओ(resmap, resv);
-पूर्ण
+	ocfs2_resv_remove(resmap, resv);
+}
 
-/* करोes nothing अगर 'resv' is null */
-व्योम ocfs2_resv_discard(काष्ठा ocfs2_reservation_map *resmap,
-			काष्ठा ocfs2_alloc_reservation *resv)
-अणु
-	अगर (resv) अणु
+/* does nothing if 'resv' is null */
+void ocfs2_resv_discard(struct ocfs2_reservation_map *resmap,
+			struct ocfs2_alloc_reservation *resv)
+{
+	if (resv) {
 		spin_lock(&resv_lock);
 		__ocfs2_resv_discard(resmap, resv);
 		spin_unlock(&resv_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ocfs2_resmap_clear_all_resv(काष्ठा ocfs2_reservation_map *resmap)
-अणु
-	काष्ठा rb_node *node;
-	काष्ठा ocfs2_alloc_reservation *resv;
+static void ocfs2_resmap_clear_all_resv(struct ocfs2_reservation_map *resmap)
+{
+	struct rb_node *node;
+	struct ocfs2_alloc_reservation *resv;
 
-	निश्चित_spin_locked(&resv_lock);
+	assert_spin_locked(&resv_lock);
 
-	जबतक ((node = rb_last(&resmap->m_reservations)) != शून्य) अणु
-		resv = rb_entry(node, काष्ठा ocfs2_alloc_reservation, r_node);
+	while ((node = rb_last(&resmap->m_reservations)) != NULL) {
+		resv = rb_entry(node, struct ocfs2_alloc_reservation, r_node);
 
 		__ocfs2_resv_discard(resmap, resv);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम ocfs2_resmap_restart(काष्ठा ocfs2_reservation_map *resmap,
-			  अचिन्हित पूर्णांक clen, अक्षर *disk_biपंचांगap)
-अणु
-	अगर (ocfs2_resmap_disabled(resmap))
-		वापस;
+void ocfs2_resmap_restart(struct ocfs2_reservation_map *resmap,
+			  unsigned int clen, char *disk_bitmap)
+{
+	if (ocfs2_resmap_disabled(resmap))
+		return;
 
 	spin_lock(&resv_lock);
 
 	ocfs2_resmap_clear_all_resv(resmap);
-	resmap->m_biपंचांगap_len = clen;
-	resmap->m_disk_biपंचांगap = disk_biपंचांगap;
+	resmap->m_bitmap_len = clen;
+	resmap->m_disk_bitmap = disk_bitmap;
 
 	spin_unlock(&resv_lock);
-पूर्ण
+}
 
-व्योम ocfs2_resmap_uninit(काष्ठा ocfs2_reservation_map *resmap)
-अणु
-	/* Does nothing क्रम now. Keep this around क्रम API symmetry */
-पूर्ण
+void ocfs2_resmap_uninit(struct ocfs2_reservation_map *resmap)
+{
+	/* Does nothing for now. Keep this around for API symmetry */
+}
 
-अटल व्योम ocfs2_resv_insert(काष्ठा ocfs2_reservation_map *resmap,
-			      काष्ठा ocfs2_alloc_reservation *new)
-अणु
-	काष्ठा rb_root *root = &resmap->m_reservations;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा rb_node **p = &root->rb_node;
-	काष्ठा ocfs2_alloc_reservation *पंचांगp;
+static void ocfs2_resv_insert(struct ocfs2_reservation_map *resmap,
+			      struct ocfs2_alloc_reservation *new)
+{
+	struct rb_root *root = &resmap->m_reservations;
+	struct rb_node *parent = NULL;
+	struct rb_node **p = &root->rb_node;
+	struct ocfs2_alloc_reservation *tmp;
 
-	निश्चित_spin_locked(&resv_lock);
+	assert_spin_locked(&resv_lock);
 
 	trace_ocfs2_resv_insert(new->r_start, new->r_len);
 
-	जबतक (*p) अणु
+	while (*p) {
 		parent = *p;
 
-		पंचांगp = rb_entry(parent, काष्ठा ocfs2_alloc_reservation, r_node);
+		tmp = rb_entry(parent, struct ocfs2_alloc_reservation, r_node);
 
-		अगर (new->r_start < पंचांगp->r_start) अणु
+		if (new->r_start < tmp->r_start) {
 			p = &(*p)->rb_left;
 
 			/*
-			 * This is a good place to check क्रम
+			 * This is a good place to check for
 			 * overlapping reservations.
 			 */
-			BUG_ON(ocfs2_resv_end(new) >= पंचांगp->r_start);
-		पूर्ण अन्यथा अगर (new->r_start > ocfs2_resv_end(पंचांगp)) अणु
+			BUG_ON(ocfs2_resv_end(new) >= tmp->r_start);
+		} else if (new->r_start > ocfs2_resv_end(tmp)) {
 			p = &(*p)->rb_right;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* This should never happen! */
 			mlog(ML_ERROR, "Duplicate reservation window!\n");
 			BUG();
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	rb_link_node(&new->r_node, parent, p);
 	rb_insert_color(&new->r_node, root);
@@ -340,303 +339,303 @@ bad:
 	ocfs2_resv_mark_lru(resmap, new);
 
 	ocfs2_check_resmap(resmap);
-पूर्ण
+}
 
 /**
- * ocfs2_find_resv_lhs() - find the winकरोw which contains goal
+ * ocfs2_find_resv_lhs() - find the window which contains goal
  * @resmap: reservation map to search
- * @goal: which bit to search क्रम
+ * @goal: which bit to search for
  *
- * If a winकरोw containing that goal is not found, we वापस the winकरोw
- * which comes beक्रमe goal. Returns शून्य on empty rbtree or no winकरोw
- * beक्रमe goal.
+ * If a window containing that goal is not found, we return the window
+ * which comes before goal. Returns NULL on empty rbtree or no window
+ * before goal.
  */
-अटल काष्ठा ocfs2_alloc_reservation *
-ocfs2_find_resv_lhs(काष्ठा ocfs2_reservation_map *resmap, अचिन्हित पूर्णांक goal)
-अणु
-	काष्ठा ocfs2_alloc_reservation *resv = शून्य;
-	काष्ठा ocfs2_alloc_reservation *prev_resv = शून्य;
-	काष्ठा rb_node *node = resmap->m_reservations.rb_node;
+static struct ocfs2_alloc_reservation *
+ocfs2_find_resv_lhs(struct ocfs2_reservation_map *resmap, unsigned int goal)
+{
+	struct ocfs2_alloc_reservation *resv = NULL;
+	struct ocfs2_alloc_reservation *prev_resv = NULL;
+	struct rb_node *node = resmap->m_reservations.rb_node;
 
-	निश्चित_spin_locked(&resv_lock);
+	assert_spin_locked(&resv_lock);
 
-	अगर (!node)
-		वापस शून्य;
+	if (!node)
+		return NULL;
 
 	node = rb_first(&resmap->m_reservations);
-	जबतक (node) अणु
-		resv = rb_entry(node, काष्ठा ocfs2_alloc_reservation, r_node);
+	while (node) {
+		resv = rb_entry(node, struct ocfs2_alloc_reservation, r_node);
 
-		अगर (resv->r_start <= goal && ocfs2_resv_end(resv) >= goal)
-			अवरोध;
+		if (resv->r_start <= goal && ocfs2_resv_end(resv) >= goal)
+			break;
 
-		/* Check अगर we overshot the reservation just beक्रमe goal? */
-		अगर (resv->r_start > goal) अणु
+		/* Check if we overshot the reservation just before goal? */
+		if (resv->r_start > goal) {
 			resv = prev_resv;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		prev_resv = resv;
 		node = rb_next(node);
-	पूर्ण
+	}
 
-	वापस resv;
-पूर्ण
+	return resv;
+}
 
 /*
- * We are given a range within the biपंचांगap, which corresponds to a gap
+ * We are given a range within the bitmap, which corresponds to a gap
  * inside the reservations tree (search_start, search_len). The range
- * can be anything from the whole biपंचांगap, to a gap between
+ * can be anything from the whole bitmap, to a gap between
  * reservations.
  *
- * The start value of *rstart is insignअगरicant.
+ * The start value of *rstart is insignificant.
  *
- * This function searches the biपंचांगap range starting at search_start
- * with length search_len क्रम a set of contiguous मुक्त bits. We try
- * to find up to 'wanted' bits, but can someबार वापस less.
+ * This function searches the bitmap range starting at search_start
+ * with length search_len for a set of contiguous free bits. We try
+ * to find up to 'wanted' bits, but can sometimes return less.
  *
- * Returns the length of allocation, 0 अगर no मुक्त bits are found.
+ * Returns the length of allocation, 0 if no free bits are found.
  *
  * *cstart and *clen will also be populated with the result.
  */
-अटल पूर्णांक ocfs2_resmap_find_मुक्त_bits(काष्ठा ocfs2_reservation_map *resmap,
-				       अचिन्हित पूर्णांक wanted,
-				       अचिन्हित पूर्णांक search_start,
-				       अचिन्हित पूर्णांक search_len,
-				       अचिन्हित पूर्णांक *rstart,
-				       अचिन्हित पूर्णांक *rlen)
-अणु
-	व्योम *biपंचांगap = resmap->m_disk_biपंचांगap;
-	अचिन्हित पूर्णांक best_start, best_len = 0;
-	पूर्णांक offset, start, found;
+static int ocfs2_resmap_find_free_bits(struct ocfs2_reservation_map *resmap,
+				       unsigned int wanted,
+				       unsigned int search_start,
+				       unsigned int search_len,
+				       unsigned int *rstart,
+				       unsigned int *rlen)
+{
+	void *bitmap = resmap->m_disk_bitmap;
+	unsigned int best_start, best_len = 0;
+	int offset, start, found;
 
-	trace_ocfs2_resmap_find_मुक्त_bits_begin(search_start, search_len,
-						wanted, resmap->m_biपंचांगap_len);
+	trace_ocfs2_resmap_find_free_bits_begin(search_start, search_len,
+						wanted, resmap->m_bitmap_len);
 
 	found = best_start = best_len = 0;
 
 	start = search_start;
-	जबतक ((offset = ocfs2_find_next_zero_bit(biपंचांगap, resmap->m_biपंचांगap_len,
-						 start)) != -1) अणु
+	while ((offset = ocfs2_find_next_zero_bit(bitmap, resmap->m_bitmap_len,
+						 start)) != -1) {
 		/* Search reached end of the region */
-		अगर (offset >= (search_start + search_len))
-			अवरोध;
+		if (offset >= (search_start + search_len))
+			break;
 
-		अगर (offset == start) अणु
+		if (offset == start) {
 			/* we found a zero */
 			found++;
 			/* move start to the next bit to test */
 			start++;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* got a zero after some ones */
 			found = 1;
 			start = offset + 1;
-		पूर्ण
-		अगर (found > best_len) अणु
+		}
+		if (found > best_len) {
 			best_len = found;
 			best_start = start - found;
-		पूर्ण
+		}
 
-		अगर (found >= wanted)
-			अवरोध;
-	पूर्ण
+		if (found >= wanted)
+			break;
+	}
 
-	अगर (best_len == 0)
-		वापस 0;
+	if (best_len == 0)
+		return 0;
 
-	अगर (best_len >= wanted)
+	if (best_len >= wanted)
 		best_len = wanted;
 
 	*rlen = best_len;
 	*rstart = best_start;
 
-	trace_ocfs2_resmap_find_मुक्त_bits_end(best_start, best_len);
+	trace_ocfs2_resmap_find_free_bits_end(best_start, best_len);
 
-	वापस *rlen;
-पूर्ण
+	return *rlen;
+}
 
-अटल व्योम __ocfs2_resv_find_winकरोw(काष्ठा ocfs2_reservation_map *resmap,
-				     काष्ठा ocfs2_alloc_reservation *resv,
-				     अचिन्हित पूर्णांक goal, अचिन्हित पूर्णांक wanted)
-अणु
-	काष्ठा rb_root *root = &resmap->m_reservations;
-	अचिन्हित पूर्णांक gap_start, gap_end, gap_len;
-	काष्ठा ocfs2_alloc_reservation *prev_resv, *next_resv;
-	काष्ठा rb_node *prev, *next;
-	अचिन्हित पूर्णांक cstart, clen;
-	अचिन्हित पूर्णांक best_start = 0, best_len = 0;
+static void __ocfs2_resv_find_window(struct ocfs2_reservation_map *resmap,
+				     struct ocfs2_alloc_reservation *resv,
+				     unsigned int goal, unsigned int wanted)
+{
+	struct rb_root *root = &resmap->m_reservations;
+	unsigned int gap_start, gap_end, gap_len;
+	struct ocfs2_alloc_reservation *prev_resv, *next_resv;
+	struct rb_node *prev, *next;
+	unsigned int cstart, clen;
+	unsigned int best_start = 0, best_len = 0;
 
 	/*
-	 * Nasty हालs to consider:
+	 * Nasty cases to consider:
 	 *
 	 * - rbtree is empty
-	 * - our winकरोw should be first in all reservations
-	 * - our winकरोw should be last in all reservations
-	 * - need to make sure we करोn't go past end of biपंचांगap
+	 * - our window should be first in all reservations
+	 * - our window should be last in all reservations
+	 * - need to make sure we don't go past end of bitmap
 	 */
-	trace_ocfs2_resv_find_winकरोw_begin(resv->r_start, ocfs2_resv_end(resv),
+	trace_ocfs2_resv_find_window_begin(resv->r_start, ocfs2_resv_end(resv),
 					   goal, wanted, RB_EMPTY_ROOT(root));
 
-	निश्चित_spin_locked(&resv_lock);
+	assert_spin_locked(&resv_lock);
 
-	अगर (RB_EMPTY_ROOT(root)) अणु
+	if (RB_EMPTY_ROOT(root)) {
 		/*
-		 * Easiest हाल - empty tree. We can just take
-		 * whatever winकरोw of मुक्त bits we want.
+		 * Easiest case - empty tree. We can just take
+		 * whatever window of free bits we want.
 		 */
-		clen = ocfs2_resmap_find_मुक्त_bits(resmap, wanted, goal,
-						   resmap->m_biपंचांगap_len - goal,
+		clen = ocfs2_resmap_find_free_bits(resmap, wanted, goal,
+						   resmap->m_bitmap_len - goal,
 						   &cstart, &clen);
 
 		/*
-		 * This should never happen - the local alloc winकरोw
-		 * will always have मुक्त bits when we're called.
+		 * This should never happen - the local alloc window
+		 * will always have free bits when we're called.
 		 */
 		BUG_ON(goal == 0 && clen == 0);
 
-		अगर (clen == 0)
-			वापस;
+		if (clen == 0)
+			return;
 
 		resv->r_start = cstart;
 		resv->r_len = clen;
 
 		ocfs2_resv_insert(resmap, resv);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	prev_resv = ocfs2_find_resv_lhs(resmap, goal);
 
-	अगर (prev_resv == शून्य) अणु
+	if (prev_resv == NULL) {
 		/*
-		 * A शून्य here means that the search code couldn't
-		 * find a winकरोw that starts beक्रमe goal.
+		 * A NULL here means that the search code couldn't
+		 * find a window that starts before goal.
 		 *
-		 * However, we can take the first winकरोw after goal,
-		 * which is also by definition, the lefपंचांगost winकरोw in
-		 * the entire tree. If we can find मुक्त bits in the
-		 * gap between goal and the LHS winकरोw, then the
+		 * However, we can take the first window after goal,
+		 * which is also by definition, the leftmost window in
+		 * the entire tree. If we can find free bits in the
+		 * gap between goal and the LHS window, then the
 		 * reservation can safely be placed there.
 		 *
 		 * Otherwise we fall back to a linear search, checking
-		 * the gaps in between winकरोws क्रम a place to
+		 * the gaps in between windows for a place to
 		 * allocate.
 		 */
 
 		next = rb_first(root);
-		next_resv = rb_entry(next, काष्ठा ocfs2_alloc_reservation,
+		next_resv = rb_entry(next, struct ocfs2_alloc_reservation,
 				     r_node);
 
 		/*
-		 * The search should never वापस such a winकरोw. (see
+		 * The search should never return such a window. (see
 		 * comment above
 		 */
-		अगर (next_resv->r_start <= goal) अणु
+		if (next_resv->r_start <= goal) {
 			mlog(ML_ERROR, "goal: %u next_resv: start %u len %u\n",
 			     goal, next_resv->r_start, next_resv->r_len);
 			ocfs2_dump_resv(resmap);
 			BUG();
-		पूर्ण
+		}
 
-		clen = ocfs2_resmap_find_मुक्त_bits(resmap, wanted, goal,
+		clen = ocfs2_resmap_find_free_bits(resmap, wanted, goal,
 						   next_resv->r_start - goal,
 						   &cstart, &clen);
-		अगर (clen) अणु
+		if (clen) {
 			best_len = clen;
 			best_start = cstart;
-			अगर (best_len == wanted)
-				जाओ out_insert;
-		पूर्ण
+			if (best_len == wanted)
+				goto out_insert;
+		}
 
 		prev_resv = next_resv;
-		next_resv = शून्य;
-	पूर्ण
+		next_resv = NULL;
+	}
 
-	trace_ocfs2_resv_find_winकरोw_prev(prev_resv->r_start,
+	trace_ocfs2_resv_find_window_prev(prev_resv->r_start,
 					  ocfs2_resv_end(prev_resv));
 
 	prev = &prev_resv->r_node;
 
-	/* Now we करो a linear search क्रम a winकरोw, starting at 'prev_rsv' */
-	जबतक (1) अणु
+	/* Now we do a linear search for a window, starting at 'prev_rsv' */
+	while (1) {
 		next = rb_next(prev);
-		अगर (next) अणु
+		if (next) {
 			next_resv = rb_entry(next,
-					     काष्ठा ocfs2_alloc_reservation,
+					     struct ocfs2_alloc_reservation,
 					     r_node);
 
 			gap_start = ocfs2_resv_end(prev_resv) + 1;
 			gap_end = next_resv->r_start - 1;
 			gap_len = gap_end - gap_start + 1;
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
-			 * We're at the righपंचांगost edge of the
-			 * tree. See अगर a reservation between this
-			 * winकरोw and the end of the biपंचांगap will work.
+			 * We're at the rightmost edge of the
+			 * tree. See if a reservation between this
+			 * window and the end of the bitmap will work.
 			 */
 			gap_start = ocfs2_resv_end(prev_resv) + 1;
-			gap_len = resmap->m_biपंचांगap_len - gap_start;
-			gap_end = resmap->m_biपंचांगap_len - 1;
-		पूर्ण
+			gap_len = resmap->m_bitmap_len - gap_start;
+			gap_end = resmap->m_bitmap_len - 1;
+		}
 
-		trace_ocfs2_resv_find_winकरोw_next(next ? next_resv->r_start: -1,
+		trace_ocfs2_resv_find_window_next(next ? next_resv->r_start: -1,
 					next ? ocfs2_resv_end(next_resv) : -1);
 		/*
-		 * No need to check this gap अगर we have alपढ़ोy found
-		 * a larger region of मुक्त bits.
+		 * No need to check this gap if we have already found
+		 * a larger region of free bits.
 		 */
-		अगर (gap_len <= best_len)
-			जाओ next_resv;
+		if (gap_len <= best_len)
+			goto next_resv;
 
-		clen = ocfs2_resmap_find_मुक्त_bits(resmap, wanted, gap_start,
+		clen = ocfs2_resmap_find_free_bits(resmap, wanted, gap_start,
 						   gap_len, &cstart, &clen);
-		अगर (clen == wanted) अणु
+		if (clen == wanted) {
 			best_len = clen;
 			best_start = cstart;
-			जाओ out_insert;
-		पूर्ण अन्यथा अगर (clen > best_len) अणु
+			goto out_insert;
+		} else if (clen > best_len) {
 			best_len = clen;
 			best_start = cstart;
-		पूर्ण
+		}
 
 next_resv:
-		अगर (!next)
-			अवरोध;
+		if (!next)
+			break;
 
 		prev = next;
-		prev_resv = rb_entry(prev, काष्ठा ocfs2_alloc_reservation,
+		prev_resv = rb_entry(prev, struct ocfs2_alloc_reservation,
 				     r_node);
-	पूर्ण
+	}
 
 out_insert:
-	अगर (best_len) अणु
+	if (best_len) {
 		resv->r_start = best_start;
 		resv->r_len = best_len;
 		ocfs2_resv_insert(resmap, resv);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ocfs2_cannibalize_resv(काष्ठा ocfs2_reservation_map *resmap,
-				   काष्ठा ocfs2_alloc_reservation *resv,
-				   अचिन्हित पूर्णांक wanted)
-अणु
-	काष्ठा ocfs2_alloc_reservation *lru_resv;
-	पूर्णांक पंचांगpwinकरोw = !!(resv->r_flags & OCFS2_RESV_FLAG_TMP);
-	अचिन्हित पूर्णांक min_bits;
+static void ocfs2_cannibalize_resv(struct ocfs2_reservation_map *resmap,
+				   struct ocfs2_alloc_reservation *resv,
+				   unsigned int wanted)
+{
+	struct ocfs2_alloc_reservation *lru_resv;
+	int tmpwindow = !!(resv->r_flags & OCFS2_RESV_FLAG_TMP);
+	unsigned int min_bits;
 
-	अगर (!पंचांगpwinकरोw)
-		min_bits = ocfs2_resv_winकरोw_bits(resmap, resv) >> 1;
-	अन्यथा
-		min_bits = wanted; /* We at know the temp winकरोw will use all
+	if (!tmpwindow)
+		min_bits = ocfs2_resv_window_bits(resmap, resv) >> 1;
+	else
+		min_bits = wanted; /* We at know the temp window will use all
 				    * of these bits */
 
 	/*
 	 * Take the first reservation off the LRU as our 'target'. We
-	 * करोn't try to be smart about it. There might be a हाल क्रम
-	 * searching based on size but I करोn't have enough data to be
+	 * don't try to be smart about it. There might be a case for
+	 * searching based on size but I don't have enough data to be
 	 * sure. --Mark (3/16/2010)
 	 */
 	lru_resv = list_first_entry(&resmap->m_lru,
-				    काष्ठा ocfs2_alloc_reservation, r_lru);
+				    struct ocfs2_alloc_reservation, r_lru);
 
 	trace_ocfs2_cannibalize_resv_begin(lru_resv->r_start,
 					   lru_resv->r_len,
@@ -644,104 +643,104 @@ out_insert:
 
 	/*
 	 * Cannibalize (some or all) of the target reservation and
-	 * feed it to the current winकरोw.
+	 * feed it to the current window.
 	 */
-	अगर (lru_resv->r_len <= min_bits) अणु
+	if (lru_resv->r_len <= min_bits) {
 		/*
-		 * Discard completely अगर size is less than or equal to a
-		 * reasonable threshold - 50% of winकरोw bits क्रम non temporary
-		 * winकरोws.
+		 * Discard completely if size is less than or equal to a
+		 * reasonable threshold - 50% of window bits for non temporary
+		 * windows.
 		 */
 		resv->r_start = lru_resv->r_start;
 		resv->r_len = lru_resv->r_len;
 
 		__ocfs2_resv_discard(resmap, lru_resv);
-	पूर्ण अन्यथा अणु
-		अचिन्हित पूर्णांक shrink;
-		अगर (पंचांगpwinकरोw)
+	} else {
+		unsigned int shrink;
+		if (tmpwindow)
 			shrink = min_bits;
-		अन्यथा
+		else
 			shrink = lru_resv->r_len / 2;
 
 		lru_resv->r_len -= shrink;
 
 		resv->r_start = ocfs2_resv_end(lru_resv) + 1;
 		resv->r_len = shrink;
-	पूर्ण
+	}
 
 	trace_ocfs2_cannibalize_resv_end(resv->r_start, ocfs2_resv_end(resv),
 					 resv->r_len, resv->r_last_start,
 					 resv->r_last_len);
 
 	ocfs2_resv_insert(resmap, resv);
-पूर्ण
+}
 
-अटल व्योम ocfs2_resv_find_winकरोw(काष्ठा ocfs2_reservation_map *resmap,
-				   काष्ठा ocfs2_alloc_reservation *resv,
-				   अचिन्हित पूर्णांक wanted)
-अणु
-	अचिन्हित पूर्णांक goal = 0;
+static void ocfs2_resv_find_window(struct ocfs2_reservation_map *resmap,
+				   struct ocfs2_alloc_reservation *resv,
+				   unsigned int wanted)
+{
+	unsigned int goal = 0;
 
 	BUG_ON(!ocfs2_resv_empty(resv));
 
 	/*
-	 * Begin by trying to get a winकरोw as बंद to the previous
+	 * Begin by trying to get a window as close to the previous
 	 * one as possible. Using the most recent allocation as a
 	 * start goal makes sense.
 	 */
-	अगर (resv->r_last_len) अणु
+	if (resv->r_last_len) {
 		goal = resv->r_last_start + resv->r_last_len;
-		अगर (goal >= resmap->m_biपंचांगap_len)
+		if (goal >= resmap->m_bitmap_len)
 			goal = 0;
-	पूर्ण
+	}
 
-	__ocfs2_resv_find_winकरोw(resmap, resv, goal, wanted);
+	__ocfs2_resv_find_window(resmap, resv, goal, wanted);
 
 	/* Search from last alloc didn't work, try once more from beginning. */
-	अगर (ocfs2_resv_empty(resv) && goal != 0)
-		__ocfs2_resv_find_winकरोw(resmap, resv, 0, wanted);
+	if (ocfs2_resv_empty(resv) && goal != 0)
+		__ocfs2_resv_find_window(resmap, resv, 0, wanted);
 
-	अगर (ocfs2_resv_empty(resv)) अणु
+	if (ocfs2_resv_empty(resv)) {
 		/*
-		 * Still empty? Pull oldest one off the LRU, हटाओ it from
+		 * Still empty? Pull oldest one off the LRU, remove it from
 		 * tree, put this one in it's place.
 		 */
 		ocfs2_cannibalize_resv(resmap, resv, wanted);
-	पूर्ण
+	}
 
 	BUG_ON(ocfs2_resv_empty(resv));
-पूर्ण
+}
 
-पूर्णांक ocfs2_resmap_resv_bits(काष्ठा ocfs2_reservation_map *resmap,
-			   काष्ठा ocfs2_alloc_reservation *resv,
-			   पूर्णांक *cstart, पूर्णांक *clen)
-अणु
-	अगर (resv == शून्य || ocfs2_resmap_disabled(resmap))
-		वापस -ENOSPC;
+int ocfs2_resmap_resv_bits(struct ocfs2_reservation_map *resmap,
+			   struct ocfs2_alloc_reservation *resv,
+			   int *cstart, int *clen)
+{
+	if (resv == NULL || ocfs2_resmap_disabled(resmap))
+		return -ENOSPC;
 
 	spin_lock(&resv_lock);
 
-	अगर (ocfs2_resv_empty(resv)) अणु
+	if (ocfs2_resv_empty(resv)) {
 		/*
-		 * We करोn't want to over-allocate क्रम temporary
-		 * winकरोws. Otherwise, we run the risk of fragmenting the
+		 * We don't want to over-allocate for temporary
+		 * windows. Otherwise, we run the risk of fragmenting the
 		 * allocation space.
 		 */
-		अचिन्हित पूर्णांक wanted = ocfs2_resv_winकरोw_bits(resmap, resv);
+		unsigned int wanted = ocfs2_resv_window_bits(resmap, resv);
 
-		अगर ((resv->r_flags & OCFS2_RESV_FLAG_TMP) || wanted < *clen)
+		if ((resv->r_flags & OCFS2_RESV_FLAG_TMP) || wanted < *clen)
 			wanted = *clen;
 
 		/*
-		 * Try to get a winकरोw here. If it works, we must fall
-		 * through and test the biपंचांगap . This aव्योमs some
-		 * ping-ponging of winकरोws due to non-reserved space
-		 * being allocation beक्रमe we initialize a winकरोw क्रम
+		 * Try to get a window here. If it works, we must fall
+		 * through and test the bitmap . This avoids some
+		 * ping-ponging of windows due to non-reserved space
+		 * being allocation before we initialize a window for
 		 * that inode.
 		 */
-		ocfs2_resv_find_winकरोw(resmap, resv, wanted);
+		ocfs2_resv_find_window(resmap, resv, wanted);
 		trace_ocfs2_resmap_resv_bits(resv->r_start, resv->r_len);
-	पूर्ण
+	}
 
 	BUG_ON(ocfs2_resv_empty(resv));
 
@@ -749,26 +748,26 @@ out_insert:
 	*clen = resv->r_len;
 
 	spin_unlock(&resv_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-	ocfs2_adjust_resv_from_alloc(काष्ठा ocfs2_reservation_map *resmap,
-				     काष्ठा ocfs2_alloc_reservation *resv,
-				     अचिन्हित पूर्णांक start, अचिन्हित पूर्णांक end)
-अणु
-	अचिन्हित पूर्णांक rhs = 0;
-	अचिन्हित पूर्णांक old_end = ocfs2_resv_end(resv);
+static void
+	ocfs2_adjust_resv_from_alloc(struct ocfs2_reservation_map *resmap,
+				     struct ocfs2_alloc_reservation *resv,
+				     unsigned int start, unsigned int end)
+{
+	unsigned int rhs = 0;
+	unsigned int old_end = ocfs2_resv_end(resv);
 
 	BUG_ON(start != resv->r_start || old_end < end);
 
 	/*
-	 * Completely used? We can हटाओ it then.
+	 * Completely used? We can remove it then.
 	 */
-	अगर (old_end == end) अणु
+	if (old_end == end) {
 		__ocfs2_resv_discard(resmap, resv);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	rhs = old_end - end;
 
@@ -779,19 +778,19 @@ out_insert:
 
 	resv->r_start = end + 1;
 	resv->r_len = old_end - resv->r_start + 1;
-पूर्ण
+}
 
-व्योम ocfs2_resmap_claimed_bits(काष्ठा ocfs2_reservation_map *resmap,
-			       काष्ठा ocfs2_alloc_reservation *resv,
+void ocfs2_resmap_claimed_bits(struct ocfs2_reservation_map *resmap,
+			       struct ocfs2_alloc_reservation *resv,
 			       u32 cstart, u32 clen)
-अणु
-	अचिन्हित पूर्णांक cend = cstart + clen - 1;
+{
+	unsigned int cend = cstart + clen - 1;
 
-	अगर (resmap == शून्य || ocfs2_resmap_disabled(resmap))
-		वापस;
+	if (resmap == NULL || ocfs2_resmap_disabled(resmap))
+		return;
 
-	अगर (resv == शून्य)
-		वापस;
+	if (resv == NULL)
+		return;
 
 	BUG_ON(cstart != resv->r_start);
 
@@ -814,7 +813,7 @@ out_insert:
 	 * May have been discarded above from
 	 * ocfs2_adjust_resv_from_alloc().
 	 */
-	अगर (!ocfs2_resv_empty(resv))
+	if (!ocfs2_resv_empty(resv))
 		ocfs2_resv_mark_lru(resmap, resv);
 
 	trace_ocfs2_resmap_claimed_bits_end(resv->r_start, ocfs2_resv_end(resv),
@@ -824,4 +823,4 @@ out_insert:
 	ocfs2_check_resmap(resmap);
 
 	spin_unlock(&resv_lock);
-पूर्ण
+}

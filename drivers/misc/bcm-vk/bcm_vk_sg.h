@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright 2018-2020 Broadcom.
  */
 
-#अगर_अघोषित BCM_VK_SG_H
-#घोषणा BCM_VK_SG_H
+#ifndef BCM_VK_SG_H
+#define BCM_VK_SG_H
 
-#समावेश <linux/dma-mapping.h>
+#include <linux/dma-mapping.h>
 
-काष्ठा bcm_vk_dma अणु
-	/* क्रम userland buffer */
-	काष्ठा page **pages;
-	पूर्णांक nr_pages;
+struct bcm_vk_dma {
+	/* for userland buffer */
+	struct page **pages;
+	int nr_pages;
 
 	/* common */
 	dma_addr_t handle;
 	/*
-	 * sglist is of the following LE क्रमmat
+	 * sglist is of the following LE format
 	 * [U32] num_sg  = number of sg addresses (N)
 	 * [U32] totalsize = totalsize of data being transferred in sglist
 	 * [U32] size[0] = size of data in address0
@@ -29,34 +28,34 @@
 	 * [U32] addr_h[N-1] = higher 32-bits of addressN-1
 	 */
 	u32 *sglist;
-#घोषणा SGLIST_NUM_SG		0
-#घोषणा SGLIST_TOTALSIZE	1
-#घोषणा SGLIST_VKDATA_START	2
+#define SGLIST_NUM_SG		0
+#define SGLIST_TOTALSIZE	1
+#define SGLIST_VKDATA_START	2
 
-	पूर्णांक sglen; /* Length (bytes) of sglist */
-	पूर्णांक direction;
-पूर्ण;
+	int sglen; /* Length (bytes) of sglist */
+	int direction;
+};
 
-काष्ठा _vk_data अणु
+struct _vk_data {
 	u32 size;    /* data size in bytes */
-	u64 address; /* Poपूर्णांकer to data     */
-पूर्ण __packed;
+	u64 address; /* Pointer to data     */
+} __packed;
 
 /*
  * Scatter-gather DMA buffer API.
  *
  * These functions provide a simple way to create a page list and a
  * scatter-gather list from userspace address and map the memory
- * क्रम DMA operation.
+ * for DMA operation.
  */
-पूर्णांक bcm_vk_sg_alloc(काष्ठा device *dev,
-		    काष्ठा bcm_vk_dma *dma,
-		    पूर्णांक dir,
-		    काष्ठा _vk_data *vkdata,
-		    पूर्णांक num);
+int bcm_vk_sg_alloc(struct device *dev,
+		    struct bcm_vk_dma *dma,
+		    int dir,
+		    struct _vk_data *vkdata,
+		    int num);
 
-पूर्णांक bcm_vk_sg_मुक्त(काष्ठा device *dev, काष्ठा bcm_vk_dma *dma, पूर्णांक num,
-		   पूर्णांक *proc_cnt);
+int bcm_vk_sg_free(struct device *dev, struct bcm_vk_dma *dma, int num,
+		   int *proc_cnt);
 
-#पूर्ण_अगर
+#endif
 

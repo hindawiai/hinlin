@@ -1,121 +1,120 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * USB host driver क्रम the Greybus "generic" USB module.
+ * USB host driver for the Greybus "generic" USB module.
  *
  * Copyright 2014 Google Inc.
  * Copyright 2014 Linaro Ltd.
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/hcd.h>
-#समावेश <linux/greybus.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/usb.h>
+#include <linux/usb/hcd.h>
+#include <linux/greybus.h>
 
-#समावेश "gbphy.h"
+#include "gbphy.h"
 
 /* Greybus USB request types */
-#घोषणा GB_USB_TYPE_HCD_START		0x02
-#घोषणा GB_USB_TYPE_HCD_STOP		0x03
-#घोषणा GB_USB_TYPE_HUB_CONTROL		0x04
+#define GB_USB_TYPE_HCD_START		0x02
+#define GB_USB_TYPE_HCD_STOP		0x03
+#define GB_USB_TYPE_HUB_CONTROL		0x04
 
-काष्ठा gb_usb_hub_control_request अणु
+struct gb_usb_hub_control_request {
 	__le16 typeReq;
 	__le16 wValue;
 	__le16 wIndex;
 	__le16 wLength;
-पूर्ण;
+};
 
-काष्ठा gb_usb_hub_control_response अणु
+struct gb_usb_hub_control_response {
 	u8 buf[0];
-पूर्ण;
+};
 
-काष्ठा gb_usb_device अणु
-	काष्ठा gb_connection *connection;
-	काष्ठा gbphy_device *gbphy_dev;
-पूर्ण;
+struct gb_usb_device {
+	struct gb_connection *connection;
+	struct gbphy_device *gbphy_dev;
+};
 
-अटल अंतरभूत काष्ठा gb_usb_device *to_gb_usb_device(काष्ठा usb_hcd *hcd)
-अणु
-	वापस (काष्ठा gb_usb_device *)hcd->hcd_priv;
-पूर्ण
+static inline struct gb_usb_device *to_gb_usb_device(struct usb_hcd *hcd)
+{
+	return (struct gb_usb_device *)hcd->hcd_priv;
+}
 
-अटल अंतरभूत काष्ठा usb_hcd *gb_usb_device_to_hcd(काष्ठा gb_usb_device *dev)
-अणु
-	वापस container_of((व्योम *)dev, काष्ठा usb_hcd, hcd_priv);
-पूर्ण
+static inline struct usb_hcd *gb_usb_device_to_hcd(struct gb_usb_device *dev)
+{
+	return container_of((void *)dev, struct usb_hcd, hcd_priv);
+}
 
-अटल व्योम hcd_stop(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा gb_usb_device *dev = to_gb_usb_device(hcd);
-	पूर्णांक ret;
+static void hcd_stop(struct usb_hcd *hcd)
+{
+	struct gb_usb_device *dev = to_gb_usb_device(hcd);
+	int ret;
 
 	ret = gb_operation_sync(dev->connection, GB_USB_TYPE_HCD_STOP,
-				शून्य, 0, शून्य, 0);
-	अगर (ret)
+				NULL, 0, NULL, 0);
+	if (ret)
 		dev_err(&dev->gbphy_dev->dev, "HCD stop failed '%d'\n", ret);
-पूर्ण
+}
 
-अटल पूर्णांक hcd_start(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा usb_bus *bus = hcd_to_bus(hcd);
-	काष्ठा gb_usb_device *dev = to_gb_usb_device(hcd);
-	पूर्णांक ret;
+static int hcd_start(struct usb_hcd *hcd)
+{
+	struct usb_bus *bus = hcd_to_bus(hcd);
+	struct gb_usb_device *dev = to_gb_usb_device(hcd);
+	int ret;
 
 	ret = gb_operation_sync(dev->connection, GB_USB_TYPE_HCD_START,
-				शून्य, 0, शून्य, 0);
-	अगर (ret) अणु
+				NULL, 0, NULL, 0);
+	if (ret) {
 		dev_err(&dev->gbphy_dev->dev, "HCD start failed '%d'\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	hcd->state = HC_STATE_RUNNING;
-	अगर (bus->root_hub)
+	if (bus->root_hub)
 		usb_hcd_resume_root_hub(hcd);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक urb_enqueue(काष्ठा usb_hcd *hcd, काष्ठा urb *urb, gfp_t mem_flags)
-अणु
-	वापस -ENXIO;
-पूर्ण
+static int urb_enqueue(struct usb_hcd *hcd, struct urb *urb, gfp_t mem_flags)
+{
+	return -ENXIO;
+}
 
-अटल पूर्णांक urb_dequeue(काष्ठा usb_hcd *hcd, काष्ठा urb *urb, पूर्णांक status)
-अणु
-	वापस -ENXIO;
-पूर्ण
+static int urb_dequeue(struct usb_hcd *hcd, struct urb *urb, int status)
+{
+	return -ENXIO;
+}
 
-अटल पूर्णांक get_frame_number(काष्ठा usb_hcd *hcd)
-अणु
-	वापस 0;
-पूर्ण
+static int get_frame_number(struct usb_hcd *hcd)
+{
+	return 0;
+}
 
-अटल पूर्णांक hub_status_data(काष्ठा usb_hcd *hcd, अक्षर *buf)
-अणु
-	वापस 0;
-पूर्ण
+static int hub_status_data(struct usb_hcd *hcd, char *buf)
+{
+	return 0;
+}
 
-अटल पूर्णांक hub_control(काष्ठा usb_hcd *hcd, u16 typeReq, u16 wValue, u16 wIndex,
-		       अक्षर *buf, u16 wLength)
-अणु
-	काष्ठा gb_usb_device *dev = to_gb_usb_device(hcd);
-	काष्ठा gb_operation *operation;
-	काष्ठा gb_usb_hub_control_request *request;
-	काष्ठा gb_usb_hub_control_response *response;
-	माप_प्रकार response_size;
-	पूर्णांक ret;
+static int hub_control(struct usb_hcd *hcd, u16 typeReq, u16 wValue, u16 wIndex,
+		       char *buf, u16 wLength)
+{
+	struct gb_usb_device *dev = to_gb_usb_device(hcd);
+	struct gb_operation *operation;
+	struct gb_usb_hub_control_request *request;
+	struct gb_usb_hub_control_response *response;
+	size_t response_size;
+	int ret;
 
-	/* FIXME: handle unspecअगरied lengths */
-	response_size = माप(*response) + wLength;
+	/* FIXME: handle unspecified lengths */
+	response_size = sizeof(*response) + wLength;
 
 	operation = gb_operation_create(dev->connection,
 					GB_USB_TYPE_HUB_CONTROL,
-					माप(*request),
+					sizeof(*request),
 					response_size,
 					GFP_KERNEL);
-	अगर (!operation)
-		वापस -ENOMEM;
+	if (!operation)
+		return -ENOMEM;
 
 	request = operation->request->payload;
 	request->typeReq = cpu_to_le16(typeReq);
@@ -124,24 +123,24 @@
 	request->wLength = cpu_to_le16(wLength);
 
 	ret = gb_operation_request_send_sync(operation);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	अगर (wLength) अणु
-		/* Greybus core has verअगरied response size */
+	if (wLength) {
+		/* Greybus core has verified response size */
 		response = operation->response->payload;
-		स_नकल(buf, response->buf, wLength);
-	पूर्ण
+		memcpy(buf, response->buf, wLength);
+	}
 out:
 	gb_operation_put(operation);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा hc_driver usb_gb_hc_driver = अणु
+static const struct hc_driver usb_gb_hc_driver = {
 	.description = "greybus-hcd",
 	.product_desc = "Greybus USB Host Controller",
-	.hcd_priv_size = माप(काष्ठा gb_usb_device),
+	.hcd_priv_size = sizeof(struct gb_usb_device),
 
 	.flags = HCD_USB2,
 
@@ -154,28 +153,28 @@ out:
 	.get_frame_number = get_frame_number,
 	.hub_status_data = hub_status_data,
 	.hub_control = hub_control,
-पूर्ण;
+};
 
-अटल पूर्णांक gb_usb_probe(काष्ठा gbphy_device *gbphy_dev,
-			स्थिर काष्ठा gbphy_device_id *id)
-अणु
-	काष्ठा gb_connection *connection;
-	काष्ठा device *dev = &gbphy_dev->dev;
-	काष्ठा gb_usb_device *gb_usb_dev;
-	काष्ठा usb_hcd *hcd;
-	पूर्णांक retval;
+static int gb_usb_probe(struct gbphy_device *gbphy_dev,
+			const struct gbphy_device_id *id)
+{
+	struct gb_connection *connection;
+	struct device *dev = &gbphy_dev->dev;
+	struct gb_usb_device *gb_usb_dev;
+	struct usb_hcd *hcd;
+	int retval;
 
 	hcd = usb_create_hcd(&usb_gb_hc_driver, dev, dev_name(dev));
-	अगर (!hcd)
-		वापस -ENOMEM;
+	if (!hcd)
+		return -ENOMEM;
 
 	connection = gb_connection_create(gbphy_dev->bundle,
 					  le16_to_cpu(gbphy_dev->cport_desc->id),
-					  शून्य);
-	अगर (IS_ERR(connection)) अणु
+					  NULL);
+	if (IS_ERR(connection)) {
 		retval = PTR_ERR(connection);
-		जाओ निकास_usb_put;
-	पूर्ण
+		goto exit_usb_put;
+	}
 
 	gb_usb_dev = to_gb_usb_device(hcd);
 	gb_usb_dev->connection = connection;
@@ -186,61 +185,61 @@ out:
 	hcd->has_tt = 1;
 
 	retval = gb_connection_enable(connection);
-	अगर (retval)
-		जाओ निकास_connection_destroy;
+	if (retval)
+		goto exit_connection_destroy;
 
 	/*
 	 * FIXME: The USB bridged-PHY protocol driver depends on changes to
 	 *        USB core which are not yet upstream.
 	 *
-	 *        Disable क्रम now.
+	 *        Disable for now.
 	 */
-	अगर (1) अणु
+	if (1) {
 		dev_warn(dev, "USB protocol disabled\n");
 		retval = -EPROTONOSUPPORT;
-		जाओ निकास_connection_disable;
-	पूर्ण
+		goto exit_connection_disable;
+	}
 
 	retval = usb_add_hcd(hcd, 0, 0);
-	अगर (retval)
-		जाओ निकास_connection_disable;
+	if (retval)
+		goto exit_connection_disable;
 
-	वापस 0;
+	return 0;
 
-निकास_connection_disable:
+exit_connection_disable:
 	gb_connection_disable(connection);
-निकास_connection_destroy:
+exit_connection_destroy:
 	gb_connection_destroy(connection);
-निकास_usb_put:
+exit_usb_put:
 	usb_put_hcd(hcd);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम gb_usb_हटाओ(काष्ठा gbphy_device *gbphy_dev)
-अणु
-	काष्ठा gb_usb_device *gb_usb_dev = gb_gbphy_get_data(gbphy_dev);
-	काष्ठा gb_connection *connection = gb_usb_dev->connection;
-	काष्ठा usb_hcd *hcd = gb_usb_device_to_hcd(gb_usb_dev);
+static void gb_usb_remove(struct gbphy_device *gbphy_dev)
+{
+	struct gb_usb_device *gb_usb_dev = gb_gbphy_get_data(gbphy_dev);
+	struct gb_connection *connection = gb_usb_dev->connection;
+	struct usb_hcd *hcd = gb_usb_device_to_hcd(gb_usb_dev);
 
-	usb_हटाओ_hcd(hcd);
+	usb_remove_hcd(hcd);
 	gb_connection_disable(connection);
 	gb_connection_destroy(connection);
 	usb_put_hcd(hcd);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा gbphy_device_id gb_usb_id_table[] = अणु
-	अणु GBPHY_PROTOCOL(GREYBUS_PROTOCOL_USB) पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct gbphy_device_id gb_usb_id_table[] = {
+	{ GBPHY_PROTOCOL(GREYBUS_PROTOCOL_USB) },
+	{ },
+};
 MODULE_DEVICE_TABLE(gbphy, gb_usb_id_table);
 
-अटल काष्ठा gbphy_driver usb_driver = अणु
+static struct gbphy_driver usb_driver = {
 	.name		= "usb",
 	.probe		= gb_usb_probe,
-	.हटाओ		= gb_usb_हटाओ,
+	.remove		= gb_usb_remove,
 	.id_table	= gb_usb_id_table,
-पूर्ण;
+};
 
 module_gbphy_driver(usb_driver);
 MODULE_LICENSE("GPL v2");

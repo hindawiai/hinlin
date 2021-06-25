@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * PCI-related functions used by the EFI stub on multiple
  * architectures.
@@ -7,109 +6,109 @@
  * Copyright 2019 Google, LLC
  */
 
-#समावेश <linux/efi.h>
-#समावेश <linux/pci.h>
+#include <linux/efi.h>
+#include <linux/pci.h>
 
-#समावेश <यंत्र/efi.h>
+#include <asm/efi.h>
 
-#समावेश "efistub.h"
+#include "efistub.h"
 
-व्योम efi_pci_disable_bridge_busmaster(व्योम)
-अणु
+void efi_pci_disable_bridge_busmaster(void)
+{
 	efi_guid_t pci_proto = EFI_PCI_IO_PROTOCOL_GUID;
-	अचिन्हित दीर्घ pci_handle_size = 0;
-	efi_handle_t *pci_handle = शून्य;
+	unsigned long pci_handle_size = 0;
+	efi_handle_t *pci_handle = NULL;
 	efi_handle_t handle;
 	efi_status_t status;
 	u16 class, command;
-	पूर्णांक i;
+	int i;
 
 	status = efi_bs_call(locate_handle, EFI_LOCATE_BY_PROTOCOL, &pci_proto,
-			     शून्य, &pci_handle_size, शून्य);
+			     NULL, &pci_handle_size, NULL);
 
-	अगर (status != EFI_BUFFER_TOO_SMALL) अणु
-		अगर (status != EFI_SUCCESS && status != EFI_NOT_FOUND)
+	if (status != EFI_BUFFER_TOO_SMALL) {
+		if (status != EFI_SUCCESS && status != EFI_NOT_FOUND)
 			efi_err("Failed to locate PCI I/O handles'\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	status = efi_bs_call(allocate_pool, EFI_LOADER_DATA, pci_handle_size,
-			     (व्योम **)&pci_handle);
-	अगर (status != EFI_SUCCESS) अणु
+			     (void **)&pci_handle);
+	if (status != EFI_SUCCESS) {
 		efi_err("Failed to allocate memory for 'pci_handle'\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	status = efi_bs_call(locate_handle, EFI_LOCATE_BY_PROTOCOL, &pci_proto,
-			     शून्य, &pci_handle_size, pci_handle);
-	अगर (status != EFI_SUCCESS) अणु
+			     NULL, &pci_handle_size, pci_handle);
+	if (status != EFI_SUCCESS) {
 		efi_err("Failed to locate PCI I/O handles'\n");
-		जाओ मुक्त_handle;
-	पूर्ण
+		goto free_handle;
+	}
 
-	क्रम_each_efi_handle(handle, pci_handle, pci_handle_size, i) अणु
+	for_each_efi_handle(handle, pci_handle, pci_handle_size, i) {
 		efi_pci_io_protocol_t *pci;
-		अचिन्हित दीर्घ segment_nr, bus_nr, device_nr, func_nr;
+		unsigned long segment_nr, bus_nr, device_nr, func_nr;
 
 		status = efi_bs_call(handle_protocol, handle, &pci_proto,
-				     (व्योम **)&pci);
-		अगर (status != EFI_SUCCESS)
-			जारी;
+				     (void **)&pci);
+		if (status != EFI_SUCCESS)
+			continue;
 
 		/*
 		 * Disregard devices living on bus 0 - these are not behind a
-		 * bridge so no poपूर्णांक in disconnecting them from their drivers.
+		 * bridge so no point in disconnecting them from their drivers.
 		 */
 		status = efi_call_proto(pci, get_location, &segment_nr, &bus_nr,
 					&device_nr, &func_nr);
-		अगर (status != EFI_SUCCESS || bus_nr == 0)
-			जारी;
+		if (status != EFI_SUCCESS || bus_nr == 0)
+			continue;
 
 		/*
 		 * Don't disconnect VGA controllers so we don't risk losing
-		 * access to the framebuffer. Drivers क्रम true PCIe graphics
-		 * controllers that are behind a PCIe root port करो not use
+		 * access to the framebuffer. Drivers for true PCIe graphics
+		 * controllers that are behind a PCIe root port do not use
 		 * DMA to implement the GOP framebuffer anyway [although they
 		 * may use it in their implementation of Gop->Blt()], and so
-		 * disabling DMA in the PCI bridge should not पूर्णांकerfere with
+		 * disabling DMA in the PCI bridge should not interfere with
 		 * normal operation of the device.
 		 */
-		status = efi_call_proto(pci, pci.पढ़ो, EfiPciIoWidthUपूर्णांक16,
+		status = efi_call_proto(pci, pci.read, EfiPciIoWidthUint16,
 					PCI_CLASS_DEVICE, 1, &class);
-		अगर (status != EFI_SUCCESS || class == PCI_CLASS_DISPLAY_VGA)
-			जारी;
+		if (status != EFI_SUCCESS || class == PCI_CLASS_DISPLAY_VGA)
+			continue;
 
 		/* Disconnect this handle from all its drivers */
-		efi_bs_call(disconnect_controller, handle, शून्य, शून्य);
-	पूर्ण
+		efi_bs_call(disconnect_controller, handle, NULL, NULL);
+	}
 
-	क्रम_each_efi_handle(handle, pci_handle, pci_handle_size, i) अणु
+	for_each_efi_handle(handle, pci_handle, pci_handle_size, i) {
 		efi_pci_io_protocol_t *pci;
 
 		status = efi_bs_call(handle_protocol, handle, &pci_proto,
-				     (व्योम **)&pci);
-		अगर (status != EFI_SUCCESS || !pci)
-			जारी;
+				     (void **)&pci);
+		if (status != EFI_SUCCESS || !pci)
+			continue;
 
-		status = efi_call_proto(pci, pci.पढ़ो, EfiPciIoWidthUपूर्णांक16,
+		status = efi_call_proto(pci, pci.read, EfiPciIoWidthUint16,
 					PCI_CLASS_DEVICE, 1, &class);
 
-		अगर (status != EFI_SUCCESS || class != PCI_CLASS_BRIDGE_PCI)
-			जारी;
+		if (status != EFI_SUCCESS || class != PCI_CLASS_BRIDGE_PCI)
+			continue;
 
 		/* Disable busmastering */
-		status = efi_call_proto(pci, pci.पढ़ो, EfiPciIoWidthUपूर्णांक16,
+		status = efi_call_proto(pci, pci.read, EfiPciIoWidthUint16,
 					PCI_COMMAND, 1, &command);
-		अगर (status != EFI_SUCCESS || !(command & PCI_COMMAND_MASTER))
-			जारी;
+		if (status != EFI_SUCCESS || !(command & PCI_COMMAND_MASTER))
+			continue;
 
 		command &= ~PCI_COMMAND_MASTER;
-		status = efi_call_proto(pci, pci.ग_लिखो, EfiPciIoWidthUपूर्णांक16,
+		status = efi_call_proto(pci, pci.write, EfiPciIoWidthUint16,
 					PCI_COMMAND, 1, &command);
-		अगर (status != EFI_SUCCESS)
+		if (status != EFI_SUCCESS)
 			efi_err("Failed to disable PCI busmastering\n");
-	पूर्ण
+	}
 
-मुक्त_handle:
-	efi_bs_call(मुक्त_pool, pci_handle);
-पूर्ण
+free_handle:
+	efi_bs_call(free_pool, pci_handle);
+}

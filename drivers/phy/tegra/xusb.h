@@ -1,90 +1,89 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2014-2015, NVIDIA CORPORATION.  All rights reserved.
  * Copyright (c) 2015, Google Inc.
  */
 
-#अगर_अघोषित __PHY_TEGRA_XUSB_H
-#घोषणा __PHY_TEGRA_XUSB_H
+#ifndef __PHY_TEGRA_XUSB_H
+#define __PHY_TEGRA_XUSB_H
 
-#समावेश <linux/पन.स>
-#समावेश <linux/mutex.h>
-#समावेश <linux/workqueue.h>
+#include <linux/io.h>
+#include <linux/mutex.h>
+#include <linux/workqueue.h>
 
-#समावेश <linux/usb/otg.h>
-#समावेश <linux/usb/role.h>
+#include <linux/usb/otg.h>
+#include <linux/usb/role.h>
 
-/* legacy entry poपूर्णांकs क्रम backwards-compatibility */
-पूर्णांक tegra_xusb_padctl_legacy_probe(काष्ठा platक्रमm_device *pdev);
-पूर्णांक tegra_xusb_padctl_legacy_हटाओ(काष्ठा platक्रमm_device *pdev);
+/* legacy entry points for backwards-compatibility */
+int tegra_xusb_padctl_legacy_probe(struct platform_device *pdev);
+int tegra_xusb_padctl_legacy_remove(struct platform_device *pdev);
 
-काष्ठा phy;
-काष्ठा phy_provider;
-काष्ठा platक्रमm_device;
-काष्ठा regulator;
+struct phy;
+struct phy_provider;
+struct platform_device;
+struct regulator;
 
 /*
  * lanes
  */
-काष्ठा tegra_xusb_lane_soc अणु
-	स्थिर अक्षर *name;
+struct tegra_xusb_lane_soc {
+	const char *name;
 
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक shअगरt;
-	अचिन्हित पूर्णांक mask;
+	unsigned int offset;
+	unsigned int shift;
+	unsigned int mask;
 
-	स्थिर अक्षर * स्थिर *funcs;
-	अचिन्हित पूर्णांक num_funcs;
-पूर्ण;
+	const char * const *funcs;
+	unsigned int num_funcs;
+};
 
-काष्ठा tegra_xusb_lane अणु
-	स्थिर काष्ठा tegra_xusb_lane_soc *soc;
-	काष्ठा tegra_xusb_pad *pad;
-	काष्ठा device_node *np;
-	काष्ठा list_head list;
-	अचिन्हित पूर्णांक function;
-	अचिन्हित पूर्णांक index;
-पूर्ण;
+struct tegra_xusb_lane {
+	const struct tegra_xusb_lane_soc *soc;
+	struct tegra_xusb_pad *pad;
+	struct device_node *np;
+	struct list_head list;
+	unsigned int function;
+	unsigned int index;
+};
 
-पूर्णांक tegra_xusb_lane_parse_dt(काष्ठा tegra_xusb_lane *lane,
-			     काष्ठा device_node *np);
+int tegra_xusb_lane_parse_dt(struct tegra_xusb_lane *lane,
+			     struct device_node *np);
 
-काष्ठा tegra_xusb_usb3_lane अणु
-	काष्ठा tegra_xusb_lane base;
-पूर्ण;
+struct tegra_xusb_usb3_lane {
+	struct tegra_xusb_lane base;
+};
 
-अटल अंतरभूत काष्ठा tegra_xusb_usb3_lane *
-to_usb3_lane(काष्ठा tegra_xusb_lane *lane)
-अणु
-	वापस container_of(lane, काष्ठा tegra_xusb_usb3_lane, base);
-पूर्ण
+static inline struct tegra_xusb_usb3_lane *
+to_usb3_lane(struct tegra_xusb_lane *lane)
+{
+	return container_of(lane, struct tegra_xusb_usb3_lane, base);
+}
 
-काष्ठा tegra_xusb_usb2_lane अणु
-	काष्ठा tegra_xusb_lane base;
+struct tegra_xusb_usb2_lane {
+	struct tegra_xusb_lane base;
 
 	u32 hs_curr_level_offset;
-	bool घातered_on;
-पूर्ण;
+	bool powered_on;
+};
 
-अटल अंतरभूत काष्ठा tegra_xusb_usb2_lane *
-to_usb2_lane(काष्ठा tegra_xusb_lane *lane)
-अणु
-	वापस container_of(lane, काष्ठा tegra_xusb_usb2_lane, base);
-पूर्ण
+static inline struct tegra_xusb_usb2_lane *
+to_usb2_lane(struct tegra_xusb_lane *lane)
+{
+	return container_of(lane, struct tegra_xusb_usb2_lane, base);
+}
 
-काष्ठा tegra_xusb_ulpi_lane अणु
-	काष्ठा tegra_xusb_lane base;
-पूर्ण;
+struct tegra_xusb_ulpi_lane {
+	struct tegra_xusb_lane base;
+};
 
-अटल अंतरभूत काष्ठा tegra_xusb_ulpi_lane *
-to_ulpi_lane(काष्ठा tegra_xusb_lane *lane)
-अणु
-	वापस container_of(lane, काष्ठा tegra_xusb_ulpi_lane, base);
-पूर्ण
+static inline struct tegra_xusb_ulpi_lane *
+to_ulpi_lane(struct tegra_xusb_lane *lane)
+{
+	return container_of(lane, struct tegra_xusb_ulpi_lane, base);
+}
 
-काष्ठा tegra_xusb_hsic_lane अणु
-	काष्ठा tegra_xusb_lane base;
+struct tegra_xusb_hsic_lane {
+	struct tegra_xusb_lane base;
 
 	u32 strobe_trim;
 	u32 rx_strobe_trim;
@@ -93,386 +92,386 @@ to_ulpi_lane(काष्ठा tegra_xusb_lane *lane)
 	u32 tx_rtune_p;
 	u32 tx_rslew_n;
 	u32 tx_rslew_p;
-	bool स्वतः_term;
-पूर्ण;
+	bool auto_term;
+};
 
-अटल अंतरभूत काष्ठा tegra_xusb_hsic_lane *
-to_hsic_lane(काष्ठा tegra_xusb_lane *lane)
-अणु
-	वापस container_of(lane, काष्ठा tegra_xusb_hsic_lane, base);
-पूर्ण
+static inline struct tegra_xusb_hsic_lane *
+to_hsic_lane(struct tegra_xusb_lane *lane)
+{
+	return container_of(lane, struct tegra_xusb_hsic_lane, base);
+}
 
-काष्ठा tegra_xusb_pcie_lane अणु
-	काष्ठा tegra_xusb_lane base;
-पूर्ण;
+struct tegra_xusb_pcie_lane {
+	struct tegra_xusb_lane base;
+};
 
-अटल अंतरभूत काष्ठा tegra_xusb_pcie_lane *
-to_pcie_lane(काष्ठा tegra_xusb_lane *lane)
-अणु
-	वापस container_of(lane, काष्ठा tegra_xusb_pcie_lane, base);
-पूर्ण
+static inline struct tegra_xusb_pcie_lane *
+to_pcie_lane(struct tegra_xusb_lane *lane)
+{
+	return container_of(lane, struct tegra_xusb_pcie_lane, base);
+}
 
-काष्ठा tegra_xusb_sata_lane अणु
-	काष्ठा tegra_xusb_lane base;
-पूर्ण;
+struct tegra_xusb_sata_lane {
+	struct tegra_xusb_lane base;
+};
 
-अटल अंतरभूत काष्ठा tegra_xusb_sata_lane *
-to_sata_lane(काष्ठा tegra_xusb_lane *lane)
-अणु
-	वापस container_of(lane, काष्ठा tegra_xusb_sata_lane, base);
-पूर्ण
+static inline struct tegra_xusb_sata_lane *
+to_sata_lane(struct tegra_xusb_lane *lane)
+{
+	return container_of(lane, struct tegra_xusb_sata_lane, base);
+}
 
-काष्ठा tegra_xusb_lane_ops अणु
-	काष्ठा tegra_xusb_lane *(*probe)(काष्ठा tegra_xusb_pad *pad,
-					 काष्ठा device_node *np,
-					 अचिन्हित पूर्णांक index);
-	व्योम (*हटाओ)(काष्ठा tegra_xusb_lane *lane);
-पूर्ण;
+struct tegra_xusb_lane_ops {
+	struct tegra_xusb_lane *(*probe)(struct tegra_xusb_pad *pad,
+					 struct device_node *np,
+					 unsigned int index);
+	void (*remove)(struct tegra_xusb_lane *lane);
+};
 
 /*
  * pads
  */
-काष्ठा tegra_xusb_pad_soc;
-काष्ठा tegra_xusb_padctl;
+struct tegra_xusb_pad_soc;
+struct tegra_xusb_padctl;
 
-काष्ठा tegra_xusb_pad_ops अणु
-	काष्ठा tegra_xusb_pad *(*probe)(काष्ठा tegra_xusb_padctl *padctl,
-					स्थिर काष्ठा tegra_xusb_pad_soc *soc,
-					काष्ठा device_node *np);
-	व्योम (*हटाओ)(काष्ठा tegra_xusb_pad *pad);
-पूर्ण;
+struct tegra_xusb_pad_ops {
+	struct tegra_xusb_pad *(*probe)(struct tegra_xusb_padctl *padctl,
+					const struct tegra_xusb_pad_soc *soc,
+					struct device_node *np);
+	void (*remove)(struct tegra_xusb_pad *pad);
+};
 
-काष्ठा tegra_xusb_pad_soc अणु
-	स्थिर अक्षर *name;
+struct tegra_xusb_pad_soc {
+	const char *name;
 
-	स्थिर काष्ठा tegra_xusb_lane_soc *lanes;
-	अचिन्हित पूर्णांक num_lanes;
+	const struct tegra_xusb_lane_soc *lanes;
+	unsigned int num_lanes;
 
-	स्थिर काष्ठा tegra_xusb_pad_ops *ops;
-पूर्ण;
+	const struct tegra_xusb_pad_ops *ops;
+};
 
-काष्ठा tegra_xusb_pad अणु
-	स्थिर काष्ठा tegra_xusb_pad_soc *soc;
-	काष्ठा tegra_xusb_padctl *padctl;
-	काष्ठा phy_provider *provider;
-	काष्ठा phy **lanes;
-	काष्ठा device dev;
+struct tegra_xusb_pad {
+	const struct tegra_xusb_pad_soc *soc;
+	struct tegra_xusb_padctl *padctl;
+	struct phy_provider *provider;
+	struct phy **lanes;
+	struct device dev;
 
-	स्थिर काष्ठा tegra_xusb_lane_ops *ops;
+	const struct tegra_xusb_lane_ops *ops;
 
-	काष्ठा list_head list;
-पूर्ण;
+	struct list_head list;
+};
 
-अटल अंतरभूत काष्ठा tegra_xusb_pad *to_tegra_xusb_pad(काष्ठा device *dev)
-अणु
-	वापस container_of(dev, काष्ठा tegra_xusb_pad, dev);
-पूर्ण
+static inline struct tegra_xusb_pad *to_tegra_xusb_pad(struct device *dev)
+{
+	return container_of(dev, struct tegra_xusb_pad, dev);
+}
 
-पूर्णांक tegra_xusb_pad_init(काष्ठा tegra_xusb_pad *pad,
-			काष्ठा tegra_xusb_padctl *padctl,
-			काष्ठा device_node *np);
-पूर्णांक tegra_xusb_pad_रेजिस्टर(काष्ठा tegra_xusb_pad *pad,
-			    स्थिर काष्ठा phy_ops *ops);
-व्योम tegra_xusb_pad_unरेजिस्टर(काष्ठा tegra_xusb_pad *pad);
+int tegra_xusb_pad_init(struct tegra_xusb_pad *pad,
+			struct tegra_xusb_padctl *padctl,
+			struct device_node *np);
+int tegra_xusb_pad_register(struct tegra_xusb_pad *pad,
+			    const struct phy_ops *ops);
+void tegra_xusb_pad_unregister(struct tegra_xusb_pad *pad);
 
-काष्ठा tegra_xusb_usb3_pad अणु
-	काष्ठा tegra_xusb_pad base;
+struct tegra_xusb_usb3_pad {
+	struct tegra_xusb_pad base;
 
-	अचिन्हित पूर्णांक enable;
-	काष्ठा mutex lock;
-पूर्ण;
+	unsigned int enable;
+	struct mutex lock;
+};
 
-अटल अंतरभूत काष्ठा tegra_xusb_usb3_pad *
-to_usb3_pad(काष्ठा tegra_xusb_pad *pad)
-अणु
-	वापस container_of(pad, काष्ठा tegra_xusb_usb3_pad, base);
-पूर्ण
+static inline struct tegra_xusb_usb3_pad *
+to_usb3_pad(struct tegra_xusb_pad *pad)
+{
+	return container_of(pad, struct tegra_xusb_usb3_pad, base);
+}
 
-काष्ठा tegra_xusb_usb2_pad अणु
-	काष्ठा tegra_xusb_pad base;
+struct tegra_xusb_usb2_pad {
+	struct tegra_xusb_pad base;
 
-	काष्ठा clk *clk;
-	अचिन्हित पूर्णांक enable;
-	काष्ठा mutex lock;
-पूर्ण;
+	struct clk *clk;
+	unsigned int enable;
+	struct mutex lock;
+};
 
-अटल अंतरभूत काष्ठा tegra_xusb_usb2_pad *
-to_usb2_pad(काष्ठा tegra_xusb_pad *pad)
-अणु
-	वापस container_of(pad, काष्ठा tegra_xusb_usb2_pad, base);
-पूर्ण
+static inline struct tegra_xusb_usb2_pad *
+to_usb2_pad(struct tegra_xusb_pad *pad)
+{
+	return container_of(pad, struct tegra_xusb_usb2_pad, base);
+}
 
-काष्ठा tegra_xusb_ulpi_pad अणु
-	काष्ठा tegra_xusb_pad base;
-पूर्ण;
+struct tegra_xusb_ulpi_pad {
+	struct tegra_xusb_pad base;
+};
 
-अटल अंतरभूत काष्ठा tegra_xusb_ulpi_pad *
-to_ulpi_pad(काष्ठा tegra_xusb_pad *pad)
-अणु
-	वापस container_of(pad, काष्ठा tegra_xusb_ulpi_pad, base);
-पूर्ण
+static inline struct tegra_xusb_ulpi_pad *
+to_ulpi_pad(struct tegra_xusb_pad *pad)
+{
+	return container_of(pad, struct tegra_xusb_ulpi_pad, base);
+}
 
-काष्ठा tegra_xusb_hsic_pad अणु
-	काष्ठा tegra_xusb_pad base;
+struct tegra_xusb_hsic_pad {
+	struct tegra_xusb_pad base;
 
-	काष्ठा regulator *supply;
-	काष्ठा clk *clk;
-पूर्ण;
+	struct regulator *supply;
+	struct clk *clk;
+};
 
-अटल अंतरभूत काष्ठा tegra_xusb_hsic_pad *
-to_hsic_pad(काष्ठा tegra_xusb_pad *pad)
-अणु
-	वापस container_of(pad, काष्ठा tegra_xusb_hsic_pad, base);
-पूर्ण
+static inline struct tegra_xusb_hsic_pad *
+to_hsic_pad(struct tegra_xusb_pad *pad)
+{
+	return container_of(pad, struct tegra_xusb_hsic_pad, base);
+}
 
-काष्ठा tegra_xusb_pcie_pad अणु
-	काष्ठा tegra_xusb_pad base;
+struct tegra_xusb_pcie_pad {
+	struct tegra_xusb_pad base;
 
-	काष्ठा reset_control *rst;
-	काष्ठा clk *pll;
+	struct reset_control *rst;
+	struct clk *pll;
 
-	अचिन्हित पूर्णांक enable;
-पूर्ण;
+	unsigned int enable;
+};
 
-अटल अंतरभूत काष्ठा tegra_xusb_pcie_pad *
-to_pcie_pad(काष्ठा tegra_xusb_pad *pad)
-अणु
-	वापस container_of(pad, काष्ठा tegra_xusb_pcie_pad, base);
-पूर्ण
+static inline struct tegra_xusb_pcie_pad *
+to_pcie_pad(struct tegra_xusb_pad *pad)
+{
+	return container_of(pad, struct tegra_xusb_pcie_pad, base);
+}
 
-काष्ठा tegra_xusb_sata_pad अणु
-	काष्ठा tegra_xusb_pad base;
+struct tegra_xusb_sata_pad {
+	struct tegra_xusb_pad base;
 
-	काष्ठा reset_control *rst;
-	काष्ठा clk *pll;
+	struct reset_control *rst;
+	struct clk *pll;
 
-	अचिन्हित पूर्णांक enable;
-पूर्ण;
+	unsigned int enable;
+};
 
-अटल अंतरभूत काष्ठा tegra_xusb_sata_pad *
-to_sata_pad(काष्ठा tegra_xusb_pad *pad)
-अणु
-	वापस container_of(pad, काष्ठा tegra_xusb_sata_pad, base);
-पूर्ण
+static inline struct tegra_xusb_sata_pad *
+to_sata_pad(struct tegra_xusb_pad *pad)
+{
+	return container_of(pad, struct tegra_xusb_sata_pad, base);
+}
 
 /*
  * ports
  */
-काष्ठा tegra_xusb_port_ops;
+struct tegra_xusb_port_ops;
 
-काष्ठा tegra_xusb_port अणु
-	काष्ठा tegra_xusb_padctl *padctl;
-	काष्ठा tegra_xusb_lane *lane;
-	अचिन्हित पूर्णांक index;
+struct tegra_xusb_port {
+	struct tegra_xusb_padctl *padctl;
+	struct tegra_xusb_lane *lane;
+	unsigned int index;
 
-	काष्ठा list_head list;
-	काष्ठा device dev;
+	struct list_head list;
+	struct device dev;
 
-	काष्ठा usb_role_चयन *usb_role_sw;
-	काष्ठा work_काष्ठा usb_phy_work;
-	काष्ठा usb_phy usb_phy;
+	struct usb_role_switch *usb_role_sw;
+	struct work_struct usb_phy_work;
+	struct usb_phy usb_phy;
 
-	स्थिर काष्ठा tegra_xusb_port_ops *ops;
-पूर्ण;
+	const struct tegra_xusb_port_ops *ops;
+};
 
-अटल अंतरभूत काष्ठा tegra_xusb_port *to_tegra_xusb_port(काष्ठा device *dev)
-अणु
-	वापस container_of(dev, काष्ठा tegra_xusb_port, dev);
-पूर्ण
+static inline struct tegra_xusb_port *to_tegra_xusb_port(struct device *dev)
+{
+	return container_of(dev, struct tegra_xusb_port, dev);
+}
 
-काष्ठा tegra_xusb_lane_map अणु
-	अचिन्हित पूर्णांक port;
-	स्थिर अक्षर *type;
-	अचिन्हित पूर्णांक index;
-	स्थिर अक्षर *func;
-पूर्ण;
+struct tegra_xusb_lane_map {
+	unsigned int port;
+	const char *type;
+	unsigned int index;
+	const char *func;
+};
 
-काष्ठा tegra_xusb_lane *
-tegra_xusb_port_find_lane(काष्ठा tegra_xusb_port *port,
-			  स्थिर काष्ठा tegra_xusb_lane_map *map,
-			  स्थिर अक्षर *function);
+struct tegra_xusb_lane *
+tegra_xusb_port_find_lane(struct tegra_xusb_port *port,
+			  const struct tegra_xusb_lane_map *map,
+			  const char *function);
 
-काष्ठा tegra_xusb_port *
-tegra_xusb_find_port(काष्ठा tegra_xusb_padctl *padctl, स्थिर अक्षर *type,
-		     अचिन्हित पूर्णांक index);
+struct tegra_xusb_port *
+tegra_xusb_find_port(struct tegra_xusb_padctl *padctl, const char *type,
+		     unsigned int index);
 
-काष्ठा tegra_xusb_usb2_port अणु
-	काष्ठा tegra_xusb_port base;
+struct tegra_xusb_usb2_port {
+	struct tegra_xusb_port base;
 
-	काष्ठा regulator *supply;
-	क्रमागत usb_dr_mode mode;
-	bool पूर्णांकernal;
-	पूर्णांक usb3_port_fake;
-पूर्ण;
+	struct regulator *supply;
+	enum usb_dr_mode mode;
+	bool internal;
+	int usb3_port_fake;
+};
 
-अटल अंतरभूत काष्ठा tegra_xusb_usb2_port *
-to_usb2_port(काष्ठा tegra_xusb_port *port)
-अणु
-	वापस container_of(port, काष्ठा tegra_xusb_usb2_port, base);
-पूर्ण
+static inline struct tegra_xusb_usb2_port *
+to_usb2_port(struct tegra_xusb_port *port)
+{
+	return container_of(port, struct tegra_xusb_usb2_port, base);
+}
 
-काष्ठा tegra_xusb_usb2_port *
-tegra_xusb_find_usb2_port(काष्ठा tegra_xusb_padctl *padctl,
-			  अचिन्हित पूर्णांक index);
-व्योम tegra_xusb_usb2_port_release(काष्ठा tegra_xusb_port *port);
-व्योम tegra_xusb_usb2_port_हटाओ(काष्ठा tegra_xusb_port *port);
+struct tegra_xusb_usb2_port *
+tegra_xusb_find_usb2_port(struct tegra_xusb_padctl *padctl,
+			  unsigned int index);
+void tegra_xusb_usb2_port_release(struct tegra_xusb_port *port);
+void tegra_xusb_usb2_port_remove(struct tegra_xusb_port *port);
 
-काष्ठा tegra_xusb_ulpi_port अणु
-	काष्ठा tegra_xusb_port base;
+struct tegra_xusb_ulpi_port {
+	struct tegra_xusb_port base;
 
-	काष्ठा regulator *supply;
-	bool पूर्णांकernal;
-पूर्ण;
+	struct regulator *supply;
+	bool internal;
+};
 
-अटल अंतरभूत काष्ठा tegra_xusb_ulpi_port *
-to_ulpi_port(काष्ठा tegra_xusb_port *port)
-अणु
-	वापस container_of(port, काष्ठा tegra_xusb_ulpi_port, base);
-पूर्ण
+static inline struct tegra_xusb_ulpi_port *
+to_ulpi_port(struct tegra_xusb_port *port)
+{
+	return container_of(port, struct tegra_xusb_ulpi_port, base);
+}
 
-व्योम tegra_xusb_ulpi_port_release(काष्ठा tegra_xusb_port *port);
+void tegra_xusb_ulpi_port_release(struct tegra_xusb_port *port);
 
-काष्ठा tegra_xusb_hsic_port अणु
-	काष्ठा tegra_xusb_port base;
-पूर्ण;
+struct tegra_xusb_hsic_port {
+	struct tegra_xusb_port base;
+};
 
-अटल अंतरभूत काष्ठा tegra_xusb_hsic_port *
-to_hsic_port(काष्ठा tegra_xusb_port *port)
-अणु
-	वापस container_of(port, काष्ठा tegra_xusb_hsic_port, base);
-पूर्ण
+static inline struct tegra_xusb_hsic_port *
+to_hsic_port(struct tegra_xusb_port *port)
+{
+	return container_of(port, struct tegra_xusb_hsic_port, base);
+}
 
-व्योम tegra_xusb_hsic_port_release(काष्ठा tegra_xusb_port *port);
+void tegra_xusb_hsic_port_release(struct tegra_xusb_port *port);
 
-काष्ठा tegra_xusb_usb3_port अणु
-	काष्ठा tegra_xusb_port base;
-	काष्ठा regulator *supply;
+struct tegra_xusb_usb3_port {
+	struct tegra_xusb_port base;
+	struct regulator *supply;
 	bool context_saved;
-	अचिन्हित पूर्णांक port;
-	bool पूर्णांकernal;
+	unsigned int port;
+	bool internal;
 	bool disable_gen2;
 
 	u32 tap1;
 	u32 amp;
 	u32 ctle_z;
 	u32 ctle_g;
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा tegra_xusb_usb3_port *
-to_usb3_port(काष्ठा tegra_xusb_port *port)
-अणु
-	वापस container_of(port, काष्ठा tegra_xusb_usb3_port, base);
-पूर्ण
+static inline struct tegra_xusb_usb3_port *
+to_usb3_port(struct tegra_xusb_port *port)
+{
+	return container_of(port, struct tegra_xusb_usb3_port, base);
+}
 
-काष्ठा tegra_xusb_usb3_port *
-tegra_xusb_find_usb3_port(काष्ठा tegra_xusb_padctl *padctl,
-			  अचिन्हित पूर्णांक index);
-व्योम tegra_xusb_usb3_port_release(काष्ठा tegra_xusb_port *port);
-व्योम tegra_xusb_usb3_port_हटाओ(काष्ठा tegra_xusb_port *port);
+struct tegra_xusb_usb3_port *
+tegra_xusb_find_usb3_port(struct tegra_xusb_padctl *padctl,
+			  unsigned int index);
+void tegra_xusb_usb3_port_release(struct tegra_xusb_port *port);
+void tegra_xusb_usb3_port_remove(struct tegra_xusb_port *port);
 
-काष्ठा tegra_xusb_port_ops अणु
-	व्योम (*release)(काष्ठा tegra_xusb_port *port);
-	व्योम (*हटाओ)(काष्ठा tegra_xusb_port *port);
-	पूर्णांक (*enable)(काष्ठा tegra_xusb_port *port);
-	व्योम (*disable)(काष्ठा tegra_xusb_port *port);
-	काष्ठा tegra_xusb_lane *(*map)(काष्ठा tegra_xusb_port *port);
-पूर्ण;
+struct tegra_xusb_port_ops {
+	void (*release)(struct tegra_xusb_port *port);
+	void (*remove)(struct tegra_xusb_port *port);
+	int (*enable)(struct tegra_xusb_port *port);
+	void (*disable)(struct tegra_xusb_port *port);
+	struct tegra_xusb_lane *(*map)(struct tegra_xusb_port *port);
+};
 
 /*
  * pad controller
  */
-काष्ठा tegra_xusb_padctl_soc;
+struct tegra_xusb_padctl_soc;
 
-काष्ठा tegra_xusb_padctl_ops अणु
-	काष्ठा tegra_xusb_padctl *
-		(*probe)(काष्ठा device *dev,
-			 स्थिर काष्ठा tegra_xusb_padctl_soc *soc);
-	व्योम (*हटाओ)(काष्ठा tegra_xusb_padctl *padctl);
+struct tegra_xusb_padctl_ops {
+	struct tegra_xusb_padctl *
+		(*probe)(struct device *dev,
+			 const struct tegra_xusb_padctl_soc *soc);
+	void (*remove)(struct tegra_xusb_padctl *padctl);
 
-	पूर्णांक (*usb3_save_context)(काष्ठा tegra_xusb_padctl *padctl,
-				 अचिन्हित पूर्णांक index);
-	पूर्णांक (*hsic_set_idle)(काष्ठा tegra_xusb_padctl *padctl,
-			     अचिन्हित पूर्णांक index, bool idle);
-	पूर्णांक (*usb3_set_lfps_detect)(काष्ठा tegra_xusb_padctl *padctl,
-				    अचिन्हित पूर्णांक index, bool enable);
-	पूर्णांक (*vbus_override)(काष्ठा tegra_xusb_padctl *padctl, bool set);
-	पूर्णांक (*uपंचांगi_port_reset)(काष्ठा phy *phy);
-पूर्ण;
+	int (*usb3_save_context)(struct tegra_xusb_padctl *padctl,
+				 unsigned int index);
+	int (*hsic_set_idle)(struct tegra_xusb_padctl *padctl,
+			     unsigned int index, bool idle);
+	int (*usb3_set_lfps_detect)(struct tegra_xusb_padctl *padctl,
+				    unsigned int index, bool enable);
+	int (*vbus_override)(struct tegra_xusb_padctl *padctl, bool set);
+	int (*utmi_port_reset)(struct phy *phy);
+};
 
-काष्ठा tegra_xusb_padctl_soc अणु
-	स्थिर काष्ठा tegra_xusb_pad_soc * स्थिर *pads;
-	अचिन्हित पूर्णांक num_pads;
+struct tegra_xusb_padctl_soc {
+	const struct tegra_xusb_pad_soc * const *pads;
+	unsigned int num_pads;
 
-	काष्ठा अणु
-		काष्ठा अणु
-			स्थिर काष्ठा tegra_xusb_port_ops *ops;
-			अचिन्हित पूर्णांक count;
-		पूर्ण usb2, ulpi, hsic, usb3;
-	पूर्ण ports;
+	struct {
+		struct {
+			const struct tegra_xusb_port_ops *ops;
+			unsigned int count;
+		} usb2, ulpi, hsic, usb3;
+	} ports;
 
-	स्थिर काष्ठा tegra_xusb_padctl_ops *ops;
+	const struct tegra_xusb_padctl_ops *ops;
 
-	स्थिर अक्षर * स्थिर *supply_names;
-	अचिन्हित पूर्णांक num_supplies;
+	const char * const *supply_names;
+	unsigned int num_supplies;
 	bool supports_gen2;
 	bool need_fake_usb3_port;
-पूर्ण;
+};
 
-काष्ठा tegra_xusb_padctl अणु
-	काष्ठा device *dev;
-	व्योम __iomem *regs;
-	काष्ठा mutex lock;
-	काष्ठा reset_control *rst;
+struct tegra_xusb_padctl {
+	struct device *dev;
+	void __iomem *regs;
+	struct mutex lock;
+	struct reset_control *rst;
 
-	स्थिर काष्ठा tegra_xusb_padctl_soc *soc;
+	const struct tegra_xusb_padctl_soc *soc;
 
-	काष्ठा tegra_xusb_pad *pcie;
-	काष्ठा tegra_xusb_pad *sata;
-	काष्ठा tegra_xusb_pad *ulpi;
-	काष्ठा tegra_xusb_pad *usb2;
-	काष्ठा tegra_xusb_pad *hsic;
+	struct tegra_xusb_pad *pcie;
+	struct tegra_xusb_pad *sata;
+	struct tegra_xusb_pad *ulpi;
+	struct tegra_xusb_pad *usb2;
+	struct tegra_xusb_pad *hsic;
 
-	काष्ठा list_head ports;
-	काष्ठा list_head lanes;
-	काष्ठा list_head pads;
+	struct list_head ports;
+	struct list_head lanes;
+	struct list_head pads;
 
-	अचिन्हित पूर्णांक enable;
+	unsigned int enable;
 
-	काष्ठा clk *clk;
+	struct clk *clk;
 
-	काष्ठा regulator_bulk_data *supplies;
-पूर्ण;
+	struct regulator_bulk_data *supplies;
+};
 
-अटल अंतरभूत व्योम padctl_ग_लिखोl(काष्ठा tegra_xusb_padctl *padctl, u32 value,
-				 अचिन्हित दीर्घ offset)
-अणु
+static inline void padctl_writel(struct tegra_xusb_padctl *padctl, u32 value,
+				 unsigned long offset)
+{
 	dev_dbg(padctl->dev, "%08lx < %08x\n", offset, value);
-	ग_लिखोl(value, padctl->regs + offset);
-पूर्ण
+	writel(value, padctl->regs + offset);
+}
 
-अटल अंतरभूत u32 padctl_पढ़ोl(काष्ठा tegra_xusb_padctl *padctl,
-			       अचिन्हित दीर्घ offset)
-अणु
-	u32 value = पढ़ोl(padctl->regs + offset);
+static inline u32 padctl_readl(struct tegra_xusb_padctl *padctl,
+			       unsigned long offset)
+{
+	u32 value = readl(padctl->regs + offset);
 	dev_dbg(padctl->dev, "%08lx > %08x\n", offset, value);
-	वापस value;
-पूर्ण
+	return value;
+}
 
-काष्ठा tegra_xusb_lane *tegra_xusb_find_lane(काष्ठा tegra_xusb_padctl *padctl,
-					     स्थिर अक्षर *name,
-					     अचिन्हित पूर्णांक index);
+struct tegra_xusb_lane *tegra_xusb_find_lane(struct tegra_xusb_padctl *padctl,
+					     const char *name,
+					     unsigned int index);
 
-#अगर defined(CONFIG_ARCH_TEGRA_124_SOC) || defined(CONFIG_ARCH_TEGRA_132_SOC)
-बाह्य स्थिर काष्ठा tegra_xusb_padctl_soc tegra124_xusb_padctl_soc;
-#पूर्ण_अगर
-#अगर defined(CONFIG_ARCH_TEGRA_210_SOC)
-बाह्य स्थिर काष्ठा tegra_xusb_padctl_soc tegra210_xusb_padctl_soc;
-#पूर्ण_अगर
-#अगर defined(CONFIG_ARCH_TEGRA_186_SOC)
-बाह्य स्थिर काष्ठा tegra_xusb_padctl_soc tegra186_xusb_padctl_soc;
-#पूर्ण_अगर
-#अगर defined(CONFIG_ARCH_TEGRA_194_SOC)
-बाह्य स्थिर काष्ठा tegra_xusb_padctl_soc tegra194_xusb_padctl_soc;
-#पूर्ण_अगर
+#if defined(CONFIG_ARCH_TEGRA_124_SOC) || defined(CONFIG_ARCH_TEGRA_132_SOC)
+extern const struct tegra_xusb_padctl_soc tegra124_xusb_padctl_soc;
+#endif
+#if defined(CONFIG_ARCH_TEGRA_210_SOC)
+extern const struct tegra_xusb_padctl_soc tegra210_xusb_padctl_soc;
+#endif
+#if defined(CONFIG_ARCH_TEGRA_186_SOC)
+extern const struct tegra_xusb_padctl_soc tegra186_xusb_padctl_soc;
+#endif
+#if defined(CONFIG_ARCH_TEGRA_194_SOC)
+extern const struct tegra_xusb_padctl_soc tegra194_xusb_padctl_soc;
+#endif
 
-#पूर्ण_अगर /* __PHY_TEGRA_XUSB_H */
+#endif /* __PHY_TEGRA_XUSB_H */

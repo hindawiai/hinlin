@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Workbit NinjaSCSI-32Bi/UDE PCI/CardBus SCSI Host Bus Adapter driver
  * I/O routine
@@ -7,162 +6,162 @@
  * the GNU General Public License.
  */
 
-#अगर_अघोषित _NSP32_IO_H
-#घोषणा _NSP32_IO_H
+#ifndef _NSP32_IO_H
+#define _NSP32_IO_H
 
-अटल अंतरभूत व्योम nsp32_ग_लिखो1(अचिन्हित पूर्णांक  base,
-				अचिन्हित पूर्णांक  index,
-				अचिन्हित अक्षर val)
-अणु
+static inline void nsp32_write1(unsigned int  base,
+				unsigned int  index,
+				unsigned char val)
+{
 	outb(val, (base + index));
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित अक्षर nsp32_पढ़ो1(अचिन्हित पूर्णांक base,
-					अचिन्हित पूर्णांक index)
-अणु
-	वापस inb(base + index);
-पूर्ण
+static inline unsigned char nsp32_read1(unsigned int base,
+					unsigned int index)
+{
+	return inb(base + index);
+}
 
-अटल अंतरभूत व्योम nsp32_ग_लिखो2(अचिन्हित पूर्णांक   base,
-				अचिन्हित पूर्णांक   index,
-				अचिन्हित लघु val)
-अणु
+static inline void nsp32_write2(unsigned int   base,
+				unsigned int   index,
+				unsigned short val)
+{
 	outw(val, (base + index));
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित लघु nsp32_पढ़ो2(अचिन्हित पूर्णांक base,
-					 अचिन्हित पूर्णांक index)
-अणु
-	वापस inw(base + index);
-पूर्ण
+static inline unsigned short nsp32_read2(unsigned int base,
+					 unsigned int index)
+{
+	return inw(base + index);
+}
 
-अटल अंतरभूत व्योम nsp32_ग_लिखो4(अचिन्हित पूर्णांक  base,
-				अचिन्हित पूर्णांक  index,
-				अचिन्हित दीर्घ val)
-अणु
+static inline void nsp32_write4(unsigned int  base,
+				unsigned int  index,
+				unsigned long val)
+{
 	outl(val, (base + index));
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ nsp32_पढ़ो4(अचिन्हित पूर्णांक base,
-					अचिन्हित पूर्णांक index)
-अणु
-	वापस inl(base + index);
-पूर्ण
-
-/*==============================================*/
-
-अटल अंतरभूत व्योम nsp32_mmio_ग_लिखो1(अचिन्हित दीर्घ base,
-				     अचिन्हित पूर्णांक  index,
-				     अचिन्हित अक्षर val)
-अणु
-	अस्थिर अचिन्हित अक्षर *ptr;
-
-	ptr = (अचिन्हित अक्षर *)(base + NSP32_MMIO_OFFSET + index);
-
-	ग_लिखोb(val, ptr);
-पूर्ण
-
-अटल अंतरभूत अचिन्हित अक्षर nsp32_mmio_पढ़ो1(अचिन्हित दीर्घ base,
-					     अचिन्हित पूर्णांक  index)
-अणु
-	अस्थिर अचिन्हित अक्षर *ptr;
-
-	ptr = (अचिन्हित अक्षर *)(base + NSP32_MMIO_OFFSET + index);
-
-	वापस पढ़ोb(ptr);
-पूर्ण
-
-अटल अंतरभूत व्योम nsp32_mmio_ग_लिखो2(अचिन्हित दीर्घ  base,
-				     अचिन्हित पूर्णांक   index,
-				     अचिन्हित लघु val)
-अणु
-	अस्थिर अचिन्हित लघु *ptr;
-
-	ptr = (अचिन्हित लघु *)(base + NSP32_MMIO_OFFSET + index);
-
-	ग_लिखोw(cpu_to_le16(val), ptr);
-पूर्ण
-
-अटल अंतरभूत अचिन्हित लघु nsp32_mmio_पढ़ो2(अचिन्हित दीर्घ base,
-					      अचिन्हित पूर्णांक  index)
-अणु
-	अस्थिर अचिन्हित लघु *ptr;
-
-	ptr = (अचिन्हित लघु *)(base + NSP32_MMIO_OFFSET + index);
-
-	वापस le16_to_cpu(पढ़ोw(ptr));
-पूर्ण
-
-अटल अंतरभूत व्योम nsp32_mmio_ग_लिखो4(अचिन्हित दीर्घ base,
-				     अचिन्हित पूर्णांक  index,
-				     अचिन्हित दीर्घ val)
-अणु
-	अस्थिर अचिन्हित दीर्घ *ptr;
-
-	ptr = (अचिन्हित दीर्घ *)(base + NSP32_MMIO_OFFSET + index);
-
-	ग_लिखोl(cpu_to_le32(val), ptr);
-पूर्ण
-
-अटल अंतरभूत अचिन्हित दीर्घ nsp32_mmio_पढ़ो4(अचिन्हित दीर्घ base,
-					     अचिन्हित पूर्णांक  index)
-अणु
-	अस्थिर अचिन्हित दीर्घ *ptr;
-
-	ptr = (अचिन्हित दीर्घ *)(base + NSP32_MMIO_OFFSET + index);
-
-	वापस le32_to_cpu(पढ़ोl(ptr));
-पूर्ण
+static inline unsigned long nsp32_read4(unsigned int base,
+					unsigned int index)
+{
+	return inl(base + index);
+}
 
 /*==============================================*/
 
-अटल अंतरभूत अचिन्हित अक्षर nsp32_index_पढ़ो1(अचिन्हित पूर्णांक base,
-					      अचिन्हित पूर्णांक reg)
-अणु
+static inline void nsp32_mmio_write1(unsigned long base,
+				     unsigned int  index,
+				     unsigned char val)
+{
+	volatile unsigned char *ptr;
+
+	ptr = (unsigned char *)(base + NSP32_MMIO_OFFSET + index);
+
+	writeb(val, ptr);
+}
+
+static inline unsigned char nsp32_mmio_read1(unsigned long base,
+					     unsigned int  index)
+{
+	volatile unsigned char *ptr;
+
+	ptr = (unsigned char *)(base + NSP32_MMIO_OFFSET + index);
+
+	return readb(ptr);
+}
+
+static inline void nsp32_mmio_write2(unsigned long  base,
+				     unsigned int   index,
+				     unsigned short val)
+{
+	volatile unsigned short *ptr;
+
+	ptr = (unsigned short *)(base + NSP32_MMIO_OFFSET + index);
+
+	writew(cpu_to_le16(val), ptr);
+}
+
+static inline unsigned short nsp32_mmio_read2(unsigned long base,
+					      unsigned int  index)
+{
+	volatile unsigned short *ptr;
+
+	ptr = (unsigned short *)(base + NSP32_MMIO_OFFSET + index);
+
+	return le16_to_cpu(readw(ptr));
+}
+
+static inline void nsp32_mmio_write4(unsigned long base,
+				     unsigned int  index,
+				     unsigned long val)
+{
+	volatile unsigned long *ptr;
+
+	ptr = (unsigned long *)(base + NSP32_MMIO_OFFSET + index);
+
+	writel(cpu_to_le32(val), ptr);
+}
+
+static inline unsigned long nsp32_mmio_read4(unsigned long base,
+					     unsigned int  index)
+{
+	volatile unsigned long *ptr;
+
+	ptr = (unsigned long *)(base + NSP32_MMIO_OFFSET + index);
+
+	return le32_to_cpu(readl(ptr));
+}
+
+/*==============================================*/
+
+static inline unsigned char nsp32_index_read1(unsigned int base,
+					      unsigned int reg)
+{
 	outb(reg, base + INDEX_REG);
-	वापस inb(base + DATA_REG_LOW);
-पूर्ण
+	return inb(base + DATA_REG_LOW);
+}
 
-अटल अंतरभूत व्योम nsp32_index_ग_लिखो1(अचिन्हित पूर्णांक  base,
-				      अचिन्हित पूर्णांक  reg,
-				      अचिन्हित अक्षर val)
-अणु
+static inline void nsp32_index_write1(unsigned int  base,
+				      unsigned int  reg,
+				      unsigned char val)
+{
 	outb(reg, base + INDEX_REG   );
 	outb(val, base + DATA_REG_LOW);
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित लघु nsp32_index_पढ़ो2(अचिन्हित पूर्णांक base,
-					       अचिन्हित पूर्णांक reg)
-अणु
+static inline unsigned short nsp32_index_read2(unsigned int base,
+					       unsigned int reg)
+{
 	outb(reg, base + INDEX_REG);
-	वापस inw(base + DATA_REG_LOW);
-पूर्ण
+	return inw(base + DATA_REG_LOW);
+}
 
-अटल अंतरभूत व्योम nsp32_index_ग_लिखो2(अचिन्हित पूर्णांक   base,
-				      अचिन्हित पूर्णांक   reg,
-				      अचिन्हित लघु val)
-अणु
+static inline void nsp32_index_write2(unsigned int   base,
+				      unsigned int   reg,
+				      unsigned short val)
+{
 	outb(reg, base + INDEX_REG   );
 	outw(val, base + DATA_REG_LOW);
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ nsp32_index_पढ़ो4(अचिन्हित पूर्णांक base,
-					      अचिन्हित पूर्णांक reg)
-अणु
-	अचिन्हित दीर्घ h,l;
+static inline unsigned long nsp32_index_read4(unsigned int base,
+					      unsigned int reg)
+{
+	unsigned long h,l;
 
 	outb(reg, base + INDEX_REG);
 	l = inw(base + DATA_REG_LOW);
 	h = inw(base + DATA_REG_HI );
 
-	वापस ((h << 16) | l);
-पूर्ण
+	return ((h << 16) | l);
+}
 
-अटल अंतरभूत व्योम nsp32_index_ग_लिखो4(अचिन्हित पूर्णांक  base,
-				      अचिन्हित पूर्णांक  reg,
-				      अचिन्हित दीर्घ val)
-अणु
-	अचिन्हित दीर्घ h,l;
+static inline void nsp32_index_write4(unsigned int  base,
+				      unsigned int  reg,
+				      unsigned long val)
+{
+	unsigned long h,l;
 
 	h = (val & 0xffff0000) >> 16;
 	l = (val & 0x0000ffff) >>  0;
@@ -170,91 +169,91 @@
 	outb(reg, base + INDEX_REG   );
 	outw(l,   base + DATA_REG_LOW);
 	outw(h,   base + DATA_REG_HI );
-पूर्ण
+}
 
 /*==============================================*/
 
-अटल अंतरभूत अचिन्हित अक्षर nsp32_mmio_index_पढ़ो1(अचिन्हित दीर्घ base,
-						   अचिन्हित पूर्णांक reg)
-अणु
-	अस्थिर अचिन्हित लघु *index_ptr, *data_ptr;
+static inline unsigned char nsp32_mmio_index_read1(unsigned long base,
+						   unsigned int reg)
+{
+	volatile unsigned short *index_ptr, *data_ptr;
 
-	index_ptr = (अचिन्हित लघु *)(base + NSP32_MMIO_OFFSET + INDEX_REG);
-	data_ptr  = (अचिन्हित लघु *)(base + NSP32_MMIO_OFFSET + DATA_REG_LOW);
+	index_ptr = (unsigned short *)(base + NSP32_MMIO_OFFSET + INDEX_REG);
+	data_ptr  = (unsigned short *)(base + NSP32_MMIO_OFFSET + DATA_REG_LOW);
 
-	ग_लिखोb(reg, index_ptr);
-	वापस पढ़ोb(data_ptr);
-पूर्ण
+	writeb(reg, index_ptr);
+	return readb(data_ptr);
+}
 
-अटल अंतरभूत व्योम nsp32_mmio_index_ग_लिखो1(अचिन्हित दीर्घ base,
-					   अचिन्हित पूर्णांक  reg,
-					   अचिन्हित अक्षर val)
-अणु
-	अस्थिर अचिन्हित लघु *index_ptr, *data_ptr;
+static inline void nsp32_mmio_index_write1(unsigned long base,
+					   unsigned int  reg,
+					   unsigned char val)
+{
+	volatile unsigned short *index_ptr, *data_ptr;
 
-	index_ptr = (अचिन्हित लघु *)(base + NSP32_MMIO_OFFSET + INDEX_REG);
-	data_ptr  = (अचिन्हित लघु *)(base + NSP32_MMIO_OFFSET + DATA_REG_LOW);
+	index_ptr = (unsigned short *)(base + NSP32_MMIO_OFFSET + INDEX_REG);
+	data_ptr  = (unsigned short *)(base + NSP32_MMIO_OFFSET + DATA_REG_LOW);
 
-	ग_लिखोb(reg, index_ptr);
-	ग_लिखोb(val, data_ptr );
-पूर्ण
+	writeb(reg, index_ptr);
+	writeb(val, data_ptr );
+}
 
-अटल अंतरभूत अचिन्हित लघु nsp32_mmio_index_पढ़ो2(अचिन्हित दीर्घ base,
-						    अचिन्हित पूर्णांक  reg)
-अणु
-	अस्थिर अचिन्हित लघु *index_ptr, *data_ptr;
+static inline unsigned short nsp32_mmio_index_read2(unsigned long base,
+						    unsigned int  reg)
+{
+	volatile unsigned short *index_ptr, *data_ptr;
 
-	index_ptr = (अचिन्हित लघु *)(base + NSP32_MMIO_OFFSET + INDEX_REG);
-	data_ptr  = (अचिन्हित लघु *)(base + NSP32_MMIO_OFFSET + DATA_REG_LOW);
+	index_ptr = (unsigned short *)(base + NSP32_MMIO_OFFSET + INDEX_REG);
+	data_ptr  = (unsigned short *)(base + NSP32_MMIO_OFFSET + DATA_REG_LOW);
 
-	ग_लिखोb(reg, index_ptr);
-	वापस le16_to_cpu(पढ़ोw(data_ptr));
-पूर्ण
+	writeb(reg, index_ptr);
+	return le16_to_cpu(readw(data_ptr));
+}
 
-अटल अंतरभूत व्योम nsp32_mmio_index_ग_लिखो2(अचिन्हित दीर्घ  base,
-					   अचिन्हित पूर्णांक   reg,
-					   अचिन्हित लघु val)
-अणु
-	अस्थिर अचिन्हित लघु *index_ptr, *data_ptr;
+static inline void nsp32_mmio_index_write2(unsigned long  base,
+					   unsigned int   reg,
+					   unsigned short val)
+{
+	volatile unsigned short *index_ptr, *data_ptr;
 
-	index_ptr = (अचिन्हित लघु *)(base + NSP32_MMIO_OFFSET + INDEX_REG);
-	data_ptr  = (अचिन्हित लघु *)(base + NSP32_MMIO_OFFSET + DATA_REG_LOW);
+	index_ptr = (unsigned short *)(base + NSP32_MMIO_OFFSET + INDEX_REG);
+	data_ptr  = (unsigned short *)(base + NSP32_MMIO_OFFSET + DATA_REG_LOW);
 
-	ग_लिखोb(reg,              index_ptr);
-	ग_लिखोw(cpu_to_le16(val), data_ptr );
-पूर्ण
+	writeb(reg,              index_ptr);
+	writew(cpu_to_le16(val), data_ptr );
+}
 
 /*==============================================*/
 
-अटल अंतरभूत व्योम nsp32_multi_पढ़ो4(अचिन्हित पूर्णांक   base,
-				     अचिन्हित पूर्णांक   reg,
-				     व्योम          *buf,
-				     अचिन्हित दीर्घ  count)
-अणु
+static inline void nsp32_multi_read4(unsigned int   base,
+				     unsigned int   reg,
+				     void          *buf,
+				     unsigned long  count)
+{
 	insl(base + reg, buf, count);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम nsp32_fअगरo_पढ़ो(अचिन्हित पूर्णांक   base,
-				   व्योम          *buf,
-				   अचिन्हित दीर्घ  count)
-अणु
-	nsp32_multi_पढ़ो4(base, FIFO_DATA_LOW, buf, count);
-पूर्ण
+static inline void nsp32_fifo_read(unsigned int   base,
+				   void          *buf,
+				   unsigned long  count)
+{
+	nsp32_multi_read4(base, FIFO_DATA_LOW, buf, count);
+}
 
-अटल अंतरभूत व्योम nsp32_multi_ग_लिखो4(अचिन्हित पूर्णांक   base,
-				      अचिन्हित पूर्णांक   reg,
-				      व्योम          *buf,
-				      अचिन्हित दीर्घ  count)
-अणु
+static inline void nsp32_multi_write4(unsigned int   base,
+				      unsigned int   reg,
+				      void          *buf,
+				      unsigned long  count)
+{
 	outsl(base + reg, buf, count);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम nsp32_fअगरo_ग_लिखो(अचिन्हित पूर्णांक   base,
-				    व्योम          *buf,
-				    अचिन्हित दीर्घ  count)
-अणु
-	nsp32_multi_ग_लिखो4(base, FIFO_DATA_LOW, buf, count);
-पूर्ण
+static inline void nsp32_fifo_write(unsigned int   base,
+				    void          *buf,
+				    unsigned long  count)
+{
+	nsp32_multi_write4(base, FIFO_DATA_LOW, buf, count);
+}
 
-#पूर्ण_अगर /* _NSP32_IO_H */
+#endif /* _NSP32_IO_H */
 /* end */

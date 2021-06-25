@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0
+/* SPDX-License-Identifier: GPL-2.0
  *
  * IO cost model based controller.
  *
@@ -9,22 +8,22 @@
  *
  * One challenge of controlling IO resources is the lack of trivially
  * observable cost metric.  This is distinguished from CPU and memory where
- * wallघड़ी समय and the number of bytes can serve as accurate enough
+ * wallclock time and the number of bytes can serve as accurate enough
  * approximations.
  *
- * Bandwidth and iops are the most commonly used metrics क्रम IO devices but
- * depending on the type and specअगरics of the device, dअगरferent IO patterns
+ * Bandwidth and iops are the most commonly used metrics for IO devices but
+ * depending on the type and specifics of the device, different IO patterns
  * easily lead to multiple orders of magnitude variations rendering them
- * useless क्रम the purpose of IO capacity distribution.  While on-device
- * समय, with a lot of clutches, could serve as a useful approximation क्रम
- * non-queued rotational devices, this is no दीर्घer viable with modern
+ * useless for the purpose of IO capacity distribution.  While on-device
+ * time, with a lot of clutches, could serve as a useful approximation for
+ * non-queued rotational devices, this is no longer viable with modern
  * devices, even the rotational ones.
  *
  * While there is no cost metric we can trivially observe, it isn't a
  * complete mystery.  For example, on a rotational device, seek cost
- * करोminates जबतक a contiguous transfer contributes a smaller amount
- * proportional to the size.  If we can अक्षरacterize at least the relative
- * costs of these dअगरferent types of IOs, it should be possible to
+ * dominates while a contiguous transfer contributes a smaller amount
+ * proportional to the size.  If we can characterize at least the relative
+ * costs of these different types of IOs, it should be possible to
  * implement a reasonable work-conserving proportional IO resource
  * distribution.
  *
@@ -32,27 +31,27 @@
  *
  * IO cost model estimates the cost of an IO given its basic parameters and
  * history (e.g. the end sector of the last IO).  The cost is measured in
- * device समय.  If a given IO is estimated to cost 10ms, the device should
+ * device time.  If a given IO is estimated to cost 10ms, the device should
  * be able to process ~100 of those IOs in a second.
  *
  * Currently, there's only one builtin cost model - linear.  Each IO is
- * classअगरied as sequential or अक्रमom and given a base cost accordingly.
+ * classified as sequential or random and given a base cost accordingly.
  * On top of that, a size cost proportional to the length of the IO is
  * added.  While simple, this model captures the operational
- * अक्षरacteristics of a wide varienty of devices well enough.  Default
- * parameters क्रम several dअगरferent classes of devices are provided and the
+ * characteristics of a wide varienty of devices well enough.  Default
+ * parameters for several different classes of devices are provided and the
  * parameters can be configured from userspace via
  * /sys/fs/cgroup/io.cost.model.
  *
  * If needed, tools/cgroup/iocost_coef_gen.py can be used to generate
- * device-specअगरic coefficients.
+ * device-specific coefficients.
  *
  * 2. Control Strategy
  *
- * The device भव समय (vसमय) is used as the primary control metric.
+ * The device virtual time (vtime) is used as the primary control metric.
  * The control strategy is composed of the following three parts.
  *
- * 2-1. Vसमय Distribution
+ * 2-1. Vtime Distribution
  *
  * When a cgroup becomes active in terms of IOs, its hierarchical share is
  * calculated.  Please consider the following hierarchy where the numbers
@@ -65,89 +64,89 @@
  *  A0 (w:100)  A1 (w:100)
  *
  * If B is idle and only A0 and A1 are actively issuing IOs, as the two are
- * of equal weight, each माला_लो 50% share.  If then B starts issuing IOs, B
- * माला_लो 300/(100+300) or 75% share, and A0 and A1 equally splits the rest,
+ * of equal weight, each gets 50% share.  If then B starts issuing IOs, B
+ * gets 300/(100+300) or 75% share, and A0 and A1 equally splits the rest,
  * 12.5% each.  The distribution mechanism only cares about these flattened
  * shares.  They're called hweights (hierarchical weights) and always add
  * upto 1 (WEIGHT_ONE).
  *
- * A given cgroup's vसमय runs slower in inverse proportion to its hweight.
- * For example, with 12.5% weight, A0's समय runs 8 बार slower (100/12.5)
- * against the device vसमय - an IO which takes 10ms on the underlying
+ * A given cgroup's vtime runs slower in inverse proportion to its hweight.
+ * For example, with 12.5% weight, A0's time runs 8 times slower (100/12.5)
+ * against the device vtime - an IO which takes 10ms on the underlying
  * device is considered to take 80ms on A0.
  *
- * This स्थिरitutes the basis of IO capacity distribution.  Each cgroup's
- * vसमय is running at a rate determined by its hweight.  A cgroup tracks
- * the vसमय consumed by past IOs and can issue a new IO अगर करोing so
- * wouldn't outrun the current device vसमय.  Otherwise, the IO is
- * suspended until the vसमय has progressed enough to cover it.
+ * This constitutes the basis of IO capacity distribution.  Each cgroup's
+ * vtime is running at a rate determined by its hweight.  A cgroup tracks
+ * the vtime consumed by past IOs and can issue a new IO if doing so
+ * wouldn't outrun the current device vtime.  Otherwise, the IO is
+ * suspended until the vtime has progressed enough to cover it.
  *
- * 2-2. Vrate Adjusपंचांगent
+ * 2-2. Vrate Adjustment
  *
  * It's unrealistic to expect the cost model to be perfect.  There are too
- * many devices and even on the same device the overall perक्रमmance
+ * many devices and even on the same device the overall performance
  * fluctuates depending on numerous factors such as IO mixture and device
- * पूर्णांकernal garbage collection.  The controller needs to adapt dynamically.
+ * internal garbage collection.  The controller needs to adapt dynamically.
  *
  * This is achieved by adjusting the overall IO rate according to how busy
- * the device is.  If the device becomes overloaded, we're sending करोwn too
- * many IOs and should generally slow करोwn.  If there are रुकोing issuers
+ * the device is.  If the device becomes overloaded, we're sending down too
+ * many IOs and should generally slow down.  If there are waiting issuers
  * but the device isn't saturated, we're issuing too few and should
  * generally speed up.
  *
- * To slow करोwn, we lower the vrate - the rate at which the device vसमय
- * passes compared to the wall घड़ी.  For example, अगर the vसमय is running
+ * To slow down, we lower the vrate - the rate at which the device vtime
+ * passes compared to the wall clock.  For example, if the vtime is running
  * at the vrate of 75%, all cgroups added up would only be able to issue
- * 750ms worth of IOs per second, and vice-versa क्रम speeding up.
+ * 750ms worth of IOs per second, and vice-versa for speeding up.
  *
- * Device business is determined using two criteria - rq रुको and
+ * Device business is determined using two criteria - rq wait and
  * completion latencies.
  *
- * When a device माला_लो saturated, the on-device and then the request queues
- * fill up and a bio which is पढ़ोy to be issued has to रुको क्रम a request
+ * When a device gets saturated, the on-device and then the request queues
+ * fill up and a bio which is ready to be issued has to wait for a request
  * to become available.  When this delay becomes noticeable, it's a clear
  * indication that the device is saturated and we lower the vrate.  This
- * saturation संकेत is fairly conservative as it only triggers when both
- * hardware and software queues are filled up, and is used as the शेष
- * busy संकेत.
+ * saturation signal is fairly conservative as it only triggers when both
+ * hardware and software queues are filled up, and is used as the default
+ * busy signal.
  *
  * As devices can have deep queues and be unfair in how the queued commands
- * are executed, soley depending on rq रुको may not result in satisfactory
+ * are executed, soley depending on rq wait may not result in satisfactory
  * control quality.  For a better control quality, completion latency QoS
  * parameters can be configured so that the device is considered saturated
- * अगर N'th percentile completion latency rises above the set poपूर्णांक.
+ * if N'th percentile completion latency rises above the set point.
  *
  * The completion latency requirements are a function of both the
- * underlying device अक्षरacteristics and the desired IO latency quality of
+ * underlying device characteristics and the desired IO latency quality of
  * service.  There is an inherent trade-off - the tighter the latency QoS,
- * the higher the bandwidth lossage.  Latency QoS is disabled by शेष
+ * the higher the bandwidth lossage.  Latency QoS is disabled by default
  * and can be set through /sys/fs/cgroup/io.cost.qos.
  *
  * 2-3. Work Conservation
  *
  * Imagine two cgroups A and B with equal weights.  A is issuing a small IO
- * periodically जबतक B is sending out enough parallel IOs to saturate the
+ * periodically while B is sending out enough parallel IOs to saturate the
  * device on its own.  Let's say A's usage amounts to 100ms worth of IO
  * cost per second, i.e., 10% of the device capacity.  The naive
  * distribution of half and half would lead to 60% utilization of the
- * device, a signअगरicant reduction in the total amount of work करोne
- * compared to मुक्त-क्रम-all competition.  This is too high a cost to pay
- * क्रम IO control.
+ * device, a significant reduction in the total amount of work done
+ * compared to free-for-all competition.  This is too high a cost to pay
+ * for IO control.
  *
- * To conserve the total amount of work करोne, we keep track of how much
- * each active cgroup is actually using and yield part of its weight अगर
- * there are other cgroups which can make use of it.  In the above हाल,
+ * To conserve the total amount of work done, we keep track of how much
+ * each active cgroup is actually using and yield part of its weight if
+ * there are other cgroups which can make use of it.  In the above case,
  * A's weight will be lowered so that it hovers above the actual usage and
  * B would be able to use the rest.
  *
- * As we करोn't want to penalize a cgroup क्रम करोnating its weight, the
- * surplus weight adjusपंचांगent factors in a margin and has an immediate
- * snapback mechanism in हाल the cgroup needs more IO vसमय क्रम itself.
+ * As we don't want to penalize a cgroup for donating its weight, the
+ * surplus weight adjustment factors in a margin and has an immediate
+ * snapback mechanism in case the cgroup needs more IO vtime for itself.
  *
- * Note that adjusting करोwn surplus weights has the same effects as
- * accelerating vसमय क्रम other cgroups and work conservation can also be
+ * Note that adjusting down surplus weights has the same effects as
+ * accelerating vtime for other cgroups and work conservation can also be
  * implemented by adjusting vrate dynamically.  However, squaring who can
- * करोnate and should take back how much requires hweight propagations
+ * donate and should take back how much requires hweight propagations
  * anyway making it easier to implement and understand as a separate
  * mechanism.
  *
@@ -156,7 +155,7 @@
  * Instead of debugfs or other clumsy monitoring mechanisms, this
  * controller uses a drgn based monitoring script -
  * tools/cgroup/iocost_monitor.py.  For details on drgn, please see
- * https://github.com/osanकरोv/drgn.  The output looks like the following.
+ * https://github.com/osandov/drgn.  The output looks like the following.
  *
  *  sdb RUN   per=300ms cur_per=234.218:v203.695 busy= +1 vrate= 62.12%
  *                 active      weight      hweight% inflt% dbt  delay usages%
@@ -164,8 +163,8 @@
  *  test/b              *   100/  100  66.67/ 66.67  17.56   0  0*000 066:079:077
  *
  * - per	: Timer period
- * - cur_per	: Internal wall and device vसमय घड़ी
- * - vrate	: Device भव समय rate against wall घड़ी
+ * - cur_per	: Internal wall and device vtime clock
+ * - vrate	: Device virtual time rate against wall clock
  * - weight	: Surplus-adjusted and configured weights
  * - hweight	: Surplus-adjusted and configured hierarchical weights
  * - inflt	: The percentage of in-flight IO cost at the end of last period
@@ -173,54 +172,54 @@
  * - usages	: Usage history
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/समय64.h>
-#समावेश <linux/parser.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/blk-cgroup.h>
-#समावेश <यंत्र/local.h>
-#समावेश <यंत्र/local64.h>
-#समावेश "blk-rq-qos.h"
-#समावेश "blk-stat.h"
-#समावेश "blk-wbt.h"
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/timer.h>
+#include <linux/time64.h>
+#include <linux/parser.h>
+#include <linux/sched/signal.h>
+#include <linux/blk-cgroup.h>
+#include <asm/local.h>
+#include <asm/local64.h>
+#include "blk-rq-qos.h"
+#include "blk-stat.h"
+#include "blk-wbt.h"
 
-#अगर_घोषित CONFIG_TRACEPOINTS
+#ifdef CONFIG_TRACEPOINTS
 
-/* copied from TRACE_CGROUP_PATH, see cgroup-पूर्णांकernal.h */
-#घोषणा TRACE_IOCG_PATH_LEN 1024
-अटल DEFINE_SPINLOCK(trace_iocg_path_lock);
-अटल अक्षर trace_iocg_path[TRACE_IOCG_PATH_LEN];
+/* copied from TRACE_CGROUP_PATH, see cgroup-internal.h */
+#define TRACE_IOCG_PATH_LEN 1024
+static DEFINE_SPINLOCK(trace_iocg_path_lock);
+static char trace_iocg_path[TRACE_IOCG_PATH_LEN];
 
-#घोषणा TRACE_IOCG_PATH(type, iocg, ...)					\
-	करो अणु									\
-		अचिन्हित दीर्घ flags;						\
-		अगर (trace_iocost_##type##_enabled()) अणु				\
+#define TRACE_IOCG_PATH(type, iocg, ...)					\
+	do {									\
+		unsigned long flags;						\
+		if (trace_iocost_##type##_enabled()) {				\
 			spin_lock_irqsave(&trace_iocg_path_lock, flags);	\
 			cgroup_path(iocg_to_blkg(iocg)->blkcg->css.cgroup,	\
 				    trace_iocg_path, TRACE_IOCG_PATH_LEN);	\
 			trace_iocost_##type(iocg, trace_iocg_path,		\
 					      ##__VA_ARGS__);			\
 			spin_unlock_irqrestore(&trace_iocg_path_lock, flags);	\
-		पूर्ण								\
-	पूर्ण जबतक (0)
+		}								\
+	} while (0)
 
-#अन्यथा	/* CONFIG_TRACE_POINTS */
-#घोषणा TRACE_IOCG_PATH(type, iocg, ...)	करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर	/* CONFIG_TRACE_POINTS */
+#else	/* CONFIG_TRACE_POINTS */
+#define TRACE_IOCG_PATH(type, iocg, ...)	do { } while (0)
+#endif	/* CONFIG_TRACE_POINTS */
 
-क्रमागत अणु
+enum {
 	MILLION			= 1000000,
 
-	/* समयr period is calculated from latency requirements, bound it */
+	/* timer period is calculated from latency requirements, bound it */
 	MIN_PERIOD		= USEC_PER_MSEC,
 	MAX_PERIOD		= USEC_PER_SEC,
 
 	/*
-	 * iocg->vसमय is targeted at 50% behind the device vसमय, which
-	 * serves as its IO credit buffer.  Surplus weight adjusपंचांगent is
-	 * immediately canceled अगर the vसमय margin runs below 10%.
+	 * iocg->vtime is targeted at 50% behind the device vtime, which
+	 * serves as its IO credit buffer.  Surplus weight adjustment is
+	 * immediately canceled if the vtime margin runs below 10%.
 	 */
 	MARGIN_MIN_PCT		= 10,
 	MARGIN_LOW_PCT		= 20,
@@ -228,36 +227,36 @@
 
 	INUSE_ADJ_STEP_PCT	= 25,
 
-	/* Have some play in समयr operations */
+	/* Have some play in timer operations */
 	TIMER_SLACK_PCT		= 1,
 
 	/* 1/64k is granular enough and can easily be handled w/ u32 */
 	WEIGHT_ONE		= 1 << 16,
 
 	/*
-	 * As vसमय is used to calculate the cost of each IO, it needs to
+	 * As vtime is used to calculate the cost of each IO, it needs to
 	 * be fairly high precision.  For example, it should be able to
 	 * represent the cost of a single page worth of discard with
-	 * suffअगरicient accuracy.  At the same समय, it should be able to
-	 * represent reasonably दीर्घ enough durations to be useful and
+	 * suffificient accuracy.  At the same time, it should be able to
+	 * represent reasonably long enough durations to be useful and
 	 * convenient during operation.
 	 *
-	 * 1s worth of vसमय is 2^37.  This gives us both sub-nanosecond
-	 * granularity and days of wrap-around समय even at extreme vrates.
+	 * 1s worth of vtime is 2^37.  This gives us both sub-nanosecond
+	 * granularity and days of wrap-around time even at extreme vrates.
 	 */
 	VTIME_PER_SEC_SHIFT	= 37,
 	VTIME_PER_SEC		= 1LLU << VTIME_PER_SEC_SHIFT,
 	VTIME_PER_USEC		= VTIME_PER_SEC / USEC_PER_SEC,
 	VTIME_PER_NSEC		= VTIME_PER_SEC / NSEC_PER_SEC,
 
-	/* bound vrate adjusपंचांगents within two orders of magnitude */
+	/* bound vrate adjustments within two orders of magnitude */
 	VRATE_MIN_PPM		= 10000,	/* 1% */
 	VRATE_MAX_PPM		= 100000000,	/* 10000% */
 
 	VRATE_MIN		= VTIME_PER_USEC * VRATE_MIN_PPM / MILLION,
 	VRATE_CLAMP_ADJ_PCT	= 4,
 
-	/* अगर IOs end up रुकोing क्रम requests, issue less */
+	/* if IOs end up waiting for requests, issue less */
 	RQ_WAIT_BUSY_PCT	= 5,
 
 	/* unbusy hysterisis */
@@ -265,22 +264,22 @@
 
 	/*
 	 * The effect of delay is indirect and non-linear and a huge amount of
-	 * future debt can accumulate abruptly जबतक unthrottled. Linearly scale
+	 * future debt can accumulate abruptly while unthrottled. Linearly scale
 	 * up delay as debt is going up and then let it decay exponentially.
-	 * This gives us quick ramp ups जबतक delay is accumulating and दीर्घ
+	 * This gives us quick ramp ups while delay is accumulating and long
 	 * tails which can help reducing the frequency of debt explosions on
 	 * unthrottle. The parameters are experimentally determined.
 	 *
 	 * The delay mechanism provides adequate protection and behavior in many
-	 * हालs. However, this is far from ideal and falls लघुs on both
+	 * cases. However, this is far from ideal and falls shorts on both
 	 * fronts. The debtors are often throttled too harshly costing a
-	 * signअगरicant level of fairness and possibly total work जबतक the
-	 * protection against their impacts on the प्रणाली can be choppy and
+	 * significant level of fairness and possibly total work while the
+	 * protection against their impacts on the system can be choppy and
 	 * unreliable.
 	 *
-	 * The लघुcoming primarily stems from the fact that, unlike क्रम page
-	 * cache, the kernel करोesn't have well-defined back-pressure propagation
-	 * mechanism and policies क्रम anonymous memory. Fully addressing this
+	 * The shortcoming primarily stems from the fact that, unlike for page
+	 * cache, the kernel doesn't have well-defined back-pressure propagation
+	 * mechanism and policies for anonymous memory. Fully addressing this
 	 * issue will likely require substantial improvements in the area.
 	 */
 	MIN_DELAY_THR_PCT	= 500,
@@ -288,44 +287,44 @@
 	MIN_DELAY		= 250,
 	MAX_DELAY		= 250 * USEC_PER_MSEC,
 
-	/* halve debts अगर avg usage over 100ms is under 50% */
+	/* halve debts if avg usage over 100ms is under 50% */
 	DFGV_USAGE_PCT		= 50,
 	DFGV_PERIOD		= 100 * USEC_PER_MSEC,
 
-	/* करोn't let cmds which take a very दीर्घ समय pin lagging क्रम too दीर्घ */
+	/* don't let cmds which take a very long time pin lagging for too long */
 	MAX_LAGGING_PERIODS	= 10,
 
-	/* चयन अगरf the conditions are met क्रम दीर्घer than this */
+	/* switch iff the conditions are met for longer than this */
 	AUTOP_CYCLE_NSEC	= 10LLU * NSEC_PER_SEC,
 
 	/*
-	 * Count IO size in 4k pages.  The 12bit shअगरt helps keeping
-	 * size-proportional components of cost calculation in बंदr
+	 * Count IO size in 4k pages.  The 12bit shift helps keeping
+	 * size-proportional components of cost calculation in closer
 	 * numbers of digits to per-IO cost components.
 	 */
 	IOC_PAGE_SHIFT		= 12,
 	IOC_PAGE_SIZE		= 1 << IOC_PAGE_SHIFT,
 	IOC_SECT_TO_PAGE_SHIFT	= IOC_PAGE_SHIFT - SECTOR_SHIFT,
 
-	/* अगर apart further than 16M, consider अक्रमio क्रम linear model */
+	/* if apart further than 16M, consider randio for linear model */
 	LCOEF_RANDIO_PAGES	= 4096,
-पूर्ण;
+};
 
-क्रमागत ioc_running अणु
+enum ioc_running {
 	IOC_IDLE,
 	IOC_RUNNING,
 	IOC_STOP,
-पूर्ण;
+};
 
 /* io.cost.qos controls including per-dev enable of the whole controller */
-क्रमागत अणु
+enum {
 	QOS_ENABLE,
 	QOS_CTRL,
 	NR_QOS_CTRL_PARAMS,
-पूर्ण;
+};
 
 /* io.cost.qos params */
-क्रमागत अणु
+enum {
 	QOS_RPPM,
 	QOS_RLAT,
 	QOS_WPPM,
@@ -333,17 +332,17 @@
 	QOS_MIN,
 	QOS_MAX,
 	NR_QOS_PARAMS,
-पूर्ण;
+};
 
 /* io.cost.model controls */
-क्रमागत अणु
+enum {
 	COST_CTRL,
 	COST_MODEL,
 	NR_COST_CTRL_PARAMS,
-पूर्ण;
+};
 
 /* builtin linear cost model coefficients */
-क्रमागत अणु
+enum {
 	I_LCOEF_RBPS,
 	I_LCOEF_RSEQIOPS,
 	I_LCOEF_RRANDIOPS,
@@ -351,9 +350,9 @@
 	I_LCOEF_WSEQIOPS,
 	I_LCOEF_WRANDIOPS,
 	NR_I_LCOEFS,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	LCOEF_RPAGE,
 	LCOEF_RSEQIO,
 	LCOEF_RRANDIO,
@@ -361,108 +360,108 @@
 	LCOEF_WSEQIO,
 	LCOEF_WRANDIO,
 	NR_LCOEFS,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	AUTOP_INVALID,
 	AUTOP_HDD,
 	AUTOP_SSD_QD1,
 	AUTOP_SSD_DFL,
 	AUTOP_SSD_FAST,
-पूर्ण;
+};
 
-काष्ठा ioc_params अणु
+struct ioc_params {
 	u32				qos[NR_QOS_PARAMS];
 	u64				i_lcoefs[NR_I_LCOEFS];
 	u64				lcoefs[NR_LCOEFS];
 	u32				too_fast_vrate_pct;
 	u32				too_slow_vrate_pct;
-पूर्ण;
+};
 
-काष्ठा ioc_margins अणु
+struct ioc_margins {
 	s64				min;
 	s64				low;
 	s64				target;
-पूर्ण;
+};
 
-काष्ठा ioc_missed अणु
+struct ioc_missed {
 	local_t				nr_met;
 	local_t				nr_missed;
 	u32				last_met;
 	u32				last_missed;
-पूर्ण;
+};
 
-काष्ठा ioc_pcpu_stat अणु
-	काष्ठा ioc_missed		missed[2];
+struct ioc_pcpu_stat {
+	struct ioc_missed		missed[2];
 
-	local64_t			rq_रुको_ns;
-	u64				last_rq_रुको_ns;
-पूर्ण;
+	local64_t			rq_wait_ns;
+	u64				last_rq_wait_ns;
+};
 
 /* per device */
-काष्ठा ioc अणु
-	काष्ठा rq_qos			rqos;
+struct ioc {
+	struct rq_qos			rqos;
 
 	bool				enabled;
 
-	काष्ठा ioc_params		params;
-	काष्ठा ioc_margins		margins;
+	struct ioc_params		params;
+	struct ioc_margins		margins;
 	u32				period_us;
-	u32				समयr_slack_ns;
+	u32				timer_slack_ns;
 	u64				vrate_min;
 	u64				vrate_max;
 
 	spinlock_t			lock;
-	काष्ठा समयr_list		समयr;
-	काष्ठा list_head		active_iocgs;	/* active cgroups */
-	काष्ठा ioc_pcpu_stat __percpu	*pcpu_stat;
+	struct timer_list		timer;
+	struct list_head		active_iocgs;	/* active cgroups */
+	struct ioc_pcpu_stat __percpu	*pcpu_stat;
 
-	क्रमागत ioc_running		running;
-	atomic64_t			vसमय_rate;
-	u64				vसमय_base_rate;
-	s64				vसमय_err;
+	enum ioc_running		running;
+	atomic64_t			vtime_rate;
+	u64				vtime_base_rate;
+	s64				vtime_err;
 
 	seqcount_spinlock_t		period_seqcount;
-	u64				period_at;	/* wallघड़ी startसमय */
-	u64				period_at_vसमय; /* vसमय startसमय */
+	u64				period_at;	/* wallclock starttime */
+	u64				period_at_vtime; /* vtime starttime */
 
 	atomic64_t			cur_period;	/* inc'd each period */
-	पूर्णांक				busy_level;	/* saturation history */
+	int				busy_level;	/* saturation history */
 
 	bool				weights_updated;
-	atomic_t			hweight_gen;	/* क्रम lazy hweights */
+	atomic_t			hweight_gen;	/* for lazy hweights */
 
-	/* debt क्रमgivness */
+	/* debt forgivness */
 	u64				dfgv_period_at;
 	u64				dfgv_period_rem;
 	u64				dfgv_usage_us_sum;
 
-	u64				स्वतःp_too_fast_at;
-	u64				स्वतःp_too_slow_at;
-	पूर्णांक				स्वतःp_idx;
+	u64				autop_too_fast_at;
+	u64				autop_too_slow_at;
+	int				autop_idx;
 	bool				user_qos_params:1;
 	bool				user_cost_model:1;
-पूर्ण;
+};
 
-काष्ठा iocg_pcpu_stat अणु
-	local64_t			असल_vusage;
-पूर्ण;
+struct iocg_pcpu_stat {
+	local64_t			abs_vusage;
+};
 
-काष्ठा iocg_stat अणु
+struct iocg_stat {
 	u64				usage_us;
-	u64				रुको_us;
+	u64				wait_us;
 	u64				indebt_us;
 	u64				indelay_us;
-पूर्ण;
+};
 
 /* per device-cgroup pair */
-काष्ठा ioc_gq अणु
-	काष्ठा blkg_policy_data		pd;
-	काष्ठा ioc			*ioc;
+struct ioc_gq {
+	struct blkg_policy_data		pd;
+	struct ioc			*ioc;
 
 	/*
 	 * A iocg can get its weight from two sources - an explicit
-	 * per-device-cgroup configuration or the शेष weight of the
+	 * per-device-cgroup configuration or the default weight of the
 	 * cgroup.  `cfg_weight` is the explicit per-device-cgroup
 	 * configuration.  `weight` is the effective considering both
 	 * sources.
@@ -472,11 +471,11 @@
 	 * `active` and `inuse` are used to calculate `hweight_active` and
 	 * `hweight_inuse`.
 	 *
-	 * `last_inuse` remembers `inuse` जबतक an iocg is idle to persist
-	 * surplus adjusपंचांगents.
+	 * `last_inuse` remembers `inuse` while an iocg is idle to persist
+	 * surplus adjustments.
 	 *
 	 * `inuse` may be adjusted dynamically during period. `saved_*` are used
-	 * to determine and track adjusपंचांगents.
+	 * to determine and track adjustments.
 	 */
 	u32				cfg_weight;
 	u32				weight;
@@ -486,410 +485,410 @@
 	u32				last_inuse;
 	s64				saved_margin;
 
-	sector_t			cursor;		/* to detect अक्रमio */
+	sector_t			cursor;		/* to detect randio */
 
 	/*
-	 * `vसमय` is this iocg's vसमय cursor which progresses as IOs are
-	 * issued.  If lagging behind device vसमय, the delta represents
+	 * `vtime` is this iocg's vtime cursor which progresses as IOs are
+	 * issued.  If lagging behind device vtime, the delta represents
 	 * the currently available IO budget.  If running ahead, the
 	 * overage.
 	 *
-	 * `vसमय_करोne` is the same but progressed on completion rather
-	 * than issue.  The delta behind `vसमय` represents the cost of
+	 * `vtime_done` is the same but progressed on completion rather
+	 * than issue.  The delta behind `vtime` represents the cost of
 	 * currently in-flight IOs.
 	 */
-	atomic64_t			vसमय;
-	atomic64_t			करोne_vसमय;
-	u64				असल_vdebt;
+	atomic64_t			vtime;
+	atomic64_t			done_vtime;
+	u64				abs_vdebt;
 
 	/* current delay in effect and when it started */
 	u64				delay;
 	u64				delay_at;
 
 	/*
-	 * The period this iocg was last active in.  Used क्रम deactivation
-	 * and invalidating `vसमय`.
+	 * The period this iocg was last active in.  Used for deactivation
+	 * and invalidating `vtime`.
 	 */
 	atomic64_t			active_period;
-	काष्ठा list_head		active_list;
+	struct list_head		active_list;
 
-	/* see __propagate_weights() and current_hweight() क्रम details */
+	/* see __propagate_weights() and current_hweight() for details */
 	u64				child_active_sum;
 	u64				child_inuse_sum;
 	u64				child_adjusted_sum;
-	पूर्णांक				hweight_gen;
+	int				hweight_gen;
 	u32				hweight_active;
 	u32				hweight_inuse;
-	u32				hweight_करोnating;
-	u32				hweight_after_करोnation;
+	u32				hweight_donating;
+	u32				hweight_after_donation;
 
-	काष्ठा list_head		walk_list;
-	काष्ठा list_head		surplus_list;
+	struct list_head		walk_list;
+	struct list_head		surplus_list;
 
-	काष्ठा रुको_queue_head		रुकोq;
-	काष्ठा hrसमयr			रुकोq_समयr;
+	struct wait_queue_head		waitq;
+	struct hrtimer			waitq_timer;
 
-	/* बारtamp at the latest activation */
+	/* timestamp at the latest activation */
 	u64				activated_at;
 
 	/* statistics */
-	काष्ठा iocg_pcpu_stat __percpu	*pcpu_stat;
-	काष्ठा iocg_stat		local_stat;
-	काष्ठा iocg_stat		desc_stat;
-	काष्ठा iocg_stat		last_stat;
-	u64				last_stat_असल_vusage;
+	struct iocg_pcpu_stat __percpu	*pcpu_stat;
+	struct iocg_stat		local_stat;
+	struct iocg_stat		desc_stat;
+	struct iocg_stat		last_stat;
+	u64				last_stat_abs_vusage;
 	u64				usage_delta_us;
-	u64				रुको_since;
+	u64				wait_since;
 	u64				indebt_since;
 	u64				indelay_since;
 
 	/* this iocg's depth in the hierarchy and ancestors including self */
-	पूर्णांक				level;
-	काष्ठा ioc_gq			*ancestors[];
-पूर्ण;
+	int				level;
+	struct ioc_gq			*ancestors[];
+};
 
 /* per cgroup */
-काष्ठा ioc_cgrp अणु
-	काष्ठा blkcg_policy_data	cpd;
-	अचिन्हित पूर्णांक			dfl_weight;
-पूर्ण;
+struct ioc_cgrp {
+	struct blkcg_policy_data	cpd;
+	unsigned int			dfl_weight;
+};
 
-काष्ठा ioc_now अणु
+struct ioc_now {
 	u64				now_ns;
 	u64				now;
 	u64				vnow;
 	u64				vrate;
-पूर्ण;
+};
 
-काष्ठा iocg_रुको अणु
-	काष्ठा रुको_queue_entry		रुको;
-	काष्ठा bio			*bio;
-	u64				असल_cost;
+struct iocg_wait {
+	struct wait_queue_entry		wait;
+	struct bio			*bio;
+	u64				abs_cost;
 	bool				committed;
-पूर्ण;
+};
 
-काष्ठा iocg_wake_ctx अणु
-	काष्ठा ioc_gq			*iocg;
+struct iocg_wake_ctx {
+	struct ioc_gq			*iocg;
 	u32				hw_inuse;
 	s64				vbudget;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ioc_params स्वतःp[] = अणु
-	[AUTOP_HDD] = अणु
-		.qos				= अणु
+static const struct ioc_params autop[] = {
+	[AUTOP_HDD] = {
+		.qos				= {
 			[QOS_RLAT]		=        250000, /* 250ms */
 			[QOS_WLAT]		=        250000,
 			[QOS_MIN]		= VRATE_MIN_PPM,
 			[QOS_MAX]		= VRATE_MAX_PPM,
-		पूर्ण,
-		.i_lcoefs			= अणु
+		},
+		.i_lcoefs			= {
 			[I_LCOEF_RBPS]		=     174019176,
 			[I_LCOEF_RSEQIOPS]	=         41708,
 			[I_LCOEF_RRANDIOPS]	=           370,
 			[I_LCOEF_WBPS]		=     178075866,
 			[I_LCOEF_WSEQIOPS]	=         42705,
 			[I_LCOEF_WRANDIOPS]	=           378,
-		पूर्ण,
-	पूर्ण,
-	[AUTOP_SSD_QD1] = अणु
-		.qos				= अणु
+		},
+	},
+	[AUTOP_SSD_QD1] = {
+		.qos				= {
 			[QOS_RLAT]		=         25000, /* 25ms */
 			[QOS_WLAT]		=         25000,
 			[QOS_MIN]		= VRATE_MIN_PPM,
 			[QOS_MAX]		= VRATE_MAX_PPM,
-		पूर्ण,
-		.i_lcoefs			= अणु
+		},
+		.i_lcoefs			= {
 			[I_LCOEF_RBPS]		=     245855193,
 			[I_LCOEF_RSEQIOPS]	=         61575,
 			[I_LCOEF_RRANDIOPS]	=          6946,
 			[I_LCOEF_WBPS]		=     141365009,
 			[I_LCOEF_WSEQIOPS]	=         33716,
 			[I_LCOEF_WRANDIOPS]	=         26796,
-		पूर्ण,
-	पूर्ण,
-	[AUTOP_SSD_DFL] = अणु
-		.qos				= अणु
+		},
+	},
+	[AUTOP_SSD_DFL] = {
+		.qos				= {
 			[QOS_RLAT]		=         25000, /* 25ms */
 			[QOS_WLAT]		=         25000,
 			[QOS_MIN]		= VRATE_MIN_PPM,
 			[QOS_MAX]		= VRATE_MAX_PPM,
-		पूर्ण,
-		.i_lcoefs			= अणु
+		},
+		.i_lcoefs			= {
 			[I_LCOEF_RBPS]		=     488636629,
 			[I_LCOEF_RSEQIOPS]	=          8932,
 			[I_LCOEF_RRANDIOPS]	=          8518,
 			[I_LCOEF_WBPS]		=     427891549,
 			[I_LCOEF_WSEQIOPS]	=         28755,
 			[I_LCOEF_WRANDIOPS]	=         21940,
-		पूर्ण,
+		},
 		.too_fast_vrate_pct		=           500,
-	पूर्ण,
-	[AUTOP_SSD_FAST] = अणु
-		.qos				= अणु
+	},
+	[AUTOP_SSD_FAST] = {
+		.qos				= {
 			[QOS_RLAT]		=          5000, /* 5ms */
 			[QOS_WLAT]		=          5000,
 			[QOS_MIN]		= VRATE_MIN_PPM,
 			[QOS_MAX]		= VRATE_MAX_PPM,
-		पूर्ण,
-		.i_lcoefs			= अणु
+		},
+		.i_lcoefs			= {
 			[I_LCOEF_RBPS]		=    3102524156LLU,
 			[I_LCOEF_RSEQIOPS]	=        724816,
 			[I_LCOEF_RRANDIOPS]	=        778122,
 			[I_LCOEF_WBPS]		=    1742780862LLU,
 			[I_LCOEF_WSEQIOPS]	=        425702,
 			[I_LCOEF_WRANDIOPS]	=	 443193,
-		पूर्ण,
+		},
 		.too_slow_vrate_pct		=            10,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * vrate adjust percentages indexed by ioc->busy_level.  We adjust up on
- * vसमय credit लघुage and करोwn on device saturation.
+ * vtime credit shortage and down on device saturation.
  */
-अटल u32 vrate_adj_pct[] =
-	अणु 0, 0, 0, 0,
+static u32 vrate_adj_pct[] =
+	{ 0, 0, 0, 0,
 	  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 	  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-	  4, 4, 4, 4, 4, 4, 4, 4, 8, 8, 8, 8, 8, 8, 8, 8, 16 पूर्ण;
+	  4, 4, 4, 4, 4, 4, 4, 4, 8, 8, 8, 8, 8, 8, 8, 8, 16 };
 
-अटल काष्ठा blkcg_policy blkcg_policy_iocost;
+static struct blkcg_policy blkcg_policy_iocost;
 
 /* accessors and helpers */
-अटल काष्ठा ioc *rqos_to_ioc(काष्ठा rq_qos *rqos)
-अणु
-	वापस container_of(rqos, काष्ठा ioc, rqos);
-पूर्ण
+static struct ioc *rqos_to_ioc(struct rq_qos *rqos)
+{
+	return container_of(rqos, struct ioc, rqos);
+}
 
-अटल काष्ठा ioc *q_to_ioc(काष्ठा request_queue *q)
-अणु
-	वापस rqos_to_ioc(rq_qos_id(q, RQ_QOS_COST));
-पूर्ण
+static struct ioc *q_to_ioc(struct request_queue *q)
+{
+	return rqos_to_ioc(rq_qos_id(q, RQ_QOS_COST));
+}
 
-अटल स्थिर अक्षर *q_name(काष्ठा request_queue *q)
-अणु
-	अगर (blk_queue_रेजिस्टरed(q))
-		वापस kobject_name(q->kobj.parent);
-	अन्यथा
-		वापस "<unknown>";
-पूर्ण
+static const char *q_name(struct request_queue *q)
+{
+	if (blk_queue_registered(q))
+		return kobject_name(q->kobj.parent);
+	else
+		return "<unknown>";
+}
 
-अटल स्थिर अक्षर __maybe_unused *ioc_name(काष्ठा ioc *ioc)
-अणु
-	वापस q_name(ioc->rqos.q);
-पूर्ण
+static const char __maybe_unused *ioc_name(struct ioc *ioc)
+{
+	return q_name(ioc->rqos.q);
+}
 
-अटल काष्ठा ioc_gq *pd_to_iocg(काष्ठा blkg_policy_data *pd)
-अणु
-	वापस pd ? container_of(pd, काष्ठा ioc_gq, pd) : शून्य;
-पूर्ण
+static struct ioc_gq *pd_to_iocg(struct blkg_policy_data *pd)
+{
+	return pd ? container_of(pd, struct ioc_gq, pd) : NULL;
+}
 
-अटल काष्ठा ioc_gq *blkg_to_iocg(काष्ठा blkcg_gq *blkg)
-अणु
-	वापस pd_to_iocg(blkg_to_pd(blkg, &blkcg_policy_iocost));
-पूर्ण
+static struct ioc_gq *blkg_to_iocg(struct blkcg_gq *blkg)
+{
+	return pd_to_iocg(blkg_to_pd(blkg, &blkcg_policy_iocost));
+}
 
-अटल काष्ठा blkcg_gq *iocg_to_blkg(काष्ठा ioc_gq *iocg)
-अणु
-	वापस pd_to_blkg(&iocg->pd);
-पूर्ण
+static struct blkcg_gq *iocg_to_blkg(struct ioc_gq *iocg)
+{
+	return pd_to_blkg(&iocg->pd);
+}
 
-अटल काष्ठा ioc_cgrp *blkcg_to_iocc(काष्ठा blkcg *blkcg)
-अणु
-	वापस container_of(blkcg_to_cpd(blkcg, &blkcg_policy_iocost),
-			    काष्ठा ioc_cgrp, cpd);
-पूर्ण
+static struct ioc_cgrp *blkcg_to_iocc(struct blkcg *blkcg)
+{
+	return container_of(blkcg_to_cpd(blkcg, &blkcg_policy_iocost),
+			    struct ioc_cgrp, cpd);
+}
 
 /*
- * Scale @असल_cost to the inverse of @hw_inuse.  The lower the hierarchical
+ * Scale @abs_cost to the inverse of @hw_inuse.  The lower the hierarchical
  * weight, the more expensive each IO.  Must round up.
  */
-अटल u64 असल_cost_to_cost(u64 असल_cost, u32 hw_inuse)
-अणु
-	वापस DIV64_U64_ROUND_UP(असल_cost * WEIGHT_ONE, hw_inuse);
-पूर्ण
+static u64 abs_cost_to_cost(u64 abs_cost, u32 hw_inuse)
+{
+	return DIV64_U64_ROUND_UP(abs_cost * WEIGHT_ONE, hw_inuse);
+}
 
 /*
- * The inverse of असल_cost_to_cost().  Must round up.
+ * The inverse of abs_cost_to_cost().  Must round up.
  */
-अटल u64 cost_to_असल_cost(u64 cost, u32 hw_inuse)
-अणु
-	वापस DIV64_U64_ROUND_UP(cost * hw_inuse, WEIGHT_ONE);
-पूर्ण
+static u64 cost_to_abs_cost(u64 cost, u32 hw_inuse)
+{
+	return DIV64_U64_ROUND_UP(cost * hw_inuse, WEIGHT_ONE);
+}
 
-अटल व्योम iocg_commit_bio(काष्ठा ioc_gq *iocg, काष्ठा bio *bio,
-			    u64 असल_cost, u64 cost)
-अणु
-	काष्ठा iocg_pcpu_stat *gcs;
+static void iocg_commit_bio(struct ioc_gq *iocg, struct bio *bio,
+			    u64 abs_cost, u64 cost)
+{
+	struct iocg_pcpu_stat *gcs;
 
 	bio->bi_iocost_cost = cost;
-	atomic64_add(cost, &iocg->vसमय);
+	atomic64_add(cost, &iocg->vtime);
 
 	gcs = get_cpu_ptr(iocg->pcpu_stat);
-	local64_add(असल_cost, &gcs->असल_vusage);
+	local64_add(abs_cost, &gcs->abs_vusage);
 	put_cpu_ptr(gcs);
-पूर्ण
+}
 
-अटल व्योम iocg_lock(काष्ठा ioc_gq *iocg, bool lock_ioc, अचिन्हित दीर्घ *flags)
-अणु
-	अगर (lock_ioc) अणु
+static void iocg_lock(struct ioc_gq *iocg, bool lock_ioc, unsigned long *flags)
+{
+	if (lock_ioc) {
 		spin_lock_irqsave(&iocg->ioc->lock, *flags);
-		spin_lock(&iocg->रुकोq.lock);
-	पूर्ण अन्यथा अणु
-		spin_lock_irqsave(&iocg->रुकोq.lock, *flags);
-	पूर्ण
-पूर्ण
+		spin_lock(&iocg->waitq.lock);
+	} else {
+		spin_lock_irqsave(&iocg->waitq.lock, *flags);
+	}
+}
 
-अटल व्योम iocg_unlock(काष्ठा ioc_gq *iocg, bool unlock_ioc, अचिन्हित दीर्घ *flags)
-अणु
-	अगर (unlock_ioc) अणु
-		spin_unlock(&iocg->रुकोq.lock);
+static void iocg_unlock(struct ioc_gq *iocg, bool unlock_ioc, unsigned long *flags)
+{
+	if (unlock_ioc) {
+		spin_unlock(&iocg->waitq.lock);
 		spin_unlock_irqrestore(&iocg->ioc->lock, *flags);
-	पूर्ण अन्यथा अणु
-		spin_unlock_irqrestore(&iocg->रुकोq.lock, *flags);
-	पूर्ण
-पूर्ण
+	} else {
+		spin_unlock_irqrestore(&iocg->waitq.lock, *flags);
+	}
+}
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <trace/events/iocost.h>
+#define CREATE_TRACE_POINTS
+#include <trace/events/iocost.h>
 
-अटल व्योम ioc_refresh_margins(काष्ठा ioc *ioc)
-अणु
-	काष्ठा ioc_margins *margins = &ioc->margins;
+static void ioc_refresh_margins(struct ioc *ioc)
+{
+	struct ioc_margins *margins = &ioc->margins;
 	u32 period_us = ioc->period_us;
-	u64 vrate = ioc->vसमय_base_rate;
+	u64 vrate = ioc->vtime_base_rate;
 
 	margins->min = (period_us * MARGIN_MIN_PCT / 100) * vrate;
 	margins->low = (period_us * MARGIN_LOW_PCT / 100) * vrate;
 	margins->target = (period_us * MARGIN_TARGET_PCT / 100) * vrate;
-पूर्ण
+}
 
 /* latency Qos params changed, update period_us and all the dependent params */
-अटल व्योम ioc_refresh_period_us(काष्ठा ioc *ioc)
-अणु
+static void ioc_refresh_period_us(struct ioc *ioc)
+{
 	u32 ppm, lat, multi, period_us;
 
-	lockdep_निश्चित_held(&ioc->lock);
+	lockdep_assert_held(&ioc->lock);
 
 	/* pick the higher latency target */
-	अगर (ioc->params.qos[QOS_RLAT] >= ioc->params.qos[QOS_WLAT]) अणु
+	if (ioc->params.qos[QOS_RLAT] >= ioc->params.qos[QOS_WLAT]) {
 		ppm = ioc->params.qos[QOS_RPPM];
 		lat = ioc->params.qos[QOS_RLAT];
-	पूर्ण अन्यथा अणु
+	} else {
 		ppm = ioc->params.qos[QOS_WPPM];
 		lat = ioc->params.qos[QOS_WLAT];
-	पूर्ण
+	}
 
 	/*
-	 * We want the period to be दीर्घ enough to contain a healthy number
-	 * of IOs जबतक लघु enough क्रम granular control.  Define it as a
+	 * We want the period to be long enough to contain a healthy number
+	 * of IOs while short enough for granular control.  Define it as a
 	 * multiple of the latency target.  Ideally, the multiplier should
 	 * be scaled according to the percentile so that it would nominally
 	 * contain a certain number of requests.  Let's be simpler and
 	 * scale it linearly so that it's 2x >= pct(90) and 10x at pct(50).
 	 */
-	अगर (ppm)
+	if (ppm)
 		multi = max_t(u32, (MILLION - ppm) / 50000, 2);
-	अन्यथा
+	else
 		multi = 2;
 	period_us = multi * lat;
 	period_us = clamp_t(u32, period_us, MIN_PERIOD, MAX_PERIOD);
 
 	/* calculate dependent params */
 	ioc->period_us = period_us;
-	ioc->समयr_slack_ns = भाग64_u64(
+	ioc->timer_slack_ns = div64_u64(
 		(u64)period_us * NSEC_PER_USEC * TIMER_SLACK_PCT,
 		100);
 	ioc_refresh_margins(ioc);
-पूर्ण
+}
 
-अटल पूर्णांक ioc_स्वतःp_idx(काष्ठा ioc *ioc)
-अणु
-	पूर्णांक idx = ioc->स्वतःp_idx;
-	स्थिर काष्ठा ioc_params *p = &स्वतःp[idx];
+static int ioc_autop_idx(struct ioc *ioc)
+{
+	int idx = ioc->autop_idx;
+	const struct ioc_params *p = &autop[idx];
 	u32 vrate_pct;
 	u64 now_ns;
 
 	/* rotational? */
-	अगर (!blk_queue_nonrot(ioc->rqos.q))
-		वापस AUTOP_HDD;
+	if (!blk_queue_nonrot(ioc->rqos.q))
+		return AUTOP_HDD;
 
 	/* handle SATA SSDs w/ broken NCQ */
-	अगर (blk_queue_depth(ioc->rqos.q) == 1)
-		वापस AUTOP_SSD_QD1;
+	if (blk_queue_depth(ioc->rqos.q) == 1)
+		return AUTOP_SSD_QD1;
 
 	/* use one of the normal ssd sets */
-	अगर (idx < AUTOP_SSD_DFL)
-		वापस AUTOP_SSD_DFL;
+	if (idx < AUTOP_SSD_DFL)
+		return AUTOP_SSD_DFL;
 
-	/* अगर user is overriding anything, मुख्यtain what was there */
-	अगर (ioc->user_qos_params || ioc->user_cost_model)
-		वापस idx;
+	/* if user is overriding anything, maintain what was there */
+	if (ioc->user_qos_params || ioc->user_cost_model)
+		return idx;
 
-	/* step up/करोwn based on the vrate */
-	vrate_pct = भाग64_u64(ioc->vसमय_base_rate * 100, VTIME_PER_USEC);
-	now_ns = kसमय_get_ns();
+	/* step up/down based on the vrate */
+	vrate_pct = div64_u64(ioc->vtime_base_rate * 100, VTIME_PER_USEC);
+	now_ns = ktime_get_ns();
 
-	अगर (p->too_fast_vrate_pct && p->too_fast_vrate_pct <= vrate_pct) अणु
-		अगर (!ioc->स्वतःp_too_fast_at)
-			ioc->स्वतःp_too_fast_at = now_ns;
-		अगर (now_ns - ioc->स्वतःp_too_fast_at >= AUTOP_CYCLE_NSEC)
-			वापस idx + 1;
-	पूर्ण अन्यथा अणु
-		ioc->स्वतःp_too_fast_at = 0;
-	पूर्ण
+	if (p->too_fast_vrate_pct && p->too_fast_vrate_pct <= vrate_pct) {
+		if (!ioc->autop_too_fast_at)
+			ioc->autop_too_fast_at = now_ns;
+		if (now_ns - ioc->autop_too_fast_at >= AUTOP_CYCLE_NSEC)
+			return idx + 1;
+	} else {
+		ioc->autop_too_fast_at = 0;
+	}
 
-	अगर (p->too_slow_vrate_pct && p->too_slow_vrate_pct >= vrate_pct) अणु
-		अगर (!ioc->स्वतःp_too_slow_at)
-			ioc->स्वतःp_too_slow_at = now_ns;
-		अगर (now_ns - ioc->स्वतःp_too_slow_at >= AUTOP_CYCLE_NSEC)
-			वापस idx - 1;
-	पूर्ण अन्यथा अणु
-		ioc->स्वतःp_too_slow_at = 0;
-	पूर्ण
+	if (p->too_slow_vrate_pct && p->too_slow_vrate_pct >= vrate_pct) {
+		if (!ioc->autop_too_slow_at)
+			ioc->autop_too_slow_at = now_ns;
+		if (now_ns - ioc->autop_too_slow_at >= AUTOP_CYCLE_NSEC)
+			return idx - 1;
+	} else {
+		ioc->autop_too_slow_at = 0;
+	}
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
 /*
  * Take the followings as input
  *
  *  @bps	maximum sequential throughput
  *  @seqiops	maximum sequential 4k iops
- *  @अक्रमiops	maximum अक्रमom 4k iops
+ *  @randiops	maximum random 4k iops
  *
  * and calculate the linear model cost coefficients.
  *
  *  *@page	per-page cost		1s / (@bps / 4096)
  *  *@seqio	base cost of a seq IO	max((1s / @seqiops) - *@page, 0)
- *  @अक्रमiops	base cost of a अक्रम IO	max((1s / @अक्रमiops) - *@page, 0)
+ *  @randiops	base cost of a rand IO	max((1s / @randiops) - *@page, 0)
  */
-अटल व्योम calc_lcoefs(u64 bps, u64 seqiops, u64 अक्रमiops,
-			u64 *page, u64 *seqio, u64 *अक्रमio)
-अणु
+static void calc_lcoefs(u64 bps, u64 seqiops, u64 randiops,
+			u64 *page, u64 *seqio, u64 *randio)
+{
 	u64 v;
 
-	*page = *seqio = *अक्रमio = 0;
+	*page = *seqio = *randio = 0;
 
-	अगर (bps)
+	if (bps)
 		*page = DIV64_U64_ROUND_UP(VTIME_PER_SEC,
 					   DIV_ROUND_UP_ULL(bps, IOC_PAGE_SIZE));
 
-	अगर (seqiops) अणु
+	if (seqiops) {
 		v = DIV64_U64_ROUND_UP(VTIME_PER_SEC, seqiops);
-		अगर (v > *page)
+		if (v > *page)
 			*seqio = v - *page;
-	पूर्ण
+	}
 
-	अगर (अक्रमiops) अणु
-		v = DIV64_U64_ROUND_UP(VTIME_PER_SEC, अक्रमiops);
-		अगर (v > *page)
-			*अक्रमio = v - *page;
-	पूर्ण
-पूर्ण
+	if (randiops) {
+		v = DIV64_U64_ROUND_UP(VTIME_PER_SEC, randiops);
+		if (v > *page)
+			*randio = v - *page;
+	}
+}
 
-अटल व्योम ioc_refresh_lcoefs(काष्ठा ioc *ioc)
-अणु
+static void ioc_refresh_lcoefs(struct ioc *ioc)
+{
 	u64 *u = ioc->params.i_lcoefs;
 	u64 *c = ioc->params.lcoefs;
 
@@ -897,201 +896,201 @@
 		    &c[LCOEF_RPAGE], &c[LCOEF_RSEQIO], &c[LCOEF_RRANDIO]);
 	calc_lcoefs(u[I_LCOEF_WBPS], u[I_LCOEF_WSEQIOPS], u[I_LCOEF_WRANDIOPS],
 		    &c[LCOEF_WPAGE], &c[LCOEF_WSEQIO], &c[LCOEF_WRANDIO]);
-पूर्ण
+}
 
-अटल bool ioc_refresh_params(काष्ठा ioc *ioc, bool क्रमce)
-अणु
-	स्थिर काष्ठा ioc_params *p;
-	पूर्णांक idx;
+static bool ioc_refresh_params(struct ioc *ioc, bool force)
+{
+	const struct ioc_params *p;
+	int idx;
 
-	lockdep_निश्चित_held(&ioc->lock);
+	lockdep_assert_held(&ioc->lock);
 
-	idx = ioc_स्वतःp_idx(ioc);
-	p = &स्वतःp[idx];
+	idx = ioc_autop_idx(ioc);
+	p = &autop[idx];
 
-	अगर (idx == ioc->स्वतःp_idx && !क्रमce)
-		वापस false;
+	if (idx == ioc->autop_idx && !force)
+		return false;
 
-	अगर (idx != ioc->स्वतःp_idx)
-		atomic64_set(&ioc->vसमय_rate, VTIME_PER_USEC);
+	if (idx != ioc->autop_idx)
+		atomic64_set(&ioc->vtime_rate, VTIME_PER_USEC);
 
-	ioc->स्वतःp_idx = idx;
-	ioc->स्वतःp_too_fast_at = 0;
-	ioc->स्वतःp_too_slow_at = 0;
+	ioc->autop_idx = idx;
+	ioc->autop_too_fast_at = 0;
+	ioc->autop_too_slow_at = 0;
 
-	अगर (!ioc->user_qos_params)
-		स_नकल(ioc->params.qos, p->qos, माप(p->qos));
-	अगर (!ioc->user_cost_model)
-		स_नकल(ioc->params.i_lcoefs, p->i_lcoefs, माप(p->i_lcoefs));
+	if (!ioc->user_qos_params)
+		memcpy(ioc->params.qos, p->qos, sizeof(p->qos));
+	if (!ioc->user_cost_model)
+		memcpy(ioc->params.i_lcoefs, p->i_lcoefs, sizeof(p->i_lcoefs));
 
 	ioc_refresh_period_us(ioc);
 	ioc_refresh_lcoefs(ioc);
 
 	ioc->vrate_min = DIV64_U64_ROUND_UP((u64)ioc->params.qos[QOS_MIN] *
 					    VTIME_PER_USEC, MILLION);
-	ioc->vrate_max = भाग64_u64((u64)ioc->params.qos[QOS_MAX] *
+	ioc->vrate_max = div64_u64((u64)ioc->params.qos[QOS_MAX] *
 				   VTIME_PER_USEC, MILLION);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * When an iocg accumulates too much vसमय or माला_लो deactivated, we throw away
- * some vसमय, which lowers the overall device utilization. As the exact amount
+ * When an iocg accumulates too much vtime or gets deactivated, we throw away
+ * some vtime, which lowers the overall device utilization. As the exact amount
  * which is being thrown away is known, we can compensate by accelerating the
- * vrate accordingly so that the extra vसमय generated in the current period
+ * vrate accordingly so that the extra vtime generated in the current period
  * matches what got lost.
  */
-अटल व्योम ioc_refresh_vrate(काष्ठा ioc *ioc, काष्ठा ioc_now *now)
-अणु
+static void ioc_refresh_vrate(struct ioc *ioc, struct ioc_now *now)
+{
 	s64 pleft = ioc->period_at + ioc->period_us - now->now;
-	s64 vperiod = ioc->period_us * ioc->vसमय_base_rate;
+	s64 vperiod = ioc->period_us * ioc->vtime_base_rate;
 	s64 vcomp, vcomp_min, vcomp_max;
 
-	lockdep_निश्चित_held(&ioc->lock);
+	lockdep_assert_held(&ioc->lock);
 
-	/* we need some समय left in this period */
-	अगर (pleft <= 0)
-		जाओ करोne;
+	/* we need some time left in this period */
+	if (pleft <= 0)
+		goto done;
 
 	/*
 	 * Calculate how much vrate should be adjusted to offset the error.
-	 * Limit the amount of adjusपंचांगent and deduct the adjusted amount from
+	 * Limit the amount of adjustment and deduct the adjusted amount from
 	 * the error.
 	 */
-	vcomp = -भाग64_s64(ioc->vसमय_err, pleft);
-	vcomp_min = -(ioc->vसमय_base_rate >> 1);
-	vcomp_max = ioc->vसमय_base_rate;
+	vcomp = -div64_s64(ioc->vtime_err, pleft);
+	vcomp_min = -(ioc->vtime_base_rate >> 1);
+	vcomp_max = ioc->vtime_base_rate;
 	vcomp = clamp(vcomp, vcomp_min, vcomp_max);
 
-	ioc->vसमय_err += vcomp * pleft;
+	ioc->vtime_err += vcomp * pleft;
 
-	atomic64_set(&ioc->vसमय_rate, ioc->vसमय_base_rate + vcomp);
-करोne:
+	atomic64_set(&ioc->vtime_rate, ioc->vtime_base_rate + vcomp);
+done:
 	/* bound how much error can accumulate */
-	ioc->vसमय_err = clamp(ioc->vसमय_err, -vperiod, vperiod);
-पूर्ण
+	ioc->vtime_err = clamp(ioc->vtime_err, -vperiod, vperiod);
+}
 
-अटल व्योम ioc_adjust_base_vrate(काष्ठा ioc *ioc, u32 rq_रुको_pct,
-				  पूर्णांक nr_lagging, पूर्णांक nr_लघुages,
-				  पूर्णांक prev_busy_level, u32 *missed_ppm)
-अणु
-	u64 vrate = ioc->vसमय_base_rate;
+static void ioc_adjust_base_vrate(struct ioc *ioc, u32 rq_wait_pct,
+				  int nr_lagging, int nr_shortages,
+				  int prev_busy_level, u32 *missed_ppm)
+{
+	u64 vrate = ioc->vtime_base_rate;
 	u64 vrate_min = ioc->vrate_min, vrate_max = ioc->vrate_max;
 
-	अगर (!ioc->busy_level || (ioc->busy_level < 0 && nr_lagging)) अणु
-		अगर (ioc->busy_level != prev_busy_level || nr_lagging)
-			trace_iocost_ioc_vrate_adj(ioc, atomic64_पढ़ो(&ioc->vसमय_rate),
-						   missed_ppm, rq_रुको_pct,
-						   nr_lagging, nr_लघुages);
+	if (!ioc->busy_level || (ioc->busy_level < 0 && nr_lagging)) {
+		if (ioc->busy_level != prev_busy_level || nr_lagging)
+			trace_iocost_ioc_vrate_adj(ioc, atomic64_read(&ioc->vtime_rate),
+						   missed_ppm, rq_wait_pct,
+						   nr_lagging, nr_shortages);
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * If vrate is out of bounds, apply clamp gradually as the
 	 * bounds can change abruptly.  Otherwise, apply busy_level
-	 * based adjusपंचांगent.
+	 * based adjustment.
 	 */
-	अगर (vrate < vrate_min) अणु
-		vrate = भाग64_u64(vrate * (100 + VRATE_CLAMP_ADJ_PCT), 100);
+	if (vrate < vrate_min) {
+		vrate = div64_u64(vrate * (100 + VRATE_CLAMP_ADJ_PCT), 100);
 		vrate = min(vrate, vrate_min);
-	पूर्ण अन्यथा अगर (vrate > vrate_max) अणु
-		vrate = भाग64_u64(vrate * (100 - VRATE_CLAMP_ADJ_PCT), 100);
+	} else if (vrate > vrate_max) {
+		vrate = div64_u64(vrate * (100 - VRATE_CLAMP_ADJ_PCT), 100);
 		vrate = max(vrate, vrate_max);
-	पूर्ण अन्यथा अणु
-		पूर्णांक idx = min_t(पूर्णांक, असल(ioc->busy_level),
+	} else {
+		int idx = min_t(int, abs(ioc->busy_level),
 				ARRAY_SIZE(vrate_adj_pct) - 1);
 		u32 adj_pct = vrate_adj_pct[idx];
 
-		अगर (ioc->busy_level > 0)
+		if (ioc->busy_level > 0)
 			adj_pct = 100 - adj_pct;
-		अन्यथा
+		else
 			adj_pct = 100 + adj_pct;
 
 		vrate = clamp(DIV64_U64_ROUND_UP(vrate * adj_pct, 100),
 			      vrate_min, vrate_max);
-	पूर्ण
+	}
 
-	trace_iocost_ioc_vrate_adj(ioc, vrate, missed_ppm, rq_रुको_pct,
-				   nr_lagging, nr_लघुages);
+	trace_iocost_ioc_vrate_adj(ioc, vrate, missed_ppm, rq_wait_pct,
+				   nr_lagging, nr_shortages);
 
-	ioc->vसमय_base_rate = vrate;
+	ioc->vtime_base_rate = vrate;
 	ioc_refresh_margins(ioc);
-पूर्ण
+}
 
-/* take a snapshot of the current [v]समय and vrate */
-अटल व्योम ioc_now(काष्ठा ioc *ioc, काष्ठा ioc_now *now)
-अणु
-	अचिन्हित seq;
+/* take a snapshot of the current [v]time and vrate */
+static void ioc_now(struct ioc *ioc, struct ioc_now *now)
+{
+	unsigned seq;
 
-	now->now_ns = kसमय_get();
-	now->now = kसमय_प्रकारo_us(now->now_ns);
-	now->vrate = atomic64_पढ़ो(&ioc->vसमय_rate);
+	now->now_ns = ktime_get();
+	now->now = ktime_to_us(now->now_ns);
+	now->vrate = atomic64_read(&ioc->vtime_rate);
 
 	/*
-	 * The current vसमय is
+	 * The current vtime is
 	 *
-	 *   vसमय at period start + (wallघड़ी समय since the start) * vrate
+	 *   vtime at period start + (wallclock time since the start) * vrate
 	 *
-	 * As a consistent snapshot of `period_at_vसमय` and `period_at` is
-	 * needed, they're seqcount रक्षित.
+	 * As a consistent snapshot of `period_at_vtime` and `period_at` is
+	 * needed, they're seqcount protected.
 	 */
-	करो अणु
-		seq = पढ़ो_seqcount_begin(&ioc->period_seqcount);
-		now->vnow = ioc->period_at_vसमय +
+	do {
+		seq = read_seqcount_begin(&ioc->period_seqcount);
+		now->vnow = ioc->period_at_vtime +
 			(now->now - ioc->period_at) * now->vrate;
-	पूर्ण जबतक (पढ़ो_seqcount_retry(&ioc->period_seqcount, seq));
-पूर्ण
+	} while (read_seqcount_retry(&ioc->period_seqcount, seq));
+}
 
-अटल व्योम ioc_start_period(काष्ठा ioc *ioc, काष्ठा ioc_now *now)
-अणु
+static void ioc_start_period(struct ioc *ioc, struct ioc_now *now)
+{
 	WARN_ON_ONCE(ioc->running != IOC_RUNNING);
 
-	ग_लिखो_seqcount_begin(&ioc->period_seqcount);
+	write_seqcount_begin(&ioc->period_seqcount);
 	ioc->period_at = now->now;
-	ioc->period_at_vसमय = now->vnow;
-	ग_लिखो_seqcount_end(&ioc->period_seqcount);
+	ioc->period_at_vtime = now->vnow;
+	write_seqcount_end(&ioc->period_seqcount);
 
-	ioc->समयr.expires = jअगरfies + usecs_to_jअगरfies(ioc->period_us);
-	add_समयr(&ioc->समयr);
-पूर्ण
+	ioc->timer.expires = jiffies + usecs_to_jiffies(ioc->period_us);
+	add_timer(&ioc->timer);
+}
 
 /*
  * Update @iocg's `active` and `inuse` to @active and @inuse, update level
  * weight sums and propagate upwards accordingly. If @save, the current margin
- * is saved to be used as reference क्रम later inuse in-period adjusपंचांगents.
+ * is saved to be used as reference for later inuse in-period adjustments.
  */
-अटल व्योम __propagate_weights(काष्ठा ioc_gq *iocg, u32 active, u32 inuse,
-				bool save, काष्ठा ioc_now *now)
-अणु
-	काष्ठा ioc *ioc = iocg->ioc;
-	पूर्णांक lvl;
+static void __propagate_weights(struct ioc_gq *iocg, u32 active, u32 inuse,
+				bool save, struct ioc_now *now)
+{
+	struct ioc *ioc = iocg->ioc;
+	int lvl;
 
-	lockdep_निश्चित_held(&ioc->lock);
+	lockdep_assert_held(&ioc->lock);
 
 	/*
 	 * For an active leaf node, its inuse shouldn't be zero or exceed
-	 * @active. An active पूर्णांकernal node's inuse is solely determined by the
+	 * @active. An active internal node's inuse is solely determined by the
 	 * inuse to active ratio of its children regardless of @inuse.
 	 */
-	अगर (list_empty(&iocg->active_list) && iocg->child_active_sum) अणु
+	if (list_empty(&iocg->active_list) && iocg->child_active_sum) {
 		inuse = DIV64_U64_ROUND_UP(active * iocg->child_inuse_sum,
 					   iocg->child_active_sum);
-	पूर्ण अन्यथा अणु
+	} else {
 		inuse = clamp_t(u32, inuse, 1, active);
-	पूर्ण
+	}
 
 	iocg->last_inuse = iocg->inuse;
-	अगर (save)
-		iocg->saved_margin = now->vnow - atomic64_पढ़ो(&iocg->vसमय);
+	if (save)
+		iocg->saved_margin = now->vnow - atomic64_read(&iocg->vtime);
 
-	अगर (active == iocg->active && inuse == iocg->inuse)
-		वापस;
+	if (active == iocg->active && inuse == iocg->inuse)
+		return;
 
-	क्रम (lvl = iocg->level - 1; lvl >= 0; lvl--) अणु
-		काष्ठा ioc_gq *parent = iocg->ancestors[lvl];
-		काष्ठा ioc_gq *child = iocg->ancestors[lvl + 1];
+	for (lvl = iocg->level - 1; lvl >= 0; lvl--) {
+		struct ioc_gq *parent = iocg->ancestors[lvl];
+		struct ioc_gq *child = iocg->ancestors[lvl + 1];
 		u32 parent_active = 0, parent_inuse = 0;
 
 		/* update the level sums */
@@ -1106,55 +1105,55 @@
 		 * much of weight is being given away.  Parent's inuse
 		 * and active should reflect the ratio.
 		 */
-		अगर (parent->child_active_sum) अणु
+		if (parent->child_active_sum) {
 			parent_active = parent->weight;
 			parent_inuse = DIV64_U64_ROUND_UP(
 				parent_active * parent->child_inuse_sum,
 				parent->child_active_sum);
-		पूर्ण
+		}
 
-		/* करो we need to keep walking up? */
-		अगर (parent_active == parent->active &&
+		/* do we need to keep walking up? */
+		if (parent_active == parent->active &&
 		    parent_inuse == parent->inuse)
-			अवरोध;
+			break;
 
 		active = parent_active;
 		inuse = parent_inuse;
-	पूर्ण
+	}
 
 	ioc->weights_updated = true;
-पूर्ण
+}
 
-अटल व्योम commit_weights(काष्ठा ioc *ioc)
-अणु
-	lockdep_निश्चित_held(&ioc->lock);
+static void commit_weights(struct ioc *ioc)
+{
+	lockdep_assert_held(&ioc->lock);
 
-	अगर (ioc->weights_updated) अणु
+	if (ioc->weights_updated) {
 		/* paired with rmb in current_hweight(), see there */
 		smp_wmb();
 		atomic_inc(&ioc->hweight_gen);
 		ioc->weights_updated = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम propagate_weights(काष्ठा ioc_gq *iocg, u32 active, u32 inuse,
-			      bool save, काष्ठा ioc_now *now)
-अणु
+static void propagate_weights(struct ioc_gq *iocg, u32 active, u32 inuse,
+			      bool save, struct ioc_now *now)
+{
 	__propagate_weights(iocg, active, inuse, save, now);
 	commit_weights(iocg->ioc);
-पूर्ण
+}
 
-अटल व्योम current_hweight(काष्ठा ioc_gq *iocg, u32 *hw_activep, u32 *hw_inusep)
-अणु
-	काष्ठा ioc *ioc = iocg->ioc;
-	पूर्णांक lvl;
+static void current_hweight(struct ioc_gq *iocg, u32 *hw_activep, u32 *hw_inusep)
+{
+	struct ioc *ioc = iocg->ioc;
+	int lvl;
 	u32 hwa, hwi;
-	पूर्णांक ioc_gen;
+	int ioc_gen;
 
-	/* hot path - अगर uptodate, use cached */
-	ioc_gen = atomic_पढ़ो(&ioc->hweight_gen);
-	अगर (ioc_gen == iocg->hweight_gen)
-		जाओ out;
+	/* hot path - if uptodate, use cached */
+	ioc_gen = atomic_read(&ioc->hweight_gen);
+	if (ioc_gen == iocg->hweight_gen)
+		goto out;
 
 	/*
 	 * Paired with wmb in commit_weights(). If we saw the updated
@@ -1163,693 +1162,693 @@
 	 *
 	 * We can race with weight updates during calculation and get it
 	 * wrong.  However, hweight_gen would have changed and a future
-	 * पढ़ोer will recalculate and we're guaranteed to discard the
+	 * reader will recalculate and we're guaranteed to discard the
 	 * wrong result soon.
 	 */
 	smp_rmb();
 
 	hwa = hwi = WEIGHT_ONE;
-	क्रम (lvl = 0; lvl <= iocg->level - 1; lvl++) अणु
-		काष्ठा ioc_gq *parent = iocg->ancestors[lvl];
-		काष्ठा ioc_gq *child = iocg->ancestors[lvl + 1];
+	for (lvl = 0; lvl <= iocg->level - 1; lvl++) {
+		struct ioc_gq *parent = iocg->ancestors[lvl];
+		struct ioc_gq *child = iocg->ancestors[lvl + 1];
 		u64 active_sum = READ_ONCE(parent->child_active_sum);
 		u64 inuse_sum = READ_ONCE(parent->child_inuse_sum);
 		u32 active = READ_ONCE(child->active);
 		u32 inuse = READ_ONCE(child->inuse);
 
-		/* we can race with deactivations and either may पढ़ो as zero */
-		अगर (!active_sum || !inuse_sum)
-			जारी;
+		/* we can race with deactivations and either may read as zero */
+		if (!active_sum || !inuse_sum)
+			continue;
 
 		active_sum = max_t(u64, active, active_sum);
-		hwa = भाग64_u64((u64)hwa * active, active_sum);
+		hwa = div64_u64((u64)hwa * active, active_sum);
 
 		inuse_sum = max_t(u64, inuse, inuse_sum);
-		hwi = भाग64_u64((u64)hwi * inuse, inuse_sum);
-	पूर्ण
+		hwi = div64_u64((u64)hwi * inuse, inuse_sum);
+	}
 
 	iocg->hweight_active = max_t(u32, hwa, 1);
 	iocg->hweight_inuse = max_t(u32, hwi, 1);
 	iocg->hweight_gen = ioc_gen;
 out:
-	अगर (hw_activep)
+	if (hw_activep)
 		*hw_activep = iocg->hweight_active;
-	अगर (hw_inusep)
+	if (hw_inusep)
 		*hw_inusep = iocg->hweight_inuse;
-पूर्ण
+}
 
 /*
  * Calculate the hweight_inuse @iocg would get with max @inuse assuming all the
  * other weights stay unchanged.
  */
-अटल u32 current_hweight_max(काष्ठा ioc_gq *iocg)
-अणु
+static u32 current_hweight_max(struct ioc_gq *iocg)
+{
 	u32 hwm = WEIGHT_ONE;
 	u32 inuse = iocg->active;
 	u64 child_inuse_sum;
-	पूर्णांक lvl;
+	int lvl;
 
-	lockdep_निश्चित_held(&iocg->ioc->lock);
+	lockdep_assert_held(&iocg->ioc->lock);
 
-	क्रम (lvl = iocg->level - 1; lvl >= 0; lvl--) अणु
-		काष्ठा ioc_gq *parent = iocg->ancestors[lvl];
-		काष्ठा ioc_gq *child = iocg->ancestors[lvl + 1];
+	for (lvl = iocg->level - 1; lvl >= 0; lvl--) {
+		struct ioc_gq *parent = iocg->ancestors[lvl];
+		struct ioc_gq *child = iocg->ancestors[lvl + 1];
 
 		child_inuse_sum = parent->child_inuse_sum + inuse - child->inuse;
-		hwm = भाग64_u64((u64)hwm * inuse, child_inuse_sum);
+		hwm = div64_u64((u64)hwm * inuse, child_inuse_sum);
 		inuse = DIV64_U64_ROUND_UP(parent->active * child_inuse_sum,
 					   parent->child_active_sum);
-	पूर्ण
+	}
 
-	वापस max_t(u32, hwm, 1);
-पूर्ण
+	return max_t(u32, hwm, 1);
+}
 
-अटल व्योम weight_updated(काष्ठा ioc_gq *iocg, काष्ठा ioc_now *now)
-अणु
-	काष्ठा ioc *ioc = iocg->ioc;
-	काष्ठा blkcg_gq *blkg = iocg_to_blkg(iocg);
-	काष्ठा ioc_cgrp *iocc = blkcg_to_iocc(blkg->blkcg);
+static void weight_updated(struct ioc_gq *iocg, struct ioc_now *now)
+{
+	struct ioc *ioc = iocg->ioc;
+	struct blkcg_gq *blkg = iocg_to_blkg(iocg);
+	struct ioc_cgrp *iocc = blkcg_to_iocc(blkg->blkcg);
 	u32 weight;
 
-	lockdep_निश्चित_held(&ioc->lock);
+	lockdep_assert_held(&ioc->lock);
 
 	weight = iocg->cfg_weight ?: iocc->dfl_weight;
-	अगर (weight != iocg->weight && iocg->active)
+	if (weight != iocg->weight && iocg->active)
 		propagate_weights(iocg, weight, iocg->inuse, true, now);
 	iocg->weight = weight;
-पूर्ण
+}
 
-अटल bool iocg_activate(काष्ठा ioc_gq *iocg, काष्ठा ioc_now *now)
-अणु
-	काष्ठा ioc *ioc = iocg->ioc;
+static bool iocg_activate(struct ioc_gq *iocg, struct ioc_now *now)
+{
+	struct ioc *ioc = iocg->ioc;
 	u64 last_period, cur_period;
-	u64 vसमय, vtarget;
-	पूर्णांक i;
+	u64 vtime, vtarget;
+	int i;
 
 	/*
-	 * If seem to be alपढ़ोy active, just update the stamp to tell the
-	 * समयr that we're still active.  We don't mind occassional races.
+	 * If seem to be already active, just update the stamp to tell the
+	 * timer that we're still active.  We don't mind occassional races.
 	 */
-	अगर (!list_empty(&iocg->active_list)) अणु
+	if (!list_empty(&iocg->active_list)) {
 		ioc_now(ioc, now);
-		cur_period = atomic64_पढ़ो(&ioc->cur_period);
-		अगर (atomic64_पढ़ो(&iocg->active_period) != cur_period)
+		cur_period = atomic64_read(&ioc->cur_period);
+		if (atomic64_read(&iocg->active_period) != cur_period)
 			atomic64_set(&iocg->active_period, cur_period);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	/* racy check on पूर्णांकernal node IOs, treat as root level IOs */
-	अगर (iocg->child_active_sum)
-		वापस false;
+	/* racy check on internal node IOs, treat as root level IOs */
+	if (iocg->child_active_sum)
+		return false;
 
 	spin_lock_irq(&ioc->lock);
 
 	ioc_now(ioc, now);
 
 	/* update period */
-	cur_period = atomic64_पढ़ो(&ioc->cur_period);
-	last_period = atomic64_पढ़ो(&iocg->active_period);
+	cur_period = atomic64_read(&ioc->cur_period);
+	last_period = atomic64_read(&iocg->active_period);
 	atomic64_set(&iocg->active_period, cur_period);
 
-	/* alपढ़ोy activated or अवरोधing leaf-only स्थिरraपूर्णांक? */
-	अगर (!list_empty(&iocg->active_list))
-		जाओ succeed_unlock;
-	क्रम (i = iocg->level - 1; i > 0; i--)
-		अगर (!list_empty(&iocg->ancestors[i]->active_list))
-			जाओ fail_unlock;
+	/* already activated or breaking leaf-only constraint? */
+	if (!list_empty(&iocg->active_list))
+		goto succeed_unlock;
+	for (i = iocg->level - 1; i > 0; i--)
+		if (!list_empty(&iocg->ancestors[i]->active_list))
+			goto fail_unlock;
 
-	अगर (iocg->child_active_sum)
-		जाओ fail_unlock;
+	if (iocg->child_active_sum)
+		goto fail_unlock;
 
 	/*
 	 * Always start with the target budget. On deactivation, we throw away
 	 * anything above it.
 	 */
 	vtarget = now->vnow - ioc->margins.target;
-	vसमय = atomic64_पढ़ो(&iocg->vसमय);
+	vtime = atomic64_read(&iocg->vtime);
 
-	atomic64_add(vtarget - vसमय, &iocg->vसमय);
-	atomic64_add(vtarget - vसमय, &iocg->करोne_vसमय);
-	vसमय = vtarget;
+	atomic64_add(vtarget - vtime, &iocg->vtime);
+	atomic64_add(vtarget - vtime, &iocg->done_vtime);
+	vtime = vtarget;
 
 	/*
-	 * Activate, propagate weight and start period समयr अगर not
-	 * running.  Reset hweight_gen to aव्योम accidental match from
+	 * Activate, propagate weight and start period timer if not
+	 * running.  Reset hweight_gen to avoid accidental match from
 	 * wrapping.
 	 */
-	iocg->hweight_gen = atomic_पढ़ो(&ioc->hweight_gen) - 1;
+	iocg->hweight_gen = atomic_read(&ioc->hweight_gen) - 1;
 	list_add(&iocg->active_list, &ioc->active_iocgs);
 
 	propagate_weights(iocg, iocg->weight,
 			  iocg->last_inuse ?: iocg->weight, true, now);
 
 	TRACE_IOCG_PATH(iocg_activate, iocg, now,
-			last_period, cur_period, vसमय);
+			last_period, cur_period, vtime);
 
 	iocg->activated_at = now->now;
 
-	अगर (ioc->running == IOC_IDLE) अणु
+	if (ioc->running == IOC_IDLE) {
 		ioc->running = IOC_RUNNING;
 		ioc->dfgv_period_at = now->now;
 		ioc->dfgv_period_rem = 0;
 		ioc_start_period(ioc, now);
-	पूर्ण
+	}
 
 succeed_unlock:
 	spin_unlock_irq(&ioc->lock);
-	वापस true;
+	return true;
 
 fail_unlock:
 	spin_unlock_irq(&ioc->lock);
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool iocg_kick_delay(काष्ठा ioc_gq *iocg, काष्ठा ioc_now *now)
-अणु
-	काष्ठा ioc *ioc = iocg->ioc;
-	काष्ठा blkcg_gq *blkg = iocg_to_blkg(iocg);
+static bool iocg_kick_delay(struct ioc_gq *iocg, struct ioc_now *now)
+{
+	struct ioc *ioc = iocg->ioc;
+	struct blkcg_gq *blkg = iocg_to_blkg(iocg);
 	u64 tdelta, delay, new_delay;
 	s64 vover, vover_pct;
 	u32 hwa;
 
-	lockdep_निश्चित_held(&iocg->रुकोq.lock);
+	lockdep_assert_held(&iocg->waitq.lock);
 
 	/* calculate the current delay in effect - 1/2 every second */
 	tdelta = now->now - iocg->delay_at;
-	अगर (iocg->delay)
-		delay = iocg->delay >> भाग64_u64(tdelta, USEC_PER_SEC);
-	अन्यथा
+	if (iocg->delay)
+		delay = iocg->delay >> div64_u64(tdelta, USEC_PER_SEC);
+	else
 		delay = 0;
 
 	/* calculate the new delay from the debt amount */
-	current_hweight(iocg, &hwa, शून्य);
-	vover = atomic64_पढ़ो(&iocg->vसमय) +
-		असल_cost_to_cost(iocg->असल_vdebt, hwa) - now->vnow;
-	vover_pct = भाग64_s64(100 * vover,
-			      ioc->period_us * ioc->vसमय_base_rate);
+	current_hweight(iocg, &hwa, NULL);
+	vover = atomic64_read(&iocg->vtime) +
+		abs_cost_to_cost(iocg->abs_vdebt, hwa) - now->vnow;
+	vover_pct = div64_s64(100 * vover,
+			      ioc->period_us * ioc->vtime_base_rate);
 
-	अगर (vover_pct <= MIN_DELAY_THR_PCT)
+	if (vover_pct <= MIN_DELAY_THR_PCT)
 		new_delay = 0;
-	अन्यथा अगर (vover_pct >= MAX_DELAY_THR_PCT)
+	else if (vover_pct >= MAX_DELAY_THR_PCT)
 		new_delay = MAX_DELAY;
-	अन्यथा
+	else
 		new_delay = MIN_DELAY +
-			भाग_u64((MAX_DELAY - MIN_DELAY) *
+			div_u64((MAX_DELAY - MIN_DELAY) *
 				(vover_pct - MIN_DELAY_THR_PCT),
 				MAX_DELAY_THR_PCT - MIN_DELAY_THR_PCT);
 
 	/* pick the higher one and apply */
-	अगर (new_delay > delay) अणु
+	if (new_delay > delay) {
 		iocg->delay = new_delay;
 		iocg->delay_at = now->now;
 		delay = new_delay;
-	पूर्ण
+	}
 
-	अगर (delay >= MIN_DELAY) अणु
-		अगर (!iocg->indelay_since)
+	if (delay >= MIN_DELAY) {
+		if (!iocg->indelay_since)
 			iocg->indelay_since = now->now;
 		blkcg_set_delay(blkg, delay * NSEC_PER_USEC);
-		वापस true;
-	पूर्ण अन्यथा अणु
-		अगर (iocg->indelay_since) अणु
+		return true;
+	} else {
+		if (iocg->indelay_since) {
 			iocg->local_stat.indelay_us += now->now - iocg->indelay_since;
 			iocg->indelay_since = 0;
-		पूर्ण
+		}
 		iocg->delay = 0;
 		blkcg_clear_delay(blkg);
-		वापस false;
-	पूर्ण
-पूर्ण
+		return false;
+	}
+}
 
-अटल व्योम iocg_incur_debt(काष्ठा ioc_gq *iocg, u64 असल_cost,
-			    काष्ठा ioc_now *now)
-अणु
-	काष्ठा iocg_pcpu_stat *gcs;
+static void iocg_incur_debt(struct ioc_gq *iocg, u64 abs_cost,
+			    struct ioc_now *now)
+{
+	struct iocg_pcpu_stat *gcs;
 
-	lockdep_निश्चित_held(&iocg->ioc->lock);
-	lockdep_निश्चित_held(&iocg->रुकोq.lock);
+	lockdep_assert_held(&iocg->ioc->lock);
+	lockdep_assert_held(&iocg->waitq.lock);
 	WARN_ON_ONCE(list_empty(&iocg->active_list));
 
 	/*
 	 * Once in debt, debt handling owns inuse. @iocg stays at the minimum
-	 * inuse करोnating all of it share to others until its debt is paid off.
+	 * inuse donating all of it share to others until its debt is paid off.
 	 */
-	अगर (!iocg->असल_vdebt && असल_cost) अणु
+	if (!iocg->abs_vdebt && abs_cost) {
 		iocg->indebt_since = now->now;
 		propagate_weights(iocg, iocg->active, 0, false, now);
-	पूर्ण
+	}
 
-	iocg->असल_vdebt += असल_cost;
+	iocg->abs_vdebt += abs_cost;
 
 	gcs = get_cpu_ptr(iocg->pcpu_stat);
-	local64_add(असल_cost, &gcs->असल_vusage);
+	local64_add(abs_cost, &gcs->abs_vusage);
 	put_cpu_ptr(gcs);
-पूर्ण
+}
 
-अटल व्योम iocg_pay_debt(काष्ठा ioc_gq *iocg, u64 असल_vpay,
-			  काष्ठा ioc_now *now)
-अणु
-	lockdep_निश्चित_held(&iocg->ioc->lock);
-	lockdep_निश्चित_held(&iocg->रुकोq.lock);
+static void iocg_pay_debt(struct ioc_gq *iocg, u64 abs_vpay,
+			  struct ioc_now *now)
+{
+	lockdep_assert_held(&iocg->ioc->lock);
+	lockdep_assert_held(&iocg->waitq.lock);
 
 	/* make sure that nobody messed with @iocg */
 	WARN_ON_ONCE(list_empty(&iocg->active_list));
 	WARN_ON_ONCE(iocg->inuse > 1);
 
-	iocg->असल_vdebt -= min(असल_vpay, iocg->असल_vdebt);
+	iocg->abs_vdebt -= min(abs_vpay, iocg->abs_vdebt);
 
-	/* अगर debt is paid in full, restore inuse */
-	अगर (!iocg->असल_vdebt) अणु
+	/* if debt is paid in full, restore inuse */
+	if (!iocg->abs_vdebt) {
 		iocg->local_stat.indebt_us += now->now - iocg->indebt_since;
 		iocg->indebt_since = 0;
 
 		propagate_weights(iocg, iocg->active, iocg->last_inuse,
 				  false, now);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक iocg_wake_fn(काष्ठा रुको_queue_entry *wq_entry, अचिन्हित mode,
-			पूर्णांक flags, व्योम *key)
-अणु
-	काष्ठा iocg_रुको *रुको = container_of(wq_entry, काष्ठा iocg_रुको, रुको);
-	काष्ठा iocg_wake_ctx *ctx = (काष्ठा iocg_wake_ctx *)key;
-	u64 cost = असल_cost_to_cost(रुको->असल_cost, ctx->hw_inuse);
+static int iocg_wake_fn(struct wait_queue_entry *wq_entry, unsigned mode,
+			int flags, void *key)
+{
+	struct iocg_wait *wait = container_of(wq_entry, struct iocg_wait, wait);
+	struct iocg_wake_ctx *ctx = (struct iocg_wake_ctx *)key;
+	u64 cost = abs_cost_to_cost(wait->abs_cost, ctx->hw_inuse);
 
 	ctx->vbudget -= cost;
 
-	अगर (ctx->vbudget < 0)
-		वापस -1;
+	if (ctx->vbudget < 0)
+		return -1;
 
-	iocg_commit_bio(ctx->iocg, रुको->bio, रुको->असल_cost, cost);
+	iocg_commit_bio(ctx->iocg, wait->bio, wait->abs_cost, cost);
 
 	/*
-	 * स्वतःहटाओ_wake_function() हटाओs the रुको entry only when it
-	 * actually changed the task state.  We want the रुको always
-	 * हटाओd.  Remove explicitly and use शेष_wake_function().
+	 * autoremove_wake_function() removes the wait entry only when it
+	 * actually changed the task state.  We want the wait always
+	 * removed.  Remove explicitly and use default_wake_function().
 	 */
 	list_del_init(&wq_entry->entry);
-	रुको->committed = true;
+	wait->committed = true;
 
-	शेष_wake_function(wq_entry, mode, flags, key);
-	वापस 0;
-पूर्ण
+	default_wake_function(wq_entry, mode, flags, key);
+	return 0;
+}
 
 /*
- * Calculate the accumulated budget, pay debt अगर @pay_debt and wake up रुकोers
+ * Calculate the accumulated budget, pay debt if @pay_debt and wake up waiters
  * accordingly. When @pay_debt is %true, the caller must be holding ioc->lock in
- * addition to iocg->रुकोq.lock.
+ * addition to iocg->waitq.lock.
  */
-अटल व्योम iocg_kick_रुकोq(काष्ठा ioc_gq *iocg, bool pay_debt,
-			    काष्ठा ioc_now *now)
-अणु
-	काष्ठा ioc *ioc = iocg->ioc;
-	काष्ठा iocg_wake_ctx ctx = अणु .iocg = iocg पूर्ण;
-	u64 vलघुage, expires, oexpires;
+static void iocg_kick_waitq(struct ioc_gq *iocg, bool pay_debt,
+			    struct ioc_now *now)
+{
+	struct ioc *ioc = iocg->ioc;
+	struct iocg_wake_ctx ctx = { .iocg = iocg };
+	u64 vshortage, expires, oexpires;
 	s64 vbudget;
 	u32 hwa;
 
-	lockdep_निश्चित_held(&iocg->रुकोq.lock);
+	lockdep_assert_held(&iocg->waitq.lock);
 
-	current_hweight(iocg, &hwa, शून्य);
-	vbudget = now->vnow - atomic64_पढ़ो(&iocg->vसमय);
+	current_hweight(iocg, &hwa, NULL);
+	vbudget = now->vnow - atomic64_read(&iocg->vtime);
 
 	/* pay off debt */
-	अगर (pay_debt && iocg->असल_vdebt && vbudget > 0) अणु
-		u64 असल_vbudget = cost_to_असल_cost(vbudget, hwa);
-		u64 असल_vpay = min_t(u64, असल_vbudget, iocg->असल_vdebt);
-		u64 vpay = असल_cost_to_cost(असल_vpay, hwa);
+	if (pay_debt && iocg->abs_vdebt && vbudget > 0) {
+		u64 abs_vbudget = cost_to_abs_cost(vbudget, hwa);
+		u64 abs_vpay = min_t(u64, abs_vbudget, iocg->abs_vdebt);
+		u64 vpay = abs_cost_to_cost(abs_vpay, hwa);
 
-		lockdep_निश्चित_held(&ioc->lock);
+		lockdep_assert_held(&ioc->lock);
 
-		atomic64_add(vpay, &iocg->vसमय);
-		atomic64_add(vpay, &iocg->करोne_vसमय);
-		iocg_pay_debt(iocg, असल_vpay, now);
+		atomic64_add(vpay, &iocg->vtime);
+		atomic64_add(vpay, &iocg->done_vtime);
+		iocg_pay_debt(iocg, abs_vpay, now);
 		vbudget -= vpay;
-	पूर्ण
+	}
 
-	अगर (iocg->असल_vdebt || iocg->delay)
+	if (iocg->abs_vdebt || iocg->delay)
 		iocg_kick_delay(iocg, now);
 
 	/*
-	 * Debt can still be outstanding अगर we haven't paid all yet or the
-	 * caller raced and called without @pay_debt. Shouldn't wake up रुकोers
+	 * Debt can still be outstanding if we haven't paid all yet or the
+	 * caller raced and called without @pay_debt. Shouldn't wake up waiters
 	 * under debt. Make sure @vbudget reflects the outstanding amount and is
 	 * not positive.
 	 */
-	अगर (iocg->असल_vdebt) अणु
-		s64 vdebt = असल_cost_to_cost(iocg->असल_vdebt, hwa);
+	if (iocg->abs_vdebt) {
+		s64 vdebt = abs_cost_to_cost(iocg->abs_vdebt, hwa);
 		vbudget = min_t(s64, 0, vbudget - vdebt);
-	पूर्ण
+	}
 
 	/*
-	 * Wake up the ones which are due and see how much vसमय we'll need क्रम
-	 * the next one. As paying off debt restores hw_inuse, it must be पढ़ो
+	 * Wake up the ones which are due and see how much vtime we'll need for
+	 * the next one. As paying off debt restores hw_inuse, it must be read
 	 * after the above debt payment.
 	 */
 	ctx.vbudget = vbudget;
-	current_hweight(iocg, शून्य, &ctx.hw_inuse);
+	current_hweight(iocg, NULL, &ctx.hw_inuse);
 
-	__wake_up_locked_key(&iocg->रुकोq, TASK_NORMAL, &ctx);
+	__wake_up_locked_key(&iocg->waitq, TASK_NORMAL, &ctx);
 
-	अगर (!रुकोqueue_active(&iocg->रुकोq)) अणु
-		अगर (iocg->रुको_since) अणु
-			iocg->local_stat.रुको_us += now->now - iocg->रुको_since;
-			iocg->रुको_since = 0;
-		पूर्ण
-		वापस;
-	पूर्ण
+	if (!waitqueue_active(&iocg->waitq)) {
+		if (iocg->wait_since) {
+			iocg->local_stat.wait_us += now->now - iocg->wait_since;
+			iocg->wait_since = 0;
+		}
+		return;
+	}
 
-	अगर (!iocg->रुको_since)
-		iocg->रुको_since = now->now;
+	if (!iocg->wait_since)
+		iocg->wait_since = now->now;
 
-	अगर (WARN_ON_ONCE(ctx.vbudget >= 0))
-		वापस;
+	if (WARN_ON_ONCE(ctx.vbudget >= 0))
+		return;
 
-	/* determine next wakeup, add a समयr margin to guarantee chunking */
-	vलघुage = -ctx.vbudget;
+	/* determine next wakeup, add a timer margin to guarantee chunking */
+	vshortage = -ctx.vbudget;
 	expires = now->now_ns +
-		DIV64_U64_ROUND_UP(vलघुage, ioc->vसमय_base_rate) *
+		DIV64_U64_ROUND_UP(vshortage, ioc->vtime_base_rate) *
 		NSEC_PER_USEC;
-	expires += ioc->समयr_slack_ns;
+	expires += ioc->timer_slack_ns;
 
-	/* अगर alपढ़ोy active and बंद enough, करोn't bother */
-	oexpires = kसमय_प्रकारo_ns(hrसमयr_get_softexpires(&iocg->रुकोq_समयr));
-	अगर (hrसमयr_is_queued(&iocg->रुकोq_समयr) &&
-	    असल(oexpires - expires) <= ioc->समयr_slack_ns)
-		वापस;
+	/* if already active and close enough, don't bother */
+	oexpires = ktime_to_ns(hrtimer_get_softexpires(&iocg->waitq_timer));
+	if (hrtimer_is_queued(&iocg->waitq_timer) &&
+	    abs(oexpires - expires) <= ioc->timer_slack_ns)
+		return;
 
-	hrसमयr_start_range_ns(&iocg->रुकोq_समयr, ns_to_kसमय(expires),
-			       ioc->समयr_slack_ns, HRTIMER_MODE_ABS);
-पूर्ण
+	hrtimer_start_range_ns(&iocg->waitq_timer, ns_to_ktime(expires),
+			       ioc->timer_slack_ns, HRTIMER_MODE_ABS);
+}
 
-अटल क्रमागत hrसमयr_restart iocg_रुकोq_समयr_fn(काष्ठा hrसमयr *समयr)
-अणु
-	काष्ठा ioc_gq *iocg = container_of(समयr, काष्ठा ioc_gq, रुकोq_समयr);
-	bool pay_debt = READ_ONCE(iocg->असल_vdebt);
-	काष्ठा ioc_now now;
-	अचिन्हित दीर्घ flags;
+static enum hrtimer_restart iocg_waitq_timer_fn(struct hrtimer *timer)
+{
+	struct ioc_gq *iocg = container_of(timer, struct ioc_gq, waitq_timer);
+	bool pay_debt = READ_ONCE(iocg->abs_vdebt);
+	struct ioc_now now;
+	unsigned long flags;
 
 	ioc_now(iocg->ioc, &now);
 
 	iocg_lock(iocg, pay_debt, &flags);
-	iocg_kick_रुकोq(iocg, pay_debt, &now);
+	iocg_kick_waitq(iocg, pay_debt, &now);
 	iocg_unlock(iocg, pay_debt, &flags);
 
-	वापस HRTIMER_NORESTART;
-पूर्ण
+	return HRTIMER_NORESTART;
+}
 
-अटल व्योम ioc_lat_stat(काष्ठा ioc *ioc, u32 *missed_ppm_ar, u32 *rq_रुको_pct_p)
-अणु
-	u32 nr_met[2] = अणु पूर्ण;
-	u32 nr_missed[2] = अणु पूर्ण;
-	u64 rq_रुको_ns = 0;
-	पूर्णांक cpu, rw;
+static void ioc_lat_stat(struct ioc *ioc, u32 *missed_ppm_ar, u32 *rq_wait_pct_p)
+{
+	u32 nr_met[2] = { };
+	u32 nr_missed[2] = { };
+	u64 rq_wait_ns = 0;
+	int cpu, rw;
 
-	क्रम_each_online_cpu(cpu) अणु
-		काष्ठा ioc_pcpu_stat *stat = per_cpu_ptr(ioc->pcpu_stat, cpu);
-		u64 this_rq_रुको_ns;
+	for_each_online_cpu(cpu) {
+		struct ioc_pcpu_stat *stat = per_cpu_ptr(ioc->pcpu_stat, cpu);
+		u64 this_rq_wait_ns;
 
-		क्रम (rw = READ; rw <= WRITE; rw++) अणु
-			u32 this_met = local_पढ़ो(&stat->missed[rw].nr_met);
-			u32 this_missed = local_पढ़ो(&stat->missed[rw].nr_missed);
+		for (rw = READ; rw <= WRITE; rw++) {
+			u32 this_met = local_read(&stat->missed[rw].nr_met);
+			u32 this_missed = local_read(&stat->missed[rw].nr_missed);
 
 			nr_met[rw] += this_met - stat->missed[rw].last_met;
 			nr_missed[rw] += this_missed - stat->missed[rw].last_missed;
 			stat->missed[rw].last_met = this_met;
 			stat->missed[rw].last_missed = this_missed;
-		पूर्ण
+		}
 
-		this_rq_रुको_ns = local64_पढ़ो(&stat->rq_रुको_ns);
-		rq_रुको_ns += this_rq_रुको_ns - stat->last_rq_रुको_ns;
-		stat->last_rq_रुको_ns = this_rq_रुको_ns;
-	पूर्ण
+		this_rq_wait_ns = local64_read(&stat->rq_wait_ns);
+		rq_wait_ns += this_rq_wait_ns - stat->last_rq_wait_ns;
+		stat->last_rq_wait_ns = this_rq_wait_ns;
+	}
 
-	क्रम (rw = READ; rw <= WRITE; rw++) अणु
-		अगर (nr_met[rw] + nr_missed[rw])
+	for (rw = READ; rw <= WRITE; rw++) {
+		if (nr_met[rw] + nr_missed[rw])
 			missed_ppm_ar[rw] =
 				DIV64_U64_ROUND_UP((u64)nr_missed[rw] * MILLION,
 						   nr_met[rw] + nr_missed[rw]);
-		अन्यथा
+		else
 			missed_ppm_ar[rw] = 0;
-	पूर्ण
+	}
 
-	*rq_रुको_pct_p = भाग64_u64(rq_रुको_ns * 100,
+	*rq_wait_pct_p = div64_u64(rq_wait_ns * 100,
 				   ioc->period_us * NSEC_PER_USEC);
-पूर्ण
+}
 
 /* was iocg idle this period? */
-अटल bool iocg_is_idle(काष्ठा ioc_gq *iocg)
-अणु
-	काष्ठा ioc *ioc = iocg->ioc;
+static bool iocg_is_idle(struct ioc_gq *iocg)
+{
+	struct ioc *ioc = iocg->ioc;
 
 	/* did something get issued this period? */
-	अगर (atomic64_पढ़ो(&iocg->active_period) ==
-	    atomic64_पढ़ो(&ioc->cur_period))
-		वापस false;
+	if (atomic64_read(&iocg->active_period) ==
+	    atomic64_read(&ioc->cur_period))
+		return false;
 
 	/* is something in flight? */
-	अगर (atomic64_पढ़ो(&iocg->करोne_vसमय) != atomic64_पढ़ो(&iocg->vसमय))
-		वापस false;
+	if (atomic64_read(&iocg->done_vtime) != atomic64_read(&iocg->vtime))
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
  * Call this function on the target leaf @iocg's to build pre-order traversal
  * list of all the ancestors in @inner_walk. The inner nodes are linked through
- * ->walk_list and the caller is responsible क्रम dissolving the list after use.
+ * ->walk_list and the caller is responsible for dissolving the list after use.
  */
-अटल व्योम iocg_build_inner_walk(काष्ठा ioc_gq *iocg,
-				  काष्ठा list_head *inner_walk)
-अणु
-	पूर्णांक lvl;
+static void iocg_build_inner_walk(struct ioc_gq *iocg,
+				  struct list_head *inner_walk)
+{
+	int lvl;
 
 	WARN_ON_ONCE(!list_empty(&iocg->walk_list));
 
 	/* find the first ancestor which hasn't been visited yet */
-	क्रम (lvl = iocg->level - 1; lvl >= 0; lvl--) अणु
-		अगर (!list_empty(&iocg->ancestors[lvl]->walk_list))
-			अवरोध;
-	पूर्ण
+	for (lvl = iocg->level - 1; lvl >= 0; lvl--) {
+		if (!list_empty(&iocg->ancestors[lvl]->walk_list))
+			break;
+	}
 
-	/* walk करोwn and visit the inner nodes to get pre-order traversal */
-	जबतक (++lvl <= iocg->level - 1) अणु
-		काष्ठा ioc_gq *inner = iocg->ancestors[lvl];
+	/* walk down and visit the inner nodes to get pre-order traversal */
+	while (++lvl <= iocg->level - 1) {
+		struct ioc_gq *inner = iocg->ancestors[lvl];
 
 		/* record traversal order */
 		list_add_tail(&inner->walk_list, inner_walk);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* collect per-cpu counters and propagate the deltas to the parent */
-अटल व्योम iocg_flush_stat_one(काष्ठा ioc_gq *iocg, काष्ठा ioc_now *now)
-अणु
-	काष्ठा ioc *ioc = iocg->ioc;
-	काष्ठा iocg_stat new_stat;
-	u64 असल_vusage = 0;
+static void iocg_flush_stat_one(struct ioc_gq *iocg, struct ioc_now *now)
+{
+	struct ioc *ioc = iocg->ioc;
+	struct iocg_stat new_stat;
+	u64 abs_vusage = 0;
 	u64 vusage_delta;
-	पूर्णांक cpu;
+	int cpu;
 
-	lockdep_निश्चित_held(&iocg->ioc->lock);
+	lockdep_assert_held(&iocg->ioc->lock);
 
 	/* collect per-cpu counters */
-	क्रम_each_possible_cpu(cpu) अणु
-		असल_vusage += local64_पढ़ो(
-				per_cpu_ptr(&iocg->pcpu_stat->असल_vusage, cpu));
-	पूर्ण
-	vusage_delta = असल_vusage - iocg->last_stat_असल_vusage;
-	iocg->last_stat_असल_vusage = असल_vusage;
+	for_each_possible_cpu(cpu) {
+		abs_vusage += local64_read(
+				per_cpu_ptr(&iocg->pcpu_stat->abs_vusage, cpu));
+	}
+	vusage_delta = abs_vusage - iocg->last_stat_abs_vusage;
+	iocg->last_stat_abs_vusage = abs_vusage;
 
-	iocg->usage_delta_us = भाग64_u64(vusage_delta, ioc->vसमय_base_rate);
+	iocg->usage_delta_us = div64_u64(vusage_delta, ioc->vtime_base_rate);
 	iocg->local_stat.usage_us += iocg->usage_delta_us;
 
 	/* propagate upwards */
 	new_stat.usage_us =
 		iocg->local_stat.usage_us + iocg->desc_stat.usage_us;
-	new_stat.रुको_us =
-		iocg->local_stat.रुको_us + iocg->desc_stat.रुको_us;
+	new_stat.wait_us =
+		iocg->local_stat.wait_us + iocg->desc_stat.wait_us;
 	new_stat.indebt_us =
 		iocg->local_stat.indebt_us + iocg->desc_stat.indebt_us;
 	new_stat.indelay_us =
 		iocg->local_stat.indelay_us + iocg->desc_stat.indelay_us;
 
 	/* propagate the deltas to the parent */
-	अगर (iocg->level > 0) अणु
-		काष्ठा iocg_stat *parent_stat =
+	if (iocg->level > 0) {
+		struct iocg_stat *parent_stat =
 			&iocg->ancestors[iocg->level - 1]->desc_stat;
 
 		parent_stat->usage_us +=
 			new_stat.usage_us - iocg->last_stat.usage_us;
-		parent_stat->रुको_us +=
-			new_stat.रुको_us - iocg->last_stat.रुको_us;
+		parent_stat->wait_us +=
+			new_stat.wait_us - iocg->last_stat.wait_us;
 		parent_stat->indebt_us +=
 			new_stat.indebt_us - iocg->last_stat.indebt_us;
 		parent_stat->indelay_us +=
 			new_stat.indelay_us - iocg->last_stat.indelay_us;
-	पूर्ण
+	}
 
 	iocg->last_stat = new_stat;
-पूर्ण
+}
 
-/* get stat counters पढ़ोy क्रम पढ़ोing on all active iocgs */
-अटल व्योम iocg_flush_stat(काष्ठा list_head *target_iocgs, काष्ठा ioc_now *now)
-अणु
+/* get stat counters ready for reading on all active iocgs */
+static void iocg_flush_stat(struct list_head *target_iocgs, struct ioc_now *now)
+{
 	LIST_HEAD(inner_walk);
-	काष्ठा ioc_gq *iocg, *tiocg;
+	struct ioc_gq *iocg, *tiocg;
 
 	/* flush leaves and build inner node walk list */
-	list_क्रम_each_entry(iocg, target_iocgs, active_list) अणु
+	list_for_each_entry(iocg, target_iocgs, active_list) {
 		iocg_flush_stat_one(iocg, now);
 		iocg_build_inner_walk(iocg, &inner_walk);
-	पूर्ण
+	}
 
 	/* keep flushing upwards by walking the inner list backwards */
-	list_क्रम_each_entry_safe_reverse(iocg, tiocg, &inner_walk, walk_list) अणु
+	list_for_each_entry_safe_reverse(iocg, tiocg, &inner_walk, walk_list) {
 		iocg_flush_stat_one(iocg, now);
 		list_del_init(&iocg->walk_list);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Determine what @iocg's hweight_inuse should be after करोnating unused
- * capacity. @hwm is the upper bound and used to संकेत no करोnation. This
+ * Determine what @iocg's hweight_inuse should be after donating unused
+ * capacity. @hwm is the upper bound and used to signal no donation. This
  * function also throws away @iocg's excess budget.
  */
-अटल u32 hweight_after_करोnation(काष्ठा ioc_gq *iocg, u32 old_hwi, u32 hwm,
-				  u32 usage, काष्ठा ioc_now *now)
-अणु
-	काष्ठा ioc *ioc = iocg->ioc;
-	u64 vसमय = atomic64_पढ़ो(&iocg->vसमय);
+static u32 hweight_after_donation(struct ioc_gq *iocg, u32 old_hwi, u32 hwm,
+				  u32 usage, struct ioc_now *now)
+{
+	struct ioc *ioc = iocg->ioc;
+	u64 vtime = atomic64_read(&iocg->vtime);
 	s64 excess, delta, target, new_hwi;
 
-	/* debt handling owns inuse क्रम debtors */
-	अगर (iocg->असल_vdebt)
-		वापस 1;
+	/* debt handling owns inuse for debtors */
+	if (iocg->abs_vdebt)
+		return 1;
 
 	/* see whether minimum margin requirement is met */
-	अगर (रुकोqueue_active(&iocg->रुकोq) ||
-	    समय_after64(vसमय, now->vnow - ioc->margins.min))
-		वापस hwm;
+	if (waitqueue_active(&iocg->waitq) ||
+	    time_after64(vtime, now->vnow - ioc->margins.min))
+		return hwm;
 
 	/* throw away excess above target */
-	excess = now->vnow - vसमय - ioc->margins.target;
-	अगर (excess > 0) अणु
-		atomic64_add(excess, &iocg->vसमय);
-		atomic64_add(excess, &iocg->करोne_vसमय);
-		vसमय += excess;
-		ioc->vसमय_err -= भाग64_u64(excess * old_hwi, WEIGHT_ONE);
-	पूर्ण
+	excess = now->vnow - vtime - ioc->margins.target;
+	if (excess > 0) {
+		atomic64_add(excess, &iocg->vtime);
+		atomic64_add(excess, &iocg->done_vtime);
+		vtime += excess;
+		ioc->vtime_err -= div64_u64(excess * old_hwi, WEIGHT_ONE);
+	}
 
 	/*
-	 * Let's say the distance between iocg's and device's vबार as a
+	 * Let's say the distance between iocg's and device's vtimes as a
 	 * fraction of period duration is delta. Assuming that the iocg will
 	 * consume the usage determined above, we want to determine new_hwi so
 	 * that delta equals MARGIN_TARGET at the end of the next period.
 	 *
-	 * We need to execute usage worth of IOs जबतक spending the sum of the
+	 * We need to execute usage worth of IOs while spending the sum of the
 	 * new budget (1 - MARGIN_TARGET) and the leftover from the last period
 	 * (delta):
 	 *
 	 *   usage = (1 - MARGIN_TARGET + delta) * new_hwi
 	 *
-	 * Thereक्रमe, the new_hwi is:
+	 * Therefore, the new_hwi is:
 	 *
 	 *   new_hwi = usage / (1 - MARGIN_TARGET + delta)
 	 */
-	delta = भाग64_s64(WEIGHT_ONE * (now->vnow - vसमय),
-			  now->vnow - ioc->period_at_vसमय);
+	delta = div64_s64(WEIGHT_ONE * (now->vnow - vtime),
+			  now->vnow - ioc->period_at_vtime);
 	target = WEIGHT_ONE * MARGIN_TARGET_PCT / 100;
-	new_hwi = भाग64_s64(WEIGHT_ONE * usage, WEIGHT_ONE - target + delta);
+	new_hwi = div64_s64(WEIGHT_ONE * usage, WEIGHT_ONE - target + delta);
 
-	वापस clamp_t(s64, new_hwi, 1, hwm);
-पूर्ण
+	return clamp_t(s64, new_hwi, 1, hwm);
+}
 
 /*
  * For work-conservation, an iocg which isn't using all of its share should
- * करोnate the leftover to other iocgs. There are two ways to achieve this - 1.
- * bumping up vrate accordingly 2. lowering the करोnating iocg's inuse weight.
+ * donate the leftover to other iocgs. There are two ways to achieve this - 1.
+ * bumping up vrate accordingly 2. lowering the donating iocg's inuse weight.
  *
  * #1 is mathematically simpler but has the drawback of requiring synchronous
  * global hweight_inuse updates when idle iocg's get activated or inuse weights
- * change due to करोnation snapbacks as it has the possibility of grossly
+ * change due to donation snapbacks as it has the possibility of grossly
  * overshooting what's allowed by the model and vrate.
  *
- * #2 is inherently safe with local operations. The करोnating iocg can easily
+ * #2 is inherently safe with local operations. The donating iocg can easily
  * snap back to higher weights when needed without worrying about impacts on
  * other nodes as the impacts will be inherently correct. This also makes idle
  * iocg activations safe. The only effect activations have is decreasing
- * hweight_inuse of others, the right solution to which is क्रम those iocgs to
+ * hweight_inuse of others, the right solution to which is for those iocgs to
  * snap back to higher weights.
  *
- * So, we go with #2. The challenge is calculating how each करोnating iocg's
- * inuse should be adjusted to achieve the target करोnation amounts. This is करोne
+ * So, we go with #2. The challenge is calculating how each donating iocg's
+ * inuse should be adjusted to achieve the target donation amounts. This is done
  * using Andy's method described in the following pdf.
  *
  *   https://drive.google.com/file/d/1PsJwxPFtjUnwOY1QJ5AeICCcsL7BM3bo
  *
- * Given the weights and target after-करोnation hweight_inuse values, Andy's
+ * Given the weights and target after-donation hweight_inuse values, Andy's
  * method determines how the proportional distribution should look like at each
- * sibling level to मुख्यtain the relative relationship between all non-करोnating
- * pairs. To roughly summarize, it भागides the tree पूर्णांकo करोnating and
- * non-करोnating parts, calculates global करोnation rate which is used to
- * determine the target hweight_inuse क्रम each node, and then derives per-level
+ * sibling level to maintain the relative relationship between all non-donating
+ * pairs. To roughly summarize, it divides the tree into donating and
+ * non-donating parts, calculates global donation rate which is used to
+ * determine the target hweight_inuse for each node, and then derives per-level
  * proportions.
  *
  * The following pdf shows that global distribution calculated this way can be
- * achieved by scaling inuse weights of करोnating leaves and propagating the
- * adjusपंचांगents upwards proportionally.
+ * achieved by scaling inuse weights of donating leaves and propagating the
+ * adjustments upwards proportionally.
  *
  *   https://drive.google.com/file/d/1vONz1-fzVO7oY5DXXsLjSxEtYYQbOvsE
  *
  * Combining the above two, we can determine how each leaf iocg's inuse should
- * be adjusted to achieve the target करोnation.
+ * be adjusted to achieve the target donation.
  *
  *   https://drive.google.com/file/d/1WcrltBOSPN0qXVdBgnKm4mdp9FhuEFQN
  *
- * The अंतरभूत comments use symbols from the last pdf.
+ * The inline comments use symbols from the last pdf.
  *
- *   b is the sum of the असलolute budमाला_लो in the subtree. 1 क्रम the root node.
- *   f is the sum of the असलolute budमाला_लो of non-करोnating nodes in the subtree.
- *   t is the sum of the असलolute budमाला_लो of करोnating nodes in the subtree.
+ *   b is the sum of the absolute budgets in the subtree. 1 for the root node.
+ *   f is the sum of the absolute budgets of non-donating nodes in the subtree.
+ *   t is the sum of the absolute budgets of donating nodes in the subtree.
  *   w is the weight of the node. w = w_f + w_t
- *   w_f is the non-करोnating portion of w. w_f = w * f / b
- *   w_b is the करोnating portion of w. w_t = w * t / b
- *   s is the sum of all sibling weights. s = Sum(w) क्रम siblings
- *   s_f and s_t are the non-करोnating and करोnating portions of s.
+ *   w_f is the non-donating portion of w. w_f = w * f / b
+ *   w_b is the donating portion of w. w_t = w * t / b
+ *   s is the sum of all sibling weights. s = Sum(w) for siblings
+ *   s_f and s_t are the non-donating and donating portions of s.
  *
  * Subscript p denotes the parent's counterpart and ' the adjusted value - e.g.
- * w_pt is the करोnating portion of the parent's weight and w'_pt the same value
- * after adjusपंचांगents. Subscript r denotes the root node's values.
+ * w_pt is the donating portion of the parent's weight and w'_pt the same value
+ * after adjustments. Subscript r denotes the root node's values.
  */
-अटल व्योम transfer_surpluses(काष्ठा list_head *surpluses, काष्ठा ioc_now *now)
-अणु
+static void transfer_surpluses(struct list_head *surpluses, struct ioc_now *now)
+{
 	LIST_HEAD(over_hwa);
 	LIST_HEAD(inner_walk);
-	काष्ठा ioc_gq *iocg, *tiocg, *root_iocg;
+	struct ioc_gq *iocg, *tiocg, *root_iocg;
 	u32 after_sum, over_sum, over_target, gamma;
 
 	/*
-	 * It's pretty unlikely but possible क्रम the total sum of
-	 * hweight_after_करोnation's to be higher than WEIGHT_ONE, which will
+	 * It's pretty unlikely but possible for the total sum of
+	 * hweight_after_donation's to be higher than WEIGHT_ONE, which will
 	 * confuse the following calculations. If such condition is detected,
-	 * scale करोwn everyone over its full share equally to keep the sum below
+	 * scale down everyone over its full share equally to keep the sum below
 	 * WEIGHT_ONE.
 	 */
 	after_sum = 0;
 	over_sum = 0;
-	list_क्रम_each_entry(iocg, surpluses, surplus_list) अणु
+	list_for_each_entry(iocg, surpluses, surplus_list) {
 		u32 hwa;
 
-		current_hweight(iocg, &hwa, शून्य);
-		after_sum += iocg->hweight_after_करोnation;
+		current_hweight(iocg, &hwa, NULL);
+		after_sum += iocg->hweight_after_donation;
 
-		अगर (iocg->hweight_after_करोnation > hwa) अणु
-			over_sum += iocg->hweight_after_करोnation;
+		if (iocg->hweight_after_donation > hwa) {
+			over_sum += iocg->hweight_after_donation;
 			list_add(&iocg->walk_list, &over_hwa);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (after_sum >= WEIGHT_ONE) अणु
+	if (after_sum >= WEIGHT_ONE) {
 		/*
 		 * The delta should be deducted from the over_sum, calculate
 		 * target over_sum value.
@@ -1857,445 +1856,445 @@ fail_unlock:
 		u32 over_delta = after_sum - (WEIGHT_ONE - 1);
 		WARN_ON_ONCE(over_sum <= over_delta);
 		over_target = over_sum - over_delta;
-	पूर्ण अन्यथा अणु
+	} else {
 		over_target = 0;
-	पूर्ण
+	}
 
-	list_क्रम_each_entry_safe(iocg, tiocg, &over_hwa, walk_list) अणु
-		अगर (over_target)
-			iocg->hweight_after_करोnation =
-				भाग_u64((u64)iocg->hweight_after_करोnation *
+	list_for_each_entry_safe(iocg, tiocg, &over_hwa, walk_list) {
+		if (over_target)
+			iocg->hweight_after_donation =
+				div_u64((u64)iocg->hweight_after_donation *
 					over_target, over_sum);
 		list_del_init(&iocg->walk_list);
-	पूर्ण
+	}
 
 	/*
-	 * Build pre-order inner node walk list and prepare क्रम करोnation
-	 * adjusपंचांगent calculations.
+	 * Build pre-order inner node walk list and prepare for donation
+	 * adjustment calculations.
 	 */
-	list_क्रम_each_entry(iocg, surpluses, surplus_list) अणु
+	list_for_each_entry(iocg, surpluses, surplus_list) {
 		iocg_build_inner_walk(iocg, &inner_walk);
-	पूर्ण
+	}
 
-	root_iocg = list_first_entry(&inner_walk, काष्ठा ioc_gq, walk_list);
+	root_iocg = list_first_entry(&inner_walk, struct ioc_gq, walk_list);
 	WARN_ON_ONCE(root_iocg->level > 0);
 
-	list_क्रम_each_entry(iocg, &inner_walk, walk_list) अणु
+	list_for_each_entry(iocg, &inner_walk, walk_list) {
 		iocg->child_adjusted_sum = 0;
-		iocg->hweight_करोnating = 0;
-		iocg->hweight_after_करोnation = 0;
-	पूर्ण
+		iocg->hweight_donating = 0;
+		iocg->hweight_after_donation = 0;
+	}
 
 	/*
-	 * Propagate the करोnating budget (b_t) and after करोnation budget (b'_t)
+	 * Propagate the donating budget (b_t) and after donation budget (b'_t)
 	 * up the hierarchy.
 	 */
-	list_क्रम_each_entry(iocg, surpluses, surplus_list) अणु
-		काष्ठा ioc_gq *parent = iocg->ancestors[iocg->level - 1];
+	list_for_each_entry(iocg, surpluses, surplus_list) {
+		struct ioc_gq *parent = iocg->ancestors[iocg->level - 1];
 
-		parent->hweight_करोnating += iocg->hweight_करोnating;
-		parent->hweight_after_करोnation += iocg->hweight_after_करोnation;
-	पूर्ण
+		parent->hweight_donating += iocg->hweight_donating;
+		parent->hweight_after_donation += iocg->hweight_after_donation;
+	}
 
-	list_क्रम_each_entry_reverse(iocg, &inner_walk, walk_list) अणु
-		अगर (iocg->level > 0) अणु
-			काष्ठा ioc_gq *parent = iocg->ancestors[iocg->level - 1];
+	list_for_each_entry_reverse(iocg, &inner_walk, walk_list) {
+		if (iocg->level > 0) {
+			struct ioc_gq *parent = iocg->ancestors[iocg->level - 1];
 
-			parent->hweight_करोnating += iocg->hweight_करोnating;
-			parent->hweight_after_करोnation += iocg->hweight_after_करोnation;
-		पूर्ण
-	पूर्ण
+			parent->hweight_donating += iocg->hweight_donating;
+			parent->hweight_after_donation += iocg->hweight_after_donation;
+		}
+	}
 
 	/*
-	 * Calculate inner hwa's (b) and make sure the करोnation values are
-	 * within the accepted ranges as we're करोing low res calculations with
+	 * Calculate inner hwa's (b) and make sure the donation values are
+	 * within the accepted ranges as we're doing low res calculations with
 	 * roundups.
 	 */
-	list_क्रम_each_entry(iocg, &inner_walk, walk_list) अणु
-		अगर (iocg->level) अणु
-			काष्ठा ioc_gq *parent = iocg->ancestors[iocg->level - 1];
+	list_for_each_entry(iocg, &inner_walk, walk_list) {
+		if (iocg->level) {
+			struct ioc_gq *parent = iocg->ancestors[iocg->level - 1];
 
 			iocg->hweight_active = DIV64_U64_ROUND_UP(
 				(u64)parent->hweight_active * iocg->active,
 				parent->child_active_sum);
 
-		पूर्ण
+		}
 
-		iocg->hweight_करोnating = min(iocg->hweight_करोnating,
+		iocg->hweight_donating = min(iocg->hweight_donating,
 					     iocg->hweight_active);
-		iocg->hweight_after_करोnation = min(iocg->hweight_after_करोnation,
-						   iocg->hweight_करोnating - 1);
-		अगर (WARN_ON_ONCE(iocg->hweight_active <= 1 ||
-				 iocg->hweight_करोnating <= 1 ||
-				 iocg->hweight_after_करोnation == 0)) अणु
+		iocg->hweight_after_donation = min(iocg->hweight_after_donation,
+						   iocg->hweight_donating - 1);
+		if (WARN_ON_ONCE(iocg->hweight_active <= 1 ||
+				 iocg->hweight_donating <= 1 ||
+				 iocg->hweight_after_donation == 0)) {
 			pr_warn("iocg: invalid donation weights in ");
 			pr_cont_cgroup_path(iocg_to_blkg(iocg)->blkcg->css.cgroup);
 			pr_cont(": active=%u donating=%u after=%u\n",
-				iocg->hweight_active, iocg->hweight_करोnating,
-				iocg->hweight_after_करोnation);
-		पूर्ण
-	पूर्ण
+				iocg->hweight_active, iocg->hweight_donating,
+				iocg->hweight_after_donation);
+		}
+	}
 
 	/*
-	 * Calculate the global करोnation rate (gamma) - the rate to adjust
-	 * non-करोnating budमाला_लो by.
+	 * Calculate the global donation rate (gamma) - the rate to adjust
+	 * non-donating budgets by.
 	 *
-	 * No need to use 64bit multiplication here as the first opeअक्रम is
+	 * No need to use 64bit multiplication here as the first operand is
 	 * guaranteed to be smaller than WEIGHT_ONE (1<<16).
 	 *
-	 * We know that there are beneficiary nodes and the sum of the करोnating
+	 * We know that there are beneficiary nodes and the sum of the donating
 	 * hweights can't be whole; however, due to the round-ups during hweight
-	 * calculations, root_iocg->hweight_करोnating might still end up equal to
-	 * or greater than whole. Limit the range when calculating the भागider.
+	 * calculations, root_iocg->hweight_donating might still end up equal to
+	 * or greater than whole. Limit the range when calculating the divider.
 	 *
 	 * gamma = (1 - t_r') / (1 - t_r)
 	 */
 	gamma = DIV_ROUND_UP(
-		(WEIGHT_ONE - root_iocg->hweight_after_करोnation) * WEIGHT_ONE,
-		WEIGHT_ONE - min_t(u32, root_iocg->hweight_करोnating, WEIGHT_ONE - 1));
+		(WEIGHT_ONE - root_iocg->hweight_after_donation) * WEIGHT_ONE,
+		WEIGHT_ONE - min_t(u32, root_iocg->hweight_donating, WEIGHT_ONE - 1));
 
 	/*
-	 * Calculate adjusted hwi, child_adjusted_sum and inuse क्रम the inner
+	 * Calculate adjusted hwi, child_adjusted_sum and inuse for the inner
 	 * nodes.
 	 */
-	list_क्रम_each_entry(iocg, &inner_walk, walk_list) अणु
-		काष्ठा ioc_gq *parent;
+	list_for_each_entry(iocg, &inner_walk, walk_list) {
+		struct ioc_gq *parent;
 		u32 inuse, wpt, wptp;
 		u64 st, sf;
 
-		अगर (iocg->level == 0) अणु
-			/* adjusted weight sum क्रम 1st level: s' = s * b_pf / b'_pf */
+		if (iocg->level == 0) {
+			/* adjusted weight sum for 1st level: s' = s * b_pf / b'_pf */
 			iocg->child_adjusted_sum = DIV64_U64_ROUND_UP(
-				iocg->child_active_sum * (WEIGHT_ONE - iocg->hweight_करोnating),
-				WEIGHT_ONE - iocg->hweight_after_करोnation);
-			जारी;
-		पूर्ण
+				iocg->child_active_sum * (WEIGHT_ONE - iocg->hweight_donating),
+				WEIGHT_ONE - iocg->hweight_after_donation);
+			continue;
+		}
 
 		parent = iocg->ancestors[iocg->level - 1];
 
 		/* b' = gamma * b_f + b_t' */
 		iocg->hweight_inuse = DIV64_U64_ROUND_UP(
-			(u64)gamma * (iocg->hweight_active - iocg->hweight_करोnating),
-			WEIGHT_ONE) + iocg->hweight_after_करोnation;
+			(u64)gamma * (iocg->hweight_active - iocg->hweight_donating),
+			WEIGHT_ONE) + iocg->hweight_after_donation;
 
 		/* w' = s' * b' / b'_p */
 		inuse = DIV64_U64_ROUND_UP(
 			(u64)parent->child_adjusted_sum * iocg->hweight_inuse,
 			parent->hweight_inuse);
 
-		/* adjusted weight sum क्रम children: s' = s_f + s_t * w'_pt / w_pt */
+		/* adjusted weight sum for children: s' = s_f + s_t * w'_pt / w_pt */
 		st = DIV64_U64_ROUND_UP(
-			iocg->child_active_sum * iocg->hweight_करोnating,
+			iocg->child_active_sum * iocg->hweight_donating,
 			iocg->hweight_active);
 		sf = iocg->child_active_sum - st;
 		wpt = DIV64_U64_ROUND_UP(
-			(u64)iocg->active * iocg->hweight_करोnating,
+			(u64)iocg->active * iocg->hweight_donating,
 			iocg->hweight_active);
 		wptp = DIV64_U64_ROUND_UP(
-			(u64)inuse * iocg->hweight_after_करोnation,
+			(u64)inuse * iocg->hweight_after_donation,
 			iocg->hweight_inuse);
 
 		iocg->child_adjusted_sum = sf + DIV64_U64_ROUND_UP(st * wptp, wpt);
-	पूर्ण
+	}
 
 	/*
 	 * All inner nodes now have ->hweight_inuse and ->child_adjusted_sum and
-	 * we can finally determine leaf adjusपंचांगents.
+	 * we can finally determine leaf adjustments.
 	 */
-	list_क्रम_each_entry(iocg, surpluses, surplus_list) अणु
-		काष्ठा ioc_gq *parent = iocg->ancestors[iocg->level - 1];
+	list_for_each_entry(iocg, surpluses, surplus_list) {
+		struct ioc_gq *parent = iocg->ancestors[iocg->level - 1];
 		u32 inuse;
 
 		/*
-		 * In-debt iocgs participated in the करोnation calculation with
+		 * In-debt iocgs participated in the donation calculation with
 		 * the minimum target hweight_inuse. Configuring inuse
 		 * accordingly would work fine but debt handling expects
-		 * @iocg->inuse stay at the minimum and we करोn't wanna
-		 * पूर्णांकerfere.
+		 * @iocg->inuse stay at the minimum and we don't wanna
+		 * interfere.
 		 */
-		अगर (iocg->असल_vdebt) अणु
+		if (iocg->abs_vdebt) {
 			WARN_ON_ONCE(iocg->inuse > 1);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* w' = s' * b' / b'_p, note that b' == b'_t क्रम करोnating leaves */
+		/* w' = s' * b' / b'_p, note that b' == b'_t for donating leaves */
 		inuse = DIV64_U64_ROUND_UP(
-			parent->child_adjusted_sum * iocg->hweight_after_करोnation,
+			parent->child_adjusted_sum * iocg->hweight_after_donation,
 			parent->hweight_inuse);
 
 		TRACE_IOCG_PATH(inuse_transfer, iocg, now,
 				iocg->inuse, inuse,
 				iocg->hweight_inuse,
-				iocg->hweight_after_करोnation);
+				iocg->hweight_after_donation);
 
 		__propagate_weights(iocg, iocg->active, inuse, true, now);
-	पूर्ण
+	}
 
 	/* walk list should be dissolved after use */
-	list_क्रम_each_entry_safe(iocg, tiocg, &inner_walk, walk_list)
+	list_for_each_entry_safe(iocg, tiocg, &inner_walk, walk_list)
 		list_del_init(&iocg->walk_list);
-पूर्ण
+}
 
 /*
- * A low weight iocg can amass a large amount of debt, क्रम example, when
- * anonymous memory माला_लो reclaimed aggressively. If the प्रणाली has a lot of
+ * A low weight iocg can amass a large amount of debt, for example, when
+ * anonymous memory gets reclaimed aggressively. If the system has a lot of
  * memory paired with a slow IO device, the debt can span multiple seconds or
  * more. If there are no other subsequent IO issuers, the in-debt iocg may end
- * up blocked paying its debt जबतक the IO device is idle.
+ * up blocked paying its debt while the IO device is idle.
  *
- * The following protects against such हालs. If the device has been
- * sufficiently idle क्रम a जबतक, the debts are halved and delays are
+ * The following protects against such cases. If the device has been
+ * sufficiently idle for a while, the debts are halved and delays are
  * recalculated.
  */
-अटल व्योम ioc_क्रमgive_debts(काष्ठा ioc *ioc, u64 usage_us_sum, पूर्णांक nr_debtors,
-			      काष्ठा ioc_now *now)
-अणु
-	काष्ठा ioc_gq *iocg;
+static void ioc_forgive_debts(struct ioc *ioc, u64 usage_us_sum, int nr_debtors,
+			      struct ioc_now *now)
+{
+	struct ioc_gq *iocg;
 	u64 dur, usage_pct, nr_cycles;
 
-	/* अगर no debtor, reset the cycle */
-	अगर (!nr_debtors) अणु
+	/* if no debtor, reset the cycle */
+	if (!nr_debtors) {
 		ioc->dfgv_period_at = now->now;
 		ioc->dfgv_period_rem = 0;
 		ioc->dfgv_usage_us_sum = 0;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * Debtors can pass through a lot of ग_लिखोs choking the device and we
-	 * करोn't want to be क्रमgiving debts जबतक the device is struggling from
-	 * ग_लिखो bursts. If we're missing latency tarमाला_लो, consider the device
+	 * Debtors can pass through a lot of writes choking the device and we
+	 * don't want to be forgiving debts while the device is struggling from
+	 * write bursts. If we're missing latency targets, consider the device
 	 * fully utilized.
 	 */
-	अगर (ioc->busy_level > 0)
+	if (ioc->busy_level > 0)
 		usage_us_sum = max_t(u64, usage_us_sum, ioc->period_us);
 
 	ioc->dfgv_usage_us_sum += usage_us_sum;
-	अगर (समय_beक्रमe64(now->now, ioc->dfgv_period_at + DFGV_PERIOD))
-		वापस;
+	if (time_before64(now->now, ioc->dfgv_period_at + DFGV_PERIOD))
+		return;
 
 	/*
 	 * At least DFGV_PERIOD has passed since the last period. Calculate the
 	 * average usage and reset the period counters.
 	 */
 	dur = now->now - ioc->dfgv_period_at;
-	usage_pct = भाग64_u64(100 * ioc->dfgv_usage_us_sum, dur);
+	usage_pct = div64_u64(100 * ioc->dfgv_usage_us_sum, dur);
 
 	ioc->dfgv_period_at = now->now;
 	ioc->dfgv_usage_us_sum = 0;
 
-	/* अगर was too busy, reset everything */
-	अगर (usage_pct > DFGV_USAGE_PCT) अणु
+	/* if was too busy, reset everything */
+	if (usage_pct > DFGV_USAGE_PCT) {
 		ioc->dfgv_period_rem = 0;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * Usage is lower than threshold. Let's क्रमgive some debts. Debt
-	 * क्रमgiveness runs off of the usual ioc समयr but its period usually
-	 * करोesn't match ioc's. Compensate the dअगरference by perक्रमming the
-	 * reduction as many बार as would fit in the duration since the last
+	 * Usage is lower than threshold. Let's forgive some debts. Debt
+	 * forgiveness runs off of the usual ioc timer but its period usually
+	 * doesn't match ioc's. Compensate the difference by performing the
+	 * reduction as many times as would fit in the duration since the last
 	 * run and carrying over the left-over duration in @ioc->dfgv_period_rem
-	 * - अगर ioc period is 75% of DFGV_PERIOD, one out of three consecutive
-	 * reductions is द्विगुनd.
+	 * - if ioc period is 75% of DFGV_PERIOD, one out of three consecutive
+	 * reductions is doubled.
 	 */
 	nr_cycles = dur + ioc->dfgv_period_rem;
-	ioc->dfgv_period_rem = करो_भाग(nr_cycles, DFGV_PERIOD);
+	ioc->dfgv_period_rem = do_div(nr_cycles, DFGV_PERIOD);
 
-	list_क्रम_each_entry(iocg, &ioc->active_iocgs, active_list) अणु
+	list_for_each_entry(iocg, &ioc->active_iocgs, active_list) {
 		u64 __maybe_unused old_debt, __maybe_unused old_delay;
 
-		अगर (!iocg->असल_vdebt && !iocg->delay)
-			जारी;
+		if (!iocg->abs_vdebt && !iocg->delay)
+			continue;
 
-		spin_lock(&iocg->रुकोq.lock);
+		spin_lock(&iocg->waitq.lock);
 
-		old_debt = iocg->असल_vdebt;
+		old_debt = iocg->abs_vdebt;
 		old_delay = iocg->delay;
 
-		अगर (iocg->असल_vdebt)
-			iocg->असल_vdebt = iocg->असल_vdebt >> nr_cycles ?: 1;
-		अगर (iocg->delay)
+		if (iocg->abs_vdebt)
+			iocg->abs_vdebt = iocg->abs_vdebt >> nr_cycles ?: 1;
+		if (iocg->delay)
 			iocg->delay = iocg->delay >> nr_cycles ?: 1;
 
-		iocg_kick_रुकोq(iocg, true, now);
+		iocg_kick_waitq(iocg, true, now);
 
-		TRACE_IOCG_PATH(iocg_क्रमgive_debt, iocg, now, usage_pct,
-				old_debt, iocg->असल_vdebt,
+		TRACE_IOCG_PATH(iocg_forgive_debt, iocg, now, usage_pct,
+				old_debt, iocg->abs_vdebt,
 				old_delay, iocg->delay);
 
-		spin_unlock(&iocg->रुकोq.lock);
-	पूर्ण
-पूर्ण
+		spin_unlock(&iocg->waitq.lock);
+	}
+}
 
 /*
- * Check the active iocgs' state to aव्योम oversleeping and deactive
+ * Check the active iocgs' state to avoid oversleeping and deactive
  * idle iocgs.
  *
- * Since रुकोers determine the sleep durations based on the vrate
- * they saw at the समय of sleep, अगर vrate has increased, some
- * रुकोers could be sleeping क्रम too दीर्घ. Wake up tardy रुकोers
+ * Since waiters determine the sleep durations based on the vrate
+ * they saw at the time of sleep, if vrate has increased, some
+ * waiters could be sleeping for too long. Wake up tardy waiters
  * which should have woken up in the last period and expire idle
  * iocgs.
  */
-अटल पूर्णांक ioc_check_iocgs(काष्ठा ioc *ioc, काष्ठा ioc_now *now)
-अणु
-	पूर्णांक nr_debtors = 0;
-	काष्ठा ioc_gq *iocg, *tiocg;
+static int ioc_check_iocgs(struct ioc *ioc, struct ioc_now *now)
+{
+	int nr_debtors = 0;
+	struct ioc_gq *iocg, *tiocg;
 
-	list_क्रम_each_entry_safe(iocg, tiocg, &ioc->active_iocgs, active_list) अणु
-		अगर (!रुकोqueue_active(&iocg->रुकोq) && !iocg->असल_vdebt &&
+	list_for_each_entry_safe(iocg, tiocg, &ioc->active_iocgs, active_list) {
+		if (!waitqueue_active(&iocg->waitq) && !iocg->abs_vdebt &&
 		    !iocg->delay && !iocg_is_idle(iocg))
-			जारी;
+			continue;
 
-		spin_lock(&iocg->रुकोq.lock);
+		spin_lock(&iocg->waitq.lock);
 
-		/* flush रुको and indebt stat deltas */
-		अगर (iocg->रुको_since) अणु
-			iocg->local_stat.रुको_us += now->now - iocg->रुको_since;
-			iocg->रुको_since = now->now;
-		पूर्ण
-		अगर (iocg->indebt_since) अणु
+		/* flush wait and indebt stat deltas */
+		if (iocg->wait_since) {
+			iocg->local_stat.wait_us += now->now - iocg->wait_since;
+			iocg->wait_since = now->now;
+		}
+		if (iocg->indebt_since) {
 			iocg->local_stat.indebt_us +=
 				now->now - iocg->indebt_since;
 			iocg->indebt_since = now->now;
-		पूर्ण
-		अगर (iocg->indelay_since) अणु
+		}
+		if (iocg->indelay_since) {
 			iocg->local_stat.indelay_us +=
 				now->now - iocg->indelay_since;
 			iocg->indelay_since = now->now;
-		पूर्ण
+		}
 
-		अगर (रुकोqueue_active(&iocg->रुकोq) || iocg->असल_vdebt ||
-		    iocg->delay) अणु
-			/* might be oversleeping vसमय / hweight changes, kick */
-			iocg_kick_रुकोq(iocg, true, now);
-			अगर (iocg->असल_vdebt || iocg->delay)
+		if (waitqueue_active(&iocg->waitq) || iocg->abs_vdebt ||
+		    iocg->delay) {
+			/* might be oversleeping vtime / hweight changes, kick */
+			iocg_kick_waitq(iocg, true, now);
+			if (iocg->abs_vdebt || iocg->delay)
 				nr_debtors++;
-		पूर्ण अन्यथा अगर (iocg_is_idle(iocg)) अणु
-			/* no रुकोer and idle, deactivate */
-			u64 vसमय = atomic64_पढ़ो(&iocg->vसमय);
+		} else if (iocg_is_idle(iocg)) {
+			/* no waiter and idle, deactivate */
+			u64 vtime = atomic64_read(&iocg->vtime);
 			s64 excess;
 
 			/*
-			 * @iocg has been inactive क्रम a full duration and will
+			 * @iocg has been inactive for a full duration and will
 			 * have a high budget. Account anything above target as
 			 * error and throw away. On reactivation, it'll start
 			 * with the target budget.
 			 */
-			excess = now->vnow - vसमय - ioc->margins.target;
-			अगर (excess > 0) अणु
+			excess = now->vnow - vtime - ioc->margins.target;
+			if (excess > 0) {
 				u32 old_hwi;
 
-				current_hweight(iocg, शून्य, &old_hwi);
-				ioc->vसमय_err -= भाग64_u64(excess * old_hwi,
+				current_hweight(iocg, NULL, &old_hwi);
+				ioc->vtime_err -= div64_u64(excess * old_hwi,
 							    WEIGHT_ONE);
-			पूर्ण
+			}
 
 			TRACE_IOCG_PATH(iocg_idle, iocg, now,
-					atomic64_पढ़ो(&iocg->active_period),
-					atomic64_पढ़ो(&ioc->cur_period), vसमय);
+					atomic64_read(&iocg->active_period),
+					atomic64_read(&ioc->cur_period), vtime);
 			__propagate_weights(iocg, 0, 0, false, now);
 			list_del_init(&iocg->active_list);
-		पूर्ण
+		}
 
-		spin_unlock(&iocg->रुकोq.lock);
-	पूर्ण
+		spin_unlock(&iocg->waitq.lock);
+	}
 
 	commit_weights(ioc);
-	वापस nr_debtors;
-पूर्ण
+	return nr_debtors;
+}
 
-अटल व्योम ioc_समयr_fn(काष्ठा समयr_list *समयr)
-अणु
-	काष्ठा ioc *ioc = container_of(समयr, काष्ठा ioc, समयr);
-	काष्ठा ioc_gq *iocg, *tiocg;
-	काष्ठा ioc_now now;
+static void ioc_timer_fn(struct timer_list *timer)
+{
+	struct ioc *ioc = container_of(timer, struct ioc, timer);
+	struct ioc_gq *iocg, *tiocg;
+	struct ioc_now now;
 	LIST_HEAD(surpluses);
-	पूर्णांक nr_debtors, nr_लघुages = 0, nr_lagging = 0;
+	int nr_debtors, nr_shortages = 0, nr_lagging = 0;
 	u64 usage_us_sum = 0;
 	u32 ppm_rthr = MILLION - ioc->params.qos[QOS_RPPM];
 	u32 ppm_wthr = MILLION - ioc->params.qos[QOS_WPPM];
-	u32 missed_ppm[2], rq_रुको_pct;
-	u64 period_vसमय;
-	पूर्णांक prev_busy_level;
+	u32 missed_ppm[2], rq_wait_pct;
+	u64 period_vtime;
+	int prev_busy_level;
 
 	/* how were the latencies during the period? */
-	ioc_lat_stat(ioc, missed_ppm, &rq_रुको_pct);
+	ioc_lat_stat(ioc, missed_ppm, &rq_wait_pct);
 
 	/* take care of active iocgs */
 	spin_lock_irq(&ioc->lock);
 
 	ioc_now(ioc, &now);
 
-	period_vसमय = now.vnow - ioc->period_at_vसमय;
-	अगर (WARN_ON_ONCE(!period_vसमय)) अणु
+	period_vtime = now.vnow - ioc->period_at_vtime;
+	if (WARN_ON_ONCE(!period_vtime)) {
 		spin_unlock_irq(&ioc->lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	nr_debtors = ioc_check_iocgs(ioc, &now);
 
 	/*
-	 * Wait and indebt stat are flushed above and the करोnation calculation
+	 * Wait and indebt stat are flushed above and the donation calculation
 	 * below needs updated usage stat. Let's bring stat up-to-date.
 	 */
 	iocg_flush_stat(&ioc->active_iocgs, &now);
 
 	/* calc usage and see whether some weights need to be moved around */
-	list_क्रम_each_entry(iocg, &ioc->active_iocgs, active_list) अणु
-		u64 vकरोne, vसमय, usage_us;
+	list_for_each_entry(iocg, &ioc->active_iocgs, active_list) {
+		u64 vdone, vtime, usage_us;
 		u32 hw_active, hw_inuse;
 
 		/*
-		 * Collect unused and wind vसमय बंदr to vnow to prevent
+		 * Collect unused and wind vtime closer to vnow to prevent
 		 * iocgs from accumulating a large amount of budget.
 		 */
-		vकरोne = atomic64_पढ़ो(&iocg->करोne_vसमय);
-		vसमय = atomic64_पढ़ो(&iocg->vसमय);
+		vdone = atomic64_read(&iocg->done_vtime);
+		vtime = atomic64_read(&iocg->vtime);
 		current_hweight(iocg, &hw_active, &hw_inuse);
 
 		/*
-		 * Latency QoS detection करोesn't account क्रम IOs which are
-		 * in-flight क्रम दीर्घer than a period.  Detect them by
-		 * comparing vकरोne against period start.  If lagging behind
-		 * IOs from past periods, करोn't increase vrate.
+		 * Latency QoS detection doesn't account for IOs which are
+		 * in-flight for longer than a period.  Detect them by
+		 * comparing vdone against period start.  If lagging behind
+		 * IOs from past periods, don't increase vrate.
 		 */
-		अगर ((ppm_rthr != MILLION || ppm_wthr != MILLION) &&
-		    !atomic_पढ़ो(&iocg_to_blkg(iocg)->use_delay) &&
-		    समय_after64(vसमय, vकरोne) &&
-		    समय_after64(vसमय, now.vnow -
-				 MAX_LAGGING_PERIODS * period_vसमय) &&
-		    समय_beक्रमe64(vकरोne, now.vnow - period_vसमय))
+		if ((ppm_rthr != MILLION || ppm_wthr != MILLION) &&
+		    !atomic_read(&iocg_to_blkg(iocg)->use_delay) &&
+		    time_after64(vtime, vdone) &&
+		    time_after64(vtime, now.vnow -
+				 MAX_LAGGING_PERIODS * period_vtime) &&
+		    time_before64(vdone, now.vnow - period_vtime))
 			nr_lagging++;
 
 		/*
-		 * Determine असलolute usage factoring in in-flight IOs to aव्योम
+		 * Determine absolute usage factoring in in-flight IOs to avoid
 		 * high-latency completions appearing as idle.
 		 */
 		usage_us = iocg->usage_delta_us;
 		usage_us_sum += usage_us;
 
-		/* see whether there's surplus vसमय */
+		/* see whether there's surplus vtime */
 		WARN_ON_ONCE(!list_empty(&iocg->surplus_list));
-		अगर (hw_inuse < hw_active ||
-		    (!रुकोqueue_active(&iocg->रुकोq) &&
-		     समय_beक्रमe64(vसमय, now.vnow - ioc->margins.low))) अणु
+		if (hw_inuse < hw_active ||
+		    (!waitqueue_active(&iocg->waitq) &&
+		     time_before64(vtime, now.vnow - ioc->margins.low))) {
 			u32 hwa, old_hwi, hwm, new_hwi, usage;
 			u64 usage_dur;
 
-			अगर (vकरोne != vसमय) अणु
+			if (vdone != vtime) {
 				u64 inflight_us = DIV64_U64_ROUND_UP(
-					cost_to_असल_cost(vसमय - vकरोne, hw_inuse),
-					ioc->vसमय_base_rate);
+					cost_to_abs_cost(vtime - vdone, hw_inuse),
+					ioc->vtime_base_rate);
 
 				usage_us = max(usage_us, inflight_us);
-			पूर्ण
+			}
 
 			/* convert to hweight based usage ratio */
-			अगर (समय_after64(iocg->activated_at, ioc->period_at))
+			if (time_after64(iocg->activated_at, ioc->period_at))
 				usage_dur = max_t(u64, now.now - iocg->activated_at, 1);
-			अन्यथा
+			else
 				usage_dur = max_t(u64, now.now - ioc->period_at, 1);
 
 			usage = clamp_t(u32,
@@ -2304,165 +2303,165 @@ fail_unlock:
 				1, WEIGHT_ONE);
 
 			/*
-			 * Alपढ़ोy करोnating or accumulated enough to start.
-			 * Determine the करोnation amount.
+			 * Already donating or accumulated enough to start.
+			 * Determine the donation amount.
 			 */
 			current_hweight(iocg, &hwa, &old_hwi);
 			hwm = current_hweight_max(iocg);
-			new_hwi = hweight_after_करोnation(iocg, old_hwi, hwm,
+			new_hwi = hweight_after_donation(iocg, old_hwi, hwm,
 							 usage, &now);
-			अगर (new_hwi < hwm) अणु
-				iocg->hweight_करोnating = hwa;
-				iocg->hweight_after_करोnation = new_hwi;
+			if (new_hwi < hwm) {
+				iocg->hweight_donating = hwa;
+				iocg->hweight_after_donation = new_hwi;
 				list_add(&iocg->surplus_list, &surpluses);
-			पूर्ण अन्यथा अणु
-				TRACE_IOCG_PATH(inuse_लघुage, iocg, &now,
+			} else {
+				TRACE_IOCG_PATH(inuse_shortage, iocg, &now,
 						iocg->inuse, iocg->active,
 						iocg->hweight_inuse, new_hwi);
 
 				__propagate_weights(iocg, iocg->active,
 						    iocg->active, true, &now);
-				nr_लघुages++;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			/* genuinely लघु on vसमय */
-			nr_लघुages++;
-		पूर्ण
-	पूर्ण
+				nr_shortages++;
+			}
+		} else {
+			/* genuinely short on vtime */
+			nr_shortages++;
+		}
+	}
 
-	अगर (!list_empty(&surpluses) && nr_लघुages)
+	if (!list_empty(&surpluses) && nr_shortages)
 		transfer_surpluses(&surpluses, &now);
 
 	commit_weights(ioc);
 
 	/* surplus list should be dissolved after use */
-	list_क्रम_each_entry_safe(iocg, tiocg, &surpluses, surplus_list)
+	list_for_each_entry_safe(iocg, tiocg, &surpluses, surplus_list)
 		list_del_init(&iocg->surplus_list);
 
 	/*
 	 * If q is getting clogged or we're missing too much, we're issuing
-	 * too much IO and should lower vसमय rate.  If we're not missing
-	 * and experiencing लघुages but not surpluses, we're too stingy
-	 * and should increase vसमय rate.
+	 * too much IO and should lower vtime rate.  If we're not missing
+	 * and experiencing shortages but not surpluses, we're too stingy
+	 * and should increase vtime rate.
 	 */
 	prev_busy_level = ioc->busy_level;
-	अगर (rq_रुको_pct > RQ_WAIT_BUSY_PCT ||
+	if (rq_wait_pct > RQ_WAIT_BUSY_PCT ||
 	    missed_ppm[READ] > ppm_rthr ||
-	    missed_ppm[WRITE] > ppm_wthr) अणु
-		/* clearly missing QoS tarमाला_लो, slow करोwn vrate */
+	    missed_ppm[WRITE] > ppm_wthr) {
+		/* clearly missing QoS targets, slow down vrate */
 		ioc->busy_level = max(ioc->busy_level, 0);
 		ioc->busy_level++;
-	पूर्ण अन्यथा अगर (rq_रुको_pct <= RQ_WAIT_BUSY_PCT * UNBUSY_THR_PCT / 100 &&
+	} else if (rq_wait_pct <= RQ_WAIT_BUSY_PCT * UNBUSY_THR_PCT / 100 &&
 		   missed_ppm[READ] <= ppm_rthr * UNBUSY_THR_PCT / 100 &&
-		   missed_ppm[WRITE] <= ppm_wthr * UNBUSY_THR_PCT / 100) अणु
-		/* QoS tarमाला_लो are being met with >25% margin */
-		अगर (nr_लघुages) अणु
+		   missed_ppm[WRITE] <= ppm_wthr * UNBUSY_THR_PCT / 100) {
+		/* QoS targets are being met with >25% margin */
+		if (nr_shortages) {
 			/*
-			 * We're throttling जबतक the device has spare
-			 * capacity.  If vrate was being slowed करोwn, stop.
+			 * We're throttling while the device has spare
+			 * capacity.  If vrate was being slowed down, stop.
 			 */
 			ioc->busy_level = min(ioc->busy_level, 0);
 
 			/*
-			 * If there are IOs spanning multiple periods, रुको
-			 * them out beक्रमe pushing the device harder.
+			 * If there are IOs spanning multiple periods, wait
+			 * them out before pushing the device harder.
 			 */
-			अगर (!nr_lagging)
+			if (!nr_lagging)
 				ioc->busy_level--;
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * Nobody is being throttled and the users aren't
 			 * issuing enough IOs to saturate the device.  We
-			 * simply करोn't know how बंद the device is to
+			 * simply don't know how close the device is to
 			 * saturation.  Coast.
 			 */
 			ioc->busy_level = 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/* inside the hysterisis margin, we're good */
 		ioc->busy_level = 0;
-	पूर्ण
+	}
 
 	ioc->busy_level = clamp(ioc->busy_level, -1000, 1000);
 
-	ioc_adjust_base_vrate(ioc, rq_रुको_pct, nr_lagging, nr_लघुages,
+	ioc_adjust_base_vrate(ioc, rq_wait_pct, nr_lagging, nr_shortages,
 			      prev_busy_level, missed_ppm);
 
 	ioc_refresh_params(ioc, false);
 
-	ioc_क्रमgive_debts(ioc, usage_us_sum, nr_debtors, &now);
+	ioc_forgive_debts(ioc, usage_us_sum, nr_debtors, &now);
 
 	/*
-	 * This period is करोne.  Move onto the next one.  If nothing's
-	 * going on with the device, stop the समयr.
+	 * This period is done.  Move onto the next one.  If nothing's
+	 * going on with the device, stop the timer.
 	 */
 	atomic64_inc(&ioc->cur_period);
 
-	अगर (ioc->running != IOC_STOP) अणु
-		अगर (!list_empty(&ioc->active_iocgs)) अणु
+	if (ioc->running != IOC_STOP) {
+		if (!list_empty(&ioc->active_iocgs)) {
 			ioc_start_period(ioc, &now);
-		पूर्ण अन्यथा अणु
+		} else {
 			ioc->busy_level = 0;
-			ioc->vसमय_err = 0;
+			ioc->vtime_err = 0;
 			ioc->running = IOC_IDLE;
-		पूर्ण
+		}
 
 		ioc_refresh_vrate(ioc, &now);
-	पूर्ण
+	}
 
 	spin_unlock_irq(&ioc->lock);
-पूर्ण
+}
 
-अटल u64 adjust_inuse_and_calc_cost(काष्ठा ioc_gq *iocg, u64 vसमय,
-				      u64 असल_cost, काष्ठा ioc_now *now)
-अणु
-	काष्ठा ioc *ioc = iocg->ioc;
-	काष्ठा ioc_margins *margins = &ioc->margins;
+static u64 adjust_inuse_and_calc_cost(struct ioc_gq *iocg, u64 vtime,
+				      u64 abs_cost, struct ioc_now *now)
+{
+	struct ioc *ioc = iocg->ioc;
+	struct ioc_margins *margins = &ioc->margins;
 	u32 __maybe_unused old_inuse = iocg->inuse, __maybe_unused old_hwi;
 	u32 hwi, adj_step;
 	s64 margin;
 	u64 cost, new_inuse;
 
-	current_hweight(iocg, शून्य, &hwi);
+	current_hweight(iocg, NULL, &hwi);
 	old_hwi = hwi;
-	cost = असल_cost_to_cost(असल_cost, hwi);
-	margin = now->vnow - vसमय - cost;
+	cost = abs_cost_to_cost(abs_cost, hwi);
+	margin = now->vnow - vtime - cost;
 
-	/* debt handling owns inuse क्रम debtors */
-	अगर (iocg->असल_vdebt)
-		वापस cost;
+	/* debt handling owns inuse for debtors */
+	if (iocg->abs_vdebt)
+		return cost;
 
 	/*
-	 * We only increase inuse during period and करो so अगर the margin has
-	 * deteriorated since the previous adjusपंचांगent.
+	 * We only increase inuse during period and do so if the margin has
+	 * deteriorated since the previous adjustment.
 	 */
-	अगर (margin >= iocg->saved_margin || margin >= margins->low ||
+	if (margin >= iocg->saved_margin || margin >= margins->low ||
 	    iocg->inuse == iocg->active)
-		वापस cost;
+		return cost;
 
 	spin_lock_irq(&ioc->lock);
 
 	/* we own inuse only when @iocg is in the normal active state */
-	अगर (iocg->असल_vdebt || list_empty(&iocg->active_list)) अणु
+	if (iocg->abs_vdebt || list_empty(&iocg->active_list)) {
 		spin_unlock_irq(&ioc->lock);
-		वापस cost;
-	पूर्ण
+		return cost;
+	}
 
 	/*
-	 * Bump up inuse till @असल_cost fits in the existing budget.
+	 * Bump up inuse till @abs_cost fits in the existing budget.
 	 * adj_step must be determined after acquiring ioc->lock - we might
-	 * have raced and lost to another thपढ़ो क्रम activation and could
-	 * be पढ़ोing 0 iocg->active beक्रमe ioc->lock which will lead to
+	 * have raced and lost to another thread for activation and could
+	 * be reading 0 iocg->active before ioc->lock which will lead to
 	 * infinite loop.
 	 */
 	new_inuse = iocg->inuse;
 	adj_step = DIV_ROUND_UP(iocg->active * INUSE_ADJ_STEP_PCT, 100);
-	करो अणु
+	do {
 		new_inuse = new_inuse + adj_step;
 		propagate_weights(iocg, iocg->active, new_inuse, true, now);
-		current_hweight(iocg, शून्य, &hwi);
-		cost = असल_cost_to_cost(असल_cost, hwi);
-	पूर्ण जबतक (समय_after64(vसमय + cost, now->vnow) &&
+		current_hweight(iocg, NULL, &hwi);
+		cost = abs_cost_to_cost(abs_cost, hwi);
+	} while (time_after64(vtime + cost, now->vnow) &&
 		 iocg->inuse != iocg->active);
 
 	spin_unlock_irq(&ioc->lock);
@@ -2470,337 +2469,337 @@ fail_unlock:
 	TRACE_IOCG_PATH(inuse_adjust, iocg, now,
 			old_inuse, iocg->inuse, old_hwi, hwi);
 
-	वापस cost;
-पूर्ण
+	return cost;
+}
 
-अटल व्योम calc_vसमय_cost_builtin(काष्ठा bio *bio, काष्ठा ioc_gq *iocg,
+static void calc_vtime_cost_builtin(struct bio *bio, struct ioc_gq *iocg,
 				    bool is_merge, u64 *costp)
-अणु
-	काष्ठा ioc *ioc = iocg->ioc;
-	u64 coef_seqio, coef_अक्रमio, coef_page;
+{
+	struct ioc *ioc = iocg->ioc;
+	u64 coef_seqio, coef_randio, coef_page;
 	u64 pages = max_t(u64, bio_sectors(bio) >> IOC_SECT_TO_PAGE_SHIFT, 1);
 	u64 seek_pages = 0;
 	u64 cost = 0;
 
-	चयन (bio_op(bio)) अणु
-	हाल REQ_OP_READ:
+	switch (bio_op(bio)) {
+	case REQ_OP_READ:
 		coef_seqio	= ioc->params.lcoefs[LCOEF_RSEQIO];
-		coef_अक्रमio	= ioc->params.lcoefs[LCOEF_RRANDIO];
+		coef_randio	= ioc->params.lcoefs[LCOEF_RRANDIO];
 		coef_page	= ioc->params.lcoefs[LCOEF_RPAGE];
-		अवरोध;
-	हाल REQ_OP_WRITE:
+		break;
+	case REQ_OP_WRITE:
 		coef_seqio	= ioc->params.lcoefs[LCOEF_WSEQIO];
-		coef_अक्रमio	= ioc->params.lcoefs[LCOEF_WRANDIO];
+		coef_randio	= ioc->params.lcoefs[LCOEF_WRANDIO];
 		coef_page	= ioc->params.lcoefs[LCOEF_WPAGE];
-		अवरोध;
-	शेष:
-		जाओ out;
-	पूर्ण
+		break;
+	default:
+		goto out;
+	}
 
-	अगर (iocg->cursor) अणु
-		seek_pages = असल(bio->bi_iter.bi_sector - iocg->cursor);
+	if (iocg->cursor) {
+		seek_pages = abs(bio->bi_iter.bi_sector - iocg->cursor);
 		seek_pages >>= IOC_SECT_TO_PAGE_SHIFT;
-	पूर्ण
+	}
 
-	अगर (!is_merge) अणु
-		अगर (seek_pages > LCOEF_RANDIO_PAGES) अणु
-			cost += coef_अक्रमio;
-		पूर्ण अन्यथा अणु
+	if (!is_merge) {
+		if (seek_pages > LCOEF_RANDIO_PAGES) {
+			cost += coef_randio;
+		} else {
 			cost += coef_seqio;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	cost += pages * coef_page;
 out:
 	*costp = cost;
-पूर्ण
+}
 
-अटल u64 calc_vसमय_cost(काष्ठा bio *bio, काष्ठा ioc_gq *iocg, bool is_merge)
-अणु
+static u64 calc_vtime_cost(struct bio *bio, struct ioc_gq *iocg, bool is_merge)
+{
 	u64 cost;
 
-	calc_vसमय_cost_builtin(bio, iocg, is_merge, &cost);
-	वापस cost;
-पूर्ण
+	calc_vtime_cost_builtin(bio, iocg, is_merge, &cost);
+	return cost;
+}
 
-अटल व्योम calc_size_vसमय_cost_builtin(काष्ठा request *rq, काष्ठा ioc *ioc,
+static void calc_size_vtime_cost_builtin(struct request *rq, struct ioc *ioc,
 					 u64 *costp)
-अणु
-	अचिन्हित पूर्णांक pages = blk_rq_stats_sectors(rq) >> IOC_SECT_TO_PAGE_SHIFT;
+{
+	unsigned int pages = blk_rq_stats_sectors(rq) >> IOC_SECT_TO_PAGE_SHIFT;
 
-	चयन (req_op(rq)) अणु
-	हाल REQ_OP_READ:
+	switch (req_op(rq)) {
+	case REQ_OP_READ:
 		*costp = pages * ioc->params.lcoefs[LCOEF_RPAGE];
-		अवरोध;
-	हाल REQ_OP_WRITE:
+		break;
+	case REQ_OP_WRITE:
 		*costp = pages * ioc->params.lcoefs[LCOEF_WPAGE];
-		अवरोध;
-	शेष:
+		break;
+	default:
 		*costp = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u64 calc_size_vसमय_cost(काष्ठा request *rq, काष्ठा ioc *ioc)
-अणु
+static u64 calc_size_vtime_cost(struct request *rq, struct ioc *ioc)
+{
 	u64 cost;
 
-	calc_size_vसमय_cost_builtin(rq, ioc, &cost);
-	वापस cost;
-पूर्ण
+	calc_size_vtime_cost_builtin(rq, ioc, &cost);
+	return cost;
+}
 
-अटल व्योम ioc_rqos_throttle(काष्ठा rq_qos *rqos, काष्ठा bio *bio)
-अणु
-	काष्ठा blkcg_gq *blkg = bio->bi_blkg;
-	काष्ठा ioc *ioc = rqos_to_ioc(rqos);
-	काष्ठा ioc_gq *iocg = blkg_to_iocg(blkg);
-	काष्ठा ioc_now now;
-	काष्ठा iocg_रुको रुको;
-	u64 असल_cost, cost, vसमय;
+static void ioc_rqos_throttle(struct rq_qos *rqos, struct bio *bio)
+{
+	struct blkcg_gq *blkg = bio->bi_blkg;
+	struct ioc *ioc = rqos_to_ioc(rqos);
+	struct ioc_gq *iocg = blkg_to_iocg(blkg);
+	struct ioc_now now;
+	struct iocg_wait wait;
+	u64 abs_cost, cost, vtime;
 	bool use_debt, ioc_locked;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	/* bypass IOs अगर disabled, still initializing, or क्रम root cgroup */
-	अगर (!ioc->enabled || !iocg || !iocg->level)
-		वापस;
+	/* bypass IOs if disabled, still initializing, or for root cgroup */
+	if (!ioc->enabled || !iocg || !iocg->level)
+		return;
 
-	/* calculate the असलolute vसमय cost */
-	असल_cost = calc_vसमय_cost(bio, iocg, false);
-	अगर (!असल_cost)
-		वापस;
+	/* calculate the absolute vtime cost */
+	abs_cost = calc_vtime_cost(bio, iocg, false);
+	if (!abs_cost)
+		return;
 
-	अगर (!iocg_activate(iocg, &now))
-		वापस;
+	if (!iocg_activate(iocg, &now))
+		return;
 
 	iocg->cursor = bio_end_sector(bio);
-	vसमय = atomic64_पढ़ो(&iocg->vसमय);
-	cost = adjust_inuse_and_calc_cost(iocg, vसमय, असल_cost, &now);
+	vtime = atomic64_read(&iocg->vtime);
+	cost = adjust_inuse_and_calc_cost(iocg, vtime, abs_cost, &now);
 
 	/*
-	 * If no one's रुकोing and within budget, issue right away.  The
-	 * tests are racy but the races aren't प्रणालीic - we only miss once
-	 * in a जबतक which is fine.
+	 * If no one's waiting and within budget, issue right away.  The
+	 * tests are racy but the races aren't systemic - we only miss once
+	 * in a while which is fine.
 	 */
-	अगर (!रुकोqueue_active(&iocg->रुकोq) && !iocg->असल_vdebt &&
-	    समय_beक्रमe_eq64(vसमय + cost, now.vnow)) अणु
-		iocg_commit_bio(iocg, bio, असल_cost, cost);
-		वापस;
-	पूर्ण
+	if (!waitqueue_active(&iocg->waitq) && !iocg->abs_vdebt &&
+	    time_before_eq64(vtime + cost, now.vnow)) {
+		iocg_commit_bio(iocg, bio, abs_cost, cost);
+		return;
+	}
 
 	/*
 	 * We're over budget. This can be handled in two ways. IOs which may
-	 * cause priority inversions are punted to @ioc->aux_iocg and अक्षरged as
-	 * debt. Otherwise, the issuer is blocked on @iocg->रुकोq. Debt handling
-	 * requires @ioc->lock, रुकोq handling @iocg->रुकोq.lock. Determine
+	 * cause priority inversions are punted to @ioc->aux_iocg and charged as
+	 * debt. Otherwise, the issuer is blocked on @iocg->waitq. Debt handling
+	 * requires @ioc->lock, waitq handling @iocg->waitq.lock. Determine
 	 * whether debt handling is needed and acquire locks accordingly.
 	 */
-	use_debt = bio_issue_as_root_blkg(bio) || fatal_संकेत_pending(current);
-	ioc_locked = use_debt || READ_ONCE(iocg->असल_vdebt);
+	use_debt = bio_issue_as_root_blkg(bio) || fatal_signal_pending(current);
+	ioc_locked = use_debt || READ_ONCE(iocg->abs_vdebt);
 retry_lock:
 	iocg_lock(iocg, ioc_locked, &flags);
 
 	/*
-	 * @iocg must stay activated क्रम debt and रुकोq handling. Deactivation
-	 * is synchronized against both ioc->lock and रुकोq.lock and we won't
-	 * get deactivated as दीर्घ as we're waiting or has debt, so we're good
-	 * अगर we're activated here. In the unlikely cases that we aren't, just
+	 * @iocg must stay activated for debt and waitq handling. Deactivation
+	 * is synchronized against both ioc->lock and waitq.lock and we won't
+	 * get deactivated as long as we're waiting or has debt, so we're good
+	 * if we're activated here. In the unlikely cases that we aren't, just
 	 * issue the IO.
 	 */
-	अगर (unlikely(list_empty(&iocg->active_list))) अणु
+	if (unlikely(list_empty(&iocg->active_list))) {
 		iocg_unlock(iocg, ioc_locked, &flags);
-		iocg_commit_bio(iocg, bio, असल_cost, cost);
-		वापस;
-	पूर्ण
+		iocg_commit_bio(iocg, bio, abs_cost, cost);
+		return;
+	}
 
 	/*
 	 * We're over budget. If @bio has to be issued regardless, remember
-	 * the असल_cost instead of advancing vसमय. iocg_kick_रुकोq() will pay
-	 * off the debt beक्रमe waking more IOs.
+	 * the abs_cost instead of advancing vtime. iocg_kick_waitq() will pay
+	 * off the debt before waking more IOs.
 	 *
 	 * This way, the debt is continuously paid off each period with the
-	 * actual budget available to the cgroup. If we just wound vसमय, we
-	 * would incorrectly use the current hw_inuse क्रम the entire amount
-	 * which, क्रम example, can lead to the cgroup staying blocked क्रम a
-	 * दीर्घ समय even with substantially उठाओd hw_inuse.
+	 * actual budget available to the cgroup. If we just wound vtime, we
+	 * would incorrectly use the current hw_inuse for the entire amount
+	 * which, for example, can lead to the cgroup staying blocked for a
+	 * long time even with substantially raised hw_inuse.
 	 *
-	 * An iocg with vdebt should stay online so that the समयr can keep
+	 * An iocg with vdebt should stay online so that the timer can keep
 	 * deducting its vdebt and [de]activate use_delay mechanism
-	 * accordingly. We करोn't want to race against the समयr trying to
+	 * accordingly. We don't want to race against the timer trying to
 	 * clear them and leave @iocg inactive w/ dangling use_delay heavily
 	 * penalizing the cgroup and its descendants.
 	 */
-	अगर (use_debt) अणु
-		iocg_incur_debt(iocg, असल_cost, &now);
-		अगर (iocg_kick_delay(iocg, &now))
+	if (use_debt) {
+		iocg_incur_debt(iocg, abs_cost, &now);
+		if (iocg_kick_delay(iocg, &now))
 			blkcg_schedule_throttle(rqos->q,
 					(bio->bi_opf & REQ_SWAP) == REQ_SWAP);
 		iocg_unlock(iocg, ioc_locked, &flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* guarantee that iocgs w/ रुकोers have maximum inuse */
-	अगर (!iocg->असल_vdebt && iocg->inuse != iocg->active) अणु
-		अगर (!ioc_locked) अणु
+	/* guarantee that iocgs w/ waiters have maximum inuse */
+	if (!iocg->abs_vdebt && iocg->inuse != iocg->active) {
+		if (!ioc_locked) {
 			iocg_unlock(iocg, false, &flags);
 			ioc_locked = true;
-			जाओ retry_lock;
-		पूर्ण
+			goto retry_lock;
+		}
 		propagate_weights(iocg, iocg->active, iocg->active, true,
 				  &now);
-	पूर्ण
+	}
 
 	/*
-	 * Append self to the रुकोq and schedule the wakeup समयr अगर we're
-	 * the first रुकोer.  The समयr duration is calculated based on the
-	 * current vrate.  vसमय and hweight changes can make it too लघु
-	 * or too दीर्घ.  Each रुको entry records the असलolute cost it's
-	 * रुकोing क्रम to allow re-evaluation using a custom रुको entry.
+	 * Append self to the waitq and schedule the wakeup timer if we're
+	 * the first waiter.  The timer duration is calculated based on the
+	 * current vrate.  vtime and hweight changes can make it too short
+	 * or too long.  Each wait entry records the absolute cost it's
+	 * waiting for to allow re-evaluation using a custom wait entry.
 	 *
-	 * If too लघु, the समयr simply reschedules itself.  If too दीर्घ,
-	 * the period समयr will notice and trigger wakeups.
+	 * If too short, the timer simply reschedules itself.  If too long,
+	 * the period timer will notice and trigger wakeups.
 	 *
-	 * All रुकोers are on iocg->रुकोq and the रुको states are
-	 * synchronized using रुकोq.lock.
+	 * All waiters are on iocg->waitq and the wait states are
+	 * synchronized using waitq.lock.
 	 */
-	init_रुकोqueue_func_entry(&रुको.रुको, iocg_wake_fn);
-	रुको.रुको.निजी = current;
-	रुको.bio = bio;
-	रुको.असल_cost = असल_cost;
-	रुको.committed = false;	/* will be set true by waker */
+	init_waitqueue_func_entry(&wait.wait, iocg_wake_fn);
+	wait.wait.private = current;
+	wait.bio = bio;
+	wait.abs_cost = abs_cost;
+	wait.committed = false;	/* will be set true by waker */
 
-	__add_रुको_queue_entry_tail(&iocg->रुकोq, &रुको.रुको);
-	iocg_kick_रुकोq(iocg, ioc_locked, &now);
+	__add_wait_queue_entry_tail(&iocg->waitq, &wait.wait);
+	iocg_kick_waitq(iocg, ioc_locked, &now);
 
 	iocg_unlock(iocg, ioc_locked, &flags);
 
-	जबतक (true) अणु
+	while (true) {
 		set_current_state(TASK_UNINTERRUPTIBLE);
-		अगर (रुको.committed)
-			अवरोध;
+		if (wait.committed)
+			break;
 		io_schedule();
-	पूर्ण
+	}
 
-	/* waker alपढ़ोy committed us, proceed */
-	finish_रुको(&iocg->रुकोq, &रुको.रुको);
-पूर्ण
+	/* waker already committed us, proceed */
+	finish_wait(&iocg->waitq, &wait.wait);
+}
 
-अटल व्योम ioc_rqos_merge(काष्ठा rq_qos *rqos, काष्ठा request *rq,
-			   काष्ठा bio *bio)
-अणु
-	काष्ठा ioc_gq *iocg = blkg_to_iocg(bio->bi_blkg);
-	काष्ठा ioc *ioc = rqos_to_ioc(rqos);
+static void ioc_rqos_merge(struct rq_qos *rqos, struct request *rq,
+			   struct bio *bio)
+{
+	struct ioc_gq *iocg = blkg_to_iocg(bio->bi_blkg);
+	struct ioc *ioc = rqos_to_ioc(rqos);
 	sector_t bio_end = bio_end_sector(bio);
-	काष्ठा ioc_now now;
-	u64 vसमय, असल_cost, cost;
-	अचिन्हित दीर्घ flags;
+	struct ioc_now now;
+	u64 vtime, abs_cost, cost;
+	unsigned long flags;
 
-	/* bypass अगर disabled, still initializing, or क्रम root cgroup */
-	अगर (!ioc->enabled || !iocg || !iocg->level)
-		वापस;
+	/* bypass if disabled, still initializing, or for root cgroup */
+	if (!ioc->enabled || !iocg || !iocg->level)
+		return;
 
-	असल_cost = calc_vसमय_cost(bio, iocg, true);
-	अगर (!असल_cost)
-		वापस;
+	abs_cost = calc_vtime_cost(bio, iocg, true);
+	if (!abs_cost)
+		return;
 
 	ioc_now(ioc, &now);
 
-	vसमय = atomic64_पढ़ो(&iocg->vसमय);
-	cost = adjust_inuse_and_calc_cost(iocg, vसमय, असल_cost, &now);
+	vtime = atomic64_read(&iocg->vtime);
+	cost = adjust_inuse_and_calc_cost(iocg, vtime, abs_cost, &now);
 
-	/* update cursor अगर backmerging पूर्णांकo the request at the cursor */
-	अगर (blk_rq_pos(rq) < bio_end &&
+	/* update cursor if backmerging into the request at the cursor */
+	if (blk_rq_pos(rq) < bio_end &&
 	    blk_rq_pos(rq) + blk_rq_sectors(rq) == iocg->cursor)
 		iocg->cursor = bio_end;
 
 	/*
-	 * Charge अगर there's enough vसमय budget and the existing request has
-	 * cost asचिन्हित.
+	 * Charge if there's enough vtime budget and the existing request has
+	 * cost assigned.
 	 */
-	अगर (rq->bio && rq->bio->bi_iocost_cost &&
-	    समय_beक्रमe_eq64(atomic64_पढ़ो(&iocg->vसमय) + cost, now.vnow)) अणु
-		iocg_commit_bio(iocg, bio, असल_cost, cost);
-		वापस;
-	पूर्ण
+	if (rq->bio && rq->bio->bi_iocost_cost &&
+	    time_before_eq64(atomic64_read(&iocg->vtime) + cost, now.vnow)) {
+		iocg_commit_bio(iocg, bio, abs_cost, cost);
+		return;
+	}
 
 	/*
-	 * Otherwise, account it as debt अगर @iocg is online, which it should
-	 * be क्रम the vast majority of हालs. See debt handling in
-	 * ioc_rqos_throttle() क्रम details.
+	 * Otherwise, account it as debt if @iocg is online, which it should
+	 * be for the vast majority of cases. See debt handling in
+	 * ioc_rqos_throttle() for details.
 	 */
 	spin_lock_irqsave(&ioc->lock, flags);
-	spin_lock(&iocg->रुकोq.lock);
+	spin_lock(&iocg->waitq.lock);
 
-	अगर (likely(!list_empty(&iocg->active_list))) अणु
-		iocg_incur_debt(iocg, असल_cost, &now);
-		अगर (iocg_kick_delay(iocg, &now))
+	if (likely(!list_empty(&iocg->active_list))) {
+		iocg_incur_debt(iocg, abs_cost, &now);
+		if (iocg_kick_delay(iocg, &now))
 			blkcg_schedule_throttle(rqos->q,
 					(bio->bi_opf & REQ_SWAP) == REQ_SWAP);
-	पूर्ण अन्यथा अणु
-		iocg_commit_bio(iocg, bio, असल_cost, cost);
-	पूर्ण
+	} else {
+		iocg_commit_bio(iocg, bio, abs_cost, cost);
+	}
 
-	spin_unlock(&iocg->रुकोq.lock);
+	spin_unlock(&iocg->waitq.lock);
 	spin_unlock_irqrestore(&ioc->lock, flags);
-पूर्ण
+}
 
-अटल व्योम ioc_rqos_करोne_bio(काष्ठा rq_qos *rqos, काष्ठा bio *bio)
-अणु
-	काष्ठा ioc_gq *iocg = blkg_to_iocg(bio->bi_blkg);
+static void ioc_rqos_done_bio(struct rq_qos *rqos, struct bio *bio)
+{
+	struct ioc_gq *iocg = blkg_to_iocg(bio->bi_blkg);
 
-	अगर (iocg && bio->bi_iocost_cost)
-		atomic64_add(bio->bi_iocost_cost, &iocg->करोne_vसमय);
-पूर्ण
+	if (iocg && bio->bi_iocost_cost)
+		atomic64_add(bio->bi_iocost_cost, &iocg->done_vtime);
+}
 
-अटल व्योम ioc_rqos_करोne(काष्ठा rq_qos *rqos, काष्ठा request *rq)
-अणु
-	काष्ठा ioc *ioc = rqos_to_ioc(rqos);
-	काष्ठा ioc_pcpu_stat *ccs;
-	u64 on_q_ns, rq_रुको_ns, size_nsec;
-	पूर्णांक pidx, rw;
+static void ioc_rqos_done(struct rq_qos *rqos, struct request *rq)
+{
+	struct ioc *ioc = rqos_to_ioc(rqos);
+	struct ioc_pcpu_stat *ccs;
+	u64 on_q_ns, rq_wait_ns, size_nsec;
+	int pidx, rw;
 
-	अगर (!ioc->enabled || !rq->alloc_समय_ns || !rq->start_समय_ns)
-		वापस;
+	if (!ioc->enabled || !rq->alloc_time_ns || !rq->start_time_ns)
+		return;
 
-	चयन (req_op(rq) & REQ_OP_MASK) अणु
-	हाल REQ_OP_READ:
+	switch (req_op(rq) & REQ_OP_MASK) {
+	case REQ_OP_READ:
 		pidx = QOS_RLAT;
 		rw = READ;
-		अवरोध;
-	हाल REQ_OP_WRITE:
+		break;
+	case REQ_OP_WRITE:
 		pidx = QOS_WLAT;
 		rw = WRITE;
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 
-	on_q_ns = kसमय_get_ns() - rq->alloc_समय_ns;
-	rq_रुको_ns = rq->start_समय_ns - rq->alloc_समय_ns;
-	size_nsec = भाग64_u64(calc_size_vसमय_cost(rq, ioc), VTIME_PER_NSEC);
+	on_q_ns = ktime_get_ns() - rq->alloc_time_ns;
+	rq_wait_ns = rq->start_time_ns - rq->alloc_time_ns;
+	size_nsec = div64_u64(calc_size_vtime_cost(rq, ioc), VTIME_PER_NSEC);
 
 	ccs = get_cpu_ptr(ioc->pcpu_stat);
 
-	अगर (on_q_ns <= size_nsec ||
+	if (on_q_ns <= size_nsec ||
 	    on_q_ns - size_nsec <= ioc->params.qos[pidx] * NSEC_PER_USEC)
 		local_inc(&ccs->missed[rw].nr_met);
-	अन्यथा
+	else
 		local_inc(&ccs->missed[rw].nr_missed);
 
-	local64_add(rq_रुको_ns, &ccs->rq_रुको_ns);
+	local64_add(rq_wait_ns, &ccs->rq_wait_ns);
 
 	put_cpu_ptr(ccs);
-पूर्ण
+}
 
-अटल व्योम ioc_rqos_queue_depth_changed(काष्ठा rq_qos *rqos)
-अणु
-	काष्ठा ioc *ioc = rqos_to_ioc(rqos);
+static void ioc_rqos_queue_depth_changed(struct rq_qos *rqos)
+{
+	struct ioc *ioc = rqos_to_ioc(rqos);
 
 	spin_lock_irq(&ioc->lock);
 	ioc_refresh_params(ioc, false);
 	spin_unlock_irq(&ioc->lock);
-पूर्ण
+}
 
-अटल व्योम ioc_rqos_निकास(काष्ठा rq_qos *rqos)
-अणु
-	काष्ठा ioc *ioc = rqos_to_ioc(rqos);
+static void ioc_rqos_exit(struct rq_qos *rqos)
+{
+	struct ioc *ioc = rqos_to_ioc(rqos);
 
 	blkcg_deactivate_policy(rqos->q, &blkcg_policy_iocost);
 
@@ -2808,45 +2807,45 @@ retry_lock:
 	ioc->running = IOC_STOP;
 	spin_unlock_irq(&ioc->lock);
 
-	del_समयr_sync(&ioc->समयr);
-	मुक्त_percpu(ioc->pcpu_stat);
-	kमुक्त(ioc);
-पूर्ण
+	del_timer_sync(&ioc->timer);
+	free_percpu(ioc->pcpu_stat);
+	kfree(ioc);
+}
 
-अटल काष्ठा rq_qos_ops ioc_rqos_ops = अणु
+static struct rq_qos_ops ioc_rqos_ops = {
 	.throttle = ioc_rqos_throttle,
 	.merge = ioc_rqos_merge,
-	.करोne_bio = ioc_rqos_करोne_bio,
-	.करोne = ioc_rqos_करोne,
+	.done_bio = ioc_rqos_done_bio,
+	.done = ioc_rqos_done,
 	.queue_depth_changed = ioc_rqos_queue_depth_changed,
-	.निकास = ioc_rqos_निकास,
-पूर्ण;
+	.exit = ioc_rqos_exit,
+};
 
-अटल पूर्णांक blk_iocost_init(काष्ठा request_queue *q)
-अणु
-	काष्ठा ioc *ioc;
-	काष्ठा rq_qos *rqos;
-	पूर्णांक i, cpu, ret;
+static int blk_iocost_init(struct request_queue *q)
+{
+	struct ioc *ioc;
+	struct rq_qos *rqos;
+	int i, cpu, ret;
 
-	ioc = kzalloc(माप(*ioc), GFP_KERNEL);
-	अगर (!ioc)
-		वापस -ENOMEM;
+	ioc = kzalloc(sizeof(*ioc), GFP_KERNEL);
+	if (!ioc)
+		return -ENOMEM;
 
-	ioc->pcpu_stat = alloc_percpu(काष्ठा ioc_pcpu_stat);
-	अगर (!ioc->pcpu_stat) अणु
-		kमुक्त(ioc);
-		वापस -ENOMEM;
-	पूर्ण
+	ioc->pcpu_stat = alloc_percpu(struct ioc_pcpu_stat);
+	if (!ioc->pcpu_stat) {
+		kfree(ioc);
+		return -ENOMEM;
+	}
 
-	क्रम_each_possible_cpu(cpu) अणु
-		काष्ठा ioc_pcpu_stat *ccs = per_cpu_ptr(ioc->pcpu_stat, cpu);
+	for_each_possible_cpu(cpu) {
+		struct ioc_pcpu_stat *ccs = per_cpu_ptr(ioc->pcpu_stat, cpu);
 
-		क्रम (i = 0; i < ARRAY_SIZE(ccs->missed); i++) अणु
+		for (i = 0; i < ARRAY_SIZE(ccs->missed); i++) {
 			local_set(&ccs->missed[i].nr_met, 0);
 			local_set(&ccs->missed[i].nr_missed, 0);
-		पूर्ण
-		local64_set(&ccs->rq_रुको_ns, 0);
-	पूर्ण
+		}
+		local64_set(&ccs->rq_wait_ns, 0);
+	}
 
 	rqos = &ioc->rqos;
 	rqos->id = RQ_QOS_COST;
@@ -2854,244 +2853,244 @@ retry_lock:
 	rqos->q = q;
 
 	spin_lock_init(&ioc->lock);
-	समयr_setup(&ioc->समयr, ioc_समयr_fn, 0);
+	timer_setup(&ioc->timer, ioc_timer_fn, 0);
 	INIT_LIST_HEAD(&ioc->active_iocgs);
 
 	ioc->running = IOC_IDLE;
-	ioc->vसमय_base_rate = VTIME_PER_USEC;
-	atomic64_set(&ioc->vसमय_rate, VTIME_PER_USEC);
+	ioc->vtime_base_rate = VTIME_PER_USEC;
+	atomic64_set(&ioc->vtime_rate, VTIME_PER_USEC);
 	seqcount_spinlock_init(&ioc->period_seqcount, &ioc->lock);
-	ioc->period_at = kसमय_प्रकारo_us(kसमय_get());
+	ioc->period_at = ktime_to_us(ktime_get());
 	atomic64_set(&ioc->cur_period, 0);
 	atomic_set(&ioc->hweight_gen, 0);
 
 	spin_lock_irq(&ioc->lock);
-	ioc->स्वतःp_idx = AUTOP_INVALID;
+	ioc->autop_idx = AUTOP_INVALID;
 	ioc_refresh_params(ioc, true);
 	spin_unlock_irq(&ioc->lock);
 
 	/*
-	 * rqos must be added beक्रमe activation to allow iocg_pd_init() to
+	 * rqos must be added before activation to allow iocg_pd_init() to
 	 * lookup the ioc from q. This means that the rqos methods may get
-	 * called beक्रमe policy activation completion, can't assume that the
-	 * target bio has an iocg associated and need to test क्रम शून्य iocg.
+	 * called before policy activation completion, can't assume that the
+	 * target bio has an iocg associated and need to test for NULL iocg.
 	 */
 	rq_qos_add(q, rqos);
 	ret = blkcg_activate_policy(q, &blkcg_policy_iocost);
-	अगर (ret) अणु
+	if (ret) {
 		rq_qos_del(q, rqos);
-		मुक्त_percpu(ioc->pcpu_stat);
-		kमुक्त(ioc);
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		free_percpu(ioc->pcpu_stat);
+		kfree(ioc);
+		return ret;
+	}
+	return 0;
+}
 
-अटल काष्ठा blkcg_policy_data *ioc_cpd_alloc(gfp_t gfp)
-अणु
-	काष्ठा ioc_cgrp *iocc;
+static struct blkcg_policy_data *ioc_cpd_alloc(gfp_t gfp)
+{
+	struct ioc_cgrp *iocc;
 
-	iocc = kzalloc(माप(काष्ठा ioc_cgrp), gfp);
-	अगर (!iocc)
-		वापस शून्य;
+	iocc = kzalloc(sizeof(struct ioc_cgrp), gfp);
+	if (!iocc)
+		return NULL;
 
 	iocc->dfl_weight = CGROUP_WEIGHT_DFL * WEIGHT_ONE;
-	वापस &iocc->cpd;
-पूर्ण
+	return &iocc->cpd;
+}
 
-अटल व्योम ioc_cpd_मुक्त(काष्ठा blkcg_policy_data *cpd)
-अणु
-	kमुक्त(container_of(cpd, काष्ठा ioc_cgrp, cpd));
-पूर्ण
+static void ioc_cpd_free(struct blkcg_policy_data *cpd)
+{
+	kfree(container_of(cpd, struct ioc_cgrp, cpd));
+}
 
-अटल काष्ठा blkg_policy_data *ioc_pd_alloc(gfp_t gfp, काष्ठा request_queue *q,
-					     काष्ठा blkcg *blkcg)
-अणु
-	पूर्णांक levels = blkcg->css.cgroup->level + 1;
-	काष्ठा ioc_gq *iocg;
+static struct blkg_policy_data *ioc_pd_alloc(gfp_t gfp, struct request_queue *q,
+					     struct blkcg *blkcg)
+{
+	int levels = blkcg->css.cgroup->level + 1;
+	struct ioc_gq *iocg;
 
-	iocg = kzalloc_node(काष्ठा_size(iocg, ancestors, levels), gfp, q->node);
-	अगर (!iocg)
-		वापस शून्य;
+	iocg = kzalloc_node(struct_size(iocg, ancestors, levels), gfp, q->node);
+	if (!iocg)
+		return NULL;
 
-	iocg->pcpu_stat = alloc_percpu_gfp(काष्ठा iocg_pcpu_stat, gfp);
-	अगर (!iocg->pcpu_stat) अणु
-		kमुक्त(iocg);
-		वापस शून्य;
-	पूर्ण
+	iocg->pcpu_stat = alloc_percpu_gfp(struct iocg_pcpu_stat, gfp);
+	if (!iocg->pcpu_stat) {
+		kfree(iocg);
+		return NULL;
+	}
 
-	वापस &iocg->pd;
-पूर्ण
+	return &iocg->pd;
+}
 
-अटल व्योम ioc_pd_init(काष्ठा blkg_policy_data *pd)
-अणु
-	काष्ठा ioc_gq *iocg = pd_to_iocg(pd);
-	काष्ठा blkcg_gq *blkg = pd_to_blkg(&iocg->pd);
-	काष्ठा ioc *ioc = q_to_ioc(blkg->q);
-	काष्ठा ioc_now now;
-	काष्ठा blkcg_gq *tblkg;
-	अचिन्हित दीर्घ flags;
+static void ioc_pd_init(struct blkg_policy_data *pd)
+{
+	struct ioc_gq *iocg = pd_to_iocg(pd);
+	struct blkcg_gq *blkg = pd_to_blkg(&iocg->pd);
+	struct ioc *ioc = q_to_ioc(blkg->q);
+	struct ioc_now now;
+	struct blkcg_gq *tblkg;
+	unsigned long flags;
 
 	ioc_now(ioc, &now);
 
 	iocg->ioc = ioc;
-	atomic64_set(&iocg->vसमय, now.vnow);
-	atomic64_set(&iocg->करोne_vसमय, now.vnow);
-	atomic64_set(&iocg->active_period, atomic64_पढ़ो(&ioc->cur_period));
+	atomic64_set(&iocg->vtime, now.vnow);
+	atomic64_set(&iocg->done_vtime, now.vnow);
+	atomic64_set(&iocg->active_period, atomic64_read(&ioc->cur_period));
 	INIT_LIST_HEAD(&iocg->active_list);
 	INIT_LIST_HEAD(&iocg->walk_list);
 	INIT_LIST_HEAD(&iocg->surplus_list);
 	iocg->hweight_active = WEIGHT_ONE;
 	iocg->hweight_inuse = WEIGHT_ONE;
 
-	init_रुकोqueue_head(&iocg->रुकोq);
-	hrसमयr_init(&iocg->रुकोq_समयr, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
-	iocg->रुकोq_समयr.function = iocg_रुकोq_समयr_fn;
+	init_waitqueue_head(&iocg->waitq);
+	hrtimer_init(&iocg->waitq_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
+	iocg->waitq_timer.function = iocg_waitq_timer_fn;
 
 	iocg->level = blkg->blkcg->css.cgroup->level;
 
-	क्रम (tblkg = blkg; tblkg; tblkg = tblkg->parent) अणु
-		काष्ठा ioc_gq *tiocg = blkg_to_iocg(tblkg);
+	for (tblkg = blkg; tblkg; tblkg = tblkg->parent) {
+		struct ioc_gq *tiocg = blkg_to_iocg(tblkg);
 		iocg->ancestors[tiocg->level] = tiocg;
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&ioc->lock, flags);
 	weight_updated(iocg, &now);
 	spin_unlock_irqrestore(&ioc->lock, flags);
-पूर्ण
+}
 
-अटल व्योम ioc_pd_मुक्त(काष्ठा blkg_policy_data *pd)
-अणु
-	काष्ठा ioc_gq *iocg = pd_to_iocg(pd);
-	काष्ठा ioc *ioc = iocg->ioc;
-	अचिन्हित दीर्घ flags;
+static void ioc_pd_free(struct blkg_policy_data *pd)
+{
+	struct ioc_gq *iocg = pd_to_iocg(pd);
+	struct ioc *ioc = iocg->ioc;
+	unsigned long flags;
 
-	अगर (ioc) अणु
+	if (ioc) {
 		spin_lock_irqsave(&ioc->lock, flags);
 
-		अगर (!list_empty(&iocg->active_list)) अणु
-			काष्ठा ioc_now now;
+		if (!list_empty(&iocg->active_list)) {
+			struct ioc_now now;
 
 			ioc_now(ioc, &now);
 			propagate_weights(iocg, 0, 0, false, &now);
 			list_del_init(&iocg->active_list);
-		पूर्ण
+		}
 
 		WARN_ON_ONCE(!list_empty(&iocg->walk_list));
 		WARN_ON_ONCE(!list_empty(&iocg->surplus_list));
 
 		spin_unlock_irqrestore(&ioc->lock, flags);
 
-		hrसमयr_cancel(&iocg->रुकोq_समयr);
-	पूर्ण
-	मुक्त_percpu(iocg->pcpu_stat);
-	kमुक्त(iocg);
-पूर्ण
+		hrtimer_cancel(&iocg->waitq_timer);
+	}
+	free_percpu(iocg->pcpu_stat);
+	kfree(iocg);
+}
 
-अटल माप_प्रकार ioc_pd_stat(काष्ठा blkg_policy_data *pd, अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा ioc_gq *iocg = pd_to_iocg(pd);
-	काष्ठा ioc *ioc = iocg->ioc;
-	माप_प्रकार pos = 0;
+static size_t ioc_pd_stat(struct blkg_policy_data *pd, char *buf, size_t size)
+{
+	struct ioc_gq *iocg = pd_to_iocg(pd);
+	struct ioc *ioc = iocg->ioc;
+	size_t pos = 0;
 
-	अगर (!ioc->enabled)
-		वापस 0;
+	if (!ioc->enabled)
+		return 0;
 
-	अगर (iocg->level == 0) अणु
-		अचिन्हित vp10k = DIV64_U64_ROUND_CLOSEST(
-			ioc->vसमय_base_rate * 10000,
+	if (iocg->level == 0) {
+		unsigned vp10k = DIV64_U64_ROUND_CLOSEST(
+			ioc->vtime_base_rate * 10000,
 			VTIME_PER_USEC);
-		pos += scnम_लिखो(buf + pos, size - pos, " cost.vrate=%u.%02u",
+		pos += scnprintf(buf + pos, size - pos, " cost.vrate=%u.%02u",
 				  vp10k / 100, vp10k % 100);
-	पूर्ण
+	}
 
-	pos += scnम_लिखो(buf + pos, size - pos, " cost.usage=%llu",
+	pos += scnprintf(buf + pos, size - pos, " cost.usage=%llu",
 			 iocg->last_stat.usage_us);
 
-	अगर (blkcg_debug_stats)
-		pos += scnम_लिखो(buf + pos, size - pos,
+	if (blkcg_debug_stats)
+		pos += scnprintf(buf + pos, size - pos,
 				 " cost.wait=%llu cost.indebt=%llu cost.indelay=%llu",
-				 iocg->last_stat.रुको_us,
+				 iocg->last_stat.wait_us,
 				 iocg->last_stat.indebt_us,
 				 iocg->last_stat.indelay_us);
 
-	वापस pos;
-पूर्ण
+	return pos;
+}
 
-अटल u64 ioc_weight_prfill(काष्ठा seq_file *sf, काष्ठा blkg_policy_data *pd,
-			     पूर्णांक off)
-अणु
-	स्थिर अक्षर *dname = blkg_dev_name(pd->blkg);
-	काष्ठा ioc_gq *iocg = pd_to_iocg(pd);
+static u64 ioc_weight_prfill(struct seq_file *sf, struct blkg_policy_data *pd,
+			     int off)
+{
+	const char *dname = blkg_dev_name(pd->blkg);
+	struct ioc_gq *iocg = pd_to_iocg(pd);
 
-	अगर (dname && iocg->cfg_weight)
-		seq_म_लिखो(sf, "%s %u\n", dname, iocg->cfg_weight / WEIGHT_ONE);
-	वापस 0;
-पूर्ण
+	if (dname && iocg->cfg_weight)
+		seq_printf(sf, "%s %u\n", dname, iocg->cfg_weight / WEIGHT_ONE);
+	return 0;
+}
 
 
-अटल पूर्णांक ioc_weight_show(काष्ठा seq_file *sf, व्योम *v)
-अणु
-	काष्ठा blkcg *blkcg = css_to_blkcg(seq_css(sf));
-	काष्ठा ioc_cgrp *iocc = blkcg_to_iocc(blkcg);
+static int ioc_weight_show(struct seq_file *sf, void *v)
+{
+	struct blkcg *blkcg = css_to_blkcg(seq_css(sf));
+	struct ioc_cgrp *iocc = blkcg_to_iocc(blkcg);
 
-	seq_म_लिखो(sf, "default %u\n", iocc->dfl_weight / WEIGHT_ONE);
-	blkcg_prपूर्णांक_blkgs(sf, blkcg, ioc_weight_prfill,
-			  &blkcg_policy_iocost, seq_cft(sf)->निजी, false);
-	वापस 0;
-पूर्ण
+	seq_printf(sf, "default %u\n", iocc->dfl_weight / WEIGHT_ONE);
+	blkcg_print_blkgs(sf, blkcg, ioc_weight_prfill,
+			  &blkcg_policy_iocost, seq_cft(sf)->private, false);
+	return 0;
+}
 
-अटल sमाप_प्रकार ioc_weight_ग_लिखो(काष्ठा kernfs_खोलो_file *of, अक्षर *buf,
-				माप_प्रकार nbytes, loff_t off)
-अणु
-	काष्ठा blkcg *blkcg = css_to_blkcg(of_css(of));
-	काष्ठा ioc_cgrp *iocc = blkcg_to_iocc(blkcg);
-	काष्ठा blkg_conf_ctx ctx;
-	काष्ठा ioc_now now;
-	काष्ठा ioc_gq *iocg;
+static ssize_t ioc_weight_write(struct kernfs_open_file *of, char *buf,
+				size_t nbytes, loff_t off)
+{
+	struct blkcg *blkcg = css_to_blkcg(of_css(of));
+	struct ioc_cgrp *iocc = blkcg_to_iocc(blkcg);
+	struct blkg_conf_ctx ctx;
+	struct ioc_now now;
+	struct ioc_gq *iocg;
 	u32 v;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!म_अक्षर(buf, ':')) अणु
-		काष्ठा blkcg_gq *blkg;
+	if (!strchr(buf, ':')) {
+		struct blkcg_gq *blkg;
 
-		अगर (!माला_पूछो(buf, "default %u", &v) && !माला_पूछो(buf, "%u", &v))
-			वापस -EINVAL;
+		if (!sscanf(buf, "default %u", &v) && !sscanf(buf, "%u", &v))
+			return -EINVAL;
 
-		अगर (v < CGROUP_WEIGHT_MIN || v > CGROUP_WEIGHT_MAX)
-			वापस -EINVAL;
+		if (v < CGROUP_WEIGHT_MIN || v > CGROUP_WEIGHT_MAX)
+			return -EINVAL;
 
 		spin_lock(&blkcg->lock);
 		iocc->dfl_weight = v * WEIGHT_ONE;
-		hlist_क्रम_each_entry(blkg, &blkcg->blkg_list, blkcg_node) अणु
-			काष्ठा ioc_gq *iocg = blkg_to_iocg(blkg);
+		hlist_for_each_entry(blkg, &blkcg->blkg_list, blkcg_node) {
+			struct ioc_gq *iocg = blkg_to_iocg(blkg);
 
-			अगर (iocg) अणु
+			if (iocg) {
 				spin_lock_irq(&iocg->ioc->lock);
 				ioc_now(iocg->ioc, &now);
 				weight_updated(iocg, &now);
 				spin_unlock_irq(&iocg->ioc->lock);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		spin_unlock(&blkcg->lock);
 
-		वापस nbytes;
-	पूर्ण
+		return nbytes;
+	}
 
 	ret = blkg_conf_prep(blkcg, &blkcg_policy_iocost, buf, &ctx);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	iocg = blkg_to_iocg(ctx.blkg);
 
-	अगर (!म_भेदन(ctx.body, "default", 7)) अणु
+	if (!strncmp(ctx.body, "default", 7)) {
 		v = 0;
-	पूर्ण अन्यथा अणु
-		अगर (!माला_पूछो(ctx.body, "%u", &v))
-			जाओ einval;
-		अगर (v < CGROUP_WEIGHT_MIN || v > CGROUP_WEIGHT_MAX)
-			जाओ einval;
-	पूर्ण
+	} else {
+		if (!sscanf(ctx.body, "%u", &v))
+			goto einval;
+		if (v < CGROUP_WEIGHT_MIN || v > CGROUP_WEIGHT_MAX)
+			goto einval;
+	}
 
 	spin_lock(&iocg->ioc->lock);
 	iocg->cfg_weight = v * WEIGHT_ONE;
@@ -3100,23 +3099,23 @@ retry_lock:
 	spin_unlock(&iocg->ioc->lock);
 
 	blkg_conf_finish(&ctx);
-	वापस nbytes;
+	return nbytes;
 
 einval:
 	blkg_conf_finish(&ctx);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल u64 ioc_qos_prfill(काष्ठा seq_file *sf, काष्ठा blkg_policy_data *pd,
-			  पूर्णांक off)
-अणु
-	स्थिर अक्षर *dname = blkg_dev_name(pd->blkg);
-	काष्ठा ioc *ioc = pd_to_iocg(pd)->ioc;
+static u64 ioc_qos_prfill(struct seq_file *sf, struct blkg_policy_data *pd,
+			  int off)
+{
+	const char *dname = blkg_dev_name(pd->blkg);
+	struct ioc *ioc = pd_to_iocg(pd)->ioc;
 
-	अगर (!dname)
-		वापस 0;
+	if (!dname)
+		return 0;
 
-	seq_म_लिखो(sf, "%s enable=%d ctrl=%s rpct=%u.%02u rlat=%u wpct=%u.%02u wlat=%u min=%u.%02u max=%u.%02u\n",
+	seq_printf(sf, "%s enable=%d ctrl=%s rpct=%u.%02u rlat=%u wpct=%u.%02u wlat=%u min=%u.%02u max=%u.%02u\n",
 		   dname, ioc->enabled, ioc->user_qos_params ? "user" : "auto",
 		   ioc->params.qos[QOS_RPPM] / 10000,
 		   ioc->params.qos[QOS_RPPM] % 10000 / 100,
@@ -3128,324 +3127,324 @@ einval:
 		   ioc->params.qos[QOS_MIN] % 10000 / 100,
 		   ioc->params.qos[QOS_MAX] / 10000,
 		   ioc->params.qos[QOS_MAX] % 10000 / 100);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ioc_qos_show(काष्ठा seq_file *sf, व्योम *v)
-अणु
-	काष्ठा blkcg *blkcg = css_to_blkcg(seq_css(sf));
+static int ioc_qos_show(struct seq_file *sf, void *v)
+{
+	struct blkcg *blkcg = css_to_blkcg(seq_css(sf));
 
-	blkcg_prपूर्णांक_blkgs(sf, blkcg, ioc_qos_prfill,
-			  &blkcg_policy_iocost, seq_cft(sf)->निजी, false);
-	वापस 0;
-पूर्ण
+	blkcg_print_blkgs(sf, blkcg, ioc_qos_prfill,
+			  &blkcg_policy_iocost, seq_cft(sf)->private, false);
+	return 0;
+}
 
-अटल स्थिर match_table_t qos_ctrl_tokens = अणु
-	अणु QOS_ENABLE,		"enable=%u"	पूर्ण,
-	अणु QOS_CTRL,		"ctrl=%s"	पूर्ण,
-	अणु NR_QOS_CTRL_PARAMS,	शून्य		पूर्ण,
-पूर्ण;
+static const match_table_t qos_ctrl_tokens = {
+	{ QOS_ENABLE,		"enable=%u"	},
+	{ QOS_CTRL,		"ctrl=%s"	},
+	{ NR_QOS_CTRL_PARAMS,	NULL		},
+};
 
-अटल स्थिर match_table_t qos_tokens = अणु
-	अणु QOS_RPPM,		"rpct=%s"	पूर्ण,
-	अणु QOS_RLAT,		"rlat=%u"	पूर्ण,
-	अणु QOS_WPPM,		"wpct=%s"	पूर्ण,
-	अणु QOS_WLAT,		"wlat=%u"	पूर्ण,
-	अणु QOS_MIN,		"min=%s"	पूर्ण,
-	अणु QOS_MAX,		"max=%s"	पूर्ण,
-	अणु NR_QOS_PARAMS,	शून्य		पूर्ण,
-पूर्ण;
+static const match_table_t qos_tokens = {
+	{ QOS_RPPM,		"rpct=%s"	},
+	{ QOS_RLAT,		"rlat=%u"	},
+	{ QOS_WPPM,		"wpct=%s"	},
+	{ QOS_WLAT,		"wlat=%u"	},
+	{ QOS_MIN,		"min=%s"	},
+	{ QOS_MAX,		"max=%s"	},
+	{ NR_QOS_PARAMS,	NULL		},
+};
 
-अटल sमाप_प्रकार ioc_qos_ग_लिखो(काष्ठा kernfs_खोलो_file *of, अक्षर *input,
-			     माप_प्रकार nbytes, loff_t off)
-अणु
-	काष्ठा block_device *bdev;
-	काष्ठा ioc *ioc;
+static ssize_t ioc_qos_write(struct kernfs_open_file *of, char *input,
+			     size_t nbytes, loff_t off)
+{
+	struct block_device *bdev;
+	struct ioc *ioc;
 	u32 qos[NR_QOS_PARAMS];
 	bool enable, user;
-	अक्षर *p;
-	पूर्णांक ret;
+	char *p;
+	int ret;
 
-	bdev = blkcg_conf_खोलो_bdev(&input);
-	अगर (IS_ERR(bdev))
-		वापस PTR_ERR(bdev);
+	bdev = blkcg_conf_open_bdev(&input);
+	if (IS_ERR(bdev))
+		return PTR_ERR(bdev);
 
 	ioc = q_to_ioc(bdev->bd_disk->queue);
-	अगर (!ioc) अणु
+	if (!ioc) {
 		ret = blk_iocost_init(bdev->bd_disk->queue);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 		ioc = q_to_ioc(bdev->bd_disk->queue);
-	पूर्ण
+	}
 
 	spin_lock_irq(&ioc->lock);
-	स_नकल(qos, ioc->params.qos, माप(qos));
+	memcpy(qos, ioc->params.qos, sizeof(qos));
 	enable = ioc->enabled;
 	user = ioc->user_qos_params;
 	spin_unlock_irq(&ioc->lock);
 
-	जबतक ((p = strsep(&input, " \t\n"))) अणु
+	while ((p = strsep(&input, " \t\n"))) {
 		substring_t args[MAX_OPT_ARGS];
-		अक्षर buf[32];
-		पूर्णांक tok;
+		char buf[32];
+		int tok;
 		s64 v;
 
-		अगर (!*p)
-			जारी;
+		if (!*p)
+			continue;
 
-		चयन (match_token(p, qos_ctrl_tokens, args)) अणु
-		हाल QOS_ENABLE:
+		switch (match_token(p, qos_ctrl_tokens, args)) {
+		case QOS_ENABLE:
 			match_u64(&args[0], &v);
 			enable = v;
-			जारी;
-		हाल QOS_CTRL:
-			match_strlcpy(buf, &args[0], माप(buf));
-			अगर (!म_भेद(buf, "auto"))
+			continue;
+		case QOS_CTRL:
+			match_strlcpy(buf, &args[0], sizeof(buf));
+			if (!strcmp(buf, "auto"))
 				user = false;
-			अन्यथा अगर (!म_भेद(buf, "user"))
+			else if (!strcmp(buf, "user"))
 				user = true;
-			अन्यथा
-				जाओ einval;
-			जारी;
-		पूर्ण
+			else
+				goto einval;
+			continue;
+		}
 
 		tok = match_token(p, qos_tokens, args);
-		चयन (tok) अणु
-		हाल QOS_RPPM:
-		हाल QOS_WPPM:
-			अगर (match_strlcpy(buf, &args[0], माप(buf)) >=
-			    माप(buf))
-				जाओ einval;
-			अगर (cgroup_parse_भग्न(buf, 2, &v))
-				जाओ einval;
-			अगर (v < 0 || v > 10000)
-				जाओ einval;
+		switch (tok) {
+		case QOS_RPPM:
+		case QOS_WPPM:
+			if (match_strlcpy(buf, &args[0], sizeof(buf)) >=
+			    sizeof(buf))
+				goto einval;
+			if (cgroup_parse_float(buf, 2, &v))
+				goto einval;
+			if (v < 0 || v > 10000)
+				goto einval;
 			qos[tok] = v * 100;
-			अवरोध;
-		हाल QOS_RLAT:
-		हाल QOS_WLAT:
-			अगर (match_u64(&args[0], &v))
-				जाओ einval;
+			break;
+		case QOS_RLAT:
+		case QOS_WLAT:
+			if (match_u64(&args[0], &v))
+				goto einval;
 			qos[tok] = v;
-			अवरोध;
-		हाल QOS_MIN:
-		हाल QOS_MAX:
-			अगर (match_strlcpy(buf, &args[0], माप(buf)) >=
-			    माप(buf))
-				जाओ einval;
-			अगर (cgroup_parse_भग्न(buf, 2, &v))
-				जाओ einval;
-			अगर (v < 0)
-				जाओ einval;
+			break;
+		case QOS_MIN:
+		case QOS_MAX:
+			if (match_strlcpy(buf, &args[0], sizeof(buf)) >=
+			    sizeof(buf))
+				goto einval;
+			if (cgroup_parse_float(buf, 2, &v))
+				goto einval;
+			if (v < 0)
+				goto einval;
 			qos[tok] = clamp_t(s64, v * 100,
 					   VRATE_MIN_PPM, VRATE_MAX_PPM);
-			अवरोध;
-		शेष:
-			जाओ einval;
-		पूर्ण
+			break;
+		default:
+			goto einval;
+		}
 		user = true;
-	पूर्ण
+	}
 
-	अगर (qos[QOS_MIN] > qos[QOS_MAX])
-		जाओ einval;
+	if (qos[QOS_MIN] > qos[QOS_MAX])
+		goto einval;
 
 	spin_lock_irq(&ioc->lock);
 
-	अगर (enable) अणु
+	if (enable) {
 		blk_stat_enable_accounting(ioc->rqos.q);
 		blk_queue_flag_set(QUEUE_FLAG_RQ_ALLOC_TIME, ioc->rqos.q);
 		ioc->enabled = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		blk_queue_flag_clear(QUEUE_FLAG_RQ_ALLOC_TIME, ioc->rqos.q);
 		ioc->enabled = false;
-	पूर्ण
+	}
 
-	अगर (user) अणु
-		स_नकल(ioc->params.qos, qos, माप(qos));
+	if (user) {
+		memcpy(ioc->params.qos, qos, sizeof(qos));
 		ioc->user_qos_params = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		ioc->user_qos_params = false;
-	पूर्ण
+	}
 
 	ioc_refresh_params(ioc, true);
 	spin_unlock_irq(&ioc->lock);
 
-	blkdev_put_no_खोलो(bdev);
-	वापस nbytes;
+	blkdev_put_no_open(bdev);
+	return nbytes;
 einval:
 	ret = -EINVAL;
 err:
-	blkdev_put_no_खोलो(bdev);
-	वापस ret;
-पूर्ण
+	blkdev_put_no_open(bdev);
+	return ret;
+}
 
-अटल u64 ioc_cost_model_prfill(काष्ठा seq_file *sf,
-				 काष्ठा blkg_policy_data *pd, पूर्णांक off)
-अणु
-	स्थिर अक्षर *dname = blkg_dev_name(pd->blkg);
-	काष्ठा ioc *ioc = pd_to_iocg(pd)->ioc;
+static u64 ioc_cost_model_prfill(struct seq_file *sf,
+				 struct blkg_policy_data *pd, int off)
+{
+	const char *dname = blkg_dev_name(pd->blkg);
+	struct ioc *ioc = pd_to_iocg(pd)->ioc;
 	u64 *u = ioc->params.i_lcoefs;
 
-	अगर (!dname)
-		वापस 0;
+	if (!dname)
+		return 0;
 
-	seq_म_लिखो(sf, "%s ctrl=%s model=linear "
+	seq_printf(sf, "%s ctrl=%s model=linear "
 		   "rbps=%llu rseqiops=%llu rrandiops=%llu "
 		   "wbps=%llu wseqiops=%llu wrandiops=%llu\n",
 		   dname, ioc->user_cost_model ? "user" : "auto",
 		   u[I_LCOEF_RBPS], u[I_LCOEF_RSEQIOPS], u[I_LCOEF_RRANDIOPS],
 		   u[I_LCOEF_WBPS], u[I_LCOEF_WSEQIOPS], u[I_LCOEF_WRANDIOPS]);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ioc_cost_model_show(काष्ठा seq_file *sf, व्योम *v)
-अणु
-	काष्ठा blkcg *blkcg = css_to_blkcg(seq_css(sf));
+static int ioc_cost_model_show(struct seq_file *sf, void *v)
+{
+	struct blkcg *blkcg = css_to_blkcg(seq_css(sf));
 
-	blkcg_prपूर्णांक_blkgs(sf, blkcg, ioc_cost_model_prfill,
-			  &blkcg_policy_iocost, seq_cft(sf)->निजी, false);
-	वापस 0;
-पूर्ण
+	blkcg_print_blkgs(sf, blkcg, ioc_cost_model_prfill,
+			  &blkcg_policy_iocost, seq_cft(sf)->private, false);
+	return 0;
+}
 
-अटल स्थिर match_table_t cost_ctrl_tokens = अणु
-	अणु COST_CTRL,		"ctrl=%s"	पूर्ण,
-	अणु COST_MODEL,		"model=%s"	पूर्ण,
-	अणु NR_COST_CTRL_PARAMS,	शून्य		पूर्ण,
-पूर्ण;
+static const match_table_t cost_ctrl_tokens = {
+	{ COST_CTRL,		"ctrl=%s"	},
+	{ COST_MODEL,		"model=%s"	},
+	{ NR_COST_CTRL_PARAMS,	NULL		},
+};
 
-अटल स्थिर match_table_t i_lcoef_tokens = अणु
-	अणु I_LCOEF_RBPS,		"rbps=%u"	पूर्ण,
-	अणु I_LCOEF_RSEQIOPS,	"rseqiops=%u"	पूर्ण,
-	अणु I_LCOEF_RRANDIOPS,	"rrandiops=%u"	पूर्ण,
-	अणु I_LCOEF_WBPS,		"wbps=%u"	पूर्ण,
-	अणु I_LCOEF_WSEQIOPS,	"wseqiops=%u"	पूर्ण,
-	अणु I_LCOEF_WRANDIOPS,	"wrandiops=%u"	पूर्ण,
-	अणु NR_I_LCOEFS,		शून्य		पूर्ण,
-पूर्ण;
+static const match_table_t i_lcoef_tokens = {
+	{ I_LCOEF_RBPS,		"rbps=%u"	},
+	{ I_LCOEF_RSEQIOPS,	"rseqiops=%u"	},
+	{ I_LCOEF_RRANDIOPS,	"rrandiops=%u"	},
+	{ I_LCOEF_WBPS,		"wbps=%u"	},
+	{ I_LCOEF_WSEQIOPS,	"wseqiops=%u"	},
+	{ I_LCOEF_WRANDIOPS,	"wrandiops=%u"	},
+	{ NR_I_LCOEFS,		NULL		},
+};
 
-अटल sमाप_प्रकार ioc_cost_model_ग_लिखो(काष्ठा kernfs_खोलो_file *of, अक्षर *input,
-				    माप_प्रकार nbytes, loff_t off)
-अणु
-	काष्ठा block_device *bdev;
-	काष्ठा ioc *ioc;
+static ssize_t ioc_cost_model_write(struct kernfs_open_file *of, char *input,
+				    size_t nbytes, loff_t off)
+{
+	struct block_device *bdev;
+	struct ioc *ioc;
 	u64 u[NR_I_LCOEFS];
 	bool user;
-	अक्षर *p;
-	पूर्णांक ret;
+	char *p;
+	int ret;
 
-	bdev = blkcg_conf_खोलो_bdev(&input);
-	अगर (IS_ERR(bdev))
-		वापस PTR_ERR(bdev);
+	bdev = blkcg_conf_open_bdev(&input);
+	if (IS_ERR(bdev))
+		return PTR_ERR(bdev);
 
 	ioc = q_to_ioc(bdev->bd_disk->queue);
-	अगर (!ioc) अणु
+	if (!ioc) {
 		ret = blk_iocost_init(bdev->bd_disk->queue);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 		ioc = q_to_ioc(bdev->bd_disk->queue);
-	पूर्ण
+	}
 
 	spin_lock_irq(&ioc->lock);
-	स_नकल(u, ioc->params.i_lcoefs, माप(u));
+	memcpy(u, ioc->params.i_lcoefs, sizeof(u));
 	user = ioc->user_cost_model;
 	spin_unlock_irq(&ioc->lock);
 
-	जबतक ((p = strsep(&input, " \t\n"))) अणु
+	while ((p = strsep(&input, " \t\n"))) {
 		substring_t args[MAX_OPT_ARGS];
-		अक्षर buf[32];
-		पूर्णांक tok;
+		char buf[32];
+		int tok;
 		u64 v;
 
-		अगर (!*p)
-			जारी;
+		if (!*p)
+			continue;
 
-		चयन (match_token(p, cost_ctrl_tokens, args)) अणु
-		हाल COST_CTRL:
-			match_strlcpy(buf, &args[0], माप(buf));
-			अगर (!म_भेद(buf, "auto"))
+		switch (match_token(p, cost_ctrl_tokens, args)) {
+		case COST_CTRL:
+			match_strlcpy(buf, &args[0], sizeof(buf));
+			if (!strcmp(buf, "auto"))
 				user = false;
-			अन्यथा अगर (!म_भेद(buf, "user"))
+			else if (!strcmp(buf, "user"))
 				user = true;
-			अन्यथा
-				जाओ einval;
-			जारी;
-		हाल COST_MODEL:
-			match_strlcpy(buf, &args[0], माप(buf));
-			अगर (म_भेद(buf, "linear"))
-				जाओ einval;
-			जारी;
-		पूर्ण
+			else
+				goto einval;
+			continue;
+		case COST_MODEL:
+			match_strlcpy(buf, &args[0], sizeof(buf));
+			if (strcmp(buf, "linear"))
+				goto einval;
+			continue;
+		}
 
 		tok = match_token(p, i_lcoef_tokens, args);
-		अगर (tok == NR_I_LCOEFS)
-			जाओ einval;
-		अगर (match_u64(&args[0], &v))
-			जाओ einval;
+		if (tok == NR_I_LCOEFS)
+			goto einval;
+		if (match_u64(&args[0], &v))
+			goto einval;
 		u[tok] = v;
 		user = true;
-	पूर्ण
+	}
 
 	spin_lock_irq(&ioc->lock);
-	अगर (user) अणु
-		स_नकल(ioc->params.i_lcoefs, u, माप(u));
+	if (user) {
+		memcpy(ioc->params.i_lcoefs, u, sizeof(u));
 		ioc->user_cost_model = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		ioc->user_cost_model = false;
-	पूर्ण
+	}
 	ioc_refresh_params(ioc, true);
 	spin_unlock_irq(&ioc->lock);
 
-	blkdev_put_no_खोलो(bdev);
-	वापस nbytes;
+	blkdev_put_no_open(bdev);
+	return nbytes;
 
 einval:
 	ret = -EINVAL;
 err:
-	blkdev_put_no_खोलो(bdev);
-	वापस ret;
-पूर्ण
+	blkdev_put_no_open(bdev);
+	return ret;
+}
 
-अटल काष्ठा cftype ioc_files[] = अणु
-	अणु
+static struct cftype ioc_files[] = {
+	{
 		.name = "weight",
 		.flags = CFTYPE_NOT_ON_ROOT,
 		.seq_show = ioc_weight_show,
-		.ग_लिखो = ioc_weight_ग_लिखो,
-	पूर्ण,
-	अणु
+		.write = ioc_weight_write,
+	},
+	{
 		.name = "cost.qos",
 		.flags = CFTYPE_ONLY_ON_ROOT,
 		.seq_show = ioc_qos_show,
-		.ग_लिखो = ioc_qos_ग_लिखो,
-	पूर्ण,
-	अणु
+		.write = ioc_qos_write,
+	},
+	{
 		.name = "cost.model",
 		.flags = CFTYPE_ONLY_ON_ROOT,
 		.seq_show = ioc_cost_model_show,
-		.ग_लिखो = ioc_cost_model_ग_लिखो,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+		.write = ioc_cost_model_write,
+	},
+	{}
+};
 
-अटल काष्ठा blkcg_policy blkcg_policy_iocost = अणु
+static struct blkcg_policy blkcg_policy_iocost = {
 	.dfl_cftypes	= ioc_files,
 	.cpd_alloc_fn	= ioc_cpd_alloc,
-	.cpd_मुक्त_fn	= ioc_cpd_मुक्त,
+	.cpd_free_fn	= ioc_cpd_free,
 	.pd_alloc_fn	= ioc_pd_alloc,
 	.pd_init_fn	= ioc_pd_init,
-	.pd_मुक्त_fn	= ioc_pd_मुक्त,
+	.pd_free_fn	= ioc_pd_free,
 	.pd_stat_fn	= ioc_pd_stat,
-पूर्ण;
+};
 
-अटल पूर्णांक __init ioc_init(व्योम)
-अणु
-	वापस blkcg_policy_रेजिस्टर(&blkcg_policy_iocost);
-पूर्ण
+static int __init ioc_init(void)
+{
+	return blkcg_policy_register(&blkcg_policy_iocost);
+}
 
-अटल व्योम __निकास ioc_निकास(व्योम)
-अणु
-	blkcg_policy_unरेजिस्टर(&blkcg_policy_iocost);
-पूर्ण
+static void __exit ioc_exit(void)
+{
+	blkcg_policy_unregister(&blkcg_policy_iocost);
+}
 
 module_init(ioc_init);
-module_निकास(ioc_निकास);
+module_exit(ioc_exit);

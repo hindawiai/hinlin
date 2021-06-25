@@ -1,421 +1,420 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#घोषणा _GNU_SOURCE
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <linux/kernel.h>
-#समावेश <सीमा.स>
-#समावेश <stdbool.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <syscall.h>
-#समावेश <unistd.h>
-#समावेश <sys/resource.h>
+#define _GNU_SOURCE
+#include <errno.h>
+#include <fcntl.h>
+#include <linux/kernel.h>
+#include <limits.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syscall.h>
+#include <unistd.h>
+#include <sys/resource.h>
 
-#समावेश "../kselftest_harness.h"
-#समावेश "../clone3/clone3_selftests.h"
+#include "../kselftest_harness.h"
+#include "../clone3/clone3_selftests.h"
 
-#अगर_अघोषित __NR_बंद_range
-	#अगर defined __alpha__
-		#घोषणा __NR_बंद_range 546
-	#या_अगर defined _MIPS_SIM
-		#अगर _MIPS_SIM == _MIPS_SIM_ABI32	/* o32 */
-			#घोषणा __NR_बंद_range (436 + 4000)
-		#पूर्ण_अगर
-		#अगर _MIPS_SIM == _MIPS_SIM_NABI32	/* n32 */
-			#घोषणा __NR_बंद_range (436 + 6000)
-		#पूर्ण_अगर
-		#अगर _MIPS_SIM == _MIPS_SIM_ABI64	/* n64 */
-			#घोषणा __NR_बंद_range (436 + 5000)
-		#पूर्ण_अगर
-	#या_अगर defined __ia64__
-		#घोषणा __NR_बंद_range (436 + 1024)
-	#अन्यथा
-		#घोषणा __NR_बंद_range 436
-	#पूर्ण_अगर
-#पूर्ण_अगर
+#ifndef __NR_close_range
+	#if defined __alpha__
+		#define __NR_close_range 546
+	#elif defined _MIPS_SIM
+		#if _MIPS_SIM == _MIPS_SIM_ABI32	/* o32 */
+			#define __NR_close_range (436 + 4000)
+		#endif
+		#if _MIPS_SIM == _MIPS_SIM_NABI32	/* n32 */
+			#define __NR_close_range (436 + 6000)
+		#endif
+		#if _MIPS_SIM == _MIPS_SIM_ABI64	/* n64 */
+			#define __NR_close_range (436 + 5000)
+		#endif
+	#elif defined __ia64__
+		#define __NR_close_range (436 + 1024)
+	#else
+		#define __NR_close_range 436
+	#endif
+#endif
 
-#अगर_अघोषित CLOSE_RANGE_UNSHARE
-#घोषणा CLOSE_RANGE_UNSHARE	(1U << 1)
-#पूर्ण_अगर
+#ifndef CLOSE_RANGE_UNSHARE
+#define CLOSE_RANGE_UNSHARE	(1U << 1)
+#endif
 
-#अगर_अघोषित CLOSE_RANGE_CLOEXEC
-#घोषणा CLOSE_RANGE_CLOEXEC	(1U << 2)
-#पूर्ण_अगर
+#ifndef CLOSE_RANGE_CLOEXEC
+#define CLOSE_RANGE_CLOEXEC	(1U << 2)
+#endif
 
-अटल अंतरभूत पूर्णांक sys_बंद_range(अचिन्हित पूर्णांक fd, अचिन्हित पूर्णांक max_fd,
-				  अचिन्हित पूर्णांक flags)
-अणु
-	वापस syscall(__NR_बंद_range, fd, max_fd, flags);
-पूर्ण
+static inline int sys_close_range(unsigned int fd, unsigned int max_fd,
+				  unsigned int flags)
+{
+	return syscall(__NR_close_range, fd, max_fd, flags);
+}
 
-#अगर_अघोषित ARRAY_SIZE
-#घोषणा ARRAY_SIZE(x) (माप(x) / माप((x)[0]))
-#पूर्ण_अगर
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#endif
 
-TEST(बंद_range)
-अणु
-	पूर्णांक i, ret;
-	पूर्णांक खोलो_fds[101];
+TEST(close_range)
+{
+	int i, ret;
+	int open_fds[101];
 
-	क्रम (i = 0; i < ARRAY_SIZE(खोलो_fds); i++) अणु
-		पूर्णांक fd;
+	for (i = 0; i < ARRAY_SIZE(open_fds); i++) {
+		int fd;
 
-		fd = खोलो("/dev/null", O_RDONLY | O_CLOEXEC);
-		ASSERT_GE(fd, 0) अणु
-			अगर (त्रुटि_सं == ENOENT)
-				SKIP(वापस, "Skipping test since /dev/null does not exist");
-		पूर्ण
+		fd = open("/dev/null", O_RDONLY | O_CLOEXEC);
+		ASSERT_GE(fd, 0) {
+			if (errno == ENOENT)
+				SKIP(return, "Skipping test since /dev/null does not exist");
+		}
 
-		खोलो_fds[i] = fd;
-	पूर्ण
+		open_fds[i] = fd;
+	}
 
-	EXPECT_EQ(-1, sys_बंद_range(खोलो_fds[0], खोलो_fds[100], -1)) अणु
-		अगर (त्रुटि_सं == ENOSYS)
-			SKIP(वापस, "close_range() syscall not supported");
-	पूर्ण
+	EXPECT_EQ(-1, sys_close_range(open_fds[0], open_fds[100], -1)) {
+		if (errno == ENOSYS)
+			SKIP(return, "close_range() syscall not supported");
+	}
 
-	EXPECT_EQ(0, sys_बंद_range(खोलो_fds[0], खोलो_fds[50], 0));
+	EXPECT_EQ(0, sys_close_range(open_fds[0], open_fds[50], 0));
 
-	क्रम (i = 0; i <= 50; i++)
-		EXPECT_EQ(-1, fcntl(खोलो_fds[i], F_GETFL));
+	for (i = 0; i <= 50; i++)
+		EXPECT_EQ(-1, fcntl(open_fds[i], F_GETFL));
 
-	क्रम (i = 51; i <= 100; i++)
-		EXPECT_GT(fcntl(खोलो_fds[i], F_GETFL), -1);
+	for (i = 51; i <= 100; i++)
+		EXPECT_GT(fcntl(open_fds[i], F_GETFL), -1);
 
 	/* create a couple of gaps */
-	बंद(57);
-	बंद(78);
-	बंद(81);
-	बंद(82);
-	बंद(84);
-	बंद(90);
+	close(57);
+	close(78);
+	close(81);
+	close(82);
+	close(84);
+	close(90);
 
-	EXPECT_EQ(0, sys_बंद_range(खोलो_fds[51], खोलो_fds[92], 0));
+	EXPECT_EQ(0, sys_close_range(open_fds[51], open_fds[92], 0));
 
-	क्रम (i = 51; i <= 92; i++)
-		EXPECT_EQ(-1, fcntl(खोलो_fds[i], F_GETFL));
+	for (i = 51; i <= 92; i++)
+		EXPECT_EQ(-1, fcntl(open_fds[i], F_GETFL));
 
-	क्रम (i = 93; i <= 100; i++)
-		EXPECT_GT(fcntl(खोलो_fds[i], F_GETFL), -1);
+	for (i = 93; i <= 100; i++)
+		EXPECT_GT(fcntl(open_fds[i], F_GETFL), -1);
 
-	/* test that the kernel caps and still बंदs all fds */
-	EXPECT_EQ(0, sys_बंद_range(खोलो_fds[93], खोलो_fds[99], 0));
+	/* test that the kernel caps and still closes all fds */
+	EXPECT_EQ(0, sys_close_range(open_fds[93], open_fds[99], 0));
 
-	क्रम (i = 93; i <= 99; i++)
-		EXPECT_EQ(-1, fcntl(खोलो_fds[i], F_GETFL));
+	for (i = 93; i <= 99; i++)
+		EXPECT_EQ(-1, fcntl(open_fds[i], F_GETFL));
 
-	EXPECT_GT(fcntl(खोलो_fds[i], F_GETFL), -1);
+	EXPECT_GT(fcntl(open_fds[i], F_GETFL), -1);
 
-	EXPECT_EQ(0, sys_बंद_range(खोलो_fds[100], खोलो_fds[100], 0));
+	EXPECT_EQ(0, sys_close_range(open_fds[100], open_fds[100], 0));
 
-	EXPECT_EQ(-1, fcntl(खोलो_fds[100], F_GETFL));
-पूर्ण
+	EXPECT_EQ(-1, fcntl(open_fds[100], F_GETFL));
+}
 
-TEST(बंद_range_unshare)
-अणु
-	पूर्णांक i, ret, status;
+TEST(close_range_unshare)
+{
+	int i, ret, status;
 	pid_t pid;
-	पूर्णांक खोलो_fds[101];
-	काष्ठा __clone_args args = अणु
-		.flags = CLONE_खाताS,
-		.निकास_संकेत = SIGCHLD,
-	पूर्ण;
+	int open_fds[101];
+	struct __clone_args args = {
+		.flags = CLONE_FILES,
+		.exit_signal = SIGCHLD,
+	};
 
-	क्रम (i = 0; i < ARRAY_SIZE(खोलो_fds); i++) अणु
-		पूर्णांक fd;
+	for (i = 0; i < ARRAY_SIZE(open_fds); i++) {
+		int fd;
 
-		fd = खोलो("/dev/null", O_RDONLY | O_CLOEXEC);
-		ASSERT_GE(fd, 0) अणु
-			अगर (त्रुटि_सं == ENOENT)
-				SKIP(वापस, "Skipping test since /dev/null does not exist");
-		पूर्ण
+		fd = open("/dev/null", O_RDONLY | O_CLOEXEC);
+		ASSERT_GE(fd, 0) {
+			if (errno == ENOENT)
+				SKIP(return, "Skipping test since /dev/null does not exist");
+		}
 
-		खोलो_fds[i] = fd;
-	पूर्ण
+		open_fds[i] = fd;
+	}
 
-	pid = sys_clone3(&args, माप(args));
+	pid = sys_clone3(&args, sizeof(args));
 	ASSERT_GE(pid, 0);
 
-	अगर (pid == 0) अणु
-		ret = sys_बंद_range(खोलो_fds[0], खोलो_fds[50],
+	if (pid == 0) {
+		ret = sys_close_range(open_fds[0], open_fds[50],
 				      CLOSE_RANGE_UNSHARE);
-		अगर (ret)
-			निकास(निकास_त्रुटि);
+		if (ret)
+			exit(EXIT_FAILURE);
 
-		क्रम (i = 0; i <= 50; i++)
-			अगर (fcntl(खोलो_fds[i], F_GETFL) != -1)
-				निकास(निकास_त्रुटि);
+		for (i = 0; i <= 50; i++)
+			if (fcntl(open_fds[i], F_GETFL) != -1)
+				exit(EXIT_FAILURE);
 
-		क्रम (i = 51; i <= 100; i++)
-			अगर (fcntl(खोलो_fds[i], F_GETFL) == -1)
-				निकास(निकास_त्रुटि);
+		for (i = 51; i <= 100; i++)
+			if (fcntl(open_fds[i], F_GETFL) == -1)
+				exit(EXIT_FAILURE);
 
 		/* create a couple of gaps */
-		बंद(57);
-		बंद(78);
-		बंद(81);
-		बंद(82);
-		बंद(84);
-		बंद(90);
+		close(57);
+		close(78);
+		close(81);
+		close(82);
+		close(84);
+		close(90);
 
-		ret = sys_बंद_range(खोलो_fds[51], खोलो_fds[92],
+		ret = sys_close_range(open_fds[51], open_fds[92],
 				      CLOSE_RANGE_UNSHARE);
-		अगर (ret)
-			निकास(निकास_त्रुटि);
+		if (ret)
+			exit(EXIT_FAILURE);
 
-		क्रम (i = 51; i <= 92; i++)
-			अगर (fcntl(खोलो_fds[i], F_GETFL) != -1)
-				निकास(निकास_त्रुटि);
+		for (i = 51; i <= 92; i++)
+			if (fcntl(open_fds[i], F_GETFL) != -1)
+				exit(EXIT_FAILURE);
 
-		क्रम (i = 93; i <= 100; i++)
-			अगर (fcntl(खोलो_fds[i], F_GETFL) == -1)
-				निकास(निकास_त्रुटि);
+		for (i = 93; i <= 100; i++)
+			if (fcntl(open_fds[i], F_GETFL) == -1)
+				exit(EXIT_FAILURE);
 
-		/* test that the kernel caps and still बंदs all fds */
-		ret = sys_बंद_range(खोलो_fds[93], खोलो_fds[99],
+		/* test that the kernel caps and still closes all fds */
+		ret = sys_close_range(open_fds[93], open_fds[99],
 				      CLOSE_RANGE_UNSHARE);
-		अगर (ret)
-			निकास(निकास_त्रुटि);
+		if (ret)
+			exit(EXIT_FAILURE);
 
-		क्रम (i = 93; i <= 99; i++)
-			अगर (fcntl(खोलो_fds[i], F_GETFL) != -1)
-				निकास(निकास_त्रुटि);
+		for (i = 93; i <= 99; i++)
+			if (fcntl(open_fds[i], F_GETFL) != -1)
+				exit(EXIT_FAILURE);
 
-		अगर (fcntl(खोलो_fds[100], F_GETFL) == -1)
-			निकास(निकास_त्रुटि);
+		if (fcntl(open_fds[100], F_GETFL) == -1)
+			exit(EXIT_FAILURE);
 
-		ret = sys_बंद_range(खोलो_fds[100], खोलो_fds[100],
+		ret = sys_close_range(open_fds[100], open_fds[100],
 				      CLOSE_RANGE_UNSHARE);
-		अगर (ret)
-			निकास(निकास_त्रुटि);
+		if (ret)
+			exit(EXIT_FAILURE);
 
-		अगर (fcntl(खोलो_fds[100], F_GETFL) != -1)
-			निकास(निकास_त्रुटि);
+		if (fcntl(open_fds[100], F_GETFL) != -1)
+			exit(EXIT_FAILURE);
 
-		निकास(निकास_सफल);
-	पूर्ण
+		exit(EXIT_SUCCESS);
+	}
 
-	EXPECT_EQ(रुकोpid(pid, &status, 0), pid);
+	EXPECT_EQ(waitpid(pid, &status, 0), pid);
 	EXPECT_EQ(true, WIFEXITED(status));
 	EXPECT_EQ(0, WEXITSTATUS(status));
-पूर्ण
+}
 
-TEST(बंद_range_unshare_capped)
-अणु
-	पूर्णांक i, ret, status;
+TEST(close_range_unshare_capped)
+{
+	int i, ret, status;
 	pid_t pid;
-	पूर्णांक खोलो_fds[101];
-	काष्ठा __clone_args args = अणु
-		.flags = CLONE_खाताS,
-		.निकास_संकेत = SIGCHLD,
-	पूर्ण;
+	int open_fds[101];
+	struct __clone_args args = {
+		.flags = CLONE_FILES,
+		.exit_signal = SIGCHLD,
+	};
 
-	क्रम (i = 0; i < ARRAY_SIZE(खोलो_fds); i++) अणु
-		पूर्णांक fd;
+	for (i = 0; i < ARRAY_SIZE(open_fds); i++) {
+		int fd;
 
-		fd = खोलो("/dev/null", O_RDONLY | O_CLOEXEC);
-		ASSERT_GE(fd, 0) अणु
-			अगर (त्रुटि_सं == ENOENT)
-				SKIP(वापस, "Skipping test since /dev/null does not exist");
-		पूर्ण
+		fd = open("/dev/null", O_RDONLY | O_CLOEXEC);
+		ASSERT_GE(fd, 0) {
+			if (errno == ENOENT)
+				SKIP(return, "Skipping test since /dev/null does not exist");
+		}
 
-		खोलो_fds[i] = fd;
-	पूर्ण
+		open_fds[i] = fd;
+	}
 
-	pid = sys_clone3(&args, माप(args));
+	pid = sys_clone3(&args, sizeof(args));
 	ASSERT_GE(pid, 0);
 
-	अगर (pid == 0) अणु
-		ret = sys_बंद_range(खोलो_fds[0], अच_पूर्णांक_उच्च,
+	if (pid == 0) {
+		ret = sys_close_range(open_fds[0], UINT_MAX,
 				      CLOSE_RANGE_UNSHARE);
-		अगर (ret)
-			निकास(निकास_त्रुटि);
+		if (ret)
+			exit(EXIT_FAILURE);
 
-		क्रम (i = 0; i <= 100; i++)
-			अगर (fcntl(खोलो_fds[i], F_GETFL) != -1)
-				निकास(निकास_त्रुटि);
+		for (i = 0; i <= 100; i++)
+			if (fcntl(open_fds[i], F_GETFL) != -1)
+				exit(EXIT_FAILURE);
 
-		निकास(निकास_सफल);
-	पूर्ण
+		exit(EXIT_SUCCESS);
+	}
 
-	EXPECT_EQ(रुकोpid(pid, &status, 0), pid);
+	EXPECT_EQ(waitpid(pid, &status, 0), pid);
 	EXPECT_EQ(true, WIFEXITED(status));
 	EXPECT_EQ(0, WEXITSTATUS(status));
-पूर्ण
+}
 
-TEST(बंद_range_cloexec)
-अणु
-	पूर्णांक i, ret;
-	पूर्णांक खोलो_fds[101];
-	काष्ठा rlimit rlimit;
+TEST(close_range_cloexec)
+{
+	int i, ret;
+	int open_fds[101];
+	struct rlimit rlimit;
 
-	क्रम (i = 0; i < ARRAY_SIZE(खोलो_fds); i++) अणु
-		पूर्णांक fd;
+	for (i = 0; i < ARRAY_SIZE(open_fds); i++) {
+		int fd;
 
-		fd = खोलो("/dev/null", O_RDONLY);
-		ASSERT_GE(fd, 0) अणु
-			अगर (त्रुटि_सं == ENOENT)
-				SKIP(वापस, "Skipping test since /dev/null does not exist");
-		पूर्ण
+		fd = open("/dev/null", O_RDONLY);
+		ASSERT_GE(fd, 0) {
+			if (errno == ENOENT)
+				SKIP(return, "Skipping test since /dev/null does not exist");
+		}
 
-		खोलो_fds[i] = fd;
-	पूर्ण
+		open_fds[i] = fd;
+	}
 
-	ret = sys_बंद_range(1000, 1000, CLOSE_RANGE_CLOEXEC);
-	अगर (ret < 0) अणु
-		अगर (त्रुटि_सं == ENOSYS)
-			SKIP(वापस, "close_range() syscall not supported");
-		अगर (त्रुटि_सं == EINVAL)
-			SKIP(वापस, "close_range() doesn't support CLOSE_RANGE_CLOEXEC");
-	पूर्ण
+	ret = sys_close_range(1000, 1000, CLOSE_RANGE_CLOEXEC);
+	if (ret < 0) {
+		if (errno == ENOSYS)
+			SKIP(return, "close_range() syscall not supported");
+		if (errno == EINVAL)
+			SKIP(return, "close_range() doesn't support CLOSE_RANGE_CLOEXEC");
+	}
 
 	/* Ensure the FD_CLOEXEC bit is set also with a resource limit in place.  */
-	ASSERT_EQ(0, getrlimit(RLIMIT_NOखाता, &rlimit));
+	ASSERT_EQ(0, getrlimit(RLIMIT_NOFILE, &rlimit));
 	rlimit.rlim_cur = 25;
-	ASSERT_EQ(0, setrlimit(RLIMIT_NOखाता, &rlimit));
+	ASSERT_EQ(0, setrlimit(RLIMIT_NOFILE, &rlimit));
 
-	/* Set बंद-on-exec क्रम two ranges: [0-50] and [75-100].  */
-	ret = sys_बंद_range(खोलो_fds[0], खोलो_fds[50], CLOSE_RANGE_CLOEXEC);
+	/* Set close-on-exec for two ranges: [0-50] and [75-100].  */
+	ret = sys_close_range(open_fds[0], open_fds[50], CLOSE_RANGE_CLOEXEC);
 	ASSERT_EQ(0, ret);
-	ret = sys_बंद_range(खोलो_fds[75], खोलो_fds[100], CLOSE_RANGE_CLOEXEC);
+	ret = sys_close_range(open_fds[75], open_fds[100], CLOSE_RANGE_CLOEXEC);
 	ASSERT_EQ(0, ret);
 
-	क्रम (i = 0; i <= 50; i++) अणु
-		पूर्णांक flags = fcntl(खोलो_fds[i], F_GETFD);
+	for (i = 0; i <= 50; i++) {
+		int flags = fcntl(open_fds[i], F_GETFD);
 
 		EXPECT_GT(flags, -1);
 		EXPECT_EQ(flags & FD_CLOEXEC, FD_CLOEXEC);
-	पूर्ण
+	}
 
-	क्रम (i = 51; i <= 74; i++) अणु
-		पूर्णांक flags = fcntl(खोलो_fds[i], F_GETFD);
+	for (i = 51; i <= 74; i++) {
+		int flags = fcntl(open_fds[i], F_GETFD);
 
 		EXPECT_GT(flags, -1);
 		EXPECT_EQ(flags & FD_CLOEXEC, 0);
-	पूर्ण
+	}
 
-	क्रम (i = 75; i <= 100; i++) अणु
-		पूर्णांक flags = fcntl(खोलो_fds[i], F_GETFD);
+	for (i = 75; i <= 100; i++) {
+		int flags = fcntl(open_fds[i], F_GETFD);
 
 		EXPECT_GT(flags, -1);
 		EXPECT_EQ(flags & FD_CLOEXEC, FD_CLOEXEC);
-	पूर्ण
+	}
 
 	/* Test a common pattern.  */
-	ret = sys_बंद_range(3, अच_पूर्णांक_उच्च, CLOSE_RANGE_CLOEXEC);
-	क्रम (i = 0; i <= 100; i++) अणु
-		पूर्णांक flags = fcntl(खोलो_fds[i], F_GETFD);
+	ret = sys_close_range(3, UINT_MAX, CLOSE_RANGE_CLOEXEC);
+	for (i = 0; i <= 100; i++) {
+		int flags = fcntl(open_fds[i], F_GETFD);
 
 		EXPECT_GT(flags, -1);
 		EXPECT_EQ(flags & FD_CLOEXEC, FD_CLOEXEC);
-	पूर्ण
-पूर्ण
+	}
+}
 
-TEST(बंद_range_cloexec_unshare)
-अणु
-	पूर्णांक i, ret;
-	पूर्णांक खोलो_fds[101];
-	काष्ठा rlimit rlimit;
+TEST(close_range_cloexec_unshare)
+{
+	int i, ret;
+	int open_fds[101];
+	struct rlimit rlimit;
 
-	क्रम (i = 0; i < ARRAY_SIZE(खोलो_fds); i++) अणु
-		पूर्णांक fd;
+	for (i = 0; i < ARRAY_SIZE(open_fds); i++) {
+		int fd;
 
-		fd = खोलो("/dev/null", O_RDONLY);
-		ASSERT_GE(fd, 0) अणु
-			अगर (त्रुटि_सं == ENOENT)
-				SKIP(वापस, "Skipping test since /dev/null does not exist");
-		पूर्ण
+		fd = open("/dev/null", O_RDONLY);
+		ASSERT_GE(fd, 0) {
+			if (errno == ENOENT)
+				SKIP(return, "Skipping test since /dev/null does not exist");
+		}
 
-		खोलो_fds[i] = fd;
-	पूर्ण
+		open_fds[i] = fd;
+	}
 
-	ret = sys_बंद_range(1000, 1000, CLOSE_RANGE_CLOEXEC);
-	अगर (ret < 0) अणु
-		अगर (त्रुटि_सं == ENOSYS)
-			SKIP(वापस, "close_range() syscall not supported");
-		अगर (त्रुटि_सं == EINVAL)
-			SKIP(वापस, "close_range() doesn't support CLOSE_RANGE_CLOEXEC");
-	पूर्ण
+	ret = sys_close_range(1000, 1000, CLOSE_RANGE_CLOEXEC);
+	if (ret < 0) {
+		if (errno == ENOSYS)
+			SKIP(return, "close_range() syscall not supported");
+		if (errno == EINVAL)
+			SKIP(return, "close_range() doesn't support CLOSE_RANGE_CLOEXEC");
+	}
 
 	/* Ensure the FD_CLOEXEC bit is set also with a resource limit in place.  */
-	ASSERT_EQ(0, getrlimit(RLIMIT_NOखाता, &rlimit));
+	ASSERT_EQ(0, getrlimit(RLIMIT_NOFILE, &rlimit));
 	rlimit.rlim_cur = 25;
-	ASSERT_EQ(0, setrlimit(RLIMIT_NOखाता, &rlimit));
+	ASSERT_EQ(0, setrlimit(RLIMIT_NOFILE, &rlimit));
 
-	/* Set बंद-on-exec क्रम two ranges: [0-50] and [75-100].  */
-	ret = sys_बंद_range(खोलो_fds[0], खोलो_fds[50],
+	/* Set close-on-exec for two ranges: [0-50] and [75-100].  */
+	ret = sys_close_range(open_fds[0], open_fds[50],
 			      CLOSE_RANGE_CLOEXEC | CLOSE_RANGE_UNSHARE);
 	ASSERT_EQ(0, ret);
-	ret = sys_बंद_range(खोलो_fds[75], खोलो_fds[100],
+	ret = sys_close_range(open_fds[75], open_fds[100],
 			      CLOSE_RANGE_CLOEXEC | CLOSE_RANGE_UNSHARE);
 	ASSERT_EQ(0, ret);
 
-	क्रम (i = 0; i <= 50; i++) अणु
-		पूर्णांक flags = fcntl(खोलो_fds[i], F_GETFD);
+	for (i = 0; i <= 50; i++) {
+		int flags = fcntl(open_fds[i], F_GETFD);
 
 		EXPECT_GT(flags, -1);
 		EXPECT_EQ(flags & FD_CLOEXEC, FD_CLOEXEC);
-	पूर्ण
+	}
 
-	क्रम (i = 51; i <= 74; i++) अणु
-		पूर्णांक flags = fcntl(खोलो_fds[i], F_GETFD);
+	for (i = 51; i <= 74; i++) {
+		int flags = fcntl(open_fds[i], F_GETFD);
 
 		EXPECT_GT(flags, -1);
 		EXPECT_EQ(flags & FD_CLOEXEC, 0);
-	पूर्ण
+	}
 
-	क्रम (i = 75; i <= 100; i++) अणु
-		पूर्णांक flags = fcntl(खोलो_fds[i], F_GETFD);
+	for (i = 75; i <= 100; i++) {
+		int flags = fcntl(open_fds[i], F_GETFD);
 
 		EXPECT_GT(flags, -1);
 		EXPECT_EQ(flags & FD_CLOEXEC, FD_CLOEXEC);
-	पूर्ण
+	}
 
 	/* Test a common pattern.  */
-	ret = sys_बंद_range(3, अच_पूर्णांक_उच्च,
+	ret = sys_close_range(3, UINT_MAX,
 			      CLOSE_RANGE_CLOEXEC | CLOSE_RANGE_UNSHARE);
-	क्रम (i = 0; i <= 100; i++) अणु
-		पूर्णांक flags = fcntl(खोलो_fds[i], F_GETFD);
+	for (i = 0; i <= 100; i++) {
+		int flags = fcntl(open_fds[i], F_GETFD);
 
 		EXPECT_GT(flags, -1);
 		EXPECT_EQ(flags & FD_CLOEXEC, FD_CLOEXEC);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Regression test क्रम syzbot+96cfd2b22b3213646a93@syzkaller.appspoपंचांगail.com
+ * Regression test for syzbot+96cfd2b22b3213646a93@syzkaller.appspotmail.com
  */
-TEST(बंद_range_cloexec_syzbot)
-अणु
-	पूर्णांक fd1, fd2, fd3, flags, ret, status;
+TEST(close_range_cloexec_syzbot)
+{
+	int fd1, fd2, fd3, flags, ret, status;
 	pid_t pid;
-	काष्ठा __clone_args args = अणु
-		.flags = CLONE_खाताS,
-		.निकास_संकेत = SIGCHLD,
-	पूर्ण;
+	struct __clone_args args = {
+		.flags = CLONE_FILES,
+		.exit_signal = SIGCHLD,
+	};
 
 	/* Create a huge gap in the fd table. */
-	fd1 = खोलो("/dev/null", O_RDWR);
+	fd1 = open("/dev/null", O_RDWR);
 	EXPECT_GT(fd1, 0);
 
 	fd2 = dup2(fd1, 1000);
 	EXPECT_GT(fd2, 0);
 
-	pid = sys_clone3(&args, माप(args));
+	pid = sys_clone3(&args, sizeof(args));
 	ASSERT_GE(pid, 0);
 
-	अगर (pid == 0) अणु
-		ret = sys_बंद_range(3, ~0U, CLOSE_RANGE_CLOEXEC);
-		अगर (ret)
-			निकास(निकास_त्रुटि);
+	if (pid == 0) {
+		ret = sys_close_range(3, ~0U, CLOSE_RANGE_CLOEXEC);
+		if (ret)
+			exit(EXIT_FAILURE);
 
 		/*
-			 * We now have a निजी file descriptor table and all
-			 * our खोलो fds should still be खोलो but made
-			 * बंद-on-exec.
+			 * We now have a private file descriptor table and all
+			 * our open fds should still be open but made
+			 * close-on-exec.
 			 */
 		flags = fcntl(fd1, F_GETFD);
 		EXPECT_GT(flags, -1);
@@ -429,23 +428,23 @@ TEST(बंद_range_cloexec_syzbot)
 		EXPECT_GT(fd3, 0);
 
 		/*
-			 * Duplicating the file descriptor must हटाओ the
+			 * Duplicating the file descriptor must remove the
 			 * FD_CLOEXEC flag.
 			 */
 		flags = fcntl(fd3, F_GETFD);
 		EXPECT_GT(flags, -1);
 		EXPECT_EQ(flags & FD_CLOEXEC, 0);
 
-		निकास(निकास_सफल);
-	पूर्ण
+		exit(EXIT_SUCCESS);
+	}
 
-	EXPECT_EQ(रुकोpid(pid, &status, 0), pid);
+	EXPECT_EQ(waitpid(pid, &status, 0), pid);
 	EXPECT_EQ(true, WIFEXITED(status));
 	EXPECT_EQ(0, WEXITSTATUS(status));
 
 	/*
-	 * We had a shared file descriptor table beक्रमe aदीर्घ with requesting
-	 * बंद-on-exec so the original fds must not be बंद-on-exec.
+	 * We had a shared file descriptor table before along with requesting
+	 * close-on-exec so the original fds must not be close-on-exec.
 	 */
 	flags = fcntl(fd1, F_GETFD);
 	EXPECT_GT(flags, -1);
@@ -462,55 +461,55 @@ TEST(बंद_range_cloexec_syzbot)
 	EXPECT_GT(flags, -1);
 	EXPECT_EQ(flags & FD_CLOEXEC, 0);
 
-	EXPECT_EQ(बंद(fd1), 0);
-	EXPECT_EQ(बंद(fd2), 0);
-	EXPECT_EQ(बंद(fd3), 0);
-पूर्ण
+	EXPECT_EQ(close(fd1), 0);
+	EXPECT_EQ(close(fd2), 0);
+	EXPECT_EQ(close(fd3), 0);
+}
 
 /*
- * Regression test क्रम syzbot+96cfd2b22b3213646a93@syzkaller.appspoपंचांगail.com
+ * Regression test for syzbot+96cfd2b22b3213646a93@syzkaller.appspotmail.com
  */
-TEST(बंद_range_cloexec_unshare_syzbot)
-अणु
-	पूर्णांक i, fd1, fd2, fd3, flags, ret, status;
+TEST(close_range_cloexec_unshare_syzbot)
+{
+	int i, fd1, fd2, fd3, flags, ret, status;
 	pid_t pid;
-	काष्ठा __clone_args args = अणु
-		.flags = CLONE_खाताS,
-		.निकास_संकेत = SIGCHLD,
-	पूर्ण;
+	struct __clone_args args = {
+		.flags = CLONE_FILES,
+		.exit_signal = SIGCHLD,
+	};
 
 	/*
 	 * Create a huge gap in the fd table. When we now call
 	 * CLOSE_RANGE_UNSHARE with a shared fd table and and with ~0U as upper
-	 * bound the kernel will only copy up to fd1 file descriptors पूर्णांकo the
-	 * new fd table. If the kernel is buggy and करोesn't handle
+	 * bound the kernel will only copy up to fd1 file descriptors into the
+	 * new fd table. If the kernel is buggy and doesn't handle
 	 * CLOSE_RANGE_CLOEXEC correctly it will not have copied all file
 	 * descriptors and we will oops!
 	 *
 	 * On a buggy kernel this should immediately oops. But let's loop just
 	 * to be sure.
 	 */
-	fd1 = खोलो("/dev/null", O_RDWR);
+	fd1 = open("/dev/null", O_RDWR);
 	EXPECT_GT(fd1, 0);
 
 	fd2 = dup2(fd1, 1000);
 	EXPECT_GT(fd2, 0);
 
-	क्रम (i = 0; i < 100; i++) अणु
+	for (i = 0; i < 100; i++) {
 
-		pid = sys_clone3(&args, माप(args));
+		pid = sys_clone3(&args, sizeof(args));
 		ASSERT_GE(pid, 0);
 
-		अगर (pid == 0) अणु
-			ret = sys_बंद_range(3, ~0U, CLOSE_RANGE_UNSHARE |
+		if (pid == 0) {
+			ret = sys_close_range(3, ~0U, CLOSE_RANGE_UNSHARE |
 						      CLOSE_RANGE_CLOEXEC);
-			अगर (ret)
-				निकास(निकास_त्रुटि);
+			if (ret)
+				exit(EXIT_FAILURE);
 
 			/*
-			 * We now have a निजी file descriptor table and all
-			 * our खोलो fds should still be खोलो but made
-			 * बंद-on-exec.
+			 * We now have a private file descriptor table and all
+			 * our open fds should still be open but made
+			 * close-on-exec.
 			 */
 			flags = fcntl(fd1, F_GETFD);
 			EXPECT_GT(flags, -1);
@@ -524,29 +523,29 @@ TEST(बंद_range_cloexec_unshare_syzbot)
 			EXPECT_GT(fd3, 0);
 
 			/*
-			 * Duplicating the file descriptor must हटाओ the
+			 * Duplicating the file descriptor must remove the
 			 * FD_CLOEXEC flag.
 			 */
 			flags = fcntl(fd3, F_GETFD);
 			EXPECT_GT(flags, -1);
 			EXPECT_EQ(flags & FD_CLOEXEC, 0);
 
-			EXPECT_EQ(बंद(fd1), 0);
-			EXPECT_EQ(बंद(fd2), 0);
-			EXPECT_EQ(बंद(fd3), 0);
+			EXPECT_EQ(close(fd1), 0);
+			EXPECT_EQ(close(fd2), 0);
+			EXPECT_EQ(close(fd3), 0);
 
-			निकास(निकास_सफल);
-		पूर्ण
+			exit(EXIT_SUCCESS);
+		}
 
-		EXPECT_EQ(रुकोpid(pid, &status, 0), pid);
+		EXPECT_EQ(waitpid(pid, &status, 0), pid);
 		EXPECT_EQ(true, WIFEXITED(status));
 		EXPECT_EQ(0, WEXITSTATUS(status));
-	पूर्ण
+	}
 
 	/*
-	 * We created a निजी file descriptor table beक्रमe aदीर्घ with
-	 * requesting बंद-on-exec so the original fds must not be
-	 * बंद-on-exec.
+	 * We created a private file descriptor table before along with
+	 * requesting close-on-exec so the original fds must not be
+	 * close-on-exec.
 	 */
 	flags = fcntl(fd1, F_GETFD);
 	EXPECT_GT(flags, -1);
@@ -563,9 +562,9 @@ TEST(बंद_range_cloexec_unshare_syzbot)
 	EXPECT_GT(flags, -1);
 	EXPECT_EQ(flags & FD_CLOEXEC, 0);
 
-	EXPECT_EQ(बंद(fd1), 0);
-	EXPECT_EQ(बंद(fd2), 0);
-	EXPECT_EQ(बंद(fd3), 0);
-पूर्ण
+	EXPECT_EQ(close(fd1), 0);
+	EXPECT_EQ(close(fd2), 0);
+	EXPECT_EQ(close(fd3), 0);
+}
 
 TEST_HARNESS_MAIN

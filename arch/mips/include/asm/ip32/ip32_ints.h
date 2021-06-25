@@ -1,26 +1,25 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2000 Harald Koerfgen
  */
 
-#अगर_अघोषित __ASM_IP32_INTS_H
-#घोषणा __ASM_IP32_INTS_H
+#ifndef __ASM_IP32_INTS_H
+#define __ASM_IP32_INTS_H
 
-#समावेश <यंत्र/irq.h>
+#include <asm/irq.h>
 
 /*
- * This list reflects the assignment of पूर्णांकerrupt numbers to
- * पूर्णांकerrupting events.	 Order is fairly irrelevant to handling
- * priority.  This dअगरfers from irix.
+ * This list reflects the assignment of interrupt numbers to
+ * interrupting events.	 Order is fairly irrelevant to handling
+ * priority.  This differs from irix.
  */
 
-क्रमागत ip32_irq_no अणु
+enum ip32_irq_no {
 	/*
-	 * CPU पूर्णांकerrupts are 0 ... 7
+	 * CPU interrupts are 0 ... 7
 	 */
 
 	CRIME_IRQ_BASE			= MIPS_CPU_IRQ_BASE + 8,
@@ -110,6 +109,6 @@
 	MACEISA_SERIAL2_RDMAOR_IRQ,
 
 	IP32_IRQ_MAX			= MACEISA_SERIAL2_RDMAOR_IRQ
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __ASM_IP32_INTS_H */
+#endif /* __ASM_IP32_INTS_H */

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,235 +23,235 @@
  *
  */
 
-#समावेश "dmub_psr.h"
-#समावेश "dc.h"
-#समावेश "dc_dmub_srv.h"
-#समावेश "dmub/dmub_srv.h"
-#समावेश "core_types.h"
+#include "dmub_psr.h"
+#include "dc.h"
+#include "dc_dmub_srv.h"
+#include "dmub/dmub_srv.h"
+#include "core_types.h"
 
-#घोषणा MAX_PIPES 6
+#define MAX_PIPES 6
 
 /*
  * Convert dmcub psr state to dmcu psr state.
  */
-अटल क्रमागत dc_psr_state convert_psr_state(uपूर्णांक32_t raw_state)
-अणु
-	क्रमागत dc_psr_state state = PSR_STATE0;
+static enum dc_psr_state convert_psr_state(uint32_t raw_state)
+{
+	enum dc_psr_state state = PSR_STATE0;
 
-	अगर (raw_state == 0)
+	if (raw_state == 0)
 		state = PSR_STATE0;
-	अन्यथा अगर (raw_state == 0x10)
+	else if (raw_state == 0x10)
 		state = PSR_STATE1;
-	अन्यथा अगर (raw_state == 0x11)
+	else if (raw_state == 0x11)
 		state = PSR_STATE1a;
-	अन्यथा अगर (raw_state == 0x20)
+	else if (raw_state == 0x20)
 		state = PSR_STATE2;
-	अन्यथा अगर (raw_state == 0x21)
+	else if (raw_state == 0x21)
 		state = PSR_STATE2a;
-	अन्यथा अगर (raw_state == 0x30)
+	else if (raw_state == 0x30)
 		state = PSR_STATE3;
-	अन्यथा अगर (raw_state == 0x31)
+	else if (raw_state == 0x31)
 		state = PSR_STATE3Init;
-	अन्यथा अगर (raw_state == 0x40)
+	else if (raw_state == 0x40)
 		state = PSR_STATE4;
-	अन्यथा अगर (raw_state == 0x41)
+	else if (raw_state == 0x41)
 		state = PSR_STATE4a;
-	अन्यथा अगर (raw_state == 0x42)
+	else if (raw_state == 0x42)
 		state = PSR_STATE4b;
-	अन्यथा अगर (raw_state == 0x43)
+	else if (raw_state == 0x43)
 		state = PSR_STATE4c;
-	अन्यथा अगर (raw_state == 0x44)
+	else if (raw_state == 0x44)
 		state = PSR_STATE4d;
-	अन्यथा अगर (raw_state == 0x50)
+	else if (raw_state == 0x50)
 		state = PSR_STATE5;
-	अन्यथा अगर (raw_state == 0x51)
+	else if (raw_state == 0x51)
 		state = PSR_STATE5a;
-	अन्यथा अगर (raw_state == 0x52)
+	else if (raw_state == 0x52)
 		state = PSR_STATE5b;
-	अन्यथा अगर (raw_state == 0x53)
+	else if (raw_state == 0x53)
 		state = PSR_STATE5c;
 
-	वापस state;
-पूर्ण
+	return state;
+}
 
 /*
  * Get PSR state from firmware.
  */
-अटल व्योम dmub_psr_get_state(काष्ठा dmub_psr *dmub, क्रमागत dc_psr_state *state)
-अणु
-	काष्ठा dmub_srv *srv = dmub->ctx->dmub_srv->dmub;
-	uपूर्णांक32_t raw_state = 0;
-	uपूर्णांक32_t retry_count = 0;
-	क्रमागत dmub_status status;
+static void dmub_psr_get_state(struct dmub_psr *dmub, enum dc_psr_state *state)
+{
+	struct dmub_srv *srv = dmub->ctx->dmub_srv->dmub;
+	uint32_t raw_state = 0;
+	uint32_t retry_count = 0;
+	enum dmub_status status;
 
-	करो अणु
-		// Send gpपूर्णांक command and रुको क्रम ack
-		status = dmub_srv_send_gpपूर्णांक_command(srv, DMUB_GPINT__GET_PSR_STATE, 0, 30);
+	do {
+		// Send gpint command and wait for ack
+		status = dmub_srv_send_gpint_command(srv, DMUB_GPINT__GET_PSR_STATE, 0, 30);
 
-		अगर (status == DMUB_STATUS_OK) अणु
+		if (status == DMUB_STATUS_OK) {
 			// GPINT was executed, get response
-			dmub_srv_get_gpपूर्णांक_response(srv, &raw_state);
+			dmub_srv_get_gpint_response(srv, &raw_state);
 			*state = convert_psr_state(raw_state);
-		पूर्ण अन्यथा
-			// Return invalid state when GPINT बार out
+		} else
+			// Return invalid state when GPINT times out
 			*state = PSR_STATE_INVALID;
 
-		// Assert अगर max retry hit
-		अगर (retry_count >= 1000)
+		// Assert if max retry hit
+		if (retry_count >= 1000)
 			ASSERT(0);
-	पूर्ण जबतक (++retry_count <= 1000 && *state == PSR_STATE_INVALID);
-पूर्ण
+	} while (++retry_count <= 1000 && *state == PSR_STATE_INVALID);
+}
 
 /*
  * Set PSR version.
  */
-अटल bool dmub_psr_set_version(काष्ठा dmub_psr *dmub, काष्ठा dc_stream_state *stream)
-अणु
-	जोड़ dmub_rb_cmd cmd;
-	काष्ठा dc_context *dc = dmub->ctx;
+static bool dmub_psr_set_version(struct dmub_psr *dmub, struct dc_stream_state *stream)
+{
+	union dmub_rb_cmd cmd;
+	struct dc_context *dc = dmub->ctx;
 
-	अगर (stream->link->psr_settings.psr_version == DC_PSR_VERSION_UNSUPPORTED)
-		वापस false;
+	if (stream->link->psr_settings.psr_version == DC_PSR_VERSION_UNSUPPORTED)
+		return false;
 
-	स_रखो(&cmd, 0, माप(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.psr_set_version.header.type = DMUB_CMD__PSR;
 	cmd.psr_set_version.header.sub_type = DMUB_CMD__PSR_SET_VERSION;
-	चयन (stream->link->psr_settings.psr_version) अणु
-	हाल DC_PSR_VERSION_1:
+	switch (stream->link->psr_settings.psr_version) {
+	case DC_PSR_VERSION_1:
 		cmd.psr_set_version.psr_set_version_data.version = PSR_VERSION_1;
-		अवरोध;
-	हाल DC_PSR_VERSION_UNSUPPORTED:
-	शेष:
+		break;
+	case DC_PSR_VERSION_UNSUPPORTED:
+	default:
 		cmd.psr_set_version.psr_set_version_data.version = PSR_VERSION_UNSUPPORTED;
-		अवरोध;
-	पूर्ण
-	cmd.psr_set_version.header.payload_bytes = माप(काष्ठा dmub_cmd_psr_set_version_data);
+		break;
+	}
+	cmd.psr_set_version.header.payload_bytes = sizeof(struct dmub_cmd_psr_set_version_data);
 
 	dc_dmub_srv_cmd_queue(dc->dmub_srv, &cmd);
 	dc_dmub_srv_cmd_execute(dc->dmub_srv);
-	dc_dmub_srv_रुको_idle(dc->dmub_srv);
+	dc_dmub_srv_wait_idle(dc->dmub_srv);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
  * Enable/Disable PSR.
  */
-अटल व्योम dmub_psr_enable(काष्ठा dmub_psr *dmub, bool enable, bool रुको)
-अणु
-	जोड़ dmub_rb_cmd cmd;
-	काष्ठा dc_context *dc = dmub->ctx;
-	uपूर्णांक32_t retry_count;
-	क्रमागत dc_psr_state state = PSR_STATE0;
+static void dmub_psr_enable(struct dmub_psr *dmub, bool enable, bool wait)
+{
+	union dmub_rb_cmd cmd;
+	struct dc_context *dc = dmub->ctx;
+	uint32_t retry_count;
+	enum dc_psr_state state = PSR_STATE0;
 
-	स_रखो(&cmd, 0, माप(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.psr_enable.header.type = DMUB_CMD__PSR;
 
-	अगर (enable)
+	if (enable)
 		cmd.psr_enable.header.sub_type = DMUB_CMD__PSR_ENABLE;
-	अन्यथा
+	else
 		cmd.psr_enable.header.sub_type = DMUB_CMD__PSR_DISABLE;
 
 	cmd.psr_enable.header.payload_bytes = 0; // Send header only
 
 	dc_dmub_srv_cmd_queue(dc->dmub_srv, &cmd);
 	dc_dmub_srv_cmd_execute(dc->dmub_srv);
-	dc_dmub_srv_रुको_idle(dc->dmub_srv);
+	dc_dmub_srv_wait_idle(dc->dmub_srv);
 
 	/* Below loops 1000 x 500us = 500 ms.
-	 *  Exit PSR may need to रुको 1-2 frames to घातer up. Timeout after at
-	 *  least a few frames. Should never hit the max retry निश्चित below.
+	 *  Exit PSR may need to wait 1-2 frames to power up. Timeout after at
+	 *  least a few frames. Should never hit the max retry assert below.
 	 */
-	अगर (रुको) अणु
-		क्रम (retry_count = 0; retry_count <= 1000; retry_count++) अणु
+	if (wait) {
+		for (retry_count = 0; retry_count <= 1000; retry_count++) {
 			dmub_psr_get_state(dmub, &state);
 
-			अगर (enable) अणु
-				अगर (state != PSR_STATE0)
-					अवरोध;
-			पूर्ण अन्यथा अणु
-				अगर (state == PSR_STATE0)
-					अवरोध;
-			पूर्ण
+			if (enable) {
+				if (state != PSR_STATE0)
+					break;
+			} else {
+				if (state == PSR_STATE0)
+					break;
+			}
 
 			udelay(500);
-		पूर्ण
+		}
 
-		/* निश्चित अगर max retry hit */
-		अगर (retry_count >= 1000)
+		/* assert if max retry hit */
+		if (retry_count >= 1000)
 			ASSERT(0);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Set PSR level.
  */
-अटल व्योम dmub_psr_set_level(काष्ठा dmub_psr *dmub, uपूर्णांक16_t psr_level)
-अणु
-	जोड़ dmub_rb_cmd cmd;
-	क्रमागत dc_psr_state state = PSR_STATE0;
-	काष्ठा dc_context *dc = dmub->ctx;
+static void dmub_psr_set_level(struct dmub_psr *dmub, uint16_t psr_level)
+{
+	union dmub_rb_cmd cmd;
+	enum dc_psr_state state = PSR_STATE0;
+	struct dc_context *dc = dmub->ctx;
 
 	dmub_psr_get_state(dmub, &state);
 
-	अगर (state == PSR_STATE0)
-		वापस;
+	if (state == PSR_STATE0)
+		return;
 
-	स_रखो(&cmd, 0, माप(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.psr_set_level.header.type = DMUB_CMD__PSR;
 	cmd.psr_set_level.header.sub_type = DMUB_CMD__PSR_SET_LEVEL;
-	cmd.psr_set_level.header.payload_bytes = माप(काष्ठा dmub_cmd_psr_set_level_data);
+	cmd.psr_set_level.header.payload_bytes = sizeof(struct dmub_cmd_psr_set_level_data);
 	cmd.psr_set_level.psr_set_level_data.psr_level = psr_level;
 
 	dc_dmub_srv_cmd_queue(dc->dmub_srv, &cmd);
 	dc_dmub_srv_cmd_execute(dc->dmub_srv);
-	dc_dmub_srv_रुको_idle(dc->dmub_srv);
-पूर्ण
+	dc_dmub_srv_wait_idle(dc->dmub_srv);
+}
 
 /*
- * Setup PSR by programming phy रेजिस्टरs and sending psr hw context values to firmware.
+ * Setup PSR by programming phy registers and sending psr hw context values to firmware.
  */
-अटल bool dmub_psr_copy_settings(काष्ठा dmub_psr *dmub,
-		काष्ठा dc_link *link,
-		काष्ठा psr_context *psr_context)
-अणु
-	जोड़ dmub_rb_cmd cmd;
-	काष्ठा dc_context *dc = dmub->ctx;
-	काष्ठा dmub_cmd_psr_copy_settings_data *copy_settings_data
+static bool dmub_psr_copy_settings(struct dmub_psr *dmub,
+		struct dc_link *link,
+		struct psr_context *psr_context)
+{
+	union dmub_rb_cmd cmd;
+	struct dc_context *dc = dmub->ctx;
+	struct dmub_cmd_psr_copy_settings_data *copy_settings_data
 		= &cmd.psr_copy_settings.psr_copy_settings_data;
-	काष्ठा pipe_ctx *pipe_ctx = शून्य;
-	काष्ठा resource_context *res_ctx = &link->ctx->dc->current_state->res_ctx;
-	पूर्णांक i = 0;
+	struct pipe_ctx *pipe_ctx = NULL;
+	struct resource_context *res_ctx = &link->ctx->dc->current_state->res_ctx;
+	int i = 0;
 
-	क्रम (i = 0; i < MAX_PIPES; i++) अणु
-		अगर (res_ctx->pipe_ctx[i].stream &&
+	for (i = 0; i < MAX_PIPES; i++) {
+		if (res_ctx->pipe_ctx[i].stream &&
 		    res_ctx->pipe_ctx[i].stream->link == link &&
-		    res_ctx->pipe_ctx[i].stream->link->connector_संकेत == SIGNAL_TYPE_EDP) अणु
+		    res_ctx->pipe_ctx[i].stream->link->connector_signal == SIGNAL_TYPE_EDP) {
 			pipe_ctx = &res_ctx->pipe_ctx[i];
-			//TODO: refactor क्रम multi edp support
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			//TODO: refactor for multi edp support
+			break;
+		}
+	}
 
-	अगर (!pipe_ctx)
-		वापस false;
+	if (!pipe_ctx)
+		return false;
 
 	// First, set the psr version
-	अगर (!dmub_psr_set_version(dmub, pipe_ctx->stream))
-		वापस false;
+	if (!dmub_psr_set_version(dmub, pipe_ctx->stream))
+		return false;
 
-	// Program DP DPHY fast training रेजिस्टरs
+	// Program DP DPHY fast training registers
 	link->link_enc->funcs->psr_program_dp_dphy_fast_training(link->link_enc,
 			psr_context->psrExitLinkTrainingRequired);
 
-	// Program DP_SEC_CNTL1 रेजिस्टर to set transmission GPS0 line num and priority to high
+	// Program DP_SEC_CNTL1 register to set transmission GPS0 line num and priority to high
 	link->link_enc->funcs->psr_program_secondary_packet(link->link_enc,
 			psr_context->sdpTransmitLineNumDeadline);
 
-	स_रखो(&cmd, 0, माप(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.psr_copy_settings.header.type = DMUB_CMD__PSR;
 	cmd.psr_copy_settings.header.sub_type = DMUB_CMD__PSR_COPY_SETTINGS;
-	cmd.psr_copy_settings.header.payload_bytes = माप(काष्ठा dmub_cmd_psr_copy_settings_data);
+	cmd.psr_copy_settings.header.payload_bytes = sizeof(struct dmub_cmd_psr_copy_settings_data);
 
 	// Hw insts
 	copy_settings_data->dpphy_inst				= psr_context->transmitterId;
@@ -262,17 +261,17 @@
 
 	copy_settings_data->mpcc_inst				= pipe_ctx->plane_res.mpcc_inst;
 
-	अगर (pipe_ctx->plane_res.dpp)
+	if (pipe_ctx->plane_res.dpp)
 		copy_settings_data->dpp_inst			= pipe_ctx->plane_res.dpp->inst;
-	अन्यथा
+	else
 		copy_settings_data->dpp_inst			= 0;
-	अगर (pipe_ctx->stream_res.opp)
+	if (pipe_ctx->stream_res.opp)
 		copy_settings_data->opp_inst			= pipe_ctx->stream_res.opp->inst;
-	अन्यथा
+	else
 		copy_settings_data->opp_inst			= 0;
-	अगर (pipe_ctx->stream_res.tg)
+	if (pipe_ctx->stream_res.tg)
 		copy_settings_data->otg_inst			= pipe_ctx->stream_res.tg->inst;
-	अन्यथा
+	else
 		copy_settings_data->otg_inst			= 0;
 
 	// Misc
@@ -290,82 +289,82 @@
 
 	dc_dmub_srv_cmd_queue(dc->dmub_srv, &cmd);
 	dc_dmub_srv_cmd_execute(dc->dmub_srv);
-	dc_dmub_srv_रुको_idle(dc->dmub_srv);
+	dc_dmub_srv_wait_idle(dc->dmub_srv);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * Send command to PSR to क्रमce अटल ENTER and ignore all state changes until निकास
+ * Send command to PSR to force static ENTER and ignore all state changes until exit
  */
-अटल व्योम dmub_psr_क्रमce_अटल(काष्ठा dmub_psr *dmub)
-अणु
-	जोड़ dmub_rb_cmd cmd;
-	काष्ठा dc_context *dc = dmub->ctx;
+static void dmub_psr_force_static(struct dmub_psr *dmub)
+{
+	union dmub_rb_cmd cmd;
+	struct dc_context *dc = dmub->ctx;
 
-	स_रखो(&cmd, 0, माप(cmd));
-	cmd.psr_क्रमce_अटल.header.type = DMUB_CMD__PSR;
-	cmd.psr_क्रमce_अटल.header.sub_type = DMUB_CMD__PSR_FORCE_STATIC;
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.psr_force_static.header.type = DMUB_CMD__PSR;
+	cmd.psr_force_static.header.sub_type = DMUB_CMD__PSR_FORCE_STATIC;
 	cmd.psr_enable.header.payload_bytes = 0;
 
 	dc_dmub_srv_cmd_queue(dc->dmub_srv, &cmd);
 	dc_dmub_srv_cmd_execute(dc->dmub_srv);
-	dc_dmub_srv_रुको_idle(dc->dmub_srv);
-पूर्ण
+	dc_dmub_srv_wait_idle(dc->dmub_srv);
+}
 
 /*
  * Get PSR residency from firmware.
  */
-अटल व्योम dmub_psr_get_residency(काष्ठा dmub_psr *dmub, uपूर्णांक32_t *residency)
-अणु
-	काष्ठा dmub_srv *srv = dmub->ctx->dmub_srv->dmub;
+static void dmub_psr_get_residency(struct dmub_psr *dmub, uint32_t *residency)
+{
+	struct dmub_srv *srv = dmub->ctx->dmub_srv->dmub;
 
-	// Send gpपूर्णांक command and रुको क्रम ack
-	dmub_srv_send_gpपूर्णांक_command(srv, DMUB_GPINT__PSR_RESIDENCY, 0, 30);
+	// Send gpint command and wait for ack
+	dmub_srv_send_gpint_command(srv, DMUB_GPINT__PSR_RESIDENCY, 0, 30);
 
-	dmub_srv_get_gpपूर्णांक_response(srv, residency);
-पूर्ण
+	dmub_srv_get_gpint_response(srv, residency);
+}
 
-अटल स्थिर काष्ठा dmub_psr_funcs psr_funcs = अणु
+static const struct dmub_psr_funcs psr_funcs = {
 	.psr_copy_settings		= dmub_psr_copy_settings,
 	.psr_enable			= dmub_psr_enable,
 	.psr_get_state			= dmub_psr_get_state,
 	.psr_set_level			= dmub_psr_set_level,
-	.psr_क्रमce_अटल		= dmub_psr_क्रमce_अटल,
+	.psr_force_static		= dmub_psr_force_static,
 	.psr_get_residency		= dmub_psr_get_residency,
-पूर्ण;
+};
 
 /*
- * Conकाष्ठा PSR object.
+ * Construct PSR object.
  */
-अटल व्योम dmub_psr_स्थिरruct(काष्ठा dmub_psr *psr, काष्ठा dc_context *ctx)
-अणु
+static void dmub_psr_construct(struct dmub_psr *psr, struct dc_context *ctx)
+{
 	psr->ctx = ctx;
 	psr->funcs = &psr_funcs;
-पूर्ण
+}
 
 /*
  * Allocate and initialize PSR object.
  */
-काष्ठा dmub_psr *dmub_psr_create(काष्ठा dc_context *ctx)
-अणु
-	काष्ठा dmub_psr *psr = kzalloc(माप(काष्ठा dmub_psr), GFP_KERNEL);
+struct dmub_psr *dmub_psr_create(struct dc_context *ctx)
+{
+	struct dmub_psr *psr = kzalloc(sizeof(struct dmub_psr), GFP_KERNEL);
 
-	अगर (psr == शून्य) अणु
+	if (psr == NULL) {
 		BREAK_TO_DEBUGGER();
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	dmub_psr_स्थिरruct(psr, ctx);
+	dmub_psr_construct(psr, ctx);
 
-	वापस psr;
-पूर्ण
+	return psr;
+}
 
 /*
  * Deallocate PSR object.
  */
-व्योम dmub_psr_destroy(काष्ठा dmub_psr **dmub)
-अणु
-	kमुक्त(*dmub);
-	*dmub = शून्य;
-पूर्ण
+void dmub_psr_destroy(struct dmub_psr **dmub)
+{
+	kfree(*dmub);
+	*dmub = NULL;
+}

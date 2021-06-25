@@ -1,113 +1,112 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2014 Texas Instruments Incorporated - https://www.ti.com/
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/sched.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/sched.h>
 
-#समावेश "omapdss.h"
-#समावेश "dss.h"
+#include "omapdss.h"
+#include "dss.h"
 
-काष्ठा dss_video_pll अणु
-	काष्ठा dss_pll pll;
+struct dss_video_pll {
+	struct dss_pll pll;
 
-	काष्ठा device *dev;
+	struct device *dev;
 
-	व्योम __iomem *clkctrl_base;
-पूर्ण;
+	void __iomem *clkctrl_base;
+};
 
-#घोषणा REG_MOD(reg, val, start, end) \
-	ग_लिखोl_relaxed(FLD_MOD(पढ़ोl_relaxed(reg), val, start, end), reg)
+#define REG_MOD(reg, val, start, end) \
+	writel_relaxed(FLD_MOD(readl_relaxed(reg), val, start, end), reg)
 
-अटल व्योम dss_dpll_enable_scp_clk(काष्ठा dss_video_pll *vpll)
-अणु
+static void dss_dpll_enable_scp_clk(struct dss_video_pll *vpll)
+{
 	REG_MOD(vpll->clkctrl_base, 1, 14, 14); /* CIO_CLK_ICG */
-पूर्ण
+}
 
-अटल व्योम dss_dpll_disable_scp_clk(काष्ठा dss_video_pll *vpll)
-अणु
+static void dss_dpll_disable_scp_clk(struct dss_video_pll *vpll)
+{
 	REG_MOD(vpll->clkctrl_base, 0, 14, 14); /* CIO_CLK_ICG */
-पूर्ण
+}
 
-अटल व्योम dss_dpll_घातer_enable(काष्ठा dss_video_pll *vpll)
-अणु
+static void dss_dpll_power_enable(struct dss_video_pll *vpll)
+{
 	REG_MOD(vpll->clkctrl_base, 2, 31, 30); /* PLL_POWER_ON_ALL */
 
 	/*
-	 * DRA7x PLL CTRL's PLL_PWR_STATUS seems to always वापस 0,
+	 * DRA7x PLL CTRL's PLL_PWR_STATUS seems to always return 0,
 	 * so we have to use fixed delay here.
 	 */
 	msleep(1);
-पूर्ण
+}
 
-अटल व्योम dss_dpll_घातer_disable(काष्ठा dss_video_pll *vpll)
-अणु
+static void dss_dpll_power_disable(struct dss_video_pll *vpll)
+{
 	REG_MOD(vpll->clkctrl_base, 0, 31, 30);	/* PLL_POWER_OFF */
-पूर्ण
+}
 
-अटल पूर्णांक dss_video_pll_enable(काष्ठा dss_pll *pll)
-अणु
-	काष्ठा dss_video_pll *vpll = container_of(pll, काष्ठा dss_video_pll, pll);
-	पूर्णांक r;
+static int dss_video_pll_enable(struct dss_pll *pll)
+{
+	struct dss_video_pll *vpll = container_of(pll, struct dss_video_pll, pll);
+	int r;
 
-	r = dss_runसमय_get(pll->dss);
-	अगर (r)
-		वापस r;
+	r = dss_runtime_get(pll->dss);
+	if (r)
+		return r;
 
 	dss_ctrl_pll_enable(pll, true);
 
 	dss_dpll_enable_scp_clk(vpll);
 
-	r = dss_pll_रुको_reset_करोne(pll);
-	अगर (r)
-		जाओ err_reset;
+	r = dss_pll_wait_reset_done(pll);
+	if (r)
+		goto err_reset;
 
-	dss_dpll_घातer_enable(vpll);
+	dss_dpll_power_enable(vpll);
 
-	वापस 0;
+	return 0;
 
 err_reset:
 	dss_dpll_disable_scp_clk(vpll);
 	dss_ctrl_pll_enable(pll, false);
-	dss_runसमय_put(pll->dss);
+	dss_runtime_put(pll->dss);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम dss_video_pll_disable(काष्ठा dss_pll *pll)
-अणु
-	काष्ठा dss_video_pll *vpll = container_of(pll, काष्ठा dss_video_pll, pll);
+static void dss_video_pll_disable(struct dss_pll *pll)
+{
+	struct dss_video_pll *vpll = container_of(pll, struct dss_video_pll, pll);
 
-	dss_dpll_घातer_disable(vpll);
+	dss_dpll_power_disable(vpll);
 
 	dss_dpll_disable_scp_clk(vpll);
 
 	dss_ctrl_pll_enable(pll, false);
 
-	dss_runसमय_put(pll->dss);
-पूर्ण
+	dss_runtime_put(pll->dss);
+}
 
-अटल स्थिर काष्ठा dss_pll_ops dss_pll_ops = अणु
+static const struct dss_pll_ops dss_pll_ops = {
 	.enable = dss_video_pll_enable,
 	.disable = dss_video_pll_disable,
-	.set_config = dss_pll_ग_लिखो_config_type_a,
-पूर्ण;
+	.set_config = dss_pll_write_config_type_a,
+};
 
-अटल स्थिर काष्ठा dss_pll_hw dss_dra7_video_pll_hw = अणु
+static const struct dss_pll_hw dss_dra7_video_pll_hw = {
 	.type = DSS_PLL_TYPE_A,
 
 	.n_max = (1 << 8) - 1,
 	.m_max = (1 << 12) - 1,
 	.mX_max = (1 << 5) - 1,
-	.fपूर्णांक_min = 500000,
-	.fपूर्णांक_max = 2500000,
+	.fint_min = 500000,
+	.fint_max = 2500000,
 	.clkdco_max = 1800000000,
 
 	.n_msb = 8,
@@ -128,49 +127,49 @@ err_reset:
 
 	.errata_i886 = true,
 	.errata_i932 = true,
-पूर्ण;
+};
 
-काष्ठा dss_pll *dss_video_pll_init(काष्ठा dss_device *dss,
-				   काष्ठा platक्रमm_device *pdev, पूर्णांक id,
-				   काष्ठा regulator *regulator)
-अणु
-	स्थिर अक्षर * स्थिर reg_name[] = अणु "pll1", "pll2" पूर्ण;
-	स्थिर अक्षर * स्थिर clkctrl_name[] = अणु "pll1_clkctrl", "pll2_clkctrl" पूर्ण;
-	स्थिर अक्षर * स्थिर clkin_name[] = अणु "video1_clk", "video2_clk" पूर्ण;
+struct dss_pll *dss_video_pll_init(struct dss_device *dss,
+				   struct platform_device *pdev, int id,
+				   struct regulator *regulator)
+{
+	const char * const reg_name[] = { "pll1", "pll2" };
+	const char * const clkctrl_name[] = { "pll1_clkctrl", "pll2_clkctrl" };
+	const char * const clkin_name[] = { "video1_clk", "video2_clk" };
 
-	काष्ठा resource *res;
-	काष्ठा dss_video_pll *vpll;
-	व्योम __iomem *pll_base, *clkctrl_base;
-	काष्ठा clk *clk;
-	काष्ठा dss_pll *pll;
-	पूर्णांक r;
+	struct resource *res;
+	struct dss_video_pll *vpll;
+	void __iomem *pll_base, *clkctrl_base;
+	struct clk *clk;
+	struct dss_pll *pll;
+	int r;
 
 	/* PLL CONTROL */
 
-	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, reg_name[id]);
+	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, reg_name[id]);
 	pll_base = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(pll_base))
-		वापस ERR_CAST(pll_base);
+	if (IS_ERR(pll_base))
+		return ERR_CAST(pll_base);
 
 	/* CLOCK CONTROL */
 
-	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM,
+	res = platform_get_resource_byname(pdev, IORESOURCE_MEM,
 		clkctrl_name[id]);
 	clkctrl_base = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(clkctrl_base))
-		वापस ERR_CAST(clkctrl_base);
+	if (IS_ERR(clkctrl_base))
+		return ERR_CAST(clkctrl_base);
 
 	/* CLKIN */
 
 	clk = devm_clk_get(&pdev->dev, clkin_name[id]);
-	अगर (IS_ERR(clk)) अणु
+	if (IS_ERR(clk)) {
 		DSSERR("can't get video pll clkin\n");
-		वापस ERR_CAST(clk);
-	पूर्ण
+		return ERR_CAST(clk);
+	}
 
-	vpll = devm_kzalloc(&pdev->dev, माप(*vpll), GFP_KERNEL);
-	अगर (!vpll)
-		वापस ERR_PTR(-ENOMEM);
+	vpll = devm_kzalloc(&pdev->dev, sizeof(*vpll), GFP_KERNEL);
+	if (!vpll)
+		return ERR_PTR(-ENOMEM);
 
 	vpll->dev = &pdev->dev;
 	vpll->clkctrl_base = clkctrl_base;
@@ -185,14 +184,14 @@ err_reset:
 	pll->hw = &dss_dra7_video_pll_hw;
 	pll->ops = &dss_pll_ops;
 
-	r = dss_pll_रेजिस्टर(dss, pll);
-	अगर (r)
-		वापस ERR_PTR(r);
+	r = dss_pll_register(dss, pll);
+	if (r)
+		return ERR_PTR(r);
 
-	वापस pll;
-पूर्ण
+	return pll;
+}
 
-व्योम dss_video_pll_uninit(काष्ठा dss_pll *pll)
-अणु
-	dss_pll_unरेजिस्टर(pll);
-पूर्ण
+void dss_video_pll_uninit(struct dss_pll *pll)
+{
+	dss_pll_unregister(pll);
+}

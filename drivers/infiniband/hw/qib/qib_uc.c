@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2006, 2007, 2008, 2009, 2010 QLogic Corporation.
  * All rights reserved.
@@ -7,20 +6,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -33,49 +32,49 @@
  * SOFTWARE.
  */
 
-#समावेश "qib.h"
+#include "qib.h"
 
-/* cut करोwn ridiculously दीर्घ IB macro names */
-#घोषणा OP(x) IB_OPCODE_UC_##x
+/* cut down ridiculously long IB macro names */
+#define OP(x) IB_OPCODE_UC_##x
 
 /**
- * qib_make_uc_req - स्थिरruct a request packet (SEND, RDMA ग_लिखो)
- * @qp: a poपूर्णांकer to the QP
+ * qib_make_uc_req - construct a request packet (SEND, RDMA write)
+ * @qp: a pointer to the QP
  * @flags: unused
  *
  * Assumes the s_lock is held.
  *
- * Return 1 अगर स्थिरructed; otherwise, वापस 0.
+ * Return 1 if constructed; otherwise, return 0.
  */
-पूर्णांक qib_make_uc_req(काष्ठा rvt_qp *qp, अचिन्हित दीर्घ *flags)
-अणु
-	काष्ठा qib_qp_priv *priv = qp->priv;
-	काष्ठा ib_other_headers *ohdr;
-	काष्ठा rvt_swqe *wqe;
+int qib_make_uc_req(struct rvt_qp *qp, unsigned long *flags)
+{
+	struct qib_qp_priv *priv = qp->priv;
+	struct ib_other_headers *ohdr;
+	struct rvt_swqe *wqe;
 	u32 hwords;
 	u32 bth0;
 	u32 len;
 	u32 pmtu = qp->pmtu;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (!(ib_rvt_state_ops[qp->state] & RVT_PROCESS_SEND_OK)) अणु
-		अगर (!(ib_rvt_state_ops[qp->state] & RVT_FLUSH_SEND))
-			जाओ bail;
+	if (!(ib_rvt_state_ops[qp->state] & RVT_PROCESS_SEND_OK)) {
+		if (!(ib_rvt_state_ops[qp->state] & RVT_FLUSH_SEND))
+			goto bail;
 		/* We are in the error state, flush the work request. */
-		अगर (qp->s_last == READ_ONCE(qp->s_head))
-			जाओ bail;
+		if (qp->s_last == READ_ONCE(qp->s_head))
+			goto bail;
 		/* If DMAs are in progress, we can't flush immediately. */
-		अगर (atomic_पढ़ो(&priv->s_dma_busy)) अणु
+		if (atomic_read(&priv->s_dma_busy)) {
 			qp->s_flags |= RVT_S_WAIT_DMA;
-			जाओ bail;
-		पूर्ण
+			goto bail;
+		}
 		wqe = rvt_get_swqe_ptr(qp, qp->s_last);
 		rvt_send_complete(qp, wqe, IB_WC_WR_FLUSH_ERR);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	ohdr = &priv->s_hdr->u.oth;
-	अगर (rdma_ah_get_ah_flags(&qp->remote_ah_attr) & IB_AH_GRH)
+	if (rdma_ah_get_ah_flags(&qp->remote_ah_attr) & IB_AH_GRH)
 		ohdr = &priv->s_hdr->u.l.oth;
 
 	/* header size in 32-bit words LRH+BTH = (8+12)/4. */
@@ -84,15 +83,15 @@
 
 	/* Get the next send request. */
 	wqe = rvt_get_swqe_ptr(qp, qp->s_cur);
-	qp->s_wqe = शून्य;
-	चयन (qp->s_state) अणु
-	शेष:
-		अगर (!(ib_rvt_state_ops[qp->state] &
+	qp->s_wqe = NULL;
+	switch (qp->s_state) {
+	default:
+		if (!(ib_rvt_state_ops[qp->state] &
 		    RVT_PROCESS_NEXT_SEND_OK))
-			जाओ bail;
-		/* Check अगर send work queue is empty. */
-		अगर (qp->s_cur == READ_ONCE(qp->s_head))
-			जाओ bail;
+			goto bail;
+		/* Check if send work queue is empty. */
+		if (qp->s_cur == READ_ONCE(qp->s_head))
+			goto bail;
 		/*
 		 * Start a new request.
 		 */
@@ -103,292 +102,292 @@
 		qp->s_sge.total_len = wqe->length;
 		len = wqe->length;
 		qp->s_len = len;
-		चयन (wqe->wr.opcode) अणु
-		हाल IB_WR_SEND:
-		हाल IB_WR_SEND_WITH_IMM:
-			अगर (len > pmtu) अणु
+		switch (wqe->wr.opcode) {
+		case IB_WR_SEND:
+		case IB_WR_SEND_WITH_IMM:
+			if (len > pmtu) {
 				qp->s_state = OP(SEND_FIRST);
 				len = pmtu;
-				अवरोध;
-			पूर्ण
-			अगर (wqe->wr.opcode == IB_WR_SEND)
+				break;
+			}
+			if (wqe->wr.opcode == IB_WR_SEND)
 				qp->s_state = OP(SEND_ONLY);
-			अन्यथा अणु
+			else {
 				qp->s_state =
 					OP(SEND_ONLY_WITH_IMMEDIATE);
 				/* Immediate data comes after the BTH */
 				ohdr->u.imm_data = wqe->wr.ex.imm_data;
 				hwords += 1;
-			पूर्ण
-			अगर (wqe->wr.send_flags & IB_SEND_SOLICITED)
+			}
+			if (wqe->wr.send_flags & IB_SEND_SOLICITED)
 				bth0 |= IB_BTH_SOLICITED;
 			qp->s_wqe = wqe;
-			अगर (++qp->s_cur >= qp->s_size)
+			if (++qp->s_cur >= qp->s_size)
 				qp->s_cur = 0;
-			अवरोध;
+			break;
 
-		हाल IB_WR_RDMA_WRITE:
-		हाल IB_WR_RDMA_WRITE_WITH_IMM:
+		case IB_WR_RDMA_WRITE:
+		case IB_WR_RDMA_WRITE_WITH_IMM:
 			ohdr->u.rc.reth.vaddr =
 				cpu_to_be64(wqe->rdma_wr.remote_addr);
 			ohdr->u.rc.reth.rkey =
 				cpu_to_be32(wqe->rdma_wr.rkey);
 			ohdr->u.rc.reth.length = cpu_to_be32(len);
-			hwords += माप(काष्ठा ib_reth) / 4;
-			अगर (len > pmtu) अणु
+			hwords += sizeof(struct ib_reth) / 4;
+			if (len > pmtu) {
 				qp->s_state = OP(RDMA_WRITE_FIRST);
 				len = pmtu;
-				अवरोध;
-			पूर्ण
-			अगर (wqe->wr.opcode == IB_WR_RDMA_WRITE)
+				break;
+			}
+			if (wqe->wr.opcode == IB_WR_RDMA_WRITE)
 				qp->s_state = OP(RDMA_WRITE_ONLY);
-			अन्यथा अणु
+			else {
 				qp->s_state =
 					OP(RDMA_WRITE_ONLY_WITH_IMMEDIATE);
 				/* Immediate data comes after the RETH */
 				ohdr->u.rc.imm_data = wqe->wr.ex.imm_data;
 				hwords += 1;
-				अगर (wqe->wr.send_flags & IB_SEND_SOLICITED)
+				if (wqe->wr.send_flags & IB_SEND_SOLICITED)
 					bth0 |= IB_BTH_SOLICITED;
-			पूर्ण
+			}
 			qp->s_wqe = wqe;
-			अगर (++qp->s_cur >= qp->s_size)
+			if (++qp->s_cur >= qp->s_size)
 				qp->s_cur = 0;
-			अवरोध;
+			break;
 
-		शेष:
-			जाओ bail;
-		पूर्ण
-		अवरोध;
+		default:
+			goto bail;
+		}
+		break;
 
-	हाल OP(SEND_FIRST):
+	case OP(SEND_FIRST):
 		qp->s_state = OP(SEND_MIDDLE);
 		fallthrough;
-	हाल OP(SEND_MIDDLE):
+	case OP(SEND_MIDDLE):
 		len = qp->s_len;
-		अगर (len > pmtu) अणु
+		if (len > pmtu) {
 			len = pmtu;
-			अवरोध;
-		पूर्ण
-		अगर (wqe->wr.opcode == IB_WR_SEND)
+			break;
+		}
+		if (wqe->wr.opcode == IB_WR_SEND)
 			qp->s_state = OP(SEND_LAST);
-		अन्यथा अणु
+		else {
 			qp->s_state = OP(SEND_LAST_WITH_IMMEDIATE);
 			/* Immediate data comes after the BTH */
 			ohdr->u.imm_data = wqe->wr.ex.imm_data;
 			hwords += 1;
-		पूर्ण
-		अगर (wqe->wr.send_flags & IB_SEND_SOLICITED)
+		}
+		if (wqe->wr.send_flags & IB_SEND_SOLICITED)
 			bth0 |= IB_BTH_SOLICITED;
 		qp->s_wqe = wqe;
-		अगर (++qp->s_cur >= qp->s_size)
+		if (++qp->s_cur >= qp->s_size)
 			qp->s_cur = 0;
-		अवरोध;
+		break;
 
-	हाल OP(RDMA_WRITE_FIRST):
+	case OP(RDMA_WRITE_FIRST):
 		qp->s_state = OP(RDMA_WRITE_MIDDLE);
 		fallthrough;
-	हाल OP(RDMA_WRITE_MIDDLE):
+	case OP(RDMA_WRITE_MIDDLE):
 		len = qp->s_len;
-		अगर (len > pmtu) अणु
+		if (len > pmtu) {
 			len = pmtu;
-			अवरोध;
-		पूर्ण
-		अगर (wqe->wr.opcode == IB_WR_RDMA_WRITE)
+			break;
+		}
+		if (wqe->wr.opcode == IB_WR_RDMA_WRITE)
 			qp->s_state = OP(RDMA_WRITE_LAST);
-		अन्यथा अणु
+		else {
 			qp->s_state =
 				OP(RDMA_WRITE_LAST_WITH_IMMEDIATE);
 			/* Immediate data comes after the BTH */
 			ohdr->u.imm_data = wqe->wr.ex.imm_data;
 			hwords += 1;
-			अगर (wqe->wr.send_flags & IB_SEND_SOLICITED)
+			if (wqe->wr.send_flags & IB_SEND_SOLICITED)
 				bth0 |= IB_BTH_SOLICITED;
-		पूर्ण
+		}
 		qp->s_wqe = wqe;
-		अगर (++qp->s_cur >= qp->s_size)
+		if (++qp->s_cur >= qp->s_size)
 			qp->s_cur = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	qp->s_len -= len;
 	qp->s_hdrwords = hwords;
 	qp->s_cur_sge = &qp->s_sge;
 	qp->s_cur_size = len;
 	qib_make_ruc_header(qp, ohdr, bth0 | (qp->s_state << 24),
 			    qp->s_psn++ & QIB_PSN_MASK);
-करोne:
-	वापस 1;
+done:
+	return 1;
 bail:
 	qp->s_flags &= ~RVT_S_BUSY;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * qib_uc_rcv - handle an incoming UC packet
  * @ibp: the port the packet came in on
  * @hdr: the header of the packet
- * @has_grh: true अगर the packet has a GRH
+ * @has_grh: true if the packet has a GRH
  * @data: the packet data
  * @tlen: the length of the packet
- * @qp: the QP क्रम this packet.
+ * @qp: the QP for this packet.
  *
  * This is called from qib_qp_rcv() to process an incoming UC packet
- * क्रम the given QP.
- * Called at पूर्णांकerrupt level.
+ * for the given QP.
+ * Called at interrupt level.
  */
-व्योम qib_uc_rcv(काष्ठा qib_ibport *ibp, काष्ठा ib_header *hdr,
-		पूर्णांक has_grh, व्योम *data, u32 tlen, काष्ठा rvt_qp *qp)
-अणु
-	काष्ठा ib_other_headers *ohdr;
+void qib_uc_rcv(struct qib_ibport *ibp, struct ib_header *hdr,
+		int has_grh, void *data, u32 tlen, struct rvt_qp *qp)
+{
+	struct ib_other_headers *ohdr;
 	u32 opcode;
 	u32 hdrsize;
 	u32 psn;
 	u32 pad;
-	काष्ठा ib_wc wc;
+	struct ib_wc wc;
 	u32 pmtu = qp->pmtu;
-	काष्ठा ib_reth *reth;
-	पूर्णांक ret;
+	struct ib_reth *reth;
+	int ret;
 
-	/* Check क्रम GRH */
-	अगर (!has_grh) अणु
+	/* Check for GRH */
+	if (!has_grh) {
 		ohdr = &hdr->u.oth;
 		hdrsize = 8 + 12;       /* LRH + BTH */
-	पूर्ण अन्यथा अणु
+	} else {
 		ohdr = &hdr->u.l.oth;
 		hdrsize = 8 + 40 + 12;  /* LRH + GRH + BTH */
-	पूर्ण
+	}
 
 	opcode = be32_to_cpu(ohdr->bth[0]);
-	अगर (qib_ruc_check_hdr(ibp, hdr, has_grh, qp, opcode))
-		वापस;
+	if (qib_ruc_check_hdr(ibp, hdr, has_grh, qp, opcode))
+		return;
 
 	psn = be32_to_cpu(ohdr->bth[2]);
 	opcode >>= 24;
 
 	/* Compare the PSN verses the expected PSN. */
-	अगर (unlikely(qib_cmp24(psn, qp->r_psn) != 0)) अणु
+	if (unlikely(qib_cmp24(psn, qp->r_psn) != 0)) {
 		/*
 		 * Handle a sequence error.
 		 * Silently drop any current message.
 		 */
 		qp->r_psn = psn;
 inv:
-		अगर (qp->r_state == OP(SEND_FIRST) ||
-		    qp->r_state == OP(SEND_MIDDLE)) अणु
+		if (qp->r_state == OP(SEND_FIRST) ||
+		    qp->r_state == OP(SEND_MIDDLE)) {
 			set_bit(RVT_R_REWIND_SGE, &qp->r_aflags);
 			qp->r_sge.num_sge = 0;
-		पूर्ण अन्यथा
+		} else
 			rvt_put_ss(&qp->r_sge);
 		qp->r_state = OP(SEND_LAST);
-		चयन (opcode) अणु
-		हाल OP(SEND_FIRST):
-		हाल OP(SEND_ONLY):
-		हाल OP(SEND_ONLY_WITH_IMMEDIATE):
-			जाओ send_first;
+		switch (opcode) {
+		case OP(SEND_FIRST):
+		case OP(SEND_ONLY):
+		case OP(SEND_ONLY_WITH_IMMEDIATE):
+			goto send_first;
 
-		हाल OP(RDMA_WRITE_FIRST):
-		हाल OP(RDMA_WRITE_ONLY):
-		हाल OP(RDMA_WRITE_ONLY_WITH_IMMEDIATE):
-			जाओ rdma_first;
+		case OP(RDMA_WRITE_FIRST):
+		case OP(RDMA_WRITE_ONLY):
+		case OP(RDMA_WRITE_ONLY_WITH_IMMEDIATE):
+			goto rdma_first;
 
-		शेष:
-			जाओ drop;
-		पूर्ण
-	पूर्ण
+		default:
+			goto drop;
+		}
+	}
 
-	/* Check क्रम opcode sequence errors. */
-	चयन (qp->r_state) अणु
-	हाल OP(SEND_FIRST):
-	हाल OP(SEND_MIDDLE):
-		अगर (opcode == OP(SEND_MIDDLE) ||
+	/* Check for opcode sequence errors. */
+	switch (qp->r_state) {
+	case OP(SEND_FIRST):
+	case OP(SEND_MIDDLE):
+		if (opcode == OP(SEND_MIDDLE) ||
 		    opcode == OP(SEND_LAST) ||
 		    opcode == OP(SEND_LAST_WITH_IMMEDIATE))
-			अवरोध;
-		जाओ inv;
+			break;
+		goto inv;
 
-	हाल OP(RDMA_WRITE_FIRST):
-	हाल OP(RDMA_WRITE_MIDDLE):
-		अगर (opcode == OP(RDMA_WRITE_MIDDLE) ||
+	case OP(RDMA_WRITE_FIRST):
+	case OP(RDMA_WRITE_MIDDLE):
+		if (opcode == OP(RDMA_WRITE_MIDDLE) ||
 		    opcode == OP(RDMA_WRITE_LAST) ||
 		    opcode == OP(RDMA_WRITE_LAST_WITH_IMMEDIATE))
-			अवरोध;
-		जाओ inv;
+			break;
+		goto inv;
 
-	शेष:
-		अगर (opcode == OP(SEND_FIRST) ||
+	default:
+		if (opcode == OP(SEND_FIRST) ||
 		    opcode == OP(SEND_ONLY) ||
 		    opcode == OP(SEND_ONLY_WITH_IMMEDIATE) ||
 		    opcode == OP(RDMA_WRITE_FIRST) ||
 		    opcode == OP(RDMA_WRITE_ONLY) ||
 		    opcode == OP(RDMA_WRITE_ONLY_WITH_IMMEDIATE))
-			अवरोध;
-		जाओ inv;
-	पूर्ण
+			break;
+		goto inv;
+	}
 
-	अगर (qp->state == IB_QPS_RTR && !(qp->r_flags & RVT_R_COMM_EST))
+	if (qp->state == IB_QPS_RTR && !(qp->r_flags & RVT_R_COMM_EST))
 		rvt_comm_est(qp);
 
 	/* OK, process the packet. */
-	चयन (opcode) अणु
-	हाल OP(SEND_FIRST):
-	हाल OP(SEND_ONLY):
-	हाल OP(SEND_ONLY_WITH_IMMEDIATE):
+	switch (opcode) {
+	case OP(SEND_FIRST):
+	case OP(SEND_ONLY):
+	case OP(SEND_ONLY_WITH_IMMEDIATE):
 send_first:
-		अगर (test_and_clear_bit(RVT_R_REWIND_SGE, &qp->r_aflags))
-			qp->r_sge = qp->s_rdma_पढ़ो_sge;
-		अन्यथा अणु
+		if (test_and_clear_bit(RVT_R_REWIND_SGE, &qp->r_aflags))
+			qp->r_sge = qp->s_rdma_read_sge;
+		else {
 			ret = rvt_get_rwqe(qp, false);
-			अगर (ret < 0)
-				जाओ op_err;
-			अगर (!ret)
-				जाओ drop;
+			if (ret < 0)
+				goto op_err;
+			if (!ret)
+				goto drop;
 			/*
-			 * qp->s_rdma_पढ़ो_sge will be the owner
+			 * qp->s_rdma_read_sge will be the owner
 			 * of the mr references.
 			 */
-			qp->s_rdma_पढ़ो_sge = qp->r_sge;
-		पूर्ण
+			qp->s_rdma_read_sge = qp->r_sge;
+		}
 		qp->r_rcv_len = 0;
-		अगर (opcode == OP(SEND_ONLY))
-			जाओ no_immediate_data;
-		अन्यथा अगर (opcode == OP(SEND_ONLY_WITH_IMMEDIATE))
-			जाओ send_last_imm;
+		if (opcode == OP(SEND_ONLY))
+			goto no_immediate_data;
+		else if (opcode == OP(SEND_ONLY_WITH_IMMEDIATE))
+			goto send_last_imm;
 		fallthrough;
-	हाल OP(SEND_MIDDLE):
-		/* Check क्रम invalid length PMTU or posted rwqe len. */
-		अगर (unlikely(tlen != (hdrsize + pmtu + 4)))
-			जाओ शुरुआत;
+	case OP(SEND_MIDDLE):
+		/* Check for invalid length PMTU or posted rwqe len. */
+		if (unlikely(tlen != (hdrsize + pmtu + 4)))
+			goto rewind;
 		qp->r_rcv_len += pmtu;
-		अगर (unlikely(qp->r_rcv_len > qp->r_len))
-			जाओ शुरुआत;
+		if (unlikely(qp->r_rcv_len > qp->r_len))
+			goto rewind;
 		rvt_copy_sge(qp, &qp->r_sge, data, pmtu, false, false);
-		अवरोध;
+		break;
 
-	हाल OP(SEND_LAST_WITH_IMMEDIATE):
+	case OP(SEND_LAST_WITH_IMMEDIATE):
 send_last_imm:
 		wc.ex.imm_data = ohdr->u.imm_data;
 		hdrsize += 4;
 		wc.wc_flags = IB_WC_WITH_IMM;
-		जाओ send_last;
-	हाल OP(SEND_LAST):
+		goto send_last;
+	case OP(SEND_LAST):
 no_immediate_data:
 		wc.ex.imm_data = 0;
 		wc.wc_flags = 0;
 send_last:
 		/* Get the number of bytes the message was padded by. */
 		pad = (be32_to_cpu(ohdr->bth[0]) >> 20) & 3;
-		/* Check क्रम invalid length. */
+		/* Check for invalid length. */
 		/* XXX LAST len should be >= 1 */
-		अगर (unlikely(tlen < (hdrsize + pad + 4)))
-			जाओ शुरुआत;
+		if (unlikely(tlen < (hdrsize + pad + 4)))
+			goto rewind;
 		/* Don't count the CRC. */
 		tlen -= (hdrsize + pad + 4);
 		wc.byte_len = tlen + qp->r_rcv_len;
-		अगर (unlikely(wc.byte_len > qp->r_len))
-			जाओ शुरुआत;
+		if (unlikely(wc.byte_len > qp->r_len))
+			goto rewind;
 		wc.opcode = IB_WC_RECV;
 		rvt_copy_sge(qp, &qp->r_sge, data, tlen, false, false);
-		rvt_put_ss(&qp->s_rdma_पढ़ो_sge);
+		rvt_put_ss(&qp->s_rdma_read_sge);
 last_imm:
 		wc.wr_id = qp->r_wr_id;
 		wc.status = IB_WC_SUCCESS;
@@ -397,63 +396,63 @@ last_imm:
 		wc.slid = rdma_ah_get_dlid(&qp->remote_ah_attr);
 		wc.sl = rdma_ah_get_sl(&qp->remote_ah_attr);
 		/* zero fields that are N/A */
-		wc.venकरोr_err = 0;
+		wc.vendor_err = 0;
 		wc.pkey_index = 0;
 		wc.dlid_path_bits = 0;
 		wc.port_num = 0;
-		/* Signal completion event अगर the solicited bit is set. */
+		/* Signal completion event if the solicited bit is set. */
 		rvt_recv_cq(qp, &wc, ib_bth_is_solicited(ohdr));
-		अवरोध;
+		break;
 
-	हाल OP(RDMA_WRITE_FIRST):
-	हाल OP(RDMA_WRITE_ONLY):
-	हाल OP(RDMA_WRITE_ONLY_WITH_IMMEDIATE): /* consume RWQE */
+	case OP(RDMA_WRITE_FIRST):
+	case OP(RDMA_WRITE_ONLY):
+	case OP(RDMA_WRITE_ONLY_WITH_IMMEDIATE): /* consume RWQE */
 rdma_first:
-		अगर (unlikely(!(qp->qp_access_flags &
-			       IB_ACCESS_REMOTE_WRITE))) अणु
-			जाओ drop;
-		पूर्ण
+		if (unlikely(!(qp->qp_access_flags &
+			       IB_ACCESS_REMOTE_WRITE))) {
+			goto drop;
+		}
 		reth = &ohdr->u.rc.reth;
-		hdrsize += माप(*reth);
+		hdrsize += sizeof(*reth);
 		qp->r_len = be32_to_cpu(reth->length);
 		qp->r_rcv_len = 0;
-		qp->r_sge.sg_list = शून्य;
-		अगर (qp->r_len != 0) अणु
+		qp->r_sge.sg_list = NULL;
+		if (qp->r_len != 0) {
 			u32 rkey = be32_to_cpu(reth->rkey);
 			u64 vaddr = be64_to_cpu(reth->vaddr);
-			पूर्णांक ok;
+			int ok;
 
 			/* Check rkey */
 			ok = rvt_rkey_ok(qp, &qp->r_sge.sge, qp->r_len,
 					 vaddr, rkey, IB_ACCESS_REMOTE_WRITE);
-			अगर (unlikely(!ok))
-				जाओ drop;
+			if (unlikely(!ok))
+				goto drop;
 			qp->r_sge.num_sge = 1;
-		पूर्ण अन्यथा अणु
+		} else {
 			qp->r_sge.num_sge = 0;
-			qp->r_sge.sge.mr = शून्य;
-			qp->r_sge.sge.vaddr = शून्य;
+			qp->r_sge.sge.mr = NULL;
+			qp->r_sge.sge.vaddr = NULL;
 			qp->r_sge.sge.length = 0;
 			qp->r_sge.sge.sge_length = 0;
-		पूर्ण
-		अगर (opcode == OP(RDMA_WRITE_ONLY))
-			जाओ rdma_last;
-		अन्यथा अगर (opcode == OP(RDMA_WRITE_ONLY_WITH_IMMEDIATE)) अणु
+		}
+		if (opcode == OP(RDMA_WRITE_ONLY))
+			goto rdma_last;
+		else if (opcode == OP(RDMA_WRITE_ONLY_WITH_IMMEDIATE)) {
 			wc.ex.imm_data = ohdr->u.rc.imm_data;
-			जाओ rdma_last_imm;
-		पूर्ण
+			goto rdma_last_imm;
+		}
 		fallthrough;
-	हाल OP(RDMA_WRITE_MIDDLE):
-		/* Check क्रम invalid length PMTU or posted rwqe len. */
-		अगर (unlikely(tlen != (hdrsize + pmtu + 4)))
-			जाओ drop;
+	case OP(RDMA_WRITE_MIDDLE):
+		/* Check for invalid length PMTU or posted rwqe len. */
+		if (unlikely(tlen != (hdrsize + pmtu + 4)))
+			goto drop;
 		qp->r_rcv_len += pmtu;
-		अगर (unlikely(qp->r_rcv_len > qp->r_len))
-			जाओ drop;
+		if (unlikely(qp->r_rcv_len > qp->r_len))
+			goto drop;
 		rvt_copy_sge(qp, &qp->r_sge, data, pmtu, true, false);
-		अवरोध;
+		break;
 
-	हाल OP(RDMA_WRITE_LAST_WITH_IMMEDIATE):
+	case OP(RDMA_WRITE_LAST_WITH_IMMEDIATE):
 		wc.ex.imm_data = ohdr->u.imm_data;
 rdma_last_imm:
 		hdrsize += 4;
@@ -461,62 +460,62 @@ rdma_last_imm:
 
 		/* Get the number of bytes the message was padded by. */
 		pad = (be32_to_cpu(ohdr->bth[0]) >> 20) & 3;
-		/* Check क्रम invalid length. */
+		/* Check for invalid length. */
 		/* XXX LAST len should be >= 1 */
-		अगर (unlikely(tlen < (hdrsize + pad + 4)))
-			जाओ drop;
+		if (unlikely(tlen < (hdrsize + pad + 4)))
+			goto drop;
 		/* Don't count the CRC. */
 		tlen -= (hdrsize + pad + 4);
-		अगर (unlikely(tlen + qp->r_rcv_len != qp->r_len))
-			जाओ drop;
-		अगर (test_and_clear_bit(RVT_R_REWIND_SGE, &qp->r_aflags))
-			rvt_put_ss(&qp->s_rdma_पढ़ो_sge);
-		अन्यथा अणु
+		if (unlikely(tlen + qp->r_rcv_len != qp->r_len))
+			goto drop;
+		if (test_and_clear_bit(RVT_R_REWIND_SGE, &qp->r_aflags))
+			rvt_put_ss(&qp->s_rdma_read_sge);
+		else {
 			ret = rvt_get_rwqe(qp, true);
-			अगर (ret < 0)
-				जाओ op_err;
-			अगर (!ret)
-				जाओ drop;
-		पूर्ण
+			if (ret < 0)
+				goto op_err;
+			if (!ret)
+				goto drop;
+		}
 		wc.byte_len = qp->r_len;
 		wc.opcode = IB_WC_RECV_RDMA_WITH_IMM;
 		rvt_copy_sge(qp, &qp->r_sge, data, tlen, true, false);
 		rvt_put_ss(&qp->r_sge);
-		जाओ last_imm;
+		goto last_imm;
 
-	हाल OP(RDMA_WRITE_LAST):
+	case OP(RDMA_WRITE_LAST):
 rdma_last:
 		/* Get the number of bytes the message was padded by. */
 		pad = (be32_to_cpu(ohdr->bth[0]) >> 20) & 3;
-		/* Check क्रम invalid length. */
+		/* Check for invalid length. */
 		/* XXX LAST len should be >= 1 */
-		अगर (unlikely(tlen < (hdrsize + pad + 4)))
-			जाओ drop;
+		if (unlikely(tlen < (hdrsize + pad + 4)))
+			goto drop;
 		/* Don't count the CRC. */
 		tlen -= (hdrsize + pad + 4);
-		अगर (unlikely(tlen + qp->r_rcv_len != qp->r_len))
-			जाओ drop;
+		if (unlikely(tlen + qp->r_rcv_len != qp->r_len))
+			goto drop;
 		rvt_copy_sge(qp, &qp->r_sge, data, tlen, true, false);
 		rvt_put_ss(&qp->r_sge);
-		अवरोध;
+		break;
 
-	शेष:
-		/* Drop packet क्रम unknown opcodes. */
-		जाओ drop;
-	पूर्ण
+	default:
+		/* Drop packet for unknown opcodes. */
+		goto drop;
+	}
 	qp->r_psn++;
 	qp->r_state = opcode;
-	वापस;
+	return;
 
-शुरुआत:
+rewind:
 	set_bit(RVT_R_REWIND_SGE, &qp->r_aflags);
 	qp->r_sge.num_sge = 0;
 drop:
 	ibp->rvp.n_pkt_drops++;
-	वापस;
+	return;
 
 op_err:
 	rvt_rc_error(qp, IB_WC_LOC_QP_OP_ERR);
-	वापस;
+	return;
 
-पूर्ण
+}

@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * arch/arm/mach-iop32x/iq31244.c
  *
- * Board support code क्रम the Intel EP80219 and IQ31244 platक्रमms.
+ * Board support code for the Intel EP80219 and IQ31244 platforms.
  *
  * Author: Rory Bolt <rorybolt@pacbell.net>
  * Copyright (C) 2002 Rory Bolt
@@ -11,180 +10,180 @@
  * Copyright (C) 2004 Intel Corp.
  */
 
-#समावेश <linux/mm.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/serial_core.h>
-#समावेश <linux/serial_8250.h>
-#समावेश <linux/mtd/physmap.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/gpio/machine.h>
-#समावेश <यंत्र/cputype.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/map.h>
-#समावेश <यंत्र/mach/pci.h>
-#समावेश <यंत्र/mach/समय.स>
-#समावेश <यंत्र/mach-types.h>
-#समावेश <यंत्र/page.h>
+#include <linux/mm.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/kernel.h>
+#include <linux/pci.h>
+#include <linux/pm.h>
+#include <linux/string.h>
+#include <linux/serial_core.h>
+#include <linux/serial_8250.h>
+#include <linux/mtd/physmap.h>
+#include <linux/platform_device.h>
+#include <linux/io.h>
+#include <linux/gpio/machine.h>
+#include <asm/cputype.h>
+#include <asm/irq.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/map.h>
+#include <asm/mach/pci.h>
+#include <asm/mach/time.h>
+#include <asm/mach-types.h>
+#include <asm/page.h>
 
-#समावेश "hardware.h"
-#समावेश "irqs.h"
-#समावेश "gpio-iop32x.h"
+#include "hardware.h"
+#include "irqs.h"
+#include "gpio-iop32x.h"
 
 /*
- * Until March of 2007 iq31244 platक्रमms and ep80219 platक्रमms shared the
+ * Until March of 2007 iq31244 platforms and ep80219 platforms shared the
  * same machine id, and the processor type was used to select board type.
- * However this assumption अवरोधs क्रम an iq80219 board which is an iop219
- * processor on an iq31244 board.  The क्रमce_ep80219 flag has been added
- * क्रम old boot loaders using the iq31244 machine id क्रम an ep80219 platक्रमm.
+ * However this assumption breaks for an iq80219 board which is an iop219
+ * processor on an iq31244 board.  The force_ep80219 flag has been added
+ * for old boot loaders using the iq31244 machine id for an ep80219 platform.
  */
-अटल पूर्णांक क्रमce_ep80219;
+static int force_ep80219;
 
-अटल पूर्णांक is_80219(व्योम)
-अणु
-	वापस !!((पढ़ो_cpuid_id() & 0xffffffe0) == 0x69052e20);
-पूर्ण
+static int is_80219(void)
+{
+	return !!((read_cpuid_id() & 0xffffffe0) == 0x69052e20);
+}
 
-अटल पूर्णांक is_ep80219(व्योम)
-अणु
-	अगर (machine_is_ep80219() || क्रमce_ep80219)
-		वापस 1;
-	अन्यथा
-		वापस 0;
-पूर्ण
+static int is_ep80219(void)
+{
+	if (machine_is_ep80219() || force_ep80219)
+		return 1;
+	else
+		return 0;
+}
 
 
 /*
- * EP80219/IQ31244 समयr tick configuration.
+ * EP80219/IQ31244 timer tick configuration.
  */
-अटल व्योम __init iq31244_समयr_init(व्योम)
-अणु
-	अगर (is_ep80219()) अणु
+static void __init iq31244_timer_init(void)
+{
+	if (is_ep80219()) {
 		/* 33.333 MHz crystal.  */
-		iop_init_समय(200000000);
-	पूर्ण अन्यथा अणु
+		iop_init_time(200000000);
+	} else {
 		/* 33.000 MHz crystal.  */
-		iop_init_समय(198000000);
-	पूर्ण
-पूर्ण
+		iop_init_time(198000000);
+	}
+}
 
 
 /*
  * IQ31244 I/O.
  */
-अटल काष्ठा map_desc iq31244_io_desc[] __initdata = अणु
-	अणु	/* on-board devices */
-		.भव	= IQ31244_UART,
+static struct map_desc iq31244_io_desc[] __initdata = {
+	{	/* on-board devices */
+		.virtual	= IQ31244_UART,
 		.pfn		= __phys_to_pfn(IQ31244_UART),
 		.length		= 0x00100000,
 		.type		= MT_DEVICE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-व्योम __init iq31244_map_io(व्योम)
-अणु
+void __init iq31244_map_io(void)
+{
 	iop3xx_map_io();
 	iotable_init(iq31244_io_desc, ARRAY_SIZE(iq31244_io_desc));
-पूर्ण
+}
 
 
 /*
  * EP80219/IQ31244 PCI.
  */
-अटल पूर्णांक __init
-ep80219_pci_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
-अणु
-	पूर्णांक irq;
+static int __init
+ep80219_pci_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
+{
+	int irq;
 
-	अगर (slot == 0) अणु
+	if (slot == 0) {
 		/* CFlash */
 		irq = IRQ_IOP32X_XINT1;
-	पूर्ण अन्यथा अगर (slot == 1) अणु
+	} else if (slot == 1) {
 		/* 82551 Pro 100 */
 		irq = IRQ_IOP32X_XINT0;
-	पूर्ण अन्यथा अगर (slot == 2) अणु
+	} else if (slot == 2) {
 		/* PCI-X Slot */
 		irq = IRQ_IOP32X_XINT3;
-	पूर्ण अन्यथा अगर (slot == 3) अणु
+	} else if (slot == 3) {
 		/* SATA */
 		irq = IRQ_IOP32X_XINT2;
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_ERR "ep80219_pci_map_irq() called for unknown "
+	} else {
+		printk(KERN_ERR "ep80219_pci_map_irq() called for unknown "
 			"device PCI:%d:%d:%d\n", dev->bus->number,
 			PCI_SLOT(dev->devfn), PCI_FUNC(dev->devfn));
 		irq = -1;
-	पूर्ण
+	}
 
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-अटल काष्ठा hw_pci ep80219_pci __initdata = अणु
+static struct hw_pci ep80219_pci __initdata = {
 	.nr_controllers = 1,
 	.ops		= &iop3xx_ops,
 	.setup		= iop3xx_pci_setup,
 	.preinit	= iop3xx_pci_preinit,
 	.map_irq	= ep80219_pci_map_irq,
-पूर्ण;
+};
 
-अटल पूर्णांक __init
-iq31244_pci_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
-अणु
-	पूर्णांक irq;
+static int __init
+iq31244_pci_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
+{
+	int irq;
 
-	अगर (slot == 0) अणु
+	if (slot == 0) {
 		/* CFlash */
 		irq = IRQ_IOP32X_XINT1;
-	पूर्ण अन्यथा अगर (slot == 1) अणु
+	} else if (slot == 1) {
 		/* SATA */
 		irq = IRQ_IOP32X_XINT2;
-	पूर्ण अन्यथा अगर (slot == 2) अणु
+	} else if (slot == 2) {
 		/* PCI-X Slot */
 		irq = IRQ_IOP32X_XINT3;
-	पूर्ण अन्यथा अगर (slot == 3) अणु
+	} else if (slot == 3) {
 		/* 82546 GigE */
 		irq = IRQ_IOP32X_XINT0;
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_ERR "iq31244_pci_map_irq called for unknown "
+	} else {
+		printk(KERN_ERR "iq31244_pci_map_irq called for unknown "
 			"device PCI:%d:%d:%d\n", dev->bus->number,
 			PCI_SLOT(dev->devfn), PCI_FUNC(dev->devfn));
 		irq = -1;
-	पूर्ण
+	}
 
-	वापस irq;
-पूर्ण
+	return irq;
+}
 
-अटल काष्ठा hw_pci iq31244_pci __initdata = अणु
+static struct hw_pci iq31244_pci __initdata = {
 	.nr_controllers = 1,
 	.ops		= &iop3xx_ops,
 	.setup		= iop3xx_pci_setup,
 	.preinit	= iop3xx_pci_preinit,
 	.map_irq	= iq31244_pci_map_irq,
-पूर्ण;
+};
 
-अटल पूर्णांक __init iq31244_pci_init(व्योम)
-अणु
-	अगर (is_ep80219())
+static int __init iq31244_pci_init(void)
+{
+	if (is_ep80219())
 		pci_common_init(&ep80219_pci);
-	अन्यथा अगर (machine_is_iq31244()) अणु
-		अगर (is_80219()) अणु
-			prपूर्णांकk("note: iq31244 board type has been selected\n");
-			prपूर्णांकk("note: to select ep80219 operation:\n");
-			prपूर्णांकk("\t1/ specify \"force_ep80219\" on the kernel"
+	else if (machine_is_iq31244()) {
+		if (is_80219()) {
+			printk("note: iq31244 board type has been selected\n");
+			printk("note: to select ep80219 operation:\n");
+			printk("\t1/ specify \"force_ep80219\" on the kernel"
 				" command line\n");
-			prपूर्णांकk("\t2/ update boot loader to pass"
+			printk("\t2/ update boot loader to pass"
 				" the ep80219 id: %d\n", MACH_TYPE_EP80219);
-		पूर्ण
+		}
 		pci_common_init(&iq31244_pci);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 subsys_initcall(iq31244_pci_init);
 
@@ -192,62 +191,62 @@ subsys_initcall(iq31244_pci_init);
 /*
  * IQ31244 machine initialisation.
  */
-अटल काष्ठा physmap_flash_data iq31244_flash_data = अणु
+static struct physmap_flash_data iq31244_flash_data = {
 	.width		= 2,
-पूर्ण;
+};
 
-अटल काष्ठा resource iq31244_flash_resource = अणु
+static struct resource iq31244_flash_resource = {
 	.start		= 0xf0000000,
 	.end		= 0xf07fffff,
 	.flags		= IORESOURCE_MEM,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device iq31244_flash_device = अणु
+static struct platform_device iq31244_flash_device = {
 	.name		= "physmap-flash",
 	.id		= 0,
-	.dev		= अणु
-		.platक्रमm_data	= &iq31244_flash_data,
-	पूर्ण,
+	.dev		= {
+		.platform_data	= &iq31244_flash_data,
+	},
 	.num_resources	= 1,
 	.resource	= &iq31244_flash_resource,
-पूर्ण;
+};
 
-अटल काष्ठा plat_serial8250_port iq31244_serial_port[] = अणु
-	अणु
+static struct plat_serial8250_port iq31244_serial_port[] = {
+	{
 		.mapbase	= IQ31244_UART,
-		.membase	= (अक्षर *)IQ31244_UART,
+		.membase	= (char *)IQ31244_UART,
 		.irq		= IRQ_IOP32X_XINT1,
 		.flags		= UPF_SKIP_TEST,
 		.iotype		= UPIO_MEM,
-		.regshअगरt	= 0,
+		.regshift	= 0,
 		.uartclk	= 1843200,
-	पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+	},
+	{ },
+};
 
-अटल काष्ठा resource iq31244_uart_resource = अणु
+static struct resource iq31244_uart_resource = {
 	.start		= IQ31244_UART,
 	.end		= IQ31244_UART + 7,
 	.flags		= IORESOURCE_MEM,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device iq31244_serial_device = अणु
+static struct platform_device iq31244_serial_device = {
 	.name		= "serial8250",
 	.id		= PLAT8250_DEV_PLATFORM,
-	.dev		= अणु
-		.platक्रमm_data		= iq31244_serial_port,
-	पूर्ण,
+	.dev		= {
+		.platform_data		= iq31244_serial_port,
+	},
 	.num_resources	= 1,
 	.resource	= &iq31244_uart_resource,
-पूर्ण;
+};
 
 /*
  * This function will send a SHUTDOWN_COMPLETE message to the PIC
- * controller over I2C.  We are not using the i2c subप्रणाली since
- * we are going to घातer off and it may be हटाओd
+ * controller over I2C.  We are not using the i2c subsystem since
+ * we are going to power off and it may be removed
  */
-व्योम ep80219_घातer_off(व्योम)
-अणु
+void ep80219_power_off(void)
+{
 	/*
 	 * Send the Address byte w/ the start condition
 	 */
@@ -276,58 +275,58 @@ subsys_initcall(iq31244_pci_init);
 	*IOP3XX_IDBR1 = 0x00;
 	*IOP3XX_ICR1 = 0xEA;
 
-	जबतक (1)
+	while (1)
 		;
-पूर्ण
+}
 
-अटल व्योम __init iq31244_init_machine(व्योम)
-अणु
-	रेजिस्टर_iop32x_gpio();
+static void __init iq31244_init_machine(void)
+{
+	register_iop32x_gpio();
 	gpiod_add_lookup_table(&iop3xx_i2c0_gpio_lookup);
 	gpiod_add_lookup_table(&iop3xx_i2c1_gpio_lookup);
-	platक्रमm_device_रेजिस्टर(&iop3xx_i2c0_device);
-	platक्रमm_device_रेजिस्टर(&iop3xx_i2c1_device);
-	platक्रमm_device_रेजिस्टर(&iq31244_flash_device);
-	platक्रमm_device_रेजिस्टर(&iq31244_serial_device);
-	platक्रमm_device_रेजिस्टर(&iop3xx_dma_0_channel);
-	platक्रमm_device_रेजिस्टर(&iop3xx_dma_1_channel);
+	platform_device_register(&iop3xx_i2c0_device);
+	platform_device_register(&iop3xx_i2c1_device);
+	platform_device_register(&iq31244_flash_device);
+	platform_device_register(&iq31244_serial_device);
+	platform_device_register(&iop3xx_dma_0_channel);
+	platform_device_register(&iop3xx_dma_1_channel);
 
-	अगर (is_ep80219())
-		pm_घातer_off = ep80219_घातer_off;
+	if (is_ep80219())
+		pm_power_off = ep80219_power_off;
 
-	अगर (!is_80219())
-		platक्रमm_device_रेजिस्टर(&iop3xx_aau_channel);
-पूर्ण
+	if (!is_80219())
+		platform_device_register(&iop3xx_aau_channel);
+}
 
-अटल पूर्णांक __init क्रमce_ep80219_setup(अक्षर *str)
-अणु
-	क्रमce_ep80219 = 1;
-	वापस 1;
-पूर्ण
+static int __init force_ep80219_setup(char *str)
+{
+	force_ep80219 = 1;
+	return 1;
+}
 
-__setup("force_ep80219", क्रमce_ep80219_setup);
+__setup("force_ep80219", force_ep80219_setup);
 
 MACHINE_START(IQ31244, "Intel IQ31244")
-	/* Maपूर्णांकainer: Intel Corp. */
+	/* Maintainer: Intel Corp. */
 	.atag_offset	= 0x100,
 	.map_io		= iq31244_map_io,
 	.init_irq	= iop32x_init_irq,
-	.init_समय	= iq31244_समयr_init,
+	.init_time	= iq31244_timer_init,
 	.init_machine	= iq31244_init_machine,
 	.restart	= iop3xx_restart,
 MACHINE_END
 
-/* There should have been an ep80219 machine identअगरier from the beginning.
- * Boot roms older than March 2007 करो not know the ep80219 machine id.  Pass
+/* There should have been an ep80219 machine identifier from the beginning.
+ * Boot roms older than March 2007 do not know the ep80219 machine id.  Pass
  * "force_ep80219" on the kernel command line, otherwise iq31244 operation
  * will be selected.
  */
 MACHINE_START(EP80219, "Intel EP80219")
-	/* Maपूर्णांकainer: Intel Corp. */
+	/* Maintainer: Intel Corp. */
 	.atag_offset	= 0x100,
 	.map_io		= iq31244_map_io,
 	.init_irq	= iop32x_init_irq,
-	.init_समय	= iq31244_समयr_init,
+	.init_time	= iq31244_timer_init,
 	.init_machine	= iq31244_init_machine,
 	.restart	= iop3xx_restart,
 MACHINE_END

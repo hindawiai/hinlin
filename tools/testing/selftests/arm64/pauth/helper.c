@@ -1,40 +1,39 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2020 ARM Limited
 
-#समावेश "helper.h"
+#include "helper.h"
 
-माप_प्रकार keyia_sign(माप_प्रकार ptr)
-अणु
-	यंत्र अस्थिर("paciza %0" : "+r" (ptr));
-	वापस ptr;
-पूर्ण
+size_t keyia_sign(size_t ptr)
+{
+	asm volatile("paciza %0" : "+r" (ptr));
+	return ptr;
+}
 
-माप_प्रकार keyib_sign(माप_प्रकार ptr)
-अणु
-	यंत्र अस्थिर("pacizb %0" : "+r" (ptr));
-	वापस ptr;
-पूर्ण
+size_t keyib_sign(size_t ptr)
+{
+	asm volatile("pacizb %0" : "+r" (ptr));
+	return ptr;
+}
 
-माप_प्रकार keyda_sign(माप_प्रकार ptr)
-अणु
-	यंत्र अस्थिर("pacdza %0" : "+r" (ptr));
-	वापस ptr;
-पूर्ण
+size_t keyda_sign(size_t ptr)
+{
+	asm volatile("pacdza %0" : "+r" (ptr));
+	return ptr;
+}
 
-माप_प्रकार keydb_sign(माप_प्रकार ptr)
-अणु
-	यंत्र अस्थिर("pacdzb %0" : "+r" (ptr));
-	वापस ptr;
-पूर्ण
+size_t keydb_sign(size_t ptr)
+{
+	asm volatile("pacdzb %0" : "+r" (ptr));
+	return ptr;
+}
 
-माप_प्रकार keyg_sign(माप_प्रकार ptr)
-अणु
+size_t keyg_sign(size_t ptr)
+{
 	/* output is encoded in the upper 32 bits */
-	माप_प्रकार dest = 0;
-	माप_प्रकार modअगरier = 0;
+	size_t dest = 0;
+	size_t modifier = 0;
 
-	यंत्र अस्थिर("pacga %0, %1, %2" : "=r" (dest) : "r" (ptr), "r" (modअगरier));
+	asm volatile("pacga %0, %1, %2" : "=r" (dest) : "r" (ptr), "r" (modifier));
 
-	वापस dest;
-पूर्ण
+	return dest;
+}

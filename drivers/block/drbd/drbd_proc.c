@@ -1,85 +1,84 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
    drbd_proc.c
 
    This file is part of DRBD by Philipp Reisner and Lars Ellenberg.
 
-   Copyright (C) 2001-2008, LINBIT Inक्रमmation Technologies GmbH.
+   Copyright (C) 2001-2008, LINBIT Information Technologies GmbH.
    Copyright (C) 1999-2008, Philipp Reisner <philipp.reisner@linbit.com>.
    Copyright (C) 2002-2008, Lars Ellenberg <lars.ellenberg@linbit.com>.
 
 
  */
 
-#समावेश <linux/module.h>
+#include <linux/module.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/file.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/drbd.h>
-#समावेश "drbd_int.h"
+#include <linux/uaccess.h>
+#include <linux/fs.h>
+#include <linux/file.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/drbd.h>
+#include "drbd_int.h"
 
-काष्ठा proc_dir_entry *drbd_proc;
+struct proc_dir_entry *drbd_proc;
 
-अटल व्योम seq_म_लिखो_with_thousands_grouping(काष्ठा seq_file *seq, दीर्घ v)
-अणु
-	/* v is in kB/sec. We करोn't expect TiByte/sec yet. */
-	अगर (unlikely(v >= 1000000)) अणु
+static void seq_printf_with_thousands_grouping(struct seq_file *seq, long v)
+{
+	/* v is in kB/sec. We don't expect TiByte/sec yet. */
+	if (unlikely(v >= 1000000)) {
 		/* cool: > GiByte/s */
-		seq_म_लिखो(seq, "%ld,", v / 1000000);
+		seq_printf(seq, "%ld,", v / 1000000);
 		v %= 1000000;
-		seq_म_लिखो(seq, "%03ld,%03ld", v/1000, v % 1000);
-	पूर्ण अन्यथा अगर (likely(v >= 1000))
-		seq_म_लिखो(seq, "%ld,%03ld", v/1000, v % 1000);
-	अन्यथा
-		seq_म_लिखो(seq, "%ld", v);
-पूर्ण
+		seq_printf(seq, "%03ld,%03ld", v/1000, v % 1000);
+	} else if (likely(v >= 1000))
+		seq_printf(seq, "%ld,%03ld", v/1000, v % 1000);
+	else
+		seq_printf(seq, "%ld", v);
+}
 
-अटल व्योम drbd_get_syncer_progress(काष्ठा drbd_device *device,
-		जोड़ drbd_dev_state state, अचिन्हित दीर्घ *rs_total,
-		अचिन्हित दीर्घ *bits_left, अचिन्हित पूर्णांक *per_mil_करोne)
-अणु
-	/* this is to अवरोध it at compile समय when we change that, in हाल we
+static void drbd_get_syncer_progress(struct drbd_device *device,
+		union drbd_dev_state state, unsigned long *rs_total,
+		unsigned long *bits_left, unsigned int *per_mil_done)
+{
+	/* this is to break it at compile time when we change that, in case we
 	 * want to support more than (1<<32) bits on a 32bit arch. */
-	typecheck(अचिन्हित दीर्घ, device->rs_total);
+	typecheck(unsigned long, device->rs_total);
 	*rs_total = device->rs_total;
 
 	/* note: both rs_total and rs_left are in bits, i.e. in
 	 * units of BM_BLOCK_SIZE.
-	 * क्रम the percentage, we करोn't care. */
+	 * for the percentage, we don't care. */
 
-	अगर (state.conn == C_VERIFY_S || state.conn == C_VERIFY_T)
+	if (state.conn == C_VERIFY_S || state.conn == C_VERIFY_T)
 		*bits_left = device->ov_left;
-	अन्यथा
+	else
 		*bits_left = drbd_bm_total_weight(device) - device->rs_failed;
 	/* >> 10 to prevent overflow,
-	 * +1 to prevent भागision by zero */
-	अगर (*bits_left > *rs_total) अणु
+	 * +1 to prevent division by zero */
+	if (*bits_left > *rs_total) {
 		/* D'oh. Maybe a logic bug somewhere.  More likely just a race
 		 * between state change and reset of rs_total.
 		 */
 		*bits_left = *rs_total;
-		*per_mil_करोne = *rs_total ? 0 : 1000;
-	पूर्ण अन्यथा अणु
-		/* Make sure the भागision happens in दीर्घ context.
+		*per_mil_done = *rs_total ? 0 : 1000;
+	} else {
+		/* Make sure the division happens in long context.
 		 * We allow up to one petabyte storage right now,
 		 * at a granularity of 4k per bit that is 2**38 bits.
-		 * After shअगरt right and multiplication by 1000,
-		 * this should still fit easily पूर्णांकo a 32bit दीर्घ,
-		 * so we करोn't need a 64bit भागision on 32bit arch.
-		 * Note: currently we करोn't support such large biपंचांगaps on 32bit
-		 * arch anyways, but no harm करोne to be prepared क्रम it here.
+		 * After shift right and multiplication by 1000,
+		 * this should still fit easily into a 32bit long,
+		 * so we don't need a 64bit division on 32bit arch.
+		 * Note: currently we don't support such large bitmaps on 32bit
+		 * arch anyways, but no harm done to be prepared for it here.
 		 */
-		अचिन्हित पूर्णांक shअगरt = *rs_total > अच_पूर्णांक_उच्च ? 16 : 10;
-		अचिन्हित दीर्घ left = *bits_left >> shअगरt;
-		अचिन्हित दीर्घ total = 1UL + (*rs_total >> shअगरt);
-		अचिन्हित दीर्घ पंचांगp = 1000UL - left * 1000UL/total;
-		*per_mil_करोne = पंचांगp;
-	पूर्ण
-पूर्ण
+		unsigned int shift = *rs_total > UINT_MAX ? 16 : 10;
+		unsigned long left = *bits_left >> shift;
+		unsigned long total = 1UL + (*rs_total >> shift);
+		unsigned long tmp = 1000UL - left * 1000UL/total;
+		*per_mil_done = tmp;
+	}
+}
 
 
 /*lge
@@ -88,147 +87,147 @@
  *	[=====>..............] 33.5% (23456/123456)
  *	finish: 2:20:20 speed: 6,345 (6,456) K/sec
  */
-अटल व्योम drbd_syncer_progress(काष्ठा drbd_device *device, काष्ठा seq_file *seq,
-		जोड़ drbd_dev_state state)
-अणु
-	अचिन्हित दीर्घ db, dt, dbdt, rt, rs_total, rs_left;
-	अचिन्हित पूर्णांक res;
-	पूर्णांक i, x, y;
-	पूर्णांक stalled = 0;
+static void drbd_syncer_progress(struct drbd_device *device, struct seq_file *seq,
+		union drbd_dev_state state)
+{
+	unsigned long db, dt, dbdt, rt, rs_total, rs_left;
+	unsigned int res;
+	int i, x, y;
+	int stalled = 0;
 
 	drbd_get_syncer_progress(device, state, &rs_total, &rs_left, &res);
 
 	x = res/50;
 	y = 20-x;
-	seq_माला_दो(seq, "\t[");
-	क्रम (i = 1; i < x; i++)
-		seq_अ_दो(seq, '=');
-	seq_अ_दो(seq, '>');
-	क्रम (i = 0; i < y; i++)
-		seq_अ_दो(seq, '.');
-	seq_माला_दो(seq, "] ");
+	seq_puts(seq, "\t[");
+	for (i = 1; i < x; i++)
+		seq_putc(seq, '=');
+	seq_putc(seq, '>');
+	for (i = 0; i < y; i++)
+		seq_putc(seq, '.');
+	seq_puts(seq, "] ");
 
-	अगर (state.conn == C_VERIFY_S || state.conn == C_VERIFY_T)
-		seq_माला_दो(seq, "verified:");
-	अन्यथा
-		seq_माला_दो(seq, "sync'ed:");
-	seq_म_लिखो(seq, "%3u.%u%% ", res / 10, res % 10);
+	if (state.conn == C_VERIFY_S || state.conn == C_VERIFY_T)
+		seq_puts(seq, "verified:");
+	else
+		seq_puts(seq, "sync'ed:");
+	seq_printf(seq, "%3u.%u%% ", res / 10, res % 10);
 
-	/* अगर more than a few GB, display in MB */
-	अगर (rs_total > (4UL << (30 - BM_BLOCK_SHIFT)))
-		seq_म_लिखो(seq, "(%lu/%lu)M",
-			    (अचिन्हित दीर्घ) Bit2KB(rs_left >> 10),
-			    (अचिन्हित दीर्घ) Bit2KB(rs_total >> 10));
-	अन्यथा
-		seq_म_लिखो(seq, "(%lu/%lu)K",
-			    (अचिन्हित दीर्घ) Bit2KB(rs_left),
-			    (अचिन्हित दीर्घ) Bit2KB(rs_total));
+	/* if more than a few GB, display in MB */
+	if (rs_total > (4UL << (30 - BM_BLOCK_SHIFT)))
+		seq_printf(seq, "(%lu/%lu)M",
+			    (unsigned long) Bit2KB(rs_left >> 10),
+			    (unsigned long) Bit2KB(rs_total >> 10));
+	else
+		seq_printf(seq, "(%lu/%lu)K",
+			    (unsigned long) Bit2KB(rs_left),
+			    (unsigned long) Bit2KB(rs_total));
 
-	seq_माला_दो(seq, "\n\t");
+	seq_puts(seq, "\n\t");
 
 	/* see drivers/md/md.c
-	 * We करो not want to overflow, so the order of opeअक्रमs and
-	 * the * 100 / 100 trick are important. We करो a +1 to be
-	 * safe against भागision by zero. We only estimate anyway.
+	 * We do not want to overflow, so the order of operands and
+	 * the * 100 / 100 trick are important. We do a +1 to be
+	 * safe against division by zero. We only estimate anyway.
 	 *
-	 * dt: समय from mark until now
+	 * dt: time from mark until now
 	 * db: blocks written from mark until now
-	 * rt: reमुख्यing समय
+	 * rt: remaining time
 	 */
-	/* Rolling marks. last_mark+1 may just now be modअगरied.  last_mark+2 is
+	/* Rolling marks. last_mark+1 may just now be modified.  last_mark+2 is
 	 * at least (DRBD_SYNC_MARKS-2)*DRBD_SYNC_MARK_STEP old, and has at
-	 * least DRBD_SYNC_MARK_STEP समय beक्रमe it will be modअगरied. */
+	 * least DRBD_SYNC_MARK_STEP time before it will be modified. */
 	/* ------------------------ ~18s average ------------------------ */
 	i = (device->rs_last_mark + 2) % DRBD_SYNC_MARKS;
-	dt = (jअगरfies - device->rs_mark_समय[i]) / HZ;
-	अगर (dt > 180)
+	dt = (jiffies - device->rs_mark_time[i]) / HZ;
+	if (dt > 180)
 		stalled = 1;
 
-	अगर (!dt)
+	if (!dt)
 		dt++;
 	db = device->rs_mark_left[i] - rs_left;
 	rt = (dt * (rs_left / (db/100+1)))/100; /* seconds */
 
-	seq_म_लिखो(seq, "finish: %lu:%02lu:%02lu",
+	seq_printf(seq, "finish: %lu:%02lu:%02lu",
 		rt / 3600, (rt % 3600) / 60, rt % 60);
 
 	dbdt = Bit2KB(db/dt);
-	seq_माला_दो(seq, " speed: ");
-	seq_म_लिखो_with_thousands_grouping(seq, dbdt);
-	seq_माला_दो(seq, " (");
+	seq_puts(seq, " speed: ");
+	seq_printf_with_thousands_grouping(seq, dbdt);
+	seq_puts(seq, " (");
 	/* ------------------------- ~3s average ------------------------ */
-	अगर (drbd_proc_details >= 1) अणु
-		/* this is what drbd_rs_should_slow_करोwn() uses */
+	if (drbd_proc_details >= 1) {
+		/* this is what drbd_rs_should_slow_down() uses */
 		i = (device->rs_last_mark + DRBD_SYNC_MARKS-1) % DRBD_SYNC_MARKS;
-		dt = (jअगरfies - device->rs_mark_समय[i]) / HZ;
-		अगर (!dt)
+		dt = (jiffies - device->rs_mark_time[i]) / HZ;
+		if (!dt)
 			dt++;
 		db = device->rs_mark_left[i] - rs_left;
 		dbdt = Bit2KB(db/dt);
-		seq_म_लिखो_with_thousands_grouping(seq, dbdt);
-		seq_माला_दो(seq, " -- ");
-	पूर्ण
+		seq_printf_with_thousands_grouping(seq, dbdt);
+		seq_puts(seq, " -- ");
+	}
 
-	/* --------------------- दीर्घ term average ---------------------- */
+	/* --------------------- long term average ---------------------- */
 	/* mean speed since syncer started
-	 * we करो account क्रम PausedSync periods */
-	dt = (jअगरfies - device->rs_start - device->rs_छोड़ोd) / HZ;
-	अगर (dt == 0)
+	 * we do account for PausedSync periods */
+	dt = (jiffies - device->rs_start - device->rs_paused) / HZ;
+	if (dt == 0)
 		dt = 1;
 	db = rs_total - rs_left;
 	dbdt = Bit2KB(db/dt);
-	seq_म_लिखो_with_thousands_grouping(seq, dbdt);
-	seq_अ_दो(seq, ')');
+	seq_printf_with_thousands_grouping(seq, dbdt);
+	seq_putc(seq, ')');
 
-	अगर (state.conn == C_SYNC_TARGET ||
-	    state.conn == C_VERIFY_S) अणु
-		seq_माला_दो(seq, " want: ");
-		seq_म_लिखो_with_thousands_grouping(seq, device->c_sync_rate);
-	पूर्ण
-	seq_म_लिखो(seq, " K/sec%s\n", stalled ? " (stalled)" : "");
+	if (state.conn == C_SYNC_TARGET ||
+	    state.conn == C_VERIFY_S) {
+		seq_puts(seq, " want: ");
+		seq_printf_with_thousands_grouping(seq, device->c_sync_rate);
+	}
+	seq_printf(seq, " K/sec%s\n", stalled ? " (stalled)" : "");
 
-	अगर (drbd_proc_details >= 1) अणु
+	if (drbd_proc_details >= 1) {
 		/* 64 bit:
 		 * we convert to sectors in the display below. */
-		अचिन्हित दीर्घ bm_bits = drbd_bm_bits(device);
-		अचिन्हित दीर्घ bit_pos;
-		अचिन्हित दीर्घ दीर्घ stop_sector = 0;
-		अगर (state.conn == C_VERIFY_S ||
-		    state.conn == C_VERIFY_T) अणु
+		unsigned long bm_bits = drbd_bm_bits(device);
+		unsigned long bit_pos;
+		unsigned long long stop_sector = 0;
+		if (state.conn == C_VERIFY_S ||
+		    state.conn == C_VERIFY_T) {
 			bit_pos = bm_bits - device->ov_left;
-			अगर (verअगरy_can_करो_stop_sector(device))
+			if (verify_can_do_stop_sector(device))
 				stop_sector = device->ov_stop_sector;
-		पूर्ण अन्यथा
+		} else
 			bit_pos = device->bm_resync_fo;
-		/* Total sectors may be slightly off क्रम oddly
+		/* Total sectors may be slightly off for oddly
 		 * sized devices. So what. */
-		seq_म_लिखो(seq,
+		seq_printf(seq,
 			"\t%3d%% sector pos: %llu/%llu",
-			(पूर्णांक)(bit_pos / (bm_bits/100+1)),
-			(अचिन्हित दीर्घ दीर्घ)bit_pos * BM_SECT_PER_BIT,
-			(अचिन्हित दीर्घ दीर्घ)bm_bits * BM_SECT_PER_BIT);
-		अगर (stop_sector != 0 && stop_sector != ULदीर्घ_उच्च)
-			seq_म_लिखो(seq, " stop sector: %llu", stop_sector);
-		seq_अ_दो(seq, '\n');
-	पूर्ण
-पूर्ण
+			(int)(bit_pos / (bm_bits/100+1)),
+			(unsigned long long)bit_pos * BM_SECT_PER_BIT,
+			(unsigned long long)bm_bits * BM_SECT_PER_BIT);
+		if (stop_sector != 0 && stop_sector != ULLONG_MAX)
+			seq_printf(seq, " stop sector: %llu", stop_sector);
+		seq_putc(seq, '\n');
+	}
+}
 
-पूर्णांक drbd_seq_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	पूर्णांक i, prev_i = -1;
-	स्थिर अक्षर *sn;
-	काष्ठा drbd_device *device;
-	काष्ठा net_conf *nc;
-	जोड़ drbd_dev_state state;
-	अक्षर wp;
+int drbd_seq_show(struct seq_file *seq, void *v)
+{
+	int i, prev_i = -1;
+	const char *sn;
+	struct drbd_device *device;
+	struct net_conf *nc;
+	union drbd_dev_state state;
+	char wp;
 
-	अटल अक्षर ग_लिखो_ordering_अक्षरs[] = अणु
+	static char write_ordering_chars[] = {
 		[WO_NONE] = 'n',
 		[WO_DRAIN_IO] = 'd',
 		[WO_BDEV_FLUSH] = 'f',
-	पूर्ण;
+	};
 
-	seq_म_लिखो(seq, "version: " REL_VERSION " (api:%d/proto:%d-%d)\n%s\n",
+	seq_printf(seq, "version: " REL_VERSION " (api:%d/proto:%d-%d)\n%s\n",
 		   API_VERSION, PRO_VERSION_MIN, PRO_VERSION_MAX, drbd_buildtag());
 
 	/*
@@ -239,37 +238,37 @@
 	     various flags
 	  ns .. network send
 	  nr .. network receive
-	  dw .. disk ग_लिखो
-	  dr .. disk पढ़ो
-	  al .. activity log ग_लिखो count
-	  bm .. biपंचांगap update ग_लिखो count
-	  pe .. pending (रुकोing क्रम ack or data reply)
+	  dw .. disk write
+	  dr .. disk read
+	  al .. activity log write count
+	  bm .. bitmap update write count
+	  pe .. pending (waiting for ack or data reply)
 	  ua .. unack'd (still need to send ack or data reply)
 	  ap .. application requests accepted, but not yet completed
 	  ep .. number of epochs currently "on the fly", P_BARRIER_ACK pending
-	  wo .. ग_लिखो ordering mode currently in use
+	  wo .. write ordering mode currently in use
 	 oos .. known out-of-sync kB
 	*/
 
-	rcu_पढ़ो_lock();
-	idr_क्रम_each_entry(&drbd_devices, device, i) अणु
-		अगर (prev_i != i - 1)
-			seq_अ_दो(seq, '\n');
+	rcu_read_lock();
+	idr_for_each_entry(&drbd_devices, device, i) {
+		if (prev_i != i - 1)
+			seq_putc(seq, '\n');
 		prev_i = i;
 
 		state = device->state;
 		sn = drbd_conn_str(state.conn);
 
-		अगर (state.conn == C_STANDALONE &&
+		if (state.conn == C_STANDALONE &&
 		    state.disk == D_DISKLESS &&
-		    state.role == R_SECONDARY) अणु
-			seq_म_लिखो(seq, "%2d: cs:Unconfigured\n", i);
-		पूर्ण अन्यथा अणु
+		    state.role == R_SECONDARY) {
+			seq_printf(seq, "%2d: cs:Unconfigured\n", i);
+		} else {
 			/* reset device->congestion_reason */
 
 			nc = rcu_dereference(first_peer_device(device)->connection->net_conf);
 			wp = nc ? nc->wire_protocol - DRBD_PROT_A + 'A' : ' ';
-			seq_म_लिखो(seq,
+			seq_printf(seq,
 			   "%2d: cs:%s ro:%s/%s ds:%s/%s %c %c%c%c%c%c%c\n"
 			   "    ns:%u nr:%u dw:%u dr:%u al:%u bm:%u "
 			   "lo:%d pe:%d ua:%d ap:%d ep:%d wo:%c",
@@ -288,37 +287,37 @@
 			   device->send_cnt/2,
 			   device->recv_cnt/2,
 			   device->writ_cnt/2,
-			   device->पढ़ो_cnt/2,
+			   device->read_cnt/2,
 			   device->al_writ_cnt,
 			   device->bm_writ_cnt,
-			   atomic_पढ़ो(&device->local_cnt),
-			   atomic_पढ़ो(&device->ap_pending_cnt) +
-			   atomic_पढ़ो(&device->rs_pending_cnt),
-			   atomic_पढ़ो(&device->unacked_cnt),
-			   atomic_पढ़ो(&device->ap_bio_cnt),
+			   atomic_read(&device->local_cnt),
+			   atomic_read(&device->ap_pending_cnt) +
+			   atomic_read(&device->rs_pending_cnt),
+			   atomic_read(&device->unacked_cnt),
+			   atomic_read(&device->ap_bio_cnt),
 			   first_peer_device(device)->connection->epochs,
-			   ग_लिखो_ordering_अक्षरs[device->resource->ग_लिखो_ordering]
+			   write_ordering_chars[device->resource->write_ordering]
 			);
-			seq_म_लिखो(seq, " oos:%llu\n",
-				   Bit2KB((अचिन्हित दीर्घ दीर्घ)
+			seq_printf(seq, " oos:%llu\n",
+				   Bit2KB((unsigned long long)
 					   drbd_bm_total_weight(device)));
-		पूर्ण
-		अगर (state.conn == C_SYNC_SOURCE ||
+		}
+		if (state.conn == C_SYNC_SOURCE ||
 		    state.conn == C_SYNC_TARGET ||
 		    state.conn == C_VERIFY_S ||
 		    state.conn == C_VERIFY_T)
 			drbd_syncer_progress(device, seq, state);
 
-		अगर (drbd_proc_details >= 1 && get_ldev_अगर_state(device, D_FAILED)) अणु
-			lc_seq_म_लिखो_stats(seq, device->resync);
-			lc_seq_म_लिखो_stats(seq, device->act_log);
+		if (drbd_proc_details >= 1 && get_ldev_if_state(device, D_FAILED)) {
+			lc_seq_printf_stats(seq, device->resync);
+			lc_seq_printf_stats(seq, device->act_log);
 			put_ldev(device);
-		पूर्ण
+		}
 
-		अगर (drbd_proc_details >= 2)
-			seq_म_लिखो(seq, "\tblocked on activity log: %d\n", atomic_पढ़ो(&device->ap_actlog_cnt));
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		if (drbd_proc_details >= 2)
+			seq_printf(seq, "\tblocked on activity log: %d\n", atomic_read(&device->ap_actlog_cnt));
+	}
+	rcu_read_unlock();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * fs-verity module initialization and logging
  *
  * Copyright 2019 Google LLC
  */
 
-#समावेश "fsverity_private.h"
+#include "fsverity_private.h"
 
-#समावेश <linux/ratelimit.h>
+#include <linux/ratelimit.h>
 
-व्योम fsverity_msg(स्थिर काष्ठा inode *inode, स्थिर अक्षर *level,
-		  स्थिर अक्षर *fmt, ...)
-अणु
-	अटल DEFINE_RATELIMIT_STATE(rs, DEFAULT_RATELIMIT_INTERVAL,
+void fsverity_msg(const struct inode *inode, const char *level,
+		  const char *fmt, ...)
+{
+	static DEFINE_RATELIMIT_STATE(rs, DEFAULT_RATELIMIT_INTERVAL,
 				      DEFAULT_RATELIMIT_BURST);
-	काष्ठा va_क्रमmat vaf;
-	बहु_सूची args;
+	struct va_format vaf;
+	va_list args;
 
-	अगर (!__ratelimit(&rs))
-		वापस;
+	if (!__ratelimit(&rs))
+		return;
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 	vaf.fmt = fmt;
 	vaf.va = &args;
-	अगर (inode)
-		prपूर्णांकk("%sfs-verity (%s, inode %lu): %pV\n",
+	if (inode)
+		printk("%sfs-verity (%s, inode %lu): %pV\n",
 		       level, inode->i_sb->s_id, inode->i_ino, &vaf);
-	अन्यथा
-		prपूर्णांकk("%sfs-verity: %pV\n", level, &vaf);
-	बहु_पूर्ण(args);
-पूर्ण
+	else
+		printk("%sfs-verity: %pV\n", level, &vaf);
+	va_end(args);
+}
 
-अटल पूर्णांक __init fsverity_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init fsverity_init(void)
+{
+	int err;
 
 	fsverity_check_hash_algs();
 
 	err = fsverity_init_info_cache();
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = fsverity_init_workqueue();
-	अगर (err)
-		जाओ err_निकास_info_cache;
+	if (err)
+		goto err_exit_info_cache;
 
 	err = fsverity_init_signature();
-	अगर (err)
-		जाओ err_निकास_workqueue;
+	if (err)
+		goto err_exit_workqueue;
 
 	pr_debug("Initialized fs-verity\n");
-	वापस 0;
+	return 0;
 
-err_निकास_workqueue:
-	fsverity_निकास_workqueue();
-err_निकास_info_cache:
-	fsverity_निकास_info_cache();
-	वापस err;
-पूर्ण
+err_exit_workqueue:
+	fsverity_exit_workqueue();
+err_exit_info_cache:
+	fsverity_exit_info_cache();
+	return err;
+}
 late_initcall(fsverity_init)

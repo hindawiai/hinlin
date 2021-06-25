@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _TRACE_ARM64_KVM_H
-#घोषणा _TRACE_ARM64_KVM_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _TRACE_ARM64_KVM_H
+#define _TRACE_ARM64_KVM_H
 
-#समावेश "trace_arm.h"
-#समावेश "trace_handle_exit.h"
+#include "trace_arm.h"
+#include "trace_handle_exit.h"
 
-#पूर्ण_अगर	/* _TRACE_ARM64_KVM_H */
+#endif	/* _TRACE_ARM64_KVM_H */

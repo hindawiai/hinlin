@@ -1,111 +1,110 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASMARM_UCONTEXT_H
-#घोषणा _ASMARM_UCONTEXT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASMARM_UCONTEXT_H
+#define _ASMARM_UCONTEXT_H
 
-#समावेश <यंत्र/fpstate.h>
-#समावेश <यंत्र/user.h>
+#include <asm/fpstate.h>
+#include <asm/user.h>
 
 /*
- * काष्ठा sigcontext only has room क्रम the basic रेजिस्टरs, but काष्ठा
- * ucontext now has room क्रम all रेजिस्टरs which need to be saved and
- * restored.  Coprocessor रेजिस्टरs are stored in uc_regspace.  Each
- * coprocessor's saved state should start with a करोcumented 32-bit magic
+ * struct sigcontext only has room for the basic registers, but struct
+ * ucontext now has room for all registers which need to be saved and
+ * restored.  Coprocessor registers are stored in uc_regspace.  Each
+ * coprocessor's saved state should start with a documented 32-bit magic
  * number, followed by a 32-bit word giving the coproccesor's saved size.
- * uc_regspace may be expanded अगर necessary, although this takes some
+ * uc_regspace may be expanded if necessary, although this takes some
  * coordination with glibc.
  */
 
-काष्ठा ucontext अणु
-	अचिन्हित दीर्घ	  uc_flags;
-	काष्ठा ucontext  *uc_link;
+struct ucontext {
+	unsigned long	  uc_flags;
+	struct ucontext  *uc_link;
 	stack_t		  uc_stack;
-	काष्ठा sigcontext uc_mcontext;
+	struct sigcontext uc_mcontext;
 	sigset_t	  uc_sigmask;
-	/* Allow क्रम uc_sigmask growth.  Glibc uses a 1024-bit sigset_t.  */
-	पूर्णांक		  __unused[32 - (माप (sigset_t) / माप (पूर्णांक))];
-	/* Last क्रम extensibility.  Eight byte aligned because some
+	/* Allow for uc_sigmask growth.  Glibc uses a 1024-bit sigset_t.  */
+	int		  __unused[32 - (sizeof (sigset_t) / sizeof (int))];
+	/* Last for extensibility.  Eight byte aligned because some
 	   coprocessors require eight byte alignment.  */
- 	अचिन्हित दीर्घ	  uc_regspace[128] __attribute__((__aligned__(8)));
-पूर्ण;
+ 	unsigned long	  uc_regspace[128] __attribute__((__aligned__(8)));
+};
 
-#अगर_घोषित __KERNEL__
+#ifdef __KERNEL__
 
 /*
- * Coprocessor save state.  The magic values and specअगरic
+ * Coprocessor save state.  The magic values and specific
  * coprocessor's layouts are part of the userspace ABI.  Each one of
  * these should be a multiple of eight bytes and aligned to eight
- * bytes, to prevent unpredictable padding in the संकेत frame.
+ * bytes, to prevent unpredictable padding in the signal frame.
  */
 
 /*
- * Dummy padding block: अगर this magic is encountered, the block should
+ * Dummy padding block: if this magic is encountered, the block should
  * be skipped using the corresponding size field.
  */
-#घोषणा DUMMY_MAGIC		0xb0d9ed01
+#define DUMMY_MAGIC		0xb0d9ed01
 
-#अगर_घोषित CONFIG_CRUNCH
-#घोषणा CRUNCH_MAGIC		0x5065cf03
-#घोषणा CRUNCH_STORAGE_SIZE	(CRUNCH_SIZE + 8)
+#ifdef CONFIG_CRUNCH
+#define CRUNCH_MAGIC		0x5065cf03
+#define CRUNCH_STORAGE_SIZE	(CRUNCH_SIZE + 8)
 
-काष्ठा crunch_sigframe अणु
-	अचिन्हित दीर्घ	magic;
-	अचिन्हित दीर्घ	size;
-	काष्ठा crunch_state	storage;
-पूर्ण __attribute__((__aligned__(8)));
-#पूर्ण_अगर
+struct crunch_sigframe {
+	unsigned long	magic;
+	unsigned long	size;
+	struct crunch_state	storage;
+} __attribute__((__aligned__(8)));
+#endif
 
-#अगर_घोषित CONFIG_IWMMXT
-/* iwmmxt_area is 0x98 bytes दीर्घ, preceded by 8 bytes of signature */
-#घोषणा IWMMXT_MAGIC		0x12ef842a
-#घोषणा IWMMXT_STORAGE_SIZE	(IWMMXT_SIZE + 8)
+#ifdef CONFIG_IWMMXT
+/* iwmmxt_area is 0x98 bytes long, preceded by 8 bytes of signature */
+#define IWMMXT_MAGIC		0x12ef842a
+#define IWMMXT_STORAGE_SIZE	(IWMMXT_SIZE + 8)
 
-काष्ठा iwmmxt_sigframe अणु
-	अचिन्हित दीर्घ	magic;
-	अचिन्हित दीर्घ	size;
-	काष्ठा iwmmxt_काष्ठा storage;
-पूर्ण __attribute__((__aligned__(8)));
-#पूर्ण_अगर /* CONFIG_IWMMXT */
+struct iwmmxt_sigframe {
+	unsigned long	magic;
+	unsigned long	size;
+	struct iwmmxt_struct storage;
+} __attribute__((__aligned__(8)));
+#endif /* CONFIG_IWMMXT */
 
-#अगर_घोषित CONFIG_VFP
-#घोषणा VFP_MAGIC		0x56465001
+#ifdef CONFIG_VFP
+#define VFP_MAGIC		0x56465001
 
-काष्ठा vfp_sigframe
-अणु
-	अचिन्हित दीर्घ		magic;
-	अचिन्हित दीर्घ		size;
-	काष्ठा user_vfp		ufp;
-	काष्ठा user_vfp_exc	ufp_exc;
-पूर्ण __attribute__((__aligned__(8)));
+struct vfp_sigframe
+{
+	unsigned long		magic;
+	unsigned long		size;
+	struct user_vfp		ufp;
+	struct user_vfp_exc	ufp_exc;
+} __attribute__((__aligned__(8)));
 
 /*
- *  8 byte क्रम magic and size, 264 byte क्रम ufp, 12 bytes क्रम ufp_exc,
+ *  8 byte for magic and size, 264 byte for ufp, 12 bytes for ufp_exc,
  *  4 bytes padding.
  */
-#घोषणा VFP_STORAGE_SIZE	माप(काष्ठा vfp_sigframe)
+#define VFP_STORAGE_SIZE	sizeof(struct vfp_sigframe)
 
-#पूर्ण_अगर /* CONFIG_VFP */
+#endif /* CONFIG_VFP */
 
 /*
- * Auxiliary संकेत frame.  This saves stuff like FP state.
- * The layout of this काष्ठाure is not part of the user ABI,
+ * Auxiliary signal frame.  This saves stuff like FP state.
+ * The layout of this structure is not part of the user ABI,
  * because the config options aren't.  uc_regspace is really
  * one of these.
  */
-काष्ठा aux_sigframe अणु
-#अगर_घोषित CONFIG_CRUNCH
-	काष्ठा crunch_sigframe	crunch;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_IWMMXT
-	काष्ठा iwmmxt_sigframe	iwmmxt;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_VFP
-	काष्ठा vfp_sigframe	vfp;
-#पूर्ण_अगर
-	/* Something that isn't a valid magic number क्रम any coprocessor.  */
-	अचिन्हित दीर्घ		end_magic;
-पूर्ण __attribute__((__aligned__(8)));
+struct aux_sigframe {
+#ifdef CONFIG_CRUNCH
+	struct crunch_sigframe	crunch;
+#endif
+#ifdef CONFIG_IWMMXT
+	struct iwmmxt_sigframe	iwmmxt;
+#endif
+#ifdef CONFIG_VFP
+	struct vfp_sigframe	vfp;
+#endif
+	/* Something that isn't a valid magic number for any coprocessor.  */
+	unsigned long		end_magic;
+} __attribute__((__aligned__(8)));
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर /* !_ASMARM_UCONTEXT_H */
+#endif /* !_ASMARM_UCONTEXT_H */

@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
-#अगर_अघोषित __NET_CFG80211_H
-#घोषणा __NET_CFG80211_H
+/* SPDX-License-Identifier: GPL-2.0-only */
+#ifndef __NET_CFG80211_H
+#define __NET_CFG80211_H
 /*
- * 802.11 device and configuration पूर्णांकerface
+ * 802.11 device and configuration interface
  *
  * Copyright 2006-2010	Johannes Berg <johannes@sipsolutions.net>
  * Copyright 2013-2014 Intel Mobile Communications GmbH
@@ -11,31 +10,31 @@
  * Copyright (C) 2018-2020 Intel Corporation
  */
 
-#समावेश <linux/ethtool.h>
-#समावेश <uapi/linux/rfसमाप्त.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/list.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/netlink.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/nl80211.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/ieee80211.h>
-#समावेश <linux/net.h>
-#समावेश <net/regulatory.h>
+#include <linux/ethtool.h>
+#include <uapi/linux/rfkill.h>
+#include <linux/netdevice.h>
+#include <linux/debugfs.h>
+#include <linux/list.h>
+#include <linux/bug.h>
+#include <linux/netlink.h>
+#include <linux/skbuff.h>
+#include <linux/nl80211.h>
+#include <linux/if_ether.h>
+#include <linux/ieee80211.h>
+#include <linux/net.h>
+#include <net/regulatory.h>
 
 /**
  * DOC: Introduction
  *
- * cfg80211 is the configuration API क्रम 802.11 devices in Linux. It bridges
+ * cfg80211 is the configuration API for 802.11 devices in Linux. It bridges
  * userspace and drivers, and offers some utility functionality associated
  * with 802.11. cfg80211 must, directly or indirectly via mac80211, be used
  * by all modern wireless drivers in Linux, so that they offer a consistent
  * API through nl80211. For backward compatibility, cfg80211 also offers
  * wireless extensions to userspace, but hides them from drivers completely.
  *
- * Additionally, cfg80211 contains code to help enक्रमce regulatory spectrum
+ * Additionally, cfg80211 contains code to help enforce regulatory spectrum
  * use restrictions.
  */
 
@@ -43,38 +42,38 @@
 /**
  * DOC: Device registration
  *
- * In order क्रम a driver to use cfg80211, it must रेजिस्टर the hardware device
- * with cfg80211. This happens through a number of hardware capability काष्ठाs
+ * In order for a driver to use cfg80211, it must register the hardware device
+ * with cfg80211. This happens through a number of hardware capability structs
  * described below.
  *
- * The fundamental काष्ठाure क्रम each device is the 'wiphy', of which each
- * instance describes a physical wireless device connected to the प्रणाली. Each
- * such wiphy can have zero, one, or many भव पूर्णांकerfaces associated with
- * it, which need to be identअगरied as such by poपूर्णांकing the network पूर्णांकerface's
- * @ieee80211_ptr poपूर्णांकer to a &काष्ठा wireless_dev which further describes
- * the wireless part of the पूर्णांकerface, normally this काष्ठा is embedded in the
- * network पूर्णांकerface's निजी data area. Drivers can optionally allow creating
- * or destroying भव पूर्णांकerfaces on the fly, but without at least one or the
+ * The fundamental structure for each device is the 'wiphy', of which each
+ * instance describes a physical wireless device connected to the system. Each
+ * such wiphy can have zero, one, or many virtual interfaces associated with
+ * it, which need to be identified as such by pointing the network interface's
+ * @ieee80211_ptr pointer to a &struct wireless_dev which further describes
+ * the wireless part of the interface, normally this struct is embedded in the
+ * network interface's private data area. Drivers can optionally allow creating
+ * or destroying virtual interfaces on the fly, but without at least one or the
  * ability to create some the wireless device isn't useful.
  *
- * Each wiphy काष्ठाure contains device capability inक्रमmation, and also has
- * a poपूर्णांकer to the various operations the driver offers. The definitions and
- * काष्ठाures here describe these capabilities in detail.
+ * Each wiphy structure contains device capability information, and also has
+ * a pointer to the various operations the driver offers. The definitions and
+ * structures here describe these capabilities in detail.
  */
 
-काष्ठा wiphy;
+struct wiphy;
 
 /*
- * wireless hardware capability काष्ठाures
+ * wireless hardware capability structures
  */
 
 /**
- * क्रमागत ieee80211_channel_flags - channel flags
+ * enum ieee80211_channel_flags - channel flags
  *
  * Channel flags set by the regulatory control code.
  *
  * @IEEE80211_CHAN_DISABLED: This channel is disabled.
- * @IEEE80211_CHAN_NO_IR: करो not initiate radiation, this includes
+ * @IEEE80211_CHAN_NO_IR: do not initiate radiation, this includes
  *	sending probe requests or beaconing.
  * @IEEE80211_CHAN_RADAR: Radar detection is required on this channel.
  * @IEEE80211_CHAN_NO_HT40PLUS: extension channel above this channel
@@ -111,7 +110,7 @@
  *	on this channel.
  *
  */
-क्रमागत ieee80211_channel_flags अणु
+enum ieee80211_channel_flags {
 	IEEE80211_CHAN_DISABLED		= 1<<0,
 	IEEE80211_CHAN_NO_IR		= 1<<1,
 	/* hole at 1<<2 */
@@ -131,81 +130,81 @@
 	IEEE80211_CHAN_4MHZ		= 1<<16,
 	IEEE80211_CHAN_8MHZ		= 1<<17,
 	IEEE80211_CHAN_16MHZ		= 1<<18,
-पूर्ण;
+};
 
-#घोषणा IEEE80211_CHAN_NO_HT40 \
+#define IEEE80211_CHAN_NO_HT40 \
 	(IEEE80211_CHAN_NO_HT40PLUS | IEEE80211_CHAN_NO_HT40MINUS)
 
-#घोषणा IEEE80211_DFS_MIN_CAC_TIME_MS		60000
-#घोषणा IEEE80211_DFS_MIN_NOP_TIME_MS		(30 * 60 * 1000)
+#define IEEE80211_DFS_MIN_CAC_TIME_MS		60000
+#define IEEE80211_DFS_MIN_NOP_TIME_MS		(30 * 60 * 1000)
 
 /**
- * काष्ठा ieee80211_channel - channel definition
+ * struct ieee80211_channel - channel definition
  *
- * This काष्ठाure describes a single channel क्रम use
+ * This structure describes a single channel for use
  * with cfg80211.
  *
  * @center_freq: center frequency in MHz
  * @freq_offset: offset from @center_freq, in KHz
- * @hw_value: hardware-specअगरic value क्रम the channel
- * @flags: channel flags from &क्रमागत ieee80211_channel_flags.
- * @orig_flags: channel flags at registration समय, used by regulatory
+ * @hw_value: hardware-specific value for the channel
+ * @flags: channel flags from &enum ieee80211_channel_flags.
+ * @orig_flags: channel flags at registration time, used by regulatory
  *	code to support devices with additional restrictions
- * @band: band this channel beदीर्घs to.
+ * @band: band this channel belongs to.
  * @max_antenna_gain: maximum antenna gain in dBi
- * @max_घातer: maximum transmission घातer (in dBm)
- * @max_reg_घातer: maximum regulatory transmission घातer (in dBm)
+ * @max_power: maximum transmission power (in dBm)
+ * @max_reg_power: maximum regulatory transmission power (in dBm)
  * @beacon_found: helper to regulatory code to indicate when a beacon
- *	has been found on this channel. Use regulatory_hपूर्णांक_found_beacon()
+ *	has been found on this channel. Use regulatory_hint_found_beacon()
  *	to enable this, this is useful only on 5 GHz band.
- * @orig_mag: पूर्णांकernal use
- * @orig_mpwr: पूर्णांकernal use
- * @dfs_state: current state of this channel. Only relevant अगर radar is required
+ * @orig_mag: internal use
+ * @orig_mpwr: internal use
+ * @dfs_state: current state of this channel. Only relevant if radar is required
  *	on this channel.
- * @dfs_state_entered: बारtamp (jअगरfies) when the dfs state was entered.
- * @dfs_cac_ms: DFS CAC समय in milliseconds, this is valid क्रम DFS channels.
+ * @dfs_state_entered: timestamp (jiffies) when the dfs state was entered.
+ * @dfs_cac_ms: DFS CAC time in milliseconds, this is valid for DFS channels.
  */
-काष्ठा ieee80211_channel अणु
-	क्रमागत nl80211_band band;
+struct ieee80211_channel {
+	enum nl80211_band band;
 	u32 center_freq;
 	u16 freq_offset;
 	u16 hw_value;
 	u32 flags;
-	पूर्णांक max_antenna_gain;
-	पूर्णांक max_घातer;
-	पूर्णांक max_reg_घातer;
+	int max_antenna_gain;
+	int max_power;
+	int max_reg_power;
 	bool beacon_found;
 	u32 orig_flags;
-	पूर्णांक orig_mag, orig_mpwr;
-	क्रमागत nl80211_dfs_state dfs_state;
-	अचिन्हित दीर्घ dfs_state_entered;
-	अचिन्हित पूर्णांक dfs_cac_ms;
-पूर्ण;
+	int orig_mag, orig_mpwr;
+	enum nl80211_dfs_state dfs_state;
+	unsigned long dfs_state_entered;
+	unsigned int dfs_cac_ms;
+};
 
 /**
- * क्रमागत ieee80211_rate_flags - rate flags
+ * enum ieee80211_rate_flags - rate flags
  *
- * Hardware/specअगरication flags क्रम rates. These are काष्ठाured
- * in a way that allows using the same bitrate काष्ठाure क्रम
- * dअगरferent bands/PHY modes.
+ * Hardware/specification flags for rates. These are structured
+ * in a way that allows using the same bitrate structure for
+ * different bands/PHY modes.
  *
- * @IEEE80211_RATE_SHORT_PREAMBLE: Hardware can send with लघु
+ * @IEEE80211_RATE_SHORT_PREAMBLE: Hardware can send with short
  *	preamble on this bitrate; only relevant in 2.4GHz band and
  *	with CCK rates.
  * @IEEE80211_RATE_MANDATORY_A: This bitrate is a mandatory rate
  *	when used with 802.11a (on the 5 GHz band); filled by the
- *	core code when रेजिस्टरing the wiphy.
+ *	core code when registering the wiphy.
  * @IEEE80211_RATE_MANDATORY_B: This bitrate is a mandatory rate
  *	when used with 802.11b (on the 2.4 GHz band); filled by the
- *	core code when रेजिस्टरing the wiphy.
+ *	core code when registering the wiphy.
  * @IEEE80211_RATE_MANDATORY_G: This bitrate is a mandatory rate
  *	when used with 802.11g (on the 2.4 GHz band); filled by the
- *	core code when रेजिस्टरing the wiphy.
+ *	core code when registering the wiphy.
  * @IEEE80211_RATE_ERP_G: This is an ERP rate in 802.11g mode.
  * @IEEE80211_RATE_SUPPORTS_5MHZ: Rate can be used in 5 MHz mode
  * @IEEE80211_RATE_SUPPORTS_10MHZ: Rate can be used in 10 MHz mode
  */
-क्रमागत ieee80211_rate_flags अणु
+enum ieee80211_rate_flags {
 	IEEE80211_RATE_SHORT_PREAMBLE	= 1<<0,
 	IEEE80211_RATE_MANDATORY_A	= 1<<1,
 	IEEE80211_RATE_MANDATORY_B	= 1<<2,
@@ -213,102 +212,102 @@
 	IEEE80211_RATE_ERP_G		= 1<<4,
 	IEEE80211_RATE_SUPPORTS_5MHZ	= 1<<5,
 	IEEE80211_RATE_SUPPORTS_10MHZ	= 1<<6,
-पूर्ण;
+};
 
 /**
- * क्रमागत ieee80211_bss_type - BSS type filter
+ * enum ieee80211_bss_type - BSS type filter
  *
- * @IEEE80211_BSS_TYPE_ESS: Infraकाष्ठाure BSS
+ * @IEEE80211_BSS_TYPE_ESS: Infrastructure BSS
  * @IEEE80211_BSS_TYPE_PBSS: Personal BSS
  * @IEEE80211_BSS_TYPE_IBSS: Independent BSS
  * @IEEE80211_BSS_TYPE_MBSS: Mesh BSS
- * @IEEE80211_BSS_TYPE_ANY: Wildcard value क्रम matching any BSS type
+ * @IEEE80211_BSS_TYPE_ANY: Wildcard value for matching any BSS type
  */
-क्रमागत ieee80211_bss_type अणु
+enum ieee80211_bss_type {
 	IEEE80211_BSS_TYPE_ESS,
 	IEEE80211_BSS_TYPE_PBSS,
 	IEEE80211_BSS_TYPE_IBSS,
 	IEEE80211_BSS_TYPE_MBSS,
 	IEEE80211_BSS_TYPE_ANY
-पूर्ण;
+};
 
 /**
- * क्रमागत ieee80211_privacy - BSS privacy filter
+ * enum ieee80211_privacy - BSS privacy filter
  *
  * @IEEE80211_PRIVACY_ON: privacy bit set
  * @IEEE80211_PRIVACY_OFF: privacy bit clear
- * @IEEE80211_PRIVACY_ANY: Wildcard value क्रम matching any privacy setting
+ * @IEEE80211_PRIVACY_ANY: Wildcard value for matching any privacy setting
  */
-क्रमागत ieee80211_privacy अणु
+enum ieee80211_privacy {
 	IEEE80211_PRIVACY_ON,
 	IEEE80211_PRIVACY_OFF,
 	IEEE80211_PRIVACY_ANY
-पूर्ण;
+};
 
-#घोषणा IEEE80211_PRIVACY(x)	\
+#define IEEE80211_PRIVACY(x)	\
 	((x) ? IEEE80211_PRIVACY_ON : IEEE80211_PRIVACY_OFF)
 
 /**
- * काष्ठा ieee80211_rate - bitrate definition
+ * struct ieee80211_rate - bitrate definition
  *
- * This काष्ठाure describes a bitrate that an 802.11 PHY can
- * operate with. The two values @hw_value and @hw_value_लघु
- * are only क्रम driver use when poपूर्णांकers to this काष्ठाure are
+ * This structure describes a bitrate that an 802.11 PHY can
+ * operate with. The two values @hw_value and @hw_value_short
+ * are only for driver use when pointers to this structure are
  * passed around.
  *
- * @flags: rate-specअगरic flags
+ * @flags: rate-specific flags
  * @bitrate: bitrate in units of 100 Kbps
- * @hw_value: driver/hardware value क्रम this rate
- * @hw_value_लघु: driver/hardware value क्रम this rate when
- *	लघु preamble is used
+ * @hw_value: driver/hardware value for this rate
+ * @hw_value_short: driver/hardware value for this rate when
+ *	short preamble is used
  */
-काष्ठा ieee80211_rate अणु
+struct ieee80211_rate {
 	u32 flags;
 	u16 bitrate;
-	u16 hw_value, hw_value_लघु;
-पूर्ण;
+	u16 hw_value, hw_value_short;
+};
 
 /**
- * काष्ठा ieee80211_he_obss_pd - AP settings क्रम spatial reuse
+ * struct ieee80211_he_obss_pd - AP settings for spatial reuse
  *
  * @enable: is the feature enabled.
  * @sr_ctrl: The SR Control field of SRP element.
- * @non_srg_max_offset: non-SRG maximum tx घातer offset
- * @min_offset: minimal tx घातer offset an associated station shall use
- * @max_offset: maximum tx घातer offset an associated station shall use
- * @bss_color_biपंचांगap: biपंचांगap that indicates the BSS color values used by
+ * @non_srg_max_offset: non-SRG maximum tx power offset
+ * @min_offset: minimal tx power offset an associated station shall use
+ * @max_offset: maximum tx power offset an associated station shall use
+ * @bss_color_bitmap: bitmap that indicates the BSS color values used by
  *	members of the SRG
- * @partial_bssid_biपंचांगap: biपंचांगap that indicates the partial BSSID values
+ * @partial_bssid_bitmap: bitmap that indicates the partial BSSID values
  *	used by members of the SRG
  */
-काष्ठा ieee80211_he_obss_pd अणु
+struct ieee80211_he_obss_pd {
 	bool enable;
 	u8 sr_ctrl;
 	u8 non_srg_max_offset;
 	u8 min_offset;
 	u8 max_offset;
-	u8 bss_color_biपंचांगap[8];
-	u8 partial_bssid_biपंचांगap[8];
-पूर्ण;
+	u8 bss_color_bitmap[8];
+	u8 partial_bssid_bitmap[8];
+};
 
 /**
- * काष्ठा cfg80211_he_bss_color - AP settings क्रम BSS coloring
+ * struct cfg80211_he_bss_color - AP settings for BSS coloring
  *
  * @color: the current color.
  * @enabled: HE BSS color is used
  * @partial: define the AID equation.
  */
-काष्ठा cfg80211_he_bss_color अणु
+struct cfg80211_he_bss_color {
 	u8 color;
 	bool enabled;
 	bool partial;
-पूर्ण;
+};
 
 /**
- * काष्ठा ieee80211_sta_ht_cap - STA's HT capabilities
+ * struct ieee80211_sta_ht_cap - STA's HT capabilities
  *
- * This काष्ठाure describes most essential parameters needed
- * to describe 802.11n HT capabilities क्रम an STA.
+ * This structure describes most essential parameters needed
+ * to describe 802.11n HT capabilities for an STA.
  *
  * @ht_supported: is HT supported by the STA
  * @cap: HT capabilities map as described in 802.11n spec
@@ -316,70 +315,70 @@
  * @ampdu_density: Minimum A-MPDU spacing
  * @mcs: Supported MCS rates
  */
-काष्ठा ieee80211_sta_ht_cap अणु
+struct ieee80211_sta_ht_cap {
 	u16 cap; /* use IEEE80211_HT_CAP_ */
 	bool ht_supported;
 	u8 ampdu_factor;
 	u8 ampdu_density;
-	काष्ठा ieee80211_mcs_info mcs;
-पूर्ण;
+	struct ieee80211_mcs_info mcs;
+};
 
 /**
- * काष्ठा ieee80211_sta_vht_cap - STA's VHT capabilities
+ * struct ieee80211_sta_vht_cap - STA's VHT capabilities
  *
- * This काष्ठाure describes most essential parameters needed
- * to describe 802.11ac VHT capabilities क्रम an STA.
+ * This structure describes most essential parameters needed
+ * to describe 802.11ac VHT capabilities for an STA.
  *
  * @vht_supported: is VHT supported by the STA
  * @cap: VHT capabilities map as described in 802.11ac spec
  * @vht_mcs: Supported VHT MCS rates
  */
-काष्ठा ieee80211_sta_vht_cap अणु
+struct ieee80211_sta_vht_cap {
 	bool vht_supported;
 	u32 cap; /* use IEEE80211_VHT_CAP_ */
-	काष्ठा ieee80211_vht_mcs_info vht_mcs;
-पूर्ण;
+	struct ieee80211_vht_mcs_info vht_mcs;
+};
 
-#घोषणा IEEE80211_HE_PPE_THRES_MAX_LEN		25
+#define IEEE80211_HE_PPE_THRES_MAX_LEN		25
 
 /**
- * काष्ठा ieee80211_sta_he_cap - STA's HE capabilities
+ * struct ieee80211_sta_he_cap - STA's HE capabilities
  *
- * This काष्ठाure describes most essential parameters needed
- * to describe 802.11ax HE capabilities क्रम a STA.
+ * This structure describes most essential parameters needed
+ * to describe 802.11ax HE capabilities for a STA.
  *
- * @has_he: true अगरf HE data is valid.
+ * @has_he: true iff HE data is valid.
  * @he_cap_elem: Fixed portion of the HE capabilities element.
  * @he_mcs_nss_supp: The supported NSS/MCS combinations.
  * @ppe_thres: Holds the PPE Thresholds data.
  */
-काष्ठा ieee80211_sta_he_cap अणु
+struct ieee80211_sta_he_cap {
 	bool has_he;
-	काष्ठा ieee80211_he_cap_elem he_cap_elem;
-	काष्ठा ieee80211_he_mcs_nss_supp he_mcs_nss_supp;
+	struct ieee80211_he_cap_elem he_cap_elem;
+	struct ieee80211_he_mcs_nss_supp he_mcs_nss_supp;
 	u8 ppe_thres[IEEE80211_HE_PPE_THRES_MAX_LEN];
-पूर्ण;
+};
 
 /**
- * काष्ठा ieee80211_sband_अगरtype_data - sband data per पूर्णांकerface type
+ * struct ieee80211_sband_iftype_data - sband data per interface type
  *
- * This काष्ठाure encapsulates sband data that is relevant क्रम the
- * पूर्णांकerface types defined in @types_mask.  Each type in the
- * @types_mask must be unique across all instances of अगरtype_data.
+ * This structure encapsulates sband data that is relevant for the
+ * interface types defined in @types_mask.  Each type in the
+ * @types_mask must be unique across all instances of iftype_data.
  *
- * @types_mask: पूर्णांकerface types mask
+ * @types_mask: interface types mask
  * @he_cap: holds the HE capabilities
- * @he_6ghz_capa: HE 6 GHz capabilities, must be filled in क्रम a
+ * @he_6ghz_capa: HE 6 GHz capabilities, must be filled in for a
  *	6 GHz band channel (and 0 may be valid value).
  */
-काष्ठा ieee80211_sband_अगरtype_data अणु
+struct ieee80211_sband_iftype_data {
 	u16 types_mask;
-	काष्ठा ieee80211_sta_he_cap he_cap;
-	काष्ठा ieee80211_he_6ghz_capa he_6ghz_capa;
-पूर्ण;
+	struct ieee80211_sta_he_cap he_cap;
+	struct ieee80211_he_6ghz_capa he_6ghz_capa;
+};
 
 /**
- * क्रमागत ieee80211_edmg_bw_config - allowed channel bandwidth configurations
+ * enum ieee80211_edmg_bw_config - allowed channel bandwidth configurations
  *
  * @IEEE80211_EDMG_BW_CONFIG_4: 2.16GHz
  * @IEEE80211_EDMG_BW_CONFIG_5: 2.16GHz and 4.32GHz
@@ -399,7 +398,7 @@
  * @IEEE80211_EDMG_BW_CONFIG_15: 2.16GHz, 4.32GHz, 6.48GHz, 8.64GHz,
  *	2.16GHz + 2.16GHz and 4.32GHz + 4.32GHz
  */
-क्रमागत ieee80211_edmg_bw_config अणु
+enum ieee80211_edmg_bw_config {
 	IEEE80211_EDMG_BW_CONFIG_4	= 4,
 	IEEE80211_EDMG_BW_CONFIG_5	= 5,
 	IEEE80211_EDMG_BW_CONFIG_6	= 6,
@@ -412,51 +411,51 @@
 	IEEE80211_EDMG_BW_CONFIG_13	= 13,
 	IEEE80211_EDMG_BW_CONFIG_14	= 14,
 	IEEE80211_EDMG_BW_CONFIG_15	= 15,
-पूर्ण;
+};
 
 /**
- * काष्ठा ieee80211_edmg - EDMG configuration
+ * struct ieee80211_edmg - EDMG configuration
  *
- * This काष्ठाure describes most essential parameters needed
+ * This structure describes most essential parameters needed
  * to describe 802.11ay EDMG configuration
  *
- * @channels: biपंचांगap that indicates the 2.16 GHz channel(s)
- *	that are allowed to be used क्रम transmissions.
+ * @channels: bitmap that indicates the 2.16 GHz channel(s)
+ *	that are allowed to be used for transmissions.
  *	Bit 0 indicates channel 1, bit 1 indicates channel 2, etc.
  *	Set to 0 indicate EDMG not supported.
  * @bw_config: Channel BW Configuration subfield encodes
  *	the allowed channel bandwidth configurations
  */
-काष्ठा ieee80211_edmg अणु
+struct ieee80211_edmg {
 	u8 channels;
-	क्रमागत ieee80211_edmg_bw_config bw_config;
-पूर्ण;
+	enum ieee80211_edmg_bw_config bw_config;
+};
 
 /**
- * काष्ठा ieee80211_sta_s1g_cap - STA's S1G capabilities
+ * struct ieee80211_sta_s1g_cap - STA's S1G capabilities
  *
- * This काष्ठाure describes most essential parameters needed
- * to describe 802.11ah S1G capabilities क्रम a STA.
+ * This structure describes most essential parameters needed
+ * to describe 802.11ah S1G capabilities for a STA.
  *
  * @s1g_supported: is STA an S1G STA
- * @cap: S1G capabilities inक्रमmation
+ * @cap: S1G capabilities information
  * @nss_mcs: Supported NSS MCS set
  */
-काष्ठा ieee80211_sta_s1g_cap अणु
+struct ieee80211_sta_s1g_cap {
 	bool s1g;
 	u8 cap[10]; /* use S1G_CAPAB_ */
 	u8 nss_mcs[5];
-पूर्ण;
+};
 
 /**
- * काष्ठा ieee80211_supported_band - frequency band definition
+ * struct ieee80211_supported_band - frequency band definition
  *
- * This काष्ठाure describes a frequency band a wiphy
+ * This structure describes a frequency band a wiphy
  * is able to operate in.
  *
  * @channels: Array of channels the hardware can operate with
  *	in this band.
- * @band: the band this काष्ठाure represents
+ * @band: the band this structure represents
  * @n_channels: Number of channels in @channels
  * @bitrates: Array of bitrates the hardware can operate with
  *	in this band. Must be sorted to give a valid "supported
@@ -467,206 +466,206 @@
  * @s1g_cap: S1G capabilities in this band
  * @edmg_cap: EDMG capabilities in this band
  * @s1g_cap: S1G capabilities in this band (S1B band only, of course)
- * @n_अगरtype_data: number of अगरtype data entries
- * @अगरtype_data: पूर्णांकerface type data entries.  Note that the bits in
- *	@types_mask inside this काष्ठाure cannot overlap (i.e. only
+ * @n_iftype_data: number of iftype data entries
+ * @iftype_data: interface type data entries.  Note that the bits in
+ *	@types_mask inside this structure cannot overlap (i.e. only
  *	one occurrence of each type is allowed across all instances of
- *	अगरtype_data).
+ *	iftype_data).
  */
-काष्ठा ieee80211_supported_band अणु
-	काष्ठा ieee80211_channel *channels;
-	काष्ठा ieee80211_rate *bitrates;
-	क्रमागत nl80211_band band;
-	पूर्णांक n_channels;
-	पूर्णांक n_bitrates;
-	काष्ठा ieee80211_sta_ht_cap ht_cap;
-	काष्ठा ieee80211_sta_vht_cap vht_cap;
-	काष्ठा ieee80211_sta_s1g_cap s1g_cap;
-	काष्ठा ieee80211_edmg edmg_cap;
-	u16 n_अगरtype_data;
-	स्थिर काष्ठा ieee80211_sband_अगरtype_data *अगरtype_data;
-पूर्ण;
+struct ieee80211_supported_band {
+	struct ieee80211_channel *channels;
+	struct ieee80211_rate *bitrates;
+	enum nl80211_band band;
+	int n_channels;
+	int n_bitrates;
+	struct ieee80211_sta_ht_cap ht_cap;
+	struct ieee80211_sta_vht_cap vht_cap;
+	struct ieee80211_sta_s1g_cap s1g_cap;
+	struct ieee80211_edmg edmg_cap;
+	u16 n_iftype_data;
+	const struct ieee80211_sband_iftype_data *iftype_data;
+};
 
 /**
- * ieee80211_get_sband_अगरtype_data - वापस sband data क्रम a given अगरtype
- * @sband: the sband to search क्रम the STA on
- * @अगरtype: क्रमागत nl80211_अगरtype
+ * ieee80211_get_sband_iftype_data - return sband data for a given iftype
+ * @sband: the sband to search for the STA on
+ * @iftype: enum nl80211_iftype
  *
- * Return: poपूर्णांकer to काष्ठा ieee80211_sband_अगरtype_data, or शून्य is none found
+ * Return: pointer to struct ieee80211_sband_iftype_data, or NULL is none found
  */
-अटल अंतरभूत स्थिर काष्ठा ieee80211_sband_अगरtype_data *
-ieee80211_get_sband_अगरtype_data(स्थिर काष्ठा ieee80211_supported_band *sband,
-				u8 अगरtype)
-अणु
-	पूर्णांक i;
+static inline const struct ieee80211_sband_iftype_data *
+ieee80211_get_sband_iftype_data(const struct ieee80211_supported_band *sband,
+				u8 iftype)
+{
+	int i;
 
-	अगर (WARN_ON(अगरtype >= NL80211_IFTYPE_MAX))
-		वापस शून्य;
+	if (WARN_ON(iftype >= NL80211_IFTYPE_MAX))
+		return NULL;
 
-	क्रम (i = 0; i < sband->n_अगरtype_data; i++)  अणु
-		स्थिर काष्ठा ieee80211_sband_अगरtype_data *data =
-			&sband->अगरtype_data[i];
+	for (i = 0; i < sband->n_iftype_data; i++)  {
+		const struct ieee80211_sband_iftype_data *data =
+			&sband->iftype_data[i];
 
-		अगर (data->types_mask & BIT(अगरtype))
-			वापस data;
-	पूर्ण
+		if (data->types_mask & BIT(iftype))
+			return data;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
- * ieee80211_get_he_अगरtype_cap - वापस HE capabilities क्रम an sband's अगरtype
- * @sband: the sband to search क्रम the अगरtype on
- * @अगरtype: क्रमागत nl80211_अगरtype
+ * ieee80211_get_he_iftype_cap - return HE capabilities for an sband's iftype
+ * @sband: the sband to search for the iftype on
+ * @iftype: enum nl80211_iftype
  *
- * Return: poपूर्णांकer to the काष्ठा ieee80211_sta_he_cap, or शून्य is none found
+ * Return: pointer to the struct ieee80211_sta_he_cap, or NULL is none found
  */
-अटल अंतरभूत स्थिर काष्ठा ieee80211_sta_he_cap *
-ieee80211_get_he_अगरtype_cap(स्थिर काष्ठा ieee80211_supported_band *sband,
-			    u8 अगरtype)
-अणु
-	स्थिर काष्ठा ieee80211_sband_अगरtype_data *data =
-		ieee80211_get_sband_अगरtype_data(sband, अगरtype);
+static inline const struct ieee80211_sta_he_cap *
+ieee80211_get_he_iftype_cap(const struct ieee80211_supported_band *sband,
+			    u8 iftype)
+{
+	const struct ieee80211_sband_iftype_data *data =
+		ieee80211_get_sband_iftype_data(sband, iftype);
 
-	अगर (data && data->he_cap.has_he)
-		वापस &data->he_cap;
+	if (data && data->he_cap.has_he)
+		return &data->he_cap;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
- * ieee80211_get_he_sta_cap - वापस HE capabilities क्रम an sband's STA
- * @sband: the sband to search क्रम the STA on
+ * ieee80211_get_he_sta_cap - return HE capabilities for an sband's STA
+ * @sband: the sband to search for the STA on
  *
- * Return: poपूर्णांकer to the काष्ठा ieee80211_sta_he_cap, or शून्य is none found
+ * Return: pointer to the struct ieee80211_sta_he_cap, or NULL is none found
  */
-अटल अंतरभूत स्थिर काष्ठा ieee80211_sta_he_cap *
-ieee80211_get_he_sta_cap(स्थिर काष्ठा ieee80211_supported_band *sband)
-अणु
-	वापस ieee80211_get_he_अगरtype_cap(sband, NL80211_IFTYPE_STATION);
-पूर्ण
+static inline const struct ieee80211_sta_he_cap *
+ieee80211_get_he_sta_cap(const struct ieee80211_supported_band *sband)
+{
+	return ieee80211_get_he_iftype_cap(sband, NL80211_IFTYPE_STATION);
+}
 
 /**
- * ieee80211_get_he_6ghz_capa - वापस HE 6 GHz capabilities
- * @sband: the sband to search क्रम the STA on
- * @अगरtype: the अगरtype to search क्रम
+ * ieee80211_get_he_6ghz_capa - return HE 6 GHz capabilities
+ * @sband: the sband to search for the STA on
+ * @iftype: the iftype to search for
  *
  * Return: the 6GHz capabilities
  */
-अटल अंतरभूत __le16
-ieee80211_get_he_6ghz_capa(स्थिर काष्ठा ieee80211_supported_band *sband,
-			   क्रमागत nl80211_अगरtype अगरtype)
-अणु
-	स्थिर काष्ठा ieee80211_sband_अगरtype_data *data =
-		ieee80211_get_sband_अगरtype_data(sband, अगरtype);
+static inline __le16
+ieee80211_get_he_6ghz_capa(const struct ieee80211_supported_band *sband,
+			   enum nl80211_iftype iftype)
+{
+	const struct ieee80211_sband_iftype_data *data =
+		ieee80211_get_sband_iftype_data(sband, iftype);
 
-	अगर (WARN_ON(!data || !data->he_cap.has_he))
-		वापस 0;
+	if (WARN_ON(!data || !data->he_cap.has_he))
+		return 0;
 
-	वापस data->he_6ghz_capa.capa;
-पूर्ण
+	return data->he_6ghz_capa.capa;
+}
 
 /**
- * wiphy_पढ़ो_of_freq_limits - पढ़ो frequency limits from device tree
+ * wiphy_read_of_freq_limits - read frequency limits from device tree
  *
- * @wiphy: the wireless device to get extra limits क्रम
+ * @wiphy: the wireless device to get extra limits for
  *
- * Some devices may have extra limitations specअगरied in DT. This may be useful
- * क्रम chipsets that normally support more bands but are limited due to board
- * design (e.g. by antennas or बाह्यal घातer amplअगरier).
+ * Some devices may have extra limitations specified in DT. This may be useful
+ * for chipsets that normally support more bands but are limited due to board
+ * design (e.g. by antennas or external power amplifier).
  *
- * This function पढ़ोs info from DT and uses it to *modअगरy* channels (disable
+ * This function reads info from DT and uses it to *modify* channels (disable
  * unavailable ones). It's usually a *bad* idea to use it in drivers with
- * shared channel data as DT limitations are device specअगरic. You should make
- * sure to call it only अगर channels in wiphy are copied and can be modअगरied
+ * shared channel data as DT limitations are device specific. You should make
+ * sure to call it only if channels in wiphy are copied and can be modified
  * without affecting other devices.
  *
  * As this function access device node it has to be called after set_wiphy_dev.
- * It also modअगरies channels so they have to be set first.
- * If using this helper, call it beक्रमe wiphy_रेजिस्टर().
+ * It also modifies channels so they have to be set first.
+ * If using this helper, call it before wiphy_register().
  */
-#अगर_घोषित CONFIG_OF
-व्योम wiphy_पढ़ो_of_freq_limits(काष्ठा wiphy *wiphy);
-#अन्यथा /* CONFIG_OF */
-अटल अंतरभूत व्योम wiphy_पढ़ो_of_freq_limits(काष्ठा wiphy *wiphy)
-अणु
-पूर्ण
-#पूर्ण_अगर /* !CONFIG_OF */
+#ifdef CONFIG_OF
+void wiphy_read_of_freq_limits(struct wiphy *wiphy);
+#else /* CONFIG_OF */
+static inline void wiphy_read_of_freq_limits(struct wiphy *wiphy)
+{
+}
+#endif /* !CONFIG_OF */
 
 
 /*
- * Wireless hardware/device configuration काष्ठाures and methods
+ * Wireless hardware/device configuration structures and methods
  */
 
 /**
  * DOC: Actions and configuration
  *
- * Each wireless device and each भव पूर्णांकerface offer a set of configuration
+ * Each wireless device and each virtual interface offer a set of configuration
  * operations and other actions that are invoked by userspace. Each of these
- * actions is described in the operations काष्ठाure, and the parameters these
+ * actions is described in the operations structure, and the parameters these
  * operations use are described separately.
  *
  * Additionally, some operations are asynchronous and expect to get status
- * inक्रमmation via some functions that drivers need to call.
+ * information via some functions that drivers need to call.
  *
  * Scanning and BSS list handling with its associated functionality is described
  * in a separate chapter.
  */
 
-#घोषणा VHT_MUMIMO_GROUPS_DATA_LEN (WLAN_MEMBERSHIP_LEN +\
+#define VHT_MUMIMO_GROUPS_DATA_LEN (WLAN_MEMBERSHIP_LEN +\
 				    WLAN_USER_POSITION_LEN)
 
 /**
- * काष्ठा vअगर_params - describes भव पूर्णांकerface parameters
- * @flags: monitor पूर्णांकerface flags, unchanged अगर 0, otherwise
+ * struct vif_params - describes virtual interface parameters
+ * @flags: monitor interface flags, unchanged if 0, otherwise
  *	%MONITOR_FLAG_CHANGED will be set
  * @use_4addr: use 4-address frames
- * @macaddr: address to use क्रम this भव पूर्णांकerface.
+ * @macaddr: address to use for this virtual interface.
  *	If this parameter is set to zero address the driver may
  *	determine the address as needed.
  *	This feature is only fully supported by drivers that enable the
  *	%NL80211_FEATURE_MAC_ON_CREATE flag.  Others may support creating
- **	only p2p devices with specअगरied MAC.
- * @vht_mumimo_groups: MU-MIMO groupID, used क्रम monitoring MU-MIMO packets
- *	beदीर्घing to that MU-MIMO groupID; %शून्य अगर not changed
- * @vht_mumimo_follow_addr: MU-MIMO follow address, used क्रम monitoring
- *	MU-MIMO packets going to the specअगरied station; %शून्य अगर not changed
+ **	only p2p devices with specified MAC.
+ * @vht_mumimo_groups: MU-MIMO groupID, used for monitoring MU-MIMO packets
+ *	belonging to that MU-MIMO groupID; %NULL if not changed
+ * @vht_mumimo_follow_addr: MU-MIMO follow address, used for monitoring
+ *	MU-MIMO packets going to the specified station; %NULL if not changed
  */
-काष्ठा vअगर_params अणु
+struct vif_params {
 	u32 flags;
-	पूर्णांक use_4addr;
+	int use_4addr;
 	u8 macaddr[ETH_ALEN];
-	स्थिर u8 *vht_mumimo_groups;
-	स्थिर u8 *vht_mumimo_follow_addr;
-पूर्ण;
+	const u8 *vht_mumimo_groups;
+	const u8 *vht_mumimo_follow_addr;
+};
 
 /**
- * काष्ठा key_params - key inक्रमmation
+ * struct key_params - key information
  *
- * Inक्रमmation about a key
+ * Information about a key
  *
  * @key: key material
  * @key_len: length of key material
  * @cipher: cipher suite selector
- * @seq: sequence counter (IV/PN) क्रम TKIP and CCMP keys, only used
+ * @seq: sequence counter (IV/PN) for TKIP and CCMP keys, only used
  *	with the get_key() callback, must be in little endian,
  *	length given by @seq_len.
  * @seq_len: length of @seq.
- * @vlan_id: vlan_id क्रम VLAN group key (अगर nonzero)
+ * @vlan_id: vlan_id for VLAN group key (if nonzero)
  * @mode: key install mode (RX_TX, NO_TX or SET_TX)
  */
-काष्ठा key_params अणु
-	स्थिर u8 *key;
-	स्थिर u8 *seq;
-	पूर्णांक key_len;
-	पूर्णांक seq_len;
+struct key_params {
+	const u8 *key;
+	const u8 *seq;
+	int key_len;
+	int seq_len;
 	u16 vlan_id;
 	u32 cipher;
-	क्रमागत nl80211_key_mode mode;
-पूर्ण;
+	enum nl80211_key_mode mode;
+};
 
 /**
- * काष्ठा cfg80211_chan_def - channel definition
+ * struct cfg80211_chan_def - channel definition
  * @chan: the (control) channel
  * @width: channel width
  * @center_freq1: center frequency of first segment
@@ -678,251 +677,251 @@ ieee80211_get_he_6ghz_capa(स्थिर काष्ठा ieee80211_supporte
  *	parameters are ignored.
  * @freq1_offset: offset from @center_freq1, in KHz
  */
-काष्ठा cfg80211_chan_def अणु
-	काष्ठा ieee80211_channel *chan;
-	क्रमागत nl80211_chan_width width;
+struct cfg80211_chan_def {
+	struct ieee80211_channel *chan;
+	enum nl80211_chan_width width;
 	u32 center_freq1;
 	u32 center_freq2;
-	काष्ठा ieee80211_edmg edmg;
+	struct ieee80211_edmg edmg;
 	u16 freq1_offset;
-पूर्ण;
+};
 
 /*
- * cfg80211_bitrate_mask - masks क्रम bitrate control
+ * cfg80211_bitrate_mask - masks for bitrate control
  */
-काष्ठा cfg80211_bitrate_mask अणु
-	काष्ठा अणु
+struct cfg80211_bitrate_mask {
+	struct {
 		u32 legacy;
 		u8 ht_mcs[IEEE80211_HT_MCS_MASK_LEN];
 		u16 vht_mcs[NL80211_VHT_NSS_MAX];
 		u16 he_mcs[NL80211_HE_NSS_MAX];
-		क्रमागत nl80211_txrate_gi gi;
-		क्रमागत nl80211_he_gi he_gi;
-		क्रमागत nl80211_he_ltf he_ltf;
-	पूर्ण control[NUM_NL80211_BANDS];
-पूर्ण;
+		enum nl80211_txrate_gi gi;
+		enum nl80211_he_gi he_gi;
+		enum nl80211_he_ltf he_ltf;
+	} control[NUM_NL80211_BANDS];
+};
 
 
 /**
- * काष्ठा cfg80211_tid_cfg - TID specअगरic configuration
- * @config_override: Flag to notअगरy driver to reset TID configuration
+ * struct cfg80211_tid_cfg - TID specific configuration
+ * @config_override: Flag to notify driver to reset TID configuration
  *	of the peer.
- * @tids: biपंचांगap of TIDs to modअगरy
- * @mask: biपंचांगap of attributes indicating which parameter changed,
+ * @tids: bitmap of TIDs to modify
+ * @mask: bitmap of attributes indicating which parameter changed,
  *	similar to &nl80211_tid_config_supp.
- * @noack: noack configuration value क्रम the TID
- * @retry_दीर्घ: retry count value
- * @retry_लघु: retry count value
+ * @noack: noack configuration value for the TID
+ * @retry_long: retry count value
+ * @retry_short: retry count value
  * @ampdu: Enable/Disable MPDU aggregation
  * @rtscts: Enable/Disable RTS/CTS
  * @amsdu: Enable/Disable MSDU aggregation
  * @txrate_type: Tx bitrate mask type
- * @txrate_mask: Tx bitrate to be applied क्रम the TID
+ * @txrate_mask: Tx bitrate to be applied for the TID
  */
-काष्ठा cfg80211_tid_cfg अणु
+struct cfg80211_tid_cfg {
 	bool config_override;
 	u8 tids;
 	u64 mask;
-	क्रमागत nl80211_tid_config noack;
-	u8 retry_दीर्घ, retry_लघु;
-	क्रमागत nl80211_tid_config ampdu;
-	क्रमागत nl80211_tid_config rtscts;
-	क्रमागत nl80211_tid_config amsdu;
-	क्रमागत nl80211_tx_rate_setting txrate_type;
-	काष्ठा cfg80211_bitrate_mask txrate_mask;
-पूर्ण;
+	enum nl80211_tid_config noack;
+	u8 retry_long, retry_short;
+	enum nl80211_tid_config ampdu;
+	enum nl80211_tid_config rtscts;
+	enum nl80211_tid_config amsdu;
+	enum nl80211_tx_rate_setting txrate_type;
+	struct cfg80211_bitrate_mask txrate_mask;
+};
 
 /**
- * काष्ठा cfg80211_tid_config - TID configuration
+ * struct cfg80211_tid_config - TID configuration
  * @peer: Station's MAC address
- * @n_tid_conf: Number of TID specअगरic configurations to be applied
+ * @n_tid_conf: Number of TID specific configurations to be applied
  * @tid_conf: Configuration change info
  */
-काष्ठा cfg80211_tid_config अणु
-	स्थिर u8 *peer;
+struct cfg80211_tid_config {
+	const u8 *peer;
 	u32 n_tid_conf;
-	काष्ठा cfg80211_tid_cfg tid_conf[];
-पूर्ण;
+	struct cfg80211_tid_cfg tid_conf[];
+};
 
 /**
- * cfg80211_get_chandef_type - वापस old channel type from chandef
+ * cfg80211_get_chandef_type - return old channel type from chandef
  * @chandef: the channel definition
  *
  * Return: The old channel type (NOHT, HT20, HT40+/-) from a given
  * chandef, which must have a bandwidth allowing this conversion.
  */
-अटल अंतरभूत क्रमागत nl80211_channel_type
-cfg80211_get_chandef_type(स्थिर काष्ठा cfg80211_chan_def *chandef)
-अणु
-	चयन (chandef->width) अणु
-	हाल NL80211_CHAN_WIDTH_20_NOHT:
-		वापस NL80211_CHAN_NO_HT;
-	हाल NL80211_CHAN_WIDTH_20:
-		वापस NL80211_CHAN_HT20;
-	हाल NL80211_CHAN_WIDTH_40:
-		अगर (chandef->center_freq1 > chandef->chan->center_freq)
-			वापस NL80211_CHAN_HT40PLUS;
-		वापस NL80211_CHAN_HT40MINUS;
-	शेष:
+static inline enum nl80211_channel_type
+cfg80211_get_chandef_type(const struct cfg80211_chan_def *chandef)
+{
+	switch (chandef->width) {
+	case NL80211_CHAN_WIDTH_20_NOHT:
+		return NL80211_CHAN_NO_HT;
+	case NL80211_CHAN_WIDTH_20:
+		return NL80211_CHAN_HT20;
+	case NL80211_CHAN_WIDTH_40:
+		if (chandef->center_freq1 > chandef->chan->center_freq)
+			return NL80211_CHAN_HT40PLUS;
+		return NL80211_CHAN_HT40MINUS;
+	default:
 		WARN_ON(1);
-		वापस NL80211_CHAN_NO_HT;
-	पूर्ण
-पूर्ण
+		return NL80211_CHAN_NO_HT;
+	}
+}
 
 /**
  * cfg80211_chandef_create - create channel definition using channel type
- * @chandef: the channel definition काष्ठा to fill
+ * @chandef: the channel definition struct to fill
  * @channel: the control channel
  * @chantype: the channel type
  *
  * Given a channel type, create a channel definition.
  */
-व्योम cfg80211_chandef_create(काष्ठा cfg80211_chan_def *chandef,
-			     काष्ठा ieee80211_channel *channel,
-			     क्रमागत nl80211_channel_type chantype);
+void cfg80211_chandef_create(struct cfg80211_chan_def *chandef,
+			     struct ieee80211_channel *channel,
+			     enum nl80211_channel_type chantype);
 
 /**
- * cfg80211_chandef_identical - check अगर two channel definitions are identical
+ * cfg80211_chandef_identical - check if two channel definitions are identical
  * @chandef1: first channel definition
  * @chandef2: second channel definition
  *
- * Return: %true अगर the channels defined by the channel definitions are
+ * Return: %true if the channels defined by the channel definitions are
  * identical, %false otherwise.
  */
-अटल अंतरभूत bool
-cfg80211_chandef_identical(स्थिर काष्ठा cfg80211_chan_def *chandef1,
-			   स्थिर काष्ठा cfg80211_chan_def *chandef2)
-अणु
-	वापस (chandef1->chan == chandef2->chan &&
+static inline bool
+cfg80211_chandef_identical(const struct cfg80211_chan_def *chandef1,
+			   const struct cfg80211_chan_def *chandef2)
+{
+	return (chandef1->chan == chandef2->chan &&
 		chandef1->width == chandef2->width &&
 		chandef1->center_freq1 == chandef2->center_freq1 &&
 		chandef1->freq1_offset == chandef2->freq1_offset &&
 		chandef1->center_freq2 == chandef2->center_freq2);
-पूर्ण
+}
 
 /**
- * cfg80211_chandef_is_edmg - check अगर chandef represents an EDMG channel
+ * cfg80211_chandef_is_edmg - check if chandef represents an EDMG channel
  *
  * @chandef: the channel definition
  *
- * Return: %true अगर EDMG defined, %false otherwise.
+ * Return: %true if EDMG defined, %false otherwise.
  */
-अटल अंतरभूत bool
-cfg80211_chandef_is_edmg(स्थिर काष्ठा cfg80211_chan_def *chandef)
-अणु
-	वापस chandef->edmg.channels || chandef->edmg.bw_config;
-पूर्ण
+static inline bool
+cfg80211_chandef_is_edmg(const struct cfg80211_chan_def *chandef)
+{
+	return chandef->edmg.channels || chandef->edmg.bw_config;
+}
 
 /**
- * cfg80211_chandef_compatible - check अगर two channel definitions are compatible
+ * cfg80211_chandef_compatible - check if two channel definitions are compatible
  * @chandef1: first channel definition
  * @chandef2: second channel definition
  *
- * Return: %शून्य अगर the given channel definitions are incompatible,
+ * Return: %NULL if the given channel definitions are incompatible,
  * chandef1 or chandef2 otherwise.
  */
-स्थिर काष्ठा cfg80211_chan_def *
-cfg80211_chandef_compatible(स्थिर काष्ठा cfg80211_chan_def *chandef1,
-			    स्थिर काष्ठा cfg80211_chan_def *chandef2);
+const struct cfg80211_chan_def *
+cfg80211_chandef_compatible(const struct cfg80211_chan_def *chandef1,
+			    const struct cfg80211_chan_def *chandef2);
 
 /**
- * cfg80211_chandef_valid - check अगर a channel definition is valid
+ * cfg80211_chandef_valid - check if a channel definition is valid
  * @chandef: the channel definition to check
- * Return: %true अगर the channel definition is valid. %false otherwise.
+ * Return: %true if the channel definition is valid. %false otherwise.
  */
-bool cfg80211_chandef_valid(स्थिर काष्ठा cfg80211_chan_def *chandef);
+bool cfg80211_chandef_valid(const struct cfg80211_chan_def *chandef);
 
 /**
- * cfg80211_chandef_usable - check अगर secondary channels can be used
+ * cfg80211_chandef_usable - check if secondary channels can be used
  * @wiphy: the wiphy to validate against
  * @chandef: the channel definition to check
  * @prohibited_flags: the regulatory channel flags that must not be set
- * Return: %true अगर secondary channels are usable. %false otherwise.
+ * Return: %true if secondary channels are usable. %false otherwise.
  */
-bool cfg80211_chandef_usable(काष्ठा wiphy *wiphy,
-			     स्थिर काष्ठा cfg80211_chan_def *chandef,
+bool cfg80211_chandef_usable(struct wiphy *wiphy,
+			     const struct cfg80211_chan_def *chandef,
 			     u32 prohibited_flags);
 
 /**
- * cfg80211_chandef_dfs_required - checks अगर radar detection is required
+ * cfg80211_chandef_dfs_required - checks if radar detection is required
  * @wiphy: the wiphy to validate against
  * @chandef: the channel definition to check
- * @अगरtype: the पूर्णांकerface type as specअगरied in &क्रमागत nl80211_अगरtype
+ * @iftype: the interface type as specified in &enum nl80211_iftype
  * Returns:
- *	1 अगर radar detection is required, 0 अगर it is not, < 0 on error
+ *	1 if radar detection is required, 0 if it is not, < 0 on error
  */
-पूर्णांक cfg80211_chandef_dfs_required(काष्ठा wiphy *wiphy,
-				  स्थिर काष्ठा cfg80211_chan_def *chandef,
-				  क्रमागत nl80211_अगरtype अगरtype);
+int cfg80211_chandef_dfs_required(struct wiphy *wiphy,
+				  const struct cfg80211_chan_def *chandef,
+				  enum nl80211_iftype iftype);
 
 /**
- * ieee80211_chandef_rate_flags - वापसs rate flags क्रम a channel
+ * ieee80211_chandef_rate_flags - returns rate flags for a channel
  *
- * In some channel types, not all rates may be used - क्रम example CCK
+ * In some channel types, not all rates may be used - for example CCK
  * rates may not be used in 5/10 MHz channels.
  *
- * @chandef: channel definition क्रम the channel
+ * @chandef: channel definition for the channel
  *
- * Returns: rate flags which apply क्रम this channel
+ * Returns: rate flags which apply for this channel
  */
-अटल अंतरभूत क्रमागत ieee80211_rate_flags
-ieee80211_chandef_rate_flags(काष्ठा cfg80211_chan_def *chandef)
-अणु
-	चयन (chandef->width) अणु
-	हाल NL80211_CHAN_WIDTH_5:
-		वापस IEEE80211_RATE_SUPPORTS_5MHZ;
-	हाल NL80211_CHAN_WIDTH_10:
-		वापस IEEE80211_RATE_SUPPORTS_10MHZ;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static inline enum ieee80211_rate_flags
+ieee80211_chandef_rate_flags(struct cfg80211_chan_def *chandef)
+{
+	switch (chandef->width) {
+	case NL80211_CHAN_WIDTH_5:
+		return IEEE80211_RATE_SUPPORTS_5MHZ;
+	case NL80211_CHAN_WIDTH_10:
+		return IEEE80211_RATE_SUPPORTS_10MHZ;
+	default:
+		break;
+	}
+	return 0;
+}
 
 /**
- * ieee80211_chandef_max_घातer - maximum transmission घातer क्रम the chandef
+ * ieee80211_chandef_max_power - maximum transmission power for the chandef
  *
- * In some regulations, the transmit घातer may depend on the configured channel
- * bandwidth which may be defined as dBm/MHz. This function वापसs the actual
- * max_घातer क्रम non-standard (20 MHz) channels.
+ * In some regulations, the transmit power may depend on the configured channel
+ * bandwidth which may be defined as dBm/MHz. This function returns the actual
+ * max_power for non-standard (20 MHz) channels.
  *
- * @chandef: channel definition क्रम the channel
+ * @chandef: channel definition for the channel
  *
- * Returns: maximum allowed transmission घातer in dBm क्रम the chandef
+ * Returns: maximum allowed transmission power in dBm for the chandef
  */
-अटल अंतरभूत पूर्णांक
-ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
-अणु
-	चयन (chandef->width) अणु
-	हाल NL80211_CHAN_WIDTH_5:
-		वापस min(chandef->chan->max_reg_घातer - 6,
-			   chandef->chan->max_घातer);
-	हाल NL80211_CHAN_WIDTH_10:
-		वापस min(chandef->chan->max_reg_घातer - 3,
-			   chandef->chan->max_घातer);
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस chandef->chan->max_घातer;
-पूर्ण
+static inline int
+ieee80211_chandef_max_power(struct cfg80211_chan_def *chandef)
+{
+	switch (chandef->width) {
+	case NL80211_CHAN_WIDTH_5:
+		return min(chandef->chan->max_reg_power - 6,
+			   chandef->chan->max_power);
+	case NL80211_CHAN_WIDTH_10:
+		return min(chandef->chan->max_reg_power - 3,
+			   chandef->chan->max_power);
+	default:
+		break;
+	}
+	return chandef->chan->max_power;
+}
 
 /**
- * क्रमागत survey_info_flags - survey inक्रमmation flags
+ * enum survey_info_flags - survey information flags
  *
  * @SURVEY_INFO_NOISE_DBM: noise (in dBm) was filled in
  * @SURVEY_INFO_IN_USE: channel is currently being used
- * @SURVEY_INFO_TIME: active समय (in ms) was filled in
- * @SURVEY_INFO_TIME_BUSY: busy समय was filled in
- * @SURVEY_INFO_TIME_EXT_BUSY: extension channel busy समय was filled in
- * @SURVEY_INFO_TIME_RX: receive समय was filled in
- * @SURVEY_INFO_TIME_TX: transmit समय was filled in
- * @SURVEY_INFO_TIME_SCAN: scan समय was filled in
- * @SURVEY_INFO_TIME_BSS_RX: local BSS receive समय was filled in
+ * @SURVEY_INFO_TIME: active time (in ms) was filled in
+ * @SURVEY_INFO_TIME_BUSY: busy time was filled in
+ * @SURVEY_INFO_TIME_EXT_BUSY: extension channel busy time was filled in
+ * @SURVEY_INFO_TIME_RX: receive time was filled in
+ * @SURVEY_INFO_TIME_TX: transmit time was filled in
+ * @SURVEY_INFO_TIME_SCAN: scan time was filled in
+ * @SURVEY_INFO_TIME_BSS_RX: local BSS receive time was filled in
  *
- * Used by the driver to indicate which info in &काष्ठा survey_info
+ * Used by the driver to indicate which info in &struct survey_info
  * it has filled in during the get_survey().
  */
-क्रमागत survey_info_flags अणु
+enum survey_info_flags {
 	SURVEY_INFO_NOISE_DBM		= BIT(0),
 	SURVEY_INFO_IN_USE		= BIT(1),
 	SURVEY_INFO_TIME		= BIT(2),
@@ -932,49 +931,49 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
 	SURVEY_INFO_TIME_TX		= BIT(6),
 	SURVEY_INFO_TIME_SCAN		= BIT(7),
 	SURVEY_INFO_TIME_BSS_RX		= BIT(8),
-पूर्ण;
+};
 
 /**
- * काष्ठा survey_info - channel survey response
+ * struct survey_info - channel survey response
  *
- * @channel: the channel this survey record reports, may be %शून्य क्रम a single
+ * @channel: the channel this survey record reports, may be %NULL for a single
  *	record to report global statistics
- * @filled: bitflag of flags from &क्रमागत survey_info_flags
+ * @filled: bitflag of flags from &enum survey_info_flags
  * @noise: channel noise in dBm. This and all following fields are
  *	optional
- * @समय: amount of समय in ms the radio was turn on (on the channel)
- * @समय_busy: amount of समय the primary channel was sensed busy
- * @समय_ext_busy: amount of समय the extension channel was sensed busy
- * @समय_rx: amount of समय the radio spent receiving data
- * @समय_प्रकारx: amount of समय the radio spent transmitting data
- * @समय_scan: amount of समय the radio spent क्रम scanning
- * @समय_bss_rx: amount of समय the radio spent receiving data on a local BSS
+ * @time: amount of time in ms the radio was turn on (on the channel)
+ * @time_busy: amount of time the primary channel was sensed busy
+ * @time_ext_busy: amount of time the extension channel was sensed busy
+ * @time_rx: amount of time the radio spent receiving data
+ * @time_tx: amount of time the radio spent transmitting data
+ * @time_scan: amount of time the radio spent for scanning
+ * @time_bss_rx: amount of time the radio spent receiving data on a local BSS
  *
- * Used by dump_survey() to report back per-channel survey inक्रमmation.
+ * Used by dump_survey() to report back per-channel survey information.
  *
- * This काष्ठाure can later be expanded with things like
+ * This structure can later be expanded with things like
  * channel duty cycle etc.
  */
-काष्ठा survey_info अणु
-	काष्ठा ieee80211_channel *channel;
-	u64 समय;
-	u64 समय_busy;
-	u64 समय_ext_busy;
-	u64 समय_rx;
-	u64 समय_प्रकारx;
-	u64 समय_scan;
-	u64 समय_bss_rx;
+struct survey_info {
+	struct ieee80211_channel *channel;
+	u64 time;
+	u64 time_busy;
+	u64 time_ext_busy;
+	u64 time_rx;
+	u64 time_tx;
+	u64 time_scan;
+	u64 time_bss_rx;
 	u32 filled;
 	s8 noise;
-पूर्ण;
+};
 
-#घोषणा CFG80211_MAX_WEP_KEYS	4
+#define CFG80211_MAX_WEP_KEYS	4
 
 /**
- * काष्ठा cfg80211_crypto_settings - Crypto settings
- * @wpa_versions: indicates which, अगर any, WPA versions are enabled
- *	(from क्रमागत nl80211_wpa_versions)
- * @cipher_group: group key cipher suite (or 0 अगर unset)
+ * struct cfg80211_crypto_settings - Crypto settings
+ * @wpa_versions: indicates which, if any, WPA versions are enabled
+ *	(from enum nl80211_wpa_versions)
+ * @cipher_group: group key cipher suite (or 0 if unset)
  * @n_ciphers_pairwise: number of AP supported unicast ciphers
  * @ciphers_pairwise: unicast key cipher suites
  * @n_akm_suites: number of AKM suites
@@ -982,27 +981,27 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
  * @control_port: Whether user space controls IEEE 802.1X port, i.e.,
  *	sets/clears %NL80211_STA_FLAG_AUTHORIZED. If true, the driver is
  *	required to assume that the port is unauthorized until authorized by
- *	user space. Otherwise, port is marked authorized by शेष.
+ *	user space. Otherwise, port is marked authorized by default.
  * @control_port_ethertype: the control port protocol that should be
  *	allowed through even on unauthorized ports
  * @control_port_no_encrypt: TRUE to prevent encryption of control port
  *	protocol frames.
- * @control_port_over_nl80211: TRUE अगर userspace expects to exchange control
- *	port frames over NL80211 instead of the network पूर्णांकerface.
+ * @control_port_over_nl80211: TRUE if userspace expects to exchange control
+ *	port frames over NL80211 instead of the network interface.
  * @control_port_no_preauth: disables pre-auth rx over the nl80211 control
- *	port क्रम mac80211
- * @wep_keys: अटल WEP keys, अगर not शून्य poपूर्णांकs to an array of
+ *	port for mac80211
+ * @wep_keys: static WEP keys, if not NULL points to an array of
  *	CFG80211_MAX_WEP_KEYS WEP keys
- * @wep_tx_key: key index (0..3) of the शेष TX अटल WEP key
- * @psk: PSK (क्रम devices supporting 4-way-handshake offload)
- * @sae_pwd: password क्रम SAE authentication (क्रम devices supporting SAE
+ * @wep_tx_key: key index (0..3) of the default TX static WEP key
+ * @psk: PSK (for devices supporting 4-way-handshake offload)
+ * @sae_pwd: password for SAE authentication (for devices supporting SAE
  *	offload)
- * @sae_pwd_len: length of SAE password (क्रम devices supporting SAE offload)
- * @sae_pwe: The mechanisms allowed क्रम SAE PWE derivation:
+ * @sae_pwd_len: length of SAE password (for devices supporting SAE offload)
+ * @sae_pwe: The mechanisms allowed for SAE PWE derivation:
  *
  *	NL80211_SAE_PWE_UNSPECIFIED
- *	  Not-specअगरied, used to indicate userspace did not specअगरy any
- *	  preference. The driver should follow its पूर्णांकernal policy in
+ *	  Not-specified, used to indicate userspace did not specify any
+ *	  preference. The driver should follow its internal policy in
  *	  such a scenario.
  *
  *	NL80211_SAE_PWE_HUNT_AND_PECK
@@ -1014,45 +1013,45 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
  *	NL80211_SAE_PWE_BOTH
  *	  Allow either hunting-and-pecking loop or hash-to-element
  */
-काष्ठा cfg80211_crypto_settings अणु
+struct cfg80211_crypto_settings {
 	u32 wpa_versions;
 	u32 cipher_group;
-	पूर्णांक n_ciphers_pairwise;
+	int n_ciphers_pairwise;
 	u32 ciphers_pairwise[NL80211_MAX_NR_CIPHER_SUITES];
-	पूर्णांक n_akm_suites;
+	int n_akm_suites;
 	u32 akm_suites[NL80211_MAX_NR_AKM_SUITES];
 	bool control_port;
 	__be16 control_port_ethertype;
 	bool control_port_no_encrypt;
 	bool control_port_over_nl80211;
 	bool control_port_no_preauth;
-	काष्ठा key_params *wep_keys;
-	पूर्णांक wep_tx_key;
-	स्थिर u8 *psk;
-	स्थिर u8 *sae_pwd;
+	struct key_params *wep_keys;
+	int wep_tx_key;
+	const u8 *psk;
+	const u8 *sae_pwd;
 	u8 sae_pwd_len;
-	क्रमागत nl80211_sae_pwe_mechanism sae_pwe;
-पूर्ण;
+	enum nl80211_sae_pwe_mechanism sae_pwe;
+};
 
 /**
- * काष्ठा cfg80211_beacon_data - beacon data
- * @head: head portion of beacon (beक्रमe TIM IE)
- *	or %शून्य अगर not changed
+ * struct cfg80211_beacon_data - beacon data
+ * @head: head portion of beacon (before TIM IE)
+ *	or %NULL if not changed
  * @tail: tail portion of beacon (after TIM IE)
- *	or %शून्य अगर not changed
+ *	or %NULL if not changed
  * @head_len: length of @head
  * @tail_len: length of @tail
- * @beacon_ies: extra inक्रमmation element(s) to add पूर्णांकo Beacon frames or %शून्य
+ * @beacon_ies: extra information element(s) to add into Beacon frames or %NULL
  * @beacon_ies_len: length of beacon_ies in octets
- * @proberesp_ies: extra inक्रमmation element(s) to add पूर्णांकo Probe Response
- *	frames or %शून्य
+ * @proberesp_ies: extra information element(s) to add into Probe Response
+ *	frames or %NULL
  * @proberesp_ies_len: length of proberesp_ies in octets
- * @assocresp_ies: extra inक्रमmation element(s) to add पूर्णांकo (Re)Association
- *	Response frames or %शून्य
+ * @assocresp_ies: extra information element(s) to add into (Re)Association
+ *	Response frames or %NULL
  * @assocresp_ies_len: length of assocresp_ies in octets
- * @probe_resp_len: length of probe response ढाँचा (@probe_resp)
- * @probe_resp: probe response ढाँचा (AP mode only)
- * @fपंचांग_responder: enable FTM responder functionality; -1 क्रम no change
+ * @probe_resp_len: length of probe response template (@probe_resp)
+ * @probe_resp: probe response template (AP mode only)
+ * @ftm_responder: enable FTM responder functionality; -1 for no change
  *	(which also implies no change in LCI/civic location data)
  * @lci: Measurement Report element content, starting with Measurement Token
  *	(measurement type 8)
@@ -1061,99 +1060,99 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
  * @lci_len: LCI data length
  * @civicloc_len: Civic location data length
  */
-काष्ठा cfg80211_beacon_data अणु
-	स्थिर u8 *head, *tail;
-	स्थिर u8 *beacon_ies;
-	स्थिर u8 *proberesp_ies;
-	स्थिर u8 *assocresp_ies;
-	स्थिर u8 *probe_resp;
-	स्थिर u8 *lci;
-	स्थिर u8 *civicloc;
-	s8 fपंचांग_responder;
+struct cfg80211_beacon_data {
+	const u8 *head, *tail;
+	const u8 *beacon_ies;
+	const u8 *proberesp_ies;
+	const u8 *assocresp_ies;
+	const u8 *probe_resp;
+	const u8 *lci;
+	const u8 *civicloc;
+	s8 ftm_responder;
 
-	माप_प्रकार head_len, tail_len;
-	माप_प्रकार beacon_ies_len;
-	माप_प्रकार proberesp_ies_len;
-	माप_प्रकार assocresp_ies_len;
-	माप_प्रकार probe_resp_len;
-	माप_प्रकार lci_len;
-	माप_प्रकार civicloc_len;
-पूर्ण;
+	size_t head_len, tail_len;
+	size_t beacon_ies_len;
+	size_t proberesp_ies_len;
+	size_t assocresp_ies_len;
+	size_t probe_resp_len;
+	size_t lci_len;
+	size_t civicloc_len;
+};
 
-काष्ठा mac_address अणु
+struct mac_address {
 	u8 addr[ETH_ALEN];
-पूर्ण;
+};
 
 /**
- * काष्ठा cfg80211_acl_data - Access control list data
+ * struct cfg80211_acl_data - Access control list data
  *
  * @acl_policy: ACL policy to be applied on the station's
- *	entry specअगरied by mac_addr
+ *	entry specified by mac_addr
  * @n_acl_entries: Number of MAC address entries passed
- * @mac_addrs: List of MAC addresses of stations to be used क्रम ACL
+ * @mac_addrs: List of MAC addresses of stations to be used for ACL
  */
-काष्ठा cfg80211_acl_data अणु
-	क्रमागत nl80211_acl_policy acl_policy;
-	पूर्णांक n_acl_entries;
+struct cfg80211_acl_data {
+	enum nl80211_acl_policy acl_policy;
+	int n_acl_entries;
 
 	/* Keep it last */
-	काष्ठा mac_address mac_addrs[];
-पूर्ण;
+	struct mac_address mac_addrs[];
+};
 
 /**
- * काष्ठा cfg80211_fils_discovery - FILS discovery parameters from
+ * struct cfg80211_fils_discovery - FILS discovery parameters from
  * IEEE Std 802.11ai-2016, Annex C.3 MIB detail.
  *
- * @min_पूर्णांकerval: Minimum packet पूर्णांकerval in TUs (0 - 10000)
- * @max_पूर्णांकerval: Maximum packet पूर्णांकerval in TUs (0 - 10000)
- * @पंचांगpl_len: Template length
- * @पंचांगpl: Template data क्रम FILS discovery frame including the action
+ * @min_interval: Minimum packet interval in TUs (0 - 10000)
+ * @max_interval: Maximum packet interval in TUs (0 - 10000)
+ * @tmpl_len: Template length
+ * @tmpl: Template data for FILS discovery frame including the action
  *	frame headers.
  */
-काष्ठा cfg80211_fils_discovery अणु
-	u32 min_पूर्णांकerval;
-	u32 max_पूर्णांकerval;
-	माप_प्रकार पंचांगpl_len;
-	स्थिर u8 *पंचांगpl;
-पूर्ण;
+struct cfg80211_fils_discovery {
+	u32 min_interval;
+	u32 max_interval;
+	size_t tmpl_len;
+	const u8 *tmpl;
+};
 
 /**
- * काष्ठा cfg80211_unsol_bcast_probe_resp - Unsolicited broadcast probe
+ * struct cfg80211_unsol_bcast_probe_resp - Unsolicited broadcast probe
  *	response parameters in 6GHz.
  *
- * @पूर्णांकerval: Packet पूर्णांकerval in TUs. Maximum allowed is 20 TU, as mentioned
- *	in IEEE P802.11ax/D6.0 26.17.2.3.2 - AP behavior क्रम fast passive
+ * @interval: Packet interval in TUs. Maximum allowed is 20 TU, as mentioned
+ *	in IEEE P802.11ax/D6.0 26.17.2.3.2 - AP behavior for fast passive
  *	scanning
- * @पंचांगpl_len: Template length
- * @पंचांगpl: Template data क्रम probe response
+ * @tmpl_len: Template length
+ * @tmpl: Template data for probe response
  */
-काष्ठा cfg80211_unsol_bcast_probe_resp अणु
-	u32 पूर्णांकerval;
-	माप_प्रकार पंचांगpl_len;
-	स्थिर u8 *पंचांगpl;
-पूर्ण;
+struct cfg80211_unsol_bcast_probe_resp {
+	u32 interval;
+	size_t tmpl_len;
+	const u8 *tmpl;
+};
 
 /**
- * क्रमागत cfg80211_ap_settings_flags - AP settings flags
+ * enum cfg80211_ap_settings_flags - AP settings flags
  *
  * Used by cfg80211_ap_settings
  *
- * @AP_SETTINGS_EXTERNAL_AUTH_SUPPORT: AP supports बाह्यal authentication
+ * @AP_SETTINGS_EXTERNAL_AUTH_SUPPORT: AP supports external authentication
  */
-क्रमागत cfg80211_ap_settings_flags अणु
+enum cfg80211_ap_settings_flags {
 	AP_SETTINGS_EXTERNAL_AUTH_SUPPORT = BIT(0),
-पूर्ण;
+};
 
 /**
- * काष्ठा cfg80211_ap_settings - AP configuration
+ * struct cfg80211_ap_settings - AP configuration
  *
- * Used to configure an AP पूर्णांकerface.
+ * Used to configure an AP interface.
  *
  * @chandef: defines the channel to use
  * @beacon: beacon data
- * @beacon_पूर्णांकerval: beacon पूर्णांकerval
+ * @beacon_interval: beacon interval
  * @dtim_period: DTIM period
- * @ssid: SSID to be used in the BSS (note: may be %शून्य अगर not provided from
+ * @ssid: SSID to be used in the BSS (note: may be %NULL if not provided from
  *	user space)
  * @ssid_len: length of @ssid
  * @hidden_ssid: whether to hide the SSID in Beacon/Probe Response frames
@@ -1161,268 +1160,268 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
  * @privacy: the BSS uses privacy
  * @auth_type: Authentication type (algorithm)
  * @smps_mode: SMPS mode
- * @inactivity_समयout: समय in seconds to determine station's inactivity.
- * @p2p_ctwinकरोw: P2P CT Winकरोw
+ * @inactivity_timeout: time in seconds to determine station's inactivity.
+ * @p2p_ctwindow: P2P CT Window
  * @p2p_opp_ps: P2P opportunistic PS
- * @acl: ACL configuration used by the drivers which has support क्रम
+ * @acl: ACL configuration used by the drivers which has support for
  *	MAC address based access control
- * @pbss: If set, start as a PCP instead of AP. Relevant क्रम DMG
+ * @pbss: If set, start as a PCP instead of AP. Relevant for DMG
  *	networks.
- * @beacon_rate: bitrate to be used क्रम beacons
- * @ht_cap: HT capabilities (or %शून्य अगर HT isn't enabled)
- * @vht_cap: VHT capabilities (or %शून्य अगर VHT isn't enabled)
- * @he_cap: HE capabilities (or %शून्य अगर HE isn't enabled)
+ * @beacon_rate: bitrate to be used for beacons
+ * @ht_cap: HT capabilities (or %NULL if HT isn't enabled)
+ * @vht_cap: VHT capabilities (or %NULL if VHT isn't enabled)
+ * @he_cap: HE capabilities (or %NULL if HE isn't enabled)
  * @ht_required: stations must support HT
  * @vht_required: stations must support VHT
  * @twt_responder: Enable Target Wait Time
  * @he_required: stations must support HE
  * @sae_h2e_required: stations must support direct H2E technique in SAE
- * @flags: flags, as defined in क्रमागत cfg80211_ap_settings_flags
+ * @flags: flags, as defined in enum cfg80211_ap_settings_flags
  * @he_obss_pd: OBSS Packet Detection settings
  * @he_bss_color: BSS Color settings
- * @he_oper: HE operation IE (or %शून्य अगर HE isn't enabled)
+ * @he_oper: HE operation IE (or %NULL if HE isn't enabled)
  * @fils_discovery: FILS discovery transmission parameters
  * @unsol_bcast_probe_resp: Unsolicited broadcast probe response parameters
  */
-काष्ठा cfg80211_ap_settings अणु
-	काष्ठा cfg80211_chan_def chandef;
+struct cfg80211_ap_settings {
+	struct cfg80211_chan_def chandef;
 
-	काष्ठा cfg80211_beacon_data beacon;
+	struct cfg80211_beacon_data beacon;
 
-	पूर्णांक beacon_पूर्णांकerval, dtim_period;
-	स्थिर u8 *ssid;
-	माप_प्रकार ssid_len;
-	क्रमागत nl80211_hidden_ssid hidden_ssid;
-	काष्ठा cfg80211_crypto_settings crypto;
+	int beacon_interval, dtim_period;
+	const u8 *ssid;
+	size_t ssid_len;
+	enum nl80211_hidden_ssid hidden_ssid;
+	struct cfg80211_crypto_settings crypto;
 	bool privacy;
-	क्रमागत nl80211_auth_type auth_type;
-	क्रमागत nl80211_smps_mode smps_mode;
-	पूर्णांक inactivity_समयout;
-	u8 p2p_ctwinकरोw;
+	enum nl80211_auth_type auth_type;
+	enum nl80211_smps_mode smps_mode;
+	int inactivity_timeout;
+	u8 p2p_ctwindow;
 	bool p2p_opp_ps;
-	स्थिर काष्ठा cfg80211_acl_data *acl;
+	const struct cfg80211_acl_data *acl;
 	bool pbss;
-	काष्ठा cfg80211_bitrate_mask beacon_rate;
+	struct cfg80211_bitrate_mask beacon_rate;
 
-	स्थिर काष्ठा ieee80211_ht_cap *ht_cap;
-	स्थिर काष्ठा ieee80211_vht_cap *vht_cap;
-	स्थिर काष्ठा ieee80211_he_cap_elem *he_cap;
-	स्थिर काष्ठा ieee80211_he_operation *he_oper;
+	const struct ieee80211_ht_cap *ht_cap;
+	const struct ieee80211_vht_cap *vht_cap;
+	const struct ieee80211_he_cap_elem *he_cap;
+	const struct ieee80211_he_operation *he_oper;
 	bool ht_required, vht_required, he_required, sae_h2e_required;
 	bool twt_responder;
 	u32 flags;
-	काष्ठा ieee80211_he_obss_pd he_obss_pd;
-	काष्ठा cfg80211_he_bss_color he_bss_color;
-	काष्ठा cfg80211_fils_discovery fils_discovery;
-	काष्ठा cfg80211_unsol_bcast_probe_resp unsol_bcast_probe_resp;
-पूर्ण;
+	struct ieee80211_he_obss_pd he_obss_pd;
+	struct cfg80211_he_bss_color he_bss_color;
+	struct cfg80211_fils_discovery fils_discovery;
+	struct cfg80211_unsol_bcast_probe_resp unsol_bcast_probe_resp;
+};
 
 /**
- * काष्ठा cfg80211_csa_settings - channel चयन settings
+ * struct cfg80211_csa_settings - channel switch settings
  *
- * Used क्रम channel चयन
+ * Used for channel switch
  *
- * @chandef: defines the channel to use after the चयन
- * @beacon_csa: beacon data जबतक perक्रमming the चयन
+ * @chandef: defines the channel to use after the switch
+ * @beacon_csa: beacon data while performing the switch
  * @counter_offsets_beacon: offsets of the counters within the beacon (tail)
  * @counter_offsets_presp: offsets of the counters within the probe response
  * @n_counter_offsets_beacon: number of csa counters the beacon (tail)
  * @n_counter_offsets_presp: number of csa counters in the probe response
  * @beacon_after: beacon data to be used on the new channel
  * @radar_required: whether radar detection is required on the new channel
- * @block_tx: whether transmissions should be blocked जबतक changing
- * @count: number of beacons until चयन
+ * @block_tx: whether transmissions should be blocked while changing
+ * @count: number of beacons until switch
  */
-काष्ठा cfg80211_csa_settings अणु
-	काष्ठा cfg80211_chan_def chandef;
-	काष्ठा cfg80211_beacon_data beacon_csa;
-	स्थिर u16 *counter_offsets_beacon;
-	स्थिर u16 *counter_offsets_presp;
-	अचिन्हित पूर्णांक n_counter_offsets_beacon;
-	अचिन्हित पूर्णांक n_counter_offsets_presp;
-	काष्ठा cfg80211_beacon_data beacon_after;
+struct cfg80211_csa_settings {
+	struct cfg80211_chan_def chandef;
+	struct cfg80211_beacon_data beacon_csa;
+	const u16 *counter_offsets_beacon;
+	const u16 *counter_offsets_presp;
+	unsigned int n_counter_offsets_beacon;
+	unsigned int n_counter_offsets_presp;
+	struct cfg80211_beacon_data beacon_after;
 	bool radar_required;
 	bool block_tx;
 	u8 count;
-पूर्ण;
+};
 
-#घोषणा CFG80211_MAX_NUM_DIFFERENT_CHANNELS 10
+#define CFG80211_MAX_NUM_DIFFERENT_CHANNELS 10
 
 /**
- * काष्ठा अगरace_combination_params - input parameters क्रम पूर्णांकerface combinations
+ * struct iface_combination_params - input parameters for interface combinations
  *
- * Used to pass पूर्णांकerface combination parameters
+ * Used to pass interface combination parameters
  *
- * @num_dअगरferent_channels: the number of dअगरferent channels we want
- *	to use क्रम verअगरication
- * @radar_detect: a biपंचांगap where each bit corresponds to a channel
+ * @num_different_channels: the number of different channels we want
+ *	to use for verification
+ * @radar_detect: a bitmap where each bit corresponds to a channel
  *	width where radar detection is needed, as in the definition of
- *	&काष्ठा ieee80211_अगरace_combination.@radar_detect_widths
- * @अगरtype_num: array with the number of पूर्णांकerfaces of each पूर्णांकerface
- *	type.  The index is the पूर्णांकerface type as specअगरied in &क्रमागत
- *	nl80211_अगरtype.
- * @new_beacon_पूर्णांक: set this to the beacon पूर्णांकerval of a new पूर्णांकerface
- *	that's not operating yet, अगर such is to be checked as part of
- *	the verअगरication
+ *	&struct ieee80211_iface_combination.@radar_detect_widths
+ * @iftype_num: array with the number of interfaces of each interface
+ *	type.  The index is the interface type as specified in &enum
+ *	nl80211_iftype.
+ * @new_beacon_int: set this to the beacon interval of a new interface
+ *	that's not operating yet, if such is to be checked as part of
+ *	the verification
  */
-काष्ठा अगरace_combination_params अणु
-	पूर्णांक num_dअगरferent_channels;
+struct iface_combination_params {
+	int num_different_channels;
 	u8 radar_detect;
-	पूर्णांक अगरtype_num[NUM_NL80211_IFTYPES];
-	u32 new_beacon_पूर्णांक;
-पूर्ण;
+	int iftype_num[NUM_NL80211_IFTYPES];
+	u32 new_beacon_int;
+};
 
 /**
- * क्रमागत station_parameters_apply_mask - station parameter values to apply
+ * enum station_parameters_apply_mask - station parameter values to apply
  * @STATION_PARAM_APPLY_UAPSD: apply new uAPSD parameters (uapsd_queues, max_sp)
  * @STATION_PARAM_APPLY_CAPABILITY: apply new capability
  * @STATION_PARAM_APPLY_PLINK_STATE: apply new plink state
  *
- * Not all station parameters have in-band "no change" संकेतling,
- * क्रम those that करोn't these flags will are used.
+ * Not all station parameters have in-band "no change" signalling,
+ * for those that don't these flags will are used.
  */
-क्रमागत station_parameters_apply_mask अणु
+enum station_parameters_apply_mask {
 	STATION_PARAM_APPLY_UAPSD = BIT(0),
 	STATION_PARAM_APPLY_CAPABILITY = BIT(1),
 	STATION_PARAM_APPLY_PLINK_STATE = BIT(2),
 	STATION_PARAM_APPLY_STA_TXPOWER = BIT(3),
-पूर्ण;
+};
 
 /**
- * काष्ठा sta_txpwr - station txघातer configuration
+ * struct sta_txpwr - station txpower configuration
  *
- * Used to configure txघातer क्रम station.
+ * Used to configure txpower for station.
  *
- * @घातer: tx घातer (in dBm) to be used क्रम sending data traffic. If tx घातer
- *	is not provided, the शेष per-पूर्णांकerface tx घातer setting will be
- *	overriding. Driver should be picking up the lowest tx घातer, either tx
- *	घातer per-पूर्णांकerface or per-station.
- * @type: In particular अगर TPC %type is NL80211_TX_POWER_LIMITED then tx घातer
- *	will be less than or equal to specअगरied from userspace, whereas अगर TPC
- *	%type is NL80211_TX_POWER_AUTOMATIC then it indicates शेष tx घातer.
- *	NL80211_TX_POWER_FIXED is not a valid configuration option क्रम
+ * @power: tx power (in dBm) to be used for sending data traffic. If tx power
+ *	is not provided, the default per-interface tx power setting will be
+ *	overriding. Driver should be picking up the lowest tx power, either tx
+ *	power per-interface or per-station.
+ * @type: In particular if TPC %type is NL80211_TX_POWER_LIMITED then tx power
+ *	will be less than or equal to specified from userspace, whereas if TPC
+ *	%type is NL80211_TX_POWER_AUTOMATIC then it indicates default tx power.
+ *	NL80211_TX_POWER_FIXED is not a valid configuration option for
  *	per peer TPC.
  */
-काष्ठा sta_txpwr अणु
-	s16 घातer;
-	क्रमागत nl80211_tx_घातer_setting type;
-पूर्ण;
+struct sta_txpwr {
+	s16 power;
+	enum nl80211_tx_power_setting type;
+};
 
 /**
- * काष्ठा station_parameters - station parameters
+ * struct station_parameters - station parameters
  *
  * Used to change and create a new station.
  *
- * @vlan: vlan पूर्णांकerface station should beदीर्घ to
- * @supported_rates: supported rates in IEEE 802.11 क्रमmat
- *	(or शून्य क्रम no change)
+ * @vlan: vlan interface station should belong to
+ * @supported_rates: supported rates in IEEE 802.11 format
+ *	(or NULL for no change)
  * @supported_rates_len: number of supported rates
  * @sta_flags_mask: station flags that changed
- *	(biपंचांगask of BIT(%NL80211_STA_FLAG_...))
+ *	(bitmask of BIT(%NL80211_STA_FLAG_...))
  * @sta_flags_set: station flags values
- *	(biपंचांगask of BIT(%NL80211_STA_FLAG_...))
- * @listen_पूर्णांकerval: listen पूर्णांकerval or -1 क्रम no change
- * @aid: AID or zero क्रम no change
- * @vlan_id: VLAN ID क्रम station (अगर nonzero)
- * @peer_aid: mesh peer AID or zero क्रम no change
+ *	(bitmask of BIT(%NL80211_STA_FLAG_...))
+ * @listen_interval: listen interval or -1 for no change
+ * @aid: AID or zero for no change
+ * @vlan_id: VLAN ID for station (if nonzero)
+ * @peer_aid: mesh peer AID or zero for no change
  * @plink_action: plink action to take
- * @plink_state: set the peer link state क्रम a station
+ * @plink_state: set the peer link state for a station
  * @ht_capa: HT capabilities of station
  * @vht_capa: VHT capabilities of station
- * @uapsd_queues: biपंचांगap of queues configured क्रम uapsd. same क्रमmat
- *	as the AC biपंचांगap in the QoS info field
- * @max_sp: max Service Period. same क्रमmat as the MAX_SP in the
- *	QoS info field (but alपढ़ोy shअगरted करोwn)
- * @sta_modअगरy_mask: biपंचांगap indicating which parameters changed
- *	(क्रम those that करोn't have a natural "no change" value),
- *	see &क्रमागत station_parameters_apply_mask
- * @local_pm: local link-specअगरic mesh घातer save mode (no change when set
+ * @uapsd_queues: bitmap of queues configured for uapsd. same format
+ *	as the AC bitmap in the QoS info field
+ * @max_sp: max Service Period. same format as the MAX_SP in the
+ *	QoS info field (but already shifted down)
+ * @sta_modify_mask: bitmap indicating which parameters changed
+ *	(for those that don't have a natural "no change" value),
+ *	see &enum station_parameters_apply_mask
+ * @local_pm: local link-specific mesh power save mode (no change when set
  *	to unknown)
  * @capability: station capability
  * @ext_capab: extended capabilities of the station
  * @ext_capab_len: number of extended capabilities
- * @supported_channels: supported channels in IEEE 802.11 क्रमmat
+ * @supported_channels: supported channels in IEEE 802.11 format
  * @supported_channels_len: number of supported channels
- * @supported_oper_classes: supported oper classes in IEEE 802.11 क्रमmat
+ * @supported_oper_classes: supported oper classes in IEEE 802.11 format
  * @supported_oper_classes_len: number of supported operating classes
- * @opmode_notअगर: operating mode field from Operating Mode Notअगरication
- * @opmode_notअगर_used: inक्रमmation अगर operating mode field is used
- * @support_p2p_ps: inक्रमmation अगर station supports P2P PS mechanism
+ * @opmode_notif: operating mode field from Operating Mode Notification
+ * @opmode_notif_used: information if operating mode field is used
+ * @support_p2p_ps: information if station supports P2P PS mechanism
  * @he_capa: HE capabilities of station
  * @he_capa_len: the length of the HE capabilities
- * @airसमय_weight: airसमय scheduler weight क्रम this station
- * @txpwr: transmit घातer क्रम an associated station
+ * @airtime_weight: airtime scheduler weight for this station
+ * @txpwr: transmit power for an associated station
  * @he_6ghz_capa: HE 6 GHz Band capabilities of station
  */
-काष्ठा station_parameters अणु
-	स्थिर u8 *supported_rates;
-	काष्ठा net_device *vlan;
+struct station_parameters {
+	const u8 *supported_rates;
+	struct net_device *vlan;
 	u32 sta_flags_mask, sta_flags_set;
-	u32 sta_modअगरy_mask;
-	पूर्णांक listen_पूर्णांकerval;
+	u32 sta_modify_mask;
+	int listen_interval;
 	u16 aid;
 	u16 vlan_id;
 	u16 peer_aid;
 	u8 supported_rates_len;
 	u8 plink_action;
 	u8 plink_state;
-	स्थिर काष्ठा ieee80211_ht_cap *ht_capa;
-	स्थिर काष्ठा ieee80211_vht_cap *vht_capa;
+	const struct ieee80211_ht_cap *ht_capa;
+	const struct ieee80211_vht_cap *vht_capa;
 	u8 uapsd_queues;
 	u8 max_sp;
-	क्रमागत nl80211_mesh_घातer_mode local_pm;
+	enum nl80211_mesh_power_mode local_pm;
 	u16 capability;
-	स्थिर u8 *ext_capab;
+	const u8 *ext_capab;
 	u8 ext_capab_len;
-	स्थिर u8 *supported_channels;
+	const u8 *supported_channels;
 	u8 supported_channels_len;
-	स्थिर u8 *supported_oper_classes;
+	const u8 *supported_oper_classes;
 	u8 supported_oper_classes_len;
-	u8 opmode_notअगर;
-	bool opmode_notअगर_used;
-	पूर्णांक support_p2p_ps;
-	स्थिर काष्ठा ieee80211_he_cap_elem *he_capa;
+	u8 opmode_notif;
+	bool opmode_notif_used;
+	int support_p2p_ps;
+	const struct ieee80211_he_cap_elem *he_capa;
 	u8 he_capa_len;
-	u16 airसमय_weight;
-	काष्ठा sta_txpwr txpwr;
-	स्थिर काष्ठा ieee80211_he_6ghz_capa *he_6ghz_capa;
-पूर्ण;
+	u16 airtime_weight;
+	struct sta_txpwr txpwr;
+	const struct ieee80211_he_6ghz_capa *he_6ghz_capa;
+};
 
 /**
- * काष्ठा station_del_parameters - station deletion parameters
+ * struct station_del_parameters - station deletion parameters
  *
  * Used to delete a station entry (or all stations).
  *
- * @mac: MAC address of the station to हटाओ or शून्य to हटाओ all stations
- * @subtype: Management frame subtype to use क्रम indicating removal
+ * @mac: MAC address of the station to remove or NULL to remove all stations
+ * @subtype: Management frame subtype to use for indicating removal
  *	(10 = Disassociation, 12 = Deauthentication)
- * @reason_code: Reason code क्रम the Disassociation/Deauthentication frame
+ * @reason_code: Reason code for the Disassociation/Deauthentication frame
  */
-काष्ठा station_del_parameters अणु
-	स्थिर u8 *mac;
+struct station_del_parameters {
+	const u8 *mac;
 	u8 subtype;
 	u16 reason_code;
-पूर्ण;
+};
 
 /**
- * क्रमागत cfg80211_station_type - the type of station being modअगरied
- * @CFG80211_STA_AP_CLIENT: client of an AP पूर्णांकerface
- * @CFG80211_STA_AP_CLIENT_UNASSOC: client of an AP पूर्णांकerface that is still
- *	unassociated (update properties क्रम this type of client is permitted)
- * @CFG80211_STA_AP_MLME_CLIENT: client of an AP पूर्णांकerface that has
+ * enum cfg80211_station_type - the type of station being modified
+ * @CFG80211_STA_AP_CLIENT: client of an AP interface
+ * @CFG80211_STA_AP_CLIENT_UNASSOC: client of an AP interface that is still
+ *	unassociated (update properties for this type of client is permitted)
+ * @CFG80211_STA_AP_MLME_CLIENT: client of an AP interface that has
  *	the AP MLME in the device
- * @CFG80211_STA_AP_STA: AP station on managed पूर्णांकerface
+ * @CFG80211_STA_AP_STA: AP station on managed interface
  * @CFG80211_STA_IBSS: IBSS station
- * @CFG80211_STA_TDLS_PEER_SETUP: TDLS peer on managed पूर्णांकerface (dummy entry
- *	जबतक TDLS setup is in progress, it moves out of this state when
- *	being marked authorized; use this only अगर TDLS with बाह्यal setup is
+ * @CFG80211_STA_TDLS_PEER_SETUP: TDLS peer on managed interface (dummy entry
+ *	while TDLS setup is in progress, it moves out of this state when
+ *	being marked authorized; use this only if TDLS with external setup is
  *	supported/used)
- * @CFG80211_STA_TDLS_PEER_ACTIVE: TDLS peer on managed पूर्णांकerface (active
+ * @CFG80211_STA_TDLS_PEER_ACTIVE: TDLS peer on managed interface (active
  *	entry that is operating, has been marked authorized by userspace)
- * @CFG80211_STA_MESH_PEER_KERNEL: peer on mesh पूर्णांकerface (kernel managed)
- * @CFG80211_STA_MESH_PEER_USER: peer on mesh पूर्णांकerface (user managed)
+ * @CFG80211_STA_MESH_PEER_KERNEL: peer on mesh interface (kernel managed)
+ * @CFG80211_STA_MESH_PEER_USER: peer on mesh interface (user managed)
  */
-क्रमागत cfg80211_station_type अणु
+enum cfg80211_station_type {
 	CFG80211_STA_AP_CLIENT,
 	CFG80211_STA_AP_CLIENT_UNASSOC,
 	CFG80211_STA_AP_MLME_CLIENT,
@@ -1432,39 +1431,39 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
 	CFG80211_STA_TDLS_PEER_ACTIVE,
 	CFG80211_STA_MESH_PEER_KERNEL,
 	CFG80211_STA_MESH_PEER_USER,
-पूर्ण;
+};
 
 /**
  * cfg80211_check_station_change - validate parameter changes
  * @wiphy: the wiphy this operates on
- * @params: the new parameters क्रम a station
- * @statype: the type of station being modअगरied
+ * @params: the new parameters for a station
+ * @statype: the type of station being modified
  *
- * Utility function क्रम the @change_station driver method. Call this function
+ * Utility function for the @change_station driver method. Call this function
  * with the appropriate station type looking up the station (and checking that
- * it exists). It will verअगरy whether the station change is acceptable, and अगर
- * not will वापस an error code. Note that it may modअगरy the parameters क्रम
- * backward compatibility reasons, so करोn't use them beक्रमe calling this.
+ * it exists). It will verify whether the station change is acceptable, and if
+ * not will return an error code. Note that it may modify the parameters for
+ * backward compatibility reasons, so don't use them before calling this.
  */
-पूर्णांक cfg80211_check_station_change(काष्ठा wiphy *wiphy,
-				  काष्ठा station_parameters *params,
-				  क्रमागत cfg80211_station_type statype);
+int cfg80211_check_station_change(struct wiphy *wiphy,
+				  struct station_parameters *params,
+				  enum cfg80211_station_type statype);
 
 /**
- * क्रमागत rate_info_flags - bitrate info flags
+ * enum rate_info_flags - bitrate info flags
  *
- * Used by the driver to indicate the specअगरic rate transmission
- * type क्रम 802.11n transmissions.
+ * Used by the driver to indicate the specific rate transmission
+ * type for 802.11n transmissions.
  *
  * @RATE_INFO_FLAGS_MCS: mcs field filled with HT MCS
  * @RATE_INFO_FLAGS_VHT_MCS: mcs field filled with VHT MCS
- * @RATE_INFO_FLAGS_SHORT_GI: 400ns guard पूर्णांकerval
+ * @RATE_INFO_FLAGS_SHORT_GI: 400ns guard interval
  * @RATE_INFO_FLAGS_DMG: 60GHz MCS
- * @RATE_INFO_FLAGS_HE_MCS: HE MCS inक्रमmation
+ * @RATE_INFO_FLAGS_HE_MCS: HE MCS information
  * @RATE_INFO_FLAGS_EDMG: 60GHz MCS in EDMG mode
  * @RATE_INFO_FLAGS_EXTENDED_SC_DMG: 60GHz extended SC MCS
  */
-क्रमागत rate_info_flags अणु
+enum rate_info_flags {
 	RATE_INFO_FLAGS_MCS			= BIT(0),
 	RATE_INFO_FLAGS_VHT_MCS			= BIT(1),
 	RATE_INFO_FLAGS_SHORT_GI		= BIT(2),
@@ -1472,10 +1471,10 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
 	RATE_INFO_FLAGS_HE_MCS			= BIT(4),
 	RATE_INFO_FLAGS_EDMG			= BIT(5),
 	RATE_INFO_FLAGS_EXTENDED_SC_DMG		= BIT(6),
-पूर्ण;
+};
 
 /**
- * क्रमागत rate_info_bw - rate bandwidth inक्रमmation
+ * enum rate_info_bw - rate bandwidth information
  *
  * Used by the driver to indicate the rate bandwidth.
  *
@@ -1487,7 +1486,7 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
  * @RATE_INFO_BW_160: 160 MHz bandwidth
  * @RATE_INFO_BW_HE_RU: bandwidth determined by HE RU allocation
  */
-क्रमागत rate_info_bw अणु
+enum rate_info_bw {
 	RATE_INFO_BW_20 = 0,
 	RATE_INFO_BW_5,
 	RATE_INFO_BW_10,
@@ -1495,25 +1494,25 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
 	RATE_INFO_BW_80,
 	RATE_INFO_BW_160,
 	RATE_INFO_BW_HE_RU,
-पूर्ण;
+};
 
 /**
- * काष्ठा rate_info - bitrate inक्रमmation
+ * struct rate_info - bitrate information
  *
- * Inक्रमmation about a receiving or transmitting bitrate
+ * Information about a receiving or transmitting bitrate
  *
- * @flags: bitflag of flags from &क्रमागत rate_info_flags
- * @mcs: mcs index अगर काष्ठा describes an HT/VHT/HE rate
- * @legacy: bitrate in 100kbit/s क्रम 802.11abg
+ * @flags: bitflag of flags from &enum rate_info_flags
+ * @mcs: mcs index if struct describes an HT/VHT/HE rate
+ * @legacy: bitrate in 100kbit/s for 802.11abg
  * @nss: number of streams (VHT & HE only)
- * @bw: bandwidth (from &क्रमागत rate_info_bw)
- * @he_gi: HE guard पूर्णांकerval (from &क्रमागत nl80211_he_gi)
+ * @bw: bandwidth (from &enum rate_info_bw)
+ * @he_gi: HE guard interval (from &enum nl80211_he_gi)
  * @he_dcm: HE DCM value
- * @he_ru_alloc: HE RU allocation (from &क्रमागत nl80211_he_ru_alloc,
- *	only valid अगर bw is %RATE_INFO_BW_HE_RU)
- * @n_bonded_ch: In हाल of EDMG the number of bonded channels (1-4)
+ * @he_ru_alloc: HE RU allocation (from &enum nl80211_he_ru_alloc,
+ *	only valid if bw is %RATE_INFO_BW_HE_RU)
+ * @n_bonded_ch: In case of EDMG the number of bonded channels (1-4)
  */
-काष्ठा rate_info अणु
+struct rate_info {
 	u8 flags;
 	u8 mcs;
 	u16 legacy;
@@ -1523,43 +1522,43 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
 	u8 he_dcm;
 	u8 he_ru_alloc;
 	u8 n_bonded_ch;
-पूर्ण;
+};
 
 /**
- * क्रमागत bss_param_flags - bitrate info flags
+ * enum bss_param_flags - bitrate info flags
  *
- * Used by the driver to indicate the specअगरic rate transmission
- * type क्रम 802.11n transmissions.
+ * Used by the driver to indicate the specific rate transmission
+ * type for 802.11n transmissions.
  *
  * @BSS_PARAM_FLAGS_CTS_PROT: whether CTS protection is enabled
- * @BSS_PARAM_FLAGS_SHORT_PREAMBLE: whether लघु preamble is enabled
- * @BSS_PARAM_FLAGS_SHORT_SLOT_TIME: whether लघु slot समय is enabled
+ * @BSS_PARAM_FLAGS_SHORT_PREAMBLE: whether short preamble is enabled
+ * @BSS_PARAM_FLAGS_SHORT_SLOT_TIME: whether short slot time is enabled
  */
-क्रमागत bss_param_flags अणु
+enum bss_param_flags {
 	BSS_PARAM_FLAGS_CTS_PROT	= 1<<0,
 	BSS_PARAM_FLAGS_SHORT_PREAMBLE	= 1<<1,
 	BSS_PARAM_FLAGS_SHORT_SLOT_TIME	= 1<<2,
-पूर्ण;
+};
 
 /**
- * काष्ठा sta_bss_parameters - BSS parameters क्रम the attached station
+ * struct sta_bss_parameters - BSS parameters for the attached station
  *
- * Inक्रमmation about the currently associated BSS
+ * Information about the currently associated BSS
  *
- * @flags: bitflag of flags from &क्रमागत bss_param_flags
- * @dtim_period: DTIM period क्रम the BSS
- * @beacon_पूर्णांकerval: beacon पूर्णांकerval
+ * @flags: bitflag of flags from &enum bss_param_flags
+ * @dtim_period: DTIM period for the BSS
+ * @beacon_interval: beacon interval
  */
-काष्ठा sta_bss_parameters अणु
+struct sta_bss_parameters {
 	u8 flags;
 	u8 dtim_period;
-	u16 beacon_पूर्णांकerval;
-पूर्ण;
+	u16 beacon_interval;
+};
 
 /**
- * काष्ठा cfg80211_txq_stats - TXQ statistics क्रम this TID
- * @filled: biपंचांगap of flags using the bits of &क्रमागत nl80211_txq_stats to
- *	indicate the relevant values in this काष्ठा are filled
+ * struct cfg80211_txq_stats - TXQ statistics for this TID
+ * @filled: bitmap of flags using the bits of &enum nl80211_txq_stats to
+ *	indicate the relevant values in this struct are filled
  * @backlog_bytes: total number of bytes currently backlogged
  * @backlog_packets: total number of packets currently backlogged
  * @flows: number of new flows seen
@@ -1572,7 +1571,7 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
  * @tx_packets: total number of packets dequeued
  * @max_flows: maximum number of flows supported
  */
-काष्ठा cfg80211_txq_stats अणु
+struct cfg80211_txq_stats {
 	u32 filled;
 	u32 backlog_bytes;
 	u32 backlog_packets;
@@ -1585,234 +1584,234 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
 	u32 tx_bytes;
 	u32 tx_packets;
 	u32 max_flows;
-पूर्ण;
+};
 
 /**
- * काष्ठा cfg80211_tid_stats - per-TID statistics
- * @filled: biपंचांगap of flags using the bits of &क्रमागत nl80211_tid_stats to
- *	indicate the relevant values in this काष्ठा are filled
+ * struct cfg80211_tid_stats - per-TID statistics
+ * @filled: bitmap of flags using the bits of &enum nl80211_tid_stats to
+ *	indicate the relevant values in this struct are filled
  * @rx_msdu: number of received MSDUs
  * @tx_msdu: number of (attempted) transmitted MSDUs
- * @tx_msdu_retries: number of retries (not counting the first) क्रम
+ * @tx_msdu_retries: number of retries (not counting the first) for
  *	transmitted MSDUs
  * @tx_msdu_failed: number of failed transmitted MSDUs
  * @txq_stats: TXQ statistics
  */
-काष्ठा cfg80211_tid_stats अणु
+struct cfg80211_tid_stats {
 	u32 filled;
 	u64 rx_msdu;
 	u64 tx_msdu;
 	u64 tx_msdu_retries;
 	u64 tx_msdu_failed;
-	काष्ठा cfg80211_txq_stats txq_stats;
-पूर्ण;
+	struct cfg80211_txq_stats txq_stats;
+};
 
-#घोषणा IEEE80211_MAX_CHAINS	4
+#define IEEE80211_MAX_CHAINS	4
 
 /**
- * काष्ठा station_info - station inक्रमmation
+ * struct station_info - station information
  *
- * Station inक्रमmation filled by driver क्रम get_station() and dump_station.
+ * Station information filled by driver for get_station() and dump_station.
  *
- * @filled: bitflag of flags using the bits of &क्रमागत nl80211_sta_info to
- *	indicate the relevant values in this काष्ठा क्रम them
- * @connected_समय: समय(in secs) since a station is last connected
- * @inactive_समय: समय since last station activity (tx/rx) in milliseconds
- * @assoc_at: booसमय (ns) of the last association
+ * @filled: bitflag of flags using the bits of &enum nl80211_sta_info to
+ *	indicate the relevant values in this struct for them
+ * @connected_time: time(in secs) since a station is last connected
+ * @inactive_time: time since last station activity (tx/rx) in milliseconds
+ * @assoc_at: bootime (ns) of the last association
  * @rx_bytes: bytes (size of MPDUs) received from this station
  * @tx_bytes: bytes (size of MPDUs) transmitted to this station
  * @llid: mesh local link id
  * @plid: mesh peer link id
  * @plink_state: mesh peer link state
- * @संकेत: The संकेत strength, type depends on the wiphy's संकेत_type.
+ * @signal: The signal strength, type depends on the wiphy's signal_type.
  *	For CFG80211_SIGNAL_TYPE_MBM, value is expressed in _dBm_.
- * @संकेत_avg: Average संकेत strength, type depends on the wiphy's संकेत_type.
+ * @signal_avg: Average signal strength, type depends on the wiphy's signal_type.
  *	For CFG80211_SIGNAL_TYPE_MBM, value is expressed in _dBm_.
- * @chains: biपंचांगask क्रम filled values in @chain_संकेत, @chain_संकेत_avg
- * @chain_संकेत: per-chain संकेत strength of last received packet in dBm
- * @chain_संकेत_avg: per-chain संकेत strength average in dBm
+ * @chains: bitmask for filled values in @chain_signal, @chain_signal_avg
+ * @chain_signal: per-chain signal strength of last received packet in dBm
+ * @chain_signal_avg: per-chain signal strength average in dBm
  * @txrate: current unicast bitrate from this station
  * @rxrate: current unicast bitrate to this station
  * @rx_packets: packets (MSDUs & MMPDUs) received from this station
  * @tx_packets: packets (MSDUs & MMPDUs) transmitted to this station
  * @tx_retries: cumulative retry counts (MPDUs)
  * @tx_failed: number of failed transmissions (MPDUs) (retries exceeded, no ACK)
- * @rx_dropped_misc:  Dropped क्रम un-specअगरied reason.
+ * @rx_dropped_misc:  Dropped for un-specified reason.
  * @bss_param: current BSS parameters
- * @generation: generation number क्रम nl80211 dumps.
- *	This number should increase every समय the list of stations
- *	changes, i.e. when a station is added or हटाओd, so that
+ * @generation: generation number for nl80211 dumps.
+ *	This number should increase every time the list of stations
+ *	changes, i.e. when a station is added or removed, so that
  *	userspace can tell whether it got a consistent snapshot.
  * @assoc_req_ies: IEs from (Re)Association Request.
- *	This is used only when in AP mode with drivers that करो not use
- *	user space MLME/SME implementation. The inक्रमmation is provided क्रम
- *	the cfg80211_new_sta() calls to notअगरy user space of the IEs.
+ *	This is used only when in AP mode with drivers that do not use
+ *	user space MLME/SME implementation. The information is provided for
+ *	the cfg80211_new_sta() calls to notify user space of the IEs.
  * @assoc_req_ies_len: Length of assoc_req_ies buffer in octets.
  * @sta_flags: station flags mask & values
- * @beacon_loss_count: Number of बार beacon loss event has triggered.
+ * @beacon_loss_count: Number of times beacon loss event has triggered.
  * @t_offset: Time offset of the station relative to this host.
- * @local_pm: local mesh STA घातer save mode
- * @peer_pm: peer mesh STA घातer save mode
- * @nonpeer_pm: non-peer mesh STA घातer save mode
+ * @local_pm: local mesh STA power save mode
+ * @peer_pm: peer mesh STA power save mode
+ * @nonpeer_pm: non-peer mesh STA power save mode
  * @expected_throughput: expected throughput in kbps (including 802.11 headers)
  *	towards this station.
  * @rx_beacon: number of beacons received from this peer
- * @rx_beacon_संकेत_avg: संकेत strength average (in dBm) क्रम beacons received
+ * @rx_beacon_signal_avg: signal strength average (in dBm) for beacons received
  *	from this peer
- * @connected_to_gate: true अगर mesh STA has a path to mesh gate
- * @rx_duration: aggregate PPDU duration(usecs) क्रम all the frames from a peer
- * @tx_duration: aggregate PPDU duration(usecs) क्रम all the frames to a peer
- * @airसमय_weight: current airसमय scheduling weight
- * @pertid: per-TID statistics, see &काष्ठा cfg80211_tid_stats, using the last
- *	(IEEE80211_NUM_TIDS) index क्रम MSDUs not encapsulated in QoS-MPDUs.
- *	Note that this करोesn't use the @filled bit, but is used अगर non-शून्य.
- * @ack_संकेत: संकेत strength (in dBm) of the last ACK frame.
- * @avg_ack_संकेत: average rssi value of ack packet क्रम the no of msdu's has
+ * @connected_to_gate: true if mesh STA has a path to mesh gate
+ * @rx_duration: aggregate PPDU duration(usecs) for all the frames from a peer
+ * @tx_duration: aggregate PPDU duration(usecs) for all the frames to a peer
+ * @airtime_weight: current airtime scheduling weight
+ * @pertid: per-TID statistics, see &struct cfg80211_tid_stats, using the last
+ *	(IEEE80211_NUM_TIDS) index for MSDUs not encapsulated in QoS-MPDUs.
+ *	Note that this doesn't use the @filled bit, but is used if non-NULL.
+ * @ack_signal: signal strength (in dBm) of the last ACK frame.
+ * @avg_ack_signal: average rssi value of ack packet for the no of msdu's has
  *	been sent.
  * @rx_mpdu_count: number of MPDUs received from this station
  * @fcs_err_count: number of packets (MPDUs) received from this station with
  *	an FCS error. This counter should be incremented only when TA of the
  *	received packet with an FCS error matches the peer MAC address.
- * @airसमय_link_metric: mesh airसमय link metric.
- * @connected_to_as: true अगर mesh STA has a path to authentication server
+ * @airtime_link_metric: mesh airtime link metric.
+ * @connected_to_as: true if mesh STA has a path to authentication server
  */
-काष्ठा station_info अणु
+struct station_info {
 	u64 filled;
-	u32 connected_समय;
-	u32 inactive_समय;
+	u32 connected_time;
+	u32 inactive_time;
 	u64 assoc_at;
 	u64 rx_bytes;
 	u64 tx_bytes;
 	u16 llid;
 	u16 plid;
 	u8 plink_state;
-	s8 संकेत;
-	s8 संकेत_avg;
+	s8 signal;
+	s8 signal_avg;
 
 	u8 chains;
-	s8 chain_संकेत[IEEE80211_MAX_CHAINS];
-	s8 chain_संकेत_avg[IEEE80211_MAX_CHAINS];
+	s8 chain_signal[IEEE80211_MAX_CHAINS];
+	s8 chain_signal_avg[IEEE80211_MAX_CHAINS];
 
-	काष्ठा rate_info txrate;
-	काष्ठा rate_info rxrate;
+	struct rate_info txrate;
+	struct rate_info rxrate;
 	u32 rx_packets;
 	u32 tx_packets;
 	u32 tx_retries;
 	u32 tx_failed;
 	u32 rx_dropped_misc;
-	काष्ठा sta_bss_parameters bss_param;
-	काष्ठा nl80211_sta_flag_update sta_flags;
+	struct sta_bss_parameters bss_param;
+	struct nl80211_sta_flag_update sta_flags;
 
-	पूर्णांक generation;
+	int generation;
 
-	स्थिर u8 *assoc_req_ies;
-	माप_प्रकार assoc_req_ies_len;
+	const u8 *assoc_req_ies;
+	size_t assoc_req_ies_len;
 
 	u32 beacon_loss_count;
 	s64 t_offset;
-	क्रमागत nl80211_mesh_घातer_mode local_pm;
-	क्रमागत nl80211_mesh_घातer_mode peer_pm;
-	क्रमागत nl80211_mesh_घातer_mode nonpeer_pm;
+	enum nl80211_mesh_power_mode local_pm;
+	enum nl80211_mesh_power_mode peer_pm;
+	enum nl80211_mesh_power_mode nonpeer_pm;
 
 	u32 expected_throughput;
 
 	u64 tx_duration;
 	u64 rx_duration;
 	u64 rx_beacon;
-	u8 rx_beacon_संकेत_avg;
+	u8 rx_beacon_signal_avg;
 	u8 connected_to_gate;
 
-	काष्ठा cfg80211_tid_stats *pertid;
-	s8 ack_संकेत;
-	s8 avg_ack_संकेत;
+	struct cfg80211_tid_stats *pertid;
+	s8 ack_signal;
+	s8 avg_ack_signal;
 
-	u16 airसमय_weight;
+	u16 airtime_weight;
 
 	u32 rx_mpdu_count;
 	u32 fcs_err_count;
 
-	u32 airसमय_link_metric;
+	u32 airtime_link_metric;
 
 	u8 connected_to_as;
-पूर्ण;
+};
 
 /**
- * काष्ठा cfg80211_sar_sub_specs - sub specs limit
- * @घातer: घातer limitation in 0.25dbm
- * @freq_range_index: index the घातer limitation applies to
+ * struct cfg80211_sar_sub_specs - sub specs limit
+ * @power: power limitation in 0.25dbm
+ * @freq_range_index: index the power limitation applies to
  */
-काष्ठा cfg80211_sar_sub_specs अणु
-	s32 घातer;
+struct cfg80211_sar_sub_specs {
+	s32 power;
 	u32 freq_range_index;
-पूर्ण;
+};
 
 /**
- * काष्ठा cfg80211_sar_specs - sar limit specs
- * @type: it's set with घातer in 0.25dbm or other types
+ * struct cfg80211_sar_specs - sar limit specs
+ * @type: it's set with power in 0.25dbm or other types
  * @num_sub_specs: number of sar sub specs
  * @sub_specs: memory to hold the sar sub specs
  */
-काष्ठा cfg80211_sar_specs अणु
-	क्रमागत nl80211_sar_type type;
+struct cfg80211_sar_specs {
+	enum nl80211_sar_type type;
 	u32 num_sub_specs;
-	काष्ठा cfg80211_sar_sub_specs sub_specs[];
-पूर्ण;
+	struct cfg80211_sar_sub_specs sub_specs[];
+};
 
 
 /**
- * काष्ठा cfg80211_sar_freq_ranges - sar frequency ranges
+ * struct cfg80211_sar_freq_ranges - sar frequency ranges
  * @start_freq:  start range edge frequency
  * @end_freq:    end range edge frequency
  */
-काष्ठा cfg80211_sar_freq_ranges अणु
+struct cfg80211_sar_freq_ranges {
 	u32 start_freq;
 	u32 end_freq;
-पूर्ण;
+};
 
 /**
- * काष्ठा cfg80211_sar_capa - sar limit capability
- * @type: it's set via घातer in 0.25dbm or other types
+ * struct cfg80211_sar_capa - sar limit capability
+ * @type: it's set via power in 0.25dbm or other types
  * @num_freq_ranges: number of frequency ranges
  * @freq_ranges: memory to hold the freq ranges.
  *
  * Note: WLAN driver may append new ranges or split an existing
  * range to small ones and then append them.
  */
-काष्ठा cfg80211_sar_capa अणु
-	क्रमागत nl80211_sar_type type;
+struct cfg80211_sar_capa {
+	enum nl80211_sar_type type;
 	u32 num_freq_ranges;
-	स्थिर काष्ठा cfg80211_sar_freq_ranges *freq_ranges;
-पूर्ण;
+	const struct cfg80211_sar_freq_ranges *freq_ranges;
+};
 
-#अगर IS_ENABLED(CONFIG_CFG80211)
+#if IS_ENABLED(CONFIG_CFG80211)
 /**
- * cfg80211_get_station - retrieve inक्रमmation about a given station
+ * cfg80211_get_station - retrieve information about a given station
  * @dev: the device where the station is supposed to be connected to
- * @mac_addr: the mac address of the station of पूर्णांकerest
- * @sinfo: poपूर्णांकer to the काष्ठाure to fill with the inक्रमmation
+ * @mac_addr: the mac address of the station of interest
+ * @sinfo: pointer to the structure to fill with the information
  *
- * Returns 0 on success and sinfo is filled with the available inक्रमmation
- * otherwise वापसs a negative error code and the content of sinfo has to be
+ * Returns 0 on success and sinfo is filled with the available information
+ * otherwise returns a negative error code and the content of sinfo has to be
  * considered undefined.
  */
-पूर्णांक cfg80211_get_station(काष्ठा net_device *dev, स्थिर u8 *mac_addr,
-			 काष्ठा station_info *sinfo);
-#अन्यथा
-अटल अंतरभूत पूर्णांक cfg80211_get_station(काष्ठा net_device *dev,
-				       स्थिर u8 *mac_addr,
-				       काष्ठा station_info *sinfo)
-अणु
-	वापस -ENOENT;
-पूर्ण
-#पूर्ण_अगर
+int cfg80211_get_station(struct net_device *dev, const u8 *mac_addr,
+			 struct station_info *sinfo);
+#else
+static inline int cfg80211_get_station(struct net_device *dev,
+				       const u8 *mac_addr,
+				       struct station_info *sinfo)
+{
+	return -ENOENT;
+}
+#endif
 
 /**
- * क्रमागत monitor_flags - monitor flags
+ * enum monitor_flags - monitor flags
  *
- * Monitor पूर्णांकerface configuration flags. Note that these must be the bits
+ * Monitor interface configuration flags. Note that these must be the bits
  * according to the nl80211 flags.
  *
- * @MONITOR_FLAG_CHANGED: set अगर the flags were changed
+ * @MONITOR_FLAG_CHANGED: set if the flags were changed
  * @MONITOR_FLAG_FCSFAIL: pass frames with bad FCS
  * @MONITOR_FLAG_PLCPFAIL: pass frames with bad PLCP
  * @MONITOR_FLAG_CONTROL: pass control frames
@@ -1820,7 +1819,7 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
  * @MONITOR_FLAG_COOK_FRAMES: report frames after processing
  * @MONITOR_FLAG_ACTIVE: active monitor, ACKs frames on its MAC address
  */
-क्रमागत monitor_flags अणु
+enum monitor_flags {
 	MONITOR_FLAG_CHANGED		= 1<<__NL80211_MNTR_FLAG_INVALID,
 	MONITOR_FLAG_FCSFAIL		= 1<<NL80211_MNTR_FLAG_FCSFAIL,
 	MONITOR_FLAG_PLCPFAIL		= 1<<NL80211_MNTR_FLAG_PLCPFAIL,
@@ -1828,25 +1827,25 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
 	MONITOR_FLAG_OTHER_BSS		= 1<<NL80211_MNTR_FLAG_OTHER_BSS,
 	MONITOR_FLAG_COOK_FRAMES	= 1<<NL80211_MNTR_FLAG_COOK_FRAMES,
 	MONITOR_FLAG_ACTIVE		= 1<<NL80211_MNTR_FLAG_ACTIVE,
-पूर्ण;
+};
 
 /**
- * क्रमागत mpath_info_flags -  mesh path inक्रमmation flags
+ * enum mpath_info_flags -  mesh path information flags
  *
- * Used by the driver to indicate which info in &काष्ठा mpath_info it has filled
+ * Used by the driver to indicate which info in &struct mpath_info it has filled
  * in during get_station() or dump_station().
  *
  * @MPATH_INFO_FRAME_QLEN: @frame_qlen filled
  * @MPATH_INFO_SN: @sn filled
  * @MPATH_INFO_METRIC: @metric filled
- * @MPATH_INFO_EXPTIME: @expसमय filled
- * @MPATH_INFO_DISCOVERY_TIMEOUT: @discovery_समयout filled
+ * @MPATH_INFO_EXPTIME: @exptime filled
+ * @MPATH_INFO_DISCOVERY_TIMEOUT: @discovery_timeout filled
  * @MPATH_INFO_DISCOVERY_RETRIES: @discovery_retries filled
  * @MPATH_INFO_FLAGS: @flags filled
  * @MPATH_INFO_HOP_COUNT: @hop_count filled
  * @MPATH_INFO_PATH_CHANGE: @path_change_count filled
  */
-क्रमागत mpath_info_flags अणु
+enum mpath_info_flags {
 	MPATH_INFO_FRAME_QLEN		= BIT(0),
 	MPATH_INFO_SN			= BIT(1),
 	MPATH_INFO_METRIC		= BIT(2),
@@ -1856,190 +1855,190 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
 	MPATH_INFO_FLAGS		= BIT(6),
 	MPATH_INFO_HOP_COUNT		= BIT(7),
 	MPATH_INFO_PATH_CHANGE		= BIT(8),
-पूर्ण;
+};
 
 /**
- * काष्ठा mpath_info - mesh path inक्रमmation
+ * struct mpath_info - mesh path information
  *
- * Mesh path inक्रमmation filled by driver क्रम get_mpath() and dump_mpath().
+ * Mesh path information filled by driver for get_mpath() and dump_mpath().
  *
- * @filled: bitfield of flags from &क्रमागत mpath_info_flags
- * @frame_qlen: number of queued frames क्रम this destination
+ * @filled: bitfield of flags from &enum mpath_info_flags
+ * @frame_qlen: number of queued frames for this destination
  * @sn: target sequence number
  * @metric: metric (cost) of this mesh path
- * @expसमय: expiration समय क्रम the mesh path from now, in msecs
+ * @exptime: expiration time for the mesh path from now, in msecs
  * @flags: mesh path flags
- * @discovery_समयout: total mesh path discovery समयout, in msecs
+ * @discovery_timeout: total mesh path discovery timeout, in msecs
  * @discovery_retries: mesh path discovery retries
- * @generation: generation number क्रम nl80211 dumps.
- *	This number should increase every समय the list of mesh paths
- *	changes, i.e. when a station is added or हटाओd, so that
+ * @generation: generation number for nl80211 dumps.
+ *	This number should increase every time the list of mesh paths
+ *	changes, i.e. when a station is added or removed, so that
  *	userspace can tell whether it got a consistent snapshot.
  * @hop_count: hops to destination
  * @path_change_count: total number of path changes to destination
  */
-काष्ठा mpath_info अणु
+struct mpath_info {
 	u32 filled;
 	u32 frame_qlen;
 	u32 sn;
 	u32 metric;
-	u32 expसमय;
-	u32 discovery_समयout;
+	u32 exptime;
+	u32 discovery_timeout;
 	u8 discovery_retries;
 	u8 flags;
 	u8 hop_count;
 	u32 path_change_count;
 
-	पूर्णांक generation;
-पूर्ण;
+	int generation;
+};
 
 /**
- * काष्ठा bss_parameters - BSS parameters
+ * struct bss_parameters - BSS parameters
  *
- * Used to change BSS parameters (मुख्यly क्रम AP mode).
+ * Used to change BSS parameters (mainly for AP mode).
  *
  * @use_cts_prot: Whether to use CTS protection
- *	(0 = no, 1 = yes, -1 = करो not change)
- * @use_लघु_preamble: Whether the use of लघु preambles is allowed
- *	(0 = no, 1 = yes, -1 = करो not change)
- * @use_लघु_slot_समय: Whether the use of लघु slot समय is allowed
- *	(0 = no, 1 = yes, -1 = करो not change)
- * @basic_rates: basic rates in IEEE 802.11 क्रमmat
- *	(or शून्य क्रम no change)
+ *	(0 = no, 1 = yes, -1 = do not change)
+ * @use_short_preamble: Whether the use of short preambles is allowed
+ *	(0 = no, 1 = yes, -1 = do not change)
+ * @use_short_slot_time: Whether the use of short slot time is allowed
+ *	(0 = no, 1 = yes, -1 = do not change)
+ * @basic_rates: basic rates in IEEE 802.11 format
+ *	(or NULL for no change)
  * @basic_rates_len: number of basic rates
- * @ap_isolate: करो not क्रमward packets between connected stations
- *	(0 = no, 1 = yes, -1 = करो not change)
+ * @ap_isolate: do not forward packets between connected stations
+ *	(0 = no, 1 = yes, -1 = do not change)
  * @ht_opmode: HT Operation mode
- *	(u16 = opmode, -1 = करो not change)
- * @p2p_ctwinकरोw: P2P CT Winकरोw (-1 = no change)
+ *	(u16 = opmode, -1 = do not change)
+ * @p2p_ctwindow: P2P CT Window (-1 = no change)
  * @p2p_opp_ps: P2P opportunistic PS (-1 = no change)
  */
-काष्ठा bss_parameters अणु
-	पूर्णांक use_cts_prot;
-	पूर्णांक use_लघु_preamble;
-	पूर्णांक use_लघु_slot_समय;
-	स्थिर u8 *basic_rates;
+struct bss_parameters {
+	int use_cts_prot;
+	int use_short_preamble;
+	int use_short_slot_time;
+	const u8 *basic_rates;
 	u8 basic_rates_len;
-	पूर्णांक ap_isolate;
-	पूर्णांक ht_opmode;
-	s8 p2p_ctwinकरोw, p2p_opp_ps;
-पूर्ण;
+	int ap_isolate;
+	int ht_opmode;
+	s8 p2p_ctwindow, p2p_opp_ps;
+};
 
 /**
- * काष्ठा mesh_config - 802.11s mesh configuration
+ * struct mesh_config - 802.11s mesh configuration
  *
- * These parameters can be changed जबतक the mesh is active.
+ * These parameters can be changed while the mesh is active.
  *
- * @करोt11MeshRetryTimeout: the initial retry समयout in millisecond units used
+ * @dot11MeshRetryTimeout: the initial retry timeout in millisecond units used
  *	by the Mesh Peering Open message
- * @करोt11MeshConfirmTimeout: the initial retry समयout in millisecond units
+ * @dot11MeshConfirmTimeout: the initial retry timeout in millisecond units
  *	used by the Mesh Peering Open message
- * @करोt11MeshHoldingTimeout: the confirm समयout in millisecond units used by
- *	the mesh peering management to बंद a mesh peering
- * @करोt11MeshMaxPeerLinks: the maximum number of peer links allowed on this
- *	mesh पूर्णांकerface
- * @करोt11MeshMaxRetries: the maximum number of peer link खोलो retries that can
+ * @dot11MeshHoldingTimeout: the confirm timeout in millisecond units used by
+ *	the mesh peering management to close a mesh peering
+ * @dot11MeshMaxPeerLinks: the maximum number of peer links allowed on this
+ *	mesh interface
+ * @dot11MeshMaxRetries: the maximum number of peer link open retries that can
  *	be sent to establish a new peer link instance in a mesh
- * @करोt11MeshTTL: the value of TTL field set at a source mesh STA
- * @element_ttl: the value of TTL field set at a mesh STA क्रम path selection
+ * @dot11MeshTTL: the value of TTL field set at a source mesh STA
+ * @element_ttl: the value of TTL field set at a mesh STA for path selection
  *	elements
- * @स्वतः_खोलो_plinks: whether we should स्वतःmatically खोलो peer links when we
+ * @auto_open_plinks: whether we should automatically open peer links when we
  *	detect compatible mesh peers
- * @करोt11MeshNbrOffsetMaxNeighbor: the maximum number of neighbors to
- *	synchronize to क्रम 11s शेष synchronization method
- * @करोt11MeshHWMPmaxPREQretries: the number of action frames containing a PREQ
+ * @dot11MeshNbrOffsetMaxNeighbor: the maximum number of neighbors to
+ *	synchronize to for 11s default synchronization method
+ * @dot11MeshHWMPmaxPREQretries: the number of action frames containing a PREQ
  *	that an originator mesh STA can send to a particular path target
- * @path_refresh_समय: how frequently to refresh mesh paths in milliseconds
- * @min_discovery_समयout: the minimum length of समय to रुको until giving up on
+ * @path_refresh_time: how frequently to refresh mesh paths in milliseconds
+ * @min_discovery_timeout: the minimum length of time to wait until giving up on
  *	a path discovery in milliseconds
- * @करोt11MeshHWMPactivePathTimeout: the समय (in TUs) क्रम which mesh STAs
- *	receiving a PREQ shall consider the क्रमwarding inक्रमmation from the
- *	root to be valid. (TU = समय unit)
- * @करोt11MeshHWMPpreqMinInterval: the minimum पूर्णांकerval of समय (in TUs) during
+ * @dot11MeshHWMPactivePathTimeout: the time (in TUs) for which mesh STAs
+ *	receiving a PREQ shall consider the forwarding information from the
+ *	root to be valid. (TU = time unit)
+ * @dot11MeshHWMPpreqMinInterval: the minimum interval of time (in TUs) during
  *	which a mesh STA can send only one action frame containing a PREQ
  *	element
- * @करोt11MeshHWMPperrMinInterval: the minimum पूर्णांकerval of समय (in TUs) during
+ * @dot11MeshHWMPperrMinInterval: the minimum interval of time (in TUs) during
  *	which a mesh STA can send only one Action frame containing a PERR
  *	element
- * @करोt11MeshHWMPnetDiameterTraversalTime: the पूर्णांकerval of समय (in TUs) that
- *	it takes क्रम an HWMP inक्रमmation element to propagate across the mesh
- * @करोt11MeshHWMPRootMode: the configuration of a mesh STA as root mesh STA
- * @करोt11MeshHWMPRannInterval: the पूर्णांकerval of समय (in TUs) between root
+ * @dot11MeshHWMPnetDiameterTraversalTime: the interval of time (in TUs) that
+ *	it takes for an HWMP information element to propagate across the mesh
+ * @dot11MeshHWMPRootMode: the configuration of a mesh STA as root mesh STA
+ * @dot11MeshHWMPRannInterval: the interval of time (in TUs) between root
  *	announcements are transmitted
- * @करोt11MeshGateAnnouncementProtocol: whether to advertise that this mesh
+ * @dot11MeshGateAnnouncementProtocol: whether to advertise that this mesh
  *	station has access to a broader network beyond the MBSS. (This is
- *	missnamed in draft 12.0: करोt11MeshGateAnnouncementProtocol set to true
+ *	missnamed in draft 12.0: dot11MeshGateAnnouncementProtocol set to true
  *	only means that the station will announce others it's a mesh gate, but
  *	not necessarily using the gate announcement protocol. Still keeping the
  *	same nomenclature to be in sync with the spec)
- * @करोt11MeshForwarding: whether the Mesh STA is क्रमwarding or non-क्रमwarding
- *	entity (शेष is TRUE - क्रमwarding entity)
- * @rssi_threshold: the threshold क्रम average संकेत strength of candidate
+ * @dot11MeshForwarding: whether the Mesh STA is forwarding or non-forwarding
+ *	entity (default is TRUE - forwarding entity)
+ * @rssi_threshold: the threshold for average signal strength of candidate
  *	station to establish a peer link
  * @ht_opmode: mesh HT protection mode
  *
- * @करोt11MeshHWMPactivePathToRootTimeout: The समय (in TUs) क्रम which mesh STAs
- *	receiving a proactive PREQ shall consider the क्रमwarding inक्रमmation to
+ * @dot11MeshHWMPactivePathToRootTimeout: The time (in TUs) for which mesh STAs
+ *	receiving a proactive PREQ shall consider the forwarding information to
  *	the root mesh STA to be valid.
  *
- * @करोt11MeshHWMProotInterval: The पूर्णांकerval of समय (in TUs) between proactive
+ * @dot11MeshHWMProotInterval: The interval of time (in TUs) between proactive
  *	PREQs are transmitted.
- * @करोt11MeshHWMPconfirmationInterval: The minimum पूर्णांकerval of समय (in TUs)
+ * @dot11MeshHWMPconfirmationInterval: The minimum interval of time (in TUs)
  *	during which a mesh STA can send only one Action frame containing
- *	a PREQ element क्रम root path confirmation.
- * @घातer_mode: The शेष mesh घातer save mode which will be the initial
- *	setting क्रम new peer links.
- * @करोt11MeshAwakeWinकरोwDuration: The duration in TUs the STA will reमुख्य awake
+ *	a PREQ element for root path confirmation.
+ * @power_mode: The default mesh power save mode which will be the initial
+ *	setting for new peer links.
+ * @dot11MeshAwakeWindowDuration: The duration in TUs the STA will remain awake
  *	after transmitting its beacon.
- * @plink_समयout: If no tx activity is seen from a STA we've established
- *	peering with क्रम दीर्घer than this समय (in seconds), then हटाओ it
+ * @plink_timeout: If no tx activity is seen from a STA we've established
+ *	peering with for longer than this time (in seconds), then remove it
  *	from the STA's list of peers.  Default is 30 minutes.
- * @करोt11MeshConnectedToMeshGate: अगर set to true, advertise that this STA is
- *      connected to a mesh gate in mesh क्रमmation info.  If false, the
- *      value in mesh क्रमmation is determined by the presence of root paths
+ * @dot11MeshConnectedToMeshGate: if set to true, advertise that this STA is
+ *      connected to a mesh gate in mesh formation info.  If false, the
+ *      value in mesh formation is determined by the presence of root paths
  *      in the mesh path table
- * @करोt11MeshNolearn: Try to aव्योम multi-hop path discovery (e.g. PREQ/PREP
- *      क्रम HWMP) अगर the destination is a direct neighbor. Note that this might
+ * @dot11MeshNolearn: Try to avoid multi-hop path discovery (e.g. PREQ/PREP
+ *      for HWMP) if the destination is a direct neighbor. Note that this might
  *      not be the optimal decision as a multi-hop route might be better. So
- *      अगर using this setting you will likely also want to disable
- *      करोt11MeshForwarding and use another mesh routing protocol on top.
+ *      if using this setting you will likely also want to disable
+ *      dot11MeshForwarding and use another mesh routing protocol on top.
  */
-काष्ठा mesh_config अणु
-	u16 करोt11MeshRetryTimeout;
-	u16 करोt11MeshConfirmTimeout;
-	u16 करोt11MeshHoldingTimeout;
-	u16 करोt11MeshMaxPeerLinks;
-	u8 करोt11MeshMaxRetries;
-	u8 करोt11MeshTTL;
+struct mesh_config {
+	u16 dot11MeshRetryTimeout;
+	u16 dot11MeshConfirmTimeout;
+	u16 dot11MeshHoldingTimeout;
+	u16 dot11MeshMaxPeerLinks;
+	u8 dot11MeshMaxRetries;
+	u8 dot11MeshTTL;
 	u8 element_ttl;
-	bool स्वतः_खोलो_plinks;
-	u32 करोt11MeshNbrOffsetMaxNeighbor;
-	u8 करोt11MeshHWMPmaxPREQretries;
-	u32 path_refresh_समय;
-	u16 min_discovery_समयout;
-	u32 करोt11MeshHWMPactivePathTimeout;
-	u16 करोt11MeshHWMPpreqMinInterval;
-	u16 करोt11MeshHWMPperrMinInterval;
-	u16 करोt11MeshHWMPnetDiameterTraversalTime;
-	u8 करोt11MeshHWMPRootMode;
-	bool करोt11MeshConnectedToMeshGate;
-	bool करोt11MeshConnectedToAuthServer;
-	u16 करोt11MeshHWMPRannInterval;
-	bool करोt11MeshGateAnnouncementProtocol;
-	bool करोt11MeshForwarding;
+	bool auto_open_plinks;
+	u32 dot11MeshNbrOffsetMaxNeighbor;
+	u8 dot11MeshHWMPmaxPREQretries;
+	u32 path_refresh_time;
+	u16 min_discovery_timeout;
+	u32 dot11MeshHWMPactivePathTimeout;
+	u16 dot11MeshHWMPpreqMinInterval;
+	u16 dot11MeshHWMPperrMinInterval;
+	u16 dot11MeshHWMPnetDiameterTraversalTime;
+	u8 dot11MeshHWMPRootMode;
+	bool dot11MeshConnectedToMeshGate;
+	bool dot11MeshConnectedToAuthServer;
+	u16 dot11MeshHWMPRannInterval;
+	bool dot11MeshGateAnnouncementProtocol;
+	bool dot11MeshForwarding;
 	s32 rssi_threshold;
 	u16 ht_opmode;
-	u32 करोt11MeshHWMPactivePathToRootTimeout;
-	u16 करोt11MeshHWMProotInterval;
-	u16 करोt11MeshHWMPconfirmationInterval;
-	क्रमागत nl80211_mesh_घातer_mode घातer_mode;
-	u16 करोt11MeshAwakeWinकरोwDuration;
-	u32 plink_समयout;
-	bool करोt11MeshNolearn;
-पूर्ण;
+	u32 dot11MeshHWMPactivePathToRootTimeout;
+	u16 dot11MeshHWMProotInterval;
+	u16 dot11MeshHWMPconfirmationInterval;
+	enum nl80211_mesh_power_mode power_mode;
+	u16 dot11MeshAwakeWindowDuration;
+	u32 plink_timeout;
+	bool dot11MeshNolearn;
+};
 
 /**
- * काष्ठा mesh_setup - 802.11s mesh setup configuration
+ * struct mesh_setup - 802.11s mesh setup configuration
  * @chandef: defines the channel to use
  * @mesh_id: the mesh ID
  * @mesh_id_len: length of the mesh ID, at least 1 and at most 32 bytes
@@ -2047,73 +2046,73 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
  * @path_sel_proto: which path selection protocol to use
  * @path_metric: which metric to use
  * @auth_id: which authentication method this mesh is using
- * @ie: venकरोr inक्रमmation elements (optional)
- * @ie_len: length of venकरोr inक्रमmation elements
+ * @ie: vendor information elements (optional)
+ * @ie_len: length of vendor information elements
  * @is_authenticated: this mesh requires authentication
  * @is_secure: this mesh uses security
  * @user_mpm: userspace handles all MPM functions
  * @dtim_period: DTIM period to use
- * @beacon_पूर्णांकerval: beacon पूर्णांकerval to use
- * @mcast_rate: multicat rate क्रम Mesh Node [6Mbps is the शेष क्रम 802.11a]
+ * @beacon_interval: beacon interval to use
+ * @mcast_rate: multicat rate for Mesh Node [6Mbps is the default for 802.11a]
  * @basic_rates: basic rates to use when creating the mesh
- * @beacon_rate: bitrate to be used क्रम beacons
+ * @beacon_rate: bitrate to be used for beacons
  * @userspace_handles_dfs: whether user space controls DFS operation, i.e.
  *	changes the channel when a radar is detected. This is required
  *	to operate on DFS channels.
- * @control_port_over_nl80211: TRUE अगर userspace expects to exchange control
- *	port frames over NL80211 instead of the network पूर्णांकerface.
+ * @control_port_over_nl80211: TRUE if userspace expects to exchange control
+ *	port frames over NL80211 instead of the network interface.
  *
  * These parameters are fixed when the mesh is created.
  */
-काष्ठा mesh_setup अणु
-	काष्ठा cfg80211_chan_def chandef;
-	स्थिर u8 *mesh_id;
+struct mesh_setup {
+	struct cfg80211_chan_def chandef;
+	const u8 *mesh_id;
 	u8 mesh_id_len;
 	u8 sync_method;
 	u8 path_sel_proto;
 	u8 path_metric;
 	u8 auth_id;
-	स्थिर u8 *ie;
+	const u8 *ie;
 	u8 ie_len;
 	bool is_authenticated;
 	bool is_secure;
 	bool user_mpm;
 	u8 dtim_period;
-	u16 beacon_पूर्णांकerval;
-	पूर्णांक mcast_rate[NUM_NL80211_BANDS];
+	u16 beacon_interval;
+	int mcast_rate[NUM_NL80211_BANDS];
 	u32 basic_rates;
-	काष्ठा cfg80211_bitrate_mask beacon_rate;
+	struct cfg80211_bitrate_mask beacon_rate;
 	bool userspace_handles_dfs;
 	bool control_port_over_nl80211;
-पूर्ण;
+};
 
 /**
- * काष्ठा ocb_setup - 802.11p OCB mode setup configuration
+ * struct ocb_setup - 802.11p OCB mode setup configuration
  * @chandef: defines the channel to use
  *
  * These parameters are fixed when connecting to the network
  */
-काष्ठा ocb_setup अणु
-	काष्ठा cfg80211_chan_def chandef;
-पूर्ण;
+struct ocb_setup {
+	struct cfg80211_chan_def chandef;
+};
 
 /**
- * काष्ठा ieee80211_txq_params - TX queue parameters
- * @ac: AC identअगरier
- * @txop: Maximum burst समय in units of 32 usecs, 0 meaning disabled
- * @cwmin: Minimum contention winकरोw [a value of the क्रमm 2^n-1 in the range
+ * struct ieee80211_txq_params - TX queue parameters
+ * @ac: AC identifier
+ * @txop: Maximum burst time in units of 32 usecs, 0 meaning disabled
+ * @cwmin: Minimum contention window [a value of the form 2^n-1 in the range
  *	1..32767]
- * @cwmax: Maximum contention winकरोw [a value of the क्रमm 2^n-1 in the range
+ * @cwmax: Maximum contention window [a value of the form 2^n-1 in the range
  *	1..32767]
- * @aअगरs: Arbitration पूर्णांकerframe space [0..255]
+ * @aifs: Arbitration interframe space [0..255]
  */
-काष्ठा ieee80211_txq_params अणु
-	क्रमागत nl80211_ac ac;
+struct ieee80211_txq_params {
+	enum nl80211_ac ac;
 	u16 txop;
 	u16 cwmin;
 	u16 cwmax;
-	u8 aअगरs;
-पूर्ण;
+	u8 aifs;
+};
 
 /**
  * DOC: Scanning and BSS list handling
@@ -2121,746 +2120,746 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
  * The scanning process itself is fairly simple, but cfg80211 offers quite
  * a bit of helper functionality. To start a scan, the scan operation will
  * be invoked with a scan definition. This scan definition contains the
- * channels to scan, and the SSIDs to send probe requests क्रम (including the
- * wildcard, अगर desired). A passive scan is indicated by having no SSIDs to
- * probe. Additionally, a scan request may contain extra inक्रमmation elements
+ * channels to scan, and the SSIDs to send probe requests for (including the
+ * wildcard, if desired). A passive scan is indicated by having no SSIDs to
+ * probe. Additionally, a scan request may contain extra information elements
  * that should be added to the probe request. The IEs are guaranteed to be
- * well-क्रमmed, and will not exceed the maximum length the driver advertised
- * in the wiphy काष्ठाure.
+ * well-formed, and will not exceed the maximum length the driver advertised
+ * in the wiphy structure.
  *
- * When scanning finds a BSS, cfg80211 needs to be notअगरied of that, because
- * it is responsible क्रम मुख्यtaining the BSS list; the driver should not
- * मुख्यtain a list itself. For this notअगरication, various functions exist.
+ * When scanning finds a BSS, cfg80211 needs to be notified of that, because
+ * it is responsible for maintaining the BSS list; the driver should not
+ * maintain a list itself. For this notification, various functions exist.
  *
- * Since drivers करो not मुख्यtain a BSS list, there are also a number of
- * functions to search क्रम a BSS and obtain inक्रमmation about it from the
- * BSS काष्ठाure cfg80211 मुख्यtains. The BSS list is also made available
+ * Since drivers do not maintain a BSS list, there are also a number of
+ * functions to search for a BSS and obtain information about it from the
+ * BSS structure cfg80211 maintains. The BSS list is also made available
  * to userspace.
  */
 
 /**
- * काष्ठा cfg80211_ssid - SSID description
+ * struct cfg80211_ssid - SSID description
  * @ssid: the SSID
  * @ssid_len: length of the ssid
  */
-काष्ठा cfg80211_ssid अणु
+struct cfg80211_ssid {
 	u8 ssid[IEEE80211_MAX_SSID_LEN];
 	u8 ssid_len;
-पूर्ण;
+};
 
 /**
- * काष्ठा cfg80211_scan_info - inक्रमmation about completed scan
- * @scan_start_tsf: scan start समय in terms of the TSF of the BSS that the
+ * struct cfg80211_scan_info - information about completed scan
+ * @scan_start_tsf: scan start time in terms of the TSF of the BSS that the
  *	wireless device that requested the scan is connected to. If this
- *	inक्रमmation is not available, this field is left zero.
+ *	information is not available, this field is left zero.
  * @tsf_bssid: the BSSID according to which %scan_start_tsf is set.
- * @पातed: set to true अगर the scan was पातed क्रम any reason,
- *	userspace will be notअगरied of that
+ * @aborted: set to true if the scan was aborted for any reason,
+ *	userspace will be notified of that
  */
-काष्ठा cfg80211_scan_info अणु
+struct cfg80211_scan_info {
 	u64 scan_start_tsf;
 	u8 tsf_bssid[ETH_ALEN] __aligned(2);
-	bool पातed;
-पूर्ण;
+	bool aborted;
+};
 
 /**
- * काष्ठा cfg80211_scan_6ghz_params - relevant क्रम 6 GHz only
+ * struct cfg80211_scan_6ghz_params - relevant for 6 GHz only
  *
- * @लघु_bssid: लघु ssid to scan क्रम
- * @bssid: bssid to scan क्रम
+ * @short_bssid: short ssid to scan for
+ * @bssid: bssid to scan for
  * @channel_idx: idx of the channel in the channel array in the scan request
  *	 which the above info relvant to
  * @unsolicited_probe: the AP transmits unsolicited probe response every 20 TU
- * @लघु_ssid_valid: लघु_ssid is valid and can be used
- * @psc_no_listen: when set, and the channel is a PSC channel, no need to रुको
- *       20 TUs beक्रमe starting to send probe requests.
+ * @short_ssid_valid: short_ssid is valid and can be used
+ * @psc_no_listen: when set, and the channel is a PSC channel, no need to wait
+ *       20 TUs before starting to send probe requests.
  */
-काष्ठा cfg80211_scan_6ghz_params अणु
-	u32 लघु_ssid;
+struct cfg80211_scan_6ghz_params {
+	u32 short_ssid;
 	u32 channel_idx;
 	u8 bssid[ETH_ALEN];
 	bool unsolicited_probe;
-	bool लघु_ssid_valid;
+	bool short_ssid_valid;
 	bool psc_no_listen;
-पूर्ण;
+};
 
 /**
- * काष्ठा cfg80211_scan_request - scan request description
+ * struct cfg80211_scan_request - scan request description
  *
- * @ssids: SSIDs to scan क्रम (active scan only)
+ * @ssids: SSIDs to scan for (active scan only)
  * @n_ssids: number of SSIDs
  * @channels: channels to scan on.
  * @n_channels: total number of channels to scan
- * @scan_width: channel width क्रम scanning
- * @ie: optional inक्रमmation element(s) to add पूर्णांकo Probe Request or %शून्य
+ * @scan_width: channel width for scanning
+ * @ie: optional information element(s) to add into Probe Request or %NULL
  * @ie_len: length of ie in octets
- * @duration: how दीर्घ to listen on each channel, in TUs. If
- *	%duration_mandatory is not set, this is the maximum dwell समय and
- *	the actual dwell समय may be लघुer.
- * @duration_mandatory: अगर set, the scan duration must be as specअगरied by the
+ * @duration: how long to listen on each channel, in TUs. If
+ *	%duration_mandatory is not set, this is the maximum dwell time and
+ *	the actual dwell time may be shorter.
+ * @duration_mandatory: if set, the scan duration must be as specified by the
  *	%duration field.
  * @flags: bit field of flags controlling operation
- * @rates: biपंचांगap of rates to advertise क्रम each band
- * @wiphy: the wiphy this was क्रम
- * @scan_start: समय (in jअगरfies) when the scan started
- * @wdev: the wireless device to scan क्रम
- * @info: (पूर्णांकernal) inक्रमmation about completed scan
- * @notअगरied: (पूर्णांकernal) scan request was notअगरied as करोne or पातed
+ * @rates: bitmap of rates to advertise for each band
+ * @wiphy: the wiphy this was for
+ * @scan_start: time (in jiffies) when the scan started
+ * @wdev: the wireless device to scan for
+ * @info: (internal) information about completed scan
+ * @notified: (internal) scan request was notified as done or aborted
  * @no_cck: used to send probe requests at non CCK rate in 2GHz band
- * @mac_addr: MAC address used with अक्रमomisation
- * @mac_addr_mask: MAC address mask used with अक्रमomisation, bits that
- *	are 0 in the mask should be अक्रमomised, bits that are 1 should
+ * @mac_addr: MAC address used with randomisation
+ * @mac_addr_mask: MAC address mask used with randomisation, bits that
+ *	are 0 in the mask should be randomised, bits that are 1 should
  *	be taken from the @mac_addr
- * @scan_6ghz: relevant क्रम split scan request only,
- *	true अगर this is the second scan request
+ * @scan_6ghz: relevant for split scan request only,
+ *	true if this is the second scan request
  * @n_6ghz_params: number of 6 GHz params
  * @scan_6ghz_params: 6 GHz params
- * @bssid: BSSID to scan क्रम (most commonly, the wildcard BSSID)
+ * @bssid: BSSID to scan for (most commonly, the wildcard BSSID)
  */
-काष्ठा cfg80211_scan_request अणु
-	काष्ठा cfg80211_ssid *ssids;
-	पूर्णांक n_ssids;
+struct cfg80211_scan_request {
+	struct cfg80211_ssid *ssids;
+	int n_ssids;
 	u32 n_channels;
-	क्रमागत nl80211_bss_scan_width scan_width;
-	स्थिर u8 *ie;
-	माप_प्रकार ie_len;
+	enum nl80211_bss_scan_width scan_width;
+	const u8 *ie;
+	size_t ie_len;
 	u16 duration;
 	bool duration_mandatory;
 	u32 flags;
 
 	u32 rates[NUM_NL80211_BANDS];
 
-	काष्ठा wireless_dev *wdev;
+	struct wireless_dev *wdev;
 
 	u8 mac_addr[ETH_ALEN] __aligned(2);
 	u8 mac_addr_mask[ETH_ALEN] __aligned(2);
 	u8 bssid[ETH_ALEN] __aligned(2);
 
-	/* पूर्णांकernal */
-	काष्ठा wiphy *wiphy;
-	अचिन्हित दीर्घ scan_start;
-	काष्ठा cfg80211_scan_info info;
-	bool notअगरied;
+	/* internal */
+	struct wiphy *wiphy;
+	unsigned long scan_start;
+	struct cfg80211_scan_info info;
+	bool notified;
 	bool no_cck;
 	bool scan_6ghz;
 	u32 n_6ghz_params;
-	काष्ठा cfg80211_scan_6ghz_params *scan_6ghz_params;
+	struct cfg80211_scan_6ghz_params *scan_6ghz_params;
 
 	/* keep last */
-	काष्ठा ieee80211_channel *channels[];
-पूर्ण;
+	struct ieee80211_channel *channels[];
+};
 
-अटल अंतरभूत व्योम get_अक्रमom_mask_addr(u8 *buf, स्थिर u8 *addr, स्थिर u8 *mask)
-अणु
-	पूर्णांक i;
+static inline void get_random_mask_addr(u8 *buf, const u8 *addr, const u8 *mask)
+{
+	int i;
 
-	get_अक्रमom_bytes(buf, ETH_ALEN);
-	क्रम (i = 0; i < ETH_ALEN; i++) अणु
+	get_random_bytes(buf, ETH_ALEN);
+	for (i = 0; i < ETH_ALEN; i++) {
 		buf[i] &= ~mask[i];
 		buf[i] |= addr[i] & mask[i];
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * काष्ठा cfg80211_match_set - sets of attributes to match
+ * struct cfg80211_match_set - sets of attributes to match
  *
- * @ssid: SSID to be matched; may be zero-length in हाल of BSSID match
+ * @ssid: SSID to be matched; may be zero-length in case of BSSID match
  *	or no match (RSSI only)
- * @bssid: BSSID to be matched; may be all-zero BSSID in हाल of SSID match
+ * @bssid: BSSID to be matched; may be all-zero BSSID in case of SSID match
  *	or no match (RSSI only)
- * @rssi_thold: करोn't report scan results below this threshold (in s32 dBm)
- * @per_band_rssi_thold: Minimum rssi threshold क्रम each band to be applied
- *	क्रम filtering out scan results received. Drivers advertize this support
- *	of band specअगरic rssi based filtering through the feature capability
+ * @rssi_thold: don't report scan results below this threshold (in s32 dBm)
+ * @per_band_rssi_thold: Minimum rssi threshold for each band to be applied
+ *	for filtering out scan results received. Drivers advertize this support
+ *	of band specific rssi based filtering through the feature capability
  *	%NL80211_EXT_FEATURE_SCHED_SCAN_BAND_SPECIFIC_RSSI_THOLD. These band
- *	specअगरic rssi thresholds take precedence over rssi_thold, अगर specअगरied.
- *	If not specअगरied क्रम any band, it will be asचिन्हित with rssi_thold of
+ *	specific rssi thresholds take precedence over rssi_thold, if specified.
+ *	If not specified for any band, it will be assigned with rssi_thold of
  *	corresponding matchset.
  */
-काष्ठा cfg80211_match_set अणु
-	काष्ठा cfg80211_ssid ssid;
+struct cfg80211_match_set {
+	struct cfg80211_ssid ssid;
 	u8 bssid[ETH_ALEN];
 	s32 rssi_thold;
 	s32 per_band_rssi_thold[NUM_NL80211_BANDS];
-पूर्ण;
+};
 
 /**
- * काष्ठा cfg80211_sched_scan_plan - scan plan क्रम scheduled scan
+ * struct cfg80211_sched_scan_plan - scan plan for scheduled scan
  *
- * @पूर्णांकerval: पूर्णांकerval between scheduled scan iterations. In seconds.
+ * @interval: interval between scheduled scan iterations. In seconds.
  * @iterations: number of scan iterations in this scan plan. Zero means
  *	infinite loop.
  *	The last scan plan will always have this parameter set to zero,
  *	all other scan plans will have a finite number of iterations.
  */
-काष्ठा cfg80211_sched_scan_plan अणु
-	u32 पूर्णांकerval;
+struct cfg80211_sched_scan_plan {
+	u32 interval;
 	u32 iterations;
-पूर्ण;
+};
 
 /**
- * काष्ठा cfg80211_bss_select_adjust - BSS selection with RSSI adjusपंचांगent.
+ * struct cfg80211_bss_select_adjust - BSS selection with RSSI adjustment.
  *
- * @band: band of BSS which should match क्रम RSSI level adjusपंचांगent.
- * @delta: value of RSSI level adjusपंचांगent.
+ * @band: band of BSS which should match for RSSI level adjustment.
+ * @delta: value of RSSI level adjustment.
  */
-काष्ठा cfg80211_bss_select_adjust अणु
-	क्रमागत nl80211_band band;
+struct cfg80211_bss_select_adjust {
+	enum nl80211_band band;
 	s8 delta;
-पूर्ण;
+};
 
 /**
- * काष्ठा cfg80211_sched_scan_request - scheduled scan request description
+ * struct cfg80211_sched_scan_request - scheduled scan request description
  *
- * @reqid: identअगरies this request.
- * @ssids: SSIDs to scan क्रम (passed in the probe_reqs in active scans)
+ * @reqid: identifies this request.
+ * @ssids: SSIDs to scan for (passed in the probe_reqs in active scans)
  * @n_ssids: number of SSIDs
  * @n_channels: total number of channels to scan
- * @scan_width: channel width क्रम scanning
- * @ie: optional inक्रमmation element(s) to add पूर्णांकo Probe Request or %शून्य
+ * @scan_width: channel width for scanning
+ * @ie: optional information element(s) to add into Probe Request or %NULL
  * @ie_len: length of ie in octets
  * @flags: bit field of flags controlling operation
- * @match_sets: sets of parameters to be matched क्रम a scan result
+ * @match_sets: sets of parameters to be matched for a scan result
  *	entry to be considered valid and to be passed to the host
  *	(others are filtered out).
  *	If ommited, all results are passed.
  * @n_match_sets: number of match sets
- * @report_results: indicates that results were reported क्रम this request
- * @wiphy: the wiphy this was क्रम
- * @dev: the पूर्णांकerface
- * @scan_start: start समय of the scheduled scan
+ * @report_results: indicates that results were reported for this request
+ * @wiphy: the wiphy this was for
+ * @dev: the interface
+ * @scan_start: start time of the scheduled scan
  * @channels: channels to scan
- * @min_rssi_thold: क्रम drivers only supporting a single threshold, this
+ * @min_rssi_thold: for drivers only supporting a single threshold, this
  *	contains the minimum over all matchsets
- * @mac_addr: MAC address used with अक्रमomisation
- * @mac_addr_mask: MAC address mask used with अक्रमomisation, bits that
- *	are 0 in the mask should be अक्रमomised, bits that are 1 should
+ * @mac_addr: MAC address used with randomisation
+ * @mac_addr_mask: MAC address mask used with randomisation, bits that
+ *	are 0 in the mask should be randomised, bits that are 1 should
  *	be taken from the @mac_addr
  * @scan_plans: scan plans to be executed in this scheduled scan. Lowest
  *	index must be executed first.
  * @n_scan_plans: number of scan plans, at least 1.
- * @rcu_head: RCU callback used to मुक्त the काष्ठा
- * @owner_nlportid: netlink portid of owner (अगर this should is a request
+ * @rcu_head: RCU callback used to free the struct
+ * @owner_nlportid: netlink portid of owner (if this should is a request
  *	owned by a particular socket)
- * @nl_owner_dead: netlink owner socket was बंदd - this request be मुक्तd
- * @list: क्रम keeping list of requests.
- * @delay: delay in seconds to use beक्रमe starting the first scan
+ * @nl_owner_dead: netlink owner socket was closed - this request be freed
+ * @list: for keeping list of requests.
+ * @delay: delay in seconds to use before starting the first scan
  *	cycle.  The driver may ignore this parameter and start
- *	immediately (or at any other समय), अगर this feature is not
+ *	immediately (or at any other time), if this feature is not
  *	supported.
  * @relative_rssi_set: Indicates whether @relative_rssi is set or not.
  * @relative_rssi: Relative RSSI threshold in dB to restrict scan result
- *	reporting in connected state to हालs where a matching BSS is determined
+ *	reporting in connected state to cases where a matching BSS is determined
  *	to have better or slightly worse RSSI than the current connected BSS.
  *	The relative RSSI threshold values are ignored in disconnected state.
- * @rssi_adjust: delta dB of RSSI preference to be given to the BSSs that beदीर्घ
- *	to the specअगरied band जबतक deciding whether a better BSS is reported
+ * @rssi_adjust: delta dB of RSSI preference to be given to the BSSs that belong
+ *	to the specified band while deciding whether a better BSS is reported
  *	using @relative_rssi. If delta is a negative number, the BSSs that
- *	beदीर्घ to the specअगरied band will be penalized by delta dB in relative
+ *	belong to the specified band will be penalized by delta dB in relative
  *	comparisions.
  */
-काष्ठा cfg80211_sched_scan_request अणु
+struct cfg80211_sched_scan_request {
 	u64 reqid;
-	काष्ठा cfg80211_ssid *ssids;
-	पूर्णांक n_ssids;
+	struct cfg80211_ssid *ssids;
+	int n_ssids;
 	u32 n_channels;
-	क्रमागत nl80211_bss_scan_width scan_width;
-	स्थिर u8 *ie;
-	माप_प्रकार ie_len;
+	enum nl80211_bss_scan_width scan_width;
+	const u8 *ie;
+	size_t ie_len;
 	u32 flags;
-	काष्ठा cfg80211_match_set *match_sets;
-	पूर्णांक n_match_sets;
+	struct cfg80211_match_set *match_sets;
+	int n_match_sets;
 	s32 min_rssi_thold;
 	u32 delay;
-	काष्ठा cfg80211_sched_scan_plan *scan_plans;
-	पूर्णांक n_scan_plans;
+	struct cfg80211_sched_scan_plan *scan_plans;
+	int n_scan_plans;
 
 	u8 mac_addr[ETH_ALEN] __aligned(2);
 	u8 mac_addr_mask[ETH_ALEN] __aligned(2);
 
 	bool relative_rssi_set;
 	s8 relative_rssi;
-	काष्ठा cfg80211_bss_select_adjust rssi_adjust;
+	struct cfg80211_bss_select_adjust rssi_adjust;
 
-	/* पूर्णांकernal */
-	काष्ठा wiphy *wiphy;
-	काष्ठा net_device *dev;
-	अचिन्हित दीर्घ scan_start;
+	/* internal */
+	struct wiphy *wiphy;
+	struct net_device *dev;
+	unsigned long scan_start;
 	bool report_results;
-	काष्ठा rcu_head rcu_head;
+	struct rcu_head rcu_head;
 	u32 owner_nlportid;
 	bool nl_owner_dead;
-	काष्ठा list_head list;
+	struct list_head list;
 
 	/* keep last */
-	काष्ठा ieee80211_channel *channels[];
-पूर्ण;
+	struct ieee80211_channel *channels[];
+};
 
 /**
- * क्रमागत cfg80211_संकेत_type - संकेत type
+ * enum cfg80211_signal_type - signal type
  *
- * @CFG80211_SIGNAL_TYPE_NONE: no संकेत strength inक्रमmation available
- * @CFG80211_SIGNAL_TYPE_MBM: संकेत strength in mBm (100*dBm)
- * @CFG80211_SIGNAL_TYPE_UNSPEC: संकेत strength, increasing from 0 through 100
+ * @CFG80211_SIGNAL_TYPE_NONE: no signal strength information available
+ * @CFG80211_SIGNAL_TYPE_MBM: signal strength in mBm (100*dBm)
+ * @CFG80211_SIGNAL_TYPE_UNSPEC: signal strength, increasing from 0 through 100
  */
-क्रमागत cfg80211_संकेत_type अणु
+enum cfg80211_signal_type {
 	CFG80211_SIGNAL_TYPE_NONE,
 	CFG80211_SIGNAL_TYPE_MBM,
 	CFG80211_SIGNAL_TYPE_UNSPEC,
-पूर्ण;
+};
 
 /**
- * काष्ठा cfg80211_inक्रमm_bss - BSS inक्रमm data
+ * struct cfg80211_inform_bss - BSS inform data
  * @chan: channel the frame was received on
  * @scan_width: scan width that was used
- * @संकेत: संकेत strength value, according to the wiphy's
- *	संकेत type
- * @bootसमय_ns: बारtamp (CLOCK_BOOTTIME) when the inक्रमmation was
- *	received; should match the समय when the frame was actually
- *	received by the device (not just by the host, in हाल it was
+ * @signal: signal strength value, according to the wiphy's
+ *	signal type
+ * @boottime_ns: timestamp (CLOCK_BOOTTIME) when the information was
+ *	received; should match the time when the frame was actually
+ *	received by the device (not just by the host, in case it was
  *	buffered on the device) and be accurate to about 10ms.
- *	If the frame isn't buffered, just passing the वापस value of
- *	kसमय_get_bootसमय_ns() is likely appropriate.
- * @parent_tsf: the समय at the start of reception of the first octet of the
- *	बारtamp field of the frame. The समय is the TSF of the BSS specअगरied
+ *	If the frame isn't buffered, just passing the return value of
+ *	ktime_get_boottime_ns() is likely appropriate.
+ * @parent_tsf: the time at the start of reception of the first octet of the
+ *	timestamp field of the frame. The time is the TSF of the BSS specified
  *	by %parent_bssid.
  * @parent_bssid: the BSS according to which %parent_tsf is set. This is set to
  *	the BSS that requested the scan in which the beacon/probe was received.
- * @chains: biपंचांगask क्रम filled values in @chain_संकेत.
- * @chain_संकेत: per-chain संकेत strength of last received BSS in dBm.
+ * @chains: bitmask for filled values in @chain_signal.
+ * @chain_signal: per-chain signal strength of last received BSS in dBm.
  */
-काष्ठा cfg80211_inक्रमm_bss अणु
-	काष्ठा ieee80211_channel *chan;
-	क्रमागत nl80211_bss_scan_width scan_width;
-	s32 संकेत;
-	u64 bootसमय_ns;
+struct cfg80211_inform_bss {
+	struct ieee80211_channel *chan;
+	enum nl80211_bss_scan_width scan_width;
+	s32 signal;
+	u64 boottime_ns;
 	u64 parent_tsf;
 	u8 parent_bssid[ETH_ALEN] __aligned(2);
 	u8 chains;
-	s8 chain_संकेत[IEEE80211_MAX_CHAINS];
-पूर्ण;
+	s8 chain_signal[IEEE80211_MAX_CHAINS];
+};
 
 /**
- * काष्ठा cfg80211_bss_ies - BSS entry IE data
+ * struct cfg80211_bss_ies - BSS entry IE data
  * @tsf: TSF contained in the frame that carried these IEs
- * @rcu_head: पूर्णांकernal use, क्रम मुक्तing
+ * @rcu_head: internal use, for freeing
  * @len: length of the IEs
  * @from_beacon: these IEs are known to come from a beacon
  * @data: IE data
  */
-काष्ठा cfg80211_bss_ies अणु
+struct cfg80211_bss_ies {
 	u64 tsf;
-	काष्ठा rcu_head rcu_head;
-	पूर्णांक len;
+	struct rcu_head rcu_head;
+	int len;
 	bool from_beacon;
 	u8 data[];
-पूर्ण;
+};
 
 /**
- * काष्ठा cfg80211_bss - BSS description
+ * struct cfg80211_bss - BSS description
  *
- * This काष्ठाure describes a BSS (which may also be a mesh network)
- * क्रम use in scan results and similar.
+ * This structure describes a BSS (which may also be a mesh network)
+ * for use in scan results and similar.
  *
  * @channel: channel this BSS is on
  * @scan_width: width of the control channel
  * @bssid: BSSID of the BSS
- * @beacon_पूर्णांकerval: the beacon पूर्णांकerval as from the frame
+ * @beacon_interval: the beacon interval as from the frame
  * @capability: the capability field in host byte order
- * @ies: the inक्रमmation elements (Note that there is no guarantee that these
- *	are well-क्रमmed!); this is a poपूर्णांकer to either the beacon_ies or
+ * @ies: the information elements (Note that there is no guarantee that these
+ *	are well-formed!); this is a pointer to either the beacon_ies or
  *	proberesp_ies depending on whether Probe Response frame has been
- *	received. It is always non-%शून्य.
- * @beacon_ies: the inक्रमmation elements from the last Beacon frame
- *	(implementation note: अगर @hidden_beacon_bss is set this काष्ठा करोesn't
- *	own the beacon_ies, but they're just poपूर्णांकers to the ones from the
- *	@hidden_beacon_bss काष्ठा)
- * @proberesp_ies: the inक्रमmation elements from the last Probe Response frame
- * @hidden_beacon_bss: in हाल this BSS काष्ठा represents a probe response from
- *	a BSS that hides the SSID in its beacon, this poपूर्णांकs to the BSS काष्ठा
+ *	received. It is always non-%NULL.
+ * @beacon_ies: the information elements from the last Beacon frame
+ *	(implementation note: if @hidden_beacon_bss is set this struct doesn't
+ *	own the beacon_ies, but they're just pointers to the ones from the
+ *	@hidden_beacon_bss struct)
+ * @proberesp_ies: the information elements from the last Probe Response frame
+ * @hidden_beacon_bss: in case this BSS struct represents a probe response from
+ *	a BSS that hides the SSID in its beacon, this points to the BSS struct
  *	that holds the beacon data. @beacon_ies is still valid, of course, and
- *	poपूर्णांकs to the same data as hidden_beacon_bss->beacon_ies in that हाल.
- * @transmitted_bss: poपूर्णांकer to the transmitted BSS, अगर this is a
+ *	points to the same data as hidden_beacon_bss->beacon_ies in that case.
+ * @transmitted_bss: pointer to the transmitted BSS, if this is a
  *	non-transmitted one (multi-BSSID support)
- * @nontrans_list: list of non-transmitted BSS, अगर this is a transmitted one
+ * @nontrans_list: list of non-transmitted BSS, if this is a transmitted one
  *	(multi-BSSID support)
- * @संकेत: संकेत strength value (type depends on the wiphy's संकेत_type)
- * @chains: biपंचांगask क्रम filled values in @chain_संकेत.
- * @chain_संकेत: per-chain संकेत strength of last received BSS in dBm.
+ * @signal: signal strength value (type depends on the wiphy's signal_type)
+ * @chains: bitmask for filled values in @chain_signal.
+ * @chain_signal: per-chain signal strength of last received BSS in dBm.
  * @bssid_index: index in the multiple BSS set
  * @max_bssid_indicator: max number of members in the BSS set
- * @priv: निजी area क्रम driver use, has at least wiphy->bss_priv_size bytes
+ * @priv: private area for driver use, has at least wiphy->bss_priv_size bytes
  */
-काष्ठा cfg80211_bss अणु
-	काष्ठा ieee80211_channel *channel;
-	क्रमागत nl80211_bss_scan_width scan_width;
+struct cfg80211_bss {
+	struct ieee80211_channel *channel;
+	enum nl80211_bss_scan_width scan_width;
 
-	स्थिर काष्ठा cfg80211_bss_ies __rcu *ies;
-	स्थिर काष्ठा cfg80211_bss_ies __rcu *beacon_ies;
-	स्थिर काष्ठा cfg80211_bss_ies __rcu *proberesp_ies;
+	const struct cfg80211_bss_ies __rcu *ies;
+	const struct cfg80211_bss_ies __rcu *beacon_ies;
+	const struct cfg80211_bss_ies __rcu *proberesp_ies;
 
-	काष्ठा cfg80211_bss *hidden_beacon_bss;
-	काष्ठा cfg80211_bss *transmitted_bss;
-	काष्ठा list_head nontrans_list;
+	struct cfg80211_bss *hidden_beacon_bss;
+	struct cfg80211_bss *transmitted_bss;
+	struct list_head nontrans_list;
 
-	s32 संकेत;
+	s32 signal;
 
-	u16 beacon_पूर्णांकerval;
+	u16 beacon_interval;
 	u16 capability;
 
 	u8 bssid[ETH_ALEN];
 	u8 chains;
-	s8 chain_संकेत[IEEE80211_MAX_CHAINS];
+	s8 chain_signal[IEEE80211_MAX_CHAINS];
 
 	u8 bssid_index;
 	u8 max_bssid_indicator;
 
-	u8 priv[] __aligned(माप(व्योम *));
-पूर्ण;
+	u8 priv[] __aligned(sizeof(void *));
+};
 
 /**
  * ieee80211_bss_get_elem - find element with given ID
  * @bss: the bss to search
  * @id: the element ID
  *
- * Note that the वापस value is an RCU-रक्षित poपूर्णांकer, so
- * rcu_पढ़ो_lock() must be held when calling this function.
- * Return: %शून्य अगर not found.
+ * Note that the return value is an RCU-protected pointer, so
+ * rcu_read_lock() must be held when calling this function.
+ * Return: %NULL if not found.
  */
-स्थिर काष्ठा element *ieee80211_bss_get_elem(काष्ठा cfg80211_bss *bss, u8 id);
+const struct element *ieee80211_bss_get_elem(struct cfg80211_bss *bss, u8 id);
 
 /**
  * ieee80211_bss_get_ie - find IE with given ID
  * @bss: the bss to search
  * @id: the element ID
  *
- * Note that the वापस value is an RCU-रक्षित poपूर्णांकer, so
- * rcu_पढ़ो_lock() must be held when calling this function.
- * Return: %शून्य अगर not found.
+ * Note that the return value is an RCU-protected pointer, so
+ * rcu_read_lock() must be held when calling this function.
+ * Return: %NULL if not found.
  */
-अटल अंतरभूत स्थिर u8 *ieee80211_bss_get_ie(काष्ठा cfg80211_bss *bss, u8 id)
-अणु
-	वापस (व्योम *)ieee80211_bss_get_elem(bss, id);
-पूर्ण
+static inline const u8 *ieee80211_bss_get_ie(struct cfg80211_bss *bss, u8 id)
+{
+	return (void *)ieee80211_bss_get_elem(bss, id);
+}
 
 
 /**
- * काष्ठा cfg80211_auth_request - Authentication request data
+ * struct cfg80211_auth_request - Authentication request data
  *
- * This काष्ठाure provides inक्रमmation needed to complete IEEE 802.11
+ * This structure provides information needed to complete IEEE 802.11
  * authentication.
  *
  * @bss: The BSS to authenticate with, the callee must obtain a reference
- *	to it अगर it needs to keep it.
+ *	to it if it needs to keep it.
  * @auth_type: Authentication type (algorithm)
- * @ie: Extra IEs to add to Authentication frame or %शून्य
+ * @ie: Extra IEs to add to Authentication frame or %NULL
  * @ie_len: Length of ie buffer in octets
- * @key_len: length of WEP key क्रम shared key authentication
- * @key_idx: index of WEP key क्रम shared key authentication
- * @key: WEP key क्रम shared key authentication
+ * @key_len: length of WEP key for shared key authentication
+ * @key_idx: index of WEP key for shared key authentication
+ * @key: WEP key for shared key authentication
  * @auth_data: Fields and elements in Authentication frames. This contains
  *	the authentication frame body (non-IE and IE data), excluding the
  *	Authentication algorithm number, i.e., starting at the Authentication
  *	transaction sequence number field.
  * @auth_data_len: Length of auth_data buffer in octets
  */
-काष्ठा cfg80211_auth_request अणु
-	काष्ठा cfg80211_bss *bss;
-	स्थिर u8 *ie;
-	माप_प्रकार ie_len;
-	क्रमागत nl80211_auth_type auth_type;
-	स्थिर u8 *key;
+struct cfg80211_auth_request {
+	struct cfg80211_bss *bss;
+	const u8 *ie;
+	size_t ie_len;
+	enum nl80211_auth_type auth_type;
+	const u8 *key;
 	u8 key_len, key_idx;
-	स्थिर u8 *auth_data;
-	माप_प्रकार auth_data_len;
-पूर्ण;
+	const u8 *auth_data;
+	size_t auth_data_len;
+};
 
 /**
- * क्रमागत cfg80211_assoc_req_flags - Over-ride शेष behaviour in association.
+ * enum cfg80211_assoc_req_flags - Over-ride default behaviour in association.
  *
  * @ASSOC_REQ_DISABLE_HT:  Disable HT (802.11n)
  * @ASSOC_REQ_DISABLE_VHT:  Disable VHT
  * @ASSOC_REQ_USE_RRM: Declare RRM capability in this association
- * @CONNECT_REQ_EXTERNAL_AUTH_SUPPORT: User space indicates बाह्यal
+ * @CONNECT_REQ_EXTERNAL_AUTH_SUPPORT: User space indicates external
  *	authentication capability. Drivers can offload authentication to
- *	userspace अगर this flag is set. Only applicable क्रम cfg80211_connect()
+ *	userspace if this flag is set. Only applicable for cfg80211_connect()
  *	request (connect callback).
  * @ASSOC_REQ_DISABLE_HE:  Disable HE
  */
-क्रमागत cfg80211_assoc_req_flags अणु
+enum cfg80211_assoc_req_flags {
 	ASSOC_REQ_DISABLE_HT			= BIT(0),
 	ASSOC_REQ_DISABLE_VHT			= BIT(1),
 	ASSOC_REQ_USE_RRM			= BIT(2),
 	CONNECT_REQ_EXTERNAL_AUTH_SUPPORT	= BIT(3),
 	ASSOC_REQ_DISABLE_HE			= BIT(4),
-पूर्ण;
+};
 
 /**
- * काष्ठा cfg80211_assoc_request - (Re)Association request data
+ * struct cfg80211_assoc_request - (Re)Association request data
  *
- * This काष्ठाure provides inक्रमmation needed to complete IEEE 802.11
+ * This structure provides information needed to complete IEEE 802.11
  * (re)association.
  * @bss: The BSS to associate with. If the call is successful the driver is
  *	given a reference that it must give back to cfg80211_send_rx_assoc()
- *	or to cfg80211_assoc_समयout(). To ensure proper refcounting, new
- *	association requests जबतक alपढ़ोy associating must be rejected.
- * @ie: Extra IEs to add to (Re)Association Request frame or %शून्य
+ *	or to cfg80211_assoc_timeout(). To ensure proper refcounting, new
+ *	association requests while already associating must be rejected.
+ * @ie: Extra IEs to add to (Re)Association Request frame or %NULL
  * @ie_len: Length of ie buffer in octets
  * @use_mfp: Use management frame protection (IEEE 802.11w) in this association
  * @crypto: crypto settings
- * @prev_bssid: previous BSSID, अगर not %शून्य use reassociate frame. This is used
+ * @prev_bssid: previous BSSID, if not %NULL use reassociate frame. This is used
  *	to indicate a request to reassociate within the ESS instead of a request
- *	करो the initial association with the ESS. When included, this is set to
+ *	do the initial association with the ESS. When included, this is set to
  *	the BSSID of the current association, i.e., to the value that is
  *	included in the Current AP address field of the Reassociation Request
  *	frame.
- * @flags:  See &क्रमागत cfg80211_assoc_req_flags
+ * @flags:  See &enum cfg80211_assoc_req_flags
  * @ht_capa:  HT Capabilities over-rides.  Values set in ht_capa_mask
  *	will be used in ht_capa.  Un-supported values will be ignored.
  * @ht_capa_mask:  The bits of ht_capa which are to be used.
  * @vht_capa: VHT capability override
  * @vht_capa_mask: VHT capability mask indicating which fields to use
- * @fils_kek: FILS KEK क्रम protecting (Re)Association Request/Response frame or
- *	%शून्य अगर FILS is not used.
+ * @fils_kek: FILS KEK for protecting (Re)Association Request/Response frame or
+ *	%NULL if FILS is not used.
  * @fils_kek_len: Length of fils_kek in octets
- * @fils_nonces: FILS nonces (part of AAD) क्रम protecting (Re)Association
- *	Request/Response frame or %शून्य अगर FILS is not used. This field starts
+ * @fils_nonces: FILS nonces (part of AAD) for protecting (Re)Association
+ *	Request/Response frame or %NULL if FILS is not used. This field starts
  *	with 16 octets of STA Nonce followed by 16 octets of AP Nonce.
  * @s1g_capa: S1G capability override
  * @s1g_capa_mask: S1G capability override mask
  */
-काष्ठा cfg80211_assoc_request अणु
-	काष्ठा cfg80211_bss *bss;
-	स्थिर u8 *ie, *prev_bssid;
-	माप_प्रकार ie_len;
-	काष्ठा cfg80211_crypto_settings crypto;
+struct cfg80211_assoc_request {
+	struct cfg80211_bss *bss;
+	const u8 *ie, *prev_bssid;
+	size_t ie_len;
+	struct cfg80211_crypto_settings crypto;
 	bool use_mfp;
 	u32 flags;
-	काष्ठा ieee80211_ht_cap ht_capa;
-	काष्ठा ieee80211_ht_cap ht_capa_mask;
-	काष्ठा ieee80211_vht_cap vht_capa, vht_capa_mask;
-	स्थिर u8 *fils_kek;
-	माप_प्रकार fils_kek_len;
-	स्थिर u8 *fils_nonces;
-	काष्ठा ieee80211_s1g_cap s1g_capa, s1g_capa_mask;
-पूर्ण;
+	struct ieee80211_ht_cap ht_capa;
+	struct ieee80211_ht_cap ht_capa_mask;
+	struct ieee80211_vht_cap vht_capa, vht_capa_mask;
+	const u8 *fils_kek;
+	size_t fils_kek_len;
+	const u8 *fils_nonces;
+	struct ieee80211_s1g_cap s1g_capa, s1g_capa_mask;
+};
 
 /**
- * काष्ठा cfg80211_deauth_request - Deauthentication request data
+ * struct cfg80211_deauth_request - Deauthentication request data
  *
- * This काष्ठाure provides inक्रमmation needed to complete IEEE 802.11
+ * This structure provides information needed to complete IEEE 802.11
  * deauthentication.
  *
  * @bssid: the BSSID of the BSS to deauthenticate from
- * @ie: Extra IEs to add to Deauthentication frame or %शून्य
+ * @ie: Extra IEs to add to Deauthentication frame or %NULL
  * @ie_len: Length of ie buffer in octets
- * @reason_code: The reason code क्रम the deauthentication
- * @local_state_change: अगर set, change local state only and
- *	करो not set a deauth frame
+ * @reason_code: The reason code for the deauthentication
+ * @local_state_change: if set, change local state only and
+ *	do not set a deauth frame
  */
-काष्ठा cfg80211_deauth_request अणु
-	स्थिर u8 *bssid;
-	स्थिर u8 *ie;
-	माप_प्रकार ie_len;
+struct cfg80211_deauth_request {
+	const u8 *bssid;
+	const u8 *ie;
+	size_t ie_len;
 	u16 reason_code;
 	bool local_state_change;
-पूर्ण;
+};
 
 /**
- * काष्ठा cfg80211_disassoc_request - Disassociation request data
+ * struct cfg80211_disassoc_request - Disassociation request data
  *
- * This काष्ठाure provides inक्रमmation needed to complete IEEE 802.11
+ * This structure provides information needed to complete IEEE 802.11
  * disassociation.
  *
  * @bss: the BSS to disassociate from
- * @ie: Extra IEs to add to Disassociation frame or %शून्य
+ * @ie: Extra IEs to add to Disassociation frame or %NULL
  * @ie_len: Length of ie buffer in octets
- * @reason_code: The reason code क्रम the disassociation
- * @local_state_change: This is a request क्रम a local state only, i.e., no
+ * @reason_code: The reason code for the disassociation
+ * @local_state_change: This is a request for a local state only, i.e., no
  *	Disassociation frame is to be transmitted.
  */
-काष्ठा cfg80211_disassoc_request अणु
-	काष्ठा cfg80211_bss *bss;
-	स्थिर u8 *ie;
-	माप_प्रकार ie_len;
+struct cfg80211_disassoc_request {
+	struct cfg80211_bss *bss;
+	const u8 *ie;
+	size_t ie_len;
 	u16 reason_code;
 	bool local_state_change;
-पूर्ण;
+};
 
 /**
- * काष्ठा cfg80211_ibss_params - IBSS parameters
+ * struct cfg80211_ibss_params - IBSS parameters
  *
- * This काष्ठाure defines the IBSS parameters क्रम the join_ibss()
+ * This structure defines the IBSS parameters for the join_ibss()
  * method.
  *
  * @ssid: The SSID, will always be non-null.
  * @ssid_len: The length of the SSID, will always be non-zero.
- * @bssid: Fixed BSSID requested, maybe be %शून्य, अगर set करो not
- *	search क्रम IBSSs with a dअगरferent BSSID.
- * @chandef: defines the channel to use अगर no other IBSS to join can be found
- * @channel_fixed: The channel should be fixed -- करो not search क्रम
+ * @bssid: Fixed BSSID requested, maybe be %NULL, if set do not
+ *	search for IBSSs with a different BSSID.
+ * @chandef: defines the channel to use if no other IBSS to join can be found
+ * @channel_fixed: The channel should be fixed -- do not search for
  *	IBSSs to join on other channels.
- * @ie: inक्रमmation element(s) to include in the beacon
+ * @ie: information element(s) to include in the beacon
  * @ie_len: length of that
- * @beacon_पूर्णांकerval: beacon पूर्णांकerval to use
- * @privacy: this is a रक्षित network, keys will be configured
+ * @beacon_interval: beacon interval to use
+ * @privacy: this is a protected network, keys will be configured
  *	after joining
  * @control_port: whether user space controls IEEE 802.1X port, i.e.,
  *	sets/clears %NL80211_STA_FLAG_AUTHORIZED. If true, the driver is
  *	required to assume that the port is unauthorized until authorized by
- *	user space. Otherwise, port is marked authorized by शेष.
- * @control_port_over_nl80211: TRUE अगर userspace expects to exchange control
- *	port frames over NL80211 instead of the network पूर्णांकerface.
+ *	user space. Otherwise, port is marked authorized by default.
+ * @control_port_over_nl80211: TRUE if userspace expects to exchange control
+ *	port frames over NL80211 instead of the network interface.
  * @userspace_handles_dfs: whether user space controls DFS operation, i.e.
  *	changes the channel when a radar is detected. This is required
  *	to operate on DFS channels.
- * @basic_rates: biपंचांगap of basic rates to use when creating the IBSS
+ * @basic_rates: bitmap of basic rates to use when creating the IBSS
  * @mcast_rate: per-band multicast rate index + 1 (0: disabled)
  * @ht_capa:  HT Capabilities over-rides.  Values set in ht_capa_mask
  *	will be used in ht_capa.  Un-supported values will be ignored.
  * @ht_capa_mask:  The bits of ht_capa which are to be used.
- * @wep_keys: अटल WEP keys, अगर not शून्य poपूर्णांकs to an array of
+ * @wep_keys: static WEP keys, if not NULL points to an array of
  *	CFG80211_MAX_WEP_KEYS WEP keys
- * @wep_tx_key: key index (0..3) of the शेष TX अटल WEP key
+ * @wep_tx_key: key index (0..3) of the default TX static WEP key
  */
-काष्ठा cfg80211_ibss_params अणु
-	स्थिर u8 *ssid;
-	स्थिर u8 *bssid;
-	काष्ठा cfg80211_chan_def chandef;
-	स्थिर u8 *ie;
+struct cfg80211_ibss_params {
+	const u8 *ssid;
+	const u8 *bssid;
+	struct cfg80211_chan_def chandef;
+	const u8 *ie;
 	u8 ssid_len, ie_len;
-	u16 beacon_पूर्णांकerval;
+	u16 beacon_interval;
 	u32 basic_rates;
 	bool channel_fixed;
 	bool privacy;
 	bool control_port;
 	bool control_port_over_nl80211;
 	bool userspace_handles_dfs;
-	पूर्णांक mcast_rate[NUM_NL80211_BANDS];
-	काष्ठा ieee80211_ht_cap ht_capa;
-	काष्ठा ieee80211_ht_cap ht_capa_mask;
-	काष्ठा key_params *wep_keys;
-	पूर्णांक wep_tx_key;
-पूर्ण;
+	int mcast_rate[NUM_NL80211_BANDS];
+	struct ieee80211_ht_cap ht_capa;
+	struct ieee80211_ht_cap ht_capa_mask;
+	struct key_params *wep_keys;
+	int wep_tx_key;
+};
 
 /**
- * काष्ठा cfg80211_bss_selection - connection parameters क्रम BSS selection.
+ * struct cfg80211_bss_selection - connection parameters for BSS selection.
  *
  * @behaviour: requested BSS selection behaviour.
- * @param: parameters क्रम requestion behaviour.
- * @band_pref: preferred band क्रम %NL80211_BSS_SELECT_ATTR_BAND_PREF.
- * @adjust: parameters क्रम %NL80211_BSS_SELECT_ATTR_RSSI_ADJUST.
+ * @param: parameters for requestion behaviour.
+ * @band_pref: preferred band for %NL80211_BSS_SELECT_ATTR_BAND_PREF.
+ * @adjust: parameters for %NL80211_BSS_SELECT_ATTR_RSSI_ADJUST.
  */
-काष्ठा cfg80211_bss_selection अणु
-	क्रमागत nl80211_bss_select_attr behaviour;
-	जोड़ अणु
-		क्रमागत nl80211_band band_pref;
-		काष्ठा cfg80211_bss_select_adjust adjust;
-	पूर्ण param;
-पूर्ण;
+struct cfg80211_bss_selection {
+	enum nl80211_bss_select_attr behaviour;
+	union {
+		enum nl80211_band band_pref;
+		struct cfg80211_bss_select_adjust adjust;
+	} param;
+};
 
 /**
- * काष्ठा cfg80211_connect_params - Connection parameters
+ * struct cfg80211_connect_params - Connection parameters
  *
- * This काष्ठाure provides inक्रमmation needed to complete IEEE 802.11
+ * This structure provides information needed to complete IEEE 802.11
  * authentication and association.
  *
- * @channel: The channel to use or %शून्य अगर not specअगरied (स्वतः-select based
+ * @channel: The channel to use or %NULL if not specified (auto-select based
  *	on scan results)
- * @channel_hपूर्णांक: The channel of the recommended BSS क्रम initial connection or
- *	%शून्य अगर not specअगरied
- * @bssid: The AP BSSID or %शून्य अगर not specअगरied (स्वतः-select based on scan
+ * @channel_hint: The channel of the recommended BSS for initial connection or
+ *	%NULL if not specified
+ * @bssid: The AP BSSID or %NULL if not specified (auto-select based on scan
  *	results)
- * @bssid_hपूर्णांक: The recommended AP BSSID क्रम initial connection to the BSS or
- *	%शून्य अगर not specअगरied. Unlike the @bssid parameter, the driver is
- *	allowed to ignore this @bssid_hपूर्णांक अगर it has knowledge of a better BSS
+ * @bssid_hint: The recommended AP BSSID for initial connection to the BSS or
+ *	%NULL if not specified. Unlike the @bssid parameter, the driver is
+ *	allowed to ignore this @bssid_hint if it has knowledge of a better BSS
  *	to use.
  * @ssid: SSID
  * @ssid_len: Length of ssid in octets
  * @auth_type: Authentication type (algorithm)
- * @ie: IEs क्रम association request
+ * @ie: IEs for association request
  * @ie_len: Length of assoc_ie in octets
  * @privacy: indicates whether privacy-enabled APs should be used
  * @mfp: indicate whether management frame protection is used
  * @crypto: crypto settings
- * @key_len: length of WEP key क्रम shared key authentication
- * @key_idx: index of WEP key क्रम shared key authentication
- * @key: WEP key क्रम shared key authentication
- * @flags:  See &क्रमागत cfg80211_assoc_req_flags
+ * @key_len: length of WEP key for shared key authentication
+ * @key_idx: index of WEP key for shared key authentication
+ * @key: WEP key for shared key authentication
+ * @flags:  See &enum cfg80211_assoc_req_flags
  * @bg_scan_period:  Background scan period in seconds
- *	or -1 to indicate that शेष value is to be used.
+ *	or -1 to indicate that default value is to be used.
  * @ht_capa:  HT Capabilities over-rides.  Values set in ht_capa_mask
  *	will be used in ht_capa.  Un-supported values will be ignored.
  * @ht_capa_mask:  The bits of ht_capa which are to be used.
  * @vht_capa:  VHT Capability overrides
  * @vht_capa_mask: The bits of vht_capa which are to be used.
- * @pbss: अगर set, connect to a PCP instead of AP. Valid क्रम DMG
+ * @pbss: if set, connect to a PCP instead of AP. Valid for DMG
  *	networks.
- * @bss_select: criteria to be used क्रम BSS selection.
- * @prev_bssid: previous BSSID, अगर not %शून्य use reassociate frame. This is used
+ * @bss_select: criteria to be used for BSS selection.
+ * @prev_bssid: previous BSSID, if not %NULL use reassociate frame. This is used
  *	to indicate a request to reassociate within the ESS instead of a request
- *	करो the initial association with the ESS. When included, this is set to
+ *	do the initial association with the ESS. When included, this is set to
  *	the BSSID of the current association, i.e., to the value that is
  *	included in the Current AP address field of the Reassociation Request
  *	frame.
  * @fils_erp_username: EAP re-authentication protocol (ERP) username part of the
- *	NAI or %शून्य अगर not specअगरied. This is used to स्थिरruct FILS wrapped
+ *	NAI or %NULL if not specified. This is used to construct FILS wrapped
  *	data IE.
  * @fils_erp_username_len: Length of @fils_erp_username in octets.
  * @fils_erp_realm: EAP re-authentication protocol (ERP) realm part of NAI or
- *	%शून्य अगर not specअगरied. This specअगरies the करोमुख्य name of ER server and
- *	is used to स्थिरruct FILS wrapped data IE.
+ *	%NULL if not specified. This specifies the domain name of ER server and
+ *	is used to construct FILS wrapped data IE.
  * @fils_erp_realm_len: Length of @fils_erp_realm in octets.
  * @fils_erp_next_seq_num: The next sequence number to use in the FILS ERP
- *	messages. This is also used to स्थिरruct FILS wrapped data IE.
+ *	messages. This is also used to construct FILS wrapped data IE.
  * @fils_erp_rrk: ERP re-authentication Root Key (rRK) used to derive additional
- *	keys in FILS or %शून्य अगर not specअगरied.
+ *	keys in FILS or %NULL if not specified.
  * @fils_erp_rrk_len: Length of @fils_erp_rrk in octets.
  * @want_1x: indicates user-space supports and wants to use 802.1X driver
  *	offload of 4-way handshake.
  * @edmg: define the EDMG channels.
- *	This may specअगरy multiple channels and bonding options क्रम the driver
+ *	This may specify multiple channels and bonding options for the driver
  *	to choose from, based on BSS configuration.
  */
-काष्ठा cfg80211_connect_params अणु
-	काष्ठा ieee80211_channel *channel;
-	काष्ठा ieee80211_channel *channel_hपूर्णांक;
-	स्थिर u8 *bssid;
-	स्थिर u8 *bssid_hपूर्णांक;
-	स्थिर u8 *ssid;
-	माप_प्रकार ssid_len;
-	क्रमागत nl80211_auth_type auth_type;
-	स्थिर u8 *ie;
-	माप_प्रकार ie_len;
+struct cfg80211_connect_params {
+	struct ieee80211_channel *channel;
+	struct ieee80211_channel *channel_hint;
+	const u8 *bssid;
+	const u8 *bssid_hint;
+	const u8 *ssid;
+	size_t ssid_len;
+	enum nl80211_auth_type auth_type;
+	const u8 *ie;
+	size_t ie_len;
 	bool privacy;
-	क्रमागत nl80211_mfp mfp;
-	काष्ठा cfg80211_crypto_settings crypto;
-	स्थिर u8 *key;
+	enum nl80211_mfp mfp;
+	struct cfg80211_crypto_settings crypto;
+	const u8 *key;
 	u8 key_len, key_idx;
 	u32 flags;
-	पूर्णांक bg_scan_period;
-	काष्ठा ieee80211_ht_cap ht_capa;
-	काष्ठा ieee80211_ht_cap ht_capa_mask;
-	काष्ठा ieee80211_vht_cap vht_capa;
-	काष्ठा ieee80211_vht_cap vht_capa_mask;
+	int bg_scan_period;
+	struct ieee80211_ht_cap ht_capa;
+	struct ieee80211_ht_cap ht_capa_mask;
+	struct ieee80211_vht_cap vht_capa;
+	struct ieee80211_vht_cap vht_capa_mask;
 	bool pbss;
-	काष्ठा cfg80211_bss_selection bss_select;
-	स्थिर u8 *prev_bssid;
-	स्थिर u8 *fils_erp_username;
-	माप_प्रकार fils_erp_username_len;
-	स्थिर u8 *fils_erp_realm;
-	माप_प्रकार fils_erp_realm_len;
+	struct cfg80211_bss_selection bss_select;
+	const u8 *prev_bssid;
+	const u8 *fils_erp_username;
+	size_t fils_erp_username_len;
+	const u8 *fils_erp_realm;
+	size_t fils_erp_realm_len;
 	u16 fils_erp_next_seq_num;
-	स्थिर u8 *fils_erp_rrk;
-	माप_प्रकार fils_erp_rrk_len;
+	const u8 *fils_erp_rrk;
+	size_t fils_erp_rrk_len;
 	bool want_1x;
-	काष्ठा ieee80211_edmg edmg;
-पूर्ण;
+	struct ieee80211_edmg edmg;
+};
 
 /**
- * क्रमागत cfg80211_connect_params_changed - Connection parameters being updated
+ * enum cfg80211_connect_params_changed - Connection parameters being updated
  *
- * This क्रमागत provides inक्रमmation of all connect parameters that
+ * This enum provides information of all connect parameters that
  * have to be updated as part of update_connect_params() call.
  *
  * @UPDATE_ASSOC_IES: Indicates whether association request IEs are updated
@@ -2868,16 +2867,16 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
  *	username, erp sequence number and rrk) are updated
  * @UPDATE_AUTH_TYPE: Indicates that authentication type is updated
  */
-क्रमागत cfg80211_connect_params_changed अणु
+enum cfg80211_connect_params_changed {
 	UPDATE_ASSOC_IES		= BIT(0),
 	UPDATE_FILS_ERP_INFO		= BIT(1),
 	UPDATE_AUTH_TYPE		= BIT(2),
-पूर्ण;
+};
 
 /**
- * क्रमागत wiphy_params_flags - set_wiphy_params bitfield values
- * @WIPHY_PARAM_RETRY_SHORT: wiphy->retry_लघु has changed
- * @WIPHY_PARAM_RETRY_LONG: wiphy->retry_दीर्घ has changed
+ * enum wiphy_params_flags - set_wiphy_params bitfield values
+ * @WIPHY_PARAM_RETRY_SHORT: wiphy->retry_short has changed
+ * @WIPHY_PARAM_RETRY_LONG: wiphy->retry_long has changed
  * @WIPHY_PARAM_FRAG_THRESHOLD: wiphy->frag_threshold has changed
  * @WIPHY_PARAM_RTS_THRESHOLD: wiphy->rts_threshold has changed
  * @WIPHY_PARAM_COVERAGE_CLASS: coverage class changed
@@ -2886,7 +2885,7 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
  * @WIPHY_PARAM_TXQ_MEMORY_LIMIT: TXQ memory limit has been changed
  * @WIPHY_PARAM_TXQ_QUANTUM: TXQ scheduler quantum
  */
-क्रमागत wiphy_params_flags अणु
+enum wiphy_params_flags {
 	WIPHY_PARAM_RETRY_SHORT		= 1 << 0,
 	WIPHY_PARAM_RETRY_LONG		= 1 << 1,
 	WIPHY_PARAM_FRAG_THRESHOLD	= 1 << 2,
@@ -2896,80 +2895,80 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
 	WIPHY_PARAM_TXQ_LIMIT		= 1 << 6,
 	WIPHY_PARAM_TXQ_MEMORY_LIMIT	= 1 << 7,
 	WIPHY_PARAM_TXQ_QUANTUM		= 1 << 8,
-पूर्ण;
+};
 
-#घोषणा IEEE80211_DEFAULT_AIRTIME_WEIGHT	256
+#define IEEE80211_DEFAULT_AIRTIME_WEIGHT	256
 
-/* The per TXQ device queue limit in airसमय */
-#घोषणा IEEE80211_DEFAULT_AQL_TXQ_LIMIT_L	5000
-#घोषणा IEEE80211_DEFAULT_AQL_TXQ_LIMIT_H	12000
+/* The per TXQ device queue limit in airtime */
+#define IEEE80211_DEFAULT_AQL_TXQ_LIMIT_L	5000
+#define IEEE80211_DEFAULT_AQL_TXQ_LIMIT_H	12000
 
-/* The per पूर्णांकerface airसमय threshold to चयन to lower queue limit */
-#घोषणा IEEE80211_AQL_THRESHOLD			24000
+/* The per interface airtime threshold to switch to lower queue limit */
+#define IEEE80211_AQL_THRESHOLD			24000
 
 /**
- * काष्ठा cfg80211_pmksa - PMK Security Association
+ * struct cfg80211_pmksa - PMK Security Association
  *
- * This काष्ठाure is passed to the set/del_pmksa() method क्रम PMKSA
+ * This structure is passed to the set/del_pmksa() method for PMKSA
  * caching.
  *
- * @bssid: The AP's BSSID (may be %शून्य).
- * @pmkid: The identअगरier to refer a PMKSA.
- * @pmk: The PMK क्रम the PMKSA identअगरied by @pmkid. This is used क्रम key
- *	derivation by a FILS STA. Otherwise, %शून्य.
- * @pmk_len: Length of the @pmk. The length of @pmk can dअगरfer depending on
+ * @bssid: The AP's BSSID (may be %NULL).
+ * @pmkid: The identifier to refer a PMKSA.
+ * @pmk: The PMK for the PMKSA identified by @pmkid. This is used for key
+ *	derivation by a FILS STA. Otherwise, %NULL.
+ * @pmk_len: Length of the @pmk. The length of @pmk can differ depending on
  *	the hash algorithm used to generate this.
- * @ssid: SSID to specअगरy the ESS within which a PMKSA is valid when using FILS
- *	cache identअगरier (may be %शून्य).
+ * @ssid: SSID to specify the ESS within which a PMKSA is valid when using FILS
+ *	cache identifier (may be %NULL).
  * @ssid_len: Length of the @ssid in octets.
- * @cache_id: 2-octet cache identअगरier advertized by a FILS AP identअगरying the
- *	scope of PMKSA. This is valid only अगर @ssid_len is non-zero (may be
- *	%शून्य).
- * @pmk_lअगरeसमय: Maximum lअगरeसमय क्रम PMKSA in seconds
- *	(करोt11RSNAConfigPMKLअगरeसमय) or 0 अगर not specअगरied.
- *	The configured PMKSA must not be used क्रम PMKSA caching after
+ * @cache_id: 2-octet cache identifier advertized by a FILS AP identifying the
+ *	scope of PMKSA. This is valid only if @ssid_len is non-zero (may be
+ *	%NULL).
+ * @pmk_lifetime: Maximum lifetime for PMKSA in seconds
+ *	(dot11RSNAConfigPMKLifetime) or 0 if not specified.
+ *	The configured PMKSA must not be used for PMKSA caching after
  *	expiration and any keys derived from this PMK become invalid on
- *	expiration, i.e., the current association must be dropped अगर the PMK
- *	used क्रम it expires.
- * @pmk_reauth_threshold: Threshold समय क्रम reauthentication (percentage of
- *	PMK lअगरeसमय, करोt11RSNAConfigPMKReauthThreshold) or 0 अगर not specअगरied.
+ *	expiration, i.e., the current association must be dropped if the PMK
+ *	used for it expires.
+ * @pmk_reauth_threshold: Threshold time for reauthentication (percentage of
+ *	PMK lifetime, dot11RSNAConfigPMKReauthThreshold) or 0 if not specified.
  *	Drivers are expected to trigger a full authentication instead of using
- *	this PMKSA क्रम caching when reassociating to a new BSS after this
- *	threshold to generate a new PMK beक्रमe the current one expires.
+ *	this PMKSA for caching when reassociating to a new BSS after this
+ *	threshold to generate a new PMK before the current one expires.
  */
-काष्ठा cfg80211_pmksa अणु
-	स्थिर u8 *bssid;
-	स्थिर u8 *pmkid;
-	स्थिर u8 *pmk;
-	माप_प्रकार pmk_len;
-	स्थिर u8 *ssid;
-	माप_प्रकार ssid_len;
-	स्थिर u8 *cache_id;
-	u32 pmk_lअगरeसमय;
+struct cfg80211_pmksa {
+	const u8 *bssid;
+	const u8 *pmkid;
+	const u8 *pmk;
+	size_t pmk_len;
+	const u8 *ssid;
+	size_t ssid_len;
+	const u8 *cache_id;
+	u32 pmk_lifetime;
 	u8 pmk_reauth_threshold;
-पूर्ण;
+};
 
 /**
- * काष्ठा cfg80211_pkt_pattern - packet pattern
- * @mask: biपंचांगask where to match pattern and where to ignore bytes,
- *	one bit per byte, in same क्रमmat as nl80211
- * @pattern: bytes to match where biपंचांगask is 1
+ * struct cfg80211_pkt_pattern - packet pattern
+ * @mask: bitmask where to match pattern and where to ignore bytes,
+ *	one bit per byte, in same format as nl80211
+ * @pattern: bytes to match where bitmask is 1
  * @pattern_len: length of pattern (in bytes)
  * @pkt_offset: packet offset (in bytes)
  *
  * Internal note: @mask and @pattern are allocated in one chunk of
- * memory, मुक्त @mask only!
+ * memory, free @mask only!
  */
-काष्ठा cfg80211_pkt_pattern अणु
-	स्थिर u8 *mask, *pattern;
-	पूर्णांक pattern_len;
-	पूर्णांक pkt_offset;
-पूर्ण;
+struct cfg80211_pkt_pattern {
+	const u8 *mask, *pattern;
+	int pattern_len;
+	int pkt_offset;
+};
 
 /**
- * काष्ठा cfg80211_wowlan_tcp - TCP connection parameters
+ * struct cfg80211_wowlan_tcp - TCP connection parameters
  *
- * @sock: (पूर्णांकernal) socket क्रम source port allocation
+ * @sock: (internal) socket for source port allocation
  * @src: source IP address
  * @dst: destination IP address
  * @dst_mac: destination MAC address
@@ -2978,149 +2977,149 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
  * @payload_len: data payload length
  * @payload: data payload buffer
  * @payload_seq: payload sequence stamping configuration
- * @data_पूर्णांकerval: पूर्णांकerval at which to send data packets
+ * @data_interval: interval at which to send data packets
  * @wake_len: wakeup payload match length
  * @wake_data: wakeup payload match data
  * @wake_mask: wakeup payload match mask
  * @tokens_size: length of the tokens buffer
  * @payload_tok: payload token usage configuration
  */
-काष्ठा cfg80211_wowlan_tcp अणु
-	काष्ठा socket *sock;
+struct cfg80211_wowlan_tcp {
+	struct socket *sock;
 	__be32 src, dst;
 	u16 src_port, dst_port;
 	u8 dst_mac[ETH_ALEN];
-	पूर्णांक payload_len;
-	स्थिर u8 *payload;
-	काष्ठा nl80211_wowlan_tcp_data_seq payload_seq;
-	u32 data_पूर्णांकerval;
+	int payload_len;
+	const u8 *payload;
+	struct nl80211_wowlan_tcp_data_seq payload_seq;
+	u32 data_interval;
 	u32 wake_len;
-	स्थिर u8 *wake_data, *wake_mask;
+	const u8 *wake_data, *wake_mask;
 	u32 tokens_size;
 	/* must be last, variable member */
-	काष्ठा nl80211_wowlan_tcp_data_token payload_tok;
-पूर्ण;
+	struct nl80211_wowlan_tcp_data_token payload_tok;
+};
 
 /**
- * काष्ठा cfg80211_wowlan - Wake on Wireless-LAN support info
+ * struct cfg80211_wowlan - Wake on Wireless-LAN support info
  *
- * This काष्ठाure defines the enabled WoWLAN triggers क्रम the device.
- * @any: wake up on any activity -- special trigger अगर device जारीs
+ * This structure defines the enabled WoWLAN triggers for the device.
+ * @any: wake up on any activity -- special trigger if device continues
  *	operating as normal during suspend
- * @disconnect: wake up अगर getting disconnected
+ * @disconnect: wake up if getting disconnected
  * @magic_pkt: wake up on receiving magic packet
  * @patterns: wake up on receiving packet matching a pattern
  * @n_patterns: number of patterns
  * @gtk_rekey_failure: wake up on GTK rekey failure
  * @eap_identity_req: wake up on EAP identity request packet
  * @four_way_handshake: wake up on 4-way handshake
- * @rfसमाप्त_release: wake up when rfसमाप्त is released
+ * @rfkill_release: wake up when rfkill is released
  * @tcp: TCP connection establishment/wakeup parameters, see nl80211.h.
- *	शून्य अगर not configured.
- * @nd_config: configuration क्रम the scan to be used क्रम net detect wake.
+ *	NULL if not configured.
+ * @nd_config: configuration for the scan to be used for net detect wake.
  */
-काष्ठा cfg80211_wowlan अणु
+struct cfg80211_wowlan {
 	bool any, disconnect, magic_pkt, gtk_rekey_failure,
 	     eap_identity_req, four_way_handshake,
-	     rfसमाप्त_release;
-	काष्ठा cfg80211_pkt_pattern *patterns;
-	काष्ठा cfg80211_wowlan_tcp *tcp;
-	पूर्णांक n_patterns;
-	काष्ठा cfg80211_sched_scan_request *nd_config;
-पूर्ण;
+	     rfkill_release;
+	struct cfg80211_pkt_pattern *patterns;
+	struct cfg80211_wowlan_tcp *tcp;
+	int n_patterns;
+	struct cfg80211_sched_scan_request *nd_config;
+};
 
 /**
- * काष्ठा cfg80211_coalesce_rules - Coalesce rule parameters
+ * struct cfg80211_coalesce_rules - Coalesce rule parameters
  *
- * This काष्ठाure defines coalesce rule क्रम the device.
+ * This structure defines coalesce rule for the device.
  * @delay: maximum coalescing delay in msecs.
- * @condition: condition क्रम packet coalescence.
- *	see &क्रमागत nl80211_coalesce_condition.
+ * @condition: condition for packet coalescence.
+ *	see &enum nl80211_coalesce_condition.
  * @patterns: array of packet patterns
  * @n_patterns: number of patterns
  */
-काष्ठा cfg80211_coalesce_rules अणु
-	पूर्णांक delay;
-	क्रमागत nl80211_coalesce_condition condition;
-	काष्ठा cfg80211_pkt_pattern *patterns;
-	पूर्णांक n_patterns;
-पूर्ण;
+struct cfg80211_coalesce_rules {
+	int delay;
+	enum nl80211_coalesce_condition condition;
+	struct cfg80211_pkt_pattern *patterns;
+	int n_patterns;
+};
 
 /**
- * काष्ठा cfg80211_coalesce - Packet coalescing settings
+ * struct cfg80211_coalesce - Packet coalescing settings
  *
- * This काष्ठाure defines coalescing settings.
+ * This structure defines coalescing settings.
  * @rules: array of coalesce rules
  * @n_rules: number of rules
  */
-काष्ठा cfg80211_coalesce अणु
-	काष्ठा cfg80211_coalesce_rules *rules;
-	पूर्णांक n_rules;
-पूर्ण;
+struct cfg80211_coalesce {
+	struct cfg80211_coalesce_rules *rules;
+	int n_rules;
+};
 
 /**
- * काष्ठा cfg80211_wowlan_nd_match - inक्रमmation about the match
+ * struct cfg80211_wowlan_nd_match - information about the match
  *
  * @ssid: SSID of the match that triggered the wake up
  * @n_channels: Number of channels where the match occurred.  This
- *	value may be zero अगर the driver can't report the channels.
+ *	value may be zero if the driver can't report the channels.
  * @channels: center frequencies of the channels where a match
  *	occurred (in MHz)
  */
-काष्ठा cfg80211_wowlan_nd_match अणु
-	काष्ठा cfg80211_ssid ssid;
-	पूर्णांक n_channels;
+struct cfg80211_wowlan_nd_match {
+	struct cfg80211_ssid ssid;
+	int n_channels;
 	u32 channels[];
-पूर्ण;
+};
 
 /**
- * काष्ठा cfg80211_wowlan_nd_info - net detect wake up inक्रमmation
+ * struct cfg80211_wowlan_nd_info - net detect wake up information
  *
- * @n_matches: Number of match inक्रमmation instances provided in
- *	@matches.  This value may be zero अगर the driver can't provide
- *	match inक्रमmation.
- * @matches: Array of poपूर्णांकers to matches containing inक्रमmation about
+ * @n_matches: Number of match information instances provided in
+ *	@matches.  This value may be zero if the driver can't provide
+ *	match information.
+ * @matches: Array of pointers to matches containing information about
  *	the matches that triggered the wake up.
  */
-काष्ठा cfg80211_wowlan_nd_info अणु
-	पूर्णांक n_matches;
-	काष्ठा cfg80211_wowlan_nd_match *matches[];
-पूर्ण;
+struct cfg80211_wowlan_nd_info {
+	int n_matches;
+	struct cfg80211_wowlan_nd_match *matches[];
+};
 
 /**
- * काष्ठा cfg80211_wowlan_wakeup - wakeup report
+ * struct cfg80211_wowlan_wakeup - wakeup report
  * @disconnect: woke up by getting disconnected
  * @magic_pkt: woke up by receiving magic packet
  * @gtk_rekey_failure: woke up by GTK rekey failure
  * @eap_identity_req: woke up by EAP identity request packet
  * @four_way_handshake: woke up by 4-way handshake
- * @rfसमाप्त_release: woke up by rfसमाप्त being released
- * @pattern_idx: pattern that caused wakeup, -1 अगर not due to pattern
+ * @rfkill_release: woke up by rfkill being released
+ * @pattern_idx: pattern that caused wakeup, -1 if not due to pattern
  * @packet_present_len: copied wakeup packet data
  * @packet_len: original wakeup packet length
- * @packet: The packet causing the wakeup, अगर any.
+ * @packet: The packet causing the wakeup, if any.
  * @packet_80211:  For pattern match, magic packet and other data
- *	frame triggers an 802.3 frame should be reported, क्रम
+ *	frame triggers an 802.3 frame should be reported, for
  *	disconnect due to deauth 802.11 frame. This indicates which
  *	it is.
  * @tcp_match: TCP wakeup packet received
  * @tcp_connlost: TCP connection lost or failed to establish
  * @tcp_nomoretokens: TCP data ran out of tokens
- * @net_detect: अगर not %शून्य, woke up because of net detect
+ * @net_detect: if not %NULL, woke up because of net detect
  */
-काष्ठा cfg80211_wowlan_wakeup अणु
+struct cfg80211_wowlan_wakeup {
 	bool disconnect, magic_pkt, gtk_rekey_failure,
 	     eap_identity_req, four_way_handshake,
-	     rfसमाप्त_release, packet_80211,
+	     rfkill_release, packet_80211,
 	     tcp_match, tcp_connlost, tcp_nomoretokens;
 	s32 pattern_idx;
 	u32 packet_present_len, packet_len;
-	स्थिर व्योम *packet;
-	काष्ठा cfg80211_wowlan_nd_info *net_detect;
-पूर्ण;
+	const void *packet;
+	struct cfg80211_wowlan_nd_info *net_detect;
+};
 
 /**
- * काष्ठा cfg80211_gtk_rekey_data - rekey data
+ * struct cfg80211_gtk_rekey_data - rekey data
  * @kek: key encryption key (@kek_len bytes)
  * @kck: key confirmation key (@kck_len bytes)
  * @replay_ctr: replay counter (NL80211_REPLAY_CTR_LEN bytes)
@@ -3128,153 +3127,153 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
  * @kck_len length of kck
  * @akm: akm (oui, id)
  */
-काष्ठा cfg80211_gtk_rekey_data अणु
-	स्थिर u8 *kek, *kck, *replay_ctr;
+struct cfg80211_gtk_rekey_data {
+	const u8 *kek, *kck, *replay_ctr;
 	u32 akm;
 	u8 kek_len, kck_len;
-पूर्ण;
+};
 
 /**
- * काष्ठा cfg80211_update_ft_ies_params - FT IE Inक्रमmation
+ * struct cfg80211_update_ft_ies_params - FT IE Information
  *
- * This काष्ठाure provides inक्रमmation needed to update the fast transition IE
+ * This structure provides information needed to update the fast transition IE
  *
- * @md: The Mobility Doमुख्य ID, 2 Octet value
+ * @md: The Mobility Domain ID, 2 Octet value
  * @ie: Fast Transition IEs
  * @ie_len: Length of ft_ie in octets
  */
-काष्ठा cfg80211_update_ft_ies_params अणु
+struct cfg80211_update_ft_ies_params {
 	u16 md;
-	स्थिर u8 *ie;
-	माप_प्रकार ie_len;
-पूर्ण;
+	const u8 *ie;
+	size_t ie_len;
+};
 
 /**
- * काष्ठा cfg80211_mgmt_tx_params - mgmt tx parameters
+ * struct cfg80211_mgmt_tx_params - mgmt tx parameters
  *
- * This काष्ठाure provides inक्रमmation needed to transmit a mgmt frame
+ * This structure provides information needed to transmit a mgmt frame
  *
  * @chan: channel to use
  * @offchan: indicates wether off channel operation is required
- * @रुको: duration क्रम ROC
+ * @wait: duration for ROC
  * @buf: buffer to transmit
  * @len: buffer length
- * @no_cck: करोn't use cck rates क्रम this frame
- * @करोnt_रुको_क्रम_ack: tells the low level not to रुको क्रम an ack
+ * @no_cck: don't use cck rates for this frame
+ * @dont_wait_for_ack: tells the low level not to wait for an ack
  * @n_csa_offsets: length of csa_offsets array
  * @csa_offsets: array of all the csa offsets in the frame
  */
-काष्ठा cfg80211_mgmt_tx_params अणु
-	काष्ठा ieee80211_channel *chan;
+struct cfg80211_mgmt_tx_params {
+	struct ieee80211_channel *chan;
 	bool offchan;
-	अचिन्हित पूर्णांक रुको;
-	स्थिर u8 *buf;
-	माप_प्रकार len;
+	unsigned int wait;
+	const u8 *buf;
+	size_t len;
 	bool no_cck;
-	bool करोnt_रुको_क्रम_ack;
-	पूर्णांक n_csa_offsets;
-	स्थिर u16 *csa_offsets;
-पूर्ण;
+	bool dont_wait_for_ack;
+	int n_csa_offsets;
+	const u16 *csa_offsets;
+};
 
 /**
- * काष्ठा cfg80211_dscp_exception - DSCP exception
+ * struct cfg80211_dscp_exception - DSCP exception
  *
- * @dscp: DSCP value that करोes not adhere to the user priority range definition
- * @up: user priority value to which the corresponding DSCP value beदीर्घs
+ * @dscp: DSCP value that does not adhere to the user priority range definition
+ * @up: user priority value to which the corresponding DSCP value belongs
  */
-काष्ठा cfg80211_dscp_exception अणु
+struct cfg80211_dscp_exception {
 	u8 dscp;
 	u8 up;
-पूर्ण;
+};
 
 /**
- * काष्ठा cfg80211_dscp_range - DSCP range definition क्रम user priority
+ * struct cfg80211_dscp_range - DSCP range definition for user priority
  *
  * @low: lowest DSCP value of this user priority range, inclusive
  * @high: highest DSCP value of this user priority range, inclusive
  */
-काष्ठा cfg80211_dscp_range अणु
+struct cfg80211_dscp_range {
 	u8 low;
 	u8 high;
-पूर्ण;
+};
 
 /* QoS Map Set element length defined in IEEE Std 802.11-2012, 8.4.2.97 */
-#घोषणा IEEE80211_QOS_MAP_MAX_EX	21
-#घोषणा IEEE80211_QOS_MAP_LEN_MIN	16
-#घोषणा IEEE80211_QOS_MAP_LEN_MAX \
+#define IEEE80211_QOS_MAP_MAX_EX	21
+#define IEEE80211_QOS_MAP_LEN_MIN	16
+#define IEEE80211_QOS_MAP_LEN_MAX \
 	(IEEE80211_QOS_MAP_LEN_MIN + 2 * IEEE80211_QOS_MAP_MAX_EX)
 
 /**
- * काष्ठा cfg80211_qos_map - QoS Map Inक्रमmation
+ * struct cfg80211_qos_map - QoS Map Information
  *
- * This काष्ठा defines the Interworking QoS map setting क्रम DSCP values
+ * This struct defines the Interworking QoS map setting for DSCP values
  *
  * @num_des: number of DSCP exceptions (0..21)
  * @dscp_exception: optionally up to maximum of 21 DSCP exceptions from
  *	the user priority DSCP range definition
- * @up: DSCP range definition क्रम a particular user priority
+ * @up: DSCP range definition for a particular user priority
  */
-काष्ठा cfg80211_qos_map अणु
+struct cfg80211_qos_map {
 	u8 num_des;
-	काष्ठा cfg80211_dscp_exception dscp_exception[IEEE80211_QOS_MAP_MAX_EX];
-	काष्ठा cfg80211_dscp_range up[8];
-पूर्ण;
+	struct cfg80211_dscp_exception dscp_exception[IEEE80211_QOS_MAP_MAX_EX];
+	struct cfg80211_dscp_range up[8];
+};
 
 /**
- * काष्ठा cfg80211_nan_conf - न_अंक configuration
+ * struct cfg80211_nan_conf - NAN configuration
  *
- * This काष्ठा defines न_अंक configuration parameters
+ * This struct defines NAN configuration parameters
  *
  * @master_pref: master preference (1 - 255)
- * @bands: operating bands, a biपंचांगap of &क्रमागत nl80211_band values.
- *	For instance, क्रम NL80211_BAND_2GHZ, bit 0 would be set
+ * @bands: operating bands, a bitmap of &enum nl80211_band values.
+ *	For instance, for NL80211_BAND_2GHZ, bit 0 would be set
  *	(i.e. BIT(NL80211_BAND_2GHZ)).
  */
-काष्ठा cfg80211_nan_conf अणु
+struct cfg80211_nan_conf {
 	u8 master_pref;
 	u8 bands;
-पूर्ण;
+};
 
 /**
- * क्रमागत cfg80211_nan_conf_changes - indicates changed fields in न_अंक
+ * enum cfg80211_nan_conf_changes - indicates changed fields in NAN
  * configuration
  *
- * @CFG80211_न_अंक_CONF_CHANGED_PREF: master preference
- * @CFG80211_न_अंक_CONF_CHANGED_BANDS: operating bands
+ * @CFG80211_NAN_CONF_CHANGED_PREF: master preference
+ * @CFG80211_NAN_CONF_CHANGED_BANDS: operating bands
  */
-क्रमागत cfg80211_nan_conf_changes अणु
-	CFG80211_न_अंक_CONF_CHANGED_PREF = BIT(0),
-	CFG80211_न_अंक_CONF_CHANGED_BANDS = BIT(1),
-पूर्ण;
+enum cfg80211_nan_conf_changes {
+	CFG80211_NAN_CONF_CHANGED_PREF = BIT(0),
+	CFG80211_NAN_CONF_CHANGED_BANDS = BIT(1),
+};
 
 /**
- * काष्ठा cfg80211_nan_func_filter - a न_अंक function Rx / Tx filter
+ * struct cfg80211_nan_func_filter - a NAN function Rx / Tx filter
  *
  * @filter: the content of the filter
  * @len: the length of the filter
  */
-काष्ठा cfg80211_nan_func_filter अणु
-	स्थिर u8 *filter;
+struct cfg80211_nan_func_filter {
+	const u8 *filter;
 	u8 len;
-पूर्ण;
+};
 
 /**
- * काष्ठा cfg80211_nan_func - a न_अंक function
+ * struct cfg80211_nan_func - a NAN function
  *
- * @type: &क्रमागत nl80211_nan_function_type
+ * @type: &enum nl80211_nan_function_type
  * @service_id: the service ID of the function
  * @publish_type: &nl80211_nan_publish_type
- * @बंद_range: अगर true, the range should be limited. Threshold is
- *	implementation specअगरic.
- * @publish_bcast: अगर true, the solicited publish should be broadcasted
- * @subscribe_active: अगर true, the subscribe is active
- * @followup_id: the instance ID क्रम follow up
- * @followup_reqid: the requestor instance ID क्रम follow up
+ * @close_range: if true, the range should be limited. Threshold is
+ *	implementation specific.
+ * @publish_bcast: if true, the solicited publish should be broadcasted
+ * @subscribe_active: if true, the subscribe is active
+ * @followup_id: the instance ID for follow up
+ * @followup_reqid: the requestor instance ID for follow up
  * @followup_dest: MAC address of the recipient of the follow up
- * @ttl: समय to live counter in DW.
- * @serv_spec_info: Service Specअगरic Info
- * @serv_spec_info_len: Service Specअगरic Info length
- * @srf_include: अगर true, SRF is inclusive
+ * @ttl: time to live counter in DW.
+ * @serv_spec_info: Service Specific Info
+ * @serv_spec_info_len: Service Specific Info length
+ * @srf_include: if true, SRF is inclusive
  * @srf_bf: Bloom Filter
  * @srf_bf_len: Bloom Filter length
  * @srf_bf_idx: Bloom Filter index
@@ -3285,86 +3284,86 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
  * @num_rx_filters: length of &rx_filters.
  * @num_tx_filters: length of &tx_filters.
  * @instance_id: driver allocated id of the function.
- * @cookie: unique न_अंक function identअगरier.
+ * @cookie: unique NAN function identifier.
  */
-काष्ठा cfg80211_nan_func अणु
-	क्रमागत nl80211_nan_function_type type;
-	u8 service_id[NL80211_न_अंक_FUNC_SERVICE_ID_LEN];
+struct cfg80211_nan_func {
+	enum nl80211_nan_function_type type;
+	u8 service_id[NL80211_NAN_FUNC_SERVICE_ID_LEN];
 	u8 publish_type;
-	bool बंद_range;
+	bool close_range;
 	bool publish_bcast;
 	bool subscribe_active;
 	u8 followup_id;
 	u8 followup_reqid;
-	काष्ठा mac_address followup_dest;
+	struct mac_address followup_dest;
 	u32 ttl;
-	स्थिर u8 *serv_spec_info;
+	const u8 *serv_spec_info;
 	u8 serv_spec_info_len;
 	bool srf_include;
-	स्थिर u8 *srf_bf;
+	const u8 *srf_bf;
 	u8 srf_bf_len;
 	u8 srf_bf_idx;
-	काष्ठा mac_address *srf_macs;
-	पूर्णांक srf_num_macs;
-	काष्ठा cfg80211_nan_func_filter *rx_filters;
-	काष्ठा cfg80211_nan_func_filter *tx_filters;
+	struct mac_address *srf_macs;
+	int srf_num_macs;
+	struct cfg80211_nan_func_filter *rx_filters;
+	struct cfg80211_nan_func_filter *tx_filters;
 	u8 num_tx_filters;
 	u8 num_rx_filters;
 	u8 instance_id;
 	u64 cookie;
-पूर्ण;
+};
 
 /**
- * काष्ठा cfg80211_pmk_conf - PMK configuration
+ * struct cfg80211_pmk_conf - PMK configuration
  *
  * @aa: authenticator address
  * @pmk_len: PMK length in bytes.
  * @pmk: the PMK material
- * @pmk_r0_name: PMK-R0 Name. शून्य अगर not applicable (i.e., the PMK
- *	is not PMK-R0). When pmk_r0_name is not शून्य, the pmk field
+ * @pmk_r0_name: PMK-R0 Name. NULL if not applicable (i.e., the PMK
+ *	is not PMK-R0). When pmk_r0_name is not NULL, the pmk field
  *	holds PMK-R0.
  */
-काष्ठा cfg80211_pmk_conf अणु
-	स्थिर u8 *aa;
+struct cfg80211_pmk_conf {
+	const u8 *aa;
 	u8 pmk_len;
-	स्थिर u8 *pmk;
-	स्थिर u8 *pmk_r0_name;
-पूर्ण;
+	const u8 *pmk;
+	const u8 *pmk_r0_name;
+};
 
 /**
- * काष्ठा cfg80211_बाह्यal_auth_params - Trigger External authentication.
+ * struct cfg80211_external_auth_params - Trigger External authentication.
  *
- * Commonly used across the बाह्यal auth request and event पूर्णांकerfaces.
+ * Commonly used across the external auth request and event interfaces.
  *
- * @action: action type / trigger क्रम बाह्यal authentication. Only signअगरicant
- *	क्रम the authentication request event पूर्णांकerface (driver to user space).
+ * @action: action type / trigger for external authentication. Only significant
+ *	for the authentication request event interface (driver to user space).
  * @bssid: BSSID of the peer with which the authentication has
  *	to happen. Used by both the authentication request event and
- *	authentication response command पूर्णांकerface.
+ *	authentication response command interface.
  * @ssid: SSID of the AP.  Used by both the authentication request event and
- *	authentication response command पूर्णांकerface.
+ *	authentication response command interface.
  * @key_mgmt_suite: AKM suite of the respective authentication. Used by the
- *	authentication request event पूर्णांकerface.
- * @status: status code, %WLAN_STATUS_SUCCESS क्रम successful authentication,
- *	use %WLAN_STATUS_UNSPECIFIED_FAILURE अगर user space cannot give you
- *	the real status code क्रम failures. Used only क्रम the authentication
- *	response command पूर्णांकerface (user space to driver).
- * @pmkid: The identअगरier to refer a PMKSA.
+ *	authentication request event interface.
+ * @status: status code, %WLAN_STATUS_SUCCESS for successful authentication,
+ *	use %WLAN_STATUS_UNSPECIFIED_FAILURE if user space cannot give you
+ *	the real status code for failures. Used only for the authentication
+ *	response command interface (user space to driver).
+ * @pmkid: The identifier to refer a PMKSA.
  */
-काष्ठा cfg80211_बाह्यal_auth_params अणु
-	क्रमागत nl80211_बाह्यal_auth_action action;
+struct cfg80211_external_auth_params {
+	enum nl80211_external_auth_action action;
 	u8 bssid[ETH_ALEN] __aligned(2);
-	काष्ठा cfg80211_ssid ssid;
-	अचिन्हित पूर्णांक key_mgmt_suite;
+	struct cfg80211_ssid ssid;
+	unsigned int key_mgmt_suite;
 	u16 status;
-	स्थिर u8 *pmkid;
-पूर्ण;
+	const u8 *pmkid;
+};
 
 /**
- * काष्ठा cfg80211_fपंचांग_responder_stats - FTM responder statistics
+ * struct cfg80211_ftm_responder_stats - FTM responder statistics
  *
- * @filled: bitflag of flags using the bits of &क्रमागत nl80211_fपंचांग_stats to
- *	indicate the relevant values in this काष्ठा क्रम them
+ * @filled: bitflag of flags using the bits of &enum nl80211_ftm_stats to
+ *	indicate the relevant values in this struct for them
  * @success_num: number of FTM sessions in which all frames were successfully
  *	answered
  * @partial_num: number of FTM sessions in which part of frames were
@@ -3373,15 +3372,15 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
  * @asap_num: number of ASAP FTM sessions
  * @non_asap_num: number of  non-ASAP FTM sessions
  * @total_duration_ms: total sessions durations - gives an indication
- *	of how much समय the responder was busy
+ *	of how much time the responder was busy
  * @unknown_triggers_num: number of unknown FTM triggers - triggers from
  *	initiators that didn't finish successfully the negotiation phase with
  *	the responder
  * @reschedule_requests_num: number of FTM reschedule requests - initiator asks
- *	क्रम a new scheduling although it alपढ़ोy has scheduled FTM slot
- * @out_of_winकरोw_triggers_num: total FTM triggers out of scheduled winकरोw
+ *	for a new scheduling although it already has scheduled FTM slot
+ * @out_of_window_triggers_num: total FTM triggers out of scheduled window
  */
-काष्ठा cfg80211_fपंचांग_responder_stats अणु
+struct cfg80211_ftm_responder_stats {
 	u32 filled;
 	u32 success_num;
 	u32 partial_num;
@@ -3391,144 +3390,144 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
 	u64 total_duration_ms;
 	u32 unknown_triggers_num;
 	u32 reschedule_requests_num;
-	u32 out_of_winकरोw_triggers_num;
-पूर्ण;
+	u32 out_of_window_triggers_num;
+};
 
 /**
- * काष्ठा cfg80211_pmsr_fपंचांग_result - FTM result
- * @failure_reason: अगर this measurement failed (PMSR status is
+ * struct cfg80211_pmsr_ftm_result - FTM result
+ * @failure_reason: if this measurement failed (PMSR status is
  *	%NL80211_PMSR_STATUS_FAILURE), this gives a more precise
  *	reason than just "failure"
- * @burst_index: अगर reporting partial results, this is the index
+ * @burst_index: if reporting partial results, this is the index
  *	in [0 .. num_bursts-1] of the burst that's being reported
- * @num_fपंचांगr_attempts: number of FTM request frames transmitted
- * @num_fपंचांगr_successes: number of FTM request frames acked
- * @busy_retry_समय: अगर failure_reason is %NL80211_PMSR_FTM_FAILURE_PEER_BUSY,
+ * @num_ftmr_attempts: number of FTM request frames transmitted
+ * @num_ftmr_successes: number of FTM request frames acked
+ * @busy_retry_time: if failure_reason is %NL80211_PMSR_FTM_FAILURE_PEER_BUSY,
  *	fill this to indicate in how many seconds a retry is deemed possible
  *	by the responder
  * @num_bursts_exp: actual number of bursts exponent negotiated
  * @burst_duration: actual burst duration negotiated
- * @fपंचांगs_per_burst: actual FTMs per burst negotiated
- * @lci_len: length of LCI inक्रमmation (अगर present)
- * @civicloc_len: length of civic location inक्रमmation (अगर present)
- * @lci: LCI data (may be %शून्य)
- * @civicloc: civic location data (may be %शून्य)
+ * @ftms_per_burst: actual FTMs per burst negotiated
+ * @lci_len: length of LCI information (if present)
+ * @civicloc_len: length of civic location information (if present)
+ * @lci: LCI data (may be %NULL)
+ * @civicloc: civic location data (may be %NULL)
  * @rssi_avg: average RSSI over FTM action frames reported
- * @rssi_spपढ़ो: spपढ़ो of the RSSI over FTM action frames reported
- * @tx_rate: bitrate क्रम transmitted FTM action frame response
+ * @rssi_spread: spread of the RSSI over FTM action frames reported
+ * @tx_rate: bitrate for transmitted FTM action frame response
  * @rx_rate: bitrate of received FTM action frame
  * @rtt_avg: average of RTTs measured (must have either this or @dist_avg)
  * @rtt_variance: variance of RTTs measured (note that standard deviation is
  *	the square root of the variance)
- * @rtt_spपढ़ो: spपढ़ो of the RTTs measured
+ * @rtt_spread: spread of the RTTs measured
  * @dist_avg: average of distances (mm) measured
  *	(must have either this or @rtt_avg)
  * @dist_variance: variance of distances measured (see also @rtt_variance)
- * @dist_spपढ़ो: spपढ़ो of distances measured (see also @rtt_spपढ़ो)
- * @num_fपंचांगr_attempts_valid: @num_fपंचांगr_attempts is valid
- * @num_fपंचांगr_successes_valid: @num_fपंचांगr_successes is valid
+ * @dist_spread: spread of distances measured (see also @rtt_spread)
+ * @num_ftmr_attempts_valid: @num_ftmr_attempts is valid
+ * @num_ftmr_successes_valid: @num_ftmr_successes is valid
  * @rssi_avg_valid: @rssi_avg is valid
- * @rssi_spपढ़ो_valid: @rssi_spपढ़ो is valid
+ * @rssi_spread_valid: @rssi_spread is valid
  * @tx_rate_valid: @tx_rate is valid
  * @rx_rate_valid: @rx_rate is valid
  * @rtt_avg_valid: @rtt_avg is valid
  * @rtt_variance_valid: @rtt_variance is valid
- * @rtt_spपढ़ो_valid: @rtt_spपढ़ो is valid
+ * @rtt_spread_valid: @rtt_spread is valid
  * @dist_avg_valid: @dist_avg is valid
  * @dist_variance_valid: @dist_variance is valid
- * @dist_spपढ़ो_valid: @dist_spपढ़ो is valid
+ * @dist_spread_valid: @dist_spread is valid
  */
-काष्ठा cfg80211_pmsr_fपंचांग_result अणु
-	स्थिर u8 *lci;
-	स्थिर u8 *civicloc;
-	अचिन्हित पूर्णांक lci_len;
-	अचिन्हित पूर्णांक civicloc_len;
-	क्रमागत nl80211_peer_measurement_fपंचांग_failure_reasons failure_reason;
-	u32 num_fपंचांगr_attempts, num_fपंचांगr_successes;
+struct cfg80211_pmsr_ftm_result {
+	const u8 *lci;
+	const u8 *civicloc;
+	unsigned int lci_len;
+	unsigned int civicloc_len;
+	enum nl80211_peer_measurement_ftm_failure_reasons failure_reason;
+	u32 num_ftmr_attempts, num_ftmr_successes;
 	s16 burst_index;
-	u8 busy_retry_समय;
+	u8 busy_retry_time;
 	u8 num_bursts_exp;
 	u8 burst_duration;
-	u8 fपंचांगs_per_burst;
+	u8 ftms_per_burst;
 	s32 rssi_avg;
-	s32 rssi_spपढ़ो;
-	काष्ठा rate_info tx_rate, rx_rate;
+	s32 rssi_spread;
+	struct rate_info tx_rate, rx_rate;
 	s64 rtt_avg;
 	s64 rtt_variance;
-	s64 rtt_spपढ़ो;
+	s64 rtt_spread;
 	s64 dist_avg;
 	s64 dist_variance;
-	s64 dist_spपढ़ो;
+	s64 dist_spread;
 
-	u16 num_fपंचांगr_attempts_valid:1,
-	    num_fपंचांगr_successes_valid:1,
+	u16 num_ftmr_attempts_valid:1,
+	    num_ftmr_successes_valid:1,
 	    rssi_avg_valid:1,
-	    rssi_spपढ़ो_valid:1,
+	    rssi_spread_valid:1,
 	    tx_rate_valid:1,
 	    rx_rate_valid:1,
 	    rtt_avg_valid:1,
 	    rtt_variance_valid:1,
-	    rtt_spपढ़ो_valid:1,
+	    rtt_spread_valid:1,
 	    dist_avg_valid:1,
 	    dist_variance_valid:1,
-	    dist_spपढ़ो_valid:1;
-पूर्ण;
+	    dist_spread_valid:1;
+};
 
 /**
- * काष्ठा cfg80211_pmsr_result - peer measurement result
+ * struct cfg80211_pmsr_result - peer measurement result
  * @addr: address of the peer
- * @host_समय: host समय (use kसमय_get_bootसमय() adjust to the समय when the
+ * @host_time: host time (use ktime_get_boottime() adjust to the time when the
  *	measurement was made)
- * @ap_tsf: AP's TSF at measurement समय
+ * @ap_tsf: AP's TSF at measurement time
  * @status: status of the measurement
- * @final: अगर reporting partial results, mark this as the last one; अगर not
+ * @final: if reporting partial results, mark this as the last one; if not
  *	reporting partial results always set this flag
  * @ap_tsf_valid: indicates the @ap_tsf value is valid
  * @type: type of the measurement reported, note that we only support reporting
- *	one type at a समय, but you can report multiple results separately and
- *	they're all aggregated क्रम userspace.
+ *	one type at a time, but you can report multiple results separately and
+ *	they're all aggregated for userspace.
  */
-काष्ठा cfg80211_pmsr_result अणु
-	u64 host_समय, ap_tsf;
-	क्रमागत nl80211_peer_measurement_status status;
+struct cfg80211_pmsr_result {
+	u64 host_time, ap_tsf;
+	enum nl80211_peer_measurement_status status;
 
 	u8 addr[ETH_ALEN];
 
 	u8 final:1,
 	   ap_tsf_valid:1;
 
-	क्रमागत nl80211_peer_measurement_type type;
+	enum nl80211_peer_measurement_type type;
 
-	जोड़ अणु
-		काष्ठा cfg80211_pmsr_fपंचांग_result fपंचांग;
-	पूर्ण;
-पूर्ण;
+	union {
+		struct cfg80211_pmsr_ftm_result ftm;
+	};
+};
 
 /**
- * काष्ठा cfg80211_pmsr_fपंचांग_request_peer - FTM request data
+ * struct cfg80211_pmsr_ftm_request_peer - FTM request data
  * @requested: indicates FTM is requested
  * @preamble: frame preamble to use
  * @burst_period: burst period to use
  * @asap: indicates to use ASAP mode
  * @num_bursts_exp: number of bursts exponent
  * @burst_duration: burst duration
- * @fपंचांगs_per_burst: number of FTMs per burst
- * @fपंचांगr_retries: number of retries क्रम FTM request
- * @request_lci: request LCI inक्रमmation
- * @request_civicloc: request civic location inक्रमmation
- * @trigger_based: use trigger based ranging क्रम the measurement
+ * @ftms_per_burst: number of FTMs per burst
+ * @ftmr_retries: number of retries for FTM request
+ * @request_lci: request LCI information
+ * @request_civicloc: request civic location information
+ * @trigger_based: use trigger based ranging for the measurement
  *		 If neither @trigger_based nor @non_trigger_based is set,
  *		 EDCA based ranging will be used.
- * @non_trigger_based: use non trigger based ranging क्रम the measurement
+ * @non_trigger_based: use non trigger based ranging for the measurement
  *		 If neither @trigger_based nor @non_trigger_based is set,
  *		 EDCA based ranging will be used.
- * @lmr_feedback: negotiate क्रम I2R LMR feedback. Only valid अगर either
+ * @lmr_feedback: negotiate for I2R LMR feedback. Only valid if either
  *	@trigger_based or @non_trigger_based is set.
  *
- * See also nl80211 क्रम the respective attribute करोcumentation.
+ * See also nl80211 for the respective attribute documentation.
  */
-काष्ठा cfg80211_pmsr_fपंचांग_request_peer अणु
-	क्रमागत nl80211_preamble preamble;
+struct cfg80211_pmsr_ftm_request_peer {
+	enum nl80211_preamble preamble;
 	u16 burst_period;
 	u8 requested:1,
 	   asap:1,
@@ -3539,176 +3538,176 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
 	   lmr_feedback:1;
 	u8 num_bursts_exp;
 	u8 burst_duration;
-	u8 fपंचांगs_per_burst;
-	u8 fपंचांगr_retries;
-पूर्ण;
+	u8 ftms_per_burst;
+	u8 ftmr_retries;
+};
 
 /**
- * काष्ठा cfg80211_pmsr_request_peer - peer data क्रम a peer measurement request
+ * struct cfg80211_pmsr_request_peer - peer data for a peer measurement request
  * @addr: MAC address
  * @chandef: channel to use
  * @report_ap_tsf: report the associated AP's TSF
- * @fपंचांग: FTM data, see &काष्ठा cfg80211_pmsr_fपंचांग_request_peer
+ * @ftm: FTM data, see &struct cfg80211_pmsr_ftm_request_peer
  */
-काष्ठा cfg80211_pmsr_request_peer अणु
+struct cfg80211_pmsr_request_peer {
 	u8 addr[ETH_ALEN];
-	काष्ठा cfg80211_chan_def chandef;
+	struct cfg80211_chan_def chandef;
 	u8 report_ap_tsf:1;
-	काष्ठा cfg80211_pmsr_fपंचांग_request_peer fपंचांग;
-पूर्ण;
+	struct cfg80211_pmsr_ftm_request_peer ftm;
+};
 
 /**
- * काष्ठा cfg80211_pmsr_request - peer measurement request
+ * struct cfg80211_pmsr_request - peer measurement request
  * @cookie: cookie, set by cfg80211
  * @nl_portid: netlink portid - used by cfg80211
- * @drv_data: driver data क्रम this request, अगर required क्रम पातing,
- *	not otherwise मुक्तd or anything by cfg80211
- * @mac_addr: MAC address used क्रम (अक्रमomised) request
- * @mac_addr_mask: MAC address mask used क्रम अक्रमomisation, bits that
- *	are 0 in the mask should be अक्रमomised, bits that are 1 should
+ * @drv_data: driver data for this request, if required for aborting,
+ *	not otherwise freed or anything by cfg80211
+ * @mac_addr: MAC address used for (randomised) request
+ * @mac_addr_mask: MAC address mask used for randomisation, bits that
+ *	are 0 in the mask should be randomised, bits that are 1 should
  *	be taken from the @mac_addr
  * @list: used by cfg80211 to hold on to the request
- * @समयout: समयout (in milliseconds) क्रम the whole operation, अगर
- *	zero it means there's no समयout
- * @n_peers: number of peers to करो measurements with
+ * @timeout: timeout (in milliseconds) for the whole operation, if
+ *	zero it means there's no timeout
+ * @n_peers: number of peers to do measurements with
  * @peers: per-peer measurement request data
  */
-काष्ठा cfg80211_pmsr_request अणु
+struct cfg80211_pmsr_request {
 	u64 cookie;
-	व्योम *drv_data;
+	void *drv_data;
 	u32 n_peers;
 	u32 nl_portid;
 
-	u32 समयout;
+	u32 timeout;
 
 	u8 mac_addr[ETH_ALEN] __aligned(2);
 	u8 mac_addr_mask[ETH_ALEN] __aligned(2);
 
-	काष्ठा list_head list;
+	struct list_head list;
 
-	काष्ठा cfg80211_pmsr_request_peer peers[];
-पूर्ण;
+	struct cfg80211_pmsr_request_peer peers[];
+};
 
 /**
- * काष्ठा cfg80211_update_owe_info - OWE Inक्रमmation
+ * struct cfg80211_update_owe_info - OWE Information
  *
- * This काष्ठाure provides inक्रमmation needed क्रम the drivers to offload OWE
+ * This structure provides information needed for the drivers to offload OWE
  * (Opportunistic Wireless Encryption) processing to the user space.
  *
- * Commonly used across update_owe_info request and event पूर्णांकerfaces.
+ * Commonly used across update_owe_info request and event interfaces.
  *
- * @peer: MAC address of the peer device क्रम which the OWE processing
- *	has to be करोne.
- * @status: status code, %WLAN_STATUS_SUCCESS क्रम successful OWE info
- *	processing, use %WLAN_STATUS_UNSPECIFIED_FAILURE अगर user space
- *	cannot give you the real status code क्रम failures. Used only क्रम
- *	OWE update request command पूर्णांकerface (user space to driver).
- * @ie: IEs obtained from the peer or स्थिरructed by the user space. These are
+ * @peer: MAC address of the peer device for which the OWE processing
+ *	has to be done.
+ * @status: status code, %WLAN_STATUS_SUCCESS for successful OWE info
+ *	processing, use %WLAN_STATUS_UNSPECIFIED_FAILURE if user space
+ *	cannot give you the real status code for failures. Used only for
+ *	OWE update request command interface (user space to driver).
+ * @ie: IEs obtained from the peer or constructed by the user space. These are
  *	the IEs of the remote peer in the event from the host driver and
- *	the स्थिरructed IEs by the user space in the request पूर्णांकerface.
+ *	the constructed IEs by the user space in the request interface.
  * @ie_len: Length of IEs in octets.
  */
-काष्ठा cfg80211_update_owe_info अणु
+struct cfg80211_update_owe_info {
 	u8 peer[ETH_ALEN] __aligned(2);
 	u16 status;
-	स्थिर u8 *ie;
-	माप_प्रकार ie_len;
-पूर्ण;
+	const u8 *ie;
+	size_t ie_len;
+};
 
 /**
- * काष्ठा mgmt_frame_regs - management frame registrations data
- * @global_stypes: biपंचांगap of management frame subtypes रेजिस्टरed
- *	क्रम the entire device
- * @पूर्णांकerface_stypes: biपंचांगap of management frame subtypes रेजिस्टरed
- *	क्रम the given पूर्णांकerface
- * @global_mcast_rx: mcast RX is needed globally क्रम these subtypes
- * @पूर्णांकerface_mcast_stypes: mcast RX is needed on this पूर्णांकerface
- *	क्रम these subtypes
+ * struct mgmt_frame_regs - management frame registrations data
+ * @global_stypes: bitmap of management frame subtypes registered
+ *	for the entire device
+ * @interface_stypes: bitmap of management frame subtypes registered
+ *	for the given interface
+ * @global_mcast_rx: mcast RX is needed globally for these subtypes
+ * @interface_mcast_stypes: mcast RX is needed on this interface
+ *	for these subtypes
  */
-काष्ठा mgmt_frame_regs अणु
-	u32 global_stypes, पूर्णांकerface_stypes;
-	u32 global_mcast_stypes, पूर्णांकerface_mcast_stypes;
-पूर्ण;
+struct mgmt_frame_regs {
+	u32 global_stypes, interface_stypes;
+	u32 global_mcast_stypes, interface_mcast_stypes;
+};
 
 /**
- * काष्ठा cfg80211_ops - backend description क्रम wireless configuration
+ * struct cfg80211_ops - backend description for wireless configuration
  *
- * This काष्ठा is रेजिस्टरed by fullmac card drivers and/or wireless stacks
- * in order to handle configuration requests on their पूर्णांकerfaces.
+ * This struct is registered by fullmac card drivers and/or wireless stacks
+ * in order to handle configuration requests on their interfaces.
  *
- * All callbacks except where otherwise noted should वापस 0
+ * All callbacks except where otherwise noted should return 0
  * on success or a negative error code.
  *
  * All operations are invoked with the wiphy mutex held. The RTNL may be
  * held in addition (due to wireless extensions) but this cannot be relied
- * upon except in हालs where करोcumented below. Note that due to ordering,
+ * upon except in cases where documented below. Note that due to ordering,
  * the RTNL also cannot be acquired in any handlers.
  *
  * @suspend: wiphy device needs to be suspended. The variable @wow will
- *	be %शून्य or contain the enabled Wake-on-Wireless triggers that are
- *	configured क्रम the device.
+ *	be %NULL or contain the enabled Wake-on-Wireless triggers that are
+ *	configured for the device.
  * @resume: wiphy device needs to be resumed
  * @set_wakeup: Called when WoWLAN is enabled/disabled, use this callback
  *	to call device_set_wakeup_enable() to enable/disable wakeup from
  *	the device.
  *
- * @add_भव_पूर्णांकf: create a new भव पूर्णांकerface with the given name,
- *	must set the काष्ठा wireless_dev's अगरtype. Beware: You must create
- *	the new netdev in the wiphy's network namespace! Returns the काष्ठा
+ * @add_virtual_intf: create a new virtual interface with the given name,
+ *	must set the struct wireless_dev's iftype. Beware: You must create
+ *	the new netdev in the wiphy's network namespace! Returns the struct
  *	wireless_dev, or an ERR_PTR. For P2P device wdevs, the driver must
  *	also set the address member in the wdev.
- *	This additionally holds the RTNL to be able to करो netdev changes.
+ *	This additionally holds the RTNL to be able to do netdev changes.
  *
- * @del_भव_पूर्णांकf: हटाओ the भव पूर्णांकerface
- *	This additionally holds the RTNL to be able to करो netdev changes.
+ * @del_virtual_intf: remove the virtual interface
+ *	This additionally holds the RTNL to be able to do netdev changes.
  *
- * @change_भव_पूर्णांकf: change type/configuration of भव पूर्णांकerface,
- *	keep the काष्ठा wireless_dev's अगरtype updated.
- *	This additionally holds the RTNL to be able to करो netdev changes.
+ * @change_virtual_intf: change type/configuration of virtual interface,
+ *	keep the struct wireless_dev's iftype updated.
+ *	This additionally holds the RTNL to be able to do netdev changes.
  *
- * @add_key: add a key with the given parameters. @mac_addr will be %शून्य
+ * @add_key: add a key with the given parameters. @mac_addr will be %NULL
  *	when adding a group key.
  *
- * @get_key: get inक्रमmation about the key with the given parameters.
- *	@mac_addr will be %शून्य when requesting inक्रमmation क्रम a group
- *	key. All poपूर्णांकers given to the @callback function need not be valid
- *	after it वापसs. This function should वापस an error अगर it is
- *	not possible to retrieve the key, -ENOENT अगर it करोesn't exist.
+ * @get_key: get information about the key with the given parameters.
+ *	@mac_addr will be %NULL when requesting information for a group
+ *	key. All pointers given to the @callback function need not be valid
+ *	after it returns. This function should return an error if it is
+ *	not possible to retrieve the key, -ENOENT if it doesn't exist.
  *
- * @del_key: हटाओ a key given the @mac_addr (%शून्य क्रम a group key)
- *	and @key_index, वापस -ENOENT अगर the key करोesn't exist.
+ * @del_key: remove a key given the @mac_addr (%NULL for a group key)
+ *	and @key_index, return -ENOENT if the key doesn't exist.
  *
- * @set_शेष_key: set the शेष key on an पूर्णांकerface
+ * @set_default_key: set the default key on an interface
  *
- * @set_शेष_mgmt_key: set the शेष management frame key on an पूर्णांकerface
+ * @set_default_mgmt_key: set the default management frame key on an interface
  *
- * @set_शेष_beacon_key: set the शेष Beacon frame key on an पूर्णांकerface
+ * @set_default_beacon_key: set the default Beacon frame key on an interface
  *
- * @set_rekey_data: give the data necessary क्रम GTK rekeying to the driver
+ * @set_rekey_data: give the data necessary for GTK rekeying to the driver
  *
  * @start_ap: Start acting in AP mode defined by the parameters.
- * @change_beacon: Change the beacon parameters क्रम an access poपूर्णांक mode
- *	पूर्णांकerface. This should reject the call when AP mode wasn't started.
+ * @change_beacon: Change the beacon parameters for an access point mode
+ *	interface. This should reject the call when AP mode wasn't started.
  * @stop_ap: Stop being an AP, including stopping beaconing.
  *
  * @add_station: Add a new station.
  * @del_station: Remove a station
- * @change_station: Modअगरy a given station. Note that flags changes are not much
+ * @change_station: Modify a given station. Note that flags changes are not much
  *	validated in cfg80211, in particular the auth/assoc/authorized flags
  *	might come to the driver in invalid combinations -- make sure to check
  *	them, also against the existing state! Drivers must call
- *	cfg80211_check_station_change() to validate the inक्रमmation.
- * @get_station: get station inक्रमmation क्रम the station identअगरied by @mac
+ *	cfg80211_check_station_change() to validate the information.
+ * @get_station: get station information for the station identified by @mac
  * @dump_station: dump station callback -- resume dump at index @idx
  *
  * @add_mpath: add a fixed mesh path
  * @del_mpath: delete a given mesh path
  * @change_mpath: change a given mesh path
- * @get_mpath: get a mesh path क्रम the given parameters
+ * @get_mpath: get a mesh path for the given parameters
  * @dump_mpath: dump mesh path callback -- resume dump at index @idx
- * @get_mpp: get a mesh proxy path क्रम the given parameters
+ * @get_mpp: get a mesh proxy path for the given parameters
  * @dump_mpp: dump mesh proxy path callback -- resume dump at index @idx
- * @join_mesh: join the mesh network with the specअगरied parameters
+ * @join_mesh: join the mesh network with the specified parameters
  *	(invoked with the wireless_dev mutex held)
  * @leave_mesh: leave the current mesh network
  *	(invoked with the wireless_dev mutex held)
@@ -3719,123 +3718,123 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
  *	The mask is a bitfield which tells us which parameters to
  *	set, and which to leave alone.
  *
- * @change_bss: Modअगरy parameters क्रम a given BSS.
+ * @change_bss: Modify parameters for a given BSS.
  *
  * @set_txq_params: Set TX queue parameters
  *
- * @libertas_set_mesh_channel: Only क्रम backward compatibility क्रम libertas,
- *	as it करोesn't implement join_mesh and needs to set the channel to
+ * @libertas_set_mesh_channel: Only for backward compatibility for libertas,
+ *	as it doesn't implement join_mesh and needs to set the channel to
  *	join the mesh instead.
  *
- * @set_monitor_channel: Set the monitor mode channel क्रम the device. If other
- *	पूर्णांकerfaces are active this callback should reject the configuration.
- *	If no पूर्णांकerfaces are active or the device is करोwn, the channel should
- *	be stored क्रम when a monitor पूर्णांकerface becomes active.
+ * @set_monitor_channel: Set the monitor mode channel for the device. If other
+ *	interfaces are active this callback should reject the configuration.
+ *	If no interfaces are active or the device is down, the channel should
+ *	be stored for when a monitor interface becomes active.
  *
- * @scan: Request to करो a scan. If वापसing zero, the scan request is given
- *	the driver, and will be valid until passed to cfg80211_scan_करोne().
- *	For scan results, call cfg80211_inक्रमm_bss(); you can call this outside
- *	the scan/scan_करोne bracket too.
- * @पात_scan: Tell the driver to पात an ongoing scan. The driver shall
- *	indicate the status of the scan through cfg80211_scan_करोne().
+ * @scan: Request to do a scan. If returning zero, the scan request is given
+ *	the driver, and will be valid until passed to cfg80211_scan_done().
+ *	For scan results, call cfg80211_inform_bss(); you can call this outside
+ *	the scan/scan_done bracket too.
+ * @abort_scan: Tell the driver to abort an ongoing scan. The driver shall
+ *	indicate the status of the scan through cfg80211_scan_done().
  *
- * @auth: Request to authenticate with the specअगरied peer
+ * @auth: Request to authenticate with the specified peer
  *	(invoked with the wireless_dev mutex held)
- * @assoc: Request to (re)associate with the specअगरied peer
+ * @assoc: Request to (re)associate with the specified peer
  *	(invoked with the wireless_dev mutex held)
- * @deauth: Request to deauthenticate from the specअगरied peer
+ * @deauth: Request to deauthenticate from the specified peer
  *	(invoked with the wireless_dev mutex held)
- * @disassoc: Request to disassociate from the specअगरied peer
+ * @disassoc: Request to disassociate from the specified peer
  *	(invoked with the wireless_dev mutex held)
  *
- * @connect: Connect to the ESS with the specअगरied parameters. When connected,
+ * @connect: Connect to the ESS with the specified parameters. When connected,
  *	call cfg80211_connect_result()/cfg80211_connect_bss() with status code
- *	%WLAN_STATUS_SUCCESS. If the connection fails क्रम some reason, call
+ *	%WLAN_STATUS_SUCCESS. If the connection fails for some reason, call
  *	cfg80211_connect_result()/cfg80211_connect_bss() with the status code
- *	from the AP or cfg80211_connect_समयout() अगर no frame with status code
+ *	from the AP or cfg80211_connect_timeout() if no frame with status code
  *	was received.
  *	The driver is allowed to roam to other BSSes within the ESS when the
  *	other BSS matches the connect parameters. When such roaming is initiated
- *	by the driver, the driver is expected to verअगरy that the target matches
+ *	by the driver, the driver is expected to verify that the target matches
  *	the configured security parameters and to use Reassociation Request
  *	frame instead of Association Request frame.
- *	The connect function can also be used to request the driver to perक्रमm a
- *	specअगरic roam when connected to an ESS. In that हाल, the prev_bssid
+ *	The connect function can also be used to request the driver to perform a
+ *	specific roam when connected to an ESS. In that case, the prev_bssid
  *	parameter is set to the BSSID of the currently associated BSS as an
  *	indication of requesting reassociation.
  *	In both the driver-initiated and new connect() call initiated roaming
- *	हालs, the result of roaming is indicated with a call to
+ *	cases, the result of roaming is indicated with a call to
  *	cfg80211_roamed(). (invoked with the wireless_dev mutex held)
- * @update_connect_params: Update the connect parameters जबतक connected to a
- *	BSS. The updated parameters can be used by driver/firmware क्रम
- *	subsequent BSS selection (roaming) decisions and to क्रमm the
- *	Authentication/(Re)Association Request frames. This call करोes not
+ * @update_connect_params: Update the connect parameters while connected to a
+ *	BSS. The updated parameters can be used by driver/firmware for
+ *	subsequent BSS selection (roaming) decisions and to form the
+ *	Authentication/(Re)Association Request frames. This call does not
  *	request an immediate disassociation or reassociation with the current
  *	BSS, i.e., this impacts only subsequent (re)associations. The bits in
- *	changed are defined in &क्रमागत cfg80211_connect_params_changed.
+ *	changed are defined in &enum cfg80211_connect_params_changed.
  *	(invoked with the wireless_dev mutex held)
- * @disconnect: Disconnect from the BSS/ESS or stop connection attempts अगर
- *      connection is in progress. Once करोne, call cfg80211_disconnected() in
- *      हाल connection was alपढ़ोy established (invoked with the
- *      wireless_dev mutex held), otherwise call cfg80211_connect_समयout().
+ * @disconnect: Disconnect from the BSS/ESS or stop connection attempts if
+ *      connection is in progress. Once done, call cfg80211_disconnected() in
+ *      case connection was already established (invoked with the
+ *      wireless_dev mutex held), otherwise call cfg80211_connect_timeout().
  *
- * @join_ibss: Join the specअगरied IBSS (or create अगर necessary). Once करोne, call
+ * @join_ibss: Join the specified IBSS (or create if necessary). Once done, call
  *	cfg80211_ibss_joined(), also call that function when changing BSSID due
  *	to a merge.
  *	(invoked with the wireless_dev mutex held)
  * @leave_ibss: Leave the IBSS.
  *	(invoked with the wireless_dev mutex held)
  *
- * @set_mcast_rate: Set the specअगरied multicast rate (only अगर vअगर is in ADHOC or
+ * @set_mcast_rate: Set the specified multicast rate (only if vif is in ADHOC or
  *	MESH mode)
  *
- * @set_wiphy_params: Notअगरy that wiphy parameters have changed;
- *	@changed bitfield (see &क्रमागत wiphy_params_flags) describes which values
+ * @set_wiphy_params: Notify that wiphy parameters have changed;
+ *	@changed bitfield (see &enum wiphy_params_flags) describes which values
  *	have changed. The actual parameter values are available in
- *	काष्ठा wiphy. If वापसing an error, no value should be changed.
+ *	struct wiphy. If returning an error, no value should be changed.
  *
- * @set_tx_घातer: set the transmit घातer according to the parameters,
- *	the घातer passed is in mBm, to get dBm use MBM_TO_DBM(). The
- *	wdev may be %शून्य अगर घातer was set क्रम the wiphy, and will
- *	always be %शून्य unless the driver supports per-vअगर TX घातer
+ * @set_tx_power: set the transmit power according to the parameters,
+ *	the power passed is in mBm, to get dBm use MBM_TO_DBM(). The
+ *	wdev may be %NULL if power was set for the wiphy, and will
+ *	always be %NULL unless the driver supports per-vif TX power
  *	(as advertised by the nl80211 feature flag.)
- * @get_tx_घातer: store the current TX घातer पूर्णांकo the dbm variable;
- *	वापस 0 अगर successful
+ * @get_tx_power: store the current TX power into the dbm variable;
+ *	return 0 if successful
  *
- * @rfसमाप्त_poll: polls the hw rfसमाप्त line, use cfg80211 reporting
- *	functions to adjust rfसमाप्त hw state
+ * @rfkill_poll: polls the hw rfkill line, use cfg80211 reporting
+ *	functions to adjust rfkill hw state
  *
- * @dump_survey: get site survey inक्रमmation.
+ * @dump_survey: get site survey information.
  *
- * @reमुख्य_on_channel: Request the driver to reमुख्य awake on the specअगरied
- *	channel क्रम the specअगरied duration to complete an off-channel
- *	operation (e.g., खुला action frame exchange). When the driver is
- *	पढ़ोy on the requested channel, it must indicate this with an event
- *	notअगरication by calling cfg80211_पढ़ोy_on_channel().
- * @cancel_reमुख्य_on_channel: Cancel an on-going reमुख्य-on-channel operation.
- *	This allows the operation to be terminated prior to समयout based on
+ * @remain_on_channel: Request the driver to remain awake on the specified
+ *	channel for the specified duration to complete an off-channel
+ *	operation (e.g., public action frame exchange). When the driver is
+ *	ready on the requested channel, it must indicate this with an event
+ *	notification by calling cfg80211_ready_on_channel().
+ * @cancel_remain_on_channel: Cancel an on-going remain-on-channel operation.
+ *	This allows the operation to be terminated prior to timeout based on
  *	the duration value.
  * @mgmt_tx: Transmit a management frame.
- * @mgmt_tx_cancel_रुको: Cancel the रुको समय from transmitting a management
+ * @mgmt_tx_cancel_wait: Cancel the wait time from transmitting a management
  *	frame on another channel
  *
- * @tesपंचांगode_cmd: run a test mode command; @wdev may be %शून्य
- * @tesपंचांगode_dump: Implement a test mode dump. The cb->args[2] and up may be
+ * @testmode_cmd: run a test mode command; @wdev may be %NULL
+ * @testmode_dump: Implement a test mode dump. The cb->args[2] and up may be
  *	used by the function, but 0 and 1 must not be touched. Additionally,
- *	वापस error codes other than -ENOBUFS and -ENOENT will terminate the
- *	dump and वापस to userspace with an error, so be careful. If any data
+ *	return error codes other than -ENOBUFS and -ENOENT will terminate the
+ *	dump and return to userspace with an error, so be careful. If any data
  *	was passed in from userspace then the data/len arguments will be present
- *	and poपूर्णांक to the data contained in %NL80211_ATTR_TESTDATA.
+ *	and point to the data contained in %NL80211_ATTR_TESTDATA.
  *
  * @set_bitrate_mask: set the bitrate mask configuration
  *
- * @set_pmksa: Cache a PMKID क्रम a BSSID. This is mostly useful क्रम fullmac
+ * @set_pmksa: Cache a PMKID for a BSSID. This is mostly useful for fullmac
  *	devices running firmwares capable of generating the (re) association
- *	RSN IE. It allows क्रम faster roaming between WPA2 BSSIDs.
+ *	RSN IE. It allows for faster roaming between WPA2 BSSIDs.
  * @del_pmksa: Delete a cached PMKID.
  * @flush_pmksa: Flush all cached PMKIDs.
- * @set_घातer_mgmt: Configure WLAN घातer management. A समयout value of -1
- *	allows the driver to adjust the dynamic ps समयout value.
+ * @set_power_mgmt: Configure WLAN power management. A timeout value of -1
+ *	allows the driver to adjust the dynamic ps timeout value.
  * @set_cqm_rssi_config: Configure connection quality monitor RSSI threshold.
  *	After configuration, the driver should (soon) send an event indicating
  *	the current level is above/below the configured threshold; this may
@@ -3843,39 +3842,39 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
  *	disabled.)
  * @set_cqm_rssi_range_config: Configure two RSSI thresholds in the
  *	connection quality monitor.  An event is to be sent only when the
- *	संकेत level is found to be outside the two values.  The driver should
- *	set %NL80211_EXT_FEATURE_CQM_RSSI_LIST अगर this method is implemented.
- *	If it is provided then there's no poपूर्णांक providing @set_cqm_rssi_config.
+ *	signal level is found to be outside the two values.  The driver should
+ *	set %NL80211_EXT_FEATURE_CQM_RSSI_LIST if this method is implemented.
+ *	If it is provided then there's no point providing @set_cqm_rssi_config.
  * @set_cqm_txe_config: Configure connection quality monitor TX error
  *	thresholds.
  * @sched_scan_start: Tell the driver to start a scheduled scan.
  * @sched_scan_stop: Tell the driver to stop an ongoing scheduled scan with
- *	given request id. This call must stop the scheduled scan and be पढ़ोy
- *	क्रम starting a new one beक्रमe it वापसs, i.e. @sched_scan_start may be
- *	called immediately after that again and should not fail in that हाल.
- *	The driver should not call cfg80211_sched_scan_stopped() क्रम a requested
- *	stop (when this method वापसs 0).
+ *	given request id. This call must stop the scheduled scan and be ready
+ *	for starting a new one before it returns, i.e. @sched_scan_start may be
+ *	called immediately after that again and should not fail in that case.
+ *	The driver should not call cfg80211_sched_scan_stopped() for a requested
+ *	stop (when this method returns 0).
  *
- * @update_mgmt_frame_registrations: Notअगरy the driver that management frame
+ * @update_mgmt_frame_registrations: Notify the driver that management frame
  *	registrations were updated. The callback is allowed to sleep.
  *
  * @set_antenna: Set antenna configuration (tx_ant, rx_ant) on the device.
- *	Parameters are biपंचांगaps of allowed antennas to use क्रम TX/RX. Drivers may
- *	reject TX/RX mask combinations they cannot support by वापसing -EINVAL
+ *	Parameters are bitmaps of allowed antennas to use for TX/RX. Drivers may
+ *	reject TX/RX mask combinations they cannot support by returning -EINVAL
  *	(also see nl80211.h @NL80211_ATTR_WIPHY_ANTENNA_TX).
  *
  * @get_antenna: Get current antenna configuration from device (tx_ant, rx_ant).
  *
  * @tdls_mgmt: Transmit a TDLS management frame.
- * @tdls_oper: Perक्रमm a high-level TDLS operation (e.g. TDLS link setup).
+ * @tdls_oper: Perform a high-level TDLS operation (e.g. TDLS link setup).
  *
- * @probe_client: probe an associated client, must वापस a cookie that it
+ * @probe_client: probe an associated client, must return a cookie that it
  *	later passes to cfg80211_probe_status().
  *
- * @set_noack_map: Set the NoAck Map क्रम the TIDs.
+ * @set_noack_map: Set the NoAck Map for the TIDs.
  *
- * @get_channel: Get the current operating channel क्रम the भव पूर्णांकerface.
- *	For monitor पूर्णांकerfaces, it should वापस %शून्य unless there's a single
+ * @get_channel: Get the current operating channel for the virtual interface.
+ *	For monitor interfaces, it should return %NULL unless there's a single
  *	current monitoring channel.
  *
  * @start_p2p_device: Start the given P2P device.
@@ -3883,458 +3882,458 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
  *
  * @set_mac_acl: Sets MAC address control list in AP and P2P GO mode.
  *	Parameters include ACL policy, an array of MAC address of stations
- *	and the number of MAC addresses. If there is alपढ़ोy a list in driver
+ *	and the number of MAC addresses. If there is already a list in driver
  *	this new list replaces the existing one. Driver has to clear its ACL
  *	when number of MAC addresses entries is passed as 0. Drivers which
- *	advertise the support क्रम MAC based ACL have to implement this callback.
+ *	advertise the support for MAC based ACL have to implement this callback.
  *
  * @start_radar_detection: Start radar detection in the driver.
  *
  * @end_cac: End running CAC, probably because a related CAC
  *	was finished on another phy.
  *
- * @update_ft_ies: Provide updated Fast BSS Transition inक्रमmation to the
- *	driver. If the SME is in the driver/firmware, this inक्रमmation can be
+ * @update_ft_ies: Provide updated Fast BSS Transition information to the
+ *	driver. If the SME is in the driver/firmware, this information can be
  *	used in building Authentication and Reassociation Request frames.
  *
  * @crit_proto_start: Indicates a critical protocol needs more link reliability
- *	क्रम a given duration (milliseconds). The protocol is provided so the
+ *	for a given duration (milliseconds). The protocol is provided so the
  *	driver can take the most appropriate actions.
- * @crit_proto_stop: Indicates critical protocol no दीर्घer needs increased link
+ * @crit_proto_stop: Indicates critical protocol no longer needs increased link
  *	reliability. This operation can not fail.
  * @set_coalesce: Set coalesce parameters.
  *
- * @channel_चयन: initiate channel-चयन procedure (with CSA). Driver is
- *	responsible क्रम veryfing अगर the चयन is possible. Since this is
- *	inherently tricky driver may decide to disconnect an पूर्णांकerface later
- *	with cfg80211_stop_अगरace(). This करोesn't mean driver can accept
- *	everything. It should करो it's best to verअगरy requests and reject them
+ * @channel_switch: initiate channel-switch procedure (with CSA). Driver is
+ *	responsible for veryfing if the switch is possible. Since this is
+ *	inherently tricky driver may decide to disconnect an interface later
+ *	with cfg80211_stop_iface(). This doesn't mean driver can accept
+ *	everything. It should do it's best to verify requests and reject them
  *	as soon as possible.
  *
- * @set_qos_map: Set QoS mapping inक्रमmation to the driver
+ * @set_qos_map: Set QoS mapping information to the driver
  *
- * @set_ap_chanwidth: Set the AP (including P2P GO) mode channel width क्रम the
- *	given पूर्णांकerface This is used e.g. क्रम dynamic HT 20/40 MHz channel width
- *	changes during the lअगरeसमय of the BSS.
+ * @set_ap_chanwidth: Set the AP (including P2P GO) mode channel width for the
+ *	given interface This is used e.g. for dynamic HT 20/40 MHz channel width
+ *	changes during the lifetime of the BSS.
  *
- * @add_tx_ts: validate (अगर admitted_समय is 0) or add a TX TS to the device
+ * @add_tx_ts: validate (if admitted_time is 0) or add a TX TS to the device
  *	with the given parameters; action frame exchange has been handled by
- *	userspace so this just has to modअगरy the TX path to take the TS पूर्णांकo
+ *	userspace so this just has to modify the TX path to take the TS into
  *	account.
- *	If the admitted समय is 0 just validate the parameters to make sure
- *	the session can be created at all; it is valid to just always वापस
- *	success क्रम that but that may result in inefficient behaviour (handshake
- *	with the peer followed by immediate tearकरोwn when the addition is later
+ *	If the admitted time is 0 just validate the parameters to make sure
+ *	the session can be created at all; it is valid to just always return
+ *	success for that but that may result in inefficient behaviour (handshake
+ *	with the peer followed by immediate teardown when the addition is later
  *	rejected)
- * @del_tx_ts: हटाओ an existing TX TS
+ * @del_tx_ts: remove an existing TX TS
  *
- * @join_ocb: join the OCB network with the specअगरied parameters
+ * @join_ocb: join the OCB network with the specified parameters
  *	(invoked with the wireless_dev mutex held)
  * @leave_ocb: leave the current OCB network
  *	(invoked with the wireless_dev mutex held)
  *
- * @tdls_channel_चयन: Start channel-चयनing with a TDLS peer. The driver
- *	is responsible क्रम continually initiating channel-चयनing operations
- *	and वापसing to the base channel क्रम communication with the AP.
- * @tdls_cancel_channel_चयन: Stop channel-चयनing with a TDLS peer. Both
+ * @tdls_channel_switch: Start channel-switching with a TDLS peer. The driver
+ *	is responsible for continually initiating channel-switching operations
+ *	and returning to the base channel for communication with the AP.
+ * @tdls_cancel_channel_switch: Stop channel-switching with a TDLS peer. Both
  *	peers must be on the base channel when the call completes.
- * @start_nan: Start the न_अंक पूर्णांकerface.
- * @stop_nan: Stop the न_अंक पूर्णांकerface.
- * @add_nan_func: Add a न_अंक function. Returns negative value on failure.
+ * @start_nan: Start the NAN interface.
+ * @stop_nan: Stop the NAN interface.
+ * @add_nan_func: Add a NAN function. Returns negative value on failure.
  *	On success @nan_func ownership is transferred to the driver and
  *	it may access it outside of the scope of this function. The driver
- *	should मुक्त the @nan_func when no दीर्घer needed by calling
- *	cfg80211_मुक्त_nan_func().
+ *	should free the @nan_func when no longer needed by calling
+ *	cfg80211_free_nan_func().
  *	On success the driver should assign an instance_id in the
  *	provided @nan_func.
- * @del_nan_func: Delete a न_अंक function.
- * @nan_change_conf: changes न_अंक configuration. The changed parameters must
- *	be specअगरied in @changes (using &क्रमागत cfg80211_nan_conf_changes);
+ * @del_nan_func: Delete a NAN function.
+ * @nan_change_conf: changes NAN configuration. The changed parameters must
+ *	be specified in @changes (using &enum cfg80211_nan_conf_changes);
  *	All other parameters must be ignored.
  *
- * @set_multicast_to_unicast: configure multicast to unicast conversion क्रम BSS
+ * @set_multicast_to_unicast: configure multicast to unicast conversion for BSS
  *
- * @get_txq_stats: Get TXQ stats क्रम पूर्णांकerface or phy. If wdev is %शून्य, this
- *      function should वापस phy stats, and पूर्णांकerface stats otherwise.
+ * @get_txq_stats: Get TXQ stats for interface or phy. If wdev is %NULL, this
+ *      function should return phy stats, and interface stats otherwise.
  *
- * @set_pmk: configure the PMK to be used क्रम offloaded 802.1X 4-Way handshake.
- *	If not deleted through @del_pmk the PMK reमुख्यs valid until disconnect
+ * @set_pmk: configure the PMK to be used for offloaded 802.1X 4-Way handshake.
+ *	If not deleted through @del_pmk the PMK remains valid until disconnect
  *	upon which the driver should clear it.
  *	(invoked with the wireless_dev mutex held)
- * @del_pmk: delete the previously configured PMK क्रम the given authenticator.
+ * @del_pmk: delete the previously configured PMK for the given authenticator.
  *	(invoked with the wireless_dev mutex held)
  *
- * @बाह्यal_auth: indicates result of offloaded authentication processing from
+ * @external_auth: indicates result of offloaded authentication processing from
  *     user space
  *
  * @tx_control_port: TX a control port frame (EAPoL).  The noencrypt parameter
  *	tells the driver that the frame should not be encrypted.
  *
- * @get_fपंचांग_responder_stats: Retrieve FTM responder statistics, अगर available.
+ * @get_ftm_responder_stats: Retrieve FTM responder statistics, if available.
  *	Statistics should be cumulative, currently no way to reset is provided.
  * @start_pmsr: start peer measurement (e.g. FTM)
- * @पात_pmsr: पात peer measurement
+ * @abort_pmsr: abort peer measurement
  *
  * @update_owe_info: Provide updated OWE info to driver. Driver implementing SME
  *	but offloading OWE processing to the user space will get the updated
- *	DH IE through this पूर्णांकerface.
+ *	DH IE through this interface.
  *
  * @probe_mesh_link: Probe direct Mesh peer's link quality by sending data frame
  *	and overrule HWMP path selection algorithm.
- * @set_tid_config: TID specअगरic configuration, this can be peer or BSS specअगरic
+ * @set_tid_config: TID specific configuration, this can be peer or BSS specific
  *	This callback may sleep.
- * @reset_tid_config: Reset TID specअगरic configuration क्रम the peer, क्रम the
+ * @reset_tid_config: Reset TID specific configuration for the peer, for the
  *	given TIDs. This callback may sleep.
  *
- * @set_sar_specs: Update the SAR (TX घातer) settings.
+ * @set_sar_specs: Update the SAR (TX power) settings.
  */
-काष्ठा cfg80211_ops अणु
-	पूर्णांक	(*suspend)(काष्ठा wiphy *wiphy, काष्ठा cfg80211_wowlan *wow);
-	पूर्णांक	(*resume)(काष्ठा wiphy *wiphy);
-	व्योम	(*set_wakeup)(काष्ठा wiphy *wiphy, bool enabled);
+struct cfg80211_ops {
+	int	(*suspend)(struct wiphy *wiphy, struct cfg80211_wowlan *wow);
+	int	(*resume)(struct wiphy *wiphy);
+	void	(*set_wakeup)(struct wiphy *wiphy, bool enabled);
 
-	काष्ठा wireless_dev * (*add_भव_पूर्णांकf)(काष्ठा wiphy *wiphy,
-						  स्थिर अक्षर *name,
-						  अचिन्हित अक्षर name_assign_type,
-						  क्रमागत nl80211_अगरtype type,
-						  काष्ठा vअगर_params *params);
-	पूर्णांक	(*del_भव_पूर्णांकf)(काष्ठा wiphy *wiphy,
-				    काष्ठा wireless_dev *wdev);
-	पूर्णांक	(*change_भव_पूर्णांकf)(काष्ठा wiphy *wiphy,
-				       काष्ठा net_device *dev,
-				       क्रमागत nl80211_अगरtype type,
-				       काष्ठा vअगर_params *params);
+	struct wireless_dev * (*add_virtual_intf)(struct wiphy *wiphy,
+						  const char *name,
+						  unsigned char name_assign_type,
+						  enum nl80211_iftype type,
+						  struct vif_params *params);
+	int	(*del_virtual_intf)(struct wiphy *wiphy,
+				    struct wireless_dev *wdev);
+	int	(*change_virtual_intf)(struct wiphy *wiphy,
+				       struct net_device *dev,
+				       enum nl80211_iftype type,
+				       struct vif_params *params);
 
-	पूर्णांक	(*add_key)(काष्ठा wiphy *wiphy, काष्ठा net_device *netdev,
-			   u8 key_index, bool pairwise, स्थिर u8 *mac_addr,
-			   काष्ठा key_params *params);
-	पूर्णांक	(*get_key)(काष्ठा wiphy *wiphy, काष्ठा net_device *netdev,
-			   u8 key_index, bool pairwise, स्थिर u8 *mac_addr,
-			   व्योम *cookie,
-			   व्योम (*callback)(व्योम *cookie, काष्ठा key_params*));
-	पूर्णांक	(*del_key)(काष्ठा wiphy *wiphy, काष्ठा net_device *netdev,
-			   u8 key_index, bool pairwise, स्थिर u8 *mac_addr);
-	पूर्णांक	(*set_शेष_key)(काष्ठा wiphy *wiphy,
-				   काष्ठा net_device *netdev,
+	int	(*add_key)(struct wiphy *wiphy, struct net_device *netdev,
+			   u8 key_index, bool pairwise, const u8 *mac_addr,
+			   struct key_params *params);
+	int	(*get_key)(struct wiphy *wiphy, struct net_device *netdev,
+			   u8 key_index, bool pairwise, const u8 *mac_addr,
+			   void *cookie,
+			   void (*callback)(void *cookie, struct key_params*));
+	int	(*del_key)(struct wiphy *wiphy, struct net_device *netdev,
+			   u8 key_index, bool pairwise, const u8 *mac_addr);
+	int	(*set_default_key)(struct wiphy *wiphy,
+				   struct net_device *netdev,
 				   u8 key_index, bool unicast, bool multicast);
-	पूर्णांक	(*set_शेष_mgmt_key)(काष्ठा wiphy *wiphy,
-					काष्ठा net_device *netdev,
+	int	(*set_default_mgmt_key)(struct wiphy *wiphy,
+					struct net_device *netdev,
 					u8 key_index);
-	पूर्णांक	(*set_शेष_beacon_key)(काष्ठा wiphy *wiphy,
-					  काष्ठा net_device *netdev,
+	int	(*set_default_beacon_key)(struct wiphy *wiphy,
+					  struct net_device *netdev,
 					  u8 key_index);
 
-	पूर्णांक	(*start_ap)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			    काष्ठा cfg80211_ap_settings *settings);
-	पूर्णांक	(*change_beacon)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-				 काष्ठा cfg80211_beacon_data *info);
-	पूर्णांक	(*stop_ap)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev);
+	int	(*start_ap)(struct wiphy *wiphy, struct net_device *dev,
+			    struct cfg80211_ap_settings *settings);
+	int	(*change_beacon)(struct wiphy *wiphy, struct net_device *dev,
+				 struct cfg80211_beacon_data *info);
+	int	(*stop_ap)(struct wiphy *wiphy, struct net_device *dev);
 
 
-	पूर्णांक	(*add_station)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			       स्थिर u8 *mac,
-			       काष्ठा station_parameters *params);
-	पूर्णांक	(*del_station)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			       काष्ठा station_del_parameters *params);
-	पूर्णांक	(*change_station)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-				  स्थिर u8 *mac,
-				  काष्ठा station_parameters *params);
-	पूर्णांक	(*get_station)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			       स्थिर u8 *mac, काष्ठा station_info *sinfo);
-	पूर्णांक	(*dump_station)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-				पूर्णांक idx, u8 *mac, काष्ठा station_info *sinfo);
+	int	(*add_station)(struct wiphy *wiphy, struct net_device *dev,
+			       const u8 *mac,
+			       struct station_parameters *params);
+	int	(*del_station)(struct wiphy *wiphy, struct net_device *dev,
+			       struct station_del_parameters *params);
+	int	(*change_station)(struct wiphy *wiphy, struct net_device *dev,
+				  const u8 *mac,
+				  struct station_parameters *params);
+	int	(*get_station)(struct wiphy *wiphy, struct net_device *dev,
+			       const u8 *mac, struct station_info *sinfo);
+	int	(*dump_station)(struct wiphy *wiphy, struct net_device *dev,
+				int idx, u8 *mac, struct station_info *sinfo);
 
-	पूर्णांक	(*add_mpath)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			       स्थिर u8 *dst, स्थिर u8 *next_hop);
-	पूर्णांक	(*del_mpath)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			       स्थिर u8 *dst);
-	पूर्णांक	(*change_mpath)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-				  स्थिर u8 *dst, स्थिर u8 *next_hop);
-	पूर्णांक	(*get_mpath)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			     u8 *dst, u8 *next_hop, काष्ठा mpath_info *pinfo);
-	पूर्णांक	(*dump_mpath)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			      पूर्णांक idx, u8 *dst, u8 *next_hop,
-			      काष्ठा mpath_info *pinfo);
-	पूर्णांक	(*get_mpp)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			   u8 *dst, u8 *mpp, काष्ठा mpath_info *pinfo);
-	पूर्णांक	(*dump_mpp)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			    पूर्णांक idx, u8 *dst, u8 *mpp,
-			    काष्ठा mpath_info *pinfo);
-	पूर्णांक	(*get_mesh_config)(काष्ठा wiphy *wiphy,
-				काष्ठा net_device *dev,
-				काष्ठा mesh_config *conf);
-	पूर्णांक	(*update_mesh_config)(काष्ठा wiphy *wiphy,
-				      काष्ठा net_device *dev, u32 mask,
-				      स्थिर काष्ठा mesh_config *nconf);
-	पूर्णांक	(*join_mesh)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			     स्थिर काष्ठा mesh_config *conf,
-			     स्थिर काष्ठा mesh_setup *setup);
-	पूर्णांक	(*leave_mesh)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev);
+	int	(*add_mpath)(struct wiphy *wiphy, struct net_device *dev,
+			       const u8 *dst, const u8 *next_hop);
+	int	(*del_mpath)(struct wiphy *wiphy, struct net_device *dev,
+			       const u8 *dst);
+	int	(*change_mpath)(struct wiphy *wiphy, struct net_device *dev,
+				  const u8 *dst, const u8 *next_hop);
+	int	(*get_mpath)(struct wiphy *wiphy, struct net_device *dev,
+			     u8 *dst, u8 *next_hop, struct mpath_info *pinfo);
+	int	(*dump_mpath)(struct wiphy *wiphy, struct net_device *dev,
+			      int idx, u8 *dst, u8 *next_hop,
+			      struct mpath_info *pinfo);
+	int	(*get_mpp)(struct wiphy *wiphy, struct net_device *dev,
+			   u8 *dst, u8 *mpp, struct mpath_info *pinfo);
+	int	(*dump_mpp)(struct wiphy *wiphy, struct net_device *dev,
+			    int idx, u8 *dst, u8 *mpp,
+			    struct mpath_info *pinfo);
+	int	(*get_mesh_config)(struct wiphy *wiphy,
+				struct net_device *dev,
+				struct mesh_config *conf);
+	int	(*update_mesh_config)(struct wiphy *wiphy,
+				      struct net_device *dev, u32 mask,
+				      const struct mesh_config *nconf);
+	int	(*join_mesh)(struct wiphy *wiphy, struct net_device *dev,
+			     const struct mesh_config *conf,
+			     const struct mesh_setup *setup);
+	int	(*leave_mesh)(struct wiphy *wiphy, struct net_device *dev);
 
-	पूर्णांक	(*join_ocb)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			    काष्ठा ocb_setup *setup);
-	पूर्णांक	(*leave_ocb)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev);
+	int	(*join_ocb)(struct wiphy *wiphy, struct net_device *dev,
+			    struct ocb_setup *setup);
+	int	(*leave_ocb)(struct wiphy *wiphy, struct net_device *dev);
 
-	पूर्णांक	(*change_bss)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			      काष्ठा bss_parameters *params);
+	int	(*change_bss)(struct wiphy *wiphy, struct net_device *dev,
+			      struct bss_parameters *params);
 
-	पूर्णांक	(*set_txq_params)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-				  काष्ठा ieee80211_txq_params *params);
+	int	(*set_txq_params)(struct wiphy *wiphy, struct net_device *dev,
+				  struct ieee80211_txq_params *params);
 
-	पूर्णांक	(*libertas_set_mesh_channel)(काष्ठा wiphy *wiphy,
-					     काष्ठा net_device *dev,
-					     काष्ठा ieee80211_channel *chan);
+	int	(*libertas_set_mesh_channel)(struct wiphy *wiphy,
+					     struct net_device *dev,
+					     struct ieee80211_channel *chan);
 
-	पूर्णांक	(*set_monitor_channel)(काष्ठा wiphy *wiphy,
-				       काष्ठा cfg80211_chan_def *chandef);
+	int	(*set_monitor_channel)(struct wiphy *wiphy,
+				       struct cfg80211_chan_def *chandef);
 
-	पूर्णांक	(*scan)(काष्ठा wiphy *wiphy,
-			काष्ठा cfg80211_scan_request *request);
-	व्योम	(*पात_scan)(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev);
+	int	(*scan)(struct wiphy *wiphy,
+			struct cfg80211_scan_request *request);
+	void	(*abort_scan)(struct wiphy *wiphy, struct wireless_dev *wdev);
 
-	पूर्णांक	(*auth)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			काष्ठा cfg80211_auth_request *req);
-	पूर्णांक	(*assoc)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			 काष्ठा cfg80211_assoc_request *req);
-	पूर्णांक	(*deauth)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			  काष्ठा cfg80211_deauth_request *req);
-	पूर्णांक	(*disassoc)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			    काष्ठा cfg80211_disassoc_request *req);
+	int	(*auth)(struct wiphy *wiphy, struct net_device *dev,
+			struct cfg80211_auth_request *req);
+	int	(*assoc)(struct wiphy *wiphy, struct net_device *dev,
+			 struct cfg80211_assoc_request *req);
+	int	(*deauth)(struct wiphy *wiphy, struct net_device *dev,
+			  struct cfg80211_deauth_request *req);
+	int	(*disassoc)(struct wiphy *wiphy, struct net_device *dev,
+			    struct cfg80211_disassoc_request *req);
 
-	पूर्णांक	(*connect)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			   काष्ठा cfg80211_connect_params *sme);
-	पूर्णांक	(*update_connect_params)(काष्ठा wiphy *wiphy,
-					 काष्ठा net_device *dev,
-					 काष्ठा cfg80211_connect_params *sme,
+	int	(*connect)(struct wiphy *wiphy, struct net_device *dev,
+			   struct cfg80211_connect_params *sme);
+	int	(*update_connect_params)(struct wiphy *wiphy,
+					 struct net_device *dev,
+					 struct cfg80211_connect_params *sme,
 					 u32 changed);
-	पूर्णांक	(*disconnect)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
+	int	(*disconnect)(struct wiphy *wiphy, struct net_device *dev,
 			      u16 reason_code);
 
-	पूर्णांक	(*join_ibss)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			     काष्ठा cfg80211_ibss_params *params);
-	पूर्णांक	(*leave_ibss)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev);
+	int	(*join_ibss)(struct wiphy *wiphy, struct net_device *dev,
+			     struct cfg80211_ibss_params *params);
+	int	(*leave_ibss)(struct wiphy *wiphy, struct net_device *dev);
 
-	पूर्णांक	(*set_mcast_rate)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-				  पूर्णांक rate[NUM_NL80211_BANDS]);
+	int	(*set_mcast_rate)(struct wiphy *wiphy, struct net_device *dev,
+				  int rate[NUM_NL80211_BANDS]);
 
-	पूर्णांक	(*set_wiphy_params)(काष्ठा wiphy *wiphy, u32 changed);
+	int	(*set_wiphy_params)(struct wiphy *wiphy, u32 changed);
 
-	पूर्णांक	(*set_tx_घातer)(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev,
-				क्रमागत nl80211_tx_घातer_setting type, पूर्णांक mbm);
-	पूर्णांक	(*get_tx_घातer)(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev,
-				पूर्णांक *dbm);
+	int	(*set_tx_power)(struct wiphy *wiphy, struct wireless_dev *wdev,
+				enum nl80211_tx_power_setting type, int mbm);
+	int	(*get_tx_power)(struct wiphy *wiphy, struct wireless_dev *wdev,
+				int *dbm);
 
-	व्योम	(*rfसमाप्त_poll)(काष्ठा wiphy *wiphy);
+	void	(*rfkill_poll)(struct wiphy *wiphy);
 
-#अगर_घोषित CONFIG_NL80211_TESTMODE
-	पूर्णांक	(*tesपंचांगode_cmd)(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev,
-				व्योम *data, पूर्णांक len);
-	पूर्णांक	(*tesपंचांगode_dump)(काष्ठा wiphy *wiphy, काष्ठा sk_buff *skb,
-				 काष्ठा netlink_callback *cb,
-				 व्योम *data, पूर्णांक len);
-#पूर्ण_अगर
+#ifdef CONFIG_NL80211_TESTMODE
+	int	(*testmode_cmd)(struct wiphy *wiphy, struct wireless_dev *wdev,
+				void *data, int len);
+	int	(*testmode_dump)(struct wiphy *wiphy, struct sk_buff *skb,
+				 struct netlink_callback *cb,
+				 void *data, int len);
+#endif
 
-	पूर्णांक	(*set_bitrate_mask)(काष्ठा wiphy *wiphy,
-				    काष्ठा net_device *dev,
-				    स्थिर u8 *peer,
-				    स्थिर काष्ठा cfg80211_bitrate_mask *mask);
+	int	(*set_bitrate_mask)(struct wiphy *wiphy,
+				    struct net_device *dev,
+				    const u8 *peer,
+				    const struct cfg80211_bitrate_mask *mask);
 
-	पूर्णांक	(*dump_survey)(काष्ठा wiphy *wiphy, काष्ठा net_device *netdev,
-			पूर्णांक idx, काष्ठा survey_info *info);
+	int	(*dump_survey)(struct wiphy *wiphy, struct net_device *netdev,
+			int idx, struct survey_info *info);
 
-	पूर्णांक	(*set_pmksa)(काष्ठा wiphy *wiphy, काष्ठा net_device *netdev,
-			     काष्ठा cfg80211_pmksa *pmksa);
-	पूर्णांक	(*del_pmksa)(काष्ठा wiphy *wiphy, काष्ठा net_device *netdev,
-			     काष्ठा cfg80211_pmksa *pmksa);
-	पूर्णांक	(*flush_pmksa)(काष्ठा wiphy *wiphy, काष्ठा net_device *netdev);
+	int	(*set_pmksa)(struct wiphy *wiphy, struct net_device *netdev,
+			     struct cfg80211_pmksa *pmksa);
+	int	(*del_pmksa)(struct wiphy *wiphy, struct net_device *netdev,
+			     struct cfg80211_pmksa *pmksa);
+	int	(*flush_pmksa)(struct wiphy *wiphy, struct net_device *netdev);
 
-	पूर्णांक	(*reमुख्य_on_channel)(काष्ठा wiphy *wiphy,
-				     काष्ठा wireless_dev *wdev,
-				     काष्ठा ieee80211_channel *chan,
-				     अचिन्हित पूर्णांक duration,
+	int	(*remain_on_channel)(struct wiphy *wiphy,
+				     struct wireless_dev *wdev,
+				     struct ieee80211_channel *chan,
+				     unsigned int duration,
 				     u64 *cookie);
-	पूर्णांक	(*cancel_reमुख्य_on_channel)(काष्ठा wiphy *wiphy,
-					    काष्ठा wireless_dev *wdev,
+	int	(*cancel_remain_on_channel)(struct wiphy *wiphy,
+					    struct wireless_dev *wdev,
 					    u64 cookie);
 
-	पूर्णांक	(*mgmt_tx)(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev,
-			   काष्ठा cfg80211_mgmt_tx_params *params,
+	int	(*mgmt_tx)(struct wiphy *wiphy, struct wireless_dev *wdev,
+			   struct cfg80211_mgmt_tx_params *params,
 			   u64 *cookie);
-	पूर्णांक	(*mgmt_tx_cancel_रुको)(काष्ठा wiphy *wiphy,
-				       काष्ठा wireless_dev *wdev,
+	int	(*mgmt_tx_cancel_wait)(struct wiphy *wiphy,
+				       struct wireless_dev *wdev,
 				       u64 cookie);
 
-	पूर्णांक	(*set_घातer_mgmt)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-				  bool enabled, पूर्णांक समयout);
+	int	(*set_power_mgmt)(struct wiphy *wiphy, struct net_device *dev,
+				  bool enabled, int timeout);
 
-	पूर्णांक	(*set_cqm_rssi_config)(काष्ठा wiphy *wiphy,
-				       काष्ठा net_device *dev,
+	int	(*set_cqm_rssi_config)(struct wiphy *wiphy,
+				       struct net_device *dev,
 				       s32 rssi_thold, u32 rssi_hyst);
 
-	पूर्णांक	(*set_cqm_rssi_range_config)(काष्ठा wiphy *wiphy,
-					     काष्ठा net_device *dev,
+	int	(*set_cqm_rssi_range_config)(struct wiphy *wiphy,
+					     struct net_device *dev,
 					     s32 rssi_low, s32 rssi_high);
 
-	पूर्णांक	(*set_cqm_txe_config)(काष्ठा wiphy *wiphy,
-				      काष्ठा net_device *dev,
-				      u32 rate, u32 pkts, u32 पूर्णांकvl);
+	int	(*set_cqm_txe_config)(struct wiphy *wiphy,
+				      struct net_device *dev,
+				      u32 rate, u32 pkts, u32 intvl);
 
-	व्योम	(*update_mgmt_frame_registrations)(काष्ठा wiphy *wiphy,
-						   काष्ठा wireless_dev *wdev,
-						   काष्ठा mgmt_frame_regs *upd);
+	void	(*update_mgmt_frame_registrations)(struct wiphy *wiphy,
+						   struct wireless_dev *wdev,
+						   struct mgmt_frame_regs *upd);
 
-	पूर्णांक	(*set_antenna)(काष्ठा wiphy *wiphy, u32 tx_ant, u32 rx_ant);
-	पूर्णांक	(*get_antenna)(काष्ठा wiphy *wiphy, u32 *tx_ant, u32 *rx_ant);
+	int	(*set_antenna)(struct wiphy *wiphy, u32 tx_ant, u32 rx_ant);
+	int	(*get_antenna)(struct wiphy *wiphy, u32 *tx_ant, u32 *rx_ant);
 
-	पूर्णांक	(*sched_scan_start)(काष्ठा wiphy *wiphy,
-				काष्ठा net_device *dev,
-				काष्ठा cfg80211_sched_scan_request *request);
-	पूर्णांक	(*sched_scan_stop)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
+	int	(*sched_scan_start)(struct wiphy *wiphy,
+				struct net_device *dev,
+				struct cfg80211_sched_scan_request *request);
+	int	(*sched_scan_stop)(struct wiphy *wiphy, struct net_device *dev,
 				   u64 reqid);
 
-	पूर्णांक	(*set_rekey_data)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-				  काष्ठा cfg80211_gtk_rekey_data *data);
+	int	(*set_rekey_data)(struct wiphy *wiphy, struct net_device *dev,
+				  struct cfg80211_gtk_rekey_data *data);
 
-	पूर्णांक	(*tdls_mgmt)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			     स्थिर u8 *peer, u8 action_code,  u8 dialog_token,
+	int	(*tdls_mgmt)(struct wiphy *wiphy, struct net_device *dev,
+			     const u8 *peer, u8 action_code,  u8 dialog_token,
 			     u16 status_code, u32 peer_capability,
-			     bool initiator, स्थिर u8 *buf, माप_प्रकार len);
-	पूर्णांक	(*tdls_oper)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			     स्थिर u8 *peer, क्रमागत nl80211_tdls_operation oper);
+			     bool initiator, const u8 *buf, size_t len);
+	int	(*tdls_oper)(struct wiphy *wiphy, struct net_device *dev,
+			     const u8 *peer, enum nl80211_tdls_operation oper);
 
-	पूर्णांक	(*probe_client)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-				स्थिर u8 *peer, u64 *cookie);
+	int	(*probe_client)(struct wiphy *wiphy, struct net_device *dev,
+				const u8 *peer, u64 *cookie);
 
-	पूर्णांक	(*set_noack_map)(काष्ठा wiphy *wiphy,
-				  काष्ठा net_device *dev,
+	int	(*set_noack_map)(struct wiphy *wiphy,
+				  struct net_device *dev,
 				  u16 noack_map);
 
-	पूर्णांक	(*get_channel)(काष्ठा wiphy *wiphy,
-			       काष्ठा wireless_dev *wdev,
-			       काष्ठा cfg80211_chan_def *chandef);
+	int	(*get_channel)(struct wiphy *wiphy,
+			       struct wireless_dev *wdev,
+			       struct cfg80211_chan_def *chandef);
 
-	पूर्णांक	(*start_p2p_device)(काष्ठा wiphy *wiphy,
-				    काष्ठा wireless_dev *wdev);
-	व्योम	(*stop_p2p_device)(काष्ठा wiphy *wiphy,
-				   काष्ठा wireless_dev *wdev);
+	int	(*start_p2p_device)(struct wiphy *wiphy,
+				    struct wireless_dev *wdev);
+	void	(*stop_p2p_device)(struct wiphy *wiphy,
+				   struct wireless_dev *wdev);
 
-	पूर्णांक	(*set_mac_acl)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			       स्थिर काष्ठा cfg80211_acl_data *params);
+	int	(*set_mac_acl)(struct wiphy *wiphy, struct net_device *dev,
+			       const struct cfg80211_acl_data *params);
 
-	पूर्णांक	(*start_radar_detection)(काष्ठा wiphy *wiphy,
-					 काष्ठा net_device *dev,
-					 काष्ठा cfg80211_chan_def *chandef,
-					 u32 cac_समय_ms);
-	व्योम	(*end_cac)(काष्ठा wiphy *wiphy,
-				काष्ठा net_device *dev);
-	पूर्णांक	(*update_ft_ies)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-				 काष्ठा cfg80211_update_ft_ies_params *ftie);
-	पूर्णांक	(*crit_proto_start)(काष्ठा wiphy *wiphy,
-				    काष्ठा wireless_dev *wdev,
-				    क्रमागत nl80211_crit_proto_id protocol,
+	int	(*start_radar_detection)(struct wiphy *wiphy,
+					 struct net_device *dev,
+					 struct cfg80211_chan_def *chandef,
+					 u32 cac_time_ms);
+	void	(*end_cac)(struct wiphy *wiphy,
+				struct net_device *dev);
+	int	(*update_ft_ies)(struct wiphy *wiphy, struct net_device *dev,
+				 struct cfg80211_update_ft_ies_params *ftie);
+	int	(*crit_proto_start)(struct wiphy *wiphy,
+				    struct wireless_dev *wdev,
+				    enum nl80211_crit_proto_id protocol,
 				    u16 duration);
-	व्योम	(*crit_proto_stop)(काष्ठा wiphy *wiphy,
-				   काष्ठा wireless_dev *wdev);
-	पूर्णांक	(*set_coalesce)(काष्ठा wiphy *wiphy,
-				काष्ठा cfg80211_coalesce *coalesce);
+	void	(*crit_proto_stop)(struct wiphy *wiphy,
+				   struct wireless_dev *wdev);
+	int	(*set_coalesce)(struct wiphy *wiphy,
+				struct cfg80211_coalesce *coalesce);
 
-	पूर्णांक	(*channel_चयन)(काष्ठा wiphy *wiphy,
-				  काष्ठा net_device *dev,
-				  काष्ठा cfg80211_csa_settings *params);
+	int	(*channel_switch)(struct wiphy *wiphy,
+				  struct net_device *dev,
+				  struct cfg80211_csa_settings *params);
 
-	पूर्णांक     (*set_qos_map)(काष्ठा wiphy *wiphy,
-			       काष्ठा net_device *dev,
-			       काष्ठा cfg80211_qos_map *qos_map);
+	int     (*set_qos_map)(struct wiphy *wiphy,
+			       struct net_device *dev,
+			       struct cfg80211_qos_map *qos_map);
 
-	पूर्णांक	(*set_ap_chanwidth)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-				    काष्ठा cfg80211_chan_def *chandef);
+	int	(*set_ap_chanwidth)(struct wiphy *wiphy, struct net_device *dev,
+				    struct cfg80211_chan_def *chandef);
 
-	पूर्णांक	(*add_tx_ts)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			     u8 tsid, स्थिर u8 *peer, u8 user_prio,
-			     u16 admitted_समय);
-	पूर्णांक	(*del_tx_ts)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			     u8 tsid, स्थिर u8 *peer);
+	int	(*add_tx_ts)(struct wiphy *wiphy, struct net_device *dev,
+			     u8 tsid, const u8 *peer, u8 user_prio,
+			     u16 admitted_time);
+	int	(*del_tx_ts)(struct wiphy *wiphy, struct net_device *dev,
+			     u8 tsid, const u8 *peer);
 
-	पूर्णांक	(*tdls_channel_चयन)(काष्ठा wiphy *wiphy,
-				       काष्ठा net_device *dev,
-				       स्थिर u8 *addr, u8 oper_class,
-				       काष्ठा cfg80211_chan_def *chandef);
-	व्योम	(*tdls_cancel_channel_चयन)(काष्ठा wiphy *wiphy,
-					      काष्ठा net_device *dev,
-					      स्थिर u8 *addr);
-	पूर्णांक	(*start_nan)(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev,
-			     काष्ठा cfg80211_nan_conf *conf);
-	व्योम	(*stop_nan)(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev);
-	पूर्णांक	(*add_nan_func)(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev,
-				काष्ठा cfg80211_nan_func *nan_func);
-	व्योम	(*del_nan_func)(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev,
+	int	(*tdls_channel_switch)(struct wiphy *wiphy,
+				       struct net_device *dev,
+				       const u8 *addr, u8 oper_class,
+				       struct cfg80211_chan_def *chandef);
+	void	(*tdls_cancel_channel_switch)(struct wiphy *wiphy,
+					      struct net_device *dev,
+					      const u8 *addr);
+	int	(*start_nan)(struct wiphy *wiphy, struct wireless_dev *wdev,
+			     struct cfg80211_nan_conf *conf);
+	void	(*stop_nan)(struct wiphy *wiphy, struct wireless_dev *wdev);
+	int	(*add_nan_func)(struct wiphy *wiphy, struct wireless_dev *wdev,
+				struct cfg80211_nan_func *nan_func);
+	void	(*del_nan_func)(struct wiphy *wiphy, struct wireless_dev *wdev,
 			       u64 cookie);
-	पूर्णांक	(*nan_change_conf)(काष्ठा wiphy *wiphy,
-				   काष्ठा wireless_dev *wdev,
-				   काष्ठा cfg80211_nan_conf *conf,
+	int	(*nan_change_conf)(struct wiphy *wiphy,
+				   struct wireless_dev *wdev,
+				   struct cfg80211_nan_conf *conf,
 				   u32 changes);
 
-	पूर्णांक	(*set_multicast_to_unicast)(काष्ठा wiphy *wiphy,
-					    काष्ठा net_device *dev,
-					    स्थिर bool enabled);
+	int	(*set_multicast_to_unicast)(struct wiphy *wiphy,
+					    struct net_device *dev,
+					    const bool enabled);
 
-	पूर्णांक	(*get_txq_stats)(काष्ठा wiphy *wiphy,
-				 काष्ठा wireless_dev *wdev,
-				 काष्ठा cfg80211_txq_stats *txqstats);
+	int	(*get_txq_stats)(struct wiphy *wiphy,
+				 struct wireless_dev *wdev,
+				 struct cfg80211_txq_stats *txqstats);
 
-	पूर्णांक	(*set_pmk)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			   स्थिर काष्ठा cfg80211_pmk_conf *conf);
-	पूर्णांक	(*del_pmk)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-			   स्थिर u8 *aa);
-	पूर्णांक     (*बाह्यal_auth)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-				 काष्ठा cfg80211_बाह्यal_auth_params *params);
+	int	(*set_pmk)(struct wiphy *wiphy, struct net_device *dev,
+			   const struct cfg80211_pmk_conf *conf);
+	int	(*del_pmk)(struct wiphy *wiphy, struct net_device *dev,
+			   const u8 *aa);
+	int     (*external_auth)(struct wiphy *wiphy, struct net_device *dev,
+				 struct cfg80211_external_auth_params *params);
 
-	पूर्णांक	(*tx_control_port)(काष्ठा wiphy *wiphy,
-				   काष्ठा net_device *dev,
-				   स्थिर u8 *buf, माप_प्रकार len,
-				   स्थिर u8 *dest, स्थिर __be16 proto,
-				   स्थिर bool noencrypt,
+	int	(*tx_control_port)(struct wiphy *wiphy,
+				   struct net_device *dev,
+				   const u8 *buf, size_t len,
+				   const u8 *dest, const __be16 proto,
+				   const bool noencrypt,
 				   u64 *cookie);
 
-	पूर्णांक	(*get_fपंचांग_responder_stats)(काष्ठा wiphy *wiphy,
-				काष्ठा net_device *dev,
-				काष्ठा cfg80211_fपंचांग_responder_stats *fपंचांग_stats);
+	int	(*get_ftm_responder_stats)(struct wiphy *wiphy,
+				struct net_device *dev,
+				struct cfg80211_ftm_responder_stats *ftm_stats);
 
-	पूर्णांक	(*start_pmsr)(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev,
-			      काष्ठा cfg80211_pmsr_request *request);
-	व्योम	(*पात_pmsr)(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev,
-			      काष्ठा cfg80211_pmsr_request *request);
-	पूर्णांक	(*update_owe_info)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-				   काष्ठा cfg80211_update_owe_info *owe_info);
-	पूर्णांक	(*probe_mesh_link)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-				   स्थिर u8 *buf, माप_प्रकार len);
-	पूर्णांक     (*set_tid_config)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-				  काष्ठा cfg80211_tid_config *tid_conf);
-	पूर्णांक	(*reset_tid_config)(काष्ठा wiphy *wiphy, काष्ठा net_device *dev,
-				    स्थिर u8 *peer, u8 tids);
-	पूर्णांक	(*set_sar_specs)(काष्ठा wiphy *wiphy,
-				 काष्ठा cfg80211_sar_specs *sar);
-पूर्ण;
+	int	(*start_pmsr)(struct wiphy *wiphy, struct wireless_dev *wdev,
+			      struct cfg80211_pmsr_request *request);
+	void	(*abort_pmsr)(struct wiphy *wiphy, struct wireless_dev *wdev,
+			      struct cfg80211_pmsr_request *request);
+	int	(*update_owe_info)(struct wiphy *wiphy, struct net_device *dev,
+				   struct cfg80211_update_owe_info *owe_info);
+	int	(*probe_mesh_link)(struct wiphy *wiphy, struct net_device *dev,
+				   const u8 *buf, size_t len);
+	int     (*set_tid_config)(struct wiphy *wiphy, struct net_device *dev,
+				  struct cfg80211_tid_config *tid_conf);
+	int	(*reset_tid_config)(struct wiphy *wiphy, struct net_device *dev,
+				    const u8 *peer, u8 tids);
+	int	(*set_sar_specs)(struct wiphy *wiphy,
+				 struct cfg80211_sar_specs *sar);
+};
 
 /*
- * wireless hardware and networking पूर्णांकerfaces काष्ठाures
+ * wireless hardware and networking interfaces structures
  * and registration/helper functions
  */
 
 /**
- * क्रमागत wiphy_flags - wiphy capability flags
+ * enum wiphy_flags - wiphy capability flags
  *
- * @WIPHY_FLAG_SPLIT_SCAN_6GHZ: अगर set to true, the scan request will be split
- *	 पूर्णांकo two, first क्रम legacy bands and second क्रम UHB.
- * @WIPHY_FLAG_NETNS_OK: अगर not set, करो not allow changing the netns of this
+ * @WIPHY_FLAG_SPLIT_SCAN_6GHZ: if set to true, the scan request will be split
+ *	 into two, first for legacy bands and second for UHB.
+ * @WIPHY_FLAG_NETNS_OK: if not set, do not allow changing the netns of this
  *	wiphy at all
- * @WIPHY_FLAG_PS_ON_BY_DEFAULT: अगर set to true, घातersave will be enabled
- *	by शेष -- this flag will be set depending on the kernel's शेष
- *	on wiphy_new(), but can be changed by the driver अगर it has a good
- *	reason to override the शेष
+ * @WIPHY_FLAG_PS_ON_BY_DEFAULT: if set to true, powersave will be enabled
+ *	by default -- this flag will be set depending on the kernel's default
+ *	on wiphy_new(), but can be changed by the driver if it has a good
+ *	reason to override the default
  * @WIPHY_FLAG_4ADDR_AP: supports 4addr mode even on AP (with a single station
- *	on a VLAN पूर्णांकerface). This flag also serves an extra purpose of
- *	supporting 4ADDR AP mode on devices which करो not support AP/VLAN अगरtype.
+ *	on a VLAN interface). This flag also serves an extra purpose of
+ *	supporting 4ADDR AP mode on devices which do not support AP/VLAN iftype.
  * @WIPHY_FLAG_4ADDR_STATION: supports 4addr mode even as a station
  * @WIPHY_FLAG_CONTROL_PORT_PROTOCOL: This device supports setting the
  *	control port protocol ethertype. The device also honours the
@@ -4346,27 +4345,27 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
  *	firmware.
  * @WIPHY_FLAG_AP_UAPSD: The device supports uapsd on AP.
  * @WIPHY_FLAG_SUPPORTS_TDLS: The device supports TDLS (802.11z) operation.
- * @WIPHY_FLAG_TDLS_EXTERNAL_SETUP: The device करोes not handle TDLS (802.11z)
- *	link setup/discovery operations पूर्णांकernally. Setup, discovery and
- *	tearकरोwn packets should be sent through the @NL80211_CMD_TDLS_MGMT
+ * @WIPHY_FLAG_TDLS_EXTERNAL_SETUP: The device does not handle TDLS (802.11z)
+ *	link setup/discovery operations internally. Setup, discovery and
+ *	teardown packets should be sent through the @NL80211_CMD_TDLS_MGMT
  *	command. When this flag is not set, @NL80211_CMD_TDLS_OPER should be
- *	used क्रम asking the driver/firmware to perक्रमm a TDLS operation.
- * @WIPHY_FLAG_HAVE_AP_SME: device पूर्णांकegrates AP SME
+ *	used for asking the driver/firmware to perform a TDLS operation.
+ * @WIPHY_FLAG_HAVE_AP_SME: device integrates AP SME
  * @WIPHY_FLAG_REPORTS_OBSS: the device will report beacons from other BSSes
- *	when there are भव पूर्णांकerfaces in AP mode by calling
+ *	when there are virtual interfaces in AP mode by calling
  *	cfg80211_report_obss_beacon().
  * @WIPHY_FLAG_AP_PROBE_RESP_OFFLOAD: When operating as an AP, the device
  *	responds to probe-requests in hardware.
  * @WIPHY_FLAG_OFFCHAN_TX: Device supports direct off-channel TX.
- * @WIPHY_FLAG_HAS_REMAIN_ON_CHANNEL: Device supports reमुख्य-on-channel call.
+ * @WIPHY_FLAG_HAS_REMAIN_ON_CHANNEL: Device supports remain-on-channel call.
  * @WIPHY_FLAG_SUPPORTS_5_10_MHZ: Device supports 5 MHz and 10 MHz channels.
- * @WIPHY_FLAG_HAS_CHANNEL_SWITCH: Device supports channel चयन in
+ * @WIPHY_FLAG_HAS_CHANNEL_SWITCH: Device supports channel switch in
  *	beaconing mode (AP, IBSS, Mesh, ...).
- * @WIPHY_FLAG_HAS_STATIC_WEP: The device supports अटल WEP key installation
- *	beक्रमe connection.
+ * @WIPHY_FLAG_HAS_STATIC_WEP: The device supports static WEP key installation
+ *	before connection.
  * @WIPHY_FLAG_SUPPORTS_EXT_KEK_KCK: The device supports bigger kek and kck keys
  */
-क्रमागत wiphy_flags अणु
+enum wiphy_flags {
 	WIPHY_FLAG_SUPPORTS_EXT_KEK_KCK		= BIT(0),
 	/* use hole at 1 */
 	WIPHY_FLAG_SPLIT_SCAN_6GHZ		= BIT(2),
@@ -4391,22 +4390,22 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
 	WIPHY_FLAG_SUPPORTS_5_10_MHZ		= BIT(22),
 	WIPHY_FLAG_HAS_CHANNEL_SWITCH		= BIT(23),
 	WIPHY_FLAG_HAS_STATIC_WEP		= BIT(24),
-पूर्ण;
+};
 
 /**
- * काष्ठा ieee80211_अगरace_limit - limit on certain पूर्णांकerface types
- * @max: maximum number of पूर्णांकerfaces of these types
- * @types: पूर्णांकerface types (bits)
+ * struct ieee80211_iface_limit - limit on certain interface types
+ * @max: maximum number of interfaces of these types
+ * @types: interface types (bits)
  */
-काष्ठा ieee80211_अगरace_limit अणु
+struct ieee80211_iface_limit {
 	u16 max;
 	u16 types;
-पूर्ण;
+};
 
 /**
- * काष्ठा ieee80211_अगरace_combination - possible पूर्णांकerface combination
+ * struct ieee80211_iface_combination - possible interface combination
  *
- * With this काष्ठाure the driver can describe which पूर्णांकerface
+ * With this structure the driver can describe which interface
  * combinations it supports concurrently.
  *
  * Examples:
@@ -4415,71 +4414,71 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
  *
  *    .. code-block:: c
  *
- *	काष्ठा ieee80211_अगरace_limit limits1[] = अणु
- *		अणु .max = 1, .types = BIT(NL80211_IFTYPE_STATION), पूर्ण,
- *		अणु .max = 1, .types = BIT(NL80211_IFTYPE_APपूर्ण, पूर्ण,
- *	पूर्ण;
- *	काष्ठा ieee80211_अगरace_combination combination1 = अणु
+ *	struct ieee80211_iface_limit limits1[] = {
+ *		{ .max = 1, .types = BIT(NL80211_IFTYPE_STATION), },
+ *		{ .max = 1, .types = BIT(NL80211_IFTYPE_AP}, },
+ *	};
+ *	struct ieee80211_iface_combination combination1 = {
  *		.limits = limits1,
  *		.n_limits = ARRAY_SIZE(limits1),
- *		.max_पूर्णांकerfaces = 2,
- *		.beacon_पूर्णांक_infra_match = true,
- *	पूर्ण;
+ *		.max_interfaces = 2,
+ *		.beacon_int_infra_match = true,
+ *	};
  *
  *
- * 2. Allow #अणुAP, P2P-GOपूर्ण <= 8, channels = 1, 8 total:
+ * 2. Allow #{AP, P2P-GO} <= 8, channels = 1, 8 total:
  *
  *    .. code-block:: c
  *
- *	काष्ठा ieee80211_अगरace_limit limits2[] = अणु
- *		अणु .max = 8, .types = BIT(NL80211_IFTYPE_AP) |
- *				     BIT(NL80211_IFTYPE_P2P_GO), पूर्ण,
- *	पूर्ण;
- *	काष्ठा ieee80211_अगरace_combination combination2 = अणु
+ *	struct ieee80211_iface_limit limits2[] = {
+ *		{ .max = 8, .types = BIT(NL80211_IFTYPE_AP) |
+ *				     BIT(NL80211_IFTYPE_P2P_GO), },
+ *	};
+ *	struct ieee80211_iface_combination combination2 = {
  *		.limits = limits2,
  *		.n_limits = ARRAY_SIZE(limits2),
- *		.max_पूर्णांकerfaces = 8,
- *		.num_dअगरferent_channels = 1,
- *	पूर्ण;
+ *		.max_interfaces = 8,
+ *		.num_different_channels = 1,
+ *	};
  *
  *
- * 3. Allow #STA <= 1, #अणुP2P-client,P2P-GOपूर्ण <= 3 on two channels, 4 total.
+ * 3. Allow #STA <= 1, #{P2P-client,P2P-GO} <= 3 on two channels, 4 total.
  *
- *    This allows क्रम an infraकाष्ठाure connection and three P2P connections.
+ *    This allows for an infrastructure connection and three P2P connections.
  *
  *    .. code-block:: c
  *
- *	काष्ठा ieee80211_अगरace_limit limits3[] = अणु
- *		अणु .max = 1, .types = BIT(NL80211_IFTYPE_STATION), पूर्ण,
- *		अणु .max = 3, .types = BIT(NL80211_IFTYPE_P2P_GO) |
- *				     BIT(NL80211_IFTYPE_P2P_CLIENT), पूर्ण,
- *	पूर्ण;
- *	काष्ठा ieee80211_अगरace_combination combination3 = अणु
+ *	struct ieee80211_iface_limit limits3[] = {
+ *		{ .max = 1, .types = BIT(NL80211_IFTYPE_STATION), },
+ *		{ .max = 3, .types = BIT(NL80211_IFTYPE_P2P_GO) |
+ *				     BIT(NL80211_IFTYPE_P2P_CLIENT), },
+ *	};
+ *	struct ieee80211_iface_combination combination3 = {
  *		.limits = limits3,
  *		.n_limits = ARRAY_SIZE(limits3),
- *		.max_पूर्णांकerfaces = 4,
- *		.num_dअगरferent_channels = 2,
- *	पूर्ण;
+ *		.max_interfaces = 4,
+ *		.num_different_channels = 2,
+ *	};
  *
  */
-काष्ठा ieee80211_अगरace_combination अणु
+struct ieee80211_iface_combination {
 	/**
 	 * @limits:
-	 * limits क्रम the given पूर्णांकerface types
+	 * limits for the given interface types
 	 */
-	स्थिर काष्ठा ieee80211_अगरace_limit *limits;
+	const struct ieee80211_iface_limit *limits;
 
 	/**
-	 * @num_dअगरferent_channels:
-	 * can use up to this many dअगरferent channels
+	 * @num_different_channels:
+	 * can use up to this many different channels
 	 */
-	u32 num_dअगरferent_channels;
+	u32 num_different_channels;
 
 	/**
-	 * @max_पूर्णांकerfaces:
-	 * maximum number of पूर्णांकerfaces in total allowed in this group
+	 * @max_interfaces:
+	 * maximum number of interfaces in total allowed in this group
 	 */
-	u16 max_पूर्णांकerfaces;
+	u16 max_interfaces;
 
 	/**
 	 * @n_limits:
@@ -4488,60 +4487,60 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
 	u8 n_limits;
 
 	/**
-	 * @beacon_पूर्णांक_infra_match:
-	 * In this combination, the beacon पूर्णांकervals between infraकाष्ठाure
-	 * and AP types must match. This is required only in special हालs.
+	 * @beacon_int_infra_match:
+	 * In this combination, the beacon intervals between infrastructure
+	 * and AP types must match. This is required only in special cases.
 	 */
-	bool beacon_पूर्णांक_infra_match;
+	bool beacon_int_infra_match;
 
 	/**
 	 * @radar_detect_widths:
-	 * biपंचांगap of channel widths supported क्रम radar detection
+	 * bitmap of channel widths supported for radar detection
 	 */
 	u8 radar_detect_widths;
 
 	/**
 	 * @radar_detect_regions:
-	 * biपंचांगap of regions supported क्रम radar detection
+	 * bitmap of regions supported for radar detection
 	 */
 	u8 radar_detect_regions;
 
 	/**
-	 * @beacon_पूर्णांक_min_gcd:
-	 * This पूर्णांकerface combination supports dअगरferent beacon पूर्णांकervals.
+	 * @beacon_int_min_gcd:
+	 * This interface combination supports different beacon intervals.
 	 *
 	 * = 0
-	 *   all beacon पूर्णांकervals क्रम dअगरferent पूर्णांकerface must be same.
+	 *   all beacon intervals for different interface must be same.
 	 * > 0
-	 *   any beacon पूर्णांकerval क्रम the पूर्णांकerface part of this combination AND
-	 *   GCD of all beacon पूर्णांकervals from beaconing पूर्णांकerfaces of this
+	 *   any beacon interval for the interface part of this combination AND
+	 *   GCD of all beacon intervals from beaconing interfaces of this
 	 *   combination must be greater or equal to this value.
 	 */
-	u32 beacon_पूर्णांक_min_gcd;
-पूर्ण;
+	u32 beacon_int_min_gcd;
+};
 
-काष्ठा ieee80211_txrx_stypes अणु
+struct ieee80211_txrx_stypes {
 	u16 tx, rx;
-पूर्ण;
+};
 
 /**
- * क्रमागत wiphy_wowlan_support_flags - WoWLAN support flags
- * @WIPHY_WOWLAN_ANY: supports wakeup क्रम the special "any"
+ * enum wiphy_wowlan_support_flags - WoWLAN support flags
+ * @WIPHY_WOWLAN_ANY: supports wakeup for the special "any"
  *	trigger that keeps the device operating as-is and
- *	wakes up the host on any activity, क्रम example a
+ *	wakes up the host on any activity, for example a
  *	received packet that passed filtering; note that the
- *	packet should be preserved in that हाल
+ *	packet should be preserved in that case
  * @WIPHY_WOWLAN_MAGIC_PKT: supports wakeup on magic packet
  *	(see nl80211.h)
  * @WIPHY_WOWLAN_DISCONNECT: supports wakeup on disconnect
- * @WIPHY_WOWLAN_SUPPORTS_GTK_REKEY: supports GTK rekeying जबतक asleep
+ * @WIPHY_WOWLAN_SUPPORTS_GTK_REKEY: supports GTK rekeying while asleep
  * @WIPHY_WOWLAN_GTK_REKEY_FAILURE: supports wakeup on GTK rekey failure
  * @WIPHY_WOWLAN_EAP_IDENTITY_REQ: supports wakeup on EAP identity request
  * @WIPHY_WOWLAN_4WAY_HANDSHAKE: supports wakeup on 4-way handshake failure
- * @WIPHY_WOWLAN_RFKILL_RELEASE: supports wakeup on RF-समाप्त release
+ * @WIPHY_WOWLAN_RFKILL_RELEASE: supports wakeup on RF-kill release
  * @WIPHY_WOWLAN_NET_DETECT: supports wakeup on network detection
  */
-क्रमागत wiphy_wowlan_support_flags अणु
+enum wiphy_wowlan_support_flags {
 	WIPHY_WOWLAN_ANY		= BIT(0),
 	WIPHY_WOWLAN_MAGIC_PKT		= BIT(1),
 	WIPHY_WOWLAN_DISCONNECT		= BIT(2),
@@ -4551,182 +4550,182 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
 	WIPHY_WOWLAN_4WAY_HANDSHAKE	= BIT(6),
 	WIPHY_WOWLAN_RFKILL_RELEASE	= BIT(7),
 	WIPHY_WOWLAN_NET_DETECT		= BIT(8),
-पूर्ण;
+};
 
-काष्ठा wiphy_wowlan_tcp_support अणु
-	स्थिर काष्ठा nl80211_wowlan_tcp_data_token_feature *tok;
+struct wiphy_wowlan_tcp_support {
+	const struct nl80211_wowlan_tcp_data_token_feature *tok;
 	u32 data_payload_max;
-	u32 data_पूर्णांकerval_max;
+	u32 data_interval_max;
 	u32 wake_payload_max;
 	bool seq;
-पूर्ण;
+};
 
 /**
- * काष्ठा wiphy_wowlan_support - WoWLAN support data
- * @flags: see &क्रमागत wiphy_wowlan_support_flags
+ * struct wiphy_wowlan_support - WoWLAN support data
+ * @flags: see &enum wiphy_wowlan_support_flags
  * @n_patterns: number of supported wakeup patterns
- *	(see nl80211.h क्रम the pattern definition)
+ *	(see nl80211.h for the pattern definition)
  * @pattern_max_len: maximum length of each pattern
  * @pattern_min_len: minimum length of each pattern
  * @max_pkt_offset: maximum Rx packet offset
- * @max_nd_match_sets: maximum number of matchsets क्रम net-detect,
- *	similar, but not necessarily identical, to max_match_sets क्रम
+ * @max_nd_match_sets: maximum number of matchsets for net-detect,
+ *	similar, but not necessarily identical, to max_match_sets for
  *	scheduled scans.
- *	See &काष्ठा cfg80211_sched_scan_request.@match_sets क्रम more
+ *	See &struct cfg80211_sched_scan_request.@match_sets for more
  *	details.
- * @tcp: TCP wakeup support inक्रमmation
+ * @tcp: TCP wakeup support information
  */
-काष्ठा wiphy_wowlan_support अणु
+struct wiphy_wowlan_support {
 	u32 flags;
-	पूर्णांक n_patterns;
-	पूर्णांक pattern_max_len;
-	पूर्णांक pattern_min_len;
-	पूर्णांक max_pkt_offset;
-	पूर्णांक max_nd_match_sets;
-	स्थिर काष्ठा wiphy_wowlan_tcp_support *tcp;
-पूर्ण;
+	int n_patterns;
+	int pattern_max_len;
+	int pattern_min_len;
+	int max_pkt_offset;
+	int max_nd_match_sets;
+	const struct wiphy_wowlan_tcp_support *tcp;
+};
 
 /**
- * काष्ठा wiphy_coalesce_support - coalesce support data
+ * struct wiphy_coalesce_support - coalesce support data
  * @n_rules: maximum number of coalesce rules
  * @max_delay: maximum supported coalescing delay in msecs
  * @n_patterns: number of supported patterns in a rule
- *	(see nl80211.h क्रम the pattern definition)
+ *	(see nl80211.h for the pattern definition)
  * @pattern_max_len: maximum length of each pattern
  * @pattern_min_len: minimum length of each pattern
  * @max_pkt_offset: maximum Rx packet offset
  */
-काष्ठा wiphy_coalesce_support अणु
-	पूर्णांक n_rules;
-	पूर्णांक max_delay;
-	पूर्णांक n_patterns;
-	पूर्णांक pattern_max_len;
-	पूर्णांक pattern_min_len;
-	पूर्णांक max_pkt_offset;
-पूर्ण;
+struct wiphy_coalesce_support {
+	int n_rules;
+	int max_delay;
+	int n_patterns;
+	int pattern_max_len;
+	int pattern_min_len;
+	int max_pkt_offset;
+};
 
 /**
- * क्रमागत wiphy_venकरोr_command_flags - validation flags क्रम venकरोr commands
- * @WIPHY_VENDOR_CMD_NEED_WDEV: venकरोr command requires wdev
- * @WIPHY_VENDOR_CMD_NEED_NETDEV: venकरोr command requires netdev
- * @WIPHY_VENDOR_CMD_NEED_RUNNING: पूर्णांकerface/wdev must be up & running
+ * enum wiphy_vendor_command_flags - validation flags for vendor commands
+ * @WIPHY_VENDOR_CMD_NEED_WDEV: vendor command requires wdev
+ * @WIPHY_VENDOR_CMD_NEED_NETDEV: vendor command requires netdev
+ * @WIPHY_VENDOR_CMD_NEED_RUNNING: interface/wdev must be up & running
  *	(must be combined with %_WDEV or %_NETDEV)
  */
-क्रमागत wiphy_venकरोr_command_flags अणु
+enum wiphy_vendor_command_flags {
 	WIPHY_VENDOR_CMD_NEED_WDEV = BIT(0),
 	WIPHY_VENDOR_CMD_NEED_NETDEV = BIT(1),
 	WIPHY_VENDOR_CMD_NEED_RUNNING = BIT(2),
-पूर्ण;
+};
 
 /**
- * क्रमागत wiphy_opmode_flag - Station's ht/vht operation mode inक्रमmation flags
+ * enum wiphy_opmode_flag - Station's ht/vht operation mode information flags
  *
  * @STA_OPMODE_MAX_BW_CHANGED: Max Bandwidth changed
  * @STA_OPMODE_SMPS_MODE_CHANGED: SMPS mode changed
  * @STA_OPMODE_N_SS_CHANGED: max N_SS (number of spatial streams) changed
  *
  */
-क्रमागत wiphy_opmode_flag अणु
+enum wiphy_opmode_flag {
 	STA_OPMODE_MAX_BW_CHANGED	= BIT(0),
 	STA_OPMODE_SMPS_MODE_CHANGED	= BIT(1),
 	STA_OPMODE_N_SS_CHANGED		= BIT(2),
-पूर्ण;
+};
 
 /**
- * काष्ठा sta_opmode_info - Station's ht/vht operation mode inक्रमmation
- * @changed: contains value from &क्रमागत wiphy_opmode_flag
- * @smps_mode: New SMPS mode value from &क्रमागत nl80211_smps_mode of a station
- * @bw: new max bandwidth value from &क्रमागत nl80211_chan_width of a station
+ * struct sta_opmode_info - Station's ht/vht operation mode information
+ * @changed: contains value from &enum wiphy_opmode_flag
+ * @smps_mode: New SMPS mode value from &enum nl80211_smps_mode of a station
+ * @bw: new max bandwidth value from &enum nl80211_chan_width of a station
  * @rx_nss: new rx_nss value of a station
  */
 
-काष्ठा sta_opmode_info अणु
+struct sta_opmode_info {
 	u32 changed;
-	क्रमागत nl80211_smps_mode smps_mode;
-	क्रमागत nl80211_chan_width bw;
+	enum nl80211_smps_mode smps_mode;
+	enum nl80211_chan_width bw;
 	u8 rx_nss;
-पूर्ण;
+};
 
-#घोषणा VENDOR_CMD_RAW_DATA ((स्थिर काष्ठा nla_policy *)(दीर्घ)(-ENODATA))
+#define VENDOR_CMD_RAW_DATA ((const struct nla_policy *)(long)(-ENODATA))
 
 /**
- * काष्ठा wiphy_venकरोr_command - venकरोr command definition
- * @info: venकरोr command identअगरying inक्रमmation, as used in nl80211
- * @flags: flags, see &क्रमागत wiphy_venकरोr_command_flags
- * @करोit: callback क्रम the operation, note that wdev is %शून्य अगर the
- *	flags didn't ask क्रम a wdev and non-%शून्य otherwise; the data
- *	poपूर्णांकer may be %शून्य अगर userspace provided no data at all
- * @dumpit: dump callback, क्रम transferring bigger/multiple items. The
- *	@storage poपूर्णांकs to cb->args[5], ie. is preserved over the multiple
+ * struct wiphy_vendor_command - vendor command definition
+ * @info: vendor command identifying information, as used in nl80211
+ * @flags: flags, see &enum wiphy_vendor_command_flags
+ * @doit: callback for the operation, note that wdev is %NULL if the
+ *	flags didn't ask for a wdev and non-%NULL otherwise; the data
+ *	pointer may be %NULL if userspace provided no data at all
+ * @dumpit: dump callback, for transferring bigger/multiple items. The
+ *	@storage points to cb->args[5], ie. is preserved over the multiple
  *	dumpit calls.
- * @policy: policy poपूर्णांकer क्रम attributes within %NL80211_ATTR_VENDOR_DATA.
- *	Set this to %VENDOR_CMD_RAW_DATA अगर no policy can be given and the
+ * @policy: policy pointer for attributes within %NL80211_ATTR_VENDOR_DATA.
+ *	Set this to %VENDOR_CMD_RAW_DATA if no policy can be given and the
  *	attribute is just raw data (e.g. a firmware command).
  * @maxattr: highest attribute number in policy
- * It's recommended to not have the same sub command with both @करोit and
+ * It's recommended to not have the same sub command with both @doit and
  * @dumpit, so that userspace can assume certain ones are get and others
  * are used with dump requests.
  */
-काष्ठा wiphy_venकरोr_command अणु
-	काष्ठा nl80211_venकरोr_cmd_info info;
+struct wiphy_vendor_command {
+	struct nl80211_vendor_cmd_info info;
 	u32 flags;
-	पूर्णांक (*करोit)(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev,
-		    स्थिर व्योम *data, पूर्णांक data_len);
-	पूर्णांक (*dumpit)(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev,
-		      काष्ठा sk_buff *skb, स्थिर व्योम *data, पूर्णांक data_len,
-		      अचिन्हित दीर्घ *storage);
-	स्थिर काष्ठा nla_policy *policy;
-	अचिन्हित पूर्णांक maxattr;
-पूर्ण;
+	int (*doit)(struct wiphy *wiphy, struct wireless_dev *wdev,
+		    const void *data, int data_len);
+	int (*dumpit)(struct wiphy *wiphy, struct wireless_dev *wdev,
+		      struct sk_buff *skb, const void *data, int data_len,
+		      unsigned long *storage);
+	const struct nla_policy *policy;
+	unsigned int maxattr;
+};
 
 /**
- * काष्ठा wiphy_अगरtype_ext_capab - extended capabilities per पूर्णांकerface type
- * @अगरtype: पूर्णांकerface type
+ * struct wiphy_iftype_ext_capab - extended capabilities per interface type
+ * @iftype: interface type
  * @extended_capabilities: extended capabilities supported by the driver,
  *	additional capabilities might be supported by userspace; these are the
  *	802.11 extended capabilities ("Extended Capabilities element") and are
- *	in the same क्रमmat as in the inक्रमmation element. See IEEE Std
- *	802.11-2012 8.4.2.29 क्रम the defined fields.
+ *	in the same format as in the information element. See IEEE Std
+ *	802.11-2012 8.4.2.29 for the defined fields.
  * @extended_capabilities_mask: mask of the valid values
  * @extended_capabilities_len: length of the extended capabilities
  */
-काष्ठा wiphy_अगरtype_ext_capab अणु
-	क्रमागत nl80211_अगरtype अगरtype;
-	स्थिर u8 *extended_capabilities;
-	स्थिर u8 *extended_capabilities_mask;
+struct wiphy_iftype_ext_capab {
+	enum nl80211_iftype iftype;
+	const u8 *extended_capabilities;
+	const u8 *extended_capabilities_mask;
 	u8 extended_capabilities_len;
-पूर्ण;
+};
 
 /**
- * काष्ठा cfg80211_pmsr_capabilities - cfg80211 peer measurement capabilities
+ * struct cfg80211_pmsr_capabilities - cfg80211 peer measurement capabilities
  * @max_peers: maximum number of peers in a single measurement
- * @report_ap_tsf: can report assoc AP's TSF क्रम radio resource measurement
- * @अक्रमomize_mac_addr: can अक्रमomize MAC address क्रम measurement
- * @fपंचांग.supported: FTM measurement is supported
- * @fपंचांग.asap: ASAP-mode is supported
- * @fपंचांग.non_asap: non-ASAP-mode is supported
- * @fपंचांग.request_lci: can request LCI data
- * @fपंचांग.request_civicloc: can request civic location data
- * @fपंचांग.preambles: biपंचांगap of preambles supported (&क्रमागत nl80211_preamble)
- * @fपंचांग.bandwidths: biपंचांगap of bandwidths supported (&क्रमागत nl80211_chan_width)
- * @fपंचांग.max_bursts_exponent: maximum burst exponent supported
- *	(set to -1 अगर not limited; note that setting this will necessarily
- *	क्रमbid using the value 15 to let the responder pick)
- * @fपंचांग.max_fपंचांगs_per_burst: maximum FTMs per burst supported (set to 0 अगर
+ * @report_ap_tsf: can report assoc AP's TSF for radio resource measurement
+ * @randomize_mac_addr: can randomize MAC address for measurement
+ * @ftm.supported: FTM measurement is supported
+ * @ftm.asap: ASAP-mode is supported
+ * @ftm.non_asap: non-ASAP-mode is supported
+ * @ftm.request_lci: can request LCI data
+ * @ftm.request_civicloc: can request civic location data
+ * @ftm.preambles: bitmap of preambles supported (&enum nl80211_preamble)
+ * @ftm.bandwidths: bitmap of bandwidths supported (&enum nl80211_chan_width)
+ * @ftm.max_bursts_exponent: maximum burst exponent supported
+ *	(set to -1 if not limited; note that setting this will necessarily
+ *	forbid using the value 15 to let the responder pick)
+ * @ftm.max_ftms_per_burst: maximum FTMs per burst supported (set to 0 if
  *	not limited)
- * @fपंचांग.trigger_based: trigger based ranging measurement is supported
- * @fपंचांग.non_trigger_based: non trigger based ranging measurement is supported
+ * @ftm.trigger_based: trigger based ranging measurement is supported
+ * @ftm.non_trigger_based: non trigger based ranging measurement is supported
  */
-काष्ठा cfg80211_pmsr_capabilities अणु
-	अचिन्हित पूर्णांक max_peers;
+struct cfg80211_pmsr_capabilities {
+	unsigned int max_peers;
 	u8 report_ap_tsf:1,
-	   अक्रमomize_mac_addr:1;
+	   randomize_mac_addr:1;
 
-	काष्ठा अणु
+	struct {
 		u32 preambles;
 		u32 bandwidths;
 		s8 max_bursts_exponent;
-		u8 max_fपंचांगs_per_burst;
+		u8 max_ftms_per_burst;
 		u8 supported:1,
 		   asap:1,
 		   non_asap:1,
@@ -4734,239 +4733,239 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
 		   request_civicloc:1,
 		   trigger_based:1,
 		   non_trigger_based:1;
-	पूर्ण fपंचांग;
-पूर्ण;
+	} ftm;
+};
 
 /**
- * काष्ठा wiphy_अगरtype_akm_suites - This काष्ठाure encapsulates supported akm
- * suites क्रम पूर्णांकerface types defined in @अगरtypes_mask. Each type in the
- * @अगरtypes_mask must be unique across all instances of अगरtype_akm_suites.
+ * struct wiphy_iftype_akm_suites - This structure encapsulates supported akm
+ * suites for interface types defined in @iftypes_mask. Each type in the
+ * @iftypes_mask must be unique across all instances of iftype_akm_suites.
  *
- * @अगरtypes_mask: biपंचांगask of पूर्णांकerfaces types
- * @akm_suites: poपूर्णांकs to an array of supported akm suites
+ * @iftypes_mask: bitmask of interfaces types
+ * @akm_suites: points to an array of supported akm suites
  * @n_akm_suites: number of supported AKM suites
  */
-काष्ठा wiphy_अगरtype_akm_suites अणु
-	u16 अगरtypes_mask;
-	स्थिर u32 *akm_suites;
-	पूर्णांक n_akm_suites;
-पूर्ण;
+struct wiphy_iftype_akm_suites {
+	u16 iftypes_mask;
+	const u32 *akm_suites;
+	int n_akm_suites;
+};
 
 /**
- * काष्ठा wiphy - wireless hardware description
- * @mtx: mutex क्रम the data (काष्ठाures) of this device
- * @reg_notअगरier: the driver's regulatory notअगरication callback,
- *	note that अगर your driver uses wiphy_apply_custom_regulatory()
- *	the reg_notअगरier's request can be passed as शून्य
- * @regd: the driver's regulatory करोमुख्य, अगर one was requested via
- *	the regulatory_hपूर्णांक() API. This can be used by the driver
- *	on the reg_notअगरier() अगर it chooses to ignore future
- *	regulatory करोमुख्य changes caused by other drivers.
- * @संकेत_type: संकेत type reported in &काष्ठा cfg80211_bss.
+ * struct wiphy - wireless hardware description
+ * @mtx: mutex for the data (structures) of this device
+ * @reg_notifier: the driver's regulatory notification callback,
+ *	note that if your driver uses wiphy_apply_custom_regulatory()
+ *	the reg_notifier's request can be passed as NULL
+ * @regd: the driver's regulatory domain, if one was requested via
+ *	the regulatory_hint() API. This can be used by the driver
+ *	on the reg_notifier() if it chooses to ignore future
+ *	regulatory domain changes caused by other drivers.
+ * @signal_type: signal type reported in &struct cfg80211_bss.
  * @cipher_suites: supported cipher suites
  * @n_cipher_suites: number of supported cipher suites
- * @akm_suites: supported AKM suites. These are the शेष AKMs supported अगर
- *	the supported AKMs not advertized क्रम a specअगरic पूर्णांकerface type in
- *	अगरtype_akm_suites.
+ * @akm_suites: supported AKM suites. These are the default AKMs supported if
+ *	the supported AKMs not advertized for a specific interface type in
+ *	iftype_akm_suites.
  * @n_akm_suites: number of supported AKM suites
- * @अगरtype_akm_suites: array of supported akm suites info per पूर्णांकerface type.
- *	Note that the bits in @अगरtypes_mask inside this काष्ठाure cannot
+ * @iftype_akm_suites: array of supported akm suites info per interface type.
+ *	Note that the bits in @iftypes_mask inside this structure cannot
  *	overlap (i.e. only one occurrence of each type is allowed across all
- *	instances of अगरtype_akm_suites).
- * @num_अगरtype_akm_suites: number of पूर्णांकerface types क्रम which supported akm
- *	suites are specअगरied separately.
- * @retry_लघु: Retry limit क्रम लघु frames (करोt11ShortRetryLimit)
- * @retry_दीर्घ: Retry limit क्रम दीर्घ frames (करोt11LongRetryLimit)
- * @frag_threshold: Fragmentation threshold (करोt11FragmentationThreshold);
+ *	instances of iftype_akm_suites).
+ * @num_iftype_akm_suites: number of interface types for which supported akm
+ *	suites are specified separately.
+ * @retry_short: Retry limit for short frames (dot11ShortRetryLimit)
+ * @retry_long: Retry limit for long frames (dot11LongRetryLimit)
+ * @frag_threshold: Fragmentation threshold (dot11FragmentationThreshold);
  *	-1 = fragmentation disabled, only odd values >= 256 used
- * @rts_threshold: RTS threshold (करोt11RTSThreshold); -1 = RTS/CTS disabled
+ * @rts_threshold: RTS threshold (dot11RTSThreshold); -1 = RTS/CTS disabled
  * @_net: the network namespace this wiphy currently lives in
  * @perm_addr: permanent MAC address of this device
  * @addr_mask: If the device supports multiple MAC addresses by masking,
- *	set this to a mask with variable bits set to 1, e.g. अगर the last
+ *	set this to a mask with variable bits set to 1, e.g. if the last
  *	four bits are variable then set it to 00-00-00-00-00-0f. The actual
- *	variable bits shall be determined by the पूर्णांकerfaces added, with
- *	पूर्णांकerfaces not matching the mask being rejected to be brought up.
+ *	variable bits shall be determined by the interfaces added, with
+ *	interfaces not matching the mask being rejected to be brought up.
  * @n_addresses: number of addresses in @addresses.
- * @addresses: If the device has more than one address, set this poपूर्णांकer
+ * @addresses: If the device has more than one address, set this pointer
  *	to a list of addresses (6 bytes each). The first one will be used
- *	by शेष क्रम perm_addr. In this हाल, the mask should be set to
- *	all-zeroes. In this हाल it is assumed that the device can handle
+ *	by default for perm_addr. In this case, the mask should be set to
+ *	all-zeroes. In this case it is assumed that the device can handle
  *	the same number of arbitrary MAC addresses.
- * @रेजिस्टरed: protects ->resume and ->suspend sysfs callbacks against
- *	unरेजिस्टर hardware
- * @debugfsdir: debugfs directory used क्रम this wiphy (ieee80211/<wiphyname>).
- *	It will be नामd स्वतःmatically on wiphy नामs
- * @dev: (भव) काष्ठा device क्रम this wiphy. The item in
- *	/sys/class/ieee80211/ poपूर्णांकs to this. You need use set_wiphy_dev()
+ * @registered: protects ->resume and ->suspend sysfs callbacks against
+ *	unregister hardware
+ * @debugfsdir: debugfs directory used for this wiphy (ieee80211/<wiphyname>).
+ *	It will be renamed automatically on wiphy renames
+ * @dev: (virtual) struct device for this wiphy. The item in
+ *	/sys/class/ieee80211/ points to this. You need use set_wiphy_dev()
  *	(see below).
  * @wext: wireless extension handlers
- * @priv: driver निजी data (sized according to wiphy_new() parameter)
- * @पूर्णांकerface_modes: biपंचांगask of पूर्णांकerfaces types valid क्रम this wiphy,
+ * @priv: driver private data (sized according to wiphy_new() parameter)
+ * @interface_modes: bitmask of interfaces types valid for this wiphy,
  *	must be set by driver
- * @अगरace_combinations: Valid पूर्णांकerface combinations array, should not
- *	list single पूर्णांकerface types.
- * @n_अगरace_combinations: number of entries in @अगरace_combinations array.
- * @software_अगरtypes: biपंचांगask of software पूर्णांकerface types, these are not
+ * @iface_combinations: Valid interface combinations array, should not
+ *	list single interface types.
+ * @n_iface_combinations: number of entries in @iface_combinations array.
+ * @software_iftypes: bitmask of software interface types, these are not
  *	subject to any restrictions since they are purely managed in SW.
- * @flags: wiphy flags, see &क्रमागत wiphy_flags
+ * @flags: wiphy flags, see &enum wiphy_flags
  * @regulatory_flags: wiphy regulatory flags, see
- *	&क्रमागत ieee80211_regulatory_flags
- * @features: features advertised to nl80211, see &क्रमागत nl80211_feature_flags.
+ *	&enum ieee80211_regulatory_flags
+ * @features: features advertised to nl80211, see &enum nl80211_feature_flags.
  * @ext_features: extended features advertised to nl80211, see
- *	&क्रमागत nl80211_ext_feature_index.
- * @bss_priv_size: each BSS काष्ठा has निजी data allocated with it,
+ *	&enum nl80211_ext_feature_index.
+ * @bss_priv_size: each BSS struct has private data allocated with it,
  *	this variable determines its size
- * @max_scan_ssids: maximum number of SSIDs the device can scan क्रम in
+ * @max_scan_ssids: maximum number of SSIDs the device can scan for in
  *	any given scan
  * @max_sched_scan_reqs: maximum number of scheduled scan requests that
  *	the device can run concurrently.
  * @max_sched_scan_ssids: maximum number of SSIDs the device can scan
- *	क्रम in any given scheduled scan
+ *	for in any given scheduled scan
  * @max_match_sets: maximum number of match sets the device can handle
- *	when perक्रमming a scheduled scan, 0 अगर filtering is not
+ *	when performing a scheduled scan, 0 if filtering is not
  *	supported.
  * @max_scan_ie_len: maximum length of user-controlled IEs device can
  *	add to probe request frames transmitted during a scan, must not
  *	include fixed IEs like supported rates
- * @max_sched_scan_ie_len: same as max_scan_ie_len, but क्रम scheduled
+ * @max_sched_scan_ie_len: same as max_scan_ie_len, but for scheduled
  *	scans
- * @max_sched_scan_plans: maximum number of scan plans (scan पूर्णांकerval and number
- *	of iterations) क्रम scheduled scan supported by the device.
- * @max_sched_scan_plan_पूर्णांकerval: maximum पूर्णांकerval (in seconds) क्रम a
+ * @max_sched_scan_plans: maximum number of scan plans (scan interval and number
+ *	of iterations) for scheduled scan supported by the device.
+ * @max_sched_scan_plan_interval: maximum interval (in seconds) for a
  *	single scan plan supported by the device.
- * @max_sched_scan_plan_iterations: maximum number of iterations क्रम a single
+ * @max_sched_scan_plan_iterations: maximum number of iterations for a single
  *	scan plan supported by the device.
  * @coverage_class: current coverage class
- * @fw_version: firmware version क्रम ethtool reporting
- * @hw_version: hardware version क्रम ethtool reporting
+ * @fw_version: firmware version for ethtool reporting
+ * @hw_version: hardware version for ethtool reporting
  * @max_num_pmkids: maximum number of PMKIDs supported by device
- * @privid: a poपूर्णांकer that drivers can use to identअगरy अगर an arbitrary
- *	wiphy is theirs, e.g. in global notअगरiers
- * @bands: inक्रमmation about bands/channels supported by this device
+ * @privid: a pointer that drivers can use to identify if an arbitrary
+ *	wiphy is theirs, e.g. in global notifiers
+ * @bands: information about bands/channels supported by this device
  *
- * @mgmt_stypes: biपंचांगasks of frame subtypes that can be subscribed to or
- *	transmitted through nl80211, poपूर्णांकs to an array indexed by पूर्णांकerface
+ * @mgmt_stypes: bitmasks of frame subtypes that can be subscribed to or
+ *	transmitted through nl80211, points to an array indexed by interface
  *	type
  *
- * @available_antennas_tx: biपंचांगap of antennas which are available to be
+ * @available_antennas_tx: bitmap of antennas which are available to be
  *	configured as TX antennas. Antenna configuration commands will be
  *	rejected unless this or @available_antennas_rx is set.
  *
- * @available_antennas_rx: biपंचांगap of antennas which are available to be
+ * @available_antennas_rx: bitmap of antennas which are available to be
  *	configured as RX antennas. Antenna configuration commands will be
  *	rejected unless this or @available_antennas_tx is set.
  *
  * @probe_resp_offload:
- *	 Biपंचांगap of supported protocols क्रम probe response offloading.
- *	 See &क्रमागत nl80211_probe_resp_offload_support_attr. Only valid
+ *	 Bitmap of supported protocols for probe response offloading.
+ *	 See &enum nl80211_probe_resp_offload_support_attr. Only valid
  *	 when the wiphy flag @WIPHY_FLAG_AP_PROBE_RESP_OFFLOAD is set.
  *
- * @max_reमुख्य_on_channel_duration: Maximum समय a reमुख्य-on-channel operation
- *	may request, अगर implemented.
+ * @max_remain_on_channel_duration: Maximum time a remain-on-channel operation
+ *	may request, if implemented.
  *
- * @wowlan: WoWLAN support inक्रमmation
+ * @wowlan: WoWLAN support information
  * @wowlan_config: current WoWLAN configuration; this should usually not be
  *	used since access to it is necessarily racy, use the parameter passed
  *	to the suspend() operation instead.
  *
- * @ap_sme_capa: AP SME capabilities, flags from &क्रमागत nl80211_ap_sme_features.
- * @ht_capa_mod_mask:  Specअगरy what ht_cap values can be over-ridden.
+ * @ap_sme_capa: AP SME capabilities, flags from &enum nl80211_ap_sme_features.
+ * @ht_capa_mod_mask:  Specify what ht_cap values can be over-ridden.
  *	If null, then none can be over-ridden.
- * @vht_capa_mod_mask:  Specअगरy what VHT capabilities can be over-ridden.
+ * @vht_capa_mod_mask:  Specify what VHT capabilities can be over-ridden.
  *	If null, then none can be over-ridden.
  *
- * @wdev_list: the list of associated (भव) पूर्णांकerfaces; this list must
- *	not be modअगरied by the driver, but can be पढ़ो with RTNL/RCU protection.
+ * @wdev_list: the list of associated (virtual) interfaces; this list must
+ *	not be modified by the driver, but can be read with RTNL/RCU protection.
  *
  * @max_acl_mac_addrs: Maximum number of MAC addresses that the device
- *	supports क्रम ACL.
+ *	supports for ACL.
  *
  * @extended_capabilities: extended capabilities supported by the driver,
  *	additional capabilities might be supported by userspace; these are
  *	the 802.11 extended capabilities ("Extended Capabilities element")
- *	and are in the same क्रमmat as in the inक्रमmation element. See
- *	802.11-2012 8.4.2.29 क्रम the defined fields. These are the शेष
- *	extended capabilities to be used अगर the capabilities are not specअगरied
- *	क्रम a specअगरic पूर्णांकerface type in अगरtype_ext_capab.
+ *	and are in the same format as in the information element. See
+ *	802.11-2012 8.4.2.29 for the defined fields. These are the default
+ *	extended capabilities to be used if the capabilities are not specified
+ *	for a specific interface type in iftype_ext_capab.
  * @extended_capabilities_mask: mask of the valid values
  * @extended_capabilities_len: length of the extended capabilities
- * @अगरtype_ext_capab: array of extended capabilities per पूर्णांकerface type
- * @num_अगरtype_ext_capab: number of पूर्णांकerface types क्रम which extended
- *	capabilities are specअगरied separately.
- * @coalesce: packet coalescing support inक्रमmation
+ * @iftype_ext_capab: array of extended capabilities per interface type
+ * @num_iftype_ext_capab: number of interface types for which extended
+ *	capabilities are specified separately.
+ * @coalesce: packet coalescing support information
  *
- * @venकरोr_commands: array of venकरोr commands supported by the hardware
- * @n_venकरोr_commands: number of venकरोr commands
- * @venकरोr_events: array of venकरोr events supported by the hardware
- * @n_venकरोr_events: number of venकरोr events
+ * @vendor_commands: array of vendor commands supported by the hardware
+ * @n_vendor_commands: number of vendor commands
+ * @vendor_events: array of vendor events supported by the hardware
+ * @n_vendor_events: number of vendor events
  *
  * @max_ap_assoc_sta: maximum number of associated stations supported in AP mode
  *	(including P2P GO) or 0 to indicate no such limit is advertised. The
  *	driver is allowed to advertise a theoretical limit that it can reach in
- *	some हालs, but may not always reach.
+ *	some cases, but may not always reach.
  *
  * @max_num_csa_counters: Number of supported csa_counters in beacons
- *	and probe responses.  This value should be set अगर the driver
+ *	and probe responses.  This value should be set if the driver
  *	wishes to limit the number of csa counters. Default (0) means
  *	infinite.
- * @bss_select_support: biपंचांगask indicating the BSS selection criteria supported
+ * @bss_select_support: bitmask indicating the BSS selection criteria supported
  *	by the driver in the .connect() callback. The bit position maps to the
- *	attribute indices defined in &क्रमागत nl80211_bss_select_attr.
+ *	attribute indices defined in &enum nl80211_bss_select_attr.
  *
- * @nan_supported_bands: bands supported by the device in न_अंक mode, a
- *	biपंचांगap of &क्रमागत nl80211_band values.  For instance, क्रम
+ * @nan_supported_bands: bands supported by the device in NAN mode, a
+ *	bitmap of &enum nl80211_band values.  For instance, for
  *	NL80211_BAND_2GHZ, bit 0 would be set
  *	(i.e. BIT(NL80211_BAND_2GHZ)).
  *
- * @txq_limit: configuration of पूर्णांकernal TX queue frame limit
- * @txq_memory_limit: configuration पूर्णांकernal TX queue memory limit
- * @txq_quantum: configuration of पूर्णांकernal TX queue scheduler quantum
+ * @txq_limit: configuration of internal TX queue frame limit
+ * @txq_memory_limit: configuration internal TX queue memory limit
+ * @txq_quantum: configuration of internal TX queue scheduler quantum
  *
- * @tx_queue_len: allow setting transmit queue len क्रम drivers not using
+ * @tx_queue_len: allow setting transmit queue len for drivers not using
  *	wake_tx_queue
  *
  * @support_mbssid: can HW support association with nontransmitted AP
- * @support_only_he_mbssid: करोn't parse MBSSID elements अगर it is not
- *	HE AP, in order to aव्योम compatibility issues.
- *	@support_mbssid must be set क्रम this to have any effect.
+ * @support_only_he_mbssid: don't parse MBSSID elements if it is not
+ *	HE AP, in order to avoid compatibility issues.
+ *	@support_mbssid must be set for this to have any effect.
  *
  * @pmsr_capa: peer measurement capabilities
  *
  * @tid_config_support: describes the per-TID config support that the
  *	device has
- * @tid_config_support.vअगर: biपंचांगap of attributes (configurations)
- *	supported by the driver क्रम each vअगर
- * @tid_config_support.peer: biपंचांगap of attributes (configurations)
- *	supported by the driver क्रम each peer
- * @tid_config_support.max_retry: maximum supported retry count क्रम
- *	दीर्घ/लघु retry configuration
+ * @tid_config_support.vif: bitmap of attributes (configurations)
+ *	supported by the driver for each vif
+ * @tid_config_support.peer: bitmap of attributes (configurations)
+ *	supported by the driver for each peer
+ * @tid_config_support.max_retry: maximum supported retry count for
+ *	long/short retry configuration
  *
- * @max_data_retry_count: maximum supported per TID retry count क्रम
+ * @max_data_retry_count: maximum supported per TID retry count for
  *	configuration through the %NL80211_TID_CONFIG_ATTR_RETRY_SHORT and
  *	%NL80211_TID_CONFIG_ATTR_RETRY_LONG attributes
  * @sar_capa: SAR control capabilities
  */
-काष्ठा wiphy अणु
-	काष्ठा mutex mtx;
+struct wiphy {
+	struct mutex mtx;
 
-	/* assign these fields beक्रमe you रेजिस्टर the wiphy */
+	/* assign these fields before you register the wiphy */
 
 	u8 perm_addr[ETH_ALEN];
 	u8 addr_mask[ETH_ALEN];
 
-	काष्ठा mac_address *addresses;
+	struct mac_address *addresses;
 
-	स्थिर काष्ठा ieee80211_txrx_stypes *mgmt_stypes;
+	const struct ieee80211_txrx_stypes *mgmt_stypes;
 
-	स्थिर काष्ठा ieee80211_अगरace_combination *अगरace_combinations;
-	पूर्णांक n_अगरace_combinations;
-	u16 software_अगरtypes;
+	const struct ieee80211_iface_combination *iface_combinations;
+	int n_iface_combinations;
+	u16 software_iftypes;
 
 	u16 n_addresses;
 
-	/* Supported पूर्णांकerface modes, OR together BIT(NL80211_IFTYPE_...) */
-	u16 पूर्णांकerface_modes;
+	/* Supported interface modes, OR together BIT(NL80211_IFTYPE_...) */
+	u16 interface_modes;
 
 	u16 max_acl_mac_addrs;
 
@@ -4975,9 +4974,9 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
 
 	u32 ap_sme_capa;
 
-	क्रमागत cfg80211_संकेत_type संकेत_type;
+	enum cfg80211_signal_type signal_type;
 
-	पूर्णांक bss_priv_size;
+	int bss_priv_size;
 	u8 max_scan_ssids;
 	u8 max_sched_scan_reqs;
 	u8 max_sched_scan_ssids;
@@ -4985,33 +4984,33 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
 	u16 max_scan_ie_len;
 	u16 max_sched_scan_ie_len;
 	u32 max_sched_scan_plans;
-	u32 max_sched_scan_plan_पूर्णांकerval;
+	u32 max_sched_scan_plan_interval;
 	u32 max_sched_scan_plan_iterations;
 
-	पूर्णांक n_cipher_suites;
-	स्थिर u32 *cipher_suites;
+	int n_cipher_suites;
+	const u32 *cipher_suites;
 
-	पूर्णांक n_akm_suites;
-	स्थिर u32 *akm_suites;
+	int n_akm_suites;
+	const u32 *akm_suites;
 
-	स्थिर काष्ठा wiphy_अगरtype_akm_suites *अगरtype_akm_suites;
-	अचिन्हित पूर्णांक num_अगरtype_akm_suites;
+	const struct wiphy_iftype_akm_suites *iftype_akm_suites;
+	unsigned int num_iftype_akm_suites;
 
-	u8 retry_लघु;
-	u8 retry_दीर्घ;
+	u8 retry_short;
+	u8 retry_long;
 	u32 frag_threshold;
 	u32 rts_threshold;
 	u8 coverage_class;
 
-	अक्षर fw_version[ETHTOOL_FWVERS_LEN];
+	char fw_version[ETHTOOL_FWVERS_LEN];
 	u32 hw_version;
 
-#अगर_घोषित CONFIG_PM
-	स्थिर काष्ठा wiphy_wowlan_support *wowlan;
-	काष्ठा cfg80211_wowlan *wowlan_config;
-#पूर्ण_अगर
+#ifdef CONFIG_PM
+	const struct wiphy_wowlan_support *wowlan;
+	struct cfg80211_wowlan *wowlan_config;
+#endif
 
-	u16 max_reमुख्य_on_channel_duration;
+	u16 max_remain_on_channel_duration;
 
 	u8 max_num_pmkids;
 
@@ -5020,45 +5019,45 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
 
 	u32 probe_resp_offload;
 
-	स्थिर u8 *extended_capabilities, *extended_capabilities_mask;
+	const u8 *extended_capabilities, *extended_capabilities_mask;
 	u8 extended_capabilities_len;
 
-	स्थिर काष्ठा wiphy_अगरtype_ext_capab *अगरtype_ext_capab;
-	अचिन्हित पूर्णांक num_अगरtype_ext_capab;
+	const struct wiphy_iftype_ext_capab *iftype_ext_capab;
+	unsigned int num_iftype_ext_capab;
 
-	स्थिर व्योम *privid;
+	const void *privid;
 
-	काष्ठा ieee80211_supported_band *bands[NUM_NL80211_BANDS];
+	struct ieee80211_supported_band *bands[NUM_NL80211_BANDS];
 
-	व्योम (*reg_notअगरier)(काष्ठा wiphy *wiphy,
-			     काष्ठा regulatory_request *request);
+	void (*reg_notifier)(struct wiphy *wiphy,
+			     struct regulatory_request *request);
 
-	/* fields below are पढ़ो-only, asचिन्हित by cfg80211 */
+	/* fields below are read-only, assigned by cfg80211 */
 
-	स्थिर काष्ठा ieee80211_regकरोमुख्य __rcu *regd;
+	const struct ieee80211_regdomain __rcu *regd;
 
-	काष्ठा device dev;
+	struct device dev;
 
-	bool रेजिस्टरed;
+	bool registered;
 
-	काष्ठा dentry *debugfsdir;
+	struct dentry *debugfsdir;
 
-	स्थिर काष्ठा ieee80211_ht_cap *ht_capa_mod_mask;
-	स्थिर काष्ठा ieee80211_vht_cap *vht_capa_mod_mask;
+	const struct ieee80211_ht_cap *ht_capa_mod_mask;
+	const struct ieee80211_vht_cap *vht_capa_mod_mask;
 
-	काष्ठा list_head wdev_list;
+	struct list_head wdev_list;
 
 	possible_net_t _net;
 
-#अगर_घोषित CONFIG_CFG80211_WEXT
-	स्थिर काष्ठा iw_handler_def *wext;
-#पूर्ण_अगर
+#ifdef CONFIG_CFG80211_WEXT
+	const struct iw_handler_def *wext;
+#endif
 
-	स्थिर काष्ठा wiphy_coalesce_support *coalesce;
+	const struct wiphy_coalesce_support *coalesce;
 
-	स्थिर काष्ठा wiphy_venकरोr_command *venकरोr_commands;
-	स्थिर काष्ठा nl80211_venकरोr_cmd_info *venकरोr_events;
-	पूर्णांक n_venकरोr_commands, n_venकरोr_events;
+	const struct wiphy_vendor_command *vendor_commands;
+	const struct nl80211_vendor_cmd_info *vendor_events;
+	int n_vendor_commands, n_vendor_events;
 
 	u16 max_ap_assoc_sta;
 
@@ -5072,354 +5071,354 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
 	u32 txq_memory_limit;
 	u32 txq_quantum;
 
-	अचिन्हित दीर्घ tx_queue_len;
+	unsigned long tx_queue_len;
 
 	u8 support_mbssid:1,
 	   support_only_he_mbssid:1;
 
-	स्थिर काष्ठा cfg80211_pmsr_capabilities *pmsr_capa;
+	const struct cfg80211_pmsr_capabilities *pmsr_capa;
 
-	काष्ठा अणु
-		u64 peer, vअगर;
+	struct {
+		u64 peer, vif;
 		u8 max_retry;
-	पूर्ण tid_config_support;
+	} tid_config_support;
 
 	u8 max_data_retry_count;
 
-	स्थिर काष्ठा cfg80211_sar_capa *sar_capa;
+	const struct cfg80211_sar_capa *sar_capa;
 
-	अक्षर priv[] __aligned(NETDEV_ALIGN);
-पूर्ण;
+	char priv[] __aligned(NETDEV_ALIGN);
+};
 
-अटल अंतरभूत काष्ठा net *wiphy_net(काष्ठा wiphy *wiphy)
-अणु
-	वापस पढ़ो_pnet(&wiphy->_net);
-पूर्ण
+static inline struct net *wiphy_net(struct wiphy *wiphy)
+{
+	return read_pnet(&wiphy->_net);
+}
 
-अटल अंतरभूत व्योम wiphy_net_set(काष्ठा wiphy *wiphy, काष्ठा net *net)
-अणु
-	ग_लिखो_pnet(&wiphy->_net, net);
-पूर्ण
+static inline void wiphy_net_set(struct wiphy *wiphy, struct net *net)
+{
+	write_pnet(&wiphy->_net, net);
+}
 
 /**
- * wiphy_priv - वापस priv from wiphy
+ * wiphy_priv - return priv from wiphy
  *
- * @wiphy: the wiphy whose priv poपूर्णांकer to वापस
+ * @wiphy: the wiphy whose priv pointer to return
  * Return: The priv of @wiphy.
  */
-अटल अंतरभूत व्योम *wiphy_priv(काष्ठा wiphy *wiphy)
-अणु
+static inline void *wiphy_priv(struct wiphy *wiphy)
+{
 	BUG_ON(!wiphy);
-	वापस &wiphy->priv;
-पूर्ण
+	return &wiphy->priv;
+}
 
 /**
- * priv_to_wiphy - वापस the wiphy containing the priv
+ * priv_to_wiphy - return the wiphy containing the priv
  *
- * @priv: a poपूर्णांकer previously वापसed by wiphy_priv
+ * @priv: a pointer previously returned by wiphy_priv
  * Return: The wiphy of @priv.
  */
-अटल अंतरभूत काष्ठा wiphy *priv_to_wiphy(व्योम *priv)
-अणु
+static inline struct wiphy *priv_to_wiphy(void *priv)
+{
 	BUG_ON(!priv);
-	वापस container_of(priv, काष्ठा wiphy, priv);
-पूर्ण
+	return container_of(priv, struct wiphy, priv);
+}
 
 /**
- * set_wiphy_dev - set device poपूर्णांकer क्रम wiphy
+ * set_wiphy_dev - set device pointer for wiphy
  *
  * @wiphy: The wiphy whose device to bind
  * @dev: The device to parent it to
  */
-अटल अंतरभूत व्योम set_wiphy_dev(काष्ठा wiphy *wiphy, काष्ठा device *dev)
-अणु
+static inline void set_wiphy_dev(struct wiphy *wiphy, struct device *dev)
+{
 	wiphy->dev.parent = dev;
-पूर्ण
+}
 
 /**
- * wiphy_dev - get wiphy dev poपूर्णांकer
+ * wiphy_dev - get wiphy dev pointer
  *
- * @wiphy: The wiphy whose device काष्ठा to look up
+ * @wiphy: The wiphy whose device struct to look up
  * Return: The dev of @wiphy.
  */
-अटल अंतरभूत काष्ठा device *wiphy_dev(काष्ठा wiphy *wiphy)
-अणु
-	वापस wiphy->dev.parent;
-पूर्ण
+static inline struct device *wiphy_dev(struct wiphy *wiphy)
+{
+	return wiphy->dev.parent;
+}
 
 /**
  * wiphy_name - get wiphy name
  *
- * @wiphy: The wiphy whose name to वापस
+ * @wiphy: The wiphy whose name to return
  * Return: The name of @wiphy.
  */
-अटल अंतरभूत स्थिर अक्षर *wiphy_name(स्थिर काष्ठा wiphy *wiphy)
-अणु
-	वापस dev_name(&wiphy->dev);
-पूर्ण
+static inline const char *wiphy_name(const struct wiphy *wiphy)
+{
+	return dev_name(&wiphy->dev);
+}
 
 /**
- * wiphy_new_nm - create a new wiphy क्रम use with cfg80211
+ * wiphy_new_nm - create a new wiphy for use with cfg80211
  *
- * @ops: The configuration operations क्रम this device
- * @माप_priv: The size of the निजी area to allocate
+ * @ops: The configuration operations for this device
+ * @sizeof_priv: The size of the private area to allocate
  * @requested_name: Request a particular name.
- *	शून्य is valid value, and means use the शेष phy%d naming.
+ *	NULL is valid value, and means use the default phy%d naming.
  *
  * Create a new wiphy and associate the given operations with it.
- * @माप_priv bytes are allocated क्रम निजी use.
+ * @sizeof_priv bytes are allocated for private use.
  *
- * Return: A poपूर्णांकer to the new wiphy. This poपूर्णांकer must be
- * asचिन्हित to each netdev's ieee80211_ptr क्रम proper operation.
+ * Return: A pointer to the new wiphy. This pointer must be
+ * assigned to each netdev's ieee80211_ptr for proper operation.
  */
-काष्ठा wiphy *wiphy_new_nm(स्थिर काष्ठा cfg80211_ops *ops, पूर्णांक माप_priv,
-			   स्थिर अक्षर *requested_name);
+struct wiphy *wiphy_new_nm(const struct cfg80211_ops *ops, int sizeof_priv,
+			   const char *requested_name);
 
 /**
- * wiphy_new - create a new wiphy क्रम use with cfg80211
+ * wiphy_new - create a new wiphy for use with cfg80211
  *
- * @ops: The configuration operations क्रम this device
- * @माप_priv: The size of the निजी area to allocate
+ * @ops: The configuration operations for this device
+ * @sizeof_priv: The size of the private area to allocate
  *
  * Create a new wiphy and associate the given operations with it.
- * @माप_priv bytes are allocated क्रम निजी use.
+ * @sizeof_priv bytes are allocated for private use.
  *
- * Return: A poपूर्णांकer to the new wiphy. This poपूर्णांकer must be
- * asचिन्हित to each netdev's ieee80211_ptr क्रम proper operation.
+ * Return: A pointer to the new wiphy. This pointer must be
+ * assigned to each netdev's ieee80211_ptr for proper operation.
  */
-अटल अंतरभूत काष्ठा wiphy *wiphy_new(स्थिर काष्ठा cfg80211_ops *ops,
-				      पूर्णांक माप_priv)
-अणु
-	वापस wiphy_new_nm(ops, माप_priv, शून्य);
-पूर्ण
+static inline struct wiphy *wiphy_new(const struct cfg80211_ops *ops,
+				      int sizeof_priv)
+{
+	return wiphy_new_nm(ops, sizeof_priv, NULL);
+}
 
 /**
- * wiphy_रेजिस्टर - रेजिस्टर a wiphy with cfg80211
+ * wiphy_register - register a wiphy with cfg80211
  *
- * @wiphy: The wiphy to रेजिस्टर.
+ * @wiphy: The wiphy to register.
  *
  * Return: A non-negative wiphy index or a negative error code.
  */
-पूर्णांक wiphy_रेजिस्टर(काष्ठा wiphy *wiphy);
+int wiphy_register(struct wiphy *wiphy);
 
-/* this is a define क्रम better error reporting (file/line) */
-#घोषणा lockdep_निश्चित_wiphy(wiphy) lockdep_निश्चित_held(&(wiphy)->mtx)
+/* this is a define for better error reporting (file/line) */
+#define lockdep_assert_wiphy(wiphy) lockdep_assert_held(&(wiphy)->mtx)
 
 /**
  * rcu_dereference_wiphy - rcu_dereference with debug checking
  * @wiphy: the wiphy to check the locking on
- * @p: The poपूर्णांकer to पढ़ो, prior to dereferencing
+ * @p: The pointer to read, prior to dereferencing
  *
- * Do an rcu_dereference(p), but check caller either holds rcu_पढ़ो_lock()
+ * Do an rcu_dereference(p), but check caller either holds rcu_read_lock()
  * or RTNL. Note: Please prefer wiphy_dereference() or rcu_dereference().
  */
-#घोषणा rcu_dereference_wiphy(wiphy, p)				\
+#define rcu_dereference_wiphy(wiphy, p)				\
         rcu_dereference_check(p, lockdep_is_held(&wiphy->mtx))
 
 /**
- * wiphy_dereference - fetch RCU poपूर्णांकer when updates are prevented by wiphy mtx
+ * wiphy_dereference - fetch RCU pointer when updates are prevented by wiphy mtx
  * @wiphy: the wiphy to check the locking on
- * @p: The poपूर्णांकer to पढ़ो, prior to dereferencing
+ * @p: The pointer to read, prior to dereferencing
  *
- * Return the value of the specअगरied RCU-रक्षित poपूर्णांकer, but omit the
- * READ_ONCE(), because caller holds the wiphy mutex used क्रम updates.
+ * Return the value of the specified RCU-protected pointer, but omit the
+ * READ_ONCE(), because caller holds the wiphy mutex used for updates.
  */
-#घोषणा wiphy_dereference(wiphy, p)				\
-        rcu_dereference_रक्षित(p, lockdep_is_held(&wiphy->mtx))
+#define wiphy_dereference(wiphy, p)				\
+        rcu_dereference_protected(p, lockdep_is_held(&wiphy->mtx))
 
 /**
- * get_wiphy_regकरोm - get custom regकरोमुख्य क्रम the given wiphy
- * @wiphy: the wiphy to get the regकरोमुख्य from
+ * get_wiphy_regdom - get custom regdomain for the given wiphy
+ * @wiphy: the wiphy to get the regdomain from
  */
-स्थिर काष्ठा ieee80211_regकरोमुख्य *get_wiphy_regकरोm(काष्ठा wiphy *wiphy);
+const struct ieee80211_regdomain *get_wiphy_regdom(struct wiphy *wiphy);
 
 /**
- * wiphy_unरेजिस्टर - deरेजिस्टर a wiphy from cfg80211
+ * wiphy_unregister - deregister a wiphy from cfg80211
  *
- * @wiphy: The wiphy to unरेजिस्टर.
+ * @wiphy: The wiphy to unregister.
  *
  * After this call, no more requests can be made with this priv
- * poपूर्णांकer, but the call may sleep to रुको क्रम an outstanding
+ * pointer, but the call may sleep to wait for an outstanding
  * request that is being handled.
  */
-व्योम wiphy_unरेजिस्टर(काष्ठा wiphy *wiphy);
+void wiphy_unregister(struct wiphy *wiphy);
 
 /**
- * wiphy_मुक्त - मुक्त wiphy
+ * wiphy_free - free wiphy
  *
- * @wiphy: The wiphy to मुक्त
+ * @wiphy: The wiphy to free
  */
-व्योम wiphy_मुक्त(काष्ठा wiphy *wiphy);
+void wiphy_free(struct wiphy *wiphy);
 
-/* पूर्णांकernal काष्ठाs */
-काष्ठा cfg80211_conn;
-काष्ठा cfg80211_पूर्णांकernal_bss;
-काष्ठा cfg80211_cached_keys;
-काष्ठा cfg80211_cqm_config;
+/* internal structs */
+struct cfg80211_conn;
+struct cfg80211_internal_bss;
+struct cfg80211_cached_keys;
+struct cfg80211_cqm_config;
 
 /**
  * wiphy_lock - lock the wiphy
  * @wiphy: the wiphy to lock
  *
- * This is mostly exposed so it can be करोne around रेजिस्टरing and
- * unरेजिस्टरing netdevs that aren't created through cfg80211 calls,
- * since that requires locking in cfg80211 when the notअगरiers is
- * called, but that cannot dअगरferentiate which way it's called.
+ * This is mostly exposed so it can be done around registering and
+ * unregistering netdevs that aren't created through cfg80211 calls,
+ * since that requires locking in cfg80211 when the notifiers is
+ * called, but that cannot differentiate which way it's called.
  *
- * When cfg80211 ops are called, the wiphy is alपढ़ोy locked.
+ * When cfg80211 ops are called, the wiphy is already locked.
  */
-अटल अंतरभूत व्योम wiphy_lock(काष्ठा wiphy *wiphy)
+static inline void wiphy_lock(struct wiphy *wiphy)
 	__acquires(&wiphy->mtx)
-अणु
+{
 	mutex_lock(&wiphy->mtx);
 	__acquire(&wiphy->mtx);
-पूर्ण
+}
 
 /**
  * wiphy_unlock - unlock the wiphy again
  * @wiphy: the wiphy to unlock
  */
-अटल अंतरभूत व्योम wiphy_unlock(काष्ठा wiphy *wiphy)
+static inline void wiphy_unlock(struct wiphy *wiphy)
 	__releases(&wiphy->mtx)
-अणु
+{
 	__release(&wiphy->mtx);
 	mutex_unlock(&wiphy->mtx);
-पूर्ण
+}
 
 /**
- * काष्ठा wireless_dev - wireless device state
+ * struct wireless_dev - wireless device state
  *
- * For netdevs, this काष्ठाure must be allocated by the driver
- * that uses the ieee80211_ptr field in काष्ठा net_device (this
- * is पूर्णांकentional so it can be allocated aदीर्घ with the netdev.)
- * It need not be रेजिस्टरed then as netdev registration will
- * be पूर्णांकercepted by cfg80211 to see the new wireless device,
- * however, drivers must lock the wiphy beक्रमe रेजिस्टरing or
- * unरेजिस्टरing netdevs अगर they pre-create any netdevs (in ops
- * called from cfg80211, the wiphy is alपढ़ोy locked.)
+ * For netdevs, this structure must be allocated by the driver
+ * that uses the ieee80211_ptr field in struct net_device (this
+ * is intentional so it can be allocated along with the netdev.)
+ * It need not be registered then as netdev registration will
+ * be intercepted by cfg80211 to see the new wireless device,
+ * however, drivers must lock the wiphy before registering or
+ * unregistering netdevs if they pre-create any netdevs (in ops
+ * called from cfg80211, the wiphy is already locked.)
  *
  * For non-netdev uses, it must also be allocated by the driver
  * in response to the cfg80211 callbacks that require it, as
- * there's no netdev registration in that हाल it may not be
- * allocated outside of callback operations that वापस it.
+ * there's no netdev registration in that case it may not be
+ * allocated outside of callback operations that return it.
  *
- * @wiphy: poपूर्णांकer to hardware description
- * @अगरtype: पूर्णांकerface type
- * @रेजिस्टरed: is this wdev alपढ़ोy रेजिस्टरed with cfg80211
- * @रेजिस्टरing: indicates we're करोing registration under wiphy lock
- *	क्रम the notअगरier
- * @list: (निजी) Used to collect the पूर्णांकerfaces
- * @netdev: (निजी) Used to reference back to the netdev, may be %शून्य
- * @identअगरier: (निजी) Identअगरier used in nl80211 to identअगरy this
- *	wireless device अगर it has no netdev
- * @current_bss: (निजी) Used by the पूर्णांकernal configuration code
- * @chandef: (निजी) Used by the पूर्णांकernal configuration code to track
+ * @wiphy: pointer to hardware description
+ * @iftype: interface type
+ * @registered: is this wdev already registered with cfg80211
+ * @registering: indicates we're doing registration under wiphy lock
+ *	for the notifier
+ * @list: (private) Used to collect the interfaces
+ * @netdev: (private) Used to reference back to the netdev, may be %NULL
+ * @identifier: (private) Identifier used in nl80211 to identify this
+ *	wireless device if it has no netdev
+ * @current_bss: (private) Used by the internal configuration code
+ * @chandef: (private) Used by the internal configuration code to track
  *	the user-set channel definition.
- * @preset_chandef: (निजी) Used by the पूर्णांकernal configuration code to
- *	track the channel to be used क्रम AP later
- * @bssid: (निजी) Used by the पूर्णांकernal configuration code
- * @ssid: (निजी) Used by the पूर्णांकernal configuration code
- * @ssid_len: (निजी) Used by the पूर्णांकernal configuration code
- * @mesh_id_len: (निजी) Used by the पूर्णांकernal configuration code
- * @mesh_id_up_len: (निजी) Used by the पूर्णांकernal configuration code
- * @wext: (निजी) Used by the पूर्णांकernal wireless extensions compat code
- * @wext.ibss: (निजी) IBSS data part of wext handling
- * @wext.connect: (निजी) connection handling data
- * @wext.keys: (निजी) (WEP) key data
- * @wext.ie: (निजी) extra elements क्रम association
- * @wext.ie_len: (निजी) length of extra elements
- * @wext.bssid: (निजी) selected network BSSID
- * @wext.ssid: (निजी) selected network SSID
- * @wext.शेष_key: (निजी) selected शेष key index
- * @wext.शेष_mgmt_key: (निजी) selected शेष management key index
- * @wext.prev_bssid: (निजी) previous BSSID क्रम reassociation
- * @wext.prev_bssid_valid: (निजी) previous BSSID validity
- * @use_4addr: indicates 4addr mode is used on this पूर्णांकerface, must be
- *	set by driver (अगर supported) on add_पूर्णांकerface BEFORE रेजिस्टरing the
- *	netdev and may otherwise be used by driver पढ़ो-only, will be update
- *	by cfg80211 on change_पूर्णांकerface
- * @mgmt_registrations: list of registrations क्रम management frames
- * @mgmt_registrations_lock: lock क्रम the list
+ * @preset_chandef: (private) Used by the internal configuration code to
+ *	track the channel to be used for AP later
+ * @bssid: (private) Used by the internal configuration code
+ * @ssid: (private) Used by the internal configuration code
+ * @ssid_len: (private) Used by the internal configuration code
+ * @mesh_id_len: (private) Used by the internal configuration code
+ * @mesh_id_up_len: (private) Used by the internal configuration code
+ * @wext: (private) Used by the internal wireless extensions compat code
+ * @wext.ibss: (private) IBSS data part of wext handling
+ * @wext.connect: (private) connection handling data
+ * @wext.keys: (private) (WEP) key data
+ * @wext.ie: (private) extra elements for association
+ * @wext.ie_len: (private) length of extra elements
+ * @wext.bssid: (private) selected network BSSID
+ * @wext.ssid: (private) selected network SSID
+ * @wext.default_key: (private) selected default key index
+ * @wext.default_mgmt_key: (private) selected default management key index
+ * @wext.prev_bssid: (private) previous BSSID for reassociation
+ * @wext.prev_bssid_valid: (private) previous BSSID validity
+ * @use_4addr: indicates 4addr mode is used on this interface, must be
+ *	set by driver (if supported) on add_interface BEFORE registering the
+ *	netdev and may otherwise be used by driver read-only, will be update
+ *	by cfg80211 on change_interface
+ * @mgmt_registrations: list of registrations for management frames
+ * @mgmt_registrations_lock: lock for the list
  * @mgmt_registrations_need_update: mgmt registrations were updated,
  *	need to propagate the update to the driver
- * @mtx: mutex used to lock data in this काष्ठा, may be used by drivers
+ * @mtx: mutex used to lock data in this struct, may be used by drivers
  *	and some API functions require it held
- * @beacon_पूर्णांकerval: beacon पूर्णांकerval used on this device क्रम transmitting
+ * @beacon_interval: beacon interval used on this device for transmitting
  *	beacons, 0 when not valid
- * @address: The address क्रम this device, valid only अगर @netdev is %शून्य
- * @is_running: true अगर this is a non-netdev device that has been started, e.g.
+ * @address: The address for this device, valid only if @netdev is %NULL
+ * @is_running: true if this is a non-netdev device that has been started, e.g.
  *	the P2P Device.
- * @cac_started: true अगर DFS channel availability check has been started
- * @cac_start_समय: बारtamp (jअगरfies) when the dfs state was entered.
- * @cac_समय_ms: CAC समय in ms
- * @ps: घातersave mode is enabled
- * @ps_समयout: dynamic घातersave समयout
- * @ap_unexpected_nlportid: (निजी) netlink port ID of application
- *	रेजिस्टरed क्रम unexpected class 3 frames (AP mode)
- * @conn: (निजी) cfg80211 software SME connection state machine data
- * @connect_keys: (निजी) keys to set after connection is established
+ * @cac_started: true if DFS channel availability check has been started
+ * @cac_start_time: timestamp (jiffies) when the dfs state was entered.
+ * @cac_time_ms: CAC time in ms
+ * @ps: powersave mode is enabled
+ * @ps_timeout: dynamic powersave timeout
+ * @ap_unexpected_nlportid: (private) netlink port ID of application
+ *	registered for unexpected class 3 frames (AP mode)
+ * @conn: (private) cfg80211 software SME connection state machine data
+ * @connect_keys: (private) keys to set after connection is established
  * @conn_bss_type: connecting/connected BSS type
- * @conn_owner_nlportid: (निजी) connection owner socket port ID
- * @disconnect_wk: (निजी) स्वतः-disconnect work
- * @disconnect_bssid: (निजी) the BSSID to use क्रम स्वतः-disconnect
- * @ibss_fixed: (निजी) IBSS is using fixed BSSID
- * @ibss_dfs_possible: (निजी) IBSS may change to a DFS channel
- * @event_list: (निजी) list क्रम पूर्णांकernal event processing
- * @event_lock: (निजी) lock क्रम event list
- * @owner_nlportid: (निजी) owner socket port ID
- * @nl_owner_dead: (निजी) owner socket went away
- * @cqm_config: (निजी) nl80211 RSSI monitor state
- * @pmsr_list: (निजी) peer measurement requests
- * @pmsr_lock: (निजी) peer measurements requests/results lock
- * @pmsr_मुक्त_wk: (निजी) peer measurements cleanup work
- * @unprot_beacon_reported: (निजी) बारtamp of last
- *	unरक्षित beacon report
+ * @conn_owner_nlportid: (private) connection owner socket port ID
+ * @disconnect_wk: (private) auto-disconnect work
+ * @disconnect_bssid: (private) the BSSID to use for auto-disconnect
+ * @ibss_fixed: (private) IBSS is using fixed BSSID
+ * @ibss_dfs_possible: (private) IBSS may change to a DFS channel
+ * @event_list: (private) list for internal event processing
+ * @event_lock: (private) lock for event list
+ * @owner_nlportid: (private) owner socket port ID
+ * @nl_owner_dead: (private) owner socket went away
+ * @cqm_config: (private) nl80211 RSSI monitor state
+ * @pmsr_list: (private) peer measurement requests
+ * @pmsr_lock: (private) peer measurements requests/results lock
+ * @pmsr_free_wk: (private) peer measurements cleanup work
+ * @unprot_beacon_reported: (private) timestamp of last
+ *	unprotected beacon report
  */
-काष्ठा wireless_dev अणु
-	काष्ठा wiphy *wiphy;
-	क्रमागत nl80211_अगरtype अगरtype;
+struct wireless_dev {
+	struct wiphy *wiphy;
+	enum nl80211_iftype iftype;
 
-	/* the reमुख्यder of this काष्ठा should be निजी to cfg80211 */
-	काष्ठा list_head list;
-	काष्ठा net_device *netdev;
+	/* the remainder of this struct should be private to cfg80211 */
+	struct list_head list;
+	struct net_device *netdev;
 
-	u32 identअगरier;
+	u32 identifier;
 
-	काष्ठा list_head mgmt_registrations;
+	struct list_head mgmt_registrations;
 	spinlock_t mgmt_registrations_lock;
 	u8 mgmt_registrations_need_update:1;
 
-	काष्ठा mutex mtx;
+	struct mutex mtx;
 
-	bool use_4addr, is_running, रेजिस्टरed, रेजिस्टरing;
+	bool use_4addr, is_running, registered, registering;
 
-	u8 address[ETH_ALEN] __aligned(माप(u16));
+	u8 address[ETH_ALEN] __aligned(sizeof(u16));
 
-	/* currently used क्रम IBSS and SME - might be rearranged later */
+	/* currently used for IBSS and SME - might be rearranged later */
 	u8 ssid[IEEE80211_MAX_SSID_LEN];
 	u8 ssid_len, mesh_id_len, mesh_id_up_len;
-	काष्ठा cfg80211_conn *conn;
-	काष्ठा cfg80211_cached_keys *connect_keys;
-	क्रमागत ieee80211_bss_type conn_bss_type;
+	struct cfg80211_conn *conn;
+	struct cfg80211_cached_keys *connect_keys;
+	enum ieee80211_bss_type conn_bss_type;
 	u32 conn_owner_nlportid;
 
-	काष्ठा work_काष्ठा disconnect_wk;
+	struct work_struct disconnect_wk;
 	u8 disconnect_bssid[ETH_ALEN];
 
-	काष्ठा list_head event_list;
+	struct list_head event_list;
 	spinlock_t event_lock;
 
-	काष्ठा cfg80211_पूर्णांकernal_bss *current_bss; /* associated / joined */
-	काष्ठा cfg80211_chan_def preset_chandef;
-	काष्ठा cfg80211_chan_def chandef;
+	struct cfg80211_internal_bss *current_bss; /* associated / joined */
+	struct cfg80211_chan_def preset_chandef;
+	struct cfg80211_chan_def chandef;
 
 	bool ibss_fixed;
 	bool ibss_dfs_possible;
 
 	bool ps;
-	पूर्णांक ps_समयout;
+	int ps_timeout;
 
-	पूर्णांक beacon_पूर्णांकerval;
+	int beacon_interval;
 
 	u32 ap_unexpected_nlportid;
 
@@ -5427,59 +5426,59 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
 	bool nl_owner_dead;
 
 	bool cac_started;
-	अचिन्हित दीर्घ cac_start_समय;
-	अचिन्हित पूर्णांक cac_समय_ms;
+	unsigned long cac_start_time;
+	unsigned int cac_time_ms;
 
-#अगर_घोषित CONFIG_CFG80211_WEXT
+#ifdef CONFIG_CFG80211_WEXT
 	/* wext data */
-	काष्ठा अणु
-		काष्ठा cfg80211_ibss_params ibss;
-		काष्ठा cfg80211_connect_params connect;
-		काष्ठा cfg80211_cached_keys *keys;
-		स्थिर u8 *ie;
-		माप_प्रकार ie_len;
+	struct {
+		struct cfg80211_ibss_params ibss;
+		struct cfg80211_connect_params connect;
+		struct cfg80211_cached_keys *keys;
+		const u8 *ie;
+		size_t ie_len;
 		u8 bssid[ETH_ALEN];
 		u8 prev_bssid[ETH_ALEN];
 		u8 ssid[IEEE80211_MAX_SSID_LEN];
-		s8 शेष_key, शेष_mgmt_key;
+		s8 default_key, default_mgmt_key;
 		bool prev_bssid_valid;
-	पूर्ण wext;
-#पूर्ण_अगर
+	} wext;
+#endif
 
-	काष्ठा cfg80211_cqm_config *cqm_config;
+	struct cfg80211_cqm_config *cqm_config;
 
-	काष्ठा list_head pmsr_list;
+	struct list_head pmsr_list;
 	spinlock_t pmsr_lock;
-	काष्ठा work_काष्ठा pmsr_मुक्त_wk;
+	struct work_struct pmsr_free_wk;
 
-	अचिन्हित दीर्घ unprot_beacon_reported;
-पूर्ण;
+	unsigned long unprot_beacon_reported;
+};
 
-अटल अंतरभूत u8 *wdev_address(काष्ठा wireless_dev *wdev)
-अणु
-	अगर (wdev->netdev)
-		वापस wdev->netdev->dev_addr;
-	वापस wdev->address;
-पूर्ण
+static inline u8 *wdev_address(struct wireless_dev *wdev)
+{
+	if (wdev->netdev)
+		return wdev->netdev->dev_addr;
+	return wdev->address;
+}
 
-अटल अंतरभूत bool wdev_running(काष्ठा wireless_dev *wdev)
-अणु
-	अगर (wdev->netdev)
-		वापस netअगर_running(wdev->netdev);
-	वापस wdev->is_running;
-पूर्ण
+static inline bool wdev_running(struct wireless_dev *wdev)
+{
+	if (wdev->netdev)
+		return netif_running(wdev->netdev);
+	return wdev->is_running;
+}
 
 /**
- * wdev_priv - वापस wiphy priv from wireless_dev
+ * wdev_priv - return wiphy priv from wireless_dev
  *
- * @wdev: The wireless device whose wiphy's priv poपूर्णांकer to वापस
+ * @wdev: The wireless device whose wiphy's priv pointer to return
  * Return: The wiphy priv of @wdev.
  */
-अटल अंतरभूत व्योम *wdev_priv(काष्ठा wireless_dev *wdev)
-अणु
+static inline void *wdev_priv(struct wireless_dev *wdev)
+{
 	BUG_ON(!wdev);
-	वापस wiphy_priv(wdev->wiphy);
-पूर्ण
+	return wiphy_priv(wdev->wiphy);
+}
 
 /**
  * DOC: Utility functions
@@ -5488,326 +5487,326 @@ ieee80211_chandef_max_घातer(काष्ठा cfg80211_chan_def *chandef)
  */
 
 /**
- * ieee80211_channel_equal - compare two काष्ठा ieee80211_channel
+ * ieee80211_channel_equal - compare two struct ieee80211_channel
  *
- * @a: 1st काष्ठा ieee80211_channel
- * @b: 2nd काष्ठा ieee80211_channel
- * Return: true अगर center frequency of @a == @b
+ * @a: 1st struct ieee80211_channel
+ * @b: 2nd struct ieee80211_channel
+ * Return: true if center frequency of @a == @b
  */
-अटल अंतरभूत bool
-ieee80211_channel_equal(काष्ठा ieee80211_channel *a,
-			काष्ठा ieee80211_channel *b)
-अणु
-	वापस (a->center_freq == b->center_freq &&
+static inline bool
+ieee80211_channel_equal(struct ieee80211_channel *a,
+			struct ieee80211_channel *b)
+{
+	return (a->center_freq == b->center_freq &&
 		a->freq_offset == b->freq_offset);
-पूर्ण
+}
 
 /**
  * ieee80211_channel_to_khz - convert ieee80211_channel to frequency in KHz
- * @chan: काष्ठा ieee80211_channel to convert
+ * @chan: struct ieee80211_channel to convert
  * Return: The corresponding frequency (in KHz)
  */
-अटल अंतरभूत u32
-ieee80211_channel_to_khz(स्थिर काष्ठा ieee80211_channel *chan)
-अणु
-	वापस MHZ_TO_KHZ(chan->center_freq) + chan->freq_offset;
-पूर्ण
+static inline u32
+ieee80211_channel_to_khz(const struct ieee80211_channel *chan)
+{
+	return MHZ_TO_KHZ(chan->center_freq) + chan->freq_offset;
+}
 
 /**
  * ieee80211_s1g_channel_width - get allowed channel width from @chan
  *
- * Only allowed क्रम band NL80211_BAND_S1GHZ
+ * Only allowed for band NL80211_BAND_S1GHZ
  * @chan: channel
- * Return: The allowed channel width क्रम this center_freq
+ * Return: The allowed channel width for this center_freq
  */
-क्रमागत nl80211_chan_width
-ieee80211_s1g_channel_width(स्थिर काष्ठा ieee80211_channel *chan);
+enum nl80211_chan_width
+ieee80211_s1g_channel_width(const struct ieee80211_channel *chan);
 
 /**
  * ieee80211_channel_to_freq_khz - convert channel number to frequency
  * @chan: channel number
  * @band: band, necessary due to channel number overlap
- * Return: The corresponding frequency (in KHz), or 0 अगर the conversion failed.
+ * Return: The corresponding frequency (in KHz), or 0 if the conversion failed.
  */
-u32 ieee80211_channel_to_freq_khz(पूर्णांक chan, क्रमागत nl80211_band band);
+u32 ieee80211_channel_to_freq_khz(int chan, enum nl80211_band band);
 
 /**
  * ieee80211_channel_to_frequency - convert channel number to frequency
  * @chan: channel number
  * @band: band, necessary due to channel number overlap
- * Return: The corresponding frequency (in MHz), or 0 अगर the conversion failed.
+ * Return: The corresponding frequency (in MHz), or 0 if the conversion failed.
  */
-अटल अंतरभूत पूर्णांक
-ieee80211_channel_to_frequency(पूर्णांक chan, क्रमागत nl80211_band band)
-अणु
-	वापस KHZ_TO_MHZ(ieee80211_channel_to_freq_khz(chan, band));
-पूर्ण
+static inline int
+ieee80211_channel_to_frequency(int chan, enum nl80211_band band)
+{
+	return KHZ_TO_MHZ(ieee80211_channel_to_freq_khz(chan, band));
+}
 
 /**
  * ieee80211_freq_khz_to_channel - convert frequency to channel number
  * @freq: center frequency in KHz
- * Return: The corresponding channel, or 0 अगर the conversion failed.
+ * Return: The corresponding channel, or 0 if the conversion failed.
  */
-पूर्णांक ieee80211_freq_khz_to_channel(u32 freq);
+int ieee80211_freq_khz_to_channel(u32 freq);
 
 /**
  * ieee80211_frequency_to_channel - convert frequency to channel number
  * @freq: center frequency in MHz
- * Return: The corresponding channel, or 0 अगर the conversion failed.
+ * Return: The corresponding channel, or 0 if the conversion failed.
  */
-अटल अंतरभूत पूर्णांक
-ieee80211_frequency_to_channel(पूर्णांक freq)
-अणु
-	वापस ieee80211_freq_khz_to_channel(MHZ_TO_KHZ(freq));
-पूर्ण
+static inline int
+ieee80211_frequency_to_channel(int freq)
+{
+	return ieee80211_freq_khz_to_channel(MHZ_TO_KHZ(freq));
+}
 
 /**
- * ieee80211_get_channel_khz - get channel काष्ठा from wiphy क्रम specअगरied
+ * ieee80211_get_channel_khz - get channel struct from wiphy for specified
  * frequency
- * @wiphy: the काष्ठा wiphy to get the channel क्रम
+ * @wiphy: the struct wiphy to get the channel for
  * @freq: the center frequency (in KHz) of the channel
- * Return: The channel काष्ठा from @wiphy at @freq.
+ * Return: The channel struct from @wiphy at @freq.
  */
-काष्ठा ieee80211_channel *
-ieee80211_get_channel_khz(काष्ठा wiphy *wiphy, u32 freq);
+struct ieee80211_channel *
+ieee80211_get_channel_khz(struct wiphy *wiphy, u32 freq);
 
 /**
- * ieee80211_get_channel - get channel काष्ठा from wiphy क्रम specअगरied frequency
+ * ieee80211_get_channel - get channel struct from wiphy for specified frequency
  *
- * @wiphy: the काष्ठा wiphy to get the channel क्रम
+ * @wiphy: the struct wiphy to get the channel for
  * @freq: the center frequency (in MHz) of the channel
- * Return: The channel काष्ठा from @wiphy at @freq.
+ * Return: The channel struct from @wiphy at @freq.
  */
-अटल अंतरभूत काष्ठा ieee80211_channel *
-ieee80211_get_channel(काष्ठा wiphy *wiphy, पूर्णांक freq)
-अणु
-	वापस ieee80211_get_channel_khz(wiphy, MHZ_TO_KHZ(freq));
-पूर्ण
+static inline struct ieee80211_channel *
+ieee80211_get_channel(struct wiphy *wiphy, int freq)
+{
+	return ieee80211_get_channel_khz(wiphy, MHZ_TO_KHZ(freq));
+}
 
 /**
- * cfg80211_channel_is_psc - Check अगर the channel is a 6 GHz PSC
+ * cfg80211_channel_is_psc - Check if the channel is a 6 GHz PSC
  * @chan: control channel to check
  *
  * The Preferred Scanning Channels (PSC) are defined in
  * Draft IEEE P802.11ax/D5.0, 26.17.2.3.3
  */
-अटल अंतरभूत bool cfg80211_channel_is_psc(काष्ठा ieee80211_channel *chan)
-अणु
-	अगर (chan->band != NL80211_BAND_6GHZ)
-		वापस false;
+static inline bool cfg80211_channel_is_psc(struct ieee80211_channel *chan)
+{
+	if (chan->band != NL80211_BAND_6GHZ)
+		return false;
 
-	वापस ieee80211_frequency_to_channel(chan->center_freq) % 16 == 5;
-पूर्ण
+	return ieee80211_frequency_to_channel(chan->center_freq) % 16 == 5;
+}
 
 /**
- * ieee80211_get_response_rate - get basic rate क्रम a given rate
+ * ieee80211_get_response_rate - get basic rate for a given rate
  *
- * @sband: the band to look क्रम rates in
- * @basic_rates: biपंचांगap of basic rates
- * @bitrate: the bitrate क्रम which to find the basic rate
+ * @sband: the band to look for rates in
+ * @basic_rates: bitmap of basic rates
+ * @bitrate: the bitrate for which to find the basic rate
  *
  * Return: The basic rate corresponding to a given bitrate, that
  * is the next lower bitrate contained in the basic rate map,
- * which is, क्रम this function, given as a biपंचांगap of indices of
+ * which is, for this function, given as a bitmap of indices of
  * rates in the band's bitrate table.
  */
-स्थिर काष्ठा ieee80211_rate *
-ieee80211_get_response_rate(काष्ठा ieee80211_supported_band *sband,
-			    u32 basic_rates, पूर्णांक bitrate);
+const struct ieee80211_rate *
+ieee80211_get_response_rate(struct ieee80211_supported_band *sband,
+			    u32 basic_rates, int bitrate);
 
 /**
- * ieee80211_mandatory_rates - get mandatory rates क्रम a given band
- * @sband: the band to look क्रम rates in
+ * ieee80211_mandatory_rates - get mandatory rates for a given band
+ * @sband: the band to look for rates in
  * @scan_width: width of the control channel
  *
- * This function वापसs a biपंचांगap of the mandatory rates क्रम the given
+ * This function returns a bitmap of the mandatory rates for the given
  * band, bits are set according to the rate position in the bitrates array.
  */
-u32 ieee80211_mandatory_rates(काष्ठा ieee80211_supported_band *sband,
-			      क्रमागत nl80211_bss_scan_width scan_width);
+u32 ieee80211_mandatory_rates(struct ieee80211_supported_band *sband,
+			      enum nl80211_bss_scan_width scan_width);
 
 /*
- * Radiotap parsing functions -- क्रम controlled injection support
+ * Radiotap parsing functions -- for controlled injection support
  *
  * Implemented in net/wireless/radiotap.c
  * Documentation in Documentation/networking/radiotap-headers.rst
  */
 
-काष्ठा radiotap_align_size अणु
-	uपूर्णांक8_t align:4, size:4;
-पूर्ण;
+struct radiotap_align_size {
+	uint8_t align:4, size:4;
+};
 
-काष्ठा ieee80211_radiotap_namespace अणु
-	स्थिर काष्ठा radiotap_align_size *align_size;
-	पूर्णांक n_bits;
-	uपूर्णांक32_t oui;
-	uपूर्णांक8_t subns;
-पूर्ण;
+struct ieee80211_radiotap_namespace {
+	const struct radiotap_align_size *align_size;
+	int n_bits;
+	uint32_t oui;
+	uint8_t subns;
+};
 
-काष्ठा ieee80211_radiotap_venकरोr_namespaces अणु
-	स्थिर काष्ठा ieee80211_radiotap_namespace *ns;
-	पूर्णांक n_ns;
-पूर्ण;
+struct ieee80211_radiotap_vendor_namespaces {
+	const struct ieee80211_radiotap_namespace *ns;
+	int n_ns;
+};
 
 /**
- * काष्ठा ieee80211_radiotap_iterator - tracks walk thru present radiotap args
+ * struct ieee80211_radiotap_iterator - tracks walk thru present radiotap args
  * @this_arg_index: index of current arg, valid after each successful call
  *	to ieee80211_radiotap_iterator_next()
- * @this_arg: poपूर्णांकer to current radiotap arg; it is valid after each
+ * @this_arg: pointer to current radiotap arg; it is valid after each
  *	call to ieee80211_radiotap_iterator_next() but also after
- *	ieee80211_radiotap_iterator_init() where it will poपूर्णांक to
+ *	ieee80211_radiotap_iterator_init() where it will point to
  *	the beginning of the actual data portion
- * @this_arg_size: length of the current arg, क्रम convenience
- * @current_namespace: poपूर्णांकer to the current namespace definition
- *	(or पूर्णांकernally %शून्य अगर the current namespace is unknown)
- * @is_radiotap_ns: indicates whether the current namespace is the शेष
+ * @this_arg_size: length of the current arg, for convenience
+ * @current_namespace: pointer to the current namespace definition
+ *	(or internally %NULL if the current namespace is unknown)
+ * @is_radiotap_ns: indicates whether the current namespace is the default
  *	radiotap namespace or not
  *
- * @_rtheader: poपूर्णांकer to the radiotap header we are walking through
+ * @_rtheader: pointer to the radiotap header we are walking through
  * @_max_length: length of radiotap header in cpu byte ordering
  * @_arg_index: next argument index
- * @_arg: next argument poपूर्णांकer
- * @_next_biपंचांगap: पूर्णांकernal poपूर्णांकer to next present u32
- * @_biपंचांगap_shअगरter: पूर्णांकernal shअगरter क्रम curr u32 biपंचांगap, b0 set == arg present
- * @_vns: venकरोr namespace definitions
+ * @_arg: next argument pointer
+ * @_next_bitmap: internal pointer to next present u32
+ * @_bitmap_shifter: internal shifter for curr u32 bitmap, b0 set == arg present
+ * @_vns: vendor namespace definitions
  * @_next_ns_data: beginning of the next namespace's data
- * @_reset_on_ext: पूर्णांकernal; reset the arg index to 0 when going to the
- *	next biपंचांगap word
+ * @_reset_on_ext: internal; reset the arg index to 0 when going to the
+ *	next bitmap word
  *
  * Describes the radiotap parser state. Fields prefixed with an underscore
- * must not be used by users of the parser, only by the parser पूर्णांकernally.
+ * must not be used by users of the parser, only by the parser internally.
  */
 
-काष्ठा ieee80211_radiotap_iterator अणु
-	काष्ठा ieee80211_radiotap_header *_rtheader;
-	स्थिर काष्ठा ieee80211_radiotap_venकरोr_namespaces *_vns;
-	स्थिर काष्ठा ieee80211_radiotap_namespace *current_namespace;
+struct ieee80211_radiotap_iterator {
+	struct ieee80211_radiotap_header *_rtheader;
+	const struct ieee80211_radiotap_vendor_namespaces *_vns;
+	const struct ieee80211_radiotap_namespace *current_namespace;
 
-	अचिन्हित अक्षर *_arg, *_next_ns_data;
-	__le32 *_next_biपंचांगap;
+	unsigned char *_arg, *_next_ns_data;
+	__le32 *_next_bitmap;
 
-	अचिन्हित अक्षर *this_arg;
-	पूर्णांक this_arg_index;
-	पूर्णांक this_arg_size;
+	unsigned char *this_arg;
+	int this_arg_index;
+	int this_arg_size;
 
-	पूर्णांक is_radiotap_ns;
+	int is_radiotap_ns;
 
-	पूर्णांक _max_length;
-	पूर्णांक _arg_index;
-	uपूर्णांक32_t _biपंचांगap_shअगरter;
-	पूर्णांक _reset_on_ext;
-पूर्ण;
+	int _max_length;
+	int _arg_index;
+	uint32_t _bitmap_shifter;
+	int _reset_on_ext;
+};
 
-पूर्णांक
-ieee80211_radiotap_iterator_init(काष्ठा ieee80211_radiotap_iterator *iterator,
-				 काष्ठा ieee80211_radiotap_header *radiotap_header,
-				 पूर्णांक max_length,
-				 स्थिर काष्ठा ieee80211_radiotap_venकरोr_namespaces *vns);
+int
+ieee80211_radiotap_iterator_init(struct ieee80211_radiotap_iterator *iterator,
+				 struct ieee80211_radiotap_header *radiotap_header,
+				 int max_length,
+				 const struct ieee80211_radiotap_vendor_namespaces *vns);
 
-पूर्णांक
-ieee80211_radiotap_iterator_next(काष्ठा ieee80211_radiotap_iterator *iterator);
+int
+ieee80211_radiotap_iterator_next(struct ieee80211_radiotap_iterator *iterator);
 
 
-बाह्य स्थिर अचिन्हित अक्षर rfc1042_header[6];
-बाह्य स्थिर अचिन्हित अक्षर bridge_tunnel_header[6];
+extern const unsigned char rfc1042_header[6];
+extern const unsigned char bridge_tunnel_header[6];
 
 /**
  * ieee80211_get_hdrlen_from_skb - get header length from data
  *
  * @skb: the frame
  *
- * Given an skb with a raw 802.11 header at the data poपूर्णांकer this function
- * वापसs the 802.11 header length.
+ * Given an skb with a raw 802.11 header at the data pointer this function
+ * returns the 802.11 header length.
  *
  * Return: The 802.11 header length in bytes (not including encryption
- * headers). Or 0 अगर the data in the sk_buff is too लघु to contain a valid
+ * headers). Or 0 if the data in the sk_buff is too short to contain a valid
  * 802.11 header.
  */
-अचिन्हित पूर्णांक ieee80211_get_hdrlen_from_skb(स्थिर काष्ठा sk_buff *skb);
+unsigned int ieee80211_get_hdrlen_from_skb(const struct sk_buff *skb);
 
 /**
  * ieee80211_hdrlen - get header length in bytes from frame control
- * @fc: frame control field in little-endian क्रमmat
+ * @fc: frame control field in little-endian format
  * Return: The header length in bytes.
  */
-अचिन्हित पूर्णांक __attribute_स्थिर__ ieee80211_hdrlen(__le16 fc);
+unsigned int __attribute_const__ ieee80211_hdrlen(__le16 fc);
 
 /**
  * ieee80211_get_mesh_hdrlen - get mesh extension header length
  * @meshhdr: the mesh extension header, only the flags field
  *	(first byte) will be accessed
  * Return: The length of the extension header, which is always at
- * least 6 bytes and at most 18 अगर address 5 and 6 are present.
+ * least 6 bytes and at most 18 if address 5 and 6 are present.
  */
-अचिन्हित पूर्णांक ieee80211_get_mesh_hdrlen(काष्ठा ieee80211s_hdr *meshhdr);
+unsigned int ieee80211_get_mesh_hdrlen(struct ieee80211s_hdr *meshhdr);
 
 /**
  * DOC: Data path helpers
  *
  * In addition to generic utilities, cfg80211 also offers
- * functions that help implement the data path क्रम devices
- * that करो not करो the 802.11/802.3 conversion on the device.
+ * functions that help implement the data path for devices
+ * that do not do the 802.11/802.3 conversion on the device.
  */
 
 /**
  * ieee80211_data_to_8023_exthdr - convert an 802.11 data frame to 802.3
  * @skb: the 802.11 data frame
- * @ehdr: poपूर्णांकer to a &काष्ठा ethhdr that will get the header, instead
- *	of it being pushed पूर्णांकo the SKB
+ * @ehdr: pointer to a &struct ethhdr that will get the header, instead
+ *	of it being pushed into the SKB
  * @addr: the device MAC address
- * @अगरtype: the भव पूर्णांकerface type
+ * @iftype: the virtual interface type
  * @data_offset: offset of payload after the 802.11 header
  * Return: 0 on success. Non-zero on error.
  */
-पूर्णांक ieee80211_data_to_8023_exthdr(काष्ठा sk_buff *skb, काष्ठा ethhdr *ehdr,
-				  स्थिर u8 *addr, क्रमागत nl80211_अगरtype अगरtype,
+int ieee80211_data_to_8023_exthdr(struct sk_buff *skb, struct ethhdr *ehdr,
+				  const u8 *addr, enum nl80211_iftype iftype,
 				  u8 data_offset, bool is_amsdu);
 
 /**
  * ieee80211_data_to_8023 - convert an 802.11 data frame to 802.3
  * @skb: the 802.11 data frame
  * @addr: the device MAC address
- * @अगरtype: the भव पूर्णांकerface type
+ * @iftype: the virtual interface type
  * Return: 0 on success. Non-zero on error.
  */
-अटल अंतरभूत पूर्णांक ieee80211_data_to_8023(काष्ठा sk_buff *skb, स्थिर u8 *addr,
-					 क्रमागत nl80211_अगरtype अगरtype)
-अणु
-	वापस ieee80211_data_to_8023_exthdr(skb, शून्य, addr, अगरtype, 0, false);
-पूर्ण
+static inline int ieee80211_data_to_8023(struct sk_buff *skb, const u8 *addr,
+					 enum nl80211_iftype iftype)
+{
+	return ieee80211_data_to_8023_exthdr(skb, NULL, addr, iftype, 0, false);
+}
 
 /**
  * ieee80211_amsdu_to_8023s - decode an IEEE 802.11n A-MSDU frame
  *
  * Decode an IEEE 802.11 A-MSDU and convert it to a list of 802.3 frames.
- * The @list will be empty अगर the decode fails. The @skb must be fully
- * header-less beक्रमe being passed in here; it is मुक्तd in this function.
+ * The @list will be empty if the decode fails. The @skb must be fully
+ * header-less before being passed in here; it is freed in this function.
  *
  * @skb: The input A-MSDU frame without any headers.
  * @list: The output list of 802.3 frames. It must be allocated and
  *	initialized by the caller.
  * @addr: The device MAC address.
- * @अगरtype: The device पूर्णांकerface type.
- * @extra_headroom: The hardware extra headroom क्रम SKBs in the @list.
- * @check_da: DA to check in the inner ethernet header, or शून्य
- * @check_sa: SA to check in the inner ethernet header, or शून्य
+ * @iftype: The device interface type.
+ * @extra_headroom: The hardware extra headroom for SKBs in the @list.
+ * @check_da: DA to check in the inner ethernet header, or NULL
+ * @check_sa: SA to check in the inner ethernet header, or NULL
  */
-व्योम ieee80211_amsdu_to_8023s(काष्ठा sk_buff *skb, काष्ठा sk_buff_head *list,
-			      स्थिर u8 *addr, क्रमागत nl80211_अगरtype अगरtype,
-			      स्थिर अचिन्हित पूर्णांक extra_headroom,
-			      स्थिर u8 *check_da, स्थिर u8 *check_sa);
+void ieee80211_amsdu_to_8023s(struct sk_buff *skb, struct sk_buff_head *list,
+			      const u8 *addr, enum nl80211_iftype iftype,
+			      const unsigned int extra_headroom,
+			      const u8 *check_da, const u8 *check_sa);
 
 /**
- * cfg80211_classअगरy8021d - determine the 802.1p/1d tag क्रम a data frame
+ * cfg80211_classify8021d - determine the 802.1p/1d tag for a data frame
  * @skb: the data frame
- * @qos_map: Interworking QoS mapping or %शून्य अगर not in use
+ * @qos_map: Interworking QoS mapping or %NULL if not in use
  * Return: The 802.1p/1d tag.
  */
-अचिन्हित पूर्णांक cfg80211_classअगरy8021d(काष्ठा sk_buff *skb,
-				    काष्ठा cfg80211_qos_map *qos_map);
+unsigned int cfg80211_classify8021d(struct sk_buff *skb,
+				    struct cfg80211_qos_map *qos_map);
 
 /**
- * cfg80211_find_elem_match - match inक्रमmation element and byte array in data
+ * cfg80211_find_elem_match - match information element and byte array in data
  *
  * @eid: element ID
  * @ies: data consisting of IEs
@@ -5815,26 +5814,26 @@ ieee80211_radiotap_iterator_next(काष्ठा ieee80211_radiotap_iterator 
  * @match: byte array to match
  * @match_len: number of bytes in the match array
  * @match_offset: offset in the IE data where the byte array should match.
- *	Note the dअगरference to cfg80211_find_ie_match() which considers
+ *	Note the difference to cfg80211_find_ie_match() which considers
  *	the offset to start from the element ID byte, but here we take
  *	the data portion instead.
  *
- * Return: %शून्य अगर the element ID could not be found or अगर
- * the element is invalid (claims to be दीर्घer than the given
- * data) or अगर the byte array करोesn't match; otherwise वापस the
- * requested element काष्ठा.
+ * Return: %NULL if the element ID could not be found or if
+ * the element is invalid (claims to be longer than the given
+ * data) or if the byte array doesn't match; otherwise return the
+ * requested element struct.
  *
  * Note: There are no checks on the element length other than
- * having to fit पूर्णांकo the given data and being large enough क्रम the
+ * having to fit into the given data and being large enough for the
  * byte array to match.
  */
-स्थिर काष्ठा element *
-cfg80211_find_elem_match(u8 eid, स्थिर u8 *ies, अचिन्हित पूर्णांक len,
-			 स्थिर u8 *match, अचिन्हित पूर्णांक match_len,
-			 अचिन्हित पूर्णांक match_offset);
+const struct element *
+cfg80211_find_elem_match(u8 eid, const u8 *ies, unsigned int len,
+			 const u8 *match, unsigned int match_len,
+			 unsigned int match_offset);
 
 /**
- * cfg80211_find_ie_match - match inक्रमmation element and byte array in data
+ * cfg80211_find_ie_match - match information element and byte array in data
  *
  * @eid: element ID
  * @ies: data consisting of IEs
@@ -5844,162 +5843,162 @@ cfg80211_find_elem_match(u8 eid, स्थिर u8 *ies, अचिन्हि�
  * @match_offset: offset in the IE where the byte array should match.
  *	If match_len is zero, this must also be set to zero.
  *	Otherwise this must be set to 2 or more, because the first
- *	byte is the element id, which is alपढ़ोy compared to eid, and
+ *	byte is the element id, which is already compared to eid, and
  *	the second byte is the IE length.
  *
- * Return: %शून्य अगर the element ID could not be found or अगर
- * the element is invalid (claims to be दीर्घer than the given
- * data) or अगर the byte array करोesn't match, or a poपूर्णांकer to the first
+ * Return: %NULL if the element ID could not be found or if
+ * the element is invalid (claims to be longer than the given
+ * data) or if the byte array doesn't match, or a pointer to the first
  * byte of the requested element, that is the byte containing the
  * element ID.
  *
  * Note: There are no checks on the element length other than
- * having to fit पूर्णांकo the given data and being large enough क्रम the
+ * having to fit into the given data and being large enough for the
  * byte array to match.
  */
-अटल अंतरभूत स्थिर u8 *
-cfg80211_find_ie_match(u8 eid, स्थिर u8 *ies, अचिन्हित पूर्णांक len,
-		       स्थिर u8 *match, अचिन्हित पूर्णांक match_len,
-		       अचिन्हित पूर्णांक match_offset)
-अणु
+static inline const u8 *
+cfg80211_find_ie_match(u8 eid, const u8 *ies, unsigned int len,
+		       const u8 *match, unsigned int match_len,
+		       unsigned int match_offset)
+{
 	/* match_offset can't be smaller than 2, unless match_len is
-	 * zero, in which हाल match_offset must be zero as well.
+	 * zero, in which case match_offset must be zero as well.
 	 */
-	अगर (WARN_ON((match_len && match_offset < 2) ||
+	if (WARN_ON((match_len && match_offset < 2) ||
 		    (!match_len && match_offset)))
-		वापस शून्य;
+		return NULL;
 
-	वापस (व्योम *)cfg80211_find_elem_match(eid, ies, len,
+	return (void *)cfg80211_find_elem_match(eid, ies, len,
 						match, match_len,
 						match_offset ?
 							match_offset - 2 : 0);
-पूर्ण
+}
 
 /**
- * cfg80211_find_elem - find inक्रमmation element in data
+ * cfg80211_find_elem - find information element in data
  *
  * @eid: element ID
  * @ies: data consisting of IEs
  * @len: length of data
  *
- * Return: %शून्य अगर the element ID could not be found or अगर
- * the element is invalid (claims to be दीर्घer than the given
- * data) or अगर the byte array करोesn't match; otherwise वापस the
- * requested element काष्ठा.
+ * Return: %NULL if the element ID could not be found or if
+ * the element is invalid (claims to be longer than the given
+ * data) or if the byte array doesn't match; otherwise return the
+ * requested element struct.
  *
  * Note: There are no checks on the element length other than
- * having to fit पूर्णांकo the given data.
+ * having to fit into the given data.
  */
-अटल अंतरभूत स्थिर काष्ठा element *
-cfg80211_find_elem(u8 eid, स्थिर u8 *ies, पूर्णांक len)
-अणु
-	वापस cfg80211_find_elem_match(eid, ies, len, शून्य, 0, 0);
-पूर्ण
+static inline const struct element *
+cfg80211_find_elem(u8 eid, const u8 *ies, int len)
+{
+	return cfg80211_find_elem_match(eid, ies, len, NULL, 0, 0);
+}
 
 /**
- * cfg80211_find_ie - find inक्रमmation element in data
+ * cfg80211_find_ie - find information element in data
  *
  * @eid: element ID
  * @ies: data consisting of IEs
  * @len: length of data
  *
- * Return: %शून्य अगर the element ID could not be found or अगर
- * the element is invalid (claims to be दीर्घer than the given
- * data), or a poपूर्णांकer to the first byte of the requested
+ * Return: %NULL if the element ID could not be found or if
+ * the element is invalid (claims to be longer than the given
+ * data), or a pointer to the first byte of the requested
  * element, that is the byte containing the element ID.
  *
  * Note: There are no checks on the element length other than
- * having to fit पूर्णांकo the given data.
+ * having to fit into the given data.
  */
-अटल अंतरभूत स्थिर u8 *cfg80211_find_ie(u8 eid, स्थिर u8 *ies, पूर्णांक len)
-अणु
-	वापस cfg80211_find_ie_match(eid, ies, len, शून्य, 0, 0);
-पूर्ण
+static inline const u8 *cfg80211_find_ie(u8 eid, const u8 *ies, int len)
+{
+	return cfg80211_find_ie_match(eid, ies, len, NULL, 0, 0);
+}
 
 /**
- * cfg80211_find_ext_elem - find inक्रमmation element with EID Extension in data
+ * cfg80211_find_ext_elem - find information element with EID Extension in data
  *
  * @ext_eid: element ID Extension
  * @ies: data consisting of IEs
  * @len: length of data
  *
- * Return: %शून्य अगर the etended element could not be found or अगर
- * the element is invalid (claims to be दीर्घer than the given
- * data) or अगर the byte array करोesn't match; otherwise वापस the
- * requested element काष्ठा.
+ * Return: %NULL if the etended element could not be found or if
+ * the element is invalid (claims to be longer than the given
+ * data) or if the byte array doesn't match; otherwise return the
+ * requested element struct.
  *
  * Note: There are no checks on the element length other than
- * having to fit पूर्णांकo the given data.
+ * having to fit into the given data.
  */
-अटल अंतरभूत स्थिर काष्ठा element *
-cfg80211_find_ext_elem(u8 ext_eid, स्थिर u8 *ies, पूर्णांक len)
-अणु
-	वापस cfg80211_find_elem_match(WLAN_EID_EXTENSION, ies, len,
+static inline const struct element *
+cfg80211_find_ext_elem(u8 ext_eid, const u8 *ies, int len)
+{
+	return cfg80211_find_elem_match(WLAN_EID_EXTENSION, ies, len,
 					&ext_eid, 1, 0);
-पूर्ण
+}
 
 /**
- * cfg80211_find_ext_ie - find inक्रमmation element with EID Extension in data
+ * cfg80211_find_ext_ie - find information element with EID Extension in data
  *
  * @ext_eid: element ID Extension
  * @ies: data consisting of IEs
  * @len: length of data
  *
- * Return: %शून्य अगर the extended element ID could not be found or अगर
- * the element is invalid (claims to be दीर्घer than the given
- * data), or a poपूर्णांकer to the first byte of the requested
+ * Return: %NULL if the extended element ID could not be found or if
+ * the element is invalid (claims to be longer than the given
+ * data), or a pointer to the first byte of the requested
  * element, that is the byte containing the element ID.
  *
  * Note: There are no checks on the element length other than
- * having to fit पूर्णांकo the given data.
+ * having to fit into the given data.
  */
-अटल अंतरभूत स्थिर u8 *cfg80211_find_ext_ie(u8 ext_eid, स्थिर u8 *ies, पूर्णांक len)
-अणु
-	वापस cfg80211_find_ie_match(WLAN_EID_EXTENSION, ies, len,
+static inline const u8 *cfg80211_find_ext_ie(u8 ext_eid, const u8 *ies, int len)
+{
+	return cfg80211_find_ie_match(WLAN_EID_EXTENSION, ies, len,
 				      &ext_eid, 1, 2);
-पूर्ण
+}
 
 /**
- * cfg80211_find_venकरोr_elem - find venकरोr specअगरic inक्रमmation element in data
+ * cfg80211_find_vendor_elem - find vendor specific information element in data
  *
- * @oui: venकरोr OUI
- * @oui_type: venकरोr-specअगरic OUI type (must be < 0xff), negative means any
+ * @oui: vendor OUI
+ * @oui_type: vendor-specific OUI type (must be < 0xff), negative means any
  * @ies: data consisting of IEs
  * @len: length of data
  *
- * Return: %शून्य अगर the venकरोr specअगरic element ID could not be found or अगर the
- * element is invalid (claims to be दीर्घer than the given data); otherwise
- * वापस the element काष्ठाure क्रम the requested element.
+ * Return: %NULL if the vendor specific element ID could not be found or if the
+ * element is invalid (claims to be longer than the given data); otherwise
+ * return the element structure for the requested element.
  *
- * Note: There are no checks on the element length other than having to fit पूर्णांकo
+ * Note: There are no checks on the element length other than having to fit into
  * the given data.
  */
-स्थिर काष्ठा element *cfg80211_find_venकरोr_elem(अचिन्हित पूर्णांक oui, पूर्णांक oui_type,
-						स्थिर u8 *ies,
-						अचिन्हित पूर्णांक len);
+const struct element *cfg80211_find_vendor_elem(unsigned int oui, int oui_type,
+						const u8 *ies,
+						unsigned int len);
 
 /**
- * cfg80211_find_venकरोr_ie - find venकरोr specअगरic inक्रमmation element in data
+ * cfg80211_find_vendor_ie - find vendor specific information element in data
  *
- * @oui: venकरोr OUI
- * @oui_type: venकरोr-specअगरic OUI type (must be < 0xff), negative means any
+ * @oui: vendor OUI
+ * @oui_type: vendor-specific OUI type (must be < 0xff), negative means any
  * @ies: data consisting of IEs
  * @len: length of data
  *
- * Return: %शून्य अगर the venकरोr specअगरic element ID could not be found or अगर the
- * element is invalid (claims to be दीर्घer than the given data), or a poपूर्णांकer to
+ * Return: %NULL if the vendor specific element ID could not be found or if the
+ * element is invalid (claims to be longer than the given data), or a pointer to
  * the first byte of the requested element, that is the byte containing the
  * element ID.
  *
- * Note: There are no checks on the element length other than having to fit पूर्णांकo
+ * Note: There are no checks on the element length other than having to fit into
  * the given data.
  */
-अटल अंतरभूत स्थिर u8 *
-cfg80211_find_venकरोr_ie(अचिन्हित पूर्णांक oui, पूर्णांक oui_type,
-			स्थिर u8 *ies, अचिन्हित पूर्णांक len)
-अणु
-	वापस (व्योम *)cfg80211_find_venकरोr_elem(oui, oui_type, ies, len);
-पूर्ण
+static inline const u8 *
+cfg80211_find_vendor_ie(unsigned int oui, int oui_type,
+			const u8 *ies, unsigned int len)
+{
+	return (void *)cfg80211_find_vendor_elem(oui, oui_type, ies, len);
+}
 
 /**
  * cfg80211_send_layer2_update - send layer 2 update frame
@@ -6007,127 +6006,127 @@ cfg80211_find_venकरोr_ie(अचिन्हित पूर्णांक
  * @dev: network device
  * @addr: STA MAC address
  *
- * Wireless drivers can use this function to update क्रमwarding tables in bridge
+ * Wireless drivers can use this function to update forwarding tables in bridge
  * devices upon STA association.
  */
-व्योम cfg80211_send_layer2_update(काष्ठा net_device *dev, स्थिर u8 *addr);
+void cfg80211_send_layer2_update(struct net_device *dev, const u8 *addr);
 
 /**
- * DOC: Regulatory enक्रमcement infraकाष्ठाure
+ * DOC: Regulatory enforcement infrastructure
  *
  * TODO
  */
 
 /**
- * regulatory_hपूर्णांक - driver hपूर्णांक to the wireless core a regulatory करोमुख्य
- * @wiphy: the wireless device giving the hपूर्णांक (used only क्रम reporting
+ * regulatory_hint - driver hint to the wireless core a regulatory domain
+ * @wiphy: the wireless device giving the hint (used only for reporting
  *	conflicts)
- * @alpha2: the ISO/IEC 3166 alpha2 the driver claims its regulatory करोमुख्य
- *	should be in. If @rd is set this should be शून्य. Note that अगर you
- *	set this to शून्य you should still set rd->alpha2 to some accepted
+ * @alpha2: the ISO/IEC 3166 alpha2 the driver claims its regulatory domain
+ *	should be in. If @rd is set this should be NULL. Note that if you
+ *	set this to NULL you should still set rd->alpha2 to some accepted
  *	alpha2.
  *
- * Wireless drivers can use this function to hपूर्णांक to the wireless core
- * what it believes should be the current regulatory करोमुख्य by
+ * Wireless drivers can use this function to hint to the wireless core
+ * what it believes should be the current regulatory domain by
  * giving it an ISO/IEC 3166 alpha2 country code it knows its regulatory
- * करोमुख्य should be in or by providing a completely build regulatory करोमुख्य.
+ * domain should be in or by providing a completely build regulatory domain.
  * If the driver provides an ISO/IEC 3166 alpha2 userspace will be queried
- * क्रम a regulatory करोमुख्य काष्ठाure क्रम the respective country.
+ * for a regulatory domain structure for the respective country.
  *
- * The wiphy must have been रेजिस्टरed to cfg80211 prior to this call.
- * For cfg80211 drivers this means you must first use wiphy_रेजिस्टर(),
- * क्रम mac80211 drivers you must first use ieee80211_रेजिस्टर_hw().
+ * The wiphy must have been registered to cfg80211 prior to this call.
+ * For cfg80211 drivers this means you must first use wiphy_register(),
+ * for mac80211 drivers you must first use ieee80211_register_hw().
  *
- * Drivers should check the वापस value, its possible you can get
+ * Drivers should check the return value, its possible you can get
  * an -ENOMEM.
  *
  * Return: 0 on success. -ENOMEM.
  */
-पूर्णांक regulatory_hपूर्णांक(काष्ठा wiphy *wiphy, स्थिर अक्षर *alpha2);
+int regulatory_hint(struct wiphy *wiphy, const char *alpha2);
 
 /**
- * regulatory_set_wiphy_regd - set regकरोm info क्रम self managed drivers
- * @wiphy: the wireless device we want to process the regulatory करोमुख्य on
- * @rd: the regulatory करोमुख्य inक्रमmम_से_पn to use क्रम this wiphy
+ * regulatory_set_wiphy_regd - set regdom info for self managed drivers
+ * @wiphy: the wireless device we want to process the regulatory domain on
+ * @rd: the regulatory domain informatoin to use for this wiphy
  *
- * Set the regulatory करोमुख्य inक्रमmation क्रम self-managed wiphys, only they
- * may use this function. See %REGULATORY_WIPHY_SELF_MANAGED क्रम more
- * inक्रमmation.
+ * Set the regulatory domain information for self-managed wiphys, only they
+ * may use this function. See %REGULATORY_WIPHY_SELF_MANAGED for more
+ * information.
  *
  * Return: 0 on success. -EINVAL, -EPERM
  */
-पूर्णांक regulatory_set_wiphy_regd(काष्ठा wiphy *wiphy,
-			      काष्ठा ieee80211_regकरोमुख्य *rd);
+int regulatory_set_wiphy_regd(struct wiphy *wiphy,
+			      struct ieee80211_regdomain *rd);
 
 /**
- * regulatory_set_wiphy_regd_sync - set regकरोm क्रम self-managed drivers
- * @wiphy: the wireless device we want to process the regulatory करोमुख्य on
- * @rd: the regulatory करोमुख्य inक्रमmation to use क्रम this wiphy
+ * regulatory_set_wiphy_regd_sync - set regdom for self-managed drivers
+ * @wiphy: the wireless device we want to process the regulatory domain on
+ * @rd: the regulatory domain information to use for this wiphy
  *
  * This functions requires the RTNL and the wiphy mutex to be held and
- * applies the new regकरोमुख्य synchronously to this wiphy. For more details
+ * applies the new regdomain synchronously to this wiphy. For more details
  * see regulatory_set_wiphy_regd().
  *
  * Return: 0 on success. -EINVAL, -EPERM
  */
-पूर्णांक regulatory_set_wiphy_regd_sync(काष्ठा wiphy *wiphy,
-				   काष्ठा ieee80211_regकरोमुख्य *rd);
+int regulatory_set_wiphy_regd_sync(struct wiphy *wiphy,
+				   struct ieee80211_regdomain *rd);
 
 /**
- * wiphy_apply_custom_regulatory - apply a custom driver regulatory करोमुख्य
- * @wiphy: the wireless device we want to process the regulatory करोमुख्य on
- * @regd: the custom regulatory करोमुख्य to use क्रम this wiphy
+ * wiphy_apply_custom_regulatory - apply a custom driver regulatory domain
+ * @wiphy: the wireless device we want to process the regulatory domain on
+ * @regd: the custom regulatory domain to use for this wiphy
  *
- * Drivers can someबार have custom regulatory करोमुख्यs which करो not apply
- * to a specअगरic country. Drivers can use this to apply such custom regulatory
- * करोमुख्यs. This routine must be called prior to wiphy registration. The
- * custom regulatory करोमुख्य will be trusted completely and as such previous
- * शेष channel settings will be disregarded. If no rule is found क्रम a
- * channel on the regulatory करोमुख्य the channel will be disabled.
- * Drivers using this क्रम a wiphy should also set the wiphy flag
- * REGULATORY_CUSTOM_REG or cfg80211 will set it क्रम the wiphy
+ * Drivers can sometimes have custom regulatory domains which do not apply
+ * to a specific country. Drivers can use this to apply such custom regulatory
+ * domains. This routine must be called prior to wiphy registration. The
+ * custom regulatory domain will be trusted completely and as such previous
+ * default channel settings will be disregarded. If no rule is found for a
+ * channel on the regulatory domain the channel will be disabled.
+ * Drivers using this for a wiphy should also set the wiphy flag
+ * REGULATORY_CUSTOM_REG or cfg80211 will set it for the wiphy
  * that called this helper.
  */
-व्योम wiphy_apply_custom_regulatory(काष्ठा wiphy *wiphy,
-				   स्थिर काष्ठा ieee80211_regकरोमुख्य *regd);
+void wiphy_apply_custom_regulatory(struct wiphy *wiphy,
+				   const struct ieee80211_regdomain *regd);
 
 /**
- * freq_reg_info - get regulatory inक्रमmation क्रम the given frequency
- * @wiphy: the wiphy क्रम which we want to process this rule क्रम
- * @center_freq: Frequency in KHz क्रम which we want regulatory inक्रमmation क्रम
+ * freq_reg_info - get regulatory information for the given frequency
+ * @wiphy: the wiphy for which we want to process this rule for
+ * @center_freq: Frequency in KHz for which we want regulatory information for
  *
- * Use this function to get the regulatory rule क्रम a specअगरic frequency on
- * a given wireless device. If the device has a specअगरic regulatory करोमुख्य
+ * Use this function to get the regulatory rule for a specific frequency on
+ * a given wireless device. If the device has a specific regulatory domain
  * it wants to follow we respect that unless a country IE has been received
- * and processed alपढ़ोy.
+ * and processed already.
  *
- * Return: A valid poपूर्णांकer, or, when an error occurs, क्रम example अगर no rule
- * can be found, the वापस value is encoded using ERR_PTR(). Use IS_ERR() to
- * check and PTR_ERR() to obtain the numeric वापस value. The numeric वापस
- * value will be -दुस्फल अगर we determine the given center_freq करोes not even
- * have a regulatory rule क्रम a frequency range in the center_freq's band.
- * See freq_in_rule_band() क्रम our current definition of a band -- this is
- * purely subjective and right now it's 802.11 specअगरic.
+ * Return: A valid pointer, or, when an error occurs, for example if no rule
+ * can be found, the return value is encoded using ERR_PTR(). Use IS_ERR() to
+ * check and PTR_ERR() to obtain the numeric return value. The numeric return
+ * value will be -ERANGE if we determine the given center_freq does not even
+ * have a regulatory rule for a frequency range in the center_freq's band.
+ * See freq_in_rule_band() for our current definition of a band -- this is
+ * purely subjective and right now it's 802.11 specific.
  */
-स्थिर काष्ठा ieee80211_reg_rule *freq_reg_info(काष्ठा wiphy *wiphy,
+const struct ieee80211_reg_rule *freq_reg_info(struct wiphy *wiphy,
 					       u32 center_freq);
 
 /**
- * reg_initiator_name - map regulatory request initiator क्रमागत to name
+ * reg_initiator_name - map regulatory request initiator enum to name
  * @initiator: the regulatory request initiator
  *
- * You can use this to map the regulatory request initiator क्रमागत to a
+ * You can use this to map the regulatory request initiator enum to a
  * proper string representation.
  */
-स्थिर अक्षर *reg_initiator_name(क्रमागत nl80211_reg_initiator initiator);
+const char *reg_initiator_name(enum nl80211_reg_initiator initiator);
 
 /**
- * regulatory_pre_cac_allowed - check अगर pre-CAC allowed in the current regकरोm
- * @wiphy: wiphy क्रम which pre-CAC capability is checked.
+ * regulatory_pre_cac_allowed - check if pre-CAC allowed in the current regdom
+ * @wiphy: wiphy for which pre-CAC capability is checked.
  *
- * Pre-CAC is allowed only in some regकरोमुख्यs (notable ETSI).
+ * Pre-CAC is allowed only in some regdomains (notable ETSI).
  */
-bool regulatory_pre_cac_allowed(काष्ठा wiphy *wiphy);
+bool regulatory_pre_cac_allowed(struct wiphy *wiphy);
 
 /**
  * DOC: Internal regulatory db functions
@@ -6135,133 +6134,133 @@ bool regulatory_pre_cac_allowed(काष्ठा wiphy *wiphy);
  */
 
 /**
- * reg_query_regdb_wmm -  Query पूर्णांकernal regulatory db क्रम wmm rule
+ * reg_query_regdb_wmm -  Query internal regulatory db for wmm rule
  * Regulatory self-managed driver can use it to proactively
  *
  * @alpha2: the ISO/IEC 3166 alpha2 wmm rule to be queried.
  * @freq: the freqency(in MHz) to be queried.
- * @rule: poपूर्णांकer to store the wmm rule from the regulatory db.
+ * @rule: pointer to store the wmm rule from the regulatory db.
  *
  * Self-managed wireless drivers can use this function to  query
- * the पूर्णांकernal regulatory database to check whether the given
+ * the internal regulatory database to check whether the given
  * ISO/IEC 3166 alpha2 country and freq have wmm rule limitations.
  *
- * Drivers should check the वापस value, its possible you can get
+ * Drivers should check the return value, its possible you can get
  * an -ENODATA.
  *
  * Return: 0 on success. -ENODATA.
  */
-पूर्णांक reg_query_regdb_wmm(अक्षर *alpha2, पूर्णांक freq,
-			काष्ठा ieee80211_reg_rule *rule);
+int reg_query_regdb_wmm(char *alpha2, int freq,
+			struct ieee80211_reg_rule *rule);
 
 /*
- * callbacks क्रम asynchronous cfg80211 methods, notअगरication
+ * callbacks for asynchronous cfg80211 methods, notification
  * functions and BSS handling helpers
  */
 
 /**
- * cfg80211_scan_करोne - notअगरy that scan finished
+ * cfg80211_scan_done - notify that scan finished
  *
  * @request: the corresponding scan request
- * @info: inक्रमmation about the completed scan
+ * @info: information about the completed scan
  */
-व्योम cfg80211_scan_करोne(काष्ठा cfg80211_scan_request *request,
-			काष्ठा cfg80211_scan_info *info);
+void cfg80211_scan_done(struct cfg80211_scan_request *request,
+			struct cfg80211_scan_info *info);
 
 /**
- * cfg80211_sched_scan_results - notअगरy that new scan results are available
+ * cfg80211_sched_scan_results - notify that new scan results are available
  *
  * @wiphy: the wiphy which got scheduled scan results
- * @reqid: identअगरier क्रम the related scheduled scan request
+ * @reqid: identifier for the related scheduled scan request
  */
-व्योम cfg80211_sched_scan_results(काष्ठा wiphy *wiphy, u64 reqid);
+void cfg80211_sched_scan_results(struct wiphy *wiphy, u64 reqid);
 
 /**
- * cfg80211_sched_scan_stopped - notअगरy that the scheduled scan has stopped
+ * cfg80211_sched_scan_stopped - notify that the scheduled scan has stopped
  *
  * @wiphy: the wiphy on which the scheduled scan stopped
- * @reqid: identअगरier क्रम the related scheduled scan request
+ * @reqid: identifier for the related scheduled scan request
  *
- * The driver can call this function to inक्रमm cfg80211 that the
- * scheduled scan had to be stopped, क्रम whatever reason.  The driver
- * is then called back via the sched_scan_stop operation when करोne.
+ * The driver can call this function to inform cfg80211 that the
+ * scheduled scan had to be stopped, for whatever reason.  The driver
+ * is then called back via the sched_scan_stop operation when done.
  */
-व्योम cfg80211_sched_scan_stopped(काष्ठा wiphy *wiphy, u64 reqid);
+void cfg80211_sched_scan_stopped(struct wiphy *wiphy, u64 reqid);
 
 /**
- * cfg80211_sched_scan_stopped_locked - notअगरy that the scheduled scan has stopped
+ * cfg80211_sched_scan_stopped_locked - notify that the scheduled scan has stopped
  *
  * @wiphy: the wiphy on which the scheduled scan stopped
- * @reqid: identअगरier क्रम the related scheduled scan request
+ * @reqid: identifier for the related scheduled scan request
  *
- * The driver can call this function to inक्रमm cfg80211 that the
- * scheduled scan had to be stopped, क्रम whatever reason.  The driver
- * is then called back via the sched_scan_stop operation when करोne.
+ * The driver can call this function to inform cfg80211 that the
+ * scheduled scan had to be stopped, for whatever reason.  The driver
+ * is then called back via the sched_scan_stop operation when done.
  * This function should be called with the wiphy mutex held.
  */
-व्योम cfg80211_sched_scan_stopped_locked(काष्ठा wiphy *wiphy, u64 reqid);
+void cfg80211_sched_scan_stopped_locked(struct wiphy *wiphy, u64 reqid);
 
 /**
- * cfg80211_inक्रमm_bss_frame_data - inक्रमm cfg80211 of a received BSS frame
+ * cfg80211_inform_bss_frame_data - inform cfg80211 of a received BSS frame
  * @wiphy: the wiphy reporting the BSS
  * @data: the BSS metadata
  * @mgmt: the management frame (probe response or beacon)
  * @len: length of the management frame
  * @gfp: context flags
  *
- * This inक्रमms cfg80211 that BSS inक्रमmation was found and
+ * This informs cfg80211 that BSS information was found and
  * the BSS should be updated/added.
  *
- * Return: A referenced काष्ठा, must be released with cfg80211_put_bss()!
- * Or %शून्य on error.
+ * Return: A referenced struct, must be released with cfg80211_put_bss()!
+ * Or %NULL on error.
  */
-काष्ठा cfg80211_bss * __must_check
-cfg80211_inक्रमm_bss_frame_data(काष्ठा wiphy *wiphy,
-			       काष्ठा cfg80211_inक्रमm_bss *data,
-			       काष्ठा ieee80211_mgmt *mgmt, माप_प्रकार len,
+struct cfg80211_bss * __must_check
+cfg80211_inform_bss_frame_data(struct wiphy *wiphy,
+			       struct cfg80211_inform_bss *data,
+			       struct ieee80211_mgmt *mgmt, size_t len,
 			       gfp_t gfp);
 
-अटल अंतरभूत काष्ठा cfg80211_bss * __must_check
-cfg80211_inक्रमm_bss_width_frame(काष्ठा wiphy *wiphy,
-				काष्ठा ieee80211_channel *rx_channel,
-				क्रमागत nl80211_bss_scan_width scan_width,
-				काष्ठा ieee80211_mgmt *mgmt, माप_प्रकार len,
-				s32 संकेत, gfp_t gfp)
-अणु
-	काष्ठा cfg80211_inक्रमm_bss data = अणु
+static inline struct cfg80211_bss * __must_check
+cfg80211_inform_bss_width_frame(struct wiphy *wiphy,
+				struct ieee80211_channel *rx_channel,
+				enum nl80211_bss_scan_width scan_width,
+				struct ieee80211_mgmt *mgmt, size_t len,
+				s32 signal, gfp_t gfp)
+{
+	struct cfg80211_inform_bss data = {
 		.chan = rx_channel,
 		.scan_width = scan_width,
-		.संकेत = संकेत,
-	पूर्ण;
+		.signal = signal,
+	};
 
-	वापस cfg80211_inक्रमm_bss_frame_data(wiphy, &data, mgmt, len, gfp);
-पूर्ण
+	return cfg80211_inform_bss_frame_data(wiphy, &data, mgmt, len, gfp);
+}
 
-अटल अंतरभूत काष्ठा cfg80211_bss * __must_check
-cfg80211_inक्रमm_bss_frame(काष्ठा wiphy *wiphy,
-			  काष्ठा ieee80211_channel *rx_channel,
-			  काष्ठा ieee80211_mgmt *mgmt, माप_प्रकार len,
-			  s32 संकेत, gfp_t gfp)
-अणु
-	काष्ठा cfg80211_inक्रमm_bss data = अणु
+static inline struct cfg80211_bss * __must_check
+cfg80211_inform_bss_frame(struct wiphy *wiphy,
+			  struct ieee80211_channel *rx_channel,
+			  struct ieee80211_mgmt *mgmt, size_t len,
+			  s32 signal, gfp_t gfp)
+{
+	struct cfg80211_inform_bss data = {
 		.chan = rx_channel,
 		.scan_width = NL80211_BSS_CHAN_WIDTH_20,
-		.संकेत = संकेत,
-	पूर्ण;
+		.signal = signal,
+	};
 
-	वापस cfg80211_inक्रमm_bss_frame_data(wiphy, &data, mgmt, len, gfp);
-पूर्ण
+	return cfg80211_inform_bss_frame_data(wiphy, &data, mgmt, len, gfp);
+}
 
 /**
- * cfg80211_gen_new_bssid - generate a nontransmitted BSSID क्रम multi-BSSID
+ * cfg80211_gen_new_bssid - generate a nontransmitted BSSID for multi-BSSID
  * @bssid: transmitter BSSID
  * @max_bssid: max BSSID indicator, taken from Multiple BSSID element
  * @mbssid_index: BSSID index, taken from Multiple BSSID index element
  * @new_bssid: calculated nontransmitted BSSID
  */
-अटल अंतरभूत व्योम cfg80211_gen_new_bssid(स्थिर u8 *bssid, u8 max_bssid,
+static inline void cfg80211_gen_new_bssid(const u8 *bssid, u8 max_bssid,
 					  u8 mbssid_index, u8 *new_bssid)
-अणु
+{
 	u64 bssid_u64 = ether_addr_to_u64(bssid);
 	u64 mask = GENMASK_ULL(max_bssid - 1, 0);
 	u64 new_bssid_u64;
@@ -6271,18 +6270,18 @@ cfg80211_inक्रमm_bss_frame(काष्ठा wiphy *wiphy,
 	new_bssid_u64 |= ((bssid_u64 & mask) + mbssid_index) & mask;
 
 	u64_to_ether_addr(new_bssid_u64, new_bssid);
-पूर्ण
+}
 
 /**
- * cfg80211_is_element_inherited - वापसs अगर element ID should be inherited
+ * cfg80211_is_element_inherited - returns if element ID should be inherited
  * @element: element to check
  * @non_inherit_element: non inheritance element
  */
-bool cfg80211_is_element_inherited(स्थिर काष्ठा element *element,
-				   स्थिर काष्ठा element *non_inherit_element);
+bool cfg80211_is_element_inherited(const struct element *element,
+				   const struct element *non_inherit_element);
 
 /**
- * cfg80211_merge_profile - merges a MBSSID profile अगर it is split between IEs
+ * cfg80211_merge_profile - merges a MBSSID profile if it is split between IEs
  * @ie: ies
  * @ielen: length of IEs
  * @mbssid_elem: current MBSSID element
@@ -6290,182 +6289,182 @@ bool cfg80211_is_element_inherited(स्थिर काष्ठा element *e
  * @merged_ie: location of the merged profile
  * @max_copy_len: max merged profile length
  */
-माप_प्रकार cfg80211_merge_profile(स्थिर u8 *ie, माप_प्रकार ielen,
-			      स्थिर काष्ठा element *mbssid_elem,
-			      स्थिर काष्ठा element *sub_elem,
-			      u8 *merged_ie, माप_प्रकार max_copy_len);
+size_t cfg80211_merge_profile(const u8 *ie, size_t ielen,
+			      const struct element *mbssid_elem,
+			      const struct element *sub_elem,
+			      u8 *merged_ie, size_t max_copy_len);
 
 /**
- * क्रमागत cfg80211_bss_frame_type - frame type that the BSS data came from
- * @CFG80211_BSS_FTYPE_UNKNOWN: driver करोesn't know whether the data is
+ * enum cfg80211_bss_frame_type - frame type that the BSS data came from
+ * @CFG80211_BSS_FTYPE_UNKNOWN: driver doesn't know whether the data is
  *	from a beacon or probe response
  * @CFG80211_BSS_FTYPE_BEACON: data comes from a beacon
  * @CFG80211_BSS_FTYPE_PRESP: data comes from a probe response
  */
-क्रमागत cfg80211_bss_frame_type अणु
+enum cfg80211_bss_frame_type {
 	CFG80211_BSS_FTYPE_UNKNOWN,
 	CFG80211_BSS_FTYPE_BEACON,
 	CFG80211_BSS_FTYPE_PRESP,
-पूर्ण;
+};
 
 /**
- * cfg80211_inक्रमm_bss_data - inक्रमm cfg80211 of a new BSS
+ * cfg80211_inform_bss_data - inform cfg80211 of a new BSS
  *
  * @wiphy: the wiphy reporting the BSS
  * @data: the BSS metadata
- * @ftype: frame type (अगर known)
+ * @ftype: frame type (if known)
  * @bssid: the BSSID of the BSS
  * @tsf: the TSF sent by the peer in the beacon/probe response (or 0)
  * @capability: the capability field sent by the peer
- * @beacon_पूर्णांकerval: the beacon पूर्णांकerval announced by the peer
+ * @beacon_interval: the beacon interval announced by the peer
  * @ie: additional IEs sent by the peer
  * @ielen: length of the additional IEs
  * @gfp: context flags
  *
- * This inक्रमms cfg80211 that BSS inक्रमmation was found and
+ * This informs cfg80211 that BSS information was found and
  * the BSS should be updated/added.
  *
- * Return: A referenced काष्ठा, must be released with cfg80211_put_bss()!
- * Or %शून्य on error.
+ * Return: A referenced struct, must be released with cfg80211_put_bss()!
+ * Or %NULL on error.
  */
-काष्ठा cfg80211_bss * __must_check
-cfg80211_inक्रमm_bss_data(काष्ठा wiphy *wiphy,
-			 काष्ठा cfg80211_inक्रमm_bss *data,
-			 क्रमागत cfg80211_bss_frame_type ftype,
-			 स्थिर u8 *bssid, u64 tsf, u16 capability,
-			 u16 beacon_पूर्णांकerval, स्थिर u8 *ie, माप_प्रकार ielen,
+struct cfg80211_bss * __must_check
+cfg80211_inform_bss_data(struct wiphy *wiphy,
+			 struct cfg80211_inform_bss *data,
+			 enum cfg80211_bss_frame_type ftype,
+			 const u8 *bssid, u64 tsf, u16 capability,
+			 u16 beacon_interval, const u8 *ie, size_t ielen,
 			 gfp_t gfp);
 
-अटल अंतरभूत काष्ठा cfg80211_bss * __must_check
-cfg80211_inक्रमm_bss_width(काष्ठा wiphy *wiphy,
-			  काष्ठा ieee80211_channel *rx_channel,
-			  क्रमागत nl80211_bss_scan_width scan_width,
-			  क्रमागत cfg80211_bss_frame_type ftype,
-			  स्थिर u8 *bssid, u64 tsf, u16 capability,
-			  u16 beacon_पूर्णांकerval, स्थिर u8 *ie, माप_प्रकार ielen,
-			  s32 संकेत, gfp_t gfp)
-अणु
-	काष्ठा cfg80211_inक्रमm_bss data = अणु
+static inline struct cfg80211_bss * __must_check
+cfg80211_inform_bss_width(struct wiphy *wiphy,
+			  struct ieee80211_channel *rx_channel,
+			  enum nl80211_bss_scan_width scan_width,
+			  enum cfg80211_bss_frame_type ftype,
+			  const u8 *bssid, u64 tsf, u16 capability,
+			  u16 beacon_interval, const u8 *ie, size_t ielen,
+			  s32 signal, gfp_t gfp)
+{
+	struct cfg80211_inform_bss data = {
 		.chan = rx_channel,
 		.scan_width = scan_width,
-		.संकेत = संकेत,
-	पूर्ण;
+		.signal = signal,
+	};
 
-	वापस cfg80211_inक्रमm_bss_data(wiphy, &data, ftype, bssid, tsf,
-					capability, beacon_पूर्णांकerval, ie, ielen,
+	return cfg80211_inform_bss_data(wiphy, &data, ftype, bssid, tsf,
+					capability, beacon_interval, ie, ielen,
 					gfp);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा cfg80211_bss * __must_check
-cfg80211_inक्रमm_bss(काष्ठा wiphy *wiphy,
-		    काष्ठा ieee80211_channel *rx_channel,
-		    क्रमागत cfg80211_bss_frame_type ftype,
-		    स्थिर u8 *bssid, u64 tsf, u16 capability,
-		    u16 beacon_पूर्णांकerval, स्थिर u8 *ie, माप_प्रकार ielen,
-		    s32 संकेत, gfp_t gfp)
-अणु
-	काष्ठा cfg80211_inक्रमm_bss data = अणु
+static inline struct cfg80211_bss * __must_check
+cfg80211_inform_bss(struct wiphy *wiphy,
+		    struct ieee80211_channel *rx_channel,
+		    enum cfg80211_bss_frame_type ftype,
+		    const u8 *bssid, u64 tsf, u16 capability,
+		    u16 beacon_interval, const u8 *ie, size_t ielen,
+		    s32 signal, gfp_t gfp)
+{
+	struct cfg80211_inform_bss data = {
 		.chan = rx_channel,
 		.scan_width = NL80211_BSS_CHAN_WIDTH_20,
-		.संकेत = संकेत,
-	पूर्ण;
+		.signal = signal,
+	};
 
-	वापस cfg80211_inक्रमm_bss_data(wiphy, &data, ftype, bssid, tsf,
-					capability, beacon_पूर्णांकerval, ie, ielen,
+	return cfg80211_inform_bss_data(wiphy, &data, ftype, bssid, tsf,
+					capability, beacon_interval, ie, ielen,
 					gfp);
-पूर्ण
+}
 
 /**
  * cfg80211_get_bss - get a BSS reference
- * @wiphy: the wiphy this BSS काष्ठा beदीर्घs to
- * @channel: the channel to search on (or %शून्य)
- * @bssid: the desired BSSID (or %शून्य)
- * @ssid: the desired SSID (or %शून्य)
+ * @wiphy: the wiphy this BSS struct belongs to
+ * @channel: the channel to search on (or %NULL)
+ * @bssid: the desired BSSID (or %NULL)
+ * @ssid: the desired SSID (or %NULL)
  * @ssid_len: length of the SSID (or 0)
- * @bss_type: type of BSS, see &क्रमागत ieee80211_bss_type
- * @privacy: privacy filter, see &क्रमागत ieee80211_privacy
+ * @bss_type: type of BSS, see &enum ieee80211_bss_type
+ * @privacy: privacy filter, see &enum ieee80211_privacy
  */
-काष्ठा cfg80211_bss *cfg80211_get_bss(काष्ठा wiphy *wiphy,
-				      काष्ठा ieee80211_channel *channel,
-				      स्थिर u8 *bssid,
-				      स्थिर u8 *ssid, माप_प्रकार ssid_len,
-				      क्रमागत ieee80211_bss_type bss_type,
-				      क्रमागत ieee80211_privacy privacy);
-अटल अंतरभूत काष्ठा cfg80211_bss *
-cfg80211_get_ibss(काष्ठा wiphy *wiphy,
-		  काष्ठा ieee80211_channel *channel,
-		  स्थिर u8 *ssid, माप_प्रकार ssid_len)
-अणु
-	वापस cfg80211_get_bss(wiphy, channel, शून्य, ssid, ssid_len,
+struct cfg80211_bss *cfg80211_get_bss(struct wiphy *wiphy,
+				      struct ieee80211_channel *channel,
+				      const u8 *bssid,
+				      const u8 *ssid, size_t ssid_len,
+				      enum ieee80211_bss_type bss_type,
+				      enum ieee80211_privacy privacy);
+static inline struct cfg80211_bss *
+cfg80211_get_ibss(struct wiphy *wiphy,
+		  struct ieee80211_channel *channel,
+		  const u8 *ssid, size_t ssid_len)
+{
+	return cfg80211_get_bss(wiphy, channel, NULL, ssid, ssid_len,
 				IEEE80211_BSS_TYPE_IBSS,
 				IEEE80211_PRIVACY_ANY);
-पूर्ण
+}
 
 /**
- * cfg80211_ref_bss - reference BSS काष्ठा
- * @wiphy: the wiphy this BSS काष्ठा beदीर्घs to
- * @bss: the BSS काष्ठा to reference
+ * cfg80211_ref_bss - reference BSS struct
+ * @wiphy: the wiphy this BSS struct belongs to
+ * @bss: the BSS struct to reference
  *
- * Increments the refcount of the given BSS काष्ठा.
+ * Increments the refcount of the given BSS struct.
  */
-व्योम cfg80211_ref_bss(काष्ठा wiphy *wiphy, काष्ठा cfg80211_bss *bss);
+void cfg80211_ref_bss(struct wiphy *wiphy, struct cfg80211_bss *bss);
 
 /**
- * cfg80211_put_bss - unref BSS काष्ठा
- * @wiphy: the wiphy this BSS काष्ठा beदीर्घs to
- * @bss: the BSS काष्ठा
+ * cfg80211_put_bss - unref BSS struct
+ * @wiphy: the wiphy this BSS struct belongs to
+ * @bss: the BSS struct
  *
- * Decrements the refcount of the given BSS काष्ठा.
+ * Decrements the refcount of the given BSS struct.
  */
-व्योम cfg80211_put_bss(काष्ठा wiphy *wiphy, काष्ठा cfg80211_bss *bss);
+void cfg80211_put_bss(struct wiphy *wiphy, struct cfg80211_bss *bss);
 
 /**
- * cfg80211_unlink_bss - unlink BSS from पूर्णांकernal data काष्ठाures
+ * cfg80211_unlink_bss - unlink BSS from internal data structures
  * @wiphy: the wiphy
- * @bss: the bss to हटाओ
+ * @bss: the bss to remove
  *
- * This function हटाओs the given BSS from the पूर्णांकernal data काष्ठाures
- * thereby making it no दीर्घer show up in scan results etc. Use this
- * function when you detect a BSS is gone. Normally BSSes will also समय
+ * This function removes the given BSS from the internal data structures
+ * thereby making it no longer show up in scan results etc. Use this
+ * function when you detect a BSS is gone. Normally BSSes will also time
  * out, so it is not necessary to use this function at all.
  */
-व्योम cfg80211_unlink_bss(काष्ठा wiphy *wiphy, काष्ठा cfg80211_bss *bss);
+void cfg80211_unlink_bss(struct wiphy *wiphy, struct cfg80211_bss *bss);
 
 /**
  * cfg80211_bss_iter - iterate all BSS entries
  *
  * This function iterates over the BSS entries associated with the given wiphy
- * and calls the callback क्रम the iterated BSS. The iterator function is not
- * allowed to call functions that might modअगरy the पूर्णांकernal state of the BSS DB.
+ * and calls the callback for the iterated BSS. The iterator function is not
+ * allowed to call functions that might modify the internal state of the BSS DB.
  *
  * @wiphy: the wiphy
- * @chandef: अगर given, the iterator function will be called only अगर the channel
+ * @chandef: if given, the iterator function will be called only if the channel
  *     of the currently iterated BSS is a subset of the given channel.
  * @iter: the iterator function to call
  * @iter_data: an argument to the iterator function
  */
-व्योम cfg80211_bss_iter(काष्ठा wiphy *wiphy,
-		       काष्ठा cfg80211_chan_def *chandef,
-		       व्योम (*iter)(काष्ठा wiphy *wiphy,
-				    काष्ठा cfg80211_bss *bss,
-				    व्योम *data),
-		       व्योम *iter_data);
+void cfg80211_bss_iter(struct wiphy *wiphy,
+		       struct cfg80211_chan_def *chandef,
+		       void (*iter)(struct wiphy *wiphy,
+				    struct cfg80211_bss *bss,
+				    void *data),
+		       void *iter_data);
 
-अटल अंतरभूत क्रमागत nl80211_bss_scan_width
-cfg80211_chandef_to_scan_width(स्थिर काष्ठा cfg80211_chan_def *chandef)
-अणु
-	चयन (chandef->width) अणु
-	हाल NL80211_CHAN_WIDTH_5:
-		वापस NL80211_BSS_CHAN_WIDTH_5;
-	हाल NL80211_CHAN_WIDTH_10:
-		वापस NL80211_BSS_CHAN_WIDTH_10;
-	शेष:
-		वापस NL80211_BSS_CHAN_WIDTH_20;
-	पूर्ण
-पूर्ण
+static inline enum nl80211_bss_scan_width
+cfg80211_chandef_to_scan_width(const struct cfg80211_chan_def *chandef)
+{
+	switch (chandef->width) {
+	case NL80211_CHAN_WIDTH_5:
+		return NL80211_BSS_CHAN_WIDTH_5;
+	case NL80211_CHAN_WIDTH_10:
+		return NL80211_BSS_CHAN_WIDTH_10;
+	default:
+		return NL80211_BSS_CHAN_WIDTH_20;
+	}
+}
 
 /**
- * cfg80211_rx_mlme_mgmt - notअगरication of processed MLME management frame
+ * cfg80211_rx_mlme_mgmt - notification of processed MLME management frame
  * @dev: network device
  * @buf: authentication frame (header + body)
  * @len: length of the frame data
@@ -6473,73 +6472,73 @@ cfg80211_chandef_to_scan_width(स्थिर काष्ठा cfg80211_chan_
  * This function is called whenever an authentication, disassociation or
  * deauthentication frame has been received and processed in station mode.
  * After being asked to authenticate via cfg80211_ops::auth() the driver must
- * call either this function or cfg80211_auth_समयout().
+ * call either this function or cfg80211_auth_timeout().
  * After being asked to associate via cfg80211_ops::assoc() the driver must
- * call either this function or cfg80211_auth_समयout().
- * While connected, the driver must calls this क्रम received and processed
+ * call either this function or cfg80211_auth_timeout().
+ * While connected, the driver must calls this for received and processed
  * disassociation and deauthentication frames. If the frame couldn't be used
- * because it was unरक्षित, the driver must call the function
+ * because it was unprotected, the driver must call the function
  * cfg80211_rx_unprot_mlme_mgmt() instead.
  *
  * This function may sleep. The caller must hold the corresponding wdev's mutex.
  */
-व्योम cfg80211_rx_mlme_mgmt(काष्ठा net_device *dev, स्थिर u8 *buf, माप_प्रकार len);
+void cfg80211_rx_mlme_mgmt(struct net_device *dev, const u8 *buf, size_t len);
 
 /**
- * cfg80211_auth_समयout - notअगरication of समयd out authentication
+ * cfg80211_auth_timeout - notification of timed out authentication
  * @dev: network device
- * @addr: The MAC address of the device with which the authentication समयd out
+ * @addr: The MAC address of the device with which the authentication timed out
  *
  * This function may sleep. The caller must hold the corresponding wdev's
  * mutex.
  */
-व्योम cfg80211_auth_समयout(काष्ठा net_device *dev, स्थिर u8 *addr);
+void cfg80211_auth_timeout(struct net_device *dev, const u8 *addr);
 
 /**
- * cfg80211_rx_assoc_resp - notअगरication of processed association response
+ * cfg80211_rx_assoc_resp - notification of processed association response
  * @dev: network device
- * @bss: the BSS that association was requested with, ownership of the poपूर्णांकer
+ * @bss: the BSS that association was requested with, ownership of the pointer
  *	moves to cfg80211 in this call
  * @buf: (Re)Association Response frame (header + body)
  * @len: length of the frame data
- * @uapsd_queues: biपंचांगap of queues configured क्रम uapsd. Same क्रमmat
- *	as the AC biपंचांगap in the QoS info field
- * @req_ies: inक्रमmation elements from the (Re)Association Request frame
+ * @uapsd_queues: bitmap of queues configured for uapsd. Same format
+ *	as the AC bitmap in the QoS info field
+ * @req_ies: information elements from the (Re)Association Request frame
  * @req_ies_len: length of req_ies data
  *
  * After being asked to associate via cfg80211_ops::assoc() the driver must
- * call either this function or cfg80211_auth_समयout().
+ * call either this function or cfg80211_auth_timeout().
  *
  * This function may sleep. The caller must hold the corresponding wdev's mutex.
  */
-व्योम cfg80211_rx_assoc_resp(काष्ठा net_device *dev,
-			    काष्ठा cfg80211_bss *bss,
-			    स्थिर u8 *buf, माप_प्रकार len,
-			    पूर्णांक uapsd_queues,
-			    स्थिर u8 *req_ies, माप_प्रकार req_ies_len);
+void cfg80211_rx_assoc_resp(struct net_device *dev,
+			    struct cfg80211_bss *bss,
+			    const u8 *buf, size_t len,
+			    int uapsd_queues,
+			    const u8 *req_ies, size_t req_ies_len);
 
 /**
- * cfg80211_assoc_समयout - notअगरication of समयd out association
+ * cfg80211_assoc_timeout - notification of timed out association
  * @dev: network device
- * @bss: The BSS entry with which association समयd out.
+ * @bss: The BSS entry with which association timed out.
  *
  * This function may sleep. The caller must hold the corresponding wdev's mutex.
  */
-व्योम cfg80211_assoc_समयout(काष्ठा net_device *dev, काष्ठा cfg80211_bss *bss);
+void cfg80211_assoc_timeout(struct net_device *dev, struct cfg80211_bss *bss);
 
 /**
- * cfg80211_abanकरोn_assoc - notअगरy cfg80211 of abanकरोned association attempt
+ * cfg80211_abandon_assoc - notify cfg80211 of abandoned association attempt
  * @dev: network device
- * @bss: The BSS entry with which association was abanकरोned.
+ * @bss: The BSS entry with which association was abandoned.
  *
- * Call this whenever - क्रम reasons reported through other API, like deauth RX,
- * an association attempt was abanकरोned.
+ * Call this whenever - for reasons reported through other API, like deauth RX,
+ * an association attempt was abandoned.
  * This function may sleep. The caller must hold the corresponding wdev's mutex.
  */
-व्योम cfg80211_abanकरोn_assoc(काष्ठा net_device *dev, काष्ठा cfg80211_bss *bss);
+void cfg80211_abandon_assoc(struct net_device *dev, struct cfg80211_bss *bss);
 
 /**
- * cfg80211_tx_mlme_mgmt - notअगरication of transmitted deauth/disassoc frame
+ * cfg80211_tx_mlme_mgmt - notification of transmitted deauth/disassoc frame
  * @dev: network device
  * @buf: 802.11 frame (header + body)
  * @len: length of the frame data
@@ -6550,32 +6549,32 @@ cfg80211_chandef_to_scan_width(स्थिर काष्ठा cfg80211_chan_
  * locally generated ones. This function may sleep. The caller must hold the
  * corresponding wdev's mutex.
  */
-व्योम cfg80211_tx_mlme_mgmt(काष्ठा net_device *dev, स्थिर u8 *buf, माप_प्रकार len,
+void cfg80211_tx_mlme_mgmt(struct net_device *dev, const u8 *buf, size_t len,
 			   bool reconnect);
 
 /**
- * cfg80211_rx_unprot_mlme_mgmt - notअगरication of unरक्षित mlme mgmt frame
+ * cfg80211_rx_unprot_mlme_mgmt - notification of unprotected mlme mgmt frame
  * @dev: network device
  * @buf: received management frame (header + body)
  * @len: length of the frame data
  *
  * This function is called whenever a received deauthentication or dissassoc
  * frame has been dropped in station mode because of MFP being used but the
- * frame was not रक्षित. This is also used to notअगरy reception of a Beacon
- * frame that was dropped because it did not include a valid MME MIC जबतक
+ * frame was not protected. This is also used to notify reception of a Beacon
+ * frame that was dropped because it did not include a valid MME MIC while
  * beacon protection was enabled (BIGTK configured in station mode).
  *
  * This function may sleep.
  */
-व्योम cfg80211_rx_unprot_mlme_mgmt(काष्ठा net_device *dev,
-				  स्थिर u8 *buf, माप_प्रकार len);
+void cfg80211_rx_unprot_mlme_mgmt(struct net_device *dev,
+				  const u8 *buf, size_t len);
 
 /**
- * cfg80211_michael_mic_failure - notअगरication of Michael MIC failure (TKIP)
+ * cfg80211_michael_mic_failure - notification of Michael MIC failure (TKIP)
  * @dev: network device
  * @addr: The source MAC address of the frame
  * @key_type: The key type that the received frame used
- * @key_id: Key identअगरier (0..3). Can be -1 अगर missing.
+ * @key_id: Key identifier (0..3). Can be -1 if missing.
  * @tsc: The TSC value of the frame that generated the MIC failure (6 octets)
  * @gfp: allocation flags
  *
@@ -6583,430 +6582,430 @@ cfg80211_chandef_to_scan_width(स्थिर काष्ठा cfg80211_chan_
  * received frame. This matches with MLME-MICHAELMICFAILURE.indication()
  * primitive.
  */
-व्योम cfg80211_michael_mic_failure(काष्ठा net_device *dev, स्थिर u8 *addr,
-				  क्रमागत nl80211_key_type key_type, पूर्णांक key_id,
-				  स्थिर u8 *tsc, gfp_t gfp);
+void cfg80211_michael_mic_failure(struct net_device *dev, const u8 *addr,
+				  enum nl80211_key_type key_type, int key_id,
+				  const u8 *tsc, gfp_t gfp);
 
 /**
- * cfg80211_ibss_joined - notअगरy cfg80211 that device joined an IBSS
+ * cfg80211_ibss_joined - notify cfg80211 that device joined an IBSS
  *
  * @dev: network device
  * @bssid: the BSSID of the IBSS joined
  * @channel: the channel of the IBSS joined
  * @gfp: allocation flags
  *
- * This function notअगरies cfg80211 that the device joined an IBSS or
- * चयनed to a dअगरferent BSSID. Beक्रमe this function can be called,
+ * This function notifies cfg80211 that the device joined an IBSS or
+ * switched to a different BSSID. Before this function can be called,
  * either a beacon has to have been received from the IBSS, or one of
- * the cfg80211_inक्रमm_bssअणु,_frameपूर्ण functions must have been called
+ * the cfg80211_inform_bss{,_frame} functions must have been called
  * with the locally generated beacon -- this guarantees that there is
- * always a scan result क्रम this IBSS. cfg80211 will handle the rest.
+ * always a scan result for this IBSS. cfg80211 will handle the rest.
  */
-व्योम cfg80211_ibss_joined(काष्ठा net_device *dev, स्थिर u8 *bssid,
-			  काष्ठा ieee80211_channel *channel, gfp_t gfp);
+void cfg80211_ibss_joined(struct net_device *dev, const u8 *bssid,
+			  struct ieee80211_channel *channel, gfp_t gfp);
 
 /**
- * cfg80211_notअगरy_new_peer_candidate - notअगरy cfg80211 of a new mesh peer
+ * cfg80211_notify_new_peer_candidate - notify cfg80211 of a new mesh peer
  * 					candidate
  *
  * @dev: network device
  * @macaddr: the MAC address of the new candidate
- * @ie: inक्रमmation elements advertised by the peer candidate
- * @ie_len: length of the inक्रमmation elements buffer
+ * @ie: information elements advertised by the peer candidate
+ * @ie_len: length of the information elements buffer
  * @gfp: allocation flags
  *
- * This function notअगरies cfg80211 that the mesh peer candidate has been
+ * This function notifies cfg80211 that the mesh peer candidate has been
  * detected, most likely via a beacon or, less likely, via a probe response.
- * cfg80211 then sends a notअगरication to userspace.
+ * cfg80211 then sends a notification to userspace.
  */
-व्योम cfg80211_notअगरy_new_peer_candidate(काष्ठा net_device *dev,
-		स्थिर u8 *macaddr, स्थिर u8 *ie, u8 ie_len,
-		पूर्णांक sig_dbm, gfp_t gfp);
+void cfg80211_notify_new_peer_candidate(struct net_device *dev,
+		const u8 *macaddr, const u8 *ie, u8 ie_len,
+		int sig_dbm, gfp_t gfp);
 
 /**
- * DOC: RFसमाप्त पूर्णांकegration
+ * DOC: RFkill integration
  *
- * RFसमाप्त पूर्णांकegration in cfg80211 is almost invisible to drivers,
- * as cfg80211 स्वतःmatically रेजिस्टरs an rfसमाप्त instance क्रम each
- * wireless device it knows about. Soft समाप्त is also translated
- * पूर्णांकo disconnecting and turning all पूर्णांकerfaces off, drivers are
- * expected to turn off the device when all पूर्णांकerfaces are करोwn.
+ * RFkill integration in cfg80211 is almost invisible to drivers,
+ * as cfg80211 automatically registers an rfkill instance for each
+ * wireless device it knows about. Soft kill is also translated
+ * into disconnecting and turning all interfaces off, drivers are
+ * expected to turn off the device when all interfaces are down.
  *
- * However, devices may have a hard RFसमाप्त line, in which हाल they
- * also need to पूर्णांकeract with the rfसमाप्त subप्रणाली, via cfg80211.
- * They can करो this with a few helper functions करोcumented here.
+ * However, devices may have a hard RFkill line, in which case they
+ * also need to interact with the rfkill subsystem, via cfg80211.
+ * They can do this with a few helper functions documented here.
  */
 
 /**
- * wiphy_rfसमाप्त_set_hw_state_reason - notअगरy cfg80211 about hw block state
+ * wiphy_rfkill_set_hw_state_reason - notify cfg80211 about hw block state
  * @wiphy: the wiphy
  * @blocked: block status
- * @reason: one of reasons in &क्रमागत rfसमाप्त_hard_block_reasons
+ * @reason: one of reasons in &enum rfkill_hard_block_reasons
  */
-व्योम wiphy_rfसमाप्त_set_hw_state_reason(काष्ठा wiphy *wiphy, bool blocked,
-				      क्रमागत rfसमाप्त_hard_block_reasons reason);
+void wiphy_rfkill_set_hw_state_reason(struct wiphy *wiphy, bool blocked,
+				      enum rfkill_hard_block_reasons reason);
 
-अटल अंतरभूत व्योम wiphy_rfसमाप्त_set_hw_state(काष्ठा wiphy *wiphy, bool blocked)
-अणु
-	wiphy_rfसमाप्त_set_hw_state_reason(wiphy, blocked,
+static inline void wiphy_rfkill_set_hw_state(struct wiphy *wiphy, bool blocked)
+{
+	wiphy_rfkill_set_hw_state_reason(wiphy, blocked,
 					 RFKILL_HARD_BLOCK_SIGNAL);
-पूर्ण
+}
 
 /**
- * wiphy_rfसमाप्त_start_polling - start polling rfसमाप्त
+ * wiphy_rfkill_start_polling - start polling rfkill
  * @wiphy: the wiphy
  */
-व्योम wiphy_rfसमाप्त_start_polling(काष्ठा wiphy *wiphy);
+void wiphy_rfkill_start_polling(struct wiphy *wiphy);
 
 /**
- * wiphy_rfसमाप्त_stop_polling - stop polling rfसमाप्त
+ * wiphy_rfkill_stop_polling - stop polling rfkill
  * @wiphy: the wiphy
  */
-व्योम wiphy_rfसमाप्त_stop_polling(काष्ठा wiphy *wiphy);
+void wiphy_rfkill_stop_polling(struct wiphy *wiphy);
 
 /**
- * DOC: Venकरोr commands
+ * DOC: Vendor commands
  *
  * Occasionally, there are special protocol or firmware features that
- * can't be implemented very खोलोly. For this and similar हालs, the
- * venकरोr command functionality allows implementing the features with
- * (typically बंदd-source) userspace and firmware, using nl80211 as
+ * can't be implemented very openly. For this and similar cases, the
+ * vendor command functionality allows implementing the features with
+ * (typically closed-source) userspace and firmware, using nl80211 as
  * the configuration mechanism.
  *
- * A driver supporting venकरोr commands must रेजिस्टर them as an array
- * in काष्ठा wiphy, with handlers क्रम each one, each command has an
- * OUI and sub command ID to identअगरy it.
+ * A driver supporting vendor commands must register them as an array
+ * in struct wiphy, with handlers for each one, each command has an
+ * OUI and sub command ID to identify it.
  *
  * Note that this feature should not be (ab)used to implement protocol
- * features that could खोलोly be shared across drivers. In particular,
- * it must never be required to use venकरोr commands to implement any
+ * features that could openly be shared across drivers. In particular,
+ * it must never be required to use vendor commands to implement any
  * "normal" functionality that higher-level userspace like connection
  * managers etc. need.
  */
 
-काष्ठा sk_buff *__cfg80211_alloc_reply_skb(काष्ठा wiphy *wiphy,
-					   क्रमागत nl80211_commands cmd,
-					   क्रमागत nl80211_attrs attr,
-					   पूर्णांक approxlen);
+struct sk_buff *__cfg80211_alloc_reply_skb(struct wiphy *wiphy,
+					   enum nl80211_commands cmd,
+					   enum nl80211_attrs attr,
+					   int approxlen);
 
-काष्ठा sk_buff *__cfg80211_alloc_event_skb(काष्ठा wiphy *wiphy,
-					   काष्ठा wireless_dev *wdev,
-					   क्रमागत nl80211_commands cmd,
-					   क्रमागत nl80211_attrs attr,
-					   अचिन्हित पूर्णांक portid,
-					   पूर्णांक venकरोr_event_idx,
-					   पूर्णांक approxlen, gfp_t gfp);
+struct sk_buff *__cfg80211_alloc_event_skb(struct wiphy *wiphy,
+					   struct wireless_dev *wdev,
+					   enum nl80211_commands cmd,
+					   enum nl80211_attrs attr,
+					   unsigned int portid,
+					   int vendor_event_idx,
+					   int approxlen, gfp_t gfp);
 
-व्योम __cfg80211_send_event_skb(काष्ठा sk_buff *skb, gfp_t gfp);
+void __cfg80211_send_event_skb(struct sk_buff *skb, gfp_t gfp);
 
 /**
- * cfg80211_venकरोr_cmd_alloc_reply_skb - allocate venकरोr command reply
+ * cfg80211_vendor_cmd_alloc_reply_skb - allocate vendor command reply
  * @wiphy: the wiphy
  * @approxlen: an upper bound of the length of the data that will
- *	be put पूर्णांकo the skb
+ *	be put into the skb
  *
- * This function allocates and pre-fills an skb क्रम a reply to
- * a venकरोr command. Since it is पूर्णांकended क्रम a reply, calling
- * it outside of a venकरोr command's करोit() operation is invalid.
+ * This function allocates and pre-fills an skb for a reply to
+ * a vendor command. Since it is intended for a reply, calling
+ * it outside of a vendor command's doit() operation is invalid.
  *
- * The वापसed skb is pre-filled with some identअगरying data in
- * a way that any data that is put पूर्णांकo the skb (with skb_put(),
+ * The returned skb is pre-filled with some identifying data in
+ * a way that any data that is put into the skb (with skb_put(),
  * nla_put() or similar) will end up being within the
- * %NL80211_ATTR_VENDOR_DATA attribute, so all that needs to be करोne
- * with the skb is adding data क्रम the corresponding userspace tool
- * which can then पढ़ो that data out of the venकरोr data attribute.
- * You must not modअगरy the skb in any other way.
+ * %NL80211_ATTR_VENDOR_DATA attribute, so all that needs to be done
+ * with the skb is adding data for the corresponding userspace tool
+ * which can then read that data out of the vendor data attribute.
+ * You must not modify the skb in any other way.
  *
- * When करोne, call cfg80211_venकरोr_cmd_reply() with the skb and वापस
- * its error code as the result of the करोit() operation.
+ * When done, call cfg80211_vendor_cmd_reply() with the skb and return
+ * its error code as the result of the doit() operation.
  *
- * Return: An allocated and pre-filled skb. %शून्य अगर any errors happen.
+ * Return: An allocated and pre-filled skb. %NULL if any errors happen.
  */
-अटल अंतरभूत काष्ठा sk_buff *
-cfg80211_venकरोr_cmd_alloc_reply_skb(काष्ठा wiphy *wiphy, पूर्णांक approxlen)
-अणु
-	वापस __cfg80211_alloc_reply_skb(wiphy, NL80211_CMD_VENDOR,
+static inline struct sk_buff *
+cfg80211_vendor_cmd_alloc_reply_skb(struct wiphy *wiphy, int approxlen)
+{
+	return __cfg80211_alloc_reply_skb(wiphy, NL80211_CMD_VENDOR,
 					  NL80211_ATTR_VENDOR_DATA, approxlen);
-पूर्ण
+}
 
 /**
- * cfg80211_venकरोr_cmd_reply - send the reply skb
+ * cfg80211_vendor_cmd_reply - send the reply skb
  * @skb: The skb, must have been allocated with
- *	cfg80211_venकरोr_cmd_alloc_reply_skb()
+ *	cfg80211_vendor_cmd_alloc_reply_skb()
  *
  * Since calling this function will usually be the last thing
- * beक्रमe वापसing from the venकरोr command करोit() you should
- * वापस the error code.  Note that this function consumes the
- * skb regardless of the वापस value.
+ * before returning from the vendor command doit() you should
+ * return the error code.  Note that this function consumes the
+ * skb regardless of the return value.
  *
  * Return: An error code or 0 on success.
  */
-पूर्णांक cfg80211_venकरोr_cmd_reply(काष्ठा sk_buff *skb);
+int cfg80211_vendor_cmd_reply(struct sk_buff *skb);
 
 /**
- * cfg80211_venकरोr_cmd_get_sender - get the current sender netlink ID
+ * cfg80211_vendor_cmd_get_sender - get the current sender netlink ID
  * @wiphy: the wiphy
  *
- * Return the current netlink port ID in a venकरोr command handler.
+ * Return the current netlink port ID in a vendor command handler.
  * Valid to call only there.
  */
-अचिन्हित पूर्णांक cfg80211_venकरोr_cmd_get_sender(काष्ठा wiphy *wiphy);
+unsigned int cfg80211_vendor_cmd_get_sender(struct wiphy *wiphy);
 
 /**
- * cfg80211_venकरोr_event_alloc - allocate venकरोr-specअगरic event skb
+ * cfg80211_vendor_event_alloc - allocate vendor-specific event skb
  * @wiphy: the wiphy
  * @wdev: the wireless device
- * @event_idx: index of the venकरोr event in the wiphy's venकरोr_events
+ * @event_idx: index of the vendor event in the wiphy's vendor_events
  * @approxlen: an upper bound of the length of the data that will
- *	be put पूर्णांकo the skb
+ *	be put into the skb
  * @gfp: allocation flags
  *
- * This function allocates and pre-fills an skb क्रम an event on the
- * venकरोr-specअगरic multicast group.
+ * This function allocates and pre-fills an skb for an event on the
+ * vendor-specific multicast group.
  *
- * If wdev != शून्य, both the अगरindex and identअगरier of the specअगरied
- * wireless device are added to the event message beक्रमe the venकरोr data
+ * If wdev != NULL, both the ifindex and identifier of the specified
+ * wireless device are added to the event message before the vendor data
  * attribute.
  *
- * When करोne filling the skb, call cfg80211_venकरोr_event() with the
+ * When done filling the skb, call cfg80211_vendor_event() with the
  * skb to send the event.
  *
- * Return: An allocated and pre-filled skb. %शून्य अगर any errors happen.
+ * Return: An allocated and pre-filled skb. %NULL if any errors happen.
  */
-अटल अंतरभूत काष्ठा sk_buff *
-cfg80211_venकरोr_event_alloc(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev,
-			     पूर्णांक approxlen, पूर्णांक event_idx, gfp_t gfp)
-अणु
-	वापस __cfg80211_alloc_event_skb(wiphy, wdev, NL80211_CMD_VENDOR,
+static inline struct sk_buff *
+cfg80211_vendor_event_alloc(struct wiphy *wiphy, struct wireless_dev *wdev,
+			     int approxlen, int event_idx, gfp_t gfp)
+{
+	return __cfg80211_alloc_event_skb(wiphy, wdev, NL80211_CMD_VENDOR,
 					  NL80211_ATTR_VENDOR_DATA,
 					  0, event_idx, approxlen, gfp);
-पूर्ण
+}
 
 /**
- * cfg80211_venकरोr_event_alloc_ucast - alloc unicast venकरोr-specअगरic event skb
+ * cfg80211_vendor_event_alloc_ucast - alloc unicast vendor-specific event skb
  * @wiphy: the wiphy
  * @wdev: the wireless device
- * @event_idx: index of the venकरोr event in the wiphy's venकरोr_events
+ * @event_idx: index of the vendor event in the wiphy's vendor_events
  * @portid: port ID of the receiver
  * @approxlen: an upper bound of the length of the data that will
- *	be put पूर्णांकo the skb
+ *	be put into the skb
  * @gfp: allocation flags
  *
- * This function allocates and pre-fills an skb क्रम an event to send to
- * a specअगरic (userland) socket. This socket would previously have been
- * obtained by cfg80211_venकरोr_cmd_get_sender(), and the caller MUST take
- * care to रेजिस्टर a netlink notअगरier to see when the socket बंदs.
+ * This function allocates and pre-fills an skb for an event to send to
+ * a specific (userland) socket. This socket would previously have been
+ * obtained by cfg80211_vendor_cmd_get_sender(), and the caller MUST take
+ * care to register a netlink notifier to see when the socket closes.
  *
- * If wdev != शून्य, both the अगरindex and identअगरier of the specअगरied
- * wireless device are added to the event message beक्रमe the venकरोr data
+ * If wdev != NULL, both the ifindex and identifier of the specified
+ * wireless device are added to the event message before the vendor data
  * attribute.
  *
- * When करोne filling the skb, call cfg80211_venकरोr_event() with the
+ * When done filling the skb, call cfg80211_vendor_event() with the
  * skb to send the event.
  *
- * Return: An allocated and pre-filled skb. %शून्य अगर any errors happen.
+ * Return: An allocated and pre-filled skb. %NULL if any errors happen.
  */
-अटल अंतरभूत काष्ठा sk_buff *
-cfg80211_venकरोr_event_alloc_ucast(काष्ठा wiphy *wiphy,
-				  काष्ठा wireless_dev *wdev,
-				  अचिन्हित पूर्णांक portid, पूर्णांक approxlen,
-				  पूर्णांक event_idx, gfp_t gfp)
-अणु
-	वापस __cfg80211_alloc_event_skb(wiphy, wdev, NL80211_CMD_VENDOR,
+static inline struct sk_buff *
+cfg80211_vendor_event_alloc_ucast(struct wiphy *wiphy,
+				  struct wireless_dev *wdev,
+				  unsigned int portid, int approxlen,
+				  int event_idx, gfp_t gfp)
+{
+	return __cfg80211_alloc_event_skb(wiphy, wdev, NL80211_CMD_VENDOR,
 					  NL80211_ATTR_VENDOR_DATA,
 					  portid, event_idx, approxlen, gfp);
-पूर्ण
+}
 
 /**
- * cfg80211_venकरोr_event - send the event
- * @skb: The skb, must have been allocated with cfg80211_venकरोr_event_alloc()
+ * cfg80211_vendor_event - send the event
+ * @skb: The skb, must have been allocated with cfg80211_vendor_event_alloc()
  * @gfp: allocation flags
  *
  * This function sends the given @skb, which must have been allocated
- * by cfg80211_venकरोr_event_alloc(), as an event. It always consumes it.
+ * by cfg80211_vendor_event_alloc(), as an event. It always consumes it.
  */
-अटल अंतरभूत व्योम cfg80211_venकरोr_event(काष्ठा sk_buff *skb, gfp_t gfp)
-अणु
+static inline void cfg80211_vendor_event(struct sk_buff *skb, gfp_t gfp)
+{
 	__cfg80211_send_event_skb(skb, gfp);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_NL80211_TESTMODE
+#ifdef CONFIG_NL80211_TESTMODE
 /**
  * DOC: Test mode
  *
  * Test mode is a set of utility functions to allow drivers to
- * पूर्णांकeract with driver-specअगरic tools to aid, क्रम instance,
+ * interact with driver-specific tools to aid, for instance,
  * factory programming.
  *
- * This chapter describes how drivers पूर्णांकeract with it, क्रम more
- * inक्रमmation see the nl80211 book's chapter on it.
+ * This chapter describes how drivers interact with it, for more
+ * information see the nl80211 book's chapter on it.
  */
 
 /**
- * cfg80211_tesपंचांगode_alloc_reply_skb - allocate tesपंचांगode reply
+ * cfg80211_testmode_alloc_reply_skb - allocate testmode reply
  * @wiphy: the wiphy
  * @approxlen: an upper bound of the length of the data that will
- *	be put पूर्णांकo the skb
+ *	be put into the skb
  *
- * This function allocates and pre-fills an skb क्रम a reply to
- * the tesपंचांगode command. Since it is पूर्णांकended क्रम a reply, calling
- * it outside of the @tesपंचांगode_cmd operation is invalid.
+ * This function allocates and pre-fills an skb for a reply to
+ * the testmode command. Since it is intended for a reply, calling
+ * it outside of the @testmode_cmd operation is invalid.
  *
- * The वापसed skb is pre-filled with the wiphy index and set up in
- * a way that any data that is put पूर्णांकo the skb (with skb_put(),
+ * The returned skb is pre-filled with the wiphy index and set up in
+ * a way that any data that is put into the skb (with skb_put(),
  * nla_put() or similar) will end up being within the
- * %NL80211_ATTR_TESTDATA attribute, so all that needs to be करोne
- * with the skb is adding data क्रम the corresponding userspace tool
- * which can then पढ़ो that data out of the testdata attribute. You
- * must not modअगरy the skb in any other way.
+ * %NL80211_ATTR_TESTDATA attribute, so all that needs to be done
+ * with the skb is adding data for the corresponding userspace tool
+ * which can then read that data out of the testdata attribute. You
+ * must not modify the skb in any other way.
  *
- * When करोne, call cfg80211_tesपंचांगode_reply() with the skb and वापस
- * its error code as the result of the @tesपंचांगode_cmd operation.
+ * When done, call cfg80211_testmode_reply() with the skb and return
+ * its error code as the result of the @testmode_cmd operation.
  *
- * Return: An allocated and pre-filled skb. %शून्य अगर any errors happen.
+ * Return: An allocated and pre-filled skb. %NULL if any errors happen.
  */
-अटल अंतरभूत काष्ठा sk_buff *
-cfg80211_tesपंचांगode_alloc_reply_skb(काष्ठा wiphy *wiphy, पूर्णांक approxlen)
-अणु
-	वापस __cfg80211_alloc_reply_skb(wiphy, NL80211_CMD_TESTMODE,
+static inline struct sk_buff *
+cfg80211_testmode_alloc_reply_skb(struct wiphy *wiphy, int approxlen)
+{
+	return __cfg80211_alloc_reply_skb(wiphy, NL80211_CMD_TESTMODE,
 					  NL80211_ATTR_TESTDATA, approxlen);
-पूर्ण
+}
 
 /**
- * cfg80211_tesपंचांगode_reply - send the reply skb
+ * cfg80211_testmode_reply - send the reply skb
  * @skb: The skb, must have been allocated with
- *	cfg80211_tesपंचांगode_alloc_reply_skb()
+ *	cfg80211_testmode_alloc_reply_skb()
  *
  * Since calling this function will usually be the last thing
- * beक्रमe वापसing from the @tesपंचांगode_cmd you should वापस
+ * before returning from the @testmode_cmd you should return
  * the error code.  Note that this function consumes the skb
- * regardless of the वापस value.
+ * regardless of the return value.
  *
  * Return: An error code or 0 on success.
  */
-अटल अंतरभूत पूर्णांक cfg80211_tesपंचांगode_reply(काष्ठा sk_buff *skb)
-अणु
-	वापस cfg80211_venकरोr_cmd_reply(skb);
-पूर्ण
+static inline int cfg80211_testmode_reply(struct sk_buff *skb)
+{
+	return cfg80211_vendor_cmd_reply(skb);
+}
 
 /**
- * cfg80211_tesपंचांगode_alloc_event_skb - allocate tesपंचांगode event
+ * cfg80211_testmode_alloc_event_skb - allocate testmode event
  * @wiphy: the wiphy
  * @approxlen: an upper bound of the length of the data that will
- *	be put पूर्णांकo the skb
+ *	be put into the skb
  * @gfp: allocation flags
  *
- * This function allocates and pre-fills an skb क्रम an event on the
- * tesपंचांगode multicast group.
+ * This function allocates and pre-fills an skb for an event on the
+ * testmode multicast group.
  *
- * The वापसed skb is set up in the same way as with
- * cfg80211_tesपंचांगode_alloc_reply_skb() but prepared क्रम an event. As
+ * The returned skb is set up in the same way as with
+ * cfg80211_testmode_alloc_reply_skb() but prepared for an event. As
  * there, you should simply add data to it that will then end up in the
- * %NL80211_ATTR_TESTDATA attribute. Again, you must not modअगरy the skb
+ * %NL80211_ATTR_TESTDATA attribute. Again, you must not modify the skb
  * in any other way.
  *
- * When करोne filling the skb, call cfg80211_tesपंचांगode_event() with the
+ * When done filling the skb, call cfg80211_testmode_event() with the
  * skb to send the event.
  *
- * Return: An allocated and pre-filled skb. %शून्य अगर any errors happen.
+ * Return: An allocated and pre-filled skb. %NULL if any errors happen.
  */
-अटल अंतरभूत काष्ठा sk_buff *
-cfg80211_tesपंचांगode_alloc_event_skb(काष्ठा wiphy *wiphy, पूर्णांक approxlen, gfp_t gfp)
-अणु
-	वापस __cfg80211_alloc_event_skb(wiphy, शून्य, NL80211_CMD_TESTMODE,
+static inline struct sk_buff *
+cfg80211_testmode_alloc_event_skb(struct wiphy *wiphy, int approxlen, gfp_t gfp)
+{
+	return __cfg80211_alloc_event_skb(wiphy, NULL, NL80211_CMD_TESTMODE,
 					  NL80211_ATTR_TESTDATA, 0, -1,
 					  approxlen, gfp);
-पूर्ण
+}
 
 /**
- * cfg80211_tesपंचांगode_event - send the event
+ * cfg80211_testmode_event - send the event
  * @skb: The skb, must have been allocated with
- *	cfg80211_tesपंचांगode_alloc_event_skb()
+ *	cfg80211_testmode_alloc_event_skb()
  * @gfp: allocation flags
  *
  * This function sends the given @skb, which must have been allocated
- * by cfg80211_tesपंचांगode_alloc_event_skb(), as an event. It always
+ * by cfg80211_testmode_alloc_event_skb(), as an event. It always
  * consumes it.
  */
-अटल अंतरभूत व्योम cfg80211_tesपंचांगode_event(काष्ठा sk_buff *skb, gfp_t gfp)
-अणु
+static inline void cfg80211_testmode_event(struct sk_buff *skb, gfp_t gfp)
+{
 	__cfg80211_send_event_skb(skb, gfp);
-पूर्ण
+}
 
-#घोषणा CFG80211_TESTMODE_CMD(cmd)	.tesपंचांगode_cmd = (cmd),
-#घोषणा CFG80211_TESTMODE_DUMP(cmd)	.tesपंचांगode_dump = (cmd),
-#अन्यथा
-#घोषणा CFG80211_TESTMODE_CMD(cmd)
-#घोषणा CFG80211_TESTMODE_DUMP(cmd)
-#पूर्ण_अगर
+#define CFG80211_TESTMODE_CMD(cmd)	.testmode_cmd = (cmd),
+#define CFG80211_TESTMODE_DUMP(cmd)	.testmode_dump = (cmd),
+#else
+#define CFG80211_TESTMODE_CMD(cmd)
+#define CFG80211_TESTMODE_DUMP(cmd)
+#endif
 
 /**
- * काष्ठा cfg80211_fils_resp_params - FILS connection response params
- * @kek: KEK derived from a successful FILS connection (may be %शून्य)
+ * struct cfg80211_fils_resp_params - FILS connection response params
+ * @kek: KEK derived from a successful FILS connection (may be %NULL)
  * @kek_len: Length of @fils_kek in octets
- * @update_erp_next_seq_num: Boolean value to specअगरy whether the value in
+ * @update_erp_next_seq_num: Boolean value to specify whether the value in
  *	@erp_next_seq_num is valid.
  * @erp_next_seq_num: The next sequence number to use in ERP message in
- *	FILS Authentication. This value should be specअगरied irrespective of the
- *	status क्रम a FILS connection.
- * @pmk: A new PMK अगर derived from a successful FILS connection (may be %शून्य).
+ *	FILS Authentication. This value should be specified irrespective of the
+ *	status for a FILS connection.
+ * @pmk: A new PMK if derived from a successful FILS connection (may be %NULL).
  * @pmk_len: Length of @pmk in octets
- * @pmkid: A new PMKID अगर derived from a successful FILS connection or the PMKID
- *	used क्रम this FILS connection (may be %शून्य).
+ * @pmkid: A new PMKID if derived from a successful FILS connection or the PMKID
+ *	used for this FILS connection (may be %NULL).
  */
-काष्ठा cfg80211_fils_resp_params अणु
-	स्थिर u8 *kek;
-	माप_प्रकार kek_len;
+struct cfg80211_fils_resp_params {
+	const u8 *kek;
+	size_t kek_len;
 	bool update_erp_next_seq_num;
 	u16 erp_next_seq_num;
-	स्थिर u8 *pmk;
-	माप_प्रकार pmk_len;
-	स्थिर u8 *pmkid;
-पूर्ण;
+	const u8 *pmk;
+	size_t pmk_len;
+	const u8 *pmkid;
+};
 
 /**
- * काष्ठा cfg80211_connect_resp_params - Connection response params
- * @status: Status code, %WLAN_STATUS_SUCCESS क्रम successful connection, use
- *	%WLAN_STATUS_UNSPECIFIED_FAILURE अगर your device cannot give you
- *	the real status code क्रम failures. If this call is used to report a
- *	failure due to a समयout (e.g., not receiving an Authentication frame
+ * struct cfg80211_connect_resp_params - Connection response params
+ * @status: Status code, %WLAN_STATUS_SUCCESS for successful connection, use
+ *	%WLAN_STATUS_UNSPECIFIED_FAILURE if your device cannot give you
+ *	the real status code for failures. If this call is used to report a
+ *	failure due to a timeout (e.g., not receiving an Authentication frame
  *	from the AP) instead of an explicit rejection by the AP, -1 is used to
  *	indicate that this is a failure, but without a status code.
- *	@समयout_reason is used to report the reason क्रम the समयout in that
- *	हाल.
- * @bssid: The BSSID of the AP (may be %शून्य)
+ *	@timeout_reason is used to report the reason for the timeout in that
+ *	case.
+ * @bssid: The BSSID of the AP (may be %NULL)
  * @bss: Entry of bss to which STA got connected to, can be obtained through
- *	cfg80211_get_bss() (may be %शून्य). But it is recommended to store the
- *	bss from the connect_request and hold a reference to it and वापस
- *	through this param to aव्योम a warning अगर the bss is expired during the
- *	connection, esp. क्रम those drivers implementing connect op.
- *	Only one parameter among @bssid and @bss needs to be specअगरied.
- * @req_ie: Association request IEs (may be %शून्य)
+ *	cfg80211_get_bss() (may be %NULL). But it is recommended to store the
+ *	bss from the connect_request and hold a reference to it and return
+ *	through this param to avoid a warning if the bss is expired during the
+ *	connection, esp. for those drivers implementing connect op.
+ *	Only one parameter among @bssid and @bss needs to be specified.
+ * @req_ie: Association request IEs (may be %NULL)
  * @req_ie_len: Association request IEs length
- * @resp_ie: Association response IEs (may be %शून्य)
+ * @resp_ie: Association response IEs (may be %NULL)
  * @resp_ie_len: Association response IEs length
  * @fils: FILS connection response parameters.
- * @समयout_reason: Reason क्रम connection समयout. This is used when the
- *	connection fails due to a समयout instead of an explicit rejection from
- *	the AP. %NL80211_TIMEOUT_UNSPECIFIED is used when the समयout reason is
- *	not known. This value is used only अगर @status < 0 to indicate that the
- *	failure is due to a समयout and not due to explicit rejection by the AP.
- *	This value is ignored in other हालs (@status >= 0).
+ * @timeout_reason: Reason for connection timeout. This is used when the
+ *	connection fails due to a timeout instead of an explicit rejection from
+ *	the AP. %NL80211_TIMEOUT_UNSPECIFIED is used when the timeout reason is
+ *	not known. This value is used only if @status < 0 to indicate that the
+ *	failure is due to a timeout and not due to explicit rejection by the AP.
+ *	This value is ignored in other cases (@status >= 0).
  */
-काष्ठा cfg80211_connect_resp_params अणु
-	पूर्णांक status;
-	स्थिर u8 *bssid;
-	काष्ठा cfg80211_bss *bss;
-	स्थिर u8 *req_ie;
-	माप_प्रकार req_ie_len;
-	स्थिर u8 *resp_ie;
-	माप_प्रकार resp_ie_len;
-	काष्ठा cfg80211_fils_resp_params fils;
-	क्रमागत nl80211_समयout_reason समयout_reason;
-पूर्ण;
+struct cfg80211_connect_resp_params {
+	int status;
+	const u8 *bssid;
+	struct cfg80211_bss *bss;
+	const u8 *req_ie;
+	size_t req_ie_len;
+	const u8 *resp_ie;
+	size_t resp_ie_len;
+	struct cfg80211_fils_resp_params fils;
+	enum nl80211_timeout_reason timeout_reason;
+};
 
 /**
- * cfg80211_connect_करोne - notअगरy cfg80211 of connection result
+ * cfg80211_connect_done - notify cfg80211 of connection result
  *
  * @dev: network device
  * @params: connection response parameters
@@ -7014,63 +7013,63 @@ cfg80211_tesपंचांगode_alloc_event_skb(काष्ठा wiphy *wiph
  *
  * It should be called by the underlying driver once execution of the connection
  * request from connect() has been completed. This is similar to
- * cfg80211_connect_bss(), but takes a काष्ठाure poपूर्णांकer क्रम connection response
+ * cfg80211_connect_bss(), but takes a structure pointer for connection response
  * parameters. Only one of the functions among cfg80211_connect_bss(),
- * cfg80211_connect_result(), cfg80211_connect_समयout(),
- * and cfg80211_connect_करोne() should be called.
+ * cfg80211_connect_result(), cfg80211_connect_timeout(),
+ * and cfg80211_connect_done() should be called.
  */
-व्योम cfg80211_connect_करोne(काष्ठा net_device *dev,
-			   काष्ठा cfg80211_connect_resp_params *params,
+void cfg80211_connect_done(struct net_device *dev,
+			   struct cfg80211_connect_resp_params *params,
 			   gfp_t gfp);
 
 /**
- * cfg80211_connect_bss - notअगरy cfg80211 of connection result
+ * cfg80211_connect_bss - notify cfg80211 of connection result
  *
  * @dev: network device
  * @bssid: the BSSID of the AP
  * @bss: Entry of bss to which STA got connected to, can be obtained through
- *	cfg80211_get_bss() (may be %शून्य). But it is recommended to store the
- *	bss from the connect_request and hold a reference to it and वापस
- *	through this param to aव्योम a warning अगर the bss is expired during the
- *	connection, esp. क्रम those drivers implementing connect op.
- *	Only one parameter among @bssid and @bss needs to be specअगरied.
- * @req_ie: association request IEs (maybe be %शून्य)
+ *	cfg80211_get_bss() (may be %NULL). But it is recommended to store the
+ *	bss from the connect_request and hold a reference to it and return
+ *	through this param to avoid a warning if the bss is expired during the
+ *	connection, esp. for those drivers implementing connect op.
+ *	Only one parameter among @bssid and @bss needs to be specified.
+ * @req_ie: association request IEs (maybe be %NULL)
  * @req_ie_len: association request IEs length
- * @resp_ie: association response IEs (may be %शून्य)
+ * @resp_ie: association response IEs (may be %NULL)
  * @resp_ie_len: assoc response IEs length
- * @status: status code, %WLAN_STATUS_SUCCESS क्रम successful connection, use
- *	%WLAN_STATUS_UNSPECIFIED_FAILURE अगर your device cannot give you
- *	the real status code क्रम failures. If this call is used to report a
- *	failure due to a समयout (e.g., not receiving an Authentication frame
+ * @status: status code, %WLAN_STATUS_SUCCESS for successful connection, use
+ *	%WLAN_STATUS_UNSPECIFIED_FAILURE if your device cannot give you
+ *	the real status code for failures. If this call is used to report a
+ *	failure due to a timeout (e.g., not receiving an Authentication frame
  *	from the AP) instead of an explicit rejection by the AP, -1 is used to
  *	indicate that this is a failure, but without a status code.
- *	@समयout_reason is used to report the reason क्रम the समयout in that
- *	हाल.
+ *	@timeout_reason is used to report the reason for the timeout in that
+ *	case.
  * @gfp: allocation flags
- * @समयout_reason: reason क्रम connection समयout. This is used when the
- *	connection fails due to a समयout instead of an explicit rejection from
- *	the AP. %NL80211_TIMEOUT_UNSPECIFIED is used when the समयout reason is
- *	not known. This value is used only अगर @status < 0 to indicate that the
- *	failure is due to a समयout and not due to explicit rejection by the AP.
- *	This value is ignored in other हालs (@status >= 0).
+ * @timeout_reason: reason for connection timeout. This is used when the
+ *	connection fails due to a timeout instead of an explicit rejection from
+ *	the AP. %NL80211_TIMEOUT_UNSPECIFIED is used when the timeout reason is
+ *	not known. This value is used only if @status < 0 to indicate that the
+ *	failure is due to a timeout and not due to explicit rejection by the AP.
+ *	This value is ignored in other cases (@status >= 0).
  *
  * It should be called by the underlying driver once execution of the connection
  * request from connect() has been completed. This is similar to
- * cfg80211_connect_result(), but with the option of identअगरying the exact bss
- * entry क्रम the connection. Only one of the functions among
+ * cfg80211_connect_result(), but with the option of identifying the exact bss
+ * entry for the connection. Only one of the functions among
  * cfg80211_connect_bss(), cfg80211_connect_result(),
- * cfg80211_connect_समयout(), and cfg80211_connect_करोne() should be called.
+ * cfg80211_connect_timeout(), and cfg80211_connect_done() should be called.
  */
-अटल अंतरभूत व्योम
-cfg80211_connect_bss(काष्ठा net_device *dev, स्थिर u8 *bssid,
-		     काष्ठा cfg80211_bss *bss, स्थिर u8 *req_ie,
-		     माप_प्रकार req_ie_len, स्थिर u8 *resp_ie,
-		     माप_प्रकार resp_ie_len, पूर्णांक status, gfp_t gfp,
-		     क्रमागत nl80211_समयout_reason समयout_reason)
-अणु
-	काष्ठा cfg80211_connect_resp_params params;
+static inline void
+cfg80211_connect_bss(struct net_device *dev, const u8 *bssid,
+		     struct cfg80211_bss *bss, const u8 *req_ie,
+		     size_t req_ie_len, const u8 *resp_ie,
+		     size_t resp_ie_len, int status, gfp_t gfp,
+		     enum nl80211_timeout_reason timeout_reason)
+{
+	struct cfg80211_connect_resp_params params;
 
-	स_रखो(&params, 0, माप(params));
+	memset(&params, 0, sizeof(params));
 	params.status = status;
 	params.bssid = bssid;
 	params.bss = bss;
@@ -7078,115 +7077,115 @@ cfg80211_connect_bss(काष्ठा net_device *dev, स्थिर u8 *bss
 	params.req_ie_len = req_ie_len;
 	params.resp_ie = resp_ie;
 	params.resp_ie_len = resp_ie_len;
-	params.समयout_reason = समयout_reason;
+	params.timeout_reason = timeout_reason;
 
-	cfg80211_connect_करोne(dev, &params, gfp);
-पूर्ण
+	cfg80211_connect_done(dev, &params, gfp);
+}
 
 /**
- * cfg80211_connect_result - notअगरy cfg80211 of connection result
+ * cfg80211_connect_result - notify cfg80211 of connection result
  *
  * @dev: network device
  * @bssid: the BSSID of the AP
- * @req_ie: association request IEs (maybe be %शून्य)
+ * @req_ie: association request IEs (maybe be %NULL)
  * @req_ie_len: association request IEs length
- * @resp_ie: association response IEs (may be %शून्य)
+ * @resp_ie: association response IEs (may be %NULL)
  * @resp_ie_len: assoc response IEs length
- * @status: status code, %WLAN_STATUS_SUCCESS क्रम successful connection, use
- *	%WLAN_STATUS_UNSPECIFIED_FAILURE अगर your device cannot give you
- *	the real status code क्रम failures.
+ * @status: status code, %WLAN_STATUS_SUCCESS for successful connection, use
+ *	%WLAN_STATUS_UNSPECIFIED_FAILURE if your device cannot give you
+ *	the real status code for failures.
  * @gfp: allocation flags
  *
  * It should be called by the underlying driver once execution of the connection
  * request from connect() has been completed. This is similar to
- * cfg80211_connect_bss() which allows the exact bss entry to be specअगरied. Only
+ * cfg80211_connect_bss() which allows the exact bss entry to be specified. Only
  * one of the functions among cfg80211_connect_bss(), cfg80211_connect_result(),
- * cfg80211_connect_समयout(), and cfg80211_connect_करोne() should be called.
+ * cfg80211_connect_timeout(), and cfg80211_connect_done() should be called.
  */
-अटल अंतरभूत व्योम
-cfg80211_connect_result(काष्ठा net_device *dev, स्थिर u8 *bssid,
-			स्थिर u8 *req_ie, माप_प्रकार req_ie_len,
-			स्थिर u8 *resp_ie, माप_प्रकार resp_ie_len,
+static inline void
+cfg80211_connect_result(struct net_device *dev, const u8 *bssid,
+			const u8 *req_ie, size_t req_ie_len,
+			const u8 *resp_ie, size_t resp_ie_len,
 			u16 status, gfp_t gfp)
-अणु
-	cfg80211_connect_bss(dev, bssid, शून्य, req_ie, req_ie_len, resp_ie,
+{
+	cfg80211_connect_bss(dev, bssid, NULL, req_ie, req_ie_len, resp_ie,
 			     resp_ie_len, status, gfp,
 			     NL80211_TIMEOUT_UNSPECIFIED);
-पूर्ण
+}
 
 /**
- * cfg80211_connect_समयout - notअगरy cfg80211 of connection समयout
+ * cfg80211_connect_timeout - notify cfg80211 of connection timeout
  *
  * @dev: network device
  * @bssid: the BSSID of the AP
- * @req_ie: association request IEs (maybe be %शून्य)
+ * @req_ie: association request IEs (maybe be %NULL)
  * @req_ie_len: association request IEs length
  * @gfp: allocation flags
- * @समयout_reason: reason क्रम connection समयout.
+ * @timeout_reason: reason for connection timeout.
  *
  * It should be called by the underlying driver whenever connect() has failed
  * in a sequence where no explicit authentication/association rejection was
  * received from the AP. This could happen, e.g., due to not being able to send
- * out the Authentication or Association Request frame or timing out जबतक
- * रुकोing क्रम the response. Only one of the functions among
+ * out the Authentication or Association Request frame or timing out while
+ * waiting for the response. Only one of the functions among
  * cfg80211_connect_bss(), cfg80211_connect_result(),
- * cfg80211_connect_समयout(), and cfg80211_connect_करोne() should be called.
+ * cfg80211_connect_timeout(), and cfg80211_connect_done() should be called.
  */
-अटल अंतरभूत व्योम
-cfg80211_connect_समयout(काष्ठा net_device *dev, स्थिर u8 *bssid,
-			 स्थिर u8 *req_ie, माप_प्रकार req_ie_len, gfp_t gfp,
-			 क्रमागत nl80211_समयout_reason समयout_reason)
-अणु
-	cfg80211_connect_bss(dev, bssid, शून्य, req_ie, req_ie_len, शून्य, 0, -1,
-			     gfp, समयout_reason);
-पूर्ण
+static inline void
+cfg80211_connect_timeout(struct net_device *dev, const u8 *bssid,
+			 const u8 *req_ie, size_t req_ie_len, gfp_t gfp,
+			 enum nl80211_timeout_reason timeout_reason)
+{
+	cfg80211_connect_bss(dev, bssid, NULL, req_ie, req_ie_len, NULL, 0, -1,
+			     gfp, timeout_reason);
+}
 
 /**
- * काष्ठा cfg80211_roam_info - driver initiated roaming inक्रमmation
+ * struct cfg80211_roam_info - driver initiated roaming information
  *
  * @channel: the channel of the new AP
- * @bss: entry of bss to which STA got roamed (may be %शून्य अगर %bssid is set)
- * @bssid: the BSSID of the new AP (may be %शून्य अगर %bss is set)
- * @req_ie: association request IEs (maybe be %शून्य)
+ * @bss: entry of bss to which STA got roamed (may be %NULL if %bssid is set)
+ * @bssid: the BSSID of the new AP (may be %NULL if %bss is set)
+ * @req_ie: association request IEs (maybe be %NULL)
  * @req_ie_len: association request IEs length
- * @resp_ie: association response IEs (may be %शून्य)
+ * @resp_ie: association response IEs (may be %NULL)
  * @resp_ie_len: assoc response IEs length
- * @fils: FILS related roaming inक्रमmation.
+ * @fils: FILS related roaming information.
  */
-काष्ठा cfg80211_roam_info अणु
-	काष्ठा ieee80211_channel *channel;
-	काष्ठा cfg80211_bss *bss;
-	स्थिर u8 *bssid;
-	स्थिर u8 *req_ie;
-	माप_प्रकार req_ie_len;
-	स्थिर u8 *resp_ie;
-	माप_प्रकार resp_ie_len;
-	काष्ठा cfg80211_fils_resp_params fils;
-पूर्ण;
+struct cfg80211_roam_info {
+	struct ieee80211_channel *channel;
+	struct cfg80211_bss *bss;
+	const u8 *bssid;
+	const u8 *req_ie;
+	size_t req_ie_len;
+	const u8 *resp_ie;
+	size_t resp_ie_len;
+	struct cfg80211_fils_resp_params fils;
+};
 
 /**
- * cfg80211_roamed - notअगरy cfg80211 of roaming
+ * cfg80211_roamed - notify cfg80211 of roaming
  *
  * @dev: network device
- * @info: inक्रमmation about the new BSS. काष्ठा &cfg80211_roam_info.
+ * @info: information about the new BSS. struct &cfg80211_roam_info.
  * @gfp: allocation flags
  *
  * This function may be called with the driver passing either the BSSID of the
- * new AP or passing the bss entry to aव्योम a race in समयout of the bss entry.
+ * new AP or passing the bss entry to avoid a race in timeout of the bss entry.
  * It should be called by the underlying driver whenever it roamed from one AP
- * to another जबतक connected. Drivers which have roaming implemented in
- * firmware should pass the bss entry to aव्योम a race in bss entry समयout where
- * the bss entry of the new AP is seen in the driver, but माला_लो समयd out by the
- * समय it is accessed in __cfg80211_roamed() due to delay in scheduling
- * rdev->event_work. In हाल of any failures, the reference is released
+ * to another while connected. Drivers which have roaming implemented in
+ * firmware should pass the bss entry to avoid a race in bss entry timeout where
+ * the bss entry of the new AP is seen in the driver, but gets timed out by the
+ * time it is accessed in __cfg80211_roamed() due to delay in scheduling
+ * rdev->event_work. In case of any failures, the reference is released
  * either in cfg80211_roamed() or in __cfg80211_romed(), Otherwise, it will be
- * released जबतक disconnecting from the current bss.
+ * released while disconnecting from the current bss.
  */
-व्योम cfg80211_roamed(काष्ठा net_device *dev, काष्ठा cfg80211_roam_info *info,
+void cfg80211_roamed(struct net_device *dev, struct cfg80211_roam_info *info,
 		     gfp_t gfp);
 
 /**
- * cfg80211_port_authorized - notअगरy cfg80211 of successful security association
+ * cfg80211_port_authorized - notify cfg80211 of successful security association
  *
  * @dev: network device
  * @bssid: the BSSID of the AP
@@ -7196,51 +7195,51 @@ cfg80211_connect_समयout(काष्ठा net_device *dev, स्थि�
  * offload after a security association was successfully established (i.e.,
  * the 4 way handshake was completed successfully). The call to this function
  * should be preceded with a call to cfg80211_connect_result(),
- * cfg80211_connect_करोne(), cfg80211_connect_bss() or cfg80211_roamed() to
+ * cfg80211_connect_done(), cfg80211_connect_bss() or cfg80211_roamed() to
  * indicate the 802.11 association.
  */
-व्योम cfg80211_port_authorized(काष्ठा net_device *dev, स्थिर u8 *bssid,
+void cfg80211_port_authorized(struct net_device *dev, const u8 *bssid,
 			      gfp_t gfp);
 
 /**
- * cfg80211_disconnected - notअगरy cfg80211 that connection was dropped
+ * cfg80211_disconnected - notify cfg80211 that connection was dropped
  *
  * @dev: network device
- * @ie: inक्रमmation elements of the deauth/disassoc frame (may be %शून्य)
+ * @ie: information elements of the deauth/disassoc frame (may be %NULL)
  * @ie_len: length of IEs
- * @reason: reason code क्रम the disconnection, set it to 0 अगर unknown
+ * @reason: reason code for the disconnection, set it to 0 if unknown
  * @locally_generated: disconnection was requested locally
  * @gfp: allocation flags
  *
  * After it calls this function, the driver should enter an idle state
  * and not try to connect to any AP any more.
  */
-व्योम cfg80211_disconnected(काष्ठा net_device *dev, u16 reason,
-			   स्थिर u8 *ie, माप_प्रकार ie_len,
+void cfg80211_disconnected(struct net_device *dev, u16 reason,
+			   const u8 *ie, size_t ie_len,
 			   bool locally_generated, gfp_t gfp);
 
 /**
- * cfg80211_पढ़ोy_on_channel - notअगरication of reमुख्य_on_channel start
+ * cfg80211_ready_on_channel - notification of remain_on_channel start
  * @wdev: wireless device
  * @cookie: the request cookie
- * @chan: The current channel (from reमुख्य_on_channel request)
- * @duration: Duration in milliseconds that the driver पूर्णांकents to reमुख्य on the
+ * @chan: The current channel (from remain_on_channel request)
+ * @duration: Duration in milliseconds that the driver intents to remain on the
  *	channel
  * @gfp: allocation flags
  */
-व्योम cfg80211_पढ़ोy_on_channel(काष्ठा wireless_dev *wdev, u64 cookie,
-			       काष्ठा ieee80211_channel *chan,
-			       अचिन्हित पूर्णांक duration, gfp_t gfp);
+void cfg80211_ready_on_channel(struct wireless_dev *wdev, u64 cookie,
+			       struct ieee80211_channel *chan,
+			       unsigned int duration, gfp_t gfp);
 
 /**
- * cfg80211_reमुख्य_on_channel_expired - reमुख्य_on_channel duration expired
+ * cfg80211_remain_on_channel_expired - remain_on_channel duration expired
  * @wdev: wireless device
  * @cookie: the request cookie
- * @chan: The current channel (from reमुख्य_on_channel request)
+ * @chan: The current channel (from remain_on_channel request)
  * @gfp: allocation flags
  */
-व्योम cfg80211_reमुख्य_on_channel_expired(काष्ठा wireless_dev *wdev, u64 cookie,
-					काष्ठा ieee80211_channel *chan,
+void cfg80211_remain_on_channel_expired(struct wireless_dev *wdev, u64 cookie,
+					struct ieee80211_channel *chan,
 					gfp_t gfp);
 
 /**
@@ -7250,132 +7249,132 @@ cfg80211_connect_समयout(काष्ठा net_device *dev, स्थि�
  * @chan: The current channel (from tx_mgmt request)
  * @gfp: allocation flags
  */
-व्योम cfg80211_tx_mgmt_expired(काष्ठा wireless_dev *wdev, u64 cookie,
-			      काष्ठा ieee80211_channel *chan, gfp_t gfp);
+void cfg80211_tx_mgmt_expired(struct wireless_dev *wdev, u64 cookie,
+			      struct ieee80211_channel *chan, gfp_t gfp);
 
 /**
  * cfg80211_sinfo_alloc_tid_stats - allocate per-tid statistics.
  *
- * @sinfo: the station inक्रमmation
+ * @sinfo: the station information
  * @gfp: allocation flags
  */
-पूर्णांक cfg80211_sinfo_alloc_tid_stats(काष्ठा station_info *sinfo, gfp_t gfp);
+int cfg80211_sinfo_alloc_tid_stats(struct station_info *sinfo, gfp_t gfp);
 
 /**
  * cfg80211_sinfo_release_content - release contents of station info
- * @sinfo: the station inक्रमmation
+ * @sinfo: the station information
  *
- * Releases any potentially allocated sub-inक्रमmation of the station
- * inक्रमmation, but not the काष्ठा itself (since it's typically on
+ * Releases any potentially allocated sub-information of the station
+ * information, but not the struct itself (since it's typically on
  * the stack.)
  */
-अटल अंतरभूत व्योम cfg80211_sinfo_release_content(काष्ठा station_info *sinfo)
-अणु
-	kमुक्त(sinfo->pertid);
-पूर्ण
+static inline void cfg80211_sinfo_release_content(struct station_info *sinfo)
+{
+	kfree(sinfo->pertid);
+}
 
 /**
- * cfg80211_new_sta - notअगरy userspace about station
+ * cfg80211_new_sta - notify userspace about station
  *
  * @dev: the netdev
  * @mac_addr: the station's address
- * @sinfo: the station inक्रमmation
+ * @sinfo: the station information
  * @gfp: allocation flags
  */
-व्योम cfg80211_new_sta(काष्ठा net_device *dev, स्थिर u8 *mac_addr,
-		      काष्ठा station_info *sinfo, gfp_t gfp);
+void cfg80211_new_sta(struct net_device *dev, const u8 *mac_addr,
+		      struct station_info *sinfo, gfp_t gfp);
 
 /**
- * cfg80211_del_sta_sinfo - notअगरy userspace about deletion of a station
+ * cfg80211_del_sta_sinfo - notify userspace about deletion of a station
  * @dev: the netdev
  * @mac_addr: the station's address
- * @sinfo: the station inक्रमmation/statistics
+ * @sinfo: the station information/statistics
  * @gfp: allocation flags
  */
-व्योम cfg80211_del_sta_sinfo(काष्ठा net_device *dev, स्थिर u8 *mac_addr,
-			    काष्ठा station_info *sinfo, gfp_t gfp);
+void cfg80211_del_sta_sinfo(struct net_device *dev, const u8 *mac_addr,
+			    struct station_info *sinfo, gfp_t gfp);
 
 /**
- * cfg80211_del_sta - notअगरy userspace about deletion of a station
+ * cfg80211_del_sta - notify userspace about deletion of a station
  *
  * @dev: the netdev
  * @mac_addr: the station's address
  * @gfp: allocation flags
  */
-अटल अंतरभूत व्योम cfg80211_del_sta(काष्ठा net_device *dev,
-				    स्थिर u8 *mac_addr, gfp_t gfp)
-अणु
-	cfg80211_del_sta_sinfo(dev, mac_addr, शून्य, gfp);
-पूर्ण
+static inline void cfg80211_del_sta(struct net_device *dev,
+				    const u8 *mac_addr, gfp_t gfp)
+{
+	cfg80211_del_sta_sinfo(dev, mac_addr, NULL, gfp);
+}
 
 /**
- * cfg80211_conn_failed - connection request failed notअगरication
+ * cfg80211_conn_failed - connection request failed notification
  *
  * @dev: the netdev
  * @mac_addr: the station's address
- * @reason: the reason क्रम connection failure
+ * @reason: the reason for connection failure
  * @gfp: allocation flags
  *
- * Whenever a station tries to connect to an AP and अगर the station
+ * Whenever a station tries to connect to an AP and if the station
  * could not connect to the AP as the AP has rejected the connection
- * क्रम some reasons, this function is called.
+ * for some reasons, this function is called.
  *
- * The reason क्रम connection failure can be any of the value from
- * nl80211_connect_failed_reason क्रमागत
+ * The reason for connection failure can be any of the value from
+ * nl80211_connect_failed_reason enum
  */
-व्योम cfg80211_conn_failed(काष्ठा net_device *dev, स्थिर u8 *mac_addr,
-			  क्रमागत nl80211_connect_failed_reason reason,
+void cfg80211_conn_failed(struct net_device *dev, const u8 *mac_addr,
+			  enum nl80211_connect_failed_reason reason,
 			  gfp_t gfp);
 
 /**
- * cfg80211_rx_mgmt_khz - notअगरication of received, unprocessed management frame
+ * cfg80211_rx_mgmt_khz - notification of received, unprocessed management frame
  * @wdev: wireless device receiving the frame
  * @freq: Frequency on which the frame was received in KHz
- * @sig_dbm: संकेत strength in dBm, or 0 अगर unknown
+ * @sig_dbm: signal strength in dBm, or 0 if unknown
  * @buf: Management frame (header + body)
  * @len: length of the frame data
- * @flags: flags, as defined in क्रमागत nl80211_rxmgmt_flags
+ * @flags: flags, as defined in enum nl80211_rxmgmt_flags
  *
- * This function is called whenever an Action frame is received क्रम a station
- * mode पूर्णांकerface, but is not processed in kernel.
+ * This function is called whenever an Action frame is received for a station
+ * mode interface, but is not processed in kernel.
  *
- * Return: %true अगर a user space application has रेजिस्टरed क्रम this frame.
- * For action frames, that makes it responsible क्रम rejecting unrecognized
- * action frames; %false otherwise, in which हाल क्रम action frames the
- * driver is responsible क्रम rejecting the frame.
+ * Return: %true if a user space application has registered for this frame.
+ * For action frames, that makes it responsible for rejecting unrecognized
+ * action frames; %false otherwise, in which case for action frames the
+ * driver is responsible for rejecting the frame.
  */
-bool cfg80211_rx_mgmt_khz(काष्ठा wireless_dev *wdev, पूर्णांक freq, पूर्णांक sig_dbm,
-			  स्थिर u8 *buf, माप_प्रकार len, u32 flags);
+bool cfg80211_rx_mgmt_khz(struct wireless_dev *wdev, int freq, int sig_dbm,
+			  const u8 *buf, size_t len, u32 flags);
 
 /**
- * cfg80211_rx_mgmt - notअगरication of received, unprocessed management frame
+ * cfg80211_rx_mgmt - notification of received, unprocessed management frame
  * @wdev: wireless device receiving the frame
  * @freq: Frequency on which the frame was received in MHz
- * @sig_dbm: संकेत strength in dBm, or 0 अगर unknown
+ * @sig_dbm: signal strength in dBm, or 0 if unknown
  * @buf: Management frame (header + body)
  * @len: length of the frame data
- * @flags: flags, as defined in क्रमागत nl80211_rxmgmt_flags
+ * @flags: flags, as defined in enum nl80211_rxmgmt_flags
  *
- * This function is called whenever an Action frame is received क्रम a station
- * mode पूर्णांकerface, but is not processed in kernel.
+ * This function is called whenever an Action frame is received for a station
+ * mode interface, but is not processed in kernel.
  *
- * Return: %true अगर a user space application has रेजिस्टरed क्रम this frame.
- * For action frames, that makes it responsible क्रम rejecting unrecognized
- * action frames; %false otherwise, in which हाल क्रम action frames the
- * driver is responsible क्रम rejecting the frame.
+ * Return: %true if a user space application has registered for this frame.
+ * For action frames, that makes it responsible for rejecting unrecognized
+ * action frames; %false otherwise, in which case for action frames the
+ * driver is responsible for rejecting the frame.
  */
-अटल अंतरभूत bool cfg80211_rx_mgmt(काष्ठा wireless_dev *wdev, पूर्णांक freq,
-				    पूर्णांक sig_dbm, स्थिर u8 *buf, माप_प्रकार len,
+static inline bool cfg80211_rx_mgmt(struct wireless_dev *wdev, int freq,
+				    int sig_dbm, const u8 *buf, size_t len,
 				    u32 flags)
-अणु
-	वापस cfg80211_rx_mgmt_khz(wdev, MHZ_TO_KHZ(freq), sig_dbm, buf, len,
+{
+	return cfg80211_rx_mgmt_khz(wdev, MHZ_TO_KHZ(freq), sig_dbm, buf, len,
 				    flags);
-पूर्ण
+}
 
 /**
- * cfg80211_mgmt_tx_status - notअगरication of TX status क्रम management frame
+ * cfg80211_mgmt_tx_status - notification of TX status for management frame
  * @wdev: wireless device receiving the frame
- * @cookie: Cookie वापसed by cfg80211_ops::mgmt_tx()
+ * @cookie: Cookie returned by cfg80211_ops::mgmt_tx()
  * @buf: Management frame (header + body)
  * @len: length of the frame data
  * @ack: Whether frame was acknowledged
@@ -7385,14 +7384,14 @@ bool cfg80211_rx_mgmt_khz(काष्ठा wireless_dev *wdev, पूर्ण
  * transmitted with cfg80211_ops::mgmt_tx() to report the TX status of the
  * transmission attempt.
  */
-व्योम cfg80211_mgmt_tx_status(काष्ठा wireless_dev *wdev, u64 cookie,
-			     स्थिर u8 *buf, माप_प्रकार len, bool ack, gfp_t gfp);
+void cfg80211_mgmt_tx_status(struct wireless_dev *wdev, u64 cookie,
+			     const u8 *buf, size_t len, bool ack, gfp_t gfp);
 
 /**
- * cfg80211_control_port_tx_status - notअगरication of TX status क्रम control
+ * cfg80211_control_port_tx_status - notification of TX status for control
  *                                   port frames
  * @wdev: wireless device receiving the frame
- * @cookie: Cookie वापसed by cfg80211_ops::tx_control_port()
+ * @cookie: Cookie returned by cfg80211_ops::tx_control_port()
  * @buf: Data frame (header + body)
  * @len: length of the frame data
  * @ack: Whether frame was acknowledged
@@ -7402,188 +7401,188 @@ bool cfg80211_rx_mgmt_khz(काष्ठा wireless_dev *wdev, पूर्ण
  * transmitted with cfg80211_ops::tx_control_port() to report the TX status of
  * the transmission attempt.
  */
-व्योम cfg80211_control_port_tx_status(काष्ठा wireless_dev *wdev, u64 cookie,
-				     स्थिर u8 *buf, माप_प्रकार len, bool ack,
+void cfg80211_control_port_tx_status(struct wireless_dev *wdev, u64 cookie,
+				     const u8 *buf, size_t len, bool ack,
 				     gfp_t gfp);
 
 /**
- * cfg80211_rx_control_port - notअगरication about a received control port frame
+ * cfg80211_rx_control_port - notification about a received control port frame
  * @dev: The device the frame matched to
  * @skb: The skbuf with the control port frame.  It is assumed that the skbuf
- *	is 802.3 क्रमmatted (with 802.3 header).  The skb can be non-linear.
- *	This function करोes not take ownership of the skb, so the caller is
- *	responsible क्रम any cleanup.  The caller must also ensure that
+ *	is 802.3 formatted (with 802.3 header).  The skb can be non-linear.
+ *	This function does not take ownership of the skb, so the caller is
+ *	responsible for any cleanup.  The caller must also ensure that
  *	skb->protocol is set appropriately.
  * @unencrypted: Whether the frame was received unencrypted
  *
- * This function is used to inक्रमm userspace about a received control port
- * frame.  It should only be used अगर userspace indicated it wants to receive
+ * This function is used to inform userspace about a received control port
+ * frame.  It should only be used if userspace indicated it wants to receive
  * control port frames over nl80211.
  *
  * The frame is the data portion of the 802.3 or 802.11 data frame with all
- * network layer headers हटाओd (e.g. the raw EAPoL frame).
+ * network layer headers removed (e.g. the raw EAPoL frame).
  *
- * Return: %true अगर the frame was passed to userspace
+ * Return: %true if the frame was passed to userspace
  */
-bool cfg80211_rx_control_port(काष्ठा net_device *dev,
-			      काष्ठा sk_buff *skb, bool unencrypted);
+bool cfg80211_rx_control_port(struct net_device *dev,
+			      struct sk_buff *skb, bool unencrypted);
 
 /**
- * cfg80211_cqm_rssi_notअगरy - connection quality monitoring rssi event
+ * cfg80211_cqm_rssi_notify - connection quality monitoring rssi event
  * @dev: network device
  * @rssi_event: the triggered RSSI event
- * @rssi_level: new RSSI level value or 0 अगर not available
+ * @rssi_level: new RSSI level value or 0 if not available
  * @gfp: context flags
  *
  * This function is called when a configured connection quality monitoring
  * rssi threshold reached event occurs.
  */
-व्योम cfg80211_cqm_rssi_notअगरy(काष्ठा net_device *dev,
-			      क्रमागत nl80211_cqm_rssi_threshold_event rssi_event,
+void cfg80211_cqm_rssi_notify(struct net_device *dev,
+			      enum nl80211_cqm_rssi_threshold_event rssi_event,
 			      s32 rssi_level, gfp_t gfp);
 
 /**
- * cfg80211_cqm_pktloss_notअगरy - notअगरy userspace about packetloss to peer
+ * cfg80211_cqm_pktloss_notify - notify userspace about packetloss to peer
  * @dev: network device
  * @peer: peer's MAC address
  * @num_packets: how many packets were lost -- should be a fixed threshold
  *	but probably no less than maybe 50, or maybe a throughput dependent
- *	threshold (to account क्रम temporary पूर्णांकerference)
+ *	threshold (to account for temporary interference)
  * @gfp: context flags
  */
-व्योम cfg80211_cqm_pktloss_notअगरy(काष्ठा net_device *dev,
-				 स्थिर u8 *peer, u32 num_packets, gfp_t gfp);
+void cfg80211_cqm_pktloss_notify(struct net_device *dev,
+				 const u8 *peer, u32 num_packets, gfp_t gfp);
 
 /**
- * cfg80211_cqm_txe_notअगरy - TX error rate event
+ * cfg80211_cqm_txe_notify - TX error rate event
  * @dev: network device
  * @peer: peer's MAC address
  * @num_packets: how many packets were lost
  * @rate: % of packets which failed transmission
- * @पूर्णांकvl: पूर्णांकerval (in s) over which the TX failure threshold was breached.
+ * @intvl: interval (in s) over which the TX failure threshold was breached.
  * @gfp: context flags
  *
- * Notअगरy userspace when configured % TX failures over number of packets in a
- * given पूर्णांकerval is exceeded.
+ * Notify userspace when configured % TX failures over number of packets in a
+ * given interval is exceeded.
  */
-व्योम cfg80211_cqm_txe_notअगरy(काष्ठा net_device *dev, स्थिर u8 *peer,
-			     u32 num_packets, u32 rate, u32 पूर्णांकvl, gfp_t gfp);
+void cfg80211_cqm_txe_notify(struct net_device *dev, const u8 *peer,
+			     u32 num_packets, u32 rate, u32 intvl, gfp_t gfp);
 
 /**
- * cfg80211_cqm_beacon_loss_notअगरy - beacon loss event
+ * cfg80211_cqm_beacon_loss_notify - beacon loss event
  * @dev: network device
  * @gfp: context flags
  *
- * Notअगरy userspace about beacon loss from the connected AP.
+ * Notify userspace about beacon loss from the connected AP.
  */
-व्योम cfg80211_cqm_beacon_loss_notअगरy(काष्ठा net_device *dev, gfp_t gfp);
+void cfg80211_cqm_beacon_loss_notify(struct net_device *dev, gfp_t gfp);
 
 /**
  * cfg80211_radar_event - radar detection event
  * @wiphy: the wiphy
- * @chandef: chandef क्रम the current channel
+ * @chandef: chandef for the current channel
  * @gfp: context flags
  *
  * This function is called when a radar is detected on the current chanenl.
  */
-व्योम cfg80211_radar_event(काष्ठा wiphy *wiphy,
-			  काष्ठा cfg80211_chan_def *chandef, gfp_t gfp);
+void cfg80211_radar_event(struct wiphy *wiphy,
+			  struct cfg80211_chan_def *chandef, gfp_t gfp);
 
 /**
- * cfg80211_sta_opmode_change_notअगरy - STA's ht/vht operation mode change event
+ * cfg80211_sta_opmode_change_notify - STA's ht/vht operation mode change event
  * @dev: network device
- * @mac: MAC address of a station which opmode got modअगरied
+ * @mac: MAC address of a station which opmode got modified
  * @sta_opmode: station's current opmode value
  * @gfp: context flags
  *
- * Driver should call this function when station's opmode modअगरied via action
+ * Driver should call this function when station's opmode modified via action
  * frame.
  */
-व्योम cfg80211_sta_opmode_change_notअगरy(काष्ठा net_device *dev, स्थिर u8 *mac,
-				       काष्ठा sta_opmode_info *sta_opmode,
+void cfg80211_sta_opmode_change_notify(struct net_device *dev, const u8 *mac,
+				       struct sta_opmode_info *sta_opmode,
 				       gfp_t gfp);
 
 /**
  * cfg80211_cac_event - Channel availability check (CAC) event
  * @netdev: network device
- * @chandef: chandef क्रम the current channel
+ * @chandef: chandef for the current channel
  * @event: type of event
  * @gfp: context flags
  *
  * This function is called when a Channel availability check (CAC) is finished
- * or पातed. This must be called to notअगरy the completion of a CAC process,
+ * or aborted. This must be called to notify the completion of a CAC process,
  * also by full-MAC drivers.
  */
-व्योम cfg80211_cac_event(काष्ठा net_device *netdev,
-			स्थिर काष्ठा cfg80211_chan_def *chandef,
-			क्रमागत nl80211_radar_event event, gfp_t gfp);
+void cfg80211_cac_event(struct net_device *netdev,
+			const struct cfg80211_chan_def *chandef,
+			enum nl80211_radar_event event, gfp_t gfp);
 
 
 /**
- * cfg80211_gtk_rekey_notअगरy - notअगरy userspace about driver rekeying
+ * cfg80211_gtk_rekey_notify - notify userspace about driver rekeying
  * @dev: network device
- * @bssid: BSSID of AP (to aव्योम races)
+ * @bssid: BSSID of AP (to avoid races)
  * @replay_ctr: new replay counter
  * @gfp: allocation flags
  */
-व्योम cfg80211_gtk_rekey_notअगरy(काष्ठा net_device *dev, स्थिर u8 *bssid,
-			       स्थिर u8 *replay_ctr, gfp_t gfp);
+void cfg80211_gtk_rekey_notify(struct net_device *dev, const u8 *bssid,
+			       const u8 *replay_ctr, gfp_t gfp);
 
 /**
- * cfg80211_pmksa_candidate_notअगरy - notअगरy about PMKSA caching candidate
+ * cfg80211_pmksa_candidate_notify - notify about PMKSA caching candidate
  * @dev: network device
  * @index: candidate index (the smaller the index, the higher the priority)
  * @bssid: BSSID of AP
- * @preauth: Whether AP advertises support क्रम RSN pre-authentication
+ * @preauth: Whether AP advertises support for RSN pre-authentication
  * @gfp: allocation flags
  */
-व्योम cfg80211_pmksa_candidate_notअगरy(काष्ठा net_device *dev, पूर्णांक index,
-				     स्थिर u8 *bssid, bool preauth, gfp_t gfp);
+void cfg80211_pmksa_candidate_notify(struct net_device *dev, int index,
+				     const u8 *bssid, bool preauth, gfp_t gfp);
 
 /**
- * cfg80211_rx_spurious_frame - inक्रमm userspace about a spurious frame
+ * cfg80211_rx_spurious_frame - inform userspace about a spurious frame
  * @dev: The device the frame matched to
  * @addr: the transmitter address
  * @gfp: context flags
  *
- * This function is used in AP mode (only!) to inक्रमm userspace that
+ * This function is used in AP mode (only!) to inform userspace that
  * a spurious class 3 frame was received, to be able to deauth the
  * sender.
- * Return: %true अगर the frame was passed to userspace (or this failed
- * क्रम a reason other than not having a subscription.)
+ * Return: %true if the frame was passed to userspace (or this failed
+ * for a reason other than not having a subscription.)
  */
-bool cfg80211_rx_spurious_frame(काष्ठा net_device *dev,
-				स्थिर u8 *addr, gfp_t gfp);
+bool cfg80211_rx_spurious_frame(struct net_device *dev,
+				const u8 *addr, gfp_t gfp);
 
 /**
- * cfg80211_rx_unexpected_4addr_frame - inक्रमm about unexpected WDS frame
+ * cfg80211_rx_unexpected_4addr_frame - inform about unexpected WDS frame
  * @dev: The device the frame matched to
  * @addr: the transmitter address
  * @gfp: context flags
  *
- * This function is used in AP mode (only!) to inक्रमm userspace that
+ * This function is used in AP mode (only!) to inform userspace that
  * an associated station sent a 4addr frame but that wasn't expected.
- * It is allowed and desirable to send this event only once क्रम each
- * station to aव्योम event flooding.
- * Return: %true अगर the frame was passed to userspace (or this failed
- * क्रम a reason other than not having a subscription.)
+ * It is allowed and desirable to send this event only once for each
+ * station to avoid event flooding.
+ * Return: %true if the frame was passed to userspace (or this failed
+ * for a reason other than not having a subscription.)
  */
-bool cfg80211_rx_unexpected_4addr_frame(काष्ठा net_device *dev,
-					स्थिर u8 *addr, gfp_t gfp);
+bool cfg80211_rx_unexpected_4addr_frame(struct net_device *dev,
+					const u8 *addr, gfp_t gfp);
 
 /**
- * cfg80211_probe_status - notअगरy userspace about probe status
+ * cfg80211_probe_status - notify userspace about probe status
  * @dev: the device the probe was sent on
  * @addr: the address of the peer
  * @cookie: the cookie filled in @probe_client previously
  * @acked: indicates whether probe was acked or not
- * @ack_संकेत: संकेत strength (in dBm) of the ACK frame.
- * @is_valid_ack_संकेत: indicates the ack_संकेत is valid or not.
+ * @ack_signal: signal strength (in dBm) of the ACK frame.
+ * @is_valid_ack_signal: indicates the ack_signal is valid or not.
  * @gfp: allocation flags
  */
-व्योम cfg80211_probe_status(काष्ठा net_device *dev, स्थिर u8 *addr,
-			   u64 cookie, bool acked, s32 ack_संकेत,
-			   bool is_valid_ack_संकेत, gfp_t gfp);
+void cfg80211_probe_status(struct net_device *dev, const u8 *addr,
+			   u64 cookie, bool acked, s32 ack_signal,
+			   bool is_valid_ack_signal, gfp_t gfp);
 
 /**
  * cfg80211_report_obss_beacon_khz - report beacon from other APs
@@ -7591,14 +7590,14 @@ bool cfg80211_rx_unexpected_4addr_frame(काष्ठा net_device *dev,
  * @frame: the frame
  * @len: length of the frame
  * @freq: frequency the frame was received on in KHz
- * @sig_dbm: संकेत strength in dBm, or 0 अगर unknown
+ * @sig_dbm: signal strength in dBm, or 0 if unknown
  *
  * Use this function to report to userspace when a beacon was
  * received. It is not useful to call this when there is no
  * netdev that is in AP/GO mode.
  */
-व्योम cfg80211_report_obss_beacon_khz(काष्ठा wiphy *wiphy, स्थिर u8 *frame,
-				     माप_प्रकार len, पूर्णांक freq, पूर्णांक sig_dbm);
+void cfg80211_report_obss_beacon_khz(struct wiphy *wiphy, const u8 *frame,
+				     size_t len, int freq, int sig_dbm);
 
 /**
  * cfg80211_report_obss_beacon - report beacon from other APs
@@ -7606,96 +7605,96 @@ bool cfg80211_rx_unexpected_4addr_frame(काष्ठा net_device *dev,
  * @frame: the frame
  * @len: length of the frame
  * @freq: frequency the frame was received on
- * @sig_dbm: संकेत strength in dBm, or 0 अगर unknown
+ * @sig_dbm: signal strength in dBm, or 0 if unknown
  *
  * Use this function to report to userspace when a beacon was
  * received. It is not useful to call this when there is no
  * netdev that is in AP/GO mode.
  */
-अटल अंतरभूत व्योम cfg80211_report_obss_beacon(काष्ठा wiphy *wiphy,
-					       स्थिर u8 *frame, माप_प्रकार len,
-					       पूर्णांक freq, पूर्णांक sig_dbm)
-अणु
+static inline void cfg80211_report_obss_beacon(struct wiphy *wiphy,
+					       const u8 *frame, size_t len,
+					       int freq, int sig_dbm)
+{
 	cfg80211_report_obss_beacon_khz(wiphy, frame, len, MHZ_TO_KHZ(freq),
 					sig_dbm);
-पूर्ण
+}
 
 /**
- * cfg80211_reg_can_beacon - check अगर beaconing is allowed
+ * cfg80211_reg_can_beacon - check if beaconing is allowed
  * @wiphy: the wiphy
  * @chandef: the channel definition
- * @अगरtype: पूर्णांकerface type
+ * @iftype: interface type
  *
- * Return: %true अगर there is no secondary channel or the secondary channel(s)
- * can be used क्रम beaconing (i.e. is not a radar channel etc.)
+ * Return: %true if there is no secondary channel or the secondary channel(s)
+ * can be used for beaconing (i.e. is not a radar channel etc.)
  */
-bool cfg80211_reg_can_beacon(काष्ठा wiphy *wiphy,
-			     काष्ठा cfg80211_chan_def *chandef,
-			     क्रमागत nl80211_अगरtype अगरtype);
+bool cfg80211_reg_can_beacon(struct wiphy *wiphy,
+			     struct cfg80211_chan_def *chandef,
+			     enum nl80211_iftype iftype);
 
 /**
- * cfg80211_reg_can_beacon_relax - check अगर beaconing is allowed with relaxation
+ * cfg80211_reg_can_beacon_relax - check if beaconing is allowed with relaxation
  * @wiphy: the wiphy
  * @chandef: the channel definition
- * @अगरtype: पूर्णांकerface type
+ * @iftype: interface type
  *
- * Return: %true अगर there is no secondary channel or the secondary channel(s)
- * can be used क्रम beaconing (i.e. is not a radar channel etc.). This version
- * also checks अगर IR-relaxation conditions apply, to allow beaconing under
+ * Return: %true if there is no secondary channel or the secondary channel(s)
+ * can be used for beaconing (i.e. is not a radar channel etc.). This version
+ * also checks if IR-relaxation conditions apply, to allow beaconing under
  * more permissive conditions.
  *
  * Requires the wiphy mutex to be held.
  */
-bool cfg80211_reg_can_beacon_relax(काष्ठा wiphy *wiphy,
-				   काष्ठा cfg80211_chan_def *chandef,
-				   क्रमागत nl80211_अगरtype अगरtype);
+bool cfg80211_reg_can_beacon_relax(struct wiphy *wiphy,
+				   struct cfg80211_chan_def *chandef,
+				   enum nl80211_iftype iftype);
 
 /*
- * cfg80211_ch_चयन_notअगरy - update wdev channel and notअगरy userspace
- * @dev: the device which चयनed channels
+ * cfg80211_ch_switch_notify - update wdev channel and notify userspace
+ * @dev: the device which switched channels
  * @chandef: the new channel definition
  *
- * Caller must acquire wdev_lock, thereक्रमe must only be called from sleepable
+ * Caller must acquire wdev_lock, therefore must only be called from sleepable
  * driver context!
  */
-व्योम cfg80211_ch_चयन_notअगरy(काष्ठा net_device *dev,
-			       काष्ठा cfg80211_chan_def *chandef);
+void cfg80211_ch_switch_notify(struct net_device *dev,
+			       struct cfg80211_chan_def *chandef);
 
 /*
- * cfg80211_ch_चयन_started_notअगरy - notअगरy channel चयन start
- * @dev: the device on which the channel चयन started
+ * cfg80211_ch_switch_started_notify - notify channel switch start
+ * @dev: the device on which the channel switch started
  * @chandef: the future channel definition
- * @count: the number of TBTTs until the channel चयन happens
+ * @count: the number of TBTTs until the channel switch happens
  * @quiet: whether or not immediate quiet was requested by the AP
  *
- * Inक्रमm the userspace about the channel चयन that has just
+ * Inform the userspace about the channel switch that has just
  * started, so that it can take appropriate actions (eg. starting
- * channel चयन on other vअगरs), अगर necessary.
+ * channel switch on other vifs), if necessary.
  */
-व्योम cfg80211_ch_चयन_started_notअगरy(काष्ठा net_device *dev,
-				       काष्ठा cfg80211_chan_def *chandef,
+void cfg80211_ch_switch_started_notify(struct net_device *dev,
+				       struct cfg80211_chan_def *chandef,
 				       u8 count, bool quiet);
 
 /**
  * ieee80211_operating_class_to_band - convert operating class to band
  *
  * @operating_class: the operating class to convert
- * @band: band poपूर्णांकer to fill
+ * @band: band pointer to fill
  *
- * Returns %true अगर the conversion was successful, %false otherwise.
+ * Returns %true if the conversion was successful, %false otherwise.
  */
 bool ieee80211_operating_class_to_band(u8 operating_class,
-				       क्रमागत nl80211_band *band);
+				       enum nl80211_band *band);
 
 /**
  * ieee80211_chandef_to_operating_class - convert chandef to operation class
  *
  * @chandef: the chandef to convert
- * @op_class: a poपूर्णांकer to the resulting operating class
+ * @op_class: a pointer to the resulting operating class
  *
- * Returns %true अगर the conversion was successful, %false otherwise.
+ * Returns %true if the conversion was successful, %false otherwise.
  */
-bool ieee80211_chandef_to_operating_class(काष्ठा cfg80211_chan_def *chandef,
+bool ieee80211_chandef_to_operating_class(struct cfg80211_chan_def *chandef,
 					  u8 *op_class);
 
 /**
@@ -7705,131 +7704,131 @@ bool ieee80211_chandef_to_operating_class(काष्ठा cfg80211_chan_def *
  *
  * Returns the center frequency of chandef (1st segment) in KHz.
  */
-अटल अंतरभूत u32
-ieee80211_chandef_to_khz(स्थिर काष्ठा cfg80211_chan_def *chandef)
-अणु
-	वापस MHZ_TO_KHZ(chandef->center_freq1) + chandef->freq1_offset;
-पूर्ण
+static inline u32
+ieee80211_chandef_to_khz(const struct cfg80211_chan_def *chandef)
+{
+	return MHZ_TO_KHZ(chandef->center_freq1) + chandef->freq1_offset;
+}
 
 /*
- * cfg80211_tdls_oper_request - request userspace to perक्रमm TDLS operation
+ * cfg80211_tdls_oper_request - request userspace to perform TDLS operation
  * @dev: the device on which the operation is requested
  * @peer: the MAC address of the peer device
  * @oper: the requested TDLS operation (NL80211_TDLS_SETUP or
  *	NL80211_TDLS_TEARDOWN)
- * @reason_code: the reason code क्रम tearकरोwn request
+ * @reason_code: the reason code for teardown request
  * @gfp: allocation flags
  *
- * This function is used to request userspace to perक्रमm TDLS operation that
- * requires knowledge of keys, i.e., link setup or tearकरोwn when the AP
- * connection uses encryption. This is optional mechanism क्रम the driver to use
- * अगर it can स्वतःmatically determine when a TDLS link could be useful (e.g.,
- * based on traffic and संकेत strength क्रम a peer).
+ * This function is used to request userspace to perform TDLS operation that
+ * requires knowledge of keys, i.e., link setup or teardown when the AP
+ * connection uses encryption. This is optional mechanism for the driver to use
+ * if it can automatically determine when a TDLS link could be useful (e.g.,
+ * based on traffic and signal strength for a peer).
  */
-व्योम cfg80211_tdls_oper_request(काष्ठा net_device *dev, स्थिर u8 *peer,
-				क्रमागत nl80211_tdls_operation oper,
+void cfg80211_tdls_oper_request(struct net_device *dev, const u8 *peer,
+				enum nl80211_tdls_operation oper,
 				u16 reason_code, gfp_t gfp);
 
 /*
  * cfg80211_calculate_bitrate - calculate actual bitrate (in 100Kbps units)
  * @rate: given rate_info to calculate bitrate from
  *
- * वापस 0 अगर MCS index >= 32
+ * return 0 if MCS index >= 32
  */
-u32 cfg80211_calculate_bitrate(काष्ठा rate_info *rate);
+u32 cfg80211_calculate_bitrate(struct rate_info *rate);
 
 /**
- * cfg80211_unरेजिस्टर_wdev - हटाओ the given wdev
- * @wdev: काष्ठा wireless_dev to हटाओ
+ * cfg80211_unregister_wdev - remove the given wdev
+ * @wdev: struct wireless_dev to remove
  *
- * This function हटाओs the device so it can no दीर्घer be used. It is necessary
+ * This function removes the device so it can no longer be used. It is necessary
  * to call this function even when cfg80211 requests the removal of the device
- * by calling the del_भव_पूर्णांकf() callback. The function must also be called
- * when the driver wishes to unरेजिस्टर the wdev, e.g. when the hardware device
+ * by calling the del_virtual_intf() callback. The function must also be called
+ * when the driver wishes to unregister the wdev, e.g. when the hardware device
  * is unbound from the driver.
  *
  * Requires the RTNL and wiphy mutex to be held.
  */
-व्योम cfg80211_unरेजिस्टर_wdev(काष्ठा wireless_dev *wdev);
+void cfg80211_unregister_wdev(struct wireless_dev *wdev);
 
 /**
- * cfg80211_रेजिस्टर_netdevice - रेजिस्टर the given netdev
- * @dev: the netdev to रेजिस्टर
+ * cfg80211_register_netdevice - register the given netdev
+ * @dev: the netdev to register
  *
  * Note: In contexts coming from cfg80211 callbacks, you must call this rather
- * than रेजिस्टर_netdevice(), unरेजिस्टर_netdev() is impossible as the RTNL is
- * held. Otherwise, both रेजिस्टर_netdevice() and रेजिस्टर_netdev() are usable
+ * than register_netdevice(), unregister_netdev() is impossible as the RTNL is
+ * held. Otherwise, both register_netdevice() and register_netdev() are usable
  * instead as well.
  *
  * Requires the RTNL and wiphy mutex to be held.
  */
-पूर्णांक cfg80211_रेजिस्टर_netdevice(काष्ठा net_device *dev);
+int cfg80211_register_netdevice(struct net_device *dev);
 
 /**
- * cfg80211_unरेजिस्टर_netdevice - unरेजिस्टर the given netdev
- * @dev: the netdev to रेजिस्टर
+ * cfg80211_unregister_netdevice - unregister the given netdev
+ * @dev: the netdev to register
  *
  * Note: In contexts coming from cfg80211 callbacks, you must call this rather
- * than unरेजिस्टर_netdevice(), unरेजिस्टर_netdev() is impossible as the RTNL
- * is held. Otherwise, both unरेजिस्टर_netdevice() and unरेजिस्टर_netdev() are
+ * than unregister_netdevice(), unregister_netdev() is impossible as the RTNL
+ * is held. Otherwise, both unregister_netdevice() and unregister_netdev() are
  * usable instead as well.
  *
  * Requires the RTNL and wiphy mutex to be held.
  */
-अटल अंतरभूत व्योम cfg80211_unरेजिस्टर_netdevice(काष्ठा net_device *dev)
-अणु
-	cfg80211_unरेजिस्टर_wdev(dev->ieee80211_ptr);
-पूर्ण
+static inline void cfg80211_unregister_netdevice(struct net_device *dev)
+{
+	cfg80211_unregister_wdev(dev->ieee80211_ptr);
+}
 
 /**
- * काष्ठा cfg80211_ft_event_params - FT Inक्रमmation Elements
+ * struct cfg80211_ft_event_params - FT Information Elements
  * @ies: FT IEs
  * @ies_len: length of the FT IE in bytes
  * @target_ap: target AP's MAC address
  * @ric_ies: RIC IE
  * @ric_ies_len: length of the RIC IE in bytes
  */
-काष्ठा cfg80211_ft_event_params अणु
-	स्थिर u8 *ies;
-	माप_प्रकार ies_len;
-	स्थिर u8 *target_ap;
-	स्थिर u8 *ric_ies;
-	माप_प्रकार ric_ies_len;
-पूर्ण;
+struct cfg80211_ft_event_params {
+	const u8 *ies;
+	size_t ies_len;
+	const u8 *target_ap;
+	const u8 *ric_ies;
+	size_t ric_ies_len;
+};
 
 /**
- * cfg80211_ft_event - notअगरy userspace about FT IE and RIC IE
+ * cfg80211_ft_event - notify userspace about FT IE and RIC IE
  * @netdev: network device
- * @ft_event: IE inक्रमmation
+ * @ft_event: IE information
  */
-व्योम cfg80211_ft_event(काष्ठा net_device *netdev,
-		       काष्ठा cfg80211_ft_event_params *ft_event);
+void cfg80211_ft_event(struct net_device *netdev,
+		       struct cfg80211_ft_event_params *ft_event);
 
 /**
  * cfg80211_get_p2p_attr - find and copy a P2P attribute from IE buffer
  * @ies: the input IE buffer
  * @len: the input length
  * @attr: the attribute ID to find
- * @buf: output buffer, can be %शून्य अगर the data isn't needed, e.g.
- *	अगर the function is only called to get the needed buffer size
+ * @buf: output buffer, can be %NULL if the data isn't needed, e.g.
+ *	if the function is only called to get the needed buffer size
  * @bufsize: size of the output buffer
  *
- * The function finds a given P2P attribute in the (venकरोr) IEs and
+ * The function finds a given P2P attribute in the (vendor) IEs and
  * copies its contents to the given buffer.
  *
- * Return: A negative error code (-%EILSEQ or -%ENOENT) अगर the data is
- * malक्रमmed or the attribute can't be found (respectively), or the
+ * Return: A negative error code (-%EILSEQ or -%ENOENT) if the data is
+ * malformed or the attribute can't be found (respectively), or the
  * length of the found attribute (which can be zero).
  */
-पूर्णांक cfg80211_get_p2p_attr(स्थिर u8 *ies, अचिन्हित पूर्णांक len,
-			  क्रमागत ieee80211_p2p_attr_id attr,
-			  u8 *buf, अचिन्हित पूर्णांक bufsize);
+int cfg80211_get_p2p_attr(const u8 *ies, unsigned int len,
+			  enum ieee80211_p2p_attr_id attr,
+			  u8 *buf, unsigned int bufsize);
 
 /**
  * ieee80211_ie_split_ric - split an IE buffer according to ordering (with RIC)
  * @ies: the IE buffer
  * @ielen: the length of the IE buffer
- * @ids: an array with element IDs that are allowed beक्रमe
+ * @ids: an array with element IDs that are allowed before
  *	the split. A WLAN_EID_EXTENSION value means that the next
  *	EID in the list is a sub-element of the EXTENSION IE.
  * @n_ids: the size of the element ID array
@@ -7838,55 +7837,55 @@ u32 cfg80211_calculate_bitrate(काष्ठा rate_info *rate);
  * @offset: offset where to start splitting in the buffer
  *
  * This function splits an IE buffer by updating the @offset
- * variable to poपूर्णांक to the location where the buffer should be
+ * variable to point to the location where the buffer should be
  * split.
  *
- * It assumes that the given IE buffer is well-क्रमmed, this
+ * It assumes that the given IE buffer is well-formed, this
  * has to be guaranteed by the caller!
  *
  * It also assumes that the IEs in the buffer are ordered
- * correctly, अगर not the result of using this function will not
- * be ordered correctly either, i.e. it करोes no reordering.
+ * correctly, if not the result of using this function will not
+ * be ordered correctly either, i.e. it does no reordering.
  *
- * The function वापसs the offset where the next part of the
- * buffer starts, which may be @ielen अगर the entire (reमुख्यder)
+ * The function returns the offset where the next part of the
+ * buffer starts, which may be @ielen if the entire (remainder)
  * of the buffer should be used.
  */
-माप_प्रकार ieee80211_ie_split_ric(स्थिर u8 *ies, माप_प्रकार ielen,
-			      स्थिर u8 *ids, पूर्णांक n_ids,
-			      स्थिर u8 *after_ric, पूर्णांक n_after_ric,
-			      माप_प्रकार offset);
+size_t ieee80211_ie_split_ric(const u8 *ies, size_t ielen,
+			      const u8 *ids, int n_ids,
+			      const u8 *after_ric, int n_after_ric,
+			      size_t offset);
 
 /**
  * ieee80211_ie_split - split an IE buffer according to ordering
  * @ies: the IE buffer
  * @ielen: the length of the IE buffer
- * @ids: an array with element IDs that are allowed beक्रमe
+ * @ids: an array with element IDs that are allowed before
  *	the split. A WLAN_EID_EXTENSION value means that the next
  *	EID in the list is a sub-element of the EXTENSION IE.
  * @n_ids: the size of the element ID array
  * @offset: offset where to start splitting in the buffer
  *
  * This function splits an IE buffer by updating the @offset
- * variable to poपूर्णांक to the location where the buffer should be
+ * variable to point to the location where the buffer should be
  * split.
  *
- * It assumes that the given IE buffer is well-क्रमmed, this
+ * It assumes that the given IE buffer is well-formed, this
  * has to be guaranteed by the caller!
  *
  * It also assumes that the IEs in the buffer are ordered
- * correctly, अगर not the result of using this function will not
- * be ordered correctly either, i.e. it करोes no reordering.
+ * correctly, if not the result of using this function will not
+ * be ordered correctly either, i.e. it does no reordering.
  *
- * The function वापसs the offset where the next part of the
- * buffer starts, which may be @ielen अगर the entire (reमुख्यder)
+ * The function returns the offset where the next part of the
+ * buffer starts, which may be @ielen if the entire (remainder)
  * of the buffer should be used.
  */
-अटल अंतरभूत माप_प्रकार ieee80211_ie_split(स्थिर u8 *ies, माप_प्रकार ielen,
-					स्थिर u8 *ids, पूर्णांक n_ids, माप_प्रकार offset)
-अणु
-	वापस ieee80211_ie_split_ric(ies, ielen, ids, n_ids, शून्य, 0, offset);
-पूर्ण
+static inline size_t ieee80211_ie_split(const u8 *ies, size_t ielen,
+					const u8 *ids, int n_ids, size_t offset)
+{
+	return ieee80211_ie_split_ric(ies, ielen, ids, n_ids, NULL, 0, offset);
+}
 
 /**
  * cfg80211_report_wowlan_wakeup - report wakeup from WoWLAN
@@ -7896,24 +7895,24 @@ u32 cfg80211_calculate_bitrate(काष्ठा rate_info *rate);
  *
  * This function reports that the given device woke up. If it
  * caused the wakeup, report the reason(s), otherwise you may
- * pass %शून्य as the @wakeup parameter to advertise that something
- * अन्यथा caused the wakeup.
+ * pass %NULL as the @wakeup parameter to advertise that something
+ * else caused the wakeup.
  */
-व्योम cfg80211_report_wowlan_wakeup(काष्ठा wireless_dev *wdev,
-				   काष्ठा cfg80211_wowlan_wakeup *wakeup,
+void cfg80211_report_wowlan_wakeup(struct wireless_dev *wdev,
+				   struct cfg80211_wowlan_wakeup *wakeup,
 				   gfp_t gfp);
 
 /**
  * cfg80211_crit_proto_stopped() - indicate critical protocol stopped by driver.
  *
- * @wdev: the wireless device क्रम which critical protocol is stopped.
+ * @wdev: the wireless device for which critical protocol is stopped.
  * @gfp: allocation flags
  *
  * This function can be called by the driver to indicate it has reverted
  * operation back to normal. One reason could be that the duration given
  * by .crit_proto_start() has expired.
  */
-व्योम cfg80211_crit_proto_stopped(काष्ठा wireless_dev *wdev, gfp_t gfp);
+void cfg80211_crit_proto_stopped(struct wireless_dev *wdev, gfp_t gfp);
 
 /**
  * ieee80211_get_num_supported_channels - get number of channels device has
@@ -7921,178 +7920,178 @@ u32 cfg80211_calculate_bitrate(काष्ठा rate_info *rate);
  *
  * Return: the number of channels supported by the device.
  */
-अचिन्हित पूर्णांक ieee80211_get_num_supported_channels(काष्ठा wiphy *wiphy);
+unsigned int ieee80211_get_num_supported_channels(struct wiphy *wiphy);
 
 /**
- * cfg80211_check_combinations - check पूर्णांकerface combinations
+ * cfg80211_check_combinations - check interface combinations
  *
  * @wiphy: the wiphy
- * @params: the पूर्णांकerface combinations parameter
+ * @params: the interface combinations parameter
  *
  * This function can be called by the driver to check whether a
- * combination of पूर्णांकerfaces and their types are allowed according to
- * the पूर्णांकerface combinations.
+ * combination of interfaces and their types are allowed according to
+ * the interface combinations.
  */
-पूर्णांक cfg80211_check_combinations(काष्ठा wiphy *wiphy,
-				काष्ठा अगरace_combination_params *params);
+int cfg80211_check_combinations(struct wiphy *wiphy,
+				struct iface_combination_params *params);
 
 /**
  * cfg80211_iter_combinations - iterate over matching combinations
  *
  * @wiphy: the wiphy
- * @params: the पूर्णांकerface combinations parameter
- * @iter: function to call क्रम each matching combination
- * @data: poपूर्णांकer to pass to iter function
+ * @params: the interface combinations parameter
+ * @iter: function to call for each matching combination
+ * @data: pointer to pass to iter function
  *
  * This function can be called by the driver to check what possible
- * combinations it fits in at a given moment, e.g. क्रम channel चयनing
+ * combinations it fits in at a given moment, e.g. for channel switching
  * purposes.
  */
-पूर्णांक cfg80211_iter_combinations(काष्ठा wiphy *wiphy,
-			       काष्ठा अगरace_combination_params *params,
-			       व्योम (*iter)(स्थिर काष्ठा ieee80211_अगरace_combination *c,
-					    व्योम *data),
-			       व्योम *data);
+int cfg80211_iter_combinations(struct wiphy *wiphy,
+			       struct iface_combination_params *params,
+			       void (*iter)(const struct ieee80211_iface_combination *c,
+					    void *data),
+			       void *data);
 
 /*
- * cfg80211_stop_अगरace - trigger पूर्णांकerface disconnection
+ * cfg80211_stop_iface - trigger interface disconnection
  *
  * @wiphy: the wiphy
  * @wdev: wireless device
  * @gfp: context flags
  *
- * Trigger पूर्णांकerface to be stopped as अगर AP was stopped, IBSS/mesh left, STA
+ * Trigger interface to be stopped as if AP was stopped, IBSS/mesh left, STA
  * disconnected.
  *
- * Note: This करोesn't need any locks and is asynchronous.
+ * Note: This doesn't need any locks and is asynchronous.
  */
-व्योम cfg80211_stop_अगरace(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev,
+void cfg80211_stop_iface(struct wiphy *wiphy, struct wireless_dev *wdev,
 			 gfp_t gfp);
 
 /**
- * cfg80211_shutकरोwn_all_पूर्णांकerfaces - shut करोwn all पूर्णांकerfaces क्रम a wiphy
- * @wiphy: the wiphy to shut करोwn
+ * cfg80211_shutdown_all_interfaces - shut down all interfaces for a wiphy
+ * @wiphy: the wiphy to shut down
  *
- * This function shuts करोwn all पूर्णांकerfaces beदीर्घing to this wiphy by
- * calling dev_बंद() (and treating non-netdev पूर्णांकerfaces as needed).
+ * This function shuts down all interfaces belonging to this wiphy by
+ * calling dev_close() (and treating non-netdev interfaces as needed).
  * It shouldn't really be used unless there are some fatal device errors
  * that really can't be recovered in any other way.
  *
- * Callers must hold the RTNL and be able to deal with callbacks पूर्णांकo
- * the driver जबतक the function is running.
+ * Callers must hold the RTNL and be able to deal with callbacks into
+ * the driver while the function is running.
  */
-व्योम cfg80211_shutकरोwn_all_पूर्णांकerfaces(काष्ठा wiphy *wiphy);
+void cfg80211_shutdown_all_interfaces(struct wiphy *wiphy);
 
 /**
  * wiphy_ext_feature_set - set the extended feature flag
  *
- * @wiphy: the wiphy to modअगरy.
+ * @wiphy: the wiphy to modify.
  * @ftidx: extended feature bit index.
  *
  * The extended features are flagged in multiple bytes (see
- * &काष्ठा wiphy.@ext_features)
+ * &struct wiphy.@ext_features)
  */
-अटल अंतरभूत व्योम wiphy_ext_feature_set(काष्ठा wiphy *wiphy,
-					 क्रमागत nl80211_ext_feature_index ftidx)
-अणु
+static inline void wiphy_ext_feature_set(struct wiphy *wiphy,
+					 enum nl80211_ext_feature_index ftidx)
+{
 	u8 *ft_byte;
 
 	ft_byte = &wiphy->ext_features[ftidx / 8];
 	*ft_byte |= BIT(ftidx % 8);
-पूर्ण
+}
 
 /**
  * wiphy_ext_feature_isset - check the extended feature flag
  *
- * @wiphy: the wiphy to modअगरy.
+ * @wiphy: the wiphy to modify.
  * @ftidx: extended feature bit index.
  *
  * The extended features are flagged in multiple bytes (see
- * &काष्ठा wiphy.@ext_features)
+ * &struct wiphy.@ext_features)
  */
-अटल अंतरभूत bool
-wiphy_ext_feature_isset(काष्ठा wiphy *wiphy,
-			क्रमागत nl80211_ext_feature_index ftidx)
-अणु
+static inline bool
+wiphy_ext_feature_isset(struct wiphy *wiphy,
+			enum nl80211_ext_feature_index ftidx)
+{
 	u8 ft_byte;
 
 	ft_byte = wiphy->ext_features[ftidx / 8];
-	वापस (ft_byte & BIT(ftidx % 8)) != 0;
-पूर्ण
+	return (ft_byte & BIT(ftidx % 8)) != 0;
+}
 
 /**
- * cfg80211_मुक्त_nan_func - मुक्त न_अंक function
- * @f: न_अंक function that should be मुक्तd
+ * cfg80211_free_nan_func - free NAN function
+ * @f: NAN function that should be freed
  *
- * Frees all the न_अंक function and all it's allocated members.
+ * Frees all the NAN function and all it's allocated members.
  */
-व्योम cfg80211_मुक्त_nan_func(काष्ठा cfg80211_nan_func *f);
+void cfg80211_free_nan_func(struct cfg80211_nan_func *f);
 
 /**
- * काष्ठा cfg80211_nan_match_params - न_अंक match parameters
+ * struct cfg80211_nan_match_params - NAN match parameters
  * @type: the type of the function that triggered a match. If it is
- *	 %NL80211_न_अंक_FUNC_SUBSCRIBE it means that we replied to a subscriber.
- *	 If it is %NL80211_न_अंक_FUNC_PUBLISH, it means that we got a discovery
+ *	 %NL80211_NAN_FUNC_SUBSCRIBE it means that we replied to a subscriber.
+ *	 If it is %NL80211_NAN_FUNC_PUBLISH, it means that we got a discovery
  *	 result.
- *	 If it is %NL80211_न_अंक_FUNC_FOLLOW_UP, we received a follow up.
+ *	 If it is %NL80211_NAN_FUNC_FOLLOW_UP, we received a follow up.
  * @inst_id: the local instance id
  * @peer_inst_id: the instance id of the peer's function
  * @addr: the MAC address of the peer
  * @info_len: the length of the &info
- * @info: the Service Specअगरic Info from the peer (अगर any)
- * @cookie: unique identअगरier of the corresponding function
+ * @info: the Service Specific Info from the peer (if any)
+ * @cookie: unique identifier of the corresponding function
  */
-काष्ठा cfg80211_nan_match_params अणु
-	क्रमागत nl80211_nan_function_type type;
+struct cfg80211_nan_match_params {
+	enum nl80211_nan_function_type type;
 	u8 inst_id;
 	u8 peer_inst_id;
-	स्थिर u8 *addr;
+	const u8 *addr;
 	u8 info_len;
-	स्थिर u8 *info;
+	const u8 *info;
 	u64 cookie;
-पूर्ण;
+};
 
 /**
- * cfg80211_nan_match - report a match क्रम a न_अंक function.
+ * cfg80211_nan_match - report a match for a NAN function.
  * @wdev: the wireless device reporting the match
- * @match: match notअगरication parameters
+ * @match: match notification parameters
  * @gfp: allocation flags
  *
- * This function reports that the a न_अंक function had a match. This
+ * This function reports that the a NAN function had a match. This
  * can be a subscribe that had a match or a solicited publish that
  * was sent. It can also be a follow up that was received.
  */
-व्योम cfg80211_nan_match(काष्ठा wireless_dev *wdev,
-			काष्ठा cfg80211_nan_match_params *match, gfp_t gfp);
+void cfg80211_nan_match(struct wireless_dev *wdev,
+			struct cfg80211_nan_match_params *match, gfp_t gfp);
 
 /**
- * cfg80211_nan_func_terminated - notअगरy about न_अंक function termination.
+ * cfg80211_nan_func_terminated - notify about NAN function termination.
  *
  * @wdev: the wireless device reporting the match
  * @inst_id: the local instance id
- * @reason: termination reason (one of the NL80211_न_अंक_FUNC_TERM_REASON_*)
- * @cookie: unique न_अंक function identअगरier
+ * @reason: termination reason (one of the NL80211_NAN_FUNC_TERM_REASON_*)
+ * @cookie: unique NAN function identifier
  * @gfp: allocation flags
  *
- * This function reports that the a न_अंक function is terminated.
+ * This function reports that the a NAN function is terminated.
  */
-व्योम cfg80211_nan_func_terminated(काष्ठा wireless_dev *wdev,
+void cfg80211_nan_func_terminated(struct wireless_dev *wdev,
 				  u8 inst_id,
-				  क्रमागत nl80211_nan_func_term_reason reason,
+				  enum nl80211_nan_func_term_reason reason,
 				  u64 cookie, gfp_t gfp);
 
 /* ethtool helper */
-व्योम cfg80211_get_drvinfo(काष्ठा net_device *dev, काष्ठा ethtool_drvinfo *info);
+void cfg80211_get_drvinfo(struct net_device *dev, struct ethtool_drvinfo *info);
 
 /**
- * cfg80211_बाह्यal_auth_request - userspace request क्रम authentication
+ * cfg80211_external_auth_request - userspace request for authentication
  * @netdev: network device
  * @params: External authentication parameters
  * @gfp: allocation flags
  * Returns: 0 on success, < 0 on error
  */
-पूर्णांक cfg80211_बाह्यal_auth_request(काष्ठा net_device *netdev,
-				   काष्ठा cfg80211_बाह्यal_auth_params *params,
+int cfg80211_external_auth_request(struct net_device *netdev,
+				   struct cfg80211_external_auth_params *params,
 				   gfp_t gfp);
 
 /**
@@ -8102,9 +8101,9 @@ wiphy_ext_feature_isset(काष्ठा wiphy *wiphy,
  * @result: the result data
  * @gfp: allocation flags
  */
-व्योम cfg80211_pmsr_report(काष्ठा wireless_dev *wdev,
-			  काष्ठा cfg80211_pmsr_request *req,
-			  काष्ठा cfg80211_pmsr_result *result,
+void cfg80211_pmsr_report(struct wireless_dev *wdev,
+			  struct cfg80211_pmsr_request *req,
+			  struct cfg80211_pmsr_result *result,
 			  gfp_t gfp);
 
 /**
@@ -8114,92 +8113,92 @@ wiphy_ext_feature_isset(काष्ठा wiphy *wiphy,
  * @gfp: allocation flags
  *
  * Report that the entire measurement completed, after this
- * the request poपूर्णांकer will no दीर्घer be valid.
+ * the request pointer will no longer be valid.
  */
-व्योम cfg80211_pmsr_complete(काष्ठा wireless_dev *wdev,
-			    काष्ठा cfg80211_pmsr_request *req,
+void cfg80211_pmsr_complete(struct wireless_dev *wdev,
+			    struct cfg80211_pmsr_request *req,
 			    gfp_t gfp);
 
 /**
- * cfg80211_अगरtype_allowed - check whether the पूर्णांकerface can be allowed
+ * cfg80211_iftype_allowed - check whether the interface can be allowed
  * @wiphy: the wiphy
- * @अगरtype: पूर्णांकerface type
+ * @iftype: interface type
  * @is_4addr: use_4addr flag, must be '0' when check_swif is '1'
- * @check_swअगर: check अगरtype against software पूर्णांकerfaces
+ * @check_swif: check iftype against software interfaces
  *
- * Check whether the पूर्णांकerface is allowed to operate; additionally, this API
- * can be used to check अगरtype against the software पूर्णांकerfaces when
- * check_swअगर is '1'.
+ * Check whether the interface is allowed to operate; additionally, this API
+ * can be used to check iftype against the software interfaces when
+ * check_swif is '1'.
  */
-bool cfg80211_अगरtype_allowed(काष्ठा wiphy *wiphy, क्रमागत nl80211_अगरtype अगरtype,
-			     bool is_4addr, u8 check_swअगर);
+bool cfg80211_iftype_allowed(struct wiphy *wiphy, enum nl80211_iftype iftype,
+			     bool is_4addr, u8 check_swif);
 
 
 /* Logging, debugging and troubleshooting/diagnostic helpers. */
 
-/* wiphy_prपूर्णांकk helpers, similar to dev_prपूर्णांकk */
+/* wiphy_printk helpers, similar to dev_printk */
 
-#घोषणा wiphy_prपूर्णांकk(level, wiphy, क्रमmat, args...)		\
-	dev_prपूर्णांकk(level, &(wiphy)->dev, क्रमmat, ##args)
-#घोषणा wiphy_emerg(wiphy, क्रमmat, args...)			\
-	dev_emerg(&(wiphy)->dev, क्रमmat, ##args)
-#घोषणा wiphy_alert(wiphy, क्रमmat, args...)			\
-	dev_alert(&(wiphy)->dev, क्रमmat, ##args)
-#घोषणा wiphy_crit(wiphy, क्रमmat, args...)			\
-	dev_crit(&(wiphy)->dev, क्रमmat, ##args)
-#घोषणा wiphy_err(wiphy, क्रमmat, args...)			\
-	dev_err(&(wiphy)->dev, क्रमmat, ##args)
-#घोषणा wiphy_warn(wiphy, क्रमmat, args...)			\
-	dev_warn(&(wiphy)->dev, क्रमmat, ##args)
-#घोषणा wiphy_notice(wiphy, क्रमmat, args...)			\
-	dev_notice(&(wiphy)->dev, क्रमmat, ##args)
-#घोषणा wiphy_info(wiphy, क्रमmat, args...)			\
-	dev_info(&(wiphy)->dev, क्रमmat, ##args)
+#define wiphy_printk(level, wiphy, format, args...)		\
+	dev_printk(level, &(wiphy)->dev, format, ##args)
+#define wiphy_emerg(wiphy, format, args...)			\
+	dev_emerg(&(wiphy)->dev, format, ##args)
+#define wiphy_alert(wiphy, format, args...)			\
+	dev_alert(&(wiphy)->dev, format, ##args)
+#define wiphy_crit(wiphy, format, args...)			\
+	dev_crit(&(wiphy)->dev, format, ##args)
+#define wiphy_err(wiphy, format, args...)			\
+	dev_err(&(wiphy)->dev, format, ##args)
+#define wiphy_warn(wiphy, format, args...)			\
+	dev_warn(&(wiphy)->dev, format, ##args)
+#define wiphy_notice(wiphy, format, args...)			\
+	dev_notice(&(wiphy)->dev, format, ##args)
+#define wiphy_info(wiphy, format, args...)			\
+	dev_info(&(wiphy)->dev, format, ##args)
 
-#घोषणा wiphy_err_ratelimited(wiphy, क्रमmat, args...)		\
-	dev_err_ratelimited(&(wiphy)->dev, क्रमmat, ##args)
-#घोषणा wiphy_warn_ratelimited(wiphy, क्रमmat, args...)		\
-	dev_warn_ratelimited(&(wiphy)->dev, क्रमmat, ##args)
+#define wiphy_err_ratelimited(wiphy, format, args...)		\
+	dev_err_ratelimited(&(wiphy)->dev, format, ##args)
+#define wiphy_warn_ratelimited(wiphy, format, args...)		\
+	dev_warn_ratelimited(&(wiphy)->dev, format, ##args)
 
-#घोषणा wiphy_debug(wiphy, क्रमmat, args...)			\
-	wiphy_prपूर्णांकk(KERN_DEBUG, wiphy, क्रमmat, ##args)
+#define wiphy_debug(wiphy, format, args...)			\
+	wiphy_printk(KERN_DEBUG, wiphy, format, ##args)
 
-#घोषणा wiphy_dbg(wiphy, क्रमmat, args...)			\
-	dev_dbg(&(wiphy)->dev, क्रमmat, ##args)
+#define wiphy_dbg(wiphy, format, args...)			\
+	dev_dbg(&(wiphy)->dev, format, ##args)
 
-#अगर defined(VERBOSE_DEBUG)
-#घोषणा wiphy_vdbg	wiphy_dbg
-#अन्यथा
-#घोषणा wiphy_vdbg(wiphy, क्रमmat, args...)				\
-(अणु									\
-	अगर (0)								\
-		wiphy_prपूर्णांकk(KERN_DEBUG, wiphy, क्रमmat, ##args);	\
+#if defined(VERBOSE_DEBUG)
+#define wiphy_vdbg	wiphy_dbg
+#else
+#define wiphy_vdbg(wiphy, format, args...)				\
+({									\
+	if (0)								\
+		wiphy_printk(KERN_DEBUG, wiphy, format, ##args);	\
 	0;								\
-पूर्ण)
-#पूर्ण_अगर
+})
+#endif
 
 /*
- * wiphy_WARN() acts like wiphy_prपूर्णांकk(), but with the key dअगरference
+ * wiphy_WARN() acts like wiphy_printk(), but with the key difference
  * of using a WARN/WARN_ON to get the message out, including the
- * file/line inक्रमmation and a backtrace.
+ * file/line information and a backtrace.
  */
-#घोषणा wiphy_WARN(wiphy, क्रमmat, args...)			\
-	WARN(1, "wiphy: %s\n" क्रमmat, wiphy_name(wiphy), ##args);
+#define wiphy_WARN(wiphy, format, args...)			\
+	WARN(1, "wiphy: %s\n" format, wiphy_name(wiphy), ##args);
 
 /**
- * cfg80211_update_owe_info_event - Notअगरy the peer's OWE info to user space
+ * cfg80211_update_owe_info_event - Notify the peer's OWE info to user space
  * @netdev: network device
  * @owe_info: peer's owe info
  * @gfp: allocation flags
  */
-व्योम cfg80211_update_owe_info_event(काष्ठा net_device *netdev,
-				    काष्ठा cfg80211_update_owe_info *owe_info,
+void cfg80211_update_owe_info_event(struct net_device *netdev,
+				    struct cfg80211_update_owe_info *owe_info,
 				    gfp_t gfp);
 
 /**
  * cfg80211_bss_flush - resets all the scan entries
  * @wiphy: the wiphy
  */
-व्योम cfg80211_bss_flush(काष्ठा wiphy *wiphy);
+void cfg80211_bss_flush(struct wiphy *wiphy);
 
-#पूर्ण_अगर /* __NET_CFG80211_H */
+#endif /* __NET_CFG80211_H */

@@ -1,34 +1,33 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2020 Facebook
 
-#समावेश <linux/bpf.h>
-#समावेश <मानक_निवेशt.h>
-#समावेश <bpf/bpf_helpers.h>
+#include <linux/bpf.h>
+#include <stdint.h>
+#include <bpf/bpf_helpers.h>
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
-	__uपूर्णांक(value_size, माप(पूर्णांक));
-	__uपूर्णांक(key_size, माप(पूर्णांक));
-पूर्ण perfbuf SEC(".maps");
+struct {
+	__uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
+	__uint(value_size, sizeof(int));
+	__uint(key_size, sizeof(int));
+} perfbuf SEC(".maps");
 
-स्थिर अस्थिर पूर्णांक batch_cnt = 0;
+const volatile int batch_cnt = 0;
 
-दीर्घ sample_val = 42;
-दीर्घ dropped __attribute__((aligned(128))) = 0;
+long sample_val = 42;
+long dropped __attribute__((aligned(128))) = 0;
 
 SEC("fentry/__x64_sys_getpgid")
-पूर्णांक bench_perfbuf(व्योम *ctx)
-अणु
+int bench_perfbuf(void *ctx)
+{
 	__u64 *sample;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < batch_cnt; i++) अणु
-		अगर (bpf_perf_event_output(ctx, &perfbuf, BPF_F_CURRENT_CPU,
-					  &sample_val, माप(sample_val)))
+	for (i = 0; i < batch_cnt; i++) {
+		if (bpf_perf_event_output(ctx, &perfbuf, BPF_F_CURRENT_CPU,
+					  &sample_val, sizeof(sample_val)))
 			__sync_add_and_fetch(&dropped, 1);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}

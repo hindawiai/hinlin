@@ -1,17 +1,16 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
 
-#समावेश "odm_precomp.h"
-#समावेश "phy.h"
+#include "odm_precomp.h"
+#include "phy.h"
 
 /* MAC_REG.TXT */
 
-अटल u32 array_MAC_REG_8188E[] = अणु
+static u32 array_MAC_REG_8188E[] = {
 		0x026, 0x00000041,
 		0x027, 0x00000035,
 		0x428, 0x0000000A,
@@ -102,10 +101,10 @@
 		0x709, 0x00000043,
 		0x70A, 0x00000065,
 		0x70B, 0x00000087,
-पूर्ण;
+};
 
-bool rtl88eu_phy_mac_config(काष्ठा adapter *adapt)
-अणु
+bool rtl88eu_phy_mac_config(struct adapter *adapt)
+{
 	u32 i;
 	u32 arraylength;
 	u32 *ptrarray;
@@ -113,9 +112,9 @@ bool rtl88eu_phy_mac_config(काष्ठा adapter *adapt)
 	arraylength = ARRAY_SIZE(array_MAC_REG_8188E);
 	ptrarray = array_MAC_REG_8188E;
 
-	क्रम (i = 0; i < arraylength; i += 2)
-		usb_ग_लिखो8(adapt, ptrarray[i], (u8)ptrarray[i + 1]);
+	for (i = 0; i < arraylength; i += 2)
+		usb_write8(adapt, ptrarray[i], (u8)ptrarray[i + 1]);
 
-	usb_ग_लिखो8(adapt, REG_MAX_AGGR_NUM, MAX_AGGR_NUM);
-	वापस true;
-पूर्ण
+	usb_write8(adapt, REG_MAX_AGGR_NUM, MAX_AGGR_NUM);
+	return true;
+}

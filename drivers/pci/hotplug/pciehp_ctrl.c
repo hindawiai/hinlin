@@ -1,432 +1,431 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * PCI Express Hot Plug Controller Driver
  *
  * Copyright (C) 1995,2001 Compaq Computer Corporation
- * Copyright (C) 2001 Greg Kroah-Harपंचांगan (greg@kroah.com)
+ * Copyright (C) 2001 Greg Kroah-Hartman (greg@kroah.com)
  * Copyright (C) 2001 IBM Corp.
  * Copyright (C) 2003-2004 Intel Corporation
  *
  * All rights reserved.
  *
- * Send feedback to <greg@kroah.com>, <kristen.c.accardi@पूर्णांकel.com>
+ * Send feedback to <greg@kroah.com>, <kristen.c.accardi@intel.com>
  *
  */
 
-#घोषणा dev_fmt(fmt) "pciehp: " fmt
+#define dev_fmt(fmt) "pciehp: " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/pci.h>
-#समावेश "pciehp.h"
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/pm_runtime.h>
+#include <linux/pci.h>
+#include "pciehp.h"
 
-/* The following routines स्थिरitute the bulk of the
+/* The following routines constitute the bulk of the
    hotplug controller logic
  */
 
-#घोषणा SAFE_REMOVAL	 true
-#घोषणा SURPRISE_REMOVAL false
+#define SAFE_REMOVAL	 true
+#define SURPRISE_REMOVAL false
 
-अटल व्योम set_slot_off(काष्ठा controller *ctrl)
-अणु
+static void set_slot_off(struct controller *ctrl)
+{
 	/*
-	 * Turn off slot, turn on attention indicator, turn off घातer
+	 * Turn off slot, turn on attention indicator, turn off power
 	 * indicator
 	 */
-	अगर (POWER_CTRL(ctrl)) अणु
-		pciehp_घातer_off_slot(ctrl);
+	if (POWER_CTRL(ctrl)) {
+		pciehp_power_off_slot(ctrl);
 
 		/*
-		 * After turning घातer off, we must रुको क्रम at least 1 second
-		 * beक्रमe taking any action that relies on घातer having been
-		 * हटाओd from the slot/adapter.
+		 * After turning power off, we must wait for at least 1 second
+		 * before taking any action that relies on power having been
+		 * removed from the slot/adapter.
 		 */
 		msleep(1000);
-	पूर्ण
+	}
 
 	pciehp_set_indicators(ctrl, PCI_EXP_SLTCTL_PWR_IND_OFF,
 			      PCI_EXP_SLTCTL_ATTN_IND_ON);
-पूर्ण
+}
 
 /**
- * board_added - Called after a board has been added to the प्रणाली.
+ * board_added - Called after a board has been added to the system.
  * @ctrl: PCIe hotplug controller where board is added
  *
- * Turns घातer on क्रम the board.
+ * Turns power on for the board.
  * Configures board.
  */
-अटल पूर्णांक board_added(काष्ठा controller *ctrl)
-अणु
-	पूर्णांक retval = 0;
-	काष्ठा pci_bus *parent = ctrl->pcie->port->subordinate;
+static int board_added(struct controller *ctrl)
+{
+	int retval = 0;
+	struct pci_bus *parent = ctrl->pcie->port->subordinate;
 
-	अगर (POWER_CTRL(ctrl)) अणु
+	if (POWER_CTRL(ctrl)) {
 		/* Power on slot */
-		retval = pciehp_घातer_on_slot(ctrl);
-		अगर (retval)
-			वापस retval;
-	पूर्ण
+		retval = pciehp_power_on_slot(ctrl);
+		if (retval)
+			return retval;
+	}
 
 	pciehp_set_indicators(ctrl, PCI_EXP_SLTCTL_PWR_IND_BLINK,
 			      INDICATOR_NOOP);
 
 	/* Check link training status */
 	retval = pciehp_check_link_status(ctrl);
-	अगर (retval)
-		जाओ err_निकास;
+	if (retval)
+		goto err_exit;
 
-	/* Check क्रम a घातer fault */
-	अगर (ctrl->घातer_fault_detected || pciehp_query_घातer_fault(ctrl)) अणु
+	/* Check for a power fault */
+	if (ctrl->power_fault_detected || pciehp_query_power_fault(ctrl)) {
 		ctrl_err(ctrl, "Slot(%s): Power fault\n", slot_name(ctrl));
 		retval = -EIO;
-		जाओ err_निकास;
-	पूर्ण
+		goto err_exit;
+	}
 
 	retval = pciehp_configure_device(ctrl);
-	अगर (retval) अणु
-		अगर (retval != -EEXIST) अणु
+	if (retval) {
+		if (retval != -EEXIST) {
 			ctrl_err(ctrl, "Cannot add device at %04x:%02x:00\n",
-				 pci_करोमुख्य_nr(parent), parent->number);
-			जाओ err_निकास;
-		पूर्ण
-	पूर्ण
+				 pci_domain_nr(parent), parent->number);
+			goto err_exit;
+		}
+	}
 
 	pciehp_set_indicators(ctrl, PCI_EXP_SLTCTL_PWR_IND_ON,
 			      PCI_EXP_SLTCTL_ATTN_IND_OFF);
-	वापस 0;
+	return 0;
 
-err_निकास:
+err_exit:
 	set_slot_off(ctrl);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /**
- * हटाओ_board - Turn off slot and Power Indicator
- * @ctrl: PCIe hotplug controller where board is being हटाओd
- * @safe_removal: whether the board is safely हटाओd (versus surprise हटाओd)
+ * remove_board - Turn off slot and Power Indicator
+ * @ctrl: PCIe hotplug controller where board is being removed
+ * @safe_removal: whether the board is safely removed (versus surprise removed)
  */
-अटल व्योम हटाओ_board(काष्ठा controller *ctrl, bool safe_removal)
-अणु
+static void remove_board(struct controller *ctrl, bool safe_removal)
+{
 	pciehp_unconfigure_device(ctrl, safe_removal);
 
-	अगर (POWER_CTRL(ctrl)) अणु
-		pciehp_घातer_off_slot(ctrl);
+	if (POWER_CTRL(ctrl)) {
+		pciehp_power_off_slot(ctrl);
 
 		/*
-		 * After turning घातer off, we must रुको क्रम at least 1 second
-		 * beक्रमe taking any action that relies on घातer having been
-		 * हटाओd from the slot/adapter.
+		 * After turning power off, we must wait for at least 1 second
+		 * before taking any action that relies on power having been
+		 * removed from the slot/adapter.
 		 */
 		msleep(1000);
 
-		/* Ignore link or presence changes caused by घातer off */
+		/* Ignore link or presence changes caused by power off */
 		atomic_and(~(PCI_EXP_SLTSTA_DLLSC | PCI_EXP_SLTSTA_PDC),
 			   &ctrl->pending_events);
-	पूर्ण
+	}
 
 	pciehp_set_indicators(ctrl, PCI_EXP_SLTCTL_PWR_IND_OFF,
 			      INDICATOR_NOOP);
-पूर्ण
+}
 
-अटल पूर्णांक pciehp_enable_slot(काष्ठा controller *ctrl);
-अटल पूर्णांक pciehp_disable_slot(काष्ठा controller *ctrl, bool safe_removal);
+static int pciehp_enable_slot(struct controller *ctrl);
+static int pciehp_disable_slot(struct controller *ctrl, bool safe_removal);
 
-व्योम pciehp_request(काष्ठा controller *ctrl, पूर्णांक action)
-अणु
+void pciehp_request(struct controller *ctrl, int action)
+{
 	atomic_or(action, &ctrl->pending_events);
-	अगर (!pciehp_poll_mode)
-		irq_wake_thपढ़ो(ctrl->pcie->irq, ctrl);
-पूर्ण
+	if (!pciehp_poll_mode)
+		irq_wake_thread(ctrl->pcie->irq, ctrl);
+}
 
-व्योम pciehp_queue_pushbutton_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा controller *ctrl = container_of(work, काष्ठा controller,
+void pciehp_queue_pushbutton_work(struct work_struct *work)
+{
+	struct controller *ctrl = container_of(work, struct controller,
 					       button_work.work);
 
 	mutex_lock(&ctrl->state_lock);
-	चयन (ctrl->state) अणु
-	हाल BLINKINGOFF_STATE:
+	switch (ctrl->state) {
+	case BLINKINGOFF_STATE:
 		pciehp_request(ctrl, DISABLE_SLOT);
-		अवरोध;
-	हाल BLINKINGON_STATE:
+		break;
+	case BLINKINGON_STATE:
 		pciehp_request(ctrl, PCI_EXP_SLTSTA_PDC);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 	mutex_unlock(&ctrl->state_lock);
-पूर्ण
+}
 
-व्योम pciehp_handle_button_press(काष्ठा controller *ctrl)
-अणु
+void pciehp_handle_button_press(struct controller *ctrl)
+{
 	mutex_lock(&ctrl->state_lock);
-	चयन (ctrl->state) अणु
-	हाल OFF_STATE:
-	हाल ON_STATE:
-		अगर (ctrl->state == ON_STATE) अणु
+	switch (ctrl->state) {
+	case OFF_STATE:
+	case ON_STATE:
+		if (ctrl->state == ON_STATE) {
 			ctrl->state = BLINKINGOFF_STATE;
 			ctrl_info(ctrl, "Slot(%s): Powering off due to button press\n",
 				  slot_name(ctrl));
-		पूर्ण अन्यथा अणु
+		} else {
 			ctrl->state = BLINKINGON_STATE;
 			ctrl_info(ctrl, "Slot(%s) Powering on due to button press\n",
 				  slot_name(ctrl));
-		पूर्ण
-		/* blink घातer indicator and turn off attention */
+		}
+		/* blink power indicator and turn off attention */
 		pciehp_set_indicators(ctrl, PCI_EXP_SLTCTL_PWR_IND_BLINK,
 				      PCI_EXP_SLTCTL_ATTN_IND_OFF);
 		schedule_delayed_work(&ctrl->button_work, 5 * HZ);
-		अवरोध;
-	हाल BLINKINGOFF_STATE:
-	हाल BLINKINGON_STATE:
+		break;
+	case BLINKINGOFF_STATE:
+	case BLINKINGON_STATE:
 		/*
-		 * Cancel अगर we are still blinking; this means that we
-		 * press the attention again beक्रमe the 5 sec. limit
-		 * expires to cancel hot-add or hot-हटाओ
+		 * Cancel if we are still blinking; this means that we
+		 * press the attention again before the 5 sec. limit
+		 * expires to cancel hot-add or hot-remove
 		 */
 		ctrl_info(ctrl, "Slot(%s): Button cancel\n", slot_name(ctrl));
 		cancel_delayed_work(&ctrl->button_work);
-		अगर (ctrl->state == BLINKINGOFF_STATE) अणु
+		if (ctrl->state == BLINKINGOFF_STATE) {
 			ctrl->state = ON_STATE;
 			pciehp_set_indicators(ctrl, PCI_EXP_SLTCTL_PWR_IND_ON,
 					      PCI_EXP_SLTCTL_ATTN_IND_OFF);
-		पूर्ण अन्यथा अणु
+		} else {
 			ctrl->state = OFF_STATE;
 			pciehp_set_indicators(ctrl, PCI_EXP_SLTCTL_PWR_IND_OFF,
 					      PCI_EXP_SLTCTL_ATTN_IND_OFF);
-		पूर्ण
+		}
 		ctrl_info(ctrl, "Slot(%s): Action canceled due to button press\n",
 			  slot_name(ctrl));
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ctrl_err(ctrl, "Slot(%s): Ignoring invalid state %#x\n",
 			 slot_name(ctrl), ctrl->state);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	mutex_unlock(&ctrl->state_lock);
-पूर्ण
+}
 
-व्योम pciehp_handle_disable_request(काष्ठा controller *ctrl)
-अणु
+void pciehp_handle_disable_request(struct controller *ctrl)
+{
 	mutex_lock(&ctrl->state_lock);
-	चयन (ctrl->state) अणु
-	हाल BLINKINGON_STATE:
-	हाल BLINKINGOFF_STATE:
+	switch (ctrl->state) {
+	case BLINKINGON_STATE:
+	case BLINKINGOFF_STATE:
 		cancel_delayed_work(&ctrl->button_work);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	ctrl->state = POWEROFF_STATE;
 	mutex_unlock(&ctrl->state_lock);
 
 	ctrl->request_result = pciehp_disable_slot(ctrl, SAFE_REMOVAL);
-पूर्ण
+}
 
-व्योम pciehp_handle_presence_or_link_change(काष्ठा controller *ctrl, u32 events)
-अणु
-	पूर्णांक present, link_active;
+void pciehp_handle_presence_or_link_change(struct controller *ctrl, u32 events)
+{
+	int present, link_active;
 
 	/*
 	 * If the slot is on and presence or link has changed, turn it off.
-	 * Even अगर it's occupied again, we cannot assume the card is the same.
+	 * Even if it's occupied again, we cannot assume the card is the same.
 	 */
 	mutex_lock(&ctrl->state_lock);
-	चयन (ctrl->state) अणु
-	हाल BLINKINGOFF_STATE:
+	switch (ctrl->state) {
+	case BLINKINGOFF_STATE:
 		cancel_delayed_work(&ctrl->button_work);
 		fallthrough;
-	हाल ON_STATE:
+	case ON_STATE:
 		ctrl->state = POWEROFF_STATE;
 		mutex_unlock(&ctrl->state_lock);
-		अगर (events & PCI_EXP_SLTSTA_DLLSC)
+		if (events & PCI_EXP_SLTSTA_DLLSC)
 			ctrl_info(ctrl, "Slot(%s): Link Down\n",
 				  slot_name(ctrl));
-		अगर (events & PCI_EXP_SLTSTA_PDC)
+		if (events & PCI_EXP_SLTSTA_PDC)
 			ctrl_info(ctrl, "Slot(%s): Card not present\n",
 				  slot_name(ctrl));
 		pciehp_disable_slot(ctrl, SURPRISE_REMOVAL);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		mutex_unlock(&ctrl->state_lock);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	/* Turn the slot on अगर it's occupied or link is up */
+	/* Turn the slot on if it's occupied or link is up */
 	mutex_lock(&ctrl->state_lock);
 	present = pciehp_card_present(ctrl);
 	link_active = pciehp_check_link_active(ctrl);
-	अगर (present <= 0 && link_active <= 0) अणु
+	if (present <= 0 && link_active <= 0) {
 		mutex_unlock(&ctrl->state_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	चयन (ctrl->state) अणु
-	हाल BLINKINGON_STATE:
+	switch (ctrl->state) {
+	case BLINKINGON_STATE:
 		cancel_delayed_work(&ctrl->button_work);
 		fallthrough;
-	हाल OFF_STATE:
+	case OFF_STATE:
 		ctrl->state = POWERON_STATE;
 		mutex_unlock(&ctrl->state_lock);
-		अगर (present)
+		if (present)
 			ctrl_info(ctrl, "Slot(%s): Card present\n",
 				  slot_name(ctrl));
-		अगर (link_active)
+		if (link_active)
 			ctrl_info(ctrl, "Slot(%s): Link Up\n",
 				  slot_name(ctrl));
 		ctrl->request_result = pciehp_enable_slot(ctrl);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		mutex_unlock(&ctrl->state_lock);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक __pciehp_enable_slot(काष्ठा controller *ctrl)
-अणु
-	u8 माला_लोtatus = 0;
+static int __pciehp_enable_slot(struct controller *ctrl)
+{
+	u8 getstatus = 0;
 
-	अगर (MRL_SENS(ctrl)) अणु
-		pciehp_get_latch_status(ctrl, &माला_लोtatus);
-		अगर (माला_लोtatus) अणु
+	if (MRL_SENS(ctrl)) {
+		pciehp_get_latch_status(ctrl, &getstatus);
+		if (getstatus) {
 			ctrl_info(ctrl, "Slot(%s): Latch open\n",
 				  slot_name(ctrl));
-			वापस -ENODEV;
-		पूर्ण
-	पूर्ण
+			return -ENODEV;
+		}
+	}
 
-	अगर (POWER_CTRL(ctrl)) अणु
-		pciehp_get_घातer_status(ctrl, &माला_लोtatus);
-		अगर (माला_लोtatus) अणु
+	if (POWER_CTRL(ctrl)) {
+		pciehp_get_power_status(ctrl, &getstatus);
+		if (getstatus) {
 			ctrl_info(ctrl, "Slot(%s): Already enabled\n",
 				  slot_name(ctrl));
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस board_added(ctrl);
-पूर्ण
+	return board_added(ctrl);
+}
 
-अटल पूर्णांक pciehp_enable_slot(काष्ठा controller *ctrl)
-अणु
-	पूर्णांक ret;
+static int pciehp_enable_slot(struct controller *ctrl)
+{
+	int ret;
 
-	pm_runसमय_get_sync(&ctrl->pcie->port->dev);
+	pm_runtime_get_sync(&ctrl->pcie->port->dev);
 	ret = __pciehp_enable_slot(ctrl);
-	अगर (ret && ATTN_BUTTN(ctrl))
+	if (ret && ATTN_BUTTN(ctrl))
 		/* may be blinking */
 		pciehp_set_indicators(ctrl, PCI_EXP_SLTCTL_PWR_IND_OFF,
 				      INDICATOR_NOOP);
-	pm_runसमय_put(&ctrl->pcie->port->dev);
+	pm_runtime_put(&ctrl->pcie->port->dev);
 
 	mutex_lock(&ctrl->state_lock);
 	ctrl->state = ret ? OFF_STATE : ON_STATE;
 	mutex_unlock(&ctrl->state_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __pciehp_disable_slot(काष्ठा controller *ctrl, bool safe_removal)
-अणु
-	u8 माला_लोtatus = 0;
+static int __pciehp_disable_slot(struct controller *ctrl, bool safe_removal)
+{
+	u8 getstatus = 0;
 
-	अगर (POWER_CTRL(ctrl)) अणु
-		pciehp_get_घातer_status(ctrl, &माला_लोtatus);
-		अगर (!माला_लोtatus) अणु
+	if (POWER_CTRL(ctrl)) {
+		pciehp_get_power_status(ctrl, &getstatus);
+		if (!getstatus) {
 			ctrl_info(ctrl, "Slot(%s): Already disabled\n",
 				  slot_name(ctrl));
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	हटाओ_board(ctrl, safe_removal);
-	वापस 0;
-पूर्ण
+	remove_board(ctrl, safe_removal);
+	return 0;
+}
 
-अटल पूर्णांक pciehp_disable_slot(काष्ठा controller *ctrl, bool safe_removal)
-अणु
-	पूर्णांक ret;
+static int pciehp_disable_slot(struct controller *ctrl, bool safe_removal)
+{
+	int ret;
 
-	pm_runसमय_get_sync(&ctrl->pcie->port->dev);
+	pm_runtime_get_sync(&ctrl->pcie->port->dev);
 	ret = __pciehp_disable_slot(ctrl, safe_removal);
-	pm_runसमय_put(&ctrl->pcie->port->dev);
+	pm_runtime_put(&ctrl->pcie->port->dev);
 
 	mutex_lock(&ctrl->state_lock);
 	ctrl->state = OFF_STATE;
 	mutex_unlock(&ctrl->state_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक pciehp_sysfs_enable_slot(काष्ठा hotplug_slot *hotplug_slot)
-अणु
-	काष्ठा controller *ctrl = to_ctrl(hotplug_slot);
+int pciehp_sysfs_enable_slot(struct hotplug_slot *hotplug_slot)
+{
+	struct controller *ctrl = to_ctrl(hotplug_slot);
 
 	mutex_lock(&ctrl->state_lock);
-	चयन (ctrl->state) अणु
-	हाल BLINKINGON_STATE:
-	हाल OFF_STATE:
+	switch (ctrl->state) {
+	case BLINKINGON_STATE:
+	case OFF_STATE:
 		mutex_unlock(&ctrl->state_lock);
 		/*
-		 * The IRQ thपढ़ो becomes a no-op अगर the user pulls out the
-		 * card beक्रमe the thपढ़ो wakes up, so initialize to -ENODEV.
+		 * The IRQ thread becomes a no-op if the user pulls out the
+		 * card before the thread wakes up, so initialize to -ENODEV.
 		 */
 		ctrl->request_result = -ENODEV;
 		pciehp_request(ctrl, PCI_EXP_SLTSTA_PDC);
-		रुको_event(ctrl->requester,
-			   !atomic_पढ़ो(&ctrl->pending_events) &&
+		wait_event(ctrl->requester,
+			   !atomic_read(&ctrl->pending_events) &&
 			   !ctrl->ist_running);
-		वापस ctrl->request_result;
-	हाल POWERON_STATE:
+		return ctrl->request_result;
+	case POWERON_STATE:
 		ctrl_info(ctrl, "Slot(%s): Already in powering on state\n",
 			  slot_name(ctrl));
-		अवरोध;
-	हाल BLINKINGOFF_STATE:
-	हाल ON_STATE:
-	हाल POWEROFF_STATE:
+		break;
+	case BLINKINGOFF_STATE:
+	case ON_STATE:
+	case POWEROFF_STATE:
 		ctrl_info(ctrl, "Slot(%s): Already enabled\n",
 			  slot_name(ctrl));
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ctrl_err(ctrl, "Slot(%s): Invalid state %#x\n",
 			 slot_name(ctrl), ctrl->state);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	mutex_unlock(&ctrl->state_lock);
 
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-पूर्णांक pciehp_sysfs_disable_slot(काष्ठा hotplug_slot *hotplug_slot)
-अणु
-	काष्ठा controller *ctrl = to_ctrl(hotplug_slot);
+int pciehp_sysfs_disable_slot(struct hotplug_slot *hotplug_slot)
+{
+	struct controller *ctrl = to_ctrl(hotplug_slot);
 
 	mutex_lock(&ctrl->state_lock);
-	चयन (ctrl->state) अणु
-	हाल BLINKINGOFF_STATE:
-	हाल ON_STATE:
+	switch (ctrl->state) {
+	case BLINKINGOFF_STATE:
+	case ON_STATE:
 		mutex_unlock(&ctrl->state_lock);
 		pciehp_request(ctrl, DISABLE_SLOT);
-		रुको_event(ctrl->requester,
-			   !atomic_पढ़ो(&ctrl->pending_events) &&
+		wait_event(ctrl->requester,
+			   !atomic_read(&ctrl->pending_events) &&
 			   !ctrl->ist_running);
-		वापस ctrl->request_result;
-	हाल POWEROFF_STATE:
+		return ctrl->request_result;
+	case POWEROFF_STATE:
 		ctrl_info(ctrl, "Slot(%s): Already in powering off state\n",
 			  slot_name(ctrl));
-		अवरोध;
-	हाल BLINKINGON_STATE:
-	हाल OFF_STATE:
-	हाल POWERON_STATE:
+		break;
+	case BLINKINGON_STATE:
+	case OFF_STATE:
+	case POWERON_STATE:
 		ctrl_info(ctrl, "Slot(%s): Already disabled\n",
 			  slot_name(ctrl));
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ctrl_err(ctrl, "Slot(%s): Invalid state %#x\n",
 			 slot_name(ctrl), ctrl->state);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	mutex_unlock(&ctrl->state_lock);
 
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}

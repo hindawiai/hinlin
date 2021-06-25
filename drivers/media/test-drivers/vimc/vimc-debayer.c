@@ -1,58 +1,57 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * vimc-debayer.c Virtual Media Controller Driver
  *
- * Copyright (C) 2015-2017 Helen Koike <helen.क्रमnazier@gmail.com>
+ * Copyright (C) 2015-2017 Helen Koike <helen.fornazier@gmail.com>
  */
 
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/v4l2-mediabus.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-event.h>
-#समावेश <media/v4l2-subdev.h>
+#include <linux/moduleparam.h>
+#include <linux/platform_device.h>
+#include <linux/vmalloc.h>
+#include <linux/v4l2-mediabus.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-event.h>
+#include <media/v4l2-subdev.h>
 
-#समावेश "vimc-common.h"
+#include "vimc-common.h"
 
-क्रमागत vimc_deb_rgb_colors अणु
+enum vimc_deb_rgb_colors {
 	VIMC_DEB_RED = 0,
 	VIMC_DEB_GREEN = 1,
 	VIMC_DEB_BLUE = 2,
-पूर्ण;
+};
 
-काष्ठा vimc_deb_pix_map अणु
+struct vimc_deb_pix_map {
 	u32 code;
-	क्रमागत vimc_deb_rgb_colors order[2][2];
-पूर्ण;
+	enum vimc_deb_rgb_colors order[2][2];
+};
 
-काष्ठा vimc_deb_device अणु
-	काष्ठा vimc_ent_device ved;
-	काष्ठा v4l2_subdev sd;
-	/* The active क्रमmat */
-	काष्ठा v4l2_mbus_framefmt sink_fmt;
+struct vimc_deb_device {
+	struct vimc_ent_device ved;
+	struct v4l2_subdev sd;
+	/* The active format */
+	struct v4l2_mbus_framefmt sink_fmt;
 	u32 src_code;
-	व्योम (*set_rgb_src)(काष्ठा vimc_deb_device *vdeb, अचिन्हित पूर्णांक lin,
-			    अचिन्हित पूर्णांक col, अचिन्हित पूर्णांक rgb[3]);
+	void (*set_rgb_src)(struct vimc_deb_device *vdeb, unsigned int lin,
+			    unsigned int col, unsigned int rgb[3]);
 	/* Values calculated when the stream starts */
 	u8 *src_frame;
-	स्थिर काष्ठा vimc_deb_pix_map *sink_pix_map;
-	अचिन्हित पूर्णांक sink_bpp;
-	अचिन्हित पूर्णांक mean_win_size;
-	काष्ठा v4l2_ctrl_handler hdl;
-	काष्ठा media_pad pads[2];
-पूर्ण;
+	const struct vimc_deb_pix_map *sink_pix_map;
+	unsigned int sink_bpp;
+	unsigned int mean_win_size;
+	struct v4l2_ctrl_handler hdl;
+	struct media_pad pads[2];
+};
 
-अटल स्थिर काष्ठा v4l2_mbus_framefmt sink_fmt_शेष = अणु
+static const struct v4l2_mbus_framefmt sink_fmt_default = {
 	.width = 640,
 	.height = 480,
 	.code = MEDIA_BUS_FMT_SRGGB8_1X8,
 	.field = V4L2_FIELD_NONE,
 	.colorspace = V4L2_COLORSPACE_SRGB,
-पूर्ण;
+};
 
-अटल स्थिर u32 vimc_deb_src_mbus_codes[] = अणु
+static const u32 vimc_deb_src_mbus_codes[] = {
 	MEDIA_BUS_FMT_GBR888_1X24,
 	MEDIA_BUS_FMT_BGR888_1X24,
 	MEDIA_BUS_FMT_BGR888_3X8,
@@ -63,230 +62,230 @@
 	MEDIA_BUS_FMT_RGB888_1X7X4_SPWG,
 	MEDIA_BUS_FMT_RGB888_1X7X4_JEIDA,
 	MEDIA_BUS_FMT_RGB888_1X32_PADHI,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा vimc_deb_pix_map vimc_deb_pix_map_list[] = अणु
-	अणु
+static const struct vimc_deb_pix_map vimc_deb_pix_map_list[] = {
+	{
 		.code = MEDIA_BUS_FMT_SBGGR8_1X8,
-		.order = अणु अणु VIMC_DEB_BLUE, VIMC_DEB_GREEN पूर्ण,
-			   अणु VIMC_DEB_GREEN, VIMC_DEB_RED पूर्ण पूर्ण
-	पूर्ण,
-	अणु
+		.order = { { VIMC_DEB_BLUE, VIMC_DEB_GREEN },
+			   { VIMC_DEB_GREEN, VIMC_DEB_RED } }
+	},
+	{
 		.code = MEDIA_BUS_FMT_SGBRG8_1X8,
-		.order = अणु अणु VIMC_DEB_GREEN, VIMC_DEB_BLUE पूर्ण,
-			   अणु VIMC_DEB_RED, VIMC_DEB_GREEN पूर्ण पूर्ण
-	पूर्ण,
-	अणु
+		.order = { { VIMC_DEB_GREEN, VIMC_DEB_BLUE },
+			   { VIMC_DEB_RED, VIMC_DEB_GREEN } }
+	},
+	{
 		.code = MEDIA_BUS_FMT_SGRBG8_1X8,
-		.order = अणु अणु VIMC_DEB_GREEN, VIMC_DEB_RED पूर्ण,
-			   अणु VIMC_DEB_BLUE, VIMC_DEB_GREEN पूर्ण पूर्ण
-	पूर्ण,
-	अणु
+		.order = { { VIMC_DEB_GREEN, VIMC_DEB_RED },
+			   { VIMC_DEB_BLUE, VIMC_DEB_GREEN } }
+	},
+	{
 		.code = MEDIA_BUS_FMT_SRGGB8_1X8,
-		.order = अणु अणु VIMC_DEB_RED, VIMC_DEB_GREEN पूर्ण,
-			   अणु VIMC_DEB_GREEN, VIMC_DEB_BLUE पूर्ण पूर्ण
-	पूर्ण,
-	अणु
+		.order = { { VIMC_DEB_RED, VIMC_DEB_GREEN },
+			   { VIMC_DEB_GREEN, VIMC_DEB_BLUE } }
+	},
+	{
 		.code = MEDIA_BUS_FMT_SBGGR10_1X10,
-		.order = अणु अणु VIMC_DEB_BLUE, VIMC_DEB_GREEN पूर्ण,
-			   अणु VIMC_DEB_GREEN, VIMC_DEB_RED पूर्ण पूर्ण
-	पूर्ण,
-	अणु
+		.order = { { VIMC_DEB_BLUE, VIMC_DEB_GREEN },
+			   { VIMC_DEB_GREEN, VIMC_DEB_RED } }
+	},
+	{
 		.code = MEDIA_BUS_FMT_SGBRG10_1X10,
-		.order = अणु अणु VIMC_DEB_GREEN, VIMC_DEB_BLUE पूर्ण,
-			   अणु VIMC_DEB_RED, VIMC_DEB_GREEN पूर्ण पूर्ण
-	पूर्ण,
-	अणु
+		.order = { { VIMC_DEB_GREEN, VIMC_DEB_BLUE },
+			   { VIMC_DEB_RED, VIMC_DEB_GREEN } }
+	},
+	{
 		.code = MEDIA_BUS_FMT_SGRBG10_1X10,
-		.order = अणु अणु VIMC_DEB_GREEN, VIMC_DEB_RED पूर्ण,
-			   अणु VIMC_DEB_BLUE, VIMC_DEB_GREEN पूर्ण पूर्ण
-	पूर्ण,
-	अणु
+		.order = { { VIMC_DEB_GREEN, VIMC_DEB_RED },
+			   { VIMC_DEB_BLUE, VIMC_DEB_GREEN } }
+	},
+	{
 		.code = MEDIA_BUS_FMT_SRGGB10_1X10,
-		.order = अणु अणु VIMC_DEB_RED, VIMC_DEB_GREEN पूर्ण,
-			   अणु VIMC_DEB_GREEN, VIMC_DEB_BLUE पूर्ण पूर्ण
-	पूर्ण,
-	अणु
+		.order = { { VIMC_DEB_RED, VIMC_DEB_GREEN },
+			   { VIMC_DEB_GREEN, VIMC_DEB_BLUE } }
+	},
+	{
 		.code = MEDIA_BUS_FMT_SBGGR12_1X12,
-		.order = अणु अणु VIMC_DEB_BLUE, VIMC_DEB_GREEN पूर्ण,
-			   अणु VIMC_DEB_GREEN, VIMC_DEB_RED पूर्ण पूर्ण
-	पूर्ण,
-	अणु
+		.order = { { VIMC_DEB_BLUE, VIMC_DEB_GREEN },
+			   { VIMC_DEB_GREEN, VIMC_DEB_RED } }
+	},
+	{
 		.code = MEDIA_BUS_FMT_SGBRG12_1X12,
-		.order = अणु अणु VIMC_DEB_GREEN, VIMC_DEB_BLUE पूर्ण,
-			   अणु VIMC_DEB_RED, VIMC_DEB_GREEN पूर्ण पूर्ण
-	पूर्ण,
-	अणु
+		.order = { { VIMC_DEB_GREEN, VIMC_DEB_BLUE },
+			   { VIMC_DEB_RED, VIMC_DEB_GREEN } }
+	},
+	{
 		.code = MEDIA_BUS_FMT_SGRBG12_1X12,
-		.order = अणु अणु VIMC_DEB_GREEN, VIMC_DEB_RED पूर्ण,
-			   अणु VIMC_DEB_BLUE, VIMC_DEB_GREEN पूर्ण पूर्ण
-	पूर्ण,
-	अणु
+		.order = { { VIMC_DEB_GREEN, VIMC_DEB_RED },
+			   { VIMC_DEB_BLUE, VIMC_DEB_GREEN } }
+	},
+	{
 		.code = MEDIA_BUS_FMT_SRGGB12_1X12,
-		.order = अणु अणु VIMC_DEB_RED, VIMC_DEB_GREEN पूर्ण,
-			   अणु VIMC_DEB_GREEN, VIMC_DEB_BLUE पूर्ण पूर्ण
-	पूर्ण,
-पूर्ण;
+		.order = { { VIMC_DEB_RED, VIMC_DEB_GREEN },
+			   { VIMC_DEB_GREEN, VIMC_DEB_BLUE } }
+	},
+};
 
-अटल स्थिर काष्ठा vimc_deb_pix_map *vimc_deb_pix_map_by_code(u32 code)
-अणु
-	अचिन्हित पूर्णांक i;
+static const struct vimc_deb_pix_map *vimc_deb_pix_map_by_code(u32 code)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(vimc_deb_pix_map_list); i++)
-		अगर (vimc_deb_pix_map_list[i].code == code)
-			वापस &vimc_deb_pix_map_list[i];
+	for (i = 0; i < ARRAY_SIZE(vimc_deb_pix_map_list); i++)
+		if (vimc_deb_pix_map_list[i].code == code)
+			return &vimc_deb_pix_map_list[i];
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल bool vimc_deb_src_code_is_valid(u32 code)
-अणु
-	अचिन्हित पूर्णांक i;
+static bool vimc_deb_src_code_is_valid(u32 code)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(vimc_deb_src_mbus_codes); i++)
-		अगर (vimc_deb_src_mbus_codes[i] == code)
-			वापस true;
+	for (i = 0; i < ARRAY_SIZE(vimc_deb_src_mbus_codes); i++)
+		if (vimc_deb_src_mbus_codes[i] == code)
+			return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक vimc_deb_init_cfg(काष्ठा v4l2_subdev *sd,
-			     काष्ठा v4l2_subdev_pad_config *cfg)
-अणु
-	काष्ठा vimc_deb_device *vdeb = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt *mf;
-	अचिन्हित पूर्णांक i;
+static int vimc_deb_init_cfg(struct v4l2_subdev *sd,
+			     struct v4l2_subdev_pad_config *cfg)
+{
+	struct vimc_deb_device *vdeb = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt *mf;
+	unsigned int i;
 
-	mf = v4l2_subdev_get_try_क्रमmat(sd, cfg, 0);
-	*mf = sink_fmt_शेष;
+	mf = v4l2_subdev_get_try_format(sd, cfg, 0);
+	*mf = sink_fmt_default;
 
-	क्रम (i = 1; i < sd->entity.num_pads; i++) अणु
-		mf = v4l2_subdev_get_try_क्रमmat(sd, cfg, i);
-		*mf = sink_fmt_शेष;
+	for (i = 1; i < sd->entity.num_pads; i++) {
+		mf = v4l2_subdev_get_try_format(sd, cfg, i);
+		*mf = sink_fmt_default;
 		mf->code = vdeb->src_code;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vimc_deb_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
-				   काष्ठा v4l2_subdev_pad_config *cfg,
-				   काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
-अणु
-	अगर (VIMC_IS_SRC(code->pad)) अणु
-		अगर (code->index >= ARRAY_SIZE(vimc_deb_src_mbus_codes))
-			वापस -EINVAL;
+static int vimc_deb_enum_mbus_code(struct v4l2_subdev *sd,
+				   struct v4l2_subdev_pad_config *cfg,
+				   struct v4l2_subdev_mbus_code_enum *code)
+{
+	if (VIMC_IS_SRC(code->pad)) {
+		if (code->index >= ARRAY_SIZE(vimc_deb_src_mbus_codes))
+			return -EINVAL;
 
 		code->code = vimc_deb_src_mbus_codes[code->index];
-	पूर्ण अन्यथा अणु
-		अगर (code->index >= ARRAY_SIZE(vimc_deb_pix_map_list))
-			वापस -EINVAL;
+	} else {
+		if (code->index >= ARRAY_SIZE(vimc_deb_pix_map_list))
+			return -EINVAL;
 
 		code->code = vimc_deb_pix_map_list[code->index].code;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vimc_deb_क्रमागत_frame_size(काष्ठा v4l2_subdev *sd,
-				    काष्ठा v4l2_subdev_pad_config *cfg,
-				    काष्ठा v4l2_subdev_frame_size_क्रमागत *fse)
-अणु
-	अगर (fse->index)
-		वापस -EINVAL;
+static int vimc_deb_enum_frame_size(struct v4l2_subdev *sd,
+				    struct v4l2_subdev_pad_config *cfg,
+				    struct v4l2_subdev_frame_size_enum *fse)
+{
+	if (fse->index)
+		return -EINVAL;
 
-	अगर (VIMC_IS_SINK(fse->pad)) अणु
-		स्थिर काष्ठा vimc_deb_pix_map *vpix =
+	if (VIMC_IS_SINK(fse->pad)) {
+		const struct vimc_deb_pix_map *vpix =
 			vimc_deb_pix_map_by_code(fse->code);
 
-		अगर (!vpix)
-			वापस -EINVAL;
-	पूर्ण अन्यथा अगर (!vimc_deb_src_code_is_valid(fse->code)) अणु
-		वापस -EINVAL;
-	पूर्ण
+		if (!vpix)
+			return -EINVAL;
+	} else if (!vimc_deb_src_code_is_valid(fse->code)) {
+		return -EINVAL;
+	}
 
 	fse->min_width = VIMC_FRAME_MIN_WIDTH;
 	fse->max_width = VIMC_FRAME_MAX_WIDTH;
 	fse->min_height = VIMC_FRAME_MIN_HEIGHT;
 	fse->max_height = VIMC_FRAME_MAX_HEIGHT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vimc_deb_get_fmt(काष्ठा v4l2_subdev *sd,
-			    काष्ठा v4l2_subdev_pad_config *cfg,
-			    काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा vimc_deb_device *vdeb = v4l2_get_subdevdata(sd);
+static int vimc_deb_get_fmt(struct v4l2_subdev *sd,
+			    struct v4l2_subdev_pad_config *cfg,
+			    struct v4l2_subdev_format *fmt)
+{
+	struct vimc_deb_device *vdeb = v4l2_get_subdevdata(sd);
 
-	/* Get the current sink क्रमmat */
-	fmt->क्रमmat = fmt->which == V4L2_SUBDEV_FORMAT_TRY ?
-		      *v4l2_subdev_get_try_क्रमmat(sd, cfg, 0) :
+	/* Get the current sink format */
+	fmt->format = fmt->which == V4L2_SUBDEV_FORMAT_TRY ?
+		      *v4l2_subdev_get_try_format(sd, cfg, 0) :
 		      vdeb->sink_fmt;
 
-	/* Set the right code क्रम the source pad */
-	अगर (VIMC_IS_SRC(fmt->pad))
-		fmt->क्रमmat.code = vdeb->src_code;
+	/* Set the right code for the source pad */
+	if (VIMC_IS_SRC(fmt->pad))
+		fmt->format.code = vdeb->src_code;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vimc_deb_adjust_sink_fmt(काष्ठा v4l2_mbus_framefmt *fmt)
-अणु
-	स्थिर काष्ठा vimc_deb_pix_map *vpix;
+static void vimc_deb_adjust_sink_fmt(struct v4l2_mbus_framefmt *fmt)
+{
+	const struct vimc_deb_pix_map *vpix;
 
 	/* Don't accept a code that is not on the debayer table */
 	vpix = vimc_deb_pix_map_by_code(fmt->code);
-	अगर (!vpix)
-		fmt->code = sink_fmt_शेष.code;
+	if (!vpix)
+		fmt->code = sink_fmt_default.code;
 
 	fmt->width = clamp_t(u32, fmt->width, VIMC_FRAME_MIN_WIDTH,
 			     VIMC_FRAME_MAX_WIDTH) & ~1;
 	fmt->height = clamp_t(u32, fmt->height, VIMC_FRAME_MIN_HEIGHT,
 			      VIMC_FRAME_MAX_HEIGHT) & ~1;
 
-	अगर (fmt->field == V4L2_FIELD_ANY)
-		fmt->field = sink_fmt_शेष.field;
+	if (fmt->field == V4L2_FIELD_ANY)
+		fmt->field = sink_fmt_default.field;
 
 	vimc_colorimetry_clamp(fmt);
-पूर्ण
+}
 
-अटल पूर्णांक vimc_deb_set_fmt(काष्ठा v4l2_subdev *sd,
-			    काष्ठा v4l2_subdev_pad_config *cfg,
-			    काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा vimc_deb_device *vdeb = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt *sink_fmt;
+static int vimc_deb_set_fmt(struct v4l2_subdev *sd,
+			    struct v4l2_subdev_pad_config *cfg,
+			    struct v4l2_subdev_format *fmt)
+{
+	struct vimc_deb_device *vdeb = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt *sink_fmt;
 	u32 *src_code;
 
-	अगर (fmt->which == V4L2_SUBDEV_FORMAT_ACTIVE) अणु
-		/* Do not change the क्रमmat जबतक stream is on */
-		अगर (vdeb->src_frame)
-			वापस -EBUSY;
+	if (fmt->which == V4L2_SUBDEV_FORMAT_ACTIVE) {
+		/* Do not change the format while stream is on */
+		if (vdeb->src_frame)
+			return -EBUSY;
 
 		sink_fmt = &vdeb->sink_fmt;
 		src_code = &vdeb->src_code;
-	पूर्ण अन्यथा अणु
-		sink_fmt = v4l2_subdev_get_try_क्रमmat(sd, cfg, 0);
-		src_code = &v4l2_subdev_get_try_क्रमmat(sd, cfg, 1)->code;
-	पूर्ण
+	} else {
+		sink_fmt = v4l2_subdev_get_try_format(sd, cfg, 0);
+		src_code = &v4l2_subdev_get_try_format(sd, cfg, 1)->code;
+	}
 
 	/*
-	 * Do not change the क्रमmat of the source pad,
+	 * Do not change the format of the source pad,
 	 * it is propagated from the sink
 	 */
-	अगर (VIMC_IS_SRC(fmt->pad)) अणु
-		u32 code = fmt->क्रमmat.code;
+	if (VIMC_IS_SRC(fmt->pad)) {
+		u32 code = fmt->format.code;
 
-		fmt->क्रमmat = *sink_fmt;
+		fmt->format = *sink_fmt;
 
-		अगर (vimc_deb_src_code_is_valid(code))
+		if (vimc_deb_src_code_is_valid(code))
 			*src_code = code;
 
-		fmt->क्रमmat.code = *src_code;
-	पूर्ण अन्यथा अणु
-		/* Set the new क्रमmat in the sink pad */
-		vimc_deb_adjust_sink_fmt(&fmt->क्रमmat);
+		fmt->format.code = *src_code;
+	} else {
+		/* Set the new format in the sink pad */
+		vimc_deb_adjust_sink_fmt(&fmt->format);
 
 		dev_dbg(vdeb->ved.dev, "%s: sink format update: "
 			"old:%dx%d (0x%x, %d, %d, %d, %d) "
@@ -296,56 +295,56 @@
 			sink_fmt->colorspace, sink_fmt->quantization,
 			sink_fmt->xfer_func, sink_fmt->ycbcr_enc,
 			/* new */
-			fmt->क्रमmat.width, fmt->क्रमmat.height, fmt->क्रमmat.code,
-			fmt->क्रमmat.colorspace,	fmt->क्रमmat.quantization,
-			fmt->क्रमmat.xfer_func, fmt->क्रमmat.ycbcr_enc);
+			fmt->format.width, fmt->format.height, fmt->format.code,
+			fmt->format.colorspace,	fmt->format.quantization,
+			fmt->format.xfer_func, fmt->format.ycbcr_enc);
 
-		*sink_fmt = fmt->क्रमmat;
-	पूर्ण
+		*sink_fmt = fmt->format;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_pad_ops vimc_deb_pad_ops = अणु
+static const struct v4l2_subdev_pad_ops vimc_deb_pad_ops = {
 	.init_cfg		= vimc_deb_init_cfg,
-	.क्रमागत_mbus_code		= vimc_deb_क्रमागत_mbus_code,
-	.क्रमागत_frame_size	= vimc_deb_क्रमागत_frame_size,
+	.enum_mbus_code		= vimc_deb_enum_mbus_code,
+	.enum_frame_size	= vimc_deb_enum_frame_size,
 	.get_fmt		= vimc_deb_get_fmt,
 	.set_fmt		= vimc_deb_set_fmt,
-पूर्ण;
+};
 
-अटल व्योम vimc_deb_process_rgb_frame(काष्ठा vimc_deb_device *vdeb,
-				       अचिन्हित पूर्णांक lin,
-				       अचिन्हित पूर्णांक col,
-				       अचिन्हित पूर्णांक rgb[3])
-अणु
-	स्थिर काष्ठा vimc_pix_map *vpix;
-	अचिन्हित पूर्णांक i, index;
+static void vimc_deb_process_rgb_frame(struct vimc_deb_device *vdeb,
+				       unsigned int lin,
+				       unsigned int col,
+				       unsigned int rgb[3])
+{
+	const struct vimc_pix_map *vpix;
+	unsigned int i, index;
 
 	vpix = vimc_pix_map_by_code(vdeb->src_code);
 	index = VIMC_FRAME_INDEX(lin, col, vdeb->sink_fmt.width, 3);
-	क्रम (i = 0; i < 3; i++) अणु
-		चयन (vpix->pixelक्रमmat) अणु
-		हाल V4L2_PIX_FMT_RGB24:
+	for (i = 0; i < 3; i++) {
+		switch (vpix->pixelformat) {
+		case V4L2_PIX_FMT_RGB24:
 			vdeb->src_frame[index + i] = rgb[i];
-			अवरोध;
-		हाल V4L2_PIX_FMT_BGR24:
+			break;
+		case V4L2_PIX_FMT_BGR24:
 			vdeb->src_frame[index + i] = rgb[2 - i];
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
-अटल पूर्णांक vimc_deb_s_stream(काष्ठा v4l2_subdev *sd, पूर्णांक enable)
-अणु
-	काष्ठा vimc_deb_device *vdeb = v4l2_get_subdevdata(sd);
+static int vimc_deb_s_stream(struct v4l2_subdev *sd, int enable)
+{
+	struct vimc_deb_device *vdeb = v4l2_get_subdevdata(sd);
 
-	अगर (enable) अणु
-		स्थिर काष्ठा vimc_pix_map *vpix;
-		अचिन्हित पूर्णांक frame_size;
+	if (enable) {
+		const struct vimc_pix_map *vpix;
+		unsigned int frame_size;
 
-		अगर (vdeb->src_frame)
-			वापस 0;
+		if (vdeb->src_frame)
+			return 0;
 
 		/* Calculate the frame size of the source pad */
 		vpix = vimc_pix_map_by_code(vdeb->src_code);
@@ -361,98 +360,98 @@
 			vimc_deb_pix_map_by_code(vdeb->sink_fmt.code);
 
 		/*
-		 * Allocate the frame buffer. Use vदो_स्मृति to be able to
+		 * Allocate the frame buffer. Use vmalloc to be able to
 		 * allocate a large amount of memory
 		 */
-		vdeb->src_frame = vदो_स्मृति(frame_size);
-		अगर (!vdeb->src_frame)
-			वापस -ENOMEM;
+		vdeb->src_frame = vmalloc(frame_size);
+		if (!vdeb->src_frame)
+			return -ENOMEM;
 
-	पूर्ण अन्यथा अणु
-		अगर (!vdeb->src_frame)
-			वापस 0;
+	} else {
+		if (!vdeb->src_frame)
+			return 0;
 
-		vमुक्त(vdeb->src_frame);
-		vdeb->src_frame = शून्य;
-	पूर्ण
+		vfree(vdeb->src_frame);
+		vdeb->src_frame = NULL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_core_ops vimc_deb_core_ops = अणु
+static const struct v4l2_subdev_core_ops vimc_deb_core_ops = {
 	.log_status = v4l2_ctrl_subdev_log_status,
 	.subscribe_event = v4l2_ctrl_subdev_subscribe_event,
 	.unsubscribe_event = v4l2_event_subdev_unsubscribe,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_video_ops vimc_deb_video_ops = अणु
+static const struct v4l2_subdev_video_ops vimc_deb_video_ops = {
 	.s_stream = vimc_deb_s_stream,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops vimc_deb_ops = अणु
+static const struct v4l2_subdev_ops vimc_deb_ops = {
 	.core = &vimc_deb_core_ops,
 	.pad = &vimc_deb_pad_ops,
 	.video = &vimc_deb_video_ops,
-पूर्ण;
+};
 
-अटल अचिन्हित पूर्णांक vimc_deb_get_val(स्थिर u8 *bytes,
-				     स्थिर अचिन्हित पूर्णांक n_bytes)
-अणु
-	अचिन्हित पूर्णांक i;
-	अचिन्हित पूर्णांक acc = 0;
+static unsigned int vimc_deb_get_val(const u8 *bytes,
+				     const unsigned int n_bytes)
+{
+	unsigned int i;
+	unsigned int acc = 0;
 
-	क्रम (i = 0; i < n_bytes; i++)
+	for (i = 0; i < n_bytes; i++)
 		acc = acc + (bytes[i] << (8 * i));
 
-	वापस acc;
-पूर्ण
+	return acc;
+}
 
-अटल व्योम vimc_deb_calc_rgb_sink(काष्ठा vimc_deb_device *vdeb,
-				   स्थिर u8 *frame,
-				   स्थिर अचिन्हित पूर्णांक lin,
-				   स्थिर अचिन्हित पूर्णांक col,
-				   अचिन्हित पूर्णांक rgb[3])
-अणु
-	अचिन्हित पूर्णांक i, seek, wlin, wcol;
-	अचिन्हित पूर्णांक n_rgb[3] = अणु0, 0, 0पूर्ण;
+static void vimc_deb_calc_rgb_sink(struct vimc_deb_device *vdeb,
+				   const u8 *frame,
+				   const unsigned int lin,
+				   const unsigned int col,
+				   unsigned int rgb[3])
+{
+	unsigned int i, seek, wlin, wcol;
+	unsigned int n_rgb[3] = {0, 0, 0};
 
-	क्रम (i = 0; i < 3; i++)
+	for (i = 0; i < 3; i++)
 		rgb[i] = 0;
 
 	/*
 	 * Calculate how many we need to subtract to get to the pixel in
-	 * the top left corner of the mean winकरोw (considering the current
+	 * the top left corner of the mean window (considering the current
 	 * pixel as the center)
 	 */
 	seek = vdeb->mean_win_size / 2;
 
-	/* Sum the values of the colors in the mean winकरोw */
+	/* Sum the values of the colors in the mean window */
 
 	dev_dbg(vdeb->ved.dev,
 		"deb: %s: --- Calc pixel %dx%d, window mean %d, seek %d ---\n",
 		vdeb->sd.name, lin, col, vdeb->sink_fmt.height, seek);
 
 	/*
-	 * Iterate through all the lines in the mean winकरोw, start
-	 * with zero अगर the pixel is outside the frame and करोn't pass
+	 * Iterate through all the lines in the mean window, start
+	 * with zero if the pixel is outside the frame and don't pass
 	 * the height when the pixel is in the bottom border of the
 	 * frame
 	 */
-	क्रम (wlin = seek > lin ? 0 : lin - seek;
+	for (wlin = seek > lin ? 0 : lin - seek;
 	     wlin < lin + seek + 1 && wlin < vdeb->sink_fmt.height;
-	     wlin++) अणु
+	     wlin++) {
 
 		/*
-		 * Iterate through all the columns in the mean winकरोw, start
-		 * with zero अगर the pixel is outside the frame and करोn't pass
+		 * Iterate through all the columns in the mean window, start
+		 * with zero if the pixel is outside the frame and don't pass
 		 * the width when the pixel is in the right border of the
 		 * frame
 		 */
-		क्रम (wcol = seek > col ? 0 : col - seek;
+		for (wcol = seek > col ? 0 : col - seek;
 		     wcol < col + seek + 1 && wcol < vdeb->sink_fmt.width;
-		     wcol++) अणु
-			क्रमागत vimc_deb_rgb_colors color;
-			अचिन्हित पूर्णांक index;
+		     wcol++) {
+			enum vimc_deb_rgb_colors color;
+			unsigned int index;
 
 			/* Check which color this pixel is */
 			color = vdeb->sink_pix_map->order[wlin % 2][wcol % 2];
@@ -469,87 +468,87 @@
 			rgb[color] = rgb[color] +
 				vimc_deb_get_val(&frame[index], vdeb->sink_bpp);
 
-			/* Save how many values we alपढ़ोy added */
+			/* Save how many values we already added */
 			n_rgb[color]++;
 
 			dev_dbg(vdeb->ved.dev, "deb: %s: RGB CALC: val %d, n %d\n",
 				vdeb->sd.name, rgb[color], n_rgb[color]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Calculate the mean */
-	क्रम (i = 0; i < 3; i++) अणु
+	for (i = 0; i < 3; i++) {
 		dev_dbg(vdeb->ved.dev,
 			"deb: %s: PRE CALC: %dx%d Color %d, val %d, n %d\n",
 			vdeb->sd.name, lin, col, i, rgb[i], n_rgb[i]);
 
-		अगर (n_rgb[i])
+		if (n_rgb[i])
 			rgb[i] = rgb[i] / n_rgb[i];
 
 		dev_dbg(vdeb->ved.dev,
 			"deb: %s: FINAL CALC: %dx%d Color %d, val %d\n",
 			vdeb->sd.name, lin, col, i, rgb[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम *vimc_deb_process_frame(काष्ठा vimc_ent_device *ved,
-				    स्थिर व्योम *sink_frame)
-अणु
-	काष्ठा vimc_deb_device *vdeb = container_of(ved, काष्ठा vimc_deb_device,
+static void *vimc_deb_process_frame(struct vimc_ent_device *ved,
+				    const void *sink_frame)
+{
+	struct vimc_deb_device *vdeb = container_of(ved, struct vimc_deb_device,
 						    ved);
-	अचिन्हित पूर्णांक rgb[3];
-	अचिन्हित पूर्णांक i, j;
+	unsigned int rgb[3];
+	unsigned int i, j;
 
-	/* If the stream in this node is not active, just वापस */
-	अगर (!vdeb->src_frame)
-		वापस ERR_PTR(-EINVAL);
+	/* If the stream in this node is not active, just return */
+	if (!vdeb->src_frame)
+		return ERR_PTR(-EINVAL);
 
-	क्रम (i = 0; i < vdeb->sink_fmt.height; i++)
-		क्रम (j = 0; j < vdeb->sink_fmt.width; j++) अणु
+	for (i = 0; i < vdeb->sink_fmt.height; i++)
+		for (j = 0; j < vdeb->sink_fmt.width; j++) {
 			vimc_deb_calc_rgb_sink(vdeb, sink_frame, i, j, rgb);
 			vdeb->set_rgb_src(vdeb, i, j, rgb);
-		पूर्ण
+		}
 
-	वापस vdeb->src_frame;
-पूर्ण
+	return vdeb->src_frame;
+}
 
-अटल पूर्णांक vimc_deb_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा vimc_deb_device *vdeb =
-		container_of(ctrl->handler, काष्ठा vimc_deb_device, hdl);
+static int vimc_deb_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct vimc_deb_device *vdeb =
+		container_of(ctrl->handler, struct vimc_deb_device, hdl);
 
-	चयन (ctrl->id) अणु
-	हाल VIMC_CID_MEAN_WIN_SIZE:
+	switch (ctrl->id) {
+	case VIMC_CID_MEAN_WIN_SIZE:
 		vdeb->mean_win_size = ctrl->val;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops vimc_deb_ctrl_ops = अणु
+static const struct v4l2_ctrl_ops vimc_deb_ctrl_ops = {
 	.s_ctrl = vimc_deb_s_ctrl,
-पूर्ण;
+};
 
-अटल व्योम vimc_deb_release(काष्ठा vimc_ent_device *ved)
-अणु
-	काष्ठा vimc_deb_device *vdeb =
-		container_of(ved, काष्ठा vimc_deb_device, ved);
+static void vimc_deb_release(struct vimc_ent_device *ved)
+{
+	struct vimc_deb_device *vdeb =
+		container_of(ved, struct vimc_deb_device, ved);
 
-	v4l2_ctrl_handler_मुक्त(&vdeb->hdl);
+	v4l2_ctrl_handler_free(&vdeb->hdl);
 	media_entity_cleanup(vdeb->ved.ent);
-	kमुक्त(vdeb);
-पूर्ण
+	kfree(vdeb);
+}
 
-अटल स्थिर काष्ठा v4l2_ctrl_config vimc_deb_ctrl_class = अणु
+static const struct v4l2_ctrl_config vimc_deb_ctrl_class = {
 	.flags = V4L2_CTRL_FLAG_READ_ONLY | V4L2_CTRL_FLAG_WRITE_ONLY,
 	.id = VIMC_CID_VIMC_CLASS,
 	.name = "VIMC Controls",
 	.type = V4L2_CTRL_TYPE_CTRL_CLASS,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_ctrl_config vimc_deb_ctrl_mean_win_size = अणु
+static const struct v4l2_ctrl_config vimc_deb_ctrl_mean_win_size = {
 	.ops = &vimc_deb_ctrl_ops,
 	.id = VIMC_CID_MEAN_WIN_SIZE,
 	.name = "Debayer Mean Window Size",
@@ -558,67 +557,67 @@
 	.max = 25,
 	.step = 2,
 	.def = 3,
-पूर्ण;
+};
 
-अटल काष्ठा vimc_ent_device *vimc_deb_add(काष्ठा vimc_device *vimc,
-					    स्थिर अक्षर *vcfg_name)
-अणु
-	काष्ठा v4l2_device *v4l2_dev = &vimc->v4l2_dev;
-	काष्ठा vimc_deb_device *vdeb;
-	पूर्णांक ret;
+static struct vimc_ent_device *vimc_deb_add(struct vimc_device *vimc,
+					    const char *vcfg_name)
+{
+	struct v4l2_device *v4l2_dev = &vimc->v4l2_dev;
+	struct vimc_deb_device *vdeb;
+	int ret;
 
-	/* Allocate the vdeb काष्ठा */
-	vdeb = kzalloc(माप(*vdeb), GFP_KERNEL);
-	अगर (!vdeb)
-		वापस ERR_PTR(-ENOMEM);
+	/* Allocate the vdeb struct */
+	vdeb = kzalloc(sizeof(*vdeb), GFP_KERNEL);
+	if (!vdeb)
+		return ERR_PTR(-ENOMEM);
 
 	/* Create controls: */
 	v4l2_ctrl_handler_init(&vdeb->hdl, 2);
-	v4l2_ctrl_new_custom(&vdeb->hdl, &vimc_deb_ctrl_class, शून्य);
-	v4l2_ctrl_new_custom(&vdeb->hdl, &vimc_deb_ctrl_mean_win_size, शून्य);
+	v4l2_ctrl_new_custom(&vdeb->hdl, &vimc_deb_ctrl_class, NULL);
+	v4l2_ctrl_new_custom(&vdeb->hdl, &vimc_deb_ctrl_mean_win_size, NULL);
 	vdeb->sd.ctrl_handler = &vdeb->hdl;
-	अगर (vdeb->hdl.error) अणु
+	if (vdeb->hdl.error) {
 		ret = vdeb->hdl.error;
-		जाओ err_मुक्त_vdeb;
-	पूर्ण
+		goto err_free_vdeb;
+	}
 
 	/* Initialize ved and sd */
 	vdeb->pads[0].flags = MEDIA_PAD_FL_SINK;
 	vdeb->pads[1].flags = MEDIA_PAD_FL_SOURCE;
 
-	ret = vimc_ent_sd_रेजिस्टर(&vdeb->ved, &vdeb->sd, v4l2_dev,
+	ret = vimc_ent_sd_register(&vdeb->ved, &vdeb->sd, v4l2_dev,
 				   vcfg_name,
 				   MEDIA_ENT_F_PROC_VIDEO_PIXEL_ENC_CONV, 2,
 				   vdeb->pads, &vimc_deb_ops);
-	अगर (ret)
-		जाओ err_मुक्त_hdl;
+	if (ret)
+		goto err_free_hdl;
 
 	vdeb->ved.process_frame = vimc_deb_process_frame;
 	vdeb->ved.dev = vimc->mdev.dev;
 	vdeb->mean_win_size = vimc_deb_ctrl_mean_win_size.def;
 
-	/* Initialize the frame क्रमmat */
-	vdeb->sink_fmt = sink_fmt_शेष;
+	/* Initialize the frame format */
+	vdeb->sink_fmt = sink_fmt_default;
 	/*
-	 * TODO: Add support क्रम more output क्रमmats, we only support
-	 * RGB888 क्रम now
-	 * NOTE: the src क्रमmat is always the same as the sink, except
-	 * क्रम the code
+	 * TODO: Add support for more output formats, we only support
+	 * RGB888 for now
+	 * NOTE: the src format is always the same as the sink, except
+	 * for the code
 	 */
 	vdeb->src_code = MEDIA_BUS_FMT_RGB888_1X24;
 	vdeb->set_rgb_src = vimc_deb_process_rgb_frame;
 
-	वापस &vdeb->ved;
+	return &vdeb->ved;
 
-err_मुक्त_hdl:
-	v4l2_ctrl_handler_मुक्त(&vdeb->hdl);
-err_मुक्त_vdeb:
-	kमुक्त(vdeb);
+err_free_hdl:
+	v4l2_ctrl_handler_free(&vdeb->hdl);
+err_free_vdeb:
+	kfree(vdeb);
 
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
-काष्ठा vimc_ent_type vimc_deb_type = अणु
+struct vimc_ent_type vimc_deb_type = {
 	.add = vimc_deb_add,
 	.release = vimc_deb_release
-पूर्ण;
+};

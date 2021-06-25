@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Linux network driver क्रम QLogic BR-series Converged Network Adapter.
+ * Linux network driver for QLogic BR-series Converged Network Adapter.
  */
 /*
  * Copyright (c) 2006-2014 Brocade Communications Systems, Inc.
@@ -10,29 +9,29 @@
  * www.qlogic.com
  */
 
-#अगर_अघोषित __CNA_H__
-#घोषणा __CNA_H__
+#ifndef __CNA_H__
+#define __CNA_H__
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/अगर_ether.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/mutex.h>
+#include <linux/pci.h>
+#include <linux/delay.h>
+#include <linux/bitops.h>
+#include <linux/timer.h>
+#include <linux/interrupt.h>
+#include <linux/if_vlan.h>
+#include <linux/if_ether.h>
 
-#घोषणा bfa_sm_fault(__event)    करो अणु                            \
+#define bfa_sm_fault(__event)    do {                            \
 	pr_err("SM Assertion failure: %s: %d: event = %d\n",	\
-		 __खाता__, __LINE__, __event);			\
-पूर्ण जबतक (0)
+		 __FILE__, __LINE__, __event);			\
+} while (0)
 
-बाह्य अक्षर bfa_version[];
+extern char bfa_version[];
 
-#घोषणा CNA_FW_खाता_CT	"ctfw-3.2.5.1.bin"
-#घोषणा CNA_FW_खाता_CT2	"ct2fw-3.2.5.1.bin"
-#घोषणा FC_SYMNAME_MAX	256	/*!< max name server symbolic name size */
+#define CNA_FW_FILE_CT	"ctfw-3.2.5.1.bin"
+#define CNA_FW_FILE_CT2	"ct2fw-3.2.5.1.bin"
+#define FC_SYMNAME_MAX	256	/*!< max name server symbolic name size */
 
-#पूर्ण_अगर /* __CNA_H__ */
+#endif /* __CNA_H__ */

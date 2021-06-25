@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * davinci_mmc.c - TI DaVinci MMC/SD/SDIO driver
  *
@@ -8,411 +7,411 @@
  * Copyright (C) 2009 David Brownell
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/mmc/host.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/irq.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/mmc/mmc.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/mmc/slot-gpपन.स>
-#समावेश <linux/पूर्णांकerrupt.h>
+#include <linux/module.h>
+#include <linux/ioport.h>
+#include <linux/platform_device.h>
+#include <linux/clk.h>
+#include <linux/err.h>
+#include <linux/cpufreq.h>
+#include <linux/mmc/host.h>
+#include <linux/io.h>
+#include <linux/irq.h>
+#include <linux/delay.h>
+#include <linux/dmaengine.h>
+#include <linux/dma-mapping.h>
+#include <linux/mmc/mmc.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/mmc/slot-gpio.h>
+#include <linux/interrupt.h>
 
-#समावेश <linux/platक्रमm_data/mmc-davinci.h>
+#include <linux/platform_data/mmc-davinci.h>
 
 /*
  * Register Definitions
  */
-#घोषणा DAVINCI_MMCCTL       0x00 /* Control Register                  */
-#घोषणा DAVINCI_MMCCLK       0x04 /* Memory Clock Control Register     */
-#घोषणा DAVINCI_MMCST0       0x08 /* Status Register 0                 */
-#घोषणा DAVINCI_MMCST1       0x0C /* Status Register 1                 */
-#घोषणा DAVINCI_MMCIM        0x10 /* Interrupt Mask Register           */
-#घोषणा DAVINCI_MMCTOR       0x14 /* Response Time-Out Register        */
-#घोषणा DAVINCI_MMCTOD       0x18 /* Data Read Time-Out Register       */
-#घोषणा DAVINCI_MMCBLEN      0x1C /* Block Length Register             */
-#घोषणा DAVINCI_MMCNBLK      0x20 /* Number of Blocks Register         */
-#घोषणा DAVINCI_MMCNBLC      0x24 /* Number of Blocks Counter Register */
-#घोषणा DAVINCI_MMCDRR       0x28 /* Data Receive Register             */
-#घोषणा DAVINCI_MMCDXR       0x2C /* Data Transmit Register            */
-#घोषणा DAVINCI_MMCCMD       0x30 /* Command Register                  */
-#घोषणा DAVINCI_MMCARGHL     0x34 /* Argument Register                 */
-#घोषणा DAVINCI_MMCRSP01     0x38 /* Response Register 0 and 1         */
-#घोषणा DAVINCI_MMCRSP23     0x3C /* Response Register 0 and 1         */
-#घोषणा DAVINCI_MMCRSP45     0x40 /* Response Register 0 and 1         */
-#घोषणा DAVINCI_MMCRSP67     0x44 /* Response Register 0 and 1         */
-#घोषणा DAVINCI_MMCDRSP      0x48 /* Data Response Register            */
-#घोषणा DAVINCI_MMCETOK      0x4C
-#घोषणा DAVINCI_MMCCIDX      0x50 /* Command Index Register            */
-#घोषणा DAVINCI_MMCCKC       0x54
-#घोषणा DAVINCI_MMCTORC      0x58
-#घोषणा DAVINCI_MMCTODC      0x5C
-#घोषणा DAVINCI_MMCBLNC      0x60
-#घोषणा DAVINCI_SDIOCTL      0x64
-#घोषणा DAVINCI_SDIOST0      0x68
-#घोषणा DAVINCI_SDIOIEN      0x6C
-#घोषणा DAVINCI_SDIOIST      0x70
-#घोषणा DAVINCI_MMCFIFOCTL   0x74 /* FIFO Control Register             */
+#define DAVINCI_MMCCTL       0x00 /* Control Register                  */
+#define DAVINCI_MMCCLK       0x04 /* Memory Clock Control Register     */
+#define DAVINCI_MMCST0       0x08 /* Status Register 0                 */
+#define DAVINCI_MMCST1       0x0C /* Status Register 1                 */
+#define DAVINCI_MMCIM        0x10 /* Interrupt Mask Register           */
+#define DAVINCI_MMCTOR       0x14 /* Response Time-Out Register        */
+#define DAVINCI_MMCTOD       0x18 /* Data Read Time-Out Register       */
+#define DAVINCI_MMCBLEN      0x1C /* Block Length Register             */
+#define DAVINCI_MMCNBLK      0x20 /* Number of Blocks Register         */
+#define DAVINCI_MMCNBLC      0x24 /* Number of Blocks Counter Register */
+#define DAVINCI_MMCDRR       0x28 /* Data Receive Register             */
+#define DAVINCI_MMCDXR       0x2C /* Data Transmit Register            */
+#define DAVINCI_MMCCMD       0x30 /* Command Register                  */
+#define DAVINCI_MMCARGHL     0x34 /* Argument Register                 */
+#define DAVINCI_MMCRSP01     0x38 /* Response Register 0 and 1         */
+#define DAVINCI_MMCRSP23     0x3C /* Response Register 0 and 1         */
+#define DAVINCI_MMCRSP45     0x40 /* Response Register 0 and 1         */
+#define DAVINCI_MMCRSP67     0x44 /* Response Register 0 and 1         */
+#define DAVINCI_MMCDRSP      0x48 /* Data Response Register            */
+#define DAVINCI_MMCETOK      0x4C
+#define DAVINCI_MMCCIDX      0x50 /* Command Index Register            */
+#define DAVINCI_MMCCKC       0x54
+#define DAVINCI_MMCTORC      0x58
+#define DAVINCI_MMCTODC      0x5C
+#define DAVINCI_MMCBLNC      0x60
+#define DAVINCI_SDIOCTL      0x64
+#define DAVINCI_SDIOST0      0x68
+#define DAVINCI_SDIOIEN      0x6C
+#define DAVINCI_SDIOIST      0x70
+#define DAVINCI_MMCFIFOCTL   0x74 /* FIFO Control Register             */
 
 /* DAVINCI_MMCCTL definitions */
-#घोषणा MMCCTL_DATRST         (1 << 0)
-#घोषणा MMCCTL_CMDRST         (1 << 1)
-#घोषणा MMCCTL_WIDTH_8_BIT    (1 << 8)
-#घोषणा MMCCTL_WIDTH_4_BIT    (1 << 2)
-#घोषणा MMCCTL_DATEG_DISABLED (0 << 6)
-#घोषणा MMCCTL_DATEG_RISING   (1 << 6)
-#घोषणा MMCCTL_DATEG_FALLING  (2 << 6)
-#घोषणा MMCCTL_DATEG_BOTH     (3 << 6)
-#घोषणा MMCCTL_PERMDR_LE      (0 << 9)
-#घोषणा MMCCTL_PERMDR_BE      (1 << 9)
-#घोषणा MMCCTL_PERMDX_LE      (0 << 10)
-#घोषणा MMCCTL_PERMDX_BE      (1 << 10)
+#define MMCCTL_DATRST         (1 << 0)
+#define MMCCTL_CMDRST         (1 << 1)
+#define MMCCTL_WIDTH_8_BIT    (1 << 8)
+#define MMCCTL_WIDTH_4_BIT    (1 << 2)
+#define MMCCTL_DATEG_DISABLED (0 << 6)
+#define MMCCTL_DATEG_RISING   (1 << 6)
+#define MMCCTL_DATEG_FALLING  (2 << 6)
+#define MMCCTL_DATEG_BOTH     (3 << 6)
+#define MMCCTL_PERMDR_LE      (0 << 9)
+#define MMCCTL_PERMDR_BE      (1 << 9)
+#define MMCCTL_PERMDX_LE      (0 << 10)
+#define MMCCTL_PERMDX_BE      (1 << 10)
 
 /* DAVINCI_MMCCLK definitions */
-#घोषणा MMCCLK_CLKEN          (1 << 8)
-#घोषणा MMCCLK_CLKRT_MASK     (0xFF << 0)
+#define MMCCLK_CLKEN          (1 << 8)
+#define MMCCLK_CLKRT_MASK     (0xFF << 0)
 
-/* IRQ bit definitions, क्रम DAVINCI_MMCST0 and DAVINCI_MMCIM */
-#घोषणा MMCST0_DATDNE         BIT(0)	/* data करोne */
-#घोषणा MMCST0_BSYDNE         BIT(1)	/* busy करोne */
-#घोषणा MMCST0_RSPDNE         BIT(2)	/* command करोne */
-#घोषणा MMCST0_TOUTRD         BIT(3)	/* data पढ़ो समयout */
-#घोषणा MMCST0_TOUTRS         BIT(4)	/* command response समयout */
-#घोषणा MMCST0_CRCWR          BIT(5)	/* data ग_लिखो CRC error */
-#घोषणा MMCST0_CRCRD          BIT(6)	/* data पढ़ो CRC error */
-#घोषणा MMCST0_CRCRS          BIT(7)	/* command response CRC error */
-#घोषणा MMCST0_DXRDY          BIT(9)	/* data transmit पढ़ोy (fअगरo empty) */
-#घोषणा MMCST0_DRRDY          BIT(10)	/* data receive पढ़ोy (data in fअगरo)*/
-#घोषणा MMCST0_DATED          BIT(11)	/* DAT3 edge detect */
-#घोषणा MMCST0_TRNDNE         BIT(12)	/* transfer करोne */
+/* IRQ bit definitions, for DAVINCI_MMCST0 and DAVINCI_MMCIM */
+#define MMCST0_DATDNE         BIT(0)	/* data done */
+#define MMCST0_BSYDNE         BIT(1)	/* busy done */
+#define MMCST0_RSPDNE         BIT(2)	/* command done */
+#define MMCST0_TOUTRD         BIT(3)	/* data read timeout */
+#define MMCST0_TOUTRS         BIT(4)	/* command response timeout */
+#define MMCST0_CRCWR          BIT(5)	/* data write CRC error */
+#define MMCST0_CRCRD          BIT(6)	/* data read CRC error */
+#define MMCST0_CRCRS          BIT(7)	/* command response CRC error */
+#define MMCST0_DXRDY          BIT(9)	/* data transmit ready (fifo empty) */
+#define MMCST0_DRRDY          BIT(10)	/* data receive ready (data in fifo)*/
+#define MMCST0_DATED          BIT(11)	/* DAT3 edge detect */
+#define MMCST0_TRNDNE         BIT(12)	/* transfer done */
 
 /* DAVINCI_MMCST1 definitions */
-#घोषणा MMCST1_BUSY           (1 << 0)
+#define MMCST1_BUSY           (1 << 0)
 
 /* DAVINCI_MMCCMD definitions */
-#घोषणा MMCCMD_CMD_MASK       (0x3F << 0)
-#घोषणा MMCCMD_PPLEN          (1 << 7)
-#घोषणा MMCCMD_BSYEXP         (1 << 8)
-#घोषणा MMCCMD_RSPFMT_MASK    (3 << 9)
-#घोषणा MMCCMD_RSPFMT_NONE    (0 << 9)
-#घोषणा MMCCMD_RSPFMT_R1456   (1 << 9)
-#घोषणा MMCCMD_RSPFMT_R2      (2 << 9)
-#घोषणा MMCCMD_RSPFMT_R3      (3 << 9)
-#घोषणा MMCCMD_DTRW           (1 << 11)
-#घोषणा MMCCMD_STRMTP         (1 << 12)
-#घोषणा MMCCMD_WDATX          (1 << 13)
-#घोषणा MMCCMD_INITCK         (1 << 14)
-#घोषणा MMCCMD_DCLR           (1 << 15)
-#घोषणा MMCCMD_DMATRIG        (1 << 16)
+#define MMCCMD_CMD_MASK       (0x3F << 0)
+#define MMCCMD_PPLEN          (1 << 7)
+#define MMCCMD_BSYEXP         (1 << 8)
+#define MMCCMD_RSPFMT_MASK    (3 << 9)
+#define MMCCMD_RSPFMT_NONE    (0 << 9)
+#define MMCCMD_RSPFMT_R1456   (1 << 9)
+#define MMCCMD_RSPFMT_R2      (2 << 9)
+#define MMCCMD_RSPFMT_R3      (3 << 9)
+#define MMCCMD_DTRW           (1 << 11)
+#define MMCCMD_STRMTP         (1 << 12)
+#define MMCCMD_WDATX          (1 << 13)
+#define MMCCMD_INITCK         (1 << 14)
+#define MMCCMD_DCLR           (1 << 15)
+#define MMCCMD_DMATRIG        (1 << 16)
 
 /* DAVINCI_MMCFIFOCTL definitions */
-#घोषणा MMCFIFOCTL_FIFORST    (1 << 0)
-#घोषणा MMCFIFOCTL_FIFOसूची_WR (1 << 1)
-#घोषणा MMCFIFOCTL_FIFOसूची_RD (0 << 1)
-#घोषणा MMCFIFOCTL_FIFOLEV    (1 << 2) /* 0 = 128 bits, 1 = 256 bits */
-#घोषणा MMCFIFOCTL_ACCWD_4    (0 << 3) /* access width of 4 bytes    */
-#घोषणा MMCFIFOCTL_ACCWD_3    (1 << 3) /* access width of 3 bytes    */
-#घोषणा MMCFIFOCTL_ACCWD_2    (2 << 3) /* access width of 2 bytes    */
-#घोषणा MMCFIFOCTL_ACCWD_1    (3 << 3) /* access width of 1 byte     */
+#define MMCFIFOCTL_FIFORST    (1 << 0)
+#define MMCFIFOCTL_FIFODIR_WR (1 << 1)
+#define MMCFIFOCTL_FIFODIR_RD (0 << 1)
+#define MMCFIFOCTL_FIFOLEV    (1 << 2) /* 0 = 128 bits, 1 = 256 bits */
+#define MMCFIFOCTL_ACCWD_4    (0 << 3) /* access width of 4 bytes    */
+#define MMCFIFOCTL_ACCWD_3    (1 << 3) /* access width of 3 bytes    */
+#define MMCFIFOCTL_ACCWD_2    (2 << 3) /* access width of 2 bytes    */
+#define MMCFIFOCTL_ACCWD_1    (3 << 3) /* access width of 1 byte     */
 
 /* DAVINCI_SDIOST0 definitions */
-#घोषणा SDIOST0_DAT1_HI       BIT(0)
+#define SDIOST0_DAT1_HI       BIT(0)
 
 /* DAVINCI_SDIOIEN definitions */
-#घोषणा SDIOIEN_IOINTEN       BIT(0)
+#define SDIOIEN_IOINTEN       BIT(0)
 
 /* DAVINCI_SDIOIST definitions */
-#घोषणा SDIOIST_IOINT         BIT(0)
+#define SDIOIST_IOINT         BIT(0)
 
-/* MMCSD Init घड़ी in Hz in खोलोdrain mode */
-#घोषणा MMCSD_INIT_CLOCK		200000
+/* MMCSD Init clock in Hz in opendrain mode */
+#define MMCSD_INIT_CLOCK		200000
 
 /*
  * One scatterlist dma "segment" is at most MAX_CCNT rw_threshold units,
  * and we handle up to MAX_NR_SG segments.  MMC_BLOCK_BOUNCE kicks in only
- * क्रम drivers with max_segs == 1, making the segments bigger (64KB)
+ * for drivers with max_segs == 1, making the segments bigger (64KB)
  * than the page or two that's otherwise typical. nr_sg (passed from
- * platक्रमm data) == 16 gives at least the same throughput boost, using
- * EDMA transfer linkage instead of spending CPU समय copying pages.
+ * platform data) == 16 gives at least the same throughput boost, using
+ * EDMA transfer linkage instead of spending CPU time copying pages.
  */
-#घोषणा MAX_CCNT	((1 << 16) - 1)
+#define MAX_CCNT	((1 << 16) - 1)
 
-#घोषणा MAX_NR_SG	16
+#define MAX_NR_SG	16
 
-अटल अचिन्हित rw_threshold = 32;
-module_param(rw_threshold, uपूर्णांक, S_IRUGO);
+static unsigned rw_threshold = 32;
+module_param(rw_threshold, uint, S_IRUGO);
 MODULE_PARM_DESC(rw_threshold,
 		"Read/Write threshold. Default = 32");
 
-अटल अचिन्हित poll_threshold = 128;
-module_param(poll_threshold, uपूर्णांक, S_IRUGO);
+static unsigned poll_threshold = 128;
+module_param(poll_threshold, uint, S_IRUGO);
 MODULE_PARM_DESC(poll_threshold,
 		 "Polling transaction size threshold. Default = 128");
 
-अटल अचिन्हित poll_loopcount = 32;
-module_param(poll_loopcount, uपूर्णांक, S_IRUGO);
+static unsigned poll_loopcount = 32;
+module_param(poll_loopcount, uint, S_IRUGO);
 MODULE_PARM_DESC(poll_loopcount,
 		 "Maximum polling loop count. Default = 32");
 
-अटल अचिन्हित use_dma = 1;
-module_param(use_dma, uपूर्णांक, 0);
+static unsigned use_dma = 1;
+module_param(use_dma, uint, 0);
 MODULE_PARM_DESC(use_dma, "Whether to use DMA or not. Default = 1");
 
-काष्ठा mmc_davinci_host अणु
-	काष्ठा mmc_command *cmd;
-	काष्ठा mmc_data *data;
-	काष्ठा mmc_host *mmc;
-	काष्ठा clk *clk;
-	अचिन्हित पूर्णांक mmc_input_clk;
-	व्योम __iomem *base;
-	काष्ठा resource *mem_res;
-	पूर्णांक mmc_irq, sdio_irq;
-	अचिन्हित अक्षर bus_mode;
+struct mmc_davinci_host {
+	struct mmc_command *cmd;
+	struct mmc_data *data;
+	struct mmc_host *mmc;
+	struct clk *clk;
+	unsigned int mmc_input_clk;
+	void __iomem *base;
+	struct resource *mem_res;
+	int mmc_irq, sdio_irq;
+	unsigned char bus_mode;
 
-#घोषणा DAVINCI_MMC_DATAसूची_NONE	0
-#घोषणा DAVINCI_MMC_DATAसूची_READ	1
-#घोषणा DAVINCI_MMC_DATAसूची_WRITE	2
-	अचिन्हित अक्षर data_dir;
+#define DAVINCI_MMC_DATADIR_NONE	0
+#define DAVINCI_MMC_DATADIR_READ	1
+#define DAVINCI_MMC_DATADIR_WRITE	2
+	unsigned char data_dir;
 
 	/* buffer is used during PIO of one scatterlist segment, and
-	 * is updated aदीर्घ with buffer_bytes_left.  bytes_left applies
+	 * is updated along with buffer_bytes_left.  bytes_left applies
 	 * to all N blocks of the PIO transfer.
 	 */
 	u8 *buffer;
 	u32 buffer_bytes_left;
 	u32 bytes_left;
 
-	काष्ठा dma_chan *dma_tx;
-	काष्ठा dma_chan *dma_rx;
+	struct dma_chan *dma_tx;
+	struct dma_chan *dma_rx;
 	bool use_dma;
-	bool करो_dma;
-	bool sdio_पूर्णांक;
+	bool do_dma;
+	bool sdio_int;
 	bool active_request;
 
-	/* For PIO we walk scatterlists one segment at a समय. */
-	अचिन्हित पूर्णांक		sg_len;
-	काष्ठा scatterlist *sg;
+	/* For PIO we walk scatterlists one segment at a time. */
+	unsigned int		sg_len;
+	struct scatterlist *sg;
 
 	/* Version of the MMC/SD controller */
 	u8 version;
-	/* क्रम ns in one cycle calculation */
-	अचिन्हित ns_in_one_cycle;
+	/* for ns in one cycle calculation */
+	unsigned ns_in_one_cycle;
 	/* Number of sg segments */
 	u8 nr_sg;
-#अगर_घोषित CONFIG_CPU_FREQ
-	काष्ठा notअगरier_block	freq_transition;
-#पूर्ण_अगर
-पूर्ण;
+#ifdef CONFIG_CPU_FREQ
+	struct notifier_block	freq_transition;
+#endif
+};
 
-अटल irqवापस_t mmc_davinci_irq(पूर्णांक irq, व्योम *dev_id);
+static irqreturn_t mmc_davinci_irq(int irq, void *dev_id);
 
 /* PIO only */
-अटल व्योम mmc_davinci_sg_to_buf(काष्ठा mmc_davinci_host *host)
-अणु
+static void mmc_davinci_sg_to_buf(struct mmc_davinci_host *host)
+{
 	host->buffer_bytes_left = sg_dma_len(host->sg);
 	host->buffer = sg_virt(host->sg);
-	अगर (host->buffer_bytes_left > host->bytes_left)
+	if (host->buffer_bytes_left > host->bytes_left)
 		host->buffer_bytes_left = host->bytes_left;
-पूर्ण
+}
 
-अटल व्योम davinci_fअगरo_data_trans(काष्ठा mmc_davinci_host *host,
-					अचिन्हित पूर्णांक n)
-अणु
+static void davinci_fifo_data_trans(struct mmc_davinci_host *host,
+					unsigned int n)
+{
 	u8 *p;
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 
-	अगर (host->buffer_bytes_left == 0) अणु
+	if (host->buffer_bytes_left == 0) {
 		host->sg = sg_next(host->data->sg);
 		mmc_davinci_sg_to_buf(host);
-	पूर्ण
+	}
 
 	p = host->buffer;
-	अगर (n > host->buffer_bytes_left)
+	if (n > host->buffer_bytes_left)
 		n = host->buffer_bytes_left;
 	host->buffer_bytes_left -= n;
 	host->bytes_left -= n;
 
 	/* NOTE:  we never transfer more than rw_threshold bytes
-	 * to/from the fअगरo here; there's no I/O overlap.
+	 * to/from the fifo here; there's no I/O overlap.
 	 * This also assumes that access width( i.e. ACCWD) is 4 bytes
 	 */
-	अगर (host->data_dir == DAVINCI_MMC_DATAसूची_WRITE) अणु
-		क्रम (i = 0; i < (n >> 2); i++) अणु
-			ग_लिखोl(*((u32 *)p), host->base + DAVINCI_MMCDXR);
+	if (host->data_dir == DAVINCI_MMC_DATADIR_WRITE) {
+		for (i = 0; i < (n >> 2); i++) {
+			writel(*((u32 *)p), host->base + DAVINCI_MMCDXR);
 			p = p + 4;
-		पूर्ण
-		अगर (n & 3) अणु
-			ioग_लिखो8_rep(host->base + DAVINCI_MMCDXR, p, (n & 3));
+		}
+		if (n & 3) {
+			iowrite8_rep(host->base + DAVINCI_MMCDXR, p, (n & 3));
 			p = p + (n & 3);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < (n >> 2); i++) अणु
-			*((u32 *)p) = पढ़ोl(host->base + DAVINCI_MMCDRR);
+		}
+	} else {
+		for (i = 0; i < (n >> 2); i++) {
+			*((u32 *)p) = readl(host->base + DAVINCI_MMCDRR);
 			p  = p + 4;
-		पूर्ण
-		अगर (n & 3) अणु
-			ioपढ़ो8_rep(host->base + DAVINCI_MMCDRR, p, (n & 3));
+		}
+		if (n & 3) {
+			ioread8_rep(host->base + DAVINCI_MMCDRR, p, (n & 3));
 			p = p + (n & 3);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	host->buffer = p;
-पूर्ण
+}
 
-अटल व्योम mmc_davinci_start_command(काष्ठा mmc_davinci_host *host,
-		काष्ठा mmc_command *cmd)
-अणु
+static void mmc_davinci_start_command(struct mmc_davinci_host *host,
+		struct mmc_command *cmd)
+{
 	u32 cmd_reg = 0;
 	u32 im_val;
 
 	dev_dbg(mmc_dev(host->mmc), "CMD%d, arg 0x%08x%s\n",
 		cmd->opcode, cmd->arg,
-		(अणु अक्षर *s;
-		चयन (mmc_resp_type(cmd)) अणु
-		हाल MMC_RSP_R1:
+		({ char *s;
+		switch (mmc_resp_type(cmd)) {
+		case MMC_RSP_R1:
 			s = ", R1/R5/R6/R7 response";
-			अवरोध;
-		हाल MMC_RSP_R1B:
+			break;
+		case MMC_RSP_R1B:
 			s = ", R1b response";
-			अवरोध;
-		हाल MMC_RSP_R2:
+			break;
+		case MMC_RSP_R2:
 			s = ", R2 response";
-			अवरोध;
-		हाल MMC_RSP_R3:
+			break;
+		case MMC_RSP_R3:
 			s = ", R3/R4 response";
-			अवरोध;
-		शेष:
+			break;
+		default:
 			s = ", (R? response)";
-			अवरोध;
-		पूर्ण s; पूर्ण));
+			break;
+		} s; }));
 	host->cmd = cmd;
 
-	चयन (mmc_resp_type(cmd)) अणु
-	हाल MMC_RSP_R1B:
+	switch (mmc_resp_type(cmd)) {
+	case MMC_RSP_R1B:
 		/* There's some spec confusion about when R1B is
-		 * allowed, but अगर the card करोesn't issue a BUSY
-		 * then it's harmless क्रम us to allow it.
+		 * allowed, but if the card doesn't issue a BUSY
+		 * then it's harmless for us to allow it.
 		 */
 		cmd_reg |= MMCCMD_BSYEXP;
 		fallthrough;
-	हाल MMC_RSP_R1:		/* 48 bits, CRC */
+	case MMC_RSP_R1:		/* 48 bits, CRC */
 		cmd_reg |= MMCCMD_RSPFMT_R1456;
-		अवरोध;
-	हाल MMC_RSP_R2:		/* 136 bits, CRC */
+		break;
+	case MMC_RSP_R2:		/* 136 bits, CRC */
 		cmd_reg |= MMCCMD_RSPFMT_R2;
-		अवरोध;
-	हाल MMC_RSP_R3:		/* 48 bits, no CRC */
+		break;
+	case MMC_RSP_R3:		/* 48 bits, no CRC */
 		cmd_reg |= MMCCMD_RSPFMT_R3;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		cmd_reg |= MMCCMD_RSPFMT_NONE;
 		dev_dbg(mmc_dev(host->mmc), "unknown resp_type %04x\n",
 			mmc_resp_type(cmd));
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/* Set command index */
 	cmd_reg |= cmd->opcode;
 
 	/* Enable EDMA transfer triggers */
-	अगर (host->करो_dma)
+	if (host->do_dma)
 		cmd_reg |= MMCCMD_DMATRIG;
 
-	अगर (host->version == MMC_CTLR_VERSION_2 && host->data != शून्य &&
-			host->data_dir == DAVINCI_MMC_DATAसूची_READ)
+	if (host->version == MMC_CTLR_VERSION_2 && host->data != NULL &&
+			host->data_dir == DAVINCI_MMC_DATADIR_READ)
 		cmd_reg |= MMCCMD_DMATRIG;
 
 	/* Setting whether command involves data transfer or not */
-	अगर (cmd->data)
+	if (cmd->data)
 		cmd_reg |= MMCCMD_WDATX;
 
-	/* Setting whether data पढ़ो or ग_लिखो */
-	अगर (host->data_dir == DAVINCI_MMC_DATAसूची_WRITE)
+	/* Setting whether data read or write */
+	if (host->data_dir == DAVINCI_MMC_DATADIR_WRITE)
 		cmd_reg |= MMCCMD_DTRW;
 
-	अगर (host->bus_mode == MMC_BUSMODE_PUSHPULL)
+	if (host->bus_mode == MMC_BUSMODE_PUSHPULL)
 		cmd_reg |= MMCCMD_PPLEN;
 
-	/* set Command समयout */
-	ग_लिखोl(0x1FFF, host->base + DAVINCI_MMCTOR);
+	/* set Command timeout */
+	writel(0x1FFF, host->base + DAVINCI_MMCTOR);
 
-	/* Enable पूर्णांकerrupt (calculate here, defer until FIFO is stuffed). */
+	/* Enable interrupt (calculate here, defer until FIFO is stuffed). */
 	im_val =  MMCST0_RSPDNE | MMCST0_CRCRS | MMCST0_TOUTRS;
-	अगर (host->data_dir == DAVINCI_MMC_DATAसूची_WRITE) अणु
+	if (host->data_dir == DAVINCI_MMC_DATADIR_WRITE) {
 		im_val |= MMCST0_DATDNE | MMCST0_CRCWR;
 
-		अगर (!host->करो_dma)
+		if (!host->do_dma)
 			im_val |= MMCST0_DXRDY;
-	पूर्ण अन्यथा अगर (host->data_dir == DAVINCI_MMC_DATAसूची_READ) अणु
+	} else if (host->data_dir == DAVINCI_MMC_DATADIR_READ) {
 		im_val |= MMCST0_DATDNE | MMCST0_CRCRD | MMCST0_TOUTRD;
 
-		अगर (!host->करो_dma)
+		if (!host->do_dma)
 			im_val |= MMCST0_DRRDY;
-	पूर्ण
+	}
 
 	/*
-	 * Beक्रमe non-DMA WRITE commands the controller needs priming:
+	 * Before non-DMA WRITE commands the controller needs priming:
 	 * FIFO should be populated with 32 bytes i.e. whatever is the FIFO size
 	 */
-	अगर (!host->करो_dma && (host->data_dir == DAVINCI_MMC_DATAसूची_WRITE))
-		davinci_fअगरo_data_trans(host, rw_threshold);
+	if (!host->do_dma && (host->data_dir == DAVINCI_MMC_DATADIR_WRITE))
+		davinci_fifo_data_trans(host, rw_threshold);
 
-	ग_लिखोl(cmd->arg, host->base + DAVINCI_MMCARGHL);
-	ग_लिखोl(cmd_reg,  host->base + DAVINCI_MMCCMD);
+	writel(cmd->arg, host->base + DAVINCI_MMCARGHL);
+	writel(cmd_reg,  host->base + DAVINCI_MMCCMD);
 
 	host->active_request = true;
 
-	अगर (!host->करो_dma && host->bytes_left <= poll_threshold) अणु
+	if (!host->do_dma && host->bytes_left <= poll_threshold) {
 		u32 count = poll_loopcount;
 
-		जबतक (host->active_request && count--) अणु
+		while (host->active_request && count--) {
 			mmc_davinci_irq(0, host);
 			cpu_relax();
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (host->active_request)
-		ग_लिखोl(im_val, host->base + DAVINCI_MMCIM);
-पूर्ण
+	if (host->active_request)
+		writel(im_val, host->base + DAVINCI_MMCIM);
+}
 
 /*----------------------------------------------------------------------*/
 
-/* DMA infraकाष्ठाure */
+/* DMA infrastructure */
 
-अटल व्योम davinci_पात_dma(काष्ठा mmc_davinci_host *host)
-अणु
-	काष्ठा dma_chan *sync_dev;
+static void davinci_abort_dma(struct mmc_davinci_host *host)
+{
+	struct dma_chan *sync_dev;
 
-	अगर (host->data_dir == DAVINCI_MMC_DATAसूची_READ)
+	if (host->data_dir == DAVINCI_MMC_DATADIR_READ)
 		sync_dev = host->dma_rx;
-	अन्यथा
+	else
 		sync_dev = host->dma_tx;
 
 	dmaengine_terminate_all(sync_dev);
-पूर्ण
+}
 
-अटल पूर्णांक mmc_davinci_send_dma_request(काष्ठा mmc_davinci_host *host,
-		काष्ठा mmc_data *data)
-अणु
-	काष्ठा dma_chan *chan;
-	काष्ठा dma_async_tx_descriptor *desc;
-	पूर्णांक ret = 0;
+static int mmc_davinci_send_dma_request(struct mmc_davinci_host *host,
+		struct mmc_data *data)
+{
+	struct dma_chan *chan;
+	struct dma_async_tx_descriptor *desc;
+	int ret = 0;
 
-	अगर (host->data_dir == DAVINCI_MMC_DATAसूची_WRITE) अणु
-		काष्ठा dma_slave_config dma_tx_conf = अणु
+	if (host->data_dir == DAVINCI_MMC_DATADIR_WRITE) {
+		struct dma_slave_config dma_tx_conf = {
 			.direction = DMA_MEM_TO_DEV,
 			.dst_addr = host->mem_res->start + DAVINCI_MMCDXR,
 			.dst_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES,
 			.dst_maxburst =
 				rw_threshold / DMA_SLAVE_BUSWIDTH_4_BYTES,
-		पूर्ण;
+		};
 		chan = host->dma_tx;
 		dmaengine_slave_config(host->dma_tx, &dma_tx_conf);
 
@@ -421,20 +420,20 @@ MODULE_PARM_DESC(use_dma, "Whether to use DMA or not. Default = 1");
 				host->sg_len,
 				DMA_MEM_TO_DEV,
 				DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-		अगर (!desc) अणु
+		if (!desc) {
 			dev_dbg(mmc_dev(host->mmc),
 				"failed to allocate DMA TX descriptor");
 			ret = -1;
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		काष्ठा dma_slave_config dma_rx_conf = अणु
+			goto out;
+		}
+	} else {
+		struct dma_slave_config dma_rx_conf = {
 			.direction = DMA_DEV_TO_MEM,
 			.src_addr = host->mem_res->start + DAVINCI_MMCDRR,
 			.src_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES,
 			.src_maxburst =
 				rw_threshold / DMA_SLAVE_BUSWIDTH_4_BYTES,
-		पूर्ण;
+		};
 		chan = host->dma_rx;
 		dmaengine_slave_config(host->dma_rx, &dma_rx_conf);
 
@@ -443,500 +442,500 @@ MODULE_PARM_DESC(use_dma, "Whether to use DMA or not. Default = 1");
 				host->sg_len,
 				DMA_DEV_TO_MEM,
 				DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-		अगर (!desc) अणु
+		if (!desc) {
 			dev_dbg(mmc_dev(host->mmc),
 				"failed to allocate DMA RX descriptor");
 			ret = -1;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	dmaengine_submit(desc);
 	dma_async_issue_pending(chan);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mmc_davinci_start_dma_transfer(काष्ठा mmc_davinci_host *host,
-		काष्ठा mmc_data *data)
-अणु
-	पूर्णांक i;
-	पूर्णांक mask = rw_threshold - 1;
-	पूर्णांक ret = 0;
+static int mmc_davinci_start_dma_transfer(struct mmc_davinci_host *host,
+		struct mmc_data *data)
+{
+	int i;
+	int mask = rw_threshold - 1;
+	int ret = 0;
 
 	host->sg_len = dma_map_sg(mmc_dev(host->mmc), data->sg, data->sg_len,
 				  mmc_get_dma_dir(data));
 
-	/* no inभागidual DMA segment should need a partial FIFO */
-	क्रम (i = 0; i < host->sg_len; i++) अणु
-		अगर (sg_dma_len(data->sg + i) & mask) अणु
+	/* no individual DMA segment should need a partial FIFO */
+	for (i = 0; i < host->sg_len; i++) {
+		if (sg_dma_len(data->sg + i) & mask) {
 			dma_unmap_sg(mmc_dev(host->mmc),
 				     data->sg, data->sg_len,
 				     mmc_get_dma_dir(data));
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			return -1;
+		}
+	}
 
-	host->करो_dma = 1;
+	host->do_dma = 1;
 	ret = mmc_davinci_send_dma_request(host, data);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम davinci_release_dma_channels(काष्ठा mmc_davinci_host *host)
-अणु
-	अगर (!host->use_dma)
-		वापस;
+static void davinci_release_dma_channels(struct mmc_davinci_host *host)
+{
+	if (!host->use_dma)
+		return;
 
 	dma_release_channel(host->dma_tx);
 	dma_release_channel(host->dma_rx);
-पूर्ण
+}
 
-अटल पूर्णांक davinci_acquire_dma_channels(काष्ठा mmc_davinci_host *host)
-अणु
+static int davinci_acquire_dma_channels(struct mmc_davinci_host *host)
+{
 	host->dma_tx = dma_request_chan(mmc_dev(host->mmc), "tx");
-	अगर (IS_ERR(host->dma_tx)) अणु
+	if (IS_ERR(host->dma_tx)) {
 		dev_err(mmc_dev(host->mmc), "Can't get dma_tx channel\n");
-		वापस PTR_ERR(host->dma_tx);
-	पूर्ण
+		return PTR_ERR(host->dma_tx);
+	}
 
 	host->dma_rx = dma_request_chan(mmc_dev(host->mmc), "rx");
-	अगर (IS_ERR(host->dma_rx)) अणु
+	if (IS_ERR(host->dma_rx)) {
 		dev_err(mmc_dev(host->mmc), "Can't get dma_rx channel\n");
 		dma_release_channel(host->dma_tx);
-		वापस PTR_ERR(host->dma_rx);
-	पूर्ण
+		return PTR_ERR(host->dma_rx);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*----------------------------------------------------------------------*/
 
-अटल व्योम
-mmc_davinci_prepare_data(काष्ठा mmc_davinci_host *host, काष्ठा mmc_request *req)
-अणु
-	पूर्णांक fअगरo_lev = (rw_threshold == 32) ? MMCFIFOCTL_FIFOLEV : 0;
-	पूर्णांक समयout;
-	काष्ठा mmc_data *data = req->data;
+static void
+mmc_davinci_prepare_data(struct mmc_davinci_host *host, struct mmc_request *req)
+{
+	int fifo_lev = (rw_threshold == 32) ? MMCFIFOCTL_FIFOLEV : 0;
+	int timeout;
+	struct mmc_data *data = req->data;
 
-	अगर (host->version == MMC_CTLR_VERSION_2)
-		fअगरo_lev = (rw_threshold == 64) ? MMCFIFOCTL_FIFOLEV : 0;
+	if (host->version == MMC_CTLR_VERSION_2)
+		fifo_lev = (rw_threshold == 64) ? MMCFIFOCTL_FIFOLEV : 0;
 
 	host->data = data;
-	अगर (data == शून्य) अणु
-		host->data_dir = DAVINCI_MMC_DATAसूची_NONE;
-		ग_लिखोl(0, host->base + DAVINCI_MMCBLEN);
-		ग_लिखोl(0, host->base + DAVINCI_MMCNBLK);
-		वापस;
-	पूर्ण
+	if (data == NULL) {
+		host->data_dir = DAVINCI_MMC_DATADIR_NONE;
+		writel(0, host->base + DAVINCI_MMCBLEN);
+		writel(0, host->base + DAVINCI_MMCNBLK);
+		return;
+	}
 
 	dev_dbg(mmc_dev(host->mmc), "%s, %d blocks of %d bytes\n",
 		(data->flags & MMC_DATA_WRITE) ? "write" : "read",
 		data->blocks, data->blksz);
 	dev_dbg(mmc_dev(host->mmc), "  DTO %d cycles + %d ns\n",
-		data->समयout_clks, data->समयout_ns);
-	समयout = data->समयout_clks +
-		(data->समयout_ns / host->ns_in_one_cycle);
-	अगर (समयout > 0xffff)
-		समयout = 0xffff;
+		data->timeout_clks, data->timeout_ns);
+	timeout = data->timeout_clks +
+		(data->timeout_ns / host->ns_in_one_cycle);
+	if (timeout > 0xffff)
+		timeout = 0xffff;
 
-	ग_लिखोl(समयout, host->base + DAVINCI_MMCTOD);
-	ग_लिखोl(data->blocks, host->base + DAVINCI_MMCNBLK);
-	ग_लिखोl(data->blksz, host->base + DAVINCI_MMCBLEN);
+	writel(timeout, host->base + DAVINCI_MMCTOD);
+	writel(data->blocks, host->base + DAVINCI_MMCNBLK);
+	writel(data->blksz, host->base + DAVINCI_MMCBLEN);
 
 	/* Configure the FIFO */
-	अगर (data->flags & MMC_DATA_WRITE) अणु
-		host->data_dir = DAVINCI_MMC_DATAसूची_WRITE;
-		ग_लिखोl(fअगरo_lev | MMCFIFOCTL_FIFOसूची_WR | MMCFIFOCTL_FIFORST,
+	if (data->flags & MMC_DATA_WRITE) {
+		host->data_dir = DAVINCI_MMC_DATADIR_WRITE;
+		writel(fifo_lev | MMCFIFOCTL_FIFODIR_WR | MMCFIFOCTL_FIFORST,
 			host->base + DAVINCI_MMCFIFOCTL);
-		ग_लिखोl(fअगरo_lev | MMCFIFOCTL_FIFOसूची_WR,
+		writel(fifo_lev | MMCFIFOCTL_FIFODIR_WR,
 			host->base + DAVINCI_MMCFIFOCTL);
-	पूर्ण अन्यथा अणु
-		host->data_dir = DAVINCI_MMC_DATAसूची_READ;
-		ग_लिखोl(fअगरo_lev | MMCFIFOCTL_FIFOसूची_RD | MMCFIFOCTL_FIFORST,
+	} else {
+		host->data_dir = DAVINCI_MMC_DATADIR_READ;
+		writel(fifo_lev | MMCFIFOCTL_FIFODIR_RD | MMCFIFOCTL_FIFORST,
 			host->base + DAVINCI_MMCFIFOCTL);
-		ग_लिखोl(fअगरo_lev | MMCFIFOCTL_FIFOसूची_RD,
+		writel(fifo_lev | MMCFIFOCTL_FIFODIR_RD,
 			host->base + DAVINCI_MMCFIFOCTL);
-	पूर्ण
+	}
 
-	host->buffer = शून्य;
+	host->buffer = NULL;
 	host->bytes_left = data->blocks * data->blksz;
 
 	/* For now we try to use DMA whenever we won't need partial FIFO
-	 * पढ़ोs or ग_लिखोs, either क्रम the whole transfer (as tested here)
-	 * or क्रम any inभागidual scatterlist segment (tested when we call
+	 * reads or writes, either for the whole transfer (as tested here)
+	 * or for any individual scatterlist segment (tested when we call
 	 * start_dma_transfer).
 	 *
 	 * While we *could* change that, unusual block sizes are rarely
 	 * used.  The occasional fallback to PIO should't hurt.
 	 */
-	अगर (host->use_dma && (host->bytes_left & (rw_threshold - 1)) == 0
-			&& mmc_davinci_start_dma_transfer(host, data) == 0) अणु
+	if (host->use_dma && (host->bytes_left & (rw_threshold - 1)) == 0
+			&& mmc_davinci_start_dma_transfer(host, data) == 0) {
 		/* zero this to ensure we take no PIO paths */
 		host->bytes_left = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Revert to CPU Copy */
 		host->sg_len = data->sg_len;
 		host->sg = host->data->sg;
 		mmc_davinci_sg_to_buf(host);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mmc_davinci_request(काष्ठा mmc_host *mmc, काष्ठा mmc_request *req)
-अणु
-	काष्ठा mmc_davinci_host *host = mmc_priv(mmc);
-	अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(900);
+static void mmc_davinci_request(struct mmc_host *mmc, struct mmc_request *req)
+{
+	struct mmc_davinci_host *host = mmc_priv(mmc);
+	unsigned long timeout = jiffies + msecs_to_jiffies(900);
 	u32 mmcst1 = 0;
 
 	/* Card may still be sending BUSY after a previous operation,
-	 * typically some kind of ग_लिखो.  If so, we can't proceed yet.
+	 * typically some kind of write.  If so, we can't proceed yet.
 	 */
-	जबतक (समय_beक्रमe(jअगरfies, समयout)) अणु
-		mmcst1  = पढ़ोl(host->base + DAVINCI_MMCST1);
-		अगर (!(mmcst1 & MMCST1_BUSY))
-			अवरोध;
+	while (time_before(jiffies, timeout)) {
+		mmcst1  = readl(host->base + DAVINCI_MMCST1);
+		if (!(mmcst1 & MMCST1_BUSY))
+			break;
 		cpu_relax();
-	पूर्ण
-	अगर (mmcst1 & MMCST1_BUSY) अणु
+	}
+	if (mmcst1 & MMCST1_BUSY) {
 		dev_err(mmc_dev(host->mmc), "still BUSY? bad ... \n");
 		req->cmd->error = -ETIMEDOUT;
-		mmc_request_करोne(mmc, req);
-		वापस;
-	पूर्ण
+		mmc_request_done(mmc, req);
+		return;
+	}
 
-	host->करो_dma = 0;
+	host->do_dma = 0;
 	mmc_davinci_prepare_data(host, req);
 	mmc_davinci_start_command(host, req->cmd);
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक calculate_freq_क्रम_card(काष्ठा mmc_davinci_host *host,
-	अचिन्हित पूर्णांक mmc_req_freq)
-अणु
-	अचिन्हित पूर्णांक mmc_freq = 0, mmc_pclk = 0, mmc_push_pull_भागisor = 0;
+static unsigned int calculate_freq_for_card(struct mmc_davinci_host *host,
+	unsigned int mmc_req_freq)
+{
+	unsigned int mmc_freq = 0, mmc_pclk = 0, mmc_push_pull_divisor = 0;
 
 	mmc_pclk = host->mmc_input_clk;
-	अगर (mmc_req_freq && mmc_pclk > (2 * mmc_req_freq))
-		mmc_push_pull_भागisor = ((अचिन्हित पूर्णांक)mmc_pclk
+	if (mmc_req_freq && mmc_pclk > (2 * mmc_req_freq))
+		mmc_push_pull_divisor = ((unsigned int)mmc_pclk
 				/ (2 * mmc_req_freq)) - 1;
-	अन्यथा
-		mmc_push_pull_भागisor = 0;
+	else
+		mmc_push_pull_divisor = 0;
 
-	mmc_freq = (अचिन्हित पूर्णांक)mmc_pclk
-		/ (2 * (mmc_push_pull_भागisor + 1));
+	mmc_freq = (unsigned int)mmc_pclk
+		/ (2 * (mmc_push_pull_divisor + 1));
 
-	अगर (mmc_freq > mmc_req_freq)
-		mmc_push_pull_भागisor = mmc_push_pull_भागisor + 1;
-	/* Convert ns to घड़ी cycles */
-	अगर (mmc_req_freq <= 400000)
+	if (mmc_freq > mmc_req_freq)
+		mmc_push_pull_divisor = mmc_push_pull_divisor + 1;
+	/* Convert ns to clock cycles */
+	if (mmc_req_freq <= 400000)
 		host->ns_in_one_cycle = (1000000) / (((mmc_pclk
-				/ (2 * (mmc_push_pull_भागisor + 1)))/1000));
-	अन्यथा
+				/ (2 * (mmc_push_pull_divisor + 1)))/1000));
+	else
 		host->ns_in_one_cycle = (1000000) / (((mmc_pclk
-				/ (2 * (mmc_push_pull_भागisor + 1)))/1000000));
+				/ (2 * (mmc_push_pull_divisor + 1)))/1000000));
 
-	वापस mmc_push_pull_भागisor;
-पूर्ण
+	return mmc_push_pull_divisor;
+}
 
-अटल व्योम calculate_clk_भागider(काष्ठा mmc_host *mmc, काष्ठा mmc_ios *ios)
-अणु
-	अचिन्हित पूर्णांक खोलो_drain_freq = 0, mmc_pclk = 0;
-	अचिन्हित पूर्णांक mmc_push_pull_freq = 0;
-	काष्ठा mmc_davinci_host *host = mmc_priv(mmc);
+static void calculate_clk_divider(struct mmc_host *mmc, struct mmc_ios *ios)
+{
+	unsigned int open_drain_freq = 0, mmc_pclk = 0;
+	unsigned int mmc_push_pull_freq = 0;
+	struct mmc_davinci_host *host = mmc_priv(mmc);
 
-	अगर (ios->bus_mode == MMC_BUSMODE_OPENDRAIN) अणु
+	if (ios->bus_mode == MMC_BUSMODE_OPENDRAIN) {
 		u32 temp;
 
-		/* Ignoring the init घड़ी value passed क्रम fixing the पूर्णांकer
-		 * operability with dअगरferent cards.
+		/* Ignoring the init clock value passed for fixing the inter
+		 * operability with different cards.
 		 */
-		खोलो_drain_freq = ((अचिन्हित पूर्णांक)mmc_pclk
+		open_drain_freq = ((unsigned int)mmc_pclk
 				/ (2 * MMCSD_INIT_CLOCK)) - 1;
 
-		अगर (खोलो_drain_freq > 0xFF)
-			खोलो_drain_freq = 0xFF;
+		if (open_drain_freq > 0xFF)
+			open_drain_freq = 0xFF;
 
-		temp = पढ़ोl(host->base + DAVINCI_MMCCLK) & ~MMCCLK_CLKRT_MASK;
-		temp |= खोलो_drain_freq;
-		ग_लिखोl(temp, host->base + DAVINCI_MMCCLK);
+		temp = readl(host->base + DAVINCI_MMCCLK) & ~MMCCLK_CLKRT_MASK;
+		temp |= open_drain_freq;
+		writel(temp, host->base + DAVINCI_MMCCLK);
 
-		/* Convert ns to घड़ी cycles */
+		/* Convert ns to clock cycles */
 		host->ns_in_one_cycle = (1000000) / (MMCSD_INIT_CLOCK/1000);
-	पूर्ण अन्यथा अणु
+	} else {
 		u32 temp;
-		mmc_push_pull_freq = calculate_freq_क्रम_card(host, ios->घड़ी);
+		mmc_push_pull_freq = calculate_freq_for_card(host, ios->clock);
 
-		अगर (mmc_push_pull_freq > 0xFF)
+		if (mmc_push_pull_freq > 0xFF)
 			mmc_push_pull_freq = 0xFF;
 
-		temp = पढ़ोl(host->base + DAVINCI_MMCCLK) & ~MMCCLK_CLKEN;
-		ग_लिखोl(temp, host->base + DAVINCI_MMCCLK);
+		temp = readl(host->base + DAVINCI_MMCCLK) & ~MMCCLK_CLKEN;
+		writel(temp, host->base + DAVINCI_MMCCLK);
 
 		udelay(10);
 
-		temp = पढ़ोl(host->base + DAVINCI_MMCCLK) & ~MMCCLK_CLKRT_MASK;
+		temp = readl(host->base + DAVINCI_MMCCLK) & ~MMCCLK_CLKRT_MASK;
 		temp |= mmc_push_pull_freq;
-		ग_लिखोl(temp, host->base + DAVINCI_MMCCLK);
+		writel(temp, host->base + DAVINCI_MMCCLK);
 
-		ग_लिखोl(temp | MMCCLK_CLKEN, host->base + DAVINCI_MMCCLK);
+		writel(temp | MMCCLK_CLKEN, host->base + DAVINCI_MMCCLK);
 
 		udelay(10);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mmc_davinci_set_ios(काष्ठा mmc_host *mmc, काष्ठा mmc_ios *ios)
-अणु
-	काष्ठा mmc_davinci_host *host = mmc_priv(mmc);
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(mmc->parent);
-	काष्ठा davinci_mmc_config *config = pdev->dev.platक्रमm_data;
+static void mmc_davinci_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
+{
+	struct mmc_davinci_host *host = mmc_priv(mmc);
+	struct platform_device *pdev = to_platform_device(mmc->parent);
+	struct davinci_mmc_config *config = pdev->dev.platform_data;
 
 	dev_dbg(mmc_dev(host->mmc),
 		"clock %dHz busmode %d powermode %d Vdd %04x\n",
-		ios->घड़ी, ios->bus_mode, ios->घातer_mode,
+		ios->clock, ios->bus_mode, ios->power_mode,
 		ios->vdd);
 
-	चयन (ios->घातer_mode) अणु
-	हाल MMC_POWER_OFF:
-		अगर (config && config->set_घातer)
-			config->set_घातer(pdev->id, false);
-		अवरोध;
-	हाल MMC_POWER_UP:
-		अगर (config && config->set_घातer)
-			config->set_घातer(pdev->id, true);
-		अवरोध;
-	पूर्ण
+	switch (ios->power_mode) {
+	case MMC_POWER_OFF:
+		if (config && config->set_power)
+			config->set_power(pdev->id, false);
+		break;
+	case MMC_POWER_UP:
+		if (config && config->set_power)
+			config->set_power(pdev->id, true);
+		break;
+	}
 
-	चयन (ios->bus_width) अणु
-	हाल MMC_BUS_WIDTH_8:
+	switch (ios->bus_width) {
+	case MMC_BUS_WIDTH_8:
 		dev_dbg(mmc_dev(host->mmc), "Enabling 8 bit mode\n");
-		ग_लिखोl((पढ़ोl(host->base + DAVINCI_MMCCTL) &
+		writel((readl(host->base + DAVINCI_MMCCTL) &
 			~MMCCTL_WIDTH_4_BIT) | MMCCTL_WIDTH_8_BIT,
 			host->base + DAVINCI_MMCCTL);
-		अवरोध;
-	हाल MMC_BUS_WIDTH_4:
+		break;
+	case MMC_BUS_WIDTH_4:
 		dev_dbg(mmc_dev(host->mmc), "Enabling 4 bit mode\n");
-		अगर (host->version == MMC_CTLR_VERSION_2)
-			ग_लिखोl((पढ़ोl(host->base + DAVINCI_MMCCTL) &
+		if (host->version == MMC_CTLR_VERSION_2)
+			writel((readl(host->base + DAVINCI_MMCCTL) &
 				~MMCCTL_WIDTH_8_BIT) | MMCCTL_WIDTH_4_BIT,
 				host->base + DAVINCI_MMCCTL);
-		अन्यथा
-			ग_लिखोl(पढ़ोl(host->base + DAVINCI_MMCCTL) |
+		else
+			writel(readl(host->base + DAVINCI_MMCCTL) |
 				MMCCTL_WIDTH_4_BIT,
 				host->base + DAVINCI_MMCCTL);
-		अवरोध;
-	हाल MMC_BUS_WIDTH_1:
+		break;
+	case MMC_BUS_WIDTH_1:
 		dev_dbg(mmc_dev(host->mmc), "Enabling 1 bit mode\n");
-		अगर (host->version == MMC_CTLR_VERSION_2)
-			ग_लिखोl(पढ़ोl(host->base + DAVINCI_MMCCTL) &
+		if (host->version == MMC_CTLR_VERSION_2)
+			writel(readl(host->base + DAVINCI_MMCCTL) &
 				~(MMCCTL_WIDTH_8_BIT | MMCCTL_WIDTH_4_BIT),
 				host->base + DAVINCI_MMCCTL);
-		अन्यथा
-			ग_लिखोl(पढ़ोl(host->base + DAVINCI_MMCCTL) &
+		else
+			writel(readl(host->base + DAVINCI_MMCCTL) &
 				~MMCCTL_WIDTH_4_BIT,
 				host->base + DAVINCI_MMCCTL);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	calculate_clk_भागider(mmc, ios);
+	calculate_clk_divider(mmc, ios);
 
 	host->bus_mode = ios->bus_mode;
-	अगर (ios->घातer_mode == MMC_POWER_UP) अणु
-		अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(50);
+	if (ios->power_mode == MMC_POWER_UP) {
+		unsigned long timeout = jiffies + msecs_to_jiffies(50);
 		bool lose = true;
 
-		/* Send घड़ी cycles, poll completion */
-		ग_लिखोl(0, host->base + DAVINCI_MMCARGHL);
-		ग_लिखोl(MMCCMD_INITCK, host->base + DAVINCI_MMCCMD);
-		जबतक (समय_beक्रमe(jअगरfies, समयout)) अणु
-			u32 पंचांगp = पढ़ोl(host->base + DAVINCI_MMCST0);
+		/* Send clock cycles, poll completion */
+		writel(0, host->base + DAVINCI_MMCARGHL);
+		writel(MMCCMD_INITCK, host->base + DAVINCI_MMCCMD);
+		while (time_before(jiffies, timeout)) {
+			u32 tmp = readl(host->base + DAVINCI_MMCST0);
 
-			अगर (पंचांगp & MMCST0_RSPDNE) अणु
+			if (tmp & MMCST0_RSPDNE) {
 				lose = false;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			cpu_relax();
-		पूर्ण
-		अगर (lose)
+		}
+		if (lose)
 			dev_warn(mmc_dev(host->mmc), "powerup timeout\n");
-	पूर्ण
+	}
 
-	/* FIXME on घातer OFF, reset things ... */
-पूर्ण
+	/* FIXME on power OFF, reset things ... */
+}
 
-अटल व्योम
-mmc_davinci_xfer_करोne(काष्ठा mmc_davinci_host *host, काष्ठा mmc_data *data)
-अणु
-	host->data = शून्य;
+static void
+mmc_davinci_xfer_done(struct mmc_davinci_host *host, struct mmc_data *data)
+{
+	host->data = NULL;
 
-	अगर (host->mmc->caps & MMC_CAP_SDIO_IRQ) अणु
+	if (host->mmc->caps & MMC_CAP_SDIO_IRQ) {
 		/*
 		 * SDIO Interrupt Detection work-around as suggested by
 		 * Davinci Errata (TMS320DM355 Silicon Revision 1.1 Errata
-		 * 2.1.6): Signal SDIO पूर्णांकerrupt only अगर it is enabled by core
+		 * 2.1.6): Signal SDIO interrupt only if it is enabled by core
 		 */
-		अगर (host->sdio_पूर्णांक && !(पढ़ोl(host->base + DAVINCI_SDIOST0) &
-					SDIOST0_DAT1_HI)) अणु
-			ग_लिखोl(SDIOIST_IOINT, host->base + DAVINCI_SDIOIST);
-			mmc_संकेत_sdio_irq(host->mmc);
-		पूर्ण
-	पूर्ण
+		if (host->sdio_int && !(readl(host->base + DAVINCI_SDIOST0) &
+					SDIOST0_DAT1_HI)) {
+			writel(SDIOIST_IOINT, host->base + DAVINCI_SDIOIST);
+			mmc_signal_sdio_irq(host->mmc);
+		}
+	}
 
-	अगर (host->करो_dma) अणु
-		davinci_पात_dma(host);
+	if (host->do_dma) {
+		davinci_abort_dma(host);
 
 		dma_unmap_sg(mmc_dev(host->mmc), data->sg, data->sg_len,
 			     mmc_get_dma_dir(data));
-		host->करो_dma = false;
-	पूर्ण
-	host->data_dir = DAVINCI_MMC_DATAसूची_NONE;
+		host->do_dma = false;
+	}
+	host->data_dir = DAVINCI_MMC_DATADIR_NONE;
 
-	अगर (!data->stop || (host->cmd && host->cmd->error)) अणु
-		mmc_request_करोne(host->mmc, data->mrq);
-		ग_लिखोl(0, host->base + DAVINCI_MMCIM);
+	if (!data->stop || (host->cmd && host->cmd->error)) {
+		mmc_request_done(host->mmc, data->mrq);
+		writel(0, host->base + DAVINCI_MMCIM);
 		host->active_request = false;
-	पूर्ण अन्यथा
+	} else
 		mmc_davinci_start_command(host, data->stop);
-पूर्ण
+}
 
-अटल व्योम mmc_davinci_cmd_करोne(काष्ठा mmc_davinci_host *host,
-				 काष्ठा mmc_command *cmd)
-अणु
-	host->cmd = शून्य;
+static void mmc_davinci_cmd_done(struct mmc_davinci_host *host,
+				 struct mmc_command *cmd)
+{
+	host->cmd = NULL;
 
-	अगर (cmd->flags & MMC_RSP_PRESENT) अणु
-		अगर (cmd->flags & MMC_RSP_136) अणु
+	if (cmd->flags & MMC_RSP_PRESENT) {
+		if (cmd->flags & MMC_RSP_136) {
 			/* response type 2 */
-			cmd->resp[3] = पढ़ोl(host->base + DAVINCI_MMCRSP01);
-			cmd->resp[2] = पढ़ोl(host->base + DAVINCI_MMCRSP23);
-			cmd->resp[1] = पढ़ोl(host->base + DAVINCI_MMCRSP45);
-			cmd->resp[0] = पढ़ोl(host->base + DAVINCI_MMCRSP67);
-		पूर्ण अन्यथा अणु
+			cmd->resp[3] = readl(host->base + DAVINCI_MMCRSP01);
+			cmd->resp[2] = readl(host->base + DAVINCI_MMCRSP23);
+			cmd->resp[1] = readl(host->base + DAVINCI_MMCRSP45);
+			cmd->resp[0] = readl(host->base + DAVINCI_MMCRSP67);
+		} else {
 			/* response types 1, 1b, 3, 4, 5, 6 */
-			cmd->resp[0] = पढ़ोl(host->base + DAVINCI_MMCRSP67);
-		पूर्ण
-	पूर्ण
+			cmd->resp[0] = readl(host->base + DAVINCI_MMCRSP67);
+		}
+	}
 
-	अगर (host->data == शून्य || cmd->error) अणु
-		अगर (cmd->error == -ETIMEDOUT)
+	if (host->data == NULL || cmd->error) {
+		if (cmd->error == -ETIMEDOUT)
 			cmd->mrq->cmd->retries = 0;
-		mmc_request_करोne(host->mmc, cmd->mrq);
-		ग_लिखोl(0, host->base + DAVINCI_MMCIM);
+		mmc_request_done(host->mmc, cmd->mrq);
+		writel(0, host->base + DAVINCI_MMCIM);
 		host->active_request = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम mmc_davinci_reset_ctrl(काष्ठा mmc_davinci_host *host,
-								पूर्णांक val)
-अणु
+static inline void mmc_davinci_reset_ctrl(struct mmc_davinci_host *host,
+								int val)
+{
 	u32 temp;
 
-	temp = पढ़ोl(host->base + DAVINCI_MMCCTL);
-	अगर (val)	/* reset */
+	temp = readl(host->base + DAVINCI_MMCCTL);
+	if (val)	/* reset */
 		temp |= MMCCTL_CMDRST | MMCCTL_DATRST;
-	अन्यथा		/* enable */
+	else		/* enable */
 		temp &= ~(MMCCTL_CMDRST | MMCCTL_DATRST);
 
-	ग_लिखोl(temp, host->base + DAVINCI_MMCCTL);
+	writel(temp, host->base + DAVINCI_MMCCTL);
 	udelay(10);
-पूर्ण
+}
 
-अटल व्योम
-davinci_पात_data(काष्ठा mmc_davinci_host *host, काष्ठा mmc_data *data)
-अणु
+static void
+davinci_abort_data(struct mmc_davinci_host *host, struct mmc_data *data)
+{
 	mmc_davinci_reset_ctrl(host, 1);
 	mmc_davinci_reset_ctrl(host, 0);
-पूर्ण
+}
 
-अटल irqवापस_t mmc_davinci_sdio_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा mmc_davinci_host *host = dev_id;
-	अचिन्हित पूर्णांक status;
+static irqreturn_t mmc_davinci_sdio_irq(int irq, void *dev_id)
+{
+	struct mmc_davinci_host *host = dev_id;
+	unsigned int status;
 
-	status = पढ़ोl(host->base + DAVINCI_SDIOIST);
-	अगर (status & SDIOIST_IOINT) अणु
+	status = readl(host->base + DAVINCI_SDIOIST);
+	if (status & SDIOIST_IOINT) {
 		dev_dbg(mmc_dev(host->mmc),
 			"SDIO interrupt status %x\n", status);
-		ग_लिखोl(status | SDIOIST_IOINT, host->base + DAVINCI_SDIOIST);
-		mmc_संकेत_sdio_irq(host->mmc);
-	पूर्ण
-	वापस IRQ_HANDLED;
-पूर्ण
+		writel(status | SDIOIST_IOINT, host->base + DAVINCI_SDIOIST);
+		mmc_signal_sdio_irq(host->mmc);
+	}
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t mmc_davinci_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा mmc_davinci_host *host = (काष्ठा mmc_davinci_host *)dev_id;
-	अचिन्हित पूर्णांक status, qstatus;
-	पूर्णांक end_command = 0;
-	पूर्णांक end_transfer = 0;
-	काष्ठा mmc_data *data = host->data;
+static irqreturn_t mmc_davinci_irq(int irq, void *dev_id)
+{
+	struct mmc_davinci_host *host = (struct mmc_davinci_host *)dev_id;
+	unsigned int status, qstatus;
+	int end_command = 0;
+	int end_transfer = 0;
+	struct mmc_data *data = host->data;
 
-	अगर (host->cmd == शून्य && host->data == शून्य) अणु
-		status = पढ़ोl(host->base + DAVINCI_MMCST0);
+	if (host->cmd == NULL && host->data == NULL) {
+		status = readl(host->base + DAVINCI_MMCST0);
 		dev_dbg(mmc_dev(host->mmc),
 			"Spurious interrupt 0x%04x\n", status);
-		/* Disable the पूर्णांकerrupt from mmcsd */
-		ग_लिखोl(0, host->base + DAVINCI_MMCIM);
-		वापस IRQ_NONE;
-	पूर्ण
+		/* Disable the interrupt from mmcsd */
+		writel(0, host->base + DAVINCI_MMCIM);
+		return IRQ_NONE;
+	}
 
-	status = पढ़ोl(host->base + DAVINCI_MMCST0);
+	status = readl(host->base + DAVINCI_MMCST0);
 	qstatus = status;
 
-	/* handle FIFO first when using PIO क्रम data.
+	/* handle FIFO first when using PIO for data.
 	 * bytes_left will decrease to zero as I/O progress and status will
-	 * पढ़ो zero over iteration because this controller status
-	 * रेजिस्टर(MMCST0) reports any status only once and it is cleared
-	 * by पढ़ो. So, it is not unbouned loop even in the हाल of
+	 * read zero over iteration because this controller status
+	 * register(MMCST0) reports any status only once and it is cleared
+	 * by read. So, it is not unbouned loop even in the case of
 	 * non-dma.
 	 */
-	अगर (host->bytes_left && (status & (MMCST0_DXRDY | MMCST0_DRRDY))) अणु
-		अचिन्हित दीर्घ im_val;
+	if (host->bytes_left && (status & (MMCST0_DXRDY | MMCST0_DRRDY))) {
+		unsigned long im_val;
 
 		/*
-		 * If पूर्णांकerrupts fire during the following loop, they will be
+		 * If interrupts fire during the following loop, they will be
 		 * handled by the handler, but the PIC will still buffer these.
 		 * As a result, the handler will be called again to serve these
-		 * needlessly. In order to aव्योम these spurious पूर्णांकerrupts,
-		 * keep पूर्णांकerrupts masked during the loop.
+		 * needlessly. In order to avoid these spurious interrupts,
+		 * keep interrupts masked during the loop.
 		 */
-		im_val = पढ़ोl(host->base + DAVINCI_MMCIM);
-		ग_लिखोl(0, host->base + DAVINCI_MMCIM);
+		im_val = readl(host->base + DAVINCI_MMCIM);
+		writel(0, host->base + DAVINCI_MMCIM);
 
-		करो अणु
-			davinci_fअगरo_data_trans(host, rw_threshold);
-			status = पढ़ोl(host->base + DAVINCI_MMCST0);
+		do {
+			davinci_fifo_data_trans(host, rw_threshold);
+			status = readl(host->base + DAVINCI_MMCST0);
 			qstatus |= status;
-		पूर्ण जबतक (host->bytes_left &&
+		} while (host->bytes_left &&
 			 (status & (MMCST0_DXRDY | MMCST0_DRRDY)));
 
 		/*
-		 * If an पूर्णांकerrupt is pending, it is assumed it will fire when
+		 * If an interrupt is pending, it is assumed it will fire when
 		 * it is unmasked. This assumption is also taken when the MMCIM
-		 * is first set. Otherwise, writing to MMCIM after पढ़ोing the
+		 * is first set. Otherwise, writing to MMCIM after reading the
 		 * status is race-prone.
 		 */
-		ग_लिखोl(im_val, host->base + DAVINCI_MMCIM);
-	पूर्ण
+		writel(im_val, host->base + DAVINCI_MMCIM);
+	}
 
-	अगर (qstatus & MMCST0_DATDNE) अणु
+	if (qstatus & MMCST0_DATDNE) {
 		/* All blocks sent/received, and CRC checks passed */
-		अगर (data != शून्य) अणु
-			अगर ((host->करो_dma == 0) && (host->bytes_left > 0)) अणु
-				/* अगर datasize < rw_threshold
-				 * no RX पूर्णांकs are generated
+		if (data != NULL) {
+			if ((host->do_dma == 0) && (host->bytes_left > 0)) {
+				/* if datasize < rw_threshold
+				 * no RX ints are generated
 				 */
-				davinci_fअगरo_data_trans(host, host->bytes_left);
-			पूर्ण
+				davinci_fifo_data_trans(host, host->bytes_left);
+			}
 			end_transfer = 1;
 			data->bytes_xfered = data->blocks * data->blksz;
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_err(mmc_dev(host->mmc),
 					"DATDNE with no host->data\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (qstatus & MMCST0_TOUTRD) अणु
-		/* Read data समयout */
+	if (qstatus & MMCST0_TOUTRD) {
+		/* Read data timeout */
 		data->error = -ETIMEDOUT;
 		end_transfer = 1;
 
@@ -944,336 +943,336 @@ davinci_पात_data(काष्ठा mmc_davinci_host *host, काष्�
 			"read data timeout, status %x\n",
 			qstatus);
 
-		davinci_पात_data(host, data);
-	पूर्ण
+		davinci_abort_data(host, data);
+	}
 
-	अगर (qstatus & (MMCST0_CRCWR | MMCST0_CRCRD)) अणु
+	if (qstatus & (MMCST0_CRCWR | MMCST0_CRCRD)) {
 		/* Data CRC error */
 		data->error = -EILSEQ;
 		end_transfer = 1;
 
 		/* NOTE:  this controller uses CRCWR to report both CRC
-		 * errors and समयouts (on ग_लिखोs).  MMCDRSP values are
-		 * only weakly करोcumented, but 0x9f was clearly a समयout
-		 * हाल and the two three-bit patterns in various SD specs
+		 * errors and timeouts (on writes).  MMCDRSP values are
+		 * only weakly documented, but 0x9f was clearly a timeout
+		 * case and the two three-bit patterns in various SD specs
 		 * (101, 010) aren't part of it ...
 		 */
-		अगर (qstatus & MMCST0_CRCWR) अणु
-			u32 temp = पढ़ोb(host->base + DAVINCI_MMCDRSP);
+		if (qstatus & MMCST0_CRCWR) {
+			u32 temp = readb(host->base + DAVINCI_MMCDRSP);
 
-			अगर (temp == 0x9f)
+			if (temp == 0x9f)
 				data->error = -ETIMEDOUT;
-		पूर्ण
+		}
 		dev_dbg(mmc_dev(host->mmc), "data %s %s error\n",
 			(qstatus & MMCST0_CRCWR) ? "write" : "read",
 			(data->error == -ETIMEDOUT) ? "timeout" : "CRC");
 
-		davinci_पात_data(host, data);
-	पूर्ण
+		davinci_abort_data(host, data);
+	}
 
-	अगर (qstatus & MMCST0_TOUTRS) अणु
-		/* Command समयout */
-		अगर (host->cmd) अणु
+	if (qstatus & MMCST0_TOUTRS) {
+		/* Command timeout */
+		if (host->cmd) {
 			dev_dbg(mmc_dev(host->mmc),
 				"CMD%d timeout, status %x\n",
 				host->cmd->opcode, qstatus);
 			host->cmd->error = -ETIMEDOUT;
-			अगर (data) अणु
+			if (data) {
 				end_transfer = 1;
-				davinci_पात_data(host, data);
-			पूर्ण अन्यथा
+				davinci_abort_data(host, data);
+			} else
 				end_command = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (qstatus & MMCST0_CRCRS) अणु
+	if (qstatus & MMCST0_CRCRS) {
 		/* Command CRC error */
 		dev_dbg(mmc_dev(host->mmc), "Command CRC error\n");
-		अगर (host->cmd) अणु
+		if (host->cmd) {
 			host->cmd->error = -EILSEQ;
 			end_command = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (qstatus & MMCST0_RSPDNE) अणु
+	if (qstatus & MMCST0_RSPDNE) {
 		/* End of command phase */
 		end_command = host->cmd ? 1 : 0;
-	पूर्ण
+	}
 
-	अगर (end_command)
-		mmc_davinci_cmd_करोne(host, host->cmd);
-	अगर (end_transfer)
-		mmc_davinci_xfer_करोne(host, data);
-	वापस IRQ_HANDLED;
-पूर्ण
+	if (end_command)
+		mmc_davinci_cmd_done(host, host->cmd);
+	if (end_transfer)
+		mmc_davinci_xfer_done(host, data);
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक mmc_davinci_get_cd(काष्ठा mmc_host *mmc)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(mmc->parent);
-	काष्ठा davinci_mmc_config *config = pdev->dev.platक्रमm_data;
+static int mmc_davinci_get_cd(struct mmc_host *mmc)
+{
+	struct platform_device *pdev = to_platform_device(mmc->parent);
+	struct davinci_mmc_config *config = pdev->dev.platform_data;
 
-	अगर (config && config->get_cd)
-		वापस config->get_cd(pdev->id);
+	if (config && config->get_cd)
+		return config->get_cd(pdev->id);
 
-	वापस mmc_gpio_get_cd(mmc);
-पूर्ण
+	return mmc_gpio_get_cd(mmc);
+}
 
-अटल पूर्णांक mmc_davinci_get_ro(काष्ठा mmc_host *mmc)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(mmc->parent);
-	काष्ठा davinci_mmc_config *config = pdev->dev.platक्रमm_data;
+static int mmc_davinci_get_ro(struct mmc_host *mmc)
+{
+	struct platform_device *pdev = to_platform_device(mmc->parent);
+	struct davinci_mmc_config *config = pdev->dev.platform_data;
 
-	अगर (config && config->get_ro)
-		वापस config->get_ro(pdev->id);
+	if (config && config->get_ro)
+		return config->get_ro(pdev->id);
 
-	वापस mmc_gpio_get_ro(mmc);
-पूर्ण
+	return mmc_gpio_get_ro(mmc);
+}
 
-अटल व्योम mmc_davinci_enable_sdio_irq(काष्ठा mmc_host *mmc, पूर्णांक enable)
-अणु
-	काष्ठा mmc_davinci_host *host = mmc_priv(mmc);
+static void mmc_davinci_enable_sdio_irq(struct mmc_host *mmc, int enable)
+{
+	struct mmc_davinci_host *host = mmc_priv(mmc);
 
-	अगर (enable) अणु
-		अगर (!(पढ़ोl(host->base + DAVINCI_SDIOST0) & SDIOST0_DAT1_HI)) अणु
-			ग_लिखोl(SDIOIST_IOINT, host->base + DAVINCI_SDIOIST);
-			mmc_संकेत_sdio_irq(host->mmc);
-		पूर्ण अन्यथा अणु
-			host->sdio_पूर्णांक = true;
-			ग_लिखोl(पढ़ोl(host->base + DAVINCI_SDIOIEN) |
+	if (enable) {
+		if (!(readl(host->base + DAVINCI_SDIOST0) & SDIOST0_DAT1_HI)) {
+			writel(SDIOIST_IOINT, host->base + DAVINCI_SDIOIST);
+			mmc_signal_sdio_irq(host->mmc);
+		} else {
+			host->sdio_int = true;
+			writel(readl(host->base + DAVINCI_SDIOIEN) |
 			       SDIOIEN_IOINTEN, host->base + DAVINCI_SDIOIEN);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		host->sdio_पूर्णांक = false;
-		ग_लिखोl(पढ़ोl(host->base + DAVINCI_SDIOIEN) & ~SDIOIEN_IOINTEN,
+		}
+	} else {
+		host->sdio_int = false;
+		writel(readl(host->base + DAVINCI_SDIOIEN) & ~SDIOIEN_IOINTEN,
 		       host->base + DAVINCI_SDIOIEN);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा mmc_host_ops mmc_davinci_ops = अणु
+static const struct mmc_host_ops mmc_davinci_ops = {
 	.request	= mmc_davinci_request,
 	.set_ios	= mmc_davinci_set_ios,
 	.get_cd		= mmc_davinci_get_cd,
 	.get_ro		= mmc_davinci_get_ro,
 	.enable_sdio_irq = mmc_davinci_enable_sdio_irq,
-पूर्ण;
+};
 
 /*----------------------------------------------------------------------*/
 
-#अगर_घोषित CONFIG_CPU_FREQ
-अटल पूर्णांक mmc_davinci_cpufreq_transition(काष्ठा notअगरier_block *nb,
-				     अचिन्हित दीर्घ val, व्योम *data)
-अणु
-	काष्ठा mmc_davinci_host *host;
-	अचिन्हित पूर्णांक mmc_pclk;
-	काष्ठा mmc_host *mmc;
-	अचिन्हित दीर्घ flags;
+#ifdef CONFIG_CPU_FREQ
+static int mmc_davinci_cpufreq_transition(struct notifier_block *nb,
+				     unsigned long val, void *data)
+{
+	struct mmc_davinci_host *host;
+	unsigned int mmc_pclk;
+	struct mmc_host *mmc;
+	unsigned long flags;
 
-	host = container_of(nb, काष्ठा mmc_davinci_host, freq_transition);
+	host = container_of(nb, struct mmc_davinci_host, freq_transition);
 	mmc = host->mmc;
 	mmc_pclk = clk_get_rate(host->clk);
 
-	अगर (val == CPUFREQ_POSTCHANGE) अणु
+	if (val == CPUFREQ_POSTCHANGE) {
 		spin_lock_irqsave(&mmc->lock, flags);
 		host->mmc_input_clk = mmc_pclk;
-		calculate_clk_भागider(mmc, &mmc->ios);
+		calculate_clk_divider(mmc, &mmc->ios);
 		spin_unlock_irqrestore(&mmc->lock, flags);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक mmc_davinci_cpufreq_रेजिस्टर(काष्ठा mmc_davinci_host *host)
-अणु
-	host->freq_transition.notअगरier_call = mmc_davinci_cpufreq_transition;
+static inline int mmc_davinci_cpufreq_register(struct mmc_davinci_host *host)
+{
+	host->freq_transition.notifier_call = mmc_davinci_cpufreq_transition;
 
-	वापस cpufreq_रेजिस्टर_notअगरier(&host->freq_transition,
+	return cpufreq_register_notifier(&host->freq_transition,
 					 CPUFREQ_TRANSITION_NOTIFIER);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम mmc_davinci_cpufreq_deरेजिस्टर(काष्ठा mmc_davinci_host *host)
-अणु
-	cpufreq_unरेजिस्टर_notअगरier(&host->freq_transition,
+static inline void mmc_davinci_cpufreq_deregister(struct mmc_davinci_host *host)
+{
+	cpufreq_unregister_notifier(&host->freq_transition,
 				    CPUFREQ_TRANSITION_NOTIFIER);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक mmc_davinci_cpufreq_रेजिस्टर(काष्ठा mmc_davinci_host *host)
-अणु
-	वापस 0;
-पूर्ण
+}
+#else
+static inline int mmc_davinci_cpufreq_register(struct mmc_davinci_host *host)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम mmc_davinci_cpufreq_deरेजिस्टर(काष्ठा mmc_davinci_host *host)
-अणु
-पूर्ण
-#पूर्ण_अगर
-अटल व्योम init_mmcsd_host(काष्ठा mmc_davinci_host *host)
-अणु
+static inline void mmc_davinci_cpufreq_deregister(struct mmc_davinci_host *host)
+{
+}
+#endif
+static void init_mmcsd_host(struct mmc_davinci_host *host)
+{
 
 	mmc_davinci_reset_ctrl(host, 1);
 
-	ग_लिखोl(0, host->base + DAVINCI_MMCCLK);
-	ग_लिखोl(MMCCLK_CLKEN, host->base + DAVINCI_MMCCLK);
+	writel(0, host->base + DAVINCI_MMCCLK);
+	writel(MMCCLK_CLKEN, host->base + DAVINCI_MMCCLK);
 
-	ग_लिखोl(0x1FFF, host->base + DAVINCI_MMCTOR);
-	ग_लिखोl(0xFFFF, host->base + DAVINCI_MMCTOD);
+	writel(0x1FFF, host->base + DAVINCI_MMCTOR);
+	writel(0xFFFF, host->base + DAVINCI_MMCTOD);
 
 	mmc_davinci_reset_ctrl(host, 0);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा platक्रमm_device_id davinci_mmc_devtype[] = अणु
-	अणु
+static const struct platform_device_id davinci_mmc_devtype[] = {
+	{
 		.name	= "dm6441-mmc",
 		.driver_data = MMC_CTLR_VERSION_1,
-	पूर्ण, अणु
+	}, {
 		.name	= "da830-mmc",
 		.driver_data = MMC_CTLR_VERSION_2,
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(platक्रमm, davinci_mmc_devtype);
+	},
+	{},
+};
+MODULE_DEVICE_TABLE(platform, davinci_mmc_devtype);
 
-अटल स्थिर काष्ठा of_device_id davinci_mmc_dt_ids[] = अणु
-	अणु
+static const struct of_device_id davinci_mmc_dt_ids[] = {
+	{
 		.compatible = "ti,dm6441-mmc",
 		.data = &davinci_mmc_devtype[MMC_CTLR_VERSION_1],
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "ti,da830-mmc",
 		.data = &davinci_mmc_devtype[MMC_CTLR_VERSION_2],
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 MODULE_DEVICE_TABLE(of, davinci_mmc_dt_ids);
 
-अटल पूर्णांक mmc_davinci_parse_pdata(काष्ठा mmc_host *mmc)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(mmc->parent);
-	काष्ठा davinci_mmc_config *pdata = pdev->dev.platक्रमm_data;
-	काष्ठा mmc_davinci_host *host;
-	पूर्णांक ret;
+static int mmc_davinci_parse_pdata(struct mmc_host *mmc)
+{
+	struct platform_device *pdev = to_platform_device(mmc->parent);
+	struct davinci_mmc_config *pdata = pdev->dev.platform_data;
+	struct mmc_davinci_host *host;
+	int ret;
 
-	अगर (!pdata)
-		वापस -EINVAL;
+	if (!pdata)
+		return -EINVAL;
 
 	host = mmc_priv(mmc);
-	अगर (!host)
-		वापस -EINVAL;
+	if (!host)
+		return -EINVAL;
 
-	अगर (pdata && pdata->nr_sg)
+	if (pdata && pdata->nr_sg)
 		host->nr_sg = pdata->nr_sg - 1;
 
-	अगर (pdata && (pdata->wires == 4 || pdata->wires == 0))
+	if (pdata && (pdata->wires == 4 || pdata->wires == 0))
 		mmc->caps |= MMC_CAP_4_BIT_DATA;
 
-	अगर (pdata && (pdata->wires == 8))
+	if (pdata && (pdata->wires == 8))
 		mmc->caps |= (MMC_CAP_4_BIT_DATA | MMC_CAP_8_BIT_DATA);
 
 	mmc->f_min = 312500;
 	mmc->f_max = 25000000;
-	अगर (pdata && pdata->max_freq)
+	if (pdata && pdata->max_freq)
 		mmc->f_max = pdata->max_freq;
-	अगर (pdata && pdata->caps)
+	if (pdata && pdata->caps)
 		mmc->caps |= pdata->caps;
 
-	/* Register a cd gpio, अगर there is not one, enable polling */
+	/* Register a cd gpio, if there is not one, enable polling */
 	ret = mmc_gpiod_request_cd(mmc, "cd", 0, false, 0);
-	अगर (ret == -EPROBE_DEFER)
-		वापस ret;
-	अन्यथा अगर (ret)
+	if (ret == -EPROBE_DEFER)
+		return ret;
+	else if (ret)
 		mmc->caps |= MMC_CAP_NEEDS_POLL;
 
 	ret = mmc_gpiod_request_ro(mmc, "wp", 0, 0);
-	अगर (ret == -EPROBE_DEFER)
-		वापस ret;
+	if (ret == -EPROBE_DEFER)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक davinci_mmcsd_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा of_device_id *match;
-	काष्ठा mmc_davinci_host *host = शून्य;
-	काष्ठा mmc_host *mmc = शून्य;
-	काष्ठा resource *r, *mem = शून्य;
-	पूर्णांक ret, irq;
-	माप_प्रकार mem_size;
-	स्थिर काष्ठा platक्रमm_device_id *id_entry;
+static int davinci_mmcsd_probe(struct platform_device *pdev)
+{
+	const struct of_device_id *match;
+	struct mmc_davinci_host *host = NULL;
+	struct mmc_host *mmc = NULL;
+	struct resource *r, *mem = NULL;
+	int ret, irq;
+	size_t mem_size;
+	const struct platform_device_id *id_entry;
 
-	r = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!r)
-		वापस -ENODEV;
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!r)
+		return -ENODEV;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
 	mem_size = resource_size(r);
 	mem = devm_request_mem_region(&pdev->dev, r->start, mem_size,
 				      pdev->name);
-	अगर (!mem)
-		वापस -EBUSY;
+	if (!mem)
+		return -EBUSY;
 
-	mmc = mmc_alloc_host(माप(काष्ठा mmc_davinci_host), &pdev->dev);
-	अगर (!mmc)
-		वापस -ENOMEM;
+	mmc = mmc_alloc_host(sizeof(struct mmc_davinci_host), &pdev->dev);
+	if (!mmc)
+		return -ENOMEM;
 
 	host = mmc_priv(mmc);
 	host->mmc = mmc;	/* Important */
 
 	host->mem_res = mem;
 	host->base = devm_ioremap(&pdev->dev, mem->start, mem_size);
-	अगर (!host->base) अणु
+	if (!host->base) {
 		ret = -ENOMEM;
-		जाओ ioremap_fail;
-	पूर्ण
+		goto ioremap_fail;
+	}
 
-	host->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(host->clk)) अणु
+	host->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(host->clk)) {
 		ret = PTR_ERR(host->clk);
-		जाओ clk_get_fail;
-	पूर्ण
+		goto clk_get_fail;
+	}
 	ret = clk_prepare_enable(host->clk);
-	अगर (ret)
-		जाओ clk_prepare_enable_fail;
+	if (ret)
+		goto clk_prepare_enable_fail;
 
 	host->mmc_input_clk = clk_get_rate(host->clk);
 
 	match = of_match_device(davinci_mmc_dt_ids, &pdev->dev);
-	अगर (match) अणु
+	if (match) {
 		pdev->id_entry = match->data;
 		ret = mmc_of_parse(mmc);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err_probe(&pdev->dev, ret,
 				      "could not parse of data\n");
-			जाओ parse_fail;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto parse_fail;
+		}
+	} else {
 		ret = mmc_davinci_parse_pdata(mmc);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&pdev->dev,
 				"could not parse platform data: %d\n", ret);
-			जाओ parse_fail;
-	पूर्ण	पूर्ण
+			goto parse_fail;
+	}	}
 
-	अगर (host->nr_sg > MAX_NR_SG || !host->nr_sg)
+	if (host->nr_sg > MAX_NR_SG || !host->nr_sg)
 		host->nr_sg = MAX_NR_SG;
 
 	init_mmcsd_host(host);
 
 	host->use_dma = use_dma;
 	host->mmc_irq = irq;
-	host->sdio_irq = platक्रमm_get_irq(pdev, 1);
+	host->sdio_irq = platform_get_irq(pdev, 1);
 
-	अगर (host->use_dma) अणु
+	if (host->use_dma) {
 		ret = davinci_acquire_dma_channels(host);
-		अगर (ret == -EPROBE_DEFER)
-			जाओ dma_probe_defer;
-		अन्यथा अगर (ret)
+		if (ret == -EPROBE_DEFER)
+			goto dma_probe_defer;
+		else if (ret)
 			host->use_dma = 0;
-	पूर्ण
+	}
 
 	mmc->caps |= MMC_CAP_WAIT_WHILE_BUSY;
 
-	id_entry = platक्रमm_get_device_id(pdev);
-	अगर (id_entry)
+	id_entry = platform_get_device_id(pdev);
+	if (id_entry)
 		host->version = id_entry->driver_data;
 
 	mmc->ops = &mmc_davinci_ops;
@@ -1288,7 +1287,7 @@ MODULE_DEVICE_TABLE(of, davinci_mmc_dt_ids);
 	/* EDMA limit per hw segment (one or two MBytes) */
 	mmc->max_seg_size	= MAX_CCNT * rw_threshold;
 
-	/* MMC/SD controller limits क्रम multiblock requests */
+	/* MMC/SD controller limits for multiblock requests */
 	mmc->max_blk_size	= 4095;  /* BLEN is 12 bits */
 	mmc->max_blk_count	= 65535; /* NBLK is 16 bits */
 	mmc->max_req_size	= mmc->max_blk_size * mmc->max_blk_count;
@@ -1298,43 +1297,43 @@ MODULE_DEVICE_TABLE(of, davinci_mmc_dt_ids);
 	dev_dbg(mmc_dev(host->mmc), "max_req_size=%d\n", mmc->max_req_size);
 	dev_dbg(mmc_dev(host->mmc), "max_seg_size=%d\n", mmc->max_seg_size);
 
-	platक्रमm_set_drvdata(pdev, host);
+	platform_set_drvdata(pdev, host);
 
-	ret = mmc_davinci_cpufreq_रेजिस्टर(host);
-	अगर (ret) अणु
+	ret = mmc_davinci_cpufreq_register(host);
+	if (ret) {
 		dev_err(&pdev->dev, "failed to register cpufreq\n");
-		जाओ cpu_freq_fail;
-	पूर्ण
+		goto cpu_freq_fail;
+	}
 
 	ret = mmc_add_host(mmc);
-	अगर (ret < 0)
-		जाओ mmc_add_host_fail;
+	if (ret < 0)
+		goto mmc_add_host_fail;
 
 	ret = devm_request_irq(&pdev->dev, irq, mmc_davinci_irq, 0,
 			       mmc_hostname(mmc), host);
-	अगर (ret)
-		जाओ request_irq_fail;
+	if (ret)
+		goto request_irq_fail;
 
-	अगर (host->sdio_irq >= 0) अणु
+	if (host->sdio_irq >= 0) {
 		ret = devm_request_irq(&pdev->dev, host->sdio_irq,
 				       mmc_davinci_sdio_irq, 0,
 				       mmc_hostname(mmc), host);
-		अगर (!ret)
+		if (!ret)
 			mmc->caps |= MMC_CAP_SDIO_IRQ;
-	पूर्ण
+	}
 
-	नाम_region(mem, mmc_hostname(mmc));
+	rename_region(mem, mmc_hostname(mmc));
 
 	dev_info(mmc_dev(host->mmc), "Using %s, %d-bit mode\n",
 		host->use_dma ? "DMA" : "PIO",
 		(mmc->caps & MMC_CAP_4_BIT_DATA) ? 4 : 1);
 
-	वापस 0;
+	return 0;
 
 request_irq_fail:
-	mmc_हटाओ_host(mmc);
+	mmc_remove_host(mmc);
 mmc_add_host_fail:
-	mmc_davinci_cpufreq_deरेजिस्टर(host);
+	mmc_davinci_cpufreq_deregister(host);
 cpu_freq_fail:
 	davinci_release_dma_channels(host);
 parse_fail:
@@ -1343,69 +1342,69 @@ dma_probe_defer:
 clk_prepare_enable_fail:
 clk_get_fail:
 ioremap_fail:
-	mmc_मुक्त_host(mmc);
+	mmc_free_host(mmc);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __निकास davinci_mmcsd_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा mmc_davinci_host *host = platक्रमm_get_drvdata(pdev);
+static int __exit davinci_mmcsd_remove(struct platform_device *pdev)
+{
+	struct mmc_davinci_host *host = platform_get_drvdata(pdev);
 
-	mmc_हटाओ_host(host->mmc);
-	mmc_davinci_cpufreq_deरेजिस्टर(host);
+	mmc_remove_host(host->mmc);
+	mmc_davinci_cpufreq_deregister(host);
 	davinci_release_dma_channels(host);
 	clk_disable_unprepare(host->clk);
-	mmc_मुक्त_host(host->mmc);
+	mmc_free_host(host->mmc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक davinci_mmcsd_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा mmc_davinci_host *host = dev_get_drvdata(dev);
+#ifdef CONFIG_PM
+static int davinci_mmcsd_suspend(struct device *dev)
+{
+	struct mmc_davinci_host *host = dev_get_drvdata(dev);
 
-	ग_लिखोl(0, host->base + DAVINCI_MMCIM);
+	writel(0, host->base + DAVINCI_MMCIM);
 	mmc_davinci_reset_ctrl(host, 1);
 	clk_disable(host->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक davinci_mmcsd_resume(काष्ठा device *dev)
-अणु
-	काष्ठा mmc_davinci_host *host = dev_get_drvdata(dev);
+static int davinci_mmcsd_resume(struct device *dev)
+{
+	struct mmc_davinci_host *host = dev_get_drvdata(dev);
 
 	clk_enable(host->clk);
 	mmc_davinci_reset_ctrl(host, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops davinci_mmcsd_pm = अणु
+static const struct dev_pm_ops davinci_mmcsd_pm = {
 	.suspend        = davinci_mmcsd_suspend,
 	.resume         = davinci_mmcsd_resume,
-पूर्ण;
+};
 
-#घोषणा davinci_mmcsd_pm_ops (&davinci_mmcsd_pm)
-#अन्यथा
-#घोषणा davinci_mmcsd_pm_ops शून्य
-#पूर्ण_अगर
+#define davinci_mmcsd_pm_ops (&davinci_mmcsd_pm)
+#else
+#define davinci_mmcsd_pm_ops NULL
+#endif
 
-अटल काष्ठा platक्रमm_driver davinci_mmcsd_driver = अणु
-	.driver		= अणु
+static struct platform_driver davinci_mmcsd_driver = {
+	.driver		= {
 		.name	= "davinci_mmc",
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
 		.pm	= davinci_mmcsd_pm_ops,
 		.of_match_table = davinci_mmc_dt_ids,
-	पूर्ण,
+	},
 	.probe		= davinci_mmcsd_probe,
-	.हटाओ		= __निकास_p(davinci_mmcsd_हटाओ),
+	.remove		= __exit_p(davinci_mmcsd_remove),
 	.id_table	= davinci_mmc_devtype,
-पूर्ण;
+};
 
-module_platक्रमm_driver(davinci_mmcsd_driver);
+module_platform_driver(davinci_mmcsd_driver);
 
 MODULE_AUTHOR("Texas Instruments India");
 MODULE_LICENSE("GPL");

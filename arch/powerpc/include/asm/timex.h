@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_POWERPC_TIMEX_H
-#घोषणा _ASM_POWERPC_TIMEX_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_POWERPC_TIMEX_H
+#define _ASM_POWERPC_TIMEX_H
 
-#अगर_घोषित __KERNEL__
+#ifdef __KERNEL__
 
 /*
- * PowerPC architecture समयx specअगरications
+ * PowerPC architecture timex specifications
  */
 
-#समावेश <यंत्र/cputable.h>
-#समावेश <यंत्र/vdso/समयbase.h>
+#include <asm/cputable.h>
+#include <asm/vdso/timebase.h>
 
-#घोषणा CLOCK_TICK_RATE	1024000 /* Underlying HZ */
+#define CLOCK_TICK_RATE	1024000 /* Underlying HZ */
 
-प्रकार अचिन्हित दीर्घ cycles_t;
+typedef unsigned long cycles_t;
 
-अटल अंतरभूत cycles_t get_cycles(व्योम)
-अणु
-	वापस mftb();
-पूर्ण
+static inline cycles_t get_cycles(void)
+{
+	return mftb();
+}
 
-#पूर्ण_अगर	/* __KERNEL__ */
-#पूर्ण_अगर	/* _ASM_POWERPC_TIMEX_H */
+#endif	/* __KERNEL__ */
+#endif	/* _ASM_POWERPC_TIMEX_H */

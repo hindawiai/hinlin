@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * AppArmor security module
  *
@@ -9,39 +8,39 @@
  * Copyright 2009-2013 Canonical Ltd.
  */
 
-#अगर_अघोषित __AA_CAPABILITY_H
-#घोषणा __AA_CAPABILITY_H
+#ifndef __AA_CAPABILITY_H
+#define __AA_CAPABILITY_H
 
-#समावेश <linux/sched.h>
+#include <linux/sched.h>
 
-#समावेश "apparmorfs.h"
+#include "apparmorfs.h"
 
-काष्ठा aa_label;
+struct aa_label;
 
-/* aa_caps - confinement data क्रम capabilities
+/* aa_caps - confinement data for capabilities
  * @allowed: capabilities mask
  * @audit: caps that are to be audited
  * @denied: caps that are explicitly denied
  * @quiet: caps that should not be audited
- * @समाप्त: caps that when requested will result in the task being समाप्तed
+ * @kill: caps that when requested will result in the task being killed
  * @extended: caps that are subject finer grained mediation
  */
-काष्ठा aa_caps अणु
+struct aa_caps {
 	kernel_cap_t allow;
 	kernel_cap_t audit;
 	kernel_cap_t denied;
 	kernel_cap_t quiet;
-	kernel_cap_t समाप्त;
+	kernel_cap_t kill;
 	kernel_cap_t extended;
-पूर्ण;
+};
 
-बाह्य काष्ठा aa_sfs_entry aa_sfs_entry_caps[];
+extern struct aa_sfs_entry aa_sfs_entry_caps[];
 
-पूर्णांक aa_capable(काष्ठा aa_label *label, पूर्णांक cap, अचिन्हित पूर्णांक opts);
+int aa_capable(struct aa_label *label, int cap, unsigned int opts);
 
-अटल अंतरभूत व्योम aa_मुक्त_cap_rules(काष्ठा aa_caps *caps)
-अणु
+static inline void aa_free_cap_rules(struct aa_caps *caps)
+{
 	/* NOP */
-पूर्ण
+}
 
-#पूर्ण_अगर /* __AA_CAPBILITY_H */
+#endif /* __AA_CAPBILITY_H */

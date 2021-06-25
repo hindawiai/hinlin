@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: Apache-2.0 */
+/* SPDX-License-Identifier: Apache-2.0 */
 /*
- * WFx hardware पूर्णांकerface definitions
+ * WFx hardware interface definitions
  *
  * Copyright (c) 2018-2020, Silicon Laboratories Inc.
  */
 
-#अगर_अघोषित WFX_HIF_API_MIB_H
-#घोषणा WFX_HIF_API_MIB_H
+#ifndef WFX_HIF_API_MIB_H
+#define WFX_HIF_API_MIB_H
 
-#समावेश "hif_api_general.h"
+#include "hif_api_general.h"
 
-#घोषणा HIF_API_IPV4_ADDRESS_SIZE 4
-#घोषणा HIF_API_IPV6_ADDRESS_SIZE 16
+#define HIF_API_IPV4_ADDRESS_SIZE 4
+#define HIF_API_IPV6_ADDRESS_SIZE 16
 
-क्रमागत hअगर_mib_ids अणु
+enum hif_mib_ids {
 	HIF_MIB_ID_GL_OPERATIONAL_POWER_MODE        = 0x2000,
 	HIF_MIB_ID_GL_BLOCK_ACK_INFO                = 0x2001,
 	HIF_MIB_ID_GL_SET_MULTI_MSG                 = 0x2002,
@@ -62,41 +61,41 @@
 	HIF_MIB_ID_INACTIVITY_TIMER                 = 0x2054,
 	HIF_MIB_ID_INTERFACE_PROTECTION             = 0x2055,
 	HIF_MIB_ID_BEACON_STATS                     = 0x2056,
-पूर्ण;
+};
 
-क्रमागत hअगर_op_घातer_mode अणु
+enum hif_op_power_mode {
 	HIF_OP_POWER_MODE_ACTIVE    = 0x0,
 	HIF_OP_POWER_MODE_DOZE      = 0x1,
 	HIF_OP_POWER_MODE_QUIESCENT = 0x2
-पूर्ण;
+};
 
-काष्ठा hअगर_mib_gl_operational_घातer_mode अणु
-	u8     घातer_mode:4;
+struct hif_mib_gl_operational_power_mode {
+	u8     power_mode:4;
 	u8     reserved1:3;
 	u8     wup_ind_activation:1;
 	u8     reserved2[3];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा hअगर_mib_gl_set_multi_msg अणु
+struct hif_mib_gl_set_multi_msg {
 	u8     enable_multi_tx_conf:1;
 	u8     reserved1:7;
 	u8     reserved2[3];
-पूर्ण __packed;
+} __packed;
 
-क्रमागत hअगर_arp_ns_frame_treaपंचांगent अणु
+enum hif_arp_ns_frame_treatment {
 	HIF_ARP_NS_FILTERING_DISABLE = 0x0,
 	HIF_ARP_NS_FILTERING_ENABLE  = 0x1,
 	HIF_ARP_NS_REPLY_ENABLE      = 0x2
-पूर्ण;
+};
 
-काष्ठा hअगर_mib_arp_ip_addr_table अणु
+struct hif_mib_arp_ip_addr_table {
 	u8     condition_idx;
 	u8     arp_enable;
 	u8     reserved[2];
 	u8     ipv4_address[HIF_API_IPV4_ADDRESS_SIZE];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा hअगर_mib_rx_filter अणु
+struct hif_mib_rx_filter {
 	u8     reserved1:1;
 	u8     bssid_filter:1;
 	u8     reserved2:1;
@@ -104,36 +103,36 @@
 	u8     keep_alive_filter:1;
 	u8     reserved3:3;
 	u8     reserved4[3];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा hअगर_ie_table_entry अणु
+struct hif_ie_table_entry {
 	u8     ie_id;
 	u8     has_changed:1;
-	u8     no_दीर्घer:1;
+	u8     no_longer:1;
 	u8     has_appeared:1;
 	u8     reserved:1;
 	u8     num_match_data:4;
 	u8     oui[3];
 	u8     match_data[3];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा hअगर_mib_bcn_filter_table अणु
+struct hif_mib_bcn_filter_table {
 	__le32 num_of_info_elmts;
-	काष्ठा hअगर_ie_table_entry ie_table[];
-पूर्ण __packed;
+	struct hif_ie_table_entry ie_table[];
+} __packed;
 
-क्रमागत hअगर_beacon_filter अणु
+enum hif_beacon_filter {
 	HIF_BEACON_FILTER_DISABLE  = 0x0,
 	HIF_BEACON_FILTER_ENABLE   = 0x1,
 	HIF_BEACON_FILTER_AUTO_ERP = 0x2
-पूर्ण;
+};
 
-काष्ठा hअगर_mib_bcn_filter_enable अणु
+struct hif_mib_bcn_filter_enable {
 	__le32 enable;
 	__le32 bcn_count;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा hअगर_mib_extended_count_table अणु
+struct hif_mib_extended_count_table {
 	__le32 count_plcp_errors;
 	__le32 count_fcs_errors;
 	__le32 count_tx_packets;
@@ -160,9 +159,9 @@
 	__le32 count_rx_beacon;
 	__le32 count_miss_beacon;
 	__le32 reserved[15];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा hअगर_mib_count_table अणु
+struct hif_mib_count_table {
 	__le32 count_plcp_errors;
 	__le32 count_fcs_errors;
 	__le32 count_tx_packets;
@@ -186,66 +185,66 @@
 	__le32 count_rx_cmac_replays;
 	__le32 count_rx_mgmt_ccmp_replays;
 	__le32 count_rx_bipmic_errors;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा hअगर_mib_mac_address अणु
+struct hif_mib_mac_address {
 	u8     mac_addr[ETH_ALEN];
 	__le16 reserved;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा hअगर_mib_wep_शेष_key_id अणु
-	u8     wep_शेष_key_id;
+struct hif_mib_wep_default_key_id {
+	u8     wep_default_key_id;
 	u8     reserved[3];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा hअगर_mib_करोt11_rts_threshold अणु
+struct hif_mib_dot11_rts_threshold {
 	__le32 threshold;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा hअगर_mib_slot_समय अणु
-	__le32 slot_समय;
-पूर्ण __packed;
+struct hif_mib_slot_time {
+	__le32 slot_time;
+} __packed;
 
-काष्ठा hअगर_mib_current_tx_घातer_level अणु
-	__le32 घातer_level; // चिन्हित value
-पूर्ण __packed;
+struct hif_mib_current_tx_power_level {
+	__le32 power_level; // signed value
+} __packed;
 
-काष्ठा hअगर_mib_non_erp_protection अणु
+struct hif_mib_non_erp_protection {
 	u8     use_cts_to_self:1;
 	u8     reserved1:7;
 	u8     reserved2[3];
-पूर्ण __packed;
+} __packed;
 
-क्रमागत hअगर_पंचांगplt अणु
+enum hif_tmplt {
 	HIF_TMPLT_PRBREQ = 0x0,
 	HIF_TMPLT_BCN    = 0x1,
-	HIF_TMPLT_शून्य   = 0x2,
+	HIF_TMPLT_NULL   = 0x2,
 	HIF_TMPLT_QOSNUL = 0x3,
 	HIF_TMPLT_PSPOLL = 0x4,
 	HIF_TMPLT_PRBRES = 0x5,
 	HIF_TMPLT_ARP    = 0x6,
 	HIF_TMPLT_NA     = 0x7
-पूर्ण;
+};
 
-#घोषणा HIF_API_MAX_TEMPLATE_FRAME_SIZE 700
+#define HIF_API_MAX_TEMPLATE_FRAME_SIZE 700
 
-काष्ठा hअगर_mib_ढाँचा_frame अणु
+struct hif_mib_template_frame {
 	u8     frame_type;
 	u8     init_rate:7;
 	u8     mode:1;
 	__le16 frame_length;
 	u8     frame[];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा hअगर_mib_beacon_wake_up_period अणु
+struct hif_mib_beacon_wake_up_period {
 	u8     wakeup_period_min;
 	u8     receive_dtim:1;
 	u8     reserved1:7;
 	u8     wakeup_period_max;
 	u8     reserved2;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा hअगर_mib_rcpi_rssi_threshold अणु
+struct hif_mib_rcpi_rssi_threshold {
 	u8     detection:1;
 	u8     rcpi_rssi:1;
 	u8     upperthresh:1;
@@ -254,18 +253,18 @@
 	u8     lower_threshold;
 	u8     upper_threshold;
 	u8     rolling_average_count;
-पूर्ण __packed;
+} __packed;
 
-#घोषणा DEFAULT_BA_MAX_RX_BUFFER_SIZE 16
+#define DEFAULT_BA_MAX_RX_BUFFER_SIZE 16
 
-काष्ठा hअगर_mib_block_ack_policy अणु
+struct hif_mib_block_ack_policy {
 	u8     block_ack_tx_tid_policy;
 	u8     reserved1;
 	u8     block_ack_rx_tid_policy;
 	u8     block_ack_rx_max_buffer_size;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत hअगर_mpdu_start_spacing अणु
+enum hif_mpdu_start_spacing {
 	HIF_MPDU_START_SPACING_NO_RESTRIC = 0x0,
 	HIF_MPDU_START_SPACING_QUARTER    = 0x1,
 	HIF_MPDU_START_SPACING_HALF       = 0x2,
@@ -274,23 +273,23 @@
 	HIF_MPDU_START_SPACING_FOUR       = 0x5,
 	HIF_MPDU_START_SPACING_EIGHT      = 0x6,
 	HIF_MPDU_START_SPACING_SIXTEEN    = 0x7
-पूर्ण;
+};
 
-काष्ठा hअगर_mib_set_association_mode अणु
+struct hif_mib_set_association_mode {
 	u8     preambtype_use:1;
 	u8     mode:1;
 	u8     rateset:1;
 	u8     spacing:1;
 	u8     reserved1:4;
-	u8     लघु_preamble:1;
+	u8     short_preamble:1;
 	u8     reserved2:7;
 	u8     greenfield:1;
 	u8     reserved3:7;
 	u8     mpdu_start_spacing;
 	__le32 basic_rate_set;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा hअगर_mib_set_uapsd_inक्रमmation अणु
+struct hif_mib_set_uapsd_information {
 	u8     trig_bckgrnd:1;
 	u8     trig_be:1;
 	u8     trig_video:1;
@@ -301,15 +300,15 @@
 	u8     deliv_video:1;
 	u8     deliv_voice:1;
 	u8     reserved2:4;
-	__le16 min_स्वतः_trigger_पूर्णांकerval;
-	__le16 max_स्वतः_trigger_पूर्णांकerval;
-	__le16 स्वतः_trigger_step;
-पूर्ण __packed;
+	__le16 min_auto_trigger_interval;
+	__le16 max_auto_trigger_interval;
+	__le16 auto_trigger_step;
+} __packed;
 
-काष्ठा hअगर_tx_rate_retry_policy अणु
+struct hif_tx_rate_retry_policy {
 	u8     policy_index;
-	u8     लघु_retry_count;
-	u8     दीर्घ_retry_count;
+	u8     short_retry_count;
+	u8     long_retry_count;
 	u8     first_rate_sel:2;
 	u8     terminate:1;
 	u8     count_init:1;
@@ -317,28 +316,28 @@
 	u8     rate_recovery_count;
 	u8     reserved2[3];
 	u8     rates[12];
-पूर्ण __packed;
+} __packed;
 
-#घोषणा HIF_TX_RETRY_POLICY_MAX     15
-#घोषणा HIF_TX_RETRY_POLICY_INVALID HIF_TX_RETRY_POLICY_MAX
+#define HIF_TX_RETRY_POLICY_MAX     15
+#define HIF_TX_RETRY_POLICY_INVALID HIF_TX_RETRY_POLICY_MAX
 
-काष्ठा hअगर_mib_set_tx_rate_retry_policy अणु
+struct hif_mib_set_tx_rate_retry_policy {
 	u8     num_tx_rate_policies;
 	u8     reserved[3];
-	काष्ठा hअगर_tx_rate_retry_policy tx_rate_retry_policy[];
-पूर्ण __packed;
+	struct hif_tx_rate_retry_policy tx_rate_retry_policy[];
+} __packed;
 
-काष्ठा hअगर_mib_रक्षित_mgmt_policy अणु
+struct hif_mib_protected_mgmt_policy {
 	u8     pmf_enable:1;
 	u8     unpmf_allowed:1;
 	u8     host_enc_auth_frames:1;
 	u8     reserved1:5;
 	u8     reserved2[3];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा hअगर_mib_keep_alive_period अणु
+struct hif_mib_keep_alive_period {
 	__le16 keep_alive_period;
 	u8     reserved[2];
-पूर्ण __packed;
+} __packed;
 
-#पूर्ण_अगर
+#endif

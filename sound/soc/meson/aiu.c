@@ -1,158 +1,157 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // Copyright (c) 2020 BayLibre, SAS.
 // Author: Jerome Brunet <jbrunet@baylibre.com>
 
-#समावेश <linux/bitfield.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/reset.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/soc-dai.h>
+#include <linux/bitfield.h>
+#include <linux/clk.h>
+#include <linux/module.h>
+#include <linux/of_platform.h>
+#include <linux/regmap.h>
+#include <linux/reset.h>
+#include <sound/soc.h>
+#include <sound/soc-dai.h>
 
-#समावेश <dt-bindings/sound/meson-aiu.h>
-#समावेश "aiu.h"
-#समावेश "aiu-fifo.h"
+#include <dt-bindings/sound/meson-aiu.h>
+#include "aiu.h"
+#include "aiu-fifo.h"
 
-#घोषणा AIU_I2S_MISC_958_SRC_SHIFT 3
+#define AIU_I2S_MISC_958_SRC_SHIFT 3
 
-अटल स्थिर अक्षर * स्थिर aiu_spdअगर_encode_sel_texts[] = अणु
+static const char * const aiu_spdif_encode_sel_texts[] = {
 	"SPDIF", "I2S",
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(aiu_spdअगर_encode_sel_क्रमागत, AIU_I2S_MISC,
+static SOC_ENUM_SINGLE_DECL(aiu_spdif_encode_sel_enum, AIU_I2S_MISC,
 			    AIU_I2S_MISC_958_SRC_SHIFT,
-			    aiu_spdअगर_encode_sel_texts);
+			    aiu_spdif_encode_sel_texts);
 
-अटल स्थिर काष्ठा snd_kcontrol_new aiu_spdअगर_encode_mux =
-	SOC_DAPM_ENUM("SPDIF Buffer Src", aiu_spdअगर_encode_sel_क्रमागत);
+static const struct snd_kcontrol_new aiu_spdif_encode_mux =
+	SOC_DAPM_ENUM("SPDIF Buffer Src", aiu_spdif_encode_sel_enum);
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget aiu_cpu_dapm_widमाला_लो[] = अणु
+static const struct snd_soc_dapm_widget aiu_cpu_dapm_widgets[] = {
 	SND_SOC_DAPM_MUX("SPDIF SRC SEL", SND_SOC_NOPM, 0, 0,
-			 &aiu_spdअगर_encode_mux),
-पूर्ण;
+			 &aiu_spdif_encode_mux),
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route aiu_cpu_dapm_routes[] = अणु
-	अणु "I2S Encoder Playback", शून्य, "I2S FIFO Playback" पूर्ण,
-	अणु "SPDIF SRC SEL", "SPDIF", "SPDIF FIFO Playback" पूर्ण,
-	अणु "SPDIF SRC SEL", "I2S", "I2S FIFO Playback" पूर्ण,
-	अणु "SPDIF Encoder Playback", शून्य, "SPDIF SRC SEL" पूर्ण,
-पूर्ण;
+static const struct snd_soc_dapm_route aiu_cpu_dapm_routes[] = {
+	{ "I2S Encoder Playback", NULL, "I2S FIFO Playback" },
+	{ "SPDIF SRC SEL", "SPDIF", "SPDIF FIFO Playback" },
+	{ "SPDIF SRC SEL", "I2S", "I2S FIFO Playback" },
+	{ "SPDIF Encoder Playback", NULL, "SPDIF SRC SEL" },
+};
 
-पूर्णांक aiu_of_xlate_dai_name(काष्ठा snd_soc_component *component,
-			  स्थिर काष्ठा of_phandle_args *args,
-			  स्थिर अक्षर **dai_name,
-			  अचिन्हित पूर्णांक component_id)
-अणु
-	काष्ठा snd_soc_dai *dai;
-	पूर्णांक id;
+int aiu_of_xlate_dai_name(struct snd_soc_component *component,
+			  const struct of_phandle_args *args,
+			  const char **dai_name,
+			  unsigned int component_id)
+{
+	struct snd_soc_dai *dai;
+	int id;
 
-	अगर (args->args_count != 2)
-		वापस -EINVAL;
+	if (args->args_count != 2)
+		return -EINVAL;
 
-	अगर (args->args[0] != component_id)
-		वापस -EINVAL;
+	if (args->args[0] != component_id)
+		return -EINVAL;
 
 	id = args->args[1];
 
-	अगर (id < 0 || id >= component->num_dai)
-		वापस -EINVAL;
+	if (id < 0 || id >= component->num_dai)
+		return -EINVAL;
 
-	क्रम_each_component_dais(component, dai) अणु
-		अगर (id == 0)
-			अवरोध;
+	for_each_component_dais(component, dai) {
+		if (id == 0)
+			break;
 		id--;
-	पूर्ण
+	}
 
 	*dai_name = dai->driver->name;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aiu_cpu_of_xlate_dai_name(काष्ठा snd_soc_component *component,
-				     स्थिर काष्ठा of_phandle_args *args,
-				     स्थिर अक्षर **dai_name)
-अणु
-	वापस aiu_of_xlate_dai_name(component, args, dai_name, AIU_CPU);
-पूर्ण
+static int aiu_cpu_of_xlate_dai_name(struct snd_soc_component *component,
+				     const struct of_phandle_args *args,
+				     const char **dai_name)
+{
+	return aiu_of_xlate_dai_name(component, args, dai_name, AIU_CPU);
+}
 
-अटल पूर्णांक aiu_cpu_component_probe(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा aiu *aiu = snd_soc_component_get_drvdata(component);
+static int aiu_cpu_component_probe(struct snd_soc_component *component)
+{
+	struct aiu *aiu = snd_soc_component_get_drvdata(component);
 
-	/* Required क्रम the SPDIF Source control operation */
-	वापस clk_prepare_enable(aiu->i2s.clks[PCLK].clk);
-पूर्ण
+	/* Required for the SPDIF Source control operation */
+	return clk_prepare_enable(aiu->i2s.clks[PCLK].clk);
+}
 
-अटल व्योम aiu_cpu_component_हटाओ(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा aiu *aiu = snd_soc_component_get_drvdata(component);
+static void aiu_cpu_component_remove(struct snd_soc_component *component)
+{
+	struct aiu *aiu = snd_soc_component_get_drvdata(component);
 
 	clk_disable_unprepare(aiu->i2s.clks[PCLK].clk);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा snd_soc_component_driver aiu_cpu_component = अणु
+static const struct snd_soc_component_driver aiu_cpu_component = {
 	.name			= "AIU CPU",
-	.dapm_widमाला_लो		= aiu_cpu_dapm_widमाला_लो,
-	.num_dapm_widमाला_लो	= ARRAY_SIZE(aiu_cpu_dapm_widमाला_लो),
+	.dapm_widgets		= aiu_cpu_dapm_widgets,
+	.num_dapm_widgets	= ARRAY_SIZE(aiu_cpu_dapm_widgets),
 	.dapm_routes		= aiu_cpu_dapm_routes,
 	.num_dapm_routes	= ARRAY_SIZE(aiu_cpu_dapm_routes),
 	.of_xlate_dai_name	= aiu_cpu_of_xlate_dai_name,
-	.poपूर्णांकer		= aiu_fअगरo_poपूर्णांकer,
+	.pointer		= aiu_fifo_pointer,
 	.probe			= aiu_cpu_component_probe,
-	.हटाओ			= aiu_cpu_component_हटाओ,
-पूर्ण;
+	.remove			= aiu_cpu_component_remove,
+};
 
-अटल काष्ठा snd_soc_dai_driver aiu_cpu_dai_drv[] = अणु
-	[CPU_I2S_FIFO] = अणु
+static struct snd_soc_dai_driver aiu_cpu_dai_drv[] = {
+	[CPU_I2S_FIFO] = {
 		.name = "I2S FIFO",
-		.playback = अणु
+		.playback = {
 			.stream_name	= "I2S FIFO Playback",
 			.channels_min	= 2,
 			.channels_max	= 8,
 			.rates		= SNDRV_PCM_RATE_CONTINUOUS,
 			.rate_min	= 5512,
 			.rate_max	= 192000,
-			.क्रमmats	= AIU_FORMATS,
-		पूर्ण,
-		.ops		= &aiu_fअगरo_i2s_dai_ops,
-		.pcm_new	= aiu_fअगरo_pcm_new,
-		.probe		= aiu_fअगरo_i2s_dai_probe,
-		.हटाओ		= aiu_fअगरo_dai_हटाओ,
-	पूर्ण,
-	[CPU_SPDIF_FIFO] = अणु
+			.formats	= AIU_FORMATS,
+		},
+		.ops		= &aiu_fifo_i2s_dai_ops,
+		.pcm_new	= aiu_fifo_pcm_new,
+		.probe		= aiu_fifo_i2s_dai_probe,
+		.remove		= aiu_fifo_dai_remove,
+	},
+	[CPU_SPDIF_FIFO] = {
 		.name = "SPDIF FIFO",
-		.playback = अणु
+		.playback = {
 			.stream_name	= "SPDIF FIFO Playback",
 			.channels_min	= 2,
 			.channels_max	= 2,
 			.rates		= SNDRV_PCM_RATE_CONTINUOUS,
 			.rate_min	= 5512,
 			.rate_max	= 192000,
-			.क्रमmats	= AIU_FORMATS,
-		पूर्ण,
-		.ops		= &aiu_fअगरo_spdअगर_dai_ops,
-		.pcm_new	= aiu_fअगरo_pcm_new,
-		.probe		= aiu_fअगरo_spdअगर_dai_probe,
-		.हटाओ		= aiu_fअगरo_dai_हटाओ,
-	पूर्ण,
-	[CPU_I2S_ENCODER] = अणु
+			.formats	= AIU_FORMATS,
+		},
+		.ops		= &aiu_fifo_spdif_dai_ops,
+		.pcm_new	= aiu_fifo_pcm_new,
+		.probe		= aiu_fifo_spdif_dai_probe,
+		.remove		= aiu_fifo_dai_remove,
+	},
+	[CPU_I2S_ENCODER] = {
 		.name = "I2S Encoder",
-		.playback = अणु
+		.playback = {
 			.stream_name = "I2S Encoder Playback",
 			.channels_min = 2,
 			.channels_max = 8,
 			.rates = SNDRV_PCM_RATE_8000_192000,
-			.क्रमmats = AIU_FORMATS,
-		पूर्ण,
+			.formats = AIU_FORMATS,
+		},
 		.ops = &aiu_encoder_i2s_dai_ops,
-	पूर्ण,
-	[CPU_SPDIF_ENCODER] = अणु
+	},
+	[CPU_SPDIF_ENCODER] = {
 		.name = "SPDIF Encoder",
-		.playback = अणु
+		.playback = {
 			.stream_name = "SPDIF Encoder Playback",
 			.channels_min = 2,
 			.channels_max = 2,
@@ -163,226 +162,226 @@
 				  SNDRV_PCM_RATE_96000  |
 				  SNDRV_PCM_RATE_176400 |
 				  SNDRV_PCM_RATE_192000),
-			.क्रमmats = AIU_FORMATS,
-		पूर्ण,
-		.ops = &aiu_encoder_spdअगर_dai_ops,
-	पूर्ण
-पूर्ण;
+			.formats = AIU_FORMATS,
+		},
+		.ops = &aiu_encoder_spdif_dai_ops,
+	}
+};
 
-अटल स्थिर काष्ठा regmap_config aiu_regmap_cfg = अणु
+static const struct regmap_config aiu_regmap_cfg = {
 	.reg_bits	= 32,
 	.val_bits	= 32,
 	.reg_stride	= 4,
-	.max_रेजिस्टर	= 0x2ac,
-पूर्ण;
+	.max_register	= 0x2ac,
+};
 
-अटल पूर्णांक aiu_clk_bulk_get(काष्ठा device *dev,
-			    स्थिर अक्षर * स्थिर *ids,
-			    अचिन्हित पूर्णांक num,
-			    काष्ठा aiu_पूर्णांकerface *पूर्णांकerface)
-अणु
-	काष्ठा clk_bulk_data *clks;
-	पूर्णांक i, ret;
+static int aiu_clk_bulk_get(struct device *dev,
+			    const char * const *ids,
+			    unsigned int num,
+			    struct aiu_interface *interface)
+{
+	struct clk_bulk_data *clks;
+	int i, ret;
 
-	clks = devm_kसुस्मृति(dev, num, माप(*clks), GFP_KERNEL);
-	अगर (!clks)
-		वापस -ENOMEM;
+	clks = devm_kcalloc(dev, num, sizeof(*clks), GFP_KERNEL);
+	if (!clks)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < num; i++)
+	for (i = 0; i < num; i++)
 		clks[i].id = ids[i];
 
 	ret = devm_clk_bulk_get(dev, num, clks);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	पूर्णांकerface->clks = clks;
-	पूर्णांकerface->clk_num = num;
-	वापस 0;
-पूर्ण
+	interface->clks = clks;
+	interface->clk_num = num;
+	return 0;
+}
 
-अटल स्थिर अक्षर * स्थिर aiu_i2s_ids[] = अणु
+static const char * const aiu_i2s_ids[] = {
 	[PCLK]	= "i2s_pclk",
 	[AOCLK]	= "i2s_aoclk",
 	[MCLK]	= "i2s_mclk",
 	[MIXER]	= "i2s_mixer",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर aiu_spdअगर_ids[] = अणु
+static const char * const aiu_spdif_ids[] = {
 	[PCLK]	= "spdif_pclk",
 	[AOCLK]	= "spdif_aoclk",
 	[MCLK]	= "spdif_mclk_sel"
-पूर्ण;
+};
 
-अटल पूर्णांक aiu_clk_get(काष्ठा device *dev)
-अणु
-	काष्ठा aiu *aiu = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int aiu_clk_get(struct device *dev)
+{
+	struct aiu *aiu = dev_get_drvdata(dev);
+	int ret;
 
 	aiu->pclk = devm_clk_get(dev, "pclk");
-	अगर (IS_ERR(aiu->pclk)) अणु
-		अगर (PTR_ERR(aiu->pclk) != -EPROBE_DEFER)
+	if (IS_ERR(aiu->pclk)) {
+		if (PTR_ERR(aiu->pclk) != -EPROBE_DEFER)
 			dev_err(dev, "Can't get the aiu pclk\n");
-		वापस PTR_ERR(aiu->pclk);
-	पूर्ण
+		return PTR_ERR(aiu->pclk);
+	}
 
-	aiu->spdअगर_mclk = devm_clk_get(dev, "spdif_mclk");
-	अगर (IS_ERR(aiu->spdअगर_mclk)) अणु
-		अगर (PTR_ERR(aiu->spdअगर_mclk) != -EPROBE_DEFER)
+	aiu->spdif_mclk = devm_clk_get(dev, "spdif_mclk");
+	if (IS_ERR(aiu->spdif_mclk)) {
+		if (PTR_ERR(aiu->spdif_mclk) != -EPROBE_DEFER)
 			dev_err(dev, "Can't get the aiu spdif master clock\n");
-		वापस PTR_ERR(aiu->spdअगर_mclk);
-	पूर्ण
+		return PTR_ERR(aiu->spdif_mclk);
+	}
 
 	ret = aiu_clk_bulk_get(dev, aiu_i2s_ids, ARRAY_SIZE(aiu_i2s_ids),
 			       &aiu->i2s);
-	अगर (ret) अणु
-		अगर (ret != -EPROBE_DEFER)
+	if (ret) {
+		if (ret != -EPROBE_DEFER)
 			dev_err(dev, "Can't get the i2s clocks\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = aiu_clk_bulk_get(dev, aiu_spdअगर_ids, ARRAY_SIZE(aiu_spdअगर_ids),
-			       &aiu->spdअगर);
-	अगर (ret) अणु
-		अगर (ret != -EPROBE_DEFER)
+	ret = aiu_clk_bulk_get(dev, aiu_spdif_ids, ARRAY_SIZE(aiu_spdif_ids),
+			       &aiu->spdif);
+	if (ret) {
+		if (ret != -EPROBE_DEFER)
 			dev_err(dev, "Can't get the spdif clocks\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = clk_prepare_enable(aiu->pclk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "peripheral clock enable failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = devm_add_action_or_reset(dev,
-				       (व्योम(*)(व्योम *))clk_disable_unprepare,
+				       (void(*)(void *))clk_disable_unprepare,
 				       aiu->pclk);
-	अगर (ret)
+	if (ret)
 		dev_err(dev, "failed to add reset action on pclk");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक aiu_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	व्योम __iomem *regs;
-	काष्ठा regmap *map;
-	काष्ठा aiu *aiu;
-	पूर्णांक ret;
+static int aiu_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	void __iomem *regs;
+	struct regmap *map;
+	struct aiu *aiu;
+	int ret;
 
-	aiu = devm_kzalloc(dev, माप(*aiu), GFP_KERNEL);
-	अगर (!aiu)
-		वापस -ENOMEM;
+	aiu = devm_kzalloc(dev, sizeof(*aiu), GFP_KERNEL);
+	if (!aiu)
+		return -ENOMEM;
 
-	aiu->platक्रमm = device_get_match_data(dev);
-	अगर (!aiu->platक्रमm)
-		वापस -ENODEV;
+	aiu->platform = device_get_match_data(dev);
+	if (!aiu->platform)
+		return -ENODEV;
 
-	platक्रमm_set_drvdata(pdev, aiu);
+	platform_set_drvdata(pdev, aiu);
 
 	ret = device_reset(dev);
-	अगर (ret) अणु
-		अगर (ret != -EPROBE_DEFER)
+	if (ret) {
+		if (ret != -EPROBE_DEFER)
 			dev_err(dev, "Failed to reset device\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	regs = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(regs))
-		वापस PTR_ERR(regs);
+	regs = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(regs))
+		return PTR_ERR(regs);
 
 	map = devm_regmap_init_mmio(dev, regs, &aiu_regmap_cfg);
-	अगर (IS_ERR(map)) अणु
+	if (IS_ERR(map)) {
 		dev_err(dev, "failed to init regmap: %ld\n",
 			PTR_ERR(map));
-		वापस PTR_ERR(map);
-	पूर्ण
+		return PTR_ERR(map);
+	}
 
-	aiu->i2s.irq = platक्रमm_get_irq_byname(pdev, "i2s");
-	अगर (aiu->i2s.irq < 0)
-		वापस aiu->i2s.irq;
+	aiu->i2s.irq = platform_get_irq_byname(pdev, "i2s");
+	if (aiu->i2s.irq < 0)
+		return aiu->i2s.irq;
 
-	aiu->spdअगर.irq = platक्रमm_get_irq_byname(pdev, "spdif");
-	अगर (aiu->spdअगर.irq < 0)
-		वापस aiu->spdअगर.irq;
+	aiu->spdif.irq = platform_get_irq_byname(pdev, "spdif");
+	if (aiu->spdif.irq < 0)
+		return aiu->spdif.irq;
 
 	ret = aiu_clk_get(dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Register the cpu component of the aiu */
-	ret = snd_soc_रेजिस्टर_component(dev, &aiu_cpu_component,
+	ret = snd_soc_register_component(dev, &aiu_cpu_component,
 					 aiu_cpu_dai_drv,
 					 ARRAY_SIZE(aiu_cpu_dai_drv));
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to register cpu component\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Register the hdmi codec control component */
-	ret = aiu_hdmi_ctrl_रेजिस्टर_component(dev);
-	अगर (ret) अणु
+	ret = aiu_hdmi_ctrl_register_component(dev);
+	if (ret) {
 		dev_err(dev, "Failed to register hdmi control component\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	/* Register the पूर्णांकernal dac control component on gxl */
-	अगर (aiu->platक्रमm->has_acodec) अणु
-		ret = aiu_acodec_ctrl_रेजिस्टर_component(dev);
-		अगर (ret) अणु
+	/* Register the internal dac control component on gxl */
+	if (aiu->platform->has_acodec) {
+		ret = aiu_acodec_ctrl_register_component(dev);
+		if (ret) {
 			dev_err(dev,
 			    "Failed to register acodec control component\n");
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
-	वापस 0;
+	return 0;
 err:
-	snd_soc_unरेजिस्टर_component(dev);
-	वापस ret;
-पूर्ण
+	snd_soc_unregister_component(dev);
+	return ret;
+}
 
-अटल पूर्णांक aiu_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	snd_soc_unरेजिस्टर_component(&pdev->dev);
+static int aiu_remove(struct platform_device *pdev)
+{
+	snd_soc_unregister_component(&pdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा aiu_platक्रमm_data aiu_gxbb_pdata = अणु
+static const struct aiu_platform_data aiu_gxbb_pdata = {
 	.has_acodec = false,
-	.has_clk_ctrl_more_i2s_भाग = true,
-पूर्ण;
+	.has_clk_ctrl_more_i2s_div = true,
+};
 
-अटल स्थिर काष्ठा aiu_platक्रमm_data aiu_gxl_pdata = अणु
+static const struct aiu_platform_data aiu_gxl_pdata = {
 	.has_acodec = true,
-	.has_clk_ctrl_more_i2s_भाग = true,
-पूर्ण;
+	.has_clk_ctrl_more_i2s_div = true,
+};
 
-अटल स्थिर काष्ठा aiu_platक्रमm_data aiu_meson8_pdata = अणु
+static const struct aiu_platform_data aiu_meson8_pdata = {
 	.has_acodec = false,
-	.has_clk_ctrl_more_i2s_भाग = false,
-पूर्ण;
+	.has_clk_ctrl_more_i2s_div = false,
+};
 
-अटल स्थिर काष्ठा of_device_id aiu_of_match[] = अणु
-	अणु .compatible = "amlogic,aiu-gxbb", .data = &aiu_gxbb_pdata पूर्ण,
-	अणु .compatible = "amlogic,aiu-gxl", .data = &aiu_gxl_pdata पूर्ण,
-	अणु .compatible = "amlogic,aiu-meson8", .data = &aiu_meson8_pdata पूर्ण,
-	अणु .compatible = "amlogic,aiu-meson8b", .data = &aiu_meson8_pdata पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id aiu_of_match[] = {
+	{ .compatible = "amlogic,aiu-gxbb", .data = &aiu_gxbb_pdata },
+	{ .compatible = "amlogic,aiu-gxl", .data = &aiu_gxl_pdata },
+	{ .compatible = "amlogic,aiu-meson8", .data = &aiu_meson8_pdata },
+	{ .compatible = "amlogic,aiu-meson8b", .data = &aiu_meson8_pdata },
+	{}
+};
 MODULE_DEVICE_TABLE(of, aiu_of_match);
 
-अटल काष्ठा platक्रमm_driver aiu_pdrv = अणु
+static struct platform_driver aiu_pdrv = {
 	.probe = aiu_probe,
-	.हटाओ = aiu_हटाओ,
-	.driver = अणु
+	.remove = aiu_remove,
+	.driver = {
 		.name = "meson-aiu",
 		.of_match_table = aiu_of_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(aiu_pdrv);
+	},
+};
+module_platform_driver(aiu_pdrv);
 
 MODULE_DESCRIPTION("Meson AIU Driver");
 MODULE_AUTHOR("Jerome Brunet <jbrunet@baylibre.com>");

@@ -1,18 +1,17 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Broadcom BCM6345 style Level 1 पूर्णांकerrupt controller driver
+ * Broadcom BCM6345 style Level 1 interrupt controller driver
  *
  * Copyright (C) 2014 Broadcom Corporation
  * Copyright 2015 Simon Arlott
  *
  * This is based on the BCM7038 (which supports SMP) but with a single
- * enable रेजिस्टर instead of separate mask/set/clear रेजिस्टरs.
+ * enable register instead of separate mask/set/clear registers.
  *
- * The BCM3380 has a similar mask/status रेजिस्टर layout, but each pair
+ * The BCM3380 has a similar mask/status register layout, but each pair
  * of words is at separate locations (and SMP is not supported).
  *
- * ENABLE/STATUS words are packed next to each other क्रम each CPU:
+ * ENABLE/STATUS words are packed next to each other for each CPU:
  *
  * BCM6368:
  *   0x1000_0020: CPU0_W0_ENABLE
@@ -46,319 +45,319 @@
  * (which is big-endian in these examples)
  */
 
-#घोषणा pr_fmt(fmt)	KBUILD_MODNAME	": " fmt
+#define pr_fmt(fmt)	KBUILD_MODNAME	": " fmt
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/ioport.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/types.h>
-#समावेश <linux/irqchip.h>
-#समावेश <linux/irqchip/chained_irq.h>
+#include <linux/bitops.h>
+#include <linux/cpumask.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/ioport.h>
+#include <linux/irq.h>
+#include <linux/irqdomain.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_irq.h>
+#include <linux/of_address.h>
+#include <linux/of_platform.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/smp.h>
+#include <linux/types.h>
+#include <linux/irqchip.h>
+#include <linux/irqchip/chained_irq.h>
 
-#घोषणा IRQS_PER_WORD		32
-#घोषणा REG_BYTES_PER_IRQ_WORD	(माप(u32) * 2)
+#define IRQS_PER_WORD		32
+#define REG_BYTES_PER_IRQ_WORD	(sizeof(u32) * 2)
 
-काष्ठा bcm6345_l1_cpu;
+struct bcm6345_l1_cpu;
 
-काष्ठा bcm6345_l1_chip अणु
+struct bcm6345_l1_chip {
 	raw_spinlock_t		lock;
-	अचिन्हित पूर्णांक		n_words;
-	काष्ठा irq_करोमुख्य	*करोमुख्य;
-	काष्ठा cpumask		cpumask;
-	काष्ठा bcm6345_l1_cpu	*cpus[NR_CPUS];
-पूर्ण;
+	unsigned int		n_words;
+	struct irq_domain	*domain;
+	struct cpumask		cpumask;
+	struct bcm6345_l1_cpu	*cpus[NR_CPUS];
+};
 
-काष्ठा bcm6345_l1_cpu अणु
-	व्योम __iomem		*map_base;
-	अचिन्हित पूर्णांक		parent_irq;
+struct bcm6345_l1_cpu {
+	void __iomem		*map_base;
+	unsigned int		parent_irq;
 	u32			enable_cache[];
-पूर्ण;
+};
 
-अटल अंतरभूत अचिन्हित पूर्णांक reg_enable(काष्ठा bcm6345_l1_chip *पूर्णांकc,
-					   अचिन्हित पूर्णांक word)
-अणु
-#अगर_घोषित __BIG_ENDIAN
-	वापस (1 * पूर्णांकc->n_words - word - 1) * माप(u32);
-#अन्यथा
-	वापस (0 * पूर्णांकc->n_words + word) * माप(u32);
-#पूर्ण_अगर
-पूर्ण
+static inline unsigned int reg_enable(struct bcm6345_l1_chip *intc,
+					   unsigned int word)
+{
+#ifdef __BIG_ENDIAN
+	return (1 * intc->n_words - word - 1) * sizeof(u32);
+#else
+	return (0 * intc->n_words + word) * sizeof(u32);
+#endif
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक reg_status(काष्ठा bcm6345_l1_chip *पूर्णांकc,
-				      अचिन्हित पूर्णांक word)
-अणु
-#अगर_घोषित __BIG_ENDIAN
-	वापस (2 * पूर्णांकc->n_words - word - 1) * माप(u32);
-#अन्यथा
-	वापस (1 * पूर्णांकc->n_words + word) * माप(u32);
-#पूर्ण_अगर
-पूर्ण
+static inline unsigned int reg_status(struct bcm6345_l1_chip *intc,
+				      unsigned int word)
+{
+#ifdef __BIG_ENDIAN
+	return (2 * intc->n_words - word - 1) * sizeof(u32);
+#else
+	return (1 * intc->n_words + word) * sizeof(u32);
+#endif
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक cpu_क्रम_irq(काष्ठा bcm6345_l1_chip *पूर्णांकc,
-					काष्ठा irq_data *d)
-अणु
-	वापस cpumask_first_and(&पूर्णांकc->cpumask, irq_data_get_affinity_mask(d));
-पूर्ण
+static inline unsigned int cpu_for_irq(struct bcm6345_l1_chip *intc,
+					struct irq_data *d)
+{
+	return cpumask_first_and(&intc->cpumask, irq_data_get_affinity_mask(d));
+}
 
-अटल व्योम bcm6345_l1_irq_handle(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा bcm6345_l1_chip *पूर्णांकc = irq_desc_get_handler_data(desc);
-	काष्ठा bcm6345_l1_cpu *cpu;
-	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
-	अचिन्हित पूर्णांक idx;
+static void bcm6345_l1_irq_handle(struct irq_desc *desc)
+{
+	struct bcm6345_l1_chip *intc = irq_desc_get_handler_data(desc);
+	struct bcm6345_l1_cpu *cpu;
+	struct irq_chip *chip = irq_desc_get_chip(desc);
+	unsigned int idx;
 
-#अगर_घोषित CONFIG_SMP
-	cpu = पूर्णांकc->cpus[cpu_logical_map(smp_processor_id())];
-#अन्यथा
-	cpu = पूर्णांकc->cpus[0];
-#पूर्ण_अगर
+#ifdef CONFIG_SMP
+	cpu = intc->cpus[cpu_logical_map(smp_processor_id())];
+#else
+	cpu = intc->cpus[0];
+#endif
 
 	chained_irq_enter(chip, desc);
 
-	क्रम (idx = 0; idx < पूर्णांकc->n_words; idx++) अणु
-		पूर्णांक base = idx * IRQS_PER_WORD;
-		अचिन्हित दीर्घ pending;
+	for (idx = 0; idx < intc->n_words; idx++) {
+		int base = idx * IRQS_PER_WORD;
+		unsigned long pending;
 		irq_hw_number_t hwirq;
-		अचिन्हित पूर्णांक irq;
+		unsigned int irq;
 
-		pending = __raw_पढ़ोl(cpu->map_base + reg_status(पूर्णांकc, idx));
-		pending &= __raw_पढ़ोl(cpu->map_base + reg_enable(पूर्णांकc, idx));
+		pending = __raw_readl(cpu->map_base + reg_status(intc, idx));
+		pending &= __raw_readl(cpu->map_base + reg_enable(intc, idx));
 
-		क्रम_each_set_bit(hwirq, &pending, IRQS_PER_WORD) अणु
-			irq = irq_linear_revmap(पूर्णांकc->करोमुख्य, base + hwirq);
-			अगर (irq)
-				करो_IRQ(irq);
-			अन्यथा
-				spurious_पूर्णांकerrupt();
-		पूर्ण
-	पूर्ण
+		for_each_set_bit(hwirq, &pending, IRQS_PER_WORD) {
+			irq = irq_linear_revmap(intc->domain, base + hwirq);
+			if (irq)
+				do_IRQ(irq);
+			else
+				spurious_interrupt();
+		}
+	}
 
-	chained_irq_निकास(chip, desc);
-पूर्ण
+	chained_irq_exit(chip, desc);
+}
 
-अटल अंतरभूत व्योम __bcm6345_l1_unmask(काष्ठा irq_data *d)
-अणु
-	काष्ठा bcm6345_l1_chip *पूर्णांकc = irq_data_get_irq_chip_data(d);
+static inline void __bcm6345_l1_unmask(struct irq_data *d)
+{
+	struct bcm6345_l1_chip *intc = irq_data_get_irq_chip_data(d);
 	u32 word = d->hwirq / IRQS_PER_WORD;
 	u32 mask = BIT(d->hwirq % IRQS_PER_WORD);
-	अचिन्हित पूर्णांक cpu_idx = cpu_क्रम_irq(पूर्णांकc, d);
+	unsigned int cpu_idx = cpu_for_irq(intc, d);
 
-	पूर्णांकc->cpus[cpu_idx]->enable_cache[word] |= mask;
-	__raw_ग_लिखोl(पूर्णांकc->cpus[cpu_idx]->enable_cache[word],
-		पूर्णांकc->cpus[cpu_idx]->map_base + reg_enable(पूर्णांकc, word));
-पूर्ण
+	intc->cpus[cpu_idx]->enable_cache[word] |= mask;
+	__raw_writel(intc->cpus[cpu_idx]->enable_cache[word],
+		intc->cpus[cpu_idx]->map_base + reg_enable(intc, word));
+}
 
-अटल अंतरभूत व्योम __bcm6345_l1_mask(काष्ठा irq_data *d)
-अणु
-	काष्ठा bcm6345_l1_chip *पूर्णांकc = irq_data_get_irq_chip_data(d);
+static inline void __bcm6345_l1_mask(struct irq_data *d)
+{
+	struct bcm6345_l1_chip *intc = irq_data_get_irq_chip_data(d);
 	u32 word = d->hwirq / IRQS_PER_WORD;
 	u32 mask = BIT(d->hwirq % IRQS_PER_WORD);
-	अचिन्हित पूर्णांक cpu_idx = cpu_क्रम_irq(पूर्णांकc, d);
+	unsigned int cpu_idx = cpu_for_irq(intc, d);
 
-	पूर्णांकc->cpus[cpu_idx]->enable_cache[word] &= ~mask;
-	__raw_ग_लिखोl(पूर्णांकc->cpus[cpu_idx]->enable_cache[word],
-		पूर्णांकc->cpus[cpu_idx]->map_base + reg_enable(पूर्णांकc, word));
-पूर्ण
+	intc->cpus[cpu_idx]->enable_cache[word] &= ~mask;
+	__raw_writel(intc->cpus[cpu_idx]->enable_cache[word],
+		intc->cpus[cpu_idx]->map_base + reg_enable(intc, word));
+}
 
-अटल व्योम bcm6345_l1_unmask(काष्ठा irq_data *d)
-अणु
-	काष्ठा bcm6345_l1_chip *पूर्णांकc = irq_data_get_irq_chip_data(d);
-	अचिन्हित दीर्घ flags;
+static void bcm6345_l1_unmask(struct irq_data *d)
+{
+	struct bcm6345_l1_chip *intc = irq_data_get_irq_chip_data(d);
+	unsigned long flags;
 
-	raw_spin_lock_irqsave(&पूर्णांकc->lock, flags);
+	raw_spin_lock_irqsave(&intc->lock, flags);
 	__bcm6345_l1_unmask(d);
-	raw_spin_unlock_irqrestore(&पूर्णांकc->lock, flags);
-पूर्ण
+	raw_spin_unlock_irqrestore(&intc->lock, flags);
+}
 
-अटल व्योम bcm6345_l1_mask(काष्ठा irq_data *d)
-अणु
-	काष्ठा bcm6345_l1_chip *पूर्णांकc = irq_data_get_irq_chip_data(d);
-	अचिन्हित दीर्घ flags;
+static void bcm6345_l1_mask(struct irq_data *d)
+{
+	struct bcm6345_l1_chip *intc = irq_data_get_irq_chip_data(d);
+	unsigned long flags;
 
-	raw_spin_lock_irqsave(&पूर्णांकc->lock, flags);
+	raw_spin_lock_irqsave(&intc->lock, flags);
 	__bcm6345_l1_mask(d);
-	raw_spin_unlock_irqrestore(&पूर्णांकc->lock, flags);
-पूर्ण
+	raw_spin_unlock_irqrestore(&intc->lock, flags);
+}
 
-अटल पूर्णांक bcm6345_l1_set_affinity(काष्ठा irq_data *d,
-				   स्थिर काष्ठा cpumask *dest,
-				   bool क्रमce)
-अणु
-	काष्ठा bcm6345_l1_chip *पूर्णांकc = irq_data_get_irq_chip_data(d);
+static int bcm6345_l1_set_affinity(struct irq_data *d,
+				   const struct cpumask *dest,
+				   bool force)
+{
+	struct bcm6345_l1_chip *intc = irq_data_get_irq_chip_data(d);
 	u32 word = d->hwirq / IRQS_PER_WORD;
 	u32 mask = BIT(d->hwirq % IRQS_PER_WORD);
-	अचिन्हित पूर्णांक old_cpu = cpu_क्रम_irq(पूर्णांकc, d);
-	अचिन्हित पूर्णांक new_cpu;
-	काष्ठा cpumask valid;
-	अचिन्हित दीर्घ flags;
+	unsigned int old_cpu = cpu_for_irq(intc, d);
+	unsigned int new_cpu;
+	struct cpumask valid;
+	unsigned long flags;
 	bool enabled;
 
-	अगर (!cpumask_and(&valid, &पूर्णांकc->cpumask, dest))
-		वापस -EINVAL;
+	if (!cpumask_and(&valid, &intc->cpumask, dest))
+		return -EINVAL;
 
 	new_cpu = cpumask_any_and(&valid, cpu_online_mask);
-	अगर (new_cpu >= nr_cpu_ids)
-		वापस -EINVAL;
+	if (new_cpu >= nr_cpu_ids)
+		return -EINVAL;
 
 	dest = cpumask_of(new_cpu);
 
-	raw_spin_lock_irqsave(&पूर्णांकc->lock, flags);
-	अगर (old_cpu != new_cpu) अणु
-		enabled = पूर्णांकc->cpus[old_cpu]->enable_cache[word] & mask;
-		अगर (enabled)
+	raw_spin_lock_irqsave(&intc->lock, flags);
+	if (old_cpu != new_cpu) {
+		enabled = intc->cpus[old_cpu]->enable_cache[word] & mask;
+		if (enabled)
 			__bcm6345_l1_mask(d);
 		cpumask_copy(irq_data_get_affinity_mask(d), dest);
-		अगर (enabled)
+		if (enabled)
 			__bcm6345_l1_unmask(d);
-	पूर्ण अन्यथा अणु
+	} else {
 		cpumask_copy(irq_data_get_affinity_mask(d), dest);
-	पूर्ण
-	raw_spin_unlock_irqrestore(&पूर्णांकc->lock, flags);
+	}
+	raw_spin_unlock_irqrestore(&intc->lock, flags);
 
 	irq_data_update_effective_affinity(d, cpumask_of(new_cpu));
 
-	वापस IRQ_SET_MASK_OK_NOCOPY;
-पूर्ण
+	return IRQ_SET_MASK_OK_NOCOPY;
+}
 
-अटल पूर्णांक __init bcm6345_l1_init_one(काष्ठा device_node *dn,
-				      अचिन्हित पूर्णांक idx,
-				      काष्ठा bcm6345_l1_chip *पूर्णांकc)
-अणु
-	काष्ठा resource res;
-	resource_माप_प्रकार sz;
-	काष्ठा bcm6345_l1_cpu *cpu;
-	अचिन्हित पूर्णांक i, n_words;
+static int __init bcm6345_l1_init_one(struct device_node *dn,
+				      unsigned int idx,
+				      struct bcm6345_l1_chip *intc)
+{
+	struct resource res;
+	resource_size_t sz;
+	struct bcm6345_l1_cpu *cpu;
+	unsigned int i, n_words;
 
-	अगर (of_address_to_resource(dn, idx, &res))
-		वापस -EINVAL;
+	if (of_address_to_resource(dn, idx, &res))
+		return -EINVAL;
 	sz = resource_size(&res);
 	n_words = sz / REG_BYTES_PER_IRQ_WORD;
 
-	अगर (!पूर्णांकc->n_words)
-		पूर्णांकc->n_words = n_words;
-	अन्यथा अगर (पूर्णांकc->n_words != n_words)
-		वापस -EINVAL;
+	if (!intc->n_words)
+		intc->n_words = n_words;
+	else if (intc->n_words != n_words)
+		return -EINVAL;
 
-	cpu = पूर्णांकc->cpus[idx] = kzalloc(माप(*cpu) + n_words * माप(u32),
+	cpu = intc->cpus[idx] = kzalloc(sizeof(*cpu) + n_words * sizeof(u32),
 					GFP_KERNEL);
-	अगर (!cpu)
-		वापस -ENOMEM;
+	if (!cpu)
+		return -ENOMEM;
 
 	cpu->map_base = ioremap(res.start, sz);
-	अगर (!cpu->map_base)
-		वापस -ENOMEM;
+	if (!cpu->map_base)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < n_words; i++) अणु
+	for (i = 0; i < n_words; i++) {
 		cpu->enable_cache[i] = 0;
-		__raw_ग_लिखोl(0, cpu->map_base + reg_enable(पूर्णांकc, i));
-	पूर्ण
+		__raw_writel(0, cpu->map_base + reg_enable(intc, i));
+	}
 
 	cpu->parent_irq = irq_of_parse_and_map(dn, idx);
-	अगर (!cpu->parent_irq) अणु
+	if (!cpu->parent_irq) {
 		pr_err("failed to map parent interrupt %d\n", cpu->parent_irq);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	irq_set_chained_handler_and_data(cpu->parent_irq,
-						bcm6345_l1_irq_handle, पूर्णांकc);
+						bcm6345_l1_irq_handle, intc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा irq_chip bcm6345_l1_irq_chip = अणु
+static struct irq_chip bcm6345_l1_irq_chip = {
 	.name			= "bcm6345-l1",
 	.irq_mask		= bcm6345_l1_mask,
 	.irq_unmask		= bcm6345_l1_unmask,
 	.irq_set_affinity	= bcm6345_l1_set_affinity,
-पूर्ण;
+};
 
-अटल पूर्णांक bcm6345_l1_map(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक virq,
+static int bcm6345_l1_map(struct irq_domain *d, unsigned int virq,
 			  irq_hw_number_t hw_irq)
-अणु
+{
 	irq_set_chip_and_handler(virq,
 		&bcm6345_l1_irq_chip, handle_percpu_irq);
 	irq_set_chip_data(virq, d->host_data);
 	irqd_set_single_target(irq_desc_get_irq_data(irq_to_desc(virq)));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops bcm6345_l1_करोमुख्य_ops = अणु
-	.xlate			= irq_करोमुख्य_xlate_onecell,
+static const struct irq_domain_ops bcm6345_l1_domain_ops = {
+	.xlate			= irq_domain_xlate_onecell,
 	.map			= bcm6345_l1_map,
-पूर्ण;
+};
 
-अटल पूर्णांक __init bcm6345_l1_of_init(काष्ठा device_node *dn,
-			      काष्ठा device_node *parent)
-अणु
-	काष्ठा bcm6345_l1_chip *पूर्णांकc;
-	अचिन्हित पूर्णांक idx;
-	पूर्णांक ret;
+static int __init bcm6345_l1_of_init(struct device_node *dn,
+			      struct device_node *parent)
+{
+	struct bcm6345_l1_chip *intc;
+	unsigned int idx;
+	int ret;
 
-	पूर्णांकc = kzalloc(माप(*पूर्णांकc), GFP_KERNEL);
-	अगर (!पूर्णांकc)
-		वापस -ENOMEM;
+	intc = kzalloc(sizeof(*intc), GFP_KERNEL);
+	if (!intc)
+		return -ENOMEM;
 
-	क्रम_each_possible_cpu(idx) अणु
-		ret = bcm6345_l1_init_one(dn, idx, पूर्णांकc);
-		अगर (ret)
+	for_each_possible_cpu(idx) {
+		ret = bcm6345_l1_init_one(dn, idx, intc);
+		if (ret)
 			pr_err("failed to init intc L1 for cpu %d: %d\n",
 				idx, ret);
-		अन्यथा
-			cpumask_set_cpu(idx, &पूर्णांकc->cpumask);
-	पूर्ण
+		else
+			cpumask_set_cpu(idx, &intc->cpumask);
+	}
 
-	अगर (!cpumask_weight(&पूर्णांकc->cpumask)) अणु
+	if (!cpumask_weight(&intc->cpumask)) {
 		ret = -ENODEV;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	raw_spin_lock_init(&पूर्णांकc->lock);
+	raw_spin_lock_init(&intc->lock);
 
-	पूर्णांकc->करोमुख्य = irq_करोमुख्य_add_linear(dn, IRQS_PER_WORD * पूर्णांकc->n_words,
-					     &bcm6345_l1_करोमुख्य_ops,
-					     पूर्णांकc);
-	अगर (!पूर्णांकc->करोमुख्य) अणु
+	intc->domain = irq_domain_add_linear(dn, IRQS_PER_WORD * intc->n_words,
+					     &bcm6345_l1_domain_ops,
+					     intc);
+	if (!intc->domain) {
 		ret = -ENOMEM;
-		जाओ out_unmap;
-	पूर्ण
+		goto out_unmap;
+	}
 
 	pr_info("registered BCM6345 L1 intc (IRQs: %d)\n",
-			IRQS_PER_WORD * पूर्णांकc->n_words);
-	क्रम_each_cpu(idx, &पूर्णांकc->cpumask) अणु
-		काष्ठा bcm6345_l1_cpu *cpu = पूर्णांकc->cpus[idx];
+			IRQS_PER_WORD * intc->n_words);
+	for_each_cpu(idx, &intc->cpumask) {
+		struct bcm6345_l1_cpu *cpu = intc->cpus[idx];
 
 		pr_info("  CPU%u at MMIO 0x%p (irq = %d)\n", idx,
 				cpu->map_base, cpu->parent_irq);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 out_unmap:
-	क्रम_each_possible_cpu(idx) अणु
-		काष्ठा bcm6345_l1_cpu *cpu = पूर्णांकc->cpus[idx];
+	for_each_possible_cpu(idx) {
+		struct bcm6345_l1_cpu *cpu = intc->cpus[idx];
 
-		अगर (cpu) अणु
-			अगर (cpu->map_base)
+		if (cpu) {
+			if (cpu->map_base)
 				iounmap(cpu->map_base);
-			kमुक्त(cpu);
-		पूर्ण
-	पूर्ण
-out_मुक्त:
-	kमुक्त(पूर्णांकc);
-	वापस ret;
-पूर्ण
+			kfree(cpu);
+		}
+	}
+out_free:
+	kfree(intc);
+	return ret;
+}
 
 IRQCHIP_DECLARE(bcm6345_l1, "brcm,bcm6345-l1-intc", bcm6345_l1_of_init);

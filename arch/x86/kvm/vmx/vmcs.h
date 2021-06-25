@@ -1,168 +1,167 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __KVM_X86_VMX_VMCS_H
-#घोषणा __KVM_X86_VMX_VMCS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __KVM_X86_VMX_VMCS_H
+#define __KVM_X86_VMX_VMCS_H
 
-#समावेश <linux/kसमय.स>
-#समावेश <linux/list.h>
-#समावेश <linux/nospec.h>
+#include <linux/ktime.h>
+#include <linux/list.h>
+#include <linux/nospec.h>
 
-#समावेश <यंत्र/kvm.h>
-#समावेश <यंत्र/vmx.h>
+#include <asm/kvm.h>
+#include <asm/vmx.h>
 
-#समावेश "capabilities.h"
+#include "capabilities.h"
 
-काष्ठा vmcs_hdr अणु
+struct vmcs_hdr {
 	u32 revision_id:31;
-	u32 shaकरोw_vmcs:1;
-पूर्ण;
+	u32 shadow_vmcs:1;
+};
 
-काष्ठा vmcs अणु
-	काष्ठा vmcs_hdr hdr;
-	u32 पात;
-	अक्षर data[];
-पूर्ण;
+struct vmcs {
+	struct vmcs_hdr hdr;
+	u32 abort;
+	char data[];
+};
 
-DECLARE_PER_CPU(काष्ठा vmcs *, current_vmcs);
+DECLARE_PER_CPU(struct vmcs *, current_vmcs);
 
 /*
- * vmcs_host_state tracks रेजिस्टरs that are loaded from the VMCS on VMEXIT
- * and whose values change infrequently, but are not स्थिरant.  I.e. this is
- * used as a ग_लिखो-through cache of the corresponding VMCS fields.
+ * vmcs_host_state tracks registers that are loaded from the VMCS on VMEXIT
+ * and whose values change infrequently, but are not constant.  I.e. this is
+ * used as a write-through cache of the corresponding VMCS fields.
  */
-काष्ठा vmcs_host_state अणु
-	अचिन्हित दीर्घ cr3;	/* May not match real cr3 */
-	अचिन्हित दीर्घ cr4;	/* May not match real cr4 */
-	अचिन्हित दीर्घ gs_base;
-	अचिन्हित दीर्घ fs_base;
-	अचिन्हित दीर्घ rsp;
+struct vmcs_host_state {
+	unsigned long cr3;	/* May not match real cr3 */
+	unsigned long cr4;	/* May not match real cr4 */
+	unsigned long gs_base;
+	unsigned long fs_base;
+	unsigned long rsp;
 
 	u16           fs_sel, gs_sel, ldt_sel;
-#अगर_घोषित CONFIG_X86_64
+#ifdef CONFIG_X86_64
 	u16           ds_sel, es_sel;
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-काष्ठा vmcs_controls_shaकरोw अणु
+struct vmcs_controls_shadow {
 	u32 vm_entry;
-	u32 vm_निकास;
+	u32 vm_exit;
 	u32 pin;
 	u32 exec;
 	u32 secondary_exec;
-पूर्ण;
+};
 
 /*
  * Track a VMCS that may be loaded on a certain CPU. If it is (cpu!=-1), also
- * remember whether it was VMLAUNCHed, and मुख्यtain a linked list of all VMCSs
- * loaded on this CPU (so we can clear them अगर the CPU goes करोwn).
+ * remember whether it was VMLAUNCHed, and maintain a linked list of all VMCSs
+ * loaded on this CPU (so we can clear them if the CPU goes down).
  */
-काष्ठा loaded_vmcs अणु
-	काष्ठा vmcs *vmcs;
-	काष्ठा vmcs *shaकरोw_vmcs;
-	पूर्णांक cpu;
+struct loaded_vmcs {
+	struct vmcs *vmcs;
+	struct vmcs *shadow_vmcs;
+	int cpu;
 	bool launched;
 	bool nmi_known_unmasked;
-	bool hv_समयr_soft_disabled;
-	/* Support क्रम vnmi-less CPUs */
-	पूर्णांक soft_vnmi_blocked;
-	kसमय_प्रकार entry_समय;
-	s64 vnmi_blocked_समय;
-	अचिन्हित दीर्घ *msr_biपंचांगap;
-	काष्ठा list_head loaded_vmcss_on_cpu_link;
-	काष्ठा vmcs_host_state host_state;
-	काष्ठा vmcs_controls_shaकरोw controls_shaकरोw;
-पूर्ण;
+	bool hv_timer_soft_disabled;
+	/* Support for vnmi-less CPUs */
+	int soft_vnmi_blocked;
+	ktime_t entry_time;
+	s64 vnmi_blocked_time;
+	unsigned long *msr_bitmap;
+	struct list_head loaded_vmcss_on_cpu_link;
+	struct vmcs_host_state host_state;
+	struct vmcs_controls_shadow controls_shadow;
+};
 
-अटल अंतरभूत bool is_पूर्णांकr_type(u32 पूर्णांकr_info, u32 type)
-अणु
-	स्थिर u32 mask = INTR_INFO_VALID_MASK | INTR_INFO_INTR_TYPE_MASK;
+static inline bool is_intr_type(u32 intr_info, u32 type)
+{
+	const u32 mask = INTR_INFO_VALID_MASK | INTR_INFO_INTR_TYPE_MASK;
 
-	वापस (पूर्णांकr_info & mask) == (INTR_INFO_VALID_MASK | type);
-पूर्ण
+	return (intr_info & mask) == (INTR_INFO_VALID_MASK | type);
+}
 
-अटल अंतरभूत bool is_पूर्णांकr_type_n(u32 पूर्णांकr_info, u32 type, u8 vector)
-अणु
-	स्थिर u32 mask = INTR_INFO_VALID_MASK | INTR_INFO_INTR_TYPE_MASK |
+static inline bool is_intr_type_n(u32 intr_info, u32 type, u8 vector)
+{
+	const u32 mask = INTR_INFO_VALID_MASK | INTR_INFO_INTR_TYPE_MASK |
 			 INTR_INFO_VECTOR_MASK;
 
-	वापस (पूर्णांकr_info & mask) == (INTR_INFO_VALID_MASK | type | vector);
-पूर्ण
+	return (intr_info & mask) == (INTR_INFO_VALID_MASK | type | vector);
+}
 
-अटल अंतरभूत bool is_exception_n(u32 पूर्णांकr_info, u8 vector)
-अणु
-	वापस is_पूर्णांकr_type_n(पूर्णांकr_info, INTR_TYPE_HARD_EXCEPTION, vector);
-पूर्ण
+static inline bool is_exception_n(u32 intr_info, u8 vector)
+{
+	return is_intr_type_n(intr_info, INTR_TYPE_HARD_EXCEPTION, vector);
+}
 
-अटल अंतरभूत bool is_debug(u32 पूर्णांकr_info)
-अणु
-	वापस is_exception_n(पूर्णांकr_info, DB_VECTOR);
-पूर्ण
+static inline bool is_debug(u32 intr_info)
+{
+	return is_exception_n(intr_info, DB_VECTOR);
+}
 
-अटल अंतरभूत bool is_अवरोधpoपूर्णांक(u32 पूर्णांकr_info)
-अणु
-	वापस is_exception_n(पूर्णांकr_info, BP_VECTOR);
-पूर्ण
+static inline bool is_breakpoint(u32 intr_info)
+{
+	return is_exception_n(intr_info, BP_VECTOR);
+}
 
-अटल अंतरभूत bool is_page_fault(u32 पूर्णांकr_info)
-अणु
-	वापस is_exception_n(पूर्णांकr_info, PF_VECTOR);
-पूर्ण
+static inline bool is_page_fault(u32 intr_info)
+{
+	return is_exception_n(intr_info, PF_VECTOR);
+}
 
-अटल अंतरभूत bool is_invalid_opcode(u32 पूर्णांकr_info)
-अणु
-	वापस is_exception_n(पूर्णांकr_info, UD_VECTOR);
-पूर्ण
+static inline bool is_invalid_opcode(u32 intr_info)
+{
+	return is_exception_n(intr_info, UD_VECTOR);
+}
 
-अटल अंतरभूत bool is_gp_fault(u32 पूर्णांकr_info)
-अणु
-	वापस is_exception_n(पूर्णांकr_info, GP_VECTOR);
-पूर्ण
+static inline bool is_gp_fault(u32 intr_info)
+{
+	return is_exception_n(intr_info, GP_VECTOR);
+}
 
-अटल अंतरभूत bool is_machine_check(u32 पूर्णांकr_info)
-अणु
-	वापस is_exception_n(पूर्णांकr_info, MC_VECTOR);
-पूर्ण
+static inline bool is_machine_check(u32 intr_info)
+{
+	return is_exception_n(intr_info, MC_VECTOR);
+}
 
-/* Unकरोcumented: icebp/पूर्णांक1 */
-अटल अंतरभूत bool is_icebp(u32 पूर्णांकr_info)
-अणु
-	वापस is_पूर्णांकr_type(पूर्णांकr_info, INTR_TYPE_PRIV_SW_EXCEPTION);
-पूर्ण
+/* Undocumented: icebp/int1 */
+static inline bool is_icebp(u32 intr_info)
+{
+	return is_intr_type(intr_info, INTR_TYPE_PRIV_SW_EXCEPTION);
+}
 
-अटल अंतरभूत bool is_nmi(u32 पूर्णांकr_info)
-अणु
-	वापस is_पूर्णांकr_type(पूर्णांकr_info, INTR_TYPE_NMI_INTR);
-पूर्ण
+static inline bool is_nmi(u32 intr_info)
+{
+	return is_intr_type(intr_info, INTR_TYPE_NMI_INTR);
+}
 
-अटल अंतरभूत bool is_बाह्यal_पूर्णांकr(u32 पूर्णांकr_info)
-अणु
-	वापस is_पूर्णांकr_type(पूर्णांकr_info, INTR_TYPE_EXT_INTR);
-पूर्ण
+static inline bool is_external_intr(u32 intr_info)
+{
+	return is_intr_type(intr_info, INTR_TYPE_EXT_INTR);
+}
 
-अटल अंतरभूत bool is_exception_with_error_code(u32 पूर्णांकr_info)
-अणु
-	स्थिर u32 mask = INTR_INFO_VALID_MASK | INTR_INFO_DELIVER_CODE_MASK;
+static inline bool is_exception_with_error_code(u32 intr_info)
+{
+	const u32 mask = INTR_INFO_VALID_MASK | INTR_INFO_DELIVER_CODE_MASK;
 
-	वापस (पूर्णांकr_info & mask) == mask;
-पूर्ण
+	return (intr_info & mask) == mask;
+}
 
-क्रमागत vmcs_field_width अणु
+enum vmcs_field_width {
 	VMCS_FIELD_WIDTH_U16 = 0,
 	VMCS_FIELD_WIDTH_U64 = 1,
 	VMCS_FIELD_WIDTH_U32 = 2,
 	VMCS_FIELD_WIDTH_NATURAL_WIDTH = 3
-पूर्ण;
+};
 
-अटल अंतरभूत पूर्णांक vmcs_field_width(अचिन्हित दीर्घ field)
-अणु
-	अगर (0x1 & field)	/* the *_HIGH fields are all 32 bit */
-		वापस VMCS_FIELD_WIDTH_U32;
-	वापस (field >> 13) & 0x3;
-पूर्ण
+static inline int vmcs_field_width(unsigned long field)
+{
+	if (0x1 & field)	/* the *_HIGH fields are all 32 bit */
+		return VMCS_FIELD_WIDTH_U32;
+	return (field >> 13) & 0x3;
+}
 
-अटल अंतरभूत पूर्णांक vmcs_field_पढ़ोonly(अचिन्हित दीर्घ field)
-अणु
-	वापस (((field >> 10) & 0x3) == 1);
-पूर्ण
+static inline int vmcs_field_readonly(unsigned long field)
+{
+	return (((field >> 10) & 0x3) == 1);
+}
 
-#पूर्ण_अगर /* __KVM_X86_VMX_VMCS_H */
+#endif /* __KVM_X86_VMX_VMCS_H */

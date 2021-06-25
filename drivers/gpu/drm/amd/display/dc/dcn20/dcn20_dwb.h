@@ -1,12 +1,11 @@
-<शैली गुरु>
 /* Copyright 2012-17 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,40 +21,40 @@
  * Authors: AMD
  *
  */
-#अगर_अघोषित __DC_DWBC_DCN20_H__
-#घोषणा __DC_DWBC_DCN20_H__
+#ifndef __DC_DWBC_DCN20_H__
+#define __DC_DWBC_DCN20_H__
 
-#घोषणा TO_DCN20_DWBC(dwbc_base) \
-	container_of(dwbc_base, काष्ठा dcn20_dwbc, base)
+#define TO_DCN20_DWBC(dwbc_base) \
+	container_of(dwbc_base, struct dcn20_dwbc, base)
 
 /* DCN */
-#घोषणा BASE_INNER(seg) \
+#define BASE_INNER(seg) \
 	DCE_BASE__INST0_SEG ## seg
 
-#घोषणा BASE(seg) \
+#define BASE(seg) \
 	BASE_INNER(seg)
 
-#घोषणा SR(reg_name)\
+#define SR(reg_name)\
 		.reg_name = BASE(mm ## reg_name ## _BASE_IDX) +  \
 					mm ## reg_name
 
-#घोषणा SRI(reg_name, block, id)\
+#define SRI(reg_name, block, id)\
 	.reg_name = BASE(mm ## block ## id ## _ ## reg_name ## _BASE_IDX) + \
 					mm ## block ## id ## _ ## reg_name
 
-#घोषणा SRI2(reg_name, block, id)\
+#define SRI2(reg_name, block, id)\
 	.reg_name = BASE(mm ## reg_name ## _BASE_IDX) + \
 					mm ## reg_name
 
-#घोषणा SRII(reg_name, block, id)\
+#define SRII(reg_name, block, id)\
 	.reg_name[id] = BASE(mm ## block ## id ## _ ## reg_name ## _BASE_IDX) + \
 					mm ## block ## id ## _ ## reg_name
 
-#घोषणा SF(reg_name, field_name, post_fix)\
+#define SF(reg_name, field_name, post_fix)\
 	.field_name = reg_name ## __ ## field_name ## post_fix
 
 
-#घोषणा DWBC_COMMON_REG_LIST_DCN2_0(inst) \
+#define DWBC_COMMON_REG_LIST_DCN2_0(inst) \
 	SRI2(WB_ENABLE, CNV, inst),\
 	SRI2(WB_EC_CONFIG, CNV, inst),\
 	SRI2(CNV_MODE, CNV, inst),\
@@ -103,7 +102,7 @@
 	SRI2(WB_WARM_UP_MODE_CTL1, CNV, inst),\
 	SRI2(WB_WARM_UP_MODE_CTL2, CNV, inst)
 
-#घोषणा DWBC_COMMON_MASK_SH_LIST_DCN2_0(mask_sh) \
+#define DWBC_COMMON_MASK_SH_LIST_DCN2_0(mask_sh) \
 	SF(WB_ENABLE, WB_ENABLE, mask_sh),\
 	SF(WB_EC_CONFIG, DISPCLK_R_WB_GATE_DIS, mask_sh),\
 	SF(WB_EC_CONFIG, DISPCLK_G_WB_GATE_DIS, mask_sh),\
@@ -227,7 +226,7 @@
 	SF(WB_WARM_UP_MODE_CTL2, MODE_WARMUP, mask_sh),\
 	SF(WB_WARM_UP_MODE_CTL2, DATA_DEPTH_WARMUP, mask_sh)
 
-#घोषणा DWBC_REG_FIELD_LIST_DCN2_0(type) \
+#define DWBC_REG_FIELD_LIST_DCN2_0(type) \
 	type WB_ENABLE;\
 	type DISPCLK_R_WB_GATE_DIS;\
 	type DISPCLK_G_WB_GATE_DIS;\
@@ -354,106 +353,106 @@
 	type MODE_WARMUP;\
 	type DATA_DEPTH_WARMUP; \
 
-काष्ठा dcn20_dwbc_रेजिस्टरs अणु
+struct dcn20_dwbc_registers {
 	/* DCN2.0 */
-	uपूर्णांक32_t WB_ENABLE;
-	uपूर्णांक32_t WB_EC_CONFIG;
-	uपूर्णांक32_t CNV_MODE;
-	uपूर्णांक32_t CNV_WINDOW_START;
-	uपूर्णांक32_t CNV_WINDOW_SIZE;
-	uपूर्णांक32_t CNV_UPDATE;
-	uपूर्णांक32_t CNV_SOURCE_SIZE;
-	uपूर्णांक32_t CNV_TEST_CNTL;
-	uपूर्णांक32_t CNV_TEST_CRC_RED;
-	uपूर्णांक32_t CNV_TEST_CRC_GREEN;
-	uपूर्णांक32_t CNV_TEST_CRC_BLUE;
-	uपूर्णांक32_t WB_DEBUG_CTRL;
-	uपूर्णांक32_t WB_DBG_MODE;
-	uपूर्णांक32_t WB_HW_DEBUG;
-	uपूर्णांक32_t CNV_TEST_DEBUG_INDEX;
-	uपूर्णांक32_t CNV_TEST_DEBUG_DATA;
-	uपूर्णांक32_t WB_SOFT_RESET;
-	uपूर्णांक32_t WBSCL_COEF_RAM_SELECT;
-	uपूर्णांक32_t WBSCL_COEF_RAM_TAP_DATA;
-	uपूर्णांक32_t WBSCL_MODE;
-	uपूर्णांक32_t WBSCL_TAP_CONTROL;
-	uपूर्णांक32_t WBSCL_DEST_SIZE;
-	uपूर्णांक32_t WBSCL_HORZ_FILTER_SCALE_RATIO;
-	uपूर्णांक32_t WBSCL_HORZ_FILTER_INIT_Y_RGB;
-	uपूर्णांक32_t WBSCL_HORZ_FILTER_INIT_CBCR;
-	uपूर्णांक32_t WBSCL_VERT_FILTER_SCALE_RATIO;
-	uपूर्णांक32_t WBSCL_VERT_FILTER_INIT_Y_RGB;
-	uपूर्णांक32_t WBSCL_VERT_FILTER_INIT_CBCR;
-	uपूर्णांक32_t WBSCL_ROUND_OFFSET;
-	uपूर्णांक32_t WBSCL_OVERFLOW_STATUS;
-	uपूर्णांक32_t WBSCL_COEF_RAM_CONFLICT_STATUS;
-	uपूर्णांक32_t WBSCL_TEST_CNTL;
-	uपूर्णांक32_t WBSCL_TEST_CRC_RED;
-	uपूर्णांक32_t WBSCL_TEST_CRC_GREEN;
-	uपूर्णांक32_t WBSCL_TEST_CRC_BLUE;
-	uपूर्णांक32_t WBSCL_BACKPRESSURE_CNT_EN;
-	uपूर्णांक32_t WB_MCIF_BACKPRESSURE_CNT;
-	uपूर्णांक32_t WBSCL_CLAMP_Y_RGB;
-	uपूर्णांक32_t WBSCL_CLAMP_CBCR;
-	uपूर्णांक32_t WBSCL_OUTSIDE_PIX_STRATEGY;
-	uपूर्णांक32_t WBSCL_OUTSIDE_PIX_STRATEGY_CBCR;
-	uपूर्णांक32_t WBSCL_DEBUG;
-	uपूर्णांक32_t WBSCL_TEST_DEBUG_INDEX;
-	uपूर्णांक32_t WBSCL_TEST_DEBUG_DATA;
-	uपूर्णांक32_t WB_WARM_UP_MODE_CTL1;
-	uपूर्णांक32_t WB_WARM_UP_MODE_CTL2;
-पूर्ण;
+	uint32_t WB_ENABLE;
+	uint32_t WB_EC_CONFIG;
+	uint32_t CNV_MODE;
+	uint32_t CNV_WINDOW_START;
+	uint32_t CNV_WINDOW_SIZE;
+	uint32_t CNV_UPDATE;
+	uint32_t CNV_SOURCE_SIZE;
+	uint32_t CNV_TEST_CNTL;
+	uint32_t CNV_TEST_CRC_RED;
+	uint32_t CNV_TEST_CRC_GREEN;
+	uint32_t CNV_TEST_CRC_BLUE;
+	uint32_t WB_DEBUG_CTRL;
+	uint32_t WB_DBG_MODE;
+	uint32_t WB_HW_DEBUG;
+	uint32_t CNV_TEST_DEBUG_INDEX;
+	uint32_t CNV_TEST_DEBUG_DATA;
+	uint32_t WB_SOFT_RESET;
+	uint32_t WBSCL_COEF_RAM_SELECT;
+	uint32_t WBSCL_COEF_RAM_TAP_DATA;
+	uint32_t WBSCL_MODE;
+	uint32_t WBSCL_TAP_CONTROL;
+	uint32_t WBSCL_DEST_SIZE;
+	uint32_t WBSCL_HORZ_FILTER_SCALE_RATIO;
+	uint32_t WBSCL_HORZ_FILTER_INIT_Y_RGB;
+	uint32_t WBSCL_HORZ_FILTER_INIT_CBCR;
+	uint32_t WBSCL_VERT_FILTER_SCALE_RATIO;
+	uint32_t WBSCL_VERT_FILTER_INIT_Y_RGB;
+	uint32_t WBSCL_VERT_FILTER_INIT_CBCR;
+	uint32_t WBSCL_ROUND_OFFSET;
+	uint32_t WBSCL_OVERFLOW_STATUS;
+	uint32_t WBSCL_COEF_RAM_CONFLICT_STATUS;
+	uint32_t WBSCL_TEST_CNTL;
+	uint32_t WBSCL_TEST_CRC_RED;
+	uint32_t WBSCL_TEST_CRC_GREEN;
+	uint32_t WBSCL_TEST_CRC_BLUE;
+	uint32_t WBSCL_BACKPRESSURE_CNT_EN;
+	uint32_t WB_MCIF_BACKPRESSURE_CNT;
+	uint32_t WBSCL_CLAMP_Y_RGB;
+	uint32_t WBSCL_CLAMP_CBCR;
+	uint32_t WBSCL_OUTSIDE_PIX_STRATEGY;
+	uint32_t WBSCL_OUTSIDE_PIX_STRATEGY_CBCR;
+	uint32_t WBSCL_DEBUG;
+	uint32_t WBSCL_TEST_DEBUG_INDEX;
+	uint32_t WBSCL_TEST_DEBUG_DATA;
+	uint32_t WB_WARM_UP_MODE_CTL1;
+	uint32_t WB_WARM_UP_MODE_CTL2;
+};
 
 
-काष्ठा dcn20_dwbc_mask अणु
-	DWBC_REG_FIELD_LIST_DCN2_0(uपूर्णांक32_t)
-पूर्ण;
+struct dcn20_dwbc_mask {
+	DWBC_REG_FIELD_LIST_DCN2_0(uint32_t)
+};
 
-काष्ठा dcn20_dwbc_shअगरt अणु
-	DWBC_REG_FIELD_LIST_DCN2_0(uपूर्णांक8_t)
-पूर्ण;
+struct dcn20_dwbc_shift {
+	DWBC_REG_FIELD_LIST_DCN2_0(uint8_t)
+};
 
-काष्ठा dcn20_dwbc अणु
-	काष्ठा dwbc base;
-	स्थिर काष्ठा dcn20_dwbc_रेजिस्टरs *dwbc_regs;
-	स्थिर काष्ठा dcn20_dwbc_shअगरt *dwbc_shअगरt;
-	स्थिर काष्ठा dcn20_dwbc_mask *dwbc_mask;
-पूर्ण;
+struct dcn20_dwbc {
+	struct dwbc base;
+	const struct dcn20_dwbc_registers *dwbc_regs;
+	const struct dcn20_dwbc_shift *dwbc_shift;
+	const struct dcn20_dwbc_mask *dwbc_mask;
+};
 
-व्योम dcn20_dwbc_स्थिरruct(काष्ठा dcn20_dwbc *dwbc20,
-	काष्ठा dc_context *ctx,
-	स्थिर काष्ठा dcn20_dwbc_रेजिस्टरs *dwbc_regs,
-	स्थिर काष्ठा dcn20_dwbc_shअगरt *dwbc_shअगरt,
-	स्थिर काष्ठा dcn20_dwbc_mask *dwbc_mask,
-	पूर्णांक inst);
+void dcn20_dwbc_construct(struct dcn20_dwbc *dwbc20,
+	struct dc_context *ctx,
+	const struct dcn20_dwbc_registers *dwbc_regs,
+	const struct dcn20_dwbc_shift *dwbc_shift,
+	const struct dcn20_dwbc_mask *dwbc_mask,
+	int inst);
 
-bool dwb2_disable(काष्ठा dwbc *dwbc);
+bool dwb2_disable(struct dwbc *dwbc);
 
-bool dwb2_is_enabled(काष्ठा dwbc *dwbc);
+bool dwb2_is_enabled(struct dwbc *dwbc);
 
-व्योम dwb2_set_stereo(काष्ठा dwbc *dwbc,
-	काष्ठा dwb_stereo_params *stereo_params);
+void dwb2_set_stereo(struct dwbc *dwbc,
+	struct dwb_stereo_params *stereo_params);
 
-व्योम dwb2_set_new_content(काष्ठा dwbc *dwbc,
+void dwb2_set_new_content(struct dwbc *dwbc,
 	bool is_new_content);
 
-व्योम dwb2_config_dwb_cnv(काष्ठा dwbc *dwbc,
-	काष्ठा dc_dwb_params *params);
+void dwb2_config_dwb_cnv(struct dwbc *dwbc,
+	struct dc_dwb_params *params);
 
-व्योम dwb2_set_scaler(काष्ठा dwbc *dwbc, काष्ठा dc_dwb_params *params);
+void dwb2_set_scaler(struct dwbc *dwbc, struct dc_dwb_params *params);
 
-bool dwb_program_vert_scalar(काष्ठा dcn20_dwbc *dwbc20,
-	uपूर्णांक32_t src_height,
-	uपूर्णांक32_t dest_height,
-	काष्ठा scaling_taps num_taps,
-	क्रमागत dwb_subsample_position subsample_position);
+bool dwb_program_vert_scalar(struct dcn20_dwbc *dwbc20,
+	uint32_t src_height,
+	uint32_t dest_height,
+	struct scaling_taps num_taps,
+	enum dwb_subsample_position subsample_position);
 
-bool dwb_program_horz_scalar(काष्ठा dcn20_dwbc *dwbc20,
-	uपूर्णांक32_t src_width,
-	uपूर्णांक32_t dest_width,
-	काष्ठा scaling_taps num_taps);
+bool dwb_program_horz_scalar(struct dcn20_dwbc *dwbc20,
+	uint32_t src_width,
+	uint32_t dest_width,
+	struct scaling_taps num_taps);
 
 
-#पूर्ण_अगर
+#endif
 
 

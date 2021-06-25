@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * linux/fs/reiserfs/xattr.c
  *
@@ -12,80 +11,80 @@
  * they are implemented as files in a "private" directory.
  * Each EA is in it's own file, with the directory layout like so (/ is assumed
  * to be relative to fs root). Inside the /.reiserfs_priv/xattrs directory,
- * directories named using the capital-hex क्रमm of the objectid and
- * generation number are used. Inside each directory are inभागidual files
+ * directories named using the capital-hex form of the objectid and
+ * generation number are used. Inside each directory are individual files
  * named with the name of the extended attribute.
  *
- * So, क्रम objectid 12648430, we could have:
- * /.reiserfs_priv/xattrs/C0FFEE.0/प्रणाली.posix_acl_access
- * /.reiserfs_priv/xattrs/C0FFEE.0/प्रणाली.posix_acl_शेष
+ * So, for objectid 12648430, we could have:
+ * /.reiserfs_priv/xattrs/C0FFEE.0/system.posix_acl_access
+ * /.reiserfs_priv/xattrs/C0FFEE.0/system.posix_acl_default
  * /.reiserfs_priv/xattrs/C0FFEE.0/user.Content-Type
  * .. or similar.
  *
  * The file contents are the text of the EA. The size is known based on the
  * stat data describing the file.
  *
- * In the हाल of प्रणाली.posix_acl_access and प्रणाली.posix_acl_शेष, since
- * these are special हालs क्रम fileप्रणाली ACLs, they are पूर्णांकerpreted by the
+ * In the case of system.posix_acl_access and system.posix_acl_default, since
+ * these are special cases for filesystem ACLs, they are interpreted by the
  * kernel, in addition, they are negatively and positively cached and attached
- * to the inode so that unnecessary lookups are aव्योमed.
+ * to the inode so that unnecessary lookups are avoided.
  *
  * Locking works like so:
  * Directory components (xattr root, xattr dir) are protectd by their i_mutex.
- * The xattrs themselves are रक्षित by the xattr_sem.
+ * The xattrs themselves are protected by the xattr_sem.
  */
 
-#समावेश "reiserfs.h"
-#समावेश <linux/capability.h>
-#समावेश <linux/dcache.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/gfp.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/file.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/xattr.h>
-#समावेश "xattr.h"
-#समावेश "acl.h"
-#समावेश <linux/uaccess.h>
-#समावेश <net/checksum.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/quotaops.h>
-#समावेश <linux/security.h>
-#समावेश <linux/posix_acl_xattr.h>
+#include "reiserfs.h"
+#include <linux/capability.h>
+#include <linux/dcache.h>
+#include <linux/namei.h>
+#include <linux/errno.h>
+#include <linux/gfp.h>
+#include <linux/fs.h>
+#include <linux/file.h>
+#include <linux/pagemap.h>
+#include <linux/xattr.h>
+#include "xattr.h"
+#include "acl.h"
+#include <linux/uaccess.h>
+#include <net/checksum.h>
+#include <linux/stat.h>
+#include <linux/quotaops.h>
+#include <linux/security.h>
+#include <linux/posix_acl_xattr.h>
 
-#घोषणा PRIVROOT_NAME ".reiserfs_priv"
-#घोषणा XAROOT_NAME   "xattrs"
+#define PRIVROOT_NAME ".reiserfs_priv"
+#define XAROOT_NAME   "xattrs"
 
 
 /*
- * Helpers क्रम inode ops. We करो this so that we करोn't have all the VFS
- * overhead and also क्रम proper i_mutex annotation.
- * dir->i_mutex must be held क्रम all of them.
+ * Helpers for inode ops. We do this so that we don't have all the VFS
+ * overhead and also for proper i_mutex annotation.
+ * dir->i_mutex must be held for all of them.
  */
-#अगर_घोषित CONFIG_REISERFS_FS_XATTR
-अटल पूर्णांक xattr_create(काष्ठा inode *dir, काष्ठा dentry *dentry, पूर्णांक mode)
-अणु
+#ifdef CONFIG_REISERFS_FS_XATTR
+static int xattr_create(struct inode *dir, struct dentry *dentry, int mode)
+{
 	BUG_ON(!inode_is_locked(dir));
-	वापस dir->i_op->create(&init_user_ns, dir, dentry, mode, true);
-पूर्ण
-#पूर्ण_अगर
+	return dir->i_op->create(&init_user_ns, dir, dentry, mode, true);
+}
+#endif
 
-अटल पूर्णांक xattr_सूची_गढ़ो(काष्ठा inode *dir, काष्ठा dentry *dentry, umode_t mode)
-अणु
+static int xattr_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
+{
 	BUG_ON(!inode_is_locked(dir));
-	वापस dir->i_op->सूची_गढ़ो(&init_user_ns, dir, dentry, mode);
-पूर्ण
+	return dir->i_op->mkdir(&init_user_ns, dir, dentry, mode);
+}
 
 /*
  * We use I_MUTEX_CHILD here to silence lockdep. It's safe because xattr
- * mutation ops aren't called during नाम or splace, which are the
+ * mutation ops aren't called during rename or splace, which are the
  * only other users of I_MUTEX_CHILD. It violates the ordering, but that's
- * better than allocating another subclass just क्रम this code.
+ * better than allocating another subclass just for this code.
  */
-अटल पूर्णांक xattr_unlink(काष्ठा inode *dir, काष्ठा dentry *dentry)
-अणु
-	पूर्णांक error;
+static int xattr_unlink(struct inode *dir, struct dentry *dentry)
+{
+	int error;
 
 	BUG_ON(!inode_is_locked(dir));
 
@@ -93,125 +92,125 @@
 	error = dir->i_op->unlink(dir, dentry);
 	inode_unlock(d_inode(dentry));
 
-	अगर (!error)
+	if (!error)
 		d_delete(dentry);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक xattr_सूची_हटाओ(काष्ठा inode *dir, काष्ठा dentry *dentry)
-अणु
-	पूर्णांक error;
+static int xattr_rmdir(struct inode *dir, struct dentry *dentry)
+{
+	int error;
 
 	BUG_ON(!inode_is_locked(dir));
 
 	inode_lock_nested(d_inode(dentry), I_MUTEX_CHILD);
-	error = dir->i_op->सूची_हटाओ(dir, dentry);
-	अगर (!error)
+	error = dir->i_op->rmdir(dir, dentry);
+	if (!error)
 		d_inode(dentry)->i_flags |= S_DEAD;
 	inode_unlock(d_inode(dentry));
-	अगर (!error)
+	if (!error)
 		d_delete(dentry);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-#घोषणा xattr_may_create(flags)	(!flags || flags & XATTR_CREATE)
+#define xattr_may_create(flags)	(!flags || flags & XATTR_CREATE)
 
-अटल काष्ठा dentry *खोलो_xa_root(काष्ठा super_block *sb, पूर्णांक flags)
-अणु
-	काष्ठा dentry *privroot = REISERFS_SB(sb)->priv_root;
-	काष्ठा dentry *xaroot;
+static struct dentry *open_xa_root(struct super_block *sb, int flags)
+{
+	struct dentry *privroot = REISERFS_SB(sb)->priv_root;
+	struct dentry *xaroot;
 
-	अगर (d_really_is_negative(privroot))
-		वापस ERR_PTR(-EOPNOTSUPP);
+	if (d_really_is_negative(privroot))
+		return ERR_PTR(-EOPNOTSUPP);
 
 	inode_lock_nested(d_inode(privroot), I_MUTEX_XATTR);
 
 	xaroot = dget(REISERFS_SB(sb)->xattr_root);
-	अगर (!xaroot)
+	if (!xaroot)
 		xaroot = ERR_PTR(-EOPNOTSUPP);
-	अन्यथा अगर (d_really_is_negative(xaroot)) अणु
-		पूर्णांक err = -ENODATA;
+	else if (d_really_is_negative(xaroot)) {
+		int err = -ENODATA;
 
-		अगर (xattr_may_create(flags))
-			err = xattr_सूची_गढ़ो(d_inode(privroot), xaroot, 0700);
-		अगर (err) अणु
+		if (xattr_may_create(flags))
+			err = xattr_mkdir(d_inode(privroot), xaroot, 0700);
+		if (err) {
 			dput(xaroot);
 			xaroot = ERR_PTR(err);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	inode_unlock(d_inode(privroot));
-	वापस xaroot;
-पूर्ण
+	return xaroot;
+}
 
-अटल काष्ठा dentry *खोलो_xa_dir(स्थिर काष्ठा inode *inode, पूर्णांक flags)
-अणु
-	काष्ठा dentry *xaroot, *xadir;
-	अक्षर namebuf[17];
+static struct dentry *open_xa_dir(const struct inode *inode, int flags)
+{
+	struct dentry *xaroot, *xadir;
+	char namebuf[17];
 
-	xaroot = खोलो_xa_root(inode->i_sb, flags);
-	अगर (IS_ERR(xaroot))
-		वापस xaroot;
+	xaroot = open_xa_root(inode->i_sb, flags);
+	if (IS_ERR(xaroot))
+		return xaroot;
 
-	snम_लिखो(namebuf, माप(namebuf), "%X.%X",
+	snprintf(namebuf, sizeof(namebuf), "%X.%X",
 		 le32_to_cpu(INODE_PKEY(inode)->k_objectid),
 		 inode->i_generation);
 
 	inode_lock_nested(d_inode(xaroot), I_MUTEX_XATTR);
 
-	xadir = lookup_one_len(namebuf, xaroot, म_माप(namebuf));
-	अगर (!IS_ERR(xadir) && d_really_is_negative(xadir)) अणु
-		पूर्णांक err = -ENODATA;
+	xadir = lookup_one_len(namebuf, xaroot, strlen(namebuf));
+	if (!IS_ERR(xadir) && d_really_is_negative(xadir)) {
+		int err = -ENODATA;
 
-		अगर (xattr_may_create(flags))
-			err = xattr_सूची_गढ़ो(d_inode(xaroot), xadir, 0700);
-		अगर (err) अणु
+		if (xattr_may_create(flags))
+			err = xattr_mkdir(d_inode(xaroot), xadir, 0700);
+		if (err) {
 			dput(xadir);
 			xadir = ERR_PTR(err);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	inode_unlock(d_inode(xaroot));
 	dput(xaroot);
-	वापस xadir;
-पूर्ण
+	return xadir;
+}
 
 /*
  * The following are side effects of other operations that aren't explicitly
- * modअगरying extended attributes. This includes operations such as permissions
+ * modifying extended attributes. This includes operations such as permissions
  * or ownership changes, object deletions, etc.
  */
-काष्ठा reiserfs_dentry_buf अणु
-	काष्ठा dir_context ctx;
-	काष्ठा dentry *xadir;
-	पूर्णांक count;
-	पूर्णांक err;
-	काष्ठा dentry *dentries[8];
-पूर्ण;
+struct reiserfs_dentry_buf {
+	struct dir_context ctx;
+	struct dentry *xadir;
+	int count;
+	int err;
+	struct dentry *dentries[8];
+};
 
-अटल पूर्णांक
-fill_with_dentries(काष्ठा dir_context *ctx, स्थिर अक्षर *name, पूर्णांक namelen,
-		   loff_t offset, u64 ino, अचिन्हित पूर्णांक d_type)
-अणु
-	काष्ठा reiserfs_dentry_buf *dbuf =
-		container_of(ctx, काष्ठा reiserfs_dentry_buf, ctx);
-	काष्ठा dentry *dentry;
+static int
+fill_with_dentries(struct dir_context *ctx, const char *name, int namelen,
+		   loff_t offset, u64 ino, unsigned int d_type)
+{
+	struct reiserfs_dentry_buf *dbuf =
+		container_of(ctx, struct reiserfs_dentry_buf, ctx);
+	struct dentry *dentry;
 
 	WARN_ON_ONCE(!inode_is_locked(d_inode(dbuf->xadir)));
 
-	अगर (dbuf->count == ARRAY_SIZE(dbuf->dentries))
-		वापस -ENOSPC;
+	if (dbuf->count == ARRAY_SIZE(dbuf->dentries))
+		return -ENOSPC;
 
-	अगर (name[0] == '.' && (namelen < 2 ||
+	if (name[0] == '.' && (namelen < 2 ||
 			       (namelen == 2 && name[1] == '.')))
-		वापस 0;
+		return 0;
 
 	dentry = lookup_one_len(name, dbuf->xadir, namelen);
-	अगर (IS_ERR(dentry)) अणु
+	if (IS_ERR(dentry)) {
 		dbuf->err = PTR_ERR(dentry);
-		वापस PTR_ERR(dentry);
-	पूर्ण अन्यथा अगर (d_really_is_negative(dentry)) अणु
+		return PTR_ERR(dentry);
+	} else if (d_really_is_negative(dentry)) {
 		/* A directory entry exists, but no file? */
 		reiserfs_error(dentry->d_sb, "xattr-20003",
 			       "Corrupted directory: xattr %pd listed but "
@@ -219,515 +218,515 @@ fill_with_dentries(काष्ठा dir_context *ctx, स्थिर अक�
 			       dentry, dbuf->xadir);
 		dput(dentry);
 		dbuf->err = -EIO;
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	dbuf->dentries[dbuf->count++] = dentry;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-cleanup_dentry_buf(काष्ठा reiserfs_dentry_buf *buf)
-अणु
-	पूर्णांक i;
+static void
+cleanup_dentry_buf(struct reiserfs_dentry_buf *buf)
+{
+	int i;
 
-	क्रम (i = 0; i < buf->count; i++)
-		अगर (buf->dentries[i])
+	for (i = 0; i < buf->count; i++)
+		if (buf->dentries[i])
 			dput(buf->dentries[i]);
-पूर्ण
+}
 
-अटल पूर्णांक reiserfs_क्रम_each_xattr(काष्ठा inode *inode,
-				   पूर्णांक (*action)(काष्ठा dentry *, व्योम *),
-				   व्योम *data)
-अणु
-	काष्ठा dentry *dir;
-	पूर्णांक i, err = 0;
-	काष्ठा reiserfs_dentry_buf buf = अणु
+static int reiserfs_for_each_xattr(struct inode *inode,
+				   int (*action)(struct dentry *, void *),
+				   void *data)
+{
+	struct dentry *dir;
+	int i, err = 0;
+	struct reiserfs_dentry_buf buf = {
 		.ctx.actor = fill_with_dentries,
-	पूर्ण;
+	};
 
 	/* Skip out, an xattr has no xattrs associated with it */
-	अगर (IS_PRIVATE(inode) || get_inode_sd_version(inode) == STAT_DATA_V1)
-		वापस 0;
+	if (IS_PRIVATE(inode) || get_inode_sd_version(inode) == STAT_DATA_V1)
+		return 0;
 
-	dir = खोलो_xa_dir(inode, XATTR_REPLACE);
-	अगर (IS_ERR(dir)) अणु
+	dir = open_xa_dir(inode, XATTR_REPLACE);
+	if (IS_ERR(dir)) {
 		err = PTR_ERR(dir);
-		जाओ out;
-	पूर्ण अन्यथा अगर (d_really_is_negative(dir)) अणु
+		goto out;
+	} else if (d_really_is_negative(dir)) {
 		err = 0;
-		जाओ out_dir;
-	पूर्ण
+		goto out_dir;
+	}
 
 	inode_lock_nested(d_inode(dir), I_MUTEX_XATTR);
 
 	buf.xadir = dir;
-	जबतक (1) अणु
-		err = reiserfs_सूची_पढ़ो_inode(d_inode(dir), &buf.ctx);
-		अगर (err)
-			अवरोध;
-		अगर (buf.err) अणु
+	while (1) {
+		err = reiserfs_readdir_inode(d_inode(dir), &buf.ctx);
+		if (err)
+			break;
+		if (buf.err) {
 			err = buf.err;
-			अवरोध;
-		पूर्ण
-		अगर (!buf.count)
-			अवरोध;
-		क्रम (i = 0; !err && i < buf.count && buf.dentries[i]; i++) अणु
-			काष्ठा dentry *dentry = buf.dentries[i];
+			break;
+		}
+		if (!buf.count)
+			break;
+		for (i = 0; !err && i < buf.count && buf.dentries[i]; i++) {
+			struct dentry *dentry = buf.dentries[i];
 
-			अगर (!d_is_dir(dentry))
+			if (!d_is_dir(dentry))
 				err = action(dentry, data);
 
 			dput(dentry);
-			buf.dentries[i] = शून्य;
-		पूर्ण
-		अगर (err)
-			अवरोध;
+			buf.dentries[i] = NULL;
+		}
+		if (err)
+			break;
 		buf.count = 0;
-	पूर्ण
+	}
 	inode_unlock(d_inode(dir));
 
 	cleanup_dentry_buf(&buf);
 
-	अगर (!err) अणु
+	if (!err) {
 		/*
-		 * We start a transaction here to aव्योम a ABBA situation
+		 * We start a transaction here to avoid a ABBA situation
 		 * between the xattr root's i_mutex and the journal lock.
-		 * This करोesn't incur much additional overhead since the
+		 * This doesn't incur much additional overhead since the
 		 * new transaction will just nest inside the
 		 * outer transaction.
 		 */
-		पूर्णांक blocks = JOURNAL_PER_BALANCE_CNT * 2 + 2 +
+		int blocks = JOURNAL_PER_BALANCE_CNT * 2 + 2 +
 			     4 * REISERFS_QUOTA_TRANS_BLOCKS(inode->i_sb);
-		काष्ठा reiserfs_transaction_handle th;
+		struct reiserfs_transaction_handle th;
 
-		reiserfs_ग_लिखो_lock(inode->i_sb);
+		reiserfs_write_lock(inode->i_sb);
 		err = journal_begin(&th, inode->i_sb, blocks);
-		reiserfs_ग_लिखो_unlock(inode->i_sb);
-		अगर (!err) अणु
-			पूर्णांक jerror;
+		reiserfs_write_unlock(inode->i_sb);
+		if (!err) {
+			int jerror;
 
 			inode_lock_nested(d_inode(dir->d_parent),
 					  I_MUTEX_XATTR);
 			err = action(dir, data);
-			reiserfs_ग_लिखो_lock(inode->i_sb);
+			reiserfs_write_lock(inode->i_sb);
 			jerror = journal_end(&th);
-			reiserfs_ग_लिखो_unlock(inode->i_sb);
+			reiserfs_write_unlock(inode->i_sb);
 			inode_unlock(d_inode(dir->d_parent));
 			err = jerror ?: err;
-		पूर्ण
-	पूर्ण
+		}
+	}
 out_dir:
 	dput(dir);
 out:
 	/*
-	 * -ENODATA: this object करोesn't have any xattrs
-	 * -EOPNOTSUPP: this file प्रणाली करोesn't have xattrs enabled on disk.
+	 * -ENODATA: this object doesn't have any xattrs
+	 * -EOPNOTSUPP: this file system doesn't have xattrs enabled on disk.
 	 * Neither are errors
 	 */
-	अगर (err == -ENODATA || err == -EOPNOTSUPP)
+	if (err == -ENODATA || err == -EOPNOTSUPP)
 		err = 0;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक delete_one_xattr(काष्ठा dentry *dentry, व्योम *data)
-अणु
-	काष्ठा inode *dir = d_inode(dentry->d_parent);
+static int delete_one_xattr(struct dentry *dentry, void *data)
+{
+	struct inode *dir = d_inode(dentry->d_parent);
 
 	/* This is the xattr dir, handle specially. */
-	अगर (d_is_dir(dentry))
-		वापस xattr_सूची_हटाओ(dir, dentry);
+	if (d_is_dir(dentry))
+		return xattr_rmdir(dir, dentry);
 
-	वापस xattr_unlink(dir, dentry);
-पूर्ण
+	return xattr_unlink(dir, dentry);
+}
 
-अटल पूर्णांक chown_one_xattr(काष्ठा dentry *dentry, व्योम *data)
-अणु
-	काष्ठा iattr *attrs = data;
-	पूर्णांक ia_valid = attrs->ia_valid;
-	पूर्णांक err;
+static int chown_one_xattr(struct dentry *dentry, void *data)
+{
+	struct iattr *attrs = data;
+	int ia_valid = attrs->ia_valid;
+	int err;
 
 	/*
-	 * We only want the ownership bits. Otherwise, we'll करो
-	 * things like change a directory to a regular file अगर
+	 * We only want the ownership bits. Otherwise, we'll do
+	 * things like change a directory to a regular file if
 	 * ATTR_MODE is set.
 	 */
 	attrs->ia_valid &= (ATTR_UID|ATTR_GID);
 	err = reiserfs_setattr(&init_user_ns, dentry, attrs);
 	attrs->ia_valid = ia_valid;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* No i_mutex, but the inode is unconnected. */
-पूर्णांक reiserfs_delete_xattrs(काष्ठा inode *inode)
-अणु
-	पूर्णांक err = reiserfs_क्रम_each_xattr(inode, delete_one_xattr, शून्य);
+int reiserfs_delete_xattrs(struct inode *inode)
+{
+	int err = reiserfs_for_each_xattr(inode, delete_one_xattr, NULL);
 
-	अगर (err)
+	if (err)
 		reiserfs_warning(inode->i_sb, "jdm-20004",
 				 "Couldn't delete all xattrs (%d)\n", err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-/* inode->i_mutex: करोwn */
-पूर्णांक reiserfs_chown_xattrs(काष्ठा inode *inode, काष्ठा iattr *attrs)
-अणु
-	पूर्णांक err = reiserfs_क्रम_each_xattr(inode, chown_one_xattr, attrs);
+/* inode->i_mutex: down */
+int reiserfs_chown_xattrs(struct inode *inode, struct iattr *attrs)
+{
+	int err = reiserfs_for_each_xattr(inode, chown_one_xattr, attrs);
 
-	अगर (err)
+	if (err)
 		reiserfs_warning(inode->i_sb, "jdm-20007",
 				 "Couldn't chown all xattrs (%d)\n", err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#अगर_घोषित CONFIG_REISERFS_FS_XATTR
+#ifdef CONFIG_REISERFS_FS_XATTR
 /*
- * Returns a dentry corresponding to a specअगरic extended attribute file
- * क्रम the inode. If flags allow, the file is created. Otherwise, a
- * valid or negative dentry, or an error is वापसed.
+ * Returns a dentry corresponding to a specific extended attribute file
+ * for the inode. If flags allow, the file is created. Otherwise, a
+ * valid or negative dentry, or an error is returned.
  */
-अटल काष्ठा dentry *xattr_lookup(काष्ठा inode *inode, स्थिर अक्षर *name,
-				    पूर्णांक flags)
-अणु
-	काष्ठा dentry *xadir, *xafile;
-	पूर्णांक err = 0;
+static struct dentry *xattr_lookup(struct inode *inode, const char *name,
+				    int flags)
+{
+	struct dentry *xadir, *xafile;
+	int err = 0;
 
-	xadir = खोलो_xa_dir(inode, flags);
-	अगर (IS_ERR(xadir))
-		वापस ERR_CAST(xadir);
+	xadir = open_xa_dir(inode, flags);
+	if (IS_ERR(xadir))
+		return ERR_CAST(xadir);
 
 	inode_lock_nested(d_inode(xadir), I_MUTEX_XATTR);
-	xafile = lookup_one_len(name, xadir, म_माप(name));
-	अगर (IS_ERR(xafile)) अणु
+	xafile = lookup_one_len(name, xadir, strlen(name));
+	if (IS_ERR(xafile)) {
 		err = PTR_ERR(xafile);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (d_really_is_positive(xafile) && (flags & XATTR_CREATE))
+	if (d_really_is_positive(xafile) && (flags & XATTR_CREATE))
 		err = -EEXIST;
 
-	अगर (d_really_is_negative(xafile)) अणु
+	if (d_really_is_negative(xafile)) {
 		err = -ENODATA;
-		अगर (xattr_may_create(flags))
+		if (xattr_may_create(flags))
 			err = xattr_create(d_inode(xadir), xafile,
 					      0700|S_IFREG);
-	पूर्ण
+	}
 
-	अगर (err)
+	if (err)
 		dput(xafile);
 out:
 	inode_unlock(d_inode(xadir));
 	dput(xadir);
-	अगर (err)
-		वापस ERR_PTR(err);
-	वापस xafile;
-पूर्ण
+	if (err)
+		return ERR_PTR(err);
+	return xafile;
+}
 
 /* Internal operations on file data */
-अटल अंतरभूत व्योम reiserfs_put_page(काष्ठा page *page)
-अणु
+static inline void reiserfs_put_page(struct page *page)
+{
 	kunmap(page);
 	put_page(page);
-पूर्ण
+}
 
-अटल काष्ठा page *reiserfs_get_page(काष्ठा inode *dir, माप_प्रकार n)
-अणु
-	काष्ठा address_space *mapping = dir->i_mapping;
-	काष्ठा page *page;
+static struct page *reiserfs_get_page(struct inode *dir, size_t n)
+{
+	struct address_space *mapping = dir->i_mapping;
+	struct page *page;
 	/*
-	 * We can deadlock अगर we try to मुक्त dentries,
-	 * and an unlink/सूची_हटाओ has just occurred - GFP_NOFS aव्योमs this
+	 * We can deadlock if we try to free dentries,
+	 * and an unlink/rmdir has just occurred - GFP_NOFS avoids this
 	 */
 	mapping_set_gfp_mask(mapping, GFP_NOFS);
-	page = पढ़ो_mapping_page(mapping, n >> PAGE_SHIFT, शून्य);
-	अगर (!IS_ERR(page)) अणु
+	page = read_mapping_page(mapping, n >> PAGE_SHIFT, NULL);
+	if (!IS_ERR(page)) {
 		kmap(page);
-		अगर (PageError(page))
-			जाओ fail;
-	पूर्ण
-	वापस page;
+		if (PageError(page))
+			goto fail;
+	}
+	return page;
 
 fail:
 	reiserfs_put_page(page);
-	वापस ERR_PTR(-EIO);
-पूर्ण
+	return ERR_PTR(-EIO);
+}
 
-अटल अंतरभूत __u32 xattr_hash(स्थिर अक्षर *msg, पूर्णांक len)
-अणु
+static inline __u32 xattr_hash(const char *msg, int len)
+{
 	/*
-	 * csum_partial() gives dअगरferent results क्रम little-endian and
+	 * csum_partial() gives different results for little-endian and
 	 * big endian hosts. Images created on little-endian hosts and
 	 * mounted on big-endian hosts(and vice versa) will see csum mismatches
 	 * when trying to fetch xattrs. Treating the hash as __wsum_t would
 	 * lower the frequency of mismatch.  This is an endianness bug in
-	 * reiserfs.  The वापस statement would result in a sparse warning. Do
+	 * reiserfs.  The return statement would result in a sparse warning. Do
 	 * not fix the sparse warning so as to not hide a reminder of the bug.
 	 */
-	वापस csum_partial(msg, len, 0);
-पूर्ण
+	return csum_partial(msg, len, 0);
+}
 
-पूर्णांक reiserfs_commit_ग_लिखो(काष्ठा file *f, काष्ठा page *page,
-			  अचिन्हित from, अचिन्हित to);
+int reiserfs_commit_write(struct file *f, struct page *page,
+			  unsigned from, unsigned to);
 
-अटल व्योम update_स_समय(काष्ठा inode *inode)
-अणु
-	काष्ठा बारpec64 now = current_समय(inode);
+static void update_ctime(struct inode *inode)
+{
+	struct timespec64 now = current_time(inode);
 
-	अगर (inode_unhashed(inode) || !inode->i_nlink ||
-	    बारpec64_equal(&inode->i_स_समय, &now))
-		वापस;
+	if (inode_unhashed(inode) || !inode->i_nlink ||
+	    timespec64_equal(&inode->i_ctime, &now))
+		return;
 
-	inode->i_स_समय = current_समय(inode);
+	inode->i_ctime = current_time(inode);
 	mark_inode_dirty(inode);
-पूर्ण
+}
 
-अटल पूर्णांक lookup_and_delete_xattr(काष्ठा inode *inode, स्थिर अक्षर *name)
-अणु
-	पूर्णांक err = 0;
-	काष्ठा dentry *dentry, *xadir;
+static int lookup_and_delete_xattr(struct inode *inode, const char *name)
+{
+	int err = 0;
+	struct dentry *dentry, *xadir;
 
-	xadir = खोलो_xa_dir(inode, XATTR_REPLACE);
-	अगर (IS_ERR(xadir))
-		वापस PTR_ERR(xadir);
+	xadir = open_xa_dir(inode, XATTR_REPLACE);
+	if (IS_ERR(xadir))
+		return PTR_ERR(xadir);
 
 	inode_lock_nested(d_inode(xadir), I_MUTEX_XATTR);
-	dentry = lookup_one_len(name, xadir, म_माप(name));
-	अगर (IS_ERR(dentry)) अणु
+	dentry = lookup_one_len(name, xadir, strlen(name));
+	if (IS_ERR(dentry)) {
 		err = PTR_ERR(dentry);
-		जाओ out_dput;
-	पूर्ण
+		goto out_dput;
+	}
 
-	अगर (d_really_is_positive(dentry)) अणु
+	if (d_really_is_positive(dentry)) {
 		err = xattr_unlink(d_inode(xadir), dentry);
-		update_स_समय(inode);
-	पूर्ण
+		update_ctime(inode);
+	}
 
 	dput(dentry);
 out_dput:
 	inode_unlock(d_inode(xadir));
 	dput(xadir);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
 /* Generic extended attribute operations that can be used by xa plugins */
 
 /*
- * inode->i_mutex: करोwn
+ * inode->i_mutex: down
  */
-पूर्णांक
-reiserfs_xattr_set_handle(काष्ठा reiserfs_transaction_handle *th,
-			  काष्ठा inode *inode, स्थिर अक्षर *name,
-			  स्थिर व्योम *buffer, माप_प्रकार buffer_size, पूर्णांक flags)
-अणु
-	पूर्णांक err = 0;
-	काष्ठा dentry *dentry;
-	काष्ठा page *page;
-	अक्षर *data;
-	माप_प्रकार file_pos = 0;
-	माप_प्रकार buffer_pos = 0;
-	माप_प्रकार new_size;
+int
+reiserfs_xattr_set_handle(struct reiserfs_transaction_handle *th,
+			  struct inode *inode, const char *name,
+			  const void *buffer, size_t buffer_size, int flags)
+{
+	int err = 0;
+	struct dentry *dentry;
+	struct page *page;
+	char *data;
+	size_t file_pos = 0;
+	size_t buffer_pos = 0;
+	size_t new_size;
 	__u32 xahash = 0;
 
-	अगर (get_inode_sd_version(inode) == STAT_DATA_V1)
-		वापस -EOPNOTSUPP;
+	if (get_inode_sd_version(inode) == STAT_DATA_V1)
+		return -EOPNOTSUPP;
 
-	अगर (!buffer) अणु
+	if (!buffer) {
 		err = lookup_and_delete_xattr(inode, name);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	dentry = xattr_lookup(inode, name, flags);
-	अगर (IS_ERR(dentry))
-		वापस PTR_ERR(dentry);
+	if (IS_ERR(dentry))
+		return PTR_ERR(dentry);
 
-	करोwn_ग_लिखो(&REISERFS_I(inode)->i_xattr_sem);
+	down_write(&REISERFS_I(inode)->i_xattr_sem);
 
 	xahash = xattr_hash(buffer, buffer_size);
-	जबतक (buffer_pos < buffer_size || buffer_pos == 0) अणु
-		माप_प्रकार chunk;
-		माप_प्रकार skip = 0;
-		माप_प्रकार page_offset = (file_pos & (PAGE_SIZE - 1));
+	while (buffer_pos < buffer_size || buffer_pos == 0) {
+		size_t chunk;
+		size_t skip = 0;
+		size_t page_offset = (file_pos & (PAGE_SIZE - 1));
 
-		अगर (buffer_size - buffer_pos > PAGE_SIZE)
+		if (buffer_size - buffer_pos > PAGE_SIZE)
 			chunk = PAGE_SIZE;
-		अन्यथा
+		else
 			chunk = buffer_size - buffer_pos;
 
 		page = reiserfs_get_page(d_inode(dentry), file_pos);
-		अगर (IS_ERR(page)) अणु
+		if (IS_ERR(page)) {
 			err = PTR_ERR(page);
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 
 		lock_page(page);
 		data = page_address(page);
 
-		अगर (file_pos == 0) अणु
-			काष्ठा reiserfs_xattr_header *rxh;
+		if (file_pos == 0) {
+			struct reiserfs_xattr_header *rxh;
 
-			skip = file_pos = माप(काष्ठा reiserfs_xattr_header);
-			अगर (chunk + skip > PAGE_SIZE)
+			skip = file_pos = sizeof(struct reiserfs_xattr_header);
+			if (chunk + skip > PAGE_SIZE)
 				chunk = PAGE_SIZE - skip;
-			rxh = (काष्ठा reiserfs_xattr_header *)data;
+			rxh = (struct reiserfs_xattr_header *)data;
 			rxh->h_magic = cpu_to_le32(REISERFS_XATTR_MAGIC);
 			rxh->h_hash = cpu_to_le32(xahash);
-		पूर्ण
+		}
 
-		reiserfs_ग_लिखो_lock(inode->i_sb);
-		err = __reiserfs_ग_लिखो_begin(page, page_offset, chunk + skip);
-		अगर (!err) अणु
-			अगर (buffer)
-				स_नकल(data + skip, buffer + buffer_pos, chunk);
-			err = reiserfs_commit_ग_लिखो(शून्य, page, page_offset,
+		reiserfs_write_lock(inode->i_sb);
+		err = __reiserfs_write_begin(page, page_offset, chunk + skip);
+		if (!err) {
+			if (buffer)
+				memcpy(data + skip, buffer + buffer_pos, chunk);
+			err = reiserfs_commit_write(NULL, page, page_offset,
 						    page_offset + chunk +
 						    skip);
-		पूर्ण
-		reiserfs_ग_लिखो_unlock(inode->i_sb);
+		}
+		reiserfs_write_unlock(inode->i_sb);
 		unlock_page(page);
 		reiserfs_put_page(page);
 		buffer_pos += chunk;
 		file_pos += chunk;
 		skip = 0;
-		अगर (err || buffer_size == 0 || !buffer)
-			अवरोध;
-	पूर्ण
+		if (err || buffer_size == 0 || !buffer)
+			break;
+	}
 
-	new_size = buffer_size + माप(काष्ठा reiserfs_xattr_header);
-	अगर (!err && new_size < i_size_पढ़ो(d_inode(dentry))) अणु
-		काष्ठा iattr newattrs = अणु
-			.ia_स_समय = current_समय(inode),
+	new_size = buffer_size + sizeof(struct reiserfs_xattr_header);
+	if (!err && new_size < i_size_read(d_inode(dentry))) {
+		struct iattr newattrs = {
+			.ia_ctime = current_time(inode),
 			.ia_size = new_size,
 			.ia_valid = ATTR_SIZE | ATTR_CTIME,
-		पूर्ण;
+		};
 
 		inode_lock_nested(d_inode(dentry), I_MUTEX_XATTR);
-		inode_dio_रुको(d_inode(dentry));
+		inode_dio_wait(d_inode(dentry));
 
 		err = reiserfs_setattr(&init_user_ns, dentry, &newattrs);
 		inode_unlock(d_inode(dentry));
-	पूर्ण अन्यथा
-		update_स_समय(inode);
+	} else
+		update_ctime(inode);
 out_unlock:
-	up_ग_लिखो(&REISERFS_I(inode)->i_xattr_sem);
+	up_write(&REISERFS_I(inode)->i_xattr_sem);
 	dput(dentry);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-/* We need to start a transaction to मुख्यtain lock ordering */
-पूर्णांक reiserfs_xattr_set(काष्ठा inode *inode, स्थिर अक्षर *name,
-		       स्थिर व्योम *buffer, माप_प्रकार buffer_size, पूर्णांक flags)
-अणु
+/* We need to start a transaction to maintain lock ordering */
+int reiserfs_xattr_set(struct inode *inode, const char *name,
+		       const void *buffer, size_t buffer_size, int flags)
+{
 
-	काष्ठा reiserfs_transaction_handle th;
-	पूर्णांक error, error2;
-	माप_प्रकार jbegin_count = reiserfs_xattr_nblocks(inode, buffer_size);
+	struct reiserfs_transaction_handle th;
+	int error, error2;
+	size_t jbegin_count = reiserfs_xattr_nblocks(inode, buffer_size);
 
-	/* Check beक्रमe we start a transaction and then करो nothing. */
-	अगर (!d_really_is_positive(REISERFS_SB(inode->i_sb)->priv_root))
-		वापस -EOPNOTSUPP;
+	/* Check before we start a transaction and then do nothing. */
+	if (!d_really_is_positive(REISERFS_SB(inode->i_sb)->priv_root))
+		return -EOPNOTSUPP;
 
-	अगर (!(flags & XATTR_REPLACE))
+	if (!(flags & XATTR_REPLACE))
 		jbegin_count += reiserfs_xattr_jcreate_nblocks(inode);
 
-	reiserfs_ग_लिखो_lock(inode->i_sb);
+	reiserfs_write_lock(inode->i_sb);
 	error = journal_begin(&th, inode->i_sb, jbegin_count);
-	reiserfs_ग_लिखो_unlock(inode->i_sb);
-	अगर (error) अणु
-		वापस error;
-	पूर्ण
+	reiserfs_write_unlock(inode->i_sb);
+	if (error) {
+		return error;
+	}
 
 	error = reiserfs_xattr_set_handle(&th, inode, name,
 					  buffer, buffer_size, flags);
 
-	reiserfs_ग_लिखो_lock(inode->i_sb);
+	reiserfs_write_lock(inode->i_sb);
 	error2 = journal_end(&th);
-	reiserfs_ग_लिखो_unlock(inode->i_sb);
-	अगर (error == 0)
+	reiserfs_write_unlock(inode->i_sb);
+	if (error == 0)
 		error = error2;
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * inode->i_mutex: करोwn
+ * inode->i_mutex: down
  */
-पूर्णांक
-reiserfs_xattr_get(काष्ठा inode *inode, स्थिर अक्षर *name, व्योम *buffer,
-		   माप_प्रकार buffer_size)
-अणु
-	sमाप_प्रकार err = 0;
-	काष्ठा dentry *dentry;
-	माप_प्रकार isize;
-	माप_प्रकार file_pos = 0;
-	माप_प्रकार buffer_pos = 0;
-	काष्ठा page *page;
+int
+reiserfs_xattr_get(struct inode *inode, const char *name, void *buffer,
+		   size_t buffer_size)
+{
+	ssize_t err = 0;
+	struct dentry *dentry;
+	size_t isize;
+	size_t file_pos = 0;
+	size_t buffer_pos = 0;
+	struct page *page;
 	__u32 hash = 0;
 
-	अगर (name == शून्य)
-		वापस -EINVAL;
+	if (name == NULL)
+		return -EINVAL;
 
 	/*
 	 * We can't have xattrs attached to v1 items since they don't have
 	 * generation numbers
 	 */
-	अगर (get_inode_sd_version(inode) == STAT_DATA_V1)
-		वापस -EOPNOTSUPP;
+	if (get_inode_sd_version(inode) == STAT_DATA_V1)
+		return -EOPNOTSUPP;
 
 	/*
 	 * priv_root needn't be initialized during mount so allow initial
 	 * lookups to succeed.
 	 */
-	अगर (!REISERFS_SB(inode->i_sb)->priv_root)
-		वापस 0;
+	if (!REISERFS_SB(inode->i_sb)->priv_root)
+		return 0;
 
 	dentry = xattr_lookup(inode, name, XATTR_REPLACE);
-	अगर (IS_ERR(dentry)) अणु
+	if (IS_ERR(dentry)) {
 		err = PTR_ERR(dentry);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	करोwn_पढ़ो(&REISERFS_I(inode)->i_xattr_sem);
+	down_read(&REISERFS_I(inode)->i_xattr_sem);
 
-	isize = i_size_पढ़ो(d_inode(dentry));
+	isize = i_size_read(d_inode(dentry));
 
-	/* Just वापस the size needed */
-	अगर (buffer == शून्य) अणु
-		err = isize - माप(काष्ठा reiserfs_xattr_header);
-		जाओ out_unlock;
-	पूर्ण
+	/* Just return the size needed */
+	if (buffer == NULL) {
+		err = isize - sizeof(struct reiserfs_xattr_header);
+		goto out_unlock;
+	}
 
-	अगर (buffer_size < isize - माप(काष्ठा reiserfs_xattr_header)) अणु
-		err = -दुस्फल;
-		जाओ out_unlock;
-	पूर्ण
+	if (buffer_size < isize - sizeof(struct reiserfs_xattr_header)) {
+		err = -ERANGE;
+		goto out_unlock;
+	}
 
-	जबतक (file_pos < isize) अणु
-		माप_प्रकार chunk;
-		अक्षर *data;
-		माप_प्रकार skip = 0;
+	while (file_pos < isize) {
+		size_t chunk;
+		char *data;
+		size_t skip = 0;
 
-		अगर (isize - file_pos > PAGE_SIZE)
+		if (isize - file_pos > PAGE_SIZE)
 			chunk = PAGE_SIZE;
-		अन्यथा
+		else
 			chunk = isize - file_pos;
 
 		page = reiserfs_get_page(d_inode(dentry), file_pos);
-		अगर (IS_ERR(page)) अणु
+		if (IS_ERR(page)) {
 			err = PTR_ERR(page);
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 
 		lock_page(page);
 		data = page_address(page);
-		अगर (file_pos == 0) अणु
-			काष्ठा reiserfs_xattr_header *rxh =
-			    (काष्ठा reiserfs_xattr_header *)data;
-			skip = file_pos = माप(काष्ठा reiserfs_xattr_header);
+		if (file_pos == 0) {
+			struct reiserfs_xattr_header *rxh =
+			    (struct reiserfs_xattr_header *)data;
+			skip = file_pos = sizeof(struct reiserfs_xattr_header);
 			chunk -= skip;
-			/* Magic करोesn't match up.. */
-			अगर (rxh->h_magic != cpu_to_le32(REISERFS_XATTR_MAGIC)) अणु
+			/* Magic doesn't match up.. */
+			if (rxh->h_magic != cpu_to_le32(REISERFS_XATTR_MAGIC)) {
 				unlock_page(page);
 				reiserfs_put_page(page);
 				reiserfs_warning(inode->i_sb, "jdm-20001",
@@ -735,311 +734,311 @@ reiserfs_xattr_get(काष्ठा inode *inode, स्थिर अक्ष
 						 "associated with %k", name,
 						 INODE_PKEY(inode));
 				err = -EIO;
-				जाओ out_unlock;
-			पूर्ण
+				goto out_unlock;
+			}
 			hash = le32_to_cpu(rxh->h_hash);
-		पूर्ण
-		स_नकल(buffer + buffer_pos, data + skip, chunk);
+		}
+		memcpy(buffer + buffer_pos, data + skip, chunk);
 		unlock_page(page);
 		reiserfs_put_page(page);
 		file_pos += chunk;
 		buffer_pos += chunk;
 		skip = 0;
-	पूर्ण
-	err = isize - माप(काष्ठा reiserfs_xattr_header);
+	}
+	err = isize - sizeof(struct reiserfs_xattr_header);
 
-	अगर (xattr_hash(buffer, isize - माप(काष्ठा reiserfs_xattr_header)) !=
-	    hash) अणु
+	if (xattr_hash(buffer, isize - sizeof(struct reiserfs_xattr_header)) !=
+	    hash) {
 		reiserfs_warning(inode->i_sb, "jdm-20002",
 				 "Invalid hash for xattr (%s) associated "
 				 "with %k", name, INODE_PKEY(inode));
 		err = -EIO;
-	पूर्ण
+	}
 
 out_unlock:
-	up_पढ़ो(&REISERFS_I(inode)->i_xattr_sem);
+	up_read(&REISERFS_I(inode)->i_xattr_sem);
 	dput(dentry);
 
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * In order to implement dअगरferent sets of xattr operations क्रम each xattr
- * prefix with the generic xattr API, a fileप्रणाली should create a
- * null-terminated array of काष्ठा xattr_handler (one क्रम each prefix) and
- * hang a poपूर्णांकer to it off of the s_xattr field of the superblock.
+ * In order to implement different sets of xattr operations for each xattr
+ * prefix with the generic xattr API, a filesystem should create a
+ * null-terminated array of struct xattr_handler (one for each prefix) and
+ * hang a pointer to it off of the s_xattr field of the superblock.
  *
  * The generic_fooxattr() functions will use this list to dispatch xattr
  * operations to the correct xattr_handler.
  */
-#घोषणा क्रम_each_xattr_handler(handlers, handler)		\
-		क्रम ((handler) = *(handlers)++;			\
-			(handler) != शून्य;			\
+#define for_each_xattr_handler(handlers, handler)		\
+		for ((handler) = *(handlers)++;			\
+			(handler) != NULL;			\
 			(handler) = *(handlers)++)
 
-/* This is the implementation क्रम the xattr plugin infraकाष्ठाure */
-अटल अंतरभूत स्थिर काष्ठा xattr_handler *
-find_xattr_handler_prefix(स्थिर काष्ठा xattr_handler **handlers,
-			   स्थिर अक्षर *name)
-अणु
-	स्थिर काष्ठा xattr_handler *xah;
+/* This is the implementation for the xattr plugin infrastructure */
+static inline const struct xattr_handler *
+find_xattr_handler_prefix(const struct xattr_handler **handlers,
+			   const char *name)
+{
+	const struct xattr_handler *xah;
 
-	अगर (!handlers)
-		वापस शून्य;
+	if (!handlers)
+		return NULL;
 
-	क्रम_each_xattr_handler(handlers, xah) अणु
-		स्थिर अक्षर *prefix = xattr_prefix(xah);
-		अगर (म_भेदन(prefix, name, म_माप(prefix)) == 0)
-			अवरोध;
-	पूर्ण
+	for_each_xattr_handler(handlers, xah) {
+		const char *prefix = xattr_prefix(xah);
+		if (strncmp(prefix, name, strlen(prefix)) == 0)
+			break;
+	}
 
-	वापस xah;
-पूर्ण
+	return xah;
+}
 
-काष्ठा listxattr_buf अणु
-	काष्ठा dir_context ctx;
-	माप_प्रकार size;
-	माप_प्रकार pos;
-	अक्षर *buf;
-	काष्ठा dentry *dentry;
-पूर्ण;
+struct listxattr_buf {
+	struct dir_context ctx;
+	size_t size;
+	size_t pos;
+	char *buf;
+	struct dentry *dentry;
+};
 
-अटल पूर्णांक listxattr_filler(काष्ठा dir_context *ctx, स्थिर अक्षर *name,
-			    पूर्णांक namelen, loff_t offset, u64 ino,
-			    अचिन्हित पूर्णांक d_type)
-अणु
-	काष्ठा listxattr_buf *b =
-		container_of(ctx, काष्ठा listxattr_buf, ctx);
-	माप_प्रकार size;
+static int listxattr_filler(struct dir_context *ctx, const char *name,
+			    int namelen, loff_t offset, u64 ino,
+			    unsigned int d_type)
+{
+	struct listxattr_buf *b =
+		container_of(ctx, struct listxattr_buf, ctx);
+	size_t size;
 
-	अगर (name[0] != '.' ||
-	    (namelen != 1 && (name[1] != '.' || namelen != 2))) अणु
-		स्थिर काष्ठा xattr_handler *handler;
+	if (name[0] != '.' ||
+	    (namelen != 1 && (name[1] != '.' || namelen != 2))) {
+		const struct xattr_handler *handler;
 
 		handler = find_xattr_handler_prefix(b->dentry->d_sb->s_xattr,
 						    name);
-		अगर (!handler /* Unsupported xattr name */ ||
+		if (!handler /* Unsupported xattr name */ ||
 		    (handler->list && !handler->list(b->dentry)))
-			वापस 0;
+			return 0;
 		size = namelen + 1;
-		अगर (b->buf) अणु
-			अगर (b->pos + size > b->size) अणु
-				b->pos = -दुस्फल;
-				वापस -दुस्फल;
-			पूर्ण
-			स_नकल(b->buf + b->pos, name, namelen);
+		if (b->buf) {
+			if (b->pos + size > b->size) {
+				b->pos = -ERANGE;
+				return -ERANGE;
+			}
+			memcpy(b->buf + b->pos, name, namelen);
 			b->buf[b->pos + namelen] = 0;
-		पूर्ण
+		}
 		b->pos += size;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /*
  * Inode operation listxattr()
  *
  * We totally ignore the generic listxattr here because it would be stupid
  * not to. Since the xattrs are organized in a directory, we can just
- * सूची_पढ़ो to find them.
+ * readdir to find them.
  */
-sमाप_प्रकार reiserfs_listxattr(काष्ठा dentry * dentry, अक्षर *buffer, माप_प्रकार size)
-अणु
-	काष्ठा dentry *dir;
-	पूर्णांक err = 0;
-	काष्ठा listxattr_buf buf = अणु
+ssize_t reiserfs_listxattr(struct dentry * dentry, char *buffer, size_t size)
+{
+	struct dentry *dir;
+	int err = 0;
+	struct listxattr_buf buf = {
 		.ctx.actor = listxattr_filler,
 		.dentry = dentry,
 		.buf = buffer,
 		.size = buffer ? size : 0,
-	पूर्ण;
+	};
 
-	अगर (d_really_is_negative(dentry))
-		वापस -EINVAL;
+	if (d_really_is_negative(dentry))
+		return -EINVAL;
 
-	अगर (get_inode_sd_version(d_inode(dentry)) == STAT_DATA_V1)
-		वापस -EOPNOTSUPP;
+	if (get_inode_sd_version(d_inode(dentry)) == STAT_DATA_V1)
+		return -EOPNOTSUPP;
 
-	dir = खोलो_xa_dir(d_inode(dentry), XATTR_REPLACE);
-	अगर (IS_ERR(dir)) अणु
+	dir = open_xa_dir(d_inode(dentry), XATTR_REPLACE);
+	if (IS_ERR(dir)) {
 		err = PTR_ERR(dir);
-		अगर (err == -ENODATA)
-			err = 0;  /* Not an error अगर there aren't any xattrs */
-		जाओ out;
-	पूर्ण
+		if (err == -ENODATA)
+			err = 0;  /* Not an error if there aren't any xattrs */
+		goto out;
+	}
 
 	inode_lock_nested(d_inode(dir), I_MUTEX_XATTR);
-	err = reiserfs_सूची_पढ़ो_inode(d_inode(dir), &buf.ctx);
+	err = reiserfs_readdir_inode(d_inode(dir), &buf.ctx);
 	inode_unlock(d_inode(dir));
 
-	अगर (!err)
+	if (!err)
 		err = buf.pos;
 
 	dput(dir);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक create_privroot(काष्ठा dentry *dentry)
-अणु
-	पूर्णांक err;
-	काष्ठा inode *inode = d_inode(dentry->d_parent);
+static int create_privroot(struct dentry *dentry)
+{
+	int err;
+	struct inode *inode = d_inode(dentry->d_parent);
 
 	WARN_ON_ONCE(!inode_is_locked(inode));
 
-	err = xattr_सूची_गढ़ो(inode, dentry, 0700);
-	अगर (err || d_really_is_negative(dentry)) अणु
+	err = xattr_mkdir(inode, dentry, 0700);
+	if (err || d_really_is_negative(dentry)) {
 		reiserfs_warning(dentry->d_sb, "jdm-20006",
 				 "xattrs/ACLs enabled and couldn't "
 				 "find/create .reiserfs_priv. "
 				 "Failing mount.");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	d_inode(dentry)->i_flags |= S_PRIVATE;
 	d_inode(dentry)->i_opflags &= ~IOP_XATTR;
 	reiserfs_info(dentry->d_sb, "Created %s - reserved for xattr "
 		      "storage.\n", PRIVROOT_NAME);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अन्यथा
-पूर्णांक __init reiserfs_xattr_रेजिस्टर_handlers(व्योम) अणु वापस 0; पूर्ण
-व्योम reiserfs_xattr_unरेजिस्टर_handlers(व्योम) अणुपूर्ण
-अटल पूर्णांक create_privroot(काष्ठा dentry *dentry) अणु वापस 0; पूर्ण
-#पूर्ण_अगर
+#else
+int __init reiserfs_xattr_register_handlers(void) { return 0; }
+void reiserfs_xattr_unregister_handlers(void) {}
+static int create_privroot(struct dentry *dentry) { return 0; }
+#endif
 
 /* Actual operations that are exported to VFS-land */
-स्थिर काष्ठा xattr_handler *reiserfs_xattr_handlers[] = अणु
-#अगर_घोषित CONFIG_REISERFS_FS_XATTR
+const struct xattr_handler *reiserfs_xattr_handlers[] = {
+#ifdef CONFIG_REISERFS_FS_XATTR
 	&reiserfs_xattr_user_handler,
 	&reiserfs_xattr_trusted_handler,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_REISERFS_FS_SECURITY
+#endif
+#ifdef CONFIG_REISERFS_FS_SECURITY
 	&reiserfs_xattr_security_handler,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_REISERFS_FS_POSIX_ACL
+#endif
+#ifdef CONFIG_REISERFS_FS_POSIX_ACL
 	&posix_acl_access_xattr_handler,
-	&posix_acl_शेष_xattr_handler,
-#पूर्ण_अगर
-	शून्य
-पूर्ण;
+	&posix_acl_default_xattr_handler,
+#endif
+	NULL
+};
 
-अटल पूर्णांक xattr_mount_check(काष्ठा super_block *s)
-अणु
+static int xattr_mount_check(struct super_block *s)
+{
 	/*
 	 * We need generation numbers to ensure that the oid mapping is correct
-	 * v3.5 fileप्रणालीs करोn't have them.
+	 * v3.5 filesystems don't have them.
 	 */
-	अगर (old_क्रमmat_only(s)) अणु
-		अगर (reiserfs_xattrs_optional(s)) अणु
+	if (old_format_only(s)) {
+		if (reiserfs_xattrs_optional(s)) {
 			/*
-			 * Old क्रमmat fileप्रणाली, but optional xattrs have
+			 * Old format filesystem, but optional xattrs have
 			 * been enabled. Error out.
 			 */
 			reiserfs_warning(s, "jdm-2005",
 					 "xattrs/ACLs not supported "
 					 "on pre-v3.6 format filesystems. "
 					 "Failing mount.");
-			वापस -EOPNOTSUPP;
-		पूर्ण
-	पूर्ण
+			return -EOPNOTSUPP;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक reiserfs_permission(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
-			पूर्णांक mask)
-अणु
+int reiserfs_permission(struct user_namespace *mnt_userns, struct inode *inode,
+			int mask)
+{
 	/*
-	 * We करोn't करो permission checks on the पूर्णांकernal objects.
+	 * We don't do permission checks on the internal objects.
 	 * Permissions are determined by the "owning" object.
 	 */
-	अगर (IS_PRIVATE(inode))
-		वापस 0;
+	if (IS_PRIVATE(inode))
+		return 0;
 
-	वापस generic_permission(&init_user_ns, inode, mask);
-पूर्ण
+	return generic_permission(&init_user_ns, inode, mask);
+}
 
-अटल पूर्णांक xattr_hide_revalidate(काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags)
-अणु
-	वापस -EPERM;
-पूर्ण
+static int xattr_hide_revalidate(struct dentry *dentry, unsigned int flags)
+{
+	return -EPERM;
+}
 
-अटल स्थिर काष्ठा dentry_operations xattr_lookup_poison_ops = अणु
+static const struct dentry_operations xattr_lookup_poison_ops = {
 	.d_revalidate = xattr_hide_revalidate,
-पूर्ण;
+};
 
-पूर्णांक reiserfs_lookup_privroot(काष्ठा super_block *s)
-अणु
-	काष्ठा dentry *dentry;
-	पूर्णांक err = 0;
+int reiserfs_lookup_privroot(struct super_block *s)
+{
+	struct dentry *dentry;
+	int err = 0;
 
-	/* If we करोn't have the privroot located yet - go find it */
+	/* If we don't have the privroot located yet - go find it */
 	inode_lock(d_inode(s->s_root));
 	dentry = lookup_one_len(PRIVROOT_NAME, s->s_root,
-				म_माप(PRIVROOT_NAME));
-	अगर (!IS_ERR(dentry)) अणु
+				strlen(PRIVROOT_NAME));
+	if (!IS_ERR(dentry)) {
 		REISERFS_SB(s)->priv_root = dentry;
 		d_set_d_op(dentry, &xattr_lookup_poison_ops);
-		अगर (d_really_is_positive(dentry)) अणु
+		if (d_really_is_positive(dentry)) {
 			d_inode(dentry)->i_flags |= S_PRIVATE;
 			d_inode(dentry)->i_opflags &= ~IOP_XATTR;
-		पूर्ण
-	पूर्ण अन्यथा
+		}
+	} else
 		err = PTR_ERR(dentry);
 	inode_unlock(d_inode(s->s_root));
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
  * We need to take a copy of the mount flags since things like
- * SB_RDONLY करोn't get set until *after* we're called.
+ * SB_RDONLY don't get set until *after* we're called.
  * mount_flags != mount_options
  */
-पूर्णांक reiserfs_xattr_init(काष्ठा super_block *s, पूर्णांक mount_flags)
-अणु
-	पूर्णांक err = 0;
-	काष्ठा dentry *privroot = REISERFS_SB(s)->priv_root;
+int reiserfs_xattr_init(struct super_block *s, int mount_flags)
+{
+	int err = 0;
+	struct dentry *privroot = REISERFS_SB(s)->priv_root;
 
 	err = xattr_mount_check(s);
-	अगर (err)
-		जाओ error;
+	if (err)
+		goto error;
 
-	अगर (d_really_is_negative(privroot) && !(mount_flags & SB_RDONLY)) अणु
+	if (d_really_is_negative(privroot) && !(mount_flags & SB_RDONLY)) {
 		inode_lock(d_inode(s->s_root));
 		err = create_privroot(REISERFS_SB(s)->priv_root);
 		inode_unlock(d_inode(s->s_root));
-	पूर्ण
+	}
 
-	अगर (d_really_is_positive(privroot)) अणु
+	if (d_really_is_positive(privroot)) {
 		inode_lock(d_inode(privroot));
-		अगर (!REISERFS_SB(s)->xattr_root) अणु
-			काष्ठा dentry *dentry;
+		if (!REISERFS_SB(s)->xattr_root) {
+			struct dentry *dentry;
 
 			dentry = lookup_one_len(XAROOT_NAME, privroot,
-						म_माप(XAROOT_NAME));
-			अगर (!IS_ERR(dentry))
+						strlen(XAROOT_NAME));
+			if (!IS_ERR(dentry))
 				REISERFS_SB(s)->xattr_root = dentry;
-			अन्यथा
+			else
 				err = PTR_ERR(dentry);
-		पूर्ण
+		}
 		inode_unlock(d_inode(privroot));
-	पूर्ण
+	}
 
 error:
-	अगर (err) अणु
+	if (err) {
 		clear_bit(REISERFS_XATTRS_USER, &REISERFS_SB(s)->s_mount_opt);
 		clear_bit(REISERFS_POSIXACL, &REISERFS_SB(s)->s_mount_opt);
-	पूर्ण
+	}
 
 	/* The super_block SB_POSIXACL must mirror the (no)acl mount option. */
-	अगर (reiserfs_posixacl(s))
+	if (reiserfs_posixacl(s))
 		s->s_flags |= SB_POSIXACL;
-	अन्यथा
+	else
 		s->s_flags &= ~SB_POSIXACL;
 
-	वापस err;
-पूर्ण
+	return err;
+}

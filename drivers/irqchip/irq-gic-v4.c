@@ -1,393 +1,392 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2016,2017 ARM Limited, All Rights Reserved.
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/msi.h>
-#समावेश <linux/sched.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/irqdomain.h>
+#include <linux/msi.h>
+#include <linux/sched.h>
 
-#समावेश <linux/irqchip/arm-gic-v4.h>
+#include <linux/irqchip/arm-gic-v4.h>
 
 /*
  * WARNING: The blurb below assumes that you understand the
- * पूर्णांकricacies of GICv3, GICv4, and how a guest's view of a GICv3 माला_लो
- * translated पूर्णांकo GICv4 commands. So it effectively tarमाला_लो at most
- * two inभागiduals. You know who you are.
+ * intricacies of GICv3, GICv4, and how a guest's view of a GICv3 gets
+ * translated into GICv4 commands. So it effectively targets at most
+ * two individuals. You know who you are.
  *
- * The core GICv4 code is deचिन्हित to *aव्योम* exposing too much of the
- * core GIC code (that would in turn leak पूर्णांकo the hypervisor code),
- * and instead provide a hypervisor agnostic पूर्णांकerface to the HW (of
- * course, the astute पढ़ोer will quickly realize that hypervisor
- * agnostic actually means KVM-specअगरic - what were you thinking?).
+ * The core GICv4 code is designed to *avoid* exposing too much of the
+ * core GIC code (that would in turn leak into the hypervisor code),
+ * and instead provide a hypervisor agnostic interface to the HW (of
+ * course, the astute reader will quickly realize that hypervisor
+ * agnostic actually means KVM-specific - what were you thinking?).
  *
  * In order to achieve a modicum of isolation, we try to hide most of
  * the GICv4 "stuff" behind normal irqchip operations:
  *
- * - Any guest-visible VLPI is backed by a Linux पूर्णांकerrupt (and a
- *   physical LPI which माला_लो unmapped when the guest maps the
+ * - Any guest-visible VLPI is backed by a Linux interrupt (and a
+ *   physical LPI which gets unmapped when the guest maps the
  *   VLPI). This allows the same DevID/EventID pair to be either
  *   mapped to the LPI (host) or the VLPI (guest). Note that this is
  *   exclusive, and you cannot have both.
  *
- * - Enabling/disabling a VLPI is करोne by issuing mask/unmask calls.
+ * - Enabling/disabling a VLPI is done by issuing mask/unmask calls.
  *
  * - Guest INT/CLEAR commands are implemented through
  *   irq_set_irqchip_state().
  *
- * - The *bizarre* stuff (mapping/unmapping an पूर्णांकerrupt to a VLPI, or
- *   issuing an INV after changing a priority) माला_लो shoved पूर्णांकo the
+ * - The *bizarre* stuff (mapping/unmapping an interrupt to a VLPI, or
+ *   issuing an INV after changing a priority) gets shoved into the
  *   irq_set_vcpu_affinity() method. While this is quite horrible
  *   (let's face it, this is the irqchip version of an ioctl), it
  *   confines the crap to a single location. And map/unmap really is
  *   about setting the affinity of a VLPI to a vcpu, so only INV is
  *   majorly out of place. So there.
  *
- * A number of commands are simply not provided by this पूर्णांकerface, as
- * they करो not make direct sense. For example, MAPD is purely local to
- * the भव ITS (because it references a भव device, and the
- * physical ITS is still very much in अक्षरge of the physical
- * device). Same goes क्रम things like MAPC (the physical ITS deals
+ * A number of commands are simply not provided by this interface, as
+ * they do not make direct sense. For example, MAPD is purely local to
+ * the virtual ITS (because it references a virtual device, and the
+ * physical ITS is still very much in charge of the physical
+ * device). Same goes for things like MAPC (the physical ITS deals
  * with the actual vPE affinity, and not the braindead concept of
  * collection). SYNC is not provided either, as each and every command
  * is followed by a VSYNC. This could be relaxed in the future, should
  * this be seen as a bottleneck (yes, this means *never*).
  *
  * But handling VLPIs is only one side of the job of the GICv4
- * code. The other (darker) side is to take care of the करोorbell
- * पूर्णांकerrupts which are delivered when a VLPI targeting a non-running
+ * code. The other (darker) side is to take care of the doorbell
+ * interrupts which are delivered when a VLPI targeting a non-running
  * vcpu is being made pending.
  *
  * The choice made here is that each vcpu (VPE in old northern GICv4
- * dialect) माला_लो a single करोorbell LPI, no matter how many पूर्णांकerrupts
+ * dialect) gets a single doorbell LPI, no matter how many interrupts
  * are targeting it. This has a nice property, which is that the
- * पूर्णांकerrupt becomes a handle क्रम the VPE, and that the hypervisor
- * code can manipulate it through the normal पूर्णांकerrupt API:
+ * interrupt becomes a handle for the VPE, and that the hypervisor
+ * code can manipulate it through the normal interrupt API:
  *
- * - VMs (or rather the VM असलtraction that matters to the GIC)
- *   contain an irq करोमुख्य where each पूर्णांकerrupt maps to a VPE. In
- *   turn, this करोमुख्य sits on top of the normal LPI allocator, and a
+ * - VMs (or rather the VM abstraction that matters to the GIC)
+ *   contain an irq domain where each interrupt maps to a VPE. In
+ *   turn, this domain sits on top of the normal LPI allocator, and a
  *   specially crafted irq_chip implementation.
  *
- * - mask/unmask करो what is expected on the करोorbell पूर्णांकerrupt.
+ * - mask/unmask do what is expected on the doorbell interrupt.
  *
  * - irq_set_affinity is used to move a VPE from one redistributor to
  *   another.
  *
- * - irq_set_vcpu_affinity once again माला_लो hijacked क्रम the purpose of
+ * - irq_set_vcpu_affinity once again gets hijacked for the purpose of
  *   creating a new sub-API, namely scheduling/descheduling a VPE
- *   (which involves programming GICR_VअणुPROP,PENDपूर्णBASER) and
- *   perक्रमming INVALL operations.
+ *   (which involves programming GICR_V{PROP,PEND}BASER) and
+ *   performing INVALL operations.
  */
 
-अटल काष्ठा irq_करोमुख्य *gic_करोमुख्य;
-अटल स्थिर काष्ठा irq_करोमुख्य_ops *vpe_करोमुख्य_ops;
-अटल स्थिर काष्ठा irq_करोमुख्य_ops *sgi_करोमुख्य_ops;
+static struct irq_domain *gic_domain;
+static const struct irq_domain_ops *vpe_domain_ops;
+static const struct irq_domain_ops *sgi_domain_ops;
 
-#अगर_घोषित CONFIG_ARM64
-#समावेश <यंत्र/cpufeature.h>
+#ifdef CONFIG_ARM64
+#include <asm/cpufeature.h>
 
-bool gic_cpuअगर_has_vsgi(व्योम)
-अणु
-	अचिन्हित दीर्घ fld, reg = पढ़ो_sanitised_ftr_reg(SYS_ID_AA64PFR0_EL1);
+bool gic_cpuif_has_vsgi(void)
+{
+	unsigned long fld, reg = read_sanitised_ftr_reg(SYS_ID_AA64PFR0_EL1);
 
-	fld = cpuid_feature_extract_अचिन्हित_field(reg, ID_AA64PFR0_GIC_SHIFT);
+	fld = cpuid_feature_extract_unsigned_field(reg, ID_AA64PFR0_GIC_SHIFT);
 
-	वापस fld >= 0x3;
-पूर्ण
-#अन्यथा
-bool gic_cpuअगर_has_vsgi(व्योम)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर
+	return fld >= 0x3;
+}
+#else
+bool gic_cpuif_has_vsgi(void)
+{
+	return false;
+}
+#endif
 
-अटल bool has_v4_1(व्योम)
-अणु
-	वापस !!sgi_करोमुख्य_ops;
-पूर्ण
+static bool has_v4_1(void)
+{
+	return !!sgi_domain_ops;
+}
 
-अटल bool has_v4_1_sgi(व्योम)
-अणु
-	वापस has_v4_1() && gic_cpuअगर_has_vsgi();
-पूर्ण
+static bool has_v4_1_sgi(void)
+{
+	return has_v4_1() && gic_cpuif_has_vsgi();
+}
 
-अटल पूर्णांक its_alloc_vcpu_sgis(काष्ठा its_vpe *vpe, पूर्णांक idx)
-अणु
-	अक्षर *name;
-	पूर्णांक sgi_base;
+static int its_alloc_vcpu_sgis(struct its_vpe *vpe, int idx)
+{
+	char *name;
+	int sgi_base;
 
-	अगर (!has_v4_1_sgi())
-		वापस 0;
+	if (!has_v4_1_sgi())
+		return 0;
 
-	name = kaप्र_लिखो(GFP_KERNEL, "GICv4-sgi-%d", task_pid_nr(current));
-	अगर (!name)
-		जाओ err;
+	name = kasprintf(GFP_KERNEL, "GICv4-sgi-%d", task_pid_nr(current));
+	if (!name)
+		goto err;
 
-	vpe->fwnode = irq_करोमुख्य_alloc_named_id_fwnode(name, idx);
-	अगर (!vpe->fwnode)
-		जाओ err;
+	vpe->fwnode = irq_domain_alloc_named_id_fwnode(name, idx);
+	if (!vpe->fwnode)
+		goto err;
 
-	kमुक्त(name);
-	name = शून्य;
+	kfree(name);
+	name = NULL;
 
-	vpe->sgi_करोमुख्य = irq_करोमुख्य_create_linear(vpe->fwnode, 16,
-						   sgi_करोमुख्य_ops, vpe);
-	अगर (!vpe->sgi_करोमुख्य)
-		जाओ err;
+	vpe->sgi_domain = irq_domain_create_linear(vpe->fwnode, 16,
+						   sgi_domain_ops, vpe);
+	if (!vpe->sgi_domain)
+		goto err;
 
-	sgi_base = __irq_करोमुख्य_alloc_irqs(vpe->sgi_करोमुख्य, -1, 16,
+	sgi_base = __irq_domain_alloc_irqs(vpe->sgi_domain, -1, 16,
 					       NUMA_NO_NODE, vpe,
-					       false, शून्य);
-	अगर (sgi_base <= 0)
-		जाओ err;
+					       false, NULL);
+	if (sgi_base <= 0)
+		goto err;
 
-	वापस 0;
+	return 0;
 
 err:
-	अगर (vpe->sgi_करोमुख्य)
-		irq_करोमुख्य_हटाओ(vpe->sgi_करोमुख्य);
-	अगर (vpe->fwnode)
-		irq_करोमुख्य_मुक्त_fwnode(vpe->fwnode);
-	kमुक्त(name);
-	वापस -ENOMEM;
-पूर्ण
+	if (vpe->sgi_domain)
+		irq_domain_remove(vpe->sgi_domain);
+	if (vpe->fwnode)
+		irq_domain_free_fwnode(vpe->fwnode);
+	kfree(name);
+	return -ENOMEM;
+}
 
-पूर्णांक its_alloc_vcpu_irqs(काष्ठा its_vm *vm)
-अणु
-	पूर्णांक vpe_base_irq, i;
+int its_alloc_vcpu_irqs(struct its_vm *vm)
+{
+	int vpe_base_irq, i;
 
-	vm->fwnode = irq_करोमुख्य_alloc_named_id_fwnode("GICv4-vpe",
+	vm->fwnode = irq_domain_alloc_named_id_fwnode("GICv4-vpe",
 						      task_pid_nr(current));
-	अगर (!vm->fwnode)
-		जाओ err;
+	if (!vm->fwnode)
+		goto err;
 
-	vm->करोमुख्य = irq_करोमुख्य_create_hierarchy(gic_करोमुख्य, 0, vm->nr_vpes,
-						 vm->fwnode, vpe_करोमुख्य_ops,
+	vm->domain = irq_domain_create_hierarchy(gic_domain, 0, vm->nr_vpes,
+						 vm->fwnode, vpe_domain_ops,
 						 vm);
-	अगर (!vm->करोमुख्य)
-		जाओ err;
+	if (!vm->domain)
+		goto err;
 
-	क्रम (i = 0; i < vm->nr_vpes; i++) अणु
+	for (i = 0; i < vm->nr_vpes; i++) {
 		vm->vpes[i]->its_vm = vm;
 		vm->vpes[i]->idai = true;
-	पूर्ण
+	}
 
-	vpe_base_irq = __irq_करोमुख्य_alloc_irqs(vm->करोमुख्य, -1, vm->nr_vpes,
+	vpe_base_irq = __irq_domain_alloc_irqs(vm->domain, -1, vm->nr_vpes,
 					       NUMA_NO_NODE, vm,
-					       false, शून्य);
-	अगर (vpe_base_irq <= 0)
-		जाओ err;
+					       false, NULL);
+	if (vpe_base_irq <= 0)
+		goto err;
 
-	क्रम (i = 0; i < vm->nr_vpes; i++) अणु
-		पूर्णांक ret;
+	for (i = 0; i < vm->nr_vpes; i++) {
+		int ret;
 		vm->vpes[i]->irq = vpe_base_irq + i;
 		ret = its_alloc_vcpu_sgis(vm->vpes[i], i);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+		if (ret)
+			goto err;
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	अगर (vm->करोमुख्य)
-		irq_करोमुख्य_हटाओ(vm->करोमुख्य);
-	अगर (vm->fwnode)
-		irq_करोमुख्य_मुक्त_fwnode(vm->fwnode);
+	if (vm->domain)
+		irq_domain_remove(vm->domain);
+	if (vm->fwnode)
+		irq_domain_free_fwnode(vm->fwnode);
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल व्योम its_मुक्त_sgi_irqs(काष्ठा its_vm *vm)
-अणु
-	पूर्णांक i;
+static void its_free_sgi_irqs(struct its_vm *vm)
+{
+	int i;
 
-	अगर (!has_v4_1_sgi())
-		वापस;
+	if (!has_v4_1_sgi())
+		return;
 
-	क्रम (i = 0; i < vm->nr_vpes; i++) अणु
-		अचिन्हित पूर्णांक irq = irq_find_mapping(vm->vpes[i]->sgi_करोमुख्य, 0);
+	for (i = 0; i < vm->nr_vpes; i++) {
+		unsigned int irq = irq_find_mapping(vm->vpes[i]->sgi_domain, 0);
 
-		अगर (WARN_ON(!irq))
-			जारी;
+		if (WARN_ON(!irq))
+			continue;
 
-		irq_करोमुख्य_मुक्त_irqs(irq, 16);
-		irq_करोमुख्य_हटाओ(vm->vpes[i]->sgi_करोमुख्य);
-		irq_करोमुख्य_मुक्त_fwnode(vm->vpes[i]->fwnode);
-	पूर्ण
-पूर्ण
+		irq_domain_free_irqs(irq, 16);
+		irq_domain_remove(vm->vpes[i]->sgi_domain);
+		irq_domain_free_fwnode(vm->vpes[i]->fwnode);
+	}
+}
 
-व्योम its_मुक्त_vcpu_irqs(काष्ठा its_vm *vm)
-अणु
-	its_मुक्त_sgi_irqs(vm);
-	irq_करोमुख्य_मुक्त_irqs(vm->vpes[0]->irq, vm->nr_vpes);
-	irq_करोमुख्य_हटाओ(vm->करोमुख्य);
-	irq_करोमुख्य_मुक्त_fwnode(vm->fwnode);
-पूर्ण
+void its_free_vcpu_irqs(struct its_vm *vm)
+{
+	its_free_sgi_irqs(vm);
+	irq_domain_free_irqs(vm->vpes[0]->irq, vm->nr_vpes);
+	irq_domain_remove(vm->domain);
+	irq_domain_free_fwnode(vm->fwnode);
+}
 
-अटल पूर्णांक its_send_vpe_cmd(काष्ठा its_vpe *vpe, काष्ठा its_cmd_info *info)
-अणु
-	वापस irq_set_vcpu_affinity(vpe->irq, info);
-पूर्ण
+static int its_send_vpe_cmd(struct its_vpe *vpe, struct its_cmd_info *info)
+{
+	return irq_set_vcpu_affinity(vpe->irq, info);
+}
 
-पूर्णांक its_make_vpe_non_resident(काष्ठा its_vpe *vpe, bool db)
-अणु
-	काष्ठा irq_desc *desc = irq_to_desc(vpe->irq);
-	काष्ठा its_cmd_info info = अणु पूर्ण;
-	पूर्णांक ret;
+int its_make_vpe_non_resident(struct its_vpe *vpe, bool db)
+{
+	struct irq_desc *desc = irq_to_desc(vpe->irq);
+	struct its_cmd_info info = { };
+	int ret;
 
 	WARN_ON(preemptible());
 
 	info.cmd_type = DESCHEDULE_VPE;
-	अगर (has_v4_1()) अणु
-		/* GICv4.1 can directly deal with करोorbells */
+	if (has_v4_1()) {
+		/* GICv4.1 can directly deal with doorbells */
 		info.req_db = db;
-	पूर्ण अन्यथा अणु
-		/* Unकरो the nested disable_irq() calls... */
-		जबतक (db && irqd_irq_disabled(&desc->irq_data))
+	} else {
+		/* Undo the nested disable_irq() calls... */
+		while (db && irqd_irq_disabled(&desc->irq_data))
 			enable_irq(vpe->irq);
-	पूर्ण
+	}
 
 	ret = its_send_vpe_cmd(vpe, &info);
-	अगर (!ret)
+	if (!ret)
 		vpe->resident = false;
 
-	vpe->पढ़ोy = false;
+	vpe->ready = false;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक its_make_vpe_resident(काष्ठा its_vpe *vpe, bool g0en, bool g1en)
-अणु
-	काष्ठा its_cmd_info info = अणु पूर्ण;
-	पूर्णांक ret;
+int its_make_vpe_resident(struct its_vpe *vpe, bool g0en, bool g1en)
+{
+	struct its_cmd_info info = { };
+	int ret;
 
 	WARN_ON(preemptible());
 
 	info.cmd_type = SCHEDULE_VPE;
-	अगर (has_v4_1()) अणु
+	if (has_v4_1()) {
 		info.g0en = g0en;
 		info.g1en = g1en;
-	पूर्ण अन्यथा अणु
-		/* Disabled the करोorbell, as we're about to enter the guest */
+	} else {
+		/* Disabled the doorbell, as we're about to enter the guest */
 		disable_irq_nosync(vpe->irq);
-	पूर्ण
+	}
 
 	ret = its_send_vpe_cmd(vpe, &info);
-	अगर (!ret)
+	if (!ret)
 		vpe->resident = true;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक its_commit_vpe(काष्ठा its_vpe *vpe)
-अणु
-	काष्ठा its_cmd_info info = अणु
+int its_commit_vpe(struct its_vpe *vpe)
+{
+	struct its_cmd_info info = {
 		.cmd_type = COMMIT_VPE,
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
 	WARN_ON(preemptible());
 
 	ret = its_send_vpe_cmd(vpe, &info);
-	अगर (!ret)
-		vpe->पढ़ोy = true;
+	if (!ret)
+		vpe->ready = true;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-पूर्णांक its_invall_vpe(काष्ठा its_vpe *vpe)
-अणु
-	काष्ठा its_cmd_info info = अणु
+int its_invall_vpe(struct its_vpe *vpe)
+{
+	struct its_cmd_info info = {
 		.cmd_type = INVALL_VPE,
-	पूर्ण;
+	};
 
-	वापस its_send_vpe_cmd(vpe, &info);
-पूर्ण
+	return its_send_vpe_cmd(vpe, &info);
+}
 
-पूर्णांक its_map_vlpi(पूर्णांक irq, काष्ठा its_vlpi_map *map)
-अणु
-	काष्ठा its_cmd_info info = अणु
+int its_map_vlpi(int irq, struct its_vlpi_map *map)
+{
+	struct its_cmd_info info = {
 		.cmd_type = MAP_VLPI,
-		अणु
+		{
 			.map      = map,
-		पूर्ण,
-	पूर्ण;
-	पूर्णांक ret;
+		},
+	};
+	int ret;
 
 	/*
-	 * The host will never see that पूर्णांकerrupt firing again, so it
-	 * is vital that we करोn't करो any lazy masking.
+	 * The host will never see that interrupt firing again, so it
+	 * is vital that we don't do any lazy masking.
 	 */
 	irq_set_status_flags(irq, IRQ_DISABLE_UNLAZY);
 
 	ret = irq_set_vcpu_affinity(irq, &info);
-	अगर (ret)
+	if (ret)
 		irq_clear_status_flags(irq, IRQ_DISABLE_UNLAZY);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक its_get_vlpi(पूर्णांक irq, काष्ठा its_vlpi_map *map)
-अणु
-	काष्ठा its_cmd_info info = अणु
+int its_get_vlpi(int irq, struct its_vlpi_map *map)
+{
+	struct its_cmd_info info = {
 		.cmd_type = GET_VLPI,
-		अणु
+		{
 			.map      = map,
-		पूर्ण,
-	पूर्ण;
+		},
+	};
 
-	वापस irq_set_vcpu_affinity(irq, &info);
-पूर्ण
+	return irq_set_vcpu_affinity(irq, &info);
+}
 
-पूर्णांक its_unmap_vlpi(पूर्णांक irq)
-अणु
+int its_unmap_vlpi(int irq)
+{
 	irq_clear_status_flags(irq, IRQ_DISABLE_UNLAZY);
-	वापस irq_set_vcpu_affinity(irq, शून्य);
-पूर्ण
+	return irq_set_vcpu_affinity(irq, NULL);
+}
 
-पूर्णांक its_prop_update_vlpi(पूर्णांक irq, u8 config, bool inv)
-अणु
-	काष्ठा its_cmd_info info = अणु
+int its_prop_update_vlpi(int irq, u8 config, bool inv)
+{
+	struct its_cmd_info info = {
 		.cmd_type = inv ? PROP_UPDATE_AND_INV_VLPI : PROP_UPDATE_VLPI,
-		अणु
+		{
 			.config   = config,
-		पूर्ण,
-	पूर्ण;
+		},
+	};
 
-	वापस irq_set_vcpu_affinity(irq, &info);
-पूर्ण
+	return irq_set_vcpu_affinity(irq, &info);
+}
 
-पूर्णांक its_prop_update_vsgi(पूर्णांक irq, u8 priority, bool group)
-अणु
-	काष्ठा its_cmd_info info = अणु
+int its_prop_update_vsgi(int irq, u8 priority, bool group)
+{
+	struct its_cmd_info info = {
 		.cmd_type = PROP_UPDATE_VSGI,
-		अणु
+		{
 			.priority	= priority,
 			.group		= group,
-		पूर्ण,
-	पूर्ण;
+		},
+	};
 
-	वापस irq_set_vcpu_affinity(irq, &info);
-पूर्ण
+	return irq_set_vcpu_affinity(irq, &info);
+}
 
-पूर्णांक its_init_v4(काष्ठा irq_करोमुख्य *करोमुख्य,
-		स्थिर काष्ठा irq_करोमुख्य_ops *vpe_ops,
-		स्थिर काष्ठा irq_करोमुख्य_ops *sgi_ops)
-अणु
-	अगर (करोमुख्य) अणु
+int its_init_v4(struct irq_domain *domain,
+		const struct irq_domain_ops *vpe_ops,
+		const struct irq_domain_ops *sgi_ops)
+{
+	if (domain) {
 		pr_info("ITS: Enabling GICv4 support\n");
-		gic_करोमुख्य = करोमुख्य;
-		vpe_करोमुख्य_ops = vpe_ops;
-		sgi_करोमुख्य_ops = sgi_ops;
-		वापस 0;
-	पूर्ण
+		gic_domain = domain;
+		vpe_domain_ops = vpe_ops;
+		sgi_domain_ops = sgi_ops;
+		return 0;
+	}
 
 	pr_err("ITS: No GICv4 VPE domain allocated\n");
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}

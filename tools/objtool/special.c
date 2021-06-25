@@ -1,33 +1,32 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2015 Josh Poimboeuf <jpoimboe@redhat.com>
  */
 
 /*
- * This file पढ़ोs all the special sections which have alternate inकाष्ठाions
- * which can be patched in or redirected to at runसमय.
+ * This file reads all the special sections which have alternate instructions
+ * which can be patched in or redirected to at runtime.
  */
 
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
+#include <stdlib.h>
+#include <string.h>
 
-#समावेश <arch/special.h>
-#समावेश <objtool/builtin.h>
-#समावेश <objtool/special.h>
-#समावेश <objtool/warn.h>
-#समावेश <objtool/endianness.h>
+#include <arch/special.h>
+#include <objtool/builtin.h>
+#include <objtool/special.h>
+#include <objtool/warn.h>
+#include <objtool/endianness.h>
 
-काष्ठा special_entry अणु
-	स्थिर अक्षर *sec;
+struct special_entry {
+	const char *sec;
 	bool group, jump_or_nop;
-	अचिन्हित अक्षर size, orig, new;
-	अचिन्हित अक्षर orig_len, new_len; /* group only */
-	अचिन्हित अक्षर feature; /* ALTERNATIVE macro CPU feature */
-पूर्ण;
+	unsigned char size, orig, new;
+	unsigned char orig_len, new_len; /* group only */
+	unsigned char feature; /* ALTERNATIVE macro CPU feature */
+};
 
-काष्ठा special_entry entries[] = अणु
-	अणु
+struct special_entry entries[] = {
+	{
 		.sec = ".altinstructions",
 		.group = true,
 		.size = ALT_ENTRY_SIZE,
@@ -36,141 +35,141 @@
 		.new = ALT_NEW_OFFSET,
 		.new_len = ALT_NEW_LEN_OFFSET,
 		.feature = ALT_FEATURE_OFFSET,
-	पूर्ण,
-	अणु
+	},
+	{
 		.sec = "__jump_table",
 		.jump_or_nop = true,
 		.size = JUMP_ENTRY_SIZE,
 		.orig = JUMP_ORIG_OFFSET,
 		.new = JUMP_NEW_OFFSET,
-	पूर्ण,
-	अणु
+	},
+	{
 		.sec = "__ex_table",
 		.size = EX_ENTRY_SIZE,
 		.orig = EX_ORIG_OFFSET,
 		.new = EX_NEW_OFFSET,
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 
-व्योम __weak arch_handle_alternative(अचिन्हित लघु feature, काष्ठा special_alt *alt)
-अणु
-पूर्ण
+void __weak arch_handle_alternative(unsigned short feature, struct special_alt *alt)
+{
+}
 
-अटल पूर्णांक get_alt_entry(काष्ठा elf *elf, काष्ठा special_entry *entry,
-			 काष्ठा section *sec, पूर्णांक idx,
-			 काष्ठा special_alt *alt)
-अणु
-	काष्ठा reloc *orig_reloc, *new_reloc;
-	अचिन्हित दीर्घ offset;
+static int get_alt_entry(struct elf *elf, struct special_entry *entry,
+			 struct section *sec, int idx,
+			 struct special_alt *alt)
+{
+	struct reloc *orig_reloc, *new_reloc;
+	unsigned long offset;
 
 	offset = idx * entry->size;
 
 	alt->group = entry->group;
 	alt->jump_or_nop = entry->jump_or_nop;
 
-	अगर (alt->group) अणु
-		alt->orig_len = *(अचिन्हित अक्षर *)(sec->data->d_buf + offset +
+	if (alt->group) {
+		alt->orig_len = *(unsigned char *)(sec->data->d_buf + offset +
 						   entry->orig_len);
-		alt->new_len = *(अचिन्हित अक्षर *)(sec->data->d_buf + offset +
+		alt->new_len = *(unsigned char *)(sec->data->d_buf + offset +
 						  entry->new_len);
-	पूर्ण
+	}
 
-	अगर (entry->feature) अणु
-		अचिन्हित लघु feature;
+	if (entry->feature) {
+		unsigned short feature;
 
-		feature = bswap_अगर_needed(*(अचिन्हित लघु *)(sec->data->d_buf +
+		feature = bswap_if_needed(*(unsigned short *)(sec->data->d_buf +
 							      offset +
 							      entry->feature));
 		arch_handle_alternative(feature, alt);
-	पूर्ण
+	}
 
 	orig_reloc = find_reloc_by_dest(elf, sec, offset + entry->orig);
-	अगर (!orig_reloc) अणु
+	if (!orig_reloc) {
 		WARN_FUNC("can't find orig reloc", sec, offset + entry->orig);
-		वापस -1;
-	पूर्ण
-	अगर (orig_reloc->sym->type != STT_SECTION) अणु
+		return -1;
+	}
+	if (orig_reloc->sym->type != STT_SECTION) {
 		WARN_FUNC("don't know how to handle non-section reloc symbol %s",
 			   sec, offset + entry->orig, orig_reloc->sym->name);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	alt->orig_sec = orig_reloc->sym->sec;
 	alt->orig_off = orig_reloc->addend;
 
-	अगर (!entry->group || alt->new_len) अणु
+	if (!entry->group || alt->new_len) {
 		new_reloc = find_reloc_by_dest(elf, sec, offset + entry->new);
-		अगर (!new_reloc) अणु
+		if (!new_reloc) {
 			WARN_FUNC("can't find new reloc",
 				  sec, offset + entry->new);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
 		/*
-		 * Skip retpoline .altinstr_replacement... we alपढ़ोy reग_लिखो the
-		 * inकाष्ठाions क्रम retpolines anyway, see arch_is_retpoline()
-		 * usage in add_अणुcall,jumpपूर्ण_destinations().
+		 * Skip retpoline .altinstr_replacement... we already rewrite the
+		 * instructions for retpolines anyway, see arch_is_retpoline()
+		 * usage in add_{call,jump}_destinations().
 		 */
-		अगर (arch_is_retpoline(new_reloc->sym))
-			वापस 1;
+		if (arch_is_retpoline(new_reloc->sym))
+			return 1;
 
 		alt->new_sec = new_reloc->sym->sec;
-		alt->new_off = (अचिन्हित पूर्णांक)new_reloc->addend;
+		alt->new_off = (unsigned int)new_reloc->addend;
 
 		/* _ASM_EXTABLE_EX hack */
-		अगर (alt->new_off >= 0x7ffffff0)
+		if (alt->new_off >= 0x7ffffff0)
 			alt->new_off -= 0x7ffffff0;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Read all the special sections and create a list of special_alt काष्ठाs which
- * describe all the alternate inकाष्ठाions which can be patched in or
- * redirected to at runसमय.
+ * Read all the special sections and create a list of special_alt structs which
+ * describe all the alternate instructions which can be patched in or
+ * redirected to at runtime.
  */
-पूर्णांक special_get_alts(काष्ठा elf *elf, काष्ठा list_head *alts)
-अणु
-	काष्ठा special_entry *entry;
-	काष्ठा section *sec;
-	अचिन्हित पूर्णांक nr_entries;
-	काष्ठा special_alt *alt;
-	पूर्णांक idx, ret;
+int special_get_alts(struct elf *elf, struct list_head *alts)
+{
+	struct special_entry *entry;
+	struct section *sec;
+	unsigned int nr_entries;
+	struct special_alt *alt;
+	int idx, ret;
 
 	INIT_LIST_HEAD(alts);
 
-	क्रम (entry = entries; entry->sec; entry++) अणु
+	for (entry = entries; entry->sec; entry++) {
 		sec = find_section_by_name(elf, entry->sec);
-		अगर (!sec)
-			जारी;
+		if (!sec)
+			continue;
 
-		अगर (sec->len % entry->size != 0) अणु
+		if (sec->len % entry->size != 0) {
 			WARN("%s size not a multiple of %d",
 			     sec->name, entry->size);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
 		nr_entries = sec->len / entry->size;
 
-		क्रम (idx = 0; idx < nr_entries; idx++) अणु
-			alt = दो_स्मृति(माप(*alt));
-			अगर (!alt) अणु
+		for (idx = 0; idx < nr_entries; idx++) {
+			alt = malloc(sizeof(*alt));
+			if (!alt) {
 				WARN("malloc failed");
-				वापस -1;
-			पूर्ण
-			स_रखो(alt, 0, माप(*alt));
+				return -1;
+			}
+			memset(alt, 0, sizeof(*alt));
 
 			ret = get_alt_entry(elf, entry, sec, idx, alt);
-			अगर (ret > 0)
-				जारी;
-			अगर (ret < 0)
-				वापस ret;
+			if (ret > 0)
+				continue;
+			if (ret < 0)
+				return ret;
 
 			list_add_tail(&alt->list, alts);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

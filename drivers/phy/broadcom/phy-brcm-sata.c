@@ -1,39 +1,38 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Broadcom SATA3 AHCI Controller PHY Driver
  *
  * Copyright (C) 2016 Broadcom
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/phy/phy.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/phy/phy.h>
+#include <linux/platform_device.h>
 
-#घोषणा SATA_PCB_BANK_OFFSET				0x23c
-#घोषणा SATA_PCB_REG_OFFSET(ofs)			((ofs) * 4)
+#define SATA_PCB_BANK_OFFSET				0x23c
+#define SATA_PCB_REG_OFFSET(ofs)			((ofs) * 4)
 
-#घोषणा MAX_PORTS					2
+#define MAX_PORTS					2
 
 /* Register offset between PHYs in PCB space */
-#घोषणा SATA_PCB_REG_28NM_SPACE_SIZE			0x1000
+#define SATA_PCB_REG_28NM_SPACE_SIZE			0x1000
 
-/* The older SATA PHY रेजिस्टरs duplicated per port रेजिस्टरs within the map,
+/* The older SATA PHY registers duplicated per port registers within the map,
  * rather than having a separate map per port.
  */
-#घोषणा SATA_PCB_REG_40NM_SPACE_SIZE			0x10
+#define SATA_PCB_REG_40NM_SPACE_SIZE			0x10
 
 /* Register offset between PHYs in PHY control space */
-#घोषणा SATA_PHY_CTRL_REG_28NM_SPACE_SIZE		0x8
+#define SATA_PHY_CTRL_REG_28NM_SPACE_SIZE		0x8
 
-क्रमागत brcm_sata_phy_version अणु
+enum brcm_sata_phy_version {
 	BRCM_SATA_PHY_STB_16NM,
 	BRCM_SATA_PHY_STB_28NM,
 	BRCM_SATA_PHY_STB_40NM,
@@ -41,44 +40,44 @@
 	BRCM_SATA_PHY_IPROC_NSP,
 	BRCM_SATA_PHY_IPROC_SR,
 	BRCM_SATA_PHY_DSL_28NM,
-पूर्ण;
+};
 
-क्रमागत brcm_sata_phy_rxaeq_mode अणु
+enum brcm_sata_phy_rxaeq_mode {
 	RXAEQ_MODE_OFF = 0,
 	RXAEQ_MODE_AUTO,
 	RXAEQ_MODE_MANUAL,
-पूर्ण;
+};
 
-अटल क्रमागत brcm_sata_phy_rxaeq_mode rxaeq_to_val(स्थिर अक्षर *m)
-अणु
-	अगर (!म_भेद(m, "auto"))
-		वापस RXAEQ_MODE_AUTO;
-	अन्यथा अगर (!म_भेद(m, "manual"))
-		वापस RXAEQ_MODE_MANUAL;
-	अन्यथा
-		वापस RXAEQ_MODE_OFF;
-पूर्ण
+static enum brcm_sata_phy_rxaeq_mode rxaeq_to_val(const char *m)
+{
+	if (!strcmp(m, "auto"))
+		return RXAEQ_MODE_AUTO;
+	else if (!strcmp(m, "manual"))
+		return RXAEQ_MODE_MANUAL;
+	else
+		return RXAEQ_MODE_OFF;
+}
 
-काष्ठा brcm_sata_port अणु
-	पूर्णांक portnum;
-	काष्ठा phy *phy;
-	काष्ठा brcm_sata_phy *phy_priv;
+struct brcm_sata_port {
+	int portnum;
+	struct phy *phy;
+	struct brcm_sata_phy *phy_priv;
 	bool ssc_en;
-	क्रमागत brcm_sata_phy_rxaeq_mode rxaeq_mode;
+	enum brcm_sata_phy_rxaeq_mode rxaeq_mode;
 	u32 rxaeq_val;
 	u32 tx_amplitude_val;
-पूर्ण;
+};
 
-काष्ठा brcm_sata_phy अणु
-	काष्ठा device *dev;
-	व्योम __iomem *phy_base;
-	व्योम __iomem *ctrl_base;
-	क्रमागत brcm_sata_phy_version version;
+struct brcm_sata_phy {
+	struct device *dev;
+	void __iomem *phy_base;
+	void __iomem *ctrl_base;
+	enum brcm_sata_phy_version version;
 
-	काष्ठा brcm_sata_port phys[MAX_PORTS];
-पूर्ण;
+	struct brcm_sata_port phys[MAX_PORTS];
+};
 
-क्रमागत sata_phy_regs अणु
+enum sata_phy_regs {
 	BLOCK0_REG_BANK				= 0x000,
 	BLOCK0_XGXSSTATUS			= 0x81,
 	BLOCK0_XGXSSTATUS_PLL_LOCK		= BIT(12),
@@ -185,75 +184,75 @@
 	RXPMD_RX_FREQ_MON_CONTROL1		= 0x87,
 	RXPMD_MON_CORRECT_EN			= BIT(8),
 	RXPMD_MON_MARGIN_VAL_MASK		= 0xff,
-पूर्ण;
+};
 
-क्रमागत sata_phy_ctrl_regs अणु
+enum sata_phy_ctrl_regs {
 	PHY_CTRL_1				= 0x0,
 	PHY_CTRL_1_RESET			= BIT(0),
-पूर्ण;
+};
 
-अटल अंतरभूत व्योम __iomem *brcm_sata_ctrl_base(काष्ठा brcm_sata_port *port)
-अणु
-	काष्ठा brcm_sata_phy *priv = port->phy_priv;
+static inline void __iomem *brcm_sata_ctrl_base(struct brcm_sata_port *port)
+{
+	struct brcm_sata_phy *priv = port->phy_priv;
 	u32 size = 0;
 
-	चयन (priv->version) अणु
-	हाल BRCM_SATA_PHY_IPROC_NS2:
+	switch (priv->version) {
+	case BRCM_SATA_PHY_IPROC_NS2:
 		size = SATA_PHY_CTRL_REG_28NM_SPACE_SIZE;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(priv->dev, "invalid phy version\n");
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस priv->ctrl_base + (port->portnum * size);
-पूर्ण
+	return priv->ctrl_base + (port->portnum * size);
+}
 
-अटल व्योम brcm_sata_phy_wr(काष्ठा brcm_sata_port *port, u32 bank,
+static void brcm_sata_phy_wr(struct brcm_sata_port *port, u32 bank,
 			     u32 ofs, u32 msk, u32 value)
-अणु
-	काष्ठा brcm_sata_phy *priv = port->phy_priv;
-	व्योम __iomem *pcb_base = priv->phy_base;
-	u32 पंचांगp;
+{
+	struct brcm_sata_phy *priv = port->phy_priv;
+	void __iomem *pcb_base = priv->phy_base;
+	u32 tmp;
 
-	अगर (priv->version == BRCM_SATA_PHY_STB_40NM)
+	if (priv->version == BRCM_SATA_PHY_STB_40NM)
 		bank += (port->portnum * SATA_PCB_REG_40NM_SPACE_SIZE);
-	अन्यथा
+	else
 		pcb_base += (port->portnum * SATA_PCB_REG_28NM_SPACE_SIZE);
 
-	ग_लिखोl(bank, pcb_base + SATA_PCB_BANK_OFFSET);
-	पंचांगp = पढ़ोl(pcb_base + SATA_PCB_REG_OFFSET(ofs));
-	पंचांगp = (पंचांगp & msk) | value;
-	ग_लिखोl(पंचांगp, pcb_base + SATA_PCB_REG_OFFSET(ofs));
-पूर्ण
+	writel(bank, pcb_base + SATA_PCB_BANK_OFFSET);
+	tmp = readl(pcb_base + SATA_PCB_REG_OFFSET(ofs));
+	tmp = (tmp & msk) | value;
+	writel(tmp, pcb_base + SATA_PCB_REG_OFFSET(ofs));
+}
 
-अटल u32 brcm_sata_phy_rd(काष्ठा brcm_sata_port *port, u32 bank, u32 ofs)
-अणु
-	काष्ठा brcm_sata_phy *priv = port->phy_priv;
-	व्योम __iomem *pcb_base = priv->phy_base;
+static u32 brcm_sata_phy_rd(struct brcm_sata_port *port, u32 bank, u32 ofs)
+{
+	struct brcm_sata_phy *priv = port->phy_priv;
+	void __iomem *pcb_base = priv->phy_base;
 
-	अगर (priv->version == BRCM_SATA_PHY_STB_40NM)
+	if (priv->version == BRCM_SATA_PHY_STB_40NM)
 		bank += (port->portnum * SATA_PCB_REG_40NM_SPACE_SIZE);
-	अन्यथा
+	else
 		pcb_base += (port->portnum * SATA_PCB_REG_28NM_SPACE_SIZE);
 
-	ग_लिखोl(bank, pcb_base + SATA_PCB_BANK_OFFSET);
-	वापस पढ़ोl(pcb_base + SATA_PCB_REG_OFFSET(ofs));
-पूर्ण
+	writel(bank, pcb_base + SATA_PCB_BANK_OFFSET);
+	return readl(pcb_base + SATA_PCB_REG_OFFSET(ofs));
+}
 
-/* These शेषs were अक्षरacterized by H/W group */
-#घोषणा STB_FMIN_VAL_DEFAULT	0x3df
-#घोषणा STB_FMAX_VAL_DEFAULT	0x3df
-#घोषणा STB_FMAX_VAL_SSC	0x83
+/* These defaults were characterized by H/W group */
+#define STB_FMIN_VAL_DEFAULT	0x3df
+#define STB_FMAX_VAL_DEFAULT	0x3df
+#define STB_FMAX_VAL_SSC	0x83
 
-अटल व्योम brcm_stb_sata_ssc_init(काष्ठा brcm_sata_port *port)
-अणु
-	काष्ठा brcm_sata_phy *priv = port->phy_priv;
-	u32 पंचांगp;
+static void brcm_stb_sata_ssc_init(struct brcm_sata_port *port)
+{
+	struct brcm_sata_phy *priv = port->phy_priv;
+	u32 tmp;
 
-	/* override the TX spपढ़ो spectrum setting */
-	पंचांगp = TXPMD_CONTROL1_TX_SSC_EN_FRC_VAL | TXPMD_CONTROL1_TX_SSC_EN_FRC;
-	brcm_sata_phy_wr(port, TXPMD_REG_BANK, TXPMD_CONTROL1, ~पंचांगp, पंचांगp);
+	/* override the TX spread spectrum setting */
+	tmp = TXPMD_CONTROL1_TX_SSC_EN_FRC_VAL | TXPMD_CONTROL1_TX_SSC_EN_FRC;
+	brcm_sata_phy_wr(port, TXPMD_REG_BANK, TXPMD_CONTROL1, ~tmp, tmp);
 
 	/* set fixed min freq */
 	brcm_sata_phy_wr(port, TXPMD_REG_BANK, TXPMD_TX_FREQ_CTRL_CONTROL2,
@@ -261,176 +260,176 @@
 			 STB_FMIN_VAL_DEFAULT);
 
 	/* set fixed max freq depending on SSC config */
-	अगर (port->ssc_en) अणु
+	if (port->ssc_en) {
 		dev_info(priv->dev, "enabling SSC on port%d\n", port->portnum);
-		पंचांगp = STB_FMAX_VAL_SSC;
-	पूर्ण अन्यथा अणु
-		पंचांगp = STB_FMAX_VAL_DEFAULT;
-	पूर्ण
+		tmp = STB_FMAX_VAL_SSC;
+	} else {
+		tmp = STB_FMAX_VAL_DEFAULT;
+	}
 
 	brcm_sata_phy_wr(port, TXPMD_REG_BANK, TXPMD_TX_FREQ_CTRL_CONTROL3,
-			  ~TXPMD_TX_FREQ_CTRL_CONTROL3_FMAX_MASK, पंचांगp);
-पूर्ण
+			  ~TXPMD_TX_FREQ_CTRL_CONTROL3_FMAX_MASK, tmp);
+}
 
-#घोषणा AEQ_FRC_EQ_VAL_SHIFT	2
-#घोषणा AEQ_FRC_EQ_VAL_MASK	0x3f
+#define AEQ_FRC_EQ_VAL_SHIFT	2
+#define AEQ_FRC_EQ_VAL_MASK	0x3f
 
-अटल पूर्णांक brcm_stb_sata_rxaeq_init(काष्ठा brcm_sata_port *port)
-अणु
-	u32 पंचांगp = 0, reg = 0;
+static int brcm_stb_sata_rxaeq_init(struct brcm_sata_port *port)
+{
+	u32 tmp = 0, reg = 0;
 
-	चयन (port->rxaeq_mode) अणु
-	हाल RXAEQ_MODE_OFF:
-		वापस 0;
+	switch (port->rxaeq_mode) {
+	case RXAEQ_MODE_OFF:
+		return 0;
 
-	हाल RXAEQ_MODE_AUTO:
+	case RXAEQ_MODE_AUTO:
 		reg = AEQ_CONTROL1;
-		पंचांगp = AEQ_CONTROL1_ENABLE | AEQ_CONTROL1_FREEZE;
-		अवरोध;
+		tmp = AEQ_CONTROL1_ENABLE | AEQ_CONTROL1_FREEZE;
+		break;
 
-	हाल RXAEQ_MODE_MANUAL:
+	case RXAEQ_MODE_MANUAL:
 		reg = AEQ_FRC_EQ;
-		पंचांगp = AEQ_FRC_EQ_FORCE | AEQ_FRC_EQ_FORCE_VAL;
-		अगर (port->rxaeq_val > AEQ_FRC_EQ_VAL_MASK)
-			वापस -EINVAL;
-		पंचांगp |= port->rxaeq_val << AEQ_FRC_EQ_VAL_SHIFT;
-		अवरोध;
-	पूर्ण
+		tmp = AEQ_FRC_EQ_FORCE | AEQ_FRC_EQ_FORCE_VAL;
+		if (port->rxaeq_val > AEQ_FRC_EQ_VAL_MASK)
+			return -EINVAL;
+		tmp |= port->rxaeq_val << AEQ_FRC_EQ_VAL_SHIFT;
+		break;
+	}
 
-	brcm_sata_phy_wr(port, AEQRX_REG_BANK_0, reg, ~पंचांगp, पंचांगp);
-	brcm_sata_phy_wr(port, AEQRX_REG_BANK_1, reg, ~पंचांगp, पंचांगp);
+	brcm_sata_phy_wr(port, AEQRX_REG_BANK_0, reg, ~tmp, tmp);
+	brcm_sata_phy_wr(port, AEQRX_REG_BANK_1, reg, ~tmp, tmp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक brcm_stb_sata_init(काष्ठा brcm_sata_port *port)
-अणु
+static int brcm_stb_sata_init(struct brcm_sata_port *port)
+{
 	brcm_stb_sata_ssc_init(port);
 
-	वापस brcm_stb_sata_rxaeq_init(port);
-पूर्ण
+	return brcm_stb_sata_rxaeq_init(port);
+}
 
-अटल पूर्णांक brcm_stb_sata_16nm_ssc_init(काष्ठा brcm_sata_port *port)
-अणु
-	u32 पंचांगp, value;
+static int brcm_stb_sata_16nm_ssc_init(struct brcm_sata_port *port)
+{
+	u32 tmp, value;
 
-	/* Reduce CP tail current to 1/16th of its शेष value */
+	/* Reduce CP tail current to 1/16th of its default value */
 	brcm_sata_phy_wr(port, PLL1_REG_BANK, PLL1_ACTRL6, 0, 0x141);
 
 	/* Turn off CP tail current boost */
 	brcm_sata_phy_wr(port, PLL1_REG_BANK, PLL1_ACTRL8, 0, 0xc006);
 
-	/* Set a specअगरic AEQ equalizer value */
-	पंचांगp = AEQ_FRC_EQ_FORCE_VAL | AEQ_FRC_EQ_FORCE;
+	/* Set a specific AEQ equalizer value */
+	tmp = AEQ_FRC_EQ_FORCE_VAL | AEQ_FRC_EQ_FORCE;
 	brcm_sata_phy_wr(port, AEQRX_REG_BANK_0, AEQ_FRC_EQ,
-			 ~(पंचांगp | AEQ_RFZ_FRC_VAL |
+			 ~(tmp | AEQ_RFZ_FRC_VAL |
 			   AEQ_FRC_EQ_VAL_MASK << AEQ_FRC_EQ_VAL_SHIFT),
-			 पंचांगp | 32 << AEQ_FRC_EQ_VAL_SHIFT);
+			 tmp | 32 << AEQ_FRC_EQ_VAL_SHIFT);
 
 	/* Set RX PPM val center frequency */
-	अगर (port->ssc_en)
+	if (port->ssc_en)
 		value = 0x52;
-	अन्यथा
+	else
 		value = 0;
 	brcm_sata_phy_wr(port, RXPMD_REG_BANK, RXPMD_RX_CDR_CONTROL1,
 			 ~RXPMD_RX_PPM_VAL_MASK, value);
 
 	/* Set proportional loop bandwith Gen1/2/3 */
-	पंचांगp = RXPMD_G_CDR_PROP_BW_MASK << RXPMD_G1_CDR_PROP_BW_SHIFT |
+	tmp = RXPMD_G_CDR_PROP_BW_MASK << RXPMD_G1_CDR_PROP_BW_SHIFT |
 	      RXPMD_G_CDR_PROP_BW_MASK << RXPMD_G2_CDR_PROP_BW_SHIFT |
 	      RXPMD_G_CDR_PROP_BW_MASK << RXPMD_G3_CDR_PROB_BW_SHIFT;
-	अगर (port->ssc_en)
+	if (port->ssc_en)
 		value = 2 << RXPMD_G1_CDR_PROP_BW_SHIFT |
 			2 << RXPMD_G2_CDR_PROP_BW_SHIFT |
 			2 << RXPMD_G3_CDR_PROB_BW_SHIFT;
-	अन्यथा
+	else
 		value = 1 << RXPMD_G1_CDR_PROP_BW_SHIFT |
 			1 << RXPMD_G2_CDR_PROP_BW_SHIFT |
 			1 << RXPMD_G3_CDR_PROB_BW_SHIFT;
-	brcm_sata_phy_wr(port, RXPMD_REG_BANK, RXPMD_RX_CDR_CDR_PROP_BW, ~पंचांगp,
+	brcm_sata_phy_wr(port, RXPMD_REG_BANK, RXPMD_RX_CDR_CDR_PROP_BW, ~tmp,
 			 value);
 
-	/* Set CDR पूर्णांकegral loop acquisition bandwidth क्रम Gen1/2/3 */
-	पंचांगp = RXPMD_G_CDR_ACQ_INT_BW_MASK << RXPMD_G1_CDR_ACQ_INT_BW_SHIFT |
+	/* Set CDR integral loop acquisition bandwidth for Gen1/2/3 */
+	tmp = RXPMD_G_CDR_ACQ_INT_BW_MASK << RXPMD_G1_CDR_ACQ_INT_BW_SHIFT |
 	      RXPMD_G_CDR_ACQ_INT_BW_MASK << RXPMD_G2_CDR_ACQ_INT_BW_SHIFT |
 	      RXPMD_G_CDR_ACQ_INT_BW_MASK << RXPMD_G3_CDR_ACQ_INT_BW_SHIFT;
-	अगर (port->ssc_en)
+	if (port->ssc_en)
 		value = 1 << RXPMD_G1_CDR_ACQ_INT_BW_SHIFT |
 			1 << RXPMD_G2_CDR_ACQ_INT_BW_SHIFT |
 			1 << RXPMD_G3_CDR_ACQ_INT_BW_SHIFT;
-	अन्यथा
+	else
 		value = 0;
 	brcm_sata_phy_wr(port, RXPMD_REG_BANK, RXPMD_RX_CDR_CDR_ACQ_INTEG_BW,
-			 ~पंचांगp, value);
+			 ~tmp, value);
 
-	/* Set CDR पूर्णांकegral loop locking bandwidth to 1 क्रम Gen 1/2/3 */
-	पंचांगp = RXPMD_G_CDR_LOCK_INT_BW_MASK << RXPMD_G1_CDR_LOCK_INT_BW_SHIFT |
+	/* Set CDR integral loop locking bandwidth to 1 for Gen 1/2/3 */
+	tmp = RXPMD_G_CDR_LOCK_INT_BW_MASK << RXPMD_G1_CDR_LOCK_INT_BW_SHIFT |
 	      RXPMD_G_CDR_LOCK_INT_BW_MASK << RXPMD_G2_CDR_LOCK_INT_BW_SHIFT |
 	      RXPMD_G_CDR_LOCK_INT_BW_MASK << RXPMD_G3_CDR_LOCK_INT_BW_SHIFT;
-	अगर (port->ssc_en)
+	if (port->ssc_en)
 		value = 1 << RXPMD_G1_CDR_LOCK_INT_BW_SHIFT |
 			1 << RXPMD_G2_CDR_LOCK_INT_BW_SHIFT |
 			1 << RXPMD_G3_CDR_LOCK_INT_BW_SHIFT;
-	अन्यथा
+	else
 		value = 0;
 	brcm_sata_phy_wr(port, RXPMD_REG_BANK, RXPMD_RX_CDR_CDR_LOCK_INTEG_BW,
-			 ~पंचांगp, value);
+			 ~tmp, value);
 
 	/* Set no guard band and clamp CDR */
-	पंचांगp = RXPMD_MON_CORRECT_EN | RXPMD_MON_MARGIN_VAL_MASK;
-	अगर (port->ssc_en)
+	tmp = RXPMD_MON_CORRECT_EN | RXPMD_MON_MARGIN_VAL_MASK;
+	if (port->ssc_en)
 		value = 0x51;
-	अन्यथा
+	else
 		value = 0;
 	brcm_sata_phy_wr(port, RXPMD_REG_BANK, RXPMD_RX_FREQ_MON_CONTROL1,
-			 ~पंचांगp, RXPMD_MON_CORRECT_EN | value);
+			 ~tmp, RXPMD_MON_CORRECT_EN | value);
 
-	पंचांगp = GENMASK(15, 12);
-	चयन (port->tx_amplitude_val) अणु
-	हाल 400:
+	tmp = GENMASK(15, 12);
+	switch (port->tx_amplitude_val) {
+	case 400:
 		value = BIT(12) | BIT(13);
-		अवरोध;
-	हाल 500:
+		break;
+	case 500:
 		value = BIT(13);
-		अवरोध;
-	हाल 600:
+		break;
+	case 600:
 		value = BIT(12);
-		अवरोध;
-	हाल 800:
+		break;
+	case 800:
 		value = 0;
-		अवरोध;
-	शेष:
-		value = पंचांगp;
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		value = tmp;
+		break;
+	}
 
-	अगर (value != पंचांगp)
-		brcm_sata_phy_wr(port, BLOCK1_REG_BANK, BLOCK1_TEST_TX, ~पंचांगp,
+	if (value != tmp)
+		brcm_sata_phy_wr(port, BLOCK1_REG_BANK, BLOCK1_TEST_TX, ~tmp,
 				 value);
 
 	/* Turn on/off SSC */
 	brcm_sata_phy_wr(port, TX_REG_BANK, TX_ACTRL5, ~TX_ACTRL5_SSC_EN,
 			 port->ssc_en ? TX_ACTRL5_SSC_EN : 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक brcm_stb_sata_16nm_init(काष्ठा brcm_sata_port *port)
-अणु
-	वापस brcm_stb_sata_16nm_ssc_init(port);
-पूर्ण
+static int brcm_stb_sata_16nm_init(struct brcm_sata_port *port)
+{
+	return brcm_stb_sata_16nm_ssc_init(port);
+}
 
-/* NS2 SATA PLL1 शेषs were अक्षरacterized by H/W group */
-#घोषणा NS2_PLL1_ACTRL2_MAGIC	0x1df8
-#घोषणा NS2_PLL1_ACTRL3_MAGIC	0x2b00
-#घोषणा NS2_PLL1_ACTRL4_MAGIC	0x8824
+/* NS2 SATA PLL1 defaults were characterized by H/W group */
+#define NS2_PLL1_ACTRL2_MAGIC	0x1df8
+#define NS2_PLL1_ACTRL3_MAGIC	0x2b00
+#define NS2_PLL1_ACTRL4_MAGIC	0x8824
 
-अटल पूर्णांक brcm_ns2_sata_init(काष्ठा brcm_sata_port *port)
-अणु
-	पूर्णांक try;
-	अचिन्हित पूर्णांक val;
-	व्योम __iomem *ctrl_base = brcm_sata_ctrl_base(port);
-	काष्ठा device *dev = port->phy_priv->dev;
+static int brcm_ns2_sata_init(struct brcm_sata_port *port)
+{
+	int try;
+	unsigned int val;
+	void __iomem *ctrl_base = brcm_sata_ctrl_base(port);
+	struct device *dev = port->phy_priv->dev;
 
 	/* Configure OOB control */
 	val = 0x0;
@@ -445,7 +444,7 @@
 	val |= (0x9 << OOB_CTRL2_RESET_IDLE_MIN_SHIFT);
 	brcm_sata_phy_wr(port, OOB_REG_BANK, OOB_CTRL2, 0x0, val);
 
-	/* Configure PHY PLL रेजिस्टर bank 1 */
+	/* Configure PHY PLL register bank 1 */
 	val = NS2_PLL1_ACTRL2_MAGIC;
 	brcm_sata_phy_wr(port, PLL1_REG_BANK, PLL1_ACTRL2, 0x0, val);
 	val = NS2_PLL1_ACTRL3_MAGIC;
@@ -453,52 +452,52 @@
 	val = NS2_PLL1_ACTRL4_MAGIC;
 	brcm_sata_phy_wr(port, PLL1_REG_BANK, PLL1_ACTRL4, 0x0, val);
 
-	/* Configure PHY BLOCK0 रेजिस्टर bank */
+	/* Configure PHY BLOCK0 register bank */
 	/* Set oob_clk_sel to refclk/2 */
 	brcm_sata_phy_wr(port, BLOCK0_REG_BANK, BLOCK0_SPARE,
 			 ~BLOCK0_SPARE_OOB_CLK_SEL_MASK,
 			 BLOCK0_SPARE_OOB_CLK_SEL_REFBY2);
 
-	/* Strobe PHY reset using PHY control रेजिस्टर */
-	ग_लिखोl(PHY_CTRL_1_RESET, ctrl_base + PHY_CTRL_1);
+	/* Strobe PHY reset using PHY control register */
+	writel(PHY_CTRL_1_RESET, ctrl_base + PHY_CTRL_1);
 	mdelay(1);
-	ग_लिखोl(0x0, ctrl_base + PHY_CTRL_1);
+	writel(0x0, ctrl_base + PHY_CTRL_1);
 	mdelay(1);
 
-	/* Wait क्रम PHY PLL lock by polling pll_lock bit */
+	/* Wait for PHY PLL lock by polling pll_lock bit */
 	try = 50;
-	जबतक (try) अणु
+	while (try) {
 		val = brcm_sata_phy_rd(port, BLOCK0_REG_BANK,
 					BLOCK0_XGXSSTATUS);
-		अगर (val & BLOCK0_XGXSSTATUS_PLL_LOCK)
-			अवरोध;
+		if (val & BLOCK0_XGXSSTATUS_PLL_LOCK)
+			break;
 		msleep(20);
 		try--;
-	पूर्ण
-	अगर (!try) अणु
+	}
+	if (!try) {
 		/* PLL did not lock; give up */
 		dev_err(dev, "port%d PLL did not lock\n", port->portnum);
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
 	dev_dbg(dev, "port%d initialized\n", port->portnum);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक brcm_nsp_sata_init(काष्ठा brcm_sata_port *port)
-अणु
-	काष्ठा device *dev = port->phy_priv->dev;
-	अचिन्हित पूर्णांक oob_bank;
-	अचिन्हित पूर्णांक val, try;
+static int brcm_nsp_sata_init(struct brcm_sata_port *port)
+{
+	struct device *dev = port->phy_priv->dev;
+	unsigned int oob_bank;
+	unsigned int val, try;
 
 	/* Configure OOB control */
-	अगर (port->portnum == 0)
+	if (port->portnum == 0)
 		oob_bank = OOB_REG_BANK;
-	अन्यथा अगर (port->portnum == 1)
+	else if (port->portnum == 1)
 		oob_bank = OOB1_REG_BANK;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
 	val = 0x0;
 	val |= (0x0f << OOB_CTRL1_BURST_MAX_SHIFT);
@@ -531,40 +530,40 @@
 	brcm_sata_phy_wr(port, PLL_REG_BANK_0, PLL_REG_BANK_0_PLLCONTROL_0,
 								~val, val);
 
-	/* Wait क्रम pll_seq_करोne bit */
+	/* Wait for pll_seq_done bit */
 	try = 50;
-	जबतक (--try) अणु
+	while (--try) {
 		val = brcm_sata_phy_rd(port, BLOCK0_REG_BANK,
 					BLOCK0_XGXSSTATUS);
-		अगर (val & BLOCK0_XGXSSTATUS_PLL_LOCK)
-			अवरोध;
+		if (val & BLOCK0_XGXSSTATUS_PLL_LOCK)
+			break;
 		msleep(20);
-	पूर्ण
-	अगर (!try) अणु
+	}
+	if (!try) {
 		/* PLL did not lock; give up */
 		dev_err(dev, "port%d PLL did not lock\n", port->portnum);
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
 	dev_dbg(dev, "port%d initialized\n", port->portnum);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* SR PHY PLL0 रेजिस्टरs */
-#घोषणा SR_PLL0_ACTRL6_MAGIC			0xa
+/* SR PHY PLL0 registers */
+#define SR_PLL0_ACTRL6_MAGIC			0xa
 
-/* SR PHY PLL1 रेजिस्टरs */
-#घोषणा SR_PLL1_ACTRL2_MAGIC			0x32
-#घोषणा SR_PLL1_ACTRL3_MAGIC			0x2
-#घोषणा SR_PLL1_ACTRL4_MAGIC			0x3e8
+/* SR PHY PLL1 registers */
+#define SR_PLL1_ACTRL2_MAGIC			0x32
+#define SR_PLL1_ACTRL3_MAGIC			0x2
+#define SR_PLL1_ACTRL4_MAGIC			0x3e8
 
-अटल पूर्णांक brcm_sr_sata_init(काष्ठा brcm_sata_port *port)
-अणु
-	काष्ठा device *dev = port->phy_priv->dev;
-	अचिन्हित पूर्णांक val, try;
+static int brcm_sr_sata_init(struct brcm_sata_port *port)
+{
+	struct device *dev = port->phy_priv->dev;
+	unsigned int val, try;
 
-	/* Configure PHY PLL रेजिस्टर bank 1 */
+	/* Configure PHY PLL register bank 1 */
 	val = SR_PLL1_ACTRL2_MAGIC;
 	brcm_sata_phy_wr(port, PLL1_REG_BANK, PLL1_ACTRL2, 0x0, val);
 	val = SR_PLL1_ACTRL3_MAGIC;
@@ -572,32 +571,32 @@
 	val = SR_PLL1_ACTRL4_MAGIC;
 	brcm_sata_phy_wr(port, PLL1_REG_BANK, PLL1_ACTRL4, 0x0, val);
 
-	/* Configure PHY PLL रेजिस्टर bank 0 */
+	/* Configure PHY PLL register bank 0 */
 	val = SR_PLL0_ACTRL6_MAGIC;
 	brcm_sata_phy_wr(port, PLL_REG_BANK_0, PLL_ACTRL6, 0x0, val);
 
-	/* Wait क्रम PHY PLL lock by polling pll_lock bit */
+	/* Wait for PHY PLL lock by polling pll_lock bit */
 	try = 50;
-	करो अणु
+	do {
 		val = brcm_sata_phy_rd(port, BLOCK0_REG_BANK,
 					BLOCK0_XGXSSTATUS);
-		अगर (val & BLOCK0_XGXSSTATUS_PLL_LOCK)
-			अवरोध;
+		if (val & BLOCK0_XGXSSTATUS_PLL_LOCK)
+			break;
 		msleep(20);
 		try--;
-	पूर्ण जबतक (try);
+	} while (try);
 
-	अगर ((val & BLOCK0_XGXSSTATUS_PLL_LOCK) == 0) अणु
+	if ((val & BLOCK0_XGXSSTATUS_PLL_LOCK) == 0) {
 		/* PLL did not lock; give up */
 		dev_err(dev, "port%d PLL did not lock\n", port->portnum);
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
 	/* Invert Tx polarity */
 	brcm_sata_phy_wr(port, TX_REG_BANK, TX_ACTRL0,
 			 ~TX_ACTRL0_TXPOL_FLIP, TX_ACTRL0_TXPOL_FLIP);
 
-	/* Configure OOB control to handle 100MHz reference घड़ी */
+	/* Configure OOB control to handle 100MHz reference clock */
 	val = ((0xc << OOB_CTRL1_BURST_MAX_SHIFT) |
 		(0x4 << OOB_CTRL1_BURST_MIN_SHIFT) |
 		(0x8 << OOB_CTRL1_WAKE_IDLE_MAX_SHIFT) |
@@ -608,14 +607,14 @@
 		(0x9 << OOB_CTRL2_RESET_IDLE_MIN_SHIFT));
 	brcm_sata_phy_wr(port, OOB_REG_BANK, OOB_CTRL2, 0x0, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक brcm_dsl_sata_init(काष्ठा brcm_sata_port *port)
-अणु
-	काष्ठा device *dev = port->phy_priv->dev;
-	अचिन्हित पूर्णांक try;
-	u32 पंचांगp;
+static int brcm_dsl_sata_init(struct brcm_sata_port *port)
+{
+	struct device *dev = port->phy_priv->dev;
+	unsigned int try;
+	u32 tmp;
 
 	brcm_sata_phy_wr(port, PLL1_REG_BANK, PLL1_ACTRL7, 0, 0x873);
 
@@ -645,214 +644,214 @@
 
 	/* Acquire PLL lock */
 	try = 50;
-	जबतक (try) अणु
-		पंचांगp = brcm_sata_phy_rd(port, BLOCK0_REG_BANK,
+	while (try) {
+		tmp = brcm_sata_phy_rd(port, BLOCK0_REG_BANK,
 				       BLOCK0_XGXSSTATUS);
-		अगर (पंचांगp & BLOCK0_XGXSSTATUS_PLL_LOCK)
-			अवरोध;
+		if (tmp & BLOCK0_XGXSSTATUS_PLL_LOCK)
+			break;
 		msleep(20);
 		try--;
-	पूर्ण
+	}
 
-	अगर (!try) अणु
+	if (!try) {
 		/* PLL did not lock; give up */
 		dev_err(dev, "port%d PLL did not lock\n", port->portnum);
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
 	dev_dbg(dev, "port%d initialized\n", port->portnum);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक brcm_sata_phy_init(काष्ठा phy *phy)
-अणु
-	पूर्णांक rc;
-	काष्ठा brcm_sata_port *port = phy_get_drvdata(phy);
+static int brcm_sata_phy_init(struct phy *phy)
+{
+	int rc;
+	struct brcm_sata_port *port = phy_get_drvdata(phy);
 
-	चयन (port->phy_priv->version) अणु
-	हाल BRCM_SATA_PHY_STB_16NM:
+	switch (port->phy_priv->version) {
+	case BRCM_SATA_PHY_STB_16NM:
 		rc = brcm_stb_sata_16nm_init(port);
-		अवरोध;
-	हाल BRCM_SATA_PHY_STB_28NM:
-	हाल BRCM_SATA_PHY_STB_40NM:
+		break;
+	case BRCM_SATA_PHY_STB_28NM:
+	case BRCM_SATA_PHY_STB_40NM:
 		rc = brcm_stb_sata_init(port);
-		अवरोध;
-	हाल BRCM_SATA_PHY_IPROC_NS2:
+		break;
+	case BRCM_SATA_PHY_IPROC_NS2:
 		rc = brcm_ns2_sata_init(port);
-		अवरोध;
-	हाल BRCM_SATA_PHY_IPROC_NSP:
+		break;
+	case BRCM_SATA_PHY_IPROC_NSP:
 		rc = brcm_nsp_sata_init(port);
-		अवरोध;
-	हाल BRCM_SATA_PHY_IPROC_SR:
+		break;
+	case BRCM_SATA_PHY_IPROC_SR:
 		rc = brcm_sr_sata_init(port);
-		अवरोध;
-	हाल BRCM_SATA_PHY_DSL_28NM:
+		break;
+	case BRCM_SATA_PHY_DSL_28NM:
 		rc = brcm_dsl_sata_init(port);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rc = -ENODEV;
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम brcm_stb_sata_calibrate(काष्ठा brcm_sata_port *port)
-अणु
-	u32 पंचांगp = BIT(8);
+static void brcm_stb_sata_calibrate(struct brcm_sata_port *port)
+{
+	u32 tmp = BIT(8);
 
 	brcm_sata_phy_wr(port, RXPMD_REG_BANK, RXPMD_RX_FREQ_MON_CONTROL1,
-			 ~पंचांगp, पंचांगp);
-पूर्ण
+			 ~tmp, tmp);
+}
 
-अटल पूर्णांक brcm_sata_phy_calibrate(काष्ठा phy *phy)
-अणु
-	काष्ठा brcm_sata_port *port = phy_get_drvdata(phy);
-	पूर्णांक rc = -EOPNOTSUPP;
+static int brcm_sata_phy_calibrate(struct phy *phy)
+{
+	struct brcm_sata_port *port = phy_get_drvdata(phy);
+	int rc = -EOPNOTSUPP;
 
-	चयन (port->phy_priv->version) अणु
-	हाल BRCM_SATA_PHY_STB_28NM:
-	हाल BRCM_SATA_PHY_STB_40NM:
+	switch (port->phy_priv->version) {
+	case BRCM_SATA_PHY_STB_28NM:
+	case BRCM_SATA_PHY_STB_40NM:
 		brcm_stb_sata_calibrate(port);
 		rc = 0;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल स्थिर काष्ठा phy_ops phy_ops = अणु
+static const struct phy_ops phy_ops = {
 	.init		= brcm_sata_phy_init,
 	.calibrate	= brcm_sata_phy_calibrate,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id brcm_sata_phy_of_match[] = अणु
-	अणु .compatible	= "brcm,bcm7216-sata-phy",
-	  .data = (व्योम *)BRCM_SATA_PHY_STB_16NM पूर्ण,
-	अणु .compatible	= "brcm,bcm7445-sata-phy",
-	  .data = (व्योम *)BRCM_SATA_PHY_STB_28NM पूर्ण,
-	अणु .compatible	= "brcm,bcm7425-sata-phy",
-	  .data = (व्योम *)BRCM_SATA_PHY_STB_40NM पूर्ण,
-	अणु .compatible	= "brcm,iproc-ns2-sata-phy",
-	  .data = (व्योम *)BRCM_SATA_PHY_IPROC_NS2 पूर्ण,
-	अणु .compatible = "brcm,iproc-nsp-sata-phy",
-	  .data = (व्योम *)BRCM_SATA_PHY_IPROC_NSP पूर्ण,
-	अणु .compatible	= "brcm,iproc-sr-sata-phy",
-	  .data = (व्योम *)BRCM_SATA_PHY_IPROC_SR पूर्ण,
-	अणु .compatible	= "brcm,bcm63138-sata-phy",
-	  .data = (व्योम *)BRCM_SATA_PHY_DSL_28NM पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id brcm_sata_phy_of_match[] = {
+	{ .compatible	= "brcm,bcm7216-sata-phy",
+	  .data = (void *)BRCM_SATA_PHY_STB_16NM },
+	{ .compatible	= "brcm,bcm7445-sata-phy",
+	  .data = (void *)BRCM_SATA_PHY_STB_28NM },
+	{ .compatible	= "brcm,bcm7425-sata-phy",
+	  .data = (void *)BRCM_SATA_PHY_STB_40NM },
+	{ .compatible	= "brcm,iproc-ns2-sata-phy",
+	  .data = (void *)BRCM_SATA_PHY_IPROC_NS2 },
+	{ .compatible = "brcm,iproc-nsp-sata-phy",
+	  .data = (void *)BRCM_SATA_PHY_IPROC_NSP },
+	{ .compatible	= "brcm,iproc-sr-sata-phy",
+	  .data = (void *)BRCM_SATA_PHY_IPROC_SR },
+	{ .compatible	= "brcm,bcm63138-sata-phy",
+	  .data = (void *)BRCM_SATA_PHY_DSL_28NM },
+	{},
+};
 MODULE_DEVICE_TABLE(of, brcm_sata_phy_of_match);
 
-अटल पूर्णांक brcm_sata_phy_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर अक्षर *rxaeq_mode;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *dn = dev->of_node, *child;
-	स्थिर काष्ठा of_device_id *of_id;
-	काष्ठा brcm_sata_phy *priv;
-	काष्ठा phy_provider *provider;
-	पूर्णांक ret, count = 0;
+static int brcm_sata_phy_probe(struct platform_device *pdev)
+{
+	const char *rxaeq_mode;
+	struct device *dev = &pdev->dev;
+	struct device_node *dn = dev->of_node, *child;
+	const struct of_device_id *of_id;
+	struct brcm_sata_phy *priv;
+	struct phy_provider *provider;
+	int ret, count = 0;
 
-	अगर (of_get_child_count(dn) == 0)
-		वापस -ENODEV;
+	if (of_get_child_count(dn) == 0)
+		return -ENODEV;
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 	dev_set_drvdata(dev, priv);
 	priv->dev = dev;
 
-	priv->phy_base = devm_platक्रमm_ioremap_resource_byname(pdev, "phy");
-	अगर (IS_ERR(priv->phy_base))
-		वापस PTR_ERR(priv->phy_base);
+	priv->phy_base = devm_platform_ioremap_resource_byname(pdev, "phy");
+	if (IS_ERR(priv->phy_base))
+		return PTR_ERR(priv->phy_base);
 
 	of_id = of_match_node(brcm_sata_phy_of_match, dn);
-	अगर (of_id)
-		priv->version = (क्रमागत brcm_sata_phy_version)of_id->data;
-	अन्यथा
+	if (of_id)
+		priv->version = (enum brcm_sata_phy_version)of_id->data;
+	else
 		priv->version = BRCM_SATA_PHY_STB_28NM;
 
-	अगर (priv->version == BRCM_SATA_PHY_IPROC_NS2) अणु
-		priv->ctrl_base = devm_platक्रमm_ioremap_resource_byname(pdev, "phy-ctrl");
-		अगर (IS_ERR(priv->ctrl_base))
-			वापस PTR_ERR(priv->ctrl_base);
-	पूर्ण
+	if (priv->version == BRCM_SATA_PHY_IPROC_NS2) {
+		priv->ctrl_base = devm_platform_ioremap_resource_byname(pdev, "phy-ctrl");
+		if (IS_ERR(priv->ctrl_base))
+			return PTR_ERR(priv->ctrl_base);
+	}
 
-	क्रम_each_available_child_of_node(dn, child) अणु
-		अचिन्हित पूर्णांक id;
-		काष्ठा brcm_sata_port *port;
+	for_each_available_child_of_node(dn, child) {
+		unsigned int id;
+		struct brcm_sata_port *port;
 
-		अगर (of_property_पढ़ो_u32(child, "reg", &id)) अणु
+		if (of_property_read_u32(child, "reg", &id)) {
 			dev_err(dev, "missing reg property in node %pOFn\n",
 					child);
 			ret = -EINVAL;
-			जाओ put_child;
-		पूर्ण
+			goto put_child;
+		}
 
-		अगर (id >= MAX_PORTS) अणु
+		if (id >= MAX_PORTS) {
 			dev_err(dev, "invalid reg: %u\n", id);
 			ret = -EINVAL;
-			जाओ put_child;
-		पूर्ण
-		अगर (priv->phys[id].phy) अणु
+			goto put_child;
+		}
+		if (priv->phys[id].phy) {
 			dev_err(dev, "already registered port %u\n", id);
 			ret = -EINVAL;
-			जाओ put_child;
-		पूर्ण
+			goto put_child;
+		}
 
 		port = &priv->phys[id];
 		port->portnum = id;
 		port->phy_priv = priv;
 		port->phy = devm_phy_create(dev, child, &phy_ops);
 		port->rxaeq_mode = RXAEQ_MODE_OFF;
-		अगर (!of_property_पढ़ो_string(child, "brcm,rxaeq-mode",
+		if (!of_property_read_string(child, "brcm,rxaeq-mode",
 					     &rxaeq_mode))
 			port->rxaeq_mode = rxaeq_to_val(rxaeq_mode);
-		अगर (port->rxaeq_mode == RXAEQ_MODE_MANUAL)
-			of_property_पढ़ो_u32(child, "brcm,rxaeq-value",
+		if (port->rxaeq_mode == RXAEQ_MODE_MANUAL)
+			of_property_read_u32(child, "brcm,rxaeq-value",
 					     &port->rxaeq_val);
 
-		of_property_पढ़ो_u32(child, "brcm,tx-amplitude-millivolt",
+		of_property_read_u32(child, "brcm,tx-amplitude-millivolt",
 				     &port->tx_amplitude_val);
 
-		port->ssc_en = of_property_पढ़ो_bool(child, "brcm,enable-ssc");
-		अगर (IS_ERR(port->phy)) अणु
+		port->ssc_en = of_property_read_bool(child, "brcm,enable-ssc");
+		if (IS_ERR(port->phy)) {
 			dev_err(dev, "failed to create PHY\n");
 			ret = PTR_ERR(port->phy);
-			जाओ put_child;
-		पूर्ण
+			goto put_child;
+		}
 
 		phy_set_drvdata(port->phy, port);
 		count++;
-	पूर्ण
+	}
 
-	provider = devm_of_phy_provider_रेजिस्टर(dev, of_phy_simple_xlate);
-	अगर (IS_ERR(provider)) अणु
+	provider = devm_of_phy_provider_register(dev, of_phy_simple_xlate);
+	if (IS_ERR(provider)) {
 		dev_err(dev, "could not register PHY provider\n");
-		वापस PTR_ERR(provider);
-	पूर्ण
+		return PTR_ERR(provider);
+	}
 
 	dev_info(dev, "registered %d port(s)\n", count);
 
-	वापस 0;
+	return 0;
 put_child:
 	of_node_put(child);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा platक्रमm_driver brcm_sata_phy_driver = अणु
+static struct platform_driver brcm_sata_phy_driver = {
 	.probe	= brcm_sata_phy_probe,
-	.driver	= अणु
+	.driver	= {
 		.of_match_table	= brcm_sata_phy_of_match,
 		.name		= "brcm-sata-phy",
-	पूर्ण
-पूर्ण;
-module_platक्रमm_driver(brcm_sata_phy_driver);
+	}
+};
+module_platform_driver(brcm_sata_phy_driver);
 
 MODULE_DESCRIPTION("Broadcom SATA PHY driver");
 MODULE_LICENSE("GPL");

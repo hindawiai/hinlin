@@ -1,139 +1,138 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVIF_OBJECT_H__
-#घोषणा __NVIF_OBJECT_H__
-#समावेश <nvअगर/os.h>
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVIF_OBJECT_H__
+#define __NVIF_OBJECT_H__
+#include <nvif/os.h>
 
-काष्ठा nvअगर_sclass अणु
+struct nvif_sclass {
 	s32 oclass;
-	पूर्णांक minver;
-	पूर्णांक maxver;
-पूर्ण;
+	int minver;
+	int maxver;
+};
 
-काष्ठा nvअगर_object अणु
-	काष्ठा nvअगर_parent *parent;
-	काष्ठा nvअगर_client *client;
-	स्थिर अक्षर *name;
+struct nvif_object {
+	struct nvif_parent *parent;
+	struct nvif_client *client;
+	const char *name;
 	u32 handle;
 	s32 oclass;
-	व्योम *priv; /*XXX: hack */
-	काष्ठा अणु
-		व्योम __iomem *ptr;
+	void *priv; /*XXX: hack */
+	struct {
+		void __iomem *ptr;
 		u64 size;
-	पूर्ण map;
-पूर्ण;
+	} map;
+};
 
-पूर्णांक  nvअगर_object_ctor(काष्ठा nvअगर_object *, स्थिर अक्षर *name, u32 handle,
-		      s32 oclass, व्योम *, u32, काष्ठा nvअगर_object *);
-व्योम nvअगर_object_dtor(काष्ठा nvअगर_object *);
-पूर्णांक  nvअगर_object_ioctl(काष्ठा nvअगर_object *, व्योम *, u32, व्योम **);
-पूर्णांक  nvअगर_object_sclass_get(काष्ठा nvअगर_object *, काष्ठा nvअगर_sclass **);
-व्योम nvअगर_object_sclass_put(काष्ठा nvअगर_sclass **);
-u32  nvअगर_object_rd(काष्ठा nvअगर_object *, पूर्णांक, u64);
-व्योम nvअगर_object_wr(काष्ठा nvअगर_object *, पूर्णांक, u64, u32);
-पूर्णांक  nvअगर_object_mthd(काष्ठा nvअगर_object *, u32, व्योम *, u32);
-पूर्णांक  nvअगर_object_map_handle(काष्ठा nvअगर_object *, व्योम *, u32,
+int  nvif_object_ctor(struct nvif_object *, const char *name, u32 handle,
+		      s32 oclass, void *, u32, struct nvif_object *);
+void nvif_object_dtor(struct nvif_object *);
+int  nvif_object_ioctl(struct nvif_object *, void *, u32, void **);
+int  nvif_object_sclass_get(struct nvif_object *, struct nvif_sclass **);
+void nvif_object_sclass_put(struct nvif_sclass **);
+u32  nvif_object_rd(struct nvif_object *, int, u64);
+void nvif_object_wr(struct nvif_object *, int, u64, u32);
+int  nvif_object_mthd(struct nvif_object *, u32, void *, u32);
+int  nvif_object_map_handle(struct nvif_object *, void *, u32,
 			    u64 *handle, u64 *length);
-व्योम nvअगर_object_unmap_handle(काष्ठा nvअगर_object *);
-पूर्णांक  nvअगर_object_map(काष्ठा nvअगर_object *, व्योम *, u32);
-व्योम nvअगर_object_unmap(काष्ठा nvअगर_object *);
+void nvif_object_unmap_handle(struct nvif_object *);
+int  nvif_object_map(struct nvif_object *, void *, u32);
+void nvif_object_unmap(struct nvif_object *);
 
-#घोषणा nvअगर_handle(a) (अचिन्हित दीर्घ)(व्योम *)(a)
-#घोषणा nvअगर_object(a) (a)->object
+#define nvif_handle(a) (unsigned long)(void *)(a)
+#define nvif_object(a) (a)->object
 
-#घोषणा nvअगर_rd(a,f,b,c) (अणु                                                    \
-	काष्ठा nvअगर_object *_object = (a);                                     \
+#define nvif_rd(a,f,b,c) ({                                                    \
+	struct nvif_object *_object = (a);                                     \
 	u32 _data;                                                             \
-	अगर (likely(_object->map.ptr))                                          \
+	if (likely(_object->map.ptr))                                          \
 		_data = f((u8 __iomem *)_object->map.ptr + (c));               \
-	अन्यथा                                                                   \
-		_data = nvअगर_object_rd(_object, (b), (c));                     \
+	else                                                                   \
+		_data = nvif_object_rd(_object, (b), (c));                     \
 	_data;                                                                 \
-पूर्ण)
-#घोषणा nvअगर_wr(a,f,b,c,d) (अणु                                                  \
-	काष्ठा nvअगर_object *_object = (a);                                     \
-	अगर (likely(_object->map.ptr))                                          \
+})
+#define nvif_wr(a,f,b,c,d) ({                                                  \
+	struct nvif_object *_object = (a);                                     \
+	if (likely(_object->map.ptr))                                          \
 		f((d), (u8 __iomem *)_object->map.ptr + (c));                  \
-	अन्यथा                                                                   \
-		nvअगर_object_wr(_object, (b), (c), (d));                        \
-पूर्ण)
-#घोषणा nvअगर_rd08(a,b) (अणु ((u8)nvअगर_rd((a), ioपढ़ो8, 1, (b))); पूर्ण)
-#घोषणा nvअगर_rd16(a,b) (अणु ((u16)nvअगर_rd((a), ioपढ़ो16_native, 2, (b))); पूर्ण)
-#घोषणा nvअगर_rd32(a,b) (अणु ((u32)nvअगर_rd((a), ioपढ़ो32_native, 4, (b))); पूर्ण)
-#घोषणा nvअगर_wr08(a,b,c) nvअगर_wr((a), ioग_लिखो8, 1, (b), (u8)(c))
-#घोषणा nvअगर_wr16(a,b,c) nvअगर_wr((a), ioग_लिखो16_native, 2, (b), (u16)(c))
-#घोषणा nvअगर_wr32(a,b,c) nvअगर_wr((a), ioग_लिखो32_native, 4, (b), (u32)(c))
-#घोषणा nvअगर_mask(a,b,c,d) (अणु                                                  \
-	काष्ठा nvअगर_object *__object = (a);                                    \
-	u32 _addr = (b), _data = nvअगर_rd32(__object, _addr);                   \
-	nvअगर_wr32(__object, _addr, (_data & ~(c)) | (d));                      \
+	else                                                                   \
+		nvif_object_wr(_object, (b), (c), (d));                        \
+})
+#define nvif_rd08(a,b) ({ ((u8)nvif_rd((a), ioread8, 1, (b))); })
+#define nvif_rd16(a,b) ({ ((u16)nvif_rd((a), ioread16_native, 2, (b))); })
+#define nvif_rd32(a,b) ({ ((u32)nvif_rd((a), ioread32_native, 4, (b))); })
+#define nvif_wr08(a,b,c) nvif_wr((a), iowrite8, 1, (b), (u8)(c))
+#define nvif_wr16(a,b,c) nvif_wr((a), iowrite16_native, 2, (b), (u16)(c))
+#define nvif_wr32(a,b,c) nvif_wr((a), iowrite32_native, 4, (b), (u32)(c))
+#define nvif_mask(a,b,c,d) ({                                                  \
+	struct nvif_object *__object = (a);                                    \
+	u32 _addr = (b), _data = nvif_rd32(__object, _addr);                   \
+	nvif_wr32(__object, _addr, (_data & ~(c)) | (d));                      \
 	_data;                                                                 \
-पूर्ण)
+})
 
-#घोषणा nvअगर_mthd(a,b,c,d) nvअगर_object_mthd((a), (b), (c), (d))
+#define nvif_mthd(a,b,c,d) nvif_object_mthd((a), (b), (c), (d))
 
-काष्ठा nvअगर_mclass अणु
+struct nvif_mclass {
 	s32 oclass;
-	पूर्णांक version;
-पूर्ण;
+	int version;
+};
 
-#घोषणा nvअगर_mclass(o,m) (अणु                                                    \
-	काष्ठा nvअगर_object *object = (o);                                      \
-	काष्ठा nvअगर_sclass *sclass;                                            \
+#define nvif_mclass(o,m) ({                                                    \
+	struct nvif_object *object = (o);                                      \
+	struct nvif_sclass *sclass;                                            \
 	typeof(m[0]) *mclass = (m);                                            \
-	पूर्णांक ret = -ENODEV;                                                     \
-	पूर्णांक cnt, i, j;                                                         \
+	int ret = -ENODEV;                                                     \
+	int cnt, i, j;                                                         \
                                                                                \
-	cnt = nvअगर_object_sclass_get(object, &sclass);                         \
-	अगर (cnt >= 0) अणु                                                        \
-		क्रम (i = 0; ret < 0 && mclass[i].oclass; i++) अणु                \
-			क्रम (j = 0; j < cnt; j++) अणु                            \
-				अगर (mclass[i].oclass  == sclass[j].oclass &&   \
+	cnt = nvif_object_sclass_get(object, &sclass);                         \
+	if (cnt >= 0) {                                                        \
+		for (i = 0; ret < 0 && mclass[i].oclass; i++) {                \
+			for (j = 0; j < cnt; j++) {                            \
+				if (mclass[i].oclass  == sclass[j].oclass &&   \
 				    mclass[i].version >= sclass[j].minver &&   \
-				    mclass[i].version <= sclass[j].maxver) अणु   \
+				    mclass[i].version <= sclass[j].maxver) {   \
 					ret = i;                               \
-					अवरोध;                                 \
-				पूर्ण                                              \
-			पूर्ण                                                      \
-		पूर्ण                                                              \
-		nvअगर_object_sclass_put(&sclass);                               \
-	पूर्ण                                                                      \
+					break;                                 \
+				}                                              \
+			}                                                      \
+		}                                                              \
+		nvif_object_sclass_put(&sclass);                               \
+	}                                                                      \
 	ret;                                                                   \
-पूर्ण)
+})
 
-#घोषणा nvअगर_sclass(o,m,u) (अणु                                                  \
-	स्थिर typeof(m[0]) *_mclass = (m);                                     \
+#define nvif_sclass(o,m,u) ({                                                  \
+	const typeof(m[0]) *_mclass = (m);                                     \
 	s32 _oclass = (u);                                                     \
-	पूर्णांक _cid;                                                              \
-	अगर (_oclass) अणु                                                         \
-		क्रम (_cid = 0; _mclass[_cid].oclass; _cid++) अणु                 \
-			अगर (_mclass[_cid].oclass == _oclass)                   \
-				अवरोध;                                         \
-		पूर्ण                                                              \
+	int _cid;                                                              \
+	if (_oclass) {                                                         \
+		for (_cid = 0; _mclass[_cid].oclass; _cid++) {                 \
+			if (_mclass[_cid].oclass == _oclass)                   \
+				break;                                         \
+		}                                                              \
 		_cid = _mclass[_cid].oclass ? _cid : -ENOSYS;                  \
-	पूर्ण अन्यथा अणु                                                               \
-		_cid = nvअगर_mclass((o), _mclass);                              \
-	पूर्ण                                                                      \
+	} else {                                                               \
+		_cid = nvif_mclass((o), _mclass);                              \
+	}                                                                      \
 	_cid;                                                                  \
-पूर्ण)
+})
 
-#घोषणा NVIF_RD32_(p,o,dr)   nvअगर_rd32((p), (o) + (dr))
-#घोषणा NVIF_WR32_(p,o,dr,f) nvअगर_wr32((p), (o) + (dr), (f))
-#घोषणा NVIF_RD32(p,A...) DRF_RD(NVIF_RD32_,                  (p), 0, ##A)
-#घोषणा NVIF_RV32(p,A...) DRF_RV(NVIF_RD32_,                  (p), 0, ##A)
-#घोषणा NVIF_TV32(p,A...) DRF_TV(NVIF_RD32_,                  (p), 0, ##A)
-#घोषणा NVIF_TD32(p,A...) DRF_TD(NVIF_RD32_,                  (p), 0, ##A)
-#घोषणा NVIF_WR32(p,A...) DRF_WR(            NVIF_WR32_,      (p), 0, ##A)
-#घोषणा NVIF_WV32(p,A...) DRF_WV(            NVIF_WR32_,      (p), 0, ##A)
-#घोषणा NVIF_WD32(p,A...) DRF_WD(            NVIF_WR32_,      (p), 0, ##A)
-#घोषणा NVIF_MR32(p,A...) DRF_MR(NVIF_RD32_, NVIF_WR32_, u32, (p), 0, ##A)
-#घोषणा NVIF_MV32(p,A...) DRF_MV(NVIF_RD32_, NVIF_WR32_, u32, (p), 0, ##A)
-#घोषणा NVIF_MD32(p,A...) DRF_MD(NVIF_RD32_, NVIF_WR32_, u32, (p), 0, ##A)
+#define NVIF_RD32_(p,o,dr)   nvif_rd32((p), (o) + (dr))
+#define NVIF_WR32_(p,o,dr,f) nvif_wr32((p), (o) + (dr), (f))
+#define NVIF_RD32(p,A...) DRF_RD(NVIF_RD32_,                  (p), 0, ##A)
+#define NVIF_RV32(p,A...) DRF_RV(NVIF_RD32_,                  (p), 0, ##A)
+#define NVIF_TV32(p,A...) DRF_TV(NVIF_RD32_,                  (p), 0, ##A)
+#define NVIF_TD32(p,A...) DRF_TD(NVIF_RD32_,                  (p), 0, ##A)
+#define NVIF_WR32(p,A...) DRF_WR(            NVIF_WR32_,      (p), 0, ##A)
+#define NVIF_WV32(p,A...) DRF_WV(            NVIF_WR32_,      (p), 0, ##A)
+#define NVIF_WD32(p,A...) DRF_WD(            NVIF_WR32_,      (p), 0, ##A)
+#define NVIF_MR32(p,A...) DRF_MR(NVIF_RD32_, NVIF_WR32_, u32, (p), 0, ##A)
+#define NVIF_MV32(p,A...) DRF_MV(NVIF_RD32_, NVIF_WR32_, u32, (p), 0, ##A)
+#define NVIF_MD32(p,A...) DRF_MD(NVIF_RD32_, NVIF_WR32_, u32, (p), 0, ##A)
 
 /*XXX*/
-#समावेश <core/object.h>
-#घोषणा nvxx_object(a) (अणु                                                      \
-	काष्ठा nvअगर_object *_object = (a);                                     \
-	(काष्ठा nvkm_object *)_object->priv;                                   \
-पूर्ण)
-#पूर्ण_अगर
+#include <core/object.h>
+#define nvxx_object(a) ({                                                      \
+	struct nvif_object *_object = (a);                                     \
+	(struct nvkm_object *)_object->priv;                                   \
+})
+#endif

@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * GPIO driver क्रम AMD 8111 south bridges
+ * GPIO driver for AMD 8111 south bridges
  *
  * Copyright (c) 2012 Dmitry Eremin-Solenikov
  *
@@ -9,212 +8,212 @@
  * Copyright 2005 (c) MontaVista Software, Inc.
  * with the majority of the code coming from:
  *
- * Hardware driver क्रम the Intel/AMD/VIA Ranकरोm Number Generators (RNG)
+ * Hardware driver for the Intel/AMD/VIA Random Number Generators (RNG)
  * (c) Copyright 2003 Red Hat Inc <jgarzik@redhat.com>
  *
  * derived from
  *
- * Hardware driver क्रम the AMD 768 Ranकरोm Number Generator (RNG)
+ * Hardware driver for the AMD 768 Random Number Generator (RNG)
  * (c) Copyright 2001 Red Hat Inc
  *
  * derived from
  *
- * Hardware driver क्रम Intel i810 Ranकरोm Number Generator (RNG)
+ * Hardware driver for Intel i810 Random Number Generator (RNG)
  * Copyright 2000,2001 Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2000,2001 Philipp Rumpf <prumpf@mandrakesoft.com>
  */
-#समावेश <linux/ioport.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/spinlock.h>
+#include <linux/ioport.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/gpio/driver.h>
+#include <linux/pci.h>
+#include <linux/spinlock.h>
 
-#घोषणा PMBASE_OFFSET 0xb0
-#घोषणा PMBASE_SIZE   0x30
+#define PMBASE_OFFSET 0xb0
+#define PMBASE_SIZE   0x30
 
-#घोषणा AMD_REG_GPIO(i) (0x10 + (i))
+#define AMD_REG_GPIO(i) (0x10 + (i))
 
-#घोषणा AMD_GPIO_LTCH_STS	0x40 /* Latch status, w1 */
-#घोषणा AMD_GPIO_RTIN		0x20 /* Real Time in, ro */
-#घोषणा AMD_GPIO_DEBOUNCE	0x10 /* Debounce, rw */
-#घोषणा AMD_GPIO_MODE_MASK	0x0c /* Pin Mode Select, rw */
-#घोषणा AMD_GPIO_MODE_IN	0x00
-#घोषणा AMD_GPIO_MODE_OUT	0x04
+#define AMD_GPIO_LTCH_STS	0x40 /* Latch status, w1 */
+#define AMD_GPIO_RTIN		0x20 /* Real Time in, ro */
+#define AMD_GPIO_DEBOUNCE	0x10 /* Debounce, rw */
+#define AMD_GPIO_MODE_MASK	0x0c /* Pin Mode Select, rw */
+#define AMD_GPIO_MODE_IN	0x00
+#define AMD_GPIO_MODE_OUT	0x04
 /* Enable alternative (e.g. clkout, IRQ, etc) function of the pin */
-#घोषणा AMD_GPIO_MODE_ALTFN	0x08 /* Or 0x09 */
-#घोषणा AMD_GPIO_X_MASK		0x03 /* In/Out specअगरic, rw */
-#घोषणा AMD_GPIO_X_IN_ACTIVEHI	0x01 /* Active High */
-#घोषणा AMD_GPIO_X_IN_LATCH	0x02 /* Latched version is selected */
-#घोषणा AMD_GPIO_X_OUT_LOW	0x00
-#घोषणा AMD_GPIO_X_OUT_HI	0x01
-#घोषणा AMD_GPIO_X_OUT_CLK0	0x02
-#घोषणा AMD_GPIO_X_OUT_CLK1	0x03
+#define AMD_GPIO_MODE_ALTFN	0x08 /* Or 0x09 */
+#define AMD_GPIO_X_MASK		0x03 /* In/Out specific, rw */
+#define AMD_GPIO_X_IN_ACTIVEHI	0x01 /* Active High */
+#define AMD_GPIO_X_IN_LATCH	0x02 /* Latched version is selected */
+#define AMD_GPIO_X_OUT_LOW	0x00
+#define AMD_GPIO_X_OUT_HI	0x01
+#define AMD_GPIO_X_OUT_CLK0	0x02
+#define AMD_GPIO_X_OUT_CLK1	0x03
 
 /*
- * Data क्रम PCI driver पूर्णांकerface
+ * Data for PCI driver interface
  *
- * This data only exists क्रम exporting the supported
- * PCI ids via MODULE_DEVICE_TABLE.  We करो not actually
- * रेजिस्टर a pci_driver, because someone अन्यथा might one day
- * want to रेजिस्टर another driver on the same PCI id.
+ * This data only exists for exporting the supported
+ * PCI ids via MODULE_DEVICE_TABLE.  We do not actually
+ * register a pci_driver, because someone else might one day
+ * want to register another driver on the same PCI id.
  */
-अटल स्थिर काष्ठा pci_device_id pci_tbl[] = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_8111_SMBUS), 0 पूर्ण,
-	अणु 0, पूर्ण,	/* terminate list */
-पूर्ण;
+static const struct pci_device_id pci_tbl[] = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_8111_SMBUS), 0 },
+	{ 0, },	/* terminate list */
+};
 MODULE_DEVICE_TABLE(pci, pci_tbl);
 
-काष्ठा amd_gpio अणु
-	काष्ठा gpio_chip	chip;
+struct amd_gpio {
+	struct gpio_chip	chip;
 	u32			pmbase;
-	व्योम __iomem		*pm;
-	काष्ठा pci_dev		*pdev;
-	spinlock_t		lock; /* guards hw रेजिस्टरs and orig table */
+	void __iomem		*pm;
+	struct pci_dev		*pdev;
+	spinlock_t		lock; /* guards hw registers and orig table */
 	u8			orig[32];
-पूर्ण;
+};
 
-अटल पूर्णांक amd_gpio_request(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा amd_gpio *agp = gpiochip_get_data(chip);
+static int amd_gpio_request(struct gpio_chip *chip, unsigned offset)
+{
+	struct amd_gpio *agp = gpiochip_get_data(chip);
 
-	agp->orig[offset] = ioपढ़ो8(agp->pm + AMD_REG_GPIO(offset)) &
+	agp->orig[offset] = ioread8(agp->pm + AMD_REG_GPIO(offset)) &
 		(AMD_GPIO_DEBOUNCE | AMD_GPIO_MODE_MASK | AMD_GPIO_X_MASK);
 
 	dev_dbg(&agp->pdev->dev, "Requested gpio %d, data %x\n", offset, agp->orig[offset]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम amd_gpio_मुक्त(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा amd_gpio *agp = gpiochip_get_data(chip);
+static void amd_gpio_free(struct gpio_chip *chip, unsigned offset)
+{
+	struct amd_gpio *agp = gpiochip_get_data(chip);
 
 	dev_dbg(&agp->pdev->dev, "Freed gpio %d, data %x\n", offset, agp->orig[offset]);
 
-	ioग_लिखो8(agp->orig[offset], agp->pm + AMD_REG_GPIO(offset));
-पूर्ण
+	iowrite8(agp->orig[offset], agp->pm + AMD_REG_GPIO(offset));
+}
 
-अटल व्योम amd_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक value)
-अणु
-	काष्ठा amd_gpio *agp = gpiochip_get_data(chip);
+static void amd_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
+{
+	struct amd_gpio *agp = gpiochip_get_data(chip);
 	u8 temp;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&agp->lock, flags);
-	temp = ioपढ़ो8(agp->pm + AMD_REG_GPIO(offset));
+	temp = ioread8(agp->pm + AMD_REG_GPIO(offset));
 	temp = (temp & AMD_GPIO_DEBOUNCE) | AMD_GPIO_MODE_OUT | (value ? AMD_GPIO_X_OUT_HI : AMD_GPIO_X_OUT_LOW);
-	ioग_लिखो8(temp, agp->pm + AMD_REG_GPIO(offset));
+	iowrite8(temp, agp->pm + AMD_REG_GPIO(offset));
 	spin_unlock_irqrestore(&agp->lock, flags);
 
 	dev_dbg(&agp->pdev->dev, "Setting gpio %d, value %d, reg=%02x\n", offset, !!value, temp);
-पूर्ण
+}
 
-अटल पूर्णांक amd_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा amd_gpio *agp = gpiochip_get_data(chip);
+static int amd_gpio_get(struct gpio_chip *chip, unsigned offset)
+{
+	struct amd_gpio *agp = gpiochip_get_data(chip);
 	u8 temp;
 
-	temp = ioपढ़ो8(agp->pm + AMD_REG_GPIO(offset));
+	temp = ioread8(agp->pm + AMD_REG_GPIO(offset));
 
 	dev_dbg(&agp->pdev->dev, "Getting gpio %d, reg=%02x\n", offset, temp);
 
-	वापस (temp & AMD_GPIO_RTIN) ? 1 : 0;
-पूर्ण
+	return (temp & AMD_GPIO_RTIN) ? 1 : 0;
+}
 
-अटल पूर्णांक amd_gpio_dirout(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक value)
-अणु
-	काष्ठा amd_gpio *agp = gpiochip_get_data(chip);
+static int amd_gpio_dirout(struct gpio_chip *chip, unsigned offset, int value)
+{
+	struct amd_gpio *agp = gpiochip_get_data(chip);
 	u8 temp;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&agp->lock, flags);
-	temp = ioपढ़ो8(agp->pm + AMD_REG_GPIO(offset));
+	temp = ioread8(agp->pm + AMD_REG_GPIO(offset));
 	temp = (temp & AMD_GPIO_DEBOUNCE) | AMD_GPIO_MODE_OUT | (value ? AMD_GPIO_X_OUT_HI : AMD_GPIO_X_OUT_LOW);
-	ioग_लिखो8(temp, agp->pm + AMD_REG_GPIO(offset));
+	iowrite8(temp, agp->pm + AMD_REG_GPIO(offset));
 	spin_unlock_irqrestore(&agp->lock, flags);
 
 	dev_dbg(&agp->pdev->dev, "Dirout gpio %d, value %d, reg=%02x\n", offset, !!value, temp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक amd_gpio_dirin(काष्ठा gpio_chip *chip, अचिन्हित offset)
-अणु
-	काष्ठा amd_gpio *agp = gpiochip_get_data(chip);
+static int amd_gpio_dirin(struct gpio_chip *chip, unsigned offset)
+{
+	struct amd_gpio *agp = gpiochip_get_data(chip);
 	u8 temp;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&agp->lock, flags);
-	temp = ioपढ़ो8(agp->pm + AMD_REG_GPIO(offset));
+	temp = ioread8(agp->pm + AMD_REG_GPIO(offset));
 	temp = (temp & AMD_GPIO_DEBOUNCE) | AMD_GPIO_MODE_IN;
-	ioग_लिखो8(temp, agp->pm + AMD_REG_GPIO(offset));
+	iowrite8(temp, agp->pm + AMD_REG_GPIO(offset));
 	spin_unlock_irqrestore(&agp->lock, flags);
 
 	dev_dbg(&agp->pdev->dev, "Dirin gpio %d, reg=%02x\n", offset, temp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा amd_gpio gp = अणु
-	.chip = अणु
+static struct amd_gpio gp = {
+	.chip = {
 		.label		= "AMD GPIO",
 		.owner		= THIS_MODULE,
 		.base		= -1,
 		.ngpio		= 32,
 		.request	= amd_gpio_request,
-		.मुक्त		= amd_gpio_मुक्त,
+		.free		= amd_gpio_free,
 		.set		= amd_gpio_set,
 		.get		= amd_gpio_get,
 		.direction_output = amd_gpio_dirout,
 		.direction_input = amd_gpio_dirin,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init amd_gpio_init(व्योम)
-अणु
-	पूर्णांक err = -ENODEV;
-	काष्ठा pci_dev *pdev = शून्य;
-	स्थिर काष्ठा pci_device_id *ent;
+static int __init amd_gpio_init(void)
+{
+	int err = -ENODEV;
+	struct pci_dev *pdev = NULL;
+	const struct pci_device_id *ent;
 
-	/* We look क्रम our device - AMD South Bridge
-	 * I करोn't know about a प्रणाली with two such bridges,
+	/* We look for our device - AMD South Bridge
+	 * I don't know about a system with two such bridges,
 	 * so we can assume that there is max. one device.
 	 *
 	 * We can't use plain pci_driver mechanism,
 	 * as the device is really a multiple function device,
-	 * मुख्य driver that binds to the pci_device is an smbus
+	 * main driver that binds to the pci_device is an smbus
 	 * driver and have to find & bind to the device this way.
 	 */
-	क्रम_each_pci_dev(pdev) अणु
+	for_each_pci_dev(pdev) {
 		ent = pci_match_id(pci_tbl, pdev);
-		अगर (ent)
-			जाओ found;
-	पूर्ण
+		if (ent)
+			goto found;
+	}
 	/* Device not found. */
-	जाओ out;
+	goto out;
 
 found:
-	err = pci_पढ़ो_config_dword(pdev, 0x58, &gp.pmbase);
-	अगर (err)
-		जाओ out;
+	err = pci_read_config_dword(pdev, 0x58, &gp.pmbase);
+	if (err)
+		goto out;
 	err = -EIO;
 	gp.pmbase &= 0x0000FF00;
-	अगर (gp.pmbase == 0)
-		जाओ out;
-	अगर (!devm_request_region(&pdev->dev, gp.pmbase + PMBASE_OFFSET,
-		PMBASE_SIZE, "AMD GPIO")) अणु
+	if (gp.pmbase == 0)
+		goto out;
+	if (!devm_request_region(&pdev->dev, gp.pmbase + PMBASE_OFFSET,
+		PMBASE_SIZE, "AMD GPIO")) {
 		dev_err(&pdev->dev, "AMD GPIO region 0x%x already in use!\n",
 			gp.pmbase + PMBASE_OFFSET);
 		err = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	gp.pm = ioport_map(gp.pmbase + PMBASE_OFFSET, PMBASE_SIZE);
-	अगर (!gp.pm) अणु
+	if (!gp.pm) {
 		dev_err(&pdev->dev, "Couldn't map io port into io memory\n");
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	gp.pdev = pdev;
 	gp.chip.parent = &pdev->dev;
 
@@ -222,23 +221,23 @@ found:
 
 	dev_info(&pdev->dev, "AMD-8111 GPIO detected\n");
 	err = gpiochip_add_data(&gp.chip, &gp);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "GPIO registering failed (%d)\n", err);
 		ioport_unmap(gp.pm);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __निकास amd_gpio_निकास(व्योम)
-अणु
-	gpiochip_हटाओ(&gp.chip);
+static void __exit amd_gpio_exit(void)
+{
+	gpiochip_remove(&gp.chip);
 	ioport_unmap(gp.pm);
-पूर्ण
+}
 
 module_init(amd_gpio_init);
-module_निकास(amd_gpio_निकास);
+module_exit(amd_gpio_exit);
 
 MODULE_AUTHOR("The Linux Kernel team");
 MODULE_DESCRIPTION("GPIO driver for AMD chipsets");

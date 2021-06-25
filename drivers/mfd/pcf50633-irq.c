@@ -1,57 +1,56 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* NXP PCF50633 Power Management Unit (PMU) driver
  *
  * (C) 2006-2008 by Openmoko, Inc.
- * Author: Harald Welte <laक्रमge@खोलोmoko.org>
- * 	   Balaji Rao <balajirrao@खोलोmoko.org>
+ * Author: Harald Welte <laforge@openmoko.org>
+ * 	   Balaji Rao <balajirrao@openmoko.org>
  * All rights reserved.
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/export.h>
-#समावेश <linux/slab.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/mutex.h>
+#include <linux/export.h>
+#include <linux/slab.h>
 
-#समावेश <linux/mfd/pcf50633/core.h>
-#समावेश <linux/mfd/pcf50633/mbc.h>
+#include <linux/mfd/pcf50633/core.h>
+#include <linux/mfd/pcf50633/mbc.h>
 
-पूर्णांक pcf50633_रेजिस्टर_irq(काष्ठा pcf50633 *pcf, पूर्णांक irq,
-			व्योम (*handler) (पूर्णांक, व्योम *), व्योम *data)
-अणु
-	अगर (irq < 0 || irq >= PCF50633_NUM_IRQ || !handler)
-		वापस -EINVAL;
+int pcf50633_register_irq(struct pcf50633 *pcf, int irq,
+			void (*handler) (int, void *), void *data)
+{
+	if (irq < 0 || irq >= PCF50633_NUM_IRQ || !handler)
+		return -EINVAL;
 
-	अगर (WARN_ON(pcf->irq_handler[irq].handler))
-		वापस -EBUSY;
+	if (WARN_ON(pcf->irq_handler[irq].handler))
+		return -EBUSY;
 
 	mutex_lock(&pcf->lock);
 	pcf->irq_handler[irq].handler = handler;
 	pcf->irq_handler[irq].data = data;
 	mutex_unlock(&pcf->lock);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(pcf50633_रेजिस्टर_irq);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(pcf50633_register_irq);
 
-पूर्णांक pcf50633_मुक्त_irq(काष्ठा pcf50633 *pcf, पूर्णांक irq)
-अणु
-	अगर (irq < 0 || irq >= PCF50633_NUM_IRQ)
-		वापस -EINVAL;
+int pcf50633_free_irq(struct pcf50633 *pcf, int irq)
+{
+	if (irq < 0 || irq >= PCF50633_NUM_IRQ)
+		return -EINVAL;
 
 	mutex_lock(&pcf->lock);
-	pcf->irq_handler[irq].handler = शून्य;
+	pcf->irq_handler[irq].handler = NULL;
 	mutex_unlock(&pcf->lock);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(pcf50633_मुक्त_irq);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(pcf50633_free_irq);
 
-अटल पूर्णांक __pcf50633_irq_mask_set(काष्ठा pcf50633 *pcf, पूर्णांक irq, u8 mask)
-अणु
+static int __pcf50633_irq_mask_set(struct pcf50633 *pcf, int irq, u8 mask)
+{
 	u8 reg, bit;
-	पूर्णांक idx;
+	int idx;
 
 	idx = irq >> 3;
 	reg = PCF50633_REG_INT1M + idx;
@@ -61,108 +60,108 @@ EXPORT_SYMBOL_GPL(pcf50633_मुक्त_irq);
 
 	mutex_lock(&pcf->lock);
 
-	अगर (mask)
+	if (mask)
 		pcf->mask_regs[idx] |= bit;
-	अन्यथा
+	else
 		pcf->mask_regs[idx] &= ~bit;
 
 	mutex_unlock(&pcf->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक pcf50633_irq_mask(काष्ठा pcf50633 *pcf, पूर्णांक irq)
-अणु
+int pcf50633_irq_mask(struct pcf50633 *pcf, int irq)
+{
 	dev_dbg(pcf->dev, "Masking IRQ %d\n", irq);
 
-	वापस __pcf50633_irq_mask_set(pcf, irq, 1);
-पूर्ण
+	return __pcf50633_irq_mask_set(pcf, irq, 1);
+}
 EXPORT_SYMBOL_GPL(pcf50633_irq_mask);
 
-पूर्णांक pcf50633_irq_unmask(काष्ठा pcf50633 *pcf, पूर्णांक irq)
-अणु
+int pcf50633_irq_unmask(struct pcf50633 *pcf, int irq)
+{
 	dev_dbg(pcf->dev, "Unmasking IRQ %d\n", irq);
 
-	वापस __pcf50633_irq_mask_set(pcf, irq, 0);
-पूर्ण
+	return __pcf50633_irq_mask_set(pcf, irq, 0);
+}
 EXPORT_SYMBOL_GPL(pcf50633_irq_unmask);
 
-पूर्णांक pcf50633_irq_mask_get(काष्ठा pcf50633 *pcf, पूर्णांक irq)
-अणु
+int pcf50633_irq_mask_get(struct pcf50633 *pcf, int irq)
+{
 	u8 reg, bits;
 
 	reg =  irq >> 3;
 	bits = 1 << (irq & 0x07);
 
-	वापस pcf->mask_regs[reg] & bits;
-पूर्ण
+	return pcf->mask_regs[reg] & bits;
+}
 EXPORT_SYMBOL_GPL(pcf50633_irq_mask_get);
 
-अटल व्योम pcf50633_irq_call_handler(काष्ठा pcf50633 *pcf, पूर्णांक irq)
-अणु
-	अगर (pcf->irq_handler[irq].handler)
+static void pcf50633_irq_call_handler(struct pcf50633 *pcf, int irq)
+{
+	if (pcf->irq_handler[irq].handler)
 		pcf->irq_handler[irq].handler(irq, pcf->irq_handler[irq].data);
-पूर्ण
+}
 
-/* Maximum amount of समय ONKEY is held beक्रमe emergency action is taken */
-#घोषणा PCF50633_ONKEY1S_TIMEOUT 8
+/* Maximum amount of time ONKEY is held before emergency action is taken */
+#define PCF50633_ONKEY1S_TIMEOUT 8
 
-अटल irqवापस_t pcf50633_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा pcf50633 *pcf = data;
-	पूर्णांक ret, i, j;
-	u8 pcf_पूर्णांक[5], chgstat;
+static irqreturn_t pcf50633_irq(int irq, void *data)
+{
+	struct pcf50633 *pcf = data;
+	int ret, i, j;
+	u8 pcf_int[5], chgstat;
 
 	/* Read the 5 INT regs in one transaction */
-	ret = pcf50633_पढ़ो_block(pcf, PCF50633_REG_INT1,
-						ARRAY_SIZE(pcf_पूर्णांक), pcf_पूर्णांक);
-	अगर (ret != ARRAY_SIZE(pcf_पूर्णांक)) अणु
+	ret = pcf50633_read_block(pcf, PCF50633_REG_INT1,
+						ARRAY_SIZE(pcf_int), pcf_int);
+	if (ret != ARRAY_SIZE(pcf_int)) {
 		dev_err(pcf->dev, "Error reading INT registers\n");
 
 		/*
-		 * If this करोesn't ACK the interrupt to the chip, we'll be
+		 * If this doesn't ACK the interrupt to the chip, we'll be
 		 * called once again as we're level triggered.
 		 */
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* defeat 8s death from lowsys on A5 */
-	pcf50633_reg_ग_लिखो(pcf, PCF50633_REG_OOCSHDWN,  0x04);
+	pcf50633_reg_write(pcf, PCF50633_REG_OOCSHDWN,  0x04);
 
-	/* We immediately पढ़ो the usb and adapter status. We thus make sure
+	/* We immediately read the usb and adapter status. We thus make sure
 	 * only of USBINS/USBREM IRQ handlers are called */
-	अगर (pcf_पूर्णांक[0] & (PCF50633_INT1_USBINS | PCF50633_INT1_USBREM)) अणु
-		chgstat = pcf50633_reg_पढ़ो(pcf, PCF50633_REG_MBCS2);
-		अगर (chgstat & (0x3 << 4))
-			pcf_पूर्णांक[0] &= ~PCF50633_INT1_USBREM;
-		अन्यथा
-			pcf_पूर्णांक[0] &= ~PCF50633_INT1_USBINS;
-	पूर्ण
+	if (pcf_int[0] & (PCF50633_INT1_USBINS | PCF50633_INT1_USBREM)) {
+		chgstat = pcf50633_reg_read(pcf, PCF50633_REG_MBCS2);
+		if (chgstat & (0x3 << 4))
+			pcf_int[0] &= ~PCF50633_INT1_USBREM;
+		else
+			pcf_int[0] &= ~PCF50633_INT1_USBINS;
+	}
 
 	/* Make sure only one of ADPINS or ADPREM is set */
-	अगर (pcf_पूर्णांक[0] & (PCF50633_INT1_ADPINS | PCF50633_INT1_ADPREM)) अणु
-		chgstat = pcf50633_reg_पढ़ो(pcf, PCF50633_REG_MBCS2);
-		अगर (chgstat & (0x3 << 4))
-			pcf_पूर्णांक[0] &= ~PCF50633_INT1_ADPREM;
-		अन्यथा
-			pcf_पूर्णांक[0] &= ~PCF50633_INT1_ADPINS;
-	पूर्ण
+	if (pcf_int[0] & (PCF50633_INT1_ADPINS | PCF50633_INT1_ADPREM)) {
+		chgstat = pcf50633_reg_read(pcf, PCF50633_REG_MBCS2);
+		if (chgstat & (0x3 << 4))
+			pcf_int[0] &= ~PCF50633_INT1_ADPREM;
+		else
+			pcf_int[0] &= ~PCF50633_INT1_ADPINS;
+	}
 
 	dev_dbg(pcf->dev, "INT1=0x%02x INT2=0x%02x INT3=0x%02x "
-			"INT4=0x%02x INT5=0x%02x\n", pcf_पूर्णांक[0],
-			pcf_पूर्णांक[1], pcf_पूर्णांक[2], pcf_पूर्णांक[3], pcf_पूर्णांक[4]);
+			"INT4=0x%02x INT5=0x%02x\n", pcf_int[0],
+			pcf_int[1], pcf_int[2], pcf_int[3], pcf_int[4]);
 
-	/* Some revisions of the chip करोn't have a 8s standby mode on
-	 * ONKEY1S press. We try to manually करो it in such हालs. */
-	अगर ((pcf_पूर्णांक[0] & PCF50633_INT1_SECOND) && pcf->onkey1s_held) अणु
+	/* Some revisions of the chip don't have a 8s standby mode on
+	 * ONKEY1S press. We try to manually do it in such cases. */
+	if ((pcf_int[0] & PCF50633_INT1_SECOND) && pcf->onkey1s_held) {
 		dev_info(pcf->dev, "ONKEY1S held for %d secs\n",
 							pcf->onkey1s_held);
-		अगर (pcf->onkey1s_held++ == PCF50633_ONKEY1S_TIMEOUT)
-			अगर (pcf->pdata->क्रमce_shutकरोwn)
-				pcf->pdata->क्रमce_shutकरोwn(pcf);
-	पूर्ण
+		if (pcf->onkey1s_held++ == PCF50633_ONKEY1S_TIMEOUT)
+			if (pcf->pdata->force_shutdown)
+				pcf->pdata->force_shutdown(pcf);
+	}
 
-	अगर (pcf_पूर्णांक[2] & PCF50633_INT3_ONKEY1S) अणु
+	if (pcf_int[2] & PCF50633_INT3_ONKEY1S) {
 		dev_info(pcf->dev, "ONKEY1S held\n");
 		pcf->onkey1s_held = 1 ;
 
@@ -173,138 +172,138 @@ EXPORT_SYMBOL_GPL(pcf50633_irq_mask_get);
 		/* Unmask IRQ_ONKEYR */
 		pcf50633_reg_clear_bits(pcf, PCF50633_REG_INT2M,
 						PCF50633_INT2_ONKEYR);
-	पूर्ण
+	}
 
-	अगर ((pcf_पूर्णांक[1] & PCF50633_INT2_ONKEYR) && pcf->onkey1s_held) अणु
+	if ((pcf_int[1] & PCF50633_INT2_ONKEYR) && pcf->onkey1s_held) {
 		pcf->onkey1s_held = 0;
 
-		/* Mask SECOND and ONKEYR पूर्णांकerrupts */
-		अगर (pcf->mask_regs[0] & PCF50633_INT1_SECOND)
+		/* Mask SECOND and ONKEYR interrupts */
+		if (pcf->mask_regs[0] & PCF50633_INT1_SECOND)
 			pcf50633_reg_set_bit_mask(pcf,
 					PCF50633_REG_INT1M,
 					PCF50633_INT1_SECOND,
 					PCF50633_INT1_SECOND);
 
-		अगर (pcf->mask_regs[1] & PCF50633_INT2_ONKEYR)
+		if (pcf->mask_regs[1] & PCF50633_INT2_ONKEYR)
 			pcf50633_reg_set_bit_mask(pcf,
 					PCF50633_REG_INT2M,
 					PCF50633_INT2_ONKEYR,
 					PCF50633_INT2_ONKEYR);
-	पूर्ण
+	}
 
 	/* Have we just resumed ? */
-	अगर (pcf->is_suspended) अणु
+	if (pcf->is_suspended) {
 		pcf->is_suspended = 0;
 
 		/* Set the resume reason filtering out non resumers */
-		क्रम (i = 0; i < ARRAY_SIZE(pcf_पूर्णांक); i++)
-			pcf->resume_reason[i] = pcf_पूर्णांक[i] &
+		for (i = 0; i < ARRAY_SIZE(pcf_int); i++)
+			pcf->resume_reason[i] = pcf_int[i] &
 						pcf->pdata->resumers[i];
 
-		/* Make sure we करोn't pass on any ONKEY events to
+		/* Make sure we don't pass on any ONKEY events to
 		 * userspace now */
-		pcf_पूर्णांक[1] &= ~(PCF50633_INT2_ONKEYR | PCF50633_INT2_ONKEYF);
-	पूर्ण
+		pcf_int[1] &= ~(PCF50633_INT2_ONKEYR | PCF50633_INT2_ONKEYF);
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(pcf_पूर्णांक); i++) अणु
-		/* Unset masked पूर्णांकerrupts */
-		pcf_पूर्णांक[i] &= ~pcf->mask_regs[i];
+	for (i = 0; i < ARRAY_SIZE(pcf_int); i++) {
+		/* Unset masked interrupts */
+		pcf_int[i] &= ~pcf->mask_regs[i];
 
-		क्रम (j = 0; j < 8 ; j++)
-			अगर (pcf_पूर्णांक[i] & (1 << j))
+		for (j = 0; j < 8 ; j++)
+			if (pcf_int[i] & (1 << j))
 				pcf50633_irq_call_handler(pcf, (i * 8) + j);
-	पूर्ण
+	}
 
 out:
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 
-पूर्णांक pcf50633_irq_suspend(काष्ठा pcf50633 *pcf)
-अणु
-	पूर्णांक ret;
-	पूर्णांक i;
+int pcf50633_irq_suspend(struct pcf50633 *pcf)
+{
+	int ret;
+	int i;
 	u8 res[5];
 
 
-	/* Make sure our पूर्णांकerrupt handlers are not called
-	 * henceक्रमth */
+	/* Make sure our interrupt handlers are not called
+	 * henceforth */
 	disable_irq(pcf->irq);
 
 	/* Save the masks */
-	ret = pcf50633_पढ़ो_block(pcf, PCF50633_REG_INT1M,
+	ret = pcf50633_read_block(pcf, PCF50633_REG_INT1M,
 				ARRAY_SIZE(pcf->suspend_irq_masks),
 					pcf->suspend_irq_masks);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(pcf->dev, "error saving irq masks\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Write wakeup irq masks */
-	क्रम (i = 0; i < ARRAY_SIZE(res); i++)
+	for (i = 0; i < ARRAY_SIZE(res); i++)
 		res[i] = ~pcf->pdata->resumers[i];
 
-	ret = pcf50633_ग_लिखो_block(pcf, PCF50633_REG_INT1M,
+	ret = pcf50633_write_block(pcf, PCF50633_REG_INT1M,
 					ARRAY_SIZE(res), &res[0]);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(pcf->dev, "error writing wakeup irq masks\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	pcf->is_suspended = 1;
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक pcf50633_irq_resume(काष्ठा pcf50633 *pcf)
-अणु
-	पूर्णांक ret;
+int pcf50633_irq_resume(struct pcf50633 *pcf)
+{
+	int ret;
 
-	/* Write the saved mask रेजिस्टरs */
-	ret = pcf50633_ग_लिखो_block(pcf, PCF50633_REG_INT1M,
+	/* Write the saved mask registers */
+	ret = pcf50633_write_block(pcf, PCF50633_REG_INT1M,
 				ARRAY_SIZE(pcf->suspend_irq_masks),
 					pcf->suspend_irq_masks);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(pcf->dev, "Error restoring saved suspend masks\n");
 
 	enable_irq(pcf->irq);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#पूर्ण_अगर
+#endif
 
-पूर्णांक pcf50633_irq_init(काष्ठा pcf50633 *pcf, पूर्णांक irq)
-अणु
-	पूर्णांक ret;
+int pcf50633_irq_init(struct pcf50633 *pcf, int irq)
+{
+	int ret;
 
 	pcf->irq = irq;
 
-	/* Enable all पूर्णांकerrupts except RTC SECOND */
+	/* Enable all interrupts except RTC SECOND */
 	pcf->mask_regs[0] = 0x80;
-	pcf50633_reg_ग_लिखो(pcf, PCF50633_REG_INT1M, pcf->mask_regs[0]);
-	pcf50633_reg_ग_लिखो(pcf, PCF50633_REG_INT2M, 0x00);
-	pcf50633_reg_ग_लिखो(pcf, PCF50633_REG_INT3M, 0x00);
-	pcf50633_reg_ग_लिखो(pcf, PCF50633_REG_INT4M, 0x00);
-	pcf50633_reg_ग_लिखो(pcf, PCF50633_REG_INT5M, 0x00);
+	pcf50633_reg_write(pcf, PCF50633_REG_INT1M, pcf->mask_regs[0]);
+	pcf50633_reg_write(pcf, PCF50633_REG_INT2M, 0x00);
+	pcf50633_reg_write(pcf, PCF50633_REG_INT3M, 0x00);
+	pcf50633_reg_write(pcf, PCF50633_REG_INT4M, 0x00);
+	pcf50633_reg_write(pcf, PCF50633_REG_INT5M, 0x00);
 
-	ret = request_thपढ़ोed_irq(irq, शून्य, pcf50633_irq,
+	ret = request_threaded_irq(irq, NULL, pcf50633_irq,
 					IRQF_TRIGGER_LOW | IRQF_ONESHOT,
 					"pcf50633", pcf);
 
-	अगर (ret)
+	if (ret)
 		dev_err(pcf->dev, "Failed to request IRQ %d\n", ret);
 
-	अगर (enable_irq_wake(irq) < 0)
+	if (enable_irq_wake(irq) < 0)
 		dev_err(pcf->dev, "IRQ %u cannot be enabled as wake-up source"
 			"in this hardware revision", irq);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम pcf50633_irq_मुक्त(काष्ठा pcf50633 *pcf)
-अणु
-	मुक्त_irq(pcf->irq, pcf);
-पूर्ण
+void pcf50633_irq_free(struct pcf50633 *pcf)
+{
+	free_irq(pcf->irq, pcf);
+}

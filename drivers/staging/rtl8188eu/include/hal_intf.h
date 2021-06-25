@@ -1,35 +1,34 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#अगर_अघोषित __HAL_INTF_H__
-#घोषणा __HAL_INTF_H__
+#ifndef __HAL_INTF_H__
+#define __HAL_INTF_H__
 
-#समावेश <osdep_service.h>
-#समावेश <drv_types.h>
-#समावेश <hal8188e_phy_cfg.h>
+#include <osdep_service.h>
+#include <drv_types.h>
+#include <hal8188e_phy_cfg.h>
 
-क्रमागत RTL871X_HCI_TYPE अणु
+enum RTL871X_HCI_TYPE {
 	RTW_PCIE	= BIT(0),
 	RTW_USB		= BIT(1),
 	RTW_SDIO	= BIT(2),
 	RTW_GSPI	= BIT(3),
-पूर्ण;
+};
 
-क्रमागत _CHIP_TYPE अणु
-	शून्य_CHIP_TYPE,
+enum _CHIP_TYPE {
+	NULL_CHIP_TYPE,
 	RTL8712_8188S_8191S_8192S,
 	RTL8188C_8192C,
 	RTL8192D,
 	RTL8723A,
 	RTL8188E,
 	MAX_CHIP_TYPE
-पूर्ण;
+};
 
-क्रमागत hw_variables अणु
+enum hw_variables {
 	HW_VAR_MEDIA_STATUS,
 	HW_VAR_MEDIA_STATUS1,
 	HW_VAR_SET_OPMODE,
@@ -88,10 +87,10 @@
 	HW_VAR_EFUSE_BT_BYTES,
 	HW_VAR_FIFO_CLEARN_UP,
 	HW_VAR_CHECK_TXBUF,
-	HW_VAR_APFM_ON_MAC, /* Auto FSM to Turn On, include घड़ी, isolation,
-			     * घातer control क्रम MAC only
+	HW_VAR_APFM_ON_MAC, /* Auto FSM to Turn On, include clock, isolation,
+			     * power control for MAC only
 			     */
-	/*  The valid upper nav range क्रम the HW updating, अगर the true value is
+	/*  The valid upper nav range for the HW updating, if the true value is
 	 *  larger than the upper range, the HW won't update it.
 	 */
 	/*  Unit in microsecond. 0 means disable this function. */
@@ -100,17 +99,17 @@
 	HW_VAR_TX_RPT_MAX_MACID,
 	HW_VAR_H2C_MEDIA_STATUS_RPT,
 	HW_VAR_CHK_HI_QUEUE_EMPTY,
-पूर्ण;
+};
 
-क्रमागत hal_def_variable अणु
+enum hal_def_variable {
 	HAL_DEF_UNDERCORATEDSMOOTHEDPWDB,
 	HAL_DEF_IS_SUPPORT_ANT_DIV,
 	HAL_DEF_CURRENT_ANTENNA,
 	HAL_DEF_DRVINFO_SZ,
 	HAL_DEF_MAX_RECVBUF_SZ,
 	HAL_DEF_RX_PACKET_OFFSET,
-	HAL_DEF_DBG_DUMP_RXPKT,/* क्रम dbg */
-	HAL_DEF_DBG_DM_FUNC,/* क्रम dbg */
+	HAL_DEF_DBG_DUMP_RXPKT,/* for dbg */
+	HAL_DEF_DBG_DM_FUNC,/* for dbg */
 	HAL_DEF_RA_DECISION_RATE,
 	HAL_DEF_RA_SGI,
 	HAL_DEF_PT_PWR_STATUS,
@@ -119,107 +118,107 @@
 	HAL_DEF_DBG_DUMP_TXPKT,
 	HW_DEF_FA_CNT_DUMP,
 	HW_DEF_ODM_DBG_FLAG,
-पूर्ण;
+};
 
-क्रमागत hal_odm_variable अणु
+enum hal_odm_variable {
 	HAL_ODM_STA_INFO,
 	HAL_ODM_P2P_STATE,
 	HAL_ODM_WIFI_DISPLAY_STATE,
-पूर्ण;
+};
 
-क्रमागत hal_पूर्णांकf_ps_func अणु
+enum hal_intf_ps_func {
 	HAL_USB_SELECT_SUSPEND,
 	HAL_MAX_ID,
-पूर्ण;
+};
 
-क्रमागत rt_eeprom_type अणु
+enum rt_eeprom_type {
 	EEPROM_93C46,
 	EEPROM_93C56,
 	EEPROM_BOOT_EFUSE,
-पूर्ण;
+};
 
-#घोषणा RF_CHANGE_BY_INIT	0
-#घोषणा RF_CHANGE_BY_IPS	BIT(28)
-#घोषणा RF_CHANGE_BY_PS		BIT(29)
-#घोषणा RF_CHANGE_BY_HW		BIT(30)
-#घोषणा RF_CHANGE_BY_SW		BIT(31)
+#define RF_CHANGE_BY_INIT	0
+#define RF_CHANGE_BY_IPS	BIT(28)
+#define RF_CHANGE_BY_PS		BIT(29)
+#define RF_CHANGE_BY_HW		BIT(30)
+#define RF_CHANGE_BY_SW		BIT(31)
 
-क्रमागत hardware_type अणु
+enum hardware_type {
 	HARDWARE_TYPE_RTL8188EU,
 	HARDWARE_TYPE_MAX,
-पूर्ण;
+};
 
-#घोषणा GET_EEPROM_EFUSE_PRIV(adapter) (&adapter->eeprompriv)
+#define GET_EEPROM_EFUSE_PRIV(adapter) (&adapter->eeprompriv)
 
-#घोषणा is_boot_from_eeprom(adapter) (adapter->eeprompriv.EepromOrEfuse)
+#define is_boot_from_eeprom(adapter) (adapter->eeprompriv.EepromOrEfuse)
 
-व्योम UpdateHalRAMask8188EUsb(काष्ठा adapter *adapt, u32 mac_id, u8 rssi_level);
-u32 rtl8188eu_hal_deinit(काष्ठा adapter *Adapter);
-u32 rtl8188eu_hal_init(काष्ठा adapter *Adapter);
-व्योम rtw_hal_def_value_init(काष्ठा adapter *padapter);
+void UpdateHalRAMask8188EUsb(struct adapter *adapt, u32 mac_id, u8 rssi_level);
+u32 rtl8188eu_hal_deinit(struct adapter *Adapter);
+u32 rtl8188eu_hal_init(struct adapter *Adapter);
+void rtw_hal_def_value_init(struct adapter *padapter);
 
-व्योम	rtw_hal_मुक्त_data(काष्ठा adapter *padapter);
+void	rtw_hal_free_data(struct adapter *padapter);
 
-व्योम rtw_hal_dm_init(काष्ठा adapter *padapter);
-व्योम rtw_hal_sw_led_init(काष्ठा adapter *padapter);
-व्योम rtw_hal_sw_led_deinit(काष्ठा adapter *padapter);
+void rtw_hal_dm_init(struct adapter *padapter);
+void rtw_hal_sw_led_init(struct adapter *padapter);
+void rtw_hal_sw_led_deinit(struct adapter *padapter);
 
-u32 rtw_hal_घातer_on(काष्ठा adapter *padapter);
-uपूर्णांक rtw_hal_init(काष्ठा adapter *padapter);
-uपूर्णांक rtw_hal_deinit(काष्ठा adapter *padapter);
-व्योम rtw_hal_stop(काष्ठा adapter *padapter);
-व्योम rtw_hal_set_hwreg(काष्ठा adapter *padapter, u8 variable, u8 *val);
-व्योम rtw_hal_get_hwreg(काष्ठा adapter *padapter, u8 variable, u8 *val);
+u32 rtw_hal_power_on(struct adapter *padapter);
+uint rtw_hal_init(struct adapter *padapter);
+uint rtw_hal_deinit(struct adapter *padapter);
+void rtw_hal_stop(struct adapter *padapter);
+void rtw_hal_set_hwreg(struct adapter *padapter, u8 variable, u8 *val);
+void rtw_hal_get_hwreg(struct adapter *padapter, u8 variable, u8 *val);
 
-व्योम rtw_hal_chip_configure(काष्ठा adapter *padapter);
-व्योम rtw_hal_पढ़ो_chip_info(काष्ठा adapter *padapter);
-व्योम rtw_hal_पढ़ो_chip_version(काष्ठा adapter *padapter);
+void rtw_hal_chip_configure(struct adapter *padapter);
+void rtw_hal_read_chip_info(struct adapter *padapter);
+void rtw_hal_read_chip_version(struct adapter *padapter);
 
-u8 rtw_hal_get_def_var(काष्ठा adapter *padapter,
-		       क्रमागत hal_def_variable eVariable, व्योम *pValue);
+u8 rtw_hal_get_def_var(struct adapter *padapter,
+		       enum hal_def_variable eVariable, void *pValue);
 
-व्योम rtw_hal_set_odm_var(काष्ठा adapter *padapter,
-			 क्रमागत hal_odm_variable eVariable, व्योम *pValue1,
+void rtw_hal_set_odm_var(struct adapter *padapter,
+			 enum hal_odm_variable eVariable, void *pValue1,
 			 bool bSet);
 
-u32	rtw_hal_inirp_init(काष्ठा adapter *padapter);
-व्योम	rtw_hal_inirp_deinit(काष्ठा adapter *padapter);
-व्योम usb_पूर्णांकf_stop(काष्ठा adapter *padapter);
+u32	rtw_hal_inirp_init(struct adapter *padapter);
+void	rtw_hal_inirp_deinit(struct adapter *padapter);
+void usb_intf_stop(struct adapter *padapter);
 
-bool rtw_hal_xmit(काष्ठा adapter *padapter, काष्ठा xmit_frame *pxmitframe);
-s32	rtw_hal_mgnt_xmit(काष्ठा adapter *padapter,
-			  काष्ठा xmit_frame *pmgntframe);
+bool rtw_hal_xmit(struct adapter *padapter, struct xmit_frame *pxmitframe);
+s32	rtw_hal_mgnt_xmit(struct adapter *padapter,
+			  struct xmit_frame *pmgntframe);
 
-s32	rtw_hal_init_xmit_priv(काष्ठा adapter *padapter);
+s32	rtw_hal_init_xmit_priv(struct adapter *padapter);
 
-पूर्णांक	rtw_hal_init_recv_priv(काष्ठा adapter *padapter);
-व्योम	rtw_hal_मुक्त_recv_priv(काष्ठा adapter *padapter);
+int	rtw_hal_init_recv_priv(struct adapter *padapter);
+void	rtw_hal_free_recv_priv(struct adapter *padapter);
 
-व्योम rtw_hal_update_ra_mask(काष्ठा adapter *padapter, u32 mac_id, u8 level);
-व्योम	rtw_hal_add_ra_tid(काष्ठा adapter *adapt, u32 biपंचांगap, u8 arg, u8 level);
-व्योम	rtw_hal_clone_data(काष्ठा adapter *dst_adapt,
-			   काष्ठा adapter *src_adapt);
+void rtw_hal_update_ra_mask(struct adapter *padapter, u32 mac_id, u8 level);
+void	rtw_hal_add_ra_tid(struct adapter *adapt, u32 bitmap, u8 arg, u8 level);
+void	rtw_hal_clone_data(struct adapter *dst_adapt,
+			   struct adapter *src_adapt);
 
-व्योम beacon_timing_control(काष्ठा adapter *padapter);
+void beacon_timing_control(struct adapter *padapter);
 
-u32	rtw_hal_पढ़ो_rfreg(काष्ठा adapter *padapter, क्रमागत rf_radio_path eRFPath,
+u32	rtw_hal_read_rfreg(struct adapter *padapter, enum rf_radio_path eRFPath,
 			   u32 RegAddr, u32 BitMask);
 
-व्योम	rtw_hal_set_bwmode(काष्ठा adapter *padapter,
-			   क्रमागत ht_channel_width Bandwidth, u8 Offset);
-व्योम	rtw_hal_set_chan(काष्ठा adapter *padapter, u8 channel);
-व्योम	rtw_hal_dm_watchकरोg(काष्ठा adapter *padapter);
+void	rtw_hal_set_bwmode(struct adapter *padapter,
+			   enum ht_channel_width Bandwidth, u8 Offset);
+void	rtw_hal_set_chan(struct adapter *padapter, u8 channel);
+void	rtw_hal_dm_watchdog(struct adapter *padapter);
 
-bool rtw_hal_antभाग_beक्रमe_linked(काष्ठा adapter *padapter);
-व्योम	rtw_hal_antभाग_rssi_compared(काष्ठा adapter *padapter,
-				     काष्ठा wlan_bssid_ex *dst,
-				     काष्ठा wlan_bssid_ex *src);
+bool rtw_hal_antdiv_before_linked(struct adapter *padapter);
+void	rtw_hal_antdiv_rssi_compared(struct adapter *padapter,
+				     struct wlan_bssid_ex *dst,
+				     struct wlan_bssid_ex *src);
 
-व्योम rtw_hal_sreset_init(काष्ठा adapter *padapter);
+void rtw_hal_sreset_init(struct adapter *padapter);
 
-व्योम rtw_hal_notch_filter(काष्ठा adapter *adapter, bool enable);
+void rtw_hal_notch_filter(struct adapter *adapter, bool enable);
 
-व्योम indicate_wx_scan_complete_event(काष्ठा adapter *padapter);
-u8 rtw_करो_join(काष्ठा adapter *padapter);
+void indicate_wx_scan_complete_event(struct adapter *padapter);
+u8 rtw_do_join(struct adapter *padapter);
 
-#पूर्ण_अगर /* __HAL_INTF_H__ */
+#endif /* __HAL_INTF_H__ */

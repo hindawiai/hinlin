@@ -1,288 +1,287 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2019, Vladimir Oltean <olteanv@gmail.com>
  */
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/dsa/sja1105.h>
-#समावेश <linux/dsa/8021q.h>
-#समावेश <linux/packing.h>
-#समावेश "dsa_priv.h"
+#include <linux/if_vlan.h>
+#include <linux/dsa/sja1105.h>
+#include <linux/dsa/8021q.h>
+#include <linux/packing.h>
+#include "dsa_priv.h"
 
 /* Similar to is_link_local_ether_addr(hdr->h_dest) but also covers PTP */
-अटल अंतरभूत bool sja1105_is_link_local(स्थिर काष्ठा sk_buff *skb)
-अणु
-	स्थिर काष्ठा ethhdr *hdr = eth_hdr(skb);
+static inline bool sja1105_is_link_local(const struct sk_buff *skb)
+{
+	const struct ethhdr *hdr = eth_hdr(skb);
 	u64 dmac = ether_addr_to_u64(hdr->h_dest);
 
-	अगर (ntohs(hdr->h_proto) == ETH_P_SJA1105_META)
-		वापस false;
-	अगर ((dmac & SJA1105_LINKLOCAL_FILTER_A_MASK) ==
+	if (ntohs(hdr->h_proto) == ETH_P_SJA1105_META)
+		return false;
+	if ((dmac & SJA1105_LINKLOCAL_FILTER_A_MASK) ==
 		    SJA1105_LINKLOCAL_FILTER_A)
-		वापस true;
-	अगर ((dmac & SJA1105_LINKLOCAL_FILTER_B_MASK) ==
+		return true;
+	if ((dmac & SJA1105_LINKLOCAL_FILTER_B_MASK) ==
 		    SJA1105_LINKLOCAL_FILTER_B)
-		वापस true;
-	वापस false;
-पूर्ण
+		return true;
+	return false;
+}
 
-काष्ठा sja1105_meta अणु
+struct sja1105_meta {
 	u64 tstamp;
 	u64 dmac_byte_4;
 	u64 dmac_byte_3;
 	u64 source_port;
-	u64 चयन_id;
-पूर्ण;
+	u64 switch_id;
+};
 
-अटल व्योम sja1105_meta_unpack(स्थिर काष्ठा sk_buff *skb,
-				काष्ठा sja1105_meta *meta)
-अणु
+static void sja1105_meta_unpack(const struct sk_buff *skb,
+				struct sja1105_meta *meta)
+{
 	u8 *buf = skb_mac_header(skb) + ETH_HLEN;
 
 	/* UM10944.pdf section 4.2.17 AVB Parameters:
 	 * Structure of the meta-data follow-up frame.
 	 * It is in network byte order, so there are no quirks
-	 * जबतक unpacking the meta frame.
+	 * while unpacking the meta frame.
 	 *
-	 * Also SJA1105 E/T only populates bits 23:0 of the बारtamp
-	 * whereas P/Q/R/S करोes 32 bits. Since the काष्ठाure is the
-	 * same and the E/T माला_दो zeroes in the high-order byte, use
-	 * a unअगरied unpacking command क्रम both device series.
+	 * Also SJA1105 E/T only populates bits 23:0 of the timestamp
+	 * whereas P/Q/R/S does 32 bits. Since the structure is the
+	 * same and the E/T puts zeroes in the high-order byte, use
+	 * a unified unpacking command for both device series.
 	 */
 	packing(buf,     &meta->tstamp,     31, 0, 4, UNPACK, 0);
 	packing(buf + 4, &meta->dmac_byte_4, 7, 0, 1, UNPACK, 0);
 	packing(buf + 5, &meta->dmac_byte_3, 7, 0, 1, UNPACK, 0);
 	packing(buf + 6, &meta->source_port, 7, 0, 1, UNPACK, 0);
-	packing(buf + 7, &meta->चयन_id,   7, 0, 1, UNPACK, 0);
-पूर्ण
+	packing(buf + 7, &meta->switch_id,   7, 0, 1, UNPACK, 0);
+}
 
-अटल अंतरभूत bool sja1105_is_meta_frame(स्थिर काष्ठा sk_buff *skb)
-अणु
-	स्थिर काष्ठा ethhdr *hdr = eth_hdr(skb);
+static inline bool sja1105_is_meta_frame(const struct sk_buff *skb)
+{
+	const struct ethhdr *hdr = eth_hdr(skb);
 	u64 smac = ether_addr_to_u64(hdr->h_source);
 	u64 dmac = ether_addr_to_u64(hdr->h_dest);
 
-	अगर (smac != SJA1105_META_SMAC)
-		वापस false;
-	अगर (dmac != SJA1105_META_DMAC)
-		वापस false;
-	अगर (ntohs(hdr->h_proto) != ETH_P_SJA1105_META)
-		वापस false;
-	वापस true;
-पूर्ण
+	if (smac != SJA1105_META_SMAC)
+		return false;
+	if (dmac != SJA1105_META_DMAC)
+		return false;
+	if (ntohs(hdr->h_proto) != ETH_P_SJA1105_META)
+		return false;
+	return true;
+}
 
-अटल bool sja1105_can_use_vlan_as_tags(स्थिर काष्ठा sk_buff *skb)
-अणु
-	काष्ठा vlan_ethhdr *hdr = vlan_eth_hdr(skb);
+static bool sja1105_can_use_vlan_as_tags(const struct sk_buff *skb)
+{
+	struct vlan_ethhdr *hdr = vlan_eth_hdr(skb);
 	u16 vlan_tci;
 
-	अगर (hdr->h_vlan_proto == htons(ETH_P_SJA1105))
-		वापस true;
+	if (hdr->h_vlan_proto == htons(ETH_P_SJA1105))
+		return true;
 
-	अगर (hdr->h_vlan_proto != htons(ETH_P_8021Q) &&
+	if (hdr->h_vlan_proto != htons(ETH_P_8021Q) &&
 	    !skb_vlan_tag_present(skb))
-		वापस false;
+		return false;
 
-	अगर (skb_vlan_tag_present(skb))
+	if (skb_vlan_tag_present(skb))
 		vlan_tci = skb_vlan_tag_get(skb);
-	अन्यथा
+	else
 		vlan_tci = ntohs(hdr->h_vlan_TCI);
 
-	वापस vid_is_dsa_8021q(vlan_tci & VLAN_VID_MASK);
-पूर्ण
+	return vid_is_dsa_8021q(vlan_tci & VLAN_VID_MASK);
+}
 
-/* This is the first समय the tagger sees the frame on RX.
- * Figure out अगर we can decode it.
+/* This is the first time the tagger sees the frame on RX.
+ * Figure out if we can decode it.
  */
-अटल bool sja1105_filter(स्थिर काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	अगर (sja1105_can_use_vlan_as_tags(skb))
-		वापस true;
-	अगर (sja1105_is_link_local(skb))
-		वापस true;
-	अगर (sja1105_is_meta_frame(skb))
-		वापस true;
-	वापस false;
-पूर्ण
+static bool sja1105_filter(const struct sk_buff *skb, struct net_device *dev)
+{
+	if (sja1105_can_use_vlan_as_tags(skb))
+		return true;
+	if (sja1105_is_link_local(skb))
+		return true;
+	if (sja1105_is_meta_frame(skb))
+		return true;
+	return false;
+}
 
-/* Calls sja1105_port_deferred_xmit in sja1105_मुख्य.c */
-अटल काष्ठा sk_buff *sja1105_defer_xmit(काष्ठा sja1105_port *sp,
-					  काष्ठा sk_buff *skb)
-अणु
-	/* Increase refcount so the kमुक्त_skb in dsa_slave_xmit
-	 * won't really मुक्त the packet.
+/* Calls sja1105_port_deferred_xmit in sja1105_main.c */
+static struct sk_buff *sja1105_defer_xmit(struct sja1105_port *sp,
+					  struct sk_buff *skb)
+{
+	/* Increase refcount so the kfree_skb in dsa_slave_xmit
+	 * won't really free the packet.
 	 */
 	skb_queue_tail(&sp->xmit_queue, skb_get(skb));
-	kthपढ़ो_queue_work(sp->xmit_worker, &sp->xmit_work);
+	kthread_queue_work(sp->xmit_worker, &sp->xmit_work);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल u16 sja1105_xmit_tpid(काष्ठा sja1105_port *sp)
-अणु
-	वापस sp->xmit_tpid;
-पूर्ण
+static u16 sja1105_xmit_tpid(struct sja1105_port *sp)
+{
+	return sp->xmit_tpid;
+}
 
-अटल काष्ठा sk_buff *sja1105_xmit(काष्ठा sk_buff *skb,
-				    काष्ठा net_device *netdev)
-अणु
-	काष्ठा dsa_port *dp = dsa_slave_to_port(netdev);
+static struct sk_buff *sja1105_xmit(struct sk_buff *skb,
+				    struct net_device *netdev)
+{
+	struct dsa_port *dp = dsa_slave_to_port(netdev);
 	u16 tx_vid = dsa_8021q_tx_vid(dp->ds, dp->index);
 	u16 queue_mapping = skb_get_queue_mapping(skb);
 	u8 pcp = netdev_txq_to_tc(netdev, queue_mapping);
 
-	/* Transmitting management traffic करोes not rely upon चयन tagging,
+	/* Transmitting management traffic does not rely upon switch tagging,
 	 * but instead SPI-installed management routes. Part 2 of this
 	 * is the .port_deferred_xmit driver callback.
 	 */
-	अगर (unlikely(sja1105_is_link_local(skb)))
-		वापस sja1105_defer_xmit(dp->priv, skb);
+	if (unlikely(sja1105_is_link_local(skb)))
+		return sja1105_defer_xmit(dp->priv, skb);
 
-	वापस dsa_8021q_xmit(skb, netdev, sja1105_xmit_tpid(dp->priv),
+	return dsa_8021q_xmit(skb, netdev, sja1105_xmit_tpid(dp->priv),
 			     ((pcp << VLAN_PRIO_SHIFT) | tx_vid));
-पूर्ण
+}
 
-अटल व्योम sja1105_transfer_meta(काष्ठा sk_buff *skb,
-				  स्थिर काष्ठा sja1105_meta *meta)
-अणु
-	काष्ठा ethhdr *hdr = eth_hdr(skb);
+static void sja1105_transfer_meta(struct sk_buff *skb,
+				  const struct sja1105_meta *meta)
+{
+	struct ethhdr *hdr = eth_hdr(skb);
 
 	hdr->h_dest[3] = meta->dmac_byte_3;
 	hdr->h_dest[4] = meta->dmac_byte_4;
 	SJA1105_SKB_CB(skb)->meta_tstamp = meta->tstamp;
-पूर्ण
+}
 
 /* This is a simple state machine which follows the hardware mechanism of
- * generating RX बारtamps:
+ * generating RX timestamps:
  *
- * After each बारtampable skb (all traffic क्रम which send_meta1 and
+ * After each timestampable skb (all traffic for which send_meta1 and
  * send_meta0 is true, aka all MAC-filtered link-local traffic) a meta frame
- * containing a partial बारtamp is immediately generated by the चयन and
+ * containing a partial timestamp is immediately generated by the switch and
  * sent as a follow-up to the link-local frame on the CPU port.
  *
- * The meta frames have no unique identअगरier (such as sequence number) by which
- * one may pair them to the correct बारtampable frame.
- * Instead, the चयन has पूर्णांकernal logic that ensures no frames are sent on
- * the CPU port between a link-local बारtampable frame and its corresponding
+ * The meta frames have no unique identifier (such as sequence number) by which
+ * one may pair them to the correct timestampable frame.
+ * Instead, the switch has internal logic that ensures no frames are sent on
+ * the CPU port between a link-local timestampable frame and its corresponding
  * meta follow-up. It also ensures strict ordering between ports (lower ports
  * have higher priority towards the CPU port). For this reason, a per-port
- * data काष्ठाure is not needed/desirable.
+ * data structure is not needed/desirable.
  *
- * This function pairs the link-local frame with its partial बारtamp from the
- * meta follow-up frame. The full बारtamp will be reस्थिरructed later in a
+ * This function pairs the link-local frame with its partial timestamp from the
+ * meta follow-up frame. The full timestamp will be reconstructed later in a
  * work queue.
  */
-अटल काष्ठा sk_buff
-*sja1105_rcv_meta_state_machine(काष्ठा sk_buff *skb,
-				काष्ठा sja1105_meta *meta,
+static struct sk_buff
+*sja1105_rcv_meta_state_machine(struct sk_buff *skb,
+				struct sja1105_meta *meta,
 				bool is_link_local,
 				bool is_meta)
-अणु
-	काष्ठा sja1105_port *sp;
-	काष्ठा dsa_port *dp;
+{
+	struct sja1105_port *sp;
+	struct dsa_port *dp;
 
 	dp = dsa_slave_to_port(skb->dev);
 	sp = dp->priv;
 
-	/* Step 1: A बारtampable frame was received.
+	/* Step 1: A timestampable frame was received.
 	 * Buffer it until we get its meta frame.
 	 */
-	अगर (is_link_local) अणु
-		अगर (!test_bit(SJA1105_HWTS_RX_EN, &sp->data->state))
+	if (is_link_local) {
+		if (!test_bit(SJA1105_HWTS_RX_EN, &sp->data->state))
 			/* Do normal processing. */
-			वापस skb;
+			return skb;
 
 		spin_lock(&sp->data->meta_lock);
 		/* Was this a link-local frame instead of the meta
 		 * that we were expecting?
 		 */
-		अगर (sp->data->stampable_skb) अणु
+		if (sp->data->stampable_skb) {
 			dev_err_ratelimited(dp->ds->dev,
 					    "Expected meta frame, is %12llx "
 					    "in the DSA master multicast filter?\n",
 					    SJA1105_META_DMAC);
-			kमुक्त_skb(sp->data->stampable_skb);
-		पूर्ण
+			kfree_skb(sp->data->stampable_skb);
+		}
 
-		/* Hold a reference to aव्योम dsa_चयन_rcv
-		 * from मुक्तing the skb.
+		/* Hold a reference to avoid dsa_switch_rcv
+		 * from freeing the skb.
 		 */
 		sp->data->stampable_skb = skb_get(skb);
 		spin_unlock(&sp->data->meta_lock);
 
 		/* Tell DSA we got nothing */
-		वापस शून्य;
+		return NULL;
 
 	/* Step 2: The meta frame arrived.
-	 * Time to take the stampable skb out of the बंदt, annotate it
-	 * with the partial बारtamp, and pretend that we received it
+	 * Time to take the stampable skb out of the closet, annotate it
+	 * with the partial timestamp, and pretend that we received it
 	 * just now (basically masquerade the buffered frame as the meta
 	 * frame, which serves no further purpose).
 	 */
-	पूर्ण अन्यथा अगर (is_meta) अणु
-		काष्ठा sk_buff *stampable_skb;
+	} else if (is_meta) {
+		struct sk_buff *stampable_skb;
 
-		/* Drop the meta frame अगर we're not in the right state
+		/* Drop the meta frame if we're not in the right state
 		 * to process it.
 		 */
-		अगर (!test_bit(SJA1105_HWTS_RX_EN, &sp->data->state))
-			वापस शून्य;
+		if (!test_bit(SJA1105_HWTS_RX_EN, &sp->data->state))
+			return NULL;
 
 		spin_lock(&sp->data->meta_lock);
 
 		stampable_skb = sp->data->stampable_skb;
-		sp->data->stampable_skb = शून्य;
+		sp->data->stampable_skb = NULL;
 
 		/* Was this a meta frame instead of the link-local
 		 * that we were expecting?
 		 */
-		अगर (!stampable_skb) अणु
+		if (!stampable_skb) {
 			dev_err_ratelimited(dp->ds->dev,
 					    "Unexpected meta frame\n");
 			spin_unlock(&sp->data->meta_lock);
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 
-		अगर (stampable_skb->dev != skb->dev) अणु
+		if (stampable_skb->dev != skb->dev) {
 			dev_err_ratelimited(dp->ds->dev,
 					    "Meta frame on wrong port\n");
 			spin_unlock(&sp->data->meta_lock);
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 
 		/* Free the meta frame and give DSA the buffered stampable_skb
-		 * क्रम further processing up the network stack.
+		 * for further processing up the network stack.
 		 */
-		kमुक्त_skb(skb);
+		kfree_skb(skb);
 		skb = stampable_skb;
 		sja1105_transfer_meta(skb, meta);
 
 		spin_unlock(&sp->data->meta_lock);
-	पूर्ण
+	}
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल व्योम sja1105_decode_subvlan(काष्ठा sk_buff *skb, u16 subvlan)
-अणु
-	काष्ठा dsa_port *dp = dsa_slave_to_port(skb->dev);
-	काष्ठा sja1105_port *sp = dp->priv;
+static void sja1105_decode_subvlan(struct sk_buff *skb, u16 subvlan)
+{
+	struct dsa_port *dp = dsa_slave_to_port(skb->dev);
+	struct sja1105_port *sp = dp->priv;
 	u16 vid = sp->subvlan_map[subvlan];
 	u16 vlan_tci;
 
-	अगर (vid == VLAN_N_VID)
-		वापस;
+	if (vid == VLAN_N_VID)
+		return;
 
 	vlan_tci = (skb->priority << VLAN_PRIO_SHIFT) | vid;
 	__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), vlan_tci);
-पूर्ण
+}
 
-अटल काष्ठा sk_buff *sja1105_rcv(काष्ठा sk_buff *skb,
-				   काष्ठा net_device *netdev,
-				   काष्ठा packet_type *pt)
-अणु
-	काष्ठा sja1105_meta meta = अणु0पूर्ण;
-	पूर्णांक source_port, चयन_id;
-	काष्ठा ethhdr *hdr;
+static struct sk_buff *sja1105_rcv(struct sk_buff *skb,
+				   struct net_device *netdev,
+				   struct packet_type *pt)
+{
+	struct sja1105_meta meta = {0};
+	int source_port, switch_id;
+	struct ethhdr *hdr;
 	u16 tpid, vid, tci;
 	bool is_link_local;
 	u16 subvlan = 0;
@@ -298,66 +297,66 @@
 
 	skb->offload_fwd_mark = 1;
 
-	अगर (is_tagged) अणु
+	if (is_tagged) {
 		/* Normal traffic path. */
 		skb_push_rcsum(skb, ETH_HLEN);
-		अगर (skb_vlan_tag_present(skb)) अणु
+		if (skb_vlan_tag_present(skb)) {
 			tci = skb_vlan_tag_get(skb);
 			__vlan_hwaccel_clear_tag(skb);
-		पूर्ण अन्यथा अणु
+		} else {
 			__skb_vlan_pop(skb, &tci);
-		पूर्ण
+		}
 		skb_pull_rcsum(skb, ETH_HLEN);
 		skb_reset_network_header(skb);
 		skb_reset_transport_header(skb);
 
 		vid = tci & VLAN_VID_MASK;
 		source_port = dsa_8021q_rx_source_port(vid);
-		चयन_id = dsa_8021q_rx_चयन_id(vid);
+		switch_id = dsa_8021q_rx_switch_id(vid);
 		skb->priority = (tci & VLAN_PRIO_MASK) >> VLAN_PRIO_SHIFT;
 		subvlan = dsa_8021q_rx_subvlan(vid);
-	पूर्ण अन्यथा अगर (is_link_local) अणु
-		/* Management traffic path. Switch embeds the चयन ID and
-		 * port ID पूर्णांकo bytes of the destination MAC, courtesy of
+	} else if (is_link_local) {
+		/* Management traffic path. Switch embeds the switch ID and
+		 * port ID into bytes of the destination MAC, courtesy of
 		 * the incl_srcpt options.
 		 */
 		source_port = hdr->h_dest[3];
-		चयन_id = hdr->h_dest[4];
-		/* Clear the DMAC bytes that were mangled by the चयन */
+		switch_id = hdr->h_dest[4];
+		/* Clear the DMAC bytes that were mangled by the switch */
 		hdr->h_dest[3] = 0;
 		hdr->h_dest[4] = 0;
-	पूर्ण अन्यथा अगर (is_meta) अणु
+	} else if (is_meta) {
 		sja1105_meta_unpack(skb, &meta);
 		source_port = meta.source_port;
-		चयन_id = meta.चयन_id;
-	पूर्ण अन्यथा अणु
-		वापस शून्य;
-	पूर्ण
+		switch_id = meta.switch_id;
+	} else {
+		return NULL;
+	}
 
-	skb->dev = dsa_master_find_slave(netdev, चयन_id, source_port);
-	अगर (!skb->dev) अणु
+	skb->dev = dsa_master_find_slave(netdev, switch_id, source_port);
+	if (!skb->dev) {
 		netdev_warn(netdev, "Couldn't decode source port\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (subvlan)
+	if (subvlan)
 		sja1105_decode_subvlan(skb, subvlan);
 
-	वापस sja1105_rcv_meta_state_machine(skb, &meta, is_link_local,
+	return sja1105_rcv_meta_state_machine(skb, &meta, is_link_local,
 					      is_meta);
-पूर्ण
+}
 
-अटल व्योम sja1105_flow_dissect(स्थिर काष्ठा sk_buff *skb, __be16 *proto,
-				 पूर्णांक *offset)
-अणु
-	/* No tag added क्रम management frames, all ok */
-	अगर (unlikely(sja1105_is_link_local(skb)))
-		वापस;
+static void sja1105_flow_dissect(const struct sk_buff *skb, __be16 *proto,
+				 int *offset)
+{
+	/* No tag added for management frames, all ok */
+	if (unlikely(sja1105_is_link_local(skb)))
+		return;
 
 	dsa_tag_generic_flow_dissect(skb, proto, offset);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा dsa_device_ops sja1105_netdev_ops = अणु
+static const struct dsa_device_ops sja1105_netdev_ops = {
 	.name = "sja1105",
 	.proto = DSA_TAG_PROTO_SJA1105,
 	.xmit = sja1105_xmit,
@@ -366,7 +365,7 @@
 	.overhead = VLAN_HLEN,
 	.flow_dissect = sja1105_flow_dissect,
 	.promisc_on_master = true,
-पूर्ण;
+};
 
 MODULE_LICENSE("GPL v2");
 MODULE_ALIAS_DSA_TAG_DRIVER(DSA_TAG_PROTO_SJA1105);

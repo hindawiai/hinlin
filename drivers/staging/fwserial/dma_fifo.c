@@ -1,295 +1,294 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * DMA-able FIFO implementation
  *
  * Copyright (C) 2012 Peter Hurley <peter@hurleysoftware.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/list.h>
-#समावेश <linux/bug.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/list.h>
+#include <linux/bug.h>
 
-#समावेश "dma_fifo.h"
+#include "dma_fifo.h"
 
-#अगर_घोषित DEBUG_TRACING
-#घोषणा df_trace(s, args...) pr_debug(s, ##args)
-#अन्यथा
-#घोषणा df_trace(s, args...)
-#पूर्ण_अगर
+#ifdef DEBUG_TRACING
+#define df_trace(s, args...) pr_debug(s, ##args)
+#else
+#define df_trace(s, args...)
+#endif
 
-#घोषणा FAIL(fअगरo, condition, क्रमmat...) (अणु				\
-	fअगरo->corrupt = !!(condition);					\
-	WARN(fअगरo->corrupt, क्रमmat);					\
-पूर्ण)
+#define FAIL(fifo, condition, format...) ({				\
+	fifo->corrupt = !!(condition);					\
+	WARN(fifo->corrupt, format);					\
+})
 
 /*
- * निजी helper fn to determine अगर check is in खोलो पूर्णांकerval (lo,hi)
+ * private helper fn to determine if check is in open interval (lo,hi)
  */
-अटल bool addr_check(अचिन्हित पूर्णांक check, अचिन्हित पूर्णांक lo, अचिन्हित पूर्णांक hi)
-अणु
-	वापस check - (lo + 1) < (hi - 1) - lo;
-पूर्ण
+static bool addr_check(unsigned int check, unsigned int lo, unsigned int hi)
+{
+	return check - (lo + 1) < (hi - 1) - lo;
+}
 
 /**
- * dma_fअगरo_init: initialize the fअगरo to a valid but inoperative state
- * @fअगरo: address of in-place "struct dma_fifo" object
+ * dma_fifo_init: initialize the fifo to a valid but inoperative state
+ * @fifo: address of in-place "struct dma_fifo" object
  */
-व्योम dma_fअगरo_init(काष्ठा dma_fअगरo *fअगरo)
-अणु
-	स_रखो(fअगरo, 0, माप(*fअगरo));
-	INIT_LIST_HEAD(&fअगरo->pending);
-पूर्ण
+void dma_fifo_init(struct dma_fifo *fifo)
+{
+	memset(fifo, 0, sizeof(*fifo));
+	INIT_LIST_HEAD(&fifo->pending);
+}
 
 /**
- * dma_fअगरo_alloc - initialize and allocate dma_fअगरo
- * @fअगरo: address of in-place "struct dma_fifo" object
- * @size: 'apparent' size, in bytes, of fअगरo
- * @align: dma alignment to मुख्यtain (should be at least cpu cache alignment),
- *         must be घातer of 2
- * @tx_limit: maximum # of bytes transmissible per dma (rounded करोwn to
+ * dma_fifo_alloc - initialize and allocate dma_fifo
+ * @fifo: address of in-place "struct dma_fifo" object
+ * @size: 'apparent' size, in bytes, of fifo
+ * @align: dma alignment to maintain (should be at least cpu cache alignment),
+ *         must be power of 2
+ * @tx_limit: maximum # of bytes transmissible per dma (rounded down to
  *            multiple of alignment, but at least align size)
- * @खोलो_limit: maximum # of outstanding dma transactions allowed
- * @gfp_mask: get_मुक्त_pages mask, passed to kदो_स्मृति()
+ * @open_limit: maximum # of outstanding dma transactions allowed
+ * @gfp_mask: get_free_pages mask, passed to kmalloc()
  *
  * The 'apparent' size will be rounded up to next greater aligned size.
- * Returns 0 अगर no error, otherwise an error code
+ * Returns 0 if no error, otherwise an error code
  */
-पूर्णांक dma_fअगरo_alloc(काष्ठा dma_fअगरo *fअगरo, पूर्णांक size, अचिन्हित पूर्णांक align,
-		   पूर्णांक tx_limit, पूर्णांक खोलो_limit, gfp_t gfp_mask)
-अणु
-	पूर्णांक capacity;
+int dma_fifo_alloc(struct dma_fifo *fifo, int size, unsigned int align,
+		   int tx_limit, int open_limit, gfp_t gfp_mask)
+{
+	int capacity;
 
-	अगर (!is_घातer_of_2(align) || size < 0)
-		वापस -EINVAL;
+	if (!is_power_of_2(align) || size < 0)
+		return -EINVAL;
 
 	size = round_up(size, align);
-	capacity = size + align * खोलो_limit + align * DMA_FIFO_GUARD;
-	fअगरo->data = kदो_स्मृति(capacity, gfp_mask);
-	अगर (!fअगरo->data)
-		वापस -ENOMEM;
+	capacity = size + align * open_limit + align * DMA_FIFO_GUARD;
+	fifo->data = kmalloc(capacity, gfp_mask);
+	if (!fifo->data)
+		return -ENOMEM;
 
-	fअगरo->in = 0;
-	fअगरo->out = 0;
-	fअगरo->करोne = 0;
-	fअगरo->size = size;
-	fअगरo->avail = size;
-	fअगरo->align = align;
-	fअगरo->tx_limit = max_t(पूर्णांक, round_करोwn(tx_limit, align), align);
-	fअगरo->खोलो = 0;
-	fअगरo->खोलो_limit = खोलो_limit;
-	fअगरo->guard = size + align * खोलो_limit;
-	fअगरo->capacity = capacity;
-	fअगरo->corrupt = 0;
+	fifo->in = 0;
+	fifo->out = 0;
+	fifo->done = 0;
+	fifo->size = size;
+	fifo->avail = size;
+	fifo->align = align;
+	fifo->tx_limit = max_t(int, round_down(tx_limit, align), align);
+	fifo->open = 0;
+	fifo->open_limit = open_limit;
+	fifo->guard = size + align * open_limit;
+	fifo->capacity = capacity;
+	fifo->corrupt = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * dma_fअगरo_मुक्त - मुक्तs the fअगरo
- * @fअगरo: address of in-place "struct dma_fifo" to मुक्त
+ * dma_fifo_free - frees the fifo
+ * @fifo: address of in-place "struct dma_fifo" to free
  *
- * Also reinits the fअगरo to a valid but inoperative state. This
- * allows the fअगरo to be reused with a dअगरferent target requiring
- * dअगरferent fअगरo parameters.
+ * Also reinits the fifo to a valid but inoperative state. This
+ * allows the fifo to be reused with a different target requiring
+ * different fifo parameters.
  */
-व्योम dma_fअगरo_मुक्त(काष्ठा dma_fअगरo *fअगरo)
-अणु
-	काष्ठा dma_pending *pending, *next;
+void dma_fifo_free(struct dma_fifo *fifo)
+{
+	struct dma_pending *pending, *next;
 
-	अगर (!fअगरo->data)
-		वापस;
+	if (!fifo->data)
+		return;
 
-	list_क्रम_each_entry_safe(pending, next, &fअगरo->pending, link)
+	list_for_each_entry_safe(pending, next, &fifo->pending, link)
 		list_del_init(&pending->link);
-	kमुक्त(fअगरo->data);
-	fअगरo->data = शून्य;
-पूर्ण
+	kfree(fifo->data);
+	fifo->data = NULL;
+}
 
 /**
- * dma_fअगरo_reset - dumps the fअगरo contents and reinits क्रम reuse
- * @fअगरo: address of in-place "struct dma_fifo" to reset
+ * dma_fifo_reset - dumps the fifo contents and reinits for reuse
+ * @fifo: address of in-place "struct dma_fifo" to reset
  */
-व्योम dma_fअगरo_reset(काष्ठा dma_fअगरo *fअगरo)
-अणु
-	काष्ठा dma_pending *pending, *next;
+void dma_fifo_reset(struct dma_fifo *fifo)
+{
+	struct dma_pending *pending, *next;
 
-	अगर (!fअगरo->data)
-		वापस;
+	if (!fifo->data)
+		return;
 
-	list_क्रम_each_entry_safe(pending, next, &fअगरo->pending, link)
+	list_for_each_entry_safe(pending, next, &fifo->pending, link)
 		list_del_init(&pending->link);
-	fअगरo->in = 0;
-	fअगरo->out = 0;
-	fअगरo->करोne = 0;
-	fअगरo->avail = fअगरo->size;
-	fअगरo->खोलो = 0;
-	fअगरo->corrupt = 0;
-पूर्ण
+	fifo->in = 0;
+	fifo->out = 0;
+	fifo->done = 0;
+	fifo->avail = fifo->size;
+	fifo->open = 0;
+	fifo->corrupt = 0;
+}
 
 /**
- * dma_fअगरo_in - copies data पूर्णांकo the fअगरo
- * @fअगरo: address of in-place "struct dma_fifo" to ग_लिखो to
+ * dma_fifo_in - copies data into the fifo
+ * @fifo: address of in-place "struct dma_fifo" to write to
  * @src: buffer to copy from
  * @n: # of bytes to copy
  *
- * Returns the # of bytes actually copied, which can be less than requested अगर
- * the fअगरo becomes full. If < 0, वापस is error code.
+ * Returns the # of bytes actually copied, which can be less than requested if
+ * the fifo becomes full. If < 0, return is error code.
  */
-पूर्णांक dma_fअगरo_in(काष्ठा dma_fअगरo *fअगरo, स्थिर व्योम *src, पूर्णांक n)
-अणु
-	पूर्णांक ofs, l;
+int dma_fifo_in(struct dma_fifo *fifo, const void *src, int n)
+{
+	int ofs, l;
 
-	अगर (!fअगरo->data)
-		वापस -ENOENT;
-	अगर (fअगरo->corrupt)
-		वापस -ENXIO;
+	if (!fifo->data)
+		return -ENOENT;
+	if (fifo->corrupt)
+		return -ENXIO;
 
-	अगर (n > fअगरo->avail)
-		n = fअगरo->avail;
-	अगर (n <= 0)
-		वापस 0;
+	if (n > fifo->avail)
+		n = fifo->avail;
+	if (n <= 0)
+		return 0;
 
-	ofs = fअगरo->in % fअगरo->capacity;
-	l = min(n, fअगरo->capacity - ofs);
-	स_नकल(fअगरo->data + ofs, src, l);
-	स_नकल(fअगरo->data, src + l, n - l);
+	ofs = fifo->in % fifo->capacity;
+	l = min(n, fifo->capacity - ofs);
+	memcpy(fifo->data + ofs, src, l);
+	memcpy(fifo->data, src + l, n - l);
 
-	अगर (FAIL(fअगरo, addr_check(fअगरo->करोne, fअगरo->in, fअगरo->in + n) ||
-		 fअगरo->avail < n,
+	if (FAIL(fifo, addr_check(fifo->done, fifo->in, fifo->in + n) ||
+		 fifo->avail < n,
 		 "fifo corrupt: in:%u out:%u done:%u n:%d avail:%d",
-		 fअगरo->in, fअगरo->out, fअगरo->करोne, n, fअगरo->avail))
-		वापस -ENXIO;
+		 fifo->in, fifo->out, fifo->done, n, fifo->avail))
+		return -ENXIO;
 
-	fअगरo->in += n;
-	fअगरo->avail -= n;
+	fifo->in += n;
+	fifo->avail -= n;
 
-	df_trace("in:%u out:%u done:%u n:%d avail:%d", fअगरo->in, fअगरo->out,
-		 fअगरo->करोne, n, fअगरo->avail);
+	df_trace("in:%u out:%u done:%u n:%d avail:%d", fifo->in, fifo->out,
+		 fifo->done, n, fifo->avail);
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
 /**
- * dma_fअगरo_out_pend - माला_लो address/len of next avail पढ़ो and marks as pended
- * @fअगरo: address of in-place "struct dma_fifo" to पढ़ो from
- * @pended: address of काष्ठाure to fill with पढ़ो address/len
- *          The data/len fields will be शून्य/0 अगर no dma is pended.
+ * dma_fifo_out_pend - gets address/len of next avail read and marks as pended
+ * @fifo: address of in-place "struct dma_fifo" to read from
+ * @pended: address of structure to fill with read address/len
+ *          The data/len fields will be NULL/0 if no dma is pended.
  *
- * Returns the # of used bytes reमुख्यing in fअगरo (ie, अगर > 0, more data
- * reमुख्यs in the fअगरo that was not pended). If < 0, वापस is error code.
+ * Returns the # of used bytes remaining in fifo (ie, if > 0, more data
+ * remains in the fifo that was not pended). If < 0, return is error code.
  */
-पूर्णांक dma_fअगरo_out_pend(काष्ठा dma_fअगरo *fअगरo, काष्ठा dma_pending *pended)
-अणु
-	अचिन्हित पूर्णांक len, n, ofs, l, limit;
+int dma_fifo_out_pend(struct dma_fifo *fifo, struct dma_pending *pended)
+{
+	unsigned int len, n, ofs, l, limit;
 
-	अगर (!fअगरo->data)
-		वापस -ENOENT;
-	अगर (fअगरo->corrupt)
-		वापस -ENXIO;
+	if (!fifo->data)
+		return -ENOENT;
+	if (fifo->corrupt)
+		return -ENXIO;
 
 	pended->len = 0;
-	pended->data = शून्य;
-	pended->out = fअगरo->out;
+	pended->data = NULL;
+	pended->out = fifo->out;
 
-	len = fअगरo->in - fअगरo->out;
-	अगर (!len)
-		वापस -ENODATA;
-	अगर (fअगरo->खोलो == fअगरo->खोलो_limit)
-		वापस -EAGAIN;
+	len = fifo->in - fifo->out;
+	if (!len)
+		return -ENODATA;
+	if (fifo->open == fifo->open_limit)
+		return -EAGAIN;
 
 	n = len;
-	ofs = fअगरo->out % fअगरo->capacity;
-	l = fअगरo->capacity - ofs;
-	limit = min_t(अचिन्हित पूर्णांक, l, fअगरo->tx_limit);
-	अगर (n > limit) अणु
+	ofs = fifo->out % fifo->capacity;
+	l = fifo->capacity - ofs;
+	limit = min_t(unsigned int, l, fifo->tx_limit);
+	if (n > limit) {
 		n = limit;
-		fअगरo->out += limit;
-	पूर्ण अन्यथा अगर (ofs + n > fअगरo->guard) अणु
-		fअगरo->out += l;
-		fअगरo->in = fअगरo->out;
-	पूर्ण अन्यथा अणु
-		fअगरo->out += round_up(n, fअगरo->align);
-		fअगरo->in = fअगरo->out;
-	पूर्ण
+		fifo->out += limit;
+	} else if (ofs + n > fifo->guard) {
+		fifo->out += l;
+		fifo->in = fifo->out;
+	} else {
+		fifo->out += round_up(n, fifo->align);
+		fifo->in = fifo->out;
+	}
 
-	df_trace("in: %u out: %u done: %u n: %d len: %u avail: %d", fअगरo->in,
-		 fअगरo->out, fअगरo->करोne, n, len, fअगरo->avail);
+	df_trace("in: %u out: %u done: %u n: %d len: %u avail: %d", fifo->in,
+		 fifo->out, fifo->done, n, len, fifo->avail);
 
 	pended->len = n;
-	pended->data = fअगरo->data + ofs;
-	pended->next = fअगरo->out;
-	list_add_tail(&pended->link, &fअगरo->pending);
-	++fअगरo->खोलो;
+	pended->data = fifo->data + ofs;
+	pended->next = fifo->out;
+	list_add_tail(&pended->link, &fifo->pending);
+	++fifo->open;
 
-	अगर (FAIL(fअगरo, fअगरo->खोलो > fअगरo->खोलो_limit,
+	if (FAIL(fifo, fifo->open > fifo->open_limit,
 		 "past open limit:%d (limit:%d)",
-		 fअगरo->खोलो, fअगरo->खोलो_limit))
-		वापस -ENXIO;
-	अगर (FAIL(fअगरo, fअगरo->out & (fअगरo->align - 1),
+		 fifo->open, fifo->open_limit))
+		return -ENXIO;
+	if (FAIL(fifo, fifo->out & (fifo->align - 1),
 		 "fifo out unaligned:%u (align:%u)",
-		 fअगरo->out, fअगरo->align))
-		वापस -ENXIO;
+		 fifo->out, fifo->align))
+		return -ENXIO;
 
-	वापस len - n;
-पूर्ण
+	return len - n;
+}
 
 /**
- * dma_fअगरo_out_complete - marks pended dma as completed
- * @fअगरo: address of in-place "struct dma_fifo" which was पढ़ो from
- * @complete: address of काष्ठाure क्रम previously pended dma to mark completed
+ * dma_fifo_out_complete - marks pended dma as completed
+ * @fifo: address of in-place "struct dma_fifo" which was read from
+ * @complete: address of structure for previously pended dma to mark completed
  */
-पूर्णांक dma_fअगरo_out_complete(काष्ठा dma_fअगरo *fअगरo, काष्ठा dma_pending *complete)
-अणु
-	काष्ठा dma_pending *pending, *next, *पंचांगp;
+int dma_fifo_out_complete(struct dma_fifo *fifo, struct dma_pending *complete)
+{
+	struct dma_pending *pending, *next, *tmp;
 
-	अगर (!fअगरo->data)
-		वापस -ENOENT;
-	अगर (fअगरo->corrupt)
-		वापस -ENXIO;
-	अगर (list_empty(&fअगरo->pending) && fअगरo->खोलो == 0)
-		वापस -EINVAL;
+	if (!fifo->data)
+		return -ENOENT;
+	if (fifo->corrupt)
+		return -ENXIO;
+	if (list_empty(&fifo->pending) && fifo->open == 0)
+		return -EINVAL;
 
-	अगर (FAIL(fअगरo, list_empty(&fअगरo->pending) != (fअगरo->खोलो == 0),
+	if (FAIL(fifo, list_empty(&fifo->pending) != (fifo->open == 0),
 		 "pending list disagrees with open count:%d",
-		 fअगरo->खोलो))
-		वापस -ENXIO;
+		 fifo->open))
+		return -ENXIO;
 
-	पंचांगp = complete->data;
-	*पंचांगp = *complete;
-	list_replace(&complete->link, &पंचांगp->link);
-	dp_mark_completed(पंचांगp);
+	tmp = complete->data;
+	*tmp = *complete;
+	list_replace(&complete->link, &tmp->link);
+	dp_mark_completed(tmp);
 
-	/* Only update the fअगरo in the original pended order */
-	list_क्रम_each_entry_safe(pending, next, &fअगरo->pending, link) अणु
-		अगर (!dp_is_completed(pending)) अणु
+	/* Only update the fifo in the original pended order */
+	list_for_each_entry_safe(pending, next, &fifo->pending, link) {
+		if (!dp_is_completed(pending)) {
 			df_trace("still pending: saved out: %u len: %d",
 				 pending->out, pending->len);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (FAIL(fअगरo, pending->out != fअगरo->करोne ||
-			 addr_check(fअगरo->in, fअगरo->करोne, pending->next),
+		if (FAIL(fifo, pending->out != fifo->done ||
+			 addr_check(fifo->in, fifo->done, pending->next),
 			 "in:%u out:%u done:%u saved:%u next:%u",
-			 fअगरo->in, fअगरo->out, fअगरo->करोne, pending->out,
+			 fifo->in, fifo->out, fifo->done, pending->out,
 			 pending->next))
-			वापस -ENXIO;
+			return -ENXIO;
 
 		list_del_init(&pending->link);
-		fअगरo->करोne = pending->next;
-		fअगरo->avail += pending->len;
-		--fअगरo->खोलो;
+		fifo->done = pending->next;
+		fifo->avail += pending->len;
+		--fifo->open;
 
-		df_trace("in: %u out: %u done: %u len: %u avail: %d", fअगरo->in,
-			 fअगरo->out, fअगरo->करोne, pending->len, fअगरo->avail);
-	पूर्ण
+		df_trace("in: %u out: %u done: %u len: %u avail: %d", fifo->in,
+			 fifo->out, fifo->done, pending->len, fifo->avail);
+	}
 
-	अगर (FAIL(fअगरo, fअगरo->खोलो < 0, "open dma:%d < 0", fअगरo->खोलो))
-		वापस -ENXIO;
-	अगर (FAIL(fअगरo, fअगरo->avail > fअगरo->size, "fifo avail:%d > size:%d",
-		 fअगरo->avail, fअगरo->size))
-		वापस -ENXIO;
+	if (FAIL(fifo, fifo->open < 0, "open dma:%d < 0", fifo->open))
+		return -ENXIO;
+	if (FAIL(fifo, fifo->avail > fifo->size, "fifo avail:%d > size:%d",
+		 fifo->avail, fifo->size))
+		return -ENXIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

@@ -1,56 +1,55 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2020 NovaTech LLC
  * George McCollister <george.mccollister@gmail.com>
  */
 
-#समावेश <net/dsa.h>
-#समावेश <linux/अगर_bridge.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/netdev_features.h>
-#समावेश <linux/अगर_hsr.h>
-#समावेश "xrs700x.h"
-#समावेश "xrs700x_reg.h"
+#include <net/dsa.h>
+#include <linux/if_bridge.h>
+#include <linux/of_device.h>
+#include <linux/netdev_features.h>
+#include <linux/if_hsr.h>
+#include "xrs700x.h"
+#include "xrs700x_reg.h"
 
-#घोषणा XRS700X_MIB_INTERVAL msecs_to_jअगरfies(3000)
+#define XRS700X_MIB_INTERVAL msecs_to_jiffies(3000)
 
-#घोषणा XRS7000X_SUPPORTED_HSR_FEATURES \
+#define XRS7000X_SUPPORTED_HSR_FEATURES \
 	(NETIF_F_HW_HSR_TAG_INS | NETIF_F_HW_HSR_TAG_RM | \
 	 NETIF_F_HW_HSR_FWD | NETIF_F_HW_HSR_DUP)
 
-#घोषणा XRS7003E_ID	0x100
-#घोषणा XRS7003F_ID	0x101
-#घोषणा XRS7004E_ID	0x200
-#घोषणा XRS7004F_ID	0x201
+#define XRS7003E_ID	0x100
+#define XRS7003F_ID	0x101
+#define XRS7004E_ID	0x200
+#define XRS7004F_ID	0x201
 
-स्थिर काष्ठा xrs700x_info xrs7003e_info = अणुXRS7003E_ID, "XRS7003E", 3पूर्ण;
+const struct xrs700x_info xrs7003e_info = {XRS7003E_ID, "XRS7003E", 3};
 EXPORT_SYMBOL(xrs7003e_info);
 
-स्थिर काष्ठा xrs700x_info xrs7003f_info = अणुXRS7003F_ID, "XRS7003F", 3पूर्ण;
+const struct xrs700x_info xrs7003f_info = {XRS7003F_ID, "XRS7003F", 3};
 EXPORT_SYMBOL(xrs7003f_info);
 
-स्थिर काष्ठा xrs700x_info xrs7004e_info = अणुXRS7004E_ID, "XRS7004E", 4पूर्ण;
+const struct xrs700x_info xrs7004e_info = {XRS7004E_ID, "XRS7004E", 4};
 EXPORT_SYMBOL(xrs7004e_info);
 
-स्थिर काष्ठा xrs700x_info xrs7004f_info = अणुXRS7004F_ID, "XRS7004F", 4पूर्ण;
+const struct xrs700x_info xrs7004f_info = {XRS7004F_ID, "XRS7004F", 4};
 EXPORT_SYMBOL(xrs7004f_info);
 
-काष्ठा xrs700x_regfield अणु
-	काष्ठा reg_field rf;
-	काष्ठा regmap_field **rmf;
-पूर्ण;
+struct xrs700x_regfield {
+	struct reg_field rf;
+	struct regmap_field **rmf;
+};
 
-काष्ठा xrs700x_mib अणु
-	अचिन्हित पूर्णांक offset;
-	स्थिर अक्षर *name;
-	पूर्णांक stats64_offset;
-पूर्ण;
+struct xrs700x_mib {
+	unsigned int offset;
+	const char *name;
+	int stats64_offset;
+};
 
-#घोषणा XRS700X_MIB_ETHTOOL_ONLY(o, n) अणुo, n, -1पूर्ण
-#घोषणा XRS700X_MIB(o, n, m) अणुo, n, दुरत्व(काष्ठा rtnl_link_stats64, m)पूर्ण
+#define XRS700X_MIB_ETHTOOL_ONLY(o, n) {o, n, -1}
+#define XRS700X_MIB(o, n, m) {o, n, offsetof(struct rtnl_link_stats64, m)}
 
-अटल स्थिर काष्ठा xrs700x_mib xrs700x_mibs[] = अणु
+static const struct xrs700x_mib xrs700x_mibs[] = {
 	XRS700X_MIB(XRS_RX_GOOD_OCTETS_L, "rx_good_octets", rx_bytes),
 	XRS700X_MIB_ETHTOOL_ONLY(XRS_RX_BAD_OCTETS_L, "rx_bad_octets"),
 	XRS700X_MIB(XRS_RX_UNICAST_L, "rx_unicast", rx_packets),
@@ -78,59 +77,59 @@ EXPORT_SYMBOL(xrs7004f_info);
 	XRS700X_MIB_ETHTOOL_ONLY(XRS_TX_HSR_PRP_L, "tx_hsr_prp"),
 	XRS700X_MIB(XRS_PRIQ_DROP_L, "priq_drop", tx_dropped),
 	XRS700X_MIB(XRS_EARLY_DROP_L, "early_drop", tx_dropped),
-पूर्ण;
+};
 
-अटल व्योम xrs700x_get_strings(काष्ठा dsa_चयन *ds, पूर्णांक port,
+static void xrs700x_get_strings(struct dsa_switch *ds, int port,
 				u32 stringset, u8 *data)
-अणु
-	पूर्णांक i;
+{
+	int i;
 
-	अगर (stringset != ETH_SS_STATS)
-		वापस;
+	if (stringset != ETH_SS_STATS)
+		return;
 
-	क्रम (i = 0; i < ARRAY_SIZE(xrs700x_mibs); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(xrs700x_mibs); i++) {
 		strscpy(data, xrs700x_mibs[i].name, ETH_GSTRING_LEN);
 		data += ETH_GSTRING_LEN;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक xrs700x_get_sset_count(काष्ठा dsa_चयन *ds, पूर्णांक port, पूर्णांक sset)
-अणु
-	अगर (sset != ETH_SS_STATS)
-		वापस -EOPNOTSUPP;
+static int xrs700x_get_sset_count(struct dsa_switch *ds, int port, int sset)
+{
+	if (sset != ETH_SS_STATS)
+		return -EOPNOTSUPP;
 
-	वापस ARRAY_SIZE(xrs700x_mibs);
-पूर्ण
+	return ARRAY_SIZE(xrs700x_mibs);
+}
 
-अटल व्योम xrs700x_पढ़ो_port_counters(काष्ठा xrs700x *priv, पूर्णांक port)
-अणु
-	काष्ठा xrs700x_port *p = &priv->ports[port];
-	काष्ठा rtnl_link_stats64 stats;
-	पूर्णांक i;
+static void xrs700x_read_port_counters(struct xrs700x *priv, int port)
+{
+	struct xrs700x_port *p = &priv->ports[port];
+	struct rtnl_link_stats64 stats;
+	int i;
 
-	स_रखो(&stats, 0, माप(stats));
+	memset(&stats, 0, sizeof(stats));
 
 	mutex_lock(&p->mib_mutex);
 
 	/* Capture counter values */
-	regmap_ग_लिखो(priv->regmap, XRS_CNT_CTRL(port), 1);
+	regmap_write(priv->regmap, XRS_CNT_CTRL(port), 1);
 
-	क्रम (i = 0; i < ARRAY_SIZE(xrs700x_mibs); i++) अणु
-		अचिन्हित पूर्णांक high = 0, low = 0, reg;
+	for (i = 0; i < ARRAY_SIZE(xrs700x_mibs); i++) {
+		unsigned int high = 0, low = 0, reg;
 
 		reg = xrs700x_mibs[i].offset + XRS_PORT_OFFSET * port;
-		regmap_पढ़ो(priv->regmap, reg, &low);
-		regmap_पढ़ो(priv->regmap, reg + 2, &high);
+		regmap_read(priv->regmap, reg, &low);
+		regmap_read(priv->regmap, reg + 2, &high);
 
 		p->mib_data[i] += (high << 16) | low;
 
-		अगर (xrs700x_mibs[i].stats64_offset >= 0) अणु
+		if (xrs700x_mibs[i].stats64_offset >= 0) {
 			u8 *s = (u8 *)&stats + xrs700x_mibs[i].stats64_offset;
 			*(u64 *)s += p->mib_data[i];
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* multicast must be added to rx_packets (which alपढ़ोy includes
+	/* multicast must be added to rx_packets (which already includes
 	 * unicast and broadcast)
 	 */
 	stats.rx_packets += stats.multicast;
@@ -140,492 +139,492 @@ EXPORT_SYMBOL(xrs7004f_info);
 	u64_stats_update_end(&p->syncp);
 
 	mutex_unlock(&p->mib_mutex);
-पूर्ण
+}
 
-अटल व्योम xrs700x_mib_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा xrs700x *priv = container_of(work, काष्ठा xrs700x,
+static void xrs700x_mib_work(struct work_struct *work)
+{
+	struct xrs700x *priv = container_of(work, struct xrs700x,
 					    mib_work.work);
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < priv->ds->num_ports; i++)
-		xrs700x_पढ़ो_port_counters(priv, i);
+	for (i = 0; i < priv->ds->num_ports; i++)
+		xrs700x_read_port_counters(priv, i);
 
 	schedule_delayed_work(&priv->mib_work, XRS700X_MIB_INTERVAL);
-पूर्ण
+}
 
-अटल व्योम xrs700x_get_ethtool_stats(काष्ठा dsa_चयन *ds, पूर्णांक port,
+static void xrs700x_get_ethtool_stats(struct dsa_switch *ds, int port,
 				      u64 *data)
-अणु
-	काष्ठा xrs700x *priv = ds->priv;
-	काष्ठा xrs700x_port *p = &priv->ports[port];
+{
+	struct xrs700x *priv = ds->priv;
+	struct xrs700x_port *p = &priv->ports[port];
 
-	xrs700x_पढ़ो_port_counters(priv, port);
+	xrs700x_read_port_counters(priv, port);
 
 	mutex_lock(&p->mib_mutex);
-	स_नकल(data, p->mib_data, माप(*data) * ARRAY_SIZE(xrs700x_mibs));
+	memcpy(data, p->mib_data, sizeof(*data) * ARRAY_SIZE(xrs700x_mibs));
 	mutex_unlock(&p->mib_mutex);
-पूर्ण
+}
 
-अटल व्योम xrs700x_get_stats64(काष्ठा dsa_चयन *ds, पूर्णांक port,
-				काष्ठा rtnl_link_stats64 *s)
-अणु
-	काष्ठा xrs700x *priv = ds->priv;
-	काष्ठा xrs700x_port *p = &priv->ports[port];
-	अचिन्हित पूर्णांक start;
+static void xrs700x_get_stats64(struct dsa_switch *ds, int port,
+				struct rtnl_link_stats64 *s)
+{
+	struct xrs700x *priv = ds->priv;
+	struct xrs700x_port *p = &priv->ports[port];
+	unsigned int start;
 
-	करो अणु
+	do {
 		start = u64_stats_fetch_begin(&p->syncp);
 		*s = p->stats64;
-	पूर्ण जबतक (u64_stats_fetch_retry(&p->syncp, start));
-पूर्ण
+	} while (u64_stats_fetch_retry(&p->syncp, start));
+}
 
-अटल पूर्णांक xrs700x_setup_regmap_range(काष्ठा xrs700x *priv)
-अणु
-	काष्ठा xrs700x_regfield regfields[] = अणु
-		अणु
+static int xrs700x_setup_regmap_range(struct xrs700x *priv)
+{
+	struct xrs700x_regfield regfields[] = {
+		{
 			.rf = REG_FIELD_ID(XRS_PORT_STATE(0), 0, 1,
 					   priv->ds->num_ports,
 					   XRS_PORT_OFFSET),
-			.rmf = &priv->ps_क्रमward
-		पूर्ण,
-		अणु
+			.rmf = &priv->ps_forward
+		},
+		{
 			.rf = REG_FIELD_ID(XRS_PORT_STATE(0), 2, 3,
 					   priv->ds->num_ports,
 					   XRS_PORT_OFFSET),
 			.rmf = &priv->ps_management
-		पूर्ण,
-		अणु
+		},
+		{
 			.rf = REG_FIELD_ID(XRS_PORT_STATE(0), 4, 9,
 					   priv->ds->num_ports,
 					   XRS_PORT_OFFSET),
 			.rmf = &priv->ps_sel_speed
-		पूर्ण,
-		अणु
+		},
+		{
 			.rf = REG_FIELD_ID(XRS_PORT_STATE(0), 10, 11,
 					   priv->ds->num_ports,
 					   XRS_PORT_OFFSET),
 			.rmf = &priv->ps_cur_speed
-		पूर्ण
-	पूर्ण;
-	पूर्णांक i = 0;
+		}
+	};
+	int i = 0;
 
-	क्रम (; i < ARRAY_SIZE(regfields); i++) अणु
+	for (; i < ARRAY_SIZE(regfields); i++) {
 		*regfields[i].rmf = devm_regmap_field_alloc(priv->dev,
 							    priv->regmap,
 							    regfields[i].rf);
-		अगर (IS_ERR(*regfields[i].rmf))
-			वापस PTR_ERR(*regfields[i].rmf);
-	पूर्ण
+		if (IS_ERR(*regfields[i].rmf))
+			return PTR_ERR(*regfields[i].rmf);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल क्रमागत dsa_tag_protocol xrs700x_get_tag_protocol(काष्ठा dsa_चयन *ds,
-						      पूर्णांक port,
-						      क्रमागत dsa_tag_protocol m)
-अणु
-	वापस DSA_TAG_PROTO_XRS700X;
-पूर्ण
+static enum dsa_tag_protocol xrs700x_get_tag_protocol(struct dsa_switch *ds,
+						      int port,
+						      enum dsa_tag_protocol m)
+{
+	return DSA_TAG_PROTO_XRS700X;
+}
 
-अटल पूर्णांक xrs700x_reset(काष्ठा dsa_चयन *ds)
-अणु
-	काष्ठा xrs700x *priv = ds->priv;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+static int xrs700x_reset(struct dsa_switch *ds)
+{
+	struct xrs700x *priv = ds->priv;
+	unsigned int val;
+	int ret;
 
-	ret = regmap_ग_लिखो(priv->regmap, XRS_GENERAL, XRS_GENERAL_RESET);
-	अगर (ret)
-		जाओ error;
+	ret = regmap_write(priv->regmap, XRS_GENERAL, XRS_GENERAL_RESET);
+	if (ret)
+		goto error;
 
-	ret = regmap_पढ़ो_poll_समयout(priv->regmap, XRS_GENERAL,
+	ret = regmap_read_poll_timeout(priv->regmap, XRS_GENERAL,
 				       val, !(val & XRS_GENERAL_RESET),
 				       10, 1000);
 error:
-	अगर (ret) अणु
+	if (ret) {
 		dev_err_ratelimited(priv->dev, "error resetting switch: %d\n",
 				    ret);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम xrs700x_port_stp_state_set(काष्ठा dsa_चयन *ds, पूर्णांक port,
+static void xrs700x_port_stp_state_set(struct dsa_switch *ds, int port,
 				       u8 state)
-अणु
-	काष्ठा xrs700x *priv = ds->priv;
-	अचिन्हित पूर्णांक bpdus = 1;
-	अचिन्हित पूर्णांक val;
+{
+	struct xrs700x *priv = ds->priv;
+	unsigned int bpdus = 1;
+	unsigned int val;
 
-	चयन (state) अणु
-	हाल BR_STATE_DISABLED:
+	switch (state) {
+	case BR_STATE_DISABLED:
 		bpdus = 0;
 		fallthrough;
-	हाल BR_STATE_BLOCKING:
-	हाल BR_STATE_LISTENING:
+	case BR_STATE_BLOCKING:
+	case BR_STATE_LISTENING:
 		val = XRS_PORT_DISABLED;
-		अवरोध;
-	हाल BR_STATE_LEARNING:
+		break;
+	case BR_STATE_LEARNING:
 		val = XRS_PORT_LEARNING;
-		अवरोध;
-	हाल BR_STATE_FORWARDING:
+		break;
+	case BR_STATE_FORWARDING:
 		val = XRS_PORT_FORWARDING;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(ds->dev, "invalid STP state: %d\n", state);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	regmap_fields_ग_लिखो(priv->ps_क्रमward, port, val);
+	regmap_fields_write(priv->ps_forward, port, val);
 
 	/* Enable/disable inbound policy added by xrs700x_port_add_bpdu_ipf()
-	 * which allows BPDU क्रमwarding to the CPU port when the front facing
+	 * which allows BPDU forwarding to the CPU port when the front facing
 	 * port is in disabled/learning state.
 	 */
 	regmap_update_bits(priv->regmap, XRS_ETH_ADDR_CFG(port, 0), 1, bpdus);
 
 	dev_dbg_ratelimited(priv->dev, "%s - port: %d, state: %u, val: 0x%x\n",
 			    __func__, port, state, val);
-पूर्ण
+}
 
 /* Add an inbound policy filter which matches the BPDU destination MAC
- * and क्रमwards to the CPU port. Leave the policy disabled, it will be
+ * and forwards to the CPU port. Leave the policy disabled, it will be
  * enabled as needed.
  */
-अटल पूर्णांक xrs700x_port_add_bpdu_ipf(काष्ठा dsa_चयन *ds, पूर्णांक port)
-अणु
-	काष्ठा xrs700x *priv = ds->priv;
-	अचिन्हित पूर्णांक val = 0;
-	पूर्णांक i = 0;
-	पूर्णांक ret;
+static int xrs700x_port_add_bpdu_ipf(struct dsa_switch *ds, int port)
+{
+	struct xrs700x *priv = ds->priv;
+	unsigned int val = 0;
+	int i = 0;
+	int ret;
 
 	/* Compare all 48 bits of the destination MAC address. */
-	ret = regmap_ग_लिखो(priv->regmap, XRS_ETH_ADDR_CFG(port, 0), 48 << 2);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_write(priv->regmap, XRS_ETH_ADDR_CFG(port, 0), 48 << 2);
+	if (ret)
+		return ret;
 
 	/* match BPDU destination 01:80:c2:00:00:00 */
-	क्रम (i = 0; i < माप(eth_stp_addr); i += 2) अणु
-		ret = regmap_ग_लिखो(priv->regmap, XRS_ETH_ADDR_0(port, 0) + i,
+	for (i = 0; i < sizeof(eth_stp_addr); i += 2) {
+		ret = regmap_write(priv->regmap, XRS_ETH_ADDR_0(port, 0) + i,
 				   eth_stp_addr[i] |
 				   (eth_stp_addr[i + 1] << 8));
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	/* Mirror BPDU to CPU port */
-	क्रम (i = 0; i < ds->num_ports; i++) अणु
-		अगर (dsa_is_cpu_port(ds, i))
+	for (i = 0; i < ds->num_ports; i++) {
+		if (dsa_is_cpu_port(ds, i))
 			val |= BIT(i);
-	पूर्ण
+	}
 
-	ret = regmap_ग_लिखो(priv->regmap, XRS_ETH_ADDR_FWD_MIRROR(port, 0), val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_write(priv->regmap, XRS_ETH_ADDR_FWD_MIRROR(port, 0), val);
+	if (ret)
+		return ret;
 
-	ret = regmap_ग_लिखो(priv->regmap, XRS_ETH_ADDR_FWD_ALLOW(port, 0), 0);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_write(priv->regmap, XRS_ETH_ADDR_FWD_ALLOW(port, 0), 0);
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xrs700x_port_setup(काष्ठा dsa_चयन *ds, पूर्णांक port)
-अणु
+static int xrs700x_port_setup(struct dsa_switch *ds, int port)
+{
 	bool cpu_port = dsa_is_cpu_port(ds, port);
-	काष्ठा xrs700x *priv = ds->priv;
-	अचिन्हित पूर्णांक val = 0;
-	पूर्णांक ret, i;
+	struct xrs700x *priv = ds->priv;
+	unsigned int val = 0;
+	int ret, i;
 
 	xrs700x_port_stp_state_set(ds, port, BR_STATE_DISABLED);
 
-	/* Disable क्रमwarding to non-CPU ports */
-	क्रम (i = 0; i < ds->num_ports; i++) अणु
-		अगर (!dsa_is_cpu_port(ds, i))
+	/* Disable forwarding to non-CPU ports */
+	for (i = 0; i < ds->num_ports; i++) {
+		if (!dsa_is_cpu_port(ds, i))
 			val |= BIT(i);
-	पूर्ण
+	}
 
-	/* 1 = Disable क्रमwarding to the port */
-	ret = regmap_ग_लिखो(priv->regmap, XRS_PORT_FWD_MASK(port), val);
-	अगर (ret)
-		वापस ret;
+	/* 1 = Disable forwarding to the port */
+	ret = regmap_write(priv->regmap, XRS_PORT_FWD_MASK(port), val);
+	if (ret)
+		return ret;
 
 	val = cpu_port ? XRS_PORT_MODE_MANAGEMENT : XRS_PORT_MODE_NORMAL;
-	ret = regmap_fields_ग_लिखो(priv->ps_management, port, val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_fields_write(priv->ps_management, port, val);
+	if (ret)
+		return ret;
 
-	अगर (!cpu_port) अणु
+	if (!cpu_port) {
 		ret = xrs700x_port_add_bpdu_ipf(ds, port);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xrs700x_setup(काष्ठा dsa_चयन *ds)
-अणु
-	काष्ठा xrs700x *priv = ds->priv;
-	पूर्णांक ret, i;
+static int xrs700x_setup(struct dsa_switch *ds)
+{
+	struct xrs700x *priv = ds->priv;
+	int ret, i;
 
 	ret = xrs700x_reset(ds);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	क्रम (i = 0; i < ds->num_ports; i++) अणु
+	for (i = 0; i < ds->num_ports; i++) {
 		ret = xrs700x_port_setup(ds, i);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	schedule_delayed_work(&priv->mib_work, XRS700X_MIB_INTERVAL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम xrs700x_tearकरोwn(काष्ठा dsa_चयन *ds)
-अणु
-	काष्ठा xrs700x *priv = ds->priv;
+static void xrs700x_teardown(struct dsa_switch *ds)
+{
+	struct xrs700x *priv = ds->priv;
 
 	cancel_delayed_work_sync(&priv->mib_work);
-पूर्ण
+}
 
-अटल व्योम xrs700x_phylink_validate(काष्ठा dsa_चयन *ds, पूर्णांक port,
-				     अचिन्हित दीर्घ *supported,
-				     काष्ठा phylink_link_state *state)
-अणु
-	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = अणु 0, पूर्ण;
+static void xrs700x_phylink_validate(struct dsa_switch *ds, int port,
+				     unsigned long *supported,
+				     struct phylink_link_state *state)
+{
+	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = { 0, };
 
-	चयन (port) अणु
-	हाल 0:
-		अवरोध;
-	हाल 1:
-	हाल 2:
-	हाल 3:
+	switch (port) {
+	case 0:
+		break;
+	case 1:
+	case 2:
+	case 3:
 		phylink_set(mask, 1000baseT_Full);
-		अवरोध;
-	शेष:
-		biपंचांगap_zero(supported, __ETHTOOL_LINK_MODE_MASK_NBITS);
+		break;
+	default:
+		bitmap_zero(supported, __ETHTOOL_LINK_MODE_MASK_NBITS);
 		dev_err(ds->dev, "Unsupported port: %i\n", port);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	phylink_set_port_modes(mask);
 
-	/* The चयन only supports full duplex. */
+	/* The switch only supports full duplex. */
 	phylink_set(mask, 10baseT_Full);
 	phylink_set(mask, 100baseT_Full);
 
-	biपंचांगap_and(supported, supported, mask,
+	bitmap_and(supported, supported, mask,
 		   __ETHTOOL_LINK_MODE_MASK_NBITS);
-	biपंचांगap_and(state->advertising, state->advertising, mask,
+	bitmap_and(state->advertising, state->advertising, mask,
 		   __ETHTOOL_LINK_MODE_MASK_NBITS);
-पूर्ण
+}
 
-अटल व्योम xrs700x_mac_link_up(काष्ठा dsa_चयन *ds, पूर्णांक port,
-				अचिन्हित पूर्णांक mode, phy_पूर्णांकerface_t पूर्णांकerface,
-				काष्ठा phy_device *phydev,
-				पूर्णांक speed, पूर्णांक duplex,
-				bool tx_छोड़ो, bool rx_छोड़ो)
-अणु
-	काष्ठा xrs700x *priv = ds->priv;
-	अचिन्हित पूर्णांक val;
+static void xrs700x_mac_link_up(struct dsa_switch *ds, int port,
+				unsigned int mode, phy_interface_t interface,
+				struct phy_device *phydev,
+				int speed, int duplex,
+				bool tx_pause, bool rx_pause)
+{
+	struct xrs700x *priv = ds->priv;
+	unsigned int val;
 
-	चयन (speed) अणु
-	हाल SPEED_1000:
+	switch (speed) {
+	case SPEED_1000:
 		val = XRS_PORT_SPEED_1000;
-		अवरोध;
-	हाल SPEED_100:
+		break;
+	case SPEED_100:
 		val = XRS_PORT_SPEED_100;
-		अवरोध;
-	हाल SPEED_10:
+		break;
+	case SPEED_10:
 		val = XRS_PORT_SPEED_10;
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 
-	regmap_fields_ग_लिखो(priv->ps_sel_speed, port, val);
+	regmap_fields_write(priv->ps_sel_speed, port, val);
 
 	dev_dbg_ratelimited(priv->dev, "%s: port: %d mode: %u speed: %u\n",
 			    __func__, port, mode, speed);
-पूर्ण
+}
 
-अटल पूर्णांक xrs700x_bridge_common(काष्ठा dsa_चयन *ds, पूर्णांक port,
-				 काष्ठा net_device *bridge, bool join)
-अणु
-	अचिन्हित पूर्णांक i, cpu_mask = 0, mask = 0;
-	काष्ठा xrs700x *priv = ds->priv;
-	पूर्णांक ret;
+static int xrs700x_bridge_common(struct dsa_switch *ds, int port,
+				 struct net_device *bridge, bool join)
+{
+	unsigned int i, cpu_mask = 0, mask = 0;
+	struct xrs700x *priv = ds->priv;
+	int ret;
 
-	क्रम (i = 0; i < ds->num_ports; i++) अणु
-		अगर (dsa_is_cpu_port(ds, i))
-			जारी;
+	for (i = 0; i < ds->num_ports; i++) {
+		if (dsa_is_cpu_port(ds, i))
+			continue;
 
 		cpu_mask |= BIT(i);
 
-		अगर (dsa_to_port(ds, i)->bridge_dev == bridge)
-			जारी;
+		if (dsa_to_port(ds, i)->bridge_dev == bridge)
+			continue;
 
 		mask |= BIT(i);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ds->num_ports; i++) अणु
-		अगर (dsa_to_port(ds, i)->bridge_dev != bridge)
-			जारी;
+	for (i = 0; i < ds->num_ports; i++) {
+		if (dsa_to_port(ds, i)->bridge_dev != bridge)
+			continue;
 
-		/* 1 = Disable क्रमwarding to the port */
-		ret = regmap_ग_लिखो(priv->regmap, XRS_PORT_FWD_MASK(i), mask);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		/* 1 = Disable forwarding to the port */
+		ret = regmap_write(priv->regmap, XRS_PORT_FWD_MASK(i), mask);
+		if (ret)
+			return ret;
+	}
 
-	अगर (!join) अणु
-		ret = regmap_ग_लिखो(priv->regmap, XRS_PORT_FWD_MASK(port),
+	if (!join) {
+		ret = regmap_write(priv->regmap, XRS_PORT_FWD_MASK(port),
 				   cpu_mask);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xrs700x_bridge_join(काष्ठा dsa_चयन *ds, पूर्णांक port,
-			       काष्ठा net_device *bridge)
-अणु
-	वापस xrs700x_bridge_common(ds, port, bridge, true);
-पूर्ण
+static int xrs700x_bridge_join(struct dsa_switch *ds, int port,
+			       struct net_device *bridge)
+{
+	return xrs700x_bridge_common(ds, port, bridge, true);
+}
 
-अटल व्योम xrs700x_bridge_leave(काष्ठा dsa_चयन *ds, पूर्णांक port,
-				 काष्ठा net_device *bridge)
-अणु
+static void xrs700x_bridge_leave(struct dsa_switch *ds, int port,
+				 struct net_device *bridge)
+{
 	xrs700x_bridge_common(ds, port, bridge, false);
-पूर्ण
+}
 
-अटल पूर्णांक xrs700x_hsr_join(काष्ठा dsa_चयन *ds, पूर्णांक port,
-			    काष्ठा net_device *hsr)
-अणु
-	अचिन्हित पूर्णांक val = XRS_HSR_CFG_HSR_PRP;
-	काष्ठा dsa_port *partner = शून्य, *dp;
-	काष्ठा xrs700x *priv = ds->priv;
-	काष्ठा net_device *slave;
-	पूर्णांक ret, i, hsr_pair[2];
-	क्रमागत hsr_version ver;
+static int xrs700x_hsr_join(struct dsa_switch *ds, int port,
+			    struct net_device *hsr)
+{
+	unsigned int val = XRS_HSR_CFG_HSR_PRP;
+	struct dsa_port *partner = NULL, *dp;
+	struct xrs700x *priv = ds->priv;
+	struct net_device *slave;
+	int ret, i, hsr_pair[2];
+	enum hsr_version ver;
 
 	ret = hsr_get_version(hsr, &ver);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Only ports 1 and 2 can be HSR/PRP redundant ports. */
-	अगर (port != 1 && port != 2)
-		वापस -EOPNOTSUPP;
+	if (port != 1 && port != 2)
+		return -EOPNOTSUPP;
 
-	अगर (ver == HSR_V1)
+	if (ver == HSR_V1)
 		val |= XRS_HSR_CFG_HSR;
-	अन्यथा अगर (ver == PRP_V1)
+	else if (ver == PRP_V1)
 		val |= XRS_HSR_CFG_PRP;
-	अन्यथा
-		वापस -EOPNOTSUPP;
+	else
+		return -EOPNOTSUPP;
 
-	dsa_hsr_क्रमeach_port(dp, ds, hsr) अणु
-		अगर (dp->index != port) अणु
+	dsa_hsr_foreach_port(dp, ds, hsr) {
+		if (dp->index != port) {
 			partner = dp;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	/* We can't enable redundancy on the चयन until both
-	 * redundant ports have चिन्हित up.
+	/* We can't enable redundancy on the switch until both
+	 * redundant ports have signed up.
 	 */
-	अगर (!partner)
-		वापस 0;
+	if (!partner)
+		return 0;
 
-	regmap_fields_ग_लिखो(priv->ps_क्रमward, partner->index,
+	regmap_fields_write(priv->ps_forward, partner->index,
 			    XRS_PORT_DISABLED);
-	regmap_fields_ग_लिखो(priv->ps_क्रमward, port, XRS_PORT_DISABLED);
+	regmap_fields_write(priv->ps_forward, port, XRS_PORT_DISABLED);
 
-	regmap_ग_लिखो(priv->regmap, XRS_HSR_CFG(partner->index),
+	regmap_write(priv->regmap, XRS_HSR_CFG(partner->index),
 		     val | XRS_HSR_CFG_LANID_A);
-	regmap_ग_लिखो(priv->regmap, XRS_HSR_CFG(port),
+	regmap_write(priv->regmap, XRS_HSR_CFG(port),
 		     val | XRS_HSR_CFG_LANID_B);
 
-	/* Clear bits क्रम both redundant ports (HSR only) and the CPU port to
-	 * enable क्रमwarding.
+	/* Clear bits for both redundant ports (HSR only) and the CPU port to
+	 * enable forwarding.
 	 */
 	val = GENMASK(ds->num_ports - 1, 0);
-	अगर (ver == HSR_V1) अणु
+	if (ver == HSR_V1) {
 		val &= ~BIT(partner->index);
 		val &= ~BIT(port);
-	पूर्ण
+	}
 	val &= ~BIT(dsa_upstream_port(ds, port));
-	regmap_ग_लिखो(priv->regmap, XRS_PORT_FWD_MASK(partner->index), val);
-	regmap_ग_लिखो(priv->regmap, XRS_PORT_FWD_MASK(port), val);
+	regmap_write(priv->regmap, XRS_PORT_FWD_MASK(partner->index), val);
+	regmap_write(priv->regmap, XRS_PORT_FWD_MASK(port), val);
 
-	regmap_fields_ग_लिखो(priv->ps_क्रमward, partner->index,
+	regmap_fields_write(priv->ps_forward, partner->index,
 			    XRS_PORT_FORWARDING);
-	regmap_fields_ग_लिखो(priv->ps_क्रमward, port, XRS_PORT_FORWARDING);
+	regmap_fields_write(priv->ps_forward, port, XRS_PORT_FORWARDING);
 
 	hsr_pair[0] = port;
 	hsr_pair[1] = partner->index;
-	क्रम (i = 0; i < ARRAY_SIZE(hsr_pair); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(hsr_pair); i++) {
 		slave = dsa_to_port(ds, hsr_pair[i])->slave;
 		slave->features |= XRS7000X_SUPPORTED_HSR_FEATURES;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xrs700x_hsr_leave(काष्ठा dsa_चयन *ds, पूर्णांक port,
-			     काष्ठा net_device *hsr)
-अणु
-	काष्ठा dsa_port *partner = शून्य, *dp;
-	काष्ठा xrs700x *priv = ds->priv;
-	काष्ठा net_device *slave;
-	पूर्णांक i, hsr_pair[2];
-	अचिन्हित पूर्णांक val;
+static int xrs700x_hsr_leave(struct dsa_switch *ds, int port,
+			     struct net_device *hsr)
+{
+	struct dsa_port *partner = NULL, *dp;
+	struct xrs700x *priv = ds->priv;
+	struct net_device *slave;
+	int i, hsr_pair[2];
+	unsigned int val;
 
-	dsa_hsr_क्रमeach_port(dp, ds, hsr) अणु
-		अगर (dp->index != port) अणु
+	dsa_hsr_foreach_port(dp, ds, hsr) {
+		if (dp->index != port) {
 			partner = dp;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!partner)
-		वापस 0;
+	if (!partner)
+		return 0;
 
-	regmap_fields_ग_लिखो(priv->ps_क्रमward, partner->index,
+	regmap_fields_write(priv->ps_forward, partner->index,
 			    XRS_PORT_DISABLED);
-	regmap_fields_ग_लिखो(priv->ps_क्रमward, port, XRS_PORT_DISABLED);
+	regmap_fields_write(priv->ps_forward, port, XRS_PORT_DISABLED);
 
-	regmap_ग_लिखो(priv->regmap, XRS_HSR_CFG(partner->index), 0);
-	regmap_ग_लिखो(priv->regmap, XRS_HSR_CFG(port), 0);
+	regmap_write(priv->regmap, XRS_HSR_CFG(partner->index), 0);
+	regmap_write(priv->regmap, XRS_HSR_CFG(port), 0);
 
-	/* Clear bit क्रम the CPU port to enable क्रमwarding. */
+	/* Clear bit for the CPU port to enable forwarding. */
 	val = GENMASK(ds->num_ports - 1, 0);
 	val &= ~BIT(dsa_upstream_port(ds, port));
-	regmap_ग_लिखो(priv->regmap, XRS_PORT_FWD_MASK(partner->index), val);
-	regmap_ग_लिखो(priv->regmap, XRS_PORT_FWD_MASK(port), val);
+	regmap_write(priv->regmap, XRS_PORT_FWD_MASK(partner->index), val);
+	regmap_write(priv->regmap, XRS_PORT_FWD_MASK(port), val);
 
-	regmap_fields_ग_लिखो(priv->ps_क्रमward, partner->index,
+	regmap_fields_write(priv->ps_forward, partner->index,
 			    XRS_PORT_FORWARDING);
-	regmap_fields_ग_लिखो(priv->ps_क्रमward, port, XRS_PORT_FORWARDING);
+	regmap_fields_write(priv->ps_forward, port, XRS_PORT_FORWARDING);
 
 	hsr_pair[0] = port;
 	hsr_pair[1] = partner->index;
-	क्रम (i = 0; i < ARRAY_SIZE(hsr_pair); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(hsr_pair); i++) {
 		slave = dsa_to_port(ds, hsr_pair[i])->slave;
 		slave->features &= ~XRS7000X_SUPPORTED_HSR_FEATURES;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dsa_चयन_ops xrs700x_ops = अणु
+static const struct dsa_switch_ops xrs700x_ops = {
 	.get_tag_protocol	= xrs700x_get_tag_protocol,
 	.setup			= xrs700x_setup,
-	.tearकरोwn		= xrs700x_tearकरोwn,
+	.teardown		= xrs700x_teardown,
 	.port_stp_state_set	= xrs700x_port_stp_state_set,
 	.phylink_validate	= xrs700x_phylink_validate,
 	.phylink_mac_link_up	= xrs700x_mac_link_up,
@@ -637,51 +636,51 @@ error:
 	.port_bridge_leave	= xrs700x_bridge_leave,
 	.port_hsr_join		= xrs700x_hsr_join,
 	.port_hsr_leave		= xrs700x_hsr_leave,
-पूर्ण;
+};
 
-अटल पूर्णांक xrs700x_detect(काष्ठा xrs700x *priv)
-अणु
-	स्थिर काष्ठा xrs700x_info *info;
-	अचिन्हित पूर्णांक id;
-	पूर्णांक ret;
+static int xrs700x_detect(struct xrs700x *priv)
+{
+	const struct xrs700x_info *info;
+	unsigned int id;
+	int ret;
 
-	ret = regmap_पढ़ो(priv->regmap, XRS_DEV_ID0, &id);
-	अगर (ret) अणु
+	ret = regmap_read(priv->regmap, XRS_DEV_ID0, &id);
+	if (ret) {
 		dev_err(priv->dev, "error %d while reading switch id.\n",
 			ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	info = of_device_get_match_data(priv->dev);
-	अगर (!info)
-		वापस -EINVAL;
+	if (!info)
+		return -EINVAL;
 
-	अगर (info->id == id) अणु
+	if (info->id == id) {
 		priv->ds->num_ports = info->num_ports;
 		dev_info(priv->dev, "%s detected.\n", info->name);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	dev_err(priv->dev, "expected switch id 0x%x but found 0x%x.\n",
 		info->id, id);
 
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-काष्ठा xrs700x *xrs700x_चयन_alloc(काष्ठा device *base, व्योम *devpriv)
-अणु
-	काष्ठा dsa_चयन *ds;
-	काष्ठा xrs700x *priv;
+struct xrs700x *xrs700x_switch_alloc(struct device *base, void *devpriv)
+{
+	struct dsa_switch *ds;
+	struct xrs700x *priv;
 
-	ds = devm_kzalloc(base, माप(*ds), GFP_KERNEL);
-	अगर (!ds)
-		वापस शून्य;
+	ds = devm_kzalloc(base, sizeof(*ds), GFP_KERNEL);
+	if (!ds)
+		return NULL;
 
 	ds->dev = base;
 
-	priv = devm_kzalloc(base, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस शून्य;
+	priv = devm_kzalloc(base, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return NULL;
 
 	INIT_DELAYED_WORK(&priv->mib_work, xrs700x_mib_work);
 
@@ -692,58 +691,58 @@ error:
 	priv->ds = ds;
 	priv->priv = devpriv;
 
-	वापस priv;
-पूर्ण
-EXPORT_SYMBOL(xrs700x_चयन_alloc);
+	return priv;
+}
+EXPORT_SYMBOL(xrs700x_switch_alloc);
 
-अटल पूर्णांक xrs700x_alloc_port_mib(काष्ठा xrs700x *priv, पूर्णांक port)
-अणु
-	काष्ठा xrs700x_port *p = &priv->ports[port];
+static int xrs700x_alloc_port_mib(struct xrs700x *priv, int port)
+{
+	struct xrs700x_port *p = &priv->ports[port];
 
-	p->mib_data = devm_kसुस्मृति(priv->dev, ARRAY_SIZE(xrs700x_mibs),
-				   माप(*p->mib_data), GFP_KERNEL);
-	अगर (!p->mib_data)
-		वापस -ENOMEM;
+	p->mib_data = devm_kcalloc(priv->dev, ARRAY_SIZE(xrs700x_mibs),
+				   sizeof(*p->mib_data), GFP_KERNEL);
+	if (!p->mib_data)
+		return -ENOMEM;
 
 	mutex_init(&p->mib_mutex);
 	u64_stats_init(&p->syncp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक xrs700x_चयन_रेजिस्टर(काष्ठा xrs700x *priv)
-अणु
-	पूर्णांक ret;
-	पूर्णांक i;
+int xrs700x_switch_register(struct xrs700x *priv)
+{
+	int ret;
+	int i;
 
 	ret = xrs700x_detect(priv);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = xrs700x_setup_regmap_range(priv);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	priv->ports = devm_kसुस्मृति(priv->dev, priv->ds->num_ports,
-				   माप(*priv->ports), GFP_KERNEL);
-	अगर (!priv->ports)
-		वापस -ENOMEM;
+	priv->ports = devm_kcalloc(priv->dev, priv->ds->num_ports,
+				   sizeof(*priv->ports), GFP_KERNEL);
+	if (!priv->ports)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < priv->ds->num_ports; i++) अणु
+	for (i = 0; i < priv->ds->num_ports; i++) {
 		ret = xrs700x_alloc_port_mib(priv, i);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस dsa_रेजिस्टर_चयन(priv->ds);
-पूर्ण
-EXPORT_SYMBOL(xrs700x_चयन_रेजिस्टर);
+	return dsa_register_switch(priv->ds);
+}
+EXPORT_SYMBOL(xrs700x_switch_register);
 
-व्योम xrs700x_चयन_हटाओ(काष्ठा xrs700x *priv)
-अणु
-	dsa_unरेजिस्टर_चयन(priv->ds);
-पूर्ण
-EXPORT_SYMBOL(xrs700x_चयन_हटाओ);
+void xrs700x_switch_remove(struct xrs700x *priv)
+{
+	dsa_unregister_switch(priv->ds);
+}
+EXPORT_SYMBOL(xrs700x_switch_remove);
 
 MODULE_AUTHOR("George McCollister <george.mccollister@gmail.com>");
 MODULE_DESCRIPTION("Arrow SpeedChips XRS700x DSA driver");

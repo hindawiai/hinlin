@@ -1,644 +1,643 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2011 Red Hat, Inc.
  *
  * This file is released under the GPL.
  */
-#समावेश "dm-block-manager.h"
-#समावेश "dm-persistent-data-internal.h"
+#include "dm-block-manager.h"
+#include "dm-persistent-data-internal.h"
 
-#समावेश <linux/dm-bufपन.स>
-#समावेश <linux/crc32c.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/rwsem.h>
-#समावेश <linux/device-mapper.h>
-#समावेश <linux/stacktrace.h>
-#समावेश <linux/sched/task.h>
+#include <linux/dm-bufio.h>
+#include <linux/crc32c.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/rwsem.h>
+#include <linux/device-mapper.h>
+#include <linux/stacktrace.h>
+#include <linux/sched/task.h>
 
-#घोषणा DM_MSG_PREFIX "block manager"
+#define DM_MSG_PREFIX "block manager"
 
 /*----------------------------------------------------------------*/
 
-#अगर_घोषित CONFIG_DM_DEBUG_BLOCK_MANAGER_LOCKING
+#ifdef CONFIG_DM_DEBUG_BLOCK_MANAGER_LOCKING
 
 /*
- * This is a पढ़ो/ग_लिखो semaphore with a couple of dअगरferences.
+ * This is a read/write semaphore with a couple of differences.
  *
- * i) There is a restriction on the number of concurrent पढ़ो locks that
+ * i) There is a restriction on the number of concurrent read locks that
  * may be held at once.  This is just an implementation detail.
  *
- * ii) Recursive locking attempts are detected and वापस EINVAL.  A stack
- * trace is also emitted क्रम the previous lock acquisition.
+ * ii) Recursive locking attempts are detected and return EINVAL.  A stack
+ * trace is also emitted for the previous lock acquisition.
  *
- * iii) Priority is given to ग_लिखो locks.
+ * iii) Priority is given to write locks.
  */
-#घोषणा MAX_HOLDERS 4
-#घोषणा MAX_STACK 10
+#define MAX_HOLDERS 4
+#define MAX_STACK 10
 
-काष्ठा stack_store अणु
-	अचिन्हित पूर्णांक	nr_entries;
-	अचिन्हित दीर्घ	entries[MAX_STACK];
-पूर्ण;
+struct stack_store {
+	unsigned int	nr_entries;
+	unsigned long	entries[MAX_STACK];
+};
 
-काष्ठा block_lock अणु
+struct block_lock {
 	spinlock_t lock;
 	__s32 count;
-	काष्ठा list_head रुकोers;
-	काष्ठा task_काष्ठा *holders[MAX_HOLDERS];
+	struct list_head waiters;
+	struct task_struct *holders[MAX_HOLDERS];
 
-#अगर_घोषित CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
-	काष्ठा stack_store traces[MAX_HOLDERS];
-#पूर्ण_अगर
-पूर्ण;
+#ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
+	struct stack_store traces[MAX_HOLDERS];
+#endif
+};
 
-काष्ठा रुकोer अणु
-	काष्ठा list_head list;
-	काष्ठा task_काष्ठा *task;
-	पूर्णांक wants_ग_लिखो;
-पूर्ण;
+struct waiter {
+	struct list_head list;
+	struct task_struct *task;
+	int wants_write;
+};
 
-अटल अचिन्हित __find_holder(काष्ठा block_lock *lock,
-			      काष्ठा task_काष्ठा *task)
-अणु
-	अचिन्हित i;
+static unsigned __find_holder(struct block_lock *lock,
+			      struct task_struct *task)
+{
+	unsigned i;
 
-	क्रम (i = 0; i < MAX_HOLDERS; i++)
-		अगर (lock->holders[i] == task)
-			अवरोध;
+	for (i = 0; i < MAX_HOLDERS; i++)
+		if (lock->holders[i] == task)
+			break;
 
 	BUG_ON(i == MAX_HOLDERS);
-	वापस i;
-पूर्ण
+	return i;
+}
 
 /* call this *after* you increment lock->count */
-अटल व्योम __add_holder(काष्ठा block_lock *lock, काष्ठा task_काष्ठा *task)
-अणु
-	अचिन्हित h = __find_holder(lock, शून्य);
-#अगर_घोषित CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
-	काष्ठा stack_store *t;
-#पूर्ण_अगर
+static void __add_holder(struct block_lock *lock, struct task_struct *task)
+{
+	unsigned h = __find_holder(lock, NULL);
+#ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
+	struct stack_store *t;
+#endif
 
-	get_task_काष्ठा(task);
+	get_task_struct(task);
 	lock->holders[h] = task;
 
-#अगर_घोषित CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
+#ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
 	t = lock->traces + h;
 	t->nr_entries = stack_trace_save(t->entries, MAX_STACK, 2);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-/* call this *beक्रमe* you decrement lock->count */
-अटल व्योम __del_holder(काष्ठा block_lock *lock, काष्ठा task_काष्ठा *task)
-अणु
-	अचिन्हित h = __find_holder(lock, task);
-	lock->holders[h] = शून्य;
-	put_task_काष्ठा(task);
-पूर्ण
+/* call this *before* you decrement lock->count */
+static void __del_holder(struct block_lock *lock, struct task_struct *task)
+{
+	unsigned h = __find_holder(lock, task);
+	lock->holders[h] = NULL;
+	put_task_struct(task);
+}
 
-अटल पूर्णांक __check_holder(काष्ठा block_lock *lock)
-अणु
-	अचिन्हित i;
+static int __check_holder(struct block_lock *lock)
+{
+	unsigned i;
 
-	क्रम (i = 0; i < MAX_HOLDERS; i++) अणु
-		अगर (lock->holders[i] == current) अणु
+	for (i = 0; i < MAX_HOLDERS; i++) {
+		if (lock->holders[i] == current) {
 			DMERR("recursive lock detected in metadata");
-#अगर_घोषित CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
+#ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
 			DMERR("previously held here:");
-			stack_trace_prपूर्णांक(lock->traces[i].entries,
+			stack_trace_print(lock->traces[i].entries,
 					  lock->traces[i].nr_entries, 4);
 
 			DMERR("subsequent acquisition attempted here:");
 			dump_stack();
-#पूर्ण_अगर
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+#endif
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __रुको(काष्ठा रुकोer *w)
-अणु
-	क्रम (;;) अणु
+static void __wait(struct waiter *w)
+{
+	for (;;) {
 		set_current_state(TASK_UNINTERRUPTIBLE);
 
-		अगर (!w->task)
-			अवरोध;
+		if (!w->task)
+			break;
 
 		schedule();
-	पूर्ण
+	}
 
 	set_current_state(TASK_RUNNING);
-पूर्ण
+}
 
-अटल व्योम __wake_रुकोer(काष्ठा रुकोer *w)
-अणु
-	काष्ठा task_काष्ठा *task;
+static void __wake_waiter(struct waiter *w)
+{
+	struct task_struct *task;
 
 	list_del(&w->list);
 	task = w->task;
 	smp_mb();
-	w->task = शून्य;
+	w->task = NULL;
 	wake_up_process(task);
-पूर्ण
+}
 
 /*
- * We either wake a few पढ़ोers or a single ग_लिखोr.
+ * We either wake a few readers or a single writer.
  */
-अटल व्योम __wake_many(काष्ठा block_lock *lock)
-अणु
-	काष्ठा रुकोer *w, *पंचांगp;
+static void __wake_many(struct block_lock *lock)
+{
+	struct waiter *w, *tmp;
 
 	BUG_ON(lock->count < 0);
-	list_क्रम_each_entry_safe(w, पंचांगp, &lock->रुकोers, list) अणु
-		अगर (lock->count >= MAX_HOLDERS)
-			वापस;
+	list_for_each_entry_safe(w, tmp, &lock->waiters, list) {
+		if (lock->count >= MAX_HOLDERS)
+			return;
 
-		अगर (w->wants_ग_लिखो) अणु
-			अगर (lock->count > 0)
-				वापस; /* still पढ़ो locked */
+		if (w->wants_write) {
+			if (lock->count > 0)
+				return; /* still read locked */
 
 			lock->count = -1;
 			__add_holder(lock, w->task);
-			__wake_रुकोer(w);
-			वापस;
-		पूर्ण
+			__wake_waiter(w);
+			return;
+		}
 
 		lock->count++;
 		__add_holder(lock, w->task);
-		__wake_रुकोer(w);
-	पूर्ण
-पूर्ण
+		__wake_waiter(w);
+	}
+}
 
-अटल व्योम bl_init(काष्ठा block_lock *lock)
-अणु
-	पूर्णांक i;
+static void bl_init(struct block_lock *lock)
+{
+	int i;
 
 	spin_lock_init(&lock->lock);
 	lock->count = 0;
-	INIT_LIST_HEAD(&lock->रुकोers);
-	क्रम (i = 0; i < MAX_HOLDERS; i++)
-		lock->holders[i] = शून्य;
-पूर्ण
+	INIT_LIST_HEAD(&lock->waiters);
+	for (i = 0; i < MAX_HOLDERS; i++)
+		lock->holders[i] = NULL;
+}
 
-अटल पूर्णांक __available_क्रम_पढ़ो(काष्ठा block_lock *lock)
-अणु
-	वापस lock->count >= 0 &&
+static int __available_for_read(struct block_lock *lock)
+{
+	return lock->count >= 0 &&
 		lock->count < MAX_HOLDERS &&
-		list_empty(&lock->रुकोers);
-पूर्ण
+		list_empty(&lock->waiters);
+}
 
-अटल पूर्णांक bl_करोwn_पढ़ो(काष्ठा block_lock *lock)
-अणु
-	पूर्णांक r;
-	काष्ठा रुकोer w;
+static int bl_down_read(struct block_lock *lock)
+{
+	int r;
+	struct waiter w;
 
 	spin_lock(&lock->lock);
 	r = __check_holder(lock);
-	अगर (r) अणु
+	if (r) {
 		spin_unlock(&lock->lock);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	अगर (__available_क्रम_पढ़ो(lock)) अणु
+	if (__available_for_read(lock)) {
 		lock->count++;
 		__add_holder(lock, current);
 		spin_unlock(&lock->lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	get_task_काष्ठा(current);
+	get_task_struct(current);
 
 	w.task = current;
-	w.wants_ग_लिखो = 0;
-	list_add_tail(&w.list, &lock->रुकोers);
+	w.wants_write = 0;
+	list_add_tail(&w.list, &lock->waiters);
 	spin_unlock(&lock->lock);
 
-	__रुको(&w);
-	put_task_काष्ठा(current);
-	वापस 0;
-पूर्ण
+	__wait(&w);
+	put_task_struct(current);
+	return 0;
+}
 
-अटल पूर्णांक bl_करोwn_पढ़ो_nonblock(काष्ठा block_lock *lock)
-अणु
-	पूर्णांक r;
+static int bl_down_read_nonblock(struct block_lock *lock)
+{
+	int r;
 
 	spin_lock(&lock->lock);
 	r = __check_holder(lock);
-	अगर (r)
-		जाओ out;
+	if (r)
+		goto out;
 
-	अगर (__available_क्रम_पढ़ो(lock)) अणु
+	if (__available_for_read(lock)) {
 		lock->count++;
 		__add_holder(lock, current);
 		r = 0;
-	पूर्ण अन्यथा
+	} else
 		r = -EWOULDBLOCK;
 
 out:
 	spin_unlock(&lock->lock);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम bl_up_पढ़ो(काष्ठा block_lock *lock)
-अणु
+static void bl_up_read(struct block_lock *lock)
+{
 	spin_lock(&lock->lock);
 	BUG_ON(lock->count <= 0);
 	__del_holder(lock, current);
 	--lock->count;
-	अगर (!list_empty(&lock->रुकोers))
+	if (!list_empty(&lock->waiters))
 		__wake_many(lock);
 	spin_unlock(&lock->lock);
-पूर्ण
+}
 
-अटल पूर्णांक bl_करोwn_ग_लिखो(काष्ठा block_lock *lock)
-अणु
-	पूर्णांक r;
-	काष्ठा रुकोer w;
+static int bl_down_write(struct block_lock *lock)
+{
+	int r;
+	struct waiter w;
 
 	spin_lock(&lock->lock);
 	r = __check_holder(lock);
-	अगर (r) अणु
+	if (r) {
 		spin_unlock(&lock->lock);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	अगर (lock->count == 0 && list_empty(&lock->रुकोers)) अणु
+	if (lock->count == 0 && list_empty(&lock->waiters)) {
 		lock->count = -1;
 		__add_holder(lock, current);
 		spin_unlock(&lock->lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	get_task_काष्ठा(current);
+	get_task_struct(current);
 	w.task = current;
-	w.wants_ग_लिखो = 1;
+	w.wants_write = 1;
 
 	/*
 	 * Writers given priority. We know there's only one mutator in the
-	 * प्रणाली, so ignoring the ordering reversal.
+	 * system, so ignoring the ordering reversal.
 	 */
-	list_add(&w.list, &lock->रुकोers);
+	list_add(&w.list, &lock->waiters);
 	spin_unlock(&lock->lock);
 
-	__रुको(&w);
-	put_task_काष्ठा(current);
+	__wait(&w);
+	put_task_struct(current);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम bl_up_ग_लिखो(काष्ठा block_lock *lock)
-अणु
+static void bl_up_write(struct block_lock *lock)
+{
 	spin_lock(&lock->lock);
 	__del_holder(lock, current);
 	lock->count = 0;
-	अगर (!list_empty(&lock->रुकोers))
+	if (!list_empty(&lock->waiters))
 		__wake_many(lock);
 	spin_unlock(&lock->lock);
-पूर्ण
+}
 
-अटल व्योम report_recursive_bug(dm_block_t b, पूर्णांक r)
-अणु
-	अगर (r == -EINVAL)
+static void report_recursive_bug(dm_block_t b, int r)
+{
+	if (r == -EINVAL)
 		DMERR("recursive acquisition of block %llu requested.",
-		      (अचिन्हित दीर्घ दीर्घ) b);
-पूर्ण
+		      (unsigned long long) b);
+}
 
-#अन्यथा  /* !CONFIG_DM_DEBUG_BLOCK_MANAGER_LOCKING */
+#else  /* !CONFIG_DM_DEBUG_BLOCK_MANAGER_LOCKING */
 
-#घोषणा bl_init(x) करो अणु पूर्ण जबतक (0)
-#घोषणा bl_करोwn_पढ़ो(x) 0
-#घोषणा bl_करोwn_पढ़ो_nonblock(x) 0
-#घोषणा bl_up_पढ़ो(x) करो अणु पूर्ण जबतक (0)
-#घोषणा bl_करोwn_ग_लिखो(x) 0
-#घोषणा bl_up_ग_लिखो(x) करो अणु पूर्ण जबतक (0)
-#घोषणा report_recursive_bug(x, y) करो अणु पूर्ण जबतक (0)
+#define bl_init(x) do { } while (0)
+#define bl_down_read(x) 0
+#define bl_down_read_nonblock(x) 0
+#define bl_up_read(x) do { } while (0)
+#define bl_down_write(x) 0
+#define bl_up_write(x) do { } while (0)
+#define report_recursive_bug(x, y) do { } while (0)
 
-#पूर्ण_अगर /* CONFIG_DM_DEBUG_BLOCK_MANAGER_LOCKING */
+#endif /* CONFIG_DM_DEBUG_BLOCK_MANAGER_LOCKING */
 
 /*----------------------------------------------------------------*/
 
 /*
- * Block manager is currently implemented using dm-bufio.  काष्ठा
- * dm_block_manager and काष्ठा dm_block map directly onto a couple of
- * काष्ठाs in the bufio पूर्णांकerface.  I want to retain the मुक्तकरोm to move
- * away from bufio in the future.  So these काष्ठाs are just cast within
- * this .c file, rather than making it through to the खुला पूर्णांकerface.
+ * Block manager is currently implemented using dm-bufio.  struct
+ * dm_block_manager and struct dm_block map directly onto a couple of
+ * structs in the bufio interface.  I want to retain the freedom to move
+ * away from bufio in the future.  So these structs are just cast within
+ * this .c file, rather than making it through to the public interface.
  */
-अटल काष्ठा dm_buffer *to_buffer(काष्ठा dm_block *b)
-अणु
-	वापस (काष्ठा dm_buffer *) b;
-पूर्ण
+static struct dm_buffer *to_buffer(struct dm_block *b)
+{
+	return (struct dm_buffer *) b;
+}
 
-dm_block_t dm_block_location(काष्ठा dm_block *b)
-अणु
-	वापस dm_bufio_get_block_number(to_buffer(b));
-पूर्ण
+dm_block_t dm_block_location(struct dm_block *b)
+{
+	return dm_bufio_get_block_number(to_buffer(b));
+}
 EXPORT_SYMBOL_GPL(dm_block_location);
 
-व्योम *dm_block_data(काष्ठा dm_block *b)
-अणु
-	वापस dm_bufio_get_block_data(to_buffer(b));
-पूर्ण
+void *dm_block_data(struct dm_block *b)
+{
+	return dm_bufio_get_block_data(to_buffer(b));
+}
 EXPORT_SYMBOL_GPL(dm_block_data);
 
-काष्ठा buffer_aux अणु
-	काष्ठा dm_block_validator *validator;
-	पूर्णांक ग_लिखो_locked;
+struct buffer_aux {
+	struct dm_block_validator *validator;
+	int write_locked;
 
-#अगर_घोषित CONFIG_DM_DEBUG_BLOCK_MANAGER_LOCKING
-	काष्ठा block_lock lock;
-#पूर्ण_अगर
-पूर्ण;
+#ifdef CONFIG_DM_DEBUG_BLOCK_MANAGER_LOCKING
+	struct block_lock lock;
+#endif
+};
 
-अटल व्योम dm_block_manager_alloc_callback(काष्ठा dm_buffer *buf)
-अणु
-	काष्ठा buffer_aux *aux = dm_bufio_get_aux_data(buf);
-	aux->validator = शून्य;
+static void dm_block_manager_alloc_callback(struct dm_buffer *buf)
+{
+	struct buffer_aux *aux = dm_bufio_get_aux_data(buf);
+	aux->validator = NULL;
 	bl_init(&aux->lock);
-पूर्ण
+}
 
-अटल व्योम dm_block_manager_ग_लिखो_callback(काष्ठा dm_buffer *buf)
-अणु
-	काष्ठा buffer_aux *aux = dm_bufio_get_aux_data(buf);
-	अगर (aux->validator) अणु
-		aux->validator->prepare_क्रम_ग_लिखो(aux->validator, (काष्ठा dm_block *) buf,
+static void dm_block_manager_write_callback(struct dm_buffer *buf)
+{
+	struct buffer_aux *aux = dm_bufio_get_aux_data(buf);
+	if (aux->validator) {
+		aux->validator->prepare_for_write(aux->validator, (struct dm_block *) buf,
 			 dm_bufio_get_block_size(dm_bufio_get_client(buf)));
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*----------------------------------------------------------------
- * Public पूर्णांकerface
+ * Public interface
  *--------------------------------------------------------------*/
-काष्ठा dm_block_manager अणु
-	काष्ठा dm_bufio_client *bufio;
-	bool पढ़ो_only:1;
-पूर्ण;
+struct dm_block_manager {
+	struct dm_bufio_client *bufio;
+	bool read_only:1;
+};
 
-काष्ठा dm_block_manager *dm_block_manager_create(काष्ठा block_device *bdev,
-						 अचिन्हित block_size,
-						 अचिन्हित max_held_per_thपढ़ो)
-अणु
-	पूर्णांक r;
-	काष्ठा dm_block_manager *bm;
+struct dm_block_manager *dm_block_manager_create(struct block_device *bdev,
+						 unsigned block_size,
+						 unsigned max_held_per_thread)
+{
+	int r;
+	struct dm_block_manager *bm;
 
-	bm = kदो_स्मृति(माप(*bm), GFP_KERNEL);
-	अगर (!bm) अणु
+	bm = kmalloc(sizeof(*bm), GFP_KERNEL);
+	if (!bm) {
 		r = -ENOMEM;
-		जाओ bad;
-	पूर्ण
+		goto bad;
+	}
 
-	bm->bufio = dm_bufio_client_create(bdev, block_size, max_held_per_thपढ़ो,
-					   माप(काष्ठा buffer_aux),
+	bm->bufio = dm_bufio_client_create(bdev, block_size, max_held_per_thread,
+					   sizeof(struct buffer_aux),
 					   dm_block_manager_alloc_callback,
-					   dm_block_manager_ग_लिखो_callback);
-	अगर (IS_ERR(bm->bufio)) अणु
+					   dm_block_manager_write_callback);
+	if (IS_ERR(bm->bufio)) {
 		r = PTR_ERR(bm->bufio);
-		kमुक्त(bm);
-		जाओ bad;
-	पूर्ण
+		kfree(bm);
+		goto bad;
+	}
 
-	bm->पढ़ो_only = false;
+	bm->read_only = false;
 
-	वापस bm;
+	return bm;
 
 bad:
-	वापस ERR_PTR(r);
-पूर्ण
+	return ERR_PTR(r);
+}
 EXPORT_SYMBOL_GPL(dm_block_manager_create);
 
-व्योम dm_block_manager_destroy(काष्ठा dm_block_manager *bm)
-अणु
+void dm_block_manager_destroy(struct dm_block_manager *bm)
+{
 	dm_bufio_client_destroy(bm->bufio);
-	kमुक्त(bm);
-पूर्ण
+	kfree(bm);
+}
 EXPORT_SYMBOL_GPL(dm_block_manager_destroy);
 
-अचिन्हित dm_bm_block_size(काष्ठा dm_block_manager *bm)
-अणु
-	वापस dm_bufio_get_block_size(bm->bufio);
-पूर्ण
+unsigned dm_bm_block_size(struct dm_block_manager *bm)
+{
+	return dm_bufio_get_block_size(bm->bufio);
+}
 EXPORT_SYMBOL_GPL(dm_bm_block_size);
 
-dm_block_t dm_bm_nr_blocks(काष्ठा dm_block_manager *bm)
-अणु
-	वापस dm_bufio_get_device_size(bm->bufio);
-पूर्ण
+dm_block_t dm_bm_nr_blocks(struct dm_block_manager *bm)
+{
+	return dm_bufio_get_device_size(bm->bufio);
+}
 
-अटल पूर्णांक dm_bm_validate_buffer(काष्ठा dm_block_manager *bm,
-				 काष्ठा dm_buffer *buf,
-				 काष्ठा buffer_aux *aux,
-				 काष्ठा dm_block_validator *v)
-अणु
-	अगर (unlikely(!aux->validator)) अणु
-		पूर्णांक r;
-		अगर (!v)
-			वापस 0;
-		r = v->check(v, (काष्ठा dm_block *) buf, dm_bufio_get_block_size(bm->bufio));
-		अगर (unlikely(r)) अणु
+static int dm_bm_validate_buffer(struct dm_block_manager *bm,
+				 struct dm_buffer *buf,
+				 struct buffer_aux *aux,
+				 struct dm_block_validator *v)
+{
+	if (unlikely(!aux->validator)) {
+		int r;
+		if (!v)
+			return 0;
+		r = v->check(v, (struct dm_block *) buf, dm_bufio_get_block_size(bm->bufio));
+		if (unlikely(r)) {
 			DMERR_LIMIT("%s validator check failed for block %llu", v->name,
-				    (अचिन्हित दीर्घ दीर्घ) dm_bufio_get_block_number(buf));
-			वापस r;
-		पूर्ण
+				    (unsigned long long) dm_bufio_get_block_number(buf));
+			return r;
+		}
 		aux->validator = v;
-	पूर्ण अन्यथा अणु
-		अगर (unlikely(aux->validator != v)) अणु
+	} else {
+		if (unlikely(aux->validator != v)) {
 			DMERR_LIMIT("validator mismatch (old=%s vs new=%s) for block %llu",
 				    aux->validator->name, v ? v->name : "NULL",
-				    (अचिन्हित दीर्घ दीर्घ) dm_bufio_get_block_number(buf));
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+				    (unsigned long long) dm_bufio_get_block_number(buf));
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
-पूर्णांक dm_bm_पढ़ो_lock(काष्ठा dm_block_manager *bm, dm_block_t b,
-		    काष्ठा dm_block_validator *v,
-		    काष्ठा dm_block **result)
-अणु
-	काष्ठा buffer_aux *aux;
-	व्योम *p;
-	पूर्णांक r;
+	return 0;
+}
+int dm_bm_read_lock(struct dm_block_manager *bm, dm_block_t b,
+		    struct dm_block_validator *v,
+		    struct dm_block **result)
+{
+	struct buffer_aux *aux;
+	void *p;
+	int r;
 
-	p = dm_bufio_पढ़ो(bm->bufio, b, (काष्ठा dm_buffer **) result);
-	अगर (IS_ERR(p))
-		वापस PTR_ERR(p);
+	p = dm_bufio_read(bm->bufio, b, (struct dm_buffer **) result);
+	if (IS_ERR(p))
+		return PTR_ERR(p);
 
 	aux = dm_bufio_get_aux_data(to_buffer(*result));
-	r = bl_करोwn_पढ़ो(&aux->lock);
-	अगर (unlikely(r)) अणु
+	r = bl_down_read(&aux->lock);
+	if (unlikely(r)) {
 		dm_bufio_release(to_buffer(*result));
 		report_recursive_bug(b, r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	aux->ग_लिखो_locked = 0;
+	aux->write_locked = 0;
 
 	r = dm_bm_validate_buffer(bm, to_buffer(*result), aux, v);
-	अगर (unlikely(r)) अणु
-		bl_up_पढ़ो(&aux->lock);
+	if (unlikely(r)) {
+		bl_up_read(&aux->lock);
 		dm_bufio_release(to_buffer(*result));
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(dm_bm_पढ़ो_lock);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(dm_bm_read_lock);
 
-पूर्णांक dm_bm_ग_लिखो_lock(काष्ठा dm_block_manager *bm,
-		     dm_block_t b, काष्ठा dm_block_validator *v,
-		     काष्ठा dm_block **result)
-अणु
-	काष्ठा buffer_aux *aux;
-	व्योम *p;
-	पूर्णांक r;
+int dm_bm_write_lock(struct dm_block_manager *bm,
+		     dm_block_t b, struct dm_block_validator *v,
+		     struct dm_block **result)
+{
+	struct buffer_aux *aux;
+	void *p;
+	int r;
 
-	अगर (dm_bm_is_पढ़ो_only(bm))
-		वापस -EPERM;
+	if (dm_bm_is_read_only(bm))
+		return -EPERM;
 
-	p = dm_bufio_पढ़ो(bm->bufio, b, (काष्ठा dm_buffer **) result);
-	अगर (IS_ERR(p))
-		वापस PTR_ERR(p);
+	p = dm_bufio_read(bm->bufio, b, (struct dm_buffer **) result);
+	if (IS_ERR(p))
+		return PTR_ERR(p);
 
 	aux = dm_bufio_get_aux_data(to_buffer(*result));
-	r = bl_करोwn_ग_लिखो(&aux->lock);
-	अगर (r) अणु
+	r = bl_down_write(&aux->lock);
+	if (r) {
 		dm_bufio_release(to_buffer(*result));
 		report_recursive_bug(b, r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	aux->ग_लिखो_locked = 1;
+	aux->write_locked = 1;
 
 	r = dm_bm_validate_buffer(bm, to_buffer(*result), aux, v);
-	अगर (unlikely(r)) अणु
-		bl_up_ग_लिखो(&aux->lock);
+	if (unlikely(r)) {
+		bl_up_write(&aux->lock);
 		dm_bufio_release(to_buffer(*result));
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(dm_bm_ग_लिखो_lock);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(dm_bm_write_lock);
 
-पूर्णांक dm_bm_पढ़ो_try_lock(काष्ठा dm_block_manager *bm,
-			dm_block_t b, काष्ठा dm_block_validator *v,
-			काष्ठा dm_block **result)
-अणु
-	काष्ठा buffer_aux *aux;
-	व्योम *p;
-	पूर्णांक r;
+int dm_bm_read_try_lock(struct dm_block_manager *bm,
+			dm_block_t b, struct dm_block_validator *v,
+			struct dm_block **result)
+{
+	struct buffer_aux *aux;
+	void *p;
+	int r;
 
-	p = dm_bufio_get(bm->bufio, b, (काष्ठा dm_buffer **) result);
-	अगर (IS_ERR(p))
-		वापस PTR_ERR(p);
-	अगर (unlikely(!p))
-		वापस -EWOULDBLOCK;
+	p = dm_bufio_get(bm->bufio, b, (struct dm_buffer **) result);
+	if (IS_ERR(p))
+		return PTR_ERR(p);
+	if (unlikely(!p))
+		return -EWOULDBLOCK;
 
 	aux = dm_bufio_get_aux_data(to_buffer(*result));
-	r = bl_करोwn_पढ़ो_nonblock(&aux->lock);
-	अगर (r < 0) अणु
+	r = bl_down_read_nonblock(&aux->lock);
+	if (r < 0) {
 		dm_bufio_release(to_buffer(*result));
 		report_recursive_bug(b, r);
-		वापस r;
-	पूर्ण
-	aux->ग_लिखो_locked = 0;
+		return r;
+	}
+	aux->write_locked = 0;
 
 	r = dm_bm_validate_buffer(bm, to_buffer(*result), aux, v);
-	अगर (unlikely(r)) अणु
-		bl_up_पढ़ो(&aux->lock);
+	if (unlikely(r)) {
+		bl_up_read(&aux->lock);
 		dm_bufio_release(to_buffer(*result));
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक dm_bm_ग_लिखो_lock_zero(काष्ठा dm_block_manager *bm,
-			  dm_block_t b, काष्ठा dm_block_validator *v,
-			  काष्ठा dm_block **result)
-अणु
-	पूर्णांक r;
-	काष्ठा buffer_aux *aux;
-	व्योम *p;
+int dm_bm_write_lock_zero(struct dm_block_manager *bm,
+			  dm_block_t b, struct dm_block_validator *v,
+			  struct dm_block **result)
+{
+	int r;
+	struct buffer_aux *aux;
+	void *p;
 
-	अगर (dm_bm_is_पढ़ो_only(bm))
-		वापस -EPERM;
+	if (dm_bm_is_read_only(bm))
+		return -EPERM;
 
-	p = dm_bufio_new(bm->bufio, b, (काष्ठा dm_buffer **) result);
-	अगर (IS_ERR(p))
-		वापस PTR_ERR(p);
+	p = dm_bufio_new(bm->bufio, b, (struct dm_buffer **) result);
+	if (IS_ERR(p))
+		return PTR_ERR(p);
 
-	स_रखो(p, 0, dm_bm_block_size(bm));
+	memset(p, 0, dm_bm_block_size(bm));
 
 	aux = dm_bufio_get_aux_data(to_buffer(*result));
-	r = bl_करोwn_ग_लिखो(&aux->lock);
-	अगर (r) अणु
+	r = bl_down_write(&aux->lock);
+	if (r) {
 		dm_bufio_release(to_buffer(*result));
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	aux->ग_लिखो_locked = 1;
+	aux->write_locked = 1;
 	aux->validator = v;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(dm_bm_ग_लिखो_lock_zero);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(dm_bm_write_lock_zero);
 
-व्योम dm_bm_unlock(काष्ठा dm_block *b)
-अणु
-	काष्ठा buffer_aux *aux;
+void dm_bm_unlock(struct dm_block *b)
+{
+	struct buffer_aux *aux;
 	aux = dm_bufio_get_aux_data(to_buffer(b));
 
-	अगर (aux->ग_लिखो_locked) अणु
+	if (aux->write_locked) {
 		dm_bufio_mark_buffer_dirty(to_buffer(b));
-		bl_up_ग_लिखो(&aux->lock);
-	पूर्ण अन्यथा
-		bl_up_पढ़ो(&aux->lock);
+		bl_up_write(&aux->lock);
+	} else
+		bl_up_read(&aux->lock);
 
 	dm_bufio_release(to_buffer(b));
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(dm_bm_unlock);
 
-पूर्णांक dm_bm_flush(काष्ठा dm_block_manager *bm)
-अणु
-	अगर (dm_bm_is_पढ़ो_only(bm))
-		वापस -EPERM;
+int dm_bm_flush(struct dm_block_manager *bm)
+{
+	if (dm_bm_is_read_only(bm))
+		return -EPERM;
 
-	वापस dm_bufio_ग_लिखो_dirty_buffers(bm->bufio);
-पूर्ण
+	return dm_bufio_write_dirty_buffers(bm->bufio);
+}
 EXPORT_SYMBOL_GPL(dm_bm_flush);
 
-व्योम dm_bm_prefetch(काष्ठा dm_block_manager *bm, dm_block_t b)
-अणु
+void dm_bm_prefetch(struct dm_block_manager *bm, dm_block_t b)
+{
 	dm_bufio_prefetch(bm->bufio, b, 1);
-पूर्ण
+}
 
-bool dm_bm_is_पढ़ो_only(काष्ठा dm_block_manager *bm)
-अणु
-	वापस (bm ? bm->पढ़ो_only : true);
-पूर्ण
-EXPORT_SYMBOL_GPL(dm_bm_is_पढ़ो_only);
+bool dm_bm_is_read_only(struct dm_block_manager *bm)
+{
+	return (bm ? bm->read_only : true);
+}
+EXPORT_SYMBOL_GPL(dm_bm_is_read_only);
 
-व्योम dm_bm_set_पढ़ो_only(काष्ठा dm_block_manager *bm)
-अणु
-	अगर (bm)
-		bm->पढ़ो_only = true;
-पूर्ण
-EXPORT_SYMBOL_GPL(dm_bm_set_पढ़ो_only);
+void dm_bm_set_read_only(struct dm_block_manager *bm)
+{
+	if (bm)
+		bm->read_only = true;
+}
+EXPORT_SYMBOL_GPL(dm_bm_set_read_only);
 
-व्योम dm_bm_set_पढ़ो_ग_लिखो(काष्ठा dm_block_manager *bm)
-अणु
-	अगर (bm)
-		bm->पढ़ो_only = false;
-पूर्ण
-EXPORT_SYMBOL_GPL(dm_bm_set_पढ़ो_ग_लिखो);
+void dm_bm_set_read_write(struct dm_block_manager *bm)
+{
+	if (bm)
+		bm->read_only = false;
+}
+EXPORT_SYMBOL_GPL(dm_bm_set_read_write);
 
-u32 dm_bm_checksum(स्थिर व्योम *data, माप_प्रकार len, u32 init_xor)
-अणु
-	वापस crc32c(~(u32) 0, data, len) ^ init_xor;
-पूर्ण
+u32 dm_bm_checksum(const void *data, size_t len, u32 init_xor)
+{
+	return crc32c(~(u32) 0, data, len) ^ init_xor;
+}
 EXPORT_SYMBOL_GPL(dm_bm_checksum);
 
 /*----------------------------------------------------------------*/

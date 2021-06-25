@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _GTP_H_
-#घोषणा _GTP_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _GTP_H_
+#define _GTP_H_
 
 /* General GTP protocol related definitions. */
 
-#घोषणा GTP0_PORT	3386
-#घोषणा GTP1U_PORT	2152
+#define GTP0_PORT	3386
+#define GTP1U_PORT	2152
 
-#घोषणा GTP_TPDU	255
+#define GTP_TPDU	255
 
-काष्ठा gtp0_header अणु	/* According to GSM TS 09.60. */
+struct gtp0_header {	/* According to GSM TS 09.60. */
 	__u8	flags;
 	__u8	type;
 	__be16	length;
@@ -19,18 +18,18 @@
 	__u8	number;
 	__u8	spare[3];
 	__be64	tid;
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
-काष्ठा gtp1_header अणु	/* According to 3GPP TS 29.060. */
+struct gtp1_header {	/* According to 3GPP TS 29.060. */
 	__u8	flags;
 	__u8	type;
 	__be16	length;
 	__be32	tid;
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
-#घोषणा GTP1_F_NPDU	0x01
-#घोषणा GTP1_F_SEQ	0x02
-#घोषणा GTP1_F_EXTHDR	0x04
-#घोषणा GTP1_F_MASK	0x07
+#define GTP1_F_NPDU	0x01
+#define GTP1_F_SEQ	0x02
+#define GTP1_F_EXTHDR	0x04
+#define GTP1_F_MASK	0x07
 
-#पूर्ण_अगर
+#endif

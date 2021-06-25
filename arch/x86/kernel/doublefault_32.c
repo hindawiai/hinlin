@@ -1,56 +1,55 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/mm.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/debug.h>
-#समावेश <linux/init_task.h>
-#समावेश <linux/fs.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/mm.h>
+#include <linux/sched.h>
+#include <linux/sched/debug.h>
+#include <linux/init_task.h>
+#include <linux/fs.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/desc.h>
-#समावेश <यंत्र/traps.h>
+#include <linux/uaccess.h>
+#include <asm/processor.h>
+#include <asm/desc.h>
+#include <asm/traps.h>
 
-#घोषणा ptr_ok(x) ((x) > PAGE_OFFSET && (x) < PAGE_OFFSET + MAXMEM)
+#define ptr_ok(x) ((x) > PAGE_OFFSET && (x) < PAGE_OFFSET + MAXMEM)
 
-#घोषणा TSS(x) this_cpu_पढ़ो(cpu_tss_rw.x86_tss.x)
+#define TSS(x) this_cpu_read(cpu_tss_rw.x86_tss.x)
 
-अटल व्योम set_df_gdt_entry(अचिन्हित पूर्णांक cpu);
+static void set_df_gdt_entry(unsigned int cpu);
 
 /*
- * Called by द्विगुन_fault with CR0.TS and EFLAGS.NT cleared.  The CPU thinks
- * we're running the द्विगुनfault task.  Cannot वापस.
+ * Called by double_fault with CR0.TS and EFLAGS.NT cleared.  The CPU thinks
+ * we're running the doublefault task.  Cannot return.
  */
-यंत्रlinkage noinstr व्योम __noवापस द्विगुनfault_shim(व्योम)
-अणु
-	अचिन्हित दीर्घ cr2;
-	काष्ठा pt_regs regs;
+asmlinkage noinstr void __noreturn doublefault_shim(void)
+{
+	unsigned long cr2;
+	struct pt_regs regs;
 
-	BUILD_BUG_ON(माप(काष्ठा द्विगुनfault_stack) != PAGE_SIZE);
+	BUILD_BUG_ON(sizeof(struct doublefault_stack) != PAGE_SIZE);
 
-	cr2 = native_पढ़ो_cr2();
+	cr2 = native_read_cr2();
 
 	/* Reset back to the normal kernel task. */
-	क्रमce_reload_TR();
+	force_reload_TR();
 	set_df_gdt_entry(smp_processor_id());
 
 	trace_hardirqs_off();
 
 	/*
-	 * Fill in pt_regs.  A करोwnside of करोing this in C is that the unwinder
+	 * Fill in pt_regs.  A downside of doing this in C is that the unwinder
 	 * won't see it (no ENCODE_FRAME_POINTER), so a nested stack dump
-	 * won't successfully unwind to the source of the द्विगुन fault.
-	 * The मुख्य dump from exc_द्विगुन_fault() is fine, though, since it
+	 * won't successfully unwind to the source of the double fault.
+	 * The main dump from exc_double_fault() is fine, though, since it
 	 * uses these regs directly.
 	 *
-	 * If anyone ever cares, this could be moved to यंत्र.
+	 * If anyone ever cares, this could be moved to asm.
 	 */
 	regs.ss		= TSS(ss);
 	regs.__ssh	= 0;
 	regs.sp		= TSS(sp);
 	regs.flags	= TSS(flags);
 	regs.cs		= TSS(cs);
-	/* We won't go through the entry यंत्र, so we can leave __csh as 0. */
+	/* We won't go through the entry asm, so we can leave __csh as 0. */
 	regs.__csh	= 0;
 	regs.ip		= TSS(ip);
 	regs.orig_ax	= 0;
@@ -70,31 +69,31 @@
 	regs.cx		= TSS(cx);
 	regs.bx		= TSS(bx);
 
-	exc_द्विगुन_fault(&regs, 0, cr2);
+	exc_double_fault(&regs, 0, cr2);
 
 	/*
-	 * x86_32 करोes not save the original CR3 anywhere on a task चयन.
-	 * This means that, even अगर we wanted to वापस, we would need to find
-	 * some way to reस्थिरruct CR3.  We could make a credible guess based
-	 * on cpu_tlbstate, but that would be racy and would not account क्रम
+	 * x86_32 does not save the original CR3 anywhere on a task switch.
+	 * This means that, even if we wanted to return, we would need to find
+	 * some way to reconstruct CR3.  We could make a credible guess based
+	 * on cpu_tlbstate, but that would be racy and would not account for
 	 * PTI.
 	 *
-	 * Instead, करोn't bother.  We can वापस through
-	 * शुरुआत_stack_करो_निकास() instead.
+	 * Instead, don't bother.  We can return through
+	 * rewind_stack_do_exit() instead.
 	 */
 	panic("cannot return from double fault\n");
-पूर्ण
+}
 
-DEFINE_PER_CPU_PAGE_ALIGNED(काष्ठा द्विगुनfault_stack, द्विगुनfault_stack) = अणु
-	.tss = अणु
+DEFINE_PER_CPU_PAGE_ALIGNED(struct doublefault_stack, doublefault_stack) = {
+	.tss = {
                 /*
                  * No sp0 or ss0 -- we never run CPL != 0 with this TSS
                  * active.  sp is filled in later.
                  */
 		.ldt		= 0,
-	.io_biपंचांगap_base	= IO_BITMAP_OFFSET_INVALID,
+	.io_bitmap_base	= IO_BITMAP_OFFSET_INVALID,
 
-		.ip		= (अचिन्हित दीर्घ) यंत्र_exc_द्विगुन_fault,
+		.ip		= (unsigned long) asm_exc_double_fault,
 		.flags		= X86_EFLAGS_FIXED,
 		.es		= __USER_DS,
 		.cs		= __KERNEL_CS,
@@ -104,29 +103,29 @@ DEFINE_PER_CPU_PAGE_ALIGNED(काष्ठा द्विगुनfault_stack,
 		.gs		= 0,
 
 		.__cr3		= __pa_nodebug(swapper_pg_dir),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल व्योम set_df_gdt_entry(अचिन्हित पूर्णांक cpu)
-अणु
-	/* Set up द्विगुनfault TSS poपूर्णांकer in the GDT */
+static void set_df_gdt_entry(unsigned int cpu)
+{
+	/* Set up doublefault TSS pointer in the GDT */
 	__set_tss_desc(cpu, GDT_ENTRY_DOUBLEFAULT_TSS,
-		       &get_cpu_entry_area(cpu)->द्विगुनfault_stack.tss);
+		       &get_cpu_entry_area(cpu)->doublefault_stack.tss);
 
-पूर्ण
+}
 
-व्योम द्विगुनfault_init_cpu_tss(व्योम)
-अणु
-	अचिन्हित पूर्णांक cpu = smp_processor_id();
-	काष्ठा cpu_entry_area *cea = get_cpu_entry_area(cpu);
+void doublefault_init_cpu_tss(void)
+{
+	unsigned int cpu = smp_processor_id();
+	struct cpu_entry_area *cea = get_cpu_entry_area(cpu);
 
 	/*
 	 * The linker isn't smart enough to initialize percpu variables that
-	 * poपूर्णांक to other places in percpu space.
+	 * point to other places in percpu space.
 	 */
-        this_cpu_ग_लिखो(द्विगुनfault_stack.tss.sp,
-                       (अचिन्हित दीर्घ)&cea->द्विगुनfault_stack.stack +
-                       माप(द्विगुनfault_stack.stack));
+        this_cpu_write(doublefault_stack.tss.sp,
+                       (unsigned long)&cea->doublefault_stack.stack +
+                       sizeof(doublefault_stack.stack));
 
 	set_df_gdt_entry(cpu);
-पूर्ण
+}

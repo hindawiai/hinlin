@@ -1,194 +1,193 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _SCSI_PRIV_H
-#घोषणा _SCSI_PRIV_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _SCSI_PRIV_H
+#define _SCSI_PRIV_H
 
-#समावेश <linux/device.h>
-#समावेश <linux/async.h>
-#समावेश <scsi/scsi_device.h>
-#समावेश <linux/sbiपंचांगap.h>
+#include <linux/device.h>
+#include <linux/async.h>
+#include <scsi/scsi_device.h>
+#include <linux/sbitmap.h>
 
-काष्ठा request_queue;
-काष्ठा request;
-काष्ठा scsi_cmnd;
-काष्ठा scsi_device;
-काष्ठा scsi_target;
-काष्ठा scsi_host_ढाँचा;
-काष्ठा Scsi_Host;
-काष्ठा scsi_nl_hdr;
+struct request_queue;
+struct request;
+struct scsi_cmnd;
+struct scsi_device;
+struct scsi_target;
+struct scsi_host_template;
+struct Scsi_Host;
+struct scsi_nl_hdr;
 
-#घोषणा SCSI_CMD_RETRIES_NO_LIMIT -1
+#define SCSI_CMD_RETRIES_NO_LIMIT -1
 
 /*
  * Scsi Error Handler Flags
  */
-#घोषणा SCSI_EH_ABORT_SCHEDULED	0x0002	/* Abort has been scheduled */
+#define SCSI_EH_ABORT_SCHEDULED	0x0002	/* Abort has been scheduled */
 
-#घोषणा SCSI_SENSE_VALID(scmd) \
+#define SCSI_SENSE_VALID(scmd) \
 	(((scmd)->sense_buffer[0] & 0x70) == 0x70)
 
 /* hosts.c */
-बाह्य पूर्णांक scsi_init_hosts(व्योम);
-बाह्य व्योम scsi_निकास_hosts(व्योम);
+extern int scsi_init_hosts(void);
+extern void scsi_exit_hosts(void);
 
 /* scsi.c */
-पूर्णांक scsi_init_sense_cache(काष्ठा Scsi_Host *shost);
-व्योम scsi_init_command(काष्ठा scsi_device *dev, काष्ठा scsi_cmnd *cmd);
-#अगर_घोषित CONFIG_SCSI_LOGGING
-व्योम scsi_log_send(काष्ठा scsi_cmnd *cmd);
-व्योम scsi_log_completion(काष्ठा scsi_cmnd *cmd, पूर्णांक disposition);
-#अन्यथा
-अटल अंतरभूत व्योम scsi_log_send(काष्ठा scsi_cmnd *cmd) 
-	अणु पूर्ण;
-अटल अंतरभूत व्योम scsi_log_completion(काष्ठा scsi_cmnd *cmd, पूर्णांक disposition)
-	अणु पूर्ण;
-#पूर्ण_अगर
+int scsi_init_sense_cache(struct Scsi_Host *shost);
+void scsi_init_command(struct scsi_device *dev, struct scsi_cmnd *cmd);
+#ifdef CONFIG_SCSI_LOGGING
+void scsi_log_send(struct scsi_cmnd *cmd);
+void scsi_log_completion(struct scsi_cmnd *cmd, int disposition);
+#else
+static inline void scsi_log_send(struct scsi_cmnd *cmd) 
+	{ };
+static inline void scsi_log_completion(struct scsi_cmnd *cmd, int disposition)
+	{ };
+#endif
 
 /* scsi_devinfo.c */
 
-/* list of keys क्रम the lists */
-क्रमागत scsi_devinfo_key अणु
+/* list of keys for the lists */
+enum scsi_devinfo_key {
 	SCSI_DEVINFO_GLOBAL = 0,
 	SCSI_DEVINFO_SPI,
-पूर्ण;
+};
 
-बाह्य blist_flags_t scsi_get_device_flags(काष्ठा scsi_device *sdev,
-					   स्थिर अचिन्हित अक्षर *venकरोr,
-					   स्थिर अचिन्हित अक्षर *model);
-बाह्य blist_flags_t scsi_get_device_flags_keyed(काष्ठा scsi_device *sdev,
-						 स्थिर अचिन्हित अक्षर *venकरोr,
-						 स्थिर अचिन्हित अक्षर *model,
-						 क्रमागत scsi_devinfo_key key);
-बाह्य पूर्णांक scsi_dev_info_list_add_keyed(पूर्णांक compatible, अक्षर *venकरोr,
-					अक्षर *model, अक्षर *strflags,
+extern blist_flags_t scsi_get_device_flags(struct scsi_device *sdev,
+					   const unsigned char *vendor,
+					   const unsigned char *model);
+extern blist_flags_t scsi_get_device_flags_keyed(struct scsi_device *sdev,
+						 const unsigned char *vendor,
+						 const unsigned char *model,
+						 enum scsi_devinfo_key key);
+extern int scsi_dev_info_list_add_keyed(int compatible, char *vendor,
+					char *model, char *strflags,
 					blist_flags_t flags,
-					क्रमागत scsi_devinfo_key key);
-बाह्य पूर्णांक scsi_dev_info_list_del_keyed(अक्षर *venकरोr, अक्षर *model,
-					क्रमागत scsi_devinfo_key key);
-बाह्य पूर्णांक scsi_dev_info_add_list(क्रमागत scsi_devinfo_key key, स्थिर अक्षर *name);
-बाह्य पूर्णांक scsi_dev_info_हटाओ_list(क्रमागत scsi_devinfo_key key);
+					enum scsi_devinfo_key key);
+extern int scsi_dev_info_list_del_keyed(char *vendor, char *model,
+					enum scsi_devinfo_key key);
+extern int scsi_dev_info_add_list(enum scsi_devinfo_key key, const char *name);
+extern int scsi_dev_info_remove_list(enum scsi_devinfo_key key);
 
-बाह्य पूर्णांक __init scsi_init_devinfo(व्योम);
-बाह्य व्योम scsi_निकास_devinfo(व्योम);
+extern int __init scsi_init_devinfo(void);
+extern void scsi_exit_devinfo(void);
 
 /* scsi_error.c */
-बाह्य व्योम scmd_eh_पात_handler(काष्ठा work_काष्ठा *work);
-बाह्य क्रमागत blk_eh_समयr_वापस scsi_बार_out(काष्ठा request *req);
-बाह्य पूर्णांक scsi_error_handler(व्योम *host);
-बाह्य क्रमागत scsi_disposition scsi_decide_disposition(काष्ठा scsi_cmnd *cmd);
-बाह्य व्योम scsi_eh_wakeup(काष्ठा Scsi_Host *shost);
-बाह्य व्योम scsi_eh_scmd_add(काष्ठा scsi_cmnd *);
-व्योम scsi_eh_पढ़ोy_devs(काष्ठा Scsi_Host *shost,
-			काष्ठा list_head *work_q,
-			काष्ठा list_head *करोne_q);
-पूर्णांक scsi_eh_get_sense(काष्ठा list_head *work_q,
-		      काष्ठा list_head *करोne_q);
-पूर्णांक scsi_noretry_cmd(काष्ठा scsi_cmnd *scmd);
+extern void scmd_eh_abort_handler(struct work_struct *work);
+extern enum blk_eh_timer_return scsi_times_out(struct request *req);
+extern int scsi_error_handler(void *host);
+extern enum scsi_disposition scsi_decide_disposition(struct scsi_cmnd *cmd);
+extern void scsi_eh_wakeup(struct Scsi_Host *shost);
+extern void scsi_eh_scmd_add(struct scsi_cmnd *);
+void scsi_eh_ready_devs(struct Scsi_Host *shost,
+			struct list_head *work_q,
+			struct list_head *done_q);
+int scsi_eh_get_sense(struct list_head *work_q,
+		      struct list_head *done_q);
+int scsi_noretry_cmd(struct scsi_cmnd *scmd);
 
 /* scsi_lib.c */
-बाह्य पूर्णांक scsi_maybe_unblock_host(काष्ठा scsi_device *sdev);
-बाह्य व्योम scsi_device_unbusy(काष्ठा scsi_device *sdev, काष्ठा scsi_cmnd *cmd);
-बाह्य व्योम scsi_queue_insert(काष्ठा scsi_cmnd *cmd, पूर्णांक reason);
-बाह्य व्योम scsi_io_completion(काष्ठा scsi_cmnd *, अचिन्हित पूर्णांक);
-बाह्य व्योम scsi_run_host_queues(काष्ठा Scsi_Host *shost);
-बाह्य व्योम scsi_requeue_run_queue(काष्ठा work_काष्ठा *work);
-बाह्य काष्ठा request_queue *scsi_mq_alloc_queue(काष्ठा scsi_device *sdev);
-बाह्य व्योम scsi_start_queue(काष्ठा scsi_device *sdev);
-बाह्य पूर्णांक scsi_mq_setup_tags(काष्ठा Scsi_Host *shost);
-बाह्य व्योम scsi_mq_destroy_tags(काष्ठा Scsi_Host *shost);
-बाह्य व्योम scsi_निकास_queue(व्योम);
-बाह्य व्योम scsi_evt_thपढ़ो(काष्ठा work_काष्ठा *work);
+extern int scsi_maybe_unblock_host(struct scsi_device *sdev);
+extern void scsi_device_unbusy(struct scsi_device *sdev, struct scsi_cmnd *cmd);
+extern void scsi_queue_insert(struct scsi_cmnd *cmd, int reason);
+extern void scsi_io_completion(struct scsi_cmnd *, unsigned int);
+extern void scsi_run_host_queues(struct Scsi_Host *shost);
+extern void scsi_requeue_run_queue(struct work_struct *work);
+extern struct request_queue *scsi_mq_alloc_queue(struct scsi_device *sdev);
+extern void scsi_start_queue(struct scsi_device *sdev);
+extern int scsi_mq_setup_tags(struct Scsi_Host *shost);
+extern void scsi_mq_destroy_tags(struct Scsi_Host *shost);
+extern void scsi_exit_queue(void);
+extern void scsi_evt_thread(struct work_struct *work);
 
 /* scsi_proc.c */
-#अगर_घोषित CONFIG_SCSI_PROC_FS
-बाह्य व्योम scsi_proc_hostdir_add(काष्ठा scsi_host_ढाँचा *);
-बाह्य व्योम scsi_proc_hostdir_rm(काष्ठा scsi_host_ढाँचा *);
-बाह्य व्योम scsi_proc_host_add(काष्ठा Scsi_Host *);
-बाह्य व्योम scsi_proc_host_rm(काष्ठा Scsi_Host *);
-बाह्य पूर्णांक scsi_init_procfs(व्योम);
-बाह्य व्योम scsi_निकास_procfs(व्योम);
-#अन्यथा
-# define scsi_proc_hostdir_add(sht)	करो अणु पूर्ण जबतक (0)
-# define scsi_proc_hostdir_rm(sht)	करो अणु पूर्ण जबतक (0)
-# define scsi_proc_host_add(shost)	करो अणु पूर्ण जबतक (0)
-# define scsi_proc_host_rm(shost)	करो अणु पूर्ण जबतक (0)
+#ifdef CONFIG_SCSI_PROC_FS
+extern void scsi_proc_hostdir_add(struct scsi_host_template *);
+extern void scsi_proc_hostdir_rm(struct scsi_host_template *);
+extern void scsi_proc_host_add(struct Scsi_Host *);
+extern void scsi_proc_host_rm(struct Scsi_Host *);
+extern int scsi_init_procfs(void);
+extern void scsi_exit_procfs(void);
+#else
+# define scsi_proc_hostdir_add(sht)	do { } while (0)
+# define scsi_proc_hostdir_rm(sht)	do { } while (0)
+# define scsi_proc_host_add(shost)	do { } while (0)
+# define scsi_proc_host_rm(shost)	do { } while (0)
 # define scsi_init_procfs()		(0)
-# define scsi_निकास_procfs()		करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर /* CONFIG_PROC_FS */
+# define scsi_exit_procfs()		do { } while (0)
+#endif /* CONFIG_PROC_FS */
 
 /* scsi_scan.c */
-बाह्य अक्षर scsi_scan_type[];
-बाह्य पूर्णांक scsi_complete_async_scans(व्योम);
-बाह्य पूर्णांक scsi_scan_host_selected(काष्ठा Scsi_Host *, अचिन्हित पूर्णांक,
-				   अचिन्हित पूर्णांक, u64, क्रमागत scsi_scan_mode);
-बाह्य व्योम scsi_क्रमget_host(काष्ठा Scsi_Host *);
-बाह्य व्योम scsi_rescan_device(काष्ठा device *);
+extern char scsi_scan_type[];
+extern int scsi_complete_async_scans(void);
+extern int scsi_scan_host_selected(struct Scsi_Host *, unsigned int,
+				   unsigned int, u64, enum scsi_scan_mode);
+extern void scsi_forget_host(struct Scsi_Host *);
+extern void scsi_rescan_device(struct device *);
 
 /* scsi_sysctl.c */
-#अगर_घोषित CONFIG_SYSCTL
-बाह्य पूर्णांक scsi_init_sysctl(व्योम);
-बाह्य व्योम scsi_निकास_sysctl(व्योम);
-#अन्यथा
+#ifdef CONFIG_SYSCTL
+extern int scsi_init_sysctl(void);
+extern void scsi_exit_sysctl(void);
+#else
 # define scsi_init_sysctl()		(0)
-# define scsi_निकास_sysctl()		करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर /* CONFIG_SYSCTL */
+# define scsi_exit_sysctl()		do { } while (0)
+#endif /* CONFIG_SYSCTL */
 
 /* scsi_sysfs.c */
-बाह्य पूर्णांक scsi_sysfs_add_sdev(काष्ठा scsi_device *);
-बाह्य पूर्णांक scsi_sysfs_add_host(काष्ठा Scsi_Host *);
-बाह्य पूर्णांक scsi_sysfs_रेजिस्टर(व्योम);
-बाह्य व्योम scsi_sysfs_unरेजिस्टर(व्योम);
-बाह्य व्योम scsi_sysfs_device_initialize(काष्ठा scsi_device *);
-बाह्य पूर्णांक scsi_sysfs_target_initialize(काष्ठा scsi_device *);
-बाह्य काष्ठा scsi_transport_ढाँचा blank_transport_ढाँचा;
-बाह्य व्योम __scsi_हटाओ_device(काष्ठा scsi_device *);
+extern int scsi_sysfs_add_sdev(struct scsi_device *);
+extern int scsi_sysfs_add_host(struct Scsi_Host *);
+extern int scsi_sysfs_register(void);
+extern void scsi_sysfs_unregister(void);
+extern void scsi_sysfs_device_initialize(struct scsi_device *);
+extern int scsi_sysfs_target_initialize(struct scsi_device *);
+extern struct scsi_transport_template blank_transport_template;
+extern void __scsi_remove_device(struct scsi_device *);
 
-बाह्य काष्ठा bus_type scsi_bus_type;
-बाह्य स्थिर काष्ठा attribute_group *scsi_sysfs_shost_attr_groups[];
+extern struct bus_type scsi_bus_type;
+extern const struct attribute_group *scsi_sysfs_shost_attr_groups[];
 
 /* scsi_netlink.c */
-#अगर_घोषित CONFIG_SCSI_NETLINK
-बाह्य व्योम scsi_netlink_init(व्योम);
-बाह्य व्योम scsi_netlink_निकास(व्योम);
-बाह्य काष्ठा sock *scsi_nl_sock;
-#अन्यथा
-अटल अंतरभूत व्योम scsi_netlink_init(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम scsi_netlink_निकास(व्योम) अणुपूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_SCSI_NETLINK
+extern void scsi_netlink_init(void);
+extern void scsi_netlink_exit(void);
+extern struct sock *scsi_nl_sock;
+#else
+static inline void scsi_netlink_init(void) {}
+static inline void scsi_netlink_exit(void) {}
+#endif
 
 /* scsi_pm.c */
-#अगर_घोषित CONFIG_PM
-बाह्य स्थिर काष्ठा dev_pm_ops scsi_bus_pm_ops;
+#ifdef CONFIG_PM
+extern const struct dev_pm_ops scsi_bus_pm_ops;
 
-बाह्य व्योम scsi_स्वतःpm_get_target(काष्ठा scsi_target *);
-बाह्य व्योम scsi_स्वतःpm_put_target(काष्ठा scsi_target *);
-बाह्य पूर्णांक scsi_स्वतःpm_get_host(काष्ठा Scsi_Host *);
-बाह्य व्योम scsi_स्वतःpm_put_host(काष्ठा Scsi_Host *);
-#अन्यथा
-अटल अंतरभूत व्योम scsi_स्वतःpm_get_target(काष्ठा scsi_target *t) अणुपूर्ण
-अटल अंतरभूत व्योम scsi_स्वतःpm_put_target(काष्ठा scsi_target *t) अणुपूर्ण
-अटल अंतरभूत पूर्णांक scsi_स्वतःpm_get_host(काष्ठा Scsi_Host *h) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम scsi_स्वतःpm_put_host(काष्ठा Scsi_Host *h) अणुपूर्ण
-#पूर्ण_अगर /* CONFIG_PM */
+extern void scsi_autopm_get_target(struct scsi_target *);
+extern void scsi_autopm_put_target(struct scsi_target *);
+extern int scsi_autopm_get_host(struct Scsi_Host *);
+extern void scsi_autopm_put_host(struct Scsi_Host *);
+#else
+static inline void scsi_autopm_get_target(struct scsi_target *t) {}
+static inline void scsi_autopm_put_target(struct scsi_target *t) {}
+static inline int scsi_autopm_get_host(struct Scsi_Host *h) { return 0; }
+static inline void scsi_autopm_put_host(struct Scsi_Host *h) {}
+#endif /* CONFIG_PM */
 
-बाह्य काष्ठा async_करोमुख्य scsi_sd_pm_करोमुख्य;
+extern struct async_domain scsi_sd_pm_domain;
 
 /* scsi_dh.c */
-#अगर_घोषित CONFIG_SCSI_DH
-व्योम scsi_dh_add_device(काष्ठा scsi_device *sdev);
-व्योम scsi_dh_release_device(काष्ठा scsi_device *sdev);
-#अन्यथा
-अटल अंतरभूत व्योम scsi_dh_add_device(काष्ठा scsi_device *sdev) अणु पूर्ण
-अटल अंतरभूत व्योम scsi_dh_release_device(काष्ठा scsi_device *sdev) अणु पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_SCSI_DH
+void scsi_dh_add_device(struct scsi_device *sdev);
+void scsi_dh_release_device(struct scsi_device *sdev);
+#else
+static inline void scsi_dh_add_device(struct scsi_device *sdev) { }
+static inline void scsi_dh_release_device(struct scsi_device *sdev) { }
+#endif
 
-बाह्य पूर्णांक scsi_device_max_queue_depth(काष्ठा scsi_device *sdev);
+extern int scsi_device_max_queue_depth(struct scsi_device *sdev);
 
 /* 
- * पूर्णांकernal scsi समयout functions: क्रम use by mid-layer and transport
+ * internal scsi timeout functions: for use by mid-layer and transport
  * classes.
  */
 
-#घोषणा SCSI_DEVICE_BLOCK_MAX_TIMEOUT	600	/* units in seconds */
+#define SCSI_DEVICE_BLOCK_MAX_TIMEOUT	600	/* units in seconds */
 
-#पूर्ण_अगर /* _SCSI_PRIV_H */
+#endif /* _SCSI_PRIV_H */

@@ -1,96 +1,95 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _HVSI_H
-#घोषणा _HVSI_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _HVSI_H
+#define _HVSI_H
 
-#घोषणा VS_DATA_PACKET_HEADER           0xff
-#घोषणा VS_CONTROL_PACKET_HEADER        0xfe
-#घोषणा VS_QUERY_PACKET_HEADER          0xfd
-#घोषणा VS_QUERY_RESPONSE_PACKET_HEADER 0xfc
+#define VS_DATA_PACKET_HEADER           0xff
+#define VS_CONTROL_PACKET_HEADER        0xfe
+#define VS_QUERY_PACKET_HEADER          0xfd
+#define VS_QUERY_RESPONSE_PACKET_HEADER 0xfc
 
 /* control verbs */
-#घोषणा VSV_SET_MODEM_CTL    1 /* to service processor only */
-#घोषणा VSV_MODEM_CTL_UPDATE 2 /* from service processor only */
-#घोषणा VSV_CLOSE_PROTOCOL   3
+#define VSV_SET_MODEM_CTL    1 /* to service processor only */
+#define VSV_MODEM_CTL_UPDATE 2 /* from service processor only */
+#define VSV_CLOSE_PROTOCOL   3
 
 /* query verbs */
-#घोषणा VSV_SEND_VERSION_NUMBER 1
-#घोषणा VSV_SEND_MODEM_CTL_STATUS 2
+#define VSV_SEND_VERSION_NUMBER 1
+#define VSV_SEND_MODEM_CTL_STATUS 2
 
 /* yes, these masks are not consecutive. */
-#घोषणा HVSI_TSDTR 0x01
-#घोषणा HVSI_TSCD  0x20
+#define HVSI_TSDTR 0x01
+#define HVSI_TSCD  0x20
 
-#घोषणा HVSI_MAX_OUTGOING_DATA 12
-#घोषणा HVSI_VERSION 1
+#define HVSI_MAX_OUTGOING_DATA 12
+#define HVSI_VERSION 1
 
-काष्ठा hvsi_header अणु
-	uपूर्णांक8_t  type;
-	uपूर्णांक8_t  len;
+struct hvsi_header {
+	uint8_t  type;
+	uint8_t  len;
 	__be16 seqno;
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
-काष्ठा hvsi_data अणु
-	काष्ठा hvsi_header hdr;
-	uपूर्णांक8_t  data[HVSI_MAX_OUTGOING_DATA];
-पूर्ण __attribute__((packed));
+struct hvsi_data {
+	struct hvsi_header hdr;
+	uint8_t  data[HVSI_MAX_OUTGOING_DATA];
+} __attribute__((packed));
 
-काष्ठा hvsi_control अणु
-	काष्ठा hvsi_header hdr;
+struct hvsi_control {
+	struct hvsi_header hdr;
 	__be16 verb;
 	/* optional depending on verb: */
 	__be32 word;
 	__be32 mask;
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
-काष्ठा hvsi_query अणु
-	काष्ठा hvsi_header hdr;
+struct hvsi_query {
+	struct hvsi_header hdr;
 	__be16 verb;
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
-काष्ठा hvsi_query_response अणु
-	काष्ठा hvsi_header hdr;
+struct hvsi_query_response {
+	struct hvsi_header hdr;
 	__be16 verb;
 	__be16 query_seqno;
-	जोड़ अणु
-		uपूर्णांक8_t  version;
+	union {
+		uint8_t  version;
 		__be32 mctrl_word;
-	पूर्ण u;
-पूर्ण __attribute__((packed));
+	} u;
+} __attribute__((packed));
 
-/* hvsi lib काष्ठा definitions */
-#घोषणा HVSI_INBUF_SIZE		255
-काष्ठा tty_काष्ठा;
-काष्ठा hvsi_priv अणु
-	अचिन्हित पूर्णांक	inbuf_len;	/* data in input buffer */
-	अचिन्हित अक्षर	inbuf[HVSI_INBUF_SIZE];
-	अचिन्हित पूर्णांक	inbuf_cur;	/* Cursor in input buffer */
-	अचिन्हित पूर्णांक	inbuf_pktlen;	/* packet length from cursor */
+/* hvsi lib struct definitions */
+#define HVSI_INBUF_SIZE		255
+struct tty_struct;
+struct hvsi_priv {
+	unsigned int	inbuf_len;	/* data in input buffer */
+	unsigned char	inbuf[HVSI_INBUF_SIZE];
+	unsigned int	inbuf_cur;	/* Cursor in input buffer */
+	unsigned int	inbuf_pktlen;	/* packet length from cursor */
 	atomic_t	seqno;		/* packet sequence number */
-	अचिन्हित पूर्णांक	खोलोed:1;	/* driver खोलोed */
-	अचिन्हित पूर्णांक	established:1;	/* protocol established */
-	अचिन्हित पूर्णांक 	is_console:1;	/* used as a kernel console device */
-	अचिन्हित पूर्णांक	mctrl_update:1;	/* modem control updated */
-	अचिन्हित लघु	mctrl;		/* modem control */
-	काष्ठा tty_काष्ठा *tty;		/* tty काष्ठाure */
-	पूर्णांक (*get_अक्षरs)(uपूर्णांक32_t termno, अक्षर *buf, पूर्णांक count);
-	पूर्णांक (*put_अक्षरs)(uपूर्णांक32_t termno, स्थिर अक्षर *buf, पूर्णांक count);
-	uपूर्णांक32_t	termno;
-पूर्ण;
+	unsigned int	opened:1;	/* driver opened */
+	unsigned int	established:1;	/* protocol established */
+	unsigned int 	is_console:1;	/* used as a kernel console device */
+	unsigned int	mctrl_update:1;	/* modem control updated */
+	unsigned short	mctrl;		/* modem control */
+	struct tty_struct *tty;		/* tty structure */
+	int (*get_chars)(uint32_t termno, char *buf, int count);
+	int (*put_chars)(uint32_t termno, const char *buf, int count);
+	uint32_t	termno;
+};
 
 /* hvsi lib functions */
-काष्ठा hvc_काष्ठा;
-बाह्य व्योम hvsilib_init(काष्ठा hvsi_priv *pv,
-			 पूर्णांक (*get_अक्षरs)(uपूर्णांक32_t termno, अक्षर *buf, पूर्णांक count),
-			 पूर्णांक (*put_अक्षरs)(uपूर्णांक32_t termno, स्थिर अक्षर *buf,
-					  पूर्णांक count),
-			 पूर्णांक termno, पूर्णांक is_console);
-बाह्य पूर्णांक hvsilib_खोलो(काष्ठा hvsi_priv *pv, काष्ठा hvc_काष्ठा *hp);
-बाह्य व्योम hvsilib_बंद(काष्ठा hvsi_priv *pv, काष्ठा hvc_काष्ठा *hp);
-बाह्य पूर्णांक hvsilib_पढ़ो_mctrl(काष्ठा hvsi_priv *pv);
-बाह्य पूर्णांक hvsilib_ग_लिखो_mctrl(काष्ठा hvsi_priv *pv, पूर्णांक dtr);
-बाह्य व्योम hvsilib_establish(काष्ठा hvsi_priv *pv);
-बाह्य पूर्णांक hvsilib_get_अक्षरs(काष्ठा hvsi_priv *pv, अक्षर *buf, पूर्णांक count);
-बाह्य पूर्णांक hvsilib_put_अक्षरs(काष्ठा hvsi_priv *pv, स्थिर अक्षर *buf, पूर्णांक count);
+struct hvc_struct;
+extern void hvsilib_init(struct hvsi_priv *pv,
+			 int (*get_chars)(uint32_t termno, char *buf, int count),
+			 int (*put_chars)(uint32_t termno, const char *buf,
+					  int count),
+			 int termno, int is_console);
+extern int hvsilib_open(struct hvsi_priv *pv, struct hvc_struct *hp);
+extern void hvsilib_close(struct hvsi_priv *pv, struct hvc_struct *hp);
+extern int hvsilib_read_mctrl(struct hvsi_priv *pv);
+extern int hvsilib_write_mctrl(struct hvsi_priv *pv, int dtr);
+extern void hvsilib_establish(struct hvsi_priv *pv);
+extern int hvsilib_get_chars(struct hvsi_priv *pv, char *buf, int count);
+extern int hvsilib_put_chars(struct hvsi_priv *pv, const char *buf, int count);
 
-#पूर्ण_अगर /* _HVSI_H */
+#endif /* _HVSI_H */

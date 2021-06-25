@@ -1,46 +1,45 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Module Name: utxfinit - External पूर्णांकerfaces क्रम ACPICA initialization
+ * Module Name: utxfinit - External interfaces for ACPICA initialization
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#घोषणा EXPORT_ACPI_INTERFACES
+#define EXPORT_ACPI_INTERFACES
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acevents.h"
-#समावेश "acnamesp.h"
-#समावेश "acdebug.h"
-#समावेश "actables.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acevents.h"
+#include "acnamesp.h"
+#include "acdebug.h"
+#include "actables.h"
 
-#घोषणा _COMPONENT          ACPI_UTILITIES
+#define _COMPONENT          ACPI_UTILITIES
 ACPI_MODULE_NAME("utxfinit")
 
 /* For acpi_exec only */
-व्योम ae_करो_object_overrides(व्योम);
+void ae_do_object_overrides(void);
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_initialize_subप्रणाली
+ * FUNCTION:    acpi_initialize_subsystem
  *
  * PARAMETERS:  None
  *
  * RETURN:      Status
  *
  * DESCRIPTION: Initializes all global variables. This is the first function
- *              called, so any early initialization beदीर्घs here.
+ *              called, so any early initialization belongs here.
  *
  ******************************************************************************/
 
-acpi_status ACPI_INIT_FUNCTION acpi_initialize_subप्रणाली(व्योम)
-अणु
+acpi_status ACPI_INIT_FUNCTION acpi_initialize_subsystem(void)
+{
 	acpi_status status;
 
-	ACPI_FUNCTION_TRACE(acpi_initialize_subप्रणाली);
+	ACPI_FUNCTION_TRACE(acpi_initialize_subsystem);
 
 	acpi_gbl_startup_flags = ACPI_SUBSYSTEM_INITIALIZE;
 	ACPI_DEBUG_EXEC(acpi_ut_init_stack_ptr_trace());
@@ -48,71 +47,71 @@ acpi_status ACPI_INIT_FUNCTION acpi_initialize_subप्रणाली(व्�
 	/* Initialize the OS-Dependent layer */
 
 	status = acpi_os_initialize();
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		ACPI_EXCEPTION((AE_INFO, status, "During OSL initialization"));
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+		return_ACPI_STATUS(status);
+	}
 
-	/* Initialize all globals used by the subप्रणाली */
+	/* Initialize all globals used by the subsystem */
 
 	status = acpi_ut_init_globals();
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		ACPI_EXCEPTION((AE_INFO, status,
 				"During initialization of globals"));
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+		return_ACPI_STATUS(status);
+	}
 
-	/* Create the शेष mutex objects */
+	/* Create the default mutex objects */
 
 	status = acpi_ut_mutex_initialize();
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		ACPI_EXCEPTION((AE_INFO, status,
 				"During Global Mutex creation"));
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+		return_ACPI_STATUS(status);
+	}
 
 	/*
 	 * Initialize the namespace manager and
 	 * the root of the namespace tree
 	 */
 	status = acpi_ns_root_initialize();
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		ACPI_EXCEPTION((AE_INFO, status,
 				"During Namespace initialization"));
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+		return_ACPI_STATUS(status);
+	}
 
-	/* Initialize the global OSI पूर्णांकerfaces list with the अटल names */
+	/* Initialize the global OSI interfaces list with the static names */
 
-	status = acpi_ut_initialize_पूर्णांकerfaces();
-	अगर (ACPI_FAILURE(status)) अणु
+	status = acpi_ut_initialize_interfaces();
+	if (ACPI_FAILURE(status)) {
 		ACPI_EXCEPTION((AE_INFO, status,
 				"During OSI interfaces initialization"));
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+		return_ACPI_STATUS(status);
+	}
 
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_ACPI_STATUS(AE_OK);
+}
 
-ACPI_EXPORT_SYMBOL_INIT(acpi_initialize_subप्रणाली)
+ACPI_EXPORT_SYMBOL_INIT(acpi_initialize_subsystem)
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_enable_subप्रणाली
+ * FUNCTION:    acpi_enable_subsystem
  *
  * PARAMETERS:  flags               - Init/enable Options
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Completes the subप्रणाली initialization including hardware.
- *              Puts प्रणाली पूर्णांकo ACPI mode अगर it isn't alपढ़ोy.
+ * DESCRIPTION: Completes the subsystem initialization including hardware.
+ *              Puts system into ACPI mode if it isn't already.
  *
  ******************************************************************************/
-acpi_status ACPI_INIT_FUNCTION acpi_enable_subप्रणाली(u32 flags)
-अणु
+acpi_status ACPI_INIT_FUNCTION acpi_enable_subsystem(u32 flags)
+{
 	acpi_status status = AE_OK;
 
-	ACPI_FUNCTION_TRACE(acpi_enable_subप्रणाली);
+	ACPI_FUNCTION_TRACE(acpi_enable_subsystem);
 
 	/*
 	 * The early initialization phase is complete. The namespace is loaded,
@@ -121,41 +120,41 @@ acpi_status ACPI_INIT_FUNCTION acpi_enable_subप्रणाली(u32 flags)
 	 */
 	acpi_gbl_early_initialization = FALSE;
 
-#अगर (!ACPI_REDUCED_HARDWARE)
+#if (!ACPI_REDUCED_HARDWARE)
 
 	/* Enable ACPI mode */
 
-	अगर (!(flags & ACPI_NO_ACPI_ENABLE)) अणु
+	if (!(flags & ACPI_NO_ACPI_ENABLE)) {
 		ACPI_DEBUG_PRINT((ACPI_DB_EXEC,
 				  "[Init] Going into ACPI mode\n"));
 
 		acpi_gbl_original_mode = acpi_hw_get_mode();
 
 		status = acpi_enable();
-		अगर (ACPI_FAILURE(status)) अणु
+		if (ACPI_FAILURE(status)) {
 			ACPI_WARNING((AE_INFO, "AcpiEnable failed"));
-			वापस_ACPI_STATUS(status);
-		पूर्ण
-	पूर्ण
+			return_ACPI_STATUS(status);
+		}
+	}
 
 	/*
-	 * Obtain a permanent mapping क्रम the FACS. This is required क्रम the
+	 * Obtain a permanent mapping for the FACS. This is required for the
 	 * Global Lock and the Firmware Waking Vector
 	 */
-	अगर (!(flags & ACPI_NO_FACS_INIT)) अणु
+	if (!(flags & ACPI_NO_FACS_INIT)) {
 		status = acpi_tb_initialize_facs();
-		अगर (ACPI_FAILURE(status)) अणु
+		if (ACPI_FAILURE(status)) {
 			ACPI_WARNING((AE_INFO, "Could not map the FACS table"));
-			वापस_ACPI_STATUS(status);
-		पूर्ण
-	पूर्ण
+			return_ACPI_STATUS(status);
+		}
+	}
 
 	/*
 	 * Initialize ACPI Event handling (Fixed and General Purpose)
 	 *
-	 * Note1: We must have the hardware and events initialized beक्रमe we can
+	 * Note1: We must have the hardware and events initialized before we can
 	 * execute any control methods safely. Any control method can require
-	 * ACPI hardware support, so the hardware must be fully initialized beक्रमe
+	 * ACPI hardware support, so the hardware must be fully initialized before
 	 * any method execution!
 	 *
 	 * Note2: Fixed events are initialized and enabled here. GPEs are
@@ -164,35 +163,35 @@ acpi_status ACPI_INIT_FUNCTION acpi_enable_subप्रणाली(u32 flags)
 	 * initialization control methods are run (_REG, _STA, _INI) on the
 	 * entire namespace.
 	 */
-	अगर (!(flags & ACPI_NO_EVENT_INIT)) अणु
+	if (!(flags & ACPI_NO_EVENT_INIT)) {
 		ACPI_DEBUG_PRINT((ACPI_DB_EXEC,
 				  "[Init] Initializing ACPI events\n"));
 
 		status = acpi_ev_initialize_events();
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस_ACPI_STATUS(status);
-		पूर्ण
-	पूर्ण
+		if (ACPI_FAILURE(status)) {
+			return_ACPI_STATUS(status);
+		}
+	}
 
 	/*
 	 * Install the SCI handler and Global Lock handler. This completes the
 	 * hardware initialization.
 	 */
-	अगर (!(flags & ACPI_NO_HANDLER_INIT)) अणु
+	if (!(flags & ACPI_NO_HANDLER_INIT)) {
 		ACPI_DEBUG_PRINT((ACPI_DB_EXEC,
 				  "[Init] Installing SCI/GL handlers\n"));
 
 		status = acpi_ev_install_xrupt_handlers();
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस_ACPI_STATUS(status);
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर				/* !ACPI_REDUCED_HARDWARE */
+		if (ACPI_FAILURE(status)) {
+			return_ACPI_STATUS(status);
+		}
+	}
+#endif				/* !ACPI_REDUCED_HARDWARE */
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
-ACPI_EXPORT_SYMBOL_INIT(acpi_enable_subप्रणाली)
+ACPI_EXPORT_SYMBOL_INIT(acpi_enable_subsystem)
 
 /*******************************************************************************
  *
@@ -203,55 +202,55 @@ ACPI_EXPORT_SYMBOL_INIT(acpi_enable_subप्रणाली)
  * RETURN:      Status
  *
  * DESCRIPTION: Completes namespace initialization by initializing device
- *              objects and executing AML code क्रम Regions, buffers, etc.
+ *              objects and executing AML code for Regions, buffers, etc.
  *
  ******************************************************************************/
 acpi_status ACPI_INIT_FUNCTION acpi_initialize_objects(u32 flags)
-अणु
+{
 	acpi_status status = AE_OK;
 
 	ACPI_FUNCTION_TRACE(acpi_initialize_objects);
 
-#अगर_घोषित ACPI_OBSOLETE_BEHAVIOR
+#ifdef ACPI_OBSOLETE_BEHAVIOR
 	/*
 	 * 05/2019: Removed, initialization now happens at both object
-	 * creation and table load समय
+	 * creation and table load time
 	 */
 
 	/*
-	 * Initialize the objects that reमुख्य uninitialized. This
+	 * Initialize the objects that remain uninitialized. This
 	 * runs the executable AML that may be part of the
 	 * declaration of these objects: operation_regions, buffer_fields,
 	 * bank_fields, Buffers, and Packages.
 	 */
-	अगर (!(flags & ACPI_NO_OBJECT_INIT)) अणु
+	if (!(flags & ACPI_NO_OBJECT_INIT)) {
 		status = acpi_ns_initialize_objects();
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस_ACPI_STATUS(status);
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+		if (ACPI_FAILURE(status)) {
+			return_ACPI_STATUS(status);
+		}
+	}
+#endif
 
 	/*
 	 * Initialize all device/region objects in the namespace. This runs
 	 * the device _STA and _INI methods and region _REG methods.
 	 */
-	अगर (!(flags & (ACPI_NO_DEVICE_INIT | ACPI_NO_ADDRESS_SPACE_INIT))) अणु
+	if (!(flags & (ACPI_NO_DEVICE_INIT | ACPI_NO_ADDRESS_SPACE_INIT))) {
 		status = acpi_ns_initialize_devices(flags);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस_ACPI_STATUS(status);
-		पूर्ण
-	पूर्ण
+		if (ACPI_FAILURE(status)) {
+			return_ACPI_STATUS(status);
+		}
+	}
 
 	/*
 	 * Empty the caches (delete the cached objects) on the assumption that
-	 * the table load filled them up more than they will be at runसमय --
+	 * the table load filled them up more than they will be at runtime --
 	 * thus wasting non-paged memory.
 	 */
 	status = acpi_purge_cached_objects();
 
 	acpi_gbl_startup_flags |= ACPI_INITIALIZED_OK;
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 ACPI_EXPORT_SYMBOL_INIT(acpi_initialize_objects)

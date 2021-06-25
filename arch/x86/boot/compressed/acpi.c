@@ -1,230 +1,229 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#घोषणा BOOT_CTYPE_H
-#समावेश "misc.h"
-#समावेश "error.h"
-#समावेश "../string.h"
+// SPDX-License-Identifier: GPL-2.0
+#define BOOT_CTYPE_H
+#include "misc.h"
+#include "error.h"
+#include "../string.h"
 
-#समावेश <linux/numa.h>
-#समावेश <linux/efi.h>
-#समावेश <यंत्र/efi.h>
+#include <linux/numa.h>
+#include <linux/efi.h>
+#include <asm/efi.h>
 
 /*
  * Longest parameter of 'acpi=' is 'copy_dsdt', plus an extra '\0'
- * क्रम termination.
+ * for termination.
  */
-#घोषणा MAX_ACPI_ARG_LENGTH 10
+#define MAX_ACPI_ARG_LENGTH 10
 
 /*
  * Immovable memory regions representation. Max amount of memory regions is
  * MAX_NUMNODES*2.
  */
-काष्ठा mem_vector immovable_mem[MAX_NUMNODES*2];
+struct mem_vector immovable_mem[MAX_NUMNODES*2];
 
 /*
- * Search EFI प्रणाली tables क्रम RSDP.  If both ACPI_20_TABLE_GUID and
- * ACPI_TABLE_GUID are found, take the क्रमmer, which has more features.
+ * Search EFI system tables for RSDP.  If both ACPI_20_TABLE_GUID and
+ * ACPI_TABLE_GUID are found, take the former, which has more features.
  */
-अटल acpi_physical_address
-__efi_get_rsdp_addr(अचिन्हित दीर्घ config_tables, अचिन्हित पूर्णांक nr_tables,
+static acpi_physical_address
+__efi_get_rsdp_addr(unsigned long config_tables, unsigned int nr_tables,
 		    bool efi_64)
-अणु
+{
 	acpi_physical_address rsdp_addr = 0;
 
-#अगर_घोषित CONFIG_EFI
-	पूर्णांक i;
+#ifdef CONFIG_EFI
+	int i;
 
 	/* Get EFI tables from systab. */
-	क्रम (i = 0; i < nr_tables; i++) अणु
+	for (i = 0; i < nr_tables; i++) {
 		acpi_physical_address table;
 		efi_guid_t guid;
 
-		अगर (efi_64) अणु
+		if (efi_64) {
 			efi_config_table_64_t *tbl = (efi_config_table_64_t *)config_tables + i;
 
 			guid  = tbl->guid;
 			table = tbl->table;
 
-			अगर (!IS_ENABLED(CONFIG_X86_64) && table >> 32) अणु
-				debug_माला_दोtr("Error getting RSDP address: EFI config table located above 4GB.\n");
-				वापस 0;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			if (!IS_ENABLED(CONFIG_X86_64) && table >> 32) {
+				debug_putstr("Error getting RSDP address: EFI config table located above 4GB.\n");
+				return 0;
+			}
+		} else {
 			efi_config_table_32_t *tbl = (efi_config_table_32_t *)config_tables + i;
 
 			guid  = tbl->guid;
 			table = tbl->table;
-		पूर्ण
+		}
 
-		अगर (!(efi_guidcmp(guid, ACPI_TABLE_GUID)))
+		if (!(efi_guidcmp(guid, ACPI_TABLE_GUID)))
 			rsdp_addr = table;
-		अन्यथा अगर (!(efi_guidcmp(guid, ACPI_20_TABLE_GUID)))
-			वापस table;
-	पूर्ण
-#पूर्ण_अगर
-	वापस rsdp_addr;
-पूर्ण
+		else if (!(efi_guidcmp(guid, ACPI_20_TABLE_GUID)))
+			return table;
+	}
+#endif
+	return rsdp_addr;
+}
 
 /* EFI/kexec support is 64-bit only. */
-#अगर_घोषित CONFIG_X86_64
-अटल काष्ठा efi_setup_data *get_kexec_setup_data_addr(व्योम)
-अणु
-	काष्ठा setup_data *data;
+#ifdef CONFIG_X86_64
+static struct efi_setup_data *get_kexec_setup_data_addr(void)
+{
+	struct setup_data *data;
 	u64 pa_data;
 
 	pa_data = boot_params->hdr.setup_data;
-	जबतक (pa_data) अणु
-		data = (काष्ठा setup_data *)pa_data;
-		अगर (data->type == SETUP_EFI)
-			वापस (काष्ठा efi_setup_data *)(pa_data + माप(काष्ठा setup_data));
+	while (pa_data) {
+		data = (struct setup_data *)pa_data;
+		if (data->type == SETUP_EFI)
+			return (struct efi_setup_data *)(pa_data + sizeof(struct setup_data));
 
 		pa_data = data->next;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	}
+	return NULL;
+}
 
-अटल acpi_physical_address kexec_get_rsdp_addr(व्योम)
-अणु
-	efi_प्रणाली_table_64_t *systab;
-	काष्ठा efi_setup_data *esd;
-	काष्ठा efi_info *ei;
-	अक्षर *sig;
+static acpi_physical_address kexec_get_rsdp_addr(void)
+{
+	efi_system_table_64_t *systab;
+	struct efi_setup_data *esd;
+	struct efi_info *ei;
+	char *sig;
 
-	esd = (काष्ठा efi_setup_data *)get_kexec_setup_data_addr();
-	अगर (!esd)
-		वापस 0;
+	esd = (struct efi_setup_data *)get_kexec_setup_data_addr();
+	if (!esd)
+		return 0;
 
-	अगर (!esd->tables) अणु
-		debug_माला_दोtr("Wrong kexec SETUP_EFI data.\n");
-		वापस 0;
-	पूर्ण
+	if (!esd->tables) {
+		debug_putstr("Wrong kexec SETUP_EFI data.\n");
+		return 0;
+	}
 
 	ei = &boot_params->efi_info;
-	sig = (अक्षर *)&ei->efi_loader_signature;
-	अगर (म_भेदन(sig, EFI64_LOADER_SIGNATURE, 4)) अणु
-		debug_माला_दोtr("Wrong kexec EFI loader signature.\n");
-		वापस 0;
-	पूर्ण
+	sig = (char *)&ei->efi_loader_signature;
+	if (strncmp(sig, EFI64_LOADER_SIGNATURE, 4)) {
+		debug_putstr("Wrong kexec EFI loader signature.\n");
+		return 0;
+	}
 
 	/* Get systab from boot params. */
-	systab = (efi_प्रणाली_table_64_t *) (ei->efi_systab | ((__u64)ei->efi_systab_hi << 32));
-	अगर (!systab)
+	systab = (efi_system_table_64_t *) (ei->efi_systab | ((__u64)ei->efi_systab_hi << 32));
+	if (!systab)
 		error("EFI system table not found in kexec boot_params.");
 
-	वापस __efi_get_rsdp_addr((अचिन्हित दीर्घ)esd->tables, systab->nr_tables, true);
-पूर्ण
-#अन्यथा
-अटल acpi_physical_address kexec_get_rsdp_addr(व्योम) अणु वापस 0; पूर्ण
-#पूर्ण_अगर /* CONFIG_X86_64 */
+	return __efi_get_rsdp_addr((unsigned long)esd->tables, systab->nr_tables, true);
+}
+#else
+static acpi_physical_address kexec_get_rsdp_addr(void) { return 0; }
+#endif /* CONFIG_X86_64 */
 
-अटल acpi_physical_address efi_get_rsdp_addr(व्योम)
-अणु
-#अगर_घोषित CONFIG_EFI
-	अचिन्हित दीर्घ systab, config_tables;
-	अचिन्हित पूर्णांक nr_tables;
-	काष्ठा efi_info *ei;
+static acpi_physical_address efi_get_rsdp_addr(void)
+{
+#ifdef CONFIG_EFI
+	unsigned long systab, config_tables;
+	unsigned int nr_tables;
+	struct efi_info *ei;
 	bool efi_64;
-	अक्षर *sig;
+	char *sig;
 
 	ei = &boot_params->efi_info;
-	sig = (अक्षर *)&ei->efi_loader_signature;
+	sig = (char *)&ei->efi_loader_signature;
 
-	अगर (!म_भेदन(sig, EFI64_LOADER_SIGNATURE, 4)) अणु
+	if (!strncmp(sig, EFI64_LOADER_SIGNATURE, 4)) {
 		efi_64 = true;
-	पूर्ण अन्यथा अगर (!म_भेदन(sig, EFI32_LOADER_SIGNATURE, 4)) अणु
+	} else if (!strncmp(sig, EFI32_LOADER_SIGNATURE, 4)) {
 		efi_64 = false;
-	पूर्ण अन्यथा अणु
-		debug_माला_दोtr("Wrong EFI loader signature.\n");
-		वापस 0;
-	पूर्ण
+	} else {
+		debug_putstr("Wrong EFI loader signature.\n");
+		return 0;
+	}
 
 	/* Get systab from boot params. */
-#अगर_घोषित CONFIG_X86_64
+#ifdef CONFIG_X86_64
 	systab = ei->efi_systab | ((__u64)ei->efi_systab_hi << 32);
-#अन्यथा
-	अगर (ei->efi_systab_hi || ei->efi_memmap_hi) अणु
-		debug_माला_दोtr("Error getting RSDP address: EFI system table located above 4GB.\n");
-		वापस 0;
-	पूर्ण
+#else
+	if (ei->efi_systab_hi || ei->efi_memmap_hi) {
+		debug_putstr("Error getting RSDP address: EFI system table located above 4GB.\n");
+		return 0;
+	}
 	systab = ei->efi_systab;
-#पूर्ण_अगर
-	अगर (!systab)
+#endif
+	if (!systab)
 		error("EFI system table not found.");
 
 	/* Handle EFI bitness properly */
-	अगर (efi_64) अणु
-		efi_प्रणाली_table_64_t *stbl = (efi_प्रणाली_table_64_t *)systab;
+	if (efi_64) {
+		efi_system_table_64_t *stbl = (efi_system_table_64_t *)systab;
 
 		config_tables	= stbl->tables;
 		nr_tables	= stbl->nr_tables;
-	पूर्ण अन्यथा अणु
-		efi_प्रणाली_table_32_t *stbl = (efi_प्रणाली_table_32_t *)systab;
+	} else {
+		efi_system_table_32_t *stbl = (efi_system_table_32_t *)systab;
 
 		config_tables	= stbl->tables;
 		nr_tables	= stbl->nr_tables;
-	पूर्ण
+	}
 
-	अगर (!config_tables)
+	if (!config_tables)
 		error("EFI config tables not found.");
 
-	वापस __efi_get_rsdp_addr(config_tables, nr_tables, efi_64);
-#अन्यथा
-	वापस 0;
-#पूर्ण_अगर
-पूर्ण
+	return __efi_get_rsdp_addr(config_tables, nr_tables, efi_64);
+#else
+	return 0;
+#endif
+}
 
-अटल u8 compute_checksum(u8 *buffer, u32 length)
-अणु
+static u8 compute_checksum(u8 *buffer, u32 length)
+{
 	u8 *end = buffer + length;
 	u8 sum = 0;
 
-	जबतक (buffer < end)
+	while (buffer < end)
 		sum += *(buffer++);
 
-	वापस sum;
-पूर्ण
+	return sum;
+}
 
-/* Search a block of memory क्रम the RSDP signature. */
-अटल u8 *scan_mem_क्रम_rsdp(u8 *start, u32 length)
-अणु
-	काष्ठा acpi_table_rsdp *rsdp;
+/* Search a block of memory for the RSDP signature. */
+static u8 *scan_mem_for_rsdp(u8 *start, u32 length)
+{
+	struct acpi_table_rsdp *rsdp;
 	u8 *address, *end;
 
 	end = start + length;
 
-	/* Search from given start address क्रम the requested length */
-	क्रम (address = start; address < end; address += ACPI_RSDP_SCAN_STEP) अणु
+	/* Search from given start address for the requested length */
+	for (address = start; address < end; address += ACPI_RSDP_SCAN_STEP) {
 		/*
 		 * Both RSDP signature and checksum must be correct.
-		 * Note: Someबार there exists more than one RSDP in memory;
+		 * Note: Sometimes there exists more than one RSDP in memory;
 		 * the valid RSDP has a valid checksum, all others have an
 		 * invalid checksum.
 		 */
-		rsdp = (काष्ठा acpi_table_rsdp *)address;
+		rsdp = (struct acpi_table_rsdp *)address;
 
 		/* BAD Signature */
-		अगर (!ACPI_VALIDATE_RSDP_SIG(rsdp->signature))
-			जारी;
+		if (!ACPI_VALIDATE_RSDP_SIG(rsdp->signature))
+			continue;
 
 		/* Check the standard checksum */
-		अगर (compute_checksum((u8 *)rsdp, ACPI_RSDP_CHECKSUM_LENGTH))
-			जारी;
+		if (compute_checksum((u8 *)rsdp, ACPI_RSDP_CHECKSUM_LENGTH))
+			continue;
 
-		/* Check extended checksum अगर table version >= 2 */
-		अगर ((rsdp->revision >= 2) &&
+		/* Check extended checksum if table version >= 2 */
+		if ((rsdp->revision >= 2) &&
 		    (compute_checksum((u8 *)rsdp, ACPI_RSDP_XCHECKSUM_LENGTH)))
-			जारी;
+			continue;
 
 		/* Signature and checksum valid, we have found a real RSDP */
-		वापस address;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		return address;
+	}
+	return NULL;
+}
 
 /* Search RSDP address in EBDA. */
-अटल acpi_physical_address bios_get_rsdp_addr(व्योम)
-अणु
-	अचिन्हित दीर्घ address;
+static acpi_physical_address bios_get_rsdp_addr(void)
+{
+	unsigned long address;
 	u8 *rsdp;
 
 	/* Get the location of the Extended BIOS Data Area (EBDA) */
@@ -235,24 +234,24 @@ __efi_get_rsdp_addr(अचिन्हित दीर्घ config_tables, अ�
 	 * Search EBDA paragraphs (EBDA is required to be a minimum of
 	 * 1K length)
 	 */
-	अगर (address > 0x400) अणु
-		rsdp = scan_mem_क्रम_rsdp((u8 *)address, ACPI_EBDA_WINDOW_SIZE);
-		अगर (rsdp)
-			वापस (acpi_physical_address)(अचिन्हित दीर्घ)rsdp;
-	पूर्ण
+	if (address > 0x400) {
+		rsdp = scan_mem_for_rsdp((u8 *)address, ACPI_EBDA_WINDOW_SIZE);
+		if (rsdp)
+			return (acpi_physical_address)(unsigned long)rsdp;
+	}
 
 	/* Search upper memory: 16-byte boundaries in E0000h-FFFFFh */
-	rsdp = scan_mem_क्रम_rsdp((u8 *) ACPI_HI_RSDP_WINDOW_BASE,
+	rsdp = scan_mem_for_rsdp((u8 *) ACPI_HI_RSDP_WINDOW_BASE,
 					ACPI_HI_RSDP_WINDOW_SIZE);
-	अगर (rsdp)
-		वापस (acpi_physical_address)(अचिन्हित दीर्घ)rsdp;
+	if (rsdp)
+		return (acpi_physical_address)(unsigned long)rsdp;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Return RSDP address on success, otherwise 0. */
-acpi_physical_address get_rsdp_addr(व्योम)
-अणु
+acpi_physical_address get_rsdp_addr(void)
+{
 	acpi_physical_address pa;
 
 	pa = boot_params->acpi_rsdp_addr;
@@ -262,109 +261,109 @@ acpi_physical_address get_rsdp_addr(व्योम)
 	 * kexec'ed kernel and kexec(1) has passed all the required EFI info to
 	 * us.
 	 */
-	अगर (!pa)
+	if (!pa)
 		pa = kexec_get_rsdp_addr();
 
-	अगर (!pa)
+	if (!pa)
 		pa = efi_get_rsdp_addr();
 
-	अगर (!pa)
+	if (!pa)
 		pa = bios_get_rsdp_addr();
 
-	वापस pa;
-पूर्ण
+	return pa;
+}
 
-#अगर defined(CONFIG_RANDOMIZE_BASE) && defined(CONFIG_MEMORY_HOTREMOVE)
+#if defined(CONFIG_RANDOMIZE_BASE) && defined(CONFIG_MEMORY_HOTREMOVE)
 /*
  * Max length of 64-bit hex address string is 19, prefix "0x" + 16 hex
- * digits, and '\0' क्रम termination.
+ * digits, and '\0' for termination.
  */
-#घोषणा MAX_ADDR_LEN 19
+#define MAX_ADDR_LEN 19
 
-अटल अचिन्हित दीर्घ get_cmdline_acpi_rsdp(व्योम)
-अणु
-	अचिन्हित दीर्घ addr = 0;
+static unsigned long get_cmdline_acpi_rsdp(void)
+{
+	unsigned long addr = 0;
 
-#अगर_घोषित CONFIG_KEXEC
-	अक्षर val[MAX_ADDR_LEN] = अणु पूर्ण;
-	पूर्णांक ret;
+#ifdef CONFIG_KEXEC
+	char val[MAX_ADDR_LEN] = { };
+	int ret;
 
 	ret = cmdline_find_option("acpi_rsdp", val, MAX_ADDR_LEN);
-	अगर (ret < 0)
-		वापस 0;
+	if (ret < 0)
+		return 0;
 
-	अगर (boot_kम_से_अदीर्घ(val, 16, &addr))
-		वापस 0;
-#पूर्ण_अगर
-	वापस addr;
-पूर्ण
+	if (boot_kstrtoul(val, 16, &addr))
+		return 0;
+#endif
+	return addr;
+}
 
 /* Compute SRAT address from RSDP. */
-अटल अचिन्हित दीर्घ get_acpi_srat_table(व्योम)
-अणु
-	अचिन्हित दीर्घ root_table, acpi_table;
-	काष्ठा acpi_table_header *header;
-	काष्ठा acpi_table_rsdp *rsdp;
+static unsigned long get_acpi_srat_table(void)
+{
+	unsigned long root_table, acpi_table;
+	struct acpi_table_header *header;
+	struct acpi_table_rsdp *rsdp;
 	u32 num_entries, size, len;
-	अक्षर arg[10];
+	char arg[10];
 	u8 *entry;
 
 	/*
-	 * Check whether we were given an RSDP on the command line. We करोn't
+	 * Check whether we were given an RSDP on the command line. We don't
 	 * stash this in boot params because the kernel itself may have
-	 * dअगरferent ideas about whether to trust a command-line parameter.
+	 * different ideas about whether to trust a command-line parameter.
 	 */
-	rsdp = (काष्ठा acpi_table_rsdp *)get_cmdline_acpi_rsdp();
-	अगर (!rsdp)
-		rsdp = (काष्ठा acpi_table_rsdp *)(दीर्घ)
+	rsdp = (struct acpi_table_rsdp *)get_cmdline_acpi_rsdp();
+	if (!rsdp)
+		rsdp = (struct acpi_table_rsdp *)(long)
 			boot_params->acpi_rsdp_addr;
 
-	अगर (!rsdp)
-		वापस 0;
+	if (!rsdp)
+		return 0;
 
 	/* Get ACPI root table from RSDP.*/
-	अगर (!(cmdline_find_option("acpi", arg, माप(arg)) == 4 &&
-	    !म_भेदन(arg, "rsdt", 4)) &&
+	if (!(cmdline_find_option("acpi", arg, sizeof(arg)) == 4 &&
+	    !strncmp(arg, "rsdt", 4)) &&
 	    rsdp->xsdt_physical_address &&
-	    rsdp->revision > 1) अणु
+	    rsdp->revision > 1) {
 		root_table = rsdp->xsdt_physical_address;
 		size = ACPI_XSDT_ENTRY_SIZE;
-	पूर्ण अन्यथा अणु
+	} else {
 		root_table = rsdp->rsdt_physical_address;
 		size = ACPI_RSDT_ENTRY_SIZE;
-	पूर्ण
+	}
 
-	अगर (!root_table)
-		वापस 0;
+	if (!root_table)
+		return 0;
 
-	header = (काष्ठा acpi_table_header *)root_table;
+	header = (struct acpi_table_header *)root_table;
 	len = header->length;
-	अगर (len < माप(काष्ठा acpi_table_header) + size)
-		वापस 0;
+	if (len < sizeof(struct acpi_table_header) + size)
+		return 0;
 
-	num_entries = (len - माप(काष्ठा acpi_table_header)) / size;
-	entry = (u8 *)(root_table + माप(काष्ठा acpi_table_header));
+	num_entries = (len - sizeof(struct acpi_table_header)) / size;
+	entry = (u8 *)(root_table + sizeof(struct acpi_table_header));
 
-	जबतक (num_entries--) अणु
-		अगर (size == ACPI_RSDT_ENTRY_SIZE)
+	while (num_entries--) {
+		if (size == ACPI_RSDT_ENTRY_SIZE)
 			acpi_table = *(u32 *)entry;
-		अन्यथा
+		else
 			acpi_table = *(u64 *)entry;
 
-		अगर (acpi_table) अणु
-			header = (काष्ठा acpi_table_header *)acpi_table;
+		if (acpi_table) {
+			header = (struct acpi_table_header *)acpi_table;
 
-			अगर (ACPI_COMPARE_NAMESEG(header->signature, ACPI_SIG_SRAT))
-				वापस acpi_table;
-		पूर्ण
+			if (ACPI_COMPARE_NAMESEG(header->signature, ACPI_SIG_SRAT))
+				return acpi_table;
+		}
 		entry += size;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /**
  * count_immovable_mem_regions - Parse SRAT and cache the immovable
- * memory regions पूर्णांकo the immovable_mem array.
+ * memory regions into the immovable_mem array.
  *
  * Return the number of immovable memory regions on success, 0 on failure:
  *
@@ -372,51 +371,51 @@ acpi_physical_address get_rsdp_addr(व्योम)
  * - ACPI off or no SRAT found
  * - No immovable memory region found.
  */
-पूर्णांक count_immovable_mem_regions(व्योम)
-अणु
-	अचिन्हित दीर्घ table_addr, table_end, table;
-	काष्ठा acpi_subtable_header *sub_table;
-	काष्ठा acpi_table_header *table_header;
-	अक्षर arg[MAX_ACPI_ARG_LENGTH];
-	पूर्णांक num = 0;
+int count_immovable_mem_regions(void)
+{
+	unsigned long table_addr, table_end, table;
+	struct acpi_subtable_header *sub_table;
+	struct acpi_table_header *table_header;
+	char arg[MAX_ACPI_ARG_LENGTH];
+	int num = 0;
 
-	अगर (cmdline_find_option("acpi", arg, माप(arg)) == 3 &&
-	    !म_भेदन(arg, "off", 3))
-		वापस 0;
+	if (cmdline_find_option("acpi", arg, sizeof(arg)) == 3 &&
+	    !strncmp(arg, "off", 3))
+		return 0;
 
 	table_addr = get_acpi_srat_table();
-	अगर (!table_addr)
-		वापस 0;
+	if (!table_addr)
+		return 0;
 
-	table_header = (काष्ठा acpi_table_header *)table_addr;
+	table_header = (struct acpi_table_header *)table_addr;
 	table_end = table_addr + table_header->length;
-	table = table_addr + माप(काष्ठा acpi_table_srat);
+	table = table_addr + sizeof(struct acpi_table_srat);
 
-	जबतक (table + माप(काष्ठा acpi_subtable_header) < table_end) अणु
+	while (table + sizeof(struct acpi_subtable_header) < table_end) {
 
-		sub_table = (काष्ठा acpi_subtable_header *)table;
-		अगर (!sub_table->length) अणु
-			debug_माला_दोtr("Invalid zero length SRAT subtable.\n");
-			वापस 0;
-		पूर्ण
+		sub_table = (struct acpi_subtable_header *)table;
+		if (!sub_table->length) {
+			debug_putstr("Invalid zero length SRAT subtable.\n");
+			return 0;
+		}
 
-		अगर (sub_table->type == ACPI_SRAT_TYPE_MEMORY_AFFINITY) अणु
-			काष्ठा acpi_srat_mem_affinity *ma;
+		if (sub_table->type == ACPI_SRAT_TYPE_MEMORY_AFFINITY) {
+			struct acpi_srat_mem_affinity *ma;
 
-			ma = (काष्ठा acpi_srat_mem_affinity *)sub_table;
-			अगर (!(ma->flags & ACPI_SRAT_MEM_HOT_PLUGGABLE) && ma->length) अणु
+			ma = (struct acpi_srat_mem_affinity *)sub_table;
+			if (!(ma->flags & ACPI_SRAT_MEM_HOT_PLUGGABLE) && ma->length) {
 				immovable_mem[num].start = ma->base_address;
 				immovable_mem[num].size = ma->length;
 				num++;
-			पूर्ण
+			}
 
-			अगर (num >= MAX_NUMNODES*2) अणु
-				debug_माला_दोtr("Too many immovable memory regions, aborting.\n");
-				वापस 0;
-			पूर्ण
-		पूर्ण
+			if (num >= MAX_NUMNODES*2) {
+				debug_putstr("Too many immovable memory regions, aborting.\n");
+				return 0;
+			}
+		}
 		table += sub_table->length;
-	पूर्ण
-	वापस num;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_RANDOMIZE_BASE && CONFIG_MEMORY_HOTREMOVE */
+	}
+	return num;
+}
+#endif /* CONFIG_RANDOMIZE_BASE && CONFIG_MEMORY_HOTREMOVE */

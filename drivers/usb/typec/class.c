@@ -1,775 +1,774 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * USB Type-C Connector Class
  *
  * Copyright (C) 2017, Intel Corporation
- * Author: Heikki Krogerus <heikki.krogerus@linux.पूर्णांकel.com>
+ * Author: Heikki Krogerus <heikki.krogerus@linux.intel.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/property.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/usb/pd_vकरो.h>
-#समावेश <linux/usb/typec_mux.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/property.h>
+#include <linux/slab.h>
+#include <linux/usb/pd_vdo.h>
+#include <linux/usb/typec_mux.h>
 
-#समावेश "bus.h"
-#समावेश "class.h"
+#include "bus.h"
+#include "class.h"
 
-अटल DEFINE_IDA(typec_index_ida);
+static DEFINE_IDA(typec_index_ida);
 
-काष्ठा class typec_class = अणु
+struct class typec_class = {
 	.name = "typec",
 	.owner = THIS_MODULE,
-पूर्ण;
+};
 
 /* ------------------------------------------------------------------------- */
 /* Common attributes */
 
-अटल स्थिर अक्षर * स्थिर typec_accessory_modes[] = अणु
+static const char * const typec_accessory_modes[] = {
 	[TYPEC_ACCESSORY_NONE]		= "none",
 	[TYPEC_ACCESSORY_AUDIO]		= "analog_audio",
 	[TYPEC_ACCESSORY_DEBUG]		= "debug",
-पूर्ण;
+};
 
-/* Product types defined in USB PD Specअगरication R3.0 V2.0 */
-अटल स्थिर अक्षर * स्थिर product_type_ufp[8] = अणु
+/* Product types defined in USB PD Specification R3.0 V2.0 */
+static const char * const product_type_ufp[8] = {
 	[IDH_PTYPE_NOT_UFP]		= "not_ufp",
 	[IDH_PTYPE_HUB]			= "hub",
 	[IDH_PTYPE_PERIPH]		= "peripheral",
 	[IDH_PTYPE_PSD]			= "psd",
 	[IDH_PTYPE_AMA]			= "ama",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर product_type_dfp[8] = अणु
+static const char * const product_type_dfp[8] = {
 	[IDH_PTYPE_NOT_DFP]		= "not_dfp",
 	[IDH_PTYPE_DFP_HUB]		= "hub",
 	[IDH_PTYPE_DFP_HOST]		= "host",
 	[IDH_PTYPE_DFP_PB]		= "power_brick",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर product_type_cable[8] = अणु
+static const char * const product_type_cable[8] = {
 	[IDH_PTYPE_NOT_CABLE]		= "not_cable",
 	[IDH_PTYPE_PCABLE]		= "passive",
 	[IDH_PTYPE_ACABLE]		= "active",
 	[IDH_PTYPE_VPD]			= "vpd",
-पूर्ण;
+};
 
-अटल काष्ठा usb_pd_identity *get_pd_identity(काष्ठा device *dev)
-अणु
-	अगर (is_typec_partner(dev)) अणु
-		काष्ठा typec_partner *partner = to_typec_partner(dev);
+static struct usb_pd_identity *get_pd_identity(struct device *dev)
+{
+	if (is_typec_partner(dev)) {
+		struct typec_partner *partner = to_typec_partner(dev);
 
-		वापस partner->identity;
-	पूर्ण अन्यथा अगर (is_typec_cable(dev)) अणु
-		काष्ठा typec_cable *cable = to_typec_cable(dev);
+		return partner->identity;
+	} else if (is_typec_cable(dev)) {
+		struct typec_cable *cable = to_typec_cable(dev);
 
-		वापस cable->identity;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		return cable->identity;
+	}
+	return NULL;
+}
 
-अटल स्थिर अक्षर *get_pd_product_type(काष्ठा device *dev)
-अणु
-	काष्ठा typec_port *port = to_typec_port(dev->parent);
-	काष्ठा usb_pd_identity *id = get_pd_identity(dev);
-	स्थिर अक्षर *ptype = शून्य;
+static const char *get_pd_product_type(struct device *dev)
+{
+	struct typec_port *port = to_typec_port(dev->parent);
+	struct usb_pd_identity *id = get_pd_identity(dev);
+	const char *ptype = NULL;
 
-	अगर (is_typec_partner(dev)) अणु
-		अगर (!id)
-			वापस शून्य;
+	if (is_typec_partner(dev)) {
+		if (!id)
+			return NULL;
 
-		अगर (port->data_role == TYPEC_HOST)
+		if (port->data_role == TYPEC_HOST)
 			ptype = product_type_ufp[PD_IDH_PTYPE(id->id_header)];
-		अन्यथा
+		else
 			ptype = product_type_dfp[PD_IDH_DFP_PTYPE(id->id_header)];
-	पूर्ण अन्यथा अगर (is_typec_cable(dev)) अणु
-		अगर (id)
+	} else if (is_typec_cable(dev)) {
+		if (id)
 			ptype = product_type_cable[PD_IDH_PTYPE(id->id_header)];
-		अन्यथा
+		else
 			ptype = to_typec_cable(dev)->active ?
 				product_type_cable[IDH_PTYPE_ACABLE] :
 				product_type_cable[IDH_PTYPE_PCABLE];
-	पूर्ण
+	}
 
-	वापस ptype;
-पूर्ण
+	return ptype;
+}
 
-अटल sमाप_प्रकार id_header_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			      अक्षर *buf)
-अणु
-	काष्ठा usb_pd_identity *id = get_pd_identity(dev);
+static ssize_t id_header_show(struct device *dev, struct device_attribute *attr,
+			      char *buf)
+{
+	struct usb_pd_identity *id = get_pd_identity(dev);
 
-	वापस प्र_लिखो(buf, "0x%08x\n", id->id_header);
-पूर्ण
-अटल DEVICE_ATTR_RO(id_header);
+	return sprintf(buf, "0x%08x\n", id->id_header);
+}
+static DEVICE_ATTR_RO(id_header);
 
-अटल sमाप_प्रकार cert_stat_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			      अक्षर *buf)
-अणु
-	काष्ठा usb_pd_identity *id = get_pd_identity(dev);
+static ssize_t cert_stat_show(struct device *dev, struct device_attribute *attr,
+			      char *buf)
+{
+	struct usb_pd_identity *id = get_pd_identity(dev);
 
-	वापस प्र_लिखो(buf, "0x%08x\n", id->cert_stat);
-पूर्ण
-अटल DEVICE_ATTR_RO(cert_stat);
+	return sprintf(buf, "0x%08x\n", id->cert_stat);
+}
+static DEVICE_ATTR_RO(cert_stat);
 
-अटल sमाप_प्रकार product_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			    अक्षर *buf)
-अणु
-	काष्ठा usb_pd_identity *id = get_pd_identity(dev);
+static ssize_t product_show(struct device *dev, struct device_attribute *attr,
+			    char *buf)
+{
+	struct usb_pd_identity *id = get_pd_identity(dev);
 
-	वापस प्र_लिखो(buf, "0x%08x\n", id->product);
-पूर्ण
-अटल DEVICE_ATTR_RO(product);
+	return sprintf(buf, "0x%08x\n", id->product);
+}
+static DEVICE_ATTR_RO(product);
 
-अटल sमाप_प्रकार product_type_vकरो1_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-				      अक्षर *buf)
-अणु
-	काष्ठा usb_pd_identity *id = get_pd_identity(dev);
+static ssize_t product_type_vdo1_show(struct device *dev, struct device_attribute *attr,
+				      char *buf)
+{
+	struct usb_pd_identity *id = get_pd_identity(dev);
 
-	वापस sysfs_emit(buf, "0x%08x\n", id->vकरो[0]);
-पूर्ण
-अटल DEVICE_ATTR_RO(product_type_vकरो1);
+	return sysfs_emit(buf, "0x%08x\n", id->vdo[0]);
+}
+static DEVICE_ATTR_RO(product_type_vdo1);
 
-अटल sमाप_प्रकार product_type_vकरो2_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-				      अक्षर *buf)
-अणु
-	काष्ठा usb_pd_identity *id = get_pd_identity(dev);
+static ssize_t product_type_vdo2_show(struct device *dev, struct device_attribute *attr,
+				      char *buf)
+{
+	struct usb_pd_identity *id = get_pd_identity(dev);
 
-	वापस sysfs_emit(buf, "0x%08x\n", id->vकरो[1]);
-पूर्ण
-अटल DEVICE_ATTR_RO(product_type_vकरो2);
+	return sysfs_emit(buf, "0x%08x\n", id->vdo[1]);
+}
+static DEVICE_ATTR_RO(product_type_vdo2);
 
-अटल sमाप_प्रकार product_type_vकरो3_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-				      अक्षर *buf)
-अणु
-	काष्ठा usb_pd_identity *id = get_pd_identity(dev);
+static ssize_t product_type_vdo3_show(struct device *dev, struct device_attribute *attr,
+				      char *buf)
+{
+	struct usb_pd_identity *id = get_pd_identity(dev);
 
-	वापस sysfs_emit(buf, "0x%08x\n", id->vकरो[2]);
-पूर्ण
-अटल DEVICE_ATTR_RO(product_type_vकरो3);
+	return sysfs_emit(buf, "0x%08x\n", id->vdo[2]);
+}
+static DEVICE_ATTR_RO(product_type_vdo3);
 
-अटल काष्ठा attribute *usb_pd_id_attrs[] = अणु
+static struct attribute *usb_pd_id_attrs[] = {
 	&dev_attr_id_header.attr,
 	&dev_attr_cert_stat.attr,
 	&dev_attr_product.attr,
-	&dev_attr_product_type_vकरो1.attr,
-	&dev_attr_product_type_vकरो2.attr,
-	&dev_attr_product_type_vकरो3.attr,
-	शून्य
-पूर्ण;
+	&dev_attr_product_type_vdo1.attr,
+	&dev_attr_product_type_vdo2.attr,
+	&dev_attr_product_type_vdo3.attr,
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group usb_pd_id_group = अणु
+static const struct attribute_group usb_pd_id_group = {
 	.name = "identity",
 	.attrs = usb_pd_id_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *usb_pd_id_groups[] = अणु
+static const struct attribute_group *usb_pd_id_groups[] = {
 	&usb_pd_id_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल व्योम typec_product_type_notअगरy(काष्ठा device *dev)
-अणु
-	अक्षर *envp[2] = अणु पूर्ण;
-	स्थिर अक्षर *ptype;
+static void typec_product_type_notify(struct device *dev)
+{
+	char *envp[2] = { };
+	const char *ptype;
 
 	ptype = get_pd_product_type(dev);
-	अगर (!ptype)
-		वापस;
+	if (!ptype)
+		return;
 
-	sysfs_notअगरy(&dev->kobj, शून्य, "type");
+	sysfs_notify(&dev->kobj, NULL, "type");
 
-	envp[0] = kaप्र_लिखो(GFP_KERNEL, "PRODUCT_TYPE=%s", ptype);
-	अगर (!envp[0])
-		वापस;
+	envp[0] = kasprintf(GFP_KERNEL, "PRODUCT_TYPE=%s", ptype);
+	if (!envp[0])
+		return;
 
 	kobject_uevent_env(&dev->kobj, KOBJ_CHANGE, envp);
-	kमुक्त(envp[0]);
-पूर्ण
+	kfree(envp[0]);
+}
 
-अटल व्योम typec_report_identity(काष्ठा device *dev)
-अणु
-	sysfs_notअगरy(&dev->kobj, "identity", "id_header");
-	sysfs_notअगरy(&dev->kobj, "identity", "cert_stat");
-	sysfs_notअगरy(&dev->kobj, "identity", "product");
-	sysfs_notअगरy(&dev->kobj, "identity", "product_type_vdo1");
-	sysfs_notअगरy(&dev->kobj, "identity", "product_type_vdo2");
-	sysfs_notअगरy(&dev->kobj, "identity", "product_type_vdo3");
-	typec_product_type_notअगरy(dev);
-पूर्ण
+static void typec_report_identity(struct device *dev)
+{
+	sysfs_notify(&dev->kobj, "identity", "id_header");
+	sysfs_notify(&dev->kobj, "identity", "cert_stat");
+	sysfs_notify(&dev->kobj, "identity", "product");
+	sysfs_notify(&dev->kobj, "identity", "product_type_vdo1");
+	sysfs_notify(&dev->kobj, "identity", "product_type_vdo2");
+	sysfs_notify(&dev->kobj, "identity", "product_type_vdo3");
+	typec_product_type_notify(dev);
+}
 
-अटल sमाप_प्रकार
-type_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	स्थिर अक्षर *ptype;
+static ssize_t
+type_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	const char *ptype;
 
 	ptype = get_pd_product_type(dev);
-	अगर (!ptype)
-		वापस 0;
+	if (!ptype)
+		return 0;
 
-	वापस sysfs_emit(buf, "%s\n", ptype);
-पूर्ण
-अटल DEVICE_ATTR_RO(type);
+	return sysfs_emit(buf, "%s\n", ptype);
+}
+static DEVICE_ATTR_RO(type);
 
-अटल sमाप_प्रकार usb_घातer_delivery_revision_show(काष्ठा device *dev,
-						काष्ठा device_attribute *attr,
-						अक्षर *buf);
-अटल DEVICE_ATTR_RO(usb_घातer_delivery_revision);
+static ssize_t usb_power_delivery_revision_show(struct device *dev,
+						struct device_attribute *attr,
+						char *buf);
+static DEVICE_ATTR_RO(usb_power_delivery_revision);
 
 /* ------------------------------------------------------------------------- */
 /* Alternate Modes */
 
-अटल पूर्णांक alपंचांगode_match(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा typec_alपंचांगode *adev = to_typec_alपंचांगode(dev);
-	काष्ठा typec_device_id *id = data;
+static int altmode_match(struct device *dev, void *data)
+{
+	struct typec_altmode *adev = to_typec_altmode(dev);
+	struct typec_device_id *id = data;
 
-	अगर (!is_typec_alपंचांगode(dev))
-		वापस 0;
+	if (!is_typec_altmode(dev))
+		return 0;
 
-	वापस ((adev->svid == id->svid) && (adev->mode == id->mode));
-पूर्ण
+	return ((adev->svid == id->svid) && (adev->mode == id->mode));
+}
 
-अटल व्योम typec_alपंचांगode_set_partner(काष्ठा alपंचांगode *alपंचांगode)
-अणु
-	काष्ठा typec_alपंचांगode *adev = &alपंचांगode->adev;
-	काष्ठा typec_device_id id = अणु adev->svid, adev->mode, पूर्ण;
-	काष्ठा typec_port *port = typec_alपंचांगode2port(adev);
-	काष्ठा alपंचांगode *partner;
-	काष्ठा device *dev;
+static void typec_altmode_set_partner(struct altmode *altmode)
+{
+	struct typec_altmode *adev = &altmode->adev;
+	struct typec_device_id id = { adev->svid, adev->mode, };
+	struct typec_port *port = typec_altmode2port(adev);
+	struct altmode *partner;
+	struct device *dev;
 
-	dev = device_find_child(&port->dev, &id, alपंचांगode_match);
-	अगर (!dev)
-		वापस;
+	dev = device_find_child(&port->dev, &id, altmode_match);
+	if (!dev)
+		return;
 
 	/* Bind the port alt mode to the partner/plug alt mode. */
-	partner = to_alपंचांगode(to_typec_alपंचांगode(dev));
-	alपंचांगode->partner = partner;
+	partner = to_altmode(to_typec_altmode(dev));
+	altmode->partner = partner;
 
 	/* Bind the partner/plug alt mode to the port alt mode. */
-	अगर (is_typec_plug(adev->dev.parent)) अणु
-		काष्ठा typec_plug *plug = to_typec_plug(adev->dev.parent);
+	if (is_typec_plug(adev->dev.parent)) {
+		struct typec_plug *plug = to_typec_plug(adev->dev.parent);
 
-		partner->plug[plug->index] = alपंचांगode;
-	पूर्ण अन्यथा अणु
-		partner->partner = alपंचांगode;
-	पूर्ण
-पूर्ण
+		partner->plug[plug->index] = altmode;
+	} else {
+		partner->partner = altmode;
+	}
+}
 
-अटल व्योम typec_alपंचांगode_put_partner(काष्ठा alपंचांगode *alपंचांगode)
-अणु
-	काष्ठा alपंचांगode *partner = alपंचांगode->partner;
-	काष्ठा typec_alपंचांगode *adev;
+static void typec_altmode_put_partner(struct altmode *altmode)
+{
+	struct altmode *partner = altmode->partner;
+	struct typec_altmode *adev;
 
-	अगर (!partner)
-		वापस;
+	if (!partner)
+		return;
 
 	adev = &partner->adev;
 
-	अगर (is_typec_plug(adev->dev.parent)) अणु
-		काष्ठा typec_plug *plug = to_typec_plug(adev->dev.parent);
+	if (is_typec_plug(adev->dev.parent)) {
+		struct typec_plug *plug = to_typec_plug(adev->dev.parent);
 
-		partner->plug[plug->index] = शून्य;
-	पूर्ण अन्यथा अणु
-		partner->partner = शून्य;
-	पूर्ण
+		partner->plug[plug->index] = NULL;
+	} else {
+		partner->partner = NULL;
+	}
 	put_device(&adev->dev);
-पूर्ण
+}
 
 /**
- * typec_alपंचांगode_update_active - Report Enter/Exit mode
+ * typec_altmode_update_active - Report Enter/Exit mode
  * @adev: Handle to the alternate mode
  * @active: True when the mode has been entered
  *
  * If a partner or cable plug executes Enter/Exit Mode command successfully, the
  * drivers use this routine to report the updated state of the mode.
  */
-व्योम typec_alपंचांगode_update_active(काष्ठा typec_alपंचांगode *adev, bool active)
-अणु
-	अक्षर dir[6];
+void typec_altmode_update_active(struct typec_altmode *adev, bool active)
+{
+	char dir[6];
 
-	अगर (adev->active == active)
-		वापस;
+	if (adev->active == active)
+		return;
 
-	अगर (!is_typec_port(adev->dev.parent) && adev->dev.driver) अणु
-		अगर (!active)
+	if (!is_typec_port(adev->dev.parent) && adev->dev.driver) {
+		if (!active)
 			module_put(adev->dev.driver->owner);
-		अन्यथा
+		else
 			WARN_ON(!try_module_get(adev->dev.driver->owner));
-	पूर्ण
+	}
 
 	adev->active = active;
-	snम_लिखो(dir, माप(dir), "mode%d", adev->mode);
-	sysfs_notअगरy(&adev->dev.kobj, dir, "active");
-	sysfs_notअगरy(&adev->dev.kobj, शून्य, "active");
+	snprintf(dir, sizeof(dir), "mode%d", adev->mode);
+	sysfs_notify(&adev->dev.kobj, dir, "active");
+	sysfs_notify(&adev->dev.kobj, NULL, "active");
 	kobject_uevent(&adev->dev.kobj, KOBJ_CHANGE);
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_alपंचांगode_update_active);
+}
+EXPORT_SYMBOL_GPL(typec_altmode_update_active);
 
 /**
- * typec_alपंचांगode2port - Alternate Mode to USB Type-C port
+ * typec_altmode2port - Alternate Mode to USB Type-C port
  * @alt: The Alternate Mode
  *
  * Returns handle to the port that a cable plug or partner with @alt is
  * connected to.
  */
-काष्ठा typec_port *typec_alपंचांगode2port(काष्ठा typec_alपंचांगode *alt)
-अणु
-	अगर (is_typec_plug(alt->dev.parent))
-		वापस to_typec_port(alt->dev.parent->parent->parent);
-	अगर (is_typec_partner(alt->dev.parent))
-		वापस to_typec_port(alt->dev.parent->parent);
-	अगर (is_typec_port(alt->dev.parent))
-		वापस to_typec_port(alt->dev.parent);
+struct typec_port *typec_altmode2port(struct typec_altmode *alt)
+{
+	if (is_typec_plug(alt->dev.parent))
+		return to_typec_port(alt->dev.parent->parent->parent);
+	if (is_typec_partner(alt->dev.parent))
+		return to_typec_port(alt->dev.parent->parent);
+	if (is_typec_port(alt->dev.parent))
+		return to_typec_port(alt->dev.parent);
 
-	वापस शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_alपंचांगode2port);
+	return NULL;
+}
+EXPORT_SYMBOL_GPL(typec_altmode2port);
 
-अटल sमाप_प्रकार
-vकरो_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा typec_alपंचांगode *alt = to_typec_alपंचांगode(dev);
+static ssize_t
+vdo_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct typec_altmode *alt = to_typec_altmode(dev);
 
-	वापस प्र_लिखो(buf, "0x%08x\n", alt->vकरो);
-पूर्ण
-अटल DEVICE_ATTR_RO(vकरो);
+	return sprintf(buf, "0x%08x\n", alt->vdo);
+}
+static DEVICE_ATTR_RO(vdo);
 
-अटल sमाप_प्रकार
-description_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा typec_alपंचांगode *alt = to_typec_alपंचांगode(dev);
+static ssize_t
+description_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct typec_altmode *alt = to_typec_altmode(dev);
 
-	वापस प्र_लिखो(buf, "%s\n", alt->desc ? alt->desc : "");
-पूर्ण
-अटल DEVICE_ATTR_RO(description);
+	return sprintf(buf, "%s\n", alt->desc ? alt->desc : "");
+}
+static DEVICE_ATTR_RO(description);
 
-अटल sमाप_प्रकार
-active_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा typec_alपंचांगode *alt = to_typec_alपंचांगode(dev);
+static ssize_t
+active_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct typec_altmode *alt = to_typec_altmode(dev);
 
-	वापस प्र_लिखो(buf, "%s\n", alt->active ? "yes" : "no");
-पूर्ण
+	return sprintf(buf, "%s\n", alt->active ? "yes" : "no");
+}
 
-अटल sमाप_प्रकार active_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			    स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा typec_alपंचांगode *adev = to_typec_alपंचांगode(dev);
-	काष्ठा alपंचांगode *alपंचांगode = to_alपंचांगode(adev);
+static ssize_t active_store(struct device *dev, struct device_attribute *attr,
+			    const char *buf, size_t size)
+{
+	struct typec_altmode *adev = to_typec_altmode(dev);
+	struct altmode *altmode = to_altmode(adev);
 	bool enter;
-	पूर्णांक ret;
+	int ret;
 
 	ret = kstrtobool(buf, &enter);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (adev->active == enter)
-		वापस size;
+	if (adev->active == enter)
+		return size;
 
-	अगर (is_typec_port(adev->dev.parent)) अणु
-		typec_alपंचांगode_update_active(adev, enter);
+	if (is_typec_port(adev->dev.parent)) {
+		typec_altmode_update_active(adev, enter);
 
-		/* Make sure that the partner निकासs the mode beक्रमe disabling */
-		अगर (alपंचांगode->partner && !enter && alपंचांगode->partner->adev.active)
-			typec_alपंचांगode_निकास(&alपंचांगode->partner->adev);
-	पूर्ण अन्यथा अगर (alपंचांगode->partner) अणु
-		अगर (enter && !alपंचांगode->partner->adev.active) अणु
+		/* Make sure that the partner exits the mode before disabling */
+		if (altmode->partner && !enter && altmode->partner->adev.active)
+			typec_altmode_exit(&altmode->partner->adev);
+	} else if (altmode->partner) {
+		if (enter && !altmode->partner->adev.active) {
 			dev_warn(dev, "port has the mode disabled\n");
-			वापस -EPERM;
-		पूर्ण
-	पूर्ण
+			return -EPERM;
+		}
+	}
 
 	/* Note: If there is no driver, the mode will not be entered */
-	अगर (adev->ops && adev->ops->activate) अणु
+	if (adev->ops && adev->ops->activate) {
 		ret = adev->ops->activate(adev, enter);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस size;
-पूर्ण
-अटल DEVICE_ATTR_RW(active);
+	return size;
+}
+static DEVICE_ATTR_RW(active);
 
-अटल sमाप_प्रकार
-supported_roles_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		     अक्षर *buf)
-अणु
-	काष्ठा alपंचांगode *alt = to_alपंचांगode(to_typec_alपंचांगode(dev));
-	sमाप_प्रकार ret;
+static ssize_t
+supported_roles_show(struct device *dev, struct device_attribute *attr,
+		     char *buf)
+{
+	struct altmode *alt = to_altmode(to_typec_altmode(dev));
+	ssize_t ret;
 
-	चयन (alt->roles) अणु
-	हाल TYPEC_PORT_SRC:
-		ret = प्र_लिखो(buf, "source\n");
-		अवरोध;
-	हाल TYPEC_PORT_SNK:
-		ret = प्र_लिखो(buf, "sink\n");
-		अवरोध;
-	हाल TYPEC_PORT_DRP:
-	शेष:
-		ret = प्र_लिखो(buf, "source sink\n");
-		अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
-अटल DEVICE_ATTR_RO(supported_roles);
+	switch (alt->roles) {
+	case TYPEC_PORT_SRC:
+		ret = sprintf(buf, "source\n");
+		break;
+	case TYPEC_PORT_SNK:
+		ret = sprintf(buf, "sink\n");
+		break;
+	case TYPEC_PORT_DRP:
+	default:
+		ret = sprintf(buf, "source sink\n");
+		break;
+	}
+	return ret;
+}
+static DEVICE_ATTR_RO(supported_roles);
 
-अटल sमाप_प्रकार
-mode_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा typec_alपंचांगode *adev = to_typec_alपंचांगode(dev);
+static ssize_t
+mode_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct typec_altmode *adev = to_typec_altmode(dev);
 
-	वापस प्र_लिखो(buf, "%u\n", adev->mode);
-पूर्ण
-अटल DEVICE_ATTR_RO(mode);
+	return sprintf(buf, "%u\n", adev->mode);
+}
+static DEVICE_ATTR_RO(mode);
 
-अटल sमाप_प्रकार
-svid_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा typec_alपंचांगode *adev = to_typec_alपंचांगode(dev);
+static ssize_t
+svid_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct typec_altmode *adev = to_typec_altmode(dev);
 
-	वापस प्र_लिखो(buf, "%04x\n", adev->svid);
-पूर्ण
-अटल DEVICE_ATTR_RO(svid);
+	return sprintf(buf, "%04x\n", adev->svid);
+}
+static DEVICE_ATTR_RO(svid);
 
-अटल काष्ठा attribute *typec_alपंचांगode_attrs[] = अणु
+static struct attribute *typec_altmode_attrs[] = {
 	&dev_attr_active.attr,
 	&dev_attr_mode.attr,
 	&dev_attr_svid.attr,
-	&dev_attr_vकरो.attr,
-	शून्य
-पूर्ण;
+	&dev_attr_vdo.attr,
+	NULL
+};
 
-अटल umode_t typec_alपंचांगode_attr_is_visible(काष्ठा kobject *kobj,
-					     काष्ठा attribute *attr, पूर्णांक n)
-अणु
-	काष्ठा typec_alपंचांगode *adev = to_typec_alपंचांगode(kobj_to_dev(kobj));
+static umode_t typec_altmode_attr_is_visible(struct kobject *kobj,
+					     struct attribute *attr, int n)
+{
+	struct typec_altmode *adev = to_typec_altmode(kobj_to_dev(kobj));
 
-	अगर (attr == &dev_attr_active.attr)
-		अगर (!adev->ops || !adev->ops->activate)
-			वापस 0444;
+	if (attr == &dev_attr_active.attr)
+		if (!adev->ops || !adev->ops->activate)
+			return 0444;
 
-	वापस attr->mode;
-पूर्ण
+	return attr->mode;
+}
 
-अटल स्थिर काष्ठा attribute_group typec_alपंचांगode_group = अणु
-	.is_visible = typec_alपंचांगode_attr_is_visible,
-	.attrs = typec_alपंचांगode_attrs,
-पूर्ण;
+static const struct attribute_group typec_altmode_group = {
+	.is_visible = typec_altmode_attr_is_visible,
+	.attrs = typec_altmode_attrs,
+};
 
-अटल स्थिर काष्ठा attribute_group *typec_alपंचांगode_groups[] = अणु
-	&typec_alपंचांगode_group,
-	शून्य
-पूर्ण;
+static const struct attribute_group *typec_altmode_groups[] = {
+	&typec_altmode_group,
+	NULL
+};
 
-अटल पूर्णांक alपंचांगode_id_get(काष्ठा device *dev)
-अणु
-	काष्ठा ida *ids;
+static int altmode_id_get(struct device *dev)
+{
+	struct ida *ids;
 
-	अगर (is_typec_partner(dev))
+	if (is_typec_partner(dev))
 		ids = &to_typec_partner(dev)->mode_ids;
-	अन्यथा अगर (is_typec_plug(dev))
+	else if (is_typec_plug(dev))
 		ids = &to_typec_plug(dev)->mode_ids;
-	अन्यथा
+	else
 		ids = &to_typec_port(dev)->mode_ids;
 
-	वापस ida_simple_get(ids, 0, 0, GFP_KERNEL);
-पूर्ण
+	return ida_simple_get(ids, 0, 0, GFP_KERNEL);
+}
 
-अटल व्योम alपंचांगode_id_हटाओ(काष्ठा device *dev, पूर्णांक id)
-अणु
-	काष्ठा ida *ids;
+static void altmode_id_remove(struct device *dev, int id)
+{
+	struct ida *ids;
 
-	अगर (is_typec_partner(dev))
+	if (is_typec_partner(dev))
 		ids = &to_typec_partner(dev)->mode_ids;
-	अन्यथा अगर (is_typec_plug(dev))
+	else if (is_typec_plug(dev))
 		ids = &to_typec_plug(dev)->mode_ids;
-	अन्यथा
+	else
 		ids = &to_typec_port(dev)->mode_ids;
 
-	ida_simple_हटाओ(ids, id);
-पूर्ण
+	ida_simple_remove(ids, id);
+}
 
-अटल व्योम typec_alपंचांगode_release(काष्ठा device *dev)
-अणु
-	काष्ठा alपंचांगode *alt = to_alपंचांगode(to_typec_alपंचांगode(dev));
+static void typec_altmode_release(struct device *dev)
+{
+	struct altmode *alt = to_altmode(to_typec_altmode(dev));
 
-	typec_alपंचांगode_put_partner(alt);
+	typec_altmode_put_partner(alt);
 
-	alपंचांगode_id_हटाओ(alt->adev.dev.parent, alt->id);
-	kमुक्त(alt);
-पूर्ण
+	altmode_id_remove(alt->adev.dev.parent, alt->id);
+	kfree(alt);
+}
 
-स्थिर काष्ठा device_type typec_alपंचांगode_dev_type = अणु
+const struct device_type typec_altmode_dev_type = {
 	.name = "typec_alternate_mode",
-	.groups = typec_alपंचांगode_groups,
-	.release = typec_alपंचांगode_release,
-पूर्ण;
+	.groups = typec_altmode_groups,
+	.release = typec_altmode_release,
+};
 
-अटल काष्ठा typec_alपंचांगode *
-typec_रेजिस्टर_alपंचांगode(काष्ठा device *parent,
-		       स्थिर काष्ठा typec_alपंचांगode_desc *desc)
-अणु
-	अचिन्हित पूर्णांक id = alपंचांगode_id_get(parent);
+static struct typec_altmode *
+typec_register_altmode(struct device *parent,
+		       const struct typec_altmode_desc *desc)
+{
+	unsigned int id = altmode_id_get(parent);
 	bool is_port = is_typec_port(parent);
-	काष्ठा alपंचांगode *alt;
-	पूर्णांक ret;
+	struct altmode *alt;
+	int ret;
 
-	alt = kzalloc(माप(*alt), GFP_KERNEL);
-	अगर (!alt)
-		वापस ERR_PTR(-ENOMEM);
+	alt = kzalloc(sizeof(*alt), GFP_KERNEL);
+	if (!alt)
+		return ERR_PTR(-ENOMEM);
 
 	alt->adev.svid = desc->svid;
 	alt->adev.mode = desc->mode;
-	alt->adev.vकरो = desc->vकरो;
+	alt->adev.vdo = desc->vdo;
 	alt->roles = desc->roles;
 	alt->id = id;
 
-	alt->attrs[0] = &dev_attr_vकरो.attr;
+	alt->attrs[0] = &dev_attr_vdo.attr;
 	alt->attrs[1] = &dev_attr_description.attr;
 	alt->attrs[2] = &dev_attr_active.attr;
 
-	अगर (is_port) अणु
+	if (is_port) {
 		alt->attrs[3] = &dev_attr_supported_roles.attr;
-		alt->adev.active = true; /* Enabled by शेष */
-	पूर्ण
+		alt->adev.active = true; /* Enabled by default */
+	}
 
-	प्र_लिखो(alt->group_name, "mode%d", desc->mode);
+	sprintf(alt->group_name, "mode%d", desc->mode);
 	alt->group.name = alt->group_name;
 	alt->group.attrs = alt->attrs;
 	alt->groups[0] = &alt->group;
 
 	alt->adev.dev.parent = parent;
 	alt->adev.dev.groups = alt->groups;
-	alt->adev.dev.type = &typec_alपंचांगode_dev_type;
+	alt->adev.dev.type = &typec_altmode_dev_type;
 	dev_set_name(&alt->adev.dev, "%s.%u", dev_name(parent), id);
 
 	/* Link partners and plugs with the ports */
-	अगर (!is_port)
-		typec_alपंचांगode_set_partner(alt);
+	if (!is_port)
+		typec_altmode_set_partner(alt);
 
 	/* The partners are bind to drivers */
-	अगर (is_typec_partner(parent))
+	if (is_typec_partner(parent))
 		alt->adev.dev.bus = &typec_bus;
 
 	/* Plug alt modes need a class to generate udev events. */
-	अगर (is_typec_plug(parent))
+	if (is_typec_plug(parent))
 		alt->adev.dev.class = &typec_class;
 
-	ret = device_रेजिस्टर(&alt->adev.dev);
-	अगर (ret) अणु
+	ret = device_register(&alt->adev.dev);
+	if (ret) {
 		dev_err(parent, "failed to register alternate mode (%d)\n",
 			ret);
 		put_device(&alt->adev.dev);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		return ERR_PTR(ret);
+	}
 
-	वापस &alt->adev;
-पूर्ण
+	return &alt->adev;
+}
 
 /**
- * typec_unरेजिस्टर_alपंचांगode - Unरेजिस्टर Alternate Mode
- * @adev: The alternate mode to be unरेजिस्टरed
+ * typec_unregister_altmode - Unregister Alternate Mode
+ * @adev: The alternate mode to be unregistered
  *
- * Unरेजिस्टर device created with typec_partner_रेजिस्टर_alपंचांगode(),
- * typec_plug_रेजिस्टर_alपंचांगode() or typec_port_रेजिस्टर_alपंचांगode().
+ * Unregister device created with typec_partner_register_altmode(),
+ * typec_plug_register_altmode() or typec_port_register_altmode().
  */
-व्योम typec_unरेजिस्टर_alपंचांगode(काष्ठा typec_alपंचांगode *adev)
-अणु
-	अगर (IS_ERR_OR_शून्य(adev))
-		वापस;
-	typec_mux_put(to_alपंचांगode(adev)->mux);
-	device_unरेजिस्टर(&adev->dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_unरेजिस्टर_alपंचांगode);
+void typec_unregister_altmode(struct typec_altmode *adev)
+{
+	if (IS_ERR_OR_NULL(adev))
+		return;
+	typec_mux_put(to_altmode(adev)->mux);
+	device_unregister(&adev->dev);
+}
+EXPORT_SYMBOL_GPL(typec_unregister_altmode);
 
 /* ------------------------------------------------------------------------- */
 /* Type-C Partners */
 
-अटल sमाप_प्रकार accessory_mode_show(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr,
-				   अक्षर *buf)
-अणु
-	काष्ठा typec_partner *p = to_typec_partner(dev);
+static ssize_t accessory_mode_show(struct device *dev,
+				   struct device_attribute *attr,
+				   char *buf)
+{
+	struct typec_partner *p = to_typec_partner(dev);
 
-	वापस प्र_लिखो(buf, "%s\n", typec_accessory_modes[p->accessory]);
-पूर्ण
-अटल DEVICE_ATTR_RO(accessory_mode);
+	return sprintf(buf, "%s\n", typec_accessory_modes[p->accessory]);
+}
+static DEVICE_ATTR_RO(accessory_mode);
 
-अटल sमाप_प्रकार supports_usb_घातer_delivery_show(काष्ठा device *dev,
-						काष्ठा device_attribute *attr,
-						अक्षर *buf)
-अणु
-	काष्ठा typec_partner *p = to_typec_partner(dev);
+static ssize_t supports_usb_power_delivery_show(struct device *dev,
+						struct device_attribute *attr,
+						char *buf)
+{
+	struct typec_partner *p = to_typec_partner(dev);
 
-	वापस प्र_लिखो(buf, "%s\n", p->usb_pd ? "yes" : "no");
-पूर्ण
-अटल DEVICE_ATTR_RO(supports_usb_घातer_delivery);
+	return sprintf(buf, "%s\n", p->usb_pd ? "yes" : "no");
+}
+static DEVICE_ATTR_RO(supports_usb_power_delivery);
 
-अटल sमाप_प्रकार number_of_alternate_modes_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-					      अक्षर *buf)
-अणु
-	काष्ठा typec_partner *partner;
-	काष्ठा typec_plug *plug;
-	पूर्णांक num_alपंचांगodes;
+static ssize_t number_of_alternate_modes_show(struct device *dev, struct device_attribute *attr,
+					      char *buf)
+{
+	struct typec_partner *partner;
+	struct typec_plug *plug;
+	int num_altmodes;
 
-	अगर (is_typec_partner(dev)) अणु
+	if (is_typec_partner(dev)) {
 		partner = to_typec_partner(dev);
-		num_alपंचांगodes = partner->num_alपंचांगodes;
-	पूर्ण अन्यथा अगर (is_typec_plug(dev)) अणु
+		num_altmodes = partner->num_altmodes;
+	} else if (is_typec_plug(dev)) {
 		plug = to_typec_plug(dev);
-		num_alपंचांगodes = plug->num_alपंचांगodes;
-	पूर्ण अन्यथा अणु
-		वापस 0;
-	पूर्ण
+		num_altmodes = plug->num_altmodes;
+	} else {
+		return 0;
+	}
 
-	वापस sysfs_emit(buf, "%d\n", num_alपंचांगodes);
-पूर्ण
-अटल DEVICE_ATTR_RO(number_of_alternate_modes);
+	return sysfs_emit(buf, "%d\n", num_altmodes);
+}
+static DEVICE_ATTR_RO(number_of_alternate_modes);
 
-अटल काष्ठा attribute *typec_partner_attrs[] = अणु
+static struct attribute *typec_partner_attrs[] = {
 	&dev_attr_accessory_mode.attr,
-	&dev_attr_supports_usb_घातer_delivery.attr,
+	&dev_attr_supports_usb_power_delivery.attr,
 	&dev_attr_number_of_alternate_modes.attr,
 	&dev_attr_type.attr,
-	&dev_attr_usb_घातer_delivery_revision.attr,
-	शून्य
-पूर्ण;
+	&dev_attr_usb_power_delivery_revision.attr,
+	NULL
+};
 
-अटल umode_t typec_partner_attr_is_visible(काष्ठा kobject *kobj, काष्ठा attribute *attr, पूर्णांक n)
-अणु
-	काष्ठा typec_partner *partner = to_typec_partner(kobj_to_dev(kobj));
+static umode_t typec_partner_attr_is_visible(struct kobject *kobj, struct attribute *attr, int n)
+{
+	struct typec_partner *partner = to_typec_partner(kobj_to_dev(kobj));
 
-	अगर (attr == &dev_attr_number_of_alternate_modes.attr) अणु
-		अगर (partner->num_alपंचांगodes < 0)
-			वापस 0;
-	पूर्ण
+	if (attr == &dev_attr_number_of_alternate_modes.attr) {
+		if (partner->num_altmodes < 0)
+			return 0;
+	}
 
-	अगर (attr == &dev_attr_type.attr)
-		अगर (!get_pd_product_type(kobj_to_dev(kobj)))
-			वापस 0;
+	if (attr == &dev_attr_type.attr)
+		if (!get_pd_product_type(kobj_to_dev(kobj)))
+			return 0;
 
-	वापस attr->mode;
-पूर्ण
+	return attr->mode;
+}
 
-अटल स्थिर काष्ठा attribute_group typec_partner_group = अणु
+static const struct attribute_group typec_partner_group = {
 	.is_visible = typec_partner_attr_is_visible,
 	.attrs = typec_partner_attrs
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *typec_partner_groups[] = अणु
+static const struct attribute_group *typec_partner_groups[] = {
 	&typec_partner_group,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल व्योम typec_partner_release(काष्ठा device *dev)
-अणु
-	काष्ठा typec_partner *partner = to_typec_partner(dev);
+static void typec_partner_release(struct device *dev)
+{
+	struct typec_partner *partner = to_typec_partner(dev);
 
 	ida_destroy(&partner->mode_ids);
-	kमुक्त(partner);
-पूर्ण
+	kfree(partner);
+}
 
-स्थिर काष्ठा device_type typec_partner_dev_type = अणु
+const struct device_type typec_partner_dev_type = {
 	.name = "typec_partner",
 	.groups = typec_partner_groups,
 	.release = typec_partner_release,
-पूर्ण;
+};
 
 /**
  * typec_partner_set_identity - Report result from Discover Identity command
  * @partner: The partner updated identity values
  *
- * This routine is used to report that the result of Discover Identity USB घातer
+ * This routine is used to report that the result of Discover Identity USB power
  * delivery command has become available.
  */
-पूर्णांक typec_partner_set_identity(काष्ठा typec_partner *partner)
-अणु
-	अगर (!partner->identity)
-		वापस -EINVAL;
+int typec_partner_set_identity(struct typec_partner *partner)
+{
+	if (!partner->identity)
+		return -EINVAL;
 
 	typec_report_identity(&partner->dev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(typec_partner_set_identity);
 
 /**
  * typec_partner_set_pd_revision - Set the PD revision supported by the partner
  * @partner: The partner to be updated.
- * @pd_revision:  USB Power Delivery Specअगरication Revision supported by partner
+ * @pd_revision:  USB Power Delivery Specification Revision supported by partner
  *
  * This routine is used to report that the PD revision of the port partner has
  * become available.
  */
-व्योम typec_partner_set_pd_revision(काष्ठा typec_partner *partner, u16 pd_revision)
-अणु
-	अगर (partner->pd_revision == pd_revision)
-		वापस;
+void typec_partner_set_pd_revision(struct typec_partner *partner, u16 pd_revision)
+{
+	if (partner->pd_revision == pd_revision)
+		return;
 
 	partner->pd_revision = pd_revision;
-	sysfs_notअगरy(&partner->dev.kobj, शून्य, "usb_power_delivery_revision");
-	अगर (pd_revision != 0 && !partner->usb_pd) अणु
+	sysfs_notify(&partner->dev.kobj, NULL, "usb_power_delivery_revision");
+	if (pd_revision != 0 && !partner->usb_pd) {
 		partner->usb_pd = 1;
-		sysfs_notअगरy(&partner->dev.kobj, शून्य,
+		sysfs_notify(&partner->dev.kobj, NULL,
 			     "supports_usb_power_delivery");
-	पूर्ण
+	}
 	kobject_uevent(&partner->dev.kobj, KOBJ_CHANGE);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(typec_partner_set_pd_revision);
 
 /**
- * typec_partner_set_num_alपंचांगodes - Set the number of available partner alपंचांगodes
+ * typec_partner_set_num_altmodes - Set the number of available partner altmodes
  * @partner: The partner to be updated.
- * @num_alपंचांगodes: The number of alपंचांगodes we want to specअगरy as available.
+ * @num_altmodes: The number of altmodes we want to specify as available.
  *
  * This routine is used to report the number of alternate modes supported by the
- * partner. This value is *not* enक्रमced in alternate mode registration routines.
+ * partner. This value is *not* enforced in alternate mode registration routines.
  *
- * @partner.num_alपंचांगodes is set to -1 on partner registration, denoting that
- * a valid value has not been set क्रम it yet.
+ * @partner.num_altmodes is set to -1 on partner registration, denoting that
+ * a valid value has not been set for it yet.
  *
  * Returns 0 on success or negative error number on failure.
  */
-पूर्णांक typec_partner_set_num_alपंचांगodes(काष्ठा typec_partner *partner, पूर्णांक num_alपंचांगodes)
-अणु
-	पूर्णांक ret;
+int typec_partner_set_num_altmodes(struct typec_partner *partner, int num_altmodes)
+{
+	int ret;
 
-	अगर (num_alपंचांगodes < 0)
-		वापस -EINVAL;
+	if (num_altmodes < 0)
+		return -EINVAL;
 
-	partner->num_alपंचांगodes = num_alपंचांगodes;
+	partner->num_altmodes = num_altmodes;
 	ret = sysfs_update_group(&partner->dev.kobj, &typec_partner_group);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	sysfs_notअगरy(&partner->dev.kobj, शून्य, "number_of_alternate_modes");
+	sysfs_notify(&partner->dev.kobj, NULL, "number_of_alternate_modes");
 	kobject_uevent(&partner->dev.kobj, KOBJ_CHANGE);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_partner_set_num_alपंचांगodes);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(typec_partner_set_num_altmodes);
 
 /**
- * typec_partner_रेजिस्टर_alपंचांगode - Register USB Type-C Partner Alternate Mode
+ * typec_partner_register_altmode - Register USB Type-C Partner Alternate Mode
  * @partner: USB Type-C Partner that supports the alternate mode
  * @desc: Description of the alternate mode
  *
- * This routine is used to रेजिस्टर each alternate mode inभागidually that
- * @partner has listed in response to Discover SVIDs command. The modes क्रम a
+ * This routine is used to register each alternate mode individually that
+ * @partner has listed in response to Discover SVIDs command. The modes for a
  * SVID listed in response to Discover Modes command need to be listed in an
  * array in @desc.
  *
  * Returns handle to the alternate mode on success or ERR_PTR on failure.
  */
-काष्ठा typec_alपंचांगode *
-typec_partner_रेजिस्टर_alपंचांगode(काष्ठा typec_partner *partner,
-			       स्थिर काष्ठा typec_alपंचांगode_desc *desc)
-अणु
-	वापस typec_रेजिस्टर_alपंचांगode(&partner->dev, desc);
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_partner_रेजिस्टर_alपंचांगode);
+struct typec_altmode *
+typec_partner_register_altmode(struct typec_partner *partner,
+			       const struct typec_altmode_desc *desc)
+{
+	return typec_register_altmode(&partner->dev, desc);
+}
+EXPORT_SYMBOL_GPL(typec_partner_register_altmode);
 
 /**
  * typec_partner_set_svdm_version - Set negotiated Structured VDM (SVDM) Version
@@ -778,273 +777,273 @@ EXPORT_SYMBOL_GPL(typec_partner_रेजिस्टर_alपंचांगode
  *
  * This routine is used to save the negotiated SVDM Version.
  */
-व्योम typec_partner_set_svdm_version(काष्ठा typec_partner *partner,
-				   क्रमागत usb_pd_svdm_ver svdm_version)
-अणु
+void typec_partner_set_svdm_version(struct typec_partner *partner,
+				   enum usb_pd_svdm_ver svdm_version)
+{
 	partner->svdm_version = svdm_version;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(typec_partner_set_svdm_version);
 
 /**
- * typec_रेजिस्टर_partner - Register a USB Type-C Partner
+ * typec_register_partner - Register a USB Type-C Partner
  * @port: The USB Type-C Port the partner is connected to
  * @desc: Description of the partner
  *
- * Registers a device क्रम USB Type-C Partner described in @desc.
+ * Registers a device for USB Type-C Partner described in @desc.
  *
  * Returns handle to the partner on success or ERR_PTR on failure.
  */
-काष्ठा typec_partner *typec_रेजिस्टर_partner(काष्ठा typec_port *port,
-					     काष्ठा typec_partner_desc *desc)
-अणु
-	काष्ठा typec_partner *partner;
-	पूर्णांक ret;
+struct typec_partner *typec_register_partner(struct typec_port *port,
+					     struct typec_partner_desc *desc)
+{
+	struct typec_partner *partner;
+	int ret;
 
-	partner = kzalloc(माप(*partner), GFP_KERNEL);
-	अगर (!partner)
-		वापस ERR_PTR(-ENOMEM);
+	partner = kzalloc(sizeof(*partner), GFP_KERNEL);
+	if (!partner)
+		return ERR_PTR(-ENOMEM);
 
 	ida_init(&partner->mode_ids);
 	partner->usb_pd = desc->usb_pd;
 	partner->accessory = desc->accessory;
-	partner->num_alपंचांगodes = -1;
+	partner->num_altmodes = -1;
 	partner->pd_revision = desc->pd_revision;
 	partner->svdm_version = port->cap->svdm_version;
 
-	अगर (desc->identity) अणु
+	if (desc->identity) {
 		/*
-		 * Creating directory क्रम the identity only अगर the driver is
+		 * Creating directory for the identity only if the driver is
 		 * able to provide data to it.
 		 */
 		partner->dev.groups = usb_pd_id_groups;
 		partner->identity = desc->identity;
-	पूर्ण
+	}
 
 	partner->dev.class = &typec_class;
 	partner->dev.parent = &port->dev;
 	partner->dev.type = &typec_partner_dev_type;
 	dev_set_name(&partner->dev, "%s-partner", dev_name(&port->dev));
 
-	ret = device_रेजिस्टर(&partner->dev);
-	अगर (ret) अणु
+	ret = device_register(&partner->dev);
+	if (ret) {
 		dev_err(&port->dev, "failed to register partner (%d)\n", ret);
 		put_device(&partner->dev);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		return ERR_PTR(ret);
+	}
 
-	वापस partner;
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_रेजिस्टर_partner);
+	return partner;
+}
+EXPORT_SYMBOL_GPL(typec_register_partner);
 
 /**
- * typec_unरेजिस्टर_partner - Unरेजिस्टर a USB Type-C Partner
- * @partner: The partner to be unरेजिस्टरed
+ * typec_unregister_partner - Unregister a USB Type-C Partner
+ * @partner: The partner to be unregistered
  *
- * Unरेजिस्टर device created with typec_रेजिस्टर_partner().
+ * Unregister device created with typec_register_partner().
  */
-व्योम typec_unरेजिस्टर_partner(काष्ठा typec_partner *partner)
-अणु
-	अगर (!IS_ERR_OR_शून्य(partner))
-		device_unरेजिस्टर(&partner->dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_unरेजिस्टर_partner);
+void typec_unregister_partner(struct typec_partner *partner)
+{
+	if (!IS_ERR_OR_NULL(partner))
+		device_unregister(&partner->dev);
+}
+EXPORT_SYMBOL_GPL(typec_unregister_partner);
 
 /* ------------------------------------------------------------------------- */
 /* Type-C Cable Plugs */
 
-अटल व्योम typec_plug_release(काष्ठा device *dev)
-अणु
-	काष्ठा typec_plug *plug = to_typec_plug(dev);
+static void typec_plug_release(struct device *dev)
+{
+	struct typec_plug *plug = to_typec_plug(dev);
 
 	ida_destroy(&plug->mode_ids);
-	kमुक्त(plug);
-पूर्ण
+	kfree(plug);
+}
 
-अटल काष्ठा attribute *typec_plug_attrs[] = अणु
+static struct attribute *typec_plug_attrs[] = {
 	&dev_attr_number_of_alternate_modes.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल umode_t typec_plug_attr_is_visible(काष्ठा kobject *kobj, काष्ठा attribute *attr, पूर्णांक n)
-अणु
-	काष्ठा typec_plug *plug = to_typec_plug(kobj_to_dev(kobj));
+static umode_t typec_plug_attr_is_visible(struct kobject *kobj, struct attribute *attr, int n)
+{
+	struct typec_plug *plug = to_typec_plug(kobj_to_dev(kobj));
 
-	अगर (attr == &dev_attr_number_of_alternate_modes.attr) अणु
-		अगर (plug->num_alपंचांगodes < 0)
-			वापस 0;
-	पूर्ण
+	if (attr == &dev_attr_number_of_alternate_modes.attr) {
+		if (plug->num_altmodes < 0)
+			return 0;
+	}
 
-	वापस attr->mode;
-पूर्ण
+	return attr->mode;
+}
 
-अटल स्थिर काष्ठा attribute_group typec_plug_group = अणु
+static const struct attribute_group typec_plug_group = {
 	.is_visible = typec_plug_attr_is_visible,
 	.attrs = typec_plug_attrs
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *typec_plug_groups[] = अणु
+static const struct attribute_group *typec_plug_groups[] = {
 	&typec_plug_group,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-स्थिर काष्ठा device_type typec_plug_dev_type = अणु
+const struct device_type typec_plug_dev_type = {
 	.name = "typec_plug",
 	.groups = typec_plug_groups,
 	.release = typec_plug_release,
-पूर्ण;
+};
 
 /**
- * typec_plug_set_num_alपंचांगodes - Set the number of available plug alपंचांगodes
+ * typec_plug_set_num_altmodes - Set the number of available plug altmodes
  * @plug: The plug to be updated.
- * @num_alपंचांगodes: The number of alपंचांगodes we want to specअगरy as available.
+ * @num_altmodes: The number of altmodes we want to specify as available.
  *
  * This routine is used to report the number of alternate modes supported by the
- * plug. This value is *not* enक्रमced in alternate mode registration routines.
+ * plug. This value is *not* enforced in alternate mode registration routines.
  *
- * @plug.num_alपंचांगodes is set to -1 on plug registration, denoting that
- * a valid value has not been set क्रम it yet.
+ * @plug.num_altmodes is set to -1 on plug registration, denoting that
+ * a valid value has not been set for it yet.
  *
  * Returns 0 on success or negative error number on failure.
  */
-पूर्णांक typec_plug_set_num_alपंचांगodes(काष्ठा typec_plug *plug, पूर्णांक num_alपंचांगodes)
-अणु
-	पूर्णांक ret;
+int typec_plug_set_num_altmodes(struct typec_plug *plug, int num_altmodes)
+{
+	int ret;
 
-	अगर (num_alपंचांगodes < 0)
-		वापस -EINVAL;
+	if (num_altmodes < 0)
+		return -EINVAL;
 
-	plug->num_alपंचांगodes = num_alपंचांगodes;
+	plug->num_altmodes = num_altmodes;
 	ret = sysfs_update_group(&plug->dev.kobj, &typec_plug_group);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	sysfs_notअगरy(&plug->dev.kobj, शून्य, "number_of_alternate_modes");
+	sysfs_notify(&plug->dev.kobj, NULL, "number_of_alternate_modes");
 	kobject_uevent(&plug->dev.kobj, KOBJ_CHANGE);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_plug_set_num_alपंचांगodes);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(typec_plug_set_num_altmodes);
 
 /**
- * typec_plug_रेजिस्टर_alपंचांगode - Register USB Type-C Cable Plug Alternate Mode
+ * typec_plug_register_altmode - Register USB Type-C Cable Plug Alternate Mode
  * @plug: USB Type-C Cable Plug that supports the alternate mode
  * @desc: Description of the alternate mode
  *
- * This routine is used to रेजिस्टर each alternate mode inभागidually that @plug
- * has listed in response to Discover SVIDs command. The modes क्रम a SVID that
+ * This routine is used to register each alternate mode individually that @plug
+ * has listed in response to Discover SVIDs command. The modes for a SVID that
  * the plug lists in response to Discover Modes command need to be listed in an
  * array in @desc.
  *
  * Returns handle to the alternate mode on success or ERR_PTR on failure.
  */
-काष्ठा typec_alपंचांगode *
-typec_plug_रेजिस्टर_alपंचांगode(काष्ठा typec_plug *plug,
-			    स्थिर काष्ठा typec_alपंचांगode_desc *desc)
-अणु
-	वापस typec_रेजिस्टर_alपंचांगode(&plug->dev, desc);
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_plug_रेजिस्टर_alपंचांगode);
+struct typec_altmode *
+typec_plug_register_altmode(struct typec_plug *plug,
+			    const struct typec_altmode_desc *desc)
+{
+	return typec_register_altmode(&plug->dev, desc);
+}
+EXPORT_SYMBOL_GPL(typec_plug_register_altmode);
 
 /**
- * typec_रेजिस्टर_plug - Register a USB Type-C Cable Plug
+ * typec_register_plug - Register a USB Type-C Cable Plug
  * @cable: USB Type-C Cable with the plug
  * @desc: Description of the cable plug
  *
- * Registers a device क्रम USB Type-C Cable Plug described in @desc. A USB Type-C
+ * Registers a device for USB Type-C Cable Plug described in @desc. A USB Type-C
  * Cable Plug represents a plug with electronics in it that can response to USB
  * Power Delivery SOP Prime or SOP Double Prime packages.
  *
  * Returns handle to the cable plug on success or ERR_PTR on failure.
  */
-काष्ठा typec_plug *typec_रेजिस्टर_plug(काष्ठा typec_cable *cable,
-				       काष्ठा typec_plug_desc *desc)
-अणु
-	काष्ठा typec_plug *plug;
-	अक्षर name[8];
-	पूर्णांक ret;
+struct typec_plug *typec_register_plug(struct typec_cable *cable,
+				       struct typec_plug_desc *desc)
+{
+	struct typec_plug *plug;
+	char name[8];
+	int ret;
 
-	plug = kzalloc(माप(*plug), GFP_KERNEL);
-	अगर (!plug)
-		वापस ERR_PTR(-ENOMEM);
+	plug = kzalloc(sizeof(*plug), GFP_KERNEL);
+	if (!plug)
+		return ERR_PTR(-ENOMEM);
 
-	प्र_लिखो(name, "plug%d", desc->index);
+	sprintf(name, "plug%d", desc->index);
 
 	ida_init(&plug->mode_ids);
-	plug->num_alपंचांगodes = -1;
+	plug->num_altmodes = -1;
 	plug->index = desc->index;
 	plug->dev.class = &typec_class;
 	plug->dev.parent = &cable->dev;
 	plug->dev.type = &typec_plug_dev_type;
 	dev_set_name(&plug->dev, "%s-%s", dev_name(cable->dev.parent), name);
 
-	ret = device_रेजिस्टर(&plug->dev);
-	अगर (ret) अणु
+	ret = device_register(&plug->dev);
+	if (ret) {
 		dev_err(&cable->dev, "failed to register plug (%d)\n", ret);
 		put_device(&plug->dev);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		return ERR_PTR(ret);
+	}
 
-	वापस plug;
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_रेजिस्टर_plug);
+	return plug;
+}
+EXPORT_SYMBOL_GPL(typec_register_plug);
 
 /**
- * typec_unरेजिस्टर_plug - Unरेजिस्टर a USB Type-C Cable Plug
- * @plug: The cable plug to be unरेजिस्टरed
+ * typec_unregister_plug - Unregister a USB Type-C Cable Plug
+ * @plug: The cable plug to be unregistered
  *
- * Unरेजिस्टर device created with typec_रेजिस्टर_plug().
+ * Unregister device created with typec_register_plug().
  */
-व्योम typec_unरेजिस्टर_plug(काष्ठा typec_plug *plug)
-अणु
-	अगर (!IS_ERR_OR_शून्य(plug))
-		device_unरेजिस्टर(&plug->dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_unरेजिस्टर_plug);
+void typec_unregister_plug(struct typec_plug *plug)
+{
+	if (!IS_ERR_OR_NULL(plug))
+		device_unregister(&plug->dev);
+}
+EXPORT_SYMBOL_GPL(typec_unregister_plug);
 
 /* Type-C Cables */
 
-अटल स्थिर अक्षर * स्थिर typec_plug_types[] = अणु
+static const char * const typec_plug_types[] = {
 	[USB_PLUG_NONE]		= "unknown",
 	[USB_PLUG_TYPE_A]	= "type-a",
 	[USB_PLUG_TYPE_B]	= "type-b",
 	[USB_PLUG_TYPE_C]	= "type-c",
 	[USB_PLUG_CAPTIVE]	= "captive",
-पूर्ण;
+};
 
-अटल sमाप_प्रकार plug_type_show(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा typec_cable *cable = to_typec_cable(dev);
+static ssize_t plug_type_show(struct device *dev,
+			      struct device_attribute *attr, char *buf)
+{
+	struct typec_cable *cable = to_typec_cable(dev);
 
-	वापस प्र_लिखो(buf, "%s\n", typec_plug_types[cable->type]);
-पूर्ण
-अटल DEVICE_ATTR_RO(plug_type);
+	return sprintf(buf, "%s\n", typec_plug_types[cable->type]);
+}
+static DEVICE_ATTR_RO(plug_type);
 
-अटल काष्ठा attribute *typec_cable_attrs[] = अणु
+static struct attribute *typec_cable_attrs[] = {
 	&dev_attr_type.attr,
 	&dev_attr_plug_type.attr,
-	&dev_attr_usb_घातer_delivery_revision.attr,
-	शून्य
-पूर्ण;
+	&dev_attr_usb_power_delivery_revision.attr,
+	NULL
+};
 ATTRIBUTE_GROUPS(typec_cable);
 
-अटल व्योम typec_cable_release(काष्ठा device *dev)
-अणु
-	काष्ठा typec_cable *cable = to_typec_cable(dev);
+static void typec_cable_release(struct device *dev)
+{
+	struct typec_cable *cable = to_typec_cable(dev);
 
-	kमुक्त(cable);
-पूर्ण
+	kfree(cable);
+}
 
-स्थिर काष्ठा device_type typec_cable_dev_type = अणु
+const struct device_type typec_cable_dev_type = {
 	.name = "typec_cable",
 	.groups = typec_cable_groups,
 	.release = typec_cable_release,
-पूर्ण;
+};
 
-अटल पूर्णांक cable_match(काष्ठा device *dev, व्योम *data)
-अणु
-	वापस is_typec_cable(dev);
-पूर्ण
+static int cable_match(struct device *dev, void *data)
+{
+	return is_typec_cable(dev);
+}
 
 /**
  * typec_cable_get - Get a reference to the USB Type-C cable
@@ -1053,573 +1052,573 @@ ATTRIBUTE_GROUPS(typec_cable);
  * The caller must decrement the reference count with typec_cable_put() after
  * use.
  */
-काष्ठा typec_cable *typec_cable_get(काष्ठा typec_port *port)
-अणु
-	काष्ठा device *dev;
+struct typec_cable *typec_cable_get(struct typec_port *port)
+{
+	struct device *dev;
 
-	dev = device_find_child(&port->dev, शून्य, cable_match);
-	अगर (!dev)
-		वापस शून्य;
+	dev = device_find_child(&port->dev, NULL, cable_match);
+	if (!dev)
+		return NULL;
 
-	वापस to_typec_cable(dev);
-पूर्ण
+	return to_typec_cable(dev);
+}
 EXPORT_SYMBOL_GPL(typec_cable_get);
 
 /**
  * typec_cable_put - Decrement the reference count on USB Type-C cable
  * @cable: The USB Type-C cable
  */
-व्योम typec_cable_put(काष्ठा typec_cable *cable)
-अणु
+void typec_cable_put(struct typec_cable *cable)
+{
 	put_device(&cable->dev);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(typec_cable_put);
 
 /**
  * typec_cable_is_active - Check is the USB Type-C cable active or passive
  * @cable: The USB Type-C Cable
  *
- * Return 1 अगर the cable is active or 0 अगर it's passive.
+ * Return 1 if the cable is active or 0 if it's passive.
  */
-पूर्णांक typec_cable_is_active(काष्ठा typec_cable *cable)
-अणु
-	वापस cable->active;
-पूर्ण
+int typec_cable_is_active(struct typec_cable *cable)
+{
+	return cable->active;
+}
 EXPORT_SYMBOL_GPL(typec_cable_is_active);
 
 /**
  * typec_cable_set_identity - Report result from Discover Identity command
  * @cable: The cable updated identity values
  *
- * This routine is used to report that the result of Discover Identity USB घातer
+ * This routine is used to report that the result of Discover Identity USB power
  * delivery command has become available.
  */
-पूर्णांक typec_cable_set_identity(काष्ठा typec_cable *cable)
-अणु
-	अगर (!cable->identity)
-		वापस -EINVAL;
+int typec_cable_set_identity(struct typec_cable *cable)
+{
+	if (!cable->identity)
+		return -EINVAL;
 
 	typec_report_identity(&cable->dev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(typec_cable_set_identity);
 
 /**
- * typec_रेजिस्टर_cable - Register a USB Type-C Cable
+ * typec_register_cable - Register a USB Type-C Cable
  * @port: The USB Type-C Port the cable is connected to
  * @desc: Description of the cable
  *
- * Registers a device क्रम USB Type-C Cable described in @desc. The cable will be
- * parent क्रम the optional cable plug devises.
+ * Registers a device for USB Type-C Cable described in @desc. The cable will be
+ * parent for the optional cable plug devises.
  *
  * Returns handle to the cable on success or ERR_PTR on failure.
  */
-काष्ठा typec_cable *typec_रेजिस्टर_cable(काष्ठा typec_port *port,
-					 काष्ठा typec_cable_desc *desc)
-अणु
-	काष्ठा typec_cable *cable;
-	पूर्णांक ret;
+struct typec_cable *typec_register_cable(struct typec_port *port,
+					 struct typec_cable_desc *desc)
+{
+	struct typec_cable *cable;
+	int ret;
 
-	cable = kzalloc(माप(*cable), GFP_KERNEL);
-	अगर (!cable)
-		वापस ERR_PTR(-ENOMEM);
+	cable = kzalloc(sizeof(*cable), GFP_KERNEL);
+	if (!cable)
+		return ERR_PTR(-ENOMEM);
 
 	cable->type = desc->type;
 	cable->active = desc->active;
 	cable->pd_revision = desc->pd_revision;
 
-	अगर (desc->identity) अणु
+	if (desc->identity) {
 		/*
-		 * Creating directory क्रम the identity only अगर the driver is
+		 * Creating directory for the identity only if the driver is
 		 * able to provide data to it.
 		 */
 		cable->dev.groups = usb_pd_id_groups;
 		cable->identity = desc->identity;
-	पूर्ण
+	}
 
 	cable->dev.class = &typec_class;
 	cable->dev.parent = &port->dev;
 	cable->dev.type = &typec_cable_dev_type;
 	dev_set_name(&cable->dev, "%s-cable", dev_name(&port->dev));
 
-	ret = device_रेजिस्टर(&cable->dev);
-	अगर (ret) अणु
+	ret = device_register(&cable->dev);
+	if (ret) {
 		dev_err(&port->dev, "failed to register cable (%d)\n", ret);
 		put_device(&cable->dev);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		return ERR_PTR(ret);
+	}
 
-	वापस cable;
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_रेजिस्टर_cable);
+	return cable;
+}
+EXPORT_SYMBOL_GPL(typec_register_cable);
 
 /**
- * typec_unरेजिस्टर_cable - Unरेजिस्टर a USB Type-C Cable
- * @cable: The cable to be unरेजिस्टरed
+ * typec_unregister_cable - Unregister a USB Type-C Cable
+ * @cable: The cable to be unregistered
  *
- * Unरेजिस्टर device created with typec_रेजिस्टर_cable().
+ * Unregister device created with typec_register_cable().
  */
-व्योम typec_unरेजिस्टर_cable(काष्ठा typec_cable *cable)
-अणु
-	अगर (!IS_ERR_OR_शून्य(cable))
-		device_unरेजिस्टर(&cable->dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_unरेजिस्टर_cable);
+void typec_unregister_cable(struct typec_cable *cable)
+{
+	if (!IS_ERR_OR_NULL(cable))
+		device_unregister(&cable->dev);
+}
+EXPORT_SYMBOL_GPL(typec_unregister_cable);
 
 /* ------------------------------------------------------------------------- */
 /* USB Type-C ports */
 
-अटल स्थिर अक्षर * स्थिर typec_orientations[] = अणु
+static const char * const typec_orientations[] = {
 	[TYPEC_ORIENTATION_NONE]	= "unknown",
 	[TYPEC_ORIENTATION_NORMAL]	= "normal",
 	[TYPEC_ORIENTATION_REVERSE]	= "reverse",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर typec_roles[] = अणु
+static const char * const typec_roles[] = {
 	[TYPEC_SINK]	= "sink",
 	[TYPEC_SOURCE]	= "source",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर typec_data_roles[] = अणु
+static const char * const typec_data_roles[] = {
 	[TYPEC_DEVICE]	= "device",
 	[TYPEC_HOST]	= "host",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर typec_port_घातer_roles[] = अणु
+static const char * const typec_port_power_roles[] = {
 	[TYPEC_PORT_SRC] = "source",
 	[TYPEC_PORT_SNK] = "sink",
 	[TYPEC_PORT_DRP] = "dual",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर typec_port_data_roles[] = अणु
+static const char * const typec_port_data_roles[] = {
 	[TYPEC_PORT_DFP] = "host",
 	[TYPEC_PORT_UFP] = "device",
 	[TYPEC_PORT_DRD] = "dual",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर typec_port_types_drp[] = अणु
+static const char * const typec_port_types_drp[] = {
 	[TYPEC_PORT_SRC] = "dual [source] sink",
 	[TYPEC_PORT_SNK] = "dual source [sink]",
 	[TYPEC_PORT_DRP] = "[dual] source sink",
-पूर्ण;
+};
 
-अटल sमाप_प्रकार
-preferred_role_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		     स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा typec_port *port = to_typec_port(dev);
-	पूर्णांक role;
-	पूर्णांक ret;
+static ssize_t
+preferred_role_store(struct device *dev, struct device_attribute *attr,
+		     const char *buf, size_t size)
+{
+	struct typec_port *port = to_typec_port(dev);
+	int role;
+	int ret;
 
-	अगर (port->cap->type != TYPEC_PORT_DRP) अणु
+	if (port->cap->type != TYPEC_PORT_DRP) {
 		dev_dbg(dev, "Preferred role only supported with DRP ports\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (!port->ops || !port->ops->try_role) अणु
+	if (!port->ops || !port->ops->try_role) {
 		dev_dbg(dev, "Setting preferred role not supported\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	role = sysfs_match_string(typec_roles, buf);
-	अगर (role < 0) अणु
-		अगर (sysfs_streq(buf, "none"))
+	if (role < 0) {
+		if (sysfs_streq(buf, "none"))
 			role = TYPEC_NO_PREFERRED_ROLE;
-		अन्यथा
-			वापस -EINVAL;
-	पूर्ण
+		else
+			return -EINVAL;
+	}
 
 	ret = port->ops->try_role(port, role);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	port->prefer_role = role;
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल sमाप_प्रकार
-preferred_role_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		    अक्षर *buf)
-अणु
-	काष्ठा typec_port *port = to_typec_port(dev);
+static ssize_t
+preferred_role_show(struct device *dev, struct device_attribute *attr,
+		    char *buf)
+{
+	struct typec_port *port = to_typec_port(dev);
 
-	अगर (port->cap->type != TYPEC_PORT_DRP)
-		वापस 0;
+	if (port->cap->type != TYPEC_PORT_DRP)
+		return 0;
 
-	अगर (port->prefer_role < 0)
-		वापस 0;
+	if (port->prefer_role < 0)
+		return 0;
 
-	वापस प्र_लिखो(buf, "%s\n", typec_roles[port->prefer_role]);
-पूर्ण
-अटल DEVICE_ATTR_RW(preferred_role);
+	return sprintf(buf, "%s\n", typec_roles[port->prefer_role]);
+}
+static DEVICE_ATTR_RW(preferred_role);
 
-अटल sमाप_प्रकार data_role_store(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr,
-			       स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा typec_port *port = to_typec_port(dev);
-	पूर्णांक ret;
+static ssize_t data_role_store(struct device *dev,
+			       struct device_attribute *attr,
+			       const char *buf, size_t size)
+{
+	struct typec_port *port = to_typec_port(dev);
+	int ret;
 
-	अगर (!port->ops || !port->ops->dr_set) अणु
+	if (!port->ops || !port->ops->dr_set) {
 		dev_dbg(dev, "data role swapping not supported\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	ret = sysfs_match_string(typec_data_roles, buf);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	mutex_lock(&port->port_type_lock);
-	अगर (port->cap->data != TYPEC_PORT_DRD) अणु
+	if (port->cap->data != TYPEC_PORT_DRD) {
 		ret = -EOPNOTSUPP;
-		जाओ unlock_and_ret;
-	पूर्ण
+		goto unlock_and_ret;
+	}
 
 	ret = port->ops->dr_set(port, ret);
-	अगर (ret)
-		जाओ unlock_and_ret;
+	if (ret)
+		goto unlock_and_ret;
 
 	ret = size;
 unlock_and_ret:
 	mutex_unlock(&port->port_type_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार data_role_show(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा typec_port *port = to_typec_port(dev);
+static ssize_t data_role_show(struct device *dev,
+			      struct device_attribute *attr, char *buf)
+{
+	struct typec_port *port = to_typec_port(dev);
 
-	अगर (port->cap->data == TYPEC_PORT_DRD)
-		वापस प्र_लिखो(buf, "%s\n", port->data_role == TYPEC_HOST ?
+	if (port->cap->data == TYPEC_PORT_DRD)
+		return sprintf(buf, "%s\n", port->data_role == TYPEC_HOST ?
 			       "[host] device" : "host [device]");
 
-	वापस प्र_लिखो(buf, "[%s]\n", typec_data_roles[port->data_role]);
-पूर्ण
-अटल DEVICE_ATTR_RW(data_role);
+	return sprintf(buf, "[%s]\n", typec_data_roles[port->data_role]);
+}
+static DEVICE_ATTR_RW(data_role);
 
-अटल sमाप_प्रकार घातer_role_store(काष्ठा device *dev,
-				काष्ठा device_attribute *attr,
-				स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा typec_port *port = to_typec_port(dev);
-	पूर्णांक ret;
+static ssize_t power_role_store(struct device *dev,
+				struct device_attribute *attr,
+				const char *buf, size_t size)
+{
+	struct typec_port *port = to_typec_port(dev);
+	int ret;
 
-	अगर (!port->ops || !port->ops->pr_set) अणु
+	if (!port->ops || !port->ops->pr_set) {
 		dev_dbg(dev, "power role swapping not supported\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (port->pwr_opmode != TYPEC_PWR_MODE_PD) अणु
+	if (port->pwr_opmode != TYPEC_PWR_MODE_PD) {
 		dev_dbg(dev, "partner unable to swap power role\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	ret = sysfs_match_string(typec_roles, buf);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	mutex_lock(&port->port_type_lock);
-	अगर (port->port_type != TYPEC_PORT_DRP) अणु
+	if (port->port_type != TYPEC_PORT_DRP) {
 		dev_dbg(dev, "port type fixed at \"%s\"",
-			     typec_port_घातer_roles[port->port_type]);
+			     typec_port_power_roles[port->port_type]);
 		ret = -EOPNOTSUPP;
-		जाओ unlock_and_ret;
-	पूर्ण
+		goto unlock_and_ret;
+	}
 
 	ret = port->ops->pr_set(port, ret);
-	अगर (ret)
-		जाओ unlock_and_ret;
+	if (ret)
+		goto unlock_and_ret;
 
 	ret = size;
 unlock_and_ret:
 	mutex_unlock(&port->port_type_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार घातer_role_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा typec_port *port = to_typec_port(dev);
+static ssize_t power_role_show(struct device *dev,
+			       struct device_attribute *attr, char *buf)
+{
+	struct typec_port *port = to_typec_port(dev);
 
-	अगर (port->cap->type == TYPEC_PORT_DRP)
-		वापस प्र_लिखो(buf, "%s\n", port->pwr_role == TYPEC_SOURCE ?
+	if (port->cap->type == TYPEC_PORT_DRP)
+		return sprintf(buf, "%s\n", port->pwr_role == TYPEC_SOURCE ?
 			       "[source] sink" : "source [sink]");
 
-	वापस प्र_लिखो(buf, "[%s]\n", typec_roles[port->pwr_role]);
-पूर्ण
-अटल DEVICE_ATTR_RW(घातer_role);
+	return sprintf(buf, "[%s]\n", typec_roles[port->pwr_role]);
+}
+static DEVICE_ATTR_RW(power_role);
 
-अटल sमाप_प्रकार
-port_type_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा typec_port *port = to_typec_port(dev);
-	पूर्णांक ret;
-	क्रमागत typec_port_type type;
+static ssize_t
+port_type_store(struct device *dev, struct device_attribute *attr,
+			const char *buf, size_t size)
+{
+	struct typec_port *port = to_typec_port(dev);
+	int ret;
+	enum typec_port_type type;
 
-	अगर (port->cap->type != TYPEC_PORT_DRP ||
-	    !port->ops || !port->ops->port_type_set) अणु
+	if (port->cap->type != TYPEC_PORT_DRP ||
+	    !port->ops || !port->ops->port_type_set) {
 		dev_dbg(dev, "changing port type not supported\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	ret = sysfs_match_string(typec_port_घातer_roles, buf);
-	अगर (ret < 0)
-		वापस ret;
+	ret = sysfs_match_string(typec_port_power_roles, buf);
+	if (ret < 0)
+		return ret;
 
 	type = ret;
 	mutex_lock(&port->port_type_lock);
 
-	अगर (port->port_type == type) अणु
+	if (port->port_type == type) {
 		ret = size;
-		जाओ unlock_and_ret;
-	पूर्ण
+		goto unlock_and_ret;
+	}
 
 	ret = port->ops->port_type_set(port, type);
-	अगर (ret)
-		जाओ unlock_and_ret;
+	if (ret)
+		goto unlock_and_ret;
 
 	port->port_type = type;
 	ret = size;
 
 unlock_and_ret:
 	mutex_unlock(&port->port_type_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार
-port_type_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		अक्षर *buf)
-अणु
-	काष्ठा typec_port *port = to_typec_port(dev);
+static ssize_t
+port_type_show(struct device *dev, struct device_attribute *attr,
+		char *buf)
+{
+	struct typec_port *port = to_typec_port(dev);
 
-	अगर (port->cap->type == TYPEC_PORT_DRP)
-		वापस प्र_लिखो(buf, "%s\n",
+	if (port->cap->type == TYPEC_PORT_DRP)
+		return sprintf(buf, "%s\n",
 			       typec_port_types_drp[port->port_type]);
 
-	वापस प्र_लिखो(buf, "[%s]\n", typec_port_घातer_roles[port->cap->type]);
-पूर्ण
-अटल DEVICE_ATTR_RW(port_type);
+	return sprintf(buf, "[%s]\n", typec_port_power_roles[port->cap->type]);
+}
+static DEVICE_ATTR_RW(port_type);
 
-अटल स्थिर अक्षर * स्थिर typec_pwr_opmodes[] = अणु
+static const char * const typec_pwr_opmodes[] = {
 	[TYPEC_PWR_MODE_USB]	= "default",
 	[TYPEC_PWR_MODE_1_5A]	= "1.5A",
 	[TYPEC_PWR_MODE_3_0A]	= "3.0A",
 	[TYPEC_PWR_MODE_PD]	= "usb_power_delivery",
-पूर्ण;
+};
 
-अटल sमाप_प्रकार घातer_operation_mode_show(काष्ठा device *dev,
-					 काष्ठा device_attribute *attr,
-					 अक्षर *buf)
-अणु
-	काष्ठा typec_port *port = to_typec_port(dev);
+static ssize_t power_operation_mode_show(struct device *dev,
+					 struct device_attribute *attr,
+					 char *buf)
+{
+	struct typec_port *port = to_typec_port(dev);
 
-	वापस प्र_लिखो(buf, "%s\n", typec_pwr_opmodes[port->pwr_opmode]);
-पूर्ण
-अटल DEVICE_ATTR_RO(घातer_operation_mode);
+	return sprintf(buf, "%s\n", typec_pwr_opmodes[port->pwr_opmode]);
+}
+static DEVICE_ATTR_RO(power_operation_mode);
 
-अटल sमाप_प्रकार vconn_source_store(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr,
-				  स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा typec_port *port = to_typec_port(dev);
+static ssize_t vconn_source_store(struct device *dev,
+				  struct device_attribute *attr,
+				  const char *buf, size_t size)
+{
+	struct typec_port *port = to_typec_port(dev);
 	bool source;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!port->cap->pd_revision) अणु
+	if (!port->cap->pd_revision) {
 		dev_dbg(dev, "VCONN swap depends on USB Power Delivery\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (!port->ops || !port->ops->vconn_set) अणु
+	if (!port->ops || !port->ops->vconn_set) {
 		dev_dbg(dev, "VCONN swapping not supported\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	ret = kstrtobool(buf, &source);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = port->ops->vconn_set(port, (क्रमागत typec_role)source);
-	अगर (ret)
-		वापस ret;
+	ret = port->ops->vconn_set(port, (enum typec_role)source);
+	if (ret)
+		return ret;
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल sमाप_प्रकार vconn_source_show(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा typec_port *port = to_typec_port(dev);
+static ssize_t vconn_source_show(struct device *dev,
+				 struct device_attribute *attr, char *buf)
+{
+	struct typec_port *port = to_typec_port(dev);
 
-	वापस प्र_लिखो(buf, "%s\n",
+	return sprintf(buf, "%s\n",
 		       port->vconn_role == TYPEC_SOURCE ? "yes" : "no");
-पूर्ण
-अटल DEVICE_ATTR_RW(vconn_source);
+}
+static DEVICE_ATTR_RW(vconn_source);
 
-अटल sमाप_प्रकार supported_accessory_modes_show(काष्ठा device *dev,
-					      काष्ठा device_attribute *attr,
-					      अक्षर *buf)
-अणु
-	काष्ठा typec_port *port = to_typec_port(dev);
-	sमाप_प्रकार ret = 0;
-	पूर्णांक i;
+static ssize_t supported_accessory_modes_show(struct device *dev,
+					      struct device_attribute *attr,
+					      char *buf)
+{
+	struct typec_port *port = to_typec_port(dev);
+	ssize_t ret = 0;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(port->cap->accessory); i++) अणु
-		अगर (port->cap->accessory[i])
-			ret += प्र_लिखो(buf + ret, "%s ",
+	for (i = 0; i < ARRAY_SIZE(port->cap->accessory); i++) {
+		if (port->cap->accessory[i])
+			ret += sprintf(buf + ret, "%s ",
 			       typec_accessory_modes[port->cap->accessory[i]]);
-	पूर्ण
+	}
 
-	अगर (!ret)
-		वापस प्र_लिखो(buf, "none\n");
+	if (!ret)
+		return sprintf(buf, "none\n");
 
 	buf[ret - 1] = '\n';
 
-	वापस ret;
-पूर्ण
-अटल DEVICE_ATTR_RO(supported_accessory_modes);
+	return ret;
+}
+static DEVICE_ATTR_RO(supported_accessory_modes);
 
-अटल sमाप_प्रकार usb_typec_revision_show(काष्ठा device *dev,
-				       काष्ठा device_attribute *attr,
-				       अक्षर *buf)
-अणु
-	काष्ठा typec_port *port = to_typec_port(dev);
+static ssize_t usb_typec_revision_show(struct device *dev,
+				       struct device_attribute *attr,
+				       char *buf)
+{
+	struct typec_port *port = to_typec_port(dev);
 	u16 rev = port->cap->revision;
 
-	वापस प्र_लिखो(buf, "%d.%d\n", (rev >> 8) & 0xff, (rev >> 4) & 0xf);
-पूर्ण
-अटल DEVICE_ATTR_RO(usb_typec_revision);
+	return sprintf(buf, "%d.%d\n", (rev >> 8) & 0xff, (rev >> 4) & 0xf);
+}
+static DEVICE_ATTR_RO(usb_typec_revision);
 
-अटल sमाप_प्रकार usb_घातer_delivery_revision_show(काष्ठा device *dev,
-						काष्ठा device_attribute *attr,
-						अक्षर *buf)
-अणु
+static ssize_t usb_power_delivery_revision_show(struct device *dev,
+						struct device_attribute *attr,
+						char *buf)
+{
 	u16 rev = 0;
 
-	अगर (is_typec_partner(dev)) अणु
-		काष्ठा typec_partner *partner = to_typec_partner(dev);
+	if (is_typec_partner(dev)) {
+		struct typec_partner *partner = to_typec_partner(dev);
 
 		rev = partner->pd_revision;
-	पूर्ण अन्यथा अगर (is_typec_cable(dev)) अणु
-		काष्ठा typec_cable *cable = to_typec_cable(dev);
+	} else if (is_typec_cable(dev)) {
+		struct typec_cable *cable = to_typec_cable(dev);
 
 		rev = cable->pd_revision;
-	पूर्ण अन्यथा अगर (is_typec_port(dev)) अणु
-		काष्ठा typec_port *p = to_typec_port(dev);
+	} else if (is_typec_port(dev)) {
+		struct typec_port *p = to_typec_port(dev);
 
 		rev = p->cap->pd_revision;
-	पूर्ण
-	वापस sysfs_emit(buf, "%d.%d\n", (rev >> 8) & 0xff, (rev >> 4) & 0xf);
-पूर्ण
+	}
+	return sysfs_emit(buf, "%d.%d\n", (rev >> 8) & 0xff, (rev >> 4) & 0xf);
+}
 
-अटल sमाप_प्रकार orientation_show(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr,
-				   अक्षर *buf)
-अणु
-	काष्ठा typec_port *port = to_typec_port(dev);
+static ssize_t orientation_show(struct device *dev,
+				   struct device_attribute *attr,
+				   char *buf)
+{
+	struct typec_port *port = to_typec_port(dev);
 
-	वापस प्र_लिखो(buf, "%s\n", typec_orientations[port->orientation]);
-पूर्ण
-अटल DEVICE_ATTR_RO(orientation);
+	return sprintf(buf, "%s\n", typec_orientations[port->orientation]);
+}
+static DEVICE_ATTR_RO(orientation);
 
-अटल काष्ठा attribute *typec_attrs[] = अणु
+static struct attribute *typec_attrs[] = {
 	&dev_attr_data_role.attr,
-	&dev_attr_घातer_operation_mode.attr,
-	&dev_attr_घातer_role.attr,
+	&dev_attr_power_operation_mode.attr,
+	&dev_attr_power_role.attr,
 	&dev_attr_preferred_role.attr,
 	&dev_attr_supported_accessory_modes.attr,
-	&dev_attr_usb_घातer_delivery_revision.attr,
+	&dev_attr_usb_power_delivery_revision.attr,
 	&dev_attr_usb_typec_revision.attr,
 	&dev_attr_vconn_source.attr,
 	&dev_attr_port_type.attr,
 	&dev_attr_orientation.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल umode_t typec_attr_is_visible(काष्ठा kobject *kobj,
-				     काष्ठा attribute *attr, पूर्णांक n)
-अणु
-	काष्ठा typec_port *port = to_typec_port(kobj_to_dev(kobj));
+static umode_t typec_attr_is_visible(struct kobject *kobj,
+				     struct attribute *attr, int n)
+{
+	struct typec_port *port = to_typec_port(kobj_to_dev(kobj));
 
-	अगर (attr == &dev_attr_data_role.attr) अणु
-		अगर (port->cap->data != TYPEC_PORT_DRD ||
+	if (attr == &dev_attr_data_role.attr) {
+		if (port->cap->data != TYPEC_PORT_DRD ||
 		    !port->ops || !port->ops->dr_set)
-			वापस 0444;
-	पूर्ण अन्यथा अगर (attr == &dev_attr_घातer_role.attr) अणु
-		अगर (port->cap->type != TYPEC_PORT_DRP ||
+			return 0444;
+	} else if (attr == &dev_attr_power_role.attr) {
+		if (port->cap->type != TYPEC_PORT_DRP ||
 		    !port->ops || !port->ops->pr_set)
-			वापस 0444;
-	पूर्ण अन्यथा अगर (attr == &dev_attr_vconn_source.attr) अणु
-		अगर (!port->cap->pd_revision ||
+			return 0444;
+	} else if (attr == &dev_attr_vconn_source.attr) {
+		if (!port->cap->pd_revision ||
 		    !port->ops || !port->ops->vconn_set)
-			वापस 0444;
-	पूर्ण अन्यथा अगर (attr == &dev_attr_preferred_role.attr) अणु
-		अगर (port->cap->type != TYPEC_PORT_DRP ||
+			return 0444;
+	} else if (attr == &dev_attr_preferred_role.attr) {
+		if (port->cap->type != TYPEC_PORT_DRP ||
 		    !port->ops || !port->ops->try_role)
-			वापस 0444;
-	पूर्ण अन्यथा अगर (attr == &dev_attr_port_type.attr) अणु
-		अगर (!port->ops || !port->ops->port_type_set)
-			वापस 0;
-		अगर (port->cap->type != TYPEC_PORT_DRP)
-			वापस 0444;
-	पूर्ण अन्यथा अगर (attr == &dev_attr_orientation.attr) अणु
-		अगर (port->cap->orientation_aware)
-			वापस 0444;
-		वापस 0;
-	पूर्ण
+			return 0444;
+	} else if (attr == &dev_attr_port_type.attr) {
+		if (!port->ops || !port->ops->port_type_set)
+			return 0;
+		if (port->cap->type != TYPEC_PORT_DRP)
+			return 0444;
+	} else if (attr == &dev_attr_orientation.attr) {
+		if (port->cap->orientation_aware)
+			return 0444;
+		return 0;
+	}
 
-	वापस attr->mode;
-पूर्ण
+	return attr->mode;
+}
 
-अटल स्थिर काष्ठा attribute_group typec_group = अणु
+static const struct attribute_group typec_group = {
 	.is_visible = typec_attr_is_visible,
 	.attrs = typec_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *typec_groups[] = अणु
+static const struct attribute_group *typec_groups[] = {
 	&typec_group,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल पूर्णांक typec_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
-अणु
-	पूर्णांक ret;
+static int typec_uevent(struct device *dev, struct kobj_uevent_env *env)
+{
+	int ret;
 
 	ret = add_uevent_var(env, "TYPEC_PORT=%s", dev_name(dev));
-	अगर (ret)
+	if (ret)
 		dev_err(dev, "failed to add uevent TYPEC_PORT\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम typec_release(काष्ठा device *dev)
-अणु
-	काष्ठा typec_port *port = to_typec_port(dev);
+static void typec_release(struct device *dev)
+{
+	struct typec_port *port = to_typec_port(dev);
 
-	ida_simple_हटाओ(&typec_index_ida, port->id);
+	ida_simple_remove(&typec_index_ida, port->id);
 	ida_destroy(&port->mode_ids);
-	typec_चयन_put(port->sw);
+	typec_switch_put(port->sw);
 	typec_mux_put(port->mux);
-	kमुक्त(port->cap);
-	kमुक्त(port);
-पूर्ण
+	kfree(port->cap);
+	kfree(port);
+}
 
-स्थिर काष्ठा device_type typec_port_dev_type = अणु
+const struct device_type typec_port_dev_type = {
 	.name = "typec_port",
 	.groups = typec_groups,
 	.uevent = typec_uevent,
 	.release = typec_release,
-पूर्ण;
+};
 
 /* --------------------------------------- */
 /* Driver callbacks to report role updates */
 
-अटल पूर्णांक partner_match(काष्ठा device *dev, व्योम *data)
-अणु
-	वापस is_typec_partner(dev);
-पूर्ण
+static int partner_match(struct device *dev, void *data)
+{
+	return is_typec_partner(dev);
+}
 
 /**
  * typec_set_data_role - Report data role change
@@ -1628,44 +1627,44 @@ port_type_show(काष्ठा device *dev, काष्ठा device_attribu
  *
  * This routine is used by the port drivers to report data role changes.
  */
-व्योम typec_set_data_role(काष्ठा typec_port *port, क्रमागत typec_data_role role)
-अणु
-	काष्ठा device *partner_dev;
+void typec_set_data_role(struct typec_port *port, enum typec_data_role role)
+{
+	struct device *partner_dev;
 
-	अगर (port->data_role == role)
-		वापस;
+	if (port->data_role == role)
+		return;
 
 	port->data_role = role;
-	sysfs_notअगरy(&port->dev.kobj, शून्य, "data_role");
+	sysfs_notify(&port->dev.kobj, NULL, "data_role");
 	kobject_uevent(&port->dev.kobj, KOBJ_CHANGE);
 
-	partner_dev = device_find_child(&port->dev, शून्य, partner_match);
-	अगर (!partner_dev)
-		वापस;
+	partner_dev = device_find_child(&port->dev, NULL, partner_match);
+	if (!partner_dev)
+		return;
 
-	अगर (to_typec_partner(partner_dev)->identity)
-		typec_product_type_notअगरy(partner_dev);
+	if (to_typec_partner(partner_dev)->identity)
+		typec_product_type_notify(partner_dev);
 
 	put_device(partner_dev);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(typec_set_data_role);
 
 /**
- * typec_set_pwr_role - Report घातer role change
+ * typec_set_pwr_role - Report power role change
  * @port: The USB Type-C Port where the role was changed
  * @role: The new data role
  *
- * This routine is used by the port drivers to report घातer role changes.
+ * This routine is used by the port drivers to report power role changes.
  */
-व्योम typec_set_pwr_role(काष्ठा typec_port *port, क्रमागत typec_role role)
-अणु
-	अगर (port->pwr_role == role)
-		वापस;
+void typec_set_pwr_role(struct typec_port *port, enum typec_role role)
+{
+	if (port->pwr_role == role)
+		return;
 
 	port->pwr_role = role;
-	sysfs_notअगरy(&port->dev.kobj, शून्य, "power_role");
+	sysfs_notify(&port->dev.kobj, NULL, "power_role");
 	kobject_uevent(&port->dev.kobj, KOBJ_CHANGE);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(typec_set_pwr_role);
 
 /**
@@ -1673,114 +1672,114 @@ EXPORT_SYMBOL_GPL(typec_set_pwr_role);
  * @port: The USB Type-C Port which VCONN role changed
  * @role: Source when @port is sourcing VCONN, or Sink when it's not
  *
- * This routine is used by the port drivers to report अगर the VCONN source is
+ * This routine is used by the port drivers to report if the VCONN source is
  * changes.
  */
-व्योम typec_set_vconn_role(काष्ठा typec_port *port, क्रमागत typec_role role)
-अणु
-	अगर (port->vconn_role == role)
-		वापस;
+void typec_set_vconn_role(struct typec_port *port, enum typec_role role)
+{
+	if (port->vconn_role == role)
+		return;
 
 	port->vconn_role = role;
-	sysfs_notअगरy(&port->dev.kobj, शून्य, "vconn_source");
+	sysfs_notify(&port->dev.kobj, NULL, "vconn_source");
 	kobject_uevent(&port->dev.kobj, KOBJ_CHANGE);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(typec_set_vconn_role);
 
 /**
- * typec_set_pwr_opmode - Report changed घातer operation mode
+ * typec_set_pwr_opmode - Report changed power operation mode
  * @port: The USB Type-C Port where the mode was changed
- * @opmode: New घातer operation mode
+ * @opmode: New power operation mode
  *
- * This routine is used by the port drivers to report changed घातer operation
- * mode in @port. The modes are USB (शेष), 1.5A, 3.0A as defined in USB
- * Type-C specअगरication, and "USB Power Delivery" when the घातer levels are
- * negotiated with methods defined in USB Power Delivery specअगरication.
+ * This routine is used by the port drivers to report changed power operation
+ * mode in @port. The modes are USB (default), 1.5A, 3.0A as defined in USB
+ * Type-C specification, and "USB Power Delivery" when the power levels are
+ * negotiated with methods defined in USB Power Delivery specification.
  */
-व्योम typec_set_pwr_opmode(काष्ठा typec_port *port,
-			  क्रमागत typec_pwr_opmode opmode)
-अणु
-	काष्ठा device *partner_dev;
+void typec_set_pwr_opmode(struct typec_port *port,
+			  enum typec_pwr_opmode opmode)
+{
+	struct device *partner_dev;
 
-	अगर (port->pwr_opmode == opmode)
-		वापस;
+	if (port->pwr_opmode == opmode)
+		return;
 
 	port->pwr_opmode = opmode;
-	sysfs_notअगरy(&port->dev.kobj, शून्य, "power_operation_mode");
+	sysfs_notify(&port->dev.kobj, NULL, "power_operation_mode");
 	kobject_uevent(&port->dev.kobj, KOBJ_CHANGE);
 
-	partner_dev = device_find_child(&port->dev, शून्य, partner_match);
-	अगर (partner_dev) अणु
-		काष्ठा typec_partner *partner = to_typec_partner(partner_dev);
+	partner_dev = device_find_child(&port->dev, NULL, partner_match);
+	if (partner_dev) {
+		struct typec_partner *partner = to_typec_partner(partner_dev);
 
-		अगर (opmode == TYPEC_PWR_MODE_PD && !partner->usb_pd) अणु
+		if (opmode == TYPEC_PWR_MODE_PD && !partner->usb_pd) {
 			partner->usb_pd = 1;
-			sysfs_notअगरy(&partner_dev->kobj, शून्य,
+			sysfs_notify(&partner_dev->kobj, NULL,
 				     "supports_usb_power_delivery");
-		पूर्ण
+		}
 		put_device(partner_dev);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(typec_set_pwr_opmode);
 
 /**
- * typec_find_pwr_opmode - Get the typec घातer operation mode capability
- * @name: घातer operation mode string
+ * typec_find_pwr_opmode - Get the typec power operation mode capability
+ * @name: power operation mode string
  *
  * This routine is used to find the typec_pwr_opmode by its string @name.
  *
- * Returns typec_pwr_opmode अगर success, otherwise negative error code.
+ * Returns typec_pwr_opmode if success, otherwise negative error code.
  */
-पूर्णांक typec_find_pwr_opmode(स्थिर अक्षर *name)
-अणु
-	वापस match_string(typec_pwr_opmodes,
+int typec_find_pwr_opmode(const char *name)
+{
+	return match_string(typec_pwr_opmodes,
 			    ARRAY_SIZE(typec_pwr_opmodes), name);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(typec_find_pwr_opmode);
 
 /**
- * typec_find_orientation - Convert orientation string to क्रमागत typec_orientation
+ * typec_find_orientation - Convert orientation string to enum typec_orientation
  * @name: Orientation string
  *
  * This routine is used to find the typec_orientation by its string name @name.
  *
  * Returns the orientation value on success, otherwise negative error code.
  */
-पूर्णांक typec_find_orientation(स्थिर अक्षर *name)
-अणु
-	वापस match_string(typec_orientations, ARRAY_SIZE(typec_orientations),
+int typec_find_orientation(const char *name)
+{
+	return match_string(typec_orientations, ARRAY_SIZE(typec_orientations),
 			    name);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(typec_find_orientation);
 
 /**
- * typec_find_port_घातer_role - Get the typec port घातer capability
- * @name: port घातer capability string
+ * typec_find_port_power_role - Get the typec port power capability
+ * @name: port power capability string
  *
  * This routine is used to find the typec_port_type by its string name.
  *
- * Returns typec_port_type अगर success, otherwise negative error code.
+ * Returns typec_port_type if success, otherwise negative error code.
  */
-पूर्णांक typec_find_port_घातer_role(स्थिर अक्षर *name)
-अणु
-	वापस match_string(typec_port_घातer_roles,
-			    ARRAY_SIZE(typec_port_घातer_roles), name);
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_find_port_घातer_role);
+int typec_find_port_power_role(const char *name)
+{
+	return match_string(typec_port_power_roles,
+			    ARRAY_SIZE(typec_port_power_roles), name);
+}
+EXPORT_SYMBOL_GPL(typec_find_port_power_role);
 
 /**
- * typec_find_घातer_role - Find the typec one specअगरic घातer role
- * @name: घातer role string
+ * typec_find_power_role - Find the typec one specific power role
+ * @name: power role string
  *
  * This routine is used to find the typec_role by its string name.
  *
- * Returns typec_role अगर success, otherwise negative error code.
+ * Returns typec_role if success, otherwise negative error code.
  */
-पूर्णांक typec_find_घातer_role(स्थिर अक्षर *name)
-अणु
-	वापस match_string(typec_roles, ARRAY_SIZE(typec_roles), name);
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_find_घातer_role);
+int typec_find_power_role(const char *name)
+{
+	return match_string(typec_roles, ARRAY_SIZE(typec_roles), name);
+}
+EXPORT_SYMBOL_GPL(typec_find_power_role);
 
 /**
  * typec_find_port_data_role - Get the typec port data capability
@@ -1788,70 +1787,70 @@ EXPORT_SYMBOL_GPL(typec_find_घातer_role);
  *
  * This routine is used to find the typec_port_data by its string name.
  *
- * Returns typec_port_data अगर success, otherwise negative error code.
+ * Returns typec_port_data if success, otherwise negative error code.
  */
-पूर्णांक typec_find_port_data_role(स्थिर अक्षर *name)
-अणु
-	वापस match_string(typec_port_data_roles,
+int typec_find_port_data_role(const char *name)
+{
+	return match_string(typec_port_data_roles,
 			    ARRAY_SIZE(typec_port_data_roles), name);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(typec_find_port_data_role);
 
 /* ------------------------------------------ */
-/* API क्रम Multiplexer/DeMultiplexer Switches */
+/* API for Multiplexer/DeMultiplexer Switches */
 
 /**
  * typec_set_orientation - Set USB Type-C cable plug orientation
  * @port: USB Type-C Port
  * @orientation: USB Type-C cable plug orientation
  *
- * Set cable plug orientation क्रम @port.
+ * Set cable plug orientation for @port.
  */
-पूर्णांक typec_set_orientation(काष्ठा typec_port *port,
-			  क्रमागत typec_orientation orientation)
-अणु
-	पूर्णांक ret;
+int typec_set_orientation(struct typec_port *port,
+			  enum typec_orientation orientation)
+{
+	int ret;
 
-	ret = typec_चयन_set(port->sw, orientation);
-	अगर (ret)
-		वापस ret;
+	ret = typec_switch_set(port->sw, orientation);
+	if (ret)
+		return ret;
 
 	port->orientation = orientation;
-	sysfs_notअगरy(&port->dev.kobj, शून्य, "orientation");
+	sysfs_notify(&port->dev.kobj, NULL, "orientation");
 	kobject_uevent(&port->dev.kobj, KOBJ_CHANGE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(typec_set_orientation);
 
 /**
  * typec_get_orientation - Get USB Type-C cable plug orientation
  * @port: USB Type-C Port
  *
- * Get current cable plug orientation क्रम @port.
+ * Get current cable plug orientation for @port.
  */
-क्रमागत typec_orientation typec_get_orientation(काष्ठा typec_port *port)
-अणु
-	वापस port->orientation;
-पूर्ण
+enum typec_orientation typec_get_orientation(struct typec_port *port)
+{
+	return port->orientation;
+}
 EXPORT_SYMBOL_GPL(typec_get_orientation);
 
 /**
- * typec_set_mode - Set mode of operation क्रम USB Type-C connector
+ * typec_set_mode - Set mode of operation for USB Type-C connector
  * @port: USB Type-C connector
  * @mode: Accessory Mode, USB Operation or Safe State
  *
- * Configure @port क्रम Accessory Mode @mode. This function will configure the
- * muxes needed क्रम @mode.
+ * Configure @port for Accessory Mode @mode. This function will configure the
+ * muxes needed for @mode.
  */
-पूर्णांक typec_set_mode(काष्ठा typec_port *port, पूर्णांक mode)
-अणु
-	काष्ठा typec_mux_state state = अणु पूर्ण;
+int typec_set_mode(struct typec_port *port, int mode)
+{
+	struct typec_mux_state state = { };
 
 	state.mode = mode;
 
-	वापस typec_mux_set(port->mux, &state);
-पूर्ण
+	return typec_mux_set(port->mux, &state);
+}
 EXPORT_SYMBOL_GPL(typec_set_mode);
 
 /* --------------------------------------- */
@@ -1860,181 +1859,181 @@ EXPORT_SYMBOL_GPL(typec_set_mode);
  * typec_get_negotiated_svdm_version - Get negotiated SVDM Version
  * @port: USB Type-C Port.
  *
- * Get the negotiated SVDM Version. The Version is set to the port शेष
+ * Get the negotiated SVDM Version. The Version is set to the port default
  * value stored in typec_capability on partner registration, and updated after
- * a successful Discover Identity अगर the negotiated value is less than the
- * शेष value.
+ * a successful Discover Identity if the negotiated value is less than the
+ * default value.
  *
- * Returns usb_pd_svdm_ver अगर the partner has been रेजिस्टरed otherwise -ENODEV.
+ * Returns usb_pd_svdm_ver if the partner has been registered otherwise -ENODEV.
  */
-पूर्णांक typec_get_negotiated_svdm_version(काष्ठा typec_port *port)
-अणु
-	क्रमागत usb_pd_svdm_ver svdm_version;
-	काष्ठा device *partner_dev;
+int typec_get_negotiated_svdm_version(struct typec_port *port)
+{
+	enum usb_pd_svdm_ver svdm_version;
+	struct device *partner_dev;
 
-	partner_dev = device_find_child(&port->dev, शून्य, partner_match);
-	अगर (!partner_dev)
-		वापस -ENODEV;
+	partner_dev = device_find_child(&port->dev, NULL, partner_match);
+	if (!partner_dev)
+		return -ENODEV;
 
 	svdm_version = to_typec_partner(partner_dev)->svdm_version;
 	put_device(partner_dev);
 
-	वापस svdm_version;
-पूर्ण
+	return svdm_version;
+}
 EXPORT_SYMBOL_GPL(typec_get_negotiated_svdm_version);
 
 /**
- * typec_get_drvdata - Return निजी driver data poपूर्णांकer
+ * typec_get_drvdata - Return private driver data pointer
  * @port: USB Type-C port
  */
-व्योम *typec_get_drvdata(काष्ठा typec_port *port)
-अणु
-	वापस dev_get_drvdata(&port->dev);
-पूर्ण
+void *typec_get_drvdata(struct typec_port *port)
+{
+	return dev_get_drvdata(&port->dev);
+}
 EXPORT_SYMBOL_GPL(typec_get_drvdata);
 
 /**
- * typec_port_रेजिस्टर_alपंचांगode - Register USB Type-C Port Alternate Mode
+ * typec_port_register_altmode - Register USB Type-C Port Alternate Mode
  * @port: USB Type-C Port that supports the alternate mode
  * @desc: Description of the alternate mode
  *
- * This routine is used to रेजिस्टर an alternate mode that @port is capable of
+ * This routine is used to register an alternate mode that @port is capable of
  * supporting.
  *
  * Returns handle to the alternate mode on success or ERR_PTR on failure.
  */
-काष्ठा typec_alपंचांगode *
-typec_port_रेजिस्टर_alपंचांगode(काष्ठा typec_port *port,
-			    स्थिर काष्ठा typec_alपंचांगode_desc *desc)
-अणु
-	काष्ठा typec_alपंचांगode *adev;
-	काष्ठा typec_mux *mux;
+struct typec_altmode *
+typec_port_register_altmode(struct typec_port *port,
+			    const struct typec_altmode_desc *desc)
+{
+	struct typec_altmode *adev;
+	struct typec_mux *mux;
 
 	mux = typec_mux_get(&port->dev, desc);
-	अगर (IS_ERR(mux))
-		वापस ERR_CAST(mux);
+	if (IS_ERR(mux))
+		return ERR_CAST(mux);
 
-	adev = typec_रेजिस्टर_alपंचांगode(&port->dev, desc);
-	अगर (IS_ERR(adev))
+	adev = typec_register_altmode(&port->dev, desc);
+	if (IS_ERR(adev))
 		typec_mux_put(mux);
-	अन्यथा
-		to_alपंचांगode(adev)->mux = mux;
+	else
+		to_altmode(adev)->mux = mux;
 
-	वापस adev;
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_port_रेजिस्टर_alपंचांगode);
+	return adev;
+}
+EXPORT_SYMBOL_GPL(typec_port_register_altmode);
 
-व्योम typec_port_रेजिस्टर_alपंचांगodes(काष्ठा typec_port *port,
-	स्थिर काष्ठा typec_alपंचांगode_ops *ops, व्योम *drvdata,
-	काष्ठा typec_alपंचांगode **alपंचांगodes, माप_प्रकार n)
-अणु
-	काष्ठा fwnode_handle *alपंचांगodes_node, *child;
-	काष्ठा typec_alपंचांगode_desc desc;
-	काष्ठा typec_alपंचांगode *alt;
-	माप_प्रकार index = 0;
-	u32 svid, vकरो;
-	पूर्णांक ret;
+void typec_port_register_altmodes(struct typec_port *port,
+	const struct typec_altmode_ops *ops, void *drvdata,
+	struct typec_altmode **altmodes, size_t n)
+{
+	struct fwnode_handle *altmodes_node, *child;
+	struct typec_altmode_desc desc;
+	struct typec_altmode *alt;
+	size_t index = 0;
+	u32 svid, vdo;
+	int ret;
 
-	alपंचांगodes_node = device_get_named_child_node(&port->dev, "altmodes");
-	अगर (!alपंचांगodes_node)
-		वापस; /* No alपंचांगodes specअगरied */
+	altmodes_node = device_get_named_child_node(&port->dev, "altmodes");
+	if (!altmodes_node)
+		return; /* No altmodes specified */
 
-	fwnode_क्रम_each_child_node(alपंचांगodes_node, child) अणु
-		ret = fwnode_property_पढ़ो_u32(child, "svid", &svid);
-		अगर (ret) अणु
+	fwnode_for_each_child_node(altmodes_node, child) {
+		ret = fwnode_property_read_u32(child, "svid", &svid);
+		if (ret) {
 			dev_err(&port->dev, "Error reading svid for altmode %s\n",
 				fwnode_get_name(child));
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		ret = fwnode_property_पढ़ो_u32(child, "vdo", &vकरो);
-		अगर (ret) अणु
+		ret = fwnode_property_read_u32(child, "vdo", &vdo);
+		if (ret) {
 			dev_err(&port->dev, "Error reading vdo for altmode %s\n",
 				fwnode_get_name(child));
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (index >= n) अणु
+		if (index >= n) {
 			dev_err(&port->dev, "Error not enough space for altmode %s\n",
 				fwnode_get_name(child));
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		desc.svid = svid;
-		desc.vकरो = vकरो;
+		desc.vdo = vdo;
 		desc.mode = index + 1;
-		alt = typec_port_रेजिस्टर_alपंचांगode(port, &desc);
-		अगर (IS_ERR(alt)) अणु
+		alt = typec_port_register_altmode(port, &desc);
+		if (IS_ERR(alt)) {
 			dev_err(&port->dev, "Error registering altmode %s\n",
 				fwnode_get_name(child));
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		alt->ops = ops;
-		typec_alपंचांगode_set_drvdata(alt, drvdata);
-		alपंचांगodes[index] = alt;
+		typec_altmode_set_drvdata(alt, drvdata);
+		altmodes[index] = alt;
 		index++;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_port_रेजिस्टर_alपंचांगodes);
+	}
+}
+EXPORT_SYMBOL_GPL(typec_port_register_altmodes);
 
 /**
- * typec_रेजिस्टर_port - Register a USB Type-C Port
+ * typec_register_port - Register a USB Type-C Port
  * @parent: Parent device
  * @cap: Description of the port
  *
- * Registers a device क्रम USB Type-C Port described in @cap.
+ * Registers a device for USB Type-C Port described in @cap.
  *
  * Returns handle to the port on success or ERR_PTR on failure.
  */
-काष्ठा typec_port *typec_रेजिस्टर_port(काष्ठा device *parent,
-				       स्थिर काष्ठा typec_capability *cap)
-अणु
-	काष्ठा typec_port *port;
-	पूर्णांक ret;
-	पूर्णांक id;
+struct typec_port *typec_register_port(struct device *parent,
+				       const struct typec_capability *cap)
+{
+	struct typec_port *port;
+	int ret;
+	int id;
 
-	port = kzalloc(माप(*port), GFP_KERNEL);
-	अगर (!port)
-		वापस ERR_PTR(-ENOMEM);
+	port = kzalloc(sizeof(*port), GFP_KERNEL);
+	if (!port)
+		return ERR_PTR(-ENOMEM);
 
 	id = ida_simple_get(&typec_index_ida, 0, 0, GFP_KERNEL);
-	अगर (id < 0) अणु
-		kमुक्त(port);
-		वापस ERR_PTR(id);
-	पूर्ण
+	if (id < 0) {
+		kfree(port);
+		return ERR_PTR(id);
+	}
 
-	चयन (cap->type) अणु
-	हाल TYPEC_PORT_SRC:
+	switch (cap->type) {
+	case TYPEC_PORT_SRC:
 		port->pwr_role = TYPEC_SOURCE;
 		port->vconn_role = TYPEC_SOURCE;
-		अवरोध;
-	हाल TYPEC_PORT_SNK:
+		break;
+	case TYPEC_PORT_SNK:
 		port->pwr_role = TYPEC_SINK;
 		port->vconn_role = TYPEC_SINK;
-		अवरोध;
-	हाल TYPEC_PORT_DRP:
-		अगर (cap->prefer_role != TYPEC_NO_PREFERRED_ROLE)
+		break;
+	case TYPEC_PORT_DRP:
+		if (cap->prefer_role != TYPEC_NO_PREFERRED_ROLE)
 			port->pwr_role = cap->prefer_role;
-		अन्यथा
+		else
 			port->pwr_role = TYPEC_SINK;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	चयन (cap->data) अणु
-	हाल TYPEC_PORT_DFP:
+	switch (cap->data) {
+	case TYPEC_PORT_DFP:
 		port->data_role = TYPEC_HOST;
-		अवरोध;
-	हाल TYPEC_PORT_UFP:
+		break;
+	case TYPEC_PORT_UFP:
 		port->data_role = TYPEC_DEVICE;
-		अवरोध;
-	हाल TYPEC_PORT_DRD:
-		अगर (cap->prefer_role == TYPEC_SOURCE)
+		break;
+	case TYPEC_PORT_DRD:
+		if (cap->prefer_role == TYPEC_SOURCE)
 			port->data_role = TYPEC_HOST;
-		अन्यथा
+		else
 			port->data_role = TYPEC_DEVICE;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	ida_init(&port->mode_ids);
 	mutex_init(&port->port_type_lock);
@@ -2054,92 +2053,92 @@ EXPORT_SYMBOL_GPL(typec_port_रेजिस्टर_alपंचांगodes);
 	dev_set_name(&port->dev, "port%d", id);
 	dev_set_drvdata(&port->dev, cap->driver_data);
 
-	port->cap = kmemdup(cap, माप(*cap), GFP_KERNEL);
-	अगर (!port->cap) अणु
+	port->cap = kmemdup(cap, sizeof(*cap), GFP_KERNEL);
+	if (!port->cap) {
 		put_device(&port->dev);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 
-	port->sw = typec_चयन_get(&port->dev);
-	अगर (IS_ERR(port->sw)) अणु
+	port->sw = typec_switch_get(&port->dev);
+	if (IS_ERR(port->sw)) {
 		ret = PTR_ERR(port->sw);
 		put_device(&port->dev);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		return ERR_PTR(ret);
+	}
 
-	port->mux = typec_mux_get(&port->dev, शून्य);
-	अगर (IS_ERR(port->mux)) अणु
+	port->mux = typec_mux_get(&port->dev, NULL);
+	if (IS_ERR(port->mux)) {
 		ret = PTR_ERR(port->mux);
 		put_device(&port->dev);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		return ERR_PTR(ret);
+	}
 
 	ret = device_add(&port->dev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(parent, "failed to register port (%d)\n", ret);
 		put_device(&port->dev);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		return ERR_PTR(ret);
+	}
 
 	ret = typec_link_ports(port);
-	अगर (ret)
+	if (ret)
 		dev_warn(&port->dev, "failed to create symlinks (%d)\n", ret);
 
-	वापस port;
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_रेजिस्टर_port);
+	return port;
+}
+EXPORT_SYMBOL_GPL(typec_register_port);
 
 /**
- * typec_unरेजिस्टर_port - Unरेजिस्टर a USB Type-C Port
- * @port: The port to be unरेजिस्टरed
+ * typec_unregister_port - Unregister a USB Type-C Port
+ * @port: The port to be unregistered
  *
- * Unरेजिस्टर device created with typec_रेजिस्टर_port().
+ * Unregister device created with typec_register_port().
  */
-व्योम typec_unरेजिस्टर_port(काष्ठा typec_port *port)
-अणु
-	अगर (!IS_ERR_OR_शून्य(port)) अणु
+void typec_unregister_port(struct typec_port *port)
+{
+	if (!IS_ERR_OR_NULL(port)) {
 		typec_unlink_ports(port);
-		device_unरेजिस्टर(&port->dev);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_unरेजिस्टर_port);
+		device_unregister(&port->dev);
+	}
+}
+EXPORT_SYMBOL_GPL(typec_unregister_port);
 
-अटल पूर्णांक __init typec_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init typec_init(void)
+{
+	int ret;
 
-	ret = bus_रेजिस्टर(&typec_bus);
-	अगर (ret)
-		वापस ret;
+	ret = bus_register(&typec_bus);
+	if (ret)
+		return ret;
 
-	ret = class_रेजिस्टर(&typec_mux_class);
-	अगर (ret)
-		जाओ err_unरेजिस्टर_bus;
+	ret = class_register(&typec_mux_class);
+	if (ret)
+		goto err_unregister_bus;
 
-	ret = class_रेजिस्टर(&typec_class);
-	अगर (ret)
-		जाओ err_unरेजिस्टर_mux_class;
+	ret = class_register(&typec_class);
+	if (ret)
+		goto err_unregister_mux_class;
 
-	वापस 0;
+	return 0;
 
-err_unरेजिस्टर_mux_class:
-	class_unरेजिस्टर(&typec_mux_class);
+err_unregister_mux_class:
+	class_unregister(&typec_mux_class);
 
-err_unरेजिस्टर_bus:
-	bus_unरेजिस्टर(&typec_bus);
+err_unregister_bus:
+	bus_unregister(&typec_bus);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 subsys_initcall(typec_init);
 
-अटल व्योम __निकास typec_निकास(व्योम)
-अणु
-	class_unरेजिस्टर(&typec_class);
+static void __exit typec_exit(void)
+{
+	class_unregister(&typec_class);
 	ida_destroy(&typec_index_ida);
-	bus_unरेजिस्टर(&typec_bus);
-	class_unरेजिस्टर(&typec_mux_class);
-पूर्ण
-module_निकास(typec_निकास);
+	bus_unregister(&typec_bus);
+	class_unregister(&typec_mux_class);
+}
+module_exit(typec_exit);
 
 MODULE_AUTHOR("Heikki Krogerus <heikki.krogerus@linux.intel.com>");
 MODULE_LICENSE("GPL v2");

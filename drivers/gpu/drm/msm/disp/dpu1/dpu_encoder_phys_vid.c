@@ -1,55 +1,54 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  */
 
-#घोषणा pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
-#समावेश "dpu_encoder_phys.h"
-#समावेश "dpu_hw_interrupts.h"
-#समावेश "dpu_hw_merge3d.h"
-#समावेश "dpu_core_irq.h"
-#समावेश "dpu_formats.h"
-#समावेश "dpu_trace.h"
+#define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
+#include "dpu_encoder_phys.h"
+#include "dpu_hw_interrupts.h"
+#include "dpu_hw_merge3d.h"
+#include "dpu_core_irq.h"
+#include "dpu_formats.h"
+#include "dpu_trace.h"
 
-#घोषणा DPU_DEBUG_VIDENC(e, fmt, ...) DPU_DEBUG("enc%d intf%d " fmt, \
+#define DPU_DEBUG_VIDENC(e, fmt, ...) DPU_DEBUG("enc%d intf%d " fmt, \
 		(e) && (e)->parent ? \
 		(e)->parent->base.id : -1, \
-		(e) && (e)->hw_पूर्णांकf ? \
-		(e)->hw_पूर्णांकf->idx - INTF_0 : -1, ##__VA_ARGS__)
+		(e) && (e)->hw_intf ? \
+		(e)->hw_intf->idx - INTF_0 : -1, ##__VA_ARGS__)
 
-#घोषणा DPU_ERROR_VIDENC(e, fmt, ...) DPU_ERROR("enc%d intf%d " fmt, \
+#define DPU_ERROR_VIDENC(e, fmt, ...) DPU_ERROR("enc%d intf%d " fmt, \
 		(e) && (e)->parent ? \
 		(e)->parent->base.id : -1, \
-		(e) && (e)->hw_पूर्णांकf ? \
-		(e)->hw_पूर्णांकf->idx - INTF_0 : -1, ##__VA_ARGS__)
+		(e) && (e)->hw_intf ? \
+		(e)->hw_intf->idx - INTF_0 : -1, ##__VA_ARGS__)
 
-#घोषणा to_dpu_encoder_phys_vid(x) \
-	container_of(x, काष्ठा dpu_encoder_phys_vid, base)
+#define to_dpu_encoder_phys_vid(x) \
+	container_of(x, struct dpu_encoder_phys_vid, base)
 
-अटल bool dpu_encoder_phys_vid_is_master(
-		काष्ठा dpu_encoder_phys *phys_enc)
-अणु
+static bool dpu_encoder_phys_vid_is_master(
+		struct dpu_encoder_phys *phys_enc)
+{
 	bool ret = false;
 
-	अगर (phys_enc->split_role != ENC_ROLE_SLAVE)
+	if (phys_enc->split_role != ENC_ROLE_SLAVE)
 		ret = true;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम drm_mode_to_पूर्णांकf_timing_params(
-		स्थिर काष्ठा dpu_encoder_phys *phys_enc,
-		स्थिर काष्ठा drm_display_mode *mode,
-		काष्ठा पूर्णांकf_timing_params *timing)
-अणु
-	स_रखो(timing, 0, माप(*timing));
+static void drm_mode_to_intf_timing_params(
+		const struct dpu_encoder_phys *phys_enc,
+		const struct drm_display_mode *mode,
+		struct intf_timing_params *timing)
+{
+	memset(timing, 0, sizeof(*timing));
 
-	अगर ((mode->htotal < mode->hsync_end)
+	if ((mode->htotal < mode->hsync_end)
 			|| (mode->hsync_start < mode->hdisplay)
 			|| (mode->vtotal < mode->vsync_end)
 			|| (mode->vsync_start < mode->vdisplay)
 			|| (mode->hsync_end < mode->hsync_start)
-			|| (mode->vsync_end < mode->vsync_start)) अणु
+			|| (mode->vsync_end < mode->vsync_start)) {
 		DPU_ERROR(
 		    "invalid params - hstart:%d,hend:%d,htot:%d,hdisplay:%d\n",
 				mode->hsync_start, mode->hsync_end,
@@ -57,11 +56,11 @@
 		DPU_ERROR("vstart:%d,vend:%d,vtot:%d,vdisplay:%d\n",
 				mode->vsync_start, mode->vsync_end,
 				mode->vtotal, mode->vdisplay);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * https://www.kernel.org/करोc/hपंचांगlकरोcs/drm/ch02s05.hपंचांगl
+	 * https://www.kernel.org/doc/htmldocs/drm/ch02s05.html
 	 *  Active Region      Front Porch   Sync   Back Porch
 	 * <-----------------><------------><-----><----------->
 	 * <- [hv]display --->
@@ -85,11 +84,11 @@
 	timing->underflow_clr = 0xff;
 	timing->hsync_skew = mode->hskew;
 
-	/* DSI controller cannot handle active-low sync संकेतs. */
-	अगर (phys_enc->hw_पूर्णांकf->cap->type == INTF_DSI) अणु
+	/* DSI controller cannot handle active-low sync signals. */
+	if (phys_enc->hw_intf->cap->type == INTF_DSI) {
 		timing->hsync_polarity = 0;
 		timing->vsync_polarity = 0;
-	पूर्ण
+	}
 
 	/*
 	 * For edp only:
@@ -97,80 +96,80 @@
 	 * DISPLAY_V_END = (VBP + VACTIVE) * HCYCLE - 1 - HFP
 	 */
 	/*
-	 * अगर (vid_enc->hw->cap->type == INTF_EDP) अणु
+	 * if (vid_enc->hw->cap->type == INTF_EDP) {
 	 * display_v_start += mode->htotal - mode->hsync_start;
 	 * display_v_end -= mode->hsync_start - mode->hdisplay;
-	 * पूर्ण
+	 * }
 	 */
-	/* क्रम DP/EDP, Shअगरt timings to align it to bottom right */
-	अगर ((phys_enc->hw_पूर्णांकf->cap->type == INTF_DP) ||
-		(phys_enc->hw_पूर्णांकf->cap->type == INTF_EDP)) अणु
+	/* for DP/EDP, Shift timings to align it to bottom right */
+	if ((phys_enc->hw_intf->cap->type == INTF_DP) ||
+		(phys_enc->hw_intf->cap->type == INTF_EDP)) {
 		timing->h_back_porch += timing->h_front_porch;
 		timing->h_front_porch = 0;
 		timing->v_back_porch += timing->v_front_porch;
 		timing->v_front_porch = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u32 get_horizontal_total(स्थिर काष्ठा पूर्णांकf_timing_params *timing)
-अणु
+static u32 get_horizontal_total(const struct intf_timing_params *timing)
+{
 	u32 active = timing->xres;
 	u32 inactive =
 	    timing->h_back_porch + timing->h_front_porch +
 	    timing->hsync_pulse_width;
-	वापस active + inactive;
-पूर्ण
+	return active + inactive;
+}
 
-अटल u32 get_vertical_total(स्थिर काष्ठा पूर्णांकf_timing_params *timing)
-अणु
+static u32 get_vertical_total(const struct intf_timing_params *timing)
+{
 	u32 active = timing->yres;
 	u32 inactive =
 	    timing->v_back_porch + timing->v_front_porch +
 	    timing->vsync_pulse_width;
-	वापस active + inactive;
-पूर्ण
+	return active + inactive;
+}
 
 /*
  * programmable_fetch_get_num_lines:
  *	Number of fetch lines in vertical front porch
- * @timing: Poपूर्णांकer to the पूर्णांकf timing inक्रमmation क्रम the requested mode
+ * @timing: Pointer to the intf timing information for the requested mode
  *
  * Returns the number of fetch lines in vertical front porch at which mdp
  * can start fetching the next frame.
  *
- * Number of needed prefetch lines is anything that cannot be असलorbed in the
- * start of frame समय (back porch + vsync pulse width).
+ * Number of needed prefetch lines is anything that cannot be absorbed in the
+ * start of frame time (back porch + vsync pulse width).
  *
  * Some panels have very large VFP, however we only need a total number of
- * lines based on the chip worst हाल latencies.
+ * lines based on the chip worst case latencies.
  */
-अटल u32 programmable_fetch_get_num_lines(
-		काष्ठा dpu_encoder_phys *phys_enc,
-		स्थिर काष्ठा पूर्णांकf_timing_params *timing)
-अणु
-	u32 worst_हाल_needed_lines =
-	    phys_enc->hw_पूर्णांकf->cap->prog_fetch_lines_worst_हाल;
+static u32 programmable_fetch_get_num_lines(
+		struct dpu_encoder_phys *phys_enc,
+		const struct intf_timing_params *timing)
+{
+	u32 worst_case_needed_lines =
+	    phys_enc->hw_intf->cap->prog_fetch_lines_worst_case;
 	u32 start_of_frame_lines =
 	    timing->v_back_porch + timing->vsync_pulse_width;
-	u32 needed_vfp_lines = worst_हाल_needed_lines - start_of_frame_lines;
+	u32 needed_vfp_lines = worst_case_needed_lines - start_of_frame_lines;
 	u32 actual_vfp_lines = 0;
 
 	/* Fetch must be outside active lines, otherwise undefined. */
-	अगर (start_of_frame_lines >= worst_हाल_needed_lines) अणु
+	if (start_of_frame_lines >= worst_case_needed_lines) {
 		DPU_DEBUG_VIDENC(phys_enc,
 				"prog fetch is not needed, large vbp+vsw\n");
 		actual_vfp_lines = 0;
-	पूर्ण अन्यथा अगर (timing->v_front_porch < needed_vfp_lines) अणु
+	} else if (timing->v_front_porch < needed_vfp_lines) {
 		/* Warn fetch needed, but not enough porch in panel config */
 		pr_warn_once
 			("low vbp+vfp may lead to perf issues in some cases\n");
 		DPU_DEBUG_VIDENC(phys_enc,
 				"less vfp than fetch req, using entire vfp\n");
 		actual_vfp_lines = timing->v_front_porch;
-	पूर्ण अन्यथा अणु
+	} else {
 		DPU_DEBUG_VIDENC(phys_enc, "room in vfp for needed prefetch\n");
 		actual_vfp_lines = needed_vfp_lines;
-	पूर्ण
+	}
 
 	DPU_DEBUG_VIDENC(phys_enc,
 		"v_front_porch %u v_back_porch %u vsync_pulse_width %u\n",
@@ -178,91 +177,91 @@
 		timing->vsync_pulse_width);
 	DPU_DEBUG_VIDENC(phys_enc,
 		"wc_lines %u needed_vfp_lines %u actual_vfp_lines %u\n",
-		worst_हाल_needed_lines, needed_vfp_lines, actual_vfp_lines);
+		worst_case_needed_lines, needed_vfp_lines, actual_vfp_lines);
 
-	वापस actual_vfp_lines;
-पूर्ण
+	return actual_vfp_lines;
+}
 
 /*
  * programmable_fetch_config: Programs HW to prefetch lines by offsetting
- *	the start of fetch पूर्णांकo the vertical front porch क्रम हालs where the
- *	vsync pulse width and vertical back porch समय is insufficient
+ *	the start of fetch into the vertical front porch for cases where the
+ *	vsync pulse width and vertical back porch time is insufficient
  *
  *	Gets # of lines to pre-fetch, then calculate VSYNC counter value.
  *	HW layer requires VSYNC counter of first pixel of tgt VFP line.
  *
- * @timing: Poपूर्णांकer to the पूर्णांकf timing inक्रमmation क्रम the requested mode
+ * @timing: Pointer to the intf timing information for the requested mode
  */
-अटल व्योम programmable_fetch_config(काष्ठा dpu_encoder_phys *phys_enc,
-				      स्थिर काष्ठा पूर्णांकf_timing_params *timing)
-अणु
-	काष्ठा पूर्णांकf_prog_fetch f = अणु 0 पूर्ण;
+static void programmable_fetch_config(struct dpu_encoder_phys *phys_enc,
+				      const struct intf_timing_params *timing)
+{
+	struct intf_prog_fetch f = { 0 };
 	u32 vfp_fetch_lines = 0;
 	u32 horiz_total = 0;
 	u32 vert_total = 0;
 	u32 vfp_fetch_start_vsync_counter = 0;
-	अचिन्हित दीर्घ lock_flags;
+	unsigned long lock_flags;
 
-	अगर (WARN_ON_ONCE(!phys_enc->hw_पूर्णांकf->ops.setup_prg_fetch))
-		वापस;
+	if (WARN_ON_ONCE(!phys_enc->hw_intf->ops.setup_prg_fetch))
+		return;
 
 	vfp_fetch_lines = programmable_fetch_get_num_lines(phys_enc, timing);
-	अगर (vfp_fetch_lines) अणु
+	if (vfp_fetch_lines) {
 		vert_total = get_vertical_total(timing);
 		horiz_total = get_horizontal_total(timing);
 		vfp_fetch_start_vsync_counter =
 		    (vert_total - vfp_fetch_lines) * horiz_total + 1;
 		f.enable = 1;
 		f.fetch_start = vfp_fetch_start_vsync_counter;
-	पूर्ण
+	}
 
 	DPU_DEBUG_VIDENC(phys_enc,
 		"vfp_fetch_lines %u vfp_fetch_start_vsync_counter %u\n",
 		vfp_fetch_lines, vfp_fetch_start_vsync_counter);
 
 	spin_lock_irqsave(phys_enc->enc_spinlock, lock_flags);
-	phys_enc->hw_पूर्णांकf->ops.setup_prg_fetch(phys_enc->hw_पूर्णांकf, &f);
+	phys_enc->hw_intf->ops.setup_prg_fetch(phys_enc->hw_intf, &f);
 	spin_unlock_irqrestore(phys_enc->enc_spinlock, lock_flags);
-पूर्ण
+}
 
-अटल bool dpu_encoder_phys_vid_mode_fixup(
-		काष्ठा dpu_encoder_phys *phys_enc,
-		स्थिर काष्ठा drm_display_mode *mode,
-		काष्ठा drm_display_mode *adj_mode)
-अणु
+static bool dpu_encoder_phys_vid_mode_fixup(
+		struct dpu_encoder_phys *phys_enc,
+		const struct drm_display_mode *mode,
+		struct drm_display_mode *adj_mode)
+{
 	DPU_DEBUG_VIDENC(phys_enc, "\n");
 
 	/*
-	 * Modअगरying mode has consequences when the mode comes back to us
+	 * Modifying mode has consequences when the mode comes back to us
 	 */
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम dpu_encoder_phys_vid_setup_timing_engine(
-		काष्ठा dpu_encoder_phys *phys_enc)
-अणु
-	काष्ठा drm_display_mode mode;
-	काष्ठा पूर्णांकf_timing_params timing_params = अणु 0 पूर्ण;
-	स्थिर काष्ठा dpu_क्रमmat *fmt = शून्य;
+static void dpu_encoder_phys_vid_setup_timing_engine(
+		struct dpu_encoder_phys *phys_enc)
+{
+	struct drm_display_mode mode;
+	struct intf_timing_params timing_params = { 0 };
+	const struct dpu_format *fmt = NULL;
 	u32 fmt_fourcc = DRM_FORMAT_RGB888;
-	अचिन्हित दीर्घ lock_flags;
-	काष्ठा dpu_hw_पूर्णांकf_cfg पूर्णांकf_cfg = अणु 0 पूर्ण;
+	unsigned long lock_flags;
+	struct dpu_hw_intf_cfg intf_cfg = { 0 };
 
-	अगर (!phys_enc->hw_ctl->ops.setup_पूर्णांकf_cfg) अणु
-		DPU_ERROR("invalid encoder %d\n", phys_enc != शून्य);
-		वापस;
-	पूर्ण
+	if (!phys_enc->hw_ctl->ops.setup_intf_cfg) {
+		DPU_ERROR("invalid encoder %d\n", phys_enc != NULL);
+		return;
+	}
 
 	mode = phys_enc->cached_mode;
-	अगर (!phys_enc->hw_पूर्णांकf->ops.setup_timing_gen) अणु
+	if (!phys_enc->hw_intf->ops.setup_timing_gen) {
 		DPU_ERROR("timing engine setup is not supported\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	DPU_DEBUG_VIDENC(phys_enc, "enabling mode:\n");
-	drm_mode_debug_prपूर्णांकmodeline(&mode);
+	drm_mode_debug_printmodeline(&mode);
 
-	अगर (phys_enc->split_role != ENC_ROLE_SOLO) अणु
+	if (phys_enc->split_role != ENC_ROLE_SOLO) {
 		mode.hdisplay >>= 1;
 		mode.htotal >>= 1;
 		mode.hsync_start >>= 1;
@@ -273,419 +272,419 @@
 			phys_enc->split_role,
 			mode.hdisplay, mode.htotal,
 			mode.hsync_start, mode.hsync_end);
-	पूर्ण
+	}
 
-	drm_mode_to_पूर्णांकf_timing_params(phys_enc, &mode, &timing_params);
+	drm_mode_to_intf_timing_params(phys_enc, &mode, &timing_params);
 
-	fmt = dpu_get_dpu_क्रमmat(fmt_fourcc);
+	fmt = dpu_get_dpu_format(fmt_fourcc);
 	DPU_DEBUG_VIDENC(phys_enc, "fmt_fourcc 0x%X\n", fmt_fourcc);
 
-	पूर्णांकf_cfg.पूर्णांकf = phys_enc->hw_पूर्णांकf->idx;
-	पूर्णांकf_cfg.पूर्णांकf_mode_sel = DPU_CTL_MODE_SEL_VID;
-	पूर्णांकf_cfg.stream_sel = 0; /* Don't care value क्रम video mode */
-	पूर्णांकf_cfg.mode_3d = dpu_encoder_helper_get_3d_blend_mode(phys_enc);
-	अगर (phys_enc->hw_pp->merge_3d)
-		पूर्णांकf_cfg.merge_3d = phys_enc->hw_pp->merge_3d->id;
+	intf_cfg.intf = phys_enc->hw_intf->idx;
+	intf_cfg.intf_mode_sel = DPU_CTL_MODE_SEL_VID;
+	intf_cfg.stream_sel = 0; /* Don't care value for video mode */
+	intf_cfg.mode_3d = dpu_encoder_helper_get_3d_blend_mode(phys_enc);
+	if (phys_enc->hw_pp->merge_3d)
+		intf_cfg.merge_3d = phys_enc->hw_pp->merge_3d->id;
 
 	spin_lock_irqsave(phys_enc->enc_spinlock, lock_flags);
-	phys_enc->hw_पूर्णांकf->ops.setup_timing_gen(phys_enc->hw_पूर्णांकf,
+	phys_enc->hw_intf->ops.setup_timing_gen(phys_enc->hw_intf,
 			&timing_params, fmt);
-	phys_enc->hw_ctl->ops.setup_पूर्णांकf_cfg(phys_enc->hw_ctl, &पूर्णांकf_cfg);
+	phys_enc->hw_ctl->ops.setup_intf_cfg(phys_enc->hw_ctl, &intf_cfg);
 
-	/* setup which pp blk will connect to this पूर्णांकf */
-	अगर (phys_enc->hw_पूर्णांकf->ops.bind_pingpong_blk)
-		phys_enc->hw_पूर्णांकf->ops.bind_pingpong_blk(
-				phys_enc->hw_पूर्णांकf,
+	/* setup which pp blk will connect to this intf */
+	if (phys_enc->hw_intf->ops.bind_pingpong_blk)
+		phys_enc->hw_intf->ops.bind_pingpong_blk(
+				phys_enc->hw_intf,
 				true,
 				phys_enc->hw_pp->idx);
 
-	अगर (phys_enc->hw_pp->merge_3d) अणु
-		काष्ठा dpu_hw_merge_3d *merge_3d = to_dpu_hw_merge_3d(phys_enc->hw_pp->merge_3d);
+	if (phys_enc->hw_pp->merge_3d) {
+		struct dpu_hw_merge_3d *merge_3d = to_dpu_hw_merge_3d(phys_enc->hw_pp->merge_3d);
 
-		merge_3d->ops.setup_3d_mode(merge_3d, पूर्णांकf_cfg.mode_3d);
-	पूर्ण
+		merge_3d->ops.setup_3d_mode(merge_3d, intf_cfg.mode_3d);
+	}
 
 	spin_unlock_irqrestore(phys_enc->enc_spinlock, lock_flags);
 
 	programmable_fetch_config(phys_enc, &timing_params);
-पूर्ण
+}
 
-अटल व्योम dpu_encoder_phys_vid_vblank_irq(व्योम *arg, पूर्णांक irq_idx)
-अणु
-	काष्ठा dpu_encoder_phys *phys_enc = arg;
-	काष्ठा dpu_hw_ctl *hw_ctl;
-	अचिन्हित दीर्घ lock_flags;
-	u32 flush_रेजिस्टर = 0;
+static void dpu_encoder_phys_vid_vblank_irq(void *arg, int irq_idx)
+{
+	struct dpu_encoder_phys *phys_enc = arg;
+	struct dpu_hw_ctl *hw_ctl;
+	unsigned long lock_flags;
+	u32 flush_register = 0;
 
 	hw_ctl = phys_enc->hw_ctl;
 
 	DPU_ATRACE_BEGIN("vblank_irq");
 
-	अगर (phys_enc->parent_ops->handle_vblank_virt)
+	if (phys_enc->parent_ops->handle_vblank_virt)
 		phys_enc->parent_ops->handle_vblank_virt(phys_enc->parent,
 				phys_enc);
 
-	atomic_पढ़ो(&phys_enc->pending_kickoff_cnt);
+	atomic_read(&phys_enc->pending_kickoff_cnt);
 
 	/*
-	 * only decrement the pending flush count अगर we've actually flushed
-	 * hardware. due to sw irq latency, vblank may have alपढ़ोy happened
-	 * so we need to द्विगुन-check with hw that it accepted the flush bits
+	 * only decrement the pending flush count if we've actually flushed
+	 * hardware. due to sw irq latency, vblank may have already happened
+	 * so we need to double-check with hw that it accepted the flush bits
 	 */
 	spin_lock_irqsave(phys_enc->enc_spinlock, lock_flags);
-	अगर (hw_ctl->ops.get_flush_रेजिस्टर)
-		flush_रेजिस्टर = hw_ctl->ops.get_flush_रेजिस्टर(hw_ctl);
+	if (hw_ctl->ops.get_flush_register)
+		flush_register = hw_ctl->ops.get_flush_register(hw_ctl);
 
-	अगर (!(flush_रेजिस्टर & hw_ctl->ops.get_pending_flush(hw_ctl)))
+	if (!(flush_register & hw_ctl->ops.get_pending_flush(hw_ctl)))
 		atomic_add_unless(&phys_enc->pending_kickoff_cnt, -1, 0);
 	spin_unlock_irqrestore(phys_enc->enc_spinlock, lock_flags);
 
-	/* Signal any रुकोing atomic commit thपढ़ो */
+	/* Signal any waiting atomic commit thread */
 	wake_up_all(&phys_enc->pending_kickoff_wq);
 
-	phys_enc->parent_ops->handle_frame_करोne(phys_enc->parent, phys_enc,
+	phys_enc->parent_ops->handle_frame_done(phys_enc->parent, phys_enc,
 			DPU_ENCODER_FRAME_EVENT_DONE);
 
 	DPU_ATRACE_END("vblank_irq");
-पूर्ण
+}
 
-अटल व्योम dpu_encoder_phys_vid_underrun_irq(व्योम *arg, पूर्णांक irq_idx)
-अणु
-	काष्ठा dpu_encoder_phys *phys_enc = arg;
+static void dpu_encoder_phys_vid_underrun_irq(void *arg, int irq_idx)
+{
+	struct dpu_encoder_phys *phys_enc = arg;
 
-	अगर (phys_enc->parent_ops->handle_underrun_virt)
+	if (phys_enc->parent_ops->handle_underrun_virt)
 		phys_enc->parent_ops->handle_underrun_virt(phys_enc->parent,
 			phys_enc);
-पूर्ण
+}
 
-अटल bool dpu_encoder_phys_vid_needs_single_flush(
-		काष्ठा dpu_encoder_phys *phys_enc)
-अणु
-	वापस phys_enc->split_role != ENC_ROLE_SOLO;
-पूर्ण
+static bool dpu_encoder_phys_vid_needs_single_flush(
+		struct dpu_encoder_phys *phys_enc)
+{
+	return phys_enc->split_role != ENC_ROLE_SOLO;
+}
 
-अटल व्योम _dpu_encoder_phys_vid_setup_irq_hw_idx(
-		काष्ठा dpu_encoder_phys *phys_enc)
-अणु
-	काष्ठा dpu_encoder_irq *irq;
+static void _dpu_encoder_phys_vid_setup_irq_hw_idx(
+		struct dpu_encoder_phys *phys_enc)
+{
+	struct dpu_encoder_irq *irq;
 
 	/*
-	 * Initialize irq->hw_idx only when irq is not रेजिस्टरed.
+	 * Initialize irq->hw_idx only when irq is not registered.
 	 * Prevent invalidating irq->irq_idx as modeset may be
-	 * called many बार during dfps.
+	 * called many times during dfps.
 	 */
 
 	irq = &phys_enc->irq[INTR_IDX_VSYNC];
-	अगर (irq->irq_idx < 0)
-		irq->hw_idx = phys_enc->पूर्णांकf_idx;
+	if (irq->irq_idx < 0)
+		irq->hw_idx = phys_enc->intf_idx;
 
 	irq = &phys_enc->irq[INTR_IDX_UNDERRUN];
-	अगर (irq->irq_idx < 0)
-		irq->hw_idx = phys_enc->पूर्णांकf_idx;
-पूर्ण
+	if (irq->irq_idx < 0)
+		irq->hw_idx = phys_enc->intf_idx;
+}
 
-अटल व्योम dpu_encoder_phys_vid_mode_set(
-		काष्ठा dpu_encoder_phys *phys_enc,
-		काष्ठा drm_display_mode *mode,
-		काष्ठा drm_display_mode *adj_mode)
-अणु
-	अगर (adj_mode) अणु
+static void dpu_encoder_phys_vid_mode_set(
+		struct dpu_encoder_phys *phys_enc,
+		struct drm_display_mode *mode,
+		struct drm_display_mode *adj_mode)
+{
+	if (adj_mode) {
 		phys_enc->cached_mode = *adj_mode;
-		drm_mode_debug_prपूर्णांकmodeline(adj_mode);
+		drm_mode_debug_printmodeline(adj_mode);
 		DPU_DEBUG_VIDENC(phys_enc, "caching mode:\n");
-	पूर्ण
+	}
 
 	_dpu_encoder_phys_vid_setup_irq_hw_idx(phys_enc);
-पूर्ण
+}
 
-अटल पूर्णांक dpu_encoder_phys_vid_control_vblank_irq(
-		काष्ठा dpu_encoder_phys *phys_enc,
+static int dpu_encoder_phys_vid_control_vblank_irq(
+		struct dpu_encoder_phys *phys_enc,
 		bool enable)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक refcount;
+{
+	int ret = 0;
+	int refcount;
 
-	refcount = atomic_पढ़ो(&phys_enc->vblank_refcount);
+	refcount = atomic_read(&phys_enc->vblank_refcount);
 
-	/* Slave encoders करोn't report vblank */
-	अगर (!dpu_encoder_phys_vid_is_master(phys_enc))
-		जाओ end;
+	/* Slave encoders don't report vblank */
+	if (!dpu_encoder_phys_vid_is_master(phys_enc))
+		goto end;
 
 	/* protect against negative */
-	अगर (!enable && refcount == 0) अणु
+	if (!enable && refcount == 0) {
 		ret = -EINVAL;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	DRM_DEBUG_KMS("id:%u enable=%d/%d\n", DRMID(phys_enc->parent), enable,
-		      atomic_पढ़ो(&phys_enc->vblank_refcount));
+		      atomic_read(&phys_enc->vblank_refcount));
 
-	अगर (enable && atomic_inc_वापस(&phys_enc->vblank_refcount) == 1)
-		ret = dpu_encoder_helper_रेजिस्टर_irq(phys_enc, INTR_IDX_VSYNC);
-	अन्यथा अगर (!enable && atomic_dec_वापस(&phys_enc->vblank_refcount) == 0)
-		ret = dpu_encoder_helper_unरेजिस्टर_irq(phys_enc,
+	if (enable && atomic_inc_return(&phys_enc->vblank_refcount) == 1)
+		ret = dpu_encoder_helper_register_irq(phys_enc, INTR_IDX_VSYNC);
+	else if (!enable && atomic_dec_return(&phys_enc->vblank_refcount) == 0)
+		ret = dpu_encoder_helper_unregister_irq(phys_enc,
 				INTR_IDX_VSYNC);
 
 end:
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("failed: id:%u intf:%d ret:%d enable:%d refcnt:%d\n",
 			  DRMID(phys_enc->parent),
-			  phys_enc->hw_पूर्णांकf->idx - INTF_0, ret, enable,
+			  phys_enc->hw_intf->idx - INTF_0, ret, enable,
 			  refcount);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल व्योम dpu_encoder_phys_vid_enable(काष्ठा dpu_encoder_phys *phys_enc)
-अणु
-	काष्ठा dpu_hw_ctl *ctl;
+static void dpu_encoder_phys_vid_enable(struct dpu_encoder_phys *phys_enc)
+{
+	struct dpu_hw_ctl *ctl;
 
 	ctl = phys_enc->hw_ctl;
 
 	DPU_DEBUG_VIDENC(phys_enc, "\n");
 
-	अगर (WARN_ON(!phys_enc->hw_पूर्णांकf->ops.enable_timing))
-		वापस;
+	if (WARN_ON(!phys_enc->hw_intf->ops.enable_timing))
+		return;
 
-	dpu_encoder_helper_split_config(phys_enc, phys_enc->hw_पूर्णांकf->idx);
+	dpu_encoder_helper_split_config(phys_enc, phys_enc->hw_intf->idx);
 
 	dpu_encoder_phys_vid_setup_timing_engine(phys_enc);
 
 	/*
-	 * For single flush हालs (dual-ctl or pp-split), skip setting the
-	 * flush bit क्रम the slave पूर्णांकf, since both पूर्णांकfs use same ctl
+	 * For single flush cases (dual-ctl or pp-split), skip setting the
+	 * flush bit for the slave intf, since both intfs use same ctl
 	 * and HW will only flush the master.
 	 */
-	अगर (dpu_encoder_phys_vid_needs_single_flush(phys_enc) &&
+	if (dpu_encoder_phys_vid_needs_single_flush(phys_enc) &&
 		!dpu_encoder_phys_vid_is_master(phys_enc))
-		जाओ skip_flush;
+		goto skip_flush;
 
-	ctl->ops.update_pending_flush_पूर्णांकf(ctl, phys_enc->hw_पूर्णांकf->idx);
-	अगर (ctl->ops.update_pending_flush_merge_3d && phys_enc->hw_pp->merge_3d)
+	ctl->ops.update_pending_flush_intf(ctl, phys_enc->hw_intf->idx);
+	if (ctl->ops.update_pending_flush_merge_3d && phys_enc->hw_pp->merge_3d)
 		ctl->ops.update_pending_flush_merge_3d(ctl, phys_enc->hw_pp->merge_3d->id);
 
 skip_flush:
 	DPU_DEBUG_VIDENC(phys_enc,
 		"update pending flush ctl %d intf %d\n",
-		ctl->idx - CTL_0, phys_enc->hw_पूर्णांकf->idx);
+		ctl->idx - CTL_0, phys_enc->hw_intf->idx);
 
 
 	/* ctl_flush & timing engine enable will be triggered by framework */
-	अगर (phys_enc->enable_state == DPU_ENC_DISABLED)
+	if (phys_enc->enable_state == DPU_ENC_DISABLED)
 		phys_enc->enable_state = DPU_ENC_ENABLING;
-पूर्ण
+}
 
-अटल व्योम dpu_encoder_phys_vid_destroy(काष्ठा dpu_encoder_phys *phys_enc)
-अणु
+static void dpu_encoder_phys_vid_destroy(struct dpu_encoder_phys *phys_enc)
+{
 	DPU_DEBUG_VIDENC(phys_enc, "\n");
-	kमुक्त(phys_enc);
-पूर्ण
+	kfree(phys_enc);
+}
 
-अटल व्योम dpu_encoder_phys_vid_get_hw_resources(
-		काष्ठा dpu_encoder_phys *phys_enc,
-		काष्ठा dpu_encoder_hw_resources *hw_res)
-अणु
-	hw_res->पूर्णांकfs[phys_enc->पूर्णांकf_idx - INTF_0] = INTF_MODE_VIDEO;
-पूर्ण
+static void dpu_encoder_phys_vid_get_hw_resources(
+		struct dpu_encoder_phys *phys_enc,
+		struct dpu_encoder_hw_resources *hw_res)
+{
+	hw_res->intfs[phys_enc->intf_idx - INTF_0] = INTF_MODE_VIDEO;
+}
 
-अटल पूर्णांक dpu_encoder_phys_vid_रुको_क्रम_vblank(
-		काष्ठा dpu_encoder_phys *phys_enc)
-अणु
-	काष्ठा dpu_encoder_रुको_info रुको_info;
-	पूर्णांक ret;
+static int dpu_encoder_phys_vid_wait_for_vblank(
+		struct dpu_encoder_phys *phys_enc)
+{
+	struct dpu_encoder_wait_info wait_info;
+	int ret;
 
-	रुको_info.wq = &phys_enc->pending_kickoff_wq;
-	रुको_info.atomic_cnt = &phys_enc->pending_kickoff_cnt;
-	रुको_info.समयout_ms = KICKOFF_TIMEOUT_MS;
+	wait_info.wq = &phys_enc->pending_kickoff_wq;
+	wait_info.atomic_cnt = &phys_enc->pending_kickoff_cnt;
+	wait_info.timeout_ms = KICKOFF_TIMEOUT_MS;
 
-	अगर (!dpu_encoder_phys_vid_is_master(phys_enc)) अणु
-		वापस 0;
-	पूर्ण
+	if (!dpu_encoder_phys_vid_is_master(phys_enc)) {
+		return 0;
+	}
 
-	/* Wait क्रम kickoff to complete */
-	ret = dpu_encoder_helper_रुको_क्रम_irq(phys_enc, INTR_IDX_VSYNC,
-			&रुको_info);
+	/* Wait for kickoff to complete */
+	ret = dpu_encoder_helper_wait_for_irq(phys_enc, INTR_IDX_VSYNC,
+			&wait_info);
 
-	अगर (ret == -ETIMEDOUT) अणु
-		dpu_encoder_helper_report_irq_समयout(phys_enc, INTR_IDX_VSYNC);
-	पूर्ण
+	if (ret == -ETIMEDOUT) {
+		dpu_encoder_helper_report_irq_timeout(phys_enc, INTR_IDX_VSYNC);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dpu_encoder_phys_vid_रुको_क्रम_commit_करोne(
-		काष्ठा dpu_encoder_phys *phys_enc)
-अणु
-	काष्ठा dpu_hw_ctl *hw_ctl = phys_enc->hw_ctl;
-	पूर्णांक ret;
+static int dpu_encoder_phys_vid_wait_for_commit_done(
+		struct dpu_encoder_phys *phys_enc)
+{
+	struct dpu_hw_ctl *hw_ctl = phys_enc->hw_ctl;
+	int ret;
 
-	अगर (!hw_ctl)
-		वापस 0;
+	if (!hw_ctl)
+		return 0;
 
-	ret = रुको_event_समयout(phys_enc->pending_kickoff_wq,
-		(hw_ctl->ops.get_flush_रेजिस्टर(hw_ctl) == 0),
-		msecs_to_jअगरfies(50));
-	अगर (ret <= 0) अणु
+	ret = wait_event_timeout(phys_enc->pending_kickoff_wq,
+		(hw_ctl->ops.get_flush_register(hw_ctl) == 0),
+		msecs_to_jiffies(50));
+	if (ret <= 0) {
 		DPU_ERROR("vblank timeout\n");
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dpu_encoder_phys_vid_prepare_क्रम_kickoff(
-		काष्ठा dpu_encoder_phys *phys_enc)
-अणु
-	काष्ठा dpu_hw_ctl *ctl;
-	पूर्णांक rc;
+static void dpu_encoder_phys_vid_prepare_for_kickoff(
+		struct dpu_encoder_phys *phys_enc)
+{
+	struct dpu_hw_ctl *ctl;
+	int rc;
 
 	ctl = phys_enc->hw_ctl;
-	अगर (!ctl->ops.रुको_reset_status)
-		वापस;
+	if (!ctl->ops.wait_reset_status)
+		return;
 
 	/*
-	 * hw supports hardware initiated ctl reset, so beक्रमe we kickoff a new
-	 * frame, need to check and रुको क्रम hw initiated ctl reset completion
+	 * hw supports hardware initiated ctl reset, so before we kickoff a new
+	 * frame, need to check and wait for hw initiated ctl reset completion
 	 */
-	rc = ctl->ops.रुको_reset_status(ctl);
-	अगर (rc) अणु
+	rc = ctl->ops.wait_reset_status(ctl);
+	if (rc) {
 		DPU_ERROR_VIDENC(phys_enc, "ctl %d reset failure: %d\n",
 				ctl->idx, rc);
-		dpu_encoder_helper_unरेजिस्टर_irq(phys_enc, INTR_IDX_VSYNC);
-	पूर्ण
-पूर्ण
+		dpu_encoder_helper_unregister_irq(phys_enc, INTR_IDX_VSYNC);
+	}
+}
 
-अटल व्योम dpu_encoder_phys_vid_disable(काष्ठा dpu_encoder_phys *phys_enc)
-अणु
-	अचिन्हित दीर्घ lock_flags;
-	पूर्णांक ret;
+static void dpu_encoder_phys_vid_disable(struct dpu_encoder_phys *phys_enc)
+{
+	unsigned long lock_flags;
+	int ret;
 
-	अगर (!phys_enc->parent || !phys_enc->parent->dev) अणु
+	if (!phys_enc->parent || !phys_enc->parent->dev) {
 		DPU_ERROR("invalid encoder/device\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!phys_enc->hw_पूर्णांकf) अणु
+	if (!phys_enc->hw_intf) {
 		DPU_ERROR("invalid hw_intf %d hw_ctl %d\n",
-				phys_enc->hw_पूर्णांकf != शून्य, phys_enc->hw_ctl != शून्य);
-		वापस;
-	पूर्ण
+				phys_enc->hw_intf != NULL, phys_enc->hw_ctl != NULL);
+		return;
+	}
 
-	अगर (WARN_ON(!phys_enc->hw_पूर्णांकf->ops.enable_timing))
-		वापस;
+	if (WARN_ON(!phys_enc->hw_intf->ops.enable_timing))
+		return;
 
-	अगर (phys_enc->enable_state == DPU_ENC_DISABLED) अणु
+	if (phys_enc->enable_state == DPU_ENC_DISABLED) {
 		DPU_ERROR("already disabled\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock_irqsave(phys_enc->enc_spinlock, lock_flags);
-	phys_enc->hw_पूर्णांकf->ops.enable_timing(phys_enc->hw_पूर्णांकf, 0);
-	अगर (dpu_encoder_phys_vid_is_master(phys_enc))
+	phys_enc->hw_intf->ops.enable_timing(phys_enc->hw_intf, 0);
+	if (dpu_encoder_phys_vid_is_master(phys_enc))
 		dpu_encoder_phys_inc_pending(phys_enc);
 	spin_unlock_irqrestore(phys_enc->enc_spinlock, lock_flags);
 
 	/*
-	 * Wait क्रम a vsync so we know the ENABLE=0 latched beक्रमe
-	 * the (connector) source of the vsync's माला_लो disabled,
-	 * otherwise we end up in a funny state अगर we re-enable
-	 * beक्रमe the disable latches, which results that some of
-	 * the settings changes क्रम the new modeset (like new
-	 * scanout buffer) करोn't latch properly..
+	 * Wait for a vsync so we know the ENABLE=0 latched before
+	 * the (connector) source of the vsync's gets disabled,
+	 * otherwise we end up in a funny state if we re-enable
+	 * before the disable latches, which results that some of
+	 * the settings changes for the new modeset (like new
+	 * scanout buffer) don't latch properly..
 	 */
-	अगर (dpu_encoder_phys_vid_is_master(phys_enc)) अणु
-		ret = dpu_encoder_phys_vid_रुको_क्रम_vblank(phys_enc);
-		अगर (ret) अणु
+	if (dpu_encoder_phys_vid_is_master(phys_enc)) {
+		ret = dpu_encoder_phys_vid_wait_for_vblank(phys_enc);
+		if (ret) {
 			atomic_set(&phys_enc->pending_kickoff_cnt, 0);
 			DRM_ERROR("wait disable failed: id:%u intf:%d ret:%d\n",
 				  DRMID(phys_enc->parent),
-				  phys_enc->hw_पूर्णांकf->idx - INTF_0, ret);
-		पूर्ण
-	पूर्ण
+				  phys_enc->hw_intf->idx - INTF_0, ret);
+		}
+	}
 
 	phys_enc->enable_state = DPU_ENC_DISABLED;
-पूर्ण
+}
 
-अटल व्योम dpu_encoder_phys_vid_handle_post_kickoff(
-		काष्ठा dpu_encoder_phys *phys_enc)
-अणु
-	अचिन्हित दीर्घ lock_flags;
+static void dpu_encoder_phys_vid_handle_post_kickoff(
+		struct dpu_encoder_phys *phys_enc)
+{
+	unsigned long lock_flags;
 
 	/*
-	 * Video mode must flush CTL beक्रमe enabling timing engine
-	 * Video encoders need to turn on their पूर्णांकerfaces now
+	 * Video mode must flush CTL before enabling timing engine
+	 * Video encoders need to turn on their interfaces now
 	 */
-	अगर (phys_enc->enable_state == DPU_ENC_ENABLING) अणु
+	if (phys_enc->enable_state == DPU_ENC_ENABLING) {
 		trace_dpu_enc_phys_vid_post_kickoff(DRMID(phys_enc->parent),
-				    phys_enc->hw_पूर्णांकf->idx - INTF_0);
+				    phys_enc->hw_intf->idx - INTF_0);
 		spin_lock_irqsave(phys_enc->enc_spinlock, lock_flags);
-		phys_enc->hw_पूर्णांकf->ops.enable_timing(phys_enc->hw_पूर्णांकf, 1);
+		phys_enc->hw_intf->ops.enable_timing(phys_enc->hw_intf, 1);
 		spin_unlock_irqrestore(phys_enc->enc_spinlock, lock_flags);
 		phys_enc->enable_state = DPU_ENC_ENABLED;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम dpu_encoder_phys_vid_irq_control(काष्ठा dpu_encoder_phys *phys_enc,
+static void dpu_encoder_phys_vid_irq_control(struct dpu_encoder_phys *phys_enc,
 		bool enable)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
 	trace_dpu_enc_phys_vid_irq_ctrl(DRMID(phys_enc->parent),
-			    phys_enc->hw_पूर्णांकf->idx - INTF_0,
+			    phys_enc->hw_intf->idx - INTF_0,
 			    enable,
-			    atomic_पढ़ो(&phys_enc->vblank_refcount));
+			    atomic_read(&phys_enc->vblank_refcount));
 
-	अगर (enable) अणु
+	if (enable) {
 		ret = dpu_encoder_phys_vid_control_vblank_irq(phys_enc, true);
-		अगर (ret)
-			वापस;
+		if (ret)
+			return;
 
-		dpu_encoder_helper_रेजिस्टर_irq(phys_enc, INTR_IDX_UNDERRUN);
-	पूर्ण अन्यथा अणु
+		dpu_encoder_helper_register_irq(phys_enc, INTR_IDX_UNDERRUN);
+	} else {
 		dpu_encoder_phys_vid_control_vblank_irq(phys_enc, false);
-		dpu_encoder_helper_unरेजिस्टर_irq(phys_enc, INTR_IDX_UNDERRUN);
-	पूर्ण
-पूर्ण
+		dpu_encoder_helper_unregister_irq(phys_enc, INTR_IDX_UNDERRUN);
+	}
+}
 
-अटल पूर्णांक dpu_encoder_phys_vid_get_line_count(
-		काष्ठा dpu_encoder_phys *phys_enc)
-अणु
-	अगर (!dpu_encoder_phys_vid_is_master(phys_enc))
-		वापस -EINVAL;
+static int dpu_encoder_phys_vid_get_line_count(
+		struct dpu_encoder_phys *phys_enc)
+{
+	if (!dpu_encoder_phys_vid_is_master(phys_enc))
+		return -EINVAL;
 
-	अगर (!phys_enc->hw_पूर्णांकf || !phys_enc->hw_पूर्णांकf->ops.get_line_count)
-		वापस -EINVAL;
+	if (!phys_enc->hw_intf || !phys_enc->hw_intf->ops.get_line_count)
+		return -EINVAL;
 
-	वापस phys_enc->hw_पूर्णांकf->ops.get_line_count(phys_enc->hw_पूर्णांकf);
-पूर्ण
+	return phys_enc->hw_intf->ops.get_line_count(phys_enc->hw_intf);
+}
 
-अटल पूर्णांक dpu_encoder_phys_vid_get_frame_count(
-		काष्ठा dpu_encoder_phys *phys_enc)
-अणु
-	काष्ठा पूर्णांकf_status s = अणु0पूर्ण;
+static int dpu_encoder_phys_vid_get_frame_count(
+		struct dpu_encoder_phys *phys_enc)
+{
+	struct intf_status s = {0};
 	u32 fetch_start = 0;
-	काष्ठा drm_display_mode mode = phys_enc->cached_mode;
+	struct drm_display_mode mode = phys_enc->cached_mode;
 
-	अगर (!dpu_encoder_phys_vid_is_master(phys_enc))
-		वापस -EINVAL;
+	if (!dpu_encoder_phys_vid_is_master(phys_enc))
+		return -EINVAL;
 
-	अगर (!phys_enc->hw_पूर्णांकf || !phys_enc->hw_पूर्णांकf->ops.get_status)
-		वापस -EINVAL;
+	if (!phys_enc->hw_intf || !phys_enc->hw_intf->ops.get_status)
+		return -EINVAL;
 
-	phys_enc->hw_पूर्णांकf->ops.get_status(phys_enc->hw_पूर्णांकf, &s);
+	phys_enc->hw_intf->ops.get_status(phys_enc->hw_intf, &s);
 
-	अगर (s.is_prog_fetch_en && s.is_en) अणु
+	if (s.is_prog_fetch_en && s.is_en) {
 		fetch_start = mode.vtotal - (mode.vsync_start - mode.vdisplay);
-		अगर ((s.line_count > fetch_start) &&
+		if ((s.line_count > fetch_start) &&
 			(s.line_count <= mode.vtotal))
-			वापस s.frame_count + 1;
-	पूर्ण
+			return s.frame_count + 1;
+	}
 
-	वापस s.frame_count;
-पूर्ण
+	return s.frame_count;
+}
 
-अटल व्योम dpu_encoder_phys_vid_init_ops(काष्ठा dpu_encoder_phys_ops *ops)
-अणु
+static void dpu_encoder_phys_vid_init_ops(struct dpu_encoder_phys_ops *ops)
+{
 	ops->is_master = dpu_encoder_phys_vid_is_master;
 	ops->mode_set = dpu_encoder_phys_vid_mode_set;
 	ops->mode_fixup = dpu_encoder_phys_vid_mode_fixup;
@@ -694,37 +693,37 @@ skip_flush:
 	ops->destroy = dpu_encoder_phys_vid_destroy;
 	ops->get_hw_resources = dpu_encoder_phys_vid_get_hw_resources;
 	ops->control_vblank_irq = dpu_encoder_phys_vid_control_vblank_irq;
-	ops->रुको_क्रम_commit_करोne = dpu_encoder_phys_vid_रुको_क्रम_commit_करोne;
-	ops->रुको_क्रम_vblank = dpu_encoder_phys_vid_रुको_क्रम_vblank;
-	ops->रुको_क्रम_tx_complete = dpu_encoder_phys_vid_रुको_क्रम_vblank;
+	ops->wait_for_commit_done = dpu_encoder_phys_vid_wait_for_commit_done;
+	ops->wait_for_vblank = dpu_encoder_phys_vid_wait_for_vblank;
+	ops->wait_for_tx_complete = dpu_encoder_phys_vid_wait_for_vblank;
 	ops->irq_control = dpu_encoder_phys_vid_irq_control;
-	ops->prepare_क्रम_kickoff = dpu_encoder_phys_vid_prepare_क्रम_kickoff;
+	ops->prepare_for_kickoff = dpu_encoder_phys_vid_prepare_for_kickoff;
 	ops->handle_post_kickoff = dpu_encoder_phys_vid_handle_post_kickoff;
 	ops->needs_single_flush = dpu_encoder_phys_vid_needs_single_flush;
 	ops->get_line_count = dpu_encoder_phys_vid_get_line_count;
 	ops->get_frame_count = dpu_encoder_phys_vid_get_frame_count;
-पूर्ण
+}
 
-काष्ठा dpu_encoder_phys *dpu_encoder_phys_vid_init(
-		काष्ठा dpu_enc_phys_init_params *p)
-अणु
-	काष्ठा dpu_encoder_phys *phys_enc = शून्य;
-	काष्ठा dpu_encoder_irq *irq;
-	पूर्णांक i, ret = 0;
+struct dpu_encoder_phys *dpu_encoder_phys_vid_init(
+		struct dpu_enc_phys_init_params *p)
+{
+	struct dpu_encoder_phys *phys_enc = NULL;
+	struct dpu_encoder_irq *irq;
+	int i, ret = 0;
 
-	अगर (!p) अणु
+	if (!p) {
 		ret = -EINVAL;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	phys_enc = kzalloc(माप(*phys_enc), GFP_KERNEL);
-	अगर (!phys_enc) अणु
+	phys_enc = kzalloc(sizeof(*phys_enc), GFP_KERNEL);
+	if (!phys_enc) {
 		ret = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	phys_enc->hw_mdptop = p->dpu_kms->hw_mdp;
-	phys_enc->पूर्णांकf_idx = p->पूर्णांकf_idx;
+	phys_enc->intf_idx = p->intf_idx;
 
 	DPU_DEBUG_VIDENC(phys_enc, "\n");
 
@@ -733,41 +732,41 @@ skip_flush:
 	phys_enc->parent_ops = p->parent_ops;
 	phys_enc->dpu_kms = p->dpu_kms;
 	phys_enc->split_role = p->split_role;
-	phys_enc->पूर्णांकf_mode = INTF_MODE_VIDEO;
+	phys_enc->intf_mode = INTF_MODE_VIDEO;
 	phys_enc->enc_spinlock = p->enc_spinlock;
-	क्रम (i = 0; i < INTR_IDX_MAX; i++) अणु
+	for (i = 0; i < INTR_IDX_MAX; i++) {
 		irq = &phys_enc->irq[i];
 		INIT_LIST_HEAD(&irq->cb.list);
 		irq->irq_idx = -EINVAL;
 		irq->hw_idx = -EINVAL;
 		irq->cb.arg = phys_enc;
-	पूर्ण
+	}
 
 	irq = &phys_enc->irq[INTR_IDX_VSYNC];
 	irq->name = "vsync_irq";
-	irq->पूर्णांकr_type = DPU_IRQ_TYPE_INTF_VSYNC;
-	irq->पूर्णांकr_idx = INTR_IDX_VSYNC;
+	irq->intr_type = DPU_IRQ_TYPE_INTF_VSYNC;
+	irq->intr_idx = INTR_IDX_VSYNC;
 	irq->cb.func = dpu_encoder_phys_vid_vblank_irq;
 
 	irq = &phys_enc->irq[INTR_IDX_UNDERRUN];
 	irq->name = "underrun";
-	irq->पूर्णांकr_type = DPU_IRQ_TYPE_INTF_UNDER_RUN;
-	irq->पूर्णांकr_idx = INTR_IDX_UNDERRUN;
+	irq->intr_type = DPU_IRQ_TYPE_INTF_UNDER_RUN;
+	irq->intr_idx = INTR_IDX_UNDERRUN;
 	irq->cb.func = dpu_encoder_phys_vid_underrun_irq;
 
 	atomic_set(&phys_enc->vblank_refcount, 0);
 	atomic_set(&phys_enc->pending_kickoff_cnt, 0);
-	init_रुकोqueue_head(&phys_enc->pending_kickoff_wq);
+	init_waitqueue_head(&phys_enc->pending_kickoff_wq);
 	phys_enc->enable_state = DPU_ENC_DISABLED;
 
-	DPU_DEBUG_VIDENC(phys_enc, "created intf idx:%d\n", p->पूर्णांकf_idx);
+	DPU_DEBUG_VIDENC(phys_enc, "created intf idx:%d\n", p->intf_idx);
 
-	वापस phys_enc;
+	return phys_enc;
 
 fail:
 	DPU_ERROR("failed to create encoder\n");
-	अगर (phys_enc)
+	if (phys_enc)
 		dpu_encoder_phys_vid_destroy(phys_enc);
 
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}

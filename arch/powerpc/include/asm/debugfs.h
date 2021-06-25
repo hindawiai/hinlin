@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-#अगर_अघोषित _ASM_POWERPC_DEBUGFS_H
-#घोषणा _ASM_POWERPC_DEBUGFS_H
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#ifndef _ASM_POWERPC_DEBUGFS_H
+#define _ASM_POWERPC_DEBUGFS_H
 
 /*
  * Copyright 2017, Michael Ellerman, IBM Corporation.
  */
 
-#समावेश <linux/debugfs.h>
+#include <linux/debugfs.h>
 
-बाह्य काष्ठा dentry *घातerpc_debugfs_root;
+extern struct dentry *powerpc_debugfs_root;
 
-#पूर्ण_अगर /* _ASM_POWERPC_DEBUGFS_H */
+#endif /* _ASM_POWERPC_DEBUGFS_H */

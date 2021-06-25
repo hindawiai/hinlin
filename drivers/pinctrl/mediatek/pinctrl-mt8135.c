@@ -1,42 +1,41 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2014 MediaTek Inc.
  * Author: Hongzhou.Yang <hongzhou.yang@mediatek.com>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pinctrl/pinctrl.h>
-#समावेश <linux/regmap.h>
-#समावेश <dt-bindings/pinctrl/mt65xx.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/pinctrl/pinctrl.h>
+#include <linux/regmap.h>
+#include <dt-bindings/pinctrl/mt65xx.h>
 
-#समावेश "pinctrl-mtk-common.h"
-#समावेश "pinctrl-mtk-mt8135.h"
+#include "pinctrl-mtk-common.h"
+#include "pinctrl-mtk-mt8135.h"
 
-#घोषणा DRV_BASE1				0x500
-#घोषणा DRV_BASE2				0x510
-#घोषणा PUPD_BASE1				0x400
-#घोषणा PUPD_BASE2				0x450
-#घोषणा R0_BASE1				0x4d0
-#घोषणा R1_BASE1				0x200
-#घोषणा R1_BASE2				0x250
+#define DRV_BASE1				0x500
+#define DRV_BASE2				0x510
+#define PUPD_BASE1				0x400
+#define PUPD_BASE2				0x450
+#define R0_BASE1				0x4d0
+#define R1_BASE1				0x200
+#define R1_BASE2				0x250
 
-काष्ठा mtk_spec_pull_set अणु
-	अचिन्हित अक्षर pin;
-	अचिन्हित अक्षर pupd_bit;
-	अचिन्हित लघु pupd_offset;
-	अचिन्हित लघु r0_offset;
-	अचिन्हित लघु r1_offset;
-	अचिन्हित अक्षर r0_bit;
-	अचिन्हित अक्षर r1_bit;
-पूर्ण;
+struct mtk_spec_pull_set {
+	unsigned char pin;
+	unsigned char pupd_bit;
+	unsigned short pupd_offset;
+	unsigned short r0_offset;
+	unsigned short r1_offset;
+	unsigned char r0_bit;
+	unsigned char r1_bit;
+};
 
-#घोषणा SPEC_PULL(_pin, _pupd_offset, _pupd_bit, _r0_offset, \
+#define SPEC_PULL(_pin, _pupd_offset, _pupd_bit, _r0_offset, \
 	_r0_bit, _r1_offset, _r1_bit)	\
-	अणु	\
+	{	\
 		.pin = _pin,	\
 		.pupd_offset = _pupd_offset,	\
 		.pupd_bit = _pupd_bit,	\
@@ -44,9 +43,9 @@
 		.r0_bit = _r0_bit, \
 		.r1_offset = _r1_offset, \
 		.r1_bit = _r1_bit, \
-	पूर्ण
+	}
 
-अटल स्थिर काष्ठा mtk_drv_group_desc mt8135_drv_grp[] =  अणु
+static const struct mtk_drv_group_desc mt8135_drv_grp[] =  {
 	/* E8E4E2 2/4/6/8/10/12/14/16 */
 	MTK_DRV_GRP(2, 16, 0, 2, 2),
 	/* E8E4  4/8/12/16 */
@@ -55,9 +54,9 @@
 	MTK_DRV_GRP(2, 8, 0, 1, 2),
 	/* E16E8E4 4/8/12/16/20/24/28/32 */
 	MTK_DRV_GRP(4, 32, 0, 2, 4)
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_pin_drv_grp mt8135_pin_drv[] = अणु
+static const struct mtk_pin_drv_grp mt8135_pin_drv[] = {
 	MTK_PIN_DRV_GRP(0, DRV_BASE1, 0, 0),
 	MTK_PIN_DRV_GRP(1, DRV_BASE1, 0, 0),
 	MTK_PIN_DRV_GRP(2, DRV_BASE1, 0, 0),
@@ -200,9 +199,9 @@
 	MTK_PIN_DRV_GRP(200, DRV_BASE1+0xb0, 24, 0),
 	MTK_PIN_DRV_GRP(201, DRV_BASE1+0xb0, 16, 0),
 	MTK_PIN_DRV_GRP(202, DRV_BASE1+0xb0, 16, 0)
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_spec_pull_set spec_pupd[] = अणु
+static const struct mtk_spec_pull_set spec_pupd[] = {
 	SPEC_PULL(0, PUPD_BASE1, 0, R0_BASE1, 9, R1_BASE1, 0),
 	SPEC_PULL(1, PUPD_BASE1, 1, R0_BASE1, 8, R1_BASE1, 1),
 	SPEC_PULL(2, PUPD_BASE1, 2, R0_BASE1, 7, R1_BASE1, 2),
@@ -229,63 +228,63 @@
 	SPEC_PULL(200, PUPD_BASE2+0xc0, 8, R0_BASE1, 10, R1_BASE2+0xc0, 8),
 	SPEC_PULL(201, PUPD_BASE2+0xc0, 9, R0_BASE1, 13, R1_BASE2+0xc0, 9),
 	SPEC_PULL(202, PUPD_BASE2+0xc0, 10, R0_BASE1, 12, R1_BASE2+0xc0, 10)
-पूर्ण;
+};
 
-अटल पूर्णांक spec_pull_set(काष्ठा regmap *regmap, अचिन्हित पूर्णांक pin,
-		अचिन्हित अक्षर align, bool isup, अचिन्हित पूर्णांक r1r0)
-अणु
-	अचिन्हित पूर्णांक i;
-	अचिन्हित पूर्णांक reg_pupd, reg_set_r0, reg_set_r1;
-	अचिन्हित पूर्णांक reg_rst_r0, reg_rst_r1;
+static int spec_pull_set(struct regmap *regmap, unsigned int pin,
+		unsigned char align, bool isup, unsigned int r1r0)
+{
+	unsigned int i;
+	unsigned int reg_pupd, reg_set_r0, reg_set_r1;
+	unsigned int reg_rst_r0, reg_rst_r1;
 	bool find = false;
 
-	क्रम (i = 0; i < ARRAY_SIZE(spec_pupd); i++) अणु
-		अगर (pin == spec_pupd[i].pin) अणु
+	for (i = 0; i < ARRAY_SIZE(spec_pupd); i++) {
+		if (pin == spec_pupd[i].pin) {
 			find = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!find)
-		वापस -EINVAL;
+	if (!find)
+		return -EINVAL;
 
-	अगर (isup)
+	if (isup)
 		reg_pupd = spec_pupd[i].pupd_offset + align;
-	अन्यथा
+	else
 		reg_pupd = spec_pupd[i].pupd_offset + (align << 1);
 
-	regmap_ग_लिखो(regmap, reg_pupd, spec_pupd[i].pupd_bit);
+	regmap_write(regmap, reg_pupd, spec_pupd[i].pupd_bit);
 
 	reg_set_r0 = spec_pupd[i].r0_offset + align;
 	reg_rst_r0 = spec_pupd[i].r0_offset + (align << 1);
 	reg_set_r1 = spec_pupd[i].r1_offset + align;
 	reg_rst_r1 = spec_pupd[i].r1_offset + (align << 1);
 
-	चयन (r1r0) अणु
-	हाल MTK_PUPD_SET_R1R0_00:
-		regmap_ग_लिखो(regmap, reg_rst_r0, spec_pupd[i].r0_bit);
-		regmap_ग_लिखो(regmap, reg_rst_r1, spec_pupd[i].r1_bit);
-		अवरोध;
-	हाल MTK_PUPD_SET_R1R0_01:
-		regmap_ग_लिखो(regmap, reg_set_r0, spec_pupd[i].r0_bit);
-		regmap_ग_लिखो(regmap, reg_rst_r1, spec_pupd[i].r1_bit);
-		अवरोध;
-	हाल MTK_PUPD_SET_R1R0_10:
-		regmap_ग_लिखो(regmap, reg_rst_r0, spec_pupd[i].r0_bit);
-		regmap_ग_लिखो(regmap, reg_set_r1, spec_pupd[i].r1_bit);
-		अवरोध;
-	हाल MTK_PUPD_SET_R1R0_11:
-		regmap_ग_लिखो(regmap, reg_set_r0, spec_pupd[i].r0_bit);
-		regmap_ग_लिखो(regmap, reg_set_r1, spec_pupd[i].r1_bit);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (r1r0) {
+	case MTK_PUPD_SET_R1R0_00:
+		regmap_write(regmap, reg_rst_r0, spec_pupd[i].r0_bit);
+		regmap_write(regmap, reg_rst_r1, spec_pupd[i].r1_bit);
+		break;
+	case MTK_PUPD_SET_R1R0_01:
+		regmap_write(regmap, reg_set_r0, spec_pupd[i].r0_bit);
+		regmap_write(regmap, reg_rst_r1, spec_pupd[i].r1_bit);
+		break;
+	case MTK_PUPD_SET_R1R0_10:
+		regmap_write(regmap, reg_rst_r0, spec_pupd[i].r0_bit);
+		regmap_write(regmap, reg_set_r1, spec_pupd[i].r1_bit);
+		break;
+	case MTK_PUPD_SET_R1R0_11:
+		regmap_write(regmap, reg_set_r0, spec_pupd[i].r0_bit);
+		regmap_write(regmap, reg_set_r1, spec_pupd[i].r1_bit);
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा mtk_pinctrl_devdata mt8135_pinctrl_data = अणु
+static const struct mtk_pinctrl_devdata mt8135_pinctrl_data = {
 	.pins = mtk_pins_mt8135,
 	.npins = ARRAY_SIZE(mtk_pins_mt8135),
 	.grp_desc = mt8135_drv_grp,
@@ -298,7 +297,7 @@
 	.pullen_offset = 0x0200,
 	.smt_offset = 0x0300,
 	.pullsel_offset = 0x0400,
-	.करोut_offset = 0x0800,
+	.dout_offset = 0x0800,
 	.din_offset = 0x0A00,
 	.pinmux_offset = 0x0C00,
 	.type1_start = 34,
@@ -306,36 +305,36 @@
 	.port_shf = 4,
 	.port_mask = 0xf,
 	.port_align = 4,
-	.eपूर्णांक_hw = अणु
+	.eint_hw = {
 		.port_mask = 7,
 		.ports     = 6,
 		.ap_num    = 192,
 		.db_cnt    = 16,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक mt8135_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस mtk_pctrl_init(pdev, &mt8135_pinctrl_data, शून्य);
-पूर्ण
+static int mt8135_pinctrl_probe(struct platform_device *pdev)
+{
+	return mtk_pctrl_init(pdev, &mt8135_pinctrl_data, NULL);
+}
 
-अटल स्थिर काष्ठा of_device_id mt8135_pctrl_match[] = अणु
-	अणु
+static const struct of_device_id mt8135_pctrl_match[] = {
+	{
 		.compatible = "mediatek,mt8135-pinctrl",
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+	},
+	{ }
+};
 
-अटल काष्ठा platक्रमm_driver mtk_pinctrl_driver = अणु
+static struct platform_driver mtk_pinctrl_driver = {
 	.probe = mt8135_pinctrl_probe,
-	.driver = अणु
+	.driver = {
 		.name = "mediatek-mt8135-pinctrl",
 		.of_match_table = mt8135_pctrl_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init mtk_pinctrl_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&mtk_pinctrl_driver);
-पूर्ण
+static int __init mtk_pinctrl_init(void)
+{
+	return platform_driver_register(&mtk_pinctrl_driver);
+}
 arch_initcall(mtk_pinctrl_init);

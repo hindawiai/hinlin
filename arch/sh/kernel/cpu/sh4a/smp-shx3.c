@@ -1,140 +1,139 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * SH-X3 SMP
  *
  *  Copyright (C) 2007 - 2010  Paul Mundt
  *  Copyright (C) 2007  Magnus Damm
  */
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/cpu.h>
-#समावेश <यंत्र/sections.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/cpumask.h>
+#include <linux/smp.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/sched.h>
+#include <linux/delay.h>
+#include <linux/cpu.h>
+#include <asm/sections.h>
 
-#घोषणा STBCR_REG(phys_id) (0xfe400004 | (phys_id << 12))
-#घोषणा RESET_REG(phys_id) (0xfe400008 | (phys_id << 12))
+#define STBCR_REG(phys_id) (0xfe400004 | (phys_id << 12))
+#define RESET_REG(phys_id) (0xfe400008 | (phys_id << 12))
 
-#घोषणा STBCR_MSTP	0x00000001
-#घोषणा STBCR_RESET	0x00000002
-#घोषणा STBCR_SLEEP	0x00000004
-#घोषणा STBCR_LTSLP	0x80000000
+#define STBCR_MSTP	0x00000001
+#define STBCR_RESET	0x00000002
+#define STBCR_SLEEP	0x00000004
+#define STBCR_LTSLP	0x80000000
 
-अटल irqवापस_t ipi_पूर्णांकerrupt_handler(पूर्णांक irq, व्योम *arg)
-अणु
-	अचिन्हित पूर्णांक message = (अचिन्हित पूर्णांक)(दीर्घ)arg;
-	अचिन्हित पूर्णांक cpu = hard_smp_processor_id();
-	अचिन्हित पूर्णांक offs = 4 * cpu;
-	अचिन्हित पूर्णांक x;
+static irqreturn_t ipi_interrupt_handler(int irq, void *arg)
+{
+	unsigned int message = (unsigned int)(long)arg;
+	unsigned int cpu = hard_smp_processor_id();
+	unsigned int offs = 4 * cpu;
+	unsigned int x;
 
-	x = __raw_पढ़ोl(0xfe410070 + offs); /* C0INITICI..CnINTICI */
+	x = __raw_readl(0xfe410070 + offs); /* C0INITICI..CnINTICI */
 	x &= (1 << (message << 2));
-	__raw_ग_लिखोl(x, 0xfe410080 + offs); /* C0INTICICLR..CnINTICICLR */
+	__raw_writel(x, 0xfe410080 + offs); /* C0INTICICLR..CnINTICICLR */
 
 	smp_message_recv(message);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम shx3_smp_setup(व्योम)
-अणु
-	अचिन्हित पूर्णांक cpu = 0;
-	पूर्णांक i, num;
+static void shx3_smp_setup(void)
+{
+	unsigned int cpu = 0;
+	int i, num;
 
 	init_cpu_possible(cpumask_of(cpu));
 
-	/* Enable light sleep क्रम the boot CPU */
-	__raw_ग_लिखोl(__raw_पढ़ोl(STBCR_REG(cpu)) | STBCR_LTSLP, STBCR_REG(cpu));
+	/* Enable light sleep for the boot CPU */
+	__raw_writel(__raw_readl(STBCR_REG(cpu)) | STBCR_LTSLP, STBCR_REG(cpu));
 
 	__cpu_number_map[0] = 0;
 	__cpu_logical_map[0] = 0;
 
 	/*
-	 * Do this stupidly क्रम now.. we करोn't have an easy way to probe
-	 * क्रम the total number of cores.
+	 * Do this stupidly for now.. we don't have an easy way to probe
+	 * for the total number of cores.
 	 */
-	क्रम (i = 1, num = 0; i < NR_CPUS; i++) अणु
+	for (i = 1, num = 0; i < NR_CPUS; i++) {
 		set_cpu_possible(i, true);
 		__cpu_number_map[i] = ++num;
 		__cpu_logical_map[num] = i;
-	पूर्ण
+	}
 
-        prपूर्णांकk(KERN_INFO "Detected %i available secondary CPU(s)\n", num);
-पूर्ण
+        printk(KERN_INFO "Detected %i available secondary CPU(s)\n", num);
+}
 
-अटल व्योम shx3_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
-अणु
-	पूर्णांक i;
+static void shx3_prepare_cpus(unsigned int max_cpus)
+{
+	int i;
 
 	BUILD_BUG_ON(SMP_MSG_NR >= 8);
 
-	क्रम (i = 0; i < SMP_MSG_NR; i++)
-		request_irq(104 + i, ipi_पूर्णांकerrupt_handler,
-			    IRQF_PERCPU, "IPI", (व्योम *)(दीर्घ)i);
+	for (i = 0; i < SMP_MSG_NR; i++)
+		request_irq(104 + i, ipi_interrupt_handler,
+			    IRQF_PERCPU, "IPI", (void *)(long)i);
 
-	क्रम (i = 0; i < max_cpus; i++)
+	for (i = 0; i < max_cpus; i++)
 		set_cpu_present(i, true);
-पूर्ण
+}
 
-अटल व्योम shx3_start_cpu(अचिन्हित पूर्णांक cpu, अचिन्हित दीर्घ entry_poपूर्णांक)
-अणु
-	अगर (__in_29bit_mode())
-		__raw_ग_लिखोl(entry_poपूर्णांक, RESET_REG(cpu));
-	अन्यथा
-		__raw_ग_लिखोl(virt_to_phys(entry_poपूर्णांक), RESET_REG(cpu));
+static void shx3_start_cpu(unsigned int cpu, unsigned long entry_point)
+{
+	if (__in_29bit_mode())
+		__raw_writel(entry_point, RESET_REG(cpu));
+	else
+		__raw_writel(virt_to_phys(entry_point), RESET_REG(cpu));
 
-	अगर (!(__raw_पढ़ोl(STBCR_REG(cpu)) & STBCR_MSTP))
-		__raw_ग_लिखोl(STBCR_MSTP, STBCR_REG(cpu));
+	if (!(__raw_readl(STBCR_REG(cpu)) & STBCR_MSTP))
+		__raw_writel(STBCR_MSTP, STBCR_REG(cpu));
 
-	जबतक (!(__raw_पढ़ोl(STBCR_REG(cpu)) & STBCR_MSTP))
+	while (!(__raw_readl(STBCR_REG(cpu)) & STBCR_MSTP))
 		cpu_relax();
 
 	/* Start up secondary processor by sending a reset */
-	__raw_ग_लिखोl(STBCR_RESET | STBCR_LTSLP, STBCR_REG(cpu));
-पूर्ण
+	__raw_writel(STBCR_RESET | STBCR_LTSLP, STBCR_REG(cpu));
+}
 
-अटल अचिन्हित पूर्णांक shx3_smp_processor_id(व्योम)
-अणु
-	वापस __raw_पढ़ोl(0xff000048); /* CPIDR */
-पूर्ण
+static unsigned int shx3_smp_processor_id(void)
+{
+	return __raw_readl(0xff000048); /* CPIDR */
+}
 
-अटल व्योम shx3_send_ipi(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक message)
-अणु
-	अचिन्हित दीर्घ addr = 0xfe410070 + (cpu * 4);
+static void shx3_send_ipi(unsigned int cpu, unsigned int message)
+{
+	unsigned long addr = 0xfe410070 + (cpu * 4);
 
 	BUG_ON(cpu >= 4);
 
-	__raw_ग_लिखोl(1 << (message << 2), addr); /* C0INTICI..CnINTICI */
-पूर्ण
+	__raw_writel(1 << (message << 2), addr); /* C0INTICI..CnINTICI */
+}
 
-अटल व्योम shx3_update_boot_vector(अचिन्हित पूर्णांक cpu)
-अणु
-	__raw_ग_लिखोl(STBCR_MSTP, STBCR_REG(cpu));
-	जबतक (!(__raw_पढ़ोl(STBCR_REG(cpu)) & STBCR_MSTP))
+static void shx3_update_boot_vector(unsigned int cpu)
+{
+	__raw_writel(STBCR_MSTP, STBCR_REG(cpu));
+	while (!(__raw_readl(STBCR_REG(cpu)) & STBCR_MSTP))
 		cpu_relax();
-	__raw_ग_लिखोl(STBCR_RESET, STBCR_REG(cpu));
-पूर्ण
+	__raw_writel(STBCR_RESET, STBCR_REG(cpu));
+}
 
-अटल पूर्णांक shx3_cpu_prepare(अचिन्हित पूर्णांक cpu)
-अणु
+static int shx3_cpu_prepare(unsigned int cpu)
+{
 	shx3_update_boot_vector(cpu);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक रेजिस्टर_shx3_cpu_notअगरier(व्योम)
-अणु
+static int register_shx3_cpu_notifier(void)
+{
 	cpuhp_setup_state_nocalls(CPUHP_SH_SH3X_PREPARE, "sh/shx3:prepare",
-				  shx3_cpu_prepare, शून्य);
-	वापस 0;
-पूर्ण
-late_initcall(रेजिस्टर_shx3_cpu_notअगरier);
+				  shx3_cpu_prepare, NULL);
+	return 0;
+}
+late_initcall(register_shx3_cpu_notifier);
 
-काष्ठा plat_smp_ops shx3_smp_ops = अणु
+struct plat_smp_ops shx3_smp_ops = {
 	.smp_setup		= shx3_smp_setup,
 	.prepare_cpus		= shx3_prepare_cpus,
 	.start_cpu		= shx3_start_cpu,
@@ -143,4 +142,4 @@ late_initcall(रेजिस्टर_shx3_cpu_notअगरier);
 	.cpu_die		= native_cpu_die,
 	.cpu_disable		= native_cpu_disable,
 	.play_dead		= native_play_dead,
-पूर्ण;
+};

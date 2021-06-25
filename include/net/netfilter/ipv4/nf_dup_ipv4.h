@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _NF_DUP_IPV4_H_
-#घोषणा _NF_DUP_IPV4_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _NF_DUP_IPV4_H_
+#define _NF_DUP_IPV4_H_
 
-#समावेश <linux/skbuff.h>
-#समावेश <uapi/linux/in.h>
+#include <linux/skbuff.h>
+#include <uapi/linux/in.h>
 
-व्योम nf_dup_ipv4(काष्ठा net *net, काष्ठा sk_buff *skb, अचिन्हित पूर्णांक hooknum,
-		 स्थिर काष्ठा in_addr *gw, पूर्णांक oअगर);
+void nf_dup_ipv4(struct net *net, struct sk_buff *skb, unsigned int hooknum,
+		 const struct in_addr *gw, int oif);
 
-#पूर्ण_अगर /* _NF_DUP_IPV4_H_ */
+#endif /* _NF_DUP_IPV4_H_ */

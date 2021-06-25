@@ -1,67 +1,66 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  *
- * i2c-mux.h - functions क्रम the i2c-bus mux support
+ * i2c-mux.h - functions for the i2c-bus mux support
  *
- * Copyright (c) 2008-2009 Roकरोlfo Giometti <giometti@linux.it>
+ * Copyright (c) 2008-2009 Rodolfo Giometti <giometti@linux.it>
  * Copyright (c) 2008-2009 Eurotech S.p.A. <info@eurotech.it>
  * Michael Lawnick <michael.lawnick.ext@nsn.com>
  */
 
-#अगर_अघोषित _LINUX_I2C_MUX_H
-#घोषणा _LINUX_I2C_MUX_H
+#ifndef _LINUX_I2C_MUX_H
+#define _LINUX_I2C_MUX_H
 
-#अगर_घोषित __KERNEL__
+#ifdef __KERNEL__
 
-#समावेश <linux/bitops.h>
+#include <linux/bitops.h>
 
-काष्ठा i2c_mux_core अणु
-	काष्ठा i2c_adapter *parent;
-	काष्ठा device *dev;
-	अचिन्हित पूर्णांक mux_locked:1;
-	अचिन्हित पूर्णांक arbitrator:1;
-	अचिन्हित पूर्णांक gate:1;
+struct i2c_mux_core {
+	struct i2c_adapter *parent;
+	struct device *dev;
+	unsigned int mux_locked:1;
+	unsigned int arbitrator:1;
+	unsigned int gate:1;
 
-	व्योम *priv;
+	void *priv;
 
-	पूर्णांक (*select)(काष्ठा i2c_mux_core *, u32 chan_id);
-	पूर्णांक (*deselect)(काष्ठा i2c_mux_core *, u32 chan_id);
+	int (*select)(struct i2c_mux_core *, u32 chan_id);
+	int (*deselect)(struct i2c_mux_core *, u32 chan_id);
 
-	पूर्णांक num_adapters;
-	पूर्णांक max_adapters;
-	काष्ठा i2c_adapter *adapter[];
-पूर्ण;
+	int num_adapters;
+	int max_adapters;
+	struct i2c_adapter *adapter[];
+};
 
-काष्ठा i2c_mux_core *i2c_mux_alloc(काष्ठा i2c_adapter *parent,
-				   काष्ठा device *dev, पूर्णांक max_adapters,
-				   पूर्णांक माप_priv, u32 flags,
-				   पूर्णांक (*select)(काष्ठा i2c_mux_core *, u32),
-				   पूर्णांक (*deselect)(काष्ठा i2c_mux_core *, u32));
+struct i2c_mux_core *i2c_mux_alloc(struct i2c_adapter *parent,
+				   struct device *dev, int max_adapters,
+				   int sizeof_priv, u32 flags,
+				   int (*select)(struct i2c_mux_core *, u32),
+				   int (*deselect)(struct i2c_mux_core *, u32));
 
-/* flags क्रम i2c_mux_alloc */
-#घोषणा I2C_MUX_LOCKED     BIT(0)
-#घोषणा I2C_MUX_ARBITRATOR BIT(1)
-#घोषणा I2C_MUX_GATE       BIT(2)
+/* flags for i2c_mux_alloc */
+#define I2C_MUX_LOCKED     BIT(0)
+#define I2C_MUX_ARBITRATOR BIT(1)
+#define I2C_MUX_GATE       BIT(2)
 
-अटल अंतरभूत व्योम *i2c_mux_priv(काष्ठा i2c_mux_core *muxc)
-अणु
-	वापस muxc->priv;
-पूर्ण
+static inline void *i2c_mux_priv(struct i2c_mux_core *muxc)
+{
+	return muxc->priv;
+}
 
-काष्ठा i2c_adapter *i2c_root_adapter(काष्ठा device *dev);
+struct i2c_adapter *i2c_root_adapter(struct device *dev);
 
 /*
  * Called to create an i2c bus on a multiplexed bus segment.
  * The chan_id parameter is passed to the select and deselect
- * callback functions to perक्रमm hardware-specअगरic mux control.
+ * callback functions to perform hardware-specific mux control.
  */
-पूर्णांक i2c_mux_add_adapter(काष्ठा i2c_mux_core *muxc,
-			u32 क्रमce_nr, u32 chan_id,
-			अचिन्हित पूर्णांक class);
+int i2c_mux_add_adapter(struct i2c_mux_core *muxc,
+			u32 force_nr, u32 chan_id,
+			unsigned int class);
 
-व्योम i2c_mux_del_adapters(काष्ठा i2c_mux_core *muxc);
+void i2c_mux_del_adapters(struct i2c_mux_core *muxc);
 
-#पूर्ण_अगर /* __KERNEL__ */
+#endif /* __KERNEL__ */
 
-#पूर्ण_अगर /* _LINUX_I2C_MUX_H */
+#endif /* _LINUX_I2C_MUX_H */

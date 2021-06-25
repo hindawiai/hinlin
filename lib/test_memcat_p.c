@@ -1,116 +1,115 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Test हालs क्रम memcat_p() in lib/memcat_p.c
+ * Test cases for memcat_p() in lib/memcat_p.c
  */
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
+#include <linux/string.h>
+#include <linux/slab.h>
+#include <linux/module.h>
 
-काष्ठा test_काष्ठा अणु
-	पूर्णांक		num;
-	अचिन्हित पूर्णांक	magic;
-पूर्ण;
+struct test_struct {
+	int		num;
+	unsigned int	magic;
+};
 
-#घोषणा MAGIC		0xf00ff00f
-/* Size of each of the शून्य-terminated input arrays */
-#घोषणा INPUT_MAX	128
-/* Expected number of non-शून्य elements in the output array */
-#घोषणा EXPECT		(INPUT_MAX * 2 - 2)
+#define MAGIC		0xf00ff00f
+/* Size of each of the NULL-terminated input arrays */
+#define INPUT_MAX	128
+/* Expected number of non-NULL elements in the output array */
+#define EXPECT		(INPUT_MAX * 2 - 2)
 
-अटल पूर्णांक __init test_memcat_p_init(व्योम)
-अणु
-	काष्ठा test_काष्ठा **in0, **in1, **out, **p;
-	पूर्णांक err = -ENOMEM, i, r, total = 0;
+static int __init test_memcat_p_init(void)
+{
+	struct test_struct **in0, **in1, **out, **p;
+	int err = -ENOMEM, i, r, total = 0;
 
-	in0 = kसुस्मृति(INPUT_MAX, माप(*in0), GFP_KERNEL);
-	अगर (!in0)
-		वापस err;
+	in0 = kcalloc(INPUT_MAX, sizeof(*in0), GFP_KERNEL);
+	if (!in0)
+		return err;
 
-	in1 = kसुस्मृति(INPUT_MAX, माप(*in1), GFP_KERNEL);
-	अगर (!in1)
-		जाओ err_मुक्त_in0;
+	in1 = kcalloc(INPUT_MAX, sizeof(*in1), GFP_KERNEL);
+	if (!in1)
+		goto err_free_in0;
 
-	क्रम (i = 0, r = 1; i < INPUT_MAX - 1; i++) अणु
-		in0[i] = kदो_स्मृति(माप(**in0), GFP_KERNEL);
-		अगर (!in0[i])
-			जाओ err_मुक्त_elements;
+	for (i = 0, r = 1; i < INPUT_MAX - 1; i++) {
+		in0[i] = kmalloc(sizeof(**in0), GFP_KERNEL);
+		if (!in0[i])
+			goto err_free_elements;
 
-		in1[i] = kदो_स्मृति(माप(**in1), GFP_KERNEL);
-		अगर (!in1[i]) अणु
-			kमुक्त(in0[i]);
-			जाओ err_मुक्त_elements;
-		पूर्ण
+		in1[i] = kmalloc(sizeof(**in1), GFP_KERNEL);
+		if (!in1[i]) {
+			kfree(in0[i]);
+			goto err_free_elements;
+		}
 
-		/* lअगरted from test_sort.c */
+		/* lifted from test_sort.c */
 		r = (r * 725861) % 6599;
 		in0[i]->num = r;
 		in1[i]->num = -r;
 		in0[i]->magic = MAGIC;
 		in1[i]->magic = MAGIC;
-	पूर्ण
+	}
 
-	in0[i] = in1[i] = शून्य;
+	in0[i] = in1[i] = NULL;
 
 	out = memcat_p(in0, in1);
-	अगर (!out)
-		जाओ err_मुक्त_all_elements;
+	if (!out)
+		goto err_free_all_elements;
 
 	err = -EINVAL;
-	क्रम (i = 0, p = out; *p && (i < INPUT_MAX * 2 - 1); p++, i++) अणु
+	for (i = 0, p = out; *p && (i < INPUT_MAX * 2 - 1); p++, i++) {
 		total += (*p)->num;
 
-		अगर ((*p)->magic != MAGIC) अणु
+		if ((*p)->magic != MAGIC) {
 			pr_err("test failed: wrong magic at %d: %u\n", i,
 			       (*p)->magic);
-			जाओ err_मुक्त_out;
-		पूर्ण
-	पूर्ण
+			goto err_free_out;
+		}
+	}
 
-	अगर (total) अणु
+	if (total) {
 		pr_err("test failed: expected zero total, got %d\n", total);
-		जाओ err_मुक्त_out;
-	पूर्ण
+		goto err_free_out;
+	}
 
-	अगर (i != EXPECT) अणु
+	if (i != EXPECT) {
 		pr_err("test failed: expected output size %d, got %d\n",
 		       EXPECT, i);
-		जाओ err_मुक्त_out;
-	पूर्ण
+		goto err_free_out;
+	}
 
-	क्रम (i = 0; i < INPUT_MAX - 1; i++)
-		अगर (out[i] != in0[i] || out[i + INPUT_MAX - 1] != in1[i]) अणु
+	for (i = 0; i < INPUT_MAX - 1; i++)
+		if (out[i] != in0[i] || out[i + INPUT_MAX - 1] != in1[i]) {
 			pr_err("test failed: wrong element order at %d\n", i);
-			जाओ err_मुक्त_out;
-		पूर्ण
+			goto err_free_out;
+		}
 
 	err = 0;
 	pr_info("test passed\n");
 
-err_मुक्त_out:
-	kमुक्त(out);
-err_मुक्त_all_elements:
+err_free_out:
+	kfree(out);
+err_free_all_elements:
 	i = INPUT_MAX;
-err_मुक्त_elements:
-	क्रम (i--; i >= 0; i--) अणु
-		kमुक्त(in1[i]);
-		kमुक्त(in0[i]);
-	पूर्ण
+err_free_elements:
+	for (i--; i >= 0; i--) {
+		kfree(in1[i]);
+		kfree(in0[i]);
+	}
 
-	kमुक्त(in1);
-err_मुक्त_in0:
-	kमुक्त(in0);
+	kfree(in1);
+err_free_in0:
+	kfree(in0);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __निकास test_memcat_p_निकास(व्योम)
-अणु
-पूर्ण
+static void __exit test_memcat_p_exit(void)
+{
+}
 
 module_init(test_memcat_p_init);
-module_निकास(test_memcat_p_निकास);
+module_exit(test_memcat_p_exit);
 
 MODULE_LICENSE("GPL");

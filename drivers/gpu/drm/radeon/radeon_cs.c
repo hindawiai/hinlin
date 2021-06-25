@@ -1,14 +1,13 @@
-<शैली गुरु>
 /*
  * Copyright 2008 Jerome Glisse.
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,402 +22,402 @@
  * DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Jerome Glisse <glisse@मुक्तdesktop.org>
+ *    Jerome Glisse <glisse@freedesktop.org>
  */
 
-#समावेश <linux/list_sort.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/uaccess.h>
+#include <linux/list_sort.h>
+#include <linux/pci.h>
+#include <linux/uaccess.h>
 
-#समावेश <drm/drm_device.h>
-#समावेश <drm/drm_file.h>
-#समावेश <drm/radeon_drm.h>
+#include <drm/drm_device.h>
+#include <drm/drm_file.h>
+#include <drm/radeon_drm.h>
 
-#समावेश "radeon.h"
-#समावेश "radeon_reg.h"
-#समावेश "radeon_trace.h"
+#include "radeon.h"
+#include "radeon_reg.h"
+#include "radeon_trace.h"
 
-#घोषणा RADEON_CS_MAX_PRIORITY		32u
-#घोषणा RADEON_CS_NUM_BUCKETS		(RADEON_CS_MAX_PRIORITY + 1)
+#define RADEON_CS_MAX_PRIORITY		32u
+#define RADEON_CS_NUM_BUCKETS		(RADEON_CS_MAX_PRIORITY + 1)
 
-/* This is based on the bucket sort with O(n) समय complनिकासy.
+/* This is based on the bucket sort with O(n) time complexity.
  * An item with priority "i" is added to bucket[i]. The lists are then
  * concatenated in descending order.
  */
-काष्ठा radeon_cs_buckets अणु
-	काष्ठा list_head bucket[RADEON_CS_NUM_BUCKETS];
-पूर्ण;
+struct radeon_cs_buckets {
+	struct list_head bucket[RADEON_CS_NUM_BUCKETS];
+};
 
-अटल व्योम radeon_cs_buckets_init(काष्ठा radeon_cs_buckets *b)
-अणु
-	अचिन्हित i;
+static void radeon_cs_buckets_init(struct radeon_cs_buckets *b)
+{
+	unsigned i;
 
-	क्रम (i = 0; i < RADEON_CS_NUM_BUCKETS; i++)
+	for (i = 0; i < RADEON_CS_NUM_BUCKETS; i++)
 		INIT_LIST_HEAD(&b->bucket[i]);
-पूर्ण
+}
 
-अटल व्योम radeon_cs_buckets_add(काष्ठा radeon_cs_buckets *b,
-				  काष्ठा list_head *item, अचिन्हित priority)
-अणु
+static void radeon_cs_buckets_add(struct radeon_cs_buckets *b,
+				  struct list_head *item, unsigned priority)
+{
 	/* Since buffers which appear sooner in the relocation list are
 	 * likely to be used more often than buffers which appear later
 	 * in the list, the sort mustn't change the ordering of buffers
 	 * with the same priority, i.e. it must be stable.
 	 */
 	list_add_tail(item, &b->bucket[min(priority, RADEON_CS_MAX_PRIORITY)]);
-पूर्ण
+}
 
-अटल व्योम radeon_cs_buckets_get_list(काष्ठा radeon_cs_buckets *b,
-				       काष्ठा list_head *out_list)
-अणु
-	अचिन्हित i;
+static void radeon_cs_buckets_get_list(struct radeon_cs_buckets *b,
+				       struct list_head *out_list)
+{
+	unsigned i;
 
 	/* Connect the sorted buckets in the output list. */
-	क्रम (i = 0; i < RADEON_CS_NUM_BUCKETS; i++) अणु
+	for (i = 0; i < RADEON_CS_NUM_BUCKETS; i++) {
 		list_splice(&b->bucket[i], out_list);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक radeon_cs_parser_relocs(काष्ठा radeon_cs_parser *p)
-अणु
-	काष्ठा radeon_cs_chunk *chunk;
-	काष्ठा radeon_cs_buckets buckets;
-	अचिन्हित i;
+static int radeon_cs_parser_relocs(struct radeon_cs_parser *p)
+{
+	struct radeon_cs_chunk *chunk;
+	struct radeon_cs_buckets buckets;
+	unsigned i;
 	bool need_mmap_lock = false;
-	पूर्णांक r;
+	int r;
 
-	अगर (p->chunk_relocs == शून्य) अणु
-		वापस 0;
-	पूर्ण
+	if (p->chunk_relocs == NULL) {
+		return 0;
+	}
 	chunk = p->chunk_relocs;
 	p->dma_reloc_idx = 0;
 	/* FIXME: we assume that each relocs use 4 dwords */
 	p->nrelocs = chunk->length_dw / 4;
-	p->relocs = kvसुस्मृति(p->nrelocs, माप(काष्ठा radeon_bo_list),
+	p->relocs = kvcalloc(p->nrelocs, sizeof(struct radeon_bo_list),
 			GFP_KERNEL);
-	अगर (p->relocs == शून्य) अणु
-		वापस -ENOMEM;
-	पूर्ण
+	if (p->relocs == NULL) {
+		return -ENOMEM;
+	}
 
 	radeon_cs_buckets_init(&buckets);
 
-	क्रम (i = 0; i < p->nrelocs; i++) अणु
-		काष्ठा drm_radeon_cs_reloc *r;
-		काष्ठा drm_gem_object *gobj;
-		अचिन्हित priority;
+	for (i = 0; i < p->nrelocs; i++) {
+		struct drm_radeon_cs_reloc *r;
+		struct drm_gem_object *gobj;
+		unsigned priority;
 
-		r = (काष्ठा drm_radeon_cs_reloc *)&chunk->kdata[i*4];
+		r = (struct drm_radeon_cs_reloc *)&chunk->kdata[i*4];
 		gobj = drm_gem_object_lookup(p->filp, r->handle);
-		अगर (gobj == शून्य) अणु
+		if (gobj == NULL) {
 			DRM_ERROR("gem object lookup failed 0x%x\n",
 				  r->handle);
-			वापस -ENOENT;
-		पूर्ण
+			return -ENOENT;
+		}
 		p->relocs[i].robj = gem_to_radeon_bo(gobj);
 
 		/* The userspace buffer priorities are from 0 to 15. A higher
 		 * number means the buffer is more important.
-		 * Also, the buffers used क्रम ग_लिखो have a higher priority than
-		 * the buffers used क्रम पढ़ो only, which द्विगुनs the range
-		 * to 0 to 31. 32 is reserved क्रम the kernel driver.
+		 * Also, the buffers used for write have a higher priority than
+		 * the buffers used for read only, which doubles the range
+		 * to 0 to 31. 32 is reserved for the kernel driver.
 		 */
 		priority = (r->flags & RADEON_RELOC_PRIO_MASK) * 2
-			   + !!r->ग_लिखो_करोमुख्य;
+			   + !!r->write_domain;
 
 		/* The first reloc of an UVD job is the msg and that must be in
-		 * VRAM, the second reloc is the DPB and क्रम WMV that must be in
-		 * VRAM as well. Also put everything पूर्णांकo VRAM on AGP cards and older
-		 * IGP chips to aव्योम image corruptions
+		 * VRAM, the second reloc is the DPB and for WMV that must be in
+		 * VRAM as well. Also put everything into VRAM on AGP cards and older
+		 * IGP chips to avoid image corruptions
 		 */
-		अगर (p->ring == R600_RING_TYPE_UVD_INDEX &&
+		if (p->ring == R600_RING_TYPE_UVD_INDEX &&
 		    (i <= 0 || pci_find_capability(p->rdev->pdev, PCI_CAP_ID_AGP) ||
 		     p->rdev->family == CHIP_RS780 ||
-		     p->rdev->family == CHIP_RS880)) अणु
+		     p->rdev->family == CHIP_RS880)) {
 
-			/* TODO: is this still needed क्रम NI+ ? */
-			p->relocs[i].preferred_करोमुख्यs =
+			/* TODO: is this still needed for NI+ ? */
+			p->relocs[i].preferred_domains =
 				RADEON_GEM_DOMAIN_VRAM;
 
-			p->relocs[i].allowed_करोमुख्यs =
+			p->relocs[i].allowed_domains =
 				RADEON_GEM_DOMAIN_VRAM;
 
 			/* prioritize this over any other relocation */
 			priority = RADEON_CS_MAX_PRIORITY;
-		पूर्ण अन्यथा अणु
-			uपूर्णांक32_t करोमुख्य = r->ग_लिखो_करोमुख्य ?
-				r->ग_लिखो_करोमुख्य : r->पढ़ो_करोमुख्यs;
+		} else {
+			uint32_t domain = r->write_domain ?
+				r->write_domain : r->read_domains;
 
-			अगर (करोमुख्य & RADEON_GEM_DOMAIN_CPU) अणु
+			if (domain & RADEON_GEM_DOMAIN_CPU) {
 				DRM_ERROR("RADEON_GEM_DOMAIN_CPU is not valid "
 					  "for command submission\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
-			p->relocs[i].preferred_करोमुख्यs = करोमुख्य;
-			अगर (करोमुख्य == RADEON_GEM_DOMAIN_VRAM)
-				करोमुख्य |= RADEON_GEM_DOMAIN_GTT;
-			p->relocs[i].allowed_करोमुख्यs = करोमुख्य;
-		पूर्ण
+			p->relocs[i].preferred_domains = domain;
+			if (domain == RADEON_GEM_DOMAIN_VRAM)
+				domain |= RADEON_GEM_DOMAIN_GTT;
+			p->relocs[i].allowed_domains = domain;
+		}
 
-		अगर (radeon_tपंचांग_tt_has_userptr(p->rdev, p->relocs[i].robj->tbo.tपंचांग)) अणु
-			uपूर्णांक32_t करोमुख्य = p->relocs[i].preferred_करोमुख्यs;
-			अगर (!(करोमुख्य & RADEON_GEM_DOMAIN_GTT)) अणु
+		if (radeon_ttm_tt_has_userptr(p->rdev, p->relocs[i].robj->tbo.ttm)) {
+			uint32_t domain = p->relocs[i].preferred_domains;
+			if (!(domain & RADEON_GEM_DOMAIN_GTT)) {
 				DRM_ERROR("Only RADEON_GEM_DOMAIN_GTT is "
 					  "allowed for userptr BOs\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			need_mmap_lock = true;
-			करोमुख्य = RADEON_GEM_DOMAIN_GTT;
-			p->relocs[i].preferred_करोमुख्यs = करोमुख्य;
-			p->relocs[i].allowed_करोमुख्यs = करोमुख्य;
-		पूर्ण
+			domain = RADEON_GEM_DOMAIN_GTT;
+			p->relocs[i].preferred_domains = domain;
+			p->relocs[i].allowed_domains = domain;
+		}
 
 		/* Objects shared as dma-bufs cannot be moved to VRAM */
-		अगर (p->relocs[i].robj->prime_shared_count) अणु
-			p->relocs[i].allowed_करोमुख्यs &= ~RADEON_GEM_DOMAIN_VRAM;
-			अगर (!p->relocs[i].allowed_करोमुख्यs) अणु
+		if (p->relocs[i].robj->prime_shared_count) {
+			p->relocs[i].allowed_domains &= ~RADEON_GEM_DOMAIN_VRAM;
+			if (!p->relocs[i].allowed_domains) {
 				DRM_ERROR("BO associated with dma-buf cannot "
 					  "be moved to VRAM\n");
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
+				return -EINVAL;
+			}
+		}
 
 		p->relocs[i].tv.bo = &p->relocs[i].robj->tbo;
-		p->relocs[i].tv.num_shared = !r->ग_लिखो_करोमुख्य;
+		p->relocs[i].tv.num_shared = !r->write_domain;
 
 		radeon_cs_buckets_add(&buckets, &p->relocs[i].tv.head,
 				      priority);
-	पूर्ण
+	}
 
 	radeon_cs_buckets_get_list(&buckets, &p->validated);
 
-	अगर (p->cs_flags & RADEON_CS_USE_VM)
+	if (p->cs_flags & RADEON_CS_USE_VM)
 		p->vm_bos = radeon_vm_get_bos(p->rdev, p->ib.vm,
 					      &p->validated);
-	अगर (need_mmap_lock)
-		mmap_पढ़ो_lock(current->mm);
+	if (need_mmap_lock)
+		mmap_read_lock(current->mm);
 
 	r = radeon_bo_list_validate(p->rdev, &p->ticket, &p->validated, p->ring);
 
-	अगर (need_mmap_lock)
-		mmap_पढ़ो_unlock(current->mm);
+	if (need_mmap_lock)
+		mmap_read_unlock(current->mm);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक radeon_cs_get_ring(काष्ठा radeon_cs_parser *p, u32 ring, s32 priority)
-अणु
+static int radeon_cs_get_ring(struct radeon_cs_parser *p, u32 ring, s32 priority)
+{
 	p->priority = priority;
 
-	चयन (ring) अणु
-	शेष:
+	switch (ring) {
+	default:
 		DRM_ERROR("unknown ring id: %d\n", ring);
-		वापस -EINVAL;
-	हाल RADEON_CS_RING_GFX:
+		return -EINVAL;
+	case RADEON_CS_RING_GFX:
 		p->ring = RADEON_RING_TYPE_GFX_INDEX;
-		अवरोध;
-	हाल RADEON_CS_RING_COMPUTE:
-		अगर (p->rdev->family >= CHIP_TAHITI) अणु
-			अगर (p->priority > 0)
+		break;
+	case RADEON_CS_RING_COMPUTE:
+		if (p->rdev->family >= CHIP_TAHITI) {
+			if (p->priority > 0)
 				p->ring = CAYMAN_RING_TYPE_CP1_INDEX;
-			अन्यथा
+			else
 				p->ring = CAYMAN_RING_TYPE_CP2_INDEX;
-		पूर्ण अन्यथा
+		} else
 			p->ring = RADEON_RING_TYPE_GFX_INDEX;
-		अवरोध;
-	हाल RADEON_CS_RING_DMA:
-		अगर (p->rdev->family >= CHIP_CAYMAN) अणु
-			अगर (p->priority > 0)
+		break;
+	case RADEON_CS_RING_DMA:
+		if (p->rdev->family >= CHIP_CAYMAN) {
+			if (p->priority > 0)
 				p->ring = R600_RING_TYPE_DMA_INDEX;
-			अन्यथा
+			else
 				p->ring = CAYMAN_RING_TYPE_DMA1_INDEX;
-		पूर्ण अन्यथा अगर (p->rdev->family >= CHIP_RV770) अणु
+		} else if (p->rdev->family >= CHIP_RV770) {
 			p->ring = R600_RING_TYPE_DMA_INDEX;
-		पूर्ण अन्यथा अणु
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	हाल RADEON_CS_RING_UVD:
+		} else {
+			return -EINVAL;
+		}
+		break;
+	case RADEON_CS_RING_UVD:
 		p->ring = R600_RING_TYPE_UVD_INDEX;
-		अवरोध;
-	हाल RADEON_CS_RING_VCE:
-		/* TODO: only use the low priority ring क्रम now */
+		break;
+	case RADEON_CS_RING_VCE:
+		/* TODO: only use the low priority ring for now */
 		p->ring = TN_RING_TYPE_VCE1_INDEX;
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक radeon_cs_sync_rings(काष्ठा radeon_cs_parser *p)
-अणु
-	काष्ठा radeon_bo_list *reloc;
-	पूर्णांक r;
+static int radeon_cs_sync_rings(struct radeon_cs_parser *p)
+{
+	struct radeon_bo_list *reloc;
+	int r;
 
-	list_क्रम_each_entry(reloc, &p->validated, tv.head) अणु
-		काष्ठा dma_resv *resv;
+	list_for_each_entry(reloc, &p->validated, tv.head) {
+		struct dma_resv *resv;
 
 		resv = reloc->robj->tbo.base.resv;
 		r = radeon_sync_resv(p->rdev, &p->ib.sync, resv,
 				     reloc->tv.num_shared);
-		अगर (r)
-			वापस r;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (r)
+			return r;
+	}
+	return 0;
+}
 
 /* XXX: note that this is called from the legacy UMS CS ioctl as well */
-पूर्णांक radeon_cs_parser_init(काष्ठा radeon_cs_parser *p, व्योम *data)
-अणु
-	काष्ठा drm_radeon_cs *cs = data;
-	uपूर्णांक64_t *chunk_array_ptr;
-	अचिन्हित size, i;
+int radeon_cs_parser_init(struct radeon_cs_parser *p, void *data)
+{
+	struct drm_radeon_cs *cs = data;
+	uint64_t *chunk_array_ptr;
+	unsigned size, i;
 	u32 ring = RADEON_CS_RING_GFX;
 	s32 priority = 0;
 
 	INIT_LIST_HEAD(&p->validated);
 
-	अगर (!cs->num_chunks) अणु
-		वापस 0;
-	पूर्ण
+	if (!cs->num_chunks) {
+		return 0;
+	}
 
 	/* get chunks */
 	p->idx = 0;
-	p->ib.sa_bo = शून्य;
-	p->स्थिर_ib.sa_bo = शून्य;
-	p->chunk_ib = शून्य;
-	p->chunk_relocs = शून्य;
-	p->chunk_flags = शून्य;
-	p->chunk_स्थिर_ib = शून्य;
-	p->chunks_array = kvदो_स्मृति_array(cs->num_chunks, माप(uपूर्णांक64_t), GFP_KERNEL);
-	अगर (p->chunks_array == शून्य) अणु
-		वापस -ENOMEM;
-	पूर्ण
-	chunk_array_ptr = (uपूर्णांक64_t *)(अचिन्हित दीर्घ)(cs->chunks);
-	अगर (copy_from_user(p->chunks_array, chunk_array_ptr,
-			       माप(uपूर्णांक64_t)*cs->num_chunks)) अणु
-		वापस -EFAULT;
-	पूर्ण
+	p->ib.sa_bo = NULL;
+	p->const_ib.sa_bo = NULL;
+	p->chunk_ib = NULL;
+	p->chunk_relocs = NULL;
+	p->chunk_flags = NULL;
+	p->chunk_const_ib = NULL;
+	p->chunks_array = kvmalloc_array(cs->num_chunks, sizeof(uint64_t), GFP_KERNEL);
+	if (p->chunks_array == NULL) {
+		return -ENOMEM;
+	}
+	chunk_array_ptr = (uint64_t *)(unsigned long)(cs->chunks);
+	if (copy_from_user(p->chunks_array, chunk_array_ptr,
+			       sizeof(uint64_t)*cs->num_chunks)) {
+		return -EFAULT;
+	}
 	p->cs_flags = 0;
 	p->nchunks = cs->num_chunks;
-	p->chunks = kvसुस्मृति(p->nchunks, माप(काष्ठा radeon_cs_chunk), GFP_KERNEL);
-	अगर (p->chunks == शून्य) अणु
-		वापस -ENOMEM;
-	पूर्ण
-	क्रम (i = 0; i < p->nchunks; i++) अणु
-		काष्ठा drm_radeon_cs_chunk __user **chunk_ptr = शून्य;
-		काष्ठा drm_radeon_cs_chunk user_chunk;
-		uपूर्णांक32_t __user *cdata;
+	p->chunks = kvcalloc(p->nchunks, sizeof(struct radeon_cs_chunk), GFP_KERNEL);
+	if (p->chunks == NULL) {
+		return -ENOMEM;
+	}
+	for (i = 0; i < p->nchunks; i++) {
+		struct drm_radeon_cs_chunk __user **chunk_ptr = NULL;
+		struct drm_radeon_cs_chunk user_chunk;
+		uint32_t __user *cdata;
 
-		chunk_ptr = (व्योम __user*)(अचिन्हित दीर्घ)p->chunks_array[i];
-		अगर (copy_from_user(&user_chunk, chunk_ptr,
-				       माप(काष्ठा drm_radeon_cs_chunk))) अणु
-			वापस -EFAULT;
-		पूर्ण
+		chunk_ptr = (void __user*)(unsigned long)p->chunks_array[i];
+		if (copy_from_user(&user_chunk, chunk_ptr,
+				       sizeof(struct drm_radeon_cs_chunk))) {
+			return -EFAULT;
+		}
 		p->chunks[i].length_dw = user_chunk.length_dw;
-		अगर (user_chunk.chunk_id == RADEON_CHUNK_ID_RELOCS) अणु
+		if (user_chunk.chunk_id == RADEON_CHUNK_ID_RELOCS) {
 			p->chunk_relocs = &p->chunks[i];
-		पूर्ण
-		अगर (user_chunk.chunk_id == RADEON_CHUNK_ID_IB) अणु
+		}
+		if (user_chunk.chunk_id == RADEON_CHUNK_ID_IB) {
 			p->chunk_ib = &p->chunks[i];
 			/* zero length IB isn't useful */
-			अगर (p->chunks[i].length_dw == 0)
-				वापस -EINVAL;
-		पूर्ण
-		अगर (user_chunk.chunk_id == RADEON_CHUNK_ID_CONST_IB) अणु
-			p->chunk_स्थिर_ib = &p->chunks[i];
+			if (p->chunks[i].length_dw == 0)
+				return -EINVAL;
+		}
+		if (user_chunk.chunk_id == RADEON_CHUNK_ID_CONST_IB) {
+			p->chunk_const_ib = &p->chunks[i];
 			/* zero length CONST IB isn't useful */
-			अगर (p->chunks[i].length_dw == 0)
-				वापस -EINVAL;
-		पूर्ण
-		अगर (user_chunk.chunk_id == RADEON_CHUNK_ID_FLAGS) अणु
+			if (p->chunks[i].length_dw == 0)
+				return -EINVAL;
+		}
+		if (user_chunk.chunk_id == RADEON_CHUNK_ID_FLAGS) {
 			p->chunk_flags = &p->chunks[i];
 			/* zero length flags aren't useful */
-			अगर (p->chunks[i].length_dw == 0)
-				वापस -EINVAL;
-		पूर्ण
+			if (p->chunks[i].length_dw == 0)
+				return -EINVAL;
+		}
 
 		size = p->chunks[i].length_dw;
-		cdata = (व्योम __user *)(अचिन्हित दीर्घ)user_chunk.chunk_data;
+		cdata = (void __user *)(unsigned long)user_chunk.chunk_data;
 		p->chunks[i].user_ptr = cdata;
-		अगर (user_chunk.chunk_id == RADEON_CHUNK_ID_CONST_IB)
-			जारी;
+		if (user_chunk.chunk_id == RADEON_CHUNK_ID_CONST_IB)
+			continue;
 
-		अगर (user_chunk.chunk_id == RADEON_CHUNK_ID_IB) अणु
-			अगर (!p->rdev || !(p->rdev->flags & RADEON_IS_AGP))
-				जारी;
-		पूर्ण
+		if (user_chunk.chunk_id == RADEON_CHUNK_ID_IB) {
+			if (!p->rdev || !(p->rdev->flags & RADEON_IS_AGP))
+				continue;
+		}
 
-		p->chunks[i].kdata = kvदो_स्मृति_array(size, माप(uपूर्णांक32_t), GFP_KERNEL);
-		size *= माप(uपूर्णांक32_t);
-		अगर (p->chunks[i].kdata == शून्य) अणु
-			वापस -ENOMEM;
-		पूर्ण
-		अगर (copy_from_user(p->chunks[i].kdata, cdata, size)) अणु
-			वापस -EFAULT;
-		पूर्ण
-		अगर (user_chunk.chunk_id == RADEON_CHUNK_ID_FLAGS) अणु
+		p->chunks[i].kdata = kvmalloc_array(size, sizeof(uint32_t), GFP_KERNEL);
+		size *= sizeof(uint32_t);
+		if (p->chunks[i].kdata == NULL) {
+			return -ENOMEM;
+		}
+		if (copy_from_user(p->chunks[i].kdata, cdata, size)) {
+			return -EFAULT;
+		}
+		if (user_chunk.chunk_id == RADEON_CHUNK_ID_FLAGS) {
 			p->cs_flags = p->chunks[i].kdata[0];
-			अगर (p->chunks[i].length_dw > 1)
+			if (p->chunks[i].length_dw > 1)
 				ring = p->chunks[i].kdata[1];
-			अगर (p->chunks[i].length_dw > 2)
+			if (p->chunks[i].length_dw > 2)
 				priority = (s32)p->chunks[i].kdata[2];
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* these are KMS only */
-	अगर (p->rdev) अणु
-		अगर ((p->cs_flags & RADEON_CS_USE_VM) &&
-		    !p->rdev->vm_manager.enabled) अणु
+	if (p->rdev) {
+		if ((p->cs_flags & RADEON_CS_USE_VM) &&
+		    !p->rdev->vm_manager.enabled) {
 			DRM_ERROR("VM not active on asic!\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (radeon_cs_get_ring(p, ring, priority))
-			वापस -EINVAL;
+		if (radeon_cs_get_ring(p, ring, priority))
+			return -EINVAL;
 
 		/* we only support VM on some SI+ rings */
-		अगर ((p->cs_flags & RADEON_CS_USE_VM) == 0) अणु
-			अगर (p->rdev->asic->ring[p->ring]->cs_parse == शून्य) अणु
+		if ((p->cs_flags & RADEON_CS_USE_VM) == 0) {
+			if (p->rdev->asic->ring[p->ring]->cs_parse == NULL) {
 				DRM_ERROR("Ring %d requires VM!\n", p->ring);
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (p->rdev->asic->ring[p->ring]->ib_parse == शून्य) अणु
+				return -EINVAL;
+			}
+		} else {
+			if (p->rdev->asic->ring[p->ring]->ib_parse == NULL) {
 				DRM_ERROR("VM not supported on ring %d!\n",
 					  p->ring);
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return -EINVAL;
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cmp_size_smaller_first(व्योम *priv, स्थिर काष्ठा list_head *a,
-				  स्थिर काष्ठा list_head *b)
-अणु
-	काष्ठा radeon_bo_list *la = list_entry(a, काष्ठा radeon_bo_list, tv.head);
-	काष्ठा radeon_bo_list *lb = list_entry(b, काष्ठा radeon_bo_list, tv.head);
+static int cmp_size_smaller_first(void *priv, const struct list_head *a,
+				  const struct list_head *b)
+{
+	struct radeon_bo_list *la = list_entry(a, struct radeon_bo_list, tv.head);
+	struct radeon_bo_list *lb = list_entry(b, struct radeon_bo_list, tv.head);
 
-	/* Sort A beक्रमe B अगर A is smaller. */
-	वापस (पूर्णांक)la->robj->tbo.mem.num_pages -
-		(पूर्णांक)lb->robj->tbo.mem.num_pages;
-पूर्ण
+	/* Sort A before B if A is smaller. */
+	return (int)la->robj->tbo.mem.num_pages -
+		(int)lb->robj->tbo.mem.num_pages;
+}
 
 /**
  * cs_parser_fini() - clean parser states
- * @parser:	parser काष्ठाure holding parsing context.
+ * @parser:	parser structure holding parsing context.
  * @error:	error number
  * @backoff:	indicator to backoff the reservation
  *
- * If error is set than unvalidate buffer, otherwise just मुक्त memory
+ * If error is set than unvalidate buffer, otherwise just free memory
  * used by parsing context.
  **/
-अटल व्योम radeon_cs_parser_fini(काष्ठा radeon_cs_parser *parser, पूर्णांक error, bool backoff)
-अणु
-	अचिन्हित i;
+static void radeon_cs_parser_fini(struct radeon_cs_parser *parser, int error, bool backoff)
+{
+	unsigned i;
 
-	अगर (!error) अणु
+	if (!error) {
 		/* Sort the buffer list from the smallest to largest buffer,
 		 * which affects the order of buffers in the LRU list.
 		 * This assures that the smallest buffers are added first
@@ -429,456 +428,456 @@
 		 * This slightly lowers the number of bytes moved by TTM
 		 * per frame under memory pressure.
 		 */
-		list_sort(शून्य, &parser->validated, cmp_size_smaller_first);
+		list_sort(NULL, &parser->validated, cmp_size_smaller_first);
 
-		tपंचांग_eu_fence_buffer_objects(&parser->ticket,
+		ttm_eu_fence_buffer_objects(&parser->ticket,
 					    &parser->validated,
 					    &parser->ib.fence->base);
-	पूर्ण अन्यथा अगर (backoff) अणु
-		tपंचांग_eu_backoff_reservation(&parser->ticket,
+	} else if (backoff) {
+		ttm_eu_backoff_reservation(&parser->ticket,
 					   &parser->validated);
-	पूर्ण
+	}
 
-	अगर (parser->relocs != शून्य) अणु
-		क्रम (i = 0; i < parser->nrelocs; i++) अणु
-			काष्ठा radeon_bo *bo = parser->relocs[i].robj;
-			अगर (bo == शून्य)
-				जारी;
+	if (parser->relocs != NULL) {
+		for (i = 0; i < parser->nrelocs; i++) {
+			struct radeon_bo *bo = parser->relocs[i].robj;
+			if (bo == NULL)
+				continue;
 
 			drm_gem_object_put(&bo->tbo.base);
-		पूर्ण
-	पूर्ण
-	kमुक्त(parser->track);
-	kvमुक्त(parser->relocs);
-	kvमुक्त(parser->vm_bos);
-	क्रम (i = 0; i < parser->nchunks; i++)
-		kvमुक्त(parser->chunks[i].kdata);
-	kvमुक्त(parser->chunks);
-	kvमुक्त(parser->chunks_array);
-	radeon_ib_मुक्त(parser->rdev, &parser->ib);
-	radeon_ib_मुक्त(parser->rdev, &parser->स्थिर_ib);
-पूर्ण
+		}
+	}
+	kfree(parser->track);
+	kvfree(parser->relocs);
+	kvfree(parser->vm_bos);
+	for (i = 0; i < parser->nchunks; i++)
+		kvfree(parser->chunks[i].kdata);
+	kvfree(parser->chunks);
+	kvfree(parser->chunks_array);
+	radeon_ib_free(parser->rdev, &parser->ib);
+	radeon_ib_free(parser->rdev, &parser->const_ib);
+}
 
-अटल पूर्णांक radeon_cs_ib_chunk(काष्ठा radeon_device *rdev,
-			      काष्ठा radeon_cs_parser *parser)
-अणु
-	पूर्णांक r;
+static int radeon_cs_ib_chunk(struct radeon_device *rdev,
+			      struct radeon_cs_parser *parser)
+{
+	int r;
 
-	अगर (parser->chunk_ib == शून्य)
-		वापस 0;
+	if (parser->chunk_ib == NULL)
+		return 0;
 
-	अगर (parser->cs_flags & RADEON_CS_USE_VM)
-		वापस 0;
+	if (parser->cs_flags & RADEON_CS_USE_VM)
+		return 0;
 
 	r = radeon_cs_parse(rdev, parser->ring, parser);
-	अगर (r || parser->parser_error) अणु
+	if (r || parser->parser_error) {
 		DRM_ERROR("Invalid command stream !\n");
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	r = radeon_cs_sync_rings(parser);
-	अगर (r) अणु
-		अगर (r != -ERESTARTSYS)
+	if (r) {
+		if (r != -ERESTARTSYS)
 			DRM_ERROR("Failed to sync rings: %i\n", r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	अगर (parser->ring == R600_RING_TYPE_UVD_INDEX)
+	if (parser->ring == R600_RING_TYPE_UVD_INDEX)
 		radeon_uvd_note_usage(rdev);
-	अन्यथा अगर ((parser->ring == TN_RING_TYPE_VCE1_INDEX) ||
+	else if ((parser->ring == TN_RING_TYPE_VCE1_INDEX) ||
 		 (parser->ring == TN_RING_TYPE_VCE2_INDEX))
 		radeon_vce_note_usage(rdev);
 
-	r = radeon_ib_schedule(rdev, &parser->ib, शून्य, true);
-	अगर (r) अणु
+	r = radeon_ib_schedule(rdev, &parser->ib, NULL, true);
+	if (r) {
 		DRM_ERROR("Failed to schedule IB !\n");
-	पूर्ण
-	वापस r;
-पूर्ण
+	}
+	return r;
+}
 
-अटल पूर्णांक radeon_bo_vm_update_pte(काष्ठा radeon_cs_parser *p,
-				   काष्ठा radeon_vm *vm)
-अणु
-	काष्ठा radeon_device *rdev = p->rdev;
-	काष्ठा radeon_bo_va *bo_va;
-	पूर्णांक i, r;
+static int radeon_bo_vm_update_pte(struct radeon_cs_parser *p,
+				   struct radeon_vm *vm)
+{
+	struct radeon_device *rdev = p->rdev;
+	struct radeon_bo_va *bo_va;
+	int i, r;
 
 	r = radeon_vm_update_page_directory(rdev, vm);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	r = radeon_vm_clear_मुक्तd(rdev, vm);
-	अगर (r)
-		वापस r;
+	r = radeon_vm_clear_freed(rdev, vm);
+	if (r)
+		return r;
 
-	अगर (vm->ib_bo_va == शून्य) अणु
+	if (vm->ib_bo_va == NULL) {
 		DRM_ERROR("Tmp BO not in VM!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	r = radeon_vm_bo_update(rdev, vm->ib_bo_va,
-				&rdev->ring_पंचांगp_bo.bo->tbo.mem);
-	अगर (r)
-		वापस r;
+				&rdev->ring_tmp_bo.bo->tbo.mem);
+	if (r)
+		return r;
 
-	क्रम (i = 0; i < p->nrelocs; i++) अणु
-		काष्ठा radeon_bo *bo;
+	for (i = 0; i < p->nrelocs; i++) {
+		struct radeon_bo *bo;
 
 		bo = p->relocs[i].robj;
 		bo_va = radeon_vm_bo_find(vm, bo);
-		अगर (bo_va == शून्य) अणु
+		if (bo_va == NULL) {
 			dev_err(rdev->dev, "bo %p not in vm %p\n", bo, vm);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		r = radeon_vm_bo_update(rdev, bo_va, &bo->tbo.mem);
-		अगर (r)
-			वापस r;
+		if (r)
+			return r;
 
 		radeon_sync_fence(&p->ib.sync, bo_va->last_pt_update);
-	पूर्ण
+	}
 
-	वापस radeon_vm_clear_invalids(rdev, vm);
-पूर्ण
+	return radeon_vm_clear_invalids(rdev, vm);
+}
 
-अटल पूर्णांक radeon_cs_ib_vm_chunk(काष्ठा radeon_device *rdev,
-				 काष्ठा radeon_cs_parser *parser)
-अणु
-	काष्ठा radeon_fpriv *fpriv = parser->filp->driver_priv;
-	काष्ठा radeon_vm *vm = &fpriv->vm;
-	पूर्णांक r;
+static int radeon_cs_ib_vm_chunk(struct radeon_device *rdev,
+				 struct radeon_cs_parser *parser)
+{
+	struct radeon_fpriv *fpriv = parser->filp->driver_priv;
+	struct radeon_vm *vm = &fpriv->vm;
+	int r;
 
-	अगर (parser->chunk_ib == शून्य)
-		वापस 0;
-	अगर ((parser->cs_flags & RADEON_CS_USE_VM) == 0)
-		वापस 0;
+	if (parser->chunk_ib == NULL)
+		return 0;
+	if ((parser->cs_flags & RADEON_CS_USE_VM) == 0)
+		return 0;
 
-	अगर (parser->स्थिर_ib.length_dw) अणु
-		r = radeon_ring_ib_parse(rdev, parser->ring, &parser->स्थिर_ib);
-		अगर (r) अणु
-			वापस r;
-		पूर्ण
-	पूर्ण
+	if (parser->const_ib.length_dw) {
+		r = radeon_ring_ib_parse(rdev, parser->ring, &parser->const_ib);
+		if (r) {
+			return r;
+		}
+	}
 
 	r = radeon_ring_ib_parse(rdev, parser->ring, &parser->ib);
-	अगर (r) अणु
-		वापस r;
-	पूर्ण
+	if (r) {
+		return r;
+	}
 
-	अगर (parser->ring == R600_RING_TYPE_UVD_INDEX)
+	if (parser->ring == R600_RING_TYPE_UVD_INDEX)
 		radeon_uvd_note_usage(rdev);
 
 	mutex_lock(&vm->mutex);
 	r = radeon_bo_vm_update_pte(parser, vm);
-	अगर (r) अणु
-		जाओ out;
-	पूर्ण
+	if (r) {
+		goto out;
+	}
 
 	r = radeon_cs_sync_rings(parser);
-	अगर (r) अणु
-		अगर (r != -ERESTARTSYS)
+	if (r) {
+		if (r != -ERESTARTSYS)
 			DRM_ERROR("Failed to sync rings: %i\n", r);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर ((rdev->family >= CHIP_TAHITI) &&
-	    (parser->chunk_स्थिर_ib != शून्य)) अणु
-		r = radeon_ib_schedule(rdev, &parser->ib, &parser->स्थिर_ib, true);
-	पूर्ण अन्यथा अणु
-		r = radeon_ib_schedule(rdev, &parser->ib, शून्य, true);
-	पूर्ण
+	if ((rdev->family >= CHIP_TAHITI) &&
+	    (parser->chunk_const_ib != NULL)) {
+		r = radeon_ib_schedule(rdev, &parser->ib, &parser->const_ib, true);
+	} else {
+		r = radeon_ib_schedule(rdev, &parser->ib, NULL, true);
+	}
 
 out:
 	mutex_unlock(&vm->mutex);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक radeon_cs_handle_lockup(काष्ठा radeon_device *rdev, पूर्णांक r)
-अणु
-	अगर (r == -EDEADLK) अणु
+static int radeon_cs_handle_lockup(struct radeon_device *rdev, int r)
+{
+	if (r == -EDEADLK) {
 		r = radeon_gpu_reset(rdev);
-		अगर (!r)
+		if (!r)
 			r = -EAGAIN;
-	पूर्ण
-	वापस r;
-पूर्ण
+	}
+	return r;
+}
 
-अटल पूर्णांक radeon_cs_ib_fill(काष्ठा radeon_device *rdev, काष्ठा radeon_cs_parser *parser)
-अणु
-	काष्ठा radeon_cs_chunk *ib_chunk;
-	काष्ठा radeon_vm *vm = शून्य;
-	पूर्णांक r;
+static int radeon_cs_ib_fill(struct radeon_device *rdev, struct radeon_cs_parser *parser)
+{
+	struct radeon_cs_chunk *ib_chunk;
+	struct radeon_vm *vm = NULL;
+	int r;
 
-	अगर (parser->chunk_ib == शून्य)
-		वापस 0;
+	if (parser->chunk_ib == NULL)
+		return 0;
 
-	अगर (parser->cs_flags & RADEON_CS_USE_VM) अणु
-		काष्ठा radeon_fpriv *fpriv = parser->filp->driver_priv;
+	if (parser->cs_flags & RADEON_CS_USE_VM) {
+		struct radeon_fpriv *fpriv = parser->filp->driver_priv;
 		vm = &fpriv->vm;
 
-		अगर ((rdev->family >= CHIP_TAHITI) &&
-		    (parser->chunk_स्थिर_ib != शून्य)) अणु
-			ib_chunk = parser->chunk_स्थिर_ib;
-			अगर (ib_chunk->length_dw > RADEON_IB_VM_MAX_SIZE) अणु
+		if ((rdev->family >= CHIP_TAHITI) &&
+		    (parser->chunk_const_ib != NULL)) {
+			ib_chunk = parser->chunk_const_ib;
+			if (ib_chunk->length_dw > RADEON_IB_VM_MAX_SIZE) {
 				DRM_ERROR("cs IB CONST too big: %d\n", ib_chunk->length_dw);
-				वापस -EINVAL;
-			पूर्ण
-			r =  radeon_ib_get(rdev, parser->ring, &parser->स्थिर_ib,
+				return -EINVAL;
+			}
+			r =  radeon_ib_get(rdev, parser->ring, &parser->const_ib,
 					   vm, ib_chunk->length_dw * 4);
-			अगर (r) अणु
+			if (r) {
 				DRM_ERROR("Failed to get const ib !\n");
-				वापस r;
-			पूर्ण
-			parser->स्थिर_ib.is_स्थिर_ib = true;
-			parser->स्थिर_ib.length_dw = ib_chunk->length_dw;
-			अगर (copy_from_user(parser->स्थिर_ib.ptr,
+				return r;
+			}
+			parser->const_ib.is_const_ib = true;
+			parser->const_ib.length_dw = ib_chunk->length_dw;
+			if (copy_from_user(parser->const_ib.ptr,
 					       ib_chunk->user_ptr,
 					       ib_chunk->length_dw * 4))
-				वापस -EFAULT;
-		पूर्ण
+				return -EFAULT;
+		}
 
 		ib_chunk = parser->chunk_ib;
-		अगर (ib_chunk->length_dw > RADEON_IB_VM_MAX_SIZE) अणु
+		if (ib_chunk->length_dw > RADEON_IB_VM_MAX_SIZE) {
 			DRM_ERROR("cs IB too big: %d\n", ib_chunk->length_dw);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 	ib_chunk = parser->chunk_ib;
 
 	r =  radeon_ib_get(rdev, parser->ring, &parser->ib,
 			   vm, ib_chunk->length_dw * 4);
-	अगर (r) अणु
+	if (r) {
 		DRM_ERROR("Failed to get ib !\n");
-		वापस r;
-	पूर्ण
+		return r;
+	}
 	parser->ib.length_dw = ib_chunk->length_dw;
-	अगर (ib_chunk->kdata)
-		स_नकल(parser->ib.ptr, ib_chunk->kdata, ib_chunk->length_dw * 4);
-	अन्यथा अगर (copy_from_user(parser->ib.ptr, ib_chunk->user_ptr, ib_chunk->length_dw * 4))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (ib_chunk->kdata)
+		memcpy(parser->ib.ptr, ib_chunk->kdata, ib_chunk->length_dw * 4);
+	else if (copy_from_user(parser->ib.ptr, ib_chunk->user_ptr, ib_chunk->length_dw * 4))
+		return -EFAULT;
+	return 0;
+}
 
-पूर्णांक radeon_cs_ioctl(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *filp)
-अणु
-	काष्ठा radeon_device *rdev = dev->dev_निजी;
-	काष्ठा radeon_cs_parser parser;
-	पूर्णांक r;
+int radeon_cs_ioctl(struct drm_device *dev, void *data, struct drm_file *filp)
+{
+	struct radeon_device *rdev = dev->dev_private;
+	struct radeon_cs_parser parser;
+	int r;
 
-	करोwn_पढ़ो(&rdev->exclusive_lock);
-	अगर (!rdev->accel_working) अणु
-		up_पढ़ो(&rdev->exclusive_lock);
-		वापस -EBUSY;
-	पूर्ण
-	अगर (rdev->in_reset) अणु
-		up_पढ़ो(&rdev->exclusive_lock);
+	down_read(&rdev->exclusive_lock);
+	if (!rdev->accel_working) {
+		up_read(&rdev->exclusive_lock);
+		return -EBUSY;
+	}
+	if (rdev->in_reset) {
+		up_read(&rdev->exclusive_lock);
 		r = radeon_gpu_reset(rdev);
-		अगर (!r)
+		if (!r)
 			r = -EAGAIN;
-		वापस r;
-	पूर्ण
+		return r;
+	}
 	/* initialize parser */
-	स_रखो(&parser, 0, माप(काष्ठा radeon_cs_parser));
+	memset(&parser, 0, sizeof(struct radeon_cs_parser));
 	parser.filp = filp;
 	parser.rdev = rdev;
 	parser.dev = rdev->dev;
 	parser.family = rdev->family;
 	r = radeon_cs_parser_init(&parser, data);
-	अगर (r) अणु
+	if (r) {
 		DRM_ERROR("Failed to initialize parser !\n");
 		radeon_cs_parser_fini(&parser, r, false);
-		up_पढ़ो(&rdev->exclusive_lock);
+		up_read(&rdev->exclusive_lock);
 		r = radeon_cs_handle_lockup(rdev, r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	r = radeon_cs_ib_fill(rdev, &parser);
-	अगर (!r) अणु
+	if (!r) {
 		r = radeon_cs_parser_relocs(&parser);
-		अगर (r && r != -ERESTARTSYS)
+		if (r && r != -ERESTARTSYS)
 			DRM_ERROR("Failed to parse relocation %d!\n", r);
-	पूर्ण
+	}
 
-	अगर (r) अणु
+	if (r) {
 		radeon_cs_parser_fini(&parser, r, false);
-		up_पढ़ो(&rdev->exclusive_lock);
+		up_read(&rdev->exclusive_lock);
 		r = radeon_cs_handle_lockup(rdev, r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	trace_radeon_cs(&parser);
 
 	r = radeon_cs_ib_chunk(rdev, &parser);
-	अगर (r) अणु
-		जाओ out;
-	पूर्ण
+	if (r) {
+		goto out;
+	}
 	r = radeon_cs_ib_vm_chunk(rdev, &parser);
-	अगर (r) अणु
-		जाओ out;
-	पूर्ण
+	if (r) {
+		goto out;
+	}
 out:
 	radeon_cs_parser_fini(&parser, r, true);
-	up_पढ़ो(&rdev->exclusive_lock);
+	up_read(&rdev->exclusive_lock);
 	r = radeon_cs_handle_lockup(rdev, r);
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /**
- * radeon_cs_packet_parse() - parse cp packet and poपूर्णांक ib index to next packet
- * @p:		parser काष्ठाure holding parsing context.
- * @pkt:	where to store packet inक्रमmation
+ * radeon_cs_packet_parse() - parse cp packet and point ib index to next packet
+ * @p:		parser structure holding parsing context.
+ * @pkt:	where to store packet information
  * @idx:	packet index
  *
- * Assume that chunk_ib_index is properly set. Will वापस -EINVAL
- * अगर packet is bigger than reमुख्यing ib size. or अगर packets is unknown.
+ * Assume that chunk_ib_index is properly set. Will return -EINVAL
+ * if packet is bigger than remaining ib size. or if packets is unknown.
  **/
-पूर्णांक radeon_cs_packet_parse(काष्ठा radeon_cs_parser *p,
-			   काष्ठा radeon_cs_packet *pkt,
-			   अचिन्हित idx)
-अणु
-	काष्ठा radeon_cs_chunk *ib_chunk = p->chunk_ib;
-	काष्ठा radeon_device *rdev = p->rdev;
-	uपूर्णांक32_t header;
-	पूर्णांक ret = 0, i;
+int radeon_cs_packet_parse(struct radeon_cs_parser *p,
+			   struct radeon_cs_packet *pkt,
+			   unsigned idx)
+{
+	struct radeon_cs_chunk *ib_chunk = p->chunk_ib;
+	struct radeon_device *rdev = p->rdev;
+	uint32_t header;
+	int ret = 0, i;
 
-	अगर (idx >= ib_chunk->length_dw) अणु
+	if (idx >= ib_chunk->length_dw) {
 		DRM_ERROR("Can not parse packet at %d after CS end %d !\n",
 			  idx, ib_chunk->length_dw);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	header = radeon_get_ib_value(p, idx);
 	pkt->idx = idx;
 	pkt->type = RADEON_CP_PACKET_GET_TYPE(header);
 	pkt->count = RADEON_CP_PACKET_GET_COUNT(header);
 	pkt->one_reg_wr = 0;
-	चयन (pkt->type) अणु
-	हाल RADEON_PACKET_TYPE0:
-		अगर (rdev->family < CHIP_R600) अणु
+	switch (pkt->type) {
+	case RADEON_PACKET_TYPE0:
+		if (rdev->family < CHIP_R600) {
 			pkt->reg = R100_CP_PACKET0_GET_REG(header);
 			pkt->one_reg_wr =
 				RADEON_CP_PACKET0_GET_ONE_REG_WR(header);
-		पूर्ण अन्यथा
+		} else
 			pkt->reg = R600_CP_PACKET0_GET_REG(header);
-		अवरोध;
-	हाल RADEON_PACKET_TYPE3:
+		break;
+	case RADEON_PACKET_TYPE3:
 		pkt->opcode = RADEON_CP_PACKET3_GET_OPCODE(header);
-		अवरोध;
-	हाल RADEON_PACKET_TYPE2:
+		break;
+	case RADEON_PACKET_TYPE2:
 		pkt->count = -1;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		DRM_ERROR("Unknown packet type %d at %d !\n", pkt->type, idx);
 		ret = -EINVAL;
-		जाओ dump_ib;
-	पूर्ण
-	अगर ((pkt->count + 1 + pkt->idx) >= ib_chunk->length_dw) अणु
+		goto dump_ib;
+	}
+	if ((pkt->count + 1 + pkt->idx) >= ib_chunk->length_dw) {
 		DRM_ERROR("Packet (%d:%d:%d) end after CS buffer (%d) !\n",
 			  pkt->idx, pkt->type, pkt->count, ib_chunk->length_dw);
 		ret = -EINVAL;
-		जाओ dump_ib;
-	पूर्ण
-	वापस 0;
+		goto dump_ib;
+	}
+	return 0;
 
 dump_ib:
-	क्रम (i = 0; i < ib_chunk->length_dw; i++) अणु
-		अगर (i == idx)
-			prपूर्णांकk("\t0x%08x <---\n", radeon_get_ib_value(p, i));
-		अन्यथा
-			prपूर्णांकk("\t0x%08x\n", radeon_get_ib_value(p, i));
-	पूर्ण
-	वापस ret;
-पूर्ण
+	for (i = 0; i < ib_chunk->length_dw; i++) {
+		if (i == idx)
+			printk("\t0x%08x <---\n", radeon_get_ib_value(p, i));
+		else
+			printk("\t0x%08x\n", radeon_get_ib_value(p, i));
+	}
+	return ret;
+}
 
 /**
- * radeon_cs_packet_next_is_pkt3_nop() - test अगर the next packet is P3 NOP
- * @p:		काष्ठाure holding the parser context.
+ * radeon_cs_packet_next_is_pkt3_nop() - test if the next packet is P3 NOP
+ * @p:		structure holding the parser context.
  *
- * Check अगर the next packet is NOP relocation packet3.
+ * Check if the next packet is NOP relocation packet3.
  **/
-bool radeon_cs_packet_next_is_pkt3_nop(काष्ठा radeon_cs_parser *p)
-अणु
-	काष्ठा radeon_cs_packet p3reloc;
-	पूर्णांक r;
+bool radeon_cs_packet_next_is_pkt3_nop(struct radeon_cs_parser *p)
+{
+	struct radeon_cs_packet p3reloc;
+	int r;
 
 	r = radeon_cs_packet_parse(p, &p3reloc, p->idx);
-	अगर (r)
-		वापस false;
-	अगर (p3reloc.type != RADEON_PACKET_TYPE3)
-		वापस false;
-	अगर (p3reloc.opcode != RADEON_PACKET3_NOP)
-		वापस false;
-	वापस true;
-पूर्ण
+	if (r)
+		return false;
+	if (p3reloc.type != RADEON_PACKET_TYPE3)
+		return false;
+	if (p3reloc.opcode != RADEON_PACKET3_NOP)
+		return false;
+	return true;
+}
 
 /**
  * radeon_cs_dump_packet() - dump raw packet context
- * @p:		काष्ठाure holding the parser context.
- * @pkt:	काष्ठाure holding the packet.
+ * @p:		structure holding the parser context.
+ * @pkt:	structure holding the packet.
  *
- * Used mostly क्रम debugging and error reporting.
+ * Used mostly for debugging and error reporting.
  **/
-व्योम radeon_cs_dump_packet(काष्ठा radeon_cs_parser *p,
-			   काष्ठा radeon_cs_packet *pkt)
-अणु
-	अस्थिर uपूर्णांक32_t *ib;
-	अचिन्हित i;
-	अचिन्हित idx;
+void radeon_cs_dump_packet(struct radeon_cs_parser *p,
+			   struct radeon_cs_packet *pkt)
+{
+	volatile uint32_t *ib;
+	unsigned i;
+	unsigned idx;
 
 	ib = p->ib.ptr;
 	idx = pkt->idx;
-	क्रम (i = 0; i <= (pkt->count + 1); i++, idx++)
+	for (i = 0; i <= (pkt->count + 1); i++, idx++)
 		DRM_INFO("ib[%d]=0x%08X\n", idx, ib[idx]);
-पूर्ण
+}
 
 /**
  * radeon_cs_packet_next_reloc() - parse next (should be reloc) packet
- * @p:			parser काष्ठाure holding parsing context.
- * @cs_reloc:		reloc inक्रमmations
- * @nomm:		no memory management क्रम debugging
+ * @p:			parser structure holding parsing context.
+ * @cs_reloc:		reloc informations
+ * @nomm:		no memory management for debugging
  *
- * Check अगर next packet is relocation packet3, करो bo validation and compute
+ * Check if next packet is relocation packet3, do bo validation and compute
  * GPU offset using the provided start.
  **/
-पूर्णांक radeon_cs_packet_next_reloc(काष्ठा radeon_cs_parser *p,
-				काष्ठा radeon_bo_list **cs_reloc,
-				पूर्णांक nomm)
-अणु
-	काष्ठा radeon_cs_chunk *relocs_chunk;
-	काष्ठा radeon_cs_packet p3reloc;
-	अचिन्हित idx;
-	पूर्णांक r;
+int radeon_cs_packet_next_reloc(struct radeon_cs_parser *p,
+				struct radeon_bo_list **cs_reloc,
+				int nomm)
+{
+	struct radeon_cs_chunk *relocs_chunk;
+	struct radeon_cs_packet p3reloc;
+	unsigned idx;
+	int r;
 
-	अगर (p->chunk_relocs == शून्य) अणु
+	if (p->chunk_relocs == NULL) {
 		DRM_ERROR("No relocation chunk !\n");
-		वापस -EINVAL;
-	पूर्ण
-	*cs_reloc = शून्य;
+		return -EINVAL;
+	}
+	*cs_reloc = NULL;
 	relocs_chunk = p->chunk_relocs;
 	r = radeon_cs_packet_parse(p, &p3reloc, p->idx);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 	p->idx += p3reloc.count + 2;
-	अगर (p3reloc.type != RADEON_PACKET_TYPE3 ||
-	    p3reloc.opcode != RADEON_PACKET3_NOP) अणु
+	if (p3reloc.type != RADEON_PACKET_TYPE3 ||
+	    p3reloc.opcode != RADEON_PACKET3_NOP) {
 		DRM_ERROR("No packet3 for relocation for packet at %d.\n",
 			  p3reloc.idx);
 		radeon_cs_dump_packet(p, &p3reloc);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	idx = radeon_get_ib_value(p, p3reloc.idx + 1);
-	अगर (idx >= relocs_chunk->length_dw) अणु
+	if (idx >= relocs_chunk->length_dw) {
 		DRM_ERROR("Relocs at %d after relocations chunk end %d !\n",
 			  idx, relocs_chunk->length_dw);
 		radeon_cs_dump_packet(p, &p3reloc);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	/* FIXME: we assume reloc size is 4 dwords */
-	अगर (nomm) अणु
+	if (nomm) {
 		*cs_reloc = p->relocs;
 		(*cs_reloc)->gpu_offset =
 			(u64)relocs_chunk->kdata[idx + 3] << 32;
 		(*cs_reloc)->gpu_offset |= relocs_chunk->kdata[idx + 0];
-	पूर्ण अन्यथा
+	} else
 		*cs_reloc = &p->relocs[(idx / 4)];
-	वापस 0;
-पूर्ण
+	return 0;
+}

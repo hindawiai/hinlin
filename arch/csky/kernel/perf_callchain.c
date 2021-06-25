@@ -1,74 +1,73 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-// Copyright (C) 2019 Hangzhou C-SKY Microप्रणालीs co.,ltd.
+// SPDX-License-Identifier: GPL-2.0
+// Copyright (C) 2019 Hangzhou C-SKY Microsystems co.,ltd.
 
-#समावेश <linux/perf_event.h>
-#समावेश <linux/uaccess.h>
+#include <linux/perf_event.h>
+#include <linux/uaccess.h>
 
 /* Kernel callchain */
-काष्ठा stackframe अणु
-	अचिन्हित दीर्घ fp;
-	अचिन्हित दीर्घ lr;
-पूर्ण;
+struct stackframe {
+	unsigned long fp;
+	unsigned long lr;
+};
 
-अटल पूर्णांक unwind_frame_kernel(काष्ठा stackframe *frame)
-अणु
-	अचिन्हित दीर्घ low = (अचिन्हित दीर्घ)task_stack_page(current);
-	अचिन्हित दीर्घ high = low + THREAD_SIZE;
+static int unwind_frame_kernel(struct stackframe *frame)
+{
+	unsigned long low = (unsigned long)task_stack_page(current);
+	unsigned long high = low + THREAD_SIZE;
 
-	अगर (unlikely(frame->fp < low || frame->fp > high))
-		वापस -EPERM;
+	if (unlikely(frame->fp < low || frame->fp > high))
+		return -EPERM;
 
-	अगर (kstack_end((व्योम *)frame->fp) || frame->fp & 0x3)
-		वापस -EPERM;
+	if (kstack_end((void *)frame->fp) || frame->fp & 0x3)
+		return -EPERM;
 
-	*frame = *(काष्ठा stackframe *)frame->fp;
+	*frame = *(struct stackframe *)frame->fp;
 
-	अगर (__kernel_text_address(frame->lr)) अणु
-		पूर्णांक graph = 0;
+	if (__kernel_text_address(frame->lr)) {
+		int graph = 0;
 
-		frame->lr = ftrace_graph_ret_addr(शून्य, &graph, frame->lr,
-				शून्य);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		frame->lr = ftrace_graph_ret_addr(NULL, &graph, frame->lr,
+				NULL);
+	}
+	return 0;
+}
 
-अटल व्योम notrace walk_stackframe(काष्ठा stackframe *fr,
-			काष्ठा perf_callchain_entry_ctx *entry)
-अणु
-	करो अणु
+static void notrace walk_stackframe(struct stackframe *fr,
+			struct perf_callchain_entry_ctx *entry)
+{
+	do {
 		perf_callchain_store(entry, fr->lr);
-	पूर्ण जबतक (unwind_frame_kernel(fr) >= 0);
-पूर्ण
+	} while (unwind_frame_kernel(fr) >= 0);
+}
 
 /*
- * Get the वापस address क्रम a single stackframe and वापस a poपूर्णांकer to the
+ * Get the return address for a single stackframe and return a pointer to the
  * next frame tail.
  */
-अटल अचिन्हित दीर्घ user_backtrace(काष्ठा perf_callchain_entry_ctx *entry,
-			अचिन्हित दीर्घ fp, अचिन्हित दीर्घ reg_lr)
-अणु
-	काष्ठा stackframe buftail;
-	अचिन्हित दीर्घ lr = 0;
-	अचिन्हित दीर्घ *user_frame_tail = (अचिन्हित दीर्घ *)fp;
+static unsigned long user_backtrace(struct perf_callchain_entry_ctx *entry,
+			unsigned long fp, unsigned long reg_lr)
+{
+	struct stackframe buftail;
+	unsigned long lr = 0;
+	unsigned long *user_frame_tail = (unsigned long *)fp;
 
-	/* Check accessibility of one काष्ठा frame_tail beyond */
-	अगर (!access_ok(user_frame_tail, माप(buftail)))
-		वापस 0;
-	अगर (__copy_from_user_inatomic(&buftail, user_frame_tail,
-				      माप(buftail)))
-		वापस 0;
+	/* Check accessibility of one struct frame_tail beyond */
+	if (!access_ok(user_frame_tail, sizeof(buftail)))
+		return 0;
+	if (__copy_from_user_inatomic(&buftail, user_frame_tail,
+				      sizeof(buftail)))
+		return 0;
 
-	अगर (reg_lr != 0)
+	if (reg_lr != 0)
 		lr = reg_lr;
-	अन्यथा
+	else
 		lr = buftail.lr;
 
 	fp = buftail.fp;
 	perf_callchain_store(entry, lr);
 
-	वापस fp;
-पूर्ण
+	return fp;
+}
 
 /*
  * This will be called when the target is in user mode
@@ -77,21 +76,21 @@
  * kernel/events/core.c:perf_prepare_sample()
  *
  * How to trigger perf_callchain_[user/kernel] :
- * $ perf record -e cpu-घड़ी --call-graph fp ./program
+ * $ perf record -e cpu-clock --call-graph fp ./program
  * $ perf report --call-graph
  *
- * On C-SKY platक्रमm, the program being sampled and the C library
+ * On C-SKY platform, the program being sampled and the C library
  * need to be compiled with * -mbacktrace, otherwise the user
  * stack will not contain function frame.
  */
-व्योम perf_callchain_user(काष्ठा perf_callchain_entry_ctx *entry,
-			 काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ fp = 0;
+void perf_callchain_user(struct perf_callchain_entry_ctx *entry,
+			 struct pt_regs *regs)
+{
+	unsigned long fp = 0;
 
-	/* C-SKY करोes not support भवization. */
-	अगर (perf_guest_cbs && perf_guest_cbs->is_in_guest())
-		वापस;
+	/* C-SKY does not support virtualization. */
+	if (perf_guest_cbs && perf_guest_cbs->is_in_guest())
+		return;
 
 	fp = regs->regs[4];
 	perf_callchain_store(entry, regs->pc);
@@ -99,27 +98,27 @@
 	/*
 	 * While backtrace from leaf function, lr is normally
 	 * not saved inside frame on C-SKY, so get lr from pt_regs
-	 * at the sample poपूर्णांक. However, lr value can be incorrect अगर
-	 * lr is used as temp रेजिस्टर
+	 * at the sample point. However, lr value can be incorrect if
+	 * lr is used as temp register
 	 */
 	fp = user_backtrace(entry, fp, regs->lr);
 
-	जबतक (fp && !(fp & 0x3) && entry->nr < entry->max_stack)
+	while (fp && !(fp & 0x3) && entry->nr < entry->max_stack)
 		fp = user_backtrace(entry, fp, 0);
-पूर्ण
+}
 
-व्योम perf_callchain_kernel(काष्ठा perf_callchain_entry_ctx *entry,
-			   काष्ठा pt_regs *regs)
-अणु
-	काष्ठा stackframe fr;
+void perf_callchain_kernel(struct perf_callchain_entry_ctx *entry,
+			   struct pt_regs *regs)
+{
+	struct stackframe fr;
 
-	/* C-SKY करोes not support भवization. */
-	अगर (perf_guest_cbs && perf_guest_cbs->is_in_guest()) अणु
+	/* C-SKY does not support virtualization. */
+	if (perf_guest_cbs && perf_guest_cbs->is_in_guest()) {
 		pr_warn("C-SKY does not support perf in guest mode!");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	fr.fp = regs->regs[4];
 	fr.lr = regs->lr;
 	walk_stackframe(&fr, entry);
-पूर्ण
+}

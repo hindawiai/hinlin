@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
 // Copyright (c) 2009 Yauhen Kharuzhy <jekhor@gmail.com>,
 //	as part of OpenInkpot project
@@ -8,68 +7,68 @@
 //
 // Samsung S3C2416 Mobile CPU support
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/list.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/init.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/serial_core.h>
-#समावेश <linux/device.h>
-#समावेश <linux/syscore_ops.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/reboot.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/interrupt.h>
+#include <linux/list.h>
+#include <linux/timer.h>
+#include <linux/init.h>
+#include <linux/gpio.h>
+#include <linux/platform_device.h>
+#include <linux/serial_core.h>
+#include <linux/device.h>
+#include <linux/syscore_ops.h>
+#include <linux/clk.h>
+#include <linux/io.h>
+#include <linux/reboot.h>
 
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/map.h>
-#समावेश <यंत्र/mach/irq.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/map.h>
+#include <asm/mach/irq.h>
 
-#समावेश "map.h"
-#समावेश "gpio-samsung.h"
-#समावेश <यंत्र/proc-fns.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/प्रणाली_misc.h>
+#include "map.h"
+#include "gpio-samsung.h"
+#include <asm/proc-fns.h>
+#include <asm/irq.h>
+#include <asm/system_misc.h>
 
-#समावेश "regs-s3c2443-clock.h"
-#समावेश "rtc-core-s3c24xx.h"
+#include "regs-s3c2443-clock.h"
+#include "rtc-core-s3c24xx.h"
 
-#समावेश "gpio-core.h"
-#समावेश "gpio-cfg.h"
-#समावेश "gpio-cfg-helpers.h"
-#समावेश "devs.h"
-#समावेश "cpu.h"
-#समावेश "sdhci.h"
-#समावेश "pm.h"
+#include "gpio-core.h"
+#include "gpio-cfg.h"
+#include "gpio-cfg-helpers.h"
+#include "devs.h"
+#include "cpu.h"
+#include "sdhci.h"
+#include "pm.h"
 
-#समावेश "iic-core.h"
-#समावेश "adc-core.h"
+#include "iic-core.h"
+#include "adc-core.h"
 
-#समावेश "s3c24xx.h"
-#समावेश "fb-core-s3c24xx.h"
-#समावेश "nand-core-s3c24xx.h"
-#समावेश "spi-core-s3c24xx.h"
+#include "s3c24xx.h"
+#include "fb-core-s3c24xx.h"
+#include "nand-core-s3c24xx.h"
+#include "spi-core-s3c24xx.h"
 
-अटल काष्ठा map_desc s3c2416_iodesc[] __initdata __maybe_unused = अणु
+static struct map_desc s3c2416_iodesc[] __initdata __maybe_unused = {
 	IODESC_ENT(WATCHDOG),
 	IODESC_ENT(CLKPWR),
 	IODESC_ENT(TIMER),
-पूर्ण;
+};
 
-काष्ठा bus_type s3c2416_subsys = अणु
+struct bus_type s3c2416_subsys = {
 	.name = "s3c2416-core",
 	.dev_name = "s3c2416-core",
-पूर्ण;
+};
 
-अटल काष्ठा device s3c2416_dev = अणु
+static struct device s3c2416_dev = {
 	.bus		= &s3c2416_subsys,
-पूर्ण;
+};
 
-पूर्णांक __init s3c2416_init(व्योम)
-अणु
-	prपूर्णांकk(KERN_INFO "S3C2416: Initializing architecture\n");
+int __init s3c2416_init(void)
+{
+	printk(KERN_INFO "S3C2416: Initializing architecture\n");
 
 	/* change WDT IRQ number */
 	s3c_device_wdt.resource[1].start = IRQ_S3C2443_WDT;
@@ -84,50 +83,50 @@
 	s3c_adc_setname("s3c2416-adc");
 	s3c_rtc_setname("s3c2416-rtc");
 
-#अगर_घोषित CONFIG_PM_SLEEP
-	रेजिस्टर_syscore_ops(&s3c2416_pm_syscore_ops);
-	रेजिस्टर_syscore_ops(&s3c24xx_irq_syscore_ops);
-	रेजिस्टर_syscore_ops(&s3c2416_irq_syscore_ops);
-#पूर्ण_अगर
+#ifdef CONFIG_PM_SLEEP
+	register_syscore_ops(&s3c2416_pm_syscore_ops);
+	register_syscore_ops(&s3c24xx_irq_syscore_ops);
+	register_syscore_ops(&s3c2416_irq_syscore_ops);
+#endif
 
-	वापस device_रेजिस्टर(&s3c2416_dev);
-पूर्ण
+	return device_register(&s3c2416_dev);
+}
 
-व्योम __init s3c2416_init_uarts(काष्ठा s3c2410_uartcfg *cfg, पूर्णांक no)
-अणु
+void __init s3c2416_init_uarts(struct s3c2410_uartcfg *cfg, int no)
+{
 	s3c24xx_init_uartdevs("s3c2440-uart", s3c2410_uart_resources, cfg, no);
 
 	s3c_nand_setname("s3c2412-nand");
-पूर्ण
+}
 
 /* s3c2416_map_io
  *
- * रेजिस्टर the standard cpu IO areas, and any passed in from the
- * machine specअगरic initialisation.
+ * register the standard cpu IO areas, and any passed in from the
+ * machine specific initialisation.
  */
 
-व्योम __init s3c2416_map_io(व्योम)
-अणु
-	s3c24xx_gpiocfg_शेष.set_pull = samsung_gpio_setpull_upकरोwn;
-	s3c24xx_gpiocfg_शेष.get_pull = samsung_gpio_getpull_upकरोwn;
+void __init s3c2416_map_io(void)
+{
+	s3c24xx_gpiocfg_default.set_pull = samsung_gpio_setpull_updown;
+	s3c24xx_gpiocfg_default.get_pull = samsung_gpio_getpull_updown;
 
-	/* initialize device inक्रमmation early */
-	s3c2416_शेष_sdhci0();
-	s3c2416_शेष_sdhci1();
+	/* initialize device information early */
+	s3c2416_default_sdhci0();
+	s3c2416_default_sdhci1();
 	s3c24xx_spi_setname("s3c2443-spi");
 
 	iotable_init(s3c2416_iodesc, ARRAY_SIZE(s3c2416_iodesc));
-पूर्ण
+}
 
-/* need to रेजिस्टर the subप्रणाली beक्रमe we actually रेजिस्टर the device, and
- * we also need to ensure that it has been initialised beक्रमe any of the
- * drivers even try to use it (even अगर not on an s3c2416 based प्रणाली)
+/* need to register the subsystem before we actually register the device, and
+ * we also need to ensure that it has been initialised before any of the
+ * drivers even try to use it (even if not on an s3c2416 based system)
  * as a driver which may support both 2443 and 2440 may try and use it.
 */
 
-अटल पूर्णांक __init s3c2416_core_init(व्योम)
-अणु
-	वापस subsys_प्रणाली_रेजिस्टर(&s3c2416_subsys, शून्य);
-पूर्ण
+static int __init s3c2416_core_init(void)
+{
+	return subsys_system_register(&s3c2416_subsys, NULL);
+}
 
 core_initcall(s3c2416_core_init);

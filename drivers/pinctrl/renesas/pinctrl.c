@@ -1,827 +1,826 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * SuperH Pin Function Controller pinmux support.
  *
  * Copyright (C) 2012  Paul Mundt
  */
 
-#घोषणा DRV_NAME "sh-pfc"
+#define DRV_NAME "sh-pfc"
 
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/pinctrl/consumer.h>
-#समावेश <linux/pinctrl/machine.h>
-#समावेश <linux/pinctrl/pinconf.h>
-#समावेश <linux/pinctrl/pinconf-generic.h>
-#समावेश <linux/pinctrl/pinctrl.h>
-#समावेश <linux/pinctrl/pinmux.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/pinctrl/consumer.h>
+#include <linux/pinctrl/machine.h>
+#include <linux/pinctrl/pinconf.h>
+#include <linux/pinctrl/pinconf-generic.h>
+#include <linux/pinctrl/pinctrl.h>
+#include <linux/pinctrl/pinmux.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
 
-#समावेश "core.h"
-#समावेश "../core.h"
-#समावेश "../pinconf.h"
+#include "core.h"
+#include "../core.h"
+#include "../pinconf.h"
 
-काष्ठा sh_pfc_pin_config अणु
+struct sh_pfc_pin_config {
 	u16 gpio_enabled:1;
 	u16 mux_mark:15;
-पूर्ण;
+};
 
-काष्ठा sh_pfc_pinctrl अणु
-	काष्ठा pinctrl_dev *pctl;
-	काष्ठा pinctrl_desc pctl_desc;
+struct sh_pfc_pinctrl {
+	struct pinctrl_dev *pctl;
+	struct pinctrl_desc pctl_desc;
 
-	काष्ठा sh_pfc *pfc;
+	struct sh_pfc *pfc;
 
-	काष्ठा pinctrl_pin_desc *pins;
-	काष्ठा sh_pfc_pin_config *configs;
+	struct pinctrl_pin_desc *pins;
+	struct sh_pfc_pin_config *configs;
 
-	स्थिर अक्षर *func_prop_name;
-	स्थिर अक्षर *groups_prop_name;
-	स्थिर अक्षर *pins_prop_name;
-पूर्ण;
+	const char *func_prop_name;
+	const char *groups_prop_name;
+	const char *pins_prop_name;
+};
 
-अटल पूर्णांक sh_pfc_get_groups_count(काष्ठा pinctrl_dev *pctldev)
-अणु
-	काष्ठा sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
+static int sh_pfc_get_groups_count(struct pinctrl_dev *pctldev)
+{
+	struct sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस pmx->pfc->info->nr_groups;
-पूर्ण
+	return pmx->pfc->info->nr_groups;
+}
 
-अटल स्थिर अक्षर *sh_pfc_get_group_name(काष्ठा pinctrl_dev *pctldev,
-					 अचिन्हित selector)
-अणु
-	काष्ठा sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
+static const char *sh_pfc_get_group_name(struct pinctrl_dev *pctldev,
+					 unsigned selector)
+{
+	struct sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस pmx->pfc->info->groups[selector].name;
-पूर्ण
+	return pmx->pfc->info->groups[selector].name;
+}
 
-अटल पूर्णांक sh_pfc_get_group_pins(काष्ठा pinctrl_dev *pctldev, अचिन्हित selector,
-				 स्थिर अचिन्हित **pins, अचिन्हित *num_pins)
-अणु
-	काष्ठा sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
+static int sh_pfc_get_group_pins(struct pinctrl_dev *pctldev, unsigned selector,
+				 const unsigned **pins, unsigned *num_pins)
+{
+	struct sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
 
 	*pins = pmx->pfc->info->groups[selector].pins;
 	*num_pins = pmx->pfc->info->groups[selector].nr_pins;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sh_pfc_pin_dbg_show(काष्ठा pinctrl_dev *pctldev, काष्ठा seq_file *s,
-				अचिन्हित offset)
-अणु
-	seq_माला_दो(s, DRV_NAME);
-पूर्ण
+static void sh_pfc_pin_dbg_show(struct pinctrl_dev *pctldev, struct seq_file *s,
+				unsigned offset)
+{
+	seq_puts(s, DRV_NAME);
+}
 
-#अगर_घोषित CONFIG_OF
-अटल पूर्णांक sh_pfc_map_add_config(काष्ठा pinctrl_map *map,
-				 स्थिर अक्षर *group_or_pin,
-				 क्रमागत pinctrl_map_type type,
-				 अचिन्हित दीर्घ *configs,
-				 अचिन्हित पूर्णांक num_configs)
-अणु
-	अचिन्हित दीर्घ *cfgs;
+#ifdef CONFIG_OF
+static int sh_pfc_map_add_config(struct pinctrl_map *map,
+				 const char *group_or_pin,
+				 enum pinctrl_map_type type,
+				 unsigned long *configs,
+				 unsigned int num_configs)
+{
+	unsigned long *cfgs;
 
-	cfgs = kmemdup(configs, num_configs * माप(*cfgs),
+	cfgs = kmemdup(configs, num_configs * sizeof(*cfgs),
 		       GFP_KERNEL);
-	अगर (cfgs == शून्य)
-		वापस -ENOMEM;
+	if (cfgs == NULL)
+		return -ENOMEM;
 
 	map->type = type;
 	map->data.configs.group_or_pin = group_or_pin;
 	map->data.configs.configs = cfgs;
 	map->data.configs.num_configs = num_configs;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sh_pfc_dt_subnode_to_map(काष्ठा pinctrl_dev *pctldev,
-				    काष्ठा device_node *np,
-				    काष्ठा pinctrl_map **map,
-				    अचिन्हित पूर्णांक *num_maps, अचिन्हित पूर्णांक *index)
-अणु
-	काष्ठा sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
-	काष्ठा device *dev = pmx->pfc->dev;
-	काष्ठा pinctrl_map *maps = *map;
-	अचिन्हित पूर्णांक nmaps = *num_maps;
-	अचिन्हित पूर्णांक idx = *index;
-	अचिन्हित पूर्णांक num_configs;
-	स्थिर अक्षर *function = शून्य;
-	अचिन्हित दीर्घ *configs;
-	काष्ठा property *prop;
-	अचिन्हित पूर्णांक num_groups;
-	अचिन्हित पूर्णांक num_pins;
-	स्थिर अक्षर *group;
-	स्थिर अक्षर *pin;
-	पूर्णांक ret;
+static int sh_pfc_dt_subnode_to_map(struct pinctrl_dev *pctldev,
+				    struct device_node *np,
+				    struct pinctrl_map **map,
+				    unsigned int *num_maps, unsigned int *index)
+{
+	struct sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
+	struct device *dev = pmx->pfc->dev;
+	struct pinctrl_map *maps = *map;
+	unsigned int nmaps = *num_maps;
+	unsigned int idx = *index;
+	unsigned int num_configs;
+	const char *function = NULL;
+	unsigned long *configs;
+	struct property *prop;
+	unsigned int num_groups;
+	unsigned int num_pins;
+	const char *group;
+	const char *pin;
+	int ret;
 
-	/* Support both the old Renesas-specअगरic properties and the new standard
+	/* Support both the old Renesas-specific properties and the new standard
 	 * properties. Mixing old and new properties isn't allowed, neither
 	 * inside a subnode nor across subnodes.
 	 */
-	अगर (!pmx->func_prop_name) अणु
-		अगर (of_find_property(np, "groups", शून्य) ||
-		    of_find_property(np, "pins", शून्य)) अणु
+	if (!pmx->func_prop_name) {
+		if (of_find_property(np, "groups", NULL) ||
+		    of_find_property(np, "pins", NULL)) {
 			pmx->func_prop_name = "function";
 			pmx->groups_prop_name = "groups";
 			pmx->pins_prop_name = "pins";
-		पूर्ण अन्यथा अणु
+		} else {
 			pmx->func_prop_name = "renesas,function";
 			pmx->groups_prop_name = "renesas,groups";
 			pmx->pins_prop_name = "renesas,pins";
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Parse the function and configuration properties. At least a function
-	 * or one configuration must be specअगरied.
+	 * or one configuration must be specified.
 	 */
-	ret = of_property_पढ़ो_string(np, pmx->func_prop_name, &function);
-	अगर (ret < 0 && ret != -EINVAL) अणु
+	ret = of_property_read_string(np, pmx->func_prop_name, &function);
+	if (ret < 0 && ret != -EINVAL) {
 		dev_err(dev, "Invalid function in DT\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = pinconf_generic_parse_dt_config(np, शून्य, &configs, &num_configs);
-	अगर (ret < 0)
-		वापस ret;
+	ret = pinconf_generic_parse_dt_config(np, NULL, &configs, &num_configs);
+	if (ret < 0)
+		return ret;
 
-	अगर (!function && num_configs == 0) अणु
+	if (!function && num_configs == 0) {
 		dev_err(dev,
 			"DT node must contain at least a function or config\n");
 		ret = -ENODEV;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	/* Count the number of pins and groups and पुनः_स्मृतिate mappings. */
+	/* Count the number of pins and groups and reallocate mappings. */
 	ret = of_property_count_strings(np, pmx->pins_prop_name);
-	अगर (ret == -EINVAL) अणु
+	if (ret == -EINVAL) {
 		num_pins = 0;
-	पूर्ण अन्यथा अगर (ret < 0) अणु
+	} else if (ret < 0) {
 		dev_err(dev, "Invalid pins list in DT\n");
-		जाओ करोne;
-	पूर्ण अन्यथा अणु
+		goto done;
+	} else {
 		num_pins = ret;
-	पूर्ण
+	}
 
 	ret = of_property_count_strings(np, pmx->groups_prop_name);
-	अगर (ret == -EINVAL) अणु
+	if (ret == -EINVAL) {
 		num_groups = 0;
-	पूर्ण अन्यथा अगर (ret < 0) अणु
+	} else if (ret < 0) {
 		dev_err(dev, "Invalid pin groups list in DT\n");
-		जाओ करोne;
-	पूर्ण अन्यथा अणु
+		goto done;
+	} else {
 		num_groups = ret;
-	पूर्ण
+	}
 
-	अगर (!num_pins && !num_groups) अणु
+	if (!num_pins && !num_groups) {
 		dev_err(dev, "No pin or group provided in DT node\n");
 		ret = -ENODEV;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (function)
+	if (function)
 		nmaps += num_groups;
-	अगर (configs)
+	if (configs)
 		nmaps += num_pins + num_groups;
 
-	maps = kपुनः_स्मृति(maps, माप(*maps) * nmaps, GFP_KERNEL);
-	अगर (maps == शून्य) अणु
+	maps = krealloc(maps, sizeof(*maps) * nmaps, GFP_KERNEL);
+	if (maps == NULL) {
 		ret = -ENOMEM;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	*map = maps;
 	*num_maps = nmaps;
 
 	/* Iterate over pins and groups and create the mappings. */
-	of_property_क्रम_each_string(np, pmx->groups_prop_name, prop, group) अणु
-		अगर (function) अणु
+	of_property_for_each_string(np, pmx->groups_prop_name, prop, group) {
+		if (function) {
 			maps[idx].type = PIN_MAP_TYPE_MUX_GROUP;
 			maps[idx].data.mux.group = group;
 			maps[idx].data.mux.function = function;
 			idx++;
-		पूर्ण
+		}
 
-		अगर (configs) अणु
+		if (configs) {
 			ret = sh_pfc_map_add_config(&maps[idx], group,
 						    PIN_MAP_TYPE_CONFIGS_GROUP,
 						    configs, num_configs);
-			अगर (ret < 0)
-				जाओ करोne;
+			if (ret < 0)
+				goto done;
 
 			idx++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!configs) अणु
+	if (!configs) {
 		ret = 0;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	of_property_क्रम_each_string(np, pmx->pins_prop_name, prop, pin) अणु
+	of_property_for_each_string(np, pmx->pins_prop_name, prop, pin) {
 		ret = sh_pfc_map_add_config(&maps[idx], pin,
 					    PIN_MAP_TYPE_CONFIGS_PIN,
 					    configs, num_configs);
-		अगर (ret < 0)
-			जाओ करोne;
+		if (ret < 0)
+			goto done;
 
 		idx++;
-	पूर्ण
+	}
 
-करोne:
+done:
 	*index = idx;
-	kमुक्त(configs);
-	वापस ret;
-पूर्ण
+	kfree(configs);
+	return ret;
+}
 
-अटल व्योम sh_pfc_dt_मुक्त_map(काष्ठा pinctrl_dev *pctldev,
-			       काष्ठा pinctrl_map *map, अचिन्हित num_maps)
-अणु
-	अचिन्हित पूर्णांक i;
+static void sh_pfc_dt_free_map(struct pinctrl_dev *pctldev,
+			       struct pinctrl_map *map, unsigned num_maps)
+{
+	unsigned int i;
 
-	अगर (map == शून्य)
-		वापस;
+	if (map == NULL)
+		return;
 
-	क्रम (i = 0; i < num_maps; ++i) अणु
-		अगर (map[i].type == PIN_MAP_TYPE_CONFIGS_GROUP ||
+	for (i = 0; i < num_maps; ++i) {
+		if (map[i].type == PIN_MAP_TYPE_CONFIGS_GROUP ||
 		    map[i].type == PIN_MAP_TYPE_CONFIGS_PIN)
-			kमुक्त(map[i].data.configs.configs);
-	पूर्ण
+			kfree(map[i].data.configs.configs);
+	}
 
-	kमुक्त(map);
-पूर्ण
+	kfree(map);
+}
 
-अटल पूर्णांक sh_pfc_dt_node_to_map(काष्ठा pinctrl_dev *pctldev,
-				 काष्ठा device_node *np,
-				 काष्ठा pinctrl_map **map, अचिन्हित *num_maps)
-अणु
-	काष्ठा sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
-	काष्ठा device *dev = pmx->pfc->dev;
-	काष्ठा device_node *child;
-	अचिन्हित पूर्णांक index;
-	पूर्णांक ret;
+static int sh_pfc_dt_node_to_map(struct pinctrl_dev *pctldev,
+				 struct device_node *np,
+				 struct pinctrl_map **map, unsigned *num_maps)
+{
+	struct sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
+	struct device *dev = pmx->pfc->dev;
+	struct device_node *child;
+	unsigned int index;
+	int ret;
 
-	*map = शून्य;
+	*map = NULL;
 	*num_maps = 0;
 	index = 0;
 
-	क्रम_each_child_of_node(np, child) अणु
+	for_each_child_of_node(np, child) {
 		ret = sh_pfc_dt_subnode_to_map(pctldev, child, map, num_maps,
 					       &index);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			of_node_put(child);
-			जाओ करोne;
-		पूर्ण
-	पूर्ण
+			goto done;
+		}
+	}
 
 	/* If no mapping has been found in child nodes try the config node. */
-	अगर (*num_maps == 0) अणु
+	if (*num_maps == 0) {
 		ret = sh_pfc_dt_subnode_to_map(pctldev, np, map, num_maps,
 					       &index);
-		अगर (ret < 0)
-			जाओ करोne;
-	पूर्ण
+		if (ret < 0)
+			goto done;
+	}
 
-	अगर (*num_maps)
-		वापस 0;
+	if (*num_maps)
+		return 0;
 
 	dev_err(dev, "no mapping found in node %pOF\n", np);
 	ret = -EINVAL;
 
-करोne:
-	अगर (ret < 0)
-		sh_pfc_dt_मुक्त_map(pctldev, *map, *num_maps);
+done:
+	if (ret < 0)
+		sh_pfc_dt_free_map(pctldev, *map, *num_maps);
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_OF */
+	return ret;
+}
+#endif /* CONFIG_OF */
 
-अटल स्थिर काष्ठा pinctrl_ops sh_pfc_pinctrl_ops = अणु
+static const struct pinctrl_ops sh_pfc_pinctrl_ops = {
 	.get_groups_count	= sh_pfc_get_groups_count,
 	.get_group_name		= sh_pfc_get_group_name,
 	.get_group_pins		= sh_pfc_get_group_pins,
 	.pin_dbg_show		= sh_pfc_pin_dbg_show,
-#अगर_घोषित CONFIG_OF
+#ifdef CONFIG_OF
 	.dt_node_to_map		= sh_pfc_dt_node_to_map,
-	.dt_मुक्त_map		= sh_pfc_dt_मुक्त_map,
-#पूर्ण_अगर
-पूर्ण;
+	.dt_free_map		= sh_pfc_dt_free_map,
+#endif
+};
 
-अटल पूर्णांक sh_pfc_get_functions_count(काष्ठा pinctrl_dev *pctldev)
-अणु
-	काष्ठा sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
+static int sh_pfc_get_functions_count(struct pinctrl_dev *pctldev)
+{
+	struct sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस pmx->pfc->info->nr_functions;
-पूर्ण
+	return pmx->pfc->info->nr_functions;
+}
 
-अटल स्थिर अक्षर *sh_pfc_get_function_name(काष्ठा pinctrl_dev *pctldev,
-					    अचिन्हित selector)
-अणु
-	काष्ठा sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
+static const char *sh_pfc_get_function_name(struct pinctrl_dev *pctldev,
+					    unsigned selector)
+{
+	struct sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस pmx->pfc->info->functions[selector].name;
-पूर्ण
+	return pmx->pfc->info->functions[selector].name;
+}
 
-अटल पूर्णांक sh_pfc_get_function_groups(काष्ठा pinctrl_dev *pctldev,
-				      अचिन्हित selector,
-				      स्थिर अक्षर * स्थिर **groups,
-				      अचिन्हित * स्थिर num_groups)
-अणु
-	काष्ठा sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
+static int sh_pfc_get_function_groups(struct pinctrl_dev *pctldev,
+				      unsigned selector,
+				      const char * const **groups,
+				      unsigned * const num_groups)
+{
+	struct sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
 
 	*groups = pmx->pfc->info->functions[selector].groups;
 	*num_groups = pmx->pfc->info->functions[selector].nr_groups;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sh_pfc_func_set_mux(काष्ठा pinctrl_dev *pctldev, अचिन्हित selector,
-			       अचिन्हित group)
-अणु
-	काष्ठा sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
-	काष्ठा sh_pfc *pfc = pmx->pfc;
-	स्थिर काष्ठा sh_pfc_pin_group *grp = &pfc->info->groups[group];
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret = 0;
+static int sh_pfc_func_set_mux(struct pinctrl_dev *pctldev, unsigned selector,
+			       unsigned group)
+{
+	struct sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
+	struct sh_pfc *pfc = pmx->pfc;
+	const struct sh_pfc_pin_group *grp = &pfc->info->groups[group];
+	unsigned long flags;
+	unsigned int i;
+	int ret = 0;
 
 	dev_dbg(pctldev->dev, "Configuring pin group %s\n", grp->name);
 
 	spin_lock_irqsave(&pfc->lock, flags);
 
-	क्रम (i = 0; i < grp->nr_pins; ++i) अणु
-		पूर्णांक idx = sh_pfc_get_pin_index(pfc, grp->pins[i]);
-		काष्ठा sh_pfc_pin_config *cfg = &pmx->configs[idx];
+	for (i = 0; i < grp->nr_pins; ++i) {
+		int idx = sh_pfc_get_pin_index(pfc, grp->pins[i]);
+		struct sh_pfc_pin_config *cfg = &pmx->configs[idx];
 
 		/*
 		 * This driver cannot manage both gpio and mux when the gpio
-		 * pin is alपढ़ोy enabled. So, this function fails.
+		 * pin is already enabled. So, this function fails.
 		 */
-		अगर (cfg->gpio_enabled) अणु
+		if (cfg->gpio_enabled) {
 			ret = -EBUSY;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 
 		ret = sh_pfc_config_mux(pfc, grp->mux[i], PINMUX_TYPE_FUNCTION);
-		अगर (ret < 0)
-			जाओ करोne;
-	पूर्ण
+		if (ret < 0)
+			goto done;
+	}
 
 	/* All group pins are configured, mark the pins as muxed */
-	क्रम (i = 0; i < grp->nr_pins; ++i) अणु
-		पूर्णांक idx = sh_pfc_get_pin_index(pfc, grp->pins[i]);
-		काष्ठा sh_pfc_pin_config *cfg = &pmx->configs[idx];
+	for (i = 0; i < grp->nr_pins; ++i) {
+		int idx = sh_pfc_get_pin_index(pfc, grp->pins[i]);
+		struct sh_pfc_pin_config *cfg = &pmx->configs[idx];
 
 		cfg->mux_mark = grp->mux[i];
-	पूर्ण
+	}
 
-करोne:
+done:
 	spin_unlock_irqrestore(&pfc->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sh_pfc_gpio_request_enable(काष्ठा pinctrl_dev *pctldev,
-				      काष्ठा pinctrl_gpio_range *range,
-				      अचिन्हित offset)
-अणु
-	काष्ठा sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
-	काष्ठा sh_pfc *pfc = pmx->pfc;
-	पूर्णांक idx = sh_pfc_get_pin_index(pfc, offset);
-	काष्ठा sh_pfc_pin_config *cfg = &pmx->configs[idx];
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int sh_pfc_gpio_request_enable(struct pinctrl_dev *pctldev,
+				      struct pinctrl_gpio_range *range,
+				      unsigned offset)
+{
+	struct sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
+	struct sh_pfc *pfc = pmx->pfc;
+	int idx = sh_pfc_get_pin_index(pfc, offset);
+	struct sh_pfc_pin_config *cfg = &pmx->configs[idx];
+	unsigned long flags;
+	int ret;
 
 	spin_lock_irqsave(&pfc->lock, flags);
 
-	अगर (!pfc->gpio) अणु
-		/* If GPIOs are handled बाह्यally the pin mux type needs to be
+	if (!pfc->gpio) {
+		/* If GPIOs are handled externally the pin mux type needs to be
 		 * set to GPIO here.
 		 */
-		स्थिर काष्ठा sh_pfc_pin *pin = &pfc->info->pins[idx];
+		const struct sh_pfc_pin *pin = &pfc->info->pins[idx];
 
-		ret = sh_pfc_config_mux(pfc, pin->क्रमागत_id, PINMUX_TYPE_GPIO);
-		अगर (ret < 0)
-			जाओ करोne;
-	पूर्ण
+		ret = sh_pfc_config_mux(pfc, pin->enum_id, PINMUX_TYPE_GPIO);
+		if (ret < 0)
+			goto done;
+	}
 
 	cfg->gpio_enabled = true;
 
 	ret = 0;
 
-करोne:
+done:
 	spin_unlock_irqrestore(&pfc->lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम sh_pfc_gpio_disable_मुक्त(काष्ठा pinctrl_dev *pctldev,
-				     काष्ठा pinctrl_gpio_range *range,
-				     अचिन्हित offset)
-अणु
-	काष्ठा sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
-	काष्ठा sh_pfc *pfc = pmx->pfc;
-	पूर्णांक idx = sh_pfc_get_pin_index(pfc, offset);
-	काष्ठा sh_pfc_pin_config *cfg = &pmx->configs[idx];
-	अचिन्हित दीर्घ flags;
+static void sh_pfc_gpio_disable_free(struct pinctrl_dev *pctldev,
+				     struct pinctrl_gpio_range *range,
+				     unsigned offset)
+{
+	struct sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
+	struct sh_pfc *pfc = pmx->pfc;
+	int idx = sh_pfc_get_pin_index(pfc, offset);
+	struct sh_pfc_pin_config *cfg = &pmx->configs[idx];
+	unsigned long flags;
 
 	spin_lock_irqsave(&pfc->lock, flags);
 	cfg->gpio_enabled = false;
-	/* If mux is alपढ़ोy set, this configures it here */
-	अगर (cfg->mux_mark)
+	/* If mux is already set, this configures it here */
+	if (cfg->mux_mark)
 		sh_pfc_config_mux(pfc, cfg->mux_mark, PINMUX_TYPE_FUNCTION);
 	spin_unlock_irqrestore(&pfc->lock, flags);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PINCTRL_SH_PFC_GPIO
-अटल पूर्णांक sh_pfc_gpio_set_direction(काष्ठा pinctrl_dev *pctldev,
-				     काष्ठा pinctrl_gpio_range *range,
-				     अचिन्हित offset, bool input)
-अणु
-	काष्ठा sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
-	काष्ठा sh_pfc *pfc = pmx->pfc;
-	पूर्णांक new_type = input ? PINMUX_TYPE_INPUT : PINMUX_TYPE_OUTPUT;
-	पूर्णांक idx = sh_pfc_get_pin_index(pfc, offset);
-	स्थिर काष्ठा sh_pfc_pin *pin = &pfc->info->pins[idx];
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक dir;
-	पूर्णांक ret;
+#ifdef CONFIG_PINCTRL_SH_PFC_GPIO
+static int sh_pfc_gpio_set_direction(struct pinctrl_dev *pctldev,
+				     struct pinctrl_gpio_range *range,
+				     unsigned offset, bool input)
+{
+	struct sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
+	struct sh_pfc *pfc = pmx->pfc;
+	int new_type = input ? PINMUX_TYPE_INPUT : PINMUX_TYPE_OUTPUT;
+	int idx = sh_pfc_get_pin_index(pfc, offset);
+	const struct sh_pfc_pin *pin = &pfc->info->pins[idx];
+	unsigned long flags;
+	unsigned int dir;
+	int ret;
 
-	/* Check अगर the requested direction is supported by the pin. Not all
-	 * SoCs provide pin config data, so perक्रमm the check conditionally.
+	/* Check if the requested direction is supported by the pin. Not all
+	 * SoCs provide pin config data, so perform the check conditionally.
 	 */
-	अगर (pin->configs) अणु
+	if (pin->configs) {
 		dir = input ? SH_PFC_PIN_CFG_INPUT : SH_PFC_PIN_CFG_OUTPUT;
-		अगर (!(pin->configs & dir))
-			वापस -EINVAL;
-	पूर्ण
+		if (!(pin->configs & dir))
+			return -EINVAL;
+	}
 
 	spin_lock_irqsave(&pfc->lock, flags);
-	ret = sh_pfc_config_mux(pfc, pin->क्रमागत_id, new_type);
+	ret = sh_pfc_config_mux(pfc, pin->enum_id, new_type);
 	spin_unlock_irqrestore(&pfc->lock, flags);
-	वापस ret;
-पूर्ण
-#अन्यथा
-#घोषणा sh_pfc_gpio_set_direction	शून्य
-#पूर्ण_अगर
+	return ret;
+}
+#else
+#define sh_pfc_gpio_set_direction	NULL
+#endif
 
-अटल स्थिर काष्ठा pinmux_ops sh_pfc_pinmux_ops = अणु
+static const struct pinmux_ops sh_pfc_pinmux_ops = {
 	.get_functions_count	= sh_pfc_get_functions_count,
 	.get_function_name	= sh_pfc_get_function_name,
 	.get_function_groups	= sh_pfc_get_function_groups,
 	.set_mux		= sh_pfc_func_set_mux,
 	.gpio_request_enable	= sh_pfc_gpio_request_enable,
-	.gpio_disable_मुक्त	= sh_pfc_gpio_disable_मुक्त,
+	.gpio_disable_free	= sh_pfc_gpio_disable_free,
 	.gpio_set_direction	= sh_pfc_gpio_set_direction,
-पूर्ण;
+};
 
-अटल u32 sh_pfc_pinconf_find_drive_strength_reg(काष्ठा sh_pfc *pfc,
-		अचिन्हित पूर्णांक pin, अचिन्हित पूर्णांक *offset, अचिन्हित पूर्णांक *size)
-अणु
-	स्थिर काष्ठा pinmux_drive_reg_field *field;
-	स्थिर काष्ठा pinmux_drive_reg *reg;
-	अचिन्हित पूर्णांक i;
+static u32 sh_pfc_pinconf_find_drive_strength_reg(struct sh_pfc *pfc,
+		unsigned int pin, unsigned int *offset, unsigned int *size)
+{
+	const struct pinmux_drive_reg_field *field;
+	const struct pinmux_drive_reg *reg;
+	unsigned int i;
 
-	क्रम (reg = pfc->info->drive_regs; reg->reg; ++reg) अणु
-		क्रम (i = 0; i < ARRAY_SIZE(reg->fields); ++i) अणु
+	for (reg = pfc->info->drive_regs; reg->reg; ++reg) {
+		for (i = 0; i < ARRAY_SIZE(reg->fields); ++i) {
 			field = &reg->fields[i];
 
-			अगर (field->size && field->pin == pin) अणु
+			if (field->size && field->pin == pin) {
 				*offset = field->offset;
 				*size = field->size;
 
-				वापस reg->reg;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return reg->reg;
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sh_pfc_pinconf_get_drive_strength(काष्ठा sh_pfc *pfc,
-					     अचिन्हित पूर्णांक pin)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक size;
+static int sh_pfc_pinconf_get_drive_strength(struct sh_pfc *pfc,
+					     unsigned int pin)
+{
+	unsigned long flags;
+	unsigned int offset;
+	unsigned int size;
 	u32 reg;
 	u32 val;
 
 	reg = sh_pfc_pinconf_find_drive_strength_reg(pfc, pin, &offset, &size);
-	अगर (!reg)
-		वापस -EINVAL;
+	if (!reg)
+		return -EINVAL;
 
 	spin_lock_irqsave(&pfc->lock, flags);
-	val = sh_pfc_पढ़ो(pfc, reg);
+	val = sh_pfc_read(pfc, reg);
 	spin_unlock_irqrestore(&pfc->lock, flags);
 
 	val = (val >> offset) & GENMASK(size - 1, 0);
 
 	/* Convert the value to mA based on a full drive strength value of 24mA.
-	 * We can make the full value configurable later अगर needed.
+	 * We can make the full value configurable later if needed.
 	 */
-	वापस (val + 1) * (size == 2 ? 6 : 3);
-पूर्ण
+	return (val + 1) * (size == 2 ? 6 : 3);
+}
 
-अटल पूर्णांक sh_pfc_pinconf_set_drive_strength(काष्ठा sh_pfc *pfc,
-					     अचिन्हित पूर्णांक pin, u16 strength)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक size;
-	अचिन्हित पूर्णांक step;
+static int sh_pfc_pinconf_set_drive_strength(struct sh_pfc *pfc,
+					     unsigned int pin, u16 strength)
+{
+	unsigned long flags;
+	unsigned int offset;
+	unsigned int size;
+	unsigned int step;
 	u32 reg;
 	u32 val;
 
 	reg = sh_pfc_pinconf_find_drive_strength_reg(pfc, pin, &offset, &size);
-	अगर (!reg)
-		वापस -EINVAL;
+	if (!reg)
+		return -EINVAL;
 
 	step = size == 2 ? 6 : 3;
 
-	अगर (strength < step || strength > 24)
-		वापस -EINVAL;
+	if (strength < step || strength > 24)
+		return -EINVAL;
 
 	/* Convert the value from mA based on a full drive strength value of
-	 * 24mA. We can make the full value configurable later अगर needed.
+	 * 24mA. We can make the full value configurable later if needed.
 	 */
 	strength = strength / step - 1;
 
 	spin_lock_irqsave(&pfc->lock, flags);
 
-	val = sh_pfc_पढ़ो(pfc, reg);
+	val = sh_pfc_read(pfc, reg);
 	val &= ~GENMASK(offset + size - 1, offset);
 	val |= strength << offset;
 
-	sh_pfc_ग_लिखो(pfc, reg, val);
+	sh_pfc_write(pfc, reg, val);
 
 	spin_unlock_irqrestore(&pfc->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Check whether the requested parameter is supported क्रम a pin. */
-अटल bool sh_pfc_pinconf_validate(काष्ठा sh_pfc *pfc, अचिन्हित पूर्णांक _pin,
-				    क्रमागत pin_config_param param)
-अणु
-	पूर्णांक idx = sh_pfc_get_pin_index(pfc, _pin);
-	स्थिर काष्ठा sh_pfc_pin *pin = &pfc->info->pins[idx];
+/* Check whether the requested parameter is supported for a pin. */
+static bool sh_pfc_pinconf_validate(struct sh_pfc *pfc, unsigned int _pin,
+				    enum pin_config_param param)
+{
+	int idx = sh_pfc_get_pin_index(pfc, _pin);
+	const struct sh_pfc_pin *pin = &pfc->info->pins[idx];
 
-	चयन (param) अणु
-	हाल PIN_CONFIG_BIAS_DISABLE:
-		वापस pin->configs & SH_PFC_PIN_CFG_PULL_UP_DOWN;
+	switch (param) {
+	case PIN_CONFIG_BIAS_DISABLE:
+		return pin->configs & SH_PFC_PIN_CFG_PULL_UP_DOWN;
 
-	हाल PIN_CONFIG_BIAS_PULL_UP:
-		वापस pin->configs & SH_PFC_PIN_CFG_PULL_UP;
+	case PIN_CONFIG_BIAS_PULL_UP:
+		return pin->configs & SH_PFC_PIN_CFG_PULL_UP;
 
-	हाल PIN_CONFIG_BIAS_PULL_DOWN:
-		वापस pin->configs & SH_PFC_PIN_CFG_PULL_DOWN;
+	case PIN_CONFIG_BIAS_PULL_DOWN:
+		return pin->configs & SH_PFC_PIN_CFG_PULL_DOWN;
 
-	हाल PIN_CONFIG_DRIVE_STRENGTH:
-		वापस pin->configs & SH_PFC_PIN_CFG_DRIVE_STRENGTH;
+	case PIN_CONFIG_DRIVE_STRENGTH:
+		return pin->configs & SH_PFC_PIN_CFG_DRIVE_STRENGTH;
 
-	हाल PIN_CONFIG_POWER_SOURCE:
-		वापस pin->configs & SH_PFC_PIN_CFG_IO_VOLTAGE;
+	case PIN_CONFIG_POWER_SOURCE:
+		return pin->configs & SH_PFC_PIN_CFG_IO_VOLTAGE;
 
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+	default:
+		return false;
+	}
+}
 
-अटल पूर्णांक sh_pfc_pinconf_get(काष्ठा pinctrl_dev *pctldev, अचिन्हित _pin,
-			      अचिन्हित दीर्घ *config)
-अणु
-	काष्ठा sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
-	काष्ठा sh_pfc *pfc = pmx->pfc;
-	क्रमागत pin_config_param param = pinconf_to_config_param(*config);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक arg;
+static int sh_pfc_pinconf_get(struct pinctrl_dev *pctldev, unsigned _pin,
+			      unsigned long *config)
+{
+	struct sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
+	struct sh_pfc *pfc = pmx->pfc;
+	enum pin_config_param param = pinconf_to_config_param(*config);
+	unsigned long flags;
+	unsigned int arg;
 
-	अगर (!sh_pfc_pinconf_validate(pfc, _pin, param))
-		वापस -ENOTSUPP;
+	if (!sh_pfc_pinconf_validate(pfc, _pin, param))
+		return -ENOTSUPP;
 
-	चयन (param) अणु
-	हाल PIN_CONFIG_BIAS_DISABLE:
-	हाल PIN_CONFIG_BIAS_PULL_UP:
-	हाल PIN_CONFIG_BIAS_PULL_DOWN: अणु
-		अचिन्हित पूर्णांक bias;
+	switch (param) {
+	case PIN_CONFIG_BIAS_DISABLE:
+	case PIN_CONFIG_BIAS_PULL_UP:
+	case PIN_CONFIG_BIAS_PULL_DOWN: {
+		unsigned int bias;
 
-		अगर (!pfc->info->ops || !pfc->info->ops->get_bias)
-			वापस -ENOTSUPP;
+		if (!pfc->info->ops || !pfc->info->ops->get_bias)
+			return -ENOTSUPP;
 
 		spin_lock_irqsave(&pfc->lock, flags);
 		bias = pfc->info->ops->get_bias(pfc, _pin);
 		spin_unlock_irqrestore(&pfc->lock, flags);
 
-		अगर (bias != param)
-			वापस -EINVAL;
+		if (bias != param)
+			return -EINVAL;
 
 		arg = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल PIN_CONFIG_DRIVE_STRENGTH: अणु
-		पूर्णांक ret;
+	case PIN_CONFIG_DRIVE_STRENGTH: {
+		int ret;
 
 		ret = sh_pfc_pinconf_get_drive_strength(pfc, _pin);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		arg = ret;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल PIN_CONFIG_POWER_SOURCE: अणु
-		पूर्णांक idx = sh_pfc_get_pin_index(pfc, _pin);
-		स्थिर काष्ठा sh_pfc_pin *pin = &pfc->info->pins[idx];
-		अचिन्हित पूर्णांक lower_voltage;
+	case PIN_CONFIG_POWER_SOURCE: {
+		int idx = sh_pfc_get_pin_index(pfc, _pin);
+		const struct sh_pfc_pin *pin = &pfc->info->pins[idx];
+		unsigned int lower_voltage;
 		u32 pocctrl, val;
-		पूर्णांक bit;
+		int bit;
 
-		अगर (!pfc->info->ops || !pfc->info->ops->pin_to_pocctrl)
-			वापस -ENOTSUPP;
+		if (!pfc->info->ops || !pfc->info->ops->pin_to_pocctrl)
+			return -ENOTSUPP;
 
 		bit = pfc->info->ops->pin_to_pocctrl(pfc, _pin, &pocctrl);
-		अगर (WARN(bit < 0, "invalid pin %#x", _pin))
-			वापस bit;
+		if (WARN(bit < 0, "invalid pin %#x", _pin))
+			return bit;
 
 		spin_lock_irqsave(&pfc->lock, flags);
-		val = sh_pfc_पढ़ो(pfc, pocctrl);
+		val = sh_pfc_read(pfc, pocctrl);
 		spin_unlock_irqrestore(&pfc->lock, flags);
 
 		lower_voltage = (pin->configs & SH_PFC_PIN_VOLTAGE_25_33) ?
 			2500 : 1800;
 
 		arg = (val & BIT(bit)) ? 3300 : lower_voltage;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	शेष:
-		वापस -ENOTSUPP;
-	पूर्ण
+	default:
+		return -ENOTSUPP;
+	}
 
 	*config = pinconf_to_config_packed(param, arg);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sh_pfc_pinconf_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित _pin,
-			      अचिन्हित दीर्घ *configs, अचिन्हित num_configs)
-अणु
-	काष्ठा sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
-	काष्ठा sh_pfc *pfc = pmx->pfc;
-	क्रमागत pin_config_param param;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक i;
+static int sh_pfc_pinconf_set(struct pinctrl_dev *pctldev, unsigned _pin,
+			      unsigned long *configs, unsigned num_configs)
+{
+	struct sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
+	struct sh_pfc *pfc = pmx->pfc;
+	enum pin_config_param param;
+	unsigned long flags;
+	unsigned int i;
 
-	क्रम (i = 0; i < num_configs; i++) अणु
+	for (i = 0; i < num_configs; i++) {
 		param = pinconf_to_config_param(configs[i]);
 
-		अगर (!sh_pfc_pinconf_validate(pfc, _pin, param))
-			वापस -ENOTSUPP;
+		if (!sh_pfc_pinconf_validate(pfc, _pin, param))
+			return -ENOTSUPP;
 
-		चयन (param) अणु
-		हाल PIN_CONFIG_BIAS_PULL_UP:
-		हाल PIN_CONFIG_BIAS_PULL_DOWN:
-		हाल PIN_CONFIG_BIAS_DISABLE:
-			अगर (!pfc->info->ops || !pfc->info->ops->set_bias)
-				वापस -ENOTSUPP;
+		switch (param) {
+		case PIN_CONFIG_BIAS_PULL_UP:
+		case PIN_CONFIG_BIAS_PULL_DOWN:
+		case PIN_CONFIG_BIAS_DISABLE:
+			if (!pfc->info->ops || !pfc->info->ops->set_bias)
+				return -ENOTSUPP;
 
 			spin_lock_irqsave(&pfc->lock, flags);
 			pfc->info->ops->set_bias(pfc, _pin, param);
 			spin_unlock_irqrestore(&pfc->lock, flags);
 
-			अवरोध;
+			break;
 
-		हाल PIN_CONFIG_DRIVE_STRENGTH: अणु
-			अचिन्हित पूर्णांक arg =
+		case PIN_CONFIG_DRIVE_STRENGTH: {
+			unsigned int arg =
 				pinconf_to_config_argument(configs[i]);
-			पूर्णांक ret;
+			int ret;
 
 			ret = sh_pfc_pinconf_set_drive_strength(pfc, _pin, arg);
-			अगर (ret < 0)
-				वापस ret;
+			if (ret < 0)
+				return ret;
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		हाल PIN_CONFIG_POWER_SOURCE: अणु
-			अचिन्हित पूर्णांक mV = pinconf_to_config_argument(configs[i]);
-			पूर्णांक idx = sh_pfc_get_pin_index(pfc, _pin);
-			स्थिर काष्ठा sh_pfc_pin *pin = &pfc->info->pins[idx];
-			अचिन्हित पूर्णांक lower_voltage;
+		case PIN_CONFIG_POWER_SOURCE: {
+			unsigned int mV = pinconf_to_config_argument(configs[i]);
+			int idx = sh_pfc_get_pin_index(pfc, _pin);
+			const struct sh_pfc_pin *pin = &pfc->info->pins[idx];
+			unsigned int lower_voltage;
 			u32 pocctrl, val;
-			पूर्णांक bit;
+			int bit;
 
-			अगर (!pfc->info->ops || !pfc->info->ops->pin_to_pocctrl)
-				वापस -ENOTSUPP;
+			if (!pfc->info->ops || !pfc->info->ops->pin_to_pocctrl)
+				return -ENOTSUPP;
 
 			bit = pfc->info->ops->pin_to_pocctrl(pfc, _pin, &pocctrl);
-			अगर (WARN(bit < 0, "invalid pin %#x", _pin))
-				वापस bit;
+			if (WARN(bit < 0, "invalid pin %#x", _pin))
+				return bit;
 
 			lower_voltage = (pin->configs & SH_PFC_PIN_VOLTAGE_25_33) ?
 				2500 : 1800;
 
-			अगर (mV != lower_voltage && mV != 3300)
-				वापस -EINVAL;
+			if (mV != lower_voltage && mV != 3300)
+				return -EINVAL;
 
 			spin_lock_irqsave(&pfc->lock, flags);
-			val = sh_pfc_पढ़ो(pfc, pocctrl);
-			अगर (mV == 3300)
+			val = sh_pfc_read(pfc, pocctrl);
+			if (mV == 3300)
 				val |= BIT(bit);
-			अन्यथा
+			else
 				val &= ~BIT(bit);
-			sh_pfc_ग_लिखो(pfc, pocctrl, val);
+			sh_pfc_write(pfc, pocctrl, val);
 			spin_unlock_irqrestore(&pfc->lock, flags);
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		शेष:
-			वापस -ENOTSUPP;
-		पूर्ण
-	पूर्ण /* क्रम each config */
+		default:
+			return -ENOTSUPP;
+		}
+	} /* for each config */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sh_pfc_pinconf_group_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित group,
-				    अचिन्हित दीर्घ *configs,
-				    अचिन्हित num_configs)
-अणु
-	काष्ठा sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
-	स्थिर अचिन्हित पूर्णांक *pins;
-	अचिन्हित पूर्णांक num_pins;
-	अचिन्हित पूर्णांक i, ret;
+static int sh_pfc_pinconf_group_set(struct pinctrl_dev *pctldev, unsigned group,
+				    unsigned long *configs,
+				    unsigned num_configs)
+{
+	struct sh_pfc_pinctrl *pmx = pinctrl_dev_get_drvdata(pctldev);
+	const unsigned int *pins;
+	unsigned int num_pins;
+	unsigned int i, ret;
 
 	pins = pmx->pfc->info->groups[group].pins;
 	num_pins = pmx->pfc->info->groups[group].nr_pins;
 
-	क्रम (i = 0; i < num_pins; ++i) अणु
+	for (i = 0; i < num_pins; ++i) {
 		ret = sh_pfc_pinconf_set(pctldev, pins[i], configs, num_configs);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा pinconf_ops sh_pfc_pinconf_ops = अणु
+static const struct pinconf_ops sh_pfc_pinconf_ops = {
 	.is_generic			= true,
 	.pin_config_get			= sh_pfc_pinconf_get,
 	.pin_config_set			= sh_pfc_pinconf_set,
 	.pin_config_group_set		= sh_pfc_pinconf_group_set,
 	.pin_config_config_dbg_show	= pinconf_generic_dump_config,
-पूर्ण;
+};
 
 /* PFC ranges -> pinctrl pin descs */
-अटल पूर्णांक sh_pfc_map_pins(काष्ठा sh_pfc *pfc, काष्ठा sh_pfc_pinctrl *pmx)
-अणु
-	अचिन्हित पूर्णांक i;
+static int sh_pfc_map_pins(struct sh_pfc *pfc, struct sh_pfc_pinctrl *pmx)
+{
+	unsigned int i;
 
 	/* Allocate and initialize the pins and configs arrays. */
-	pmx->pins = devm_kसुस्मृति(pfc->dev,
-				 pfc->info->nr_pins, माप(*pmx->pins),
+	pmx->pins = devm_kcalloc(pfc->dev,
+				 pfc->info->nr_pins, sizeof(*pmx->pins),
 				 GFP_KERNEL);
-	अगर (unlikely(!pmx->pins))
-		वापस -ENOMEM;
+	if (unlikely(!pmx->pins))
+		return -ENOMEM;
 
-	pmx->configs = devm_kसुस्मृति(pfc->dev,
-				    pfc->info->nr_pins, माप(*pmx->configs),
+	pmx->configs = devm_kcalloc(pfc->dev,
+				    pfc->info->nr_pins, sizeof(*pmx->configs),
 				    GFP_KERNEL);
-	अगर (unlikely(!pmx->configs))
-		वापस -ENOMEM;
+	if (unlikely(!pmx->configs))
+		return -ENOMEM;
 
-	क्रम (i = 0; i < pfc->info->nr_pins; ++i) अणु
-		स्थिर काष्ठा sh_pfc_pin *info = &pfc->info->pins[i];
-		काष्ठा pinctrl_pin_desc *pin = &pmx->pins[i];
+	for (i = 0; i < pfc->info->nr_pins; ++i) {
+		const struct sh_pfc_pin *info = &pfc->info->pins[i];
+		struct pinctrl_pin_desc *pin = &pmx->pins[i];
 
 		/* If the pin number is equal to -1 all pins are considered */
 		pin->number = info->pin != (u16)-1 ? info->pin : i;
 		pin->name = info->name;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक sh_pfc_रेजिस्टर_pinctrl(काष्ठा sh_pfc *pfc)
-अणु
-	काष्ठा sh_pfc_pinctrl *pmx;
-	पूर्णांक ret;
+int sh_pfc_register_pinctrl(struct sh_pfc *pfc)
+{
+	struct sh_pfc_pinctrl *pmx;
+	int ret;
 
-	pmx = devm_kzalloc(pfc->dev, माप(*pmx), GFP_KERNEL);
-	अगर (unlikely(!pmx))
-		वापस -ENOMEM;
+	pmx = devm_kzalloc(pfc->dev, sizeof(*pmx), GFP_KERNEL);
+	if (unlikely(!pmx))
+		return -ENOMEM;
 
 	pmx->pfc = pfc;
 
 	ret = sh_pfc_map_pins(pfc, pmx);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	pmx->pctl_desc.name = DRV_NAME;
 	pmx->pctl_desc.owner = THIS_MODULE;
@@ -831,130 +830,130 @@
 	pmx->pctl_desc.pins = pmx->pins;
 	pmx->pctl_desc.npins = pfc->info->nr_pins;
 
-	ret = devm_pinctrl_रेजिस्टर_and_init(pfc->dev, &pmx->pctl_desc, pmx,
+	ret = devm_pinctrl_register_and_init(pfc->dev, &pmx->pctl_desc, pmx,
 					     &pmx->pctl);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(pfc->dev, "could not register: %i\n", ret);
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस pinctrl_enable(pmx->pctl);
-पूर्ण
+	return pinctrl_enable(pmx->pctl);
+}
 
-अटल स्थिर काष्ठा pinmux_bias_reg *
-rcar_pin_to_bias_reg(स्थिर काष्ठा sh_pfc *pfc, अचिन्हित पूर्णांक pin,
-		     अचिन्हित पूर्णांक *bit)
-अणु
-	अचिन्हित पूर्णांक i, j;
+static const struct pinmux_bias_reg *
+rcar_pin_to_bias_reg(const struct sh_pfc *pfc, unsigned int pin,
+		     unsigned int *bit)
+{
+	unsigned int i, j;
 
-	क्रम (i = 0; pfc->info->bias_regs[i].puen || pfc->info->bias_regs[i].pud; i++) अणु
-		क्रम (j = 0; j < ARRAY_SIZE(pfc->info->bias_regs[i].pins); j++) अणु
-			अगर (pfc->info->bias_regs[i].pins[j] == pin) अणु
+	for (i = 0; pfc->info->bias_regs[i].puen || pfc->info->bias_regs[i].pud; i++) {
+		for (j = 0; j < ARRAY_SIZE(pfc->info->bias_regs[i].pins); j++) {
+			if (pfc->info->bias_regs[i].pins[j] == pin) {
 				*bit = j;
-				वापस &pfc->info->bias_regs[i];
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return &pfc->info->bias_regs[i];
+			}
+		}
+	}
 
 	WARN_ONCE(1, "Pin %u is not in bias info list\n", pin);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अचिन्हित पूर्णांक rcar_pinmux_get_bias(काष्ठा sh_pfc *pfc, अचिन्हित पूर्णांक pin)
-अणु
-	स्थिर काष्ठा pinmux_bias_reg *reg;
-	अचिन्हित पूर्णांक bit;
-
-	reg = rcar_pin_to_bias_reg(pfc, pin, &bit);
-	अगर (!reg)
-		वापस PIN_CONFIG_BIAS_DISABLE;
-
-	अगर (reg->puen) अणु
-		अगर (!(sh_pfc_पढ़ो(pfc, reg->puen) & BIT(bit)))
-			वापस PIN_CONFIG_BIAS_DISABLE;
-		अन्यथा अगर (!reg->pud || (sh_pfc_पढ़ो(pfc, reg->pud) & BIT(bit)))
-			वापस PIN_CONFIG_BIAS_PULL_UP;
-		अन्यथा
-			वापस PIN_CONFIG_BIAS_PULL_DOWN;
-	पूर्ण अन्यथा अणु
-		अगर (sh_pfc_पढ़ो(pfc, reg->pud) & BIT(bit))
-			वापस PIN_CONFIG_BIAS_PULL_DOWN;
-		अन्यथा
-			वापस PIN_CONFIG_BIAS_DISABLE;
-	पूर्ण
-पूर्ण
-
-व्योम rcar_pinmux_set_bias(काष्ठा sh_pfc *pfc, अचिन्हित पूर्णांक pin,
-			  अचिन्हित पूर्णांक bias)
-अणु
-	स्थिर काष्ठा pinmux_bias_reg *reg;
-	u32 enable, upकरोwn;
-	अचिन्हित पूर्णांक bit;
+unsigned int rcar_pinmux_get_bias(struct sh_pfc *pfc, unsigned int pin)
+{
+	const struct pinmux_bias_reg *reg;
+	unsigned int bit;
 
 	reg = rcar_pin_to_bias_reg(pfc, pin, &bit);
-	अगर (!reg)
-		वापस;
+	if (!reg)
+		return PIN_CONFIG_BIAS_DISABLE;
 
-	अगर (reg->puen) अणु
-		enable = sh_pfc_पढ़ो(pfc, reg->puen) & ~BIT(bit);
-		अगर (bias != PIN_CONFIG_BIAS_DISABLE)
+	if (reg->puen) {
+		if (!(sh_pfc_read(pfc, reg->puen) & BIT(bit)))
+			return PIN_CONFIG_BIAS_DISABLE;
+		else if (!reg->pud || (sh_pfc_read(pfc, reg->pud) & BIT(bit)))
+			return PIN_CONFIG_BIAS_PULL_UP;
+		else
+			return PIN_CONFIG_BIAS_PULL_DOWN;
+	} else {
+		if (sh_pfc_read(pfc, reg->pud) & BIT(bit))
+			return PIN_CONFIG_BIAS_PULL_DOWN;
+		else
+			return PIN_CONFIG_BIAS_DISABLE;
+	}
+}
+
+void rcar_pinmux_set_bias(struct sh_pfc *pfc, unsigned int pin,
+			  unsigned int bias)
+{
+	const struct pinmux_bias_reg *reg;
+	u32 enable, updown;
+	unsigned int bit;
+
+	reg = rcar_pin_to_bias_reg(pfc, pin, &bit);
+	if (!reg)
+		return;
+
+	if (reg->puen) {
+		enable = sh_pfc_read(pfc, reg->puen) & ~BIT(bit);
+		if (bias != PIN_CONFIG_BIAS_DISABLE)
 			enable |= BIT(bit);
 
-		अगर (reg->pud) अणु
-			upकरोwn = sh_pfc_पढ़ो(pfc, reg->pud) & ~BIT(bit);
-			अगर (bias == PIN_CONFIG_BIAS_PULL_UP)
-				upकरोwn |= BIT(bit);
+		if (reg->pud) {
+			updown = sh_pfc_read(pfc, reg->pud) & ~BIT(bit);
+			if (bias == PIN_CONFIG_BIAS_PULL_UP)
+				updown |= BIT(bit);
 
-			sh_pfc_ग_लिखो(pfc, reg->pud, upकरोwn);
-		पूर्ण
+			sh_pfc_write(pfc, reg->pud, updown);
+		}
 
-		sh_pfc_ग_लिखो(pfc, reg->puen, enable);
-	पूर्ण अन्यथा अणु
-		enable = sh_pfc_पढ़ो(pfc, reg->pud) & ~BIT(bit);
-		अगर (bias == PIN_CONFIG_BIAS_PULL_DOWN)
+		sh_pfc_write(pfc, reg->puen, enable);
+	} else {
+		enable = sh_pfc_read(pfc, reg->pud) & ~BIT(bit);
+		if (bias == PIN_CONFIG_BIAS_PULL_DOWN)
 			enable |= BIT(bit);
 
-		sh_pfc_ग_लिखो(pfc, reg->pud, enable);
-	पूर्ण
-पूर्ण
+		sh_pfc_write(pfc, reg->pud, enable);
+	}
+}
 
-#घोषणा PORTnCR_PULMD_OFF	(0 << 6)
-#घोषणा PORTnCR_PULMD_DOWN	(2 << 6)
-#घोषणा PORTnCR_PULMD_UP	(3 << 6)
-#घोषणा PORTnCR_PULMD_MASK	(3 << 6)
+#define PORTnCR_PULMD_OFF	(0 << 6)
+#define PORTnCR_PULMD_DOWN	(2 << 6)
+#define PORTnCR_PULMD_UP	(3 << 6)
+#define PORTnCR_PULMD_MASK	(3 << 6)
 
-अचिन्हित पूर्णांक rmobile_pinmux_get_bias(काष्ठा sh_pfc *pfc, अचिन्हित पूर्णांक pin)
-अणु
-	व्योम __iomem *reg = pfc->info->ops->pin_to_portcr(pfc, pin);
-	u32 value = ioपढ़ो8(reg) & PORTnCR_PULMD_MASK;
+unsigned int rmobile_pinmux_get_bias(struct sh_pfc *pfc, unsigned int pin)
+{
+	void __iomem *reg = pfc->info->ops->pin_to_portcr(pfc, pin);
+	u32 value = ioread8(reg) & PORTnCR_PULMD_MASK;
 
-	चयन (value) अणु
-	हाल PORTnCR_PULMD_UP:
-		वापस PIN_CONFIG_BIAS_PULL_UP;
-	हाल PORTnCR_PULMD_DOWN:
-		वापस PIN_CONFIG_BIAS_PULL_DOWN;
-	हाल PORTnCR_PULMD_OFF:
-	शेष:
-		वापस PIN_CONFIG_BIAS_DISABLE;
-	पूर्ण
-पूर्ण
+	switch (value) {
+	case PORTnCR_PULMD_UP:
+		return PIN_CONFIG_BIAS_PULL_UP;
+	case PORTnCR_PULMD_DOWN:
+		return PIN_CONFIG_BIAS_PULL_DOWN;
+	case PORTnCR_PULMD_OFF:
+	default:
+		return PIN_CONFIG_BIAS_DISABLE;
+	}
+}
 
-व्योम rmobile_pinmux_set_bias(काष्ठा sh_pfc *pfc, अचिन्हित पूर्णांक pin,
-			     अचिन्हित पूर्णांक bias)
-अणु
-	व्योम __iomem *reg = pfc->info->ops->pin_to_portcr(pfc, pin);
-	u32 value = ioपढ़ो8(reg) & ~PORTnCR_PULMD_MASK;
+void rmobile_pinmux_set_bias(struct sh_pfc *pfc, unsigned int pin,
+			     unsigned int bias)
+{
+	void __iomem *reg = pfc->info->ops->pin_to_portcr(pfc, pin);
+	u32 value = ioread8(reg) & ~PORTnCR_PULMD_MASK;
 
-	चयन (bias) अणु
-	हाल PIN_CONFIG_BIAS_PULL_UP:
+	switch (bias) {
+	case PIN_CONFIG_BIAS_PULL_UP:
 		value |= PORTnCR_PULMD_UP;
-		अवरोध;
-	हाल PIN_CONFIG_BIAS_PULL_DOWN:
+		break;
+	case PIN_CONFIG_BIAS_PULL_DOWN:
 		value |= PORTnCR_PULMD_DOWN;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	ioग_लिखो8(value, reg);
-पूर्ण
+	iowrite8(value, reg);
+}

@@ -1,88 +1,87 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2017-2018 Mellanox Technologies. All rights reserved */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश "spectrum.h"
-#समावेश "item.h"
-#समावेश "core_acl_flex_keys.h"
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include "spectrum.h"
+#include "item.h"
+#include "core_acl_flex_keys.h"
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_l2_dmac[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_l2_dmac[] = {
 	MLXSW_AFK_ELEMENT_INST_BUF(DMAC_32_47, 0x00, 2),
 	MLXSW_AFK_ELEMENT_INST_BUF(DMAC_0_31, 0x02, 4),
 	MLXSW_AFK_ELEMENT_INST_U32(PCP, 0x08, 13, 3),
 	MLXSW_AFK_ELEMENT_INST_U32(VID, 0x08, 0, 12),
 	MLXSW_AFK_ELEMENT_INST_U32(SRC_SYS_PORT, 0x0C, 0, 16),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_l2_smac[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_l2_smac[] = {
 	MLXSW_AFK_ELEMENT_INST_BUF(SMAC_32_47, 0x00, 2),
 	MLXSW_AFK_ELEMENT_INST_BUF(SMAC_0_31, 0x02, 4),
 	MLXSW_AFK_ELEMENT_INST_U32(PCP, 0x08, 13, 3),
 	MLXSW_AFK_ELEMENT_INST_U32(VID, 0x08, 0, 12),
 	MLXSW_AFK_ELEMENT_INST_U32(SRC_SYS_PORT, 0x0C, 0, 16),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_l2_smac_ex[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_l2_smac_ex[] = {
 	MLXSW_AFK_ELEMENT_INST_BUF(SMAC_32_47, 0x02, 2),
 	MLXSW_AFK_ELEMENT_INST_BUF(SMAC_0_31, 0x04, 4),
 	MLXSW_AFK_ELEMENT_INST_U32(ETHERTYPE, 0x0C, 0, 16),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv4_sip[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv4_sip[] = {
 	MLXSW_AFK_ELEMENT_INST_BUF(SRC_IP_0_31, 0x00, 4),
 	MLXSW_AFK_ELEMENT_INST_U32(IP_PROTO, 0x08, 0, 8),
 	MLXSW_AFK_ELEMENT_INST_U32(SRC_SYS_PORT, 0x0C, 0, 16),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv4_dip[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv4_dip[] = {
 	MLXSW_AFK_ELEMENT_INST_BUF(DST_IP_0_31, 0x00, 4),
 	MLXSW_AFK_ELEMENT_INST_U32(IP_PROTO, 0x08, 0, 8),
 	MLXSW_AFK_ELEMENT_INST_U32(SRC_SYS_PORT, 0x0C, 0, 16),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv4[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv4[] = {
 	MLXSW_AFK_ELEMENT_INST_BUF(SRC_IP_0_31, 0x00, 4),
 	MLXSW_AFK_ELEMENT_INST_U32(IP_ECN, 0x04, 4, 2),
 	MLXSW_AFK_ELEMENT_INST_U32(IP_TTL_, 0x04, 24, 8),
 	MLXSW_AFK_ELEMENT_INST_U32(IP_DSCP, 0x08, 0, 6),
 	MLXSW_AFK_ELEMENT_INST_U32(TCP_FLAGS, 0x08, 8, 9), /* TCP_CONTROL+TCP_ECN */
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv4_ex[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv4_ex[] = {
 	MLXSW_AFK_ELEMENT_INST_U32(VID, 0x00, 0, 12),
 	MLXSW_AFK_ELEMENT_INST_U32(PCP, 0x08, 29, 3),
 	MLXSW_AFK_ELEMENT_INST_U32(SRC_L4_PORT, 0x08, 0, 16),
 	MLXSW_AFK_ELEMENT_INST_U32(DST_L4_PORT, 0x0C, 0, 16),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv6_dip[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv6_dip[] = {
 	MLXSW_AFK_ELEMENT_INST_BUF(DST_IP_32_63, 0x00, 4),
 	MLXSW_AFK_ELEMENT_INST_BUF(DST_IP_0_31, 0x04, 4),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv6_ex1[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv6_ex1[] = {
 	MLXSW_AFK_ELEMENT_INST_BUF(DST_IP_96_127, 0x00, 4),
 	MLXSW_AFK_ELEMENT_INST_BUF(DST_IP_64_95, 0x04, 4),
 	MLXSW_AFK_ELEMENT_INST_U32(IP_PROTO, 0x08, 0, 8),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv6_sip[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv6_sip[] = {
 	MLXSW_AFK_ELEMENT_INST_BUF(SRC_IP_32_63, 0x00, 4),
 	MLXSW_AFK_ELEMENT_INST_BUF(SRC_IP_0_31, 0x04, 4),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv6_sip_ex[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv6_sip_ex[] = {
 	MLXSW_AFK_ELEMENT_INST_BUF(SRC_IP_96_127, 0x00, 4),
 	MLXSW_AFK_ELEMENT_INST_BUF(SRC_IP_64_95, 0x04, 4),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_packet_type[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_packet_type[] = {
 	MLXSW_AFK_ELEMENT_INST_U32(ETHERTYPE, 0x00, 0, 16),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mlxsw_afk_block mlxsw_sp1_afk_blocks[] = अणु
+static const struct mlxsw_afk_block mlxsw_sp1_afk_blocks[] = {
 	MLXSW_AFK_BLOCK(0x10, mlxsw_sp_afk_element_info_l2_dmac),
 	MLXSW_AFK_BLOCK(0x11, mlxsw_sp_afk_element_info_l2_smac),
 	MLXSW_AFK_BLOCK(0x12, mlxsw_sp_afk_element_info_l2_smac_ex),
@@ -95,118 +94,118 @@
 	MLXSW_AFK_BLOCK(0x62, mlxsw_sp_afk_element_info_ipv6_sip),
 	MLXSW_AFK_BLOCK(0x63, mlxsw_sp_afk_element_info_ipv6_sip_ex),
 	MLXSW_AFK_BLOCK(0xB0, mlxsw_sp_afk_element_info_packet_type),
-पूर्ण;
+};
 
-#घोषणा MLXSW_SP1_AFK_KEY_BLOCK_SIZE 16
+#define MLXSW_SP1_AFK_KEY_BLOCK_SIZE 16
 
-अटल व्योम mlxsw_sp1_afk_encode_block(अक्षर *output, पूर्णांक block_index,
-				       अक्षर *block)
-अणु
-	अचिन्हित पूर्णांक offset = block_index * MLXSW_SP1_AFK_KEY_BLOCK_SIZE;
-	अक्षर *output_indexed = output + offset;
+static void mlxsw_sp1_afk_encode_block(char *output, int block_index,
+				       char *block)
+{
+	unsigned int offset = block_index * MLXSW_SP1_AFK_KEY_BLOCK_SIZE;
+	char *output_indexed = output + offset;
 
-	स_नकल(output_indexed, block, MLXSW_SP1_AFK_KEY_BLOCK_SIZE);
-पूर्ण
+	memcpy(output_indexed, block, MLXSW_SP1_AFK_KEY_BLOCK_SIZE);
+}
 
-अटल व्योम mlxsw_sp1_afk_clear_block(अक्षर *output, पूर्णांक block_index)
-अणु
-	अचिन्हित पूर्णांक offset = block_index * MLXSW_SP1_AFK_KEY_BLOCK_SIZE;
-	अक्षर *output_indexed = output + offset;
+static void mlxsw_sp1_afk_clear_block(char *output, int block_index)
+{
+	unsigned int offset = block_index * MLXSW_SP1_AFK_KEY_BLOCK_SIZE;
+	char *output_indexed = output + offset;
 
-	स_रखो(output_indexed, 0, MLXSW_SP1_AFK_KEY_BLOCK_SIZE);
-पूर्ण
+	memset(output_indexed, 0, MLXSW_SP1_AFK_KEY_BLOCK_SIZE);
+}
 
-स्थिर काष्ठा mlxsw_afk_ops mlxsw_sp1_afk_ops = अणु
+const struct mlxsw_afk_ops mlxsw_sp1_afk_ops = {
 	.blocks		= mlxsw_sp1_afk_blocks,
 	.blocks_count	= ARRAY_SIZE(mlxsw_sp1_afk_blocks),
 	.encode_block	= mlxsw_sp1_afk_encode_block,
 	.clear_block	= mlxsw_sp1_afk_clear_block,
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_mac_0[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_mac_0[] = {
 	MLXSW_AFK_ELEMENT_INST_BUF(DMAC_0_31, 0x04, 4),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_mac_1[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_mac_1[] = {
 	MLXSW_AFK_ELEMENT_INST_BUF(SMAC_0_31, 0x04, 4),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_mac_2[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_mac_2[] = {
 	MLXSW_AFK_ELEMENT_INST_BUF(SMAC_32_47, 0x04, 2),
 	MLXSW_AFK_ELEMENT_INST_BUF(DMAC_32_47, 0x06, 2),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_mac_3[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_mac_3[] = {
 	MLXSW_AFK_ELEMENT_INST_U32(PCP, 0x00, 0, 3),
 	MLXSW_AFK_ELEMENT_INST_U32(VID, 0x04, 16, 12),
 	MLXSW_AFK_ELEMENT_INST_BUF(DMAC_32_47, 0x06, 2),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_mac_4[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_mac_4[] = {
 	MLXSW_AFK_ELEMENT_INST_U32(PCP, 0x00, 0, 3),
 	MLXSW_AFK_ELEMENT_INST_U32(VID, 0x04, 16, 12),
 	MLXSW_AFK_ELEMENT_INST_U32(ETHERTYPE, 0x04, 0, 16),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_mac_5[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_mac_5[] = {
 	MLXSW_AFK_ELEMENT_INST_U32(VID, 0x04, 16, 12),
 	MLXSW_AFK_ELEMENT_INST_EXT_U32(SRC_SYS_PORT, 0x04, 0, 8, -1, true), /* RX_ACL_SYSTEM_PORT */
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv4_0[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv4_0[] = {
 	MLXSW_AFK_ELEMENT_INST_BUF(DST_IP_0_31, 0x04, 4),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv4_1[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv4_1[] = {
 	MLXSW_AFK_ELEMENT_INST_BUF(SRC_IP_0_31, 0x04, 4),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv4_2[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv4_2[] = {
 	MLXSW_AFK_ELEMENT_INST_U32(IP_DSCP, 0x04, 0, 6),
 	MLXSW_AFK_ELEMENT_INST_U32(IP_ECN, 0x04, 6, 2),
 	MLXSW_AFK_ELEMENT_INST_U32(IP_TTL_, 0x04, 8, 8),
 	MLXSW_AFK_ELEMENT_INST_U32(IP_PROTO, 0x04, 16, 8),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv4_4[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv4_4[] = {
 	MLXSW_AFK_ELEMENT_INST_U32(VIRT_ROUTER_0_7, 0x04, 24, 8),
 	MLXSW_AFK_ELEMENT_INST_U32(VIRT_ROUTER_8_10, 0x00, 0, 3),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv6_0[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv6_0[] = {
 	MLXSW_AFK_ELEMENT_INST_BUF(DST_IP_32_63, 0x04, 4),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv6_1[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv6_1[] = {
 	MLXSW_AFK_ELEMENT_INST_BUF(DST_IP_64_95, 0x04, 4),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv6_2[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv6_2[] = {
 	MLXSW_AFK_ELEMENT_INST_BUF(DST_IP_96_127, 0x04, 4),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv6_3[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv6_3[] = {
 	MLXSW_AFK_ELEMENT_INST_BUF(SRC_IP_32_63, 0x04, 4),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv6_4[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv6_4[] = {
 	MLXSW_AFK_ELEMENT_INST_BUF(SRC_IP_64_95, 0x04, 4),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv6_5[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_ipv6_5[] = {
 	MLXSW_AFK_ELEMENT_INST_BUF(SRC_IP_96_127, 0x04, 4),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_l4_0[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_l4_0[] = {
 	MLXSW_AFK_ELEMENT_INST_U32(SRC_L4_PORT, 0x04, 16, 16),
 	MLXSW_AFK_ELEMENT_INST_U32(DST_L4_PORT, 0x04, 0, 16),
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_afk_element_inst mlxsw_sp_afk_element_info_l4_2[] = अणु
+static struct mlxsw_afk_element_inst mlxsw_sp_afk_element_info_l4_2[] = {
 	MLXSW_AFK_ELEMENT_INST_U32(TCP_FLAGS, 0x04, 16, 9), /* TCP_CONTROL + TCP_ECN */
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mlxsw_afk_block mlxsw_sp2_afk_blocks[] = अणु
+static const struct mlxsw_afk_block mlxsw_sp2_afk_blocks[] = {
 	MLXSW_AFK_BLOCK(0x10, mlxsw_sp_afk_element_info_mac_0),
 	MLXSW_AFK_BLOCK(0x11, mlxsw_sp_afk_element_info_mac_1),
 	MLXSW_AFK_BLOCK(0x12, mlxsw_sp_afk_element_info_mac_2),
@@ -225,11 +224,11 @@
 	MLXSW_AFK_BLOCK(0x45, mlxsw_sp_afk_element_info_ipv6_5),
 	MLXSW_AFK_BLOCK(0x90, mlxsw_sp_afk_element_info_l4_0),
 	MLXSW_AFK_BLOCK(0x92, mlxsw_sp_afk_element_info_l4_2),
-पूर्ण;
+};
 
-#घोषणा MLXSW_SP2_AFK_BITS_PER_BLOCK 36
+#define MLXSW_SP2_AFK_BITS_PER_BLOCK 36
 
-/* A block in Spectrum-2 is of the following क्रमm:
+/* A block in Spectrum-2 is of the following form:
  *
  * +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  * |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |35|34|33|32|
@@ -239,7 +238,7 @@
  */
 MLXSW_ITEM64(sp2_afk, block, value, 0x00, 0, MLXSW_SP2_AFK_BITS_PER_BLOCK);
 
-/* The key / mask block layout in Spectrum-2 is of the following क्रमm:
+/* The key / mask block layout in Spectrum-2 is of the following form:
  *
  * +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  * |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |                block11_high                   |
@@ -249,22 +248,22 @@ MLXSW_ITEM64(sp2_afk, block, value, 0x00, 0, MLXSW_SP2_AFK_BITS_PER_BLOCK);
  * ...
  */
 
-काष्ठा mlxsw_sp2_afk_block_layout अणु
-	अचिन्हित लघु offset;
-	काष्ठा mlxsw_item item;
-पूर्ण;
+struct mlxsw_sp2_afk_block_layout {
+	unsigned short offset;
+	struct mlxsw_item item;
+};
 
-#घोषणा MLXSW_SP2_AFK_BLOCK_LAYOUT(_block, _offset, _shअगरt)			\
-	अणु									\
+#define MLXSW_SP2_AFK_BLOCK_LAYOUT(_block, _offset, _shift)			\
+	{									\
 		.offset = _offset,						\
-		अणु								\
-			.shअगरt = _shअगरt,					\
-			.size = अणु.bits = MLXSW_SP2_AFK_BITS_PER_BLOCKपूर्ण,		\
+		{								\
+			.shift = _shift,					\
+			.size = {.bits = MLXSW_SP2_AFK_BITS_PER_BLOCK},		\
 			.name = #_block,					\
-		पूर्ण								\
-	पूर्ण									\
+		}								\
+	}									\
 
-अटल स्थिर काष्ठा mlxsw_sp2_afk_block_layout mlxsw_sp2_afk_blocks_layout[] = अणु
+static const struct mlxsw_sp2_afk_block_layout mlxsw_sp2_afk_blocks_layout[] = {
 	MLXSW_SP2_AFK_BLOCK_LAYOUT(block0, 0x30, 0),
 	MLXSW_SP2_AFK_BLOCK_LAYOUT(block1, 0x2C, 4),
 	MLXSW_SP2_AFK_BLOCK_LAYOUT(block2, 0x28, 8),
@@ -277,38 +276,38 @@ MLXSW_ITEM64(sp2_afk, block, value, 0x00, 0, MLXSW_SP2_AFK_BITS_PER_BLOCK);
 	MLXSW_SP2_AFK_BLOCK_LAYOUT(block9, 0x08, 4),
 	MLXSW_SP2_AFK_BLOCK_LAYOUT(block10, 0x04, 8),
 	MLXSW_SP2_AFK_BLOCK_LAYOUT(block11, 0x00, 12),
-पूर्ण;
+};
 
-अटल व्योम __mlxsw_sp2_afk_block_value_set(अक्षर *output, पूर्णांक block_index,
+static void __mlxsw_sp2_afk_block_value_set(char *output, int block_index,
 					    u64 block_value)
-अणु
-	स्थिर काष्ठा mlxsw_sp2_afk_block_layout *block_layout;
+{
+	const struct mlxsw_sp2_afk_block_layout *block_layout;
 
-	अगर (WARN_ON(block_index < 0 ||
+	if (WARN_ON(block_index < 0 ||
 		    block_index >= ARRAY_SIZE(mlxsw_sp2_afk_blocks_layout)))
-		वापस;
+		return;
 
 	block_layout = &mlxsw_sp2_afk_blocks_layout[block_index];
 	__mlxsw_item_set64(output + block_layout->offset,
 			   &block_layout->item, 0, block_value);
-पूर्ण
+}
 
-अटल व्योम mlxsw_sp2_afk_encode_block(अक्षर *output, पूर्णांक block_index,
-				       अक्षर *block)
-अणु
+static void mlxsw_sp2_afk_encode_block(char *output, int block_index,
+				       char *block)
+{
 	u64 block_value = mlxsw_sp2_afk_block_value_get(block);
 
 	__mlxsw_sp2_afk_block_value_set(output, block_index, block_value);
-पूर्ण
+}
 
-अटल व्योम mlxsw_sp2_afk_clear_block(अक्षर *output, पूर्णांक block_index)
-अणु
+static void mlxsw_sp2_afk_clear_block(char *output, int block_index)
+{
 	__mlxsw_sp2_afk_block_value_set(output, block_index, 0);
-पूर्ण
+}
 
-स्थिर काष्ठा mlxsw_afk_ops mlxsw_sp2_afk_ops = अणु
+const struct mlxsw_afk_ops mlxsw_sp2_afk_ops = {
 	.blocks		= mlxsw_sp2_afk_blocks,
 	.blocks_count	= ARRAY_SIZE(mlxsw_sp2_afk_blocks),
 	.encode_block	= mlxsw_sp2_afk_encode_block,
 	.clear_block	= mlxsw_sp2_afk_clear_block,
-पूर्ण;
+};

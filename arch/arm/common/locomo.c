@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/arch/arm/common/locomo.c
  *
@@ -7,235 +6,235 @@
  *
  * This file contains all generic LoCoMo support.
  *
- * All initialization functions provided here are पूर्णांकended to be called
- * from machine specअगरic code with proper arguments when required.
+ * All initialization functions provided here are intended to be called
+ * from machine specific code with proper arguments when required.
  *
  * Based on sa1111.c
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/ioport.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/delay.h>
+#include <linux/errno.h>
+#include <linux/ioport.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/io.h>
 
-#समावेश <mach/hardware.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/mach/irq.h>
+#include <mach/hardware.h>
+#include <asm/irq.h>
+#include <asm/mach/irq.h>
 
-#समावेश <यंत्र/hardware/locomo.h>
+#include <asm/hardware/locomo.h>
 
 /* LoCoMo Interrupts */
-#घोषणा IRQ_LOCOMO_KEY		(0)
-#घोषणा IRQ_LOCOMO_GPIO		(1)
-#घोषणा IRQ_LOCOMO_LT		(2)
-#घोषणा IRQ_LOCOMO_SPI		(3)
+#define IRQ_LOCOMO_KEY		(0)
+#define IRQ_LOCOMO_GPIO		(1)
+#define IRQ_LOCOMO_LT		(2)
+#define IRQ_LOCOMO_SPI		(3)
 
 /* M62332 output channel selection */
-#घोषणा M62332_EVR_CH	1	/* M62332 volume channel number  */
+#define M62332_EVR_CH	1	/* M62332 volume channel number  */
 				/*   0 : CH.1 , 1 : CH. 2        */
 /* DAC send data */
-#घोषणा	M62332_SLAVE_ADDR	0x4e	/* Slave address  */
-#घोषणा	M62332_W_BIT		0x00	/* W bit (0 only) */
-#घोषणा	M62332_SUB_ADDR		0x00	/* Sub address    */
-#घोषणा	M62332_A_BIT		0x00	/* A bit (0 only) */
+#define	M62332_SLAVE_ADDR	0x4e	/* Slave address  */
+#define	M62332_W_BIT		0x00	/* W bit (0 only) */
+#define	M62332_SUB_ADDR		0x00	/* Sub address    */
+#define	M62332_A_BIT		0x00	/* A bit (0 only) */
 
-/* DAC setup and hold बार (expressed in us) */
-#घोषणा DAC_BUS_FREE_TIME	5	/*   4.7 us */
-#घोषणा DAC_START_SETUP_TIME	5	/*   4.7 us */
-#घोषणा DAC_STOP_SETUP_TIME	4	/*   4.0 us */
-#घोषणा DAC_START_HOLD_TIME	5	/*   4.7 us */
-#घोषणा DAC_SCL_LOW_HOLD_TIME	5	/*   4.7 us */
-#घोषणा DAC_SCL_HIGH_HOLD_TIME	4	/*   4.0 us */
-#घोषणा DAC_DATA_SETUP_TIME	1	/*   250 ns */
-#घोषणा DAC_DATA_HOLD_TIME	1	/*   300 ns */
-#घोषणा DAC_LOW_SETUP_TIME	1	/*   300 ns */
-#घोषणा DAC_HIGH_SETUP_TIME	1	/*  1000 ns */
+/* DAC setup and hold times (expressed in us) */
+#define DAC_BUS_FREE_TIME	5	/*   4.7 us */
+#define DAC_START_SETUP_TIME	5	/*   4.7 us */
+#define DAC_STOP_SETUP_TIME	4	/*   4.0 us */
+#define DAC_START_HOLD_TIME	5	/*   4.7 us */
+#define DAC_SCL_LOW_HOLD_TIME	5	/*   4.7 us */
+#define DAC_SCL_HIGH_HOLD_TIME	4	/*   4.0 us */
+#define DAC_DATA_SETUP_TIME	1	/*   250 ns */
+#define DAC_DATA_HOLD_TIME	1	/*   300 ns */
+#define DAC_LOW_SETUP_TIME	1	/*   300 ns */
+#define DAC_HIGH_SETUP_TIME	1	/*  1000 ns */
 
-/* the following is the overall data क्रम the locomo chip */
-काष्ठा locomo अणु
-	काष्ठा device *dev;
-	अचिन्हित दीर्घ phys;
-	अचिन्हित पूर्णांक irq;
-	पूर्णांक irq_base;
+/* the following is the overall data for the locomo chip */
+struct locomo {
+	struct device *dev;
+	unsigned long phys;
+	unsigned int irq;
+	int irq_base;
 	spinlock_t lock;
-	व्योम __iomem *base;
-#अगर_घोषित CONFIG_PM
-	व्योम *saved_state;
-#पूर्ण_अगर
-पूर्ण;
+	void __iomem *base;
+#ifdef CONFIG_PM
+	void *saved_state;
+#endif
+};
 
-काष्ठा locomo_dev_info अणु
-	अचिन्हित दीर्घ	offset;
-	अचिन्हित दीर्घ	length;
-	अचिन्हित पूर्णांक	devid;
-	अचिन्हित पूर्णांक	irq[1];
-	स्थिर अक्षर *	name;
-पूर्ण;
+struct locomo_dev_info {
+	unsigned long	offset;
+	unsigned long	length;
+	unsigned int	devid;
+	unsigned int	irq[1];
+	const char *	name;
+};
 
-/* All the locomo devices.  If offset is non-zero, the mapbase क्रम the
+/* All the locomo devices.  If offset is non-zero, the mapbase for the
  * locomo_dev will be set to the chip base plus offset.  If offset is
- * zero, then the mapbase क्रम the locomo_dev will be set to zero.  An
+ * zero, then the mapbase for the locomo_dev will be set to zero.  An
  * offset of zero means the device only uses GPIOs or other helper
  * functions inside this file */
-अटल काष्ठा locomo_dev_info locomo_devices[] = अणु
-	अणु
+static struct locomo_dev_info locomo_devices[] = {
+	{
 		.devid 		= LOCOMO_DEVID_KEYBOARD,
-		.irq		= अणु IRQ_LOCOMO_KEY पूर्ण,
+		.irq		= { IRQ_LOCOMO_KEY },
 		.name		= "locomo-keyboard",
 		.offset		= LOCOMO_KEYBOARD,
 		.length		= 16,
-	पूर्ण,
-	अणु
+	},
+	{
 		.devid		= LOCOMO_DEVID_FRONTLIGHT,
-		.irq		= अणुपूर्ण,
+		.irq		= {},
 		.name		= "locomo-frontlight",
 		.offset		= LOCOMO_FRONTLIGHT,
 		.length		= 8,
 
-	पूर्ण,
-	अणु
+	},
+	{
 		.devid		= LOCOMO_DEVID_BACKLIGHT,
-		.irq		= अणुपूर्ण,
+		.irq		= {},
 		.name		= "locomo-backlight",
 		.offset		= LOCOMO_BACKLIGHT,
 		.length		= 8,
-	पूर्ण,
-	अणु
+	},
+	{
 		.devid		= LOCOMO_DEVID_AUDIO,
-		.irq		= अणुपूर्ण,
+		.irq		= {},
 		.name		= "locomo-audio",
 		.offset		= LOCOMO_AUDIO,
 		.length		= 4,
-	पूर्ण,
-	अणु
+	},
+	{
 		.devid		= LOCOMO_DEVID_LED,
-		.irq 		= अणुपूर्ण,
+		.irq 		= {},
 		.name		= "locomo-led",
 		.offset		= LOCOMO_LED,
 		.length		= 8,
-	पूर्ण,
-	अणु
+	},
+	{
 		.devid		= LOCOMO_DEVID_UART,
-		.irq		= अणुपूर्ण,
+		.irq		= {},
 		.name		= "locomo-uart",
 		.offset		= 0,
 		.length		= 0,
-	पूर्ण,
-	अणु
+	},
+	{
 		.devid		= LOCOMO_DEVID_SPI,
-		.irq		= अणुपूर्ण,
+		.irq		= {},
 		.name		= "locomo-spi",
 		.offset		= LOCOMO_SPI,
 		.length		= 0x30,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल व्योम locomo_handler(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा locomo *lchip = irq_desc_get_handler_data(desc);
-	पूर्णांक req, i;
+static void locomo_handler(struct irq_desc *desc)
+{
+	struct locomo *lchip = irq_desc_get_handler_data(desc);
+	int req, i;
 
 	/* Acknowledge the parent IRQ */
 	desc->irq_data.chip->irq_ack(&desc->irq_data);
 
-	/* check why this पूर्णांकerrupt was generated */
-	req = locomo_पढ़ोl(lchip->base + LOCOMO_ICR) & 0x0f00;
+	/* check why this interrupt was generated */
+	req = locomo_readl(lchip->base + LOCOMO_ICR) & 0x0f00;
 
-	अगर (req) अणु
-		अचिन्हित पूर्णांक irq;
+	if (req) {
+		unsigned int irq;
 
-		/* generate the next पूर्णांकerrupt(s) */
+		/* generate the next interrupt(s) */
 		irq = lchip->irq_base;
-		क्रम (i = 0; i <= 3; i++, irq++) अणु
-			अगर (req & (0x0100 << i)) अणु
+		for (i = 0; i <= 3; i++, irq++) {
+			if (req & (0x0100 << i)) {
 				generic_handle_irq(irq);
-			पूर्ण
+			}
 
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम locomo_ack_irq(काष्ठा irq_data *d)
-अणु
-पूर्ण
+static void locomo_ack_irq(struct irq_data *d)
+{
+}
 
-अटल व्योम locomo_mask_irq(काष्ठा irq_data *d)
-अणु
-	काष्ठा locomo *lchip = irq_data_get_irq_chip_data(d);
-	अचिन्हित पूर्णांक r;
-	r = locomo_पढ़ोl(lchip->base + LOCOMO_ICR);
+static void locomo_mask_irq(struct irq_data *d)
+{
+	struct locomo *lchip = irq_data_get_irq_chip_data(d);
+	unsigned int r;
+	r = locomo_readl(lchip->base + LOCOMO_ICR);
 	r &= ~(0x0010 << (d->irq - lchip->irq_base));
-	locomo_ग_लिखोl(r, lchip->base + LOCOMO_ICR);
-पूर्ण
+	locomo_writel(r, lchip->base + LOCOMO_ICR);
+}
 
-अटल व्योम locomo_unmask_irq(काष्ठा irq_data *d)
-अणु
-	काष्ठा locomo *lchip = irq_data_get_irq_chip_data(d);
-	अचिन्हित पूर्णांक r;
-	r = locomo_पढ़ोl(lchip->base + LOCOMO_ICR);
+static void locomo_unmask_irq(struct irq_data *d)
+{
+	struct locomo *lchip = irq_data_get_irq_chip_data(d);
+	unsigned int r;
+	r = locomo_readl(lchip->base + LOCOMO_ICR);
 	r |= (0x0010 << (d->irq - lchip->irq_base));
-	locomo_ग_लिखोl(r, lchip->base + LOCOMO_ICR);
-पूर्ण
+	locomo_writel(r, lchip->base + LOCOMO_ICR);
+}
 
-अटल काष्ठा irq_chip locomo_chip = अणु
+static struct irq_chip locomo_chip = {
 	.name		= "LOCOMO",
 	.irq_ack	= locomo_ack_irq,
 	.irq_mask	= locomo_mask_irq,
 	.irq_unmask	= locomo_unmask_irq,
-पूर्ण;
+};
 
-अटल व्योम locomo_setup_irq(काष्ठा locomo *lchip)
-अणु
-	पूर्णांक irq = lchip->irq_base;
+static void locomo_setup_irq(struct locomo *lchip)
+{
+	int irq = lchip->irq_base;
 
 	/*
-	 * Install handler क्रम IRQ_LOCOMO_HW.
+	 * Install handler for IRQ_LOCOMO_HW.
 	 */
 	irq_set_irq_type(lchip->irq, IRQ_TYPE_EDGE_FALLING);
 	irq_set_chained_handler_and_data(lchip->irq, locomo_handler, lchip);
 
-	/* Install handlers क्रम IRQ_LOCOMO_* */
-	क्रम ( ; irq <= lchip->irq_base + 3; irq++) अणु
+	/* Install handlers for IRQ_LOCOMO_* */
+	for ( ; irq <= lchip->irq_base + 3; irq++) {
 		irq_set_chip_and_handler(irq, &locomo_chip, handle_level_irq);
 		irq_set_chip_data(irq, lchip);
 		irq_clear_status_flags(irq, IRQ_NOREQUEST | IRQ_NOPROBE);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
-अटल व्योम locomo_dev_release(काष्ठा device *_dev)
-अणु
-	काष्ठा locomo_dev *dev = LOCOMO_DEV(_dev);
+static void locomo_dev_release(struct device *_dev)
+{
+	struct locomo_dev *dev = LOCOMO_DEV(_dev);
 
-	kमुक्त(dev);
-पूर्ण
+	kfree(dev);
+}
 
-अटल पूर्णांक
-locomo_init_one_child(काष्ठा locomo *lchip, काष्ठा locomo_dev_info *info)
-अणु
-	काष्ठा locomo_dev *dev;
-	पूर्णांक ret;
+static int
+locomo_init_one_child(struct locomo *lchip, struct locomo_dev_info *info)
+{
+	struct locomo_dev *dev;
+	int ret;
 
-	dev = kzalloc(माप(काष्ठा locomo_dev), GFP_KERNEL);
-	अगर (!dev) अणु
+	dev = kzalloc(sizeof(struct locomo_dev), GFP_KERNEL);
+	if (!dev) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * If the parent device has a DMA mask associated with it,
-	 * propagate it करोwn to the children.
+	 * propagate it down to the children.
 	 */
-	अगर (lchip->dev->dma_mask) अणु
+	if (lchip->dev->dma_mask) {
 		dev->dma_mask = *lchip->dev->dma_mask;
 		dev->dev.dma_mask = &dev->dma_mask;
-	पूर्ण
+	}
 
 	dev_set_name(&dev->dev, "%s", info->name);
 	dev->devid	 = info->devid;
@@ -244,138 +243,138 @@ locomo_init_one_child(काष्ठा locomo *lchip, काष्ठा locom
 	dev->dev.release = locomo_dev_release;
 	dev->dev.coherent_dma_mask = lchip->dev->coherent_dma_mask;
 
-	अगर (info->offset)
+	if (info->offset)
 		dev->mapbase = lchip->base + info->offset;
-	अन्यथा
+	else
 		dev->mapbase = 0;
 	dev->length = info->length;
 
 	dev->irq[0] = (lchip->irq_base == NO_IRQ) ?
 			NO_IRQ : lchip->irq_base + info->irq[0];
 
-	ret = device_रेजिस्टर(&dev->dev);
-	अगर (ret) अणु
+	ret = device_register(&dev->dev);
+	if (ret) {
  out:
-		kमुक्त(dev);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		kfree(dev);
+	}
+	return ret;
+}
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 
-काष्ठा locomo_save_data अणु
+struct locomo_save_data {
 	u16	LCM_GPO;
 	u16	LCM_SPICT;
 	u16	LCM_GPE;
 	u16	LCM_ASD;
 	u16	LCM_SPIMD;
-पूर्ण;
+};
 
-अटल पूर्णांक locomo_suspend(काष्ठा platक्रमm_device *dev, pm_message_t state)
-अणु
-	काष्ठा locomo *lchip = platक्रमm_get_drvdata(dev);
-	काष्ठा locomo_save_data *save;
-	अचिन्हित दीर्घ flags;
+static int locomo_suspend(struct platform_device *dev, pm_message_t state)
+{
+	struct locomo *lchip = platform_get_drvdata(dev);
+	struct locomo_save_data *save;
+	unsigned long flags;
 
-	save = kदो_स्मृति(माप(काष्ठा locomo_save_data), GFP_KERNEL);
-	अगर (!save)
-		वापस -ENOMEM;
+	save = kmalloc(sizeof(struct locomo_save_data), GFP_KERNEL);
+	if (!save)
+		return -ENOMEM;
 
 	lchip->saved_state = save;
 
 	spin_lock_irqsave(&lchip->lock, flags);
 
-	save->LCM_GPO     = locomo_पढ़ोl(lchip->base + LOCOMO_GPO);	/* GPIO */
-	locomo_ग_लिखोl(0x00, lchip->base + LOCOMO_GPO);
-	save->LCM_SPICT   = locomo_पढ़ोl(lchip->base + LOCOMO_SPI + LOCOMO_SPICT);	/* SPI */
-	locomo_ग_लिखोl(0x40, lchip->base + LOCOMO_SPI + LOCOMO_SPICT);
-	save->LCM_GPE     = locomo_पढ़ोl(lchip->base + LOCOMO_GPE);	/* GPIO */
-	locomo_ग_लिखोl(0x00, lchip->base + LOCOMO_GPE);
-	save->LCM_ASD     = locomo_पढ़ोl(lchip->base + LOCOMO_ASD);	/* ADSTART */
-	locomo_ग_लिखोl(0x00, lchip->base + LOCOMO_ASD);
-	save->LCM_SPIMD   = locomo_पढ़ोl(lchip->base + LOCOMO_SPI + LOCOMO_SPIMD);	/* SPI */
-	locomo_ग_लिखोl(0x3C14, lchip->base + LOCOMO_SPI + LOCOMO_SPIMD);
+	save->LCM_GPO     = locomo_readl(lchip->base + LOCOMO_GPO);	/* GPIO */
+	locomo_writel(0x00, lchip->base + LOCOMO_GPO);
+	save->LCM_SPICT   = locomo_readl(lchip->base + LOCOMO_SPI + LOCOMO_SPICT);	/* SPI */
+	locomo_writel(0x40, lchip->base + LOCOMO_SPI + LOCOMO_SPICT);
+	save->LCM_GPE     = locomo_readl(lchip->base + LOCOMO_GPE);	/* GPIO */
+	locomo_writel(0x00, lchip->base + LOCOMO_GPE);
+	save->LCM_ASD     = locomo_readl(lchip->base + LOCOMO_ASD);	/* ADSTART */
+	locomo_writel(0x00, lchip->base + LOCOMO_ASD);
+	save->LCM_SPIMD   = locomo_readl(lchip->base + LOCOMO_SPI + LOCOMO_SPIMD);	/* SPI */
+	locomo_writel(0x3C14, lchip->base + LOCOMO_SPI + LOCOMO_SPIMD);
 
-	locomo_ग_लिखोl(0x00, lchip->base + LOCOMO_PAIF);
-	locomo_ग_लिखोl(0x00, lchip->base + LOCOMO_DAC);
-	locomo_ग_लिखोl(0x00, lchip->base + LOCOMO_BACKLIGHT + LOCOMO_TC);
+	locomo_writel(0x00, lchip->base + LOCOMO_PAIF);
+	locomo_writel(0x00, lchip->base + LOCOMO_DAC);
+	locomo_writel(0x00, lchip->base + LOCOMO_BACKLIGHT + LOCOMO_TC);
 
-	अगर ((locomo_पढ़ोl(lchip->base + LOCOMO_LED + LOCOMO_LPT0) & 0x88) && (locomo_पढ़ोl(lchip->base + LOCOMO_LED + LOCOMO_LPT1) & 0x88))
-		locomo_ग_लिखोl(0x00, lchip->base + LOCOMO_C32K); 	/* CLK32 off */
-	अन्यथा
-		/* 18MHz alपढ़ोy enabled, so no रुको */
-		locomo_ग_लिखोl(0xc1, lchip->base + LOCOMO_C32K); 	/* CLK32 on */
+	if ((locomo_readl(lchip->base + LOCOMO_LED + LOCOMO_LPT0) & 0x88) && (locomo_readl(lchip->base + LOCOMO_LED + LOCOMO_LPT1) & 0x88))
+		locomo_writel(0x00, lchip->base + LOCOMO_C32K); 	/* CLK32 off */
+	else
+		/* 18MHz already enabled, so no wait */
+		locomo_writel(0xc1, lchip->base + LOCOMO_C32K); 	/* CLK32 on */
 
-	locomo_ग_लिखोl(0x00, lchip->base + LOCOMO_TADC);		/* 18MHz घड़ी off*/
-	locomo_ग_लिखोl(0x00, lchip->base + LOCOMO_AUDIO + LOCOMO_ACC);			/* 22MHz/24MHz घड़ी off */
-	locomo_ग_लिखोl(0x00, lchip->base + LOCOMO_FRONTLIGHT + LOCOMO_ALS);			/* FL */
+	locomo_writel(0x00, lchip->base + LOCOMO_TADC);		/* 18MHz clock off*/
+	locomo_writel(0x00, lchip->base + LOCOMO_AUDIO + LOCOMO_ACC);			/* 22MHz/24MHz clock off */
+	locomo_writel(0x00, lchip->base + LOCOMO_FRONTLIGHT + LOCOMO_ALS);			/* FL */
 
 	spin_unlock_irqrestore(&lchip->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक locomo_resume(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा locomo *lchip = platक्रमm_get_drvdata(dev);
-	काष्ठा locomo_save_data *save;
-	अचिन्हित दीर्घ r;
-	अचिन्हित दीर्घ flags;
+static int locomo_resume(struct platform_device *dev)
+{
+	struct locomo *lchip = platform_get_drvdata(dev);
+	struct locomo_save_data *save;
+	unsigned long r;
+	unsigned long flags;
 
 	save = lchip->saved_state;
-	अगर (!save)
-		वापस 0;
+	if (!save)
+		return 0;
 
 	spin_lock_irqsave(&lchip->lock, flags);
 
-	locomo_ग_लिखोl(save->LCM_GPO, lchip->base + LOCOMO_GPO);
-	locomo_ग_लिखोl(save->LCM_SPICT, lchip->base + LOCOMO_SPI + LOCOMO_SPICT);
-	locomo_ग_लिखोl(save->LCM_GPE, lchip->base + LOCOMO_GPE);
-	locomo_ग_लिखोl(save->LCM_ASD, lchip->base + LOCOMO_ASD);
-	locomo_ग_लिखोl(save->LCM_SPIMD, lchip->base + LOCOMO_SPI + LOCOMO_SPIMD);
+	locomo_writel(save->LCM_GPO, lchip->base + LOCOMO_GPO);
+	locomo_writel(save->LCM_SPICT, lchip->base + LOCOMO_SPI + LOCOMO_SPICT);
+	locomo_writel(save->LCM_GPE, lchip->base + LOCOMO_GPE);
+	locomo_writel(save->LCM_ASD, lchip->base + LOCOMO_ASD);
+	locomo_writel(save->LCM_SPIMD, lchip->base + LOCOMO_SPI + LOCOMO_SPIMD);
 
-	locomo_ग_लिखोl(0x00, lchip->base + LOCOMO_C32K);
-	locomo_ग_लिखोl(0x90, lchip->base + LOCOMO_TADC);
+	locomo_writel(0x00, lchip->base + LOCOMO_C32K);
+	locomo_writel(0x90, lchip->base + LOCOMO_TADC);
 
-	locomo_ग_लिखोl(0, lchip->base + LOCOMO_KEYBOARD + LOCOMO_KSC);
-	r = locomo_पढ़ोl(lchip->base + LOCOMO_KEYBOARD + LOCOMO_KIC);
+	locomo_writel(0, lchip->base + LOCOMO_KEYBOARD + LOCOMO_KSC);
+	r = locomo_readl(lchip->base + LOCOMO_KEYBOARD + LOCOMO_KIC);
 	r &= 0xFEFF;
-	locomo_ग_लिखोl(r, lchip->base + LOCOMO_KEYBOARD + LOCOMO_KIC);
-	locomo_ग_लिखोl(0x1, lchip->base + LOCOMO_KEYBOARD + LOCOMO_KCMD);
+	locomo_writel(r, lchip->base + LOCOMO_KEYBOARD + LOCOMO_KIC);
+	locomo_writel(0x1, lchip->base + LOCOMO_KEYBOARD + LOCOMO_KCMD);
 
 	spin_unlock_irqrestore(&lchip->lock, flags);
 
-	lchip->saved_state = शून्य;
-	kमुक्त(save);
+	lchip->saved_state = NULL;
+	kfree(save);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
 
 /**
- *	locomo_probe - probe क्रम a single LoCoMo chip.
+ *	locomo_probe - probe for a single LoCoMo chip.
  *	@phys_addr: physical address of device.
  *
- *	Probe क्रम a LoCoMo chip.  This must be called
- *	beक्रमe any other locomo-specअगरic code.
+ *	Probe for a LoCoMo chip.  This must be called
+ *	before any other locomo-specific code.
  *
  *	Returns:
  *	%-ENODEV	device not found.
- *	%-EBUSY		physical address alपढ़ोy marked in-use.
+ *	%-EBUSY		physical address already marked in-use.
  *	%0		successful.
  */
-अटल पूर्णांक
-__locomo_probe(काष्ठा device *me, काष्ठा resource *mem, पूर्णांक irq)
-अणु
-	काष्ठा locomo_platक्रमm_data *pdata = me->platक्रमm_data;
-	काष्ठा locomo *lchip;
-	अचिन्हित दीर्घ r;
-	पूर्णांक i, ret = -ENODEV;
+static int
+__locomo_probe(struct device *me, struct resource *mem, int irq)
+{
+	struct locomo_platform_data *pdata = me->platform_data;
+	struct locomo *lchip;
+	unsigned long r;
+	int i, ret = -ENODEV;
 
-	lchip = kzalloc(माप(काष्ठा locomo), GFP_KERNEL);
-	अगर (!lchip)
-		वापस -ENOMEM;
+	lchip = kzalloc(sizeof(struct locomo), GFP_KERNEL);
+	if (!lchip)
+		return -ENOMEM;
 
 	spin_lock_init(&lchip->lock);
 
@@ -388,426 +387,426 @@ __locomo_probe(काष्ठा device *me, काष्ठा resource *mem, 
 
 	/*
 	 * Map the whole region.  This also maps the
-	 * रेजिस्टरs क्रम our children.
+	 * registers for our children.
 	 */
 	lchip->base = ioremap(mem->start, PAGE_SIZE);
-	अगर (!lchip->base) अणु
+	if (!lchip->base) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* locomo initialize */
-	locomo_ग_लिखोl(0, lchip->base + LOCOMO_ICR);
+	locomo_writel(0, lchip->base + LOCOMO_ICR);
 	/* KEYBOARD */
-	locomo_ग_लिखोl(0, lchip->base + LOCOMO_KEYBOARD + LOCOMO_KIC);
+	locomo_writel(0, lchip->base + LOCOMO_KEYBOARD + LOCOMO_KIC);
 
 	/* GPIO */
-	locomo_ग_लिखोl(0, lchip->base + LOCOMO_GPO);
-	locomo_ग_लिखोl((LOCOMO_GPIO(1) | LOCOMO_GPIO(2) | LOCOMO_GPIO(13) | LOCOMO_GPIO(14))
+	locomo_writel(0, lchip->base + LOCOMO_GPO);
+	locomo_writel((LOCOMO_GPIO(1) | LOCOMO_GPIO(2) | LOCOMO_GPIO(13) | LOCOMO_GPIO(14))
 			, lchip->base + LOCOMO_GPE);
-	locomo_ग_लिखोl((LOCOMO_GPIO(1) | LOCOMO_GPIO(2) | LOCOMO_GPIO(13) | LOCOMO_GPIO(14))
+	locomo_writel((LOCOMO_GPIO(1) | LOCOMO_GPIO(2) | LOCOMO_GPIO(13) | LOCOMO_GPIO(14))
 			, lchip->base + LOCOMO_GPD);
-	locomo_ग_लिखोl(0, lchip->base + LOCOMO_GIE);
+	locomo_writel(0, lchip->base + LOCOMO_GIE);
 
 	/* Frontlight */
-	locomo_ग_लिखोl(0, lchip->base + LOCOMO_FRONTLIGHT + LOCOMO_ALS);
-	locomo_ग_लिखोl(0, lchip->base + LOCOMO_FRONTLIGHT + LOCOMO_ALD);
+	locomo_writel(0, lchip->base + LOCOMO_FRONTLIGHT + LOCOMO_ALS);
+	locomo_writel(0, lchip->base + LOCOMO_FRONTLIGHT + LOCOMO_ALD);
 
-	/* Longसमय समयr */
-	locomo_ग_लिखोl(0, lchip->base + LOCOMO_LTINT);
+	/* Longtime timer */
+	locomo_writel(0, lchip->base + LOCOMO_LTINT);
 	/* SPI */
-	locomo_ग_लिखोl(0, lchip->base + LOCOMO_SPI + LOCOMO_SPIIE);
+	locomo_writel(0, lchip->base + LOCOMO_SPI + LOCOMO_SPIIE);
 
-	locomo_ग_लिखोl(6 + 8 + 320 + 30 - 10, lchip->base + LOCOMO_ASD);
-	r = locomo_पढ़ोl(lchip->base + LOCOMO_ASD);
+	locomo_writel(6 + 8 + 320 + 30 - 10, lchip->base + LOCOMO_ASD);
+	r = locomo_readl(lchip->base + LOCOMO_ASD);
 	r |= 0x8000;
-	locomo_ग_लिखोl(r, lchip->base + LOCOMO_ASD);
+	locomo_writel(r, lchip->base + LOCOMO_ASD);
 
-	locomo_ग_लिखोl(6 + 8 + 320 + 30 - 10 - 128 + 4, lchip->base + LOCOMO_HSD);
-	r = locomo_पढ़ोl(lchip->base + LOCOMO_HSD);
+	locomo_writel(6 + 8 + 320 + 30 - 10 - 128 + 4, lchip->base + LOCOMO_HSD);
+	r = locomo_readl(lchip->base + LOCOMO_HSD);
 	r |= 0x8000;
-	locomo_ग_लिखोl(r, lchip->base + LOCOMO_HSD);
+	locomo_writel(r, lchip->base + LOCOMO_HSD);
 
-	locomo_ग_लिखोl(128 / 8, lchip->base + LOCOMO_HSC);
+	locomo_writel(128 / 8, lchip->base + LOCOMO_HSC);
 
 	/* XON */
-	locomo_ग_लिखोl(0x80, lchip->base + LOCOMO_TADC);
+	locomo_writel(0x80, lchip->base + LOCOMO_TADC);
 	udelay(1000);
 	/* CLK9MEN */
-	r = locomo_पढ़ोl(lchip->base + LOCOMO_TADC);
+	r = locomo_readl(lchip->base + LOCOMO_TADC);
 	r |= 0x10;
-	locomo_ग_लिखोl(r, lchip->base + LOCOMO_TADC);
+	locomo_writel(r, lchip->base + LOCOMO_TADC);
 	udelay(100);
 
 	/* init DAC */
-	r = locomo_पढ़ोl(lchip->base + LOCOMO_DAC);
+	r = locomo_readl(lchip->base + LOCOMO_DAC);
 	r |= LOCOMO_DAC_SCLOEB | LOCOMO_DAC_SDAOEB;
-	locomo_ग_लिखोl(r, lchip->base + LOCOMO_DAC);
+	locomo_writel(r, lchip->base + LOCOMO_DAC);
 
-	r = locomo_पढ़ोl(lchip->base + LOCOMO_VER);
-	prपूर्णांकk(KERN_INFO "LoCoMo Chip: %lu%lu\n", (r >> 8), (r & 0xff));
+	r = locomo_readl(lchip->base + LOCOMO_VER);
+	printk(KERN_INFO "LoCoMo Chip: %lu%lu\n", (r >> 8), (r & 0xff));
 
 	/*
-	 * The पूर्णांकerrupt controller must be initialised beक्रमe any
-	 * other device to ensure that the पूर्णांकerrupts are available.
+	 * The interrupt controller must be initialised before any
+	 * other device to ensure that the interrupts are available.
 	 */
-	अगर (lchip->irq != NO_IRQ && lchip->irq_base != NO_IRQ)
+	if (lchip->irq != NO_IRQ && lchip->irq_base != NO_IRQ)
 		locomo_setup_irq(lchip);
 
-	क्रम (i = 0; i < ARRAY_SIZE(locomo_devices); i++)
+	for (i = 0; i < ARRAY_SIZE(locomo_devices); i++)
 		locomo_init_one_child(lchip, &locomo_devices[i]);
-	वापस 0;
+	return 0;
 
  out:
-	kमुक्त(lchip);
-	वापस ret;
-पूर्ण
+	kfree(lchip);
+	return ret;
+}
 
-अटल पूर्णांक locomo_हटाओ_child(काष्ठा device *dev, व्योम *data)
-अणु
-	device_unरेजिस्टर(dev);
-	वापस 0;
-पूर्ण 
+static int locomo_remove_child(struct device *dev, void *data)
+{
+	device_unregister(dev);
+	return 0;
+} 
 
-अटल व्योम __locomo_हटाओ(काष्ठा locomo *lchip)
-अणु
-	device_क्रम_each_child(lchip->dev, शून्य, locomo_हटाओ_child);
+static void __locomo_remove(struct locomo *lchip)
+{
+	device_for_each_child(lchip->dev, NULL, locomo_remove_child);
 
-	अगर (lchip->irq != NO_IRQ) अणु
-		irq_set_chained_handler_and_data(lchip->irq, शून्य, शून्य);
-	पूर्ण
+	if (lchip->irq != NO_IRQ) {
+		irq_set_chained_handler_and_data(lchip->irq, NULL, NULL);
+	}
 
 	iounmap(lchip->base);
-	kमुक्त(lchip);
-पूर्ण
+	kfree(lchip);
+}
 
-अटल पूर्णांक locomo_probe(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा resource *mem;
-	पूर्णांक irq;
+static int locomo_probe(struct platform_device *dev)
+{
+	struct resource *mem;
+	int irq;
 
-	mem = platक्रमm_get_resource(dev, IORESOURCE_MEM, 0);
-	अगर (!mem)
-		वापस -EINVAL;
-	irq = platक्रमm_get_irq(dev, 0);
-	अगर (irq < 0)
-		वापस -ENXIO;
+	mem = platform_get_resource(dev, IORESOURCE_MEM, 0);
+	if (!mem)
+		return -EINVAL;
+	irq = platform_get_irq(dev, 0);
+	if (irq < 0)
+		return -ENXIO;
 
-	वापस __locomo_probe(&dev->dev, mem, irq);
-पूर्ण
+	return __locomo_probe(&dev->dev, mem, irq);
+}
 
-अटल पूर्णांक locomo_हटाओ(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा locomo *lchip = platक्रमm_get_drvdata(dev);
+static int locomo_remove(struct platform_device *dev)
+{
+	struct locomo *lchip = platform_get_drvdata(dev);
 
-	अगर (lchip) अणु
-		__locomo_हटाओ(lchip);
-		platक्रमm_set_drvdata(dev, शून्य);
-	पूर्ण
+	if (lchip) {
+		__locomo_remove(lchip);
+		platform_set_drvdata(dev, NULL);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- *	Not sure अगर this should be on the प्रणाली bus or not yet.
- *	We really want some way to रेजिस्टर a प्रणाली device at
+ *	Not sure if this should be on the system bus or not yet.
+ *	We really want some way to register a system device at
  *	the per-machine level, and then have this driver pick
- *	up the रेजिस्टरed devices.
+ *	up the registered devices.
  */
-अटल काष्ठा platक्रमm_driver locomo_device_driver = अणु
+static struct platform_driver locomo_device_driver = {
 	.probe		= locomo_probe,
-	.हटाओ		= locomo_हटाओ,
-#अगर_घोषित CONFIG_PM
+	.remove		= locomo_remove,
+#ifdef CONFIG_PM
 	.suspend	= locomo_suspend,
 	.resume		= locomo_resume,
-#पूर्ण_अगर
-	.driver		= अणु
+#endif
+	.driver		= {
 		.name	= "locomo",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
- *	Get the parent device driver (us) काष्ठाure
+ *	Get the parent device driver (us) structure
  *	from a child function device
  */
-अटल अंतरभूत काष्ठा locomo *locomo_chip_driver(काष्ठा locomo_dev *ldev)
-अणु
-	वापस (काष्ठा locomo *)dev_get_drvdata(ldev->dev.parent);
-पूर्ण
+static inline struct locomo *locomo_chip_driver(struct locomo_dev *ldev)
+{
+	return (struct locomo *)dev_get_drvdata(ldev->dev.parent);
+}
 
-व्योम locomo_gpio_set_dir(काष्ठा device *dev, अचिन्हित पूर्णांक bits, अचिन्हित पूर्णांक dir)
-अणु
-	काष्ठा locomo *lchip = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक r;
+void locomo_gpio_set_dir(struct device *dev, unsigned int bits, unsigned int dir)
+{
+	struct locomo *lchip = dev_get_drvdata(dev);
+	unsigned long flags;
+	unsigned int r;
 
-	अगर (!lchip)
-		वापस;
+	if (!lchip)
+		return;
 
 	spin_lock_irqsave(&lchip->lock, flags);
 
-	r = locomo_पढ़ोl(lchip->base + LOCOMO_GPD);
-	अगर (dir)
+	r = locomo_readl(lchip->base + LOCOMO_GPD);
+	if (dir)
 		r |= bits;
-	अन्यथा
+	else
 		r &= ~bits;
-	locomo_ग_लिखोl(r, lchip->base + LOCOMO_GPD);
+	locomo_writel(r, lchip->base + LOCOMO_GPD);
 
-	r = locomo_पढ़ोl(lchip->base + LOCOMO_GPE);
-	अगर (dir)
+	r = locomo_readl(lchip->base + LOCOMO_GPE);
+	if (dir)
 		r |= bits;
-	अन्यथा
+	else
 		r &= ~bits;
-	locomo_ग_लिखोl(r, lchip->base + LOCOMO_GPE);
+	locomo_writel(r, lchip->base + LOCOMO_GPE);
 
 	spin_unlock_irqrestore(&lchip->lock, flags);
-पूर्ण
+}
 EXPORT_SYMBOL(locomo_gpio_set_dir);
 
-पूर्णांक locomo_gpio_पढ़ो_level(काष्ठा device *dev, अचिन्हित पूर्णांक bits)
-अणु
-	काष्ठा locomo *lchip = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक ret;
+int locomo_gpio_read_level(struct device *dev, unsigned int bits)
+{
+	struct locomo *lchip = dev_get_drvdata(dev);
+	unsigned long flags;
+	unsigned int ret;
 
-	अगर (!lchip)
-		वापस -ENODEV;
+	if (!lchip)
+		return -ENODEV;
 
 	spin_lock_irqsave(&lchip->lock, flags);
-	ret = locomo_पढ़ोl(lchip->base + LOCOMO_GPL);
+	ret = locomo_readl(lchip->base + LOCOMO_GPL);
 	spin_unlock_irqrestore(&lchip->lock, flags);
 
 	ret &= bits;
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(locomo_gpio_पढ़ो_level);
+	return ret;
+}
+EXPORT_SYMBOL(locomo_gpio_read_level);
 
-पूर्णांक locomo_gpio_पढ़ो_output(काष्ठा device *dev, अचिन्हित पूर्णांक bits)
-अणु
-	काष्ठा locomo *lchip = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक ret;
+int locomo_gpio_read_output(struct device *dev, unsigned int bits)
+{
+	struct locomo *lchip = dev_get_drvdata(dev);
+	unsigned long flags;
+	unsigned int ret;
 
-	अगर (!lchip)
-		वापस -ENODEV;
+	if (!lchip)
+		return -ENODEV;
 
 	spin_lock_irqsave(&lchip->lock, flags);
-	ret = locomo_पढ़ोl(lchip->base + LOCOMO_GPO);
+	ret = locomo_readl(lchip->base + LOCOMO_GPO);
 	spin_unlock_irqrestore(&lchip->lock, flags);
 
 	ret &= bits;
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(locomo_gpio_पढ़ो_output);
+	return ret;
+}
+EXPORT_SYMBOL(locomo_gpio_read_output);
 
-व्योम locomo_gpio_ग_लिखो(काष्ठा device *dev, अचिन्हित पूर्णांक bits, अचिन्हित पूर्णांक set)
-अणु
-	काष्ठा locomo *lchip = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक r;
+void locomo_gpio_write(struct device *dev, unsigned int bits, unsigned int set)
+{
+	struct locomo *lchip = dev_get_drvdata(dev);
+	unsigned long flags;
+	unsigned int r;
 
-	अगर (!lchip)
-		वापस;
+	if (!lchip)
+		return;
 
 	spin_lock_irqsave(&lchip->lock, flags);
 
-	r = locomo_पढ़ोl(lchip->base + LOCOMO_GPO);
-	अगर (set)
+	r = locomo_readl(lchip->base + LOCOMO_GPO);
+	if (set)
 		r |= bits;
-	अन्यथा
+	else
 		r &= ~bits;
-	locomo_ग_लिखोl(r, lchip->base + LOCOMO_GPO);
+	locomo_writel(r, lchip->base + LOCOMO_GPO);
 
 	spin_unlock_irqrestore(&lchip->lock, flags);
-पूर्ण
-EXPORT_SYMBOL(locomo_gpio_ग_लिखो);
+}
+EXPORT_SYMBOL(locomo_gpio_write);
 
-अटल व्योम locomo_m62332_sendbit(व्योम *mapbase, पूर्णांक bit)
-अणु
-	अचिन्हित पूर्णांक r;
+static void locomo_m62332_sendbit(void *mapbase, int bit)
+{
+	unsigned int r;
 
-	r = locomo_पढ़ोl(mapbase + LOCOMO_DAC);
+	r = locomo_readl(mapbase + LOCOMO_DAC);
 	r &=  ~(LOCOMO_DAC_SCLOEB);
-	locomo_ग_लिखोl(r, mapbase + LOCOMO_DAC);
+	locomo_writel(r, mapbase + LOCOMO_DAC);
 	udelay(DAC_LOW_SETUP_TIME);	/* 300 nsec */
 	udelay(DAC_DATA_HOLD_TIME);	/* 300 nsec */
-	r = locomo_पढ़ोl(mapbase + LOCOMO_DAC);
+	r = locomo_readl(mapbase + LOCOMO_DAC);
 	r &=  ~(LOCOMO_DAC_SCLOEB);
-	locomo_ग_लिखोl(r, mapbase + LOCOMO_DAC);
+	locomo_writel(r, mapbase + LOCOMO_DAC);
 	udelay(DAC_LOW_SETUP_TIME);	/* 300 nsec */
 	udelay(DAC_SCL_LOW_HOLD_TIME);	/* 4.7 usec */
 
-	अगर (bit & 1) अणु
-		r = locomo_पढ़ोl(mapbase + LOCOMO_DAC);
+	if (bit & 1) {
+		r = locomo_readl(mapbase + LOCOMO_DAC);
 		r |=  LOCOMO_DAC_SDAOEB;
-		locomo_ग_लिखोl(r, mapbase + LOCOMO_DAC);
+		locomo_writel(r, mapbase + LOCOMO_DAC);
 		udelay(DAC_HIGH_SETUP_TIME);	/* 1000 nsec */
-	पूर्ण अन्यथा अणु
-		r = locomo_पढ़ोl(mapbase + LOCOMO_DAC);
+	} else {
+		r = locomo_readl(mapbase + LOCOMO_DAC);
 		r &=  ~(LOCOMO_DAC_SDAOEB);
-		locomo_ग_लिखोl(r, mapbase + LOCOMO_DAC);
+		locomo_writel(r, mapbase + LOCOMO_DAC);
 		udelay(DAC_LOW_SETUP_TIME);	/* 300 nsec */
-	पूर्ण
+	}
 
 	udelay(DAC_DATA_SETUP_TIME);	/* 250 nsec */
-	r = locomo_पढ़ोl(mapbase + LOCOMO_DAC);
+	r = locomo_readl(mapbase + LOCOMO_DAC);
 	r |=  LOCOMO_DAC_SCLOEB;
-	locomo_ग_लिखोl(r, mapbase + LOCOMO_DAC);
+	locomo_writel(r, mapbase + LOCOMO_DAC);
 	udelay(DAC_HIGH_SETUP_TIME);	/* 1000 nsec */
 	udelay(DAC_SCL_HIGH_HOLD_TIME);	/*  4.0 usec */
-पूर्ण
+}
 
-व्योम locomo_m62332_senddata(काष्ठा locomo_dev *ldev, अचिन्हित पूर्णांक dac_data, पूर्णांक channel)
-अणु
-	काष्ठा locomo *lchip = locomo_chip_driver(ldev);
-	पूर्णांक i;
-	अचिन्हित अक्षर data;
-	अचिन्हित पूर्णांक r;
-	व्योम *mapbase = lchip->base;
-	अचिन्हित दीर्घ flags;
+void locomo_m62332_senddata(struct locomo_dev *ldev, unsigned int dac_data, int channel)
+{
+	struct locomo *lchip = locomo_chip_driver(ldev);
+	int i;
+	unsigned char data;
+	unsigned int r;
+	void *mapbase = lchip->base;
+	unsigned long flags;
 
 	spin_lock_irqsave(&lchip->lock, flags);
 
 	/* Start */
 	udelay(DAC_BUS_FREE_TIME);	/* 5.0 usec */
-	r = locomo_पढ़ोl(mapbase + LOCOMO_DAC);
+	r = locomo_readl(mapbase + LOCOMO_DAC);
 	r |=  LOCOMO_DAC_SCLOEB | LOCOMO_DAC_SDAOEB;
-	locomo_ग_लिखोl(r, mapbase + LOCOMO_DAC);
+	locomo_writel(r, mapbase + LOCOMO_DAC);
 	udelay(DAC_HIGH_SETUP_TIME);	/* 1000 nsec */
 	udelay(DAC_SCL_HIGH_HOLD_TIME);	/* 4.0 usec */
-	r = locomo_पढ़ोl(mapbase + LOCOMO_DAC);
+	r = locomo_readl(mapbase + LOCOMO_DAC);
 	r &=  ~(LOCOMO_DAC_SDAOEB);
-	locomo_ग_लिखोl(r, mapbase + LOCOMO_DAC);
+	locomo_writel(r, mapbase + LOCOMO_DAC);
 	udelay(DAC_START_HOLD_TIME);	/* 5.0 usec */
 	udelay(DAC_DATA_HOLD_TIME);	/* 300 nsec */
 
 	/* Send slave address and W bit (LSB is W bit) */
 	data = (M62332_SLAVE_ADDR << 1) | M62332_W_BIT;
-	क्रम (i = 1; i <= 8; i++) अणु
+	for (i = 1; i <= 8; i++) {
 		locomo_m62332_sendbit(mapbase, data >> (8 - i));
-	पूर्ण
+	}
 
 	/* Check A bit */
-	r = locomo_पढ़ोl(mapbase + LOCOMO_DAC);
+	r = locomo_readl(mapbase + LOCOMO_DAC);
 	r &=  ~(LOCOMO_DAC_SCLOEB);
-	locomo_ग_लिखोl(r, mapbase + LOCOMO_DAC);
+	locomo_writel(r, mapbase + LOCOMO_DAC);
 	udelay(DAC_LOW_SETUP_TIME);	/* 300 nsec */
 	udelay(DAC_SCL_LOW_HOLD_TIME);	/* 4.7 usec */
-	r = locomo_पढ़ोl(mapbase + LOCOMO_DAC);
+	r = locomo_readl(mapbase + LOCOMO_DAC);
 	r &=  ~(LOCOMO_DAC_SDAOEB);
-	locomo_ग_लिखोl(r, mapbase + LOCOMO_DAC);
+	locomo_writel(r, mapbase + LOCOMO_DAC);
 	udelay(DAC_LOW_SETUP_TIME);	/* 300 nsec */
-	r = locomo_पढ़ोl(mapbase + LOCOMO_DAC);
+	r = locomo_readl(mapbase + LOCOMO_DAC);
 	r |=  LOCOMO_DAC_SCLOEB;
-	locomo_ग_लिखोl(r, mapbase + LOCOMO_DAC);
+	locomo_writel(r, mapbase + LOCOMO_DAC);
 	udelay(DAC_HIGH_SETUP_TIME);	/* 1000 nsec */
 	udelay(DAC_SCL_HIGH_HOLD_TIME);	/* 4.7 usec */
-	अगर (locomo_पढ़ोl(mapbase + LOCOMO_DAC) & LOCOMO_DAC_SDAOEB) अणु	/* High is error */
-		prपूर्णांकk(KERN_WARNING "locomo: m62332_senddata Error 1\n");
-		जाओ out;
-	पूर्ण
+	if (locomo_readl(mapbase + LOCOMO_DAC) & LOCOMO_DAC_SDAOEB) {	/* High is error */
+		printk(KERN_WARNING "locomo: m62332_senddata Error 1\n");
+		goto out;
+	}
 
 	/* Send Sub address (LSB is channel select) */
 	/*    channel = 0 : ch1 select              */
 	/*            = 1 : ch2 select              */
 	data = M62332_SUB_ADDR + channel;
-	क्रम (i = 1; i <= 8; i++) अणु
+	for (i = 1; i <= 8; i++) {
 		locomo_m62332_sendbit(mapbase, data >> (8 - i));
-	पूर्ण
+	}
 
 	/* Check A bit */
-	r = locomo_पढ़ोl(mapbase + LOCOMO_DAC);
+	r = locomo_readl(mapbase + LOCOMO_DAC);
 	r &=  ~(LOCOMO_DAC_SCLOEB);
-	locomo_ग_लिखोl(r, mapbase + LOCOMO_DAC);
+	locomo_writel(r, mapbase + LOCOMO_DAC);
 	udelay(DAC_LOW_SETUP_TIME);	/* 300 nsec */
 	udelay(DAC_SCL_LOW_HOLD_TIME);	/* 4.7 usec */
-	r = locomo_पढ़ोl(mapbase + LOCOMO_DAC);
+	r = locomo_readl(mapbase + LOCOMO_DAC);
 	r &=  ~(LOCOMO_DAC_SDAOEB);
-	locomo_ग_लिखोl(r, mapbase + LOCOMO_DAC);
+	locomo_writel(r, mapbase + LOCOMO_DAC);
 	udelay(DAC_LOW_SETUP_TIME);	/* 300 nsec */
-	r = locomo_पढ़ोl(mapbase + LOCOMO_DAC);
+	r = locomo_readl(mapbase + LOCOMO_DAC);
 	r |=  LOCOMO_DAC_SCLOEB;
-	locomo_ग_लिखोl(r, mapbase + LOCOMO_DAC);
+	locomo_writel(r, mapbase + LOCOMO_DAC);
 	udelay(DAC_HIGH_SETUP_TIME);	/* 1000 nsec */
 	udelay(DAC_SCL_HIGH_HOLD_TIME);	/* 4.7 usec */
-	अगर (locomo_पढ़ोl(mapbase + LOCOMO_DAC) & LOCOMO_DAC_SDAOEB) अणु	/* High is error */
-		prपूर्णांकk(KERN_WARNING "locomo: m62332_senddata Error 2\n");
-		जाओ out;
-	पूर्ण
+	if (locomo_readl(mapbase + LOCOMO_DAC) & LOCOMO_DAC_SDAOEB) {	/* High is error */
+		printk(KERN_WARNING "locomo: m62332_senddata Error 2\n");
+		goto out;
+	}
 
 	/* Send DAC data */
-	क्रम (i = 1; i <= 8; i++) अणु
+	for (i = 1; i <= 8; i++) {
 		locomo_m62332_sendbit(mapbase, dac_data >> (8 - i));
-	पूर्ण
+	}
 
 	/* Check A bit */
-	r = locomo_पढ़ोl(mapbase + LOCOMO_DAC);
+	r = locomo_readl(mapbase + LOCOMO_DAC);
 	r &=  ~(LOCOMO_DAC_SCLOEB);
-	locomo_ग_लिखोl(r, mapbase + LOCOMO_DAC);
+	locomo_writel(r, mapbase + LOCOMO_DAC);
 	udelay(DAC_LOW_SETUP_TIME);	/* 300 nsec */
 	udelay(DAC_SCL_LOW_HOLD_TIME);	/* 4.7 usec */
-	r = locomo_पढ़ोl(mapbase + LOCOMO_DAC);
+	r = locomo_readl(mapbase + LOCOMO_DAC);
 	r &=  ~(LOCOMO_DAC_SDAOEB);
-	locomo_ग_लिखोl(r, mapbase + LOCOMO_DAC);
+	locomo_writel(r, mapbase + LOCOMO_DAC);
 	udelay(DAC_LOW_SETUP_TIME);	/* 300 nsec */
-	r = locomo_पढ़ोl(mapbase + LOCOMO_DAC);
+	r = locomo_readl(mapbase + LOCOMO_DAC);
 	r |=  LOCOMO_DAC_SCLOEB;
-	locomo_ग_लिखोl(r, mapbase + LOCOMO_DAC);
+	locomo_writel(r, mapbase + LOCOMO_DAC);
 	udelay(DAC_HIGH_SETUP_TIME);	/* 1000 nsec */
 	udelay(DAC_SCL_HIGH_HOLD_TIME);	/* 4.7 usec */
-	अगर (locomo_पढ़ोl(mapbase + LOCOMO_DAC) & LOCOMO_DAC_SDAOEB) अणु	/* High is error */
-		prपूर्णांकk(KERN_WARNING "locomo: m62332_senddata Error 3\n");
-	पूर्ण
+	if (locomo_readl(mapbase + LOCOMO_DAC) & LOCOMO_DAC_SDAOEB) {	/* High is error */
+		printk(KERN_WARNING "locomo: m62332_senddata Error 3\n");
+	}
 
 out:
 	/* stop */
-	r = locomo_पढ़ोl(mapbase + LOCOMO_DAC);
+	r = locomo_readl(mapbase + LOCOMO_DAC);
 	r &=  ~(LOCOMO_DAC_SCLOEB);
-	locomo_ग_लिखोl(r, mapbase + LOCOMO_DAC);
+	locomo_writel(r, mapbase + LOCOMO_DAC);
 	udelay(DAC_LOW_SETUP_TIME);	/* 300 nsec */
 	udelay(DAC_SCL_LOW_HOLD_TIME);	/* 4.7 usec */
-	r = locomo_पढ़ोl(mapbase + LOCOMO_DAC);
+	r = locomo_readl(mapbase + LOCOMO_DAC);
 	r |=  LOCOMO_DAC_SCLOEB;
-	locomo_ग_लिखोl(r, mapbase + LOCOMO_DAC);
+	locomo_writel(r, mapbase + LOCOMO_DAC);
 	udelay(DAC_HIGH_SETUP_TIME);	/* 1000 nsec */
 	udelay(DAC_SCL_HIGH_HOLD_TIME);	/* 4 usec */
-	r = locomo_पढ़ोl(mapbase + LOCOMO_DAC);
+	r = locomo_readl(mapbase + LOCOMO_DAC);
 	r |=  LOCOMO_DAC_SDAOEB;
-	locomo_ग_लिखोl(r, mapbase + LOCOMO_DAC);
+	locomo_writel(r, mapbase + LOCOMO_DAC);
 	udelay(DAC_HIGH_SETUP_TIME);	/* 1000 nsec */
 	udelay(DAC_SCL_HIGH_HOLD_TIME);	/* 4 usec */
 
-	r = locomo_पढ़ोl(mapbase + LOCOMO_DAC);
+	r = locomo_readl(mapbase + LOCOMO_DAC);
 	r |=  LOCOMO_DAC_SCLOEB | LOCOMO_DAC_SDAOEB;
-	locomo_ग_लिखोl(r, mapbase + LOCOMO_DAC);
+	locomo_writel(r, mapbase + LOCOMO_DAC);
 	udelay(DAC_LOW_SETUP_TIME);	/* 1000 nsec */
 	udelay(DAC_SCL_LOW_HOLD_TIME);	/* 4.7 usec */
 
 	spin_unlock_irqrestore(&lchip->lock, flags);
-पूर्ण
+}
 EXPORT_SYMBOL(locomo_m62332_senddata);
 
 /*
  *	Frontlight control
  */
 
-व्योम locomo_frontlight_set(काष्ठा locomo_dev *dev, पूर्णांक duty, पूर्णांक vr, पूर्णांक bpwf)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा locomo *lchip = locomo_chip_driver(dev);
+void locomo_frontlight_set(struct locomo_dev *dev, int duty, int vr, int bpwf)
+{
+	unsigned long flags;
+	struct locomo *lchip = locomo_chip_driver(dev);
 
-	अगर (vr)
-		locomo_gpio_ग_लिखो(dev->dev.parent, LOCOMO_GPIO_FL_VR, 1);
-	अन्यथा
-		locomo_gpio_ग_लिखो(dev->dev.parent, LOCOMO_GPIO_FL_VR, 0);
+	if (vr)
+		locomo_gpio_write(dev->dev.parent, LOCOMO_GPIO_FL_VR, 1);
+	else
+		locomo_gpio_write(dev->dev.parent, LOCOMO_GPIO_FL_VR, 0);
 
 	spin_lock_irqsave(&lchip->lock, flags);
-	locomo_ग_लिखोl(bpwf, lchip->base + LOCOMO_FRONTLIGHT + LOCOMO_ALS);
+	locomo_writel(bpwf, lchip->base + LOCOMO_FRONTLIGHT + LOCOMO_ALS);
 	udelay(100);
-	locomo_ग_लिखोl(duty, lchip->base + LOCOMO_FRONTLIGHT + LOCOMO_ALD);
-	locomo_ग_लिखोl(bpwf | LOCOMO_ALC_EN, lchip->base + LOCOMO_FRONTLIGHT + LOCOMO_ALS);
+	locomo_writel(duty, lchip->base + LOCOMO_FRONTLIGHT + LOCOMO_ALD);
+	locomo_writel(bpwf | LOCOMO_ALC_EN, lchip->base + LOCOMO_FRONTLIGHT + LOCOMO_ALS);
 	spin_unlock_irqrestore(&lchip->lock, flags);
-पूर्ण
+}
 EXPORT_SYMBOL(locomo_frontlight_set);
 
 /*
@@ -816,71 +815,71 @@ EXPORT_SYMBOL(locomo_frontlight_set);
  *	We model this as a regular bus type, and hang devices directly
  *	off this.
  */
-अटल पूर्णांक locomo_match(काष्ठा device *_dev, काष्ठा device_driver *_drv)
-अणु
-	काष्ठा locomo_dev *dev = LOCOMO_DEV(_dev);
-	काष्ठा locomo_driver *drv = LOCOMO_DRV(_drv);
+static int locomo_match(struct device *_dev, struct device_driver *_drv)
+{
+	struct locomo_dev *dev = LOCOMO_DEV(_dev);
+	struct locomo_driver *drv = LOCOMO_DRV(_drv);
 
-	वापस dev->devid == drv->devid;
-पूर्ण
+	return dev->devid == drv->devid;
+}
 
-अटल पूर्णांक locomo_bus_probe(काष्ठा device *dev)
-अणु
-	काष्ठा locomo_dev *ldev = LOCOMO_DEV(dev);
-	काष्ठा locomo_driver *drv = LOCOMO_DRV(dev->driver);
-	पूर्णांक ret = -ENODEV;
+static int locomo_bus_probe(struct device *dev)
+{
+	struct locomo_dev *ldev = LOCOMO_DEV(dev);
+	struct locomo_driver *drv = LOCOMO_DRV(dev->driver);
+	int ret = -ENODEV;
 
-	अगर (drv->probe)
+	if (drv->probe)
 		ret = drv->probe(ldev);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक locomo_bus_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा locomo_dev *ldev = LOCOMO_DEV(dev);
-	काष्ठा locomo_driver *drv = LOCOMO_DRV(dev->driver);
+static int locomo_bus_remove(struct device *dev)
+{
+	struct locomo_dev *ldev = LOCOMO_DEV(dev);
+	struct locomo_driver *drv = LOCOMO_DRV(dev->driver);
 
-	अगर (drv->हटाओ)
-		drv->हटाओ(ldev);
-	वापस 0;
-पूर्ण
+	if (drv->remove)
+		drv->remove(ldev);
+	return 0;
+}
 
-काष्ठा bus_type locomo_bus_type = अणु
+struct bus_type locomo_bus_type = {
 	.name		= "locomo-bus",
 	.match		= locomo_match,
 	.probe		= locomo_bus_probe,
-	.हटाओ		= locomo_bus_हटाओ,
-पूर्ण;
+	.remove		= locomo_bus_remove,
+};
 
-पूर्णांक locomo_driver_रेजिस्टर(काष्ठा locomo_driver *driver)
-अणु
+int locomo_driver_register(struct locomo_driver *driver)
+{
 	driver->drv.bus = &locomo_bus_type;
-	वापस driver_रेजिस्टर(&driver->drv);
-पूर्ण
-EXPORT_SYMBOL(locomo_driver_रेजिस्टर);
+	return driver_register(&driver->drv);
+}
+EXPORT_SYMBOL(locomo_driver_register);
 
-व्योम locomo_driver_unरेजिस्टर(काष्ठा locomo_driver *driver)
-अणु
-	driver_unरेजिस्टर(&driver->drv);
-पूर्ण
-EXPORT_SYMBOL(locomo_driver_unरेजिस्टर);
+void locomo_driver_unregister(struct locomo_driver *driver)
+{
+	driver_unregister(&driver->drv);
+}
+EXPORT_SYMBOL(locomo_driver_unregister);
 
-अटल पूर्णांक __init locomo_init(व्योम)
-अणु
-	पूर्णांक ret = bus_रेजिस्टर(&locomo_bus_type);
-	अगर (ret == 0)
-		platक्रमm_driver_रेजिस्टर(&locomo_device_driver);
-	वापस ret;
-पूर्ण
+static int __init locomo_init(void)
+{
+	int ret = bus_register(&locomo_bus_type);
+	if (ret == 0)
+		platform_driver_register(&locomo_device_driver);
+	return ret;
+}
 
-अटल व्योम __निकास locomo_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&locomo_device_driver);
-	bus_unरेजिस्टर(&locomo_bus_type);
-पूर्ण
+static void __exit locomo_exit(void)
+{
+	platform_driver_unregister(&locomo_device_driver);
+	bus_unregister(&locomo_bus_type);
+}
 
 module_init(locomo_init);
-module_निकास(locomo_निकास);
+module_exit(locomo_exit);
 
 MODULE_DESCRIPTION("Sharp LoCoMo core driver");
 MODULE_LICENSE("GPL");

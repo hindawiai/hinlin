@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * This file is part of wl1271
  *
@@ -8,464 +7,464 @@
  * Contact: Luciano Coelho <luciano.coelho@nokia.com>
  */
 
-#समावेश "debugfs.h"
+#include "debugfs.h"
 
-#समावेश <linux/skbuff.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pm_runसमय.स>
+#include <linux/skbuff.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/pm_runtime.h>
 
-#समावेश "wlcore.h"
-#समावेश "debug.h"
-#समावेश "acx.h"
-#समावेश "ps.h"
-#समावेश "io.h"
-#समावेश "tx.h"
-#समावेश "hw_ops.h"
+#include "wlcore.h"
+#include "debug.h"
+#include "acx.h"
+#include "ps.h"
+#include "io.h"
+#include "tx.h"
+#include "hw_ops.h"
 
 /* ms */
-#घोषणा WL1271_DEBUGFS_STATS_LIFETIME 1000
+#define WL1271_DEBUGFS_STATS_LIFETIME 1000
 
-#घोषणा WLCORE_MAX_BLOCK_SIZE ((माप_प्रकार)(4*PAGE_SIZE))
+#define WLCORE_MAX_BLOCK_SIZE ((size_t)(4*PAGE_SIZE))
 
 /* debugfs macros idea from mac80211 */
-पूर्णांक wl1271_क्रमmat_buffer(अक्षर __user *userbuf, माप_प्रकार count,
-			 loff_t *ppos, अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
-	अक्षर buf[DEBUGFS_FORMAT_BUFFER_SIZE];
-	पूर्णांक res;
+int wl1271_format_buffer(char __user *userbuf, size_t count,
+			 loff_t *ppos, char *fmt, ...)
+{
+	va_list args;
+	char buf[DEBUGFS_FORMAT_BUFFER_SIZE];
+	int res;
 
-	बहु_शुरू(args, fmt);
-	res = vscnम_लिखो(buf, माप(buf), fmt, args);
-	बहु_पूर्ण(args);
+	va_start(args, fmt);
+	res = vscnprintf(buf, sizeof(buf), fmt, args);
+	va_end(args);
 
-	वापस simple_पढ़ो_from_buffer(userbuf, count, ppos, buf, res);
-पूर्ण
-EXPORT_SYMBOL_GPL(wl1271_क्रमmat_buffer);
+	return simple_read_from_buffer(userbuf, count, ppos, buf, res);
+}
+EXPORT_SYMBOL_GPL(wl1271_format_buffer);
 
-व्योम wl1271_debugfs_update_stats(काष्ठा wl1271 *wl)
-अणु
-	पूर्णांक ret;
+void wl1271_debugfs_update_stats(struct wl1271 *wl)
+{
+	int ret;
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON))
-		जाओ out;
+	if (unlikely(wl->state != WLCORE_STATE_ON))
+		goto out;
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	अगर (!wl->plt &&
-	    समय_after(jअगरfies, wl->stats.fw_stats_update +
-		       msecs_to_jअगरfies(WL1271_DEBUGFS_STATS_LIFETIME))) अणु
+	if (!wl->plt &&
+	    time_after(jiffies, wl->stats.fw_stats_update +
+		       msecs_to_jiffies(WL1271_DEBUGFS_STATS_LIFETIME))) {
 		wl1271_acx_statistics(wl, wl->stats.fw_stats);
-		wl->stats.fw_stats_update = jअगरfies;
-	पूर्ण
+		wl->stats.fw_stats_update = jiffies;
+	}
 
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 
 out:
 	mutex_unlock(&wl->mutex);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(wl1271_debugfs_update_stats);
 
-DEBUGFS_READONLY_खाता(retry_count, "%u", wl->stats.retry_count);
-DEBUGFS_READONLY_खाता(excessive_retries, "%u",
+DEBUGFS_READONLY_FILE(retry_count, "%u", wl->stats.retry_count);
+DEBUGFS_READONLY_FILE(excessive_retries, "%u",
 		      wl->stats.excessive_retries);
 
-अटल sमाप_प्रकार tx_queue_len_पढ़ो(काष्ठा file *file, अक्षर __user *userbuf,
-				 माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
+static ssize_t tx_queue_len_read(struct file *file, char __user *userbuf,
+				 size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
 	u32 queue_len;
-	अक्षर buf[20];
-	पूर्णांक res;
+	char buf[20];
+	int res;
 
 	queue_len = wl1271_tx_total_queue_count(wl);
 
-	res = scnम_लिखो(buf, माप(buf), "%u\n", queue_len);
-	वापस simple_पढ़ो_from_buffer(userbuf, count, ppos, buf, res);
-पूर्ण
+	res = scnprintf(buf, sizeof(buf), "%u\n", queue_len);
+	return simple_read_from_buffer(userbuf, count, ppos, buf, res);
+}
 
-अटल स्थिर काष्ठा file_operations tx_queue_len_ops = अणु
-	.पढ़ो = tx_queue_len_पढ़ो,
-	.खोलो = simple_खोलो,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations tx_queue_len_ops = {
+	.read = tx_queue_len_read,
+	.open = simple_open,
+	.llseek = default_llseek,
+};
 
-अटल व्योम chip_op_handler(काष्ठा wl1271 *wl, अचिन्हित दीर्घ value,
-			    व्योम *arg)
-अणु
-	पूर्णांक ret;
-	पूर्णांक (*chip_op) (काष्ठा wl1271 *wl);
+static void chip_op_handler(struct wl1271 *wl, unsigned long value,
+			    void *arg)
+{
+	int ret;
+	int (*chip_op) (struct wl1271 *wl);
 
-	अगर (!arg) अणु
+	if (!arg) {
 		wl1271_warning("debugfs chip_op_handler with no callback");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	chip_op = arg;
 	chip_op(wl);
 
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
-पूर्ण
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
+}
 
-#घोषणा WL12XX_CONF_DEBUGFS(param, conf_sub_काष्ठा,			\
-			    min_val, max_val, ग_लिखो_handler_locked,	\
-			    ग_लिखो_handler_arg)				\
-	अटल sमाप_प्रकार param##_पढ़ो(काष्ठा file *file,			\
-				      अक्षर __user *user_buf,		\
-				      माप_प्रकार count, loff_t *ppos)	\
-	अणु								\
-	काष्ठा wl1271 *wl = file->निजी_data;				\
-	वापस wl1271_क्रमmat_buffer(user_buf, count,			\
+#define WL12XX_CONF_DEBUGFS(param, conf_sub_struct,			\
+			    min_val, max_val, write_handler_locked,	\
+			    write_handler_arg)				\
+	static ssize_t param##_read(struct file *file,			\
+				      char __user *user_buf,		\
+				      size_t count, loff_t *ppos)	\
+	{								\
+	struct wl1271 *wl = file->private_data;				\
+	return wl1271_format_buffer(user_buf, count,			\
 				    ppos, "%d\n",			\
-				    wl->conf.conf_sub_काष्ठा.param);	\
-	पूर्ण								\
+				    wl->conf.conf_sub_struct.param);	\
+	}								\
 									\
-	अटल sमाप_प्रकार param##_ग_लिखो(काष्ठा file *file,			\
-				     स्थिर अक्षर __user *user_buf,	\
-				     माप_प्रकार count, loff_t *ppos)	\
-	अणु								\
-	काष्ठा wl1271 *wl = file->निजी_data;				\
-	अचिन्हित दीर्घ value;						\
-	पूर्णांक ret;							\
+	static ssize_t param##_write(struct file *file,			\
+				     const char __user *user_buf,	\
+				     size_t count, loff_t *ppos)	\
+	{								\
+	struct wl1271 *wl = file->private_data;				\
+	unsigned long value;						\
+	int ret;							\
 									\
-	ret = kम_से_अदीर्घ_from_user(user_buf, count, 10, &value);		\
-	अगर (ret < 0) अणु							\
+	ret = kstrtoul_from_user(user_buf, count, 10, &value);		\
+	if (ret < 0) {							\
 		wl1271_warning("illegal value for " #param);		\
-		वापस -EINVAL;						\
-	पूर्ण								\
+		return -EINVAL;						\
+	}								\
 									\
-	अगर (value < min_val || value > max_val) अणु			\
+	if (value < min_val || value > max_val) {			\
 		wl1271_warning(#param " is not in valid range");	\
-		वापस -दुस्फल;						\
-	पूर्ण								\
+		return -ERANGE;						\
+	}								\
 									\
 	mutex_lock(&wl->mutex);						\
-	wl->conf.conf_sub_काष्ठा.param = value;				\
+	wl->conf.conf_sub_struct.param = value;				\
 									\
-	ग_लिखो_handler_locked(wl, value, ग_लिखो_handler_arg);		\
+	write_handler_locked(wl, value, write_handler_arg);		\
 									\
 	mutex_unlock(&wl->mutex);					\
-	वापस count;							\
-	पूर्ण								\
+	return count;							\
+	}								\
 									\
-	अटल स्थिर काष्ठा file_operations param##_ops = अणु		\
-		.पढ़ो = param##_पढ़ो,					\
-		.ग_लिखो = param##_ग_लिखो,					\
-		.खोलो = simple_खोलो,					\
-		.llseek = शेष_llseek,				\
-	पूर्ण;
+	static const struct file_operations param##_ops = {		\
+		.read = param##_read,					\
+		.write = param##_write,					\
+		.open = simple_open,					\
+		.llseek = default_llseek,				\
+	};
 
 WL12XX_CONF_DEBUGFS(irq_pkt_threshold, rx, 0, 65535,
-		    chip_op_handler, wl1271_acx_init_rx_पूर्णांकerrupt)
+		    chip_op_handler, wl1271_acx_init_rx_interrupt)
 WL12XX_CONF_DEBUGFS(irq_blk_threshold, rx, 0, 65535,
-		    chip_op_handler, wl1271_acx_init_rx_पूर्णांकerrupt)
-WL12XX_CONF_DEBUGFS(irq_समयout, rx, 0, 100,
-		    chip_op_handler, wl1271_acx_init_rx_पूर्णांकerrupt)
+		    chip_op_handler, wl1271_acx_init_rx_interrupt)
+WL12XX_CONF_DEBUGFS(irq_timeout, rx, 0, 100,
+		    chip_op_handler, wl1271_acx_init_rx_interrupt)
 
-अटल sमाप_प्रकार gpio_घातer_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
-			  माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
+static ssize_t gpio_power_read(struct file *file, char __user *user_buf,
+			  size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
 	bool state = test_bit(WL1271_FLAG_GPIO_POWER, &wl->flags);
 
-	पूर्णांक res;
-	अक्षर buf[10];
+	int res;
+	char buf[10];
 
-	res = scnम_लिखो(buf, माप(buf), "%d\n", state);
+	res = scnprintf(buf, sizeof(buf), "%d\n", state);
 
-	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, res);
-पूर्ण
+	return simple_read_from_buffer(user_buf, count, ppos, buf, res);
+}
 
-अटल sमाप_प्रकार gpio_घातer_ग_लिखो(काष्ठा file *file,
-			   स्थिर अक्षर __user *user_buf,
-			   माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
-	अचिन्हित दीर्घ value;
-	पूर्णांक ret;
+static ssize_t gpio_power_write(struct file *file,
+			   const char __user *user_buf,
+			   size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
+	unsigned long value;
+	int ret;
 
-	ret = kम_से_अदीर्घ_from_user(user_buf, count, 10, &value);
-	अगर (ret < 0) अणु
+	ret = kstrtoul_from_user(user_buf, count, 10, &value);
+	if (ret < 0) {
 		wl1271_warning("illegal value in gpio_power");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_lock(&wl->mutex);
 
-	अगर (value)
-		wl1271_घातer_on(wl);
-	अन्यथा
-		wl1271_घातer_off(wl);
+	if (value)
+		wl1271_power_on(wl);
+	else
+		wl1271_power_off(wl);
 
 	mutex_unlock(&wl->mutex);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations gpio_घातer_ops = अणु
-	.पढ़ो = gpio_घातer_पढ़ो,
-	.ग_लिखो = gpio_घातer_ग_लिखो,
-	.खोलो = simple_खोलो,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations gpio_power_ops = {
+	.read = gpio_power_read,
+	.write = gpio_power_write,
+	.open = simple_open,
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार start_recovery_ग_लिखो(काष्ठा file *file,
-				    स्थिर अक्षर __user *user_buf,
-				    माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
+static ssize_t start_recovery_write(struct file *file,
+				    const char __user *user_buf,
+				    size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
 
 	mutex_lock(&wl->mutex);
 	wl12xx_queue_recovery_work(wl);
 	mutex_unlock(&wl->mutex);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations start_recovery_ops = अणु
-	.ग_लिखो = start_recovery_ग_लिखो,
-	.खोलो = simple_खोलो,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations start_recovery_ops = {
+	.write = start_recovery_write,
+	.open = simple_open,
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार dynamic_ps_समयout_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
-			  माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
+static ssize_t dynamic_ps_timeout_read(struct file *file, char __user *user_buf,
+			  size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
 
-	वापस wl1271_क्रमmat_buffer(user_buf, count,
+	return wl1271_format_buffer(user_buf, count,
 				    ppos, "%d\n",
-				    wl->conf.conn.dynamic_ps_समयout);
-पूर्ण
+				    wl->conf.conn.dynamic_ps_timeout);
+}
 
-अटल sमाप_प्रकार dynamic_ps_समयout_ग_लिखो(काष्ठा file *file,
-				    स्थिर अक्षर __user *user_buf,
-				    माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
-	काष्ठा wl12xx_vअगर *wlvअगर;
-	अचिन्हित दीर्घ value;
-	पूर्णांक ret;
+static ssize_t dynamic_ps_timeout_write(struct file *file,
+				    const char __user *user_buf,
+				    size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
+	struct wl12xx_vif *wlvif;
+	unsigned long value;
+	int ret;
 
-	ret = kम_से_अदीर्घ_from_user(user_buf, count, 10, &value);
-	अगर (ret < 0) अणु
+	ret = kstrtoul_from_user(user_buf, count, 10, &value);
+	if (ret < 0) {
 		wl1271_warning("illegal value in dynamic_ps");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (value < 1 || value > 65535) अणु
+	if (value < 1 || value > 65535) {
 		wl1271_warning("dynamic_ps_timeout is not in valid range");
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
 	mutex_lock(&wl->mutex);
 
-	wl->conf.conn.dynamic_ps_समयout = value;
+	wl->conf.conn.dynamic_ps_timeout = value;
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON))
-		जाओ out;
+	if (unlikely(wl->state != WLCORE_STATE_ON))
+		goto out;
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	/* In हाल we're alपढ़ोy in PSM, trigger it again to set new समयout
-	 * immediately without रुकोing क्रम re-association
+	/* In case we're already in PSM, trigger it again to set new timeout
+	 * immediately without waiting for re-association
 	 */
 
-	wl12xx_क्रम_each_wlvअगर_sta(wl, wlvअगर) अणु
-		अगर (test_bit(WLVIF_FLAG_IN_PS, &wlvअगर->flags))
-			wl1271_ps_set_mode(wl, wlvअगर, STATION_AUTO_PS_MODE);
-	पूर्ण
+	wl12xx_for_each_wlvif_sta(wl, wlvif) {
+		if (test_bit(WLVIF_FLAG_IN_PS, &wlvif->flags))
+			wl1271_ps_set_mode(wl, wlvif, STATION_AUTO_PS_MODE);
+	}
 
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 
 out:
 	mutex_unlock(&wl->mutex);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations dynamic_ps_समयout_ops = अणु
-	.पढ़ो = dynamic_ps_समयout_पढ़ो,
-	.ग_लिखो = dynamic_ps_समयout_ग_लिखो,
-	.खोलो = simple_खोलो,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations dynamic_ps_timeout_ops = {
+	.read = dynamic_ps_timeout_read,
+	.write = dynamic_ps_timeout_write,
+	.open = simple_open,
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार क्रमced_ps_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
-			  माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
+static ssize_t forced_ps_read(struct file *file, char __user *user_buf,
+			  size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
 
-	वापस wl1271_क्रमmat_buffer(user_buf, count,
+	return wl1271_format_buffer(user_buf, count,
 				    ppos, "%d\n",
-				    wl->conf.conn.क्रमced_ps);
-पूर्ण
+				    wl->conf.conn.forced_ps);
+}
 
-अटल sमाप_प्रकार क्रमced_ps_ग_लिखो(काष्ठा file *file,
-				    स्थिर अक्षर __user *user_buf,
-				    माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
-	काष्ठा wl12xx_vअगर *wlvअगर;
-	अचिन्हित दीर्घ value;
-	पूर्णांक ret, ps_mode;
+static ssize_t forced_ps_write(struct file *file,
+				    const char __user *user_buf,
+				    size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
+	struct wl12xx_vif *wlvif;
+	unsigned long value;
+	int ret, ps_mode;
 
-	ret = kम_से_अदीर्घ_from_user(user_buf, count, 10, &value);
-	अगर (ret < 0) अणु
+	ret = kstrtoul_from_user(user_buf, count, 10, &value);
+	if (ret < 0) {
 		wl1271_warning("illegal value in forced_ps");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (value != 1 && value != 0) अणु
+	if (value != 1 && value != 0) {
 		wl1271_warning("forced_ps should be either 0 or 1");
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
 	mutex_lock(&wl->mutex);
 
-	अगर (wl->conf.conn.क्रमced_ps == value)
-		जाओ out;
+	if (wl->conf.conn.forced_ps == value)
+		goto out;
 
-	wl->conf.conn.क्रमced_ps = value;
+	wl->conf.conn.forced_ps = value;
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON))
-		जाओ out;
+	if (unlikely(wl->state != WLCORE_STATE_ON))
+		goto out;
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	/* In हाल we're alपढ़ोy in PSM, trigger it again to चयन mode
-	 * immediately without रुकोing क्रम re-association
+	/* In case we're already in PSM, trigger it again to switch mode
+	 * immediately without waiting for re-association
 	 */
 
 	ps_mode = value ? STATION_POWER_SAVE_MODE : STATION_AUTO_PS_MODE;
 
-	wl12xx_क्रम_each_wlvअगर_sta(wl, wlvअगर) अणु
-		अगर (test_bit(WLVIF_FLAG_IN_PS, &wlvअगर->flags))
-			wl1271_ps_set_mode(wl, wlvअगर, ps_mode);
-	पूर्ण
+	wl12xx_for_each_wlvif_sta(wl, wlvif) {
+		if (test_bit(WLVIF_FLAG_IN_PS, &wlvif->flags))
+			wl1271_ps_set_mode(wl, wlvif, ps_mode);
+	}
 
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 
 out:
 	mutex_unlock(&wl->mutex);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations क्रमced_ps_ops = अणु
-	.पढ़ो = क्रमced_ps_पढ़ो,
-	.ग_लिखो = क्रमced_ps_ग_लिखो,
-	.खोलो = simple_खोलो,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations forced_ps_ops = {
+	.read = forced_ps_read,
+	.write = forced_ps_write,
+	.open = simple_open,
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार split_scan_समयout_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
-			  माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
+static ssize_t split_scan_timeout_read(struct file *file, char __user *user_buf,
+			  size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
 
-	वापस wl1271_क्रमmat_buffer(user_buf, count,
+	return wl1271_format_buffer(user_buf, count,
 				    ppos, "%d\n",
-				    wl->conf.scan.split_scan_समयout / 1000);
-पूर्ण
+				    wl->conf.scan.split_scan_timeout / 1000);
+}
 
-अटल sमाप_प्रकार split_scan_समयout_ग_लिखो(काष्ठा file *file,
-				    स्थिर अक्षर __user *user_buf,
-				    माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
-	अचिन्हित दीर्घ value;
-	पूर्णांक ret;
+static ssize_t split_scan_timeout_write(struct file *file,
+				    const char __user *user_buf,
+				    size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
+	unsigned long value;
+	int ret;
 
-	ret = kम_से_अदीर्घ_from_user(user_buf, count, 10, &value);
-	अगर (ret < 0) अणु
+	ret = kstrtoul_from_user(user_buf, count, 10, &value);
+	if (ret < 0) {
 		wl1271_warning("illegal value in split_scan_timeout");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (value == 0)
+	if (value == 0)
 		wl1271_info("split scan will be disabled");
 
 	mutex_lock(&wl->mutex);
 
-	wl->conf.scan.split_scan_समयout = value * 1000;
+	wl->conf.scan.split_scan_timeout = value * 1000;
 
 	mutex_unlock(&wl->mutex);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations split_scan_समयout_ops = अणु
-	.पढ़ो = split_scan_समयout_पढ़ो,
-	.ग_लिखो = split_scan_समयout_ग_लिखो,
-	.खोलो = simple_खोलो,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations split_scan_timeout_ops = {
+	.read = split_scan_timeout_read,
+	.write = split_scan_timeout_write,
+	.open = simple_open,
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार driver_state_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
-				 माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
-	पूर्णांक res = 0;
-	sमाप_प्रकार ret;
-	अक्षर *buf;
-	काष्ठा wl12xx_vअगर *wlvअगर;
+static ssize_t driver_state_read(struct file *file, char __user *user_buf,
+				 size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
+	int res = 0;
+	ssize_t ret;
+	char *buf;
+	struct wl12xx_vif *wlvif;
 
-#घोषणा DRIVER_STATE_BUF_LEN 1024
+#define DRIVER_STATE_BUF_LEN 1024
 
-	buf = kदो_स्मृति(DRIVER_STATE_BUF_LEN, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc(DRIVER_STATE_BUF_LEN, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
 	mutex_lock(&wl->mutex);
 
-#घोषणा DRIVER_STATE_PRINT(x, fmt)   \
-	(res += scnम_लिखो(buf + res, DRIVER_STATE_BUF_LEN - res,\
+#define DRIVER_STATE_PRINT(x, fmt)   \
+	(res += scnprintf(buf + res, DRIVER_STATE_BUF_LEN - res,\
 			  #x " = " fmt "\n", wl->x))
 
-#घोषणा DRIVER_STATE_PRINT_GENERIC(x, fmt, args...)   \
-	(res += scnम_लिखो(buf + res, DRIVER_STATE_BUF_LEN - res,\
+#define DRIVER_STATE_PRINT_GENERIC(x, fmt, args...)   \
+	(res += scnprintf(buf + res, DRIVER_STATE_BUF_LEN - res,\
 			  #x " = " fmt "\n", args))
 
-#घोषणा DRIVER_STATE_PRINT_LONG(x) DRIVER_STATE_PRINT(x, "%ld")
-#घोषणा DRIVER_STATE_PRINT_INT(x)  DRIVER_STATE_PRINT(x, "%d")
-#घोषणा DRIVER_STATE_PRINT_STR(x)  DRIVER_STATE_PRINT(x, "%s")
-#घोषणा DRIVER_STATE_PRINT_LHEX(x) DRIVER_STATE_PRINT(x, "0x%lx")
-#घोषणा DRIVER_STATE_PRINT_HEX(x)  DRIVER_STATE_PRINT(x, "0x%x")
+#define DRIVER_STATE_PRINT_LONG(x) DRIVER_STATE_PRINT(x, "%ld")
+#define DRIVER_STATE_PRINT_INT(x)  DRIVER_STATE_PRINT(x, "%d")
+#define DRIVER_STATE_PRINT_STR(x)  DRIVER_STATE_PRINT(x, "%s")
+#define DRIVER_STATE_PRINT_LHEX(x) DRIVER_STATE_PRINT(x, "0x%lx")
+#define DRIVER_STATE_PRINT_HEX(x)  DRIVER_STATE_PRINT(x, "0x%x")
 
-	wl12xx_क्रम_each_wlvअगर_sta(wl, wlvअगर) अणु
-		अगर (!test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvअगर->flags))
-			जारी;
+	wl12xx_for_each_wlvif_sta(wl, wlvif) {
+		if (!test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvif->flags))
+			continue;
 
-		DRIVER_STATE_PRINT_GENERIC(channel, "%d (%s)", wlvअगर->channel,
-					   wlvअगर->p2p ? "P2P-CL" : "STA");
-	पूर्ण
+		DRIVER_STATE_PRINT_GENERIC(channel, "%d (%s)", wlvif->channel,
+					   wlvif->p2p ? "P2P-CL" : "STA");
+	}
 
-	wl12xx_क्रम_each_wlvअगर_ap(wl, wlvअगर)
-		DRIVER_STATE_PRINT_GENERIC(channel, "%d (%s)", wlvअगर->channel,
-					   wlvअगर->p2p ? "P2P-GO" : "AP");
+	wl12xx_for_each_wlvif_ap(wl, wlvif)
+		DRIVER_STATE_PRINT_GENERIC(channel, "%d (%s)", wlvif->channel,
+					   wlvif->p2p ? "P2P-GO" : "AP");
 
 	DRIVER_STATE_PRINT_INT(tx_blocks_available);
 	DRIVER_STATE_PRINT_INT(tx_allocated_blocks);
@@ -482,11 +481,11 @@ out:
 	DRIVER_STATE_PRINT_INT(tx_packets_count);
 	DRIVER_STATE_PRINT_INT(tx_results_count);
 	DRIVER_STATE_PRINT_LHEX(flags);
-	DRIVER_STATE_PRINT_INT(tx_blocks_मुक्तd);
+	DRIVER_STATE_PRINT_INT(tx_blocks_freed);
 	DRIVER_STATE_PRINT_INT(rx_counter);
 	DRIVER_STATE_PRINT_INT(state);
 	DRIVER_STATE_PRINT_INT(band);
-	DRIVER_STATE_PRINT_INT(घातer_level);
+	DRIVER_STATE_PRINT_INT(power_level);
 	DRIVER_STATE_PRINT_INT(sg_enabled);
 	DRIVER_STATE_PRINT_INT(enable_11a);
 	DRIVER_STATE_PRINT_INT(noise);
@@ -494,7 +493,7 @@ out:
 	DRIVER_STATE_PRINT_LHEX(ap_ps_map);
 	DRIVER_STATE_PRINT_HEX(quirks);
 	DRIVER_STATE_PRINT_HEX(irq);
-	/* TODO: ref_घड़ी and tcxo_घड़ी were moved to wl12xx priv */
+	/* TODO: ref_clock and tcxo_clock were moved to wl12xx priv */
 	DRIVER_STATE_PRINT_HEX(hw_pg_ver);
 	DRIVER_STATE_PRINT_HEX(irq_flags);
 	DRIVER_STATE_PRINT_HEX(chip.id);
@@ -502,64 +501,64 @@ out:
 	DRIVER_STATE_PRINT_STR(chip.phy_fw_ver_str);
 	DRIVER_STATE_PRINT_INT(recovery_count);
 
-#अघोषित DRIVER_STATE_PRINT_INT
-#अघोषित DRIVER_STATE_PRINT_LONG
-#अघोषित DRIVER_STATE_PRINT_HEX
-#अघोषित DRIVER_STATE_PRINT_LHEX
-#अघोषित DRIVER_STATE_PRINT_STR
-#अघोषित DRIVER_STATE_PRINT
-#अघोषित DRIVER_STATE_BUF_LEN
+#undef DRIVER_STATE_PRINT_INT
+#undef DRIVER_STATE_PRINT_LONG
+#undef DRIVER_STATE_PRINT_HEX
+#undef DRIVER_STATE_PRINT_LHEX
+#undef DRIVER_STATE_PRINT_STR
+#undef DRIVER_STATE_PRINT
+#undef DRIVER_STATE_BUF_LEN
 
 	mutex_unlock(&wl->mutex);
 
-	ret = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, res);
-	kमुक्त(buf);
-	वापस ret;
-पूर्ण
+	ret = simple_read_from_buffer(user_buf, count, ppos, buf, res);
+	kfree(buf);
+	return ret;
+}
 
-अटल स्थिर काष्ठा file_operations driver_state_ops = अणु
-	.पढ़ो = driver_state_पढ़ो,
-	.खोलो = simple_खोलो,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations driver_state_ops = {
+	.read = driver_state_read,
+	.open = simple_open,
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार vअगरs_state_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
-				 माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
-	काष्ठा wl12xx_vअगर *wlvअगर;
-	पूर्णांक ret, res = 0;
-	स्थिर पूर्णांक buf_size = 4096;
-	अक्षर *buf;
-	अक्षर पंचांगp_buf[64];
+static ssize_t vifs_state_read(struct file *file, char __user *user_buf,
+				 size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
+	struct wl12xx_vif *wlvif;
+	int ret, res = 0;
+	const int buf_size = 4096;
+	char *buf;
+	char tmp_buf[64];
 
 	buf = kzalloc(buf_size, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
 	mutex_lock(&wl->mutex);
 
-#घोषणा VIF_STATE_PRINT(x, fmt)				\
-	(res += scnम_लिखो(buf + res, buf_size - res,	\
-			  #x " = " fmt "\n", wlvअगर->x))
+#define VIF_STATE_PRINT(x, fmt)				\
+	(res += scnprintf(buf + res, buf_size - res,	\
+			  #x " = " fmt "\n", wlvif->x))
 
-#घोषणा VIF_STATE_PRINT_LONG(x)  VIF_STATE_PRINT(x, "%ld")
-#घोषणा VIF_STATE_PRINT_INT(x)   VIF_STATE_PRINT(x, "%d")
-#घोषणा VIF_STATE_PRINT_STR(x)   VIF_STATE_PRINT(x, "%s")
-#घोषणा VIF_STATE_PRINT_LHEX(x)  VIF_STATE_PRINT(x, "0x%lx")
-#घोषणा VIF_STATE_PRINT_LLHEX(x) VIF_STATE_PRINT(x, "0x%llx")
-#घोषणा VIF_STATE_PRINT_HEX(x)   VIF_STATE_PRINT(x, "0x%x")
+#define VIF_STATE_PRINT_LONG(x)  VIF_STATE_PRINT(x, "%ld")
+#define VIF_STATE_PRINT_INT(x)   VIF_STATE_PRINT(x, "%d")
+#define VIF_STATE_PRINT_STR(x)   VIF_STATE_PRINT(x, "%s")
+#define VIF_STATE_PRINT_LHEX(x)  VIF_STATE_PRINT(x, "0x%lx")
+#define VIF_STATE_PRINT_LLHEX(x) VIF_STATE_PRINT(x, "0x%llx")
+#define VIF_STATE_PRINT_HEX(x)   VIF_STATE_PRINT(x, "0x%x")
 
-#घोषणा VIF_STATE_PRINT_NSTR(x, len)				\
-	करो अणु							\
-		स_रखो(पंचांगp_buf, 0, माप(पंचांगp_buf));		\
-		स_नकल(पंचांगp_buf, wlvअगर->x,			\
-		       min_t(u8, len, माप(पंचांगp_buf) - 1));	\
-		res += scnम_लिखो(buf + res, buf_size - res,	\
-				 #x " = %s\n", पंचांगp_buf);	\
-	पूर्ण जबतक (0)
+#define VIF_STATE_PRINT_NSTR(x, len)				\
+	do {							\
+		memset(tmp_buf, 0, sizeof(tmp_buf));		\
+		memcpy(tmp_buf, wlvif->x,			\
+		       min_t(u8, len, sizeof(tmp_buf) - 1));	\
+		res += scnprintf(buf + res, buf_size - res,	\
+				 #x " = %s\n", tmp_buf);	\
+	} while (0)
 
-	wl12xx_क्रम_each_wlvअगर(wl, wlvअगर) अणु
+	wl12xx_for_each_wlvif(wl, wlvif) {
 		VIF_STATE_PRINT_INT(role_id);
 		VIF_STATE_PRINT_INT(bss_type);
 		VIF_STATE_PRINT_LHEX(flags);
@@ -567,14 +566,14 @@ out:
 		VIF_STATE_PRINT_INT(dev_role_id);
 		VIF_STATE_PRINT_INT(dev_hlid);
 
-		अगर (wlvअगर->bss_type == BSS_TYPE_STA_BSS ||
-		    wlvअगर->bss_type == BSS_TYPE_IBSS) अणु
+		if (wlvif->bss_type == BSS_TYPE_STA_BSS ||
+		    wlvif->bss_type == BSS_TYPE_IBSS) {
 			VIF_STATE_PRINT_INT(sta.hlid);
 			VIF_STATE_PRINT_INT(sta.basic_rate_idx);
 			VIF_STATE_PRINT_INT(sta.ap_rate_idx);
 			VIF_STATE_PRINT_INT(sta.p2p_rate_idx);
 			VIF_STATE_PRINT_INT(sta.qos);
-		पूर्ण अन्यथा अणु
+		} else {
 			VIF_STATE_PRINT_INT(ap.global_hlid);
 			VIF_STATE_PRINT_INT(ap.bcast_hlid);
 			VIF_STATE_PRINT_LHEX(ap.sta_hlid_map[0]);
@@ -584,14 +583,14 @@ out:
 			VIF_STATE_PRINT_INT(ap.ucast_rate_idx[1]);
 			VIF_STATE_PRINT_INT(ap.ucast_rate_idx[2]);
 			VIF_STATE_PRINT_INT(ap.ucast_rate_idx[3]);
-		पूर्ण
+		}
 		VIF_STATE_PRINT_INT(last_tx_hlid);
 		VIF_STATE_PRINT_INT(tx_queue_count[0]);
 		VIF_STATE_PRINT_INT(tx_queue_count[1]);
 		VIF_STATE_PRINT_INT(tx_queue_count[2]);
 		VIF_STATE_PRINT_INT(tx_queue_count[3]);
 		VIF_STATE_PRINT_LHEX(links_map[0]);
-		VIF_STATE_PRINT_NSTR(ssid, wlvअगर->ssid_len);
+		VIF_STATE_PRINT_NSTR(ssid, wlvif->ssid_len);
 		VIF_STATE_PRINT_INT(band);
 		VIF_STATE_PRINT_INT(channel);
 		VIF_STATE_PRINT_HEX(bitrate_masks[0]);
@@ -599,769 +598,769 @@ out:
 		VIF_STATE_PRINT_HEX(basic_rate_set);
 		VIF_STATE_PRINT_HEX(basic_rate);
 		VIF_STATE_PRINT_HEX(rate_set);
-		VIF_STATE_PRINT_INT(beacon_पूर्णांक);
-		VIF_STATE_PRINT_INT(शेष_key);
+		VIF_STATE_PRINT_INT(beacon_int);
+		VIF_STATE_PRINT_INT(default_key);
 		VIF_STATE_PRINT_INT(aid);
 		VIF_STATE_PRINT_INT(psm_entry_retry);
-		VIF_STATE_PRINT_INT(घातer_level);
+		VIF_STATE_PRINT_INT(power_level);
 		VIF_STATE_PRINT_INT(rssi_thold);
 		VIF_STATE_PRINT_INT(last_rssi_event);
 		VIF_STATE_PRINT_INT(ba_support);
 		VIF_STATE_PRINT_INT(ba_allowed);
-		VIF_STATE_PRINT_LLHEX(total_मुक्तd_pkts);
-	पूर्ण
+		VIF_STATE_PRINT_LLHEX(total_freed_pkts);
+	}
 
-#अघोषित VIF_STATE_PRINT_INT
-#अघोषित VIF_STATE_PRINT_LONG
-#अघोषित VIF_STATE_PRINT_HEX
-#अघोषित VIF_STATE_PRINT_LHEX
-#अघोषित VIF_STATE_PRINT_LLHEX
-#अघोषित VIF_STATE_PRINT_STR
-#अघोषित VIF_STATE_PRINT_NSTR
-#अघोषित VIF_STATE_PRINT
+#undef VIF_STATE_PRINT_INT
+#undef VIF_STATE_PRINT_LONG
+#undef VIF_STATE_PRINT_HEX
+#undef VIF_STATE_PRINT_LHEX
+#undef VIF_STATE_PRINT_LLHEX
+#undef VIF_STATE_PRINT_STR
+#undef VIF_STATE_PRINT_NSTR
+#undef VIF_STATE_PRINT
 
 	mutex_unlock(&wl->mutex);
 
-	ret = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, res);
-	kमुक्त(buf);
-	वापस ret;
-पूर्ण
+	ret = simple_read_from_buffer(user_buf, count, ppos, buf, res);
+	kfree(buf);
+	return ret;
+}
 
-अटल स्थिर काष्ठा file_operations vअगरs_state_ops = अणु
-	.पढ़ो = vअगरs_state_पढ़ो,
-	.खोलो = simple_खोलो,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations vifs_state_ops = {
+	.read = vifs_state_read,
+	.open = simple_open,
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार dtim_पूर्णांकerval_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
-				  माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
+static ssize_t dtim_interval_read(struct file *file, char __user *user_buf,
+				  size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
 	u8 value;
 
-	अगर (wl->conf.conn.wake_up_event == CONF_WAKE_UP_EVENT_DTIM ||
+	if (wl->conf.conn.wake_up_event == CONF_WAKE_UP_EVENT_DTIM ||
 	    wl->conf.conn.wake_up_event == CONF_WAKE_UP_EVENT_N_DTIM)
-		value = wl->conf.conn.listen_पूर्णांकerval;
-	अन्यथा
+		value = wl->conf.conn.listen_interval;
+	else
 		value = 0;
 
-	वापस wl1271_क्रमmat_buffer(user_buf, count, ppos, "%d\n", value);
-पूर्ण
+	return wl1271_format_buffer(user_buf, count, ppos, "%d\n", value);
+}
 
-अटल sमाप_प्रकार dtim_पूर्णांकerval_ग_लिखो(काष्ठा file *file,
-				   स्थिर अक्षर __user *user_buf,
-				   माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
-	अचिन्हित दीर्घ value;
-	पूर्णांक ret;
+static ssize_t dtim_interval_write(struct file *file,
+				   const char __user *user_buf,
+				   size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
+	unsigned long value;
+	int ret;
 
-	ret = kम_से_अदीर्घ_from_user(user_buf, count, 10, &value);
-	अगर (ret < 0) अणु
+	ret = kstrtoul_from_user(user_buf, count, 10, &value);
+	if (ret < 0) {
 		wl1271_warning("illegal value for dtim_interval");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (value < 1 || value > 10) अणु
+	if (value < 1 || value > 10) {
 		wl1271_warning("dtim value is not in valid range");
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
 	mutex_lock(&wl->mutex);
 
-	wl->conf.conn.listen_पूर्णांकerval = value;
-	/* क्रम some reason there are dअगरferent event types क्रम 1 and >1 */
-	अगर (value == 1)
+	wl->conf.conn.listen_interval = value;
+	/* for some reason there are different event types for 1 and >1 */
+	if (value == 1)
 		wl->conf.conn.wake_up_event = CONF_WAKE_UP_EVENT_DTIM;
-	अन्यथा
+	else
 		wl->conf.conn.wake_up_event = CONF_WAKE_UP_EVENT_N_DTIM;
 
 	/*
-	 * we करोn't reconfigure ACX_WAKE_UP_CONDITIONS now, so it will only
-	 * take effect on the next समय we enter psm.
+	 * we don't reconfigure ACX_WAKE_UP_CONDITIONS now, so it will only
+	 * take effect on the next time we enter psm.
 	 */
 	mutex_unlock(&wl->mutex);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations dtim_पूर्णांकerval_ops = अणु
-	.पढ़ो = dtim_पूर्णांकerval_पढ़ो,
-	.ग_लिखो = dtim_पूर्णांकerval_ग_लिखो,
-	.खोलो = simple_खोलो,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations dtim_interval_ops = {
+	.read = dtim_interval_read,
+	.write = dtim_interval_write,
+	.open = simple_open,
+	.llseek = default_llseek,
+};
 
 
 
-अटल sमाप_प्रकार suspend_dtim_पूर्णांकerval_पढ़ो(काष्ठा file *file,
-					  अक्षर __user *user_buf,
-					  माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
+static ssize_t suspend_dtim_interval_read(struct file *file,
+					  char __user *user_buf,
+					  size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
 	u8 value;
 
-	अगर (wl->conf.conn.suspend_wake_up_event == CONF_WAKE_UP_EVENT_DTIM ||
+	if (wl->conf.conn.suspend_wake_up_event == CONF_WAKE_UP_EVENT_DTIM ||
 	    wl->conf.conn.suspend_wake_up_event == CONF_WAKE_UP_EVENT_N_DTIM)
-		value = wl->conf.conn.suspend_listen_पूर्णांकerval;
-	अन्यथा
+		value = wl->conf.conn.suspend_listen_interval;
+	else
 		value = 0;
 
-	वापस wl1271_क्रमmat_buffer(user_buf, count, ppos, "%d\n", value);
-पूर्ण
+	return wl1271_format_buffer(user_buf, count, ppos, "%d\n", value);
+}
 
-अटल sमाप_प्रकार suspend_dtim_पूर्णांकerval_ग_लिखो(काष्ठा file *file,
-					   स्थिर अक्षर __user *user_buf,
-					   माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
-	अचिन्हित दीर्घ value;
-	पूर्णांक ret;
+static ssize_t suspend_dtim_interval_write(struct file *file,
+					   const char __user *user_buf,
+					   size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
+	unsigned long value;
+	int ret;
 
-	ret = kम_से_अदीर्घ_from_user(user_buf, count, 10, &value);
-	अगर (ret < 0) अणु
+	ret = kstrtoul_from_user(user_buf, count, 10, &value);
+	if (ret < 0) {
 		wl1271_warning("illegal value for suspend_dtim_interval");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (value < 1 || value > 10) अणु
+	if (value < 1 || value > 10) {
 		wl1271_warning("suspend_dtim value is not in valid range");
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
 	mutex_lock(&wl->mutex);
 
-	wl->conf.conn.suspend_listen_पूर्णांकerval = value;
-	/* क्रम some reason there are dअगरferent event types क्रम 1 and >1 */
-	अगर (value == 1)
+	wl->conf.conn.suspend_listen_interval = value;
+	/* for some reason there are different event types for 1 and >1 */
+	if (value == 1)
 		wl->conf.conn.suspend_wake_up_event = CONF_WAKE_UP_EVENT_DTIM;
-	अन्यथा
+	else
 		wl->conf.conn.suspend_wake_up_event = CONF_WAKE_UP_EVENT_N_DTIM;
 
 	mutex_unlock(&wl->mutex);
-	वापस count;
-पूर्ण
+	return count;
+}
 
 
-अटल स्थिर काष्ठा file_operations suspend_dtim_पूर्णांकerval_ops = अणु
-	.पढ़ो = suspend_dtim_पूर्णांकerval_पढ़ो,
-	.ग_लिखो = suspend_dtim_पूर्णांकerval_ग_लिखो,
-	.खोलो = simple_खोलो,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations suspend_dtim_interval_ops = {
+	.read = suspend_dtim_interval_read,
+	.write = suspend_dtim_interval_write,
+	.open = simple_open,
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार beacon_पूर्णांकerval_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
-				    माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
+static ssize_t beacon_interval_read(struct file *file, char __user *user_buf,
+				    size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
 	u8 value;
 
-	अगर (wl->conf.conn.wake_up_event == CONF_WAKE_UP_EVENT_BEACON ||
+	if (wl->conf.conn.wake_up_event == CONF_WAKE_UP_EVENT_BEACON ||
 	    wl->conf.conn.wake_up_event == CONF_WAKE_UP_EVENT_N_BEACONS)
-		value = wl->conf.conn.listen_पूर्णांकerval;
-	अन्यथा
+		value = wl->conf.conn.listen_interval;
+	else
 		value = 0;
 
-	वापस wl1271_क्रमmat_buffer(user_buf, count, ppos, "%d\n", value);
-पूर्ण
+	return wl1271_format_buffer(user_buf, count, ppos, "%d\n", value);
+}
 
-अटल sमाप_प्रकार beacon_पूर्णांकerval_ग_लिखो(काष्ठा file *file,
-				     स्थिर अक्षर __user *user_buf,
-				     माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
-	अचिन्हित दीर्घ value;
-	पूर्णांक ret;
+static ssize_t beacon_interval_write(struct file *file,
+				     const char __user *user_buf,
+				     size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
+	unsigned long value;
+	int ret;
 
-	ret = kम_से_अदीर्घ_from_user(user_buf, count, 10, &value);
-	अगर (ret < 0) अणु
+	ret = kstrtoul_from_user(user_buf, count, 10, &value);
+	if (ret < 0) {
 		wl1271_warning("illegal value for beacon_interval");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (value < 1 || value > 255) अणु
+	if (value < 1 || value > 255) {
 		wl1271_warning("beacon interval value is not in valid range");
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
 	mutex_lock(&wl->mutex);
 
-	wl->conf.conn.listen_पूर्णांकerval = value;
-	/* क्रम some reason there are dअगरferent event types क्रम 1 and >1 */
-	अगर (value == 1)
+	wl->conf.conn.listen_interval = value;
+	/* for some reason there are different event types for 1 and >1 */
+	if (value == 1)
 		wl->conf.conn.wake_up_event = CONF_WAKE_UP_EVENT_BEACON;
-	अन्यथा
+	else
 		wl->conf.conn.wake_up_event = CONF_WAKE_UP_EVENT_N_BEACONS;
 
 	/*
-	 * we करोn't reconfigure ACX_WAKE_UP_CONDITIONS now, so it will only
-	 * take effect on the next समय we enter psm.
+	 * we don't reconfigure ACX_WAKE_UP_CONDITIONS now, so it will only
+	 * take effect on the next time we enter psm.
 	 */
 	mutex_unlock(&wl->mutex);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations beacon_पूर्णांकerval_ops = अणु
-	.पढ़ो = beacon_पूर्णांकerval_पढ़ो,
-	.ग_लिखो = beacon_पूर्णांकerval_ग_लिखो,
-	.खोलो = simple_खोलो,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations beacon_interval_ops = {
+	.read = beacon_interval_read,
+	.write = beacon_interval_write,
+	.open = simple_open,
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार rx_streaming_पूर्णांकerval_ग_लिखो(काष्ठा file *file,
-			   स्थिर अक्षर __user *user_buf,
-			   माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
-	काष्ठा wl12xx_vअगर *wlvअगर;
-	अचिन्हित दीर्घ value;
-	पूर्णांक ret;
+static ssize_t rx_streaming_interval_write(struct file *file,
+			   const char __user *user_buf,
+			   size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
+	struct wl12xx_vif *wlvif;
+	unsigned long value;
+	int ret;
 
-	ret = kम_से_अदीर्घ_from_user(user_buf, count, 10, &value);
-	अगर (ret < 0) अणु
+	ret = kstrtoul_from_user(user_buf, count, 10, &value);
+	if (ret < 0) {
 		wl1271_warning("illegal value in rx_streaming_interval!");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* valid values: 0, 10-100 */
-	अगर (value && (value < 10 || value > 100)) अणु
+	if (value && (value < 10 || value > 100)) {
 		wl1271_warning("value is not in range!");
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
 	mutex_lock(&wl->mutex);
 
-	wl->conf.rx_streaming.पूर्णांकerval = value;
+	wl->conf.rx_streaming.interval = value;
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	wl12xx_क्रम_each_wlvअगर_sta(wl, wlvअगर) अणु
-		wl1271_recalc_rx_streaming(wl, wlvअगर);
-	पूर्ण
+	wl12xx_for_each_wlvif_sta(wl, wlvif) {
+		wl1271_recalc_rx_streaming(wl, wlvif);
+	}
 
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 out:
 	mutex_unlock(&wl->mutex);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार rx_streaming_पूर्णांकerval_पढ़ो(काष्ठा file *file,
-			    अक्षर __user *userbuf,
-			    माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
-	वापस wl1271_क्रमmat_buffer(userbuf, count, ppos,
-				    "%d\n", wl->conf.rx_streaming.पूर्णांकerval);
-पूर्ण
+static ssize_t rx_streaming_interval_read(struct file *file,
+			    char __user *userbuf,
+			    size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
+	return wl1271_format_buffer(userbuf, count, ppos,
+				    "%d\n", wl->conf.rx_streaming.interval);
+}
 
-अटल स्थिर काष्ठा file_operations rx_streaming_पूर्णांकerval_ops = अणु
-	.पढ़ो = rx_streaming_पूर्णांकerval_पढ़ो,
-	.ग_लिखो = rx_streaming_पूर्णांकerval_ग_लिखो,
-	.खोलो = simple_खोलो,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations rx_streaming_interval_ops = {
+	.read = rx_streaming_interval_read,
+	.write = rx_streaming_interval_write,
+	.open = simple_open,
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार rx_streaming_always_ग_लिखो(काष्ठा file *file,
-			   स्थिर अक्षर __user *user_buf,
-			   माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
-	काष्ठा wl12xx_vअगर *wlvअगर;
-	अचिन्हित दीर्घ value;
-	पूर्णांक ret;
+static ssize_t rx_streaming_always_write(struct file *file,
+			   const char __user *user_buf,
+			   size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
+	struct wl12xx_vif *wlvif;
+	unsigned long value;
+	int ret;
 
-	ret = kम_से_अदीर्घ_from_user(user_buf, count, 10, &value);
-	अगर (ret < 0) अणु
+	ret = kstrtoul_from_user(user_buf, count, 10, &value);
+	if (ret < 0) {
 		wl1271_warning("illegal value in rx_streaming_write!");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* valid values: 0, 10-100 */
-	अगर (!(value == 0 || value == 1)) अणु
+	if (!(value == 0 || value == 1)) {
 		wl1271_warning("value is not in valid!");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_lock(&wl->mutex);
 
 	wl->conf.rx_streaming.always = value;
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	wl12xx_क्रम_each_wlvअगर_sta(wl, wlvअगर) अणु
-		wl1271_recalc_rx_streaming(wl, wlvअगर);
-	पूर्ण
+	wl12xx_for_each_wlvif_sta(wl, wlvif) {
+		wl1271_recalc_rx_streaming(wl, wlvif);
+	}
 
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 out:
 	mutex_unlock(&wl->mutex);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार rx_streaming_always_पढ़ो(काष्ठा file *file,
-			    अक्षर __user *userbuf,
-			    माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
-	वापस wl1271_क्रमmat_buffer(userbuf, count, ppos,
+static ssize_t rx_streaming_always_read(struct file *file,
+			    char __user *userbuf,
+			    size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
+	return wl1271_format_buffer(userbuf, count, ppos,
 				    "%d\n", wl->conf.rx_streaming.always);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा file_operations rx_streaming_always_ops = अणु
-	.पढ़ो = rx_streaming_always_पढ़ो,
-	.ग_लिखो = rx_streaming_always_ग_लिखो,
-	.खोलो = simple_खोलो,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations rx_streaming_always_ops = {
+	.read = rx_streaming_always_read,
+	.write = rx_streaming_always_write,
+	.open = simple_open,
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार beacon_filtering_ग_लिखो(काष्ठा file *file,
-				      स्थिर अक्षर __user *user_buf,
-				      माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
-	काष्ठा wl12xx_vअगर *wlvअगर;
-	अचिन्हित दीर्घ value;
-	पूर्णांक ret;
+static ssize_t beacon_filtering_write(struct file *file,
+				      const char __user *user_buf,
+				      size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
+	struct wl12xx_vif *wlvif;
+	unsigned long value;
+	int ret;
 
-	ret = kम_से_अदीर्घ_from_user(user_buf, count, 0, &value);
-	अगर (ret < 0) अणु
+	ret = kstrtoul_from_user(user_buf, count, 0, &value);
+	if (ret < 0) {
 		wl1271_warning("illegal value for beacon_filtering!");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_lock(&wl->mutex);
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	wl12xx_क्रम_each_wlvअगर(wl, wlvअगर) अणु
-		ret = wl1271_acx_beacon_filter_opt(wl, wlvअगर, !!value);
-	पूर्ण
+	wl12xx_for_each_wlvif(wl, wlvif) {
+		ret = wl1271_acx_beacon_filter_opt(wl, wlvif, !!value);
+	}
 
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 out:
 	mutex_unlock(&wl->mutex);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations beacon_filtering_ops = अणु
-	.ग_लिखो = beacon_filtering_ग_लिखो,
-	.खोलो = simple_खोलो,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations beacon_filtering_ops = {
+	.write = beacon_filtering_write,
+	.open = simple_open,
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार fw_stats_raw_पढ़ो(काष्ठा file *file,
-				 अक्षर __user *userbuf,
-				 माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
+static ssize_t fw_stats_raw_read(struct file *file,
+				 char __user *userbuf,
+				 size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
 
 	wl1271_debugfs_update_stats(wl);
 
-	वापस simple_पढ़ो_from_buffer(userbuf, count, ppos,
+	return simple_read_from_buffer(userbuf, count, ppos,
 				       wl->stats.fw_stats,
 				       wl->stats.fw_stats_len);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा file_operations fw_stats_raw_ops = अणु
-	.पढ़ो = fw_stats_raw_पढ़ो,
-	.खोलो = simple_खोलो,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations fw_stats_raw_ops = {
+	.read = fw_stats_raw_read,
+	.open = simple_open,
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार sleep_auth_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
-			       माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
+static ssize_t sleep_auth_read(struct file *file, char __user *user_buf,
+			       size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
 
-	वापस wl1271_क्रमmat_buffer(user_buf, count,
+	return wl1271_format_buffer(user_buf, count,
 				    ppos, "%d\n",
 				    wl->sleep_auth);
-पूर्ण
+}
 
-अटल sमाप_प्रकार sleep_auth_ग_लिखो(काष्ठा file *file,
-				स्थिर अक्षर __user *user_buf,
-				माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
-	अचिन्हित दीर्घ value;
-	पूर्णांक ret;
+static ssize_t sleep_auth_write(struct file *file,
+				const char __user *user_buf,
+				size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
+	unsigned long value;
+	int ret;
 
-	ret = kम_से_अदीर्घ_from_user(user_buf, count, 0, &value);
-	अगर (ret < 0) अणु
+	ret = kstrtoul_from_user(user_buf, count, 0, &value);
+	if (ret < 0) {
 		wl1271_warning("illegal value in sleep_auth");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (value > WL1271_PSM_MAX) अणु
+	if (value > WL1271_PSM_MAX) {
 		wl1271_warning("sleep_auth must be between 0 and %d",
 			       WL1271_PSM_MAX);
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
 	mutex_lock(&wl->mutex);
 
 	wl->conf.conn.sta_sleep_auth = value;
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON)) अणु
-		/* this will show up on "read" in हाल we are off */
+	if (unlikely(wl->state != WLCORE_STATE_ON)) {
+		/* this will show up on "read" in case we are off */
 		wl->sleep_auth = value;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
 	ret = wl1271_acx_sleep_auth(wl, value);
-	अगर (ret < 0)
-		जाओ out_sleep;
+	if (ret < 0)
+		goto out_sleep;
 
 out_sleep:
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 out:
 	mutex_unlock(&wl->mutex);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations sleep_auth_ops = अणु
-	.पढ़ो = sleep_auth_पढ़ो,
-	.ग_लिखो = sleep_auth_ग_लिखो,
-	.खोलो = simple_खोलो,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations sleep_auth_ops = {
+	.read = sleep_auth_read,
+	.write = sleep_auth_write,
+	.open = simple_open,
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार dev_mem_पढ़ो(काष्ठा file *file,
-	     अक्षर __user *user_buf, माप_प्रकार count,
+static ssize_t dev_mem_read(struct file *file,
+	     char __user *user_buf, size_t count,
 	     loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
-	काष्ठा wlcore_partition_set part, old_part;
-	माप_प्रकार bytes = count;
-	पूर्णांक ret;
-	अक्षर *buf;
+{
+	struct wl1271 *wl = file->private_data;
+	struct wlcore_partition_set part, old_part;
+	size_t bytes = count;
+	int ret;
+	char *buf;
 
 	/* only requests of dword-aligned size and offset are supported */
-	अगर (bytes % 4)
-		वापस -EINVAL;
+	if (bytes % 4)
+		return -EINVAL;
 
-	अगर (*ppos % 4)
-		वापस -EINVAL;
+	if (*ppos % 4)
+		return -EINVAL;
 
-	/* function should वापस in reasonable समय */
+	/* function should return in reasonable time */
 	bytes = min(bytes, WLCORE_MAX_BLOCK_SIZE);
 
-	अगर (bytes == 0)
-		वापस -EINVAL;
+	if (bytes == 0)
+		return -EINVAL;
 
-	स_रखो(&part, 0, माप(part));
+	memset(&part, 0, sizeof(part));
 	part.mem.start = *ppos;
 	part.mem.size = bytes;
 
-	buf = kदो_स्मृति(bytes, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc(bytes, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state == WLCORE_STATE_OFF)) अणु
+	if (unlikely(wl->state == WLCORE_STATE_OFF)) {
 		ret = -EFAULT;
-		जाओ skip_पढ़ो;
-	पूर्ण
+		goto skip_read;
+	}
 
 	/*
 	 * Don't fail if elp_wakeup returns an error, so the device's memory
-	 * could be पढ़ो even अगर the FW crashed
+	 * could be read even if the FW crashed
 	 */
-	pm_runसमय_get_sync(wl->dev);
+	pm_runtime_get_sync(wl->dev);
 
-	/* store current partition and चयन partition */
-	स_नकल(&old_part, &wl->curr_part, माप(old_part));
+	/* store current partition and switch partition */
+	memcpy(&old_part, &wl->curr_part, sizeof(old_part));
 	ret = wlcore_set_partition(wl, &part);
-	अगर (ret < 0)
-		जाओ part_err;
+	if (ret < 0)
+		goto part_err;
 
-	ret = wlcore_raw_पढ़ो(wl, 0, buf, bytes, false);
-	अगर (ret < 0)
-		जाओ पढ़ो_err;
+	ret = wlcore_raw_read(wl, 0, buf, bytes, false);
+	if (ret < 0)
+		goto read_err;
 
-पढ़ो_err:
+read_err:
 	/* recover partition */
 	ret = wlcore_set_partition(wl, &old_part);
-	अगर (ret < 0)
-		जाओ part_err;
+	if (ret < 0)
+		goto part_err;
 
 part_err:
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 
-skip_पढ़ो:
+skip_read:
 	mutex_unlock(&wl->mutex);
 
-	अगर (ret == 0) अणु
+	if (ret == 0) {
 		ret = copy_to_user(user_buf, buf, bytes);
-		अगर (ret < bytes) अणु
+		if (ret < bytes) {
 			bytes -= ret;
 			*ppos += bytes;
 			ret = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = -EFAULT;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	kमुक्त(buf);
+	kfree(buf);
 
-	वापस ((ret == 0) ? bytes : ret);
-पूर्ण
+	return ((ret == 0) ? bytes : ret);
+}
 
-अटल sमाप_प्रकार dev_mem_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *user_buf,
-		माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
-	काष्ठा wlcore_partition_set part, old_part;
-	माप_प्रकार bytes = count;
-	पूर्णांक ret;
-	अक्षर *buf;
+static ssize_t dev_mem_write(struct file *file, const char __user *user_buf,
+		size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
+	struct wlcore_partition_set part, old_part;
+	size_t bytes = count;
+	int ret;
+	char *buf;
 
 	/* only requests of dword-aligned size and offset are supported */
-	अगर (bytes % 4)
-		वापस -EINVAL;
+	if (bytes % 4)
+		return -EINVAL;
 
-	अगर (*ppos % 4)
-		वापस -EINVAL;
+	if (*ppos % 4)
+		return -EINVAL;
 
-	/* function should वापस in reasonable समय */
+	/* function should return in reasonable time */
 	bytes = min(bytes, WLCORE_MAX_BLOCK_SIZE);
 
-	अगर (bytes == 0)
-		वापस -EINVAL;
+	if (bytes == 0)
+		return -EINVAL;
 
-	स_रखो(&part, 0, माप(part));
+	memset(&part, 0, sizeof(part));
 	part.mem.start = *ppos;
 	part.mem.size = bytes;
 
 	buf = memdup_user(user_buf, bytes);
-	अगर (IS_ERR(buf))
-		वापस PTR_ERR(buf);
+	if (IS_ERR(buf))
+		return PTR_ERR(buf);
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state == WLCORE_STATE_OFF)) अणु
+	if (unlikely(wl->state == WLCORE_STATE_OFF)) {
 		ret = -EFAULT;
-		जाओ skip_ग_लिखो;
-	पूर्ण
+		goto skip_write;
+	}
 
 	/*
 	 * Don't fail if elp_wakeup returns an error, so the device's memory
-	 * could be पढ़ो even अगर the FW crashed
+	 * could be read even if the FW crashed
 	 */
-	pm_runसमय_get_sync(wl->dev);
+	pm_runtime_get_sync(wl->dev);
 
-	/* store current partition and चयन partition */
-	स_नकल(&old_part, &wl->curr_part, माप(old_part));
+	/* store current partition and switch partition */
+	memcpy(&old_part, &wl->curr_part, sizeof(old_part));
 	ret = wlcore_set_partition(wl, &part);
-	अगर (ret < 0)
-		जाओ part_err;
+	if (ret < 0)
+		goto part_err;
 
-	ret = wlcore_raw_ग_लिखो(wl, 0, buf, bytes, false);
-	अगर (ret < 0)
-		जाओ ग_लिखो_err;
+	ret = wlcore_raw_write(wl, 0, buf, bytes, false);
+	if (ret < 0)
+		goto write_err;
 
-ग_लिखो_err:
+write_err:
 	/* recover partition */
 	ret = wlcore_set_partition(wl, &old_part);
-	अगर (ret < 0)
-		जाओ part_err;
+	if (ret < 0)
+		goto part_err;
 
 part_err:
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 
-skip_ग_लिखो:
+skip_write:
 	mutex_unlock(&wl->mutex);
 
-	अगर (ret == 0)
+	if (ret == 0)
 		*ppos += bytes;
 
-	kमुक्त(buf);
+	kfree(buf);
 
-	वापस ((ret == 0) ? bytes : ret);
-पूर्ण
+	return ((ret == 0) ? bytes : ret);
+}
 
-अटल loff_t dev_mem_seek(काष्ठा file *file, loff_t offset, पूर्णांक orig)
-अणु
+static loff_t dev_mem_seek(struct file *file, loff_t offset, int orig)
+{
 	/* only requests of dword-aligned size and offset are supported */
-	अगर (offset % 4)
-		वापस -EINVAL;
+	if (offset % 4)
+		return -EINVAL;
 
-	वापस no_seek_end_llseek(file, offset, orig);
-पूर्ण
+	return no_seek_end_llseek(file, offset, orig);
+}
 
-अटल स्थिर काष्ठा file_operations dev_mem_ops = अणु
-	.खोलो = simple_खोलो,
-	.पढ़ो = dev_mem_पढ़ो,
-	.ग_लिखो = dev_mem_ग_लिखो,
+static const struct file_operations dev_mem_ops = {
+	.open = simple_open,
+	.read = dev_mem_read,
+	.write = dev_mem_write,
 	.llseek = dev_mem_seek,
-पूर्ण;
+};
 
-अटल sमाप_प्रकार fw_logger_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
-			      माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
+static ssize_t fw_logger_read(struct file *file, char __user *user_buf,
+			      size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
 
-	वापस wl1271_क्रमmat_buffer(user_buf, count,
+	return wl1271_format_buffer(user_buf, count,
 					ppos, "%d\n",
 					wl->conf.fwlog.output);
-पूर्ण
+}
 
-अटल sमाप_प्रकार fw_logger_ग_लिखो(काष्ठा file *file,
-			       स्थिर अक्षर __user *user_buf,
-			       माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा wl1271 *wl = file->निजी_data;
-	अचिन्हित दीर्घ value;
-	पूर्णांक ret;
+static ssize_t fw_logger_write(struct file *file,
+			       const char __user *user_buf,
+			       size_t count, loff_t *ppos)
+{
+	struct wl1271 *wl = file->private_data;
+	unsigned long value;
+	int ret;
 
-	ret = kम_से_अदीर्घ_from_user(user_buf, count, 0, &value);
-	अगर (ret < 0) अणु
+	ret = kstrtoul_from_user(user_buf, count, 0, &value);
+	if (ret < 0) {
 		wl1271_warning("illegal value in fw_logger");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((value > 2) || (value == 0)) अणु
+	if ((value > 2) || (value == 0)) {
 		wl1271_warning("fw_logger value must be 1-UART 2-SDIO");
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
-	अगर (wl->conf.fwlog.output == 0) अणु
+	if (wl->conf.fwlog.output == 0) {
 		wl1271_warning("invalid operation - fw logger disabled by default, please change mode via wlconf");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_lock(&wl->mutex);
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
 		count = ret;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	wl->conf.fwlog.output = value;
 
 	ret = wl12xx_cmd_config_fwlog(wl);
 
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 
 out:
 	mutex_unlock(&wl->mutex);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations fw_logger_ops = अणु
-	.खोलो = simple_खोलो,
-	.पढ़ो = fw_logger_पढ़ो,
-	.ग_लिखो = fw_logger_ग_लिखो,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations fw_logger_ops = {
+	.open = simple_open,
+	.read = fw_logger_read,
+	.write = fw_logger_write,
+	.llseek = default_llseek,
+};
 
-अटल व्योम wl1271_debugfs_add_files(काष्ठा wl1271 *wl,
-				     काष्ठा dentry *rootdir)
-अणु
-	काष्ठा dentry *streaming;
+static void wl1271_debugfs_add_files(struct wl1271 *wl,
+				     struct dentry *rootdir)
+{
+	struct dentry *streaming;
 
 	DEBUGFS_ADD(tx_queue_len, rootdir);
 	DEBUGFS_ADD(retry_count, rootdir);
 	DEBUGFS_ADD(excessive_retries, rootdir);
 
-	DEBUGFS_ADD(gpio_घातer, rootdir);
+	DEBUGFS_ADD(gpio_power, rootdir);
 	DEBUGFS_ADD(start_recovery, rootdir);
 	DEBUGFS_ADD(driver_state, rootdir);
-	DEBUGFS_ADD(vअगरs_state, rootdir);
-	DEBUGFS_ADD(dtim_पूर्णांकerval, rootdir);
-	DEBUGFS_ADD(suspend_dtim_पूर्णांकerval, rootdir);
-	DEBUGFS_ADD(beacon_पूर्णांकerval, rootdir);
+	DEBUGFS_ADD(vifs_state, rootdir);
+	DEBUGFS_ADD(dtim_interval, rootdir);
+	DEBUGFS_ADD(suspend_dtim_interval, rootdir);
+	DEBUGFS_ADD(beacon_interval, rootdir);
 	DEBUGFS_ADD(beacon_filtering, rootdir);
-	DEBUGFS_ADD(dynamic_ps_समयout, rootdir);
-	DEBUGFS_ADD(क्रमced_ps, rootdir);
-	DEBUGFS_ADD(split_scan_समयout, rootdir);
+	DEBUGFS_ADD(dynamic_ps_timeout, rootdir);
+	DEBUGFS_ADD(forced_ps, rootdir);
+	DEBUGFS_ADD(split_scan_timeout, rootdir);
 	DEBUGFS_ADD(irq_pkt_threshold, rootdir);
 	DEBUGFS_ADD(irq_blk_threshold, rootdir);
-	DEBUGFS_ADD(irq_समयout, rootdir);
+	DEBUGFS_ADD(irq_timeout, rootdir);
 	DEBUGFS_ADD(fw_stats_raw, rootdir);
 	DEBUGFS_ADD(sleep_auth, rootdir);
 	DEBUGFS_ADD(fw_logger, rootdir);
 
 	streaming = debugfs_create_dir("rx_streaming", rootdir);
 
-	DEBUGFS_ADD_PREFIX(rx_streaming, पूर्णांकerval, streaming);
+	DEBUGFS_ADD_PREFIX(rx_streaming, interval, streaming);
 	DEBUGFS_ADD_PREFIX(rx_streaming, always, streaming);
 
 	DEBUGFS_ADD_PREFIX(dev, mem, rootdir);
-पूर्ण
+}
 
-व्योम wl1271_debugfs_reset(काष्ठा wl1271 *wl)
-अणु
-	अगर (!wl->stats.fw_stats)
-		वापस;
+void wl1271_debugfs_reset(struct wl1271 *wl)
+{
+	if (!wl->stats.fw_stats)
+		return;
 
-	स_रखो(wl->stats.fw_stats, 0, wl->stats.fw_stats_len);
+	memset(wl->stats.fw_stats, 0, wl->stats.fw_stats_len);
 	wl->stats.retry_count = 0;
 	wl->stats.excessive_retries = 0;
-पूर्ण
+}
 
-पूर्णांक wl1271_debugfs_init(काष्ठा wl1271 *wl)
-अणु
-	पूर्णांक ret;
-	काष्ठा dentry *rootdir;
+int wl1271_debugfs_init(struct wl1271 *wl)
+{
+	int ret;
+	struct dentry *rootdir;
 
 	rootdir = debugfs_create_dir(KBUILD_MODNAME,
 				     wl->hw->wiphy->debugfsdir);
 
 	wl->stats.fw_stats = kzalloc(wl->stats.fw_stats_len, GFP_KERNEL);
-	अगर (!wl->stats.fw_stats) अणु
+	if (!wl->stats.fw_stats) {
 		ret = -ENOMEM;
-		जाओ out_हटाओ;
-	पूर्ण
+		goto out_remove;
+	}
 
-	wl->stats.fw_stats_update = jअगरfies;
+	wl->stats.fw_stats_update = jiffies;
 
 	wl1271_debugfs_add_files(wl, rootdir);
 
 	ret = wlcore_debugfs_init(wl, rootdir);
-	अगर (ret < 0)
-		जाओ out_निकास;
+	if (ret < 0)
+		goto out_exit;
 
-	जाओ out;
+	goto out;
 
-out_निकास:
-	wl1271_debugfs_निकास(wl);
+out_exit:
+	wl1271_debugfs_exit(wl);
 
-out_हटाओ:
-	debugfs_हटाओ_recursive(rootdir);
+out_remove:
+	debugfs_remove_recursive(rootdir);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम wl1271_debugfs_निकास(काष्ठा wl1271 *wl)
-अणु
-	kमुक्त(wl->stats.fw_stats);
-	wl->stats.fw_stats = शून्य;
-पूर्ण
+void wl1271_debugfs_exit(struct wl1271 *wl)
+{
+	kfree(wl->stats.fw_stats);
+	wl->stats.fw_stats = NULL;
+}

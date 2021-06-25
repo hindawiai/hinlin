@@ -1,8 +1,7 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __UM_SMP_H
-#घोषणा __UM_SMP_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __UM_SMP_H
+#define __UM_SMP_H
 
-#घोषणा hard_smp_processor_id()		0
+#define hard_smp_processor_id()		0
 
-#पूर्ण_अगर
+#endif

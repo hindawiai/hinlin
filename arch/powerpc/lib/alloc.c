@@ -1,24 +1,23 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/types.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/माला.स>
-#समावेश <यंत्र/setup.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/types.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/memblock.h>
+#include <linux/string.h>
+#include <asm/setup.h>
 
 
-व्योम * __ref zalloc_maybe_booपंचांगem(माप_प्रकार size, gfp_t mask)
-अणु
-	व्योम *p;
+void * __ref zalloc_maybe_bootmem(size_t size, gfp_t mask)
+{
+	void *p;
 
-	अगर (slab_is_available())
+	if (slab_is_available())
 		p = kzalloc(size, mask);
-	अन्यथा अणु
+	else {
 		p = memblock_alloc(size, SMP_CACHE_BYTES);
-		अगर (!p)
+		if (!p)
 			panic("%s: Failed to allocate %zu bytes\n", __func__,
 			      size);
-	पूर्ण
-	वापस p;
-पूर्ण
+	}
+	return p;
+}

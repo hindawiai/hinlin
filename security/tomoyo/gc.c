@@ -1,671 +1,670 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * security/tomoyo/gc.c
  *
  * Copyright (C) 2005-2011  NTT DATA CORPORATION
  */
 
-#समावेश "common.h"
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/slab.h>
+#include "common.h"
+#include <linux/kthread.h>
+#include <linux/slab.h>
 
 /**
- * tomoyo_memory_मुक्त - Free memory क्रम elements.
+ * tomoyo_memory_free - Free memory for elements.
  *
- * @ptr:  Poपूर्णांकer to allocated memory.
+ * @ptr:  Pointer to allocated memory.
  *
  * Returns nothing.
  *
  * Caller holds tomoyo_policy_lock mutex.
  */
-अटल अंतरभूत व्योम tomoyo_memory_मुक्त(व्योम *ptr)
-अणु
+static inline void tomoyo_memory_free(void *ptr)
+{
 	tomoyo_memory_used[TOMOYO_MEMORY_POLICY] -= ksize(ptr);
-	kमुक्त(ptr);
-पूर्ण
+	kfree(ptr);
+}
 
-/* The list क्रम "struct tomoyo_io_buffer". */
-अटल LIST_HEAD(tomoyo_io_buffer_list);
-/* Lock क्रम protecting tomoyo_io_buffer_list. */
-अटल DEFINE_SPINLOCK(tomoyo_io_buffer_list_lock);
+/* The list for "struct tomoyo_io_buffer". */
+static LIST_HEAD(tomoyo_io_buffer_list);
+/* Lock for protecting tomoyo_io_buffer_list. */
+static DEFINE_SPINLOCK(tomoyo_io_buffer_list_lock);
 
 /**
- * tomoyo_काष्ठा_used_by_io_buffer - Check whether the list element is used by /sys/kernel/security/tomoyo/ users or not.
+ * tomoyo_struct_used_by_io_buffer - Check whether the list element is used by /sys/kernel/security/tomoyo/ users or not.
  *
- * @element: Poपूर्णांकer to "struct list_head".
+ * @element: Pointer to "struct list_head".
  *
- * Returns true अगर @element is used by /sys/kernel/security/tomoyo/ users,
+ * Returns true if @element is used by /sys/kernel/security/tomoyo/ users,
  * false otherwise.
  */
-अटल bool tomoyo_काष्ठा_used_by_io_buffer(स्थिर काष्ठा list_head *element)
-अणु
-	काष्ठा tomoyo_io_buffer *head;
+static bool tomoyo_struct_used_by_io_buffer(const struct list_head *element)
+{
+	struct tomoyo_io_buffer *head;
 	bool in_use = false;
 
 	spin_lock(&tomoyo_io_buffer_list_lock);
-	list_क्रम_each_entry(head, &tomoyo_io_buffer_list, list) अणु
+	list_for_each_entry(head, &tomoyo_io_buffer_list, list) {
 		head->users++;
 		spin_unlock(&tomoyo_io_buffer_list_lock);
 		mutex_lock(&head->io_sem);
-		अगर (head->r.करोमुख्य == element || head->r.group == element ||
-		    head->r.acl == element || &head->w.करोमुख्य->list == element)
+		if (head->r.domain == element || head->r.group == element ||
+		    head->r.acl == element || &head->w.domain->list == element)
 			in_use = true;
 		mutex_unlock(&head->io_sem);
 		spin_lock(&tomoyo_io_buffer_list_lock);
 		head->users--;
-		अगर (in_use)
-			अवरोध;
-	पूर्ण
+		if (in_use)
+			break;
+	}
 	spin_unlock(&tomoyo_io_buffer_list_lock);
-	वापस in_use;
-पूर्ण
+	return in_use;
+}
 
 /**
  * tomoyo_name_used_by_io_buffer - Check whether the string is used by /sys/kernel/security/tomoyo/ users or not.
  *
  * @string: String to check.
  *
- * Returns true अगर @string is used by /sys/kernel/security/tomoyo/ users,
+ * Returns true if @string is used by /sys/kernel/security/tomoyo/ users,
  * false otherwise.
  */
-अटल bool tomoyo_name_used_by_io_buffer(स्थिर अक्षर *string)
-अणु
-	काष्ठा tomoyo_io_buffer *head;
-	स्थिर माप_प्रकार size = म_माप(string) + 1;
+static bool tomoyo_name_used_by_io_buffer(const char *string)
+{
+	struct tomoyo_io_buffer *head;
+	const size_t size = strlen(string) + 1;
 	bool in_use = false;
 
 	spin_lock(&tomoyo_io_buffer_list_lock);
-	list_क्रम_each_entry(head, &tomoyo_io_buffer_list, list) अणु
-		पूर्णांक i;
+	list_for_each_entry(head, &tomoyo_io_buffer_list, list) {
+		int i;
 
 		head->users++;
 		spin_unlock(&tomoyo_io_buffer_list_lock);
 		mutex_lock(&head->io_sem);
-		क्रम (i = 0; i < TOMOYO_MAX_IO_READ_QUEUE; i++) अणु
-			स्थिर अक्षर *w = head->r.w[i];
+		for (i = 0; i < TOMOYO_MAX_IO_READ_QUEUE; i++) {
+			const char *w = head->r.w[i];
 
-			अगर (w < string || w > string + size)
-				जारी;
+			if (w < string || w > string + size)
+				continue;
 			in_use = true;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		mutex_unlock(&head->io_sem);
 		spin_lock(&tomoyo_io_buffer_list_lock);
 		head->users--;
-		अगर (in_use)
-			अवरोध;
-	पूर्ण
+		if (in_use)
+			break;
+	}
 	spin_unlock(&tomoyo_io_buffer_list_lock);
-	वापस in_use;
-पूर्ण
+	return in_use;
+}
 
 /**
  * tomoyo_del_transition_control - Delete members in "struct tomoyo_transition_control".
  *
- * @element: Poपूर्णांकer to "struct list_head".
+ * @element: Pointer to "struct list_head".
  *
  * Returns nothing.
  */
-अटल अंतरभूत व्योम tomoyo_del_transition_control(काष्ठा list_head *element)
-अणु
-	काष्ठा tomoyo_transition_control *ptr =
+static inline void tomoyo_del_transition_control(struct list_head *element)
+{
+	struct tomoyo_transition_control *ptr =
 		container_of(element, typeof(*ptr), head.list);
 
-	tomoyo_put_name(ptr->करोमुख्यname);
+	tomoyo_put_name(ptr->domainname);
 	tomoyo_put_name(ptr->program);
-पूर्ण
+}
 
 /**
  * tomoyo_del_aggregator - Delete members in "struct tomoyo_aggregator".
  *
- * @element: Poपूर्णांकer to "struct list_head".
+ * @element: Pointer to "struct list_head".
  *
  * Returns nothing.
  */
-अटल अंतरभूत व्योम tomoyo_del_aggregator(काष्ठा list_head *element)
-अणु
-	काष्ठा tomoyo_aggregator *ptr =
+static inline void tomoyo_del_aggregator(struct list_head *element)
+{
+	struct tomoyo_aggregator *ptr =
 		container_of(element, typeof(*ptr), head.list);
 
 	tomoyo_put_name(ptr->original_name);
 	tomoyo_put_name(ptr->aggregated_name);
-पूर्ण
+}
 
 /**
  * tomoyo_del_manager - Delete members in "struct tomoyo_manager".
  *
- * @element: Poपूर्णांकer to "struct list_head".
+ * @element: Pointer to "struct list_head".
  *
  * Returns nothing.
  */
-अटल अंतरभूत व्योम tomoyo_del_manager(काष्ठा list_head *element)
-अणु
-	काष्ठा tomoyo_manager *ptr =
+static inline void tomoyo_del_manager(struct list_head *element)
+{
+	struct tomoyo_manager *ptr =
 		container_of(element, typeof(*ptr), head.list);
 
 	tomoyo_put_name(ptr->manager);
-पूर्ण
+}
 
 /**
  * tomoyo_del_acl - Delete members in "struct tomoyo_acl_info".
  *
- * @element: Poपूर्णांकer to "struct list_head".
+ * @element: Pointer to "struct list_head".
  *
  * Returns nothing.
  */
-अटल व्योम tomoyo_del_acl(काष्ठा list_head *element)
-अणु
-	काष्ठा tomoyo_acl_info *acl =
+static void tomoyo_del_acl(struct list_head *element)
+{
+	struct tomoyo_acl_info *acl =
 		container_of(element, typeof(*acl), list);
 
 	tomoyo_put_condition(acl->cond);
-	चयन (acl->type) अणु
-	हाल TOMOYO_TYPE_PATH_ACL:
-		अणु
-			काष्ठा tomoyo_path_acl *entry
+	switch (acl->type) {
+	case TOMOYO_TYPE_PATH_ACL:
+		{
+			struct tomoyo_path_acl *entry
 				= container_of(acl, typeof(*entry), head);
-			tomoyo_put_name_जोड़(&entry->name);
-		पूर्ण
-		अवरोध;
-	हाल TOMOYO_TYPE_PATH2_ACL:
-		अणु
-			काष्ठा tomoyo_path2_acl *entry
+			tomoyo_put_name_union(&entry->name);
+		}
+		break;
+	case TOMOYO_TYPE_PATH2_ACL:
+		{
+			struct tomoyo_path2_acl *entry
 				= container_of(acl, typeof(*entry), head);
-			tomoyo_put_name_जोड़(&entry->name1);
-			tomoyo_put_name_जोड़(&entry->name2);
-		पूर्ण
-		अवरोध;
-	हाल TOMOYO_TYPE_PATH_NUMBER_ACL:
-		अणु
-			काष्ठा tomoyo_path_number_acl *entry
+			tomoyo_put_name_union(&entry->name1);
+			tomoyo_put_name_union(&entry->name2);
+		}
+		break;
+	case TOMOYO_TYPE_PATH_NUMBER_ACL:
+		{
+			struct tomoyo_path_number_acl *entry
 				= container_of(acl, typeof(*entry), head);
-			tomoyo_put_name_जोड़(&entry->name);
-			tomoyo_put_number_जोड़(&entry->number);
-		पूर्ण
-		अवरोध;
-	हाल TOMOYO_TYPE_MKDEV_ACL:
-		अणु
-			काष्ठा tomoyo_mkdev_acl *entry
+			tomoyo_put_name_union(&entry->name);
+			tomoyo_put_number_union(&entry->number);
+		}
+		break;
+	case TOMOYO_TYPE_MKDEV_ACL:
+		{
+			struct tomoyo_mkdev_acl *entry
 				= container_of(acl, typeof(*entry), head);
-			tomoyo_put_name_जोड़(&entry->name);
-			tomoyo_put_number_जोड़(&entry->mode);
-			tomoyo_put_number_जोड़(&entry->major);
-			tomoyo_put_number_जोड़(&entry->minor);
-		पूर्ण
-		अवरोध;
-	हाल TOMOYO_TYPE_MOUNT_ACL:
-		अणु
-			काष्ठा tomoyo_mount_acl *entry
+			tomoyo_put_name_union(&entry->name);
+			tomoyo_put_number_union(&entry->mode);
+			tomoyo_put_number_union(&entry->major);
+			tomoyo_put_number_union(&entry->minor);
+		}
+		break;
+	case TOMOYO_TYPE_MOUNT_ACL:
+		{
+			struct tomoyo_mount_acl *entry
 				= container_of(acl, typeof(*entry), head);
-			tomoyo_put_name_जोड़(&entry->dev_name);
-			tomoyo_put_name_जोड़(&entry->dir_name);
-			tomoyo_put_name_जोड़(&entry->fs_type);
-			tomoyo_put_number_जोड़(&entry->flags);
-		पूर्ण
-		अवरोध;
-	हाल TOMOYO_TYPE_ENV_ACL:
-		अणु
-			काष्ठा tomoyo_env_acl *entry =
+			tomoyo_put_name_union(&entry->dev_name);
+			tomoyo_put_name_union(&entry->dir_name);
+			tomoyo_put_name_union(&entry->fs_type);
+			tomoyo_put_number_union(&entry->flags);
+		}
+		break;
+	case TOMOYO_TYPE_ENV_ACL:
+		{
+			struct tomoyo_env_acl *entry =
 				container_of(acl, typeof(*entry), head);
 
 			tomoyo_put_name(entry->env);
-		पूर्ण
-		अवरोध;
-	हाल TOMOYO_TYPE_INET_ACL:
-		अणु
-			काष्ठा tomoyo_inet_acl *entry =
+		}
+		break;
+	case TOMOYO_TYPE_INET_ACL:
+		{
+			struct tomoyo_inet_acl *entry =
 				container_of(acl, typeof(*entry), head);
 
 			tomoyo_put_group(entry->address.group);
-			tomoyo_put_number_जोड़(&entry->port);
-		पूर्ण
-		अवरोध;
-	हाल TOMOYO_TYPE_UNIX_ACL:
-		अणु
-			काष्ठा tomoyo_unix_acl *entry =
+			tomoyo_put_number_union(&entry->port);
+		}
+		break;
+	case TOMOYO_TYPE_UNIX_ACL:
+		{
+			struct tomoyo_unix_acl *entry =
 				container_of(acl, typeof(*entry), head);
 
-			tomoyo_put_name_जोड़(&entry->name);
-		पूर्ण
-		अवरोध;
-	हाल TOMOYO_TYPE_MANUAL_TASK_ACL:
-		अणु
-			काष्ठा tomoyo_task_acl *entry =
+			tomoyo_put_name_union(&entry->name);
+		}
+		break;
+	case TOMOYO_TYPE_MANUAL_TASK_ACL:
+		{
+			struct tomoyo_task_acl *entry =
 				container_of(acl, typeof(*entry), head);
 
-			tomoyo_put_name(entry->करोमुख्यname);
-		पूर्ण
-		अवरोध;
-	पूर्ण
-पूर्ण
+			tomoyo_put_name(entry->domainname);
+		}
+		break;
+	}
+}
 
 /**
- * tomoyo_del_करोमुख्य - Delete members in "struct tomoyo_domain_info".
+ * tomoyo_del_domain - Delete members in "struct tomoyo_domain_info".
  *
- * @element: Poपूर्णांकer to "struct list_head".
+ * @element: Pointer to "struct list_head".
  *
  * Returns nothing.
  *
  * Caller holds tomoyo_policy_lock mutex.
  */
-अटल अंतरभूत व्योम tomoyo_del_करोमुख्य(काष्ठा list_head *element)
-अणु
-	काष्ठा tomoyo_करोमुख्य_info *करोमुख्य =
-		container_of(element, typeof(*करोमुख्य), list);
-	काष्ठा tomoyo_acl_info *acl;
-	काष्ठा tomoyo_acl_info *पंचांगp;
+static inline void tomoyo_del_domain(struct list_head *element)
+{
+	struct tomoyo_domain_info *domain =
+		container_of(element, typeof(*domain), list);
+	struct tomoyo_acl_info *acl;
+	struct tomoyo_acl_info *tmp;
 
 	/*
-	 * Since this करोमुख्य is referenced from neither
+	 * Since this domain is referenced from neither
 	 * "struct tomoyo_io_buffer" nor "struct cred"->security, we can delete
-	 * elements without checking क्रम is_deleted flag.
+	 * elements without checking for is_deleted flag.
 	 */
-	list_क्रम_each_entry_safe(acl, पंचांगp, &करोमुख्य->acl_info_list, list) अणु
+	list_for_each_entry_safe(acl, tmp, &domain->acl_info_list, list) {
 		tomoyo_del_acl(&acl->list);
-		tomoyo_memory_मुक्त(acl);
-	पूर्ण
-	tomoyo_put_name(करोमुख्य->करोमुख्यname);
-पूर्ण
+		tomoyo_memory_free(acl);
+	}
+	tomoyo_put_name(domain->domainname);
+}
 
 /**
  * tomoyo_del_condition - Delete members in "struct tomoyo_condition".
  *
- * @element: Poपूर्णांकer to "struct list_head".
+ * @element: Pointer to "struct list_head".
  *
  * Returns nothing.
  */
-व्योम tomoyo_del_condition(काष्ठा list_head *element)
-अणु
-	काष्ठा tomoyo_condition *cond = container_of(element, typeof(*cond),
+void tomoyo_del_condition(struct list_head *element)
+{
+	struct tomoyo_condition *cond = container_of(element, typeof(*cond),
 						     head.list);
-	स्थिर u16 condc = cond->condc;
-	स्थिर u16 numbers_count = cond->numbers_count;
-	स्थिर u16 names_count = cond->names_count;
-	स्थिर u16 argc = cond->argc;
-	स्थिर u16 envc = cond->envc;
-	अचिन्हित पूर्णांक i;
-	स्थिर काष्ठा tomoyo_condition_element *condp
-		= (स्थिर काष्ठा tomoyo_condition_element *) (cond + 1);
-	काष्ठा tomoyo_number_जोड़ *numbers_p
-		= (काष्ठा tomoyo_number_जोड़ *) (condp + condc);
-	काष्ठा tomoyo_name_जोड़ *names_p
-		= (काष्ठा tomoyo_name_जोड़ *) (numbers_p + numbers_count);
-	स्थिर काष्ठा tomoyo_argv *argv
-		= (स्थिर काष्ठा tomoyo_argv *) (names_p + names_count);
-	स्थिर काष्ठा tomoyo_envp *envp
-		= (स्थिर काष्ठा tomoyo_envp *) (argv + argc);
+	const u16 condc = cond->condc;
+	const u16 numbers_count = cond->numbers_count;
+	const u16 names_count = cond->names_count;
+	const u16 argc = cond->argc;
+	const u16 envc = cond->envc;
+	unsigned int i;
+	const struct tomoyo_condition_element *condp
+		= (const struct tomoyo_condition_element *) (cond + 1);
+	struct tomoyo_number_union *numbers_p
+		= (struct tomoyo_number_union *) (condp + condc);
+	struct tomoyo_name_union *names_p
+		= (struct tomoyo_name_union *) (numbers_p + numbers_count);
+	const struct tomoyo_argv *argv
+		= (const struct tomoyo_argv *) (names_p + names_count);
+	const struct tomoyo_envp *envp
+		= (const struct tomoyo_envp *) (argv + argc);
 
-	क्रम (i = 0; i < numbers_count; i++)
-		tomoyo_put_number_जोड़(numbers_p++);
-	क्रम (i = 0; i < names_count; i++)
-		tomoyo_put_name_जोड़(names_p++);
-	क्रम (i = 0; i < argc; argv++, i++)
+	for (i = 0; i < numbers_count; i++)
+		tomoyo_put_number_union(numbers_p++);
+	for (i = 0; i < names_count; i++)
+		tomoyo_put_name_union(names_p++);
+	for (i = 0; i < argc; argv++, i++)
 		tomoyo_put_name(argv->value);
-	क्रम (i = 0; i < envc; envp++, i++) अणु
+	for (i = 0; i < envc; envp++, i++) {
 		tomoyo_put_name(envp->name);
 		tomoyo_put_name(envp->value);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * tomoyo_del_name - Delete members in "struct tomoyo_name".
  *
- * @element: Poपूर्णांकer to "struct list_head".
+ * @element: Pointer to "struct list_head".
  *
  * Returns nothing.
  */
-अटल अंतरभूत व्योम tomoyo_del_name(काष्ठा list_head *element)
-अणु
-	/* Nothing to करो. */
-पूर्ण
+static inline void tomoyo_del_name(struct list_head *element)
+{
+	/* Nothing to do. */
+}
 
 /**
  * tomoyo_del_path_group - Delete members in "struct tomoyo_path_group".
  *
- * @element: Poपूर्णांकer to "struct list_head".
+ * @element: Pointer to "struct list_head".
  *
  * Returns nothing.
  */
-अटल अंतरभूत व्योम tomoyo_del_path_group(काष्ठा list_head *element)
-अणु
-	काष्ठा tomoyo_path_group *member =
+static inline void tomoyo_del_path_group(struct list_head *element)
+{
+	struct tomoyo_path_group *member =
 		container_of(element, typeof(*member), head.list);
 
 	tomoyo_put_name(member->member_name);
-पूर्ण
+}
 
 /**
  * tomoyo_del_group - Delete "struct tomoyo_group".
  *
- * @element: Poपूर्णांकer to "struct list_head".
+ * @element: Pointer to "struct list_head".
  *
  * Returns nothing.
  */
-अटल अंतरभूत व्योम tomoyo_del_group(काष्ठा list_head *element)
-अणु
-	काष्ठा tomoyo_group *group =
+static inline void tomoyo_del_group(struct list_head *element)
+{
+	struct tomoyo_group *group =
 		container_of(element, typeof(*group), head.list);
 
 	tomoyo_put_name(group->group_name);
-पूर्ण
+}
 
 /**
  * tomoyo_del_address_group - Delete members in "struct tomoyo_address_group".
  *
- * @element: Poपूर्णांकer to "struct list_head".
+ * @element: Pointer to "struct list_head".
  *
  * Returns nothing.
  */
-अटल अंतरभूत व्योम tomoyo_del_address_group(काष्ठा list_head *element)
-अणु
-	/* Nothing to करो. */
-पूर्ण
+static inline void tomoyo_del_address_group(struct list_head *element)
+{
+	/* Nothing to do. */
+}
 
 /**
  * tomoyo_del_number_group - Delete members in "struct tomoyo_number_group".
  *
- * @element: Poपूर्णांकer to "struct list_head".
+ * @element: Pointer to "struct list_head".
  *
  * Returns nothing.
  */
-अटल अंतरभूत व्योम tomoyo_del_number_group(काष्ठा list_head *element)
-अणु
-	/* Nothing to करो. */
-पूर्ण
+static inline void tomoyo_del_number_group(struct list_head *element)
+{
+	/* Nothing to do. */
+}
 
 /**
- * tomoyo_try_to_gc - Try to kमुक्त() an entry.
+ * tomoyo_try_to_gc - Try to kfree() an entry.
  *
  * @type:    One of values in "enum tomoyo_policy_id".
- * @element: Poपूर्णांकer to "struct list_head".
+ * @element: Pointer to "struct list_head".
  *
  * Returns nothing.
  *
  * Caller holds tomoyo_policy_lock mutex.
  */
-अटल व्योम tomoyo_try_to_gc(स्थिर क्रमागत tomoyo_policy_id type,
-			     काष्ठा list_head *element)
-अणु
+static void tomoyo_try_to_gc(const enum tomoyo_policy_id type,
+			     struct list_head *element)
+{
 	/*
-	 * __list_del_entry() guarantees that the list element became no दीर्घer
+	 * __list_del_entry() guarantees that the list element became no longer
 	 * reachable from the list which the element was originally on (e.g.
-	 * tomoyo_करोमुख्य_list). Also, synchronize_srcu() guarantees that the
-	 * list element became no दीर्घer referenced by syscall users.
+	 * tomoyo_domain_list). Also, synchronize_srcu() guarantees that the
+	 * list element became no longer referenced by syscall users.
 	 */
 	__list_del_entry(element);
 	mutex_unlock(&tomoyo_policy_lock);
 	synchronize_srcu(&tomoyo_ss);
 	/*
 	 * However, there are two users which may still be using the list
-	 * element. We need to defer until both users क्रमget this element.
+	 * element. We need to defer until both users forget this element.
 	 *
-	 * Don't kमुक्त() until "struct tomoyo_io_buffer"->r.अणुकरोमुख्य,group,aclपूर्ण
-	 * and "struct tomoyo_io_buffer"->w.करोमुख्य क्रमget this element.
+	 * Don't kfree() until "struct tomoyo_io_buffer"->r.{domain,group,acl}
+	 * and "struct tomoyo_io_buffer"->w.domain forget this element.
 	 */
-	अगर (tomoyo_काष्ठा_used_by_io_buffer(element))
-		जाओ reinject;
-	चयन (type) अणु
-	हाल TOMOYO_ID_TRANSITION_CONTROL:
+	if (tomoyo_struct_used_by_io_buffer(element))
+		goto reinject;
+	switch (type) {
+	case TOMOYO_ID_TRANSITION_CONTROL:
 		tomoyo_del_transition_control(element);
-		अवरोध;
-	हाल TOMOYO_ID_MANAGER:
+		break;
+	case TOMOYO_ID_MANAGER:
 		tomoyo_del_manager(element);
-		अवरोध;
-	हाल TOMOYO_ID_AGGREGATOR:
+		break;
+	case TOMOYO_ID_AGGREGATOR:
 		tomoyo_del_aggregator(element);
-		अवरोध;
-	हाल TOMOYO_ID_GROUP:
+		break;
+	case TOMOYO_ID_GROUP:
 		tomoyo_del_group(element);
-		अवरोध;
-	हाल TOMOYO_ID_PATH_GROUP:
+		break;
+	case TOMOYO_ID_PATH_GROUP:
 		tomoyo_del_path_group(element);
-		अवरोध;
-	हाल TOMOYO_ID_ADDRESS_GROUP:
+		break;
+	case TOMOYO_ID_ADDRESS_GROUP:
 		tomoyo_del_address_group(element);
-		अवरोध;
-	हाल TOMOYO_ID_NUMBER_GROUP:
+		break;
+	case TOMOYO_ID_NUMBER_GROUP:
 		tomoyo_del_number_group(element);
-		अवरोध;
-	हाल TOMOYO_ID_CONDITION:
+		break;
+	case TOMOYO_ID_CONDITION:
 		tomoyo_del_condition(element);
-		अवरोध;
-	हाल TOMOYO_ID_NAME:
+		break;
+	case TOMOYO_ID_NAME:
 		/*
-		 * Don't kमुक्त() until all "struct tomoyo_io_buffer"->r.w[]
-		 * क्रमget this element.
+		 * Don't kfree() until all "struct tomoyo_io_buffer"->r.w[]
+		 * forget this element.
 		 */
-		अगर (tomoyo_name_used_by_io_buffer
-		    (container_of(element, typeof(काष्ठा tomoyo_name),
+		if (tomoyo_name_used_by_io_buffer
+		    (container_of(element, typeof(struct tomoyo_name),
 				  head.list)->entry.name))
-			जाओ reinject;
+			goto reinject;
 		tomoyo_del_name(element);
-		अवरोध;
-	हाल TOMOYO_ID_ACL:
+		break;
+	case TOMOYO_ID_ACL:
 		tomoyo_del_acl(element);
-		अवरोध;
-	हाल TOMOYO_ID_DOMAIN:
+		break;
+	case TOMOYO_ID_DOMAIN:
 		/*
-		 * Don't kमुक्त() until all "struct cred"->security क्रमget this
+		 * Don't kfree() until all "struct cred"->security forget this
 		 * element.
 		 */
-		अगर (atomic_पढ़ो(&container_of
-				(element, typeof(काष्ठा tomoyo_करोमुख्य_info),
+		if (atomic_read(&container_of
+				(element, typeof(struct tomoyo_domain_info),
 				 list)->users))
-			जाओ reinject;
-		अवरोध;
-	हाल TOMOYO_MAX_POLICY:
-		अवरोध;
-	पूर्ण
+			goto reinject;
+		break;
+	case TOMOYO_MAX_POLICY:
+		break;
+	}
 	mutex_lock(&tomoyo_policy_lock);
-	अगर (type == TOMOYO_ID_DOMAIN)
-		tomoyo_del_करोमुख्य(element);
-	tomoyo_memory_मुक्त(element);
-	वापस;
+	if (type == TOMOYO_ID_DOMAIN)
+		tomoyo_del_domain(element);
+	tomoyo_memory_free(element);
+	return;
 reinject:
 	/*
 	 * We can safely reinject this element here because
-	 * (1) Appending list elements and removing list elements are रक्षित
+	 * (1) Appending list elements and removing list elements are protected
 	 *     by tomoyo_policy_lock mutex.
-	 * (2) Only this function हटाओs list elements and this function is
+	 * (2) Only this function removes list elements and this function is
 	 *     exclusively executed by tomoyo_gc_mutex mutex.
 	 * are true.
 	 */
 	mutex_lock(&tomoyo_policy_lock);
 	list_add_rcu(element, element->prev);
-पूर्ण
+}
 
 /**
  * tomoyo_collect_member - Delete elements with "struct tomoyo_acl_head".
  *
  * @id:          One of values in "enum tomoyo_policy_id".
- * @member_list: Poपूर्णांकer to "struct list_head".
+ * @member_list: Pointer to "struct list_head".
  *
  * Returns nothing.
  */
-अटल व्योम tomoyo_collect_member(स्थिर क्रमागत tomoyo_policy_id id,
-				  काष्ठा list_head *member_list)
-अणु
-	काष्ठा tomoyo_acl_head *member;
-	काष्ठा tomoyo_acl_head *पंचांगp;
+static void tomoyo_collect_member(const enum tomoyo_policy_id id,
+				  struct list_head *member_list)
+{
+	struct tomoyo_acl_head *member;
+	struct tomoyo_acl_head *tmp;
 
-	list_क्रम_each_entry_safe(member, पंचांगp, member_list, list) अणु
-		अगर (!member->is_deleted)
-			जारी;
+	list_for_each_entry_safe(member, tmp, member_list, list) {
+		if (!member->is_deleted)
+			continue;
 		member->is_deleted = TOMOYO_GC_IN_PROGRESS;
 		tomoyo_try_to_gc(id, &member->list);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * tomoyo_collect_acl - Delete elements in "struct tomoyo_domain_info".
  *
- * @list: Poपूर्णांकer to "struct list_head".
+ * @list: Pointer to "struct list_head".
  *
  * Returns nothing.
  */
-अटल व्योम tomoyo_collect_acl(काष्ठा list_head *list)
-अणु
-	काष्ठा tomoyo_acl_info *acl;
-	काष्ठा tomoyo_acl_info *पंचांगp;
+static void tomoyo_collect_acl(struct list_head *list)
+{
+	struct tomoyo_acl_info *acl;
+	struct tomoyo_acl_info *tmp;
 
-	list_क्रम_each_entry_safe(acl, पंचांगp, list, list) अणु
-		अगर (!acl->is_deleted)
-			जारी;
+	list_for_each_entry_safe(acl, tmp, list, list) {
+		if (!acl->is_deleted)
+			continue;
 		acl->is_deleted = TOMOYO_GC_IN_PROGRESS;
 		tomoyo_try_to_gc(TOMOYO_ID_ACL, &acl->list);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * tomoyo_collect_entry - Try to kमुक्त() deleted elements.
+ * tomoyo_collect_entry - Try to kfree() deleted elements.
  *
  * Returns nothing.
  */
-अटल व्योम tomoyo_collect_entry(व्योम)
-अणु
-	पूर्णांक i;
-	क्रमागत tomoyo_policy_id id;
-	काष्ठा tomoyo_policy_namespace *ns;
+static void tomoyo_collect_entry(void)
+{
+	int i;
+	enum tomoyo_policy_id id;
+	struct tomoyo_policy_namespace *ns;
 
 	mutex_lock(&tomoyo_policy_lock);
-	अणु
-		काष्ठा tomoyo_करोमुख्य_info *करोमुख्य;
-		काष्ठा tomoyo_करोमुख्य_info *पंचांगp;
+	{
+		struct tomoyo_domain_info *domain;
+		struct tomoyo_domain_info *tmp;
 
-		list_क्रम_each_entry_safe(करोमुख्य, पंचांगp, &tomoyo_करोमुख्य_list,
-					 list) अणु
-			tomoyo_collect_acl(&करोमुख्य->acl_info_list);
-			अगर (!करोमुख्य->is_deleted || atomic_पढ़ो(&करोमुख्य->users))
-				जारी;
-			tomoyo_try_to_gc(TOMOYO_ID_DOMAIN, &करोमुख्य->list);
-		पूर्ण
-	पूर्ण
-	list_क्रम_each_entry(ns, &tomoyo_namespace_list, namespace_list) अणु
-		क्रम (id = 0; id < TOMOYO_MAX_POLICY; id++)
+		list_for_each_entry_safe(domain, tmp, &tomoyo_domain_list,
+					 list) {
+			tomoyo_collect_acl(&domain->acl_info_list);
+			if (!domain->is_deleted || atomic_read(&domain->users))
+				continue;
+			tomoyo_try_to_gc(TOMOYO_ID_DOMAIN, &domain->list);
+		}
+	}
+	list_for_each_entry(ns, &tomoyo_namespace_list, namespace_list) {
+		for (id = 0; id < TOMOYO_MAX_POLICY; id++)
 			tomoyo_collect_member(id, &ns->policy_list[id]);
-		क्रम (i = 0; i < TOMOYO_MAX_ACL_GROUPS; i++)
+		for (i = 0; i < TOMOYO_MAX_ACL_GROUPS; i++)
 			tomoyo_collect_acl(&ns->acl_group[i]);
-	पूर्ण
-	अणु
-		काष्ठा tomoyo_shared_acl_head *ptr;
-		काष्ठा tomoyo_shared_acl_head *पंचांगp;
+	}
+	{
+		struct tomoyo_shared_acl_head *ptr;
+		struct tomoyo_shared_acl_head *tmp;
 
-		list_क्रम_each_entry_safe(ptr, पंचांगp, &tomoyo_condition_list,
-					 list) अणु
-			अगर (atomic_पढ़ो(&ptr->users) > 0)
-				जारी;
+		list_for_each_entry_safe(ptr, tmp, &tomoyo_condition_list,
+					 list) {
+			if (atomic_read(&ptr->users) > 0)
+				continue;
 			atomic_set(&ptr->users, TOMOYO_GC_IN_PROGRESS);
 			tomoyo_try_to_gc(TOMOYO_ID_CONDITION, &ptr->list);
-		पूर्ण
-	पूर्ण
-	list_क्रम_each_entry(ns, &tomoyo_namespace_list, namespace_list) अणु
-		क्रम (i = 0; i < TOMOYO_MAX_GROUP; i++) अणु
-			काष्ठा list_head *list = &ns->group_list[i];
-			काष्ठा tomoyo_group *group;
-			काष्ठा tomoyo_group *पंचांगp;
+		}
+	}
+	list_for_each_entry(ns, &tomoyo_namespace_list, namespace_list) {
+		for (i = 0; i < TOMOYO_MAX_GROUP; i++) {
+			struct list_head *list = &ns->group_list[i];
+			struct tomoyo_group *group;
+			struct tomoyo_group *tmp;
 
-			चयन (i) अणु
-			हाल 0:
+			switch (i) {
+			case 0:
 				id = TOMOYO_ID_PATH_GROUP;
-				अवरोध;
-			हाल 1:
+				break;
+			case 1:
 				id = TOMOYO_ID_NUMBER_GROUP;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				id = TOMOYO_ID_ADDRESS_GROUP;
-				अवरोध;
-			पूर्ण
-			list_क्रम_each_entry_safe(group, पंचांगp, list, head.list) अणु
+				break;
+			}
+			list_for_each_entry_safe(group, tmp, list, head.list) {
 				tomoyo_collect_member(id, &group->member_list);
-				अगर (!list_empty(&group->member_list) ||
-				    atomic_पढ़ो(&group->head.users) > 0)
-					जारी;
+				if (!list_empty(&group->member_list) ||
+				    atomic_read(&group->head.users) > 0)
+					continue;
 				atomic_set(&group->head.users,
 					   TOMOYO_GC_IN_PROGRESS);
 				tomoyo_try_to_gc(TOMOYO_ID_GROUP,
 						 &group->head.list);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	क्रम (i = 0; i < TOMOYO_MAX_HASH; i++) अणु
-		काष्ठा list_head *list = &tomoyo_name_list[i];
-		काष्ठा tomoyo_shared_acl_head *ptr;
-		काष्ठा tomoyo_shared_acl_head *पंचांगp;
+			}
+		}
+	}
+	for (i = 0; i < TOMOYO_MAX_HASH; i++) {
+		struct list_head *list = &tomoyo_name_list[i];
+		struct tomoyo_shared_acl_head *ptr;
+		struct tomoyo_shared_acl_head *tmp;
 
-		list_क्रम_each_entry_safe(ptr, पंचांगp, list, list) अणु
-			अगर (atomic_पढ़ो(&ptr->users) > 0)
-				जारी;
+		list_for_each_entry_safe(ptr, tmp, list, list) {
+			if (atomic_read(&ptr->users) > 0)
+				continue;
 			atomic_set(&ptr->users, TOMOYO_GC_IN_PROGRESS);
 			tomoyo_try_to_gc(TOMOYO_ID_NAME, &ptr->list);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&tomoyo_policy_lock);
-पूर्ण
+}
 
 /**
- * tomoyo_gc_thपढ़ो - Garbage collector thपढ़ो function.
+ * tomoyo_gc_thread - Garbage collector thread function.
  *
  * @unused: Unused.
  *
  * Returns 0.
  */
-अटल पूर्णांक tomoyo_gc_thपढ़ो(व्योम *unused)
-अणु
-	/* Garbage collector thपढ़ो is exclusive. */
-	अटल DEFINE_MUTEX(tomoyo_gc_mutex);
+static int tomoyo_gc_thread(void *unused)
+{
+	/* Garbage collector thread is exclusive. */
+	static DEFINE_MUTEX(tomoyo_gc_mutex);
 
-	अगर (!mutex_trylock(&tomoyo_gc_mutex))
-		जाओ out;
+	if (!mutex_trylock(&tomoyo_gc_mutex))
+		goto out;
 	tomoyo_collect_entry();
-	अणु
-		काष्ठा tomoyo_io_buffer *head;
-		काष्ठा tomoyo_io_buffer *पंचांगp;
+	{
+		struct tomoyo_io_buffer *head;
+		struct tomoyo_io_buffer *tmp;
 
 		spin_lock(&tomoyo_io_buffer_list_lock);
-		list_क्रम_each_entry_safe(head, पंचांगp, &tomoyo_io_buffer_list,
-					 list) अणु
-			अगर (head->users)
-				जारी;
+		list_for_each_entry_safe(head, tmp, &tomoyo_io_buffer_list,
+					 list) {
+			if (head->users)
+				continue;
 			list_del(&head->list);
-			kमुक्त(head->पढ़ो_buf);
-			kमुक्त(head->ग_लिखो_buf);
-			kमुक्त(head);
-		पूर्ण
+			kfree(head->read_buf);
+			kfree(head->write_buf);
+			kfree(head);
+		}
 		spin_unlock(&tomoyo_io_buffer_list_lock);
-	पूर्ण
+	}
 	mutex_unlock(&tomoyo_gc_mutex);
 out:
-	/* This acts as करो_निकास(0). */
-	वापस 0;
-पूर्ण
+	/* This acts as do_exit(0). */
+	return 0;
+}
 
 /**
- * tomoyo_notअगरy_gc - Register/unरेजिस्टर /sys/kernel/security/tomoyo/ users.
+ * tomoyo_notify_gc - Register/unregister /sys/kernel/security/tomoyo/ users.
  *
- * @head:        Poपूर्णांकer to "struct tomoyo_io_buffer".
- * @is_रेजिस्टर: True अगर रेजिस्टर, false अगर unरेजिस्टर.
+ * @head:        Pointer to "struct tomoyo_io_buffer".
+ * @is_register: True if register, false if unregister.
  *
  * Returns nothing.
  */
-व्योम tomoyo_notअगरy_gc(काष्ठा tomoyo_io_buffer *head, स्थिर bool is_रेजिस्टर)
-अणु
-	bool is_ग_लिखो = false;
+void tomoyo_notify_gc(struct tomoyo_io_buffer *head, const bool is_register)
+{
+	bool is_write = false;
 
 	spin_lock(&tomoyo_io_buffer_list_lock);
-	अगर (is_रेजिस्टर) अणु
+	if (is_register) {
 		head->users = 1;
 		list_add(&head->list, &tomoyo_io_buffer_list);
-	पूर्ण अन्यथा अणु
-		is_ग_लिखो = head->ग_लिखो_buf != शून्य;
-		अगर (!--head->users) अणु
+	} else {
+		is_write = head->write_buf != NULL;
+		if (!--head->users) {
 			list_del(&head->list);
-			kमुक्त(head->पढ़ो_buf);
-			kमुक्त(head->ग_लिखो_buf);
-			kमुक्त(head);
-		पूर्ण
-	पूर्ण
+			kfree(head->read_buf);
+			kfree(head->write_buf);
+			kfree(head);
+		}
+	}
 	spin_unlock(&tomoyo_io_buffer_list_lock);
-	अगर (is_ग_लिखो)
-		kthपढ़ो_run(tomoyo_gc_thपढ़ो, शून्य, "GC for TOMOYO");
-पूर्ण
+	if (is_write)
+		kthread_run(tomoyo_gc_thread, NULL, "GC for TOMOYO");
+}

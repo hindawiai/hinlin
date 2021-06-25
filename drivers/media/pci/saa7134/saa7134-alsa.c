@@ -1,81 +1,80 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *   SAA713x ALSA support क्रम V4L
+ *   SAA713x ALSA support for V4L
  */
 
-#समावेश "saa7134.h"
-#समावेश "saa7134-reg.h"
+#include "saa7134.h"
+#include "saa7134-reg.h"
 
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/रुको.h>
-#समावेश <linux/module.h>
-#समावेश <sound/core.h>
-#समावेश <sound/control.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/initval.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/vदो_स्मृति.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/time.h>
+#include <linux/wait.h>
+#include <linux/module.h>
+#include <sound/core.h>
+#include <sound/control.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/initval.h>
+#include <linux/interrupt.h>
+#include <linux/vmalloc.h>
 
 /*
  * Configuration macros
  */
 
-/* शेषs */
-#घोषणा MIXER_ADDR_UNSELECTED	-1
-#घोषणा MIXER_ADDR_TVTUNER	0
-#घोषणा MIXER_ADDR_LINE1	1
-#घोषणा MIXER_ADDR_LINE2	2
-#घोषणा MIXER_ADDR_LAST		2
+/* defaults */
+#define MIXER_ADDR_UNSELECTED	-1
+#define MIXER_ADDR_TVTUNER	0
+#define MIXER_ADDR_LINE1	1
+#define MIXER_ADDR_LINE2	2
+#define MIXER_ADDR_LAST		2
 
 
-अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
-अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID क्रम this card */
-अटल पूर्णांक enable[SNDRV_CARDS] = अणु1, [1 ... (SNDRV_CARDS - 1)] = 1पूर्ण;
+static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
+static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID for this card */
+static int enable[SNDRV_CARDS] = {1, [1 ... (SNDRV_CARDS - 1)] = 1};
 
-module_param_array(index, पूर्णांक, शून्य, 0444);
-module_param_array(enable, पूर्णांक, शून्य, 0444);
+module_param_array(index, int, NULL, 0444);
+module_param_array(enable, int, NULL, 0444);
 MODULE_PARM_DESC(index, "Index value for SAA7134 capture interface(s).");
 MODULE_PARM_DESC(enable, "Enable (or not) the SAA7134 capture interface(s).");
 
 /*
- * Main chip काष्ठाure
+ * Main chip structure
  */
 
-प्रकार काष्ठा snd_card_saa7134 अणु
-	काष्ठा snd_card *card;
+typedef struct snd_card_saa7134 {
+	struct snd_card *card;
 	spinlock_t mixer_lock;
-	पूर्णांक mixer_volume[MIXER_ADDR_LAST+1][2];
-	पूर्णांक capture_source_addr;
-	पूर्णांक capture_source[2];
-	काष्ठा snd_kcontrol *capture_ctl[MIXER_ADDR_LAST+1];
-	काष्ठा pci_dev *pci;
-	काष्ठा saa7134_dev *dev;
+	int mixer_volume[MIXER_ADDR_LAST+1][2];
+	int capture_source_addr;
+	int capture_source[2];
+	struct snd_kcontrol *capture_ctl[MIXER_ADDR_LAST+1];
+	struct pci_dev *pci;
+	struct saa7134_dev *dev;
 
-	अचिन्हित दीर्घ iobase;
+	unsigned long iobase;
 	s16 irq;
 	u16 mute_was_on;
 
 	spinlock_t lock;
-पूर्ण snd_card_saa7134_t;
+} snd_card_saa7134_t;
 
 
 /*
- * PCM काष्ठाure
+ * PCM structure
  */
 
-प्रकार काष्ठा snd_card_saa7134_pcm अणु
-	काष्ठा saa7134_dev *dev;
+typedef struct snd_card_saa7134_pcm {
+	struct saa7134_dev *dev;
 
 	spinlock_t lock;
 
-	काष्ठा snd_pcm_substream *substream;
-पूर्ण snd_card_saa7134_pcm_t;
+	struct snd_pcm_substream *substream;
+} snd_card_saa7134_pcm_t;
 
-अटल काष्ठा snd_card *snd_saa7134_cards[SNDRV_CARDS];
+static struct snd_card *snd_saa7134_cards[SNDRV_CARDS];
 
 
 /*
@@ -87,138 +86,138 @@ MODULE_PARM_DESC(enable, "Enable (or not) the SAA7134 capture interface(s).");
  *
  */
 
-अटल व्योम saa7134_dma_stop(काष्ठा saa7134_dev *dev)
-अणु
+static void saa7134_dma_stop(struct saa7134_dev *dev)
+{
 	dev->dmasound.dma_blk     = -1;
 	dev->dmasound.dma_running = 0;
 	saa7134_set_dmabits(dev);
-पूर्ण
+}
 
 /*
  * saa7134 DMA audio start
  *
- *   Called when preparing the capture device क्रम use
+ *   Called when preparing the capture device for use
  *
  *   - Copied verbatim from saa7134-oss's dsp_dma_start.
  *
  */
 
-अटल व्योम saa7134_dma_start(काष्ठा saa7134_dev *dev)
-अणु
+static void saa7134_dma_start(struct saa7134_dev *dev)
+{
 	dev->dmasound.dma_blk     = 0;
 	dev->dmasound.dma_running = 1;
 	saa7134_set_dmabits(dev);
-पूर्ण
+}
 
 /*
  * saa7134 audio DMA IRQ handler
  *
- *   Called whenever we get an SAA7134_IRQ_REPORT_DONE_RA3 पूर्णांकerrupt
- *   Handles shअगरting between the 2 buffers, manages the पढ़ो counters,
- *  and notअगरies ALSA when periods elapse
+ *   Called whenever we get an SAA7134_IRQ_REPORT_DONE_RA3 interrupt
+ *   Handles shifting between the 2 buffers, manages the read counters,
+ *  and notifies ALSA when periods elapse
  *
- *   - Mostly copied from saa7134-oss's saa7134_irq_oss_करोne.
+ *   - Mostly copied from saa7134-oss's saa7134_irq_oss_done.
  *
  */
 
-अटल व्योम saa7134_irq_alsa_करोne(काष्ठा saa7134_dev *dev,
-				  अचिन्हित दीर्घ status)
-अणु
-	पूर्णांक next_blk, reg = 0;
+static void saa7134_irq_alsa_done(struct saa7134_dev *dev,
+				  unsigned long status)
+{
+	int next_blk, reg = 0;
 
 	spin_lock(&dev->slock);
-	अगर (UNSET == dev->dmasound.dma_blk) अणु
+	if (UNSET == dev->dmasound.dma_blk) {
 		pr_debug("irq: recording stopped\n");
-		जाओ करोne;
-	पूर्ण
-	अगर (0 != (status & 0x0f000000))
+		goto done;
+	}
+	if (0 != (status & 0x0f000000))
 		pr_debug("irq: lost %ld\n", (status >> 24) & 0x0f);
-	अगर (0 == (status & 0x10000000)) अणु
+	if (0 == (status & 0x10000000)) {
 		/* odd */
-		अगर (0 == (dev->dmasound.dma_blk & 0x01))
+		if (0 == (dev->dmasound.dma_blk & 0x01))
 			reg = SAA7134_RS_BA1(6);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* even */
-		अगर (1 == (dev->dmasound.dma_blk & 0x01))
+		if (1 == (dev->dmasound.dma_blk & 0x01))
 			reg = SAA7134_RS_BA2(6);
-	पूर्ण
-	अगर (0 == reg) अणु
+	}
+	if (0 == reg) {
 		pr_debug("irq: field oops [%s]\n",
 			(status & 0x10000000) ? "even" : "odd");
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (dev->dmasound.पढ़ो_count >= dev->dmasound.blksize * (dev->dmasound.blocks-2)) अणु
+	if (dev->dmasound.read_count >= dev->dmasound.blksize * (dev->dmasound.blocks-2)) {
 		pr_debug("irq: overrun [full=%d/%d] - Blocks in %d\n",
-			dev->dmasound.पढ़ो_count,
+			dev->dmasound.read_count,
 			dev->dmasound.bufsize, dev->dmasound.blocks);
 		spin_unlock(&dev->slock);
 		snd_pcm_stop_xrun(dev->dmasound.substream);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* next block addr */
 	next_blk = (dev->dmasound.dma_blk + 2) % dev->dmasound.blocks;
-	saa_ग_लिखोl(reg,next_blk * dev->dmasound.blksize);
+	saa_writel(reg,next_blk * dev->dmasound.blksize);
 	pr_debug("irq: ok, %s, next_blk=%d, addr=%x, blocks=%u, size=%u, read=%u\n",
 		(status & 0x10000000) ? "even" : "odd ", next_blk,
 		 next_blk * dev->dmasound.blksize, dev->dmasound.blocks,
-		 dev->dmasound.blksize, dev->dmasound.पढ़ो_count);
+		 dev->dmasound.blksize, dev->dmasound.read_count);
 
-	/* update status & wake रुकोing पढ़ोers */
+	/* update status & wake waiting readers */
 	dev->dmasound.dma_blk = (dev->dmasound.dma_blk + 1) % dev->dmasound.blocks;
-	dev->dmasound.पढ़ो_count += dev->dmasound.blksize;
+	dev->dmasound.read_count += dev->dmasound.blksize;
 
 	dev->dmasound.recording_on = reg;
 
-	अगर (dev->dmasound.पढ़ो_count >= snd_pcm_lib_period_bytes(dev->dmasound.substream)) अणु
+	if (dev->dmasound.read_count >= snd_pcm_lib_period_bytes(dev->dmasound.substream)) {
 		spin_unlock(&dev->slock);
 		snd_pcm_period_elapsed(dev->dmasound.substream);
 		spin_lock(&dev->slock);
-	पूर्ण
+	}
 
- करोne:
+ done:
 	spin_unlock(&dev->slock);
 
-पूर्ण
+}
 
 /*
  * IRQ request handler
  *
- *   Runs aदीर्घ with saa7134's IRQ handler, discards anything that isn't
+ *   Runs along with saa7134's IRQ handler, discards anything that isn't
  *   DMA sound
  *
  */
 
-अटल irqवापस_t saa7134_alsa_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा saa7134_dmasound *dmasound = dev_id;
-	काष्ठा saa7134_dev *dev = dmasound->priv_data;
+static irqreturn_t saa7134_alsa_irq(int irq, void *dev_id)
+{
+	struct saa7134_dmasound *dmasound = dev_id;
+	struct saa7134_dev *dev = dmasound->priv_data;
 
-	अचिन्हित दीर्घ report, status;
-	पूर्णांक loop, handled = 0;
+	unsigned long report, status;
+	int loop, handled = 0;
 
-	क्रम (loop = 0; loop < 10; loop++) अणु
-		report = saa_पढ़ोl(SAA7134_IRQ_REPORT);
-		status = saa_पढ़ोl(SAA7134_IRQ_STATUS);
+	for (loop = 0; loop < 10; loop++) {
+		report = saa_readl(SAA7134_IRQ_REPORT);
+		status = saa_readl(SAA7134_IRQ_STATUS);
 
-		अगर (report & SAA7134_IRQ_REPORT_DONE_RA3) अणु
+		if (report & SAA7134_IRQ_REPORT_DONE_RA3) {
 			handled = 1;
-			saa_ग_लिखोl(SAA7134_IRQ_REPORT,
+			saa_writel(SAA7134_IRQ_REPORT,
 				   SAA7134_IRQ_REPORT_DONE_RA3);
-			saa7134_irq_alsa_करोne(dev, status);
-		पूर्ण अन्यथा अणु
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			saa7134_irq_alsa_done(dev, status);
+		} else {
+			goto out;
+		}
+	}
 
-	अगर (loop == 10) अणु
+	if (loop == 10) {
 		pr_debug("error! looping IRQ!");
-	पूर्ण
+	}
 
 out:
-	वापस IRQ_RETVAL(handled);
-पूर्ण
+	return IRQ_RETVAL(handled);
+}
 
 /*
  * ALSA capture trigger
@@ -226,165 +225,165 @@ out:
  *   - One of the ALSA capture callbacks.
  *
  *   Called whenever a capture is started or stopped. Must be defined,
- *   but there's nothing we want to करो here
+ *   but there's nothing we want to do here
  *
  */
 
-अटल पूर्णांक snd_card_saa7134_capture_trigger(काष्ठा snd_pcm_substream * substream,
-					  पूर्णांक cmd)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	snd_card_saa7134_pcm_t *pcm = runसमय->निजी_data;
-	काष्ठा saa7134_dev *dev=pcm->dev;
-	पूर्णांक err = 0;
+static int snd_card_saa7134_capture_trigger(struct snd_pcm_substream * substream,
+					  int cmd)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	snd_card_saa7134_pcm_t *pcm = runtime->private_data;
+	struct saa7134_dev *dev=pcm->dev;
+	int err = 0;
 
 	spin_lock(&dev->slock);
-	अगर (cmd == SNDRV_PCM_TRIGGER_START) अणु
+	if (cmd == SNDRV_PCM_TRIGGER_START) {
 		/* start dma */
 		saa7134_dma_start(dev);
-	पूर्ण अन्यथा अगर (cmd == SNDRV_PCM_TRIGGER_STOP) अणु
+	} else if (cmd == SNDRV_PCM_TRIGGER_STOP) {
 		/* stop dma */
 		saa7134_dma_stop(dev);
-	पूर्ण अन्यथा अणु
+	} else {
 		err = -EINVAL;
-	पूर्ण
+	}
 	spin_unlock(&dev->slock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक saa7134_alsa_dma_init(काष्ठा saa7134_dev *dev,
-				 अचिन्हित दीर्घ nr_pages)
-अणु
-	काष्ठा saa7134_dmasound *dma = &dev->dmasound;
-	काष्ठा page *pg;
-	पूर्णांक i;
+static int saa7134_alsa_dma_init(struct saa7134_dev *dev,
+				 unsigned long nr_pages)
+{
+	struct saa7134_dmasound *dma = &dev->dmasound;
+	struct page *pg;
+	int i;
 
-	dma->vaddr = vदो_स्मृति_32(nr_pages << PAGE_SHIFT);
-	अगर (शून्य == dma->vaddr) अणु
+	dma->vaddr = vmalloc_32(nr_pages << PAGE_SHIFT);
+	if (NULL == dma->vaddr) {
 		pr_debug("vmalloc_32(%lu pages) failed\n", nr_pages);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	pr_debug("vmalloc is at addr %p, size=%lu\n",
 		 dma->vaddr, nr_pages << PAGE_SHIFT);
 
-	स_रखो(dma->vaddr, 0, nr_pages << PAGE_SHIFT);
+	memset(dma->vaddr, 0, nr_pages << PAGE_SHIFT);
 	dma->nr_pages = nr_pages;
 
-	dma->sglist = vzalloc(array_size(माप(*dma->sglist), dma->nr_pages));
-	अगर (शून्य == dma->sglist)
-		जाओ vzalloc_err;
+	dma->sglist = vzalloc(array_size(sizeof(*dma->sglist), dma->nr_pages));
+	if (NULL == dma->sglist)
+		goto vzalloc_err;
 
 	sg_init_table(dma->sglist, dma->nr_pages);
-	क्रम (i = 0; i < dma->nr_pages; i++) अणु
-		pg = vदो_स्मृति_to_page(dma->vaddr + i * PAGE_SIZE);
-		अगर (शून्य == pg)
-			जाओ vदो_स्मृति_to_page_err;
+	for (i = 0; i < dma->nr_pages; i++) {
+		pg = vmalloc_to_page(dma->vaddr + i * PAGE_SIZE);
+		if (NULL == pg)
+			goto vmalloc_to_page_err;
 		sg_set_page(&dma->sglist[i], pg, PAGE_SIZE, 0);
-	पूर्ण
-	वापस 0;
+	}
+	return 0;
 
-vदो_स्मृति_to_page_err:
-	vमुक्त(dma->sglist);
-	dma->sglist = शून्य;
+vmalloc_to_page_err:
+	vfree(dma->sglist);
+	dma->sglist = NULL;
 vzalloc_err:
-	vमुक्त(dma->vaddr);
-	dma->vaddr = शून्य;
-	वापस -ENOMEM;
-पूर्ण
+	vfree(dma->vaddr);
+	dma->vaddr = NULL;
+	return -ENOMEM;
+}
 
-अटल पूर्णांक saa7134_alsa_dma_map(काष्ठा saa7134_dev *dev)
-अणु
-	काष्ठा saa7134_dmasound *dma = &dev->dmasound;
+static int saa7134_alsa_dma_map(struct saa7134_dev *dev)
+{
+	struct saa7134_dmasound *dma = &dev->dmasound;
 
 	dma->sglen = dma_map_sg(&dev->pci->dev, dma->sglist,
 			dma->nr_pages, DMA_FROM_DEVICE);
 
-	अगर (0 == dma->sglen) अणु
+	if (0 == dma->sglen) {
 		pr_warn("%s: saa7134_alsa_map_sg failed\n", __func__);
-		वापस -ENOMEM;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ENOMEM;
+	}
+	return 0;
+}
 
-अटल पूर्णांक saa7134_alsa_dma_unmap(काष्ठा saa7134_dev *dev)
-अणु
-	काष्ठा saa7134_dmasound *dma = &dev->dmasound;
+static int saa7134_alsa_dma_unmap(struct saa7134_dev *dev)
+{
+	struct saa7134_dmasound *dma = &dev->dmasound;
 
-	अगर (!dma->sglen)
-		वापस 0;
+	if (!dma->sglen)
+		return 0;
 
 	dma_unmap_sg(&dev->pci->dev, dma->sglist, dma->nr_pages, DMA_FROM_DEVICE);
 	dma->sglen = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक saa7134_alsa_dma_मुक्त(काष्ठा saa7134_dmasound *dma)
-अणु
-	vमुक्त(dma->sglist);
-	dma->sglist = शून्य;
-	vमुक्त(dma->vaddr);
-	dma->vaddr = शून्य;
-	वापस 0;
-पूर्ण
+static int saa7134_alsa_dma_free(struct saa7134_dmasound *dma)
+{
+	vfree(dma->sglist);
+	dma->sglist = NULL;
+	vfree(dma->vaddr);
+	dma->vaddr = NULL;
+	return 0;
+}
 
 /*
  * DMA buffer initialization
  *
  *   Uses V4L functions to initialize the DMA. Shouldn't be necessary in
- *  ALSA, but I was unable to use ALSA's own DMA, and had to क्रमce the
+ *  ALSA, but I was unable to use ALSA's own DMA, and had to force the
  *  usage of V4L's
  *
  *   - Copied verbatim from saa7134-oss.
  *
  */
 
-अटल पूर्णांक dsp_buffer_init(काष्ठा saa7134_dev *dev)
-अणु
-	पूर्णांक err;
+static int dsp_buffer_init(struct saa7134_dev *dev)
+{
+	int err;
 
 	BUG_ON(!dev->dmasound.bufsize);
 
 	err = saa7134_alsa_dma_init(dev,
 			       (dev->dmasound.bufsize + PAGE_SIZE) >> PAGE_SHIFT);
-	अगर (0 != err)
-		वापस err;
-	वापस 0;
-पूर्ण
+	if (0 != err)
+		return err;
+	return 0;
+}
 
 /*
  * DMA buffer release
  *
- *   Called after closing the device, during snd_card_saa7134_capture_बंद
+ *   Called after closing the device, during snd_card_saa7134_capture_close
  *
  */
 
-अटल पूर्णांक dsp_buffer_मुक्त(काष्ठा saa7134_dev *dev)
-अणु
+static int dsp_buffer_free(struct saa7134_dev *dev)
+{
 	BUG_ON(!dev->dmasound.blksize);
 
-	saa7134_alsa_dma_मुक्त(&dev->dmasound);
+	saa7134_alsa_dma_free(&dev->dmasound);
 
 	dev->dmasound.blocks  = 0;
 	dev->dmasound.blksize = 0;
 	dev->dmasound.bufsize = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Setting the capture source and updating the ALSA controls
  */
-अटल पूर्णांक snd_saa7134_capsrc_set(काष्ठा snd_kcontrol *kcontrol,
-				  पूर्णांक left, पूर्णांक right, bool क्रमce_notअगरy)
-अणु
+static int snd_saa7134_capsrc_set(struct snd_kcontrol *kcontrol,
+				  int left, int right, bool force_notify)
+{
 	snd_card_saa7134_t *chip = snd_kcontrol_chip(kcontrol);
-	पूर्णांक change = 0, addr = kcontrol->निजी_value;
-	पूर्णांक active, old_addr;
+	int change = 0, addr = kcontrol->private_value;
+	int active, old_addr;
 	u32 anabar, xbarin;
-	पूर्णांक analog_io, rate;
-	काष्ठा saa7134_dev *dev;
+	int analog_io, rate;
+	struct saa7134_dev *dev;
 
 	dev = chip->dev;
 
@@ -394,7 +393,7 @@ vzalloc_err:
 	old_addr = chip->capture_source_addr;
 
 	/* The active capture source cannot be deactivated */
-	अगर (active) अणु
+	if (active) {
 		change = old_addr != addr ||
 			 chip->capture_source[0] != left ||
 			 chip->capture_source[1] != right;
@@ -403,228 +402,228 @@ vzalloc_err:
 		chip->capture_source[1] = right;
 		chip->capture_source_addr = addr;
 		dev->dmasound.input = addr;
-	पूर्ण
+	}
 	spin_unlock_irq(&chip->mixer_lock);
 
-	अगर (change) अणु
-		चयन (dev->pci->device) अणु
+	if (change) {
+		switch (dev->pci->device) {
 
-		हाल PCI_DEVICE_ID_PHILIPS_SAA7134:
-			चयन (addr) अणु
-			हाल MIXER_ADDR_TVTUNER:
-				saa_anकरोrb(SAA7134_AUDIO_FORMAT_CTRL,
+		case PCI_DEVICE_ID_PHILIPS_SAA7134:
+			switch (addr) {
+			case MIXER_ADDR_TVTUNER:
+				saa_andorb(SAA7134_AUDIO_FORMAT_CTRL,
 					   0xc0, 0xc0);
-				saa_anकरोrb(SAA7134_SIF_SAMPLE_FREQ,
+				saa_andorb(SAA7134_SIF_SAMPLE_FREQ,
 					   0x03, 0x00);
-				अवरोध;
-			हाल MIXER_ADDR_LINE1:
-			हाल MIXER_ADDR_LINE2:
+				break;
+			case MIXER_ADDR_LINE1:
+			case MIXER_ADDR_LINE2:
 				analog_io = (MIXER_ADDR_LINE1 == addr) ?
 					     0x00 : 0x08;
 				rate = (32000 == dev->dmasound.rate) ?
 					0x01 : 0x03;
-				saa_anकरोrb(SAA7134_ANALOG_IO_SELECT,
+				saa_andorb(SAA7134_ANALOG_IO_SELECT,
 					   0x08, analog_io);
-				saa_anकरोrb(SAA7134_AUDIO_FORMAT_CTRL,
+				saa_andorb(SAA7134_AUDIO_FORMAT_CTRL,
 					   0xc0, 0x80);
-				saa_anकरोrb(SAA7134_SIF_SAMPLE_FREQ,
+				saa_andorb(SAA7134_SIF_SAMPLE_FREQ,
 					   0x03, rate);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			अवरोध;
-		हाल PCI_DEVICE_ID_PHILIPS_SAA7133:
-		हाल PCI_DEVICE_ID_PHILIPS_SAA7135:
+			break;
+		case PCI_DEVICE_ID_PHILIPS_SAA7133:
+		case PCI_DEVICE_ID_PHILIPS_SAA7135:
 			xbarin = 0x03; /* adc */
 			anabar = 0;
-			चयन (addr) अणु
-			हाल MIXER_ADDR_TVTUNER:
+			switch (addr) {
+			case MIXER_ADDR_TVTUNER:
 				xbarin = 0; /* Demodulator */
 				anabar = 2; /* DACs */
-				अवरोध;
-			हाल MIXER_ADDR_LINE1:
+				break;
+			case MIXER_ADDR_LINE1:
 				anabar = 0;  /* aux1, aux1 */
-				अवरोध;
-			हाल MIXER_ADDR_LINE2:
+				break;
+			case MIXER_ADDR_LINE2:
 				anabar = 9;  /* aux2, aux2 */
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			/* output xbar always मुख्य channel */
-			saa_dsp_ग_लिखोl(dev, SAA7133_DIGITAL_OUTPUT_SEL1,
+			/* output xbar always main channel */
+			saa_dsp_writel(dev, SAA7133_DIGITAL_OUTPUT_SEL1,
 				       0xbbbb10);
 
-			अगर (left || right) अणु
+			if (left || right) {
 				/* We've got data, turn the input on */
-				saa_dsp_ग_लिखोl(dev, SAA7133_DIGITAL_INPUT_XBAR1,
+				saa_dsp_writel(dev, SAA7133_DIGITAL_INPUT_XBAR1,
 					       xbarin);
-				saa_ग_लिखोl(SAA7133_ANALOG_IO_SELECT, anabar);
-			पूर्ण अन्यथा अणु
-				saa_dsp_ग_लिखोl(dev, SAA7133_DIGITAL_INPUT_XBAR1,
+				saa_writel(SAA7133_ANALOG_IO_SELECT, anabar);
+			} else {
+				saa_dsp_writel(dev, SAA7133_DIGITAL_INPUT_XBAR1,
 					       0);
-				saa_ग_लिखोl(SAA7133_ANALOG_IO_SELECT, 0);
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
+				saa_writel(SAA7133_ANALOG_IO_SELECT, 0);
+			}
+			break;
+		}
+	}
 
-	अगर (change) अणु
-		अगर (क्रमce_notअगरy)
-			snd_ctl_notअगरy(chip->card,
+	if (change) {
+		if (force_notify)
+			snd_ctl_notify(chip->card,
 				       SNDRV_CTL_EVENT_MASK_VALUE,
 				       &chip->capture_ctl[addr]->id);
 
-		अगर (old_addr != MIXER_ADDR_UNSELECTED && old_addr != addr)
-			snd_ctl_notअगरy(chip->card,
+		if (old_addr != MIXER_ADDR_UNSELECTED && old_addr != addr)
+			snd_ctl_notify(chip->card,
 				       SNDRV_CTL_EVENT_MASK_VALUE,
 				       &chip->capture_ctl[old_addr]->id);
-	पूर्ण
+	}
 
-	वापस change;
-पूर्ण
+	return change;
+}
 
 /*
  * ALSA PCM preparation
  *
  *   - One of the ALSA capture callbacks.
  *
- *   Called right after the capture device is खोलोed, this function configures
+ *   Called right after the capture device is opened, this function configures
  *  the buffer using the previously defined functions, allocates the memory,
- *  sets up the hardware रेजिस्टरs, and then starts the DMA. When this function
- *  वापसs, the audio should be flowing.
+ *  sets up the hardware registers, and then starts the DMA. When this function
+ *  returns, the audio should be flowing.
  *
  */
 
-अटल पूर्णांक snd_card_saa7134_capture_prepare(काष्ठा snd_pcm_substream * substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	पूर्णांक bswap, sign;
+static int snd_card_saa7134_capture_prepare(struct snd_pcm_substream * substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	int bswap, sign;
 	u32 fmt, control;
 	snd_card_saa7134_t *saa7134 = snd_pcm_substream_chip(substream);
-	काष्ठा saa7134_dev *dev;
-	snd_card_saa7134_pcm_t *pcm = runसमय->निजी_data;
+	struct saa7134_dev *dev;
+	snd_card_saa7134_pcm_t *pcm = runtime->private_data;
 
 	pcm->dev->dmasound.substream = substream;
 
 	dev = saa7134->dev;
 
-	अगर (snd_pcm_क्रमmat_width(runसमय->क्रमmat) == 8)
+	if (snd_pcm_format_width(runtime->format) == 8)
 		fmt = 0x00;
-	अन्यथा
+	else
 		fmt = 0x01;
 
-	अगर (snd_pcm_क्रमmat_चिन्हित(runसमय->क्रमmat))
+	if (snd_pcm_format_signed(runtime->format))
 		sign = 1;
-	अन्यथा
+	else
 		sign = 0;
 
-	अगर (snd_pcm_क्रमmat_big_endian(runसमय->क्रमmat))
+	if (snd_pcm_format_big_endian(runtime->format))
 		bswap = 1;
-	अन्यथा
+	else
 		bswap = 0;
 
-	चयन (dev->pci->device) अणु
-	  हाल PCI_DEVICE_ID_PHILIPS_SAA7134:
-		अगर (1 == runसमय->channels)
+	switch (dev->pci->device) {
+	  case PCI_DEVICE_ID_PHILIPS_SAA7134:
+		if (1 == runtime->channels)
 			fmt |= (1 << 3);
-		अगर (2 == runसमय->channels)
+		if (2 == runtime->channels)
 			fmt |= (3 << 3);
-		अगर (sign)
+		if (sign)
 			fmt |= 0x04;
 
 		fmt |= (MIXER_ADDR_TVTUNER == dev->dmasound.input) ? 0xc0 : 0x80;
-		saa_ग_लिखोb(SAA7134_NUM_SAMPLES0, ((dev->dmasound.blksize - 1) & 0x0000ff));
-		saa_ग_लिखोb(SAA7134_NUM_SAMPLES1, ((dev->dmasound.blksize - 1) & 0x00ff00) >>  8);
-		saa_ग_लिखोb(SAA7134_NUM_SAMPLES2, ((dev->dmasound.blksize - 1) & 0xff0000) >> 16);
-		saa_ग_लिखोb(SAA7134_AUDIO_FORMAT_CTRL, fmt);
+		saa_writeb(SAA7134_NUM_SAMPLES0, ((dev->dmasound.blksize - 1) & 0x0000ff));
+		saa_writeb(SAA7134_NUM_SAMPLES1, ((dev->dmasound.blksize - 1) & 0x00ff00) >>  8);
+		saa_writeb(SAA7134_NUM_SAMPLES2, ((dev->dmasound.blksize - 1) & 0xff0000) >> 16);
+		saa_writeb(SAA7134_AUDIO_FORMAT_CTRL, fmt);
 
-		अवरोध;
-	  हाल PCI_DEVICE_ID_PHILIPS_SAA7133:
-	  हाल PCI_DEVICE_ID_PHILIPS_SAA7135:
-		अगर (1 == runसमय->channels)
+		break;
+	  case PCI_DEVICE_ID_PHILIPS_SAA7133:
+	  case PCI_DEVICE_ID_PHILIPS_SAA7135:
+		if (1 == runtime->channels)
 			fmt |= (1 << 4);
-		अगर (2 == runसमय->channels)
+		if (2 == runtime->channels)
 			fmt |= (2 << 4);
-		अगर (!sign)
+		if (!sign)
 			fmt |= 0x04;
-		saa_ग_लिखोl(SAA7133_NUM_SAMPLES, dev->dmasound.blksize -1);
-		saa_ग_लिखोl(SAA7133_AUDIO_CHANNEL, 0x543210 | (fmt << 24));
-		अवरोध;
-	पूर्ण
+		saa_writel(SAA7133_NUM_SAMPLES, dev->dmasound.blksize -1);
+		saa_writel(SAA7133_AUDIO_CHANNEL, 0x543210 | (fmt << 24));
+		break;
+	}
 
 	pr_debug("rec_start: afmt=%d ch=%d  =>  fmt=0x%x swap=%c\n",
-		runसमय->क्रमmat, runसमय->channels, fmt,
+		runtime->format, runtime->channels, fmt,
 		bswap ? 'b' : '-');
 	/* dma: setup channel 6 (= AUDIO) */
 	control = SAA7134_RS_CONTROL_BURST_16 |
 		SAA7134_RS_CONTROL_ME |
 		(dev->dmasound.pt.dma >> 12);
-	अगर (bswap)
+	if (bswap)
 		control |= SAA7134_RS_CONTROL_BSWAP;
 
-	saa_ग_लिखोl(SAA7134_RS_BA1(6),0);
-	saa_ग_लिखोl(SAA7134_RS_BA2(6),dev->dmasound.blksize);
-	saa_ग_लिखोl(SAA7134_RS_PITCH(6),0);
-	saa_ग_लिखोl(SAA7134_RS_CONTROL(6),control);
+	saa_writel(SAA7134_RS_BA1(6),0);
+	saa_writel(SAA7134_RS_BA2(6),dev->dmasound.blksize);
+	saa_writel(SAA7134_RS_PITCH(6),0);
+	saa_writel(SAA7134_RS_CONTROL(6),control);
 
-	dev->dmasound.rate = runसमय->rate;
+	dev->dmasound.rate = runtime->rate;
 
 	/* Setup and update the card/ALSA controls */
 	snd_saa7134_capsrc_set(saa7134->capture_ctl[dev->dmasound.input], 1, 1,
 			       true);
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
 /*
- * ALSA poपूर्णांकer fetching
+ * ALSA pointer fetching
  *
  *   - One of the ALSA capture callbacks.
  *
- *   Called whenever a period elapses, it must वापस the current hardware
+ *   Called whenever a period elapses, it must return the current hardware
  *  position of the buffer.
- *   Also resets the पढ़ो counter used to prevent overruns
+ *   Also resets the read counter used to prevent overruns
  *
  */
 
-अटल snd_pcm_uframes_t
-snd_card_saa7134_capture_poपूर्णांकer(काष्ठा snd_pcm_substream * substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	snd_card_saa7134_pcm_t *pcm = runसमय->निजी_data;
-	काष्ठा saa7134_dev *dev=pcm->dev;
+static snd_pcm_uframes_t
+snd_card_saa7134_capture_pointer(struct snd_pcm_substream * substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	snd_card_saa7134_pcm_t *pcm = runtime->private_data;
+	struct saa7134_dev *dev=pcm->dev;
 
-	अगर (dev->dmasound.पढ़ो_count) अणु
-		dev->dmasound.पढ़ो_count  -= snd_pcm_lib_period_bytes(substream);
-		dev->dmasound.पढ़ो_offset += snd_pcm_lib_period_bytes(substream);
-		अगर (dev->dmasound.पढ़ो_offset == dev->dmasound.bufsize)
-			dev->dmasound.पढ़ो_offset = 0;
-	पूर्ण
+	if (dev->dmasound.read_count) {
+		dev->dmasound.read_count  -= snd_pcm_lib_period_bytes(substream);
+		dev->dmasound.read_offset += snd_pcm_lib_period_bytes(substream);
+		if (dev->dmasound.read_offset == dev->dmasound.bufsize)
+			dev->dmasound.read_offset = 0;
+	}
 
-	वापस bytes_to_frames(runसमय, dev->dmasound.पढ़ो_offset);
-पूर्ण
+	return bytes_to_frames(runtime, dev->dmasound.read_offset);
+}
 
 /*
  * ALSA hardware capabilities definition
  *
- *  Report only 32kHz क्रम ALSA:
+ *  Report only 32kHz for ALSA:
  *
  *  - SAA7133/35 uses DDEP (DemDec Easy Programming mode), which works in 32kHz
  *    only
- *  - SAA7134 क्रम TV mode uses DemDec mode (32kHz)
+ *  - SAA7134 for TV mode uses DemDec mode (32kHz)
  *  - Radio works in 32kHz only
- *  - When recording 48kHz from Line1/Line2, चयनing of capture source to TV
+ *  - When recording 48kHz from Line1/Line2, switching of capture source to TV
  *    means
- *    चयनing to 32kHz without any frequency translation
+ *    switching to 32kHz without any frequency translation
  */
 
-अटल स्थिर काष्ठा snd_pcm_hardware snd_card_saa7134_capture =
-अणु
+static const struct snd_pcm_hardware snd_card_saa7134_capture =
+{
 	.info =                 (SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_INTERLEAVED |
 				 SNDRV_PCM_INFO_BLOCK_TRANSFER |
 				 SNDRV_PCM_INFO_MMAP_VALID),
-	.क्रमmats =		SNDRV_PCM_FMTBIT_S16_LE | \
+	.formats =		SNDRV_PCM_FMTBIT_S16_LE | \
 				SNDRV_PCM_FMTBIT_S16_BE | \
 				SNDRV_PCM_FMTBIT_S8 | \
 				SNDRV_PCM_FMTBIT_U8 | \
@@ -640,14 +639,14 @@ snd_card_saa7134_capture_poपूर्णांकer(काष्ठा snd_pcm
 	.period_bytes_max =	(256*1024),
 	.periods_min =		4,
 	.periods_max =		1024,
-पूर्ण;
+};
 
-अटल व्योम snd_card_saa7134_runसमय_मुक्त(काष्ठा snd_pcm_runसमय *runसमय)
-अणु
-	snd_card_saa7134_pcm_t *pcm = runसमय->निजी_data;
+static void snd_card_saa7134_runtime_free(struct snd_pcm_runtime *runtime)
+{
+	snd_card_saa7134_pcm_t *pcm = runtime->private_data;
 
-	kमुक्त(pcm);
-पूर्ण
+	kfree(pcm);
+}
 
 
 /*
@@ -655,111 +654,111 @@ snd_card_saa7134_capture_poपूर्णांकer(काष्ठा snd_pcm
  *
  *   - One of the ALSA capture callbacks.
  *
- *   Called on initialization, right beक्रमe the PCM preparation
+ *   Called on initialization, right before the PCM preparation
  *
  */
 
-अटल पूर्णांक snd_card_saa7134_hw_params(काष्ठा snd_pcm_substream * substream,
-				      काष्ठा snd_pcm_hw_params * hw_params)
-अणु
+static int snd_card_saa7134_hw_params(struct snd_pcm_substream * substream,
+				      struct snd_pcm_hw_params * hw_params)
+{
 	snd_card_saa7134_t *saa7134 = snd_pcm_substream_chip(substream);
-	काष्ठा saa7134_dev *dev;
-	अचिन्हित पूर्णांक period_size, periods;
-	पूर्णांक err;
+	struct saa7134_dev *dev;
+	unsigned int period_size, periods;
+	int err;
 
 	period_size = params_period_bytes(hw_params);
 	periods = params_periods(hw_params);
 
-	अगर (period_size < 0x100 || period_size > 0x10000)
-		वापस -EINVAL;
-	अगर (periods < 4)
-		वापस -EINVAL;
-	अगर (period_size * periods > 1024 * 1024)
-		वापस -EINVAL;
+	if (period_size < 0x100 || period_size > 0x10000)
+		return -EINVAL;
+	if (periods < 4)
+		return -EINVAL;
+	if (period_size * periods > 1024 * 1024)
+		return -EINVAL;
 
 	dev = saa7134->dev;
 
-	अगर (dev->dmasound.blocks == periods &&
+	if (dev->dmasound.blocks == periods &&
 	    dev->dmasound.blksize == period_size)
-		वापस 0;
+		return 0;
 
 	/* release the old buffer */
-	अगर (substream->runसमय->dma_area) अणु
-		saa7134_pgtable_मुक्त(dev->pci, &dev->dmasound.pt);
+	if (substream->runtime->dma_area) {
+		saa7134_pgtable_free(dev->pci, &dev->dmasound.pt);
 		saa7134_alsa_dma_unmap(dev);
-		dsp_buffer_मुक्त(dev);
-		substream->runसमय->dma_area = शून्य;
-	पूर्ण
+		dsp_buffer_free(dev);
+		substream->runtime->dma_area = NULL;
+	}
 	dev->dmasound.blocks  = periods;
 	dev->dmasound.blksize = period_size;
 	dev->dmasound.bufsize = period_size * periods;
 
 	err = dsp_buffer_init(dev);
-	अगर (0 != err) अणु
+	if (0 != err) {
 		dev->dmasound.blocks  = 0;
 		dev->dmasound.blksize = 0;
 		dev->dmasound.bufsize = 0;
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = saa7134_alsa_dma_map(dev);
-	अगर (err) अणु
-		dsp_buffer_मुक्त(dev);
-		वापस err;
-	पूर्ण
+	if (err) {
+		dsp_buffer_free(dev);
+		return err;
+	}
 	err = saa7134_pgtable_alloc(dev->pci, &dev->dmasound.pt);
-	अगर (err) अणु
+	if (err) {
 		saa7134_alsa_dma_unmap(dev);
-		dsp_buffer_मुक्त(dev);
-		वापस err;
-	पूर्ण
+		dsp_buffer_free(dev);
+		return err;
+	}
 	err = saa7134_pgtable_build(dev->pci, &dev->dmasound.pt,
 				dev->dmasound.sglist, dev->dmasound.sglen, 0);
-	अगर (err) अणु
-		saa7134_pgtable_मुक्त(dev->pci, &dev->dmasound.pt);
+	if (err) {
+		saa7134_pgtable_free(dev->pci, &dev->dmasound.pt);
 		saa7134_alsa_dma_unmap(dev);
-		dsp_buffer_मुक्त(dev);
-		वापस err;
-	पूर्ण
+		dsp_buffer_free(dev);
+		return err;
+	}
 
-	/* I should be able to use runसमय->dma_addr in the control
-	   byte, but it करोesn't work. So I allocate the DMA using the
-	   V4L functions, and क्रमce ALSA to use that as the DMA area */
+	/* I should be able to use runtime->dma_addr in the control
+	   byte, but it doesn't work. So I allocate the DMA using the
+	   V4L functions, and force ALSA to use that as the DMA area */
 
-	substream->runसमय->dma_area = dev->dmasound.vaddr;
-	substream->runसमय->dma_bytes = dev->dmasound.bufsize;
-	substream->runसमय->dma_addr = 0;
+	substream->runtime->dma_area = dev->dmasound.vaddr;
+	substream->runtime->dma_bytes = dev->dmasound.bufsize;
+	substream->runtime->dma_addr = 0;
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
 /*
  * ALSA hardware release
  *
  *   - One of the ALSA capture callbacks.
  *
- *   Called after closing the device, but beक्रमe snd_card_saa7134_capture_बंद
+ *   Called after closing the device, but before snd_card_saa7134_capture_close
  *   It stops the DMA audio and releases the buffers.
  *
  */
 
-अटल पूर्णांक snd_card_saa7134_hw_मुक्त(काष्ठा snd_pcm_substream * substream)
-अणु
+static int snd_card_saa7134_hw_free(struct snd_pcm_substream * substream)
+{
 	snd_card_saa7134_t *saa7134 = snd_pcm_substream_chip(substream);
-	काष्ठा saa7134_dev *dev;
+	struct saa7134_dev *dev;
 
 	dev = saa7134->dev;
 
-	अगर (substream->runसमय->dma_area) अणु
-		saa7134_pgtable_मुक्त(dev->pci, &dev->dmasound.pt);
+	if (substream->runtime->dma_area) {
+		saa7134_pgtable_free(dev->pci, &dev->dmasound.pt);
 		saa7134_alsa_dma_unmap(dev);
-		dsp_buffer_मुक्त(dev);
-		substream->runसमय->dma_area = शून्य;
-	पूर्ण
+		dsp_buffer_free(dev);
+		substream->runtime->dma_area = NULL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * ALSA capture finish
@@ -770,110 +769,110 @@ snd_card_saa7134_capture_poपूर्णांकer(काष्ठा snd_pcm
  *
  */
 
-अटल पूर्णांक snd_card_saa7134_capture_बंद(काष्ठा snd_pcm_substream * substream)
-अणु
+static int snd_card_saa7134_capture_close(struct snd_pcm_substream * substream)
+{
 	snd_card_saa7134_t *saa7134 = snd_pcm_substream_chip(substream);
-	काष्ठा saa7134_dev *dev = saa7134->dev;
+	struct saa7134_dev *dev = saa7134->dev;
 
-	अगर (saa7134->mute_was_on) अणु
+	if (saa7134->mute_was_on) {
 		dev->ctl_mute = 1;
-		saa7134_tvaudio_seपंचांगute(dev);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		saa7134_tvaudio_setmute(dev);
+	}
+	return 0;
+}
 
 /*
  * ALSA capture start
  *
  *   - One of the ALSA capture callbacks.
  *
- *   Called when खोलोing the device. It creates and populates the PCM
- *  काष्ठाure
+ *   Called when opening the device. It creates and populates the PCM
+ *  structure
  *
  */
 
-अटल पूर्णांक snd_card_saa7134_capture_खोलो(काष्ठा snd_pcm_substream * substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+static int snd_card_saa7134_capture_open(struct snd_pcm_substream * substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
 	snd_card_saa7134_pcm_t *pcm;
 	snd_card_saa7134_t *saa7134 = snd_pcm_substream_chip(substream);
-	काष्ठा saa7134_dev *dev;
-	पूर्णांक amux, err;
+	struct saa7134_dev *dev;
+	int amux, err;
 
-	अगर (!saa7134) अणु
+	if (!saa7134) {
 		pr_err("BUG: saa7134 can't find device struct. Can't proceed with open\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	dev = saa7134->dev;
 	mutex_lock(&dev->dmasound.lock);
 
-	dev->dmasound.पढ़ो_count  = 0;
-	dev->dmasound.पढ़ो_offset = 0;
+	dev->dmasound.read_count  = 0;
+	dev->dmasound.read_offset = 0;
 
 	amux = dev->input->amux;
-	अगर ((amux < 1) || (amux > 3))
+	if ((amux < 1) || (amux > 3))
 		amux = 1;
 	dev->dmasound.input  =  amux - 1;
 
 	mutex_unlock(&dev->dmasound.lock);
 
-	pcm = kzalloc(माप(*pcm), GFP_KERNEL);
-	अगर (pcm == शून्य)
-		वापस -ENOMEM;
+	pcm = kzalloc(sizeof(*pcm), GFP_KERNEL);
+	if (pcm == NULL)
+		return -ENOMEM;
 
 	pcm->dev=saa7134->dev;
 
 	spin_lock_init(&pcm->lock);
 
 	pcm->substream = substream;
-	runसमय->निजी_data = pcm;
-	runसमय->निजी_मुक्त = snd_card_saa7134_runसमय_मुक्त;
-	runसमय->hw = snd_card_saa7134_capture;
+	runtime->private_data = pcm;
+	runtime->private_free = snd_card_saa7134_runtime_free;
+	runtime->hw = snd_card_saa7134_capture;
 
-	अगर (dev->ctl_mute != 0) अणु
+	if (dev->ctl_mute != 0) {
 		saa7134->mute_was_on = 1;
 		dev->ctl_mute = 0;
-		saa7134_tvaudio_seपंचांगute(dev);
-	पूर्ण
+		saa7134_tvaudio_setmute(dev);
+	}
 
-	err = snd_pcm_hw_स्थिरraपूर्णांक_पूर्णांकeger(runसमय,
+	err = snd_pcm_hw_constraint_integer(runtime,
 						SNDRV_PCM_HW_PARAM_PERIODS);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	err = snd_pcm_hw_स्थिरraपूर्णांक_step(runसमय, 0,
+	err = snd_pcm_hw_constraint_step(runtime, 0,
 						SNDRV_PCM_HW_PARAM_PERIODS, 2);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * page callback (needed क्रम mmap)
+ * page callback (needed for mmap)
  */
 
-अटल काष्ठा page *snd_card_saa7134_page(काष्ठा snd_pcm_substream *substream,
-					अचिन्हित दीर्घ offset)
-अणु
-	व्योम *pageptr = substream->runसमय->dma_area + offset;
-	वापस vदो_स्मृति_to_page(pageptr);
-पूर्ण
+static struct page *snd_card_saa7134_page(struct snd_pcm_substream *substream,
+					unsigned long offset)
+{
+	void *pageptr = substream->runtime->dma_area + offset;
+	return vmalloc_to_page(pageptr);
+}
 
 /*
  * ALSA capture callbacks definition
  */
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_card_saa7134_capture_ops = अणु
-	.खोलो =			snd_card_saa7134_capture_खोलो,
-	.बंद =		snd_card_saa7134_capture_बंद,
+static const struct snd_pcm_ops snd_card_saa7134_capture_ops = {
+	.open =			snd_card_saa7134_capture_open,
+	.close =		snd_card_saa7134_capture_close,
 	.hw_params =		snd_card_saa7134_hw_params,
-	.hw_मुक्त =		snd_card_saa7134_hw_मुक्त,
+	.hw_free =		snd_card_saa7134_hw_free,
 	.prepare =		snd_card_saa7134_capture_prepare,
 	.trigger =		snd_card_saa7134_capture_trigger,
-	.poपूर्णांकer =		snd_card_saa7134_capture_poपूर्णांकer,
+	.pointer =		snd_card_saa7134_capture_pointer,
 	.page =			snd_card_saa7134_page,
-पूर्ण;
+};
 
 /*
  * ALSA PCM setup
@@ -883,173 +882,173 @@ snd_card_saa7134_capture_poपूर्णांकer(काष्ठा snd_pcm
  *
  */
 
-अटल पूर्णांक snd_card_saa7134_pcm(snd_card_saa7134_t *saa7134, पूर्णांक device)
-अणु
-	काष्ठा snd_pcm *pcm;
-	पूर्णांक err;
+static int snd_card_saa7134_pcm(snd_card_saa7134_t *saa7134, int device)
+{
+	struct snd_pcm *pcm;
+	int err;
 
-	अगर ((err = snd_pcm_new(saa7134->card, "SAA7134 PCM", device, 0, 1, &pcm)) < 0)
-		वापस err;
+	if ((err = snd_pcm_new(saa7134->card, "SAA7134 PCM", device, 0, 1, &pcm)) < 0)
+		return err;
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &snd_card_saa7134_capture_ops);
-	pcm->निजी_data = saa7134;
+	pcm->private_data = saa7134;
 	pcm->info_flags = 0;
-	strscpy(pcm->name, "SAA7134 PCM", माप(pcm->name));
-	वापस 0;
-पूर्ण
+	strscpy(pcm->name, "SAA7134 PCM", sizeof(pcm->name));
+	return 0;
+}
 
-#घोषणा SAA713x_VOLUME(xname, xindex, addr) \
-अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, .index = xindex, \
+#define SAA713x_VOLUME(xname, xindex, addr) \
+{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, .index = xindex, \
   .info = snd_saa7134_volume_info, \
   .get = snd_saa7134_volume_get, .put = snd_saa7134_volume_put, \
-  .निजी_value = addr पूर्ण
+  .private_value = addr }
 
-अटल पूर्णांक snd_saa7134_volume_info(काष्ठा snd_kcontrol * kcontrol,
-				   काष्ठा snd_ctl_elem_info * uinfo)
-अणु
+static int snd_saa7134_volume_info(struct snd_kcontrol * kcontrol,
+				   struct snd_ctl_elem_info * uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 2;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 20;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 20;
+	return 0;
+}
 
-अटल पूर्णांक snd_saa7134_volume_get(काष्ठा snd_kcontrol * kcontrol,
-				  काष्ठा snd_ctl_elem_value * ucontrol)
-अणु
+static int snd_saa7134_volume_get(struct snd_kcontrol * kcontrol,
+				  struct snd_ctl_elem_value * ucontrol)
+{
 	snd_card_saa7134_t *chip = snd_kcontrol_chip(kcontrol);
-	पूर्णांक addr = kcontrol->निजी_value;
+	int addr = kcontrol->private_value;
 
-	ucontrol->value.पूर्णांकeger.value[0] = chip->mixer_volume[addr][0];
-	ucontrol->value.पूर्णांकeger.value[1] = chip->mixer_volume[addr][1];
-	वापस 0;
-पूर्ण
+	ucontrol->value.integer.value[0] = chip->mixer_volume[addr][0];
+	ucontrol->value.integer.value[1] = chip->mixer_volume[addr][1];
+	return 0;
+}
 
-अटल पूर्णांक snd_saa7134_volume_put(काष्ठा snd_kcontrol * kcontrol,
-				  काष्ठा snd_ctl_elem_value * ucontrol)
-अणु
+static int snd_saa7134_volume_put(struct snd_kcontrol * kcontrol,
+				  struct snd_ctl_elem_value * ucontrol)
+{
 	snd_card_saa7134_t *chip = snd_kcontrol_chip(kcontrol);
-	काष्ठा saa7134_dev *dev = chip->dev;
+	struct saa7134_dev *dev = chip->dev;
 
-	पूर्णांक change, addr = kcontrol->निजी_value;
-	पूर्णांक left, right;
+	int change, addr = kcontrol->private_value;
+	int left, right;
 
-	left = ucontrol->value.पूर्णांकeger.value[0];
-	अगर (left < 0)
+	left = ucontrol->value.integer.value[0];
+	if (left < 0)
 		left = 0;
-	अगर (left > 20)
+	if (left > 20)
 		left = 20;
-	right = ucontrol->value.पूर्णांकeger.value[1];
-	अगर (right < 0)
+	right = ucontrol->value.integer.value[1];
+	if (right < 0)
 		right = 0;
-	अगर (right > 20)
+	if (right > 20)
 		right = 20;
 	spin_lock_irq(&chip->mixer_lock);
 	change = 0;
-	अगर (chip->mixer_volume[addr][0] != left) अणु
+	if (chip->mixer_volume[addr][0] != left) {
 		change = 1;
 		right = left;
-	पूर्ण
-	अगर (chip->mixer_volume[addr][1] != right) अणु
+	}
+	if (chip->mixer_volume[addr][1] != right) {
 		change = 1;
 		left = right;
-	पूर्ण
-	अगर (change) अणु
-		चयन (dev->pci->device) अणु
-			हाल PCI_DEVICE_ID_PHILIPS_SAA7134:
-				चयन (addr) अणु
-					हाल MIXER_ADDR_TVTUNER:
+	}
+	if (change) {
+		switch (dev->pci->device) {
+			case PCI_DEVICE_ID_PHILIPS_SAA7134:
+				switch (addr) {
+					case MIXER_ADDR_TVTUNER:
 						left = 20;
-						अवरोध;
-					हाल MIXER_ADDR_LINE1:
-						saa_anकरोrb(SAA7134_ANALOG_IO_SELECT,  0x10,
+						break;
+					case MIXER_ADDR_LINE1:
+						saa_andorb(SAA7134_ANALOG_IO_SELECT,  0x10,
 							   (left > 10) ? 0x00 : 0x10);
-						अवरोध;
-					हाल MIXER_ADDR_LINE2:
-						saa_anकरोrb(SAA7134_ANALOG_IO_SELECT,  0x20,
+						break;
+					case MIXER_ADDR_LINE2:
+						saa_andorb(SAA7134_ANALOG_IO_SELECT,  0x20,
 							   (left > 10) ? 0x00 : 0x20);
-						अवरोध;
-				पूर्ण
-				अवरोध;
-			हाल PCI_DEVICE_ID_PHILIPS_SAA7133:
-			हाल PCI_DEVICE_ID_PHILIPS_SAA7135:
-				चयन (addr) अणु
-					हाल MIXER_ADDR_TVTUNER:
+						break;
+				}
+				break;
+			case PCI_DEVICE_ID_PHILIPS_SAA7133:
+			case PCI_DEVICE_ID_PHILIPS_SAA7135:
+				switch (addr) {
+					case MIXER_ADDR_TVTUNER:
 						left = 20;
-						अवरोध;
-					हाल MIXER_ADDR_LINE1:
-						saa_anकरोrb(0x0594,  0x10,
+						break;
+					case MIXER_ADDR_LINE1:
+						saa_andorb(0x0594,  0x10,
 							   (left > 10) ? 0x00 : 0x10);
-						अवरोध;
-					हाल MIXER_ADDR_LINE2:
-						saa_anकरोrb(0x0594,  0x20,
+						break;
+					case MIXER_ADDR_LINE2:
+						saa_andorb(0x0594,  0x20,
 							   (left > 10) ? 0x00 : 0x20);
-						अवरोध;
-				पूर्ण
-				अवरोध;
-		पूर्ण
+						break;
+				}
+				break;
+		}
 		chip->mixer_volume[addr][0] = left;
 		chip->mixer_volume[addr][1] = right;
-	पूर्ण
+	}
 	spin_unlock_irq(&chip->mixer_lock);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-#घोषणा SAA713x_CAPSRC(xname, xindex, addr) \
-अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, .index = xindex, \
+#define SAA713x_CAPSRC(xname, xindex, addr) \
+{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, .index = xindex, \
   .info = snd_saa7134_capsrc_info, \
   .get = snd_saa7134_capsrc_get, .put = snd_saa7134_capsrc_put, \
-  .निजी_value = addr पूर्ण
+  .private_value = addr }
 
-अटल पूर्णांक snd_saa7134_capsrc_info(काष्ठा snd_kcontrol * kcontrol,
-				   काष्ठा snd_ctl_elem_info * uinfo)
-अणु
+static int snd_saa7134_capsrc_info(struct snd_kcontrol * kcontrol,
+				   struct snd_ctl_elem_info * uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
 	uinfo->count = 2;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 1;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 1;
+	return 0;
+}
 
-अटल पूर्णांक snd_saa7134_capsrc_get(काष्ठा snd_kcontrol * kcontrol,
-				  काष्ठा snd_ctl_elem_value * ucontrol)
-अणु
+static int snd_saa7134_capsrc_get(struct snd_kcontrol * kcontrol,
+				  struct snd_ctl_elem_value * ucontrol)
+{
 	snd_card_saa7134_t *chip = snd_kcontrol_chip(kcontrol);
-	पूर्णांक addr = kcontrol->निजी_value;
+	int addr = kcontrol->private_value;
 
 	spin_lock_irq(&chip->mixer_lock);
-	अगर (chip->capture_source_addr == addr) अणु
-		ucontrol->value.पूर्णांकeger.value[0] = chip->capture_source[0];
-		ucontrol->value.पूर्णांकeger.value[1] = chip->capture_source[1];
-	पूर्ण अन्यथा अणु
-		ucontrol->value.पूर्णांकeger.value[0] = 0;
-		ucontrol->value.पूर्णांकeger.value[1] = 0;
-	पूर्ण
+	if (chip->capture_source_addr == addr) {
+		ucontrol->value.integer.value[0] = chip->capture_source[0];
+		ucontrol->value.integer.value[1] = chip->capture_source[1];
+	} else {
+		ucontrol->value.integer.value[0] = 0;
+		ucontrol->value.integer.value[1] = 0;
+	}
 	spin_unlock_irq(&chip->mixer_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_saa7134_capsrc_put(काष्ठा snd_kcontrol * kcontrol,
-				  काष्ठा snd_ctl_elem_value * ucontrol)
-अणु
-	पूर्णांक left, right;
-	left = ucontrol->value.पूर्णांकeger.value[0] & 1;
-	right = ucontrol->value.पूर्णांकeger.value[1] & 1;
+static int snd_saa7134_capsrc_put(struct snd_kcontrol * kcontrol,
+				  struct snd_ctl_elem_value * ucontrol)
+{
+	int left, right;
+	left = ucontrol->value.integer.value[0] & 1;
+	right = ucontrol->value.integer.value[1] & 1;
 
-	वापस snd_saa7134_capsrc_set(kcontrol, left, right, false);
-पूर्ण
+	return snd_saa7134_capsrc_set(kcontrol, left, right, false);
+}
 
-अटल काष्ठा snd_kcontrol_new snd_saa7134_volume_controls[] = अणु
+static struct snd_kcontrol_new snd_saa7134_volume_controls[] = {
 SAA713x_VOLUME("Video Volume", 0, MIXER_ADDR_TVTUNER),
 SAA713x_VOLUME("Line Volume", 1, MIXER_ADDR_LINE1),
 SAA713x_VOLUME("Line Volume", 2, MIXER_ADDR_LINE2),
-पूर्ण;
+};
 
-अटल काष्ठा snd_kcontrol_new snd_saa7134_capture_controls[] = अणु
+static struct snd_kcontrol_new snd_saa7134_capture_controls[] = {
 SAA713x_CAPSRC("Video Capture Switch", 0, MIXER_ADDR_TVTUNER),
 SAA713x_CAPSRC("Line Capture Switch", 1, MIXER_ADDR_LINE1),
 SAA713x_CAPSRC("Line Capture Switch", 2, MIXER_ADDR_LINE2),
-पूर्ण;
+};
 
 /*
  * ALSA mixer setup
@@ -1059,83 +1058,83 @@ SAA713x_CAPSRC("Line Capture Switch", 2, MIXER_ADDR_LINE2),
  *
  */
 
-अटल पूर्णांक snd_card_saa7134_new_mixer(snd_card_saa7134_t * chip)
-अणु
-	काष्ठा snd_card *card = chip->card;
-	काष्ठा snd_kcontrol *kcontrol;
-	अचिन्हित पूर्णांक idx;
-	पूर्णांक err, addr;
+static int snd_card_saa7134_new_mixer(snd_card_saa7134_t * chip)
+{
+	struct snd_card *card = chip->card;
+	struct snd_kcontrol *kcontrol;
+	unsigned int idx;
+	int err, addr;
 
-	strscpy(card->mixername, "SAA7134 Mixer", माप(card->mixername));
+	strscpy(card->mixername, "SAA7134 Mixer", sizeof(card->mixername));
 
-	क्रम (idx = 0; idx < ARRAY_SIZE(snd_saa7134_volume_controls); idx++) अणु
+	for (idx = 0; idx < ARRAY_SIZE(snd_saa7134_volume_controls); idx++) {
 		kcontrol = snd_ctl_new1(&snd_saa7134_volume_controls[idx],
 					chip);
 		err = snd_ctl_add(card, kcontrol);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	क्रम (idx = 0; idx < ARRAY_SIZE(snd_saa7134_capture_controls); idx++) अणु
+	for (idx = 0; idx < ARRAY_SIZE(snd_saa7134_capture_controls); idx++) {
 		kcontrol = snd_ctl_new1(&snd_saa7134_capture_controls[idx],
 					chip);
-		addr = snd_saa7134_capture_controls[idx].निजी_value;
+		addr = snd_saa7134_capture_controls[idx].private_value;
 		chip->capture_ctl[addr] = kcontrol;
 		err = snd_ctl_add(card, kcontrol);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
 	chip->capture_source_addr = MIXER_ADDR_UNSELECTED;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम snd_saa7134_मुक्त(काष्ठा snd_card * card)
-अणु
-	snd_card_saa7134_t *chip = card->निजी_data;
+static void snd_saa7134_free(struct snd_card * card)
+{
+	snd_card_saa7134_t *chip = card->private_data;
 
-	अगर (chip->dev->dmasound.priv_data == शून्य)
-		वापस;
+	if (chip->dev->dmasound.priv_data == NULL)
+		return;
 
-	अगर (chip->irq >= 0)
-		मुक्त_irq(chip->irq, &chip->dev->dmasound);
+	if (chip->irq >= 0)
+		free_irq(chip->irq, &chip->dev->dmasound);
 
-	chip->dev->dmasound.priv_data = शून्य;
+	chip->dev->dmasound.priv_data = NULL;
 
-पूर्ण
+}
 
 /*
  * ALSA initialization
  *
- *   Called by the init routine, once क्रम each saa7134 device present,
- *  it creates the basic काष्ठाures and रेजिस्टरs the ALSA devices
+ *   Called by the init routine, once for each saa7134 device present,
+ *  it creates the basic structures and registers the ALSA devices
  *
  */
 
-अटल पूर्णांक alsa_card_saa7134_create(काष्ठा saa7134_dev *dev, पूर्णांक devnum)
-अणु
+static int alsa_card_saa7134_create(struct saa7134_dev *dev, int devnum)
+{
 
-	काष्ठा snd_card *card;
+	struct snd_card *card;
 	snd_card_saa7134_t *chip;
-	पूर्णांक err;
+	int err;
 
 
-	अगर (devnum >= SNDRV_CARDS)
-		वापस -ENODEV;
-	अगर (!enable[devnum])
-		वापस -ENODEV;
+	if (devnum >= SNDRV_CARDS)
+		return -ENODEV;
+	if (!enable[devnum])
+		return -ENODEV;
 
 	err = snd_card_new(&dev->pci->dev, index[devnum], id[devnum],
-			   THIS_MODULE, माप(snd_card_saa7134_t), &card);
-	अगर (err < 0)
-		वापस err;
+			   THIS_MODULE, sizeof(snd_card_saa7134_t), &card);
+	if (err < 0)
+		return err;
 
-	strscpy(card->driver, "SAA7134", माप(card->driver));
+	strscpy(card->driver, "SAA7134", sizeof(card->driver));
 
 	/* Card "creation" */
 
-	card->निजी_मुक्त = snd_saa7134_मुक्त;
-	chip = card->निजी_data;
+	card->private_free = snd_saa7134_free;
+	chip = card->private_data;
 
 	spin_lock_init(&chip->lock);
 	spin_lock_init(&chip->mixer_lock);
@@ -1150,60 +1149,60 @@ SAA713x_CAPSRC("Line Capture Switch", 2, MIXER_ADDR_LINE2),
 
 	err = request_irq(dev->pci->irq, saa7134_alsa_irq,
 				IRQF_SHARED, dev->name,
-				(व्योम*) &dev->dmasound);
+				(void*) &dev->dmasound);
 
-	अगर (err < 0) अणु
+	if (err < 0) {
 		pr_err("%s: can't get IRQ %d for ALSA\n",
 			dev->name, dev->pci->irq);
-		जाओ __nodev;
-	पूर्ण
+		goto __nodev;
+	}
 
 	chip->irq = dev->pci->irq;
 
 	mutex_init(&dev->dmasound.lock);
 
-	अगर ((err = snd_card_saa7134_new_mixer(chip)) < 0)
-		जाओ __nodev;
+	if ((err = snd_card_saa7134_new_mixer(chip)) < 0)
+		goto __nodev;
 
-	अगर ((err = snd_card_saa7134_pcm(chip, 0)) < 0)
-		जाओ __nodev;
+	if ((err = snd_card_saa7134_pcm(chip, 0)) < 0)
+		goto __nodev;
 
 	/* End of "creation" */
 
-	strscpy(card->लघुname, "SAA7134", माप(card->लघुname));
-	प्र_लिखो(card->दीर्घname, "%s at 0x%lx irq %d",
+	strscpy(card->shortname, "SAA7134", sizeof(card->shortname));
+	sprintf(card->longname, "%s at 0x%lx irq %d",
 		chip->dev->name, chip->iobase, chip->irq);
 
 	pr_info("%s/alsa: %s registered as card %d\n",
-		dev->name, card->दीर्घname, index[devnum]);
+		dev->name, card->longname, index[devnum]);
 
-	अगर ((err = snd_card_रेजिस्टर(card)) == 0) अणु
+	if ((err = snd_card_register(card)) == 0) {
 		snd_saa7134_cards[devnum] = card;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 __nodev:
-	snd_card_मुक्त(card);
-	वापस err;
-पूर्ण
+	snd_card_free(card);
+	return err;
+}
 
 
-अटल पूर्णांक alsa_device_init(काष्ठा saa7134_dev *dev)
-अणु
+static int alsa_device_init(struct saa7134_dev *dev)
+{
 	dev->dmasound.priv_data = dev;
 	alsa_card_saa7134_create(dev,dev->nr);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक alsa_device_निकास(काष्ठा saa7134_dev *dev)
-अणु
-	अगर (!snd_saa7134_cards[dev->nr])
-		वापस 1;
+static int alsa_device_exit(struct saa7134_dev *dev)
+{
+	if (!snd_saa7134_cards[dev->nr])
+		return 1;
 
-	snd_card_मुक्त(snd_saa7134_cards[dev->nr]);
-	snd_saa7134_cards[dev->nr] = शून्य;
-	वापस 1;
-पूर्ण
+	snd_card_free(snd_saa7134_cards[dev->nr]);
+	snd_saa7134_cards[dev->nr] = NULL;
+	return 1;
+}
 
 /*
  * Module initializer
@@ -1213,54 +1212,54 @@ __nodev:
  *
  */
 
-अटल पूर्णांक saa7134_alsa_init(व्योम)
-अणु
-	काष्ठा saa7134_dev *dev = शून्य;
-	काष्ठा list_head *list;
+static int saa7134_alsa_init(void)
+{
+	struct saa7134_dev *dev = NULL;
+	struct list_head *list;
 
 	saa7134_dmasound_init = alsa_device_init;
-	saa7134_dmasound_निकास = alsa_device_निकास;
+	saa7134_dmasound_exit = alsa_device_exit;
 
 	pr_info("saa7134 ALSA driver for DMA sound loaded\n");
 
-	list_क्रम_each(list,&saa7134_devlist) अणु
-		dev = list_entry(list, काष्ठा saa7134_dev, devlist);
-		अगर (dev->pci->device == PCI_DEVICE_ID_PHILIPS_SAA7130)
+	list_for_each(list,&saa7134_devlist) {
+		dev = list_entry(list, struct saa7134_dev, devlist);
+		if (dev->pci->device == PCI_DEVICE_ID_PHILIPS_SAA7130)
 			pr_info("%s/alsa: %s doesn't support digital audio\n",
 				dev->name, saa7134_boards[dev->board].name);
-		अन्यथा
+		else
 			alsa_device_init(dev);
-	पूर्ण
+	}
 
-	अगर (dev == शून्य)
+	if (dev == NULL)
 		pr_info("saa7134 ALSA: no saa7134 cards found\n");
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
 /*
- * Module deकाष्ठाor
+ * Module destructor
  */
 
-अटल व्योम saa7134_alsa_निकास(व्योम)
-अणु
-	पूर्णांक idx;
+static void saa7134_alsa_exit(void)
+{
+	int idx;
 
-	क्रम (idx = 0; idx < SNDRV_CARDS; idx++) अणु
-		अगर (snd_saa7134_cards[idx])
-			snd_card_मुक्त(snd_saa7134_cards[idx]);
-	पूर्ण
+	for (idx = 0; idx < SNDRV_CARDS; idx++) {
+		if (snd_saa7134_cards[idx])
+			snd_card_free(snd_saa7134_cards[idx]);
+	}
 
-	saa7134_dmasound_init = शून्य;
-	saa7134_dmasound_निकास = शून्य;
+	saa7134_dmasound_init = NULL;
+	saa7134_dmasound_exit = NULL;
 	pr_info("saa7134 ALSA driver for DMA sound unloaded\n");
 
-	वापस;
-पूर्ण
+	return;
+}
 
-/* We initialize this late, to make sure the sound प्रणाली is up and running */
+/* We initialize this late, to make sure the sound system is up and running */
 late_initcall(saa7134_alsa_init);
-module_निकास(saa7134_alsa_निकास);
+module_exit(saa7134_alsa_exit);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Ricardo Cerqueira");

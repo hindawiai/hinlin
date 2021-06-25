@@ -1,7 +1,6 @@
-<शैली गुरु>
-अणु
+{
 	"bpf_get_stack return R0 within range",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_1),
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
@@ -10,10 +9,10 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_map_lookup_elem),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 28),
 	BPF_MOV64_REG(BPF_REG_7, BPF_REG_0),
-	BPF_MOV64_IMM(BPF_REG_9, माप(काष्ठा test_val)/2),
+	BPF_MOV64_IMM(BPF_REG_9, sizeof(struct test_val)/2),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_6),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_7),
-	BPF_MOV64_IMM(BPF_REG_3, माप(काष्ठा test_val)/2),
+	BPF_MOV64_IMM(BPF_REG_3, sizeof(struct test_val)/2),
 	BPF_MOV64_IMM(BPF_REG_4, 256),
 	BPF_EMIT_CALL(BPF_FUNC_get_stack),
 	BPF_MOV64_IMM(BPF_REG_1, 0),
@@ -30,7 +29,7 @@
 	BPF_MOV64_REG(BPF_REG_3, BPF_REG_2),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_3, BPF_REG_1),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_7),
-	BPF_MOV64_IMM(BPF_REG_5, माप(काष्ठा test_val)/2),
+	BPF_MOV64_IMM(BPF_REG_5, sizeof(struct test_val)/2),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_1, BPF_REG_5),
 	BPF_JMP_REG(BPF_JGE, BPF_REG_3, BPF_REG_1, 4),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_6),
@@ -38,14 +37,14 @@
 	BPF_MOV64_IMM(BPF_REG_4, 0),
 	BPF_EMIT_CALL(BPF_FUNC_get_stack),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_48b = अणु 4 पूर्ण,
+	},
+	.fixup_map_hash_48b = { 4 },
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-पूर्ण,
-अणु
+},
+{
 	"bpf_get_task_stack return R0 range is refined",
-	.insns = अणु
+	.insns = {
 	BPF_LDX_MEM(BPF_DW, BPF_REG_6, BPF_REG_1, 0),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_6, BPF_REG_6, 0), // ctx->meta->seq
 	BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_1, 8), // ctx->task
@@ -63,7 +62,7 @@
 
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_7),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_0),
-	BPF_MOV64_REG(BPF_REG_9, BPF_REG_0), // keep buf क्रम seq_ग_लिखो
+	BPF_MOV64_REG(BPF_REG_9, BPF_REG_0), // keep buf for seq_write
 	BPF_MOV64_IMM(BPF_REG_3, 48),
 	BPF_MOV64_IMM(BPF_REG_4, 0),
 	BPF_EMIT_CALL(BPF_FUNC_get_task_stack),
@@ -74,15 +73,15 @@
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_6),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_9),
 	BPF_MOV64_REG(BPF_REG_3, BPF_REG_0),
-	BPF_EMIT_CALL(BPF_FUNC_seq_ग_लिखो),
+	BPF_EMIT_CALL(BPF_FUNC_seq_write),
 
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACING,
 	.expected_attach_type = BPF_TRACE_ITER,
 	.kfunc = "task",
 	.runs = -1, // Don't run, just load
-	.fixup_map_array_48b = अणु 3 पूर्ण,
-पूर्ण,
+	.fixup_map_array_48b = { 3 },
+},

@@ -1,82 +1,81 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * INET		An implementation of the TCP/IP protocol suite क्रम the LINUX
- *		operating प्रणाली.  INET is implemented using the  BSD Socket
- *		पूर्णांकerface as the means of communication with the user level.
+ * INET		An implementation of the TCP/IP protocol suite for the LINUX
+ *		operating system.  INET is implemented using the  BSD Socket
+ *		interface as the means of communication with the user level.
  *
- *		This file implements the various access functions क्रम the
- *		PROC file प्रणाली.  It is मुख्यly used क्रम debugging and
+ *		This file implements the various access functions for the
+ *		PROC file system.  It is mainly used for debugging and
  *		statistics.
  *
  * Authors:	Fred N. van Kempen, <waltje@uWalt.NL.Mugnet.ORG>
- *		Gerald J. Heim, <heim@peanuts.inक्रमmatik.uni-tuebingen.de>
+ *		Gerald J. Heim, <heim@peanuts.informatik.uni-tuebingen.de>
  *		Fred Baumgarten, <dc6iq@insu1.etec.uni-karlsruhe.de>
  *		Erik Schoenfelder, <schoenfr@ibr.cs.tu-bs.de>
  *
  * Fixes:
  *		Alan Cox	:	UDP sockets show the rxqueue/txqueue
- *					using hपूर्णांक flag क्रम the netinfo.
+ *					using hint flag for the netinfo.
  *	Pauline Middelink	:	identd support
  *		Alan Cox	:	Make /proc safer.
  *	Erik Schoenfelder	:	/proc/net/snmp
  *		Alan Cox	:	Handle dead sockets properly.
- *	Gerhard Koerting	:	Show both समयrs
- *		Alan Cox	:	Allow inode to be शून्य (kernel socket)
- *	Andi Kleen		:	Add support क्रम खोलो_requests and
- *					split functions क्रम more पढ़ोibility.
- *	Andi Kleen		:	Add support क्रम /proc/net/netstat
- *	Arnalकरो C. Melo		:	Convert to seq_file
+ *	Gerhard Koerting	:	Show both timers
+ *		Alan Cox	:	Allow inode to be NULL (kernel socket)
+ *	Andi Kleen		:	Add support for open_requests and
+ *					split functions for more readibility.
+ *	Andi Kleen		:	Add support for /proc/net/netstat
+ *	Arnaldo C. Melo		:	Convert to seq_file
  */
-#समावेश <linux/types.h>
-#समावेश <net/net_namespace.h>
-#समावेश <net/icmp.h>
-#समावेश <net/protocol.h>
-#समावेश <net/tcp.h>
-#समावेश <net/mptcp.h>
-#समावेश <net/udp.h>
-#समावेश <net/udplite.h>
-#समावेश <linux/bottom_half.h>
-#समावेश <linux/inetdevice.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/export.h>
-#समावेश <net/sock.h>
-#समावेश <net/raw.h>
+#include <linux/types.h>
+#include <net/net_namespace.h>
+#include <net/icmp.h>
+#include <net/protocol.h>
+#include <net/tcp.h>
+#include <net/mptcp.h>
+#include <net/udp.h>
+#include <net/udplite.h>
+#include <linux/bottom_half.h>
+#include <linux/inetdevice.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/export.h>
+#include <net/sock.h>
+#include <net/raw.h>
 
-#घोषणा TCPUDP_MIB_MAX max_t(u32, UDP_MIB_MAX, TCP_MIB_MAX)
+#define TCPUDP_MIB_MAX max_t(u32, UDP_MIB_MAX, TCP_MIB_MAX)
 
 /*
  *	Report socket allocation statistics [mea@utu.fi]
  */
-अटल पूर्णांक sockstat_seq_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा net *net = seq->निजी;
-	पूर्णांक orphans, sockets;
+static int sockstat_seq_show(struct seq_file *seq, void *v)
+{
+	struct net *net = seq->private;
+	int orphans, sockets;
 
 	orphans = percpu_counter_sum_positive(&tcp_orphan_count);
 	sockets = proto_sockets_allocated_sum_positive(&tcp_prot);
 
 	socket_seq_show(seq);
-	seq_म_लिखो(seq, "TCP: inuse %d orphan %d tw %d alloc %d mem %ld\n",
+	seq_printf(seq, "TCP: inuse %d orphan %d tw %d alloc %d mem %ld\n",
 		   sock_prot_inuse_get(net, &tcp_prot), orphans,
-		   atomic_पढ़ो(&net->ipv4.tcp_death_row.tw_count), sockets,
+		   atomic_read(&net->ipv4.tcp_death_row.tw_count), sockets,
 		   proto_memory_allocated(&tcp_prot));
-	seq_म_लिखो(seq, "UDP: inuse %d mem %ld\n",
+	seq_printf(seq, "UDP: inuse %d mem %ld\n",
 		   sock_prot_inuse_get(net, &udp_prot),
 		   proto_memory_allocated(&udp_prot));
-	seq_म_लिखो(seq, "UDPLITE: inuse %d\n",
+	seq_printf(seq, "UDPLITE: inuse %d\n",
 		   sock_prot_inuse_get(net, &udplite_prot));
-	seq_म_लिखो(seq, "RAW: inuse %d\n",
+	seq_printf(seq, "RAW: inuse %d\n",
 		   sock_prot_inuse_get(net, &raw_prot));
-	seq_म_लिखो(seq,  "FRAG: inuse %u memory %lu\n",
-		   atomic_पढ़ो(&net->ipv4.fqdir->rhashtable.nelems),
+	seq_printf(seq,  "FRAG: inuse %u memory %lu\n",
+		   atomic_read(&net->ipv4.fqdir->rhashtable.nelems),
 		   frag_mem_limit(net->ipv4.fqdir));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* snmp items */
-अटल स्थिर काष्ठा snmp_mib snmp4_ipstats_list[] = अणु
+static const struct snmp_mib snmp4_ipstats_list[] = {
 	SNMP_MIB_ITEM("InReceives", IPSTATS_MIB_INPKTS),
 	SNMP_MIB_ITEM("InHdrErrors", IPSTATS_MIB_INHDRERRORS),
 	SNMP_MIB_ITEM("InAddrErrors", IPSTATS_MIB_INADDRERRORS),
@@ -95,10 +94,10 @@
 	SNMP_MIB_ITEM("FragFails", IPSTATS_MIB_FRAGFAILS),
 	SNMP_MIB_ITEM("FragCreates", IPSTATS_MIB_FRAGCREATES),
 	SNMP_MIB_SENTINEL
-पूर्ण;
+};
 
 /* Following items are displayed in /proc/net/netstat */
-अटल स्थिर काष्ठा snmp_mib snmp4_ipextstats_list[] = अणु
+static const struct snmp_mib snmp4_ipextstats_list[] = {
 	SNMP_MIB_ITEM("InNoRoutes", IPSTATS_MIB_INNOROUTES),
 	SNMP_MIB_ITEM("InTruncatedPkts", IPSTATS_MIB_INTRUNCATEDPKTS),
 	SNMP_MIB_ITEM("InMcastPkts", IPSTATS_MIB_INMCASTPKTS),
@@ -119,28 +118,28 @@
 	SNMP_MIB_ITEM("InCEPkts", IPSTATS_MIB_CEPKTS),
 	SNMP_MIB_ITEM("ReasmOverlaps", IPSTATS_MIB_REASM_OVERLAPS),
 	SNMP_MIB_SENTINEL
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा अणु
-	स्थिर अक्षर *name;
-	पूर्णांक index;
-पूर्ण icmpmibmap[] = अणु
-	अणु "DestUnreachs", ICMP_DEST_UNREACH पूर्ण,
-	अणु "TimeExcds", ICMP_TIME_EXCEEDED पूर्ण,
-	अणु "ParmProbs", ICMP_PARAMETERPROB पूर्ण,
-	अणु "SrcQuenchs", ICMP_SOURCE_QUENCH पूर्ण,
-	अणु "Redirects", ICMP_REसूचीECT पूर्ण,
-	अणु "Echos", ICMP_ECHO पूर्ण,
-	अणु "EchoReps", ICMP_ECHOREPLY पूर्ण,
-	अणु "Timestamps", ICMP_TIMESTAMP पूर्ण,
-	अणु "TimestampReps", ICMP_TIMESTAMPREPLY पूर्ण,
-	अणु "AddrMasks", ICMP_ADDRESS पूर्ण,
-	अणु "AddrMaskReps", ICMP_ADDRESSREPLY पूर्ण,
-	अणु शून्य, 0 पूर्ण
-पूर्ण;
+static const struct {
+	const char *name;
+	int index;
+} icmpmibmap[] = {
+	{ "DestUnreachs", ICMP_DEST_UNREACH },
+	{ "TimeExcds", ICMP_TIME_EXCEEDED },
+	{ "ParmProbs", ICMP_PARAMETERPROB },
+	{ "SrcQuenchs", ICMP_SOURCE_QUENCH },
+	{ "Redirects", ICMP_REDIRECT },
+	{ "Echos", ICMP_ECHO },
+	{ "EchoReps", ICMP_ECHOREPLY },
+	{ "Timestamps", ICMP_TIMESTAMP },
+	{ "TimestampReps", ICMP_TIMESTAMPREPLY },
+	{ "AddrMasks", ICMP_ADDRESS },
+	{ "AddrMaskReps", ICMP_ADDRESSREPLY },
+	{ NULL, 0 }
+};
 
 
-अटल स्थिर काष्ठा snmp_mib snmp4_tcp_list[] = अणु
+static const struct snmp_mib snmp4_tcp_list[] = {
 	SNMP_MIB_ITEM("RtoAlgorithm", TCP_MIB_RTOALGORITHM),
 	SNMP_MIB_ITEM("RtoMin", TCP_MIB_RTOMIN),
 	SNMP_MIB_ITEM("RtoMax", TCP_MIB_RTOMAX),
@@ -157,9 +156,9 @@
 	SNMP_MIB_ITEM("OutRsts", TCP_MIB_OUTRSTS),
 	SNMP_MIB_ITEM("InCsumErrors", TCP_MIB_CSUMERRORS),
 	SNMP_MIB_SENTINEL
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snmp_mib snmp4_udp_list[] = अणु
+static const struct snmp_mib snmp4_udp_list[] = {
 	SNMP_MIB_ITEM("InDatagrams", UDP_MIB_INDATAGRAMS),
 	SNMP_MIB_ITEM("NoPorts", UDP_MIB_NOPORTS),
 	SNMP_MIB_ITEM("InErrors", UDP_MIB_INERRORS),
@@ -170,9 +169,9 @@
 	SNMP_MIB_ITEM("IgnoredMulti", UDP_MIB_IGNOREDMULTI),
 	SNMP_MIB_ITEM("MemErrors", UDP_MIB_MEMERRORS),
 	SNMP_MIB_SENTINEL
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snmp_mib snmp4_net_list[] = अणु
+static const struct snmp_mib snmp4_net_list[] = {
 	SNMP_MIB_ITEM("SyncookiesSent", LINUX_MIB_SYNCOOKIESSENT),
 	SNMP_MIB_ITEM("SyncookiesRecv", LINUX_MIB_SYNCOOKIESRECV),
 	SNMP_MIB_ITEM("SyncookiesFailed", LINUX_MIB_SYNCOOKIESFAILED),
@@ -297,159 +296,159 @@
 	SNMP_MIB_ITEM("TCPDSACKRecvSegs", LINUX_MIB_TCPDSACKRECVSEGS),
 	SNMP_MIB_ITEM("TCPDSACKIgnoredDubious", LINUX_MIB_TCPDSACKIGNOREDDUBIOUS),
 	SNMP_MIB_SENTINEL
-पूर्ण;
+};
 
-अटल व्योम icmpmsg_put_line(काष्ठा seq_file *seq, अचिन्हित दीर्घ *vals,
-			     अचिन्हित लघु *type, पूर्णांक count)
-अणु
-	पूर्णांक j;
+static void icmpmsg_put_line(struct seq_file *seq, unsigned long *vals,
+			     unsigned short *type, int count)
+{
+	int j;
 
-	अगर (count) अणु
-		seq_माला_दो(seq, "\nIcmpMsg:");
-		क्रम (j = 0; j < count; ++j)
-			seq_म_लिखो(seq, " %sType%u",
+	if (count) {
+		seq_puts(seq, "\nIcmpMsg:");
+		for (j = 0; j < count; ++j)
+			seq_printf(seq, " %sType%u",
 				type[j] & 0x100 ? "Out" : "In",
 				type[j] & 0xff);
-		seq_माला_दो(seq, "\nIcmpMsg:");
-		क्रम (j = 0; j < count; ++j)
-			seq_म_लिखो(seq, " %lu", vals[j]);
-	पूर्ण
-पूर्ण
+		seq_puts(seq, "\nIcmpMsg:");
+		for (j = 0; j < count; ++j)
+			seq_printf(seq, " %lu", vals[j]);
+	}
+}
 
-अटल व्योम icmpmsg_put(काष्ठा seq_file *seq)
-अणु
-#घोषणा PERLINE	16
+static void icmpmsg_put(struct seq_file *seq)
+{
+#define PERLINE	16
 
-	पूर्णांक i, count;
-	अचिन्हित लघु type[PERLINE];
-	अचिन्हित दीर्घ vals[PERLINE], val;
-	काष्ठा net *net = seq->निजी;
+	int i, count;
+	unsigned short type[PERLINE];
+	unsigned long vals[PERLINE], val;
+	struct net *net = seq->private;
 
 	count = 0;
-	क्रम (i = 0; i < ICMPMSG_MIB_MAX; i++) अणु
-		val = atomic_दीर्घ_पढ़ो(&net->mib.icmpmsg_statistics->mibs[i]);
-		अगर (val) अणु
+	for (i = 0; i < ICMPMSG_MIB_MAX; i++) {
+		val = atomic_long_read(&net->mib.icmpmsg_statistics->mibs[i]);
+		if (val) {
 			type[count] = i;
 			vals[count++] = val;
-		पूर्ण
-		अगर (count == PERLINE) अणु
+		}
+		if (count == PERLINE) {
 			icmpmsg_put_line(seq, vals, type, count);
 			count = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	icmpmsg_put_line(seq, vals, type, count);
 
-#अघोषित PERLINE
-पूर्ण
+#undef PERLINE
+}
 
-अटल व्योम icmp_put(काष्ठा seq_file *seq)
-अणु
-	पूर्णांक i;
-	काष्ठा net *net = seq->निजी;
-	atomic_दीर्घ_t *ptr = net->mib.icmpmsg_statistics->mibs;
+static void icmp_put(struct seq_file *seq)
+{
+	int i;
+	struct net *net = seq->private;
+	atomic_long_t *ptr = net->mib.icmpmsg_statistics->mibs;
 
-	seq_माला_दो(seq, "\nIcmp: InMsgs InErrors InCsumErrors");
-	क्रम (i = 0; icmpmibmap[i].name; i++)
-		seq_म_लिखो(seq, " In%s", icmpmibmap[i].name);
-	seq_माला_दो(seq, " OutMsgs OutErrors");
-	क्रम (i = 0; icmpmibmap[i].name; i++)
-		seq_म_लिखो(seq, " Out%s", icmpmibmap[i].name);
-	seq_म_लिखो(seq, "\nIcmp: %lu %lu %lu",
+	seq_puts(seq, "\nIcmp: InMsgs InErrors InCsumErrors");
+	for (i = 0; icmpmibmap[i].name; i++)
+		seq_printf(seq, " In%s", icmpmibmap[i].name);
+	seq_puts(seq, " OutMsgs OutErrors");
+	for (i = 0; icmpmibmap[i].name; i++)
+		seq_printf(seq, " Out%s", icmpmibmap[i].name);
+	seq_printf(seq, "\nIcmp: %lu %lu %lu",
 		snmp_fold_field(net->mib.icmp_statistics, ICMP_MIB_INMSGS),
 		snmp_fold_field(net->mib.icmp_statistics, ICMP_MIB_INERRORS),
 		snmp_fold_field(net->mib.icmp_statistics, ICMP_MIB_CSUMERRORS));
-	क्रम (i = 0; icmpmibmap[i].name; i++)
-		seq_म_लिखो(seq, " %lu",
-			   atomic_दीर्घ_पढ़ो(ptr + icmpmibmap[i].index));
-	seq_म_लिखो(seq, " %lu %lu",
+	for (i = 0; icmpmibmap[i].name; i++)
+		seq_printf(seq, " %lu",
+			   atomic_long_read(ptr + icmpmibmap[i].index));
+	seq_printf(seq, " %lu %lu",
 		snmp_fold_field(net->mib.icmp_statistics, ICMP_MIB_OUTMSGS),
 		snmp_fold_field(net->mib.icmp_statistics, ICMP_MIB_OUTERRORS));
-	क्रम (i = 0; icmpmibmap[i].name; i++)
-		seq_म_लिखो(seq, " %lu",
-			   atomic_दीर्घ_पढ़ो(ptr + (icmpmibmap[i].index | 0x100)));
-पूर्ण
+	for (i = 0; icmpmibmap[i].name; i++)
+		seq_printf(seq, " %lu",
+			   atomic_long_read(ptr + (icmpmibmap[i].index | 0x100)));
+}
 
 /*
- *	Called from the PROCfs module. This outमाला_दो /proc/net/snmp.
+ *	Called from the PROCfs module. This outputs /proc/net/snmp.
  */
-अटल पूर्णांक snmp_seq_show_ipstats(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा net *net = seq->निजी;
+static int snmp_seq_show_ipstats(struct seq_file *seq, void *v)
+{
+	struct net *net = seq->private;
 	u64 buff64[IPSTATS_MIB_MAX];
-	पूर्णांक i;
+	int i;
 
-	स_रखो(buff64, 0, IPSTATS_MIB_MAX * माप(u64));
+	memset(buff64, 0, IPSTATS_MIB_MAX * sizeof(u64));
 
-	seq_माला_दो(seq, "Ip: Forwarding DefaultTTL");
-	क्रम (i = 0; snmp4_ipstats_list[i].name; i++)
-		seq_म_लिखो(seq, " %s", snmp4_ipstats_list[i].name);
+	seq_puts(seq, "Ip: Forwarding DefaultTTL");
+	for (i = 0; snmp4_ipstats_list[i].name; i++)
+		seq_printf(seq, " %s", snmp4_ipstats_list[i].name);
 
-	seq_म_लिखो(seq, "\nIp: %d %d",
+	seq_printf(seq, "\nIp: %d %d",
 		   IPV4_DEVCONF_ALL(net, FORWARDING) ? 1 : 2,
-		   net->ipv4.sysctl_ip_शेष_ttl);
+		   net->ipv4.sysctl_ip_default_ttl);
 
-	BUILD_BUG_ON(दुरत्व(काष्ठा ipstats_mib, mibs) != 0);
+	BUILD_BUG_ON(offsetof(struct ipstats_mib, mibs) != 0);
 	snmp_get_cpu_field64_batch(buff64, snmp4_ipstats_list,
 				   net->mib.ip_statistics,
-				   दुरत्व(काष्ठा ipstats_mib, syncp));
-	क्रम (i = 0; snmp4_ipstats_list[i].name; i++)
-		seq_म_लिखो(seq, " %llu", buff64[i]);
+				   offsetof(struct ipstats_mib, syncp));
+	for (i = 0; snmp4_ipstats_list[i].name; i++)
+		seq_printf(seq, " %llu", buff64[i]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snmp_seq_show_tcp_udp(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	अचिन्हित दीर्घ buff[TCPUDP_MIB_MAX];
-	काष्ठा net *net = seq->निजी;
-	पूर्णांक i;
+static int snmp_seq_show_tcp_udp(struct seq_file *seq, void *v)
+{
+	unsigned long buff[TCPUDP_MIB_MAX];
+	struct net *net = seq->private;
+	int i;
 
-	स_रखो(buff, 0, TCPUDP_MIB_MAX * माप(अचिन्हित दीर्घ));
+	memset(buff, 0, TCPUDP_MIB_MAX * sizeof(unsigned long));
 
-	seq_माला_दो(seq, "\nTcp:");
-	क्रम (i = 0; snmp4_tcp_list[i].name; i++)
-		seq_म_लिखो(seq, " %s", snmp4_tcp_list[i].name);
+	seq_puts(seq, "\nTcp:");
+	for (i = 0; snmp4_tcp_list[i].name; i++)
+		seq_printf(seq, " %s", snmp4_tcp_list[i].name);
 
-	seq_माला_दो(seq, "\nTcp:");
+	seq_puts(seq, "\nTcp:");
 	snmp_get_cpu_field_batch(buff, snmp4_tcp_list,
 				 net->mib.tcp_statistics);
-	क्रम (i = 0; snmp4_tcp_list[i].name; i++) अणु
-		/* MaxConn field is चिन्हित, RFC 2012 */
-		अगर (snmp4_tcp_list[i].entry == TCP_MIB_MAXCONN)
-			seq_म_लिखो(seq, " %ld", buff[i]);
-		अन्यथा
-			seq_म_लिखो(seq, " %lu", buff[i]);
-	पूर्ण
+	for (i = 0; snmp4_tcp_list[i].name; i++) {
+		/* MaxConn field is signed, RFC 2012 */
+		if (snmp4_tcp_list[i].entry == TCP_MIB_MAXCONN)
+			seq_printf(seq, " %ld", buff[i]);
+		else
+			seq_printf(seq, " %lu", buff[i]);
+	}
 
-	स_रखो(buff, 0, TCPUDP_MIB_MAX * माप(अचिन्हित दीर्घ));
+	memset(buff, 0, TCPUDP_MIB_MAX * sizeof(unsigned long));
 
 	snmp_get_cpu_field_batch(buff, snmp4_udp_list,
 				 net->mib.udp_statistics);
-	seq_माला_दो(seq, "\nUdp:");
-	क्रम (i = 0; snmp4_udp_list[i].name; i++)
-		seq_म_लिखो(seq, " %s", snmp4_udp_list[i].name);
-	seq_माला_दो(seq, "\nUdp:");
-	क्रम (i = 0; snmp4_udp_list[i].name; i++)
-		seq_म_लिखो(seq, " %lu", buff[i]);
+	seq_puts(seq, "\nUdp:");
+	for (i = 0; snmp4_udp_list[i].name; i++)
+		seq_printf(seq, " %s", snmp4_udp_list[i].name);
+	seq_puts(seq, "\nUdp:");
+	for (i = 0; snmp4_udp_list[i].name; i++)
+		seq_printf(seq, " %lu", buff[i]);
 
-	स_रखो(buff, 0, TCPUDP_MIB_MAX * माप(अचिन्हित दीर्घ));
+	memset(buff, 0, TCPUDP_MIB_MAX * sizeof(unsigned long));
 
 	/* the UDP and UDP-Lite MIBs are the same */
-	seq_माला_दो(seq, "\nUdpLite:");
+	seq_puts(seq, "\nUdpLite:");
 	snmp_get_cpu_field_batch(buff, snmp4_udp_list,
 				 net->mib.udplite_statistics);
-	क्रम (i = 0; snmp4_udp_list[i].name; i++)
-		seq_म_लिखो(seq, " %s", snmp4_udp_list[i].name);
-	seq_माला_दो(seq, "\nUdpLite:");
-	क्रम (i = 0; snmp4_udp_list[i].name; i++)
-		seq_म_लिखो(seq, " %lu", buff[i]);
+	for (i = 0; snmp4_udp_list[i].name; i++)
+		seq_printf(seq, " %s", snmp4_udp_list[i].name);
+	seq_puts(seq, "\nUdpLite:");
+	for (i = 0; snmp4_udp_list[i].name; i++)
+		seq_printf(seq, " %lu", buff[i]);
 
-	seq_अ_दो(seq, '\n');
-	वापस 0;
-पूर्ण
+	seq_putc(seq, '\n');
+	return 0;
+}
 
-अटल पूर्णांक snmp_seq_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
+static int snmp_seq_show(struct seq_file *seq, void *v)
+{
 	snmp_seq_show_ipstats(seq, v);
 
 	icmp_put(seq);	/* RFC 2011 compatibility */
@@ -457,100 +456,100 @@
 
 	snmp_seq_show_tcp_udp(seq, v);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  *	Output /proc/net/netstat
  */
-अटल पूर्णांक netstat_seq_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	स्थिर पूर्णांक ip_cnt = ARRAY_SIZE(snmp4_ipextstats_list) - 1;
-	स्थिर पूर्णांक tcp_cnt = ARRAY_SIZE(snmp4_net_list) - 1;
-	काष्ठा net *net = seq->निजी;
-	अचिन्हित दीर्घ *buff;
-	पूर्णांक i;
+static int netstat_seq_show(struct seq_file *seq, void *v)
+{
+	const int ip_cnt = ARRAY_SIZE(snmp4_ipextstats_list) - 1;
+	const int tcp_cnt = ARRAY_SIZE(snmp4_net_list) - 1;
+	struct net *net = seq->private;
+	unsigned long *buff;
+	int i;
 
-	seq_माला_दो(seq, "TcpExt:");
-	क्रम (i = 0; i < tcp_cnt; i++)
-		seq_म_लिखो(seq, " %s", snmp4_net_list[i].name);
+	seq_puts(seq, "TcpExt:");
+	for (i = 0; i < tcp_cnt; i++)
+		seq_printf(seq, " %s", snmp4_net_list[i].name);
 
-	seq_माला_दो(seq, "\nTcpExt:");
-	buff = kzalloc(max(tcp_cnt * माप(दीर्घ), ip_cnt * माप(u64)),
+	seq_puts(seq, "\nTcpExt:");
+	buff = kzalloc(max(tcp_cnt * sizeof(long), ip_cnt * sizeof(u64)),
 		       GFP_KERNEL);
-	अगर (buff) अणु
+	if (buff) {
 		snmp_get_cpu_field_batch(buff, snmp4_net_list,
 					 net->mib.net_statistics);
-		क्रम (i = 0; i < tcp_cnt; i++)
-			seq_म_लिखो(seq, " %lu", buff[i]);
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < tcp_cnt; i++)
-			seq_म_लिखो(seq, " %lu",
+		for (i = 0; i < tcp_cnt; i++)
+			seq_printf(seq, " %lu", buff[i]);
+	} else {
+		for (i = 0; i < tcp_cnt; i++)
+			seq_printf(seq, " %lu",
 				   snmp_fold_field(net->mib.net_statistics,
 						   snmp4_net_list[i].entry));
-	पूर्ण
-	seq_माला_दो(seq, "\nIpExt:");
-	क्रम (i = 0; i < ip_cnt; i++)
-		seq_म_लिखो(seq, " %s", snmp4_ipextstats_list[i].name);
+	}
+	seq_puts(seq, "\nIpExt:");
+	for (i = 0; i < ip_cnt; i++)
+		seq_printf(seq, " %s", snmp4_ipextstats_list[i].name);
 
-	seq_माला_दो(seq, "\nIpExt:");
-	अगर (buff) अणु
+	seq_puts(seq, "\nIpExt:");
+	if (buff) {
 		u64 *buff64 = (u64 *)buff;
 
-		स_रखो(buff64, 0, ip_cnt * माप(u64));
+		memset(buff64, 0, ip_cnt * sizeof(u64));
 		snmp_get_cpu_field64_batch(buff64, snmp4_ipextstats_list,
 					   net->mib.ip_statistics,
-					   दुरत्व(काष्ठा ipstats_mib, syncp));
-		क्रम (i = 0; i < ip_cnt; i++)
-			seq_म_लिखो(seq, " %llu", buff64[i]);
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < ip_cnt; i++)
-			seq_म_लिखो(seq, " %llu",
+					   offsetof(struct ipstats_mib, syncp));
+		for (i = 0; i < ip_cnt; i++)
+			seq_printf(seq, " %llu", buff64[i]);
+	} else {
+		for (i = 0; i < ip_cnt; i++)
+			seq_printf(seq, " %llu",
 				   snmp_fold_field64(net->mib.ip_statistics,
 						     snmp4_ipextstats_list[i].entry,
-						     दुरत्व(काष्ठा ipstats_mib, syncp)));
-	पूर्ण
-	kमुक्त(buff);
-	seq_अ_दो(seq, '\n');
+						     offsetof(struct ipstats_mib, syncp)));
+	}
+	kfree(buff);
+	seq_putc(seq, '\n');
 	mptcp_seq_show(seq);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __net_init पूर्णांक ip_proc_init_net(काष्ठा net *net)
-अणु
-	अगर (!proc_create_net_single("sockstat", 0444, net->proc_net,
-			sockstat_seq_show, शून्य))
-		जाओ out_sockstat;
-	अगर (!proc_create_net_single("netstat", 0444, net->proc_net,
-			netstat_seq_show, शून्य))
-		जाओ out_netstat;
-	अगर (!proc_create_net_single("snmp", 0444, net->proc_net, snmp_seq_show,
-			शून्य))
-		जाओ out_snmp;
+static __net_init int ip_proc_init_net(struct net *net)
+{
+	if (!proc_create_net_single("sockstat", 0444, net->proc_net,
+			sockstat_seq_show, NULL))
+		goto out_sockstat;
+	if (!proc_create_net_single("netstat", 0444, net->proc_net,
+			netstat_seq_show, NULL))
+		goto out_netstat;
+	if (!proc_create_net_single("snmp", 0444, net->proc_net, snmp_seq_show,
+			NULL))
+		goto out_snmp;
 
-	वापस 0;
+	return 0;
 
 out_snmp:
-	हटाओ_proc_entry("netstat", net->proc_net);
+	remove_proc_entry("netstat", net->proc_net);
 out_netstat:
-	हटाओ_proc_entry("sockstat", net->proc_net);
+	remove_proc_entry("sockstat", net->proc_net);
 out_sockstat:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल __net_निकास व्योम ip_proc_निकास_net(काष्ठा net *net)
-अणु
-	हटाओ_proc_entry("snmp", net->proc_net);
-	हटाओ_proc_entry("netstat", net->proc_net);
-	हटाओ_proc_entry("sockstat", net->proc_net);
-पूर्ण
+static __net_exit void ip_proc_exit_net(struct net *net)
+{
+	remove_proc_entry("snmp", net->proc_net);
+	remove_proc_entry("netstat", net->proc_net);
+	remove_proc_entry("sockstat", net->proc_net);
+}
 
-अटल __net_initdata काष्ठा pernet_operations ip_proc_ops = अणु
+static __net_initdata struct pernet_operations ip_proc_ops = {
 	.init = ip_proc_init_net,
-	.निकास = ip_proc_निकास_net,
-पूर्ण;
+	.exit = ip_proc_exit_net,
+};
 
-पूर्णांक __init ip_misc_proc_init(व्योम)
-अणु
-	वापस रेजिस्टर_pernet_subsys(&ip_proc_ops);
-पूर्ण
+int __init ip_misc_proc_init(void)
+{
+	return register_pernet_subsys(&ip_proc_ops);
+}

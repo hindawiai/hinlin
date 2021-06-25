@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/bpf.h>
-#समावेश <bpf/bpf_helpers.h>
-#समावेश "bpf_legacy.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
+#include "bpf_legacy.h"
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_PROG_ARRAY);
-	__uपूर्णांक(max_entries, 2);
-	__uपूर्णांक(key_size, माप(__u32));
-	__uपूर्णांक(value_size, माप(__u32));
-पूर्ण jmp_table SEC(".maps");
+struct {
+	__uint(type, BPF_MAP_TYPE_PROG_ARRAY);
+	__uint(max_entries, 2);
+	__uint(key_size, sizeof(__u32));
+	__uint(value_size, sizeof(__u32));
+} jmp_table SEC(".maps");
 
-__noअंतरभूत
-पूर्णांक subprog_tail2(काष्ठा __sk_buff *skb)
-अणु
-	अस्थिर अक्षर arr[64] = अणुपूर्ण;
+__noinline
+int subprog_tail2(struct __sk_buff *skb)
+{
+	volatile char arr[64] = {};
 
-	अगर (load_word(skb, 0) || load_half(skb, 0))
-		bpf_tail_call_अटल(skb, &jmp_table, 10);
-	अन्यथा
-		bpf_tail_call_अटल(skb, &jmp_table, 1);
+	if (load_word(skb, 0) || load_half(skb, 0))
+		bpf_tail_call_static(skb, &jmp_table, 10);
+	else
+		bpf_tail_call_static(skb, &jmp_table, 1);
 
-	वापस skb->len;
-पूर्ण
+	return skb->len;
+}
 
-अटल __noअंतरभूत
-पूर्णांक subprog_tail(काष्ठा __sk_buff *skb)
-अणु
-	अस्थिर अक्षर arr[64] = अणुपूर्ण;
+static __noinline
+int subprog_tail(struct __sk_buff *skb)
+{
+	volatile char arr[64] = {};
 
-	bpf_tail_call_अटल(skb, &jmp_table, 0);
+	bpf_tail_call_static(skb, &jmp_table, 0);
 
-	वापस skb->len * 2;
-पूर्ण
+	return skb->len * 2;
+}
 
 SEC("classifier/0")
-पूर्णांक bpf_func_0(काष्ठा __sk_buff *skb)
-अणु
-	अस्थिर अक्षर arr[128] = अणुपूर्ण;
+int bpf_func_0(struct __sk_buff *skb)
+{
+	volatile char arr[128] = {};
 
-	वापस subprog_tail2(skb);
-पूर्ण
+	return subprog_tail2(skb);
+}
 
 SEC("classifier/1")
-पूर्णांक bpf_func_1(काष्ठा __sk_buff *skb)
-अणु
-	अस्थिर अक्षर arr[128] = अणुपूर्ण;
+int bpf_func_1(struct __sk_buff *skb)
+{
+	volatile char arr[128] = {};
 
-	वापस skb->len * 3;
-पूर्ण
+	return skb->len * 3;
+}
 
 SEC("classifier")
-पूर्णांक entry(काष्ठा __sk_buff *skb)
-अणु
-	अस्थिर अक्षर arr[128] = अणुपूर्ण;
+int entry(struct __sk_buff *skb)
+{
+	volatile char arr[128] = {};
 
-	वापस subprog_tail(skb);
-पूर्ण
+	return subprog_tail(skb);
+}
 
-अक्षर __license[] SEC("license") = "GPL";
-पूर्णांक _version SEC("version") = 1;
+char __license[] SEC("license") = "GPL";
+int _version SEC("version") = 1;

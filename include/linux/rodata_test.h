@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * rodata_test.h: functional test क्रम mark_rodata_ro function
+ * rodata_test.h: functional test for mark_rodata_ro function
  *
  * (C) Copyright 2008 Intel Corporation
- * Author: Arjan van de Ven <arjan@linux.पूर्णांकel.com>
+ * Author: Arjan van de Ven <arjan@linux.intel.com>
  */
 
-#अगर_अघोषित _RODATA_TEST_H
-#घोषणा _RODATA_TEST_H
+#ifndef _RODATA_TEST_H
+#define _RODATA_TEST_H
 
-#अगर_घोषित CONFIG_DEBUG_RODATA_TEST
-व्योम rodata_test(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम rodata_test(व्योम) अणुपूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_DEBUG_RODATA_TEST
+void rodata_test(void);
+#else
+static inline void rodata_test(void) {}
+#endif
 
-#पूर्ण_अगर /* _RODATA_TEST_H */
+#endif /* _RODATA_TEST_H */

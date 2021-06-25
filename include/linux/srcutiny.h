@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Sleepable Read-Copy Update mechanism क्रम mutual exclusion,
+ * Sleepable Read-Copy Update mechanism for mutual exclusion,
  *	tiny variant.
  *
  * Copyright (C) IBM Corporation, 2017
@@ -9,84 +8,84 @@
  * Author: Paul McKenney <paulmck@linux.ibm.com>
  */
 
-#अगर_अघोषित _LINUX_SRCU_TINY_H
-#घोषणा _LINUX_SRCU_TINY_H
+#ifndef _LINUX_SRCU_TINY_H
+#define _LINUX_SRCU_TINY_H
 
-#समावेश <linux/sरुको.h>
+#include <linux/swait.h>
 
-काष्ठा srcu_काष्ठा अणु
-	लघु srcu_lock_nesting[2];	/* srcu_पढ़ो_lock() nesting depth. */
-	अचिन्हित लघु srcu_idx;	/* Current पढ़ोer array element in bit 0x2. */
-	अचिन्हित लघु srcu_idx_max;	/* Furthest future srcu_idx request. */
+struct srcu_struct {
+	short srcu_lock_nesting[2];	/* srcu_read_lock() nesting depth. */
+	unsigned short srcu_idx;	/* Current reader array element in bit 0x2. */
+	unsigned short srcu_idx_max;	/* Furthest future srcu_idx request. */
 	u8 srcu_gp_running;		/* GP workqueue running? */
-	u8 srcu_gp_रुकोing;		/* GP रुकोing क्रम पढ़ोers? */
-	काष्ठा sरुको_queue_head srcu_wq;
-					/* Last srcu_पढ़ो_unlock() wakes GP. */
-	काष्ठा rcu_head *srcu_cb_head;	/* Pending callbacks: Head. */
-	काष्ठा rcu_head **srcu_cb_tail;	/* Pending callbacks: Tail. */
-	काष्ठा work_काष्ठा srcu_work;	/* For driving grace periods. */
-#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
-	काष्ठा lockdep_map dep_map;
-#पूर्ण_अगर /* #अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC */
-पूर्ण;
+	u8 srcu_gp_waiting;		/* GP waiting for readers? */
+	struct swait_queue_head srcu_wq;
+					/* Last srcu_read_unlock() wakes GP. */
+	struct rcu_head *srcu_cb_head;	/* Pending callbacks: Head. */
+	struct rcu_head **srcu_cb_tail;	/* Pending callbacks: Tail. */
+	struct work_struct srcu_work;	/* For driving grace periods. */
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
+	struct lockdep_map dep_map;
+#endif /* #ifdef CONFIG_DEBUG_LOCK_ALLOC */
+};
 
-व्योम srcu_drive_gp(काष्ठा work_काष्ठा *wp);
+void srcu_drive_gp(struct work_struct *wp);
 
-#घोषणा __SRCU_STRUCT_INIT(name, __ignored)				\
-अणु									\
+#define __SRCU_STRUCT_INIT(name, __ignored)				\
+{									\
 	.srcu_wq = __SWAIT_QUEUE_HEAD_INITIALIZER(name.srcu_wq),	\
 	.srcu_cb_tail = &name.srcu_cb_head,				\
 	.srcu_work = __WORK_INITIALIZER(name.srcu_work, srcu_drive_gp),	\
 	__SRCU_DEP_MAP_INIT(name)					\
-पूर्ण
+}
 
 /*
- * This odd _STATIC_ arrangement is needed क्रम API compatibility with
+ * This odd _STATIC_ arrangement is needed for API compatibility with
  * Tree SRCU, which needs some per-CPU data.
  */
-#घोषणा DEFINE_SRCU(name) \
-	काष्ठा srcu_काष्ठा name = __SRCU_STRUCT_INIT(name, name)
-#घोषणा DEFINE_STATIC_SRCU(name) \
-	अटल काष्ठा srcu_काष्ठा name = __SRCU_STRUCT_INIT(name, name)
+#define DEFINE_SRCU(name) \
+	struct srcu_struct name = __SRCU_STRUCT_INIT(name, name)
+#define DEFINE_STATIC_SRCU(name) \
+	static struct srcu_struct name = __SRCU_STRUCT_INIT(name, name)
 
-व्योम synchronize_srcu(काष्ठा srcu_काष्ठा *ssp);
+void synchronize_srcu(struct srcu_struct *ssp);
 
 /*
- * Counts the new पढ़ोer in the appropriate per-CPU element of the
- * srcu_काष्ठा.  Can be invoked from irq/bh handlers, but the matching
- * __srcu_पढ़ो_unlock() must be in the same handler instance.  Returns an
- * index that must be passed to the matching srcu_पढ़ो_unlock().
+ * Counts the new reader in the appropriate per-CPU element of the
+ * srcu_struct.  Can be invoked from irq/bh handlers, but the matching
+ * __srcu_read_unlock() must be in the same handler instance.  Returns an
+ * index that must be passed to the matching srcu_read_unlock().
  */
-अटल अंतरभूत पूर्णांक __srcu_पढ़ो_lock(काष्ठा srcu_काष्ठा *ssp)
-अणु
-	पूर्णांक idx;
+static inline int __srcu_read_lock(struct srcu_struct *ssp)
+{
+	int idx;
 
 	idx = ((READ_ONCE(ssp->srcu_idx) + 1) & 0x2) >> 1;
 	WRITE_ONCE(ssp->srcu_lock_nesting[idx], ssp->srcu_lock_nesting[idx] + 1);
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल अंतरभूत व्योम synchronize_srcu_expedited(काष्ठा srcu_काष्ठा *ssp)
-अणु
+static inline void synchronize_srcu_expedited(struct srcu_struct *ssp)
+{
 	synchronize_srcu(ssp);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम srcu_barrier(काष्ठा srcu_काष्ठा *ssp)
-अणु
+static inline void srcu_barrier(struct srcu_struct *ssp)
+{
 	synchronize_srcu(ssp);
-पूर्ण
+}
 
-/* Defined here to aव्योम size increase क्रम non-torture kernels. */
-अटल अंतरभूत व्योम srcu_torture_stats_prपूर्णांक(काष्ठा srcu_काष्ठा *ssp,
-					    अक्षर *tt, अक्षर *tf)
-अणु
-	पूर्णांक idx;
+/* Defined here to avoid size increase for non-torture kernels. */
+static inline void srcu_torture_stats_print(struct srcu_struct *ssp,
+					    char *tt, char *tf)
+{
+	int idx;
 
 	idx = ((READ_ONCE(ssp->srcu_idx) + 1) & 0x2) >> 1;
 	pr_alert("%s%s Tiny SRCU per-CPU(idx=%d): (%hd,%hd)\n",
 		 tt, tf, idx,
 		 READ_ONCE(ssp->srcu_lock_nesting[!idx]),
 		 READ_ONCE(ssp->srcu_lock_nesting[idx]));
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif

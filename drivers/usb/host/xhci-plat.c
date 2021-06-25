@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * xhci-plat.c - xHCI host controller driver platक्रमm Bus Glue.
+ * xhci-plat.c - xHCI host controller driver platform Bus Glue.
  *
  * Copyright (C) 2012 Texas Instruments Incorporated - https://www.ti.com
  * Author: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
@@ -9,255 +8,255 @@
  * A lot of code borrowed from the Linux xHCI driver.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/usb/phy.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/usb/of.h>
+#include <linux/clk.h>
+#include <linux/dma-mapping.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/usb/phy.h>
+#include <linux/slab.h>
+#include <linux/acpi.h>
+#include <linux/usb/of.h>
 
-#समावेश "xhci.h"
-#समावेश "xhci-plat.h"
-#समावेश "xhci-mvebu.h"
-#समावेश "xhci-rcar.h"
+#include "xhci.h"
+#include "xhci-plat.h"
+#include "xhci-mvebu.h"
+#include "xhci-rcar.h"
 
-अटल काष्ठा hc_driver __पढ़ो_mostly xhci_plat_hc_driver;
+static struct hc_driver __read_mostly xhci_plat_hc_driver;
 
-अटल पूर्णांक xhci_plat_setup(काष्ठा usb_hcd *hcd);
-अटल पूर्णांक xhci_plat_start(काष्ठा usb_hcd *hcd);
+static int xhci_plat_setup(struct usb_hcd *hcd);
+static int xhci_plat_start(struct usb_hcd *hcd);
 
-अटल स्थिर काष्ठा xhci_driver_overrides xhci_plat_overrides __initस्थिर = अणु
-	.extra_priv_size = माप(काष्ठा xhci_plat_priv),
+static const struct xhci_driver_overrides xhci_plat_overrides __initconst = {
+	.extra_priv_size = sizeof(struct xhci_plat_priv),
 	.reset = xhci_plat_setup,
 	.start = xhci_plat_start,
-पूर्ण;
+};
 
-अटल व्योम xhci_priv_plat_start(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा xhci_plat_priv *priv = hcd_to_xhci_priv(hcd);
+static void xhci_priv_plat_start(struct usb_hcd *hcd)
+{
+	struct xhci_plat_priv *priv = hcd_to_xhci_priv(hcd);
 
-	अगर (priv->plat_start)
+	if (priv->plat_start)
 		priv->plat_start(hcd);
-पूर्ण
+}
 
-अटल पूर्णांक xhci_priv_plat_setup(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा xhci_plat_priv *priv = hcd_to_xhci_priv(hcd);
+static int xhci_priv_plat_setup(struct usb_hcd *hcd)
+{
+	struct xhci_plat_priv *priv = hcd_to_xhci_priv(hcd);
 
-	अगर (!priv->plat_setup)
-		वापस 0;
+	if (!priv->plat_setup)
+		return 0;
 
-	वापस priv->plat_setup(hcd);
-पूर्ण
+	return priv->plat_setup(hcd);
+}
 
-अटल पूर्णांक xhci_priv_init_quirk(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा xhci_plat_priv *priv = hcd_to_xhci_priv(hcd);
+static int xhci_priv_init_quirk(struct usb_hcd *hcd)
+{
+	struct xhci_plat_priv *priv = hcd_to_xhci_priv(hcd);
 
-	अगर (!priv->init_quirk)
-		वापस 0;
+	if (!priv->init_quirk)
+		return 0;
 
-	वापस priv->init_quirk(hcd);
-पूर्ण
+	return priv->init_quirk(hcd);
+}
 
-अटल पूर्णांक xhci_priv_suspend_quirk(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा xhci_plat_priv *priv = hcd_to_xhci_priv(hcd);
+static int xhci_priv_suspend_quirk(struct usb_hcd *hcd)
+{
+	struct xhci_plat_priv *priv = hcd_to_xhci_priv(hcd);
 
-	अगर (!priv->suspend_quirk)
-		वापस 0;
+	if (!priv->suspend_quirk)
+		return 0;
 
-	वापस priv->suspend_quirk(hcd);
-पूर्ण
+	return priv->suspend_quirk(hcd);
+}
 
-अटल पूर्णांक xhci_priv_resume_quirk(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा xhci_plat_priv *priv = hcd_to_xhci_priv(hcd);
+static int xhci_priv_resume_quirk(struct usb_hcd *hcd)
+{
+	struct xhci_plat_priv *priv = hcd_to_xhci_priv(hcd);
 
-	अगर (!priv->resume_quirk)
-		वापस 0;
+	if (!priv->resume_quirk)
+		return 0;
 
-	वापस priv->resume_quirk(hcd);
-पूर्ण
+	return priv->resume_quirk(hcd);
+}
 
-अटल व्योम xhci_plat_quirks(काष्ठा device *dev, काष्ठा xhci_hcd *xhci)
-अणु
-	काष्ठा xhci_plat_priv *priv = xhci_to_priv(xhci);
+static void xhci_plat_quirks(struct device *dev, struct xhci_hcd *xhci)
+{
+	struct xhci_plat_priv *priv = xhci_to_priv(xhci);
 
 	/*
-	 * As of now platक्रमm drivers करोn't provide MSI support so we ensure
-	 * here that the generic code करोes not try to make a pci_dev from our
-	 * dev काष्ठा in order to setup MSI
+	 * As of now platform drivers don't provide MSI support so we ensure
+	 * here that the generic code does not try to make a pci_dev from our
+	 * dev struct in order to setup MSI
 	 */
 	xhci->quirks |= XHCI_PLAT | priv->quirks;
-पूर्ण
+}
 
 /* called during probe() after chip reset completes */
-अटल पूर्णांक xhci_plat_setup(काष्ठा usb_hcd *hcd)
-अणु
-	पूर्णांक ret;
+static int xhci_plat_setup(struct usb_hcd *hcd)
+{
+	int ret;
 
 
 	ret = xhci_priv_init_quirk(hcd);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस xhci_gen_setup(hcd, xhci_plat_quirks);
-पूर्ण
+	return xhci_gen_setup(hcd, xhci_plat_quirks);
+}
 
-अटल पूर्णांक xhci_plat_start(काष्ठा usb_hcd *hcd)
-अणु
+static int xhci_plat_start(struct usb_hcd *hcd)
+{
 	xhci_priv_plat_start(hcd);
-	वापस xhci_run(hcd);
-पूर्ण
+	return xhci_run(hcd);
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा xhci_plat_priv xhci_plat_marvell_armada = अणु
+#ifdef CONFIG_OF
+static const struct xhci_plat_priv xhci_plat_marvell_armada = {
 	.init_quirk = xhci_mvebu_mbus_init_quirk,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा xhci_plat_priv xhci_plat_marvell_armada3700 = अणु
+static const struct xhci_plat_priv xhci_plat_marvell_armada3700 = {
 	.plat_setup = xhci_mvebu_a3700_plat_setup,
 	.init_quirk = xhci_mvebu_a3700_init_quirk,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा xhci_plat_priv xhci_plat_renesas_rcar_gen2 = अणु
+static const struct xhci_plat_priv xhci_plat_renesas_rcar_gen2 = {
 	SET_XHCI_PLAT_PRIV_FOR_RCAR(XHCI_RCAR_FIRMWARE_NAME_V1)
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा xhci_plat_priv xhci_plat_renesas_rcar_gen3 = अणु
+static const struct xhci_plat_priv xhci_plat_renesas_rcar_gen3 = {
 	SET_XHCI_PLAT_PRIV_FOR_RCAR(XHCI_RCAR_FIRMWARE_NAME_V3)
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा xhci_plat_priv xhci_plat_brcm = अणु
+static const struct xhci_plat_priv xhci_plat_brcm = {
 	.quirks = XHCI_RESET_ON_RESUME,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id usb_xhci_of_match[] = अणु
-	अणु
+static const struct of_device_id usb_xhci_of_match[] = {
+	{
 		.compatible = "generic-xhci",
-	पूर्ण, अणु
+	}, {
 		.compatible = "xhci-platform",
-	पूर्ण, अणु
+	}, {
 		.compatible = "marvell,armada-375-xhci",
 		.data = &xhci_plat_marvell_armada,
-	पूर्ण, अणु
+	}, {
 		.compatible = "marvell,armada-380-xhci",
 		.data = &xhci_plat_marvell_armada,
-	पूर्ण, अणु
+	}, {
 		.compatible = "marvell,armada3700-xhci",
 		.data = &xhci_plat_marvell_armada3700,
-	पूर्ण, अणु
+	}, {
 		.compatible = "renesas,xhci-r8a7790",
 		.data = &xhci_plat_renesas_rcar_gen2,
-	पूर्ण, अणु
+	}, {
 		.compatible = "renesas,xhci-r8a7791",
 		.data = &xhci_plat_renesas_rcar_gen2,
-	पूर्ण, अणु
+	}, {
 		.compatible = "renesas,xhci-r8a7793",
 		.data = &xhci_plat_renesas_rcar_gen2,
-	पूर्ण, अणु
+	}, {
 		.compatible = "renesas,xhci-r8a7795",
 		.data = &xhci_plat_renesas_rcar_gen3,
-	पूर्ण, अणु
+	}, {
 		.compatible = "renesas,xhci-r8a7796",
 		.data = &xhci_plat_renesas_rcar_gen3,
-	पूर्ण, अणु
+	}, {
 		.compatible = "renesas,rcar-gen2-xhci",
 		.data = &xhci_plat_renesas_rcar_gen2,
-	पूर्ण, अणु
+	}, {
 		.compatible = "renesas,rcar-gen3-xhci",
 		.data = &xhci_plat_renesas_rcar_gen3,
-	पूर्ण, अणु
+	}, {
 		.compatible = "brcm,xhci-brcm-v2",
 		.data = &xhci_plat_brcm,
-	पूर्ण, अणु
+	}, {
 		.compatible = "brcm,bcm7445-xhci",
 		.data = &xhci_plat_brcm,
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 MODULE_DEVICE_TABLE(of, usb_xhci_of_match);
-#पूर्ण_अगर
+#endif
 
-अटल पूर्णांक xhci_plat_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा xhci_plat_priv *priv_match;
-	स्थिर काष्ठा hc_driver	*driver;
-	काष्ठा device		*sysdev, *पंचांगpdev;
-	काष्ठा xhci_hcd		*xhci;
-	काष्ठा resource         *res;
-	काष्ठा usb_hcd		*hcd;
-	पूर्णांक			ret;
-	पूर्णांक			irq;
-	काष्ठा xhci_plat_priv	*priv = शून्य;
+static int xhci_plat_probe(struct platform_device *pdev)
+{
+	const struct xhci_plat_priv *priv_match;
+	const struct hc_driver	*driver;
+	struct device		*sysdev, *tmpdev;
+	struct xhci_hcd		*xhci;
+	struct resource         *res;
+	struct usb_hcd		*hcd;
+	int			ret;
+	int			irq;
+	struct xhci_plat_priv	*priv = NULL;
 
 
-	अगर (usb_disabled())
-		वापस -ENODEV;
+	if (usb_disabled())
+		return -ENODEV;
 
 	driver = &xhci_plat_hc_driver;
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
 	/*
-	 * sysdev must poपूर्णांक to a device that is known to the प्रणाली firmware
-	 * or PCI hardware. We handle these three हालs here:
+	 * sysdev must point to a device that is known to the system firmware
+	 * or PCI hardware. We handle these three cases here:
 	 * 1. xhci_plat comes from firmware
 	 * 2. xhci_plat is child of a device from firmware (dwc3-plat)
-	 * 3. xhci_plat is gअक्रमchild of a pci device (dwc3-pci)
+	 * 3. xhci_plat is grandchild of a pci device (dwc3-pci)
 	 */
-	क्रम (sysdev = &pdev->dev; sysdev; sysdev = sysdev->parent) अणु
-		अगर (is_of_node(sysdev->fwnode) ||
+	for (sysdev = &pdev->dev; sysdev; sysdev = sysdev->parent) {
+		if (is_of_node(sysdev->fwnode) ||
 			is_acpi_device_node(sysdev->fwnode))
-			अवरोध;
-#अगर_घोषित CONFIG_PCI
-		अन्यथा अगर (sysdev->bus == &pci_bus_type)
-			अवरोध;
-#पूर्ण_अगर
-	पूर्ण
+			break;
+#ifdef CONFIG_PCI
+		else if (sysdev->bus == &pci_bus_type)
+			break;
+#endif
+	}
 
-	अगर (!sysdev)
+	if (!sysdev)
 		sysdev = &pdev->dev;
 
 	/* Try to set 64-bit DMA first */
-	अगर (WARN_ON(!sysdev->dma_mask))
-		/* Platक्रमm did not initialize dma_mask */
+	if (WARN_ON(!sysdev->dma_mask))
+		/* Platform did not initialize dma_mask */
 		ret = dma_coerce_mask_and_coherent(sysdev,
 						   DMA_BIT_MASK(64));
-	अन्यथा
+	else
 		ret = dma_set_mask_and_coherent(sysdev, DMA_BIT_MASK(64));
 
 	/* If seting 64-bit DMA mask fails, fall back to 32-bit DMA mask */
-	अगर (ret) अणु
+	if (ret) {
 		ret = dma_set_mask_and_coherent(sysdev, DMA_BIT_MASK(32));
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	pm_runसमय_set_active(&pdev->dev);
-	pm_runसमय_enable(&pdev->dev);
-	pm_runसमय_get_noresume(&pdev->dev);
+	pm_runtime_set_active(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
+	pm_runtime_get_noresume(&pdev->dev);
 
 	hcd = __usb_create_hcd(driver, sysdev, &pdev->dev,
-			       dev_name(&pdev->dev), शून्य);
-	अगर (!hcd) अणु
+			       dev_name(&pdev->dev), NULL);
+	if (!hcd) {
 		ret = -ENOMEM;
-		जाओ disable_runसमय;
-	पूर्ण
+		goto disable_runtime;
+	}
 
-	hcd->regs = devm_platक्रमm_get_and_ioremap_resource(pdev, 0, &res);
-	अगर (IS_ERR(hcd->regs)) अणु
+	hcd->regs = devm_platform_get_and_ioremap_resource(pdev, 0, &res);
+	if (IS_ERR(hcd->regs)) {
 		ret = PTR_ERR(hcd->regs);
-		जाओ put_hcd;
-	पूर्ण
+		goto put_hcd;
+	}
 
 	hcd->rsrc_start = res->start;
 	hcd->rsrc_len = resource_size(res);
@@ -265,124 +264,124 @@ MODULE_DEVICE_TABLE(of, usb_xhci_of_match);
 	xhci = hcd_to_xhci(hcd);
 
 	/*
-	 * Not all platक्रमms have clks so it is not an error अगर the
-	 * घड़ी करो not exist.
+	 * Not all platforms have clks so it is not an error if the
+	 * clock do not exist.
 	 */
 	xhci->reg_clk = devm_clk_get_optional(&pdev->dev, "reg");
-	अगर (IS_ERR(xhci->reg_clk)) अणु
+	if (IS_ERR(xhci->reg_clk)) {
 		ret = PTR_ERR(xhci->reg_clk);
-		जाओ put_hcd;
-	पूर्ण
+		goto put_hcd;
+	}
 
 	ret = clk_prepare_enable(xhci->reg_clk);
-	अगर (ret)
-		जाओ put_hcd;
+	if (ret)
+		goto put_hcd;
 
-	xhci->clk = devm_clk_get_optional(&pdev->dev, शून्य);
-	अगर (IS_ERR(xhci->clk)) अणु
+	xhci->clk = devm_clk_get_optional(&pdev->dev, NULL);
+	if (IS_ERR(xhci->clk)) {
 		ret = PTR_ERR(xhci->clk);
-		जाओ disable_reg_clk;
-	पूर्ण
+		goto disable_reg_clk;
+	}
 
 	ret = clk_prepare_enable(xhci->clk);
-	अगर (ret)
-		जाओ disable_reg_clk;
+	if (ret)
+		goto disable_reg_clk;
 
-	अगर (pdev->dev.of_node)
+	if (pdev->dev.of_node)
 		priv_match = of_device_get_match_data(&pdev->dev);
-	अन्यथा
+	else
 		priv_match = dev_get_platdata(&pdev->dev);
 
-	अगर (priv_match) अणु
+	if (priv_match) {
 		priv = hcd_to_xhci_priv(hcd);
-		/* Just copy data क्रम now */
+		/* Just copy data for now */
 		*priv = *priv_match;
-	पूर्ण
+	}
 
 	device_set_wakeup_capable(&pdev->dev, true);
 
-	xhci->मुख्य_hcd = hcd;
+	xhci->main_hcd = hcd;
 	xhci->shared_hcd = __usb_create_hcd(driver, sysdev, &pdev->dev,
 			dev_name(&pdev->dev), hcd);
-	अगर (!xhci->shared_hcd) अणु
+	if (!xhci->shared_hcd) {
 		ret = -ENOMEM;
-		जाओ disable_clk;
-	पूर्ण
+		goto disable_clk;
+	}
 
-	/* imod_पूर्णांकerval is the पूर्णांकerrupt moderation value in nanoseconds. */
-	xhci->imod_पूर्णांकerval = 40000;
+	/* imod_interval is the interrupt moderation value in nanoseconds. */
+	xhci->imod_interval = 40000;
 
-	/* Iterate over all parent nodes क्रम finding quirks */
-	क्रम (पंचांगpdev = &pdev->dev; पंचांगpdev; पंचांगpdev = पंचांगpdev->parent) अणु
+	/* Iterate over all parent nodes for finding quirks */
+	for (tmpdev = &pdev->dev; tmpdev; tmpdev = tmpdev->parent) {
 
-		अगर (device_property_पढ़ो_bool(पंचांगpdev, "usb2-lpm-disable"))
+		if (device_property_read_bool(tmpdev, "usb2-lpm-disable"))
 			xhci->quirks |= XHCI_HW_LPM_DISABLE;
 
-		अगर (device_property_पढ़ो_bool(पंचांगpdev, "usb3-lpm-capable"))
+		if (device_property_read_bool(tmpdev, "usb3-lpm-capable"))
 			xhci->quirks |= XHCI_LPM_SUPPORT;
 
-		अगर (device_property_पढ़ो_bool(पंचांगpdev, "quirk-broken-port-ped"))
+		if (device_property_read_bool(tmpdev, "quirk-broken-port-ped"))
 			xhci->quirks |= XHCI_BROKEN_PORT_PED;
 
-		device_property_पढ़ो_u32(पंचांगpdev, "imod-interval-ns",
-					 &xhci->imod_पूर्णांकerval);
-	पूर्ण
+		device_property_read_u32(tmpdev, "imod-interval-ns",
+					 &xhci->imod_interval);
+	}
 
 	hcd->usb_phy = devm_usb_get_phy_by_phandle(sysdev, "usb-phy", 0);
-	अगर (IS_ERR(hcd->usb_phy)) अणु
+	if (IS_ERR(hcd->usb_phy)) {
 		ret = PTR_ERR(hcd->usb_phy);
-		अगर (ret == -EPROBE_DEFER)
-			जाओ put_usb3_hcd;
-		hcd->usb_phy = शून्य;
-	पूर्ण अन्यथा अणु
+		if (ret == -EPROBE_DEFER)
+			goto put_usb3_hcd;
+		hcd->usb_phy = NULL;
+	} else {
 		ret = usb_phy_init(hcd->usb_phy);
-		अगर (ret)
-			जाओ put_usb3_hcd;
-	पूर्ण
+		if (ret)
+			goto put_usb3_hcd;
+	}
 
 	hcd->tpl_support = of_usb_host_tpl_support(sysdev->of_node);
 	xhci->shared_hcd->tpl_support = hcd->tpl_support;
 
-	अगर (priv) अणु
+	if (priv) {
 		ret = xhci_priv_plat_setup(hcd);
-		अगर (ret)
-			जाओ disable_usb_phy;
-	पूर्ण
+		if (ret)
+			goto disable_usb_phy;
+	}
 
-	अगर ((xhci->quirks & XHCI_SKIP_PHY_INIT) || (priv && (priv->quirks & XHCI_SKIP_PHY_INIT)))
+	if ((xhci->quirks & XHCI_SKIP_PHY_INIT) || (priv && (priv->quirks & XHCI_SKIP_PHY_INIT)))
 		hcd->skip_phy_initialization = 1;
 
-	अगर (priv && (priv->quirks & XHCI_SG_TRB_CACHE_SIZE_QUIRK))
+	if (priv && (priv->quirks & XHCI_SG_TRB_CACHE_SIZE_QUIRK))
 		xhci->quirks |= XHCI_SG_TRB_CACHE_SIZE_QUIRK;
 
 	ret = usb_add_hcd(hcd, irq, IRQF_SHARED);
-	अगर (ret)
-		जाओ disable_usb_phy;
+	if (ret)
+		goto disable_usb_phy;
 
-	अगर (HCC_MAX_PSA(xhci->hcc_params) >= 4)
-		xhci->shared_hcd->can_करो_streams = 1;
+	if (HCC_MAX_PSA(xhci->hcc_params) >= 4)
+		xhci->shared_hcd->can_do_streams = 1;
 
 	ret = usb_add_hcd(xhci->shared_hcd, irq, IRQF_SHARED);
-	अगर (ret)
-		जाओ dealloc_usb2_hcd;
+	if (ret)
+		goto dealloc_usb2_hcd;
 
 	device_enable_async_suspend(&pdev->dev);
-	pm_runसमय_put_noidle(&pdev->dev);
+	pm_runtime_put_noidle(&pdev->dev);
 
 	/*
-	 * Prevent runसमय pm from being on as शेष, users should enable
-	 * runसमय pm using घातer/control in sysfs.
+	 * Prevent runtime pm from being on as default, users should enable
+	 * runtime pm using power/control in sysfs.
 	 */
-	pm_runसमय_क्रमbid(&pdev->dev);
+	pm_runtime_forbid(&pdev->dev);
 
-	वापस 0;
+	return 0;
 
 
 dealloc_usb2_hcd:
-	usb_हटाओ_hcd(hcd);
+	usb_remove_hcd(hcd);
 
 disable_usb_phy:
-	usb_phy_shutकरोwn(hcd->usb_phy);
+	usb_phy_shutdown(hcd->usb_phy);
 
 put_usb3_hcd:
 	usb_put_hcd(xhci->shared_hcd);
@@ -396,142 +395,142 @@ disable_reg_clk:
 put_hcd:
 	usb_put_hcd(hcd);
 
-disable_runसमय:
-	pm_runसमय_put_noidle(&pdev->dev);
-	pm_runसमय_disable(&pdev->dev);
+disable_runtime:
+	pm_runtime_put_noidle(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक xhci_plat_हटाओ(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा usb_hcd	*hcd = platक्रमm_get_drvdata(dev);
-	काष्ठा xhci_hcd	*xhci = hcd_to_xhci(hcd);
-	काष्ठा clk *clk = xhci->clk;
-	काष्ठा clk *reg_clk = xhci->reg_clk;
-	काष्ठा usb_hcd *shared_hcd = xhci->shared_hcd;
+static int xhci_plat_remove(struct platform_device *dev)
+{
+	struct usb_hcd	*hcd = platform_get_drvdata(dev);
+	struct xhci_hcd	*xhci = hcd_to_xhci(hcd);
+	struct clk *clk = xhci->clk;
+	struct clk *reg_clk = xhci->reg_clk;
+	struct usb_hcd *shared_hcd = xhci->shared_hcd;
 
-	pm_runसमय_get_sync(&dev->dev);
+	pm_runtime_get_sync(&dev->dev);
 	xhci->xhc_state |= XHCI_STATE_REMOVING;
 
-	usb_हटाओ_hcd(shared_hcd);
-	xhci->shared_hcd = शून्य;
-	usb_phy_shutकरोwn(hcd->usb_phy);
+	usb_remove_hcd(shared_hcd);
+	xhci->shared_hcd = NULL;
+	usb_phy_shutdown(hcd->usb_phy);
 
-	usb_हटाओ_hcd(hcd);
+	usb_remove_hcd(hcd);
 	usb_put_hcd(shared_hcd);
 
 	clk_disable_unprepare(clk);
 	clk_disable_unprepare(reg_clk);
 	usb_put_hcd(hcd);
 
-	pm_runसमय_disable(&dev->dev);
-	pm_runसमय_put_noidle(&dev->dev);
-	pm_runसमय_set_suspended(&dev->dev);
+	pm_runtime_disable(&dev->dev);
+	pm_runtime_put_noidle(&dev->dev);
+	pm_runtime_set_suspended(&dev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused xhci_plat_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा usb_hcd	*hcd = dev_get_drvdata(dev);
-	काष्ठा xhci_hcd	*xhci = hcd_to_xhci(hcd);
-	पूर्णांक ret;
+static int __maybe_unused xhci_plat_suspend(struct device *dev)
+{
+	struct usb_hcd	*hcd = dev_get_drvdata(dev);
+	struct xhci_hcd	*xhci = hcd_to_xhci(hcd);
+	int ret;
 
 	ret = xhci_priv_suspend_quirk(hcd);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	/*
-	 * xhci_suspend() needs `करो_wakeup` to know whether host is allowed
-	 * to करो wakeup during suspend.
+	 * xhci_suspend() needs `do_wakeup` to know whether host is allowed
+	 * to do wakeup during suspend.
 	 */
-	वापस xhci_suspend(xhci, device_may_wakeup(dev));
-पूर्ण
+	return xhci_suspend(xhci, device_may_wakeup(dev));
+}
 
-अटल पूर्णांक __maybe_unused xhci_plat_resume(काष्ठा device *dev)
-अणु
-	काष्ठा usb_hcd	*hcd = dev_get_drvdata(dev);
-	काष्ठा xhci_hcd	*xhci = hcd_to_xhci(hcd);
-	पूर्णांक ret;
+static int __maybe_unused xhci_plat_resume(struct device *dev)
+{
+	struct usb_hcd	*hcd = dev_get_drvdata(dev);
+	struct xhci_hcd	*xhci = hcd_to_xhci(hcd);
+	int ret;
 
 	ret = xhci_priv_resume_quirk(hcd);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = xhci_resume(xhci, 0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	pm_runसमय_disable(dev);
-	pm_runसमय_set_active(dev);
-	pm_runसमय_enable(dev);
+	pm_runtime_disable(dev);
+	pm_runtime_set_active(dev);
+	pm_runtime_enable(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused xhci_plat_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा usb_hcd  *hcd = dev_get_drvdata(dev);
-	काष्ठा xhci_hcd *xhci = hcd_to_xhci(hcd);
-	पूर्णांक ret;
+static int __maybe_unused xhci_plat_runtime_suspend(struct device *dev)
+{
+	struct usb_hcd  *hcd = dev_get_drvdata(dev);
+	struct xhci_hcd *xhci = hcd_to_xhci(hcd);
+	int ret;
 
 	ret = xhci_priv_suspend_quirk(hcd);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस xhci_suspend(xhci, true);
-पूर्ण
+	return xhci_suspend(xhci, true);
+}
 
-अटल पूर्णांक __maybe_unused xhci_plat_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा usb_hcd  *hcd = dev_get_drvdata(dev);
-	काष्ठा xhci_hcd *xhci = hcd_to_xhci(hcd);
+static int __maybe_unused xhci_plat_runtime_resume(struct device *dev)
+{
+	struct usb_hcd  *hcd = dev_get_drvdata(dev);
+	struct xhci_hcd *xhci = hcd_to_xhci(hcd);
 
-	वापस xhci_resume(xhci, 0);
-पूर्ण
+	return xhci_resume(xhci, 0);
+}
 
-अटल स्थिर काष्ठा dev_pm_ops xhci_plat_pm_ops = अणु
+static const struct dev_pm_ops xhci_plat_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(xhci_plat_suspend, xhci_plat_resume)
 
-	SET_RUNTIME_PM_OPS(xhci_plat_runसमय_suspend,
-			   xhci_plat_runसमय_resume,
-			   शून्य)
-पूर्ण;
+	SET_RUNTIME_PM_OPS(xhci_plat_runtime_suspend,
+			   xhci_plat_runtime_resume,
+			   NULL)
+};
 
-#अगर_घोषित CONFIG_ACPI
-अटल स्थिर काष्ठा acpi_device_id usb_xhci_acpi_match[] = अणु
+#ifdef CONFIG_ACPI
+static const struct acpi_device_id usb_xhci_acpi_match[] = {
 	/* XHCI-compliant USB Controller */
-	अणु "PNP0D10", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+	{ "PNP0D10", },
+	{ }
+};
 MODULE_DEVICE_TABLE(acpi, usb_xhci_acpi_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver usb_xhci_driver = अणु
+static struct platform_driver usb_xhci_driver = {
 	.probe	= xhci_plat_probe,
-	.हटाओ	= xhci_plat_हटाओ,
-	.shutकरोwn = usb_hcd_platक्रमm_shutकरोwn,
-	.driver	= अणु
+	.remove	= xhci_plat_remove,
+	.shutdown = usb_hcd_platform_shutdown,
+	.driver	= {
 		.name = "xhci-hcd",
 		.pm = &xhci_plat_pm_ops,
 		.of_match_table = of_match_ptr(usb_xhci_of_match),
 		.acpi_match_table = ACPI_PTR(usb_xhci_acpi_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 MODULE_ALIAS("platform:xhci-hcd");
 
-अटल पूर्णांक __init xhci_plat_init(व्योम)
-अणु
+static int __init xhci_plat_init(void)
+{
 	xhci_init_driver(&xhci_plat_hc_driver, &xhci_plat_overrides);
-	वापस platक्रमm_driver_रेजिस्टर(&usb_xhci_driver);
-पूर्ण
+	return platform_driver_register(&usb_xhci_driver);
+}
 module_init(xhci_plat_init);
 
-अटल व्योम __निकास xhci_plat_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&usb_xhci_driver);
-पूर्ण
-module_निकास(xhci_plat_निकास);
+static void __exit xhci_plat_exit(void)
+{
+	platform_driver_unregister(&usb_xhci_driver);
+}
+module_exit(xhci_plat_exit);
 
 MODULE_DESCRIPTION("xHCI Platform Host Controller Driver");
 MODULE_LICENSE("GPL");

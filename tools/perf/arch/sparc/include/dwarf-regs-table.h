@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_घोषित DEFINE_DWARF_REGSTR_TABLE
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifdef DEFINE_DWARF_REGSTR_TABLE
 /* This is included in perf/util/dwarf-regs.c */
 
-अटल स्थिर अक्षर * स्थिर sparc_regstr_tbl[] = अणु
+static const char * const sparc_regstr_tbl[] = {
 	"%g0", "%g1", "%g2", "%g3", "%g4", "%g5", "%g6", "%g7",
 	"%o0", "%o1", "%o2", "%o3", "%o4", "%o5", "%sp", "%o7",
 	"%l0", "%l1", "%l2", "%l3", "%l4", "%l5", "%l6", "%l7",
@@ -16,5 +15,5 @@
 	"%f40", "%f41", "%f42", "%f43", "%f44", "%f45", "%f46", "%f47",
 	"%f48", "%f49", "%f50", "%f51", "%f52", "%f53", "%f54", "%f55",
 	"%f56", "%f57", "%f58", "%f59", "%f60", "%f61", "%f62", "%f63",
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif

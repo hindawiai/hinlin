@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
+/* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
  *
  * Copyright (c) 2007-2010 VMware, Inc., Palo Alto, CA., USA
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -27,55 +26,55 @@
  *
  **************************************************************************/
 /*
- * Authors: Thomas Hellstrom <thellstrom-at-vmware-करोt-com>
+ * Authors: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
  */
 
-#समावेश <drm/tपंचांग/tपंचांग_bo_driver.h>
-#समावेश <drm/tपंचांग/tपंचांग_placement.h>
-#समावेश <drm/drm_mm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/module.h>
+#include <drm/ttm/ttm_bo_driver.h>
+#include <drm/ttm/ttm_placement.h>
+#include <drm/drm_mm.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/module.h>
 
 /*
- * Currently we use a spinlock क्रम the lock, but a mutex *may* be
- * more appropriate to reduce scheduling latency अगर the range manager
+ * Currently we use a spinlock for the lock, but a mutex *may* be
+ * more appropriate to reduce scheduling latency if the range manager
  * ends up with very fragmented allocation patterns.
  */
 
-काष्ठा tपंचांग_range_manager अणु
-	काष्ठा tपंचांग_resource_manager manager;
-	काष्ठा drm_mm mm;
+struct ttm_range_manager {
+	struct ttm_resource_manager manager;
+	struct drm_mm mm;
 	spinlock_t lock;
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा tपंचांग_range_manager *to_range_manager(काष्ठा tपंचांग_resource_manager *man)
-अणु
-	वापस container_of(man, काष्ठा tपंचांग_range_manager, manager);
-पूर्ण
+static inline struct ttm_range_manager *to_range_manager(struct ttm_resource_manager *man)
+{
+	return container_of(man, struct ttm_range_manager, manager);
+}
 
-अटल पूर्णांक tपंचांग_range_man_alloc(काष्ठा tपंचांग_resource_manager *man,
-			       काष्ठा tपंचांग_buffer_object *bo,
-			       स्थिर काष्ठा tपंचांग_place *place,
-			       काष्ठा tपंचांग_resource *mem)
-अणु
-	काष्ठा tपंचांग_range_manager *rman = to_range_manager(man);
-	काष्ठा drm_mm *mm = &rman->mm;
-	काष्ठा drm_mm_node *node;
-	क्रमागत drm_mm_insert_mode mode;
-	अचिन्हित दीर्घ lpfn;
-	पूर्णांक ret;
+static int ttm_range_man_alloc(struct ttm_resource_manager *man,
+			       struct ttm_buffer_object *bo,
+			       const struct ttm_place *place,
+			       struct ttm_resource *mem)
+{
+	struct ttm_range_manager *rman = to_range_manager(man);
+	struct drm_mm *mm = &rman->mm;
+	struct drm_mm_node *node;
+	enum drm_mm_insert_mode mode;
+	unsigned long lpfn;
+	int ret;
 
 	lpfn = place->lpfn;
-	अगर (!lpfn)
+	if (!lpfn)
 		lpfn = man->size;
 
-	node = kzalloc(माप(*node), GFP_KERNEL);
-	अगर (!node)
-		वापस -ENOMEM;
+	node = kzalloc(sizeof(*node), GFP_KERNEL);
+	if (!node)
+		return -ENOMEM;
 
 	mode = DRM_MM_INSERT_BEST;
-	अगर (place->flags & TTM_PL_FLAG_TOPDOWN)
+	if (place->flags & TTM_PL_FLAG_TOPDOWN)
 		mode = DRM_MM_INSERT_HIGH;
 
 	spin_lock(&rman->lock);
@@ -85,98 +84,98 @@
 					  place->fpfn, lpfn, mode);
 	spin_unlock(&rman->lock);
 
-	अगर (unlikely(ret)) अणु
-		kमुक्त(node);
-	पूर्ण अन्यथा अणु
+	if (unlikely(ret)) {
+		kfree(node);
+	} else {
 		mem->mm_node = node;
 		mem->start = node->start;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम tपंचांग_range_man_मुक्त(काष्ठा tपंचांग_resource_manager *man,
-			       काष्ठा tपंचांग_resource *mem)
-अणु
-	काष्ठा tपंचांग_range_manager *rman = to_range_manager(man);
+static void ttm_range_man_free(struct ttm_resource_manager *man,
+			       struct ttm_resource *mem)
+{
+	struct ttm_range_manager *rman = to_range_manager(man);
 
-	अगर (mem->mm_node) अणु
+	if (mem->mm_node) {
 		spin_lock(&rman->lock);
-		drm_mm_हटाओ_node(mem->mm_node);
+		drm_mm_remove_node(mem->mm_node);
 		spin_unlock(&rman->lock);
 
-		kमुक्त(mem->mm_node);
-		mem->mm_node = शून्य;
-	पूर्ण
-पूर्ण
+		kfree(mem->mm_node);
+		mem->mm_node = NULL;
+	}
+}
 
-अटल स्थिर काष्ठा tपंचांग_resource_manager_func tपंचांग_range_manager_func;
+static const struct ttm_resource_manager_func ttm_range_manager_func;
 
-पूर्णांक tपंचांग_range_man_init(काष्ठा tपंचांग_device *bdev,
-		       अचिन्हित type, bool use_tt,
-		       अचिन्हित दीर्घ p_size)
-अणु
-	काष्ठा tपंचांग_resource_manager *man;
-	काष्ठा tपंचांग_range_manager *rman;
+int ttm_range_man_init(struct ttm_device *bdev,
+		       unsigned type, bool use_tt,
+		       unsigned long p_size)
+{
+	struct ttm_resource_manager *man;
+	struct ttm_range_manager *rman;
 
-	rman = kzalloc(माप(*rman), GFP_KERNEL);
-	अगर (!rman)
-		वापस -ENOMEM;
+	rman = kzalloc(sizeof(*rman), GFP_KERNEL);
+	if (!rman)
+		return -ENOMEM;
 
 	man = &rman->manager;
 	man->use_tt = use_tt;
 
-	man->func = &tपंचांग_range_manager_func;
+	man->func = &ttm_range_manager_func;
 
-	tपंचांग_resource_manager_init(man, p_size);
+	ttm_resource_manager_init(man, p_size);
 
 	drm_mm_init(&rman->mm, 0, p_size);
 	spin_lock_init(&rman->lock);
 
-	tपंचांग_set_driver_manager(bdev, type, &rman->manager);
-	tपंचांग_resource_manager_set_used(man, true);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(tपंचांग_range_man_init);
+	ttm_set_driver_manager(bdev, type, &rman->manager);
+	ttm_resource_manager_set_used(man, true);
+	return 0;
+}
+EXPORT_SYMBOL(ttm_range_man_init);
 
-पूर्णांक tपंचांग_range_man_fini(काष्ठा tपंचांग_device *bdev,
-		       अचिन्हित type)
-अणु
-	काष्ठा tपंचांग_resource_manager *man = tपंचांग_manager_type(bdev, type);
-	काष्ठा tपंचांग_range_manager *rman = to_range_manager(man);
-	काष्ठा drm_mm *mm = &rman->mm;
-	पूर्णांक ret;
+int ttm_range_man_fini(struct ttm_device *bdev,
+		       unsigned type)
+{
+	struct ttm_resource_manager *man = ttm_manager_type(bdev, type);
+	struct ttm_range_manager *rman = to_range_manager(man);
+	struct drm_mm *mm = &rman->mm;
+	int ret;
 
-	tपंचांग_resource_manager_set_used(man, false);
+	ttm_resource_manager_set_used(man, false);
 
-	ret = tपंचांग_resource_manager_evict_all(bdev, man);
-	अगर (ret)
-		वापस ret;
+	ret = ttm_resource_manager_evict_all(bdev, man);
+	if (ret)
+		return ret;
 
 	spin_lock(&rman->lock);
 	drm_mm_clean(mm);
-	drm_mm_takeकरोwn(mm);
+	drm_mm_takedown(mm);
 	spin_unlock(&rman->lock);
 
-	tपंचांग_resource_manager_cleanup(man);
-	tपंचांग_set_driver_manager(bdev, type, शून्य);
-	kमुक्त(rman);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(tपंचांग_range_man_fini);
+	ttm_resource_manager_cleanup(man);
+	ttm_set_driver_manager(bdev, type, NULL);
+	kfree(rman);
+	return 0;
+}
+EXPORT_SYMBOL(ttm_range_man_fini);
 
-अटल व्योम tपंचांग_range_man_debug(काष्ठा tपंचांग_resource_manager *man,
-				काष्ठा drm_prपूर्णांकer *prपूर्णांकer)
-अणु
-	काष्ठा tपंचांग_range_manager *rman = to_range_manager(man);
+static void ttm_range_man_debug(struct ttm_resource_manager *man,
+				struct drm_printer *printer)
+{
+	struct ttm_range_manager *rman = to_range_manager(man);
 
 	spin_lock(&rman->lock);
-	drm_mm_prपूर्णांक(&rman->mm, prपूर्णांकer);
+	drm_mm_print(&rman->mm, printer);
 	spin_unlock(&rman->lock);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा tपंचांग_resource_manager_func tपंचांग_range_manager_func = अणु
-	.alloc = tपंचांग_range_man_alloc,
-	.मुक्त = tपंचांग_range_man_मुक्त,
-	.debug = tपंचांग_range_man_debug
-पूर्ण;
+static const struct ttm_resource_manager_func ttm_range_manager_func = {
+	.alloc = ttm_range_man_alloc,
+	.free = ttm_range_man_free,
+	.debug = ttm_range_man_debug
+};

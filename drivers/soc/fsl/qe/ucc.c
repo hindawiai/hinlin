@@ -1,46 +1,45 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * arch/घातerpc/sysdev/qe_lib/ucc.c
+ * arch/powerpc/sysdev/qe_lib/ucc.c
  *
- * QE UCC API Set - UCC specअगरic routines implementations.
+ * QE UCC API Set - UCC specific routines implementations.
  *
  * Copyright (C) 2006 Freescale Semiconductor, Inc. All rights reserved.
  *
- * Authors: 	Shlomi Gridish <gridish@मुक्तscale.com>
- * 		Li Yang <leoli@मुक्तscale.com>
+ * Authors: 	Shlomi Gridish <gridish@freescale.com>
+ * 		Li Yang <leoli@freescale.com>
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/export.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/stddef.h>
+#include <linux/spinlock.h>
+#include <linux/export.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <soc/fsl/qe/immap_qe.h>
-#समावेश <soc/fsl/qe/qe.h>
-#समावेश <soc/fsl/qe/ucc.h>
+#include <asm/io.h>
+#include <soc/fsl/qe/immap_qe.h>
+#include <soc/fsl/qe/qe.h>
+#include <soc/fsl/qe/ucc.h>
 
-#घोषणा UCC_TDM_NUM 8
-#घोषणा RX_SYNC_SHIFT_BASE 30
-#घोषणा TX_SYNC_SHIFT_BASE 14
-#घोषणा RX_CLK_SHIFT_BASE 28
-#घोषणा TX_CLK_SHIFT_BASE 12
+#define UCC_TDM_NUM 8
+#define RX_SYNC_SHIFT_BASE 30
+#define TX_SYNC_SHIFT_BASE 14
+#define RX_CLK_SHIFT_BASE 28
+#define TX_CLK_SHIFT_BASE 12
 
-पूर्णांक ucc_set_qe_mux_mii_mng(अचिन्हित पूर्णांक ucc_num)
-अणु
-	अचिन्हित दीर्घ flags;
+int ucc_set_qe_mux_mii_mng(unsigned int ucc_num)
+{
+	unsigned long flags;
 
-	अगर (ucc_num > UCC_MAX_NUM - 1)
-		वापस -EINVAL;
+	if (ucc_num > UCC_MAX_NUM - 1)
+		return -EINVAL;
 
 	spin_lock_irqsave(&cmxgcr_lock, flags);
 	qe_clrsetbits_be32(&qe_immr->qmx.cmxgcr, QE_CMXGCR_MII_ENET_MNG,
 			   ucc_num << QE_CMXGCR_MII_ENET_MNG_SHIFT);
 	spin_unlock_irqrestore(&cmxgcr_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(ucc_set_qe_mux_mii_mng);
 
 /* Configure the UCC to either Slow or Fast.
@@ -53,606 +52,606 @@ EXPORT_SYMBOL(ucc_set_qe_mux_mii_mng);
  * This function also sets the UCC_GUEMR_SET_RESERVED3 bit because that bit
  * must always be set to 1.
  */
-पूर्णांक ucc_set_type(अचिन्हित पूर्णांक ucc_num, क्रमागत ucc_speed_type speed)
-अणु
+int ucc_set_type(unsigned int ucc_num, enum ucc_speed_type speed)
+{
 	u8 __iomem *guemr;
 
-	/* The GUEMR रेजिस्टर is at the same location क्रम both slow and fast
+	/* The GUEMR register is at the same location for both slow and fast
 	   devices, so we just use uccX.slow.guemr. */
-	चयन (ucc_num) अणु
-	हाल 0: guemr = &qe_immr->ucc1.slow.guemr;
-		अवरोध;
-	हाल 1: guemr = &qe_immr->ucc2.slow.guemr;
-		अवरोध;
-	हाल 2: guemr = &qe_immr->ucc3.slow.guemr;
-		अवरोध;
-	हाल 3: guemr = &qe_immr->ucc4.slow.guemr;
-		अवरोध;
-	हाल 4: guemr = &qe_immr->ucc5.slow.guemr;
-		अवरोध;
-	हाल 5: guemr = &qe_immr->ucc6.slow.guemr;
-		अवरोध;
-	हाल 6: guemr = &qe_immr->ucc7.slow.guemr;
-		अवरोध;
-	हाल 7: guemr = &qe_immr->ucc8.slow.guemr;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (ucc_num) {
+	case 0: guemr = &qe_immr->ucc1.slow.guemr;
+		break;
+	case 1: guemr = &qe_immr->ucc2.slow.guemr;
+		break;
+	case 2: guemr = &qe_immr->ucc3.slow.guemr;
+		break;
+	case 3: guemr = &qe_immr->ucc4.slow.guemr;
+		break;
+	case 4: guemr = &qe_immr->ucc5.slow.guemr;
+		break;
+	case 5: guemr = &qe_immr->ucc6.slow.guemr;
+		break;
+	case 6: guemr = &qe_immr->ucc7.slow.guemr;
+		break;
+	case 7: guemr = &qe_immr->ucc8.slow.guemr;
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	qe_clrsetbits_8(guemr, UCC_GUEMR_MODE_MASK,
 			UCC_GUEMR_SET_RESERVED3 | speed);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम get_cmxucr_reg(अचिन्हित पूर्णांक ucc_num, __be32 __iomem **cmxucr,
-	अचिन्हित पूर्णांक *reg_num, अचिन्हित पूर्णांक *shअगरt)
-अणु
-	अचिन्हित पूर्णांक cmx = ((ucc_num & 1) << 1) + (ucc_num > 3);
+static void get_cmxucr_reg(unsigned int ucc_num, __be32 __iomem **cmxucr,
+	unsigned int *reg_num, unsigned int *shift)
+{
+	unsigned int cmx = ((ucc_num & 1) << 1) + (ucc_num > 3);
 
 	*reg_num = cmx + 1;
 	*cmxucr = &qe_immr->qmx.cmxucr[cmx];
-	*shअगरt = 16 - 8 * (ucc_num & 2);
-पूर्ण
+	*shift = 16 - 8 * (ucc_num & 2);
+}
 
-पूर्णांक ucc_mux_set_grant_tsa_bkpt(अचिन्हित पूर्णांक ucc_num, पूर्णांक set, u32 mask)
-अणु
+int ucc_mux_set_grant_tsa_bkpt(unsigned int ucc_num, int set, u32 mask)
+{
 	__be32 __iomem *cmxucr;
-	अचिन्हित पूर्णांक reg_num;
-	अचिन्हित पूर्णांक shअगरt;
+	unsigned int reg_num;
+	unsigned int shift;
 
-	/* check अगर the UCC number is in range. */
-	अगर (ucc_num > UCC_MAX_NUM - 1)
-		वापस -EINVAL;
+	/* check if the UCC number is in range. */
+	if (ucc_num > UCC_MAX_NUM - 1)
+		return -EINVAL;
 
-	get_cmxucr_reg(ucc_num, &cmxucr, &reg_num, &shअगरt);
+	get_cmxucr_reg(ucc_num, &cmxucr, &reg_num, &shift);
 
-	अगर (set)
-		qe_setbits_be32(cmxucr, mask << shअगरt);
-	अन्यथा
-		qe_clrbits_be32(cmxucr, mask << shअगरt);
+	if (set)
+		qe_setbits_be32(cmxucr, mask << shift);
+	else
+		qe_clrbits_be32(cmxucr, mask << shift);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ucc_set_qe_mux_rxtx(अचिन्हित पूर्णांक ucc_num, क्रमागत qe_घड़ी घड़ी,
-	क्रमागत comm_dir mode)
-अणु
+int ucc_set_qe_mux_rxtx(unsigned int ucc_num, enum qe_clock clock,
+	enum comm_dir mode)
+{
 	__be32 __iomem *cmxucr;
-	अचिन्हित पूर्णांक reg_num;
-	अचिन्हित पूर्णांक shअगरt;
-	u32 घड़ी_bits = 0;
+	unsigned int reg_num;
+	unsigned int shift;
+	u32 clock_bits = 0;
 
-	/* check अगर the UCC number is in range. */
-	अगर (ucc_num > UCC_MAX_NUM - 1)
-		वापस -EINVAL;
+	/* check if the UCC number is in range. */
+	if (ucc_num > UCC_MAX_NUM - 1)
+		return -EINVAL;
 
 	/* The communications direction must be RX or TX */
-	अगर (!((mode == COMM_सूची_RX) || (mode == COMM_सूची_TX)))
-		वापस -EINVAL;
+	if (!((mode == COMM_DIR_RX) || (mode == COMM_DIR_TX)))
+		return -EINVAL;
 
-	get_cmxucr_reg(ucc_num, &cmxucr, &reg_num, &shअगरt);
+	get_cmxucr_reg(ucc_num, &cmxucr, &reg_num, &shift);
 
-	चयन (reg_num) अणु
-	हाल 1:
-		चयन (घड़ी) अणु
-		हाल QE_BRG1:	घड़ी_bits = 1; अवरोध;
-		हाल QE_BRG2:	घड़ी_bits = 2; अवरोध;
-		हाल QE_BRG7:	घड़ी_bits = 3; अवरोध;
-		हाल QE_BRG8:	घड़ी_bits = 4; अवरोध;
-		हाल QE_CLK9:	घड़ी_bits = 5; अवरोध;
-		हाल QE_CLK10:	घड़ी_bits = 6; अवरोध;
-		हाल QE_CLK11:	घड़ी_bits = 7; अवरोध;
-		हाल QE_CLK12:	घड़ी_bits = 8; अवरोध;
-		हाल QE_CLK15:	घड़ी_bits = 9; अवरोध;
-		हाल QE_CLK16:	घड़ी_bits = 10; अवरोध;
-		शेष: अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 2:
-		चयन (घड़ी) अणु
-		हाल QE_BRG5:	घड़ी_bits = 1; अवरोध;
-		हाल QE_BRG6:	घड़ी_bits = 2; अवरोध;
-		हाल QE_BRG7:	घड़ी_bits = 3; अवरोध;
-		हाल QE_BRG8:	घड़ी_bits = 4; अवरोध;
-		हाल QE_CLK13:	घड़ी_bits = 5; अवरोध;
-		हाल QE_CLK14:	घड़ी_bits = 6; अवरोध;
-		हाल QE_CLK19:	घड़ी_bits = 7; अवरोध;
-		हाल QE_CLK20:	घड़ी_bits = 8; अवरोध;
-		हाल QE_CLK15:	घड़ी_bits = 9; अवरोध;
-		हाल QE_CLK16:	घड़ी_bits = 10; अवरोध;
-		शेष: अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 3:
-		चयन (घड़ी) अणु
-		हाल QE_BRG9:	घड़ी_bits = 1; अवरोध;
-		हाल QE_BRG10:	घड़ी_bits = 2; अवरोध;
-		हाल QE_BRG15:	घड़ी_bits = 3; अवरोध;
-		हाल QE_BRG16:	घड़ी_bits = 4; अवरोध;
-		हाल QE_CLK3:	घड़ी_bits = 5; अवरोध;
-		हाल QE_CLK4:	घड़ी_bits = 6; अवरोध;
-		हाल QE_CLK17:	घड़ी_bits = 7; अवरोध;
-		हाल QE_CLK18:	घड़ी_bits = 8; अवरोध;
-		हाल QE_CLK7:	घड़ी_bits = 9; अवरोध;
-		हाल QE_CLK8:	घड़ी_bits = 10; अवरोध;
-		हाल QE_CLK16:	घड़ी_bits = 11; अवरोध;
-		शेष: अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 4:
-		चयन (घड़ी) अणु
-		हाल QE_BRG13:	घड़ी_bits = 1; अवरोध;
-		हाल QE_BRG14:	घड़ी_bits = 2; अवरोध;
-		हाल QE_BRG15:	घड़ी_bits = 3; अवरोध;
-		हाल QE_BRG16:	घड़ी_bits = 4; अवरोध;
-		हाल QE_CLK5:	घड़ी_bits = 5; अवरोध;
-		हाल QE_CLK6:	घड़ी_bits = 6; अवरोध;
-		हाल QE_CLK21:	घड़ी_bits = 7; अवरोध;
-		हाल QE_CLK22:	घड़ी_bits = 8; अवरोध;
-		हाल QE_CLK7:	घड़ी_bits = 9; अवरोध;
-		हाल QE_CLK8:	घड़ी_bits = 10; अवरोध;
-		हाल QE_CLK16:	घड़ी_bits = 11; अवरोध;
-		शेष: अवरोध;
-		पूर्ण
-		अवरोध;
-	शेष: अवरोध;
-	पूर्ण
+	switch (reg_num) {
+	case 1:
+		switch (clock) {
+		case QE_BRG1:	clock_bits = 1; break;
+		case QE_BRG2:	clock_bits = 2; break;
+		case QE_BRG7:	clock_bits = 3; break;
+		case QE_BRG8:	clock_bits = 4; break;
+		case QE_CLK9:	clock_bits = 5; break;
+		case QE_CLK10:	clock_bits = 6; break;
+		case QE_CLK11:	clock_bits = 7; break;
+		case QE_CLK12:	clock_bits = 8; break;
+		case QE_CLK15:	clock_bits = 9; break;
+		case QE_CLK16:	clock_bits = 10; break;
+		default: break;
+		}
+		break;
+	case 2:
+		switch (clock) {
+		case QE_BRG5:	clock_bits = 1; break;
+		case QE_BRG6:	clock_bits = 2; break;
+		case QE_BRG7:	clock_bits = 3; break;
+		case QE_BRG8:	clock_bits = 4; break;
+		case QE_CLK13:	clock_bits = 5; break;
+		case QE_CLK14:	clock_bits = 6; break;
+		case QE_CLK19:	clock_bits = 7; break;
+		case QE_CLK20:	clock_bits = 8; break;
+		case QE_CLK15:	clock_bits = 9; break;
+		case QE_CLK16:	clock_bits = 10; break;
+		default: break;
+		}
+		break;
+	case 3:
+		switch (clock) {
+		case QE_BRG9:	clock_bits = 1; break;
+		case QE_BRG10:	clock_bits = 2; break;
+		case QE_BRG15:	clock_bits = 3; break;
+		case QE_BRG16:	clock_bits = 4; break;
+		case QE_CLK3:	clock_bits = 5; break;
+		case QE_CLK4:	clock_bits = 6; break;
+		case QE_CLK17:	clock_bits = 7; break;
+		case QE_CLK18:	clock_bits = 8; break;
+		case QE_CLK7:	clock_bits = 9; break;
+		case QE_CLK8:	clock_bits = 10; break;
+		case QE_CLK16:	clock_bits = 11; break;
+		default: break;
+		}
+		break;
+	case 4:
+		switch (clock) {
+		case QE_BRG13:	clock_bits = 1; break;
+		case QE_BRG14:	clock_bits = 2; break;
+		case QE_BRG15:	clock_bits = 3; break;
+		case QE_BRG16:	clock_bits = 4; break;
+		case QE_CLK5:	clock_bits = 5; break;
+		case QE_CLK6:	clock_bits = 6; break;
+		case QE_CLK21:	clock_bits = 7; break;
+		case QE_CLK22:	clock_bits = 8; break;
+		case QE_CLK7:	clock_bits = 9; break;
+		case QE_CLK8:	clock_bits = 10; break;
+		case QE_CLK16:	clock_bits = 11; break;
+		default: break;
+		}
+		break;
+	default: break;
+	}
 
-	/* Check क्रम invalid combination of घड़ी and UCC number */
-	अगर (!घड़ी_bits)
-		वापस -ENOENT;
+	/* Check for invalid combination of clock and UCC number */
+	if (!clock_bits)
+		return -ENOENT;
 
-	अगर (mode == COMM_सूची_RX)
-		shअगरt += 4;
+	if (mode == COMM_DIR_RX)
+		shift += 4;
 
-	qe_clrsetbits_be32(cmxucr, QE_CMXUCR_TX_CLK_SRC_MASK << shअगरt,
-			   घड़ी_bits << shअगरt);
+	qe_clrsetbits_be32(cmxucr, QE_CMXUCR_TX_CLK_SRC_MASK << shift,
+			   clock_bits << shift);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ucc_get_tdm_common_clk(u32 tdm_num, क्रमागत qe_घड़ी घड़ी)
-अणु
-	पूर्णांक घड़ी_bits = -EINVAL;
+static int ucc_get_tdm_common_clk(u32 tdm_num, enum qe_clock clock)
+{
+	int clock_bits = -EINVAL;
 
 	/*
-	 * क्रम TDM[0, 1, 2, 3], TX and RX use  common
-	 * घड़ी source BRG3,4 and CLK1,2
-	 * क्रम TDM[4, 5, 6, 7], TX and RX use  common
-	 * घड़ी source BRG12,13 and CLK23,24
+	 * for TDM[0, 1, 2, 3], TX and RX use  common
+	 * clock source BRG3,4 and CLK1,2
+	 * for TDM[4, 5, 6, 7], TX and RX use  common
+	 * clock source BRG12,13 and CLK23,24
 	 */
-	चयन (tdm_num) अणु
-	हाल 0:
-	हाल 1:
-	हाल 2:
-	हाल 3:
-		चयन (घड़ी) अणु
-		हाल QE_BRG3:
-			घड़ी_bits = 1;
-			अवरोध;
-		हाल QE_BRG4:
-			घड़ी_bits = 2;
-			अवरोध;
-		हाल QE_CLK1:
-			घड़ी_bits = 4;
-			अवरोध;
-		हाल QE_CLK2:
-			घड़ी_bits = 5;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 4:
-	हाल 5:
-	हाल 6:
-	हाल 7:
-		चयन (घड़ी) अणु
-		हाल QE_BRG12:
-			घड़ी_bits = 1;
-			अवरोध;
-		हाल QE_BRG13:
-			घड़ी_bits = 2;
-			अवरोध;
-		हाल QE_CLK23:
-			घड़ी_bits = 4;
-			अवरोध;
-		हाल QE_CLK24:
-			घड़ी_bits = 5;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (tdm_num) {
+	case 0:
+	case 1:
+	case 2:
+	case 3:
+		switch (clock) {
+		case QE_BRG3:
+			clock_bits = 1;
+			break;
+		case QE_BRG4:
+			clock_bits = 2;
+			break;
+		case QE_CLK1:
+			clock_bits = 4;
+			break;
+		case QE_CLK2:
+			clock_bits = 5;
+			break;
+		default:
+			break;
+		}
+		break;
+	case 4:
+	case 5:
+	case 6:
+	case 7:
+		switch (clock) {
+		case QE_BRG12:
+			clock_bits = 1;
+			break;
+		case QE_BRG13:
+			clock_bits = 2;
+			break;
+		case QE_CLK23:
+			clock_bits = 4;
+			break;
+		case QE_CLK24:
+			clock_bits = 5;
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		break;
+	}
 
-	वापस घड़ी_bits;
-पूर्ण
+	return clock_bits;
+}
 
-अटल पूर्णांक ucc_get_tdm_rx_clk(u32 tdm_num, क्रमागत qe_घड़ी घड़ी)
-अणु
-	पूर्णांक घड़ी_bits = -EINVAL;
+static int ucc_get_tdm_rx_clk(u32 tdm_num, enum qe_clock clock)
+{
+	int clock_bits = -EINVAL;
 
-	चयन (tdm_num) अणु
-	हाल 0:
-		चयन (घड़ी) अणु
-		हाल QE_CLK3:
-			घड़ी_bits = 6;
-			अवरोध;
-		हाल QE_CLK8:
-			घड़ी_bits = 7;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 1:
-		चयन (घड़ी) अणु
-		हाल QE_CLK5:
-			घड़ी_bits = 6;
-			अवरोध;
-		हाल QE_CLK10:
-			घड़ी_bits = 7;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 2:
-		चयन (घड़ी) अणु
-		हाल QE_CLK7:
-			घड़ी_bits = 6;
-			अवरोध;
-		हाल QE_CLK12:
-			घड़ी_bits = 7;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 3:
-		चयन (घड़ी) अणु
-		हाल QE_CLK9:
-			घड़ी_bits = 6;
-			अवरोध;
-		हाल QE_CLK14:
-			घड़ी_bits = 7;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 4:
-		चयन (घड़ी) अणु
-		हाल QE_CLK11:
-			घड़ी_bits = 6;
-			अवरोध;
-		हाल QE_CLK16:
-			घड़ी_bits = 7;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 5:
-		चयन (घड़ी) अणु
-		हाल QE_CLK13:
-			घड़ी_bits = 6;
-			अवरोध;
-		हाल QE_CLK18:
-			घड़ी_bits = 7;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 6:
-		चयन (घड़ी) अणु
-		हाल QE_CLK15:
-			घड़ी_bits = 6;
-			अवरोध;
-		हाल QE_CLK20:
-			घड़ी_bits = 7;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 7:
-		चयन (घड़ी) अणु
-		हाल QE_CLK17:
-			घड़ी_bits = 6;
-			अवरोध;
-		हाल QE_CLK22:
-			घड़ी_bits = 7;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+	switch (tdm_num) {
+	case 0:
+		switch (clock) {
+		case QE_CLK3:
+			clock_bits = 6;
+			break;
+		case QE_CLK8:
+			clock_bits = 7;
+			break;
+		default:
+			break;
+		}
+		break;
+	case 1:
+		switch (clock) {
+		case QE_CLK5:
+			clock_bits = 6;
+			break;
+		case QE_CLK10:
+			clock_bits = 7;
+			break;
+		default:
+			break;
+		}
+		break;
+	case 2:
+		switch (clock) {
+		case QE_CLK7:
+			clock_bits = 6;
+			break;
+		case QE_CLK12:
+			clock_bits = 7;
+			break;
+		default:
+			break;
+		}
+		break;
+	case 3:
+		switch (clock) {
+		case QE_CLK9:
+			clock_bits = 6;
+			break;
+		case QE_CLK14:
+			clock_bits = 7;
+			break;
+		default:
+			break;
+		}
+		break;
+	case 4:
+		switch (clock) {
+		case QE_CLK11:
+			clock_bits = 6;
+			break;
+		case QE_CLK16:
+			clock_bits = 7;
+			break;
+		default:
+			break;
+		}
+		break;
+	case 5:
+		switch (clock) {
+		case QE_CLK13:
+			clock_bits = 6;
+			break;
+		case QE_CLK18:
+			clock_bits = 7;
+			break;
+		default:
+			break;
+		}
+		break;
+	case 6:
+		switch (clock) {
+		case QE_CLK15:
+			clock_bits = 6;
+			break;
+		case QE_CLK20:
+			clock_bits = 7;
+			break;
+		default:
+			break;
+		}
+		break;
+	case 7:
+		switch (clock) {
+		case QE_CLK17:
+			clock_bits = 6;
+			break;
+		case QE_CLK22:
+			clock_bits = 7;
+			break;
+		default:
+			break;
+		}
+		break;
+	}
 
-	वापस घड़ी_bits;
-पूर्ण
+	return clock_bits;
+}
 
-अटल पूर्णांक ucc_get_tdm_tx_clk(u32 tdm_num, क्रमागत qe_घड़ी घड़ी)
-अणु
-	पूर्णांक घड़ी_bits = -EINVAL;
+static int ucc_get_tdm_tx_clk(u32 tdm_num, enum qe_clock clock)
+{
+	int clock_bits = -EINVAL;
 
-	चयन (tdm_num) अणु
-	हाल 0:
-		चयन (घड़ी) अणु
-		हाल QE_CLK4:
-			घड़ी_bits = 6;
-			अवरोध;
-		हाल QE_CLK9:
-			घड़ी_bits = 7;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 1:
-		चयन (घड़ी) अणु
-		हाल QE_CLK6:
-			घड़ी_bits = 6;
-			अवरोध;
-		हाल QE_CLK11:
-			घड़ी_bits = 7;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 2:
-		चयन (घड़ी) अणु
-		हाल QE_CLK8:
-			घड़ी_bits = 6;
-			अवरोध;
-		हाल QE_CLK13:
-			घड़ी_bits = 7;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 3:
-		चयन (घड़ी) अणु
-		हाल QE_CLK10:
-			घड़ी_bits = 6;
-			अवरोध;
-		हाल QE_CLK15:
-			घड़ी_bits = 7;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 4:
-		चयन (घड़ी) अणु
-		हाल QE_CLK12:
-			घड़ी_bits = 6;
-			अवरोध;
-		हाल QE_CLK17:
-			घड़ी_bits = 7;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 5:
-		चयन (घड़ी) अणु
-		हाल QE_CLK14:
-			घड़ी_bits = 6;
-			अवरोध;
-		हाल QE_CLK19:
-			घड़ी_bits = 7;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 6:
-		चयन (घड़ी) अणु
-		हाल QE_CLK16:
-			घड़ी_bits = 6;
-			अवरोध;
-		हाल QE_CLK21:
-			घड़ी_bits = 7;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 7:
-		चयन (घड़ी) अणु
-		हाल QE_CLK18:
-			घड़ी_bits = 6;
-			अवरोध;
-		हाल QE_CLK3:
-			घड़ी_bits = 7;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+	switch (tdm_num) {
+	case 0:
+		switch (clock) {
+		case QE_CLK4:
+			clock_bits = 6;
+			break;
+		case QE_CLK9:
+			clock_bits = 7;
+			break;
+		default:
+			break;
+		}
+		break;
+	case 1:
+		switch (clock) {
+		case QE_CLK6:
+			clock_bits = 6;
+			break;
+		case QE_CLK11:
+			clock_bits = 7;
+			break;
+		default:
+			break;
+		}
+		break;
+	case 2:
+		switch (clock) {
+		case QE_CLK8:
+			clock_bits = 6;
+			break;
+		case QE_CLK13:
+			clock_bits = 7;
+			break;
+		default:
+			break;
+		}
+		break;
+	case 3:
+		switch (clock) {
+		case QE_CLK10:
+			clock_bits = 6;
+			break;
+		case QE_CLK15:
+			clock_bits = 7;
+			break;
+		default:
+			break;
+		}
+		break;
+	case 4:
+		switch (clock) {
+		case QE_CLK12:
+			clock_bits = 6;
+			break;
+		case QE_CLK17:
+			clock_bits = 7;
+			break;
+		default:
+			break;
+		}
+		break;
+	case 5:
+		switch (clock) {
+		case QE_CLK14:
+			clock_bits = 6;
+			break;
+		case QE_CLK19:
+			clock_bits = 7;
+			break;
+		default:
+			break;
+		}
+		break;
+	case 6:
+		switch (clock) {
+		case QE_CLK16:
+			clock_bits = 6;
+			break;
+		case QE_CLK21:
+			clock_bits = 7;
+			break;
+		default:
+			break;
+		}
+		break;
+	case 7:
+		switch (clock) {
+		case QE_CLK18:
+			clock_bits = 6;
+			break;
+		case QE_CLK3:
+			clock_bits = 7;
+			break;
+		default:
+			break;
+		}
+		break;
+	}
 
-	वापस घड़ी_bits;
-पूर्ण
+	return clock_bits;
+}
 
 /* tdm_num: TDM A-H port num is 0-7 */
-अटल पूर्णांक ucc_get_tdm_rxtx_clk(क्रमागत comm_dir mode, u32 tdm_num,
-				क्रमागत qe_घड़ी घड़ी)
-अणु
-	पूर्णांक घड़ी_bits;
+static int ucc_get_tdm_rxtx_clk(enum comm_dir mode, u32 tdm_num,
+				enum qe_clock clock)
+{
+	int clock_bits;
 
-	घड़ी_bits = ucc_get_tdm_common_clk(tdm_num, घड़ी);
-	अगर (घड़ी_bits > 0)
-		वापस घड़ी_bits;
-	अगर (mode == COMM_सूची_RX)
-		घड़ी_bits = ucc_get_tdm_rx_clk(tdm_num, घड़ी);
-	अगर (mode == COMM_सूची_TX)
-		घड़ी_bits = ucc_get_tdm_tx_clk(tdm_num, घड़ी);
-	वापस घड़ी_bits;
-पूर्ण
+	clock_bits = ucc_get_tdm_common_clk(tdm_num, clock);
+	if (clock_bits > 0)
+		return clock_bits;
+	if (mode == COMM_DIR_RX)
+		clock_bits = ucc_get_tdm_rx_clk(tdm_num, clock);
+	if (mode == COMM_DIR_TX)
+		clock_bits = ucc_get_tdm_tx_clk(tdm_num, clock);
+	return clock_bits;
+}
 
-अटल u32 ucc_get_tdm_clk_shअगरt(क्रमागत comm_dir mode, u32 tdm_num)
-अणु
-	u32 shअगरt;
+static u32 ucc_get_tdm_clk_shift(enum comm_dir mode, u32 tdm_num)
+{
+	u32 shift;
 
-	shअगरt = (mode == COMM_सूची_RX) ? RX_CLK_SHIFT_BASE : TX_CLK_SHIFT_BASE;
-	अगर (tdm_num < 4)
-		shअगरt -= tdm_num * 4;
-	अन्यथा
-		shअगरt -= (tdm_num - 4) * 4;
+	shift = (mode == COMM_DIR_RX) ? RX_CLK_SHIFT_BASE : TX_CLK_SHIFT_BASE;
+	if (tdm_num < 4)
+		shift -= tdm_num * 4;
+	else
+		shift -= (tdm_num - 4) * 4;
 
-	वापस shअगरt;
-पूर्ण
+	return shift;
+}
 
-पूर्णांक ucc_set_tdm_rxtx_clk(u32 tdm_num, क्रमागत qe_घड़ी घड़ी,
-			 क्रमागत comm_dir mode)
-अणु
-	पूर्णांक घड़ी_bits;
-	u32 shअगरt;
-	काष्ठा qe_mux __iomem *qe_mux_reg;
+int ucc_set_tdm_rxtx_clk(u32 tdm_num, enum qe_clock clock,
+			 enum comm_dir mode)
+{
+	int clock_bits;
+	u32 shift;
+	struct qe_mux __iomem *qe_mux_reg;
 	__be32 __iomem *cmxs1cr;
 
 	qe_mux_reg = &qe_immr->qmx;
 
-	अगर (tdm_num > 7)
-		वापस -EINVAL;
+	if (tdm_num > 7)
+		return -EINVAL;
 
 	/* The communications direction must be RX or TX */
-	अगर (mode != COMM_सूची_RX && mode != COMM_सूची_TX)
-		वापस -EINVAL;
+	if (mode != COMM_DIR_RX && mode != COMM_DIR_TX)
+		return -EINVAL;
 
-	घड़ी_bits = ucc_get_tdm_rxtx_clk(mode, tdm_num, घड़ी);
-	अगर (घड़ी_bits < 0)
-		वापस -EINVAL;
+	clock_bits = ucc_get_tdm_rxtx_clk(mode, tdm_num, clock);
+	if (clock_bits < 0)
+		return -EINVAL;
 
-	shअगरt = ucc_get_tdm_clk_shअगरt(mode, tdm_num);
+	shift = ucc_get_tdm_clk_shift(mode, tdm_num);
 
 	cmxs1cr = (tdm_num < 4) ? &qe_mux_reg->cmxsi1cr_l :
 				  &qe_mux_reg->cmxsi1cr_h;
 
-	qe_clrsetbits_be32(cmxs1cr, QE_CMXUCR_TX_CLK_SRC_MASK << shअगरt,
-			   घड़ी_bits << shअगरt);
+	qe_clrsetbits_be32(cmxs1cr, QE_CMXUCR_TX_CLK_SRC_MASK << shift,
+			   clock_bits << shift);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ucc_get_tdm_sync_source(u32 tdm_num, क्रमागत qe_घड़ी घड़ी,
-				   क्रमागत comm_dir mode)
-अणु
-	पूर्णांक source = -EINVAL;
+static int ucc_get_tdm_sync_source(u32 tdm_num, enum qe_clock clock,
+				   enum comm_dir mode)
+{
+	int source = -EINVAL;
 
-	अगर (mode == COMM_सूची_RX && घड़ी == QE_RSYNC_PIN) अणु
+	if (mode == COMM_DIR_RX && clock == QE_RSYNC_PIN) {
 		source = 0;
-		वापस source;
-	पूर्ण
-	अगर (mode == COMM_सूची_TX && घड़ी == QE_TSYNC_PIN) अणु
+		return source;
+	}
+	if (mode == COMM_DIR_TX && clock == QE_TSYNC_PIN) {
 		source = 0;
-		वापस source;
-	पूर्ण
+		return source;
+	}
 
-	चयन (tdm_num) अणु
-	हाल 0:
-	हाल 1:
-		चयन (घड़ी) अणु
-		हाल QE_BRG9:
+	switch (tdm_num) {
+	case 0:
+	case 1:
+		switch (clock) {
+		case QE_BRG9:
 			source = 1;
-			अवरोध;
-		हाल QE_BRG10:
+			break;
+		case QE_BRG10:
 			source = 2;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 2:
-	हाल 3:
-		चयन (घड़ी) अणु
-		हाल QE_BRG9:
+			break;
+		default:
+			break;
+		}
+		break;
+	case 2:
+	case 3:
+		switch (clock) {
+		case QE_BRG9:
 			source = 1;
-			अवरोध;
-		हाल QE_BRG11:
+			break;
+		case QE_BRG11:
 			source = 2;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 4:
-	हाल 5:
-		चयन (घड़ी) अणु
-		हाल QE_BRG13:
+			break;
+		default:
+			break;
+		}
+		break;
+	case 4:
+	case 5:
+		switch (clock) {
+		case QE_BRG13:
 			source = 1;
-			अवरोध;
-		हाल QE_BRG14:
+			break;
+		case QE_BRG14:
 			source = 2;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल 6:
-	हाल 7:
-		चयन (घड़ी) अणु
-		हाल QE_BRG13:
+			break;
+		default:
+			break;
+		}
+		break;
+	case 6:
+	case 7:
+		switch (clock) {
+		case QE_BRG13:
 			source = 1;
-			अवरोध;
-		हाल QE_BRG15:
+			break;
+		case QE_BRG15:
 			source = 2;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			break;
+		default:
+			break;
+		}
+		break;
+	}
 
-	वापस source;
-पूर्ण
+	return source;
+}
 
-अटल u32 ucc_get_tdm_sync_shअगरt(क्रमागत comm_dir mode, u32 tdm_num)
-अणु
-	u32 shअगरt;
+static u32 ucc_get_tdm_sync_shift(enum comm_dir mode, u32 tdm_num)
+{
+	u32 shift;
 
-	shअगरt = (mode == COMM_सूची_RX) ? RX_SYNC_SHIFT_BASE : TX_SYNC_SHIFT_BASE;
-	shअगरt -= tdm_num * 2;
+	shift = (mode == COMM_DIR_RX) ? RX_SYNC_SHIFT_BASE : TX_SYNC_SHIFT_BASE;
+	shift -= tdm_num * 2;
 
-	वापस shअगरt;
-पूर्ण
+	return shift;
+}
 
-पूर्णांक ucc_set_tdm_rxtx_sync(u32 tdm_num, क्रमागत qe_घड़ी घड़ी,
-			  क्रमागत comm_dir mode)
-अणु
-	पूर्णांक source;
-	u32 shअगरt;
-	काष्ठा qe_mux __iomem *qe_mux_reg;
+int ucc_set_tdm_rxtx_sync(u32 tdm_num, enum qe_clock clock,
+			  enum comm_dir mode)
+{
+	int source;
+	u32 shift;
+	struct qe_mux __iomem *qe_mux_reg;
 
 	qe_mux_reg = &qe_immr->qmx;
 
-	अगर (tdm_num >= UCC_TDM_NUM)
-		वापस -EINVAL;
+	if (tdm_num >= UCC_TDM_NUM)
+		return -EINVAL;
 
 	/* The communications direction must be RX or TX */
-	अगर (mode != COMM_सूची_RX && mode != COMM_सूची_TX)
-		वापस -EINVAL;
+	if (mode != COMM_DIR_RX && mode != COMM_DIR_TX)
+		return -EINVAL;
 
-	source = ucc_get_tdm_sync_source(tdm_num, घड़ी, mode);
-	अगर (source < 0)
-		वापस -EINVAL;
+	source = ucc_get_tdm_sync_source(tdm_num, clock, mode);
+	if (source < 0)
+		return -EINVAL;
 
-	shअगरt = ucc_get_tdm_sync_shअगरt(mode, tdm_num);
+	shift = ucc_get_tdm_sync_shift(mode, tdm_num);
 
 	qe_clrsetbits_be32(&qe_mux_reg->cmxsi1syr,
-			   QE_CMXUCR_TX_CLK_SRC_MASK << shअगरt,
-			   source << shअगरt);
+			   QE_CMXUCR_TX_CLK_SRC_MASK << shift,
+			   source << shift);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

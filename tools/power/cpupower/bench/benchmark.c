@@ -1,182 +1,181 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*  cpufreq-bench CPUFreq microbenchmark
  *
  *  Copyright (C) 2008 Christian Kornacker <ckornacker@suse.de>
  */
 
-#समावेश <मानकपन.स>
-#समावेश <unistd.h>
-#समावेश <गणित.स>
+#include <stdio.h>
+#include <unistd.h>
+#include <math.h>
 
-#समावेश "config.h"
-#समावेश "system.h"
-#समावेश "benchmark.h"
+#include "config.h"
+#include "system.h"
+#include "benchmark.h"
 
-/* Prपूर्णांक out progress अगर we log पूर्णांकo a file */
-#घोषणा show_progress(total_समय, progress_समय)	\
-अगर (config->output != मानक_निकास) अणु				\
-	ख_लिखो(मानक_निकास, "Progress: %02lu %%\r",		\
-		(progress_समय * 100) / total_समय);	\
-	ख_साफ(मानक_निकास);					\
-पूर्ण
+/* Print out progress if we log into a file */
+#define show_progress(total_time, progress_time)	\
+if (config->output != stdout) {				\
+	fprintf(stdout, "Progress: %02lu %%\r",		\
+		(progress_time * 100) / total_time);	\
+	fflush(stdout);					\
+}
 
 /**
- * compute how many rounds of calculation we should करो
- * to get the given load समय
+ * compute how many rounds of calculation we should do
+ * to get the given load time
  *
- * @param load aimed load समय in तगs
+ * @param load aimed load time in µs
  *
  * @retval rounds of calculation
  **/
 
-अचिन्हित पूर्णांक calculate_बारpace(दीर्घ load, काष्ठा config *config)
-अणु
-	पूर्णांक i;
-	दीर्घ दीर्घ now, then;
-	अचिन्हित पूर्णांक estimated = GAUGECOUNT;
-	अचिन्हित पूर्णांक rounds = 0;
-	अचिन्हित पूर्णांक समयd = 0;
+unsigned int calculate_timespace(long load, struct config *config)
+{
+	int i;
+	long long now, then;
+	unsigned int estimated = GAUGECOUNT;
+	unsigned int rounds = 0;
+	unsigned int timed = 0;
 
-	अगर (config->verbose)
-		म_लिखो("calibrating load of %lius, please wait...\n", load);
+	if (config->verbose)
+		printf("calibrating load of %lius, please wait...\n", load);
 
-	/* get the initial calculation समय क्रम a specअगरic number of rounds */
-	now = get_समय();
+	/* get the initial calculation time for a specific number of rounds */
+	now = get_time();
 	ROUNDS(estimated);
-	then = get_समय();
+	then = get_time();
 
-	समयd = (अचिन्हित पूर्णांक)(then - now);
+	timed = (unsigned int)(then - now);
 
-	/* approximation of the wanted load समय by comparing with the
-	 * initial calculation समय */
-	क्रम (i = 0; i < 4; i++) अणु
-		rounds = (अचिन्हित पूर्णांक)(load * estimated / समयd);
-		dम_लिखो("calibrating with %u rounds\n", rounds);
-		now = get_समय();
+	/* approximation of the wanted load time by comparing with the
+	 * initial calculation time */
+	for (i = 0; i < 4; i++) {
+		rounds = (unsigned int)(load * estimated / timed);
+		dprintf("calibrating with %u rounds\n", rounds);
+		now = get_time();
 		ROUNDS(rounds);
-		then = get_समय();
+		then = get_time();
 
-		समयd = (अचिन्हित पूर्णांक)(then - now);
+		timed = (unsigned int)(then - now);
 		estimated = rounds;
-	पूर्ण
-	अगर (config->verbose)
-		म_लिखो("calibration done\n");
+	}
+	if (config->verbose)
+		printf("calibration done\n");
 
-	वापस estimated;
-पूर्ण
+	return estimated;
+}
 
 /**
  * benchmark
- * generates a specअगरic sleep an load समय with the perक्रमmance
- * governor and compares the used समय क्रम same calculations करोne
- * with the configured घातersave governor
+ * generates a specific sleep an load time with the performance
+ * governor and compares the used time for same calculations done
+ * with the configured powersave governor
  *
- * @param config config values क्रम the benchmark
+ * @param config config values for the benchmark
  *
  **/
 
-व्योम start_benchmark(काष्ठा config *config)
-अणु
-	अचिन्हित पूर्णांक _round, cycle;
-	दीर्घ दीर्घ now, then;
-	दीर्घ sleep_समय = 0, load_समय = 0;
-	दीर्घ perक्रमmance_समय = 0, घातersave_समय = 0;
-	अचिन्हित पूर्णांक calculations;
-	अचिन्हित दीर्घ total_समय = 0, progress_समय = 0;
+void start_benchmark(struct config *config)
+{
+	unsigned int _round, cycle;
+	long long now, then;
+	long sleep_time = 0, load_time = 0;
+	long performance_time = 0, powersave_time = 0;
+	unsigned int calculations;
+	unsigned long total_time = 0, progress_time = 0;
 
-	sleep_समय = config->sleep;
-	load_समय = config->load;
+	sleep_time = config->sleep;
+	load_time = config->load;
 
 	/* For the progress bar */
-	क्रम (_round = 1; _round <= config->rounds; _round++)
-		total_समय += _round * (config->sleep + config->load);
-	total_समय *= 2; /* घातersave and perक्रमmance cycles */
+	for (_round = 1; _round <= config->rounds; _round++)
+		total_time += _round * (config->sleep + config->load);
+	total_time *= 2; /* powersave and performance cycles */
 
-	क्रम (_round = 0; _round < config->rounds; _round++) अणु
-		perक्रमmance_समय = 0LL;
-		घातersave_समय = 0LL;
+	for (_round = 0; _round < config->rounds; _round++) {
+		performance_time = 0LL;
+		powersave_time = 0LL;
 
-		show_progress(total_समय, progress_समय);
+		show_progress(total_time, progress_time);
 
 		/* set the cpufreq governor to "performance" which disables
-		 * P-State चयनing. */
-		अगर (set_cpufreq_governor("performance", config->cpu) != 0)
-			वापस;
+		 * P-State switching. */
+		if (set_cpufreq_governor("performance", config->cpu) != 0)
+			return;
 
-		/* calibrate the calculation समय. the resulting calculation
+		/* calibrate the calculation time. the resulting calculation
 		 * _rounds should produce a load which matches the configured
-		 * load समय */
-		calculations = calculate_बारpace(load_समय, config);
+		 * load time */
+		calculations = calculate_timespace(load_time, config);
 
-		अगर (config->verbose)
-			म_लिखो("_round %i: doing %u cycles with %u calculations"
+		if (config->verbose)
+			printf("_round %i: doing %u cycles with %u calculations"
 			       " for %lius\n", _round + 1, config->cycles,
-			       calculations, load_समय);
+			       calculations, load_time);
 
-		ख_लिखो(config->output, "%u %li %li ",
-			_round, load_समय, sleep_समय);
+		fprintf(config->output, "%u %li %li ",
+			_round, load_time, sleep_time);
 
-		अगर (config->verbose)
-			म_लिखो("average: %lius, rps:%li\n",
-				load_समय / calculations,
-				1000000 * calculations / load_समय);
+		if (config->verbose)
+			printf("average: %lius, rps:%li\n",
+				load_time / calculations,
+				1000000 * calculations / load_time);
 
-		/* करो some sleep/load cycles with the perक्रमmance governor */
-		क्रम (cycle = 0; cycle < config->cycles; cycle++) अणु
-			now = get_समय();
-			usleep(sleep_समय);
+		/* do some sleep/load cycles with the performance governor */
+		for (cycle = 0; cycle < config->cycles; cycle++) {
+			now = get_time();
+			usleep(sleep_time);
 			ROUNDS(calculations);
-			then = get_समय();
-			perक्रमmance_समय += then - now - sleep_समय;
-			अगर (config->verbose)
-				म_लिखो("performance cycle took %lius, "
+			then = get_time();
+			performance_time += then - now - sleep_time;
+			if (config->verbose)
+				printf("performance cycle took %lius, "
 					"sleep: %lius, "
 					"load: %lius, rounds: %u\n",
-					(दीर्घ)(then - now), sleep_समय,
-					load_समय, calculations);
-		पूर्ण
-		ख_लिखो(config->output, "%li ",
-			perक्रमmance_समय / config->cycles);
+					(long)(then - now), sleep_time,
+					load_time, calculations);
+		}
+		fprintf(config->output, "%li ",
+			performance_time / config->cycles);
 
-		progress_समय += sleep_समय + load_समय;
-		show_progress(total_समय, progress_समय);
+		progress_time += sleep_time + load_time;
+		show_progress(total_time, progress_time);
 
-		/* set the घातersave governor which activates P-State चयनing
+		/* set the powersave governor which activates P-State switching
 		 * again */
-		अगर (set_cpufreq_governor(config->governor, config->cpu) != 0)
-			वापस;
+		if (set_cpufreq_governor(config->governor, config->cpu) != 0)
+			return;
 
-		/* again, करो some sleep/load cycles with the
-		 * घातersave governor */
-		क्रम (cycle = 0; cycle < config->cycles; cycle++) अणु
-			now = get_समय();
-			usleep(sleep_समय);
+		/* again, do some sleep/load cycles with the
+		 * powersave governor */
+		for (cycle = 0; cycle < config->cycles; cycle++) {
+			now = get_time();
+			usleep(sleep_time);
 			ROUNDS(calculations);
-			then = get_समय();
-			घातersave_समय += then - now - sleep_समय;
-			अगर (config->verbose)
-				म_लिखो("powersave cycle took %lius, "
+			then = get_time();
+			powersave_time += then - now - sleep_time;
+			if (config->verbose)
+				printf("powersave cycle took %lius, "
 					"sleep: %lius, "
 					"load: %lius, rounds: %u\n",
-					(दीर्घ)(then - now), sleep_समय,
-					load_समय, calculations);
-		पूर्ण
+					(long)(then - now), sleep_time,
+					load_time, calculations);
+		}
 
-		progress_समय += sleep_समय + load_समय;
+		progress_time += sleep_time + load_time;
 
 		/* compare the average sleep/load cycles  */
-		ख_लिखो(config->output, "%li ",
-			घातersave_समय / config->cycles);
-		ख_लिखो(config->output, "%.3f\n",
-			perक्रमmance_समय * 100.0 / घातersave_समय);
-		ख_साफ(config->output);
+		fprintf(config->output, "%li ",
+			powersave_time / config->cycles);
+		fprintf(config->output, "%.3f\n",
+			performance_time * 100.0 / powersave_time);
+		fflush(config->output);
 
-		अगर (config->verbose)
-			म_लिखो("performance is at %.2f%%\n",
-				perक्रमmance_समय * 100.0 / घातersave_समय);
+		if (config->verbose)
+			printf("performance is at %.2f%%\n",
+				performance_time * 100.0 / powersave_time);
 
-		sleep_समय += config->sleep_step;
-		load_समय += config->load_step;
-	पूर्ण
-पूर्ण
+		sleep_time += config->sleep_step;
+		load_time += config->load_step;
+	}
+}

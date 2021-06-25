@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
+/* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /* Copyright 2020 Qiang Yu <yuq825@gmail.com> */
 
-#अगर !defined(_LIMA_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _LIMA_TRACE_H_
+#if !defined(_LIMA_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _LIMA_TRACE_H_
 
-#समावेश <linux/tracepoपूर्णांक.h>
+#include <linux/tracepoint.h>
 
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM lima
-#घोषणा TRACE_INCLUDE_खाता lima_trace
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM lima
+#define TRACE_INCLUDE_FILE lima_trace
 
 DECLARE_EVENT_CLASS(lima_task,
-	TP_PROTO(काष्ठा lima_sched_task *task),
+	TP_PROTO(struct lima_sched_task *task),
 	TP_ARGS(task),
 	TP_STRUCT__entry(
-		__field(uपूर्णांक64_t, task_id)
-		__field(अचिन्हित पूर्णांक, context)
-		__field(अचिन्हित पूर्णांक, seqno)
+		__field(uint64_t, task_id)
+		__field(unsigned int, context)
+		__field(unsigned int, seqno)
 		__string(pipe, task->base.sched->name)
 		),
 
@@ -28,24 +27,24 @@ DECLARE_EVENT_CLASS(lima_task,
 		__assign_str(pipe, task->base.sched->name)
 		),
 
-	TP_prपूर्णांकk("task=%llu, context=%u seqno=%u pipe=%s",
+	TP_printk("task=%llu, context=%u seqno=%u pipe=%s",
 		  __entry->task_id, __entry->context, __entry->seqno,
 		  __get_str(pipe))
 );
 
 DEFINE_EVENT(lima_task, lima_task_submit,
-	     TP_PROTO(काष्ठा lima_sched_task *task),
+	     TP_PROTO(struct lima_sched_task *task),
 	     TP_ARGS(task)
 );
 
 DEFINE_EVENT(lima_task, lima_task_run,
-	     TP_PROTO(काष्ठा lima_sched_task *task),
+	     TP_PROTO(struct lima_sched_task *task),
 	     TP_ARGS(task)
 );
 
-#पूर्ण_अगर
+#endif
 
 /* This part must be outside protection */
-#अघोषित TRACE_INCLUDE_PATH
-#घोषणा TRACE_INCLUDE_PATH ../../drivers/gpu/drm/lima
-#समावेश <trace/define_trace.h>
+#undef TRACE_INCLUDE_PATH
+#define TRACE_INCLUDE_PATH ../../drivers/gpu/drm/lima
+#include <trace/define_trace.h>

@@ -1,148 +1,147 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2008-2011 Atheros Communications Inc.
  *
- * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#समावेश "hw.h"
-#समावेश "hw-ops.h"
-#समावेश <linux/export.h>
+#include "hw.h"
+#include "hw-ops.h"
+#include <linux/export.h>
 
-अटल व्योम ath9k_hw_set_txq_पूर्णांकerrupts(काष्ठा ath_hw *ah,
-					काष्ठा ath9k_tx_queue_info *qi)
-अणु
+static void ath9k_hw_set_txq_interrupts(struct ath_hw *ah,
+					struct ath9k_tx_queue_info *qi)
+{
 	ath_dbg(ath9k_hw_common(ah), INTERRUPT,
 		"tx ok 0x%x err 0x%x desc 0x%x eol 0x%x urn 0x%x\n",
-		ah->txok_पूर्णांकerrupt_mask, ah->txerr_पूर्णांकerrupt_mask,
-		ah->txdesc_पूर्णांकerrupt_mask, ah->txeol_पूर्णांकerrupt_mask,
-		ah->txurn_पूर्णांकerrupt_mask);
+		ah->txok_interrupt_mask, ah->txerr_interrupt_mask,
+		ah->txdesc_interrupt_mask, ah->txeol_interrupt_mask,
+		ah->txurn_interrupt_mask);
 
 	ENABLE_REGWRITE_BUFFER(ah);
 
 	REG_WRITE(ah, AR_IMR_S0,
-		  SM(ah->txok_पूर्णांकerrupt_mask, AR_IMR_S0_QCU_TXOK)
-		  | SM(ah->txdesc_पूर्णांकerrupt_mask, AR_IMR_S0_QCU_TXDESC));
+		  SM(ah->txok_interrupt_mask, AR_IMR_S0_QCU_TXOK)
+		  | SM(ah->txdesc_interrupt_mask, AR_IMR_S0_QCU_TXDESC));
 	REG_WRITE(ah, AR_IMR_S1,
-		  SM(ah->txerr_पूर्णांकerrupt_mask, AR_IMR_S1_QCU_TXERR)
-		  | SM(ah->txeol_पूर्णांकerrupt_mask, AR_IMR_S1_QCU_TXEOL));
+		  SM(ah->txerr_interrupt_mask, AR_IMR_S1_QCU_TXERR)
+		  | SM(ah->txeol_interrupt_mask, AR_IMR_S1_QCU_TXEOL));
 
 	ah->imrs2_reg &= ~AR_IMR_S2_QCU_TXURN;
-	ah->imrs2_reg |= (ah->txurn_पूर्णांकerrupt_mask & AR_IMR_S2_QCU_TXURN);
+	ah->imrs2_reg |= (ah->txurn_interrupt_mask & AR_IMR_S2_QCU_TXURN);
 	REG_WRITE(ah, AR_IMR_S2, ah->imrs2_reg);
 
 	REGWRITE_BUFFER_FLUSH(ah);
-पूर्ण
+}
 
-u32 ath9k_hw_gettxbuf(काष्ठा ath_hw *ah, u32 q)
-अणु
-	वापस REG_READ(ah, AR_QTXDP(q));
-पूर्ण
+u32 ath9k_hw_gettxbuf(struct ath_hw *ah, u32 q)
+{
+	return REG_READ(ah, AR_QTXDP(q));
+}
 EXPORT_SYMBOL(ath9k_hw_gettxbuf);
 
-व्योम ath9k_hw_puttxbuf(काष्ठा ath_hw *ah, u32 q, u32 txdp)
-अणु
+void ath9k_hw_puttxbuf(struct ath_hw *ah, u32 q, u32 txdp)
+{
 	REG_WRITE(ah, AR_QTXDP(q), txdp);
-पूर्ण
+}
 EXPORT_SYMBOL(ath9k_hw_puttxbuf);
 
-व्योम ath9k_hw_txstart(काष्ठा ath_hw *ah, u32 q)
-अणु
+void ath9k_hw_txstart(struct ath_hw *ah, u32 q)
+{
 	ath_dbg(ath9k_hw_common(ah), QUEUE, "Enable TXE on queue: %u\n", q);
 	REG_WRITE(ah, AR_Q_TXE, 1 << q);
-पूर्ण
+}
 EXPORT_SYMBOL(ath9k_hw_txstart);
 
-u32 ath9k_hw_numtxpending(काष्ठा ath_hw *ah, u32 q)
-अणु
+u32 ath9k_hw_numtxpending(struct ath_hw *ah, u32 q)
+{
 	u32 npend;
 
 	npend = REG_READ(ah, AR_QSTS(q)) & AR_Q_STS_PEND_FR_CNT;
-	अगर (npend == 0) अणु
+	if (npend == 0) {
 
-		अगर (REG_READ(ah, AR_Q_TXE) & (1 << q))
+		if (REG_READ(ah, AR_Q_TXE) & (1 << q))
 			npend = 1;
-	पूर्ण
+	}
 
-	वापस npend;
-पूर्ण
+	return npend;
+}
 EXPORT_SYMBOL(ath9k_hw_numtxpending);
 
 /**
  * ath9k_hw_updatetxtriglevel - adjusts the frame trigger level
  *
- * @ah: atheros hardware काष्ठा
+ * @ah: atheros hardware struct
  * @bIncTrigLevel: whether or not the frame trigger level should be updated
  *
- * The frame trigger level specअगरies the minimum number of bytes,
- * in units of 64 bytes, that must be DMA'ed पूर्णांकo the PCU TX FIFO
- * beक्रमe the PCU will initiate sending the frame on the air. This can
- * mean we initiate transmit beक्रमe a full frame is on the PCU TX FIFO.
+ * The frame trigger level specifies the minimum number of bytes,
+ * in units of 64 bytes, that must be DMA'ed into the PCU TX FIFO
+ * before the PCU will initiate sending the frame on the air. This can
+ * mean we initiate transmit before a full frame is on the PCU TX FIFO.
  * Resets to 0x1 (meaning 64 bytes or a full frame, whichever occurs
  * first)
  *
  * Caution must be taken to ensure to set the frame trigger level based
- * on the DMA request size. For example अगर the DMA request size is set to
+ * on the DMA request size. For example if the DMA request size is set to
  * 128 bytes the trigger level cannot exceed 6 * 64 = 384. This is because
- * there need to be enough space in the tx FIFO क्रम the requested transfer
+ * there need to be enough space in the tx FIFO for the requested transfer
  * size. Hence the tx FIFO will stop with 512 - 128 = 384 bytes. If we set
  * the threshold to a value beyond 6, then the transmit will hang.
  *
  * Current dual   stream devices have a PCU TX FIFO size of 8 KB.
  * Current single stream devices have a PCU TX FIFO size of 4 KB, however,
- * there is a hardware issue which क्रमces us to use 2 KB instead so the
- * frame trigger level must not exceed 2 KB क्रम these chipsets.
+ * there is a hardware issue which forces us to use 2 KB instead so the
+ * frame trigger level must not exceed 2 KB for these chipsets.
  */
-bool ath9k_hw_updatetxtriglevel(काष्ठा ath_hw *ah, bool bIncTrigLevel)
-अणु
+bool ath9k_hw_updatetxtriglevel(struct ath_hw *ah, bool bIncTrigLevel)
+{
 	u32 txcfg, curLevel, newLevel;
 
-	अगर (ah->tx_trig_level >= ah->config.max_txtrig_level)
-		वापस false;
+	if (ah->tx_trig_level >= ah->config.max_txtrig_level)
+		return false;
 
-	ath9k_hw_disable_पूर्णांकerrupts(ah);
+	ath9k_hw_disable_interrupts(ah);
 
 	txcfg = REG_READ(ah, AR_TXCFG);
 	curLevel = MS(txcfg, AR_FTRIG);
 	newLevel = curLevel;
-	अगर (bIncTrigLevel) अणु
-		अगर (curLevel < ah->config.max_txtrig_level)
+	if (bIncTrigLevel) {
+		if (curLevel < ah->config.max_txtrig_level)
 			newLevel++;
-	पूर्ण अन्यथा अगर (curLevel > MIN_TX_FIFO_THRESHOLD)
+	} else if (curLevel > MIN_TX_FIFO_THRESHOLD)
 		newLevel--;
-	अगर (newLevel != curLevel)
+	if (newLevel != curLevel)
 		REG_WRITE(ah, AR_TXCFG,
 			  (txcfg & ~AR_FTRIG) | SM(newLevel, AR_FTRIG));
 
-	ath9k_hw_enable_पूर्णांकerrupts(ah);
+	ath9k_hw_enable_interrupts(ah);
 
 	ah->tx_trig_level = newLevel;
 
-	वापस newLevel != curLevel;
-पूर्ण
+	return newLevel != curLevel;
+}
 EXPORT_SYMBOL(ath9k_hw_updatetxtriglevel);
 
-व्योम ath9k_hw_पात_tx_dma(काष्ठा ath_hw *ah)
-अणु
-	पूर्णांक maxdelay = 1000;
-	पूर्णांक i, q;
+void ath9k_hw_abort_tx_dma(struct ath_hw *ah)
+{
+	int maxdelay = 1000;
+	int i, q;
 
-	अगर (ah->curchan) अणु
-		अगर (IS_CHAN_HALF_RATE(ah->curchan))
+	if (ah->curchan) {
+		if (IS_CHAN_HALF_RATE(ah->curchan))
 			maxdelay *= 2;
-		अन्यथा अगर (IS_CHAN_QUARTER_RATE(ah->curchan))
+		else if (IS_CHAN_QUARTER_RATE(ah->curchan))
 			maxdelay *= 4;
-	पूर्ण
+	}
 
 	REG_WRITE(ah, AR_Q_TXD, AR_Q_TXD_M);
 
@@ -150,63 +149,63 @@ EXPORT_SYMBOL(ath9k_hw_updatetxtriglevel);
 	REG_SET_BIT(ah, AR_DIAG_SW, AR_DIAG_FORCE_CH_IDLE_HIGH);
 	REG_SET_BIT(ah, AR_D_GBL_IFS_MISC, AR_D_GBL_IFS_MISC_IGNORE_BACKOFF);
 
-	क्रम (q = 0; q < AR_NUM_QCU; q++) अणु
-		क्रम (i = 0; i < maxdelay; i++) अणु
-			अगर (i)
+	for (q = 0; q < AR_NUM_QCU; q++) {
+		for (i = 0; i < maxdelay; i++) {
+			if (i)
 				udelay(5);
 
-			अगर (!ath9k_hw_numtxpending(ah, q))
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (!ath9k_hw_numtxpending(ah, q))
+				break;
+		}
+	}
 
 	REG_CLR_BIT(ah, AR_PCU_MISC, AR_PCU_FORCE_QUIET_COLL | AR_PCU_CLEAR_VMF);
 	REG_CLR_BIT(ah, AR_DIAG_SW, AR_DIAG_FORCE_CH_IDLE_HIGH);
 	REG_CLR_BIT(ah, AR_D_GBL_IFS_MISC, AR_D_GBL_IFS_MISC_IGNORE_BACKOFF);
 
 	REG_WRITE(ah, AR_Q_TXD, 0);
-पूर्ण
-EXPORT_SYMBOL(ath9k_hw_पात_tx_dma);
+}
+EXPORT_SYMBOL(ath9k_hw_abort_tx_dma);
 
-bool ath9k_hw_stop_dma_queue(काष्ठा ath_hw *ah, u32 q)
-अणु
-#घोषणा ATH9K_TX_STOP_DMA_TIMEOUT	1000    /* usec */
-#घोषणा ATH9K_TIME_QUANTUM		100     /* usec */
-	पूर्णांक रुको_समय = ATH9K_TX_STOP_DMA_TIMEOUT / ATH9K_TIME_QUANTUM;
-	पूर्णांक रुको;
+bool ath9k_hw_stop_dma_queue(struct ath_hw *ah, u32 q)
+{
+#define ATH9K_TX_STOP_DMA_TIMEOUT	1000    /* usec */
+#define ATH9K_TIME_QUANTUM		100     /* usec */
+	int wait_time = ATH9K_TX_STOP_DMA_TIMEOUT / ATH9K_TIME_QUANTUM;
+	int wait;
 
 	REG_WRITE(ah, AR_Q_TXD, 1 << q);
 
-	क्रम (रुको = रुको_समय; रुको != 0; रुको--) अणु
-		अगर (रुको != रुको_समय)
+	for (wait = wait_time; wait != 0; wait--) {
+		if (wait != wait_time)
 			udelay(ATH9K_TIME_QUANTUM);
 
-		अगर (ath9k_hw_numtxpending(ah, q) == 0)
-			अवरोध;
-	पूर्ण
+		if (ath9k_hw_numtxpending(ah, q) == 0)
+			break;
+	}
 
 	REG_WRITE(ah, AR_Q_TXD, 0);
 
-	वापस रुको != 0;
+	return wait != 0;
 
-#अघोषित ATH9K_TX_STOP_DMA_TIMEOUT
-#अघोषित ATH9K_TIME_QUANTUM
-पूर्ण
+#undef ATH9K_TX_STOP_DMA_TIMEOUT
+#undef ATH9K_TIME_QUANTUM
+}
 EXPORT_SYMBOL(ath9k_hw_stop_dma_queue);
 
-bool ath9k_hw_set_txq_props(काष्ठा ath_hw *ah, पूर्णांक q,
-			    स्थिर काष्ठा ath9k_tx_queue_info *qinfo)
-अणु
+bool ath9k_hw_set_txq_props(struct ath_hw *ah, int q,
+			    const struct ath9k_tx_queue_info *qinfo)
+{
 	u32 cw;
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	काष्ठा ath9k_tx_queue_info *qi;
+	struct ath_common *common = ath9k_hw_common(ah);
+	struct ath9k_tx_queue_info *qi;
 
 	qi = &ah->txq[q];
-	अगर (qi->tqi_type == ATH9K_TX_QUEUE_INACTIVE) अणु
+	if (qi->tqi_type == ATH9K_TX_QUEUE_INACTIVE) {
 		ath_dbg(common, QUEUE,
 			"Set TXQ properties, inactive queue: %u\n", q);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	ath_dbg(common, QUEUE, "Set queue properties for: %u\n", q);
 
@@ -214,70 +213,70 @@ bool ath9k_hw_set_txq_props(काष्ठा ath_hw *ah, पूर्णां
 	qi->tqi_subtype = qinfo->tqi_subtype;
 	qi->tqi_qflags = qinfo->tqi_qflags;
 	qi->tqi_priority = qinfo->tqi_priority;
-	अगर (qinfo->tqi_aअगरs != ATH9K_TXQ_USEDEFAULT)
-		qi->tqi_aअगरs = min(qinfo->tqi_aअगरs, 255U);
-	अन्यथा
-		qi->tqi_aअगरs = INIT_AIFS;
-	अगर (qinfo->tqi_cwmin != ATH9K_TXQ_USEDEFAULT) अणु
+	if (qinfo->tqi_aifs != ATH9K_TXQ_USEDEFAULT)
+		qi->tqi_aifs = min(qinfo->tqi_aifs, 255U);
+	else
+		qi->tqi_aifs = INIT_AIFS;
+	if (qinfo->tqi_cwmin != ATH9K_TXQ_USEDEFAULT) {
 		cw = min(qinfo->tqi_cwmin, 1024U);
 		qi->tqi_cwmin = 1;
-		जबतक (qi->tqi_cwmin < cw)
+		while (qi->tqi_cwmin < cw)
 			qi->tqi_cwmin = (qi->tqi_cwmin << 1) | 1;
-	पूर्ण अन्यथा
+	} else
 		qi->tqi_cwmin = qinfo->tqi_cwmin;
-	अगर (qinfo->tqi_cwmax != ATH9K_TXQ_USEDEFAULT) अणु
+	if (qinfo->tqi_cwmax != ATH9K_TXQ_USEDEFAULT) {
 		cw = min(qinfo->tqi_cwmax, 1024U);
 		qi->tqi_cwmax = 1;
-		जबतक (qi->tqi_cwmax < cw)
+		while (qi->tqi_cwmax < cw)
 			qi->tqi_cwmax = (qi->tqi_cwmax << 1) | 1;
-	पूर्ण अन्यथा
+	} else
 		qi->tqi_cwmax = INIT_CWMAX;
 
-	अगर (qinfo->tqi_shretry != 0)
+	if (qinfo->tqi_shretry != 0)
 		qi->tqi_shretry = min((u32) qinfo->tqi_shretry, 15U);
-	अन्यथा
+	else
 		qi->tqi_shretry = INIT_SH_RETRY;
-	अगर (qinfo->tqi_lgretry != 0)
+	if (qinfo->tqi_lgretry != 0)
 		qi->tqi_lgretry = min((u32) qinfo->tqi_lgretry, 15U);
-	अन्यथा
+	else
 		qi->tqi_lgretry = INIT_LG_RETRY;
 	qi->tqi_cbrPeriod = qinfo->tqi_cbrPeriod;
 	qi->tqi_cbrOverflowLimit = qinfo->tqi_cbrOverflowLimit;
 	qi->tqi_burstTime = qinfo->tqi_burstTime;
-	qi->tqi_पढ़ोyTime = qinfo->tqi_पढ़ोyTime;
+	qi->tqi_readyTime = qinfo->tqi_readyTime;
 
-	चयन (qinfo->tqi_subtype) अणु
-	हाल ATH9K_WME_UPSD:
-		अगर (qi->tqi_type == ATH9K_TX_QUEUE_DATA)
-			qi->tqi_पूर्णांकFlags = ATH9K_TXQ_USE_LOCKOUT_BKOFF_DIS;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (qinfo->tqi_subtype) {
+	case ATH9K_WME_UPSD:
+		if (qi->tqi_type == ATH9K_TX_QUEUE_DATA)
+			qi->tqi_intFlags = ATH9K_TXQ_USE_LOCKOUT_BKOFF_DIS;
+		break;
+	default:
+		break;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL(ath9k_hw_set_txq_props);
 
-bool ath9k_hw_get_txq_props(काष्ठा ath_hw *ah, पूर्णांक q,
-			    काष्ठा ath9k_tx_queue_info *qinfo)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	काष्ठा ath9k_tx_queue_info *qi;
+bool ath9k_hw_get_txq_props(struct ath_hw *ah, int q,
+			    struct ath9k_tx_queue_info *qinfo)
+{
+	struct ath_common *common = ath9k_hw_common(ah);
+	struct ath9k_tx_queue_info *qi;
 
 	qi = &ah->txq[q];
-	अगर (qi->tqi_type == ATH9K_TX_QUEUE_INACTIVE) अणु
+	if (qi->tqi_type == ATH9K_TX_QUEUE_INACTIVE) {
 		ath_dbg(common, QUEUE,
 			"Get TXQ properties, inactive queue: %u\n", q);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	qinfo->tqi_qflags = qi->tqi_qflags;
 	qinfo->tqi_ver = qi->tqi_ver;
 	qinfo->tqi_subtype = qi->tqi_subtype;
 	qinfo->tqi_qflags = qi->tqi_qflags;
 	qinfo->tqi_priority = qi->tqi_priority;
-	qinfo->tqi_aअगरs = qi->tqi_aअगरs;
+	qinfo->tqi_aifs = qi->tqi_aifs;
 	qinfo->tqi_cwmin = qi->tqi_cwmin;
 	qinfo->tqi_cwmax = qi->tqi_cwmax;
 	qinfo->tqi_shretry = qi->tqi_shretry;
@@ -285,105 +284,105 @@ bool ath9k_hw_get_txq_props(काष्ठा ath_hw *ah, पूर्णां
 	qinfo->tqi_cbrPeriod = qi->tqi_cbrPeriod;
 	qinfo->tqi_cbrOverflowLimit = qi->tqi_cbrOverflowLimit;
 	qinfo->tqi_burstTime = qi->tqi_burstTime;
-	qinfo->tqi_पढ़ोyTime = qi->tqi_पढ़ोyTime;
+	qinfo->tqi_readyTime = qi->tqi_readyTime;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL(ath9k_hw_get_txq_props);
 
-पूर्णांक ath9k_hw_setuptxqueue(काष्ठा ath_hw *ah, क्रमागत ath9k_tx_queue type,
-			  स्थिर काष्ठा ath9k_tx_queue_info *qinfo)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	काष्ठा ath9k_tx_queue_info *qi;
-	पूर्णांक q;
+int ath9k_hw_setuptxqueue(struct ath_hw *ah, enum ath9k_tx_queue type,
+			  const struct ath9k_tx_queue_info *qinfo)
+{
+	struct ath_common *common = ath9k_hw_common(ah);
+	struct ath9k_tx_queue_info *qi;
+	int q;
 
-	चयन (type) अणु
-	हाल ATH9K_TX_QUEUE_BEACON:
+	switch (type) {
+	case ATH9K_TX_QUEUE_BEACON:
 		q = ATH9K_NUM_TX_QUEUES - 1;
-		अवरोध;
-	हाल ATH9K_TX_QUEUE_CAB:
+		break;
+	case ATH9K_TX_QUEUE_CAB:
 		q = ATH9K_NUM_TX_QUEUES - 2;
-		अवरोध;
-	हाल ATH9K_TX_QUEUE_PSPOLL:
+		break;
+	case ATH9K_TX_QUEUE_PSPOLL:
 		q = 1;
-		अवरोध;
-	हाल ATH9K_TX_QUEUE_UAPSD:
+		break;
+	case ATH9K_TX_QUEUE_UAPSD:
 		q = ATH9K_NUM_TX_QUEUES - 3;
-		अवरोध;
-	हाल ATH9K_TX_QUEUE_DATA:
+		break;
+	case ATH9K_TX_QUEUE_DATA:
 		q = qinfo->tqi_subtype;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ath_err(common, "Invalid TX queue type: %u\n", type);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	ath_dbg(common, QUEUE, "Setup TX queue: %u\n", q);
 
 	qi = &ah->txq[q];
-	अगर (qi->tqi_type != ATH9K_TX_QUEUE_INACTIVE) अणु
+	if (qi->tqi_type != ATH9K_TX_QUEUE_INACTIVE) {
 		ath_err(common, "TX queue: %u already active\n", q);
-		वापस -1;
-	पूर्ण
-	स_रखो(qi, 0, माप(काष्ठा ath9k_tx_queue_info));
+		return -1;
+	}
+	memset(qi, 0, sizeof(struct ath9k_tx_queue_info));
 	qi->tqi_type = type;
 	qi->tqi_physCompBuf = qinfo->tqi_physCompBuf;
-	(व्योम) ath9k_hw_set_txq_props(ah, q, qinfo);
+	(void) ath9k_hw_set_txq_props(ah, q, qinfo);
 
-	वापस q;
-पूर्ण
+	return q;
+}
 EXPORT_SYMBOL(ath9k_hw_setuptxqueue);
 
-अटल व्योम ath9k_hw_clear_queue_पूर्णांकerrupts(काष्ठा ath_hw *ah, u32 q)
-अणु
-	ah->txok_पूर्णांकerrupt_mask &= ~(1 << q);
-	ah->txerr_पूर्णांकerrupt_mask &= ~(1 << q);
-	ah->txdesc_पूर्णांकerrupt_mask &= ~(1 << q);
-	ah->txeol_पूर्णांकerrupt_mask &= ~(1 << q);
-	ah->txurn_पूर्णांकerrupt_mask &= ~(1 << q);
-पूर्ण
+static void ath9k_hw_clear_queue_interrupts(struct ath_hw *ah, u32 q)
+{
+	ah->txok_interrupt_mask &= ~(1 << q);
+	ah->txerr_interrupt_mask &= ~(1 << q);
+	ah->txdesc_interrupt_mask &= ~(1 << q);
+	ah->txeol_interrupt_mask &= ~(1 << q);
+	ah->txurn_interrupt_mask &= ~(1 << q);
+}
 
-bool ath9k_hw_releasetxqueue(काष्ठा ath_hw *ah, u32 q)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	काष्ठा ath9k_tx_queue_info *qi;
+bool ath9k_hw_releasetxqueue(struct ath_hw *ah, u32 q)
+{
+	struct ath_common *common = ath9k_hw_common(ah);
+	struct ath9k_tx_queue_info *qi;
 
 	qi = &ah->txq[q];
-	अगर (qi->tqi_type == ATH9K_TX_QUEUE_INACTIVE) अणु
+	if (qi->tqi_type == ATH9K_TX_QUEUE_INACTIVE) {
 		ath_dbg(common, QUEUE, "Release TXQ, inactive queue: %u\n", q);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	ath_dbg(common, QUEUE, "Release TX queue: %u\n", q);
 
 	qi->tqi_type = ATH9K_TX_QUEUE_INACTIVE;
-	ath9k_hw_clear_queue_पूर्णांकerrupts(ah, q);
-	ath9k_hw_set_txq_पूर्णांकerrupts(ah, qi);
+	ath9k_hw_clear_queue_interrupts(ah, q);
+	ath9k_hw_set_txq_interrupts(ah, qi);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL(ath9k_hw_releasetxqueue);
 
-bool ath9k_hw_resettxqueue(काष्ठा ath_hw *ah, u32 q)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	काष्ठा ath9k_tx_queue_info *qi;
+bool ath9k_hw_resettxqueue(struct ath_hw *ah, u32 q)
+{
+	struct ath_common *common = ath9k_hw_common(ah);
+	struct ath9k_tx_queue_info *qi;
 	u32 cwMin, chanCwMin, value;
 
 	qi = &ah->txq[q];
-	अगर (qi->tqi_type == ATH9K_TX_QUEUE_INACTIVE) अणु
+	if (qi->tqi_type == ATH9K_TX_QUEUE_INACTIVE) {
 		ath_dbg(common, QUEUE, "Reset TXQ, inactive queue: %u\n", q);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
 	ath_dbg(common, QUEUE, "Reset TX queue: %u\n", q);
 
-	अगर (qi->tqi_cwmin == ATH9K_TXQ_USEDEFAULT) अणु
+	if (qi->tqi_cwmin == ATH9K_TXQ_USEDEFAULT) {
 		chanCwMin = INIT_CWMIN;
 
-		क्रम (cwMin = 1; cwMin < chanCwMin; cwMin = (cwMin << 1) | 1);
-	पूर्ण अन्यथा
+		for (cwMin = 1; cwMin < chanCwMin; cwMin = (cwMin << 1) | 1);
+	} else
 		cwMin = qi->tqi_cwmin;
 
 	ENABLE_REGWRITE_BUFFER(ah);
@@ -391,7 +390,7 @@ bool ath9k_hw_resettxqueue(काष्ठा ath_hw *ah, u32 q)
 	REG_WRITE(ah, AR_DLCL_IFS(q),
 		  SM(cwMin, AR_D_LCL_IFS_CWMIN) |
 		  SM(qi->tqi_cwmax, AR_D_LCL_IFS_CWMAX) |
-		  SM(qi->tqi_aअगरs, AR_D_LCL_IFS_AIFS));
+		  SM(qi->tqi_aifs, AR_D_LCL_IFS_AIFS));
 
 	REG_WRITE(ah, AR_DRETRY_LIMIT(q),
 		  SM(INIT_SSH_RETRY, AR_D_RETRY_LIMIT_STA_SH) |
@@ -400,45 +399,45 @@ bool ath9k_hw_resettxqueue(काष्ठा ath_hw *ah, u32 q)
 
 	REG_WRITE(ah, AR_QMISC(q), AR_Q_MISC_DCU_EARLY_TERM_REQ);
 
-	अगर (AR_SREV_9340(ah) && !AR_SREV_9340_13_OR_LATER(ah))
+	if (AR_SREV_9340(ah) && !AR_SREV_9340_13_OR_LATER(ah))
 		REG_WRITE(ah, AR_DMISC(q),
 			  AR_D_MISC_CW_BKOFF_EN | AR_D_MISC_FRAG_WAIT_EN | 0x1);
-	अन्यथा
+	else
 		REG_WRITE(ah, AR_DMISC(q),
 			  AR_D_MISC_CW_BKOFF_EN | AR_D_MISC_FRAG_WAIT_EN | 0x2);
 
-	अगर (qi->tqi_cbrPeriod) अणु
+	if (qi->tqi_cbrPeriod) {
 		REG_WRITE(ah, AR_QCBRCFG(q),
 			  SM(qi->tqi_cbrPeriod, AR_Q_CBRCFG_INTERVAL) |
 			  SM(qi->tqi_cbrOverflowLimit, AR_Q_CBRCFG_OVF_THRESH));
 		REG_SET_BIT(ah, AR_QMISC(q), AR_Q_MISC_FSP_CBR |
 			    (qi->tqi_cbrOverflowLimit ?
 			     AR_Q_MISC_CBR_EXP_CNTR_LIMIT_EN : 0));
-	पूर्ण
-	अगर (qi->tqi_पढ़ोyTime && (qi->tqi_type != ATH9K_TX_QUEUE_CAB)) अणु
+	}
+	if (qi->tqi_readyTime && (qi->tqi_type != ATH9K_TX_QUEUE_CAB)) {
 		REG_WRITE(ah, AR_QRDYTIMECFG(q),
-			  SM(qi->tqi_पढ़ोyTime, AR_Q_RDYTIMECFG_DURATION) |
+			  SM(qi->tqi_readyTime, AR_Q_RDYTIMECFG_DURATION) |
 			  AR_Q_RDYTIMECFG_EN);
-	पूर्ण
+	}
 
 	REG_WRITE(ah, AR_DCHNTIME(q),
 		  SM(qi->tqi_burstTime, AR_D_CHNTIME_DUR) |
 		  (qi->tqi_burstTime ? AR_D_CHNTIME_EN : 0));
 
-	अगर (qi->tqi_burstTime
+	if (qi->tqi_burstTime
 	    && (qi->tqi_qflags & TXQ_FLAG_RDYTIME_EXP_POLICY_ENABLE))
 		REG_SET_BIT(ah, AR_QMISC(q), AR_Q_MISC_RDYTIME_EXP_POLICY);
 
-	अगर (qi->tqi_qflags & TXQ_FLAG_BACKOFF_DISABLE)
+	if (qi->tqi_qflags & TXQ_FLAG_BACKOFF_DISABLE)
 		REG_SET_BIT(ah, AR_DMISC(q), AR_D_MISC_POST_FR_BKOFF_DIS);
 
 	REGWRITE_BUFFER_FLUSH(ah);
 
-	अगर (qi->tqi_qflags & TXQ_FLAG_FRAG_BURST_BACKOFF_ENABLE)
+	if (qi->tqi_qflags & TXQ_FLAG_FRAG_BURST_BACKOFF_ENABLE)
 		REG_SET_BIT(ah, AR_DMISC(q), AR_D_MISC_FRAG_BKOFF_EN);
 
-	चयन (qi->tqi_type) अणु
-	हाल ATH9K_TX_QUEUE_BEACON:
+	switch (qi->tqi_type) {
+	case ATH9K_TX_QUEUE_BEACON:
 		ENABLE_REGWRITE_BUFFER(ah);
 
 		REG_SET_BIT(ah, AR_QMISC(q),
@@ -455,27 +454,27 @@ bool ath9k_hw_resettxqueue(काष्ठा ath_hw *ah, u32 q)
 		REGWRITE_BUFFER_FLUSH(ah);
 
 		/*
-		 * cwmin and cwmax should be 0 क्रम beacon queue
-		 * but not क्रम IBSS as we would create an imbalance
-		 * on beaconing fairness क्रम participating nodes.
+		 * cwmin and cwmax should be 0 for beacon queue
+		 * but not for IBSS as we would create an imbalance
+		 * on beaconing fairness for participating nodes.
 		 */
-		अगर (AR_SREV_9300_20_OR_LATER(ah) &&
-		    ah->opmode != NL80211_IFTYPE_ADHOC) अणु
+		if (AR_SREV_9300_20_OR_LATER(ah) &&
+		    ah->opmode != NL80211_IFTYPE_ADHOC) {
 			REG_WRITE(ah, AR_DLCL_IFS(q), SM(0, AR_D_LCL_IFS_CWMIN)
 				  | SM(0, AR_D_LCL_IFS_CWMAX)
-				  | SM(qi->tqi_aअगरs, AR_D_LCL_IFS_AIFS));
-		पूर्ण
-		अवरोध;
-	हाल ATH9K_TX_QUEUE_CAB:
+				  | SM(qi->tqi_aifs, AR_D_LCL_IFS_AIFS));
+		}
+		break;
+	case ATH9K_TX_QUEUE_CAB:
 		ENABLE_REGWRITE_BUFFER(ah);
 
 		REG_SET_BIT(ah, AR_QMISC(q),
 			    AR_Q_MISC_FSP_DBA_GATED
 			    | AR_Q_MISC_CBR_INCR_DIS1
 			    | AR_Q_MISC_CBR_INCR_DIS0);
-		value = (qi->tqi_पढ़ोyTime -
-			 (ah->config.sw_beacon_response_समय -
-			  ah->config.dma_beacon_response_समय)) * 1024;
+		value = (qi->tqi_readyTime -
+			 (ah->config.sw_beacon_response_time -
+			  ah->config.dma_beacon_response_time)) * 1024;
 		REG_WRITE(ah, AR_QRDYTIMECFG(q),
 			  value | AR_Q_RDYTIMECFG_EN);
 		REG_SET_BIT(ah, AR_DMISC(q),
@@ -484,53 +483,53 @@ bool ath9k_hw_resettxqueue(काष्ठा ath_hw *ah, u32 q)
 
 		REGWRITE_BUFFER_FLUSH(ah);
 
-		अवरोध;
-	हाल ATH9K_TX_QUEUE_PSPOLL:
+		break;
+	case ATH9K_TX_QUEUE_PSPOLL:
 		REG_SET_BIT(ah, AR_QMISC(q), AR_Q_MISC_CBR_INCR_DIS1);
-		अवरोध;
-	हाल ATH9K_TX_QUEUE_UAPSD:
+		break;
+	case ATH9K_TX_QUEUE_UAPSD:
 		REG_SET_BIT(ah, AR_DMISC(q), AR_D_MISC_POST_FR_BKOFF_DIS);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	अगर (qi->tqi_पूर्णांकFlags & ATH9K_TXQ_USE_LOCKOUT_BKOFF_DIS) अणु
+	if (qi->tqi_intFlags & ATH9K_TXQ_USE_LOCKOUT_BKOFF_DIS) {
 		REG_SET_BIT(ah, AR_DMISC(q),
 			    SM(AR_D_MISC_ARB_LOCKOUT_CNTRL_GLOBAL,
 			       AR_D_MISC_ARB_LOCKOUT_CNTRL) |
 			    AR_D_MISC_POST_FR_BKOFF_DIS);
-	पूर्ण
+	}
 
-	अगर (AR_SREV_9300_20_OR_LATER(ah))
+	if (AR_SREV_9300_20_OR_LATER(ah))
 		REG_WRITE(ah, AR_Q_DESC_CRCCHK, AR_Q_DESC_CRCCHK_EN);
 
-	ath9k_hw_clear_queue_पूर्णांकerrupts(ah, q);
-	अगर (qi->tqi_qflags & TXQ_FLAG_TXINT_ENABLE) अणु
-		ah->txok_पूर्णांकerrupt_mask |= 1 << q;
-		ah->txerr_पूर्णांकerrupt_mask |= 1 << q;
-	पूर्ण
-	अगर (qi->tqi_qflags & TXQ_FLAG_TXDESCINT_ENABLE)
-		ah->txdesc_पूर्णांकerrupt_mask |= 1 << q;
-	अगर (qi->tqi_qflags & TXQ_FLAG_TXEOLINT_ENABLE)
-		ah->txeol_पूर्णांकerrupt_mask |= 1 << q;
-	अगर (qi->tqi_qflags & TXQ_FLAG_TXURNINT_ENABLE)
-		ah->txurn_पूर्णांकerrupt_mask |= 1 << q;
-	ath9k_hw_set_txq_पूर्णांकerrupts(ah, qi);
+	ath9k_hw_clear_queue_interrupts(ah, q);
+	if (qi->tqi_qflags & TXQ_FLAG_TXINT_ENABLE) {
+		ah->txok_interrupt_mask |= 1 << q;
+		ah->txerr_interrupt_mask |= 1 << q;
+	}
+	if (qi->tqi_qflags & TXQ_FLAG_TXDESCINT_ENABLE)
+		ah->txdesc_interrupt_mask |= 1 << q;
+	if (qi->tqi_qflags & TXQ_FLAG_TXEOLINT_ENABLE)
+		ah->txeol_interrupt_mask |= 1 << q;
+	if (qi->tqi_qflags & TXQ_FLAG_TXURNINT_ENABLE)
+		ah->txurn_interrupt_mask |= 1 << q;
+	ath9k_hw_set_txq_interrupts(ah, qi);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL(ath9k_hw_resettxqueue);
 
-पूर्णांक ath9k_hw_rxprocdesc(काष्ठा ath_hw *ah, काष्ठा ath_desc *ds,
-			काष्ठा ath_rx_status *rs)
-अणु
-	काष्ठा ar5416_desc ads;
-	काष्ठा ar5416_desc *adsp = AR5416DESC(ds);
+int ath9k_hw_rxprocdesc(struct ath_hw *ah, struct ath_desc *ds,
+			struct ath_rx_status *rs)
+{
+	struct ar5416_desc ads;
+	struct ar5416_desc *adsp = AR5416DESC(ds);
 	u32 phyerr;
 
-	अगर ((adsp->ds_rxstatus8 & AR_RxDone) == 0)
-		वापस -EINPROGRESS;
+	if ((adsp->ds_rxstatus8 & AR_RxDone) == 0)
+		return -EINPROGRESS;
 
 	ads.u.rx = adsp->u.rx;
 
@@ -542,7 +541,7 @@ EXPORT_SYMBOL(ath9k_hw_resettxqueue);
 	rs->rs_datalen = ads.ds_rxstatus1 & AR_DataLen;
 	rs->rs_tstamp = ads.AR_RcvTimestamp;
 
-	अगर (ads.ds_rxstatus8 & AR_PostDelimCRCErr) अणु
+	if (ads.ds_rxstatus8 & AR_PostDelimCRCErr) {
 		rs->rs_rssi = ATH9K_RSSI_BAD;
 		rs->rs_rssi_ctl[0] = ATH9K_RSSI_BAD;
 		rs->rs_rssi_ctl[1] = ATH9K_RSSI_BAD;
@@ -550,7 +549,7 @@ EXPORT_SYMBOL(ath9k_hw_resettxqueue);
 		rs->rs_rssi_ext[0] = ATH9K_RSSI_BAD;
 		rs->rs_rssi_ext[1] = ATH9K_RSSI_BAD;
 		rs->rs_rssi_ext[2] = ATH9K_RSSI_BAD;
-	पूर्ण अन्यथा अणु
+	} else {
 		rs->rs_rssi = MS(ads.ds_rxstatus4, AR_RxRSSICombined);
 		rs->rs_rssi_ctl[0] = MS(ads.ds_rxstatus0,
 						AR_RxRSSIAnt00);
@@ -564,10 +563,10 @@ EXPORT_SYMBOL(ath9k_hw_resettxqueue);
 						AR_RxRSSIAnt11);
 		rs->rs_rssi_ext[2] = MS(ads.ds_rxstatus4,
 						AR_RxRSSIAnt12);
-	पूर्ण
-	अगर (ads.ds_rxstatus8 & AR_RxKeyIdxValid)
+	}
+	if (ads.ds_rxstatus8 & AR_RxKeyIdxValid)
 		rs->rs_keyix = MS(ads.ds_rxstatus8, AR_KeyIdx);
-	अन्यथा
+	else
 		rs->rs_keyix = ATH9K_RXKEYIX_INVALID;
 
 	rs->rs_rate = MS(ads.ds_rxstatus0, AR_RxRate);
@@ -578,75 +577,75 @@ EXPORT_SYMBOL(ath9k_hw_resettxqueue);
 	rs->rs_moreaggr = (ads.ds_rxstatus8 & AR_RxMoreAggr) ? 1 : 0;
 	rs->rs_antenna = MS(ads.ds_rxstatus3, AR_RxAntenna);
 
-	/* directly mapped flags क्रम ieee80211_rx_status */
+	/* directly mapped flags for ieee80211_rx_status */
 	rs->enc_flags |=
 		(ads.ds_rxstatus3 & AR_GI) ? RX_ENC_FLAG_SHORT_GI : 0;
 	rs->bw = (ads.ds_rxstatus3 & AR_2040) ? RATE_INFO_BW_40 :
 						RATE_INFO_BW_20;
-	अगर (AR_SREV_9280_20_OR_LATER(ah))
+	if (AR_SREV_9280_20_OR_LATER(ah))
 		rs->enc_flags |=
 			(ads.ds_rxstatus3 & AR_STBC) ?
 				/* we can only Nss=1 STBC */
 				(1 << RX_ENC_FLAG_STBC_SHIFT) : 0;
 
-	अगर (ads.ds_rxstatus8 & AR_PreDelimCRCErr)
+	if (ads.ds_rxstatus8 & AR_PreDelimCRCErr)
 		rs->rs_flags |= ATH9K_RX_DELIM_CRC_PRE;
-	अगर (ads.ds_rxstatus8 & AR_PostDelimCRCErr)
+	if (ads.ds_rxstatus8 & AR_PostDelimCRCErr)
 		rs->rs_flags |= ATH9K_RX_DELIM_CRC_POST;
-	अगर (ads.ds_rxstatus8 & AR_DecryptBusyErr)
+	if (ads.ds_rxstatus8 & AR_DecryptBusyErr)
 		rs->rs_flags |= ATH9K_RX_DECRYPT_BUSY;
 
-	अगर ((ads.ds_rxstatus8 & AR_RxFrameOK) == 0) अणु
+	if ((ads.ds_rxstatus8 & AR_RxFrameOK) == 0) {
 		/*
-		 * Treat these errors as mutually exclusive to aव्योम spurious
+		 * Treat these errors as mutually exclusive to avoid spurious
 		 * extra error reports from the hardware. If a CRC error is
 		 * reported, then decryption and MIC errors are irrelevant,
 		 * the frame is going to be dropped either way
 		 */
-		अगर (ads.ds_rxstatus8 & AR_PHYErr) अणु
+		if (ads.ds_rxstatus8 & AR_PHYErr) {
 			rs->rs_status |= ATH9K_RXERR_PHY;
 			phyerr = MS(ads.ds_rxstatus8, AR_PHYErrCode);
 			rs->rs_phyerr = phyerr;
-		पूर्ण अन्यथा अगर (ads.ds_rxstatus8 & AR_CRCErr)
+		} else if (ads.ds_rxstatus8 & AR_CRCErr)
 			rs->rs_status |= ATH9K_RXERR_CRC;
-		अन्यथा अगर (ads.ds_rxstatus8 & AR_DecryptCRCErr)
+		else if (ads.ds_rxstatus8 & AR_DecryptCRCErr)
 			rs->rs_status |= ATH9K_RXERR_DECRYPT;
-		अन्यथा अगर (ads.ds_rxstatus8 & AR_MichaelErr)
+		else if (ads.ds_rxstatus8 & AR_MichaelErr)
 			rs->rs_status |= ATH9K_RXERR_MIC;
-	पूर्ण अन्यथा अणु
-		अगर (ads.ds_rxstatus8 &
+	} else {
+		if (ads.ds_rxstatus8 &
 		    (AR_CRCErr | AR_PHYErr | AR_DecryptCRCErr | AR_MichaelErr))
 			rs->rs_status |= ATH9K_RXERR_CORRUPT_DESC;
 
 		/* Only up to MCS16 supported, everything above is invalid */
-		अगर (rs->rs_rate >= 0x90)
+		if (rs->rs_rate >= 0x90)
 			rs->rs_status |= ATH9K_RXERR_CORRUPT_DESC;
-	पूर्ण
+	}
 
-	अगर (ads.ds_rxstatus8 & AR_KeyMiss)
+	if (ads.ds_rxstatus8 & AR_KeyMiss)
 		rs->rs_status |= ATH9K_RXERR_KEYMISS;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(ath9k_hw_rxprocdesc);
 
 /*
  * This can stop or re-enables RX.
  *
- * If bool is set this will समाप्त any frame which is currently being
+ * If bool is set this will kill any frame which is currently being
  * transferred between the MAC and baseband and also prevent any new
  * frames from getting started.
  */
-bool ath9k_hw_setrxपात(काष्ठा ath_hw *ah, bool set)
-अणु
+bool ath9k_hw_setrxabort(struct ath_hw *ah, bool set)
+{
 	u32 reg;
 
-	अगर (set) अणु
+	if (set) {
 		REG_SET_BIT(ah, AR_DIAG_SW,
 			    (AR_DIAG_RX_DIS | AR_DIAG_RX_ABORT));
 
-		अगर (!ath9k_hw_रुको(ah, AR_OBS_BUS_1, AR_OBS_BUS_1_RX_STATE,
-				   0, AH_WAIT_TIMEOUT)) अणु
+		if (!ath9k_hw_wait(ah, AR_OBS_BUS_1, AR_OBS_BUS_1_RX_STATE,
+				   0, AH_WAIT_TIMEOUT)) {
 			REG_CLR_BIT(ah, AR_DIAG_SW,
 				    (AR_DIAG_RX_DIS |
 				     AR_DIAG_RX_ABORT));
@@ -656,47 +655,47 @@ bool ath9k_hw_setrxपात(काष्ठा ath_hw *ah, bool set)
 				"RX failed to go idle in 10 ms RXSM=0x%x\n",
 				reg);
 
-			वापस false;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return false;
+		}
+	} else {
 		REG_CLR_BIT(ah, AR_DIAG_SW,
 			    (AR_DIAG_RX_DIS | AR_DIAG_RX_ABORT));
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
-EXPORT_SYMBOL(ath9k_hw_setrxपात);
+	return true;
+}
+EXPORT_SYMBOL(ath9k_hw_setrxabort);
 
-व्योम ath9k_hw_putrxbuf(काष्ठा ath_hw *ah, u32 rxdp)
-अणु
+void ath9k_hw_putrxbuf(struct ath_hw *ah, u32 rxdp)
+{
 	REG_WRITE(ah, AR_RXDP, rxdp);
-पूर्ण
+}
 EXPORT_SYMBOL(ath9k_hw_putrxbuf);
 
-व्योम ath9k_hw_startpcureceive(काष्ठा ath_hw *ah, bool is_scanning)
-अणु
+void ath9k_hw_startpcureceive(struct ath_hw *ah, bool is_scanning)
+{
 	ath9k_enable_mib_counters(ah);
 
 	ath9k_ani_reset(ah, is_scanning);
 
 	REG_CLR_BIT(ah, AR_DIAG_SW, (AR_DIAG_RX_DIS | AR_DIAG_RX_ABORT));
-पूर्ण
+}
 EXPORT_SYMBOL(ath9k_hw_startpcureceive);
 
-व्योम ath9k_hw_पातpcurecv(काष्ठा ath_hw *ah)
-अणु
+void ath9k_hw_abortpcurecv(struct ath_hw *ah)
+{
 	REG_SET_BIT(ah, AR_DIAG_SW, AR_DIAG_RX_ABORT | AR_DIAG_RX_DIS);
 
 	ath9k_hw_disable_mib_counters(ah);
-पूर्ण
-EXPORT_SYMBOL(ath9k_hw_पातpcurecv);
+}
+EXPORT_SYMBOL(ath9k_hw_abortpcurecv);
 
-bool ath9k_hw_stopdmarecv(काष्ठा ath_hw *ah, bool *reset)
-अणु
-#घोषणा AH_RX_STOP_DMA_TIMEOUT 10000   /* usec */
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
+bool ath9k_hw_stopdmarecv(struct ath_hw *ah, bool *reset)
+{
+#define AH_RX_STOP_DMA_TIMEOUT 10000   /* usec */
+	struct ath_common *common = ath9k_hw_common(ah);
 	u32 mac_status, last_mac_status = 0;
-	पूर्णांक i;
+	int i;
 
 	/* Enable access to the DMA observation bus */
 	REG_WRITE(ah, AR_MACMISC,
@@ -706,135 +705,135 @@ bool ath9k_hw_stopdmarecv(काष्ठा ath_hw *ah, bool *reset)
 
 	REG_WRITE(ah, AR_CR, AR_CR_RXD);
 
-	/* Wait क्रम rx enable bit to go low */
-	क्रम (i = AH_RX_STOP_DMA_TIMEOUT / AH_TIME_QUANTUM; i != 0; i--) अणु
-		अगर ((REG_READ(ah, AR_CR) & AR_CR_RXE) == 0)
-			अवरोध;
+	/* Wait for rx enable bit to go low */
+	for (i = AH_RX_STOP_DMA_TIMEOUT / AH_TIME_QUANTUM; i != 0; i--) {
+		if ((REG_READ(ah, AR_CR) & AR_CR_RXE) == 0)
+			break;
 
-		अगर (!AR_SREV_9300_20_OR_LATER(ah)) अणु
+		if (!AR_SREV_9300_20_OR_LATER(ah)) {
 			mac_status = REG_READ(ah, AR_DMADBG_7) & 0x7f0;
-			अगर (mac_status == 0x1c0 && mac_status == last_mac_status) अणु
+			if (mac_status == 0x1c0 && mac_status == last_mac_status) {
 				*reset = true;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			last_mac_status = mac_status;
-		पूर्ण
+		}
 
 		udelay(AH_TIME_QUANTUM);
-	पूर्ण
+	}
 
-	अगर (i == 0) अणु
+	if (i == 0) {
 		ath_err(common,
 			"DMA failed to stop in %d ms AR_CR=0x%08x AR_DIAG_SW=0x%08x DMADBG_7=0x%08x\n",
 			AH_RX_STOP_DMA_TIMEOUT / 1000,
 			REG_READ(ah, AR_CR),
 			REG_READ(ah, AR_DIAG_SW),
 			REG_READ(ah, AR_DMADBG_7));
-		वापस false;
-	पूर्ण अन्यथा अणु
-		वापस true;
-	पूर्ण
+		return false;
+	} else {
+		return true;
+	}
 
-#अघोषित AH_RX_STOP_DMA_TIMEOUT
-पूर्ण
+#undef AH_RX_STOP_DMA_TIMEOUT
+}
 EXPORT_SYMBOL(ath9k_hw_stopdmarecv);
 
-पूर्णांक ath9k_hw_beaconq_setup(काष्ठा ath_hw *ah)
-अणु
-	काष्ठा ath9k_tx_queue_info qi;
+int ath9k_hw_beaconq_setup(struct ath_hw *ah)
+{
+	struct ath9k_tx_queue_info qi;
 
-	स_रखो(&qi, 0, माप(qi));
-	qi.tqi_aअगरs = 1;
+	memset(&qi, 0, sizeof(qi));
+	qi.tqi_aifs = 1;
 	qi.tqi_cwmin = 0;
 	qi.tqi_cwmax = 0;
 
-	अगर (ah->caps.hw_caps & ATH9K_HW_CAP_EDMA)
+	if (ah->caps.hw_caps & ATH9K_HW_CAP_EDMA)
 		qi.tqi_qflags = TXQ_FLAG_TXINT_ENABLE;
 
-	वापस ath9k_hw_setuptxqueue(ah, ATH9K_TX_QUEUE_BEACON, &qi);
-पूर्ण
+	return ath9k_hw_setuptxqueue(ah, ATH9K_TX_QUEUE_BEACON, &qi);
+}
 EXPORT_SYMBOL(ath9k_hw_beaconq_setup);
 
-bool ath9k_hw_पूर्णांकrpend(काष्ठा ath_hw *ah)
-अणु
+bool ath9k_hw_intrpend(struct ath_hw *ah)
+{
 	u32 host_isr;
 
-	अगर (AR_SREV_9100(ah))
-		वापस true;
+	if (AR_SREV_9100(ah))
+		return true;
 
 	host_isr = REG_READ(ah, AR_INTR_ASYNC_CAUSE);
 
-	अगर (((host_isr & AR_INTR_MAC_IRQ) ||
+	if (((host_isr & AR_INTR_MAC_IRQ) ||
 	     (host_isr & AR_INTR_ASYNC_MASK_MCI)) &&
 	    (host_isr != AR_INTR_SPURIOUS))
-		वापस true;
+		return true;
 
 	host_isr = REG_READ(ah, AR_INTR_SYNC_CAUSE);
-	अगर ((host_isr & AR_INTR_SYNC_DEFAULT)
+	if ((host_isr & AR_INTR_SYNC_DEFAULT)
 	    && (host_isr != AR_INTR_SPURIOUS))
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण
-EXPORT_SYMBOL(ath9k_hw_पूर्णांकrpend);
+	return false;
+}
+EXPORT_SYMBOL(ath9k_hw_intrpend);
 
-व्योम ath9k_hw_समाप्त_पूर्णांकerrupts(काष्ठा ath_hw *ah)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
+void ath9k_hw_kill_interrupts(struct ath_hw *ah)
+{
+	struct ath_common *common = ath9k_hw_common(ah);
 
 	ath_dbg(common, INTERRUPT, "disable IER\n");
 	REG_WRITE(ah, AR_IER, AR_IER_DISABLE);
-	(व्योम) REG_READ(ah, AR_IER);
-	अगर (!AR_SREV_9100(ah)) अणु
+	(void) REG_READ(ah, AR_IER);
+	if (!AR_SREV_9100(ah)) {
 		REG_WRITE(ah, AR_INTR_ASYNC_ENABLE, 0);
-		(व्योम) REG_READ(ah, AR_INTR_ASYNC_ENABLE);
+		(void) REG_READ(ah, AR_INTR_ASYNC_ENABLE);
 
 		REG_WRITE(ah, AR_INTR_SYNC_ENABLE, 0);
-		(व्योम) REG_READ(ah, AR_INTR_SYNC_ENABLE);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(ath9k_hw_समाप्त_पूर्णांकerrupts);
+		(void) REG_READ(ah, AR_INTR_SYNC_ENABLE);
+	}
+}
+EXPORT_SYMBOL(ath9k_hw_kill_interrupts);
 
-व्योम ath9k_hw_disable_पूर्णांकerrupts(काष्ठा ath_hw *ah)
-अणु
-	अगर (!(ah->imask & ATH9K_INT_GLOBAL))
-		atomic_set(&ah->पूर्णांकr_ref_cnt, -1);
-	अन्यथा
-		atomic_dec(&ah->पूर्णांकr_ref_cnt);
+void ath9k_hw_disable_interrupts(struct ath_hw *ah)
+{
+	if (!(ah->imask & ATH9K_INT_GLOBAL))
+		atomic_set(&ah->intr_ref_cnt, -1);
+	else
+		atomic_dec(&ah->intr_ref_cnt);
 
-	ath9k_hw_समाप्त_पूर्णांकerrupts(ah);
-पूर्ण
-EXPORT_SYMBOL(ath9k_hw_disable_पूर्णांकerrupts);
+	ath9k_hw_kill_interrupts(ah);
+}
+EXPORT_SYMBOL(ath9k_hw_disable_interrupts);
 
-अटल व्योम __ath9k_hw_enable_पूर्णांकerrupts(काष्ठा ath_hw *ah)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	u32 sync_शेष = AR_INTR_SYNC_DEFAULT;
+static void __ath9k_hw_enable_interrupts(struct ath_hw *ah)
+{
+	struct ath_common *common = ath9k_hw_common(ah);
+	u32 sync_default = AR_INTR_SYNC_DEFAULT;
 	u32 async_mask;
 
-	अगर (AR_SREV_9340(ah) || AR_SREV_9550(ah) || AR_SREV_9531(ah) ||
+	if (AR_SREV_9340(ah) || AR_SREV_9550(ah) || AR_SREV_9531(ah) ||
 	    AR_SREV_9561(ah))
-		sync_शेष &= ~AR_INTR_SYNC_HOST1_FATAL;
+		sync_default &= ~AR_INTR_SYNC_HOST1_FATAL;
 
 	async_mask = AR_INTR_MAC_IRQ;
 
-	अगर (ah->imask & ATH9K_INT_MCI)
+	if (ah->imask & ATH9K_INT_MCI)
 		async_mask |= AR_INTR_ASYNC_MASK_MCI;
 
 	ath_dbg(common, INTERRUPT, "enable IER\n");
 	REG_WRITE(ah, AR_IER, AR_IER_ENABLE);
-	अगर (!AR_SREV_9100(ah)) अणु
+	if (!AR_SREV_9100(ah)) {
 		REG_WRITE(ah, AR_INTR_ASYNC_ENABLE, async_mask);
 		REG_WRITE(ah, AR_INTR_ASYNC_MASK, async_mask);
 
-		REG_WRITE(ah, AR_INTR_SYNC_ENABLE, sync_शेष);
-		REG_WRITE(ah, AR_INTR_SYNC_MASK, sync_शेष);
-	पूर्ण
+		REG_WRITE(ah, AR_INTR_SYNC_ENABLE, sync_default);
+		REG_WRITE(ah, AR_INTR_SYNC_MASK, sync_default);
+	}
 	ath_dbg(common, INTERRUPT, "AR_IMR 0x%x IER 0x%x\n",
 		REG_READ(ah, AR_IMR), REG_READ(ah, AR_IER));
 
-	अगर (ah->msi_enabled) अणु
+	if (ah->msi_enabled) {
 		u32 _msi_reg = 0;
 		u32 i = 0;
 		u32 msi_pend_addr_mask = AR_PCIE_MSI_HW_INT_PENDING_ADDR_MSI_64;
@@ -849,7 +848,7 @@ EXPORT_SYMBOL(ath9k_hw_disable_पूर्णांकerrupts);
 			REG_READ(ah, AR_INTR_PRIO_ASYNC_ENABLE),
 			REG_READ(ah, AR_INTR_PRIO_ASYNC_MASK));
 
-		अगर (ah->msi_reg == 0)
+		if (ah->msi_reg == 0)
 			ah->msi_reg = REG_READ(ah, AR_PCIE_MSI);
 
 		ath_dbg(ath9k_hw_common(ah), INTERRUPT,
@@ -857,144 +856,144 @@ EXPORT_SYMBOL(ath9k_hw_disable_पूर्णांकerrupts);
 			AR_PCIE_MSI, ah->msi_reg);
 
 		i = 0;
-		करो अणु
+		do {
 			REG_WRITE(ah, AR_PCIE_MSI,
 				  (ah->msi_reg | AR_PCIE_MSI_ENABLE)
 				  & msi_pend_addr_mask);
 			_msi_reg = REG_READ(ah, AR_PCIE_MSI);
 			i++;
-		पूर्ण जबतक ((_msi_reg & AR_PCIE_MSI_ENABLE) == 0 && i < 200);
+		} while ((_msi_reg & AR_PCIE_MSI_ENABLE) == 0 && i < 200);
 
-		अगर (i >= 200)
+		if (i >= 200)
 			ath_err(ath9k_hw_common(ah),
 				"%s: _msi_reg = 0x%X\n",
 				__func__, _msi_reg);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम ath9k_hw_resume_पूर्णांकerrupts(काष्ठा ath_hw *ah)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
+void ath9k_hw_resume_interrupts(struct ath_hw *ah)
+{
+	struct ath_common *common = ath9k_hw_common(ah);
 
-	अगर (!(ah->imask & ATH9K_INT_GLOBAL))
-		वापस;
+	if (!(ah->imask & ATH9K_INT_GLOBAL))
+		return;
 
-	अगर (atomic_पढ़ो(&ah->पूर्णांकr_ref_cnt) != 0) अणु
+	if (atomic_read(&ah->intr_ref_cnt) != 0) {
 		ath_dbg(common, INTERRUPT, "Do not enable IER ref count %d\n",
-			atomic_पढ़ो(&ah->पूर्णांकr_ref_cnt));
-		वापस;
-	पूर्ण
+			atomic_read(&ah->intr_ref_cnt));
+		return;
+	}
 
-	__ath9k_hw_enable_पूर्णांकerrupts(ah);
-पूर्ण
-EXPORT_SYMBOL(ath9k_hw_resume_पूर्णांकerrupts);
+	__ath9k_hw_enable_interrupts(ah);
+}
+EXPORT_SYMBOL(ath9k_hw_resume_interrupts);
 
-व्योम ath9k_hw_enable_पूर्णांकerrupts(काष्ठा ath_hw *ah)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
+void ath9k_hw_enable_interrupts(struct ath_hw *ah)
+{
+	struct ath_common *common = ath9k_hw_common(ah);
 
-	अगर (!(ah->imask & ATH9K_INT_GLOBAL))
-		वापस;
+	if (!(ah->imask & ATH9K_INT_GLOBAL))
+		return;
 
-	अगर (!atomic_inc_and_test(&ah->पूर्णांकr_ref_cnt)) अणु
+	if (!atomic_inc_and_test(&ah->intr_ref_cnt)) {
 		ath_dbg(common, INTERRUPT, "Do not enable IER ref count %d\n",
-			atomic_पढ़ो(&ah->पूर्णांकr_ref_cnt));
-		वापस;
-	पूर्ण
+			atomic_read(&ah->intr_ref_cnt));
+		return;
+	}
 
-	__ath9k_hw_enable_पूर्णांकerrupts(ah);
-पूर्ण
-EXPORT_SYMBOL(ath9k_hw_enable_पूर्णांकerrupts);
+	__ath9k_hw_enable_interrupts(ah);
+}
+EXPORT_SYMBOL(ath9k_hw_enable_interrupts);
 
-व्योम ath9k_hw_set_पूर्णांकerrupts(काष्ठा ath_hw *ah)
-अणु
-	क्रमागत ath9k_पूर्णांक पूर्णांकs = ah->imask;
+void ath9k_hw_set_interrupts(struct ath_hw *ah)
+{
+	enum ath9k_int ints = ah->imask;
 	u32 mask, mask2;
-	काष्ठा ath9k_hw_capabilities *pCap = &ah->caps;
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
+	struct ath9k_hw_capabilities *pCap = &ah->caps;
+	struct ath_common *common = ath9k_hw_common(ah);
 
-	अगर (!(पूर्णांकs & ATH9K_INT_GLOBAL))
-		ath9k_hw_disable_पूर्णांकerrupts(ah);
+	if (!(ints & ATH9K_INT_GLOBAL))
+		ath9k_hw_disable_interrupts(ah);
 
-	अगर (ah->msi_enabled) अणु
+	if (ah->msi_enabled) {
 		ath_dbg(common, INTERRUPT, "Clearing AR_INTR_PRIO_ASYNC_ENABLE\n");
 
 		REG_WRITE(ah, AR_INTR_PRIO_ASYNC_ENABLE, 0);
 		REG_READ(ah, AR_INTR_PRIO_ASYNC_ENABLE);
-	पूर्ण
+	}
 
-	ath_dbg(common, INTERRUPT, "New interrupt mask 0x%x\n", पूर्णांकs);
+	ath_dbg(common, INTERRUPT, "New interrupt mask 0x%x\n", ints);
 
-	mask = पूर्णांकs & ATH9K_INT_COMMON;
+	mask = ints & ATH9K_INT_COMMON;
 	mask2 = 0;
 
 	ah->msi_mask = 0;
-	अगर (पूर्णांकs & ATH9K_INT_TX) अणु
+	if (ints & ATH9K_INT_TX) {
 		ah->msi_mask |= AR_INTR_PRIO_TX;
-		अगर (ah->config.tx_पूर्णांकr_mitigation)
+		if (ah->config.tx_intr_mitigation)
 			mask |= AR_IMR_TXMINTR | AR_IMR_TXINTM;
-		अन्यथा अणु
-			अगर (ah->txok_पूर्णांकerrupt_mask)
+		else {
+			if (ah->txok_interrupt_mask)
 				mask |= AR_IMR_TXOK;
-			अगर (ah->txdesc_पूर्णांकerrupt_mask)
+			if (ah->txdesc_interrupt_mask)
 				mask |= AR_IMR_TXDESC;
-		पूर्ण
-		अगर (ah->txerr_पूर्णांकerrupt_mask)
+		}
+		if (ah->txerr_interrupt_mask)
 			mask |= AR_IMR_TXERR;
-		अगर (ah->txeol_पूर्णांकerrupt_mask)
+		if (ah->txeol_interrupt_mask)
 			mask |= AR_IMR_TXEOL;
-	पूर्ण
-	अगर (पूर्णांकs & ATH9K_INT_RX) अणु
+	}
+	if (ints & ATH9K_INT_RX) {
 		ah->msi_mask |= AR_INTR_PRIO_RXLP | AR_INTR_PRIO_RXHP;
-		अगर (AR_SREV_9300_20_OR_LATER(ah)) अणु
+		if (AR_SREV_9300_20_OR_LATER(ah)) {
 			mask |= AR_IMR_RXERR | AR_IMR_RXOK_HP;
-			अगर (ah->config.rx_पूर्णांकr_mitigation) अणु
+			if (ah->config.rx_intr_mitigation) {
 				mask &= ~AR_IMR_RXOK_LP;
 				mask |=  AR_IMR_RXMINTR | AR_IMR_RXINTM;
-			पूर्ण अन्यथा अणु
+			} else {
 				mask |= AR_IMR_RXOK_LP;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (ah->config.rx_पूर्णांकr_mitigation)
+			}
+		} else {
+			if (ah->config.rx_intr_mitigation)
 				mask |= AR_IMR_RXMINTR | AR_IMR_RXINTM;
-			अन्यथा
+			else
 				mask |= AR_IMR_RXOK | AR_IMR_RXDESC;
-		पूर्ण
-		अगर (!(pCap->hw_caps & ATH9K_HW_CAP_AUTOSLEEP))
+		}
+		if (!(pCap->hw_caps & ATH9K_HW_CAP_AUTOSLEEP))
 			mask |= AR_IMR_GENTMR;
-	पूर्ण
+	}
 
-	अगर (पूर्णांकs & ATH9K_INT_GENTIMER)
+	if (ints & ATH9K_INT_GENTIMER)
 		mask |= AR_IMR_GENTMR;
 
-	अगर (पूर्णांकs & (ATH9K_INT_BMISC)) अणु
+	if (ints & (ATH9K_INT_BMISC)) {
 		mask |= AR_IMR_BCNMISC;
-		अगर (पूर्णांकs & ATH9K_INT_TIM)
+		if (ints & ATH9K_INT_TIM)
 			mask2 |= AR_IMR_S2_TIM;
-		अगर (पूर्णांकs & ATH9K_INT_DTIM)
+		if (ints & ATH9K_INT_DTIM)
 			mask2 |= AR_IMR_S2_DTIM;
-		अगर (पूर्णांकs & ATH9K_INT_DTIMSYNC)
+		if (ints & ATH9K_INT_DTIMSYNC)
 			mask2 |= AR_IMR_S2_DTIMSYNC;
-		अगर (पूर्णांकs & ATH9K_INT_CABEND)
+		if (ints & ATH9K_INT_CABEND)
 			mask2 |= AR_IMR_S2_CABEND;
-		अगर (पूर्णांकs & ATH9K_INT_TSFOOR)
+		if (ints & ATH9K_INT_TSFOOR)
 			mask2 |= AR_IMR_S2_TSFOOR;
-	पूर्ण
+	}
 
-	अगर (पूर्णांकs & (ATH9K_INT_GTT | ATH9K_INT_CST)) अणु
+	if (ints & (ATH9K_INT_GTT | ATH9K_INT_CST)) {
 		mask |= AR_IMR_BCNMISC;
-		अगर (पूर्णांकs & ATH9K_INT_GTT)
+		if (ints & ATH9K_INT_GTT)
 			mask2 |= AR_IMR_S2_GTT;
-		अगर (पूर्णांकs & ATH9K_INT_CST)
+		if (ints & ATH9K_INT_CST)
 			mask2 |= AR_IMR_S2_CST;
-	पूर्ण
+	}
 
-	अगर (ah->config.hw_hang_checks & HW_BB_WATCHDOG) अणु
-		अगर (पूर्णांकs & ATH9K_INT_BB_WATCHDOG) अणु
+	if (ah->config.hw_hang_checks & HW_BB_WATCHDOG) {
+		if (ints & ATH9K_INT_BB_WATCHDOG) {
 			mask |= AR_IMR_BCNMISC;
 			mask2 |= AR_IMR_S2_BB_WATCHDOG;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ath_dbg(common, INTERRUPT, "new IMR 0x%x\n", mask);
 	REG_WRITE(ah, AR_IMR, mask);
@@ -1007,34 +1006,34 @@ EXPORT_SYMBOL(ath9k_hw_enable_पूर्णांकerrupts);
 			   AR_IMR_S2_GTT |
 			   AR_IMR_S2_CST);
 
-	अगर (ah->config.hw_hang_checks & HW_BB_WATCHDOG) अणु
-		अगर (पूर्णांकs & ATH9K_INT_BB_WATCHDOG)
+	if (ah->config.hw_hang_checks & HW_BB_WATCHDOG) {
+		if (ints & ATH9K_INT_BB_WATCHDOG)
 			ah->imrs2_reg &= ~AR_IMR_S2_BB_WATCHDOG;
-	पूर्ण
+	}
 
 	ah->imrs2_reg |= mask2;
 	REG_WRITE(ah, AR_IMR_S2, ah->imrs2_reg);
 
-	अगर (!(pCap->hw_caps & ATH9K_HW_CAP_AUTOSLEEP)) अणु
-		अगर (पूर्णांकs & ATH9K_INT_TIM_TIMER)
+	if (!(pCap->hw_caps & ATH9K_HW_CAP_AUTOSLEEP)) {
+		if (ints & ATH9K_INT_TIM_TIMER)
 			REG_SET_BIT(ah, AR_IMR_S5, AR_IMR_S5_TIM_TIMER);
-		अन्यथा
+		else
 			REG_CLR_BIT(ah, AR_IMR_S5, AR_IMR_S5_TIM_TIMER);
-	पूर्ण
+	}
 
-	वापस;
-पूर्ण
-EXPORT_SYMBOL(ath9k_hw_set_पूर्णांकerrupts);
+	return;
+}
+EXPORT_SYMBOL(ath9k_hw_set_interrupts);
 
-#घोषणा ATH9K_HW_MAX_DCU       10
-#घोषणा ATH9K_HW_SLICE_PER_DCU 16
-#घोषणा ATH9K_HW_BIT_IN_SLICE  16
-व्योम ath9k_hw_set_tx_filter(काष्ठा ath_hw *ah, u8 destidx, bool set)
-अणु
-	पूर्णांक dcu_idx;
+#define ATH9K_HW_MAX_DCU       10
+#define ATH9K_HW_SLICE_PER_DCU 16
+#define ATH9K_HW_BIT_IN_SLICE  16
+void ath9k_hw_set_tx_filter(struct ath_hw *ah, u8 destidx, bool set)
+{
+	int dcu_idx;
 	u32 filter;
 
-	क्रम (dcu_idx = 0; dcu_idx < 10; dcu_idx++) अणु
+	for (dcu_idx = 0; dcu_idx < 10; dcu_idx++) {
 		filter = SM(set, AR_D_TXBLK_WRITE_COMMAND);
 		filter |= SM(dcu_idx, AR_D_TXBLK_WRITE_DCU);
 		filter |= SM((destidx / ATH9K_HW_SLICE_PER_DCU),
@@ -1044,6 +1043,6 @@ EXPORT_SYMBOL(ath9k_hw_set_पूर्णांकerrupts);
 			"DCU%d staid %d set %d txfilter %08x\n",
 			dcu_idx, destidx, set, filter);
 		REG_WRITE(ah, AR_D_TXBLK_BASE, filter);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(ath9k_hw_set_tx_filter);

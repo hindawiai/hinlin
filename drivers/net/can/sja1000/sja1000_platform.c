@@ -1,29 +1,28 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2005 Sascha Hauer, Pengutronix
- * Copyright (C) 2007 Wolfgang Gअक्रमegger <wg@gअक्रमegger.com>
+ * Copyright (C) 2007 Wolfgang Grandegger <wg@grandegger.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/can/dev.h>
-#समावेश <linux/can/platक्रमm/sja1000.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_irq.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/netdevice.h>
+#include <linux/delay.h>
+#include <linux/pci.h>
+#include <linux/platform_device.h>
+#include <linux/irq.h>
+#include <linux/can/dev.h>
+#include <linux/can/platform/sja1000.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_irq.h>
 
-#समावेश "sja1000.h"
+#include "sja1000.h"
 
-#घोषणा DRV_NAME "sja1000_platform"
-#घोषणा SP_CAN_CLOCK  (16000000 / 2)
+#define DRV_NAME "sja1000_platform"
+#define SP_CAN_CLOCK  (16000000 / 2)
 
 MODULE_AUTHOR("Sascha Hauer <s.hauer@pengutronix.de>");
 MODULE_AUTHOR("Wolfgang Grandegger <wg@grandegger.com>");
@@ -31,289 +30,289 @@ MODULE_DESCRIPTION("Socket-CAN driver for SJA1000 on the platform bus");
 MODULE_ALIAS("platform:" DRV_NAME);
 MODULE_LICENSE("GPL v2");
 
-काष्ठा sja1000_of_data अणु
-	माप_प्रकार  priv_sz;
-	पूर्णांक     (*init)(काष्ठा sja1000_priv *priv, काष्ठा device_node *of);
-पूर्ण;
+struct sja1000_of_data {
+	size_t  priv_sz;
+	int     (*init)(struct sja1000_priv *priv, struct device_node *of);
+};
 
-काष्ठा technologic_priv अणु
+struct technologic_priv {
 	spinlock_t      io_lock;
-पूर्ण;
+};
 
-अटल u8 sp_पढ़ो_reg8(स्थिर काष्ठा sja1000_priv *priv, पूर्णांक reg)
-अणु
-	वापस ioपढ़ो8(priv->reg_base + reg);
-पूर्ण
+static u8 sp_read_reg8(const struct sja1000_priv *priv, int reg)
+{
+	return ioread8(priv->reg_base + reg);
+}
 
-अटल व्योम sp_ग_लिखो_reg8(स्थिर काष्ठा sja1000_priv *priv, पूर्णांक reg, u8 val)
-अणु
-	ioग_लिखो8(val, priv->reg_base + reg);
-पूर्ण
+static void sp_write_reg8(const struct sja1000_priv *priv, int reg, u8 val)
+{
+	iowrite8(val, priv->reg_base + reg);
+}
 
-अटल u8 sp_पढ़ो_reg16(स्थिर काष्ठा sja1000_priv *priv, पूर्णांक reg)
-अणु
-	वापस ioपढ़ो8(priv->reg_base + reg * 2);
-पूर्ण
+static u8 sp_read_reg16(const struct sja1000_priv *priv, int reg)
+{
+	return ioread8(priv->reg_base + reg * 2);
+}
 
-अटल व्योम sp_ग_लिखो_reg16(स्थिर काष्ठा sja1000_priv *priv, पूर्णांक reg, u8 val)
-अणु
-	ioग_लिखो8(val, priv->reg_base + reg * 2);
-पूर्ण
+static void sp_write_reg16(const struct sja1000_priv *priv, int reg, u8 val)
+{
+	iowrite8(val, priv->reg_base + reg * 2);
+}
 
-अटल u8 sp_पढ़ो_reg32(स्थिर काष्ठा sja1000_priv *priv, पूर्णांक reg)
-अणु
-	वापस ioपढ़ो8(priv->reg_base + reg * 4);
-पूर्ण
+static u8 sp_read_reg32(const struct sja1000_priv *priv, int reg)
+{
+	return ioread8(priv->reg_base + reg * 4);
+}
 
-अटल व्योम sp_ग_लिखो_reg32(स्थिर काष्ठा sja1000_priv *priv, पूर्णांक reg, u8 val)
-अणु
-	ioग_लिखो8(val, priv->reg_base + reg * 4);
-पूर्ण
+static void sp_write_reg32(const struct sja1000_priv *priv, int reg, u8 val)
+{
+	iowrite8(val, priv->reg_base + reg * 4);
+}
 
-अटल u8 sp_technologic_पढ़ो_reg16(स्थिर काष्ठा sja1000_priv *priv, पूर्णांक reg)
-अणु
-	काष्ठा technologic_priv *tp = priv->priv;
-	अचिन्हित दीर्घ flags;
+static u8 sp_technologic_read_reg16(const struct sja1000_priv *priv, int reg)
+{
+	struct technologic_priv *tp = priv->priv;
+	unsigned long flags;
 	u8 val;
 
 	spin_lock_irqsave(&tp->io_lock, flags);
-	ioग_लिखो16(reg, priv->reg_base + 0);
-	val = ioपढ़ो16(priv->reg_base + 2);
+	iowrite16(reg, priv->reg_base + 0);
+	val = ioread16(priv->reg_base + 2);
 	spin_unlock_irqrestore(&tp->io_lock, flags);
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल व्योम sp_technologic_ग_लिखो_reg16(स्थिर काष्ठा sja1000_priv *priv,
-				       पूर्णांक reg, u8 val)
-अणु
-	काष्ठा technologic_priv *tp = priv->priv;
-	अचिन्हित दीर्घ flags;
+static void sp_technologic_write_reg16(const struct sja1000_priv *priv,
+				       int reg, u8 val)
+{
+	struct technologic_priv *tp = priv->priv;
+	unsigned long flags;
 
 	spin_lock_irqsave(&tp->io_lock, flags);
-	ioग_लिखो16(reg, priv->reg_base + 0);
-	ioग_लिखो16(val, priv->reg_base + 2);
+	iowrite16(reg, priv->reg_base + 0);
+	iowrite16(val, priv->reg_base + 2);
 	spin_unlock_irqrestore(&tp->io_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक sp_technologic_init(काष्ठा sja1000_priv *priv, काष्ठा device_node *of)
-अणु
-	काष्ठा technologic_priv *tp = priv->priv;
+static int sp_technologic_init(struct sja1000_priv *priv, struct device_node *of)
+{
+	struct technologic_priv *tp = priv->priv;
 
-	priv->पढ़ो_reg = sp_technologic_पढ़ो_reg16;
-	priv->ग_लिखो_reg = sp_technologic_ग_लिखो_reg16;
+	priv->read_reg = sp_technologic_read_reg16;
+	priv->write_reg = sp_technologic_write_reg16;
 	spin_lock_init(&tp->io_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sp_populate(काष्ठा sja1000_priv *priv,
-			काष्ठा sja1000_platक्रमm_data *pdata,
-			अचिन्हित दीर्घ resource_mem_flags)
-अणु
-	/* The CAN घड़ी frequency is half the oscillator घड़ी frequency */
-	priv->can.घड़ी.freq = pdata->osc_freq / 2;
+static void sp_populate(struct sja1000_priv *priv,
+			struct sja1000_platform_data *pdata,
+			unsigned long resource_mem_flags)
+{
+	/* The CAN clock frequency is half the oscillator clock frequency */
+	priv->can.clock.freq = pdata->osc_freq / 2;
 	priv->ocr = pdata->ocr;
 	priv->cdr = pdata->cdr;
 
-	चयन (resource_mem_flags & IORESOURCE_MEM_TYPE_MASK) अणु
-	हाल IORESOURCE_MEM_32BIT:
-		priv->पढ़ो_reg = sp_पढ़ो_reg32;
-		priv->ग_लिखो_reg = sp_ग_लिखो_reg32;
-		अवरोध;
-	हाल IORESOURCE_MEM_16BIT:
-		priv->पढ़ो_reg = sp_पढ़ो_reg16;
-		priv->ग_लिखो_reg = sp_ग_लिखो_reg16;
-		अवरोध;
-	हाल IORESOURCE_MEM_8BIT:
-	शेष:
-		priv->पढ़ो_reg = sp_पढ़ो_reg8;
-		priv->ग_लिखो_reg = sp_ग_लिखो_reg8;
-		अवरोध;
-	पूर्ण
-पूर्ण
+	switch (resource_mem_flags & IORESOURCE_MEM_TYPE_MASK) {
+	case IORESOURCE_MEM_32BIT:
+		priv->read_reg = sp_read_reg32;
+		priv->write_reg = sp_write_reg32;
+		break;
+	case IORESOURCE_MEM_16BIT:
+		priv->read_reg = sp_read_reg16;
+		priv->write_reg = sp_write_reg16;
+		break;
+	case IORESOURCE_MEM_8BIT:
+	default:
+		priv->read_reg = sp_read_reg8;
+		priv->write_reg = sp_write_reg8;
+		break;
+	}
+}
 
-अटल व्योम sp_populate_of(काष्ठा sja1000_priv *priv, काष्ठा device_node *of)
-अणु
-	पूर्णांक err;
+static void sp_populate_of(struct sja1000_priv *priv, struct device_node *of)
+{
+	int err;
 	u32 prop;
 
-	err = of_property_पढ़ो_u32(of, "reg-io-width", &prop);
-	अगर (err)
-		prop = 1; /* 8 bit is शेष */
+	err = of_property_read_u32(of, "reg-io-width", &prop);
+	if (err)
+		prop = 1; /* 8 bit is default */
 
-	चयन (prop) अणु
-	हाल 4:
-		priv->पढ़ो_reg = sp_पढ़ो_reg32;
-		priv->ग_लिखो_reg = sp_ग_लिखो_reg32;
-		अवरोध;
-	हाल 2:
-		priv->पढ़ो_reg = sp_पढ़ो_reg16;
-		priv->ग_लिखो_reg = sp_ग_लिखो_reg16;
-		अवरोध;
-	हाल 1:
-	शेष:
-		priv->पढ़ो_reg = sp_पढ़ो_reg8;
-		priv->ग_लिखो_reg = sp_ग_लिखो_reg8;
-	पूर्ण
+	switch (prop) {
+	case 4:
+		priv->read_reg = sp_read_reg32;
+		priv->write_reg = sp_write_reg32;
+		break;
+	case 2:
+		priv->read_reg = sp_read_reg16;
+		priv->write_reg = sp_write_reg16;
+		break;
+	case 1:
+	default:
+		priv->read_reg = sp_read_reg8;
+		priv->write_reg = sp_write_reg8;
+	}
 
-	err = of_property_पढ़ो_u32(of, "nxp,external-clock-frequency", &prop);
-	अगर (!err)
-		priv->can.घड़ी.freq = prop / 2;
-	अन्यथा
-		priv->can.घड़ी.freq = SP_CAN_CLOCK; /* शेष */
+	err = of_property_read_u32(of, "nxp,external-clock-frequency", &prop);
+	if (!err)
+		priv->can.clock.freq = prop / 2;
+	else
+		priv->can.clock.freq = SP_CAN_CLOCK; /* default */
 
-	err = of_property_पढ़ो_u32(of, "nxp,tx-output-mode", &prop);
-	अगर (!err)
+	err = of_property_read_u32(of, "nxp,tx-output-mode", &prop);
+	if (!err)
 		priv->ocr |= prop & OCR_MODE_MASK;
-	अन्यथा
-		priv->ocr |= OCR_MODE_NORMAL; /* शेष */
+	else
+		priv->ocr |= OCR_MODE_NORMAL; /* default */
 
-	err = of_property_पढ़ो_u32(of, "nxp,tx-output-config", &prop);
-	अगर (!err)
+	err = of_property_read_u32(of, "nxp,tx-output-config", &prop);
+	if (!err)
 		priv->ocr |= (prop << OCR_TX_SHIFT) & OCR_TX_MASK;
-	अन्यथा
-		priv->ocr |= OCR_TX0_PULLDOWN; /* शेष */
+	else
+		priv->ocr |= OCR_TX0_PULLDOWN; /* default */
 
-	err = of_property_पढ़ो_u32(of, "nxp,clock-out-frequency", &prop);
-	अगर (!err && prop) अणु
-		u32 भागider = priv->can.घड़ी.freq * 2 / prop;
+	err = of_property_read_u32(of, "nxp,clock-out-frequency", &prop);
+	if (!err && prop) {
+		u32 divider = priv->can.clock.freq * 2 / prop;
 
-		अगर (भागider > 1)
-			priv->cdr |= भागider / 2 - 1;
-		अन्यथा
+		if (divider > 1)
+			priv->cdr |= divider / 2 - 1;
+		else
 			priv->cdr |= CDR_CLKOUT_MASK;
-	पूर्ण अन्यथा अणु
-		priv->cdr |= CDR_CLK_OFF; /* शेष */
-	पूर्ण
+	} else {
+		priv->cdr |= CDR_CLK_OFF; /* default */
+	}
 
-	अगर (!of_property_पढ़ो_bool(of, "nxp,no-comparator-bypass"))
-		priv->cdr |= CDR_CBP; /* शेष */
-पूर्ण
+	if (!of_property_read_bool(of, "nxp,no-comparator-bypass"))
+		priv->cdr |= CDR_CBP; /* default */
+}
 
-अटल काष्ठा sja1000_of_data technologic_data = अणु
-	.priv_sz = माप(काष्ठा technologic_priv),
+static struct sja1000_of_data technologic_data = {
+	.priv_sz = sizeof(struct technologic_priv),
 	.init = sp_technologic_init,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id sp_of_table[] = अणु
-	अणु .compatible = "nxp,sja1000", .data = शून्य, पूर्ण,
-	अणु .compatible = "technologic,sja1000", .data = &technologic_data, पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+static const struct of_device_id sp_of_table[] = {
+	{ .compatible = "nxp,sja1000", .data = NULL, },
+	{ .compatible = "technologic,sja1000", .data = &technologic_data, },
+	{ /* sentinel */ },
+};
 MODULE_DEVICE_TABLE(of, sp_of_table);
 
-अटल पूर्णांक sp_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक err, irq = 0;
-	व्योम __iomem *addr;
-	काष्ठा net_device *dev;
-	काष्ठा sja1000_priv *priv;
-	काष्ठा resource *res_mem, *res_irq = शून्य;
-	काष्ठा sja1000_platक्रमm_data *pdata;
-	काष्ठा device_node *of = pdev->dev.of_node;
-	स्थिर काष्ठा of_device_id *of_id;
-	स्थिर काष्ठा sja1000_of_data *of_data = शून्य;
-	माप_प्रकार priv_sz = 0;
+static int sp_probe(struct platform_device *pdev)
+{
+	int err, irq = 0;
+	void __iomem *addr;
+	struct net_device *dev;
+	struct sja1000_priv *priv;
+	struct resource *res_mem, *res_irq = NULL;
+	struct sja1000_platform_data *pdata;
+	struct device_node *of = pdev->dev.of_node;
+	const struct of_device_id *of_id;
+	const struct sja1000_of_data *of_data = NULL;
+	size_t priv_sz = 0;
 
 	pdata = dev_get_platdata(&pdev->dev);
-	अगर (!pdata && !of) अणु
+	if (!pdata && !of) {
 		dev_err(&pdev->dev, "No platform data provided!\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	res_mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res_mem)
-		वापस -ENODEV;
+	res_mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res_mem)
+		return -ENODEV;
 
-	अगर (!devm_request_mem_region(&pdev->dev, res_mem->start,
+	if (!devm_request_mem_region(&pdev->dev, res_mem->start,
 				     resource_size(res_mem), DRV_NAME))
-		वापस -EBUSY;
+		return -EBUSY;
 
 	addr = devm_ioremap(&pdev->dev, res_mem->start,
 				    resource_size(res_mem));
-	अगर (!addr)
-		वापस -ENOMEM;
+	if (!addr)
+		return -ENOMEM;
 
-	अगर (of)
+	if (of)
 		irq = irq_of_parse_and_map(of, 0);
-	अन्यथा
-		res_irq = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
+	else
+		res_irq = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
 
-	अगर (!irq && !res_irq)
-		वापस -ENODEV;
+	if (!irq && !res_irq)
+		return -ENODEV;
 
 	of_id = of_match_device(sp_of_table, &pdev->dev);
-	अगर (of_id && of_id->data) अणु
+	if (of_id && of_id->data) {
 		of_data = of_id->data;
 		priv_sz = of_data->priv_sz;
-	पूर्ण
+	}
 
 	dev = alloc_sja1000dev(priv_sz);
-	अगर (!dev)
-		वापस -ENOMEM;
+	if (!dev)
+		return -ENOMEM;
 	priv = netdev_priv(dev);
 
-	अगर (res_irq) अणु
+	if (res_irq) {
 		irq = res_irq->start;
 		priv->irq_flags = res_irq->flags & IRQF_TRIGGER_MASK;
-		अगर (res_irq->flags & IORESOURCE_IRQ_SHAREABLE)
+		if (res_irq->flags & IORESOURCE_IRQ_SHAREABLE)
 			priv->irq_flags |= IRQF_SHARED;
-	पूर्ण अन्यथा अणु
+	} else {
 		priv->irq_flags = IRQF_SHARED;
-	पूर्ण
+	}
 
 	dev->irq = irq;
 	priv->reg_base = addr;
 
-	अगर (of) अणु
+	if (of) {
 		sp_populate_of(priv, of);
 
-		अगर (of_data && of_data->init) अणु
+		if (of_data && of_data->init) {
 			err = of_data->init(priv, of);
-			अगर (err)
-				जाओ निकास_मुक्त;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			if (err)
+				goto exit_free;
+		}
+	} else {
 		sp_populate(priv, pdata, res_mem->flags);
-	पूर्ण
+	}
 
-	platक्रमm_set_drvdata(pdev, dev);
+	platform_set_drvdata(pdev, dev);
 	SET_NETDEV_DEV(dev, &pdev->dev);
 
-	err = रेजिस्टर_sja1000dev(dev);
-	अगर (err) अणु
+	err = register_sja1000dev(dev);
+	if (err) {
 		dev_err(&pdev->dev, "registering %s failed (err=%d)\n",
 			DRV_NAME, err);
-		जाओ निकास_मुक्त;
-	पूर्ण
+		goto exit_free;
+	}
 
 	dev_info(&pdev->dev, "%s device registered (reg_base=%p, irq=%d)\n",
 		 DRV_NAME, priv->reg_base, dev->irq);
-	वापस 0;
+	return 0;
 
- निकास_मुक्त:
-	मुक्त_sja1000dev(dev);
-	वापस err;
-पूर्ण
+ exit_free:
+	free_sja1000dev(dev);
+	return err;
+}
 
-अटल पूर्णांक sp_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *dev = platक्रमm_get_drvdata(pdev);
+static int sp_remove(struct platform_device *pdev)
+{
+	struct net_device *dev = platform_get_drvdata(pdev);
 
-	unरेजिस्टर_sja1000dev(dev);
-	मुक्त_sja1000dev(dev);
+	unregister_sja1000dev(dev);
+	free_sja1000dev(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver sp_driver = अणु
+static struct platform_driver sp_driver = {
 	.probe = sp_probe,
-	.हटाओ = sp_हटाओ,
-	.driver = अणु
+	.remove = sp_remove,
+	.driver = {
 		.name = DRV_NAME,
 		.of_match_table = sp_of_table,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(sp_driver);
+module_platform_driver(sp_driver);

@@ -1,5 +1,4 @@
-<शैली गुरु>
-#घोषणा ATOMIC64_EXPORT EXPORT_SYMBOL
+#define ATOMIC64_EXPORT EXPORT_SYMBOL
 
-#समावेश <linux/export.h>
-#समावेश <linux/atomic.h>
+#include <linux/export.h>
+#include <linux/atomic.h>

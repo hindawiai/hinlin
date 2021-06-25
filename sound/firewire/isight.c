@@ -1,258 +1,257 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Apple iSight audio driver
  *
  * Copyright (c) Clemens Ladisch <clemens@ladisch.de>
  */
 
-#समावेश <यंत्र/byteorder.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/firewire.h>
-#समावेश <linux/firewire-स्थिरants.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/माला.स>
-#समावेश <sound/control.h>
-#समावेश <sound/core.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/tlv.h>
-#समावेश "lib.h"
-#समावेश "iso-resources.h"
-#समावेश "packets-buffer.h"
+#include <asm/byteorder.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/firewire.h>
+#include <linux/firewire-constants.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/mutex.h>
+#include <linux/string.h>
+#include <sound/control.h>
+#include <sound/core.h>
+#include <sound/initval.h>
+#include <sound/pcm.h>
+#include <sound/tlv.h>
+#include "lib.h"
+#include "iso-resources.h"
+#include "packets-buffer.h"
 
-#घोषणा OUI_APPLE		0x000a27
-#घोषणा MODEL_APPLE_ISIGHT	0x000008
-#घोषणा SW_ISIGHT_AUDIO		0x000010
+#define OUI_APPLE		0x000a27
+#define MODEL_APPLE_ISIGHT	0x000008
+#define SW_ISIGHT_AUDIO		0x000010
 
-#घोषणा REG_AUDIO_ENABLE	0x000
-#घोषणा  AUDIO_ENABLE		0x80000000
-#घोषणा REG_DEF_AUDIO_GAIN	0x204
-#घोषणा REG_GAIN_RAW_START	0x210
-#घोषणा REG_GAIN_RAW_END	0x214
-#घोषणा REG_GAIN_DB_START	0x218
-#घोषणा REG_GAIN_DB_END		0x21c
-#घोषणा REG_SAMPLE_RATE_INQUIRY	0x280
-#घोषणा REG_ISO_TX_CONFIG	0x300
-#घोषणा  SPEED_SHIFT		16
-#घोषणा REG_SAMPLE_RATE		0x400
-#घोषणा  RATE_48000		0x80000000
-#घोषणा REG_GAIN		0x500
-#घोषणा REG_MUTE		0x504
+#define REG_AUDIO_ENABLE	0x000
+#define  AUDIO_ENABLE		0x80000000
+#define REG_DEF_AUDIO_GAIN	0x204
+#define REG_GAIN_RAW_START	0x210
+#define REG_GAIN_RAW_END	0x214
+#define REG_GAIN_DB_START	0x218
+#define REG_GAIN_DB_END		0x21c
+#define REG_SAMPLE_RATE_INQUIRY	0x280
+#define REG_ISO_TX_CONFIG	0x300
+#define  SPEED_SHIFT		16
+#define REG_SAMPLE_RATE		0x400
+#define  RATE_48000		0x80000000
+#define REG_GAIN		0x500
+#define REG_MUTE		0x504
 
-#घोषणा MAX_FRAMES_PER_PACKET	475
+#define MAX_FRAMES_PER_PACKET	475
 
-#घोषणा QUEUE_LENGTH		20
+#define QUEUE_LENGTH		20
 
-काष्ठा isight अणु
-	काष्ठा snd_card *card;
-	काष्ठा fw_unit *unit;
-	काष्ठा fw_device *device;
+struct isight {
+	struct snd_card *card;
+	struct fw_unit *unit;
+	struct fw_device *device;
 	u64 audio_base;
-	काष्ठा snd_pcm_substream *pcm;
-	काष्ठा mutex mutex;
-	काष्ठा iso_packets_buffer buffer;
-	काष्ठा fw_iso_resources resources;
-	काष्ठा fw_iso_context *context;
+	struct snd_pcm_substream *pcm;
+	struct mutex mutex;
+	struct iso_packets_buffer buffer;
+	struct fw_iso_resources resources;
+	struct fw_iso_context *context;
 	bool pcm_active;
 	bool pcm_running;
 	bool first_packet;
-	पूर्णांक packet_index;
+	int packet_index;
 	u32 total_samples;
-	अचिन्हित पूर्णांक buffer_poपूर्णांकer;
-	अचिन्हित पूर्णांक period_counter;
+	unsigned int buffer_pointer;
+	unsigned int period_counter;
 	s32 gain_min, gain_max;
-	अचिन्हित पूर्णांक gain_tlv[4];
-पूर्ण;
+	unsigned int gain_tlv[4];
+};
 
-काष्ठा audio_payload अणु
+struct audio_payload {
 	__be32 sample_count;
 	__be32 signature;
 	__be32 sample_total;
 	__be32 reserved;
 	__be16 samples[2 * MAX_FRAMES_PER_PACKET];
-पूर्ण;
+};
 
 MODULE_DESCRIPTION("iSight audio driver");
 MODULE_AUTHOR("Clemens Ladisch <clemens@ladisch.de>");
 MODULE_LICENSE("GPL v2");
 
-अटल काष्ठा fw_iso_packet audio_packet = अणु
-	.payload_length = माप(काष्ठा audio_payload),
-	.पूर्णांकerrupt = 1,
+static struct fw_iso_packet audio_packet = {
+	.payload_length = sizeof(struct audio_payload),
+	.interrupt = 1,
 	.header_length = 4,
-पूर्ण;
+};
 
-अटल व्योम isight_update_poपूर्णांकers(काष्ठा isight *isight, अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = isight->pcm->runसमय;
-	अचिन्हित पूर्णांक ptr;
+static void isight_update_pointers(struct isight *isight, unsigned int count)
+{
+	struct snd_pcm_runtime *runtime = isight->pcm->runtime;
+	unsigned int ptr;
 
-	smp_wmb(); /* update buffer data beक्रमe buffer poपूर्णांकer */
+	smp_wmb(); /* update buffer data before buffer pointer */
 
-	ptr = isight->buffer_poपूर्णांकer;
+	ptr = isight->buffer_pointer;
 	ptr += count;
-	अगर (ptr >= runसमय->buffer_size)
-		ptr -= runसमय->buffer_size;
-	WRITE_ONCE(isight->buffer_poपूर्णांकer, ptr);
+	if (ptr >= runtime->buffer_size)
+		ptr -= runtime->buffer_size;
+	WRITE_ONCE(isight->buffer_pointer, ptr);
 
 	isight->period_counter += count;
-	अगर (isight->period_counter >= runसमय->period_size) अणु
-		isight->period_counter -= runसमय->period_size;
+	if (isight->period_counter >= runtime->period_size) {
+		isight->period_counter -= runtime->period_size;
 		snd_pcm_period_elapsed(isight->pcm);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम isight_samples(काष्ठा isight *isight,
-			   स्थिर __be16 *samples, अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय;
-	अचिन्हित पूर्णांक count1;
+static void isight_samples(struct isight *isight,
+			   const __be16 *samples, unsigned int count)
+{
+	struct snd_pcm_runtime *runtime;
+	unsigned int count1;
 
-	अगर (!READ_ONCE(isight->pcm_running))
-		वापस;
+	if (!READ_ONCE(isight->pcm_running))
+		return;
 
-	runसमय = isight->pcm->runसमय;
-	अगर (isight->buffer_poपूर्णांकer + count <= runसमय->buffer_size) अणु
-		स_नकल(runसमय->dma_area + isight->buffer_poपूर्णांकer * 4,
+	runtime = isight->pcm->runtime;
+	if (isight->buffer_pointer + count <= runtime->buffer_size) {
+		memcpy(runtime->dma_area + isight->buffer_pointer * 4,
 		       samples, count * 4);
-	पूर्ण अन्यथा अणु
-		count1 = runसमय->buffer_size - isight->buffer_poपूर्णांकer;
-		स_नकल(runसमय->dma_area + isight->buffer_poपूर्णांकer * 4,
+	} else {
+		count1 = runtime->buffer_size - isight->buffer_pointer;
+		memcpy(runtime->dma_area + isight->buffer_pointer * 4,
 		       samples, count1 * 4);
 		samples += count1 * 2;
-		स_नकल(runसमय->dma_area, samples, (count - count1) * 4);
-	पूर्ण
+		memcpy(runtime->dma_area, samples, (count - count1) * 4);
+	}
 
-	isight_update_poपूर्णांकers(isight, count);
-पूर्ण
+	isight_update_pointers(isight, count);
+}
 
-अटल व्योम isight_pcm_पात(काष्ठा isight *isight)
-अणु
-	अगर (READ_ONCE(isight->pcm_active))
+static void isight_pcm_abort(struct isight *isight)
+{
+	if (READ_ONCE(isight->pcm_active))
 		snd_pcm_stop_xrun(isight->pcm);
-पूर्ण
+}
 
-अटल व्योम isight_dropped_samples(काष्ठा isight *isight, अचिन्हित पूर्णांक total)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय;
+static void isight_dropped_samples(struct isight *isight, unsigned int total)
+{
+	struct snd_pcm_runtime *runtime;
 	u32 dropped;
-	अचिन्हित पूर्णांक count1;
+	unsigned int count1;
 
-	अगर (!READ_ONCE(isight->pcm_running))
-		वापस;
+	if (!READ_ONCE(isight->pcm_running))
+		return;
 
-	runसमय = isight->pcm->runसमय;
+	runtime = isight->pcm->runtime;
 	dropped = total - isight->total_samples;
-	अगर (dropped < runसमय->buffer_size) अणु
-		अगर (isight->buffer_poपूर्णांकer + dropped <= runसमय->buffer_size) अणु
-			स_रखो(runसमय->dma_area + isight->buffer_poपूर्णांकer * 4,
+	if (dropped < runtime->buffer_size) {
+		if (isight->buffer_pointer + dropped <= runtime->buffer_size) {
+			memset(runtime->dma_area + isight->buffer_pointer * 4,
 			       0, dropped * 4);
-		पूर्ण अन्यथा अणु
-			count1 = runसमय->buffer_size - isight->buffer_poपूर्णांकer;
-			स_रखो(runसमय->dma_area + isight->buffer_poपूर्णांकer * 4,
+		} else {
+			count1 = runtime->buffer_size - isight->buffer_pointer;
+			memset(runtime->dma_area + isight->buffer_pointer * 4,
 			       0, count1 * 4);
-			स_रखो(runसमय->dma_area, 0, (dropped - count1) * 4);
-		पूर्ण
-		isight_update_poपूर्णांकers(isight, dropped);
-	पूर्ण अन्यथा अणु
-		isight_pcm_पात(isight);
-	पूर्ण
-पूर्ण
+			memset(runtime->dma_area, 0, (dropped - count1) * 4);
+		}
+		isight_update_pointers(isight, dropped);
+	} else {
+		isight_pcm_abort(isight);
+	}
+}
 
-अटल व्योम isight_packet(काष्ठा fw_iso_context *context, u32 cycle,
-			  माप_प्रकार header_length, व्योम *header, व्योम *data)
-अणु
-	काष्ठा isight *isight = data;
-	स्थिर काष्ठा audio_payload *payload;
-	अचिन्हित पूर्णांक index, length, count, total;
-	पूर्णांक err;
+static void isight_packet(struct fw_iso_context *context, u32 cycle,
+			  size_t header_length, void *header, void *data)
+{
+	struct isight *isight = data;
+	const struct audio_payload *payload;
+	unsigned int index, length, count, total;
+	int err;
 
-	अगर (isight->packet_index < 0)
-		वापस;
+	if (isight->packet_index < 0)
+		return;
 	index = isight->packet_index;
 	payload = isight->buffer.packets[index].buffer;
 	length = be32_to_cpup(header) >> 16;
 
-	अगर (likely(length >= 16 &&
-		   payload->signature == cpu_to_be32(0x73676874/*"sght"*/))) अणु
+	if (likely(length >= 16 &&
+		   payload->signature == cpu_to_be32(0x73676874/*"sght"*/))) {
 		count = be32_to_cpu(payload->sample_count);
-		अगर (likely(count <= (length - 16) / 4)) अणु
+		if (likely(count <= (length - 16) / 4)) {
 			total = be32_to_cpu(payload->sample_total);
-			अगर (unlikely(total != isight->total_samples)) अणु
-				अगर (!isight->first_packet)
+			if (unlikely(total != isight->total_samples)) {
+				if (!isight->first_packet)
 					isight_dropped_samples(isight, total);
 				isight->first_packet = false;
 				isight->total_samples = total;
-			पूर्ण
+			}
 
 			isight_samples(isight, payload->samples, count);
 			isight->total_samples += count;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	err = fw_iso_context_queue(isight->context, &audio_packet,
 				   &isight->buffer.iso_buffer,
 				   isight->buffer.packets[index].offset);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(&isight->unit->device, "queueing error: %d\n", err);
-		isight_pcm_पात(isight);
+		isight_pcm_abort(isight);
 		isight->packet_index = -1;
-		वापस;
-	पूर्ण
+		return;
+	}
 	fw_iso_context_queue_flush(isight->context);
 
-	अगर (++index >= QUEUE_LENGTH)
+	if (++index >= QUEUE_LENGTH)
 		index = 0;
 	isight->packet_index = index;
-पूर्ण
+}
 
-अटल पूर्णांक isight_connect(काष्ठा isight *isight)
-अणु
-	पूर्णांक ch, err;
+static int isight_connect(struct isight *isight)
+{
+	int ch, err;
 	__be32 value;
 
 retry_after_bus_reset:
 	ch = fw_iso_resources_allocate(&isight->resources,
-				       माप(काष्ठा audio_payload),
+				       sizeof(struct audio_payload),
 				       isight->device->max_speed);
-	अगर (ch < 0) अणु
+	if (ch < 0) {
 		err = ch;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	value = cpu_to_be32(ch | (isight->device->max_speed << SPEED_SHIFT));
 	err = snd_fw_transaction(isight->unit, TCODE_WRITE_QUADLET_REQUEST,
 				 isight->audio_base + REG_ISO_TX_CONFIG,
 				 &value, 4, FW_FIXED_GENERATION |
 				 isight->resources.generation);
-	अगर (err == -EAGAIN) अणु
-		fw_iso_resources_मुक्त(&isight->resources);
-		जाओ retry_after_bus_reset;
-	पूर्ण अन्यथा अगर (err < 0) अणु
-		जाओ err_resources;
-	पूर्ण
+	if (err == -EAGAIN) {
+		fw_iso_resources_free(&isight->resources);
+		goto retry_after_bus_reset;
+	} else if (err < 0) {
+		goto err_resources;
+	}
 
-	वापस 0;
+	return 0;
 
 err_resources:
-	fw_iso_resources_मुक्त(&isight->resources);
+	fw_iso_resources_free(&isight->resources);
 error:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक isight_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	अटल स्थिर काष्ठा snd_pcm_hardware hardware = अणु
+static int isight_open(struct snd_pcm_substream *substream)
+{
+	static const struct snd_pcm_hardware hardware = {
 		.info = SNDRV_PCM_INFO_MMAP |
 			SNDRV_PCM_INFO_MMAP_VALID |
 			SNDRV_PCM_INFO_BATCH |
 			SNDRV_PCM_INFO_INTERLEAVED |
 			SNDRV_PCM_INFO_BLOCK_TRANSFER,
-		.क्रमmats = SNDRV_PCM_FMTBIT_S16_BE,
+		.formats = SNDRV_PCM_FMTBIT_S16_BE,
 		.rates = SNDRV_PCM_RATE_48000,
 		.rate_min = 48000,
 		.rate_max = 48000,
@@ -262,69 +261,69 @@ error:
 		.period_bytes_min = MAX_FRAMES_PER_PACKET * 4,
 		.period_bytes_max = 1024 * 1024,
 		.periods_min = 2,
-		.periods_max = अच_पूर्णांक_उच्च,
-	पूर्ण;
-	काष्ठा isight *isight = substream->निजी_data;
+		.periods_max = UINT_MAX,
+	};
+	struct isight *isight = substream->private_data;
 
-	substream->runसमय->hw = hardware;
+	substream->runtime->hw = hardware;
 
-	वापस iso_packets_buffer_init(&isight->buffer, isight->unit,
+	return iso_packets_buffer_init(&isight->buffer, isight->unit,
 				       QUEUE_LENGTH,
-				       माप(काष्ठा audio_payload),
+				       sizeof(struct audio_payload),
 				       DMA_FROM_DEVICE);
-पूर्ण
+}
 
-अटल पूर्णांक isight_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा isight *isight = substream->निजी_data;
+static int isight_close(struct snd_pcm_substream *substream)
+{
+	struct isight *isight = substream->private_data;
 
 	iso_packets_buffer_destroy(&isight->buffer, isight->unit);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक isight_hw_params(काष्ठा snd_pcm_substream *substream,
-			    काष्ठा snd_pcm_hw_params *hw_params)
-अणु
-	काष्ठा isight *isight = substream->निजी_data;
+static int isight_hw_params(struct snd_pcm_substream *substream,
+			    struct snd_pcm_hw_params *hw_params)
+{
+	struct isight *isight = substream->private_data;
 
 	WRITE_ONCE(isight->pcm_active, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक reg_पढ़ो(काष्ठा isight *isight, पूर्णांक offset, __be32 *value)
-अणु
-	वापस snd_fw_transaction(isight->unit, TCODE_READ_QUADLET_REQUEST,
+static int reg_read(struct isight *isight, int offset, __be32 *value)
+{
+	return snd_fw_transaction(isight->unit, TCODE_READ_QUADLET_REQUEST,
 				  isight->audio_base + offset, value, 4, 0);
-पूर्ण
+}
 
-अटल पूर्णांक reg_ग_लिखो(काष्ठा isight *isight, पूर्णांक offset, __be32 value)
-अणु
-	वापस snd_fw_transaction(isight->unit, TCODE_WRITE_QUADLET_REQUEST,
+static int reg_write(struct isight *isight, int offset, __be32 value)
+{
+	return snd_fw_transaction(isight->unit, TCODE_WRITE_QUADLET_REQUEST,
 				  isight->audio_base + offset, &value, 4, 0);
-पूर्ण
+}
 
-अटल व्योम isight_stop_streaming(काष्ठा isight *isight)
-अणु
+static void isight_stop_streaming(struct isight *isight)
+{
 	__be32 value;
 
-	अगर (!isight->context)
-		वापस;
+	if (!isight->context)
+		return;
 
 	fw_iso_context_stop(isight->context);
 	fw_iso_context_destroy(isight->context);
-	isight->context = शून्य;
-	fw_iso_resources_मुक्त(&isight->resources);
+	isight->context = NULL;
+	fw_iso_resources_free(&isight->resources);
 	value = 0;
 	snd_fw_transaction(isight->unit, TCODE_WRITE_QUADLET_REQUEST,
 			   isight->audio_base + REG_AUDIO_ENABLE,
 			   &value, 4, FW_QUIET);
-पूर्ण
+}
 
-अटल पूर्णांक isight_hw_मुक्त(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा isight *isight = substream->निजी_data;
+static int isight_hw_free(struct snd_pcm_substream *substream)
+{
+	struct isight *isight = substream->private_data;
 
 	WRITE_ONCE(isight->pcm_active, false);
 
@@ -332,362 +331,362 @@ error:
 	isight_stop_streaming(isight);
 	mutex_unlock(&isight->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक isight_start_streaming(काष्ठा isight *isight)
-अणु
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
+static int isight_start_streaming(struct isight *isight)
+{
+	unsigned int i;
+	int err;
 
-	अगर (isight->context) अणु
-		अगर (isight->packet_index < 0)
+	if (isight->context) {
+		if (isight->packet_index < 0)
 			isight_stop_streaming(isight);
-		अन्यथा
-			वापस 0;
-	पूर्ण
+		else
+			return 0;
+	}
 
-	err = reg_ग_लिखो(isight, REG_SAMPLE_RATE, cpu_to_be32(RATE_48000));
-	अगर (err < 0)
-		जाओ error;
+	err = reg_write(isight, REG_SAMPLE_RATE, cpu_to_be32(RATE_48000));
+	if (err < 0)
+		goto error;
 
 	err = isight_connect(isight);
-	अगर (err < 0)
-		जाओ error;
+	if (err < 0)
+		goto error;
 
-	err = reg_ग_लिखो(isight, REG_AUDIO_ENABLE, cpu_to_be32(AUDIO_ENABLE));
-	अगर (err < 0)
-		जाओ err_resources;
+	err = reg_write(isight, REG_AUDIO_ENABLE, cpu_to_be32(AUDIO_ENABLE));
+	if (err < 0)
+		goto err_resources;
 
 	isight->context = fw_iso_context_create(isight->device->card,
 						FW_ISO_CONTEXT_RECEIVE,
 						isight->resources.channel,
 						isight->device->max_speed,
 						4, isight_packet, isight);
-	अगर (IS_ERR(isight->context)) अणु
+	if (IS_ERR(isight->context)) {
 		err = PTR_ERR(isight->context);
-		isight->context = शून्य;
-		जाओ err_resources;
-	पूर्ण
+		isight->context = NULL;
+		goto err_resources;
+	}
 
-	क्रम (i = 0; i < QUEUE_LENGTH; ++i) अणु
+	for (i = 0; i < QUEUE_LENGTH; ++i) {
 		err = fw_iso_context_queue(isight->context, &audio_packet,
 					   &isight->buffer.iso_buffer,
 					   isight->buffer.packets[i].offset);
-		अगर (err < 0)
-			जाओ err_context;
-	पूर्ण
+		if (err < 0)
+			goto err_context;
+	}
 
 	isight->first_packet = true;
 	isight->packet_index = 0;
 
 	err = fw_iso_context_start(isight->context, -1, 0,
 				   FW_ISO_CONTEXT_MATCH_ALL_TAGS/*?*/);
-	अगर (err < 0)
-		जाओ err_context;
+	if (err < 0)
+		goto err_context;
 
-	वापस 0;
+	return 0;
 
 err_context:
 	fw_iso_context_destroy(isight->context);
-	isight->context = शून्य;
+	isight->context = NULL;
 err_resources:
-	fw_iso_resources_मुक्त(&isight->resources);
-	reg_ग_लिखो(isight, REG_AUDIO_ENABLE, 0);
+	fw_iso_resources_free(&isight->resources);
+	reg_write(isight, REG_AUDIO_ENABLE, 0);
 error:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक isight_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा isight *isight = substream->निजी_data;
-	पूर्णांक err;
+static int isight_prepare(struct snd_pcm_substream *substream)
+{
+	struct isight *isight = substream->private_data;
+	int err;
 
-	isight->buffer_poपूर्णांकer = 0;
+	isight->buffer_pointer = 0;
 	isight->period_counter = 0;
 
 	mutex_lock(&isight->mutex);
 	err = isight_start_streaming(isight);
 	mutex_unlock(&isight->mutex);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक isight_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
-अणु
-	काष्ठा isight *isight = substream->निजी_data;
+static int isight_trigger(struct snd_pcm_substream *substream, int cmd)
+{
+	struct isight *isight = substream->private_data;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
 		WRITE_ONCE(isight->pcm_running, true);
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
 		WRITE_ONCE(isight->pcm_running, false);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल snd_pcm_uframes_t isight_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा isight *isight = substream->निजी_data;
+static snd_pcm_uframes_t isight_pointer(struct snd_pcm_substream *substream)
+{
+	struct isight *isight = substream->private_data;
 
-	वापस READ_ONCE(isight->buffer_poपूर्णांकer);
-पूर्ण
+	return READ_ONCE(isight->buffer_pointer);
+}
 
-अटल पूर्णांक isight_create_pcm(काष्ठा isight *isight)
-अणु
-	अटल स्थिर काष्ठा snd_pcm_ops ops = अणु
-		.खोलो      = isight_खोलो,
-		.बंद     = isight_बंद,
+static int isight_create_pcm(struct isight *isight)
+{
+	static const struct snd_pcm_ops ops = {
+		.open      = isight_open,
+		.close     = isight_close,
 		.hw_params = isight_hw_params,
-		.hw_मुक्त   = isight_hw_मुक्त,
+		.hw_free   = isight_hw_free,
 		.prepare   = isight_prepare,
 		.trigger   = isight_trigger,
-		.poपूर्णांकer   = isight_poपूर्णांकer,
-	पूर्ण;
-	काष्ठा snd_pcm *pcm;
-	पूर्णांक err;
+		.pointer   = isight_pointer,
+	};
+	struct snd_pcm *pcm;
+	int err;
 
 	err = snd_pcm_new(isight->card, "iSight", 0, 0, 1, &pcm);
-	अगर (err < 0)
-		वापस err;
-	pcm->निजी_data = isight;
-	म_नकल(pcm->name, "iSight");
+	if (err < 0)
+		return err;
+	pcm->private_data = isight;
+	strcpy(pcm->name, "iSight");
 	isight->pcm = pcm->streams[SNDRV_PCM_STREAM_CAPTURE].substream;
 	isight->pcm->ops = &ops;
-	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_VMALLOC, शून्य, 0, 0);
+	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_VMALLOC, NULL, 0, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक isight_gain_info(काष्ठा snd_kcontrol *ctl,
-			    काष्ठा snd_ctl_elem_info *info)
-अणु
-	काष्ठा isight *isight = ctl->निजी_data;
+static int isight_gain_info(struct snd_kcontrol *ctl,
+			    struct snd_ctl_elem_info *info)
+{
+	struct isight *isight = ctl->private_data;
 
 	info->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	info->count = 1;
-	info->value.पूर्णांकeger.min = isight->gain_min;
-	info->value.पूर्णांकeger.max = isight->gain_max;
+	info->value.integer.min = isight->gain_min;
+	info->value.integer.max = isight->gain_max;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक isight_gain_get(काष्ठा snd_kcontrol *ctl,
-			   काष्ठा snd_ctl_elem_value *value)
-अणु
-	काष्ठा isight *isight = ctl->निजी_data;
+static int isight_gain_get(struct snd_kcontrol *ctl,
+			   struct snd_ctl_elem_value *value)
+{
+	struct isight *isight = ctl->private_data;
 	__be32 gain;
-	पूर्णांक err;
+	int err;
 
-	err = reg_पढ़ो(isight, REG_GAIN, &gain);
-	अगर (err < 0)
-		वापस err;
+	err = reg_read(isight, REG_GAIN, &gain);
+	if (err < 0)
+		return err;
 
-	value->value.पूर्णांकeger.value[0] = (s32)be32_to_cpu(gain);
+	value->value.integer.value[0] = (s32)be32_to_cpu(gain);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक isight_gain_put(काष्ठा snd_kcontrol *ctl,
-			   काष्ठा snd_ctl_elem_value *value)
-अणु
-	काष्ठा isight *isight = ctl->निजी_data;
+static int isight_gain_put(struct snd_kcontrol *ctl,
+			   struct snd_ctl_elem_value *value)
+{
+	struct isight *isight = ctl->private_data;
 
-	अगर (value->value.पूर्णांकeger.value[0] < isight->gain_min ||
-	    value->value.पूर्णांकeger.value[0] > isight->gain_max)
-		वापस -EINVAL;
+	if (value->value.integer.value[0] < isight->gain_min ||
+	    value->value.integer.value[0] > isight->gain_max)
+		return -EINVAL;
 
-	वापस reg_ग_लिखो(isight, REG_GAIN,
-			 cpu_to_be32(value->value.पूर्णांकeger.value[0]));
-पूर्ण
+	return reg_write(isight, REG_GAIN,
+			 cpu_to_be32(value->value.integer.value[0]));
+}
 
-अटल पूर्णांक isight_mute_get(काष्ठा snd_kcontrol *ctl,
-			   काष्ठा snd_ctl_elem_value *value)
-अणु
-	काष्ठा isight *isight = ctl->निजी_data;
+static int isight_mute_get(struct snd_kcontrol *ctl,
+			   struct snd_ctl_elem_value *value)
+{
+	struct isight *isight = ctl->private_data;
 	__be32 mute;
-	पूर्णांक err;
+	int err;
 
-	err = reg_पढ़ो(isight, REG_MUTE, &mute);
-	अगर (err < 0)
-		वापस err;
+	err = reg_read(isight, REG_MUTE, &mute);
+	if (err < 0)
+		return err;
 
-	value->value.पूर्णांकeger.value[0] = !mute;
+	value->value.integer.value[0] = !mute;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक isight_mute_put(काष्ठा snd_kcontrol *ctl,
-			   काष्ठा snd_ctl_elem_value *value)
-अणु
-	काष्ठा isight *isight = ctl->निजी_data;
+static int isight_mute_put(struct snd_kcontrol *ctl,
+			   struct snd_ctl_elem_value *value)
+{
+	struct isight *isight = ctl->private_data;
 
-	वापस reg_ग_लिखो(isight, REG_MUTE,
-			 (__क्रमce __be32)!value->value.पूर्णांकeger.value[0]);
-पूर्ण
+	return reg_write(isight, REG_MUTE,
+			 (__force __be32)!value->value.integer.value[0]);
+}
 
-अटल पूर्णांक isight_create_mixer(काष्ठा isight *isight)
-अणु
-	अटल स्थिर काष्ठा snd_kcontrol_new gain_control = अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static int isight_create_mixer(struct isight *isight)
+{
+	static const struct snd_kcontrol_new gain_control = {
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "Mic Capture Volume",
 		.access = SNDRV_CTL_ELEM_ACCESS_READWRITE |
 			  SNDRV_CTL_ELEM_ACCESS_TLV_READ,
 		.info = isight_gain_info,
 		.get = isight_gain_get,
 		.put = isight_gain_put,
-	पूर्ण;
-	अटल स्थिर काष्ठा snd_kcontrol_new mute_control = अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+	};
+	static const struct snd_kcontrol_new mute_control = {
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "Mic Capture Switch",
 		.info = snd_ctl_boolean_mono_info,
 		.get = isight_mute_get,
 		.put = isight_mute_put,
-	पूर्ण;
+	};
 	__be32 value;
-	काष्ठा snd_kcontrol *ctl;
-	पूर्णांक err;
+	struct snd_kcontrol *ctl;
+	int err;
 
-	err = reg_पढ़ो(isight, REG_GAIN_RAW_START, &value);
-	अगर (err < 0)
-		वापस err;
+	err = reg_read(isight, REG_GAIN_RAW_START, &value);
+	if (err < 0)
+		return err;
 	isight->gain_min = be32_to_cpu(value);
 
-	err = reg_पढ़ो(isight, REG_GAIN_RAW_END, &value);
-	अगर (err < 0)
-		वापस err;
+	err = reg_read(isight, REG_GAIN_RAW_END, &value);
+	if (err < 0)
+		return err;
 	isight->gain_max = be32_to_cpu(value);
 
 	isight->gain_tlv[SNDRV_CTL_TLVO_TYPE] = SNDRV_CTL_TLVT_DB_MINMAX;
-	isight->gain_tlv[SNDRV_CTL_TLVO_LEN] = 2 * माप(अचिन्हित पूर्णांक);
+	isight->gain_tlv[SNDRV_CTL_TLVO_LEN] = 2 * sizeof(unsigned int);
 
-	err = reg_पढ़ो(isight, REG_GAIN_DB_START, &value);
-	अगर (err < 0)
-		वापस err;
+	err = reg_read(isight, REG_GAIN_DB_START, &value);
+	if (err < 0)
+		return err;
 	isight->gain_tlv[SNDRV_CTL_TLVO_DB_MINMAX_MIN] =
 						(s32)be32_to_cpu(value) * 100;
 
-	err = reg_पढ़ो(isight, REG_GAIN_DB_END, &value);
-	अगर (err < 0)
-		वापस err;
+	err = reg_read(isight, REG_GAIN_DB_END, &value);
+	if (err < 0)
+		return err;
 	isight->gain_tlv[SNDRV_CTL_TLVO_DB_MINMAX_MAX] =
 						(s32)be32_to_cpu(value) * 100;
 
 	ctl = snd_ctl_new1(&gain_control, isight);
-	अगर (ctl)
+	if (ctl)
 		ctl->tlv.p = isight->gain_tlv;
 	err = snd_ctl_add(isight->card, ctl);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = snd_ctl_add(isight->card, snd_ctl_new1(&mute_control, isight));
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम isight_card_मुक्त(काष्ठा snd_card *card)
-अणु
-	काष्ठा isight *isight = card->निजी_data;
+static void isight_card_free(struct snd_card *card)
+{
+	struct isight *isight = card->private_data;
 
 	fw_iso_resources_destroy(&isight->resources);
-पूर्ण
+}
 
-अटल u64 get_unit_base(काष्ठा fw_unit *unit)
-अणु
-	काष्ठा fw_csr_iterator i;
-	पूर्णांक key, value;
+static u64 get_unit_base(struct fw_unit *unit)
+{
+	struct fw_csr_iterator i;
+	int key, value;
 
 	fw_csr_iterator_init(&i, unit->directory);
-	जबतक (fw_csr_iterator_next(&i, &key, &value))
-		अगर (key == CSR_OFFSET)
-			वापस CSR_REGISTER_BASE + value * 4;
-	वापस 0;
-पूर्ण
+	while (fw_csr_iterator_next(&i, &key, &value))
+		if (key == CSR_OFFSET)
+			return CSR_REGISTER_BASE + value * 4;
+	return 0;
+}
 
-अटल पूर्णांक isight_probe(काष्ठा fw_unit *unit,
-			स्थिर काष्ठा ieee1394_device_id *id)
-अणु
-	काष्ठा fw_device *fw_dev = fw_parent_device(unit);
-	काष्ठा snd_card *card;
-	काष्ठा isight *isight;
-	पूर्णांक err;
+static int isight_probe(struct fw_unit *unit,
+			const struct ieee1394_device_id *id)
+{
+	struct fw_device *fw_dev = fw_parent_device(unit);
+	struct snd_card *card;
+	struct isight *isight;
+	int err;
 
-	err = snd_card_new(&unit->device, -1, शून्य, THIS_MODULE,
-			   माप(*isight), &card);
-	अगर (err < 0)
-		वापस err;
+	err = snd_card_new(&unit->device, -1, NULL, THIS_MODULE,
+			   sizeof(*isight), &card);
+	if (err < 0)
+		return err;
 
-	isight = card->निजी_data;
+	isight = card->private_data;
 	isight->card = card;
 	mutex_init(&isight->mutex);
 	isight->unit = fw_unit_get(unit);
 	isight->device = fw_dev;
 	isight->audio_base = get_unit_base(unit);
-	अगर (!isight->audio_base) अणु
+	if (!isight->audio_base) {
 		dev_err(&unit->device, "audio unit base not found\n");
 		err = -ENXIO;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 	fw_iso_resources_init(&isight->resources, unit);
 
-	card->निजी_मुक्त = isight_card_मुक्त;
+	card->private_free = isight_card_free;
 
-	म_नकल(card->driver, "iSight");
-	म_नकल(card->लघुname, "Apple iSight");
-	snम_लिखो(card->दीर्घname, माप(card->दीर्घname),
+	strcpy(card->driver, "iSight");
+	strcpy(card->shortname, "Apple iSight");
+	snprintf(card->longname, sizeof(card->longname),
 		 "Apple iSight (GUID %08x%08x) at %s, S%d",
 		 fw_dev->config_rom[3], fw_dev->config_rom[4],
 		 dev_name(&unit->device), 100 << fw_dev->max_speed);
-	म_नकल(card->mixername, "iSight");
+	strcpy(card->mixername, "iSight");
 
 	err = isight_create_pcm(isight);
-	अगर (err < 0)
-		जाओ error;
+	if (err < 0)
+		goto error;
 
 	err = isight_create_mixer(isight);
-	अगर (err < 0)
-		जाओ error;
+	if (err < 0)
+		goto error;
 
-	err = snd_card_रेजिस्टर(card);
-	अगर (err < 0)
-		जाओ error;
+	err = snd_card_register(card);
+	if (err < 0)
+		goto error;
 
 	dev_set_drvdata(&unit->device, isight);
 
-	वापस 0;
+	return 0;
 error:
-	snd_card_मुक्त(card);
+	snd_card_free(card);
 
 	mutex_destroy(&isight->mutex);
 	fw_unit_put(isight->unit);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम isight_bus_reset(काष्ठा fw_unit *unit)
-अणु
-	काष्ठा isight *isight = dev_get_drvdata(&unit->device);
+static void isight_bus_reset(struct fw_unit *unit)
+{
+	struct isight *isight = dev_get_drvdata(&unit->device);
 
-	अगर (fw_iso_resources_update(&isight->resources) < 0) अणु
-		isight_pcm_पात(isight);
+	if (fw_iso_resources_update(&isight->resources) < 0) {
+		isight_pcm_abort(isight);
 
 		mutex_lock(&isight->mutex);
 		isight_stop_streaming(isight);
 		mutex_unlock(&isight->mutex);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम isight_हटाओ(काष्ठा fw_unit *unit)
-अणु
-	काष्ठा isight *isight = dev_get_drvdata(&unit->device);
+static void isight_remove(struct fw_unit *unit)
+{
+	struct isight *isight = dev_get_drvdata(&unit->device);
 
-	isight_pcm_पात(isight);
+	isight_pcm_abort(isight);
 
 	snd_card_disconnect(isight->card);
 
@@ -695,45 +694,45 @@ error:
 	isight_stop_streaming(isight);
 	mutex_unlock(&isight->mutex);
 
-	// Block till all of ALSA अक्षरacter devices are released.
-	snd_card_मुक्त(isight->card);
+	// Block till all of ALSA character devices are released.
+	snd_card_free(isight->card);
 
 	mutex_destroy(&isight->mutex);
 	fw_unit_put(isight->unit);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा ieee1394_device_id isight_id_table[] = अणु
-	अणु
+static const struct ieee1394_device_id isight_id_table[] = {
+	{
 		.match_flags  = IEEE1394_MATCH_SPECIFIER_ID |
 				IEEE1394_MATCH_VERSION,
-		.specअगरier_id = OUI_APPLE,
+		.specifier_id = OUI_APPLE,
 		.version      = SW_ISIGHT_AUDIO,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+	},
+	{ }
+};
 MODULE_DEVICE_TABLE(ieee1394, isight_id_table);
 
-अटल काष्ठा fw_driver isight_driver = अणु
-	.driver   = अणु
+static struct fw_driver isight_driver = {
+	.driver   = {
 		.owner	= THIS_MODULE,
 		.name	= KBUILD_MODNAME,
 		.bus	= &fw_bus_type,
-	पूर्ण,
+	},
 	.probe    = isight_probe,
 	.update   = isight_bus_reset,
-	.हटाओ   = isight_हटाओ,
+	.remove   = isight_remove,
 	.id_table = isight_id_table,
-पूर्ण;
+};
 
-अटल पूर्णांक __init alsa_isight_init(व्योम)
-अणु
-	वापस driver_रेजिस्टर(&isight_driver.driver);
-पूर्ण
+static int __init alsa_isight_init(void)
+{
+	return driver_register(&isight_driver.driver);
+}
 
-अटल व्योम __निकास alsa_isight_निकास(व्योम)
-अणु
-	driver_unरेजिस्टर(&isight_driver.driver);
-पूर्ण
+static void __exit alsa_isight_exit(void)
+{
+	driver_unregister(&isight_driver.driver);
+}
 
 module_init(alsa_isight_init);
-module_निकास(alsa_isight_निकास);
+module_exit(alsa_isight_exit);

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
  * Copyright (C) 2020 Google, Inc.
  *
@@ -7,69 +6,69 @@
  * Sean Paul <seanpaul@chromium.org>
  */
 
-#समावेश <drm/drm_dp_helper.h>
-#समावेश <drm/drm_dp_mst_helper.h>
-#समावेश <drm/drm_hdcp.h>
-#समावेश <drm/drm_prपूर्णांक.h>
+#include <drm/drm_dp_helper.h>
+#include <drm/drm_dp_mst_helper.h>
+#include <drm/drm_hdcp.h>
+#include <drm/drm_print.h>
 
-#समावेश "intel_display_types.h"
-#समावेश "intel_ddi.h"
-#समावेश "intel_dp.h"
-#समावेश "intel_hdcp.h"
+#include "intel_display_types.h"
+#include "intel_ddi.h"
+#include "intel_dp.h"
+#include "intel_hdcp.h"
 
-अटल अचिन्हित पूर्णांक transcoder_to_stream_enc_status(क्रमागत transcoder cpu_transcoder)
-अणु
+static unsigned int transcoder_to_stream_enc_status(enum transcoder cpu_transcoder)
+{
 	u32 stream_enc_mask;
 
-	चयन (cpu_transcoder) अणु
-	हाल TRANSCODER_A:
+	switch (cpu_transcoder) {
+	case TRANSCODER_A:
 		stream_enc_mask = HDCP_STATUS_STREAM_A_ENC;
-		अवरोध;
-	हाल TRANSCODER_B:
+		break;
+	case TRANSCODER_B:
 		stream_enc_mask = HDCP_STATUS_STREAM_B_ENC;
-		अवरोध;
-	हाल TRANSCODER_C:
+		break;
+	case TRANSCODER_C:
 		stream_enc_mask = HDCP_STATUS_STREAM_C_ENC;
-		अवरोध;
-	हाल TRANSCODER_D:
+		break;
+	case TRANSCODER_D:
 		stream_enc_mask = HDCP_STATUS_STREAM_D_ENC;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		stream_enc_mask = 0;
-	पूर्ण
+	}
 
-	वापस stream_enc_mask;
-पूर्ण
+	return stream_enc_mask;
+}
 
-अटल व्योम पूर्णांकel_dp_hdcp_रुको_क्रम_cp_irq(काष्ठा पूर्णांकel_hdcp *hdcp, पूर्णांक समयout)
-अणु
-	दीर्घ ret;
+static void intel_dp_hdcp_wait_for_cp_irq(struct intel_hdcp *hdcp, int timeout)
+{
+	long ret;
 
-#घोषणा C (hdcp->cp_irq_count_cached != atomic_पढ़ो(&hdcp->cp_irq_count))
-	ret = रुको_event_पूर्णांकerruptible_समयout(hdcp->cp_irq_queue, C,
-					       msecs_to_jअगरfies(समयout));
+#define C (hdcp->cp_irq_count_cached != atomic_read(&hdcp->cp_irq_count))
+	ret = wait_event_interruptible_timeout(hdcp->cp_irq_queue, C,
+					       msecs_to_jiffies(timeout));
 
-	अगर (!ret)
+	if (!ret)
 		DRM_DEBUG_KMS("Timedout at waiting for CP_IRQ\n");
-पूर्ण
+}
 
-अटल
-पूर्णांक पूर्णांकel_dp_hdcp_ग_लिखो_an_aksv(काष्ठा पूर्णांकel_digital_port *dig_port,
+static
+int intel_dp_hdcp_write_an_aksv(struct intel_digital_port *dig_port,
 				u8 *an)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(dig_port->base.base.dev);
-	u8 aksv[DRM_HDCP_KSV_LEN] = अणुपूर्ण;
-	sमाप_प्रकार dpcd_ret;
+{
+	struct drm_i915_private *i915 = to_i915(dig_port->base.base.dev);
+	u8 aksv[DRM_HDCP_KSV_LEN] = {};
+	ssize_t dpcd_ret;
 
 	/* Output An first, that's easy */
-	dpcd_ret = drm_dp_dpcd_ग_लिखो(&dig_port->dp.aux, DP_AUX_HDCP_AN,
+	dpcd_ret = drm_dp_dpcd_write(&dig_port->dp.aux, DP_AUX_HDCP_AN,
 				     an, DRM_HDCP_AN_LEN);
-	अगर (dpcd_ret != DRM_HDCP_AN_LEN) अणु
+	if (dpcd_ret != DRM_HDCP_AN_LEN) {
 		drm_dbg_kms(&i915->drm,
 			    "Failed to write An over DP/AUX (%zd)\n",
 			    dpcd_ret);
-		वापस dpcd_ret >= 0 ? -EIO : dpcd_ret;
-	पूर्ण
+		return dpcd_ret >= 0 ? -EIO : dpcd_ret;
+	}
 
 	/*
 	 * Since Aksv is Oh-So-Secret, we can't access it in software. So we
@@ -78,782 +77,782 @@
 	 * the destination address which will tickle the hardware to output the
 	 * Aksv on our behalf after the header is sent.
 	 */
-	dpcd_ret = drm_dp_dpcd_ग_लिखो(&dig_port->dp.aux, DP_AUX_HDCP_AKSV,
+	dpcd_ret = drm_dp_dpcd_write(&dig_port->dp.aux, DP_AUX_HDCP_AKSV,
 				     aksv, DRM_HDCP_KSV_LEN);
-	अगर (dpcd_ret != DRM_HDCP_KSV_LEN) अणु
+	if (dpcd_ret != DRM_HDCP_KSV_LEN) {
 		drm_dbg_kms(&i915->drm,
 			    "Failed to write Aksv over DP/AUX (%zd)\n",
 			    dpcd_ret);
-		वापस dpcd_ret >= 0 ? -EIO : dpcd_ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return dpcd_ret >= 0 ? -EIO : dpcd_ret;
+	}
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_dp_hdcp_पढ़ो_bksv(काष्ठा पूर्णांकel_digital_port *dig_port,
+static int intel_dp_hdcp_read_bksv(struct intel_digital_port *dig_port,
 				   u8 *bksv)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(dig_port->base.base.dev);
-	sमाप_प्रकार ret;
+{
+	struct drm_i915_private *i915 = to_i915(dig_port->base.base.dev);
+	ssize_t ret;
 
-	ret = drm_dp_dpcd_पढ़ो(&dig_port->dp.aux, DP_AUX_HDCP_BKSV, bksv,
+	ret = drm_dp_dpcd_read(&dig_port->dp.aux, DP_AUX_HDCP_BKSV, bksv,
 			       DRM_HDCP_KSV_LEN);
-	अगर (ret != DRM_HDCP_KSV_LEN) अणु
+	if (ret != DRM_HDCP_KSV_LEN) {
 		drm_dbg_kms(&i915->drm,
 			    "Read Bksv from DP/AUX failed (%zd)\n", ret);
-		वापस ret >= 0 ? -EIO : ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret >= 0 ? -EIO : ret;
+	}
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_dp_hdcp_पढ़ो_bstatus(काष्ठा पूर्णांकel_digital_port *dig_port,
+static int intel_dp_hdcp_read_bstatus(struct intel_digital_port *dig_port,
 				      u8 *bstatus)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(dig_port->base.base.dev);
-	sमाप_प्रकार ret;
+{
+	struct drm_i915_private *i915 = to_i915(dig_port->base.base.dev);
+	ssize_t ret;
 
 	/*
-	 * For some reason the HDMI and DP HDCP specs call this रेजिस्टर
-	 * definition by dअगरferent names. In the HDMI spec, it's called BSTATUS,
+	 * For some reason the HDMI and DP HDCP specs call this register
+	 * definition by different names. In the HDMI spec, it's called BSTATUS,
 	 * but in DP it's called BINFO.
 	 */
-	ret = drm_dp_dpcd_पढ़ो(&dig_port->dp.aux, DP_AUX_HDCP_BINFO,
+	ret = drm_dp_dpcd_read(&dig_port->dp.aux, DP_AUX_HDCP_BINFO,
 			       bstatus, DRM_HDCP_BSTATUS_LEN);
-	अगर (ret != DRM_HDCP_BSTATUS_LEN) अणु
+	if (ret != DRM_HDCP_BSTATUS_LEN) {
 		drm_dbg_kms(&i915->drm,
 			    "Read bstatus from DP/AUX failed (%zd)\n", ret);
-		वापस ret >= 0 ? -EIO : ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret >= 0 ? -EIO : ret;
+	}
+	return 0;
+}
 
-अटल
-पूर्णांक पूर्णांकel_dp_hdcp_पढ़ो_bcaps(काष्ठा पूर्णांकel_digital_port *dig_port,
+static
+int intel_dp_hdcp_read_bcaps(struct intel_digital_port *dig_port,
 			     u8 *bcaps)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(dig_port->base.base.dev);
-	sमाप_प्रकार ret;
+{
+	struct drm_i915_private *i915 = to_i915(dig_port->base.base.dev);
+	ssize_t ret;
 
-	ret = drm_dp_dpcd_पढ़ो(&dig_port->dp.aux, DP_AUX_HDCP_BCAPS,
+	ret = drm_dp_dpcd_read(&dig_port->dp.aux, DP_AUX_HDCP_BCAPS,
 			       bcaps, 1);
-	अगर (ret != 1) अणु
+	if (ret != 1) {
 		drm_dbg_kms(&i915->drm,
 			    "Read bcaps from DP/AUX failed (%zd)\n", ret);
-		वापस ret >= 0 ? -EIO : ret;
-	पूर्ण
+		return ret >= 0 ? -EIO : ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल
-पूर्णांक पूर्णांकel_dp_hdcp_repeater_present(काष्ठा पूर्णांकel_digital_port *dig_port,
+static
+int intel_dp_hdcp_repeater_present(struct intel_digital_port *dig_port,
 				   bool *repeater_present)
-अणु
-	sमाप_प्रकार ret;
+{
+	ssize_t ret;
 	u8 bcaps;
 
-	ret = पूर्णांकel_dp_hdcp_पढ़ो_bcaps(dig_port, &bcaps);
-	अगर (ret)
-		वापस ret;
+	ret = intel_dp_hdcp_read_bcaps(dig_port, &bcaps);
+	if (ret)
+		return ret;
 
 	*repeater_present = bcaps & DP_BCAPS_REPEATER_PRESENT;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल
-पूर्णांक पूर्णांकel_dp_hdcp_पढ़ो_ri_prime(काष्ठा पूर्णांकel_digital_port *dig_port,
+static
+int intel_dp_hdcp_read_ri_prime(struct intel_digital_port *dig_port,
 				u8 *ri_prime)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(dig_port->base.base.dev);
-	sमाप_प्रकार ret;
+{
+	struct drm_i915_private *i915 = to_i915(dig_port->base.base.dev);
+	ssize_t ret;
 
-	ret = drm_dp_dpcd_पढ़ो(&dig_port->dp.aux, DP_AUX_HDCP_RI_PRIME,
+	ret = drm_dp_dpcd_read(&dig_port->dp.aux, DP_AUX_HDCP_RI_PRIME,
 			       ri_prime, DRM_HDCP_RI_LEN);
-	अगर (ret != DRM_HDCP_RI_LEN) अणु
+	if (ret != DRM_HDCP_RI_LEN) {
 		drm_dbg_kms(&i915->drm, "Read Ri' from DP/AUX failed (%zd)\n",
 			    ret);
-		वापस ret >= 0 ? -EIO : ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret >= 0 ? -EIO : ret;
+	}
+	return 0;
+}
 
-अटल
-पूर्णांक पूर्णांकel_dp_hdcp_पढ़ो_ksv_पढ़ोy(काष्ठा पूर्णांकel_digital_port *dig_port,
-				 bool *ksv_पढ़ोy)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(dig_port->base.base.dev);
-	sमाप_प्रकार ret;
+static
+int intel_dp_hdcp_read_ksv_ready(struct intel_digital_port *dig_port,
+				 bool *ksv_ready)
+{
+	struct drm_i915_private *i915 = to_i915(dig_port->base.base.dev);
+	ssize_t ret;
 	u8 bstatus;
 
-	ret = drm_dp_dpcd_पढ़ो(&dig_port->dp.aux, DP_AUX_HDCP_BSTATUS,
+	ret = drm_dp_dpcd_read(&dig_port->dp.aux, DP_AUX_HDCP_BSTATUS,
 			       &bstatus, 1);
-	अगर (ret != 1) अणु
+	if (ret != 1) {
 		drm_dbg_kms(&i915->drm,
 			    "Read bstatus from DP/AUX failed (%zd)\n", ret);
-		वापस ret >= 0 ? -EIO : ret;
-	पूर्ण
-	*ksv_पढ़ोy = bstatus & DP_BSTATUS_READY;
-	वापस 0;
-पूर्ण
+		return ret >= 0 ? -EIO : ret;
+	}
+	*ksv_ready = bstatus & DP_BSTATUS_READY;
+	return 0;
+}
 
-अटल
-पूर्णांक पूर्णांकel_dp_hdcp_पढ़ो_ksv_fअगरo(काष्ठा पूर्णांकel_digital_port *dig_port,
-				पूर्णांक num_करोwnstream, u8 *ksv_fअगरo)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(dig_port->base.base.dev);
-	sमाप_प्रकार ret;
-	पूर्णांक i;
+static
+int intel_dp_hdcp_read_ksv_fifo(struct intel_digital_port *dig_port,
+				int num_downstream, u8 *ksv_fifo)
+{
+	struct drm_i915_private *i915 = to_i915(dig_port->base.base.dev);
+	ssize_t ret;
+	int i;
 
-	/* KSV list is पढ़ो via 15 byte winकरोw (3 entries @ 5 bytes each) */
-	क्रम (i = 0; i < num_करोwnstream; i += 3) अणु
-		माप_प्रकार len = min(num_करोwnstream - i, 3) * DRM_HDCP_KSV_LEN;
-		ret = drm_dp_dpcd_पढ़ो(&dig_port->dp.aux,
+	/* KSV list is read via 15 byte window (3 entries @ 5 bytes each) */
+	for (i = 0; i < num_downstream; i += 3) {
+		size_t len = min(num_downstream - i, 3) * DRM_HDCP_KSV_LEN;
+		ret = drm_dp_dpcd_read(&dig_port->dp.aux,
 				       DP_AUX_HDCP_KSV_FIFO,
-				       ksv_fअगरo + i * DRM_HDCP_KSV_LEN,
+				       ksv_fifo + i * DRM_HDCP_KSV_LEN,
 				       len);
-		अगर (ret != len) अणु
+		if (ret != len) {
 			drm_dbg_kms(&i915->drm,
 				    "Read ksv[%d] from DP/AUX failed (%zd)\n",
 				    i, ret);
-			वापस ret >= 0 ? -EIO : ret;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return ret >= 0 ? -EIO : ret;
+		}
+	}
+	return 0;
+}
 
-अटल
-पूर्णांक पूर्णांकel_dp_hdcp_पढ़ो_v_prime_part(काष्ठा पूर्णांकel_digital_port *dig_port,
-				    पूर्णांक i, u32 *part)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(dig_port->base.base.dev);
-	sमाप_प्रकार ret;
+static
+int intel_dp_hdcp_read_v_prime_part(struct intel_digital_port *dig_port,
+				    int i, u32 *part)
+{
+	struct drm_i915_private *i915 = to_i915(dig_port->base.base.dev);
+	ssize_t ret;
 
-	अगर (i >= DRM_HDCP_V_PRIME_NUM_PARTS)
-		वापस -EINVAL;
+	if (i >= DRM_HDCP_V_PRIME_NUM_PARTS)
+		return -EINVAL;
 
-	ret = drm_dp_dpcd_पढ़ो(&dig_port->dp.aux,
+	ret = drm_dp_dpcd_read(&dig_port->dp.aux,
 			       DP_AUX_HDCP_V_PRIME(i), part,
 			       DRM_HDCP_V_PRIME_PART_LEN);
-	अगर (ret != DRM_HDCP_V_PRIME_PART_LEN) अणु
+	if (ret != DRM_HDCP_V_PRIME_PART_LEN) {
 		drm_dbg_kms(&i915->drm,
 			    "Read v'[%d] from DP/AUX failed (%zd)\n", i, ret);
-		वापस ret >= 0 ? -EIO : ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret >= 0 ? -EIO : ret;
+	}
+	return 0;
+}
 
-अटल
-पूर्णांक पूर्णांकel_dp_hdcp_toggle_संकेतling(काष्ठा पूर्णांकel_digital_port *dig_port,
-				    क्रमागत transcoder cpu_transcoder,
+static
+int intel_dp_hdcp_toggle_signalling(struct intel_digital_port *dig_port,
+				    enum transcoder cpu_transcoder,
 				    bool enable)
-अणु
-	/* Not used क्रम single stream DisplayPort setups */
-	वापस 0;
-पूर्ण
+{
+	/* Not used for single stream DisplayPort setups */
+	return 0;
+}
 
-अटल
-bool पूर्णांकel_dp_hdcp_check_link(काष्ठा पूर्णांकel_digital_port *dig_port,
-			      काष्ठा पूर्णांकel_connector *connector)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(dig_port->base.base.dev);
-	sमाप_प्रकार ret;
+static
+bool intel_dp_hdcp_check_link(struct intel_digital_port *dig_port,
+			      struct intel_connector *connector)
+{
+	struct drm_i915_private *i915 = to_i915(dig_port->base.base.dev);
+	ssize_t ret;
 	u8 bstatus;
 
-	ret = drm_dp_dpcd_पढ़ो(&dig_port->dp.aux, DP_AUX_HDCP_BSTATUS,
+	ret = drm_dp_dpcd_read(&dig_port->dp.aux, DP_AUX_HDCP_BSTATUS,
 			       &bstatus, 1);
-	अगर (ret != 1) अणु
+	if (ret != 1) {
 		drm_dbg_kms(&i915->drm,
 			    "Read bstatus from DP/AUX failed (%zd)\n", ret);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस !(bstatus & (DP_BSTATUS_LINK_FAILURE | DP_BSTATUS_REAUTH_REQ));
-पूर्ण
+	return !(bstatus & (DP_BSTATUS_LINK_FAILURE | DP_BSTATUS_REAUTH_REQ));
+}
 
-अटल
-पूर्णांक पूर्णांकel_dp_hdcp_capable(काष्ठा पूर्णांकel_digital_port *dig_port,
+static
+int intel_dp_hdcp_capable(struct intel_digital_port *dig_port,
 			  bool *hdcp_capable)
-अणु
-	sमाप_प्रकार ret;
+{
+	ssize_t ret;
 	u8 bcaps;
 
-	ret = पूर्णांकel_dp_hdcp_पढ़ो_bcaps(dig_port, &bcaps);
-	अगर (ret)
-		वापस ret;
+	ret = intel_dp_hdcp_read_bcaps(dig_port, &bcaps);
+	if (ret)
+		return ret;
 
 	*hdcp_capable = bcaps & DP_BCAPS_HDCP_CAPABLE;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा hdcp2_dp_errata_stream_type अणु
+struct hdcp2_dp_errata_stream_type {
 	u8	msg_id;
 	u8	stream_type;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा hdcp2_dp_msg_data अणु
+struct hdcp2_dp_msg_data {
 	u8 msg_id;
 	u32 offset;
 	bool msg_detectable;
-	u32 समयout;
-	u32 समयout2; /* Added क्रम non_paired situation */
-	/* Timeout to पढ़ो entire msg */
-	u32 msg_पढ़ो_समयout;
-पूर्ण;
+	u32 timeout;
+	u32 timeout2; /* Added for non_paired situation */
+	/* Timeout to read entire msg */
+	u32 msg_read_timeout;
+};
 
-अटल स्थिर काष्ठा hdcp2_dp_msg_data hdcp2_dp_msg_data[] = अणु
-	अणु HDCP_2_2_AKE_INIT, DP_HDCP_2_2_AKE_INIT_OFFSET, false, 0, 0, 0पूर्ण,
-	अणु HDCP_2_2_AKE_SEND_CERT, DP_HDCP_2_2_AKE_SEND_CERT_OFFSET,
-	  false, HDCP_2_2_CERT_TIMEOUT_MS, 0, HDCP_2_2_DP_CERT_READ_TIMEOUT_MSपूर्ण,
-	अणु HDCP_2_2_AKE_NO_STORED_KM, DP_HDCP_2_2_AKE_NO_STORED_KM_OFFSET,
-	  false, 0, 0, 0 पूर्ण,
-	अणु HDCP_2_2_AKE_STORED_KM, DP_HDCP_2_2_AKE_STORED_KM_OFFSET,
-	  false, 0, 0, 0 पूर्ण,
-	अणु HDCP_2_2_AKE_SEND_HPRIME, DP_HDCP_2_2_AKE_SEND_HPRIME_OFFSET,
+static const struct hdcp2_dp_msg_data hdcp2_dp_msg_data[] = {
+	{ HDCP_2_2_AKE_INIT, DP_HDCP_2_2_AKE_INIT_OFFSET, false, 0, 0, 0},
+	{ HDCP_2_2_AKE_SEND_CERT, DP_HDCP_2_2_AKE_SEND_CERT_OFFSET,
+	  false, HDCP_2_2_CERT_TIMEOUT_MS, 0, HDCP_2_2_DP_CERT_READ_TIMEOUT_MS},
+	{ HDCP_2_2_AKE_NO_STORED_KM, DP_HDCP_2_2_AKE_NO_STORED_KM_OFFSET,
+	  false, 0, 0, 0 },
+	{ HDCP_2_2_AKE_STORED_KM, DP_HDCP_2_2_AKE_STORED_KM_OFFSET,
+	  false, 0, 0, 0 },
+	{ HDCP_2_2_AKE_SEND_HPRIME, DP_HDCP_2_2_AKE_SEND_HPRIME_OFFSET,
 	  true, HDCP_2_2_HPRIME_PAIRED_TIMEOUT_MS,
-	  HDCP_2_2_HPRIME_NO_PAIRED_TIMEOUT_MS, HDCP_2_2_DP_HPRIME_READ_TIMEOUT_MSपूर्ण,
-	अणु HDCP_2_2_AKE_SEND_PAIRING_INFO,
+	  HDCP_2_2_HPRIME_NO_PAIRED_TIMEOUT_MS, HDCP_2_2_DP_HPRIME_READ_TIMEOUT_MS},
+	{ HDCP_2_2_AKE_SEND_PAIRING_INFO,
 	  DP_HDCP_2_2_AKE_SEND_PAIRING_INFO_OFFSET, true,
-	  HDCP_2_2_PAIRING_TIMEOUT_MS, 0, HDCP_2_2_DP_PAIRING_READ_TIMEOUT_MS पूर्ण,
-	अणु HDCP_2_2_LC_INIT, DP_HDCP_2_2_LC_INIT_OFFSET, false, 0, 0, 0 पूर्ण,
-	अणु HDCP_2_2_LC_SEND_LPRIME, DP_HDCP_2_2_LC_SEND_LPRIME_OFFSET,
-	  false, HDCP_2_2_DP_LPRIME_TIMEOUT_MS, 0, 0 पूर्ण,
-	अणु HDCP_2_2_SKE_SEND_EKS, DP_HDCP_2_2_SKE_SEND_EKS_OFFSET, false,
-	  0, 0, 0 पूर्ण,
-	अणु HDCP_2_2_REP_SEND_RECVID_LIST,
+	  HDCP_2_2_PAIRING_TIMEOUT_MS, 0, HDCP_2_2_DP_PAIRING_READ_TIMEOUT_MS },
+	{ HDCP_2_2_LC_INIT, DP_HDCP_2_2_LC_INIT_OFFSET, false, 0, 0, 0 },
+	{ HDCP_2_2_LC_SEND_LPRIME, DP_HDCP_2_2_LC_SEND_LPRIME_OFFSET,
+	  false, HDCP_2_2_DP_LPRIME_TIMEOUT_MS, 0, 0 },
+	{ HDCP_2_2_SKE_SEND_EKS, DP_HDCP_2_2_SKE_SEND_EKS_OFFSET, false,
+	  0, 0, 0 },
+	{ HDCP_2_2_REP_SEND_RECVID_LIST,
 	  DP_HDCP_2_2_REP_SEND_RECVID_LIST_OFFSET, true,
-	  HDCP_2_2_RECVID_LIST_TIMEOUT_MS, 0, 0 पूर्ण,
-	अणु HDCP_2_2_REP_SEND_ACK, DP_HDCP_2_2_REP_SEND_ACK_OFFSET, false,
-	  0, 0, 0 पूर्ण,
-	अणु HDCP_2_2_REP_STREAM_MANAGE,
+	  HDCP_2_2_RECVID_LIST_TIMEOUT_MS, 0, 0 },
+	{ HDCP_2_2_REP_SEND_ACK, DP_HDCP_2_2_REP_SEND_ACK_OFFSET, false,
+	  0, 0, 0 },
+	{ HDCP_2_2_REP_STREAM_MANAGE,
 	  DP_HDCP_2_2_REP_STREAM_MANAGE_OFFSET, false,
-	  0, 0, 0पूर्ण,
-	अणु HDCP_2_2_REP_STREAM_READY, DP_HDCP_2_2_REP_STREAM_READY_OFFSET,
-	  false, HDCP_2_2_STREAM_READY_TIMEOUT_MS, 0, 0 पूर्ण,
-/* local define to shovel this through the ग_लिखो_2_2 पूर्णांकerface */
-#घोषणा HDCP_2_2_ERRATA_DP_STREAM_TYPE	50
-	अणु HDCP_2_2_ERRATA_DP_STREAM_TYPE,
+	  0, 0, 0},
+	{ HDCP_2_2_REP_STREAM_READY, DP_HDCP_2_2_REP_STREAM_READY_OFFSET,
+	  false, HDCP_2_2_STREAM_READY_TIMEOUT_MS, 0, 0 },
+/* local define to shovel this through the write_2_2 interface */
+#define HDCP_2_2_ERRATA_DP_STREAM_TYPE	50
+	{ HDCP_2_2_ERRATA_DP_STREAM_TYPE,
 	  DP_HDCP_2_2_REG_STREAM_TYPE_OFFSET, false,
-	  0, 0 पूर्ण,
-पूर्ण;
+	  0, 0 },
+};
 
-अटल पूर्णांक
-पूर्णांकel_dp_hdcp2_पढ़ो_rx_status(काष्ठा पूर्णांकel_digital_port *dig_port,
+static int
+intel_dp_hdcp2_read_rx_status(struct intel_digital_port *dig_port,
 			      u8 *rx_status)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(dig_port->base.base.dev);
-	sमाप_प्रकार ret;
+{
+	struct drm_i915_private *i915 = to_i915(dig_port->base.base.dev);
+	ssize_t ret;
 
-	ret = drm_dp_dpcd_पढ़ो(&dig_port->dp.aux,
+	ret = drm_dp_dpcd_read(&dig_port->dp.aux,
 			       DP_HDCP_2_2_REG_RXSTATUS_OFFSET, rx_status,
 			       HDCP_2_2_DP_RXSTATUS_LEN);
-	अगर (ret != HDCP_2_2_DP_RXSTATUS_LEN) अणु
+	if (ret != HDCP_2_2_DP_RXSTATUS_LEN) {
 		drm_dbg_kms(&i915->drm,
 			    "Read bstatus from DP/AUX failed (%zd)\n", ret);
-		वापस ret >= 0 ? -EIO : ret;
-	पूर्ण
+		return ret >= 0 ? -EIO : ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल
-पूर्णांक hdcp2_detect_msg_availability(काष्ठा पूर्णांकel_digital_port *dig_port,
-				  u8 msg_id, bool *msg_पढ़ोy)
-अणु
+static
+int hdcp2_detect_msg_availability(struct intel_digital_port *dig_port,
+				  u8 msg_id, bool *msg_ready)
+{
 	u8 rx_status;
-	पूर्णांक ret;
+	int ret;
 
-	*msg_पढ़ोy = false;
-	ret = पूर्णांकel_dp_hdcp2_पढ़ो_rx_status(dig_port, &rx_status);
-	अगर (ret < 0)
-		वापस ret;
+	*msg_ready = false;
+	ret = intel_dp_hdcp2_read_rx_status(dig_port, &rx_status);
+	if (ret < 0)
+		return ret;
 
-	चयन (msg_id) अणु
-	हाल HDCP_2_2_AKE_SEND_HPRIME:
-		अगर (HDCP_2_2_DP_RXSTATUS_H_PRIME(rx_status))
-			*msg_पढ़ोy = true;
-		अवरोध;
-	हाल HDCP_2_2_AKE_SEND_PAIRING_INFO:
-		अगर (HDCP_2_2_DP_RXSTATUS_PAIRING(rx_status))
-			*msg_पढ़ोy = true;
-		अवरोध;
-	हाल HDCP_2_2_REP_SEND_RECVID_LIST:
-		अगर (HDCP_2_2_DP_RXSTATUS_READY(rx_status))
-			*msg_पढ़ोy = true;
-		अवरोध;
-	शेष:
+	switch (msg_id) {
+	case HDCP_2_2_AKE_SEND_HPRIME:
+		if (HDCP_2_2_DP_RXSTATUS_H_PRIME(rx_status))
+			*msg_ready = true;
+		break;
+	case HDCP_2_2_AKE_SEND_PAIRING_INFO:
+		if (HDCP_2_2_DP_RXSTATUS_PAIRING(rx_status))
+			*msg_ready = true;
+		break;
+	case HDCP_2_2_REP_SEND_RECVID_LIST:
+		if (HDCP_2_2_DP_RXSTATUS_READY(rx_status))
+			*msg_ready = true;
+		break;
+	default:
 		DRM_ERROR("Unidentified msg_id: %d\n", msg_id);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार
-पूर्णांकel_dp_hdcp2_रुको_क्रम_msg(काष्ठा पूर्णांकel_digital_port *dig_port,
-			    स्थिर काष्ठा hdcp2_dp_msg_data *hdcp2_msg_data)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(dig_port->base.base.dev);
-	काष्ठा पूर्णांकel_dp *dp = &dig_port->dp;
-	काष्ठा पूर्णांकel_hdcp *hdcp = &dp->attached_connector->hdcp;
+static ssize_t
+intel_dp_hdcp2_wait_for_msg(struct intel_digital_port *dig_port,
+			    const struct hdcp2_dp_msg_data *hdcp2_msg_data)
+{
+	struct drm_i915_private *i915 = to_i915(dig_port->base.base.dev);
+	struct intel_dp *dp = &dig_port->dp;
+	struct intel_hdcp *hdcp = &dp->attached_connector->hdcp;
 	u8 msg_id = hdcp2_msg_data->msg_id;
-	पूर्णांक ret, समयout;
-	bool msg_पढ़ोy = false;
+	int ret, timeout;
+	bool msg_ready = false;
 
-	अगर (msg_id == HDCP_2_2_AKE_SEND_HPRIME && !hdcp->is_paired)
-		समयout = hdcp2_msg_data->समयout2;
-	अन्यथा
-		समयout = hdcp2_msg_data->समयout;
+	if (msg_id == HDCP_2_2_AKE_SEND_HPRIME && !hdcp->is_paired)
+		timeout = hdcp2_msg_data->timeout2;
+	else
+		timeout = hdcp2_msg_data->timeout;
 
 	/*
 	 * There is no way to detect the CERT, LPRIME and STREAM_READY
-	 * availability. So Wait क्रम समयout and पढ़ो the msg.
+	 * availability. So Wait for timeout and read the msg.
 	 */
-	अगर (!hdcp2_msg_data->msg_detectable) अणु
-		mdelay(समयout);
+	if (!hdcp2_msg_data->msg_detectable) {
+		mdelay(timeout);
 		ret = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * As we want to check the msg availability at समयout, Ignoring
-		 * the समयout at रुको क्रम CP_IRQ.
+		 * As we want to check the msg availability at timeout, Ignoring
+		 * the timeout at wait for CP_IRQ.
 		 */
-		पूर्णांकel_dp_hdcp_रुको_क्रम_cp_irq(hdcp, समयout);
+		intel_dp_hdcp_wait_for_cp_irq(hdcp, timeout);
 		ret = hdcp2_detect_msg_availability(dig_port,
-						    msg_id, &msg_पढ़ोy);
-		अगर (!msg_पढ़ोy)
+						    msg_id, &msg_ready);
+		if (!msg_ready)
 			ret = -ETIMEDOUT;
-	पूर्ण
+	}
 
-	अगर (ret)
+	if (ret)
 		drm_dbg_kms(&i915->drm,
 			    "msg_id %d, ret %d, timeout(mSec): %d\n",
-			    hdcp2_msg_data->msg_id, ret, समयout);
+			    hdcp2_msg_data->msg_id, ret, timeout);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा hdcp2_dp_msg_data *get_hdcp2_dp_msg_data(u8 msg_id)
-अणु
-	पूर्णांक i;
+static const struct hdcp2_dp_msg_data *get_hdcp2_dp_msg_data(u8 msg_id)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(hdcp2_dp_msg_data); i++)
-		अगर (hdcp2_dp_msg_data[i].msg_id == msg_id)
-			वापस &hdcp2_dp_msg_data[i];
+	for (i = 0; i < ARRAY_SIZE(hdcp2_dp_msg_data); i++)
+		if (hdcp2_dp_msg_data[i].msg_id == msg_id)
+			return &hdcp2_dp_msg_data[i];
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल
-पूर्णांक पूर्णांकel_dp_hdcp2_ग_लिखो_msg(काष्ठा पूर्णांकel_digital_port *dig_port,
-			     व्योम *buf, माप_प्रकार size)
-अणु
-	काष्ठा पूर्णांकel_dp *dp = &dig_port->dp;
-	काष्ठा पूर्णांकel_hdcp *hdcp = &dp->attached_connector->hdcp;
-	अचिन्हित पूर्णांक offset;
+static
+int intel_dp_hdcp2_write_msg(struct intel_digital_port *dig_port,
+			     void *buf, size_t size)
+{
+	struct intel_dp *dp = &dig_port->dp;
+	struct intel_hdcp *hdcp = &dp->attached_connector->hdcp;
+	unsigned int offset;
 	u8 *byte = buf;
-	sमाप_प्रकार ret, bytes_to_ग_लिखो, len;
-	स्थिर काष्ठा hdcp2_dp_msg_data *hdcp2_msg_data;
+	ssize_t ret, bytes_to_write, len;
+	const struct hdcp2_dp_msg_data *hdcp2_msg_data;
 
 	hdcp2_msg_data = get_hdcp2_dp_msg_data(*byte);
-	अगर (!hdcp2_msg_data)
-		वापस -EINVAL;
+	if (!hdcp2_msg_data)
+		return -EINVAL;
 
 	offset = hdcp2_msg_data->offset;
 
 	/* No msg_id in DP HDCP2.2 msgs */
-	bytes_to_ग_लिखो = size - 1;
+	bytes_to_write = size - 1;
 	byte++;
 
-	hdcp->cp_irq_count_cached = atomic_पढ़ो(&hdcp->cp_irq_count);
+	hdcp->cp_irq_count_cached = atomic_read(&hdcp->cp_irq_count);
 
-	जबतक (bytes_to_ग_लिखो) अणु
-		len = bytes_to_ग_लिखो > DP_AUX_MAX_PAYLOAD_BYTES ?
-				DP_AUX_MAX_PAYLOAD_BYTES : bytes_to_ग_लिखो;
+	while (bytes_to_write) {
+		len = bytes_to_write > DP_AUX_MAX_PAYLOAD_BYTES ?
+				DP_AUX_MAX_PAYLOAD_BYTES : bytes_to_write;
 
-		ret = drm_dp_dpcd_ग_लिखो(&dig_port->dp.aux,
-					offset, (व्योम *)byte, len);
-		अगर (ret < 0)
-			वापस ret;
+		ret = drm_dp_dpcd_write(&dig_port->dp.aux,
+					offset, (void *)byte, len);
+		if (ret < 0)
+			return ret;
 
-		bytes_to_ग_लिखो -= ret;
+		bytes_to_write -= ret;
 		byte += ret;
 		offset += ret;
-	पूर्ण
+	}
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल पूर्णांक
-get_rxinfo_hdcp_1_dev_करोwnstream(काष्ठा पूर्णांकel_digital_port *dig_port, bool *hdcp_1_x)
-अणु
+static int
+get_rxinfo_hdcp_1_dev_downstream(struct intel_digital_port *dig_port, bool *hdcp_1_x)
+{
 	u8 rx_info[HDCP_2_2_RXINFO_LEN];
-	पूर्णांक ret;
+	int ret;
 
-	ret = drm_dp_dpcd_पढ़ो(&dig_port->dp.aux,
+	ret = drm_dp_dpcd_read(&dig_port->dp.aux,
 			       DP_HDCP_2_2_REG_RXINFO_OFFSET,
-			       (व्योम *)rx_info, HDCP_2_2_RXINFO_LEN);
+			       (void *)rx_info, HDCP_2_2_RXINFO_LEN);
 
-	अगर (ret != HDCP_2_2_RXINFO_LEN)
-		वापस ret >= 0 ? -EIO : ret;
+	if (ret != HDCP_2_2_RXINFO_LEN)
+		return ret >= 0 ? -EIO : ret;
 
 	*hdcp_1_x = HDCP_2_2_HDCP1_DEVICE_CONNECTED(rx_info[1]) ? true : false;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल
-sमाप_प्रकार get_receiver_id_list_size(काष्ठा पूर्णांकel_digital_port *dig_port)
-अणु
+static
+ssize_t get_receiver_id_list_size(struct intel_digital_port *dig_port)
+{
 	u8 rx_info[HDCP_2_2_RXINFO_LEN];
 	u32 dev_cnt;
-	sमाप_प्रकार ret;
+	ssize_t ret;
 
-	ret = drm_dp_dpcd_पढ़ो(&dig_port->dp.aux,
+	ret = drm_dp_dpcd_read(&dig_port->dp.aux,
 			       DP_HDCP_2_2_REG_RXINFO_OFFSET,
-			       (व्योम *)rx_info, HDCP_2_2_RXINFO_LEN);
-	अगर (ret != HDCP_2_2_RXINFO_LEN)
-		वापस ret >= 0 ? -EIO : ret;
+			       (void *)rx_info, HDCP_2_2_RXINFO_LEN);
+	if (ret != HDCP_2_2_RXINFO_LEN)
+		return ret >= 0 ? -EIO : ret;
 
 	dev_cnt = (HDCP_2_2_DEV_COUNT_HI(rx_info[0]) << 4 |
 		   HDCP_2_2_DEV_COUNT_LO(rx_info[1]));
 
-	अगर (dev_cnt > HDCP_2_2_MAX_DEVICE_COUNT)
+	if (dev_cnt > HDCP_2_2_MAX_DEVICE_COUNT)
 		dev_cnt = HDCP_2_2_MAX_DEVICE_COUNT;
 
-	ret = माप(काष्ठा hdcp2_rep_send_receiverid_list) -
+	ret = sizeof(struct hdcp2_rep_send_receiverid_list) -
 		HDCP_2_2_RECEIVER_IDS_MAX_LEN +
 		(dev_cnt * HDCP_2_2_RECEIVER_ID_LEN);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल
-पूर्णांक पूर्णांकel_dp_hdcp2_पढ़ो_msg(काष्ठा पूर्णांकel_digital_port *dig_port,
-			    u8 msg_id, व्योम *buf, माप_प्रकार size)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(dig_port->base.base.dev);
-	अचिन्हित पूर्णांक offset;
+static
+int intel_dp_hdcp2_read_msg(struct intel_digital_port *dig_port,
+			    u8 msg_id, void *buf, size_t size)
+{
+	struct drm_i915_private *i915 = to_i915(dig_port->base.base.dev);
+	unsigned int offset;
 	u8 *byte = buf;
-	sमाप_प्रकार ret, bytes_to_recv, len;
-	स्थिर काष्ठा hdcp2_dp_msg_data *hdcp2_msg_data;
-	kसमय_प्रकार msg_end;
+	ssize_t ret, bytes_to_recv, len;
+	const struct hdcp2_dp_msg_data *hdcp2_msg_data;
+	ktime_t msg_end;
 	bool msg_expired;
 
 	hdcp2_msg_data = get_hdcp2_dp_msg_data(msg_id);
-	अगर (!hdcp2_msg_data)
-		वापस -EINVAL;
+	if (!hdcp2_msg_data)
+		return -EINVAL;
 	offset = hdcp2_msg_data->offset;
 
-	ret = पूर्णांकel_dp_hdcp2_रुको_क्रम_msg(dig_port, hdcp2_msg_data);
-	अगर (ret < 0)
-		वापस ret;
+	ret = intel_dp_hdcp2_wait_for_msg(dig_port, hdcp2_msg_data);
+	if (ret < 0)
+		return ret;
 
-	अगर (msg_id == HDCP_2_2_REP_SEND_RECVID_LIST) अणु
+	if (msg_id == HDCP_2_2_REP_SEND_RECVID_LIST) {
 		ret = get_receiver_id_list_size(dig_port);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		size = ret;
-	पूर्ण
+	}
 	bytes_to_recv = size - 1;
 
 	/* DP adaptation msgs has no msg_id */
 	byte++;
 
-	जबतक (bytes_to_recv) अणु
+	while (bytes_to_recv) {
 		len = bytes_to_recv > DP_AUX_MAX_PAYLOAD_BYTES ?
 		      DP_AUX_MAX_PAYLOAD_BYTES : bytes_to_recv;
 
-		/* Entire msg पढ़ो समयout since initiate of msg पढ़ो */
-		अगर (bytes_to_recv == size - 1 && hdcp2_msg_data->msg_पढ़ो_समयout > 0)
-			msg_end = kसमय_add_ms(kसमय_get_raw(),
-					       hdcp2_msg_data->msg_पढ़ो_समयout);
+		/* Entire msg read timeout since initiate of msg read */
+		if (bytes_to_recv == size - 1 && hdcp2_msg_data->msg_read_timeout > 0)
+			msg_end = ktime_add_ms(ktime_get_raw(),
+					       hdcp2_msg_data->msg_read_timeout);
 
-		ret = drm_dp_dpcd_पढ़ो(&dig_port->dp.aux, offset,
-				       (व्योम *)byte, len);
-		अगर (ret < 0) अणु
+		ret = drm_dp_dpcd_read(&dig_port->dp.aux, offset,
+				       (void *)byte, len);
+		if (ret < 0) {
 			drm_dbg_kms(&i915->drm, "msg_id %d, ret %zd\n",
 				    msg_id, ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		bytes_to_recv -= ret;
 		byte += ret;
 		offset += ret;
-	पूर्ण
+	}
 
-	अगर (hdcp2_msg_data->msg_पढ़ो_समयout > 0) अणु
-		msg_expired = kसमय_after(kसमय_get_raw(), msg_end);
-		अगर (msg_expired) अणु
+	if (hdcp2_msg_data->msg_read_timeout > 0) {
+		msg_expired = ktime_after(ktime_get_raw(), msg_end);
+		if (msg_expired) {
 			drm_dbg_kms(&i915->drm, "msg_id %d, entire msg read timeout(mSec): %d\n",
-				    msg_id, hdcp2_msg_data->msg_पढ़ो_समयout);
-			वापस -ETIMEDOUT;
-		पूर्ण
-	पूर्ण
+				    msg_id, hdcp2_msg_data->msg_read_timeout);
+			return -ETIMEDOUT;
+		}
+	}
 
 	byte = buf;
 	*byte = msg_id;
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल
-पूर्णांक पूर्णांकel_dp_hdcp2_config_stream_type(काष्ठा पूर्णांकel_digital_port *dig_port,
+static
+int intel_dp_hdcp2_config_stream_type(struct intel_digital_port *dig_port,
 				      bool is_repeater, u8 content_type)
-अणु
-	पूर्णांक ret;
-	काष्ठा hdcp2_dp_errata_stream_type stream_type_msg;
+{
+	int ret;
+	struct hdcp2_dp_errata_stream_type stream_type_msg;
 
-	अगर (is_repeater)
-		वापस 0;
+	if (is_repeater)
+		return 0;
 
 	/*
-	 * Errata क्रम DP: As Stream type is used क्रम encryption, Receiver
-	 * should be communicated with stream type क्रम the decryption of the
+	 * Errata for DP: As Stream type is used for encryption, Receiver
+	 * should be communicated with stream type for the decryption of the
 	 * content.
 	 * Repeater will be communicated with stream type as a part of it's
-	 * auth later in समय.
+	 * auth later in time.
 	 */
 	stream_type_msg.msg_id = HDCP_2_2_ERRATA_DP_STREAM_TYPE;
 	stream_type_msg.stream_type = content_type;
 
-	ret =  पूर्णांकel_dp_hdcp2_ग_लिखो_msg(dig_port, &stream_type_msg,
-					माप(stream_type_msg));
+	ret =  intel_dp_hdcp2_write_msg(dig_port, &stream_type_msg,
+					sizeof(stream_type_msg));
 
-	वापस ret < 0 ? ret : 0;
+	return ret < 0 ? ret : 0;
 
-पूर्ण
+}
 
-अटल
-पूर्णांक पूर्णांकel_dp_hdcp2_check_link(काष्ठा पूर्णांकel_digital_port *dig_port,
-			      काष्ठा पूर्णांकel_connector *connector)
-अणु
+static
+int intel_dp_hdcp2_check_link(struct intel_digital_port *dig_port,
+			      struct intel_connector *connector)
+{
 	u8 rx_status;
-	पूर्णांक ret;
+	int ret;
 
-	ret = पूर्णांकel_dp_hdcp2_पढ़ो_rx_status(dig_port, &rx_status);
-	अगर (ret)
-		वापस ret;
+	ret = intel_dp_hdcp2_read_rx_status(dig_port, &rx_status);
+	if (ret)
+		return ret;
 
-	अगर (HDCP_2_2_DP_RXSTATUS_REAUTH_REQ(rx_status))
+	if (HDCP_2_2_DP_RXSTATUS_REAUTH_REQ(rx_status))
 		ret = HDCP_REAUTH_REQUEST;
-	अन्यथा अगर (HDCP_2_2_DP_RXSTATUS_LINK_FAILED(rx_status))
+	else if (HDCP_2_2_DP_RXSTATUS_LINK_FAILED(rx_status))
 		ret = HDCP_LINK_INTEGRITY_FAILURE;
-	अन्यथा अगर (HDCP_2_2_DP_RXSTATUS_READY(rx_status))
+	else if (HDCP_2_2_DP_RXSTATUS_READY(rx_status))
 		ret = HDCP_TOPOLOGY_CHANGE;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल
-पूर्णांक पूर्णांकel_dp_hdcp2_capable(काष्ठा पूर्णांकel_digital_port *dig_port,
+static
+int intel_dp_hdcp2_capable(struct intel_digital_port *dig_port,
 			   bool *capable)
-अणु
+{
 	u8 rx_caps[3];
-	पूर्णांक ret;
+	int ret;
 
 	*capable = false;
-	ret = drm_dp_dpcd_पढ़ो(&dig_port->dp.aux,
+	ret = drm_dp_dpcd_read(&dig_port->dp.aux,
 			       DP_HDCP_2_2_REG_RX_CAPS_OFFSET,
 			       rx_caps, HDCP_2_2_RXCAPS_LEN);
-	अगर (ret != HDCP_2_2_RXCAPS_LEN)
-		वापस ret >= 0 ? -EIO : ret;
+	if (ret != HDCP_2_2_RXCAPS_LEN)
+		return ret >= 0 ? -EIO : ret;
 
-	अगर (rx_caps[0] == HDCP_2_2_RX_CAPS_VERSION_VAL &&
+	if (rx_caps[0] == HDCP_2_2_RX_CAPS_VERSION_VAL &&
 	    HDCP_2_2_DP_HDCP_CAPABLE(rx_caps[2]))
 		*capable = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल
-पूर्णांक पूर्णांकel_dp_mst_streams_type1_capable(काष्ठा पूर्णांकel_connector *connector,
+static
+int intel_dp_mst_streams_type1_capable(struct intel_connector *connector,
 				       bool *capable)
-अणु
-	काष्ठा पूर्णांकel_digital_port *dig_port = पूर्णांकel_attached_dig_port(connector);
-	काष्ठा drm_i915_निजी *i915 = to_i915(dig_port->base.base.dev);
-	पूर्णांक ret;
+{
+	struct intel_digital_port *dig_port = intel_attached_dig_port(connector);
+	struct drm_i915_private *i915 = to_i915(dig_port->base.base.dev);
+	int ret;
 	bool hdcp_1_x;
 
-	ret = get_rxinfo_hdcp_1_dev_करोwnstream(dig_port, &hdcp_1_x);
-	अगर (ret) अणु
+	ret = get_rxinfo_hdcp_1_dev_downstream(dig_port, &hdcp_1_x);
+	if (ret) {
 		drm_dbg_kms(&i915->drm,
 			    "[%s:%d] failed to read RxInfo ret=%d\n",
 			    connector->base.name, connector->base.base.id, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	*capable = !hdcp_1_x;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा पूर्णांकel_hdcp_shim पूर्णांकel_dp_hdcp_shim = अणु
-	.ग_लिखो_an_aksv = पूर्णांकel_dp_hdcp_ग_लिखो_an_aksv,
-	.पढ़ो_bksv = पूर्णांकel_dp_hdcp_पढ़ो_bksv,
-	.पढ़ो_bstatus = पूर्णांकel_dp_hdcp_पढ़ो_bstatus,
-	.repeater_present = पूर्णांकel_dp_hdcp_repeater_present,
-	.पढ़ो_ri_prime = पूर्णांकel_dp_hdcp_पढ़ो_ri_prime,
-	.पढ़ो_ksv_पढ़ोy = पूर्णांकel_dp_hdcp_पढ़ो_ksv_पढ़ोy,
-	.पढ़ो_ksv_fअगरo = पूर्णांकel_dp_hdcp_पढ़ो_ksv_fअगरo,
-	.पढ़ो_v_prime_part = पूर्णांकel_dp_hdcp_पढ़ो_v_prime_part,
-	.toggle_संकेतling = पूर्णांकel_dp_hdcp_toggle_संकेतling,
-	.check_link = पूर्णांकel_dp_hdcp_check_link,
-	.hdcp_capable = पूर्णांकel_dp_hdcp_capable,
-	.ग_लिखो_2_2_msg = पूर्णांकel_dp_hdcp2_ग_लिखो_msg,
-	.पढ़ो_2_2_msg = पूर्णांकel_dp_hdcp2_पढ़ो_msg,
-	.config_stream_type = पूर्णांकel_dp_hdcp2_config_stream_type,
-	.check_2_2_link = पूर्णांकel_dp_hdcp2_check_link,
-	.hdcp_2_2_capable = पूर्णांकel_dp_hdcp2_capable,
+static const struct intel_hdcp_shim intel_dp_hdcp_shim = {
+	.write_an_aksv = intel_dp_hdcp_write_an_aksv,
+	.read_bksv = intel_dp_hdcp_read_bksv,
+	.read_bstatus = intel_dp_hdcp_read_bstatus,
+	.repeater_present = intel_dp_hdcp_repeater_present,
+	.read_ri_prime = intel_dp_hdcp_read_ri_prime,
+	.read_ksv_ready = intel_dp_hdcp_read_ksv_ready,
+	.read_ksv_fifo = intel_dp_hdcp_read_ksv_fifo,
+	.read_v_prime_part = intel_dp_hdcp_read_v_prime_part,
+	.toggle_signalling = intel_dp_hdcp_toggle_signalling,
+	.check_link = intel_dp_hdcp_check_link,
+	.hdcp_capable = intel_dp_hdcp_capable,
+	.write_2_2_msg = intel_dp_hdcp2_write_msg,
+	.read_2_2_msg = intel_dp_hdcp2_read_msg,
+	.config_stream_type = intel_dp_hdcp2_config_stream_type,
+	.check_2_2_link = intel_dp_hdcp2_check_link,
+	.hdcp_2_2_capable = intel_dp_hdcp2_capable,
 	.protocol = HDCP_PROTOCOL_DP,
-पूर्ण;
+};
 
-अटल पूर्णांक
-पूर्णांकel_dp_mst_toggle_hdcp_stream_select(काष्ठा पूर्णांकel_connector *connector,
+static int
+intel_dp_mst_toggle_hdcp_stream_select(struct intel_connector *connector,
 				       bool enable)
-अणु
-	काष्ठा पूर्णांकel_digital_port *dig_port = पूर्णांकel_attached_dig_port(connector);
-	काष्ठा drm_i915_निजी *i915 = to_i915(connector->base.dev);
-	काष्ठा पूर्णांकel_hdcp *hdcp = &connector->hdcp;
-	पूर्णांक ret;
+{
+	struct intel_digital_port *dig_port = intel_attached_dig_port(connector);
+	struct drm_i915_private *i915 = to_i915(connector->base.dev);
+	struct intel_hdcp *hdcp = &connector->hdcp;
+	int ret;
 
-	ret = पूर्णांकel_ddi_toggle_hdcp_bits(&dig_port->base,
+	ret = intel_ddi_toggle_hdcp_bits(&dig_port->base,
 					 hdcp->stream_transcoder, enable,
 					 TRANS_DDI_HDCP_SELECT);
-	अगर (ret)
+	if (ret)
 		drm_err(&i915->drm, "%s HDCP stream select failed (%d)\n",
 			enable ? "Enable" : "Disable", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-पूर्णांकel_dp_mst_hdcp_stream_encryption(काष्ठा पूर्णांकel_connector *connector,
+static int
+intel_dp_mst_hdcp_stream_encryption(struct intel_connector *connector,
 				    bool enable)
-अणु
-	काष्ठा पूर्णांकel_digital_port *dig_port = पूर्णांकel_attached_dig_port(connector);
-	काष्ठा drm_i915_निजी *i915 = to_i915(connector->base.dev);
-	काष्ठा पूर्णांकel_hdcp *hdcp = &connector->hdcp;
-	क्रमागत port port = dig_port->base.port;
-	क्रमागत transcoder cpu_transcoder = hdcp->stream_transcoder;
+{
+	struct intel_digital_port *dig_port = intel_attached_dig_port(connector);
+	struct drm_i915_private *i915 = to_i915(connector->base.dev);
+	struct intel_hdcp *hdcp = &connector->hdcp;
+	enum port port = dig_port->base.port;
+	enum transcoder cpu_transcoder = hdcp->stream_transcoder;
 	u32 stream_enc_status;
-	पूर्णांक ret;
+	int ret;
 
-	ret = पूर्णांकel_dp_mst_toggle_hdcp_stream_select(connector, enable);
-	अगर (ret)
-		वापस ret;
+	ret = intel_dp_mst_toggle_hdcp_stream_select(connector, enable);
+	if (ret)
+		return ret;
 
 	stream_enc_status =  transcoder_to_stream_enc_status(cpu_transcoder);
-	अगर (!stream_enc_status)
-		वापस -EINVAL;
+	if (!stream_enc_status)
+		return -EINVAL;
 
-	/* Wait क्रम encryption confirmation */
-	अगर (पूर्णांकel_de_रुको_क्रम_रेजिस्टर(i915,
+	/* Wait for encryption confirmation */
+	if (intel_de_wait_for_register(i915,
 				       HDCP_STATUS(i915, cpu_transcoder, port),
 				       stream_enc_status,
 				       enable ? stream_enc_status : 0,
-				       HDCP_ENCRYPT_STATUS_CHANGE_TIMEOUT_MS)) अणु
+				       HDCP_ENCRYPT_STATUS_CHANGE_TIMEOUT_MS)) {
 		drm_err(&i915->drm, "Timed out waiting for transcoder: %s stream encryption %s\n",
 			transcoder_name(cpu_transcoder), enable ? "enabled" : "disabled");
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-पूर्णांकel_dp_mst_hdcp2_stream_encryption(काष्ठा पूर्णांकel_connector *connector,
+static int
+intel_dp_mst_hdcp2_stream_encryption(struct intel_connector *connector,
 				     bool enable)
-अणु
-	काष्ठा पूर्णांकel_digital_port *dig_port = पूर्णांकel_attached_dig_port(connector);
-	काष्ठा drm_i915_निजी *i915 = to_i915(connector->base.dev);
-	काष्ठा hdcp_port_data *data = &dig_port->hdcp_port_data;
-	काष्ठा पूर्णांकel_hdcp *hdcp = &connector->hdcp;
-	क्रमागत transcoder cpu_transcoder = hdcp->stream_transcoder;
-	क्रमागत pipe pipe = (क्रमागत pipe)cpu_transcoder;
-	क्रमागत port port = dig_port->base.port;
-	पूर्णांक ret;
+{
+	struct intel_digital_port *dig_port = intel_attached_dig_port(connector);
+	struct drm_i915_private *i915 = to_i915(connector->base.dev);
+	struct hdcp_port_data *data = &dig_port->hdcp_port_data;
+	struct intel_hdcp *hdcp = &connector->hdcp;
+	enum transcoder cpu_transcoder = hdcp->stream_transcoder;
+	enum pipe pipe = (enum pipe)cpu_transcoder;
+	enum port port = dig_port->base.port;
+	int ret;
 
 	drm_WARN_ON(&i915->drm, enable &&
-		    !!(पूर्णांकel_de_पढ़ो(i915, HDCP2_AUTH_STREAM(i915, cpu_transcoder, port))
+		    !!(intel_de_read(i915, HDCP2_AUTH_STREAM(i915, cpu_transcoder, port))
 		    & AUTH_STREAM_TYPE) != data->streams[0].stream_type);
 
-	ret = पूर्णांकel_dp_mst_toggle_hdcp_stream_select(connector, enable);
-	अगर (ret)
-		वापस ret;
+	ret = intel_dp_mst_toggle_hdcp_stream_select(connector, enable);
+	if (ret)
+		return ret;
 
-	/* Wait क्रम encryption confirmation */
-	अगर (पूर्णांकel_de_रुको_क्रम_रेजिस्टर(i915,
+	/* Wait for encryption confirmation */
+	if (intel_de_wait_for_register(i915,
 				       HDCP2_STREAM_STATUS(i915, cpu_transcoder, pipe),
 				       STREAM_ENCRYPTION_STATUS,
 				       enable ? STREAM_ENCRYPTION_STATUS : 0,
-				       HDCP_ENCRYPT_STATUS_CHANGE_TIMEOUT_MS)) अणु
+				       HDCP_ENCRYPT_STATUS_CHANGE_TIMEOUT_MS)) {
 		drm_err(&i915->drm, "Timed out waiting for transcoder: %s stream encryption %s\n",
 			transcoder_name(cpu_transcoder), enable ? "enabled" : "disabled");
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल
-पूर्णांक पूर्णांकel_dp_mst_hdcp2_check_link(काष्ठा पूर्णांकel_digital_port *dig_port,
-				  काष्ठा पूर्णांकel_connector *connector)
-अणु
-	काष्ठा पूर्णांकel_hdcp *hdcp = &connector->hdcp;
-	पूर्णांक ret;
+static
+int intel_dp_mst_hdcp2_check_link(struct intel_digital_port *dig_port,
+				  struct intel_connector *connector)
+{
+	struct intel_hdcp *hdcp = &connector->hdcp;
+	int ret;
 
 	/*
-	 * We करो need to करो the Link Check only क्रम the connector involved with
+	 * We do need to do the Link Check only for the connector involved with
 	 * HDCP port authentication and encryption.
 	 * We can re-use the hdcp->is_repeater flag to know that the connector
 	 * involved with HDCP port authentication and encryption.
 	 */
-	अगर (hdcp->is_repeater) अणु
-		ret = पूर्णांकel_dp_hdcp2_check_link(dig_port, connector);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (hdcp->is_repeater) {
+		ret = intel_dp_hdcp2_check_link(dig_port, connector);
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा पूर्णांकel_hdcp_shim पूर्णांकel_dp_mst_hdcp_shim = अणु
-	.ग_लिखो_an_aksv = पूर्णांकel_dp_hdcp_ग_लिखो_an_aksv,
-	.पढ़ो_bksv = पूर्णांकel_dp_hdcp_पढ़ो_bksv,
-	.पढ़ो_bstatus = पूर्णांकel_dp_hdcp_पढ़ो_bstatus,
-	.repeater_present = पूर्णांकel_dp_hdcp_repeater_present,
-	.पढ़ो_ri_prime = पूर्णांकel_dp_hdcp_पढ़ो_ri_prime,
-	.पढ़ो_ksv_पढ़ोy = पूर्णांकel_dp_hdcp_पढ़ो_ksv_पढ़ोy,
-	.पढ़ो_ksv_fअगरo = पूर्णांकel_dp_hdcp_पढ़ो_ksv_fअगरo,
-	.पढ़ो_v_prime_part = पूर्णांकel_dp_hdcp_पढ़ो_v_prime_part,
-	.toggle_संकेतling = पूर्णांकel_dp_hdcp_toggle_संकेतling,
-	.stream_encryption = पूर्णांकel_dp_mst_hdcp_stream_encryption,
-	.check_link = पूर्णांकel_dp_hdcp_check_link,
-	.hdcp_capable = पूर्णांकel_dp_hdcp_capable,
-	.ग_लिखो_2_2_msg = पूर्णांकel_dp_hdcp2_ग_लिखो_msg,
-	.पढ़ो_2_2_msg = पूर्णांकel_dp_hdcp2_पढ़ो_msg,
-	.config_stream_type = पूर्णांकel_dp_hdcp2_config_stream_type,
-	.stream_2_2_encryption = पूर्णांकel_dp_mst_hdcp2_stream_encryption,
-	.check_2_2_link = पूर्णांकel_dp_mst_hdcp2_check_link,
-	.hdcp_2_2_capable = पूर्णांकel_dp_hdcp2_capable,
-	.streams_type1_capable = पूर्णांकel_dp_mst_streams_type1_capable,
+static const struct intel_hdcp_shim intel_dp_mst_hdcp_shim = {
+	.write_an_aksv = intel_dp_hdcp_write_an_aksv,
+	.read_bksv = intel_dp_hdcp_read_bksv,
+	.read_bstatus = intel_dp_hdcp_read_bstatus,
+	.repeater_present = intel_dp_hdcp_repeater_present,
+	.read_ri_prime = intel_dp_hdcp_read_ri_prime,
+	.read_ksv_ready = intel_dp_hdcp_read_ksv_ready,
+	.read_ksv_fifo = intel_dp_hdcp_read_ksv_fifo,
+	.read_v_prime_part = intel_dp_hdcp_read_v_prime_part,
+	.toggle_signalling = intel_dp_hdcp_toggle_signalling,
+	.stream_encryption = intel_dp_mst_hdcp_stream_encryption,
+	.check_link = intel_dp_hdcp_check_link,
+	.hdcp_capable = intel_dp_hdcp_capable,
+	.write_2_2_msg = intel_dp_hdcp2_write_msg,
+	.read_2_2_msg = intel_dp_hdcp2_read_msg,
+	.config_stream_type = intel_dp_hdcp2_config_stream_type,
+	.stream_2_2_encryption = intel_dp_mst_hdcp2_stream_encryption,
+	.check_2_2_link = intel_dp_mst_hdcp2_check_link,
+	.hdcp_2_2_capable = intel_dp_hdcp2_capable,
+	.streams_type1_capable = intel_dp_mst_streams_type1_capable,
 	.protocol = HDCP_PROTOCOL_DP,
-पूर्ण;
+};
 
-पूर्णांक पूर्णांकel_dp_init_hdcp(काष्ठा पूर्णांकel_digital_port *dig_port,
-		       काष्ठा पूर्णांकel_connector *पूर्णांकel_connector)
-अणु
-	काष्ठा drm_device *dev = पूर्णांकel_connector->base.dev;
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(dev);
-	काष्ठा पूर्णांकel_encoder *पूर्णांकel_encoder = &dig_port->base;
-	क्रमागत port port = पूर्णांकel_encoder->port;
-	काष्ठा पूर्णांकel_dp *पूर्णांकel_dp = &dig_port->dp;
+int intel_dp_init_hdcp(struct intel_digital_port *dig_port,
+		       struct intel_connector *intel_connector)
+{
+	struct drm_device *dev = intel_connector->base.dev;
+	struct drm_i915_private *dev_priv = to_i915(dev);
+	struct intel_encoder *intel_encoder = &dig_port->base;
+	enum port port = intel_encoder->port;
+	struct intel_dp *intel_dp = &dig_port->dp;
 
-	अगर (!is_hdcp_supported(dev_priv, port))
-		वापस 0;
+	if (!is_hdcp_supported(dev_priv, port))
+		return 0;
 
-	अगर (पूर्णांकel_connector->mst_port)
-		वापस पूर्णांकel_hdcp_init(पूर्णांकel_connector, dig_port,
-				       &पूर्णांकel_dp_mst_hdcp_shim);
-	अन्यथा अगर (!पूर्णांकel_dp_is_edp(पूर्णांकel_dp))
-		वापस पूर्णांकel_hdcp_init(पूर्णांकel_connector, dig_port,
-				       &पूर्णांकel_dp_hdcp_shim);
+	if (intel_connector->mst_port)
+		return intel_hdcp_init(intel_connector, dig_port,
+				       &intel_dp_mst_hdcp_shim);
+	else if (!intel_dp_is_edp(intel_dp))
+		return intel_hdcp_init(intel_connector, dig_port,
+				       &intel_dp_hdcp_shim);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

@@ -1,4 +1,3 @@
-<शैली गुरु>
 /**
  * Marvell Bluetooth driver: debugfs related functions
  *
@@ -6,180 +5,180 @@
  *
  * This software file (the "File") is distributed by Marvell International
  * Ltd. under the terms of the GNU General Public License Version 2, June 1991
- * (the "License").  You may use, redistribute and/or modअगरy this File in
+ * (the "License").  You may use, redistribute and/or modify this File in
  * accordance with the terms and conditions of the License, a copy of which
  * is available by writing to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fअगरth Floor, Boston, MA 02110-1301 USA or on the
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA or on the
  * worldwide web at http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
  *
  *
- * THE खाता IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
+ * THE FILE IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE
  * ARE EXPRESSLY DISCLAIMED.  The License provides additional details about
  * this warranty disclaimer.
  **/
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/slab.h>
+#include <linux/debugfs.h>
+#include <linux/slab.h>
 
-#समावेश <net/bluetooth/bluetooth.h>
-#समावेश <net/bluetooth/hci_core.h>
+#include <net/bluetooth/bluetooth.h>
+#include <net/bluetooth/hci_core.h>
 
-#समावेश "btmrvl_drv.h"
+#include "btmrvl_drv.h"
 
-काष्ठा bपंचांगrvl_debugfs_data अणु
-	काष्ठा dentry *config_dir;
-	काष्ठा dentry *status_dir;
-पूर्ण;
+struct btmrvl_debugfs_data {
+	struct dentry *config_dir;
+	struct dentry *status_dir;
+};
 
-अटल sमाप_प्रकार bपंचांगrvl_hscfgcmd_ग_लिखो(काष्ठा file *file,
-			स्थिर अक्षर __user *ubuf, माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा bपंचांगrvl_निजी *priv = file->निजी_data;
-	दीर्घ result, ret;
+static ssize_t btmrvl_hscfgcmd_write(struct file *file,
+			const char __user *ubuf, size_t count, loff_t *ppos)
+{
+	struct btmrvl_private *priv = file->private_data;
+	long result, ret;
 
-	ret = kम_से_दीर्घ_from_user(ubuf, count, 10, &result);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtol_from_user(ubuf, count, 10, &result);
+	if (ret)
+		return ret;
 
-	priv->bपंचांगrvl_dev.hscfgcmd = result;
+	priv->btmrvl_dev.hscfgcmd = result;
 
-	अगर (priv->bपंचांगrvl_dev.hscfgcmd) अणु
-		bपंचांगrvl_prepare_command(priv);
-		wake_up_पूर्णांकerruptible(&priv->मुख्य_thपढ़ो.रुको_q);
-	पूर्ण
+	if (priv->btmrvl_dev.hscfgcmd) {
+		btmrvl_prepare_command(priv);
+		wake_up_interruptible(&priv->main_thread.wait_q);
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार bपंचांगrvl_hscfgcmd_पढ़ो(काष्ठा file *file, अक्षर __user *userbuf,
-						माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा bपंचांगrvl_निजी *priv = file->निजी_data;
-	अक्षर buf[16];
-	पूर्णांक ret;
+static ssize_t btmrvl_hscfgcmd_read(struct file *file, char __user *userbuf,
+						size_t count, loff_t *ppos)
+{
+	struct btmrvl_private *priv = file->private_data;
+	char buf[16];
+	int ret;
 
-	ret = snम_लिखो(buf, माप(buf) - 1, "%d\n",
-						priv->bपंचांगrvl_dev.hscfgcmd);
+	ret = snprintf(buf, sizeof(buf) - 1, "%d\n",
+						priv->btmrvl_dev.hscfgcmd);
 
-	वापस simple_पढ़ो_from_buffer(userbuf, count, ppos, buf, ret);
-पूर्ण
+	return simple_read_from_buffer(userbuf, count, ppos, buf, ret);
+}
 
-अटल स्थिर काष्ठा file_operations bपंचांगrvl_hscfgcmd_fops = अणु
-	.पढ़ो	= bपंचांगrvl_hscfgcmd_पढ़ो,
-	.ग_लिखो	= bपंचांगrvl_hscfgcmd_ग_लिखो,
-	.खोलो	= simple_खोलो,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations btmrvl_hscfgcmd_fops = {
+	.read	= btmrvl_hscfgcmd_read,
+	.write	= btmrvl_hscfgcmd_write,
+	.open	= simple_open,
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार bपंचांगrvl_pscmd_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *ubuf,
-						माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा bपंचांगrvl_निजी *priv = file->निजी_data;
-	दीर्घ result, ret;
+static ssize_t btmrvl_pscmd_write(struct file *file, const char __user *ubuf,
+						size_t count, loff_t *ppos)
+{
+	struct btmrvl_private *priv = file->private_data;
+	long result, ret;
 
-	ret = kम_से_दीर्घ_from_user(ubuf, count, 10, &result);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtol_from_user(ubuf, count, 10, &result);
+	if (ret)
+		return ret;
 
-	priv->bपंचांगrvl_dev.pscmd = result;
+	priv->btmrvl_dev.pscmd = result;
 
-	अगर (priv->bपंचांगrvl_dev.pscmd) अणु
-		bपंचांगrvl_prepare_command(priv);
-		wake_up_पूर्णांकerruptible(&priv->मुख्य_thपढ़ो.रुको_q);
-	पूर्ण
+	if (priv->btmrvl_dev.pscmd) {
+		btmrvl_prepare_command(priv);
+		wake_up_interruptible(&priv->main_thread.wait_q);
+	}
 
-	वापस count;
+	return count;
 
-पूर्ण
+}
 
-अटल sमाप_प्रकार bपंचांगrvl_pscmd_पढ़ो(काष्ठा file *file, अक्षर __user *userbuf,
-						माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा bपंचांगrvl_निजी *priv = file->निजी_data;
-	अक्षर buf[16];
-	पूर्णांक ret;
+static ssize_t btmrvl_pscmd_read(struct file *file, char __user *userbuf,
+						size_t count, loff_t *ppos)
+{
+	struct btmrvl_private *priv = file->private_data;
+	char buf[16];
+	int ret;
 
-	ret = snम_लिखो(buf, माप(buf) - 1, "%d\n", priv->bपंचांगrvl_dev.pscmd);
+	ret = snprintf(buf, sizeof(buf) - 1, "%d\n", priv->btmrvl_dev.pscmd);
 
-	वापस simple_पढ़ो_from_buffer(userbuf, count, ppos, buf, ret);
-पूर्ण
+	return simple_read_from_buffer(userbuf, count, ppos, buf, ret);
+}
 
-अटल स्थिर काष्ठा file_operations bपंचांगrvl_pscmd_fops = अणु
-	.पढ़ो = bपंचांगrvl_pscmd_पढ़ो,
-	.ग_लिखो = bपंचांगrvl_pscmd_ग_लिखो,
-	.खोलो = simple_खोलो,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations btmrvl_pscmd_fops = {
+	.read = btmrvl_pscmd_read,
+	.write = btmrvl_pscmd_write,
+	.open = simple_open,
+	.llseek = default_llseek,
+};
 
-अटल sमाप_प्रकार bपंचांगrvl_hscmd_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *ubuf,
-						माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा bपंचांगrvl_निजी *priv = file->निजी_data;
-	दीर्घ result, ret;
+static ssize_t btmrvl_hscmd_write(struct file *file, const char __user *ubuf,
+						size_t count, loff_t *ppos)
+{
+	struct btmrvl_private *priv = file->private_data;
+	long result, ret;
 
-	ret = kम_से_दीर्घ_from_user(ubuf, count, 10, &result);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtol_from_user(ubuf, count, 10, &result);
+	if (ret)
+		return ret;
 
-	priv->bपंचांगrvl_dev.hscmd = result;
-	अगर (priv->bपंचांगrvl_dev.hscmd) अणु
-		bपंचांगrvl_prepare_command(priv);
-		wake_up_पूर्णांकerruptible(&priv->मुख्य_thपढ़ो.रुको_q);
-	पूर्ण
+	priv->btmrvl_dev.hscmd = result;
+	if (priv->btmrvl_dev.hscmd) {
+		btmrvl_prepare_command(priv);
+		wake_up_interruptible(&priv->main_thread.wait_q);
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार bपंचांगrvl_hscmd_पढ़ो(काष्ठा file *file, अक्षर __user *userbuf,
-						माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा bपंचांगrvl_निजी *priv = file->निजी_data;
-	अक्षर buf[16];
-	पूर्णांक ret;
+static ssize_t btmrvl_hscmd_read(struct file *file, char __user *userbuf,
+						size_t count, loff_t *ppos)
+{
+	struct btmrvl_private *priv = file->private_data;
+	char buf[16];
+	int ret;
 
-	ret = snम_लिखो(buf, माप(buf) - 1, "%d\n", priv->bपंचांगrvl_dev.hscmd);
+	ret = snprintf(buf, sizeof(buf) - 1, "%d\n", priv->btmrvl_dev.hscmd);
 
-	वापस simple_पढ़ो_from_buffer(userbuf, count, ppos, buf, ret);
-पूर्ण
+	return simple_read_from_buffer(userbuf, count, ppos, buf, ret);
+}
 
-अटल स्थिर काष्ठा file_operations bपंचांगrvl_hscmd_fops = अणु
-	.पढ़ो	= bपंचांगrvl_hscmd_पढ़ो,
-	.ग_लिखो	= bपंचांगrvl_hscmd_ग_लिखो,
-	.खोलो	= simple_खोलो,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations btmrvl_hscmd_fops = {
+	.read	= btmrvl_hscmd_read,
+	.write	= btmrvl_hscmd_write,
+	.open	= simple_open,
+	.llseek = default_llseek,
+};
 
-व्योम bपंचांगrvl_debugfs_init(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा bपंचांगrvl_निजी *priv = hci_get_drvdata(hdev);
-	काष्ठा bपंचांगrvl_debugfs_data *dbg;
+void btmrvl_debugfs_init(struct hci_dev *hdev)
+{
+	struct btmrvl_private *priv = hci_get_drvdata(hdev);
+	struct btmrvl_debugfs_data *dbg;
 
-	अगर (!hdev->debugfs)
-		वापस;
+	if (!hdev->debugfs)
+		return;
 
-	dbg = kzalloc(माप(*dbg), GFP_KERNEL);
+	dbg = kzalloc(sizeof(*dbg), GFP_KERNEL);
 	priv->debugfs_data = dbg;
 
-	अगर (!dbg) अणु
+	if (!dbg) {
 		BT_ERR("Can not allocate memory for btmrvl_debugfs_data.");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	dbg->config_dir = debugfs_create_dir("config", hdev->debugfs);
 
 	debugfs_create_u8("psmode", 0644, dbg->config_dir,
-			  &priv->bपंचांगrvl_dev.psmode);
+			  &priv->btmrvl_dev.psmode);
 	debugfs_create_file("pscmd", 0644, dbg->config_dir,
-			    priv, &bपंचांगrvl_pscmd_fops);
+			    priv, &btmrvl_pscmd_fops);
 	debugfs_create_x16("gpiogap", 0644, dbg->config_dir,
-			   &priv->bपंचांगrvl_dev.gpio_gap);
+			   &priv->btmrvl_dev.gpio_gap);
 	debugfs_create_u8("hsmode", 0644, dbg->config_dir,
-			  &priv->bपंचांगrvl_dev.hsmode);
+			  &priv->btmrvl_dev.hsmode);
 	debugfs_create_file("hscmd", 0644, dbg->config_dir,
-			    priv, &bपंचांगrvl_hscmd_fops);
+			    priv, &btmrvl_hscmd_fops);
 	debugfs_create_file("hscfgcmd", 0644, dbg->config_dir,
-			    priv, &bपंचांगrvl_hscfgcmd_fops);
+			    priv, &btmrvl_hscfgcmd_fops);
 
 	dbg->status_dir = debugfs_create_dir("status", hdev->debugfs);
 	debugfs_create_u8("curpsmode", 0444, dbg->status_dir,
@@ -189,19 +188,19 @@
 	debugfs_create_u8("hsstate", 0444, dbg->status_dir,
 			  &priv->adapter->hs_state);
 	debugfs_create_u8("txdnldready", 0444, dbg->status_dir,
-			  &priv->bपंचांगrvl_dev.tx_dnld_rdy);
-पूर्ण
+			  &priv->btmrvl_dev.tx_dnld_rdy);
+}
 
-व्योम bपंचांगrvl_debugfs_हटाओ(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा bपंचांगrvl_निजी *priv = hci_get_drvdata(hdev);
-	काष्ठा bपंचांगrvl_debugfs_data *dbg = priv->debugfs_data;
+void btmrvl_debugfs_remove(struct hci_dev *hdev)
+{
+	struct btmrvl_private *priv = hci_get_drvdata(hdev);
+	struct btmrvl_debugfs_data *dbg = priv->debugfs_data;
 
-	अगर (!dbg)
-		वापस;
+	if (!dbg)
+		return;
 
-	debugfs_हटाओ_recursive(dbg->config_dir);
-	debugfs_हटाओ_recursive(dbg->status_dir);
+	debugfs_remove_recursive(dbg->config_dir);
+	debugfs_remove_recursive(dbg->status_dir);
 
-	kमुक्त(dbg);
-पूर्ण
+	kfree(dbg);
+}

@@ -1,118 +1,117 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_S390_STACKTRACE_H
-#घोषणा _ASM_S390_STACKTRACE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_S390_STACKTRACE_H
+#define _ASM_S390_STACKTRACE_H
 
-#समावेश <linux/uaccess.h>
-#समावेश <linux/ptrace.h>
-#समावेश <यंत्र/चयन_to.h>
+#include <linux/uaccess.h>
+#include <linux/ptrace.h>
+#include <asm/switch_to.h>
 
-क्रमागत stack_type अणु
+enum stack_type {
 	STACK_TYPE_UNKNOWN,
 	STACK_TYPE_TASK,
 	STACK_TYPE_IRQ,
 	STACK_TYPE_NODAT,
 	STACK_TYPE_RESTART,
 	STACK_TYPE_MCCK,
-पूर्ण;
+};
 
-काष्ठा stack_info अणु
-	क्रमागत stack_type type;
-	अचिन्हित दीर्घ begin, end;
-पूर्ण;
+struct stack_info {
+	enum stack_type type;
+	unsigned long begin, end;
+};
 
-स्थिर अक्षर *stack_type_name(क्रमागत stack_type type);
-पूर्णांक get_stack_info(अचिन्हित दीर्घ sp, काष्ठा task_काष्ठा *task,
-		   काष्ठा stack_info *info, अचिन्हित दीर्घ *visit_mask);
+const char *stack_type_name(enum stack_type type);
+int get_stack_info(unsigned long sp, struct task_struct *task,
+		   struct stack_info *info, unsigned long *visit_mask);
 
-अटल अंतरभूत bool on_stack(काष्ठा stack_info *info,
-			    अचिन्हित दीर्घ addr, माप_प्रकार len)
-अणु
-	अगर (info->type == STACK_TYPE_UNKNOWN)
-		वापस false;
-	अगर (addr + len < addr)
-		वापस false;
-	वापस addr >= info->begin && addr + len <= info->end;
-पूर्ण
+static inline bool on_stack(struct stack_info *info,
+			    unsigned long addr, size_t len)
+{
+	if (info->type == STACK_TYPE_UNKNOWN)
+		return false;
+	if (addr + len < addr)
+		return false;
+	return addr >= info->begin && addr + len <= info->end;
+}
 
-अटल __always_अंतरभूत अचिन्हित दीर्घ get_stack_poपूर्णांकer(काष्ठा task_काष्ठा *task,
-						       काष्ठा pt_regs *regs)
-अणु
-	अगर (regs)
-		वापस (अचिन्हित दीर्घ) kernel_stack_poपूर्णांकer(regs);
-	अगर (task == current)
-		वापस current_stack_poपूर्णांकer();
-	वापस (अचिन्हित दीर्घ) task->thपढ़ो.ksp;
-पूर्ण
+static __always_inline unsigned long get_stack_pointer(struct task_struct *task,
+						       struct pt_regs *regs)
+{
+	if (regs)
+		return (unsigned long) kernel_stack_pointer(regs);
+	if (task == current)
+		return current_stack_pointer();
+	return (unsigned long) task->thread.ksp;
+}
 
 /*
  * Stack layout of a C stack frame.
  */
-#अगर_अघोषित __PACK_STACK
-काष्ठा stack_frame अणु
-	अचिन्हित दीर्घ back_chain;
-	अचिन्हित दीर्घ empty1[5];
-	अचिन्हित दीर्घ gprs[10];
-	अचिन्हित पूर्णांक  empty2[8];
-पूर्ण;
-#अन्यथा
-काष्ठा stack_frame अणु
-	अचिन्हित दीर्घ empty1[5];
-	अचिन्हित पूर्णांक  empty2[8];
-	अचिन्हित दीर्घ gprs[10];
-	अचिन्हित दीर्घ back_chain;
-पूर्ण;
-#पूर्ण_अगर
+#ifndef __PACK_STACK
+struct stack_frame {
+	unsigned long back_chain;
+	unsigned long empty1[5];
+	unsigned long gprs[10];
+	unsigned int  empty2[8];
+};
+#else
+struct stack_frame {
+	unsigned long empty1[5];
+	unsigned int  empty2[8];
+	unsigned long gprs[10];
+	unsigned long back_chain;
+};
+#endif
 
 /*
- * Unlike current_stack_poपूर्णांकer() which simply वापसs current value of %r15
- * current_frame_address() वापसs function stack frame address, which matches
- * %r15 upon function invocation. It may dअगरfer from %r15 later अगर function
- * allocates stack क्रम local variables or new stack frame to call other
+ * Unlike current_stack_pointer() which simply returns current value of %r15
+ * current_frame_address() returns function stack frame address, which matches
+ * %r15 upon function invocation. It may differ from %r15 later if function
+ * allocates stack for local variables or new stack frame to call other
  * functions.
  */
-#घोषणा current_frame_address()						\
-	((अचिन्हित दीर्घ)__builtin_frame_address(0) -			\
-	 दुरत्व(काष्ठा stack_frame, back_chain))
+#define current_frame_address()						\
+	((unsigned long)__builtin_frame_address(0) -			\
+	 offsetof(struct stack_frame, back_chain))
 
-#घोषणा CALL_ARGS_0()							\
-	रेजिस्टर अचिन्हित दीर्घ r2 यंत्र("2")
-#घोषणा CALL_ARGS_1(arg1)						\
-	रेजिस्टर अचिन्हित दीर्घ r2 यंत्र("2") = (अचिन्हित दीर्घ)(arg1)
-#घोषणा CALL_ARGS_2(arg1, arg2)						\
+#define CALL_ARGS_0()							\
+	register unsigned long r2 asm("2")
+#define CALL_ARGS_1(arg1)						\
+	register unsigned long r2 asm("2") = (unsigned long)(arg1)
+#define CALL_ARGS_2(arg1, arg2)						\
 	CALL_ARGS_1(arg1);						\
-	रेजिस्टर अचिन्हित दीर्घ r3 यंत्र("3") = (अचिन्हित दीर्घ)(arg2)
-#घोषणा CALL_ARGS_3(arg1, arg2, arg3)					\
+	register unsigned long r3 asm("3") = (unsigned long)(arg2)
+#define CALL_ARGS_3(arg1, arg2, arg3)					\
 	CALL_ARGS_2(arg1, arg2);					\
-	रेजिस्टर अचिन्हित दीर्घ r4 यंत्र("4") = (अचिन्हित दीर्घ)(arg3)
-#घोषणा CALL_ARGS_4(arg1, arg2, arg3, arg4)				\
+	register unsigned long r4 asm("4") = (unsigned long)(arg3)
+#define CALL_ARGS_4(arg1, arg2, arg3, arg4)				\
 	CALL_ARGS_3(arg1, arg2, arg3);					\
-	रेजिस्टर अचिन्हित दीर्घ r4 यंत्र("5") = (अचिन्हित दीर्घ)(arg4)
-#घोषणा CALL_ARGS_5(arg1, arg2, arg3, arg4, arg5)			\
+	register unsigned long r4 asm("5") = (unsigned long)(arg4)
+#define CALL_ARGS_5(arg1, arg2, arg3, arg4, arg5)			\
 	CALL_ARGS_4(arg1, arg2, arg3, arg4);				\
-	रेजिस्टर अचिन्हित दीर्घ r4 यंत्र("6") = (अचिन्हित दीर्घ)(arg5)
+	register unsigned long r4 asm("6") = (unsigned long)(arg5)
 
-#घोषणा CALL_FMT_0 "=&d" (r2) :
-#घोषणा CALL_FMT_1 "+&d" (r2) :
-#घोषणा CALL_FMT_2 CALL_FMT_1 "d" (r3),
-#घोषणा CALL_FMT_3 CALL_FMT_2 "d" (r4),
-#घोषणा CALL_FMT_4 CALL_FMT_3 "d" (r5),
-#घोषणा CALL_FMT_5 CALL_FMT_4 "d" (r6),
+#define CALL_FMT_0 "=&d" (r2) :
+#define CALL_FMT_1 "+&d" (r2) :
+#define CALL_FMT_2 CALL_FMT_1 "d" (r3),
+#define CALL_FMT_3 CALL_FMT_2 "d" (r4),
+#define CALL_FMT_4 CALL_FMT_3 "d" (r5),
+#define CALL_FMT_5 CALL_FMT_4 "d" (r6),
 
-#घोषणा CALL_CLOBBER_5 "0", "1", "14", "cc", "memory"
-#घोषणा CALL_CLOBBER_4 CALL_CLOBBER_5
-#घोषणा CALL_CLOBBER_3 CALL_CLOBBER_4, "5"
-#घोषणा CALL_CLOBBER_2 CALL_CLOBBER_3, "4"
-#घोषणा CALL_CLOBBER_1 CALL_CLOBBER_2, "3"
-#घोषणा CALL_CLOBBER_0 CALL_CLOBBER_1
+#define CALL_CLOBBER_5 "0", "1", "14", "cc", "memory"
+#define CALL_CLOBBER_4 CALL_CLOBBER_5
+#define CALL_CLOBBER_3 CALL_CLOBBER_4, "5"
+#define CALL_CLOBBER_2 CALL_CLOBBER_3, "4"
+#define CALL_CLOBBER_1 CALL_CLOBBER_2, "3"
+#define CALL_CLOBBER_0 CALL_CLOBBER_1
 
-#घोषणा CALL_ON_STACK(fn, stack, nr, args...)				\
-(अणु									\
-	अचिन्हित दीर्घ frame = current_frame_address();			\
+#define CALL_ON_STACK(fn, stack, nr, args...)				\
+({									\
+	unsigned long frame = current_frame_address();			\
 	CALL_ARGS_##nr(args);						\
-	अचिन्हित दीर्घ prev;						\
+	unsigned long prev;						\
 									\
-	यंत्र अस्थिर(							\
+	asm volatile(							\
 		"	la	%[_prev],0(15)\n"			\
 		"	lg	15,%[_stack]\n"				\
 		"	stg	%[_frame],%[_bc](15)\n"			\
@@ -120,21 +119,21 @@
 		"	la	15,0(%[_prev])\n"			\
 		: [_prev] "=&a" (prev), CALL_FMT_##nr			\
 		  [_stack] "R" (stack),					\
-		  [_bc] "i" (दुरत्व(काष्ठा stack_frame, back_chain)),	\
+		  [_bc] "i" (offsetof(struct stack_frame, back_chain)),	\
 		  [_frame] "d" (frame),					\
 		  [_fn] "X" (fn) : CALL_CLOBBER_##nr);			\
 	r2;								\
-पूर्ण)
+})
 
-#घोषणा CALL_ON_STACK_NORETURN(fn, stack)				\
-(अणु									\
-	यंत्र अस्थिर(							\
+#define CALL_ON_STACK_NORETURN(fn, stack)				\
+({									\
+	asm volatile(							\
 		"	la	15,0(%[_stack])\n"			\
 		"	xc	%[_bc](8,15),%[_bc](15)\n"		\
 		"	brasl	14,%[_fn]\n"				\
-		::[_bc] "i" (दुरत्व(काष्ठा stack_frame, back_chain)),	\
+		::[_bc] "i" (offsetof(struct stack_frame, back_chain)),	\
 		  [_stack] "a" (stack), [_fn] "X" (fn));		\
 	BUG();								\
-पूर्ण)
+})
 
-#पूर्ण_अगर /* _ASM_S390_STACKTRACE_H */
+#endif /* _ASM_S390_STACKTRACE_H */

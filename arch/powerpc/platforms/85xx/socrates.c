@@ -1,12 +1,11 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2008 Emcraft Systems
  * Sergei Poselenov <sposelenov@emcraft.com>
  *
  * Based on MPC8560 ADS and arch/ppc tqm85xx ports
  *
- * Maपूर्णांकained by Kumar Gala (see MAINTAINERS क्रम contact inक्रमmation)
+ * Maintained by Kumar Gala (see MAINTAINERS for contact information)
  *
  * Copyright 2008 Freescale Semiconductor Inc.
  *
@@ -14,75 +13,75 @@
  * Stefan Roese <sr@denx.de>
  *
  * Based on original work by
- * 	Kumar Gala <kumar.gala@मुक्तscale.com>
+ * 	Kumar Gala <kumar.gala@freescale.com>
  *      Copyright 2004 Freescale Semiconductor Inc.
  */
 
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/kdev_t.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/of_platक्रमm.h>
+#include <linux/stddef.h>
+#include <linux/kernel.h>
+#include <linux/pci.h>
+#include <linux/kdev_t.h>
+#include <linux/delay.h>
+#include <linux/seq_file.h>
+#include <linux/of_platform.h>
 
-#समावेश <यंत्र/समय.स>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/pci-bridge.h>
-#समावेश <यंत्र/mpic.h>
-#समावेश <यंत्र/prom.h>
-#समावेश <mm/mmu_decl.h>
-#समावेश <यंत्र/udbg.h>
+#include <asm/time.h>
+#include <asm/machdep.h>
+#include <asm/pci-bridge.h>
+#include <asm/mpic.h>
+#include <asm/prom.h>
+#include <mm/mmu_decl.h>
+#include <asm/udbg.h>
 
-#समावेश <sysdev/fsl_soc.h>
-#समावेश <sysdev/fsl_pci.h>
+#include <sysdev/fsl_soc.h>
+#include <sysdev/fsl_pci.h>
 
-#समावेश "mpc85xx.h"
-#समावेश "socrates_fpga_pic.h"
+#include "mpc85xx.h"
+#include "socrates_fpga_pic.h"
 
-अटल व्योम __init socrates_pic_init(व्योम)
-अणु
-	काष्ठा device_node *np;
+static void __init socrates_pic_init(void)
+{
+	struct device_node *np;
 
-	काष्ठा mpic *mpic = mpic_alloc(शून्य, 0, MPIC_BIG_ENDIAN,
+	struct mpic *mpic = mpic_alloc(NULL, 0, MPIC_BIG_ENDIAN,
 			0, 256, " OpenPIC  ");
-	BUG_ON(mpic == शून्य);
+	BUG_ON(mpic == NULL);
 	mpic_init(mpic);
 
-	np = of_find_compatible_node(शून्य, शून्य, "abb,socrates-fpga-pic");
-	अगर (!np) अणु
-		prपूर्णांकk(KERN_ERR "Could not find socrates-fpga-pic node\n");
-		वापस;
-	पूर्ण
+	np = of_find_compatible_node(NULL, NULL, "abb,socrates-fpga-pic");
+	if (!np) {
+		printk(KERN_ERR "Could not find socrates-fpga-pic node\n");
+		return;
+	}
 	socrates_fpga_pic_init(np);
 	of_node_put(np);
-पूर्ण
+}
 
 /*
  * Setup the architecture
  */
-अटल व्योम __init socrates_setup_arch(व्योम)
-अणु
-	अगर (ppc_md.progress)
+static void __init socrates_setup_arch(void)
+{
+	if (ppc_md.progress)
 		ppc_md.progress("socrates_setup_arch()", 0);
 
 	fsl_pci_assign_primary();
-पूर्ण
+}
 
 machine_arch_initcall(socrates, mpc85xx_common_publish_devices);
 
 /*
  * Called very early, device-tree isn't unflattened
  */
-अटल पूर्णांक __init socrates_probe(व्योम)
-अणु
-	अगर (of_machine_is_compatible("abb,socrates"))
-		वापस 1;
+static int __init socrates_probe(void)
+{
+	if (of_machine_is_compatible("abb,socrates"))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-define_machine(socrates) अणु
+define_machine(socrates) {
 	.name			= "Socrates",
 	.probe			= socrates_probe,
 	.setup_arch		= socrates_setup_arch,
@@ -90,4 +89,4 @@ define_machine(socrates) अणु
 	.get_irq		= mpic_get_irq,
 	.calibrate_decr		= generic_calibrate_decr,
 	.progress		= udbg_progress,
-पूर्ण;
+};

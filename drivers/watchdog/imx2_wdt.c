@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Watchकरोg driver क्रम IMX2 and later processors
+ * Watchdog driver for IMX2 and later processors
  *
  *  Copyright (C) 2010 Wolfram Sang, Pengutronix e.K. <kernel@pengutronix.de>
  *  Copyright (C) 2014 Freescale Semiconductor, Inc.
@@ -9,408 +8,408 @@
  * some parts adapted by similar drivers from Darius Augulis and Vladimir
  * Zapolskiy, additional improvements by Wim Van Sebroeck.
  *
- * NOTE: MX1 has a slightly dअगरferent Watchकरोg than MX2 and later:
+ * NOTE: MX1 has a slightly different Watchdog than MX2 and later:
  *
  *			MX1:		MX2+:
  *			----		-----
  * Registers:		32-bit		16-bit
- * Stopable समयr:	Yes		No
+ * Stopable timer:	Yes		No
  * Need to enable clk:	No		Yes
- * Halt on suspend:	Manual		Can be स्वतःmatic
+ * Halt on suspend:	Manual		Can be automatic
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/watchकरोg.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/of_address.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/watchdog.h>
 
-#घोषणा DRIVER_NAME "imx2-wdt"
+#define DRIVER_NAME "imx2-wdt"
 
-#घोषणा IMX2_WDT_WCR		0x00		/* Control Register */
-#घोषणा IMX2_WDT_WCR_WT		(0xFF << 8)	/* -> Watchकरोg Timeout Field */
-#घोषणा IMX2_WDT_WCR_WDA	BIT(5)		/* -> External Reset WDOG_B */
-#घोषणा IMX2_WDT_WCR_SRS	BIT(4)		/* -> Software Reset Signal */
-#घोषणा IMX2_WDT_WCR_WRE	BIT(3)		/* -> WDOG Reset Enable */
-#घोषणा IMX2_WDT_WCR_WDE	BIT(2)		/* -> Watchकरोg Enable */
-#घोषणा IMX2_WDT_WCR_WDZST	BIT(0)		/* -> Watchकरोg समयr Suspend */
+#define IMX2_WDT_WCR		0x00		/* Control Register */
+#define IMX2_WDT_WCR_WT		(0xFF << 8)	/* -> Watchdog Timeout Field */
+#define IMX2_WDT_WCR_WDA	BIT(5)		/* -> External Reset WDOG_B */
+#define IMX2_WDT_WCR_SRS	BIT(4)		/* -> Software Reset Signal */
+#define IMX2_WDT_WCR_WRE	BIT(3)		/* -> WDOG Reset Enable */
+#define IMX2_WDT_WCR_WDE	BIT(2)		/* -> Watchdog Enable */
+#define IMX2_WDT_WCR_WDZST	BIT(0)		/* -> Watchdog timer Suspend */
 
-#घोषणा IMX2_WDT_WSR		0x02		/* Service Register */
-#घोषणा IMX2_WDT_SEQ1		0x5555		/* -> service sequence 1 */
-#घोषणा IMX2_WDT_SEQ2		0xAAAA		/* -> service sequence 2 */
+#define IMX2_WDT_WSR		0x02		/* Service Register */
+#define IMX2_WDT_SEQ1		0x5555		/* -> service sequence 1 */
+#define IMX2_WDT_SEQ2		0xAAAA		/* -> service sequence 2 */
 
-#घोषणा IMX2_WDT_WRSR		0x04		/* Reset Status Register */
-#घोषणा IMX2_WDT_WRSR_TOUT	BIT(1)		/* -> Reset due to Timeout */
+#define IMX2_WDT_WRSR		0x04		/* Reset Status Register */
+#define IMX2_WDT_WRSR_TOUT	BIT(1)		/* -> Reset due to Timeout */
 
-#घोषणा IMX2_WDT_WICR		0x06		/* Interrupt Control Register */
-#घोषणा IMX2_WDT_WICR_WIE	BIT(15)		/* -> Interrupt Enable */
-#घोषणा IMX2_WDT_WICR_WTIS	BIT(14)		/* -> Interrupt Status */
-#घोषणा IMX2_WDT_WICR_WICT	0xFF		/* -> Interrupt Count Timeout */
+#define IMX2_WDT_WICR		0x06		/* Interrupt Control Register */
+#define IMX2_WDT_WICR_WIE	BIT(15)		/* -> Interrupt Enable */
+#define IMX2_WDT_WICR_WTIS	BIT(14)		/* -> Interrupt Status */
+#define IMX2_WDT_WICR_WICT	0xFF		/* -> Interrupt Count Timeout */
 
-#घोषणा IMX2_WDT_WMCR		0x08		/* Misc Register */
+#define IMX2_WDT_WMCR		0x08		/* Misc Register */
 
-#घोषणा IMX2_WDT_MAX_TIME	128U
-#घोषणा IMX2_WDT_DEFAULT_TIME	60		/* in seconds */
+#define IMX2_WDT_MAX_TIME	128U
+#define IMX2_WDT_DEFAULT_TIME	60		/* in seconds */
 
-#घोषणा WDOG_SEC_TO_COUNT(s)	((s * 2 - 1) << 8)
+#define WDOG_SEC_TO_COUNT(s)	((s * 2 - 1) << 8)
 
-काष्ठा imx2_wdt_device अणु
-	काष्ठा clk *clk;
-	काष्ठा regmap *regmap;
-	काष्ठा watchकरोg_device wकरोg;
+struct imx2_wdt_device {
+	struct clk *clk;
+	struct regmap *regmap;
+	struct watchdog_device wdog;
 	bool ext_reset;
-पूर्ण;
+};
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started (default="
 				__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-अटल अचिन्हित समयout;
-module_param(समयout, uपूर्णांक, 0);
-MODULE_PARM_DESC(समयout, "Watchdog timeout in seconds (default="
+static unsigned timeout;
+module_param(timeout, uint, 0);
+MODULE_PARM_DESC(timeout, "Watchdog timeout in seconds (default="
 				__MODULE_STRING(IMX2_WDT_DEFAULT_TIME) ")");
 
-अटल स्थिर काष्ठा watchकरोg_info imx2_wdt_info = अणु
+static const struct watchdog_info imx2_wdt_info = {
 	.identity = "imx2+ watchdog",
 	.options = WDIOF_KEEPALIVEPING | WDIOF_SETTIMEOUT | WDIOF_MAGICCLOSE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा watchकरोg_info imx2_wdt_preसमयout_info = अणु
+static const struct watchdog_info imx2_wdt_pretimeout_info = {
 	.identity = "imx2+ watchdog",
 	.options = WDIOF_KEEPALIVEPING | WDIOF_SETTIMEOUT | WDIOF_MAGICCLOSE |
 		   WDIOF_PRETIMEOUT,
-पूर्ण;
+};
 
-अटल पूर्णांक imx2_wdt_restart(काष्ठा watchकरोg_device *wकरोg, अचिन्हित दीर्घ action,
-			    व्योम *data)
-अणु
-	काष्ठा imx2_wdt_device *wdev = watchकरोg_get_drvdata(wकरोg);
-	अचिन्हित पूर्णांक wcr_enable = IMX2_WDT_WCR_WDE;
+static int imx2_wdt_restart(struct watchdog_device *wdog, unsigned long action,
+			    void *data)
+{
+	struct imx2_wdt_device *wdev = watchdog_get_drvdata(wdog);
+	unsigned int wcr_enable = IMX2_WDT_WCR_WDE;
 
-	/* Use पूर्णांकernal reset or बाह्यal - not both */
-	अगर (wdev->ext_reset)
-		wcr_enable |= IMX2_WDT_WCR_SRS; /* करो not निश्चित पूर्णांक reset */
-	अन्यथा
-		wcr_enable |= IMX2_WDT_WCR_WDA; /* करो not निश्चित ext-reset */
+	/* Use internal reset or external - not both */
+	if (wdev->ext_reset)
+		wcr_enable |= IMX2_WDT_WCR_SRS; /* do not assert int reset */
+	else
+		wcr_enable |= IMX2_WDT_WCR_WDA; /* do not assert ext-reset */
 
-	/* Assert SRS संकेत */
-	regmap_ग_लिखो(wdev->regmap, IMX2_WDT_WCR, wcr_enable);
+	/* Assert SRS signal */
+	regmap_write(wdev->regmap, IMX2_WDT_WCR, wcr_enable);
 	/*
 	 * Due to imx6q errata ERR004346 (WDOG: WDOG SRS bit requires to be
-	 * written twice), we add another two ग_लिखोs to ensure there must be at
-	 * least two ग_लिखोs happen in the same one 32kHz घड़ी period.  We save
-	 * the target check here, since the ग_लिखोs shouldn't be a huge burden
-	 * क्रम other platक्रमms.
+	 * written twice), we add another two writes to ensure there must be at
+	 * least two writes happen in the same one 32kHz clock period.  We save
+	 * the target check here, since the writes shouldn't be a huge burden
+	 * for other platforms.
 	 */
-	regmap_ग_लिखो(wdev->regmap, IMX2_WDT_WCR, wcr_enable);
-	regmap_ग_लिखो(wdev->regmap, IMX2_WDT_WCR, wcr_enable);
+	regmap_write(wdev->regmap, IMX2_WDT_WCR, wcr_enable);
+	regmap_write(wdev->regmap, IMX2_WDT_WCR, wcr_enable);
 
-	/* रुको क्रम reset to निश्चित... */
+	/* wait for reset to assert... */
 	mdelay(500);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम imx2_wdt_setup(काष्ठा watchकरोg_device *wकरोg)
-अणु
-	काष्ठा imx2_wdt_device *wdev = watchकरोg_get_drvdata(wकरोg);
+static inline void imx2_wdt_setup(struct watchdog_device *wdog)
+{
+	struct imx2_wdt_device *wdev = watchdog_get_drvdata(wdog);
 	u32 val;
 
-	regmap_पढ़ो(wdev->regmap, IMX2_WDT_WCR, &val);
+	regmap_read(wdev->regmap, IMX2_WDT_WCR, &val);
 
-	/* Suspend समयr in low घातer mode, ग_लिखो once-only */
+	/* Suspend timer in low power mode, write once-only */
 	val |= IMX2_WDT_WCR_WDZST;
-	/* Strip the old watchकरोg Time-Out value */
+	/* Strip the old watchdog Time-Out value */
 	val &= ~IMX2_WDT_WCR_WT;
-	/* Generate पूर्णांकernal chip-level reset अगर WDOG बार out */
-	अगर (!wdev->ext_reset)
+	/* Generate internal chip-level reset if WDOG times out */
+	if (!wdev->ext_reset)
 		val &= ~IMX2_WDT_WCR_WRE;
-	/* Or अगर बाह्यal-reset निश्चित WDOG_B reset only on समय-out */
-	अन्यथा
+	/* Or if external-reset assert WDOG_B reset only on time-out */
+	else
 		val |= IMX2_WDT_WCR_WRE;
-	/* Keep Watchकरोg Disabled */
+	/* Keep Watchdog Disabled */
 	val &= ~IMX2_WDT_WCR_WDE;
-	/* Set the watchकरोg's Time-Out value */
-	val |= WDOG_SEC_TO_COUNT(wकरोg->समयout);
+	/* Set the watchdog's Time-Out value */
+	val |= WDOG_SEC_TO_COUNT(wdog->timeout);
 
-	regmap_ग_लिखो(wdev->regmap, IMX2_WDT_WCR, val);
+	regmap_write(wdev->regmap, IMX2_WDT_WCR, val);
 
-	/* enable the watchकरोg */
+	/* enable the watchdog */
 	val |= IMX2_WDT_WCR_WDE;
-	regmap_ग_लिखो(wdev->regmap, IMX2_WDT_WCR, val);
-पूर्ण
+	regmap_write(wdev->regmap, IMX2_WDT_WCR, val);
+}
 
-अटल अंतरभूत bool imx2_wdt_is_running(काष्ठा imx2_wdt_device *wdev)
-अणु
+static inline bool imx2_wdt_is_running(struct imx2_wdt_device *wdev)
+{
 	u32 val;
 
-	regmap_पढ़ो(wdev->regmap, IMX2_WDT_WCR, &val);
+	regmap_read(wdev->regmap, IMX2_WDT_WCR, &val);
 
-	वापस val & IMX2_WDT_WCR_WDE;
-पूर्ण
+	return val & IMX2_WDT_WCR_WDE;
+}
 
-अटल पूर्णांक imx2_wdt_ping(काष्ठा watchकरोg_device *wकरोg)
-अणु
-	काष्ठा imx2_wdt_device *wdev = watchकरोg_get_drvdata(wकरोg);
+static int imx2_wdt_ping(struct watchdog_device *wdog)
+{
+	struct imx2_wdt_device *wdev = watchdog_get_drvdata(wdog);
 
-	regmap_ग_लिखो(wdev->regmap, IMX2_WDT_WSR, IMX2_WDT_SEQ1);
-	regmap_ग_लिखो(wdev->regmap, IMX2_WDT_WSR, IMX2_WDT_SEQ2);
-	वापस 0;
-पूर्ण
+	regmap_write(wdev->regmap, IMX2_WDT_WSR, IMX2_WDT_SEQ1);
+	regmap_write(wdev->regmap, IMX2_WDT_WSR, IMX2_WDT_SEQ2);
+	return 0;
+}
 
-अटल व्योम __imx2_wdt_set_समयout(काष्ठा watchकरोg_device *wकरोg,
-				   अचिन्हित पूर्णांक new_समयout)
-अणु
-	काष्ठा imx2_wdt_device *wdev = watchकरोg_get_drvdata(wकरोg);
+static void __imx2_wdt_set_timeout(struct watchdog_device *wdog,
+				   unsigned int new_timeout)
+{
+	struct imx2_wdt_device *wdev = watchdog_get_drvdata(wdog);
 
 	regmap_update_bits(wdev->regmap, IMX2_WDT_WCR, IMX2_WDT_WCR_WT,
-			   WDOG_SEC_TO_COUNT(new_समयout));
-पूर्ण
+			   WDOG_SEC_TO_COUNT(new_timeout));
+}
 
-अटल पूर्णांक imx2_wdt_set_समयout(काष्ठा watchकरोg_device *wकरोg,
-				अचिन्हित पूर्णांक new_समयout)
-अणु
-	अचिन्हित पूर्णांक actual;
+static int imx2_wdt_set_timeout(struct watchdog_device *wdog,
+				unsigned int new_timeout)
+{
+	unsigned int actual;
 
-	actual = min(new_समयout, IMX2_WDT_MAX_TIME);
-	__imx2_wdt_set_समयout(wकरोg, actual);
-	wकरोg->समयout = new_समयout;
-	वापस 0;
-पूर्ण
+	actual = min(new_timeout, IMX2_WDT_MAX_TIME);
+	__imx2_wdt_set_timeout(wdog, actual);
+	wdog->timeout = new_timeout;
+	return 0;
+}
 
-अटल पूर्णांक imx2_wdt_set_preसमयout(काष्ठा watchकरोg_device *wकरोg,
-				   अचिन्हित पूर्णांक new_preसमयout)
-अणु
-	काष्ठा imx2_wdt_device *wdev = watchकरोg_get_drvdata(wकरोg);
+static int imx2_wdt_set_pretimeout(struct watchdog_device *wdog,
+				   unsigned int new_pretimeout)
+{
+	struct imx2_wdt_device *wdev = watchdog_get_drvdata(wdog);
 
-	अगर (new_preसमयout >= IMX2_WDT_MAX_TIME)
-		वापस -EINVAL;
+	if (new_pretimeout >= IMX2_WDT_MAX_TIME)
+		return -EINVAL;
 
-	wकरोg->preसमयout = new_preसमयout;
+	wdog->pretimeout = new_pretimeout;
 
 	regmap_update_bits(wdev->regmap, IMX2_WDT_WICR,
 			   IMX2_WDT_WICR_WIE | IMX2_WDT_WICR_WICT,
-			   IMX2_WDT_WICR_WIE | (new_preसमयout << 1));
-	वापस 0;
-पूर्ण
+			   IMX2_WDT_WICR_WIE | (new_pretimeout << 1));
+	return 0;
+}
 
-अटल irqवापस_t imx2_wdt_isr(पूर्णांक irq, व्योम *wकरोg_arg)
-अणु
-	काष्ठा watchकरोg_device *wकरोg = wकरोg_arg;
-	काष्ठा imx2_wdt_device *wdev = watchकरोg_get_drvdata(wकरोg);
+static irqreturn_t imx2_wdt_isr(int irq, void *wdog_arg)
+{
+	struct watchdog_device *wdog = wdog_arg;
+	struct imx2_wdt_device *wdev = watchdog_get_drvdata(wdog);
 
-	regmap_ग_लिखो_bits(wdev->regmap, IMX2_WDT_WICR,
+	regmap_write_bits(wdev->regmap, IMX2_WDT_WICR,
 			  IMX2_WDT_WICR_WTIS, IMX2_WDT_WICR_WTIS);
 
-	watchकरोg_notअगरy_preसमयout(wकरोg);
+	watchdog_notify_pretimeout(wdog);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक imx2_wdt_start(काष्ठा watchकरोg_device *wकरोg)
-अणु
-	काष्ठा imx2_wdt_device *wdev = watchकरोg_get_drvdata(wकरोg);
+static int imx2_wdt_start(struct watchdog_device *wdog)
+{
+	struct imx2_wdt_device *wdev = watchdog_get_drvdata(wdog);
 
-	अगर (imx2_wdt_is_running(wdev))
-		imx2_wdt_set_समयout(wकरोg, wकरोg->समयout);
-	अन्यथा
-		imx2_wdt_setup(wकरोg);
+	if (imx2_wdt_is_running(wdev))
+		imx2_wdt_set_timeout(wdog, wdog->timeout);
+	else
+		imx2_wdt_setup(wdog);
 
-	set_bit(WDOG_HW_RUNNING, &wकरोg->status);
+	set_bit(WDOG_HW_RUNNING, &wdog->status);
 
-	वापस imx2_wdt_ping(wकरोg);
-पूर्ण
+	return imx2_wdt_ping(wdog);
+}
 
-अटल स्थिर काष्ठा watchकरोg_ops imx2_wdt_ops = अणु
+static const struct watchdog_ops imx2_wdt_ops = {
 	.owner = THIS_MODULE,
 	.start = imx2_wdt_start,
 	.ping = imx2_wdt_ping,
-	.set_समयout = imx2_wdt_set_समयout,
-	.set_preसमयout = imx2_wdt_set_preसमयout,
+	.set_timeout = imx2_wdt_set_timeout,
+	.set_pretimeout = imx2_wdt_set_pretimeout,
 	.restart = imx2_wdt_restart,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_config imx2_wdt_regmap_config = अणु
+static const struct regmap_config imx2_wdt_regmap_config = {
 	.reg_bits = 16,
 	.reg_stride = 2,
 	.val_bits = 16,
-	.max_रेजिस्टर = 0x8,
-पूर्ण;
+	.max_register = 0x8,
+};
 
-अटल व्योम imx2_wdt_action(व्योम *data)
-अणु
+static void imx2_wdt_action(void *data)
+{
 	clk_disable_unprepare(data);
-पूर्ण
+}
 
-अटल पूर्णांक __init imx2_wdt_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा imx2_wdt_device *wdev;
-	काष्ठा watchकरोg_device *wकरोg;
-	व्योम __iomem *base;
-	पूर्णांक ret;
+static int __init imx2_wdt_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct imx2_wdt_device *wdev;
+	struct watchdog_device *wdog;
+	void __iomem *base;
+	int ret;
 	u32 val;
 
-	wdev = devm_kzalloc(dev, माप(*wdev), GFP_KERNEL);
-	अगर (!wdev)
-		वापस -ENOMEM;
+	wdev = devm_kzalloc(dev, sizeof(*wdev), GFP_KERNEL);
+	if (!wdev)
+		return -ENOMEM;
 
-	base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(base))
-		वापस PTR_ERR(base);
+	base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(base))
+		return PTR_ERR(base);
 
-	wdev->regmap = devm_regmap_init_mmio_clk(dev, शून्य, base,
+	wdev->regmap = devm_regmap_init_mmio_clk(dev, NULL, base,
 						 &imx2_wdt_regmap_config);
-	अगर (IS_ERR(wdev->regmap)) अणु
+	if (IS_ERR(wdev->regmap)) {
 		dev_err(dev, "regmap init failed\n");
-		वापस PTR_ERR(wdev->regmap);
-	पूर्ण
+		return PTR_ERR(wdev->regmap);
+	}
 
-	wdev->clk = devm_clk_get(dev, शून्य);
-	अगर (IS_ERR(wdev->clk)) अणु
+	wdev->clk = devm_clk_get(dev, NULL);
+	if (IS_ERR(wdev->clk)) {
 		dev_err(dev, "can't get Watchdog clock\n");
-		वापस PTR_ERR(wdev->clk);
-	पूर्ण
+		return PTR_ERR(wdev->clk);
+	}
 
-	wकरोg			= &wdev->wकरोg;
-	wकरोg->info		= &imx2_wdt_info;
-	wकरोg->ops		= &imx2_wdt_ops;
-	wकरोg->min_समयout	= 1;
-	wकरोg->समयout		= IMX2_WDT_DEFAULT_TIME;
-	wकरोg->max_hw_heartbeat_ms = IMX2_WDT_MAX_TIME * 1000;
-	wकरोg->parent		= dev;
+	wdog			= &wdev->wdog;
+	wdog->info		= &imx2_wdt_info;
+	wdog->ops		= &imx2_wdt_ops;
+	wdog->min_timeout	= 1;
+	wdog->timeout		= IMX2_WDT_DEFAULT_TIME;
+	wdog->max_hw_heartbeat_ms = IMX2_WDT_MAX_TIME * 1000;
+	wdog->parent		= dev;
 
-	ret = platक्रमm_get_irq(pdev, 0);
-	अगर (ret > 0)
-		अगर (!devm_request_irq(dev, ret, imx2_wdt_isr, 0,
-				      dev_name(dev), wकरोg))
-			wकरोg->info = &imx2_wdt_preसमयout_info;
+	ret = platform_get_irq(pdev, 0);
+	if (ret > 0)
+		if (!devm_request_irq(dev, ret, imx2_wdt_isr, 0,
+				      dev_name(dev), wdog))
+			wdog->info = &imx2_wdt_pretimeout_info;
 
 	ret = clk_prepare_enable(wdev->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = devm_add_action_or_reset(dev, imx2_wdt_action, wdev->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	regmap_पढ़ो(wdev->regmap, IMX2_WDT_WRSR, &val);
-	wकरोg->bootstatus = val & IMX2_WDT_WRSR_TOUT ? WDIOF_CARDRESET : 0;
+	regmap_read(wdev->regmap, IMX2_WDT_WRSR, &val);
+	wdog->bootstatus = val & IMX2_WDT_WRSR_TOUT ? WDIOF_CARDRESET : 0;
 
-	wdev->ext_reset = of_property_पढ़ो_bool(dev->of_node,
+	wdev->ext_reset = of_property_read_bool(dev->of_node,
 						"fsl,ext-reset-output");
-	platक्रमm_set_drvdata(pdev, wकरोg);
-	watchकरोg_set_drvdata(wकरोg, wdev);
-	watchकरोg_set_nowayout(wकरोg, nowayout);
-	watchकरोg_set_restart_priority(wकरोg, 128);
-	watchकरोg_init_समयout(wकरोg, समयout, dev);
+	platform_set_drvdata(pdev, wdog);
+	watchdog_set_drvdata(wdog, wdev);
+	watchdog_set_nowayout(wdog, nowayout);
+	watchdog_set_restart_priority(wdog, 128);
+	watchdog_init_timeout(wdog, timeout, dev);
 
-	अगर (imx2_wdt_is_running(wdev)) अणु
-		imx2_wdt_set_समयout(wकरोg, wकरोg->समयout);
-		set_bit(WDOG_HW_RUNNING, &wकरोg->status);
-	पूर्ण
+	if (imx2_wdt_is_running(wdev)) {
+		imx2_wdt_set_timeout(wdog, wdog->timeout);
+		set_bit(WDOG_HW_RUNNING, &wdog->status);
+	}
 
 	/*
-	 * Disable the watchकरोg घातer करोwn counter at boot. Otherwise the घातer
-	 * करोwn counter will pull करोwn the #WDOG पूर्णांकerrupt line क्रम one घड़ी
+	 * Disable the watchdog power down counter at boot. Otherwise the power
+	 * down counter will pull down the #WDOG interrupt line for one clock
 	 * cycle.
 	 */
-	regmap_ग_लिखो(wdev->regmap, IMX2_WDT_WMCR, 0);
+	regmap_write(wdev->regmap, IMX2_WDT_WMCR, 0);
 
-	वापस devm_watchकरोg_रेजिस्टर_device(dev, wकरोg);
-पूर्ण
+	return devm_watchdog_register_device(dev, wdog);
+}
 
-अटल व्योम imx2_wdt_shutकरोwn(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा watchकरोg_device *wकरोg = platक्रमm_get_drvdata(pdev);
-	काष्ठा imx2_wdt_device *wdev = watchकरोg_get_drvdata(wकरोg);
+static void imx2_wdt_shutdown(struct platform_device *pdev)
+{
+	struct watchdog_device *wdog = platform_get_drvdata(pdev);
+	struct imx2_wdt_device *wdev = watchdog_get_drvdata(wdog);
 
-	अगर (imx2_wdt_is_running(wdev)) अणु
+	if (imx2_wdt_is_running(wdev)) {
 		/*
-		 * We are running, configure max समयout beक्रमe reboot
+		 * We are running, configure max timeout before reboot
 		 * will take place.
 		 */
-		imx2_wdt_set_समयout(wकरोg, IMX2_WDT_MAX_TIME);
-		imx2_wdt_ping(wकरोg);
+		imx2_wdt_set_timeout(wdog, IMX2_WDT_MAX_TIME);
+		imx2_wdt_ping(wdog);
 		dev_crit(&pdev->dev, "Device shutdown: Expect reboot!\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Disable watchकरोg अगर it is active or non-active but still running */
-अटल पूर्णांक __maybe_unused imx2_wdt_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा watchकरोg_device *wकरोg = dev_get_drvdata(dev);
-	काष्ठा imx2_wdt_device *wdev = watchकरोg_get_drvdata(wकरोg);
+/* Disable watchdog if it is active or non-active but still running */
+static int __maybe_unused imx2_wdt_suspend(struct device *dev)
+{
+	struct watchdog_device *wdog = dev_get_drvdata(dev);
+	struct imx2_wdt_device *wdev = watchdog_get_drvdata(wdog);
 
-	/* The watchकरोg IP block is running */
-	अगर (imx2_wdt_is_running(wdev)) अणु
+	/* The watchdog IP block is running */
+	if (imx2_wdt_is_running(wdev)) {
 		/*
 		 * Don't update wdog->timeout, we'll restore the current value
 		 * during resume.
 		 */
-		__imx2_wdt_set_समयout(wकरोg, IMX2_WDT_MAX_TIME);
-		imx2_wdt_ping(wकरोg);
-	पूर्ण
+		__imx2_wdt_set_timeout(wdog, IMX2_WDT_MAX_TIME);
+		imx2_wdt_ping(wdog);
+	}
 
 	clk_disable_unprepare(wdev->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Enable watchकरोg and configure it अगर necessary */
-अटल पूर्णांक __maybe_unused imx2_wdt_resume(काष्ठा device *dev)
-अणु
-	काष्ठा watchकरोg_device *wकरोg = dev_get_drvdata(dev);
-	काष्ठा imx2_wdt_device *wdev = watchकरोg_get_drvdata(wकरोg);
-	पूर्णांक ret;
+/* Enable watchdog and configure it if necessary */
+static int __maybe_unused imx2_wdt_resume(struct device *dev)
+{
+	struct watchdog_device *wdog = dev_get_drvdata(dev);
+	struct imx2_wdt_device *wdev = watchdog_get_drvdata(wdog);
+	int ret;
 
 	ret = clk_prepare_enable(wdev->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (watchकरोg_active(wकरोg) && !imx2_wdt_is_running(wdev)) अणु
+	if (watchdog_active(wdog) && !imx2_wdt_is_running(wdev)) {
 		/*
-		 * If the watchकरोg is still active and resumes
+		 * If the watchdog is still active and resumes
 		 * from deep sleep state, need to restart the
-		 * watchकरोg again.
+		 * watchdog again.
 		 */
-		imx2_wdt_setup(wकरोg);
-	पूर्ण
-	अगर (imx2_wdt_is_running(wdev)) अणु
-		imx2_wdt_set_समयout(wकरोg, wकरोg->समयout);
-		imx2_wdt_ping(wकरोg);
-	पूर्ण
+		imx2_wdt_setup(wdog);
+	}
+	if (imx2_wdt_is_running(wdev)) {
+		imx2_wdt_set_timeout(wdog, wdog->timeout);
+		imx2_wdt_ping(wdog);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(imx2_wdt_pm_ops, imx2_wdt_suspend,
+static SIMPLE_DEV_PM_OPS(imx2_wdt_pm_ops, imx2_wdt_suspend,
 			 imx2_wdt_resume);
 
-अटल स्थिर काष्ठा of_device_id imx2_wdt_dt_ids[] = अणु
-	अणु .compatible = "fsl,imx21-wdt", पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id imx2_wdt_dt_ids[] = {
+	{ .compatible = "fsl,imx21-wdt", },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, imx2_wdt_dt_ids);
 
-अटल काष्ठा platक्रमm_driver imx2_wdt_driver = अणु
-	.shutकरोwn	= imx2_wdt_shutकरोwn,
-	.driver		= अणु
+static struct platform_driver imx2_wdt_driver = {
+	.shutdown	= imx2_wdt_shutdown,
+	.driver		= {
 		.name	= DRIVER_NAME,
 		.pm     = &imx2_wdt_pm_ops,
 		.of_match_table = imx2_wdt_dt_ids,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver_probe(imx2_wdt_driver, imx2_wdt_probe);
+module_platform_driver_probe(imx2_wdt_driver, imx2_wdt_probe);
 
 MODULE_AUTHOR("Wolfram Sang");
 MODULE_DESCRIPTION("Watchdog driver for IMX2 and later");

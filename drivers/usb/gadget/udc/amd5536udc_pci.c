@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * amd5536udc_pci.c -- AMD 5536 UDC high/full speed USB device controller
  *
@@ -10,145 +9,145 @@
 /*
  * The AMD5536 UDC is part of the x86 southbridge AMD Geode CS5536.
  * It is a USB Highspeed DMA capable USB device controller. Beside ep0 it
- * provides 4 IN and 4 OUT endpoपूर्णांकs (bulk or पूर्णांकerrupt type).
+ * provides 4 IN and 4 OUT endpoints (bulk or interrupt type).
  *
- * Make sure that UDC is asचिन्हित to port 4 by BIOS settings (port can also
- * be used as host port) and UOC bits PAD_EN and APU are set (should be करोne
+ * Make sure that UDC is assigned to port 4 by BIOS settings (port can also
+ * be used as host port) and UOC bits PAD_EN and APU are set (should be done
  * by BIOS init).
  *
- * UDC DMA requires 32-bit aligned buffers so DMA with gadget ether करोes not
+ * UDC DMA requires 32-bit aligned buffers so DMA with gadget ether does not
  * work without updating NET_IP_ALIGN. Or PIO mode (module param "use_dma=0")
  * can be used with gadget ether.
  *
- * This file करोes pci device registration, and the core driver implementation
- * is करोne in amd5536udc.c
+ * This file does pci device registration, and the core driver implementation
+ * is done in amd5536udc.c
  *
  * The driver is split so as to use the core UDC driver which is based on
- * Synopsys device controller IP (dअगरferent than HS OTG IP) in UDCs
- * पूर्णांकegrated to SoC platक्रमms.
+ * Synopsys device controller IP (different than HS OTG IP) in UDCs
+ * integrated to SoC platforms.
  *
  */
 
 /* Driver strings */
-#घोषणा UDC_MOD_DESCRIPTION		"AMD 5536 UDC - USB Device Controller"
+#define UDC_MOD_DESCRIPTION		"AMD 5536 UDC - USB Device Controller"
 
-/* प्रणाली */
-#समावेश <linux/device.h>
-#समावेश <linux/dmapool.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/irq.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/prefetch.h>
-#समावेश <linux/pci.h>
+/* system */
+#include <linux/device.h>
+#include <linux/dmapool.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/irq.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/prefetch.h>
+#include <linux/pci.h>
 
-/* udc specअगरic */
-#समावेश "amd5536udc.h"
+/* udc specific */
+#include "amd5536udc.h"
 
-/* poपूर्णांकer to device object */
-अटल काष्ठा udc *udc;
+/* pointer to device object */
+static struct udc *udc;
 
 /* description */
-अटल स्थिर अक्षर name[] = "amd5536udc-pci";
+static const char name[] = "amd5536udc-pci";
 
 /* Reset all pci context */
-अटल व्योम udc_pci_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा udc		*dev;
+static void udc_pci_remove(struct pci_dev *pdev)
+{
+	struct udc		*dev;
 
 	dev = pci_get_drvdata(pdev);
 
 	usb_del_gadget_udc(&udc->gadget);
-	/* gadget driver must not be रेजिस्टरed */
-	अगर (WARN_ON(dev->driver))
-		वापस;
+	/* gadget driver must not be registered */
+	if (WARN_ON(dev->driver))
+		return;
 
 	/* dma pool cleanup */
-	मुक्त_dma_pools(dev);
+	free_dma_pools(dev);
 
 	/* reset controller */
-	ग_लिखोl(AMD_BIT(UDC_DEVCFG_SOFTRESET), &dev->regs->cfg);
-	मुक्त_irq(pdev->irq, dev);
+	writel(AMD_BIT(UDC_DEVCFG_SOFTRESET), &dev->regs->cfg);
+	free_irq(pdev->irq, dev);
 	iounmap(dev->virt_addr);
 	release_mem_region(pci_resource_start(pdev, 0),
 			   pci_resource_len(pdev, 0));
 	pci_disable_device(pdev);
 
-	udc_हटाओ(dev);
-पूर्ण
+	udc_remove(dev);
+}
 
 /* Called by pci bus driver to init pci context */
-अटल पूर्णांक udc_pci_probe(
-	काष्ठा pci_dev *pdev,
-	स्थिर काष्ठा pci_device_id *id
+static int udc_pci_probe(
+	struct pci_dev *pdev,
+	const struct pci_device_id *id
 )
-अणु
-	काष्ठा udc		*dev;
-	अचिन्हित दीर्घ		resource;
-	अचिन्हित दीर्घ		len;
-	पूर्णांक			retval = 0;
+{
+	struct udc		*dev;
+	unsigned long		resource;
+	unsigned long		len;
+	int			retval = 0;
 
 	/* one udc only */
-	अगर (udc) अणु
+	if (udc) {
 		dev_dbg(&pdev->dev, "already probed\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	/* init */
-	dev = kzalloc(माप(काष्ठा udc), GFP_KERNEL);
-	अगर (!dev)
-		वापस -ENOMEM;
+	dev = kzalloc(sizeof(struct udc), GFP_KERNEL);
+	if (!dev)
+		return -ENOMEM;
 
 	/* pci setup */
-	अगर (pci_enable_device(pdev) < 0) अणु
+	if (pci_enable_device(pdev) < 0) {
 		retval = -ENODEV;
-		जाओ err_pcidev;
-	पूर्ण
+		goto err_pcidev;
+	}
 
 	/* PCI resource allocation */
 	resource = pci_resource_start(pdev, 0);
 	len = pci_resource_len(pdev, 0);
 
-	अगर (!request_mem_region(resource, len, name)) अणु
+	if (!request_mem_region(resource, len, name)) {
 		dev_dbg(&pdev->dev, "pci device used already\n");
 		retval = -EBUSY;
-		जाओ err_memreg;
-	पूर्ण
+		goto err_memreg;
+	}
 
 	dev->virt_addr = ioremap(resource, len);
-	अगर (!dev->virt_addr) अणु
+	if (!dev->virt_addr) {
 		dev_dbg(&pdev->dev, "start address cannot be mapped\n");
 		retval = -EFAULT;
-		जाओ err_ioremap;
-	पूर्ण
+		goto err_ioremap;
+	}
 
-	अगर (!pdev->irq) अणु
+	if (!pdev->irq) {
 		dev_err(&pdev->dev, "irq not set\n");
 		retval = -ENODEV;
-		जाओ err_irq;
-	पूर्ण
+		goto err_irq;
+	}
 
 	spin_lock_init(&dev->lock);
-	/* udc csr रेजिस्टरs base */
+	/* udc csr registers base */
 	dev->csr = dev->virt_addr + UDC_CSR_ADDR;
-	/* dev रेजिस्टरs base */
+	/* dev registers base */
 	dev->regs = dev->virt_addr + UDC_DEVCFG_ADDR;
-	/* ep रेजिस्टरs base */
+	/* ep registers base */
 	dev->ep_regs = dev->virt_addr + UDC_EPREGS_ADDR;
-	/* fअगरo's base */
-	dev->rxfअगरo = (u32 __iomem *)(dev->virt_addr + UDC_RXFIFO_ADDR);
-	dev->txfअगरo = (u32 __iomem *)(dev->virt_addr + UDC_TXFIFO_ADDR);
+	/* fifo's base */
+	dev->rxfifo = (u32 __iomem *)(dev->virt_addr + UDC_RXFIFO_ADDR);
+	dev->txfifo = (u32 __iomem *)(dev->virt_addr + UDC_TXFIFO_ADDR);
 
-	अगर (request_irq(pdev->irq, udc_irq, IRQF_SHARED, name, dev) != 0) अणु
+	if (request_irq(pdev->irq, udc_irq, IRQF_SHARED, name, dev) != 0) {
 		dev_dbg(&pdev->dev, "request_irq(%d) fail\n", pdev->irq);
 		retval = -EBUSY;
-		जाओ err_irq;
-	पूर्ण
+		goto err_irq;
+	}
 
 	pci_set_drvdata(pdev, dev);
 
-	/* chip revision क्रम Hs AMD5536 */
+	/* chip revision for Hs AMD5536 */
 	dev->chiprev = pdev->revision;
 
 	pci_set_master(pdev);
@@ -160,24 +159,24 @@
 	dev->dev = &pdev->dev;
 
 	/* init dma pools */
-	अगर (use_dma) अणु
+	if (use_dma) {
 		retval = init_dma_pools(dev);
-		अगर (retval != 0)
-			जाओ err_dma;
-	पूर्ण
+		if (retval != 0)
+			goto err_dma;
+	}
 
 	/* general probing */
-	अगर (udc_probe(dev)) अणु
+	if (udc_probe(dev)) {
 		retval = -ENODEV;
-		जाओ err_probe;
-	पूर्ण
-	वापस 0;
+		goto err_probe;
+	}
+	return 0;
 
 err_probe:
-	अगर (use_dma)
-		मुक्त_dma_pools(dev);
+	if (use_dma)
+		free_dma_pools(dev);
 err_dma:
-	मुक्त_irq(pdev->irq, dev);
+	free_irq(pdev->irq, dev);
 err_irq:
 	iounmap(dev->virt_addr);
 err_ioremap:
@@ -185,28 +184,28 @@ err_ioremap:
 err_memreg:
 	pci_disable_device(pdev);
 err_pcidev:
-	kमुक्त(dev);
-	वापस retval;
-पूर्ण
+	kfree(dev);
+	return retval;
+}
 
 /* PCI device parameters */
-अटल स्थिर काष्ठा pci_device_id pci_id[] = अणु
-	अणु
+static const struct pci_device_id pci_id[] = {
+	{
 		PCI_DEVICE(PCI_VENDOR_ID_AMD, 0x2096),
 		.class =	PCI_CLASS_SERIAL_USB_DEVICE,
 		.class_mask =	0xffffffff,
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 MODULE_DEVICE_TABLE(pci, pci_id);
 
 /* PCI functions */
-अटल काष्ठा pci_driver udc_pci_driver = अणु
+static struct pci_driver udc_pci_driver = {
 	.name =		name,
 	.id_table =	pci_id,
 	.probe =	udc_pci_probe,
-	.हटाओ =	udc_pci_हटाओ,
-पूर्ण;
+	.remove =	udc_pci_remove,
+};
 module_pci_driver(udc_pci_driver);
 
 MODULE_DESCRIPTION(UDC_MOD_DESCRIPTION);

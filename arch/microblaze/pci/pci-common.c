@@ -1,375 +1,374 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Contains common pci routines क्रम ALL ppc platक्रमm
+ * Contains common pci routines for ALL ppc platform
  * (based on pci_32.c and pci_64.c)
  *
- * Port क्रम PPC64 David Engebretsen, IBM Corp.
- * Contains common pci routines क्रम ppc64 platक्रमm, pSeries and iSeries bअक्रमs.
+ * Port for PPC64 David Engebretsen, IBM Corp.
+ * Contains common pci routines for ppc64 platform, pSeries and iSeries brands.
  *
- * Copyright (C) 2003 Anton Blanअक्षरd <anton@au.ibm.com>, IBM
+ * Copyright (C) 2003 Anton Blanchard <anton@au.ibm.com>, IBM
  *   Rework, based on alpha PCI code.
  *
  * Common pmac/prep/chrp pci routines. -- Cort
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/init.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/shmem_fs.h>
-#समावेश <linux/list.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_pci.h>
-#समावेश <linux/export.h>
+#include <linux/kernel.h>
+#include <linux/pci.h>
+#include <linux/string.h>
+#include <linux/init.h>
+#include <linux/memblock.h>
+#include <linux/mm.h>
+#include <linux/shmem_fs.h>
+#include <linux/list.h>
+#include <linux/syscalls.h>
+#include <linux/irq.h>
+#include <linux/vmalloc.h>
+#include <linux/slab.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/of_pci.h>
+#include <linux/export.h>
 
-#समावेश <यंत्र/processor.h>
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/pci-bridge.h>
-#समावेश <यंत्र/byteorder.h>
+#include <asm/processor.h>
+#include <linux/io.h>
+#include <asm/pci-bridge.h>
+#include <asm/byteorder.h>
 
-अटल DEFINE_SPINLOCK(hose_spinlock);
+static DEFINE_SPINLOCK(hose_spinlock);
 LIST_HEAD(hose_list);
 
-/* XXX समाप्त that some day ... */
-अटल पूर्णांक global_phb_number;		/* Global phb counter */
+/* XXX kill that some day ... */
+static int global_phb_number;		/* Global phb counter */
 
 /* ISA Memory physical address */
-resource_माप_प्रकार isa_mem_base;
+resource_size_t isa_mem_base;
 
-अचिन्हित दीर्घ isa_io_base;
+unsigned long isa_io_base;
 EXPORT_SYMBOL(isa_io_base);
 
-अटल पूर्णांक pci_bus_count;
+static int pci_bus_count;
 
-काष्ठा pci_controller *pcibios_alloc_controller(काष्ठा device_node *dev)
-अणु
-	काष्ठा pci_controller *phb;
+struct pci_controller *pcibios_alloc_controller(struct device_node *dev)
+{
+	struct pci_controller *phb;
 
-	phb = zalloc_maybe_booपंचांगem(माप(काष्ठा pci_controller), GFP_KERNEL);
-	अगर (!phb)
-		वापस शून्य;
+	phb = zalloc_maybe_bootmem(sizeof(struct pci_controller), GFP_KERNEL);
+	if (!phb)
+		return NULL;
 	spin_lock(&hose_spinlock);
 	phb->global_number = global_phb_number++;
 	list_add_tail(&phb->list_node, &hose_list);
 	spin_unlock(&hose_spinlock);
 	phb->dn = dev;
-	phb->is_dynamic = mem_init_करोne;
-	वापस phb;
-पूर्ण
+	phb->is_dynamic = mem_init_done;
+	return phb;
+}
 
-व्योम pcibios_मुक्त_controller(काष्ठा pci_controller *phb)
-अणु
+void pcibios_free_controller(struct pci_controller *phb)
+{
 	spin_lock(&hose_spinlock);
 	list_del(&phb->list_node);
 	spin_unlock(&hose_spinlock);
 
-	अगर (phb->is_dynamic)
-		kमुक्त(phb);
-पूर्ण
+	if (phb->is_dynamic)
+		kfree(phb);
+}
 
-अटल resource_माप_प्रकार pcibios_io_size(स्थिर काष्ठा pci_controller *hose)
-अणु
-	वापस resource_size(&hose->io_resource);
-पूर्ण
+static resource_size_t pcibios_io_size(const struct pci_controller *hose)
+{
+	return resource_size(&hose->io_resource);
+}
 
-पूर्णांक pcibios_vaddr_is_ioport(व्योम __iomem *address)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा pci_controller *hose;
-	resource_माप_प्रकार size;
+int pcibios_vaddr_is_ioport(void __iomem *address)
+{
+	int ret = 0;
+	struct pci_controller *hose;
+	resource_size_t size;
 
 	spin_lock(&hose_spinlock);
-	list_क्रम_each_entry(hose, &hose_list, list_node) अणु
+	list_for_each_entry(hose, &hose_list, list_node) {
 		size = pcibios_io_size(hose);
-		अगर (address >= hose->io_base_virt &&
-		    address < (hose->io_base_virt + size)) अणु
+		if (address >= hose->io_base_virt &&
+		    address < (hose->io_base_virt + size)) {
 			ret = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock(&hose_spinlock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अचिन्हित दीर्घ pci_address_to_pio(phys_addr_t address)
-अणु
-	काष्ठा pci_controller *hose;
-	resource_माप_प्रकार size;
-	अचिन्हित दीर्घ ret = ~0;
+unsigned long pci_address_to_pio(phys_addr_t address)
+{
+	struct pci_controller *hose;
+	resource_size_t size;
+	unsigned long ret = ~0;
 
 	spin_lock(&hose_spinlock);
-	list_क्रम_each_entry(hose, &hose_list, list_node) अणु
+	list_for_each_entry(hose, &hose_list, list_node) {
 		size = pcibios_io_size(hose);
-		अगर (address >= hose->io_base_phys &&
-		    address < (hose->io_base_phys + size)) अणु
-			अचिन्हित दीर्घ base =
-				(अचिन्हित दीर्घ)hose->io_base_virt - _IO_BASE;
+		if (address >= hose->io_base_phys &&
+		    address < (hose->io_base_phys + size)) {
+			unsigned long base =
+				(unsigned long)hose->io_base_virt - _IO_BASE;
 			ret = base + (address - hose->io_base_phys);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock(&hose_spinlock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(pci_address_to_pio);
 
 /* This routine is meant to be used early during boot, when the
- * PCI bus numbers have not yet been asचिन्हित, and you need to
+ * PCI bus numbers have not yet been assigned, and you need to
  * issue PCI config cycles to an OF device.
- * It could also be used to "fix" RTAS config cycles अगर you want
- * to set pci_assign_all_buses to 1 and still use RTAS क्रम PCI
+ * It could also be used to "fix" RTAS config cycles if you want
+ * to set pci_assign_all_buses to 1 and still use RTAS for PCI
  * config cycles.
  */
-काष्ठा pci_controller *pci_find_hose_क्रम_OF_device(काष्ठा device_node *node)
-अणु
-	जबतक (node) अणु
-		काष्ठा pci_controller *hose, *पंचांगp;
-		list_क्रम_each_entry_safe(hose, पंचांगp, &hose_list, list_node)
-			अगर (hose->dn == node)
-				वापस hose;
+struct pci_controller *pci_find_hose_for_OF_device(struct device_node *node)
+{
+	while (node) {
+		struct pci_controller *hose, *tmp;
+		list_for_each_entry_safe(hose, tmp, &hose_list, list_node)
+			if (hose->dn == node)
+				return hose;
 		node = node->parent;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	}
+	return NULL;
+}
 
-व्योम pcibios_set_master(काष्ठा pci_dev *dev)
-अणु
+void pcibios_set_master(struct pci_dev *dev)
+{
 	/* No special bus mastering setup handling */
-पूर्ण
+}
 
 /*
- * Platक्रमm support क्रम /proc/bus/pci/X/Y mmap()s.
+ * Platform support for /proc/bus/pci/X/Y mmap()s.
  */
 
-पूर्णांक pci_iobar_pfn(काष्ठा pci_dev *pdev, पूर्णांक bar, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा pci_controller *hose = pci_bus_to_host(pdev->bus);
-	resource_माप_प्रकार ioaddr = pci_resource_start(pdev, bar);
+int pci_iobar_pfn(struct pci_dev *pdev, int bar, struct vm_area_struct *vma)
+{
+	struct pci_controller *hose = pci_bus_to_host(pdev->bus);
+	resource_size_t ioaddr = pci_resource_start(pdev, bar);
 
-	अगर (!hose)
-		वापस -EINVAL;		/* should never happen */
+	if (!hose)
+		return -EINVAL;		/* should never happen */
 
 	/* Convert to an offset within this PCI controller */
-	ioaddr -= (अचिन्हित दीर्घ)hose->io_base_virt - _IO_BASE;
+	ioaddr -= (unsigned long)hose->io_base_virt - _IO_BASE;
 
 	vma->vm_pgoff += (ioaddr + hose->io_base_phys) >> PAGE_SHIFT;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * This one is used by /dev/mem and fbdev who have no clue about the
  * PCI device, it tries to find the PCI device first and calls the
  * above routine
  */
-pgprot_t pci_phys_mem_access_prot(काष्ठा file *file,
-				  अचिन्हित दीर्घ pfn,
-				  अचिन्हित दीर्घ size,
+pgprot_t pci_phys_mem_access_prot(struct file *file,
+				  unsigned long pfn,
+				  unsigned long size,
 				  pgprot_t prot)
-अणु
-	काष्ठा pci_dev *pdev = शून्य;
-	काष्ठा resource *found = शून्य;
-	resource_माप_प्रकार offset = ((resource_माप_प्रकार)pfn) << PAGE_SHIFT;
-	पूर्णांक i;
+{
+	struct pci_dev *pdev = NULL;
+	struct resource *found = NULL;
+	resource_size_t offset = ((resource_size_t)pfn) << PAGE_SHIFT;
+	int i;
 
-	अगर (page_is_ram(pfn))
-		वापस prot;
+	if (page_is_ram(pfn))
+		return prot;
 
 	prot = pgprot_noncached(prot);
-	क्रम_each_pci_dev(pdev) अणु
-		क्रम (i = 0; i <= PCI_ROM_RESOURCE; i++) अणु
-			काष्ठा resource *rp = &pdev->resource[i];
-			पूर्णांक flags = rp->flags;
+	for_each_pci_dev(pdev) {
+		for (i = 0; i <= PCI_ROM_RESOURCE; i++) {
+			struct resource *rp = &pdev->resource[i];
+			int flags = rp->flags;
 
 			/* Active and same type? */
-			अगर ((flags & IORESOURCE_MEM) == 0)
-				जारी;
+			if ((flags & IORESOURCE_MEM) == 0)
+				continue;
 			/* In the range of this resource? */
-			अगर (offset < (rp->start & PAGE_MASK) ||
+			if (offset < (rp->start & PAGE_MASK) ||
 			    offset > rp->end)
-				जारी;
+				continue;
 			found = rp;
-			अवरोध;
-		पूर्ण
-		अगर (found)
-			अवरोध;
-	पूर्ण
-	अगर (found) अणु
-		अगर (found->flags & IORESOURCE_PREFETCH)
+			break;
+		}
+		if (found)
+			break;
+	}
+	if (found) {
+		if (found->flags & IORESOURCE_PREFETCH)
 			prot = pgprot_noncached_wc(prot);
 		pci_dev_put(pdev);
-	पूर्ण
+	}
 
 	pr_debug("PCI: Non-PCI map for %llx, prot: %lx\n",
-		 (अचिन्हित दीर्घ दीर्घ)offset, pgprot_val(prot));
+		 (unsigned long long)offset, pgprot_val(prot));
 
-	वापस prot;
-पूर्ण
+	return prot;
+}
 
-/* This provides legacy IO पढ़ो access on a bus */
-पूर्णांक pci_legacy_पढ़ो(काष्ठा pci_bus *bus, loff_t port, u32 *val, माप_प्रकार size)
-अणु
-	अचिन्हित दीर्घ offset;
-	काष्ठा pci_controller *hose = pci_bus_to_host(bus);
-	काष्ठा resource *rp = &hose->io_resource;
-	व्योम __iomem *addr;
+/* This provides legacy IO read access on a bus */
+int pci_legacy_read(struct pci_bus *bus, loff_t port, u32 *val, size_t size)
+{
+	unsigned long offset;
+	struct pci_controller *hose = pci_bus_to_host(bus);
+	struct resource *rp = &hose->io_resource;
+	void __iomem *addr;
 
-	/* Check अगर port can be supported by that bus. We only check
+	/* Check if port can be supported by that bus. We only check
 	 * the ranges of the PHB though, not the bus itself as the rules
-	 * क्रम क्रमwarding legacy cycles करोwn bridges are not our problem
-	 * here. So अगर the host bridge supports it, we करो it.
+	 * for forwarding legacy cycles down bridges are not our problem
+	 * here. So if the host bridge supports it, we do it.
 	 */
-	offset = (अचिन्हित दीर्घ)hose->io_base_virt - _IO_BASE;
+	offset = (unsigned long)hose->io_base_virt - _IO_BASE;
 	offset += port;
 
-	अगर (!(rp->flags & IORESOURCE_IO))
-		वापस -ENXIO;
-	अगर (offset < rp->start || (offset + size) > rp->end)
-		वापस -ENXIO;
+	if (!(rp->flags & IORESOURCE_IO))
+		return -ENXIO;
+	if (offset < rp->start || (offset + size) > rp->end)
+		return -ENXIO;
 	addr = hose->io_base_virt + port;
 
-	चयन (size) अणु
-	हाल 1:
+	switch (size) {
+	case 1:
 		*((u8 *)val) = in_8(addr);
-		वापस 1;
-	हाल 2:
-		अगर (port & 1)
-			वापस -EINVAL;
+		return 1;
+	case 2:
+		if (port & 1)
+			return -EINVAL;
 		*((u16 *)val) = in_le16(addr);
-		वापस 2;
-	हाल 4:
-		अगर (port & 3)
-			वापस -EINVAL;
+		return 2;
+	case 4:
+		if (port & 3)
+			return -EINVAL;
 		*((u32 *)val) = in_le32(addr);
-		वापस 4;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+		return 4;
+	}
+	return -EINVAL;
+}
 
-/* This provides legacy IO ग_लिखो access on a bus */
-पूर्णांक pci_legacy_ग_लिखो(काष्ठा pci_bus *bus, loff_t port, u32 val, माप_प्रकार size)
-अणु
-	अचिन्हित दीर्घ offset;
-	काष्ठा pci_controller *hose = pci_bus_to_host(bus);
-	काष्ठा resource *rp = &hose->io_resource;
-	व्योम __iomem *addr;
+/* This provides legacy IO write access on a bus */
+int pci_legacy_write(struct pci_bus *bus, loff_t port, u32 val, size_t size)
+{
+	unsigned long offset;
+	struct pci_controller *hose = pci_bus_to_host(bus);
+	struct resource *rp = &hose->io_resource;
+	void __iomem *addr;
 
-	/* Check अगर port can be supported by that bus. We only check
+	/* Check if port can be supported by that bus. We only check
 	 * the ranges of the PHB though, not the bus itself as the rules
-	 * क्रम क्रमwarding legacy cycles करोwn bridges are not our problem
-	 * here. So अगर the host bridge supports it, we करो it.
+	 * for forwarding legacy cycles down bridges are not our problem
+	 * here. So if the host bridge supports it, we do it.
 	 */
-	offset = (अचिन्हित दीर्घ)hose->io_base_virt - _IO_BASE;
+	offset = (unsigned long)hose->io_base_virt - _IO_BASE;
 	offset += port;
 
-	अगर (!(rp->flags & IORESOURCE_IO))
-		वापस -ENXIO;
-	अगर (offset < rp->start || (offset + size) > rp->end)
-		वापस -ENXIO;
+	if (!(rp->flags & IORESOURCE_IO))
+		return -ENXIO;
+	if (offset < rp->start || (offset + size) > rp->end)
+		return -ENXIO;
 	addr = hose->io_base_virt + port;
 
-	/* WARNING: The generic code is idiotic. It माला_लो passed a poपूर्णांकer
-	 * to what can be a 1, 2 or 4 byte quantity and always पढ़ोs that
+	/* WARNING: The generic code is idiotic. It gets passed a pointer
+	 * to what can be a 1, 2 or 4 byte quantity and always reads that
 	 * as a u32, which means that we have to correct the location of
-	 * the data पढ़ो within those 32 bits क्रम size 1 and 2
+	 * the data read within those 32 bits for size 1 and 2
 	 */
-	चयन (size) अणु
-	हाल 1:
+	switch (size) {
+	case 1:
 		out_8(addr, val >> 24);
-		वापस 1;
-	हाल 2:
-		अगर (port & 1)
-			वापस -EINVAL;
+		return 1;
+	case 2:
+		if (port & 1)
+			return -EINVAL;
 		out_le16(addr, val >> 16);
-		वापस 2;
-	हाल 4:
-		अगर (port & 3)
-			वापस -EINVAL;
+		return 2;
+	case 4:
+		if (port & 3)
+			return -EINVAL;
 		out_le32(addr, val);
-		वापस 4;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+		return 4;
+	}
+	return -EINVAL;
+}
 
 /* This provides legacy IO or memory mmap access on a bus */
-पूर्णांक pci_mmap_legacy_page_range(काष्ठा pci_bus *bus,
-			       काष्ठा vm_area_काष्ठा *vma,
-			       क्रमागत pci_mmap_state mmap_state)
-अणु
-	काष्ठा pci_controller *hose = pci_bus_to_host(bus);
-	resource_माप_प्रकार offset =
-		((resource_माप_प्रकार)vma->vm_pgoff) << PAGE_SHIFT;
-	resource_माप_प्रकार size = vma->vm_end - vma->vm_start;
-	काष्ठा resource *rp;
+int pci_mmap_legacy_page_range(struct pci_bus *bus,
+			       struct vm_area_struct *vma,
+			       enum pci_mmap_state mmap_state)
+{
+	struct pci_controller *hose = pci_bus_to_host(bus);
+	resource_size_t offset =
+		((resource_size_t)vma->vm_pgoff) << PAGE_SHIFT;
+	resource_size_t size = vma->vm_end - vma->vm_start;
+	struct resource *rp;
 
 	pr_debug("pci_mmap_legacy_page_range(%04x:%02x, %s @%llx..%llx)\n",
-		 pci_करोमुख्य_nr(bus), bus->number,
+		 pci_domain_nr(bus), bus->number,
 		 mmap_state == pci_mmap_mem ? "MEM" : "IO",
-		 (अचिन्हित दीर्घ दीर्घ)offset,
-		 (अचिन्हित दीर्घ दीर्घ)(offset + size - 1));
+		 (unsigned long long)offset,
+		 (unsigned long long)(offset + size - 1));
 
-	अगर (mmap_state == pci_mmap_mem) अणु
+	if (mmap_state == pci_mmap_mem) {
 		/* Hack alert !
 		 *
-		 * Because X is lame and can fail starting अगर it माला_लो an error
+		 * Because X is lame and can fail starting if it gets an error
 		 * trying to mmap legacy_mem (instead of just moving on without
 		 * legacy memory access) we fake it here by giving it anonymous
 		 * memory, effectively behaving just like /dev/zero
 		 */
-		अगर ((offset + size) > hose->isa_mem_size) अणु
+		if ((offset + size) > hose->isa_mem_size) {
 			pr_debug("Process %s (pid:%d) mapped non-existing PCI",
 				current->comm, current->pid);
 			pr_debug("legacy memory for 0%04x:%02x\n",
-				pci_करोमुख्य_nr(bus), bus->number);
-			अगर (vma->vm_flags & VM_SHARED)
-				वापस shmem_zero_setup(vma);
-			वापस 0;
-		पूर्ण
+				pci_domain_nr(bus), bus->number);
+			if (vma->vm_flags & VM_SHARED)
+				return shmem_zero_setup(vma);
+			return 0;
+		}
 		offset += hose->isa_mem_phys;
-	पूर्ण अन्यथा अणु
-		अचिन्हित दीर्घ io_offset = (अचिन्हित दीर्घ)hose->io_base_virt -
+	} else {
+		unsigned long io_offset = (unsigned long)hose->io_base_virt -
 								_IO_BASE;
-		अचिन्हित दीर्घ roffset = offset + io_offset;
+		unsigned long roffset = offset + io_offset;
 		rp = &hose->io_resource;
-		अगर (!(rp->flags & IORESOURCE_IO))
-			वापस -ENXIO;
-		अगर (roffset < rp->start || (roffset + size) > rp->end)
-			वापस -ENXIO;
+		if (!(rp->flags & IORESOURCE_IO))
+			return -ENXIO;
+		if (roffset < rp->start || (roffset + size) > rp->end)
+			return -ENXIO;
 		offset += hose->io_base_phys;
-	पूर्ण
-	pr_debug(" -> mapping phys %llx\n", (अचिन्हित दीर्घ दीर्घ)offset);
+	}
+	pr_debug(" -> mapping phys %llx\n", (unsigned long long)offset);
 
 	vma->vm_pgoff = offset >> PAGE_SHIFT;
 	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
-	वापस remap_pfn_range(vma, vma->vm_start, vma->vm_pgoff,
+	return remap_pfn_range(vma, vma->vm_start, vma->vm_pgoff,
 			       vma->vm_end - vma->vm_start,
 			       vma->vm_page_prot);
-पूर्ण
+}
 
-व्योम pci_resource_to_user(स्थिर काष्ठा pci_dev *dev, पूर्णांक bar,
-			  स्थिर काष्ठा resource *rsrc,
-			  resource_माप_प्रकार *start, resource_माप_प्रकार *end)
-अणु
-	काष्ठा pci_bus_region region;
+void pci_resource_to_user(const struct pci_dev *dev, int bar,
+			  const struct resource *rsrc,
+			  resource_size_t *start, resource_size_t *end)
+{
+	struct pci_bus_region region;
 
-	अगर (rsrc->flags & IORESOURCE_IO) अणु
+	if (rsrc->flags & IORESOURCE_IO) {
 		pcibios_resource_to_bus(dev->bus, &region,
-					(काष्ठा resource *) rsrc);
+					(struct resource *) rsrc);
 		*start = region.start;
 		*end = region.end;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* We pass a CPU physical address to userland क्रम MMIO instead of a
+	/* We pass a CPU physical address to userland for MMIO instead of a
 	 * BAR value because X is lame and expects to be able to use that
 	 * to pass to /dev/mem!
 	 *
@@ -378,94 +377,94 @@ pgprot_t pci_phys_mem_access_prot(काष्ठा file *file,
 	 */
 	*start = rsrc->start;
 	*end = rsrc->end;
-पूर्ण
+}
 
 /**
  * pci_process_bridge_OF_ranges - Parse PCI bridge resources from device tree
  * @hose: newly allocated pci_controller to be setup
  * @dev: device node of the host bridge
- * @primary: set अगर primary bus (32 bits only, soon to be deprecated)
+ * @primary: set if primary bus (32 bits only, soon to be deprecated)
  *
  * This function will parse the "ranges" property of a PCI host bridge device
  * node and setup the resource mapping of a pci controller based on its
  * content.
  *
- * Lअगरe would be boring अगर it wasn't क्रम a few issues that we have to deal
+ * Life would be boring if it wasn't for a few issues that we have to deal
  * with here:
  *
  *   - We can only cope with one IO space range and up to 3 Memory space
  *     ranges. However, some machines (thanks Apple !) tend to split their
- *     space पूर्णांकo lots of small contiguous ranges. So we have to coalesce.
+ *     space into lots of small contiguous ranges. So we have to coalesce.
  *
  *   - We can only cope with all memory ranges having the same offset
- *     between CPU addresses and PCI addresses. Unक्रमtunately, some bridges
- *     are setup क्रम a large 1:1 mapping aदीर्घ with a small "window" which
+ *     between CPU addresses and PCI addresses. Unfortunately, some bridges
+ *     are setup for a large 1:1 mapping along with a small "window" which
  *     maps PCI address 0 to some arbitrary high address of the CPU space in
  *     order to give access to the ISA memory hole.
- *     The way out of here that I've chosen क्रम now is to always set the
- *     offset based on the first resource found, then override it अगर we
- *     have a dअगरferent offset and the previous was set by an ISA hole.
+ *     The way out of here that I've chosen for now is to always set the
+ *     offset based on the first resource found, then override it if we
+ *     have a different offset and the previous was set by an ISA hole.
  *
  *   - Some busses have IO space not starting at 0, which causes trouble with
- *     the way we करो our IO resource rक्रमागतbering. The code somewhat deals with
- *     it क्रम 64 bits but I would expect problems on 32 bits.
+ *     the way we do our IO resource renumbering. The code somewhat deals with
+ *     it for 64 bits but I would expect problems on 32 bits.
  *
- *   - Some 32 bits platक्रमms such as 4xx can have physical space larger than
- *     32 bits so we need to use 64 bits values क्रम the parsing
+ *   - Some 32 bits platforms such as 4xx can have physical space larger than
+ *     32 bits so we need to use 64 bits values for the parsing
  */
-व्योम pci_process_bridge_OF_ranges(काष्ठा pci_controller *hose,
-				  काष्ठा device_node *dev, पूर्णांक primary)
-अणु
-	पूर्णांक memno = 0, isa_hole = -1;
-	अचिन्हित दीर्घ दीर्घ isa_mb = 0;
-	काष्ठा resource *res;
-	काष्ठा of_pci_range range;
-	काष्ठा of_pci_range_parser parser;
+void pci_process_bridge_OF_ranges(struct pci_controller *hose,
+				  struct device_node *dev, int primary)
+{
+	int memno = 0, isa_hole = -1;
+	unsigned long long isa_mb = 0;
+	struct resource *res;
+	struct of_pci_range range;
+	struct of_pci_range_parser parser;
 
 	pr_info("PCI host bridge %pOF %s ranges:\n",
 	       dev, primary ? "(primary)" : "");
 
-	/* Check क्रम ranges property */
-	अगर (of_pci_range_parser_init(&parser, dev))
-		वापस;
+	/* Check for ranges property */
+	if (of_pci_range_parser_init(&parser, dev))
+		return;
 
 	pr_debug("Parsing ranges property...\n");
-	क्रम_each_of_pci_range(&parser, &range) अणु
+	for_each_of_pci_range(&parser, &range) {
 		/* Read next ranges element */
 
 		/* If we failed translation or got a zero-sized region
 		 * (some FW try to feed us with non sensical zero sized regions
-		 * such as घातer3 which look like some kind of attempt
+		 * such as power3 which look like some kind of attempt
 		 * at exposing the VGA memory hole)
 		 */
-		अगर (range.cpu_addr == OF_BAD_ADDR || range.size == 0)
-			जारी;
+		if (range.cpu_addr == OF_BAD_ADDR || range.size == 0)
+			continue;
 
 		/* Act based on address space type */
-		res = शून्य;
-		चयन (range.flags & IORESOURCE_TYPE_BITS) अणु
-		हाल IORESOURCE_IO:
+		res = NULL;
+		switch (range.flags & IORESOURCE_TYPE_BITS) {
+		case IORESOURCE_IO:
 			pr_info("  IO 0x%016llx..0x%016llx -> 0x%016llx\n",
 				range.cpu_addr, range.cpu_addr + range.size - 1,
 				range.pci_addr);
 
 			/* We support only one IO range */
-			अगर (hose->pci_io_size) अणु
+			if (hose->pci_io_size) {
 				pr_info(" \\--> Skipped (too many) !\n");
-				जारी;
-			पूर्ण
+				continue;
+			}
 			/* On 32 bits, limit I/O space to 16MB */
-			अगर (range.size > 0x01000000)
+			if (range.size > 0x01000000)
 				range.size = 0x01000000;
 
 			/* 32 bits needs to map IOs here */
 			hose->io_base_virt = ioremap(range.cpu_addr,
 						range.size);
 
-			/* Expect trouble अगर pci_addr is not 0 */
-			अगर (primary)
+			/* Expect trouble if pci_addr is not 0 */
+			if (primary)
 				isa_io_base =
-					(अचिन्हित दीर्घ)hose->io_base_virt;
+					(unsigned long)hose->io_base_virt;
 			/* pci_io_size and io_base_phys always represent IO
 			 * space starting at 0 so we factor in pci_addr
 			 */
@@ -476,8 +475,8 @@ pgprot_t pci_phys_mem_access_prot(काष्ठा file *file,
 			res = &hose->io_resource;
 			range.cpu_addr = range.pci_addr;
 
-			अवरोध;
-		हाल IORESOURCE_MEM:
+			break;
+		case IORESOURCE_MEM:
 			pr_info(" MEM 0x%016llx..0x%016llx -> 0x%016llx %s\n",
 				range.cpu_addr, range.cpu_addr + range.size - 1,
 				range.pci_addr,
@@ -485,165 +484,165 @@ pgprot_t pci_phys_mem_access_prot(काष्ठा file *file,
 				"Prefetch" : "");
 
 			/* We support only 3 memory ranges */
-			अगर (memno >= 3) अणु
+			if (memno >= 3) {
 				pr_info(" \\--> Skipped (too many) !\n");
-				जारी;
-			पूर्ण
+				continue;
+			}
 			/* Handles ISA memory hole space here */
-			अगर (range.pci_addr == 0) अणु
+			if (range.pci_addr == 0) {
 				isa_mb = range.cpu_addr;
 				isa_hole = memno;
-				अगर (primary || isa_mem_base == 0)
+				if (primary || isa_mem_base == 0)
 					isa_mem_base = range.cpu_addr;
 				hose->isa_mem_phys = range.cpu_addr;
 				hose->isa_mem_size = range.size;
-			पूर्ण
+			}
 
 			/* We get the PCI/Mem offset from the first range or
-			 * the, current one अगर the offset came from an ISA
-			 * hole. If they करोn't match, bugger.
+			 * the, current one if the offset came from an ISA
+			 * hole. If they don't match, bugger.
 			 */
-			अगर (memno == 0 ||
+			if (memno == 0 ||
 			    (isa_hole >= 0 && range.pci_addr != 0 &&
 			     hose->pci_mem_offset == isa_mb))
 				hose->pci_mem_offset = range.cpu_addr -
 							range.pci_addr;
-			अन्यथा अगर (range.pci_addr != 0 &&
+			else if (range.pci_addr != 0 &&
 				 hose->pci_mem_offset != range.cpu_addr -
-							range.pci_addr) अणु
+							range.pci_addr) {
 				pr_info(" \\--> Skipped (offset mismatch) !\n");
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			/* Build resource */
 			res = &hose->mem_resources[memno++];
-			अवरोध;
-		पूर्ण
-		अगर (res != शून्य) अणु
+			break;
+		}
+		if (res != NULL) {
 			res->name = dev->full_name;
 			res->flags = range.flags;
 			res->start = range.cpu_addr;
 			res->end = range.cpu_addr + range.size - 1;
-			res->parent = res->child = res->sibling = शून्य;
-		पूर्ण
-	पूर्ण
+			res->parent = res->child = res->sibling = NULL;
+		}
+	}
 
 	/* If there's an ISA hole and the pci_mem_offset is -not- matching
-	 * the ISA hole offset, then we need to हटाओ the ISA hole from
-	 * the resource list क्रम that brige
+	 * the ISA hole offset, then we need to remove the ISA hole from
+	 * the resource list for that brige
 	 */
-	अगर (isa_hole >= 0 && hose->pci_mem_offset != isa_mb) अणु
-		अचिन्हित पूर्णांक next = isa_hole + 1;
+	if (isa_hole >= 0 && hose->pci_mem_offset != isa_mb) {
+		unsigned int next = isa_hole + 1;
 		pr_info(" Removing ISA hole at 0x%016llx\n", isa_mb);
-		अगर (next < memno)
-			स_हटाओ(&hose->mem_resources[isa_hole],
+		if (next < memno)
+			memmove(&hose->mem_resources[isa_hole],
 				&hose->mem_resources[next],
-				माप(काष्ठा resource) * (memno - next));
+				sizeof(struct resource) * (memno - next));
 		hose->mem_resources[--memno].flags = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Display the करोमुख्य number in /proc */
-पूर्णांक pci_proc_करोमुख्य(काष्ठा pci_bus *bus)
-अणु
-	वापस pci_करोमुख्य_nr(bus);
-पूर्ण
+/* Display the domain number in /proc */
+int pci_proc_domain(struct pci_bus *bus)
+{
+	return pci_domain_nr(bus);
+}
 
-/* This header fixup will करो the resource fixup क्रम all devices as they are
- * probed, but not क्रम bridge ranges
+/* This header fixup will do the resource fixup for all devices as they are
+ * probed, but not for bridge ranges
  */
-अटल व्योम pcibios_fixup_resources(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा pci_controller *hose = pci_bus_to_host(dev->bus);
-	पूर्णांक i;
+static void pcibios_fixup_resources(struct pci_dev *dev)
+{
+	struct pci_controller *hose = pci_bus_to_host(dev->bus);
+	int i;
 
-	अगर (!hose) अणु
+	if (!hose) {
 		pr_err("No host bridge for PCI dev %s !\n",
 		       pci_name(dev));
-		वापस;
-	पूर्ण
-	क्रम (i = 0; i < DEVICE_COUNT_RESOURCE; i++) अणु
-		काष्ठा resource *res = dev->resource + i;
-		अगर (!res->flags)
-			जारी;
-		अगर (res->start == 0) अणु
+		return;
+	}
+	for (i = 0; i < DEVICE_COUNT_RESOURCE; i++) {
+		struct resource *res = dev->resource + i;
+		if (!res->flags)
+			continue;
+		if (res->start == 0) {
 			pr_debug("PCI:%s Resource %d %016llx-%016llx [%x]",
 				 pci_name(dev), i,
-				 (अचिन्हित दीर्घ दीर्घ)res->start,
-				 (अचिन्हित दीर्घ दीर्घ)res->end,
-				 (अचिन्हित पूर्णांक)res->flags);
+				 (unsigned long long)res->start,
+				 (unsigned long long)res->end,
+				 (unsigned int)res->flags);
 			pr_debug("is unassigned\n");
 			res->end -= res->start;
 			res->start = 0;
 			res->flags |= IORESOURCE_UNSET;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		pr_debug("PCI:%s Resource %d %016llx-%016llx [%x]\n",
 			 pci_name(dev), i,
-			 (अचिन्हित दीर्घ दीर्घ)res->start,
-			 (अचिन्हित दीर्घ दीर्घ)res->end,
-			 (अचिन्हित पूर्णांक)res->flags);
-	पूर्ण
-पूर्ण
+			 (unsigned long long)res->start,
+			 (unsigned long long)res->end,
+			 (unsigned int)res->flags);
+	}
+}
 DECLARE_PCI_FIXUP_HEADER(PCI_ANY_ID, PCI_ANY_ID, pcibios_fixup_resources);
 
-पूर्णांक pcibios_add_device(काष्ठा pci_dev *dev)
-अणु
+int pcibios_add_device(struct pci_dev *dev)
+{
 	dev->irq = of_irq_parse_and_map_pci(dev, 0, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(pcibios_add_device);
 
 /*
  * Reparent resource children of pr that conflict with res
  * under res, and make res replace those children.
  */
-अटल पूर्णांक __init reparent_resources(काष्ठा resource *parent,
-				     काष्ठा resource *res)
-अणु
-	काष्ठा resource *p, **pp;
-	काष्ठा resource **firstpp = शून्य;
+static int __init reparent_resources(struct resource *parent,
+				     struct resource *res)
+{
+	struct resource *p, **pp;
+	struct resource **firstpp = NULL;
 
-	क्रम (pp = &parent->child; (p = *pp) != शून्य; pp = &p->sibling) अणु
-		अगर (p->end < res->start)
-			जारी;
-		अगर (res->end < p->start)
-			अवरोध;
-		अगर (p->start < res->start || p->end > res->end)
-			वापस -1;	/* not completely contained */
-		अगर (firstpp == शून्य)
+	for (pp = &parent->child; (p = *pp) != NULL; pp = &p->sibling) {
+		if (p->end < res->start)
+			continue;
+		if (res->end < p->start)
+			break;
+		if (p->start < res->start || p->end > res->end)
+			return -1;	/* not completely contained */
+		if (firstpp == NULL)
 			firstpp = pp;
-	पूर्ण
-	अगर (firstpp == शून्य)
-		वापस -1;	/* didn't find any conflicting entries? */
+	}
+	if (firstpp == NULL)
+		return -1;	/* didn't find any conflicting entries? */
 	res->parent = parent;
 	res->child = *firstpp;
 	res->sibling = *pp;
 	*firstpp = res;
-	*pp = शून्य;
-	क्रम (p = res->child; p != शून्य; p = p->sibling) अणु
+	*pp = NULL;
+	for (p = res->child; p != NULL; p = p->sibling) {
 		p->parent = res;
 		pr_debug("PCI: Reparented %s [%llx..%llx] under %s\n",
 			 p->name,
-			 (अचिन्हित दीर्घ दीर्घ)p->start,
-			 (अचिन्हित दीर्घ दीर्घ)p->end, res->name);
-	पूर्ण
-	वापस 0;
-पूर्ण
+			 (unsigned long long)p->start,
+			 (unsigned long long)p->end, res->name);
+	}
+	return 0;
+}
 
 /*
  *  Handle resources of PCI devices.  If the world were perfect, we could
- *  just allocate all the resource regions and करो nothing more.  It isn't.
+ *  just allocate all the resource regions and do nothing more.  It isn't.
  *  On the other hand, we cannot just re-allocate all devices, as it would
- *  require us to know lots of host bridge पूर्णांकernals.  So we attempt to
+ *  require us to know lots of host bridge internals.  So we attempt to
  *  keep as much of the original configuration as possible, but tweak it
  *  when it's found to be wrong.
  *
  *  Known BIOS problems we have to work around:
  *	- I/O or memory regions not configured
- *	- regions configured, but not enabled in the command रेजिस्टर
+ *	- regions configured, but not enabled in the command register
  *	- bogus I/O addresses above 64K used
  *	- expansion ROMs left enabled (this may sound harmless, but given
  *	  the fact the PCI specs explicitly allow address decoders to be
@@ -651,14 +650,14 @@ EXPORT_SYMBOL(pcibios_add_device);
  *	  at least dangerous)
  *
  *  Our solution:
- *	(1) Allocate resources क्रम all buses behind PCI-to-PCI bridges.
+ *	(1) Allocate resources for all buses behind PCI-to-PCI bridges.
  *	    This gives us fixed barriers on where we can allocate.
- *	(2) Allocate resources क्रम all enabled devices.  If there is
+ *	(2) Allocate resources for all enabled devices.  If there is
  *	    a collision, just mark the resource as unallocated. Also
  *	    disable expansion ROMs during this step.
- *	(3) Try to allocate resources क्रम disabled devices.  If the
- *	    resources were asचिन्हित correctly, everything goes well,
- *	    अगर they weren't, they won't disturb allocation of other
+ *	(3) Try to allocate resources for disabled devices.  If the
+ *	    resources were assigned correctly, everything goes well,
+ *	    if they weren't, they won't disturb allocation of other
  *	    resources.
  *	(4) Assign new addresses to resources which were either
  *	    not configured at all or misconfigured.  If explicitly
@@ -666,300 +665,300 @@ EXPORT_SYMBOL(pcibios_add_device);
  *	    as well.
  */
 
-अटल व्योम pcibios_allocate_bus_resources(काष्ठा pci_bus *bus)
-अणु
-	काष्ठा pci_bus *b;
-	पूर्णांक i;
-	काष्ठा resource *res, *pr;
+static void pcibios_allocate_bus_resources(struct pci_bus *bus)
+{
+	struct pci_bus *b;
+	int i;
+	struct resource *res, *pr;
 
 	pr_debug("PCI: Allocating bus resources for %04x:%02x...\n",
-		 pci_करोमुख्य_nr(bus), bus->number);
+		 pci_domain_nr(bus), bus->number);
 
-	pci_bus_क्रम_each_resource(bus, res, i) अणु
-		अगर (!res || !res->flags
+	pci_bus_for_each_resource(bus, res, i) {
+		if (!res || !res->flags
 		    || res->start > res->end || res->parent)
-			जारी;
-		अगर (bus->parent == शून्य)
+			continue;
+		if (bus->parent == NULL)
 			pr = (res->flags & IORESOURCE_IO) ?
 				&ioport_resource : &iomem_resource;
-		अन्यथा अणु
+		else {
 			/* Don't bother with non-root busses when
 			 * re-assigning all resources. We clear the
-			 * resource flags as अगर they were colliding
+			 * resource flags as if they were colliding
 			 * and as such ensure proper re-allocation
 			 * later.
 			 */
 			pr = pci_find_parent_resource(bus->self, res);
-			अगर (pr == res) अणु
+			if (pr == res) {
 				/* this happens when the generic PCI
 				 * code (wrongly) decides that this
 				 * bridge is transparent  -- paulus
 				 */
-				जारी;
-			पूर्ण
-		पूर्ण
+				continue;
+			}
+		}
 
 		pr_debug("PCI: %s (bus %d) bridge rsrc %d: %016llx-%016llx ",
 			 bus->self ? pci_name(bus->self) : "PHB",
 			 bus->number, i,
-			 (अचिन्हित दीर्घ दीर्घ)res->start,
-			 (अचिन्हित दीर्घ दीर्घ)res->end);
+			 (unsigned long long)res->start,
+			 (unsigned long long)res->end);
 		pr_debug("[0x%x], parent %p (%s)\n",
-			 (अचिन्हित पूर्णांक)res->flags,
+			 (unsigned int)res->flags,
 			 pr, (pr && pr->name) ? pr->name : "nil");
 
-		अगर (pr && !(pr->flags & IORESOURCE_UNSET)) अणु
-			काष्ठा pci_dev *dev = bus->self;
+		if (pr && !(pr->flags & IORESOURCE_UNSET)) {
+			struct pci_dev *dev = bus->self;
 
-			अगर (request_resource(pr, res) == 0)
-				जारी;
+			if (request_resource(pr, res) == 0)
+				continue;
 			/*
 			 * Must be a conflict with an existing entry.
 			 * Move that entry (or entries) under the
 			 * bridge resource and try again.
 			 */
-			अगर (reparent_resources(pr, res) == 0)
-				जारी;
+			if (reparent_resources(pr, res) == 0)
+				continue;
 
-			अगर (dev && i < PCI_BRIDGE_RESOURCE_NUM &&
+			if (dev && i < PCI_BRIDGE_RESOURCE_NUM &&
 			    pci_claim_bridge_resource(dev,
 						 i + PCI_BRIDGE_RESOURCES) == 0)
-				जारी;
+				continue;
 
-		पूर्ण
+		}
 		pr_warn("PCI: Cannot allocate resource region ");
 		pr_cont("%d of PCI bridge %d, will remap\n", i, bus->number);
 		res->start = res->end = 0;
 		res->flags = 0;
-	पूर्ण
+	}
 
-	list_क्रम_each_entry(b, &bus->children, node)
+	list_for_each_entry(b, &bus->children, node)
 		pcibios_allocate_bus_resources(b);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम alloc_resource(काष्ठा pci_dev *dev, पूर्णांक idx)
-अणु
-	काष्ठा resource *pr, *r = &dev->resource[idx];
+static inline void alloc_resource(struct pci_dev *dev, int idx)
+{
+	struct resource *pr, *r = &dev->resource[idx];
 
 	pr_debug("PCI: Allocating %s: Resource %d: %016llx..%016llx [%x]\n",
 		 pci_name(dev), idx,
-		 (अचिन्हित दीर्घ दीर्घ)r->start,
-		 (अचिन्हित दीर्घ दीर्घ)r->end,
-		 (अचिन्हित पूर्णांक)r->flags);
+		 (unsigned long long)r->start,
+		 (unsigned long long)r->end,
+		 (unsigned int)r->flags);
 
 	pr = pci_find_parent_resource(dev, r);
-	अगर (!pr || (pr->flags & IORESOURCE_UNSET) ||
-	    request_resource(pr, r) < 0) अणु
+	if (!pr || (pr->flags & IORESOURCE_UNSET) ||
+	    request_resource(pr, r) < 0) {
 		pr_warn("PCI: Cannot allocate resource region %d ", idx);
 		pr_cont("of device %s, will remap\n", pci_name(dev));
-		अगर (pr)
+		if (pr)
 			pr_debug("PCI:  parent is %p: %016llx-%016llx [%x]\n",
 				 pr,
-				 (अचिन्हित दीर्घ दीर्घ)pr->start,
-				 (अचिन्हित दीर्घ दीर्घ)pr->end,
-				 (अचिन्हित पूर्णांक)pr->flags);
+				 (unsigned long long)pr->start,
+				 (unsigned long long)pr->end,
+				 (unsigned int)pr->flags);
 		/* We'll assign a new address later */
 		r->flags |= IORESOURCE_UNSET;
 		r->end -= r->start;
 		r->start = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __init pcibios_allocate_resources(पूर्णांक pass)
-अणु
-	काष्ठा pci_dev *dev = शून्य;
-	पूर्णांक idx, disabled;
+static void __init pcibios_allocate_resources(int pass)
+{
+	struct pci_dev *dev = NULL;
+	int idx, disabled;
 	u16 command;
-	काष्ठा resource *r;
+	struct resource *r;
 
-	क्रम_each_pci_dev(dev) अणु
-		pci_पढ़ो_config_word(dev, PCI_COMMAND, &command);
-		क्रम (idx = 0; idx <= PCI_ROM_RESOURCE; idx++) अणु
+	for_each_pci_dev(dev) {
+		pci_read_config_word(dev, PCI_COMMAND, &command);
+		for (idx = 0; idx <= PCI_ROM_RESOURCE; idx++) {
 			r = &dev->resource[idx];
-			अगर (r->parent)		/* Alपढ़ोy allocated */
-				जारी;
-			अगर (!r->flags || (r->flags & IORESOURCE_UNSET))
-				जारी;	/* Not asचिन्हित at all */
-			/* We only allocate ROMs on pass 1 just in हाल they
+			if (r->parent)		/* Already allocated */
+				continue;
+			if (!r->flags || (r->flags & IORESOURCE_UNSET))
+				continue;	/* Not assigned at all */
+			/* We only allocate ROMs on pass 1 just in case they
 			 * have been screwed up by firmware
 			 */
-			अगर (idx == PCI_ROM_RESOURCE)
+			if (idx == PCI_ROM_RESOURCE)
 				disabled = 1;
-			अगर (r->flags & IORESOURCE_IO)
+			if (r->flags & IORESOURCE_IO)
 				disabled = !(command & PCI_COMMAND_IO);
-			अन्यथा
+			else
 				disabled = !(command & PCI_COMMAND_MEMORY);
-			अगर (pass == disabled)
+			if (pass == disabled)
 				alloc_resource(dev, idx);
-		पूर्ण
-		अगर (pass)
-			जारी;
+		}
+		if (pass)
+			continue;
 		r = &dev->resource[PCI_ROM_RESOURCE];
-		अगर (r->flags) अणु
+		if (r->flags) {
 			/* Turn the ROM off, leave the resource region,
-			 * but keep it unरेजिस्टरed.
+			 * but keep it unregistered.
 			 */
 			u32 reg;
-			pci_पढ़ो_config_dword(dev, dev->rom_base_reg, &reg);
-			अगर (reg & PCI_ROM_ADDRESS_ENABLE) अणु
+			pci_read_config_dword(dev, dev->rom_base_reg, &reg);
+			if (reg & PCI_ROM_ADDRESS_ENABLE) {
 				pr_debug("PCI: Switching off ROM of %s\n",
 					 pci_name(dev));
 				r->flags &= ~IORESOURCE_ROM_ENABLE;
-				pci_ग_लिखो_config_dword(dev, dev->rom_base_reg,
+				pci_write_config_dword(dev, dev->rom_base_reg,
 						reg & ~PCI_ROM_ADDRESS_ENABLE);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल व्योम __init pcibios_reserve_legacy_regions(काष्ठा pci_bus *bus)
-अणु
-	काष्ठा pci_controller *hose = pci_bus_to_host(bus);
-	resource_माप_प्रकार	offset;
-	काष्ठा resource *res, *pres;
-	पूर्णांक i;
+static void __init pcibios_reserve_legacy_regions(struct pci_bus *bus)
+{
+	struct pci_controller *hose = pci_bus_to_host(bus);
+	resource_size_t	offset;
+	struct resource *res, *pres;
+	int i;
 
 	pr_debug("Reserving legacy ranges for domain %04x\n",
-							pci_करोमुख्य_nr(bus));
+							pci_domain_nr(bus));
 
-	/* Check क्रम IO */
-	अगर (!(hose->io_resource.flags & IORESOURCE_IO))
-		जाओ no_io;
-	offset = (अचिन्हित दीर्घ)hose->io_base_virt - _IO_BASE;
-	res = kzalloc(माप(काष्ठा resource), GFP_KERNEL);
-	BUG_ON(res == शून्य);
+	/* Check for IO */
+	if (!(hose->io_resource.flags & IORESOURCE_IO))
+		goto no_io;
+	offset = (unsigned long)hose->io_base_virt - _IO_BASE;
+	res = kzalloc(sizeof(struct resource), GFP_KERNEL);
+	BUG_ON(res == NULL);
 	res->name = "Legacy IO";
 	res->flags = IORESOURCE_IO;
 	res->start = offset;
 	res->end = (offset + 0xfff) & 0xfffffffful;
 	pr_debug("Candidate legacy IO: %pR\n", res);
-	अगर (request_resource(&hose->io_resource, res)) अणु
+	if (request_resource(&hose->io_resource, res)) {
 		pr_debug("PCI %04x:%02x Cannot reserve Legacy IO %pR\n",
-		       pci_करोमुख्य_nr(bus), bus->number, res);
-		kमुक्त(res);
-	पूर्ण
+		       pci_domain_nr(bus), bus->number, res);
+		kfree(res);
+	}
 
  no_io:
-	/* Check क्रम memory */
+	/* Check for memory */
 	offset = hose->pci_mem_offset;
-	pr_debug("hose mem offset: %016llx\n", (अचिन्हित दीर्घ दीर्घ)offset);
-	क्रम (i = 0; i < 3; i++) अणु
+	pr_debug("hose mem offset: %016llx\n", (unsigned long long)offset);
+	for (i = 0; i < 3; i++) {
 		pres = &hose->mem_resources[i];
-		अगर (!(pres->flags & IORESOURCE_MEM))
-			जारी;
+		if (!(pres->flags & IORESOURCE_MEM))
+			continue;
 		pr_debug("hose mem res: %pR\n", pres);
-		अगर ((pres->start - offset) <= 0xa0000 &&
+		if ((pres->start - offset) <= 0xa0000 &&
 		    (pres->end - offset) >= 0xbffff)
-			अवरोध;
-	पूर्ण
-	अगर (i >= 3)
-		वापस;
-	res = kzalloc(माप(काष्ठा resource), GFP_KERNEL);
-	BUG_ON(res == शून्य);
+			break;
+	}
+	if (i >= 3)
+		return;
+	res = kzalloc(sizeof(struct resource), GFP_KERNEL);
+	BUG_ON(res == NULL);
 	res->name = "Legacy VGA memory";
 	res->flags = IORESOURCE_MEM;
 	res->start = 0xa0000 + offset;
 	res->end = 0xbffff + offset;
 	pr_debug("Candidate VGA memory: %pR\n", res);
-	अगर (request_resource(pres, res)) अणु
+	if (request_resource(pres, res)) {
 		pr_debug("PCI %04x:%02x Cannot reserve VGA memory %pR\n",
-		       pci_करोमुख्य_nr(bus), bus->number, res);
-		kमुक्त(res);
-	पूर्ण
-पूर्ण
+		       pci_domain_nr(bus), bus->number, res);
+		kfree(res);
+	}
+}
 
-व्योम __init pcibios_resource_survey(व्योम)
-अणु
-	काष्ठा pci_bus *b;
+void __init pcibios_resource_survey(void)
+{
+	struct pci_bus *b;
 
 	/* Allocate and assign resources. If we re-assign everything, then
 	 * we skip the allocate phase
 	 */
-	list_क्रम_each_entry(b, &pci_root_buses, node)
+	list_for_each_entry(b, &pci_root_buses, node)
 		pcibios_allocate_bus_resources(b);
 
 	pcibios_allocate_resources(0);
 	pcibios_allocate_resources(1);
 
-	/* Beक्रमe we start assigning unasचिन्हित resource, we try to reserve
-	 * the low IO area and the VGA memory area अगर they पूर्णांकersect the
-	 * bus available resources to aव्योम allocating things on top of them
+	/* Before we start assigning unassigned resource, we try to reserve
+	 * the low IO area and the VGA memory area if they intersect the
+	 * bus available resources to avoid allocating things on top of them
 	 */
-	list_क्रम_each_entry(b, &pci_root_buses, node)
+	list_for_each_entry(b, &pci_root_buses, node)
 		pcibios_reserve_legacy_regions(b);
 
-	/* Now proceed to assigning things that were left unasचिन्हित */
+	/* Now proceed to assigning things that were left unassigned */
 	pr_debug("PCI: Assigning unassigned resources...\n");
-	pci_assign_unasचिन्हित_resources();
-पूर्ण
+	pci_assign_unassigned_resources();
+}
 
-अटल व्योम pcibios_setup_phb_resources(काष्ठा pci_controller *hose,
-					काष्ठा list_head *resources)
-अणु
-	अचिन्हित दीर्घ io_offset;
-	काष्ठा resource *res;
-	पूर्णांक i;
+static void pcibios_setup_phb_resources(struct pci_controller *hose,
+					struct list_head *resources)
+{
+	unsigned long io_offset;
+	struct resource *res;
+	int i;
 
 	/* Hookup PHB IO resource */
 	res = &hose->io_resource;
 
 	/* Fixup IO space offset */
-	io_offset = (अचिन्हित दीर्घ)hose->io_base_virt - isa_io_base;
+	io_offset = (unsigned long)hose->io_base_virt - isa_io_base;
 	res->start = (res->start + io_offset) & 0xffffffffu;
 	res->end = (res->end + io_offset) & 0xffffffffu;
 
-	अगर (!res->flags) अणु
+	if (!res->flags) {
 		pr_warn("PCI: I/O resource not set for host ");
 		pr_cont("bridge %pOF (domain %d)\n",
 			hose->dn, hose->global_number);
-		/* Workaround क्रम lack of IO resource only on 32-bit */
-		res->start = (अचिन्हित दीर्घ)hose->io_base_virt - isa_io_base;
+		/* Workaround for lack of IO resource only on 32-bit */
+		res->start = (unsigned long)hose->io_base_virt - isa_io_base;
 		res->end = res->start + IO_SPACE_LIMIT;
 		res->flags = IORESOURCE_IO;
-	पूर्ण
+	}
 	pci_add_resource_offset(resources, res,
-		(__क्रमce resource_माप_प्रकार)(hose->io_base_virt - _IO_BASE));
+		(__force resource_size_t)(hose->io_base_virt - _IO_BASE));
 
 	pr_debug("PCI: PHB IO resource    = %016llx-%016llx [%lx]\n",
-		 (अचिन्हित दीर्घ दीर्घ)res->start,
-		 (अचिन्हित दीर्घ दीर्घ)res->end,
-		 (अचिन्हित दीर्घ)res->flags);
+		 (unsigned long long)res->start,
+		 (unsigned long long)res->end,
+		 (unsigned long)res->flags);
 
 	/* Hookup PHB Memory resources */
-	क्रम (i = 0; i < 3; ++i) अणु
+	for (i = 0; i < 3; ++i) {
 		res = &hose->mem_resources[i];
-		अगर (!res->flags) अणु
-			अगर (i > 0)
-				जारी;
+		if (!res->flags) {
+			if (i > 0)
+				continue;
 			pr_err("PCI: Memory resource 0 not set for ");
 			pr_cont("host bridge %pOF (domain %d)\n",
 				hose->dn, hose->global_number);
 
-			/* Workaround क्रम lack of MEM resource only on 32-bit */
+			/* Workaround for lack of MEM resource only on 32-bit */
 			res->start = hose->pci_mem_offset;
-			res->end = (resource_माप_प्रकार)-1LL;
+			res->end = (resource_size_t)-1LL;
 			res->flags = IORESOURCE_MEM;
 
-		पूर्ण
+		}
 		pci_add_resource_offset(resources, res, hose->pci_mem_offset);
 
 		pr_debug("PCI: PHB MEM resource %d = %016llx-%016llx [%lx]\n",
-			i, (अचिन्हित दीर्घ दीर्घ)res->start,
-			(अचिन्हित दीर्घ दीर्घ)res->end,
-			(अचिन्हित दीर्घ)res->flags);
-	पूर्ण
+			i, (unsigned long long)res->start,
+			(unsigned long long)res->end,
+			(unsigned long)res->flags);
+	}
 
 	pr_debug("PCI: PHB MEM offset     = %016llx\n",
-		 (अचिन्हित दीर्घ दीर्घ)hose->pci_mem_offset);
+		 (unsigned long long)hose->pci_mem_offset);
 	pr_debug("PCI: PHB IO  offset     = %08lx\n",
-		 (अचिन्हित दीर्घ)hose->io_base_virt - _IO_BASE);
-पूर्ण
+		 (unsigned long)hose->io_base_virt - _IO_BASE);
+}
 
-अटल व्योम pcibios_scan_phb(काष्ठा pci_controller *hose)
-अणु
+static void pcibios_scan_phb(struct pci_controller *hose)
+{
 	LIST_HEAD(resources);
-	काष्ठा pci_bus *bus;
-	काष्ठा device_node *node = hose->dn;
+	struct pci_bus *bus;
+	struct device_node *node = hose->dn;
 
 	pr_debug("PCI: Scanning PHB %pOF\n", node);
 
@@ -967,152 +966,152 @@ EXPORT_SYMBOL(pcibios_add_device);
 
 	bus = pci_scan_root_bus(hose->parent, hose->first_busno,
 				hose->ops, hose, &resources);
-	अगर (bus == शून्य) अणु
+	if (bus == NULL) {
 		pr_err("Failed to create bus for PCI domain %04x\n",
 		       hose->global_number);
-		pci_मुक्त_resource_list(&resources);
-		वापस;
-	पूर्ण
+		pci_free_resource_list(&resources);
+		return;
+	}
 	bus->busn_res.start = hose->first_busno;
 	hose->bus = bus;
 
 	hose->last_busno = bus->busn_res.end;
-पूर्ण
+}
 
-अटल पूर्णांक __init pcibios_init(व्योम)
-अणु
-	काष्ठा pci_controller *hose, *पंचांगp;
-	पूर्णांक next_busno = 0;
+static int __init pcibios_init(void)
+{
+	struct pci_controller *hose, *tmp;
+	int next_busno = 0;
 
 	pr_info("PCI: Probing PCI hardware\n");
 
 	/* Scan all of the recorded PCI controllers.  */
-	list_क्रम_each_entry_safe(hose, पंचांगp, &hose_list, list_node) अणु
+	list_for_each_entry_safe(hose, tmp, &hose_list, list_node) {
 		hose->last_busno = 0xff;
 		pcibios_scan_phb(hose);
-		अगर (next_busno <= hose->last_busno)
+		if (next_busno <= hose->last_busno)
 			next_busno = hose->last_busno + 1;
-	पूर्ण
+	}
 	pci_bus_count = next_busno;
 
 	/* Call common code to handle resource allocation */
 	pcibios_resource_survey();
-	list_क्रम_each_entry_safe(hose, पंचांगp, &hose_list, list_node) अणु
-		अगर (hose->bus)
+	list_for_each_entry_safe(hose, tmp, &hose_list, list_node) {
+		if (hose->bus)
 			pci_bus_add_devices(hose->bus);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 subsys_initcall(pcibios_init);
 
-अटल काष्ठा pci_controller *pci_bus_to_hose(पूर्णांक bus)
-अणु
-	काष्ठा pci_controller *hose, *पंचांगp;
+static struct pci_controller *pci_bus_to_hose(int bus)
+{
+	struct pci_controller *hose, *tmp;
 
-	list_क्रम_each_entry_safe(hose, पंचांगp, &hose_list, list_node)
-		अगर (bus >= hose->first_busno && bus <= hose->last_busno)
-			वापस hose;
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry_safe(hose, tmp, &hose_list, list_node)
+		if (bus >= hose->first_busno && bus <= hose->last_busno)
+			return hose;
+	return NULL;
+}
 
-/* Provide inक्रमmation on locations of various I/O regions in physical
+/* Provide information on locations of various I/O regions in physical
  * memory.  Do this on a per-card basis so that we choose the right
  * root bridge.
- * Note that the वापसed IO or memory base is a physical address
+ * Note that the returned IO or memory base is a physical address
  */
 
-दीर्घ sys_pciconfig_iobase(दीर्घ which, अचिन्हित दीर्घ bus, अचिन्हित दीर्घ devfn)
-अणु
-	काष्ठा pci_controller *hose;
-	दीर्घ result = -EOPNOTSUPP;
+long sys_pciconfig_iobase(long which, unsigned long bus, unsigned long devfn)
+{
+	struct pci_controller *hose;
+	long result = -EOPNOTSUPP;
 
 	hose = pci_bus_to_hose(bus);
-	अगर (!hose)
-		वापस -ENODEV;
+	if (!hose)
+		return -ENODEV;
 
-	चयन (which) अणु
-	हाल IOBASE_BRIDGE_NUMBER:
-		वापस (दीर्घ)hose->first_busno;
-	हाल IOBASE_MEMORY:
-		वापस (दीर्घ)hose->pci_mem_offset;
-	हाल IOBASE_IO:
-		वापस (दीर्घ)hose->io_base_phys;
-	हाल IOBASE_ISA_IO:
-		वापस (दीर्घ)isa_io_base;
-	हाल IOBASE_ISA_MEM:
-		वापस (दीर्घ)isa_mem_base;
-	पूर्ण
+	switch (which) {
+	case IOBASE_BRIDGE_NUMBER:
+		return (long)hose->first_busno;
+	case IOBASE_MEMORY:
+		return (long)hose->pci_mem_offset;
+	case IOBASE_IO:
+		return (long)hose->io_base_phys;
+	case IOBASE_ISA_IO:
+		return (long)isa_io_base;
+	case IOBASE_ISA_MEM:
+		return (long)isa_mem_base;
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*
- * Null PCI config access functions, क्रम the हाल when we can't
+ * Null PCI config access functions, for the case when we can't
  * find a hose.
  */
-#घोषणा शून्य_PCI_OP(rw, size, type)					\
-अटल पूर्णांक								\
-null_##rw##_config_##size(काष्ठा pci_dev *dev, पूर्णांक offset, type val)	\
-अणु									\
-	वापस PCIBIOS_DEVICE_NOT_FOUND;				\
-पूर्ण
+#define NULL_PCI_OP(rw, size, type)					\
+static int								\
+null_##rw##_config_##size(struct pci_dev *dev, int offset, type val)	\
+{									\
+	return PCIBIOS_DEVICE_NOT_FOUND;				\
+}
 
-अटल पूर्णांक
-null_पढ़ो_config(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक offset,
-		 पूर्णांक len, u32 *val)
-अणु
-	वापस PCIBIOS_DEVICE_NOT_FOUND;
-पूर्ण
+static int
+null_read_config(struct pci_bus *bus, unsigned int devfn, int offset,
+		 int len, u32 *val)
+{
+	return PCIBIOS_DEVICE_NOT_FOUND;
+}
 
-अटल पूर्णांक
-null_ग_लिखो_config(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक offset,
-		  पूर्णांक len, u32 val)
-अणु
-	वापस PCIBIOS_DEVICE_NOT_FOUND;
-पूर्ण
+static int
+null_write_config(struct pci_bus *bus, unsigned int devfn, int offset,
+		  int len, u32 val)
+{
+	return PCIBIOS_DEVICE_NOT_FOUND;
+}
 
-अटल काष्ठा pci_ops null_pci_ops = अणु
-	.पढ़ो = null_पढ़ो_config,
-	.ग_लिखो = null_ग_लिखो_config,
-पूर्ण;
+static struct pci_ops null_pci_ops = {
+	.read = null_read_config,
+	.write = null_write_config,
+};
 
 /*
- * These functions are used early on beक्रमe PCI scanning is करोne
- * and all of the pci_dev and pci_bus काष्ठाures have been created.
+ * These functions are used early on before PCI scanning is done
+ * and all of the pci_dev and pci_bus structures have been created.
  */
-अटल काष्ठा pci_bus *
-fake_pci_bus(काष्ठा pci_controller *hose, पूर्णांक busnr)
-अणु
-	अटल काष्ठा pci_bus bus;
+static struct pci_bus *
+fake_pci_bus(struct pci_controller *hose, int busnr)
+{
+	static struct pci_bus bus;
 
-	अगर (!hose)
+	if (!hose)
 		pr_err("Can't find hose for PCI bus %d!\n", busnr);
 
 	bus.number = busnr;
 	bus.sysdata = hose;
 	bus.ops = hose ? hose->ops : &null_pci_ops;
-	वापस &bus;
-पूर्ण
+	return &bus;
+}
 
-#घोषणा EARLY_PCI_OP(rw, size, type)					\
-पूर्णांक early_##rw##_config_##size(काष्ठा pci_controller *hose, पूर्णांक bus,	\
-			       पूर्णांक devfn, पूर्णांक offset, type value)	\
-अणु									\
-	वापस pci_bus_##rw##_config_##size(fake_pci_bus(hose, bus),	\
+#define EARLY_PCI_OP(rw, size, type)					\
+int early_##rw##_config_##size(struct pci_controller *hose, int bus,	\
+			       int devfn, int offset, type value)	\
+{									\
+	return pci_bus_##rw##_config_##size(fake_pci_bus(hose, bus),	\
 					    devfn, offset, value);	\
-पूर्ण
+}
 
-EARLY_PCI_OP(पढ़ो, byte, u8 *)
-EARLY_PCI_OP(पढ़ो, word, u16 *)
-EARLY_PCI_OP(पढ़ो, dword, u32 *)
-EARLY_PCI_OP(ग_लिखो, byte, u8)
-EARLY_PCI_OP(ग_लिखो, word, u16)
-EARLY_PCI_OP(ग_लिखो, dword, u32)
+EARLY_PCI_OP(read, byte, u8 *)
+EARLY_PCI_OP(read, word, u16 *)
+EARLY_PCI_OP(read, dword, u32 *)
+EARLY_PCI_OP(write, byte, u8)
+EARLY_PCI_OP(write, word, u16)
+EARLY_PCI_OP(write, dword, u32)
 
-पूर्णांक early_find_capability(काष्ठा pci_controller *hose, पूर्णांक bus, पूर्णांक devfn,
-			  पूर्णांक cap)
-अणु
-	वापस pci_bus_find_capability(fake_pci_bus(hose, bus), devfn, cap);
-पूर्ण
+int early_find_capability(struct pci_controller *hose, int bus, int devfn,
+			  int cap)
+{
+	return pci_bus_find_capability(fake_pci_bus(hose, bus), devfn, cap);
+}

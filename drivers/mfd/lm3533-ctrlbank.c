@@ -1,67 +1,66 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * lm3533-ctrlbank.c -- LM3533 Generic Control Bank पूर्णांकerface
+ * lm3533-ctrlbank.c -- LM3533 Generic Control Bank interface
  *
  * Copyright (C) 2011-2012 Texas Instruments
  *
  * Author: Johan Hovold <jhovold@gmail.com>
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/module.h>
+#include <linux/device.h>
+#include <linux/module.h>
 
-#समावेश <linux/mfd/lm3533.h>
-
-
-#घोषणा LM3533_MAX_CURRENT_MIN		5000
-#घोषणा LM3533_MAX_CURRENT_MAX		29800
-#घोषणा LM3533_MAX_CURRENT_STEP		800
-
-#घोषणा LM3533_PWM_MAX			0x3f
-
-#घोषणा LM3533_REG_PWM_BASE		0x14
-#घोषणा LM3533_REG_MAX_CURRENT_BASE	0x1f
-#घोषणा LM3533_REG_CTRLBANK_ENABLE	0x27
-#घोषणा LM3533_REG_BRIGHTNESS_BASE	0x40
+#include <linux/mfd/lm3533.h>
 
 
-अटल अंतरभूत u8 lm3533_ctrlbank_get_reg(काष्ठा lm3533_ctrlbank *cb, u8 base)
-अणु
-	वापस base + cb->id;
-पूर्ण
+#define LM3533_MAX_CURRENT_MIN		5000
+#define LM3533_MAX_CURRENT_MAX		29800
+#define LM3533_MAX_CURRENT_STEP		800
 
-पूर्णांक lm3533_ctrlbank_enable(काष्ठा lm3533_ctrlbank *cb)
-अणु
+#define LM3533_PWM_MAX			0x3f
+
+#define LM3533_REG_PWM_BASE		0x14
+#define LM3533_REG_MAX_CURRENT_BASE	0x1f
+#define LM3533_REG_CTRLBANK_ENABLE	0x27
+#define LM3533_REG_BRIGHTNESS_BASE	0x40
+
+
+static inline u8 lm3533_ctrlbank_get_reg(struct lm3533_ctrlbank *cb, u8 base)
+{
+	return base + cb->id;
+}
+
+int lm3533_ctrlbank_enable(struct lm3533_ctrlbank *cb)
+{
 	u8 mask;
-	पूर्णांक ret;
+	int ret;
 
 	dev_dbg(cb->dev, "%s - %d\n", __func__, cb->id);
 
 	mask = 1 << cb->id;
 	ret = lm3533_update(cb->lm3533, LM3533_REG_CTRLBANK_ENABLE,
 								mask, mask);
-	अगर (ret)
+	if (ret)
 		dev_err(cb->dev, "failed to enable ctrlbank %d\n", cb->id);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(lm3533_ctrlbank_enable);
 
-पूर्णांक lm3533_ctrlbank_disable(काष्ठा lm3533_ctrlbank *cb)
-अणु
+int lm3533_ctrlbank_disable(struct lm3533_ctrlbank *cb)
+{
 	u8 mask;
-	पूर्णांक ret;
+	int ret;
 
 	dev_dbg(cb->dev, "%s - %d\n", __func__, cb->id);
 
 	mask = 1 << cb->id;
 	ret = lm3533_update(cb->lm3533, LM3533_REG_CTRLBANK_ENABLE, 0, mask);
-	अगर (ret)
+	if (ret)
 		dev_err(cb->dev, "failed to disable ctrlbank %d\n", cb->id);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(lm3533_ctrlbank_disable);
 
 /*
@@ -69,52 +68,52 @@ EXPORT_SYMBOL_GPL(lm3533_ctrlbank_disable);
  *
  * imax		5000 - 29800 uA (800 uA step)
  */
-पूर्णांक lm3533_ctrlbank_set_max_current(काष्ठा lm3533_ctrlbank *cb, u16 imax)
-अणु
+int lm3533_ctrlbank_set_max_current(struct lm3533_ctrlbank *cb, u16 imax)
+{
 	u8 reg;
 	u8 val;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (imax < LM3533_MAX_CURRENT_MIN || imax > LM3533_MAX_CURRENT_MAX)
-		वापस -EINVAL;
+	if (imax < LM3533_MAX_CURRENT_MIN || imax > LM3533_MAX_CURRENT_MAX)
+		return -EINVAL;
 
 	val = (imax - LM3533_MAX_CURRENT_MIN) / LM3533_MAX_CURRENT_STEP;
 
 	reg = lm3533_ctrlbank_get_reg(cb, LM3533_REG_MAX_CURRENT_BASE);
-	ret = lm3533_ग_लिखो(cb->lm3533, reg, val);
-	अगर (ret)
+	ret = lm3533_write(cb->lm3533, reg, val);
+	if (ret)
 		dev_err(cb->dev, "failed to set max current\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(lm3533_ctrlbank_set_max_current);
 
-पूर्णांक lm3533_ctrlbank_set_brightness(काष्ठा lm3533_ctrlbank *cb, u8 val)
-अणु
+int lm3533_ctrlbank_set_brightness(struct lm3533_ctrlbank *cb, u8 val)
+{
 	u8 reg;
-	पूर्णांक ret;
+	int ret;
 
 	reg = lm3533_ctrlbank_get_reg(cb, LM3533_REG_BRIGHTNESS_BASE);
-	ret = lm3533_ग_लिखो(cb->lm3533, reg, val);
-	अगर (ret)
+	ret = lm3533_write(cb->lm3533, reg, val);
+	if (ret)
 		dev_err(cb->dev, "failed to set brightness\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(lm3533_ctrlbank_set_brightness);
 
-पूर्णांक lm3533_ctrlbank_get_brightness(काष्ठा lm3533_ctrlbank *cb, u8 *val)
-अणु
+int lm3533_ctrlbank_get_brightness(struct lm3533_ctrlbank *cb, u8 *val)
+{
 	u8 reg;
-	पूर्णांक ret;
+	int ret;
 
 	reg = lm3533_ctrlbank_get_reg(cb, LM3533_REG_BRIGHTNESS_BASE);
-	ret = lm3533_पढ़ो(cb->lm3533, reg, val);
-	अगर (ret)
+	ret = lm3533_read(cb->lm3533, reg, val);
+	if (ret)
 		dev_err(cb->dev, "failed to get brightness\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(lm3533_ctrlbank_get_brightness);
 
 /*
@@ -127,35 +126,35 @@ EXPORT_SYMBOL_GPL(lm3533_ctrlbank_get_brightness);
  *   bit 1 - PWM-input enabled in Zone 0
  *   bit 0 - PWM-input enabled
  */
-पूर्णांक lm3533_ctrlbank_set_pwm(काष्ठा lm3533_ctrlbank *cb, u8 val)
-अणु
+int lm3533_ctrlbank_set_pwm(struct lm3533_ctrlbank *cb, u8 val)
+{
 	u8 reg;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (val > LM3533_PWM_MAX)
-		वापस -EINVAL;
+	if (val > LM3533_PWM_MAX)
+		return -EINVAL;
 
 	reg = lm3533_ctrlbank_get_reg(cb, LM3533_REG_PWM_BASE);
-	ret = lm3533_ग_लिखो(cb->lm3533, reg, val);
-	अगर (ret)
+	ret = lm3533_write(cb->lm3533, reg, val);
+	if (ret)
 		dev_err(cb->dev, "failed to set PWM mask\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(lm3533_ctrlbank_set_pwm);
 
-पूर्णांक lm3533_ctrlbank_get_pwm(काष्ठा lm3533_ctrlbank *cb, u8 *val)
-अणु
+int lm3533_ctrlbank_get_pwm(struct lm3533_ctrlbank *cb, u8 *val)
+{
 	u8 reg;
-	पूर्णांक ret;
+	int ret;
 
 	reg = lm3533_ctrlbank_get_reg(cb, LM3533_REG_PWM_BASE);
-	ret = lm3533_पढ़ो(cb->lm3533, reg, val);
-	अगर (ret)
+	ret = lm3533_read(cb->lm3533, reg, val);
+	if (ret)
 		dev_err(cb->dev, "failed to get PWM mask\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(lm3533_ctrlbank_get_pwm);
 
 MODULE_AUTHOR("Johan Hovold <jhovold@gmail.com>");

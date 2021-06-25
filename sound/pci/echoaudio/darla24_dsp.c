@@ -1,4 +1,3 @@
-<शैली गुरु>
 /***************************************************************************
 
    Copyright Echo Digital Audio Corporation (c) 1998 - 2004
@@ -7,41 +6,41 @@
 
    This file is part of Echo Digital Audio's generic driver library.
 
-   Echo Digital Audio's generic driver library is मुक्त software;
-   you can redistribute it and/or modअगरy it under the terms of
+   Echo Digital Audio's generic driver library is free software;
+   you can redistribute it and/or modify it under the terms of
    the GNU General Public License as published by the Free Software
    Foundation.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License क्रम more details.
+   GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+   along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston,
    MA  02111-1307, USA.
 
    *************************************************************************
 
- Translation from C++ and adaptation क्रम use in ALSA-Driver
+ Translation from C++ and adaptation for use in ALSA-Driver
  were made by Giuliano Pochini <pochini@shiny.it>
 
 ****************************************************************************/
 
 
-अटल पूर्णांक init_hw(काष्ठा echoaudio *chip, u16 device_id, u16 subdevice_id)
-अणु
-	पूर्णांक err;
+static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
+{
+	int err;
 
-	अगर (snd_BUG_ON((subdevice_id & 0xfff0) != DARLA24))
-		वापस -ENODEV;
+	if (snd_BUG_ON((subdevice_id & 0xfff0) != DARLA24))
+		return -ENODEV;
 
-	अगर ((err = init_dsp_comm_page(chip))) अणु
+	if ((err = init_dsp_comm_page(chip))) {
 		dev_err(chip->card->dev,
 			"init_hw: could not initialize DSP comm page\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	chip->device_id = device_id;
 	chip->subdevice_id = subdevice_id;
@@ -50,115 +49,115 @@
 	/* Since this card has no ASIC, mark it as loaded so everything
 	   works OK */
 	chip->asic_loaded = true;
-	chip->input_घड़ी_प्रकारypes = ECHO_CLOCK_BIT_INTERNAL |
+	chip->input_clock_types = ECHO_CLOCK_BIT_INTERNAL |
 		ECHO_CLOCK_BIT_ESYNC;
 
-	अगर ((err = load_firmware(chip)) < 0)
-		वापस err;
+	if ((err = load_firmware(chip)) < 0)
+		return err;
 	chip->bad_board = false;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
 
-अटल पूर्णांक set_mixer_शेषs(काष्ठा echoaudio *chip)
-अणु
-	वापस init_line_levels(chip);
-पूर्ण
+static int set_mixer_defaults(struct echoaudio *chip)
+{
+	return init_line_levels(chip);
+}
 
 
 
-अटल u32 detect_input_घड़ीs(स्थिर काष्ठा echoaudio *chip)
-अणु
-	u32 घड़ीs_from_dsp, घड़ी_bits;
+static u32 detect_input_clocks(const struct echoaudio *chip)
+{
+	u32 clocks_from_dsp, clock_bits;
 
-	/* Map the DSP घड़ी detect bits to the generic driver घड़ी
+	/* Map the DSP clock detect bits to the generic driver clock
 	   detect bits */
-	घड़ीs_from_dsp = le32_to_cpu(chip->comm_page->status_घड़ीs);
+	clocks_from_dsp = le32_to_cpu(chip->comm_page->status_clocks);
 
-	घड़ी_bits = ECHO_CLOCK_BIT_INTERNAL;
+	clock_bits = ECHO_CLOCK_BIT_INTERNAL;
 
-	अगर (घड़ीs_from_dsp & GLDM_CLOCK_DETECT_BIT_ESYNC)
-		घड़ी_bits |= ECHO_CLOCK_BIT_ESYNC;
+	if (clocks_from_dsp & GLDM_CLOCK_DETECT_BIT_ESYNC)
+		clock_bits |= ECHO_CLOCK_BIT_ESYNC;
 
-	वापस घड़ी_bits;
-पूर्ण
-
-
-
-/* The Darla24 has no ASIC. Just करो nothing */
-अटल पूर्णांक load_asic(काष्ठा echoaudio *chip)
-अणु
-	वापस 0;
-पूर्ण
+	return clock_bits;
+}
 
 
 
-अटल पूर्णांक set_sample_rate(काष्ठा echoaudio *chip, u32 rate)
-अणु
-	u8 घड़ी;
+/* The Darla24 has no ASIC. Just do nothing */
+static int load_asic(struct echoaudio *chip)
+{
+	return 0;
+}
 
-	चयन (rate) अणु
-	हाल 96000:
-		घड़ी = GD24_96000;
-		अवरोध;
-	हाल 88200:
-		घड़ी = GD24_88200;
-		अवरोध;
-	हाल 48000:
-		घड़ी = GD24_48000;
-		अवरोध;
-	हाल 44100:
-		घड़ी = GD24_44100;
-		अवरोध;
-	हाल 32000:
-		घड़ी = GD24_32000;
-		अवरोध;
-	हाल 22050:
-		घड़ी = GD24_22050;
-		अवरोध;
-	हाल 16000:
-		घड़ी = GD24_16000;
-		अवरोध;
-	हाल 11025:
-		घड़ी = GD24_11025;
-		अवरोध;
-	हाल 8000:
-		घड़ी = GD24_8000;
-		अवरोध;
-	शेष:
+
+
+static int set_sample_rate(struct echoaudio *chip, u32 rate)
+{
+	u8 clock;
+
+	switch (rate) {
+	case 96000:
+		clock = GD24_96000;
+		break;
+	case 88200:
+		clock = GD24_88200;
+		break;
+	case 48000:
+		clock = GD24_48000;
+		break;
+	case 44100:
+		clock = GD24_44100;
+		break;
+	case 32000:
+		clock = GD24_32000;
+		break;
+	case 22050:
+		clock = GD24_22050;
+		break;
+	case 16000:
+		clock = GD24_16000;
+		break;
+	case 11025:
+		clock = GD24_11025;
+		break;
+	case 8000:
+		clock = GD24_8000;
+		break;
+	default:
 		dev_err(chip->card->dev,
 			"set_sample_rate: Error, invalid sample rate %d\n",
 			rate);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (रुको_handshake(chip))
-		वापस -EIO;
+	if (wait_handshake(chip))
+		return -EIO;
 
 	dev_dbg(chip->card->dev,
-		"set_sample_rate: %d clock %d\n", rate, घड़ी);
+		"set_sample_rate: %d clock %d\n", rate, clock);
 	chip->sample_rate = rate;
 
-	/* Override the sample rate अगर this card is set to Echo sync. */
-	अगर (chip->input_घड़ी == ECHO_CLOCK_ESYNC)
-		घड़ी = GD24_EXT_SYNC;
+	/* Override the sample rate if this card is set to Echo sync. */
+	if (chip->input_clock == ECHO_CLOCK_ESYNC)
+		clock = GD24_EXT_SYNC;
 
 	chip->comm_page->sample_rate = cpu_to_le32(rate);	/* ignored by the DSP ? */
-	chip->comm_page->gd_घड़ी_state = घड़ी;
+	chip->comm_page->gd_clock_state = clock;
 	clear_handshake(chip);
-	वापस send_vector(chip, DSP_VC_SET_GD_AUDIO_STATE);
-पूर्ण
+	return send_vector(chip, DSP_VC_SET_GD_AUDIO_STATE);
+}
 
 
 
-अटल पूर्णांक set_input_घड़ी(काष्ठा echoaudio *chip, u16 घड़ी)
-अणु
-	अगर (snd_BUG_ON(घड़ी != ECHO_CLOCK_INTERNAL &&
-		       घड़ी != ECHO_CLOCK_ESYNC))
-		वापस -EINVAL;
-	chip->input_घड़ी = घड़ी;
-	वापस set_sample_rate(chip, chip->sample_rate);
-पूर्ण
+static int set_input_clock(struct echoaudio *chip, u16 clock)
+{
+	if (snd_BUG_ON(clock != ECHO_CLOCK_INTERNAL &&
+		       clock != ECHO_CLOCK_ESYNC))
+		return -EINVAL;
+	chip->input_clock = clock;
+	return set_sample_rate(chip, chip->sample_rate);
+}
 

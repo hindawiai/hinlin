@@ -1,14 +1,13 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2013 - 2018 Intel Corporation. */
 
-#समावेश "i40e.h"
-#समावेश <linux/ptp_classअगरy.h>
+#include "i40e.h"
+#include <linux/ptp_classify.h>
 
-/* The XL710 बारync is very much like Intel's 82599 design when it comes to
- * the fundamental घड़ी design. However, the घड़ी operations are much simpler
+/* The XL710 timesync is very much like Intel's 82599 design when it comes to
+ * the fundamental clock design. However, the clock operations are much simpler
  * in the XL710 because the device supports a full 64 bits of nanoseconds.
- * Because the field is so wide, we can क्रमgo the cycle counter and just
+ * Because the field is so wide, we can forgo the cycle counter and just
  * operate with the nanosecond field directly without fear of overflow.
  *
  * Much like the 82599, the update period is dependent upon the link speed:
@@ -17,362 +16,362 @@
  * At 1Gb link, the period is multiplied by 20. (32ns)
  * 1588 functionality is not supported at 100Mbps.
  */
-#घोषणा I40E_PTP_40GB_INCVAL		0x0199999999ULL
-#घोषणा I40E_PTP_10GB_INCVAL_MULT	2
-#घोषणा I40E_PTP_1GB_INCVAL_MULT	20
+#define I40E_PTP_40GB_INCVAL		0x0199999999ULL
+#define I40E_PTP_10GB_INCVAL_MULT	2
+#define I40E_PTP_1GB_INCVAL_MULT	20
 
-#घोषणा I40E_PRTTSYN_CTL1_TSYNTYPE_V1  BIT(I40E_PRTTSYN_CTL1_TSYNTYPE_SHIFT)
-#घोषणा I40E_PRTTSYN_CTL1_TSYNTYPE_V2  (2 << \
+#define I40E_PRTTSYN_CTL1_TSYNTYPE_V1  BIT(I40E_PRTTSYN_CTL1_TSYNTYPE_SHIFT)
+#define I40E_PRTTSYN_CTL1_TSYNTYPE_V2  (2 << \
 					I40E_PRTTSYN_CTL1_TSYNTYPE_SHIFT)
 
 /**
- * i40e_ptp_पढ़ो - Read the PHC समय from the device
- * @pf: Board निजी काष्ठाure
- * @ts: बारpec काष्ठाure to hold the current समय value
- * @sts: काष्ठाure to hold the प्रणाली समय beक्रमe and after पढ़ोing the PHC
+ * i40e_ptp_read - Read the PHC time from the device
+ * @pf: Board private structure
+ * @ts: timespec structure to hold the current time value
+ * @sts: structure to hold the system time before and after reading the PHC
  *
- * This function पढ़ोs the PRTTSYN_TIME रेजिस्टरs and stores them in a
- * बारpec. However, since the रेजिस्टरs are 64 bits of nanoseconds, we must
- * convert the result to a बारpec beक्रमe we can वापस.
+ * This function reads the PRTTSYN_TIME registers and stores them in a
+ * timespec. However, since the registers are 64 bits of nanoseconds, we must
+ * convert the result to a timespec before we can return.
  **/
-अटल व्योम i40e_ptp_पढ़ो(काष्ठा i40e_pf *pf, काष्ठा बारpec64 *ts,
-			  काष्ठा ptp_प्रणाली_बारtamp *sts)
-अणु
-	काष्ठा i40e_hw *hw = &pf->hw;
+static void i40e_ptp_read(struct i40e_pf *pf, struct timespec64 *ts,
+			  struct ptp_system_timestamp *sts)
+{
+	struct i40e_hw *hw = &pf->hw;
 	u32 hi, lo;
 	u64 ns;
 
-	/* The समयr latches on the lowest रेजिस्टर पढ़ो. */
-	ptp_पढ़ो_प्रणाली_prets(sts);
+	/* The timer latches on the lowest register read. */
+	ptp_read_system_prets(sts);
 	lo = rd32(hw, I40E_PRTTSYN_TIME_L);
-	ptp_पढ़ो_प्रणाली_postts(sts);
+	ptp_read_system_postts(sts);
 	hi = rd32(hw, I40E_PRTTSYN_TIME_H);
 
 	ns = (((u64)hi) << 32) | lo;
 
-	*ts = ns_to_बारpec64(ns);
-पूर्ण
+	*ts = ns_to_timespec64(ns);
+}
 
 /**
- * i40e_ptp_ग_लिखो - Write the PHC समय to the device
- * @pf: Board निजी काष्ठाure
- * @ts: बारpec काष्ठाure that holds the new समय value
+ * i40e_ptp_write - Write the PHC time to the device
+ * @pf: Board private structure
+ * @ts: timespec structure that holds the new time value
  *
- * This function ग_लिखोs the PRTTSYN_TIME रेजिस्टरs with the user value. Since
- * we receive a बारpec from the stack, we must convert that बारpec पूर्णांकo
- * nanoseconds beक्रमe programming the रेजिस्टरs.
+ * This function writes the PRTTSYN_TIME registers with the user value. Since
+ * we receive a timespec from the stack, we must convert that timespec into
+ * nanoseconds before programming the registers.
  **/
-अटल व्योम i40e_ptp_ग_लिखो(काष्ठा i40e_pf *pf, स्थिर काष्ठा बारpec64 *ts)
-अणु
-	काष्ठा i40e_hw *hw = &pf->hw;
-	u64 ns = बारpec64_to_ns(ts);
+static void i40e_ptp_write(struct i40e_pf *pf, const struct timespec64 *ts)
+{
+	struct i40e_hw *hw = &pf->hw;
+	u64 ns = timespec64_to_ns(ts);
 
-	/* The समयr will not update until the high रेजिस्टर is written, so
-	 * ग_लिखो the low रेजिस्टर first.
+	/* The timer will not update until the high register is written, so
+	 * write the low register first.
 	 */
 	wr32(hw, I40E_PRTTSYN_TIME_L, ns & 0xFFFFFFFF);
 	wr32(hw, I40E_PRTTSYN_TIME_H, ns >> 32);
-पूर्ण
+}
 
 /**
- * i40e_ptp_convert_to_hwtstamp - Convert device घड़ी to प्रणाली समय
- * @hwtstamps: Timestamp काष्ठाure to update
- * @बारtamp: Timestamp from the hardware
+ * i40e_ptp_convert_to_hwtstamp - Convert device clock to system time
+ * @hwtstamps: Timestamp structure to update
+ * @timestamp: Timestamp from the hardware
  *
- * We need to convert the NIC घड़ी value पूर्णांकo a hwtstamp which can be used by
- * the upper level बारtamping functions. Since the बारtamp is simply a 64-
- * bit nanosecond value, we can call ns_to_kसमय directly to handle this.
+ * We need to convert the NIC clock value into a hwtstamp which can be used by
+ * the upper level timestamping functions. Since the timestamp is simply a 64-
+ * bit nanosecond value, we can call ns_to_ktime directly to handle this.
  **/
-अटल व्योम i40e_ptp_convert_to_hwtstamp(काष्ठा skb_shared_hwtstamps *hwtstamps,
-					 u64 बारtamp)
-अणु
-	स_रखो(hwtstamps, 0, माप(*hwtstamps));
+static void i40e_ptp_convert_to_hwtstamp(struct skb_shared_hwtstamps *hwtstamps,
+					 u64 timestamp)
+{
+	memset(hwtstamps, 0, sizeof(*hwtstamps));
 
-	hwtstamps->hwtstamp = ns_to_kसमय(बारtamp);
-पूर्ण
+	hwtstamps->hwtstamp = ns_to_ktime(timestamp);
+}
 
 /**
  * i40e_ptp_adjfreq - Adjust the PHC frequency
- * @ptp: The PTP घड़ी काष्ठाure
- * @ppb: Parts per billion adjusपंचांगent from the base
+ * @ptp: The PTP clock structure
+ * @ppb: Parts per billion adjustment from the base
  *
  * Adjust the frequency of the PHC by the indicated parts per billion from the
  * base frequency.
  **/
-अटल पूर्णांक i40e_ptp_adjfreq(काष्ठा ptp_घड़ी_info *ptp, s32 ppb)
-अणु
-	काष्ठा i40e_pf *pf = container_of(ptp, काष्ठा i40e_pf, ptp_caps);
-	काष्ठा i40e_hw *hw = &pf->hw;
-	u64 adj, freq, dअगरf;
-	पूर्णांक neg_adj = 0;
+static int i40e_ptp_adjfreq(struct ptp_clock_info *ptp, s32 ppb)
+{
+	struct i40e_pf *pf = container_of(ptp, struct i40e_pf, ptp_caps);
+	struct i40e_hw *hw = &pf->hw;
+	u64 adj, freq, diff;
+	int neg_adj = 0;
 
-	अगर (ppb < 0) अणु
+	if (ppb < 0) {
 		neg_adj = 1;
 		ppb = -ppb;
-	पूर्ण
+	}
 
 	freq = I40E_PTP_40GB_INCVAL;
 	freq *= ppb;
-	dअगरf = भाग_u64(freq, 1000000000ULL);
+	diff = div_u64(freq, 1000000000ULL);
 
-	अगर (neg_adj)
-		adj = I40E_PTP_40GB_INCVAL - dअगरf;
-	अन्यथा
-		adj = I40E_PTP_40GB_INCVAL + dअगरf;
+	if (neg_adj)
+		adj = I40E_PTP_40GB_INCVAL - diff;
+	else
+		adj = I40E_PTP_40GB_INCVAL + diff;
 
 	/* At some link speeds, the base incval is so large that directly
 	 * multiplying by ppb would result in arithmetic overflow even when
-	 * using a u64. Aव्योम this by instead calculating the new incval
-	 * always in terms of the 40GbE घड़ी rate and then multiplying by the
-	 * link speed factor afterwards. This करोes result in slightly lower
+	 * using a u64. Avoid this by instead calculating the new incval
+	 * always in terms of the 40GbE clock rate and then multiplying by the
+	 * link speed factor afterwards. This does result in slightly lower
 	 * precision at lower link speeds, but it is fairly minor.
 	 */
-	smp_mb(); /* Force any pending update beक्रमe accessing. */
+	smp_mb(); /* Force any pending update before accessing. */
 	adj *= READ_ONCE(pf->ptp_adj_mult);
 
 	wr32(hw, I40E_PRTTSYN_INC_L, adj & 0xFFFFFFFF);
 	wr32(hw, I40E_PRTTSYN_INC_H, adj >> 32);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * i40e_ptp_adjसमय - Adjust the PHC समय
- * @ptp: The PTP घड़ी काष्ठाure
- * @delta: Offset in nanoseconds to adjust the PHC समय by
+ * i40e_ptp_adjtime - Adjust the PHC time
+ * @ptp: The PTP clock structure
+ * @delta: Offset in nanoseconds to adjust the PHC time by
  *
- * Adjust the current घड़ी समय by a delta specअगरied in nanoseconds.
+ * Adjust the current clock time by a delta specified in nanoseconds.
  **/
-अटल पूर्णांक i40e_ptp_adjसमय(काष्ठा ptp_घड़ी_info *ptp, s64 delta)
-अणु
-	काष्ठा i40e_pf *pf = container_of(ptp, काष्ठा i40e_pf, ptp_caps);
-	काष्ठा बारpec64 now, then;
+static int i40e_ptp_adjtime(struct ptp_clock_info *ptp, s64 delta)
+{
+	struct i40e_pf *pf = container_of(ptp, struct i40e_pf, ptp_caps);
+	struct timespec64 now, then;
 
-	then = ns_to_बारpec64(delta);
-	mutex_lock(&pf->पंचांगreg_lock);
+	then = ns_to_timespec64(delta);
+	mutex_lock(&pf->tmreg_lock);
 
-	i40e_ptp_पढ़ो(pf, &now, शून्य);
-	now = बारpec64_add(now, then);
-	i40e_ptp_ग_लिखो(pf, (स्थिर काष्ठा बारpec64 *)&now);
+	i40e_ptp_read(pf, &now, NULL);
+	now = timespec64_add(now, then);
+	i40e_ptp_write(pf, (const struct timespec64 *)&now);
 
-	mutex_unlock(&pf->पंचांगreg_lock);
+	mutex_unlock(&pf->tmreg_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * i40e_ptp_समय_लोx - Get the समय of the PHC
- * @ptp: The PTP घड़ी काष्ठाure
- * @ts: बारpec काष्ठाure to hold the current समय value
- * @sts: काष्ठाure to hold the प्रणाली समय beक्रमe and after पढ़ोing the PHC
+ * i40e_ptp_gettimex - Get the time of the PHC
+ * @ptp: The PTP clock structure
+ * @ts: timespec structure to hold the current time value
+ * @sts: structure to hold the system time before and after reading the PHC
  *
- * Read the device घड़ी and वापस the correct value on ns, after converting it
- * पूर्णांकo a बारpec काष्ठा.
+ * Read the device clock and return the correct value on ns, after converting it
+ * into a timespec struct.
  **/
-अटल पूर्णांक i40e_ptp_समय_लोx(काष्ठा ptp_घड़ी_info *ptp, काष्ठा बारpec64 *ts,
-			     काष्ठा ptp_प्रणाली_बारtamp *sts)
-अणु
-	काष्ठा i40e_pf *pf = container_of(ptp, काष्ठा i40e_pf, ptp_caps);
+static int i40e_ptp_gettimex(struct ptp_clock_info *ptp, struct timespec64 *ts,
+			     struct ptp_system_timestamp *sts)
+{
+	struct i40e_pf *pf = container_of(ptp, struct i40e_pf, ptp_caps);
 
-	mutex_lock(&pf->पंचांगreg_lock);
-	i40e_ptp_पढ़ो(pf, ts, sts);
-	mutex_unlock(&pf->पंचांगreg_lock);
+	mutex_lock(&pf->tmreg_lock);
+	i40e_ptp_read(pf, ts, sts);
+	mutex_unlock(&pf->tmreg_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * i40e_ptp_समय_रखो - Set the समय of the PHC
- * @ptp: The PTP घड़ी काष्ठाure
- * @ts: बारpec काष्ठाure that holds the new समय value
+ * i40e_ptp_settime - Set the time of the PHC
+ * @ptp: The PTP clock structure
+ * @ts: timespec structure that holds the new time value
  *
- * Set the device घड़ी to the user input value. The conversion from बारpec
- * to ns happens in the ग_लिखो function.
+ * Set the device clock to the user input value. The conversion from timespec
+ * to ns happens in the write function.
  **/
-अटल पूर्णांक i40e_ptp_समय_रखो(काष्ठा ptp_घड़ी_info *ptp,
-			    स्थिर काष्ठा बारpec64 *ts)
-अणु
-	काष्ठा i40e_pf *pf = container_of(ptp, काष्ठा i40e_pf, ptp_caps);
+static int i40e_ptp_settime(struct ptp_clock_info *ptp,
+			    const struct timespec64 *ts)
+{
+	struct i40e_pf *pf = container_of(ptp, struct i40e_pf, ptp_caps);
 
-	mutex_lock(&pf->पंचांगreg_lock);
-	i40e_ptp_ग_लिखो(pf, ts);
-	mutex_unlock(&pf->पंचांगreg_lock);
+	mutex_lock(&pf->tmreg_lock);
+	i40e_ptp_write(pf, ts);
+	mutex_unlock(&pf->tmreg_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * i40e_ptp_feature_enable - Enable/disable ancillary features of the PHC subप्रणाली
- * @ptp: The PTP घड़ी काष्ठाure
+ * i40e_ptp_feature_enable - Enable/disable ancillary features of the PHC subsystem
+ * @ptp: The PTP clock structure
  * @rq: The requested feature to change
  * @on: Enable/disable flag
  *
- * The XL710 करोes not support any of the ancillary features of the PHC
- * subप्रणाली, so this function may just वापस.
+ * The XL710 does not support any of the ancillary features of the PHC
+ * subsystem, so this function may just return.
  **/
-अटल पूर्णांक i40e_ptp_feature_enable(काष्ठा ptp_घड़ी_info *ptp,
-				   काष्ठा ptp_घड़ी_request *rq, पूर्णांक on)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static int i40e_ptp_feature_enable(struct ptp_clock_info *ptp,
+				   struct ptp_clock_request *rq, int on)
+{
+	return -EOPNOTSUPP;
+}
 
 /**
  * i40e_ptp_get_rx_events - Read I40E_PRTTSYN_STAT_1 and latch events
- * @pf: the PF data काष्ठाure
+ * @pf: the PF data structure
  *
- * This function पढ़ोs I40E_PRTTSYN_STAT_1 and updates the corresponding समयrs
- * क्रम noticed latch events. This allows the driver to keep track of the first
- * समय a latch event was noticed which will be used to help clear out Rx
- * बारtamps क्रम packets that got dropped or lost.
+ * This function reads I40E_PRTTSYN_STAT_1 and updates the corresponding timers
+ * for noticed latch events. This allows the driver to keep track of the first
+ * time a latch event was noticed which will be used to help clear out Rx
+ * timestamps for packets that got dropped or lost.
  *
- * This function will वापस the current value of I40E_PRTTSYN_STAT_1 and is
- * expected to be called only जबतक under the ptp_rx_lock.
+ * This function will return the current value of I40E_PRTTSYN_STAT_1 and is
+ * expected to be called only while under the ptp_rx_lock.
  **/
-अटल u32 i40e_ptp_get_rx_events(काष्ठा i40e_pf *pf)
-अणु
-	काष्ठा i40e_hw *hw = &pf->hw;
+static u32 i40e_ptp_get_rx_events(struct i40e_pf *pf)
+{
+	struct i40e_hw *hw = &pf->hw;
 	u32 prttsyn_stat, new_latch_events;
-	पूर्णांक  i;
+	int  i;
 
 	prttsyn_stat = rd32(hw, I40E_PRTTSYN_STAT_1);
 	new_latch_events = prttsyn_stat & ~pf->latch_event_flags;
 
-	/* Update the jअगरfies समय क्रम any newly latched बारtamp. This
-	 * ensures that we store the समय that we first discovered a बारtamp
+	/* Update the jiffies time for any newly latched timestamp. This
+	 * ensures that we store the time that we first discovered a timestamp
 	 * was latched by the hardware. The service task will later determine
-	 * अगर we should मुक्त the latch and drop that बारtamp should too much
-	 * समय pass. This flow ensures that we only update jअगरfies क्रम new
-	 * events latched since the last समय we checked, and not all events
-	 * currently latched, so that the service task accounting reमुख्यs
+	 * if we should free the latch and drop that timestamp should too much
+	 * time pass. This flow ensures that we only update jiffies for new
+	 * events latched since the last time we checked, and not all events
+	 * currently latched, so that the service task accounting remains
 	 * accurate.
 	 */
-	क्रम (i = 0; i < 4; i++) अणु
-		अगर (new_latch_events & BIT(i))
-			pf->latch_events[i] = jअगरfies;
-	पूर्ण
+	for (i = 0; i < 4; i++) {
+		if (new_latch_events & BIT(i))
+			pf->latch_events[i] = jiffies;
+	}
 
-	/* Finally, we store the current status of the Rx बारtamp latches */
+	/* Finally, we store the current status of the Rx timestamp latches */
 	pf->latch_event_flags = prttsyn_stat;
 
-	वापस prttsyn_stat;
-पूर्ण
+	return prttsyn_stat;
+}
 
 /**
- * i40e_ptp_rx_hang - Detect error हाल when Rx बारtamp रेजिस्टरs are hung
- * @pf: The PF निजी data काष्ठाure
+ * i40e_ptp_rx_hang - Detect error case when Rx timestamp registers are hung
+ * @pf: The PF private data structure
  *
- * This watchकरोg task is scheduled to detect error हाल where hardware has
- * dropped an Rx packet that was बारtamped when the ring is full. The
- * particular error is rare but leaves the device in a state unable to बारtamp
+ * This watchdog task is scheduled to detect error case where hardware has
+ * dropped an Rx packet that was timestamped when the ring is full. The
+ * particular error is rare but leaves the device in a state unable to timestamp
  * any future packets.
  **/
-व्योम i40e_ptp_rx_hang(काष्ठा i40e_pf *pf)
-अणु
-	काष्ठा i40e_hw *hw = &pf->hw;
-	अचिन्हित पूर्णांक i, cleared = 0;
+void i40e_ptp_rx_hang(struct i40e_pf *pf)
+{
+	struct i40e_hw *hw = &pf->hw;
+	unsigned int i, cleared = 0;
 
-	/* Since we cannot turn off the Rx बारtamp logic अगर the device is
-	 * configured क्रम Tx बारtamping, we check अगर Rx बारtamping is
-	 * configured. We करोn't want to spuriously warn about Rx बारtamp
-	 * hangs अगर we करोn't care about the बारtamps.
+	/* Since we cannot turn off the Rx timestamp logic if the device is
+	 * configured for Tx timestamping, we check if Rx timestamping is
+	 * configured. We don't want to spuriously warn about Rx timestamp
+	 * hangs if we don't care about the timestamps.
 	 */
-	अगर (!(pf->flags & I40E_FLAG_PTP) || !pf->ptp_rx)
-		वापस;
+	if (!(pf->flags & I40E_FLAG_PTP) || !pf->ptp_rx)
+		return;
 
 	spin_lock_bh(&pf->ptp_rx_lock);
 
-	/* Update current latch बार क्रम Rx events */
+	/* Update current latch times for Rx events */
 	i40e_ptp_get_rx_events(pf);
 
 	/* Check all the currently latched Rx events and see whether they have
-	 * been latched क्रम over a second. It is assumed that any बारtamp
-	 * should have been cleared within this समय, or अन्यथा it was captured
-	 * क्रम a dropped frame that the driver never received. Thus, we will
-	 * clear any बारtamp that has been latched क्रम over 1 second.
+	 * been latched for over a second. It is assumed that any timestamp
+	 * should have been cleared within this time, or else it was captured
+	 * for a dropped frame that the driver never received. Thus, we will
+	 * clear any timestamp that has been latched for over 1 second.
 	 */
-	क्रम (i = 0; i < 4; i++) अणु
-		अगर ((pf->latch_event_flags & BIT(i)) &&
-		    समय_is_beक्रमe_jअगरfies(pf->latch_events[i] + HZ)) अणु
+	for (i = 0; i < 4; i++) {
+		if ((pf->latch_event_flags & BIT(i)) &&
+		    time_is_before_jiffies(pf->latch_events[i] + HZ)) {
 			rd32(hw, I40E_PRTTSYN_RXTIME_H(i));
 			pf->latch_event_flags &= ~BIT(i);
 			cleared++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	spin_unlock_bh(&pf->ptp_rx_lock);
 
-	/* Log a warning अगर more than 2 बारtamps got dropped in the same
-	 * check. We करोn't want to warn about all drops because it can occur
+	/* Log a warning if more than 2 timestamps got dropped in the same
+	 * check. We don't want to warn about all drops because it can occur
 	 * in normal scenarios such as PTP frames on multicast addresses we
-	 * aren't listening to. However, administrator should know अगर this is
-	 * the reason packets aren't receiving बारtamps.
+	 * aren't listening to. However, administrator should know if this is
+	 * the reason packets aren't receiving timestamps.
 	 */
-	अगर (cleared > 2)
+	if (cleared > 2)
 		dev_dbg(&pf->pdev->dev,
 			"Dropped %d missed RXTIME timestamp events\n",
 			cleared);
 
 	/* Finally, update the rx_hwtstamp_cleared counter */
 	pf->rx_hwtstamp_cleared += cleared;
-पूर्ण
+}
 
 /**
- * i40e_ptp_tx_hang - Detect error हाल when Tx बारtamp रेजिस्टर is hung
- * @pf: The PF निजी data काष्ठाure
+ * i40e_ptp_tx_hang - Detect error case when Tx timestamp register is hung
+ * @pf: The PF private data structure
  *
- * This watchकरोg task is run periodically to make sure that we clear the Tx
- * बारtamp logic अगर we करोn't obtain a बारtamp in a reasonable amount of
- * समय. It is unexpected in the normal हाल but अगर it occurs it results in
- * permanently preventing बारtamps of future packets.
+ * This watchdog task is run periodically to make sure that we clear the Tx
+ * timestamp logic if we don't obtain a timestamp in a reasonable amount of
+ * time. It is unexpected in the normal case but if it occurs it results in
+ * permanently preventing timestamps of future packets.
  **/
-व्योम i40e_ptp_tx_hang(काष्ठा i40e_pf *pf)
-अणु
-	काष्ठा sk_buff *skb;
+void i40e_ptp_tx_hang(struct i40e_pf *pf)
+{
+	struct sk_buff *skb;
 
-	अगर (!(pf->flags & I40E_FLAG_PTP) || !pf->ptp_tx)
-		वापस;
+	if (!(pf->flags & I40E_FLAG_PTP) || !pf->ptp_tx)
+		return;
 
-	/* Nothing to करो अगर we're not alपढ़ोy रुकोing क्रम a बारtamp */
-	अगर (!test_bit(__I40E_PTP_TX_IN_PROGRESS, pf->state))
-		वापस;
+	/* Nothing to do if we're not already waiting for a timestamp */
+	if (!test_bit(__I40E_PTP_TX_IN_PROGRESS, pf->state))
+		return;
 
-	/* We alपढ़ोy have a handler routine which is run when we are notअगरied
-	 * of a Tx बारtamp in the hardware. If we करोn't get an पूर्णांकerrupt
+	/* We already have a handler routine which is run when we are notified
+	 * of a Tx timestamp in the hardware. If we don't get an interrupt
 	 * within a second it is reasonable to assume that we never will.
 	 */
-	अगर (समय_is_beक्रमe_jअगरfies(pf->ptp_tx_start + HZ)) अणु
+	if (time_is_before_jiffies(pf->ptp_tx_start + HZ)) {
 		skb = pf->ptp_tx_skb;
-		pf->ptp_tx_skb = शून्य;
+		pf->ptp_tx_skb = NULL;
 		clear_bit_unlock(__I40E_PTP_TX_IN_PROGRESS, pf->state);
 
 		/* Free the skb after we clear the bitlock */
-		dev_kमुक्त_skb_any(skb);
-		pf->tx_hwtstamp_समयouts++;
-	पूर्ण
-पूर्ण
+		dev_kfree_skb_any(skb);
+		pf->tx_hwtstamp_timeouts++;
+	}
+}
 
 /**
- * i40e_ptp_tx_hwtstamp - Utility function which वापसs the Tx बारtamp
- * @pf: Board निजी काष्ठाure
+ * i40e_ptp_tx_hwtstamp - Utility function which returns the Tx timestamp
+ * @pf: Board private structure
  *
- * Read the value of the Tx बारtamp from the रेजिस्टरs, convert it पूर्णांकo a
- * value consumable by the stack, and store that result पूर्णांकo the shhwtstamps
- * काष्ठा beक्रमe वापसing it up the stack.
+ * Read the value of the Tx timestamp from the registers, convert it into a
+ * value consumable by the stack, and store that result into the shhwtstamps
+ * struct before returning it up the stack.
  **/
-व्योम i40e_ptp_tx_hwtstamp(काष्ठा i40e_pf *pf)
-अणु
-	काष्ठा skb_shared_hwtstamps shhwtstamps;
-	काष्ठा sk_buff *skb = pf->ptp_tx_skb;
-	काष्ठा i40e_hw *hw = &pf->hw;
+void i40e_ptp_tx_hwtstamp(struct i40e_pf *pf)
+{
+	struct skb_shared_hwtstamps shhwtstamps;
+	struct sk_buff *skb = pf->ptp_tx_skb;
+	struct i40e_hw *hw = &pf->hw;
 	u32 hi, lo;
 	u64 ns;
 
-	अगर (!(pf->flags & I40E_FLAG_PTP) || !pf->ptp_tx)
-		वापस;
+	if (!(pf->flags & I40E_FLAG_PTP) || !pf->ptp_tx)
+		return;
 
-	/* करोn't attempt to timestamp if we don't have an skb */
-	अगर (!pf->ptp_tx_skb)
-		वापस;
+	/* don't attempt to timestamp if we don't have an skb */
+	if (!pf->ptp_tx_skb)
+		return;
 
 	lo = rd32(hw, I40E_PRTTSYN_TXTIME_L);
 	hi = rd32(hw, I40E_PRTTSYN_TXTIME_H);
@@ -380,57 +379,57 @@
 	ns = (((u64)hi) << 32) | lo;
 	i40e_ptp_convert_to_hwtstamp(&shhwtstamps, ns);
 
-	/* Clear the bit lock as soon as possible after पढ़ोing the रेजिस्टर,
-	 * and prior to notअगरying the stack via skb_tstamp_tx(). Otherwise
+	/* Clear the bit lock as soon as possible after reading the register,
+	 * and prior to notifying the stack via skb_tstamp_tx(). Otherwise
 	 * applications might wake up and attempt to request another transmit
-	 * बारtamp prior to the bit lock being cleared.
+	 * timestamp prior to the bit lock being cleared.
 	 */
-	pf->ptp_tx_skb = शून्य;
+	pf->ptp_tx_skb = NULL;
 	clear_bit_unlock(__I40E_PTP_TX_IN_PROGRESS, pf->state);
 
-	/* Notअगरy the stack and मुक्त the skb after we've unlocked */
+	/* Notify the stack and free the skb after we've unlocked */
 	skb_tstamp_tx(skb, &shhwtstamps);
-	dev_kमुक्त_skb_any(skb);
-पूर्ण
+	dev_kfree_skb_any(skb);
+}
 
 /**
- * i40e_ptp_rx_hwtstamp - Utility function which checks क्रम an Rx बारtamp
- * @pf: Board निजी काष्ठाure
- * @skb: Particular skb to send बारtamp with
- * @index: Index पूर्णांकo the receive बारtamp रेजिस्टरs क्रम the बारtamp
+ * i40e_ptp_rx_hwtstamp - Utility function which checks for an Rx timestamp
+ * @pf: Board private structure
+ * @skb: Particular skb to send timestamp with
+ * @index: Index into the receive timestamp registers for the timestamp
  *
- * The XL710 receives a notअगरication in the receive descriptor with an offset
- * पूर्णांकo the set of RXTIME रेजिस्टरs where the बारtamp is क्रम that skb. This
- * function goes and fetches the receive बारtamp from that offset, अगर a valid
- * one exists. The RXTIME रेजिस्टरs are in ns, so we must convert the result
+ * The XL710 receives a notification in the receive descriptor with an offset
+ * into the set of RXTIME registers where the timestamp is for that skb. This
+ * function goes and fetches the receive timestamp from that offset, if a valid
+ * one exists. The RXTIME registers are in ns, so we must convert the result
  * first.
  **/
-व्योम i40e_ptp_rx_hwtstamp(काष्ठा i40e_pf *pf, काष्ठा sk_buff *skb, u8 index)
-अणु
+void i40e_ptp_rx_hwtstamp(struct i40e_pf *pf, struct sk_buff *skb, u8 index)
+{
 	u32 prttsyn_stat, hi, lo;
-	काष्ठा i40e_hw *hw;
+	struct i40e_hw *hw;
 	u64 ns;
 
-	/* Since we cannot turn off the Rx बारtamp logic अगर the device is
-	 * करोing Tx बारtamping, check अगर Rx बारtamping is configured.
+	/* Since we cannot turn off the Rx timestamp logic if the device is
+	 * doing Tx timestamping, check if Rx timestamping is configured.
 	 */
-	अगर (!(pf->flags & I40E_FLAG_PTP) || !pf->ptp_rx)
-		वापस;
+	if (!(pf->flags & I40E_FLAG_PTP) || !pf->ptp_rx)
+		return;
 
 	hw = &pf->hw;
 
 	spin_lock_bh(&pf->ptp_rx_lock);
 
-	/* Get current Rx events and update latch बार */
+	/* Get current Rx events and update latch times */
 	prttsyn_stat = i40e_ptp_get_rx_events(pf);
 
-	/* TODO: Should we warn about missing Rx बारtamp event? */
-	अगर (!(prttsyn_stat & BIT(index))) अणु
+	/* TODO: Should we warn about missing Rx timestamp event? */
+	if (!(prttsyn_stat & BIT(index))) {
 		spin_unlock_bh(&pf->ptp_rx_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Clear the latched event since we're about to पढ़ो its रेजिस्टर */
+	/* Clear the latched event since we're about to read its register */
 	pf->latch_event_flags &= ~BIT(index);
 
 	lo = rd32(hw, I40E_PRTTSYN_RXTIME_L(index));
@@ -441,59 +440,59 @@
 	ns = (((u64)hi) << 32) | lo;
 
 	i40e_ptp_convert_to_hwtstamp(skb_hwtstamps(skb), ns);
-पूर्ण
+}
 
 /**
- * i40e_ptp_set_increment - Utility function to update घड़ी increment rate
- * @pf: Board निजी काष्ठाure
+ * i40e_ptp_set_increment - Utility function to update clock increment rate
+ * @pf: Board private structure
  *
  * During a link change, the DMA frequency that drives the 1588 logic will
- * change. In order to keep the PRTTSYN_TIME रेजिस्टरs in units of nanoseconds,
- * we must update the increment value per घड़ी tick.
+ * change. In order to keep the PRTTSYN_TIME registers in units of nanoseconds,
+ * we must update the increment value per clock tick.
  **/
-व्योम i40e_ptp_set_increment(काष्ठा i40e_pf *pf)
-अणु
-	काष्ठा i40e_link_status *hw_link_info;
-	काष्ठा i40e_hw *hw = &pf->hw;
+void i40e_ptp_set_increment(struct i40e_pf *pf)
+{
+	struct i40e_link_status *hw_link_info;
+	struct i40e_hw *hw = &pf->hw;
 	u64 incval;
 	u32 mult;
 
 	hw_link_info = &hw->phy.link_info;
 
-	i40e_aq_get_link_info(&pf->hw, true, शून्य, शून्य);
+	i40e_aq_get_link_info(&pf->hw, true, NULL, NULL);
 
-	चयन (hw_link_info->link_speed) अणु
-	हाल I40E_LINK_SPEED_10GB:
+	switch (hw_link_info->link_speed) {
+	case I40E_LINK_SPEED_10GB:
 		mult = I40E_PTP_10GB_INCVAL_MULT;
-		अवरोध;
-	हाल I40E_LINK_SPEED_1GB:
+		break;
+	case I40E_LINK_SPEED_1GB:
 		mult = I40E_PTP_1GB_INCVAL_MULT;
-		अवरोध;
-	हाल I40E_LINK_SPEED_100MB:
-	अणु
-		अटल पूर्णांक warn_once;
+		break;
+	case I40E_LINK_SPEED_100MB:
+	{
+		static int warn_once;
 
-		अगर (!warn_once) अणु
+		if (!warn_once) {
 			dev_warn(&pf->pdev->dev,
 				 "1588 functionality is not supported at 100 Mbps. Stopping the PHC.\n");
 			warn_once++;
-		पूर्ण
+		}
 		mult = 0;
-		अवरोध;
-	पूर्ण
-	हाल I40E_LINK_SPEED_40GB:
-	शेष:
+		break;
+	}
+	case I40E_LINK_SPEED_40GB:
+	default:
 		mult = 1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/* The increment value is calculated by taking the base 40GbE incvalue
 	 * and multiplying it by a factor based on the link speed.
 	 */
 	incval = I40E_PTP_40GB_INCVAL * mult;
 
-	/* Write the new increment value पूर्णांकo the increment रेजिस्टर. The
-	 * hardware will not update the घड़ी until both रेजिस्टरs have been
+	/* Write the new increment value into the increment register. The
+	 * hardware will not update the clock until both registers have been
 	 * written.
 	 */
 	wr32(hw, I40E_PRTTSYN_INC_L, incval & 0xFFFFFFFF);
@@ -502,111 +501,111 @@
 	/* Update the base adjustement value. */
 	WRITE_ONCE(pf->ptp_adj_mult, mult);
 	smp_mb(); /* Force the above update. */
-पूर्ण
+}
 
 /**
- * i40e_ptp_get_ts_config - ioctl पूर्णांकerface to पढ़ो the HW बारtamping
- * @pf: Board निजी काष्ठाure
- * @अगरr: ioctl data
+ * i40e_ptp_get_ts_config - ioctl interface to read the HW timestamping
+ * @pf: Board private structure
+ * @ifr: ioctl data
  *
- * Obtain the current hardware बारtamping settigs as requested. To करो this,
- * keep a shaकरोw copy of the बारtamp settings rather than attempting to
- * deस्थिरruct it from the रेजिस्टरs.
+ * Obtain the current hardware timestamping settigs as requested. To do this,
+ * keep a shadow copy of the timestamp settings rather than attempting to
+ * deconstruct it from the registers.
  **/
-पूर्णांक i40e_ptp_get_ts_config(काष्ठा i40e_pf *pf, काष्ठा अगरreq *अगरr)
-अणु
-	काष्ठा hwtstamp_config *config = &pf->tstamp_config;
+int i40e_ptp_get_ts_config(struct i40e_pf *pf, struct ifreq *ifr)
+{
+	struct hwtstamp_config *config = &pf->tstamp_config;
 
-	अगर (!(pf->flags & I40E_FLAG_PTP))
-		वापस -EOPNOTSUPP;
+	if (!(pf->flags & I40E_FLAG_PTP))
+		return -EOPNOTSUPP;
 
-	वापस copy_to_user(अगरr->अगरr_data, config, माप(*config)) ?
+	return copy_to_user(ifr->ifr_data, config, sizeof(*config)) ?
 		-EFAULT : 0;
-पूर्ण
+}
 
 /**
- * i40e_ptp_set_बारtamp_mode - setup hardware क्रम requested बारtamp mode
- * @pf: Board निजी काष्ठाure
+ * i40e_ptp_set_timestamp_mode - setup hardware for requested timestamp mode
+ * @pf: Board private structure
  * @config: hwtstamp settings requested or saved
  *
- * Control hardware रेजिस्टरs to enter the specअगरic mode requested by the
- * user. Also used during reset path to ensure that बारtamp settings are
- * मुख्यtained.
+ * Control hardware registers to enter the specific mode requested by the
+ * user. Also used during reset path to ensure that timestamp settings are
+ * maintained.
  *
- * Note: modअगरies config in place, and may update the requested mode to be
- * more broad अगर the specअगरic filter is not directly supported.
+ * Note: modifies config in place, and may update the requested mode to be
+ * more broad if the specific filter is not directly supported.
  **/
-अटल पूर्णांक i40e_ptp_set_बारtamp_mode(काष्ठा i40e_pf *pf,
-				       काष्ठा hwtstamp_config *config)
-अणु
-	काष्ठा i40e_hw *hw = &pf->hw;
+static int i40e_ptp_set_timestamp_mode(struct i40e_pf *pf,
+				       struct hwtstamp_config *config)
+{
+	struct i40e_hw *hw = &pf->hw;
 	u32 tsyntype, regval;
 
-	/* Reserved क्रम future extensions. */
-	अगर (config->flags)
-		वापस -EINVAL;
+	/* Reserved for future extensions. */
+	if (config->flags)
+		return -EINVAL;
 
-	चयन (config->tx_type) अणु
-	हाल HWTSTAMP_TX_OFF:
+	switch (config->tx_type) {
+	case HWTSTAMP_TX_OFF:
 		pf->ptp_tx = false;
-		अवरोध;
-	हाल HWTSTAMP_TX_ON:
+		break;
+	case HWTSTAMP_TX_ON:
 		pf->ptp_tx = true;
-		अवरोध;
-	शेष:
-		वापस -दुस्फल;
-	पूर्ण
+		break;
+	default:
+		return -ERANGE;
+	}
 
-	चयन (config->rx_filter) अणु
-	हाल HWTSTAMP_FILTER_NONE:
+	switch (config->rx_filter) {
+	case HWTSTAMP_FILTER_NONE:
 		pf->ptp_rx = false;
-		/* We set the type to V1, but करो not enable UDP packet
-		 * recognition. In this way, we should be as बंद to
-		 * disabling PTP Rx बारtamps as possible since V1 packets
+		/* We set the type to V1, but do not enable UDP packet
+		 * recognition. In this way, we should be as close to
+		 * disabling PTP Rx timestamps as possible since V1 packets
 		 * are always UDP, since L2 packets are a V2 feature.
 		 */
 		tsyntype = I40E_PRTTSYN_CTL1_TSYNTYPE_V1;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_PTP_V1_L4_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ:
-	हाल HWTSTAMP_FILTER_PTP_V1_L4_EVENT:
-		अगर (!(pf->hw_features & I40E_HW_PTP_L4_CAPABLE))
-			वापस -दुस्फल;
+		break;
+	case HWTSTAMP_FILTER_PTP_V1_L4_SYNC:
+	case HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ:
+	case HWTSTAMP_FILTER_PTP_V1_L4_EVENT:
+		if (!(pf->hw_features & I40E_HW_PTP_L4_CAPABLE))
+			return -ERANGE;
 		pf->ptp_rx = true;
 		tsyntype = I40E_PRTTSYN_CTL1_V1MESSTYPE0_MASK |
 			   I40E_PRTTSYN_CTL1_TSYNTYPE_V1 |
 			   I40E_PRTTSYN_CTL1_UDP_ENA_MASK;
 		config->rx_filter = HWTSTAMP_FILTER_PTP_V1_L4_EVENT;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_PTP_V2_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V2_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V2_DELAY_REQ:
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
-		अगर (!(pf->hw_features & I40E_HW_PTP_L4_CAPABLE))
-			वापस -दुस्फल;
+		break;
+	case HWTSTAMP_FILTER_PTP_V2_EVENT:
+	case HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
+	case HWTSTAMP_FILTER_PTP_V2_SYNC:
+	case HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
+	case HWTSTAMP_FILTER_PTP_V2_DELAY_REQ:
+	case HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
+		if (!(pf->hw_features & I40E_HW_PTP_L4_CAPABLE))
+			return -ERANGE;
 		fallthrough;
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ:
+	case HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
+	case HWTSTAMP_FILTER_PTP_V2_L2_SYNC:
+	case HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ:
 		pf->ptp_rx = true;
 		tsyntype = I40E_PRTTSYN_CTL1_V2MESSTYPE0_MASK |
 			   I40E_PRTTSYN_CTL1_TSYNTYPE_V2;
-		अगर (pf->hw_features & I40E_HW_PTP_L4_CAPABLE) अणु
+		if (pf->hw_features & I40E_HW_PTP_L4_CAPABLE) {
 			tsyntype |= I40E_PRTTSYN_CTL1_UDP_ENA_MASK;
 			config->rx_filter = HWTSTAMP_FILTER_PTP_V2_EVENT;
-		पूर्ण अन्यथा अणु
+		} else {
 			config->rx_filter = HWTSTAMP_FILTER_PTP_V2_L2_EVENT;
-		पूर्ण
-		अवरोध;
-	हाल HWTSTAMP_FILTER_NTP_ALL:
-	हाल HWTSTAMP_FILTER_ALL:
-	शेष:
-		वापस -दुस्फल;
-	पूर्ण
+		}
+		break;
+	case HWTSTAMP_FILTER_NTP_ALL:
+	case HWTSTAMP_FILTER_ALL:
+	default:
+		return -ERANGE;
+	}
 
-	/* Clear out all 1588-related रेजिस्टरs to clear and unlatch them. */
+	/* Clear out all 1588-related registers to clear and unlatch them. */
 	spin_lock_bh(&pf->ptp_rx_lock);
 	rd32(hw, I40E_PRTTSYN_STAT_0);
 	rd32(hw, I40E_PRTTSYN_TXTIME_H);
@@ -617,213 +616,213 @@
 	pf->latch_event_flags = 0;
 	spin_unlock_bh(&pf->ptp_rx_lock);
 
-	/* Enable/disable the Tx बारtamp पूर्णांकerrupt based on user input. */
+	/* Enable/disable the Tx timestamp interrupt based on user input. */
 	regval = rd32(hw, I40E_PRTTSYN_CTL0);
-	अगर (pf->ptp_tx)
+	if (pf->ptp_tx)
 		regval |= I40E_PRTTSYN_CTL0_TXTIME_INT_ENA_MASK;
-	अन्यथा
+	else
 		regval &= ~I40E_PRTTSYN_CTL0_TXTIME_INT_ENA_MASK;
 	wr32(hw, I40E_PRTTSYN_CTL0, regval);
 
 	regval = rd32(hw, I40E_PFINT_ICR0_ENA);
-	अगर (pf->ptp_tx)
+	if (pf->ptp_tx)
 		regval |= I40E_PFINT_ICR0_ENA_TIMESYNC_MASK;
-	अन्यथा
+	else
 		regval &= ~I40E_PFINT_ICR0_ENA_TIMESYNC_MASK;
 	wr32(hw, I40E_PFINT_ICR0_ENA, regval);
 
-	/* Although there is no simple on/off चयन क्रम Rx, we "disable" Rx
-	 * बारtamps by setting to V1 only mode and clear the UDP
-	 * recognition. This ought to disable all PTP Rx बारtamps as V1
+	/* Although there is no simple on/off switch for Rx, we "disable" Rx
+	 * timestamps by setting to V1 only mode and clear the UDP
+	 * recognition. This ought to disable all PTP Rx timestamps as V1
 	 * packets are always over UDP. Note that software is configured to
-	 * ignore Rx बारtamps via the pf->ptp_rx flag.
+	 * ignore Rx timestamps via the pf->ptp_rx flag.
 	 */
 	regval = rd32(hw, I40E_PRTTSYN_CTL1);
 	/* clear everything but the enable bit */
 	regval &= I40E_PRTTSYN_CTL1_TSYNENA_MASK;
-	/* now enable bits क्रम desired Rx बारtamps */
+	/* now enable bits for desired Rx timestamps */
 	regval |= tsyntype;
 	wr32(hw, I40E_PRTTSYN_CTL1, regval);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * i40e_ptp_set_ts_config - ioctl पूर्णांकerface to control the HW बारtamping
- * @pf: Board निजी काष्ठाure
- * @अगरr: ioctl data
+ * i40e_ptp_set_ts_config - ioctl interface to control the HW timestamping
+ * @pf: Board private structure
+ * @ifr: ioctl data
  *
  * Respond to the user filter requests and make the appropriate hardware
- * changes here. The XL710 cannot support splitting of the Tx/Rx बारtamping
- * logic, so keep track in software of whether to indicate these बारtamps
+ * changes here. The XL710 cannot support splitting of the Tx/Rx timestamping
+ * logic, so keep track in software of whether to indicate these timestamps
  * or not.
  *
- * It is permissible to "upgrade" the user request to a broader filter, as दीर्घ
- * as the user receives the बारtamps they care about and the user is notअगरied
+ * It is permissible to "upgrade" the user request to a broader filter, as long
+ * as the user receives the timestamps they care about and the user is notified
  * the filter has been broadened.
  **/
-पूर्णांक i40e_ptp_set_ts_config(काष्ठा i40e_pf *pf, काष्ठा अगरreq *अगरr)
-अणु
-	काष्ठा hwtstamp_config config;
-	पूर्णांक err;
+int i40e_ptp_set_ts_config(struct i40e_pf *pf, struct ifreq *ifr)
+{
+	struct hwtstamp_config config;
+	int err;
 
-	अगर (!(pf->flags & I40E_FLAG_PTP))
-		वापस -EOPNOTSUPP;
+	if (!(pf->flags & I40E_FLAG_PTP))
+		return -EOPNOTSUPP;
 
-	अगर (copy_from_user(&config, अगरr->अगरr_data, माप(config)))
-		वापस -EFAULT;
+	if (copy_from_user(&config, ifr->ifr_data, sizeof(config)))
+		return -EFAULT;
 
-	err = i40e_ptp_set_बारtamp_mode(pf, &config);
-	अगर (err)
-		वापस err;
+	err = i40e_ptp_set_timestamp_mode(pf, &config);
+	if (err)
+		return err;
 
-	/* save these settings क्रम future reference */
+	/* save these settings for future reference */
 	pf->tstamp_config = config;
 
-	वापस copy_to_user(अगरr->अगरr_data, &config, माप(config)) ?
+	return copy_to_user(ifr->ifr_data, &config, sizeof(config)) ?
 		-EFAULT : 0;
-पूर्ण
+}
 
 /**
- * i40e_ptp_create_घड़ी - Create PTP घड़ी device क्रम userspace
- * @pf: Board निजी काष्ठाure
+ * i40e_ptp_create_clock - Create PTP clock device for userspace
+ * @pf: Board private structure
  *
- * This function creates a new PTP घड़ी device. It only creates one अगर we
- * करोn't alपढ़ोy have one, so it is safe to call. Will वापस error अगर it
- * can't create one, but success अगर we alपढ़ोy have a device. Should be used
- * by i40e_ptp_init to create घड़ी initially, and prevent global resets from
- * creating new घड़ी devices.
+ * This function creates a new PTP clock device. It only creates one if we
+ * don't already have one, so it is safe to call. Will return error if it
+ * can't create one, but success if we already have a device. Should be used
+ * by i40e_ptp_init to create clock initially, and prevent global resets from
+ * creating new clock devices.
  **/
-अटल दीर्घ i40e_ptp_create_घड़ी(काष्ठा i40e_pf *pf)
-अणु
-	/* no need to create a घड़ी device अगर we alपढ़ोy have one */
-	अगर (!IS_ERR_OR_शून्य(pf->ptp_घड़ी))
-		वापस 0;
+static long i40e_ptp_create_clock(struct i40e_pf *pf)
+{
+	/* no need to create a clock device if we already have one */
+	if (!IS_ERR_OR_NULL(pf->ptp_clock))
+		return 0;
 
 	strlcpy(pf->ptp_caps.name, i40e_driver_name,
-		माप(pf->ptp_caps.name) - 1);
+		sizeof(pf->ptp_caps.name) - 1);
 	pf->ptp_caps.owner = THIS_MODULE;
 	pf->ptp_caps.max_adj = 999999999;
 	pf->ptp_caps.n_ext_ts = 0;
 	pf->ptp_caps.pps = 0;
 	pf->ptp_caps.adjfreq = i40e_ptp_adjfreq;
-	pf->ptp_caps.adjसमय = i40e_ptp_adjसमय;
-	pf->ptp_caps.समय_लोx64 = i40e_ptp_समय_लोx;
-	pf->ptp_caps.समय_रखो64 = i40e_ptp_समय_रखो;
+	pf->ptp_caps.adjtime = i40e_ptp_adjtime;
+	pf->ptp_caps.gettimex64 = i40e_ptp_gettimex;
+	pf->ptp_caps.settime64 = i40e_ptp_settime;
 	pf->ptp_caps.enable = i40e_ptp_feature_enable;
 
-	/* Attempt to रेजिस्टर the घड़ी beक्रमe enabling the hardware. */
-	pf->ptp_घड़ी = ptp_घड़ी_रेजिस्टर(&pf->ptp_caps, &pf->pdev->dev);
-	अगर (IS_ERR(pf->ptp_घड़ी))
-		वापस PTR_ERR(pf->ptp_घड़ी);
+	/* Attempt to register the clock before enabling the hardware. */
+	pf->ptp_clock = ptp_clock_register(&pf->ptp_caps, &pf->pdev->dev);
+	if (IS_ERR(pf->ptp_clock))
+		return PTR_ERR(pf->ptp_clock);
 
-	/* clear the hwtstamp settings here during घड़ी create, instead of
-	 * during regular init, so that we can मुख्यtain settings across a
+	/* clear the hwtstamp settings here during clock create, instead of
+	 * during regular init, so that we can maintain settings across a
 	 * reset or suspend.
 	 */
 	pf->tstamp_config.rx_filter = HWTSTAMP_FILTER_NONE;
 	pf->tstamp_config.tx_type = HWTSTAMP_TX_OFF;
 
-	/* Set the previous "reset" समय to the current Kernel घड़ी समय */
-	kसमय_get_real_ts64(&pf->ptp_prev_hw_समय);
-	pf->ptp_reset_start = kसमय_get();
+	/* Set the previous "reset" time to the current Kernel clock time */
+	ktime_get_real_ts64(&pf->ptp_prev_hw_time);
+	pf->ptp_reset_start = ktime_get();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * i40e_ptp_save_hw_समय - Save the current PTP समय as ptp_prev_hw_समय
- * @pf: Board निजी काष्ठाure
+ * i40e_ptp_save_hw_time - Save the current PTP time as ptp_prev_hw_time
+ * @pf: Board private structure
  *
- * Read the current PTP समय and save it पूर्णांकo pf->ptp_prev_hw_समय. This should
- * be called at the end of preparing to reset, just beक्रमe hardware reset
- * occurs, in order to preserve the PTP समय as बंद as possible across
+ * Read the current PTP time and save it into pf->ptp_prev_hw_time. This should
+ * be called at the end of preparing to reset, just before hardware reset
+ * occurs, in order to preserve the PTP time as close as possible across
  * resets.
  */
-व्योम i40e_ptp_save_hw_समय(काष्ठा i40e_pf *pf)
-अणु
-	/* करोn't try to access the PTP clock if it's not enabled */
-	अगर (!(pf->flags & I40E_FLAG_PTP))
-		वापस;
+void i40e_ptp_save_hw_time(struct i40e_pf *pf)
+{
+	/* don't try to access the PTP clock if it's not enabled */
+	if (!(pf->flags & I40E_FLAG_PTP))
+		return;
 
-	i40e_ptp_समय_लोx(&pf->ptp_caps, &pf->ptp_prev_hw_समय, शून्य);
-	/* Get a monotonic starting समय क्रम this reset */
-	pf->ptp_reset_start = kसमय_get();
-पूर्ण
+	i40e_ptp_gettimex(&pf->ptp_caps, &pf->ptp_prev_hw_time, NULL);
+	/* Get a monotonic starting time for this reset */
+	pf->ptp_reset_start = ktime_get();
+}
 
 /**
- * i40e_ptp_restore_hw_समय - Restore the ptp_prev_hw_समय + delta to PTP regs
- * @pf: Board निजी काष्ठाure
+ * i40e_ptp_restore_hw_time - Restore the ptp_prev_hw_time + delta to PTP regs
+ * @pf: Board private structure
  *
- * Restore the PTP hardware घड़ी रेजिस्टरs. We previously cached the PTP
- * hardware समय as pf->ptp_prev_hw_समय. To be as accurate as possible,
- * update this value based on the समय delta since the समय was saved, using
- * CLOCK_MONOTONIC (via kसमय_get()) to calculate the समय dअगरference.
+ * Restore the PTP hardware clock registers. We previously cached the PTP
+ * hardware time as pf->ptp_prev_hw_time. To be as accurate as possible,
+ * update this value based on the time delta since the time was saved, using
+ * CLOCK_MONOTONIC (via ktime_get()) to calculate the time difference.
  *
- * This ensures that the hardware घड़ी is restored to nearly what it should
- * have been अगर a reset had not occurred.
+ * This ensures that the hardware clock is restored to nearly what it should
+ * have been if a reset had not occurred.
  */
-व्योम i40e_ptp_restore_hw_समय(काष्ठा i40e_pf *pf)
-अणु
-	kसमय_प्रकार delta = kसमय_sub(kसमय_get(), pf->ptp_reset_start);
+void i40e_ptp_restore_hw_time(struct i40e_pf *pf)
+{
+	ktime_t delta = ktime_sub(ktime_get(), pf->ptp_reset_start);
 
-	/* Update the previous HW समय with the kसमय delta */
-	बारpec64_add_ns(&pf->ptp_prev_hw_समय, kसमय_प्रकारo_ns(delta));
+	/* Update the previous HW time with the ktime delta */
+	timespec64_add_ns(&pf->ptp_prev_hw_time, ktime_to_ns(delta));
 
-	/* Restore the hardware घड़ी रेजिस्टरs */
-	i40e_ptp_समय_रखो(&pf->ptp_caps, &pf->ptp_prev_hw_समय);
-पूर्ण
+	/* Restore the hardware clock registers */
+	i40e_ptp_settime(&pf->ptp_caps, &pf->ptp_prev_hw_time);
+}
 
 /**
  * i40e_ptp_init - Initialize the 1588 support after device probe or reset
- * @pf: Board निजी काष्ठाure
+ * @pf: Board private structure
  *
- * This function sets device up क्रम 1588 support. The first समय it is run, it
- * will create a PHC घड़ी device. It करोes not create a घड़ी device अगर one
- * alपढ़ोy exists. It also reconfigures the device after a reset.
+ * This function sets device up for 1588 support. The first time it is run, it
+ * will create a PHC clock device. It does not create a clock device if one
+ * already exists. It also reconfigures the device after a reset.
  *
- * The first समय a घड़ी is created, i40e_ptp_create_घड़ी will set
- * pf->ptp_prev_hw_समय to the current प्रणाली समय. During resets, it is
- * expected that this बारpec will be set to the last known PTP घड़ी समय,
- * in order to preserve the घड़ी समय as बंद as possible across a reset.
+ * The first time a clock is created, i40e_ptp_create_clock will set
+ * pf->ptp_prev_hw_time to the current system time. During resets, it is
+ * expected that this timespec will be set to the last known PTP clock time,
+ * in order to preserve the clock time as close as possible across a reset.
  **/
-व्योम i40e_ptp_init(काष्ठा i40e_pf *pf)
-अणु
-	काष्ठा net_device *netdev = pf->vsi[pf->lan_vsi]->netdev;
-	काष्ठा i40e_hw *hw = &pf->hw;
+void i40e_ptp_init(struct i40e_pf *pf)
+{
+	struct net_device *netdev = pf->vsi[pf->lan_vsi]->netdev;
+	struct i40e_hw *hw = &pf->hw;
 	u32 pf_id;
-	दीर्घ err;
+	long err;
 
-	/* Only one PF is asचिन्हित to control 1588 logic per port. Do not
-	 * enable any support क्रम PFs not asचिन्हित via PRTTSYN_CTL0.PF_ID
+	/* Only one PF is assigned to control 1588 logic per port. Do not
+	 * enable any support for PFs not assigned via PRTTSYN_CTL0.PF_ID
 	 */
 	pf_id = (rd32(hw, I40E_PRTTSYN_CTL0) & I40E_PRTTSYN_CTL0_PF_ID_MASK) >>
 		I40E_PRTTSYN_CTL0_PF_ID_SHIFT;
-	अगर (hw->pf_id != pf_id) अणु
+	if (hw->pf_id != pf_id) {
 		pf->flags &= ~I40E_FLAG_PTP;
 		dev_info(&pf->pdev->dev, "%s: PTP not supported on %s\n",
 			 __func__,
 			 netdev->name);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	mutex_init(&pf->पंचांगreg_lock);
+	mutex_init(&pf->tmreg_lock);
 	spin_lock_init(&pf->ptp_rx_lock);
 
-	/* ensure we have a घड़ी device */
-	err = i40e_ptp_create_घड़ी(pf);
-	अगर (err) अणु
-		pf->ptp_घड़ी = शून्य;
+	/* ensure we have a clock device */
+	err = i40e_ptp_create_clock(pf);
+	if (err) {
+		pf->ptp_clock = NULL;
 		dev_err(&pf->pdev->dev, "%s: ptp_clock_register failed\n",
 			__func__);
-	पूर्ण अन्यथा अगर (pf->ptp_घड़ी) अणु
+	} else if (pf->ptp_clock) {
 		u32 regval;
 
-		अगर (pf->hw.debug_mask & I40E_DEBUG_LAN)
+		if (pf->hw.debug_mask & I40E_DEBUG_LAN)
 			dev_info(&pf->pdev->dev, "PHC enabled\n");
 		pf->flags |= I40E_FLAG_PTP;
 
-		/* Ensure the घड़ीs are running. */
+		/* Ensure the clocks are running. */
 		regval = rd32(hw, I40E_PRTTSYN_CTL0);
 		regval |= I40E_PRTTSYN_CTL0_TSYNENA_MASK;
 		wr32(hw, I40E_PRTTSYN_CTL0, regval);
@@ -831,42 +830,42 @@
 		regval |= I40E_PRTTSYN_CTL1_TSYNENA_MASK;
 		wr32(hw, I40E_PRTTSYN_CTL1, regval);
 
-		/* Set the increment value per घड़ी tick. */
+		/* Set the increment value per clock tick. */
 		i40e_ptp_set_increment(pf);
 
-		/* reset बारtamping mode */
-		i40e_ptp_set_बारtamp_mode(pf, &pf->tstamp_config);
+		/* reset timestamping mode */
+		i40e_ptp_set_timestamp_mode(pf, &pf->tstamp_config);
 
-		/* Restore the घड़ी समय based on last known value */
-		i40e_ptp_restore_hw_समय(pf);
-	पूर्ण
-पूर्ण
+		/* Restore the clock time based on last known value */
+		i40e_ptp_restore_hw_time(pf);
+	}
+}
 
 /**
- * i40e_ptp_stop - Disable the driver/hardware support and unरेजिस्टर the PHC
- * @pf: Board निजी काष्ठाure
+ * i40e_ptp_stop - Disable the driver/hardware support and unregister the PHC
+ * @pf: Board private structure
  *
  * This function handles the cleanup work required from the initialization by
- * clearing out the important inक्रमmation and unरेजिस्टरing the PHC.
+ * clearing out the important information and unregistering the PHC.
  **/
-व्योम i40e_ptp_stop(काष्ठा i40e_pf *pf)
-अणु
+void i40e_ptp_stop(struct i40e_pf *pf)
+{
 	pf->flags &= ~I40E_FLAG_PTP;
 	pf->ptp_tx = false;
 	pf->ptp_rx = false;
 
-	अगर (pf->ptp_tx_skb) अणु
-		काष्ठा sk_buff *skb = pf->ptp_tx_skb;
+	if (pf->ptp_tx_skb) {
+		struct sk_buff *skb = pf->ptp_tx_skb;
 
-		pf->ptp_tx_skb = शून्य;
+		pf->ptp_tx_skb = NULL;
 		clear_bit_unlock(__I40E_PTP_TX_IN_PROGRESS, pf->state);
-		dev_kमुक्त_skb_any(skb);
-	पूर्ण
+		dev_kfree_skb_any(skb);
+	}
 
-	अगर (pf->ptp_घड़ी) अणु
-		ptp_घड़ी_unरेजिस्टर(pf->ptp_घड़ी);
-		pf->ptp_घड़ी = शून्य;
+	if (pf->ptp_clock) {
+		ptp_clock_unregister(pf->ptp_clock);
+		pf->ptp_clock = NULL;
 		dev_info(&pf->pdev->dev, "%s: removed PHC on %s\n", __func__,
 			 pf->vsi[pf->lan_vsi]->netdev->name);
-	पूर्ण
-पूर्ण
+	}
+}

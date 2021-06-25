@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
-#घोषणा START_CHAR 'a'
-#समावेश "bpf_iter_test_kern_common.h"
+#define START_CHAR 'a'
+#include "bpf_iter_test_kern_common.h"

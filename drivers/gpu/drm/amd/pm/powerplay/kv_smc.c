@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,197 +22,197 @@
  * Authors: Alex Deucher
  */
 
-#समावेश "amdgpu.h"
-#समावेश "cikd.h"
-#समावेश "kv_dpm.h"
+#include "amdgpu.h"
+#include "cikd.h"
+#include "kv_dpm.h"
 
-#समावेश "smu/smu_7_0_0_d.h"
-#समावेश "smu/smu_7_0_0_sh_mask.h"
+#include "smu/smu_7_0_0_d.h"
+#include "smu/smu_7_0_0_sh_mask.h"
 
-पूर्णांक amdgpu_kv_notअगरy_message_to_smu(काष्ठा amdgpu_device *adev, u32 id)
-अणु
+int amdgpu_kv_notify_message_to_smu(struct amdgpu_device *adev, u32 id)
+{
 	u32 i;
-	u32 पंचांगp = 0;
+	u32 tmp = 0;
 
 	WREG32(mmSMC_MESSAGE_0, id & SMC_MESSAGE_0__SMC_MSG_MASK);
 
-	क्रम (i = 0; i < adev->usec_समयout; i++) अणु
-		अगर ((RREG32(mmSMC_RESP_0) & SMC_RESP_0__SMC_RESP_MASK) != 0)
-			अवरोध;
+	for (i = 0; i < adev->usec_timeout; i++) {
+		if ((RREG32(mmSMC_RESP_0) & SMC_RESP_0__SMC_RESP_MASK) != 0)
+			break;
 		udelay(1);
-	पूर्ण
-	पंचांगp = RREG32(mmSMC_RESP_0) & SMC_RESP_0__SMC_RESP_MASK;
+	}
+	tmp = RREG32(mmSMC_RESP_0) & SMC_RESP_0__SMC_RESP_MASK;
 
-	अगर (पंचांगp != 1) अणु
-		अगर (पंचांगp == 0xFF)
-			वापस -EINVAL;
-		अन्यथा अगर (पंचांगp == 0xFE)
-			वापस -EINVAL;
-	पूर्ण
+	if (tmp != 1) {
+		if (tmp == 0xFF)
+			return -EINVAL;
+		else if (tmp == 0xFE)
+			return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक amdgpu_kv_dpm_get_enable_mask(काष्ठा amdgpu_device *adev, u32 *enable_mask)
-अणु
-	पूर्णांक ret;
+int amdgpu_kv_dpm_get_enable_mask(struct amdgpu_device *adev, u32 *enable_mask)
+{
+	int ret;
 
-	ret = amdgpu_kv_notअगरy_message_to_smu(adev, PPSMC_MSG_SCLKDPM_GetEnabledMask);
+	ret = amdgpu_kv_notify_message_to_smu(adev, PPSMC_MSG_SCLKDPM_GetEnabledMask);
 
-	अगर (ret == 0)
+	if (ret == 0)
 		*enable_mask = RREG32_SMC(ixSMC_SYSCON_MSG_ARG_0);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक amdgpu_kv_send_msg_to_smc_with_parameter(काष्ठा amdgpu_device *adev,
+int amdgpu_kv_send_msg_to_smc_with_parameter(struct amdgpu_device *adev,
 				      PPSMC_Msg msg, u32 parameter)
-अणु
+{
 
 	WREG32(mmSMC_MSG_ARG_0, parameter);
 
-	वापस amdgpu_kv_notअगरy_message_to_smu(adev, msg);
-पूर्ण
+	return amdgpu_kv_notify_message_to_smu(adev, msg);
+}
 
-अटल पूर्णांक kv_set_smc_sram_address(काष्ठा amdgpu_device *adev,
+static int kv_set_smc_sram_address(struct amdgpu_device *adev,
 				   u32 smc_address, u32 limit)
-अणु
-	अगर (smc_address & 3)
-		वापस -EINVAL;
-	अगर ((smc_address + 3) > limit)
-		वापस -EINVAL;
+{
+	if (smc_address & 3)
+		return -EINVAL;
+	if ((smc_address + 3) > limit)
+		return -EINVAL;
 
 	WREG32(mmSMC_IND_INDEX_0, smc_address);
 	WREG32_P(mmSMC_IND_ACCESS_CNTL, 0,
 			~SMC_IND_ACCESS_CNTL__AUTO_INCREMENT_IND_0_MASK);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक amdgpu_kv_पढ़ो_smc_sram_dword(काष्ठा amdgpu_device *adev, u32 smc_address,
+int amdgpu_kv_read_smc_sram_dword(struct amdgpu_device *adev, u32 smc_address,
 			   u32 *value, u32 limit)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
 	ret = kv_set_smc_sram_address(adev, smc_address, limit);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	*value = RREG32(mmSMC_IND_DATA_0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक amdgpu_kv_smc_dpm_enable(काष्ठा amdgpu_device *adev, bool enable)
-अणु
-	अगर (enable)
-		वापस amdgpu_kv_notअगरy_message_to_smu(adev, PPSMC_MSG_DPM_Enable);
-	अन्यथा
-		वापस amdgpu_kv_notअगरy_message_to_smu(adev, PPSMC_MSG_DPM_Disable);
-पूर्ण
+int amdgpu_kv_smc_dpm_enable(struct amdgpu_device *adev, bool enable)
+{
+	if (enable)
+		return amdgpu_kv_notify_message_to_smu(adev, PPSMC_MSG_DPM_Enable);
+	else
+		return amdgpu_kv_notify_message_to_smu(adev, PPSMC_MSG_DPM_Disable);
+}
 
-पूर्णांक amdgpu_kv_smc_bapm_enable(काष्ठा amdgpu_device *adev, bool enable)
-अणु
-	अगर (enable)
-		वापस amdgpu_kv_notअगरy_message_to_smu(adev, PPSMC_MSG_EnableBAPM);
-	अन्यथा
-		वापस amdgpu_kv_notअगरy_message_to_smu(adev, PPSMC_MSG_DisableBAPM);
-पूर्ण
+int amdgpu_kv_smc_bapm_enable(struct amdgpu_device *adev, bool enable)
+{
+	if (enable)
+		return amdgpu_kv_notify_message_to_smu(adev, PPSMC_MSG_EnableBAPM);
+	else
+		return amdgpu_kv_notify_message_to_smu(adev, PPSMC_MSG_DisableBAPM);
+}
 
-पूर्णांक amdgpu_kv_copy_bytes_to_smc(काष्ठा amdgpu_device *adev,
+int amdgpu_kv_copy_bytes_to_smc(struct amdgpu_device *adev,
 			 u32 smc_start_address,
-			 स्थिर u8 *src, u32 byte_count, u32 limit)
-अणु
-	पूर्णांक ret;
-	u32 data, original_data, addr, extra_shअगरt, t_byte, count, mask;
+			 const u8 *src, u32 byte_count, u32 limit)
+{
+	int ret;
+	u32 data, original_data, addr, extra_shift, t_byte, count, mask;
 
-	अगर ((smc_start_address + byte_count) > limit)
-		वापस -EINVAL;
+	if ((smc_start_address + byte_count) > limit)
+		return -EINVAL;
 
 	addr = smc_start_address;
 	t_byte = addr & 3;
 
-	/* RMW क्रम the initial bytes */
-	अगर  (t_byte != 0) अणु
+	/* RMW for the initial bytes */
+	if  (t_byte != 0) {
 		addr -= t_byte;
 
 		ret = kv_set_smc_sram_address(adev, addr, limit);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		original_data = RREG32(mmSMC_IND_DATA_0);
 
 		data = 0;
 		mask = 0;
 		count = 4;
-		जबतक (count > 0) अणु
-			अगर (t_byte > 0) अणु
+		while (count > 0) {
+			if (t_byte > 0) {
 				mask = (mask << 8) | 0xff;
 				t_byte--;
-			पूर्ण अन्यथा अगर (byte_count > 0) अणु
+			} else if (byte_count > 0) {
 				data = (data << 8) + *src++;
 				byte_count--;
 				mask <<= 8;
-			पूर्ण अन्यथा अणु
+			} else {
 				data <<= 8;
 				mask = (mask << 8) | 0xff;
-			पूर्ण
+			}
 			count--;
-		पूर्ण
+		}
 
 		data |= original_data & mask;
 
 		ret = kv_set_smc_sram_address(adev, addr, limit);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		WREG32(mmSMC_IND_DATA_0, data);
 
 		addr += 4;
-	पूर्ण
+	}
 
-	जबतक (byte_count >= 4) अणु
+	while (byte_count >= 4) {
 		/* SMC address space is BE */
 		data = (src[0] << 24) + (src[1] << 16) + (src[2] << 8) + src[3];
 
 		ret = kv_set_smc_sram_address(adev, addr, limit);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		WREG32(mmSMC_IND_DATA_0, data);
 
 		src += 4;
 		byte_count -= 4;
 		addr += 4;
-	पूर्ण
+	}
 
-	/* RMW क्रम the final bytes */
-	अगर (byte_count > 0) अणु
+	/* RMW for the final bytes */
+	if (byte_count > 0) {
 		data = 0;
 
 		ret = kv_set_smc_sram_address(adev, addr, limit);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		original_data = RREG32(mmSMC_IND_DATA_0);
 
-		extra_shअगरt = 8 * (4 - byte_count);
+		extra_shift = 8 * (4 - byte_count);
 
-		जबतक (byte_count > 0) अणु
+		while (byte_count > 0) {
 			/* SMC address space is BE */
 			data = (data << 8) + *src++;
 			byte_count--;
-		पूर्ण
+		}
 
-		data <<= extra_shअगरt;
+		data <<= extra_shift;
 
-		data |= (original_data & ~((~0UL) << extra_shअगरt));
+		data |= (original_data & ~((~0UL) << extra_shift));
 
 		ret = kv_set_smc_sram_address(adev, addr, limit);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		WREG32(mmSMC_IND_DATA_0, data);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 

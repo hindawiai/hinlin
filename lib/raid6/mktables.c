@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* -*- linux-c -*- ------------------------------------------------------- *
  *
  *   Copyright 2002-2007 H. Peter Anvin - All Rights Reserved
@@ -10,167 +9,167 @@
  * mktables.c
  *
  * Make RAID-6 tables.  This is a host user space program to be run at
- * compile समय.
+ * compile time.
  */
 
-#समावेश <मानकपन.स>
-#समावेश <माला.स>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <मानककोष.स>
-#समावेश <समय.स>
+#include <stdio.h>
+#include <string.h>
+#include <inttypes.h>
+#include <stdlib.h>
+#include <time.h>
 
-अटल uपूर्णांक8_t gfmul(uपूर्णांक8_t a, uपूर्णांक8_t b)
-अणु
-	uपूर्णांक8_t v = 0;
+static uint8_t gfmul(uint8_t a, uint8_t b)
+{
+	uint8_t v = 0;
 
-	जबतक (b) अणु
-		अगर (b & 1)
+	while (b) {
+		if (b & 1)
 			v ^= a;
 		a = (a << 1) ^ (a & 0x80 ? 0x1d : 0);
 		b >>= 1;
-	पूर्ण
+	}
 
-	वापस v;
-पूर्ण
+	return v;
+}
 
-अटल uपूर्णांक8_t gfघात(uपूर्णांक8_t a, पूर्णांक b)
-अणु
-	uपूर्णांक8_t v = 1;
+static uint8_t gfpow(uint8_t a, int b)
+{
+	uint8_t v = 1;
 
 	b %= 255;
-	अगर (b < 0)
+	if (b < 0)
 		b += 255;
 
-	जबतक (b) अणु
-		अगर (b & 1)
+	while (b) {
+		if (b & 1)
 			v = gfmul(v, a);
 		a = gfmul(a, a);
 		b >>= 1;
-	पूर्ण
+	}
 
-	वापस v;
-पूर्ण
+	return v;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	पूर्णांक i, j, k;
-	uपूर्णांक8_t v;
-	uपूर्णांक8_t exptbl[256], invtbl[256];
+int main(int argc, char *argv[])
+{
+	int i, j, k;
+	uint8_t v;
+	uint8_t exptbl[256], invtbl[256];
 
-	म_लिखो("#include <linux/export.h>\n");
-	म_लिखो("#include <linux/raid/pq.h>\n");
+	printf("#include <linux/export.h>\n");
+	printf("#include <linux/raid/pq.h>\n");
 
 	/* Compute multiplication table */
-	म_लिखो("\nconst u8  __attribute__((aligned(256)))\n"
+	printf("\nconst u8  __attribute__((aligned(256)))\n"
 		"raid6_gfmul[256][256] =\n"
 		"{\n");
-	क्रम (i = 0; i < 256; i++) अणु
-		म_लिखो("\t{\n");
-		क्रम (j = 0; j < 256; j += 8) अणु
-			म_लिखो("\t\t");
-			क्रम (k = 0; k < 8; k++)
-				म_लिखो("0x%02x,%c", gfmul(i, j + k),
+	for (i = 0; i < 256; i++) {
+		printf("\t{\n");
+		for (j = 0; j < 256; j += 8) {
+			printf("\t\t");
+			for (k = 0; k < 8; k++)
+				printf("0x%02x,%c", gfmul(i, j + k),
 				       (k == 7) ? '\n' : ' ');
-		पूर्ण
-		म_लिखो("\t},\n");
-	पूर्ण
-	म_लिखो("};\n");
-	म_लिखो("#ifdef __KERNEL__\n");
-	म_लिखो("EXPORT_SYMBOL(raid6_gfmul);\n");
-	म_लिखो("#endif\n");
+		}
+		printf("\t},\n");
+	}
+	printf("};\n");
+	printf("#ifdef __KERNEL__\n");
+	printf("EXPORT_SYMBOL(raid6_gfmul);\n");
+	printf("#endif\n");
 
 	/* Compute vector multiplication table */
-	म_लिखो("\nconst u8  __attribute__((aligned(256)))\n"
+	printf("\nconst u8  __attribute__((aligned(256)))\n"
 		"raid6_vgfmul[256][32] =\n"
 		"{\n");
-	क्रम (i = 0; i < 256; i++) अणु
-		म_लिखो("\t{\n");
-		क्रम (j = 0; j < 16; j += 8) अणु
-			म_लिखो("\t\t");
-			क्रम (k = 0; k < 8; k++)
-				म_लिखो("0x%02x,%c", gfmul(i, j + k),
+	for (i = 0; i < 256; i++) {
+		printf("\t{\n");
+		for (j = 0; j < 16; j += 8) {
+			printf("\t\t");
+			for (k = 0; k < 8; k++)
+				printf("0x%02x,%c", gfmul(i, j + k),
 				       (k == 7) ? '\n' : ' ');
-		पूर्ण
-		क्रम (j = 0; j < 16; j += 8) अणु
-			म_लिखो("\t\t");
-			क्रम (k = 0; k < 8; k++)
-				म_लिखो("0x%02x,%c", gfmul(i, (j + k) << 4),
+		}
+		for (j = 0; j < 16; j += 8) {
+			printf("\t\t");
+			for (k = 0; k < 8; k++)
+				printf("0x%02x,%c", gfmul(i, (j + k) << 4),
 				       (k == 7) ? '\n' : ' ');
-		पूर्ण
-		म_लिखो("\t},\n");
-	पूर्ण
-	म_लिखो("};\n");
-	म_लिखो("#ifdef __KERNEL__\n");
-	म_लिखो("EXPORT_SYMBOL(raid6_vgfmul);\n");
-	म_लिखो("#endif\n");
+		}
+		printf("\t},\n");
+	}
+	printf("};\n");
+	printf("#ifdef __KERNEL__\n");
+	printf("EXPORT_SYMBOL(raid6_vgfmul);\n");
+	printf("#endif\n");
 
-	/* Compute घातer-of-2 table (exponent) */
+	/* Compute power-of-2 table (exponent) */
 	v = 1;
-	म_लिखो("\nconst u8 __attribute__((aligned(256)))\n"
+	printf("\nconst u8 __attribute__((aligned(256)))\n"
 	       "raid6_gfexp[256] =\n" "{\n");
-	क्रम (i = 0; i < 256; i += 8) अणु
-		म_लिखो("\t");
-		क्रम (j = 0; j < 8; j++) अणु
+	for (i = 0; i < 256; i += 8) {
+		printf("\t");
+		for (j = 0; j < 8; j++) {
 			exptbl[i + j] = v;
-			म_लिखो("0x%02x,%c", v, (j == 7) ? '\n' : ' ');
+			printf("0x%02x,%c", v, (j == 7) ? '\n' : ' ');
 			v = gfmul(v, 2);
-			अगर (v == 1)
+			if (v == 1)
 				v = 0;	/* For entry 255, not a real entry */
-		पूर्ण
-	पूर्ण
-	म_लिखो("};\n");
-	म_लिखो("#ifdef __KERNEL__\n");
-	म_लिखो("EXPORT_SYMBOL(raid6_gfexp);\n");
-	म_लिखो("#endif\n");
+		}
+	}
+	printf("};\n");
+	printf("#ifdef __KERNEL__\n");
+	printf("EXPORT_SYMBOL(raid6_gfexp);\n");
+	printf("#endif\n");
 
 	/* Compute log-of-2 table */
-	म_लिखो("\nconst u8 __attribute__((aligned(256)))\n"
+	printf("\nconst u8 __attribute__((aligned(256)))\n"
 	       "raid6_gflog[256] =\n" "{\n");
-	क्रम (i = 0; i < 256; i += 8) अणु
-		म_लिखो("\t");
-		क्रम (j = 0; j < 8; j++) अणु
+	for (i = 0; i < 256; i += 8) {
+		printf("\t");
+		for (j = 0; j < 8; j++) {
 			v = 255;
-			क्रम (k = 0; k < 256; k++)
-				अगर (exptbl[k] == (i + j)) अणु
+			for (k = 0; k < 256; k++)
+				if (exptbl[k] == (i + j)) {
 					v = k;
-					अवरोध;
-				पूर्ण
-			म_लिखो("0x%02x,%c", v, (j == 7) ? '\n' : ' ');
-		पूर्ण
-	पूर्ण
-	म_लिखो("};\n");
-	म_लिखो("#ifdef __KERNEL__\n");
-	म_लिखो("EXPORT_SYMBOL(raid6_gflog);\n");
-	म_लिखो("#endif\n");
+					break;
+				}
+			printf("0x%02x,%c", v, (j == 7) ? '\n' : ' ');
+		}
+	}
+	printf("};\n");
+	printf("#ifdef __KERNEL__\n");
+	printf("EXPORT_SYMBOL(raid6_gflog);\n");
+	printf("#endif\n");
 
 	/* Compute inverse table x^-1 == x^254 */
-	म_लिखो("\nconst u8 __attribute__((aligned(256)))\n"
+	printf("\nconst u8 __attribute__((aligned(256)))\n"
 	       "raid6_gfinv[256] =\n" "{\n");
-	क्रम (i = 0; i < 256; i += 8) अणु
-		म_लिखो("\t");
-		क्रम (j = 0; j < 8; j++) अणु
-			invtbl[i + j] = v = gfघात(i + j, 254);
-			म_लिखो("0x%02x,%c", v, (j == 7) ? '\n' : ' ');
-		पूर्ण
-	पूर्ण
-	म_लिखो("};\n");
-	म_लिखो("#ifdef __KERNEL__\n");
-	म_लिखो("EXPORT_SYMBOL(raid6_gfinv);\n");
-	म_लिखो("#endif\n");
+	for (i = 0; i < 256; i += 8) {
+		printf("\t");
+		for (j = 0; j < 8; j++) {
+			invtbl[i + j] = v = gfpow(i + j, 254);
+			printf("0x%02x,%c", v, (j == 7) ? '\n' : ' ');
+		}
+	}
+	printf("};\n");
+	printf("#ifdef __KERNEL__\n");
+	printf("EXPORT_SYMBOL(raid6_gfinv);\n");
+	printf("#endif\n");
 
 	/* Compute inv(2^x + 1) (exponent-xor-inverse) table */
-	म_लिखो("\nconst u8 __attribute__((aligned(256)))\n"
+	printf("\nconst u8 __attribute__((aligned(256)))\n"
 	       "raid6_gfexi[256] =\n" "{\n");
-	क्रम (i = 0; i < 256; i += 8) अणु
-		म_लिखो("\t");
-		क्रम (j = 0; j < 8; j++)
-			म_लिखो("0x%02x,%c", invtbl[exptbl[i + j] ^ 1],
+	for (i = 0; i < 256; i += 8) {
+		printf("\t");
+		for (j = 0; j < 8; j++)
+			printf("0x%02x,%c", invtbl[exptbl[i + j] ^ 1],
 			       (j == 7) ? '\n' : ' ');
-	पूर्ण
-	म_लिखो("};\n");
-	म_लिखो("#ifdef __KERNEL__\n");
-	म_लिखो("EXPORT_SYMBOL(raid6_gfexi);\n");
-	म_लिखो("#endif\n");
+	}
+	printf("};\n");
+	printf("#ifdef __KERNEL__\n");
+	printf("EXPORT_SYMBOL(raid6_gfexi);\n");
+	printf("#endif\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

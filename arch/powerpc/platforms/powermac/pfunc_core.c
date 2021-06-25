@@ -1,164 +1,163 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *
- * FIXME: Properly make this race मुक्त with refcounting etc...
+ * FIXME: Properly make this race free with refcounting etc...
  *
  * FIXME: LOCKING !!!
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
+#include <linux/delay.h>
+#include <linux/kernel.h>
+#include <linux/spinlock.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
 
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/pmac_pfunc.h>
+#include <asm/prom.h>
+#include <asm/pmac_pfunc.h>
 
 /* Debug */
-#घोषणा LOG_PARSE(fmt...)
-#घोषणा LOG_ERROR(fmt...)	prपूर्णांकk(fmt)
-#घोषणा LOG_BLOB(t,b,c)
+#define LOG_PARSE(fmt...)
+#define LOG_ERROR(fmt...)	printk(fmt)
+#define LOG_BLOB(t,b,c)
 
-#अघोषित DEBUG
-#अगर_घोषित DEBUG
-#घोषणा DBG(fmt...)		prपूर्णांकk(fmt)
-#अन्यथा
-#घोषणा DBG(fmt...)
-#पूर्ण_अगर
+#undef DEBUG
+#ifdef DEBUG
+#define DBG(fmt...)		printk(fmt)
+#else
+#define DBG(fmt...)
+#endif
 
 /* Command numbers */
-#घोषणा PMF_CMD_LIST			0
-#घोषणा PMF_CMD_WRITE_GPIO		1
-#घोषणा PMF_CMD_READ_GPIO		2
-#घोषणा PMF_CMD_WRITE_REG32		3
-#घोषणा PMF_CMD_READ_REG32		4
-#घोषणा PMF_CMD_WRITE_REG16		5
-#घोषणा PMF_CMD_READ_REG16		6
-#घोषणा PMF_CMD_WRITE_REG8		7
-#घोषणा PMF_CMD_READ_REG8		8
-#घोषणा PMF_CMD_DELAY			9
-#घोषणा PMF_CMD_WAIT_REG32		10
-#घोषणा PMF_CMD_WAIT_REG16		11
-#घोषणा PMF_CMD_WAIT_REG8		12
-#घोषणा PMF_CMD_READ_I2C		13
-#घोषणा PMF_CMD_WRITE_I2C		14
-#घोषणा PMF_CMD_RMW_I2C			15
-#घोषणा PMF_CMD_GEN_I2C			16
-#घोषणा PMF_CMD_SHIFT_BYTES_RIGHT	17
-#घोषणा PMF_CMD_SHIFT_BYTES_LEFT	18
-#घोषणा PMF_CMD_READ_CFG		19
-#घोषणा PMF_CMD_WRITE_CFG		20
-#घोषणा PMF_CMD_RMW_CFG			21
-#घोषणा PMF_CMD_READ_I2C_SUBADDR	22
-#घोषणा PMF_CMD_WRITE_I2C_SUBADDR	23
-#घोषणा PMF_CMD_SET_I2C_MODE		24
-#घोषणा PMF_CMD_RMW_I2C_SUBADDR		25
-#घोषणा PMF_CMD_READ_REG32_MASK_SHR_XOR	26
-#घोषणा PMF_CMD_READ_REG16_MASK_SHR_XOR	27
-#घोषणा PMF_CMD_READ_REG8_MASK_SHR_XOR	28
-#घोषणा PMF_CMD_WRITE_REG32_SHL_MASK	29
-#घोषणा PMF_CMD_WRITE_REG16_SHL_MASK	30
-#घोषणा PMF_CMD_WRITE_REG8_SHL_MASK	31
-#घोषणा PMF_CMD_MASK_AND_COMPARE	32
-#घोषणा PMF_CMD_COUNT			33
+#define PMF_CMD_LIST			0
+#define PMF_CMD_WRITE_GPIO		1
+#define PMF_CMD_READ_GPIO		2
+#define PMF_CMD_WRITE_REG32		3
+#define PMF_CMD_READ_REG32		4
+#define PMF_CMD_WRITE_REG16		5
+#define PMF_CMD_READ_REG16		6
+#define PMF_CMD_WRITE_REG8		7
+#define PMF_CMD_READ_REG8		8
+#define PMF_CMD_DELAY			9
+#define PMF_CMD_WAIT_REG32		10
+#define PMF_CMD_WAIT_REG16		11
+#define PMF_CMD_WAIT_REG8		12
+#define PMF_CMD_READ_I2C		13
+#define PMF_CMD_WRITE_I2C		14
+#define PMF_CMD_RMW_I2C			15
+#define PMF_CMD_GEN_I2C			16
+#define PMF_CMD_SHIFT_BYTES_RIGHT	17
+#define PMF_CMD_SHIFT_BYTES_LEFT	18
+#define PMF_CMD_READ_CFG		19
+#define PMF_CMD_WRITE_CFG		20
+#define PMF_CMD_RMW_CFG			21
+#define PMF_CMD_READ_I2C_SUBADDR	22
+#define PMF_CMD_WRITE_I2C_SUBADDR	23
+#define PMF_CMD_SET_I2C_MODE		24
+#define PMF_CMD_RMW_I2C_SUBADDR		25
+#define PMF_CMD_READ_REG32_MASK_SHR_XOR	26
+#define PMF_CMD_READ_REG16_MASK_SHR_XOR	27
+#define PMF_CMD_READ_REG8_MASK_SHR_XOR	28
+#define PMF_CMD_WRITE_REG32_SHL_MASK	29
+#define PMF_CMD_WRITE_REG16_SHL_MASK	30
+#define PMF_CMD_WRITE_REG8_SHL_MASK	31
+#define PMF_CMD_MASK_AND_COMPARE	32
+#define PMF_CMD_COUNT			33
 
-/* This काष्ठाure holds the state of the parser जबतक walking through
+/* This structure holds the state of the parser while walking through
  * a function definition
  */
-काष्ठा pmf_cmd अणु
-	स्थिर व्योम		*cmdptr;
-	स्थिर व्योम		*cmdend;
-	काष्ठा pmf_function	*func;
-	व्योम			*instdata;
-	काष्ठा pmf_args		*args;
-	पूर्णांक			error;
-पूर्ण;
+struct pmf_cmd {
+	const void		*cmdptr;
+	const void		*cmdend;
+	struct pmf_function	*func;
+	void			*instdata;
+	struct pmf_args		*args;
+	int			error;
+};
 
-#अगर 0
+#if 0
 /* Debug output */
-अटल व्योम prपूर्णांक_blob(स्थिर अक्षर *title, स्थिर व्योम *blob, पूर्णांक bytes)
-अणु
-	prपूर्णांकk("%s", title);
-	जबतक(bytes--) अणु
-		prपूर्णांकk("%02x ", *((u8 *)blob));
+static void print_blob(const char *title, const void *blob, int bytes)
+{
+	printk("%s", title);
+	while(bytes--) {
+		printk("%02x ", *((u8 *)blob));
 		blob += 1;
-	पूर्ण
-	prपूर्णांकk("\n");
-पूर्ण
-#पूर्ण_अगर
+	}
+	printk("\n");
+}
+#endif
 
 /*
  * Parser helpers
  */
 
-अटल u32 pmf_next32(काष्ठा pmf_cmd *cmd)
-अणु
+static u32 pmf_next32(struct pmf_cmd *cmd)
+{
 	u32 value;
-	अगर ((cmd->cmdend - cmd->cmdptr) < 4) अणु
+	if ((cmd->cmdend - cmd->cmdptr) < 4) {
 		cmd->error = 1;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	value = *((u32 *)cmd->cmdptr);
 	cmd->cmdptr += 4;
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल स्थिर व्योम* pmf_next_blob(काष्ठा pmf_cmd *cmd, पूर्णांक count)
-अणु
-	स्थिर व्योम *value;
-	अगर ((cmd->cmdend - cmd->cmdptr) < count) अणु
+static const void* pmf_next_blob(struct pmf_cmd *cmd, int count)
+{
+	const void *value;
+	if ((cmd->cmdend - cmd->cmdptr) < count) {
 		cmd->error = 1;
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	value = cmd->cmdptr;
 	cmd->cmdptr += count;
-	वापस value;
-पूर्ण
+	return value;
+}
 
 /*
- * Inभागidual command parsers
+ * Individual command parsers
  */
 
-#घोषणा PMF_PARSE_CALL(name, cmd, handlers, p...) \
-	करो अणु \
-		अगर (cmd->error) \
-			वापस -ENXIO; \
-		अगर (handlers == शून्य) \
-			वापस 0; \
-		अगर (handlers->name)				      \
-			वापस handlers->name(cmd->func, cmd->instdata, \
+#define PMF_PARSE_CALL(name, cmd, handlers, p...) \
+	do { \
+		if (cmd->error) \
+			return -ENXIO; \
+		if (handlers == NULL) \
+			return 0; \
+		if (handlers->name)				      \
+			return handlers->name(cmd->func, cmd->instdata, \
 					      cmd->args, p);	      \
-		वापस -1; \
-	पूर्ण जबतक(0) \
+		return -1; \
+	} while(0) \
 
 
-अटल पूर्णांक pmf_parser_ग_लिखो_gpio(काष्ठा pmf_cmd *cmd, काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_write_gpio(struct pmf_cmd *cmd, struct pmf_handlers *h)
+{
 	u8 value = (u8)pmf_next32(cmd);
 	u8 mask = (u8)pmf_next32(cmd);
 
 	LOG_PARSE("pmf: write_gpio(value: %02x, mask: %02x)\n", value, mask);
 
-	PMF_PARSE_CALL(ग_लिखो_gpio, cmd, h, value, mask);
-पूर्ण
+	PMF_PARSE_CALL(write_gpio, cmd, h, value, mask);
+}
 
-अटल पूर्णांक pmf_parser_पढ़ो_gpio(काष्ठा pmf_cmd *cmd, काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_read_gpio(struct pmf_cmd *cmd, struct pmf_handlers *h)
+{
 	u8 mask = (u8)pmf_next32(cmd);
-	पूर्णांक rshअगरt = (पूर्णांक)pmf_next32(cmd);
+	int rshift = (int)pmf_next32(cmd);
 	u8 xor = (u8)pmf_next32(cmd);
 
 	LOG_PARSE("pmf: read_gpio(mask: %02x, rshift: %d, xor: %02x)\n",
-		  mask, rshअगरt, xor);
+		  mask, rshift, xor);
 
-	PMF_PARSE_CALL(पढ़ो_gpio, cmd, h, mask, rshअगरt, xor);
-पूर्ण
+	PMF_PARSE_CALL(read_gpio, cmd, h, mask, rshift, xor);
+}
 
-अटल पूर्णांक pmf_parser_ग_लिखो_reg32(काष्ठा pmf_cmd *cmd, काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_write_reg32(struct pmf_cmd *cmd, struct pmf_handlers *h)
+{
 	u32 offset = pmf_next32(cmd);
 	u32 value = pmf_next32(cmd);
 	u32 mask = pmf_next32(cmd);
@@ -166,21 +165,21 @@
 	LOG_PARSE("pmf: write_reg32(offset: %08x, value: %08x, mask: %08x)\n",
 		  offset, value, mask);
 
-	PMF_PARSE_CALL(ग_लिखो_reg32, cmd, h, offset, value, mask);
-पूर्ण
+	PMF_PARSE_CALL(write_reg32, cmd, h, offset, value, mask);
+}
 
-अटल पूर्णांक pmf_parser_पढ़ो_reg32(काष्ठा pmf_cmd *cmd, काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_read_reg32(struct pmf_cmd *cmd, struct pmf_handlers *h)
+{
 	u32 offset = pmf_next32(cmd);
 
 	LOG_PARSE("pmf: read_reg32(offset: %08x)\n", offset);
 
-	PMF_PARSE_CALL(पढ़ो_reg32, cmd, h, offset);
-पूर्ण
+	PMF_PARSE_CALL(read_reg32, cmd, h, offset);
+}
 
 
-अटल पूर्णांक pmf_parser_ग_लिखो_reg16(काष्ठा pmf_cmd *cmd, काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_write_reg16(struct pmf_cmd *cmd, struct pmf_handlers *h)
+{
 	u32 offset = pmf_next32(cmd);
 	u16 value = (u16)pmf_next32(cmd);
 	u16 mask = (u16)pmf_next32(cmd);
@@ -188,21 +187,21 @@
 	LOG_PARSE("pmf: write_reg16(offset: %08x, value: %04x, mask: %04x)\n",
 		  offset, value, mask);
 
-	PMF_PARSE_CALL(ग_लिखो_reg16, cmd, h, offset, value, mask);
-पूर्ण
+	PMF_PARSE_CALL(write_reg16, cmd, h, offset, value, mask);
+}
 
-अटल पूर्णांक pmf_parser_पढ़ो_reg16(काष्ठा pmf_cmd *cmd, काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_read_reg16(struct pmf_cmd *cmd, struct pmf_handlers *h)
+{
 	u32 offset = pmf_next32(cmd);
 
 	LOG_PARSE("pmf: read_reg16(offset: %08x)\n", offset);
 
-	PMF_PARSE_CALL(पढ़ो_reg16, cmd, h, offset);
-पूर्ण
+	PMF_PARSE_CALL(read_reg16, cmd, h, offset);
+}
 
 
-अटल पूर्णांक pmf_parser_ग_लिखो_reg8(काष्ठा pmf_cmd *cmd, काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_write_reg8(struct pmf_cmd *cmd, struct pmf_handlers *h)
+{
 	u32 offset = pmf_next32(cmd);
 	u8 value = (u16)pmf_next32(cmd);
 	u8 mask = (u16)pmf_next32(cmd);
@@ -210,29 +209,29 @@
 	LOG_PARSE("pmf: write_reg8(offset: %08x, value: %02x, mask: %02x)\n",
 		  offset, value, mask);
 
-	PMF_PARSE_CALL(ग_लिखो_reg8, cmd, h, offset, value, mask);
-पूर्ण
+	PMF_PARSE_CALL(write_reg8, cmd, h, offset, value, mask);
+}
 
-अटल पूर्णांक pmf_parser_पढ़ो_reg8(काष्ठा pmf_cmd *cmd, काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_read_reg8(struct pmf_cmd *cmd, struct pmf_handlers *h)
+{
 	u32 offset = pmf_next32(cmd);
 
 	LOG_PARSE("pmf: read_reg8(offset: %08x)\n", offset);
 
-	PMF_PARSE_CALL(पढ़ो_reg8, cmd, h, offset);
-पूर्ण
+	PMF_PARSE_CALL(read_reg8, cmd, h, offset);
+}
 
-अटल पूर्णांक pmf_parser_delay(काष्ठा pmf_cmd *cmd, काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_delay(struct pmf_cmd *cmd, struct pmf_handlers *h)
+{
 	u32 duration = pmf_next32(cmd);
 
 	LOG_PARSE("pmf: delay(duration: %d us)\n", duration);
 
 	PMF_PARSE_CALL(delay, cmd, h, duration);
-पूर्ण
+}
 
-अटल पूर्णांक pmf_parser_रुको_reg32(काष्ठा pmf_cmd *cmd, काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_wait_reg32(struct pmf_cmd *cmd, struct pmf_handlers *h)
+{
 	u32 offset = pmf_next32(cmd);
 	u32 value = pmf_next32(cmd);
 	u32 mask = pmf_next32(cmd);
@@ -240,11 +239,11 @@
 	LOG_PARSE("pmf: wait_reg32(offset: %08x, comp_value: %08x,mask: %08x)\n",
 		  offset, value, mask);
 
-	PMF_PARSE_CALL(रुको_reg32, cmd, h, offset, value, mask);
-पूर्ण
+	PMF_PARSE_CALL(wait_reg32, cmd, h, offset, value, mask);
+}
 
-अटल पूर्णांक pmf_parser_रुको_reg16(काष्ठा pmf_cmd *cmd, काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_wait_reg16(struct pmf_cmd *cmd, struct pmf_handlers *h)
+{
 	u32 offset = pmf_next32(cmd);
 	u16 value = (u16)pmf_next32(cmd);
 	u16 mask = (u16)pmf_next32(cmd);
@@ -252,11 +251,11 @@
 	LOG_PARSE("pmf: wait_reg16(offset: %08x, comp_value: %04x,mask: %04x)\n",
 		  offset, value, mask);
 
-	PMF_PARSE_CALL(रुको_reg16, cmd, h, offset, value, mask);
-पूर्ण
+	PMF_PARSE_CALL(wait_reg16, cmd, h, offset, value, mask);
+}
 
-अटल पूर्णांक pmf_parser_रुको_reg8(काष्ठा pmf_cmd *cmd, काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_wait_reg8(struct pmf_cmd *cmd, struct pmf_handlers *h)
+{
 	u32 offset = pmf_next32(cmd);
 	u8 value = (u8)pmf_next32(cmd);
 	u8 mask = (u8)pmf_next32(cmd);
@@ -264,37 +263,37 @@
 	LOG_PARSE("pmf: wait_reg8(offset: %08x, comp_value: %02x,mask: %02x)\n",
 		  offset, value, mask);
 
-	PMF_PARSE_CALL(रुको_reg8, cmd, h, offset, value, mask);
-पूर्ण
+	PMF_PARSE_CALL(wait_reg8, cmd, h, offset, value, mask);
+}
 
-अटल पूर्णांक pmf_parser_पढ़ो_i2c(काष्ठा pmf_cmd *cmd, काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_read_i2c(struct pmf_cmd *cmd, struct pmf_handlers *h)
+{
 	u32 bytes = pmf_next32(cmd);
 
 	LOG_PARSE("pmf: read_i2c(bytes: %ud)\n", bytes);
 
-	PMF_PARSE_CALL(पढ़ो_i2c, cmd, h, bytes);
-पूर्ण
+	PMF_PARSE_CALL(read_i2c, cmd, h, bytes);
+}
 
-अटल पूर्णांक pmf_parser_ग_लिखो_i2c(काष्ठा pmf_cmd *cmd, काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_write_i2c(struct pmf_cmd *cmd, struct pmf_handlers *h)
+{
 	u32 bytes = pmf_next32(cmd);
-	स्थिर व्योम *blob = pmf_next_blob(cmd, bytes);
+	const void *blob = pmf_next_blob(cmd, bytes);
 
 	LOG_PARSE("pmf: write_i2c(bytes: %ud) ...\n", bytes);
 	LOG_BLOB("pmf:   data: \n", blob, bytes);
 
-	PMF_PARSE_CALL(ग_लिखो_i2c, cmd, h, bytes, blob);
-पूर्ण
+	PMF_PARSE_CALL(write_i2c, cmd, h, bytes, blob);
+}
 
 
-अटल पूर्णांक pmf_parser_rmw_i2c(काष्ठा pmf_cmd *cmd, काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_rmw_i2c(struct pmf_cmd *cmd, struct pmf_handlers *h)
+{
 	u32 maskbytes = pmf_next32(cmd);
 	u32 valuesbytes = pmf_next32(cmd);
 	u32 totalbytes = pmf_next32(cmd);
-	स्थिर व्योम *maskblob = pmf_next_blob(cmd, maskbytes);
-	स्थिर व्योम *valuesblob = pmf_next_blob(cmd, valuesbytes);
+	const void *maskblob = pmf_next_blob(cmd, maskbytes);
+	const void *valuesblob = pmf_next_blob(cmd, valuesbytes);
 
 	LOG_PARSE("pmf: rmw_i2c(maskbytes: %ud, valuebytes: %ud, "
 		  "totalbytes: %d) ...\n",
@@ -304,39 +303,39 @@
 
 	PMF_PARSE_CALL(rmw_i2c, cmd, h, maskbytes, valuesbytes, totalbytes,
 		       maskblob, valuesblob);
-पूर्ण
+}
 
-अटल पूर्णांक pmf_parser_पढ़ो_cfg(काष्ठा pmf_cmd *cmd, काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_read_cfg(struct pmf_cmd *cmd, struct pmf_handlers *h)
+{
 	u32 offset = pmf_next32(cmd);
 	u32 bytes = pmf_next32(cmd);
 
 	LOG_PARSE("pmf: read_cfg(offset: %x, bytes: %ud)\n", offset, bytes);
 
-	PMF_PARSE_CALL(पढ़ो_cfg, cmd, h, offset, bytes);
-पूर्ण
+	PMF_PARSE_CALL(read_cfg, cmd, h, offset, bytes);
+}
 
 
-अटल पूर्णांक pmf_parser_ग_लिखो_cfg(काष्ठा pmf_cmd *cmd, काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_write_cfg(struct pmf_cmd *cmd, struct pmf_handlers *h)
+{
 	u32 offset = pmf_next32(cmd);
 	u32 bytes = pmf_next32(cmd);
-	स्थिर व्योम *blob = pmf_next_blob(cmd, bytes);
+	const void *blob = pmf_next_blob(cmd, bytes);
 
 	LOG_PARSE("pmf: write_cfg(offset: %x, bytes: %ud)\n", offset, bytes);
 	LOG_BLOB("pmf:   data: \n", blob, bytes);
 
-	PMF_PARSE_CALL(ग_लिखो_cfg, cmd, h, offset, bytes, blob);
-पूर्ण
+	PMF_PARSE_CALL(write_cfg, cmd, h, offset, bytes, blob);
+}
 
-अटल पूर्णांक pmf_parser_rmw_cfg(काष्ठा pmf_cmd *cmd, काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_rmw_cfg(struct pmf_cmd *cmd, struct pmf_handlers *h)
+{
 	u32 offset = pmf_next32(cmd);
 	u32 maskbytes = pmf_next32(cmd);
 	u32 valuesbytes = pmf_next32(cmd);
 	u32 totalbytes = pmf_next32(cmd);
-	स्थिर व्योम *maskblob = pmf_next_blob(cmd, maskbytes);
-	स्थिर व्योम *valuesblob = pmf_next_blob(cmd, valuesbytes);
+	const void *maskblob = pmf_next_blob(cmd, maskbytes);
+	const void *valuesblob = pmf_next_blob(cmd, valuesbytes);
 
 	LOG_PARSE("pmf: rmw_cfg(maskbytes: %ud, valuebytes: %ud,"
 		  " totalbytes: %d) ...\n",
@@ -346,51 +345,51 @@
 
 	PMF_PARSE_CALL(rmw_cfg, cmd, h, offset, maskbytes, valuesbytes,
 		       totalbytes, maskblob, valuesblob);
-पूर्ण
+}
 
 
-अटल पूर्णांक pmf_parser_पढ़ो_i2c_sub(काष्ठा pmf_cmd *cmd, काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_read_i2c_sub(struct pmf_cmd *cmd, struct pmf_handlers *h)
+{
 	u8 subaddr = (u8)pmf_next32(cmd);
 	u32 bytes = pmf_next32(cmd);
 
 	LOG_PARSE("pmf: read_i2c_sub(subaddr: %x, bytes: %ud)\n",
 		  subaddr, bytes);
 
-	PMF_PARSE_CALL(पढ़ो_i2c_sub, cmd, h, subaddr, bytes);
-पूर्ण
+	PMF_PARSE_CALL(read_i2c_sub, cmd, h, subaddr, bytes);
+}
 
-अटल पूर्णांक pmf_parser_ग_लिखो_i2c_sub(काष्ठा pmf_cmd *cmd, काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_write_i2c_sub(struct pmf_cmd *cmd, struct pmf_handlers *h)
+{
 	u8 subaddr = (u8)pmf_next32(cmd);
 	u32 bytes = pmf_next32(cmd);
-	स्थिर व्योम *blob = pmf_next_blob(cmd, bytes);
+	const void *blob = pmf_next_blob(cmd, bytes);
 
 	LOG_PARSE("pmf: write_i2c_sub(subaddr: %x, bytes: %ud) ...\n",
 		  subaddr, bytes);
 	LOG_BLOB("pmf:   data: \n", blob, bytes);
 
-	PMF_PARSE_CALL(ग_लिखो_i2c_sub, cmd, h, subaddr, bytes, blob);
-पूर्ण
+	PMF_PARSE_CALL(write_i2c_sub, cmd, h, subaddr, bytes, blob);
+}
 
-अटल पूर्णांक pmf_parser_set_i2c_mode(काष्ठा pmf_cmd *cmd, काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_set_i2c_mode(struct pmf_cmd *cmd, struct pmf_handlers *h)
+{
 	u32 mode = pmf_next32(cmd);
 
 	LOG_PARSE("pmf: set_i2c_mode(mode: %d)\n", mode);
 
 	PMF_PARSE_CALL(set_i2c_mode, cmd, h, mode);
-पूर्ण
+}
 
 
-अटल पूर्णांक pmf_parser_rmw_i2c_sub(काष्ठा pmf_cmd *cmd, काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_rmw_i2c_sub(struct pmf_cmd *cmd, struct pmf_handlers *h)
+{
 	u8 subaddr = (u8)pmf_next32(cmd);
 	u32 maskbytes = pmf_next32(cmd);
 	u32 valuesbytes = pmf_next32(cmd);
 	u32 totalbytes = pmf_next32(cmd);
-	स्थिर व्योम *maskblob = pmf_next_blob(cmd, maskbytes);
-	स्थिर व्योम *valuesblob = pmf_next_blob(cmd, valuesbytes);
+	const void *maskblob = pmf_next_blob(cmd, maskbytes);
+	const void *valuesblob = pmf_next_blob(cmd, valuesbytes);
 
 	LOG_PARSE("pmf: rmw_i2c_sub(subaddr: %x, maskbytes: %ud, valuebytes: %ud"
 		  ", totalbytes: %d) ...\n",
@@ -400,94 +399,94 @@
 
 	PMF_PARSE_CALL(rmw_i2c_sub, cmd, h, subaddr, maskbytes, valuesbytes,
 		       totalbytes, maskblob, valuesblob);
-पूर्ण
+}
 
-अटल पूर्णांक pmf_parser_पढ़ो_reg32_msrx(काष्ठा pmf_cmd *cmd,
-				      काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_read_reg32_msrx(struct pmf_cmd *cmd,
+				      struct pmf_handlers *h)
+{
 	u32 offset = pmf_next32(cmd);
 	u32 mask = pmf_next32(cmd);
-	u32 shअगरt = pmf_next32(cmd);
+	u32 shift = pmf_next32(cmd);
 	u32 xor = pmf_next32(cmd);
 
 	LOG_PARSE("pmf: read_reg32_msrx(offset: %x, mask: %x, shift: %x,"
-		  " xor: %x\n", offset, mask, shअगरt, xor);
+		  " xor: %x\n", offset, mask, shift, xor);
 
-	PMF_PARSE_CALL(पढ़ो_reg32_msrx, cmd, h, offset, mask, shअगरt, xor);
-पूर्ण
+	PMF_PARSE_CALL(read_reg32_msrx, cmd, h, offset, mask, shift, xor);
+}
 
-अटल पूर्णांक pmf_parser_पढ़ो_reg16_msrx(काष्ठा pmf_cmd *cmd,
-				      काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_read_reg16_msrx(struct pmf_cmd *cmd,
+				      struct pmf_handlers *h)
+{
 	u32 offset = pmf_next32(cmd);
 	u32 mask = pmf_next32(cmd);
-	u32 shअगरt = pmf_next32(cmd);
+	u32 shift = pmf_next32(cmd);
 	u32 xor = pmf_next32(cmd);
 
 	LOG_PARSE("pmf: read_reg16_msrx(offset: %x, mask: %x, shift: %x,"
-		  " xor: %x\n", offset, mask, shअगरt, xor);
+		  " xor: %x\n", offset, mask, shift, xor);
 
-	PMF_PARSE_CALL(पढ़ो_reg16_msrx, cmd, h, offset, mask, shअगरt, xor);
-पूर्ण
-अटल पूर्णांक pmf_parser_पढ़ो_reg8_msrx(काष्ठा pmf_cmd *cmd,
-				     काष्ठा pmf_handlers *h)
-अणु
+	PMF_PARSE_CALL(read_reg16_msrx, cmd, h, offset, mask, shift, xor);
+}
+static int pmf_parser_read_reg8_msrx(struct pmf_cmd *cmd,
+				     struct pmf_handlers *h)
+{
 	u32 offset = pmf_next32(cmd);
 	u32 mask = pmf_next32(cmd);
-	u32 shअगरt = pmf_next32(cmd);
+	u32 shift = pmf_next32(cmd);
 	u32 xor = pmf_next32(cmd);
 
 	LOG_PARSE("pmf: read_reg8_msrx(offset: %x, mask: %x, shift: %x,"
-		  " xor: %x\n", offset, mask, shअगरt, xor);
+		  " xor: %x\n", offset, mask, shift, xor);
 
-	PMF_PARSE_CALL(पढ़ो_reg8_msrx, cmd, h, offset, mask, shअगरt, xor);
-पूर्ण
+	PMF_PARSE_CALL(read_reg8_msrx, cmd, h, offset, mask, shift, xor);
+}
 
-अटल पूर्णांक pmf_parser_ग_लिखो_reg32_slm(काष्ठा pmf_cmd *cmd,
-				      काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_write_reg32_slm(struct pmf_cmd *cmd,
+				      struct pmf_handlers *h)
+{
 	u32 offset = pmf_next32(cmd);
-	u32 shअगरt = pmf_next32(cmd);
+	u32 shift = pmf_next32(cmd);
 	u32 mask = pmf_next32(cmd);
 
 	LOG_PARSE("pmf: write_reg32_slm(offset: %x, shift: %x, mask: %x\n",
-		  offset, shअगरt, mask);
+		  offset, shift, mask);
 
-	PMF_PARSE_CALL(ग_लिखो_reg32_slm, cmd, h, offset, shअगरt, mask);
-पूर्ण
+	PMF_PARSE_CALL(write_reg32_slm, cmd, h, offset, shift, mask);
+}
 
-अटल पूर्णांक pmf_parser_ग_लिखो_reg16_slm(काष्ठा pmf_cmd *cmd,
-				      काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_write_reg16_slm(struct pmf_cmd *cmd,
+				      struct pmf_handlers *h)
+{
 	u32 offset = pmf_next32(cmd);
-	u32 shअगरt = pmf_next32(cmd);
+	u32 shift = pmf_next32(cmd);
 	u32 mask = pmf_next32(cmd);
 
 	LOG_PARSE("pmf: write_reg16_slm(offset: %x, shift: %x, mask: %x\n",
-		  offset, shअगरt, mask);
+		  offset, shift, mask);
 
-	PMF_PARSE_CALL(ग_लिखो_reg16_slm, cmd, h, offset, shअगरt, mask);
-पूर्ण
+	PMF_PARSE_CALL(write_reg16_slm, cmd, h, offset, shift, mask);
+}
 
-अटल पूर्णांक pmf_parser_ग_लिखो_reg8_slm(काष्ठा pmf_cmd *cmd,
-				     काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_write_reg8_slm(struct pmf_cmd *cmd,
+				     struct pmf_handlers *h)
+{
 	u32 offset = pmf_next32(cmd);
-	u32 shअगरt = pmf_next32(cmd);
+	u32 shift = pmf_next32(cmd);
 	u32 mask = pmf_next32(cmd);
 
 	LOG_PARSE("pmf: write_reg8_slm(offset: %x, shift: %x, mask: %x\n",
-		  offset, shअगरt, mask);
+		  offset, shift, mask);
 
-	PMF_PARSE_CALL(ग_लिखो_reg8_slm, cmd, h, offset, shअगरt, mask);
-पूर्ण
+	PMF_PARSE_CALL(write_reg8_slm, cmd, h, offset, shift, mask);
+}
 
-अटल पूर्णांक pmf_parser_mask_and_compare(काष्ठा pmf_cmd *cmd,
-				       काष्ठा pmf_handlers *h)
-अणु
+static int pmf_parser_mask_and_compare(struct pmf_cmd *cmd,
+				       struct pmf_handlers *h)
+{
 	u32 bytes = pmf_next32(cmd);
-	स्थिर व्योम *maskblob = pmf_next_blob(cmd, bytes);
-	स्थिर व्योम *valuesblob = pmf_next_blob(cmd, bytes);
+	const void *maskblob = pmf_next_blob(cmd, bytes);
+	const void *valuesblob = pmf_next_blob(cmd, bytes);
 
 	LOG_PARSE("pmf: mask_and_compare(length: %ud ...\n", bytes);
 	LOG_BLOB("pmf:   mask data: \n", maskblob, bytes);
@@ -495,95 +494,95 @@
 
 	PMF_PARSE_CALL(mask_and_compare, cmd, h,
 		       bytes, maskblob, valuesblob);
-पूर्ण
+}
 
 
-प्रकार पूर्णांक (*pmf_cmd_parser_t)(काष्ठा pmf_cmd *cmd, काष्ठा pmf_handlers *h);
+typedef int (*pmf_cmd_parser_t)(struct pmf_cmd *cmd, struct pmf_handlers *h);
 
-अटल pmf_cmd_parser_t pmf_parsers[PMF_CMD_COUNT] =
-अणु
-	शून्य,
-	pmf_parser_ग_लिखो_gpio,
-	pmf_parser_पढ़ो_gpio,
-	pmf_parser_ग_लिखो_reg32,
-	pmf_parser_पढ़ो_reg32,
-	pmf_parser_ग_लिखो_reg16,
-	pmf_parser_पढ़ो_reg16,
-	pmf_parser_ग_लिखो_reg8,
-	pmf_parser_पढ़ो_reg8,
+static pmf_cmd_parser_t pmf_parsers[PMF_CMD_COUNT] =
+{
+	NULL,
+	pmf_parser_write_gpio,
+	pmf_parser_read_gpio,
+	pmf_parser_write_reg32,
+	pmf_parser_read_reg32,
+	pmf_parser_write_reg16,
+	pmf_parser_read_reg16,
+	pmf_parser_write_reg8,
+	pmf_parser_read_reg8,
 	pmf_parser_delay,
-	pmf_parser_रुको_reg32,
-	pmf_parser_रुको_reg16,
-	pmf_parser_रुको_reg8,
-	pmf_parser_पढ़ो_i2c,
-	pmf_parser_ग_लिखो_i2c,
+	pmf_parser_wait_reg32,
+	pmf_parser_wait_reg16,
+	pmf_parser_wait_reg8,
+	pmf_parser_read_i2c,
+	pmf_parser_write_i2c,
 	pmf_parser_rmw_i2c,
-	शून्य, /* Bogus command */
-	शून्य, /* Shअगरt bytes right: NYI */
-	शून्य, /* Shअगरt bytes left: NYI */
-	pmf_parser_पढ़ो_cfg,
-	pmf_parser_ग_लिखो_cfg,
+	NULL, /* Bogus command */
+	NULL, /* Shift bytes right: NYI */
+	NULL, /* Shift bytes left: NYI */
+	pmf_parser_read_cfg,
+	pmf_parser_write_cfg,
 	pmf_parser_rmw_cfg,
-	pmf_parser_पढ़ो_i2c_sub,
-	pmf_parser_ग_लिखो_i2c_sub,
+	pmf_parser_read_i2c_sub,
+	pmf_parser_write_i2c_sub,
 	pmf_parser_set_i2c_mode,
 	pmf_parser_rmw_i2c_sub,
-	pmf_parser_पढ़ो_reg32_msrx,
-	pmf_parser_पढ़ो_reg16_msrx,
-	pmf_parser_पढ़ो_reg8_msrx,
-	pmf_parser_ग_लिखो_reg32_slm,
-	pmf_parser_ग_लिखो_reg16_slm,
-	pmf_parser_ग_लिखो_reg8_slm,
+	pmf_parser_read_reg32_msrx,
+	pmf_parser_read_reg16_msrx,
+	pmf_parser_read_reg8_msrx,
+	pmf_parser_write_reg32_slm,
+	pmf_parser_write_reg16_slm,
+	pmf_parser_write_reg8_slm,
 	pmf_parser_mask_and_compare,
-पूर्ण;
+};
 
-काष्ठा pmf_device अणु
-	काष्ठा list_head	link;
-	काष्ठा device_node	*node;
-	काष्ठा pmf_handlers	*handlers;
-	काष्ठा list_head	functions;
-	काष्ठा kref		ref;
-पूर्ण;
+struct pmf_device {
+	struct list_head	link;
+	struct device_node	*node;
+	struct pmf_handlers	*handlers;
+	struct list_head	functions;
+	struct kref		ref;
+};
 
-अटल LIST_HEAD(pmf_devices);
-अटल DEFINE_SPINLOCK(pmf_lock);
-अटल DEFINE_MUTEX(pmf_irq_mutex);
+static LIST_HEAD(pmf_devices);
+static DEFINE_SPINLOCK(pmf_lock);
+static DEFINE_MUTEX(pmf_irq_mutex);
 
-अटल व्योम pmf_release_device(काष्ठा kref *kref)
-अणु
-	काष्ठा pmf_device *dev = container_of(kref, काष्ठा pmf_device, ref);
-	kमुक्त(dev);
-पूर्ण
+static void pmf_release_device(struct kref *kref)
+{
+	struct pmf_device *dev = container_of(kref, struct pmf_device, ref);
+	kfree(dev);
+}
 
-अटल अंतरभूत व्योम pmf_put_device(काष्ठा pmf_device *dev)
-अणु
+static inline void pmf_put_device(struct pmf_device *dev)
+{
 	kref_put(&dev->ref, pmf_release_device);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा pmf_device *pmf_get_device(काष्ठा pmf_device *dev)
-अणु
+static inline struct pmf_device *pmf_get_device(struct pmf_device *dev)
+{
 	kref_get(&dev->ref);
-	वापस dev;
-पूर्ण
+	return dev;
+}
 
-अटल अंतरभूत काष्ठा pmf_device *pmf_find_device(काष्ठा device_node *np)
-अणु
-	काष्ठा pmf_device *dev;
+static inline struct pmf_device *pmf_find_device(struct device_node *np)
+{
+	struct pmf_device *dev;
 
-	list_क्रम_each_entry(dev, &pmf_devices, link) अणु
-		अगर (dev->node == np)
-			वापस pmf_get_device(dev);
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(dev, &pmf_devices, link) {
+		if (dev->node == np)
+			return pmf_get_device(dev);
+	}
+	return NULL;
+}
 
-अटल पूर्णांक pmf_parse_one(काष्ठा pmf_function *func,
-			 काष्ठा pmf_handlers *handlers,
-			 व्योम *instdata, काष्ठा pmf_args *args)
-अणु
-	काष्ठा pmf_cmd cmd;
+static int pmf_parse_one(struct pmf_function *func,
+			 struct pmf_handlers *handlers,
+			 void *instdata, struct pmf_args *args)
+{
+	struct pmf_cmd cmd;
 	u32 ccode;
-	पूर्णांक count, rc;
+	int count, rc;
 
 	cmd.cmdptr		= func->data;
 	cmd.cmdend		= func->data + func->length;
@@ -596,58 +595,58 @@
 		  func->name, func->length,
 		  handlers ? "executing" : "parsing");
 
-	/* One subcommand to parse क्रम now */
+	/* One subcommand to parse for now */
 	count = 1;
 
-	जबतक(count-- && cmd.cmdptr < cmd.cmdend) अणु
+	while(count-- && cmd.cmdptr < cmd.cmdend) {
 		/* Get opcode */
 		ccode = pmf_next32(&cmd);
-		/* Check अगर we are hitting a command list, fetch new count */
-		अगर (ccode == 0) अणु
+		/* Check if we are hitting a command list, fetch new count */
+		if (ccode == 0) {
 			count = pmf_next32(&cmd) - 1;
 			ccode = pmf_next32(&cmd);
-		पूर्ण
-		अगर (cmd.error) अणु
+		}
+		if (cmd.error) {
 			LOG_ERROR("pmf: parse error, not enough data\n");
-			वापस -ENXIO;
-		पूर्ण
-		अगर (ccode >= PMF_CMD_COUNT) अणु
+			return -ENXIO;
+		}
+		if (ccode >= PMF_CMD_COUNT) {
 			LOG_ERROR("pmf: command code %d unknown !\n", ccode);
-			वापस -ENXIO;
-		पूर्ण
-		अगर (pmf_parsers[ccode] == शून्य) अणु
+			return -ENXIO;
+		}
+		if (pmf_parsers[ccode] == NULL) {
 			LOG_ERROR("pmf: no parser for command %d !\n", ccode);
-			वापस -ENXIO;
-		पूर्ण
+			return -ENXIO;
+		}
 		rc = pmf_parsers[ccode](&cmd, handlers);
-		अगर (rc != 0) अणु
+		if (rc != 0) {
 			LOG_ERROR("pmf: parser for command %d returned"
 				  " error %d\n", ccode, rc);
-			वापस rc;
-		पूर्ण
-	पूर्ण
+			return rc;
+		}
+	}
 
-	/* We are करोing an initial parse pass, we need to adjust the size */
-	अगर (handlers == शून्य)
+	/* We are doing an initial parse pass, we need to adjust the size */
+	if (handlers == NULL)
 		func->length = cmd.cmdptr - func->data;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pmf_add_function_prop(काष्ठा pmf_device *dev, व्योम *driverdata,
-				 स्थिर अक्षर *name, u32 *data,
-				 अचिन्हित पूर्णांक length)
-अणु
-	पूर्णांक count = 0;
-	काष्ठा pmf_function *func = शून्य;
+static int pmf_add_function_prop(struct pmf_device *dev, void *driverdata,
+				 const char *name, u32 *data,
+				 unsigned int length)
+{
+	int count = 0;
+	struct pmf_function *func = NULL;
 
 	DBG("pmf: Adding functions for platform-do-%s\n", name);
 
-	जबतक (length >= 12) अणु
-		/* Allocate a काष्ठाure */
-		func = kzalloc(माप(*func), GFP_KERNEL);
-		अगर (func == शून्य)
-			जाओ bail;
+	while (length >= 12) {
+		/* Allocate a structure */
+		func = kzalloc(sizeof(*func), GFP_KERNEL);
+		if (func == NULL)
+			goto bail;
 		kref_init(&func->ref);
 		INIT_LIST_HEAD(&func->irq_clients);
 		func->node = dev->node;
@@ -663,224 +662,224 @@
 		DBG("pmf: idx %d: flags=%08x, phandle=%08x "
 		    " %d bytes remaining, parsing...\n",
 		    count+1, func->flags, func->phandle, length);
-		अगर (pmf_parse_one(func, शून्य, शून्य, शून्य)) अणु
-			kमुक्त(func);
-			जाओ bail;
-		पूर्ण
+		if (pmf_parse_one(func, NULL, NULL, NULL)) {
+			kfree(func);
+			goto bail;
+		}
 		length -= func->length;
 		data = (u32 *)(((u8 *)data) + func->length);
 		list_add(&func->link, &dev->functions);
 		pmf_get_device(dev);
 		count++;
-	पूर्ण
+	}
  bail:
 	DBG("pmf: Added %d functions\n", count);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक pmf_add_functions(काष्ठा pmf_device *dev, व्योम *driverdata)
-अणु
-	काष्ठा property *pp;
-#घोषणा PP_PREFIX "platform-do-"
-	स्थिर पूर्णांक plen = म_माप(PP_PREFIX);
-	पूर्णांक count = 0;
+static int pmf_add_functions(struct pmf_device *dev, void *driverdata)
+{
+	struct property *pp;
+#define PP_PREFIX "platform-do-"
+	const int plen = strlen(PP_PREFIX);
+	int count = 0;
 
-	क्रम (pp = dev->node->properties; pp != 0; pp = pp->next) अणु
-		स्थिर अक्षर *name;
-		अगर (म_भेदन(pp->name, PP_PREFIX, plen) != 0)
-			जारी;
+	for (pp = dev->node->properties; pp != 0; pp = pp->next) {
+		const char *name;
+		if (strncmp(pp->name, PP_PREFIX, plen) != 0)
+			continue;
 		name = pp->name + plen;
-		अगर (म_माप(name) && pp->length >= 12)
+		if (strlen(name) && pp->length >= 12)
 			count += pmf_add_function_prop(dev, driverdata, name,
 						       pp->value, pp->length);
-	पूर्ण
-	वापस count;
-पूर्ण
+	}
+	return count;
+}
 
 
-पूर्णांक pmf_रेजिस्टर_driver(काष्ठा device_node *np,
-			काष्ठा pmf_handlers *handlers,
-			व्योम *driverdata)
-अणु
-	काष्ठा pmf_device *dev;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc = 0;
+int pmf_register_driver(struct device_node *np,
+			struct pmf_handlers *handlers,
+			void *driverdata)
+{
+	struct pmf_device *dev;
+	unsigned long flags;
+	int rc = 0;
 
-	अगर (handlers == शून्य)
-		वापस -EINVAL;
+	if (handlers == NULL)
+		return -EINVAL;
 
 	DBG("pmf: registering driver for node %pOF\n", np);
 
 	spin_lock_irqsave(&pmf_lock, flags);
 	dev = pmf_find_device(np);
 	spin_unlock_irqrestore(&pmf_lock, flags);
-	अगर (dev != शून्य) अणु
+	if (dev != NULL) {
 		DBG("pmf: already there !\n");
 		pmf_put_device(dev);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	dev = kzalloc(माप(*dev), GFP_KERNEL);
-	अगर (dev == शून्य) अणु
+	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+	if (dev == NULL) {
 		DBG("pmf: no memory !\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	kref_init(&dev->ref);
 	dev->node = of_node_get(np);
 	dev->handlers = handlers;
 	INIT_LIST_HEAD(&dev->functions);
 
 	rc = pmf_add_functions(dev, driverdata);
-	अगर (rc == 0) अणु
+	if (rc == 0) {
 		DBG("pmf: no functions, disposing.. \n");
 		of_node_put(np);
-		kमुक्त(dev);
-		वापस -ENODEV;
-	पूर्ण
+		kfree(dev);
+		return -ENODEV;
+	}
 
 	spin_lock_irqsave(&pmf_lock, flags);
 	list_add(&dev->link, &pmf_devices);
 	spin_unlock_irqrestore(&pmf_lock, flags);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(pmf_रेजिस्टर_driver);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(pmf_register_driver);
 
-काष्ठा pmf_function *pmf_get_function(काष्ठा pmf_function *func)
-अणु
-	अगर (!try_module_get(func->dev->handlers->owner))
-		वापस शून्य;
+struct pmf_function *pmf_get_function(struct pmf_function *func)
+{
+	if (!try_module_get(func->dev->handlers->owner))
+		return NULL;
 	kref_get(&func->ref);
-	वापस func;
-पूर्ण
+	return func;
+}
 EXPORT_SYMBOL_GPL(pmf_get_function);
 
-अटल व्योम pmf_release_function(काष्ठा kref *kref)
-अणु
-	काष्ठा pmf_function *func =
-		container_of(kref, काष्ठा pmf_function, ref);
+static void pmf_release_function(struct kref *kref)
+{
+	struct pmf_function *func =
+		container_of(kref, struct pmf_function, ref);
 	pmf_put_device(func->dev);
-	kमुक्त(func);
-पूर्ण
+	kfree(func);
+}
 
-अटल अंतरभूत व्योम __pmf_put_function(काष्ठा pmf_function *func)
-अणु
+static inline void __pmf_put_function(struct pmf_function *func)
+{
 	kref_put(&func->ref, pmf_release_function);
-पूर्ण
+}
 
-व्योम pmf_put_function(काष्ठा pmf_function *func)
-अणु
-	अगर (func == शून्य)
-		वापस;
+void pmf_put_function(struct pmf_function *func)
+{
+	if (func == NULL)
+		return;
 	module_put(func->dev->handlers->owner);
 	__pmf_put_function(func);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(pmf_put_function);
 
-व्योम pmf_unरेजिस्टर_driver(काष्ठा device_node *np)
-अणु
-	काष्ठा pmf_device *dev;
-	अचिन्हित दीर्घ flags;
+void pmf_unregister_driver(struct device_node *np)
+{
+	struct pmf_device *dev;
+	unsigned long flags;
 
 	DBG("pmf: unregistering driver for node %pOF\n", np);
 
 	spin_lock_irqsave(&pmf_lock, flags);
 	dev = pmf_find_device(np);
-	अगर (dev == शून्य) अणु
+	if (dev == NULL) {
 		DBG("pmf: not such driver !\n");
 		spin_unlock_irqrestore(&pmf_lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 	list_del(&dev->link);
 
-	जबतक(!list_empty(&dev->functions)) अणु
-		काष्ठा pmf_function *func =
+	while(!list_empty(&dev->functions)) {
+		struct pmf_function *func =
 			list_entry(dev->functions.next, typeof(*func), link);
 		list_del(&func->link);
 		__pmf_put_function(func);
-	पूर्ण
+	}
 
 	pmf_put_device(dev);
 	spin_unlock_irqrestore(&pmf_lock, flags);
-पूर्ण
-EXPORT_SYMBOL_GPL(pmf_unरेजिस्टर_driver);
+}
+EXPORT_SYMBOL_GPL(pmf_unregister_driver);
 
-अटल काष्ठा pmf_function *__pmf_find_function(काष्ठा device_node *target,
-					 स्थिर अक्षर *name, u32 flags)
-अणु
-	काष्ठा device_node *actor = of_node_get(target);
-	काष्ठा pmf_device *dev;
-	काष्ठा pmf_function *func, *result = शून्य;
-	अक्षर fname[64];
-	स्थिर u32 *prop;
+static struct pmf_function *__pmf_find_function(struct device_node *target,
+					 const char *name, u32 flags)
+{
+	struct device_node *actor = of_node_get(target);
+	struct pmf_device *dev;
+	struct pmf_function *func, *result = NULL;
+	char fname[64];
+	const u32 *prop;
 	u32 ph;
 
 	/*
-	 * Look क्रम a "platform-*" function reference. If we can't find
+	 * Look for a "platform-*" function reference. If we can't find
 	 * one, then we fallback to a direct call attempt
 	 */
-	snम_लिखो(fname, 63, "platform-%s", name);
-	prop = of_get_property(target, fname, शून्य);
-	अगर (prop == शून्य)
-		जाओ find_it;
+	snprintf(fname, 63, "platform-%s", name);
+	prop = of_get_property(target, fname, NULL);
+	if (prop == NULL)
+		goto find_it;
 	ph = *prop;
-	अगर (ph == 0)
-		जाओ find_it;
+	if (ph == 0)
+		goto find_it;
 
 	/*
 	 * Ok, now try to find the actor. If we can't find it, we fail,
-	 * there is no poपूर्णांक in falling back there
+	 * there is no point in falling back there
 	 */
 	of_node_put(actor);
 	actor = of_find_node_by_phandle(ph);
-	अगर (actor == शून्य)
-		वापस शून्य;
+	if (actor == NULL)
+		return NULL;
  find_it:
 	dev = pmf_find_device(actor);
-	अगर (dev == शून्य) अणु
-		result = शून्य;
-		जाओ out;
-	पूर्ण
+	if (dev == NULL) {
+		result = NULL;
+		goto out;
+	}
 
-	list_क्रम_each_entry(func, &dev->functions, link) अणु
-		अगर (name && म_भेद(name, func->name))
-			जारी;
-		अगर (func->phandle && target->phandle != func->phandle)
-			जारी;
-		अगर ((func->flags & flags) == 0)
-			जारी;
+	list_for_each_entry(func, &dev->functions, link) {
+		if (name && strcmp(name, func->name))
+			continue;
+		if (func->phandle && target->phandle != func->phandle)
+			continue;
+		if ((func->flags & flags) == 0)
+			continue;
 		result = func;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	pmf_put_device(dev);
 out:
 	of_node_put(actor);
-	वापस result;
-पूर्ण
+	return result;
+}
 
 
-पूर्णांक pmf_रेजिस्टर_irq_client(काष्ठा device_node *target,
-			    स्थिर अक्षर *name,
-			    काष्ठा pmf_irq_client *client)
-अणु
-	काष्ठा pmf_function *func;
-	अचिन्हित दीर्घ flags;
+int pmf_register_irq_client(struct device_node *target,
+			    const char *name,
+			    struct pmf_irq_client *client)
+{
+	struct pmf_function *func;
+	unsigned long flags;
 
 	spin_lock_irqsave(&pmf_lock, flags);
 	func = __pmf_find_function(target, name, PMF_FLAGS_INT_GEN);
-	अगर (func)
+	if (func)
 		func = pmf_get_function(func);
 	spin_unlock_irqrestore(&pmf_lock, flags);
-	अगर (func == शून्य)
-		वापस -ENODEV;
+	if (func == NULL)
+		return -ENODEV;
 
 	/* guard against manipulations of list */
 	mutex_lock(&pmf_irq_mutex);
-	अगर (list_empty(&func->irq_clients))
+	if (list_empty(&func->irq_clients))
 		func->dev->handlers->irq_enable(func);
 
-	/* guard against pmf_करो_irq जबतक changing list */
+	/* guard against pmf_do_irq while changing list */
 	spin_lock_irqsave(&pmf_lock, flags);
 	list_add(&client->link, &func->irq_clients);
 	spin_unlock_irqrestore(&pmf_lock, flags);
@@ -888,136 +887,136 @@ out:
 	client->func = func;
 	mutex_unlock(&pmf_irq_mutex);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(pmf_रेजिस्टर_irq_client);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(pmf_register_irq_client);
 
-व्योम pmf_unरेजिस्टर_irq_client(काष्ठा pmf_irq_client *client)
-अणु
-	काष्ठा pmf_function *func = client->func;
-	अचिन्हित दीर्घ flags;
+void pmf_unregister_irq_client(struct pmf_irq_client *client)
+{
+	struct pmf_function *func = client->func;
+	unsigned long flags;
 
-	BUG_ON(func == शून्य);
+	BUG_ON(func == NULL);
 
 	/* guard against manipulations of list */
 	mutex_lock(&pmf_irq_mutex);
-	client->func = शून्य;
+	client->func = NULL;
 
-	/* guard against pmf_करो_irq जबतक changing list */
+	/* guard against pmf_do_irq while changing list */
 	spin_lock_irqsave(&pmf_lock, flags);
 	list_del(&client->link);
 	spin_unlock_irqrestore(&pmf_lock, flags);
 
-	अगर (list_empty(&func->irq_clients))
+	if (list_empty(&func->irq_clients))
 		func->dev->handlers->irq_disable(func);
 	mutex_unlock(&pmf_irq_mutex);
 	pmf_put_function(func);
-पूर्ण
-EXPORT_SYMBOL_GPL(pmf_unरेजिस्टर_irq_client);
+}
+EXPORT_SYMBOL_GPL(pmf_unregister_irq_client);
 
 
-व्योम pmf_करो_irq(काष्ठा pmf_function *func)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा pmf_irq_client *client;
+void pmf_do_irq(struct pmf_function *func)
+{
+	unsigned long flags;
+	struct pmf_irq_client *client;
 
 	/* For now, using a spinlock over the whole function. Can be made
-	 * to drop the lock using 2 lists अगर necessary
+	 * to drop the lock using 2 lists if necessary
 	 */
 	spin_lock_irqsave(&pmf_lock, flags);
-	list_क्रम_each_entry(client, &func->irq_clients, link) अणु
-		अगर (!try_module_get(client->owner))
-			जारी;
+	list_for_each_entry(client, &func->irq_clients, link) {
+		if (!try_module_get(client->owner))
+			continue;
 		client->handler(client->data);
 		module_put(client->owner);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&pmf_lock, flags);
-पूर्ण
-EXPORT_SYMBOL_GPL(pmf_करो_irq);
+}
+EXPORT_SYMBOL_GPL(pmf_do_irq);
 
 
-पूर्णांक pmf_call_one(काष्ठा pmf_function *func, काष्ठा pmf_args *args)
-अणु
-	काष्ठा pmf_device *dev = func->dev;
-	व्योम *instdata = शून्य;
-	पूर्णांक rc = 0;
+int pmf_call_one(struct pmf_function *func, struct pmf_args *args)
+{
+	struct pmf_device *dev = func->dev;
+	void *instdata = NULL;
+	int rc = 0;
 
 	DBG(" ** pmf_call_one(%pOF/%s) **\n", dev->node, func->name);
 
-	अगर (dev->handlers->begin)
+	if (dev->handlers->begin)
 		instdata = dev->handlers->begin(func, args);
 	rc = pmf_parse_one(func, dev->handlers, instdata, args);
-	अगर (dev->handlers->end)
+	if (dev->handlers->end)
 		dev->handlers->end(func, instdata);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(pmf_call_one);
 
-पूर्णांक pmf_करो_functions(काष्ठा device_node *np, स्थिर अक्षर *name,
-		     u32 phandle, u32 fflags, काष्ठा pmf_args *args)
-अणु
-	काष्ठा pmf_device *dev;
-	काष्ठा pmf_function *func, *पंचांगp;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc = -ENODEV;
+int pmf_do_functions(struct device_node *np, const char *name,
+		     u32 phandle, u32 fflags, struct pmf_args *args)
+{
+	struct pmf_device *dev;
+	struct pmf_function *func, *tmp;
+	unsigned long flags;
+	int rc = -ENODEV;
 
 	spin_lock_irqsave(&pmf_lock, flags);
 
 	dev = pmf_find_device(np);
-	अगर (dev == शून्य) अणु
+	if (dev == NULL) {
 		spin_unlock_irqrestore(&pmf_lock, flags);
-		वापस -ENODEV;
-	पूर्ण
-	list_क्रम_each_entry_safe(func, पंचांगp, &dev->functions, link) अणु
-		अगर (name && म_भेद(name, func->name))
-			जारी;
-		अगर (phandle && func->phandle && phandle != func->phandle)
-			जारी;
-		अगर ((func->flags & fflags) == 0)
-			जारी;
-		अगर (pmf_get_function(func) == शून्य)
-			जारी;
+		return -ENODEV;
+	}
+	list_for_each_entry_safe(func, tmp, &dev->functions, link) {
+		if (name && strcmp(name, func->name))
+			continue;
+		if (phandle && func->phandle && phandle != func->phandle)
+			continue;
+		if ((func->flags & fflags) == 0)
+			continue;
+		if (pmf_get_function(func) == NULL)
+			continue;
 		spin_unlock_irqrestore(&pmf_lock, flags);
 		rc = pmf_call_one(func, args);
 		pmf_put_function(func);
 		spin_lock_irqsave(&pmf_lock, flags);
-	पूर्ण
+	}
 	pmf_put_device(dev);
 	spin_unlock_irqrestore(&pmf_lock, flags);
 
-	वापस rc;
-पूर्ण
-EXPORT_SYMBOL_GPL(pmf_करो_functions);
+	return rc;
+}
+EXPORT_SYMBOL_GPL(pmf_do_functions);
 
 
-काष्ठा pmf_function *pmf_find_function(काष्ठा device_node *target,
-				       स्थिर अक्षर *name)
-अणु
-	काष्ठा pmf_function *func;
-	अचिन्हित दीर्घ flags;
+struct pmf_function *pmf_find_function(struct device_node *target,
+				       const char *name)
+{
+	struct pmf_function *func;
+	unsigned long flags;
 
 	spin_lock_irqsave(&pmf_lock, flags);
 	func = __pmf_find_function(target, name, PMF_FLAGS_ON_DEMAND);
-	अगर (func)
+	if (func)
 		func = pmf_get_function(func);
 	spin_unlock_irqrestore(&pmf_lock, flags);
-	वापस func;
-पूर्ण
+	return func;
+}
 EXPORT_SYMBOL_GPL(pmf_find_function);
 
-पूर्णांक pmf_call_function(काष्ठा device_node *target, स्थिर अक्षर *name,
-		      काष्ठा pmf_args *args)
-अणु
-	काष्ठा pmf_function *func = pmf_find_function(target, name);
-	पूर्णांक rc;
+int pmf_call_function(struct device_node *target, const char *name,
+		      struct pmf_args *args)
+{
+	struct pmf_function *func = pmf_find_function(target, name);
+	int rc;
 
-	अगर (func == शून्य)
-		वापस -ENODEV;
+	if (func == NULL)
+		return -ENODEV;
 
 	rc = pmf_call_one(func, args);
 	pmf_put_function(func);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(pmf_call_function);
 

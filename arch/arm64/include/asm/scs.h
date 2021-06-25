@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_SCS_H
-#घोषणा _ASM_SCS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_SCS_H
+#define _ASM_SCS_H
 
-#अगर_घोषित __ASSEMBLY__
+#ifdef __ASSEMBLY__
 
-#समावेश <यंत्र/यंत्र-offsets.h>
+#include <asm/asm-offsets.h>
 
-#अगर_घोषित CONFIG_SHADOW_CALL_STACK
+#ifdef CONFIG_SHADOW_CALL_STACK
 	scs_sp	.req	x18
 
-	.macro scs_load tsk, पंचांगp
-	ldr	scs_sp, [\टsk, #TSK_TI_SCS_SP]
+	.macro scs_load tsk, tmp
+	ldr	scs_sp, [\tsk, #TSK_TI_SCS_SP]
 	.endm
 
-	.macro scs_save tsk, पंचांगp
-	str	scs_sp, [\टsk, #TSK_TI_SCS_SP]
+	.macro scs_save tsk, tmp
+	str	scs_sp, [\tsk, #TSK_TI_SCS_SP]
 	.endm
-#अन्यथा
-	.macro scs_load tsk, पंचांगp
+#else
+	.macro scs_load tsk, tmp
 	.endm
 
-	.macro scs_save tsk, पंचांगp
+	.macro scs_save tsk, tmp
 	.endm
-#पूर्ण_अगर /* CONFIG_SHADOW_CALL_STACK */
+#endif /* CONFIG_SHADOW_CALL_STACK */
 
-#पूर्ण_अगर /* __ASSEMBLY __ */
+#endif /* __ASSEMBLY __ */
 
-#पूर्ण_अगर /* _ASM_SCS_H */
+#endif /* _ASM_SCS_H */

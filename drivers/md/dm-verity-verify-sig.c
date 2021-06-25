@@ -1,139 +1,138 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2019 Microsoft Corporation.
  *
  * Author:  Jaskaran Singh Khurana <jaskarankhurana@linux.microsoft.com>
  *
  */
-#समावेश <linux/device-mapper.h>
-#समावेश <linux/verअगरication.h>
-#समावेश <keys/user-type.h>
-#समावेश <linux/module.h>
-#समावेश "dm-verity.h"
-#समावेश "dm-verity-verify-sig.h"
+#include <linux/device-mapper.h>
+#include <linux/verification.h>
+#include <keys/user-type.h>
+#include <linux/module.h>
+#include "dm-verity.h"
+#include "dm-verity-verify-sig.h"
 
-#घोषणा DM_VERITY_VERIFY_ERR(s) DM_VERITY_ROOT_HASH_VERIFICATION " " s
+#define DM_VERITY_VERIFY_ERR(s) DM_VERITY_ROOT_HASH_VERIFICATION " " s
 
-अटल bool require_signatures;
+static bool require_signatures;
 module_param(require_signatures, bool, 0444);
 MODULE_PARM_DESC(require_signatures,
 		"Verify the roothash of dm-verity hash tree");
 
-#घोषणा DM_VERITY_IS_SIG_FORCE_ENABLED() \
+#define DM_VERITY_IS_SIG_FORCE_ENABLED() \
 	(require_signatures != false)
 
-bool verity_verअगरy_is_sig_opt_arg(स्थिर अक्षर *arg_name)
-अणु
-	वापस (!strहालcmp(arg_name,
+bool verity_verify_is_sig_opt_arg(const char *arg_name)
+{
+	return (!strcasecmp(arg_name,
 			    DM_VERITY_ROOT_HASH_VERIFICATION_OPT_SIG_KEY));
-पूर्ण
+}
 
-अटल पूर्णांक verity_verअगरy_get_sig_from_key(स्थिर अक्षर *key_desc,
-					काष्ठा dm_verity_sig_opts *sig_opts)
-अणु
-	काष्ठा key *key;
-	स्थिर काष्ठा user_key_payload *ukp;
-	पूर्णांक ret = 0;
+static int verity_verify_get_sig_from_key(const char *key_desc,
+					struct dm_verity_sig_opts *sig_opts)
+{
+	struct key *key;
+	const struct user_key_payload *ukp;
+	int ret = 0;
 
 	key = request_key(&key_type_user,
-			key_desc, शून्य);
-	अगर (IS_ERR(key))
-		वापस PTR_ERR(key);
+			key_desc, NULL);
+	if (IS_ERR(key))
+		return PTR_ERR(key);
 
-	करोwn_पढ़ो(&key->sem);
+	down_read(&key->sem);
 
 	ukp = user_key_payload_locked(key);
-	अगर (!ukp) अणु
+	if (!ukp) {
 		ret = -EKEYREVOKED;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	sig_opts->sig = kदो_स्मृति(ukp->datalen, GFP_KERNEL);
-	अगर (!sig_opts->sig) अणु
+	sig_opts->sig = kmalloc(ukp->datalen, GFP_KERNEL);
+	if (!sig_opts->sig) {
 		ret = -ENOMEM;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 	sig_opts->sig_size = ukp->datalen;
 
-	स_नकल(sig_opts->sig, ukp->data, sig_opts->sig_size);
+	memcpy(sig_opts->sig, ukp->data, sig_opts->sig_size);
 
 end:
-	up_पढ़ो(&key->sem);
+	up_read(&key->sem);
 	key_put(key);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक verity_verअगरy_sig_parse_opt_args(काष्ठा dm_arg_set *as,
-				     काष्ठा dm_verity *v,
-				     काष्ठा dm_verity_sig_opts *sig_opts,
-				     अचिन्हित पूर्णांक *argc,
-				     स्थिर अक्षर *arg_name)
-अणु
-	काष्ठा dm_target *ti = v->ti;
-	पूर्णांक ret = 0;
-	स्थिर अक्षर *sig_key = शून्य;
+int verity_verify_sig_parse_opt_args(struct dm_arg_set *as,
+				     struct dm_verity *v,
+				     struct dm_verity_sig_opts *sig_opts,
+				     unsigned int *argc,
+				     const char *arg_name)
+{
+	struct dm_target *ti = v->ti;
+	int ret = 0;
+	const char *sig_key = NULL;
 
-	अगर (!*argc) अणु
+	if (!*argc) {
 		ti->error = DM_VERITY_VERIFY_ERR("Signature key not specified");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	sig_key = dm_shअगरt_arg(as);
+	sig_key = dm_shift_arg(as);
 	(*argc)--;
 
-	ret = verity_verअगरy_get_sig_from_key(sig_key, sig_opts);
-	अगर (ret < 0)
+	ret = verity_verify_get_sig_from_key(sig_key, sig_opts);
+	if (ret < 0)
 		ti->error = DM_VERITY_VERIFY_ERR("Invalid key specified");
 
 	v->signature_key_desc = kstrdup(sig_key, GFP_KERNEL);
-	अगर (!v->signature_key_desc)
-		वापस -ENOMEM;
+	if (!v->signature_key_desc)
+		return -ENOMEM;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * verअगरy_verअगरy_roothash - Verअगरy the root hash of the verity hash device
+ * verify_verify_roothash - Verify the root hash of the verity hash device
  *			     using builtin trusted keys.
  *
- * @root_hash: For verity, the roothash/data to be verअगरied.
- * @root_hash_len: Size of the roothash/data to be verअगरied.
- * @sig_data: The trusted signature that verअगरies the roothash/data.
+ * @root_hash: For verity, the roothash/data to be verified.
+ * @root_hash_len: Size of the roothash/data to be verified.
+ * @sig_data: The trusted signature that verifies the roothash/data.
  * @sig_len: Size of the signature.
  *
  */
-पूर्णांक verity_verअगरy_root_hash(स्थिर व्योम *root_hash, माप_प्रकार root_hash_len,
-			    स्थिर व्योम *sig_data, माप_प्रकार sig_len)
-अणु
-	पूर्णांक ret;
+int verity_verify_root_hash(const void *root_hash, size_t root_hash_len,
+			    const void *sig_data, size_t sig_len)
+{
+	int ret;
 
-	अगर (!root_hash || root_hash_len == 0)
-		वापस -EINVAL;
+	if (!root_hash || root_hash_len == 0)
+		return -EINVAL;
 
-	अगर (!sig_data  || sig_len == 0) अणु
-		अगर (DM_VERITY_IS_SIG_FORCE_ENABLED())
-			वापस -ENOKEY;
-		अन्यथा
-			वापस 0;
-	पूर्ण
+	if (!sig_data  || sig_len == 0) {
+		if (DM_VERITY_IS_SIG_FORCE_ENABLED())
+			return -ENOKEY;
+		else
+			return 0;
+	}
 
-	ret = verअगरy_pkcs7_signature(root_hash, root_hash_len, sig_data,
+	ret = verify_pkcs7_signature(root_hash, root_hash_len, sig_data,
 				sig_len,
-#अगर_घोषित CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG_SECONDARY_KEYRING
+#ifdef CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG_SECONDARY_KEYRING
 				VERIFY_USE_SECONDARY_KEYRING,
-#अन्यथा
-				शून्य,
-#पूर्ण_अगर
-				VERIFYING_UNSPECIFIED_SIGNATURE, शून्य, शून्य);
+#else
+				NULL,
+#endif
+				VERIFYING_UNSPECIFIED_SIGNATURE, NULL, NULL);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम verity_verअगरy_sig_opts_cleanup(काष्ठा dm_verity_sig_opts *sig_opts)
-अणु
-	kमुक्त(sig_opts->sig);
-	sig_opts->sig = शून्य;
+void verity_verify_sig_opts_cleanup(struct dm_verity_sig_opts *sig_opts)
+{
+	kfree(sig_opts->sig);
+	sig_opts->sig = NULL;
 	sig_opts->sig_size = 0;
-पूर्ण
+}

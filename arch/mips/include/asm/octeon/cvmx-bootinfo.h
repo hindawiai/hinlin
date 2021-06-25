@@ -1,4 +1,3 @@
-<शैली गुरु>
 /***********************license start***************
  * Author: Cavium Networks
  *
@@ -7,33 +6,33 @@
  *
  * Copyright (c) 2003-2008 Cavium Networks
  *
- * This file is मुक्त software; you can redistribute it and/or modअगरy
+ * This file is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, Version 2, as
  * published by the Free Software Foundation.
  *
  * This file is distributed in the hope that it will be useful, but
  * AS-IS and WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE, TITLE, or
- * NONINFRINGEMENT.  See the GNU General Public License क्रम more
+ * NONINFRINGEMENT.  See the GNU General Public License for more
  * details.
  *
  * You should have received a copy of the GNU General Public License
- * aदीर्घ with this file; अगर not, ग_लिखो to the Free Software
- * Foundation, Inc., 51 Franklin St, Fअगरth Floor, Boston, MA 02110-1301 USA
+ * along with this file; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  * or visit http://www.gnu.org/licenses/.
  *
- * This file may also be available under a dअगरferent license from Cavium.
- * Contact Cavium Networks क्रम more inक्रमmation
+ * This file may also be available under a different license from Cavium.
+ * Contact Cavium Networks for more information
  ***********************license end**************************************/
 
 /*
  * Header file containing the ABI with the bootloader.
  */
 
-#अगर_अघोषित __CVMX_BOOTINFO_H__
-#घोषणा __CVMX_BOOTINFO_H__
+#ifndef __CVMX_BOOTINFO_H__
+#define __CVMX_BOOTINFO_H__
 
-#समावेश "cvmx-coremask.h"
+#include "cvmx-coremask.h"
 
 /*
  * Current major and minor versions of the CVMX bootinfo block that is
@@ -41,177 +40,177 @@
  * so that applications can properly handle multiple bootloader
  * versions.
  */
-#घोषणा CVMX_BOOTINFO_MAJ_VER 1
-#घोषणा CVMX_BOOTINFO_MIN_VER 4
+#define CVMX_BOOTINFO_MAJ_VER 1
+#define CVMX_BOOTINFO_MIN_VER 4
 
-#अगर (CVMX_BOOTINFO_MAJ_VER == 1)
-#घोषणा CVMX_BOOTINFO_OCTEON_SERIAL_LEN 20
+#if (CVMX_BOOTINFO_MAJ_VER == 1)
+#define CVMX_BOOTINFO_OCTEON_SERIAL_LEN 20
 /*
- * This काष्ठाure is populated by the bootloader.  For binary
+ * This structure is populated by the bootloader.  For binary
  * compatibility the only changes that should be made are
- * adding members to the end of the काष्ठाure, and the minor
- * version should be incremented at that समय.
+ * adding members to the end of the structure, and the minor
+ * version should be incremented at that time.
  * If an incompatible change is made, the major version
  * must be incremented, and the minor version should be reset
  * to 0.
  */
-काष्ठा cvmx_bootinfo अणु
-#अगर_घोषित __BIG_ENDIAN_BITFIELD
-	uपूर्णांक32_t major_version;
-	uपूर्णांक32_t minor_version;
+struct cvmx_bootinfo {
+#ifdef __BIG_ENDIAN_BITFIELD
+	uint32_t major_version;
+	uint32_t minor_version;
 
-	uपूर्णांक64_t stack_top;
-	uपूर्णांक64_t heap_base;
-	uपूर्णांक64_t heap_end;
-	uपूर्णांक64_t desc_vaddr;
+	uint64_t stack_top;
+	uint64_t heap_base;
+	uint64_t heap_end;
+	uint64_t desc_vaddr;
 
-	uपूर्णांक32_t exception_base_addr;
-	uपूर्णांक32_t stack_size;
-	uपूर्णांक32_t flags;
-	uपूर्णांक32_t core_mask;
+	uint32_t exception_base_addr;
+	uint32_t stack_size;
+	uint32_t flags;
+	uint32_t core_mask;
 	/* DRAM size in megabytes */
-	uपूर्णांक32_t dram_size;
-	/* physical address of मुक्त memory descriptor block*/
-	uपूर्णांक32_t phy_mem_desc_addr;
+	uint32_t dram_size;
+	/* physical address of free memory descriptor block*/
+	uint32_t phy_mem_desc_addr;
 	/* used to pass flags from app to debugger */
-	uपूर्णांक32_t debugger_flags_base_addr;
+	uint32_t debugger_flags_base_addr;
 
-	/* CPU घड़ी speed, in hz */
-	uपूर्णांक32_t eघड़ी_hz;
+	/* CPU clock speed, in hz */
+	uint32_t eclock_hz;
 
-	/* DRAM घड़ी speed, in hz */
-	uपूर्णांक32_t dघड़ी_hz;
+	/* DRAM clock speed, in hz */
+	uint32_t dclock_hz;
 
-	uपूर्णांक32_t reserved0;
-	uपूर्णांक16_t board_type;
-	uपूर्णांक8_t board_rev_major;
-	uपूर्णांक8_t board_rev_minor;
-	uपूर्णांक16_t reserved1;
-	uपूर्णांक8_t reserved2;
-	uपूर्णांक8_t reserved3;
-	अक्षर board_serial_number[CVMX_BOOTINFO_OCTEON_SERIAL_LEN];
-	uपूर्णांक8_t mac_addr_base[6];
-	uपूर्णांक8_t mac_addr_count;
-#अगर (CVMX_BOOTINFO_MIN_VER >= 1)
+	uint32_t reserved0;
+	uint16_t board_type;
+	uint8_t board_rev_major;
+	uint8_t board_rev_minor;
+	uint16_t reserved1;
+	uint8_t reserved2;
+	uint8_t reserved3;
+	char board_serial_number[CVMX_BOOTINFO_OCTEON_SERIAL_LEN];
+	uint8_t mac_addr_base[6];
+	uint8_t mac_addr_count;
+#if (CVMX_BOOTINFO_MIN_VER >= 1)
 	/*
 	 * Several boards support compact flash on the Octeon boot
-	 * bus.	 The CF memory spaces may be mapped to dअगरferent
-	 * addresses on dअगरferent boards.  These are the physical
+	 * bus.	 The CF memory spaces may be mapped to different
+	 * addresses on different boards.  These are the physical
 	 * addresses, so care must be taken to use the correct
 	 * XKPHYS/KSEG0 addressing depending on the application's
-	 * ABI.	 These values will be 0 अगर CF is not present.
+	 * ABI.	 These values will be 0 if CF is not present.
 	 */
-	uपूर्णांक64_t compact_flash_common_base_addr;
-	uपूर्णांक64_t compact_flash_attribute_base_addr;
+	uint64_t compact_flash_common_base_addr;
+	uint64_t compact_flash_attribute_base_addr;
 	/*
 	 * Base address of the LED display (as on EBT3000 board)
-	 * This will be 0 अगर LED display not present.
+	 * This will be 0 if LED display not present.
 	 */
-	uपूर्णांक64_t led_display_base_addr;
-#पूर्ण_अगर
-#अगर (CVMX_BOOTINFO_MIN_VER >= 2)
-	/* DFA reference घड़ी in hz (अगर applicable)*/
-	uपूर्णांक32_t dfa_ref_घड़ी_hz;
+	uint64_t led_display_base_addr;
+#endif
+#if (CVMX_BOOTINFO_MIN_VER >= 2)
+	/* DFA reference clock in hz (if applicable)*/
+	uint32_t dfa_ref_clock_hz;
 
 	/*
 	 * flags indicating various configuration options.  These
 	 * flags supercede the 'flags' variable and should be used
-	 * instead अगर available.
+	 * instead if available.
 	 */
-	uपूर्णांक32_t config_flags;
-#पूर्ण_अगर
-#अगर (CVMX_BOOTINFO_MIN_VER >= 3)
+	uint32_t config_flags;
+#endif
+#if (CVMX_BOOTINFO_MIN_VER >= 3)
 	/*
-	 * Address of the OF Flattened Device Tree काष्ठाure
+	 * Address of the OF Flattened Device Tree structure
 	 * describing the board.
 	 */
-	uपूर्णांक64_t fdt_addr;
-#पूर्ण_अगर
-#अगर (CVMX_BOOTINFO_MIN_VER >= 4)
+	uint64_t fdt_addr;
+#endif
+#if (CVMX_BOOTINFO_MIN_VER >= 4)
 	/*
-	 * Coremask used क्रम processors with more than 32 cores
+	 * Coremask used for processors with more than 32 cores
 	 * or with OCI.  This replaces core_mask.
 	 */
-	काष्ठा cvmx_coremask ext_core_mask;
-#पूर्ण_अगर
-#अन्यथा				/* __BIG_ENDIAN */
+	struct cvmx_coremask ext_core_mask;
+#endif
+#else				/* __BIG_ENDIAN */
 	/*
-	 * Little-Endian: When the CPU mode is चयनed to
-	 * little-endian, the view of the काष्ठाure has some of the
+	 * Little-Endian: When the CPU mode is switched to
+	 * little-endian, the view of the structure has some of the
 	 * fields swapped.
 	 */
-	uपूर्णांक32_t minor_version;
-	uपूर्णांक32_t major_version;
+	uint32_t minor_version;
+	uint32_t major_version;
 
-	uपूर्णांक64_t stack_top;
-	uपूर्णांक64_t heap_base;
-	uपूर्णांक64_t heap_end;
-	uपूर्णांक64_t desc_vaddr;
+	uint64_t stack_top;
+	uint64_t heap_base;
+	uint64_t heap_end;
+	uint64_t desc_vaddr;
 
-	uपूर्णांक32_t stack_size;
-	uपूर्णांक32_t exception_base_addr;
+	uint32_t stack_size;
+	uint32_t exception_base_addr;
 
-	uपूर्णांक32_t core_mask;
-	uपूर्णांक32_t flags;
+	uint32_t core_mask;
+	uint32_t flags;
 
-	uपूर्णांक32_t phy_mem_desc_addr;
-	uपूर्णांक32_t dram_size;
+	uint32_t phy_mem_desc_addr;
+	uint32_t dram_size;
 
-	uपूर्णांक32_t eघड़ी_hz;
-	uपूर्णांक32_t debugger_flags_base_addr;
+	uint32_t eclock_hz;
+	uint32_t debugger_flags_base_addr;
 
-	uपूर्णांक32_t reserved0;
-	uपूर्णांक32_t dघड़ी_hz;
+	uint32_t reserved0;
+	uint32_t dclock_hz;
 
-	uपूर्णांक8_t reserved3;
-	uपूर्णांक8_t reserved2;
-	uपूर्णांक16_t reserved1;
-	uपूर्णांक8_t board_rev_minor;
-	uपूर्णांक8_t board_rev_major;
-	uपूर्णांक16_t board_type;
+	uint8_t reserved3;
+	uint8_t reserved2;
+	uint16_t reserved1;
+	uint8_t board_rev_minor;
+	uint8_t board_rev_major;
+	uint16_t board_type;
 
-	अक्षर board_serial_number[CVMX_BOOTINFO_OCTEON_SERIAL_LEN];
-	uपूर्णांक8_t mac_addr_base[6];
-	uपूर्णांक8_t mac_addr_count;
-	uपूर्णांक8_t pad[5];
+	char board_serial_number[CVMX_BOOTINFO_OCTEON_SERIAL_LEN];
+	uint8_t mac_addr_base[6];
+	uint8_t mac_addr_count;
+	uint8_t pad[5];
 
-#अगर (CVMX_BOOTINFO_MIN_VER >= 1)
-	uपूर्णांक64_t compact_flash_common_base_addr;
-	uपूर्णांक64_t compact_flash_attribute_base_addr;
-	uपूर्णांक64_t led_display_base_addr;
-#पूर्ण_अगर
-#अगर (CVMX_BOOTINFO_MIN_VER >= 2)
-	uपूर्णांक32_t config_flags;
-	uपूर्णांक32_t dfa_ref_घड़ी_hz;
-#पूर्ण_अगर
-#अगर (CVMX_BOOTINFO_MIN_VER >= 3)
-	uपूर्णांक64_t fdt_addr;
-#पूर्ण_अगर
-#अगर (CVMX_BOOTINFO_MIN_VER >= 4)
-	काष्ठा cvmx_coremask ext_core_mask;
-#पूर्ण_अगर
-#पूर्ण_अगर
-पूर्ण;
+#if (CVMX_BOOTINFO_MIN_VER >= 1)
+	uint64_t compact_flash_common_base_addr;
+	uint64_t compact_flash_attribute_base_addr;
+	uint64_t led_display_base_addr;
+#endif
+#if (CVMX_BOOTINFO_MIN_VER >= 2)
+	uint32_t config_flags;
+	uint32_t dfa_ref_clock_hz;
+#endif
+#if (CVMX_BOOTINFO_MIN_VER >= 3)
+	uint64_t fdt_addr;
+#endif
+#if (CVMX_BOOTINFO_MIN_VER >= 4)
+	struct cvmx_coremask ext_core_mask;
+#endif
+#endif
+};
 
-#घोषणा CVMX_BOOTINFO_CFG_FLAG_PCI_HOST			(1ull << 0)
-#घोषणा CVMX_BOOTINFO_CFG_FLAG_PCI_TARGET		(1ull << 1)
-#घोषणा CVMX_BOOTINFO_CFG_FLAG_DEBUG			(1ull << 2)
-#घोषणा CVMX_BOOTINFO_CFG_FLAG_NO_MAGIC			(1ull << 3)
-/* This flag is set अगर the TLB mappings are not contained in the
+#define CVMX_BOOTINFO_CFG_FLAG_PCI_HOST			(1ull << 0)
+#define CVMX_BOOTINFO_CFG_FLAG_PCI_TARGET		(1ull << 1)
+#define CVMX_BOOTINFO_CFG_FLAG_DEBUG			(1ull << 2)
+#define CVMX_BOOTINFO_CFG_FLAG_NO_MAGIC			(1ull << 3)
+/* This flag is set if the TLB mappings are not contained in the
  * 0x10000000 - 0x20000000 boot bus region. */
-#घोषणा CVMX_BOOTINFO_CFG_FLAG_OVERSIZE_TLB_MAPPING	(1ull << 4)
-#घोषणा CVMX_BOOTINFO_CFG_FLAG_BREAK			(1ull << 5)
+#define CVMX_BOOTINFO_CFG_FLAG_OVERSIZE_TLB_MAPPING	(1ull << 4)
+#define CVMX_BOOTINFO_CFG_FLAG_BREAK			(1ull << 5)
 
-#पूर्ण_अगर /*   (CVMX_BOOTINFO_MAJ_VER == 1) */
+#endif /*   (CVMX_BOOTINFO_MAJ_VER == 1) */
 
-/* Type defines क्रम board and chip types */
-क्रमागत cvmx_board_types_क्रमागत अणु
-	CVMX_BOARD_TYPE_शून्य = 0,
+/* Type defines for board and chip types */
+enum cvmx_board_types_enum {
+	CVMX_BOARD_TYPE_NULL = 0,
 	CVMX_BOARD_TYPE_SIM = 1,
 	CVMX_BOARD_TYPE_EBT3000 = 2,
 	CVMX_BOARD_TYPE_KODAMA = 3,
 	CVMX_BOARD_TYPE_NIAGARA = 4,
-	CVMX_BOARD_TYPE_NAC38 = 5,	/* क्रमmerly NAO38 */
+	CVMX_BOARD_TYPE_NAC38 = 5,	/* formerly NAO38 */
 	CVMX_BOARD_TYPE_THUNDER = 6,
 	CVMX_BOARD_TYPE_TRANTOR = 7,
 	CVMX_BOARD_TYPE_EBH3000 = 8,
@@ -258,12 +257,12 @@
 
 	/*
 	 * The range from CVMX_BOARD_TYPE_MAX to
-	 * CVMX_BOARD_TYPE_CUST_DEFINED_MIN is reserved क्रम future
+	 * CVMX_BOARD_TYPE_CUST_DEFINED_MIN is reserved for future
 	 * SDK use.
 	 */
 
 	/*
-	 * Set aside a range क्रम customer boards.  These numbers are managed
+	 * Set aside a range for customer boards.  These numbers are managed
 	 * by Cavium.
 	 */
 	CVMX_BOARD_TYPE_CUST_DEFINED_MIN = 10000,
@@ -291,7 +290,7 @@
 	CVMX_BOARD_TYPE_CUST_DEFINED_MAX = 20000,
 
 	/*
-	 * Set aside a range क्रम customer निजी use.	The SDK won't
+	 * Set aside a range for customer private use.	The SDK won't
 	 * use any numbers in this range.
 	 */
 	CVMX_BOARD_TYPE_CUST_PRIVATE_MIN = 20001,
@@ -303,28 +302,28 @@
 	CVMX_BOARD_TYPE_KONTRON_S1901 = 21901,
 	CVMX_BOARD_TYPE_CUST_PRIVATE_MAX = 30000,
 
-	/* The reमुख्यing range is reserved क्रम future use. */
-पूर्ण;
+	/* The remaining range is reserved for future use. */
+};
 
-क्रमागत cvmx_chip_types_क्रमागत अणु
-	CVMX_CHIP_TYPE_शून्य = 0,
+enum cvmx_chip_types_enum {
+	CVMX_CHIP_TYPE_NULL = 0,
 	CVMX_CHIP_SIM_TYPE_DEPRECATED = 1,
 	CVMX_CHIP_TYPE_OCTEON_SAMPLE = 2,
 	CVMX_CHIP_TYPE_MAX,
-पूर्ण;
+};
 
-/* Compatibility alias क्रम NAC38 name change, planned to be हटाओd
+/* Compatibility alias for NAC38 name change, planned to be removed
  * from SDK 1.7 */
-#घोषणा CVMX_BOARD_TYPE_NAO38	CVMX_BOARD_TYPE_NAC38
+#define CVMX_BOARD_TYPE_NAO38	CVMX_BOARD_TYPE_NAC38
 
-/* Functions to वापस string based on type */
-#घोषणा ENUM_BRD_TYPE_CASE(x) \
-	हाल x: वापस(#x + 16);	/* Skip CVMX_BOARD_TYPE_ */
-अटल अंतरभूत स्थिर अक्षर *cvmx_board_type_to_string(क्रमागत
-						    cvmx_board_types_क्रमागत type)
-अणु
-	चयन (type) अणु
-		ENUM_BRD_TYPE_CASE(CVMX_BOARD_TYPE_शून्य)
+/* Functions to return string based on type */
+#define ENUM_BRD_TYPE_CASE(x) \
+	case x: return(#x + 16);	/* Skip CVMX_BOARD_TYPE_ */
+static inline const char *cvmx_board_type_to_string(enum
+						    cvmx_board_types_enum type)
+{
+	switch (type) {
+		ENUM_BRD_TYPE_CASE(CVMX_BOARD_TYPE_NULL)
 		ENUM_BRD_TYPE_CASE(CVMX_BOARD_TYPE_SIM)
 		ENUM_BRD_TYPE_CASE(CVMX_BOARD_TYPE_EBT3000)
 		ENUM_BRD_TYPE_CASE(CVMX_BOARD_TYPE_KODAMA)
@@ -397,7 +396,7 @@
 		ENUM_BRD_TYPE_CASE(CVMX_BOARD_TYPE_CUST_L2_ZINWELL)
 		ENUM_BRD_TYPE_CASE(CVMX_BOARD_TYPE_CUST_DEFINED_MAX)
 
-		    /* Customer निजी range */
+		    /* Customer private range */
 		ENUM_BRD_TYPE_CASE(CVMX_BOARD_TYPE_CUST_PRIVATE_MIN)
 		ENUM_BRD_TYPE_CASE(CVMX_BOARD_TYPE_UBNT_E100)
 		ENUM_BRD_TYPE_CASE(CVMX_BOARD_TYPE_UBNT_E200)
@@ -406,22 +405,22 @@
 		ENUM_BRD_TYPE_CASE(CVMX_BOARD_TYPE_UBNT_E300)
 		ENUM_BRD_TYPE_CASE(CVMX_BOARD_TYPE_KONTRON_S1901)
 		ENUM_BRD_TYPE_CASE(CVMX_BOARD_TYPE_CUST_PRIVATE_MAX)
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	}
+	return NULL;
+}
 
-#घोषणा ENUM_CHIP_TYPE_CASE(x) \
-	हाल x: वापस(#x + 15);	/* Skip CVMX_CHIP_TYPE */
-अटल अंतरभूत स्थिर अक्षर *cvmx_chip_type_to_string(क्रमागत
-						   cvmx_chip_types_क्रमागत type)
-अणु
-	चयन (type) अणु
-		ENUM_CHIP_TYPE_CASE(CVMX_CHIP_TYPE_शून्य)
+#define ENUM_CHIP_TYPE_CASE(x) \
+	case x: return(#x + 15);	/* Skip CVMX_CHIP_TYPE */
+static inline const char *cvmx_chip_type_to_string(enum
+						   cvmx_chip_types_enum type)
+{
+	switch (type) {
+		ENUM_CHIP_TYPE_CASE(CVMX_CHIP_TYPE_NULL)
 		ENUM_CHIP_TYPE_CASE(CVMX_CHIP_SIM_TYPE_DEPRECATED)
 		ENUM_CHIP_TYPE_CASE(CVMX_CHIP_TYPE_OCTEON_SAMPLE)
 		ENUM_CHIP_TYPE_CASE(CVMX_CHIP_TYPE_MAX)
-	पूर्ण
-	वापस "Unsupported Chip";
-पूर्ण
+	}
+	return "Unsupported Chip";
+}
 
-#पूर्ण_अगर /* __CVMX_BOOTINFO_H__ */
+#endif /* __CVMX_BOOTINFO_H__ */

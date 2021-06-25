@@ -1,50 +1,49 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * NFS protocol definitions
  *
- * This file contains स्थिरants mostly क्रम Version 2 of the protocol,
+ * This file contains constants mostly for Version 2 of the protocol,
  * but also has a couple of NFSv3 bits in (notably the error codes).
  */
-#अगर_अघोषित _UAPI_LINUX_NFS_H
-#घोषणा _UAPI_LINUX_NFS_H
+#ifndef _UAPI_LINUX_NFS_H
+#define _UAPI_LINUX_NFS_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#घोषणा NFS_PROGRAM	100003
-#घोषणा NFS_PORT	2049
-#घोषणा NFS_RDMA_PORT	20049
-#घोषणा NFS_MAXDATA	8192
-#घोषणा NFS_MAXPATHLEN	1024
-#घोषणा NFS_MAXNAMLEN	255
-#घोषणा NFS_MAXGROUPS	16
-#घोषणा NFS_FHSIZE	32
-#घोषणा NFS_COOKIESIZE	4
-#घोषणा NFS_FIFO_DEV	(-1)
-#घोषणा NFSMODE_FMT	0170000
-#घोषणा NFSMODE_सूची	0040000
-#घोषणा NFSMODE_CHR	0020000
-#घोषणा NFSMODE_BLK	0060000
-#घोषणा NFSMODE_REG	0100000
-#घोषणा NFSMODE_LNK	0120000
-#घोषणा NFSMODE_SOCK	0140000
-#घोषणा NFSMODE_FIFO	0010000
+#define NFS_PROGRAM	100003
+#define NFS_PORT	2049
+#define NFS_RDMA_PORT	20049
+#define NFS_MAXDATA	8192
+#define NFS_MAXPATHLEN	1024
+#define NFS_MAXNAMLEN	255
+#define NFS_MAXGROUPS	16
+#define NFS_FHSIZE	32
+#define NFS_COOKIESIZE	4
+#define NFS_FIFO_DEV	(-1)
+#define NFSMODE_FMT	0170000
+#define NFSMODE_DIR	0040000
+#define NFSMODE_CHR	0020000
+#define NFSMODE_BLK	0060000
+#define NFSMODE_REG	0100000
+#define NFSMODE_LNK	0120000
+#define NFSMODE_SOCK	0140000
+#define NFSMODE_FIFO	0010000
 
-#घोषणा NFS_MNT_PROGRAM		100005
-#घोषणा NFS_MNT_VERSION		1
-#घोषणा NFS_MNT3_VERSION	3
+#define NFS_MNT_PROGRAM		100005
+#define NFS_MNT_VERSION		1
+#define NFS_MNT3_VERSION	3
 
-#घोषणा NFS_PIPE_सूचीNAME "nfs"
+#define NFS_PIPE_DIRNAME "nfs"
 
 /*
  * NFS stats. The good thing with these values is that NFSv3 errors are
  * a superset of NFSv2 errors (with the exception of NFSERR_WFLUSH which
- * no-one uses anyway), so we can happily mix code as दीर्घ as we make sure
- * no NFSv3 errors are वापसed to NFSv2 clients.
+ * no-one uses anyway), so we can happily mix code as long as we make sure
+ * no NFSv3 errors are returned to NFSv2 clients.
  * Error codes that have a `--' in the v2 column are not part of the
  * standard, but seem to be widely used nevertheless.
  */
- क्रमागत nfs_stat अणु
+ enum nfs_stat {
 	NFS_OK = 0,			/* v2 v3 v4 */
 	NFSERR_PERM = 1,		/* v2 v3 v4 */
 	NFSERR_NOENT = 2,		/* v2 v3 v4 */
@@ -55,8 +54,8 @@
 	NFSERR_EXIST = 17,		/* v2 v3 v4 */
 	NFSERR_XDEV = 18,		/*    v3 v4 */
 	NFSERR_NODEV = 19,		/* v2 v3 v4 */
-	NFSERR_NOTसूची = 20,		/* v2 v3 v4 */
-	NFSERR_ISसूची = 21,		/* v2 v3 v4 */
+	NFSERR_NOTDIR = 20,		/* v2 v3 v4 */
+	NFSERR_ISDIR = 21,		/* v2 v3 v4 */
 	NFSERR_INVAL = 22,		/* v2 v3 v4 */
 	NFSERR_FBIG = 27,		/* v2 v3 v4 */
 	NFSERR_NOSPC = 28,		/* v2 v3 v4 */
@@ -88,7 +87,7 @@
 	NFSERR_CLID_INUSE = 10017,	/*       v4 */
 	NFSERR_RESOURCE = 10018,	/*       v4 */
 	NFSERR_MOVED = 10019,		/*       v4 */
-	NFSERR_NOखाताHANDLE = 10020,	/*       v4 */
+	NFSERR_NOFILEHANDLE = 10020,	/*       v4 */
 	NFSERR_MINOR_VERS_MISMATCH = 10021,   /* v4 */
 	NFSERR_STALE_CLIENTID = 10022,	/*       v4 */
 	NFSERR_STALE_STATEID = 10023,   /*       v4 */
@@ -114,23 +113,23 @@
 	NFSERR_LOCK_NOTSUPP = 10043,   /*       v4 */
 	NFSERR_OP_ILLEGAL = 10044,     /*       v4 */
 	NFSERR_DEADLOCK = 10045,       /*       v4 */
-	NFSERR_खाता_OPEN = 10046,      /*       v4 */
+	NFSERR_FILE_OPEN = 10046,      /*       v4 */
 	NFSERR_ADMIN_REVOKED = 10047,  /*       v4 */
 	NFSERR_CB_PATH_DOWN = 10048,   /*       v4 */
-पूर्ण;
+};
 
 /* NFSv2 file types - beware, these are not the same in NFSv3 */
 
-क्रमागत nfs_ftype अणु
+enum nfs_ftype {
 	NFNON = 0,
 	NFREG = 1,
-	NFसूची = 2,
+	NFDIR = 2,
 	NFBLK = 3,
 	NFCHR = 4,
 	NFLNK = 5,
 	NFSOCK = 6,
 	NFBAD = 7,
 	NFFIFO = 8
-पूर्ण;
+};
 
-#पूर्ण_अगर /* _UAPI_LINUX_NFS_H */
+#endif /* _UAPI_LINUX_NFS_H */

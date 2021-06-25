@@ -1,11 +1,10 @@
-<शैली गुरु>
 /*
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
- * of this software and associated करोcumentation files (the "Software"), to
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
  * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modअगरy, merge, publish, distribute, sublicense, and/or
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to करो so, subject to the following conditions:
+ * furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,304 +18,304 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#अगर_अघोषित __XEN_PUBLIC_PHYSDEV_H__
-#घोषणा __XEN_PUBLIC_PHYSDEV_H__
+#ifndef __XEN_PUBLIC_PHYSDEV_H__
+#define __XEN_PUBLIC_PHYSDEV_H__
 
 /*
- * Prototype क्रम this hypercall is:
- *  पूर्णांक physdev_op(पूर्णांक cmd, व्योम *args)
+ * Prototype for this hypercall is:
+ *  int physdev_op(int cmd, void *args)
  * @cmd	 == PHYSDEVOP_??? (physdev operation).
- * @args == Operation-specअगरic extra arguments (शून्य अगर none).
+ * @args == Operation-specific extra arguments (NULL if none).
  */
 
 /*
- * Notअगरy end-of-पूर्णांकerrupt (EOI) क्रम the specअगरied IRQ.
- * @arg == poपूर्णांकer to physdev_eoi काष्ठाure.
+ * Notify end-of-interrupt (EOI) for the specified IRQ.
+ * @arg == pointer to physdev_eoi structure.
  */
-#घोषणा PHYSDEVOP_eoi			12
-काष्ठा physdev_eoi अणु
+#define PHYSDEVOP_eoi			12
+struct physdev_eoi {
 	/* IN */
-	uपूर्णांक32_t irq;
-पूर्ण;
+	uint32_t irq;
+};
 
 /*
- * Register a shared page क्रम the hypervisor to indicate whether the guest
+ * Register a shared page for the hypervisor to indicate whether the guest
  * must issue PHYSDEVOP_eoi. The semantics of PHYSDEVOP_eoi change slightly
  * once the guest used this function in that the associated event channel
- * will स्वतःmatically get unmasked. The page रेजिस्टरed is used as a bit
+ * will automatically get unmasked. The page registered is used as a bit
  * array indexed by Xen's PIRQ value.
  */
-#घोषणा PHYSDEVOP_pirq_eoi_gmfn_v1       17
+#define PHYSDEVOP_pirq_eoi_gmfn_v1       17
 /*
- * Register a shared page क्रम the hypervisor to indicate whether the
+ * Register a shared page for the hypervisor to indicate whether the
  * guest must issue PHYSDEVOP_eoi. This hypercall is very similar to
- * PHYSDEVOP_pirq_eoi_gmfn_v1 but it करोesn't change the semantics of
- * PHYSDEVOP_eoi. The page रेजिस्टरed is used as a bit array indexed by
+ * PHYSDEVOP_pirq_eoi_gmfn_v1 but it doesn't change the semantics of
+ * PHYSDEVOP_eoi. The page registered is used as a bit array indexed by
  * Xen's PIRQ value.
  */
-#घोषणा PHYSDEVOP_pirq_eoi_gmfn_v2       28
-काष्ठा physdev_pirq_eoi_gmfn अणु
+#define PHYSDEVOP_pirq_eoi_gmfn_v2       28
+struct physdev_pirq_eoi_gmfn {
     /* IN */
-    xen_uदीर्घ_t gmfn;
-पूर्ण;
+    xen_ulong_t gmfn;
+};
 
 /*
  * Query the status of an IRQ line.
- * @arg == poपूर्णांकer to physdev_irq_status_query काष्ठाure.
+ * @arg == pointer to physdev_irq_status_query structure.
  */
-#घोषणा PHYSDEVOP_irq_status_query	 5
-काष्ठा physdev_irq_status_query अणु
+#define PHYSDEVOP_irq_status_query	 5
+struct physdev_irq_status_query {
 	/* IN */
-	uपूर्णांक32_t irq;
+	uint32_t irq;
 	/* OUT */
-	uपूर्णांक32_t flags; /* XENIRQSTAT_* */
-पूर्ण;
+	uint32_t flags; /* XENIRQSTAT_* */
+};
 
 /* Need to call PHYSDEVOP_eoi when the IRQ has been serviced? */
-#घोषणा _XENIRQSTAT_needs_eoi	(0)
-#घोषणा	 XENIRQSTAT_needs_eoi	(1U<<_XENIRQSTAT_needs_eoi)
+#define _XENIRQSTAT_needs_eoi	(0)
+#define	 XENIRQSTAT_needs_eoi	(1U<<_XENIRQSTAT_needs_eoi)
 
 /* IRQ shared by multiple guests? */
-#घोषणा _XENIRQSTAT_shared	(1)
-#घोषणा	 XENIRQSTAT_shared	(1U<<_XENIRQSTAT_shared)
+#define _XENIRQSTAT_shared	(1)
+#define	 XENIRQSTAT_shared	(1U<<_XENIRQSTAT_shared)
 
 /*
  * Set the current VCPU's I/O privilege level.
- * @arg == poपूर्णांकer to physdev_set_iopl काष्ठाure.
+ * @arg == pointer to physdev_set_iopl structure.
  */
-#घोषणा PHYSDEVOP_set_iopl		 6
-काष्ठा physdev_set_iopl अणु
+#define PHYSDEVOP_set_iopl		 6
+struct physdev_set_iopl {
 	/* IN */
-	uपूर्णांक32_t iopl;
-पूर्ण;
+	uint32_t iopl;
+};
 
 /*
- * Set the current VCPU's I/O-port permissions biपंचांगap.
- * @arg == poपूर्णांकer to physdev_set_iobiपंचांगap काष्ठाure.
+ * Set the current VCPU's I/O-port permissions bitmap.
+ * @arg == pointer to physdev_set_iobitmap structure.
  */
-#घोषणा PHYSDEVOP_set_iobiपंचांगap		 7
-काष्ठा physdev_set_iobiपंचांगap अणु
+#define PHYSDEVOP_set_iobitmap		 7
+struct physdev_set_iobitmap {
 	/* IN */
-	uपूर्णांक8_t * biपंचांगap;
-	uपूर्णांक32_t nr_ports;
-पूर्ण;
+	uint8_t * bitmap;
+	uint32_t nr_ports;
+};
 
 /*
- * Read or ग_लिखो an IO-APIC रेजिस्टर.
- * @arg == poपूर्णांकer to physdev_apic काष्ठाure.
+ * Read or write an IO-APIC register.
+ * @arg == pointer to physdev_apic structure.
  */
-#घोषणा PHYSDEVOP_apic_पढ़ो		 8
-#घोषणा PHYSDEVOP_apic_ग_लिखो		 9
-काष्ठा physdev_apic अणु
+#define PHYSDEVOP_apic_read		 8
+#define PHYSDEVOP_apic_write		 9
+struct physdev_apic {
 	/* IN */
-	अचिन्हित दीर्घ apic_physbase;
-	uपूर्णांक32_t reg;
+	unsigned long apic_physbase;
+	uint32_t reg;
 	/* IN or OUT */
-	uपूर्णांक32_t value;
-पूर्ण;
+	uint32_t value;
+};
 
 /*
- * Allocate or मुक्त a physical upcall vector क्रम the specअगरied IRQ line.
- * @arg == poपूर्णांकer to physdev_irq काष्ठाure.
+ * Allocate or free a physical upcall vector for the specified IRQ line.
+ * @arg == pointer to physdev_irq structure.
  */
-#घोषणा PHYSDEVOP_alloc_irq_vector	10
-#घोषणा PHYSDEVOP_मुक्त_irq_vector	11
-काष्ठा physdev_irq अणु
+#define PHYSDEVOP_alloc_irq_vector	10
+#define PHYSDEVOP_free_irq_vector	11
+struct physdev_irq {
 	/* IN */
-	uपूर्णांक32_t irq;
+	uint32_t irq;
 	/* IN or OUT */
-	uपूर्णांक32_t vector;
-पूर्ण;
+	uint32_t vector;
+};
 
-#घोषणा MAP_PIRQ_TYPE_MSI		0x0
-#घोषणा MAP_PIRQ_TYPE_GSI		0x1
-#घोषणा MAP_PIRQ_TYPE_UNKNOWN		0x2
-#घोषणा MAP_PIRQ_TYPE_MSI_SEG		0x3
-#घोषणा MAP_PIRQ_TYPE_MULTI_MSI		0x4
+#define MAP_PIRQ_TYPE_MSI		0x0
+#define MAP_PIRQ_TYPE_GSI		0x1
+#define MAP_PIRQ_TYPE_UNKNOWN		0x2
+#define MAP_PIRQ_TYPE_MSI_SEG		0x3
+#define MAP_PIRQ_TYPE_MULTI_MSI		0x4
 
-#घोषणा PHYSDEVOP_map_pirq		13
-काष्ठा physdev_map_pirq अणु
-    करोmid_t करोmid;
+#define PHYSDEVOP_map_pirq		13
+struct physdev_map_pirq {
+    domid_t domid;
     /* IN */
-    पूर्णांक type;
+    int type;
     /* IN */
-    पूर्णांक index;
+    int index;
     /* IN or OUT */
-    पूर्णांक pirq;
-    /* IN - high 16 bits hold segment क्रम ..._MSI_SEG and ..._MULTI_MSI */
-    पूर्णांक bus;
+    int pirq;
+    /* IN - high 16 bits hold segment for ..._MSI_SEG and ..._MULTI_MSI */
+    int bus;
     /* IN */
-    पूर्णांक devfn;
+    int devfn;
     /* IN
      * - For MSI-X contains entry number.
      * - For MSI with ..._MULTI_MSI contains number of vectors.
      * OUT (..._MULTI_MSI only)
      * - Number of vectors allocated.
      */
-    पूर्णांक entry_nr;
+    int entry_nr;
     /* IN */
-    uपूर्णांक64_t table_base;
-पूर्ण;
+    uint64_t table_base;
+};
 
-#घोषणा PHYSDEVOP_unmap_pirq		14
-काष्ठा physdev_unmap_pirq अणु
-    करोmid_t करोmid;
+#define PHYSDEVOP_unmap_pirq		14
+struct physdev_unmap_pirq {
+    domid_t domid;
     /* IN */
-    पूर्णांक pirq;
-पूर्ण;
+    int pirq;
+};
 
-#घोषणा PHYSDEVOP_manage_pci_add	15
-#घोषणा PHYSDEVOP_manage_pci_हटाओ	16
-काष्ठा physdev_manage_pci अणु
+#define PHYSDEVOP_manage_pci_add	15
+#define PHYSDEVOP_manage_pci_remove	16
+struct physdev_manage_pci {
 	/* IN */
-	uपूर्णांक8_t bus;
-	uपूर्णांक8_t devfn;
-पूर्ण;
+	uint8_t bus;
+	uint8_t devfn;
+};
 
-#घोषणा PHYSDEVOP_restore_msi            19
-काष्ठा physdev_restore_msi अणु
+#define PHYSDEVOP_restore_msi            19
+struct physdev_restore_msi {
 	/* IN */
-	uपूर्णांक8_t bus;
-	uपूर्णांक8_t devfn;
-पूर्ण;
+	uint8_t bus;
+	uint8_t devfn;
+};
 
-#घोषणा PHYSDEVOP_manage_pci_add_ext	20
-काष्ठा physdev_manage_pci_ext अणु
+#define PHYSDEVOP_manage_pci_add_ext	20
+struct physdev_manage_pci_ext {
 	/* IN */
-	uपूर्णांक8_t bus;
-	uपूर्णांक8_t devfn;
-	अचिन्हित is_extfn;
-	अचिन्हित is_virtfn;
-	काष्ठा अणु
-		uपूर्णांक8_t bus;
-		uपूर्णांक8_t devfn;
-	पूर्ण physfn;
-पूर्ण;
+	uint8_t bus;
+	uint8_t devfn;
+	unsigned is_extfn;
+	unsigned is_virtfn;
+	struct {
+		uint8_t bus;
+		uint8_t devfn;
+	} physfn;
+};
 
 /*
  * Argument to physdev_op_compat() hypercall. Superceded by new physdev_op()
  * hypercall since 0x00030202.
  */
-काष्ठा physdev_op अणु
-	uपूर्णांक32_t cmd;
-	जोड़ अणु
-		काष्ठा physdev_irq_status_query	     irq_status_query;
-		काष्ठा physdev_set_iopl		     set_iopl;
-		काष्ठा physdev_set_iobiपंचांगap	     set_iobiपंचांगap;
-		काष्ठा physdev_apic		     apic_op;
-		काष्ठा physdev_irq		     irq_op;
-	पूर्ण u;
-पूर्ण;
+struct physdev_op {
+	uint32_t cmd;
+	union {
+		struct physdev_irq_status_query	     irq_status_query;
+		struct physdev_set_iopl		     set_iopl;
+		struct physdev_set_iobitmap	     set_iobitmap;
+		struct physdev_apic		     apic_op;
+		struct physdev_irq		     irq_op;
+	} u;
+};
 
-#घोषणा PHYSDEVOP_setup_gsi    21
-काष्ठा physdev_setup_gsi अणु
-    पूर्णांक gsi;
+#define PHYSDEVOP_setup_gsi    21
+struct physdev_setup_gsi {
+    int gsi;
     /* IN */
-    uपूर्णांक8_t triggering;
+    uint8_t triggering;
     /* IN */
-    uपूर्णांक8_t polarity;
+    uint8_t polarity;
     /* IN */
-पूर्ण;
+};
 
-#घोषणा PHYSDEVOP_get_nr_pirqs    22
-काष्ठा physdev_nr_pirqs अणु
+#define PHYSDEVOP_get_nr_pirqs    22
+struct physdev_nr_pirqs {
     /* OUT */
-    uपूर्णांक32_t nr_pirqs;
-पूर्ण;
+    uint32_t nr_pirqs;
+};
 
 /* type is MAP_PIRQ_TYPE_GSI or MAP_PIRQ_TYPE_MSI
- * the hypercall वापसs a मुक्त pirq */
-#घोषणा PHYSDEVOP_get_मुक्त_pirq    23
-काष्ठा physdev_get_मुक्त_pirq अणु
+ * the hypercall returns a free pirq */
+#define PHYSDEVOP_get_free_pirq    23
+struct physdev_get_free_pirq {
     /* IN */ 
-    पूर्णांक type;
+    int type;
     /* OUT */
-    uपूर्णांक32_t pirq;
-पूर्ण;
+    uint32_t pirq;
+};
 
-#घोषणा XEN_PCI_DEV_EXTFN              0x1
-#घोषणा XEN_PCI_DEV_VIRTFN             0x2
-#घोषणा XEN_PCI_DEV_PXM                0x4
+#define XEN_PCI_DEV_EXTFN              0x1
+#define XEN_PCI_DEV_VIRTFN             0x2
+#define XEN_PCI_DEV_PXM                0x4
 
-#घोषणा XEN_PCI_MMCFG_RESERVED         0x1
+#define XEN_PCI_MMCFG_RESERVED         0x1
 
-#घोषणा PHYSDEVOP_pci_mmcfg_reserved    24
-काष्ठा physdev_pci_mmcfg_reserved अणु
-    uपूर्णांक64_t address;
-    uपूर्णांक16_t segment;
-    uपूर्णांक8_t start_bus;
-    uपूर्णांक8_t end_bus;
-    uपूर्णांक32_t flags;
-पूर्ण;
+#define PHYSDEVOP_pci_mmcfg_reserved    24
+struct physdev_pci_mmcfg_reserved {
+    uint64_t address;
+    uint16_t segment;
+    uint8_t start_bus;
+    uint8_t end_bus;
+    uint32_t flags;
+};
 
-#घोषणा PHYSDEVOP_pci_device_add        25
-काष्ठा physdev_pci_device_add अणु
+#define PHYSDEVOP_pci_device_add        25
+struct physdev_pci_device_add {
     /* IN */
-    uपूर्णांक16_t seg;
-    uपूर्णांक8_t bus;
-    uपूर्णांक8_t devfn;
-    uपूर्णांक32_t flags;
-    काष्ठा अणु
-        uपूर्णांक8_t bus;
-        uपूर्णांक8_t devfn;
-    पूर्ण physfn;
-#अगर defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
-    uपूर्णांक32_t optarr[];
-#या_अगर defined(__GNUC__)
-    uपूर्णांक32_t optarr[0];
-#पूर्ण_अगर
-पूर्ण;
+    uint16_t seg;
+    uint8_t bus;
+    uint8_t devfn;
+    uint32_t flags;
+    struct {
+        uint8_t bus;
+        uint8_t devfn;
+    } physfn;
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+    uint32_t optarr[];
+#elif defined(__GNUC__)
+    uint32_t optarr[0];
+#endif
+};
 
-#घोषणा PHYSDEVOP_pci_device_हटाओ     26
-#घोषणा PHYSDEVOP_restore_msi_ext       27
+#define PHYSDEVOP_pci_device_remove     26
+#define PHYSDEVOP_restore_msi_ext       27
 /*
- * Dom0 should use these two to announce MMIO resources asचिन्हित to
+ * Dom0 should use these two to announce MMIO resources assigned to
  * MSI-X capable devices won't (prepare) or may (release) change.
  */
-#घोषणा PHYSDEVOP_prepare_msix          30
-#घोषणा PHYSDEVOP_release_msix          31
-काष्ठा physdev_pci_device अणु
+#define PHYSDEVOP_prepare_msix          30
+#define PHYSDEVOP_release_msix          31
+struct physdev_pci_device {
     /* IN */
-    uपूर्णांक16_t seg;
-    uपूर्णांक8_t bus;
-    uपूर्णांक8_t devfn;
-पूर्ण;
+    uint16_t seg;
+    uint8_t bus;
+    uint8_t devfn;
+};
 
-#घोषणा PHYSDEVOP_DBGP_RESET_PREPARE    1
-#घोषणा PHYSDEVOP_DBGP_RESET_DONE       2
+#define PHYSDEVOP_DBGP_RESET_PREPARE    1
+#define PHYSDEVOP_DBGP_RESET_DONE       2
 
-#घोषणा PHYSDEVOP_DBGP_BUS_UNKNOWN      0
-#घोषणा PHYSDEVOP_DBGP_BUS_PCI          1
+#define PHYSDEVOP_DBGP_BUS_UNKNOWN      0
+#define PHYSDEVOP_DBGP_BUS_PCI          1
 
-#घोषणा PHYSDEVOP_dbgp_op               29
-काष्ठा physdev_dbgp_op अणु
+#define PHYSDEVOP_dbgp_op               29
+struct physdev_dbgp_op {
     /* IN */
-    uपूर्णांक8_t op;
-    uपूर्णांक8_t bus;
-    जोड़ अणु
-        काष्ठा physdev_pci_device pci;
-    पूर्ण u;
-पूर्ण;
+    uint8_t op;
+    uint8_t bus;
+    union {
+        struct physdev_pci_device pci;
+    } u;
+};
 
 /*
- * Notअगरy that some PIRQ-bound event channels have been unmasked.
- * ** This command is obsolete since पूर्णांकerface version 0x00030202 and is **
+ * Notify that some PIRQ-bound event channels have been unmasked.
+ * ** This command is obsolete since interface version 0x00030202 and is **
  * ** unsupported by newer versions of Xen.				 **
  */
-#घोषणा PHYSDEVOP_IRQ_UNMASK_NOTIFY	 4
+#define PHYSDEVOP_IRQ_UNMASK_NOTIFY	 4
 
 /*
  * These all-capitals physdev operation names are superceded by the new names
- * (defined above) since पूर्णांकerface version 0x00030202.
+ * (defined above) since interface version 0x00030202.
  */
-#घोषणा PHYSDEVOP_IRQ_STATUS_QUERY	 PHYSDEVOP_irq_status_query
-#घोषणा PHYSDEVOP_SET_IOPL		 PHYSDEVOP_set_iopl
-#घोषणा PHYSDEVOP_SET_IOBITMAP		 PHYSDEVOP_set_iobiपंचांगap
-#घोषणा PHYSDEVOP_APIC_READ		 PHYSDEVOP_apic_पढ़ो
-#घोषणा PHYSDEVOP_APIC_WRITE		 PHYSDEVOP_apic_ग_लिखो
-#घोषणा PHYSDEVOP_ASSIGN_VECTOR		 PHYSDEVOP_alloc_irq_vector
-#घोषणा PHYSDEVOP_FREE_VECTOR		 PHYSDEVOP_मुक्त_irq_vector
-#घोषणा PHYSDEVOP_IRQ_NEEDS_UNMASK_NOTIFY XENIRQSTAT_needs_eoi
-#घोषणा PHYSDEVOP_IRQ_SHARED		 XENIRQSTAT_shared
+#define PHYSDEVOP_IRQ_STATUS_QUERY	 PHYSDEVOP_irq_status_query
+#define PHYSDEVOP_SET_IOPL		 PHYSDEVOP_set_iopl
+#define PHYSDEVOP_SET_IOBITMAP		 PHYSDEVOP_set_iobitmap
+#define PHYSDEVOP_APIC_READ		 PHYSDEVOP_apic_read
+#define PHYSDEVOP_APIC_WRITE		 PHYSDEVOP_apic_write
+#define PHYSDEVOP_ASSIGN_VECTOR		 PHYSDEVOP_alloc_irq_vector
+#define PHYSDEVOP_FREE_VECTOR		 PHYSDEVOP_free_irq_vector
+#define PHYSDEVOP_IRQ_NEEDS_UNMASK_NOTIFY XENIRQSTAT_needs_eoi
+#define PHYSDEVOP_IRQ_SHARED		 XENIRQSTAT_shared
 
-#पूर्ण_अगर /* __XEN_PUBLIC_PHYSDEV_H__ */
+#endif /* __XEN_PUBLIC_PHYSDEV_H__ */

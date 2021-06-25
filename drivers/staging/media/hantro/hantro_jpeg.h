@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 
-#घोषणा JPEG_HEADER_SIZE	601
+#define JPEG_HEADER_SIZE	601
 
-काष्ठा hantro_jpeg_ctx अणु
-	पूर्णांक width;
-	पूर्णांक height;
-	पूर्णांक quality;
-	अचिन्हित अक्षर *buffer;
-पूर्ण;
+struct hantro_jpeg_ctx {
+	int width;
+	int height;
+	int quality;
+	unsigned char *buffer;
+};
 
-अचिन्हित अक्षर *hantro_jpeg_get_qtable(पूर्णांक index);
-व्योम hantro_jpeg_header_assemble(काष्ठा hantro_jpeg_ctx *ctx);
+unsigned char *hantro_jpeg_get_qtable(int index);
+void hantro_jpeg_header_assemble(struct hantro_jpeg_ctx *ctx);

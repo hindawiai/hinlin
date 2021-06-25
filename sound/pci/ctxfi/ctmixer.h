@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2008, Creative Technology Ltd. All Rights Reserved.
  *
- * @File	cपंचांगixer.h
+ * @File	ctmixer.h
  *
  * @Brief
  * This file contains the definition of the mixer device functions.
@@ -12,15 +11,15 @@
  * @Date 	Mar 28 2008
  */
 
-#अगर_अघोषित CTMIXER_H
-#घोषणा CTMIXER_H
+#ifndef CTMIXER_H
+#define CTMIXER_H
 
-#समावेश "ctatc.h"
-#समावेश "ctresource.h"
+#include "ctatc.h"
+#include "ctresource.h"
 
-#घोषणा INIT_VOL	0x1c00
+#define INIT_VOL	0x1c00
 
-क्रमागत MIXER_PORT_T अणु
+enum MIXER_PORT_T {
 	MIX_WAVE_FRONT,
 	MIX_WAVE_REAR,
 	MIX_WAVE_CENTLFE,
@@ -36,32 +35,32 @@
 	MIX_PCMI_SURROUND,
 
 	NUM_MIX_PORTS
-पूर्ण;
+};
 
 /* alsa mixer descriptor */
-काष्ठा ct_mixer अणु
-	काष्ठा ct_atc *atc;
+struct ct_mixer {
+	struct ct_atc *atc;
 
-	व्योम **amixers;		/* amixer resources क्रम volume control */
-	व्योम **sums;		/* sum resources क्रम संकेत collection */
-	अचिन्हित पूर्णांक चयन_state; /* A bit-map to indicate state of चयनes */
+	void **amixers;		/* amixer resources for volume control */
+	void **sums;		/* sum resources for signal collection */
+	unsigned int switch_state; /* A bit-map to indicate state of switches */
 
-	पूर्णांक (*get_output_ports)(काष्ठा ct_mixer *mixer, क्रमागत MIXER_PORT_T type,
-				  काष्ठा rsc **rleft, काष्ठा rsc **rright);
+	int (*get_output_ports)(struct ct_mixer *mixer, enum MIXER_PORT_T type,
+				  struct rsc **rleft, struct rsc **rright);
 
-	पूर्णांक (*set_input_left)(काष्ठा ct_mixer *mixer,
-			      क्रमागत MIXER_PORT_T type, काष्ठा rsc *rsc);
-	पूर्णांक (*set_input_right)(काष्ठा ct_mixer *mixer,
-			       क्रमागत MIXER_PORT_T type, काष्ठा rsc *rsc);
-#अगर_घोषित CONFIG_PM_SLEEP
-	पूर्णांक (*resume)(काष्ठा ct_mixer *mixer);
-#पूर्ण_अगर
-पूर्ण;
+	int (*set_input_left)(struct ct_mixer *mixer,
+			      enum MIXER_PORT_T type, struct rsc *rsc);
+	int (*set_input_right)(struct ct_mixer *mixer,
+			       enum MIXER_PORT_T type, struct rsc *rsc);
+#ifdef CONFIG_PM_SLEEP
+	int (*resume)(struct ct_mixer *mixer);
+#endif
+};
 
-पूर्णांक ct_alsa_mix_create(काष्ठा ct_atc *atc,
-		       क्रमागत CTALSADEVS device,
-		       स्थिर अक्षर *device_name);
-पूर्णांक ct_mixer_create(काष्ठा ct_atc *atc, काष्ठा ct_mixer **rmixer);
-पूर्णांक ct_mixer_destroy(काष्ठा ct_mixer *mixer);
+int ct_alsa_mix_create(struct ct_atc *atc,
+		       enum CTALSADEVS device,
+		       const char *device_name);
+int ct_mixer_create(struct ct_atc *atc, struct ct_mixer **rmixer);
+int ct_mixer_destroy(struct ct_mixer *mixer);
 
-#पूर्ण_अगर /* CTMIXER_H */
+#endif /* CTMIXER_H */

@@ -1,81 +1,80 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Simple program to generate defines out of facility lists that use the bit
- * numbering scheme from the Princples of Operations: most signअगरicant bit
+ * numbering scheme from the Princples of Operations: most significant bit
  * has bit number 0.
  *
  *    Copyright IBM Corp. 2015, 2018
  *
  */
 
-#समावेश <strings.h>
-#समावेश <माला.स>
-#समावेश <मानककोष.स>
-#समावेश <मानकपन.स>
+#include <strings.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
-काष्ठा facility_def अणु
-	अक्षर *name;
-	पूर्णांक *bits;
-पूर्ण;
+struct facility_def {
+	char *name;
+	int *bits;
+};
 
-अटल काष्ठा facility_def facility_defs[] = अणु
-	अणु
+static struct facility_def facility_defs[] = {
+	{
 		/*
 		 * FACILITIES_ALS contains the list of facilities that are
 		 * required to run a kernel that is compiled e.g. with
 		 * -march=<machine>.
 		 */
 		.name = "FACILITIES_ALS",
-		.bits = (पूर्णांक[])अणु
-#अगर_घोषित CONFIG_HAVE_MARCH_Z900_FEATURES
-			0,  /* N3 inकाष्ठाions */
+		.bits = (int[]){
+#ifdef CONFIG_HAVE_MARCH_Z900_FEATURES
+			0,  /* N3 instructions */
 			1,  /* z/Arch mode installed */
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_HAVE_MARCH_Z990_FEATURES
-			18, /* दीर्घ displacement facility */
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_HAVE_MARCH_Z9_109_FEATURES
+#endif
+#ifdef CONFIG_HAVE_MARCH_Z990_FEATURES
+			18, /* long displacement facility */
+#endif
+#ifdef CONFIG_HAVE_MARCH_Z9_109_FEATURES
 			21, /* extended-immediate facility */
-			25, /* store घड़ी fast */
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_HAVE_MARCH_Z10_FEATURES
+			25, /* store clock fast */
+#endif
+#ifdef CONFIG_HAVE_MARCH_Z10_FEATURES
 			27, /* mvcos */
 			32, /* compare and swap and store */
 			33, /* compare and swap and store 2 */
-			34, /* general inकाष्ठाions extension */
+			34, /* general instructions extension */
 			35, /* execute extensions */
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_HAVE_MARCH_Z196_FEATURES
+#endif
+#ifdef CONFIG_HAVE_MARCH_Z196_FEATURES
 			45, /* fast-BCR, etc. */
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_HAVE_MARCH_ZEC12_FEATURES
-			49, /* misc-inकाष्ठाion-extensions */
-			52, /* पूर्णांकerlocked facility 2 */
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_HAVE_MARCH_Z13_FEATURES
-			53, /* load-and-zero-righपंचांगost-byte, etc. */
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_HAVE_MARCH_Z14_FEATURES
-			58, /* miscellaneous-inकाष्ठाion-extension 2 */
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_HAVE_MARCH_Z15_FEATURES
-			61, /* miscellaneous-inकाष्ठाion-extension 3 */
-#पूर्ण_अगर
+#endif
+#ifdef CONFIG_HAVE_MARCH_ZEC12_FEATURES
+			49, /* misc-instruction-extensions */
+			52, /* interlocked facility 2 */
+#endif
+#ifdef CONFIG_HAVE_MARCH_Z13_FEATURES
+			53, /* load-and-zero-rightmost-byte, etc. */
+#endif
+#ifdef CONFIG_HAVE_MARCH_Z14_FEATURES
+			58, /* miscellaneous-instruction-extension 2 */
+#endif
+#ifdef CONFIG_HAVE_MARCH_Z15_FEATURES
+			61, /* miscellaneous-instruction-extension 3 */
+#endif
 			-1 /* END */
-		पूर्ण
-	पूर्ण,
-	अणु
+		}
+	},
+	{
 		/*
 		 * FACILITIES_KVM contains the list of facilities that are part
-		 * of the शेष facility mask and list that are passed to the
+		 * of the default facility mask and list that are passed to the
 		 * initial CPU model. If no CPU model is used, this, together
 		 * with the non-hypervisor managed bits, is the maximum list of
 		 * guest facilities supported by KVM.
 		 */
 		.name = "FACILITIES_KVM",
-		.bits = (पूर्णांक[])अणु
-			0,  /* N3 inकाष्ठाions */
+		.bits = (int[]){
+			0,  /* N3 instructions */
 			1,  /* z/Arch mode installed */
 			2,  /* z/Arch mode active */
 			3,  /* DAT-enhancement */
@@ -93,7 +92,7 @@
 			76, /* msa extension 3 */
 			77, /* msa extension 4 */
 			78, /* enhanced-DAT 2 */
-			130, /* inकाष्ठाion-execution-protection */
+			130, /* instruction-execution-protection */
 			131, /* enhanced-SOP 2 and side-effect */
 			139, /* multiple epoch facility */
 			146, /* msa extension 8 */
@@ -101,72 +100,72 @@
 			151, /* deflate conversion */
 			155, /* msa extension 9 */
 			-1  /* END */
-		पूर्ण
-	पूर्ण,
-	अणु
+		}
+	},
+	{
 		/*
 		 * FACILITIES_KVM_CPUMODEL contains the list of facilities
-		 * that can be enabled by CPU model code अगर the host supports
+		 * that can be enabled by CPU model code if the host supports
 		 * it. These facilities are not passed to the guest without
 		 * CPU model support.
 		 */
 
 		.name = "FACILITIES_KVM_CPUMODEL",
-		.bits = (पूर्णांक[])अणु
-			12, /* AP Query Configuration Inक्रमmation */
+		.bits = (int[]){
+			12, /* AP Query Configuration Information */
 			15, /* AP Facilities Test */
 			156, /* etoken facility */
 			-1  /* END */
-		पूर्ण
-	पूर्ण,
-पूर्ण;
+		}
+	},
+};
 
-अटल व्योम prपूर्णांक_facility_list(काष्ठा facility_def *def)
-अणु
-	अचिन्हित पूर्णांक high, bit, dword, i;
-	अचिन्हित दीर्घ दीर्घ *array;
+static void print_facility_list(struct facility_def *def)
+{
+	unsigned int high, bit, dword, i;
+	unsigned long long *array;
 
-	array = सुस्मृति(1, 8);
-	अगर (!array)
-		निकास(निकास_त्रुटि);
+	array = calloc(1, 8);
+	if (!array)
+		exit(EXIT_FAILURE);
 	high = 0;
-	क्रम (i = 0; def->bits[i] != -1; i++) अणु
+	for (i = 0; def->bits[i] != -1; i++) {
 		bit = 63 - (def->bits[i] & 63);
 		dword = def->bits[i] / 64;
-		अगर (dword > high) अणु
-			array = पुनः_स्मृति(array, (dword + 1) * 8);
-			अगर (!array)
-				निकास(निकास_त्रुटि);
-			स_रखो(array + high + 1, 0, (dword - high) * 8);
+		if (dword > high) {
+			array = realloc(array, (dword + 1) * 8);
+			if (!array)
+				exit(EXIT_FAILURE);
+			memset(array + high + 1, 0, (dword - high) * 8);
 			high = dword;
-		पूर्ण
+		}
 		array[dword] |= 1ULL << bit;
-	पूर्ण
-	म_लिखो("#define %s ", def->name);
-	क्रम (i = 0; i <= high; i++)
-		म_लिखो("_AC(0x%016llx,UL)%c", array[i], i < high ? ',' : '\n');
-	मुक्त(array);
-पूर्ण
+	}
+	printf("#define %s ", def->name);
+	for (i = 0; i <= high; i++)
+		printf("_AC(0x%016llx,UL)%c", array[i], i < high ? ',' : '\n');
+	free(array);
+}
 
-अटल व्योम prपूर्णांक_facility_lists(व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
+static void print_facility_lists(void)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < माप(facility_defs) / माप(facility_defs[0]); i++)
-		prपूर्णांक_facility_list(&facility_defs[i]);
-पूर्ण
+	for (i = 0; i < sizeof(facility_defs) / sizeof(facility_defs[0]); i++)
+		print_facility_list(&facility_defs[i]);
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	म_लिखो("#ifndef __ASM_S390_FACILITY_DEFS__\n");
-	म_लिखो("#define __ASM_S390_FACILITY_DEFS__\n");
-	म_लिखो("/*\n");
-	म_लिखो(" * DO NOT MODIFY.\n");
-	म_लिखो(" *\n");
-	म_लिखो(" * This file was generated by %s\n", __खाता__);
-	म_लिखो(" */\n\n");
-	म_लिखो("#include <linux/const.h>\n\n");
-	prपूर्णांक_facility_lists();
-	म_लिखो("\n#endif\n");
-	वापस 0;
-पूर्ण
+int main(int argc, char **argv)
+{
+	printf("#ifndef __ASM_S390_FACILITY_DEFS__\n");
+	printf("#define __ASM_S390_FACILITY_DEFS__\n");
+	printf("/*\n");
+	printf(" * DO NOT MODIFY.\n");
+	printf(" *\n");
+	printf(" * This file was generated by %s\n", __FILE__);
+	printf(" */\n\n");
+	printf("#include <linux/const.h>\n\n");
+	print_facility_lists();
+	printf("\n#endif\n");
+	return 0;
+}

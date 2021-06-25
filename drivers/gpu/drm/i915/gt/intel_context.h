@@ -1,268 +1,267 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित __INTEL_CONTEXT_H__
-#घोषणा __INTEL_CONTEXT_H__
+#ifndef __INTEL_CONTEXT_H__
+#define __INTEL_CONTEXT_H__
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/lockdep.h>
-#समावेश <linux/types.h>
+#include <linux/bitops.h>
+#include <linux/lockdep.h>
+#include <linux/types.h>
 
-#समावेश "i915_active.h"
-#समावेश "i915_drv.h"
-#समावेश "intel_context_types.h"
-#समावेश "intel_engine_types.h"
-#समावेश "intel_ring_types.h"
-#समावेश "intel_timeline_types.h"
+#include "i915_active.h"
+#include "i915_drv.h"
+#include "intel_context_types.h"
+#include "intel_engine_types.h"
+#include "intel_ring_types.h"
+#include "intel_timeline_types.h"
 
-#घोषणा CE_TRACE(ce, fmt, ...) करो अणु					\
-	स्थिर काष्ठा पूर्णांकel_context *ce__ = (ce);			\
+#define CE_TRACE(ce, fmt, ...) do {					\
+	const struct intel_context *ce__ = (ce);			\
 	ENGINE_TRACE(ce__->engine, "context:%llx " fmt,			\
-		     ce__->समयline->fence_context,			\
+		     ce__->timeline->fence_context,			\
 		     ##__VA_ARGS__);					\
-पूर्ण जबतक (0)
+} while (0)
 
-काष्ठा i915_gem_ww_ctx;
+struct i915_gem_ww_ctx;
 
-व्योम पूर्णांकel_context_init(काष्ठा पूर्णांकel_context *ce,
-			काष्ठा पूर्णांकel_engine_cs *engine);
-व्योम पूर्णांकel_context_fini(काष्ठा पूर्णांकel_context *ce);
+void intel_context_init(struct intel_context *ce,
+			struct intel_engine_cs *engine);
+void intel_context_fini(struct intel_context *ce);
 
-काष्ठा पूर्णांकel_context *
-पूर्णांकel_context_create(काष्ठा पूर्णांकel_engine_cs *engine);
+struct intel_context *
+intel_context_create(struct intel_engine_cs *engine);
 
-पूर्णांक पूर्णांकel_context_alloc_state(काष्ठा पूर्णांकel_context *ce);
+int intel_context_alloc_state(struct intel_context *ce);
 
-व्योम पूर्णांकel_context_मुक्त(काष्ठा पूर्णांकel_context *ce);
+void intel_context_free(struct intel_context *ce);
 
-पूर्णांक पूर्णांकel_context_reconfigure_sseu(काष्ठा पूर्णांकel_context *ce,
-				   स्थिर काष्ठा पूर्णांकel_sseu sseu);
+int intel_context_reconfigure_sseu(struct intel_context *ce,
+				   const struct intel_sseu sseu);
 
 /**
- * पूर्णांकel_context_lock_pinned - Stablises the 'pinned' status of the HW context
+ * intel_context_lock_pinned - Stablises the 'pinned' status of the HW context
  * @ce - the context
  *
  * Acquire a lock on the pinned status of the HW context, such that the context
  * can neither be bound to the GPU or unbound whilst the lock is held, i.e.
- * पूर्णांकel_context_is_pinned() reमुख्यs stable.
+ * intel_context_is_pinned() remains stable.
  */
-अटल अंतरभूत पूर्णांक पूर्णांकel_context_lock_pinned(काष्ठा पूर्णांकel_context *ce)
+static inline int intel_context_lock_pinned(struct intel_context *ce)
 	__acquires(ce->pin_mutex)
-अणु
-	वापस mutex_lock_पूर्णांकerruptible(&ce->pin_mutex);
-पूर्ण
+{
+	return mutex_lock_interruptible(&ce->pin_mutex);
+}
 
 /**
- * पूर्णांकel_context_is_pinned - Reports the 'pinned' status
+ * intel_context_is_pinned - Reports the 'pinned' status
  * @ce - the context
  *
- * While in use by the GPU, the context, aदीर्घ with its ring and page
- * tables is pinned पूर्णांकo memory and the GTT.
+ * While in use by the GPU, the context, along with its ring and page
+ * tables is pinned into memory and the GTT.
  *
- * Returns: true अगर the context is currently pinned क्रम use by the GPU.
+ * Returns: true if the context is currently pinned for use by the GPU.
  */
-अटल अंतरभूत bool
-पूर्णांकel_context_is_pinned(काष्ठा पूर्णांकel_context *ce)
-अणु
-	वापस atomic_पढ़ो(&ce->pin_count);
-पूर्ण
+static inline bool
+intel_context_is_pinned(struct intel_context *ce)
+{
+	return atomic_read(&ce->pin_count);
+}
 
 /**
- * पूर्णांकel_context_unlock_pinned - Releases the earlier locking of 'pinned' status
+ * intel_context_unlock_pinned - Releases the earlier locking of 'pinned' status
  * @ce - the context
  *
- * Releases the lock earlier acquired by पूर्णांकel_context_unlock_pinned().
+ * Releases the lock earlier acquired by intel_context_unlock_pinned().
  */
-अटल अंतरभूत व्योम पूर्णांकel_context_unlock_pinned(काष्ठा पूर्णांकel_context *ce)
+static inline void intel_context_unlock_pinned(struct intel_context *ce)
 	__releases(ce->pin_mutex)
-अणु
+{
 	mutex_unlock(&ce->pin_mutex);
-पूर्ण
+}
 
-पूर्णांक __पूर्णांकel_context_करो_pin(काष्ठा पूर्णांकel_context *ce);
-पूर्णांक __पूर्णांकel_context_करो_pin_ww(काष्ठा पूर्णांकel_context *ce,
-			      काष्ठा i915_gem_ww_ctx *ww);
+int __intel_context_do_pin(struct intel_context *ce);
+int __intel_context_do_pin_ww(struct intel_context *ce,
+			      struct i915_gem_ww_ctx *ww);
 
-अटल अंतरभूत bool पूर्णांकel_context_pin_अगर_active(काष्ठा पूर्णांकel_context *ce)
-अणु
-	वापस atomic_inc_not_zero(&ce->pin_count);
-पूर्ण
+static inline bool intel_context_pin_if_active(struct intel_context *ce)
+{
+	return atomic_inc_not_zero(&ce->pin_count);
+}
 
-अटल अंतरभूत पूर्णांक पूर्णांकel_context_pin(काष्ठा पूर्णांकel_context *ce)
-अणु
-	अगर (likely(पूर्णांकel_context_pin_अगर_active(ce)))
-		वापस 0;
+static inline int intel_context_pin(struct intel_context *ce)
+{
+	if (likely(intel_context_pin_if_active(ce)))
+		return 0;
 
-	वापस __पूर्णांकel_context_करो_pin(ce);
-पूर्ण
+	return __intel_context_do_pin(ce);
+}
 
-अटल अंतरभूत पूर्णांक पूर्णांकel_context_pin_ww(काष्ठा पूर्णांकel_context *ce,
-				       काष्ठा i915_gem_ww_ctx *ww)
-अणु
-	अगर (likely(पूर्णांकel_context_pin_अगर_active(ce)))
-		वापस 0;
+static inline int intel_context_pin_ww(struct intel_context *ce,
+				       struct i915_gem_ww_ctx *ww)
+{
+	if (likely(intel_context_pin_if_active(ce)))
+		return 0;
 
-	वापस __पूर्णांकel_context_करो_pin_ww(ce, ww);
-पूर्ण
+	return __intel_context_do_pin_ww(ce, ww);
+}
 
-अटल अंतरभूत व्योम __पूर्णांकel_context_pin(काष्ठा पूर्णांकel_context *ce)
-अणु
-	GEM_BUG_ON(!पूर्णांकel_context_is_pinned(ce));
+static inline void __intel_context_pin(struct intel_context *ce)
+{
+	GEM_BUG_ON(!intel_context_is_pinned(ce));
 	atomic_inc(&ce->pin_count);
-पूर्ण
+}
 
-व्योम पूर्णांकel_context_unpin(काष्ठा पूर्णांकel_context *ce);
+void intel_context_unpin(struct intel_context *ce);
 
-व्योम पूर्णांकel_context_enter_engine(काष्ठा पूर्णांकel_context *ce);
-व्योम पूर्णांकel_context_निकास_engine(काष्ठा पूर्णांकel_context *ce);
+void intel_context_enter_engine(struct intel_context *ce);
+void intel_context_exit_engine(struct intel_context *ce);
 
-अटल अंतरभूत व्योम पूर्णांकel_context_enter(काष्ठा पूर्णांकel_context *ce)
-अणु
-	lockdep_निश्चित_held(&ce->समयline->mutex);
-	अगर (!ce->active_count++)
+static inline void intel_context_enter(struct intel_context *ce)
+{
+	lockdep_assert_held(&ce->timeline->mutex);
+	if (!ce->active_count++)
 		ce->ops->enter(ce);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम पूर्णांकel_context_mark_active(काष्ठा पूर्णांकel_context *ce)
-अणु
-	lockdep_निश्चित_held(&ce->समयline->mutex);
+static inline void intel_context_mark_active(struct intel_context *ce)
+{
+	lockdep_assert_held(&ce->timeline->mutex);
 	++ce->active_count;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम पूर्णांकel_context_निकास(काष्ठा पूर्णांकel_context *ce)
-अणु
-	lockdep_निश्चित_held(&ce->समयline->mutex);
+static inline void intel_context_exit(struct intel_context *ce)
+{
+	lockdep_assert_held(&ce->timeline->mutex);
 	GEM_BUG_ON(!ce->active_count);
-	अगर (!--ce->active_count)
-		ce->ops->निकास(ce);
-पूर्ण
+	if (!--ce->active_count)
+		ce->ops->exit(ce);
+}
 
-अटल अंतरभूत काष्ठा पूर्णांकel_context *पूर्णांकel_context_get(काष्ठा पूर्णांकel_context *ce)
-अणु
+static inline struct intel_context *intel_context_get(struct intel_context *ce)
+{
 	kref_get(&ce->ref);
-	वापस ce;
-पूर्ण
+	return ce;
+}
 
-अटल अंतरभूत व्योम पूर्णांकel_context_put(काष्ठा पूर्णांकel_context *ce)
-अणु
+static inline void intel_context_put(struct intel_context *ce)
+{
 	kref_put(&ce->ref, ce->ops->destroy);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा पूर्णांकel_समयline *__must_check
-पूर्णांकel_context_समयline_lock(काष्ठा पूर्णांकel_context *ce)
-	__acquires(&ce->समयline->mutex)
-अणु
-	काष्ठा पूर्णांकel_समयline *tl = ce->समयline;
-	पूर्णांक err;
+static inline struct intel_timeline *__must_check
+intel_context_timeline_lock(struct intel_context *ce)
+	__acquires(&ce->timeline->mutex)
+{
+	struct intel_timeline *tl = ce->timeline;
+	int err;
 
-	err = mutex_lock_पूर्णांकerruptible(&tl->mutex);
-	अगर (err)
-		वापस ERR_PTR(err);
+	err = mutex_lock_interruptible(&tl->mutex);
+	if (err)
+		return ERR_PTR(err);
 
-	वापस tl;
-पूर्ण
+	return tl;
+}
 
-अटल अंतरभूत व्योम पूर्णांकel_context_समयline_unlock(काष्ठा पूर्णांकel_समयline *tl)
+static inline void intel_context_timeline_unlock(struct intel_timeline *tl)
 	__releases(&tl->mutex)
-अणु
+{
 	mutex_unlock(&tl->mutex);
-पूर्ण
+}
 
-पूर्णांक पूर्णांकel_context_prepare_remote_request(काष्ठा पूर्णांकel_context *ce,
-					 काष्ठा i915_request *rq);
+int intel_context_prepare_remote_request(struct intel_context *ce,
+					 struct i915_request *rq);
 
-काष्ठा i915_request *पूर्णांकel_context_create_request(काष्ठा पूर्णांकel_context *ce);
+struct i915_request *intel_context_create_request(struct intel_context *ce);
 
-अटल अंतरभूत काष्ठा पूर्णांकel_ring *__पूर्णांकel_context_ring_size(u64 sz)
-अणु
-	वापस u64_to_ptr(काष्ठा पूर्णांकel_ring, sz);
-पूर्ण
+static inline struct intel_ring *__intel_context_ring_size(u64 sz)
+{
+	return u64_to_ptr(struct intel_ring, sz);
+}
 
-अटल अंतरभूत bool पूर्णांकel_context_is_barrier(स्थिर काष्ठा पूर्णांकel_context *ce)
-अणु
-	वापस test_bit(CONTEXT_BARRIER_BIT, &ce->flags);
-पूर्ण
+static inline bool intel_context_is_barrier(const struct intel_context *ce)
+{
+	return test_bit(CONTEXT_BARRIER_BIT, &ce->flags);
+}
 
-अटल अंतरभूत bool पूर्णांकel_context_is_बंदd(स्थिर काष्ठा पूर्णांकel_context *ce)
-अणु
-	वापस test_bit(CONTEXT_CLOSED_BIT, &ce->flags);
-पूर्ण
+static inline bool intel_context_is_closed(const struct intel_context *ce)
+{
+	return test_bit(CONTEXT_CLOSED_BIT, &ce->flags);
+}
 
-अटल अंतरभूत bool पूर्णांकel_context_has_inflight(स्थिर काष्ठा पूर्णांकel_context *ce)
-अणु
-	वापस test_bit(COPS_HAS_INFLIGHT_BIT, &ce->ops->flags);
-पूर्ण
+static inline bool intel_context_has_inflight(const struct intel_context *ce)
+{
+	return test_bit(COPS_HAS_INFLIGHT_BIT, &ce->ops->flags);
+}
 
-अटल अंतरभूत bool पूर्णांकel_context_use_semaphores(स्थिर काष्ठा पूर्णांकel_context *ce)
-अणु
-	वापस test_bit(CONTEXT_USE_SEMAPHORES, &ce->flags);
-पूर्ण
+static inline bool intel_context_use_semaphores(const struct intel_context *ce)
+{
+	return test_bit(CONTEXT_USE_SEMAPHORES, &ce->flags);
+}
 
-अटल अंतरभूत व्योम पूर्णांकel_context_set_use_semaphores(काष्ठा पूर्णांकel_context *ce)
-अणु
+static inline void intel_context_set_use_semaphores(struct intel_context *ce)
+{
 	set_bit(CONTEXT_USE_SEMAPHORES, &ce->flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम पूर्णांकel_context_clear_use_semaphores(काष्ठा पूर्णांकel_context *ce)
-अणु
+static inline void intel_context_clear_use_semaphores(struct intel_context *ce)
+{
 	clear_bit(CONTEXT_USE_SEMAPHORES, &ce->flags);
-पूर्ण
+}
 
-अटल अंतरभूत bool पूर्णांकel_context_is_banned(स्थिर काष्ठा पूर्णांकel_context *ce)
-अणु
-	वापस test_bit(CONTEXT_BANNED, &ce->flags);
-पूर्ण
+static inline bool intel_context_is_banned(const struct intel_context *ce)
+{
+	return test_bit(CONTEXT_BANNED, &ce->flags);
+}
 
-अटल अंतरभूत bool पूर्णांकel_context_set_banned(काष्ठा पूर्णांकel_context *ce)
-अणु
-	वापस test_and_set_bit(CONTEXT_BANNED, &ce->flags);
-पूर्ण
+static inline bool intel_context_set_banned(struct intel_context *ce)
+{
+	return test_and_set_bit(CONTEXT_BANNED, &ce->flags);
+}
 
-अटल अंतरभूत bool
-पूर्णांकel_context_क्रमce_single_submission(स्थिर काष्ठा पूर्णांकel_context *ce)
-अणु
-	वापस test_bit(CONTEXT_FORCE_SINGLE_SUBMISSION, &ce->flags);
-पूर्ण
+static inline bool
+intel_context_force_single_submission(const struct intel_context *ce)
+{
+	return test_bit(CONTEXT_FORCE_SINGLE_SUBMISSION, &ce->flags);
+}
 
-अटल अंतरभूत व्योम
-पूर्णांकel_context_set_single_submission(काष्ठा पूर्णांकel_context *ce)
-अणु
+static inline void
+intel_context_set_single_submission(struct intel_context *ce)
+{
 	__set_bit(CONTEXT_FORCE_SINGLE_SUBMISSION, &ce->flags);
-पूर्ण
+}
 
-अटल अंतरभूत bool
-पूर्णांकel_context_nopreempt(स्थिर काष्ठा पूर्णांकel_context *ce)
-अणु
-	वापस test_bit(CONTEXT_NOPREEMPT, &ce->flags);
-पूर्ण
+static inline bool
+intel_context_nopreempt(const struct intel_context *ce)
+{
+	return test_bit(CONTEXT_NOPREEMPT, &ce->flags);
+}
 
-अटल अंतरभूत व्योम
-पूर्णांकel_context_set_nopreempt(काष्ठा पूर्णांकel_context *ce)
-अणु
+static inline void
+intel_context_set_nopreempt(struct intel_context *ce)
+{
 	set_bit(CONTEXT_NOPREEMPT, &ce->flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-पूर्णांकel_context_clear_nopreempt(काष्ठा पूर्णांकel_context *ce)
-अणु
+static inline void
+intel_context_clear_nopreempt(struct intel_context *ce)
+{
 	clear_bit(CONTEXT_NOPREEMPT, &ce->flags);
-पूर्ण
+}
 
-अटल अंतरभूत u64 पूर्णांकel_context_get_total_runसमय_ns(काष्ठा पूर्णांकel_context *ce)
-अणु
-	स्थिर u32 period = ce->engine->gt->घड़ी_period_ns;
+static inline u64 intel_context_get_total_runtime_ns(struct intel_context *ce)
+{
+	const u32 period = ce->engine->gt->clock_period_ns;
 
-	वापस READ_ONCE(ce->runसमय.total) * period;
-पूर्ण
+	return READ_ONCE(ce->runtime.total) * period;
+}
 
-अटल अंतरभूत u64 पूर्णांकel_context_get_avg_runसमय_ns(काष्ठा पूर्णांकel_context *ce)
-अणु
-	स्थिर u32 period = ce->engine->gt->घड़ी_period_ns;
+static inline u64 intel_context_get_avg_runtime_ns(struct intel_context *ce)
+{
+	const u32 period = ce->engine->gt->clock_period_ns;
 
-	वापस mul_u32_u32(ewma_runसमय_पढ़ो(&ce->runसमय.avg), period);
-पूर्ण
+	return mul_u32_u32(ewma_runtime_read(&ce->runtime.avg), period);
+}
 
-#पूर्ण_अगर /* __INTEL_CONTEXT_H__ */
+#endif /* __INTEL_CONTEXT_H__ */

@@ -1,41 +1,40 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * SMP operations क्रम Alpine platक्रमm.
+ * SMP operations for Alpine platform.
  *
- * Copyright (C) 2015 Annapurna Lअसल Ltd.
+ * Copyright (C) 2015 Annapurna Labs Ltd.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
+#include <linux/init.h>
+#include <linux/errno.h>
+#include <linux/io.h>
+#include <linux/of.h>
 
-#समावेश <यंत्र/smp_plat.h>
+#include <asm/smp_plat.h>
 
-#समावेश "alpine_cpu_pm.h"
+#include "alpine_cpu_pm.h"
 
-अटल पूर्णांक alpine_boot_secondary(अचिन्हित पूर्णांक cpu, काष्ठा task_काष्ठा *idle)
-अणु
+static int alpine_boot_secondary(unsigned int cpu, struct task_struct *idle)
+{
 	phys_addr_t addr;
 
 	addr = __pa_symbol(secondary_startup);
 
-	अगर (addr > (phys_addr_t)(uपूर्णांक32_t)(-1)) अणु
+	if (addr > (phys_addr_t)(uint32_t)(-1)) {
 		pr_err("FAIL: resume address over 32bit (%pa)", &addr);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस alpine_cpu_wakeup(cpu_logical_map(cpu), (uपूर्णांक32_t)addr);
-पूर्ण
+	return alpine_cpu_wakeup(cpu_logical_map(cpu), (uint32_t)addr);
+}
 
-अटल व्योम __init alpine_smp_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
-अणु
+static void __init alpine_smp_prepare_cpus(unsigned int max_cpus)
+{
 	alpine_cpu_pm_init();
-पूर्ण
+}
 
-अटल स्थिर काष्ठा smp_operations alpine_smp_ops __initस्थिर = अणु
+static const struct smp_operations alpine_smp_ops __initconst = {
 	.smp_prepare_cpus	= alpine_smp_prepare_cpus,
 	.smp_boot_secondary	= alpine_boot_secondary,
-पूर्ण;
+};
 CPU_METHOD_OF_DECLARE(alpine_smp, "al,alpine-smp", &alpine_smp_ops);

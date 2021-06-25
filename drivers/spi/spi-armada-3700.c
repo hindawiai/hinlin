@@ -1,224 +1,223 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Marvell Armada-3700 SPI controller driver
  *
  * Copyright (C) 2016 Marvell Ltd.
  *
  * Author: Wilson Ding <dingwei@marvell.com>
- * Author: Roमुख्य Perier <roमुख्य.perier@मुक्त-electrons.com>
+ * Author: Romain Perier <romain.perier@free-electrons.com>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pinctrl/consumer.h>
-#समावेश <linux/spi/spi.h>
+#include <linux/clk.h>
+#include <linux/completion.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_irq.h>
+#include <linux/of_device.h>
+#include <linux/pinctrl/consumer.h>
+#include <linux/spi/spi.h>
 
-#घोषणा DRIVER_NAME			"armada_3700_spi"
+#define DRIVER_NAME			"armada_3700_spi"
 
-#घोषणा A3700_SPI_MAX_SPEED_HZ		100000000
-#घोषणा A3700_SPI_MAX_PRESCALE		30
-#घोषणा A3700_SPI_TIMEOUT		10
+#define A3700_SPI_MAX_SPEED_HZ		100000000
+#define A3700_SPI_MAX_PRESCALE		30
+#define A3700_SPI_TIMEOUT		10
 
 /* SPI Register Offest */
-#घोषणा A3700_SPI_IF_CTRL_REG		0x00
-#घोषणा A3700_SPI_IF_CFG_REG		0x04
-#घोषणा A3700_SPI_DATA_OUT_REG		0x08
-#घोषणा A3700_SPI_DATA_IN_REG		0x0C
-#घोषणा A3700_SPI_IF_INST_REG		0x10
-#घोषणा A3700_SPI_IF_ADDR_REG		0x14
-#घोषणा A3700_SPI_IF_RMODE_REG		0x18
-#घोषणा A3700_SPI_IF_HDR_CNT_REG	0x1C
-#घोषणा A3700_SPI_IF_DIN_CNT_REG	0x20
-#घोषणा A3700_SPI_IF_TIME_REG		0x24
-#घोषणा A3700_SPI_INT_STAT_REG		0x28
-#घोषणा A3700_SPI_INT_MASK_REG		0x2C
+#define A3700_SPI_IF_CTRL_REG		0x00
+#define A3700_SPI_IF_CFG_REG		0x04
+#define A3700_SPI_DATA_OUT_REG		0x08
+#define A3700_SPI_DATA_IN_REG		0x0C
+#define A3700_SPI_IF_INST_REG		0x10
+#define A3700_SPI_IF_ADDR_REG		0x14
+#define A3700_SPI_IF_RMODE_REG		0x18
+#define A3700_SPI_IF_HDR_CNT_REG	0x1C
+#define A3700_SPI_IF_DIN_CNT_REG	0x20
+#define A3700_SPI_IF_TIME_REG		0x24
+#define A3700_SPI_INT_STAT_REG		0x28
+#define A3700_SPI_INT_MASK_REG		0x2C
 
 /* A3700_SPI_IF_CTRL_REG */
-#घोषणा A3700_SPI_EN			BIT(16)
-#घोषणा A3700_SPI_ADDR_NOT_CONFIG	BIT(12)
-#घोषणा A3700_SPI_WFIFO_OVERFLOW	BIT(11)
-#घोषणा A3700_SPI_WFIFO_UNDERFLOW	BIT(10)
-#घोषणा A3700_SPI_RFIFO_OVERFLOW	BIT(9)
-#घोषणा A3700_SPI_RFIFO_UNDERFLOW	BIT(8)
-#घोषणा A3700_SPI_WFIFO_FULL		BIT(7)
-#घोषणा A3700_SPI_WFIFO_EMPTY		BIT(6)
-#घोषणा A3700_SPI_RFIFO_FULL		BIT(5)
-#घोषणा A3700_SPI_RFIFO_EMPTY		BIT(4)
-#घोषणा A3700_SPI_WFIFO_RDY		BIT(3)
-#घोषणा A3700_SPI_RFIFO_RDY		BIT(2)
-#घोषणा A3700_SPI_XFER_RDY		BIT(1)
-#घोषणा A3700_SPI_XFER_DONE		BIT(0)
+#define A3700_SPI_EN			BIT(16)
+#define A3700_SPI_ADDR_NOT_CONFIG	BIT(12)
+#define A3700_SPI_WFIFO_OVERFLOW	BIT(11)
+#define A3700_SPI_WFIFO_UNDERFLOW	BIT(10)
+#define A3700_SPI_RFIFO_OVERFLOW	BIT(9)
+#define A3700_SPI_RFIFO_UNDERFLOW	BIT(8)
+#define A3700_SPI_WFIFO_FULL		BIT(7)
+#define A3700_SPI_WFIFO_EMPTY		BIT(6)
+#define A3700_SPI_RFIFO_FULL		BIT(5)
+#define A3700_SPI_RFIFO_EMPTY		BIT(4)
+#define A3700_SPI_WFIFO_RDY		BIT(3)
+#define A3700_SPI_RFIFO_RDY		BIT(2)
+#define A3700_SPI_XFER_RDY		BIT(1)
+#define A3700_SPI_XFER_DONE		BIT(0)
 
 /* A3700_SPI_IF_CFG_REG */
-#घोषणा A3700_SPI_WFIFO_THRS		BIT(28)
-#घोषणा A3700_SPI_RFIFO_THRS		BIT(24)
-#घोषणा A3700_SPI_AUTO_CS		BIT(20)
-#घोषणा A3700_SPI_DMA_RD_EN		BIT(18)
-#घोषणा A3700_SPI_FIFO_MODE		BIT(17)
-#घोषणा A3700_SPI_SRST			BIT(16)
-#घोषणा A3700_SPI_XFER_START		BIT(15)
-#घोषणा A3700_SPI_XFER_STOP		BIT(14)
-#घोषणा A3700_SPI_INST_PIN		BIT(13)
-#घोषणा A3700_SPI_ADDR_PIN		BIT(12)
-#घोषणा A3700_SPI_DATA_PIN1		BIT(11)
-#घोषणा A3700_SPI_DATA_PIN0		BIT(10)
-#घोषणा A3700_SPI_FIFO_FLUSH		BIT(9)
-#घोषणा A3700_SPI_RW_EN			BIT(8)
-#घोषणा A3700_SPI_CLK_POL		BIT(7)
-#घोषणा A3700_SPI_CLK_PHA		BIT(6)
-#घोषणा A3700_SPI_BYTE_LEN		BIT(5)
-#घोषणा A3700_SPI_CLK_PRESCALE		BIT(0)
-#घोषणा A3700_SPI_CLK_PRESCALE_MASK	(0x1f)
-#घोषणा A3700_SPI_CLK_EVEN_OFFS		(0x10)
+#define A3700_SPI_WFIFO_THRS		BIT(28)
+#define A3700_SPI_RFIFO_THRS		BIT(24)
+#define A3700_SPI_AUTO_CS		BIT(20)
+#define A3700_SPI_DMA_RD_EN		BIT(18)
+#define A3700_SPI_FIFO_MODE		BIT(17)
+#define A3700_SPI_SRST			BIT(16)
+#define A3700_SPI_XFER_START		BIT(15)
+#define A3700_SPI_XFER_STOP		BIT(14)
+#define A3700_SPI_INST_PIN		BIT(13)
+#define A3700_SPI_ADDR_PIN		BIT(12)
+#define A3700_SPI_DATA_PIN1		BIT(11)
+#define A3700_SPI_DATA_PIN0		BIT(10)
+#define A3700_SPI_FIFO_FLUSH		BIT(9)
+#define A3700_SPI_RW_EN			BIT(8)
+#define A3700_SPI_CLK_POL		BIT(7)
+#define A3700_SPI_CLK_PHA		BIT(6)
+#define A3700_SPI_BYTE_LEN		BIT(5)
+#define A3700_SPI_CLK_PRESCALE		BIT(0)
+#define A3700_SPI_CLK_PRESCALE_MASK	(0x1f)
+#define A3700_SPI_CLK_EVEN_OFFS		(0x10)
 
-#घोषणा A3700_SPI_WFIFO_THRS_BIT	28
-#घोषणा A3700_SPI_RFIFO_THRS_BIT	24
-#घोषणा A3700_SPI_FIFO_THRS_MASK	0x7
+#define A3700_SPI_WFIFO_THRS_BIT	28
+#define A3700_SPI_RFIFO_THRS_BIT	24
+#define A3700_SPI_FIFO_THRS_MASK	0x7
 
-#घोषणा A3700_SPI_DATA_PIN_MASK		0x3
+#define A3700_SPI_DATA_PIN_MASK		0x3
 
 /* A3700_SPI_IF_HDR_CNT_REG */
-#घोषणा A3700_SPI_DUMMY_CNT_BIT		12
-#घोषणा A3700_SPI_DUMMY_CNT_MASK	0x7
-#घोषणा A3700_SPI_RMODE_CNT_BIT		8
-#घोषणा A3700_SPI_RMODE_CNT_MASK	0x3
-#घोषणा A3700_SPI_ADDR_CNT_BIT		4
-#घोषणा A3700_SPI_ADDR_CNT_MASK		0x7
-#घोषणा A3700_SPI_INSTR_CNT_BIT		0
-#घोषणा A3700_SPI_INSTR_CNT_MASK	0x3
+#define A3700_SPI_DUMMY_CNT_BIT		12
+#define A3700_SPI_DUMMY_CNT_MASK	0x7
+#define A3700_SPI_RMODE_CNT_BIT		8
+#define A3700_SPI_RMODE_CNT_MASK	0x3
+#define A3700_SPI_ADDR_CNT_BIT		4
+#define A3700_SPI_ADDR_CNT_MASK		0x7
+#define A3700_SPI_INSTR_CNT_BIT		0
+#define A3700_SPI_INSTR_CNT_MASK	0x3
 
 /* A3700_SPI_IF_TIME_REG */
-#घोषणा A3700_SPI_CLK_CAPT_EDGE		BIT(7)
+#define A3700_SPI_CLK_CAPT_EDGE		BIT(7)
 
-काष्ठा a3700_spi अणु
-	काष्ठा spi_master *master;
-	व्योम __iomem *base;
-	काष्ठा clk *clk;
-	अचिन्हित पूर्णांक irq;
-	अचिन्हित पूर्णांक flags;
+struct a3700_spi {
+	struct spi_master *master;
+	void __iomem *base;
+	struct clk *clk;
+	unsigned int irq;
+	unsigned int flags;
 	bool xmit_data;
-	स्थिर u8 *tx_buf;
+	const u8 *tx_buf;
 	u8 *rx_buf;
-	माप_प्रकार buf_len;
+	size_t buf_len;
 	u8 byte_len;
-	u32 रुको_mask;
-	काष्ठा completion करोne;
-पूर्ण;
+	u32 wait_mask;
+	struct completion done;
+};
 
-अटल u32 spireg_पढ़ो(काष्ठा a3700_spi *a3700_spi, u32 offset)
-अणु
-	वापस पढ़ोl(a3700_spi->base + offset);
-पूर्ण
+static u32 spireg_read(struct a3700_spi *a3700_spi, u32 offset)
+{
+	return readl(a3700_spi->base + offset);
+}
 
-अटल व्योम spireg_ग_लिखो(काष्ठा a3700_spi *a3700_spi, u32 offset, u32 data)
-अणु
-	ग_लिखोl(data, a3700_spi->base + offset);
-पूर्ण
+static void spireg_write(struct a3700_spi *a3700_spi, u32 offset, u32 data)
+{
+	writel(data, a3700_spi->base + offset);
+}
 
-अटल व्योम a3700_spi_स्वतः_cs_unset(काष्ठा a3700_spi *a3700_spi)
-अणु
+static void a3700_spi_auto_cs_unset(struct a3700_spi *a3700_spi)
+{
 	u32 val;
 
-	val = spireg_पढ़ो(a3700_spi, A3700_SPI_IF_CFG_REG);
+	val = spireg_read(a3700_spi, A3700_SPI_IF_CFG_REG);
 	val &= ~A3700_SPI_AUTO_CS;
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_CFG_REG, val);
-पूर्ण
+	spireg_write(a3700_spi, A3700_SPI_IF_CFG_REG, val);
+}
 
-अटल व्योम a3700_spi_activate_cs(काष्ठा a3700_spi *a3700_spi, अचिन्हित पूर्णांक cs)
-अणु
+static void a3700_spi_activate_cs(struct a3700_spi *a3700_spi, unsigned int cs)
+{
 	u32 val;
 
-	val = spireg_पढ़ो(a3700_spi, A3700_SPI_IF_CTRL_REG);
+	val = spireg_read(a3700_spi, A3700_SPI_IF_CTRL_REG);
 	val |= (A3700_SPI_EN << cs);
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_CTRL_REG, val);
-पूर्ण
+	spireg_write(a3700_spi, A3700_SPI_IF_CTRL_REG, val);
+}
 
-अटल व्योम a3700_spi_deactivate_cs(काष्ठा a3700_spi *a3700_spi,
-				    अचिन्हित पूर्णांक cs)
-अणु
+static void a3700_spi_deactivate_cs(struct a3700_spi *a3700_spi,
+				    unsigned int cs)
+{
 	u32 val;
 
-	val = spireg_पढ़ो(a3700_spi, A3700_SPI_IF_CTRL_REG);
+	val = spireg_read(a3700_spi, A3700_SPI_IF_CTRL_REG);
 	val &= ~(A3700_SPI_EN << cs);
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_CTRL_REG, val);
-पूर्ण
+	spireg_write(a3700_spi, A3700_SPI_IF_CTRL_REG, val);
+}
 
-अटल पूर्णांक a3700_spi_pin_mode_set(काष्ठा a3700_spi *a3700_spi,
-				  अचिन्हित पूर्णांक pin_mode, bool receiving)
-अणु
+static int a3700_spi_pin_mode_set(struct a3700_spi *a3700_spi,
+				  unsigned int pin_mode, bool receiving)
+{
 	u32 val;
 
-	val = spireg_पढ़ो(a3700_spi, A3700_SPI_IF_CFG_REG);
+	val = spireg_read(a3700_spi, A3700_SPI_IF_CFG_REG);
 	val &= ~(A3700_SPI_INST_PIN | A3700_SPI_ADDR_PIN);
 	val &= ~(A3700_SPI_DATA_PIN0 | A3700_SPI_DATA_PIN1);
 
-	चयन (pin_mode) अणु
-	हाल SPI_NBITS_SINGLE:
-		अवरोध;
-	हाल SPI_NBITS_DUAL:
+	switch (pin_mode) {
+	case SPI_NBITS_SINGLE:
+		break;
+	case SPI_NBITS_DUAL:
 		val |= A3700_SPI_DATA_PIN0;
-		अवरोध;
-	हाल SPI_NBITS_QUAD:
+		break;
+	case SPI_NBITS_QUAD:
 		val |= A3700_SPI_DATA_PIN1;
 		/* RX during address reception uses 4-pin */
-		अगर (receiving)
+		if (receiving)
 			val |= A3700_SPI_ADDR_PIN;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(&a3700_spi->master->dev, "wrong pin mode %u", pin_mode);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_CFG_REG, val);
+	spireg_write(a3700_spi, A3700_SPI_IF_CFG_REG, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम a3700_spi_fअगरo_mode_set(काष्ठा a3700_spi *a3700_spi, bool enable)
-अणु
+static void a3700_spi_fifo_mode_set(struct a3700_spi *a3700_spi, bool enable)
+{
 	u32 val;
 
-	val = spireg_पढ़ो(a3700_spi, A3700_SPI_IF_CFG_REG);
-	अगर (enable)
+	val = spireg_read(a3700_spi, A3700_SPI_IF_CFG_REG);
+	if (enable)
 		val |= A3700_SPI_FIFO_MODE;
-	अन्यथा
+	else
 		val &= ~A3700_SPI_FIFO_MODE;
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_CFG_REG, val);
-पूर्ण
+	spireg_write(a3700_spi, A3700_SPI_IF_CFG_REG, val);
+}
 
-अटल व्योम a3700_spi_mode_set(काष्ठा a3700_spi *a3700_spi,
-			       अचिन्हित पूर्णांक mode_bits)
-अणु
+static void a3700_spi_mode_set(struct a3700_spi *a3700_spi,
+			       unsigned int mode_bits)
+{
 	u32 val;
 
-	val = spireg_पढ़ो(a3700_spi, A3700_SPI_IF_CFG_REG);
+	val = spireg_read(a3700_spi, A3700_SPI_IF_CFG_REG);
 
-	अगर (mode_bits & SPI_CPOL)
+	if (mode_bits & SPI_CPOL)
 		val |= A3700_SPI_CLK_POL;
-	अन्यथा
+	else
 		val &= ~A3700_SPI_CLK_POL;
 
-	अगर (mode_bits & SPI_CPHA)
+	if (mode_bits & SPI_CPHA)
 		val |= A3700_SPI_CLK_PHA;
-	अन्यथा
+	else
 		val &= ~A3700_SPI_CLK_PHA;
 
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_CFG_REG, val);
-पूर्ण
+	spireg_write(a3700_spi, A3700_SPI_IF_CFG_REG, val);
+}
 
-अटल व्योम a3700_spi_घड़ी_set(काष्ठा a3700_spi *a3700_spi,
-				अचिन्हित पूर्णांक speed_hz)
-अणु
+static void a3700_spi_clock_set(struct a3700_spi *a3700_spi,
+				unsigned int speed_hz)
+{
 	u32 val;
 	u32 prescale;
 
@@ -228,202 +227,202 @@
 	 * Starting from A3700_SPI_CLK_EVEN_OFFS, we set values from 0 up to
 	 * 30. We only use this range from 16 to 30.
 	 */
-	अगर (prescale > 15)
+	if (prescale > 15)
 		prescale = A3700_SPI_CLK_EVEN_OFFS + DIV_ROUND_UP(prescale, 2);
 
-	val = spireg_पढ़ो(a3700_spi, A3700_SPI_IF_CFG_REG);
+	val = spireg_read(a3700_spi, A3700_SPI_IF_CFG_REG);
 	val = val & ~A3700_SPI_CLK_PRESCALE_MASK;
 
 	val = val | (prescale & A3700_SPI_CLK_PRESCALE_MASK);
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_CFG_REG, val);
+	spireg_write(a3700_spi, A3700_SPI_IF_CFG_REG, val);
 
-	अगर (prescale <= 2) अणु
-		val = spireg_पढ़ो(a3700_spi, A3700_SPI_IF_TIME_REG);
+	if (prescale <= 2) {
+		val = spireg_read(a3700_spi, A3700_SPI_IF_TIME_REG);
 		val |= A3700_SPI_CLK_CAPT_EDGE;
-		spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_TIME_REG, val);
-	पूर्ण
-पूर्ण
+		spireg_write(a3700_spi, A3700_SPI_IF_TIME_REG, val);
+	}
+}
 
-अटल व्योम a3700_spi_bytelen_set(काष्ठा a3700_spi *a3700_spi, अचिन्हित पूर्णांक len)
-अणु
+static void a3700_spi_bytelen_set(struct a3700_spi *a3700_spi, unsigned int len)
+{
 	u32 val;
 
-	val = spireg_पढ़ो(a3700_spi, A3700_SPI_IF_CFG_REG);
-	अगर (len == 4)
+	val = spireg_read(a3700_spi, A3700_SPI_IF_CFG_REG);
+	if (len == 4)
 		val |= A3700_SPI_BYTE_LEN;
-	अन्यथा
+	else
 		val &= ~A3700_SPI_BYTE_LEN;
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_CFG_REG, val);
+	spireg_write(a3700_spi, A3700_SPI_IF_CFG_REG, val);
 
 	a3700_spi->byte_len = len;
-पूर्ण
+}
 
-अटल पूर्णांक a3700_spi_fअगरo_flush(काष्ठा a3700_spi *a3700_spi)
-अणु
-	पूर्णांक समयout = A3700_SPI_TIMEOUT;
+static int a3700_spi_fifo_flush(struct a3700_spi *a3700_spi)
+{
+	int timeout = A3700_SPI_TIMEOUT;
 	u32 val;
 
-	val = spireg_पढ़ो(a3700_spi, A3700_SPI_IF_CFG_REG);
+	val = spireg_read(a3700_spi, A3700_SPI_IF_CFG_REG);
 	val |= A3700_SPI_FIFO_FLUSH;
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_CFG_REG, val);
+	spireg_write(a3700_spi, A3700_SPI_IF_CFG_REG, val);
 
-	जबतक (--समयout) अणु
-		val = spireg_पढ़ो(a3700_spi, A3700_SPI_IF_CFG_REG);
-		अगर (!(val & A3700_SPI_FIFO_FLUSH))
-			वापस 0;
+	while (--timeout) {
+		val = spireg_read(a3700_spi, A3700_SPI_IF_CFG_REG);
+		if (!(val & A3700_SPI_FIFO_FLUSH))
+			return 0;
 		udelay(1);
-	पूर्ण
+	}
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल व्योम a3700_spi_init(काष्ठा a3700_spi *a3700_spi)
-अणु
-	काष्ठा spi_master *master = a3700_spi->master;
+static void a3700_spi_init(struct a3700_spi *a3700_spi)
+{
+	struct spi_master *master = a3700_spi->master;
 	u32 val;
-	पूर्णांक i;
+	int i;
 
 	/* Reset SPI unit */
-	val = spireg_पढ़ो(a3700_spi, A3700_SPI_IF_CFG_REG);
+	val = spireg_read(a3700_spi, A3700_SPI_IF_CFG_REG);
 	val |= A3700_SPI_SRST;
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_CFG_REG, val);
+	spireg_write(a3700_spi, A3700_SPI_IF_CFG_REG, val);
 
 	udelay(A3700_SPI_TIMEOUT);
 
-	val = spireg_पढ़ो(a3700_spi, A3700_SPI_IF_CFG_REG);
+	val = spireg_read(a3700_spi, A3700_SPI_IF_CFG_REG);
 	val &= ~A3700_SPI_SRST;
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_CFG_REG, val);
+	spireg_write(a3700_spi, A3700_SPI_IF_CFG_REG, val);
 
 	/* Disable AUTO_CS and deactivate all chip-selects */
-	a3700_spi_स्वतः_cs_unset(a3700_spi);
-	क्रम (i = 0; i < master->num_chipselect; i++)
+	a3700_spi_auto_cs_unset(a3700_spi);
+	for (i = 0; i < master->num_chipselect; i++)
 		a3700_spi_deactivate_cs(a3700_spi, i);
 
 	/* Enable FIFO mode */
-	a3700_spi_fअगरo_mode_set(a3700_spi, true);
+	a3700_spi_fifo_mode_set(a3700_spi, true);
 
 	/* Set SPI mode */
 	a3700_spi_mode_set(a3700_spi, master->mode_bits);
 
 	/* Reset counters */
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_HDR_CNT_REG, 0);
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_DIN_CNT_REG, 0);
+	spireg_write(a3700_spi, A3700_SPI_IF_HDR_CNT_REG, 0);
+	spireg_write(a3700_spi, A3700_SPI_IF_DIN_CNT_REG, 0);
 
-	/* Mask the पूर्णांकerrupts and clear cause bits */
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_INT_MASK_REG, 0);
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_INT_STAT_REG, ~0U);
-पूर्ण
+	/* Mask the interrupts and clear cause bits */
+	spireg_write(a3700_spi, A3700_SPI_INT_MASK_REG, 0);
+	spireg_write(a3700_spi, A3700_SPI_INT_STAT_REG, ~0U);
+}
 
-अटल irqवापस_t a3700_spi_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा spi_master *master = dev_id;
-	काष्ठा a3700_spi *a3700_spi;
+static irqreturn_t a3700_spi_interrupt(int irq, void *dev_id)
+{
+	struct spi_master *master = dev_id;
+	struct a3700_spi *a3700_spi;
 	u32 cause;
 
 	a3700_spi = spi_master_get_devdata(master);
 
-	/* Get पूर्णांकerrupt causes */
-	cause = spireg_पढ़ो(a3700_spi, A3700_SPI_INT_STAT_REG);
+	/* Get interrupt causes */
+	cause = spireg_read(a3700_spi, A3700_SPI_INT_STAT_REG);
 
-	अगर (!cause || !(a3700_spi->रुको_mask & cause))
-		वापस IRQ_NONE;
+	if (!cause || !(a3700_spi->wait_mask & cause))
+		return IRQ_NONE;
 
-	/* mask and acknowledge the SPI पूर्णांकerrupts */
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_INT_MASK_REG, 0);
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_INT_STAT_REG, cause);
+	/* mask and acknowledge the SPI interrupts */
+	spireg_write(a3700_spi, A3700_SPI_INT_MASK_REG, 0);
+	spireg_write(a3700_spi, A3700_SPI_INT_STAT_REG, cause);
 
 	/* Wake up the transfer */
-	complete(&a3700_spi->करोne);
+	complete(&a3700_spi->done);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल bool a3700_spi_रुको_completion(काष्ठा spi_device *spi)
-अणु
-	काष्ठा a3700_spi *a3700_spi;
-	अचिन्हित पूर्णांक समयout;
-	अचिन्हित पूर्णांक ctrl_reg;
-	अचिन्हित दीर्घ समयout_jअगरfies;
+static bool a3700_spi_wait_completion(struct spi_device *spi)
+{
+	struct a3700_spi *a3700_spi;
+	unsigned int timeout;
+	unsigned int ctrl_reg;
+	unsigned long timeout_jiffies;
 
 	a3700_spi = spi_master_get_devdata(spi->master);
 
-	/* SPI पूर्णांकerrupt is edge-triggered, which means an पूर्णांकerrupt will
-	 * be generated only when detecting a specअगरic status bit changed
-	 * from '0' to '1'. So when we start रुकोing क्रम a पूर्णांकerrupt, we
-	 * need to check status bit in control reg first, अगर it is alपढ़ोy 1,
-	 * then we करो not need to रुको क्रम पूर्णांकerrupt
+	/* SPI interrupt is edge-triggered, which means an interrupt will
+	 * be generated only when detecting a specific status bit changed
+	 * from '0' to '1'. So when we start waiting for a interrupt, we
+	 * need to check status bit in control reg first, if it is already 1,
+	 * then we do not need to wait for interrupt
 	 */
-	ctrl_reg = spireg_पढ़ो(a3700_spi, A3700_SPI_IF_CTRL_REG);
-	अगर (a3700_spi->रुको_mask & ctrl_reg)
-		वापस true;
+	ctrl_reg = spireg_read(a3700_spi, A3700_SPI_IF_CTRL_REG);
+	if (a3700_spi->wait_mask & ctrl_reg)
+		return true;
 
-	reinit_completion(&a3700_spi->करोne);
+	reinit_completion(&a3700_spi->done);
 
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_INT_MASK_REG,
-		     a3700_spi->रुको_mask);
+	spireg_write(a3700_spi, A3700_SPI_INT_MASK_REG,
+		     a3700_spi->wait_mask);
 
-	समयout_jअगरfies = msecs_to_jअगरfies(A3700_SPI_TIMEOUT);
-	समयout = रुको_क्रम_completion_समयout(&a3700_spi->करोne,
-					      समयout_jअगरfies);
+	timeout_jiffies = msecs_to_jiffies(A3700_SPI_TIMEOUT);
+	timeout = wait_for_completion_timeout(&a3700_spi->done,
+					      timeout_jiffies);
 
-	a3700_spi->रुको_mask = 0;
+	a3700_spi->wait_mask = 0;
 
-	अगर (समयout)
-		वापस true;
+	if (timeout)
+		return true;
 
-	/* there might be the हाल that right after we checked the
-	 * status bits in this routine and beक्रमe start to रुको क्रम
-	 * पूर्णांकerrupt by रुको_क्रम_completion_समयout, the पूर्णांकerrupt
-	 * happens, to aव्योम missing it we need to द्विगुन check
-	 * status bits in control reg, अगर it is alपढ़ोy 1, then
-	 * consider that we have the पूर्णांकerrupt successfully and
-	 * वापस true.
+	/* there might be the case that right after we checked the
+	 * status bits in this routine and before start to wait for
+	 * interrupt by wait_for_completion_timeout, the interrupt
+	 * happens, to avoid missing it we need to double check
+	 * status bits in control reg, if it is already 1, then
+	 * consider that we have the interrupt successfully and
+	 * return true.
 	 */
-	ctrl_reg = spireg_पढ़ो(a3700_spi, A3700_SPI_IF_CTRL_REG);
-	अगर (a3700_spi->रुको_mask & ctrl_reg)
-		वापस true;
+	ctrl_reg = spireg_read(a3700_spi, A3700_SPI_IF_CTRL_REG);
+	if (a3700_spi->wait_mask & ctrl_reg)
+		return true;
 
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_INT_MASK_REG, 0);
+	spireg_write(a3700_spi, A3700_SPI_INT_MASK_REG, 0);
 
 	/* Timeout was reached */
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool a3700_spi_transfer_रुको(काष्ठा spi_device *spi,
-				    अचिन्हित पूर्णांक bit_mask)
-अणु
-	काष्ठा a3700_spi *a3700_spi;
+static bool a3700_spi_transfer_wait(struct spi_device *spi,
+				    unsigned int bit_mask)
+{
+	struct a3700_spi *a3700_spi;
 
 	a3700_spi = spi_master_get_devdata(spi->master);
-	a3700_spi->रुको_mask = bit_mask;
+	a3700_spi->wait_mask = bit_mask;
 
-	वापस a3700_spi_रुको_completion(spi);
-पूर्ण
+	return a3700_spi_wait_completion(spi);
+}
 
-अटल व्योम a3700_spi_fअगरo_thres_set(काष्ठा a3700_spi *a3700_spi,
-				     अचिन्हित पूर्णांक bytes)
-अणु
+static void a3700_spi_fifo_thres_set(struct a3700_spi *a3700_spi,
+				     unsigned int bytes)
+{
 	u32 val;
 
-	val = spireg_पढ़ो(a3700_spi, A3700_SPI_IF_CFG_REG);
+	val = spireg_read(a3700_spi, A3700_SPI_IF_CFG_REG);
 	val &= ~(A3700_SPI_FIFO_THRS_MASK << A3700_SPI_RFIFO_THRS_BIT);
 	val |= (bytes - 1) << A3700_SPI_RFIFO_THRS_BIT;
 	val &= ~(A3700_SPI_FIFO_THRS_MASK << A3700_SPI_WFIFO_THRS_BIT);
 	val |= (7 - bytes) << A3700_SPI_WFIFO_THRS_BIT;
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_CFG_REG, val);
-पूर्ण
+	spireg_write(a3700_spi, A3700_SPI_IF_CFG_REG, val);
+}
 
-अटल व्योम a3700_spi_transfer_setup(काष्ठा spi_device *spi,
-				     काष्ठा spi_transfer *xfer)
-अणु
-	काष्ठा a3700_spi *a3700_spi;
+static void a3700_spi_transfer_setup(struct spi_device *spi,
+				     struct spi_transfer *xfer)
+{
+	struct a3700_spi *a3700_spi;
 
 	a3700_spi = spi_master_get_devdata(spi->master);
 
-	a3700_spi_घड़ी_set(a3700_spi, xfer->speed_hz);
+	a3700_spi_clock_set(a3700_spi, xfer->speed_hz);
 
-	/* Use 4 bytes दीर्घ transfers. Each transfer method has its way to deal
-	 * with the reमुख्यing bytes क्रम non 4-bytes aligned transfers.
+	/* Use 4 bytes long transfers. Each transfer method has its way to deal
+	 * with the remaining bytes for non 4-bytes aligned transfers.
 	 */
 	a3700_spi_bytelen_set(a3700_spi, 4);
 
@@ -431,408 +430,408 @@
 	a3700_spi->tx_buf  = xfer->tx_buf;
 	a3700_spi->rx_buf  = xfer->rx_buf;
 	a3700_spi->buf_len = xfer->len;
-पूर्ण
+}
 
-अटल व्योम a3700_spi_set_cs(काष्ठा spi_device *spi, bool enable)
-अणु
-	काष्ठा a3700_spi *a3700_spi = spi_master_get_devdata(spi->master);
+static void a3700_spi_set_cs(struct spi_device *spi, bool enable)
+{
+	struct a3700_spi *a3700_spi = spi_master_get_devdata(spi->master);
 
-	अगर (!enable)
+	if (!enable)
 		a3700_spi_activate_cs(a3700_spi, spi->chip_select);
-	अन्यथा
+	else
 		a3700_spi_deactivate_cs(a3700_spi, spi->chip_select);
-पूर्ण
+}
 
-अटल व्योम a3700_spi_header_set(काष्ठा a3700_spi *a3700_spi)
-अणु
-	अचिन्हित पूर्णांक addr_cnt;
+static void a3700_spi_header_set(struct a3700_spi *a3700_spi)
+{
+	unsigned int addr_cnt;
 	u32 val = 0;
 
-	/* Clear the header रेजिस्टरs */
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_INST_REG, 0);
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_ADDR_REG, 0);
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_RMODE_REG, 0);
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_HDR_CNT_REG, 0);
+	/* Clear the header registers */
+	spireg_write(a3700_spi, A3700_SPI_IF_INST_REG, 0);
+	spireg_write(a3700_spi, A3700_SPI_IF_ADDR_REG, 0);
+	spireg_write(a3700_spi, A3700_SPI_IF_RMODE_REG, 0);
+	spireg_write(a3700_spi, A3700_SPI_IF_HDR_CNT_REG, 0);
 
 	/* Set header counters */
-	अगर (a3700_spi->tx_buf) अणु
+	if (a3700_spi->tx_buf) {
 		/*
 		 * when tx data is not 4 bytes aligned, there will be unexpected
-		 * bytes out of SPI output रेजिस्टर, since it always shअगरts out
+		 * bytes out of SPI output register, since it always shifts out
 		 * as whole 4 bytes. This might cause incorrect transaction with
-		 * some devices. To aव्योम that, use SPI header count feature to
+		 * some devices. To avoid that, use SPI header count feature to
 		 * transfer up to 3 bytes of data first, and then make the rest
 		 * of data 4-byte aligned.
 		 */
 		addr_cnt = a3700_spi->buf_len % 4;
-		अगर (addr_cnt) अणु
+		if (addr_cnt) {
 			val = (addr_cnt & A3700_SPI_ADDR_CNT_MASK)
 				<< A3700_SPI_ADDR_CNT_BIT;
-			spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_HDR_CNT_REG, val);
+			spireg_write(a3700_spi, A3700_SPI_IF_HDR_CNT_REG, val);
 
 			/* Update the buffer length to be transferred */
 			a3700_spi->buf_len -= addr_cnt;
 
 			/* transfer 1~3 bytes through address count */
 			val = 0;
-			जबतक (addr_cnt--) अणु
+			while (addr_cnt--) {
 				val = (val << 8) | a3700_spi->tx_buf[0];
 				a3700_spi->tx_buf++;
-			पूर्ण
-			spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_ADDR_REG, val);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+			spireg_write(a3700_spi, A3700_SPI_IF_ADDR_REG, val);
+		}
+	}
+}
 
-अटल पूर्णांक a3700_is_wfअगरo_full(काष्ठा a3700_spi *a3700_spi)
-अणु
+static int a3700_is_wfifo_full(struct a3700_spi *a3700_spi)
+{
 	u32 val;
 
-	val = spireg_पढ़ो(a3700_spi, A3700_SPI_IF_CTRL_REG);
-	वापस (val & A3700_SPI_WFIFO_FULL);
-पूर्ण
+	val = spireg_read(a3700_spi, A3700_SPI_IF_CTRL_REG);
+	return (val & A3700_SPI_WFIFO_FULL);
+}
 
-अटल पूर्णांक a3700_spi_fअगरo_ग_लिखो(काष्ठा a3700_spi *a3700_spi)
-अणु
+static int a3700_spi_fifo_write(struct a3700_spi *a3700_spi)
+{
 	u32 val;
 
-	जबतक (!a3700_is_wfअगरo_full(a3700_spi) && a3700_spi->buf_len) अणु
+	while (!a3700_is_wfifo_full(a3700_spi) && a3700_spi->buf_len) {
 		val = *(u32 *)a3700_spi->tx_buf;
-		spireg_ग_लिखो(a3700_spi, A3700_SPI_DATA_OUT_REG, val);
+		spireg_write(a3700_spi, A3700_SPI_DATA_OUT_REG, val);
 		a3700_spi->buf_len -= 4;
 		a3700_spi->tx_buf += 4;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक a3700_is_rfअगरo_empty(काष्ठा a3700_spi *a3700_spi)
-अणु
-	u32 val = spireg_पढ़ो(a3700_spi, A3700_SPI_IF_CTRL_REG);
+static int a3700_is_rfifo_empty(struct a3700_spi *a3700_spi)
+{
+	u32 val = spireg_read(a3700_spi, A3700_SPI_IF_CTRL_REG);
 
-	वापस (val & A3700_SPI_RFIFO_EMPTY);
-पूर्ण
+	return (val & A3700_SPI_RFIFO_EMPTY);
+}
 
-अटल पूर्णांक a3700_spi_fअगरo_पढ़ो(काष्ठा a3700_spi *a3700_spi)
-अणु
+static int a3700_spi_fifo_read(struct a3700_spi *a3700_spi)
+{
 	u32 val;
 
-	जबतक (!a3700_is_rfअगरo_empty(a3700_spi) && a3700_spi->buf_len) अणु
-		val = spireg_पढ़ो(a3700_spi, A3700_SPI_DATA_IN_REG);
-		अगर (a3700_spi->buf_len >= 4) अणु
+	while (!a3700_is_rfifo_empty(a3700_spi) && a3700_spi->buf_len) {
+		val = spireg_read(a3700_spi, A3700_SPI_DATA_IN_REG);
+		if (a3700_spi->buf_len >= 4) {
 
-			स_नकल(a3700_spi->rx_buf, &val, 4);
+			memcpy(a3700_spi->rx_buf, &val, 4);
 
 			a3700_spi->buf_len -= 4;
 			a3700_spi->rx_buf += 4;
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
-			 * When reमुख्य bytes is not larger than 4, we should
-			 * aव्योम memory overwriting and just ग_लिखो the left rx
+			 * When remain bytes is not larger than 4, we should
+			 * avoid memory overwriting and just write the left rx
 			 * buffer bytes.
 			 */
-			जबतक (a3700_spi->buf_len) अणु
+			while (a3700_spi->buf_len) {
 				*a3700_spi->rx_buf = val & 0xff;
 				val >>= 8;
 
 				a3700_spi->buf_len--;
 				a3700_spi->rx_buf++;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम a3700_spi_transfer_पात_fअगरo(काष्ठा a3700_spi *a3700_spi)
-अणु
-	पूर्णांक समयout = A3700_SPI_TIMEOUT;
+static void a3700_spi_transfer_abort_fifo(struct a3700_spi *a3700_spi)
+{
+	int timeout = A3700_SPI_TIMEOUT;
 	u32 val;
 
-	val = spireg_पढ़ो(a3700_spi, A3700_SPI_IF_CFG_REG);
+	val = spireg_read(a3700_spi, A3700_SPI_IF_CFG_REG);
 	val |= A3700_SPI_XFER_STOP;
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_CFG_REG, val);
+	spireg_write(a3700_spi, A3700_SPI_IF_CFG_REG, val);
 
-	जबतक (--समयout) अणु
-		val = spireg_पढ़ो(a3700_spi, A3700_SPI_IF_CFG_REG);
-		अगर (!(val & A3700_SPI_XFER_START))
-			अवरोध;
+	while (--timeout) {
+		val = spireg_read(a3700_spi, A3700_SPI_IF_CFG_REG);
+		if (!(val & A3700_SPI_XFER_START))
+			break;
 		udelay(1);
-	पूर्ण
+	}
 
-	a3700_spi_fअगरo_flush(a3700_spi);
+	a3700_spi_fifo_flush(a3700_spi);
 
 	val &= ~A3700_SPI_XFER_STOP;
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_CFG_REG, val);
-पूर्ण
+	spireg_write(a3700_spi, A3700_SPI_IF_CFG_REG, val);
+}
 
-अटल पूर्णांक a3700_spi_prepare_message(काष्ठा spi_master *master,
-				     काष्ठा spi_message *message)
-अणु
-	काष्ठा a3700_spi *a3700_spi = spi_master_get_devdata(master);
-	काष्ठा spi_device *spi = message->spi;
-	पूर्णांक ret;
+static int a3700_spi_prepare_message(struct spi_master *master,
+				     struct spi_message *message)
+{
+	struct a3700_spi *a3700_spi = spi_master_get_devdata(master);
+	struct spi_device *spi = message->spi;
+	int ret;
 
 	ret = clk_enable(a3700_spi->clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&spi->dev, "failed to enable clk with error %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Flush the FIFOs */
-	ret = a3700_spi_fअगरo_flush(a3700_spi);
-	अगर (ret)
-		वापस ret;
+	ret = a3700_spi_fifo_flush(a3700_spi);
+	if (ret)
+		return ret;
 
 	a3700_spi_mode_set(a3700_spi, spi->mode);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक a3700_spi_transfer_one_fअगरo(काष्ठा spi_master *master,
-				  काष्ठा spi_device *spi,
-				  काष्ठा spi_transfer *xfer)
-अणु
-	काष्ठा a3700_spi *a3700_spi = spi_master_get_devdata(master);
-	पूर्णांक ret = 0, समयout = A3700_SPI_TIMEOUT;
-	अचिन्हित पूर्णांक nbits = 0, byte_len;
+static int a3700_spi_transfer_one_fifo(struct spi_master *master,
+				  struct spi_device *spi,
+				  struct spi_transfer *xfer)
+{
+	struct a3700_spi *a3700_spi = spi_master_get_devdata(master);
+	int ret = 0, timeout = A3700_SPI_TIMEOUT;
+	unsigned int nbits = 0, byte_len;
 	u32 val;
 
 	/* Make sure we use FIFO mode */
-	a3700_spi_fअगरo_mode_set(a3700_spi, true);
+	a3700_spi_fifo_mode_set(a3700_spi, true);
 
 	/* Configure FIFO thresholds */
 	byte_len = xfer->bits_per_word >> 3;
-	a3700_spi_fअगरo_thres_set(a3700_spi, byte_len);
+	a3700_spi_fifo_thres_set(a3700_spi, byte_len);
 
-	अगर (xfer->tx_buf)
+	if (xfer->tx_buf)
 		nbits = xfer->tx_nbits;
-	अन्यथा अगर (xfer->rx_buf)
+	else if (xfer->rx_buf)
 		nbits = xfer->rx_nbits;
 
 	a3700_spi_pin_mode_set(a3700_spi, nbits, xfer->rx_buf ? true : false);
 
 	/* Flush the FIFOs */
-	a3700_spi_fअगरo_flush(a3700_spi);
+	a3700_spi_fifo_flush(a3700_spi);
 
 	/* Transfer first bytes of data when buffer is not 4-byte aligned */
 	a3700_spi_header_set(a3700_spi);
 
-	अगर (xfer->rx_buf) अणु
-		/* Clear WFIFO, since it's last 2 bytes are shअगरted out during
-		 * a पढ़ो operation
+	if (xfer->rx_buf) {
+		/* Clear WFIFO, since it's last 2 bytes are shifted out during
+		 * a read operation
 		 */
-		spireg_ग_लिखो(a3700_spi, A3700_SPI_DATA_OUT_REG, 0);
+		spireg_write(a3700_spi, A3700_SPI_DATA_OUT_REG, 0);
 
-		/* Set पढ़ो data length */
-		spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_DIN_CNT_REG,
+		/* Set read data length */
+		spireg_write(a3700_spi, A3700_SPI_IF_DIN_CNT_REG,
 			     a3700_spi->buf_len);
 		/* Start READ transfer */
-		val = spireg_पढ़ो(a3700_spi, A3700_SPI_IF_CFG_REG);
+		val = spireg_read(a3700_spi, A3700_SPI_IF_CFG_REG);
 		val &= ~A3700_SPI_RW_EN;
 		val |= A3700_SPI_XFER_START;
-		spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_CFG_REG, val);
-	पूर्ण अन्यथा अगर (xfer->tx_buf) अणु
+		spireg_write(a3700_spi, A3700_SPI_IF_CFG_REG, val);
+	} else if (xfer->tx_buf) {
 		/* Start Write transfer */
-		val = spireg_पढ़ो(a3700_spi, A3700_SPI_IF_CFG_REG);
+		val = spireg_read(a3700_spi, A3700_SPI_IF_CFG_REG);
 		val |= (A3700_SPI_XFER_START | A3700_SPI_RW_EN);
-		spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_CFG_REG, val);
+		spireg_write(a3700_spi, A3700_SPI_IF_CFG_REG, val);
 
 		/*
 		 * If there are data to be written to the SPI device, xmit_data
-		 * flag is set true; otherwise the inकाष्ठाion in SPI_INSTR करोes
+		 * flag is set true; otherwise the instruction in SPI_INSTR does
 		 * not require data to be written to the SPI device, then
 		 * xmit_data flag is set false.
 		 */
 		a3700_spi->xmit_data = (a3700_spi->buf_len != 0);
-	पूर्ण
+	}
 
-	जबतक (a3700_spi->buf_len) अणु
-		अगर (a3700_spi->tx_buf) अणु
-			/* Wait wfअगरo पढ़ोy */
-			अगर (!a3700_spi_transfer_रुको(spi,
-						     A3700_SPI_WFIFO_RDY)) अणु
+	while (a3700_spi->buf_len) {
+		if (a3700_spi->tx_buf) {
+			/* Wait wfifo ready */
+			if (!a3700_spi_transfer_wait(spi,
+						     A3700_SPI_WFIFO_RDY)) {
 				dev_err(&spi->dev,
 					"wait wfifo ready timed out\n");
 				ret = -ETIMEDOUT;
-				जाओ error;
-			पूर्ण
-			/* Fill up the wfअगरo */
-			ret = a3700_spi_fअगरo_ग_लिखो(a3700_spi);
-			अगर (ret)
-				जाओ error;
-		पूर्ण अन्यथा अगर (a3700_spi->rx_buf) अणु
-			/* Wait rfअगरo पढ़ोy */
-			अगर (!a3700_spi_transfer_रुको(spi,
-						     A3700_SPI_RFIFO_RDY)) अणु
+				goto error;
+			}
+			/* Fill up the wfifo */
+			ret = a3700_spi_fifo_write(a3700_spi);
+			if (ret)
+				goto error;
+		} else if (a3700_spi->rx_buf) {
+			/* Wait rfifo ready */
+			if (!a3700_spi_transfer_wait(spi,
+						     A3700_SPI_RFIFO_RDY)) {
 				dev_err(&spi->dev,
 					"wait rfifo ready timed out\n");
 				ret = -ETIMEDOUT;
-				जाओ error;
-			पूर्ण
-			/* Drain out the rfअगरo */
-			ret = a3700_spi_fअगरo_पढ़ो(a3700_spi);
-			अगर (ret)
-				जाओ error;
-		पूर्ण
-	पूर्ण
+				goto error;
+			}
+			/* Drain out the rfifo */
+			ret = a3700_spi_fifo_read(a3700_spi);
+			if (ret)
+				goto error;
+		}
+	}
 
 	/*
-	 * Stop a ग_लिखो transfer in fअगरo mode:
-	 *	- रुको all the bytes in wfअगरo to be shअगरted out
+	 * Stop a write transfer in fifo mode:
+	 *	- wait all the bytes in wfifo to be shifted out
 	 *	 - set XFER_STOP bit
-	 *	- रुको XFER_START bit clear
+	 *	- wait XFER_START bit clear
 	 *	- clear XFER_STOP bit
-	 * Stop a पढ़ो transfer in fअगरo mode:
+	 * Stop a read transfer in fifo mode:
 	 *	- the hardware is to reset the XFER_START bit
 	 *	   after the number of bytes indicated in DIN_CNT
-	 *	   रेजिस्टर
-	 *	- just रुको XFER_START bit clear
+	 *	   register
+	 *	- just wait XFER_START bit clear
 	 */
-	अगर (a3700_spi->tx_buf) अणु
-		अगर (a3700_spi->xmit_data) अणु
+	if (a3700_spi->tx_buf) {
+		if (a3700_spi->xmit_data) {
 			/*
-			 * If there are data written to the SPI device, रुको
-			 * until SPI_WFIFO_EMPTY is 1 to रुको क्रम all data to
-			 * transfer out of ग_लिखो FIFO.
+			 * If there are data written to the SPI device, wait
+			 * until SPI_WFIFO_EMPTY is 1 to wait for all data to
+			 * transfer out of write FIFO.
 			 */
-			अगर (!a3700_spi_transfer_रुको(spi,
-						     A3700_SPI_WFIFO_EMPTY)) अणु
+			if (!a3700_spi_transfer_wait(spi,
+						     A3700_SPI_WFIFO_EMPTY)) {
 				dev_err(&spi->dev, "wait wfifo empty timed out\n");
-				वापस -ETIMEDOUT;
-			पूर्ण
-		पूर्ण
+				return -ETIMEDOUT;
+			}
+		}
 
-		अगर (!a3700_spi_transfer_रुको(spi, A3700_SPI_XFER_RDY)) अणु
+		if (!a3700_spi_transfer_wait(spi, A3700_SPI_XFER_RDY)) {
 			dev_err(&spi->dev, "wait xfer ready timed out\n");
-			वापस -ETIMEDOUT;
-		पूर्ण
+			return -ETIMEDOUT;
+		}
 
-		val = spireg_पढ़ो(a3700_spi, A3700_SPI_IF_CFG_REG);
+		val = spireg_read(a3700_spi, A3700_SPI_IF_CFG_REG);
 		val |= A3700_SPI_XFER_STOP;
-		spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_CFG_REG, val);
-	पूर्ण
+		spireg_write(a3700_spi, A3700_SPI_IF_CFG_REG, val);
+	}
 
-	जबतक (--समयout) अणु
-		val = spireg_पढ़ो(a3700_spi, A3700_SPI_IF_CFG_REG);
-		अगर (!(val & A3700_SPI_XFER_START))
-			अवरोध;
+	while (--timeout) {
+		val = spireg_read(a3700_spi, A3700_SPI_IF_CFG_REG);
+		if (!(val & A3700_SPI_XFER_START))
+			break;
 		udelay(1);
-	पूर्ण
+	}
 
-	अगर (समयout == 0) अणु
+	if (timeout == 0) {
 		dev_err(&spi->dev, "wait transfer start clear timed out\n");
 		ret = -ETIMEDOUT;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	val &= ~A3700_SPI_XFER_STOP;
-	spireg_ग_लिखो(a3700_spi, A3700_SPI_IF_CFG_REG, val);
-	जाओ out;
+	spireg_write(a3700_spi, A3700_SPI_IF_CFG_REG, val);
+	goto out;
 
 error:
-	a3700_spi_transfer_पात_fअगरo(a3700_spi);
+	a3700_spi_transfer_abort_fifo(a3700_spi);
 out:
 	spi_finalize_current_transfer(master);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक a3700_spi_transfer_one_full_duplex(काष्ठा spi_master *master,
-				  काष्ठा spi_device *spi,
-				  काष्ठा spi_transfer *xfer)
-अणु
-	काष्ठा a3700_spi *a3700_spi = spi_master_get_devdata(master);
+static int a3700_spi_transfer_one_full_duplex(struct spi_master *master,
+				  struct spi_device *spi,
+				  struct spi_transfer *xfer)
+{
+	struct a3700_spi *a3700_spi = spi_master_get_devdata(master);
 	u32 val;
 
 	/* Disable FIFO mode */
-	a3700_spi_fअगरo_mode_set(a3700_spi, false);
+	a3700_spi_fifo_mode_set(a3700_spi, false);
 
-	जबतक (a3700_spi->buf_len) अणु
+	while (a3700_spi->buf_len) {
 
-		/* When we have less than 4 bytes to transfer, चयन to 1 byte
+		/* When we have less than 4 bytes to transfer, switch to 1 byte
 		 * mode. This is reset after each transfer
 		 */
-		अगर (a3700_spi->buf_len < 4)
+		if (a3700_spi->buf_len < 4)
 			a3700_spi_bytelen_set(a3700_spi, 1);
 
-		अगर (a3700_spi->byte_len == 1)
+		if (a3700_spi->byte_len == 1)
 			val = *a3700_spi->tx_buf;
-		अन्यथा
+		else
 			val = *(u32 *)a3700_spi->tx_buf;
 
-		spireg_ग_लिखो(a3700_spi, A3700_SPI_DATA_OUT_REG, val);
+		spireg_write(a3700_spi, A3700_SPI_DATA_OUT_REG, val);
 
-		/* Wait क्रम all the data to be shअगरted in / out */
-		जबतक (!(spireg_पढ़ो(a3700_spi, A3700_SPI_IF_CTRL_REG) &
+		/* Wait for all the data to be shifted in / out */
+		while (!(spireg_read(a3700_spi, A3700_SPI_IF_CTRL_REG) &
 				A3700_SPI_XFER_DONE))
 			cpu_relax();
 
-		val = spireg_पढ़ो(a3700_spi, A3700_SPI_DATA_IN_REG);
+		val = spireg_read(a3700_spi, A3700_SPI_DATA_IN_REG);
 
-		स_नकल(a3700_spi->rx_buf, &val, a3700_spi->byte_len);
+		memcpy(a3700_spi->rx_buf, &val, a3700_spi->byte_len);
 
 		a3700_spi->buf_len -= a3700_spi->byte_len;
 		a3700_spi->tx_buf += a3700_spi->byte_len;
 		a3700_spi->rx_buf += a3700_spi->byte_len;
 
-	पूर्ण
+	}
 
 	spi_finalize_current_transfer(master);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक a3700_spi_transfer_one(काष्ठा spi_master *master,
-				  काष्ठा spi_device *spi,
-				  काष्ठा spi_transfer *xfer)
-अणु
+static int a3700_spi_transfer_one(struct spi_master *master,
+				  struct spi_device *spi,
+				  struct spi_transfer *xfer)
+{
 	a3700_spi_transfer_setup(spi, xfer);
 
-	अगर (xfer->tx_buf && xfer->rx_buf)
-		वापस a3700_spi_transfer_one_full_duplex(master, spi, xfer);
+	if (xfer->tx_buf && xfer->rx_buf)
+		return a3700_spi_transfer_one_full_duplex(master, spi, xfer);
 
-	वापस a3700_spi_transfer_one_fअगरo(master, spi, xfer);
-पूर्ण
+	return a3700_spi_transfer_one_fifo(master, spi, xfer);
+}
 
-अटल पूर्णांक a3700_spi_unprepare_message(काष्ठा spi_master *master,
-				       काष्ठा spi_message *message)
-अणु
-	काष्ठा a3700_spi *a3700_spi = spi_master_get_devdata(master);
+static int a3700_spi_unprepare_message(struct spi_master *master,
+				       struct spi_message *message)
+{
+	struct a3700_spi *a3700_spi = spi_master_get_devdata(master);
 
 	clk_disable(a3700_spi->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id a3700_spi_dt_ids[] = अणु
-	अणु .compatible = "marvell,armada-3700-spi", .data = शून्य पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id a3700_spi_dt_ids[] = {
+	{ .compatible = "marvell,armada-3700-spi", .data = NULL },
+	{},
+};
 
 MODULE_DEVICE_TABLE(of, a3700_spi_dt_ids);
 
-अटल पूर्णांक a3700_spi_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *of_node = dev->of_node;
-	काष्ठा spi_master *master;
-	काष्ठा a3700_spi *spi;
+static int a3700_spi_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *of_node = dev->of_node;
+	struct spi_master *master;
+	struct a3700_spi *spi;
 	u32 num_cs = 0;
-	पूर्णांक irq, ret = 0;
+	int irq, ret = 0;
 
-	master = spi_alloc_master(dev, माप(*spi));
-	अगर (!master) अणु
+	master = spi_alloc_master(dev, sizeof(*spi));
+	if (!master) {
 		dev_err(dev, "master allocation failed\n");
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (of_property_पढ़ो_u32(of_node, "num-cs", &num_cs)) अणु
+	if (of_property_read_u32(of_node, "num-cs", &num_cs)) {
 		dev_err(dev, "could not find num-cs\n");
 		ret = -ENXIO;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	master->bus_num = pdev->id;
 	master->dev.of_node = of_node;
@@ -846,89 +845,89 @@ MODULE_DEVICE_TABLE(of, a3700_spi_dt_ids);
 	master->mode_bits |= (SPI_RX_DUAL | SPI_TX_DUAL |
 			      SPI_RX_QUAD | SPI_TX_QUAD);
 
-	platक्रमm_set_drvdata(pdev, master);
+	platform_set_drvdata(pdev, master);
 
 	spi = spi_master_get_devdata(master);
 
 	spi->master = master;
 
-	spi->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(spi->base)) अणु
+	spi->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(spi->base)) {
 		ret = PTR_ERR(spi->base);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0) अणु
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0) {
 		ret = -ENXIO;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 	spi->irq = irq;
 
-	init_completion(&spi->करोne);
+	init_completion(&spi->done);
 
-	spi->clk = devm_clk_get(dev, शून्य);
-	अगर (IS_ERR(spi->clk)) अणु
+	spi->clk = devm_clk_get(dev, NULL);
+	if (IS_ERR(spi->clk)) {
 		dev_err(dev, "could not find clk: %ld\n", PTR_ERR(spi->clk));
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	ret = clk_prepare(spi->clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "could not prepare clk: %d\n", ret);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	master->max_speed_hz = min_t(अचिन्हित दीर्घ, A3700_SPI_MAX_SPEED_HZ,
+	master->max_speed_hz = min_t(unsigned long, A3700_SPI_MAX_SPEED_HZ,
 					clk_get_rate(spi->clk));
 	master->min_speed_hz = DIV_ROUND_UP(clk_get_rate(spi->clk),
 						A3700_SPI_MAX_PRESCALE);
 
 	a3700_spi_init(spi);
 
-	ret = devm_request_irq(dev, spi->irq, a3700_spi_पूर्णांकerrupt, 0,
+	ret = devm_request_irq(dev, spi->irq, a3700_spi_interrupt, 0,
 			       dev_name(dev), master);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "could not request IRQ: %d\n", ret);
-		जाओ error_clk;
-	पूर्ण
+		goto error_clk;
+	}
 
-	ret = devm_spi_रेजिस्टर_master(dev, master);
-	अगर (ret) अणु
+	ret = devm_spi_register_master(dev, master);
+	if (ret) {
 		dev_err(dev, "Failed to register master\n");
-		जाओ error_clk;
-	पूर्ण
+		goto error_clk;
+	}
 
-	वापस 0;
+	return 0;
 
 error_clk:
 	clk_disable_unprepare(spi->clk);
 error:
 	spi_master_put(master);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक a3700_spi_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा spi_master *master = platक्रमm_get_drvdata(pdev);
-	काष्ठा a3700_spi *spi = spi_master_get_devdata(master);
+static int a3700_spi_remove(struct platform_device *pdev)
+{
+	struct spi_master *master = platform_get_drvdata(pdev);
+	struct a3700_spi *spi = spi_master_get_devdata(master);
 
 	clk_unprepare(spi->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver a3700_spi_driver = अणु
-	.driver = अणु
+static struct platform_driver a3700_spi_driver = {
+	.driver = {
 		.name	= DRIVER_NAME,
 		.of_match_table = of_match_ptr(a3700_spi_dt_ids),
-	पूर्ण,
+	},
 	.probe		= a3700_spi_probe,
-	.हटाओ		= a3700_spi_हटाओ,
-पूर्ण;
+	.remove		= a3700_spi_remove,
+};
 
-module_platक्रमm_driver(a3700_spi_driver);
+module_platform_driver(a3700_spi_driver);
 
 MODULE_DESCRIPTION("Armada-3700 SPI driver");
 MODULE_AUTHOR("Wilson Ding <dingwei@marvell.com>");

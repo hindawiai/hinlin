@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVKM_SW_CHAN_H__
-#घोषणा __NVKM_SW_CHAN_H__
-#घोषणा nvkm_sw_chan(p) container_of((p), काष्ठा nvkm_sw_chan, object)
-#समावेश <core/object.h>
-#समावेश <core/event.h>
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVKM_SW_CHAN_H__
+#define __NVKM_SW_CHAN_H__
+#define nvkm_sw_chan(p) container_of((p), struct nvkm_sw_chan, object)
+#include <core/object.h>
+#include <core/event.h>
 
-#समावेश "priv.h"
+#include "priv.h"
 
-काष्ठा nvkm_sw_chan अणु
-	स्थिर काष्ठा nvkm_sw_chan_func *func;
-	काष्ठा nvkm_object object;
-	काष्ठा nvkm_sw *sw;
-	काष्ठा nvkm_fअगरo_chan *fअगरo;
-	काष्ठा list_head head;
+struct nvkm_sw_chan {
+	const struct nvkm_sw_chan_func *func;
+	struct nvkm_object object;
+	struct nvkm_sw *sw;
+	struct nvkm_fifo_chan *fifo;
+	struct list_head head;
 
-	काष्ठा nvkm_event event;
-पूर्ण;
+	struct nvkm_event event;
+};
 
-काष्ठा nvkm_sw_chan_func अणु
-	व्योम *(*dtor)(काष्ठा nvkm_sw_chan *);
-	bool (*mthd)(काष्ठा nvkm_sw_chan *, पूर्णांक subc, u32 mthd, u32 data);
-पूर्ण;
+struct nvkm_sw_chan_func {
+	void *(*dtor)(struct nvkm_sw_chan *);
+	bool (*mthd)(struct nvkm_sw_chan *, int subc, u32 mthd, u32 data);
+};
 
-पूर्णांक nvkm_sw_chan_ctor(स्थिर काष्ठा nvkm_sw_chan_func *, काष्ठा nvkm_sw *,
-		      काष्ठा nvkm_fअगरo_chan *, स्थिर काष्ठा nvkm_oclass *,
-		      काष्ठा nvkm_sw_chan *);
-bool nvkm_sw_chan_mthd(काष्ठा nvkm_sw_chan *, पूर्णांक subc, u32 mthd, u32 data);
-#पूर्ण_अगर
+int nvkm_sw_chan_ctor(const struct nvkm_sw_chan_func *, struct nvkm_sw *,
+		      struct nvkm_fifo_chan *, const struct nvkm_oclass *,
+		      struct nvkm_sw_chan *);
+bool nvkm_sw_chan_mthd(struct nvkm_sw_chan *, int subc, u32 mthd, u32 data);
+#endif

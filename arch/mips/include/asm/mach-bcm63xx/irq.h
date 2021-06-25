@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_MACH_BCM63XX_IRQ_H
-#घोषणा __ASM_MACH_BCM63XX_IRQ_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_MACH_BCM63XX_IRQ_H
+#define __ASM_MACH_BCM63XX_IRQ_H
 
-#घोषणा NR_IRQS 128
-#घोषणा MIPS_CPU_IRQ_BASE 0
+#define NR_IRQS 128
+#define MIPS_CPU_IRQ_BASE 0
 
-#पूर्ण_अगर
+#endif

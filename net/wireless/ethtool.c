@@ -1,30 +1,29 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/utsname.h>
-#समावेश <net/cfg80211.h>
-#समावेश "core.h"
-#समावेश "rdev-ops.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/utsname.h>
+#include <net/cfg80211.h>
+#include "core.h"
+#include "rdev-ops.h"
 
-व्योम cfg80211_get_drvinfo(काष्ठा net_device *dev, काष्ठा ethtool_drvinfo *info)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	काष्ठा device *pdev = wiphy_dev(wdev->wiphy);
+void cfg80211_get_drvinfo(struct net_device *dev, struct ethtool_drvinfo *info)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct device *pdev = wiphy_dev(wdev->wiphy);
 
-	अगर (pdev->driver)
+	if (pdev->driver)
 		strlcpy(info->driver, pdev->driver->name,
-			माप(info->driver));
-	अन्यथा
-		strlcpy(info->driver, "N/A", माप(info->driver));
+			sizeof(info->driver));
+	else
+		strlcpy(info->driver, "N/A", sizeof(info->driver));
 
-	strlcpy(info->version, init_utsname()->release, माप(info->version));
+	strlcpy(info->version, init_utsname()->release, sizeof(info->version));
 
-	अगर (wdev->wiphy->fw_version[0])
+	if (wdev->wiphy->fw_version[0])
 		strlcpy(info->fw_version, wdev->wiphy->fw_version,
-			माप(info->fw_version));
-	अन्यथा
-		strlcpy(info->fw_version, "N/A", माप(info->fw_version));
+			sizeof(info->fw_version));
+	else
+		strlcpy(info->fw_version, "N/A", sizeof(info->fw_version));
 
 	strlcpy(info->bus_info, dev_name(wiphy_dev(wdev->wiphy)),
-		माप(info->bus_info));
-पूर्ण
+		sizeof(info->bus_info));
+}
 EXPORT_SYMBOL(cfg80211_get_drvinfo);

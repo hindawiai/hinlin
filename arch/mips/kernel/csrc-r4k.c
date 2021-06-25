@@ -1,131 +1,130 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2007 by Ralf Baechle
  */
-#समावेश <linux/घड़ीsource.h>
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/init.h>
-#समावेश <linux/sched_घड़ी.h>
+#include <linux/clocksource.h>
+#include <linux/cpufreq.h>
+#include <linux/init.h>
+#include <linux/sched_clock.h>
 
-#समावेश <यंत्र/समय.स>
+#include <asm/time.h>
 
-अटल u64 c0_hpt_पढ़ो(काष्ठा घड़ीsource *cs)
-अणु
-	वापस पढ़ो_c0_count();
-पूर्ण
+static u64 c0_hpt_read(struct clocksource *cs)
+{
+	return read_c0_count();
+}
 
-अटल काष्ठा घड़ीsource घड़ीsource_mips = अणु
+static struct clocksource clocksource_mips = {
 	.name		= "MIPS",
-	.पढ़ो		= c0_hpt_पढ़ो,
+	.read		= c0_hpt_read,
 	.mask		= CLOCKSOURCE_MASK(32),
 	.flags		= CLOCK_SOURCE_IS_CONTINUOUS,
-पूर्ण;
+};
 
-अटल u64 __maybe_unused notrace r4k_पढ़ो_sched_घड़ी(व्योम)
-अणु
-	वापस पढ़ो_c0_count();
-पूर्ण
+static u64 __maybe_unused notrace r4k_read_sched_clock(void)
+{
+	return read_c0_count();
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक rdhwr_count(व्योम)
-अणु
-	अचिन्हित पूर्णांक count;
+static inline unsigned int rdhwr_count(void)
+{
+	unsigned int count;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	"	.set push\n"
 	"	.set mips32r2\n"
 	"	rdhwr	%0, $2\n"
 	"	.set pop\n"
 	: "=r" (count));
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल bool rdhwr_count_usable(व्योम)
-अणु
-	अचिन्हित पूर्णांक prev, curr, i;
+static bool rdhwr_count_usable(void)
+{
+	unsigned int prev, curr, i;
 
 	/*
-	 * Older QEMUs have a broken implementation of RDHWR क्रम the CP0 count
-	 * which always वापसs a स्थिरant value. Try to identअगरy this and करोn't
-	 * use it in the VDSO अगर it is broken. This workaround can be हटाओd
-	 * once the fix has been in QEMU stable क्रम a reasonable amount of समय.
+	 * Older QEMUs have a broken implementation of RDHWR for the CP0 count
+	 * which always returns a constant value. Try to identify this and don't
+	 * use it in the VDSO if it is broken. This workaround can be removed
+	 * once the fix has been in QEMU stable for a reasonable amount of time.
 	 */
-	क्रम (i = 0, prev = rdhwr_count(); i < 100; i++) अणु
+	for (i = 0, prev = rdhwr_count(); i < 100; i++) {
 		curr = rdhwr_count();
 
-		अगर (curr != prev)
-			वापस true;
+		if (curr != prev)
+			return true;
 
 		prev = curr;
-	पूर्ण
+	}
 
 	pr_warn("Not using R4K clocksource in VDSO due to broken RDHWR\n");
-	वापस false;
-पूर्ण
+	return false;
+}
 
-#अगर_घोषित CONFIG_CPU_FREQ
+#ifdef CONFIG_CPU_FREQ
 
-अटल bool __पढ़ो_mostly r4k_घड़ी_unstable;
+static bool __read_mostly r4k_clock_unstable;
 
-अटल व्योम r4k_घड़ीsource_unstable(अक्षर *reason)
-अणु
-	अगर (r4k_घड़ी_unstable)
-		वापस;
+static void r4k_clocksource_unstable(char *reason)
+{
+	if (r4k_clock_unstable)
+		return;
 
-	r4k_घड़ी_unstable = true;
+	r4k_clock_unstable = true;
 
 	pr_info("R4K timer is unstable due to %s\n", reason);
 
-	घड़ीsource_mark_unstable(&घड़ीsource_mips);
-पूर्ण
+	clocksource_mark_unstable(&clocksource_mips);
+}
 
-अटल पूर्णांक r4k_cpufreq_callback(काष्ठा notअगरier_block *nb,
-				अचिन्हित दीर्घ val, व्योम *data)
-अणु
-	अगर (val == CPUFREQ_POSTCHANGE)
-		r4k_घड़ीsource_unstable("CPU frequency change");
+static int r4k_cpufreq_callback(struct notifier_block *nb,
+				unsigned long val, void *data)
+{
+	if (val == CPUFREQ_POSTCHANGE)
+		r4k_clocksource_unstable("CPU frequency change");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा notअगरier_block r4k_cpufreq_notअगरier = अणु
-	.notअगरier_call  = r4k_cpufreq_callback,
-पूर्ण;
+static struct notifier_block r4k_cpufreq_notifier = {
+	.notifier_call  = r4k_cpufreq_callback,
+};
 
-अटल पूर्णांक __init r4k_रेजिस्टर_cpufreq_notअगरier(व्योम)
-अणु
-	वापस cpufreq_रेजिस्टर_notअगरier(&r4k_cpufreq_notअगरier,
+static int __init r4k_register_cpufreq_notifier(void)
+{
+	return cpufreq_register_notifier(&r4k_cpufreq_notifier,
 					 CPUFREQ_TRANSITION_NOTIFIER);
 
-पूर्ण
-core_initcall(r4k_रेजिस्टर_cpufreq_notअगरier);
+}
+core_initcall(r4k_register_cpufreq_notifier);
 
-#पूर्ण_अगर /* !CONFIG_CPU_FREQ */
+#endif /* !CONFIG_CPU_FREQ */
 
-पूर्णांक __init init_r4k_घड़ीsource(व्योम)
-अणु
-	अगर (!cpu_has_counter || !mips_hpt_frequency)
-		वापस -ENXIO;
+int __init init_r4k_clocksource(void)
+{
+	if (!cpu_has_counter || !mips_hpt_frequency)
+		return -ENXIO;
 
 	/* Calculate a somewhat reasonable rating value */
-	घड़ीsource_mips.rating = 200 + mips_hpt_frequency / 10000000;
+	clocksource_mips.rating = 200 + mips_hpt_frequency / 10000000;
 
 	/*
 	 * R2 onwards makes the count accessible to user mode so it can be used
 	 * by the VDSO (HWREna is configured by configure_hwrena()).
 	 */
-	अगर (cpu_has_mips_r2_r6 && rdhwr_count_usable())
-		घड़ीsource_mips.vdso_घड़ी_mode = VDSO_CLOCKMODE_R4K;
+	if (cpu_has_mips_r2_r6 && rdhwr_count_usable())
+		clocksource_mips.vdso_clock_mode = VDSO_CLOCKMODE_R4K;
 
-	घड़ीsource_रेजिस्टर_hz(&घड़ीsource_mips, mips_hpt_frequency);
+	clocksource_register_hz(&clocksource_mips, mips_hpt_frequency);
 
-#अगर_अघोषित CONFIG_CPU_FREQ
-	sched_घड़ी_रेजिस्टर(r4k_पढ़ो_sched_घड़ी, 32, mips_hpt_frequency);
-#पूर्ण_अगर
+#ifndef CONFIG_CPU_FREQ
+	sched_clock_register(r4k_read_sched_clock, 32, mips_hpt_frequency);
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

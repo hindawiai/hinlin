@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _PSERIES_OF_HELPERS_H
-#घोषणा _PSERIES_OF_HELPERS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _PSERIES_OF_HELPERS_H
+#define _PSERIES_OF_HELPERS_H
 
-#समावेश <linux/of.h>
+#include <linux/of.h>
 
-काष्ठा device_node *pseries_of_derive_parent(स्थिर अक्षर *path);
+struct device_node *pseries_of_derive_parent(const char *path);
 
-#पूर्ण_अगर /* _PSERIES_OF_HELPERS_H */
+#endif /* _PSERIES_OF_HELPERS_H */

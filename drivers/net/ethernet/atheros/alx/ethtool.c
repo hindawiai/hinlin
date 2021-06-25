@@ -1,8 +1,7 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2013 Johannes Berg <johannes@sipsolutions.net>
  *
- *  This file is मुक्त software: you may copy, redistribute and/or modअगरy it
+ *  This file is free software: you may copy, redistribute and/or modify it
  *  under the terms of the GNU General Public License as published by the
  *  Free Software Foundation, either version 2 of the License, or (at your
  *  option) any later version.
@@ -10,48 +9,48 @@
  *  This file is distributed in the hope that it will be useful, but
  *  WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  General Public License क्रम more details.
+ *  General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  aदीर्घ with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * This file incorporates work covered by the following copyright and
  * permission notice:
  *
  * Copyright (c) 2012 Qualcomm Atheros, Inc.
  *
- * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#समावेश <linux/pci.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/tcp.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/mdपन.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <यंत्र/byteorder.h>
+#include <linux/pci.h>
+#include <linux/ip.h>
+#include <linux/tcp.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/ethtool.h>
+#include <linux/mdio.h>
+#include <linux/interrupt.h>
+#include <asm/byteorder.h>
 
-#समावेश "alx.h"
-#समावेश "reg.h"
-#समावेश "hw.h"
+#include "alx.h"
+#include "reg.h"
+#include "hw.h"
 
 /* The order of these strings must match the order of the fields in
- * काष्ठा alx_hw_stats
+ * struct alx_hw_stats
  * See hw.h
  */
-अटल स्थिर अक्षर alx_gstrings_stats[][ETH_GSTRING_LEN] = अणु
+static const char alx_gstrings_stats[][ETH_GSTRING_LEN] = {
 	"rx_packets",
 	"rx_bcast_packets",
 	"rx_mcast_packets",
@@ -102,19 +101,19 @@
 	"tx_bcast_bytes",
 	"tx_mcast_bytes",
 	"tx_update",
-पूर्ण;
+};
 
-#घोषणा ALX_NUM_STATS ARRAY_SIZE(alx_gstrings_stats)
+#define ALX_NUM_STATS ARRAY_SIZE(alx_gstrings_stats)
 
 
-अटल u32 alx_get_supported_speeds(काष्ठा alx_hw *hw)
-अणु
+static u32 alx_get_supported_speeds(struct alx_hw *hw)
+{
 	u32 supported = SUPPORTED_10baseT_Half |
 			SUPPORTED_10baseT_Full |
 			SUPPORTED_100baseT_Half |
 			SUPPORTED_100baseT_Full;
 
-	अगर (alx_hw_giga(hw))
+	if (alx_hw_giga(hw))
 		supported |= SUPPORTED_1000baseT_Full;
 
 	BUILD_BUG_ON(SUPPORTED_10baseT_Half != ADVERTISED_10baseT_Half);
@@ -123,46 +122,46 @@
 	BUILD_BUG_ON(SUPPORTED_100baseT_Full != ADVERTISED_100baseT_Full);
 	BUILD_BUG_ON(SUPPORTED_1000baseT_Full != ADVERTISED_1000baseT_Full);
 
-	वापस supported;
-पूर्ण
+	return supported;
+}
 
-अटल पूर्णांक alx_get_link_ksettings(काष्ठा net_device *netdev,
-				  काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा alx_priv *alx = netdev_priv(netdev);
-	काष्ठा alx_hw *hw = &alx->hw;
+static int alx_get_link_ksettings(struct net_device *netdev,
+				  struct ethtool_link_ksettings *cmd)
+{
+	struct alx_priv *alx = netdev_priv(netdev);
+	struct alx_hw *hw = &alx->hw;
 	u32 supported, advertising;
 
 	supported = SUPPORTED_Autoneg |
 			  SUPPORTED_TP |
 			  SUPPORTED_Pause |
 			  SUPPORTED_Asym_Pause;
-	अगर (alx_hw_giga(hw))
+	if (alx_hw_giga(hw))
 		supported |= SUPPORTED_1000baseT_Full;
 	supported |= alx_get_supported_speeds(hw);
 
 	advertising = ADVERTISED_TP;
-	अगर (hw->adv_cfg & ADVERTISED_Autoneg)
+	if (hw->adv_cfg & ADVERTISED_Autoneg)
 		advertising |= hw->adv_cfg;
 
 	cmd->base.port = PORT_TP;
 	cmd->base.phy_address = 0;
 
-	अगर (hw->adv_cfg & ADVERTISED_Autoneg)
-		cmd->base.स्वतःneg = AUTONEG_ENABLE;
-	अन्यथा
-		cmd->base.स्वतःneg = AUTONEG_DISABLE;
+	if (hw->adv_cfg & ADVERTISED_Autoneg)
+		cmd->base.autoneg = AUTONEG_ENABLE;
+	else
+		cmd->base.autoneg = AUTONEG_DISABLE;
 
-	अगर (hw->flowctrl & ALX_FC_ANEG && hw->adv_cfg & ADVERTISED_Autoneg) अणु
-		अगर (hw->flowctrl & ALX_FC_RX) अणु
+	if (hw->flowctrl & ALX_FC_ANEG && hw->adv_cfg & ADVERTISED_Autoneg) {
+		if (hw->flowctrl & ALX_FC_RX) {
 			advertising |= ADVERTISED_Pause;
 
-			अगर (!(hw->flowctrl & ALX_FC_TX))
+			if (!(hw->flowctrl & ALX_FC_TX))
 				advertising |= ADVERTISED_Asym_Pause;
-		पूर्ण अन्यथा अगर (hw->flowctrl & ALX_FC_TX) अणु
+		} else if (hw->flowctrl & ALX_FC_TX) {
 			advertising |= ADVERTISED_Asym_Pause;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	cmd->base.speed = hw->link_speed;
 	cmd->base.duplex = hw->duplex;
@@ -172,14 +171,14 @@
 	ethtool_convert_legacy_u32_to_link_mode(cmd->link_modes.advertising,
 						advertising);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक alx_set_link_ksettings(काष्ठा net_device *netdev,
-				  स्थिर काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा alx_priv *alx = netdev_priv(netdev);
-	काष्ठा alx_hw *hw = &alx->hw;
+static int alx_set_link_ksettings(struct net_device *netdev,
+				  const struct ethtool_link_ksettings *cmd)
+{
+	struct alx_priv *alx = netdev_priv(netdev);
+	struct alx_hw *hw = &alx->hw;
 	u32 adv_cfg;
 	u32 advertising;
 
@@ -188,132 +187,132 @@
 	ethtool_convert_link_mode_to_legacy_u32(&advertising,
 						cmd->link_modes.advertising);
 
-	अगर (cmd->base.स्वतःneg == AUTONEG_ENABLE) अणु
-		अगर (advertising & ~alx_get_supported_speeds(hw))
-			वापस -EINVAL;
+	if (cmd->base.autoneg == AUTONEG_ENABLE) {
+		if (advertising & ~alx_get_supported_speeds(hw))
+			return -EINVAL;
 		adv_cfg = advertising | ADVERTISED_Autoneg;
-	पूर्ण अन्यथा अणु
+	} else {
 		adv_cfg = alx_speed_to_ethadv(cmd->base.speed,
 					      cmd->base.duplex);
 
-		अगर (!adv_cfg || adv_cfg == ADVERTISED_1000baseT_Full)
-			वापस -EINVAL;
-	पूर्ण
+		if (!adv_cfg || adv_cfg == ADVERTISED_1000baseT_Full)
+			return -EINVAL;
+	}
 
 	hw->adv_cfg = adv_cfg;
-	वापस alx_setup_speed_duplex(hw, adv_cfg, hw->flowctrl);
-पूर्ण
+	return alx_setup_speed_duplex(hw, adv_cfg, hw->flowctrl);
+}
 
-अटल व्योम alx_get_छोड़ोparam(काष्ठा net_device *netdev,
-			       काष्ठा ethtool_छोड़ोparam *छोड़ो)
-अणु
-	काष्ठा alx_priv *alx = netdev_priv(netdev);
-	काष्ठा alx_hw *hw = &alx->hw;
+static void alx_get_pauseparam(struct net_device *netdev,
+			       struct ethtool_pauseparam *pause)
+{
+	struct alx_priv *alx = netdev_priv(netdev);
+	struct alx_hw *hw = &alx->hw;
 
-	छोड़ो->स्वतःneg = !!(hw->flowctrl & ALX_FC_ANEG &&
+	pause->autoneg = !!(hw->flowctrl & ALX_FC_ANEG &&
 			    hw->adv_cfg & ADVERTISED_Autoneg);
-	छोड़ो->tx_छोड़ो = !!(hw->flowctrl & ALX_FC_TX);
-	छोड़ो->rx_छोड़ो = !!(hw->flowctrl & ALX_FC_RX);
-पूर्ण
+	pause->tx_pause = !!(hw->flowctrl & ALX_FC_TX);
+	pause->rx_pause = !!(hw->flowctrl & ALX_FC_RX);
+}
 
 
-अटल पूर्णांक alx_set_छोड़ोparam(काष्ठा net_device *netdev,
-			      काष्ठा ethtool_छोड़ोparam *छोड़ो)
-अणु
-	काष्ठा alx_priv *alx = netdev_priv(netdev);
-	काष्ठा alx_hw *hw = &alx->hw;
-	पूर्णांक err = 0;
+static int alx_set_pauseparam(struct net_device *netdev,
+			      struct ethtool_pauseparam *pause)
+{
+	struct alx_priv *alx = netdev_priv(netdev);
+	struct alx_hw *hw = &alx->hw;
+	int err = 0;
 	bool reconfig_phy = false;
 	u8 fc = 0;
 
-	अगर (छोड़ो->tx_छोड़ो)
+	if (pause->tx_pause)
 		fc |= ALX_FC_TX;
-	अगर (छोड़ो->rx_छोड़ो)
+	if (pause->rx_pause)
 		fc |= ALX_FC_RX;
-	अगर (छोड़ो->स्वतःneg)
+	if (pause->autoneg)
 		fc |= ALX_FC_ANEG;
 
 	ASSERT_RTNL();
 
-	/* restart स्वतः-neg क्रम स्वतः-mode */
-	अगर (hw->adv_cfg & ADVERTISED_Autoneg) अणु
-		अगर (!((fc ^ hw->flowctrl) & ALX_FC_ANEG))
+	/* restart auto-neg for auto-mode */
+	if (hw->adv_cfg & ADVERTISED_Autoneg) {
+		if (!((fc ^ hw->flowctrl) & ALX_FC_ANEG))
 			reconfig_phy = true;
-		अगर (fc & hw->flowctrl & ALX_FC_ANEG &&
+		if (fc & hw->flowctrl & ALX_FC_ANEG &&
 		    (fc ^ hw->flowctrl) & (ALX_FC_RX | ALX_FC_TX))
 			reconfig_phy = true;
-	पूर्ण
+	}
 
-	अगर (reconfig_phy) अणु
+	if (reconfig_phy) {
 		err = alx_setup_speed_duplex(hw, hw->adv_cfg, fc);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	/* flow control on mac */
-	अगर ((fc ^ hw->flowctrl) & (ALX_FC_RX | ALX_FC_TX))
+	if ((fc ^ hw->flowctrl) & (ALX_FC_RX | ALX_FC_TX))
 		alx_cfg_mac_flowcontrol(hw, fc);
 
 	hw->flowctrl = fc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 alx_get_msglevel(काष्ठा net_device *netdev)
-अणु
-	काष्ठा alx_priv *alx = netdev_priv(netdev);
+static u32 alx_get_msglevel(struct net_device *netdev)
+{
+	struct alx_priv *alx = netdev_priv(netdev);
 
-	वापस alx->msg_enable;
-पूर्ण
+	return alx->msg_enable;
+}
 
-अटल व्योम alx_set_msglevel(काष्ठा net_device *netdev, u32 data)
-अणु
-	काष्ठा alx_priv *alx = netdev_priv(netdev);
+static void alx_set_msglevel(struct net_device *netdev, u32 data)
+{
+	struct alx_priv *alx = netdev_priv(netdev);
 
 	alx->msg_enable = data;
-पूर्ण
+}
 
-अटल व्योम alx_get_ethtool_stats(काष्ठा net_device *netdev,
-				  काष्ठा ethtool_stats *estats, u64 *data)
-अणु
-	काष्ठा alx_priv *alx = netdev_priv(netdev);
-	काष्ठा alx_hw *hw = &alx->hw;
+static void alx_get_ethtool_stats(struct net_device *netdev,
+				  struct ethtool_stats *estats, u64 *data)
+{
+	struct alx_priv *alx = netdev_priv(netdev);
+	struct alx_hw *hw = &alx->hw;
 
 	spin_lock(&alx->stats_lock);
 
 	alx_update_hw_stats(hw);
-	BUILD_BUG_ON(माप(hw->stats) - दुरत्व(काष्ठा alx_hw_stats, rx_ok) <
-		     ALX_NUM_STATS * माप(u64));
-	स_नकल(data, &hw->stats.rx_ok, ALX_NUM_STATS * माप(u64));
+	BUILD_BUG_ON(sizeof(hw->stats) - offsetof(struct alx_hw_stats, rx_ok) <
+		     ALX_NUM_STATS * sizeof(u64));
+	memcpy(data, &hw->stats.rx_ok, ALX_NUM_STATS * sizeof(u64));
 
 	spin_unlock(&alx->stats_lock);
-पूर्ण
+}
 
-अटल व्योम alx_get_strings(काष्ठा net_device *netdev, u32 stringset, u8 *buf)
-अणु
-	चयन (stringset) अणु
-	हाल ETH_SS_STATS:
-		स_नकल(buf, &alx_gstrings_stats, माप(alx_gstrings_stats));
-		अवरोध;
-	शेष:
+static void alx_get_strings(struct net_device *netdev, u32 stringset, u8 *buf)
+{
+	switch (stringset) {
+	case ETH_SS_STATS:
+		memcpy(buf, &alx_gstrings_stats, sizeof(alx_gstrings_stats));
+		break;
+	default:
 		WARN_ON(1);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक alx_get_sset_count(काष्ठा net_device *netdev, पूर्णांक sset)
-अणु
-	चयन (sset) अणु
-	हाल ETH_SS_STATS:
-		वापस ALX_NUM_STATS;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+static int alx_get_sset_count(struct net_device *netdev, int sset)
+{
+	switch (sset) {
+	case ETH_SS_STATS:
+		return ALX_NUM_STATS;
+	default:
+		return -EINVAL;
+	}
+}
 
-स्थिर काष्ठा ethtool_ops alx_ethtool_ops = अणु
-	.get_छोड़ोparam	= alx_get_छोड़ोparam,
-	.set_छोड़ोparam	= alx_set_छोड़ोparam,
+const struct ethtool_ops alx_ethtool_ops = {
+	.get_pauseparam	= alx_get_pauseparam,
+	.set_pauseparam	= alx_set_pauseparam,
 	.get_msglevel	= alx_get_msglevel,
 	.set_msglevel	= alx_set_msglevel,
 	.get_link	= ethtool_op_get_link,
@@ -322,4 +321,4 @@
 	.get_ethtool_stats	= alx_get_ethtool_stats,
 	.get_link_ksettings	= alx_get_link_ksettings,
 	.set_link_ksettings	= alx_set_link_ksettings,
-पूर्ण;
+};

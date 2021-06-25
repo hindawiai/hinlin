@@ -1,274 +1,273 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2018 Red Hat, Inc.
  *
- * This is a test "dust" device, which fails पढ़ोs on specअगरied
+ * This is a test "dust" device, which fails reads on specified
  * sectors, emulating the behavior of a hard disk drive sending
  * a "Read Medium Error" sense.
  *
  */
 
-#समावेश <linux/device-mapper.h>
-#समावेश <linux/module.h>
-#समावेश <linux/rbtree.h>
+#include <linux/device-mapper.h>
+#include <linux/module.h>
+#include <linux/rbtree.h>
 
-#घोषणा DM_MSG_PREFIX "dust"
+#define DM_MSG_PREFIX "dust"
 
-काष्ठा badblock अणु
-	काष्ठा rb_node node;
+struct badblock {
+	struct rb_node node;
 	sector_t bb;
-	अचिन्हित अक्षर wr_fail_cnt;
-पूर्ण;
+	unsigned char wr_fail_cnt;
+};
 
-काष्ठा dust_device अणु
-	काष्ठा dm_dev *dev;
-	काष्ठा rb_root badblocklist;
-	अचिन्हित दीर्घ दीर्घ badblock_count;
+struct dust_device {
+	struct dm_dev *dev;
+	struct rb_root badblocklist;
+	unsigned long long badblock_count;
 	spinlock_t dust_lock;
-	अचिन्हित पूर्णांक blksz;
-	पूर्णांक sect_per_block_shअगरt;
-	अचिन्हित पूर्णांक sect_per_block;
+	unsigned int blksz;
+	int sect_per_block_shift;
+	unsigned int sect_per_block;
 	sector_t start;
-	bool fail_पढ़ो_on_bb:1;
+	bool fail_read_on_bb:1;
 	bool quiet_mode:1;
-पूर्ण;
+};
 
-अटल काष्ठा badblock *dust_rb_search(काष्ठा rb_root *root, sector_t blk)
-अणु
-	काष्ठा rb_node *node = root->rb_node;
+static struct badblock *dust_rb_search(struct rb_root *root, sector_t blk)
+{
+	struct rb_node *node = root->rb_node;
 
-	जबतक (node) अणु
-		काष्ठा badblock *bblk = rb_entry(node, काष्ठा badblock, node);
+	while (node) {
+		struct badblock *bblk = rb_entry(node, struct badblock, node);
 
-		अगर (bblk->bb > blk)
+		if (bblk->bb > blk)
 			node = node->rb_left;
-		अन्यथा अगर (bblk->bb < blk)
+		else if (bblk->bb < blk)
 			node = node->rb_right;
-		अन्यथा
-			वापस bblk;
-	पूर्ण
+		else
+			return bblk;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल bool dust_rb_insert(काष्ठा rb_root *root, काष्ठा badblock *new)
-अणु
-	काष्ठा badblock *bblk;
-	काष्ठा rb_node **link = &root->rb_node, *parent = शून्य;
+static bool dust_rb_insert(struct rb_root *root, struct badblock *new)
+{
+	struct badblock *bblk;
+	struct rb_node **link = &root->rb_node, *parent = NULL;
 	sector_t value = new->bb;
 
-	जबतक (*link) अणु
+	while (*link) {
 		parent = *link;
-		bblk = rb_entry(parent, काष्ठा badblock, node);
+		bblk = rb_entry(parent, struct badblock, node);
 
-		अगर (bblk->bb > value)
+		if (bblk->bb > value)
 			link = &(*link)->rb_left;
-		अन्यथा अगर (bblk->bb < value)
+		else if (bblk->bb < value)
 			link = &(*link)->rb_right;
-		अन्यथा
-			वापस false;
-	पूर्ण
+		else
+			return false;
+	}
 
 	rb_link_node(&new->node, parent, link);
 	rb_insert_color(&new->node, root);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक dust_हटाओ_block(काष्ठा dust_device *dd, अचिन्हित दीर्घ दीर्घ block)
-अणु
-	काष्ठा badblock *bblock;
-	अचिन्हित दीर्घ flags;
+static int dust_remove_block(struct dust_device *dd, unsigned long long block)
+{
+	struct badblock *bblock;
+	unsigned long flags;
 
 	spin_lock_irqsave(&dd->dust_lock, flags);
 	bblock = dust_rb_search(&dd->badblocklist, block);
 
-	अगर (bblock == शून्य) अणु
-		अगर (!dd->quiet_mode) अणु
+	if (bblock == NULL) {
+		if (!dd->quiet_mode) {
 			DMERR("%s: block %llu not found in badblocklist",
 			      __func__, block);
-		पूर्ण
+		}
 		spin_unlock_irqrestore(&dd->dust_lock, flags);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	rb_erase(&bblock->node, &dd->badblocklist);
 	dd->badblock_count--;
-	अगर (!dd->quiet_mode)
+	if (!dd->quiet_mode)
 		DMINFO("%s: badblock removed at block %llu", __func__, block);
-	kमुक्त(bblock);
+	kfree(bblock);
 	spin_unlock_irqrestore(&dd->dust_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dust_add_block(काष्ठा dust_device *dd, अचिन्हित दीर्घ दीर्घ block,
-			  अचिन्हित अक्षर wr_fail_cnt)
-अणु
-	काष्ठा badblock *bblock;
-	अचिन्हित दीर्घ flags;
+static int dust_add_block(struct dust_device *dd, unsigned long long block,
+			  unsigned char wr_fail_cnt)
+{
+	struct badblock *bblock;
+	unsigned long flags;
 
-	bblock = kदो_स्मृति(माप(*bblock), GFP_KERNEL);
-	अगर (bblock == शून्य) अणु
-		अगर (!dd->quiet_mode)
+	bblock = kmalloc(sizeof(*bblock), GFP_KERNEL);
+	if (bblock == NULL) {
+		if (!dd->quiet_mode)
 			DMERR("%s: badblock allocation failed", __func__);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	spin_lock_irqsave(&dd->dust_lock, flags);
 	bblock->bb = block;
 	bblock->wr_fail_cnt = wr_fail_cnt;
-	अगर (!dust_rb_insert(&dd->badblocklist, bblock)) अणु
-		अगर (!dd->quiet_mode) अणु
+	if (!dust_rb_insert(&dd->badblocklist, bblock)) {
+		if (!dd->quiet_mode) {
 			DMERR("%s: block %llu already in badblocklist",
 			      __func__, block);
-		पूर्ण
+		}
 		spin_unlock_irqrestore(&dd->dust_lock, flags);
-		kमुक्त(bblock);
-		वापस -EINVAL;
-	पूर्ण
+		kfree(bblock);
+		return -EINVAL;
+	}
 
 	dd->badblock_count++;
-	अगर (!dd->quiet_mode) अणु
+	if (!dd->quiet_mode) {
 		DMINFO("%s: badblock added at block %llu with write fail count %u",
 		       __func__, block, wr_fail_cnt);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&dd->dust_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dust_query_block(काष्ठा dust_device *dd, अचिन्हित दीर्घ दीर्घ block, अक्षर *result,
-			    अचिन्हित पूर्णांक maxlen, अचिन्हित पूर्णांक *sz_ptr)
-अणु
-	काष्ठा badblock *bblock;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक sz = *sz_ptr;
+static int dust_query_block(struct dust_device *dd, unsigned long long block, char *result,
+			    unsigned int maxlen, unsigned int *sz_ptr)
+{
+	struct badblock *bblock;
+	unsigned long flags;
+	unsigned int sz = *sz_ptr;
 
 	spin_lock_irqsave(&dd->dust_lock, flags);
 	bblock = dust_rb_search(&dd->badblocklist, block);
-	अगर (bblock != शून्य)
+	if (bblock != NULL)
 		DMEMIT("%s: block %llu found in badblocklist", __func__, block);
-	अन्यथा
+	else
 		DMEMIT("%s: block %llu not found in badblocklist", __func__, block);
 	spin_unlock_irqrestore(&dd->dust_lock, flags);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __dust_map_पढ़ो(काष्ठा dust_device *dd, sector_t thisblock)
-अणु
-	काष्ठा badblock *bblk = dust_rb_search(&dd->badblocklist, thisblock);
+static int __dust_map_read(struct dust_device *dd, sector_t thisblock)
+{
+	struct badblock *bblk = dust_rb_search(&dd->badblocklist, thisblock);
 
-	अगर (bblk)
-		वापस DM_MAPIO_KILL;
+	if (bblk)
+		return DM_MAPIO_KILL;
 
-	वापस DM_MAPIO_REMAPPED;
-पूर्ण
+	return DM_MAPIO_REMAPPED;
+}
 
-अटल पूर्णांक dust_map_पढ़ो(काष्ठा dust_device *dd, sector_t thisblock,
-			 bool fail_पढ़ो_on_bb)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक r = DM_MAPIO_REMAPPED;
+static int dust_map_read(struct dust_device *dd, sector_t thisblock,
+			 bool fail_read_on_bb)
+{
+	unsigned long flags;
+	int r = DM_MAPIO_REMAPPED;
 
-	अगर (fail_पढ़ो_on_bb) अणु
-		thisblock >>= dd->sect_per_block_shअगरt;
+	if (fail_read_on_bb) {
+		thisblock >>= dd->sect_per_block_shift;
 		spin_lock_irqsave(&dd->dust_lock, flags);
-		r = __dust_map_पढ़ो(dd, thisblock);
+		r = __dust_map_read(dd, thisblock);
 		spin_unlock_irqrestore(&dd->dust_lock, flags);
-	पूर्ण
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक __dust_map_ग_लिखो(काष्ठा dust_device *dd, sector_t thisblock)
-अणु
-	काष्ठा badblock *bblk = dust_rb_search(&dd->badblocklist, thisblock);
+static int __dust_map_write(struct dust_device *dd, sector_t thisblock)
+{
+	struct badblock *bblk = dust_rb_search(&dd->badblocklist, thisblock);
 
-	अगर (bblk && bblk->wr_fail_cnt > 0) अणु
+	if (bblk && bblk->wr_fail_cnt > 0) {
 		bblk->wr_fail_cnt--;
-		वापस DM_MAPIO_KILL;
-	पूर्ण
+		return DM_MAPIO_KILL;
+	}
 
-	अगर (bblk) अणु
+	if (bblk) {
 		rb_erase(&bblk->node, &dd->badblocklist);
 		dd->badblock_count--;
-		kमुक्त(bblk);
-		अगर (!dd->quiet_mode) अणु
-			sector_भाग(thisblock, dd->sect_per_block);
+		kfree(bblk);
+		if (!dd->quiet_mode) {
+			sector_div(thisblock, dd->sect_per_block);
 			DMINFO("block %llu removed from badblocklist by write",
-			       (अचिन्हित दीर्घ दीर्घ)thisblock);
-		पूर्ण
-	पूर्ण
+			       (unsigned long long)thisblock);
+		}
+	}
 
-	वापस DM_MAPIO_REMAPPED;
-पूर्ण
+	return DM_MAPIO_REMAPPED;
+}
 
-अटल पूर्णांक dust_map_ग_लिखो(काष्ठा dust_device *dd, sector_t thisblock,
-			  bool fail_पढ़ो_on_bb)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक r = DM_MAPIO_REMAPPED;
+static int dust_map_write(struct dust_device *dd, sector_t thisblock,
+			  bool fail_read_on_bb)
+{
+	unsigned long flags;
+	int r = DM_MAPIO_REMAPPED;
 
-	अगर (fail_पढ़ो_on_bb) अणु
-		thisblock >>= dd->sect_per_block_shअगरt;
+	if (fail_read_on_bb) {
+		thisblock >>= dd->sect_per_block_shift;
 		spin_lock_irqsave(&dd->dust_lock, flags);
-		r = __dust_map_ग_लिखो(dd, thisblock);
+		r = __dust_map_write(dd, thisblock);
 		spin_unlock_irqrestore(&dd->dust_lock, flags);
-	पूर्ण
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक dust_map(काष्ठा dm_target *ti, काष्ठा bio *bio)
-अणु
-	काष्ठा dust_device *dd = ti->निजी;
-	पूर्णांक r;
+static int dust_map(struct dm_target *ti, struct bio *bio)
+{
+	struct dust_device *dd = ti->private;
+	int r;
 
 	bio_set_dev(bio, dd->dev->bdev);
 	bio->bi_iter.bi_sector = dd->start + dm_target_offset(ti, bio->bi_iter.bi_sector);
 
-	अगर (bio_data_dir(bio) == READ)
-		r = dust_map_पढ़ो(dd, bio->bi_iter.bi_sector, dd->fail_पढ़ो_on_bb);
-	अन्यथा
-		r = dust_map_ग_लिखो(dd, bio->bi_iter.bi_sector, dd->fail_पढ़ो_on_bb);
+	if (bio_data_dir(bio) == READ)
+		r = dust_map_read(dd, bio->bi_iter.bi_sector, dd->fail_read_on_bb);
+	else
+		r = dust_map_write(dd, bio->bi_iter.bi_sector, dd->fail_read_on_bb);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल bool __dust_clear_badblocks(काष्ठा rb_root *tree,
-				   अचिन्हित दीर्घ दीर्घ count)
-अणु
-	काष्ठा rb_node *node = शून्य, *nnode = शून्य;
+static bool __dust_clear_badblocks(struct rb_root *tree,
+				   unsigned long long count)
+{
+	struct rb_node *node = NULL, *nnode = NULL;
 
 	nnode = rb_first(tree);
-	अगर (nnode == शून्य) अणु
+	if (nnode == NULL) {
 		BUG_ON(count != 0);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	जबतक (nnode) अणु
+	while (nnode) {
 		node = nnode;
 		nnode = rb_next(node);
 		rb_erase(node, tree);
 		count--;
-		kमुक्त(node);
-	पूर्ण
+		kfree(node);
+	}
 	BUG_ON(count != 0);
-	BUG_ON(tree->rb_node != शून्य);
+	BUG_ON(tree->rb_node != NULL);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक dust_clear_badblocks(काष्ठा dust_device *dd, अक्षर *result, अचिन्हित पूर्णांक maxlen,
-				अचिन्हित पूर्णांक *sz_ptr)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा rb_root badblocklist;
-	अचिन्हित दीर्घ दीर्घ badblock_count;
-	अचिन्हित पूर्णांक sz = *sz_ptr;
+static int dust_clear_badblocks(struct dust_device *dd, char *result, unsigned int maxlen,
+				unsigned int *sz_ptr)
+{
+	unsigned long flags;
+	struct rb_root badblocklist;
+	unsigned long long badblock_count;
+	unsigned int sz = *sz_ptr;
 
 	spin_lock_irqsave(&dd->dust_lock, flags);
 	badblocklist = dd->badblocklist;
@@ -277,38 +276,38 @@
 	dd->badblock_count = 0;
 	spin_unlock_irqrestore(&dd->dust_lock, flags);
 
-	अगर (!__dust_clear_badblocks(&badblocklist, badblock_count))
+	if (!__dust_clear_badblocks(&badblocklist, badblock_count))
 		DMEMIT("%s: no badblocks found", __func__);
-	अन्यथा
+	else
 		DMEMIT("%s: badblocks cleared", __func__);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक dust_list_badblocks(काष्ठा dust_device *dd, अक्षर *result, अचिन्हित पूर्णांक maxlen,
-				अचिन्हित पूर्णांक *sz_ptr)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा rb_root badblocklist;
-	काष्ठा rb_node *node;
-	काष्ठा badblock *bblk;
-	अचिन्हित पूर्णांक sz = *sz_ptr;
-	अचिन्हित दीर्घ दीर्घ num = 0;
+static int dust_list_badblocks(struct dust_device *dd, char *result, unsigned int maxlen,
+				unsigned int *sz_ptr)
+{
+	unsigned long flags;
+	struct rb_root badblocklist;
+	struct rb_node *node;
+	struct badblock *bblk;
+	unsigned int sz = *sz_ptr;
+	unsigned long long num = 0;
 
 	spin_lock_irqsave(&dd->dust_lock, flags);
 	badblocklist = dd->badblocklist;
-	क्रम (node = rb_first(&badblocklist); node; node = rb_next(node)) अणु
-		bblk = rb_entry(node, काष्ठा badblock, node);
+	for (node = rb_first(&badblocklist); node; node = rb_next(node)) {
+		bblk = rb_entry(node, struct badblock, node);
 		DMEMIT("%llu\n", bblk->bb);
 		num++;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&dd->dust_lock, flags);
-	अगर (!num)
+	if (!num)
 		DMEMIT("No blocks in badblocklist");
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
  * Target parameters:
@@ -317,73 +316,73 @@
  *
  * device_path: path to the block device
  * offset: offset to data area from start of device_path
- * blksz: block size (minimum 512, maximum 1073741824, must be a घातer of 2)
+ * blksz: block size (minimum 512, maximum 1073741824, must be a power of 2)
  */
-अटल पूर्णांक dust_ctr(काष्ठा dm_target *ti, अचिन्हित पूर्णांक argc, अक्षर **argv)
-अणु
-	काष्ठा dust_device *dd;
-	अचिन्हित दीर्घ दीर्घ पंचांगp;
-	अक्षर dummy;
-	अचिन्हित पूर्णांक blksz;
-	अचिन्हित पूर्णांक sect_per_block;
+static int dust_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+{
+	struct dust_device *dd;
+	unsigned long long tmp;
+	char dummy;
+	unsigned int blksz;
+	unsigned int sect_per_block;
 	sector_t DUST_MAX_BLKSZ_SECTORS = 2097152;
 	sector_t max_block_sectors = min(ti->len, DUST_MAX_BLKSZ_SECTORS);
 
-	अगर (argc != 3) अणु
+	if (argc != 3) {
 		ti->error = "Invalid argument count";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (kstrtouपूर्णांक(argv[2], 10, &blksz) || !blksz) अणु
+	if (kstrtouint(argv[2], 10, &blksz) || !blksz) {
 		ti->error = "Invalid block size parameter";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (blksz < 512) अणु
+	if (blksz < 512) {
 		ti->error = "Block size must be at least 512";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!is_घातer_of_2(blksz)) अणु
+	if (!is_power_of_2(blksz)) {
 		ti->error = "Block size must be a power of 2";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (to_sector(blksz) > max_block_sectors) अणु
+	if (to_sector(blksz) > max_block_sectors) {
 		ti->error = "Block size is too large";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	sect_per_block = (blksz >> SECTOR_SHIFT);
 
-	अगर (माला_पूछो(argv[1], "%llu%c", &पंचांगp, &dummy) != 1 || पंचांगp != (sector_t)पंचांगp) अणु
+	if (sscanf(argv[1], "%llu%c", &tmp, &dummy) != 1 || tmp != (sector_t)tmp) {
 		ti->error = "Invalid device offset sector";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	dd = kzalloc(माप(काष्ठा dust_device), GFP_KERNEL);
-	अगर (dd == शून्य) अणु
+	dd = kzalloc(sizeof(struct dust_device), GFP_KERNEL);
+	if (dd == NULL) {
 		ti->error = "Cannot allocate context";
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	अगर (dm_get_device(ti, argv[0], dm_table_get_mode(ti->table), &dd->dev)) अणु
+	if (dm_get_device(ti, argv[0], dm_table_get_mode(ti->table), &dd->dev)) {
 		ti->error = "Device lookup failed";
-		kमुक्त(dd);
-		वापस -EINVAL;
-	पूर्ण
+		kfree(dd);
+		return -EINVAL;
+	}
 
 	dd->sect_per_block = sect_per_block;
 	dd->blksz = blksz;
-	dd->start = पंचांगp;
+	dd->start = tmp;
 
-	dd->sect_per_block_shअगरt = __ffs(sect_per_block);
+	dd->sect_per_block_shift = __ffs(sect_per_block);
 
 	/*
-	 * Whether to fail a पढ़ो on a "bad" block.
+	 * Whether to fail a read on a "bad" block.
 	 * Defaults to false; enabled later by message.
 	 */
-	dd->fail_पढ़ो_on_bb = false;
+	dd->fail_read_on_bb = false;
 
 	/*
 	 * Initialize bad block list rbtree.
@@ -398,167 +397,167 @@
 
 	ti->num_discard_bios = 1;
 	ti->num_flush_bios = 1;
-	ti->निजी = dd;
+	ti->private = dd;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dust_dtr(काष्ठा dm_target *ti)
-अणु
-	काष्ठा dust_device *dd = ti->निजी;
+static void dust_dtr(struct dm_target *ti)
+{
+	struct dust_device *dd = ti->private;
 
 	__dust_clear_badblocks(&dd->badblocklist, dd->badblock_count);
 	dm_put_device(ti, dd->dev);
-	kमुक्त(dd);
-पूर्ण
+	kfree(dd);
+}
 
-अटल पूर्णांक dust_message(काष्ठा dm_target *ti, अचिन्हित पूर्णांक argc, अक्षर **argv,
-			अक्षर *result, अचिन्हित पूर्णांक maxlen)
-अणु
-	काष्ठा dust_device *dd = ti->निजी;
-	sector_t size = i_size_पढ़ो(dd->dev->bdev->bd_inode) >> SECTOR_SHIFT;
+static int dust_message(struct dm_target *ti, unsigned int argc, char **argv,
+			char *result, unsigned int maxlen)
+{
+	struct dust_device *dd = ti->private;
+	sector_t size = i_size_read(dd->dev->bdev->bd_inode) >> SECTOR_SHIFT;
 	bool invalid_msg = false;
-	पूर्णांक r = -EINVAL;
-	अचिन्हित दीर्घ दीर्घ पंचांगp, block;
-	अचिन्हित अक्षर wr_fail_cnt;
-	अचिन्हित पूर्णांक पंचांगp_ui;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक sz = 0;
-	अक्षर dummy;
+	int r = -EINVAL;
+	unsigned long long tmp, block;
+	unsigned char wr_fail_cnt;
+	unsigned int tmp_ui;
+	unsigned long flags;
+	unsigned int sz = 0;
+	char dummy;
 
-	अगर (argc == 1) अणु
-		अगर (!strहालcmp(argv[0], "addbadblock") ||
-		    !strहालcmp(argv[0], "removebadblock") ||
-		    !strहालcmp(argv[0], "queryblock")) अणु
+	if (argc == 1) {
+		if (!strcasecmp(argv[0], "addbadblock") ||
+		    !strcasecmp(argv[0], "removebadblock") ||
+		    !strcasecmp(argv[0], "queryblock")) {
 			DMERR("%s requires an additional argument", argv[0]);
-		पूर्ण अन्यथा अगर (!strहालcmp(argv[0], "disable")) अणु
+		} else if (!strcasecmp(argv[0], "disable")) {
 			DMINFO("disabling read failures on bad sectors");
-			dd->fail_पढ़ो_on_bb = false;
+			dd->fail_read_on_bb = false;
 			r = 0;
-		पूर्ण अन्यथा अगर (!strहालcmp(argv[0], "enable")) अणु
+		} else if (!strcasecmp(argv[0], "enable")) {
 			DMINFO("enabling read failures on bad sectors");
-			dd->fail_पढ़ो_on_bb = true;
+			dd->fail_read_on_bb = true;
 			r = 0;
-		पूर्ण अन्यथा अगर (!strहालcmp(argv[0], "countbadblocks")) अणु
+		} else if (!strcasecmp(argv[0], "countbadblocks")) {
 			spin_lock_irqsave(&dd->dust_lock, flags);
 			DMEMIT("countbadblocks: %llu badblock(s) found",
 			       dd->badblock_count);
 			spin_unlock_irqrestore(&dd->dust_lock, flags);
 			r = 1;
-		पूर्ण अन्यथा अगर (!strहालcmp(argv[0], "clearbadblocks")) अणु
+		} else if (!strcasecmp(argv[0], "clearbadblocks")) {
 			r = dust_clear_badblocks(dd, result, maxlen, &sz);
-		पूर्ण अन्यथा अगर (!strहालcmp(argv[0], "quiet")) अणु
-			अगर (!dd->quiet_mode)
+		} else if (!strcasecmp(argv[0], "quiet")) {
+			if (!dd->quiet_mode)
 				dd->quiet_mode = true;
-			अन्यथा
+			else
 				dd->quiet_mode = false;
 			r = 0;
-		पूर्ण अन्यथा अगर (!strहालcmp(argv[0], "listbadblocks")) अणु
+		} else if (!strcasecmp(argv[0], "listbadblocks")) {
 			r = dust_list_badblocks(dd, result, maxlen, &sz);
-		पूर्ण अन्यथा अणु
+		} else {
 			invalid_msg = true;
-		पूर्ण
-	पूर्ण अन्यथा अगर (argc == 2) अणु
-		अगर (माला_पूछो(argv[1], "%llu%c", &पंचांगp, &dummy) != 1)
-			वापस r;
+		}
+	} else if (argc == 2) {
+		if (sscanf(argv[1], "%llu%c", &tmp, &dummy) != 1)
+			return r;
 
-		block = पंचांगp;
-		sector_भाग(size, dd->sect_per_block);
-		अगर (block > size) अणु
+		block = tmp;
+		sector_div(size, dd->sect_per_block);
+		if (block > size) {
 			DMERR("selected block value out of range");
-			वापस r;
-		पूर्ण
+			return r;
+		}
 
-		अगर (!strहालcmp(argv[0], "addbadblock"))
+		if (!strcasecmp(argv[0], "addbadblock"))
 			r = dust_add_block(dd, block, 0);
-		अन्यथा अगर (!strहालcmp(argv[0], "removebadblock"))
-			r = dust_हटाओ_block(dd, block);
-		अन्यथा अगर (!strहालcmp(argv[0], "queryblock"))
+		else if (!strcasecmp(argv[0], "removebadblock"))
+			r = dust_remove_block(dd, block);
+		else if (!strcasecmp(argv[0], "queryblock"))
 			r = dust_query_block(dd, block, result, maxlen, &sz);
-		अन्यथा
+		else
 			invalid_msg = true;
 
-	पूर्ण अन्यथा अगर (argc == 3) अणु
-		अगर (माला_पूछो(argv[1], "%llu%c", &पंचांगp, &dummy) != 1)
-			वापस r;
+	} else if (argc == 3) {
+		if (sscanf(argv[1], "%llu%c", &tmp, &dummy) != 1)
+			return r;
 
-		अगर (माला_पूछो(argv[2], "%u%c", &पंचांगp_ui, &dummy) != 1)
-			वापस r;
+		if (sscanf(argv[2], "%u%c", &tmp_ui, &dummy) != 1)
+			return r;
 
-		block = पंचांगp;
-		अगर (पंचांगp_ui > 255) अणु
+		block = tmp;
+		if (tmp_ui > 255) {
 			DMERR("selected write fail count out of range");
-			वापस r;
-		पूर्ण
-		wr_fail_cnt = पंचांगp_ui;
-		sector_भाग(size, dd->sect_per_block);
-		अगर (block > size) अणु
+			return r;
+		}
+		wr_fail_cnt = tmp_ui;
+		sector_div(size, dd->sect_per_block);
+		if (block > size) {
 			DMERR("selected block value out of range");
-			वापस r;
-		पूर्ण
+			return r;
+		}
 
-		अगर (!strहालcmp(argv[0], "addbadblock"))
+		if (!strcasecmp(argv[0], "addbadblock"))
 			r = dust_add_block(dd, block, wr_fail_cnt);
-		अन्यथा
+		else
 			invalid_msg = true;
 
-	पूर्ण अन्यथा
+	} else
 		DMERR("invalid number of arguments '%d'", argc);
 
-	अगर (invalid_msg)
+	if (invalid_msg)
 		DMERR("unrecognized message '%s' received", argv[0]);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम dust_status(काष्ठा dm_target *ti, status_type_t type,
-			अचिन्हित पूर्णांक status_flags, अक्षर *result, अचिन्हित पूर्णांक maxlen)
-अणु
-	काष्ठा dust_device *dd = ti->निजी;
-	अचिन्हित पूर्णांक sz = 0;
+static void dust_status(struct dm_target *ti, status_type_t type,
+			unsigned int status_flags, char *result, unsigned int maxlen)
+{
+	struct dust_device *dd = ti->private;
+	unsigned int sz = 0;
 
-	चयन (type) अणु
-	हाल STATUSTYPE_INFO:
+	switch (type) {
+	case STATUSTYPE_INFO:
 		DMEMIT("%s %s %s", dd->dev->name,
-		       dd->fail_पढ़ो_on_bb ? "fail_read_on_bad_block" : "bypass",
+		       dd->fail_read_on_bb ? "fail_read_on_bad_block" : "bypass",
 		       dd->quiet_mode ? "quiet" : "verbose");
-		अवरोध;
+		break;
 
-	हाल STATUSTYPE_TABLE:
+	case STATUSTYPE_TABLE:
 		DMEMIT("%s %llu %u", dd->dev->name,
-		       (अचिन्हित दीर्घ दीर्घ)dd->start, dd->blksz);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		       (unsigned long long)dd->start, dd->blksz);
+		break;
+	}
+}
 
-अटल पूर्णांक dust_prepare_ioctl(काष्ठा dm_target *ti, काष्ठा block_device **bdev)
-अणु
-	काष्ठा dust_device *dd = ti->निजी;
-	काष्ठा dm_dev *dev = dd->dev;
+static int dust_prepare_ioctl(struct dm_target *ti, struct block_device **bdev)
+{
+	struct dust_device *dd = ti->private;
+	struct dm_dev *dev = dd->dev;
 
 	*bdev = dev->bdev;
 
 	/*
-	 * Only pass ioctls through अगर the device sizes match exactly.
+	 * Only pass ioctls through if the device sizes match exactly.
 	 */
-	अगर (dd->start ||
-	    ti->len != i_size_पढ़ो(dev->bdev->bd_inode) >> SECTOR_SHIFT)
-		वापस 1;
+	if (dd->start ||
+	    ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dust_iterate_devices(काष्ठा dm_target *ti, iterate_devices_callout_fn fn,
-				व्योम *data)
-अणु
-	काष्ठा dust_device *dd = ti->निजी;
+static int dust_iterate_devices(struct dm_target *ti, iterate_devices_callout_fn fn,
+				void *data)
+{
+	struct dust_device *dd = ti->private;
 
-	वापस fn(ti, dd->dev, dd->start, ti->len, data);
-पूर्ण
+	return fn(ti, dd->dev, dd->start, ti->len, data);
+}
 
-अटल काष्ठा target_type dust_target = अणु
+static struct target_type dust_target = {
 	.name = "dust",
-	.version = अणु1, 0, 0पूर्ण,
+	.version = {1, 0, 0},
 	.module = THIS_MODULE,
 	.ctr = dust_ctr,
 	.dtr = dust_dtr,
@@ -567,25 +566,25 @@
 	.message = dust_message,
 	.status = dust_status,
 	.prepare_ioctl = dust_prepare_ioctl,
-पूर्ण;
+};
 
-अटल पूर्णांक __init dm_dust_init(व्योम)
-अणु
-	पूर्णांक r = dm_रेजिस्टर_target(&dust_target);
+static int __init dm_dust_init(void)
+{
+	int r = dm_register_target(&dust_target);
 
-	अगर (r < 0)
+	if (r < 0)
 		DMERR("dm_register_target failed %d", r);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम __निकास dm_dust_निकास(व्योम)
-अणु
-	dm_unरेजिस्टर_target(&dust_target);
-पूर्ण
+static void __exit dm_dust_exit(void)
+{
+	dm_unregister_target(&dust_target);
+}
 
 module_init(dm_dust_init);
-module_निकास(dm_dust_निकास);
+module_exit(dm_dust_exit);
 
 MODULE_DESCRIPTION(DM_NAME " dust test target");
 MODULE_AUTHOR("Bryan Gurney <dm-devel@redhat.com>");

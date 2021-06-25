@@ -1,84 +1,83 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Stereo and SAP detection क्रम cx88
+ *  Stereo and SAP detection for cx88
  *
- *  Copyright (c) 2009 Marton Balपूर्णांक <cus@fazekas.hu>
+ *  Copyright (c) 2009 Marton Balint <cus@fazekas.hu>
  */
 
-#समावेश "cx88.h"
-#समावेश "cx88-reg.h"
+#include "cx88.h"
+#include "cx88-reg.h"
 
-#समावेश <linux/slab.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <यंत्र/भाग64.h>
+#include <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/jiffies.h>
+#include <asm/div64.h>
 
-#घोषणा INT_PI			((s32)(3.141592653589 * 32768.0))
+#define INT_PI			((s32)(3.141592653589 * 32768.0))
 
-#घोषणा compat_reमुख्यder(a, b) \
-	 ((भग्न)(((s32)((a) * 100)) % ((s32)((b) * 100))) / 100.0)
+#define compat_remainder(a, b) \
+	 ((float)(((s32)((a) * 100)) % ((s32)((b) * 100))) / 100.0)
 
-#घोषणा baseband_freq(carrier, srate, tone) ((s32)( \
-	 (compat_reमुख्यder(carrier + tone, srate)) / srate * 2 * INT_PI))
+#define baseband_freq(carrier, srate, tone) ((s32)( \
+	 (compat_remainder(carrier + tone, srate)) / srate * 2 * INT_PI))
 
 /*
  * We calculate the baseband frequencies of the carrier and the pilot tones
- * based on the the sampling rate of the audio rds fअगरo.
+ * based on the the sampling rate of the audio rds fifo.
  */
 
-#घोषणा FREQ_A2_CARRIER         baseband_freq(54687.5, 2689.36, 0.0)
-#घोषणा FREQ_A2_DUAL            baseband_freq(54687.5, 2689.36, 274.1)
-#घोषणा FREQ_A2_STEREO          baseband_freq(54687.5, 2689.36, 117.5)
+#define FREQ_A2_CARRIER         baseband_freq(54687.5, 2689.36, 0.0)
+#define FREQ_A2_DUAL            baseband_freq(54687.5, 2689.36, 274.1)
+#define FREQ_A2_STEREO          baseband_freq(54687.5, 2689.36, 117.5)
 
 /*
  * The frequencies below are from the reference driver. They probably need
- * further adjusपंचांगents, because they are not tested at all. You may even need
- * to play a bit with the रेजिस्टरs of the chip to select the proper संकेत
- * क्रम the input of the audio rds fअगरo, and measure it's sampling rate to
+ * further adjustments, because they are not tested at all. You may even need
+ * to play a bit with the registers of the chip to select the proper signal
+ * for the input of the audio rds fifo, and measure it's sampling rate to
  * calculate the proper baseband frequencies...
  */
 
-#घोषणा FREQ_A2M_CARRIER	((s32)(2.114516 * 32768.0))
-#घोषणा FREQ_A2M_DUAL		((s32)(2.754916 * 32768.0))
-#घोषणा FREQ_A2M_STEREO		((s32)(2.462326 * 32768.0))
+#define FREQ_A2M_CARRIER	((s32)(2.114516 * 32768.0))
+#define FREQ_A2M_DUAL		((s32)(2.754916 * 32768.0))
+#define FREQ_A2M_STEREO		((s32)(2.462326 * 32768.0))
 
-#घोषणा FREQ_EIAJ_CARRIER	((s32)(1.963495 * 32768.0)) /* 5pi/8  */
-#घोषणा FREQ_EIAJ_DUAL		((s32)(2.562118 * 32768.0))
-#घोषणा FREQ_EIAJ_STEREO	((s32)(2.601053 * 32768.0))
+#define FREQ_EIAJ_CARRIER	((s32)(1.963495 * 32768.0)) /* 5pi/8  */
+#define FREQ_EIAJ_DUAL		((s32)(2.562118 * 32768.0))
+#define FREQ_EIAJ_STEREO	((s32)(2.601053 * 32768.0))
 
-#घोषणा FREQ_BTSC_DUAL		((s32)(1.963495 * 32768.0)) /* 5pi/8  */
-#घोषणा FREQ_BTSC_DUAL_REF	((s32)(1.374446 * 32768.0)) /* 7pi/16 */
+#define FREQ_BTSC_DUAL		((s32)(1.963495 * 32768.0)) /* 5pi/8  */
+#define FREQ_BTSC_DUAL_REF	((s32)(1.374446 * 32768.0)) /* 7pi/16 */
 
-#घोषणा FREQ_BTSC_SAP		((s32)(2.471532 * 32768.0))
-#घोषणा FREQ_BTSC_SAP_REF	((s32)(1.730072 * 32768.0))
+#define FREQ_BTSC_SAP		((s32)(2.471532 * 32768.0))
+#define FREQ_BTSC_SAP_REF	((s32)(1.730072 * 32768.0))
 
-/* The spectrum of the संकेत should be empty between these frequencies. */
-#घोषणा FREQ_NOISE_START	((s32)(0.100000 * 32768.0))
-#घोषणा FREQ_NOISE_END		((s32)(1.200000 * 32768.0))
+/* The spectrum of the signal should be empty between these frequencies. */
+#define FREQ_NOISE_START	((s32)(0.100000 * 32768.0))
+#define FREQ_NOISE_END		((s32)(1.200000 * 32768.0))
 
-अटल अचिन्हित पूर्णांक dsp_debug;
-module_param(dsp_debug, पूर्णांक, 0644);
+static unsigned int dsp_debug;
+module_param(dsp_debug, int, 0644);
 MODULE_PARM_DESC(dsp_debug, "enable audio dsp debug messages");
 
-#घोषणा dprपूर्णांकk(level, fmt, arg...) करो अणु				\
-	अगर (dsp_debug >= level)						\
-		prपूर्णांकk(KERN_DEBUG pr_fmt("%s: dsp:" fmt),		\
+#define dprintk(level, fmt, arg...) do {				\
+	if (dsp_debug >= level)						\
+		printk(KERN_DEBUG pr_fmt("%s: dsp:" fmt),		\
 			__func__, ##arg);				\
-पूर्ण जबतक (0)
+} while (0)
 
-अटल s32 पूर्णांक_cos(u32 x)
-अणु
+static s32 int_cos(u32 x)
+{
 	u32 t2, t4, t6, t8;
 	s32 ret;
 	u16 period = x / INT_PI;
 
-	अगर (period % 2)
-		वापस -पूर्णांक_cos(x - INT_PI);
+	if (period % 2)
+		return -int_cos(x - INT_PI);
 	x = x % INT_PI;
-	अगर (x > INT_PI / 2)
-		वापस -पूर्णांक_cos(INT_PI / 2 - (x % (INT_PI / 2)));
+	if (x > INT_PI / 2)
+		return -int_cos(INT_PI / 2 - (x % (INT_PI / 2)));
 	/*
 	 * Now x is between 0 and INT_PI/2.
 	 * To calculate cos(x) we use it's Taylor polinom.
@@ -88,237 +87,237 @@ MODULE_PARM_DESC(dsp_debug, "enable audio dsp debug messages");
 	t6 = t4 * x / 32768 * x / 32768 / 5 / 6;
 	t8 = t6 * x / 32768 * x / 32768 / 7 / 8;
 	ret = 32768 - t2 + t4 - t6 + t8;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u32 पूर्णांक_goertzel(s16 x[], u32 N, u32 freq)
-अणु
+static u32 int_goertzel(s16 x[], u32 N, u32 freq)
+{
 	/*
-	 * We use the Goertzel algorithm to determine the घातer of the
-	 * given frequency in the संकेत
+	 * We use the Goertzel algorithm to determine the power of the
+	 * given frequency in the signal
 	 */
 	s32 s_prev = 0;
 	s32 s_prev2 = 0;
-	s32 coeff = 2 * पूर्णांक_cos(freq);
+	s32 coeff = 2 * int_cos(freq);
 	u32 i;
 
-	u64 पंचांगp;
-	u32 भागisor;
+	u64 tmp;
+	u32 divisor;
 
-	क्रम (i = 0; i < N; i++) अणु
+	for (i = 0; i < N; i++) {
 		s32 s = x[i] + ((s64)coeff * s_prev / 32768) - s_prev2;
 
 		s_prev2 = s_prev;
 		s_prev = s;
-	पूर्ण
+	}
 
-	पंचांगp = (s64)s_prev2 * s_prev2 + (s64)s_prev * s_prev -
+	tmp = (s64)s_prev2 * s_prev2 + (s64)s_prev * s_prev -
 		      (s64)coeff * s_prev2 * s_prev / 32768;
 
 	/*
 	 * XXX: N must be low enough so that N*N fits in s32.
-	 * Else we need two भागisions.
+	 * Else we need two divisions.
 	 */
-	भागisor = N * N;
-	करो_भाग(पंचांगp, भागisor);
+	divisor = N * N;
+	do_div(tmp, divisor);
 
-	वापस (u32)पंचांगp;
-पूर्ण
+	return (u32)tmp;
+}
 
-अटल u32 freq_magnitude(s16 x[], u32 N, u32 freq)
-अणु
-	u32 sum = पूर्णांक_goertzel(x, N, freq);
+static u32 freq_magnitude(s16 x[], u32 N, u32 freq)
+{
+	u32 sum = int_goertzel(x, N, freq);
 
-	वापस (u32)पूर्णांक_वर्ग_मूल(sum);
-पूर्ण
+	return (u32)int_sqrt(sum);
+}
 
-अटल u32 noise_magnitude(s16 x[], u32 N, u32 freq_start, u32 freq_end)
-अणु
-	पूर्णांक i;
+static u32 noise_magnitude(s16 x[], u32 N, u32 freq_start, u32 freq_end)
+{
+	int i;
 	u32 sum = 0;
 	u32 freq_step;
-	पूर्णांक samples = 5;
+	int samples = 5;
 
-	अगर (N > 192) अणु
-		/* The last 192 samples are enough क्रम noise detection */
+	if (N > 192) {
+		/* The last 192 samples are enough for noise detection */
 		x += (N - 192);
 		N = 192;
-	पूर्ण
+	}
 
 	freq_step = (freq_end - freq_start) / (samples - 1);
 
-	क्रम (i = 0; i < samples; i++) अणु
-		sum += पूर्णांक_goertzel(x, N, freq_start);
+	for (i = 0; i < samples; i++) {
+		sum += int_goertzel(x, N, freq_start);
 		freq_start += freq_step;
-	पूर्ण
+	}
 
-	वापस (u32)पूर्णांक_वर्ग_मूल(sum / samples);
-पूर्ण
+	return (u32)int_sqrt(sum / samples);
+}
 
-अटल s32 detect_a2_a2m_eiaj(काष्ठा cx88_core *core, s16 x[], u32 N)
-अणु
+static s32 detect_a2_a2m_eiaj(struct cx88_core *core, s16 x[], u32 N)
+{
 	s32 carrier, stereo, dual, noise;
 	s32 carrier_freq, stereo_freq, dual_freq;
 	s32 ret;
 
-	चयन (core->tvaudio) अणु
-	हाल WW_BG:
-	हाल WW_DK:
+	switch (core->tvaudio) {
+	case WW_BG:
+	case WW_DK:
 		carrier_freq = FREQ_A2_CARRIER;
 		stereo_freq = FREQ_A2_STEREO;
 		dual_freq = FREQ_A2_DUAL;
-		अवरोध;
-	हाल WW_M:
+		break;
+	case WW_M:
 		carrier_freq = FREQ_A2M_CARRIER;
 		stereo_freq = FREQ_A2M_STEREO;
 		dual_freq = FREQ_A2M_DUAL;
-		अवरोध;
-	हाल WW_EIAJ:
+		break;
+	case WW_EIAJ:
 		carrier_freq = FREQ_EIAJ_CARRIER;
 		stereo_freq = FREQ_EIAJ_STEREO;
 		dual_freq = FREQ_EIAJ_DUAL;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_warn("unsupported audio mode %d for %s\n",
 			core->tvaudio, __func__);
-		वापस UNSET;
-	पूर्ण
+		return UNSET;
+	}
 
 	carrier = freq_magnitude(x, N, carrier_freq);
 	stereo  = freq_magnitude(x, N, stereo_freq);
 	dual    = freq_magnitude(x, N, dual_freq);
 	noise   = noise_magnitude(x, N, FREQ_NOISE_START, FREQ_NOISE_END);
 
-	dprपूर्णांकk(1,
+	dprintk(1,
 		"detect a2/a2m/eiaj: carrier=%d, stereo=%d, dual=%d, noise=%d\n",
 		carrier, stereo, dual, noise);
 
-	अगर (stereo > dual)
+	if (stereo > dual)
 		ret = V4L2_TUNER_SUB_STEREO;
-	अन्यथा
+	else
 		ret = V4L2_TUNER_SUB_LANG1 | V4L2_TUNER_SUB_LANG2;
 
-	अगर (core->tvaudio == WW_EIAJ) अणु
-		/* EIAJ checks may need adjusपंचांगents */
-		अगर ((carrier > max(stereo, dual) * 2) &&
+	if (core->tvaudio == WW_EIAJ) {
+		/* EIAJ checks may need adjustments */
+		if ((carrier > max(stereo, dual) * 2) &&
 		    (carrier < max(stereo, dual) * 6) &&
 		    (carrier > 20 && carrier < 200) &&
-		    (max(stereo, dual) > min(stereo, dual))) अणु
+		    (max(stereo, dual) > min(stereo, dual))) {
 			/*
 			 * For EIAJ the carrier is always present,
-			 * so we probably करोn't need noise detection
+			 * so we probably don't need noise detection
 			 */
-			वापस ret;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर ((carrier > max(stereo, dual) * 2) &&
+			return ret;
+		}
+	} else {
+		if ((carrier > max(stereo, dual) * 2) &&
 		    (carrier < max(stereo, dual) * 8) &&
 		    (carrier > 20 && carrier < 200) &&
 		    (noise < 10) &&
-		    (max(stereo, dual) > min(stereo, dual) * 2)) अणु
-			वापस ret;
-		पूर्ण
-	पूर्ण
-	वापस V4L2_TUNER_SUB_MONO;
-पूर्ण
+		    (max(stereo, dual) > min(stereo, dual) * 2)) {
+			return ret;
+		}
+	}
+	return V4L2_TUNER_SUB_MONO;
+}
 
-अटल s32 detect_btsc(काष्ठा cx88_core *core, s16 x[], u32 N)
-अणु
+static s32 detect_btsc(struct cx88_core *core, s16 x[], u32 N)
+{
 	s32 sap_ref = freq_magnitude(x, N, FREQ_BTSC_SAP_REF);
 	s32 sap = freq_magnitude(x, N, FREQ_BTSC_SAP);
 	s32 dual_ref = freq_magnitude(x, N, FREQ_BTSC_DUAL_REF);
 	s32 dual = freq_magnitude(x, N, FREQ_BTSC_DUAL);
 
-	dprपूर्णांकk(1, "detect btsc: dual_ref=%d, dual=%d, sap_ref=%d, sap=%d\n",
+	dprintk(1, "detect btsc: dual_ref=%d, dual=%d, sap_ref=%d, sap=%d\n",
 		dual_ref, dual, sap_ref, sap);
 	/* FIXME: Currently not supported */
-	वापस UNSET;
-पूर्ण
+	return UNSET;
+}
 
-अटल s16 *पढ़ो_rds_samples(काष्ठा cx88_core *core, u32 *N)
-अणु
-	स्थिर काष्ठा sram_channel *srch = &cx88_sram_channels[SRAM_CH27];
+static s16 *read_rds_samples(struct cx88_core *core, u32 *N)
+{
+	const struct sram_channel *srch = &cx88_sram_channels[SRAM_CH27];
 	s16 *samples;
 
-	अचिन्हित पूर्णांक i;
-	अचिन्हित पूर्णांक bpl = srch->fअगरo_size / AUD_RDS_LINES;
-	अचिन्हित पूर्णांक spl = bpl / 4;
-	अचिन्हित पूर्णांक sample_count = spl * (AUD_RDS_LINES - 1);
+	unsigned int i;
+	unsigned int bpl = srch->fifo_size / AUD_RDS_LINES;
+	unsigned int spl = bpl / 4;
+	unsigned int sample_count = spl * (AUD_RDS_LINES - 1);
 
-	u32 current_address = cx_पढ़ो(srch->ptr1_reg);
-	u32 offset = (current_address - srch->fअगरo_start + bpl);
+	u32 current_address = cx_read(srch->ptr1_reg);
+	u32 offset = (current_address - srch->fifo_start + bpl);
 
-	dprपूर्णांकk(1,
+	dprintk(1,
 		"read RDS samples: current_address=%08x (offset=%08x), sample_count=%d, aud_intstat=%08x\n",
 		current_address,
-		current_address - srch->fअगरo_start, sample_count,
-		cx_पढ़ो(MO_AUD_INTSTAT));
-	samples = kदो_स्मृति_array(sample_count, माप(*samples), GFP_KERNEL);
-	अगर (!samples)
-		वापस शून्य;
+		current_address - srch->fifo_start, sample_count,
+		cx_read(MO_AUD_INTSTAT));
+	samples = kmalloc_array(sample_count, sizeof(*samples), GFP_KERNEL);
+	if (!samples)
+		return NULL;
 
 	*N = sample_count;
 
-	क्रम (i = 0; i < sample_count; i++)  अणु
+	for (i = 0; i < sample_count; i++)  {
 		offset = offset % (AUD_RDS_LINES * bpl);
-		samples[i] = cx_पढ़ो(srch->fअगरo_start + offset);
+		samples[i] = cx_read(srch->fifo_start + offset);
 		offset += 4;
-	पूर्ण
+	}
 
-	dprपूर्णांकk(2, "RDS samples dump: %*ph\n", sample_count, samples);
+	dprintk(2, "RDS samples dump: %*ph\n", sample_count, samples);
 
-	वापस samples;
-पूर्ण
+	return samples;
+}
 
-s32 cx88_dsp_detect_stereo_sap(काष्ठा cx88_core *core)
-अणु
+s32 cx88_dsp_detect_stereo_sap(struct cx88_core *core)
+{
 	s16 *samples;
 	u32 N = 0;
 	s32 ret = UNSET;
 
-	/* If audio RDS fअगरo is disabled, we can't पढ़ो the samples */
-	अगर (!(cx_पढ़ो(MO_AUD_DMACNTRL) & 0x04))
-		वापस ret;
-	अगर (!(cx_पढ़ो(AUD_CTL) & EN_FMRADIO_EN_RDS))
-		वापस ret;
+	/* If audio RDS fifo is disabled, we can't read the samples */
+	if (!(cx_read(MO_AUD_DMACNTRL) & 0x04))
+		return ret;
+	if (!(cx_read(AUD_CTL) & EN_FMRADIO_EN_RDS))
+		return ret;
 
 	/* Wait at least 500 ms after an audio standard change */
-	अगर (समय_beक्रमe(jअगरfies, core->last_change + msecs_to_jअगरfies(500)))
-		वापस ret;
+	if (time_before(jiffies, core->last_change + msecs_to_jiffies(500)))
+		return ret;
 
-	samples = पढ़ो_rds_samples(core, &N);
+	samples = read_rds_samples(core, &N);
 
-	अगर (!samples)
-		वापस ret;
+	if (!samples)
+		return ret;
 
-	चयन (core->tvaudio) अणु
-	हाल WW_BG:
-	हाल WW_DK:
-	हाल WW_EIAJ:
-	हाल WW_M:
+	switch (core->tvaudio) {
+	case WW_BG:
+	case WW_DK:
+	case WW_EIAJ:
+	case WW_M:
 		ret = detect_a2_a2m_eiaj(core, samples, N);
-		अवरोध;
-	हाल WW_BTSC:
+		break;
+	case WW_BTSC:
 		ret = detect_btsc(core, samples, N);
-		अवरोध;
-	हाल WW_NONE:
-	हाल WW_I:
-	हाल WW_L:
-	हाल WW_I2SPT:
-	हाल WW_FM:
-	हाल WW_I2SADC:
-		अवरोध;
-	पूर्ण
+		break;
+	case WW_NONE:
+	case WW_I:
+	case WW_L:
+	case WW_I2SPT:
+	case WW_FM:
+	case WW_I2SADC:
+		break;
+	}
 
-	kमुक्त(samples);
+	kfree(samples);
 
-	अगर (ret != UNSET)
-		dprपूर्णांकk(1, "stereo/sap detection result:%s%s%s\n",
+	if (ret != UNSET)
+		dprintk(1, "stereo/sap detection result:%s%s%s\n",
 			(ret & V4L2_TUNER_SUB_MONO) ? " mono" : "",
 			(ret & V4L2_TUNER_SUB_STEREO) ? " stereo" : "",
 			(ret & V4L2_TUNER_SUB_LANG2) ? " dual" : "");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(cx88_dsp_detect_stereo_sap);
 

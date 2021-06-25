@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright 2016, Cyril Bur, IBM Corp.
  */
 
-#अगर_अघोषित _SELFTESTS_POWERPC_GPR_ASM_H
-#घोषणा _SELFTESTS_POWERPC_GPR_ASM_H
+#ifndef _SELFTESTS_POWERPC_GPR_ASM_H
+#define _SELFTESTS_POWERPC_GPR_ASM_H
 
-#समावेश "basic_asm.h"
+#include "basic_asm.h"
 
-#घोषणा __PUSH_NVREGS(top_pos); \
+#define __PUSH_NVREGS(top_pos); \
 	std r31,(top_pos)(%r1); \
 	std r30,(top_pos - 8)(%r1); \
 	std r29,(top_pos - 16)(%r1); \
@@ -29,7 +28,7 @@
 	std r15,(top_pos - 128)(%r1); \
 	std r14,(top_pos - 136)(%r1)
 
-#घोषणा __POP_NVREGS(top_pos); \
+#define __POP_NVREGS(top_pos); \
 	ld r31,(top_pos)(%r1); \
 	ld r30,(top_pos - 8)(%r1); \
 	ld r29,(top_pos - 16)(%r1); \
@@ -49,18 +48,18 @@
 	ld r15,(top_pos - 128)(%r1); \
 	ld r14,(top_pos - 136)(%r1)
 
-#घोषणा PUSH_NVREGS(stack_size) \
+#define PUSH_NVREGS(stack_size) \
 	__PUSH_NVREGS(stack_size + STACK_FRAME_MIN_SIZE)
 
 /* 18 NV FPU REGS */
-#घोषणा PUSH_NVREGS_BELOW_FPU(stack_size) \
+#define PUSH_NVREGS_BELOW_FPU(stack_size) \
 	__PUSH_NVREGS(stack_size + STACK_FRAME_MIN_SIZE - (18 * 8))
 
-#घोषणा POP_NVREGS(stack_size) \
+#define POP_NVREGS(stack_size) \
 	__POP_NVREGS(stack_size + STACK_FRAME_MIN_SIZE)
 
 /* 18 NV FPU REGS */
-#घोषणा POP_NVREGS_BELOW_FPU(stack_size) \
+#define POP_NVREGS_BELOW_FPU(stack_size) \
 	__POP_NVREGS(stack_size + STACK_FRAME_MIN_SIZE - (18 * 8))
 
 /*
@@ -90,4 +89,4 @@ FUNC_START(load_gpr)
 FUNC_END(load_gpr)
 
 
-#पूर्ण_अगर /* _SELFTESTS_POWERPC_GPR_ASM_H */
+#endif /* _SELFTESTS_POWERPC_GPR_ASM_H */

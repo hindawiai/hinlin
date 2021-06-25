@@ -1,90 +1,89 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _UAPI_M68K_SIGNAL_H
-#घोषणा _UAPI_M68K_SIGNAL_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _UAPI_M68K_SIGNAL_H
+#define _UAPI_M68K_SIGNAL_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-/* Aव्योम too many header ordering problems.  */
-काष्ठा siginfo;
+/* Avoid too many header ordering problems.  */
+struct siginfo;
 
-#अगर_अघोषित __KERNEL__
+#ifndef __KERNEL__
 /* Here we must cater to libcs that poke about in kernel headers.  */
 
-#घोषणा NSIG		32
-प्रकार अचिन्हित दीर्घ sigset_t;
+#define NSIG		32
+typedef unsigned long sigset_t;
 
-#पूर्ण_अगर /* __KERNEL__ */
+#endif /* __KERNEL__ */
 
-#घोषणा SIGHUP		 1
-#घोषणा संक_विघ्न		 2
-#घोषणा SIGQUIT		 3
-#घोषणा संक_अवैध		 4
-#घोषणा SIGTRAP		 5
-#घोषणा SIGABRT		 6
-#घोषणा SIGIOT		 6
-#घोषणा SIGBUS		 7
-#घोषणा संक_भ_त्रुटि		 8
-#घोषणा SIGKILL		 9
-#घोषणा SIGUSR1		10
-#घोषणा संक_अंश		11
-#घोषणा SIGUSR2		12
-#घोषणा SIGPIPE		13
-#घोषणा SIGALRM		14
-#घोषणा संक_इति		15
-#घोषणा SIGSTKFLT	16
-#घोषणा SIGCHLD		17
-#घोषणा SIGCONT		18
-#घोषणा SIGSTOP		19
-#घोषणा SIGTSTP		20
-#घोषणा SIGTTIN		21
-#घोषणा SIGTTOU		22
-#घोषणा SIGURG		23
-#घोषणा SIGXCPU		24
-#घोषणा SIGXFSZ		25
-#घोषणा SIGVTALRM	26
-#घोषणा SIGPROF		27
-#घोषणा SIGWINCH	28
-#घोषणा SIGIO		29
-#घोषणा SIGPOLL		SIGIO
+#define SIGHUP		 1
+#define SIGINT		 2
+#define SIGQUIT		 3
+#define SIGILL		 4
+#define SIGTRAP		 5
+#define SIGABRT		 6
+#define SIGIOT		 6
+#define SIGBUS		 7
+#define SIGFPE		 8
+#define SIGKILL		 9
+#define SIGUSR1		10
+#define SIGSEGV		11
+#define SIGUSR2		12
+#define SIGPIPE		13
+#define SIGALRM		14
+#define SIGTERM		15
+#define SIGSTKFLT	16
+#define SIGCHLD		17
+#define SIGCONT		18
+#define SIGSTOP		19
+#define SIGTSTP		20
+#define SIGTTIN		21
+#define SIGTTOU		22
+#define SIGURG		23
+#define SIGXCPU		24
+#define SIGXFSZ		25
+#define SIGVTALRM	26
+#define SIGPROF		27
+#define SIGWINCH	28
+#define SIGIO		29
+#define SIGPOLL		SIGIO
 /*
-#घोषणा SIGLOST		29
+#define SIGLOST		29
 */
-#घोषणा SIGPWR		30
-#घोषणा SIGSYS		31
-#घोषणा	SIGUNUSED	31
+#define SIGPWR		30
+#define SIGSYS		31
+#define	SIGUNUSED	31
 
-/* These should not be considered स्थिरants from userland.  */
-#घोषणा SIGRTMIN	32
-#घोषणा SIGRTMAX	_NSIG
+/* These should not be considered constants from userland.  */
+#define SIGRTMIN	32
+#define SIGRTMAX	_NSIG
 
-#घोषणा MINSIGSTKSZ	2048
-#घोषणा SIGSTKSZ	8192
+#define MINSIGSTKSZ	2048
+#define SIGSTKSZ	8192
 
-#समावेश <यंत्र-generic/संकेत-defs.h>
+#include <asm-generic/signal-defs.h>
 
-#अगर_अघोषित __KERNEL__
+#ifndef __KERNEL__
 /* Here we must cater to libcs that poke about in kernel headers.  */
 
-काष्ठा sigaction अणु
-	जोड़ अणु
+struct sigaction {
+	union {
 	  __sighandler_t _sa_handler;
-	  व्योम (*_sa_sigaction)(पूर्णांक, काष्ठा siginfo *, व्योम *);
-	पूर्ण _u;
+	  void (*_sa_sigaction)(int, struct siginfo *, void *);
+	} _u;
 	sigset_t sa_mask;
-	अचिन्हित दीर्घ sa_flags;
-	व्योम (*sa_restorer)(व्योम);
-पूर्ण;
+	unsigned long sa_flags;
+	void (*sa_restorer)(void);
+};
 
-#घोषणा sa_handler	_u._sa_handler
-#घोषणा sa_sigaction	_u._sa_sigaction
+#define sa_handler	_u._sa_handler
+#define sa_sigaction	_u._sa_sigaction
 
-#पूर्ण_अगर /* __KERNEL__ */
+#endif /* __KERNEL__ */
 
-प्रकार काष्ठा sigaltstack अणु
-	व्योम __user *ss_sp;
-	पूर्णांक ss_flags;
-	माप_प्रकार ss_size;
-पूर्ण stack_t;
+typedef struct sigaltstack {
+	void __user *ss_sp;
+	int ss_flags;
+	size_t ss_size;
+} stack_t;
 
-#पूर्ण_अगर /* _UAPI_M68K_SIGNAL_H */
+#endif /* _UAPI_M68K_SIGNAL_H */

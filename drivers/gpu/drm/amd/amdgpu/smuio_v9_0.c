@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,58 +20,58 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#समावेश "amdgpu.h"
-#समावेश "smuio_v9_0.h"
-#समावेश "smuio/smuio_9_0_offset.h"
-#समावेश "smuio/smuio_9_0_sh_mask.h"
+#include "amdgpu.h"
+#include "smuio_v9_0.h"
+#include "smuio/smuio_9_0_offset.h"
+#include "smuio/smuio_9_0_sh_mask.h"
 
-अटल u32 smuio_v9_0_get_rom_index_offset(काष्ठा amdgpu_device *adev)
-अणु
-	वापस SOC15_REG_OFFSET(SMUIO, 0, mmROM_INDEX);
-पूर्ण
+static u32 smuio_v9_0_get_rom_index_offset(struct amdgpu_device *adev)
+{
+	return SOC15_REG_OFFSET(SMUIO, 0, mmROM_INDEX);
+}
 
-अटल u32 smuio_v9_0_get_rom_data_offset(काष्ठा amdgpu_device *adev)
-अणु
-	वापस SOC15_REG_OFFSET(SMUIO, 0, mmROM_DATA);
-पूर्ण
+static u32 smuio_v9_0_get_rom_data_offset(struct amdgpu_device *adev)
+{
+	return SOC15_REG_OFFSET(SMUIO, 0, mmROM_DATA);
+}
 
-अटल व्योम smuio_v9_0_update_rom_घड़ी_gating(काष्ठा amdgpu_device *adev, bool enable)
-अणु
+static void smuio_v9_0_update_rom_clock_gating(struct amdgpu_device *adev, bool enable)
+{
 	u32 def, data;
 
 	/* enable/disable ROM CG is not supported on APU */
-	अगर (adev->flags & AMD_IS_APU)
-		वापस;
+	if (adev->flags & AMD_IS_APU)
+		return;
 
 	def = data = RREG32_SOC15(SMUIO, 0, mmCGTT_ROM_CLK_CTRL0);
 
-	अगर (enable && (adev->cg_flags & AMD_CG_SUPPORT_ROM_MGCG))
+	if (enable && (adev->cg_flags & AMD_CG_SUPPORT_ROM_MGCG))
 		data &= ~(CGTT_ROM_CLK_CTRL0__SOFT_OVERRIDE0_MASK |
 			CGTT_ROM_CLK_CTRL0__SOFT_OVERRIDE1_MASK);
-	अन्यथा
+	else
 		data |= CGTT_ROM_CLK_CTRL0__SOFT_OVERRIDE0_MASK |
 			CGTT_ROM_CLK_CTRL0__SOFT_OVERRIDE1_MASK;
 
-	अगर (def != data)
+	if (def != data)
 		WREG32_SOC15(SMUIO, 0, mmCGTT_ROM_CLK_CTRL0, data);
-पूर्ण
+}
 
-अटल व्योम smuio_v9_0_get_घड़ी_gating_state(काष्ठा amdgpu_device *adev, u32 *flags)
-अणु
+static void smuio_v9_0_get_clock_gating_state(struct amdgpu_device *adev, u32 *flags)
+{
 	u32 data;
 
-	/* CGTT_ROM_CLK_CTRL0 is not availabe क्रम APUs */
-	अगर (adev->flags & AMD_IS_APU)
-		वापस;
+	/* CGTT_ROM_CLK_CTRL0 is not availabe for APUs */
+	if (adev->flags & AMD_IS_APU)
+		return;
 
 	data = RREG32_SOC15(SMUIO, 0, mmCGTT_ROM_CLK_CTRL0);
-	अगर (!(data & CGTT_ROM_CLK_CTRL0__SOFT_OVERRIDE0_MASK))
+	if (!(data & CGTT_ROM_CLK_CTRL0__SOFT_OVERRIDE0_MASK))
 		*flags |= AMD_CG_SUPPORT_ROM_MGCG;
-पूर्ण
+}
 
-स्थिर काष्ठा amdgpu_smuio_funcs smuio_v9_0_funcs = अणु
+const struct amdgpu_smuio_funcs smuio_v9_0_funcs = {
 	.get_rom_index_offset = smuio_v9_0_get_rom_index_offset,
 	.get_rom_data_offset = smuio_v9_0_get_rom_data_offset,
-	.update_rom_घड़ी_gating = smuio_v9_0_update_rom_घड़ी_gating,
-	.get_घड़ी_gating_state = smuio_v9_0_get_घड़ी_gating_state,
-पूर्ण;
+	.update_rom_clock_gating = smuio_v9_0_update_rom_clock_gating,
+	.get_clock_gating_state = smuio_v9_0_get_clock_gating_state,
+};

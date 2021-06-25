@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * hp206c.c - HOPERF HP206C precision barometer and alसमयter sensor
+ * hp206c.c - HOPERF HP206C precision barometer and altimeter sensor
  *
  * Copyright (c) 2016, Intel Corporation.
  *
@@ -11,367 +10,367 @@
  *  http://www.hoperf.com/upload/sensor/HP206C_DataSheet_EN_V2.0.pdf
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/util_macros.h>
-#समावेश <linux/acpi.h>
+#include <linux/module.h>
+#include <linux/i2c.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
+#include <linux/delay.h>
+#include <linux/util_macros.h>
+#include <linux/acpi.h>
 
-#समावेश <यंत्र/unaligned.h>
+#include <asm/unaligned.h>
 
 /* I2C commands: */
-#घोषणा HP206C_CMD_SOFT_RST	0x06
+#define HP206C_CMD_SOFT_RST	0x06
 
-#घोषणा HP206C_CMD_ADC_CVT	0x40
+#define HP206C_CMD_ADC_CVT	0x40
 
-#घोषणा HP206C_CMD_ADC_CVT_OSR_4096	0x00
-#घोषणा HP206C_CMD_ADC_CVT_OSR_2048	0x04
-#घोषणा HP206C_CMD_ADC_CVT_OSR_1024	0x08
-#घोषणा HP206C_CMD_ADC_CVT_OSR_512	0x0c
-#घोषणा HP206C_CMD_ADC_CVT_OSR_256	0x10
-#घोषणा HP206C_CMD_ADC_CVT_OSR_128	0x14
+#define HP206C_CMD_ADC_CVT_OSR_4096	0x00
+#define HP206C_CMD_ADC_CVT_OSR_2048	0x04
+#define HP206C_CMD_ADC_CVT_OSR_1024	0x08
+#define HP206C_CMD_ADC_CVT_OSR_512	0x0c
+#define HP206C_CMD_ADC_CVT_OSR_256	0x10
+#define HP206C_CMD_ADC_CVT_OSR_128	0x14
 
-#घोषणा HP206C_CMD_ADC_CVT_CHNL_PT	0x00
-#घोषणा HP206C_CMD_ADC_CVT_CHNL_T	0x02
+#define HP206C_CMD_ADC_CVT_CHNL_PT	0x00
+#define HP206C_CMD_ADC_CVT_CHNL_T	0x02
 
-#घोषणा HP206C_CMD_READ_P	0x30
-#घोषणा HP206C_CMD_READ_T	0x32
+#define HP206C_CMD_READ_P	0x30
+#define HP206C_CMD_READ_T	0x32
 
-#घोषणा HP206C_CMD_READ_REG	0x80
-#घोषणा HP206C_CMD_WRITE_REG	0xc0
+#define HP206C_CMD_READ_REG	0x80
+#define HP206C_CMD_WRITE_REG	0xc0
 
-#घोषणा HP206C_REG_INT_EN	0x0b
-#घोषणा HP206C_REG_INT_CFG	0x0c
+#define HP206C_REG_INT_EN	0x0b
+#define HP206C_REG_INT_CFG	0x0c
 
-#घोषणा HP206C_REG_INT_SRC	0x0d
-#घोषणा HP206C_FLAG_DEV_RDY	0x40
+#define HP206C_REG_INT_SRC	0x0d
+#define HP206C_FLAG_DEV_RDY	0x40
 
-#घोषणा HP206C_REG_PARA		0x0f
-#घोषणा HP206C_FLAG_CMPS_EN	0x80
+#define HP206C_REG_PARA		0x0f
+#define HP206C_FLAG_CMPS_EN	0x80
 
-/* Maximum spin क्रम DEV_RDY */
-#घोषणा HP206C_MAX_DEV_RDY_WAIT_COUNT 20
-#घोषणा HP206C_DEV_RDY_WAIT_US    20000
+/* Maximum spin for DEV_RDY */
+#define HP206C_MAX_DEV_RDY_WAIT_COUNT 20
+#define HP206C_DEV_RDY_WAIT_US    20000
 
-काष्ठा hp206c_data अणु
-	काष्ठा mutex mutex;
-	काष्ठा i2c_client *client;
-	पूर्णांक temp_osr_index;
-	पूर्णांक pres_osr_index;
-पूर्ण;
+struct hp206c_data {
+	struct mutex mutex;
+	struct i2c_client *client;
+	int temp_osr_index;
+	int pres_osr_index;
+};
 
-काष्ठा hp206c_osr_setting अणु
+struct hp206c_osr_setting {
 	u8 osr_mask;
-	अचिन्हित पूर्णांक temp_conv_समय_us;
-	अचिन्हित पूर्णांक pres_conv_समय_us;
-पूर्ण;
+	unsigned int temp_conv_time_us;
+	unsigned int pres_conv_time_us;
+};
 
 /* Data from Table 5 in datasheet. */
-अटल स्थिर काष्ठा hp206c_osr_setting hp206c_osr_settings[] = अणु
-	अणु HP206C_CMD_ADC_CVT_OSR_4096,	65600,	131100	पूर्ण,
-	अणु HP206C_CMD_ADC_CVT_OSR_2048,	32800,	65600	पूर्ण,
-	अणु HP206C_CMD_ADC_CVT_OSR_1024,	16400,	32800	पूर्ण,
-	अणु HP206C_CMD_ADC_CVT_OSR_512,	8200,	16400	पूर्ण,
-	अणु HP206C_CMD_ADC_CVT_OSR_256,	4100,	8200	पूर्ण,
-	अणु HP206C_CMD_ADC_CVT_OSR_128,	2100,	4100	पूर्ण,
-पूर्ण;
-अटल स्थिर पूर्णांक hp206c_osr_rates[] = अणु 4096, 2048, 1024, 512, 256, 128 पूर्ण;
-अटल स्थिर अक्षर hp206c_osr_rates_str[] = "4096 2048 1024 512 256 128";
+static const struct hp206c_osr_setting hp206c_osr_settings[] = {
+	{ HP206C_CMD_ADC_CVT_OSR_4096,	65600,	131100	},
+	{ HP206C_CMD_ADC_CVT_OSR_2048,	32800,	65600	},
+	{ HP206C_CMD_ADC_CVT_OSR_1024,	16400,	32800	},
+	{ HP206C_CMD_ADC_CVT_OSR_512,	8200,	16400	},
+	{ HP206C_CMD_ADC_CVT_OSR_256,	4100,	8200	},
+	{ HP206C_CMD_ADC_CVT_OSR_128,	2100,	4100	},
+};
+static const int hp206c_osr_rates[] = { 4096, 2048, 1024, 512, 256, 128 };
+static const char hp206c_osr_rates_str[] = "4096 2048 1024 512 256 128";
 
-अटल अंतरभूत पूर्णांक hp206c_पढ़ो_reg(काष्ठा i2c_client *client, u8 reg)
-अणु
-	वापस i2c_smbus_पढ़ो_byte_data(client, HP206C_CMD_READ_REG | reg);
-पूर्ण
+static inline int hp206c_read_reg(struct i2c_client *client, u8 reg)
+{
+	return i2c_smbus_read_byte_data(client, HP206C_CMD_READ_REG | reg);
+}
 
-अटल अंतरभूत पूर्णांक hp206c_ग_लिखो_reg(काष्ठा i2c_client *client, u8 reg, u8 val)
-अणु
-	वापस i2c_smbus_ग_लिखो_byte_data(client,
+static inline int hp206c_write_reg(struct i2c_client *client, u8 reg, u8 val)
+{
+	return i2c_smbus_write_byte_data(client,
 			HP206C_CMD_WRITE_REG | reg, val);
-पूर्ण
+}
 
-अटल पूर्णांक hp206c_पढ़ो_20bit(काष्ठा i2c_client *client, u8 cmd)
-अणु
-	पूर्णांक ret;
+static int hp206c_read_20bit(struct i2c_client *client, u8 cmd)
+{
+	int ret;
 	u8 values[3];
 
-	ret = i2c_smbus_पढ़ो_i2c_block_data(client, cmd, माप(values), values);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (ret != माप(values))
-		वापस -EIO;
-	वापस get_unaligned_be24(&values[0]) & GENMASK(19, 0);
-पूर्ण
+	ret = i2c_smbus_read_i2c_block_data(client, cmd, sizeof(values), values);
+	if (ret < 0)
+		return ret;
+	if (ret != sizeof(values))
+		return -EIO;
+	return get_unaligned_be24(&values[0]) & GENMASK(19, 0);
+}
 
-/* Spin क्रम max 160ms until DEV_RDY is 1, or वापस error. */
-अटल पूर्णांक hp206c_रुको_dev_rdy(काष्ठा iio_dev *indio_dev)
-अणु
-	पूर्णांक ret;
-	पूर्णांक count = 0;
-	काष्ठा hp206c_data *data = iio_priv(indio_dev);
-	काष्ठा i2c_client *client = data->client;
+/* Spin for max 160ms until DEV_RDY is 1, or return error. */
+static int hp206c_wait_dev_rdy(struct iio_dev *indio_dev)
+{
+	int ret;
+	int count = 0;
+	struct hp206c_data *data = iio_priv(indio_dev);
+	struct i2c_client *client = data->client;
 
-	जबतक (++count <= HP206C_MAX_DEV_RDY_WAIT_COUNT) अणु
-		ret = hp206c_पढ़ो_reg(client, HP206C_REG_INT_SRC);
-		अगर (ret < 0) अणु
+	while (++count <= HP206C_MAX_DEV_RDY_WAIT_COUNT) {
+		ret = hp206c_read_reg(client, HP206C_REG_INT_SRC);
+		if (ret < 0) {
 			dev_err(&indio_dev->dev, "Failed READ_REG INT_SRC: %d\n", ret);
-			वापस ret;
-		पूर्ण
-		अगर (ret & HP206C_FLAG_DEV_RDY)
-			वापस 0;
+			return ret;
+		}
+		if (ret & HP206C_FLAG_DEV_RDY)
+			return 0;
 		usleep_range(HP206C_DEV_RDY_WAIT_US, HP206C_DEV_RDY_WAIT_US * 3 / 2);
-	पूर्ण
-	वापस -ETIMEDOUT;
-पूर्ण
+	}
+	return -ETIMEDOUT;
+}
 
-अटल पूर्णांक hp206c_set_compensation(काष्ठा i2c_client *client, bool enabled)
-अणु
-	पूर्णांक val;
+static int hp206c_set_compensation(struct i2c_client *client, bool enabled)
+{
+	int val;
 
-	val = hp206c_पढ़ो_reg(client, HP206C_REG_PARA);
-	अगर (val < 0)
-		वापस val;
-	अगर (enabled)
+	val = hp206c_read_reg(client, HP206C_REG_PARA);
+	if (val < 0)
+		return val;
+	if (enabled)
 		val |= HP206C_FLAG_CMPS_EN;
-	अन्यथा
+	else
 		val &= ~HP206C_FLAG_CMPS_EN;
 
-	वापस hp206c_ग_लिखो_reg(client, HP206C_REG_PARA, val);
-पूर्ण
+	return hp206c_write_reg(client, HP206C_REG_PARA, val);
+}
 
 /* Do a soft reset */
-अटल पूर्णांक hp206c_soft_reset(काष्ठा iio_dev *indio_dev)
-अणु
-	पूर्णांक ret;
-	काष्ठा hp206c_data *data = iio_priv(indio_dev);
-	काष्ठा i2c_client *client = data->client;
+static int hp206c_soft_reset(struct iio_dev *indio_dev)
+{
+	int ret;
+	struct hp206c_data *data = iio_priv(indio_dev);
+	struct i2c_client *client = data->client;
 
-	ret = i2c_smbus_ग_लिखो_byte(client, HP206C_CMD_SOFT_RST);
-	अगर (ret) अणु
+	ret = i2c_smbus_write_byte(client, HP206C_CMD_SOFT_RST);
+	if (ret) {
 		dev_err(&client->dev, "Failed to reset device: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	usleep_range(400, 600);
 
-	ret = hp206c_रुको_dev_rdy(indio_dev);
-	अगर (ret) अणु
+	ret = hp206c_wait_dev_rdy(indio_dev);
+	if (ret) {
 		dev_err(&client->dev, "Device not ready after soft reset: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = hp206c_set_compensation(client, true);
-	अगर (ret)
+	if (ret)
 		dev_err(&client->dev, "Failed to enable compensation: %d\n", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक hp206c_conv_and_पढ़ो(काष्ठा iio_dev *indio_dev,
-				u8 conv_cmd, u8 पढ़ो_cmd,
-				अचिन्हित पूर्णांक sleep_us)
-अणु
-	पूर्णांक ret;
-	काष्ठा hp206c_data *data = iio_priv(indio_dev);
-	काष्ठा i2c_client *client = data->client;
+static int hp206c_conv_and_read(struct iio_dev *indio_dev,
+				u8 conv_cmd, u8 read_cmd,
+				unsigned int sleep_us)
+{
+	int ret;
+	struct hp206c_data *data = iio_priv(indio_dev);
+	struct i2c_client *client = data->client;
 
-	ret = hp206c_रुको_dev_rdy(indio_dev);
-	अगर (ret < 0) अणु
+	ret = hp206c_wait_dev_rdy(indio_dev);
+	if (ret < 0) {
 		dev_err(&indio_dev->dev, "Device not ready: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = i2c_smbus_ग_लिखो_byte(client, conv_cmd);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_write_byte(client, conv_cmd);
+	if (ret < 0) {
 		dev_err(&indio_dev->dev, "Failed convert: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	usleep_range(sleep_us, sleep_us * 3 / 2);
 
-	ret = hp206c_रुको_dev_rdy(indio_dev);
-	अगर (ret < 0) अणु
+	ret = hp206c_wait_dev_rdy(indio_dev);
+	if (ret < 0) {
 		dev_err(&indio_dev->dev, "Device not ready: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = hp206c_पढ़ो_20bit(client, पढ़ो_cmd);
-	अगर (ret < 0)
+	ret = hp206c_read_20bit(client, read_cmd);
+	if (ret < 0)
 		dev_err(&indio_dev->dev, "Failed read: %d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक hp206c_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			   काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक *val,
-			   पूर्णांक *val2, दीर्घ mask)
-अणु
-	पूर्णांक ret;
-	काष्ठा hp206c_data *data = iio_priv(indio_dev);
-	स्थिर काष्ठा hp206c_osr_setting *osr_setting;
+static int hp206c_read_raw(struct iio_dev *indio_dev,
+			   struct iio_chan_spec const *chan, int *val,
+			   int *val2, long mask)
+{
+	int ret;
+	struct hp206c_data *data = iio_priv(indio_dev);
+	const struct hp206c_osr_setting *osr_setting;
 	u8 conv_cmd;
 
 	mutex_lock(&data->mutex);
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_OVERSAMPLING_RATIO:
-		चयन (chan->type) अणु
-		हाल IIO_TEMP:
+	switch (mask) {
+	case IIO_CHAN_INFO_OVERSAMPLING_RATIO:
+		switch (chan->type) {
+		case IIO_TEMP:
 			*val = hp206c_osr_rates[data->temp_osr_index];
 			ret = IIO_VAL_INT;
-			अवरोध;
+			break;
 
-		हाल IIO_PRESSURE:
+		case IIO_PRESSURE:
 			*val = hp206c_osr_rates[data->pres_osr_index];
 			ret = IIO_VAL_INT;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			ret = -EINVAL;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल IIO_CHAN_INFO_RAW:
-		चयन (chan->type) अणु
-		हाल IIO_TEMP:
+	case IIO_CHAN_INFO_RAW:
+		switch (chan->type) {
+		case IIO_TEMP:
 			osr_setting = &hp206c_osr_settings[data->temp_osr_index];
 			conv_cmd = HP206C_CMD_ADC_CVT |
 					osr_setting->osr_mask |
 					HP206C_CMD_ADC_CVT_CHNL_T;
-			ret = hp206c_conv_and_पढ़ो(indio_dev,
+			ret = hp206c_conv_and_read(indio_dev,
 					conv_cmd,
 					HP206C_CMD_READ_T,
-					osr_setting->temp_conv_समय_us);
-			अगर (ret >= 0) अणु
-				/* 20 signअगरicant bits are provided.
+					osr_setting->temp_conv_time_us);
+			if (ret >= 0) {
+				/* 20 significant bits are provided.
 				 * Extend sign over the rest.
 				 */
 				*val = sign_extend32(ret, 19);
 				ret = IIO_VAL_INT;
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		हाल IIO_PRESSURE:
+		case IIO_PRESSURE:
 			osr_setting = &hp206c_osr_settings[data->pres_osr_index];
 			conv_cmd = HP206C_CMD_ADC_CVT |
 					osr_setting->osr_mask |
 					HP206C_CMD_ADC_CVT_CHNL_PT;
-			ret = hp206c_conv_and_पढ़ो(indio_dev,
+			ret = hp206c_conv_and_read(indio_dev,
 					conv_cmd,
 					HP206C_CMD_READ_P,
-					osr_setting->pres_conv_समय_us);
-			अगर (ret >= 0) अणु
+					osr_setting->pres_conv_time_us);
+			if (ret >= 0) {
 				*val = ret;
 				ret = IIO_VAL_INT;
-			पूर्ण
-			अवरोध;
-		शेष:
+			}
+			break;
+		default:
 			ret = -EINVAL;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल IIO_CHAN_INFO_SCALE:
-		चयन (chan->type) अणु
-		हाल IIO_TEMP:
+	case IIO_CHAN_INFO_SCALE:
+		switch (chan->type) {
+		case IIO_TEMP:
 			*val = 0;
 			*val2 = 10000;
 			ret = IIO_VAL_INT_PLUS_MICRO;
-			अवरोध;
+			break;
 
-		हाल IIO_PRESSURE:
+		case IIO_PRESSURE:
 			*val = 0;
 			*val2 = 1000;
 			ret = IIO_VAL_INT_PLUS_MICRO;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			ret = -EINVAL;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	शेष:
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 
 	mutex_unlock(&data->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक hp206c_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
-			    काष्ठा iio_chan_spec स्थिर *chan,
-			    पूर्णांक val, पूर्णांक val2, दीर्घ mask)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा hp206c_data *data = iio_priv(indio_dev);
+static int hp206c_write_raw(struct iio_dev *indio_dev,
+			    struct iio_chan_spec const *chan,
+			    int val, int val2, long mask)
+{
+	int ret = 0;
+	struct hp206c_data *data = iio_priv(indio_dev);
 
-	अगर (mask != IIO_CHAN_INFO_OVERSAMPLING_RATIO)
-		वापस -EINVAL;
+	if (mask != IIO_CHAN_INFO_OVERSAMPLING_RATIO)
+		return -EINVAL;
 	mutex_lock(&data->mutex);
-	चयन (chan->type) अणु
-	हाल IIO_TEMP:
-		data->temp_osr_index = find_बंदst_descending(val,
+	switch (chan->type) {
+	case IIO_TEMP:
+		data->temp_osr_index = find_closest_descending(val,
 			hp206c_osr_rates, ARRAY_SIZE(hp206c_osr_rates));
-		अवरोध;
-	हाल IIO_PRESSURE:
-		data->pres_osr_index = find_बंदst_descending(val,
+		break;
+	case IIO_PRESSURE:
+		data->pres_osr_index = find_closest_descending(val,
 			hp206c_osr_rates, ARRAY_SIZE(hp206c_osr_rates));
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 	mutex_unlock(&data->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा iio_chan_spec hp206c_channels[] = अणु
-	अणु
+static const struct iio_chan_spec hp206c_channels[] = {
+	{
 		.type = IIO_TEMP,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 				      BIT(IIO_CHAN_INFO_SCALE) |
 				      BIT(IIO_CHAN_INFO_OVERSAMPLING_RATIO),
-	पूर्ण,
-	अणु
+	},
+	{
 		.type = IIO_PRESSURE,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 				      BIT(IIO_CHAN_INFO_SCALE) |
 				      BIT(IIO_CHAN_INFO_OVERSAMPLING_RATIO),
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल IIO_CONST_ATTR_SAMP_FREQ_AVAIL(hp206c_osr_rates_str);
+static IIO_CONST_ATTR_SAMP_FREQ_AVAIL(hp206c_osr_rates_str);
 
-अटल काष्ठा attribute *hp206c_attributes[] = अणु
-	&iio_स्थिर_attr_sampling_frequency_available.dev_attr.attr,
-	शून्य,
-पूर्ण;
+static struct attribute *hp206c_attributes[] = {
+	&iio_const_attr_sampling_frequency_available.dev_attr.attr,
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group hp206c_attribute_group = अणु
+static const struct attribute_group hp206c_attribute_group = {
 	.attrs = hp206c_attributes,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_info hp206c_info = अणु
+static const struct iio_info hp206c_info = {
 	.attrs = &hp206c_attribute_group,
-	.पढ़ो_raw = hp206c_पढ़ो_raw,
-	.ग_लिखो_raw = hp206c_ग_लिखो_raw,
-पूर्ण;
+	.read_raw = hp206c_read_raw,
+	.write_raw = hp206c_write_raw,
+};
 
-अटल पूर्णांक hp206c_probe(काष्ठा i2c_client *client,
-			स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा hp206c_data *data;
-	पूर्णांक ret;
+static int hp206c_probe(struct i2c_client *client,
+			const struct i2c_device_id *id)
+{
+	struct iio_dev *indio_dev;
+	struct hp206c_data *data;
+	int ret;
 
-	अगर (!i2c_check_functionality(client->adapter,
+	if (!i2c_check_functionality(client->adapter,
 				     I2C_FUNC_SMBUS_BYTE |
 				     I2C_FUNC_SMBUS_BYTE_DATA |
-				     I2C_FUNC_SMBUS_READ_I2C_BLOCK)) अणु
+				     I2C_FUNC_SMBUS_READ_I2C_BLOCK)) {
 		dev_err(&client->dev, "Adapter does not support "
 				"all required i2c functionality\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	indio_dev = devm_iio_device_alloc(&client->dev, माप(*data));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*data));
+	if (!indio_dev)
+		return -ENOMEM;
 
 	data = iio_priv(indio_dev);
 	data->client = client;
@@ -379,7 +378,7 @@
 
 	indio_dev->info = &hp206c_info;
 	indio_dev->name = id->name;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 	indio_dev->channels = hp206c_channels;
 	indio_dev->num_channels = ARRAY_SIZE(hp206c_channels);
 
@@ -387,36 +386,36 @@
 
 	/* Do a soft reset on probe */
 	ret = hp206c_soft_reset(indio_dev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&client->dev, "Failed to reset on startup: %d\n", ret);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस devm_iio_device_रेजिस्टर(&client->dev, indio_dev);
-पूर्ण
+	return devm_iio_device_register(&client->dev, indio_dev);
+}
 
-अटल स्थिर काष्ठा i2c_device_id hp206c_id[] = अणु
-	अणु"hp206c"पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct i2c_device_id hp206c_id[] = {
+	{"hp206c"},
+	{}
+};
 MODULE_DEVICE_TABLE(i2c, hp206c_id);
 
-#अगर_घोषित CONFIG_ACPI
-अटल स्थिर काष्ठा acpi_device_id hp206c_acpi_match[] = अणु
-	अणु"HOP206C", 0पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+#ifdef CONFIG_ACPI
+static const struct acpi_device_id hp206c_acpi_match[] = {
+	{"HOP206C", 0},
+	{ },
+};
 MODULE_DEVICE_TABLE(acpi, hp206c_acpi_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा i2c_driver hp206c_driver = अणु
+static struct i2c_driver hp206c_driver = {
 	.probe = hp206c_probe,
 	.id_table = hp206c_id,
-	.driver = अणु
+	.driver = {
 		.name = "hp206c",
 		.acpi_match_table = ACPI_PTR(hp206c_acpi_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 module_i2c_driver(hp206c_driver);
 

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,16 +23,16 @@
  *
  */
 
-#अगर_अघोषित __DAL_TYPES_H__
-#घोषणा __DAL_TYPES_H__
+#ifndef __DAL_TYPES_H__
+#define __DAL_TYPES_H__
 
-#समावेश "signal_types.h"
-#समावेश "dc_types.h"
+#include "signal_types.h"
+#include "dc_types.h"
 
-काष्ठा dal_logger;
-काष्ठा dc_bios;
+struct dal_logger;
+struct dc_bios;
 
-क्रमागत dce_version अणु
+enum dce_version {
 	DCE_VERSION_UNKNOWN = (-1),
 	DCE_VERSION_6_0,
 	DCE_VERSION_6_1,
@@ -56,6 +55,6 @@
 	DCN_VERSION_3_01,
 	DCN_VERSION_3_02,
 	DCN_VERSION_MAX
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __DAL_TYPES_H__ */
+#endif /* __DAL_TYPES_H__ */

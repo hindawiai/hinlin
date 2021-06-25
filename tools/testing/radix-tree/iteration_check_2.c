@@ -1,88 +1,87 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * iteration_check_2.c: Check that deleting a tagged entry करोesn't cause
+ * iteration_check_2.c: Check that deleting a tagged entry doesn't cause
  * an RCU walker to finish early.
  * Copyright (c) 2020 Oracle
  * Author: Matthew Wilcox <willy@infradead.org>
  */
-#समावेश <pthपढ़ो.h>
-#समावेश "test.h"
+#include <pthread.h>
+#include "test.h"
 
-अटल अस्थिर bool test_complete;
+static volatile bool test_complete;
 
-अटल व्योम *iterator(व्योम *arg)
-अणु
+static void *iterator(void *arg)
+{
 	XA_STATE(xas, arg, 0);
-	व्योम *entry;
+	void *entry;
 
-	rcu_रेजिस्टर_thपढ़ो();
+	rcu_register_thread();
 
-	जबतक (!test_complete) अणु
+	while (!test_complete) {
 		xas_set(&xas, 0);
-		rcu_पढ़ो_lock();
-		xas_क्रम_each_marked(&xas, entry, अच_दीर्घ_उच्च, XA_MARK_0)
+		rcu_read_lock();
+		xas_for_each_marked(&xas, entry, ULONG_MAX, XA_MARK_0)
 			;
-		rcu_पढ़ो_unlock();
-		निश्चित(xas.xa_index >= 100);
-	पूर्ण
+		rcu_read_unlock();
+		assert(xas.xa_index >= 100);
+	}
 
-	rcu_unरेजिस्टर_thपढ़ो();
-	वापस शून्य;
-पूर्ण
+	rcu_unregister_thread();
+	return NULL;
+}
 
-अटल व्योम *throbber(व्योम *arg)
-अणु
-	काष्ठा xarray *xa = arg;
+static void *throbber(void *arg)
+{
+	struct xarray *xa = arg;
 
-	rcu_रेजिस्टर_thपढ़ो();
+	rcu_register_thread();
 
-	जबतक (!test_complete) अणु
-		पूर्णांक i;
+	while (!test_complete) {
+		int i;
 
-		क्रम (i = 0; i < 100; i++) अणु
+		for (i = 0; i < 100; i++) {
 			xa_store(xa, i, xa_mk_value(i), GFP_KERNEL);
 			xa_set_mark(xa, i, XA_MARK_0);
-		पूर्ण
-		क्रम (i = 0; i < 100; i++)
+		}
+		for (i = 0; i < 100; i++)
 			xa_erase(xa, i);
-	पूर्ण
+	}
 
-	rcu_unरेजिस्टर_thपढ़ो();
-	वापस शून्य;
-पूर्ण
+	rcu_unregister_thread();
+	return NULL;
+}
 
-व्योम iteration_test2(अचिन्हित test_duration)
-अणु
-	pthपढ़ो_t thपढ़ोs[2];
+void iteration_test2(unsigned test_duration)
+{
+	pthread_t threads[2];
 	DEFINE_XARRAY(array);
-	पूर्णांक i;
+	int i;
 
-	prपूर्णांकv(1, "Running iteration test 2 for %d seconds\n", test_duration);
+	printv(1, "Running iteration test 2 for %d seconds\n", test_duration);
 
 	test_complete = false;
 
 	xa_store(&array, 100, xa_mk_value(100), GFP_KERNEL);
 	xa_set_mark(&array, 100, XA_MARK_0);
 
-	अगर (pthपढ़ो_create(&thपढ़ोs[0], शून्य, iterator, &array)) अणु
-		लिखो_त्रुटि("create iterator thread");
-		निकास(1);
-	पूर्ण
-	अगर (pthपढ़ो_create(&thपढ़ोs[1], शून्य, throbber, &array)) अणु
-		लिखो_त्रुटि("create throbber thread");
-		निकास(1);
-	पूर्ण
+	if (pthread_create(&threads[0], NULL, iterator, &array)) {
+		perror("create iterator thread");
+		exit(1);
+	}
+	if (pthread_create(&threads[1], NULL, throbber, &array)) {
+		perror("create throbber thread");
+		exit(1);
+	}
 
 	sleep(test_duration);
 	test_complete = true;
 
-	क्रम (i = 0; i < 2; i++) अणु
-		अगर (pthपढ़ो_join(thपढ़ोs[i], शून्य)) अणु
-			लिखो_त्रुटि("pthread_join");
-			निकास(1);
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < 2; i++) {
+		if (pthread_join(threads[i], NULL)) {
+			perror("pthread_join");
+			exit(1);
+		}
+	}
 
 	xa_destroy(&array);
-पूर्ण
+}

@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Optimized RAID-5 checksumming functions क्रम IA-64.
+ * Optimized RAID-5 checksumming functions for IA-64.
  */
 
 
-बाह्य व्योम xor_ia64_2(अचिन्हित दीर्घ, अचिन्हित दीर्घ *, अचिन्हित दीर्घ *);
-बाह्य व्योम xor_ia64_3(अचिन्हित दीर्घ, अचिन्हित दीर्घ *, अचिन्हित दीर्घ *,
-		       अचिन्हित दीर्घ *);
-बाह्य व्योम xor_ia64_4(अचिन्हित दीर्घ, अचिन्हित दीर्घ *, अचिन्हित दीर्घ *,
-		       अचिन्हित दीर्घ *, अचिन्हित दीर्घ *);
-बाह्य व्योम xor_ia64_5(अचिन्हित दीर्घ, अचिन्हित दीर्घ *, अचिन्हित दीर्घ *,
-		       अचिन्हित दीर्घ *, अचिन्हित दीर्घ *, अचिन्हित दीर्घ *);
+extern void xor_ia64_2(unsigned long, unsigned long *, unsigned long *);
+extern void xor_ia64_3(unsigned long, unsigned long *, unsigned long *,
+		       unsigned long *);
+extern void xor_ia64_4(unsigned long, unsigned long *, unsigned long *,
+		       unsigned long *, unsigned long *);
+extern void xor_ia64_5(unsigned long, unsigned long *, unsigned long *,
+		       unsigned long *, unsigned long *, unsigned long *);
 
-अटल काष्ठा xor_block_ढाँचा xor_block_ia64 = अणु
+static struct xor_block_template xor_block_ia64 = {
 	.name =	"ia64",
-	.करो_2 =	xor_ia64_2,
-	.करो_3 =	xor_ia64_3,
-	.करो_4 =	xor_ia64_4,
-	.करो_5 =	xor_ia64_5,
-पूर्ण;
+	.do_2 =	xor_ia64_2,
+	.do_3 =	xor_ia64_3,
+	.do_4 =	xor_ia64_4,
+	.do_5 =	xor_ia64_5,
+};
 
-#घोषणा XOR_TRY_TEMPLATES	xor_speed(&xor_block_ia64)
+#define XOR_TRY_TEMPLATES	xor_speed(&xor_block_ia64)

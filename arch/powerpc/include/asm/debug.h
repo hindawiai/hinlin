@@ -1,56 +1,55 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 1999 Cort Dougan <cort@cs.nmt.edu>
  */
-#अगर_अघोषित _ASM_POWERPC_DEBUG_H
-#घोषणा _ASM_POWERPC_DEBUG_H
+#ifndef _ASM_POWERPC_DEBUG_H
+#define _ASM_POWERPC_DEBUG_H
 
-#समावेश <यंत्र/hw_अवरोधpoपूर्णांक.h>
+#include <asm/hw_breakpoint.h>
 
-काष्ठा pt_regs;
+struct pt_regs;
 
-#अगर defined(CONFIG_DEBUGGER) || defined(CONFIG_KEXEC_CORE)
+#if defined(CONFIG_DEBUGGER) || defined(CONFIG_KEXEC_CORE)
 
-बाह्य पूर्णांक (*__debugger)(काष्ठा pt_regs *regs);
-बाह्य पूर्णांक (*__debugger_ipi)(काष्ठा pt_regs *regs);
-बाह्य पूर्णांक (*__debugger_bpt)(काष्ठा pt_regs *regs);
-बाह्य पूर्णांक (*__debugger_sstep)(काष्ठा pt_regs *regs);
-बाह्य पूर्णांक (*__debugger_iabr_match)(काष्ठा pt_regs *regs);
-बाह्य पूर्णांक (*__debugger_अवरोध_match)(काष्ठा pt_regs *regs);
-बाह्य पूर्णांक (*__debugger_fault_handler)(काष्ठा pt_regs *regs);
+extern int (*__debugger)(struct pt_regs *regs);
+extern int (*__debugger_ipi)(struct pt_regs *regs);
+extern int (*__debugger_bpt)(struct pt_regs *regs);
+extern int (*__debugger_sstep)(struct pt_regs *regs);
+extern int (*__debugger_iabr_match)(struct pt_regs *regs);
+extern int (*__debugger_break_match)(struct pt_regs *regs);
+extern int (*__debugger_fault_handler)(struct pt_regs *regs);
 
-#घोषणा DEBUGGER_BOILERPLATE(__NAME) \
-अटल अंतरभूत पूर्णांक __NAME(काष्ठा pt_regs *regs) \
-अणु \
-	अगर (unlikely(__ ## __NAME)) \
-		वापस __ ## __NAME(regs); \
-	वापस 0; \
-पूर्ण
+#define DEBUGGER_BOILERPLATE(__NAME) \
+static inline int __NAME(struct pt_regs *regs) \
+{ \
+	if (unlikely(__ ## __NAME)) \
+		return __ ## __NAME(regs); \
+	return 0; \
+}
 
 DEBUGGER_BOILERPLATE(debugger)
 DEBUGGER_BOILERPLATE(debugger_ipi)
 DEBUGGER_BOILERPLATE(debugger_bpt)
 DEBUGGER_BOILERPLATE(debugger_sstep)
 DEBUGGER_BOILERPLATE(debugger_iabr_match)
-DEBUGGER_BOILERPLATE(debugger_अवरोध_match)
+DEBUGGER_BOILERPLATE(debugger_break_match)
 DEBUGGER_BOILERPLATE(debugger_fault_handler)
 
-#अन्यथा
-अटल अंतरभूत पूर्णांक debugger(काष्ठा pt_regs *regs) अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक debugger_ipi(काष्ठा pt_regs *regs) अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक debugger_bpt(काष्ठा pt_regs *regs) अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक debugger_sstep(काष्ठा pt_regs *regs) अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक debugger_iabr_match(काष्ठा pt_regs *regs) अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक debugger_अवरोध_match(काष्ठा pt_regs *regs) अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक debugger_fault_handler(काष्ठा pt_regs *regs) अणु वापस 0; पूर्ण
-#पूर्ण_अगर
+#else
+static inline int debugger(struct pt_regs *regs) { return 0; }
+static inline int debugger_ipi(struct pt_regs *regs) { return 0; }
+static inline int debugger_bpt(struct pt_regs *regs) { return 0; }
+static inline int debugger_sstep(struct pt_regs *regs) { return 0; }
+static inline int debugger_iabr_match(struct pt_regs *regs) { return 0; }
+static inline int debugger_break_match(struct pt_regs *regs) { return 0; }
+static inline int debugger_fault_handler(struct pt_regs *regs) { return 0; }
+#endif
 
-व्योम __set_अवरोधpoपूर्णांक(पूर्णांक nr, काष्ठा arch_hw_अवरोधpoपूर्णांक *brk);
-bool ppc_अवरोधpoपूर्णांक_available(व्योम);
-#अगर_घोषित CONFIG_PPC_ADV_DEBUG_REGS
-बाह्य व्योम करो_send_trap(काष्ठा pt_regs *regs, अचिन्हित दीर्घ address,
-			 अचिन्हित दीर्घ error_code, पूर्णांक brkpt);
-#पूर्ण_अगर
+void __set_breakpoint(int nr, struct arch_hw_breakpoint *brk);
+bool ppc_breakpoint_available(void);
+#ifdef CONFIG_PPC_ADV_DEBUG_REGS
+extern void do_send_trap(struct pt_regs *regs, unsigned long address,
+			 unsigned long error_code, int brkpt);
+#endif
 
-#पूर्ण_अगर /* _ASM_POWERPC_DEBUG_H */
+#endif /* _ASM_POWERPC_DEBUG_H */

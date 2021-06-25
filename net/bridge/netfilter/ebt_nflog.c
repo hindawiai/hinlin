@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * ebt_nflog
  *
@@ -10,23 +9,23 @@
  *
  * Based on:
  *  xt_NFLOG.c, (C) 2006 by Patrick McHardy <kaber@trash.net>
- *  ebt_ulog.c, (C) 2004 by Bart De Schuymer <bdschuym@panकरोra.be>
+ *  ebt_ulog.c, (C) 2004 by Bart De Schuymer <bdschuym@pandora.be>
  *
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/netfilter/x_tables.h>
-#समावेश <linux/netfilter_bridge/ebtables.h>
-#समावेश <linux/netfilter_bridge/ebt_nflog.h>
-#समावेश <net/netfilter/nf_log.h>
+#include <linux/module.h>
+#include <linux/spinlock.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter_bridge/ebtables.h>
+#include <linux/netfilter_bridge/ebt_nflog.h>
+#include <net/netfilter/nf_log.h>
 
-अटल अचिन्हित पूर्णांक
-ebt_nflog_tg(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा ebt_nflog_info *info = par->targinfo;
-	काष्ठा net *net = xt_net(par);
-	काष्ठा nf_loginfo li;
+static unsigned int
+ebt_nflog_tg(struct sk_buff *skb, const struct xt_action_param *par)
+{
+	const struct ebt_nflog_info *info = par->targinfo;
+	struct net *net = xt_net(par);
+	struct nf_loginfo li;
 
 	li.type = NF_LOG_TYPE_ULOG;
 	li.u.ulog.copy_len = info->len;
@@ -36,41 +35,41 @@ ebt_nflog_tg(काष्ठा sk_buff *skb, स्थिर काष्ठा
 
 	nf_log_packet(net, PF_BRIDGE, xt_hooknum(par), skb, xt_in(par),
 		      xt_out(par), &li, "%s", info->prefix);
-	वापस EBT_CONTINUE;
-पूर्ण
+	return EBT_CONTINUE;
+}
 
-अटल पूर्णांक ebt_nflog_tg_check(स्थिर काष्ठा xt_tgchk_param *par)
-अणु
-	काष्ठा ebt_nflog_info *info = par->targinfo;
+static int ebt_nflog_tg_check(const struct xt_tgchk_param *par)
+{
+	struct ebt_nflog_info *info = par->targinfo;
 
-	अगर (info->flags & ~EBT_NFLOG_MASK)
-		वापस -EINVAL;
+	if (info->flags & ~EBT_NFLOG_MASK)
+		return -EINVAL;
 	info->prefix[EBT_NFLOG_PREFIX_SIZE - 1] = '\0';
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा xt_target ebt_nflog_tg_reg __पढ़ो_mostly = अणु
+static struct xt_target ebt_nflog_tg_reg __read_mostly = {
 	.name       = "nflog",
 	.revision   = 0,
 	.family     = NFPROTO_BRIDGE,
 	.target     = ebt_nflog_tg,
 	.checkentry = ebt_nflog_tg_check,
-	.tarमाला_लोize = माप(काष्ठा ebt_nflog_info),
+	.targetsize = sizeof(struct ebt_nflog_info),
 	.me         = THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init ebt_nflog_init(व्योम)
-अणु
-	वापस xt_रेजिस्टर_target(&ebt_nflog_tg_reg);
-पूर्ण
+static int __init ebt_nflog_init(void)
+{
+	return xt_register_target(&ebt_nflog_tg_reg);
+}
 
-अटल व्योम __निकास ebt_nflog_fini(व्योम)
-अणु
-	xt_unरेजिस्टर_target(&ebt_nflog_tg_reg);
-पूर्ण
+static void __exit ebt_nflog_fini(void)
+{
+	xt_unregister_target(&ebt_nflog_tg_reg);
+}
 
 module_init(ebt_nflog_init);
-module_निकास(ebt_nflog_fini);
+module_exit(ebt_nflog_fini);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Peter Warasin <peter@endian.com>");
 MODULE_DESCRIPTION("ebtables NFLOG netfilter logging module");

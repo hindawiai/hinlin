@@ -1,37 +1,36 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2017-2018 Netronome Systems, Inc. */
 
-#घोषणा _GNU_SOURCE
-#समावेश <प्रकार.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <ftw.h>
-#समावेश <libgen.h>
-#समावेश <mntent.h>
-#समावेश <stdbool.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <unistd.h>
-#समावेश <linux/सीमा.स>
-#समावेश <linux/magic.h>
-#समावेश <net/अगर.h>
-#समावेश <sys/mount.h>
-#समावेश <sys/resource.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/vfs.h>
+#define _GNU_SOURCE
+#include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <ftw.h>
+#include <libgen.h>
+#include <mntent.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <linux/limits.h>
+#include <linux/magic.h>
+#include <net/if.h>
+#include <sys/mount.h>
+#include <sys/resource.h>
+#include <sys/stat.h>
+#include <sys/vfs.h>
 
-#समावेश <bpf/bpf.h>
-#समावेश <bpf/libbpf.h> /* libbpf_num_possible_cpus */
+#include <bpf/bpf.h>
+#include <bpf/libbpf.h> /* libbpf_num_possible_cpus */
 
-#समावेश "main.h"
+#include "main.h"
 
-#अगर_अघोषित BPF_FS_MAGIC
-#घोषणा BPF_FS_MAGIC		0xcafe4a11
-#पूर्ण_अगर
+#ifndef BPF_FS_MAGIC
+#define BPF_FS_MAGIC		0xcafe4a11
+#endif
 
-स्थिर अक्षर * स्थिर attach_type_name[__MAX_BPF_ATTACH_TYPE] = अणु
+const char * const attach_type_name[__MAX_BPF_ATTACH_TYPE] = {
 	[BPF_CGROUP_INET_INGRESS]	= "ingress",
 	[BPF_CGROUP_INET_EGRESS]	= "egress",
 	[BPF_CGROUP_INET_SOCK_CREATE]	= "sock_create",
@@ -68,887 +67,887 @@
 	[BPF_MODIFY_RETURN]		= "mod_ret",
 	[BPF_LSM_MAC]			= "lsm_mac",
 	[BPF_SK_LOOKUP]			= "sk_lookup",
-पूर्ण;
+};
 
-व्योम p_err(स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
+void p_err(const char *fmt, ...)
+{
+	va_list ap;
 
-	बहु_शुरू(ap, fmt);
-	अगर (json_output) अणु
+	va_start(ap, fmt);
+	if (json_output) {
 		jsonw_start_object(json_wtr);
 		jsonw_name(json_wtr, "error");
-		jsonw_भ_लिखो_enquote(json_wtr, fmt, ap);
+		jsonw_vprintf_enquote(json_wtr, fmt, ap);
 		jsonw_end_object(json_wtr);
-	पूर्ण अन्यथा अणु
-		ख_लिखो(मानक_त्रुटि, "Error: ");
-		भख_लिखो(मानक_त्रुटि, fmt, ap);
-		ख_लिखो(मानक_त्रुटि, "\n");
-	पूर्ण
-	बहु_पूर्ण(ap);
-पूर्ण
+	} else {
+		fprintf(stderr, "Error: ");
+		vfprintf(stderr, fmt, ap);
+		fprintf(stderr, "\n");
+	}
+	va_end(ap);
+}
 
-व्योम p_info(स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
+void p_info(const char *fmt, ...)
+{
+	va_list ap;
 
-	अगर (json_output)
-		वापस;
+	if (json_output)
+		return;
 
-	बहु_शुरू(ap, fmt);
-	भख_लिखो(मानक_त्रुटि, fmt, ap);
-	ख_लिखो(मानक_त्रुटि, "\n");
-	बहु_पूर्ण(ap);
-पूर्ण
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	fprintf(stderr, "\n");
+	va_end(ap);
+}
 
-अटल bool is_bpffs(अक्षर *path)
-अणु
-	काष्ठा statfs st_fs;
+static bool is_bpffs(char *path)
+{
+	struct statfs st_fs;
 
-	अगर (statfs(path, &st_fs) < 0)
-		वापस false;
+	if (statfs(path, &st_fs) < 0)
+		return false;
 
-	वापस (अचिन्हित दीर्घ)st_fs.f_type == BPF_FS_MAGIC;
-पूर्ण
+	return (unsigned long)st_fs.f_type == BPF_FS_MAGIC;
+}
 
-व्योम set_max_rlimit(व्योम)
-अणु
-	काष्ठा rlimit rinf = अणु RLIM_अनन्त, RLIM_अनन्त पूर्ण;
+void set_max_rlimit(void)
+{
+	struct rlimit rinf = { RLIM_INFINITY, RLIM_INFINITY };
 
 	setrlimit(RLIMIT_MEMLOCK, &rinf);
-पूर्ण
+}
 
-अटल पूर्णांक
-mnt_fs(स्थिर अक्षर *target, स्थिर अक्षर *type, अक्षर *buff, माप_प्रकार bufflen)
-अणु
-	bool bind_करोne = false;
+static int
+mnt_fs(const char *target, const char *type, char *buff, size_t bufflen)
+{
+	bool bind_done = false;
 
-	जबतक (mount("", target, "none", MS_PRIVATE | MS_REC, शून्य)) अणु
-		अगर (त्रुटि_सं != EINVAL || bind_करोne) अणु
-			snम_लिखो(buff, bufflen,
+	while (mount("", target, "none", MS_PRIVATE | MS_REC, NULL)) {
+		if (errno != EINVAL || bind_done) {
+			snprintf(buff, bufflen,
 				 "mount --make-private %s failed: %s",
-				 target, म_त्रुटि(त्रुटि_सं));
-			वापस -1;
-		पूर्ण
+				 target, strerror(errno));
+			return -1;
+		}
 
-		अगर (mount(target, target, "none", MS_BIND, शून्य)) अणु
-			snम_लिखो(buff, bufflen,
+		if (mount(target, target, "none", MS_BIND, NULL)) {
+			snprintf(buff, bufflen,
 				 "mount --bind %s %s failed: %s",
-				 target, target, म_त्रुटि(त्रुटि_सं));
-			वापस -1;
-		पूर्ण
+				 target, target, strerror(errno));
+			return -1;
+		}
 
-		bind_करोne = true;
-	पूर्ण
+		bind_done = true;
+	}
 
-	अगर (mount(type, target, type, 0, "mode=0700")) अणु
-		snम_लिखो(buff, bufflen, "mount -t %s %s %s failed: %s",
-			 type, type, target, म_त्रुटि(त्रुटि_सं));
-		वापस -1;
-	पूर्ण
+	if (mount(type, target, type, 0, "mode=0700")) {
+		snprintf(buff, bufflen, "mount -t %s %s %s failed: %s",
+			 type, type, target, strerror(errno));
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mount_tracefs(स्थिर अक्षर *target)
-अणु
-	अक्षर err_str[ERR_MAX_LEN];
-	पूर्णांक err;
+int mount_tracefs(const char *target)
+{
+	char err_str[ERR_MAX_LEN];
+	int err;
 
 	err = mnt_fs(target, "tracefs", err_str, ERR_MAX_LEN);
-	अगर (err) अणु
+	if (err) {
 		err_str[ERR_MAX_LEN - 1] = '\0';
 		p_err("can't mount tracefs: %s", err_str);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक खोलो_obj_pinned(स्थिर अक्षर *path, bool quiet)
-अणु
-	अक्षर *pname;
-	पूर्णांक fd = -1;
+int open_obj_pinned(const char *path, bool quiet)
+{
+	char *pname;
+	int fd = -1;
 
 	pname = strdup(path);
-	अगर (!pname) अणु
-		अगर (!quiet)
+	if (!pname) {
+		if (!quiet)
 			p_err("mem alloc failed");
-		जाओ out_ret;
-	पूर्ण
+		goto out_ret;
+	}
 
 	fd = bpf_obj_get(pname);
-	अगर (fd < 0) अणु
-		अगर (!quiet)
+	if (fd < 0) {
+		if (!quiet)
 			p_err("bpf obj get (%s): %s", pname,
-			      त्रुटि_सं == EACCES && !is_bpffs(स_नाम(pname)) ?
+			      errno == EACCES && !is_bpffs(dirname(pname)) ?
 			    "directory not in bpf file system (bpffs)" :
-			    म_त्रुटि(त्रुटि_सं));
-		जाओ out_मुक्त;
-	पूर्ण
+			    strerror(errno));
+		goto out_free;
+	}
 
-out_मुक्त:
-	मुक्त(pname);
+out_free:
+	free(pname);
 out_ret:
-	वापस fd;
-पूर्ण
+	return fd;
+}
 
-पूर्णांक खोलो_obj_pinned_any(स्थिर अक्षर *path, क्रमागत bpf_obj_type exp_type)
-अणु
-	क्रमागत bpf_obj_type type;
-	पूर्णांक fd;
+int open_obj_pinned_any(const char *path, enum bpf_obj_type exp_type)
+{
+	enum bpf_obj_type type;
+	int fd;
 
-	fd = खोलो_obj_pinned(path, false);
-	अगर (fd < 0)
-		वापस -1;
+	fd = open_obj_pinned(path, false);
+	if (fd < 0)
+		return -1;
 
 	type = get_fd_type(fd);
-	अगर (type < 0) अणु
-		बंद(fd);
-		वापस type;
-	पूर्ण
-	अगर (type != exp_type) अणु
+	if (type < 0) {
+		close(fd);
+		return type;
+	}
+	if (type != exp_type) {
 		p_err("incorrect object type: %s", get_fd_type_name(type));
-		बंद(fd);
-		वापस -1;
-	पूर्ण
+		close(fd);
+		return -1;
+	}
 
-	वापस fd;
-पूर्ण
+	return fd;
+}
 
-पूर्णांक mount_bpffs_क्रम_pin(स्थिर अक्षर *name)
-अणु
-	अक्षर err_str[ERR_MAX_LEN];
-	अक्षर *file;
-	अक्षर *dir;
-	पूर्णांक err = 0;
+int mount_bpffs_for_pin(const char *name)
+{
+	char err_str[ERR_MAX_LEN];
+	char *file;
+	char *dir;
+	int err = 0;
 
-	file = दो_स्मृति(म_माप(name) + 1);
-	म_नकल(file, name);
-	dir = स_नाम(file);
+	file = malloc(strlen(name) + 1);
+	strcpy(file, name);
+	dir = dirname(file);
 
-	अगर (is_bpffs(dir))
-		/* nothing to करो अगर alपढ़ोy mounted */
-		जाओ out_मुक्त;
+	if (is_bpffs(dir))
+		/* nothing to do if already mounted */
+		goto out_free;
 
-	अगर (block_mount) अणु
+	if (block_mount) {
 		p_err("no BPF file system found, not mounting it due to --nomount option");
 		err = -1;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	err = mnt_fs(dir, "bpf", err_str, ERR_MAX_LEN);
-	अगर (err) अणु
+	if (err) {
 		err_str[ERR_MAX_LEN - 1] = '\0';
 		p_err("can't mount BPF file system to pin the object (%s): %s",
 		      name, err_str);
-	पूर्ण
+	}
 
-out_मुक्त:
-	मुक्त(file);
-	वापस err;
-पूर्ण
+out_free:
+	free(file);
+	return err;
+}
 
-पूर्णांक करो_pin_fd(पूर्णांक fd, स्थिर अक्षर *name)
-अणु
-	पूर्णांक err;
+int do_pin_fd(int fd, const char *name)
+{
+	int err;
 
-	err = mount_bpffs_क्रम_pin(name);
-	अगर (err)
-		वापस err;
+	err = mount_bpffs_for_pin(name);
+	if (err)
+		return err;
 
 	err = bpf_obj_pin(fd, name);
-	अगर (err)
-		p_err("can't pin the object (%s): %s", name, म_त्रुटि(त्रुटि_सं));
+	if (err)
+		p_err("can't pin the object (%s): %s", name, strerror(errno));
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक करो_pin_any(पूर्णांक argc, अक्षर **argv, पूर्णांक (*get_fd)(पूर्णांक *, अक्षर ***))
-अणु
-	पूर्णांक err;
-	पूर्णांक fd;
+int do_pin_any(int argc, char **argv, int (*get_fd)(int *, char ***))
+{
+	int err;
+	int fd;
 
 	fd = get_fd(&argc, &argv);
-	अगर (fd < 0)
-		वापस fd;
+	if (fd < 0)
+		return fd;
 
-	err = करो_pin_fd(fd, *argv);
+	err = do_pin_fd(fd, *argv);
 
-	बंद(fd);
-	वापस err;
-पूर्ण
+	close(fd);
+	return err;
+}
 
-स्थिर अक्षर *get_fd_type_name(क्रमागत bpf_obj_type type)
-अणु
-	अटल स्थिर अक्षर * स्थिर names[] = अणु
+const char *get_fd_type_name(enum bpf_obj_type type)
+{
+	static const char * const names[] = {
 		[BPF_OBJ_UNKNOWN]	= "unknown",
 		[BPF_OBJ_PROG]		= "prog",
 		[BPF_OBJ_MAP]		= "map",
-	पूर्ण;
+	};
 
-	अगर (type < 0 || type >= ARRAY_SIZE(names) || !names[type])
-		वापस names[BPF_OBJ_UNKNOWN];
+	if (type < 0 || type >= ARRAY_SIZE(names) || !names[type])
+		return names[BPF_OBJ_UNKNOWN];
 
-	वापस names[type];
-पूर्ण
+	return names[type];
+}
 
-पूर्णांक get_fd_type(पूर्णांक fd)
-अणु
-	अक्षर path[PATH_MAX];
-	अक्षर buf[512];
-	sमाप_प्रकार n;
+int get_fd_type(int fd)
+{
+	char path[PATH_MAX];
+	char buf[512];
+	ssize_t n;
 
-	snम_लिखो(path, माप(path), "/proc/self/fd/%d", fd);
+	snprintf(path, sizeof(path), "/proc/self/fd/%d", fd);
 
-	n = पढ़ोlink(path, buf, माप(buf));
-	अगर (n < 0) अणु
-		p_err("can't read link type: %s", म_त्रुटि(त्रुटि_सं));
-		वापस -1;
-	पूर्ण
-	अगर (n == माप(path)) अणु
+	n = readlink(path, buf, sizeof(buf));
+	if (n < 0) {
+		p_err("can't read link type: %s", strerror(errno));
+		return -1;
+	}
+	if (n == sizeof(path)) {
 		p_err("can't read link type: path too long!");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (म_माला(buf, "bpf-map"))
-		वापस BPF_OBJ_MAP;
-	अन्यथा अगर (म_माला(buf, "bpf-prog"))
-		वापस BPF_OBJ_PROG;
-	अन्यथा अगर (म_माला(buf, "bpf-link"))
-		वापस BPF_OBJ_LINK;
+	if (strstr(buf, "bpf-map"))
+		return BPF_OBJ_MAP;
+	else if (strstr(buf, "bpf-prog"))
+		return BPF_OBJ_PROG;
+	else if (strstr(buf, "bpf-link"))
+		return BPF_OBJ_LINK;
 
-	वापस BPF_OBJ_UNKNOWN;
-पूर्ण
+	return BPF_OBJ_UNKNOWN;
+}
 
-अक्षर *get_fdinfo(पूर्णांक fd, स्थिर अक्षर *key)
-अणु
-	अक्षर path[PATH_MAX];
-	अक्षर *line = शून्य;
-	माप_प्रकार line_n = 0;
-	sमाप_प्रकार n;
-	खाता *fdi;
+char *get_fdinfo(int fd, const char *key)
+{
+	char path[PATH_MAX];
+	char *line = NULL;
+	size_t line_n = 0;
+	ssize_t n;
+	FILE *fdi;
 
-	snम_लिखो(path, माप(path), "/proc/self/fdinfo/%d", fd);
+	snprintf(path, sizeof(path), "/proc/self/fdinfo/%d", fd);
 
-	fdi = ख_खोलो(path, "r");
-	अगर (!fdi)
-		वापस शून्य;
+	fdi = fopen(path, "r");
+	if (!fdi)
+		return NULL;
 
-	जबतक ((n = getline(&line, &line_n, fdi)) > 0) अणु
-		अक्षर *value;
-		पूर्णांक len;
+	while ((n = getline(&line, &line_n, fdi)) > 0) {
+		char *value;
+		int len;
 
-		अगर (!म_माला(line, key))
-			जारी;
+		if (!strstr(line, key))
+			continue;
 
-		ख_बंद(fdi);
+		fclose(fdi);
 
-		value = म_अक्षर(line, '\t');
-		अगर (!value || !value[1]) अणु
-			मुक्त(line);
-			वापस शून्य;
-		पूर्ण
+		value = strchr(line, '\t');
+		if (!value || !value[1]) {
+			free(line);
+			return NULL;
+		}
 		value++;
 
-		len = म_माप(value);
-		स_हटाओ(line, value, len);
+		len = strlen(value);
+		memmove(line, value, len);
 		line[len - 1] = '\0';
 
-		वापस line;
-	पूर्ण
+		return line;
+	}
 
-	मुक्त(line);
-	ख_बंद(fdi);
-	वापस शून्य;
-पूर्ण
+	free(line);
+	fclose(fdi);
+	return NULL;
+}
 
-व्योम prपूर्णांक_data_json(uपूर्णांक8_t *data, माप_प्रकार len)
-अणु
-	अचिन्हित पूर्णांक i;
-
-	jsonw_start_array(json_wtr);
-	क्रम (i = 0; i < len; i++)
-		jsonw_म_लिखो(json_wtr, "%d", data[i]);
-	jsonw_end_array(json_wtr);
-पूर्ण
-
-व्योम prपूर्णांक_hex_data_json(uपूर्णांक8_t *data, माप_प्रकार len)
-अणु
-	अचिन्हित पूर्णांक i;
+void print_data_json(uint8_t *data, size_t len)
+{
+	unsigned int i;
 
 	jsonw_start_array(json_wtr);
-	क्रम (i = 0; i < len; i++)
-		jsonw_म_लिखो(json_wtr, "\"0x%02hhx\"", data[i]);
+	for (i = 0; i < len; i++)
+		jsonw_printf(json_wtr, "%d", data[i]);
 	jsonw_end_array(json_wtr);
-पूर्ण
+}
 
-/* extra params क्रम nftw cb */
-अटल काष्ठा pinned_obj_table *build_fn_table;
-अटल क्रमागत bpf_obj_type build_fn_type;
+void print_hex_data_json(uint8_t *data, size_t len)
+{
+	unsigned int i;
 
-अटल पूर्णांक करो_build_table_cb(स्थिर अक्षर *fpath, स्थिर काष्ठा stat *sb,
-			     पूर्णांक typeflag, काष्ठा FTW *ftwbuf)
-अणु
-	काष्ठा bpf_prog_info pinned_info;
-	__u32 len = माप(pinned_info);
-	काष्ठा pinned_obj *obj_node;
-	क्रमागत bpf_obj_type objtype;
-	पूर्णांक fd, err = 0;
+	jsonw_start_array(json_wtr);
+	for (i = 0; i < len; i++)
+		jsonw_printf(json_wtr, "\"0x%02hhx\"", data[i]);
+	jsonw_end_array(json_wtr);
+}
 
-	अगर (typeflag != FTW_F)
-		जाओ out_ret;
+/* extra params for nftw cb */
+static struct pinned_obj_table *build_fn_table;
+static enum bpf_obj_type build_fn_type;
 
-	fd = खोलो_obj_pinned(fpath, true);
-	अगर (fd < 0)
-		जाओ out_ret;
+static int do_build_table_cb(const char *fpath, const struct stat *sb,
+			     int typeflag, struct FTW *ftwbuf)
+{
+	struct bpf_prog_info pinned_info;
+	__u32 len = sizeof(pinned_info);
+	struct pinned_obj *obj_node;
+	enum bpf_obj_type objtype;
+	int fd, err = 0;
+
+	if (typeflag != FTW_F)
+		goto out_ret;
+
+	fd = open_obj_pinned(fpath, true);
+	if (fd < 0)
+		goto out_ret;
 
 	objtype = get_fd_type(fd);
-	अगर (objtype != build_fn_type)
-		जाओ out_बंद;
+	if (objtype != build_fn_type)
+		goto out_close;
 
-	स_रखो(&pinned_info, 0, माप(pinned_info));
-	अगर (bpf_obj_get_info_by_fd(fd, &pinned_info, &len))
-		जाओ out_बंद;
+	memset(&pinned_info, 0, sizeof(pinned_info));
+	if (bpf_obj_get_info_by_fd(fd, &pinned_info, &len))
+		goto out_close;
 
-	obj_node = सुस्मृति(1, माप(*obj_node));
-	अगर (!obj_node) अणु
+	obj_node = calloc(1, sizeof(*obj_node));
+	if (!obj_node) {
 		err = -1;
-		जाओ out_बंद;
-	पूर्ण
+		goto out_close;
+	}
 
 	obj_node->id = pinned_info.id;
 	obj_node->path = strdup(fpath);
-	अगर (!obj_node->path) अणु
+	if (!obj_node->path) {
 		err = -1;
-		मुक्त(obj_node);
-		जाओ out_बंद;
-	पूर्ण
+		free(obj_node);
+		goto out_close;
+	}
 
 	hash_add(build_fn_table->table, &obj_node->hash, obj_node->id);
-out_बंद:
-	बंद(fd);
+out_close:
+	close(fd);
 out_ret:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक build_pinned_obj_table(काष्ठा pinned_obj_table *tab,
-			   क्रमागत bpf_obj_type type)
-अणु
-	काष्ठा mntent *mntent = शून्य;
-	खाता *mntfile = शून्य;
-	पूर्णांक flags = FTW_PHYS;
-	पूर्णांक nखोलोfd = 16;
-	पूर्णांक err = 0;
+int build_pinned_obj_table(struct pinned_obj_table *tab,
+			   enum bpf_obj_type type)
+{
+	struct mntent *mntent = NULL;
+	FILE *mntfile = NULL;
+	int flags = FTW_PHYS;
+	int nopenfd = 16;
+	int err = 0;
 
-	mntfile = seपंचांगntent("/proc/mounts", "r");
-	अगर (!mntfile)
-		वापस -1;
+	mntfile = setmntent("/proc/mounts", "r");
+	if (!mntfile)
+		return -1;
 
 	build_fn_table = tab;
 	build_fn_type = type;
 
-	जबतक ((mntent = geपंचांगntent(mntfile))) अणु
-		अक्षर *path = mntent->mnt_dir;
+	while ((mntent = getmntent(mntfile))) {
+		char *path = mntent->mnt_dir;
 
-		अगर (म_भेदन(mntent->mnt_type, "bpf", 3) != 0)
-			जारी;
-		err = nftw(path, करो_build_table_cb, nखोलोfd, flags);
-		अगर (err)
-			अवरोध;
-	पूर्ण
-	ख_बंद(mntfile);
-	वापस err;
-पूर्ण
+		if (strncmp(mntent->mnt_type, "bpf", 3) != 0)
+			continue;
+		err = nftw(path, do_build_table_cb, nopenfd, flags);
+		if (err)
+			break;
+	}
+	fclose(mntfile);
+	return err;
+}
 
-व्योम delete_pinned_obj_table(काष्ठा pinned_obj_table *tab)
-अणु
-	काष्ठा pinned_obj *obj;
-	काष्ठा hlist_node *पंचांगp;
-	अचिन्हित पूर्णांक bkt;
+void delete_pinned_obj_table(struct pinned_obj_table *tab)
+{
+	struct pinned_obj *obj;
+	struct hlist_node *tmp;
+	unsigned int bkt;
 
-	hash_क्रम_each_safe(tab->table, bkt, पंचांगp, obj, hash) अणु
+	hash_for_each_safe(tab->table, bkt, tmp, obj, hash) {
 		hash_del(&obj->hash);
-		मुक्त(obj->path);
-		मुक्त(obj);
-	पूर्ण
-पूर्ण
+		free(obj->path);
+		free(obj);
+	}
+}
 
-अचिन्हित पूर्णांक get_page_size(व्योम)
-अणु
-	अटल पूर्णांक result;
+unsigned int get_page_size(void)
+{
+	static int result;
 
-	अगर (!result)
+	if (!result)
 		result = getpagesize();
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अचिन्हित पूर्णांक get_possible_cpus(व्योम)
-अणु
-	पूर्णांक cpus = libbpf_num_possible_cpus();
+unsigned int get_possible_cpus(void)
+{
+	int cpus = libbpf_num_possible_cpus();
 
-	अगर (cpus < 0) अणु
-		p_err("Can't get # of possible cpus: %s", म_त्रुटि(-cpus));
-		निकास(-1);
-	पूर्ण
-	वापस cpus;
-पूर्ण
+	if (cpus < 0) {
+		p_err("Can't get # of possible cpus: %s", strerror(-cpus));
+		exit(-1);
+	}
+	return cpus;
+}
 
-अटल अक्षर *
-अगरindex_to_name_ns(__u32 अगरindex, __u32 ns_dev, __u32 ns_ino, अक्षर *buf)
-अणु
-	काष्ठा stat st;
-	पूर्णांक err;
+static char *
+ifindex_to_name_ns(__u32 ifindex, __u32 ns_dev, __u32 ns_ino, char *buf)
+{
+	struct stat st;
+	int err;
 
 	err = stat("/proc/self/ns/net", &st);
-	अगर (err) अणु
-		p_err("Can't stat /proc/self: %s", म_त्रुटि(त्रुटि_सं));
-		वापस शून्य;
-	पूर्ण
+	if (err) {
+		p_err("Can't stat /proc/self: %s", strerror(errno));
+		return NULL;
+	}
 
-	अगर (st.st_dev != ns_dev || st.st_ino != ns_ino)
-		वापस शून्य;
+	if (st.st_dev != ns_dev || st.st_ino != ns_ino)
+		return NULL;
 
-	वापस अगर_indextoname(अगरindex, buf);
-पूर्ण
+	return if_indextoname(ifindex, buf);
+}
 
-अटल पूर्णांक पढ़ो_sysfs_hex_पूर्णांक(अक्षर *path)
-अणु
-	अक्षर venकरोr_id_buf[8];
-	पूर्णांक len;
-	पूर्णांक fd;
+static int read_sysfs_hex_int(char *path)
+{
+	char vendor_id_buf[8];
+	int len;
+	int fd;
 
-	fd = खोलो(path, O_RDONLY);
-	अगर (fd < 0) अणु
-		p_err("Can't open %s: %s", path, म_त्रुटि(त्रुटि_सं));
-		वापस -1;
-	पूर्ण
+	fd = open(path, O_RDONLY);
+	if (fd < 0) {
+		p_err("Can't open %s: %s", path, strerror(errno));
+		return -1;
+	}
 
-	len = पढ़ो(fd, venकरोr_id_buf, माप(venकरोr_id_buf));
-	बंद(fd);
-	अगर (len < 0) अणु
-		p_err("Can't read %s: %s", path, म_त्रुटि(त्रुटि_सं));
-		वापस -1;
-	पूर्ण
-	अगर (len >= (पूर्णांक)माप(venकरोr_id_buf)) अणु
+	len = read(fd, vendor_id_buf, sizeof(vendor_id_buf));
+	close(fd);
+	if (len < 0) {
+		p_err("Can't read %s: %s", path, strerror(errno));
+		return -1;
+	}
+	if (len >= (int)sizeof(vendor_id_buf)) {
 		p_err("Value in %s too long", path);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	venकरोr_id_buf[len] = 0;
+	vendor_id_buf[len] = 0;
 
-	वापस म_से_दीर्घ(venकरोr_id_buf, शून्य, 0);
-पूर्ण
+	return strtol(vendor_id_buf, NULL, 0);
+}
 
-अटल पूर्णांक पढ़ो_sysfs_netdev_hex_पूर्णांक(अक्षर *devname, स्थिर अक्षर *entry_name)
-अणु
-	अक्षर full_path[64];
+static int read_sysfs_netdev_hex_int(char *devname, const char *entry_name)
+{
+	char full_path[64];
 
-	snम_लिखो(full_path, माप(full_path), "/sys/class/net/%s/device/%s",
+	snprintf(full_path, sizeof(full_path), "/sys/class/net/%s/device/%s",
 		 devname, entry_name);
 
-	वापस पढ़ो_sysfs_hex_पूर्णांक(full_path);
-पूर्ण
+	return read_sysfs_hex_int(full_path);
+}
 
-स्थिर अक्षर *
-अगरindex_to_bfd_params(__u32 अगरindex, __u64 ns_dev, __u64 ns_ino,
-		      स्थिर अक्षर **opt)
-अणु
-	अक्षर devname[IF_NAMESIZE];
-	पूर्णांक venकरोr_id;
-	पूर्णांक device_id;
+const char *
+ifindex_to_bfd_params(__u32 ifindex, __u64 ns_dev, __u64 ns_ino,
+		      const char **opt)
+{
+	char devname[IF_NAMESIZE];
+	int vendor_id;
+	int device_id;
 
-	अगर (!अगरindex_to_name_ns(अगरindex, ns_dev, ns_ino, devname)) अणु
-		p_err("Can't get net device name for ifindex %d: %s", अगरindex,
-		      म_त्रुटि(त्रुटि_सं));
-		वापस शून्य;
-	पूर्ण
+	if (!ifindex_to_name_ns(ifindex, ns_dev, ns_ino, devname)) {
+		p_err("Can't get net device name for ifindex %d: %s", ifindex,
+		      strerror(errno));
+		return NULL;
+	}
 
-	venकरोr_id = पढ़ो_sysfs_netdev_hex_पूर्णांक(devname, "vendor");
-	अगर (venकरोr_id < 0) अणु
+	vendor_id = read_sysfs_netdev_hex_int(devname, "vendor");
+	if (vendor_id < 0) {
 		p_err("Can't get device vendor id for %s", devname);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	चयन (venकरोr_id) अणु
-	हाल 0x19ee:
-		device_id = पढ़ो_sysfs_netdev_hex_पूर्णांक(devname, "device");
-		अगर (device_id != 0x4000 &&
+	switch (vendor_id) {
+	case 0x19ee:
+		device_id = read_sysfs_netdev_hex_int(devname, "device");
+		if (device_id != 0x4000 &&
 		    device_id != 0x6000 &&
 		    device_id != 0x6003)
 			p_info("Unknown NFP device ID, assuming it is NFP-6xxx arch");
 		*opt = "ctx4";
-		वापस "NFP-6xxx";
-	शेष:
+		return "NFP-6xxx";
+	default:
 		p_err("Can't get bfd arch name for device vendor id 0x%04x",
-		      venकरोr_id);
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+		      vendor_id);
+		return NULL;
+	}
+}
 
-व्योम prपूर्णांक_dev_plain(__u32 अगरindex, __u64 ns_dev, __u64 ns_inode)
-अणु
-	अक्षर name[IF_NAMESIZE];
+void print_dev_plain(__u32 ifindex, __u64 ns_dev, __u64 ns_inode)
+{
+	char name[IF_NAMESIZE];
 
-	अगर (!अगरindex)
-		वापस;
+	if (!ifindex)
+		return;
 
-	म_लिखो("  offloaded_to ");
-	अगर (अगरindex_to_name_ns(अगरindex, ns_dev, ns_inode, name))
-		म_लिखो("%s", name);
-	अन्यथा
-		म_लिखो("ifindex %u ns_dev %llu ns_ino %llu",
-		       अगरindex, ns_dev, ns_inode);
-पूर्ण
+	printf("  offloaded_to ");
+	if (ifindex_to_name_ns(ifindex, ns_dev, ns_inode, name))
+		printf("%s", name);
+	else
+		printf("ifindex %u ns_dev %llu ns_ino %llu",
+		       ifindex, ns_dev, ns_inode);
+}
 
-व्योम prपूर्णांक_dev_json(__u32 अगरindex, __u64 ns_dev, __u64 ns_inode)
-अणु
-	अक्षर name[IF_NAMESIZE];
+void print_dev_json(__u32 ifindex, __u64 ns_dev, __u64 ns_inode)
+{
+	char name[IF_NAMESIZE];
 
-	अगर (!अगरindex)
-		वापस;
+	if (!ifindex)
+		return;
 
 	jsonw_name(json_wtr, "dev");
 	jsonw_start_object(json_wtr);
-	jsonw_uपूर्णांक_field(json_wtr, "ifindex", अगरindex);
-	jsonw_uपूर्णांक_field(json_wtr, "ns_dev", ns_dev);
-	jsonw_uपूर्णांक_field(json_wtr, "ns_inode", ns_inode);
-	अगर (अगरindex_to_name_ns(अगरindex, ns_dev, ns_inode, name))
+	jsonw_uint_field(json_wtr, "ifindex", ifindex);
+	jsonw_uint_field(json_wtr, "ns_dev", ns_dev);
+	jsonw_uint_field(json_wtr, "ns_inode", ns_inode);
+	if (ifindex_to_name_ns(ifindex, ns_dev, ns_inode, name))
 		jsonw_string_field(json_wtr, "ifname", name);
 	jsonw_end_object(json_wtr);
-पूर्ण
+}
 
-पूर्णांक parse_u32_arg(पूर्णांक *argc, अक्षर ***argv, __u32 *val, स्थिर अक्षर *what)
-अणु
-	अक्षर *endptr;
+int parse_u32_arg(int *argc, char ***argv, __u32 *val, const char *what)
+{
+	char *endptr;
 
 	NEXT_ARGP();
 
-	अगर (*val) अणु
+	if (*val) {
 		p_err("%s already specified", what);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	*val = म_से_अदीर्घ(**argv, &endptr, 0);
-	अगर (*endptr) अणु
+	*val = strtoul(**argv, &endptr, 0);
+	if (*endptr) {
 		p_err("can't parse %s as %s", **argv, what);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	NEXT_ARGP();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक __म_लिखो(2, 0)
-prपूर्णांक_all_levels(__maybe_unused क्रमागत libbpf_prपूर्णांक_level level,
-		 स्थिर अक्षर *क्रमmat, बहु_सूची args)
-अणु
-	वापस भख_लिखो(मानक_त्रुटि, क्रमmat, args);
-पूर्ण
+int __printf(2, 0)
+print_all_levels(__maybe_unused enum libbpf_print_level level,
+		 const char *format, va_list args)
+{
+	return vfprintf(stderr, format, args);
+}
 
-अटल पूर्णांक prog_fd_by_nametag(व्योम *nametag, पूर्णांक **fds, bool tag)
-अणु
-	अचिन्हित पूर्णांक id = 0;
-	पूर्णांक fd, nb_fds = 0;
-	व्योम *पंचांगp;
-	पूर्णांक err;
+static int prog_fd_by_nametag(void *nametag, int **fds, bool tag)
+{
+	unsigned int id = 0;
+	int fd, nb_fds = 0;
+	void *tmp;
+	int err;
 
-	जबतक (true) अणु
-		काष्ठा bpf_prog_info info = अणुपूर्ण;
-		__u32 len = माप(info);
+	while (true) {
+		struct bpf_prog_info info = {};
+		__u32 len = sizeof(info);
 
 		err = bpf_prog_get_next_id(id, &id);
-		अगर (err) अणु
-			अगर (त्रुटि_सं != ENOENT) अणु
-				p_err("%s", म_त्रुटि(त्रुटि_सं));
-				जाओ err_बंद_fds;
-			पूर्ण
-			वापस nb_fds;
-		पूर्ण
+		if (err) {
+			if (errno != ENOENT) {
+				p_err("%s", strerror(errno));
+				goto err_close_fds;
+			}
+			return nb_fds;
+		}
 
 		fd = bpf_prog_get_fd_by_id(id);
-		अगर (fd < 0) अणु
+		if (fd < 0) {
 			p_err("can't get prog by id (%u): %s",
-			      id, म_त्रुटि(त्रुटि_सं));
-			जाओ err_बंद_fds;
-		पूर्ण
+			      id, strerror(errno));
+			goto err_close_fds;
+		}
 
 		err = bpf_obj_get_info_by_fd(fd, &info, &len);
-		अगर (err) अणु
+		if (err) {
 			p_err("can't get prog info (%u): %s",
-			      id, म_त्रुटि(त्रुटि_सं));
-			जाओ err_बंद_fd;
-		पूर्ण
+			      id, strerror(errno));
+			goto err_close_fd;
+		}
 
-		अगर ((tag && स_भेद(nametag, info.tag, BPF_TAG_SIZE)) ||
-		    (!tag && म_भेदन(nametag, info.name, BPF_OBJ_NAME_LEN))) अणु
-			बंद(fd);
-			जारी;
-		पूर्ण
+		if ((tag && memcmp(nametag, info.tag, BPF_TAG_SIZE)) ||
+		    (!tag && strncmp(nametag, info.name, BPF_OBJ_NAME_LEN))) {
+			close(fd);
+			continue;
+		}
 
-		अगर (nb_fds > 0) अणु
-			पंचांगp = पुनः_स्मृति(*fds, (nb_fds + 1) * माप(पूर्णांक));
-			अगर (!पंचांगp) अणु
+		if (nb_fds > 0) {
+			tmp = realloc(*fds, (nb_fds + 1) * sizeof(int));
+			if (!tmp) {
 				p_err("failed to realloc");
-				जाओ err_बंद_fd;
-			पूर्ण
-			*fds = पंचांगp;
-		पूर्ण
+				goto err_close_fd;
+			}
+			*fds = tmp;
+		}
 		(*fds)[nb_fds++] = fd;
-	पूर्ण
+	}
 
-err_बंद_fd:
-	बंद(fd);
-err_बंद_fds:
-	जबतक (--nb_fds >= 0)
-		बंद((*fds)[nb_fds]);
-	वापस -1;
-पूर्ण
+err_close_fd:
+	close(fd);
+err_close_fds:
+	while (--nb_fds >= 0)
+		close((*fds)[nb_fds]);
+	return -1;
+}
 
-पूर्णांक prog_parse_fds(पूर्णांक *argc, अक्षर ***argv, पूर्णांक **fds)
-अणु
-	अगर (is_prefix(**argv, "id")) अणु
-		अचिन्हित पूर्णांक id;
-		अक्षर *endptr;
+int prog_parse_fds(int *argc, char ***argv, int **fds)
+{
+	if (is_prefix(**argv, "id")) {
+		unsigned int id;
+		char *endptr;
 
 		NEXT_ARGP();
 
-		id = म_से_अदीर्घ(**argv, &endptr, 0);
-		अगर (*endptr) अणु
+		id = strtoul(**argv, &endptr, 0);
+		if (*endptr) {
 			p_err("can't parse %s as ID", **argv);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 		NEXT_ARGP();
 
 		(*fds)[0] = bpf_prog_get_fd_by_id(id);
-		अगर ((*fds)[0] < 0) अणु
-			p_err("get by id (%u): %s", id, म_त्रुटि(त्रुटि_सं));
-			वापस -1;
-		पूर्ण
-		वापस 1;
-	पूर्ण अन्यथा अगर (is_prefix(**argv, "tag")) अणु
-		अचिन्हित अक्षर tag[BPF_TAG_SIZE];
+		if ((*fds)[0] < 0) {
+			p_err("get by id (%u): %s", id, strerror(errno));
+			return -1;
+		}
+		return 1;
+	} else if (is_prefix(**argv, "tag")) {
+		unsigned char tag[BPF_TAG_SIZE];
 
 		NEXT_ARGP();
 
-		अगर (माला_पूछो(**argv, BPF_TAG_FMT, tag, tag + 1, tag + 2,
+		if (sscanf(**argv, BPF_TAG_FMT, tag, tag + 1, tag + 2,
 			   tag + 3, tag + 4, tag + 5, tag + 6, tag + 7)
-		    != BPF_TAG_SIZE) अणु
+		    != BPF_TAG_SIZE) {
 			p_err("can't parse tag");
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 		NEXT_ARGP();
 
-		वापस prog_fd_by_nametag(tag, fds, true);
-	पूर्ण अन्यथा अगर (is_prefix(**argv, "name")) अणु
-		अक्षर *name;
+		return prog_fd_by_nametag(tag, fds, true);
+	} else if (is_prefix(**argv, "name")) {
+		char *name;
 
 		NEXT_ARGP();
 
 		name = **argv;
-		अगर (म_माप(name) > BPF_OBJ_NAME_LEN - 1) अणु
+		if (strlen(name) > BPF_OBJ_NAME_LEN - 1) {
 			p_err("can't parse name");
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 		NEXT_ARGP();
 
-		वापस prog_fd_by_nametag(name, fds, false);
-	पूर्ण अन्यथा अगर (is_prefix(**argv, "pinned")) अणु
-		अक्षर *path;
+		return prog_fd_by_nametag(name, fds, false);
+	} else if (is_prefix(**argv, "pinned")) {
+		char *path;
 
 		NEXT_ARGP();
 
 		path = **argv;
 		NEXT_ARGP();
 
-		(*fds)[0] = खोलो_obj_pinned_any(path, BPF_OBJ_PROG);
-		अगर ((*fds)[0] < 0)
-			वापस -1;
-		वापस 1;
-	पूर्ण
+		(*fds)[0] = open_obj_pinned_any(path, BPF_OBJ_PROG);
+		if ((*fds)[0] < 0)
+			return -1;
+		return 1;
+	}
 
 	p_err("expected 'id', 'tag', 'name' or 'pinned', got: '%s'?", **argv);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-पूर्णांक prog_parse_fd(पूर्णांक *argc, अक्षर ***argv)
-अणु
-	पूर्णांक *fds = शून्य;
-	पूर्णांक nb_fds, fd;
+int prog_parse_fd(int *argc, char ***argv)
+{
+	int *fds = NULL;
+	int nb_fds, fd;
 
-	fds = दो_स्मृति(माप(पूर्णांक));
-	अगर (!fds) अणु
+	fds = malloc(sizeof(int));
+	if (!fds) {
 		p_err("mem alloc failed");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	nb_fds = prog_parse_fds(argc, argv, &fds);
-	अगर (nb_fds != 1) अणु
-		अगर (nb_fds > 1) अणु
+	if (nb_fds != 1) {
+		if (nb_fds > 1) {
 			p_err("several programs match this handle");
-			जबतक (nb_fds--)
-				बंद(fds[nb_fds]);
-		पूर्ण
+			while (nb_fds--)
+				close(fds[nb_fds]);
+		}
 		fd = -1;
-		जाओ निकास_मुक्त;
-	पूर्ण
+		goto exit_free;
+	}
 
 	fd = fds[0];
-निकास_मुक्त:
-	मुक्त(fds);
-	वापस fd;
-पूर्ण
+exit_free:
+	free(fds);
+	return fd;
+}
 
-अटल पूर्णांक map_fd_by_name(अक्षर *name, पूर्णांक **fds)
-अणु
-	अचिन्हित पूर्णांक id = 0;
-	पूर्णांक fd, nb_fds = 0;
-	व्योम *पंचांगp;
-	पूर्णांक err;
+static int map_fd_by_name(char *name, int **fds)
+{
+	unsigned int id = 0;
+	int fd, nb_fds = 0;
+	void *tmp;
+	int err;
 
-	जबतक (true) अणु
-		काष्ठा bpf_map_info info = अणुपूर्ण;
-		__u32 len = माप(info);
+	while (true) {
+		struct bpf_map_info info = {};
+		__u32 len = sizeof(info);
 
 		err = bpf_map_get_next_id(id, &id);
-		अगर (err) अणु
-			अगर (त्रुटि_सं != ENOENT) अणु
-				p_err("%s", म_त्रुटि(त्रुटि_सं));
-				जाओ err_बंद_fds;
-			पूर्ण
-			वापस nb_fds;
-		पूर्ण
+		if (err) {
+			if (errno != ENOENT) {
+				p_err("%s", strerror(errno));
+				goto err_close_fds;
+			}
+			return nb_fds;
+		}
 
 		fd = bpf_map_get_fd_by_id(id);
-		अगर (fd < 0) अणु
+		if (fd < 0) {
 			p_err("can't get map by id (%u): %s",
-			      id, म_त्रुटि(त्रुटि_सं));
-			जाओ err_बंद_fds;
-		पूर्ण
+			      id, strerror(errno));
+			goto err_close_fds;
+		}
 
 		err = bpf_obj_get_info_by_fd(fd, &info, &len);
-		अगर (err) अणु
+		if (err) {
 			p_err("can't get map info (%u): %s",
-			      id, म_त्रुटि(त्रुटि_सं));
-			जाओ err_बंद_fd;
-		पूर्ण
+			      id, strerror(errno));
+			goto err_close_fd;
+		}
 
-		अगर (म_भेदन(name, info.name, BPF_OBJ_NAME_LEN)) अणु
-			बंद(fd);
-			जारी;
-		पूर्ण
+		if (strncmp(name, info.name, BPF_OBJ_NAME_LEN)) {
+			close(fd);
+			continue;
+		}
 
-		अगर (nb_fds > 0) अणु
-			पंचांगp = पुनः_स्मृति(*fds, (nb_fds + 1) * माप(पूर्णांक));
-			अगर (!पंचांगp) अणु
+		if (nb_fds > 0) {
+			tmp = realloc(*fds, (nb_fds + 1) * sizeof(int));
+			if (!tmp) {
 				p_err("failed to realloc");
-				जाओ err_बंद_fd;
-			पूर्ण
-			*fds = पंचांगp;
-		पूर्ण
+				goto err_close_fd;
+			}
+			*fds = tmp;
+		}
 		(*fds)[nb_fds++] = fd;
-	पूर्ण
+	}
 
-err_बंद_fd:
-	बंद(fd);
-err_बंद_fds:
-	जबतक (--nb_fds >= 0)
-		बंद((*fds)[nb_fds]);
-	वापस -1;
-पूर्ण
+err_close_fd:
+	close(fd);
+err_close_fds:
+	while (--nb_fds >= 0)
+		close((*fds)[nb_fds]);
+	return -1;
+}
 
-पूर्णांक map_parse_fds(पूर्णांक *argc, अक्षर ***argv, पूर्णांक **fds)
-अणु
-	अगर (is_prefix(**argv, "id")) अणु
-		अचिन्हित पूर्णांक id;
-		अक्षर *endptr;
+int map_parse_fds(int *argc, char ***argv, int **fds)
+{
+	if (is_prefix(**argv, "id")) {
+		unsigned int id;
+		char *endptr;
 
 		NEXT_ARGP();
 
-		id = म_से_अदीर्घ(**argv, &endptr, 0);
-		अगर (*endptr) अणु
+		id = strtoul(**argv, &endptr, 0);
+		if (*endptr) {
 			p_err("can't parse %s as ID", **argv);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 		NEXT_ARGP();
 
 		(*fds)[0] = bpf_map_get_fd_by_id(id);
-		अगर ((*fds)[0] < 0) अणु
-			p_err("get map by id (%u): %s", id, म_त्रुटि(त्रुटि_सं));
-			वापस -1;
-		पूर्ण
-		वापस 1;
-	पूर्ण अन्यथा अगर (is_prefix(**argv, "name")) अणु
-		अक्षर *name;
+		if ((*fds)[0] < 0) {
+			p_err("get map by id (%u): %s", id, strerror(errno));
+			return -1;
+		}
+		return 1;
+	} else if (is_prefix(**argv, "name")) {
+		char *name;
 
 		NEXT_ARGP();
 
 		name = **argv;
-		अगर (म_माप(name) > BPF_OBJ_NAME_LEN - 1) अणु
+		if (strlen(name) > BPF_OBJ_NAME_LEN - 1) {
 			p_err("can't parse name");
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 		NEXT_ARGP();
 
-		वापस map_fd_by_name(name, fds);
-	पूर्ण अन्यथा अगर (is_prefix(**argv, "pinned")) अणु
-		अक्षर *path;
+		return map_fd_by_name(name, fds);
+	} else if (is_prefix(**argv, "pinned")) {
+		char *path;
 
 		NEXT_ARGP();
 
 		path = **argv;
 		NEXT_ARGP();
 
-		(*fds)[0] = खोलो_obj_pinned_any(path, BPF_OBJ_MAP);
-		अगर ((*fds)[0] < 0)
-			वापस -1;
-		वापस 1;
-	पूर्ण
+		(*fds)[0] = open_obj_pinned_any(path, BPF_OBJ_MAP);
+		if ((*fds)[0] < 0)
+			return -1;
+		return 1;
+	}
 
 	p_err("expected 'id', 'name' or 'pinned', got: '%s'?", **argv);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-पूर्णांक map_parse_fd(पूर्णांक *argc, अक्षर ***argv)
-अणु
-	पूर्णांक *fds = शून्य;
-	पूर्णांक nb_fds, fd;
+int map_parse_fd(int *argc, char ***argv)
+{
+	int *fds = NULL;
+	int nb_fds, fd;
 
-	fds = दो_स्मृति(माप(पूर्णांक));
-	अगर (!fds) अणु
+	fds = malloc(sizeof(int));
+	if (!fds) {
 		p_err("mem alloc failed");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	nb_fds = map_parse_fds(argc, argv, &fds);
-	अगर (nb_fds != 1) अणु
-		अगर (nb_fds > 1) अणु
+	if (nb_fds != 1) {
+		if (nb_fds > 1) {
 			p_err("several maps match this handle");
-			जबतक (nb_fds--)
-				बंद(fds[nb_fds]);
-		पूर्ण
+			while (nb_fds--)
+				close(fds[nb_fds]);
+		}
 		fd = -1;
-		जाओ निकास_मुक्त;
-	पूर्ण
+		goto exit_free;
+	}
 
 	fd = fds[0];
-निकास_मुक्त:
-	मुक्त(fds);
-	वापस fd;
-पूर्ण
+exit_free:
+	free(fds);
+	return fd;
+}
 
-पूर्णांक map_parse_fd_and_info(पूर्णांक *argc, अक्षर ***argv, व्योम *info, __u32 *info_len)
-अणु
-	पूर्णांक err;
-	पूर्णांक fd;
+int map_parse_fd_and_info(int *argc, char ***argv, void *info, __u32 *info_len)
+{
+	int err;
+	int fd;
 
 	fd = map_parse_fd(argc, argv);
-	अगर (fd < 0)
-		वापस -1;
+	if (fd < 0)
+		return -1;
 
 	err = bpf_obj_get_info_by_fd(fd, info, info_len);
-	अगर (err) अणु
-		p_err("can't get map info: %s", म_त्रुटि(त्रुटि_सं));
-		बंद(fd);
-		वापस err;
-	पूर्ण
+	if (err) {
+		p_err("can't get map info: %s", strerror(errno));
+		close(fd);
+		return err;
+	}
 
-	वापस fd;
-पूर्ण
+	return fd;
+}

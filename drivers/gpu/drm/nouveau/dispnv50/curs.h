@@ -1,15 +1,14 @@
-<शैली गुरु>
-#अगर_अघोषित __NV50_KMS_CURS_H__
-#घोषणा __NV50_KMS_CURS_H__
-#समावेश "wndw.h"
+#ifndef __NV50_KMS_CURS_H__
+#define __NV50_KMS_CURS_H__
+#include "wndw.h"
 
-पूर्णांक curs507a_new(काष्ठा nouveau_drm *, पूर्णांक, s32, काष्ठा nv50_wndw **);
-पूर्णांक curs507a_new_(स्थिर काष्ठा nv50_wimm_func *, काष्ठा nouveau_drm *,
-		  पूर्णांक head, s32 oclass, u32 पूर्णांकerlock_data,
-		  काष्ठा nv50_wndw **);
+int curs507a_new(struct nouveau_drm *, int, s32, struct nv50_wndw **);
+int curs507a_new_(const struct nv50_wimm_func *, struct nouveau_drm *,
+		  int head, s32 oclass, u32 interlock_data,
+		  struct nv50_wndw **);
 
-पूर्णांक curs907a_new(काष्ठा nouveau_drm *, पूर्णांक, s32, काष्ठा nv50_wndw **);
-पूर्णांक cursc37a_new(काष्ठा nouveau_drm *, पूर्णांक, s32, काष्ठा nv50_wndw **);
+int curs907a_new(struct nouveau_drm *, int, s32, struct nv50_wndw **);
+int cursc37a_new(struct nouveau_drm *, int, s32, struct nv50_wndw **);
 
-पूर्णांक nv50_curs_new(काष्ठा nouveau_drm *, पूर्णांक head, काष्ठा nv50_wndw **);
-#पूर्ण_अगर
+int nv50_curs_new(struct nouveau_drm *, int head, struct nv50_wndw **);
+#endif

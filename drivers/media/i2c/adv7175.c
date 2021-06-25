@@ -1,144 +1,143 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  adv7175 - adv7175a video encoder driver version 0.0.3
  *
  * Copyright (C) 1998 Dave Perks <dperks@ibm.net>
  * Copyright (C) 1999 Wolfgang Scherr <scherr@net4you.net>
- * Copyright (C) 2000 Serguei Miriकरोnov <mirsev@cicese.mx>
- *    - some corrections क्रम Pinnacle Systems Inc. DC10plus card.
+ * Copyright (C) 2000 Serguei Miridonov <mirsev@cicese.mx>
+ *    - some corrections for Pinnacle Systems Inc. DC10plus card.
  *
  * Changes by Ronald Bultje <rbultje@ronald.bitfreak.net>
  *    - moved over to linux>=2.4.x i2c protocol (9/9/2002)
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/ioctl.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/videodev2.h>
-#समावेश <media/v4l2-device.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/ioctl.h>
+#include <linux/uaccess.h>
+#include <linux/i2c.h>
+#include <linux/videodev2.h>
+#include <media/v4l2-device.h>
 
 MODULE_DESCRIPTION("Analog Devices ADV7175 video encoder driver");
 MODULE_AUTHOR("Dave Perks");
 MODULE_LICENSE("GPL");
 
-#घोषणा   I2C_ADV7175        0xd4
-#घोषणा   I2C_ADV7176        0x54
+#define   I2C_ADV7175        0xd4
+#define   I2C_ADV7176        0x54
 
 
-अटल पूर्णांक debug;
-module_param(debug, पूर्णांक, 0);
+static int debug;
+module_param(debug, int, 0);
 MODULE_PARM_DESC(debug, "Debug level (0-1)");
 
 /* ----------------------------------------------------------------------- */
 
-काष्ठा adv7175 अणु
-	काष्ठा v4l2_subdev sd;
+struct adv7175 {
+	struct v4l2_subdev sd;
 	v4l2_std_id norm;
-	पूर्णांक input;
-पूर्ण;
+	int input;
+};
 
-अटल अंतरभूत काष्ठा adv7175 *to_adv7175(काष्ठा v4l2_subdev *sd)
-अणु
-	वापस container_of(sd, काष्ठा adv7175, sd);
-पूर्ण
+static inline struct adv7175 *to_adv7175(struct v4l2_subdev *sd)
+{
+	return container_of(sd, struct adv7175, sd);
+}
 
-अटल अक्षर *inमाला_दो[] = अणु "pass_through", "play_back", "color_bar" पूर्ण;
+static char *inputs[] = { "pass_through", "play_back", "color_bar" };
 
-अटल u32 adv7175_codes[] = अणु
+static u32 adv7175_codes[] = {
 	MEDIA_BUS_FMT_UYVY8_2X8,
 	MEDIA_BUS_FMT_UYVY8_1X16,
-पूर्ण;
+};
 
 /* ----------------------------------------------------------------------- */
 
-अटल अंतरभूत पूर्णांक adv7175_ग_लिखो(काष्ठा v4l2_subdev *sd, u8 reg, u8 value)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+static inline int adv7175_write(struct v4l2_subdev *sd, u8 reg, u8 value)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
 
-	वापस i2c_smbus_ग_लिखो_byte_data(client, reg, value);
-पूर्ण
+	return i2c_smbus_write_byte_data(client, reg, value);
+}
 
-अटल अंतरभूत पूर्णांक adv7175_पढ़ो(काष्ठा v4l2_subdev *sd, u8 reg)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+static inline int adv7175_read(struct v4l2_subdev *sd, u8 reg)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
 
-	वापस i2c_smbus_पढ़ो_byte_data(client, reg);
-पूर्ण
+	return i2c_smbus_read_byte_data(client, reg);
+}
 
-अटल पूर्णांक adv7175_ग_लिखो_block(काष्ठा v4l2_subdev *sd,
-		     स्थिर u8 *data, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	पूर्णांक ret = -1;
+static int adv7175_write_block(struct v4l2_subdev *sd,
+		     const u8 *data, unsigned int len)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	int ret = -1;
 	u8 reg;
 
-	/* the adv7175 has an स्वतःincrement function, use it अगर
+	/* the adv7175 has an autoincrement function, use it if
 	 * the adapter understands raw I2C */
-	अगर (i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) अणु
-		/* करो raw I2C, not smbus compatible */
+	if (i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
+		/* do raw I2C, not smbus compatible */
 		u8 block_data[32];
-		पूर्णांक block_len;
+		int block_len;
 
-		जबतक (len >= 2) अणु
+		while (len >= 2) {
 			block_len = 0;
 			block_data[block_len++] = reg = data[0];
-			करो अणु
+			do {
 				block_data[block_len++] = data[1];
 				reg++;
 				len -= 2;
 				data += 2;
-			पूर्ण जबतक (len >= 2 && data[0] == reg && block_len < 32);
+			} while (len >= 2 && data[0] == reg && block_len < 32);
 			ret = i2c_master_send(client, block_data, block_len);
-			अगर (ret < 0)
-				अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* करो some slow I2C emulation kind of thing */
-		जबतक (len >= 2) अणु
+			if (ret < 0)
+				break;
+		}
+	} else {
+		/* do some slow I2C emulation kind of thing */
+		while (len >= 2) {
 			reg = *data++;
-			ret = adv7175_ग_लिखो(sd, reg, *data++);
-			अगर (ret < 0)
-				अवरोध;
+			ret = adv7175_write(sd, reg, *data++);
+			if (ret < 0)
+				break;
 			len -= 2;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम set_subcarrier_freq(काष्ठा v4l2_subdev *sd, पूर्णांक pass_through)
-अणु
-	/* क्रम some reason pass_through NTSC needs
-	 * a dअगरferent sub-carrier freq to reमुख्य stable. */
-	अगर (pass_through)
-		adv7175_ग_लिखो(sd, 0x02, 0x00);
-	अन्यथा
-		adv7175_ग_लिखो(sd, 0x02, 0x55);
+static void set_subcarrier_freq(struct v4l2_subdev *sd, int pass_through)
+{
+	/* for some reason pass_through NTSC needs
+	 * a different sub-carrier freq to remain stable. */
+	if (pass_through)
+		adv7175_write(sd, 0x02, 0x00);
+	else
+		adv7175_write(sd, 0x02, 0x55);
 
-	adv7175_ग_लिखो(sd, 0x03, 0x55);
-	adv7175_ग_लिखो(sd, 0x04, 0x55);
-	adv7175_ग_लिखो(sd, 0x05, 0x25);
-पूर्ण
+	adv7175_write(sd, 0x03, 0x55);
+	adv7175_write(sd, 0x04, 0x55);
+	adv7175_write(sd, 0x05, 0x25);
+}
 
 /* ----------------------------------------------------------------------- */
 /* Output filter:  S-Video  Composite */
 
-#घोषणा MR050       0x11	/* 0x09 */
-#घोषणा MR060       0x14	/* 0x0c */
+#define MR050       0x11	/* 0x09 */
+#define MR060       0x14	/* 0x0c */
 
 /* ----------------------------------------------------------------------- */
 
-#घोषणा TR0MODE     0x46
-#घोषणा TR0RST	    0x80
+#define TR0MODE     0x46
+#define TR0RST	    0x80
 
-#घोषणा TR1CAPT	    0x80
-#घोषणा TR1PLAY	    0x00
+#define TR1CAPT	    0x80
+#define TR1PLAY	    0x00
 
-अटल स्थिर अचिन्हित अक्षर init_common[] = अणु
+static const unsigned char init_common[] = {
 
 	0x00, MR050,		/* MR0, PAL enabled */
 	0x01, 0x00,		/* MR1 */
@@ -159,9 +158,9 @@ MODULE_PARM_DESC(debug, "Debug level (0-1)");
 	0x0f, 0x00,		/*  */
 	0x10, 0x00,		/*  */
 	0x11, 0x00,		/*  */
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित अक्षर init_pal[] = अणु
+static const unsigned char init_pal[] = {
 	0x00, MR050,		/* MR0, PAL enabled */
 	0x01, 0x00,		/* MR1 */
 	0x02, 0x0c,		/* subc. freq. */
@@ -169,9 +168,9 @@ MODULE_PARM_DESC(debug, "Debug level (0-1)");
 	0x04, 0x79,		/* subc. freq. */
 	0x05, 0x26,		/* subc. freq. */
 	0x06, 0x40,		/* subc. phase */
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित अक्षर init_ntsc[] = अणु
+static const unsigned char init_ntsc[] = {
 	0x00, MR060,		/* MR0, NTSC enabled */
 	0x01, 0x00,		/* MR1 */
 	0x02, 0x55,		/* subc. freq. */
@@ -179,139 +178,139 @@ MODULE_PARM_DESC(debug, "Debug level (0-1)");
 	0x04, 0x55,		/* subc. freq. */
 	0x05, 0x25,		/* subc. freq. */
 	0x06, 0x1a,		/* subc. phase */
-पूर्ण;
+};
 
-अटल पूर्णांक adv7175_init(काष्ठा v4l2_subdev *sd, u32 val)
-अणु
-	/* This is just क्रम testing!!! */
-	adv7175_ग_लिखो_block(sd, init_common, माप(init_common));
-	adv7175_ग_लिखो(sd, 0x07, TR0MODE | TR0RST);
-	adv7175_ग_लिखो(sd, 0x07, TR0MODE);
-	वापस 0;
-पूर्ण
+static int adv7175_init(struct v4l2_subdev *sd, u32 val)
+{
+	/* This is just for testing!!! */
+	adv7175_write_block(sd, init_common, sizeof(init_common));
+	adv7175_write(sd, 0x07, TR0MODE | TR0RST);
+	adv7175_write(sd, 0x07, TR0MODE);
+	return 0;
+}
 
-अटल पूर्णांक adv7175_s_std_output(काष्ठा v4l2_subdev *sd, v4l2_std_id std)
-अणु
-	काष्ठा adv7175 *encoder = to_adv7175(sd);
+static int adv7175_s_std_output(struct v4l2_subdev *sd, v4l2_std_id std)
+{
+	struct adv7175 *encoder = to_adv7175(sd);
 
-	अगर (std & V4L2_STD_NTSC) अणु
-		adv7175_ग_लिखो_block(sd, init_ntsc, माप(init_ntsc));
-		अगर (encoder->input == 0)
-			adv7175_ग_लिखो(sd, 0x0d, 0x4f);	/* Enable genlock */
-		adv7175_ग_लिखो(sd, 0x07, TR0MODE | TR0RST);
-		adv7175_ग_लिखो(sd, 0x07, TR0MODE);
-	पूर्ण अन्यथा अगर (std & V4L2_STD_PAL) अणु
-		adv7175_ग_लिखो_block(sd, init_pal, माप(init_pal));
-		अगर (encoder->input == 0)
-			adv7175_ग_लिखो(sd, 0x0d, 0x4f);	/* Enable genlock */
-		adv7175_ग_लिखो(sd, 0x07, TR0MODE | TR0RST);
-		adv7175_ग_लिखो(sd, 0x07, TR0MODE);
-	पूर्ण अन्यथा अगर (std & V4L2_STD_SECAM) अणु
+	if (std & V4L2_STD_NTSC) {
+		adv7175_write_block(sd, init_ntsc, sizeof(init_ntsc));
+		if (encoder->input == 0)
+			adv7175_write(sd, 0x0d, 0x4f);	/* Enable genlock */
+		adv7175_write(sd, 0x07, TR0MODE | TR0RST);
+		adv7175_write(sd, 0x07, TR0MODE);
+	} else if (std & V4L2_STD_PAL) {
+		adv7175_write_block(sd, init_pal, sizeof(init_pal));
+		if (encoder->input == 0)
+			adv7175_write(sd, 0x0d, 0x4f);	/* Enable genlock */
+		adv7175_write(sd, 0x07, TR0MODE | TR0RST);
+		adv7175_write(sd, 0x07, TR0MODE);
+	} else if (std & V4L2_STD_SECAM) {
 		/* This is an attempt to convert
-		 * SECAM->PAL (typically it करोes not work
+		 * SECAM->PAL (typically it does not work
 		 * due to genlock: when decoder is in SECAM
 		 * and encoder in in PAL the subcarrier can
 		 * not be synchronized with horizontal
 		 * quency) */
-		adv7175_ग_लिखो_block(sd, init_pal, माप(init_pal));
-		अगर (encoder->input == 0)
-			adv7175_ग_लिखो(sd, 0x0d, 0x49);	/* Disable genlock */
-		adv7175_ग_लिखो(sd, 0x07, TR0MODE | TR0RST);
-		adv7175_ग_लिखो(sd, 0x07, TR0MODE);
-	पूर्ण अन्यथा अणु
+		adv7175_write_block(sd, init_pal, sizeof(init_pal));
+		if (encoder->input == 0)
+			adv7175_write(sd, 0x0d, 0x49);	/* Disable genlock */
+		adv7175_write(sd, 0x07, TR0MODE | TR0RST);
+		adv7175_write(sd, 0x07, TR0MODE);
+	} else {
 		v4l2_dbg(1, debug, sd, "illegal norm: %llx\n",
-				(अचिन्हित दीर्घ दीर्घ)std);
-		वापस -EINVAL;
-	पूर्ण
-	v4l2_dbg(1, debug, sd, "switched to %llx\n", (अचिन्हित दीर्घ दीर्घ)std);
+				(unsigned long long)std);
+		return -EINVAL;
+	}
+	v4l2_dbg(1, debug, sd, "switched to %llx\n", (unsigned long long)std);
 	encoder->norm = std;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adv7175_s_routing(काष्ठा v4l2_subdev *sd,
+static int adv7175_s_routing(struct v4l2_subdev *sd,
 			     u32 input, u32 output, u32 config)
-अणु
-	काष्ठा adv7175 *encoder = to_adv7175(sd);
+{
+	struct adv7175 *encoder = to_adv7175(sd);
 
 	/* RJ: input = 0: input is from decoder
 	   input = 1: input is from ZR36060
 	   input = 2: color bar */
 
-	चयन (input) अणु
-	हाल 0:
-		adv7175_ग_लिखो(sd, 0x01, 0x00);
+	switch (input) {
+	case 0:
+		adv7175_write(sd, 0x01, 0x00);
 
-		अगर (encoder->norm & V4L2_STD_NTSC)
+		if (encoder->norm & V4L2_STD_NTSC)
 			set_subcarrier_freq(sd, 1);
 
-		adv7175_ग_लिखो(sd, 0x0c, TR1CAPT);	/* TR1 */
-		अगर (encoder->norm & V4L2_STD_SECAM)
-			adv7175_ग_लिखो(sd, 0x0d, 0x49);	/* Disable genlock */
-		अन्यथा
-			adv7175_ग_लिखो(sd, 0x0d, 0x4f);	/* Enable genlock */
-		adv7175_ग_लिखो(sd, 0x07, TR0MODE | TR0RST);
-		adv7175_ग_लिखो(sd, 0x07, TR0MODE);
+		adv7175_write(sd, 0x0c, TR1CAPT);	/* TR1 */
+		if (encoder->norm & V4L2_STD_SECAM)
+			adv7175_write(sd, 0x0d, 0x49);	/* Disable genlock */
+		else
+			adv7175_write(sd, 0x0d, 0x4f);	/* Enable genlock */
+		adv7175_write(sd, 0x07, TR0MODE | TR0RST);
+		adv7175_write(sd, 0x07, TR0MODE);
 		/*udelay(10);*/
-		अवरोध;
+		break;
 
-	हाल 1:
-		adv7175_ग_लिखो(sd, 0x01, 0x00);
+	case 1:
+		adv7175_write(sd, 0x01, 0x00);
 
-		अगर (encoder->norm & V4L2_STD_NTSC)
+		if (encoder->norm & V4L2_STD_NTSC)
 			set_subcarrier_freq(sd, 0);
 
-		adv7175_ग_लिखो(sd, 0x0c, TR1PLAY);	/* TR1 */
-		adv7175_ग_लिखो(sd, 0x0d, 0x49);
-		adv7175_ग_लिखो(sd, 0x07, TR0MODE | TR0RST);
-		adv7175_ग_लिखो(sd, 0x07, TR0MODE);
+		adv7175_write(sd, 0x0c, TR1PLAY);	/* TR1 */
+		adv7175_write(sd, 0x0d, 0x49);
+		adv7175_write(sd, 0x07, TR0MODE | TR0RST);
+		adv7175_write(sd, 0x07, TR0MODE);
 		/* udelay(10); */
-		अवरोध;
+		break;
 
-	हाल 2:
-		adv7175_ग_लिखो(sd, 0x01, 0x80);
+	case 2:
+		adv7175_write(sd, 0x01, 0x80);
 
-		अगर (encoder->norm & V4L2_STD_NTSC)
+		if (encoder->norm & V4L2_STD_NTSC)
 			set_subcarrier_freq(sd, 0);
 
-		adv7175_ग_लिखो(sd, 0x0d, 0x49);
-		adv7175_ग_लिखो(sd, 0x07, TR0MODE | TR0RST);
-		adv7175_ग_लिखो(sd, 0x07, TR0MODE);
+		adv7175_write(sd, 0x0d, 0x49);
+		adv7175_write(sd, 0x07, TR0MODE | TR0RST);
+		adv7175_write(sd, 0x07, TR0MODE);
 		/* udelay(10); */
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		v4l2_dbg(1, debug, sd, "illegal input: %d\n", input);
-		वापस -EINVAL;
-	पूर्ण
-	v4l2_dbg(1, debug, sd, "switched to %s\n", inमाला_दो[input]);
+		return -EINVAL;
+	}
+	v4l2_dbg(1, debug, sd, "switched to %s\n", inputs[input]);
 	encoder->input = input;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adv7175_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
-		काष्ठा v4l2_subdev_pad_config *cfg,
-		काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
-अणु
-	अगर (code->pad || code->index >= ARRAY_SIZE(adv7175_codes))
-		वापस -EINVAL;
+static int adv7175_enum_mbus_code(struct v4l2_subdev *sd,
+		struct v4l2_subdev_pad_config *cfg,
+		struct v4l2_subdev_mbus_code_enum *code)
+{
+	if (code->pad || code->index >= ARRAY_SIZE(adv7175_codes))
+		return -EINVAL;
 
 	code->code = adv7175_codes[code->index];
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adv7175_get_fmt(काष्ठा v4l2_subdev *sd,
-		काष्ठा v4l2_subdev_pad_config *cfg,
-		काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
-अणु
-	काष्ठा v4l2_mbus_framefmt *mf = &क्रमmat->क्रमmat;
-	u8 val = adv7175_पढ़ो(sd, 0x7);
+static int adv7175_get_fmt(struct v4l2_subdev *sd,
+		struct v4l2_subdev_pad_config *cfg,
+		struct v4l2_subdev_format *format)
+{
+	struct v4l2_mbus_framefmt *mf = &format->format;
+	u8 val = adv7175_read(sd, 0x7);
 
-	अगर (क्रमmat->pad)
-		वापस -EINVAL;
+	if (format->pad)
+		return -EINVAL;
 
-	अगर ((val & 0x40) == (1 << 6))
+	if ((val & 0x40) == (1 << 6))
 		mf->code = MEDIA_BUS_FMT_UYVY8_1X16;
-	अन्यथा
+	else
 		mf->code = MEDIA_BUS_FMT_UYVY8_2X8;
 
 	mf->colorspace  = V4L2_COLORSPACE_SMPTE170M;
@@ -319,135 +318,135 @@ MODULE_PARM_DESC(debug, "Debug level (0-1)");
 	mf->height      = 0;
 	mf->field       = V4L2_FIELD_ANY;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adv7175_set_fmt(काष्ठा v4l2_subdev *sd,
-		काष्ठा v4l2_subdev_pad_config *cfg,
-		काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
-अणु
-	काष्ठा v4l2_mbus_framefmt *mf = &क्रमmat->क्रमmat;
-	u8 val = adv7175_पढ़ो(sd, 0x7);
-	पूर्णांक ret = 0;
+static int adv7175_set_fmt(struct v4l2_subdev *sd,
+		struct v4l2_subdev_pad_config *cfg,
+		struct v4l2_subdev_format *format)
+{
+	struct v4l2_mbus_framefmt *mf = &format->format;
+	u8 val = adv7175_read(sd, 0x7);
+	int ret = 0;
 
-	अगर (क्रमmat->pad)
-		वापस -EINVAL;
+	if (format->pad)
+		return -EINVAL;
 
-	चयन (mf->code) अणु
-	हाल MEDIA_BUS_FMT_UYVY8_2X8:
+	switch (mf->code) {
+	case MEDIA_BUS_FMT_UYVY8_2X8:
 		val &= ~0x40;
-		अवरोध;
+		break;
 
-	हाल MEDIA_BUS_FMT_UYVY8_1X16:
+	case MEDIA_BUS_FMT_UYVY8_1X16:
 		val |= 0x40;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		v4l2_dbg(1, debug, sd,
 			"illegal v4l2_mbus_framefmt code: %d\n", mf->code);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (क्रमmat->which == V4L2_SUBDEV_FORMAT_ACTIVE)
-		ret = adv7175_ग_लिखो(sd, 0x7, val);
+	if (format->which == V4L2_SUBDEV_FORMAT_ACTIVE)
+		ret = adv7175_write(sd, 0x7, val);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक adv7175_s_घातer(काष्ठा v4l2_subdev *sd, पूर्णांक on)
-अणु
-	अगर (on)
-		adv7175_ग_लिखो(sd, 0x01, 0x00);
-	अन्यथा
-		adv7175_ग_लिखो(sd, 0x01, 0x78);
+static int adv7175_s_power(struct v4l2_subdev *sd, int on)
+{
+	if (on)
+		adv7175_write(sd, 0x01, 0x00);
+	else
+		adv7175_write(sd, 0x01, 0x78);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* ----------------------------------------------------------------------- */
 
-अटल स्थिर काष्ठा v4l2_subdev_core_ops adv7175_core_ops = अणु
+static const struct v4l2_subdev_core_ops adv7175_core_ops = {
 	.init = adv7175_init,
-	.s_घातer = adv7175_s_घातer,
-पूर्ण;
+	.s_power = adv7175_s_power,
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_video_ops adv7175_video_ops = अणु
+static const struct v4l2_subdev_video_ops adv7175_video_ops = {
 	.s_std_output = adv7175_s_std_output,
 	.s_routing = adv7175_s_routing,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_pad_ops adv7175_pad_ops = अणु
-	.क्रमागत_mbus_code = adv7175_क्रमागत_mbus_code,
+static const struct v4l2_subdev_pad_ops adv7175_pad_ops = {
+	.enum_mbus_code = adv7175_enum_mbus_code,
 	.get_fmt = adv7175_get_fmt,
 	.set_fmt = adv7175_set_fmt,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops adv7175_ops = अणु
+static const struct v4l2_subdev_ops adv7175_ops = {
 	.core = &adv7175_core_ops,
 	.video = &adv7175_video_ops,
 	.pad = &adv7175_pad_ops,
-पूर्ण;
+};
 
 /* ----------------------------------------------------------------------- */
 
-अटल पूर्णांक adv7175_probe(काष्ठा i2c_client *client,
-			स्थिर काष्ठा i2c_device_id *id)
-अणु
-	पूर्णांक i;
-	काष्ठा adv7175 *encoder;
-	काष्ठा v4l2_subdev *sd;
+static int adv7175_probe(struct i2c_client *client,
+			const struct i2c_device_id *id)
+{
+	int i;
+	struct adv7175 *encoder;
+	struct v4l2_subdev *sd;
 
-	/* Check अगर the adapter supports the needed features */
-	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		वापस -ENODEV;
+	/* Check if the adapter supports the needed features */
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE_DATA))
+		return -ENODEV;
 
 	v4l_info(client, "chip found @ 0x%x (%s)\n",
 			client->addr << 1, client->adapter->name);
 
-	encoder = devm_kzalloc(&client->dev, माप(*encoder), GFP_KERNEL);
-	अगर (encoder == शून्य)
-		वापस -ENOMEM;
+	encoder = devm_kzalloc(&client->dev, sizeof(*encoder), GFP_KERNEL);
+	if (encoder == NULL)
+		return -ENOMEM;
 	sd = &encoder->sd;
 	v4l2_i2c_subdev_init(sd, client, &adv7175_ops);
 	encoder->norm = V4L2_STD_NTSC;
 	encoder->input = 0;
 
-	i = adv7175_ग_लिखो_block(sd, init_common, माप(init_common));
-	अगर (i >= 0) अणु
-		i = adv7175_ग_लिखो(sd, 0x07, TR0MODE | TR0RST);
-		i = adv7175_ग_लिखो(sd, 0x07, TR0MODE);
-		i = adv7175_पढ़ो(sd, 0x12);
+	i = adv7175_write_block(sd, init_common, sizeof(init_common));
+	if (i >= 0) {
+		i = adv7175_write(sd, 0x07, TR0MODE | TR0RST);
+		i = adv7175_write(sd, 0x07, TR0MODE);
+		i = adv7175_read(sd, 0x12);
 		v4l2_dbg(1, debug, sd, "revision %d\n", i & 1);
-	पूर्ण
-	अगर (i < 0)
+	}
+	if (i < 0)
 		v4l2_dbg(1, debug, sd, "init error 0x%x\n", i);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adv7175_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
+static int adv7175_remove(struct i2c_client *client)
+{
+	struct v4l2_subdev *sd = i2c_get_clientdata(client);
 
-	v4l2_device_unरेजिस्टर_subdev(sd);
-	वापस 0;
-पूर्ण
+	v4l2_device_unregister_subdev(sd);
+	return 0;
+}
 
 /* ----------------------------------------------------------------------- */
 
-अटल स्थिर काष्ठा i2c_device_id adv7175_id[] = अणु
-	अणु "adv7175", 0 पूर्ण,
-	अणु "adv7176", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id adv7175_id[] = {
+	{ "adv7175", 0 },
+	{ "adv7176", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, adv7175_id);
 
-अटल काष्ठा i2c_driver adv7175_driver = अणु
-	.driver = अणु
+static struct i2c_driver adv7175_driver = {
+	.driver = {
 		.name	= "adv7175",
-	पूर्ण,
+	},
 	.probe		= adv7175_probe,
-	.हटाओ		= adv7175_हटाओ,
+	.remove		= adv7175_remove,
 	.id_table	= adv7175_id,
-पूर्ण;
+};
 
 module_i2c_driver(adv7175_driver);

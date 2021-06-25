@@ -1,28 +1,27 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * ip_vs_proto_ah_esp.c:	AH/ESP IPSec load balancing support क्रम IPVS
+ * ip_vs_proto_ah_esp.c:	AH/ESP IPSec load balancing support for IPVS
  *
  * Authors:	Julian Anastasov <ja@ssi.bg>, February 2002
- *		Wensong Zhang <wensong@linuxभवserver.org>
+ *		Wensong Zhang <wensong@linuxvirtualserver.org>
  */
 
-#घोषणा KMSG_COMPONENT "IPVS"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "IPVS"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/in.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/netfilter.h>
-#समावेश <linux/netfilter_ipv4.h>
+#include <linux/in.h>
+#include <linux/ip.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/netfilter.h>
+#include <linux/netfilter_ipv4.h>
 
-#समावेश <net/ip_vs.h>
+#include <net/ip_vs.h>
 
 
 /* TODO:
 
-काष्ठा isakmp_hdr अणु
+struct isakmp_hdr {
 	__u8		icookie[8];
 	__u8		rcookie[8];
 	__u8		np;
@@ -31,40 +30,40 @@
 	__u8		flags;
 	__u32		msgid;
 	__u32		length;
-पूर्ण;
+};
 
 */
 
-#घोषणा PORT_ISAKMP	500
+#define PORT_ISAKMP	500
 
-अटल व्योम
-ah_esp_conn_fill_param_proto(काष्ठा netns_ipvs *ipvs, पूर्णांक af,
-			     स्थिर काष्ठा ip_vs_iphdr *iph,
-			     काष्ठा ip_vs_conn_param *p)
-अणु
-	अगर (likely(!ip_vs_iph_inverse(iph)))
+static void
+ah_esp_conn_fill_param_proto(struct netns_ipvs *ipvs, int af,
+			     const struct ip_vs_iphdr *iph,
+			     struct ip_vs_conn_param *p)
+{
+	if (likely(!ip_vs_iph_inverse(iph)))
 		ip_vs_conn_fill_param(ipvs, af, IPPROTO_UDP,
 				      &iph->saddr, htons(PORT_ISAKMP),
 				      &iph->daddr, htons(PORT_ISAKMP), p);
-	अन्यथा
+	else
 		ip_vs_conn_fill_param(ipvs, af, IPPROTO_UDP,
 				      &iph->daddr, htons(PORT_ISAKMP),
 				      &iph->saddr, htons(PORT_ISAKMP), p);
-पूर्ण
+}
 
-अटल काष्ठा ip_vs_conn *
-ah_esp_conn_in_get(काष्ठा netns_ipvs *ipvs, पूर्णांक af, स्थिर काष्ठा sk_buff *skb,
-		   स्थिर काष्ठा ip_vs_iphdr *iph)
-अणु
-	काष्ठा ip_vs_conn *cp;
-	काष्ठा ip_vs_conn_param p;
+static struct ip_vs_conn *
+ah_esp_conn_in_get(struct netns_ipvs *ipvs, int af, const struct sk_buff *skb,
+		   const struct ip_vs_iphdr *iph)
+{
+	struct ip_vs_conn *cp;
+	struct ip_vs_conn_param p;
 
 	ah_esp_conn_fill_param_proto(ipvs, af, iph, &p);
 	cp = ip_vs_conn_in_get(&p);
-	अगर (!cp) अणु
+	if (!cp) {
 		/*
-		 * We are not sure अगर the packet is from our
-		 * service, so our conn_schedule hook should वापस NF_ACCEPT
+		 * We are not sure if the packet is from our
+		 * service, so our conn_schedule hook should return NF_ACCEPT
 		 */
 		IP_VS_DBG_BUF(12, "Unknown ISAKMP entry for outin packet "
 			      "%s%s %s->%s\n",
@@ -72,87 +71,87 @@ ah_esp_conn_in_get(काष्ठा netns_ipvs *ipvs, पूर्णांक
 			      ip_vs_proto_get(iph->protocol)->name,
 			      IP_VS_DBG_ADDR(af, &iph->saddr),
 			      IP_VS_DBG_ADDR(af, &iph->daddr));
-	पूर्ण
+	}
 
-	वापस cp;
-पूर्ण
+	return cp;
+}
 
 
-अटल काष्ठा ip_vs_conn *
-ah_esp_conn_out_get(काष्ठा netns_ipvs *ipvs, पूर्णांक af, स्थिर काष्ठा sk_buff *skb,
-		    स्थिर काष्ठा ip_vs_iphdr *iph)
-अणु
-	काष्ठा ip_vs_conn *cp;
-	काष्ठा ip_vs_conn_param p;
+static struct ip_vs_conn *
+ah_esp_conn_out_get(struct netns_ipvs *ipvs, int af, const struct sk_buff *skb,
+		    const struct ip_vs_iphdr *iph)
+{
+	struct ip_vs_conn *cp;
+	struct ip_vs_conn_param p;
 
 	ah_esp_conn_fill_param_proto(ipvs, af, iph, &p);
 	cp = ip_vs_conn_out_get(&p);
-	अगर (!cp) अणु
+	if (!cp) {
 		IP_VS_DBG_BUF(12, "Unknown ISAKMP entry for inout packet "
 			      "%s%s %s->%s\n",
 			      ip_vs_iph_icmp(iph) ? "ICMP+" : "",
 			      ip_vs_proto_get(iph->protocol)->name,
 			      IP_VS_DBG_ADDR(af, &iph->saddr),
 			      IP_VS_DBG_ADDR(af, &iph->daddr));
-	पूर्ण
+	}
 
-	वापस cp;
-पूर्ण
+	return cp;
+}
 
 
-अटल पूर्णांक
-ah_esp_conn_schedule(काष्ठा netns_ipvs *ipvs, पूर्णांक af, काष्ठा sk_buff *skb,
-		     काष्ठा ip_vs_proto_data *pd,
-		     पूर्णांक *verdict, काष्ठा ip_vs_conn **cpp,
-		     काष्ठा ip_vs_iphdr *iph)
-अणु
+static int
+ah_esp_conn_schedule(struct netns_ipvs *ipvs, int af, struct sk_buff *skb,
+		     struct ip_vs_proto_data *pd,
+		     int *verdict, struct ip_vs_conn **cpp,
+		     struct ip_vs_iphdr *iph)
+{
 	/*
 	 * AH/ESP is only related traffic. Pass the packet to IP stack.
 	 */
 	*verdict = NF_ACCEPT;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_IP_VS_PROTO_AH
-काष्ठा ip_vs_protocol ip_vs_protocol_ah = अणु
+#ifdef CONFIG_IP_VS_PROTO_AH
+struct ip_vs_protocol ip_vs_protocol_ah = {
 	.name =			"AH",
 	.protocol =		IPPROTO_AH,
 	.num_states =		1,
-	.करोnt_defrag =		1,
-	.init =			शून्य,
-	.निकास =			शून्य,
+	.dont_defrag =		1,
+	.init =			NULL,
+	.exit =			NULL,
 	.conn_schedule =	ah_esp_conn_schedule,
 	.conn_in_get =		ah_esp_conn_in_get,
 	.conn_out_get =		ah_esp_conn_out_get,
-	.snat_handler =		शून्य,
-	.dnat_handler =		शून्य,
-	.state_transition =	शून्य,
-	.रेजिस्टर_app =		शून्य,
-	.unरेजिस्टर_app =	शून्य,
-	.app_conn_bind =	शून्य,
+	.snat_handler =		NULL,
+	.dnat_handler =		NULL,
+	.state_transition =	NULL,
+	.register_app =		NULL,
+	.unregister_app =	NULL,
+	.app_conn_bind =	NULL,
 	.debug_packet =		ip_vs_tcpudp_debug_packet,
-	.समयout_change =	शून्य,		/* ISAKMP */
-पूर्ण;
-#पूर्ण_अगर
+	.timeout_change =	NULL,		/* ISAKMP */
+};
+#endif
 
-#अगर_घोषित CONFIG_IP_VS_PROTO_ESP
-काष्ठा ip_vs_protocol ip_vs_protocol_esp = अणु
+#ifdef CONFIG_IP_VS_PROTO_ESP
+struct ip_vs_protocol ip_vs_protocol_esp = {
 	.name =			"ESP",
 	.protocol =		IPPROTO_ESP,
 	.num_states =		1,
-	.करोnt_defrag =		1,
-	.init =			शून्य,
-	.निकास =			शून्य,
+	.dont_defrag =		1,
+	.init =			NULL,
+	.exit =			NULL,
 	.conn_schedule =	ah_esp_conn_schedule,
 	.conn_in_get =		ah_esp_conn_in_get,
 	.conn_out_get =		ah_esp_conn_out_get,
-	.snat_handler =		शून्य,
-	.dnat_handler =		शून्य,
-	.state_transition =	शून्य,
-	.रेजिस्टर_app =		शून्य,
-	.unरेजिस्टर_app =	शून्य,
-	.app_conn_bind =	शून्य,
+	.snat_handler =		NULL,
+	.dnat_handler =		NULL,
+	.state_transition =	NULL,
+	.register_app =		NULL,
+	.unregister_app =	NULL,
+	.app_conn_bind =	NULL,
 	.debug_packet =		ip_vs_tcpudp_debug_packet,
-	.समयout_change =	शून्य,		/* ISAKMP */
-पूर्ण;
-#पूर्ण_अगर
+	.timeout_change =	NULL,		/* ISAKMP */
+};
+#endif

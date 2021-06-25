@@ -1,220 +1,219 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright 2018 NXP.
  *
  * This driver supports the fractional plls found in the imx8m SOCs
  *
- * Documentation क्रम this fractional pll can be found at:
- *   https://www.nxp.com/करोcs/en/reference-manual/IMX8MDQLQRM.pdf#page=834
+ * Documentation for this fractional pll can be found at:
+ *   https://www.nxp.com/docs/en/reference-manual/IMX8MDQLQRM.pdf#page=834
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/err.h>
-#समावेश <linux/export.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/bitfield.h>
+#include <linux/clk-provider.h>
+#include <linux/err.h>
+#include <linux/export.h>
+#include <linux/io.h>
+#include <linux/iopoll.h>
+#include <linux/slab.h>
+#include <linux/bitfield.h>
 
-#समावेश "clk.h"
+#include "clk.h"
 
-#घोषणा PLL_CFG0		0x0
-#घोषणा PLL_CFG1		0x4
+#define PLL_CFG0		0x0
+#define PLL_CFG1		0x4
 
-#घोषणा PLL_LOCK_STATUS		BIT(31)
-#घोषणा PLL_PD_MASK		BIT(19)
-#घोषणा PLL_BYPASS_MASK		BIT(14)
-#घोषणा PLL_NEWDIV_VAL		BIT(12)
-#घोषणा PLL_NEWDIV_ACK		BIT(11)
-#घोषणा PLL_FRAC_DIV_MASK	GENMASK(30, 7)
-#घोषणा PLL_INT_DIV_MASK	GENMASK(6, 0)
-#घोषणा PLL_OUTPUT_DIV_MASK	GENMASK(4, 0)
-#घोषणा PLL_FRAC_DENOM		0x1000000
+#define PLL_LOCK_STATUS		BIT(31)
+#define PLL_PD_MASK		BIT(19)
+#define PLL_BYPASS_MASK		BIT(14)
+#define PLL_NEWDIV_VAL		BIT(12)
+#define PLL_NEWDIV_ACK		BIT(11)
+#define PLL_FRAC_DIV_MASK	GENMASK(30, 7)
+#define PLL_INT_DIV_MASK	GENMASK(6, 0)
+#define PLL_OUTPUT_DIV_MASK	GENMASK(4, 0)
+#define PLL_FRAC_DENOM		0x1000000
 
-#घोषणा PLL_FRAC_LOCK_TIMEOUT	10000
-#घोषणा PLL_FRAC_ACK_TIMEOUT	500000
+#define PLL_FRAC_LOCK_TIMEOUT	10000
+#define PLL_FRAC_ACK_TIMEOUT	500000
 
-काष्ठा clk_frac_pll अणु
-	काष्ठा clk_hw	hw;
-	व्योम __iomem	*base;
-पूर्ण;
+struct clk_frac_pll {
+	struct clk_hw	hw;
+	void __iomem	*base;
+};
 
-#घोषणा to_clk_frac_pll(_hw) container_of(_hw, काष्ठा clk_frac_pll, hw)
+#define to_clk_frac_pll(_hw) container_of(_hw, struct clk_frac_pll, hw)
 
-अटल पूर्णांक clk_रुको_lock(काष्ठा clk_frac_pll *pll)
-अणु
+static int clk_wait_lock(struct clk_frac_pll *pll)
+{
 	u32 val;
 
-	वापस पढ़ोl_poll_समयout(pll->base, val, val & PLL_LOCK_STATUS, 0,
+	return readl_poll_timeout(pll->base, val, val & PLL_LOCK_STATUS, 0,
 					PLL_FRAC_LOCK_TIMEOUT);
-पूर्ण
+}
 
-अटल पूर्णांक clk_रुको_ack(काष्ठा clk_frac_pll *pll)
-अणु
+static int clk_wait_ack(struct clk_frac_pll *pll)
+{
 	u32 val;
 
-	/* वापस directly अगर the pll is in घातerकरोwn or in bypass */
-	अगर (पढ़ोl_relaxed(pll->base) & (PLL_PD_MASK | PLL_BYPASS_MASK))
-		वापस 0;
+	/* return directly if the pll is in powerdown or in bypass */
+	if (readl_relaxed(pll->base) & (PLL_PD_MASK | PLL_BYPASS_MASK))
+		return 0;
 
-	/* Wait क्रम the pll's भागfi and भागff to be reloaded */
-	वापस पढ़ोl_poll_समयout(pll->base, val, val & PLL_NEWDIV_ACK, 0,
+	/* Wait for the pll's divfi and divff to be reloaded */
+	return readl_poll_timeout(pll->base, val, val & PLL_NEWDIV_ACK, 0,
 					PLL_FRAC_ACK_TIMEOUT);
-पूर्ण
+}
 
-अटल पूर्णांक clk_pll_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_frac_pll *pll = to_clk_frac_pll(hw);
+static int clk_pll_prepare(struct clk_hw *hw)
+{
+	struct clk_frac_pll *pll = to_clk_frac_pll(hw);
 	u32 val;
 
-	val = पढ़ोl_relaxed(pll->base + PLL_CFG0);
+	val = readl_relaxed(pll->base + PLL_CFG0);
 	val &= ~PLL_PD_MASK;
-	ग_लिखोl_relaxed(val, pll->base + PLL_CFG0);
+	writel_relaxed(val, pll->base + PLL_CFG0);
 
-	वापस clk_रुको_lock(pll);
-पूर्ण
+	return clk_wait_lock(pll);
+}
 
-अटल व्योम clk_pll_unprepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_frac_pll *pll = to_clk_frac_pll(hw);
+static void clk_pll_unprepare(struct clk_hw *hw)
+{
+	struct clk_frac_pll *pll = to_clk_frac_pll(hw);
 	u32 val;
 
-	val = पढ़ोl_relaxed(pll->base + PLL_CFG0);
+	val = readl_relaxed(pll->base + PLL_CFG0);
 	val |= PLL_PD_MASK;
-	ग_लिखोl_relaxed(val, pll->base + PLL_CFG0);
-पूर्ण
+	writel_relaxed(val, pll->base + PLL_CFG0);
+}
 
-अटल पूर्णांक clk_pll_is_prepared(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_frac_pll *pll = to_clk_frac_pll(hw);
+static int clk_pll_is_prepared(struct clk_hw *hw)
+{
+	struct clk_frac_pll *pll = to_clk_frac_pll(hw);
 	u32 val;
 
-	val = पढ़ोl_relaxed(pll->base + PLL_CFG0);
-	वापस (val & PLL_PD_MASK) ? 0 : 1;
-पूर्ण
+	val = readl_relaxed(pll->base + PLL_CFG0);
+	return (val & PLL_PD_MASK) ? 0 : 1;
+}
 
-अटल अचिन्हित दीर्घ clk_pll_recalc_rate(काष्ठा clk_hw *hw,
-					 अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_frac_pll *pll = to_clk_frac_pll(hw);
-	u32 val, भागff, भागfi, भागq;
+static unsigned long clk_pll_recalc_rate(struct clk_hw *hw,
+					 unsigned long parent_rate)
+{
+	struct clk_frac_pll *pll = to_clk_frac_pll(hw);
+	u32 val, divff, divfi, divq;
 	u64 temp64 = parent_rate;
 	u64 rate;
 
-	val = पढ़ोl_relaxed(pll->base + PLL_CFG0);
-	भागq = (FIELD_GET(PLL_OUTPUT_DIV_MASK, val) + 1) * 2;
-	val = पढ़ोl_relaxed(pll->base + PLL_CFG1);
-	भागff = FIELD_GET(PLL_FRAC_DIV_MASK, val);
-	भागfi = FIELD_GET(PLL_INT_DIV_MASK, val);
+	val = readl_relaxed(pll->base + PLL_CFG0);
+	divq = (FIELD_GET(PLL_OUTPUT_DIV_MASK, val) + 1) * 2;
+	val = readl_relaxed(pll->base + PLL_CFG1);
+	divff = FIELD_GET(PLL_FRAC_DIV_MASK, val);
+	divfi = FIELD_GET(PLL_INT_DIV_MASK, val);
 
 	temp64 *= 8;
-	temp64 *= भागff;
-	करो_भाग(temp64, PLL_FRAC_DENOM);
-	करो_भाग(temp64, भागq);
+	temp64 *= divff;
+	do_div(temp64, PLL_FRAC_DENOM);
+	do_div(temp64, divq);
 
-	rate = parent_rate * 8 * (भागfi + 1);
-	करो_भाग(rate, भागq);
+	rate = parent_rate * 8 * (divfi + 1);
+	do_div(rate, divq);
 	rate += temp64;
 
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
-अटल दीर्घ clk_pll_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			       अचिन्हित दीर्घ *prate)
-अणु
+static long clk_pll_round_rate(struct clk_hw *hw, unsigned long rate,
+			       unsigned long *prate)
+{
 	u64 parent_rate = *prate;
-	u32 भागff, भागfi;
+	u32 divff, divfi;
 	u64 temp64;
 
 	parent_rate *= 8;
 	rate *= 2;
 	temp64 = rate;
-	करो_भाग(temp64, parent_rate);
-	भागfi = temp64;
-	temp64 = rate - भागfi * parent_rate;
+	do_div(temp64, parent_rate);
+	divfi = temp64;
+	temp64 = rate - divfi * parent_rate;
 	temp64 *= PLL_FRAC_DENOM;
-	करो_भाग(temp64, parent_rate);
-	भागff = temp64;
+	do_div(temp64, parent_rate);
+	divff = temp64;
 
 	temp64 = parent_rate;
-	temp64 *= भागff;
-	करो_भाग(temp64, PLL_FRAC_DENOM);
+	temp64 *= divff;
+	do_div(temp64, PLL_FRAC_DENOM);
 
-	rate = parent_rate * भागfi + temp64;
+	rate = parent_rate * divfi + temp64;
 
-	वापस rate / 2;
-पूर्ण
+	return rate / 2;
+}
 
 /*
- * To simplअगरy the घड़ी calculation, we can keep the 'PLL_OUTPUT_VAL' at zero
- * (means the PLL output will be भागided by 2). So the PLL output can use
- * the below क्रमmula:
+ * To simplify the clock calculation, we can keep the 'PLL_OUTPUT_VAL' at zero
+ * (means the PLL output will be divided by 2). So the PLL output can use
+ * the below formula:
  * pllout = parent_rate * 8 / 2 * DIVF_VAL;
  * where DIVF_VAL = 1 + DIVFI + DIVFF / 2^24.
  */
-अटल पूर्णांक clk_pll_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			    अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_frac_pll *pll = to_clk_frac_pll(hw);
-	u32 val, भागfi, भागff;
+static int clk_pll_set_rate(struct clk_hw *hw, unsigned long rate,
+			    unsigned long parent_rate)
+{
+	struct clk_frac_pll *pll = to_clk_frac_pll(hw);
+	u32 val, divfi, divff;
 	u64 temp64;
-	पूर्णांक ret;
+	int ret;
 
 	parent_rate *= 8;
 	rate *= 2;
-	भागfi = rate / parent_rate;
-	temp64 = parent_rate * भागfi;
+	divfi = rate / parent_rate;
+	temp64 = parent_rate * divfi;
 	temp64 = rate - temp64;
 	temp64 *= PLL_FRAC_DENOM;
-	करो_भाग(temp64, parent_rate);
-	भागff = temp64;
+	do_div(temp64, parent_rate);
+	divff = temp64;
 
-	val = पढ़ोl_relaxed(pll->base + PLL_CFG1);
+	val = readl_relaxed(pll->base + PLL_CFG1);
 	val &= ~(PLL_FRAC_DIV_MASK | PLL_INT_DIV_MASK);
-	val |= (भागff << 7) | (भागfi - 1);
-	ग_लिखोl_relaxed(val, pll->base + PLL_CFG1);
+	val |= (divff << 7) | (divfi - 1);
+	writel_relaxed(val, pll->base + PLL_CFG1);
 
-	val = पढ़ोl_relaxed(pll->base + PLL_CFG0);
+	val = readl_relaxed(pll->base + PLL_CFG0);
 	val &= ~0x1f;
-	ग_लिखोl_relaxed(val, pll->base + PLL_CFG0);
+	writel_relaxed(val, pll->base + PLL_CFG0);
 
 	/* Set the NEV_DIV_VAL to reload the DIVFI and DIVFF */
-	val = पढ़ोl_relaxed(pll->base + PLL_CFG0);
+	val = readl_relaxed(pll->base + PLL_CFG0);
 	val |= PLL_NEWDIV_VAL;
-	ग_लिखोl_relaxed(val, pll->base + PLL_CFG0);
+	writel_relaxed(val, pll->base + PLL_CFG0);
 
-	ret = clk_रुको_ack(pll);
+	ret = clk_wait_ack(pll);
 
 	/* clear the NEV_DIV_VAL */
-	val = पढ़ोl_relaxed(pll->base + PLL_CFG0);
+	val = readl_relaxed(pll->base + PLL_CFG0);
 	val &= ~PLL_NEWDIV_VAL;
-	ग_लिखोl_relaxed(val, pll->base + PLL_CFG0);
+	writel_relaxed(val, pll->base + PLL_CFG0);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा clk_ops clk_frac_pll_ops = अणु
+static const struct clk_ops clk_frac_pll_ops = {
 	.prepare	= clk_pll_prepare,
 	.unprepare	= clk_pll_unprepare,
 	.is_prepared	= clk_pll_is_prepared,
 	.recalc_rate	= clk_pll_recalc_rate,
 	.round_rate	= clk_pll_round_rate,
 	.set_rate	= clk_pll_set_rate,
-पूर्ण;
+};
 
-काष्ठा clk_hw *imx_clk_hw_frac_pll(स्थिर अक्षर *name,
-				   स्थिर अक्षर *parent_name,
-				   व्योम __iomem *base)
-अणु
-	काष्ठा clk_init_data init;
-	काष्ठा clk_frac_pll *pll;
-	काष्ठा clk_hw *hw;
-	पूर्णांक ret;
+struct clk_hw *imx_clk_hw_frac_pll(const char *name,
+				   const char *parent_name,
+				   void __iomem *base)
+{
+	struct clk_init_data init;
+	struct clk_frac_pll *pll;
+	struct clk_hw *hw;
+	int ret;
 
-	pll = kzalloc(माप(*pll), GFP_KERNEL);
-	अगर (!pll)
-		वापस ERR_PTR(-ENOMEM);
+	pll = kzalloc(sizeof(*pll), GFP_KERNEL);
+	if (!pll)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &clk_frac_pll_ops;
@@ -227,12 +226,12 @@
 
 	hw = &pll->hw;
 
-	ret = clk_hw_रेजिस्टर(शून्य, hw);
-	अगर (ret) अणु
-		kमुक्त(pll);
-		वापस ERR_PTR(ret);
-	पूर्ण
+	ret = clk_hw_register(NULL, hw);
+	if (ret) {
+		kfree(pll);
+		return ERR_PTR(ret);
+	}
 
-	वापस hw;
-पूर्ण
+	return hw;
+}
 EXPORT_SYMBOL_GPL(imx_clk_hw_frac_pll);

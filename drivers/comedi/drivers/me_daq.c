@@ -1,8 +1,7 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * comedi/drivers/me_daq.c
- * Hardware driver क्रम Meilhaus data acquisition cards:
+ * Hardware driver for Meilhaus data acquisition cards:
  *   ME-2000i, ME-2600i, ME-3000vm1
  *
  * Copyright (C) 2002 Michael Hillmann <hillmann@syscongroup.de>
@@ -15,84 +14,84 @@
  * Author: Michael Hillmann <hillmann@syscongroup.de>
  * Status: experimental
  *
- * Configuration options: not applicable, uses PCI स्वतः config
+ * Configuration options: not applicable, uses PCI auto config
  *
  * Supports:
  *    Analog Input, Analog Output, Digital I/O
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/sched.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/sched.h>
 
-#समावेश "../comedi_pci.h"
+#include "../comedi_pci.h"
 
-#समावेश "plx9052.h"
+#include "plx9052.h"
 
-#घोषणा ME2600_FIRMWARE		"me2600_firmware.bin"
+#define ME2600_FIRMWARE		"me2600_firmware.bin"
 
-#घोषणा XILINX_DOWNLOAD_RESET	0x42	/* Xilinx रेजिस्टरs */
+#define XILINX_DOWNLOAD_RESET	0x42	/* Xilinx registers */
 
 /*
  * PCI BAR2 Memory map (dev->mmio)
  */
-#घोषणा ME_CTRL1_REG			0x00	/* R (ai start) | W */
-#घोषणा   ME_CTRL1_INT_ENA		BIT(15)
-#घोषणा   ME_CTRL1_COUNTER_B_IRQ	BIT(12)
-#घोषणा   ME_CTRL1_COUNTER_A_IRQ	BIT(11)
-#घोषणा   ME_CTRL1_CHANLIST_READY_IRQ	BIT(10)
-#घोषणा   ME_CTRL1_EXT_IRQ		BIT(9)
-#घोषणा   ME_CTRL1_ADFIFO_HALFFULL_IRQ	BIT(8)
-#घोषणा   ME_CTRL1_SCAN_COUNT_ENA	BIT(5)
-#घोषणा   ME_CTRL1_SIMULTANEOUS_ENA	BIT(4)
-#घोषणा   ME_CTRL1_TRIGGER_FALLING_EDGE	BIT(3)
-#घोषणा   ME_CTRL1_CONTINUOUS_MODE	BIT(2)
-#घोषणा   ME_CTRL1_ADC_MODE(x)		(((x) & 0x3) << 0)
-#घोषणा   ME_CTRL1_ADC_MODE_DISABLE	ME_CTRL1_ADC_MODE(0)
-#घोषणा   ME_CTRL1_ADC_MODE_SOFT_TRIG	ME_CTRL1_ADC_MODE(1)
-#घोषणा   ME_CTRL1_ADC_MODE_SCAN_TRIG	ME_CTRL1_ADC_MODE(2)
-#घोषणा   ME_CTRL1_ADC_MODE_EXT_TRIG	ME_CTRL1_ADC_MODE(3)
-#घोषणा   ME_CTRL1_ADC_MODE_MASK	ME_CTRL1_ADC_MODE(3)
-#घोषणा ME_CTRL2_REG			0x02	/* R (dac update) | W */
-#घोषणा   ME_CTRL2_ADFIFO_ENA		BIT(10)
-#घोषणा   ME_CTRL2_CHANLIST_ENA		BIT(9)
-#घोषणा   ME_CTRL2_PORT_B_ENA		BIT(7)
-#घोषणा   ME_CTRL2_PORT_A_ENA		BIT(6)
-#घोषणा   ME_CTRL2_COUNTER_B_ENA	BIT(4)
-#घोषणा   ME_CTRL2_COUNTER_A_ENA	BIT(3)
-#घोषणा   ME_CTRL2_DAC_ENA		BIT(1)
-#घोषणा   ME_CTRL2_BUFFERED_DAC		BIT(0)
-#घोषणा ME_STATUS_REG			0x04	/* R | W (clears पूर्णांकerrupts) */
-#घोषणा   ME_STATUS_COUNTER_B_IRQ	BIT(12)
-#घोषणा   ME_STATUS_COUNTER_A_IRQ	BIT(11)
-#घोषणा   ME_STATUS_CHANLIST_READY_IRQ	BIT(10)
-#घोषणा   ME_STATUS_EXT_IRQ		BIT(9)
-#घोषणा   ME_STATUS_ADFIFO_HALFFULL_IRQ	BIT(8)
-#घोषणा   ME_STATUS_ADFIFO_FULL		BIT(4)
-#घोषणा   ME_STATUS_ADFIFO_HALFFULL	BIT(3)
-#घोषणा   ME_STATUS_ADFIFO_EMPTY	BIT(2)
-#घोषणा   ME_STATUS_CHANLIST_FULL	BIT(1)
-#घोषणा   ME_STATUS_FST_ACTIVE		BIT(0)
-#घोषणा ME_DIO_PORT_A_REG		0x06	/* R | W */
-#घोषणा ME_DIO_PORT_B_REG		0x08	/* R | W */
-#घोषणा ME_TIMER_DATA_REG(x)		(0x0a + ((x) * 2))	/* - | W */
-#घोषणा ME_AI_FIFO_REG			0x10	/* R (fअगरo) | W (chanlist) */
-#घोषणा   ME_AI_FIFO_CHANLIST_DIFF	BIT(7)
-#घोषणा   ME_AI_FIFO_CHANLIST_UNIPOLAR	BIT(6)
-#घोषणा   ME_AI_FIFO_CHANLIST_GAIN(x)	(((x) & 0x3) << 4)
-#घोषणा   ME_AI_FIFO_CHANLIST_CHAN(x)	(((x) & 0xf) << 0)
-#घोषणा ME_DAC_CTRL_REG			0x12	/* R (updates) | W */
-#घोषणा   ME_DAC_CTRL_BIPOLAR(x)	BIT(7 - ((x) & 0x3))
-#घोषणा   ME_DAC_CTRL_GAIN(x)		BIT(11 - ((x) & 0x3))
-#घोषणा   ME_DAC_CTRL_MASK(x)		(ME_DAC_CTRL_BIPOLAR(x) |	\
+#define ME_CTRL1_REG			0x00	/* R (ai start) | W */
+#define   ME_CTRL1_INT_ENA		BIT(15)
+#define   ME_CTRL1_COUNTER_B_IRQ	BIT(12)
+#define   ME_CTRL1_COUNTER_A_IRQ	BIT(11)
+#define   ME_CTRL1_CHANLIST_READY_IRQ	BIT(10)
+#define   ME_CTRL1_EXT_IRQ		BIT(9)
+#define   ME_CTRL1_ADFIFO_HALFFULL_IRQ	BIT(8)
+#define   ME_CTRL1_SCAN_COUNT_ENA	BIT(5)
+#define   ME_CTRL1_SIMULTANEOUS_ENA	BIT(4)
+#define   ME_CTRL1_TRIGGER_FALLING_EDGE	BIT(3)
+#define   ME_CTRL1_CONTINUOUS_MODE	BIT(2)
+#define   ME_CTRL1_ADC_MODE(x)		(((x) & 0x3) << 0)
+#define   ME_CTRL1_ADC_MODE_DISABLE	ME_CTRL1_ADC_MODE(0)
+#define   ME_CTRL1_ADC_MODE_SOFT_TRIG	ME_CTRL1_ADC_MODE(1)
+#define   ME_CTRL1_ADC_MODE_SCAN_TRIG	ME_CTRL1_ADC_MODE(2)
+#define   ME_CTRL1_ADC_MODE_EXT_TRIG	ME_CTRL1_ADC_MODE(3)
+#define   ME_CTRL1_ADC_MODE_MASK	ME_CTRL1_ADC_MODE(3)
+#define ME_CTRL2_REG			0x02	/* R (dac update) | W */
+#define   ME_CTRL2_ADFIFO_ENA		BIT(10)
+#define   ME_CTRL2_CHANLIST_ENA		BIT(9)
+#define   ME_CTRL2_PORT_B_ENA		BIT(7)
+#define   ME_CTRL2_PORT_A_ENA		BIT(6)
+#define   ME_CTRL2_COUNTER_B_ENA	BIT(4)
+#define   ME_CTRL2_COUNTER_A_ENA	BIT(3)
+#define   ME_CTRL2_DAC_ENA		BIT(1)
+#define   ME_CTRL2_BUFFERED_DAC		BIT(0)
+#define ME_STATUS_REG			0x04	/* R | W (clears interrupts) */
+#define   ME_STATUS_COUNTER_B_IRQ	BIT(12)
+#define   ME_STATUS_COUNTER_A_IRQ	BIT(11)
+#define   ME_STATUS_CHANLIST_READY_IRQ	BIT(10)
+#define   ME_STATUS_EXT_IRQ		BIT(9)
+#define   ME_STATUS_ADFIFO_HALFFULL_IRQ	BIT(8)
+#define   ME_STATUS_ADFIFO_FULL		BIT(4)
+#define   ME_STATUS_ADFIFO_HALFFULL	BIT(3)
+#define   ME_STATUS_ADFIFO_EMPTY	BIT(2)
+#define   ME_STATUS_CHANLIST_FULL	BIT(1)
+#define   ME_STATUS_FST_ACTIVE		BIT(0)
+#define ME_DIO_PORT_A_REG		0x06	/* R | W */
+#define ME_DIO_PORT_B_REG		0x08	/* R | W */
+#define ME_TIMER_DATA_REG(x)		(0x0a + ((x) * 2))	/* - | W */
+#define ME_AI_FIFO_REG			0x10	/* R (fifo) | W (chanlist) */
+#define   ME_AI_FIFO_CHANLIST_DIFF	BIT(7)
+#define   ME_AI_FIFO_CHANLIST_UNIPOLAR	BIT(6)
+#define   ME_AI_FIFO_CHANLIST_GAIN(x)	(((x) & 0x3) << 4)
+#define   ME_AI_FIFO_CHANLIST_CHAN(x)	(((x) & 0xf) << 0)
+#define ME_DAC_CTRL_REG			0x12	/* R (updates) | W */
+#define   ME_DAC_CTRL_BIPOLAR(x)	BIT(7 - ((x) & 0x3))
+#define   ME_DAC_CTRL_GAIN(x)		BIT(11 - ((x) & 0x3))
+#define   ME_DAC_CTRL_MASK(x)		(ME_DAC_CTRL_BIPOLAR(x) |	\
 					 ME_DAC_CTRL_GAIN(x))
-#घोषणा ME_AO_DATA_REG(x)		(0x14 + ((x) * 2))	/* - | W */
-#घोषणा ME_COUNTER_ENDDATA_REG(x)	(0x1c + ((x) * 2))	/* - | W */
-#घोषणा ME_COUNTER_STARTDATA_REG(x)	(0x20 + ((x) * 2))	/* - | W */
-#घोषणा ME_COUNTER_VALUE_REG(x)		(0x20 + ((x) * 2))	/* R | - */
+#define ME_AO_DATA_REG(x)		(0x14 + ((x) * 2))	/* - | W */
+#define ME_COUNTER_ENDDATA_REG(x)	(0x1c + ((x) * 2))	/* - | W */
+#define ME_COUNTER_STARTDATA_REG(x)	(0x20 + ((x) * 2))	/* - | W */
+#define ME_COUNTER_VALUE_REG(x)		(0x20 + ((x) * 2))	/* R | - */
 
-अटल स्थिर काष्ठा comedi_lrange me_ai_range = अणु
-	8, अणु
+static const struct comedi_lrange me_ai_range = {
+	8, {
 		BIP_RANGE(10),
 		BIP_RANGE(5),
 		BIP_RANGE(2.5),
@@ -101,375 +100,375 @@
 		UNI_RANGE(5),
 		UNI_RANGE(2.5),
 		UNI_RANGE(1.25)
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा comedi_lrange me_ao_range = अणु
-	3, अणु
+static const struct comedi_lrange me_ao_range = {
+	3, {
 		BIP_RANGE(10),
 		BIP_RANGE(5),
 		UNI_RANGE(10)
-	पूर्ण
-पूर्ण;
+	}
+};
 
-क्रमागत me_boardid अणु
+enum me_boardid {
 	BOARD_ME2600,
 	BOARD_ME2000,
-पूर्ण;
+};
 
-काष्ठा me_board अणु
-	स्थिर अक्षर *name;
-	पूर्णांक needs_firmware;
-	पूर्णांक has_ao;
-पूर्ण;
+struct me_board {
+	const char *name;
+	int needs_firmware;
+	int has_ao;
+};
 
-अटल स्थिर काष्ठा me_board me_boards[] = अणु
-	[BOARD_ME2600] = अणु
+static const struct me_board me_boards[] = {
+	[BOARD_ME2600] = {
 		.name		= "me-2600i",
 		.needs_firmware	= 1,
 		.has_ao		= 1,
-	पूर्ण,
-	[BOARD_ME2000] = अणु
+	},
+	[BOARD_ME2000] = {
 		.name		= "me-2000i",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा me_निजी_data अणु
-	व्योम __iomem *plx_regbase;	/* PLX configuration base address */
+struct me_private_data {
+	void __iomem *plx_regbase;	/* PLX configuration base address */
 
-	अचिन्हित लघु ctrl1;		/* Mirror of CONTROL_1 रेजिस्टर */
-	अचिन्हित लघु ctrl2;		/* Mirror of CONTROL_2 रेजिस्टर */
-	अचिन्हित लघु dac_ctrl;	/* Mirror of the DAC_CONTROL रेजिस्टर */
-पूर्ण;
+	unsigned short ctrl1;		/* Mirror of CONTROL_1 register */
+	unsigned short ctrl2;		/* Mirror of CONTROL_2 register */
+	unsigned short dac_ctrl;	/* Mirror of the DAC_CONTROL register */
+};
 
-अटल अंतरभूत व्योम sleep(अचिन्हित पूर्णांक sec)
-अणु
-	schedule_समयout_पूर्णांकerruptible(sec * HZ);
-पूर्ण
+static inline void sleep(unsigned int sec)
+{
+	schedule_timeout_interruptible(sec * HZ);
+}
 
-अटल पूर्णांक me_dio_insn_config(काष्ठा comedi_device *dev,
-			      काष्ठा comedi_subdevice *s,
-			      काष्ठा comedi_insn *insn,
-			      अचिन्हित पूर्णांक *data)
-अणु
-	काष्ठा me_निजी_data *devpriv = dev->निजी;
-	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
-	अचिन्हित पूर्णांक mask;
-	पूर्णांक ret;
+static int me_dio_insn_config(struct comedi_device *dev,
+			      struct comedi_subdevice *s,
+			      struct comedi_insn *insn,
+			      unsigned int *data)
+{
+	struct me_private_data *devpriv = dev->private;
+	unsigned int chan = CR_CHAN(insn->chanspec);
+	unsigned int mask;
+	int ret;
 
-	अगर (chan < 16)
+	if (chan < 16)
 		mask = 0x0000ffff;
-	अन्यथा
+	else
 		mask = 0xffff0000;
 
 	ret = comedi_dio_insn_config(dev, s, insn, data, mask);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (s->io_bits & 0x0000ffff)
+	if (s->io_bits & 0x0000ffff)
 		devpriv->ctrl2 |= ME_CTRL2_PORT_A_ENA;
-	अन्यथा
+	else
 		devpriv->ctrl2 &= ~ME_CTRL2_PORT_A_ENA;
-	अगर (s->io_bits & 0xffff0000)
+	if (s->io_bits & 0xffff0000)
 		devpriv->ctrl2 |= ME_CTRL2_PORT_B_ENA;
-	अन्यथा
+	else
 		devpriv->ctrl2 &= ~ME_CTRL2_PORT_B_ENA;
 
-	ग_लिखोw(devpriv->ctrl2, dev->mmio + ME_CTRL2_REG);
+	writew(devpriv->ctrl2, dev->mmio + ME_CTRL2_REG);
 
-	वापस insn->n;
-पूर्ण
+	return insn->n;
+}
 
-अटल पूर्णांक me_dio_insn_bits(काष्ठा comedi_device *dev,
-			    काष्ठा comedi_subdevice *s,
-			    काष्ठा comedi_insn *insn,
-			    अचिन्हित पूर्णांक *data)
-अणु
-	व्योम __iomem *mmio_porta = dev->mmio + ME_DIO_PORT_A_REG;
-	व्योम __iomem *mmio_portb = dev->mmio + ME_DIO_PORT_B_REG;
-	अचिन्हित पूर्णांक mask;
-	अचिन्हित पूर्णांक val;
+static int me_dio_insn_bits(struct comedi_device *dev,
+			    struct comedi_subdevice *s,
+			    struct comedi_insn *insn,
+			    unsigned int *data)
+{
+	void __iomem *mmio_porta = dev->mmio + ME_DIO_PORT_A_REG;
+	void __iomem *mmio_portb = dev->mmio + ME_DIO_PORT_B_REG;
+	unsigned int mask;
+	unsigned int val;
 
 	mask = comedi_dio_update_state(s, data);
-	अगर (mask) अणु
-		अगर (mask & 0x0000ffff)
-			ग_लिखोw((s->state & 0xffff), mmio_porta);
-		अगर (mask & 0xffff0000)
-			ग_लिखोw(((s->state >> 16) & 0xffff), mmio_portb);
-	पूर्ण
+	if (mask) {
+		if (mask & 0x0000ffff)
+			writew((s->state & 0xffff), mmio_porta);
+		if (mask & 0xffff0000)
+			writew(((s->state >> 16) & 0xffff), mmio_portb);
+	}
 
-	अगर (s->io_bits & 0x0000ffff)
+	if (s->io_bits & 0x0000ffff)
 		val = s->state & 0xffff;
-	अन्यथा
-		val = पढ़ोw(mmio_porta);
+	else
+		val = readw(mmio_porta);
 
-	अगर (s->io_bits & 0xffff0000)
+	if (s->io_bits & 0xffff0000)
 		val |= (s->state & 0xffff0000);
-	अन्यथा
-		val |= (पढ़ोw(mmio_portb) << 16);
+	else
+		val |= (readw(mmio_portb) << 16);
 
 	data[1] = val;
 
-	वापस insn->n;
-पूर्ण
+	return insn->n;
+}
 
-अटल पूर्णांक me_ai_eoc(काष्ठा comedi_device *dev,
-		     काष्ठा comedi_subdevice *s,
-		     काष्ठा comedi_insn *insn,
-		     अचिन्हित दीर्घ context)
-अणु
-	अचिन्हित पूर्णांक status;
+static int me_ai_eoc(struct comedi_device *dev,
+		     struct comedi_subdevice *s,
+		     struct comedi_insn *insn,
+		     unsigned long context)
+{
+	unsigned int status;
 
-	status = पढ़ोw(dev->mmio + ME_STATUS_REG);
-	अगर ((status & ME_STATUS_ADFIFO_EMPTY) == 0)
-		वापस 0;
-	वापस -EBUSY;
-पूर्ण
+	status = readw(dev->mmio + ME_STATUS_REG);
+	if ((status & ME_STATUS_ADFIFO_EMPTY) == 0)
+		return 0;
+	return -EBUSY;
+}
 
-अटल पूर्णांक me_ai_insn_पढ़ो(काष्ठा comedi_device *dev,
-			   काष्ठा comedi_subdevice *s,
-			   काष्ठा comedi_insn *insn,
-			   अचिन्हित पूर्णांक *data)
-अणु
-	काष्ठा me_निजी_data *devpriv = dev->निजी;
-	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
-	अचिन्हित पूर्णांक range = CR_RANGE(insn->chanspec);
-	अचिन्हित पूर्णांक aref = CR_AREF(insn->chanspec);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+static int me_ai_insn_read(struct comedi_device *dev,
+			   struct comedi_subdevice *s,
+			   struct comedi_insn *insn,
+			   unsigned int *data)
+{
+	struct me_private_data *devpriv = dev->private;
+	unsigned int chan = CR_CHAN(insn->chanspec);
+	unsigned int range = CR_RANGE(insn->chanspec);
+	unsigned int aref = CR_AREF(insn->chanspec);
+	unsigned int val;
+	int ret = 0;
+	int i;
 
 	/*
-	 * For dअगरferential operation, there are only 8 input channels
+	 * For differential operation, there are only 8 input channels
 	 * and only bipolar ranges are available.
 	 */
-	अगर (aref & AREF_DIFF) अणु
-		अगर (chan > 7 || comedi_range_is_unipolar(s, range))
-			वापस -EINVAL;
-	पूर्ण
+	if (aref & AREF_DIFF) {
+		if (chan > 7 || comedi_range_is_unipolar(s, range))
+			return -EINVAL;
+	}
 
-	/* clear chanlist and ad fअगरo */
+	/* clear chanlist and ad fifo */
 	devpriv->ctrl2 &= ~(ME_CTRL2_ADFIFO_ENA | ME_CTRL2_CHANLIST_ENA);
-	ग_लिखोw(devpriv->ctrl2, dev->mmio + ME_CTRL2_REG);
+	writew(devpriv->ctrl2, dev->mmio + ME_CTRL2_REG);
 
-	ग_लिखोw(0x00, dev->mmio + ME_STATUS_REG);	/* clear पूर्णांकerrupts */
+	writew(0x00, dev->mmio + ME_STATUS_REG);	/* clear interrupts */
 
-	/* enable the chanlist and ADC fअगरo */
+	/* enable the chanlist and ADC fifo */
 	devpriv->ctrl2 |= (ME_CTRL2_ADFIFO_ENA | ME_CTRL2_CHANLIST_ENA);
-	ग_लिखोw(devpriv->ctrl2, dev->mmio + ME_CTRL2_REG);
+	writew(devpriv->ctrl2, dev->mmio + ME_CTRL2_REG);
 
-	/* ग_लिखो to channel list fअगरo */
+	/* write to channel list fifo */
 	val = ME_AI_FIFO_CHANLIST_CHAN(chan) | ME_AI_FIFO_CHANLIST_GAIN(range);
-	अगर (comedi_range_is_unipolar(s, range))
+	if (comedi_range_is_unipolar(s, range))
 		val |= ME_AI_FIFO_CHANLIST_UNIPOLAR;
-	अगर (aref & AREF_DIFF)
+	if (aref & AREF_DIFF)
 		val |= ME_AI_FIFO_CHANLIST_DIFF;
-	ग_लिखोw(val, dev->mmio + ME_AI_FIFO_REG);
+	writew(val, dev->mmio + ME_AI_FIFO_REG);
 
 	/* set ADC mode to software trigger */
 	devpriv->ctrl1 |= ME_CTRL1_ADC_MODE_SOFT_TRIG;
-	ग_लिखोw(devpriv->ctrl1, dev->mmio + ME_CTRL1_REG);
+	writew(devpriv->ctrl1, dev->mmio + ME_CTRL1_REG);
 
-	क्रम (i = 0; i < insn->n; i++) अणु
+	for (i = 0; i < insn->n; i++) {
 		/* start ai conversion */
-		पढ़ोw(dev->mmio + ME_CTRL1_REG);
+		readw(dev->mmio + ME_CTRL1_REG);
 
-		/* रुको क्रम ADC fअगरo not empty flag */
-		ret = comedi_समयout(dev, s, insn, me_ai_eoc, 0);
-		अगर (ret)
-			अवरोध;
+		/* wait for ADC fifo not empty flag */
+		ret = comedi_timeout(dev, s, insn, me_ai_eoc, 0);
+		if (ret)
+			break;
 
-		/* get value from ADC fअगरo */
-		val = पढ़ोw(dev->mmio + ME_AI_FIFO_REG) & s->maxdata;
+		/* get value from ADC fifo */
+		val = readw(dev->mmio + ME_AI_FIFO_REG) & s->maxdata;
 
 		/* munge 2's complement value to offset binary */
 		data[i] = comedi_offset_munge(s, val);
-	पूर्ण
+	}
 
 	/* stop any running conversion */
 	devpriv->ctrl1 &= ~ME_CTRL1_ADC_MODE_MASK;
-	ग_लिखोw(devpriv->ctrl1, dev->mmio + ME_CTRL1_REG);
+	writew(devpriv->ctrl1, dev->mmio + ME_CTRL1_REG);
 
-	वापस ret ? ret : insn->n;
-पूर्ण
+	return ret ? ret : insn->n;
+}
 
-अटल पूर्णांक me_ao_insn_ग_लिखो(काष्ठा comedi_device *dev,
-			    काष्ठा comedi_subdevice *s,
-			    काष्ठा comedi_insn *insn,
-			    अचिन्हित पूर्णांक *data)
-अणु
-	काष्ठा me_निजी_data *devpriv = dev->निजी;
-	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
-	अचिन्हित पूर्णांक range = CR_RANGE(insn->chanspec);
-	अचिन्हित पूर्णांक val = s->पढ़ोback[chan];
-	पूर्णांक i;
+static int me_ao_insn_write(struct comedi_device *dev,
+			    struct comedi_subdevice *s,
+			    struct comedi_insn *insn,
+			    unsigned int *data)
+{
+	struct me_private_data *devpriv = dev->private;
+	unsigned int chan = CR_CHAN(insn->chanspec);
+	unsigned int range = CR_RANGE(insn->chanspec);
+	unsigned int val = s->readback[chan];
+	int i;
 
 	/* Enable all DAC */
 	devpriv->ctrl2 |= ME_CTRL2_DAC_ENA;
-	ग_लिखोw(devpriv->ctrl2, dev->mmio + ME_CTRL2_REG);
+	writew(devpriv->ctrl2, dev->mmio + ME_CTRL2_REG);
 
 	/* and set DAC to "buffered" mode */
 	devpriv->ctrl2 |= ME_CTRL2_BUFFERED_DAC;
-	ग_लिखोw(devpriv->ctrl2, dev->mmio + ME_CTRL2_REG);
+	writew(devpriv->ctrl2, dev->mmio + ME_CTRL2_REG);
 
-	/* Set dac-control रेजिस्टर */
+	/* Set dac-control register */
 	devpriv->dac_ctrl &= ~ME_DAC_CTRL_MASK(chan);
-	अगर (range == 0)
+	if (range == 0)
 		devpriv->dac_ctrl |= ME_DAC_CTRL_GAIN(chan);
-	अगर (comedi_range_is_bipolar(s, range))
+	if (comedi_range_is_bipolar(s, range))
 		devpriv->dac_ctrl |= ME_DAC_CTRL_BIPOLAR(chan);
-	ग_लिखोw(devpriv->dac_ctrl, dev->mmio + ME_DAC_CTRL_REG);
+	writew(devpriv->dac_ctrl, dev->mmio + ME_DAC_CTRL_REG);
 
-	/* Update dac-control रेजिस्टर */
-	पढ़ोw(dev->mmio + ME_DAC_CTRL_REG);
+	/* Update dac-control register */
+	readw(dev->mmio + ME_DAC_CTRL_REG);
 
-	/* Set data रेजिस्टर */
-	क्रम (i = 0; i < insn->n; i++) अणु
+	/* Set data register */
+	for (i = 0; i < insn->n; i++) {
 		val = data[i];
 
-		ग_लिखोw(val, dev->mmio + ME_AO_DATA_REG(chan));
-	पूर्ण
-	s->पढ़ोback[chan] = val;
+		writew(val, dev->mmio + ME_AO_DATA_REG(chan));
+	}
+	s->readback[chan] = val;
 
-	/* Update dac with data रेजिस्टरs */
-	पढ़ोw(dev->mmio + ME_CTRL2_REG);
+	/* Update dac with data registers */
+	readw(dev->mmio + ME_CTRL2_REG);
 
-	वापस insn->n;
-पूर्ण
+	return insn->n;
+}
 
-अटल पूर्णांक me2600_xilinx_करोwnload(काष्ठा comedi_device *dev,
-				  स्थिर u8 *data, माप_प्रकार size,
-				  अचिन्हित दीर्घ context)
-अणु
-	काष्ठा me_निजी_data *devpriv = dev->निजी;
-	अचिन्हित पूर्णांक value;
-	अचिन्हित पूर्णांक file_length;
-	अचिन्हित पूर्णांक i;
+static int me2600_xilinx_download(struct comedi_device *dev,
+				  const u8 *data, size_t size,
+				  unsigned long context)
+{
+	struct me_private_data *devpriv = dev->private;
+	unsigned int value;
+	unsigned int file_length;
+	unsigned int i;
 
 	/* disable irq's on PLX */
-	ग_लिखोl(0x00, devpriv->plx_regbase + PLX9052_INTCSR);
+	writel(0x00, devpriv->plx_regbase + PLX9052_INTCSR);
 
-	/* First, make a dummy पढ़ो to reset xilinx */
-	value = पढ़ोw(dev->mmio + XILINX_DOWNLOAD_RESET);
+	/* First, make a dummy read to reset xilinx */
+	value = readw(dev->mmio + XILINX_DOWNLOAD_RESET);
 
 	/* Wait until reset is over */
 	sleep(1);
 
 	/* Write a dummy value to Xilinx */
-	ग_लिखोb(0x00, dev->mmio + 0x0);
+	writeb(0x00, dev->mmio + 0x0);
 	sleep(1);
 
 	/*
 	 * Format of the firmware
-	 * Build दीर्घs from the byte-wise coded header
+	 * Build longs from the byte-wise coded header
 	 * Byte 1-3:   length of the array
 	 * Byte 4-7:   version
 	 * Byte 8-11:  date
 	 * Byte 12-15: reserved
 	 */
-	अगर (size < 16)
-		वापस -EINVAL;
+	if (size < 16)
+		return -EINVAL;
 
-	file_length = (((अचिन्हित पूर्णांक)data[0] & 0xff) << 24) +
-	    (((अचिन्हित पूर्णांक)data[1] & 0xff) << 16) +
-	    (((अचिन्हित पूर्णांक)data[2] & 0xff) << 8) +
-	    ((अचिन्हित पूर्णांक)data[3] & 0xff);
+	file_length = (((unsigned int)data[0] & 0xff) << 24) +
+	    (((unsigned int)data[1] & 0xff) << 16) +
+	    (((unsigned int)data[2] & 0xff) << 8) +
+	    ((unsigned int)data[3] & 0xff);
 
 	/*
-	 * Loop क्रम writing firmware byte by byte to xilinx
+	 * Loop for writing firmware byte by byte to xilinx
 	 * Firmware data start at offset 16
 	 */
-	क्रम (i = 0; i < file_length; i++)
-		ग_लिखोb((data[16 + i] & 0xff), dev->mmio + 0x0);
+	for (i = 0; i < file_length; i++)
+		writeb((data[16 + i] & 0xff), dev->mmio + 0x0);
 
 	/* Write 5 dummy values to xilinx */
-	क्रम (i = 0; i < 5; i++)
-		ग_लिखोb(0x00, dev->mmio + 0x0);
+	for (i = 0; i < 5; i++)
+		writeb(0x00, dev->mmio + 0x0);
 
-	/* Test अगर there was an error during करोwnload -> INTB was thrown */
-	value = पढ़ोl(devpriv->plx_regbase + PLX9052_INTCSR);
-	अगर (value & PLX9052_INTCSR_LI2STAT) अणु
-		/* Disable पूर्णांकerrupt */
-		ग_लिखोl(0x00, devpriv->plx_regbase + PLX9052_INTCSR);
+	/* Test if there was an error during download -> INTB was thrown */
+	value = readl(devpriv->plx_regbase + PLX9052_INTCSR);
+	if (value & PLX9052_INTCSR_LI2STAT) {
+		/* Disable interrupt */
+		writel(0x00, devpriv->plx_regbase + PLX9052_INTCSR);
 		dev_err(dev->class_dev, "Xilinx download failed\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	/* Wait until the Xilinx is पढ़ोy क्रम real work */
+	/* Wait until the Xilinx is ready for real work */
 	sleep(1);
 
 	/* Enable PLX-Interrupts */
-	ग_लिखोl(PLX9052_INTCSR_LI1ENAB |
+	writel(PLX9052_INTCSR_LI1ENAB |
 	       PLX9052_INTCSR_LI1POL |
 	       PLX9052_INTCSR_PCIENAB,
 	       devpriv->plx_regbase + PLX9052_INTCSR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक me_reset(काष्ठा comedi_device *dev)
-अणु
-	काष्ठा me_निजी_data *devpriv = dev->निजी;
+static int me_reset(struct comedi_device *dev)
+{
+	struct me_private_data *devpriv = dev->private;
 
 	/* Reset board */
-	ग_लिखोw(0x00, dev->mmio + ME_CTRL1_REG);
-	ग_लिखोw(0x00, dev->mmio + ME_CTRL2_REG);
-	ग_लिखोw(0x00, dev->mmio + ME_STATUS_REG);	/* clear पूर्णांकerrupts */
-	ग_लिखोw(0x00, dev->mmio + ME_DAC_CTRL_REG);
+	writew(0x00, dev->mmio + ME_CTRL1_REG);
+	writew(0x00, dev->mmio + ME_CTRL2_REG);
+	writew(0x00, dev->mmio + ME_STATUS_REG);	/* clear interrupts */
+	writew(0x00, dev->mmio + ME_DAC_CTRL_REG);
 
 	/* Save values in the board context */
 	devpriv->dac_ctrl = 0;
 	devpriv->ctrl1 = 0;
 	devpriv->ctrl2 = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक me_स्वतः_attach(काष्ठा comedi_device *dev,
-			  अचिन्हित दीर्घ context)
-अणु
-	काष्ठा pci_dev *pcidev = comedi_to_pci_dev(dev);
-	स्थिर काष्ठा me_board *board = शून्य;
-	काष्ठा me_निजी_data *devpriv;
-	काष्ठा comedi_subdevice *s;
-	पूर्णांक ret;
+static int me_auto_attach(struct comedi_device *dev,
+			  unsigned long context)
+{
+	struct pci_dev *pcidev = comedi_to_pci_dev(dev);
+	const struct me_board *board = NULL;
+	struct me_private_data *devpriv;
+	struct comedi_subdevice *s;
+	int ret;
 
-	अगर (context < ARRAY_SIZE(me_boards))
+	if (context < ARRAY_SIZE(me_boards))
 		board = &me_boards[context];
-	अगर (!board)
-		वापस -ENODEV;
+	if (!board)
+		return -ENODEV;
 	dev->board_ptr = board;
 	dev->board_name = board->name;
 
-	devpriv = comedi_alloc_devpriv(dev, माप(*devpriv));
-	अगर (!devpriv)
-		वापस -ENOMEM;
+	devpriv = comedi_alloc_devpriv(dev, sizeof(*devpriv));
+	if (!devpriv)
+		return -ENOMEM;
 
 	ret = comedi_pci_enable(dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	devpriv->plx_regbase = pci_ioremap_bar(pcidev, 0);
-	अगर (!devpriv->plx_regbase)
-		वापस -ENOMEM;
+	if (!devpriv->plx_regbase)
+		return -ENOMEM;
 
 	dev->mmio = pci_ioremap_bar(pcidev, 2);
-	अगर (!dev->mmio)
-		वापस -ENOMEM;
+	if (!dev->mmio)
+		return -ENOMEM;
 
 	/* Download firmware and reset card */
-	अगर (board->needs_firmware) अणु
+	if (board->needs_firmware) {
 		ret = comedi_load_firmware(dev, &comedi_to_pci_dev(dev)->dev,
 					   ME2600_FIRMWARE,
-					   me2600_xilinx_करोwnload, 0);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+					   me2600_xilinx_download, 0);
+		if (ret < 0)
+			return ret;
+	}
 	me_reset(dev);
 
 	ret = comedi_alloc_subdevices(dev, 3);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	s = &dev->subdevices[0];
 	s->type		= COMEDI_SUBD_AI;
@@ -478,24 +477,24 @@
 	s->maxdata	= 0x0fff;
 	s->len_chanlist	= 16;
 	s->range_table	= &me_ai_range;
-	s->insn_पढ़ो	= me_ai_insn_पढ़ो;
+	s->insn_read	= me_ai_insn_read;
 
 	s = &dev->subdevices[1];
-	अगर (board->has_ao) अणु
+	if (board->has_ao) {
 		s->type		= COMEDI_SUBD_AO;
 		s->subdev_flags	= SDF_WRITABLE | SDF_COMMON;
 		s->n_chan	= 4;
 		s->maxdata	= 0x0fff;
 		s->len_chanlist	= 4;
 		s->range_table	= &me_ao_range;
-		s->insn_ग_लिखो	= me_ao_insn_ग_लिखो;
+		s->insn_write	= me_ao_insn_write;
 
-		ret = comedi_alloc_subdev_पढ़ोback(s);
-		अगर (ret)
-			वापस ret;
-	पूर्ण अन्यथा अणु
+		ret = comedi_alloc_subdev_readback(s);
+		if (ret)
+			return ret;
+	} else {
 		s->type = COMEDI_SUBD_UNUSED;
-	पूर्ण
+	}
 
 	s = &dev->subdevices[2];
 	s->type		= COMEDI_SUBD_DIO;
@@ -507,48 +506,48 @@
 	s->insn_bits	= me_dio_insn_bits;
 	s->insn_config	= me_dio_insn_config;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम me_detach(काष्ठा comedi_device *dev)
-अणु
-	काष्ठा me_निजी_data *devpriv = dev->निजी;
+static void me_detach(struct comedi_device *dev)
+{
+	struct me_private_data *devpriv = dev->private;
 
-	अगर (devpriv) अणु
-		अगर (dev->mmio)
+	if (devpriv) {
+		if (dev->mmio)
 			me_reset(dev);
-		अगर (devpriv->plx_regbase)
+		if (devpriv->plx_regbase)
 			iounmap(devpriv->plx_regbase);
-	पूर्ण
+	}
 	comedi_pci_detach(dev);
-पूर्ण
+}
 
-अटल काष्ठा comedi_driver me_daq_driver = अणु
+static struct comedi_driver me_daq_driver = {
 	.driver_name	= "me_daq",
 	.module		= THIS_MODULE,
-	.स्वतः_attach	= me_स्वतः_attach,
+	.auto_attach	= me_auto_attach,
 	.detach		= me_detach,
-पूर्ण;
+};
 
-अटल पूर्णांक me_daq_pci_probe(काष्ठा pci_dev *dev,
-			    स्थिर काष्ठा pci_device_id *id)
-अणु
-	वापस comedi_pci_स्वतः_config(dev, &me_daq_driver, id->driver_data);
-पूर्ण
+static int me_daq_pci_probe(struct pci_dev *dev,
+			    const struct pci_device_id *id)
+{
+	return comedi_pci_auto_config(dev, &me_daq_driver, id->driver_data);
+}
 
-अटल स्थिर काष्ठा pci_device_id me_daq_pci_table[] = अणु
-	अणु PCI_VDEVICE(MEILHAUS, 0x2600), BOARD_ME2600 पूर्ण,
-	अणु PCI_VDEVICE(MEILHAUS, 0x2000), BOARD_ME2000 पूर्ण,
-	अणु 0 पूर्ण
-पूर्ण;
+static const struct pci_device_id me_daq_pci_table[] = {
+	{ PCI_VDEVICE(MEILHAUS, 0x2600), BOARD_ME2600 },
+	{ PCI_VDEVICE(MEILHAUS, 0x2000), BOARD_ME2000 },
+	{ 0 }
+};
 MODULE_DEVICE_TABLE(pci, me_daq_pci_table);
 
-अटल काष्ठा pci_driver me_daq_pci_driver = अणु
+static struct pci_driver me_daq_pci_driver = {
 	.name		= "me_daq",
 	.id_table	= me_daq_pci_table,
 	.probe		= me_daq_pci_probe,
-	.हटाओ		= comedi_pci_स्वतः_unconfig,
-पूर्ण;
+	.remove		= comedi_pci_auto_unconfig,
+};
 module_comedi_pci_driver(me_daq_driver, me_daq_pci_driver);
 
 MODULE_AUTHOR("Comedi https://www.comedi.org");

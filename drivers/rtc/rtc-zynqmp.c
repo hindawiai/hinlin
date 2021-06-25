@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Xilinx Zynq Ultrascale+ MPSoC Real Time Clock Driver
  *
@@ -7,318 +6,318 @@
  *
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/rtc.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/rtc.h>
 
 /* RTC Registers */
-#घोषणा RTC_SET_TM_WR		0x00
-#घोषणा RTC_SET_TM_RD		0x04
-#घोषणा RTC_CALIB_WR		0x08
-#घोषणा RTC_CALIB_RD		0x0C
-#घोषणा RTC_CUR_TM		0x10
-#घोषणा RTC_CUR_TICK		0x14
-#घोषणा RTC_ALRM		0x18
-#घोषणा RTC_INT_STS		0x20
-#घोषणा RTC_INT_MASK		0x24
-#घोषणा RTC_INT_EN		0x28
-#घोषणा RTC_INT_DIS		0x2C
-#घोषणा RTC_CTRL		0x40
+#define RTC_SET_TM_WR		0x00
+#define RTC_SET_TM_RD		0x04
+#define RTC_CALIB_WR		0x08
+#define RTC_CALIB_RD		0x0C
+#define RTC_CUR_TM		0x10
+#define RTC_CUR_TICK		0x14
+#define RTC_ALRM		0x18
+#define RTC_INT_STS		0x20
+#define RTC_INT_MASK		0x24
+#define RTC_INT_EN		0x28
+#define RTC_INT_DIS		0x2C
+#define RTC_CTRL		0x40
 
-#घोषणा RTC_FR_EN		BIT(20)
-#घोषणा RTC_FR_DATSHIFT		16
-#घोषणा RTC_TICK_MASK		0xFFFF
-#घोषणा RTC_INT_SEC		BIT(0)
-#घोषणा RTC_INT_ALRM		BIT(1)
-#घोषणा RTC_OSC_EN		BIT(24)
-#घोषणा RTC_BATT_EN		BIT(31)
+#define RTC_FR_EN		BIT(20)
+#define RTC_FR_DATSHIFT		16
+#define RTC_TICK_MASK		0xFFFF
+#define RTC_INT_SEC		BIT(0)
+#define RTC_INT_ALRM		BIT(1)
+#define RTC_OSC_EN		BIT(24)
+#define RTC_BATT_EN		BIT(31)
 
-#घोषणा RTC_CALIB_DEF		0x198233
-#घोषणा RTC_CALIB_MASK		0x1FFFFF
-#घोषणा RTC_ALRM_MASK          BIT(1)
-#घोषणा RTC_MSEC               1000
+#define RTC_CALIB_DEF		0x198233
+#define RTC_CALIB_MASK		0x1FFFFF
+#define RTC_ALRM_MASK          BIT(1)
+#define RTC_MSEC               1000
 
-काष्ठा xlnx_rtc_dev अणु
-	काष्ठा rtc_device	*rtc;
-	व्योम __iomem		*reg_base;
-	पूर्णांक			alarm_irq;
-	पूर्णांक			sec_irq;
-	अचिन्हित पूर्णांक		calibval;
-पूर्ण;
+struct xlnx_rtc_dev {
+	struct rtc_device	*rtc;
+	void __iomem		*reg_base;
+	int			alarm_irq;
+	int			sec_irq;
+	unsigned int		calibval;
+};
 
-अटल पूर्णांक xlnx_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा xlnx_rtc_dev *xrtcdev = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ new_समय;
+static int xlnx_rtc_set_time(struct device *dev, struct rtc_time *tm)
+{
+	struct xlnx_rtc_dev *xrtcdev = dev_get_drvdata(dev);
+	unsigned long new_time;
 
 	/*
-	 * The value written will be updated after 1 sec पूर्णांकo the
-	 * seconds पढ़ो रेजिस्टर, so we need to program समय +1 sec
-	 * to get the correct समय on पढ़ो.
+	 * The value written will be updated after 1 sec into the
+	 * seconds read register, so we need to program time +1 sec
+	 * to get the correct time on read.
 	 */
-	new_समय = rtc_पंचांग_to_समय64(पंचांग) + 1;
+	new_time = rtc_tm_to_time64(tm) + 1;
 
 	/*
-	 * Writing पूर्णांकo calibration रेजिस्टर will clear the Tick Counter and
-	 * क्रमce the next second to be संकेतed exactly in 1 second period
+	 * Writing into calibration register will clear the Tick Counter and
+	 * force the next second to be signaled exactly in 1 second period
 	 */
 	xrtcdev->calibval &= RTC_CALIB_MASK;
-	ग_लिखोl(xrtcdev->calibval, (xrtcdev->reg_base + RTC_CALIB_WR));
+	writel(xrtcdev->calibval, (xrtcdev->reg_base + RTC_CALIB_WR));
 
-	ग_लिखोl(new_समय, xrtcdev->reg_base + RTC_SET_TM_WR);
+	writel(new_time, xrtcdev->reg_base + RTC_SET_TM_WR);
 
 	/*
-	 * Clear the rtc पूर्णांकerrupt status रेजिस्टर after setting the
-	 * समय. During a पढ़ो_समय function, the code should पढ़ो the
-	 * RTC_INT_STATUS रेजिस्टर and अगर bit 0 is still 0, it means
+	 * Clear the rtc interrupt status register after setting the
+	 * time. During a read_time function, the code should read the
+	 * RTC_INT_STATUS register and if bit 0 is still 0, it means
 	 * that one second has not elapsed yet since RTC was set and
-	 * the current समय should be पढ़ो from SET_TIME_READ रेजिस्टर;
-	 * otherwise, CURRENT_TIME रेजिस्टर is पढ़ो to report the समय
+	 * the current time should be read from SET_TIME_READ register;
+	 * otherwise, CURRENT_TIME register is read to report the time
 	 */
-	ग_लिखोl(RTC_INT_SEC, xrtcdev->reg_base + RTC_INT_STS);
+	writel(RTC_INT_SEC, xrtcdev->reg_base + RTC_INT_STS);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xlnx_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
+static int xlnx_rtc_read_time(struct device *dev, struct rtc_time *tm)
+{
 	u32 status;
-	अचिन्हित दीर्घ पढ़ो_समय;
-	काष्ठा xlnx_rtc_dev *xrtcdev = dev_get_drvdata(dev);
+	unsigned long read_time;
+	struct xlnx_rtc_dev *xrtcdev = dev_get_drvdata(dev);
 
-	status = पढ़ोl(xrtcdev->reg_base + RTC_INT_STS);
+	status = readl(xrtcdev->reg_base + RTC_INT_STS);
 
-	अगर (status & RTC_INT_SEC) अणु
+	if (status & RTC_INT_SEC) {
 		/*
-		 * RTC has updated the CURRENT_TIME with the समय written पूर्णांकo
-		 * SET_TIME_WRITE रेजिस्टर.
+		 * RTC has updated the CURRENT_TIME with the time written into
+		 * SET_TIME_WRITE register.
 		 */
-		पढ़ो_समय = पढ़ोl(xrtcdev->reg_base + RTC_CUR_TM);
-	पूर्ण अन्यथा अणु
+		read_time = readl(xrtcdev->reg_base + RTC_CUR_TM);
+	} else {
 		/*
-		 * Time written in SET_TIME_WRITE has not yet updated पूर्णांकo
-		 * the seconds पढ़ो रेजिस्टर, so पढ़ो the समय from the
-		 * SET_TIME_WRITE instead of CURRENT_TIME रेजिस्टर.
-		 * Since we add +1 sec जबतक writing, we need to -1 sec जबतक
-		 * पढ़ोing.
+		 * Time written in SET_TIME_WRITE has not yet updated into
+		 * the seconds read register, so read the time from the
+		 * SET_TIME_WRITE instead of CURRENT_TIME register.
+		 * Since we add +1 sec while writing, we need to -1 sec while
+		 * reading.
 		 */
-		पढ़ो_समय = पढ़ोl(xrtcdev->reg_base + RTC_SET_TM_RD) - 1;
-	पूर्ण
-	rtc_समय64_to_पंचांग(पढ़ो_समय, पंचांग);
+		read_time = readl(xrtcdev->reg_base + RTC_SET_TM_RD) - 1;
+	}
+	rtc_time64_to_tm(read_time, tm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xlnx_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	काष्ठा xlnx_rtc_dev *xrtcdev = dev_get_drvdata(dev);
+static int xlnx_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	struct xlnx_rtc_dev *xrtcdev = dev_get_drvdata(dev);
 
-	rtc_समय64_to_पंचांग(पढ़ोl(xrtcdev->reg_base + RTC_ALRM), &alrm->समय);
-	alrm->enabled = पढ़ोl(xrtcdev->reg_base + RTC_INT_MASK) & RTC_INT_ALRM;
+	rtc_time64_to_tm(readl(xrtcdev->reg_base + RTC_ALRM), &alrm->time);
+	alrm->enabled = readl(xrtcdev->reg_base + RTC_INT_MASK) & RTC_INT_ALRM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xlnx_rtc_alarm_irq_enable(काष्ठा device *dev, u32 enabled)
-अणु
-	काष्ठा xlnx_rtc_dev *xrtcdev = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक status;
-	uदीर्घ समयout;
+static int xlnx_rtc_alarm_irq_enable(struct device *dev, u32 enabled)
+{
+	struct xlnx_rtc_dev *xrtcdev = dev_get_drvdata(dev);
+	unsigned int status;
+	ulong timeout;
 
-	समयout = jअगरfies + msecs_to_jअगरfies(RTC_MSEC);
+	timeout = jiffies + msecs_to_jiffies(RTC_MSEC);
 
-	अगर (enabled) अणु
-		जबतक (1) अणु
-			status = पढ़ोl(xrtcdev->reg_base + RTC_INT_STS);
-			अगर (!((status & RTC_ALRM_MASK) == RTC_ALRM_MASK))
-				अवरोध;
+	if (enabled) {
+		while (1) {
+			status = readl(xrtcdev->reg_base + RTC_INT_STS);
+			if (!((status & RTC_ALRM_MASK) == RTC_ALRM_MASK))
+				break;
 
-			अगर (समय_after_eq(jअगरfies, समयout)) अणु
+			if (time_after_eq(jiffies, timeout)) {
 				dev_err(dev, "Time out occur, while clearing alarm status bit\n");
-				वापस -ETIMEDOUT;
-			पूर्ण
-			ग_लिखोl(RTC_INT_ALRM, xrtcdev->reg_base + RTC_INT_STS);
-		पूर्ण
+				return -ETIMEDOUT;
+			}
+			writel(RTC_INT_ALRM, xrtcdev->reg_base + RTC_INT_STS);
+		}
 
-		ग_लिखोl(RTC_INT_ALRM, xrtcdev->reg_base + RTC_INT_EN);
-	पूर्ण अन्यथा अणु
-		ग_लिखोl(RTC_INT_ALRM, xrtcdev->reg_base + RTC_INT_DIS);
-	पूर्ण
+		writel(RTC_INT_ALRM, xrtcdev->reg_base + RTC_INT_EN);
+	} else {
+		writel(RTC_INT_ALRM, xrtcdev->reg_base + RTC_INT_DIS);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xlnx_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	काष्ठा xlnx_rtc_dev *xrtcdev = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ alarm_समय;
+static int xlnx_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	struct xlnx_rtc_dev *xrtcdev = dev_get_drvdata(dev);
+	unsigned long alarm_time;
 
-	alarm_समय = rtc_पंचांग_to_समय64(&alrm->समय);
+	alarm_time = rtc_tm_to_time64(&alrm->time);
 
-	ग_लिखोl((u32)alarm_समय, (xrtcdev->reg_base + RTC_ALRM));
+	writel((u32)alarm_time, (xrtcdev->reg_base + RTC_ALRM));
 
 	xlnx_rtc_alarm_irq_enable(dev, alrm->enabled);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम xlnx_init_rtc(काष्ठा xlnx_rtc_dev *xrtcdev)
-अणु
+static void xlnx_init_rtc(struct xlnx_rtc_dev *xrtcdev)
+{
 	u32 rtc_ctrl;
 
-	/* Enable RTC चयन to battery when VCC_PSAUX is not available */
-	rtc_ctrl = पढ़ोl(xrtcdev->reg_base + RTC_CTRL);
+	/* Enable RTC switch to battery when VCC_PSAUX is not available */
+	rtc_ctrl = readl(xrtcdev->reg_base + RTC_CTRL);
 	rtc_ctrl |= RTC_BATT_EN;
-	ग_लिखोl(rtc_ctrl, xrtcdev->reg_base + RTC_CTRL);
+	writel(rtc_ctrl, xrtcdev->reg_base + RTC_CTRL);
 
 	/*
 	 * Based on crystal freq of 33.330 KHz
 	 * set the seconds counter and enable, set fractions counter
-	 * to शेष value suggested as per design spec
-	 * to correct RTC delay in frequency over period of समय.
+	 * to default value suggested as per design spec
+	 * to correct RTC delay in frequency over period of time.
 	 */
 	xrtcdev->calibval &= RTC_CALIB_MASK;
-	ग_लिखोl(xrtcdev->calibval, (xrtcdev->reg_base + RTC_CALIB_WR));
-पूर्ण
+	writel(xrtcdev->calibval, (xrtcdev->reg_base + RTC_CALIB_WR));
+}
 
-अटल स्थिर काष्ठा rtc_class_ops xlnx_rtc_ops = अणु
-	.set_समय	  = xlnx_rtc_set_समय,
-	.पढ़ो_समय	  = xlnx_rtc_पढ़ो_समय,
-	.पढ़ो_alarm	  = xlnx_rtc_पढ़ो_alarm,
+static const struct rtc_class_ops xlnx_rtc_ops = {
+	.set_time	  = xlnx_rtc_set_time,
+	.read_time	  = xlnx_rtc_read_time,
+	.read_alarm	  = xlnx_rtc_read_alarm,
 	.set_alarm	  = xlnx_rtc_set_alarm,
 	.alarm_irq_enable = xlnx_rtc_alarm_irq_enable,
-पूर्ण;
+};
 
-अटल irqवापस_t xlnx_rtc_पूर्णांकerrupt(पूर्णांक irq, व्योम *id)
-अणु
-	काष्ठा xlnx_rtc_dev *xrtcdev = (काष्ठा xlnx_rtc_dev *)id;
-	अचिन्हित पूर्णांक status;
+static irqreturn_t xlnx_rtc_interrupt(int irq, void *id)
+{
+	struct xlnx_rtc_dev *xrtcdev = (struct xlnx_rtc_dev *)id;
+	unsigned int status;
 
-	status = पढ़ोl(xrtcdev->reg_base + RTC_INT_STS);
-	/* Check अगर पूर्णांकerrupt निश्चितed */
-	अगर (!(status & (RTC_INT_SEC | RTC_INT_ALRM)))
-		वापस IRQ_NONE;
+	status = readl(xrtcdev->reg_base + RTC_INT_STS);
+	/* Check if interrupt asserted */
+	if (!(status & (RTC_INT_SEC | RTC_INT_ALRM)))
+		return IRQ_NONE;
 
-	/* Disable RTC_INT_ALRM पूर्णांकerrupt only */
-	ग_लिखोl(RTC_INT_ALRM, xrtcdev->reg_base + RTC_INT_DIS);
+	/* Disable RTC_INT_ALRM interrupt only */
+	writel(RTC_INT_ALRM, xrtcdev->reg_base + RTC_INT_DIS);
 
-	अगर (status & RTC_INT_ALRM)
+	if (status & RTC_INT_ALRM)
 		rtc_update_irq(xrtcdev->rtc, 1, RTC_IRQF | RTC_AF);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक xlnx_rtc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा xlnx_rtc_dev *xrtcdev;
-	पूर्णांक ret;
+static int xlnx_rtc_probe(struct platform_device *pdev)
+{
+	struct xlnx_rtc_dev *xrtcdev;
+	int ret;
 
-	xrtcdev = devm_kzalloc(&pdev->dev, माप(*xrtcdev), GFP_KERNEL);
-	अगर (!xrtcdev)
-		वापस -ENOMEM;
+	xrtcdev = devm_kzalloc(&pdev->dev, sizeof(*xrtcdev), GFP_KERNEL);
+	if (!xrtcdev)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, xrtcdev);
+	platform_set_drvdata(pdev, xrtcdev);
 
 	xrtcdev->rtc = devm_rtc_allocate_device(&pdev->dev);
-	अगर (IS_ERR(xrtcdev->rtc))
-		वापस PTR_ERR(xrtcdev->rtc);
+	if (IS_ERR(xrtcdev->rtc))
+		return PTR_ERR(xrtcdev->rtc);
 
 	xrtcdev->rtc->ops = &xlnx_rtc_ops;
 	xrtcdev->rtc->range_max = U32_MAX;
 
-	xrtcdev->reg_base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(xrtcdev->reg_base))
-		वापस PTR_ERR(xrtcdev->reg_base);
+	xrtcdev->reg_base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(xrtcdev->reg_base))
+		return PTR_ERR(xrtcdev->reg_base);
 
-	xrtcdev->alarm_irq = platक्रमm_get_irq_byname(pdev, "alarm");
-	अगर (xrtcdev->alarm_irq < 0)
-		वापस xrtcdev->alarm_irq;
+	xrtcdev->alarm_irq = platform_get_irq_byname(pdev, "alarm");
+	if (xrtcdev->alarm_irq < 0)
+		return xrtcdev->alarm_irq;
 	ret = devm_request_irq(&pdev->dev, xrtcdev->alarm_irq,
-			       xlnx_rtc_पूर्णांकerrupt, 0,
+			       xlnx_rtc_interrupt, 0,
 			       dev_name(&pdev->dev), xrtcdev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "request irq failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	xrtcdev->sec_irq = platक्रमm_get_irq_byname(pdev, "sec");
-	अगर (xrtcdev->sec_irq < 0)
-		वापस xrtcdev->sec_irq;
+	xrtcdev->sec_irq = platform_get_irq_byname(pdev, "sec");
+	if (xrtcdev->sec_irq < 0)
+		return xrtcdev->sec_irq;
 	ret = devm_request_irq(&pdev->dev, xrtcdev->sec_irq,
-			       xlnx_rtc_पूर्णांकerrupt, 0,
+			       xlnx_rtc_interrupt, 0,
 			       dev_name(&pdev->dev), xrtcdev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "request irq failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = of_property_पढ़ो_u32(pdev->dev.of_node, "calibration",
+	ret = of_property_read_u32(pdev->dev.of_node, "calibration",
 				   &xrtcdev->calibval);
-	अगर (ret)
+	if (ret)
 		xrtcdev->calibval = RTC_CALIB_DEF;
 
 	xlnx_init_rtc(xrtcdev);
 
 	device_init_wakeup(&pdev->dev, 1);
 
-	वापस devm_rtc_रेजिस्टर_device(xrtcdev->rtc);
-पूर्ण
+	return devm_rtc_register_device(xrtcdev->rtc);
+}
 
-अटल पूर्णांक xlnx_rtc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
+static int xlnx_rtc_remove(struct platform_device *pdev)
+{
 	xlnx_rtc_alarm_irq_enable(&pdev->dev, 0);
 	device_init_wakeup(&pdev->dev, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused xlnx_rtc_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा xlnx_rtc_dev *xrtcdev = dev_get_drvdata(dev);
+static int __maybe_unused xlnx_rtc_suspend(struct device *dev)
+{
+	struct xlnx_rtc_dev *xrtcdev = dev_get_drvdata(dev);
 
-	अगर (device_may_wakeup(dev))
+	if (device_may_wakeup(dev))
 		enable_irq_wake(xrtcdev->alarm_irq);
-	अन्यथा
+	else
 		xlnx_rtc_alarm_irq_enable(dev, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused xlnx_rtc_resume(काष्ठा device *dev)
-अणु
-	काष्ठा xlnx_rtc_dev *xrtcdev = dev_get_drvdata(dev);
+static int __maybe_unused xlnx_rtc_resume(struct device *dev)
+{
+	struct xlnx_rtc_dev *xrtcdev = dev_get_drvdata(dev);
 
-	अगर (device_may_wakeup(dev))
+	if (device_may_wakeup(dev))
 		disable_irq_wake(xrtcdev->alarm_irq);
-	अन्यथा
+	else
 		xlnx_rtc_alarm_irq_enable(dev, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(xlnx_rtc_pm_ops, xlnx_rtc_suspend, xlnx_rtc_resume);
+static SIMPLE_DEV_PM_OPS(xlnx_rtc_pm_ops, xlnx_rtc_suspend, xlnx_rtc_resume);
 
-अटल स्थिर काष्ठा of_device_id xlnx_rtc_of_match[] = अणु
-	अणु.compatible = "xlnx,zynqmp-rtc" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id xlnx_rtc_of_match[] = {
+	{.compatible = "xlnx,zynqmp-rtc" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, xlnx_rtc_of_match);
 
-अटल काष्ठा platक्रमm_driver xlnx_rtc_driver = अणु
+static struct platform_driver xlnx_rtc_driver = {
 	.probe		= xlnx_rtc_probe,
-	.हटाओ		= xlnx_rtc_हटाओ,
-	.driver		= अणु
+	.remove		= xlnx_rtc_remove,
+	.driver		= {
 		.name	= KBUILD_MODNAME,
 		.pm	= &xlnx_rtc_pm_ops,
 		.of_match_table	= xlnx_rtc_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(xlnx_rtc_driver);
+module_platform_driver(xlnx_rtc_driver);
 
 MODULE_DESCRIPTION("Xilinx Zynq MPSoC RTC driver");
 MODULE_AUTHOR("Xilinx Inc.");

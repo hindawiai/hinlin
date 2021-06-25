@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * vDPA bus.
  *
@@ -8,69 +7,69 @@
  *
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/vdpa.h>
-#समावेश <uapi/linux/vdpa.h>
-#समावेश <net/genetlink.h>
-#समावेश <linux/mod_devicetable.h>
+#include <linux/module.h>
+#include <linux/idr.h>
+#include <linux/slab.h>
+#include <linux/vdpa.h>
+#include <uapi/linux/vdpa.h>
+#include <net/genetlink.h>
+#include <linux/mod_devicetable.h>
 
-अटल LIST_HEAD(mdev_head);
+static LIST_HEAD(mdev_head);
 /* A global mutex that protects vdpa management device and device level operations. */
-अटल DEFINE_MUTEX(vdpa_dev_mutex);
-अटल DEFINE_IDA(vdpa_index_ida);
+static DEFINE_MUTEX(vdpa_dev_mutex);
+static DEFINE_IDA(vdpa_index_ida);
 
-अटल काष्ठा genl_family vdpa_nl_family;
+static struct genl_family vdpa_nl_family;
 
-अटल पूर्णांक vdpa_dev_probe(काष्ठा device *d)
-अणु
-	काष्ठा vdpa_device *vdev = dev_to_vdpa(d);
-	काष्ठा vdpa_driver *drv = drv_to_vdpa(vdev->dev.driver);
-	पूर्णांक ret = 0;
+static int vdpa_dev_probe(struct device *d)
+{
+	struct vdpa_device *vdev = dev_to_vdpa(d);
+	struct vdpa_driver *drv = drv_to_vdpa(vdev->dev.driver);
+	int ret = 0;
 
-	अगर (drv && drv->probe)
+	if (drv && drv->probe)
 		ret = drv->probe(vdev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक vdpa_dev_हटाओ(काष्ठा device *d)
-अणु
-	काष्ठा vdpa_device *vdev = dev_to_vdpa(d);
-	काष्ठा vdpa_driver *drv = drv_to_vdpa(vdev->dev.driver);
+static int vdpa_dev_remove(struct device *d)
+{
+	struct vdpa_device *vdev = dev_to_vdpa(d);
+	struct vdpa_driver *drv = drv_to_vdpa(vdev->dev.driver);
 
-	अगर (drv && drv->हटाओ)
-		drv->हटाओ(vdev);
+	if (drv && drv->remove)
+		drv->remove(vdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा bus_type vdpa_bus = अणु
+static struct bus_type vdpa_bus = {
 	.name  = "vdpa",
 	.probe = vdpa_dev_probe,
-	.हटाओ = vdpa_dev_हटाओ,
-पूर्ण;
+	.remove = vdpa_dev_remove,
+};
 
-अटल व्योम vdpa_release_dev(काष्ठा device *d)
-अणु
-	काष्ठा vdpa_device *vdev = dev_to_vdpa(d);
-	स्थिर काष्ठा vdpa_config_ops *ops = vdev->config;
+static void vdpa_release_dev(struct device *d)
+{
+	struct vdpa_device *vdev = dev_to_vdpa(d);
+	const struct vdpa_config_ops *ops = vdev->config;
 
-	अगर (ops->मुक्त)
-		ops->मुक्त(vdev);
+	if (ops->free)
+		ops->free(vdev);
 
-	ida_simple_हटाओ(&vdpa_index_ida, vdev->index);
-	kमुक्त(vdev);
-पूर्ण
+	ida_simple_remove(&vdpa_index_ida, vdev->index);
+	kfree(vdev);
+}
 
 /**
  * __vdpa_alloc_device - allocate and initilaize a vDPA device
  * This allows driver to some prepartion after device is
- * initialized but beक्रमe रेजिस्टरed.
+ * initialized but before registered.
  * @parent: the parent device
  * @config: the bus operations that is supported by this device
- * @size: size of the parent काष्ठाure that contains निजी data
+ * @size: size of the parent structure that contains private data
  * @name: name of the vdpa device; optional.
  *
  * Driver should use vdpa_alloc_device() wrapper macro instead of
@@ -79,27 +78,27 @@
  * Return: Returns an error when parent/config/dma_dev is not set or fail to get
  *	   ida.
  */
-काष्ठा vdpa_device *__vdpa_alloc_device(काष्ठा device *parent,
-					स्थिर काष्ठा vdpa_config_ops *config,
-					माप_प्रकार size, स्थिर अक्षर *name)
-अणु
-	काष्ठा vdpa_device *vdev;
-	पूर्णांक err = -EINVAL;
+struct vdpa_device *__vdpa_alloc_device(struct device *parent,
+					const struct vdpa_config_ops *config,
+					size_t size, const char *name)
+{
+	struct vdpa_device *vdev;
+	int err = -EINVAL;
 
-	अगर (!config)
-		जाओ err;
+	if (!config)
+		goto err;
 
-	अगर (!!config->dma_map != !!config->dma_unmap)
-		जाओ err;
+	if (!!config->dma_map != !!config->dma_unmap)
+		goto err;
 
 	err = -ENOMEM;
 	vdev = kzalloc(size, GFP_KERNEL);
-	अगर (!vdev)
-		जाओ err;
+	if (!vdev)
+		goto err;
 
 	err = ida_alloc(&vdpa_index_ida, GFP_KERNEL);
-	अगर (err < 0)
-		जाओ err_ida;
+	if (err < 0)
+		goto err_ida;
 
 	vdev->dev.bus = &vdpa_bus;
 	vdev->dev.parent = parent;
@@ -108,493 +107,493 @@
 	vdev->config = config;
 	vdev->features_valid = false;
 
-	अगर (name)
+	if (name)
 		err = dev_set_name(&vdev->dev, "%s", name);
-	अन्यथा
+	else
 		err = dev_set_name(&vdev->dev, "vdpa%u", vdev->index);
-	अगर (err)
-		जाओ err_name;
+	if (err)
+		goto err_name;
 
 	device_initialize(&vdev->dev);
 
-	वापस vdev;
+	return vdev;
 
 err_name:
-	ida_simple_हटाओ(&vdpa_index_ida, vdev->index);
+	ida_simple_remove(&vdpa_index_ida, vdev->index);
 err_ida:
-	kमुक्त(vdev);
+	kfree(vdev);
 err:
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 EXPORT_SYMBOL_GPL(__vdpa_alloc_device);
 
-अटल पूर्णांक vdpa_name_match(काष्ठा device *dev, स्थिर व्योम *data)
-अणु
-	काष्ठा vdpa_device *vdev = container_of(dev, काष्ठा vdpa_device, dev);
+static int vdpa_name_match(struct device *dev, const void *data)
+{
+	struct vdpa_device *vdev = container_of(dev, struct vdpa_device, dev);
 
-	वापस (म_भेद(dev_name(&vdev->dev), data) == 0);
-पूर्ण
+	return (strcmp(dev_name(&vdev->dev), data) == 0);
+}
 
-अटल पूर्णांक __vdpa_रेजिस्टर_device(काष्ठा vdpa_device *vdev, पूर्णांक nvqs)
-अणु
-	काष्ठा device *dev;
+static int __vdpa_register_device(struct vdpa_device *vdev, int nvqs)
+{
+	struct device *dev;
 
 	vdev->nvqs = nvqs;
 
-	lockdep_निश्चित_held(&vdpa_dev_mutex);
-	dev = bus_find_device(&vdpa_bus, शून्य, dev_name(&vdev->dev), vdpa_name_match);
-	अगर (dev) अणु
+	lockdep_assert_held(&vdpa_dev_mutex);
+	dev = bus_find_device(&vdpa_bus, NULL, dev_name(&vdev->dev), vdpa_name_match);
+	if (dev) {
 		put_device(dev);
-		वापस -EEXIST;
-	पूर्ण
-	वापस device_add(&vdev->dev);
-पूर्ण
+		return -EEXIST;
+	}
+	return device_add(&vdev->dev);
+}
 
 /**
- * _vdpa_रेजिस्टर_device - रेजिस्टर a vDPA device with vdpa lock held
- * Caller must have a succeed call of vdpa_alloc_device() beक्रमe.
+ * _vdpa_register_device - register a vDPA device with vdpa lock held
+ * Caller must have a succeed call of vdpa_alloc_device() before.
  * Caller must invoke this routine in the management device dev_add()
- * callback after setting up valid mgmtdev क्रम this vdpa device.
- * @vdev: the vdpa device to be रेजिस्टरed to vDPA bus
+ * callback after setting up valid mgmtdev for this vdpa device.
+ * @vdev: the vdpa device to be registered to vDPA bus
  * @nvqs: number of virtqueues supported by this device
  *
  * Return: Returns an error when fail to add device to vDPA bus
  */
-पूर्णांक _vdpa_रेजिस्टर_device(काष्ठा vdpa_device *vdev, पूर्णांक nvqs)
-अणु
-	अगर (!vdev->mdev)
-		वापस -EINVAL;
+int _vdpa_register_device(struct vdpa_device *vdev, int nvqs)
+{
+	if (!vdev->mdev)
+		return -EINVAL;
 
-	वापस __vdpa_रेजिस्टर_device(vdev, nvqs);
-पूर्ण
-EXPORT_SYMBOL_GPL(_vdpa_रेजिस्टर_device);
+	return __vdpa_register_device(vdev, nvqs);
+}
+EXPORT_SYMBOL_GPL(_vdpa_register_device);
 
 /**
- * vdpa_रेजिस्टर_device - रेजिस्टर a vDPA device
- * Callers must have a succeed call of vdpa_alloc_device() beक्रमe.
- * @vdev: the vdpa device to be रेजिस्टरed to vDPA bus
+ * vdpa_register_device - register a vDPA device
+ * Callers must have a succeed call of vdpa_alloc_device() before.
+ * @vdev: the vdpa device to be registered to vDPA bus
  * @nvqs: number of virtqueues supported by this device
  *
  * Return: Returns an error when fail to add to vDPA bus
  */
-पूर्णांक vdpa_रेजिस्टर_device(काष्ठा vdpa_device *vdev, पूर्णांक nvqs)
-अणु
-	पूर्णांक err;
+int vdpa_register_device(struct vdpa_device *vdev, int nvqs)
+{
+	int err;
 
 	mutex_lock(&vdpa_dev_mutex);
-	err = __vdpa_रेजिस्टर_device(vdev, nvqs);
+	err = __vdpa_register_device(vdev, nvqs);
 	mutex_unlock(&vdpa_dev_mutex);
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL_GPL(vdpa_रेजिस्टर_device);
+	return err;
+}
+EXPORT_SYMBOL_GPL(vdpa_register_device);
 
 /**
- * _vdpa_unरेजिस्टर_device - unरेजिस्टर a vDPA device
+ * _vdpa_unregister_device - unregister a vDPA device
  * Caller must invoke this routine as part of management device dev_del()
  * callback.
  * @vdev: the vdpa device to be unregisted from vDPA bus
  */
-व्योम _vdpa_unरेजिस्टर_device(काष्ठा vdpa_device *vdev)
-अणु
-	lockdep_निश्चित_held(&vdpa_dev_mutex);
+void _vdpa_unregister_device(struct vdpa_device *vdev)
+{
+	lockdep_assert_held(&vdpa_dev_mutex);
 	WARN_ON(!vdev->mdev);
-	device_unरेजिस्टर(&vdev->dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(_vdpa_unरेजिस्टर_device);
+	device_unregister(&vdev->dev);
+}
+EXPORT_SYMBOL_GPL(_vdpa_unregister_device);
 
 /**
- * vdpa_unरेजिस्टर_device - unरेजिस्टर a vDPA device
+ * vdpa_unregister_device - unregister a vDPA device
  * @vdev: the vdpa device to be unregisted from vDPA bus
  */
-व्योम vdpa_unरेजिस्टर_device(काष्ठा vdpa_device *vdev)
-अणु
+void vdpa_unregister_device(struct vdpa_device *vdev)
+{
 	mutex_lock(&vdpa_dev_mutex);
-	device_unरेजिस्टर(&vdev->dev);
+	device_unregister(&vdev->dev);
 	mutex_unlock(&vdpa_dev_mutex);
-पूर्ण
-EXPORT_SYMBOL_GPL(vdpa_unरेजिस्टर_device);
+}
+EXPORT_SYMBOL_GPL(vdpa_unregister_device);
 
 /**
- * __vdpa_रेजिस्टर_driver - रेजिस्टर a vDPA device driver
- * @drv: the vdpa device driver to be रेजिस्टरed
+ * __vdpa_register_driver - register a vDPA device driver
+ * @drv: the vdpa device driver to be registered
  * @owner: module owner of the driver
  *
- * Return: Returns an err when fail to करो the registration
+ * Return: Returns an err when fail to do the registration
  */
-पूर्णांक __vdpa_रेजिस्टर_driver(काष्ठा vdpa_driver *drv, काष्ठा module *owner)
-अणु
+int __vdpa_register_driver(struct vdpa_driver *drv, struct module *owner)
+{
 	drv->driver.bus = &vdpa_bus;
 	drv->driver.owner = owner;
 
-	वापस driver_रेजिस्टर(&drv->driver);
-पूर्ण
-EXPORT_SYMBOL_GPL(__vdpa_रेजिस्टर_driver);
+	return driver_register(&drv->driver);
+}
+EXPORT_SYMBOL_GPL(__vdpa_register_driver);
 
 /**
- * vdpa_unरेजिस्टर_driver - unरेजिस्टर a vDPA device driver
- * @drv: the vdpa device driver to be unरेजिस्टरed
+ * vdpa_unregister_driver - unregister a vDPA device driver
+ * @drv: the vdpa device driver to be unregistered
  */
-व्योम vdpa_unरेजिस्टर_driver(काष्ठा vdpa_driver *drv)
-अणु
-	driver_unरेजिस्टर(&drv->driver);
-पूर्ण
-EXPORT_SYMBOL_GPL(vdpa_unरेजिस्टर_driver);
+void vdpa_unregister_driver(struct vdpa_driver *drv)
+{
+	driver_unregister(&drv->driver);
+}
+EXPORT_SYMBOL_GPL(vdpa_unregister_driver);
 
 /**
- * vdpa_mgmtdev_रेजिस्टर - रेजिस्टर a vdpa management device
+ * vdpa_mgmtdev_register - register a vdpa management device
  *
- * @mdev: Poपूर्णांकer to vdpa management device
- * vdpa_mgmtdev_रेजिस्टर() रेजिस्टर a vdpa management device which supports
+ * @mdev: Pointer to vdpa management device
+ * vdpa_mgmtdev_register() register a vdpa management device which supports
  * vdpa device management.
  * Return: Returns 0 on success or failure when required callback ops are not
  *         initialized.
  */
-पूर्णांक vdpa_mgmtdev_रेजिस्टर(काष्ठा vdpa_mgmt_dev *mdev)
-अणु
-	अगर (!mdev->device || !mdev->ops || !mdev->ops->dev_add || !mdev->ops->dev_del)
-		वापस -EINVAL;
+int vdpa_mgmtdev_register(struct vdpa_mgmt_dev *mdev)
+{
+	if (!mdev->device || !mdev->ops || !mdev->ops->dev_add || !mdev->ops->dev_del)
+		return -EINVAL;
 
 	INIT_LIST_HEAD(&mdev->list);
 	mutex_lock(&vdpa_dev_mutex);
 	list_add_tail(&mdev->list, &mdev_head);
 	mutex_unlock(&vdpa_dev_mutex);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(vdpa_mgmtdev_रेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(vdpa_mgmtdev_register);
 
-अटल पूर्णांक vdpa_match_हटाओ(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा vdpa_device *vdev = container_of(dev, काष्ठा vdpa_device, dev);
-	काष्ठा vdpa_mgmt_dev *mdev = vdev->mdev;
+static int vdpa_match_remove(struct device *dev, void *data)
+{
+	struct vdpa_device *vdev = container_of(dev, struct vdpa_device, dev);
+	struct vdpa_mgmt_dev *mdev = vdev->mdev;
 
-	अगर (mdev == data)
+	if (mdev == data)
 		mdev->ops->dev_del(mdev, vdev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम vdpa_mgmtdev_unरेजिस्टर(काष्ठा vdpa_mgmt_dev *mdev)
-अणु
+void vdpa_mgmtdev_unregister(struct vdpa_mgmt_dev *mdev)
+{
 	mutex_lock(&vdpa_dev_mutex);
 
 	list_del(&mdev->list);
 
-	/* Filter out all the entries beदीर्घ to this management device and delete it. */
-	bus_क्रम_each_dev(&vdpa_bus, शून्य, mdev, vdpa_match_हटाओ);
+	/* Filter out all the entries belong to this management device and delete it. */
+	bus_for_each_dev(&vdpa_bus, NULL, mdev, vdpa_match_remove);
 
 	mutex_unlock(&vdpa_dev_mutex);
-पूर्ण
-EXPORT_SYMBOL_GPL(vdpa_mgmtdev_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(vdpa_mgmtdev_unregister);
 
-अटल bool mgmtdev_handle_match(स्थिर काष्ठा vdpa_mgmt_dev *mdev,
-				 स्थिर अक्षर *busname, स्थिर अक्षर *devname)
-अणु
-	/* Bus name is optional क्रम simulated management device, so ignore the
-	 * device with bus अगर bus attribute is provided.
+static bool mgmtdev_handle_match(const struct vdpa_mgmt_dev *mdev,
+				 const char *busname, const char *devname)
+{
+	/* Bus name is optional for simulated management device, so ignore the
+	 * device with bus if bus attribute is provided.
 	 */
-	अगर ((busname && !mdev->device->bus) || (!busname && mdev->device->bus))
-		वापस false;
+	if ((busname && !mdev->device->bus) || (!busname && mdev->device->bus))
+		return false;
 
-	अगर (!busname && म_भेद(dev_name(mdev->device), devname) == 0)
-		वापस true;
+	if (!busname && strcmp(dev_name(mdev->device), devname) == 0)
+		return true;
 
-	अगर (busname && (म_भेद(mdev->device->bus->name, busname) == 0) &&
-	    (म_भेद(dev_name(mdev->device), devname) == 0))
-		वापस true;
+	if (busname && (strcmp(mdev->device->bus->name, busname) == 0) &&
+	    (strcmp(dev_name(mdev->device), devname) == 0))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल काष्ठा vdpa_mgmt_dev *vdpa_mgmtdev_get_from_attr(काष्ठा nlattr **attrs)
-अणु
-	काष्ठा vdpa_mgmt_dev *mdev;
-	स्थिर अक्षर *busname = शून्य;
-	स्थिर अक्षर *devname;
+static struct vdpa_mgmt_dev *vdpa_mgmtdev_get_from_attr(struct nlattr **attrs)
+{
+	struct vdpa_mgmt_dev *mdev;
+	const char *busname = NULL;
+	const char *devname;
 
-	अगर (!attrs[VDPA_ATTR_MGMTDEV_DEV_NAME])
-		वापस ERR_PTR(-EINVAL);
+	if (!attrs[VDPA_ATTR_MGMTDEV_DEV_NAME])
+		return ERR_PTR(-EINVAL);
 	devname = nla_data(attrs[VDPA_ATTR_MGMTDEV_DEV_NAME]);
-	अगर (attrs[VDPA_ATTR_MGMTDEV_BUS_NAME])
+	if (attrs[VDPA_ATTR_MGMTDEV_BUS_NAME])
 		busname = nla_data(attrs[VDPA_ATTR_MGMTDEV_BUS_NAME]);
 
-	list_क्रम_each_entry(mdev, &mdev_head, list) अणु
-		अगर (mgmtdev_handle_match(mdev, busname, devname))
-			वापस mdev;
-	पूर्ण
-	वापस ERR_PTR(-ENODEV);
-पूर्ण
+	list_for_each_entry(mdev, &mdev_head, list) {
+		if (mgmtdev_handle_match(mdev, busname, devname))
+			return mdev;
+	}
+	return ERR_PTR(-ENODEV);
+}
 
-अटल पूर्णांक vdpa_nl_mgmtdev_handle_fill(काष्ठा sk_buff *msg, स्थिर काष्ठा vdpa_mgmt_dev *mdev)
-अणु
-	अगर (mdev->device->bus &&
+static int vdpa_nl_mgmtdev_handle_fill(struct sk_buff *msg, const struct vdpa_mgmt_dev *mdev)
+{
+	if (mdev->device->bus &&
 	    nla_put_string(msg, VDPA_ATTR_MGMTDEV_BUS_NAME, mdev->device->bus->name))
-		वापस -EMSGSIZE;
-	अगर (nla_put_string(msg, VDPA_ATTR_MGMTDEV_DEV_NAME, dev_name(mdev->device)))
-		वापस -EMSGSIZE;
-	वापस 0;
-पूर्ण
+		return -EMSGSIZE;
+	if (nla_put_string(msg, VDPA_ATTR_MGMTDEV_DEV_NAME, dev_name(mdev->device)))
+		return -EMSGSIZE;
+	return 0;
+}
 
-अटल पूर्णांक vdpa_mgmtdev_fill(स्थिर काष्ठा vdpa_mgmt_dev *mdev, काष्ठा sk_buff *msg,
-			     u32 portid, u32 seq, पूर्णांक flags)
-अणु
+static int vdpa_mgmtdev_fill(const struct vdpa_mgmt_dev *mdev, struct sk_buff *msg,
+			     u32 portid, u32 seq, int flags)
+{
 	u64 supported_classes = 0;
-	व्योम *hdr;
-	पूर्णांक i = 0;
-	पूर्णांक err;
+	void *hdr;
+	int i = 0;
+	int err;
 
 	hdr = genlmsg_put(msg, portid, seq, &vdpa_nl_family, flags, VDPA_CMD_MGMTDEV_NEW);
-	अगर (!hdr)
-		वापस -EMSGSIZE;
+	if (!hdr)
+		return -EMSGSIZE;
 	err = vdpa_nl_mgmtdev_handle_fill(msg, mdev);
-	अगर (err)
-		जाओ msg_err;
+	if (err)
+		goto msg_err;
 
-	जबतक (mdev->id_table[i].device) अणु
+	while (mdev->id_table[i].device) {
 		supported_classes |= BIT(mdev->id_table[i].device);
 		i++;
-	पूर्ण
+	}
 
-	अगर (nla_put_u64_64bit(msg, VDPA_ATTR_MGMTDEV_SUPPORTED_CLASSES,
-			      supported_classes, VDPA_ATTR_UNSPEC)) अणु
+	if (nla_put_u64_64bit(msg, VDPA_ATTR_MGMTDEV_SUPPORTED_CLASSES,
+			      supported_classes, VDPA_ATTR_UNSPEC)) {
 		err = -EMSGSIZE;
-		जाओ msg_err;
-	पूर्ण
+		goto msg_err;
+	}
 
 	genlmsg_end(msg, hdr);
-	वापस 0;
+	return 0;
 
 msg_err:
 	genlmsg_cancel(msg, hdr);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक vdpa_nl_cmd_mgmtdev_get_करोit(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा vdpa_mgmt_dev *mdev;
-	काष्ठा sk_buff *msg;
-	पूर्णांक err;
+static int vdpa_nl_cmd_mgmtdev_get_doit(struct sk_buff *skb, struct genl_info *info)
+{
+	struct vdpa_mgmt_dev *mdev;
+	struct sk_buff *msg;
+	int err;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस -ENOMEM;
+	if (!msg)
+		return -ENOMEM;
 
 	mutex_lock(&vdpa_dev_mutex);
 	mdev = vdpa_mgmtdev_get_from_attr(info->attrs);
-	अगर (IS_ERR(mdev)) अणु
+	if (IS_ERR(mdev)) {
 		mutex_unlock(&vdpa_dev_mutex);
 		NL_SET_ERR_MSG_MOD(info->extack, "Fail to find the specified mgmt device");
 		err = PTR_ERR(mdev);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = vdpa_mgmtdev_fill(mdev, msg, info->snd_portid, info->snd_seq, 0);
 	mutex_unlock(&vdpa_dev_mutex);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 	err = genlmsg_reply(msg, info);
-	वापस err;
+	return err;
 
 out:
-	nlmsg_मुक्त(msg);
-	वापस err;
-पूर्ण
+	nlmsg_free(msg);
+	return err;
+}
 
-अटल पूर्णांक
-vdpa_nl_cmd_mgmtdev_get_dumpit(काष्ठा sk_buff *msg, काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा vdpa_mgmt_dev *mdev;
-	पूर्णांक start = cb->args[0];
-	पूर्णांक idx = 0;
-	पूर्णांक err;
+static int
+vdpa_nl_cmd_mgmtdev_get_dumpit(struct sk_buff *msg, struct netlink_callback *cb)
+{
+	struct vdpa_mgmt_dev *mdev;
+	int start = cb->args[0];
+	int idx = 0;
+	int err;
 
 	mutex_lock(&vdpa_dev_mutex);
-	list_क्रम_each_entry(mdev, &mdev_head, list) अणु
-		अगर (idx < start) अणु
+	list_for_each_entry(mdev, &mdev_head, list) {
+		if (idx < start) {
 			idx++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		err = vdpa_mgmtdev_fill(mdev, msg, NETLINK_CB(cb->skb).portid,
 					cb->nlh->nlmsg_seq, NLM_F_MULTI);
-		अगर (err)
-			जाओ out;
+		if (err)
+			goto out;
 		idx++;
-	पूर्ण
+	}
 out:
 	mutex_unlock(&vdpa_dev_mutex);
 	cb->args[0] = idx;
-	वापस msg->len;
-पूर्ण
+	return msg->len;
+}
 
-अटल पूर्णांक vdpa_nl_cmd_dev_add_set_करोit(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा vdpa_mgmt_dev *mdev;
-	स्थिर अक्षर *name;
-	पूर्णांक err = 0;
+static int vdpa_nl_cmd_dev_add_set_doit(struct sk_buff *skb, struct genl_info *info)
+{
+	struct vdpa_mgmt_dev *mdev;
+	const char *name;
+	int err = 0;
 
-	अगर (!info->attrs[VDPA_ATTR_DEV_NAME])
-		वापस -EINVAL;
+	if (!info->attrs[VDPA_ATTR_DEV_NAME])
+		return -EINVAL;
 
 	name = nla_data(info->attrs[VDPA_ATTR_DEV_NAME]);
 
 	mutex_lock(&vdpa_dev_mutex);
 	mdev = vdpa_mgmtdev_get_from_attr(info->attrs);
-	अगर (IS_ERR(mdev)) अणु
+	if (IS_ERR(mdev)) {
 		NL_SET_ERR_MSG_MOD(info->extack, "Fail to find the specified management device");
 		err = PTR_ERR(mdev);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	err = mdev->ops->dev_add(mdev, name);
 err:
 	mutex_unlock(&vdpa_dev_mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक vdpa_nl_cmd_dev_del_set_करोit(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा vdpa_mgmt_dev *mdev;
-	काष्ठा vdpa_device *vdev;
-	काष्ठा device *dev;
-	स्थिर अक्षर *name;
-	पूर्णांक err = 0;
+static int vdpa_nl_cmd_dev_del_set_doit(struct sk_buff *skb, struct genl_info *info)
+{
+	struct vdpa_mgmt_dev *mdev;
+	struct vdpa_device *vdev;
+	struct device *dev;
+	const char *name;
+	int err = 0;
 
-	अगर (!info->attrs[VDPA_ATTR_DEV_NAME])
-		वापस -EINVAL;
+	if (!info->attrs[VDPA_ATTR_DEV_NAME])
+		return -EINVAL;
 	name = nla_data(info->attrs[VDPA_ATTR_DEV_NAME]);
 
 	mutex_lock(&vdpa_dev_mutex);
-	dev = bus_find_device(&vdpa_bus, शून्य, name, vdpa_name_match);
-	अगर (!dev) अणु
+	dev = bus_find_device(&vdpa_bus, NULL, name, vdpa_name_match);
+	if (!dev) {
 		NL_SET_ERR_MSG_MOD(info->extack, "device not found");
 		err = -ENODEV;
-		जाओ dev_err;
-	पूर्ण
-	vdev = container_of(dev, काष्ठा vdpa_device, dev);
-	अगर (!vdev->mdev) अणु
+		goto dev_err;
+	}
+	vdev = container_of(dev, struct vdpa_device, dev);
+	if (!vdev->mdev) {
 		NL_SET_ERR_MSG_MOD(info->extack, "Only user created device can be deleted by user");
 		err = -EINVAL;
-		जाओ mdev_err;
-	पूर्ण
+		goto mdev_err;
+	}
 	mdev = vdev->mdev;
 	mdev->ops->dev_del(mdev, vdev);
 mdev_err:
 	put_device(dev);
 dev_err:
 	mutex_unlock(&vdpa_dev_mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-vdpa_dev_fill(काष्ठा vdpa_device *vdev, काष्ठा sk_buff *msg, u32 portid, u32 seq,
-	      पूर्णांक flags, काष्ठा netlink_ext_ack *extack)
-अणु
+static int
+vdpa_dev_fill(struct vdpa_device *vdev, struct sk_buff *msg, u32 portid, u32 seq,
+	      int flags, struct netlink_ext_ack *extack)
+{
 	u16 max_vq_size;
 	u32 device_id;
-	u32 venकरोr_id;
-	व्योम *hdr;
-	पूर्णांक err;
+	u32 vendor_id;
+	void *hdr;
+	int err;
 
 	hdr = genlmsg_put(msg, portid, seq, &vdpa_nl_family, flags, VDPA_CMD_DEV_NEW);
-	अगर (!hdr)
-		वापस -EMSGSIZE;
+	if (!hdr)
+		return -EMSGSIZE;
 
 	err = vdpa_nl_mgmtdev_handle_fill(msg, vdev->mdev);
-	अगर (err)
-		जाओ msg_err;
+	if (err)
+		goto msg_err;
 
 	device_id = vdev->config->get_device_id(vdev);
-	venकरोr_id = vdev->config->get_venकरोr_id(vdev);
+	vendor_id = vdev->config->get_vendor_id(vdev);
 	max_vq_size = vdev->config->get_vq_num_max(vdev);
 
 	err = -EMSGSIZE;
-	अगर (nla_put_string(msg, VDPA_ATTR_DEV_NAME, dev_name(&vdev->dev)))
-		जाओ msg_err;
-	अगर (nla_put_u32(msg, VDPA_ATTR_DEV_ID, device_id))
-		जाओ msg_err;
-	अगर (nla_put_u32(msg, VDPA_ATTR_DEV_VENDOR_ID, venकरोr_id))
-		जाओ msg_err;
-	अगर (nla_put_u32(msg, VDPA_ATTR_DEV_MAX_VQS, vdev->nvqs))
-		जाओ msg_err;
-	अगर (nla_put_u16(msg, VDPA_ATTR_DEV_MAX_VQ_SIZE, max_vq_size))
-		जाओ msg_err;
+	if (nla_put_string(msg, VDPA_ATTR_DEV_NAME, dev_name(&vdev->dev)))
+		goto msg_err;
+	if (nla_put_u32(msg, VDPA_ATTR_DEV_ID, device_id))
+		goto msg_err;
+	if (nla_put_u32(msg, VDPA_ATTR_DEV_VENDOR_ID, vendor_id))
+		goto msg_err;
+	if (nla_put_u32(msg, VDPA_ATTR_DEV_MAX_VQS, vdev->nvqs))
+		goto msg_err;
+	if (nla_put_u16(msg, VDPA_ATTR_DEV_MAX_VQ_SIZE, max_vq_size))
+		goto msg_err;
 
 	genlmsg_end(msg, hdr);
-	वापस 0;
+	return 0;
 
 msg_err:
 	genlmsg_cancel(msg, hdr);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक vdpa_nl_cmd_dev_get_करोit(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा vdpa_device *vdev;
-	काष्ठा sk_buff *msg;
-	स्थिर अक्षर *devname;
-	काष्ठा device *dev;
-	पूर्णांक err;
+static int vdpa_nl_cmd_dev_get_doit(struct sk_buff *skb, struct genl_info *info)
+{
+	struct vdpa_device *vdev;
+	struct sk_buff *msg;
+	const char *devname;
+	struct device *dev;
+	int err;
 
-	अगर (!info->attrs[VDPA_ATTR_DEV_NAME])
-		वापस -EINVAL;
+	if (!info->attrs[VDPA_ATTR_DEV_NAME])
+		return -EINVAL;
 	devname = nla_data(info->attrs[VDPA_ATTR_DEV_NAME]);
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!msg)
-		वापस -ENOMEM;
+	if (!msg)
+		return -ENOMEM;
 
 	mutex_lock(&vdpa_dev_mutex);
-	dev = bus_find_device(&vdpa_bus, शून्य, devname, vdpa_name_match);
-	अगर (!dev) अणु
+	dev = bus_find_device(&vdpa_bus, NULL, devname, vdpa_name_match);
+	if (!dev) {
 		NL_SET_ERR_MSG_MOD(info->extack, "device not found");
 		err = -ENODEV;
-		जाओ err;
-	पूर्ण
-	vdev = container_of(dev, काष्ठा vdpa_device, dev);
-	अगर (!vdev->mdev) अणु
+		goto err;
+	}
+	vdev = container_of(dev, struct vdpa_device, dev);
+	if (!vdev->mdev) {
 		err = -EINVAL;
-		जाओ mdev_err;
-	पूर्ण
+		goto mdev_err;
+	}
 	err = vdpa_dev_fill(vdev, msg, info->snd_portid, info->snd_seq, 0, info->extack);
-	अगर (!err)
+	if (!err)
 		err = genlmsg_reply(msg, info);
 mdev_err:
 	put_device(dev);
 err:
 	mutex_unlock(&vdpa_dev_mutex);
-	अगर (err)
-		nlmsg_मुक्त(msg);
-	वापस err;
-पूर्ण
+	if (err)
+		nlmsg_free(msg);
+	return err;
+}
 
-काष्ठा vdpa_dev_dump_info अणु
-	काष्ठा sk_buff *msg;
-	काष्ठा netlink_callback *cb;
-	पूर्णांक start_idx;
-	पूर्णांक idx;
-पूर्ण;
+struct vdpa_dev_dump_info {
+	struct sk_buff *msg;
+	struct netlink_callback *cb;
+	int start_idx;
+	int idx;
+};
 
-अटल पूर्णांक vdpa_dev_dump(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा vdpa_device *vdev = container_of(dev, काष्ठा vdpa_device, dev);
-	काष्ठा vdpa_dev_dump_info *info = data;
-	पूर्णांक err;
+static int vdpa_dev_dump(struct device *dev, void *data)
+{
+	struct vdpa_device *vdev = container_of(dev, struct vdpa_device, dev);
+	struct vdpa_dev_dump_info *info = data;
+	int err;
 
-	अगर (!vdev->mdev)
-		वापस 0;
-	अगर (info->idx < info->start_idx) अणु
+	if (!vdev->mdev)
+		return 0;
+	if (info->idx < info->start_idx) {
 		info->idx++;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	err = vdpa_dev_fill(vdev, info->msg, NETLINK_CB(info->cb->skb).portid,
 			    info->cb->nlh->nlmsg_seq, NLM_F_MULTI, info->cb->extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	info->idx++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vdpa_nl_cmd_dev_get_dumpit(काष्ठा sk_buff *msg, काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा vdpa_dev_dump_info info;
+static int vdpa_nl_cmd_dev_get_dumpit(struct sk_buff *msg, struct netlink_callback *cb)
+{
+	struct vdpa_dev_dump_info info;
 
 	info.msg = msg;
 	info.cb = cb;
@@ -602,46 +601,46 @@ err:
 	info.idx = 0;
 
 	mutex_lock(&vdpa_dev_mutex);
-	bus_क्रम_each_dev(&vdpa_bus, शून्य, &info, vdpa_dev_dump);
+	bus_for_each_dev(&vdpa_bus, NULL, &info, vdpa_dev_dump);
 	mutex_unlock(&vdpa_dev_mutex);
 	cb->args[0] = info.idx;
-	वापस msg->len;
-पूर्ण
+	return msg->len;
+}
 
-अटल स्थिर काष्ठा nla_policy vdpa_nl_policy[VDPA_ATTR_MAX + 1] = अणु
-	[VDPA_ATTR_MGMTDEV_BUS_NAME] = अणु .type = NLA_NUL_STRING पूर्ण,
-	[VDPA_ATTR_MGMTDEV_DEV_NAME] = अणु .type = NLA_STRING पूर्ण,
-	[VDPA_ATTR_DEV_NAME] = अणु .type = NLA_STRING पूर्ण,
-पूर्ण;
+static const struct nla_policy vdpa_nl_policy[VDPA_ATTR_MAX + 1] = {
+	[VDPA_ATTR_MGMTDEV_BUS_NAME] = { .type = NLA_NUL_STRING },
+	[VDPA_ATTR_MGMTDEV_DEV_NAME] = { .type = NLA_STRING },
+	[VDPA_ATTR_DEV_NAME] = { .type = NLA_STRING },
+};
 
-अटल स्थिर काष्ठा genl_ops vdpa_nl_ops[] = अणु
-	अणु
+static const struct genl_ops vdpa_nl_ops[] = {
+	{
 		.cmd = VDPA_CMD_MGMTDEV_GET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = vdpa_nl_cmd_mgmtdev_get_करोit,
+		.doit = vdpa_nl_cmd_mgmtdev_get_doit,
 		.dumpit = vdpa_nl_cmd_mgmtdev_get_dumpit,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = VDPA_CMD_DEV_NEW,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = vdpa_nl_cmd_dev_add_set_करोit,
+		.doit = vdpa_nl_cmd_dev_add_set_doit,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = VDPA_CMD_DEV_DEL,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = vdpa_nl_cmd_dev_del_set_करोit,
+		.doit = vdpa_nl_cmd_dev_del_set_doit,
 		.flags = GENL_ADMIN_PERM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.cmd = VDPA_CMD_DEV_GET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.करोit = vdpa_nl_cmd_dev_get_करोit,
+		.doit = vdpa_nl_cmd_dev_get_doit,
 		.dumpit = vdpa_nl_cmd_dev_get_dumpit,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा genl_family vdpa_nl_family __ro_after_init = अणु
+static struct genl_family vdpa_nl_family __ro_after_init = {
 	.name = VDPA_GENL_NAME,
 	.version = VDPA_GENL_VERSION,
 	.maxattr = VDPA_ATTR_MAX,
@@ -650,33 +649,33 @@ err:
 	.module = THIS_MODULE,
 	.ops = vdpa_nl_ops,
 	.n_ops = ARRAY_SIZE(vdpa_nl_ops),
-पूर्ण;
+};
 
-अटल पूर्णांक vdpa_init(व्योम)
-अणु
-	पूर्णांक err;
+static int vdpa_init(void)
+{
+	int err;
 
-	err = bus_रेजिस्टर(&vdpa_bus);
-	अगर (err)
-		वापस err;
-	err = genl_रेजिस्टर_family(&vdpa_nl_family);
-	अगर (err)
-		जाओ err;
-	वापस 0;
+	err = bus_register(&vdpa_bus);
+	if (err)
+		return err;
+	err = genl_register_family(&vdpa_nl_family);
+	if (err)
+		goto err;
+	return 0;
 
 err:
-	bus_unरेजिस्टर(&vdpa_bus);
-	वापस err;
-पूर्ण
+	bus_unregister(&vdpa_bus);
+	return err;
+}
 
-अटल व्योम __निकास vdpa_निकास(व्योम)
-अणु
-	genl_unरेजिस्टर_family(&vdpa_nl_family);
-	bus_unरेजिस्टर(&vdpa_bus);
+static void __exit vdpa_exit(void)
+{
+	genl_unregister_family(&vdpa_nl_family);
+	bus_unregister(&vdpa_bus);
 	ida_destroy(&vdpa_index_ida);
-पूर्ण
+}
 core_initcall(vdpa_init);
-module_निकास(vdpa_निकास);
+module_exit(vdpa_exit);
 
 MODULE_AUTHOR("Jason Wang <jasowang@redhat.com>");
 MODULE_LICENSE("GPL v2");

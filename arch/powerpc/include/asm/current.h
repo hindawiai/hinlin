@@ -1,39 +1,38 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-#अगर_अघोषित _ASM_POWERPC_CURRENT_H
-#घोषणा _ASM_POWERPC_CURRENT_H
-#अगर_घोषित __KERNEL__
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#ifndef _ASM_POWERPC_CURRENT_H
+#define _ASM_POWERPC_CURRENT_H
+#ifdef __KERNEL__
 
 /*
  */
 
-काष्ठा task_काष्ठा;
+struct task_struct;
 
-#अगर_घोषित __घातerpc64__
-#समावेश <linux/मानकघोष.स>
-#समावेश <यंत्र/paca.h>
+#ifdef __powerpc64__
+#include <linux/stddef.h>
+#include <asm/paca.h>
 
-अटल अंतरभूत काष्ठा task_काष्ठा *get_current(व्योम)
-अणु
-	काष्ठा task_काष्ठा *task;
+static inline struct task_struct *get_current(void)
+{
+	struct task_struct *task;
 
-	/* get_current can be cached by the compiler, so no अस्थिर */
-	यंत्र ("ld %0,%1(13)"
+	/* get_current can be cached by the compiler, so no volatile */
+	asm ("ld %0,%1(13)"
 	: "=r" (task)
-	: "i" (दुरत्व(काष्ठा paca_काष्ठा, __current)));
+	: "i" (offsetof(struct paca_struct, __current)));
 
-	वापस task;
-पूर्ण
-#घोषणा current	get_current()
+	return task;
+}
+#define current	get_current()
 
-#अन्यथा
+#else
 
 /*
- * We keep `current' in r2 क्रम speed.
+ * We keep `current' in r2 for speed.
  */
-रेजिस्टर काष्ठा task_काष्ठा *current यंत्र ("r2");
+register struct task_struct *current asm ("r2");
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर /* __KERNEL__ */
-#पूर्ण_अगर /* _ASM_POWERPC_CURRENT_H */
+#endif /* __KERNEL__ */
+#endif /* _ASM_POWERPC_CURRENT_H */

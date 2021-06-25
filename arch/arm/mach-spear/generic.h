@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * spear machine family generic header file
  *
@@ -11,37 +10,37 @@
  * warranty of any kind, whether express or implied.
  */
 
-#अगर_अघोषित __MACH_GENERIC_H
-#घोषणा __MACH_GENERIC_H
+#ifndef __MACH_GENERIC_H
+#define __MACH_GENERIC_H
 
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/amba/pl08x.h>
-#समावेश <linux/init.h>
-#समावेश <linux/reboot.h>
+#include <linux/dmaengine.h>
+#include <linux/amba/pl08x.h>
+#include <linux/init.h>
+#include <linux/reboot.h>
 
-#समावेश <यंत्र/mach/समय.स>
+#include <asm/mach/time.h>
 
-बाह्य अस्थिर पूर्णांक spear_pen_release;
+extern volatile int spear_pen_release;
 
-बाह्य व्योम spear13xx_समयr_init(व्योम);
-बाह्य व्योम spear3xx_समयr_init(व्योम);
-बाह्य काष्ठा pl022_ssp_controller pl022_plat_data;
-बाह्य काष्ठा pl08x_platक्रमm_data pl080_plat_data;
+extern void spear13xx_timer_init(void);
+extern void spear3xx_timer_init(void);
+extern struct pl022_ssp_controller pl022_plat_data;
+extern struct pl08x_platform_data pl080_plat_data;
 
-व्योम __init spear_setup_of_समयr(व्योम);
-व्योम __init spear3xx_clk_init(व्योम __iomem *misc_base,
-			      व्योम __iomem *soc_config_base);
-व्योम __init spear3xx_map_io(व्योम);
-व्योम __init spear3xx_dt_init_irq(व्योम);
-व्योम __init spear6xx_clk_init(व्योम __iomem *misc_base);
-व्योम __init spear13xx_map_io(व्योम);
-व्योम __init spear13xx_l2x0_init(व्योम);
+void __init spear_setup_of_timer(void);
+void __init spear3xx_clk_init(void __iomem *misc_base,
+			      void __iomem *soc_config_base);
+void __init spear3xx_map_io(void);
+void __init spear3xx_dt_init_irq(void);
+void __init spear6xx_clk_init(void __iomem *misc_base);
+void __init spear13xx_map_io(void);
+void __init spear13xx_l2x0_init(void);
 
-व्योम spear_restart(क्रमागत reboot_mode, स्थिर अक्षर *);
+void spear_restart(enum reboot_mode, const char *);
 
-व्योम spear13xx_secondary_startup(व्योम);
-व्योम spear13xx_cpu_die(अचिन्हित पूर्णांक cpu);
+void spear13xx_secondary_startup(void);
+void spear13xx_cpu_die(unsigned int cpu);
 
-बाह्य स्थिर काष्ठा smp_operations spear13xx_smp_ops;
+extern const struct smp_operations spear13xx_smp_ops;
 
-#पूर्ण_अगर /* __MACH_GENERIC_H */
+#endif /* __MACH_GENERIC_H */

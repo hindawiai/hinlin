@@ -1,49 +1,48 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित OXYGEN_H_INCLUDED
-#घोषणा OXYGEN_H_INCLUDED
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef OXYGEN_H_INCLUDED
+#define OXYGEN_H_INCLUDED
 
-#समावेश <linux/mutex.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/workqueue.h>
-#समावेश "oxygen_regs.h"
+#include <linux/mutex.h>
+#include <linux/spinlock.h>
+#include <linux/wait.h>
+#include <linux/workqueue.h>
+#include "oxygen_regs.h"
 
 /* 1 << PCM_x == OXYGEN_CHANNEL_x */
-#घोषणा PCM_A		0
-#घोषणा PCM_B		1
-#घोषणा PCM_C		2
-#घोषणा PCM_SPDIF	3
-#घोषणा PCM_MULTICH	4
-#घोषणा PCM_AC97	5
-#घोषणा PCM_COUNT	6
+#define PCM_A		0
+#define PCM_B		1
+#define PCM_C		2
+#define PCM_SPDIF	3
+#define PCM_MULTICH	4
+#define PCM_AC97	5
+#define PCM_COUNT	6
 
-#घोषणा OXYGEN_MCLKS(f_single, f_द्विगुन, f_quad) ((MCLK_##f_single << 0) | \
-						  (MCLK_##f_द्विगुन << 2) | \
+#define OXYGEN_MCLKS(f_single, f_double, f_quad) ((MCLK_##f_single << 0) | \
+						  (MCLK_##f_double << 2) | \
 						  (MCLK_##f_quad   << 4))
 
-#घोषणा OXYGEN_IO_SIZE	0x100
+#define OXYGEN_IO_SIZE	0x100
 
-#घोषणा OXYGEN_EEPROM_ID	0x434d	/* "CM" */
+#define OXYGEN_EEPROM_ID	0x434d	/* "CM" */
 
-/* model-specअगरic configuration of outमाला_दो/inमाला_दो */
-#घोषणा PLAYBACK_0_TO_I2S	0x0001
+/* model-specific configuration of outputs/inputs */
+#define PLAYBACK_0_TO_I2S	0x0001
      /* PLAYBACK_0_TO_AC97_0		not implemented */
-#घोषणा PLAYBACK_1_TO_SPDIF	0x0004
-#घोषणा PLAYBACK_2_TO_AC97_1	0x0008
-#घोषणा CAPTURE_0_FROM_I2S_1	0x0010
-#घोषणा CAPTURE_0_FROM_I2S_2	0x0020
+#define PLAYBACK_1_TO_SPDIF	0x0004
+#define PLAYBACK_2_TO_AC97_1	0x0008
+#define CAPTURE_0_FROM_I2S_1	0x0010
+#define CAPTURE_0_FROM_I2S_2	0x0020
      /* CAPTURE_0_FROM_AC97_0		not implemented */
-#घोषणा CAPTURE_1_FROM_SPDIF	0x0080
-#घोषणा CAPTURE_2_FROM_I2S_2	0x0100
-#घोषणा CAPTURE_2_FROM_AC97_1	0x0200
-#घोषणा CAPTURE_3_FROM_I2S_3	0x0400
-#घोषणा MIDI_OUTPUT		0x0800
-#घोषणा MIDI_INPUT		0x1000
-#घोषणा AC97_CD_INPUT		0x2000
-#घोषणा AC97_FMIC_SWITCH	0x4000
+#define CAPTURE_1_FROM_SPDIF	0x0080
+#define CAPTURE_2_FROM_I2S_2	0x0100
+#define CAPTURE_2_FROM_AC97_1	0x0200
+#define CAPTURE_3_FROM_I2S_3	0x0400
+#define MIDI_OUTPUT		0x0800
+#define MIDI_INPUT		0x1000
+#define AC97_CD_INPUT		0x2000
+#define AC97_FMIC_SWITCH	0x4000
 
-क्रमागत अणु
+enum {
 	CONTROL_SPDIF_PCM,
 	CONTROL_SPDIF_INPUT_BITS,
 	CONTROL_MIC_CAPTURE_SWITCH,
@@ -51,60 +50,60 @@
 	CONTROL_CD_CAPTURE_SWITCH,
 	CONTROL_AUX_CAPTURE_SWITCH,
 	CONTROL_COUNT
-पूर्ण;
+};
 
-#घोषणा OXYGEN_PCI_SUBID(sv, sd) \
-	.venकरोr = PCI_VENDOR_ID_CMEDIA, \
+#define OXYGEN_PCI_SUBID(sv, sd) \
+	.vendor = PCI_VENDOR_ID_CMEDIA, \
 	.device = 0x8788, \
-	.subvenकरोr = sv, \
+	.subvendor = sv, \
 	.subdevice = sd
 
-#घोषणा BROKEN_EEPROM_DRIVER_DATA ((अचिन्हित दीर्घ)-1)
-#घोषणा OXYGEN_PCI_SUBID_BROKEN_EEPROM \
+#define BROKEN_EEPROM_DRIVER_DATA ((unsigned long)-1)
+#define OXYGEN_PCI_SUBID_BROKEN_EEPROM \
 	OXYGEN_PCI_SUBID(PCI_VENDOR_ID_CMEDIA, 0x8788), \
 	.driver_data = BROKEN_EEPROM_DRIVER_DATA
 
-काष्ठा pci_dev;
-काष्ठा pci_device_id;
-काष्ठा snd_card;
-काष्ठा snd_pcm_substream;
-काष्ठा snd_pcm_hardware;
-काष्ठा snd_pcm_hw_params;
-काष्ठा snd_kcontrol_new;
-काष्ठा snd_rawmidi;
-काष्ठा snd_info_buffer;
-काष्ठा oxygen;
+struct pci_dev;
+struct pci_device_id;
+struct snd_card;
+struct snd_pcm_substream;
+struct snd_pcm_hardware;
+struct snd_pcm_hw_params;
+struct snd_kcontrol_new;
+struct snd_rawmidi;
+struct snd_info_buffer;
+struct oxygen;
 
-काष्ठा oxygen_model अणु
-	स्थिर अक्षर *लघुname;
-	स्थिर अक्षर *दीर्घname;
-	स्थिर अक्षर *chip;
-	व्योम (*init)(काष्ठा oxygen *chip);
-	पूर्णांक (*control_filter)(काष्ठा snd_kcontrol_new *ढाँचा);
-	पूर्णांक (*mixer_init)(काष्ठा oxygen *chip);
-	व्योम (*cleanup)(काष्ठा oxygen *chip);
-	व्योम (*suspend)(काष्ठा oxygen *chip);
-	व्योम (*resume)(काष्ठा oxygen *chip);
-	व्योम (*pcm_hardware_filter)(अचिन्हित पूर्णांक channel,
-				    काष्ठा snd_pcm_hardware *hardware);
-	व्योम (*set_dac_params)(काष्ठा oxygen *chip,
-			       काष्ठा snd_pcm_hw_params *params);
-	व्योम (*set_adc_params)(काष्ठा oxygen *chip,
-			       काष्ठा snd_pcm_hw_params *params);
-	व्योम (*update_dac_volume)(काष्ठा oxygen *chip);
-	व्योम (*update_dac_mute)(काष्ठा oxygen *chip);
-	व्योम (*update_center_lfe_mix)(काष्ठा oxygen *chip, bool mixed);
-	अचिन्हित पूर्णांक (*adjust_dac_routing)(काष्ठा oxygen *chip,
-					   अचिन्हित पूर्णांक play_routing);
-	व्योम (*gpio_changed)(काष्ठा oxygen *chip);
-	व्योम (*uart_input)(काष्ठा oxygen *chip);
-	व्योम (*ac97_चयन)(काष्ठा oxygen *chip,
-			    अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक mute);
-	व्योम (*dump_रेजिस्टरs)(काष्ठा oxygen *chip,
-			       काष्ठा snd_info_buffer *buffer);
-	स्थिर अचिन्हित पूर्णांक *dac_tlv;
-	माप_प्रकार model_data_size;
-	अचिन्हित पूर्णांक device_config;
+struct oxygen_model {
+	const char *shortname;
+	const char *longname;
+	const char *chip;
+	void (*init)(struct oxygen *chip);
+	int (*control_filter)(struct snd_kcontrol_new *template);
+	int (*mixer_init)(struct oxygen *chip);
+	void (*cleanup)(struct oxygen *chip);
+	void (*suspend)(struct oxygen *chip);
+	void (*resume)(struct oxygen *chip);
+	void (*pcm_hardware_filter)(unsigned int channel,
+				    struct snd_pcm_hardware *hardware);
+	void (*set_dac_params)(struct oxygen *chip,
+			       struct snd_pcm_hw_params *params);
+	void (*set_adc_params)(struct oxygen *chip,
+			       struct snd_pcm_hw_params *params);
+	void (*update_dac_volume)(struct oxygen *chip);
+	void (*update_dac_mute)(struct oxygen *chip);
+	void (*update_center_lfe_mix)(struct oxygen *chip, bool mixed);
+	unsigned int (*adjust_dac_routing)(struct oxygen *chip,
+					   unsigned int play_routing);
+	void (*gpio_changed)(struct oxygen *chip);
+	void (*uart_input)(struct oxygen *chip);
+	void (*ac97_switch)(struct oxygen *chip,
+			    unsigned int reg, unsigned int mute);
+	void (*dump_registers)(struct oxygen *chip,
+			       struct snd_info_buffer *buffer);
+	const unsigned int *dac_tlv;
+	size_t model_data_size;
+	unsigned int device_config;
 	u8 dac_channels_pcm;
 	u8 dac_channels_mixer;
 	u8 dac_volume_min;
@@ -113,149 +112,149 @@
 	u8 function_flags;
 	u8 dac_mclks;
 	u8 adc_mclks;
-	u16 dac_i2s_क्रमmat;
-	u16 adc_i2s_क्रमmat;
-पूर्ण;
+	u16 dac_i2s_format;
+	u16 adc_i2s_format;
+};
 
-काष्ठा oxygen अणु
-	अचिन्हित दीर्घ addr;
+struct oxygen {
+	unsigned long addr;
 	spinlock_t reg_lock;
-	काष्ठा mutex mutex;
-	काष्ठा snd_card *card;
-	काष्ठा pci_dev *pci;
-	काष्ठा snd_rawmidi *midi;
-	पूर्णांक irq;
-	व्योम *model_data;
-	अचिन्हित पूर्णांक पूर्णांकerrupt_mask;
+	struct mutex mutex;
+	struct snd_card *card;
+	struct pci_dev *pci;
+	struct snd_rawmidi *midi;
+	int irq;
+	void *model_data;
+	unsigned int interrupt_mask;
 	u8 dac_volume[8];
 	u8 dac_mute;
 	u8 pcm_active;
 	u8 pcm_running;
 	u8 dac_routing;
-	u8 spdअगर_playback_enable;
+	u8 spdif_playback_enable;
 	u8 has_ac97_0;
 	u8 has_ac97_1;
-	u32 spdअगर_bits;
-	u32 spdअगर_pcm_bits;
-	काष्ठा snd_pcm_substream *streams[PCM_COUNT];
-	काष्ठा snd_kcontrol *controls[CONTROL_COUNT];
-	काष्ठा work_काष्ठा spdअगर_input_bits_work;
-	काष्ठा work_काष्ठा gpio_work;
-	रुको_queue_head_t ac97_रुकोqueue;
-	जोड़ अणु
+	u32 spdif_bits;
+	u32 spdif_pcm_bits;
+	struct snd_pcm_substream *streams[PCM_COUNT];
+	struct snd_kcontrol *controls[CONTROL_COUNT];
+	struct work_struct spdif_input_bits_work;
+	struct work_struct gpio_work;
+	wait_queue_head_t ac97_waitqueue;
+	union {
 		u8 _8[OXYGEN_IO_SIZE];
 		__le16 _16[OXYGEN_IO_SIZE / 2];
 		__le32 _32[OXYGEN_IO_SIZE / 4];
-	पूर्ण saved_रेजिस्टरs;
-	u16 saved_ac97_रेजिस्टरs[2][0x40];
-	अचिन्हित पूर्णांक uart_input_count;
+	} saved_registers;
+	u16 saved_ac97_registers[2][0x40];
+	unsigned int uart_input_count;
 	u8 uart_input[32];
-	काष्ठा oxygen_model model;
-पूर्ण;
+	struct oxygen_model model;
+};
 
 /* oxygen_lib.c */
 
-पूर्णांक oxygen_pci_probe(काष्ठा pci_dev *pci, पूर्णांक index, अक्षर *id,
-		     काष्ठा module *owner,
-		     स्थिर काष्ठा pci_device_id *ids,
-		     पूर्णांक (*get_model)(काष्ठा oxygen *chip,
-				      स्थिर काष्ठा pci_device_id *id
+int oxygen_pci_probe(struct pci_dev *pci, int index, char *id,
+		     struct module *owner,
+		     const struct pci_device_id *ids,
+		     int (*get_model)(struct oxygen *chip,
+				      const struct pci_device_id *id
 				     )
 		    );
-व्योम oxygen_pci_हटाओ(काष्ठा pci_dev *pci);
-#अगर_घोषित CONFIG_PM_SLEEP
-बाह्य स्थिर काष्ठा dev_pm_ops oxygen_pci_pm;
-#पूर्ण_अगर
-व्योम oxygen_pci_shutकरोwn(काष्ठा pci_dev *pci);
+void oxygen_pci_remove(struct pci_dev *pci);
+#ifdef CONFIG_PM_SLEEP
+extern const struct dev_pm_ops oxygen_pci_pm;
+#endif
+void oxygen_pci_shutdown(struct pci_dev *pci);
 
 /* oxygen_mixer.c */
 
-पूर्णांक oxygen_mixer_init(काष्ठा oxygen *chip);
-व्योम oxygen_update_dac_routing(काष्ठा oxygen *chip);
-व्योम oxygen_update_spdअगर_source(काष्ठा oxygen *chip);
+int oxygen_mixer_init(struct oxygen *chip);
+void oxygen_update_dac_routing(struct oxygen *chip);
+void oxygen_update_spdif_source(struct oxygen *chip);
 
 /* oxygen_pcm.c */
 
-पूर्णांक oxygen_pcm_init(काष्ठा oxygen *chip);
+int oxygen_pcm_init(struct oxygen *chip);
 
 /* oxygen_io.c */
 
-u8 oxygen_पढ़ो8(काष्ठा oxygen *chip, अचिन्हित पूर्णांक reg);
-u16 oxygen_पढ़ो16(काष्ठा oxygen *chip, अचिन्हित पूर्णांक reg);
-u32 oxygen_पढ़ो32(काष्ठा oxygen *chip, अचिन्हित पूर्णांक reg);
-व्योम oxygen_ग_लिखो8(काष्ठा oxygen *chip, अचिन्हित पूर्णांक reg, u8 value);
-व्योम oxygen_ग_लिखो16(काष्ठा oxygen *chip, अचिन्हित पूर्णांक reg, u16 value);
-व्योम oxygen_ग_लिखो32(काष्ठा oxygen *chip, अचिन्हित पूर्णांक reg, u32 value);
-व्योम oxygen_ग_लिखो8_masked(काष्ठा oxygen *chip, अचिन्हित पूर्णांक reg,
+u8 oxygen_read8(struct oxygen *chip, unsigned int reg);
+u16 oxygen_read16(struct oxygen *chip, unsigned int reg);
+u32 oxygen_read32(struct oxygen *chip, unsigned int reg);
+void oxygen_write8(struct oxygen *chip, unsigned int reg, u8 value);
+void oxygen_write16(struct oxygen *chip, unsigned int reg, u16 value);
+void oxygen_write32(struct oxygen *chip, unsigned int reg, u32 value);
+void oxygen_write8_masked(struct oxygen *chip, unsigned int reg,
 			  u8 value, u8 mask);
-व्योम oxygen_ग_लिखो16_masked(काष्ठा oxygen *chip, अचिन्हित पूर्णांक reg,
+void oxygen_write16_masked(struct oxygen *chip, unsigned int reg,
 			   u16 value, u16 mask);
-व्योम oxygen_ग_लिखो32_masked(काष्ठा oxygen *chip, अचिन्हित पूर्णांक reg,
+void oxygen_write32_masked(struct oxygen *chip, unsigned int reg,
 			   u32 value, u32 mask);
 
-u16 oxygen_पढ़ो_ac97(काष्ठा oxygen *chip, अचिन्हित पूर्णांक codec,
-		     अचिन्हित पूर्णांक index);
-व्योम oxygen_ग_लिखो_ac97(काष्ठा oxygen *chip, अचिन्हित पूर्णांक codec,
-		       अचिन्हित पूर्णांक index, u16 data);
-व्योम oxygen_ग_लिखो_ac97_masked(काष्ठा oxygen *chip, अचिन्हित पूर्णांक codec,
-			      अचिन्हित पूर्णांक index, u16 data, u16 mask);
+u16 oxygen_read_ac97(struct oxygen *chip, unsigned int codec,
+		     unsigned int index);
+void oxygen_write_ac97(struct oxygen *chip, unsigned int codec,
+		       unsigned int index, u16 data);
+void oxygen_write_ac97_masked(struct oxygen *chip, unsigned int codec,
+			      unsigned int index, u16 data, u16 mask);
 
-पूर्णांक oxygen_ग_लिखो_spi(काष्ठा oxygen *chip, u8 control, अचिन्हित पूर्णांक data);
-व्योम oxygen_ग_लिखो_i2c(काष्ठा oxygen *chip, u8 device, u8 map, u8 data);
+int oxygen_write_spi(struct oxygen *chip, u8 control, unsigned int data);
+void oxygen_write_i2c(struct oxygen *chip, u8 device, u8 map, u8 data);
 
-व्योम oxygen_reset_uart(काष्ठा oxygen *chip);
-व्योम oxygen_ग_लिखो_uart(काष्ठा oxygen *chip, u8 data);
+void oxygen_reset_uart(struct oxygen *chip);
+void oxygen_write_uart(struct oxygen *chip, u8 data);
 
-u16 oxygen_पढ़ो_eeprom(काष्ठा oxygen *chip, अचिन्हित पूर्णांक index);
-व्योम oxygen_ग_लिखो_eeprom(काष्ठा oxygen *chip, अचिन्हित पूर्णांक index, u16 value);
+u16 oxygen_read_eeprom(struct oxygen *chip, unsigned int index);
+void oxygen_write_eeprom(struct oxygen *chip, unsigned int index, u16 value);
 
-अटल अंतरभूत व्योम oxygen_set_bits8(काष्ठा oxygen *chip,
-				    अचिन्हित पूर्णांक reg, u8 value)
-अणु
-	oxygen_ग_लिखो8_masked(chip, reg, value, value);
-पूर्ण
+static inline void oxygen_set_bits8(struct oxygen *chip,
+				    unsigned int reg, u8 value)
+{
+	oxygen_write8_masked(chip, reg, value, value);
+}
 
-अटल अंतरभूत व्योम oxygen_set_bits16(काष्ठा oxygen *chip,
-				     अचिन्हित पूर्णांक reg, u16 value)
-अणु
-	oxygen_ग_लिखो16_masked(chip, reg, value, value);
-पूर्ण
+static inline void oxygen_set_bits16(struct oxygen *chip,
+				     unsigned int reg, u16 value)
+{
+	oxygen_write16_masked(chip, reg, value, value);
+}
 
-अटल अंतरभूत व्योम oxygen_set_bits32(काष्ठा oxygen *chip,
-				     अचिन्हित पूर्णांक reg, u32 value)
-अणु
-	oxygen_ग_लिखो32_masked(chip, reg, value, value);
-पूर्ण
+static inline void oxygen_set_bits32(struct oxygen *chip,
+				     unsigned int reg, u32 value)
+{
+	oxygen_write32_masked(chip, reg, value, value);
+}
 
-अटल अंतरभूत व्योम oxygen_clear_bits8(काष्ठा oxygen *chip,
-				      अचिन्हित पूर्णांक reg, u8 value)
-अणु
-	oxygen_ग_लिखो8_masked(chip, reg, 0, value);
-पूर्ण
+static inline void oxygen_clear_bits8(struct oxygen *chip,
+				      unsigned int reg, u8 value)
+{
+	oxygen_write8_masked(chip, reg, 0, value);
+}
 
-अटल अंतरभूत व्योम oxygen_clear_bits16(काष्ठा oxygen *chip,
-				       अचिन्हित पूर्णांक reg, u16 value)
-अणु
-	oxygen_ग_लिखो16_masked(chip, reg, 0, value);
-पूर्ण
+static inline void oxygen_clear_bits16(struct oxygen *chip,
+				       unsigned int reg, u16 value)
+{
+	oxygen_write16_masked(chip, reg, 0, value);
+}
 
-अटल अंतरभूत व्योम oxygen_clear_bits32(काष्ठा oxygen *chip,
-				       अचिन्हित पूर्णांक reg, u32 value)
-अणु
-	oxygen_ग_लिखो32_masked(chip, reg, 0, value);
-पूर्ण
+static inline void oxygen_clear_bits32(struct oxygen *chip,
+				       unsigned int reg, u32 value)
+{
+	oxygen_write32_masked(chip, reg, 0, value);
+}
 
-अटल अंतरभूत व्योम oxygen_ac97_set_bits(काष्ठा oxygen *chip, अचिन्हित पूर्णांक codec,
-					अचिन्हित पूर्णांक index, u16 value)
-अणु
-	oxygen_ग_लिखो_ac97_masked(chip, codec, index, value, value);
-पूर्ण
+static inline void oxygen_ac97_set_bits(struct oxygen *chip, unsigned int codec,
+					unsigned int index, u16 value)
+{
+	oxygen_write_ac97_masked(chip, codec, index, value, value);
+}
 
-अटल अंतरभूत व्योम oxygen_ac97_clear_bits(काष्ठा oxygen *chip,
-					  अचिन्हित पूर्णांक codec,
-					  अचिन्हित पूर्णांक index, u16 value)
-अणु
-	oxygen_ग_लिखो_ac97_masked(chip, codec, index, 0, value);
-पूर्ण
+static inline void oxygen_ac97_clear_bits(struct oxygen *chip,
+					  unsigned int codec,
+					  unsigned int index, u16 value)
+{
+	oxygen_write_ac97_masked(chip, codec, index, 0, value);
+}
 
-#पूर्ण_अगर
+#endif

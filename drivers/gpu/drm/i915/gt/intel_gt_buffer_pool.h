@@ -1,44 +1,43 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2014-2018 Intel Corporation
+ * Copyright © 2014-2018 Intel Corporation
  */
 
-#अगर_अघोषित INTEL_GT_BUFFER_POOL_H
-#घोषणा INTEL_GT_BUFFER_POOL_H
+#ifndef INTEL_GT_BUFFER_POOL_H
+#define INTEL_GT_BUFFER_POOL_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#समावेश "i915_active.h"
-#समावेश "intel_gt_buffer_pool_types.h"
+#include "i915_active.h"
+#include "intel_gt_buffer_pool_types.h"
 
-काष्ठा पूर्णांकel_gt;
-काष्ठा i915_request;
+struct intel_gt;
+struct i915_request;
 
-काष्ठा पूर्णांकel_gt_buffer_pool_node *
-पूर्णांकel_gt_get_buffer_pool(काष्ठा पूर्णांकel_gt *gt, माप_प्रकार size,
-			 क्रमागत i915_map_type type);
+struct intel_gt_buffer_pool_node *
+intel_gt_get_buffer_pool(struct intel_gt *gt, size_t size,
+			 enum i915_map_type type);
 
-व्योम पूर्णांकel_gt_buffer_pool_mark_used(काष्ठा पूर्णांकel_gt_buffer_pool_node *node);
+void intel_gt_buffer_pool_mark_used(struct intel_gt_buffer_pool_node *node);
 
-अटल अंतरभूत पूर्णांक
-पूर्णांकel_gt_buffer_pool_mark_active(काष्ठा पूर्णांकel_gt_buffer_pool_node *node,
-				 काष्ठा i915_request *rq)
-अणु
+static inline int
+intel_gt_buffer_pool_mark_active(struct intel_gt_buffer_pool_node *node,
+				 struct i915_request *rq)
+{
 	/* did we call mark_used? */
 	GEM_WARN_ON(!node->pinned);
 
-	वापस i915_active_add_request(&node->active, rq);
-पूर्ण
+	return i915_active_add_request(&node->active, rq);
+}
 
-अटल अंतरभूत व्योम
-पूर्णांकel_gt_buffer_pool_put(काष्ठा पूर्णांकel_gt_buffer_pool_node *node)
-अणु
+static inline void
+intel_gt_buffer_pool_put(struct intel_gt_buffer_pool_node *node)
+{
 	i915_active_release(&node->active);
-पूर्ण
+}
 
-व्योम पूर्णांकel_gt_init_buffer_pool(काष्ठा पूर्णांकel_gt *gt);
-व्योम पूर्णांकel_gt_flush_buffer_pool(काष्ठा पूर्णांकel_gt *gt);
-व्योम पूर्णांकel_gt_fini_buffer_pool(काष्ठा पूर्णांकel_gt *gt);
+void intel_gt_init_buffer_pool(struct intel_gt *gt);
+void intel_gt_flush_buffer_pool(struct intel_gt *gt);
+void intel_gt_fini_buffer_pool(struct intel_gt *gt);
 
-#पूर्ण_अगर /* INTEL_GT_BUFFER_POOL_H */
+#endif /* INTEL_GT_BUFFER_POOL_H */

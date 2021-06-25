@@ -1,222 +1,221 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2014 Intel Corporation
  *
- * Adjustable fractional भागider घड़ी implementation.
+ * Adjustable fractional divider clock implementation.
  * Output rate = (m / n) * parent_rate.
  * Uses rational best approximation algorithm.
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/rational.h>
+#include <linux/clk-provider.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/slab.h>
+#include <linux/rational.h>
 
-अटल अंतरभूत u32 clk_fd_पढ़ोl(काष्ठा clk_fractional_भागider *fd)
-अणु
-	अगर (fd->flags & CLK_FRAC_DIVIDER_BIG_ENDIAN)
-		वापस ioपढ़ो32be(fd->reg);
+static inline u32 clk_fd_readl(struct clk_fractional_divider *fd)
+{
+	if (fd->flags & CLK_FRAC_DIVIDER_BIG_ENDIAN)
+		return ioread32be(fd->reg);
 
-	वापस पढ़ोl(fd->reg);
-पूर्ण
+	return readl(fd->reg);
+}
 
-अटल अंतरभूत व्योम clk_fd_ग_लिखोl(काष्ठा clk_fractional_भागider *fd, u32 val)
-अणु
-	अगर (fd->flags & CLK_FRAC_DIVIDER_BIG_ENDIAN)
-		ioग_लिखो32be(val, fd->reg);
-	अन्यथा
-		ग_लिखोl(val, fd->reg);
-पूर्ण
+static inline void clk_fd_writel(struct clk_fractional_divider *fd, u32 val)
+{
+	if (fd->flags & CLK_FRAC_DIVIDER_BIG_ENDIAN)
+		iowrite32be(val, fd->reg);
+	else
+		writel(val, fd->reg);
+}
 
-अटल अचिन्हित दीर्घ clk_fd_recalc_rate(काष्ठा clk_hw *hw,
-					अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_fractional_भागider *fd = to_clk_fd(hw);
-	अचिन्हित दीर्घ flags = 0;
-	अचिन्हित दीर्घ m, n;
+static unsigned long clk_fd_recalc_rate(struct clk_hw *hw,
+					unsigned long parent_rate)
+{
+	struct clk_fractional_divider *fd = to_clk_fd(hw);
+	unsigned long flags = 0;
+	unsigned long m, n;
 	u32 val;
 	u64 ret;
 
-	अगर (fd->lock)
+	if (fd->lock)
 		spin_lock_irqsave(fd->lock, flags);
-	अन्यथा
+	else
 		__acquire(fd->lock);
 
-	val = clk_fd_पढ़ोl(fd);
+	val = clk_fd_readl(fd);
 
-	अगर (fd->lock)
+	if (fd->lock)
 		spin_unlock_irqrestore(fd->lock, flags);
-	अन्यथा
+	else
 		__release(fd->lock);
 
-	m = (val & fd->mmask) >> fd->mshअगरt;
-	n = (val & fd->nmask) >> fd->nshअगरt;
+	m = (val & fd->mmask) >> fd->mshift;
+	n = (val & fd->nmask) >> fd->nshift;
 
-	अगर (fd->flags & CLK_FRAC_DIVIDER_ZERO_BASED) अणु
+	if (fd->flags & CLK_FRAC_DIVIDER_ZERO_BASED) {
 		m++;
 		n++;
-	पूर्ण
+	}
 
-	अगर (!n || !m)
-		वापस parent_rate;
+	if (!n || !m)
+		return parent_rate;
 
 	ret = (u64)parent_rate * m;
-	करो_भाग(ret, n);
+	do_div(ret, n);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम clk_fd_general_approximation(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-					 अचिन्हित दीर्घ *parent_rate,
-					 अचिन्हित दीर्घ *m, अचिन्हित दीर्घ *n)
-अणु
-	काष्ठा clk_fractional_भागider *fd = to_clk_fd(hw);
-	अचिन्हित दीर्घ scale;
+static void clk_fd_general_approximation(struct clk_hw *hw, unsigned long rate,
+					 unsigned long *parent_rate,
+					 unsigned long *m, unsigned long *n)
+{
+	struct clk_fractional_divider *fd = to_clk_fd(hw);
+	unsigned long scale;
 
 	/*
-	 * Get rate बंदr to *parent_rate to guarantee there is no overflow
-	 * क्रम m and n. In the result it will be the nearest rate left shअगरted
+	 * Get rate closer to *parent_rate to guarantee there is no overflow
+	 * for m and n. In the result it will be the nearest rate left shifted
 	 * by (scale - fd->nwidth) bits.
 	 */
-	scale = fls_दीर्घ(*parent_rate / rate - 1);
-	अगर (scale > fd->nwidth)
+	scale = fls_long(*parent_rate / rate - 1);
+	if (scale > fd->nwidth)
 		rate <<= scale - fd->nwidth;
 
 	rational_best_approximation(rate, *parent_rate,
 			GENMASK(fd->mwidth - 1, 0), GENMASK(fd->nwidth - 1, 0),
 			m, n);
-पूर्ण
+}
 
-अटल दीर्घ clk_fd_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			      अचिन्हित दीर्घ *parent_rate)
-अणु
-	काष्ठा clk_fractional_भागider *fd = to_clk_fd(hw);
-	अचिन्हित दीर्घ m, n;
+static long clk_fd_round_rate(struct clk_hw *hw, unsigned long rate,
+			      unsigned long *parent_rate)
+{
+	struct clk_fractional_divider *fd = to_clk_fd(hw);
+	unsigned long m, n;
 	u64 ret;
 
-	अगर (!rate || (!clk_hw_can_set_rate_parent(hw) && rate >= *parent_rate))
-		वापस *parent_rate;
+	if (!rate || (!clk_hw_can_set_rate_parent(hw) && rate >= *parent_rate))
+		return *parent_rate;
 
-	अगर (fd->approximation)
+	if (fd->approximation)
 		fd->approximation(hw, rate, parent_rate, &m, &n);
-	अन्यथा
+	else
 		clk_fd_general_approximation(hw, rate, parent_rate, &m, &n);
 
 	ret = (u64)*parent_rate * m;
-	करो_भाग(ret, n);
+	do_div(ret, n);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक clk_fd_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			   अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_fractional_भागider *fd = to_clk_fd(hw);
-	अचिन्हित दीर्घ flags = 0;
-	अचिन्हित दीर्घ m, n;
+static int clk_fd_set_rate(struct clk_hw *hw, unsigned long rate,
+			   unsigned long parent_rate)
+{
+	struct clk_fractional_divider *fd = to_clk_fd(hw);
+	unsigned long flags = 0;
+	unsigned long m, n;
 	u32 val;
 
 	rational_best_approximation(rate, parent_rate,
 			GENMASK(fd->mwidth - 1, 0), GENMASK(fd->nwidth - 1, 0),
 			&m, &n);
 
-	अगर (fd->flags & CLK_FRAC_DIVIDER_ZERO_BASED) अणु
+	if (fd->flags & CLK_FRAC_DIVIDER_ZERO_BASED) {
 		m--;
 		n--;
-	पूर्ण
+	}
 
-	अगर (fd->lock)
+	if (fd->lock)
 		spin_lock_irqsave(fd->lock, flags);
-	अन्यथा
+	else
 		__acquire(fd->lock);
 
-	val = clk_fd_पढ़ोl(fd);
+	val = clk_fd_readl(fd);
 	val &= ~(fd->mmask | fd->nmask);
-	val |= (m << fd->mshअगरt) | (n << fd->nshअगरt);
-	clk_fd_ग_लिखोl(fd, val);
+	val |= (m << fd->mshift) | (n << fd->nshift);
+	clk_fd_writel(fd, val);
 
-	अगर (fd->lock)
+	if (fd->lock)
 		spin_unlock_irqrestore(fd->lock, flags);
-	अन्यथा
+	else
 		__release(fd->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा clk_ops clk_fractional_भागider_ops = अणु
+const struct clk_ops clk_fractional_divider_ops = {
 	.recalc_rate = clk_fd_recalc_rate,
 	.round_rate = clk_fd_round_rate,
 	.set_rate = clk_fd_set_rate,
-पूर्ण;
-EXPORT_SYMBOL_GPL(clk_fractional_भागider_ops);
+};
+EXPORT_SYMBOL_GPL(clk_fractional_divider_ops);
 
-काष्ठा clk_hw *clk_hw_रेजिस्टर_fractional_भागider(काष्ठा device *dev,
-		स्थिर अक्षर *name, स्थिर अक्षर *parent_name, अचिन्हित दीर्घ flags,
-		व्योम __iomem *reg, u8 mshअगरt, u8 mwidth, u8 nshअगरt, u8 nwidth,
-		u8 clk_भागider_flags, spinlock_t *lock)
-अणु
-	काष्ठा clk_fractional_भागider *fd;
-	काष्ठा clk_init_data init;
-	काष्ठा clk_hw *hw;
-	पूर्णांक ret;
+struct clk_hw *clk_hw_register_fractional_divider(struct device *dev,
+		const char *name, const char *parent_name, unsigned long flags,
+		void __iomem *reg, u8 mshift, u8 mwidth, u8 nshift, u8 nwidth,
+		u8 clk_divider_flags, spinlock_t *lock)
+{
+	struct clk_fractional_divider *fd;
+	struct clk_init_data init;
+	struct clk_hw *hw;
+	int ret;
 
-	fd = kzalloc(माप(*fd), GFP_KERNEL);
-	अगर (!fd)
-		वापस ERR_PTR(-ENOMEM);
+	fd = kzalloc(sizeof(*fd), GFP_KERNEL);
+	if (!fd)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
-	init.ops = &clk_fractional_भागider_ops;
+	init.ops = &clk_fractional_divider_ops;
 	init.flags = flags;
-	init.parent_names = parent_name ? &parent_name : शून्य;
+	init.parent_names = parent_name ? &parent_name : NULL;
 	init.num_parents = parent_name ? 1 : 0;
 
 	fd->reg = reg;
-	fd->mshअगरt = mshअगरt;
+	fd->mshift = mshift;
 	fd->mwidth = mwidth;
-	fd->mmask = GENMASK(mwidth - 1, 0) << mshअगरt;
-	fd->nshअगरt = nshअगरt;
+	fd->mmask = GENMASK(mwidth - 1, 0) << mshift;
+	fd->nshift = nshift;
 	fd->nwidth = nwidth;
-	fd->nmask = GENMASK(nwidth - 1, 0) << nshअगरt;
-	fd->flags = clk_भागider_flags;
+	fd->nmask = GENMASK(nwidth - 1, 0) << nshift;
+	fd->flags = clk_divider_flags;
 	fd->lock = lock;
 	fd->hw.init = &init;
 
 	hw = &fd->hw;
-	ret = clk_hw_रेजिस्टर(dev, hw);
-	अगर (ret) अणु
-		kमुक्त(fd);
+	ret = clk_hw_register(dev, hw);
+	if (ret) {
+		kfree(fd);
 		hw = ERR_PTR(ret);
-	पूर्ण
+	}
 
-	वापस hw;
-पूर्ण
-EXPORT_SYMBOL_GPL(clk_hw_रेजिस्टर_fractional_भागider);
+	return hw;
+}
+EXPORT_SYMBOL_GPL(clk_hw_register_fractional_divider);
 
-काष्ठा clk *clk_रेजिस्टर_fractional_भागider(काष्ठा device *dev,
-		स्थिर अक्षर *name, स्थिर अक्षर *parent_name, अचिन्हित दीर्घ flags,
-		व्योम __iomem *reg, u8 mshअगरt, u8 mwidth, u8 nshअगरt, u8 nwidth,
-		u8 clk_भागider_flags, spinlock_t *lock)
-अणु
-	काष्ठा clk_hw *hw;
+struct clk *clk_register_fractional_divider(struct device *dev,
+		const char *name, const char *parent_name, unsigned long flags,
+		void __iomem *reg, u8 mshift, u8 mwidth, u8 nshift, u8 nwidth,
+		u8 clk_divider_flags, spinlock_t *lock)
+{
+	struct clk_hw *hw;
 
-	hw = clk_hw_रेजिस्टर_fractional_भागider(dev, name, parent_name, flags,
-			reg, mshअगरt, mwidth, nshअगरt, nwidth, clk_भागider_flags,
+	hw = clk_hw_register_fractional_divider(dev, name, parent_name, flags,
+			reg, mshift, mwidth, nshift, nwidth, clk_divider_flags,
 			lock);
-	अगर (IS_ERR(hw))
-		वापस ERR_CAST(hw);
-	वापस hw->clk;
-पूर्ण
-EXPORT_SYMBOL_GPL(clk_रेजिस्टर_fractional_भागider);
+	if (IS_ERR(hw))
+		return ERR_CAST(hw);
+	return hw->clk;
+}
+EXPORT_SYMBOL_GPL(clk_register_fractional_divider);
 
-व्योम clk_hw_unरेजिस्टर_fractional_भागider(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_fractional_भागider *fd;
+void clk_hw_unregister_fractional_divider(struct clk_hw *hw)
+{
+	struct clk_fractional_divider *fd;
 
 	fd = to_clk_fd(hw);
 
-	clk_hw_unरेजिस्टर(hw);
-	kमुक्त(fd);
-पूर्ण
+	clk_hw_unregister(hw);
+	kfree(fd);
+}

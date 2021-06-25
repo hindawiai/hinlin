@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *                   Takashi Iwai <tiwai@suse.de>
@@ -7,142 +6,142 @@
  *  Generic memory allocators
  */
 
-#अगर_अघोषित __SOUND_MEMALLOC_H
-#घोषणा __SOUND_MEMALLOC_H
+#ifndef __SOUND_MEMALLOC_H
+#define __SOUND_MEMALLOC_H
 
-#समावेश <यंत्र/page.h>
+#include <asm/page.h>
 
-काष्ठा device;
+struct device;
 
 /*
  * buffer device info
  */
-काष्ठा snd_dma_device अणु
-	पूर्णांक type;			/* SNDRV_DMA_TYPE_XXX */
-	काष्ठा device *dev;		/* generic device */
-पूर्ण;
+struct snd_dma_device {
+	int type;			/* SNDRV_DMA_TYPE_XXX */
+	struct device *dev;		/* generic device */
+};
 
-#घोषणा snd_dma_continuous_data(x)	((काष्ठा device *)(__क्रमce अचिन्हित दीर्घ)(x))
+#define snd_dma_continuous_data(x)	((struct device *)(__force unsigned long)(x))
 
 
 /*
  * buffer types
  */
-#घोषणा SNDRV_DMA_TYPE_UNKNOWN		0	/* not defined */
-#घोषणा SNDRV_DMA_TYPE_CONTINUOUS	1	/* continuous no-DMA memory */
-#घोषणा SNDRV_DMA_TYPE_DEV		2	/* generic device continuous */
-#घोषणा SNDRV_DMA_TYPE_DEV_UC		5	/* continuous non-cahced */
-#अगर_घोषित CONFIG_SND_DMA_SGBUF
-#घोषणा SNDRV_DMA_TYPE_DEV_SG		3	/* generic device SG-buffer */
-#घोषणा SNDRV_DMA_TYPE_DEV_UC_SG	6	/* SG non-cached */
-#अन्यथा
-#घोषणा SNDRV_DMA_TYPE_DEV_SG	SNDRV_DMA_TYPE_DEV /* no SG-buf support */
-#घोषणा SNDRV_DMA_TYPE_DEV_UC_SG	SNDRV_DMA_TYPE_DEV_UC
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_GENERIC_ALLOCATOR
-#घोषणा SNDRV_DMA_TYPE_DEV_IRAM		4	/* generic device iram-buffer */
-#अन्यथा
-#घोषणा SNDRV_DMA_TYPE_DEV_IRAM	SNDRV_DMA_TYPE_DEV
-#पूर्ण_अगर
-#घोषणा SNDRV_DMA_TYPE_VMALLOC		7	/* vदो_स्मृति'ed buffer */
+#define SNDRV_DMA_TYPE_UNKNOWN		0	/* not defined */
+#define SNDRV_DMA_TYPE_CONTINUOUS	1	/* continuous no-DMA memory */
+#define SNDRV_DMA_TYPE_DEV		2	/* generic device continuous */
+#define SNDRV_DMA_TYPE_DEV_UC		5	/* continuous non-cahced */
+#ifdef CONFIG_SND_DMA_SGBUF
+#define SNDRV_DMA_TYPE_DEV_SG		3	/* generic device SG-buffer */
+#define SNDRV_DMA_TYPE_DEV_UC_SG	6	/* SG non-cached */
+#else
+#define SNDRV_DMA_TYPE_DEV_SG	SNDRV_DMA_TYPE_DEV /* no SG-buf support */
+#define SNDRV_DMA_TYPE_DEV_UC_SG	SNDRV_DMA_TYPE_DEV_UC
+#endif
+#ifdef CONFIG_GENERIC_ALLOCATOR
+#define SNDRV_DMA_TYPE_DEV_IRAM		4	/* generic device iram-buffer */
+#else
+#define SNDRV_DMA_TYPE_DEV_IRAM	SNDRV_DMA_TYPE_DEV
+#endif
+#define SNDRV_DMA_TYPE_VMALLOC		7	/* vmalloc'ed buffer */
 
 /*
- * info क्रम buffer allocation
+ * info for buffer allocation
  */
-काष्ठा snd_dma_buffer अणु
-	काष्ठा snd_dma_device dev;	/* device type */
-	अचिन्हित अक्षर *area;	/* भव poपूर्णांकer */
+struct snd_dma_buffer {
+	struct snd_dma_device dev;	/* device type */
+	unsigned char *area;	/* virtual pointer */
 	dma_addr_t addr;	/* physical address */
-	माप_प्रकार bytes;		/* buffer size in bytes */
-	व्योम *निजी_data;	/* निजी क्रम allocator; करोn't touch */
-पूर्ण;
+	size_t bytes;		/* buffer size in bytes */
+	void *private_data;	/* private for allocator; don't touch */
+};
 
 /*
- * वापस the pages matching with the given byte size
+ * return the pages matching with the given byte size
  */
-अटल अंतरभूत अचिन्हित पूर्णांक snd_sgbuf_aligned_pages(माप_प्रकार size)
-अणु
-	वापस (size + PAGE_SIZE - 1) >> PAGE_SHIFT;
-पूर्ण
+static inline unsigned int snd_sgbuf_aligned_pages(size_t size)
+{
+	return (size + PAGE_SIZE - 1) >> PAGE_SHIFT;
+}
 
-#अगर_घोषित CONFIG_SND_DMA_SGBUF
+#ifdef CONFIG_SND_DMA_SGBUF
 /*
  * Scatter-Gather generic device pages
  */
-व्योम *snd_दो_स्मृति_sgbuf_pages(काष्ठा device *device,
-			     माप_प्रकार size, काष्ठा snd_dma_buffer *dmab,
-			     माप_प्रकार *res_size);
-पूर्णांक snd_मुक्त_sgbuf_pages(काष्ठा snd_dma_buffer *dmab);
+void *snd_malloc_sgbuf_pages(struct device *device,
+			     size_t size, struct snd_dma_buffer *dmab,
+			     size_t *res_size);
+int snd_free_sgbuf_pages(struct snd_dma_buffer *dmab);
 
-काष्ठा snd_sg_page अणु
-	व्योम *buf;
+struct snd_sg_page {
+	void *buf;
 	dma_addr_t addr;
-पूर्ण;
+};
 
-काष्ठा snd_sg_buf अणु
-	पूर्णांक size;	/* allocated byte size */
-	पूर्णांक pages;	/* allocated pages */
-	पूर्णांक tblsize;	/* allocated table size */
-	काष्ठा snd_sg_page *table;	/* address table */
-	काष्ठा page **page_table;	/* page table (क्रम vmap/vunmap) */
-	काष्ठा device *dev;
-पूर्ण;
+struct snd_sg_buf {
+	int size;	/* allocated byte size */
+	int pages;	/* allocated pages */
+	int tblsize;	/* allocated table size */
+	struct snd_sg_page *table;	/* address table */
+	struct page **page_table;	/* page table (for vmap/vunmap) */
+	struct device *dev;
+};
 
 /*
- * वापस the physical address at the corresponding offset
+ * return the physical address at the corresponding offset
  */
-अटल अंतरभूत dma_addr_t snd_sgbuf_get_addr(काष्ठा snd_dma_buffer *dmab,
-					   माप_प्रकार offset)
-अणु
-	काष्ठा snd_sg_buf *sgbuf = dmab->निजी_data;
+static inline dma_addr_t snd_sgbuf_get_addr(struct snd_dma_buffer *dmab,
+					   size_t offset)
+{
+	struct snd_sg_buf *sgbuf = dmab->private_data;
 	dma_addr_t addr;
 
-	अगर (!sgbuf)
-		वापस dmab->addr + offset;
+	if (!sgbuf)
+		return dmab->addr + offset;
 	addr = sgbuf->table[offset >> PAGE_SHIFT].addr;
 	addr &= ~((dma_addr_t)PAGE_SIZE - 1);
-	वापस addr + offset % PAGE_SIZE;
-पूर्ण
+	return addr + offset % PAGE_SIZE;
+}
 
 /*
- * वापस the भव address at the corresponding offset
+ * return the virtual address at the corresponding offset
  */
-अटल अंतरभूत व्योम *snd_sgbuf_get_ptr(काष्ठा snd_dma_buffer *dmab,
-				     माप_प्रकार offset)
-अणु
-	काष्ठा snd_sg_buf *sgbuf = dmab->निजी_data;
+static inline void *snd_sgbuf_get_ptr(struct snd_dma_buffer *dmab,
+				     size_t offset)
+{
+	struct snd_sg_buf *sgbuf = dmab->private_data;
 
-	अगर (!sgbuf)
-		वापस dmab->area + offset;
-	वापस sgbuf->table[offset >> PAGE_SHIFT].buf + offset % PAGE_SIZE;
-पूर्ण
+	if (!sgbuf)
+		return dmab->area + offset;
+	return sgbuf->table[offset >> PAGE_SHIFT].buf + offset % PAGE_SIZE;
+}
 
-अचिन्हित पूर्णांक snd_sgbuf_get_chunk_size(काष्ठा snd_dma_buffer *dmab,
-				      अचिन्हित पूर्णांक ofs, अचिन्हित पूर्णांक size);
-#अन्यथा
+unsigned int snd_sgbuf_get_chunk_size(struct snd_dma_buffer *dmab,
+				      unsigned int ofs, unsigned int size);
+#else
 /* non-SG versions */
-अटल अंतरभूत dma_addr_t snd_sgbuf_get_addr(काष्ठा snd_dma_buffer *dmab,
-					    माप_प्रकार offset)
-अणु
-	वापस dmab->addr + offset;
-पूर्ण
+static inline dma_addr_t snd_sgbuf_get_addr(struct snd_dma_buffer *dmab,
+					    size_t offset)
+{
+	return dmab->addr + offset;
+}
 
-अटल अंतरभूत व्योम *snd_sgbuf_get_ptr(काष्ठा snd_dma_buffer *dmab,
-				      माप_प्रकार offset)
-अणु
-	वापस dmab->area + offset;
-पूर्ण
+static inline void *snd_sgbuf_get_ptr(struct snd_dma_buffer *dmab,
+				      size_t offset)
+{
+	return dmab->area + offset;
+}
 
-#घोषणा snd_sgbuf_get_chunk_size(dmab, ofs, size)	(size)
+#define snd_sgbuf_get_chunk_size(dmab, ofs, size)	(size)
 
-#पूर्ण_अगर /* CONFIG_SND_DMA_SGBUF */
+#endif /* CONFIG_SND_DMA_SGBUF */
 
 /* allocate/release a buffer */
-पूर्णांक snd_dma_alloc_pages(पूर्णांक type, काष्ठा device *dev, माप_प्रकार size,
-			काष्ठा snd_dma_buffer *dmab);
-पूर्णांक snd_dma_alloc_pages_fallback(पूर्णांक type, काष्ठा device *dev, माप_प्रकार size,
-                                 काष्ठा snd_dma_buffer *dmab);
-व्योम snd_dma_मुक्त_pages(काष्ठा snd_dma_buffer *dmab);
+int snd_dma_alloc_pages(int type, struct device *dev, size_t size,
+			struct snd_dma_buffer *dmab);
+int snd_dma_alloc_pages_fallback(int type, struct device *dev, size_t size,
+                                 struct snd_dma_buffer *dmab);
+void snd_dma_free_pages(struct snd_dma_buffer *dmab);
 
-#पूर्ण_अगर /* __SOUND_MEMALLOC_H */
+#endif /* __SOUND_MEMALLOC_H */
 

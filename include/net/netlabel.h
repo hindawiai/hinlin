@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * NetLabel System
  *
- * The NetLabel प्रणाली manages अटल and dynamic label mappings क्रम network
+ * The NetLabel system manages static and dynamic label mappings for network
  * protocols such as CIPSO and RIPSO.
  *
  * Author: Paul Moore <paul@paul-moore.com>
@@ -13,46 +12,46 @@
  * (c) Copyright Hewlett-Packard Development Company, L.P., 2006, 2008
  */
 
-#अगर_अघोषित _NETLABEL_H
-#घोषणा _NETLABEL_H
+#ifndef _NETLABEL_H
+#define _NETLABEL_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/net.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/in.h>
-#समावेश <linux/in6.h>
-#समावेश <net/netlink.h>
-#समावेश <net/request_sock.h>
-#समावेश <linux/refcount.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/net.h>
+#include <linux/skbuff.h>
+#include <linux/in.h>
+#include <linux/in6.h>
+#include <net/netlink.h>
+#include <net/request_sock.h>
+#include <linux/refcount.h>
 
-काष्ठा cipso_v4_करोi;
-काष्ठा calipso_करोi;
+struct cipso_v4_doi;
+struct calipso_doi;
 
 /*
- * NetLabel - A management पूर्णांकerface क्रम मुख्यtaining network packet label
- *            mapping tables क्रम explicit packet labling protocols.
+ * NetLabel - A management interface for maintaining network packet label
+ *            mapping tables for explicit packet labling protocols.
  *
  * Network protocols such as CIPSO and RIPSO require a label translation layer
- * to convert the label on the packet पूर्णांकo something meaningful on the host
+ * to convert the label on the packet into something meaningful on the host
  * machine.  In the current Linux implementation these mapping tables live
- * inside the kernel; NetLabel provides a mechanism क्रम user space applications
+ * inside the kernel; NetLabel provides a mechanism for user space applications
  * to manage these mapping tables.
  *
  * NetLabel makes use of the Generic NETLINK mechanism as a transport layer to
- * send messages between kernel and user space.  The general क्रमmat of a
+ * send messages between kernel and user space.  The general format of a
  * NetLabel message is shown below:
  *
  *  +-----------------+-------------------+--------- --- -- -
- *  | काष्ठा nlmsghdr | काष्ठा genlmsghdr | payload
+ *  | struct nlmsghdr | struct genlmsghdr | payload
  *  +-----------------+-------------------+--------- --- -- -
  *
- * The 'nlmsghdr' and 'genlmsghdr' काष्ठाs should be dealt with like normal.
- * The payload is dependent on the subप्रणाली specअगरied in the
+ * The 'nlmsghdr' and 'genlmsghdr' structs should be dealt with like normal.
+ * The payload is dependent on the subsystem specified in the
  * 'nlmsghdr->nlmsg_type' and should be defined below, supporting functions
  * should be defined in the corresponding net/netlabel/netlabel_<subsys>.h|c
  * file.  All of the fields in the NetLabel payload are NETLINK attributes, see
- * the include/net/netlink.h file क्रम more inक्रमmation on NETLINK attributes.
+ * the include/net/netlink.h file for more information on NETLINK attributes.
  *
  */
 
@@ -62,209 +61,209 @@
 
 /* NetLabel NETLINK protocol version
  *  1: initial version
- *  2: added अटल labels क्रम unlabeled connections
- *  3: network selectors added to the NetLabel/LSM करोमुख्य mapping and the
+ *  2: added static labels for unlabeled connections
+ *  3: network selectors added to the NetLabel/LSM domain mapping and the
  *     CIPSO_V4_MAP_LOCAL CIPSO mapping was added
  */
-#घोषणा NETLBL_PROTO_VERSION            3
+#define NETLBL_PROTO_VERSION            3
 
 /* NetLabel NETLINK types/families */
-#घोषणा NETLBL_NLTYPE_NONE              0
-#घोषणा NETLBL_NLTYPE_MGMT              1
-#घोषणा NETLBL_NLTYPE_MGMT_NAME         "NLBL_MGMT"
-#घोषणा NETLBL_NLTYPE_RIPSO             2
-#घोषणा NETLBL_NLTYPE_RIPSO_NAME        "NLBL_RIPSO"
-#घोषणा NETLBL_NLTYPE_CIPSOV4           3
-#घोषणा NETLBL_NLTYPE_CIPSOV4_NAME      "NLBL_CIPSOv4"
-#घोषणा NETLBL_NLTYPE_CIPSOV6           4
-#घोषणा NETLBL_NLTYPE_CIPSOV6_NAME      "NLBL_CIPSOv6"
-#घोषणा NETLBL_NLTYPE_UNLABELED         5
-#घोषणा NETLBL_NLTYPE_UNLABELED_NAME    "NLBL_UNLBL"
-#घोषणा NETLBL_NLTYPE_ADDRSELECT        6
-#घोषणा NETLBL_NLTYPE_ADDRSELECT_NAME   "NLBL_ADRSEL"
-#घोषणा NETLBL_NLTYPE_CALIPSO           7
-#घोषणा NETLBL_NLTYPE_CALIPSO_NAME      "NLBL_CALIPSO"
+#define NETLBL_NLTYPE_NONE              0
+#define NETLBL_NLTYPE_MGMT              1
+#define NETLBL_NLTYPE_MGMT_NAME         "NLBL_MGMT"
+#define NETLBL_NLTYPE_RIPSO             2
+#define NETLBL_NLTYPE_RIPSO_NAME        "NLBL_RIPSO"
+#define NETLBL_NLTYPE_CIPSOV4           3
+#define NETLBL_NLTYPE_CIPSOV4_NAME      "NLBL_CIPSOv4"
+#define NETLBL_NLTYPE_CIPSOV6           4
+#define NETLBL_NLTYPE_CIPSOV6_NAME      "NLBL_CIPSOv6"
+#define NETLBL_NLTYPE_UNLABELED         5
+#define NETLBL_NLTYPE_UNLABELED_NAME    "NLBL_UNLBL"
+#define NETLBL_NLTYPE_ADDRSELECT        6
+#define NETLBL_NLTYPE_ADDRSELECT_NAME   "NLBL_ADRSEL"
+#define NETLBL_NLTYPE_CALIPSO           7
+#define NETLBL_NLTYPE_CALIPSO_NAME      "NLBL_CALIPSO"
 
 /*
- * NetLabel - Kernel API क्रम accessing the network packet label mappings.
+ * NetLabel - Kernel API for accessing the network packet label mappings.
  *
- * The following functions are provided क्रम use by other kernel modules,
- * specअगरically kernel LSM modules, to provide a consistent, transparent API
- * क्रम dealing with explicit packet labeling protocols such as CIPSO and
+ * The following functions are provided for use by other kernel modules,
+ * specifically kernel LSM modules, to provide a consistent, transparent API
+ * for dealing with explicit packet labeling protocols such as CIPSO and
  * RIPSO.  The functions defined here are implemented in the
  * net/netlabel/netlabel_kapi.c file.
  *
  */
 
-/* NetLabel audit inक्रमmation */
-काष्ठा netlbl_audit अणु
+/* NetLabel audit information */
+struct netlbl_audit {
 	u32 secid;
 	kuid_t loginuid;
-	अचिन्हित पूर्णांक sessionid;
-पूर्ण;
+	unsigned int sessionid;
+};
 
 /*
  * LSM security attributes
  */
 
 /**
- * काष्ठा netlbl_lsm_cache - NetLabel LSM security attribute cache
+ * struct netlbl_lsm_cache - NetLabel LSM security attribute cache
  * @refcount: atomic reference counter
- * @मुक्त: LSM supplied function to मुक्त the cache data
+ * @free: LSM supplied function to free the cache data
  * @data: LSM supplied cache data
  *
  * Description:
- * This काष्ठाure is provided क्रम LSMs which wish to make use of the NetLabel
- * caching mechanism to store LSM specअगरic data/attributes in the NetLabel
- * cache.  If the LSM has to perक्रमm a lot of translation from the NetLabel
- * security attributes पूर्णांकo it's own पूर्णांकernal representation then the cache
+ * This structure is provided for LSMs which wish to make use of the NetLabel
+ * caching mechanism to store LSM specific data/attributes in the NetLabel
+ * cache.  If the LSM has to perform a lot of translation from the NetLabel
+ * security attributes into it's own internal representation then the cache
  * mechanism can provide a way to eliminate some or all of that translation
  * overhead on a cache hit.
  *
  */
-काष्ठा netlbl_lsm_cache अणु
+struct netlbl_lsm_cache {
 	refcount_t refcount;
-	व्योम (*मुक्त) (स्थिर व्योम *data);
-	व्योम *data;
-पूर्ण;
+	void (*free) (const void *data);
+	void *data;
+};
 
 /**
- * काष्ठा netlbl_lsm_caपंचांगap - NetLabel LSM secattr category biपंचांगap
- * @startbit: the value of the lowest order bit in the biपंचांगap
- * @biपंचांगap: the category biपंचांगap
- * @next: poपूर्णांकer to the next biपंचांगap "node" or शून्य
+ * struct netlbl_lsm_catmap - NetLabel LSM secattr category bitmap
+ * @startbit: the value of the lowest order bit in the bitmap
+ * @bitmap: the category bitmap
+ * @next: pointer to the next bitmap "node" or NULL
  *
  * Description:
- * This काष्ठाure is used to represent category biपंचांगaps.  Due to the large
+ * This structure is used to represent category bitmaps.  Due to the large
  * number of categories supported by most labeling protocols it is not
- * practical to transfer a full biपंचांगap पूर्णांकernally so NetLabel aकरोpts a sparse
- * biपंचांगap काष्ठाure modeled after SELinux's ebiपंचांगap काष्ठाure.
- * The caपंचांगap biपंचांगap field MUST be a घातer of two in length and large
+ * practical to transfer a full bitmap internally so NetLabel adopts a sparse
+ * bitmap structure modeled after SELinux's ebitmap structure.
+ * The catmap bitmap field MUST be a power of two in length and large
  * enough to hold at least 240 bits.  Special care (i.e. check the code!)
  * should be used when changing these values as the LSM implementation
  * probably has functions which rely on the sizes of these types to speed
  * processing.
  *
  */
-#घोषणा NETLBL_CATMAP_MAPTYPE           u64
-#घोषणा NETLBL_CATMAP_MAPCNT            4
-#घोषणा NETLBL_CATMAP_MAPSIZE           (माप(NETLBL_CATMAP_MAPTYPE) * 8)
-#घोषणा NETLBL_CATMAP_SIZE              (NETLBL_CATMAP_MAPSIZE * \
+#define NETLBL_CATMAP_MAPTYPE           u64
+#define NETLBL_CATMAP_MAPCNT            4
+#define NETLBL_CATMAP_MAPSIZE           (sizeof(NETLBL_CATMAP_MAPTYPE) * 8)
+#define NETLBL_CATMAP_SIZE              (NETLBL_CATMAP_MAPSIZE * \
 					 NETLBL_CATMAP_MAPCNT)
-#घोषणा NETLBL_CATMAP_BIT               (NETLBL_CATMAP_MAPTYPE)0x01
-काष्ठा netlbl_lsm_caपंचांगap अणु
+#define NETLBL_CATMAP_BIT               (NETLBL_CATMAP_MAPTYPE)0x01
+struct netlbl_lsm_catmap {
 	u32 startbit;
-	NETLBL_CATMAP_MAPTYPE biपंचांगap[NETLBL_CATMAP_MAPCNT];
-	काष्ठा netlbl_lsm_caपंचांगap *next;
-पूर्ण;
+	NETLBL_CATMAP_MAPTYPE bitmap[NETLBL_CATMAP_MAPCNT];
+	struct netlbl_lsm_catmap *next;
+};
 
 /**
- * काष्ठा netlbl_lsm_secattr - NetLabel LSM security attributes
- * @flags: indicate काष्ठाure attributes, see NETLBL_SECATTR_*
+ * struct netlbl_lsm_secattr - NetLabel LSM security attributes
+ * @flags: indicate structure attributes, see NETLBL_SECATTR_*
  * @type: indicate the NLTYPE of the attributes
- * @करोमुख्य: the NetLabel LSM करोमुख्य
- * @cache: NetLabel LSM specअगरic cache
+ * @domain: the NetLabel LSM domain
+ * @cache: NetLabel LSM specific cache
  * @attr.mls: MLS sensitivity label
- * @attr.mls.cat: MLS category biपंचांगap
+ * @attr.mls.cat: MLS category bitmap
  * @attr.mls.lvl: MLS sensitivity level
- * @attr.secid: LSM specअगरic secid token
+ * @attr.secid: LSM specific secid token
  *
  * Description:
- * This काष्ठाure is used to pass security attributes between NetLabel and the
- * LSM modules.  The flags field is used to specअगरy which fields within the
- * काष्ठा are valid and valid values can be created by bitwise OR'ing the
- * NETLBL_SECATTR_* defines.  The करोमुख्य field is typically set by the LSM to
- * specअगरy करोमुख्य specअगरic configuration settings and is not usually used by
- * NetLabel itself when वापसing security attributes to the LSM.
+ * This structure is used to pass security attributes between NetLabel and the
+ * LSM modules.  The flags field is used to specify which fields within the
+ * struct are valid and valid values can be created by bitwise OR'ing the
+ * NETLBL_SECATTR_* defines.  The domain field is typically set by the LSM to
+ * specify domain specific configuration settings and is not usually used by
+ * NetLabel itself when returning security attributes to the LSM.
  *
  */
-काष्ठा netlbl_lsm_secattr अणु
+struct netlbl_lsm_secattr {
 	u32 flags;
-	/* biपंचांगap values क्रम 'flags' */
-#घोषणा NETLBL_SECATTR_NONE             0x00000000
-#घोषणा NETLBL_SECATTR_DOMAIN           0x00000001
-#घोषणा NETLBL_SECATTR_DOMAIN_CPY       (NETLBL_SECATTR_DOMAIN | \
+	/* bitmap values for 'flags' */
+#define NETLBL_SECATTR_NONE             0x00000000
+#define NETLBL_SECATTR_DOMAIN           0x00000001
+#define NETLBL_SECATTR_DOMAIN_CPY       (NETLBL_SECATTR_DOMAIN | \
 					 NETLBL_SECATTR_FREE_DOMAIN)
-#घोषणा NETLBL_SECATTR_CACHE            0x00000002
-#घोषणा NETLBL_SECATTR_MLS_LVL          0x00000004
-#घोषणा NETLBL_SECATTR_MLS_CAT          0x00000008
-#घोषणा NETLBL_SECATTR_SECID            0x00000010
-	/* biपंचांगap meta-values क्रम 'flags' */
-#घोषणा NETLBL_SECATTR_FREE_DOMAIN      0x01000000
-#घोषणा NETLBL_SECATTR_CACHEABLE        (NETLBL_SECATTR_MLS_LVL | \
+#define NETLBL_SECATTR_CACHE            0x00000002
+#define NETLBL_SECATTR_MLS_LVL          0x00000004
+#define NETLBL_SECATTR_MLS_CAT          0x00000008
+#define NETLBL_SECATTR_SECID            0x00000010
+	/* bitmap meta-values for 'flags' */
+#define NETLBL_SECATTR_FREE_DOMAIN      0x01000000
+#define NETLBL_SECATTR_CACHEABLE        (NETLBL_SECATTR_MLS_LVL | \
 					 NETLBL_SECATTR_MLS_CAT | \
 					 NETLBL_SECATTR_SECID)
 	u32 type;
-	अक्षर *करोमुख्य;
-	काष्ठा netlbl_lsm_cache *cache;
-	काष्ठा अणु
-		काष्ठा अणु
-			काष्ठा netlbl_lsm_caपंचांगap *cat;
+	char *domain;
+	struct netlbl_lsm_cache *cache;
+	struct {
+		struct {
+			struct netlbl_lsm_catmap *cat;
 			u32 lvl;
-		पूर्ण mls;
+		} mls;
 		u32 secid;
-	पूर्ण attr;
-पूर्ण;
+	} attr;
+};
 
 /**
- * काष्ठा netlbl_calipso_ops - NetLabel CALIPSO operations
- * @करोi_add: add a CALIPSO DOI
- * @करोi_मुक्त: मुक्त a CALIPSO DOI
- * @करोi_getdef: वापसs a reference to a DOI
- * @करोi_putdef: releases a reference of a DOI
- * @करोi_walk: क्रमागतerate the DOI list
+ * struct netlbl_calipso_ops - NetLabel CALIPSO operations
+ * @doi_add: add a CALIPSO DOI
+ * @doi_free: free a CALIPSO DOI
+ * @doi_getdef: returns a reference to a DOI
+ * @doi_putdef: releases a reference of a DOI
+ * @doi_walk: enumerate the DOI list
  * @sock_getattr: retrieve the socket's attr
  * @sock_setattr: set the socket's attr
- * @sock_delattr: हटाओ the socket's attr
+ * @sock_delattr: remove the socket's attr
  * @req_setattr: set the req socket's attr
- * @req_delattr: हटाओ the req socket's attr
+ * @req_delattr: remove the req socket's attr
  * @opt_getattr: retrieve attr from memory block
  * @skbuff_optptr: find option in packet
  * @skbuff_setattr: set the skbuff's attr
- * @skbuff_delattr: हटाओ the skbuff's attr
+ * @skbuff_delattr: remove the skbuff's attr
  * @cache_invalidate: invalidate cache
  * @cache_add: add cache entry
  *
  * Description:
- * This काष्ठाure is filled out by the CALIPSO engine and passed
- * to the NetLabel core via a call to netlbl_calipso_ops_रेजिस्टर().
+ * This structure is filled out by the CALIPSO engine and passed
+ * to the NetLabel core via a call to netlbl_calipso_ops_register().
  * It enables the CALIPSO engine (and hence IPv6) to be compiled
  * as a module.
  */
-काष्ठा netlbl_calipso_ops अणु
-	पूर्णांक (*करोi_add)(काष्ठा calipso_करोi *करोi_def,
-		       काष्ठा netlbl_audit *audit_info);
-	व्योम (*करोi_मुक्त)(काष्ठा calipso_करोi *करोi_def);
-	पूर्णांक (*करोi_हटाओ)(u32 करोi, काष्ठा netlbl_audit *audit_info);
-	काष्ठा calipso_करोi *(*करोi_getdef)(u32 करोi);
-	व्योम (*करोi_putdef)(काष्ठा calipso_करोi *करोi_def);
-	पूर्णांक (*करोi_walk)(u32 *skip_cnt,
-			पूर्णांक (*callback)(काष्ठा calipso_करोi *करोi_def, व्योम *arg),
-			व्योम *cb_arg);
-	पूर्णांक (*sock_getattr)(काष्ठा sock *sk,
-			    काष्ठा netlbl_lsm_secattr *secattr);
-	पूर्णांक (*sock_setattr)(काष्ठा sock *sk,
-			    स्थिर काष्ठा calipso_करोi *करोi_def,
-			    स्थिर काष्ठा netlbl_lsm_secattr *secattr);
-	व्योम (*sock_delattr)(काष्ठा sock *sk);
-	पूर्णांक (*req_setattr)(काष्ठा request_sock *req,
-			   स्थिर काष्ठा calipso_करोi *करोi_def,
-			   स्थिर काष्ठा netlbl_lsm_secattr *secattr);
-	व्योम (*req_delattr)(काष्ठा request_sock *req);
-	पूर्णांक (*opt_getattr)(स्थिर अचिन्हित अक्षर *calipso,
-			   काष्ठा netlbl_lsm_secattr *secattr);
-	अचिन्हित अक्षर *(*skbuff_optptr)(स्थिर काष्ठा sk_buff *skb);
-	पूर्णांक (*skbuff_setattr)(काष्ठा sk_buff *skb,
-			      स्थिर काष्ठा calipso_करोi *करोi_def,
-			      स्थिर काष्ठा netlbl_lsm_secattr *secattr);
-	पूर्णांक (*skbuff_delattr)(काष्ठा sk_buff *skb);
-	व्योम (*cache_invalidate)(व्योम);
-	पूर्णांक (*cache_add)(स्थिर अचिन्हित अक्षर *calipso_ptr,
-			 स्थिर काष्ठा netlbl_lsm_secattr *secattr);
-पूर्ण;
+struct netlbl_calipso_ops {
+	int (*doi_add)(struct calipso_doi *doi_def,
+		       struct netlbl_audit *audit_info);
+	void (*doi_free)(struct calipso_doi *doi_def);
+	int (*doi_remove)(u32 doi, struct netlbl_audit *audit_info);
+	struct calipso_doi *(*doi_getdef)(u32 doi);
+	void (*doi_putdef)(struct calipso_doi *doi_def);
+	int (*doi_walk)(u32 *skip_cnt,
+			int (*callback)(struct calipso_doi *doi_def, void *arg),
+			void *cb_arg);
+	int (*sock_getattr)(struct sock *sk,
+			    struct netlbl_lsm_secattr *secattr);
+	int (*sock_setattr)(struct sock *sk,
+			    const struct calipso_doi *doi_def,
+			    const struct netlbl_lsm_secattr *secattr);
+	void (*sock_delattr)(struct sock *sk);
+	int (*req_setattr)(struct request_sock *req,
+			   const struct calipso_doi *doi_def,
+			   const struct netlbl_lsm_secattr *secattr);
+	void (*req_delattr)(struct request_sock *req);
+	int (*opt_getattr)(const unsigned char *calipso,
+			   struct netlbl_lsm_secattr *secattr);
+	unsigned char *(*skbuff_optptr)(const struct sk_buff *skb);
+	int (*skbuff_setattr)(struct sk_buff *skb,
+			      const struct calipso_doi *doi_def,
+			      const struct netlbl_lsm_secattr *secattr);
+	int (*skbuff_delattr)(struct sk_buff *skb);
+	void (*cache_invalidate)(void);
+	int (*cache_add)(const unsigned char *calipso_ptr,
+			 const struct netlbl_lsm_secattr *secattr);
+};
 
 /*
- * LSM security attribute operations (अंतरभूत)
+ * LSM security attribute operations (inline)
  */
 
 /**
@@ -272,412 +271,412 @@
  * @flags: the memory allocation flags
  *
  * Description:
- * Allocate and initialize a netlbl_lsm_cache काष्ठाure.  Returns a poपूर्णांकer
- * on success, शून्य on failure.
+ * Allocate and initialize a netlbl_lsm_cache structure.  Returns a pointer
+ * on success, NULL on failure.
  *
  */
-अटल अंतरभूत काष्ठा netlbl_lsm_cache *netlbl_secattr_cache_alloc(gfp_t flags)
-अणु
-	काष्ठा netlbl_lsm_cache *cache;
+static inline struct netlbl_lsm_cache *netlbl_secattr_cache_alloc(gfp_t flags)
+{
+	struct netlbl_lsm_cache *cache;
 
-	cache = kzalloc(माप(*cache), flags);
-	अगर (cache)
+	cache = kzalloc(sizeof(*cache), flags);
+	if (cache)
 		refcount_set(&cache->refcount, 1);
-	वापस cache;
-पूर्ण
+	return cache;
+}
 
 /**
- * netlbl_secattr_cache_मुक्त - Frees a netlbl_lsm_cache काष्ठा
- * @cache: the काष्ठा to मुक्त
+ * netlbl_secattr_cache_free - Frees a netlbl_lsm_cache struct
+ * @cache: the struct to free
  *
  * Description:
- * Frees @secattr including all of the पूर्णांकernal buffers.
+ * Frees @secattr including all of the internal buffers.
  *
  */
-अटल अंतरभूत व्योम netlbl_secattr_cache_मुक्त(काष्ठा netlbl_lsm_cache *cache)
-अणु
-	अगर (!refcount_dec_and_test(&cache->refcount))
-		वापस;
+static inline void netlbl_secattr_cache_free(struct netlbl_lsm_cache *cache)
+{
+	if (!refcount_dec_and_test(&cache->refcount))
+		return;
 
-	अगर (cache->मुक्त)
-		cache->मुक्त(cache->data);
-	kमुक्त(cache);
-पूर्ण
+	if (cache->free)
+		cache->free(cache->data);
+	kfree(cache);
+}
 
 /**
- * netlbl_caपंचांगap_alloc - Allocate a LSM secattr caपंचांगap
+ * netlbl_catmap_alloc - Allocate a LSM secattr catmap
  * @flags: memory allocation flags
  *
  * Description:
- * Allocate memory क्रम a LSM secattr caपंचांगap, वापसs a poपूर्णांकer on success, शून्य
+ * Allocate memory for a LSM secattr catmap, returns a pointer on success, NULL
  * on failure.
  *
  */
-अटल अंतरभूत काष्ठा netlbl_lsm_caपंचांगap *netlbl_caपंचांगap_alloc(gfp_t flags)
-अणु
-	वापस kzalloc(माप(काष्ठा netlbl_lsm_caपंचांगap), flags);
-पूर्ण
+static inline struct netlbl_lsm_catmap *netlbl_catmap_alloc(gfp_t flags)
+{
+	return kzalloc(sizeof(struct netlbl_lsm_catmap), flags);
+}
 
 /**
- * netlbl_caपंचांगap_मुक्त - Free a LSM secattr caपंचांगap
- * @caपंचांगap: the category biपंचांगap
+ * netlbl_catmap_free - Free a LSM secattr catmap
+ * @catmap: the category bitmap
  *
  * Description:
- * Free a LSM secattr caपंचांगap.
+ * Free a LSM secattr catmap.
  *
  */
-अटल अंतरभूत व्योम netlbl_caपंचांगap_मुक्त(काष्ठा netlbl_lsm_caपंचांगap *caपंचांगap)
-अणु
-	काष्ठा netlbl_lsm_caपंचांगap *iter;
+static inline void netlbl_catmap_free(struct netlbl_lsm_catmap *catmap)
+{
+	struct netlbl_lsm_catmap *iter;
 
-	जबतक (caपंचांगap) अणु
-		iter = caपंचांगap;
-		caपंचांगap = caपंचांगap->next;
-		kमुक्त(iter);
-	पूर्ण
-पूर्ण
+	while (catmap) {
+		iter = catmap;
+		catmap = catmap->next;
+		kfree(iter);
+	}
+}
 
 /**
- * netlbl_secattr_init - Initialize a netlbl_lsm_secattr काष्ठा
- * @secattr: the काष्ठा to initialize
+ * netlbl_secattr_init - Initialize a netlbl_lsm_secattr struct
+ * @secattr: the struct to initialize
  *
  * Description:
- * Initialize an alपढ़ोy allocated netlbl_lsm_secattr काष्ठा.
+ * Initialize an already allocated netlbl_lsm_secattr struct.
  *
  */
-अटल अंतरभूत व्योम netlbl_secattr_init(काष्ठा netlbl_lsm_secattr *secattr)
-अणु
-	स_रखो(secattr, 0, माप(*secattr));
-पूर्ण
+static inline void netlbl_secattr_init(struct netlbl_lsm_secattr *secattr)
+{
+	memset(secattr, 0, sizeof(*secattr));
+}
 
 /**
- * netlbl_secattr_destroy - Clears a netlbl_lsm_secattr काष्ठा
- * @secattr: the काष्ठा to clear
+ * netlbl_secattr_destroy - Clears a netlbl_lsm_secattr struct
+ * @secattr: the struct to clear
  *
  * Description:
- * Destroys the @secattr काष्ठा, including मुक्तing all of the पूर्णांकernal buffers.
- * The काष्ठा must be reset with a call to netlbl_secattr_init() beक्रमe reuse.
+ * Destroys the @secattr struct, including freeing all of the internal buffers.
+ * The struct must be reset with a call to netlbl_secattr_init() before reuse.
  *
  */
-अटल अंतरभूत व्योम netlbl_secattr_destroy(काष्ठा netlbl_lsm_secattr *secattr)
-अणु
-	अगर (secattr->flags & NETLBL_SECATTR_FREE_DOMAIN)
-		kमुक्त(secattr->करोमुख्य);
-	अगर (secattr->flags & NETLBL_SECATTR_CACHE)
-		netlbl_secattr_cache_मुक्त(secattr->cache);
-	अगर (secattr->flags & NETLBL_SECATTR_MLS_CAT)
-		netlbl_caपंचांगap_मुक्त(secattr->attr.mls.cat);
-पूर्ण
+static inline void netlbl_secattr_destroy(struct netlbl_lsm_secattr *secattr)
+{
+	if (secattr->flags & NETLBL_SECATTR_FREE_DOMAIN)
+		kfree(secattr->domain);
+	if (secattr->flags & NETLBL_SECATTR_CACHE)
+		netlbl_secattr_cache_free(secattr->cache);
+	if (secattr->flags & NETLBL_SECATTR_MLS_CAT)
+		netlbl_catmap_free(secattr->attr.mls.cat);
+}
 
 /**
- * netlbl_secattr_alloc - Allocate and initialize a netlbl_lsm_secattr काष्ठा
+ * netlbl_secattr_alloc - Allocate and initialize a netlbl_lsm_secattr struct
  * @flags: the memory allocation flags
  *
  * Description:
- * Allocate and initialize a netlbl_lsm_secattr काष्ठा.  Returns a valid
- * poपूर्णांकer on success, or शून्य on failure.
+ * Allocate and initialize a netlbl_lsm_secattr struct.  Returns a valid
+ * pointer on success, or NULL on failure.
  *
  */
-अटल अंतरभूत काष्ठा netlbl_lsm_secattr *netlbl_secattr_alloc(gfp_t flags)
-अणु
-	वापस kzalloc(माप(काष्ठा netlbl_lsm_secattr), flags);
-पूर्ण
+static inline struct netlbl_lsm_secattr *netlbl_secattr_alloc(gfp_t flags)
+{
+	return kzalloc(sizeof(struct netlbl_lsm_secattr), flags);
+}
 
 /**
- * netlbl_secattr_मुक्त - Frees a netlbl_lsm_secattr काष्ठा
- * @secattr: the काष्ठा to मुक्त
+ * netlbl_secattr_free - Frees a netlbl_lsm_secattr struct
+ * @secattr: the struct to free
  *
  * Description:
- * Frees @secattr including all of the पूर्णांकernal buffers.
+ * Frees @secattr including all of the internal buffers.
  *
  */
-अटल अंतरभूत व्योम netlbl_secattr_मुक्त(काष्ठा netlbl_lsm_secattr *secattr)
-अणु
+static inline void netlbl_secattr_free(struct netlbl_lsm_secattr *secattr)
+{
 	netlbl_secattr_destroy(secattr);
-	kमुक्त(secattr);
-पूर्ण
+	kfree(secattr);
+}
 
-#अगर_घोषित CONFIG_NETLABEL
+#ifdef CONFIG_NETLABEL
 /*
  * LSM configuration operations
  */
-पूर्णांक netlbl_cfg_map_del(स्थिर अक्षर *करोमुख्य,
+int netlbl_cfg_map_del(const char *domain,
 		       u16 family,
-		       स्थिर व्योम *addr,
-		       स्थिर व्योम *mask,
-		       काष्ठा netlbl_audit *audit_info);
-पूर्णांक netlbl_cfg_unlbl_map_add(स्थिर अक्षर *करोमुख्य,
+		       const void *addr,
+		       const void *mask,
+		       struct netlbl_audit *audit_info);
+int netlbl_cfg_unlbl_map_add(const char *domain,
 			     u16 family,
-			     स्थिर व्योम *addr,
-			     स्थिर व्योम *mask,
-			     काष्ठा netlbl_audit *audit_info);
-पूर्णांक netlbl_cfg_unlbl_अटल_add(काष्ठा net *net,
-				स्थिर अक्षर *dev_name,
-				स्थिर व्योम *addr,
-				स्थिर व्योम *mask,
+			     const void *addr,
+			     const void *mask,
+			     struct netlbl_audit *audit_info);
+int netlbl_cfg_unlbl_static_add(struct net *net,
+				const char *dev_name,
+				const void *addr,
+				const void *mask,
 				u16 family,
 				u32 secid,
-				काष्ठा netlbl_audit *audit_info);
-पूर्णांक netlbl_cfg_unlbl_अटल_del(काष्ठा net *net,
-				स्थिर अक्षर *dev_name,
-				स्थिर व्योम *addr,
-				स्थिर व्योम *mask,
+				struct netlbl_audit *audit_info);
+int netlbl_cfg_unlbl_static_del(struct net *net,
+				const char *dev_name,
+				const void *addr,
+				const void *mask,
 				u16 family,
-				काष्ठा netlbl_audit *audit_info);
-पूर्णांक netlbl_cfg_cipsov4_add(काष्ठा cipso_v4_करोi *करोi_def,
-			   काष्ठा netlbl_audit *audit_info);
-व्योम netlbl_cfg_cipsov4_del(u32 करोi, काष्ठा netlbl_audit *audit_info);
-पूर्णांक netlbl_cfg_cipsov4_map_add(u32 करोi,
-			       स्थिर अक्षर *करोमुख्य,
-			       स्थिर काष्ठा in_addr *addr,
-			       स्थिर काष्ठा in_addr *mask,
-			       काष्ठा netlbl_audit *audit_info);
-पूर्णांक netlbl_cfg_calipso_add(काष्ठा calipso_करोi *करोi_def,
-			   काष्ठा netlbl_audit *audit_info);
-व्योम netlbl_cfg_calipso_del(u32 करोi, काष्ठा netlbl_audit *audit_info);
-पूर्णांक netlbl_cfg_calipso_map_add(u32 करोi,
-			       स्थिर अक्षर *करोमुख्य,
-			       स्थिर काष्ठा in6_addr *addr,
-			       स्थिर काष्ठा in6_addr *mask,
-			       काष्ठा netlbl_audit *audit_info);
+				struct netlbl_audit *audit_info);
+int netlbl_cfg_cipsov4_add(struct cipso_v4_doi *doi_def,
+			   struct netlbl_audit *audit_info);
+void netlbl_cfg_cipsov4_del(u32 doi, struct netlbl_audit *audit_info);
+int netlbl_cfg_cipsov4_map_add(u32 doi,
+			       const char *domain,
+			       const struct in_addr *addr,
+			       const struct in_addr *mask,
+			       struct netlbl_audit *audit_info);
+int netlbl_cfg_calipso_add(struct calipso_doi *doi_def,
+			   struct netlbl_audit *audit_info);
+void netlbl_cfg_calipso_del(u32 doi, struct netlbl_audit *audit_info);
+int netlbl_cfg_calipso_map_add(u32 doi,
+			       const char *domain,
+			       const struct in6_addr *addr,
+			       const struct in6_addr *mask,
+			       struct netlbl_audit *audit_info);
 /*
  * LSM security attribute operations
  */
-पूर्णांक netlbl_caपंचांगap_walk(काष्ठा netlbl_lsm_caपंचांगap *caपंचांगap, u32 offset);
-पूर्णांक netlbl_caपंचांगap_walkrng(काष्ठा netlbl_lsm_caपंचांगap *caपंचांगap, u32 offset);
-पूर्णांक netlbl_caपंचांगap_getदीर्घ(काष्ठा netlbl_lsm_caपंचांगap *caपंचांगap,
+int netlbl_catmap_walk(struct netlbl_lsm_catmap *catmap, u32 offset);
+int netlbl_catmap_walkrng(struct netlbl_lsm_catmap *catmap, u32 offset);
+int netlbl_catmap_getlong(struct netlbl_lsm_catmap *catmap,
 			  u32 *offset,
-			  अचिन्हित दीर्घ *biपंचांगap);
-पूर्णांक netlbl_caपंचांगap_setbit(काष्ठा netlbl_lsm_caपंचांगap **caपंचांगap,
+			  unsigned long *bitmap);
+int netlbl_catmap_setbit(struct netlbl_lsm_catmap **catmap,
 			 u32 bit,
 			 gfp_t flags);
-पूर्णांक netlbl_caपंचांगap_setrng(काष्ठा netlbl_lsm_caपंचांगap **caपंचांगap,
+int netlbl_catmap_setrng(struct netlbl_lsm_catmap **catmap,
 			 u32 start,
 			 u32 end,
 			 gfp_t flags);
-पूर्णांक netlbl_caपंचांगap_setदीर्घ(काष्ठा netlbl_lsm_caपंचांगap **caपंचांगap,
+int netlbl_catmap_setlong(struct netlbl_lsm_catmap **catmap,
 			  u32 offset,
-			  अचिन्हित दीर्घ biपंचांगap,
+			  unsigned long bitmap,
 			  gfp_t flags);
 
-/* Biपंचांगap functions
+/* Bitmap functions
  */
-पूर्णांक netlbl_biपंचांगap_walk(स्थिर अचिन्हित अक्षर *biपंचांगap, u32 biपंचांगap_len,
+int netlbl_bitmap_walk(const unsigned char *bitmap, u32 bitmap_len,
 		       u32 offset, u8 state);
-व्योम netlbl_biपंचांगap_setbit(अचिन्हित अक्षर *biपंचांगap, u32 bit, u8 state);
+void netlbl_bitmap_setbit(unsigned char *bitmap, u32 bit, u8 state);
 
 /*
  * LSM protocol operations (NetLabel LSM/kernel API)
  */
-पूर्णांक netlbl_enabled(व्योम);
-पूर्णांक netlbl_sock_setattr(काष्ठा sock *sk,
+int netlbl_enabled(void);
+int netlbl_sock_setattr(struct sock *sk,
 			u16 family,
-			स्थिर काष्ठा netlbl_lsm_secattr *secattr);
-व्योम netlbl_sock_delattr(काष्ठा sock *sk);
-पूर्णांक netlbl_sock_getattr(काष्ठा sock *sk,
-			काष्ठा netlbl_lsm_secattr *secattr);
-पूर्णांक netlbl_conn_setattr(काष्ठा sock *sk,
-			काष्ठा sockaddr *addr,
-			स्थिर काष्ठा netlbl_lsm_secattr *secattr);
-पूर्णांक netlbl_req_setattr(काष्ठा request_sock *req,
-		       स्थिर काष्ठा netlbl_lsm_secattr *secattr);
-व्योम netlbl_req_delattr(काष्ठा request_sock *req);
-पूर्णांक netlbl_skbuff_setattr(काष्ठा sk_buff *skb,
+			const struct netlbl_lsm_secattr *secattr);
+void netlbl_sock_delattr(struct sock *sk);
+int netlbl_sock_getattr(struct sock *sk,
+			struct netlbl_lsm_secattr *secattr);
+int netlbl_conn_setattr(struct sock *sk,
+			struct sockaddr *addr,
+			const struct netlbl_lsm_secattr *secattr);
+int netlbl_req_setattr(struct request_sock *req,
+		       const struct netlbl_lsm_secattr *secattr);
+void netlbl_req_delattr(struct request_sock *req);
+int netlbl_skbuff_setattr(struct sk_buff *skb,
 			  u16 family,
-			  स्थिर काष्ठा netlbl_lsm_secattr *secattr);
-पूर्णांक netlbl_skbuff_getattr(स्थिर काष्ठा sk_buff *skb,
+			  const struct netlbl_lsm_secattr *secattr);
+int netlbl_skbuff_getattr(const struct sk_buff *skb,
 			  u16 family,
-			  काष्ठा netlbl_lsm_secattr *secattr);
-व्योम netlbl_skbuff_err(काष्ठा sk_buff *skb, u16 family, पूर्णांक error, पूर्णांक gateway);
+			  struct netlbl_lsm_secattr *secattr);
+void netlbl_skbuff_err(struct sk_buff *skb, u16 family, int error, int gateway);
 
 /*
  * LSM label mapping cache operations
  */
-व्योम netlbl_cache_invalidate(व्योम);
-पूर्णांक netlbl_cache_add(स्थिर काष्ठा sk_buff *skb, u16 family,
-		     स्थिर काष्ठा netlbl_lsm_secattr *secattr);
+void netlbl_cache_invalidate(void);
+int netlbl_cache_add(const struct sk_buff *skb, u16 family,
+		     const struct netlbl_lsm_secattr *secattr);
 
 /*
  * Protocol engine operations
  */
-काष्ठा audit_buffer *netlbl_audit_start(पूर्णांक type,
-					काष्ठा netlbl_audit *audit_info);
-#अन्यथा
-अटल अंतरभूत पूर्णांक netlbl_cfg_map_del(स्थिर अक्षर *करोमुख्य,
+struct audit_buffer *netlbl_audit_start(int type,
+					struct netlbl_audit *audit_info);
+#else
+static inline int netlbl_cfg_map_del(const char *domain,
 				     u16 family,
-				     स्थिर व्योम *addr,
-				     स्थिर व्योम *mask,
-				     काष्ठा netlbl_audit *audit_info)
-अणु
-	वापस -ENOSYS;
-पूर्ण
-अटल अंतरभूत पूर्णांक netlbl_cfg_unlbl_map_add(स्थिर अक्षर *करोमुख्य,
+				     const void *addr,
+				     const void *mask,
+				     struct netlbl_audit *audit_info)
+{
+	return -ENOSYS;
+}
+static inline int netlbl_cfg_unlbl_map_add(const char *domain,
 					   u16 family,
-					   व्योम *addr,
-					   व्योम *mask,
-					   काष्ठा netlbl_audit *audit_info)
-अणु
-	वापस -ENOSYS;
-पूर्ण
-अटल अंतरभूत पूर्णांक netlbl_cfg_unlbl_अटल_add(काष्ठा net *net,
-					      स्थिर अक्षर *dev_name,
-					      स्थिर व्योम *addr,
-					      स्थिर व्योम *mask,
+					   void *addr,
+					   void *mask,
+					   struct netlbl_audit *audit_info)
+{
+	return -ENOSYS;
+}
+static inline int netlbl_cfg_unlbl_static_add(struct net *net,
+					      const char *dev_name,
+					      const void *addr,
+					      const void *mask,
 					      u16 family,
 					      u32 secid,
-					      काष्ठा netlbl_audit *audit_info)
-अणु
-	वापस -ENOSYS;
-पूर्ण
-अटल अंतरभूत पूर्णांक netlbl_cfg_unlbl_अटल_del(काष्ठा net *net,
-					      स्थिर अक्षर *dev_name,
-					      स्थिर व्योम *addr,
-					      स्थिर व्योम *mask,
+					      struct netlbl_audit *audit_info)
+{
+	return -ENOSYS;
+}
+static inline int netlbl_cfg_unlbl_static_del(struct net *net,
+					      const char *dev_name,
+					      const void *addr,
+					      const void *mask,
 					      u16 family,
-					      काष्ठा netlbl_audit *audit_info)
-अणु
-	वापस -ENOSYS;
-पूर्ण
-अटल अंतरभूत पूर्णांक netlbl_cfg_cipsov4_add(काष्ठा cipso_v4_करोi *करोi_def,
-					 काष्ठा netlbl_audit *audit_info)
-अणु
-	वापस -ENOSYS;
-पूर्ण
-अटल अंतरभूत व्योम netlbl_cfg_cipsov4_del(u32 करोi,
-					  काष्ठा netlbl_audit *audit_info)
-अणु
-	वापस;
-पूर्ण
-अटल अंतरभूत पूर्णांक netlbl_cfg_cipsov4_map_add(u32 करोi,
-					     स्थिर अक्षर *करोमुख्य,
-					     स्थिर काष्ठा in_addr *addr,
-					     स्थिर काष्ठा in_addr *mask,
-					     काष्ठा netlbl_audit *audit_info)
-अणु
-	वापस -ENOSYS;
-पूर्ण
-अटल अंतरभूत पूर्णांक netlbl_cfg_calipso_add(काष्ठा calipso_करोi *करोi_def,
-					 काष्ठा netlbl_audit *audit_info)
-अणु
-	वापस -ENOSYS;
-पूर्ण
-अटल अंतरभूत व्योम netlbl_cfg_calipso_del(u32 करोi,
-					  काष्ठा netlbl_audit *audit_info)
-अणु
-	वापस;
-पूर्ण
-अटल अंतरभूत पूर्णांक netlbl_cfg_calipso_map_add(u32 करोi,
-					     स्थिर अक्षर *करोमुख्य,
-					     स्थिर काष्ठा in6_addr *addr,
-					     स्थिर काष्ठा in6_addr *mask,
-					     काष्ठा netlbl_audit *audit_info)
-अणु
-	वापस -ENOSYS;
-पूर्ण
-अटल अंतरभूत पूर्णांक netlbl_caपंचांगap_walk(काष्ठा netlbl_lsm_caपंचांगap *caपंचांगap,
+					      struct netlbl_audit *audit_info)
+{
+	return -ENOSYS;
+}
+static inline int netlbl_cfg_cipsov4_add(struct cipso_v4_doi *doi_def,
+					 struct netlbl_audit *audit_info)
+{
+	return -ENOSYS;
+}
+static inline void netlbl_cfg_cipsov4_del(u32 doi,
+					  struct netlbl_audit *audit_info)
+{
+	return;
+}
+static inline int netlbl_cfg_cipsov4_map_add(u32 doi,
+					     const char *domain,
+					     const struct in_addr *addr,
+					     const struct in_addr *mask,
+					     struct netlbl_audit *audit_info)
+{
+	return -ENOSYS;
+}
+static inline int netlbl_cfg_calipso_add(struct calipso_doi *doi_def,
+					 struct netlbl_audit *audit_info)
+{
+	return -ENOSYS;
+}
+static inline void netlbl_cfg_calipso_del(u32 doi,
+					  struct netlbl_audit *audit_info)
+{
+	return;
+}
+static inline int netlbl_cfg_calipso_map_add(u32 doi,
+					     const char *domain,
+					     const struct in6_addr *addr,
+					     const struct in6_addr *mask,
+					     struct netlbl_audit *audit_info)
+{
+	return -ENOSYS;
+}
+static inline int netlbl_catmap_walk(struct netlbl_lsm_catmap *catmap,
 				     u32 offset)
-अणु
-	वापस -ENOENT;
-पूर्ण
-अटल अंतरभूत पूर्णांक netlbl_caपंचांगap_walkrng(काष्ठा netlbl_lsm_caपंचांगap *caपंचांगap,
+{
+	return -ENOENT;
+}
+static inline int netlbl_catmap_walkrng(struct netlbl_lsm_catmap *catmap,
 					u32 offset)
-अणु
-	वापस -ENOENT;
-पूर्ण
-अटल अंतरभूत पूर्णांक netlbl_caपंचांगap_getदीर्घ(काष्ठा netlbl_lsm_caपंचांगap *caपंचांगap,
+{
+	return -ENOENT;
+}
+static inline int netlbl_catmap_getlong(struct netlbl_lsm_catmap *catmap,
 					u32 *offset,
-					अचिन्हित दीर्घ *biपंचांगap)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक netlbl_caपंचांगap_setbit(काष्ठा netlbl_lsm_caपंचांगap **caपंचांगap,
+					unsigned long *bitmap)
+{
+	return 0;
+}
+static inline int netlbl_catmap_setbit(struct netlbl_lsm_catmap **catmap,
 				       u32 bit,
 				       gfp_t flags)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक netlbl_caपंचांगap_setrng(काष्ठा netlbl_lsm_caपंचांगap **caपंचांगap,
+{
+	return 0;
+}
+static inline int netlbl_catmap_setrng(struct netlbl_lsm_catmap **catmap,
 				       u32 start,
 				       u32 end,
 				       gfp_t flags)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक netlbl_caपंचांगap_setदीर्घ(काष्ठा netlbl_lsm_caपंचांगap **caपंचांगap,
+{
+	return 0;
+}
+static inline int netlbl_catmap_setlong(struct netlbl_lsm_catmap **catmap,
 					u32 offset,
-					अचिन्हित दीर्घ biपंचांगap,
+					unsigned long bitmap,
 					gfp_t flags)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक netlbl_enabled(व्योम)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक netlbl_sock_setattr(काष्ठा sock *sk,
+{
+	return 0;
+}
+static inline int netlbl_enabled(void)
+{
+	return 0;
+}
+static inline int netlbl_sock_setattr(struct sock *sk,
 				      u16 family,
-				      स्थिर काष्ठा netlbl_lsm_secattr *secattr)
-अणु
-	वापस -ENOSYS;
-पूर्ण
-अटल अंतरभूत व्योम netlbl_sock_delattr(काष्ठा sock *sk)
-अणु
-पूर्ण
-अटल अंतरभूत पूर्णांक netlbl_sock_getattr(काष्ठा sock *sk,
-				      काष्ठा netlbl_lsm_secattr *secattr)
-अणु
-	वापस -ENOSYS;
-पूर्ण
-अटल अंतरभूत पूर्णांक netlbl_conn_setattr(काष्ठा sock *sk,
-				      काष्ठा sockaddr *addr,
-				      स्थिर काष्ठा netlbl_lsm_secattr *secattr)
-अणु
-	वापस -ENOSYS;
-पूर्ण
-अटल अंतरभूत पूर्णांक netlbl_req_setattr(काष्ठा request_sock *req,
-				     स्थिर काष्ठा netlbl_lsm_secattr *secattr)
-अणु
-	वापस -ENOSYS;
-पूर्ण
-अटल अंतरभूत व्योम netlbl_req_delattr(काष्ठा request_sock *req)
-अणु
-	वापस;
-पूर्ण
-अटल अंतरभूत पूर्णांक netlbl_skbuff_setattr(काष्ठा sk_buff *skb,
+				      const struct netlbl_lsm_secattr *secattr)
+{
+	return -ENOSYS;
+}
+static inline void netlbl_sock_delattr(struct sock *sk)
+{
+}
+static inline int netlbl_sock_getattr(struct sock *sk,
+				      struct netlbl_lsm_secattr *secattr)
+{
+	return -ENOSYS;
+}
+static inline int netlbl_conn_setattr(struct sock *sk,
+				      struct sockaddr *addr,
+				      const struct netlbl_lsm_secattr *secattr)
+{
+	return -ENOSYS;
+}
+static inline int netlbl_req_setattr(struct request_sock *req,
+				     const struct netlbl_lsm_secattr *secattr)
+{
+	return -ENOSYS;
+}
+static inline void netlbl_req_delattr(struct request_sock *req)
+{
+	return;
+}
+static inline int netlbl_skbuff_setattr(struct sk_buff *skb,
 				      u16 family,
-				      स्थिर काष्ठा netlbl_lsm_secattr *secattr)
-अणु
-	वापस -ENOSYS;
-पूर्ण
-अटल अंतरभूत पूर्णांक netlbl_skbuff_getattr(स्थिर काष्ठा sk_buff *skb,
+				      const struct netlbl_lsm_secattr *secattr)
+{
+	return -ENOSYS;
+}
+static inline int netlbl_skbuff_getattr(const struct sk_buff *skb,
 					u16 family,
-					काष्ठा netlbl_lsm_secattr *secattr)
-अणु
-	वापस -ENOSYS;
-पूर्ण
-अटल अंतरभूत व्योम netlbl_skbuff_err(काष्ठा sk_buff *skb,
-				     पूर्णांक error,
-				     पूर्णांक gateway)
-अणु
-	वापस;
-पूर्ण
-अटल अंतरभूत व्योम netlbl_cache_invalidate(व्योम)
-अणु
-	वापस;
-पूर्ण
-अटल अंतरभूत पूर्णांक netlbl_cache_add(स्थिर काष्ठा sk_buff *skb, u16 family,
-				   स्थिर काष्ठा netlbl_lsm_secattr *secattr)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत काष्ठा audit_buffer *netlbl_audit_start(पूर्णांक type,
-						काष्ठा netlbl_audit *audit_info)
-अणु
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NETLABEL */
+					struct netlbl_lsm_secattr *secattr)
+{
+	return -ENOSYS;
+}
+static inline void netlbl_skbuff_err(struct sk_buff *skb,
+				     int error,
+				     int gateway)
+{
+	return;
+}
+static inline void netlbl_cache_invalidate(void)
+{
+	return;
+}
+static inline int netlbl_cache_add(const struct sk_buff *skb, u16 family,
+				   const struct netlbl_lsm_secattr *secattr)
+{
+	return 0;
+}
+static inline struct audit_buffer *netlbl_audit_start(int type,
+						struct netlbl_audit *audit_info)
+{
+	return NULL;
+}
+#endif /* CONFIG_NETLABEL */
 
-स्थिर काष्ठा netlbl_calipso_ops *
-netlbl_calipso_ops_रेजिस्टर(स्थिर काष्ठा netlbl_calipso_ops *ops);
+const struct netlbl_calipso_ops *
+netlbl_calipso_ops_register(const struct netlbl_calipso_ops *ops);
 
-#पूर्ण_अगर /* _NETLABEL_H */
+#endif /* _NETLABEL_H */

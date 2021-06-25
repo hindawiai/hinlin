@@ -1,104 +1,103 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * dir.c
  *
  * Copyright (c) 1999 Al Smith
  */
 
-#समावेश <linux/buffer_head.h>
-#समावेश "efs.h"
+#include <linux/buffer_head.h>
+#include "efs.h"
 
-अटल पूर्णांक efs_सूची_पढ़ो(काष्ठा file *, काष्ठा dir_context *);
+static int efs_readdir(struct file *, struct dir_context *);
 
-स्थिर काष्ठा file_operations efs_dir_operations = अणु
+const struct file_operations efs_dir_operations = {
 	.llseek		= generic_file_llseek,
-	.पढ़ो		= generic_पढ़ो_dir,
-	.iterate_shared	= efs_सूची_पढ़ो,
-पूर्ण;
+	.read		= generic_read_dir,
+	.iterate_shared	= efs_readdir,
+};
 
-स्थिर काष्ठा inode_operations efs_dir_inode_operations = अणु
+const struct inode_operations efs_dir_inode_operations = {
 	.lookup		= efs_lookup,
-पूर्ण;
+};
 
-अटल पूर्णांक efs_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
-अणु
-	काष्ठा inode *inode = file_inode(file);
+static int efs_readdir(struct file *file, struct dir_context *ctx)
+{
+	struct inode *inode = file_inode(file);
 	efs_block_t		block;
-	पूर्णांक			slot;
+	int			slot;
 
-	अगर (inode->i_size & (EFS_सूचीBSIZE-1))
+	if (inode->i_size & (EFS_DIRBSIZE-1))
 		pr_warn("%s(): directory size not a multiple of EFS_DIRBSIZE\n",
 			__func__);
 
 	/* work out where this entry can be found */
-	block = ctx->pos >> EFS_सूचीBSIZE_BITS;
+	block = ctx->pos >> EFS_DIRBSIZE_BITS;
 
 	/* each block contains at most 256 slots */
 	slot  = ctx->pos & 0xff;
 
 	/* look at all blocks */
-	जबतक (block < inode->i_blocks) अणु
-		काष्ठा efs_dir		*dirblock;
-		काष्ठा buffer_head *bh;
+	while (block < inode->i_blocks) {
+		struct efs_dir		*dirblock;
+		struct buffer_head *bh;
 
-		/* पढ़ो the dir block */
-		bh = sb_bपढ़ो(inode->i_sb, efs_bmap(inode, block));
+		/* read the dir block */
+		bh = sb_bread(inode->i_sb, efs_bmap(inode, block));
 
-		अगर (!bh) अणु
+		if (!bh) {
 			pr_err("%s(): failed to read dir block %d\n",
 			       __func__, block);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		dirblock = (काष्ठा efs_dir *) bh->b_data; 
+		dirblock = (struct efs_dir *) bh->b_data; 
 
-		अगर (be16_to_cpu(dirblock->magic) != EFS_सूचीBLK_MAGIC) अणु
+		if (be16_to_cpu(dirblock->magic) != EFS_DIRBLK_MAGIC) {
 			pr_err("%s(): invalid directory block\n", __func__);
-			brअन्यथा(bh);
-			अवरोध;
-		पूर्ण
+			brelse(bh);
+			break;
+		}
 
-		क्रम (; slot < dirblock->slots; slot++) अणु
-			काष्ठा efs_dentry *dirslot;
-			efs_ino_t inodक्रमागत;
-			स्थिर अक्षर *nameptr;
-			पूर्णांक namelen;
+		for (; slot < dirblock->slots; slot++) {
+			struct efs_dentry *dirslot;
+			efs_ino_t inodenum;
+			const char *nameptr;
+			int namelen;
 
-			अगर (dirblock->space[slot] == 0)
-				जारी;
+			if (dirblock->space[slot] == 0)
+				continue;
 
-			dirslot  = (काष्ठा efs_dentry *) (((अक्षर *) bh->b_data) + EFS_SLOTAT(dirblock, slot));
+			dirslot  = (struct efs_dentry *) (((char *) bh->b_data) + EFS_SLOTAT(dirblock, slot));
 
-			inodक्रमागत = be32_to_cpu(dirslot->inode);
+			inodenum = be32_to_cpu(dirslot->inode);
 			namelen  = dirslot->namelen;
 			nameptr  = dirslot->name;
 			pr_debug("%s(): block %d slot %d/%d: inode %u, name \"%s\", namelen %u\n",
 				 __func__, block, slot, dirblock->slots-1,
-				 inodक्रमागत, nameptr, namelen);
-			अगर (!namelen)
-				जारी;
+				 inodenum, nameptr, namelen);
+			if (!namelen)
+				continue;
 			/* found the next entry */
-			ctx->pos = (block << EFS_सूचीBSIZE_BITS) | slot;
+			ctx->pos = (block << EFS_DIRBSIZE_BITS) | slot;
 
 			/* sanity check */
-			अगर (nameptr - (अक्षर *) dirblock + namelen > EFS_सूचीBSIZE) अणु
+			if (nameptr - (char *) dirblock + namelen > EFS_DIRBSIZE) {
 				pr_warn("directory entry %d exceeds directory block\n",
 					slot);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			/* copy filename and data in dirslot */
-			अगर (!dir_emit(ctx, nameptr, namelen, inodक्रमागत, DT_UNKNOWN)) अणु
-				brअन्यथा(bh);
-				वापस 0;
-			पूर्ण
-		पूर्ण
-		brअन्यथा(bh);
+			if (!dir_emit(ctx, nameptr, namelen, inodenum, DT_UNKNOWN)) {
+				brelse(bh);
+				return 0;
+			}
+		}
+		brelse(bh);
 
 		slot = 0;
 		block++;
-	पूर्ण
-	ctx->pos = (block << EFS_सूचीBSIZE_BITS) | slot;
-	वापस 0;
-पूर्ण
+	}
+	ctx->pos = (block << EFS_DIRBSIZE_BITS) | slot;
+	return 0;
+}

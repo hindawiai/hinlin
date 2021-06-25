@@ -1,11 +1,10 @@
-<शैली गुरु>
 /*
- *   fs/cअगरs/xattr.c
+ *   fs/cifs/xattr.c
  *
  *   Copyright (c) International Business Machines  Corp., 2003, 2007
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *
- *   This library is मुक्त software; you can redistribute it and/or modअगरy
+ *   This library is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU Lesser General Public License as published
  *   by the Free Software Foundation; either version 2.1 of the License, or
  *   (at your option) any later version.
@@ -13,552 +12,552 @@
  *   This library is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU Lesser General Public License क्रम more details.
+ *   the GNU Lesser General Public License for more details.
  *
  *   You should have received a copy of the GNU Lesser General Public License
- *   aदीर्घ with this library; अगर not, ग_लिखो to the Free Software
+ *   along with this library; if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/posix_acl_xattr.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/xattr.h>
-#समावेश "cifsfs.h"
-#समावेश "cifspdu.h"
-#समावेश "cifsglob.h"
-#समावेश "cifsproto.h"
-#समावेश "cifs_debug.h"
-#समावेश "cifs_fs_sb.h"
-#समावेश "cifs_unicode.h"
-#समावेश "cifs_ioctl.h"
+#include <linux/fs.h>
+#include <linux/posix_acl_xattr.h>
+#include <linux/slab.h>
+#include <linux/xattr.h>
+#include "cifsfs.h"
+#include "cifspdu.h"
+#include "cifsglob.h"
+#include "cifsproto.h"
+#include "cifs_debug.h"
+#include "cifs_fs_sb.h"
+#include "cifs_unicode.h"
+#include "cifs_ioctl.h"
 
-#घोषणा MAX_EA_VALUE_SIZE CIFSMaxBufSize
-#घोषणा CIFS_XATTR_CIFS_ACL "system.cifs_acl" /* DACL only */
-#घोषणा CIFS_XATTR_CIFS_NTSD "system.cifs_ntsd" /* owner plus DACL */
-#घोषणा CIFS_XATTR_CIFS_NTSD_FULL "system.cifs_ntsd_full" /* owner/DACL/SACL */
-#घोषणा CIFS_XATTR_ATTRIB "cifs.dosattrib"  /* full name: user.cअगरs.करोsattrib */
-#घोषणा CIFS_XATTR_CREATETIME "cifs.creationtime"  /* user.cअगरs.creationसमय */
+#define MAX_EA_VALUE_SIZE CIFSMaxBufSize
+#define CIFS_XATTR_CIFS_ACL "system.cifs_acl" /* DACL only */
+#define CIFS_XATTR_CIFS_NTSD "system.cifs_ntsd" /* owner plus DACL */
+#define CIFS_XATTR_CIFS_NTSD_FULL "system.cifs_ntsd_full" /* owner/DACL/SACL */
+#define CIFS_XATTR_ATTRIB "cifs.dosattrib"  /* full name: user.cifs.dosattrib */
+#define CIFS_XATTR_CREATETIME "cifs.creationtime"  /* user.cifs.creationtime */
 /*
- * Although these three are just aliases क्रम the above, need to move away from
- * confusing users and using the 20+ year old term 'cifs' when it is no दीर्घer
+ * Although these three are just aliases for the above, need to move away from
+ * confusing users and using the 20+ year old term 'cifs' when it is no longer
  * secure, replaced by SMB2 (then even more highly secure SMB3) many years ago
  */
-#घोषणा SMB3_XATTR_CIFS_ACL "system.smb3_acl" /* DACL only */
-#घोषणा SMB3_XATTR_CIFS_NTSD "system.smb3_ntsd" /* owner plus DACL */
-#घोषणा SMB3_XATTR_CIFS_NTSD_FULL "system.smb3_ntsd_full" /* owner/DACL/SACL */
-#घोषणा SMB3_XATTR_ATTRIB "smb3.dosattrib"  /* full name: user.smb3.करोsattrib */
-#घोषणा SMB3_XATTR_CREATETIME "smb3.creationtime"  /* user.smb3.creationसमय */
-/* BB need to add server (Samba e.g) support क्रम security and trusted prefix */
+#define SMB3_XATTR_CIFS_ACL "system.smb3_acl" /* DACL only */
+#define SMB3_XATTR_CIFS_NTSD "system.smb3_ntsd" /* owner plus DACL */
+#define SMB3_XATTR_CIFS_NTSD_FULL "system.smb3_ntsd_full" /* owner/DACL/SACL */
+#define SMB3_XATTR_ATTRIB "smb3.dosattrib"  /* full name: user.smb3.dosattrib */
+#define SMB3_XATTR_CREATETIME "smb3.creationtime"  /* user.smb3.creationtime */
+/* BB need to add server (Samba e.g) support for security and trusted prefix */
 
-क्रमागत अणु XATTR_USER, XATTR_CIFS_ACL, XATTR_ACL_ACCESS, XATTR_ACL_DEFAULT,
-	XATTR_CIFS_NTSD, XATTR_CIFS_NTSD_FULL पूर्ण;
+enum { XATTR_USER, XATTR_CIFS_ACL, XATTR_ACL_ACCESS, XATTR_ACL_DEFAULT,
+	XATTR_CIFS_NTSD, XATTR_CIFS_NTSD_FULL };
 
-अटल पूर्णांक cअगरs_attrib_set(अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *pTcon,
-			   काष्ठा inode *inode, स्थिर अक्षर *full_path,
-			   स्थिर व्योम *value, माप_प्रकार size)
-अणु
-	sमाप_प्रकार rc = -EOPNOTSUPP;
+static int cifs_attrib_set(unsigned int xid, struct cifs_tcon *pTcon,
+			   struct inode *inode, const char *full_path,
+			   const void *value, size_t size)
+{
+	ssize_t rc = -EOPNOTSUPP;
 	__u32 *pattrib = (__u32 *)value;
 	__u32 attrib;
-	खाता_BASIC_INFO info_buf;
+	FILE_BASIC_INFO info_buf;
 
-	अगर ((value == शून्य) || (size != माप(__u32)))
-		वापस -दुस्फल;
+	if ((value == NULL) || (size != sizeof(__u32)))
+		return -ERANGE;
 
-	स_रखो(&info_buf, 0, माप(info_buf));
+	memset(&info_buf, 0, sizeof(info_buf));
 	attrib = *pattrib;
 	info_buf.Attributes = cpu_to_le32(attrib);
-	अगर (pTcon->ses->server->ops->set_file_info)
+	if (pTcon->ses->server->ops->set_file_info)
 		rc = pTcon->ses->server->ops->set_file_info(inode, full_path,
 				&info_buf, xid);
-	अगर (rc == 0)
-		CIFS_I(inode)->cअगरsAttrs = attrib;
+	if (rc == 0)
+		CIFS_I(inode)->cifsAttrs = attrib;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक cअगरs_creation_समय_set(अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *pTcon,
-				  काष्ठा inode *inode, स्थिर अक्षर *full_path,
-				  स्थिर व्योम *value, माप_प्रकार size)
-अणु
-	sमाप_प्रकार rc = -EOPNOTSUPP;
-	__u64 *pcreation_समय = (__u64 *)value;
-	__u64 creation_समय;
-	खाता_BASIC_INFO info_buf;
+static int cifs_creation_time_set(unsigned int xid, struct cifs_tcon *pTcon,
+				  struct inode *inode, const char *full_path,
+				  const void *value, size_t size)
+{
+	ssize_t rc = -EOPNOTSUPP;
+	__u64 *pcreation_time = (__u64 *)value;
+	__u64 creation_time;
+	FILE_BASIC_INFO info_buf;
 
-	अगर ((value == शून्य) || (size != माप(__u64)))
-		वापस -दुस्फल;
+	if ((value == NULL) || (size != sizeof(__u64)))
+		return -ERANGE;
 
-	स_रखो(&info_buf, 0, माप(info_buf));
-	creation_समय = *pcreation_समय;
-	info_buf.CreationTime = cpu_to_le64(creation_समय);
-	अगर (pTcon->ses->server->ops->set_file_info)
+	memset(&info_buf, 0, sizeof(info_buf));
+	creation_time = *pcreation_time;
+	info_buf.CreationTime = cpu_to_le64(creation_time);
+	if (pTcon->ses->server->ops->set_file_info)
 		rc = pTcon->ses->server->ops->set_file_info(inode, full_path,
 				&info_buf, xid);
-	अगर (rc == 0)
-		CIFS_I(inode)->createसमय = creation_समय;
+	if (rc == 0)
+		CIFS_I(inode)->createtime = creation_time;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक cअगरs_xattr_set(स्थिर काष्ठा xattr_handler *handler,
-			  काष्ठा user_namespace *mnt_userns,
-			  काष्ठा dentry *dentry, काष्ठा inode *inode,
-			  स्थिर अक्षर *name, स्थिर व्योम *value,
-			  माप_प्रकार size, पूर्णांक flags)
-अणु
-	पूर्णांक rc = -EOPNOTSUPP;
-	अचिन्हित पूर्णांक xid;
-	काष्ठा super_block *sb = dentry->d_sb;
-	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(sb);
-	काष्ठा tcon_link *tlink;
-	काष्ठा cअगरs_tcon *pTcon;
-	स्थिर अक्षर *full_path;
-	व्योम *page;
+static int cifs_xattr_set(const struct xattr_handler *handler,
+			  struct user_namespace *mnt_userns,
+			  struct dentry *dentry, struct inode *inode,
+			  const char *name, const void *value,
+			  size_t size, int flags)
+{
+	int rc = -EOPNOTSUPP;
+	unsigned int xid;
+	struct super_block *sb = dentry->d_sb;
+	struct cifs_sb_info *cifs_sb = CIFS_SB(sb);
+	struct tcon_link *tlink;
+	struct cifs_tcon *pTcon;
+	const char *full_path;
+	void *page;
 
-	tlink = cअगरs_sb_tlink(cअगरs_sb);
-	अगर (IS_ERR(tlink))
-		वापस PTR_ERR(tlink);
+	tlink = cifs_sb_tlink(cifs_sb);
+	if (IS_ERR(tlink))
+		return PTR_ERR(tlink);
 	pTcon = tlink_tcon(tlink);
 
 	xid = get_xid();
 	page = alloc_dentry_path();
 
 	full_path = build_path_from_dentry(dentry, page);
-	अगर (IS_ERR(full_path)) अणु
+	if (IS_ERR(full_path)) {
 		rc = PTR_ERR(full_path);
-		जाओ out;
-	पूर्ण
-	/* वापस करोs attributes as pseuकरो xattr */
-	/* वापस alt name अगर available as pseuकरो attr */
+		goto out;
+	}
+	/* return dos attributes as pseudo xattr */
+	/* return alt name if available as pseudo attr */
 
-	/* अगर proc/fs/cअगरs/streamstoxattr is set then
-		search server क्रम EAs or streams to
-		वापसs as xattrs */
-	अगर (size > MAX_EA_VALUE_SIZE) अणु
-		cअगरs_dbg(FYI, "size of EA value too large\n");
+	/* if proc/fs/cifs/streamstoxattr is set then
+		search server for EAs or streams to
+		returns as xattrs */
+	if (size > MAX_EA_VALUE_SIZE) {
+		cifs_dbg(FYI, "size of EA value too large\n");
 		rc = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (handler->flags) अणु
-	हाल XATTR_USER:
-		cअगरs_dbg(FYI, "%s:setting user xattr %s\n", __func__, name);
-		अगर ((म_भेद(name, CIFS_XATTR_ATTRIB) == 0) ||
-		    (म_भेद(name, SMB3_XATTR_ATTRIB) == 0)) अणु
-			rc = cअगरs_attrib_set(xid, pTcon, inode, full_path,
+	switch (handler->flags) {
+	case XATTR_USER:
+		cifs_dbg(FYI, "%s:setting user xattr %s\n", __func__, name);
+		if ((strcmp(name, CIFS_XATTR_ATTRIB) == 0) ||
+		    (strcmp(name, SMB3_XATTR_ATTRIB) == 0)) {
+			rc = cifs_attrib_set(xid, pTcon, inode, full_path,
 					value, size);
-			अगर (rc == 0) /* क्रमce revalidate of the inode */
-				CIFS_I(inode)->समय = 0;
-			अवरोध;
-		पूर्ण अन्यथा अगर ((म_भेद(name, CIFS_XATTR_CREATETIME) == 0) ||
-			   (म_भेद(name, SMB3_XATTR_CREATETIME) == 0)) अणु
-			rc = cअगरs_creation_समय_set(xid, pTcon, inode,
+			if (rc == 0) /* force revalidate of the inode */
+				CIFS_I(inode)->time = 0;
+			break;
+		} else if ((strcmp(name, CIFS_XATTR_CREATETIME) == 0) ||
+			   (strcmp(name, SMB3_XATTR_CREATETIME) == 0)) {
+			rc = cifs_creation_time_set(xid, pTcon, inode,
 					full_path, value, size);
-			अगर (rc == 0) /* क्रमce revalidate of the inode */
-				CIFS_I(inode)->समय = 0;
-			अवरोध;
-		पूर्ण
+			if (rc == 0) /* force revalidate of the inode */
+				CIFS_I(inode)->time = 0;
+			break;
+		}
 
-		अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_NO_XATTR)
-			जाओ out;
+		if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NO_XATTR)
+			goto out;
 
-		अगर (pTcon->ses->server->ops->set_EA)
+		if (pTcon->ses->server->ops->set_EA)
 			rc = pTcon->ses->server->ops->set_EA(xid, pTcon,
 				full_path, name, value, (__u16)size,
-				cअगरs_sb->local_nls, cअगरs_sb);
-		अवरोध;
+				cifs_sb->local_nls, cifs_sb);
+		break;
 
-	हाल XATTR_CIFS_ACL:
-	हाल XATTR_CIFS_NTSD:
-	हाल XATTR_CIFS_NTSD_FULL: अणु
-		काष्ठा cअगरs_ntsd *pacl;
+	case XATTR_CIFS_ACL:
+	case XATTR_CIFS_NTSD:
+	case XATTR_CIFS_NTSD_FULL: {
+		struct cifs_ntsd *pacl;
 
-		अगर (!value)
-			जाओ out;
-		pacl = kदो_स्मृति(size, GFP_KERNEL);
-		अगर (!pacl) अणु
+		if (!value)
+			goto out;
+		pacl = kmalloc(size, GFP_KERNEL);
+		if (!pacl) {
 			rc = -ENOMEM;
-		पूर्ण अन्यथा अणु
-			स_नकल(pacl, value, size);
-			अगर (pTcon->ses->server->ops->set_acl) अणु
-				पूर्णांक aclflags = 0;
+		} else {
+			memcpy(pacl, value, size);
+			if (pTcon->ses->server->ops->set_acl) {
+				int aclflags = 0;
 				rc = 0;
 
-				चयन (handler->flags) अणु
-				हाल XATTR_CIFS_NTSD_FULL:
+				switch (handler->flags) {
+				case XATTR_CIFS_NTSD_FULL:
 					aclflags = (CIFS_ACL_OWNER |
 						    CIFS_ACL_DACL |
 						    CIFS_ACL_SACL);
-					अवरोध;
-				हाल XATTR_CIFS_NTSD:
+					break;
+				case XATTR_CIFS_NTSD:
 					aclflags = (CIFS_ACL_OWNER |
 						    CIFS_ACL_DACL);
-					अवरोध;
-				हाल XATTR_CIFS_ACL:
-				शेष:
+					break;
+				case XATTR_CIFS_ACL:
+				default:
 					aclflags = CIFS_ACL_DACL;
-				पूर्ण
+				}
 
 				rc = pTcon->ses->server->ops->set_acl(pacl,
 					size, inode, full_path, aclflags);
-			पूर्ण अन्यथा अणु
+			} else {
 				rc = -EOPNOTSUPP;
-			पूर्ण
-			अगर (rc == 0) /* क्रमce revalidate of the inode */
-				CIFS_I(inode)->समय = 0;
-			kमुक्त(pacl);
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			}
+			if (rc == 0) /* force revalidate of the inode */
+				CIFS_I(inode)->time = 0;
+			kfree(pacl);
+		}
+		break;
+	}
 
-	हाल XATTR_ACL_ACCESS:
-#अगर_घोषित CONFIG_CIFS_POSIX
-		अगर (!value)
-			जाओ out;
-		अगर (sb->s_flags & SB_POSIXACL)
+	case XATTR_ACL_ACCESS:
+#ifdef CONFIG_CIFS_POSIX
+		if (!value)
+			goto out;
+		if (sb->s_flags & SB_POSIXACL)
 			rc = CIFSSMBSetPosixACL(xid, pTcon, full_path,
-				value, (स्थिर पूर्णांक)size,
-				ACL_TYPE_ACCESS, cअगरs_sb->local_nls,
-				cअगरs_remap(cअगरs_sb));
-#पूर्ण_अगर  /* CONFIG_CIFS_POSIX */
-		अवरोध;
+				value, (const int)size,
+				ACL_TYPE_ACCESS, cifs_sb->local_nls,
+				cifs_remap(cifs_sb));
+#endif  /* CONFIG_CIFS_POSIX */
+		break;
 
-	हाल XATTR_ACL_DEFAULT:
-#अगर_घोषित CONFIG_CIFS_POSIX
-		अगर (!value)
-			जाओ out;
-		अगर (sb->s_flags & SB_POSIXACL)
+	case XATTR_ACL_DEFAULT:
+#ifdef CONFIG_CIFS_POSIX
+		if (!value)
+			goto out;
+		if (sb->s_flags & SB_POSIXACL)
 			rc = CIFSSMBSetPosixACL(xid, pTcon, full_path,
-				value, (स्थिर पूर्णांक)size,
-				ACL_TYPE_DEFAULT, cअगरs_sb->local_nls,
-				cअगरs_remap(cअगरs_sb));
-#पूर्ण_अगर  /* CONFIG_CIFS_POSIX */
-		अवरोध;
-	पूर्ण
+				value, (const int)size,
+				ACL_TYPE_DEFAULT, cifs_sb->local_nls,
+				cifs_remap(cifs_sb));
+#endif  /* CONFIG_CIFS_POSIX */
+		break;
+	}
 
 out:
-	मुक्त_dentry_path(page);
-	मुक्त_xid(xid);
-	cअगरs_put_tlink(tlink);
-	वापस rc;
-पूर्ण
+	free_dentry_path(page);
+	free_xid(xid);
+	cifs_put_tlink(tlink);
+	return rc;
+}
 
-अटल पूर्णांक cअगरs_attrib_get(काष्ठा dentry *dentry,
-			   काष्ठा inode *inode, व्योम *value,
-			   माप_प्रकार size)
-अणु
-	sमाप_प्रकार rc;
+static int cifs_attrib_get(struct dentry *dentry,
+			   struct inode *inode, void *value,
+			   size_t size)
+{
+	ssize_t rc;
 	__u32 *pattribute;
 
-	rc = cअगरs_revalidate_dentry_attr(dentry);
+	rc = cifs_revalidate_dentry_attr(dentry);
 
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	अगर ((value == शून्य) || (size == 0))
-		वापस माप(__u32);
-	अन्यथा अगर (size < माप(__u32))
-		वापस -दुस्फल;
+	if ((value == NULL) || (size == 0))
+		return sizeof(__u32);
+	else if (size < sizeof(__u32))
+		return -ERANGE;
 
-	/* वापस करोs attributes as pseuकरो xattr */
+	/* return dos attributes as pseudo xattr */
 	pattribute = (__u32 *)value;
-	*pattribute = CIFS_I(inode)->cअगरsAttrs;
+	*pattribute = CIFS_I(inode)->cifsAttrs;
 
-	वापस माप(__u32);
-पूर्ण
+	return sizeof(__u32);
+}
 
-अटल पूर्णांक cअगरs_creation_समय_get(काष्ठा dentry *dentry, काष्ठा inode *inode,
-				  व्योम *value, माप_प्रकार size)
-अणु
-	sमाप_प्रकार rc;
-	__u64 *pcreateसमय;
+static int cifs_creation_time_get(struct dentry *dentry, struct inode *inode,
+				  void *value, size_t size)
+{
+	ssize_t rc;
+	__u64 *pcreatetime;
 
-	rc = cअगरs_revalidate_dentry_attr(dentry);
-	अगर (rc)
-		वापस rc;
+	rc = cifs_revalidate_dentry_attr(dentry);
+	if (rc)
+		return rc;
 
-	अगर ((value == शून्य) || (size == 0))
-		वापस माप(__u64);
-	अन्यथा अगर (size < माप(__u64))
-		वापस -दुस्फल;
+	if ((value == NULL) || (size == 0))
+		return sizeof(__u64);
+	else if (size < sizeof(__u64))
+		return -ERANGE;
 
-	/* वापस करोs attributes as pseuकरो xattr */
-	pcreateसमय = (__u64 *)value;
-	*pcreateसमय = CIFS_I(inode)->createसमय;
-	वापस माप(__u64);
-पूर्ण
+	/* return dos attributes as pseudo xattr */
+	pcreatetime = (__u64 *)value;
+	*pcreatetime = CIFS_I(inode)->createtime;
+	return sizeof(__u64);
+}
 
 
-अटल पूर्णांक cअगरs_xattr_get(स्थिर काष्ठा xattr_handler *handler,
-			  काष्ठा dentry *dentry, काष्ठा inode *inode,
-			  स्थिर अक्षर *name, व्योम *value, माप_प्रकार size)
-अणु
-	sमाप_प्रकार rc = -EOPNOTSUPP;
-	अचिन्हित पूर्णांक xid;
-	काष्ठा super_block *sb = dentry->d_sb;
-	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(sb);
-	काष्ठा tcon_link *tlink;
-	काष्ठा cअगरs_tcon *pTcon;
-	स्थिर अक्षर *full_path;
-	व्योम *page;
+static int cifs_xattr_get(const struct xattr_handler *handler,
+			  struct dentry *dentry, struct inode *inode,
+			  const char *name, void *value, size_t size)
+{
+	ssize_t rc = -EOPNOTSUPP;
+	unsigned int xid;
+	struct super_block *sb = dentry->d_sb;
+	struct cifs_sb_info *cifs_sb = CIFS_SB(sb);
+	struct tcon_link *tlink;
+	struct cifs_tcon *pTcon;
+	const char *full_path;
+	void *page;
 
-	tlink = cअगरs_sb_tlink(cअगरs_sb);
-	अगर (IS_ERR(tlink))
-		वापस PTR_ERR(tlink);
+	tlink = cifs_sb_tlink(cifs_sb);
+	if (IS_ERR(tlink))
+		return PTR_ERR(tlink);
 	pTcon = tlink_tcon(tlink);
 
 	xid = get_xid();
 	page = alloc_dentry_path();
 
 	full_path = build_path_from_dentry(dentry, page);
-	अगर (IS_ERR(full_path)) अणु
+	if (IS_ERR(full_path)) {
 		rc = PTR_ERR(full_path);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* वापस alt name अगर available as pseuकरो attr */
-	चयन (handler->flags) अणु
-	हाल XATTR_USER:
-		cअगरs_dbg(FYI, "%s:querying user xattr %s\n", __func__, name);
-		अगर ((म_भेद(name, CIFS_XATTR_ATTRIB) == 0) ||
-		    (म_भेद(name, SMB3_XATTR_ATTRIB) == 0)) अणु
-			rc = cअगरs_attrib_get(dentry, inode, value, size);
-			अवरोध;
-		पूर्ण अन्यथा अगर ((म_भेद(name, CIFS_XATTR_CREATETIME) == 0) ||
-		    (म_भेद(name, SMB3_XATTR_CREATETIME) == 0)) अणु
-			rc = cअगरs_creation_समय_get(dentry, inode, value, size);
-			अवरोध;
-		पूर्ण
+	/* return alt name if available as pseudo attr */
+	switch (handler->flags) {
+	case XATTR_USER:
+		cifs_dbg(FYI, "%s:querying user xattr %s\n", __func__, name);
+		if ((strcmp(name, CIFS_XATTR_ATTRIB) == 0) ||
+		    (strcmp(name, SMB3_XATTR_ATTRIB) == 0)) {
+			rc = cifs_attrib_get(dentry, inode, value, size);
+			break;
+		} else if ((strcmp(name, CIFS_XATTR_CREATETIME) == 0) ||
+		    (strcmp(name, SMB3_XATTR_CREATETIME) == 0)) {
+			rc = cifs_creation_time_get(dentry, inode, value, size);
+			break;
+		}
 
-		अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_NO_XATTR)
-			जाओ out;
+		if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NO_XATTR)
+			goto out;
 
-		अगर (pTcon->ses->server->ops->query_all_EAs)
+		if (pTcon->ses->server->ops->query_all_EAs)
 			rc = pTcon->ses->server->ops->query_all_EAs(xid, pTcon,
-				full_path, name, value, size, cअगरs_sb);
-		अवरोध;
+				full_path, name, value, size, cifs_sb);
+		break;
 
-	हाल XATTR_CIFS_ACL:
-	हाल XATTR_CIFS_NTSD:
-	हाल XATTR_CIFS_NTSD_FULL: अणु
+	case XATTR_CIFS_ACL:
+	case XATTR_CIFS_NTSD:
+	case XATTR_CIFS_NTSD_FULL: {
 		/*
-		 * fetch owner, DACL, and SACL अगर asked क्रम full descriptor,
+		 * fetch owner, DACL, and SACL if asked for full descriptor,
 		 * fetch owner and DACL otherwise
 		 */
 		u32 acllen, extra_info;
-		काष्ठा cअगरs_ntsd *pacl;
+		struct cifs_ntsd *pacl;
 
-		अगर (pTcon->ses->server->ops->get_acl == शून्य)
-			जाओ out; /* rc alपढ़ोy EOPNOTSUPP */
+		if (pTcon->ses->server->ops->get_acl == NULL)
+			goto out; /* rc already EOPNOTSUPP */
 
-		अगर (handler->flags == XATTR_CIFS_NTSD_FULL) अणु
+		if (handler->flags == XATTR_CIFS_NTSD_FULL) {
 			extra_info = SACL_SECINFO;
-		पूर्ण अन्यथा अणु
+		} else {
 			extra_info = 0;
-		पूर्ण
-		pacl = pTcon->ses->server->ops->get_acl(cअगरs_sb,
+		}
+		pacl = pTcon->ses->server->ops->get_acl(cifs_sb,
 				inode, full_path, &acllen, extra_info);
-		अगर (IS_ERR(pacl)) अणु
+		if (IS_ERR(pacl)) {
 			rc = PTR_ERR(pacl);
-			cअगरs_dbg(VFS, "%s: error %zd getting sec desc\n",
+			cifs_dbg(VFS, "%s: error %zd getting sec desc\n",
 				 __func__, rc);
-		पूर्ण अन्यथा अणु
-			अगर (value) अणु
-				अगर (acllen > size)
-					acllen = -दुस्फल;
-				अन्यथा
-					स_नकल(value, pacl, acllen);
-			पूर्ण
+		} else {
+			if (value) {
+				if (acllen > size)
+					acllen = -ERANGE;
+				else
+					memcpy(value, pacl, acllen);
+			}
 			rc = acllen;
-			kमुक्त(pacl);
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			kfree(pacl);
+		}
+		break;
+	}
 
-	हाल XATTR_ACL_ACCESS:
-#अगर_घोषित CONFIG_CIFS_POSIX
-		अगर (sb->s_flags & SB_POSIXACL)
+	case XATTR_ACL_ACCESS:
+#ifdef CONFIG_CIFS_POSIX
+		if (sb->s_flags & SB_POSIXACL)
 			rc = CIFSSMBGetPosixACL(xid, pTcon, full_path,
 				value, size, ACL_TYPE_ACCESS,
-				cअगरs_sb->local_nls,
-				cअगरs_remap(cअगरs_sb));
-#पूर्ण_अगर  /* CONFIG_CIFS_POSIX */
-		अवरोध;
+				cifs_sb->local_nls,
+				cifs_remap(cifs_sb));
+#endif  /* CONFIG_CIFS_POSIX */
+		break;
 
-	हाल XATTR_ACL_DEFAULT:
-#अगर_घोषित CONFIG_CIFS_POSIX
-		अगर (sb->s_flags & SB_POSIXACL)
+	case XATTR_ACL_DEFAULT:
+#ifdef CONFIG_CIFS_POSIX
+		if (sb->s_flags & SB_POSIXACL)
 			rc = CIFSSMBGetPosixACL(xid, pTcon, full_path,
 				value, size, ACL_TYPE_DEFAULT,
-				cअगरs_sb->local_nls,
-				cअगरs_remap(cअगरs_sb));
-#पूर्ण_अगर  /* CONFIG_CIFS_POSIX */
-		अवरोध;
-	पूर्ण
+				cifs_sb->local_nls,
+				cifs_remap(cifs_sb));
+#endif  /* CONFIG_CIFS_POSIX */
+		break;
+	}
 
-	/* We could add an additional check क्रम streams ie
-	    अगर proc/fs/cअगरs/streamstoxattr is set then
-		search server क्रम EAs or streams to
-		वापसs as xattrs */
+	/* We could add an additional check for streams ie
+	    if proc/fs/cifs/streamstoxattr is set then
+		search server for EAs or streams to
+		returns as xattrs */
 
-	अगर (rc == -EINVAL)
+	if (rc == -EINVAL)
 		rc = -EOPNOTSUPP;
 
 out:
-	मुक्त_dentry_path(page);
-	मुक्त_xid(xid);
-	cअगरs_put_tlink(tlink);
-	वापस rc;
-पूर्ण
+	free_dentry_path(page);
+	free_xid(xid);
+	cifs_put_tlink(tlink);
+	return rc;
+}
 
-sमाप_प्रकार cअगरs_listxattr(काष्ठा dentry *direntry, अक्षर *data, माप_प्रकार buf_size)
-अणु
-	sमाप_प्रकार rc = -EOPNOTSUPP;
-	अचिन्हित पूर्णांक xid;
-	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(direntry->d_sb);
-	काष्ठा tcon_link *tlink;
-	काष्ठा cअगरs_tcon *pTcon;
-	स्थिर अक्षर *full_path;
-	व्योम *page;
+ssize_t cifs_listxattr(struct dentry *direntry, char *data, size_t buf_size)
+{
+	ssize_t rc = -EOPNOTSUPP;
+	unsigned int xid;
+	struct cifs_sb_info *cifs_sb = CIFS_SB(direntry->d_sb);
+	struct tcon_link *tlink;
+	struct cifs_tcon *pTcon;
+	const char *full_path;
+	void *page;
 
-	अगर (unlikely(cअगरs_क्रमced_shutकरोwn(cअगरs_sb)))
-		वापस -EIO;
+	if (unlikely(cifs_forced_shutdown(cifs_sb)))
+		return -EIO;
 
-	अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_NO_XATTR)
-		वापस -EOPNOTSUPP;
+	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NO_XATTR)
+		return -EOPNOTSUPP;
 
-	tlink = cअगरs_sb_tlink(cअगरs_sb);
-	अगर (IS_ERR(tlink))
-		वापस PTR_ERR(tlink);
+	tlink = cifs_sb_tlink(cifs_sb);
+	if (IS_ERR(tlink))
+		return PTR_ERR(tlink);
 	pTcon = tlink_tcon(tlink);
 
 	xid = get_xid();
 	page = alloc_dentry_path();
 
 	full_path = build_path_from_dentry(direntry, page);
-	अगर (IS_ERR(full_path)) अणु
+	if (IS_ERR(full_path)) {
 		rc = PTR_ERR(full_path);
-		जाओ list_ea_निकास;
-	पूर्ण
-	/* वापस करोs attributes as pseuकरो xattr */
-	/* वापस alt name अगर available as pseuकरो attr */
+		goto list_ea_exit;
+	}
+	/* return dos attributes as pseudo xattr */
+	/* return alt name if available as pseudo attr */
 
-	/* अगर proc/fs/cअगरs/streamstoxattr is set then
-		search server क्रम EAs or streams to
-		वापसs as xattrs */
+	/* if proc/fs/cifs/streamstoxattr is set then
+		search server for EAs or streams to
+		returns as xattrs */
 
-	अगर (pTcon->ses->server->ops->query_all_EAs)
+	if (pTcon->ses->server->ops->query_all_EAs)
 		rc = pTcon->ses->server->ops->query_all_EAs(xid, pTcon,
-				full_path, शून्य, data, buf_size, cअगरs_sb);
-list_ea_निकास:
-	मुक्त_dentry_path(page);
-	मुक्त_xid(xid);
-	cअगरs_put_tlink(tlink);
-	वापस rc;
-पूर्ण
+				full_path, NULL, data, buf_size, cifs_sb);
+list_ea_exit:
+	free_dentry_path(page);
+	free_xid(xid);
+	cifs_put_tlink(tlink);
+	return rc;
+}
 
-अटल स्थिर काष्ठा xattr_handler cअगरs_user_xattr_handler = अणु
+static const struct xattr_handler cifs_user_xattr_handler = {
 	.prefix = XATTR_USER_PREFIX,
 	.flags = XATTR_USER,
-	.get = cअगरs_xattr_get,
-	.set = cअगरs_xattr_set,
-पूर्ण;
+	.get = cifs_xattr_get,
+	.set = cifs_xattr_set,
+};
 
 /* os2.* attributes are treated like user.* attributes */
-अटल स्थिर काष्ठा xattr_handler cअगरs_os2_xattr_handler = अणु
+static const struct xattr_handler cifs_os2_xattr_handler = {
 	.prefix = XATTR_OS2_PREFIX,
 	.flags = XATTR_USER,
-	.get = cअगरs_xattr_get,
-	.set = cअगरs_xattr_set,
-पूर्ण;
+	.get = cifs_xattr_get,
+	.set = cifs_xattr_set,
+};
 
-अटल स्थिर काष्ठा xattr_handler cअगरs_cअगरs_acl_xattr_handler = अणु
+static const struct xattr_handler cifs_cifs_acl_xattr_handler = {
 	.name = CIFS_XATTR_CIFS_ACL,
 	.flags = XATTR_CIFS_ACL,
-	.get = cअगरs_xattr_get,
-	.set = cअगरs_xattr_set,
-पूर्ण;
+	.get = cifs_xattr_get,
+	.set = cifs_xattr_set,
+};
 
 /*
- * Although this is just an alias क्रम the above, need to move away from
+ * Although this is just an alias for the above, need to move away from
  * confusing users and using the 20 year old term 'cifs' when it is no
- * दीर्घer secure and was replaced by SMB2/SMB3 a दीर्घ समय ago, and
+ * longer secure and was replaced by SMB2/SMB3 a long time ago, and
  * SMB3 and later are highly secure.
  */
-अटल स्थिर काष्ठा xattr_handler smb3_acl_xattr_handler = अणु
+static const struct xattr_handler smb3_acl_xattr_handler = {
 	.name = SMB3_XATTR_CIFS_ACL,
 	.flags = XATTR_CIFS_ACL,
-	.get = cअगरs_xattr_get,
-	.set = cअगरs_xattr_set,
-पूर्ण;
+	.get = cifs_xattr_get,
+	.set = cifs_xattr_set,
+};
 
-अटल स्थिर काष्ठा xattr_handler cअगरs_cअगरs_ntsd_xattr_handler = अणु
+static const struct xattr_handler cifs_cifs_ntsd_xattr_handler = {
 	.name = CIFS_XATTR_CIFS_NTSD,
 	.flags = XATTR_CIFS_NTSD,
-	.get = cअगरs_xattr_get,
-	.set = cअगरs_xattr_set,
-पूर्ण;
+	.get = cifs_xattr_get,
+	.set = cifs_xattr_set,
+};
 
 /*
- * Although this is just an alias क्रम the above, need to move away from
+ * Although this is just an alias for the above, need to move away from
  * confusing users and using the 20 year old term 'cifs' when it is no
- * दीर्घer secure and was replaced by SMB2/SMB3 a दीर्घ समय ago, and
+ * longer secure and was replaced by SMB2/SMB3 a long time ago, and
  * SMB3 and later are highly secure.
  */
-अटल स्थिर काष्ठा xattr_handler smb3_ntsd_xattr_handler = अणु
+static const struct xattr_handler smb3_ntsd_xattr_handler = {
 	.name = SMB3_XATTR_CIFS_NTSD,
 	.flags = XATTR_CIFS_NTSD,
-	.get = cअगरs_xattr_get,
-	.set = cअगरs_xattr_set,
-पूर्ण;
+	.get = cifs_xattr_get,
+	.set = cifs_xattr_set,
+};
 
-अटल स्थिर काष्ठा xattr_handler cअगरs_cअगरs_ntsd_full_xattr_handler = अणु
+static const struct xattr_handler cifs_cifs_ntsd_full_xattr_handler = {
 	.name = CIFS_XATTR_CIFS_NTSD_FULL,
 	.flags = XATTR_CIFS_NTSD_FULL,
-	.get = cअगरs_xattr_get,
-	.set = cअगरs_xattr_set,
-पूर्ण;
+	.get = cifs_xattr_get,
+	.set = cifs_xattr_set,
+};
 
 /*
- * Although this is just an alias क्रम the above, need to move away from
+ * Although this is just an alias for the above, need to move away from
  * confusing users and using the 20 year old term 'cifs' when it is no
- * दीर्घer secure and was replaced by SMB2/SMB3 a दीर्घ समय ago, and
+ * longer secure and was replaced by SMB2/SMB3 a long time ago, and
  * SMB3 and later are highly secure.
  */
-अटल स्थिर काष्ठा xattr_handler smb3_ntsd_full_xattr_handler = अणु
+static const struct xattr_handler smb3_ntsd_full_xattr_handler = {
 	.name = SMB3_XATTR_CIFS_NTSD_FULL,
 	.flags = XATTR_CIFS_NTSD_FULL,
-	.get = cअगरs_xattr_get,
-	.set = cअगरs_xattr_set,
-पूर्ण;
+	.get = cifs_xattr_get,
+	.set = cifs_xattr_set,
+};
 
 
-अटल स्थिर काष्ठा xattr_handler cअगरs_posix_acl_access_xattr_handler = अणु
+static const struct xattr_handler cifs_posix_acl_access_xattr_handler = {
 	.name = XATTR_NAME_POSIX_ACL_ACCESS,
 	.flags = XATTR_ACL_ACCESS,
-	.get = cअगरs_xattr_get,
-	.set = cअगरs_xattr_set,
-पूर्ण;
+	.get = cifs_xattr_get,
+	.set = cifs_xattr_set,
+};
 
-अटल स्थिर काष्ठा xattr_handler cअगरs_posix_acl_शेष_xattr_handler = अणु
+static const struct xattr_handler cifs_posix_acl_default_xattr_handler = {
 	.name = XATTR_NAME_POSIX_ACL_DEFAULT,
 	.flags = XATTR_ACL_DEFAULT,
-	.get = cअगरs_xattr_get,
-	.set = cअगरs_xattr_set,
-पूर्ण;
+	.get = cifs_xattr_get,
+	.set = cifs_xattr_set,
+};
 
-स्थिर काष्ठा xattr_handler *cअगरs_xattr_handlers[] = अणु
-	&cअगरs_user_xattr_handler,
-	&cअगरs_os2_xattr_handler,
-	&cअगरs_cअगरs_acl_xattr_handler,
-	&smb3_acl_xattr_handler, /* alias क्रम above since aव्योमing "cifs" */
-	&cअगरs_cअगरs_ntsd_xattr_handler,
-	&smb3_ntsd_xattr_handler, /* alias क्रम above since aव्योमing "cifs" */
-	&cअगरs_cअगरs_ntsd_full_xattr_handler,
-	&smb3_ntsd_full_xattr_handler, /* alias क्रम above since aव्योमing "cifs" */
-	&cअगरs_posix_acl_access_xattr_handler,
-	&cअगरs_posix_acl_शेष_xattr_handler,
-	शून्य
-पूर्ण;
+const struct xattr_handler *cifs_xattr_handlers[] = {
+	&cifs_user_xattr_handler,
+	&cifs_os2_xattr_handler,
+	&cifs_cifs_acl_xattr_handler,
+	&smb3_acl_xattr_handler, /* alias for above since avoiding "cifs" */
+	&cifs_cifs_ntsd_xattr_handler,
+	&smb3_ntsd_xattr_handler, /* alias for above since avoiding "cifs" */
+	&cifs_cifs_ntsd_full_xattr_handler,
+	&smb3_ntsd_full_xattr_handler, /* alias for above since avoiding "cifs" */
+	&cifs_posix_acl_access_xattr_handler,
+	&cifs_posix_acl_default_xattr_handler,
+	NULL
+};

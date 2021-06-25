@@ -1,30 +1,29 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * HDMI PLL
  *
  * Copyright (C) 2013 Texas Instruments Incorporated
  */
 
-#घोषणा DSS_SUBSYS_NAME "HDMIPLL"
+#define DSS_SUBSYS_NAME "HDMIPLL"
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/seq_file.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/platform_device.h>
+#include <linux/clk.h>
+#include <linux/seq_file.h>
 
-#समावेश <video/omapfb_dss.h>
+#include <video/omapfb_dss.h>
 
-#समावेश "dss.h"
-#समावेश "hdmi.h"
+#include "dss.h"
+#include "hdmi.h"
 
-व्योम hdmi_pll_dump(काष्ठा hdmi_pll_data *pll, काष्ठा seq_file *s)
-अणु
-#घोषणा DUMPPLL(r) seq_म_लिखो(s, "%-35s %08x\n", #r,\
-		hdmi_पढ़ो_reg(pll->base, r))
+void hdmi_pll_dump(struct hdmi_pll_data *pll, struct seq_file *s)
+{
+#define DUMPPLL(r) seq_printf(s, "%-35s %08x\n", #r,\
+		hdmi_read_reg(pll->base, r))
 
 	DUMPPLL(PLLCTRL_PLL_CONTROL);
 	DUMPPLL(PLLCTRL_PLL_STATUS);
@@ -35,56 +34,56 @@
 	DUMPPLL(PLLCTRL_SSC_CFG1);
 	DUMPPLL(PLLCTRL_SSC_CFG2);
 	DUMPPLL(PLLCTRL_CFG4);
-पूर्ण
+}
 
-व्योम hdmi_pll_compute(काष्ठा hdmi_pll_data *pll,
-	अचिन्हित दीर्घ target_पंचांगds, काष्ठा dss_pll_घड़ी_info *pi)
-अणु
-	अचिन्हित दीर्घ fपूर्णांक, clkdco, clkout;
-	अचिन्हित दीर्घ target_bitclk, target_clkdco;
-	अचिन्हित दीर्घ min_dco;
-	अचिन्हित n, m, mf, m2, sd;
-	अचिन्हित दीर्घ clkin;
-	स्थिर काष्ठा dss_pll_hw *hw = pll->pll.hw;
+void hdmi_pll_compute(struct hdmi_pll_data *pll,
+	unsigned long target_tmds, struct dss_pll_clock_info *pi)
+{
+	unsigned long fint, clkdco, clkout;
+	unsigned long target_bitclk, target_clkdco;
+	unsigned long min_dco;
+	unsigned n, m, mf, m2, sd;
+	unsigned long clkin;
+	const struct dss_pll_hw *hw = pll->pll.hw;
 
 	clkin = clk_get_rate(pll->pll.clkin);
 
-	DSSDBG("clkin %lu, target tmds %lu\n", clkin, target_पंचांगds);
+	DSSDBG("clkin %lu, target tmds %lu\n", clkin, target_tmds);
 
-	target_bitclk = target_पंचांगds * 10;
+	target_bitclk = target_tmds * 10;
 
-	/* Fपूर्णांक */
-	n = DIV_ROUND_UP(clkin, hw->fपूर्णांक_max);
-	fपूर्णांक = clkin / n;
+	/* Fint */
+	n = DIV_ROUND_UP(clkin, hw->fint_max);
+	fint = clkin / n;
 
 	/* adjust m2 so that the clkdco will be high enough */
-	min_dco = roundup(hw->clkdco_min, fपूर्णांक);
+	min_dco = roundup(hw->clkdco_min, fint);
 	m2 = DIV_ROUND_UP(min_dco, target_bitclk);
-	अगर (m2 == 0)
+	if (m2 == 0)
 		m2 = 1;
 
 	target_clkdco = target_bitclk * m2;
-	m = target_clkdco / fपूर्णांक;
+	m = target_clkdco / fint;
 
-	clkdco = fपूर्णांक * m;
+	clkdco = fint * m;
 
 	/* adjust clkdco with fractional mf */
-	अगर (WARN_ON(target_clkdco - clkdco > fपूर्णांक))
+	if (WARN_ON(target_clkdco - clkdco > fint))
 		mf = 0;
-	अन्यथा
-		mf = (u32)भाग_u64(262144ull * (target_clkdco - clkdco), fपूर्णांक);
+	else
+		mf = (u32)div_u64(262144ull * (target_clkdco - clkdco), fint);
 
-	अगर (mf > 0)
-		clkdco += (u32)भाग_u64((u64)mf * fपूर्णांक, 262144);
+	if (mf > 0)
+		clkdco += (u32)div_u64((u64)mf * fint, 262144);
 
 	clkout = clkdco / m2;
 
 	/* sigma-delta */
-	sd = DIV_ROUND_UP(fपूर्णांक * m, 250000000);
+	sd = DIV_ROUND_UP(fint * m, 250000000);
 
 	DSSDBG("N = %u, M = %u, M.f = %u, M2 = %u, SD = %u\n",
 		n, m, mf, m2, sd);
-	DSSDBG("Fint %lu, clkdco %lu, clkout %lu\n", fपूर्णांक, clkdco, clkout);
+	DSSDBG("Fint %lu, clkdco %lu, clkout %lu\n", fint, clkdco, clkout);
 
 	pi->n = n;
 	pi->m = m;
@@ -92,44 +91,44 @@
 	pi->mX[0] = m2;
 	pi->sd = sd;
 
-	pi->fपूर्णांक = fपूर्णांक;
+	pi->fint = fint;
 	pi->clkdco = clkdco;
 	pi->clkout[0] = clkout;
-पूर्ण
+}
 
-अटल पूर्णांक hdmi_pll_enable(काष्ठा dss_pll *dsspll)
-अणु
-	काष्ठा hdmi_pll_data *pll = container_of(dsspll, काष्ठा hdmi_pll_data, pll);
-	काष्ठा hdmi_wp_data *wp = pll->wp;
+static int hdmi_pll_enable(struct dss_pll *dsspll)
+{
+	struct hdmi_pll_data *pll = container_of(dsspll, struct hdmi_pll_data, pll);
+	struct hdmi_wp_data *wp = pll->wp;
 
 	dss_ctrl_pll_enable(DSS_PLL_HDMI, true);
 
-	वापस hdmi_wp_set_pll_pwr(wp, HDMI_PLLPWRCMD_BOTHON_ALLCLKS);
-पूर्ण
+	return hdmi_wp_set_pll_pwr(wp, HDMI_PLLPWRCMD_BOTHON_ALLCLKS);
+}
 
-अटल व्योम hdmi_pll_disable(काष्ठा dss_pll *dsspll)
-अणु
-	काष्ठा hdmi_pll_data *pll = container_of(dsspll, काष्ठा hdmi_pll_data, pll);
-	काष्ठा hdmi_wp_data *wp = pll->wp;
+static void hdmi_pll_disable(struct dss_pll *dsspll)
+{
+	struct hdmi_pll_data *pll = container_of(dsspll, struct hdmi_pll_data, pll);
+	struct hdmi_wp_data *wp = pll->wp;
 
 	hdmi_wp_set_pll_pwr(wp, HDMI_PLLPWRCMD_ALLOFF);
 
 	dss_ctrl_pll_enable(DSS_PLL_HDMI, false);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा dss_pll_ops dsi_pll_ops = अणु
+static const struct dss_pll_ops dsi_pll_ops = {
 	.enable = hdmi_pll_enable,
 	.disable = hdmi_pll_disable,
-	.set_config = dss_pll_ग_लिखो_config_type_b,
-पूर्ण;
+	.set_config = dss_pll_write_config_type_b,
+};
 
-अटल स्थिर काष्ठा dss_pll_hw dss_omap4_hdmi_pll_hw = अणु
+static const struct dss_pll_hw dss_omap4_hdmi_pll_hw = {
 	.n_max = 255,
 	.m_min = 20,
 	.m_max = 4095,
 	.mX_max = 127,
-	.fपूर्णांक_min = 500000,
-	.fपूर्णांक_max = 2500000,
+	.fint_min = 500000,
+	.fint_max = 2500000,
 
 	.clkdco_min = 500000000,
 	.clkdco_low = 1000000000,
@@ -144,15 +143,15 @@
 	.mX_lsb[0] = 18,
 
 	.has_selfreqdco = true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा dss_pll_hw dss_omap5_hdmi_pll_hw = अणु
+static const struct dss_pll_hw dss_omap5_hdmi_pll_hw = {
 	.n_max = 255,
 	.m_min = 20,
 	.m_max = 2045,
 	.mX_max = 127,
-	.fपूर्णांक_min = 620000,
-	.fपूर्णांक_max = 2500000,
+	.fint_min = 620000,
+	.fint_max = 2500000,
 
 	.clkdco_min = 750000000,
 	.clkdco_low = 1500000000,
@@ -168,75 +167,75 @@
 
 	.has_selfreqdco = true,
 	.has_refsel = true,
-पूर्ण;
+};
 
-अटल पूर्णांक dsi_init_pll_data(काष्ठा platक्रमm_device *pdev, काष्ठा hdmi_pll_data *hpll)
-अणु
-	काष्ठा dss_pll *pll = &hpll->pll;
-	काष्ठा clk *clk;
-	पूर्णांक r;
+static int dsi_init_pll_data(struct platform_device *pdev, struct hdmi_pll_data *hpll)
+{
+	struct dss_pll *pll = &hpll->pll;
+	struct clk *clk;
+	int r;
 
 	clk = devm_clk_get(&pdev->dev, "sys_clk");
-	अगर (IS_ERR(clk)) अणु
+	if (IS_ERR(clk)) {
 		DSSERR("can't get sys_clk\n");
-		वापस PTR_ERR(clk);
-	पूर्ण
+		return PTR_ERR(clk);
+	}
 
 	pll->name = "hdmi";
 	pll->id = DSS_PLL_HDMI;
 	pll->base = hpll->base;
 	pll->clkin = clk;
 
-	चयन (omapdss_get_version()) अणु
-	हाल OMAPDSS_VER_OMAP4430_ES1:
-	हाल OMAPDSS_VER_OMAP4430_ES2:
-	हाल OMAPDSS_VER_OMAP4:
+	switch (omapdss_get_version()) {
+	case OMAPDSS_VER_OMAP4430_ES1:
+	case OMAPDSS_VER_OMAP4430_ES2:
+	case OMAPDSS_VER_OMAP4:
 		pll->hw = &dss_omap4_hdmi_pll_hw;
-		अवरोध;
+		break;
 
-	हाल OMAPDSS_VER_OMAP5:
-	हाल OMAPDSS_VER_DRA7xx:
+	case OMAPDSS_VER_OMAP5:
+	case OMAPDSS_VER_DRA7xx:
 		pll->hw = &dss_omap5_hdmi_pll_hw;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -ENODEV;
-	पूर्ण
+	default:
+		return -ENODEV;
+	}
 
 	pll->ops = &dsi_pll_ops;
 
-	r = dss_pll_रेजिस्टर(pll);
-	अगर (r)
-		वापस r;
+	r = dss_pll_register(pll);
+	if (r)
+		return r;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hdmi_pll_init(काष्ठा platक्रमm_device *pdev, काष्ठा hdmi_pll_data *pll,
-	काष्ठा hdmi_wp_data *wp)
-अणु
-	पूर्णांक r;
+int hdmi_pll_init(struct platform_device *pdev, struct hdmi_pll_data *pll,
+	struct hdmi_wp_data *wp)
+{
+	int r;
 
 	pll->wp = wp;
 
-	pll->base = devm_platक्रमm_ioremap_resource_byname(pdev, "pll");
-	अगर (IS_ERR(pll->base)) अणु
+	pll->base = devm_platform_ioremap_resource_byname(pdev, "pll");
+	if (IS_ERR(pll->base)) {
 		DSSERR("can't ioremap PLLCTRL\n");
-		वापस PTR_ERR(pll->base);
-	पूर्ण
+		return PTR_ERR(pll->base);
+	}
 
 	r = dsi_init_pll_data(pdev, pll);
-	अगर (r) अणु
+	if (r) {
 		DSSERR("failed to init HDMI PLL\n");
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम hdmi_pll_uninit(काष्ठा hdmi_pll_data *hpll)
-अणु
-	काष्ठा dss_pll *pll = &hpll->pll;
+void hdmi_pll_uninit(struct hdmi_pll_data *hpll)
+{
+	struct dss_pll *pll = &hpll->pll;
 
-	dss_pll_unरेजिस्टर(pll);
-पूर्ण
+	dss_pll_unregister(pll);
+}

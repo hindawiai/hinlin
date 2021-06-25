@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2015 Red Hat, Inc.
  * All Rights Reserved.
@@ -7,12 +6,12 @@
  *    Dave Airlie <airlied@redhat.com>
  *    Gerd Hoffmann <kraxel@redhat.com>
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -27,157 +26,157 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/console.h>
-#समावेश <linux/pci.h>
+#include <linux/module.h>
+#include <linux/console.h>
+#include <linux/pci.h>
 
-#समावेश <drm/drm.h>
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_drv.h>
-#समावेश <drm/drm_file.h>
+#include <drm/drm.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_file.h>
 
-#समावेश "virtgpu_drv.h"
+#include "virtgpu_drv.h"
 
-अटल स्थिर काष्ठा drm_driver driver;
+static const struct drm_driver driver;
 
-अटल पूर्णांक virtio_gpu_modeset = -1;
+static int virtio_gpu_modeset = -1;
 
 MODULE_PARM_DESC(modeset, "Disable/Enable modesetting");
-module_param_named(modeset, virtio_gpu_modeset, पूर्णांक, 0400);
+module_param_named(modeset, virtio_gpu_modeset, int, 0400);
 
-अटल पूर्णांक virtio_gpu_pci_quirk(काष्ठा drm_device *dev, काष्ठा virtio_device *vdev)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(vdev->dev.parent);
-	स्थिर अक्षर *pname = dev_name(&pdev->dev);
+static int virtio_gpu_pci_quirk(struct drm_device *dev, struct virtio_device *vdev)
+{
+	struct pci_dev *pdev = to_pci_dev(vdev->dev.parent);
+	const char *pname = dev_name(&pdev->dev);
 	bool vga = (pdev->class >> 8) == PCI_CLASS_DISPLAY_VGA;
-	अक्षर unique[20];
+	char unique[20];
 
 	DRM_INFO("pci: %s detected at %s\n",
 		 vga ? "virtio-vga" : "virtio-gpu-pci",
 		 pname);
-	अगर (vga)
-		drm_fb_helper_हटाओ_conflicting_pci_framebuffers(pdev,
+	if (vga)
+		drm_fb_helper_remove_conflicting_pci_framebuffers(pdev,
 								  "virtiodrmfb");
 
 	/*
-	 * Normally the drm_dev_set_unique() call is करोne by core DRM.
+	 * Normally the drm_dev_set_unique() call is done by core DRM.
 	 * The following comment covers, why virtio cannot rely on it.
 	 *
-	 * Unlike the other भव GPU drivers, virtio असलtracts the
-	 * underlying bus type by using काष्ठा virtio_device.
+	 * Unlike the other virtual GPU drivers, virtio abstracts the
+	 * underlying bus type by using struct virtio_device.
 	 *
 	 * Hence the dev_is_pci() check, used in core DRM, will fail
-	 * and the unique वापसed will be the virtio_device "virtio0",
-	 * जबतक a "pci:..." one is required.
+	 * and the unique returned will be the virtio_device "virtio0",
+	 * while a "pci:..." one is required.
 	 *
 	 * A few other ideas were considered:
 	 * - Extend the dev_is_pci() check [in drm_set_busid] to
 	 *   consider virtio.
-	 *   Seems like a bigger hack than what we have alपढ़ोy.
+	 *   Seems like a bigger hack than what we have already.
 	 *
-	 * - Poपूर्णांक drm_device::dev to the parent of the virtio_device
+	 * - Point drm_device::dev to the parent of the virtio_device
 	 *   Semantic changes:
-	 *   * Using the wrong device क्रम i2c, framebuffer_alloc and
+	 *   * Using the wrong device for i2c, framebuffer_alloc and
 	 *     prime import.
 	 *   Visual changes:
-	 *   * Helpers such as DRM_DEV_ERROR, dev_info, drm_prपूर्णांकer,
-	 *     will prपूर्णांक the wrong inक्रमmation.
+	 *   * Helpers such as DRM_DEV_ERROR, dev_info, drm_printer,
+	 *     will print the wrong information.
 	 *
-	 * We could address the latter issues, by पूर्णांकroducing
-	 * drm_device::bus_dev, ... which would be used solely क्रम this.
+	 * We could address the latter issues, by introducing
+	 * drm_device::bus_dev, ... which would be used solely for this.
 	 *
-	 * So क्रम the moment keep things as-is, with a bulky comment
-	 * क्रम the next person who feels like removing this
+	 * So for the moment keep things as-is, with a bulky comment
+	 * for the next person who feels like removing this
 	 * drm_dev_set_unique() quirk.
 	 */
-	snम_लिखो(unique, माप(unique), "pci:%s", pname);
-	वापस drm_dev_set_unique(dev, unique);
-पूर्ण
+	snprintf(unique, sizeof(unique), "pci:%s", pname);
+	return drm_dev_set_unique(dev, unique);
+}
 
-अटल पूर्णांक virtio_gpu_probe(काष्ठा virtio_device *vdev)
-अणु
-	काष्ठा drm_device *dev;
-	पूर्णांक ret;
+static int virtio_gpu_probe(struct virtio_device *vdev)
+{
+	struct drm_device *dev;
+	int ret;
 
-	अगर (vgacon_text_क्रमce() && virtio_gpu_modeset == -1)
-		वापस -EINVAL;
+	if (vgacon_text_force() && virtio_gpu_modeset == -1)
+		return -EINVAL;
 
-	अगर (virtio_gpu_modeset == 0)
-		वापस -EINVAL;
+	if (virtio_gpu_modeset == 0)
+		return -EINVAL;
 
 	dev = drm_dev_alloc(&driver, &vdev->dev);
-	अगर (IS_ERR(dev))
-		वापस PTR_ERR(dev);
+	if (IS_ERR(dev))
+		return PTR_ERR(dev);
 	vdev->priv = dev;
 
-	अगर (!म_भेद(vdev->dev.parent->bus->name, "pci")) अणु
+	if (!strcmp(vdev->dev.parent->bus->name, "pci")) {
 		ret = virtio_gpu_pci_quirk(dev, vdev);
-		अगर (ret)
-			जाओ err_मुक्त;
-	पूर्ण
+		if (ret)
+			goto err_free;
+	}
 
 	ret = virtio_gpu_init(dev);
-	अगर (ret)
-		जाओ err_मुक्त;
+	if (ret)
+		goto err_free;
 
-	ret = drm_dev_रेजिस्टर(dev, 0);
-	अगर (ret)
-		जाओ err_मुक्त;
+	ret = drm_dev_register(dev, 0);
+	if (ret)
+		goto err_free;
 
 	drm_fbdev_generic_setup(vdev->priv, 32);
-	वापस 0;
+	return 0;
 
-err_मुक्त:
+err_free:
 	drm_dev_put(dev);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम virtio_gpu_हटाओ(काष्ठा virtio_device *vdev)
-अणु
-	काष्ठा drm_device *dev = vdev->priv;
+static void virtio_gpu_remove(struct virtio_device *vdev)
+{
+	struct drm_device *dev = vdev->priv;
 
 	drm_dev_unplug(dev);
-	drm_atomic_helper_shutकरोwn(dev);
+	drm_atomic_helper_shutdown(dev);
 	virtio_gpu_deinit(dev);
 	drm_dev_put(dev);
-पूर्ण
+}
 
-अटल व्योम virtio_gpu_config_changed(काष्ठा virtio_device *vdev)
-अणु
-	काष्ठा drm_device *dev = vdev->priv;
-	काष्ठा virtio_gpu_device *vgdev = dev->dev_निजी;
+static void virtio_gpu_config_changed(struct virtio_device *vdev)
+{
+	struct drm_device *dev = vdev->priv;
+	struct virtio_gpu_device *vgdev = dev->dev_private;
 
 	schedule_work(&vgdev->config_changed_work);
-पूर्ण
+}
 
-अटल काष्ठा virtio_device_id id_table[] = अणु
-	अणु VIRTIO_ID_GPU, VIRTIO_DEV_ANY_ID पूर्ण,
-	अणु 0 पूर्ण,
-पूर्ण;
+static struct virtio_device_id id_table[] = {
+	{ VIRTIO_ID_GPU, VIRTIO_DEV_ANY_ID },
+	{ 0 },
+};
 
-अटल अचिन्हित पूर्णांक features[] = अणु
-#अगर_घोषित __LITTLE_ENDIAN
+static unsigned int features[] = {
+#ifdef __LITTLE_ENDIAN
 	/*
 	 * Gallium command stream send by virgl is native endian.
 	 * Because of that we only support little endian guests on
 	 * little endian hosts.
 	 */
 	VIRTIO_GPU_F_VIRGL,
-#पूर्ण_अगर
+#endif
 	VIRTIO_GPU_F_EDID,
 	VIRTIO_GPU_F_RESOURCE_UUID,
 	VIRTIO_GPU_F_RESOURCE_BLOB,
-पूर्ण;
-अटल काष्ठा virtio_driver virtio_gpu_driver = अणु
+};
+static struct virtio_driver virtio_gpu_driver = {
 	.feature_table = features,
 	.feature_table_size = ARRAY_SIZE(features),
 	.driver.name = KBUILD_MODNAME,
 	.driver.owner = THIS_MODULE,
 	.id_table = id_table,
 	.probe = virtio_gpu_probe,
-	.हटाओ = virtio_gpu_हटाओ,
+	.remove = virtio_gpu_remove,
 	.config_changed = virtio_gpu_config_changed
-पूर्ण;
+};
 
 module_virtio_driver(virtio_gpu_driver);
 
@@ -190,17 +189,17 @@ MODULE_AUTHOR("Alon Levy");
 
 DEFINE_DRM_GEM_FOPS(virtio_gpu_driver_fops);
 
-अटल स्थिर काष्ठा drm_driver driver = अणु
+static const struct drm_driver driver = {
 	.driver_features = DRIVER_MODESET | DRIVER_GEM | DRIVER_RENDER | DRIVER_ATOMIC,
-	.खोलो = virtio_gpu_driver_खोलो,
-	.postबंद = virtio_gpu_driver_postबंद,
+	.open = virtio_gpu_driver_open,
+	.postclose = virtio_gpu_driver_postclose,
 
 	.dumb_create = virtio_gpu_mode_dumb_create,
 	.dumb_map_offset = virtio_gpu_mode_dumb_mmap,
 
-#अगर defined(CONFIG_DEBUG_FS)
+#if defined(CONFIG_DEBUG_FS)
 	.debugfs_init = virtio_gpu_debugfs_init,
-#पूर्ण_अगर
+#endif
 	.prime_handle_to_fd = drm_gem_prime_handle_to_fd,
 	.prime_fd_to_handle = drm_gem_prime_fd_to_handle,
 	.gem_prime_mmap = drm_gem_prime_mmap,
@@ -221,4 +220,4 @@ DEFINE_DRM_GEM_FOPS(virtio_gpu_driver_fops);
 	.patchlevel = DRIVER_PATCHLEVEL,
 
 	.release = virtio_gpu_release,
-पूर्ण;
+};

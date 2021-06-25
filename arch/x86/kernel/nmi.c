@@ -1,8 +1,7 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  Copyright (C) 1991, 1992  Linus Torvalds
- *  Copyright (C) 2000, 2001, 2002 Andi Kleen, SuSE Lअसल
+ *  Copyright (C) 2000, 2001, 2002 Andi Kleen, SuSE Labs
  *  Copyright (C) 2011	Don Zickus Red Hat, Inc.
  *
  *  Pentium III FXSR, SSE support
@@ -12,160 +11,160 @@
 /*
  * Handle hardware traps and faults.
  */
-#समावेश <linux/spinlock.h>
-#समावेश <linux/kprobes.h>
-#समावेश <linux/kdebug.h>
-#समावेश <linux/sched/debug.h>
-#समावेश <linux/nmi.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/hardirq.h>
-#समावेश <linux/ratelimit.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/export.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/sched/घड़ी.h>
+#include <linux/spinlock.h>
+#include <linux/kprobes.h>
+#include <linux/kdebug.h>
+#include <linux/sched/debug.h>
+#include <linux/nmi.h>
+#include <linux/debugfs.h>
+#include <linux/delay.h>
+#include <linux/hardirq.h>
+#include <linux/ratelimit.h>
+#include <linux/slab.h>
+#include <linux/export.h>
+#include <linux/atomic.h>
+#include <linux/sched/clock.h>
 
-#समावेश <यंत्र/cpu_entry_area.h>
-#समावेश <यंत्र/traps.h>
-#समावेश <यंत्र/mach_traps.h>
-#समावेश <यंत्र/nmi.h>
-#समावेश <यंत्र/x86_init.h>
-#समावेश <यंत्र/reboot.h>
-#समावेश <यंत्र/cache.h>
-#समावेश <यंत्र/nospec-branch.h>
-#समावेश <यंत्र/sev.h>
+#include <asm/cpu_entry_area.h>
+#include <asm/traps.h>
+#include <asm/mach_traps.h>
+#include <asm/nmi.h>
+#include <asm/x86_init.h>
+#include <asm/reboot.h>
+#include <asm/cache.h>
+#include <asm/nospec-branch.h>
+#include <asm/sev.h>
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <trace/events/nmi.h>
+#define CREATE_TRACE_POINTS
+#include <trace/events/nmi.h>
 
-काष्ठा nmi_desc अणु
+struct nmi_desc {
 	raw_spinlock_t lock;
-	काष्ठा list_head head;
-पूर्ण;
+	struct list_head head;
+};
 
-अटल काष्ठा nmi_desc nmi_desc[NMI_MAX] = 
-अणु
-	अणु
+static struct nmi_desc nmi_desc[NMI_MAX] = 
+{
+	{
 		.lock = __RAW_SPIN_LOCK_UNLOCKED(&nmi_desc[0].lock),
 		.head = LIST_HEAD_INIT(nmi_desc[0].head),
-	पूर्ण,
-	अणु
+	},
+	{
 		.lock = __RAW_SPIN_LOCK_UNLOCKED(&nmi_desc[1].lock),
 		.head = LIST_HEAD_INIT(nmi_desc[1].head),
-	पूर्ण,
-	अणु
+	},
+	{
 		.lock = __RAW_SPIN_LOCK_UNLOCKED(&nmi_desc[2].lock),
 		.head = LIST_HEAD_INIT(nmi_desc[2].head),
-	पूर्ण,
-	अणु
+	},
+	{
 		.lock = __RAW_SPIN_LOCK_UNLOCKED(&nmi_desc[3].lock),
 		.head = LIST_HEAD_INIT(nmi_desc[3].head),
-	पूर्ण,
+	},
 
-पूर्ण;
+};
 
-काष्ठा nmi_stats अणु
-	अचिन्हित पूर्णांक normal;
-	अचिन्हित पूर्णांक unknown;
-	अचिन्हित पूर्णांक बाह्यal;
-	अचिन्हित पूर्णांक swallow;
-पूर्ण;
+struct nmi_stats {
+	unsigned int normal;
+	unsigned int unknown;
+	unsigned int external;
+	unsigned int swallow;
+};
 
-अटल DEFINE_PER_CPU(काष्ठा nmi_stats, nmi_stats);
+static DEFINE_PER_CPU(struct nmi_stats, nmi_stats);
 
-अटल पूर्णांक ignore_nmis __पढ़ो_mostly;
+static int ignore_nmis __read_mostly;
 
-पूर्णांक unknown_nmi_panic;
+int unknown_nmi_panic;
 /*
  * Prevent NMI reason port (0x61) being accessed simultaneously, can
  * only be used in NMI handler.
  */
-अटल DEFINE_RAW_SPINLOCK(nmi_reason_lock);
+static DEFINE_RAW_SPINLOCK(nmi_reason_lock);
 
-अटल पूर्णांक __init setup_unknown_nmi_panic(अक्षर *str)
-अणु
+static int __init setup_unknown_nmi_panic(char *str)
+{
 	unknown_nmi_panic = 1;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 __setup("unknown_nmi_panic", setup_unknown_nmi_panic);
 
-#घोषणा nmi_to_desc(type) (&nmi_desc[type])
+#define nmi_to_desc(type) (&nmi_desc[type])
 
-अटल u64 nmi_दीर्घest_ns = 1 * NSEC_PER_MSEC;
+static u64 nmi_longest_ns = 1 * NSEC_PER_MSEC;
 
-अटल पूर्णांक __init nmi_warning_debugfs(व्योम)
-अणु
+static int __init nmi_warning_debugfs(void)
+{
 	debugfs_create_u64("nmi_longest_ns", 0644,
-			arch_debugfs_dir, &nmi_दीर्घest_ns);
-	वापस 0;
-पूर्ण
+			arch_debugfs_dir, &nmi_longest_ns);
+	return 0;
+}
 fs_initcall(nmi_warning_debugfs);
 
-अटल व्योम nmi_check_duration(काष्ठा nmiaction *action, u64 duration)
-अणु
-	पूर्णांक reमुख्यder_ns, decimal_msecs;
+static void nmi_check_duration(struct nmiaction *action, u64 duration)
+{
+	int remainder_ns, decimal_msecs;
 
-	अगर (duration < nmi_दीर्घest_ns || duration < action->max_duration)
-		वापस;
+	if (duration < nmi_longest_ns || duration < action->max_duration)
+		return;
 
 	action->max_duration = duration;
 
-	reमुख्यder_ns = करो_भाग(duration, (1000 * 1000));
-	decimal_msecs = reमुख्यder_ns / 1000;
+	remainder_ns = do_div(duration, (1000 * 1000));
+	decimal_msecs = remainder_ns / 1000;
 
-	prपूर्णांकk_ratelimited(KERN_INFO
+	printk_ratelimited(KERN_INFO
 		"INFO: NMI handler (%ps) took too long to run: %lld.%03d msecs\n",
 		action->handler, duration, decimal_msecs);
-पूर्ण
+}
 
-अटल पूर्णांक nmi_handle(अचिन्हित पूर्णांक type, काष्ठा pt_regs *regs)
-अणु
-	काष्ठा nmi_desc *desc = nmi_to_desc(type);
-	काष्ठा nmiaction *a;
-	पूर्णांक handled=0;
+static int nmi_handle(unsigned int type, struct pt_regs *regs)
+{
+	struct nmi_desc *desc = nmi_to_desc(type);
+	struct nmiaction *a;
+	int handled=0;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	/*
-	 * NMIs are edge-triggered, which means अगर you have enough
+	 * NMIs are edge-triggered, which means if you have enough
 	 * of them concurrently, you can lose some because only one
-	 * can be latched at any given समय.  Walk the whole list
+	 * can be latched at any given time.  Walk the whole list
 	 * to handle those situations.
 	 */
-	list_क्रम_each_entry_rcu(a, &desc->head, list) अणु
-		पूर्णांक thishandled;
+	list_for_each_entry_rcu(a, &desc->head, list) {
+		int thishandled;
 		u64 delta;
 
-		delta = sched_घड़ी();
+		delta = sched_clock();
 		thishandled = a->handler(type, regs);
 		handled += thishandled;
-		delta = sched_घड़ी() - delta;
-		trace_nmi_handler(a->handler, (पूर्णांक)delta, thishandled);
+		delta = sched_clock() - delta;
+		trace_nmi_handler(a->handler, (int)delta, thishandled);
 
 		nmi_check_duration(a, delta);
-	पूर्ण
+	}
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	/* वापस total number of NMI events handled */
-	वापस handled;
-पूर्ण
+	/* return total number of NMI events handled */
+	return handled;
+}
 NOKPROBE_SYMBOL(nmi_handle);
 
-पूर्णांक __रेजिस्टर_nmi_handler(अचिन्हित पूर्णांक type, काष्ठा nmiaction *action)
-अणु
-	काष्ठा nmi_desc *desc = nmi_to_desc(type);
-	अचिन्हित दीर्घ flags;
+int __register_nmi_handler(unsigned int type, struct nmiaction *action)
+{
+	struct nmi_desc *desc = nmi_to_desc(type);
+	unsigned long flags;
 
-	अगर (!action->handler)
-		वापस -EINVAL;
+	if (!action->handler)
+		return -EINVAL;
 
 	raw_spin_lock_irqsave(&desc->lock, flags);
 
 	/*
-	 * Indicate अगर there are multiple registrations on the
-	 * पूर्णांकernal NMI handler call chains (SERR and IO_CHECK).
+	 * Indicate if there are multiple registrations on the
+	 * internal NMI handler call chains (SERR and IO_CHECK).
 	 */
 	WARN_ON_ONCE(type == NMI_SERR && !list_empty(&desc->head));
 	WARN_ON_ONCE(type == NMI_IO_CHECK && !list_empty(&desc->head));
@@ -174,53 +173,53 @@ NOKPROBE_SYMBOL(nmi_handle);
 	 * some handlers need to be executed first otherwise a fake
 	 * event confuses some handlers (kdump uses this flag)
 	 */
-	अगर (action->flags & NMI_FLAG_FIRST)
+	if (action->flags & NMI_FLAG_FIRST)
 		list_add_rcu(&action->list, &desc->head);
-	अन्यथा
+	else
 		list_add_tail_rcu(&action->list, &desc->head);
 	
 	raw_spin_unlock_irqrestore(&desc->lock, flags);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(__रेजिस्टर_nmi_handler);
+	return 0;
+}
+EXPORT_SYMBOL(__register_nmi_handler);
 
-व्योम unरेजिस्टर_nmi_handler(अचिन्हित पूर्णांक type, स्थिर अक्षर *name)
-अणु
-	काष्ठा nmi_desc *desc = nmi_to_desc(type);
-	काष्ठा nmiaction *n;
-	अचिन्हित दीर्घ flags;
+void unregister_nmi_handler(unsigned int type, const char *name)
+{
+	struct nmi_desc *desc = nmi_to_desc(type);
+	struct nmiaction *n;
+	unsigned long flags;
 
 	raw_spin_lock_irqsave(&desc->lock, flags);
 
-	list_क्रम_each_entry_rcu(n, &desc->head, list) अणु
+	list_for_each_entry_rcu(n, &desc->head, list) {
 		/*
 		 * the name passed in to describe the nmi handler
 		 * is used as the lookup key
 		 */
-		अगर (!म_भेद(n->name, name)) अणु
+		if (!strcmp(n->name, name)) {
 			WARN(in_nmi(),
 				"Trying to free NMI (%s) from NMI context!\n", n->name);
 			list_del_rcu(&n->list);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	raw_spin_unlock_irqrestore(&desc->lock, flags);
 	synchronize_rcu();
-पूर्ण
-EXPORT_SYMBOL_GPL(unरेजिस्टर_nmi_handler);
+}
+EXPORT_SYMBOL_GPL(unregister_nmi_handler);
 
-अटल व्योम
-pci_serr_error(अचिन्हित अक्षर reason, काष्ठा pt_regs *regs)
-अणु
-	/* check to see अगर anyone रेजिस्टरed against these types of errors */
-	अगर (nmi_handle(NMI_SERR, regs))
-		वापस;
+static void
+pci_serr_error(unsigned char reason, struct pt_regs *regs)
+{
+	/* check to see if anyone registered against these types of errors */
+	if (nmi_handle(NMI_SERR, regs))
+		return;
 
 	pr_emerg("NMI: PCI system error (SERR) for reason %02x on CPU %d.\n",
 		 reason, smp_processor_id());
 
-	अगर (panic_on_unrecovered_nmi)
+	if (panic_on_unrecovered_nmi)
 		nmi_panic(regs, "NMI: Not continuing");
 
 	pr_emerg("Dazed and confused, but trying to continue\n");
@@ -228,65 +227,65 @@ pci_serr_error(अचिन्हित अक्षर reason, काष्ठ�
 	/* Clear and disable the PCI SERR error line. */
 	reason = (reason & NMI_REASON_CLEAR_MASK) | NMI_REASON_CLEAR_SERR;
 	outb(reason, NMI_REASON_PORT);
-पूर्ण
+}
 NOKPROBE_SYMBOL(pci_serr_error);
 
-अटल व्योम
-io_check_error(अचिन्हित अक्षर reason, काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ i;
+static void
+io_check_error(unsigned char reason, struct pt_regs *regs)
+{
+	unsigned long i;
 
-	/* check to see अगर anyone रेजिस्टरed against these types of errors */
-	अगर (nmi_handle(NMI_IO_CHECK, regs))
-		वापस;
+	/* check to see if anyone registered against these types of errors */
+	if (nmi_handle(NMI_IO_CHECK, regs))
+		return;
 
 	pr_emerg(
 	"NMI: IOCK error (debug interrupt?) for reason %02x on CPU %d.\n",
 		 reason, smp_processor_id());
 	show_regs(regs);
 
-	अगर (panic_on_io_nmi) अणु
+	if (panic_on_io_nmi) {
 		nmi_panic(regs, "NMI IOCK error: Not continuing");
 
 		/*
-		 * If we end up here, it means we have received an NMI जबतक
-		 * processing panic(). Simply वापस without delaying and
+		 * If we end up here, it means we have received an NMI while
+		 * processing panic(). Simply return without delaying and
 		 * re-enabling NMIs.
 		 */
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Re-enable the IOCK line, रुको क्रम a few seconds */
+	/* Re-enable the IOCK line, wait for a few seconds */
 	reason = (reason & NMI_REASON_CLEAR_MASK) | NMI_REASON_CLEAR_IOCHK;
 	outb(reason, NMI_REASON_PORT);
 
 	i = 20000;
-	जबतक (--i) अणु
-		touch_nmi_watchकरोg();
+	while (--i) {
+		touch_nmi_watchdog();
 		udelay(100);
-	पूर्ण
+	}
 
 	reason &= ~NMI_REASON_CLEAR_IOCHK;
 	outb(reason, NMI_REASON_PORT);
-पूर्ण
+}
 NOKPROBE_SYMBOL(io_check_error);
 
-अटल व्योम
-unknown_nmi_error(अचिन्हित अक्षर reason, काष्ठा pt_regs *regs)
-अणु
-	पूर्णांक handled;
+static void
+unknown_nmi_error(unsigned char reason, struct pt_regs *regs)
+{
+	int handled;
 
 	/*
 	 * Use 'false' as back-to-back NMIs are dealt with one level up.
 	 * Of course this makes having multiple 'unknown' handlers useless
 	 * as only the first one is ever run (unless it can actually determine
-	 * अगर it caused the NMI)
+	 * if it caused the NMI)
 	 */
 	handled = nmi_handle(NMI_UNKNOWN, regs);
-	अगर (handled) अणु
+	if (handled) {
 		__this_cpu_add(nmi_stats.unknown, handled);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	__this_cpu_add(nmi_stats.unknown, 1);
 
@@ -294,99 +293,99 @@ unknown_nmi_error(अचिन्हित अक्षर reason, काष्�
 		 reason, smp_processor_id());
 
 	pr_emerg("Do you have a strange power saving mode enabled?\n");
-	अगर (unknown_nmi_panic || panic_on_unrecovered_nmi)
+	if (unknown_nmi_panic || panic_on_unrecovered_nmi)
 		nmi_panic(regs, "NMI: Not continuing");
 
 	pr_emerg("Dazed and confused, but trying to continue\n");
-पूर्ण
+}
 NOKPROBE_SYMBOL(unknown_nmi_error);
 
-अटल DEFINE_PER_CPU(bool, swallow_nmi);
-अटल DEFINE_PER_CPU(अचिन्हित दीर्घ, last_nmi_rip);
+static DEFINE_PER_CPU(bool, swallow_nmi);
+static DEFINE_PER_CPU(unsigned long, last_nmi_rip);
 
-अटल noinstr व्योम शेष_करो_nmi(काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित अक्षर reason = 0;
-	पूर्णांक handled;
+static noinstr void default_do_nmi(struct pt_regs *regs)
+{
+	unsigned char reason = 0;
+	int handled;
 	bool b2b = false;
 
 	/*
-	 * CPU-specअगरic NMI must be processed beक्रमe non-CPU-specअगरic
-	 * NMI, otherwise we may lose it, because the CPU-specअगरic
+	 * CPU-specific NMI must be processed before non-CPU-specific
+	 * NMI, otherwise we may lose it, because the CPU-specific
 	 * NMI can not be detected/processed on other CPUs.
 	 */
 
 	/*
-	 * Back-to-back NMIs are पूर्णांकeresting because they can either
+	 * Back-to-back NMIs are interesting because they can either
 	 * be two NMI or more than two NMIs (any thing over two is dropped
 	 * due to NMI being edge-triggered).  If this is the second half
 	 * of the back-to-back NMI, assume we dropped things and process
 	 * more handlers.  Otherwise reset the 'swallow' NMI behaviour
 	 */
-	अगर (regs->ip == __this_cpu_पढ़ो(last_nmi_rip))
+	if (regs->ip == __this_cpu_read(last_nmi_rip))
 		b2b = true;
-	अन्यथा
-		__this_cpu_ग_लिखो(swallow_nmi, false);
+	else
+		__this_cpu_write(swallow_nmi, false);
 
-	__this_cpu_ग_लिखो(last_nmi_rip, regs->ip);
+	__this_cpu_write(last_nmi_rip, regs->ip);
 
 	instrumentation_begin();
 
 	handled = nmi_handle(NMI_LOCAL, regs);
 	__this_cpu_add(nmi_stats.normal, handled);
-	अगर (handled) अणु
+	if (handled) {
 		/*
-		 * There are हालs when a NMI handler handles multiple
+		 * There are cases when a NMI handler handles multiple
 		 * events in the current NMI.  One of these events may
-		 * be queued क्रम in the next NMI.  Because the event is
-		 * alपढ़ोy handled, the next NMI will result in an unknown
-		 * NMI.  Instead lets flag this क्रम a potential NMI to
+		 * be queued for in the next NMI.  Because the event is
+		 * already handled, the next NMI will result in an unknown
+		 * NMI.  Instead lets flag this for a potential NMI to
 		 * swallow.
 		 */
-		अगर (handled > 1)
-			__this_cpu_ग_लिखो(swallow_nmi, true);
-		जाओ out;
-	पूर्ण
+		if (handled > 1)
+			__this_cpu_write(swallow_nmi, true);
+		goto out;
+	}
 
 	/*
-	 * Non-CPU-specअगरic NMI: NMI sources can be processed on any CPU.
+	 * Non-CPU-specific NMI: NMI sources can be processed on any CPU.
 	 *
-	 * Another CPU may be processing panic routines जबतक holding
-	 * nmi_reason_lock. Check अगर the CPU issued the IPI क्रम crash dumping,
-	 * and अगर so, call its callback directly.  If there is no CPU preparing
+	 * Another CPU may be processing panic routines while holding
+	 * nmi_reason_lock. Check if the CPU issued the IPI for crash dumping,
+	 * and if so, call its callback directly.  If there is no CPU preparing
 	 * crash dump, we simply loop here.
 	 */
-	जबतक (!raw_spin_trylock(&nmi_reason_lock)) अणु
+	while (!raw_spin_trylock(&nmi_reason_lock)) {
 		run_crash_ipi_callback(regs);
 		cpu_relax();
-	पूर्ण
+	}
 
-	reason = x86_platक्रमm.get_nmi_reason();
+	reason = x86_platform.get_nmi_reason();
 
-	अगर (reason & NMI_REASON_MASK) अणु
-		अगर (reason & NMI_REASON_SERR)
+	if (reason & NMI_REASON_MASK) {
+		if (reason & NMI_REASON_SERR)
 			pci_serr_error(reason, regs);
-		अन्यथा अगर (reason & NMI_REASON_IOCHK)
+		else if (reason & NMI_REASON_IOCHK)
 			io_check_error(reason, regs);
-#अगर_घोषित CONFIG_X86_32
+#ifdef CONFIG_X86_32
 		/*
-		 * Reनिश्चित NMI in हाल it became active
-		 * meanजबतक as it's edge-triggered:
+		 * Reassert NMI in case it became active
+		 * meanwhile as it's edge-triggered:
 		 */
-		reनिश्चित_nmi();
-#पूर्ण_अगर
-		__this_cpu_add(nmi_stats.बाह्यal, 1);
+		reassert_nmi();
+#endif
+		__this_cpu_add(nmi_stats.external, 1);
 		raw_spin_unlock(&nmi_reason_lock);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	raw_spin_unlock(&nmi_reason_lock);
 
 	/*
-	 * Only one NMI can be latched at a समय.  To handle
+	 * Only one NMI can be latched at a time.  To handle
 	 * this we may process multiple nmi handlers at once to
-	 * cover the हाल where an NMI is dropped.  The करोwnside
+	 * cover the case where an NMI is dropped.  The downside
 	 * to this approach is we may process an NMI prematurely,
-	 * जबतक its real NMI is sitting latched.  This will cause
+	 * while its real NMI is sitting latched.  This will cause
 	 * an unknown NMI on the next run of the NMI processing.
 	 *
 	 * We tried to flag that condition above, by setting the
@@ -394,39 +393,39 @@ NOKPROBE_SYMBOL(unknown_nmi_error);
 	 * This condition is also only present on the second half
 	 * of a back-to-back NMI, so we flag that condition too.
 	 *
-	 * If both are true, we assume we alपढ़ोy processed this
+	 * If both are true, we assume we already processed this
 	 * NMI previously and we swallow it.  Otherwise we reset
 	 * the logic.
 	 *
 	 * There are scenarios where we may accidentally swallow
-	 * a 'real' unknown NMI.  For example, जबतक processing
-	 * a perf NMI another perf NMI comes in aदीर्घ with a
-	 * 'real' unknown NMI.  These two NMIs get combined पूर्णांकo
-	 * one (as described above).  When the next NMI माला_लो
+	 * a 'real' unknown NMI.  For example, while processing
+	 * a perf NMI another perf NMI comes in along with a
+	 * 'real' unknown NMI.  These two NMIs get combined into
+	 * one (as described above).  When the next NMI gets
 	 * processed, it will be flagged by perf as handled, but
 	 * no one will know that there was a 'real' unknown NMI sent
-	 * also.  As a result it माला_लो swallowed.  Or अगर the first
-	 * perf NMI वापसs two events handled then the second
+	 * also.  As a result it gets swallowed.  Or if the first
+	 * perf NMI returns two events handled then the second
 	 * NMI will get eaten by the logic below, again losing a
-	 * 'real' unknown NMI.  But this is the best we can करो
-	 * क्रम now.
+	 * 'real' unknown NMI.  But this is the best we can do
+	 * for now.
 	 */
-	अगर (b2b && __this_cpu_पढ़ो(swallow_nmi))
+	if (b2b && __this_cpu_read(swallow_nmi))
 		__this_cpu_add(nmi_stats.swallow, 1);
-	अन्यथा
+	else
 		unknown_nmi_error(reason, regs);
 
 out:
 	instrumentation_end();
-पूर्ण
+}
 
 /*
- * NMIs can page fault or hit अवरोधpoपूर्णांकs which will cause it to lose
- * its NMI context with the CPU when the अवरोधpoपूर्णांक or page fault करोes an IRET.
+ * NMIs can page fault or hit breakpoints which will cause it to lose
+ * its NMI context with the CPU when the breakpoint or page fault does an IRET.
  *
- * As a result, NMIs can nest अगर NMIs get unmasked due an IRET during
- * NMI processing.  On x86_64, the यंत्र glue protects us from nested NMIs
- * अगर the outer NMI came from kernel mode, but we can still nest अगर the
+ * As a result, NMIs can nest if NMIs get unmasked due an IRET during
+ * NMI processing.  On x86_64, the asm glue protects us from nested NMIs
+ * if the outer NMI came from kernel mode, but we can still nest if the
  * outer NMI came from user mode.
  *
  * To handle these nested NMIs, we have three states:
@@ -436,46 +435,46 @@ out:
  *  3) latched
  *
  * When no NMI is in progress, it is in the "not running" state.
- * When an NMI comes in, it goes पूर्णांकo the "executing" state.
- * Normally, अगर another NMI is triggered, it करोes not पूर्णांकerrupt
+ * When an NMI comes in, it goes into the "executing" state.
+ * Normally, if another NMI is triggered, it does not interrupt
  * the running NMI and the HW will simply latch it so that when
  * the first NMI finishes, it will restart the second NMI.
  * (Note, the latch is binary, thus multiple NMIs triggering,
  *  when one is running, are ignored. Only one NMI is restarted.)
  *
- * If an NMI executes an iret, another NMI can preempt it. We करो not
+ * If an NMI executes an iret, another NMI can preempt it. We do not
  * want to allow this new NMI to run, but we want to execute it when the
- * first one finishes.  We set the state to "latched", and the निकास of
- * the first NMI will perक्रमm a dec_वापस, अगर the result is zero
- * (NOT_RUNNING), then it will simply निकास the NMI handler. If not, the
- * dec_वापस would have set the state to NMI_EXECUTING (what we want it
- * to be when we are running). In this हाल, we simply jump back to
+ * first one finishes.  We set the state to "latched", and the exit of
+ * the first NMI will perform a dec_return, if the result is zero
+ * (NOT_RUNNING), then it will simply exit the NMI handler. If not, the
+ * dec_return would have set the state to NMI_EXECUTING (what we want it
+ * to be when we are running). In this case, we simply jump back to
  * rerun the NMI handler again, and restart the 'latched' NMI.
  *
- * No trap (अवरोधpoपूर्णांक or page fault) should be hit beक्रमe nmi_restart,
- * thus there is no race between the first check of state क्रम NOT_RUNNING
+ * No trap (breakpoint or page fault) should be hit before nmi_restart,
+ * thus there is no race between the first check of state for NOT_RUNNING
  * and setting it to NMI_EXECUTING. The HW will prevent nested NMIs
- * at this poपूर्णांक.
+ * at this point.
  *
- * In हाल the NMI takes a page fault, we need to save off the CR2
+ * In case the NMI takes a page fault, we need to save off the CR2
  * because the NMI could have preempted another page fault and corrupt
- * the CR2 that is about to be पढ़ो. As nested NMIs must be restarted
- * and they can not take अवरोधpoपूर्णांकs or page faults, the update of the
- * CR2 must be करोne beक्रमe converting the nmi state back to NOT_RUNNING.
+ * the CR2 that is about to be read. As nested NMIs must be restarted
+ * and they can not take breakpoints or page faults, the update of the
+ * CR2 must be done before converting the nmi state back to NOT_RUNNING.
  * Otherwise, there would be a race of another nested NMI coming in
- * after setting state to NOT_RUNNING but beक्रमe updating the nmi_cr2.
+ * after setting state to NOT_RUNNING but before updating the nmi_cr2.
  */
-क्रमागत nmi_states अणु
+enum nmi_states {
 	NMI_NOT_RUNNING = 0,
 	NMI_EXECUTING,
 	NMI_LATCHED,
-पूर्ण;
-अटल DEFINE_PER_CPU(क्रमागत nmi_states, nmi_state);
-अटल DEFINE_PER_CPU(अचिन्हित दीर्घ, nmi_cr2);
-अटल DEFINE_PER_CPU(अचिन्हित दीर्घ, nmi_dr7);
+};
+static DEFINE_PER_CPU(enum nmi_states, nmi_state);
+static DEFINE_PER_CPU(unsigned long, nmi_cr2);
+static DEFINE_PER_CPU(unsigned long, nmi_dr7);
 
 DEFINE_IDTENTRY_RAW(exc_nmi)
-अणु
+{
 	irqentry_state_t irq_state;
 
 	/*
@@ -484,70 +483,70 @@ DEFINE_IDTENTRY_RAW(exc_nmi)
 	 */
 	sev_es_nmi_complete();
 
-	अगर (IS_ENABLED(CONFIG_SMP) && arch_cpu_is_offline(smp_processor_id()))
-		वापस;
+	if (IS_ENABLED(CONFIG_SMP) && arch_cpu_is_offline(smp_processor_id()))
+		return;
 
-	अगर (this_cpu_पढ़ो(nmi_state) != NMI_NOT_RUNNING) अणु
-		this_cpu_ग_लिखो(nmi_state, NMI_LATCHED);
-		वापस;
-	पूर्ण
-	this_cpu_ग_लिखो(nmi_state, NMI_EXECUTING);
-	this_cpu_ग_लिखो(nmi_cr2, पढ़ो_cr2());
+	if (this_cpu_read(nmi_state) != NMI_NOT_RUNNING) {
+		this_cpu_write(nmi_state, NMI_LATCHED);
+		return;
+	}
+	this_cpu_write(nmi_state, NMI_EXECUTING);
+	this_cpu_write(nmi_cr2, read_cr2());
 nmi_restart:
 
 	/*
-	 * Needs to happen beक्रमe DR7 is accessed, because the hypervisor can
-	 * पूर्णांकercept DR7 पढ़ोs/ग_लिखोs, turning those पूर्णांकo #VC exceptions.
+	 * Needs to happen before DR7 is accessed, because the hypervisor can
+	 * intercept DR7 reads/writes, turning those into #VC exceptions.
 	 */
 	sev_es_ist_enter(regs);
 
-	this_cpu_ग_लिखो(nmi_dr7, local_db_save());
+	this_cpu_write(nmi_dr7, local_db_save());
 
 	irq_state = irqentry_nmi_enter(regs);
 
 	inc_irq_stat(__nmi_count);
 
-	अगर (!ignore_nmis)
-		शेष_करो_nmi(regs);
+	if (!ignore_nmis)
+		default_do_nmi(regs);
 
-	irqentry_nmi_निकास(regs, irq_state);
+	irqentry_nmi_exit(regs, irq_state);
 
-	local_db_restore(this_cpu_पढ़ो(nmi_dr7));
+	local_db_restore(this_cpu_read(nmi_dr7));
 
-	sev_es_ist_निकास();
+	sev_es_ist_exit();
 
-	अगर (unlikely(this_cpu_पढ़ो(nmi_cr2) != पढ़ो_cr2()))
-		ग_लिखो_cr2(this_cpu_पढ़ो(nmi_cr2));
-	अगर (this_cpu_dec_वापस(nmi_state))
-		जाओ nmi_restart;
+	if (unlikely(this_cpu_read(nmi_cr2) != read_cr2()))
+		write_cr2(this_cpu_read(nmi_cr2));
+	if (this_cpu_dec_return(nmi_state))
+		goto nmi_restart;
 
-	अगर (user_mode(regs))
+	if (user_mode(regs))
 		mds_user_clear_cpu_buffers();
-पूर्ण
+}
 
-#अगर defined(CONFIG_X86_64) && IS_ENABLED(CONFIG_KVM_INTEL)
+#if defined(CONFIG_X86_64) && IS_ENABLED(CONFIG_KVM_INTEL)
 DEFINE_IDTENTRY_RAW(exc_nmi_noist)
-अणु
+{
 	exc_nmi(regs);
-पूर्ण
-#पूर्ण_अगर
-#अगर IS_MODULE(CONFIG_KVM_INTEL)
-EXPORT_SYMBOL_GPL(यंत्र_exc_nmi_noist);
-#पूर्ण_अगर
+}
+#endif
+#if IS_MODULE(CONFIG_KVM_INTEL)
+EXPORT_SYMBOL_GPL(asm_exc_nmi_noist);
+#endif
 
-व्योम stop_nmi(व्योम)
-अणु
+void stop_nmi(void)
+{
 	ignore_nmis++;
-पूर्ण
+}
 
-व्योम restart_nmi(व्योम)
-अणु
+void restart_nmi(void)
+{
 	ignore_nmis--;
-पूर्ण
+}
 
 /* reset the back-to-back NMI logic */
-व्योम local_touch_nmi(व्योम)
-अणु
-	__this_cpu_ग_लिखो(last_nmi_rip, 0);
-पूर्ण
+void local_touch_nmi(void)
+{
+	__this_cpu_write(last_nmi_rip, 0);
+}
 EXPORT_SYMBOL_GPL(local_touch_nmi);

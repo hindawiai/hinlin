@@ -1,53 +1,52 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __NET_IFE_H
-#घोषणा __NET_IFE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __NET_IFE_H
+#define __NET_IFE_H
 
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <uapi/linux/अगरe.h>
+#include <linux/etherdevice.h>
+#include <linux/rtnetlink.h>
+#include <uapi/linux/ife.h>
 
-#अगर IS_ENABLED(CONFIG_NET_IFE)
+#if IS_ENABLED(CONFIG_NET_IFE)
 
-व्योम *अगरe_encode(काष्ठा sk_buff *skb, u16 metalen);
-व्योम *अगरe_decode(काष्ठा sk_buff *skb, u16 *metalen);
+void *ife_encode(struct sk_buff *skb, u16 metalen);
+void *ife_decode(struct sk_buff *skb, u16 *metalen);
 
-व्योम *अगरe_tlv_meta_decode(व्योम *skbdata, स्थिर व्योम *अगरehdr_end, u16 *attrtype,
+void *ife_tlv_meta_decode(void *skbdata, const void *ifehdr_end, u16 *attrtype,
 			  u16 *dlen, u16 *totlen);
-पूर्णांक अगरe_tlv_meta_encode(व्योम *skbdata, u16 attrtype, u16 dlen,
-			स्थिर व्योम *dval);
+int ife_tlv_meta_encode(void *skbdata, u16 attrtype, u16 dlen,
+			const void *dval);
 
-व्योम *अगरe_tlv_meta_next(व्योम *skbdata);
+void *ife_tlv_meta_next(void *skbdata);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम *अगरe_encode(काष्ठा sk_buff *skb, u16 metalen)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline void *ife_encode(struct sk_buff *skb, u16 metalen)
+{
+	return NULL;
+}
 
-अटल अंतरभूत व्योम *अगरe_decode(काष्ठा sk_buff *skb, u16 *metalen)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline void *ife_decode(struct sk_buff *skb, u16 *metalen)
+{
+	return NULL;
+}
 
-अटल अंतरभूत व्योम *अगरe_tlv_meta_decode(व्योम *skbdata, u16 *attrtype, u16 *dlen,
+static inline void *ife_tlv_meta_decode(void *skbdata, u16 *attrtype, u16 *dlen,
 					u16 *totlen)
-अणु
-	वापस शून्य;
-पूर्ण
+{
+	return NULL;
+}
 
-अटल अंतरभूत पूर्णांक अगरe_tlv_meta_encode(व्योम *skbdata, u16 attrtype, u16 dlen,
-			स्थिर व्योम *dval)
-अणु
-	वापस 0;
-पूर्ण
+static inline int ife_tlv_meta_encode(void *skbdata, u16 attrtype, u16 dlen,
+			const void *dval)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम *अगरe_tlv_meta_next(व्योम *skbdata)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline void *ife_tlv_meta_next(void *skbdata)
+{
+	return NULL;
+}
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर /* __NET_IFE_H */
+#endif /* __NET_IFE_H */

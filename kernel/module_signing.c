@@ -1,46 +1,45 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* Module signature checker
  *
  * Copyright (C) 2012 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/module.h>
-#समावेश <linux/module_signature.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/verअगरication.h>
-#समावेश <crypto/खुला_key.h>
-#समावेश "module-internal.h"
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/module.h>
+#include <linux/module_signature.h>
+#include <linux/string.h>
+#include <linux/verification.h>
+#include <crypto/public_key.h>
+#include "module-internal.h"
 
 /*
- * Verअगरy the signature on a module.
+ * Verify the signature on a module.
  */
-पूर्णांक mod_verअगरy_sig(स्थिर व्योम *mod, काष्ठा load_info *info)
-अणु
-	काष्ठा module_signature ms;
-	माप_प्रकार sig_len, modlen = info->len;
-	पूर्णांक ret;
+int mod_verify_sig(const void *mod, struct load_info *info)
+{
+	struct module_signature ms;
+	size_t sig_len, modlen = info->len;
+	int ret;
 
 	pr_devel("==>%s(,%zu)\n", __func__, modlen);
 
-	अगर (modlen <= माप(ms))
-		वापस -EBADMSG;
+	if (modlen <= sizeof(ms))
+		return -EBADMSG;
 
-	स_नकल(&ms, mod + (modlen - माप(ms)), माप(ms));
+	memcpy(&ms, mod + (modlen - sizeof(ms)), sizeof(ms));
 
 	ret = mod_check_sig(&ms, modlen, "module");
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	sig_len = be32_to_cpu(ms.sig_len);
-	modlen -= sig_len + माप(ms);
+	modlen -= sig_len + sizeof(ms);
 	info->len = modlen;
 
-	वापस verअगरy_pkcs7_signature(mod, modlen, mod + modlen, sig_len,
+	return verify_pkcs7_signature(mod, modlen, mod + modlen, sig_len,
 				      VERIFY_USE_SECONDARY_KEYRING,
 				      VERIFYING_MODULE_SIGNATURE,
-				      शून्य, शून्य);
-पूर्ण
+				      NULL, NULL);
+}

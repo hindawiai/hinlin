@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2015 Karol Herbst <nouveau@karolherbst.de>
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,10 +21,10 @@
  *
  * Authors: Karol Herbst <nouveau@karolherbst.de>
  */
-#समावेश "priv.h"
+#include "priv.h"
 
-अटल स्थिर काष्ठा nvkm_pci_func
-gf106_pci_func = अणु
+static const struct nvkm_pci_func
+gf106_pci_func = {
 	.init = g84_pci_init,
 	.rd32 = nv40_pci_rd32,
 	.wr08 = nv40_pci_wr08,
@@ -41,11 +40,11 @@ gf106_pci_func = अणु
 	.pcie.set_version = gf100_pcie_set_version,
 	.pcie.version = gf100_pcie_version,
 	.pcie.version_supported = g92_pcie_version_supported,
-पूर्ण;
+};
 
-पूर्णांक
-gf106_pci_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
-	      काष्ठा nvkm_pci **ppci)
-अणु
-	वापस nvkm_pci_new_(&gf106_pci_func, device, type, inst, ppci);
-पूर्ण
+int
+gf106_pci_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
+	      struct nvkm_pci **ppci)
+{
+	return nvkm_pci_new_(&gf106_pci_func, device, type, inst, ppci);
+}

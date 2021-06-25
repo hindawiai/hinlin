@@ -1,11 +1,10 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _UAPI__LINUX_LTALK_H
-#घोषणा _UAPI__LINUX_LTALK_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _UAPI__LINUX_LTALK_H
+#define _UAPI__LINUX_LTALK_H
 
-#घोषणा LTALK_HLEN		1
-#घोषणा LTALK_MTU		600
-#घोषणा LTALK_ALEN		1
+#define LTALK_HLEN		1
+#define LTALK_MTU		600
+#define LTALK_ALEN		1
 
 
-#पूर्ण_अगर /* _UAPI__LINUX_LTALK_H */
+#endif /* _UAPI__LINUX_LTALK_H */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
 *  Digi AccelePort USB-4 and USB-2 Serial Converters
 *
@@ -9,351 +8,351 @@
 *  usb-serial driver.
 *
 *  Peter Berger (pberger@brimson.com)
-*  Al Borchers (borchers@steinerpoपूर्णांक.com)
+*  Al Borchers (borchers@steinerpoint.com)
 */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_driver.h>
-#समावेश <linux/tty_flip.h>
-#समावेश <linux/module.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/usb/serial.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/slab.h>
+#include <linux/tty.h>
+#include <linux/tty_driver.h>
+#include <linux/tty_flip.h>
+#include <linux/module.h>
+#include <linux/spinlock.h>
+#include <linux/uaccess.h>
+#include <linux/usb.h>
+#include <linux/wait.h>
+#include <linux/sched/signal.h>
+#include <linux/usb/serial.h>
 
 /* Defines */
 
-#घोषणा DRIVER_AUTHOR "Peter Berger <pberger@brimson.com>, Al Borchers <borchers@steinerpoint.com>"
-#घोषणा DRIVER_DESC "Digi AccelePort USB-2/USB-4 Serial Converter driver"
+#define DRIVER_AUTHOR "Peter Berger <pberger@brimson.com>, Al Borchers <borchers@steinerpoint.com>"
+#define DRIVER_DESC "Digi AccelePort USB-2/USB-4 Serial Converter driver"
 
 /* port output buffer length -- must be <= transfer buffer length - 2 */
 /* so we can be sure to send the full buffer in one urb */
-#घोषणा DIGI_OUT_BUF_SIZE		8
+#define DIGI_OUT_BUF_SIZE		8
 
 /* port input buffer length -- must be >= transfer buffer length - 3 */
 /* so we can be sure to hold at least one full buffer from one urb */
-#घोषणा DIGI_IN_BUF_SIZE		64
+#define DIGI_IN_BUF_SIZE		64
 
-/* retry समयout जबतक sleeping */
-#घोषणा DIGI_RETRY_TIMEOUT		(HZ/10)
+/* retry timeout while sleeping */
+#define DIGI_RETRY_TIMEOUT		(HZ/10)
 
-/* समयout जबतक रुकोing क्रम tty output to drain in बंद */
-/* this delay is used twice in बंद, so the total delay could */
+/* timeout while waiting for tty output to drain in close */
+/* this delay is used twice in close, so the total delay could */
 /* be twice this value */
-#घोषणा DIGI_CLOSE_TIMEOUT		(5*HZ)
+#define DIGI_CLOSE_TIMEOUT		(5*HZ)
 
 
 /* AccelePort USB Defines */
 
 /* ids */
-#घोषणा DIGI_VENDOR_ID			0x05c5
-#घोषणा DIGI_2_ID			0x0002	/* USB-2 */
-#घोषणा DIGI_4_ID			0x0004	/* USB-4 */
+#define DIGI_VENDOR_ID			0x05c5
+#define DIGI_2_ID			0x0002	/* USB-2 */
+#define DIGI_4_ID			0x0004	/* USB-4 */
 
 /* commands
- * "INB": can be used on the in-band endpoपूर्णांक
- * "OOB": can be used on the out-of-band endpoपूर्णांक
+ * "INB": can be used on the in-band endpoint
+ * "OOB": can be used on the out-of-band endpoint
  */
-#घोषणा DIGI_CMD_SET_BAUD_RATE			0	/* INB, OOB */
-#घोषणा DIGI_CMD_SET_WORD_SIZE			1	/* INB, OOB */
-#घोषणा DIGI_CMD_SET_PARITY			2	/* INB, OOB */
-#घोषणा DIGI_CMD_SET_STOP_BITS			3	/* INB, OOB */
-#घोषणा DIGI_CMD_SET_INPUT_FLOW_CONTROL		4	/* INB, OOB */
-#घोषणा DIGI_CMD_SET_OUTPUT_FLOW_CONTROL	5	/* INB, OOB */
-#घोषणा DIGI_CMD_SET_DTR_SIGNAL			6	/* INB, OOB */
-#घोषणा DIGI_CMD_SET_RTS_SIGNAL			7	/* INB, OOB */
-#घोषणा DIGI_CMD_READ_INPUT_SIGNALS		8	/*      OOB */
-#घोषणा DIGI_CMD_IFLUSH_FIFO			9	/*      OOB */
-#घोषणा DIGI_CMD_RECEIVE_ENABLE			10	/* INB, OOB */
-#घोषणा DIGI_CMD_BREAK_CONTROL			11	/* INB, OOB */
-#घोषणा DIGI_CMD_LOCAL_LOOPBACK			12	/* INB, OOB */
-#घोषणा DIGI_CMD_TRANSMIT_IDLE			13	/* INB, OOB */
-#घोषणा DIGI_CMD_READ_UART_REGISTER		14	/*      OOB */
-#घोषणा DIGI_CMD_WRITE_UART_REGISTER		15	/* INB, OOB */
-#घोषणा DIGI_CMD_AND_UART_REGISTER		16	/* INB, OOB */
-#घोषणा DIGI_CMD_OR_UART_REGISTER		17	/* INB, OOB */
-#घोषणा DIGI_CMD_SEND_DATA			18	/* INB      */
-#घोषणा DIGI_CMD_RECEIVE_DATA			19	/* INB      */
-#घोषणा DIGI_CMD_RECEIVE_DISABLE		20	/* INB      */
-#घोषणा DIGI_CMD_GET_PORT_TYPE			21	/*      OOB */
+#define DIGI_CMD_SET_BAUD_RATE			0	/* INB, OOB */
+#define DIGI_CMD_SET_WORD_SIZE			1	/* INB, OOB */
+#define DIGI_CMD_SET_PARITY			2	/* INB, OOB */
+#define DIGI_CMD_SET_STOP_BITS			3	/* INB, OOB */
+#define DIGI_CMD_SET_INPUT_FLOW_CONTROL		4	/* INB, OOB */
+#define DIGI_CMD_SET_OUTPUT_FLOW_CONTROL	5	/* INB, OOB */
+#define DIGI_CMD_SET_DTR_SIGNAL			6	/* INB, OOB */
+#define DIGI_CMD_SET_RTS_SIGNAL			7	/* INB, OOB */
+#define DIGI_CMD_READ_INPUT_SIGNALS		8	/*      OOB */
+#define DIGI_CMD_IFLUSH_FIFO			9	/*      OOB */
+#define DIGI_CMD_RECEIVE_ENABLE			10	/* INB, OOB */
+#define DIGI_CMD_BREAK_CONTROL			11	/* INB, OOB */
+#define DIGI_CMD_LOCAL_LOOPBACK			12	/* INB, OOB */
+#define DIGI_CMD_TRANSMIT_IDLE			13	/* INB, OOB */
+#define DIGI_CMD_READ_UART_REGISTER		14	/*      OOB */
+#define DIGI_CMD_WRITE_UART_REGISTER		15	/* INB, OOB */
+#define DIGI_CMD_AND_UART_REGISTER		16	/* INB, OOB */
+#define DIGI_CMD_OR_UART_REGISTER		17	/* INB, OOB */
+#define DIGI_CMD_SEND_DATA			18	/* INB      */
+#define DIGI_CMD_RECEIVE_DATA			19	/* INB      */
+#define DIGI_CMD_RECEIVE_DISABLE		20	/* INB      */
+#define DIGI_CMD_GET_PORT_TYPE			21	/*      OOB */
 
 /* baud rates */
-#घोषणा DIGI_BAUD_50				0
-#घोषणा DIGI_BAUD_75				1
-#घोषणा DIGI_BAUD_110				2
-#घोषणा DIGI_BAUD_150				3
-#घोषणा DIGI_BAUD_200				4
-#घोषणा DIGI_BAUD_300				5
-#घोषणा DIGI_BAUD_600				6
-#घोषणा DIGI_BAUD_1200				7
-#घोषणा DIGI_BAUD_1800				8
-#घोषणा DIGI_BAUD_2400				9
-#घोषणा DIGI_BAUD_4800				10
-#घोषणा DIGI_BAUD_7200				11
-#घोषणा DIGI_BAUD_9600				12
-#घोषणा DIGI_BAUD_14400				13
-#घोषणा DIGI_BAUD_19200				14
-#घोषणा DIGI_BAUD_28800				15
-#घोषणा DIGI_BAUD_38400				16
-#घोषणा DIGI_BAUD_57600				17
-#घोषणा DIGI_BAUD_76800				18
-#घोषणा DIGI_BAUD_115200			19
-#घोषणा DIGI_BAUD_153600			20
-#घोषणा DIGI_BAUD_230400			21
-#घोषणा DIGI_BAUD_460800			22
+#define DIGI_BAUD_50				0
+#define DIGI_BAUD_75				1
+#define DIGI_BAUD_110				2
+#define DIGI_BAUD_150				3
+#define DIGI_BAUD_200				4
+#define DIGI_BAUD_300				5
+#define DIGI_BAUD_600				6
+#define DIGI_BAUD_1200				7
+#define DIGI_BAUD_1800				8
+#define DIGI_BAUD_2400				9
+#define DIGI_BAUD_4800				10
+#define DIGI_BAUD_7200				11
+#define DIGI_BAUD_9600				12
+#define DIGI_BAUD_14400				13
+#define DIGI_BAUD_19200				14
+#define DIGI_BAUD_28800				15
+#define DIGI_BAUD_38400				16
+#define DIGI_BAUD_57600				17
+#define DIGI_BAUD_76800				18
+#define DIGI_BAUD_115200			19
+#define DIGI_BAUD_153600			20
+#define DIGI_BAUD_230400			21
+#define DIGI_BAUD_460800			22
 
 /* arguments */
-#घोषणा DIGI_WORD_SIZE_5			0
-#घोषणा DIGI_WORD_SIZE_6			1
-#घोषणा DIGI_WORD_SIZE_7			2
-#घोषणा DIGI_WORD_SIZE_8			3
+#define DIGI_WORD_SIZE_5			0
+#define DIGI_WORD_SIZE_6			1
+#define DIGI_WORD_SIZE_7			2
+#define DIGI_WORD_SIZE_8			3
 
-#घोषणा DIGI_PARITY_NONE			0
-#घोषणा DIGI_PARITY_ODD				1
-#घोषणा DIGI_PARITY_EVEN			2
-#घोषणा DIGI_PARITY_MARK			3
-#घोषणा DIGI_PARITY_SPACE			4
+#define DIGI_PARITY_NONE			0
+#define DIGI_PARITY_ODD				1
+#define DIGI_PARITY_EVEN			2
+#define DIGI_PARITY_MARK			3
+#define DIGI_PARITY_SPACE			4
 
-#घोषणा DIGI_STOP_BITS_1			0
-#घोषणा DIGI_STOP_BITS_2			1
+#define DIGI_STOP_BITS_1			0
+#define DIGI_STOP_BITS_2			1
 
-#घोषणा DIGI_INPUT_FLOW_CONTROL_XON_XOFF	1
-#घोषणा DIGI_INPUT_FLOW_CONTROL_RTS		2
-#घोषणा DIGI_INPUT_FLOW_CONTROL_DTR		4
+#define DIGI_INPUT_FLOW_CONTROL_XON_XOFF	1
+#define DIGI_INPUT_FLOW_CONTROL_RTS		2
+#define DIGI_INPUT_FLOW_CONTROL_DTR		4
 
-#घोषणा DIGI_OUTPUT_FLOW_CONTROL_XON_XOFF	1
-#घोषणा DIGI_OUTPUT_FLOW_CONTROL_CTS		2
-#घोषणा DIGI_OUTPUT_FLOW_CONTROL_DSR		4
+#define DIGI_OUTPUT_FLOW_CONTROL_XON_XOFF	1
+#define DIGI_OUTPUT_FLOW_CONTROL_CTS		2
+#define DIGI_OUTPUT_FLOW_CONTROL_DSR		4
 
-#घोषणा DIGI_DTR_INACTIVE			0
-#घोषणा DIGI_DTR_ACTIVE				1
-#घोषणा DIGI_DTR_INPUT_FLOW_CONTROL		2
+#define DIGI_DTR_INACTIVE			0
+#define DIGI_DTR_ACTIVE				1
+#define DIGI_DTR_INPUT_FLOW_CONTROL		2
 
-#घोषणा DIGI_RTS_INACTIVE			0
-#घोषणा DIGI_RTS_ACTIVE				1
-#घोषणा DIGI_RTS_INPUT_FLOW_CONTROL		2
-#घोषणा DIGI_RTS_TOGGLE				3
+#define DIGI_RTS_INACTIVE			0
+#define DIGI_RTS_ACTIVE				1
+#define DIGI_RTS_INPUT_FLOW_CONTROL		2
+#define DIGI_RTS_TOGGLE				3
 
-#घोषणा DIGI_FLUSH_TX				1
-#घोषणा DIGI_FLUSH_RX				2
-#घोषणा DIGI_RESUME_TX				4 /* clears xoff condition */
+#define DIGI_FLUSH_TX				1
+#define DIGI_FLUSH_RX				2
+#define DIGI_RESUME_TX				4 /* clears xoff condition */
 
-#घोषणा DIGI_TRANSMIT_NOT_IDLE			0
-#घोषणा DIGI_TRANSMIT_IDLE			1
+#define DIGI_TRANSMIT_NOT_IDLE			0
+#define DIGI_TRANSMIT_IDLE			1
 
-#घोषणा DIGI_DISABLE				0
-#घोषणा DIGI_ENABLE				1
+#define DIGI_DISABLE				0
+#define DIGI_ENABLE				1
 
-#घोषणा DIGI_DEASSERT				0
-#घोषणा DIGI_ASSERT				1
+#define DIGI_DEASSERT				0
+#define DIGI_ASSERT				1
 
 /* in band status codes */
-#घोषणा DIGI_OVERRUN_ERROR			4
-#घोषणा DIGI_PARITY_ERROR			8
-#घोषणा DIGI_FRAMING_ERROR			16
-#घोषणा DIGI_BREAK_ERROR			32
+#define DIGI_OVERRUN_ERROR			4
+#define DIGI_PARITY_ERROR			8
+#define DIGI_FRAMING_ERROR			16
+#define DIGI_BREAK_ERROR			32
 
 /* out of band status */
-#घोषणा DIGI_NO_ERROR				0
-#घोषणा DIGI_BAD_FIRST_PARAMETER		1
-#घोषणा DIGI_BAD_SECOND_PARAMETER		2
-#घोषणा DIGI_INVALID_LINE			3
-#घोषणा DIGI_INVALID_OPCODE			4
+#define DIGI_NO_ERROR				0
+#define DIGI_BAD_FIRST_PARAMETER		1
+#define DIGI_BAD_SECOND_PARAMETER		2
+#define DIGI_INVALID_LINE			3
+#define DIGI_INVALID_OPCODE			4
 
-/* input संकेतs */
-#घोषणा DIGI_READ_INPUT_SIGNALS_SLOT		1
-#घोषणा DIGI_READ_INPUT_SIGNALS_ERR		2
-#घोषणा DIGI_READ_INPUT_SIGNALS_BUSY		4
-#घोषणा DIGI_READ_INPUT_SIGNALS_PE		8
-#घोषणा DIGI_READ_INPUT_SIGNALS_CTS		16
-#घोषणा DIGI_READ_INPUT_SIGNALS_DSR		32
-#घोषणा DIGI_READ_INPUT_SIGNALS_RI		64
-#घोषणा DIGI_READ_INPUT_SIGNALS_DCD		128
+/* input signals */
+#define DIGI_READ_INPUT_SIGNALS_SLOT		1
+#define DIGI_READ_INPUT_SIGNALS_ERR		2
+#define DIGI_READ_INPUT_SIGNALS_BUSY		4
+#define DIGI_READ_INPUT_SIGNALS_PE		8
+#define DIGI_READ_INPUT_SIGNALS_CTS		16
+#define DIGI_READ_INPUT_SIGNALS_DSR		32
+#define DIGI_READ_INPUT_SIGNALS_RI		64
+#define DIGI_READ_INPUT_SIGNALS_DCD		128
 
 
 /* Structures */
 
-काष्ठा digi_serial अणु
+struct digi_serial {
 	spinlock_t ds_serial_lock;
-	काष्ठा usb_serial_port *ds_oob_port;	/* out-of-band port */
-	पूर्णांक ds_oob_port_num;			/* index of out-of-band port */
-	पूर्णांक ds_device_started;
-पूर्ण;
+	struct usb_serial_port *ds_oob_port;	/* out-of-band port */
+	int ds_oob_port_num;			/* index of out-of-band port */
+	int ds_device_started;
+};
 
-काष्ठा digi_port अणु
+struct digi_port {
 	spinlock_t dp_port_lock;
-	पूर्णांक dp_port_num;
-	पूर्णांक dp_out_buf_len;
-	अचिन्हित अक्षर dp_out_buf[DIGI_OUT_BUF_SIZE];
-	पूर्णांक dp_ग_लिखो_urb_in_use;
-	अचिन्हित पूर्णांक dp_modem_संकेतs;
-	पूर्णांक dp_transmit_idle;
-	रुको_queue_head_t dp_transmit_idle_रुको;
-	पूर्णांक dp_throttled;
-	पूर्णांक dp_throttle_restart;
-	रुको_queue_head_t dp_flush_रुको;
-	रुको_queue_head_t dp_बंद_रुको;	/* रुको queue क्रम बंद */
-	रुको_queue_head_t ग_लिखो_रुको;
-	काष्ठा usb_serial_port *dp_port;
-पूर्ण;
+	int dp_port_num;
+	int dp_out_buf_len;
+	unsigned char dp_out_buf[DIGI_OUT_BUF_SIZE];
+	int dp_write_urb_in_use;
+	unsigned int dp_modem_signals;
+	int dp_transmit_idle;
+	wait_queue_head_t dp_transmit_idle_wait;
+	int dp_throttled;
+	int dp_throttle_restart;
+	wait_queue_head_t dp_flush_wait;
+	wait_queue_head_t dp_close_wait;	/* wait queue for close */
+	wait_queue_head_t write_wait;
+	struct usb_serial_port *dp_port;
+};
 
 
 /* Local Function Declarations */
 
-अटल पूर्णांक digi_ग_लिखो_oob_command(काष्ठा usb_serial_port *port,
-	अचिन्हित अक्षर *buf, पूर्णांक count, पूर्णांक पूर्णांकerruptible);
-अटल पूर्णांक digi_ग_लिखो_inb_command(काष्ठा usb_serial_port *port,
-	अचिन्हित अक्षर *buf, पूर्णांक count, अचिन्हित दीर्घ समयout);
-अटल पूर्णांक digi_set_modem_संकेतs(काष्ठा usb_serial_port *port,
-	अचिन्हित पूर्णांक modem_संकेतs, पूर्णांक पूर्णांकerruptible);
-अटल पूर्णांक digi_transmit_idle(काष्ठा usb_serial_port *port,
-	अचिन्हित दीर्घ समयout);
-अटल व्योम digi_rx_throttle(काष्ठा tty_काष्ठा *tty);
-अटल व्योम digi_rx_unthrottle(काष्ठा tty_काष्ठा *tty);
-अटल व्योम digi_set_termios(काष्ठा tty_काष्ठा *tty,
-		काष्ठा usb_serial_port *port, काष्ठा ktermios *old_termios);
-अटल व्योम digi_अवरोध_ctl(काष्ठा tty_काष्ठा *tty, पूर्णांक अवरोध_state);
-अटल पूर्णांक digi_tiocmget(काष्ठा tty_काष्ठा *tty);
-अटल पूर्णांक digi_tiocmset(काष्ठा tty_काष्ठा *tty, अचिन्हित पूर्णांक set,
-		अचिन्हित पूर्णांक clear);
-अटल पूर्णांक digi_ग_लिखो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port,
-		स्थिर अचिन्हित अक्षर *buf, पूर्णांक count);
-अटल व्योम digi_ग_लिखो_bulk_callback(काष्ठा urb *urb);
-अटल पूर्णांक digi_ग_लिखो_room(काष्ठा tty_काष्ठा *tty);
-अटल पूर्णांक digi_अक्षरs_in_buffer(काष्ठा tty_काष्ठा *tty);
-अटल पूर्णांक digi_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port);
-अटल व्योम digi_बंद(काष्ठा usb_serial_port *port);
-अटल व्योम digi_dtr_rts(काष्ठा usb_serial_port *port, पूर्णांक on);
-अटल पूर्णांक digi_startup_device(काष्ठा usb_serial *serial);
-अटल पूर्णांक digi_startup(काष्ठा usb_serial *serial);
-अटल व्योम digi_disconnect(काष्ठा usb_serial *serial);
-अटल व्योम digi_release(काष्ठा usb_serial *serial);
-अटल पूर्णांक digi_port_probe(काष्ठा usb_serial_port *port);
-अटल व्योम digi_port_हटाओ(काष्ठा usb_serial_port *port);
-अटल व्योम digi_पढ़ो_bulk_callback(काष्ठा urb *urb);
-अटल पूर्णांक digi_पढ़ो_inb_callback(काष्ठा urb *urb);
-अटल पूर्णांक digi_पढ़ो_oob_callback(काष्ठा urb *urb);
+static int digi_write_oob_command(struct usb_serial_port *port,
+	unsigned char *buf, int count, int interruptible);
+static int digi_write_inb_command(struct usb_serial_port *port,
+	unsigned char *buf, int count, unsigned long timeout);
+static int digi_set_modem_signals(struct usb_serial_port *port,
+	unsigned int modem_signals, int interruptible);
+static int digi_transmit_idle(struct usb_serial_port *port,
+	unsigned long timeout);
+static void digi_rx_throttle(struct tty_struct *tty);
+static void digi_rx_unthrottle(struct tty_struct *tty);
+static void digi_set_termios(struct tty_struct *tty,
+		struct usb_serial_port *port, struct ktermios *old_termios);
+static void digi_break_ctl(struct tty_struct *tty, int break_state);
+static int digi_tiocmget(struct tty_struct *tty);
+static int digi_tiocmset(struct tty_struct *tty, unsigned int set,
+		unsigned int clear);
+static int digi_write(struct tty_struct *tty, struct usb_serial_port *port,
+		const unsigned char *buf, int count);
+static void digi_write_bulk_callback(struct urb *urb);
+static int digi_write_room(struct tty_struct *tty);
+static int digi_chars_in_buffer(struct tty_struct *tty);
+static int digi_open(struct tty_struct *tty, struct usb_serial_port *port);
+static void digi_close(struct usb_serial_port *port);
+static void digi_dtr_rts(struct usb_serial_port *port, int on);
+static int digi_startup_device(struct usb_serial *serial);
+static int digi_startup(struct usb_serial *serial);
+static void digi_disconnect(struct usb_serial *serial);
+static void digi_release(struct usb_serial *serial);
+static int digi_port_probe(struct usb_serial_port *port);
+static void digi_port_remove(struct usb_serial_port *port);
+static void digi_read_bulk_callback(struct urb *urb);
+static int digi_read_inb_callback(struct urb *urb);
+static int digi_read_oob_callback(struct urb *urb);
 
 
-अटल स्थिर काष्ठा usb_device_id id_table_combined[] = अणु
-	अणु USB_DEVICE(DIGI_VENDOR_ID, DIGI_2_ID) पूर्ण,
-	अणु USB_DEVICE(DIGI_VENDOR_ID, DIGI_4_ID) पूर्ण,
-	अणु पूर्ण						/* Terminating entry */
-पूर्ण;
+static const struct usb_device_id id_table_combined[] = {
+	{ USB_DEVICE(DIGI_VENDOR_ID, DIGI_2_ID) },
+	{ USB_DEVICE(DIGI_VENDOR_ID, DIGI_4_ID) },
+	{ }						/* Terminating entry */
+};
 
-अटल स्थिर काष्ठा usb_device_id id_table_2[] = अणु
-	अणु USB_DEVICE(DIGI_VENDOR_ID, DIGI_2_ID) पूर्ण,
-	अणु पूर्ण						/* Terminating entry */
-पूर्ण;
+static const struct usb_device_id id_table_2[] = {
+	{ USB_DEVICE(DIGI_VENDOR_ID, DIGI_2_ID) },
+	{ }						/* Terminating entry */
+};
 
-अटल स्थिर काष्ठा usb_device_id id_table_4[] = अणु
-	अणु USB_DEVICE(DIGI_VENDOR_ID, DIGI_4_ID) पूर्ण,
-	अणु पूर्ण						/* Terminating entry */
-पूर्ण;
+static const struct usb_device_id id_table_4[] = {
+	{ USB_DEVICE(DIGI_VENDOR_ID, DIGI_4_ID) },
+	{ }						/* Terminating entry */
+};
 
 MODULE_DEVICE_TABLE(usb, id_table_combined);
 
-/* device info needed क्रम the Digi serial converter */
+/* device info needed for the Digi serial converter */
 
-अटल काष्ठा usb_serial_driver digi_acceleport_2_device = अणु
-	.driver = अणु
+static struct usb_serial_driver digi_acceleport_2_device = {
+	.driver = {
 		.owner =		THIS_MODULE,
 		.name =			"digi_2",
-	पूर्ण,
+	},
 	.description =			"Digi 2 port USB adapter",
 	.id_table =			id_table_2,
 	.num_ports =			3,
 	.num_bulk_in =			4,
 	.num_bulk_out =			4,
-	.खोलो =				digi_खोलो,
-	.बंद =			digi_बंद,
+	.open =				digi_open,
+	.close =			digi_close,
 	.dtr_rts =			digi_dtr_rts,
-	.ग_लिखो =			digi_ग_लिखो,
-	.ग_लिखो_room =			digi_ग_लिखो_room,
-	.ग_लिखो_bulk_callback = 		digi_ग_लिखो_bulk_callback,
-	.पढ़ो_bulk_callback =		digi_पढ़ो_bulk_callback,
-	.अक्षरs_in_buffer =		digi_अक्षरs_in_buffer,
+	.write =			digi_write,
+	.write_room =			digi_write_room,
+	.write_bulk_callback = 		digi_write_bulk_callback,
+	.read_bulk_callback =		digi_read_bulk_callback,
+	.chars_in_buffer =		digi_chars_in_buffer,
 	.throttle =			digi_rx_throttle,
 	.unthrottle =			digi_rx_unthrottle,
 	.set_termios =			digi_set_termios,
-	.अवरोध_ctl =			digi_अवरोध_ctl,
+	.break_ctl =			digi_break_ctl,
 	.tiocmget =			digi_tiocmget,
 	.tiocmset =			digi_tiocmset,
 	.attach =			digi_startup,
 	.disconnect =			digi_disconnect,
 	.release =			digi_release,
 	.port_probe =			digi_port_probe,
-	.port_हटाओ =			digi_port_हटाओ,
-पूर्ण;
+	.port_remove =			digi_port_remove,
+};
 
-अटल काष्ठा usb_serial_driver digi_acceleport_4_device = अणु
-	.driver = अणु
+static struct usb_serial_driver digi_acceleport_4_device = {
+	.driver = {
 		.owner =		THIS_MODULE,
 		.name =			"digi_4",
-	पूर्ण,
+	},
 	.description =			"Digi 4 port USB adapter",
 	.id_table =			id_table_4,
 	.num_ports =			4,
 	.num_bulk_in =			5,
 	.num_bulk_out =			5,
-	.खोलो =				digi_खोलो,
-	.बंद =			digi_बंद,
-	.ग_लिखो =			digi_ग_लिखो,
-	.ग_लिखो_room =			digi_ग_लिखो_room,
-	.ग_लिखो_bulk_callback = 		digi_ग_लिखो_bulk_callback,
-	.पढ़ो_bulk_callback =		digi_पढ़ो_bulk_callback,
-	.अक्षरs_in_buffer =		digi_अक्षरs_in_buffer,
+	.open =				digi_open,
+	.close =			digi_close,
+	.write =			digi_write,
+	.write_room =			digi_write_room,
+	.write_bulk_callback = 		digi_write_bulk_callback,
+	.read_bulk_callback =		digi_read_bulk_callback,
+	.chars_in_buffer =		digi_chars_in_buffer,
 	.throttle =			digi_rx_throttle,
 	.unthrottle =			digi_rx_unthrottle,
 	.set_termios =			digi_set_termios,
-	.अवरोध_ctl =			digi_अवरोध_ctl,
+	.break_ctl =			digi_break_ctl,
 	.tiocmget =			digi_tiocmget,
 	.tiocmset =			digi_tiocmset,
 	.attach =			digi_startup,
 	.disconnect =			digi_disconnect,
 	.release =			digi_release,
 	.port_probe =			digi_port_probe,
-	.port_हटाओ =			digi_port_हटाओ,
-पूर्ण;
+	.port_remove =			digi_port_remove,
+};
 
-अटल काष्ठा usb_serial_driver * स्थिर serial_drivers[] = अणु
-	&digi_acceleport_2_device, &digi_acceleport_4_device, शून्य
-पूर्ण;
+static struct usb_serial_driver * const serial_drivers[] = {
+	&digi_acceleport_2_device, &digi_acceleport_4_device, NULL
+};
 
 /* Functions */
 
 /*
  *  Cond Wait Interruptible Timeout Irqrestore
  *
- *  Do spin_unlock_irqrestore and पूर्णांकerruptible_sleep_on_समयout
- *  so that wake ups are not lost अगर they occur between the unlock
+ *  Do spin_unlock_irqrestore and interruptible_sleep_on_timeout
+ *  so that wake ups are not lost if they occur between the unlock
  *  and the sleep.  In other words, spin_unlock_irqrestore and
- *  पूर्णांकerruptible_sleep_on_समयout are "atomic" with respect to
+ *  interruptible_sleep_on_timeout are "atomic" with respect to
  *  wake ups.  This is used to implement condition variables.
  *
- *  पूर्णांकerruptible_sleep_on_समयout is deprecated and has been replaced
+ *  interruptible_sleep_on_timeout is deprecated and has been replaced
  *  with the equivalent code.
  */
 
-अटल दीर्घ cond_रुको_पूर्णांकerruptible_समयout_irqrestore(
-	रुको_queue_head_t *q, दीर्घ समयout,
-	spinlock_t *lock, अचिन्हित दीर्घ flags)
+static long cond_wait_interruptible_timeout_irqrestore(
+	wait_queue_head_t *q, long timeout,
+	spinlock_t *lock, unsigned long flags)
 __releases(lock)
-अणु
-	DEFINE_WAIT(रुको);
+{
+	DEFINE_WAIT(wait);
 
-	prepare_to_रुको(q, &रुको, TASK_INTERRUPTIBLE);
+	prepare_to_wait(q, &wait, TASK_INTERRUPTIBLE);
 	spin_unlock_irqrestore(lock, flags);
-	समयout = schedule_समयout(समयout);
-	finish_रुको(q, &रुको);
+	timeout = schedule_timeout(timeout);
+	finish_wait(q, &wait);
 
-	वापस समयout;
-पूर्ण
+	return timeout;
+}
 
 /*
  *  Digi Write OOB Command
@@ -361,55 +360,55 @@ __releases(lock)
  *  Write commands on the out of band port.  Commands are 4
  *  bytes each, multiple commands can be sent at once, and
  *  no command will be split across USB packets.  Returns 0
- *  अगर successful, -EINTR अगर पूर्णांकerrupted जबतक sleeping and
- *  the पूर्णांकerruptible flag is true, or a negative error
- *  वापसed by usb_submit_urb.
+ *  if successful, -EINTR if interrupted while sleeping and
+ *  the interruptible flag is true, or a negative error
+ *  returned by usb_submit_urb.
  */
 
-अटल पूर्णांक digi_ग_लिखो_oob_command(काष्ठा usb_serial_port *port,
-	अचिन्हित अक्षर *buf, पूर्णांक count, पूर्णांक पूर्णांकerruptible)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक len;
-	काष्ठा usb_serial_port *oob_port = (काष्ठा usb_serial_port *)((काष्ठा digi_serial *)(usb_get_serial_data(port->serial)))->ds_oob_port;
-	काष्ठा digi_port *oob_priv = usb_get_serial_port_data(oob_port);
-	अचिन्हित दीर्घ flags = 0;
+static int digi_write_oob_command(struct usb_serial_port *port,
+	unsigned char *buf, int count, int interruptible)
+{
+	int ret = 0;
+	int len;
+	struct usb_serial_port *oob_port = (struct usb_serial_port *)((struct digi_serial *)(usb_get_serial_data(port->serial)))->ds_oob_port;
+	struct digi_port *oob_priv = usb_get_serial_port_data(oob_port);
+	unsigned long flags = 0;
 
 	dev_dbg(&port->dev,
 		"digi_write_oob_command: TOP: port=%d, count=%d\n",
 		oob_priv->dp_port_num, count);
 
 	spin_lock_irqsave(&oob_priv->dp_port_lock, flags);
-	जबतक (count > 0) अणु
-		जबतक (oob_priv->dp_ग_लिखो_urb_in_use) अणु
-			cond_रुको_पूर्णांकerruptible_समयout_irqrestore(
-				&oob_priv->ग_लिखो_रुको, DIGI_RETRY_TIMEOUT,
+	while (count > 0) {
+		while (oob_priv->dp_write_urb_in_use) {
+			cond_wait_interruptible_timeout_irqrestore(
+				&oob_priv->write_wait, DIGI_RETRY_TIMEOUT,
 				&oob_priv->dp_port_lock, flags);
-			अगर (पूर्णांकerruptible && संकेत_pending(current))
-				वापस -EINTR;
+			if (interruptible && signal_pending(current))
+				return -EINTR;
 			spin_lock_irqsave(&oob_priv->dp_port_lock, flags);
-		पूर्ण
+		}
 
 		/* len must be a multiple of 4, so commands are not split */
 		len = min(count, oob_port->bulk_out_size);
-		अगर (len > 4)
+		if (len > 4)
 			len &= ~3;
-		स_नकल(oob_port->ग_लिखो_urb->transfer_buffer, buf, len);
-		oob_port->ग_लिखो_urb->transfer_buffer_length = len;
-		ret = usb_submit_urb(oob_port->ग_लिखो_urb, GFP_ATOMIC);
-		अगर (ret == 0) अणु
-			oob_priv->dp_ग_लिखो_urb_in_use = 1;
+		memcpy(oob_port->write_urb->transfer_buffer, buf, len);
+		oob_port->write_urb->transfer_buffer_length = len;
+		ret = usb_submit_urb(oob_port->write_urb, GFP_ATOMIC);
+		if (ret == 0) {
+			oob_priv->dp_write_urb_in_use = 1;
 			count -= len;
 			buf += len;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&oob_priv->dp_port_lock, flags);
-	अगर (ret)
+	if (ret)
 		dev_err(&port->dev, "%s: usb_submit_urb failed, ret=%d\n",
 			__func__, ret);
-	वापस ret;
+	return ret;
 
-पूर्ण
+}
 
 
 /*
@@ -417,168 +416,168 @@ __releases(lock)
  *
  *  Write commands on the given port.  Commands are 4
  *  bytes each, multiple commands can be sent at once, and
- *  no command will be split across USB packets.  If समयout
- *  is non-zero, ग_लिखो in band command will वापस after
- *  रुकोing unsuccessfully क्रम the URB status to clear क्रम
- *  समयout ticks.  Returns 0 अगर successful, or a negative
- *  error वापसed by digi_ग_लिखो.
+ *  no command will be split across USB packets.  If timeout
+ *  is non-zero, write in band command will return after
+ *  waiting unsuccessfully for the URB status to clear for
+ *  timeout ticks.  Returns 0 if successful, or a negative
+ *  error returned by digi_write.
  */
 
-अटल पूर्णांक digi_ग_लिखो_inb_command(काष्ठा usb_serial_port *port,
-	अचिन्हित अक्षर *buf, पूर्णांक count, अचिन्हित दीर्घ समयout)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक len;
-	काष्ठा digi_port *priv = usb_get_serial_port_data(port);
-	अचिन्हित अक्षर *data = port->ग_लिखो_urb->transfer_buffer;
-	अचिन्हित दीर्घ flags = 0;
+static int digi_write_inb_command(struct usb_serial_port *port,
+	unsigned char *buf, int count, unsigned long timeout)
+{
+	int ret = 0;
+	int len;
+	struct digi_port *priv = usb_get_serial_port_data(port);
+	unsigned char *data = port->write_urb->transfer_buffer;
+	unsigned long flags = 0;
 
 	dev_dbg(&port->dev, "digi_write_inb_command: TOP: port=%d, count=%d\n",
 		priv->dp_port_num, count);
 
-	अगर (समयout)
-		समयout += jअगरfies;
-	अन्यथा
-		समयout = अच_दीर्घ_उच्च;
+	if (timeout)
+		timeout += jiffies;
+	else
+		timeout = ULONG_MAX;
 
 	spin_lock_irqsave(&priv->dp_port_lock, flags);
-	जबतक (count > 0 && ret == 0) अणु
-		जबतक (priv->dp_ग_लिखो_urb_in_use &&
-		       समय_beक्रमe(jअगरfies, समयout)) अणु
-			cond_रुको_पूर्णांकerruptible_समयout_irqrestore(
-				&priv->ग_लिखो_रुको, DIGI_RETRY_TIMEOUT,
+	while (count > 0 && ret == 0) {
+		while (priv->dp_write_urb_in_use &&
+		       time_before(jiffies, timeout)) {
+			cond_wait_interruptible_timeout_irqrestore(
+				&priv->write_wait, DIGI_RETRY_TIMEOUT,
 				&priv->dp_port_lock, flags);
-			अगर (संकेत_pending(current))
-				वापस -EINTR;
+			if (signal_pending(current))
+				return -EINTR;
 			spin_lock_irqsave(&priv->dp_port_lock, flags);
-		पूर्ण
+		}
 
 		/* len must be a multiple of 4 and small enough to */
-		/* guarantee the ग_लिखो will send buffered data first, */
+		/* guarantee the write will send buffered data first, */
 		/* so commands are in order with data and not split */
 		len = min(count, port->bulk_out_size-2-priv->dp_out_buf_len);
-		अगर (len > 4)
+		if (len > 4)
 			len &= ~3;
 
-		/* ग_लिखो any buffered data first */
-		अगर (priv->dp_out_buf_len > 0) अणु
+		/* write any buffered data first */
+		if (priv->dp_out_buf_len > 0) {
 			data[0] = DIGI_CMD_SEND_DATA;
 			data[1] = priv->dp_out_buf_len;
-			स_नकल(data + 2, priv->dp_out_buf,
+			memcpy(data + 2, priv->dp_out_buf,
 				priv->dp_out_buf_len);
-			स_नकल(data + 2 + priv->dp_out_buf_len, buf, len);
-			port->ग_लिखो_urb->transfer_buffer_length
+			memcpy(data + 2 + priv->dp_out_buf_len, buf, len);
+			port->write_urb->transfer_buffer_length
 				= priv->dp_out_buf_len + 2 + len;
-		पूर्ण अन्यथा अणु
-			स_नकल(data, buf, len);
-			port->ग_लिखो_urb->transfer_buffer_length = len;
-		पूर्ण
+		} else {
+			memcpy(data, buf, len);
+			port->write_urb->transfer_buffer_length = len;
+		}
 
-		ret = usb_submit_urb(port->ग_लिखो_urb, GFP_ATOMIC);
-		अगर (ret == 0) अणु
-			priv->dp_ग_लिखो_urb_in_use = 1;
+		ret = usb_submit_urb(port->write_urb, GFP_ATOMIC);
+		if (ret == 0) {
+			priv->dp_write_urb_in_use = 1;
 			priv->dp_out_buf_len = 0;
 			count -= len;
 			buf += len;
-		पूर्ण
+		}
 
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&priv->dp_port_lock, flags);
 
-	अगर (ret)
+	if (ret)
 		dev_err(&port->dev,
 			"%s: usb_submit_urb failed, ret=%d, port=%d\n",
 			__func__, ret, priv->dp_port_num);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
 /*
  *  Digi Set Modem Signals
  *
  *  Sets or clears DTR and RTS on the port, according to the
- *  modem_संकेतs argument.  Use TIOCM_DTR and TIOCM_RTS flags
- *  क्रम the modem_संकेतs argument.  Returns 0 अगर successful,
- *  -EINTR अगर पूर्णांकerrupted जबतक sleeping, or a non-zero error
- *  वापसed by usb_submit_urb.
+ *  modem_signals argument.  Use TIOCM_DTR and TIOCM_RTS flags
+ *  for the modem_signals argument.  Returns 0 if successful,
+ *  -EINTR if interrupted while sleeping, or a non-zero error
+ *  returned by usb_submit_urb.
  */
 
-अटल पूर्णांक digi_set_modem_संकेतs(काष्ठा usb_serial_port *port,
-	अचिन्हित पूर्णांक modem_संकेतs, पूर्णांक पूर्णांकerruptible)
-अणु
+static int digi_set_modem_signals(struct usb_serial_port *port,
+	unsigned int modem_signals, int interruptible)
+{
 
-	पूर्णांक ret;
-	काष्ठा digi_port *port_priv = usb_get_serial_port_data(port);
-	काष्ठा usb_serial_port *oob_port = (काष्ठा usb_serial_port *) ((काष्ठा digi_serial *)(usb_get_serial_data(port->serial)))->ds_oob_port;
-	काष्ठा digi_port *oob_priv = usb_get_serial_port_data(oob_port);
-	अचिन्हित अक्षर *data = oob_port->ग_लिखो_urb->transfer_buffer;
-	अचिन्हित दीर्घ flags = 0;
+	int ret;
+	struct digi_port *port_priv = usb_get_serial_port_data(port);
+	struct usb_serial_port *oob_port = (struct usb_serial_port *) ((struct digi_serial *)(usb_get_serial_data(port->serial)))->ds_oob_port;
+	struct digi_port *oob_priv = usb_get_serial_port_data(oob_port);
+	unsigned char *data = oob_port->write_urb->transfer_buffer;
+	unsigned long flags = 0;
 
 
 	dev_dbg(&port->dev,
 		"digi_set_modem_signals: TOP: port=%d, modem_signals=0x%x\n",
-		port_priv->dp_port_num, modem_संकेतs);
+		port_priv->dp_port_num, modem_signals);
 
 	spin_lock_irqsave(&oob_priv->dp_port_lock, flags);
 	spin_lock(&port_priv->dp_port_lock);
 
-	जबतक (oob_priv->dp_ग_लिखो_urb_in_use) अणु
+	while (oob_priv->dp_write_urb_in_use) {
 		spin_unlock(&port_priv->dp_port_lock);
-		cond_रुको_पूर्णांकerruptible_समयout_irqrestore(
-			&oob_priv->ग_लिखो_रुको, DIGI_RETRY_TIMEOUT,
+		cond_wait_interruptible_timeout_irqrestore(
+			&oob_priv->write_wait, DIGI_RETRY_TIMEOUT,
 			&oob_priv->dp_port_lock, flags);
-		अगर (पूर्णांकerruptible && संकेत_pending(current))
-			वापस -EINTR;
+		if (interruptible && signal_pending(current))
+			return -EINTR;
 		spin_lock_irqsave(&oob_priv->dp_port_lock, flags);
 		spin_lock(&port_priv->dp_port_lock);
-	पूर्ण
+	}
 	data[0] = DIGI_CMD_SET_DTR_SIGNAL;
 	data[1] = port_priv->dp_port_num;
-	data[2] = (modem_संकेतs & TIOCM_DTR) ?
+	data[2] = (modem_signals & TIOCM_DTR) ?
 					DIGI_DTR_ACTIVE : DIGI_DTR_INACTIVE;
 	data[3] = 0;
 	data[4] = DIGI_CMD_SET_RTS_SIGNAL;
 	data[5] = port_priv->dp_port_num;
-	data[6] = (modem_संकेतs & TIOCM_RTS) ?
+	data[6] = (modem_signals & TIOCM_RTS) ?
 					DIGI_RTS_ACTIVE : DIGI_RTS_INACTIVE;
 	data[7] = 0;
 
-	oob_port->ग_लिखो_urb->transfer_buffer_length = 8;
+	oob_port->write_urb->transfer_buffer_length = 8;
 
-	ret = usb_submit_urb(oob_port->ग_लिखो_urb, GFP_ATOMIC);
-	अगर (ret == 0) अणु
-		oob_priv->dp_ग_लिखो_urb_in_use = 1;
-		port_priv->dp_modem_संकेतs &= ~(TIOCM_DTR | TIOCM_RTS);
-		port_priv->dp_modem_संकेतs |=
-				modem_संकेतs & (TIOCM_DTR | TIOCM_RTS);
-	पूर्ण
+	ret = usb_submit_urb(oob_port->write_urb, GFP_ATOMIC);
+	if (ret == 0) {
+		oob_priv->dp_write_urb_in_use = 1;
+		port_priv->dp_modem_signals &= ~(TIOCM_DTR | TIOCM_RTS);
+		port_priv->dp_modem_signals |=
+				modem_signals & (TIOCM_DTR | TIOCM_RTS);
+	}
 	spin_unlock(&port_priv->dp_port_lock);
 	spin_unlock_irqrestore(&oob_priv->dp_port_lock, flags);
-	अगर (ret)
+	if (ret)
 		dev_err(&port->dev, "%s: usb_submit_urb failed, ret=%d\n",
 			__func__, ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  *  Digi Transmit Idle
  *
- *  Digi transmit idle रुकोs, up to समयout ticks, क्रम the transmitter
- *  to go idle.  It वापसs 0 अगर successful or a negative error.
+ *  Digi transmit idle waits, up to timeout ticks, for the transmitter
+ *  to go idle.  It returns 0 if successful or a negative error.
  *
- *  There are race conditions here अगर more than one process is calling
- *  digi_transmit_idle on the same port at the same समय.  However, this
- *  is only called from बंद, and only one process can be in बंद on a
- *  port at a समय, so its ok.
+ *  There are race conditions here if more than one process is calling
+ *  digi_transmit_idle on the same port at the same time.  However, this
+ *  is only called from close, and only one process can be in close on a
+ *  port at a time, so its ok.
  */
 
-अटल पूर्णांक digi_transmit_idle(काष्ठा usb_serial_port *port,
-	अचिन्हित दीर्घ समयout)
-अणु
-	पूर्णांक ret;
-	अचिन्हित अक्षर buf[2];
-	काष्ठा digi_port *priv = usb_get_serial_port_data(port);
-	अचिन्हित दीर्घ flags = 0;
+static int digi_transmit_idle(struct usb_serial_port *port,
+	unsigned long timeout)
+{
+	int ret;
+	unsigned char buf[2];
+	struct digi_port *priv = usb_get_serial_port_data(port);
+	unsigned long flags = 0;
 
 	spin_lock_irqsave(&priv->dp_port_lock, flags);
 	priv->dp_transmit_idle = 0;
@@ -587,55 +586,55 @@ __releases(lock)
 	buf[0] = DIGI_CMD_TRANSMIT_IDLE;
 	buf[1] = 0;
 
-	समयout += jअगरfies;
+	timeout += jiffies;
 
-	ret = digi_ग_लिखो_inb_command(port, buf, 2, समयout - jअगरfies);
-	अगर (ret != 0)
-		वापस ret;
+	ret = digi_write_inb_command(port, buf, 2, timeout - jiffies);
+	if (ret != 0)
+		return ret;
 
 	spin_lock_irqsave(&priv->dp_port_lock, flags);
 
-	जबतक (समय_beक्रमe(jअगरfies, समयout) && !priv->dp_transmit_idle) अणु
-		cond_रुको_पूर्णांकerruptible_समयout_irqrestore(
-			&priv->dp_transmit_idle_रुको, DIGI_RETRY_TIMEOUT,
+	while (time_before(jiffies, timeout) && !priv->dp_transmit_idle) {
+		cond_wait_interruptible_timeout_irqrestore(
+			&priv->dp_transmit_idle_wait, DIGI_RETRY_TIMEOUT,
 			&priv->dp_port_lock, flags);
-		अगर (संकेत_pending(current))
-			वापस -EINTR;
+		if (signal_pending(current))
+			return -EINTR;
 		spin_lock_irqsave(&priv->dp_port_lock, flags);
-	पूर्ण
+	}
 	priv->dp_transmit_idle = 0;
 	spin_unlock_irqrestore(&priv->dp_port_lock, flags);
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
 
-अटल व्योम digi_rx_throttle(काष्ठा tty_काष्ठा *tty)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा digi_port *priv = usb_get_serial_port_data(port);
+static void digi_rx_throttle(struct tty_struct *tty)
+{
+	unsigned long flags;
+	struct usb_serial_port *port = tty->driver_data;
+	struct digi_port *priv = usb_get_serial_port_data(port);
 
-	/* stop receiving अक्षरacters by not resubmitting the पढ़ो urb */
+	/* stop receiving characters by not resubmitting the read urb */
 	spin_lock_irqsave(&priv->dp_port_lock, flags);
 	priv->dp_throttled = 1;
 	priv->dp_throttle_restart = 0;
 	spin_unlock_irqrestore(&priv->dp_port_lock, flags);
-पूर्ण
+}
 
 
-अटल व्योम digi_rx_unthrottle(काष्ठा tty_काष्ठा *tty)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा digi_port *priv = usb_get_serial_port_data(port);
+static void digi_rx_unthrottle(struct tty_struct *tty)
+{
+	int ret = 0;
+	unsigned long flags;
+	struct usb_serial_port *port = tty->driver_data;
+	struct digi_port *priv = usb_get_serial_port_data(port);
 
 	spin_lock_irqsave(&priv->dp_port_lock, flags);
 
-	/* restart पढ़ो chain */
-	अगर (priv->dp_throttle_restart)
-		ret = usb_submit_urb(port->पढ़ो_urb, GFP_ATOMIC);
+	/* restart read chain */
+	if (priv->dp_throttle_restart)
+		ret = usb_submit_urb(port->read_urb, GFP_ATOMIC);
 
 	/* turn throttle off */
 	priv->dp_throttled = 0;
@@ -643,126 +642,126 @@ __releases(lock)
 
 	spin_unlock_irqrestore(&priv->dp_port_lock, flags);
 
-	अगर (ret)
+	if (ret)
 		dev_err(&port->dev,
 			"%s: usb_submit_urb failed, ret=%d, port=%d\n",
 			__func__, ret, priv->dp_port_num);
-पूर्ण
+}
 
 
-अटल व्योम digi_set_termios(काष्ठा tty_काष्ठा *tty,
-		काष्ठा usb_serial_port *port, काष्ठा ktermios *old_termios)
-अणु
-	काष्ठा digi_port *priv = usb_get_serial_port_data(port);
-	काष्ठा device *dev = &port->dev;
-	अचिन्हित पूर्णांक अगरlag = tty->termios.c_अगरlag;
-	अचिन्हित पूर्णांक cflag = tty->termios.c_cflag;
-	अचिन्हित पूर्णांक old_अगरlag = old_termios->c_अगरlag;
-	अचिन्हित पूर्णांक old_cflag = old_termios->c_cflag;
-	अचिन्हित अक्षर buf[32];
-	अचिन्हित पूर्णांक modem_संकेतs;
-	पूर्णांक arg, ret;
-	पूर्णांक i = 0;
+static void digi_set_termios(struct tty_struct *tty,
+		struct usb_serial_port *port, struct ktermios *old_termios)
+{
+	struct digi_port *priv = usb_get_serial_port_data(port);
+	struct device *dev = &port->dev;
+	unsigned int iflag = tty->termios.c_iflag;
+	unsigned int cflag = tty->termios.c_cflag;
+	unsigned int old_iflag = old_termios->c_iflag;
+	unsigned int old_cflag = old_termios->c_cflag;
+	unsigned char buf[32];
+	unsigned int modem_signals;
+	int arg, ret;
+	int i = 0;
 	speed_t baud;
 
 	dev_dbg(dev,
 		"digi_set_termios: TOP: port=%d, iflag=0x%x, old_iflag=0x%x, cflag=0x%x, old_cflag=0x%x\n",
-		priv->dp_port_num, अगरlag, old_अगरlag, cflag, old_cflag);
+		priv->dp_port_num, iflag, old_iflag, cflag, old_cflag);
 
 	/* set baud rate */
 	baud = tty_get_baud_rate(tty);
-	अगर (baud != tty_termios_baud_rate(old_termios)) अणु
+	if (baud != tty_termios_baud_rate(old_termios)) {
 		arg = -1;
 
-		/* reनिश्चित DTR and (maybe) RTS on transition from B0 */
-		अगर ((old_cflag & CBAUD) == B0) अणु
-			/* करोn't set RTS अगर using hardware flow control */
+		/* reassert DTR and (maybe) RTS on transition from B0 */
+		if ((old_cflag & CBAUD) == B0) {
+			/* don't set RTS if using hardware flow control */
 			/* and throttling input */
-			modem_संकेतs = TIOCM_DTR;
-			अगर (!C_CRTSCTS(tty) || !tty_throttled(tty))
-				modem_संकेतs |= TIOCM_RTS;
-			digi_set_modem_संकेतs(port, modem_संकेतs, 1);
-		पूर्ण
-		चयन (baud) अणु
+			modem_signals = TIOCM_DTR;
+			if (!C_CRTSCTS(tty) || !tty_throttled(tty))
+				modem_signals |= TIOCM_RTS;
+			digi_set_modem_signals(port, modem_signals, 1);
+		}
+		switch (baud) {
 		/* drop DTR and RTS on transition to B0 */
-		हाल 0: digi_set_modem_संकेतs(port, 0, 1); अवरोध;
-		हाल 50: arg = DIGI_BAUD_50; अवरोध;
-		हाल 75: arg = DIGI_BAUD_75; अवरोध;
-		हाल 110: arg = DIGI_BAUD_110; अवरोध;
-		हाल 150: arg = DIGI_BAUD_150; अवरोध;
-		हाल 200: arg = DIGI_BAUD_200; अवरोध;
-		हाल 300: arg = DIGI_BAUD_300; अवरोध;
-		हाल 600: arg = DIGI_BAUD_600; अवरोध;
-		हाल 1200: arg = DIGI_BAUD_1200; अवरोध;
-		हाल 1800: arg = DIGI_BAUD_1800; अवरोध;
-		हाल 2400: arg = DIGI_BAUD_2400; अवरोध;
-		हाल 4800: arg = DIGI_BAUD_4800; अवरोध;
-		हाल 9600: arg = DIGI_BAUD_9600; अवरोध;
-		हाल 19200: arg = DIGI_BAUD_19200; अवरोध;
-		हाल 38400: arg = DIGI_BAUD_38400; अवरोध;
-		हाल 57600: arg = DIGI_BAUD_57600; अवरोध;
-		हाल 115200: arg = DIGI_BAUD_115200; अवरोध;
-		हाल 230400: arg = DIGI_BAUD_230400; अवरोध;
-		हाल 460800: arg = DIGI_BAUD_460800; अवरोध;
-		शेष:
+		case 0: digi_set_modem_signals(port, 0, 1); break;
+		case 50: arg = DIGI_BAUD_50; break;
+		case 75: arg = DIGI_BAUD_75; break;
+		case 110: arg = DIGI_BAUD_110; break;
+		case 150: arg = DIGI_BAUD_150; break;
+		case 200: arg = DIGI_BAUD_200; break;
+		case 300: arg = DIGI_BAUD_300; break;
+		case 600: arg = DIGI_BAUD_600; break;
+		case 1200: arg = DIGI_BAUD_1200; break;
+		case 1800: arg = DIGI_BAUD_1800; break;
+		case 2400: arg = DIGI_BAUD_2400; break;
+		case 4800: arg = DIGI_BAUD_4800; break;
+		case 9600: arg = DIGI_BAUD_9600; break;
+		case 19200: arg = DIGI_BAUD_19200; break;
+		case 38400: arg = DIGI_BAUD_38400; break;
+		case 57600: arg = DIGI_BAUD_57600; break;
+		case 115200: arg = DIGI_BAUD_115200; break;
+		case 230400: arg = DIGI_BAUD_230400; break;
+		case 460800: arg = DIGI_BAUD_460800; break;
+		default:
 			arg = DIGI_BAUD_9600;
 			baud = 9600;
-			अवरोध;
-		पूर्ण
-		अगर (arg != -1) अणु
+			break;
+		}
+		if (arg != -1) {
 			buf[i++] = DIGI_CMD_SET_BAUD_RATE;
 			buf[i++] = priv->dp_port_num;
 			buf[i++] = arg;
 			buf[i++] = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/* set parity */
 	tty->termios.c_cflag &= ~CMSPAR;
 
-	अगर ((cflag & (PARENB | PARODD)) != (old_cflag & (PARENB | PARODD))) अणु
-		अगर (cflag & PARENB) अणु
-			अगर (cflag & PARODD)
+	if ((cflag & (PARENB | PARODD)) != (old_cflag & (PARENB | PARODD))) {
+		if (cflag & PARENB) {
+			if (cflag & PARODD)
 				arg = DIGI_PARITY_ODD;
-			अन्यथा
+			else
 				arg = DIGI_PARITY_EVEN;
-		पूर्ण अन्यथा अणु
+		} else {
 			arg = DIGI_PARITY_NONE;
-		पूर्ण
+		}
 		buf[i++] = DIGI_CMD_SET_PARITY;
 		buf[i++] = priv->dp_port_num;
 		buf[i++] = arg;
 		buf[i++] = 0;
-	पूर्ण
+	}
 	/* set word size */
-	अगर ((cflag & CSIZE) != (old_cflag & CSIZE)) अणु
+	if ((cflag & CSIZE) != (old_cflag & CSIZE)) {
 		arg = -1;
-		चयन (cflag & CSIZE) अणु
-		हाल CS5: arg = DIGI_WORD_SIZE_5; अवरोध;
-		हाल CS6: arg = DIGI_WORD_SIZE_6; अवरोध;
-		हाल CS7: arg = DIGI_WORD_SIZE_7; अवरोध;
-		हाल CS8: arg = DIGI_WORD_SIZE_8; अवरोध;
-		शेष:
+		switch (cflag & CSIZE) {
+		case CS5: arg = DIGI_WORD_SIZE_5; break;
+		case CS6: arg = DIGI_WORD_SIZE_6; break;
+		case CS7: arg = DIGI_WORD_SIZE_7; break;
+		case CS8: arg = DIGI_WORD_SIZE_8; break;
+		default:
 			dev_dbg(dev,
 				"digi_set_termios: can't handle word size %d\n",
 				cflag & CSIZE);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (arg != -1) अणु
+		if (arg != -1) {
 			buf[i++] = DIGI_CMD_SET_WORD_SIZE;
 			buf[i++] = priv->dp_port_num;
 			buf[i++] = arg;
 			buf[i++] = 0;
-		पूर्ण
+		}
 
-	पूर्ण
+	}
 
 	/* set stop bits */
-	अगर ((cflag & CSTOPB) != (old_cflag & CSTOPB)) अणु
+	if ((cflag & CSTOPB) != (old_cflag & CSTOPB)) {
 
-		अगर ((cflag & CSTOPB))
+		if ((cflag & CSTOPB))
 			arg = DIGI_STOP_BITS_2;
-		अन्यथा
+		else
 			arg = DIGI_STOP_BITS_1;
 
 		buf[i++] = DIGI_CMD_SET_STOP_BITS;
@@ -770,351 +769,351 @@ __releases(lock)
 		buf[i++] = arg;
 		buf[i++] = 0;
 
-	पूर्ण
+	}
 
 	/* set input flow control */
-	अगर ((अगरlag & IXOFF) != (old_अगरlag & IXOFF) ||
-			(cflag & CRTSCTS) != (old_cflag & CRTSCTS)) अणु
+	if ((iflag & IXOFF) != (old_iflag & IXOFF) ||
+			(cflag & CRTSCTS) != (old_cflag & CRTSCTS)) {
 		arg = 0;
-		अगर (अगरlag & IXOFF)
+		if (iflag & IXOFF)
 			arg |= DIGI_INPUT_FLOW_CONTROL_XON_XOFF;
-		अन्यथा
+		else
 			arg &= ~DIGI_INPUT_FLOW_CONTROL_XON_XOFF;
 
-		अगर (cflag & CRTSCTS) अणु
+		if (cflag & CRTSCTS) {
 			arg |= DIGI_INPUT_FLOW_CONTROL_RTS;
 
-			/* On USB-4 it is necessary to निश्चित RTS prior */
+			/* On USB-4 it is necessary to assert RTS prior */
 			/* to selecting RTS input flow control.  */
 			buf[i++] = DIGI_CMD_SET_RTS_SIGNAL;
 			buf[i++] = priv->dp_port_num;
 			buf[i++] = DIGI_RTS_ACTIVE;
 			buf[i++] = 0;
 
-		पूर्ण अन्यथा अणु
+		} else {
 			arg &= ~DIGI_INPUT_FLOW_CONTROL_RTS;
-		पूर्ण
+		}
 		buf[i++] = DIGI_CMD_SET_INPUT_FLOW_CONTROL;
 		buf[i++] = priv->dp_port_num;
 		buf[i++] = arg;
 		buf[i++] = 0;
-	पूर्ण
+	}
 
 	/* set output flow control */
-	अगर ((अगरlag & IXON) != (old_अगरlag & IXON) ||
-			(cflag & CRTSCTS) != (old_cflag & CRTSCTS)) अणु
+	if ((iflag & IXON) != (old_iflag & IXON) ||
+			(cflag & CRTSCTS) != (old_cflag & CRTSCTS)) {
 		arg = 0;
-		अगर (अगरlag & IXON)
+		if (iflag & IXON)
 			arg |= DIGI_OUTPUT_FLOW_CONTROL_XON_XOFF;
-		अन्यथा
+		else
 			arg &= ~DIGI_OUTPUT_FLOW_CONTROL_XON_XOFF;
 
-		अगर (cflag & CRTSCTS)
+		if (cflag & CRTSCTS)
 			arg |= DIGI_OUTPUT_FLOW_CONTROL_CTS;
-		अन्यथा
+		else
 			arg &= ~DIGI_OUTPUT_FLOW_CONTROL_CTS;
 
 		buf[i++] = DIGI_CMD_SET_OUTPUT_FLOW_CONTROL;
 		buf[i++] = priv->dp_port_num;
 		buf[i++] = arg;
 		buf[i++] = 0;
-	पूर्ण
+	}
 
 	/* set receive enable/disable */
-	अगर ((cflag & CREAD) != (old_cflag & CREAD)) अणु
-		अगर (cflag & CREAD)
+	if ((cflag & CREAD) != (old_cflag & CREAD)) {
+		if (cflag & CREAD)
 			arg = DIGI_ENABLE;
-		अन्यथा
+		else
 			arg = DIGI_DISABLE;
 
 		buf[i++] = DIGI_CMD_RECEIVE_ENABLE;
 		buf[i++] = priv->dp_port_num;
 		buf[i++] = arg;
 		buf[i++] = 0;
-	पूर्ण
-	ret = digi_ग_लिखो_oob_command(port, buf, i, 1);
-	अगर (ret != 0)
+	}
+	ret = digi_write_oob_command(port, buf, i, 1);
+	if (ret != 0)
 		dev_dbg(dev, "digi_set_termios: write oob failed, ret=%d\n", ret);
 	tty_encode_baud_rate(tty, baud, baud);
-पूर्ण
+}
 
 
-अटल व्योम digi_अवरोध_ctl(काष्ठा tty_काष्ठा *tty, पूर्णांक अवरोध_state)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	अचिन्हित अक्षर buf[4];
+static void digi_break_ctl(struct tty_struct *tty, int break_state)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	unsigned char buf[4];
 
 	buf[0] = DIGI_CMD_BREAK_CONTROL;
 	buf[1] = 2;				/* length */
-	buf[2] = अवरोध_state ? 1 : 0;
+	buf[2] = break_state ? 1 : 0;
 	buf[3] = 0;				/* pad */
-	digi_ग_लिखो_inb_command(port, buf, 4, 0);
-पूर्ण
+	digi_write_inb_command(port, buf, 4, 0);
+}
 
 
-अटल पूर्णांक digi_tiocmget(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा digi_port *priv = usb_get_serial_port_data(port);
-	अचिन्हित पूर्णांक val;
-	अचिन्हित दीर्घ flags;
-
-	spin_lock_irqsave(&priv->dp_port_lock, flags);
-	val = priv->dp_modem_संकेतs;
-	spin_unlock_irqrestore(&priv->dp_port_lock, flags);
-	वापस val;
-पूर्ण
-
-
-अटल पूर्णांक digi_tiocmset(काष्ठा tty_काष्ठा *tty,
-					अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा digi_port *priv = usb_get_serial_port_data(port);
-	अचिन्हित पूर्णांक val;
-	अचिन्हित दीर्घ flags;
+static int digi_tiocmget(struct tty_struct *tty)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	struct digi_port *priv = usb_get_serial_port_data(port);
+	unsigned int val;
+	unsigned long flags;
 
 	spin_lock_irqsave(&priv->dp_port_lock, flags);
-	val = (priv->dp_modem_संकेतs & ~clear) | set;
+	val = priv->dp_modem_signals;
 	spin_unlock_irqrestore(&priv->dp_port_lock, flags);
-	वापस digi_set_modem_संकेतs(port, val, 1);
-पूर्ण
+	return val;
+}
 
 
-अटल पूर्णांक digi_ग_लिखो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port,
-					स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
-अणु
+static int digi_tiocmset(struct tty_struct *tty,
+					unsigned int set, unsigned int clear)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	struct digi_port *priv = usb_get_serial_port_data(port);
+	unsigned int val;
+	unsigned long flags;
 
-	पूर्णांक ret, data_len, new_len;
-	काष्ठा digi_port *priv = usb_get_serial_port_data(port);
-	अचिन्हित अक्षर *data = port->ग_लिखो_urb->transfer_buffer;
-	अचिन्हित दीर्घ flags = 0;
+	spin_lock_irqsave(&priv->dp_port_lock, flags);
+	val = (priv->dp_modem_signals & ~clear) | set;
+	spin_unlock_irqrestore(&priv->dp_port_lock, flags);
+	return digi_set_modem_signals(port, val, 1);
+}
+
+
+static int digi_write(struct tty_struct *tty, struct usb_serial_port *port,
+					const unsigned char *buf, int count)
+{
+
+	int ret, data_len, new_len;
+	struct digi_port *priv = usb_get_serial_port_data(port);
+	unsigned char *data = port->write_urb->transfer_buffer;
+	unsigned long flags = 0;
 
 	dev_dbg(&port->dev, "digi_write: TOP: port=%d, count=%d\n",
 		priv->dp_port_num, count);
 
-	/* copy user data (which can sleep) beक्रमe getting spin lock */
+	/* copy user data (which can sleep) before getting spin lock */
 	count = min(count, port->bulk_out_size-2);
 	count = min(64, count);
 
-	/* be sure only one ग_लिखो proceeds at a समय */
-	/* there are races on the port निजी buffer */
+	/* be sure only one write proceeds at a time */
+	/* there are races on the port private buffer */
 	spin_lock_irqsave(&priv->dp_port_lock, flags);
 
-	/* रुको क्रम urb status clear to submit another urb */
-	अगर (priv->dp_ग_लिखो_urb_in_use) अणु
-		/* buffer data अगर count is 1 (probably put_अक्षर) अगर possible */
-		अगर (count == 1 && priv->dp_out_buf_len < DIGI_OUT_BUF_SIZE) अणु
+	/* wait for urb status clear to submit another urb */
+	if (priv->dp_write_urb_in_use) {
+		/* buffer data if count is 1 (probably put_char) if possible */
+		if (count == 1 && priv->dp_out_buf_len < DIGI_OUT_BUF_SIZE) {
 			priv->dp_out_buf[priv->dp_out_buf_len++] = *buf;
 			new_len = 1;
-		पूर्ण अन्यथा अणु
+		} else {
 			new_len = 0;
-		पूर्ण
+		}
 		spin_unlock_irqrestore(&priv->dp_port_lock, flags);
-		वापस new_len;
-	पूर्ण
+		return new_len;
+	}
 
-	/* allow space क्रम any buffered data and क्रम new data, up to */
-	/* transfer buffer size - 2 (क्रम command and length bytes) */
+	/* allow space for any buffered data and for new data, up to */
+	/* transfer buffer size - 2 (for command and length bytes) */
 	new_len = min(count, port->bulk_out_size-2-priv->dp_out_buf_len);
 	data_len = new_len + priv->dp_out_buf_len;
 
-	अगर (data_len == 0) अणु
+	if (data_len == 0) {
 		spin_unlock_irqrestore(&priv->dp_port_lock, flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	port->ग_लिखो_urb->transfer_buffer_length = data_len+2;
+	port->write_urb->transfer_buffer_length = data_len+2;
 
 	*data++ = DIGI_CMD_SEND_DATA;
 	*data++ = data_len;
 
 	/* copy in buffered data first */
-	स_नकल(data, priv->dp_out_buf, priv->dp_out_buf_len);
+	memcpy(data, priv->dp_out_buf, priv->dp_out_buf_len);
 	data += priv->dp_out_buf_len;
 
 	/* copy in new data */
-	स_नकल(data, buf, new_len);
+	memcpy(data, buf, new_len);
 
-	ret = usb_submit_urb(port->ग_लिखो_urb, GFP_ATOMIC);
-	अगर (ret == 0) अणु
-		priv->dp_ग_लिखो_urb_in_use = 1;
+	ret = usb_submit_urb(port->write_urb, GFP_ATOMIC);
+	if (ret == 0) {
+		priv->dp_write_urb_in_use = 1;
 		ret = new_len;
 		priv->dp_out_buf_len = 0;
-	पूर्ण
+	}
 
-	/* वापस length of new data written, or error */
+	/* return length of new data written, or error */
 	spin_unlock_irqrestore(&priv->dp_port_lock, flags);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err_console(port,
 			"%s: usb_submit_urb failed, ret=%d, port=%d\n",
 			__func__, ret, priv->dp_port_num);
 	dev_dbg(&port->dev, "digi_write: returning %d\n", ret);
-	वापस ret;
+	return ret;
 
-पूर्ण
+}
 
-अटल व्योम digi_ग_लिखो_bulk_callback(काष्ठा urb *urb)
-अणु
+static void digi_write_bulk_callback(struct urb *urb)
+{
 
-	काष्ठा usb_serial_port *port = urb->context;
-	काष्ठा usb_serial *serial;
-	काष्ठा digi_port *priv;
-	काष्ठा digi_serial *serial_priv;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
-	पूर्णांक status = urb->status;
+	struct usb_serial_port *port = urb->context;
+	struct usb_serial *serial;
+	struct digi_port *priv;
+	struct digi_serial *serial_priv;
+	unsigned long flags;
+	int ret = 0;
+	int status = urb->status;
 	bool wakeup;
 
 	/* port and serial sanity check */
-	अगर (port == शून्य || (priv = usb_get_serial_port_data(port)) == शून्य) अणु
+	if (port == NULL || (priv = usb_get_serial_port_data(port)) == NULL) {
 		pr_err("%s: port or port->private is NULL, status=%d\n",
 			__func__, status);
-		वापस;
-	पूर्ण
+		return;
+	}
 	serial = port->serial;
-	अगर (serial == शून्य || (serial_priv = usb_get_serial_data(serial)) == शून्य) अणु
+	if (serial == NULL || (serial_priv = usb_get_serial_data(serial)) == NULL) {
 		dev_err(&port->dev,
 			"%s: serial or serial->private is NULL, status=%d\n",
 			__func__, status);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* handle oob callback */
-	अगर (priv->dp_port_num == serial_priv->ds_oob_port_num) अणु
+	if (priv->dp_port_num == serial_priv->ds_oob_port_num) {
 		dev_dbg(&port->dev, "digi_write_bulk_callback: oob callback\n");
 		spin_lock_irqsave(&priv->dp_port_lock, flags);
-		priv->dp_ग_लिखो_urb_in_use = 0;
-		wake_up_पूर्णांकerruptible(&priv->ग_लिखो_रुको);
+		priv->dp_write_urb_in_use = 0;
+		wake_up_interruptible(&priv->write_wait);
 		spin_unlock_irqrestore(&priv->dp_port_lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* try to send any buffered data on this port */
 	wakeup = true;
 	spin_lock_irqsave(&priv->dp_port_lock, flags);
-	priv->dp_ग_लिखो_urb_in_use = 0;
-	अगर (priv->dp_out_buf_len > 0) अणु
-		*((अचिन्हित अक्षर *)(port->ग_लिखो_urb->transfer_buffer))
-			= (अचिन्हित अक्षर)DIGI_CMD_SEND_DATA;
-		*((अचिन्हित अक्षर *)(port->ग_लिखो_urb->transfer_buffer) + 1)
-			= (अचिन्हित अक्षर)priv->dp_out_buf_len;
-		port->ग_लिखो_urb->transfer_buffer_length =
+	priv->dp_write_urb_in_use = 0;
+	if (priv->dp_out_buf_len > 0) {
+		*((unsigned char *)(port->write_urb->transfer_buffer))
+			= (unsigned char)DIGI_CMD_SEND_DATA;
+		*((unsigned char *)(port->write_urb->transfer_buffer) + 1)
+			= (unsigned char)priv->dp_out_buf_len;
+		port->write_urb->transfer_buffer_length =
 						priv->dp_out_buf_len + 2;
-		स_नकल(port->ग_लिखो_urb->transfer_buffer + 2, priv->dp_out_buf,
+		memcpy(port->write_urb->transfer_buffer + 2, priv->dp_out_buf,
 			priv->dp_out_buf_len);
-		ret = usb_submit_urb(port->ग_लिखो_urb, GFP_ATOMIC);
-		अगर (ret == 0) अणु
-			priv->dp_ग_लिखो_urb_in_use = 1;
+		ret = usb_submit_urb(port->write_urb, GFP_ATOMIC);
+		if (ret == 0) {
+			priv->dp_write_urb_in_use = 1;
 			priv->dp_out_buf_len = 0;
 			wakeup = false;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&priv->dp_port_lock, flags);
 
-	अगर (ret && ret != -EPERM)
+	if (ret && ret != -EPERM)
 		dev_err_console(port,
 			"%s: usb_submit_urb failed, ret=%d, port=%d\n",
 			__func__, ret, priv->dp_port_num);
 
-	अगर (wakeup)
+	if (wakeup)
 		tty_port_tty_wakeup(&port->port);
-पूर्ण
+}
 
-अटल पूर्णांक digi_ग_लिखो_room(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा digi_port *priv = usb_get_serial_port_data(port);
-	पूर्णांक room;
-	अचिन्हित दीर्घ flags = 0;
+static int digi_write_room(struct tty_struct *tty)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	struct digi_port *priv = usb_get_serial_port_data(port);
+	int room;
+	unsigned long flags = 0;
 
 	spin_lock_irqsave(&priv->dp_port_lock, flags);
 
-	अगर (priv->dp_ग_लिखो_urb_in_use)
+	if (priv->dp_write_urb_in_use)
 		room = 0;
-	अन्यथा
+	else
 		room = port->bulk_out_size - 2 - priv->dp_out_buf_len;
 
 	spin_unlock_irqrestore(&priv->dp_port_lock, flags);
 	dev_dbg(&port->dev, "digi_write_room: port=%d, room=%d\n", priv->dp_port_num, room);
-	वापस room;
+	return room;
 
-पूर्ण
+}
 
-अटल पूर्णांक digi_अक्षरs_in_buffer(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा digi_port *priv = usb_get_serial_port_data(port);
+static int digi_chars_in_buffer(struct tty_struct *tty)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	struct digi_port *priv = usb_get_serial_port_data(port);
 
-	अगर (priv->dp_ग_लिखो_urb_in_use) अणु
+	if (priv->dp_write_urb_in_use) {
 		dev_dbg(&port->dev, "digi_chars_in_buffer: port=%d, chars=%d\n",
 			priv->dp_port_num, port->bulk_out_size - 2);
-		/* वापस(port->bulk_out_size - 2); */
-		वापस 256;
-	पूर्ण अन्यथा अणु
+		/* return(port->bulk_out_size - 2); */
+		return 256;
+	} else {
 		dev_dbg(&port->dev, "digi_chars_in_buffer: port=%d, chars=%d\n",
 			priv->dp_port_num, priv->dp_out_buf_len);
-		वापस priv->dp_out_buf_len;
-	पूर्ण
+		return priv->dp_out_buf_len;
+	}
 
-पूर्ण
+}
 
-अटल व्योम digi_dtr_rts(काष्ठा usb_serial_port *port, पूर्णांक on)
-अणु
+static void digi_dtr_rts(struct usb_serial_port *port, int on)
+{
 	/* Adjust DTR and RTS */
-	digi_set_modem_संकेतs(port, on * (TIOCM_DTR | TIOCM_RTS), 1);
-पूर्ण
+	digi_set_modem_signals(port, on * (TIOCM_DTR | TIOCM_RTS), 1);
+}
 
-अटल पूर्णांक digi_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port)
-अणु
-	पूर्णांक ret;
-	अचिन्हित अक्षर buf[32];
-	काष्ठा digi_port *priv = usb_get_serial_port_data(port);
-	काष्ठा ktermios not_termios;
+static int digi_open(struct tty_struct *tty, struct usb_serial_port *port)
+{
+	int ret;
+	unsigned char buf[32];
+	struct digi_port *priv = usb_get_serial_port_data(port);
+	struct ktermios not_termios;
 
 	/* be sure the device is started up */
-	अगर (digi_startup_device(port->serial) != 0)
-		वापस -ENXIO;
+	if (digi_startup_device(port->serial) != 0)
+		return -ENXIO;
 
-	/* पढ़ो modem संकेतs स्वतःmatically whenever they change */
+	/* read modem signals automatically whenever they change */
 	buf[0] = DIGI_CMD_READ_INPUT_SIGNALS;
 	buf[1] = priv->dp_port_num;
 	buf[2] = DIGI_ENABLE;
 	buf[3] = 0;
 
-	/* flush fअगरos */
+	/* flush fifos */
 	buf[4] = DIGI_CMD_IFLUSH_FIFO;
 	buf[5] = priv->dp_port_num;
 	buf[6] = DIGI_FLUSH_TX | DIGI_FLUSH_RX;
 	buf[7] = 0;
 
-	ret = digi_ग_लिखो_oob_command(port, buf, 8, 1);
-	अगर (ret != 0)
+	ret = digi_write_oob_command(port, buf, 8, 1);
+	if (ret != 0)
 		dev_dbg(&port->dev, "digi_open: write oob failed, ret=%d\n", ret);
 
 	/* set termios settings */
-	अगर (tty) अणु
+	if (tty) {
 		not_termios.c_cflag = ~tty->termios.c_cflag;
-		not_termios.c_अगरlag = ~tty->termios.c_अगरlag;
+		not_termios.c_iflag = ~tty->termios.c_iflag;
 		digi_set_termios(tty, port, &not_termios);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 
-अटल व्योम digi_बंद(काष्ठा usb_serial_port *port)
-अणु
-	DEFINE_WAIT(रुको);
-	पूर्णांक ret;
-	अचिन्हित अक्षर buf[32];
-	काष्ठा digi_port *priv = usb_get_serial_port_data(port);
+static void digi_close(struct usb_serial_port *port)
+{
+	DEFINE_WAIT(wait);
+	int ret;
+	unsigned char buf[32];
+	struct digi_port *priv = usb_get_serial_port_data(port);
 
 	mutex_lock(&port->serial->disc_mutex);
-	/* अगर disconnected, just clear flags */
-	अगर (port->serial->disconnected)
-		जाओ निकास;
+	/* if disconnected, just clear flags */
+	if (port->serial->disconnected)
+		goto exit;
 
-	/* FIXME: Transmit idle beदीर्घs in the रुको_unti_sent path */
+	/* FIXME: Transmit idle belongs in the wait_unti_sent path */
 	digi_transmit_idle(port, DIGI_CLOSE_TIMEOUT);
 
 	/* disable input flow control */
@@ -1129,7 +1128,7 @@ __releases(lock)
 	buf[6] = DIGI_DISABLE;
 	buf[7] = 0;
 
-	/* disable पढ़ोing modem संकेतs स्वतःmatically */
+	/* disable reading modem signals automatically */
 	buf[8] = DIGI_CMD_READ_INPUT_SIGNALS;
 	buf[9] = priv->dp_port_num;
 	buf[10] = DIGI_DISABLE;
@@ -1141,99 +1140,99 @@ __releases(lock)
 	buf[14] = DIGI_DISABLE;
 	buf[15] = 0;
 
-	/* flush fअगरos */
+	/* flush fifos */
 	buf[16] = DIGI_CMD_IFLUSH_FIFO;
 	buf[17] = priv->dp_port_num;
 	buf[18] = DIGI_FLUSH_TX | DIGI_FLUSH_RX;
 	buf[19] = 0;
 
-	ret = digi_ग_लिखो_oob_command(port, buf, 20, 0);
-	अगर (ret != 0)
+	ret = digi_write_oob_command(port, buf, 20, 0);
+	if (ret != 0)
 		dev_dbg(&port->dev, "digi_close: write oob failed, ret=%d\n",
 									ret);
-	/* रुको क्रम final commands on oob port to complete */
-	prepare_to_रुको(&priv->dp_flush_रुको, &रुको,
+	/* wait for final commands on oob port to complete */
+	prepare_to_wait(&priv->dp_flush_wait, &wait,
 			TASK_INTERRUPTIBLE);
-	schedule_समयout(DIGI_CLOSE_TIMEOUT);
-	finish_रुको(&priv->dp_flush_रुको, &रुको);
+	schedule_timeout(DIGI_CLOSE_TIMEOUT);
+	finish_wait(&priv->dp_flush_wait, &wait);
 
-	/* shutकरोwn any outstanding bulk ग_लिखोs */
-	usb_समाप्त_urb(port->ग_लिखो_urb);
-निकास:
+	/* shutdown any outstanding bulk writes */
+	usb_kill_urb(port->write_urb);
+exit:
 	spin_lock_irq(&priv->dp_port_lock);
-	priv->dp_ग_लिखो_urb_in_use = 0;
-	wake_up_पूर्णांकerruptible(&priv->dp_बंद_रुको);
+	priv->dp_write_urb_in_use = 0;
+	wake_up_interruptible(&priv->dp_close_wait);
 	spin_unlock_irq(&priv->dp_port_lock);
 	mutex_unlock(&port->serial->disc_mutex);
-पूर्ण
+}
 
 
 /*
  *  Digi Startup Device
  *
- *  Starts पढ़ोs on all ports.  Must be called AFTER startup, with
- *  urbs initialized.  Returns 0 अगर successful, non-zero error otherwise.
+ *  Starts reads on all ports.  Must be called AFTER startup, with
+ *  urbs initialized.  Returns 0 if successful, non-zero error otherwise.
  */
 
-अटल पूर्णांक digi_startup_device(काष्ठा usb_serial *serial)
-अणु
-	पूर्णांक i, ret = 0;
-	काष्ठा digi_serial *serial_priv = usb_get_serial_data(serial);
-	काष्ठा usb_serial_port *port;
+static int digi_startup_device(struct usb_serial *serial)
+{
+	int i, ret = 0;
+	struct digi_serial *serial_priv = usb_get_serial_data(serial);
+	struct usb_serial_port *port;
 
 	/* be sure this happens exactly once */
 	spin_lock(&serial_priv->ds_serial_lock);
-	अगर (serial_priv->ds_device_started) अणु
+	if (serial_priv->ds_device_started) {
 		spin_unlock(&serial_priv->ds_serial_lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	serial_priv->ds_device_started = 1;
 	spin_unlock(&serial_priv->ds_serial_lock);
 
-	/* start पढ़ोing from each bulk in endpoपूर्णांक क्रम the device */
-	/* set USB_DISABLE_SPD flag क्रम ग_लिखो bulk urbs */
-	क्रम (i = 0; i < serial->type->num_ports + 1; i++) अणु
+	/* start reading from each bulk in endpoint for the device */
+	/* set USB_DISABLE_SPD flag for write bulk urbs */
+	for (i = 0; i < serial->type->num_ports + 1; i++) {
 		port = serial->port[i];
-		ret = usb_submit_urb(port->पढ़ो_urb, GFP_KERNEL);
-		अगर (ret != 0) अणु
+		ret = usb_submit_urb(port->read_urb, GFP_KERNEL);
+		if (ret != 0) {
 			dev_err(&port->dev,
 				"%s: usb_submit_urb failed, ret=%d, port=%d\n",
 				__func__, ret, i);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+			break;
+		}
+	}
+	return ret;
+}
 
-अटल पूर्णांक digi_port_init(काष्ठा usb_serial_port *port, अचिन्हित port_num)
-अणु
-	काष्ठा digi_port *priv;
+static int digi_port_init(struct usb_serial_port *port, unsigned port_num)
+{
+	struct digi_port *priv;
 
-	priv = kzalloc(माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	spin_lock_init(&priv->dp_port_lock);
 	priv->dp_port_num = port_num;
-	init_रुकोqueue_head(&priv->dp_transmit_idle_रुको);
-	init_रुकोqueue_head(&priv->dp_flush_रुको);
-	init_रुकोqueue_head(&priv->dp_बंद_रुको);
-	init_रुकोqueue_head(&priv->ग_लिखो_रुको);
+	init_waitqueue_head(&priv->dp_transmit_idle_wait);
+	init_waitqueue_head(&priv->dp_flush_wait);
+	init_waitqueue_head(&priv->dp_close_wait);
+	init_waitqueue_head(&priv->write_wait);
 	priv->dp_port = port;
 
 	usb_set_serial_port_data(port, priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक digi_startup(काष्ठा usb_serial *serial)
-अणु
-	काष्ठा digi_serial *serial_priv;
-	पूर्णांक ret;
+static int digi_startup(struct usb_serial *serial)
+{
+	struct digi_serial *serial_priv;
+	int ret;
 
-	serial_priv = kzalloc(माप(*serial_priv), GFP_KERNEL);
-	अगर (!serial_priv)
-		वापस -ENOMEM;
+	serial_priv = kzalloc(sizeof(*serial_priv), GFP_KERNEL);
+	if (!serial_priv)
+		return -ENOMEM;
 
 	spin_lock_init(&serial_priv->ds_serial_lock);
 	serial_priv->ds_oob_port_num = serial->type->num_ports;
@@ -1241,224 +1240,224 @@ __releases(lock)
 
 	ret = digi_port_init(serial_priv->ds_oob_port,
 						serial_priv->ds_oob_port_num);
-	अगर (ret) अणु
-		kमुक्त(serial_priv);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		kfree(serial_priv);
+		return ret;
+	}
 
 	usb_set_serial_data(serial, serial_priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल व्योम digi_disconnect(काष्ठा usb_serial *serial)
-अणु
-	पूर्णांक i;
+static void digi_disconnect(struct usb_serial *serial)
+{
+	int i;
 
-	/* stop पढ़ोs and ग_लिखोs on all ports */
-	क्रम (i = 0; i < serial->type->num_ports + 1; i++) अणु
-		usb_समाप्त_urb(serial->port[i]->पढ़ो_urb);
-		usb_समाप्त_urb(serial->port[i]->ग_लिखो_urb);
-	पूर्ण
-पूर्ण
+	/* stop reads and writes on all ports */
+	for (i = 0; i < serial->type->num_ports + 1; i++) {
+		usb_kill_urb(serial->port[i]->read_urb);
+		usb_kill_urb(serial->port[i]->write_urb);
+	}
+}
 
 
-अटल व्योम digi_release(काष्ठा usb_serial *serial)
-अणु
-	काष्ठा digi_serial *serial_priv;
-	काष्ठा digi_port *priv;
+static void digi_release(struct usb_serial *serial)
+{
+	struct digi_serial *serial_priv;
+	struct digi_port *priv;
 
 	serial_priv = usb_get_serial_data(serial);
 
 	priv = usb_get_serial_port_data(serial_priv->ds_oob_port);
-	kमुक्त(priv);
+	kfree(priv);
 
-	kमुक्त(serial_priv);
-पूर्ण
+	kfree(serial_priv);
+}
 
-अटल पूर्णांक digi_port_probe(काष्ठा usb_serial_port *port)
-अणु
-	वापस digi_port_init(port, port->port_number);
-पूर्ण
+static int digi_port_probe(struct usb_serial_port *port)
+{
+	return digi_port_init(port, port->port_number);
+}
 
-अटल व्योम digi_port_हटाओ(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा digi_port *priv;
+static void digi_port_remove(struct usb_serial_port *port)
+{
+	struct digi_port *priv;
 
 	priv = usb_get_serial_port_data(port);
-	kमुक्त(priv);
-पूर्ण
+	kfree(priv);
+}
 
-अटल व्योम digi_पढ़ो_bulk_callback(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_serial_port *port = urb->context;
-	काष्ठा digi_port *priv;
-	काष्ठा digi_serial *serial_priv;
-	पूर्णांक ret;
-	पूर्णांक status = urb->status;
+static void digi_read_bulk_callback(struct urb *urb)
+{
+	struct usb_serial_port *port = urb->context;
+	struct digi_port *priv;
+	struct digi_serial *serial_priv;
+	int ret;
+	int status = urb->status;
 
-	/* port sanity check, करो not resubmit अगर port is not valid */
-	अगर (port == शून्य)
-		वापस;
+	/* port sanity check, do not resubmit if port is not valid */
+	if (port == NULL)
+		return;
 	priv = usb_get_serial_port_data(port);
-	अगर (priv == शून्य) अणु
+	if (priv == NULL) {
 		dev_err(&port->dev, "%s: port->private is NULL, status=%d\n",
 			__func__, status);
-		वापस;
-	पूर्ण
-	अगर (port->serial == शून्य ||
-		(serial_priv = usb_get_serial_data(port->serial)) == शून्य) अणु
+		return;
+	}
+	if (port->serial == NULL ||
+		(serial_priv = usb_get_serial_data(port->serial)) == NULL) {
 		dev_err(&port->dev, "%s: serial is bad or serial->private "
 			"is NULL, status=%d\n", __func__, status);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* करो not resubmit urb अगर it has any status error */
-	अगर (status) अणु
+	/* do not resubmit urb if it has any status error */
+	if (status) {
 		dev_err(&port->dev,
 			"%s: nonzero read bulk status: status=%d, port=%d\n",
 			__func__, status, priv->dp_port_num);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* handle oob or inb callback, करो not resubmit अगर error */
-	अगर (priv->dp_port_num == serial_priv->ds_oob_port_num) अणु
-		अगर (digi_पढ़ो_oob_callback(urb) != 0)
-			वापस;
-	पूर्ण अन्यथा अणु
-		अगर (digi_पढ़ो_inb_callback(urb) != 0)
-			वापस;
-	पूर्ण
+	/* handle oob or inb callback, do not resubmit if error */
+	if (priv->dp_port_num == serial_priv->ds_oob_port_num) {
+		if (digi_read_oob_callback(urb) != 0)
+			return;
+	} else {
+		if (digi_read_inb_callback(urb) != 0)
+			return;
+	}
 
-	/* जारी पढ़ो */
+	/* continue read */
 	ret = usb_submit_urb(urb, GFP_ATOMIC);
-	अगर (ret != 0 && ret != -EPERM) अणु
+	if (ret != 0 && ret != -EPERM) {
 		dev_err(&port->dev,
 			"%s: failed resubmitting urb, ret=%d, port=%d\n",
 			__func__, ret, priv->dp_port_num);
-	पूर्ण
+	}
 
-पूर्ण
+}
 
 /*
  *  Digi Read INB Callback
  *
- *  Digi Read INB Callback handles पढ़ोs on the in band ports, sending
- *  the data on to the tty subप्रणाली.  When called we know port and
- *  port->निजी are not शून्य and port->serial has been validated.
- *  It वापसs 0 अगर successful, 1 अगर successful but the port is
- *  throttled, and -1 अगर the sanity checks failed.
+ *  Digi Read INB Callback handles reads on the in band ports, sending
+ *  the data on to the tty subsystem.  When called we know port and
+ *  port->private are not NULL and port->serial has been validated.
+ *  It returns 0 if successful, 1 if successful but the port is
+ *  throttled, and -1 if the sanity checks failed.
  */
 
-अटल पूर्णांक digi_पढ़ो_inb_callback(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_serial_port *port = urb->context;
-	काष्ठा digi_port *priv = usb_get_serial_port_data(port);
-	अचिन्हित अक्षर *buf = urb->transfer_buffer;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक opcode;
-	पूर्णांक len;
-	पूर्णांक port_status;
-	अचिन्हित अक्षर *data;
-	पूर्णांक tty_flag, throttled;
+static int digi_read_inb_callback(struct urb *urb)
+{
+	struct usb_serial_port *port = urb->context;
+	struct digi_port *priv = usb_get_serial_port_data(port);
+	unsigned char *buf = urb->transfer_buffer;
+	unsigned long flags;
+	int opcode;
+	int len;
+	int port_status;
+	unsigned char *data;
+	int tty_flag, throttled;
 
-	/* लघु/multiple packet check */
-	अगर (urb->actual_length < 2) अणु
+	/* short/multiple packet check */
+	if (urb->actual_length < 2) {
 		dev_warn(&port->dev, "short packet received\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	opcode = buf[0];
 	len = buf[1];
 
-	अगर (urb->actual_length != len + 2) अणु
+	if (urb->actual_length != len + 2) {
 		dev_err(&port->dev, "malformed packet received: port=%d, opcode=%d, len=%d, actual_length=%u\n",
 			priv->dp_port_num, opcode, len, urb->actual_length);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (opcode == DIGI_CMD_RECEIVE_DATA && len < 1) अणु
+	if (opcode == DIGI_CMD_RECEIVE_DATA && len < 1) {
 		dev_err(&port->dev, "malformed data packet received\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	spin_lock_irqsave(&priv->dp_port_lock, flags);
 
-	/* check क्रम throttle; अगर set, करो not resubmit पढ़ो urb */
-	/* indicate the पढ़ो chain needs to be restarted on unthrottle */
+	/* check for throttle; if set, do not resubmit read urb */
+	/* indicate the read chain needs to be restarted on unthrottle */
 	throttled = priv->dp_throttled;
-	अगर (throttled)
+	if (throttled)
 		priv->dp_throttle_restart = 1;
 
 	/* receive data */
-	अगर (opcode == DIGI_CMD_RECEIVE_DATA) अणु
+	if (opcode == DIGI_CMD_RECEIVE_DATA) {
 		port_status = buf[2];
 		data = &buf[3];
 
 		/* get flag from port_status */
 		tty_flag = 0;
 
-		/* overrun is special, not associated with a अक्षर */
-		अगर (port_status & DIGI_OVERRUN_ERROR)
-			tty_insert_flip_अक्षर(&port->port, 0, TTY_OVERRUN);
+		/* overrun is special, not associated with a char */
+		if (port_status & DIGI_OVERRUN_ERROR)
+			tty_insert_flip_char(&port->port, 0, TTY_OVERRUN);
 
-		/* अवरोध takes precedence over parity, */
+		/* break takes precedence over parity, */
 		/* which takes precedence over framing errors */
-		अगर (port_status & DIGI_BREAK_ERROR)
+		if (port_status & DIGI_BREAK_ERROR)
 			tty_flag = TTY_BREAK;
-		अन्यथा अगर (port_status & DIGI_PARITY_ERROR)
+		else if (port_status & DIGI_PARITY_ERROR)
 			tty_flag = TTY_PARITY;
-		अन्यथा अगर (port_status & DIGI_FRAMING_ERROR)
+		else if (port_status & DIGI_FRAMING_ERROR)
 			tty_flag = TTY_FRAME;
 
 		/* data length is len-1 (one byte of len is port_status) */
 		--len;
-		अगर (len > 0) अणु
+		if (len > 0) {
 			tty_insert_flip_string_fixed_flag(&port->port, data,
 					tty_flag, len);
 			tty_flip_buffer_push(&port->port);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&priv->dp_port_lock, flags);
 
-	अगर (opcode == DIGI_CMD_RECEIVE_DISABLE)
+	if (opcode == DIGI_CMD_RECEIVE_DISABLE)
 		dev_dbg(&port->dev, "%s: got RECEIVE_DISABLE\n", __func__);
-	अन्यथा अगर (opcode != DIGI_CMD_RECEIVE_DATA)
+	else if (opcode != DIGI_CMD_RECEIVE_DATA)
 		dev_dbg(&port->dev, "%s: unknown opcode: %d\n", __func__, opcode);
 
-	वापस throttled ? 1 : 0;
+	return throttled ? 1 : 0;
 
-पूर्ण
+}
 
 
 /*
  *  Digi Read OOB Callback
  *
- *  Digi Read OOB Callback handles पढ़ोs on the out of band port.
- *  When called we know port and port->निजी are not शून्य and
- *  the port->serial is valid.  It वापसs 0 अगर successful, and
- *  -1 अगर the sanity checks failed.
+ *  Digi Read OOB Callback handles reads on the out of band port.
+ *  When called we know port and port->private are not NULL and
+ *  the port->serial is valid.  It returns 0 if successful, and
+ *  -1 if the sanity checks failed.
  */
 
-अटल पूर्णांक digi_पढ़ो_oob_callback(काष्ठा urb *urb)
-अणु
+static int digi_read_oob_callback(struct urb *urb)
+{
 
-	काष्ठा usb_serial_port *port = urb->context;
-	काष्ठा usb_serial *serial = port->serial;
-	काष्ठा tty_काष्ठा *tty;
-	काष्ठा digi_port *priv;
-	अचिन्हित अक्षर *buf = urb->transfer_buffer;
-	पूर्णांक opcode, line, status, val;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
-	अचिन्हित पूर्णांक rts;
+	struct usb_serial_port *port = urb->context;
+	struct usb_serial *serial = port->serial;
+	struct tty_struct *tty;
+	struct digi_port *priv;
+	unsigned char *buf = urb->transfer_buffer;
+	int opcode, line, status, val;
+	unsigned long flags;
+	int i;
+	unsigned int rts;
 
-	अगर (urb->actual_length < 4)
-		वापस -1;
+	if (urb->actual_length < 4)
+		return -1;
 
 	/* handle each oob command */
-	क्रम (i = 0; i < urb->actual_length - 3; i += 4) अणु
+	for (i = 0; i < urb->actual_length - 3; i += 4) {
 		opcode = buf[i];
 		line = buf[i + 1];
 		status = buf[i + 2];
@@ -1467,64 +1466,64 @@ __releases(lock)
 		dev_dbg(&port->dev, "digi_read_oob_callback: opcode=%d, line=%d, status=%d, val=%d\n",
 			opcode, line, status, val);
 
-		अगर (status != 0 || line >= serial->type->num_ports)
-			जारी;
+		if (status != 0 || line >= serial->type->num_ports)
+			continue;
 
 		port = serial->port[line];
 
 		priv = usb_get_serial_port_data(port);
-		अगर (priv == शून्य)
-			वापस -1;
+		if (priv == NULL)
+			return -1;
 
 		tty = tty_port_tty_get(&port->port);
 
 		rts = 0;
-		अगर (tty)
+		if (tty)
 			rts = C_CRTSCTS(tty);
 
-		अगर (tty && opcode == DIGI_CMD_READ_INPUT_SIGNALS) अणु
+		if (tty && opcode == DIGI_CMD_READ_INPUT_SIGNALS) {
 			bool wakeup = false;
 
 			spin_lock_irqsave(&priv->dp_port_lock, flags);
 			/* convert from digi flags to termiox flags */
-			अगर (val & DIGI_READ_INPUT_SIGNALS_CTS) अणु
-				priv->dp_modem_संकेतs |= TIOCM_CTS;
-				अगर (rts)
+			if (val & DIGI_READ_INPUT_SIGNALS_CTS) {
+				priv->dp_modem_signals |= TIOCM_CTS;
+				if (rts)
 					wakeup = true;
-			पूर्ण अन्यथा अणु
-				priv->dp_modem_संकेतs &= ~TIOCM_CTS;
-				/* port must be खोलो to use tty काष्ठा */
-			पूर्ण
-			अगर (val & DIGI_READ_INPUT_SIGNALS_DSR)
-				priv->dp_modem_संकेतs |= TIOCM_DSR;
-			अन्यथा
-				priv->dp_modem_संकेतs &= ~TIOCM_DSR;
-			अगर (val & DIGI_READ_INPUT_SIGNALS_RI)
-				priv->dp_modem_संकेतs |= TIOCM_RI;
-			अन्यथा
-				priv->dp_modem_संकेतs &= ~TIOCM_RI;
-			अगर (val & DIGI_READ_INPUT_SIGNALS_DCD)
-				priv->dp_modem_संकेतs |= TIOCM_CD;
-			अन्यथा
-				priv->dp_modem_संकेतs &= ~TIOCM_CD;
+			} else {
+				priv->dp_modem_signals &= ~TIOCM_CTS;
+				/* port must be open to use tty struct */
+			}
+			if (val & DIGI_READ_INPUT_SIGNALS_DSR)
+				priv->dp_modem_signals |= TIOCM_DSR;
+			else
+				priv->dp_modem_signals &= ~TIOCM_DSR;
+			if (val & DIGI_READ_INPUT_SIGNALS_RI)
+				priv->dp_modem_signals |= TIOCM_RI;
+			else
+				priv->dp_modem_signals &= ~TIOCM_RI;
+			if (val & DIGI_READ_INPUT_SIGNALS_DCD)
+				priv->dp_modem_signals |= TIOCM_CD;
+			else
+				priv->dp_modem_signals &= ~TIOCM_CD;
 
 			spin_unlock_irqrestore(&priv->dp_port_lock, flags);
 
-			अगर (wakeup)
+			if (wakeup)
 				tty_port_tty_wakeup(&port->port);
-		पूर्ण अन्यथा अगर (opcode == DIGI_CMD_TRANSMIT_IDLE) अणु
+		} else if (opcode == DIGI_CMD_TRANSMIT_IDLE) {
 			spin_lock_irqsave(&priv->dp_port_lock, flags);
 			priv->dp_transmit_idle = 1;
-			wake_up_पूर्णांकerruptible(&priv->dp_transmit_idle_रुको);
+			wake_up_interruptible(&priv->dp_transmit_idle_wait);
 			spin_unlock_irqrestore(&priv->dp_port_lock, flags);
-		पूर्ण अन्यथा अगर (opcode == DIGI_CMD_IFLUSH_FIFO) अणु
-			wake_up_पूर्णांकerruptible(&priv->dp_flush_रुको);
-		पूर्ण
+		} else if (opcode == DIGI_CMD_IFLUSH_FIFO) {
+			wake_up_interruptible(&priv->dp_flush_wait);
+		}
 		tty_kref_put(tty);
-	पूर्ण
-	वापस 0;
+	}
+	return 0;
 
-पूर्ण
+}
 
 module_usb_serial_driver(serial_drivers, id_table_combined);
 

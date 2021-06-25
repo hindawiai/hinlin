@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Author(s)......: Horst  Hummel    <Horst.Hummel@de.ibm.com>
  *		    Holger Smolinski <Holger.Smolinski@de.ibm.com>
@@ -8,22 +7,22 @@
  *
  */
 
-#घोषणा KMSG_COMPONENT "dasd-eckd"
+#define KMSG_COMPONENT "dasd-eckd"
 
-#समावेश <linux/समयr.h>
-#समावेश <यंत्र/idals.h>
+#include <linux/timer.h>
+#include <asm/idals.h>
 
-#घोषणा PRINTK_HEADER "dasd_erp(3990): "
+#define PRINTK_HEADER "dasd_erp(3990): "
 
-#समावेश "dasd_int.h"
-#समावेश "dasd_eckd.h"
+#include "dasd_int.h"
+#include "dasd_eckd.h"
 
 
-काष्ठा DCTL_data अणु
-	अचिन्हित अक्षर subcommand;  /* e.g Inhibit Write, Enable Write,... */
-	अचिन्हित अक्षर modअगरier;	   /* Subcommand modअगरier */
-	अचिन्हित लघु res;	   /* reserved */
-पूर्ण __attribute__ ((packed));
+struct DCTL_data {
+	unsigned char subcommand;  /* e.g Inhibit Write, Enable Write,... */
+	unsigned char modifier;	   /* Subcommand modifier */
+	unsigned short res;	   /* reserved */
+} __attribute__ ((packed));
 
 /*
  *****************************************************************************
@@ -40,7 +39,7 @@
  * DASD_3990_ERP_CLEANUP
  *
  * DESCRIPTION
- *   Removes the alपढ़ोy build but not necessary ERP request and sets
+ *   Removes the already build but not necessary ERP request and sets
  *   the status of the original cqr / erp to the given (final) status
  *
  *  PARAMETER
@@ -50,30 +49,30 @@
  * RETURN VALUES
  *   cqr		original cqr
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_cleanup(काष्ठा dasd_ccw_req * erp, अक्षर final_status)
-अणु
-	काष्ठा dasd_ccw_req *cqr = erp->refers;
+static struct dasd_ccw_req *
+dasd_3990_erp_cleanup(struct dasd_ccw_req * erp, char final_status)
+{
+	struct dasd_ccw_req *cqr = erp->refers;
 
-	dasd_मुक्त_erp_request(erp, erp->memdev);
+	dasd_free_erp_request(erp, erp->memdev);
 	cqr->status = final_status;
-	वापस cqr;
+	return cqr;
 
-पूर्ण				/* end dasd_3990_erp_cleanup */
+}				/* end dasd_3990_erp_cleanup */
 
 /*
  * DASD_3990_ERP_BLOCK_QUEUE
  *
  * DESCRIPTION
  *   Block the given device request queue to prevent from further
- *   processing until the started समयr has expired or an related
- *   पूर्णांकerrupt was received.
+ *   processing until the started timer has expired or an related
+ *   interrupt was received.
  */
-अटल व्योम dasd_3990_erp_block_queue(काष्ठा dasd_ccw_req *erp, पूर्णांक expires)
-अणु
+static void dasd_3990_erp_block_queue(struct dasd_ccw_req *erp, int expires)
+{
 
-	काष्ठा dasd_device *device = erp->startdev;
-	अचिन्हित दीर्घ flags;
+	struct dasd_device *device = erp->startdev;
+	unsigned long flags;
 
 	DBF_DEV_EVENT(DBF_INFO, device,
 		    "blocking request queue for %is", expires/HZ);
@@ -82,11 +81,11 @@ dasd_3990_erp_cleanup(काष्ठा dasd_ccw_req * erp, अक्षर fin
 	dasd_device_set_stop_bits(device, DASD_STOPPED_PENDING);
 	spin_unlock_irqrestore(get_ccwdev_lock(device->cdev), flags);
 	erp->status = DASD_CQR_FILLED;
-	अगर (erp->block)
-		dasd_block_set_समयr(erp->block, expires);
-	अन्यथा
-		dasd_device_set_समयr(device, expires);
-पूर्ण
+	if (erp->block)
+		dasd_block_set_timer(erp->block, expires);
+	else
+		dasd_device_set_timer(device, expires);
+}
 
 /*
  * DASD_3990_ERP_INT_REQ
@@ -98,68 +97,68 @@ dasd_3990_erp_cleanup(काष्ठा dasd_ccw_req * erp, अक्षर fin
  * PARAMETER
  *   erp		current erp
  * RETURN VALUES
- *   erp		modअगरied erp
+ *   erp		modified erp
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_पूर्णांक_req(काष्ठा dasd_ccw_req * erp)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_erp_int_req(struct dasd_ccw_req * erp)
+{
 
-	काष्ठा dasd_device *device = erp->startdev;
+	struct dasd_device *device = erp->startdev;
 
-	/* first समय set initial retry counter and erp_function */
+	/* first time set initial retry counter and erp_function */
 	/* and retry once without blocking queue		 */
 	/* (this enables easier enqueing of the cqr)		 */
-	अगर (erp->function != dasd_3990_erp_पूर्णांक_req) अणु
+	if (erp->function != dasd_3990_erp_int_req) {
 
 		erp->retries = 256;
-		erp->function = dasd_3990_erp_पूर्णांक_req;
+		erp->function = dasd_3990_erp_int_req;
 
-	पूर्ण अन्यथा अणु
+	} else {
 
-		/* issue a message and रुको क्रम 'device ready' पूर्णांकerrupt */
+		/* issue a message and wait for 'device ready' interrupt */
 		dev_err(&device->cdev->dev,
 			    "is offline or not installed - "
 			    "INTERVENTION REQUIRED!!\n");
 
 		dasd_3990_erp_block_queue(erp, 60*HZ);
-	पूर्ण
+	}
 
-	वापस erp;
+	return erp;
 
-पूर्ण				/* end dasd_3990_erp_पूर्णांक_req */
+}				/* end dasd_3990_erp_int_req */
 
 /*
  * DASD_3990_ERP_ALTERNATE_PATH
  *
  * DESCRIPTION
- *   Repeat the operation on a dअगरferent channel path.
+ *   Repeat the operation on a different channel path.
  *   If all alternate paths have been tried, the request is posted with a
  *   permanent error.
  *
  *  PARAMETER
- *   erp		poपूर्णांकer to the current ERP
+ *   erp		pointer to the current ERP
  *
  * RETURN VALUES
- *   erp		modअगरied poपूर्णांकer to the ERP
+ *   erp		modified pointer to the ERP
  */
-अटल व्योम
-dasd_3990_erp_alternate_path(काष्ठा dasd_ccw_req * erp)
-अणु
-	काष्ठा dasd_device *device = erp->startdev;
+static void
+dasd_3990_erp_alternate_path(struct dasd_ccw_req * erp)
+{
+	struct dasd_device *device = erp->startdev;
 	__u8 opm;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	/* try alternate valid path */
 	spin_lock_irqsave(get_ccwdev_lock(device->cdev), flags);
 	opm = ccw_device_get_path_mask(device->cdev);
 	spin_unlock_irqrestore(get_ccwdev_lock(device->cdev), flags);
-	अगर (erp->lpm == 0)
+	if (erp->lpm == 0)
 		erp->lpm = dasd_path_get_opm(device) &
 			~(erp->irb.esw.esw0.sublog.lpum);
-	अन्यथा
+	else
 		erp->lpm &= ~(erp->irb.esw.esw0.sublog.lpum);
 
-	अगर ((erp->lpm & opm) != 0x00) अणु
+	if ((erp->lpm & opm) != 0x00) {
 
 		DBF_DEV_EVENT(DBF_WARNING, device,
 			    "try alternate lpm=%x (lpum=%x / opm=%x)",
@@ -168,57 +167,57 @@ dasd_3990_erp_alternate_path(काष्ठा dasd_ccw_req * erp)
 		/* reset status to submit the request again... */
 		erp->status = DASD_CQR_FILLED;
 		erp->retries = 10;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(&device->cdev->dev,
 			"The DASD cannot be reached on any path (lpum=%x"
 			"/opm=%x)\n", erp->irb.esw.esw0.sublog.lpum, opm);
 
 		/* post request with permanent error */
 		erp->status = DASD_CQR_FAILED;
-	पूर्ण
-पूर्ण				/* end dasd_3990_erp_alternate_path */
+	}
+}				/* end dasd_3990_erp_alternate_path */
 
 /*
  * DASD_3990_ERP_DCTL
  *
  * DESCRIPTION
- *   Setup cqr to करो the Diagnostic Control (DCTL) command with an
- *   Inhibit Write subcommand (0x20) and the given modअगरier.
+ *   Setup cqr to do the Diagnostic Control (DCTL) command with an
+ *   Inhibit Write subcommand (0x20) and the given modifier.
  *
  *  PARAMETER
- *   erp		poपूर्णांकer to the current (failed) ERP
- *   modअगरier		subcommand modअगरier
+ *   erp		pointer to the current (failed) ERP
+ *   modifier		subcommand modifier
  *
  * RETURN VALUES
- *   dctl_cqr		poपूर्णांकer to NEW dctl_cqr
+ *   dctl_cqr		pointer to NEW dctl_cqr
  *
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_DCTL(काष्ठा dasd_ccw_req * erp, अक्षर modअगरier)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_erp_DCTL(struct dasd_ccw_req * erp, char modifier)
+{
 
-	काष्ठा dasd_device *device = erp->startdev;
-	काष्ठा DCTL_data *DCTL_data;
-	काष्ठा ccw1 *ccw;
-	काष्ठा dasd_ccw_req *dctl_cqr;
+	struct dasd_device *device = erp->startdev;
+	struct DCTL_data *DCTL_data;
+	struct ccw1 *ccw;
+	struct dasd_ccw_req *dctl_cqr;
 
-	dctl_cqr = dasd_alloc_erp_request((अक्षर *) &erp->magic, 1,
-					  माप(काष्ठा DCTL_data),
+	dctl_cqr = dasd_alloc_erp_request((char *) &erp->magic, 1,
+					  sizeof(struct DCTL_data),
 					  device);
-	अगर (IS_ERR(dctl_cqr)) अणु
+	if (IS_ERR(dctl_cqr)) {
 		dev_err(&device->cdev->dev,
 			    "Unable to allocate DCTL-CQR\n");
 		erp->status = DASD_CQR_FAILED;
-		वापस erp;
-	पूर्ण
+		return erp;
+	}
 
 	DCTL_data = dctl_cqr->data;
 
 	DCTL_data->subcommand = 0x02;	/* Inhibit Write */
-	DCTL_data->modअगरier = modअगरier;
+	DCTL_data->modifier = modifier;
 
 	ccw = dctl_cqr->cpaddr;
-	स_रखो(ccw, 0, माप(काष्ठा ccw1));
+	memset(ccw, 0, sizeof(struct ccw1));
 	ccw->cmd_code = CCW_CMD_DCTL;
 	ccw->count = 4;
 	ccw->cda = (__u32)(addr_t) DCTL_data;
@@ -231,84 +230,84 @@ dasd_3990_erp_DCTL(काष्ठा dasd_ccw_req * erp, अक्षर modअ
 	dctl_cqr->expires = 5 * 60 * HZ;
 	dctl_cqr->retries = 2;
 
-	dctl_cqr->buildclk = get_tod_घड़ी();
+	dctl_cqr->buildclk = get_tod_clock();
 
 	dctl_cqr->status = DASD_CQR_FILLED;
 
-	वापस dctl_cqr;
+	return dctl_cqr;
 
-पूर्ण				/* end dasd_3990_erp_DCTL */
+}				/* end dasd_3990_erp_DCTL */
 
 /*
  * DASD_3990_ERP_ACTION_1
  *
  * DESCRIPTION
- *   Setup ERP to करो the ERP action 1 (see Reference manual).
- *   Repeat the operation on a dअगरferent channel path.
+ *   Setup ERP to do the ERP action 1 (see Reference manual).
+ *   Repeat the operation on a different channel path.
  *   As deviation from the recommended recovery action, we reset the path mask
- *   after we have tried each path and go through all paths a second समय.
- *   This will cover situations where only one path at a समय is actually करोwn,
+ *   after we have tried each path and go through all paths a second time.
+ *   This will cover situations where only one path at a time is actually down,
  *   but all paths fail and recover just with the same sequence and timing as
  *   we try to use them (flapping links).
  *   If all alternate paths have been tried twice, the request is posted with
  *   a permanent error.
  *
  *  PARAMETER
- *   erp		poपूर्णांकer to the current ERP
+ *   erp		pointer to the current ERP
  *
  * RETURN VALUES
- *   erp		poपूर्णांकer to the ERP
+ *   erp		pointer to the ERP
  *
  */
-अटल काष्ठा dasd_ccw_req *dasd_3990_erp_action_1_sec(काष्ठा dasd_ccw_req *erp)
-अणु
+static struct dasd_ccw_req *dasd_3990_erp_action_1_sec(struct dasd_ccw_req *erp)
+{
 	erp->function = dasd_3990_erp_action_1_sec;
 	dasd_3990_erp_alternate_path(erp);
-	वापस erp;
-पूर्ण
+	return erp;
+}
 
-अटल काष्ठा dasd_ccw_req *dasd_3990_erp_action_1(काष्ठा dasd_ccw_req *erp)
-अणु
+static struct dasd_ccw_req *dasd_3990_erp_action_1(struct dasd_ccw_req *erp)
+{
 	erp->function = dasd_3990_erp_action_1;
 	dasd_3990_erp_alternate_path(erp);
-	अगर (erp->status == DASD_CQR_FAILED &&
-	    !test_bit(DASD_CQR_VERIFY_PATH, &erp->flags)) अणु
+	if (erp->status == DASD_CQR_FAILED &&
+	    !test_bit(DASD_CQR_VERIFY_PATH, &erp->flags)) {
 		erp->status = DASD_CQR_FILLED;
 		erp->retries = 10;
 		erp->lpm = dasd_path_get_opm(erp->startdev);
 		erp->function = dasd_3990_erp_action_1_sec;
-	पूर्ण
-	वापस erp;
-पूर्ण				/* end dasd_3990_erp_action_1(b) */
+	}
+	return erp;
+}				/* end dasd_3990_erp_action_1(b) */
 
 /*
  * DASD_3990_ERP_ACTION_4
  *
  * DESCRIPTION
- *   Setup ERP to करो the ERP action 4 (see Reference manual).
- *   Set the current request to PENDING to block the CQR queue क्रम that device
- *   until the state change पूर्णांकerrupt appears.
- *   Use a समयr (20 seconds) to retry the cqr अगर the पूर्णांकerrupt is still
+ *   Setup ERP to do the ERP action 4 (see Reference manual).
+ *   Set the current request to PENDING to block the CQR queue for that device
+ *   until the state change interrupt appears.
+ *   Use a timer (20 seconds) to retry the cqr if the interrupt is still
  *   missing.
  *
  *  PARAMETER
  *   sense		sense data of the actual error
- *   erp		poपूर्णांकer to the current ERP
+ *   erp		pointer to the current ERP
  *
  * RETURN VALUES
- *   erp		poपूर्णांकer to the ERP
+ *   erp		pointer to the ERP
  *
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_action_4(काष्ठा dasd_ccw_req * erp, अक्षर *sense)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_erp_action_4(struct dasd_ccw_req * erp, char *sense)
+{
 
-	काष्ठा dasd_device *device = erp->startdev;
+	struct dasd_device *device = erp->startdev;
 
-	/* first समय set initial retry counter and erp_function    */
-	/* and retry once without रुकोing क्रम state change pending  */
-	/* पूर्णांकerrupt (this enables easier enqueing of the cqr)	    */
-	अगर (erp->function != dasd_3990_erp_action_4) अणु
+	/* first time set initial retry counter and erp_function    */
+	/* and retry once without waiting for state change pending  */
+	/* interrupt (this enables easier enqueing of the cqr)	    */
+	if (erp->function != dasd_3990_erp_action_4) {
 
 		DBF_DEV_EVENT(DBF_INFO, device, "%s",
 			    "dasd_3990_erp_action_4: first time retry");
@@ -316,8 +315,8 @@ dasd_3990_erp_action_4(काष्ठा dasd_ccw_req * erp, अक्षर *s
 		erp->retries = 256;
 		erp->function = dasd_3990_erp_action_4;
 
-	पूर्ण अन्यथा अणु
-		अगर (sense && (sense[25] == 0x1D)) अणु /* state change pending */
+	} else {
+		if (sense && (sense[25] == 0x1D)) { /* state change pending */
 
 			DBF_DEV_EVENT(DBF_INFO, device,
 				    "waiting for state change pending "
@@ -326,25 +325,25 @@ dasd_3990_erp_action_4(काष्ठा dasd_ccw_req * erp, अक्षर *s
 
 			dasd_3990_erp_block_queue(erp, 30*HZ);
 
-		पूर्ण अन्यथा अगर (sense && (sense[25] == 0x1E)) अणु	/* busy */
+		} else if (sense && (sense[25] == 0x1E)) {	/* busy */
 			DBF_DEV_EVENT(DBF_INFO, device,
 				    "busy - redriving request later, "
 				    "%d retries left",
 				    erp->retries);
                         dasd_3990_erp_block_queue(erp, HZ);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* no state change pending - retry */
 			DBF_DEV_EVENT(DBF_INFO, device,
 				     "redriving request immediately, "
 				     "%d retries left",
 				     erp->retries);
 			erp->status = DASD_CQR_FILLED;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस erp;
+	return erp;
 
-पूर्ण				/* end dasd_3990_erp_action_4 */
+}				/* end dasd_3990_erp_action_4 */
 
 /*
  *****************************************************************************
@@ -356,27 +355,27 @@ dasd_3990_erp_action_4(काष्ठा dasd_ccw_req * erp, अक्षर *s
  * DASD_3990_ERP_ACTION_5
  *
  * DESCRIPTION
- *   Setup ERP to करो the ERP action 5 (see Reference manual).
- *   NOTE: Further handling is करोne in xxx_further_erp after the retries.
+ *   Setup ERP to do the ERP action 5 (see Reference manual).
+ *   NOTE: Further handling is done in xxx_further_erp after the retries.
  *
  *  PARAMETER
- *   erp		poपूर्णांकer to the current ERP
+ *   erp		pointer to the current ERP
  *
  * RETURN VALUES
- *   erp		poपूर्णांकer to the ERP
+ *   erp		pointer to the ERP
  *
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_action_5(काष्ठा dasd_ccw_req * erp)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_erp_action_5(struct dasd_ccw_req * erp)
+{
 
 	/* first of all retry */
 	erp->retries = 10;
 	erp->function = dasd_3990_erp_action_5;
 
-	वापस erp;
+	return erp;
 
-पूर्ण				/* end dasd_3990_erp_action_5 */
+}				/* end dasd_3990_erp_action_5 */
 
 /*
  * DASD_3990_HANDLE_ENV_DATA
@@ -384,637 +383,637 @@ dasd_3990_erp_action_5(काष्ठा dasd_ccw_req * erp)
  * DESCRIPTION
  *   Handles 24 byte 'Environmental data present'.
  *   Does a analysis of the sense data (message Format)
- *   and prपूर्णांकs the error messages.
+ *   and prints the error messages.
  *
  * PARAMETER
  *   sense		current sense data
  *
  * RETURN VALUES
- *   व्योम
+ *   void
  */
-अटल व्योम
-dasd_3990_handle_env_data(काष्ठा dasd_ccw_req * erp, अक्षर *sense)
-अणु
+static void
+dasd_3990_handle_env_data(struct dasd_ccw_req * erp, char *sense)
+{
 
-	काष्ठा dasd_device *device = erp->startdev;
-	अक्षर msg_क्रमmat = (sense[7] & 0xF0);
-	अक्षर msg_no = (sense[7] & 0x0F);
-	अक्षर errorstring[ERRORLENGTH];
+	struct dasd_device *device = erp->startdev;
+	char msg_format = (sense[7] & 0xF0);
+	char msg_no = (sense[7] & 0x0F);
+	char errorstring[ERRORLENGTH];
 
-	चयन (msg_क्रमmat) अणु
-	हाल 0x00:		/* Format 0 - Program or System Checks */
+	switch (msg_format) {
+	case 0x00:		/* Format 0 - Program or System Checks */
 
-		अगर (sense[1] & 0x10) अणु	/* check message to चालक bit */
+		if (sense[1] & 0x10) {	/* check message to operator bit */
 
-			चयन (msg_no) अणु
-			हाल 0x00:	/* No Message */
-				अवरोध;
-			हाल 0x01:
+			switch (msg_no) {
+			case 0x00:	/* No Message */
+				break;
+			case 0x01:
 				dev_warn(&device->cdev->dev,
 					    "FORMAT 0 - Invalid Command\n");
-				अवरोध;
-			हाल 0x02:
+				break;
+			case 0x02:
 				dev_warn(&device->cdev->dev,
 					    "FORMAT 0 - Invalid Command "
 					    "Sequence\n");
-				अवरोध;
-			हाल 0x03:
+				break;
+			case 0x03:
 				dev_warn(&device->cdev->dev,
 					    "FORMAT 0 - CCW Count less than "
 					    "required\n");
-				अवरोध;
-			हाल 0x04:
+				break;
+			case 0x04:
 				dev_warn(&device->cdev->dev,
 					    "FORMAT 0 - Invalid Parameter\n");
-				अवरोध;
-			हाल 0x05:
+				break;
+			case 0x05:
 				dev_warn(&device->cdev->dev,
 					    "FORMAT 0 - Diagnostic of Special"
 					    " Command Violates File Mask\n");
-				अवरोध;
-			हाल 0x07:
+				break;
+			case 0x07:
 				dev_warn(&device->cdev->dev,
 					    "FORMAT 0 - Channel Returned with "
 					    "Incorrect retry CCW\n");
-				अवरोध;
-			हाल 0x08:
+				break;
+			case 0x08:
 				dev_warn(&device->cdev->dev,
 					    "FORMAT 0 - Reset Notification\n");
-				अवरोध;
-			हाल 0x09:
+				break;
+			case 0x09:
 				dev_warn(&device->cdev->dev,
 					 "FORMAT 0 - Storage Path Restart\n");
-				अवरोध;
-			हाल 0x0A:
+				break;
+			case 0x0A:
 				dev_warn(&device->cdev->dev,
 					    "FORMAT 0 - Channel requested "
 					    "... %02x\n", sense[8]);
-				अवरोध;
-			हाल 0x0B:
+				break;
+			case 0x0B:
 				dev_warn(&device->cdev->dev,
 					    "FORMAT 0 - Invalid Defective/"
 					    "Alternate Track Pointer\n");
-				अवरोध;
-			हाल 0x0C:
+				break;
+			case 0x0C:
 				dev_warn(&device->cdev->dev,
 					    "FORMAT 0 - DPS Installation "
 					    "Check\n");
-				अवरोध;
-			हाल 0x0E:
+				break;
+			case 0x0E:
 				dev_warn(&device->cdev->dev,
 					    "FORMAT 0 - Command Invalid on "
 					    "Secondary Address\n");
-				अवरोध;
-			हाल 0x0F:
+				break;
+			case 0x0F:
 				dev_warn(&device->cdev->dev,
 					    "FORMAT 0 - Status Not As "
 					    "Required: reason %02x\n",
 					 sense[8]);
-				अवरोध;
-			शेष:
+				break;
+			default:
 				dev_warn(&device->cdev->dev,
 					    "FORMAT 0 - Reserved\n");
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			चयन (msg_no) अणु
-			हाल 0x00:	/* No Message */
-				अवरोध;
-			हाल 0x01:
+			}
+		} else {
+			switch (msg_no) {
+			case 0x00:	/* No Message */
+				break;
+			case 0x01:
 				dev_warn(&device->cdev->dev,
 					 "FORMAT 0 - Device Error "
 					 "Source\n");
-				अवरोध;
-			हाल 0x02:
+				break;
+			case 0x02:
 				dev_warn(&device->cdev->dev,
 					    "FORMAT 0 - Reserved\n");
-				अवरोध;
-			हाल 0x03:
+				break;
+			case 0x03:
 				dev_warn(&device->cdev->dev,
 					    "FORMAT 0 - Device Fenced - "
 					    "device = %02x\n", sense[4]);
-				अवरोध;
-			हाल 0x04:
+				break;
+			case 0x04:
 				dev_warn(&device->cdev->dev,
 					    "FORMAT 0 - Data Pinned for "
 					    "Device\n");
-				अवरोध;
-			शेष:
+				break;
+			default:
 				dev_warn(&device->cdev->dev,
 					    "FORMAT 0 - Reserved\n");
-			पूर्ण
-		पूर्ण
-		अवरोध;
+			}
+		}
+		break;
 
-	हाल 0x10:		/* Format 1 - Device Equipment Checks */
-		चयन (msg_no) अणु
-		हाल 0x00:	/* No Message */
-			अवरोध;
-		हाल 0x01:
+	case 0x10:		/* Format 1 - Device Equipment Checks */
+		switch (msg_no) {
+		case 0x00:	/* No Message */
+			break;
+		case 0x01:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 1 - Device Status 1 not as "
 				    "expected\n");
-			अवरोध;
-		हाल 0x03:
+			break;
+		case 0x03:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 1 - Index missing\n");
-			अवरोध;
-		हाल 0x04:
+			break;
+		case 0x04:
 			dev_warn(&device->cdev->dev,
 				 "FORMAT 1 - Interruption cannot be "
 				 "reset\n");
-			अवरोध;
-		हाल 0x05:
+			break;
+		case 0x05:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 1 - Device did not respond to "
 				    "selection\n");
-			अवरोध;
-		हाल 0x06:
+			break;
+		case 0x06:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 1 - Device check-2 error or Set "
 				    "Sector is not complete\n");
-			अवरोध;
-		हाल 0x07:
+			break;
+		case 0x07:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 1 - Head address does not "
 				    "compare\n");
-			अवरोध;
-		हाल 0x08:
+			break;
+		case 0x08:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 1 - Device status 1 not valid\n");
-			अवरोध;
-		हाल 0x09:
+			break;
+		case 0x09:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 1 - Device not ready\n");
-			अवरोध;
-		हाल 0x0A:
+			break;
+		case 0x0A:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 1 - Track physical address did "
 				    "not compare\n");
-			अवरोध;
-		हाल 0x0B:
+			break;
+		case 0x0B:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 1 - Missing device address bit\n");
-			अवरोध;
-		हाल 0x0C:
+			break;
+		case 0x0C:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 1 - Drive motor switch is off\n");
-			अवरोध;
-		हाल 0x0D:
+			break;
+		case 0x0D:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 1 - Seek incomplete\n");
-			अवरोध;
-		हाल 0x0E:
+			break;
+		case 0x0E:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 1 - Cylinder address did not "
 				    "compare\n");
-			अवरोध;
-		हाल 0x0F:
+			break;
+		case 0x0F:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 1 - Offset active cannot be "
 				    "reset\n");
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 1 - Reserved\n");
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल 0x20:		/* Format 2 - 3990 Equipment Checks */
-		चयन (msg_no) अणु
-		हाल 0x08:
+	case 0x20:		/* Format 2 - 3990 Equipment Checks */
+		switch (msg_no) {
+		case 0x08:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 2 - 3990 check-2 error\n");
-			अवरोध;
-		हाल 0x0E:
+			break;
+		case 0x0E:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 2 - Support facility errors\n");
-			अवरोध;
-		हाल 0x0F:
+			break;
+		case 0x0F:
 			dev_warn(&device->cdev->dev,
 				 "FORMAT 2 - Microcode detected error "
 				 "%02x\n",
 				 sense[8]);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 2 - Reserved\n");
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल 0x30:		/* Format 3 - 3990 Control Checks */
-		चयन (msg_no) अणु
-		हाल 0x0F:
+	case 0x30:		/* Format 3 - 3990 Control Checks */
+		switch (msg_no) {
+		case 0x0F:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 3 - Allegiance terminated\n");
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 3 - Reserved\n");
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल 0x40:		/* Format 4 - Data Checks */
-		चयन (msg_no) अणु
-		हाल 0x00:
+	case 0x40:		/* Format 4 - Data Checks */
+		switch (msg_no) {
+		case 0x00:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 4 - Home address area error\n");
-			अवरोध;
-		हाल 0x01:
+			break;
+		case 0x01:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 4 - Count area error\n");
-			अवरोध;
-		हाल 0x02:
+			break;
+		case 0x02:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 4 - Key area error\n");
-			अवरोध;
-		हाल 0x03:
+			break;
+		case 0x03:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 4 - Data area error\n");
-			अवरोध;
-		हाल 0x04:
+			break;
+		case 0x04:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 4 - No sync byte in home address "
 				    "area\n");
-			अवरोध;
-		हाल 0x05:
+			break;
+		case 0x05:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 4 - No sync byte in count address "
 				    "area\n");
-			अवरोध;
-		हाल 0x06:
+			break;
+		case 0x06:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 4 - No sync byte in key area\n");
-			अवरोध;
-		हाल 0x07:
+			break;
+		case 0x07:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 4 - No sync byte in data area\n");
-			अवरोध;
-		हाल 0x08:
+			break;
+		case 0x08:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 4 - Home address area error; "
 				    "offset active\n");
-			अवरोध;
-		हाल 0x09:
+			break;
+		case 0x09:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 4 - Count area error; offset "
 				    "active\n");
-			अवरोध;
-		हाल 0x0A:
+			break;
+		case 0x0A:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 4 - Key area error; offset "
 				    "active\n");
-			अवरोध;
-		हाल 0x0B:
+			break;
+		case 0x0B:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 4 - Data area error; "
 				    "offset active\n");
-			अवरोध;
-		हाल 0x0C:
+			break;
+		case 0x0C:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 4 - No sync byte in home "
 				    "address area; offset active\n");
-			अवरोध;
-		हाल 0x0D:
+			break;
+		case 0x0D:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 4 - No sync byte in count "
 				    "address area; offset active\n");
-			अवरोध;
-		हाल 0x0E:
+			break;
+		case 0x0E:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 4 - No sync byte in key area; "
 				    "offset active\n");
-			अवरोध;
-		हाल 0x0F:
+			break;
+		case 0x0F:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 4 - No sync byte in data area; "
 				    "offset active\n");
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 4 - Reserved\n");
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल 0x50:  /* Format 5 - Data Check with displacement inक्रमmation */
-		चयन (msg_no) अणु
-		हाल 0x00:
+	case 0x50:  /* Format 5 - Data Check with displacement information */
+		switch (msg_no) {
+		case 0x00:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 5 - Data Check in the "
 				    "home address area\n");
-			अवरोध;
-		हाल 0x01:
+			break;
+		case 0x01:
 			dev_warn(&device->cdev->dev,
 				 "FORMAT 5 - Data Check in the count "
 				 "area\n");
-			अवरोध;
-		हाल 0x02:
+			break;
+		case 0x02:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 5 - Data Check in the key area\n");
-			अवरोध;
-		हाल 0x03:
+			break;
+		case 0x03:
 			dev_warn(&device->cdev->dev,
 				 "FORMAT 5 - Data Check in the data "
 				 "area\n");
-			अवरोध;
-		हाल 0x08:
+			break;
+		case 0x08:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 5 - Data Check in the "
 				    "home address area; offset active\n");
-			अवरोध;
-		हाल 0x09:
+			break;
+		case 0x09:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 5 - Data Check in the count area; "
 				    "offset active\n");
-			अवरोध;
-		हाल 0x0A:
+			break;
+		case 0x0A:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 5 - Data Check in the key area; "
 				    "offset active\n");
-			अवरोध;
-		हाल 0x0B:
+			break;
+		case 0x0B:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 5 - Data Check in the data area; "
 				    "offset active\n");
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 5 - Reserved\n");
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल 0x60:  /* Format 6 - Usage Statistics/Overrun Errors */
-		चयन (msg_no) अणु
-		हाल 0x00:
+	case 0x60:  /* Format 6 - Usage Statistics/Overrun Errors */
+		switch (msg_no) {
+		case 0x00:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 6 - Overrun on channel A\n");
-			अवरोध;
-		हाल 0x01:
+			break;
+		case 0x01:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 6 - Overrun on channel B\n");
-			अवरोध;
-		हाल 0x02:
+			break;
+		case 0x02:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 6 - Overrun on channel C\n");
-			अवरोध;
-		हाल 0x03:
+			break;
+		case 0x03:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 6 - Overrun on channel D\n");
-			अवरोध;
-		हाल 0x04:
+			break;
+		case 0x04:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 6 - Overrun on channel E\n");
-			अवरोध;
-		हाल 0x05:
+			break;
+		case 0x05:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 6 - Overrun on channel F\n");
-			अवरोध;
-		हाल 0x06:
+			break;
+		case 0x06:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 6 - Overrun on channel G\n");
-			अवरोध;
-		हाल 0x07:
+			break;
+		case 0x07:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 6 - Overrun on channel H\n");
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 6 - Reserved\n");
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल 0x70:  /* Format 7 - Device Connection Control Checks */
-		चयन (msg_no) अणु
-		हाल 0x00:
+	case 0x70:  /* Format 7 - Device Connection Control Checks */
+		switch (msg_no) {
+		case 0x00:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 7 - RCC initiated by a connection "
 				    "check alert\n");
-			अवरोध;
-		हाल 0x01:
+			break;
+		case 0x01:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 7 - RCC 1 sequence not "
 				    "successful\n");
-			अवरोध;
-		हाल 0x02:
+			break;
+		case 0x02:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 7 - RCC 1 and RCC 2 sequences not "
 				    "successful\n");
-			अवरोध;
-		हाल 0x03:
+			break;
+		case 0x03:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 7 - Invalid tag-in during "
 				    "selection sequence\n");
-			अवरोध;
-		हाल 0x04:
+			break;
+		case 0x04:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 7 - extra RCC required\n");
-			अवरोध;
-		हाल 0x05:
+			break;
+		case 0x05:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 7 - Invalid DCC selection "
 				    "response or timeout\n");
-			अवरोध;
-		हाल 0x06:
+			break;
+		case 0x06:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 7 - Missing end operation; device "
 				    "transfer complete\n");
-			अवरोध;
-		हाल 0x07:
+			break;
+		case 0x07:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 7 - Missing end operation; device "
 				    "transfer incomplete\n");
-			अवरोध;
-		हाल 0x08:
+			break;
+		case 0x08:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 7 - Invalid tag-in for an "
 				    "immediate command sequence\n");
-			अवरोध;
-		हाल 0x09:
+			break;
+		case 0x09:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 7 - Invalid tag-in for an "
 				    "extended command sequence\n");
-			अवरोध;
-		हाल 0x0A:
+			break;
+		case 0x0A:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 7 - 3990 microcode time out when "
 				    "stopping selection\n");
-			अवरोध;
-		हाल 0x0B:
+			break;
+		case 0x0B:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 7 - No response to selection "
 				    "after a poll interruption\n");
-			अवरोध;
-		हाल 0x0C:
+			break;
+		case 0x0C:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 7 - Permanent path error (DASD "
 				    "controller not available)\n");
-			अवरोध;
-		हाल 0x0D:
+			break;
+		case 0x0D:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 7 - DASD controller not available"
 				    " on disconnected command chain\n");
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 7 - Reserved\n");
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल 0x80:  /* Format 8 - Additional Device Equipment Checks */
-		चयन (msg_no) अणु
-		हाल 0x00:	/* No Message */
-		हाल 0x01:
+	case 0x80:  /* Format 8 - Additional Device Equipment Checks */
+		switch (msg_no) {
+		case 0x00:	/* No Message */
+		case 0x01:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 8 - Error correction code "
 				    "hardware fault\n");
-			अवरोध;
-		हाल 0x03:
+			break;
+		case 0x03:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 8 - Unexpected end operation "
 				    "response code\n");
-			अवरोध;
-		हाल 0x04:
+			break;
+		case 0x04:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 8 - End operation with transfer "
 				    "count not zero\n");
-			अवरोध;
-		हाल 0x05:
+			break;
+		case 0x05:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 8 - End operation with transfer "
 				    "count zero\n");
-			अवरोध;
-		हाल 0x06:
+			break;
+		case 0x06:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 8 - DPS checks after a system "
 				    "reset or selective reset\n");
-			अवरोध;
-		हाल 0x07:
+			break;
+		case 0x07:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 8 - DPS cannot be filled\n");
-			अवरोध;
-		हाल 0x08:
+			break;
+		case 0x08:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 8 - Short busy time-out during "
 				    "device selection\n");
-			अवरोध;
-		हाल 0x09:
+			break;
+		case 0x09:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 8 - DASD controller failed to "
 				    "set or reset the long busy latch\n");
-			अवरोध;
-		हाल 0x0A:
+			break;
+		case 0x0A:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 8 - No interruption from device "
 				    "during a command chain\n");
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 8 - Reserved\n");
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल 0x90:  /* Format 9 - Device Read, Write, and Seek Checks */
-		चयन (msg_no) अणु
-		हाल 0x00:
-			अवरोध;	/* No Message */
-		हाल 0x06:
+	case 0x90:  /* Format 9 - Device Read, Write, and Seek Checks */
+		switch (msg_no) {
+		case 0x00:
+			break;	/* No Message */
+		case 0x06:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 9 - Device check-2 error\n");
-			अवरोध;
-		हाल 0x07:
+			break;
+		case 0x07:
 			dev_warn(&device->cdev->dev,
 				 "FORMAT 9 - Head address did not "
 				 "compare\n");
-			अवरोध;
-		हाल 0x0A:
+			break;
+		case 0x0A:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 9 - Track physical address did "
 				    "not compare while oriented\n");
-			अवरोध;
-		हाल 0x0E:
+			break;
+		case 0x0E:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 9 - Cylinder address did not "
 				    "compare\n");
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT 9 - Reserved\n");
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल 0xF0:		/* Format F - Cache Storage Checks */
-		चयन (msg_no) अणु
-		हाल 0x00:
+	case 0xF0:		/* Format F - Cache Storage Checks */
+		switch (msg_no) {
+		case 0x00:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT F - Operation Terminated\n");
-			अवरोध;
-		हाल 0x01:
+			break;
+		case 0x01:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT F - Subsystem Processing Error\n");
-			अवरोध;
-		हाल 0x02:
+			break;
+		case 0x02:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT F - Cache or nonvolatile storage "
 				    "equipment failure\n");
-			अवरोध;
-		हाल 0x04:
+			break;
+		case 0x04:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT F - Caching terminated\n");
-			अवरोध;
-		हाल 0x06:
+			break;
+		case 0x06:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT F - Cache fast write access not "
 				    "authorized\n");
-			अवरोध;
-		हाल 0x07:
+			break;
+		case 0x07:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT F - Track format incorrect\n");
-			अवरोध;
-		हाल 0x09:
+			break;
+		case 0x09:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT F - Caching reinitiated\n");
-			अवरोध;
-		हाल 0x0A:
+			break;
+		case 0x0A:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT F - Nonvolatile storage "
 				    "terminated\n");
-			अवरोध;
-		हाल 0x0B:
+			break;
+		case 0x0B:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT F - Volume is suspended duplex\n");
 			/* call extended error reporting (EER) */
-			dasd_eer_ग_लिखो(device, erp->refers,
+			dasd_eer_write(device, erp->refers,
 				       DASD_EER_PPRCSUSPEND);
-			अवरोध;
-		हाल 0x0C:
+			break;
+		case 0x0C:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT F - Subsystem status cannot be "
 				    "determined\n");
-			अवरोध;
-		हाल 0x0D:
+			break;
+		case 0x0D:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT F - Caching status reset to "
 				    "default\n");
-			अवरोध;
-		हाल 0x0E:
+			break;
+		case 0x0E:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT F - DASD Fast Write inhibited\n");
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_warn(&device->cdev->dev,
 				    "FORMAT F - Reserved\n");
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	शेष:	/* unknown message क्रमmat - should not happen
-			   पूर्णांकernal error 03 - unknown message क्रमmat */
-		snम_लिखो(errorstring, ERRORLENGTH, "03 %x02", msg_क्रमmat);
+	default:	/* unknown message format - should not happen
+			   internal error 03 - unknown message format */
+		snprintf(errorstring, ERRORLENGTH, "03 %x02", msg_format);
 		dev_err(&device->cdev->dev,
 			 "An error occurred in the DASD device driver, "
 			 "reason=%s\n", errorstring);
-		अवरोध;
-	पूर्ण			/* end चयन message क्रमmat */
+		break;
+	}			/* end switch message format */
 
-पूर्ण				/* end dasd_3990_handle_env_data */
+}				/* end dasd_3990_handle_env_data */
 
 /*
  * DASD_3990_ERP_COM_REJ
@@ -1027,18 +1026,18 @@ dasd_3990_handle_env_data(काष्ठा dasd_ccw_req * erp, अक्षर
  *   sense		current sense data
  *
  * RETURN VALUES
- *   erp		'new' erp_head - poपूर्णांकer to new ERP
+ *   erp		'new' erp_head - pointer to new ERP
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_com_rej(काष्ठा dasd_ccw_req * erp, अक्षर *sense)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_erp_com_rej(struct dasd_ccw_req * erp, char *sense)
+{
 
-	काष्ठा dasd_device *device = erp->startdev;
+	struct dasd_device *device = erp->startdev;
 
 	erp->function = dasd_3990_erp_com_rej;
 
 	/* env data present (ACTION 10 - retry should work) */
-	अगर (sense[2] & SNS2_ENV_DATA_PRESENT) अणु
+	if (sense[2] & SNS2_ENV_DATA_PRESENT) {
 
 		DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 			    "Command Reject - environmental data present");
@@ -1047,23 +1046,23 @@ dasd_3990_erp_com_rej(काष्ठा dasd_ccw_req * erp, अक्षर *se
 
 		erp->retries = 5;
 
-	पूर्ण अन्यथा अगर (sense[1] & SNS1_WRITE_INHIBITED) अणु
+	} else if (sense[1] & SNS1_WRITE_INHIBITED) {
 		dev_err(&device->cdev->dev, "An I/O request was rejected"
 			" because writing is inhibited\n");
 		erp = dasd_3990_erp_cleanup(erp, DASD_CQR_FAILED);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* fatal error -  set status to FAILED
-		   पूर्णांकernal error 09 - Command Reject */
-		अगर (!test_bit(DASD_CQR_SUPPRESS_CR, &erp->flags))
+		   internal error 09 - Command Reject */
+		if (!test_bit(DASD_CQR_SUPPRESS_CR, &erp->flags))
 			dev_err(&device->cdev->dev,
 				"An error occurred in the DASD device driver, reason=09\n");
 
 		erp = dasd_3990_erp_cleanup(erp, DASD_CQR_FAILED);
-	पूर्ण
+	}
 
-	वापस erp;
+	return erp;
 
-पूर्ण				/* end dasd_3990_erp_com_rej */
+}				/* end dasd_3990_erp_com_rej */
 
 /*
  * DASD_3990_ERP_BUS_OUT
@@ -1074,35 +1073,35 @@ dasd_3990_erp_com_rej(काष्ठा dasd_ccw_req * erp, अक्षर *se
  * PARAMETER
  *   erp		current erp_head
  * RETURN VALUES
- *   erp		new erp_head - poपूर्णांकer to new ERP
+ *   erp		new erp_head - pointer to new ERP
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_bus_out(काष्ठा dasd_ccw_req * erp)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_erp_bus_out(struct dasd_ccw_req * erp)
+{
 
-	काष्ठा dasd_device *device = erp->startdev;
+	struct dasd_device *device = erp->startdev;
 
-	/* first समय set initial retry counter and erp_function */
+	/* first time set initial retry counter and erp_function */
 	/* and retry once without blocking queue		 */
 	/* (this enables easier enqueing of the cqr)		 */
-	अगर (erp->function != dasd_3990_erp_bus_out) अणु
+	if (erp->function != dasd_3990_erp_bus_out) {
 		erp->retries = 256;
 		erp->function = dasd_3990_erp_bus_out;
 
-	पूर्ण अन्यथा अणु
+	} else {
 
-		/* issue a message and रुको क्रम 'device ready' पूर्णांकerrupt */
+		/* issue a message and wait for 'device ready' interrupt */
 		DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 			    "bus out parity error or BOPC requested by "
 			    "channel");
 
 		dasd_3990_erp_block_queue(erp, 60*HZ);
 
-	पूर्ण
+	}
 
-	वापस erp;
+	return erp;
 
-पूर्ण				/* end dasd_3990_erp_bus_out */
+}				/* end dasd_3990_erp_bus_out */
 
 /*
  * DASD_3990_ERP_EQUIP_CHECK
@@ -1113,28 +1112,28 @@ dasd_3990_erp_bus_out(काष्ठा dasd_ccw_req * erp)
  * PARAMETER
  *   erp		current erp_head
  * RETURN VALUES
- *   erp		new erp_head - poपूर्णांकer to new ERP
+ *   erp		new erp_head - pointer to new ERP
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_equip_check(काष्ठा dasd_ccw_req * erp, अक्षर *sense)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_erp_equip_check(struct dasd_ccw_req * erp, char *sense)
+{
 
-	काष्ठा dasd_device *device = erp->startdev;
+	struct dasd_device *device = erp->startdev;
 
 	erp->function = dasd_3990_erp_equip_check;
 
-	अगर (sense[1] & SNS1_WRITE_INHIBITED) अणु
+	if (sense[1] & SNS1_WRITE_INHIBITED) {
 		dev_info(&device->cdev->dev,
 			    "Write inhibited path encountered\n");
 
 		/* vary path offline
-		   पूर्णांकernal error 04 - Path should be varied off-line.*/
+		   internal error 04 - Path should be varied off-line.*/
 		dev_err(&device->cdev->dev, "An error occurred in the DASD "
 			"device driver, reason=%s\n", "04");
 
 		erp = dasd_3990_erp_action_1(erp);
 
-	पूर्ण अन्यथा अगर (sense[2] & SNS2_ENV_DATA_PRESENT) अणु
+	} else if (sense[2] & SNS2_ENV_DATA_PRESENT) {
 
 		DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 			    "Equipment Check - " "environmental data present");
@@ -1143,7 +1142,7 @@ dasd_3990_erp_equip_check(काष्ठा dasd_ccw_req * erp, अक्षर
 
 		erp = dasd_3990_erp_action_4(erp, sense);
 
-	पूर्ण अन्यथा अगर (sense[1] & SNS1_PERM_ERR) अणु
+	} else if (sense[1] & SNS1_PERM_ERR) {
 
 		DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 			    "Equipment Check - retry exhausted or "
@@ -1151,17 +1150,17 @@ dasd_3990_erp_equip_check(काष्ठा dasd_ccw_req * erp, अक्षर
 
 		erp = dasd_3990_erp_action_1(erp);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		/* all other equipment checks - Action 5 */
-		/* rest is करोne when retries == 0 */
+		/* rest is done when retries == 0 */
 		DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 			    "Equipment check or processing error");
 
 		erp = dasd_3990_erp_action_5(erp);
-	पूर्ण
-	वापस erp;
+	}
+	return erp;
 
-पूर्ण				/* end dasd_3990_erp_equip_check */
+}				/* end dasd_3990_erp_equip_check */
 
 /*
  * DASD_3990_ERP_DATA_CHECK
@@ -1172,17 +1171,17 @@ dasd_3990_erp_equip_check(काष्ठा dasd_ccw_req * erp, अक्षर
  * PARAMETER
  *   erp		current erp_head
  * RETURN VALUES
- *   erp		new erp_head - poपूर्णांकer to new ERP
+ *   erp		new erp_head - pointer to new ERP
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_data_check(काष्ठा dasd_ccw_req * erp, अक्षर *sense)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_erp_data_check(struct dasd_ccw_req * erp, char *sense)
+{
 
-	काष्ठा dasd_device *device = erp->startdev;
+	struct dasd_device *device = erp->startdev;
 
 	erp->function = dasd_3990_erp_data_check;
 
-	अगर (sense[2] & SNS2_CORRECTABLE) अणु	/* correctable data check */
+	if (sense[2] & SNS2_CORRECTABLE) {	/* correctable data check */
 
 		/* issue message that the data has been corrected */
 		dev_emerg(&device->cdev->dev,
@@ -1193,7 +1192,7 @@ dasd_3990_erp_data_check(काष्ठा dasd_ccw_req * erp, अक्षर 
 		panic("No way to inform application about the possibly "
 		      "incorrect data");
 
-	पूर्ण अन्यथा अगर (sense[2] & SNS2_ENV_DATA_PRESENT) अणु
+	} else if (sense[2] & SNS2_ENV_DATA_PRESENT) {
 
 		DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 			    "Uncorrectable data check recovered secondary "
@@ -1201,7 +1200,7 @@ dasd_3990_erp_data_check(काष्ठा dasd_ccw_req * erp, अक्षर 
 
 		erp = dasd_3990_erp_action_4(erp, sense);
 
-	पूर्ण अन्यथा अगर (sense[1] & SNS1_PERM_ERR) अणु
+	} else if (sense[1] & SNS1_PERM_ERR) {
 
 		DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 			    "Uncorrectable data check with internal "
@@ -1209,18 +1208,18 @@ dasd_3990_erp_data_check(काष्ठा dasd_ccw_req * erp, अक्षर 
 
 		erp = dasd_3990_erp_action_1(erp);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		/* all other data checks */
 		DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 			    "Uncorrectable data check with retry count "
 			    "exhausted...");
 
 		erp = dasd_3990_erp_action_5(erp);
-	पूर्ण
+	}
 
-	वापस erp;
+	return erp;
 
-पूर्ण				/* end dasd_3990_erp_data_check */
+}				/* end dasd_3990_erp_data_check */
 
 /*
  * DASD_3990_ERP_OVERRUN
@@ -1231,13 +1230,13 @@ dasd_3990_erp_data_check(काष्ठा dasd_ccw_req * erp, अक्षर 
  * PARAMETER
  *   erp		current erp_head
  * RETURN VALUES
- *   erp		new erp_head - poपूर्णांकer to new ERP
+ *   erp		new erp_head - pointer to new ERP
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_overrun(काष्ठा dasd_ccw_req * erp, अक्षर *sense)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_erp_overrun(struct dasd_ccw_req * erp, char *sense)
+{
 
-	काष्ठा dasd_device *device = erp->startdev;
+	struct dasd_device *device = erp->startdev;
 
 	erp->function = dasd_3990_erp_overrun;
 
@@ -1247,9 +1246,9 @@ dasd_3990_erp_overrun(काष्ठा dasd_ccw_req * erp, अक्षर *se
 
 	erp = dasd_3990_erp_action_5(erp);
 
-	वापस erp;
+	return erp;
 
-पूर्ण				/* end dasd_3990_erp_overrun */
+}				/* end dasd_3990_erp_overrun */
 
 /*
  * DASD_3990_ERP_INV_FORMAT
@@ -1260,17 +1259,17 @@ dasd_3990_erp_overrun(काष्ठा dasd_ccw_req * erp, अक्षर *se
  * PARAMETER
  *   erp		current erp_head
  * RETURN VALUES
- *   erp		new erp_head - poपूर्णांकer to new ERP
+ *   erp		new erp_head - pointer to new ERP
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_inv_क्रमmat(काष्ठा dasd_ccw_req * erp, अक्षर *sense)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_erp_inv_format(struct dasd_ccw_req * erp, char *sense)
+{
 
-	काष्ठा dasd_device *device = erp->startdev;
+	struct dasd_device *device = erp->startdev;
 
-	erp->function = dasd_3990_erp_inv_क्रमmat;
+	erp->function = dasd_3990_erp_inv_format;
 
-	अगर (sense[2] & SNS2_ENV_DATA_PRESENT) अणु
+	if (sense[2] & SNS2_ENV_DATA_PRESENT) {
 
 		DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 			    "Track format error when destaging or "
@@ -1280,18 +1279,18 @@ dasd_3990_erp_inv_क्रमmat(काष्ठा dasd_ccw_req * erp, अक�
 
 		erp = dasd_3990_erp_action_4(erp, sense);
 
-	पूर्ण अन्यथा अणु
-		/* पूर्णांकernal error 06 - The track क्रमmat is not valid*/
+	} else {
+		/* internal error 06 - The track format is not valid*/
 		dev_err(&device->cdev->dev,
 			"An error occurred in the DASD device driver, "
 			"reason=%s\n", "06");
 
 		erp = dasd_3990_erp_cleanup(erp, DASD_CQR_FAILED);
-	पूर्ण
+	}
 
-	वापस erp;
+	return erp;
 
-पूर्ण				/* end dasd_3990_erp_inv_क्रमmat */
+}				/* end dasd_3990_erp_inv_format */
 
 /*
  * DASD_3990_ERP_EOC
@@ -1300,23 +1299,23 @@ dasd_3990_erp_inv_क्रमmat(काष्ठा dasd_ccw_req * erp, अक�
  *   Handles 24 byte 'End-of-Cylinder' error.
  *
  * PARAMETER
- *   erp		alपढ़ोy added शेष erp
+ *   erp		already added default erp
  * RETURN VALUES
- *   erp		poपूर्णांकer to original (failed) cqr.
+ *   erp		pointer to original (failed) cqr.
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_EOC(काष्ठा dasd_ccw_req * शेष_erp, अक्षर *sense)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_erp_EOC(struct dasd_ccw_req * default_erp, char *sense)
+{
 
-	काष्ठा dasd_device *device = शेष_erp->startdev;
+	struct dasd_device *device = default_erp->startdev;
 
 	dev_err(&device->cdev->dev,
 		"The cylinder data for accessing the DASD is inconsistent\n");
 
 	/* implement action 7 - BUG */
-	वापस dasd_3990_erp_cleanup(शेष_erp, DASD_CQR_FAILED);
+	return dasd_3990_erp_cleanup(default_erp, DASD_CQR_FAILED);
 
-पूर्ण				/* end dasd_3990_erp_EOC */
+}				/* end dasd_3990_erp_EOC */
 
 /*
  * DASD_3990_ERP_ENV_DATA
@@ -1327,13 +1326,13 @@ dasd_3990_erp_EOC(काष्ठा dasd_ccw_req * शेष_erp, अक्ष�
  * PARAMETER
  *   erp		current erp_head
  * RETURN VALUES
- *   erp		new erp_head - poपूर्णांकer to new ERP
+ *   erp		new erp_head - pointer to new ERP
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_env_data(काष्ठा dasd_ccw_req * erp, अक्षर *sense)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_erp_env_data(struct dasd_ccw_req * erp, char *sense)
+{
 
-	काष्ठा dasd_device *device = erp->startdev;
+	struct dasd_device *device = erp->startdev;
 
 	erp->function = dasd_3990_erp_env_data;
 
@@ -1341,16 +1340,16 @@ dasd_3990_erp_env_data(काष्ठा dasd_ccw_req * erp, अक्षर *s
 
 	dasd_3990_handle_env_data(erp, sense);
 
-	/* करोn't retry on disabled पूर्णांकerface */
-	अगर (sense[7] != 0x0F) अणु
+	/* don't retry on disabled interface */
+	if (sense[7] != 0x0F) {
 		erp = dasd_3990_erp_action_4(erp, sense);
-	पूर्ण अन्यथा अणु
+	} else {
 		erp->status = DASD_CQR_FILLED;
-	पूर्ण
+	}
 
-	वापस erp;
+	return erp;
 
-पूर्ण				/* end dasd_3990_erp_env_data */
+}				/* end dasd_3990_erp_env_data */
 
 /*
  * DASD_3990_ERP_NO_REC
@@ -1359,117 +1358,117 @@ dasd_3990_erp_env_data(काष्ठा dasd_ccw_req * erp, अक्षर *s
  *   Handles 24 byte 'No Record Found' error.
  *
  * PARAMETER
- *   erp		alपढ़ोy added शेष ERP
+ *   erp		already added default ERP
  *
  * RETURN VALUES
- *   erp		new erp_head - poपूर्णांकer to new ERP
+ *   erp		new erp_head - pointer to new ERP
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_no_rec(काष्ठा dasd_ccw_req * शेष_erp, अक्षर *sense)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_erp_no_rec(struct dasd_ccw_req * default_erp, char *sense)
+{
 
-	काष्ठा dasd_device *device = शेष_erp->startdev;
+	struct dasd_device *device = default_erp->startdev;
 
 	/*
-	 * In some हालs the 'No Record Found' error might be expected and
+	 * In some cases the 'No Record Found' error might be expected and
 	 * log messages shouldn't be written then.
-	 * Check अगर the according suppress bit is set.
+	 * Check if the according suppress bit is set.
 	 */
-	अगर (!test_bit(DASD_CQR_SUPPRESS_NRF, &शेष_erp->flags))
+	if (!test_bit(DASD_CQR_SUPPRESS_NRF, &default_erp->flags))
 		dev_err(&device->cdev->dev,
 			"The specified record was not found\n");
 
-	वापस dasd_3990_erp_cleanup(शेष_erp, DASD_CQR_FAILED);
+	return dasd_3990_erp_cleanup(default_erp, DASD_CQR_FAILED);
 
-पूर्ण				/* end dasd_3990_erp_no_rec */
+}				/* end dasd_3990_erp_no_rec */
 
 /*
- * DASD_3990_ERP_खाता_PROT
+ * DASD_3990_ERP_FILE_PROT
  *
  * DESCRIPTION
  *   Handles 24 byte 'File Protected' error.
  *   Note: Seek related recovery is not implemented because
- *	   wee करोn't use the seek command yet.
+ *	   wee don't use the seek command yet.
  *
  * PARAMETER
  *   erp		current erp_head
  * RETURN VALUES
- *   erp		new erp_head - poपूर्णांकer to new ERP
+ *   erp		new erp_head - pointer to new ERP
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_file_prot(काष्ठा dasd_ccw_req * erp)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_erp_file_prot(struct dasd_ccw_req * erp)
+{
 
-	काष्ठा dasd_device *device = erp->startdev;
+	struct dasd_device *device = erp->startdev;
 
 	/*
-	 * In some हालs the 'File Protected' error might be expected and
+	 * In some cases the 'File Protected' error might be expected and
 	 * log messages shouldn't be written then.
-	 * Check अगर the according suppress bit is set.
+	 * Check if the according suppress bit is set.
 	 */
-	अगर (!test_bit(DASD_CQR_SUPPRESS_FP, &erp->flags))
+	if (!test_bit(DASD_CQR_SUPPRESS_FP, &erp->flags))
 		dev_err(&device->cdev->dev,
 			"Accessing the DASD failed because of a hardware error\n");
 
-	वापस dasd_3990_erp_cleanup(erp, DASD_CQR_FAILED);
+	return dasd_3990_erp_cleanup(erp, DASD_CQR_FAILED);
 
-पूर्ण				/* end dasd_3990_erp_file_prot */
+}				/* end dasd_3990_erp_file_prot */
 
 /*
  * DASD_3990_ERP_INSPECT_ALIAS
  *
  * DESCRIPTION
- *   Checks अगर the original request was started on an alias device.
- *   If yes, it modअगरies the original and the erp request so that
+ *   Checks if the original request was started on an alias device.
+ *   If yes, it modifies the original and the erp request so that
  *   the erp request can be started on a base device.
  *
  * PARAMETER
- *   erp		poपूर्णांकer to the currently created शेष ERP
+ *   erp		pointer to the currently created default ERP
  *
  * RETURN VALUES
- *   erp		poपूर्णांकer to the modअगरied ERP, or शून्य
+ *   erp		pointer to the modified ERP, or NULL
  */
 
-अटल काष्ठा dasd_ccw_req *dasd_3990_erp_inspect_alias(
-						काष्ठा dasd_ccw_req *erp)
-अणु
-	काष्ठा dasd_ccw_req *cqr = erp->refers;
-	अक्षर *sense;
+static struct dasd_ccw_req *dasd_3990_erp_inspect_alias(
+						struct dasd_ccw_req *erp)
+{
+	struct dasd_ccw_req *cqr = erp->refers;
+	char *sense;
 
-	अगर (cqr->block &&
-	    (cqr->block->base != cqr->startdev)) अणु
+	if (cqr->block &&
+	    (cqr->block->base != cqr->startdev)) {
 
 		sense = dasd_get_sense(&erp->refers->irb);
 		/*
 		 * dynamic pav may have changed base alias mapping
 		 */
-		अगर (!test_bit(DASD_FLAG_OFFLINE, &cqr->startdev->flags) && sense
+		if (!test_bit(DASD_FLAG_OFFLINE, &cqr->startdev->flags) && sense
 		    && (sense[0] == 0x10) && (sense[7] == 0x0F)
-		    && (sense[8] == 0x67)) अणु
+		    && (sense[8] == 0x67)) {
 			/*
-			 * हटाओ device from alias handling to prevent new
+			 * remove device from alias handling to prevent new
 			 * requests from being scheduled on the
 			 * wrong alias device
 			 */
-			dasd_alias_हटाओ_device(cqr->startdev);
+			dasd_alias_remove_device(cqr->startdev);
 
 			/* schedule worker to reload device */
 			dasd_reload_device(cqr->startdev);
-		पूर्ण
+		}
 
-		अगर (cqr->startdev->features & DASD_FEATURE_ERPLOG) अणु
+		if (cqr->startdev->features & DASD_FEATURE_ERPLOG) {
 			DBF_DEV_EVENT(DBF_ERR, cqr->startdev,
 				    "ERP on alias device for request %p,"
 				    " recover on base device %s", cqr,
 				    dev_name(&cqr->block->base->cdev->dev));
-		पूर्ण
+		}
 		dasd_eckd_reset_ccw_to_base_io(cqr);
 		erp->startdev = cqr->block->base;
 		erp->function = dasd_3990_erp_inspect_alias;
-		वापस erp;
-	पूर्ण अन्यथा
-		वापस शून्य;
-पूर्ण
+		return erp;
+	} else
+		return NULL;
+}
 
 
 /*
@@ -1481,71 +1480,71 @@ dasd_3990_erp_file_prot(काष्ठा dasd_ccw_req * erp)
  *
  * PARAMETER
  *   sense		sense data of the actual error
- *   erp		poपूर्णांकer to the currently created शेष ERP
+ *   erp		pointer to the currently created default ERP
  *
  * RETURN VALUES
- *   erp		poपूर्णांकer to the (addtitional) ERP
+ *   erp		pointer to the (addtitional) ERP
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_inspect_24(काष्ठा dasd_ccw_req * erp, अक्षर *sense)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_erp_inspect_24(struct dasd_ccw_req * erp, char *sense)
+{
 
-	काष्ठा dasd_ccw_req *erp_filled = शून्य;
+	struct dasd_ccw_req *erp_filled = NULL;
 
-	/* Check sense क्रम ....	   */
+	/* Check sense for ....	   */
 	/* 'Command Reject'	   */
-	अगर ((erp_filled == शून्य) && (sense[0] & SNS0_CMD_REJECT)) अणु
+	if ((erp_filled == NULL) && (sense[0] & SNS0_CMD_REJECT)) {
 		erp_filled = dasd_3990_erp_com_rej(erp, sense);
-	पूर्ण
+	}
 	/* 'Intervention Required' */
-	अगर ((erp_filled == शून्य) && (sense[0] & SNS0_INTERVENTION_REQ)) अणु
-		erp_filled = dasd_3990_erp_पूर्णांक_req(erp);
-	पूर्ण
+	if ((erp_filled == NULL) && (sense[0] & SNS0_INTERVENTION_REQ)) {
+		erp_filled = dasd_3990_erp_int_req(erp);
+	}
 	/* 'Bus Out Parity Check'  */
-	अगर ((erp_filled == शून्य) && (sense[0] & SNS0_BUS_OUT_CHECK)) अणु
+	if ((erp_filled == NULL) && (sense[0] & SNS0_BUS_OUT_CHECK)) {
 		erp_filled = dasd_3990_erp_bus_out(erp);
-	पूर्ण
+	}
 	/* 'Equipment Check'	   */
-	अगर ((erp_filled == शून्य) && (sense[0] & SNS0_EQUIPMENT_CHECK)) अणु
+	if ((erp_filled == NULL) && (sense[0] & SNS0_EQUIPMENT_CHECK)) {
 		erp_filled = dasd_3990_erp_equip_check(erp, sense);
-	पूर्ण
+	}
 	/* 'Data Check'		   */
-	अगर ((erp_filled == शून्य) && (sense[0] & SNS0_DATA_CHECK)) अणु
+	if ((erp_filled == NULL) && (sense[0] & SNS0_DATA_CHECK)) {
 		erp_filled = dasd_3990_erp_data_check(erp, sense);
-	पूर्ण
+	}
 	/* 'Overrun'		   */
-	अगर ((erp_filled == शून्य) && (sense[0] & SNS0_OVERRUN)) अणु
+	if ((erp_filled == NULL) && (sense[0] & SNS0_OVERRUN)) {
 		erp_filled = dasd_3990_erp_overrun(erp, sense);
-	पूर्ण
+	}
 	/* 'Invalid Track Format'  */
-	अगर ((erp_filled == शून्य) && (sense[1] & SNS1_INV_TRACK_FORMAT)) अणु
-		erp_filled = dasd_3990_erp_inv_क्रमmat(erp, sense);
-	पूर्ण
+	if ((erp_filled == NULL) && (sense[1] & SNS1_INV_TRACK_FORMAT)) {
+		erp_filled = dasd_3990_erp_inv_format(erp, sense);
+	}
 	/* 'End-of-Cylinder'	   */
-	अगर ((erp_filled == शून्य) && (sense[1] & SNS1_EOC)) अणु
+	if ((erp_filled == NULL) && (sense[1] & SNS1_EOC)) {
 		erp_filled = dasd_3990_erp_EOC(erp, sense);
-	पूर्ण
+	}
 	/* 'Environmental Data'	   */
-	अगर ((erp_filled == शून्य) && (sense[2] & SNS2_ENV_DATA_PRESENT)) अणु
+	if ((erp_filled == NULL) && (sense[2] & SNS2_ENV_DATA_PRESENT)) {
 		erp_filled = dasd_3990_erp_env_data(erp, sense);
-	पूर्ण
+	}
 	/* 'No Record Found'	   */
-	अगर ((erp_filled == शून्य) && (sense[1] & SNS1_NO_REC_FOUND)) अणु
+	if ((erp_filled == NULL) && (sense[1] & SNS1_NO_REC_FOUND)) {
 		erp_filled = dasd_3990_erp_no_rec(erp, sense);
-	पूर्ण
+	}
 	/* 'File Protected'	   */
-	अगर ((erp_filled == शून्य) && (sense[1] & SNS1_खाता_PROTECTED)) अणु
+	if ((erp_filled == NULL) && (sense[1] & SNS1_FILE_PROTECTED)) {
 		erp_filled = dasd_3990_erp_file_prot(erp);
-	पूर्ण
-	/* other (unknown) error - करो शेष ERP */
-	अगर (erp_filled == शून्य) अणु
+	}
+	/* other (unknown) error - do default ERP */
+	if (erp_filled == NULL) {
 
 		erp_filled = erp;
-	पूर्ण
+	}
 
-	वापस erp_filled;
+	return erp_filled;
 
-पूर्ण				/* END dasd_3990_erp_inspect_24 */
+}				/* END dasd_3990_erp_inspect_24 */
 
 /*
  *****************************************************************************
@@ -1558,142 +1557,142 @@ dasd_3990_erp_inspect_24(काष्ठा dasd_ccw_req * erp, अक्षर 
  *
  * DESCRIPTION
  *   Handles 32 byte 'Action 10' of Single Program Action Codes.
- *   Just retry and अगर retry करोesn't work, वापस with error.
+ *   Just retry and if retry doesn't work, return with error.
  *
  * PARAMETER
  *   erp		current erp_head
  *   sense		current sense data
  * RETURN VALUES
- *   erp		modअगरied erp_head
+ *   erp		modified erp_head
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_action_10_32(काष्ठा dasd_ccw_req * erp, अक्षर *sense)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_erp_action_10_32(struct dasd_ccw_req * erp, char *sense)
+{
 
-	काष्ठा dasd_device *device = erp->startdev;
+	struct dasd_device *device = erp->startdev;
 
 	erp->retries = 256;
 	erp->function = dasd_3990_erp_action_10_32;
 
 	DBF_DEV_EVENT(DBF_WARNING, device, "%s", "Perform logging requested");
 
-	वापस erp;
+	return erp;
 
-पूर्ण				/* end dasd_3990_erp_action_10_32 */
+}				/* end dasd_3990_erp_action_10_32 */
 
 /*
  * DASD_3990_ERP_ACTION_1B_32
  *
  * DESCRIPTION
  *   Handles 32 byte 'Action 1B' of Single Program Action Codes.
- *   A ग_लिखो operation could not be finished because of an unexpected
+ *   A write operation could not be finished because of an unexpected
  *   condition.
- *   The alपढ़ोy created 'default erp' is used to get the link to
- *   the erp chain, but it can not be used क्रम this recovery
+ *   The already created 'default erp' is used to get the link to
+ *   the erp chain, but it can not be used for this recovery
  *   action because it contains no DE/LO data space.
  *
  * PARAMETER
- *   शेष_erp	alपढ़ोy added शेष erp.
+ *   default_erp	already added default erp.
  *   sense		current sense data
  *
  * RETURN VALUES
  *   erp		new erp or
- *			शेष_erp in हाल of imprecise ending or error
+ *			default_erp in case of imprecise ending or error
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_action_1B_32(काष्ठा dasd_ccw_req * शेष_erp, अक्षर *sense)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_erp_action_1B_32(struct dasd_ccw_req * default_erp, char *sense)
+{
 
-	काष्ठा dasd_device *device = शेष_erp->startdev;
+	struct dasd_device *device = default_erp->startdev;
 	__u32 cpa = 0;
-	काष्ठा dasd_ccw_req *cqr;
-	काष्ठा dasd_ccw_req *erp;
-	काष्ठा DE_eckd_data *DE_data;
-	काष्ठा PFX_eckd_data *PFX_data;
-	अक्षर *LO_data;		/* LO_eckd_data_t */
-	काष्ठा ccw1 *ccw, *oldccw;
+	struct dasd_ccw_req *cqr;
+	struct dasd_ccw_req *erp;
+	struct DE_eckd_data *DE_data;
+	struct PFX_eckd_data *PFX_data;
+	char *LO_data;		/* LO_eckd_data_t */
+	struct ccw1 *ccw, *oldccw;
 
 	DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 		    "Write not finished because of unexpected condition");
 
-	शेष_erp->function = dasd_3990_erp_action_1B_32;
+	default_erp->function = dasd_3990_erp_action_1B_32;
 
 	/* determine the original cqr */
-	cqr = शेष_erp;
+	cqr = default_erp;
 
-	जबतक (cqr->refers != शून्य) अणु
+	while (cqr->refers != NULL) {
 		cqr = cqr->refers;
-	पूर्ण
+	}
 
-	अगर (scsw_is_पंचांग(&cqr->irb.scsw)) अणु
+	if (scsw_is_tm(&cqr->irb.scsw)) {
 		DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 			      "32 bit sense, action 1B is not defined"
 			      " in transport mode - just retry");
-		वापस शेष_erp;
-	पूर्ण
+		return default_erp;
+	}
 
-	/* क्रम imprecise ending just करो शेष erp */
-	अगर (sense[1] & 0x01) अणु
+	/* for imprecise ending just do default erp */
+	if (sense[1] & 0x01) {
 		DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 			    "Imprecise ending is set - just retry");
 
-		वापस शेष_erp;
-	पूर्ण
+		return default_erp;
+	}
 
 	/* determine the address of the CCW to be restarted */
 	/* Imprecise ending is not set -> addr from IRB-SCSW */
-	cpa = शेष_erp->refers->irb.scsw.cmd.cpa;
+	cpa = default_erp->refers->irb.scsw.cmd.cpa;
 
-	अगर (cpa == 0) अणु
+	if (cpa == 0) {
 		DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 			    "Unable to determine address of the CCW "
 			    "to be restarted");
 
-		वापस dasd_3990_erp_cleanup(शेष_erp, DASD_CQR_FAILED);
-	पूर्ण
+		return dasd_3990_erp_cleanup(default_erp, DASD_CQR_FAILED);
+	}
 
 	/* Build new ERP request including DE/LO */
-	erp = dasd_alloc_erp_request((अक्षर *) &cqr->magic,
+	erp = dasd_alloc_erp_request((char *) &cqr->magic,
 				     2 + 1,/* DE/LO + TIC */
-				     माप(काष्ठा DE_eckd_data) +
-				     माप(काष्ठा LO_eckd_data), device);
+				     sizeof(struct DE_eckd_data) +
+				     sizeof(struct LO_eckd_data), device);
 
-	अगर (IS_ERR(erp)) अणु
-		/* पूर्णांकernal error 01 - Unable to allocate ERP */
+	if (IS_ERR(erp)) {
+		/* internal error 01 - Unable to allocate ERP */
 		dev_err(&device->cdev->dev, "An error occurred in the DASD "
 			"device driver, reason=%s\n", "01");
-		वापस dasd_3990_erp_cleanup(शेष_erp, DASD_CQR_FAILED);
-	पूर्ण
+		return dasd_3990_erp_cleanup(default_erp, DASD_CQR_FAILED);
+	}
 
 	/* use original DE */
 	DE_data = erp->data;
 	oldccw = cqr->cpaddr;
-	अगर (oldccw->cmd_code == DASD_ECKD_CCW_PFX) अणु
+	if (oldccw->cmd_code == DASD_ECKD_CCW_PFX) {
 		PFX_data = cqr->data;
-		स_नकल(DE_data, &PFX_data->define_extent,
-		       माप(काष्ठा DE_eckd_data));
-	पूर्ण अन्यथा
-		स_नकल(DE_data, cqr->data, माप(काष्ठा DE_eckd_data));
+		memcpy(DE_data, &PFX_data->define_extent,
+		       sizeof(struct DE_eckd_data));
+	} else
+		memcpy(DE_data, cqr->data, sizeof(struct DE_eckd_data));
 
 	/* create LO */
-	LO_data = erp->data + माप(काष्ठा DE_eckd_data);
+	LO_data = erp->data + sizeof(struct DE_eckd_data);
 
-	अगर ((sense[3] == 0x01) && (LO_data[1] & 0x01)) अणु
+	if ((sense[3] == 0x01) && (LO_data[1] & 0x01)) {
 		/* should not */
-		वापस dasd_3990_erp_cleanup(शेष_erp, DASD_CQR_FAILED);
-	पूर्ण
+		return dasd_3990_erp_cleanup(default_erp, DASD_CQR_FAILED);
+	}
 
-	अगर ((sense[7] & 0x3F) == 0x01) अणु
+	if ((sense[7] & 0x3F) == 0x01) {
 		/* operation code is WRITE DATA -> data area orientation */
 		LO_data[0] = 0x81;
 
-	पूर्ण अन्यथा अगर ((sense[7] & 0x3F) == 0x03) अणु
+	} else if ((sense[7] & 0x3F) == 0x03) {
 		/* operation code is FORMAT WRITE -> index orientation */
 		LO_data[0] = 0xC3;
 
-	पूर्ण अन्यथा अणु
+	} else {
 		LO_data[0] = sense[7];	/* operation */
-	पूर्ण
+	}
 
 	LO_data[1] = sense[8];	/* auxiliary */
 	LO_data[2] = sense[9];
@@ -1702,11 +1701,11 @@ dasd_3990_erp_action_1B_32(काष्ठा dasd_ccw_req * शेष_erp, अ�
 	LO_data[5] = sense[30];	/* seek_addr.cyl 2nd byte */
 	LO_data[7] = sense[31];	/* seek_addr.head 2nd byte */
 
-	स_नकल(&(LO_data[8]), &(sense[11]), 8);
+	memcpy(&(LO_data[8]), &(sense[11]), 8);
 
 	/* create DE ccw */
 	ccw = erp->cpaddr;
-	स_रखो(ccw, 0, माप(काष्ठा ccw1));
+	memset(ccw, 0, sizeof(struct ccw1));
 	ccw->cmd_code = DASD_ECKD_CCW_DEFINE_EXTENT;
 	ccw->flags = CCW_FLAG_CC;
 	ccw->count = 16;
@@ -1714,7 +1713,7 @@ dasd_3990_erp_action_1B_32(काष्ठा dasd_ccw_req * शेष_erp, अ�
 
 	/* create LO ccw */
 	ccw++;
-	स_रखो(ccw, 0, माप(काष्ठा ccw1));
+	memset(ccw, 0, sizeof(struct ccw1));
 	ccw->cmd_code = DASD_ECKD_CCW_LOCATE_RECORD;
 	ccw->flags = CCW_FLAG_CC;
 	ccw->count = 16;
@@ -1726,49 +1725,49 @@ dasd_3990_erp_action_1B_32(काष्ठा dasd_ccw_req * शेष_erp, अ�
 	ccw->cda = cpa;
 
 	/* fill erp related fields */
-	erp->flags = शेष_erp->flags;
+	erp->flags = default_erp->flags;
 	erp->function = dasd_3990_erp_action_1B_32;
-	erp->refers = शेष_erp->refers;
+	erp->refers = default_erp->refers;
 	erp->startdev = device;
 	erp->memdev = device;
-	erp->magic = शेष_erp->magic;
-	erp->expires = शेष_erp->expires;
+	erp->magic = default_erp->magic;
+	erp->expires = default_erp->expires;
 	erp->retries = 256;
-	erp->buildclk = get_tod_घड़ी();
+	erp->buildclk = get_tod_clock();
 	erp->status = DASD_CQR_FILLED;
 
-	/* हटाओ the शेष erp */
-	dasd_मुक्त_erp_request(शेष_erp, device);
+	/* remove the default erp */
+	dasd_free_erp_request(default_erp, device);
 
-	वापस erp;
+	return erp;
 
-पूर्ण				/* end dasd_3990_erp_action_1B_32 */
+}				/* end dasd_3990_erp_action_1B_32 */
 
 /*
  * DASD_3990_UPDATE_1B
  *
  * DESCRIPTION
  *   Handles the update to the 32 byte 'Action 1B' of Single Program
- *   Action Codes in हाल the first action was not successful.
- *   The alपढ़ोy created 'previous_erp' is the currently not successful
+ *   Action Codes in case the first action was not successful.
+ *   The already created 'previous_erp' is the currently not successful
  *   ERP.
  *
  * PARAMETER
- *   previous_erp	alपढ़ोy created previous erp.
+ *   previous_erp	already created previous erp.
  *   sense		current sense data
  * RETURN VALUES
- *   erp		modअगरied erp
+ *   erp		modified erp
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_update_1B(काष्ठा dasd_ccw_req * previous_erp, अक्षर *sense)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_update_1B(struct dasd_ccw_req * previous_erp, char *sense)
+{
 
-	काष्ठा dasd_device *device = previous_erp->startdev;
+	struct dasd_device *device = previous_erp->startdev;
 	__u32 cpa = 0;
-	काष्ठा dasd_ccw_req *cqr;
-	काष्ठा dasd_ccw_req *erp;
-	अक्षर *LO_data;		/* काष्ठा LO_eckd_data */
-	काष्ठा ccw1 *ccw;
+	struct dasd_ccw_req *cqr;
+	struct dasd_ccw_req *erp;
+	char *LO_data;		/* struct LO_eckd_data */
+	struct ccw1 *ccw;
 
 	DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 		    "Write not finished because of unexpected condition"
@@ -1777,65 +1776,65 @@ dasd_3990_update_1B(काष्ठा dasd_ccw_req * previous_erp, अक्ष
 	/* determine the original cqr */
 	cqr = previous_erp;
 
-	जबतक (cqr->refers != शून्य) अणु
+	while (cqr->refers != NULL) {
 		cqr = cqr->refers;
-	पूर्ण
+	}
 
-	अगर (scsw_is_पंचांग(&cqr->irb.scsw)) अणु
+	if (scsw_is_tm(&cqr->irb.scsw)) {
 		DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 			      "32 bit sense, action 1B, update,"
 			      " in transport mode - just retry");
-		वापस previous_erp;
-	पूर्ण
+		return previous_erp;
+	}
 
-	/* क्रम imprecise ending just करो शेष erp */
-	अगर (sense[1] & 0x01) अणु
+	/* for imprecise ending just do default erp */
+	if (sense[1] & 0x01) {
 		DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 			    "Imprecise ending is set - just retry");
 
 		previous_erp->status = DASD_CQR_FILLED;
 
-		वापस previous_erp;
-	पूर्ण
+		return previous_erp;
+	}
 
 	/* determine the address of the CCW to be restarted */
 	/* Imprecise ending is not set -> addr from IRB-SCSW */
 	cpa = previous_erp->irb.scsw.cmd.cpa;
 
-	अगर (cpa == 0) अणु
-		/* पूर्णांकernal error 02 -
+	if (cpa == 0) {
+		/* internal error 02 -
 		   Unable to determine address of the CCW to be restarted */
 		dev_err(&device->cdev->dev, "An error occurred in the DASD "
 			"device driver, reason=%s\n", "02");
 
 		previous_erp->status = DASD_CQR_FAILED;
 
-		वापस previous_erp;
-	पूर्ण
+		return previous_erp;
+	}
 
 	erp = previous_erp;
 
-	/* update the LO with the new वापसed sense data  */
-	LO_data = erp->data + माप(काष्ठा DE_eckd_data);
+	/* update the LO with the new returned sense data  */
+	LO_data = erp->data + sizeof(struct DE_eckd_data);
 
-	अगर ((sense[3] == 0x01) && (LO_data[1] & 0x01)) अणु
+	if ((sense[3] == 0x01) && (LO_data[1] & 0x01)) {
 		/* should not happen */
 		previous_erp->status = DASD_CQR_FAILED;
 
-		वापस previous_erp;
-	पूर्ण
+		return previous_erp;
+	}
 
-	अगर ((sense[7] & 0x3F) == 0x01) अणु
+	if ((sense[7] & 0x3F) == 0x01) {
 		/* operation code is WRITE DATA -> data area orientation */
 		LO_data[0] = 0x81;
 
-	पूर्ण अन्यथा अगर ((sense[7] & 0x3F) == 0x03) अणु
+	} else if ((sense[7] & 0x3F) == 0x03) {
 		/* operation code is FORMAT WRITE -> index orientation */
 		LO_data[0] = 0xC3;
 
-	पूर्ण अन्यथा अणु
+	} else {
 		LO_data[0] = sense[7];	/* operation */
-	पूर्ण
+	}
 
 	LO_data[1] = sense[8];	/* auxiliary */
 	LO_data[2] = sense[9];
@@ -1844,7 +1843,7 @@ dasd_3990_update_1B(काष्ठा dasd_ccw_req * previous_erp, अक्ष
 	LO_data[5] = sense[30];	/* seek_addr.cyl 2nd byte */
 	LO_data[7] = sense[31];	/* seek_addr.head 2nd byte */
 
-	स_नकल(&(LO_data[8]), &(sense[11]), 8);
+	memcpy(&(LO_data[8]), &(sense[11]), 8);
 
 	/* TIC to the failed ccw */
 	ccw = erp->cpaddr;	/* addr of DE ccw */
@@ -1854,216 +1853,216 @@ dasd_3990_update_1B(काष्ठा dasd_ccw_req * previous_erp, अक्ष
 
 	erp->status = DASD_CQR_FILLED;
 
-	वापस erp;
+	return erp;
 
-पूर्ण				/* end dasd_3990_update_1B */
+}				/* end dasd_3990_update_1B */
 
 /*
  * DASD_3990_ERP_COMPOUND_RETRY
  *
  * DESCRIPTION
  *   Handles the compound ERP action retry code.
- *   NOTE: At least one retry is करोne even अगर zero is specअगरied
+ *   NOTE: At least one retry is done even if zero is specified
  *	   by the sense data. This makes enqueueing of the request
  *	   easier.
  *
  * PARAMETER
  *   sense		sense data of the actual error
- *   erp		poपूर्णांकer to the currently created ERP
+ *   erp		pointer to the currently created ERP
  *
  * RETURN VALUES
- *   erp		modअगरied ERP poपूर्णांकer
+ *   erp		modified ERP pointer
  *
  */
-अटल व्योम
-dasd_3990_erp_compound_retry(काष्ठा dasd_ccw_req * erp, अक्षर *sense)
-अणु
+static void
+dasd_3990_erp_compound_retry(struct dasd_ccw_req * erp, char *sense)
+{
 
-	चयन (sense[25] & 0x03) अणु
-	हाल 0x00:		/* no not retry */
+	switch (sense[25] & 0x03) {
+	case 0x00:		/* no not retry */
 		erp->retries = 1;
-		अवरोध;
+		break;
 
-	हाल 0x01:		/* retry 2 बार */
+	case 0x01:		/* retry 2 times */
 		erp->retries = 2;
-		अवरोध;
+		break;
 
-	हाल 0x02:		/* retry 10 बार */
+	case 0x02:		/* retry 10 times */
 		erp->retries = 10;
-		अवरोध;
+		break;
 
-	हाल 0x03:		/* retry 256 बार */
+	case 0x03:		/* retry 256 times */
 		erp->retries = 256;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		BUG();
-	पूर्ण
+	}
 
 	erp->function = dasd_3990_erp_compound_retry;
 
-पूर्ण				/* end dasd_3990_erp_compound_retry */
+}				/* end dasd_3990_erp_compound_retry */
 
 /*
  * DASD_3990_ERP_COMPOUND_PATH
  *
  * DESCRIPTION
- *   Handles the compound ERP action क्रम retry on alternate
+ *   Handles the compound ERP action for retry on alternate
  *   channel path.
  *
  * PARAMETER
  *   sense		sense data of the actual error
- *   erp		poपूर्णांकer to the currently created ERP
+ *   erp		pointer to the currently created ERP
  *
  * RETURN VALUES
- *   erp		modअगरied ERP poपूर्णांकer
+ *   erp		modified ERP pointer
  *
  */
-अटल व्योम
-dasd_3990_erp_compound_path(काष्ठा dasd_ccw_req * erp, अक्षर *sense)
-अणु
-	अगर (sense[25] & DASD_SENSE_BIT_3) अणु
+static void
+dasd_3990_erp_compound_path(struct dasd_ccw_req * erp, char *sense)
+{
+	if (sense[25] & DASD_SENSE_BIT_3) {
 		dasd_3990_erp_alternate_path(erp);
 
-		अगर (erp->status == DASD_CQR_FAILED &&
-		    !test_bit(DASD_CQR_VERIFY_PATH, &erp->flags)) अणु
+		if (erp->status == DASD_CQR_FAILED &&
+		    !test_bit(DASD_CQR_VERIFY_PATH, &erp->flags)) {
 			/* reset the lpm and the status to be able to
 			 * try further actions. */
 			erp->lpm = dasd_path_get_opm(erp->startdev);
 			erp->status = DASD_CQR_NEED_ERP;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	erp->function = dasd_3990_erp_compound_path;
 
-पूर्ण				/* end dasd_3990_erp_compound_path */
+}				/* end dasd_3990_erp_compound_path */
 
 /*
  * DASD_3990_ERP_COMPOUND_CODE
  *
  * DESCRIPTION
- *   Handles the compound ERP action क्रम retry code.
+ *   Handles the compound ERP action for retry code.
  *
  * PARAMETER
  *   sense		sense data of the actual error
- *   erp		poपूर्णांकer to the currently created ERP
+ *   erp		pointer to the currently created ERP
  *
  * RETURN VALUES
- *   erp		NEW ERP poपूर्णांकer
+ *   erp		NEW ERP pointer
  *
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_compound_code(काष्ठा dasd_ccw_req * erp, अक्षर *sense)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_erp_compound_code(struct dasd_ccw_req * erp, char *sense)
+{
 
-	अगर (sense[25] & DASD_SENSE_BIT_2) अणु
+	if (sense[25] & DASD_SENSE_BIT_2) {
 
-		चयन (sense[28]) अणु
-		हाल 0x17:
+		switch (sense[28]) {
+		case 0x17:
 			/* issue a Diagnostic Control command with an
-			 * Inhibit Write subcommand and controller modअगरier */
+			 * Inhibit Write subcommand and controller modifier */
 			erp = dasd_3990_erp_DCTL(erp, 0x20);
-			अवरोध;
+			break;
 
-		हाल 0x25:
-			/* रुको क्रम 5 seconds and retry again */
+		case 0x25:
+			/* wait for 5 seconds and retry again */
 			erp->retries = 1;
 
 			dasd_3990_erp_block_queue (erp, 5*HZ);
-			अवरोध;
+			break;
 
-		शेष:
-			/* should not happen - जारी */
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		default:
+			/* should not happen - continue */
+			break;
+		}
+	}
 
 	erp->function = dasd_3990_erp_compound_code;
 
-	वापस erp;
+	return erp;
 
-पूर्ण				/* end dasd_3990_erp_compound_code */
+}				/* end dasd_3990_erp_compound_code */
 
 /*
  * DASD_3990_ERP_COMPOUND_CONFIG
  *
  * DESCRIPTION
- *   Handles the compound ERP action क्रम configuration
+ *   Handles the compound ERP action for configuration
  *   dependent error.
  *   Note: duplex handling is not implemented (yet).
  *
  * PARAMETER
  *   sense		sense data of the actual error
- *   erp		poपूर्णांकer to the currently created ERP
+ *   erp		pointer to the currently created ERP
  *
  * RETURN VALUES
- *   erp		modअगरied ERP poपूर्णांकer
+ *   erp		modified ERP pointer
  *
  */
-अटल व्योम
-dasd_3990_erp_compound_config(काष्ठा dasd_ccw_req * erp, अक्षर *sense)
-अणु
+static void
+dasd_3990_erp_compound_config(struct dasd_ccw_req * erp, char *sense)
+{
 
-	अगर ((sense[25] & DASD_SENSE_BIT_1) && (sense[26] & DASD_SENSE_BIT_2)) अणु
+	if ((sense[25] & DASD_SENSE_BIT_1) && (sense[26] & DASD_SENSE_BIT_2)) {
 
 		/* set to suspended duplex state then restart
-		   पूर्णांकernal error 05 - Set device to suspended duplex state
-		   should be करोne */
-		काष्ठा dasd_device *device = erp->startdev;
+		   internal error 05 - Set device to suspended duplex state
+		   should be done */
+		struct dasd_device *device = erp->startdev;
 		dev_err(&device->cdev->dev,
 			"An error occurred in the DASD device driver, "
 			"reason=%s\n", "05");
 
-	पूर्ण
+	}
 
 	erp->function = dasd_3990_erp_compound_config;
 
-पूर्ण				/* end dasd_3990_erp_compound_config */
+}				/* end dasd_3990_erp_compound_config */
 
 /*
  * DASD_3990_ERP_COMPOUND
  *
  * DESCRIPTION
- *   Does the further compound program action अगर
+ *   Does the further compound program action if
  *   compound retry was not successful.
  *
  * PARAMETER
  *   sense		sense data of the actual error
- *   erp		poपूर्णांकer to the current (failed) ERP
+ *   erp		pointer to the current (failed) ERP
  *
  * RETURN VALUES
- *   erp		(additional) ERP poपूर्णांकer
+ *   erp		(additional) ERP pointer
  *
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_compound(काष्ठा dasd_ccw_req * erp, अक्षर *sense)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_erp_compound(struct dasd_ccw_req * erp, char *sense)
+{
 
-	अगर ((erp->function == dasd_3990_erp_compound_retry) &&
-	    (erp->status == DASD_CQR_NEED_ERP)) अणु
+	if ((erp->function == dasd_3990_erp_compound_retry) &&
+	    (erp->status == DASD_CQR_NEED_ERP)) {
 
 		dasd_3990_erp_compound_path(erp, sense);
-	पूर्ण
+	}
 
-	अगर ((erp->function == dasd_3990_erp_compound_path) &&
-	    (erp->status == DASD_CQR_NEED_ERP)) अणु
+	if ((erp->function == dasd_3990_erp_compound_path) &&
+	    (erp->status == DASD_CQR_NEED_ERP)) {
 
 		erp = dasd_3990_erp_compound_code(erp, sense);
-	पूर्ण
+	}
 
-	अगर ((erp->function == dasd_3990_erp_compound_code) &&
-	    (erp->status == DASD_CQR_NEED_ERP)) अणु
+	if ((erp->function == dasd_3990_erp_compound_code) &&
+	    (erp->status == DASD_CQR_NEED_ERP)) {
 
 		dasd_3990_erp_compound_config(erp, sense);
-	पूर्ण
+	}
 
-	/* अगर no compound action ERP specअगरied, the request failed */
-	अगर (erp->status == DASD_CQR_NEED_ERP)
+	/* if no compound action ERP specified, the request failed */
+	if (erp->status == DASD_CQR_NEED_ERP)
 		erp->status = DASD_CQR_FAILED;
 
-	वापस erp;
+	return erp;
 
-पूर्ण				/* end dasd_3990_erp_compound */
+}				/* end dasd_3990_erp_compound */
 
 /*
  *DASD_3990_ERP_HANDLE_SIM
@@ -2077,22 +2076,22 @@ dasd_3990_erp_compound(काष्ठा dasd_ccw_req * erp, अक्षर *s
  * RETURN VALUES
  *   none
  */
-व्योम
-dasd_3990_erp_handle_sim(काष्ठा dasd_device *device, अक्षर *sense)
-अणु
-	/* prपूर्णांक message according to log or message to चालक mode */
-	अगर ((sense[24] & DASD_SIM_MSG_TO_OP) || (sense[1] & 0x10)) अणु
-		/* prपूर्णांक SIM SRC from RefCode */
+void
+dasd_3990_erp_handle_sim(struct dasd_device *device, char *sense)
+{
+	/* print message according to log or message to operator mode */
+	if ((sense[24] & DASD_SIM_MSG_TO_OP) || (sense[1] & 0x10)) {
+		/* print SIM SRC from RefCode */
 		dev_err(&device->cdev->dev, "SIM - SRC: "
 			    "%02x%02x%02x%02x\n", sense[22],
 			    sense[23], sense[11], sense[12]);
-	पूर्ण अन्यथा अगर (sense[24] & DASD_SIM_LOG) अणु
-		/* prपूर्णांक SIM SRC Refcode */
+	} else if (sense[24] & DASD_SIM_LOG) {
+		/* print SIM SRC Refcode */
 		dev_warn(&device->cdev->dev, "log SIM - SRC: "
 			    "%02x%02x%02x%02x\n", sense[22],
 			    sense[23], sense[11], sense[12]);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * DASD_3990_ERP_INSPECT_32
@@ -2103,80 +2102,80 @@ dasd_3990_erp_handle_sim(काष्ठा dasd_device *device, अक्षर
  *
  * PARAMETER
  *   sense		sense data of the actual error
- *   erp		poपूर्णांकer to the currently created शेष ERP
+ *   erp		pointer to the currently created default ERP
  *
  * RETURN VALUES
- *   erp_filled		poपूर्णांकer to the ERP
+ *   erp_filled		pointer to the ERP
  *
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_inspect_32(काष्ठा dasd_ccw_req * erp, अक्षर *sense)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_erp_inspect_32(struct dasd_ccw_req * erp, char *sense)
+{
 
-	काष्ठा dasd_device *device = erp->startdev;
+	struct dasd_device *device = erp->startdev;
 
 	erp->function = dasd_3990_erp_inspect_32;
 
-	/* check क्रम SIM sense data */
-	अगर ((sense[6] & DASD_SIM_SENSE) == DASD_SIM_SENSE)
+	/* check for SIM sense data */
+	if ((sense[6] & DASD_SIM_SENSE) == DASD_SIM_SENSE)
 		dasd_3990_erp_handle_sim(device, sense);
 
-	अगर (sense[25] & DASD_SENSE_BIT_0) अणु
+	if (sense[25] & DASD_SENSE_BIT_0) {
 
 		/* compound program action codes (byte25 bit 0 == '1') */
 		dasd_3990_erp_compound_retry(erp, sense);
 
-	पूर्ण अन्यथा अणु
+	} else {
 
 		/* single program action codes (byte25 bit 0 == '0') */
-		चयन (sense[25]) अणु
+		switch (sense[25]) {
 
-		हाल 0x00:	/* success - use शेष ERP क्रम retries */
+		case 0x00:	/* success - use default ERP for retries */
 			DBF_DEV_EVENT(DBF_DEBUG, device, "%s",
 				    "ERP called for successful request"
 				    " - just retry");
-			अवरोध;
+			break;
 
-		हाल 0x01:	/* fatal error */
+		case 0x01:	/* fatal error */
 			dev_err(&device->cdev->dev,
 				    "ERP failed for the DASD\n");
 
 			erp = dasd_3990_erp_cleanup(erp, DASD_CQR_FAILED);
-			अवरोध;
+			break;
 
-		हाल 0x02:	/* पूर्णांकervention required */
-		हाल 0x03:	/* पूर्णांकervention required during dual copy */
-			erp = dasd_3990_erp_पूर्णांक_req(erp);
-			अवरोध;
+		case 0x02:	/* intervention required */
+		case 0x03:	/* intervention required during dual copy */
+			erp = dasd_3990_erp_int_req(erp);
+			break;
 
-		हाल 0x0F:  /* length mismatch during update ग_लिखो command
-			       पूर्णांकernal error 08 - update ग_लिखो command error*/
+		case 0x0F:  /* length mismatch during update write command
+			       internal error 08 - update write command error*/
 			dev_err(&device->cdev->dev, "An error occurred in the "
 				"DASD device driver, reason=%s\n", "08");
 
 			erp = dasd_3990_erp_cleanup(erp, DASD_CQR_FAILED);
-			अवरोध;
+			break;
 
-		हाल 0x10:  /* logging required क्रम other channel program */
+		case 0x10:  /* logging required for other channel program */
 			erp = dasd_3990_erp_action_10_32(erp, sense);
-			अवरोध;
+			break;
 
-		हाल 0x15:	/* next track outside defined extend
-				   पूर्णांकernal error 07 - The next track is not
+		case 0x15:	/* next track outside defined extend
+				   internal error 07 - The next track is not
 				   within the defined storage extent */
 			dev_err(&device->cdev->dev,
 				"An error occurred in the DASD device driver, "
 				"reason=%s\n", "07");
 
 			erp = dasd_3990_erp_cleanup(erp, DASD_CQR_FAILED);
-			अवरोध;
+			break;
 
-		हाल 0x1B:	/* unexpected condition during ग_लिखो */
+		case 0x1B:	/* unexpected condition during write */
 
 			erp = dasd_3990_erp_action_1B_32(erp, sense);
-			अवरोध;
+			break;
 
-		हाल 0x1C:	/* invalid data */
+		case 0x1C:	/* invalid data */
 			dev_emerg(&device->cdev->dev,
 				    "Data recovered during retry with PCI "
 				    "fetch mode active\n");
@@ -2185,93 +2184,93 @@ dasd_3990_erp_inspect_32(काष्ठा dasd_ccw_req * erp, अक्षर 
 			panic
 			    ("Invalid data - No way to inform application "
 			     "about the possibly incorrect data");
-			अवरोध;
+			break;
 
-		हाल 0x1D:	/* state-change pending */
+		case 0x1D:	/* state-change pending */
 			DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 				    "A State change pending condition exists "
 				    "for the subsystem or device");
 
 			erp = dasd_3990_erp_action_4(erp, sense);
-			अवरोध;
+			break;
 
-		हाल 0x1E:	/* busy */
+		case 0x1E:	/* busy */
 			DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 				    "Busy condition exists "
 				    "for the subsystem or device");
                         erp = dasd_3990_erp_action_4(erp, sense);
-			अवरोध;
+			break;
 
-		शेष:	/* all others errors - शेष erp  */
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		default:	/* all others errors - default erp  */
+			break;
+		}
+	}
 
-	वापस erp;
+	return erp;
 
-पूर्ण				/* end dasd_3990_erp_inspect_32 */
+}				/* end dasd_3990_erp_inspect_32 */
 
-अटल व्योम dasd_3990_erp_disable_path(काष्ठा dasd_device *device, __u8 lpum)
-अणु
-	पूर्णांक pos = pathmask_to_pos(lpum);
+static void dasd_3990_erp_disable_path(struct dasd_device *device, __u8 lpum)
+{
+	int pos = pathmask_to_pos(lpum);
 
-	अगर (!(device->features & DASD_FEATURE_PATH_AUTODISABLE)) अणु
+	if (!(device->features & DASD_FEATURE_PATH_AUTODISABLE)) {
 		dev_err(&device->cdev->dev,
 			"Path %x.%02x (pathmask %02x) is operational despite excessive IFCCs\n",
 			device->path[pos].cssid, device->path[pos].chpid, lpum);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* no reमुख्यing path, cannot disable */
-	अगर (!(dasd_path_get_opm(device) & ~lpum)) अणु
+	/* no remaining path, cannot disable */
+	if (!(dasd_path_get_opm(device) & ~lpum)) {
 		dev_err(&device->cdev->dev,
 			"Last path %x.%02x (pathmask %02x) is operational despite excessive IFCCs\n",
 			device->path[pos].cssid, device->path[pos].chpid, lpum);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	dev_err(&device->cdev->dev,
 		"Path %x.%02x (pathmask %02x) is disabled - IFCC threshold exceeded\n",
 		device->path[pos].cssid, device->path[pos].chpid, lpum);
-	dasd_path_हटाओ_opm(device, lpum);
-	dasd_path_add_अगरccpm(device, lpum);
+	dasd_path_remove_opm(device, lpum);
+	dasd_path_add_ifccpm(device, lpum);
 
 out:
 	device->path[pos].errorclk = 0;
 	atomic_set(&device->path[pos].error_count, 0);
-पूर्ण
+}
 
-अटल व्योम dasd_3990_erp_account_error(काष्ठा dasd_ccw_req *erp)
-अणु
-	काष्ठा dasd_device *device = erp->startdev;
+static void dasd_3990_erp_account_error(struct dasd_ccw_req *erp)
+{
+	struct dasd_device *device = erp->startdev;
 	__u8 lpum = erp->refers->irb.esw.esw1.lpum;
-	पूर्णांक pos = pathmask_to_pos(lpum);
-	अचिन्हित दीर्घ clk;
+	int pos = pathmask_to_pos(lpum);
+	unsigned long clk;
 
-	अगर (!device->path_thrhld)
-		वापस;
+	if (!device->path_thrhld)
+		return;
 
-	clk = get_tod_घड़ी();
+	clk = get_tod_clock();
 	/*
-	 * check अगर the last error is दीर्घer ago than the समयout,
-	 * अगर so reset error state
+	 * check if the last error is longer ago than the timeout,
+	 * if so reset error state
 	 */
-	अगर ((tod_to_ns(clk - device->path[pos].errorclk) / NSEC_PER_SEC)
-	    >= device->path_पूर्णांकerval) अणु
+	if ((tod_to_ns(clk - device->path[pos].errorclk) / NSEC_PER_SEC)
+	    >= device->path_interval) {
 		atomic_set(&device->path[pos].error_count, 0);
 		device->path[pos].errorclk = 0;
-	पूर्ण
+	}
 	atomic_inc(&device->path[pos].error_count);
 	device->path[pos].errorclk = clk;
-	/* threshold exceeded disable path अगर possible */
-	अगर (atomic_पढ़ो(&device->path[pos].error_count) >=
+	/* threshold exceeded disable path if possible */
+	if (atomic_read(&device->path[pos].error_count) >=
 	    device->path_thrhld)
 		dasd_3990_erp_disable_path(device, lpum);
-पूर्ण
+}
 
 /*
  *****************************************************************************
- * मुख्य ERP control functions (24 and 32 byte sense)
+ * main ERP control functions (24 and 32 byte sense)
  *****************************************************************************
  */
 
@@ -2279,77 +2278,77 @@ out:
  * DASD_3990_ERP_CONTROL_CHECK
  *
  * DESCRIPTION
- *   Does a generic inspection अगर a control check occurred and sets up
+ *   Does a generic inspection if a control check occurred and sets up
  *   the related error recovery procedure
  *
  * PARAMETER
- *   erp		poपूर्णांकer to the currently created शेष ERP
+ *   erp		pointer to the currently created default ERP
  *
  * RETURN VALUES
- *   erp_filled		poपूर्णांकer to the erp
+ *   erp_filled		pointer to the erp
  */
 
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_control_check(काष्ठा dasd_ccw_req *erp)
-अणु
-	काष्ठा dasd_device *device = erp->startdev;
+static struct dasd_ccw_req *
+dasd_3990_erp_control_check(struct dasd_ccw_req *erp)
+{
+	struct dasd_device *device = erp->startdev;
 
-	अगर (scsw_cstat(&erp->refers->irb.scsw) & (SCHN_STAT_INTF_CTRL_CHK
-					   | SCHN_STAT_CHN_CTRL_CHK)) अणु
+	if (scsw_cstat(&erp->refers->irb.scsw) & (SCHN_STAT_INTF_CTRL_CHK
+					   | SCHN_STAT_CHN_CTRL_CHK)) {
 		DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 			    "channel or interface control check");
 		dasd_3990_erp_account_error(erp);
-		erp = dasd_3990_erp_action_4(erp, शून्य);
-	पूर्ण
-	वापस erp;
-पूर्ण
+		erp = dasd_3990_erp_action_4(erp, NULL);
+	}
+	return erp;
+}
 
 /*
  * DASD_3990_ERP_INSPECT
  *
  * DESCRIPTION
- *   Does a detailed inspection क्रम sense data by calling either
+ *   Does a detailed inspection for sense data by calling either
  *   the 24-byte or the 32-byte inspection routine.
  *
  * PARAMETER
- *   erp		poपूर्णांकer to the currently created शेष ERP
+ *   erp		pointer to the currently created default ERP
  * RETURN VALUES
- *   erp_new		contens was possibly modअगरied
+ *   erp_new		contens was possibly modified
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_inspect(काष्ठा dasd_ccw_req *erp)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_erp_inspect(struct dasd_ccw_req *erp)
+{
 
-	काष्ठा dasd_ccw_req *erp_new = शून्य;
-	अक्षर *sense;
+	struct dasd_ccw_req *erp_new = NULL;
+	char *sense;
 
-	/* अगर this problem occurred on an alias retry on base */
+	/* if this problem occurred on an alias retry on base */
 	erp_new = dasd_3990_erp_inspect_alias(erp);
-	अगर (erp_new)
-		वापस erp_new;
+	if (erp_new)
+		return erp_new;
 
 	/* sense data are located in the refers record of the
-	 * alपढ़ोy set up new ERP !
-	 * check अगर concurrent sens is available
+	 * already set up new ERP !
+	 * check if concurrent sens is available
 	 */
 	sense = dasd_get_sense(&erp->refers->irb);
-	अगर (!sense)
+	if (!sense)
 		erp_new = dasd_3990_erp_control_check(erp);
 	/* distinguish between 24 and 32 byte sense data */
-	अन्यथा अगर (sense[27] & DASD_SENSE_BIT_0) अणु
+	else if (sense[27] & DASD_SENSE_BIT_0) {
 
 		/* inspect the 24 byte sense data */
 		erp_new = dasd_3990_erp_inspect_24(erp, sense);
 
-	पूर्ण अन्यथा अणु
+	} else {
 
 		/* inspect the 32 byte sense data */
 		erp_new = dasd_3990_erp_inspect_32(erp, sense);
 
-	पूर्ण	/* end distinguish between 24 and 32 byte sense data */
+	}	/* end distinguish between 24 and 32 byte sense data */
 
-	वापस erp_new;
-पूर्ण
+	return erp_new;
+}
 
 /*
  * DASD_3990_ERP_ADD_ERP
@@ -2357,77 +2356,77 @@ dasd_3990_erp_inspect(काष्ठा dasd_ccw_req *erp)
  * DESCRIPTION
  *   This function adds an additional request block (ERP) to the head of
  *   the given cqr (or erp).
- *   For a command mode cqr the erp is initialized as an शेष erp
+ *   For a command mode cqr the erp is initialized as an default erp
  *   (retry TIC).
- *   For transport mode we make a copy of the original TCW (poपूर्णांकs to
+ *   For transport mode we make a copy of the original TCW (points to
  *   the original TCCB, TIDALs, etc.) but give it a fresh
  *   TSB so the original sense data will not be changed.
  *
  * PARAMETER
- *   cqr		head of the current ERP-chain (or single cqr अगर
+ *   cqr		head of the current ERP-chain (or single cqr if
  *			first error)
  * RETURN VALUES
- *   erp		poपूर्णांकer to new ERP-chain head
+ *   erp		pointer to new ERP-chain head
  */
-अटल काष्ठा dasd_ccw_req *dasd_3990_erp_add_erp(काष्ठा dasd_ccw_req *cqr)
-अणु
+static struct dasd_ccw_req *dasd_3990_erp_add_erp(struct dasd_ccw_req *cqr)
+{
 
-	काष्ठा dasd_device *device = cqr->startdev;
-	काष्ठा ccw1 *ccw;
-	काष्ठा dasd_ccw_req *erp;
-	पूर्णांक cplength, datasize;
-	काष्ठा tcw *tcw;
-	काष्ठा tsb *tsb;
+	struct dasd_device *device = cqr->startdev;
+	struct ccw1 *ccw;
+	struct dasd_ccw_req *erp;
+	int cplength, datasize;
+	struct tcw *tcw;
+	struct tsb *tsb;
 
-	अगर (cqr->cpmode == 1) अणु
+	if (cqr->cpmode == 1) {
 		cplength = 0;
 		/* TCW needs to be 64 byte aligned, so leave enough room */
-		datasize = 64 + माप(काष्ठा tcw) + माप(काष्ठा tsb);
-	पूर्ण अन्यथा अणु
+		datasize = 64 + sizeof(struct tcw) + sizeof(struct tsb);
+	} else {
 		cplength = 2;
 		datasize = 0;
-	पूर्ण
+	}
 
 	/* allocate additional request block */
-	erp = dasd_alloc_erp_request((अक्षर *) &cqr->magic,
+	erp = dasd_alloc_erp_request((char *) &cqr->magic,
 				     cplength, datasize, device);
-	अगर (IS_ERR(erp)) अणु
-                अगर (cqr->retries <= 0) अणु
+	if (IS_ERR(erp)) {
+                if (cqr->retries <= 0) {
 			DBF_DEV_EVENT(DBF_ERR, device, "%s",
 				    "Unable to allocate ERP request");
 			cqr->status = DASD_CQR_FAILED;
-			cqr->stopclk = get_tod_घड़ी();
-		पूर्ण अन्यथा अणु
+			cqr->stopclk = get_tod_clock();
+		} else {
 			DBF_DEV_EVENT(DBF_ERR, device,
                                      "Unable to allocate ERP request "
 				     "(%i retries left)",
                                      cqr->retries);
-			dasd_block_set_समयr(device->block, (HZ << 3));
-                पूर्ण
-		वापस erp;
-	पूर्ण
+			dasd_block_set_timer(device->block, (HZ << 3));
+                }
+		return erp;
+	}
 
 	ccw = cqr->cpaddr;
-	अगर (cqr->cpmode == 1) अणु
+	if (cqr->cpmode == 1) {
 		/* make a shallow copy of the original tcw but set new tsb */
 		erp->cpmode = 1;
 		erp->cpaddr = PTR_ALIGN(erp->data, 64);
 		tcw = erp->cpaddr;
-		tsb = (काष्ठा tsb *) &tcw[1];
-		*tcw = *((काष्ठा tcw *)cqr->cpaddr);
-		tcw->tsb = (दीर्घ)tsb;
-	पूर्ण अन्यथा अगर (ccw->cmd_code == DASD_ECKD_CCW_PSF) अणु
+		tsb = (struct tsb *) &tcw[1];
+		*tcw = *((struct tcw *)cqr->cpaddr);
+		tcw->tsb = (long)tsb;
+	} else if (ccw->cmd_code == DASD_ECKD_CCW_PSF) {
 		/* PSF cannot be chained from NOOP/TIC */
 		erp->cpaddr = cqr->cpaddr;
-	पूर्ण अन्यथा अणु
-		/* initialize request with शेष TIC to current ERP/CQR */
+	} else {
+		/* initialize request with default TIC to current ERP/CQR */
 		ccw = erp->cpaddr;
 		ccw->cmd_code = CCW_CMD_NOOP;
 		ccw->flags = CCW_FLAG_CC;
 		ccw++;
 		ccw->cmd_code = CCW_CMD_TIC;
-		ccw->cda      = (दीर्घ)(cqr->cpaddr);
-	पूर्ण
+		ccw->cda      = (long)(cqr->cpaddr);
+	}
 
 	erp->flags = cqr->flags;
 	erp->function = dasd_3990_erp_add_erp;
@@ -2438,11 +2437,11 @@ dasd_3990_erp_inspect(काष्ठा dasd_ccw_req *erp)
 	erp->magic    = cqr->magic;
 	erp->expires  = cqr->expires;
 	erp->retries  = 256;
-	erp->buildclk = get_tod_घड़ी();
+	erp->buildclk = get_tod_clock();
 	erp->status = DASD_CQR_FILLED;
 
-	वापस erp;
-पूर्ण
+	return erp;
+}
 
 /*
  * DASD_3990_ERP_ADDITIONAL_ERP
@@ -2453,42 +2452,42 @@ dasd_3990_erp_inspect(काष्ठा dasd_ccw_req *erp)
  *   determined based on the sense data.
  *
  * PARAMETER
- *   cqr		head of the current ERP-chain (or single cqr अगर
+ *   cqr		head of the current ERP-chain (or single cqr if
  *			first error)
  *
  * RETURN VALUES
- *   erp		poपूर्णांकer to new ERP-chain head
+ *   erp		pointer to new ERP-chain head
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_additional_erp(काष्ठा dasd_ccw_req * cqr)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_erp_additional_erp(struct dasd_ccw_req * cqr)
+{
 
-	काष्ठा dasd_ccw_req *erp = शून्य;
+	struct dasd_ccw_req *erp = NULL;
 
-	/* add erp and initialize with शेष TIC */
+	/* add erp and initialize with default TIC */
 	erp = dasd_3990_erp_add_erp(cqr);
 
-	अगर (IS_ERR(erp))
-		वापस erp;
+	if (IS_ERR(erp))
+		return erp;
 
-	/* inspect sense, determine specअगरic ERP अगर possible */
-	अगर (erp != cqr) अणु
+	/* inspect sense, determine specific ERP if possible */
+	if (erp != cqr) {
 
 		erp = dasd_3990_erp_inspect(erp);
-	पूर्ण
+	}
 
-	वापस erp;
+	return erp;
 
-पूर्ण				/* end dasd_3990_erp_additional_erp */
+}				/* end dasd_3990_erp_additional_erp */
 
 /*
  * DASD_3990_ERP_ERROR_MATCH
  *
  * DESCRIPTION
- *   Check अगर the device status of the given cqr is the same.
+ *   Check if the device status of the given cqr is the same.
  *   This means that the failed CCW and the relevant sense data
  *   must match.
- *   I करोn't distinguish between 24 and 32 byte sense because in हाल of
+ *   I don't distinguish between 24 and 32 byte sense because in case of
  *   24 byte sense byte 25 and 27 is set as well.
  *
  * PARAMETER
@@ -2496,164 +2495,164 @@ dasd_3990_erp_additional_erp(काष्ठा dasd_ccw_req * cqr)
  *   cqr2		second cqr.
  *
  * RETURN VALUES
- *   match		'boolean' क्रम match found
- *			वापसs 1 अगर match found, otherwise 0.
+ *   match		'boolean' for match found
+ *			returns 1 if match found, otherwise 0.
  */
-अटल पूर्णांक dasd_3990_erp_error_match(काष्ठा dasd_ccw_req *cqr1,
-				     काष्ठा dasd_ccw_req *cqr2)
-अणु
-	अक्षर *sense1, *sense2;
+static int dasd_3990_erp_error_match(struct dasd_ccw_req *cqr1,
+				     struct dasd_ccw_req *cqr2)
+{
+	char *sense1, *sense2;
 
-	अगर (cqr1->startdev != cqr2->startdev)
-		वापस 0;
+	if (cqr1->startdev != cqr2->startdev)
+		return 0;
 
 	sense1 = dasd_get_sense(&cqr1->irb);
 	sense2 = dasd_get_sense(&cqr2->irb);
 
-	/* one request has sense data, the other not -> no match, वापस 0 */
-	अगर (!sense1 != !sense2)
-		वापस 0;
-	/* no sense data in both हालs -> check cstat क्रम IFCC */
-	अगर (!sense1 && !sense2)	अणु
-		अगर ((scsw_cstat(&cqr1->irb.scsw) & (SCHN_STAT_INTF_CTRL_CHK |
+	/* one request has sense data, the other not -> no match, return 0 */
+	if (!sense1 != !sense2)
+		return 0;
+	/* no sense data in both cases -> check cstat for IFCC */
+	if (!sense1 && !sense2)	{
+		if ((scsw_cstat(&cqr1->irb.scsw) & (SCHN_STAT_INTF_CTRL_CHK |
 						    SCHN_STAT_CHN_CTRL_CHK)) ==
 		    (scsw_cstat(&cqr2->irb.scsw) & (SCHN_STAT_INTF_CTRL_CHK |
 						    SCHN_STAT_CHN_CTRL_CHK)))
-			वापस 1; /* match with अगरcc*/
-	पूर्ण
+			return 1; /* match with ifcc*/
+	}
 	/* check sense data; byte 0-2,25,27 */
-	अगर (!(sense1 && sense2 &&
-	      (स_भेद(sense1, sense2, 3) == 0) &&
+	if (!(sense1 && sense2 &&
+	      (memcmp(sense1, sense2, 3) == 0) &&
 	      (sense1[27] == sense2[27]) &&
-	      (sense1[25] == sense2[25]))) अणु
+	      (sense1[25] == sense2[25]))) {
 
-		वापस 0;	/* sense करोesn't match */
-	पूर्ण
+		return 0;	/* sense doesn't match */
+	}
 
-	वापस 1;		/* match */
+	return 1;		/* match */
 
-पूर्ण				/* end dasd_3990_erp_error_match */
+}				/* end dasd_3990_erp_error_match */
 
 /*
  * DASD_3990_ERP_IN_ERP
  *
  * DESCRIPTION
- *   check अगर the current error alपढ़ोy happened beक्रमe.
- *   quick निकास अगर current cqr is not an ERP (cqr->refers=शून्य)
+ *   check if the current error already happened before.
+ *   quick exit if current cqr is not an ERP (cqr->refers=NULL)
  *
  * PARAMETER
- *   cqr		failed cqr (either original cqr or alपढ़ोy an erp)
+ *   cqr		failed cqr (either original cqr or already an erp)
  *
  * RETURN VALUES
- *   erp		erp-poपूर्णांकer to the alपढ़ोy defined error
+ *   erp		erp-pointer to the already defined error
  *			recovery procedure OR
- *			शून्य अगर a 'new' error occurred.
+ *			NULL if a 'new' error occurred.
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_in_erp(काष्ठा dasd_ccw_req *cqr)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_erp_in_erp(struct dasd_ccw_req *cqr)
+{
 
-	काष्ठा dasd_ccw_req *erp_head = cqr,	/* save erp chain head */
-	*erp_match = शून्य;	/* save erp chain head */
-	पूर्णांक match = 0;		/* 'boolean' क्रम matching error found */
+	struct dasd_ccw_req *erp_head = cqr,	/* save erp chain head */
+	*erp_match = NULL;	/* save erp chain head */
+	int match = 0;		/* 'boolean' for matching error found */
 
-	अगर (cqr->refers == शून्य) अणु	/* वापस अगर not in erp */
-		वापस शून्य;
-	पूर्ण
+	if (cqr->refers == NULL) {	/* return if not in erp */
+		return NULL;
+	}
 
-	/* check the erp/cqr chain क्रम current error */
-	करो अणु
+	/* check the erp/cqr chain for current error */
+	do {
 		match = dasd_3990_erp_error_match(erp_head, cqr->refers);
 		erp_match = cqr;	/* save possible matching erp  */
 		cqr = cqr->refers;	/* check next erp/cqr in queue */
 
-	पूर्ण जबतक ((cqr->refers != शून्य) && (!match));
+	} while ((cqr->refers != NULL) && (!match));
 
-	अगर (!match) अणु
-		वापस शून्य;	/* no match was found */
-	पूर्ण
+	if (!match) {
+		return NULL;	/* no match was found */
+	}
 
-	वापस erp_match;	/* वापस address of matching erp */
+	return erp_match;	/* return address of matching erp */
 
-पूर्ण				/* END dasd_3990_erp_in_erp */
+}				/* END dasd_3990_erp_in_erp */
 
 /*
  * DASD_3990_ERP_FURTHER_ERP (24 & 32 byte sense)
  *
  * DESCRIPTION
- *   No retry is left क्रम the current ERP. Check what has to be करोne
+ *   No retry is left for the current ERP. Check what has to be done
  *   with the ERP.
- *     - करो further defined ERP action or
- *     - रुको क्रम पूर्णांकerrupt or
- *     - निकास with permanent error
+ *     - do further defined ERP action or
+ *     - wait for interrupt or
+ *     - exit with permanent error
  *
  * PARAMETER
  *   erp		ERP which is in progress with no retry left
  *
  * RETURN VALUES
- *   erp		modअगरied/additional ERP
+ *   erp		modified/additional ERP
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_further_erp(काष्ठा dasd_ccw_req *erp)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_erp_further_erp(struct dasd_ccw_req *erp)
+{
 
-	काष्ठा dasd_device *device = erp->startdev;
-	अक्षर *sense = dasd_get_sense(&erp->irb);
+	struct dasd_device *device = erp->startdev;
+	char *sense = dasd_get_sense(&erp->irb);
 
-	/* check क्रम 24 byte sense ERP */
-	अगर ((erp->function == dasd_3990_erp_bus_out) ||
+	/* check for 24 byte sense ERP */
+	if ((erp->function == dasd_3990_erp_bus_out) ||
 	    (erp->function == dasd_3990_erp_action_1) ||
-	    (erp->function == dasd_3990_erp_action_4)) अणु
+	    (erp->function == dasd_3990_erp_action_4)) {
 
 		erp = dasd_3990_erp_action_1(erp);
 
-	पूर्ण अन्यथा अगर (erp->function == dasd_3990_erp_action_1_sec) अणु
+	} else if (erp->function == dasd_3990_erp_action_1_sec) {
 		erp = dasd_3990_erp_action_1_sec(erp);
-	पूर्ण अन्यथा अगर (erp->function == dasd_3990_erp_action_5) अणु
+	} else if (erp->function == dasd_3990_erp_action_5) {
 
 		/* retries have not been successful */
-		/* prepare erp क्रम retry on dअगरferent channel path */
+		/* prepare erp for retry on different channel path */
 		erp = dasd_3990_erp_action_1(erp);
 
-		अगर (sense && !(sense[2] & DASD_SENSE_BIT_0)) अणु
+		if (sense && !(sense[2] & DASD_SENSE_BIT_0)) {
 
 			/* issue a Diagnostic Control command with an
 			 * Inhibit Write subcommand */
 
-			चयन (sense[25]) अणु
-			हाल 0x17:
-			हाल 0x57:अणु	/* controller */
+			switch (sense[25]) {
+			case 0x17:
+			case 0x57:{	/* controller */
 					erp = dasd_3990_erp_DCTL(erp, 0x20);
-					अवरोध;
-				पूर्ण
-			हाल 0x18:
-			हाल 0x58:अणु	/* channel path */
+					break;
+				}
+			case 0x18:
+			case 0x58:{	/* channel path */
 					erp = dasd_3990_erp_DCTL(erp, 0x40);
-					अवरोध;
-				पूर्ण
-			हाल 0x19:
-			हाल 0x59:अणु	/* storage director */
+					break;
+				}
+			case 0x19:
+			case 0x59:{	/* storage director */
 					erp = dasd_3990_erp_DCTL(erp, 0x80);
-					अवरोध;
-				पूर्ण
-			शेष:
+					break;
+				}
+			default:
 				DBF_DEV_EVENT(DBF_WARNING, device,
 					    "invalid subcommand modifier 0x%x "
 					    "for Diagnostic Control Command",
 					    sense[25]);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		/* check क्रम 32 byte sense ERP */
-	पूर्ण अन्यथा अगर (sense &&
+		/* check for 32 byte sense ERP */
+	} else if (sense &&
 		   ((erp->function == dasd_3990_erp_compound_retry) ||
 		    (erp->function == dasd_3990_erp_compound_path) ||
 		    (erp->function == dasd_3990_erp_compound_code) ||
-		    (erp->function == dasd_3990_erp_compound_config))) अणु
+		    (erp->function == dasd_3990_erp_compound_config))) {
 
 		erp = dasd_3990_erp_compound(erp, sense);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * No retry left and no additional special handling
 		 * necessary
@@ -2662,22 +2661,22 @@ dasd_3990_erp_further_erp(काष्ठा dasd_ccw_req *erp)
 			"ERP %p has run out of retries and failed\n", erp);
 
 		erp->status = DASD_CQR_FAILED;
-	पूर्ण
+	}
 
-	वापस erp;
+	return erp;
 
-पूर्ण				/* end dasd_3990_erp_further_erp */
+}				/* end dasd_3990_erp_further_erp */
 
 /*
  * DASD_3990_ERP_HANDLE_MATCH_ERP
  *
  * DESCRIPTION
- *   An error occurred again and an ERP has been detected which is alपढ़ोy
+ *   An error occurred again and an ERP has been detected which is already
  *   used to handle this error (e.g. retries).
- *   All prior ERP's are asumed to be successful and thereक्रमe हटाओd
+ *   All prior ERP's are asumed to be successful and therefore removed
  *   from queue.
- *   If retry counter of matching erp is alपढ़ोy 0, it is checked अगर further
- *   action is needed (besides retry) or अगर the ERP has failed.
+ *   If retry counter of matching erp is already 0, it is checked if further
+ *   action is needed (besides retry) or if the ERP has failed.
  *
  * PARAMETER
  *   erp_head		first ERP in ERP-chain
@@ -2685,54 +2684,54 @@ dasd_3990_erp_further_erp(काष्ठा dasd_ccw_req *erp)
  *			(matching erp)
  *
  * RETURN VALUES
- *   erp		modअगरied/additional ERP
+ *   erp		modified/additional ERP
  */
-अटल काष्ठा dasd_ccw_req *
-dasd_3990_erp_handle_match_erp(काष्ठा dasd_ccw_req *erp_head,
-			       काष्ठा dasd_ccw_req *erp)
-अणु
+static struct dasd_ccw_req *
+dasd_3990_erp_handle_match_erp(struct dasd_ccw_req *erp_head,
+			       struct dasd_ccw_req *erp)
+{
 
-	काष्ठा dasd_device *device = erp_head->startdev;
-	काष्ठा dasd_ccw_req *erp_करोne = erp_head;	/* finished req */
-	काष्ठा dasd_ccw_req *erp_मुक्त = शून्य;	/* req to be मुक्तd */
+	struct dasd_device *device = erp_head->startdev;
+	struct dasd_ccw_req *erp_done = erp_head;	/* finished req */
+	struct dasd_ccw_req *erp_free = NULL;	/* req to be freed */
 
-	/* loop over successful ERPs and हटाओ them from chanq */
-	जबतक (erp_करोne != erp) अणु
+	/* loop over successful ERPs and remove them from chanq */
+	while (erp_done != erp) {
 
-		अगर (erp_करोne == शून्य)	/* end of chain reached */
+		if (erp_done == NULL)	/* end of chain reached */
 			panic(PRINTK_HEADER "Programming error in ERP! The "
 			      "original request was lost\n");
 
-		/* हटाओ the request from the device queue */
-		list_del(&erp_करोne->blocklist);
+		/* remove the request from the device queue */
+		list_del(&erp_done->blocklist);
 
-		erp_मुक्त = erp_करोne;
-		erp_करोne = erp_करोne->refers;
+		erp_free = erp_done;
+		erp_done = erp_done->refers;
 
-		/* मुक्त the finished erp request */
-		dasd_मुक्त_erp_request(erp_मुक्त, erp_मुक्त->memdev);
+		/* free the finished erp request */
+		dasd_free_erp_request(erp_free, erp_free->memdev);
 
-	पूर्ण			/* end जबतक */
+	}			/* end while */
 
-	अगर (erp->retries > 0) अणु
+	if (erp->retries > 0) {
 
-		अक्षर *sense = dasd_get_sense(&erp->refers->irb);
+		char *sense = dasd_get_sense(&erp->refers->irb);
 
-		/* check क्रम special retries */
-		अगर (sense && erp->function == dasd_3990_erp_action_4) अणु
+		/* check for special retries */
+		if (sense && erp->function == dasd_3990_erp_action_4) {
 
 			erp = dasd_3990_erp_action_4(erp, sense);
 
-		पूर्ण अन्यथा अगर (sense &&
-			   erp->function == dasd_3990_erp_action_1B_32) अणु
+		} else if (sense &&
+			   erp->function == dasd_3990_erp_action_1B_32) {
 
 			erp = dasd_3990_update_1B(erp, sense);
 
-		पूर्ण अन्यथा अगर (sense && erp->function == dasd_3990_erp_पूर्णांक_req) अणु
+		} else if (sense && erp->function == dasd_3990_erp_int_req) {
 
-			erp = dasd_3990_erp_पूर्णांक_req(erp);
+			erp = dasd_3990_erp_int_req(erp);
 
-		पूर्ण अन्यथा अणु
+		} else {
 			/* simple retry	  */
 			DBF_DEV_EVENT(DBF_DEBUG, device,
 				    "%i retries left for erp %p",
@@ -2740,60 +2739,60 @@ dasd_3990_erp_handle_match_erp(काष्ठा dasd_ccw_req *erp_head,
 
 			/* handle the request again... */
 			erp->status = DASD_CQR_FILLED;
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा अणु
-		/* no retry left - check क्रम further necessary action	 */
-		/* अगर no further actions, handle rest as permanent error */
+	} else {
+		/* no retry left - check for further necessary action	 */
+		/* if no further actions, handle rest as permanent error */
 		erp = dasd_3990_erp_further_erp(erp);
-	पूर्ण
+	}
 
-	वापस erp;
+	return erp;
 
-पूर्ण				/* end dasd_3990_erp_handle_match_erp */
+}				/* end dasd_3990_erp_handle_match_erp */
 
 /*
  * DASD_3990_ERP_ACTION
  *
  * DESCRIPTION
- *   control routine क्रम 3990 erp actions.
+ *   control routine for 3990 erp actions.
  *   Has to be called with the queue lock (namely the s390_irq_lock) acquired.
  *
  * PARAMETER
- *   cqr		failed cqr (either original cqr or alपढ़ोy an erp)
+ *   cqr		failed cqr (either original cqr or already an erp)
  *
  * RETURN VALUES
- *   erp		erp-poपूर्णांकer to the head of the ERP action chain.
+ *   erp		erp-pointer to the head of the ERP action chain.
  *			This means:
  *			 - either a ptr to an additional ERP cqr or
  *			 - the original given cqr (which's status might
- *			   be modअगरied)
+ *			   be modified)
  */
-काष्ठा dasd_ccw_req *
-dasd_3990_erp_action(काष्ठा dasd_ccw_req * cqr)
-अणु
-	काष्ठा dasd_ccw_req *erp = शून्य;
-	काष्ठा dasd_device *device = cqr->startdev;
-	काष्ठा dasd_ccw_req *temp_erp = शून्य;
+struct dasd_ccw_req *
+dasd_3990_erp_action(struct dasd_ccw_req * cqr)
+{
+	struct dasd_ccw_req *erp = NULL;
+	struct dasd_device *device = cqr->startdev;
+	struct dasd_ccw_req *temp_erp = NULL;
 
-	अगर (device->features & DASD_FEATURE_ERPLOG) अणु
-		/* prपूर्णांक current erp_chain */
+	if (device->features & DASD_FEATURE_ERPLOG) {
+		/* print current erp_chain */
 		dev_err(&device->cdev->dev,
 			    "ERP chain at BEGINNING of ERP-ACTION\n");
-		क्रम (temp_erp = cqr;
-		     temp_erp != शून्य; temp_erp = temp_erp->refers) अणु
+		for (temp_erp = cqr;
+		     temp_erp != NULL; temp_erp = temp_erp->refers) {
 
 			dev_err(&device->cdev->dev,
 				    "ERP %p (%02x) refers to %p\n",
 				    temp_erp, temp_erp->status,
 				    temp_erp->refers);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* द्विगुन-check अगर current erp/cqr was successful */
-	अगर ((scsw_cstat(&cqr->irb.scsw) == 0x00) &&
+	/* double-check if current erp/cqr was successful */
+	if ((scsw_cstat(&cqr->irb.scsw) == 0x00) &&
 	    (scsw_dstat(&cqr->irb.scsw) ==
-	     (DEV_STAT_CHN_END | DEV_STAT_DEV_END))) अणु
+	     (DEV_STAT_CHN_END | DEV_STAT_DEV_END))) {
 
 		DBF_DEV_EVENT(DBF_DEBUG, device,
 			    "ERP called for successful request %p"
@@ -2801,55 +2800,55 @@ dasd_3990_erp_action(काष्ठा dasd_ccw_req * cqr)
 
 		cqr->status = DASD_CQR_DONE;
 
-		वापस cqr;
-	पूर्ण
+		return cqr;
+	}
 
-	/* check अगर error happened beक्रमe */
+	/* check if error happened before */
 	erp = dasd_3990_erp_in_erp(cqr);
 
-	अगर (erp == शून्य) अणु
+	if (erp == NULL) {
 		/* no matching erp found - set up erp */
 		erp = dasd_3990_erp_additional_erp(cqr);
-		अगर (IS_ERR(erp))
-			वापस erp;
-	पूर्ण अन्यथा अणु
+		if (IS_ERR(erp))
+			return erp;
+	} else {
 		/* matching erp found - set all leading erp's to DONE */
 		erp = dasd_3990_erp_handle_match_erp(cqr, erp);
-	पूर्ण
+	}
 
 
 	/*
-	 * For path verअगरication work we need to stick with the path that was
+	 * For path verification work we need to stick with the path that was
 	 * originally chosen so that the per path configuration data is
-	 * asचिन्हित correctly.
+	 * assigned correctly.
 	 */
-	अगर (test_bit(DASD_CQR_VERIFY_PATH, &erp->flags) && cqr->lpm) अणु
+	if (test_bit(DASD_CQR_VERIFY_PATH, &erp->flags) && cqr->lpm) {
 		erp->lpm = cqr->lpm;
-	पूर्ण
+	}
 
-	अगर (device->features & DASD_FEATURE_ERPLOG) अणु
-		/* prपूर्णांक current erp_chain */
+	if (device->features & DASD_FEATURE_ERPLOG) {
+		/* print current erp_chain */
 		dev_err(&device->cdev->dev,
 			    "ERP chain at END of ERP-ACTION\n");
-		क्रम (temp_erp = erp;
-		     temp_erp != शून्य; temp_erp = temp_erp->refers) अणु
+		for (temp_erp = erp;
+		     temp_erp != NULL; temp_erp = temp_erp->refers) {
 
 			dev_err(&device->cdev->dev,
 				    "ERP %p (%02x) refers to %p\n",
 				    temp_erp, temp_erp->status,
 				    temp_erp->refers);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* enqueue ERP request अगर it's a new one */
-	अगर (list_empty(&erp->blocklist)) अणु
+	/* enqueue ERP request if it's a new one */
+	if (list_empty(&erp->blocklist)) {
 		cqr->status = DASD_CQR_IN_ERP;
-		/* add erp request beक्रमe the cqr */
+		/* add erp request before the cqr */
 		list_add_tail(&erp->blocklist, &cqr->blocklist);
-	पूर्ण
+	}
 
 
 
-	वापस erp;
+	return erp;
 
-पूर्ण				/* end dasd_3990_erp_action */
+}				/* end dasd_3990_erp_action */

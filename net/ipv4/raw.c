@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * INET		An implementation of the TCP/IP protocol suite क्रम the LINUX
- *		operating प्रणाली.  INET is implemented using the  BSD Socket
- *		पूर्णांकerface as the means of communication with the user level.
+ * INET		An implementation of the TCP/IP protocol suite for the LINUX
+ *		operating system.  INET is implemented using the  BSD Socket
+ *		interface as the means of communication with the user level.
  *
  *		RAW - implementation of IP "raw" sockets.
  *
@@ -11,376 +10,376 @@
  *		Fred N. van Kempen, <waltje@uWalt.NL.Mugnet.ORG>
  *
  * Fixes:
- *		Alan Cox	:	verअगरy_area() fixed up
+ *		Alan Cox	:	verify_area() fixed up
  *		Alan Cox	:	ICMP error handling
- *		Alan Cox	:	EMSGSIZE अगर you send too big a packet
+ *		Alan Cox	:	EMSGSIZE if you send too big a packet
  *		Alan Cox	: 	Now uses generic datagrams and shared
  *					skbuff library. No more peek crashes,
  *					no more backlogs
  *		Alan Cox	:	Checks sk->broadcast.
- *		Alan Cox	:	Uses skb_मुक्त_datagram/skb_copy_datagram
+ *		Alan Cox	:	Uses skb_free_datagram/skb_copy_datagram
  *		Alan Cox	:	Raw passes ip options too
  *		Alan Cox	:	Setsocketopt added
- *		Alan Cox	:	Fixed error वापस क्रम broadcasts
+ *		Alan Cox	:	Fixed error return for broadcasts
  *		Alan Cox	:	Removed wake_up calls
  *		Alan Cox	:	Use ttl/tos
  *		Alan Cox	:	Cleaned up old debugging
  *		Alan Cox	:	Use new kernel side addresses
- *	Arnt Gulbअक्रमsen	:	Fixed MSG_DONTROUTE in raw sockets.
+ *	Arnt Gulbrandsen	:	Fixed MSG_DONTROUTE in raw sockets.
  *		Alan Cox	:	BSD style RAW socket demultiplexing.
  *		Alan Cox	:	Beginnings of mrouted support.
  *		Alan Cox	:	Added IP_HDRINCL option.
- *		Alan Cox	:	Skip broadcast check अगर BSDism set.
+ *		Alan Cox	:	Skip broadcast check if BSDism set.
  *		David S. Miller	:	New socket lookup architecture.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/atomic.h>
-#समावेश <यंत्र/byteorder.h>
-#समावेश <यंत्र/current.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/ioctls.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/export.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/sockios.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/in.h>
-#समावेश <linux/mroute.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/in_route.h>
-#समावेश <linux/route.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/igmp.h>
-#समावेश <net/net_namespace.h>
-#समावेश <net/dst.h>
-#समावेश <net/sock.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/net.h>
-#समावेश <net/ip.h>
-#समावेश <net/icmp.h>
-#समावेश <net/udp.h>
-#समावेश <net/raw.h>
-#समावेश <net/snmp.h>
-#समावेश <net/tcp_states.h>
-#समावेश <net/inet_common.h>
-#समावेश <net/checksum.h>
-#समावेश <net/xfrm.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/netfilter.h>
-#समावेश <linux/netfilter_ipv4.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/uपन.स>
+#include <linux/types.h>
+#include <linux/atomic.h>
+#include <asm/byteorder.h>
+#include <asm/current.h>
+#include <linux/uaccess.h>
+#include <asm/ioctls.h>
+#include <linux/stddef.h>
+#include <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/export.h>
+#include <linux/spinlock.h>
+#include <linux/sockios.h>
+#include <linux/socket.h>
+#include <linux/in.h>
+#include <linux/mroute.h>
+#include <linux/netdevice.h>
+#include <linux/in_route.h>
+#include <linux/route.h>
+#include <linux/skbuff.h>
+#include <linux/igmp.h>
+#include <net/net_namespace.h>
+#include <net/dst.h>
+#include <net/sock.h>
+#include <linux/ip.h>
+#include <linux/net.h>
+#include <net/ip.h>
+#include <net/icmp.h>
+#include <net/udp.h>
+#include <net/raw.h>
+#include <net/snmp.h>
+#include <net/tcp_states.h>
+#include <net/inet_common.h>
+#include <net/checksum.h>
+#include <net/xfrm.h>
+#include <linux/rtnetlink.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/netfilter.h>
+#include <linux/netfilter_ipv4.h>
+#include <linux/compat.h>
+#include <linux/uio.h>
 
-काष्ठा raw_frag_vec अणु
-	काष्ठा msghdr *msg;
-	जोड़ अणु
-		काष्ठा icmphdr icmph;
-		अक्षर c[1];
-	पूर्ण hdr;
-	पूर्णांक hlen;
-पूर्ण;
+struct raw_frag_vec {
+	struct msghdr *msg;
+	union {
+		struct icmphdr icmph;
+		char c[1];
+	} hdr;
+	int hlen;
+};
 
-काष्ठा raw_hashinfo raw_v4_hashinfo = अणु
+struct raw_hashinfo raw_v4_hashinfo = {
 	.lock = __RW_LOCK_UNLOCKED(raw_v4_hashinfo.lock),
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(raw_v4_hashinfo);
 
-पूर्णांक raw_hash_sk(काष्ठा sock *sk)
-अणु
-	काष्ठा raw_hashinfo *h = sk->sk_prot->h.raw_hash;
-	काष्ठा hlist_head *head;
+int raw_hash_sk(struct sock *sk)
+{
+	struct raw_hashinfo *h = sk->sk_prot->h.raw_hash;
+	struct hlist_head *head;
 
 	head = &h->ht[inet_sk(sk)->inet_num & (RAW_HTABLE_SIZE - 1)];
 
-	ग_लिखो_lock_bh(&h->lock);
+	write_lock_bh(&h->lock);
 	sk_add_node(sk, head);
 	sock_prot_inuse_add(sock_net(sk), sk->sk_prot, 1);
-	ग_लिखो_unlock_bh(&h->lock);
+	write_unlock_bh(&h->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(raw_hash_sk);
 
-व्योम raw_unhash_sk(काष्ठा sock *sk)
-अणु
-	काष्ठा raw_hashinfo *h = sk->sk_prot->h.raw_hash;
+void raw_unhash_sk(struct sock *sk)
+{
+	struct raw_hashinfo *h = sk->sk_prot->h.raw_hash;
 
-	ग_लिखो_lock_bh(&h->lock);
-	अगर (sk_del_node_init(sk))
+	write_lock_bh(&h->lock);
+	if (sk_del_node_init(sk))
 		sock_prot_inuse_add(sock_net(sk), sk->sk_prot, -1);
-	ग_लिखो_unlock_bh(&h->lock);
-पूर्ण
+	write_unlock_bh(&h->lock);
+}
 EXPORT_SYMBOL_GPL(raw_unhash_sk);
 
-काष्ठा sock *__raw_v4_lookup(काष्ठा net *net, काष्ठा sock *sk,
-			     अचिन्हित लघु num, __be32 raddr, __be32 laddr,
-			     पूर्णांक dअगर, पूर्णांक sdअगर)
-अणु
-	sk_क्रम_each_from(sk) अणु
-		काष्ठा inet_sock *inet = inet_sk(sk);
+struct sock *__raw_v4_lookup(struct net *net, struct sock *sk,
+			     unsigned short num, __be32 raddr, __be32 laddr,
+			     int dif, int sdif)
+{
+	sk_for_each_from(sk) {
+		struct inet_sock *inet = inet_sk(sk);
 
-		अगर (net_eq(sock_net(sk), net) && inet->inet_num == num	&&
+		if (net_eq(sock_net(sk), net) && inet->inet_num == num	&&
 		    !(inet->inet_daddr && inet->inet_daddr != raddr) 	&&
 		    !(inet->inet_rcv_saddr && inet->inet_rcv_saddr != laddr) &&
-		    raw_sk_bound_dev_eq(net, sk->sk_bound_dev_अगर, dअगर, sdअगर))
-			जाओ found; /* gotcha */
-	पूर्ण
-	sk = शून्य;
+		    raw_sk_bound_dev_eq(net, sk->sk_bound_dev_if, dif, sdif))
+			goto found; /* gotcha */
+	}
+	sk = NULL;
 found:
-	वापस sk;
-पूर्ण
+	return sk;
+}
 EXPORT_SYMBOL_GPL(__raw_v4_lookup);
 
 /*
  *	0 - deliver
  *	1 - block
  */
-अटल पूर्णांक icmp_filter(स्थिर काष्ठा sock *sk, स्थिर काष्ठा sk_buff *skb)
-अणु
-	काष्ठा icmphdr _hdr;
-	स्थिर काष्ठा icmphdr *hdr;
+static int icmp_filter(const struct sock *sk, const struct sk_buff *skb)
+{
+	struct icmphdr _hdr;
+	const struct icmphdr *hdr;
 
-	hdr = skb_header_poपूर्णांकer(skb, skb_transport_offset(skb),
-				 माप(_hdr), &_hdr);
-	अगर (!hdr)
-		वापस 1;
+	hdr = skb_header_pointer(skb, skb_transport_offset(skb),
+				 sizeof(_hdr), &_hdr);
+	if (!hdr)
+		return 1;
 
-	अगर (hdr->type < 32) अणु
+	if (hdr->type < 32) {
 		__u32 data = raw_sk(sk)->filter.data;
 
-		वापस ((1U << hdr->type) & data) != 0;
-	पूर्ण
+		return ((1U << hdr->type) & data) != 0;
+	}
 
 	/* Do not block unknown ICMP types */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* IP input processing comes here क्रम RAW socket delivery.
+/* IP input processing comes here for RAW socket delivery.
  * Caller owns SKB, so we must make clones.
  *
  * RFC 1122: SHOULD pass TOS value up to the transport layer.
- * -> It करोes. And not only TOS, but all IP header.
+ * -> It does. And not only TOS, but all IP header.
  */
-अटल पूर्णांक raw_v4_input(काष्ठा sk_buff *skb, स्थिर काष्ठा iphdr *iph, पूर्णांक hash)
-अणु
-	पूर्णांक sdअगर = inet_sdअगर(skb);
-	पूर्णांक dअगर = inet_iअगर(skb);
-	काष्ठा sock *sk;
-	काष्ठा hlist_head *head;
-	पूर्णांक delivered = 0;
-	काष्ठा net *net;
+static int raw_v4_input(struct sk_buff *skb, const struct iphdr *iph, int hash)
+{
+	int sdif = inet_sdif(skb);
+	int dif = inet_iif(skb);
+	struct sock *sk;
+	struct hlist_head *head;
+	int delivered = 0;
+	struct net *net;
 
-	पढ़ो_lock(&raw_v4_hashinfo.lock);
+	read_lock(&raw_v4_hashinfo.lock);
 	head = &raw_v4_hashinfo.ht[hash];
-	अगर (hlist_empty(head))
-		जाओ out;
+	if (hlist_empty(head))
+		goto out;
 
 	net = dev_net(skb->dev);
 	sk = __raw_v4_lookup(net, __sk_head(head), iph->protocol,
-			     iph->saddr, iph->daddr, dअगर, sdअगर);
+			     iph->saddr, iph->daddr, dif, sdif);
 
-	जबतक (sk) अणु
+	while (sk) {
 		delivered = 1;
-		अगर ((iph->protocol != IPPROTO_ICMP || !icmp_filter(sk, skb)) &&
+		if ((iph->protocol != IPPROTO_ICMP || !icmp_filter(sk, skb)) &&
 		    ip_mc_sf_allow(sk, iph->daddr, iph->saddr,
-				   skb->dev->अगरindex, sdअगर)) अणु
-			काष्ठा sk_buff *clone = skb_clone(skb, GFP_ATOMIC);
+				   skb->dev->ifindex, sdif)) {
+			struct sk_buff *clone = skb_clone(skb, GFP_ATOMIC);
 
 			/* Not releasing hash table! */
-			अगर (clone)
+			if (clone)
 				raw_rcv(sk, clone);
-		पूर्ण
+		}
 		sk = __raw_v4_lookup(net, sk_next(sk), iph->protocol,
 				     iph->saddr, iph->daddr,
-				     dअगर, sdअगर);
-	पूर्ण
+				     dif, sdif);
+	}
 out:
-	पढ़ो_unlock(&raw_v4_hashinfo.lock);
-	वापस delivered;
-पूर्ण
+	read_unlock(&raw_v4_hashinfo.lock);
+	return delivered;
+}
 
-पूर्णांक raw_local_deliver(काष्ठा sk_buff *skb, पूर्णांक protocol)
-अणु
-	पूर्णांक hash;
-	काष्ठा sock *raw_sk;
+int raw_local_deliver(struct sk_buff *skb, int protocol)
+{
+	int hash;
+	struct sock *raw_sk;
 
 	hash = protocol & (RAW_HTABLE_SIZE - 1);
 	raw_sk = sk_head(&raw_v4_hashinfo.ht[hash]);
 
-	/* If there maybe a raw socket we must check - अगर not we
-	 * करोn't care less
+	/* If there maybe a raw socket we must check - if not we
+	 * don't care less
 	 */
-	अगर (raw_sk && !raw_v4_input(skb, ip_hdr(skb), hash))
-		raw_sk = शून्य;
+	if (raw_sk && !raw_v4_input(skb, ip_hdr(skb), hash))
+		raw_sk = NULL;
 
-	वापस raw_sk != शून्य;
+	return raw_sk != NULL;
 
-पूर्ण
+}
 
-अटल व्योम raw_err(काष्ठा sock *sk, काष्ठा sk_buff *skb, u32 info)
-अणु
-	काष्ठा inet_sock *inet = inet_sk(sk);
-	स्थिर पूर्णांक type = icmp_hdr(skb)->type;
-	स्थिर पूर्णांक code = icmp_hdr(skb)->code;
-	पूर्णांक err = 0;
-	पूर्णांक harderr = 0;
+static void raw_err(struct sock *sk, struct sk_buff *skb, u32 info)
+{
+	struct inet_sock *inet = inet_sk(sk);
+	const int type = icmp_hdr(skb)->type;
+	const int code = icmp_hdr(skb)->code;
+	int err = 0;
+	int harderr = 0;
 
-	अगर (type == ICMP_DEST_UNREACH && code == ICMP_FRAG_NEEDED)
+	if (type == ICMP_DEST_UNREACH && code == ICMP_FRAG_NEEDED)
 		ipv4_sk_update_pmtu(skb, sk, info);
-	अन्यथा अगर (type == ICMP_REसूचीECT) अणु
+	else if (type == ICMP_REDIRECT) {
 		ipv4_sk_redirect(skb, sk);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Report error on raw socket, अगर:
+	/* Report error on raw socket, if:
 	   1. User requested ip_recverr.
 	   2. Socket is connected (otherwise the error indication
 	      is useless without ip_recverr and error is hard.
 	 */
-	अगर (!inet->recverr && sk->sk_state != TCP_ESTABLISHED)
-		वापस;
+	if (!inet->recverr && sk->sk_state != TCP_ESTABLISHED)
+		return;
 
-	चयन (type) अणु
-	शेष:
-	हाल ICMP_TIME_EXCEEDED:
+	switch (type) {
+	default:
+	case ICMP_TIME_EXCEEDED:
 		err = EHOSTUNREACH;
-		अवरोध;
-	हाल ICMP_SOURCE_QUENCH:
-		वापस;
-	हाल ICMP_PARAMETERPROB:
+		break;
+	case ICMP_SOURCE_QUENCH:
+		return;
+	case ICMP_PARAMETERPROB:
 		err = EPROTO;
 		harderr = 1;
-		अवरोध;
-	हाल ICMP_DEST_UNREACH:
+		break;
+	case ICMP_DEST_UNREACH:
 		err = EHOSTUNREACH;
-		अगर (code > NR_ICMP_UNREACH)
-			अवरोध;
-		अगर (code == ICMP_FRAG_NEEDED) अणु
+		if (code > NR_ICMP_UNREACH)
+			break;
+		if (code == ICMP_FRAG_NEEDED) {
 			harderr = inet->pmtudisc != IP_PMTUDISC_DONT;
 			err = EMSGSIZE;
-		पूर्ण अन्यथा अणु
-			err = icmp_err_convert[code].त्रुटि_सं;
+		} else {
+			err = icmp_err_convert[code].errno;
 			harderr = icmp_err_convert[code].fatal;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (inet->recverr) अणु
-		स्थिर काष्ठा iphdr *iph = (स्थिर काष्ठा iphdr *)skb->data;
+	if (inet->recverr) {
+		const struct iphdr *iph = (const struct iphdr *)skb->data;
 		u8 *payload = skb->data + (iph->ihl << 2);
 
-		अगर (inet->hdrincl)
+		if (inet->hdrincl)
 			payload = skb->data;
 		ip_icmp_error(sk, skb, err, 0, info, payload);
-	पूर्ण
+	}
 
-	अगर (inet->recverr || harderr) अणु
+	if (inet->recverr || harderr) {
 		sk->sk_err = err;
 		sk->sk_error_report(sk);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम raw_icmp_error(काष्ठा sk_buff *skb, पूर्णांक protocol, u32 info)
-अणु
-	पूर्णांक hash;
-	काष्ठा sock *raw_sk;
-	स्थिर काष्ठा iphdr *iph;
-	काष्ठा net *net;
+void raw_icmp_error(struct sk_buff *skb, int protocol, u32 info)
+{
+	int hash;
+	struct sock *raw_sk;
+	const struct iphdr *iph;
+	struct net *net;
 
 	hash = protocol & (RAW_HTABLE_SIZE - 1);
 
-	पढ़ो_lock(&raw_v4_hashinfo.lock);
+	read_lock(&raw_v4_hashinfo.lock);
 	raw_sk = sk_head(&raw_v4_hashinfo.ht[hash]);
-	अगर (raw_sk) अणु
-		पूर्णांक dअगर = skb->dev->अगरindex;
-		पूर्णांक sdअगर = inet_sdअगर(skb);
+	if (raw_sk) {
+		int dif = skb->dev->ifindex;
+		int sdif = inet_sdif(skb);
 
-		iph = (स्थिर काष्ठा iphdr *)skb->data;
+		iph = (const struct iphdr *)skb->data;
 		net = dev_net(skb->dev);
 
-		जबतक ((raw_sk = __raw_v4_lookup(net, raw_sk, protocol,
+		while ((raw_sk = __raw_v4_lookup(net, raw_sk, protocol,
 						iph->daddr, iph->saddr,
-						dअगर, sdअगर)) != शून्य) अणु
+						dif, sdif)) != NULL) {
 			raw_err(raw_sk, skb, info);
 			raw_sk = sk_next(raw_sk);
-			iph = (स्थिर काष्ठा iphdr *)skb->data;
-		पूर्ण
-	पूर्ण
-	पढ़ो_unlock(&raw_v4_hashinfo.lock);
-पूर्ण
+			iph = (const struct iphdr *)skb->data;
+		}
+	}
+	read_unlock(&raw_v4_hashinfo.lock);
+}
 
-अटल पूर्णांक raw_rcv_skb(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
+static int raw_rcv_skb(struct sock *sk, struct sk_buff *skb)
+{
 	/* Charge it to the socket. */
 
 	ipv4_pktinfo_prepare(sk, skb);
-	अगर (sock_queue_rcv_skb(sk, skb) < 0) अणु
-		kमुक्त_skb(skb);
-		वापस NET_RX_DROP;
-	पूर्ण
+	if (sock_queue_rcv_skb(sk, skb) < 0) {
+		kfree_skb(skb);
+		return NET_RX_DROP;
+	}
 
-	वापस NET_RX_SUCCESS;
-पूर्ण
+	return NET_RX_SUCCESS;
+}
 
-पूर्णांक raw_rcv(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	अगर (!xfrm4_policy_check(sk, XFRM_POLICY_IN, skb)) अणु
+int raw_rcv(struct sock *sk, struct sk_buff *skb)
+{
+	if (!xfrm4_policy_check(sk, XFRM_POLICY_IN, skb)) {
 		atomic_inc(&sk->sk_drops);
-		kमुक्त_skb(skb);
-		वापस NET_RX_DROP;
-	पूर्ण
+		kfree_skb(skb);
+		return NET_RX_DROP;
+	}
 	nf_reset_ct(skb);
 
 	skb_push(skb, skb->data - skb_network_header(skb));
 
 	raw_rcv_skb(sk, skb);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक raw_send_hdrinc(काष्ठा sock *sk, काष्ठा flowi4 *fl4,
-			   काष्ठा msghdr *msg, माप_प्रकार length,
-			   काष्ठा rtable **rtp, अचिन्हित पूर्णांक flags,
-			   स्थिर काष्ठा sockcm_cookie *sockc)
-अणु
-	काष्ठा inet_sock *inet = inet_sk(sk);
-	काष्ठा net *net = sock_net(sk);
-	काष्ठा iphdr *iph;
-	काष्ठा sk_buff *skb;
-	अचिन्हित पूर्णांक iphlen;
-	पूर्णांक err;
-	काष्ठा rtable *rt = *rtp;
-	पूर्णांक hlen, tlen;
+static int raw_send_hdrinc(struct sock *sk, struct flowi4 *fl4,
+			   struct msghdr *msg, size_t length,
+			   struct rtable **rtp, unsigned int flags,
+			   const struct sockcm_cookie *sockc)
+{
+	struct inet_sock *inet = inet_sk(sk);
+	struct net *net = sock_net(sk);
+	struct iphdr *iph;
+	struct sk_buff *skb;
+	unsigned int iphlen;
+	int err;
+	struct rtable *rt = *rtp;
+	int hlen, tlen;
 
-	अगर (length > rt->dst.dev->mtu) अणु
+	if (length > rt->dst.dev->mtu) {
 		ip_local_error(sk, EMSGSIZE, fl4->daddr, inet->inet_dport,
 			       rt->dst.dev->mtu);
-		वापस -EMSGSIZE;
-	पूर्ण
-	अगर (length < माप(काष्ठा iphdr))
-		वापस -EINVAL;
+		return -EMSGSIZE;
+	}
+	if (length < sizeof(struct iphdr))
+		return -EINVAL;
 
-	अगर (flags&MSG_PROBE)
-		जाओ out;
+	if (flags&MSG_PROBE)
+		goto out;
 
 	hlen = LL_RESERVED_SPACE(rt->dst.dev);
 	tlen = rt->dst.dev->needed_tailroom;
 	skb = sock_alloc_send_skb(sk,
 				  length + hlen + tlen + 15,
 				  flags & MSG_DONTWAIT, &err);
-	अगर (!skb)
-		जाओ error;
+	if (!skb)
+		goto error;
 	skb_reserve(skb, hlen);
 
 	skb->priority = sk->sk_priority;
 	skb->mark = sockc->mark;
-	skb->tstamp = sockc->transmit_समय;
+	skb->tstamp = sockc->transmit_time;
 	skb_dst_set(skb, &rt->dst);
-	*rtp = शून्य;
+	*rtp = NULL;
 
 	skb_reset_network_header(skb);
 	iph = ip_hdr(skb);
@@ -388,95 +387,95 @@ out:
 
 	skb->ip_summed = CHECKSUM_NONE;
 
-	skb_setup_tx_बारtamp(skb, sockc->tsflags);
+	skb_setup_tx_timestamp(skb, sockc->tsflags);
 
-	अगर (flags & MSG_CONFIRM)
+	if (flags & MSG_CONFIRM)
 		skb_set_dst_pending_confirm(skb, 1);
 
 	skb->transport_header = skb->network_header;
 	err = -EFAULT;
-	अगर (स_नकल_from_msg(iph, msg, length))
-		जाओ error_मुक्त;
+	if (memcpy_from_msg(iph, msg, length))
+		goto error_free;
 
 	iphlen = iph->ihl * 4;
 
 	/*
-	 * We करोn't want to modअगरy the ip header, but we करो need to
-	 * be sure that it won't cause problems later aदीर्घ the network
-	 * stack.  Specअगरically we want to make sure that iph->ihl is a
-	 * sane value.  If ihl poपूर्णांकs beyond the length of the buffer passed
+	 * We don't want to modify the ip header, but we do need to
+	 * be sure that it won't cause problems later along the network
+	 * stack.  Specifically we want to make sure that iph->ihl is a
+	 * sane value.  If ihl points beyond the length of the buffer passed
 	 * in, reject the frame as invalid
 	 */
 	err = -EINVAL;
-	अगर (iphlen > length)
-		जाओ error_मुक्त;
+	if (iphlen > length)
+		goto error_free;
 
-	अगर (iphlen >= माप(*iph)) अणु
-		अगर (!iph->saddr)
+	if (iphlen >= sizeof(*iph)) {
+		if (!iph->saddr)
 			iph->saddr = fl4->saddr;
 		iph->check   = 0;
 		iph->tot_len = htons(length);
-		अगर (!iph->id)
-			ip_select_ident(net, skb, शून्य);
+		if (!iph->id)
+			ip_select_ident(net, skb, NULL);
 
-		iph->check = ip_fast_csum((अचिन्हित अक्षर *)iph, iph->ihl);
+		iph->check = ip_fast_csum((unsigned char *)iph, iph->ihl);
 		skb->transport_header += iphlen;
-		अगर (iph->protocol == IPPROTO_ICMP &&
-		    length >= iphlen + माप(काष्ठा icmphdr))
-			icmp_out_count(net, ((काष्ठा icmphdr *)
+		if (iph->protocol == IPPROTO_ICMP &&
+		    length >= iphlen + sizeof(struct icmphdr))
+			icmp_out_count(net, ((struct icmphdr *)
 				skb_transport_header(skb))->type);
-	पूर्ण
+	}
 
 	err = NF_HOOK(NFPROTO_IPV4, NF_INET_LOCAL_OUT,
-		      net, sk, skb, शून्य, rt->dst.dev,
+		      net, sk, skb, NULL, rt->dst.dev,
 		      dst_output);
-	अगर (err > 0)
-		err = net_xmit_त्रुटि_सं(err);
-	अगर (err)
-		जाओ error;
+	if (err > 0)
+		err = net_xmit_errno(err);
+	if (err)
+		goto error;
 out:
-	वापस 0;
+	return 0;
 
-error_मुक्त:
-	kमुक्त_skb(skb);
+error_free:
+	kfree_skb(skb);
 error:
 	IP_INC_STATS(net, IPSTATS_MIB_OUTDISCARDS);
-	अगर (err == -ENOBUFS && !inet->recverr)
+	if (err == -ENOBUFS && !inet->recverr)
 		err = 0;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक raw_probe_proto_opt(काष्ठा raw_frag_vec *rfv, काष्ठा flowi4 *fl4)
-अणु
-	पूर्णांक err;
+static int raw_probe_proto_opt(struct raw_frag_vec *rfv, struct flowi4 *fl4)
+{
+	int err;
 
-	अगर (fl4->flowi4_proto != IPPROTO_ICMP)
-		वापस 0;
+	if (fl4->flowi4_proto != IPPROTO_ICMP)
+		return 0;
 
 	/* We only need the first two bytes. */
 	rfv->hlen = 2;
 
-	err = स_नकल_from_msg(rfv->hdr.c, rfv->msg, rfv->hlen);
-	अगर (err)
-		वापस err;
+	err = memcpy_from_msg(rfv->hdr.c, rfv->msg, rfv->hlen);
+	if (err)
+		return err;
 
 	fl4->fl4_icmp_type = rfv->hdr.icmph.type;
 	fl4->fl4_icmp_code = rfv->hdr.icmph.code;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक raw_getfrag(व्योम *from, अक्षर *to, पूर्णांक offset, पूर्णांक len, पूर्णांक odd,
-		       काष्ठा sk_buff *skb)
-अणु
-	काष्ठा raw_frag_vec *rfv = from;
+static int raw_getfrag(void *from, char *to, int offset, int len, int odd,
+		       struct sk_buff *skb)
+{
+	struct raw_frag_vec *rfv = from;
 
-	अगर (offset < rfv->hlen) अणु
-		पूर्णांक copy = min(rfv->hlen - offset, len);
+	if (offset < rfv->hlen) {
+		int copy = min(rfv->hlen - offset, len);
 
-		अगर (skb->ip_summed == CHECKSUM_PARTIAL)
-			स_नकल(to, rfv->hdr.c + offset, copy);
-		अन्यथा
+		if (skb->ip_summed == CHECKSUM_PARTIAL)
+			memcpy(to, rfv->hdr.c + offset, copy);
+		else
 			skb->csum = csum_block_add(
 				skb->csum,
 				csum_partial_copy_nocheck(rfv->hdr.c + offset,
@@ -488,37 +487,37 @@ error:
 		to += copy;
 		len -= copy;
 
-		अगर (!len)
-			वापस 0;
-	पूर्ण
+		if (!len)
+			return 0;
+	}
 
 	offset -= rfv->hlen;
 
-	वापस ip_generic_getfrag(rfv->msg, to, offset, len, odd, skb);
-पूर्ण
+	return ip_generic_getfrag(rfv->msg, to, offset, len, odd, skb);
+}
 
-अटल पूर्णांक raw_sendmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार len)
-अणु
-	काष्ठा inet_sock *inet = inet_sk(sk);
-	काष्ठा net *net = sock_net(sk);
-	काष्ठा ipcm_cookie ipc;
-	काष्ठा rtable *rt = शून्य;
-	काष्ठा flowi4 fl4;
-	पूर्णांक मुक्त = 0;
+static int raw_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
+{
+	struct inet_sock *inet = inet_sk(sk);
+	struct net *net = sock_net(sk);
+	struct ipcm_cookie ipc;
+	struct rtable *rt = NULL;
+	struct flowi4 fl4;
+	int free = 0;
 	__be32 daddr;
 	__be32 saddr;
 	u8  tos;
-	पूर्णांक err;
-	काष्ठा ip_options_data opt_copy;
-	काष्ठा raw_frag_vec rfv;
-	पूर्णांक hdrincl;
+	int err;
+	struct ip_options_data opt_copy;
+	struct raw_frag_vec rfv;
+	int hdrincl;
 
 	err = -EMSGSIZE;
-	अगर (len > 0xFFFF)
-		जाओ out;
+	if (len > 0xFFFF)
+		goto out;
 
 	/* hdrincl should be READ_ONCE(inet->hdrincl)
-	 * but READ_ONCE() करोesn't work with bit fields.
+	 * but READ_ONCE() doesn't work with bit fields.
 	 * Doing this indirectly yields the same result.
 	 */
 	hdrincl = inet->hdrincl;
@@ -528,405 +527,405 @@ error:
 	 */
 
 	err = -EOPNOTSUPP;
-	अगर (msg->msg_flags & MSG_OOB)	/* Mirror BSD error message */
-		जाओ out;               /* compatibility */
+	if (msg->msg_flags & MSG_OOB)	/* Mirror BSD error message */
+		goto out;               /* compatibility */
 
 	/*
-	 *	Get and verअगरy the address.
+	 *	Get and verify the address.
 	 */
 
-	अगर (msg->msg_namelen) अणु
-		DECLARE_SOCKADDR(काष्ठा sockaddr_in *, usin, msg->msg_name);
+	if (msg->msg_namelen) {
+		DECLARE_SOCKADDR(struct sockaddr_in *, usin, msg->msg_name);
 		err = -EINVAL;
-		अगर (msg->msg_namelen < माप(*usin))
-			जाओ out;
-		अगर (usin->sin_family != AF_INET) अणु
+		if (msg->msg_namelen < sizeof(*usin))
+			goto out;
+		if (usin->sin_family != AF_INET) {
 			pr_info_once("%s: %s forgot to set AF_INET. Fix it!\n",
 				     __func__, current->comm);
 			err = -EAFNOSUPPORT;
-			अगर (usin->sin_family)
-				जाओ out;
-		पूर्ण
+			if (usin->sin_family)
+				goto out;
+		}
 		daddr = usin->sin_addr.s_addr;
-		/* ANK: I did not क्रमget to get protocol from port field.
-		 * I just करो not know, who uses this weirdness.
+		/* ANK: I did not forget to get protocol from port field.
+		 * I just do not know, who uses this weirdness.
 		 * IP_HDRINCL is much more convenient.
 		 */
-	पूर्ण अन्यथा अणु
+	} else {
 		err = -EDESTADDRREQ;
-		अगर (sk->sk_state != TCP_ESTABLISHED)
-			जाओ out;
+		if (sk->sk_state != TCP_ESTABLISHED)
+			goto out;
 		daddr = inet->inet_daddr;
-	पूर्ण
+	}
 
 	ipcm_init_sk(&ipc, inet);
 
-	अगर (msg->msg_controllen) अणु
+	if (msg->msg_controllen) {
 		err = ip_cmsg_send(sk, msg, &ipc, false);
-		अगर (unlikely(err)) अणु
-			kमुक्त(ipc.opt);
-			जाओ out;
-		पूर्ण
-		अगर (ipc.opt)
-			मुक्त = 1;
-	पूर्ण
+		if (unlikely(err)) {
+			kfree(ipc.opt);
+			goto out;
+		}
+		if (ipc.opt)
+			free = 1;
+	}
 
 	saddr = ipc.addr;
 	ipc.addr = daddr;
 
-	अगर (!ipc.opt) अणु
-		काष्ठा ip_options_rcu *inet_opt;
+	if (!ipc.opt) {
+		struct ip_options_rcu *inet_opt;
 
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		inet_opt = rcu_dereference(inet->inet_opt);
-		अगर (inet_opt) अणु
-			स_नकल(&opt_copy, inet_opt,
-			       माप(*inet_opt) + inet_opt->opt.optlen);
+		if (inet_opt) {
+			memcpy(&opt_copy, inet_opt,
+			       sizeof(*inet_opt) + inet_opt->opt.optlen);
 			ipc.opt = &opt_copy.opt;
-		पूर्ण
-		rcu_पढ़ो_unlock();
-	पूर्ण
+		}
+		rcu_read_unlock();
+	}
 
-	अगर (ipc.opt) अणु
+	if (ipc.opt) {
 		err = -EINVAL;
-		/* Linux करोes not mangle headers on raw sockets,
+		/* Linux does not mangle headers on raw sockets,
 		 * so that IP options + IP_HDRINCL is non-sense.
 		 */
-		अगर (hdrincl)
-			जाओ करोne;
-		अगर (ipc.opt->opt.srr) अणु
-			अगर (!daddr)
-				जाओ करोne;
+		if (hdrincl)
+			goto done;
+		if (ipc.opt->opt.srr) {
+			if (!daddr)
+				goto done;
 			daddr = ipc.opt->opt.faddr;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	tos = get_rtconn_flags(&ipc, sk);
-	अगर (msg->msg_flags & MSG_DONTROUTE)
+	if (msg->msg_flags & MSG_DONTROUTE)
 		tos |= RTO_ONLINK;
 
-	अगर (ipv4_is_multicast(daddr)) अणु
-		अगर (!ipc.oअगर || netअगर_index_is_l3_master(sock_net(sk), ipc.oअगर))
-			ipc.oअगर = inet->mc_index;
-		अगर (!saddr)
+	if (ipv4_is_multicast(daddr)) {
+		if (!ipc.oif || netif_index_is_l3_master(sock_net(sk), ipc.oif))
+			ipc.oif = inet->mc_index;
+		if (!saddr)
 			saddr = inet->mc_addr;
-	पूर्ण अन्यथा अगर (!ipc.oअगर) अणु
-		ipc.oअगर = inet->uc_index;
-	पूर्ण अन्यथा अगर (ipv4_is_lbcast(daddr) && inet->uc_index) अणु
-		/* oअगर is set, packet is to local broadcast
-		 * and uc_index is set. oअगर is most likely set
-		 * by sk_bound_dev_अगर. If uc_index != oअगर check अगर the
-		 * oअगर is an L3 master and uc_index is an L3 slave.
+	} else if (!ipc.oif) {
+		ipc.oif = inet->uc_index;
+	} else if (ipv4_is_lbcast(daddr) && inet->uc_index) {
+		/* oif is set, packet is to local broadcast
+		 * and uc_index is set. oif is most likely set
+		 * by sk_bound_dev_if. If uc_index != oif check if the
+		 * oif is an L3 master and uc_index is an L3 slave.
 		 * If so, we want to allow the send using the uc_index.
 		 */
-		अगर (ipc.oअगर != inet->uc_index &&
-		    ipc.oअगर == l3mdev_master_अगरindex_by_index(sock_net(sk),
-							      inet->uc_index)) अणु
-			ipc.oअगर = inet->uc_index;
-		पूर्ण
-	पूर्ण
+		if (ipc.oif != inet->uc_index &&
+		    ipc.oif == l3mdev_master_ifindex_by_index(sock_net(sk),
+							      inet->uc_index)) {
+			ipc.oif = inet->uc_index;
+		}
+	}
 
-	flowi4_init_output(&fl4, ipc.oअगर, ipc.sockc.mark, tos,
+	flowi4_init_output(&fl4, ipc.oif, ipc.sockc.mark, tos,
 			   RT_SCOPE_UNIVERSE,
 			   hdrincl ? IPPROTO_RAW : sk->sk_protocol,
 			   inet_sk_flowi_flags(sk) |
 			    (hdrincl ? FLOWI_FLAG_KNOWN_NH : 0),
 			   daddr, saddr, 0, 0, sk->sk_uid);
 
-	अगर (!hdrincl) अणु
+	if (!hdrincl) {
 		rfv.msg = msg;
 		rfv.hlen = 0;
 
 		err = raw_probe_proto_opt(&rfv, &fl4);
-		अगर (err)
-			जाओ करोne;
-	पूर्ण
+		if (err)
+			goto done;
+	}
 
-	security_sk_classअगरy_flow(sk, flowi4_to_flowi_common(&fl4));
+	security_sk_classify_flow(sk, flowi4_to_flowi_common(&fl4));
 	rt = ip_route_output_flow(net, &fl4, sk);
-	अगर (IS_ERR(rt)) अणु
+	if (IS_ERR(rt)) {
 		err = PTR_ERR(rt);
-		rt = शून्य;
-		जाओ करोne;
-	पूर्ण
+		rt = NULL;
+		goto done;
+	}
 
 	err = -EACCES;
-	अगर (rt->rt_flags & RTCF_BROADCAST && !sock_flag(sk, SOCK_BROADCAST))
-		जाओ करोne;
+	if (rt->rt_flags & RTCF_BROADCAST && !sock_flag(sk, SOCK_BROADCAST))
+		goto done;
 
-	अगर (msg->msg_flags & MSG_CONFIRM)
-		जाओ करो_confirm;
+	if (msg->msg_flags & MSG_CONFIRM)
+		goto do_confirm;
 back_from_confirm:
 
-	अगर (hdrincl)
+	if (hdrincl)
 		err = raw_send_hdrinc(sk, &fl4, msg, len,
 				      &rt, msg->msg_flags, &ipc.sockc);
 
-	 अन्यथा अणु
-		अगर (!ipc.addr)
+	 else {
+		if (!ipc.addr)
 			ipc.addr = fl4.daddr;
 		lock_sock(sk);
 		err = ip_append_data(sk, &fl4, raw_getfrag,
 				     &rfv, len, 0,
 				     &ipc, &rt, msg->msg_flags);
-		अगर (err)
+		if (err)
 			ip_flush_pending_frames(sk);
-		अन्यथा अगर (!(msg->msg_flags & MSG_MORE)) अणु
+		else if (!(msg->msg_flags & MSG_MORE)) {
 			err = ip_push_pending_frames(sk, &fl4);
-			अगर (err == -ENOBUFS && !inet->recverr)
+			if (err == -ENOBUFS && !inet->recverr)
 				err = 0;
-		पूर्ण
+		}
 		release_sock(sk);
-	पूर्ण
-करोne:
-	अगर (मुक्त)
-		kमुक्त(ipc.opt);
+	}
+done:
+	if (free)
+		kfree(ipc.opt);
 	ip_rt_put(rt);
 
 out:
-	अगर (err < 0)
-		वापस err;
-	वापस len;
+	if (err < 0)
+		return err;
+	return len;
 
-करो_confirm:
-	अगर (msg->msg_flags & MSG_PROBE)
+do_confirm:
+	if (msg->msg_flags & MSG_PROBE)
 		dst_confirm_neigh(&rt->dst, &fl4.daddr);
-	अगर (!(msg->msg_flags & MSG_PROBE) || len)
-		जाओ back_from_confirm;
+	if (!(msg->msg_flags & MSG_PROBE) || len)
+		goto back_from_confirm;
 	err = 0;
-	जाओ करोne;
-पूर्ण
+	goto done;
+}
 
-अटल व्योम raw_बंद(काष्ठा sock *sk, दीर्घ समयout)
-अणु
+static void raw_close(struct sock *sk, long timeout)
+{
 	/*
 	 * Raw sockets may have direct kernel references. Kill them.
 	 */
-	ip_ra_control(sk, 0, शून्य);
+	ip_ra_control(sk, 0, NULL);
 
 	sk_common_release(sk);
-पूर्ण
+}
 
-अटल व्योम raw_destroy(काष्ठा sock *sk)
-अणु
+static void raw_destroy(struct sock *sk)
+{
 	lock_sock(sk);
 	ip_flush_pending_frames(sk);
 	release_sock(sk);
-पूर्ण
+}
 
-/* This माला_लो rid of all the nasties in af_inet. -DaveM */
-अटल पूर्णांक raw_bind(काष्ठा sock *sk, काष्ठा sockaddr *uaddr, पूर्णांक addr_len)
-अणु
-	काष्ठा inet_sock *inet = inet_sk(sk);
-	काष्ठा sockaddr_in *addr = (काष्ठा sockaddr_in *) uaddr;
+/* This gets rid of all the nasties in af_inet. -DaveM */
+static int raw_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len)
+{
+	struct inet_sock *inet = inet_sk(sk);
+	struct sockaddr_in *addr = (struct sockaddr_in *) uaddr;
 	u32 tb_id = RT_TABLE_LOCAL;
-	पूर्णांक ret = -EINVAL;
-	पूर्णांक chk_addr_ret;
+	int ret = -EINVAL;
+	int chk_addr_ret;
 
-	अगर (sk->sk_state != TCP_CLOSE || addr_len < माप(काष्ठा sockaddr_in))
-		जाओ out;
+	if (sk->sk_state != TCP_CLOSE || addr_len < sizeof(struct sockaddr_in))
+		goto out;
 
-	अगर (sk->sk_bound_dev_अगर)
+	if (sk->sk_bound_dev_if)
 		tb_id = l3mdev_fib_table_by_index(sock_net(sk),
-						 sk->sk_bound_dev_अगर) ? : tb_id;
+						 sk->sk_bound_dev_if) ? : tb_id;
 
 	chk_addr_ret = inet_addr_type_table(sock_net(sk), addr->sin_addr.s_addr,
 					    tb_id);
 
 	ret = -EADDRNOTAVAIL;
-	अगर (addr->sin_addr.s_addr && chk_addr_ret != RTN_LOCAL &&
+	if (addr->sin_addr.s_addr && chk_addr_ret != RTN_LOCAL &&
 	    chk_addr_ret != RTN_MULTICAST && chk_addr_ret != RTN_BROADCAST)
-		जाओ out;
+		goto out;
 	inet->inet_rcv_saddr = inet->inet_saddr = addr->sin_addr.s_addr;
-	अगर (chk_addr_ret == RTN_MULTICAST || chk_addr_ret == RTN_BROADCAST)
+	if (chk_addr_ret == RTN_MULTICAST || chk_addr_ret == RTN_BROADCAST)
 		inet->inet_saddr = 0;  /* Use device */
 	sk_dst_reset(sk);
 	ret = 0;
-out:	वापस ret;
-पूर्ण
+out:	return ret;
+}
 
 /*
- *	This should be easy, अगर there is something there
- *	we वापस it, otherwise we block.
+ *	This should be easy, if there is something there
+ *	we return it, otherwise we block.
  */
 
-अटल पूर्णांक raw_recvmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार len,
-		       पूर्णांक noblock, पूर्णांक flags, पूर्णांक *addr_len)
-अणु
-	काष्ठा inet_sock *inet = inet_sk(sk);
-	माप_प्रकार copied = 0;
-	पूर्णांक err = -EOPNOTSUPP;
-	DECLARE_SOCKADDR(काष्ठा sockaddr_in *, sin, msg->msg_name);
-	काष्ठा sk_buff *skb;
+static int raw_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
+		       int noblock, int flags, int *addr_len)
+{
+	struct inet_sock *inet = inet_sk(sk);
+	size_t copied = 0;
+	int err = -EOPNOTSUPP;
+	DECLARE_SOCKADDR(struct sockaddr_in *, sin, msg->msg_name);
+	struct sk_buff *skb;
 
-	अगर (flags & MSG_OOB)
-		जाओ out;
+	if (flags & MSG_OOB)
+		goto out;
 
-	अगर (flags & MSG_ERRQUEUE) अणु
+	if (flags & MSG_ERRQUEUE) {
 		err = ip_recv_error(sk, msg, len, addr_len);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	skb = skb_recv_datagram(sk, flags, noblock, &err);
-	अगर (!skb)
-		जाओ out;
+	if (!skb)
+		goto out;
 
 	copied = skb->len;
-	अगर (len < copied) अणु
+	if (len < copied) {
 		msg->msg_flags |= MSG_TRUNC;
 		copied = len;
-	पूर्ण
+	}
 
 	err = skb_copy_datagram_msg(skb, 0, msg, copied);
-	अगर (err)
-		जाओ करोne;
+	if (err)
+		goto done;
 
 	sock_recv_ts_and_drops(msg, sk, skb);
 
 	/* Copy the address. */
-	अगर (sin) अणु
+	if (sin) {
 		sin->sin_family = AF_INET;
 		sin->sin_addr.s_addr = ip_hdr(skb)->saddr;
 		sin->sin_port = 0;
-		स_रखो(&sin->sin_zero, 0, माप(sin->sin_zero));
-		*addr_len = माप(*sin);
-	पूर्ण
-	अगर (inet->cmsg_flags)
+		memset(&sin->sin_zero, 0, sizeof(sin->sin_zero));
+		*addr_len = sizeof(*sin);
+	}
+	if (inet->cmsg_flags)
 		ip_cmsg_recv(msg, skb);
-	अगर (flags & MSG_TRUNC)
+	if (flags & MSG_TRUNC)
 		copied = skb->len;
-करोne:
-	skb_मुक्त_datagram(sk, skb);
+done:
+	skb_free_datagram(sk, skb);
 out:
-	अगर (err)
-		वापस err;
-	वापस copied;
-पूर्ण
+	if (err)
+		return err;
+	return copied;
+}
 
-अटल पूर्णांक raw_sk_init(काष्ठा sock *sk)
-अणु
-	काष्ठा raw_sock *rp = raw_sk(sk);
+static int raw_sk_init(struct sock *sk)
+{
+	struct raw_sock *rp = raw_sk(sk);
 
-	अगर (inet_sk(sk)->inet_num == IPPROTO_ICMP)
-		स_रखो(&rp->filter, 0, माप(rp->filter));
-	वापस 0;
-पूर्ण
+	if (inet_sk(sk)->inet_num == IPPROTO_ICMP)
+		memset(&rp->filter, 0, sizeof(rp->filter));
+	return 0;
+}
 
-अटल पूर्णांक raw_seticmpfilter(काष्ठा sock *sk, sockptr_t optval, पूर्णांक optlen)
-अणु
-	अगर (optlen > माप(काष्ठा icmp_filter))
-		optlen = माप(काष्ठा icmp_filter);
-	अगर (copy_from_sockptr(&raw_sk(sk)->filter, optval, optlen))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+static int raw_seticmpfilter(struct sock *sk, sockptr_t optval, int optlen)
+{
+	if (optlen > sizeof(struct icmp_filter))
+		optlen = sizeof(struct icmp_filter);
+	if (copy_from_sockptr(&raw_sk(sk)->filter, optval, optlen))
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक raw_geticmpfilter(काष्ठा sock *sk, अक्षर __user *optval, पूर्णांक __user *optlen)
-अणु
-	पूर्णांक len, ret = -EFAULT;
+static int raw_geticmpfilter(struct sock *sk, char __user *optval, int __user *optlen)
+{
+	int len, ret = -EFAULT;
 
-	अगर (get_user(len, optlen))
-		जाओ out;
+	if (get_user(len, optlen))
+		goto out;
 	ret = -EINVAL;
-	अगर (len < 0)
-		जाओ out;
-	अगर (len > माप(काष्ठा icmp_filter))
-		len = माप(काष्ठा icmp_filter);
+	if (len < 0)
+		goto out;
+	if (len > sizeof(struct icmp_filter))
+		len = sizeof(struct icmp_filter);
 	ret = -EFAULT;
-	अगर (put_user(len, optlen) ||
+	if (put_user(len, optlen) ||
 	    copy_to_user(optval, &raw_sk(sk)->filter, len))
-		जाओ out;
+		goto out;
 	ret = 0;
-out:	वापस ret;
-पूर्ण
+out:	return ret;
+}
 
-अटल पूर्णांक करो_raw_setsockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
-			     sockptr_t optval, अचिन्हित पूर्णांक optlen)
-अणु
-	अगर (optname == ICMP_FILTER) अणु
-		अगर (inet_sk(sk)->inet_num != IPPROTO_ICMP)
-			वापस -EOPNOTSUPP;
-		अन्यथा
-			वापस raw_seticmpfilter(sk, optval, optlen);
-	पूर्ण
-	वापस -ENOPROTOOPT;
-पूर्ण
+static int do_raw_setsockopt(struct sock *sk, int level, int optname,
+			     sockptr_t optval, unsigned int optlen)
+{
+	if (optname == ICMP_FILTER) {
+		if (inet_sk(sk)->inet_num != IPPROTO_ICMP)
+			return -EOPNOTSUPP;
+		else
+			return raw_seticmpfilter(sk, optval, optlen);
+	}
+	return -ENOPROTOOPT;
+}
 
-अटल पूर्णांक raw_setsockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
-			  sockptr_t optval, अचिन्हित पूर्णांक optlen)
-अणु
-	अगर (level != SOL_RAW)
-		वापस ip_setsockopt(sk, level, optname, optval, optlen);
-	वापस करो_raw_setsockopt(sk, level, optname, optval, optlen);
-पूर्ण
+static int raw_setsockopt(struct sock *sk, int level, int optname,
+			  sockptr_t optval, unsigned int optlen)
+{
+	if (level != SOL_RAW)
+		return ip_setsockopt(sk, level, optname, optval, optlen);
+	return do_raw_setsockopt(sk, level, optname, optval, optlen);
+}
 
-अटल पूर्णांक करो_raw_माला_लोockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
-			  अक्षर __user *optval, पूर्णांक __user *optlen)
-अणु
-	अगर (optname == ICMP_FILTER) अणु
-		अगर (inet_sk(sk)->inet_num != IPPROTO_ICMP)
-			वापस -EOPNOTSUPP;
-		अन्यथा
-			वापस raw_geticmpfilter(sk, optval, optlen);
-	पूर्ण
-	वापस -ENOPROTOOPT;
-पूर्ण
+static int do_raw_getsockopt(struct sock *sk, int level, int optname,
+			  char __user *optval, int __user *optlen)
+{
+	if (optname == ICMP_FILTER) {
+		if (inet_sk(sk)->inet_num != IPPROTO_ICMP)
+			return -EOPNOTSUPP;
+		else
+			return raw_geticmpfilter(sk, optval, optlen);
+	}
+	return -ENOPROTOOPT;
+}
 
-अटल पूर्णांक raw_माला_लोockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
-			  अक्षर __user *optval, पूर्णांक __user *optlen)
-अणु
-	अगर (level != SOL_RAW)
-		वापस ip_माला_लोockopt(sk, level, optname, optval, optlen);
-	वापस करो_raw_माला_लोockopt(sk, level, optname, optval, optlen);
-पूर्ण
+static int raw_getsockopt(struct sock *sk, int level, int optname,
+			  char __user *optval, int __user *optlen)
+{
+	if (level != SOL_RAW)
+		return ip_getsockopt(sk, level, optname, optval, optlen);
+	return do_raw_getsockopt(sk, level, optname, optval, optlen);
+}
 
-अटल पूर्णांक raw_ioctl(काष्ठा sock *sk, पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	चयन (cmd) अणु
-	हाल SIOCOUTQ: अणु
-		पूर्णांक amount = sk_wmem_alloc_get(sk);
+static int raw_ioctl(struct sock *sk, int cmd, unsigned long arg)
+{
+	switch (cmd) {
+	case SIOCOUTQ: {
+		int amount = sk_wmem_alloc_get(sk);
 
-		वापस put_user(amount, (पूर्णांक __user *)arg);
-	पूर्ण
-	हाल SIOCINQ: अणु
-		काष्ठा sk_buff *skb;
-		पूर्णांक amount = 0;
+		return put_user(amount, (int __user *)arg);
+	}
+	case SIOCINQ: {
+		struct sk_buff *skb;
+		int amount = 0;
 
 		spin_lock_bh(&sk->sk_receive_queue.lock);
 		skb = skb_peek(&sk->sk_receive_queue);
-		अगर (skb)
+		if (skb)
 			amount = skb->len;
 		spin_unlock_bh(&sk->sk_receive_queue.lock);
-		वापस put_user(amount, (पूर्णांक __user *)arg);
-	पूर्ण
+		return put_user(amount, (int __user *)arg);
+	}
 
-	शेष:
-#अगर_घोषित CONFIG_IP_MROUTE
-		वापस ipmr_ioctl(sk, cmd, (व्योम __user *)arg);
-#अन्यथा
-		वापस -ENOIOCTLCMD;
-#पूर्ण_अगर
-	पूर्ण
-पूर्ण
+	default:
+#ifdef CONFIG_IP_MROUTE
+		return ipmr_ioctl(sk, cmd, (void __user *)arg);
+#else
+		return -ENOIOCTLCMD;
+#endif
+	}
+}
 
-#अगर_घोषित CONFIG_COMPAT
-अटल पूर्णांक compat_raw_ioctl(काष्ठा sock *sk, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	चयन (cmd) अणु
-	हाल SIOCOUTQ:
-	हाल SIOCINQ:
-		वापस -ENOIOCTLCMD;
-	शेष:
-#अगर_घोषित CONFIG_IP_MROUTE
-		वापस ipmr_compat_ioctl(sk, cmd, compat_ptr(arg));
-#अन्यथा
-		वापस -ENOIOCTLCMD;
-#पूर्ण_अगर
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_COMPAT
+static int compat_raw_ioctl(struct sock *sk, unsigned int cmd, unsigned long arg)
+{
+	switch (cmd) {
+	case SIOCOUTQ:
+	case SIOCINQ:
+		return -ENOIOCTLCMD;
+	default:
+#ifdef CONFIG_IP_MROUTE
+		return ipmr_compat_ioctl(sk, cmd, compat_ptr(arg));
+#else
+		return -ENOIOCTLCMD;
+#endif
+	}
+}
+#endif
 
-पूर्णांक raw_पात(काष्ठा sock *sk, पूर्णांक err)
-अणु
+int raw_abort(struct sock *sk, int err)
+{
 	lock_sock(sk);
 
 	sk->sk_err = err;
@@ -935,21 +934,21 @@ out:	वापस ret;
 
 	release_sock(sk);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(raw_पात);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(raw_abort);
 
-काष्ठा proto raw_prot = अणु
+struct proto raw_prot = {
 	.name		   = "RAW",
 	.owner		   = THIS_MODULE,
-	.बंद		   = raw_बंद,
+	.close		   = raw_close,
 	.destroy	   = raw_destroy,
 	.connect	   = ip4_datagram_connect,
 	.disconnect	   = __udp_disconnect,
 	.ioctl		   = raw_ioctl,
 	.init		   = raw_sk_init,
 	.setsockopt	   = raw_setsockopt,
-	.माला_लोockopt	   = raw_माला_लोockopt,
+	.getsockopt	   = raw_getsockopt,
 	.sendmsg	   = raw_sendmsg,
 	.recvmsg	   = raw_recvmsg,
 	.bind		   = raw_bind,
@@ -957,103 +956,103 @@ EXPORT_SYMBOL_GPL(raw_पात);
 	.release_cb	   = ip4_datagram_release_cb,
 	.hash		   = raw_hash_sk,
 	.unhash		   = raw_unhash_sk,
-	.obj_size	   = माप(काष्ठा raw_sock),
-	.useroffset	   = दुरत्व(काष्ठा raw_sock, filter),
-	.usersize	   = माप_field(काष्ठा raw_sock, filter),
+	.obj_size	   = sizeof(struct raw_sock),
+	.useroffset	   = offsetof(struct raw_sock, filter),
+	.usersize	   = sizeof_field(struct raw_sock, filter),
 	.h.raw_hash	   = &raw_v4_hashinfo,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.compat_ioctl	   = compat_raw_ioctl,
-#पूर्ण_अगर
-	.diag_destroy	   = raw_पात,
-पूर्ण;
+#endif
+	.diag_destroy	   = raw_abort,
+};
 
-#अगर_घोषित CONFIG_PROC_FS
-अटल काष्ठा sock *raw_get_first(काष्ठा seq_file *seq)
-अणु
-	काष्ठा sock *sk;
-	काष्ठा raw_hashinfo *h = PDE_DATA(file_inode(seq->file));
-	काष्ठा raw_iter_state *state = raw_seq_निजी(seq);
+#ifdef CONFIG_PROC_FS
+static struct sock *raw_get_first(struct seq_file *seq)
+{
+	struct sock *sk;
+	struct raw_hashinfo *h = PDE_DATA(file_inode(seq->file));
+	struct raw_iter_state *state = raw_seq_private(seq);
 
-	क्रम (state->bucket = 0; state->bucket < RAW_HTABLE_SIZE;
-			++state->bucket) अणु
-		sk_क्रम_each(sk, &h->ht[state->bucket])
-			अगर (sock_net(sk) == seq_file_net(seq))
-				जाओ found;
-	पूर्ण
-	sk = शून्य;
+	for (state->bucket = 0; state->bucket < RAW_HTABLE_SIZE;
+			++state->bucket) {
+		sk_for_each(sk, &h->ht[state->bucket])
+			if (sock_net(sk) == seq_file_net(seq))
+				goto found;
+	}
+	sk = NULL;
 found:
-	वापस sk;
-पूर्ण
+	return sk;
+}
 
-अटल काष्ठा sock *raw_get_next(काष्ठा seq_file *seq, काष्ठा sock *sk)
-अणु
-	काष्ठा raw_hashinfo *h = PDE_DATA(file_inode(seq->file));
-	काष्ठा raw_iter_state *state = raw_seq_निजी(seq);
+static struct sock *raw_get_next(struct seq_file *seq, struct sock *sk)
+{
+	struct raw_hashinfo *h = PDE_DATA(file_inode(seq->file));
+	struct raw_iter_state *state = raw_seq_private(seq);
 
-	करो अणु
+	do {
 		sk = sk_next(sk);
 try_again:
 		;
-	पूर्ण जबतक (sk && sock_net(sk) != seq_file_net(seq));
+	} while (sk && sock_net(sk) != seq_file_net(seq));
 
-	अगर (!sk && ++state->bucket < RAW_HTABLE_SIZE) अणु
+	if (!sk && ++state->bucket < RAW_HTABLE_SIZE) {
 		sk = sk_head(&h->ht[state->bucket]);
-		जाओ try_again;
-	पूर्ण
-	वापस sk;
-पूर्ण
+		goto try_again;
+	}
+	return sk;
+}
 
-अटल काष्ठा sock *raw_get_idx(काष्ठा seq_file *seq, loff_t pos)
-अणु
-	काष्ठा sock *sk = raw_get_first(seq);
+static struct sock *raw_get_idx(struct seq_file *seq, loff_t pos)
+{
+	struct sock *sk = raw_get_first(seq);
 
-	अगर (sk)
-		जबतक (pos && (sk = raw_get_next(seq, sk)) != शून्य)
+	if (sk)
+		while (pos && (sk = raw_get_next(seq, sk)) != NULL)
 			--pos;
-	वापस pos ? शून्य : sk;
-पूर्ण
+	return pos ? NULL : sk;
+}
 
-व्योम *raw_seq_start(काष्ठा seq_file *seq, loff_t *pos)
+void *raw_seq_start(struct seq_file *seq, loff_t *pos)
 	__acquires(&h->lock)
-अणु
-	काष्ठा raw_hashinfo *h = PDE_DATA(file_inode(seq->file));
+{
+	struct raw_hashinfo *h = PDE_DATA(file_inode(seq->file));
 
-	पढ़ो_lock(&h->lock);
-	वापस *pos ? raw_get_idx(seq, *pos - 1) : SEQ_START_TOKEN;
-पूर्ण
+	read_lock(&h->lock);
+	return *pos ? raw_get_idx(seq, *pos - 1) : SEQ_START_TOKEN;
+}
 EXPORT_SYMBOL_GPL(raw_seq_start);
 
-व्योम *raw_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
-अणु
-	काष्ठा sock *sk;
+void *raw_seq_next(struct seq_file *seq, void *v, loff_t *pos)
+{
+	struct sock *sk;
 
-	अगर (v == SEQ_START_TOKEN)
+	if (v == SEQ_START_TOKEN)
 		sk = raw_get_first(seq);
-	अन्यथा
+	else
 		sk = raw_get_next(seq, v);
 	++*pos;
-	वापस sk;
-पूर्ण
+	return sk;
+}
 EXPORT_SYMBOL_GPL(raw_seq_next);
 
-व्योम raw_seq_stop(काष्ठा seq_file *seq, व्योम *v)
+void raw_seq_stop(struct seq_file *seq, void *v)
 	__releases(&h->lock)
-अणु
-	काष्ठा raw_hashinfo *h = PDE_DATA(file_inode(seq->file));
+{
+	struct raw_hashinfo *h = PDE_DATA(file_inode(seq->file));
 
-	पढ़ो_unlock(&h->lock);
-पूर्ण
+	read_unlock(&h->lock);
+}
 EXPORT_SYMBOL_GPL(raw_seq_stop);
 
-अटल व्योम raw_sock_seq_show(काष्ठा seq_file *seq, काष्ठा sock *sp, पूर्णांक i)
-अणु
-	काष्ठा inet_sock *inet = inet_sk(sp);
+static void raw_sock_seq_show(struct seq_file *seq, struct sock *sp, int i)
+{
+	struct inet_sock *inet = inet_sk(sp);
 	__be32 dest = inet->inet_daddr,
 	       src = inet->inet_rcv_saddr;
 	__u16 destp = 0,
 	      srcp  = inet->inet_num;
 
-	seq_म_लिखो(seq, "%4d: %08X:%04X %08X:%04X"
+	seq_printf(seq, "%4d: %08X:%04X %08X:%04X"
 		" %02X %08X:%08X %02X:%08lX %08X %5u %8d %lu %d %pK %u\n",
 		i, src, srcp, dest, destp, sp->sk_state,
 		sk_wmem_alloc_get(sp),
@@ -1061,77 +1060,77 @@ EXPORT_SYMBOL_GPL(raw_seq_stop);
 		0, 0L, 0,
 		from_kuid_munged(seq_user_ns(seq), sock_i_uid(sp)),
 		0, sock_i_ino(sp),
-		refcount_पढ़ो(&sp->sk_refcnt), sp, atomic_पढ़ो(&sp->sk_drops));
-पूर्ण
+		refcount_read(&sp->sk_refcnt), sp, atomic_read(&sp->sk_drops));
+}
 
-अटल पूर्णांक raw_seq_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	अगर (v == SEQ_START_TOKEN)
-		seq_म_लिखो(seq, "  sl  local_address rem_address   st tx_queue "
+static int raw_seq_show(struct seq_file *seq, void *v)
+{
+	if (v == SEQ_START_TOKEN)
+		seq_printf(seq, "  sl  local_address rem_address   st tx_queue "
 				"rx_queue tr tm->when retrnsmt   uid  timeout "
 				"inode ref pointer drops\n");
-	अन्यथा
-		raw_sock_seq_show(seq, v, raw_seq_निजी(seq)->bucket);
-	वापस 0;
-पूर्ण
+	else
+		raw_sock_seq_show(seq, v, raw_seq_private(seq)->bucket);
+	return 0;
+}
 
-अटल स्थिर काष्ठा seq_operations raw_seq_ops = अणु
+static const struct seq_operations raw_seq_ops = {
 	.start = raw_seq_start,
 	.next  = raw_seq_next,
 	.stop  = raw_seq_stop,
 	.show  = raw_seq_show,
-पूर्ण;
+};
 
-अटल __net_init पूर्णांक raw_init_net(काष्ठा net *net)
-अणु
-	अगर (!proc_create_net_data("raw", 0444, net->proc_net, &raw_seq_ops,
-			माप(काष्ठा raw_iter_state), &raw_v4_hashinfo))
-		वापस -ENOMEM;
+static __net_init int raw_init_net(struct net *net)
+{
+	if (!proc_create_net_data("raw", 0444, net->proc_net, &raw_seq_ops,
+			sizeof(struct raw_iter_state), &raw_v4_hashinfo))
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __net_निकास व्योम raw_निकास_net(काष्ठा net *net)
-अणु
-	हटाओ_proc_entry("raw", net->proc_net);
-पूर्ण
+static __net_exit void raw_exit_net(struct net *net)
+{
+	remove_proc_entry("raw", net->proc_net);
+}
 
-अटल __net_initdata काष्ठा pernet_operations raw_net_ops = अणु
+static __net_initdata struct pernet_operations raw_net_ops = {
 	.init = raw_init_net,
-	.निकास = raw_निकास_net,
-पूर्ण;
+	.exit = raw_exit_net,
+};
 
-पूर्णांक __init raw_proc_init(व्योम)
-अणु
-	वापस रेजिस्टर_pernet_subsys(&raw_net_ops);
-पूर्ण
+int __init raw_proc_init(void)
+{
+	return register_pernet_subsys(&raw_net_ops);
+}
 
-व्योम __init raw_proc_निकास(व्योम)
-अणु
-	unरेजिस्टर_pernet_subsys(&raw_net_ops);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PROC_FS */
+void __init raw_proc_exit(void)
+{
+	unregister_pernet_subsys(&raw_net_ops);
+}
+#endif /* CONFIG_PROC_FS */
 
-अटल व्योम raw_sysctl_init_net(काष्ठा net *net)
-अणु
-#अगर_घोषित CONFIG_NET_L3_MASTER_DEV
+static void raw_sysctl_init_net(struct net *net)
+{
+#ifdef CONFIG_NET_L3_MASTER_DEV
 	net->ipv4.sysctl_raw_l3mdev_accept = 1;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल पूर्णांक __net_init raw_sysctl_init(काष्ठा net *net)
-अणु
+static int __net_init raw_sysctl_init(struct net *net)
+{
 	raw_sysctl_init_net(net);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा pernet_operations __net_initdata raw_sysctl_ops = अणु
+static struct pernet_operations __net_initdata raw_sysctl_ops = {
 	.init	= raw_sysctl_init,
-पूर्ण;
+};
 
-व्योम __init raw_init(व्योम)
-अणु
+void __init raw_init(void)
+{
 	raw_sysctl_init_net(&init_net);
-	अगर (रेजिस्टर_pernet_subsys(&raw_sysctl_ops))
+	if (register_pernet_subsys(&raw_sysctl_ops))
 		panic("RAW: failed to init sysctl parameters.\n");
-पूर्ण
+}

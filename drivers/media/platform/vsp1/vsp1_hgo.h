@@ -1,42 +1,41 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * vsp1_hgo.h  --  R-Car VSP1 Histogram Generator 1D
  *
  * Copyright (C) 2016 Renesas Electronics Corporation
  *
- * Contact: Laurent Pinअक्षरt (laurent.pinअक्षरt@ideasonboard.com)
+ * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
-#अगर_अघोषित __VSP1_HGO_H__
-#घोषणा __VSP1_HGO_H__
+#ifndef __VSP1_HGO_H__
+#define __VSP1_HGO_H__
 
-#समावेश <media/media-entity.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-subdev.h>
+#include <media/media-entity.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-subdev.h>
 
-#समावेश "vsp1_histo.h"
+#include "vsp1_histo.h"
 
-काष्ठा vsp1_device;
+struct vsp1_device;
 
-काष्ठा vsp1_hgo अणु
-	काष्ठा vsp1_histogram histo;
+struct vsp1_hgo {
+	struct vsp1_histogram histo;
 
-	काष्ठा अणु
-		काष्ठा v4l2_ctrl_handler handler;
-		काष्ठा v4l2_ctrl *max_rgb;
-		काष्ठा v4l2_ctrl *num_bins;
-	पूर्ण ctrls;
+	struct {
+		struct v4l2_ctrl_handler handler;
+		struct v4l2_ctrl *max_rgb;
+		struct v4l2_ctrl *num_bins;
+	} ctrls;
 
 	bool max_rgb;
-	अचिन्हित पूर्णांक num_bins;
-पूर्ण;
+	unsigned int num_bins;
+};
 
-अटल अंतरभूत काष्ठा vsp1_hgo *to_hgo(काष्ठा v4l2_subdev *subdev)
-अणु
-	वापस container_of(subdev, काष्ठा vsp1_hgo, histo.entity.subdev);
-पूर्ण
+static inline struct vsp1_hgo *to_hgo(struct v4l2_subdev *subdev)
+{
+	return container_of(subdev, struct vsp1_hgo, histo.entity.subdev);
+}
 
-काष्ठा vsp1_hgo *vsp1_hgo_create(काष्ठा vsp1_device *vsp1);
-व्योम vsp1_hgo_frame_end(काष्ठा vsp1_entity *hgo);
+struct vsp1_hgo *vsp1_hgo_create(struct vsp1_device *vsp1);
+void vsp1_hgo_frame_end(struct vsp1_entity *hgo);
 
-#पूर्ण_अगर /* __VSP1_HGO_H__ */
+#endif /* __VSP1_HGO_H__ */

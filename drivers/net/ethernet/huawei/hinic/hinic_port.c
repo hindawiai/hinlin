@@ -1,30 +1,29 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Huawei HiNIC PCI Express Linux driver
  * Copyright(c) 2017 Huawei Technologies Co., Ltd
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/device.h>
-#समावेश <linux/त्रुटिसं.स>
+#include <linux/types.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/if_vlan.h>
+#include <linux/pci.h>
+#include <linux/device.h>
+#include <linux/errno.h>
 
-#समावेश "hinic_hw_if.h"
-#समावेश "hinic_hw_dev.h"
-#समावेश "hinic_port.h"
-#समावेश "hinic_dev.h"
+#include "hinic_hw_if.h"
+#include "hinic_hw_dev.h"
+#include "hinic_port.h"
+#include "hinic_dev.h"
 
-#घोषणा HINIC_MIN_MTU_SIZE              256
-#घोषणा HINIC_MAX_JUMBO_FRAME_SIZE      15872
+#define HINIC_MIN_MTU_SIZE              256
+#define HINIC_MAX_JUMBO_FRAME_SIZE      15872
 
-क्रमागत mac_op अणु
+enum mac_op {
 	MAC_DEL,
 	MAC_SET,
-पूर्ण;
+};
 
 /**
  * change_mac - change(add or delete) mac address
@@ -35,50 +34,50 @@
  *
  * Return 0 - Success, negative - Failure
  **/
-अटल पूर्णांक change_mac(काष्ठा hinic_dev *nic_dev, स्थिर u8 *addr,
-		      u16 vlan_id, क्रमागत mac_op op)
-अणु
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	काष्ठा hinic_port_mac_cmd port_mac_cmd;
-	काष्ठा hinic_hwअगर *hwअगर = hwdev->hwअगर;
-	u16 out_size = माप(port_mac_cmd);
-	काष्ठा pci_dev *pdev = hwअगर->pdev;
-	क्रमागत hinic_port_cmd cmd;
-	पूर्णांक err;
+static int change_mac(struct hinic_dev *nic_dev, const u8 *addr,
+		      u16 vlan_id, enum mac_op op)
+{
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	struct hinic_port_mac_cmd port_mac_cmd;
+	struct hinic_hwif *hwif = hwdev->hwif;
+	u16 out_size = sizeof(port_mac_cmd);
+	struct pci_dev *pdev = hwif->pdev;
+	enum hinic_port_cmd cmd;
+	int err;
 
-	अगर (op == MAC_SET)
+	if (op == MAC_SET)
 		cmd = HINIC_PORT_CMD_SET_MAC;
-	अन्यथा
+	else
 		cmd = HINIC_PORT_CMD_DEL_MAC;
 
-	port_mac_cmd.func_idx = HINIC_HWIF_FUNC_IDX(hwअगर);
+	port_mac_cmd.func_idx = HINIC_HWIF_FUNC_IDX(hwif);
 	port_mac_cmd.vlan_id = vlan_id;
-	स_नकल(port_mac_cmd.mac, addr, ETH_ALEN);
+	memcpy(port_mac_cmd.mac, addr, ETH_ALEN);
 
 	err = hinic_port_msg_cmd(hwdev, cmd, &port_mac_cmd,
-				 माप(port_mac_cmd),
+				 sizeof(port_mac_cmd),
 				 &port_mac_cmd, &out_size);
-	अगर (err || out_size != माप(port_mac_cmd) ||
+	if (err || out_size != sizeof(port_mac_cmd) ||
 	    (port_mac_cmd.status &&
-	     (port_mac_cmd.status != HINIC_PF_SET_VF_ALREADY || !HINIC_IS_VF(hwअगर)) &&
-	     port_mac_cmd.status != HINIC_MGMT_STATUS_EXIST)) अणु
+	     (port_mac_cmd.status != HINIC_PF_SET_VF_ALREADY || !HINIC_IS_VF(hwif)) &&
+	     port_mac_cmd.status != HINIC_MGMT_STATUS_EXIST)) {
 		dev_err(&pdev->dev, "Failed to change MAC, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, port_mac_cmd.status, out_size);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	अगर (port_mac_cmd.status == HINIC_PF_SET_VF_ALREADY) अणु
+	if (port_mac_cmd.status == HINIC_PF_SET_VF_ALREADY) {
 		dev_warn(&pdev->dev, "PF has already set VF mac, ignore %s operation\n",
 			 (op == MAC_SET) ? "set" : "del");
-		वापस HINIC_PF_SET_VF_ALREADY;
-	पूर्ण
+		return HINIC_PF_SET_VF_ALREADY;
+	}
 
-	अगर (cmd == HINIC_PORT_CMD_SET_MAC && port_mac_cmd.status ==
+	if (cmd == HINIC_PORT_CMD_SET_MAC && port_mac_cmd.status ==
 	    HINIC_MGMT_STATUS_EXIST)
 		dev_warn(&pdev->dev, "MAC is repeated, ignore set operation\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * hinic_port_add_mac - add mac address
@@ -88,56 +87,56 @@
  *
  * Return 0 - Success, negative - Failure
  **/
-पूर्णांक hinic_port_add_mac(काष्ठा hinic_dev *nic_dev,
-		       स्थिर u8 *addr, u16 vlan_id)
-अणु
-	वापस change_mac(nic_dev, addr, vlan_id, MAC_SET);
-पूर्ण
+int hinic_port_add_mac(struct hinic_dev *nic_dev,
+		       const u8 *addr, u16 vlan_id)
+{
+	return change_mac(nic_dev, addr, vlan_id, MAC_SET);
+}
 
 /**
- * hinic_port_del_mac - हटाओ mac address
+ * hinic_port_del_mac - remove mac address
  * @nic_dev: nic device
  * @addr: mac address
  * @vlan_id: vlan number that is connected to the mac
  *
  * Return 0 - Success, negative - Failure
  **/
-पूर्णांक hinic_port_del_mac(काष्ठा hinic_dev *nic_dev, स्थिर u8 *addr,
+int hinic_port_del_mac(struct hinic_dev *nic_dev, const u8 *addr,
 		       u16 vlan_id)
-अणु
-	वापस change_mac(nic_dev, addr, vlan_id, MAC_DEL);
-पूर्ण
+{
+	return change_mac(nic_dev, addr, vlan_id, MAC_DEL);
+}
 
 /**
  * hinic_port_get_mac - get the mac address of the nic device
  * @nic_dev: nic device
- * @addr: वापसed mac address
+ * @addr: returned mac address
  *
  * Return 0 - Success, negative - Failure
  **/
-पूर्णांक hinic_port_get_mac(काष्ठा hinic_dev *nic_dev, u8 *addr)
-अणु
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	काष्ठा hinic_port_mac_cmd port_mac_cmd;
-	काष्ठा hinic_hwअगर *hwअगर = hwdev->hwअगर;
-	u16 out_size = माप(port_mac_cmd);
-	काष्ठा pci_dev *pdev = hwअगर->pdev;
-	पूर्णांक err;
+int hinic_port_get_mac(struct hinic_dev *nic_dev, u8 *addr)
+{
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	struct hinic_port_mac_cmd port_mac_cmd;
+	struct hinic_hwif *hwif = hwdev->hwif;
+	u16 out_size = sizeof(port_mac_cmd);
+	struct pci_dev *pdev = hwif->pdev;
+	int err;
 
-	port_mac_cmd.func_idx = HINIC_HWIF_FUNC_IDX(hwअगर);
+	port_mac_cmd.func_idx = HINIC_HWIF_FUNC_IDX(hwif);
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_GET_MAC,
-				 &port_mac_cmd, माप(port_mac_cmd),
+				 &port_mac_cmd, sizeof(port_mac_cmd),
 				 &port_mac_cmd, &out_size);
-	अगर (err || (out_size != माप(port_mac_cmd)) || port_mac_cmd.status) अणु
+	if (err || (out_size != sizeof(port_mac_cmd)) || port_mac_cmd.status) {
 		dev_err(&pdev->dev, "Failed to get mac, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, port_mac_cmd.status, out_size);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	स_नकल(addr, port_mac_cmd.mac, ETH_ALEN);
-	वापस 0;
-पूर्ण
+	memcpy(addr, port_mac_cmd.mac, ETH_ALEN);
+	return 0;
+}
 
 /**
  * hinic_port_set_mtu - set mtu
@@ -146,41 +145,41 @@
  *
  * Return 0 - Success, negative - Failure
  **/
-पूर्णांक hinic_port_set_mtu(काष्ठा hinic_dev *nic_dev, पूर्णांक new_mtu)
-अणु
-	काष्ठा net_device *netdev = nic_dev->netdev;
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	काष्ठा hinic_port_mtu_cmd port_mtu_cmd;
-	काष्ठा hinic_hwअगर *hwअगर = hwdev->hwअगर;
-	u16 out_size = माप(port_mtu_cmd);
-	काष्ठा pci_dev *pdev = hwअगर->pdev;
-	पूर्णांक err, max_frame;
+int hinic_port_set_mtu(struct hinic_dev *nic_dev, int new_mtu)
+{
+	struct net_device *netdev = nic_dev->netdev;
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	struct hinic_port_mtu_cmd port_mtu_cmd;
+	struct hinic_hwif *hwif = hwdev->hwif;
+	u16 out_size = sizeof(port_mtu_cmd);
+	struct pci_dev *pdev = hwif->pdev;
+	int err, max_frame;
 
-	अगर (new_mtu < HINIC_MIN_MTU_SIZE) अणु
-		netअगर_err(nic_dev, drv, netdev, "mtu < MIN MTU size");
-		वापस -EINVAL;
-	पूर्ण
+	if (new_mtu < HINIC_MIN_MTU_SIZE) {
+		netif_err(nic_dev, drv, netdev, "mtu < MIN MTU size");
+		return -EINVAL;
+	}
 
 	max_frame = new_mtu + ETH_HLEN + ETH_FCS_LEN;
-	अगर (max_frame > HINIC_MAX_JUMBO_FRAME_SIZE) अणु
-		netअगर_err(nic_dev, drv, netdev, "mtu > MAX MTU size");
-		वापस -EINVAL;
-	पूर्ण
+	if (max_frame > HINIC_MAX_JUMBO_FRAME_SIZE) {
+		netif_err(nic_dev, drv, netdev, "mtu > MAX MTU size");
+		return -EINVAL;
+	}
 
-	port_mtu_cmd.func_idx = HINIC_HWIF_FUNC_IDX(hwअगर);
+	port_mtu_cmd.func_idx = HINIC_HWIF_FUNC_IDX(hwif);
 	port_mtu_cmd.mtu = new_mtu;
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_CHANGE_MTU,
-				 &port_mtu_cmd, माप(port_mtu_cmd),
+				 &port_mtu_cmd, sizeof(port_mtu_cmd),
 				 &port_mtu_cmd, &out_size);
-	अगर (err || out_size != माप(port_mtu_cmd) || port_mtu_cmd.status) अणु
+	if (err || out_size != sizeof(port_mtu_cmd) || port_mtu_cmd.status) {
 		dev_err(&pdev->dev, "Failed to set mtu, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, port_mtu_cmd.status, out_size);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * hinic_port_add_vlan - add vlan to the nic device
@@ -189,18 +188,18 @@
  *
  * Return 0 - Success, negative - Failure
  **/
-पूर्णांक hinic_port_add_vlan(काष्ठा hinic_dev *nic_dev, u16 vlan_id)
-अणु
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	काष्ठा hinic_port_vlan_cmd port_vlan_cmd;
+int hinic_port_add_vlan(struct hinic_dev *nic_dev, u16 vlan_id)
+{
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	struct hinic_port_vlan_cmd port_vlan_cmd;
 
-	port_vlan_cmd.func_idx = HINIC_HWIF_FUNC_IDX(hwdev->hwअगर);
+	port_vlan_cmd.func_idx = HINIC_HWIF_FUNC_IDX(hwdev->hwif);
 	port_vlan_cmd.vlan_id = vlan_id;
 
-	वापस hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_ADD_VLAN,
-				  &port_vlan_cmd, माप(port_vlan_cmd),
-				  शून्य, शून्य);
-पूर्ण
+	return hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_ADD_VLAN,
+				  &port_vlan_cmd, sizeof(port_vlan_cmd),
+				  NULL, NULL);
+}
 
 /**
  * hinic_port_del_vlan - delete vlan from the nic device
@@ -209,18 +208,18 @@
  *
  * Return 0 - Success, negative - Failure
  **/
-पूर्णांक hinic_port_del_vlan(काष्ठा hinic_dev *nic_dev, u16 vlan_id)
-अणु
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	काष्ठा hinic_port_vlan_cmd port_vlan_cmd;
+int hinic_port_del_vlan(struct hinic_dev *nic_dev, u16 vlan_id)
+{
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	struct hinic_port_vlan_cmd port_vlan_cmd;
 
-	port_vlan_cmd.func_idx = HINIC_HWIF_FUNC_IDX(hwdev->hwअगर);
+	port_vlan_cmd.func_idx = HINIC_HWIF_FUNC_IDX(hwdev->hwif);
 	port_vlan_cmd.vlan_id = vlan_id;
 
-	वापस hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_DEL_VLAN,
-				 &port_vlan_cmd, माप(port_vlan_cmd),
-				 शून्य, शून्य);
-पूर्ण
+	return hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_DEL_VLAN,
+				 &port_vlan_cmd, sizeof(port_vlan_cmd),
+				 NULL, NULL);
+}
 
 /**
  * hinic_port_set_rx_mode - set rx mode in the nic device
@@ -229,50 +228,50 @@
  *
  * Return 0 - Success, negative - Failure
  **/
-पूर्णांक hinic_port_set_rx_mode(काष्ठा hinic_dev *nic_dev, u32 rx_mode)
-अणु
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	काष्ठा hinic_port_rx_mode_cmd rx_mode_cmd;
+int hinic_port_set_rx_mode(struct hinic_dev *nic_dev, u32 rx_mode)
+{
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	struct hinic_port_rx_mode_cmd rx_mode_cmd;
 
-	rx_mode_cmd.func_idx = HINIC_HWIF_FUNC_IDX(hwdev->hwअगर);
+	rx_mode_cmd.func_idx = HINIC_HWIF_FUNC_IDX(hwdev->hwif);
 	rx_mode_cmd.rx_mode = rx_mode;
 
-	वापस hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_SET_RX_MODE,
-				  &rx_mode_cmd, माप(rx_mode_cmd),
-				  शून्य, शून्य);
-पूर्ण
+	return hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_SET_RX_MODE,
+				  &rx_mode_cmd, sizeof(rx_mode_cmd),
+				  NULL, NULL);
+}
 
 /**
  * hinic_port_link_state - get the link state
  * @nic_dev: nic device
- * @link_state: the वापसed link state
+ * @link_state: the returned link state
  *
  * Return 0 - Success, negative - Failure
  **/
-पूर्णांक hinic_port_link_state(काष्ठा hinic_dev *nic_dev,
-			  क्रमागत hinic_port_link_state *link_state)
-अणु
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	काष्ठा hinic_hwअगर *hwअगर = hwdev->hwअगर;
-	काष्ठा hinic_port_link_cmd link_cmd;
-	काष्ठा pci_dev *pdev = hwअगर->pdev;
-	u16 out_size = माप(link_cmd);
-	पूर्णांक err;
+int hinic_port_link_state(struct hinic_dev *nic_dev,
+			  enum hinic_port_link_state *link_state)
+{
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	struct hinic_hwif *hwif = hwdev->hwif;
+	struct hinic_port_link_cmd link_cmd;
+	struct pci_dev *pdev = hwif->pdev;
+	u16 out_size = sizeof(link_cmd);
+	int err;
 
-	link_cmd.func_idx = HINIC_HWIF_FUNC_IDX(hwअगर);
+	link_cmd.func_idx = HINIC_HWIF_FUNC_IDX(hwif);
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_GET_LINK_STATE,
-				 &link_cmd, माप(link_cmd),
+				 &link_cmd, sizeof(link_cmd),
 				 &link_cmd, &out_size);
-	अगर (err || (out_size != माप(link_cmd)) || link_cmd.status) अणु
+	if (err || (out_size != sizeof(link_cmd)) || link_cmd.status) {
 		dev_err(&pdev->dev, "Failed to get link state, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, link_cmd.status, out_size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	*link_state = link_cmd.state;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * hinic_port_set_state - set port state
@@ -281,31 +280,31 @@
  *
  * Return 0 - Success, negative - Failure
  **/
-पूर्णांक hinic_port_set_state(काष्ठा hinic_dev *nic_dev, क्रमागत hinic_port_state state)
-अणु
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	काष्ठा hinic_port_state_cmd port_state;
-	काष्ठा hinic_hwअगर *hwअगर = hwdev->hwअगर;
-	काष्ठा pci_dev *pdev = hwअगर->pdev;
-	u16 out_size = माप(port_state);
-	पूर्णांक err;
+int hinic_port_set_state(struct hinic_dev *nic_dev, enum hinic_port_state state)
+{
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	struct hinic_port_state_cmd port_state;
+	struct hinic_hwif *hwif = hwdev->hwif;
+	struct pci_dev *pdev = hwif->pdev;
+	u16 out_size = sizeof(port_state);
+	int err;
 
-	अगर (HINIC_IS_VF(hwdev->hwअगर))
-		वापस 0;
+	if (HINIC_IS_VF(hwdev->hwif))
+		return 0;
 
 	port_state.state = state;
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_SET_PORT_STATE,
-				 &port_state, माप(port_state),
+				 &port_state, sizeof(port_state),
 				 &port_state, &out_size);
-	अगर (err || (out_size != माप(port_state)) || port_state.status) अणु
+	if (err || (out_size != sizeof(port_state)) || port_state.status) {
 		dev_err(&pdev->dev, "Failed to set port state, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, port_state.status, out_size);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * hinic_port_set_func_state- set func device state
@@ -314,61 +313,61 @@
  *
  * Return 0 - Success, negative - Failure
  **/
-पूर्णांक hinic_port_set_func_state(काष्ठा hinic_dev *nic_dev,
-			      क्रमागत hinic_func_port_state state)
-अणु
-	काष्ठा hinic_port_func_state_cmd func_state;
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	काष्ठा hinic_hwअगर *hwअगर = hwdev->hwअगर;
-	काष्ठा pci_dev *pdev = hwअगर->pdev;
-	u16 out_size = माप(func_state);
-	पूर्णांक err;
+int hinic_port_set_func_state(struct hinic_dev *nic_dev,
+			      enum hinic_func_port_state state)
+{
+	struct hinic_port_func_state_cmd func_state;
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	struct hinic_hwif *hwif = hwdev->hwif;
+	struct pci_dev *pdev = hwif->pdev;
+	u16 out_size = sizeof(func_state);
+	int err;
 
-	func_state.func_idx = HINIC_HWIF_FUNC_IDX(hwअगर);
+	func_state.func_idx = HINIC_HWIF_FUNC_IDX(hwif);
 	func_state.state = state;
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_SET_FUNC_STATE,
-				 &func_state, माप(func_state),
+				 &func_state, sizeof(func_state),
 				 &func_state, &out_size);
-	अगर (err || (out_size != माप(func_state)) || func_state.status) अणु
+	if (err || (out_size != sizeof(func_state)) || func_state.status) {
 		dev_err(&pdev->dev, "Failed to set port func state, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, func_state.status, out_size);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * hinic_port_get_cap - get port capabilities
  * @nic_dev: nic device
- * @port_cap: वापसed port capabilities
+ * @port_cap: returned port capabilities
  *
  * Return 0 - Success, negative - Failure
  **/
-पूर्णांक hinic_port_get_cap(काष्ठा hinic_dev *nic_dev,
-		       काष्ठा hinic_port_cap *port_cap)
-अणु
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	काष्ठा hinic_hwअगर *hwअगर = hwdev->hwअगर;
-	काष्ठा pci_dev *pdev = hwअगर->pdev;
-	u16 out_size = माप(*port_cap);
-	पूर्णांक err;
+int hinic_port_get_cap(struct hinic_dev *nic_dev,
+		       struct hinic_port_cap *port_cap)
+{
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	struct hinic_hwif *hwif = hwdev->hwif;
+	struct pci_dev *pdev = hwif->pdev;
+	u16 out_size = sizeof(*port_cap);
+	int err;
 
-	port_cap->func_idx = HINIC_HWIF_FUNC_IDX(hwअगर);
+	port_cap->func_idx = HINIC_HWIF_FUNC_IDX(hwif);
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_GET_CAP,
-				 port_cap, माप(*port_cap),
+				 port_cap, sizeof(*port_cap),
 				 port_cap, &out_size);
-	अगर (err || (out_size != माप(*port_cap)) || port_cap->status) अणु
+	if (err || (out_size != sizeof(*port_cap)) || port_cap->status) {
 		dev_err(&pdev->dev,
 			"Failed to get port capabilities, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, port_cap->status, out_size);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * hinic_port_set_tso - set port tso configuration
@@ -377,333 +376,333 @@
  *
  * Return 0 - Success, negative - Failure
  **/
-पूर्णांक hinic_port_set_tso(काष्ठा hinic_dev *nic_dev, क्रमागत hinic_tso_state state)
-अणु
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	काष्ठा hinic_hwअगर *hwअगर = hwdev->hwअगर;
-	काष्ठा hinic_tso_config tso_cfg = अणु0पूर्ण;
-	काष्ठा pci_dev *pdev = hwअगर->pdev;
-	u16 out_size = माप(tso_cfg);
-	पूर्णांक err;
+int hinic_port_set_tso(struct hinic_dev *nic_dev, enum hinic_tso_state state)
+{
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	struct hinic_hwif *hwif = hwdev->hwif;
+	struct hinic_tso_config tso_cfg = {0};
+	struct pci_dev *pdev = hwif->pdev;
+	u16 out_size = sizeof(tso_cfg);
+	int err;
 
-	tso_cfg.func_id = HINIC_HWIF_FUNC_IDX(hwअगर);
+	tso_cfg.func_id = HINIC_HWIF_FUNC_IDX(hwif);
 	tso_cfg.tso_en = state;
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_SET_TSO,
-				 &tso_cfg, माप(tso_cfg),
+				 &tso_cfg, sizeof(tso_cfg),
 				 &tso_cfg, &out_size);
-	अगर (err || out_size != माप(tso_cfg) || tso_cfg.status) अणु
+	if (err || out_size != sizeof(tso_cfg) || tso_cfg.status) {
 		dev_err(&pdev->dev,
 			"Failed to set port tso, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, tso_cfg.status, out_size);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hinic_set_rx_csum_offload(काष्ठा hinic_dev *nic_dev, u32 en)
-अणु
-	काष्ठा hinic_checksum_offload rx_csum_cfg = अणु0पूर्ण;
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	u16 out_size = माप(rx_csum_cfg);
-	काष्ठा hinic_hwअगर *hwअगर;
-	काष्ठा pci_dev *pdev;
-	पूर्णांक err;
+int hinic_set_rx_csum_offload(struct hinic_dev *nic_dev, u32 en)
+{
+	struct hinic_checksum_offload rx_csum_cfg = {0};
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	u16 out_size = sizeof(rx_csum_cfg);
+	struct hinic_hwif *hwif;
+	struct pci_dev *pdev;
+	int err;
 
-	अगर (!hwdev)
-		वापस -EINVAL;
+	if (!hwdev)
+		return -EINVAL;
 
-	hwअगर = hwdev->hwअगर;
-	pdev = hwअगर->pdev;
-	rx_csum_cfg.func_id = HINIC_HWIF_FUNC_IDX(hwअगर);
+	hwif = hwdev->hwif;
+	pdev = hwif->pdev;
+	rx_csum_cfg.func_id = HINIC_HWIF_FUNC_IDX(hwif);
 	rx_csum_cfg.rx_csum_offload = en;
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_SET_RX_CSUM,
-				 &rx_csum_cfg, माप(rx_csum_cfg),
+				 &rx_csum_cfg, sizeof(rx_csum_cfg),
 				 &rx_csum_cfg, &out_size);
-	अगर (err || !out_size || rx_csum_cfg.status) अणु
+	if (err || !out_size || rx_csum_cfg.status) {
 		dev_err(&pdev->dev,
 			"Failed to set rx csum offload, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, rx_csum_cfg.status, out_size);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hinic_set_rx_vlan_offload(काष्ठा hinic_dev *nic_dev, u8 en)
-अणु
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	काष्ठा hinic_vlan_cfg vlan_cfg;
-	काष्ठा hinic_hwअगर *hwअगर;
-	काष्ठा pci_dev *pdev;
+int hinic_set_rx_vlan_offload(struct hinic_dev *nic_dev, u8 en)
+{
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	struct hinic_vlan_cfg vlan_cfg;
+	struct hinic_hwif *hwif;
+	struct pci_dev *pdev;
 	u16 out_size;
-	पूर्णांक err;
+	int err;
 
-	अगर (!hwdev)
-		वापस -EINVAL;
+	if (!hwdev)
+		return -EINVAL;
 
-	out_size = माप(vlan_cfg);
-	hwअगर = hwdev->hwअगर;
-	pdev = hwअगर->pdev;
-	vlan_cfg.func_id = HINIC_HWIF_FUNC_IDX(hwअगर);
+	out_size = sizeof(vlan_cfg);
+	hwif = hwdev->hwif;
+	pdev = hwif->pdev;
+	vlan_cfg.func_id = HINIC_HWIF_FUNC_IDX(hwif);
 	vlan_cfg.vlan_rx_offload = en;
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_SET_RX_VLAN_OFFLOAD,
-				 &vlan_cfg, माप(vlan_cfg),
+				 &vlan_cfg, sizeof(vlan_cfg),
 				 &vlan_cfg, &out_size);
-	अगर (err || !out_size || vlan_cfg.status) अणु
+	if (err || !out_size || vlan_cfg.status) {
 		dev_err(&pdev->dev,
 			"Failed to set rx vlan offload, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, vlan_cfg.status, out_size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hinic_set_max_qnum(काष्ठा hinic_dev *nic_dev, u8 num_rqs)
-अणु
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	काष्ठा hinic_hwअगर *hwअगर = hwdev->hwअगर;
-	काष्ठा hinic_rq_num rq_num = अणु 0 पूर्ण;
-	काष्ठा pci_dev *pdev = hwअगर->pdev;
-	u16 out_size = माप(rq_num);
-	पूर्णांक err;
+int hinic_set_max_qnum(struct hinic_dev *nic_dev, u8 num_rqs)
+{
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	struct hinic_hwif *hwif = hwdev->hwif;
+	struct hinic_rq_num rq_num = { 0 };
+	struct pci_dev *pdev = hwif->pdev;
+	u16 out_size = sizeof(rq_num);
+	int err;
 
-	rq_num.func_id = HINIC_HWIF_FUNC_IDX(hwअगर);
+	rq_num.func_id = HINIC_HWIF_FUNC_IDX(hwif);
 	rq_num.num_rqs = num_rqs;
 	rq_num.rq_depth = ilog2(nic_dev->rq_depth);
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_SET_RQ_IQ_MAP,
-				 &rq_num, माप(rq_num),
+				 &rq_num, sizeof(rq_num),
 				 &rq_num, &out_size);
-	अगर (err || !out_size || rq_num.status) अणु
+	if (err || !out_size || rq_num.status) {
 		dev_err(&pdev->dev,
 			"Failed to set rxq number, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, rq_num.status, out_size);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hinic_set_rx_lro(काष्ठा hinic_dev *nic_dev, u8 ipv4_en, u8 ipv6_en,
+static int hinic_set_rx_lro(struct hinic_dev *nic_dev, u8 ipv4_en, u8 ipv6_en,
 			    u8 max_wqe_num)
-अणु
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	काष्ठा hinic_lro_config lro_cfg = अणु 0 पूर्ण;
-	काष्ठा hinic_hwअगर *hwअगर = hwdev->hwअगर;
-	काष्ठा pci_dev *pdev = hwअगर->pdev;
-	u16 out_size = माप(lro_cfg);
-	पूर्णांक err;
+{
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	struct hinic_lro_config lro_cfg = { 0 };
+	struct hinic_hwif *hwif = hwdev->hwif;
+	struct pci_dev *pdev = hwif->pdev;
+	u16 out_size = sizeof(lro_cfg);
+	int err;
 
-	lro_cfg.func_id = HINIC_HWIF_FUNC_IDX(hwअगर);
+	lro_cfg.func_id = HINIC_HWIF_FUNC_IDX(hwif);
 	lro_cfg.lro_ipv4_en = ipv4_en;
 	lro_cfg.lro_ipv6_en = ipv6_en;
 	lro_cfg.lro_max_wqe_num = max_wqe_num;
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_SET_LRO,
-				 &lro_cfg, माप(lro_cfg),
+				 &lro_cfg, sizeof(lro_cfg),
 				 &lro_cfg, &out_size);
-	अगर (err || !out_size || lro_cfg.status) अणु
+	if (err || !out_size || lro_cfg.status) {
 		dev_err(&pdev->dev,
 			"Failed to set lro offload, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, lro_cfg.status, out_size);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hinic_set_rx_lro_समयr(काष्ठा hinic_dev *nic_dev, u32 समयr_value)
-अणु
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	काष्ठा hinic_lro_समयr lro_समयr = अणु 0 पूर्ण;
-	काष्ठा hinic_hwअगर *hwअगर = hwdev->hwअगर;
-	काष्ठा pci_dev *pdev = hwअगर->pdev;
-	u16 out_size = माप(lro_समयr);
-	पूर्णांक err;
+static int hinic_set_rx_lro_timer(struct hinic_dev *nic_dev, u32 timer_value)
+{
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	struct hinic_lro_timer lro_timer = { 0 };
+	struct hinic_hwif *hwif = hwdev->hwif;
+	struct pci_dev *pdev = hwif->pdev;
+	u16 out_size = sizeof(lro_timer);
+	int err;
 
-	lro_समयr.status = 0;
-	lro_समयr.type = 0;
-	lro_समयr.enable = 1;
-	lro_समयr.समयr = समयr_value;
+	lro_timer.status = 0;
+	lro_timer.type = 0;
+	lro_timer.enable = 1;
+	lro_timer.timer = timer_value;
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_SET_LRO_TIMER,
-				 &lro_समयr, माप(lro_समयr),
-				 &lro_समयr, &out_size);
-	अगर (lro_समयr.status == 0xFF) अणु
-		/* For this हाल, we think status (0xFF) is OK */
-		lro_समयr.status = 0;
+				 &lro_timer, sizeof(lro_timer),
+				 &lro_timer, &out_size);
+	if (lro_timer.status == 0xFF) {
+		/* For this case, we think status (0xFF) is OK */
+		lro_timer.status = 0;
 		dev_dbg(&pdev->dev,
 			"Set lro timer not supported by the current FW version, it will be 1ms default\n");
-	पूर्ण
+	}
 
-	अगर (err || !out_size || lro_समयr.status) अणु
+	if (err || !out_size || lro_timer.status) {
 		dev_err(&pdev->dev,
 			"Failed to set lro timer, err: %d, status: 0x%x, out size: 0x%x\n",
-			err, lro_समयr.status, out_size);
+			err, lro_timer.status, out_size);
 
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hinic_set_rx_lro_state(काष्ठा hinic_dev *nic_dev, u8 lro_en,
-			   u32 lro_समयr, u32 wqe_num)
-अणु
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
+int hinic_set_rx_lro_state(struct hinic_dev *nic_dev, u8 lro_en,
+			   u32 lro_timer, u32 wqe_num)
+{
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
 	u8 ipv4_en;
 	u8 ipv6_en;
-	पूर्णांक err;
+	int err;
 
-	अगर (!hwdev)
-		वापस -EINVAL;
+	if (!hwdev)
+		return -EINVAL;
 
 	ipv4_en = lro_en ? 1 : 0;
 	ipv6_en = lro_en ? 1 : 0;
 
 	err = hinic_set_rx_lro(nic_dev, ipv4_en, ipv6_en, (u8)wqe_num);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (HINIC_IS_VF(nic_dev->hwdev->hwअगर))
-		वापस 0;
+	if (HINIC_IS_VF(nic_dev->hwdev->hwif))
+		return 0;
 
-	err = hinic_set_rx_lro_समयr(nic_dev, lro_समयr);
-	अगर (err)
-		वापस err;
+	err = hinic_set_rx_lro_timer(nic_dev, lro_timer);
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hinic_rss_set_indir_tbl(काष्ठा hinic_dev *nic_dev, u32 पंचांगpl_idx,
-			    स्थिर u32 *indir_table)
-अणु
-	काष्ठा hinic_rss_indirect_tbl *indir_tbl;
-	काष्ठा hinic_func_to_io *func_to_io;
-	काष्ठा hinic_cmdq_buf cmd_buf;
-	काष्ठा hinic_hwdev *hwdev;
-	काष्ठा hinic_hwअगर *hwअगर;
-	काष्ठा pci_dev *pdev;
+int hinic_rss_set_indir_tbl(struct hinic_dev *nic_dev, u32 tmpl_idx,
+			    const u32 *indir_table)
+{
+	struct hinic_rss_indirect_tbl *indir_tbl;
+	struct hinic_func_to_io *func_to_io;
+	struct hinic_cmdq_buf cmd_buf;
+	struct hinic_hwdev *hwdev;
+	struct hinic_hwif *hwif;
+	struct pci_dev *pdev;
 	u32 indir_size;
 	u64 out_param;
-	पूर्णांक err, i;
+	int err, i;
 	u32 *temp;
 
 	hwdev = nic_dev->hwdev;
 	func_to_io = &hwdev->func_to_io;
-	hwअगर = hwdev->hwअगर;
-	pdev = hwअगर->pdev;
+	hwif = hwdev->hwif;
+	pdev = hwif->pdev;
 
 	err = hinic_alloc_cmdq_buf(&func_to_io->cmdqs, &cmd_buf);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "Failed to allocate cmdq buf\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	cmd_buf.size = माप(*indir_tbl);
+	cmd_buf.size = sizeof(*indir_tbl);
 
 	indir_tbl = cmd_buf.buf;
-	indir_tbl->group_index = cpu_to_be32(पंचांगpl_idx);
+	indir_tbl->group_index = cpu_to_be32(tmpl_idx);
 
-	क्रम (i = 0; i < HINIC_RSS_INसूची_SIZE; i++) अणु
+	for (i = 0; i < HINIC_RSS_INDIR_SIZE; i++) {
 		indir_tbl->entry[i] = indir_table[i];
 
-		अगर (0x3 == (i & 0x3)) अणु
+		if (0x3 == (i & 0x3)) {
 			temp = (u32 *)&indir_tbl->entry[i - 3];
 			*temp = cpu_to_be32(*temp);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* cfg the rss indirect table by command queue */
-	indir_size = HINIC_RSS_INसूची_SIZE / 2;
+	indir_size = HINIC_RSS_INDIR_SIZE / 2;
 	indir_tbl->offset = 0;
 	indir_tbl->size = cpu_to_be32(indir_size);
 
 	err = hinic_cmdq_direct_resp(&func_to_io->cmdqs, HINIC_MOD_L2NIC,
-				     HINIC_UCODE_CMD_SET_RSS_INसूची_TABLE,
+				     HINIC_UCODE_CMD_SET_RSS_INDIR_TABLE,
 				     &cmd_buf, &out_param);
-	अगर (err || out_param != 0) अणु
+	if (err || out_param != 0) {
 		dev_err(&pdev->dev, "Failed to set rss indir table\n");
 		err = -EFAULT;
-		जाओ मुक्त_buf;
-	पूर्ण
+		goto free_buf;
+	}
 
 	indir_tbl->offset = cpu_to_be32(indir_size);
 	indir_tbl->size = cpu_to_be32(indir_size);
-	स_नकल(&indir_tbl->entry[0], &indir_tbl->entry[indir_size], indir_size);
+	memcpy(&indir_tbl->entry[0], &indir_tbl->entry[indir_size], indir_size);
 
 	err = hinic_cmdq_direct_resp(&func_to_io->cmdqs, HINIC_MOD_L2NIC,
-				     HINIC_UCODE_CMD_SET_RSS_INसूची_TABLE,
+				     HINIC_UCODE_CMD_SET_RSS_INDIR_TABLE,
 				     &cmd_buf, &out_param);
-	अगर (err || out_param != 0) अणु
+	if (err || out_param != 0) {
 		dev_err(&pdev->dev, "Failed to set rss indir table\n");
 		err = -EFAULT;
-	पूर्ण
+	}
 
-मुक्त_buf:
-	hinic_मुक्त_cmdq_buf(&func_to_io->cmdqs, &cmd_buf);
+free_buf:
+	hinic_free_cmdq_buf(&func_to_io->cmdqs, &cmd_buf);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक hinic_rss_get_indir_tbl(काष्ठा hinic_dev *nic_dev, u32 पंचांगpl_idx,
+int hinic_rss_get_indir_tbl(struct hinic_dev *nic_dev, u32 tmpl_idx,
 			    u32 *indir_table)
-अणु
-	काष्ठा hinic_rss_indir_table rss_cfg = अणु 0 पूर्ण;
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	काष्ठा hinic_hwअगर *hwअगर = hwdev->hwअगर;
-	काष्ठा pci_dev *pdev = hwअगर->pdev;
-	u16 out_size = माप(rss_cfg);
-	पूर्णांक err = 0, i;
+{
+	struct hinic_rss_indir_table rss_cfg = { 0 };
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	struct hinic_hwif *hwif = hwdev->hwif;
+	struct pci_dev *pdev = hwif->pdev;
+	u16 out_size = sizeof(rss_cfg);
+	int err = 0, i;
 
-	rss_cfg.func_id = HINIC_HWIF_FUNC_IDX(hwअगर);
-	rss_cfg.ढाँचा_id = पंचांगpl_idx;
+	rss_cfg.func_id = HINIC_HWIF_FUNC_IDX(hwif);
+	rss_cfg.template_id = tmpl_idx;
 
 	err = hinic_port_msg_cmd(hwdev,
-				 HINIC_PORT_CMD_GET_RSS_TEMPLATE_INसूची_TBL,
-				 &rss_cfg, माप(rss_cfg), &rss_cfg,
+				 HINIC_PORT_CMD_GET_RSS_TEMPLATE_INDIR_TBL,
+				 &rss_cfg, sizeof(rss_cfg), &rss_cfg,
 				 &out_size);
-	अगर (err || !out_size || rss_cfg.status) अणु
+	if (err || !out_size || rss_cfg.status) {
 		dev_err(&pdev->dev, "Failed to get indir table, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, rss_cfg.status, out_size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	hinic_be32_to_cpu(rss_cfg.indir, HINIC_RSS_INसूची_SIZE);
-	क्रम (i = 0; i < HINIC_RSS_INसूची_SIZE; i++)
+	hinic_be32_to_cpu(rss_cfg.indir, HINIC_RSS_INDIR_SIZE);
+	for (i = 0; i < HINIC_RSS_INDIR_SIZE; i++)
 		indir_table[i] = rss_cfg.indir[i];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hinic_set_rss_type(काष्ठा hinic_dev *nic_dev, u32 पंचांगpl_idx,
-		       काष्ठा hinic_rss_type rss_type)
-अणु
-	काष्ठा hinic_rss_context_tbl *ctx_tbl;
-	काष्ठा hinic_func_to_io *func_to_io;
-	काष्ठा hinic_cmdq_buf cmd_buf;
-	काष्ठा hinic_hwdev *hwdev;
-	काष्ठा hinic_hwअगर *hwअगर;
-	काष्ठा pci_dev *pdev;
+int hinic_set_rss_type(struct hinic_dev *nic_dev, u32 tmpl_idx,
+		       struct hinic_rss_type rss_type)
+{
+	struct hinic_rss_context_tbl *ctx_tbl;
+	struct hinic_func_to_io *func_to_io;
+	struct hinic_cmdq_buf cmd_buf;
+	struct hinic_hwdev *hwdev;
+	struct hinic_hwif *hwif;
+	struct pci_dev *pdev;
 	u64 out_param;
 	u32 ctx = 0;
-	पूर्णांक err;
+	int err;
 
 	hwdev = nic_dev->hwdev;
 	func_to_io = &hwdev->func_to_io;
-	hwअगर = hwdev->hwअगर;
-	pdev = hwअगर->pdev;
+	hwif = hwdev->hwif;
+	pdev = hwif->pdev;
 
 	err = hinic_alloc_cmdq_buf(&func_to_io->cmdqs, &cmd_buf);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "Failed to allocate cmd buf\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ctx |=  HINIC_RSS_TYPE_SET(1, VALID) |
 		HINIC_RSS_TYPE_SET(rss_type.ipv4, IPV4) |
@@ -715,12 +714,12 @@
 		HINIC_RSS_TYPE_SET(rss_type.udp_ipv4, UDP_IPV4) |
 		HINIC_RSS_TYPE_SET(rss_type.udp_ipv6, UDP_IPV6);
 
-	cmd_buf.size = माप(काष्ठा hinic_rss_context_tbl);
+	cmd_buf.size = sizeof(struct hinic_rss_context_tbl);
 
-	ctx_tbl = (काष्ठा hinic_rss_context_tbl *)cmd_buf.buf;
-	ctx_tbl->group_index = cpu_to_be32(पंचांगpl_idx);
+	ctx_tbl = (struct hinic_rss_context_tbl *)cmd_buf.buf;
+	ctx_tbl->group_index = cpu_to_be32(tmpl_idx);
 	ctx_tbl->offset = 0;
-	ctx_tbl->size = माप(u32);
+	ctx_tbl->size = sizeof(u32);
 	ctx_tbl->size = cpu_to_be32(ctx_tbl->size);
 	ctx_tbl->rsvd = 0;
 	ctx_tbl->ctx = cpu_to_be32(ctx);
@@ -730,44 +729,44 @@
 				     HINIC_UCODE_CMD_SET_RSS_CONTEXT_TABLE,
 				     &cmd_buf, &out_param);
 
-	hinic_मुक्त_cmdq_buf(&func_to_io->cmdqs, &cmd_buf);
+	hinic_free_cmdq_buf(&func_to_io->cmdqs, &cmd_buf);
 
-	अगर (err || out_param != 0) अणु
+	if (err || out_param != 0) {
 		dev_err(&pdev->dev, "Failed to set rss context table, err: %d\n",
 			err);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hinic_get_rss_type(काष्ठा hinic_dev *nic_dev, u32 पंचांगpl_idx,
-		       काष्ठा hinic_rss_type *rss_type)
-अणु
-	काष्ठा hinic_rss_context_table ctx_tbl = अणु 0 पूर्ण;
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	u16 out_size = माप(ctx_tbl);
-	काष्ठा hinic_hwअगर *hwअगर;
-	काष्ठा pci_dev *pdev;
-	पूर्णांक err;
+int hinic_get_rss_type(struct hinic_dev *nic_dev, u32 tmpl_idx,
+		       struct hinic_rss_type *rss_type)
+{
+	struct hinic_rss_context_table ctx_tbl = { 0 };
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	u16 out_size = sizeof(ctx_tbl);
+	struct hinic_hwif *hwif;
+	struct pci_dev *pdev;
+	int err;
 
-	अगर (!hwdev || !rss_type)
-		वापस -EINVAL;
+	if (!hwdev || !rss_type)
+		return -EINVAL;
 
-	hwअगर = hwdev->hwअगर;
-	pdev = hwअगर->pdev;
+	hwif = hwdev->hwif;
+	pdev = hwif->pdev;
 
-	ctx_tbl.func_id = HINIC_HWIF_FUNC_IDX(hwअगर);
-	ctx_tbl.ढाँचा_id = पंचांगpl_idx;
+	ctx_tbl.func_id = HINIC_HWIF_FUNC_IDX(hwif);
+	ctx_tbl.template_id = tmpl_idx;
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_GET_RSS_CTX_TBL,
-				 &ctx_tbl, माप(ctx_tbl),
+				 &ctx_tbl, sizeof(ctx_tbl),
 				 &ctx_tbl, &out_size);
-	अगर (err || !out_size || ctx_tbl.status) अणु
+	if (err || !out_size || ctx_tbl.status) {
 		dev_err(&pdev->dev, "Failed to get hash type, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, ctx_tbl.status, out_size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	rss_type->ipv4          = HINIC_RSS_TYPE_GET(ctx_tbl.context, IPV4);
 	rss_type->ipv6          = HINIC_RSS_TYPE_GET(ctx_tbl.context, IPV6);
@@ -779,507 +778,507 @@
 	rss_type->udp_ipv4      = HINIC_RSS_TYPE_GET(ctx_tbl.context, UDP_IPV4);
 	rss_type->udp_ipv6      = HINIC_RSS_TYPE_GET(ctx_tbl.context, UDP_IPV6);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hinic_rss_set_ढाँचा_tbl(काष्ठा hinic_dev *nic_dev, u32 ढाँचा_id,
-			       स्थिर u8 *temp)
-अणु
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	काष्ठा hinic_hwअगर *hwअगर = hwdev->hwअगर;
-	काष्ठा hinic_rss_key rss_key = अणु 0 पूर्ण;
-	काष्ठा pci_dev *pdev = hwअगर->pdev;
-	u16 out_size = माप(rss_key);
-	पूर्णांक err;
+int hinic_rss_set_template_tbl(struct hinic_dev *nic_dev, u32 template_id,
+			       const u8 *temp)
+{
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	struct hinic_hwif *hwif = hwdev->hwif;
+	struct hinic_rss_key rss_key = { 0 };
+	struct pci_dev *pdev = hwif->pdev;
+	u16 out_size = sizeof(rss_key);
+	int err;
 
-	rss_key.func_id = HINIC_HWIF_FUNC_IDX(hwअगर);
-	rss_key.ढाँचा_id = ढाँचा_id;
-	स_नकल(rss_key.key, temp, HINIC_RSS_KEY_SIZE);
+	rss_key.func_id = HINIC_HWIF_FUNC_IDX(hwif);
+	rss_key.template_id = template_id;
+	memcpy(rss_key.key, temp, HINIC_RSS_KEY_SIZE);
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_SET_RSS_TEMPLATE_TBL,
-				 &rss_key, माप(rss_key),
+				 &rss_key, sizeof(rss_key),
 				 &rss_key, &out_size);
-	अगर (err || !out_size || rss_key.status) अणु
+	if (err || !out_size || rss_key.status) {
 		dev_err(&pdev->dev,
 			"Failed to set rss hash key, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, rss_key.status, out_size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hinic_rss_get_ढाँचा_tbl(काष्ठा hinic_dev *nic_dev, u32 पंचांगpl_idx,
+int hinic_rss_get_template_tbl(struct hinic_dev *nic_dev, u32 tmpl_idx,
 			       u8 *temp)
-अणु
-	काष्ठा hinic_rss_ढाँचा_key temp_key = अणु 0 पूर्ण;
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	u16 out_size = माप(temp_key);
-	काष्ठा hinic_hwअगर *hwअगर;
-	काष्ठा pci_dev *pdev;
-	पूर्णांक err;
+{
+	struct hinic_rss_template_key temp_key = { 0 };
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	u16 out_size = sizeof(temp_key);
+	struct hinic_hwif *hwif;
+	struct pci_dev *pdev;
+	int err;
 
-	अगर (!hwdev || !temp)
-		वापस -EINVAL;
+	if (!hwdev || !temp)
+		return -EINVAL;
 
-	hwअगर = hwdev->hwअगर;
-	pdev = hwअगर->pdev;
+	hwif = hwdev->hwif;
+	pdev = hwif->pdev;
 
-	temp_key.func_id = HINIC_HWIF_FUNC_IDX(hwअगर);
-	temp_key.ढाँचा_id = पंचांगpl_idx;
+	temp_key.func_id = HINIC_HWIF_FUNC_IDX(hwif);
+	temp_key.template_id = tmpl_idx;
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_GET_RSS_TEMPLATE_TBL,
-				 &temp_key, माप(temp_key),
+				 &temp_key, sizeof(temp_key),
 				 &temp_key, &out_size);
-	अगर (err || !out_size || temp_key.status) अणु
+	if (err || !out_size || temp_key.status) {
 		dev_err(&pdev->dev, "Failed to set hash key, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, temp_key.status, out_size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	स_नकल(temp, temp_key.key, HINIC_RSS_KEY_SIZE);
+	memcpy(temp, temp_key.key, HINIC_RSS_KEY_SIZE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hinic_rss_set_hash_engine(काष्ठा hinic_dev *nic_dev, u8 ढाँचा_id,
+int hinic_rss_set_hash_engine(struct hinic_dev *nic_dev, u8 template_id,
 			      u8 type)
-अणु
-	काष्ठा hinic_rss_engine_type rss_engine = अणु 0 पूर्ण;
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	काष्ठा hinic_hwअगर *hwअगर = hwdev->hwअगर;
-	काष्ठा pci_dev *pdev = hwअगर->pdev;
-	u16 out_size = माप(rss_engine);
-	पूर्णांक err;
+{
+	struct hinic_rss_engine_type rss_engine = { 0 };
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	struct hinic_hwif *hwif = hwdev->hwif;
+	struct pci_dev *pdev = hwif->pdev;
+	u16 out_size = sizeof(rss_engine);
+	int err;
 
-	rss_engine.func_id = HINIC_HWIF_FUNC_IDX(hwअगर);
+	rss_engine.func_id = HINIC_HWIF_FUNC_IDX(hwif);
 	rss_engine.hash_engine = type;
-	rss_engine.ढाँचा_id = ढाँचा_id;
+	rss_engine.template_id = template_id;
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_SET_RSS_HASH_ENGINE,
-				 &rss_engine, माप(rss_engine),
+				 &rss_engine, sizeof(rss_engine),
 				 &rss_engine, &out_size);
-	अगर (err || !out_size || rss_engine.status) अणु
+	if (err || !out_size || rss_engine.status) {
 		dev_err(&pdev->dev,
 			"Failed to set hash engine, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, rss_engine.status, out_size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hinic_rss_get_hash_engine(काष्ठा hinic_dev *nic_dev, u8 पंचांगpl_idx, u8 *type)
-अणु
-	काष्ठा hinic_rss_engine_type hash_type = अणु 0 पूर्ण;
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	u16 out_size = माप(hash_type);
-	काष्ठा hinic_hwअगर *hwअगर;
-	काष्ठा pci_dev *pdev;
-	पूर्णांक err;
+int hinic_rss_get_hash_engine(struct hinic_dev *nic_dev, u8 tmpl_idx, u8 *type)
+{
+	struct hinic_rss_engine_type hash_type = { 0 };
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	u16 out_size = sizeof(hash_type);
+	struct hinic_hwif *hwif;
+	struct pci_dev *pdev;
+	int err;
 
-	अगर (!hwdev || !type)
-		वापस -EINVAL;
+	if (!hwdev || !type)
+		return -EINVAL;
 
-	hwअगर = hwdev->hwअगर;
-	pdev = hwअगर->pdev;
+	hwif = hwdev->hwif;
+	pdev = hwif->pdev;
 
-	hash_type.func_id = HINIC_HWIF_FUNC_IDX(hwअगर);
-	hash_type.ढाँचा_id = पंचांगpl_idx;
+	hash_type.func_id = HINIC_HWIF_FUNC_IDX(hwif);
+	hash_type.template_id = tmpl_idx;
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_GET_RSS_HASH_ENGINE,
-				 &hash_type, माप(hash_type),
+				 &hash_type, sizeof(hash_type),
 				 &hash_type, &out_size);
-	अगर (err || !out_size || hash_type.status) अणु
+	if (err || !out_size || hash_type.status) {
 		dev_err(&pdev->dev, "Failed to get hash engine, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, hash_type.status, out_size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	*type = hash_type.hash_engine;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hinic_rss_cfg(काष्ठा hinic_dev *nic_dev, u8 rss_en, u8 ढाँचा_id)
-अणु
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	काष्ठा hinic_rss_config rss_cfg = अणु 0 पूर्ण;
-	काष्ठा hinic_hwअगर *hwअगर = hwdev->hwअगर;
-	काष्ठा pci_dev *pdev = hwअगर->pdev;
-	u16 out_size = माप(rss_cfg);
-	पूर्णांक err;
+int hinic_rss_cfg(struct hinic_dev *nic_dev, u8 rss_en, u8 template_id)
+{
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	struct hinic_rss_config rss_cfg = { 0 };
+	struct hinic_hwif *hwif = hwdev->hwif;
+	struct pci_dev *pdev = hwif->pdev;
+	u16 out_size = sizeof(rss_cfg);
+	int err;
 
-	rss_cfg.func_id = HINIC_HWIF_FUNC_IDX(hwअगर);
+	rss_cfg.func_id = HINIC_HWIF_FUNC_IDX(hwif);
 	rss_cfg.rss_en = rss_en;
-	rss_cfg.ढाँचा_id = ढाँचा_id;
+	rss_cfg.template_id = template_id;
 	rss_cfg.rq_priority_number = 0;
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_RSS_CFG,
-				 &rss_cfg, माप(rss_cfg),
+				 &rss_cfg, sizeof(rss_cfg),
 				 &rss_cfg, &out_size);
-	अगर (err || !out_size || rss_cfg.status) अणु
+	if (err || !out_size || rss_cfg.status) {
 		dev_err(&pdev->dev,
 			"Failed to set rss cfg, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, rss_cfg.status, out_size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hinic_rss_ढाँचा_alloc(काष्ठा hinic_dev *nic_dev, u8 *पंचांगpl_idx)
-अणु
-	काष्ठा hinic_rss_ढाँचा_mgmt ढाँचा_mgmt = अणु 0 पूर्ण;
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	काष्ठा hinic_hwअगर *hwअगर = hwdev->hwअगर;
-	u16 out_size = माप(ढाँचा_mgmt);
-	काष्ठा pci_dev *pdev = hwअगर->pdev;
-	पूर्णांक err;
+int hinic_rss_template_alloc(struct hinic_dev *nic_dev, u8 *tmpl_idx)
+{
+	struct hinic_rss_template_mgmt template_mgmt = { 0 };
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	struct hinic_hwif *hwif = hwdev->hwif;
+	u16 out_size = sizeof(template_mgmt);
+	struct pci_dev *pdev = hwif->pdev;
+	int err;
 
-	ढाँचा_mgmt.func_id = HINIC_HWIF_FUNC_IDX(hwअगर);
-	ढाँचा_mgmt.cmd = NIC_RSS_CMD_TEMP_ALLOC;
+	template_mgmt.func_id = HINIC_HWIF_FUNC_IDX(hwif);
+	template_mgmt.cmd = NIC_RSS_CMD_TEMP_ALLOC;
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_RSS_TEMP_MGR,
-				 &ढाँचा_mgmt, माप(ढाँचा_mgmt),
-				 &ढाँचा_mgmt, &out_size);
-	अगर (err || !out_size || ढाँचा_mgmt.status) अणु
+				 &template_mgmt, sizeof(template_mgmt),
+				 &template_mgmt, &out_size);
+	if (err || !out_size || template_mgmt.status) {
 		dev_err(&pdev->dev, "Failed to alloc rss template, err: %d, status: 0x%x, out size: 0x%x\n",
-			err, ढाँचा_mgmt.status, out_size);
-		वापस -EINVAL;
-	पूर्ण
+			err, template_mgmt.status, out_size);
+		return -EINVAL;
+	}
 
-	*पंचांगpl_idx = ढाँचा_mgmt.ढाँचा_id;
+	*tmpl_idx = template_mgmt.template_id;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hinic_rss_ढाँचा_मुक्त(काष्ठा hinic_dev *nic_dev, u8 पंचांगpl_idx)
-अणु
-	काष्ठा hinic_rss_ढाँचा_mgmt ढाँचा_mgmt = अणु 0 पूर्ण;
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	काष्ठा hinic_hwअगर *hwअगर = hwdev->hwअगर;
-	u16 out_size = माप(ढाँचा_mgmt);
-	काष्ठा pci_dev *pdev = hwअगर->pdev;
-	पूर्णांक err;
+int hinic_rss_template_free(struct hinic_dev *nic_dev, u8 tmpl_idx)
+{
+	struct hinic_rss_template_mgmt template_mgmt = { 0 };
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	struct hinic_hwif *hwif = hwdev->hwif;
+	u16 out_size = sizeof(template_mgmt);
+	struct pci_dev *pdev = hwif->pdev;
+	int err;
 
-	ढाँचा_mgmt.func_id = HINIC_HWIF_FUNC_IDX(hwअगर);
-	ढाँचा_mgmt.ढाँचा_id = पंचांगpl_idx;
-	ढाँचा_mgmt.cmd = NIC_RSS_CMD_TEMP_FREE;
+	template_mgmt.func_id = HINIC_HWIF_FUNC_IDX(hwif);
+	template_mgmt.template_id = tmpl_idx;
+	template_mgmt.cmd = NIC_RSS_CMD_TEMP_FREE;
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_RSS_TEMP_MGR,
-				 &ढाँचा_mgmt, माप(ढाँचा_mgmt),
-				 &ढाँचा_mgmt, &out_size);
-	अगर (err || !out_size || ढाँचा_mgmt.status) अणु
+				 &template_mgmt, sizeof(template_mgmt),
+				 &template_mgmt, &out_size);
+	if (err || !out_size || template_mgmt.status) {
 		dev_err(&pdev->dev, "Failed to free rss template, err: %d, status: 0x%x, out size: 0x%x\n",
-			err, ढाँचा_mgmt.status, out_size);
-		वापस -EINVAL;
-	पूर्ण
+			err, template_mgmt.status, out_size);
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hinic_get_vport_stats(काष्ठा hinic_dev *nic_dev,
-			  काष्ठा hinic_vport_stats *stats)
-अणु
-	काष्ठा hinic_cmd_vport_stats vport_stats = अणु 0 पूर्ण;
-	काष्ठा hinic_port_stats_info stats_info = अणु 0 पूर्ण;
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	काष्ठा hinic_hwअगर *hwअगर = hwdev->hwअगर;
-	u16 out_size = माप(vport_stats);
-	काष्ठा pci_dev *pdev = hwअगर->pdev;
-	पूर्णांक err;
+int hinic_get_vport_stats(struct hinic_dev *nic_dev,
+			  struct hinic_vport_stats *stats)
+{
+	struct hinic_cmd_vport_stats vport_stats = { 0 };
+	struct hinic_port_stats_info stats_info = { 0 };
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	struct hinic_hwif *hwif = hwdev->hwif;
+	u16 out_size = sizeof(vport_stats);
+	struct pci_dev *pdev = hwif->pdev;
+	int err;
 
 	stats_info.stats_version = HINIC_PORT_STATS_VERSION;
-	stats_info.func_id = HINIC_HWIF_FUNC_IDX(hwअगर);
-	stats_info.stats_size = माप(vport_stats);
+	stats_info.func_id = HINIC_HWIF_FUNC_IDX(hwif);
+	stats_info.stats_size = sizeof(vport_stats);
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_GET_VPORT_STAT,
-				 &stats_info, माप(stats_info),
+				 &stats_info, sizeof(stats_info),
 				 &vport_stats, &out_size);
-	अगर (err || !out_size || vport_stats.status) अणु
+	if (err || !out_size || vport_stats.status) {
 		dev_err(&pdev->dev,
 			"Failed to get function statistics, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, vport_stats.status, out_size);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	स_नकल(stats, &vport_stats.stats, माप(*stats));
-	वापस 0;
-पूर्ण
+	memcpy(stats, &vport_stats.stats, sizeof(*stats));
+	return 0;
+}
 
-पूर्णांक hinic_get_phy_port_stats(काष्ठा hinic_dev *nic_dev,
-			     काष्ठा hinic_phy_port_stats *stats)
-अणु
-	काष्ठा hinic_port_stats_info stats_info = अणु 0 पूर्ण;
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	काष्ठा hinic_hwअगर *hwअगर = hwdev->hwअगर;
-	काष्ठा hinic_port_stats *port_stats;
-	u16 out_size = माप(*port_stats);
-	काष्ठा pci_dev *pdev = hwअगर->pdev;
-	पूर्णांक err;
+int hinic_get_phy_port_stats(struct hinic_dev *nic_dev,
+			     struct hinic_phy_port_stats *stats)
+{
+	struct hinic_port_stats_info stats_info = { 0 };
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	struct hinic_hwif *hwif = hwdev->hwif;
+	struct hinic_port_stats *port_stats;
+	u16 out_size = sizeof(*port_stats);
+	struct pci_dev *pdev = hwif->pdev;
+	int err;
 
-	port_stats = kzalloc(माप(*port_stats), GFP_KERNEL);
-	अगर (!port_stats)
-		वापस -ENOMEM;
+	port_stats = kzalloc(sizeof(*port_stats), GFP_KERNEL);
+	if (!port_stats)
+		return -ENOMEM;
 
 	stats_info.stats_version = HINIC_PORT_STATS_VERSION;
-	stats_info.stats_size = माप(*port_stats);
+	stats_info.stats_size = sizeof(*port_stats);
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_GET_PORT_STATISTICS,
-				 &stats_info, माप(stats_info),
+				 &stats_info, sizeof(stats_info),
 				 port_stats, &out_size);
-	अगर (err || !out_size || port_stats->status) अणु
+	if (err || !out_size || port_stats->status) {
 		dev_err(&pdev->dev,
 			"Failed to get port statistics, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, port_stats->status, out_size);
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	स_नकल(stats, &port_stats->stats, माप(*stats));
+	memcpy(stats, &port_stats->stats, sizeof(*stats));
 
 out:
-	kमुक्त(port_stats);
+	kfree(port_stats);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक hinic_get_mgmt_version(काष्ठा hinic_dev *nic_dev, u8 *mgmt_ver)
-अणु
-	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
-	काष्ठा hinic_version_info up_ver = अणु0पूर्ण;
-	u16 out_size = माप(up_ver);
-	काष्ठा hinic_hwअगर *hwअगर;
-	काष्ठा pci_dev *pdev;
-	पूर्णांक err;
+int hinic_get_mgmt_version(struct hinic_dev *nic_dev, u8 *mgmt_ver)
+{
+	struct hinic_hwdev *hwdev = nic_dev->hwdev;
+	struct hinic_version_info up_ver = {0};
+	u16 out_size = sizeof(up_ver);
+	struct hinic_hwif *hwif;
+	struct pci_dev *pdev;
+	int err;
 
-	अगर (!hwdev)
-		वापस -EINVAL;
+	if (!hwdev)
+		return -EINVAL;
 
-	hwअगर = hwdev->hwअगर;
-	pdev = hwअगर->pdev;
+	hwif = hwdev->hwif;
+	pdev = hwif->pdev;
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_GET_MGMT_VERSION,
-				 &up_ver, माप(up_ver), &up_ver,
+				 &up_ver, sizeof(up_ver), &up_ver,
 				 &out_size);
-	अगर (err || !out_size || up_ver.status) अणु
+	if (err || !out_size || up_ver.status) {
 		dev_err(&pdev->dev,
 			"Failed to get mgmt version, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, up_ver.status, out_size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	snम_लिखो(mgmt_ver, HINIC_MGMT_VERSION_MAX_LEN, "%s", up_ver.ver);
+	snprintf(mgmt_ver, HINIC_MGMT_VERSION_MAX_LEN, "%s", up_ver.ver);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hinic_get_link_mode(काष्ठा hinic_hwdev *hwdev,
-			काष्ठा hinic_link_mode_cmd *link_mode)
-अणु
+int hinic_get_link_mode(struct hinic_hwdev *hwdev,
+			struct hinic_link_mode_cmd *link_mode)
+{
 	u16 out_size;
-	पूर्णांक err;
+	int err;
 
-	अगर (!hwdev || !link_mode)
-		वापस -EINVAL;
+	if (!hwdev || !link_mode)
+		return -EINVAL;
 
-	link_mode->func_id = HINIC_HWIF_FUNC_IDX(hwdev->hwअगर);
-	out_size = माप(*link_mode);
+	link_mode->func_id = HINIC_HWIF_FUNC_IDX(hwdev->hwif);
+	out_size = sizeof(*link_mode);
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_GET_LINK_MODE,
-				 link_mode, माप(*link_mode),
+				 link_mode, sizeof(*link_mode),
 				 link_mode, &out_size);
-	अगर (err || !out_size || link_mode->status) अणु
-		dev_err(&hwdev->hwअगर->pdev->dev,
+	if (err || !out_size || link_mode->status) {
+		dev_err(&hwdev->hwif->pdev->dev,
 			"Failed to get link mode, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, link_mode->status, out_size);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hinic_set_स्वतःneg(काष्ठा hinic_hwdev *hwdev, bool enable)
-अणु
-	काष्ठा hinic_set_स्वतःneg_cmd स्वतःneg = अणु0पूर्ण;
-	u16 out_size = माप(स्वतःneg);
-	पूर्णांक err;
+int hinic_set_autoneg(struct hinic_hwdev *hwdev, bool enable)
+{
+	struct hinic_set_autoneg_cmd autoneg = {0};
+	u16 out_size = sizeof(autoneg);
+	int err;
 
-	अगर (!hwdev)
-		वापस -EINVAL;
+	if (!hwdev)
+		return -EINVAL;
 
-	स्वतःneg.func_id = HINIC_HWIF_FUNC_IDX(hwdev->hwअगर);
-	स्वतःneg.enable = enable;
+	autoneg.func_id = HINIC_HWIF_FUNC_IDX(hwdev->hwif);
+	autoneg.enable = enable;
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_SET_AUTONEG,
-				 &स्वतःneg, माप(स्वतःneg),
-				 &स्वतःneg, &out_size);
-	अगर (err || !out_size || स्वतःneg.status) अणु
-		dev_err(&hwdev->hwअगर->pdev->dev, "Failed to %s autoneg, err: %d, status: 0x%x, out size: 0x%x\n",
-			enable ? "enable" : "disable", err, स्वतःneg.status,
+				 &autoneg, sizeof(autoneg),
+				 &autoneg, &out_size);
+	if (err || !out_size || autoneg.status) {
+		dev_err(&hwdev->hwif->pdev->dev, "Failed to %s autoneg, err: %d, status: 0x%x, out size: 0x%x\n",
+			enable ? "enable" : "disable", err, autoneg.status,
 			out_size);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hinic_set_speed(काष्ठा hinic_hwdev *hwdev, क्रमागत nic_speed_level speed)
-अणु
-	काष्ठा hinic_speed_cmd speed_info = अणु0पूर्ण;
-	u16 out_size = माप(speed_info);
-	पूर्णांक err;
+int hinic_set_speed(struct hinic_hwdev *hwdev, enum nic_speed_level speed)
+{
+	struct hinic_speed_cmd speed_info = {0};
+	u16 out_size = sizeof(speed_info);
+	int err;
 
-	अगर (!hwdev)
-		वापस -EINVAL;
+	if (!hwdev)
+		return -EINVAL;
 
-	speed_info.func_id = HINIC_HWIF_FUNC_IDX(hwdev->hwअगर);
+	speed_info.func_id = HINIC_HWIF_FUNC_IDX(hwdev->hwif);
 	speed_info.speed = speed;
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_SET_SPEED,
-				 &speed_info, माप(speed_info),
+				 &speed_info, sizeof(speed_info),
 				 &speed_info, &out_size);
-	अगर (err || !out_size || speed_info.status) अणु
-		dev_err(&hwdev->hwअगर->pdev->dev,
+	if (err || !out_size || speed_info.status) {
+		dev_err(&hwdev->hwif->pdev->dev,
 			"Failed to set speed, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, speed_info.status, out_size);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hinic_set_link_settings(काष्ठा hinic_hwdev *hwdev,
-			    काष्ठा hinic_link_ksettings_info *info)
-अणु
-	u16 out_size = माप(*info);
-	पूर्णांक err;
+int hinic_set_link_settings(struct hinic_hwdev *hwdev,
+			    struct hinic_link_ksettings_info *info)
+{
+	u16 out_size = sizeof(*info);
+	int err;
 
 	err = hinic_hilink_msg_cmd(hwdev, HINIC_HILINK_CMD_SET_LINK_SETTINGS,
-				   info, माप(*info), info, &out_size);
-	अगर ((info->status != HINIC_MGMT_CMD_UNSUPPORTED &&
-	     info->status) || err || !out_size) अणु
-		dev_err(&hwdev->hwअगर->pdev->dev,
+				   info, sizeof(*info), info, &out_size);
+	if ((info->status != HINIC_MGMT_CMD_UNSUPPORTED &&
+	     info->status) || err || !out_size) {
+		dev_err(&hwdev->hwif->pdev->dev,
 			"Failed to set link settings, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, info->status, out_size);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	वापस info->status;
-पूर्ण
+	return info->status;
+}
 
-पूर्णांक hinic_get_hw_छोड़ो_info(काष्ठा hinic_hwdev *hwdev,
-			    काष्ठा hinic_छोड़ो_config *छोड़ो_info)
-अणु
-	u16 out_size = माप(*छोड़ो_info);
-	पूर्णांक err;
+int hinic_get_hw_pause_info(struct hinic_hwdev *hwdev,
+			    struct hinic_pause_config *pause_info)
+{
+	u16 out_size = sizeof(*pause_info);
+	int err;
 
-	छोड़ो_info->func_id = HINIC_HWIF_FUNC_IDX(hwdev->hwअगर);
+	pause_info->func_id = HINIC_HWIF_FUNC_IDX(hwdev->hwif);
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_GET_PAUSE_INFO,
-				 छोड़ो_info, माप(*छोड़ो_info),
-				 छोड़ो_info, &out_size);
-	अगर (err || !out_size || छोड़ो_info->status) अणु
-		dev_err(&hwdev->hwअगर->pdev->dev, "Failed to get pause info, err: %d, status: 0x%x, out size: 0x%x\n",
-			err, छोड़ो_info->status, out_size);
-		वापस -EIO;
-	पूर्ण
+				 pause_info, sizeof(*pause_info),
+				 pause_info, &out_size);
+	if (err || !out_size || pause_info->status) {
+		dev_err(&hwdev->hwif->pdev->dev, "Failed to get pause info, err: %d, status: 0x%x, out size: 0x%x\n",
+			err, pause_info->status, out_size);
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hinic_set_hw_छोड़ो_info(काष्ठा hinic_hwdev *hwdev,
-			    काष्ठा hinic_छोड़ो_config *छोड़ो_info)
-अणु
-	u16 out_size = माप(*छोड़ो_info);
-	पूर्णांक err;
+int hinic_set_hw_pause_info(struct hinic_hwdev *hwdev,
+			    struct hinic_pause_config *pause_info)
+{
+	u16 out_size = sizeof(*pause_info);
+	int err;
 
-	छोड़ो_info->func_id = HINIC_HWIF_FUNC_IDX(hwdev->hwअगर);
+	pause_info->func_id = HINIC_HWIF_FUNC_IDX(hwdev->hwif);
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_SET_PAUSE_INFO,
-				 छोड़ो_info, माप(*छोड़ो_info),
-				 छोड़ो_info, &out_size);
-	अगर (err || !out_size || छोड़ो_info->status) अणु
-		dev_err(&hwdev->hwअगर->pdev->dev, "Failed to set pause info, err: %d, status: 0x%x, out size: 0x%x\n",
-			err, छोड़ो_info->status, out_size);
-		वापस -EIO;
-	पूर्ण
+				 pause_info, sizeof(*pause_info),
+				 pause_info, &out_size);
+	if (err || !out_size || pause_info->status) {
+		dev_err(&hwdev->hwif->pdev->dev, "Failed to set pause info, err: %d, status: 0x%x, out size: 0x%x\n",
+			err, pause_info->status, out_size);
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hinic_dcb_set_pfc(काष्ठा hinic_hwdev *hwdev, u8 pfc_en, u8 pfc_biपंचांगap)
-अणु
-	काष्ठा hinic_nic_cfg *nic_cfg = &hwdev->func_to_io.nic_cfg;
-	काष्ठा hinic_set_pfc pfc = अणु0पूर्ण;
-	u16 out_size = माप(pfc);
-	पूर्णांक err;
+int hinic_dcb_set_pfc(struct hinic_hwdev *hwdev, u8 pfc_en, u8 pfc_bitmap)
+{
+	struct hinic_nic_cfg *nic_cfg = &hwdev->func_to_io.nic_cfg;
+	struct hinic_set_pfc pfc = {0};
+	u16 out_size = sizeof(pfc);
+	int err;
 
-	अगर (HINIC_IS_VF(hwdev->hwअगर))
-		वापस 0;
+	if (HINIC_IS_VF(hwdev->hwif))
+		return 0;
 
 	mutex_lock(&nic_cfg->cfg_mutex);
 
-	pfc.func_id = HINIC_HWIF_FUNC_IDX(hwdev->hwअगर);
-	pfc.pfc_biपंचांगap = pfc_biपंचांगap;
+	pfc.func_id = HINIC_HWIF_FUNC_IDX(hwdev->hwif);
+	pfc.pfc_bitmap = pfc_bitmap;
 	pfc.pfc_en = pfc_en;
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_SET_PFC,
-				 &pfc, माप(pfc), &pfc, &out_size);
-	अगर (err || pfc.status || !out_size) अणु
-		dev_err(&hwdev->hwअगर->pdev->dev, "Failed to %s pfc, err: %d, status: 0x%x, out size: 0x%x\n",
+				 &pfc, sizeof(pfc), &pfc, &out_size);
+	if (err || pfc.status || !out_size) {
+		dev_err(&hwdev->hwif->pdev->dev, "Failed to %s pfc, err: %d, status: 0x%x, out size: 0x%x\n",
 			pfc_en ? "enable" : "disable", err, pfc.status,
 			out_size);
 		mutex_unlock(&nic_cfg->cfg_mutex);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	/* छोड़ो settings is opposite from pfc */
-	nic_cfg->rx_छोड़ो = pfc_en ? 0 : 1;
-	nic_cfg->tx_छोड़ो = pfc_en ? 0 : 1;
+	/* pause settings is opposite from pfc */
+	nic_cfg->rx_pause = pfc_en ? 0 : 1;
+	nic_cfg->tx_pause = pfc_en ? 0 : 1;
 
 	mutex_unlock(&nic_cfg->cfg_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hinic_set_loopback_mode(काष्ठा hinic_hwdev *hwdev, u32 mode, u32 enable)
-अणु
-	काष्ठा hinic_port_loopback lb = अणु0पूर्ण;
-	u16 out_size = माप(lb);
-	पूर्णांक err;
+int hinic_set_loopback_mode(struct hinic_hwdev *hwdev, u32 mode, u32 enable)
+{
+	struct hinic_port_loopback lb = {0};
+	u16 out_size = sizeof(lb);
+	int err;
 
 	lb.mode = mode;
 	lb.en = enable;
 
-	अगर (mode < LOOP_MODE_MIN || mode > LOOP_MODE_MAX) अणु
-		dev_err(&hwdev->hwअगर->pdev->dev,
+	if (mode < LOOP_MODE_MIN || mode > LOOP_MODE_MAX) {
+		dev_err(&hwdev->hwif->pdev->dev,
 			"Invalid loopback mode %d to set\n", mode);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_SET_LOOPBACK_MODE,
-				 &lb, माप(lb), &lb, &out_size);
-	अगर (err || !out_size || lb.status) अणु
-		dev_err(&hwdev->hwअगर->pdev->dev,
+				 &lb, sizeof(lb), &lb, &out_size);
+	if (err || !out_size || lb.status) {
+		dev_err(&hwdev->hwif->pdev->dev,
 			"Failed to set loopback mode %d en %d, err: %d, status: 0x%x, out size: 0x%x\n",
 			mode, enable, err, lb.status, out_size);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक _set_led_status(काष्ठा hinic_hwdev *hwdev, u8 port,
-			   क्रमागत hinic_led_type type,
-			   क्रमागत hinic_led_mode mode, u8 reset)
-अणु
-	काष्ठा hinic_led_info led_info = अणु0पूर्ण;
-	u16 out_size = माप(led_info);
-	काष्ठा hinic_pfhwdev *pfhwdev;
-	पूर्णांक err;
+static int _set_led_status(struct hinic_hwdev *hwdev, u8 port,
+			   enum hinic_led_type type,
+			   enum hinic_led_mode mode, u8 reset)
+{
+	struct hinic_led_info led_info = {0};
+	u16 out_size = sizeof(led_info);
+	struct hinic_pfhwdev *pfhwdev;
+	int err;
 
-	pfhwdev = container_of(hwdev, काष्ठा hinic_pfhwdev, hwdev);
+	pfhwdev = container_of(hwdev, struct hinic_pfhwdev, hwdev);
 
 	led_info.port = port;
 	led_info.reset = reset;
@@ -1289,110 +1288,110 @@ out:
 
 	err = hinic_msg_to_mgmt(&pfhwdev->pf_to_mgmt, HINIC_MOD_COMM,
 				HINIC_COMM_CMD_SET_LED_STATUS,
-				&led_info, माप(led_info),
+				&led_info, sizeof(led_info),
 				&led_info, &out_size, HINIC_MGMT_MSG_SYNC);
-	अगर (err || led_info.status || !out_size) अणु
-		dev_err(&hwdev->hwअगर->pdev->dev, "Failed to set led status, err: %d, status: 0x%x, out size: 0x%x\n",
+	if (err || led_info.status || !out_size) {
+		dev_err(&hwdev->hwif->pdev->dev, "Failed to set led status, err: %d, status: 0x%x, out size: 0x%x\n",
 			err, led_info.status, out_size);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hinic_set_led_status(काष्ठा hinic_hwdev *hwdev, u8 port,
-			 क्रमागत hinic_led_type type, क्रमागत hinic_led_mode mode)
-अणु
-	अगर (!hwdev)
-		वापस -EINVAL;
+int hinic_set_led_status(struct hinic_hwdev *hwdev, u8 port,
+			 enum hinic_led_type type, enum hinic_led_mode mode)
+{
+	if (!hwdev)
+		return -EINVAL;
 
-	वापस _set_led_status(hwdev, port, type, mode, 0);
-पूर्ण
+	return _set_led_status(hwdev, port, type, mode, 0);
+}
 
-पूर्णांक hinic_reset_led_status(काष्ठा hinic_hwdev *hwdev, u8 port)
-अणु
-	पूर्णांक err;
+int hinic_reset_led_status(struct hinic_hwdev *hwdev, u8 port)
+{
+	int err;
 
-	अगर (!hwdev)
-		वापस -EINVAL;
+	if (!hwdev)
+		return -EINVAL;
 
 	err = _set_led_status(hwdev, port, HINIC_LED_TYPE_INVALID,
 			      HINIC_LED_MODE_INVALID, 1);
-	अगर (err)
-		dev_err(&hwdev->hwअगर->pdev->dev,
+	if (err)
+		dev_err(&hwdev->hwif->pdev->dev,
 			"Failed to reset led status\n");
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल bool hinic_अगर_sfp_असलent(काष्ठा hinic_hwdev *hwdev)
-अणु
-	काष्ठा hinic_cmd_get_light_module_असल sfp_असल = अणु0पूर्ण;
-	u16 out_size = माप(sfp_असल);
+static bool hinic_if_sfp_absent(struct hinic_hwdev *hwdev)
+{
+	struct hinic_cmd_get_light_module_abs sfp_abs = {0};
+	u16 out_size = sizeof(sfp_abs);
 	u8 port_id = hwdev->port_id;
-	पूर्णांक err;
+	int err;
 
-	sfp_असल.port_id = port_id;
+	sfp_abs.port_id = port_id;
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_GET_SFP_ABS,
-				 &sfp_असल, माप(sfp_असल), &sfp_असल,
+				 &sfp_abs, sizeof(sfp_abs), &sfp_abs,
 				 &out_size);
-	अगर (sfp_असल.status || err || !out_size) अणु
-		dev_err(&hwdev->hwअगर->pdev->dev,
+	if (sfp_abs.status || err || !out_size) {
+		dev_err(&hwdev->hwif->pdev->dev,
 			"Failed to get port%d sfp absent status, err: %d, status: 0x%x, out size: 0x%x\n",
-			port_id, err, sfp_असल.status, out_size);
-		वापस true;
-	पूर्ण
+			port_id, err, sfp_abs.status, out_size);
+		return true;
+	}
 
-	वापस ((sfp_असल.असल_status == 0) ? false : true);
-पूर्ण
+	return ((sfp_abs.abs_status == 0) ? false : true);
+}
 
-पूर्णांक hinic_get_sfp_eeprom(काष्ठा hinic_hwdev *hwdev, u8 *data, u16 *len)
-अणु
-	काष्ठा hinic_cmd_get_std_sfp_info sfp_info = अणु0पूर्ण;
-	u16 out_size = माप(sfp_info);
+int hinic_get_sfp_eeprom(struct hinic_hwdev *hwdev, u8 *data, u16 *len)
+{
+	struct hinic_cmd_get_std_sfp_info sfp_info = {0};
+	u16 out_size = sizeof(sfp_info);
 	u8 port_id;
-	पूर्णांक err;
+	int err;
 
-	अगर (!hwdev || !data || !len)
-		वापस -EINVAL;
+	if (!hwdev || !data || !len)
+		return -EINVAL;
 
 	port_id = hwdev->port_id;
 
-	अगर (hinic_अगर_sfp_असलent(hwdev))
-		वापस -ENXIO;
+	if (hinic_if_sfp_absent(hwdev))
+		return -ENXIO;
 
 	sfp_info.port_id = port_id;
 	err = hinic_port_msg_cmd(hwdev, HINIC_PORT_CMD_GET_STD_SFP_INFO,
-				 &sfp_info, माप(sfp_info), &sfp_info,
+				 &sfp_info, sizeof(sfp_info), &sfp_info,
 				 &out_size);
-	अगर (sfp_info.status || err || !out_size) अणु
-		dev_err(&hwdev->hwअगर->pdev->dev,
+	if (sfp_info.status || err || !out_size) {
+		dev_err(&hwdev->hwif->pdev->dev,
 			"Failed to get port%d sfp eeprom information, err: %d, status: 0x%x, out size: 0x%x\n",
 			port_id, err, sfp_info.status, out_size);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	*len = min_t(u16, sfp_info.eeprom_len, STD_SFP_INFO_MAX_SIZE);
-	स_नकल(data, sfp_info.sfp_info, STD_SFP_INFO_MAX_SIZE);
+	memcpy(data, sfp_info.sfp_info, STD_SFP_INFO_MAX_SIZE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hinic_get_sfp_type(काष्ठा hinic_hwdev *hwdev, u8 *data0, u8 *data1)
-अणु
+int hinic_get_sfp_type(struct hinic_hwdev *hwdev, u8 *data0, u8 *data1)
+{
 	u8 sfp_data[STD_SFP_INFO_MAX_SIZE];
 	u16 len;
-	पूर्णांक err;
+	int err;
 
-	अगर (hinic_अगर_sfp_असलent(hwdev))
-		वापस -ENXIO;
+	if (hinic_if_sfp_absent(hwdev))
+		return -ENXIO;
 
 	err = hinic_get_sfp_eeprom(hwdev, sfp_data, &len);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	*data0 = sfp_data[0];
 	*data1 = sfp_data[1];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

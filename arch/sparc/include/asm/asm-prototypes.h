@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2017 Oracle and/or its affiliates. All rights reserved.
  */
 
-#समावेश <यंत्र/xor.h>
-#समावेश <यंत्र/checksum.h>
-#समावेश <यंत्र/trap_block.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/atomic.h>
-#समावेश <यंत्र/ftrace.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/oplib.h>
-#समावेश <linux/atomic.h>
+#include <asm/xor.h>
+#include <asm/checksum.h>
+#include <asm/trap_block.h>
+#include <linux/uaccess.h>
+#include <asm/atomic.h>
+#include <asm/ftrace.h>
+#include <asm/cacheflush.h>
+#include <asm/oplib.h>
+#include <linux/atomic.h>
 
-व्योम *__memscan_zero(व्योम *, माप_प्रकार);
-व्योम *__memscan_generic(व्योम *, पूर्णांक, माप_प्रकार);
-व्योम *__bzero(व्योम *, माप_प्रकार);
-व्योम VISenter(व्योम); /* Dummy prototype to supress warning */
-#अघोषित स_नकल
-#अघोषित स_रखो
-व्योम *स_नकल(व्योम *dest, स्थिर व्योम *src, माप_प्रकार n);
-व्योम *स_रखो(व्योम *s, पूर्णांक c, माप_प्रकार n);
-प्रकार पूर्णांक TItype __attribute__((mode(TI)));
+void *__memscan_zero(void *, size_t);
+void *__memscan_generic(void *, int, size_t);
+void *__bzero(void *, size_t);
+void VISenter(void); /* Dummy prototype to supress warning */
+#undef memcpy
+#undef memset
+void *memcpy(void *dest, const void *src, size_t n);
+void *memset(void *s, int c, size_t n);
+typedef int TItype __attribute__((mode(TI)));
 TItype __multi3(TItype a, TItype b);

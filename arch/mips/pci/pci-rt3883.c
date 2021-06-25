@@ -1,106 +1,105 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  Ralink RT3662/RT3883 SoC PCI support
  *
- *  Copyright (C) 2011-2013 Gabor Juhos <juhosg@खोलोwrt.org>
+ *  Copyright (C) 2011-2013 Gabor Juhos <juhosg@openwrt.org>
  *
  *  Parts of this file are based on Ralink's 2.6.21 BSP
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_pci.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/types.h>
+#include <linux/pci.h>
+#include <linux/io.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/of.h>
+#include <linux/of_irq.h>
+#include <linux/of_pci.h>
+#include <linux/platform_device.h>
 
-#समावेश <यंत्र/mach-ralink/rt3883.h>
-#समावेश <यंत्र/mach-ralink/ralink_regs.h>
+#include <asm/mach-ralink/rt3883.h>
+#include <asm/mach-ralink/ralink_regs.h>
 
-#घोषणा RT3883_MEMORY_BASE		0x00000000
-#घोषणा RT3883_MEMORY_SIZE		0x02000000
+#define RT3883_MEMORY_BASE		0x00000000
+#define RT3883_MEMORY_SIZE		0x02000000
 
-#घोषणा RT3883_PCI_REG_PCICFG		0x00
-#घोषणा   RT3883_PCICFG_P2P_BR_DEVNUM_M 0xf
-#घोषणा   RT3883_PCICFG_P2P_BR_DEVNUM_S 16
-#घोषणा   RT3883_PCICFG_PCIRST		BIT(1)
-#घोषणा RT3883_PCI_REG_PCIRAW		0x04
-#घोषणा RT3883_PCI_REG_PCIINT		0x08
-#घोषणा RT3883_PCI_REG_PCIENA		0x0c
+#define RT3883_PCI_REG_PCICFG		0x00
+#define   RT3883_PCICFG_P2P_BR_DEVNUM_M 0xf
+#define   RT3883_PCICFG_P2P_BR_DEVNUM_S 16
+#define   RT3883_PCICFG_PCIRST		BIT(1)
+#define RT3883_PCI_REG_PCIRAW		0x04
+#define RT3883_PCI_REG_PCIINT		0x08
+#define RT3883_PCI_REG_PCIENA		0x0c
 
-#घोषणा RT3883_PCI_REG_CFGADDR		0x20
-#घोषणा RT3883_PCI_REG_CFGDATA		0x24
-#घोषणा RT3883_PCI_REG_MEMBASE		0x28
-#घोषणा RT3883_PCI_REG_IOBASE		0x2c
-#घोषणा RT3883_PCI_REG_ARBCTL		0x80
+#define RT3883_PCI_REG_CFGADDR		0x20
+#define RT3883_PCI_REG_CFGDATA		0x24
+#define RT3883_PCI_REG_MEMBASE		0x28
+#define RT3883_PCI_REG_IOBASE		0x2c
+#define RT3883_PCI_REG_ARBCTL		0x80
 
-#घोषणा RT3883_PCI_REG_BASE(_x)		(0x1000 + (_x) * 0x1000)
-#घोषणा RT3883_PCI_REG_BAR0SETUP(_x)	(RT3883_PCI_REG_BASE((_x)) + 0x10)
-#घोषणा RT3883_PCI_REG_IMBASEBAR0(_x)	(RT3883_PCI_REG_BASE((_x)) + 0x18)
-#घोषणा RT3883_PCI_REG_ID(_x)		(RT3883_PCI_REG_BASE((_x)) + 0x30)
-#घोषणा RT3883_PCI_REG_CLASS(_x)	(RT3883_PCI_REG_BASE((_x)) + 0x34)
-#घोषणा RT3883_PCI_REG_SUBID(_x)	(RT3883_PCI_REG_BASE((_x)) + 0x38)
-#घोषणा RT3883_PCI_REG_STATUS(_x)	(RT3883_PCI_REG_BASE((_x)) + 0x50)
+#define RT3883_PCI_REG_BASE(_x)		(0x1000 + (_x) * 0x1000)
+#define RT3883_PCI_REG_BAR0SETUP(_x)	(RT3883_PCI_REG_BASE((_x)) + 0x10)
+#define RT3883_PCI_REG_IMBASEBAR0(_x)	(RT3883_PCI_REG_BASE((_x)) + 0x18)
+#define RT3883_PCI_REG_ID(_x)		(RT3883_PCI_REG_BASE((_x)) + 0x30)
+#define RT3883_PCI_REG_CLASS(_x)	(RT3883_PCI_REG_BASE((_x)) + 0x34)
+#define RT3883_PCI_REG_SUBID(_x)	(RT3883_PCI_REG_BASE((_x)) + 0x38)
+#define RT3883_PCI_REG_STATUS(_x)	(RT3883_PCI_REG_BASE((_x)) + 0x50)
 
-#घोषणा RT3883_PCI_MODE_NONE	0
-#घोषणा RT3883_PCI_MODE_PCI	BIT(0)
-#घोषणा RT3883_PCI_MODE_PCIE	BIT(1)
-#घोषणा RT3883_PCI_MODE_BOTH	(RT3883_PCI_MODE_PCI | RT3883_PCI_MODE_PCIE)
+#define RT3883_PCI_MODE_NONE	0
+#define RT3883_PCI_MODE_PCI	BIT(0)
+#define RT3883_PCI_MODE_PCIE	BIT(1)
+#define RT3883_PCI_MODE_BOTH	(RT3883_PCI_MODE_PCI | RT3883_PCI_MODE_PCIE)
 
-#घोषणा RT3883_PCI_IRQ_COUNT	32
+#define RT3883_PCI_IRQ_COUNT	32
 
-#घोषणा RT3883_P2P_BR_DEVNUM	1
+#define RT3883_P2P_BR_DEVNUM	1
 
-काष्ठा rt3883_pci_controller अणु
-	व्योम __iomem *base;
+struct rt3883_pci_controller {
+	void __iomem *base;
 
-	काष्ठा device_node *पूर्णांकc_of_node;
-	काष्ठा irq_करोमुख्य *irq_करोमुख्य;
+	struct device_node *intc_of_node;
+	struct irq_domain *irq_domain;
 
-	काष्ठा pci_controller pci_controller;
-	काष्ठा resource io_res;
-	काष्ठा resource mem_res;
+	struct pci_controller pci_controller;
+	struct resource io_res;
+	struct resource mem_res;
 
-	bool pcie_पढ़ोy;
-पूर्ण;
+	bool pcie_ready;
+};
 
-अटल अंतरभूत काष्ठा rt3883_pci_controller *
-pci_bus_to_rt3883_controller(काष्ठा pci_bus *bus)
-अणु
-	काष्ठा pci_controller *hose;
+static inline struct rt3883_pci_controller *
+pci_bus_to_rt3883_controller(struct pci_bus *bus)
+{
+	struct pci_controller *hose;
 
-	hose = (काष्ठा pci_controller *) bus->sysdata;
-	वापस container_of(hose, काष्ठा rt3883_pci_controller, pci_controller);
-पूर्ण
+	hose = (struct pci_controller *) bus->sysdata;
+	return container_of(hose, struct rt3883_pci_controller, pci_controller);
+}
 
-अटल अंतरभूत u32 rt3883_pci_r32(काष्ठा rt3883_pci_controller *rpc,
-				 अचिन्हित reg)
-अणु
-	वापस ioपढ़ो32(rpc->base + reg);
-पूर्ण
+static inline u32 rt3883_pci_r32(struct rt3883_pci_controller *rpc,
+				 unsigned reg)
+{
+	return ioread32(rpc->base + reg);
+}
 
-अटल अंतरभूत व्योम rt3883_pci_w32(काष्ठा rt3883_pci_controller *rpc,
-				  u32 val, अचिन्हित reg)
-अणु
-	ioग_लिखो32(val, rpc->base + reg);
-पूर्ण
+static inline void rt3883_pci_w32(struct rt3883_pci_controller *rpc,
+				  u32 val, unsigned reg)
+{
+	iowrite32(val, rpc->base + reg);
+}
 
-अटल अंतरभूत u32 rt3883_pci_get_cfgaddr(अचिन्हित पूर्णांक bus, अचिन्हित पूर्णांक slot,
-					 अचिन्हित पूर्णांक func, अचिन्हित पूर्णांक where)
-अणु
-	वापस (bus << 16) | (slot << 11) | (func << 8) | (where & 0xfc) |
+static inline u32 rt3883_pci_get_cfgaddr(unsigned int bus, unsigned int slot,
+					 unsigned int func, unsigned int where)
+{
+	return (bus << 16) | (slot << 11) | (func << 8) | (where & 0xfc) |
 	       0x80000000;
-पूर्ण
+}
 
-अटल u32 rt3883_pci_पढ़ो_cfg32(काष्ठा rt3883_pci_controller *rpc,
-			       अचिन्हित bus, अचिन्हित slot,
-			       अचिन्हित func, अचिन्हित reg)
-अणु
+static u32 rt3883_pci_read_cfg32(struct rt3883_pci_controller *rpc,
+			       unsigned bus, unsigned slot,
+			       unsigned func, unsigned reg)
+{
 	u32 address;
 	u32 ret;
 
@@ -109,24 +108,24 @@ pci_bus_to_rt3883_controller(काष्ठा pci_bus *bus)
 	rt3883_pci_w32(rpc, address, RT3883_PCI_REG_CFGADDR);
 	ret = rt3883_pci_r32(rpc, RT3883_PCI_REG_CFGDATA);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम rt3883_pci_ग_लिखो_cfg32(काष्ठा rt3883_pci_controller *rpc,
-				 अचिन्हित bus, अचिन्हित slot,
-				 अचिन्हित func, अचिन्हित reg, u32 val)
-अणु
+static void rt3883_pci_write_cfg32(struct rt3883_pci_controller *rpc,
+				 unsigned bus, unsigned slot,
+				 unsigned func, unsigned reg, u32 val)
+{
 	u32 address;
 
 	address = rt3883_pci_get_cfgaddr(bus, slot, func, reg);
 
 	rt3883_pci_w32(rpc, address, RT3883_PCI_REG_CFGADDR);
 	rt3883_pci_w32(rpc, val, RT3883_PCI_REG_CFGDATA);
-पूर्ण
+}
 
-अटल व्योम rt3883_pci_irq_handler(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा rt3883_pci_controller *rpc;
+static void rt3883_pci_irq_handler(struct irq_desc *desc)
+{
+	struct rt3883_pci_controller *rpc;
 	u32 pending;
 
 	rpc = irq_desc_get_handler_data(desc);
@@ -134,107 +133,107 @@ pci_bus_to_rt3883_controller(काष्ठा pci_bus *bus)
 	pending = rt3883_pci_r32(rpc, RT3883_PCI_REG_PCIINT) &
 		  rt3883_pci_r32(rpc, RT3883_PCI_REG_PCIENA);
 
-	अगर (!pending) अणु
-		spurious_पूर्णांकerrupt();
-		वापस;
-	पूर्ण
+	if (!pending) {
+		spurious_interrupt();
+		return;
+	}
 
-	जबतक (pending) अणु
-		अचिन्हित irq, bit = __ffs(pending);
+	while (pending) {
+		unsigned irq, bit = __ffs(pending);
 
-		irq = irq_find_mapping(rpc->irq_करोमुख्य, bit);
+		irq = irq_find_mapping(rpc->irq_domain, bit);
 		generic_handle_irq(irq);
 
 		pending &= ~BIT(bit);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम rt3883_pci_irq_unmask(काष्ठा irq_data *d)
-अणु
-	काष्ठा rt3883_pci_controller *rpc;
+static void rt3883_pci_irq_unmask(struct irq_data *d)
+{
+	struct rt3883_pci_controller *rpc;
 	u32 t;
 
 	rpc = irq_data_get_irq_chip_data(d);
 
 	t = rt3883_pci_r32(rpc, RT3883_PCI_REG_PCIENA);
 	rt3883_pci_w32(rpc, t | BIT(d->hwirq), RT3883_PCI_REG_PCIENA);
-	/* flush ग_लिखो */
+	/* flush write */
 	rt3883_pci_r32(rpc, RT3883_PCI_REG_PCIENA);
-पूर्ण
+}
 
-अटल व्योम rt3883_pci_irq_mask(काष्ठा irq_data *d)
-अणु
-	काष्ठा rt3883_pci_controller *rpc;
+static void rt3883_pci_irq_mask(struct irq_data *d)
+{
+	struct rt3883_pci_controller *rpc;
 	u32 t;
 
 	rpc = irq_data_get_irq_chip_data(d);
 
 	t = rt3883_pci_r32(rpc, RT3883_PCI_REG_PCIENA);
 	rt3883_pci_w32(rpc, t & ~BIT(d->hwirq), RT3883_PCI_REG_PCIENA);
-	/* flush ग_लिखो */
+	/* flush write */
 	rt3883_pci_r32(rpc, RT3883_PCI_REG_PCIENA);
-पूर्ण
+}
 
-अटल काष्ठा irq_chip rt3883_pci_irq_chip = अणु
+static struct irq_chip rt3883_pci_irq_chip = {
 	.name		= "RT3883 PCI",
 	.irq_mask	= rt3883_pci_irq_mask,
 	.irq_unmask	= rt3883_pci_irq_unmask,
 	.irq_mask_ack	= rt3883_pci_irq_mask,
-पूर्ण;
+};
 
-अटल पूर्णांक rt3883_pci_irq_map(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक irq,
+static int rt3883_pci_irq_map(struct irq_domain *d, unsigned int irq,
 			      irq_hw_number_t hw)
-अणु
+{
 	irq_set_chip_and_handler(irq, &rt3883_pci_irq_chip, handle_level_irq);
 	irq_set_chip_data(irq, d->host_data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops rt3883_pci_irq_करोमुख्य_ops = अणु
+static const struct irq_domain_ops rt3883_pci_irq_domain_ops = {
 	.map = rt3883_pci_irq_map,
-	.xlate = irq_करोमुख्य_xlate_onecell,
-पूर्ण;
+	.xlate = irq_domain_xlate_onecell,
+};
 
-अटल पूर्णांक rt3883_pci_irq_init(काष्ठा device *dev,
-			       काष्ठा rt3883_pci_controller *rpc)
-अणु
-	पूर्णांक irq;
+static int rt3883_pci_irq_init(struct device *dev,
+			       struct rt3883_pci_controller *rpc)
+{
+	int irq;
 
-	irq = irq_of_parse_and_map(rpc->पूर्णांकc_of_node, 0);
-	अगर (irq == 0) अणु
-		dev_err(dev, "%pOF has no IRQ", rpc->पूर्णांकc_of_node);
-		वापस -EINVAL;
-	पूर्ण
+	irq = irq_of_parse_and_map(rpc->intc_of_node, 0);
+	if (irq == 0) {
+		dev_err(dev, "%pOF has no IRQ", rpc->intc_of_node);
+		return -EINVAL;
+	}
 
-	/* disable all पूर्णांकerrupts */
+	/* disable all interrupts */
 	rt3883_pci_w32(rpc, 0, RT3883_PCI_REG_PCIENA);
 
-	rpc->irq_करोमुख्य =
-		irq_करोमुख्य_add_linear(rpc->पूर्णांकc_of_node, RT3883_PCI_IRQ_COUNT,
-				      &rt3883_pci_irq_करोमुख्य_ops,
+	rpc->irq_domain =
+		irq_domain_add_linear(rpc->intc_of_node, RT3883_PCI_IRQ_COUNT,
+				      &rt3883_pci_irq_domain_ops,
 				      rpc);
-	अगर (!rpc->irq_करोमुख्य) अणु
+	if (!rpc->irq_domain) {
 		dev_err(dev, "unable to add IRQ domain\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	irq_set_chained_handler_and_data(irq, rt3883_pci_irq_handler, rpc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rt3883_pci_config_पढ़ो(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
-				  पूर्णांक where, पूर्णांक size, u32 *val)
-अणु
-	काष्ठा rt3883_pci_controller *rpc;
+static int rt3883_pci_config_read(struct pci_bus *bus, unsigned int devfn,
+				  int where, int size, u32 *val)
+{
+	struct rt3883_pci_controller *rpc;
 	u32 address;
 	u32 data;
 
 	rpc = pci_bus_to_rt3883_controller(bus);
 
-	अगर (!rpc->pcie_पढ़ोy && bus->number == 1)
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	if (!rpc->pcie_ready && bus->number == 1)
+		return PCIBIOS_DEVICE_NOT_FOUND;
 
 	address = rt3883_pci_get_cfgaddr(bus->number, PCI_SLOT(devfn),
 					 PCI_FUNC(devfn), where);
@@ -242,32 +241,32 @@ pci_bus_to_rt3883_controller(काष्ठा pci_bus *bus)
 	rt3883_pci_w32(rpc, address, RT3883_PCI_REG_CFGADDR);
 	data = rt3883_pci_r32(rpc, RT3883_PCI_REG_CFGDATA);
 
-	चयन (size) अणु
-	हाल 1:
+	switch (size) {
+	case 1:
 		*val = (data >> ((where & 3) << 3)) & 0xff;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		*val = (data >> ((where & 3) << 3)) & 0xffff;
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		*val = data;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस PCIBIOS_SUCCESSFUL;
-पूर्ण
+	return PCIBIOS_SUCCESSFUL;
+}
 
-अटल पूर्णांक rt3883_pci_config_ग_लिखो(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
-				   पूर्णांक where, पूर्णांक size, u32 val)
-अणु
-	काष्ठा rt3883_pci_controller *rpc;
+static int rt3883_pci_config_write(struct pci_bus *bus, unsigned int devfn,
+				   int where, int size, u32 val)
+{
+	struct rt3883_pci_controller *rpc;
 	u32 address;
 	u32 data;
 
 	rpc = pci_bus_to_rt3883_controller(bus);
 
-	अगर (!rpc->pcie_पढ़ोy && bus->number == 1)
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	if (!rpc->pcie_ready && bus->number == 1)
+		return PCIBIOS_DEVICE_NOT_FOUND;
 
 	address = rt3883_pci_get_cfgaddr(bus->number, PCI_SLOT(devfn),
 					 PCI_FUNC(devfn), where);
@@ -275,32 +274,32 @@ pci_bus_to_rt3883_controller(काष्ठा pci_bus *bus)
 	rt3883_pci_w32(rpc, address, RT3883_PCI_REG_CFGADDR);
 	data = rt3883_pci_r32(rpc, RT3883_PCI_REG_CFGDATA);
 
-	चयन (size) अणु
-	हाल 1:
+	switch (size) {
+	case 1:
 		data = (data & ~(0xff << ((where & 3) << 3))) |
 		       (val << ((where & 3) << 3));
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		data = (data & ~(0xffff << ((where & 3) << 3))) |
 		       (val << ((where & 3) << 3));
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		data = val;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	rt3883_pci_w32(rpc, data, RT3883_PCI_REG_CFGDATA);
 
-	वापस PCIBIOS_SUCCESSFUL;
-पूर्ण
+	return PCIBIOS_SUCCESSFUL;
+}
 
-अटल काष्ठा pci_ops rt3883_pci_ops = अणु
-	.पढ़ो	= rt3883_pci_config_पढ़ो,
-	.ग_लिखो	= rt3883_pci_config_ग_लिखो,
-पूर्ण;
+static struct pci_ops rt3883_pci_ops = {
+	.read	= rt3883_pci_config_read,
+	.write	= rt3883_pci_config_write,
+};
 
-अटल व्योम rt3883_pci_preinit(काष्ठा rt3883_pci_controller *rpc, अचिन्हित mode)
-अणु
+static void rt3883_pci_preinit(struct rt3883_pci_controller *rpc, unsigned mode)
+{
 	u32 syscfg1;
 	u32 rstctrl;
 	u32 clkcfg1;
@@ -310,7 +309,7 @@ pci_bus_to_rt3883_controller(काष्ठा pci_bus *bus)
 	syscfg1 = rt_sysc_r32(RT3883_SYSC_REG_SYSCFG1);
 	clkcfg1 = rt_sysc_r32(RT3883_SYSC_REG_CLKCFG1);
 
-	अगर (mode & RT3883_PCI_MODE_PCIE) अणु
+	if (mode & RT3883_PCI_MODE_PCIE) {
 		rstctrl |= RT3883_RSTCTRL_PCIE;
 		rt_sysc_w32(rstctrl, RT3883_SYSC_REG_RSTCTRL);
 
@@ -339,21 +338,21 @@ pci_bus_to_rt3883_controller(काष्ठा pci_bus *bus)
 
 		rstctrl &= ~RT3883_RSTCTRL_PCIE;
 		rt_sysc_w32(rstctrl, RT3883_SYSC_REG_RSTCTRL);
-	पूर्ण
+	}
 
 	syscfg1 |= (RT3883_SYSCFG1_PCIE_RC_MODE | RT3883_SYSCFG1_PCI_HOST_MODE);
 
 	clkcfg1 &= ~(RT3883_CLKCFG1_PCI_CLK_EN | RT3883_CLKCFG1_PCIE_CLK_EN);
 
-	अगर (mode & RT3883_PCI_MODE_PCI) अणु
+	if (mode & RT3883_PCI_MODE_PCI) {
 		clkcfg1 |= RT3883_CLKCFG1_PCI_CLK_EN;
 		rstctrl &= ~RT3883_RSTCTRL_PCI;
-	पूर्ण
+	}
 
-	अगर (mode & RT3883_PCI_MODE_PCIE) अणु
+	if (mode & RT3883_PCI_MODE_PCIE) {
 		clkcfg1 |= RT3883_CLKCFG1_PCIE_CLK_EN;
 		rstctrl &= ~RT3883_RSTCTRL_PCIE;
-	पूर्ण
+	}
 
 	rt_sysc_w32(syscfg1, RT3883_SYSC_REG_SYSCFG1);
 	rt_sysc_w32(rstctrl, RT3883_SYSC_REG_RSTCTRL);
@@ -363,23 +362,23 @@ pci_bus_to_rt3883_controller(काष्ठा pci_bus *bus)
 
 	/*
 	 * setup the device number of the P2P bridge
-	 * and de-निश्चित the reset line
+	 * and de-assert the reset line
 	 */
 	t = (RT3883_P2P_BR_DEVNUM << RT3883_PCICFG_P2P_BR_DEVNUM_S);
 	rt3883_pci_w32(rpc, t, RT3883_PCI_REG_PCICFG);
 
-	/* flush ग_लिखो */
+	/* flush write */
 	rt3883_pci_r32(rpc, RT3883_PCI_REG_PCICFG);
 	msleep(500);
 
-	अगर (mode & RT3883_PCI_MODE_PCIE) अणु
+	if (mode & RT3883_PCI_MODE_PCIE) {
 		msleep(500);
 
 		t = rt3883_pci_r32(rpc, RT3883_PCI_REG_STATUS(1));
 
-		rpc->pcie_पढ़ोy = t & BIT(0);
+		rpc->pcie_ready = t & BIT(0);
 
-		अगर (!rpc->pcie_पढ़ोy) अणु
+		if (!rpc->pcie_ready) {
 			/* reset the PCIe block */
 			t = rt_sysc_r32(RT3883_SYSC_REG_RSTCTRL);
 			t |= RT3883_RSTCTRL_PCIE;
@@ -387,7 +386,7 @@ pci_bus_to_rt3883_controller(काष्ठा pci_bus *bus)
 			t &= ~RT3883_RSTCTRL_PCIE;
 			rt_sysc_w32(t, RT3883_SYSC_REG_RSTCTRL);
 
-			/* turn off PCIe घड़ी */
+			/* turn off PCIe clock */
 			t = rt_sysc_r32(RT3883_SYSC_REG_CLKCFG1);
 			t &= ~RT3883_CLKCFG1_PCIE_CLK_EN;
 			rt_sysc_w32(t, RT3883_SYSC_REG_CLKCFG1);
@@ -395,90 +394,90 @@ pci_bus_to_rt3883_controller(काष्ठा pci_bus *bus)
 			t = rt_sysc_r32(RT3883_SYSC_REG_PCIE_CLK_GEN0);
 			t &= ~0xf000c080;
 			rt_sysc_w32(t, RT3883_SYSC_REG_PCIE_CLK_GEN0);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* enable PCI arbiter */
 	rt3883_pci_w32(rpc, 0x79, RT3883_PCI_REG_ARBCTL);
-पूर्ण
+}
 
-अटल पूर्णांक rt3883_pci_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा rt3883_pci_controller *rpc;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा resource *res;
-	काष्ठा device_node *child;
+static int rt3883_pci_probe(struct platform_device *pdev)
+{
+	struct rt3883_pci_controller *rpc;
+	struct device *dev = &pdev->dev;
+	struct device_node *np = dev->of_node;
+	struct resource *res;
+	struct device_node *child;
 	u32 val;
-	पूर्णांक err;
-	पूर्णांक mode;
+	int err;
+	int mode;
 
-	rpc = devm_kzalloc(dev, माप(*rpc), GFP_KERNEL);
-	अगर (!rpc)
-		वापस -ENOMEM;
+	rpc = devm_kzalloc(dev, sizeof(*rpc), GFP_KERNEL);
+	if (!rpc)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	rpc->base = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(rpc->base))
-		वापस PTR_ERR(rpc->base);
+	if (IS_ERR(rpc->base))
+		return PTR_ERR(rpc->base);
 
-	/* find the पूर्णांकerrupt controller child node */
-	क्रम_each_child_of_node(np, child) अणु
-		अगर (of_get_property(child, "interrupt-controller", शून्य)) अणु
-			rpc->पूर्णांकc_of_node = child;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	/* find the interrupt controller child node */
+	for_each_child_of_node(np, child) {
+		if (of_get_property(child, "interrupt-controller", NULL)) {
+			rpc->intc_of_node = child;
+			break;
+		}
+	}
 
-	अगर (!rpc->पूर्णांकc_of_node) अणु
+	if (!rpc->intc_of_node) {
 		dev_err(dev, "%pOF has no %s child node",
 			np, "interrupt controller");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* find the PCI host bridge child node */
-	क्रम_each_child_of_node(np, child) अणु
-		अगर (of_node_is_type(child, "pci")) अणु
+	for_each_child_of_node(np, child) {
+		if (of_node_is_type(child, "pci")) {
 			rpc->pci_controller.of_node = child;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!rpc->pci_controller.of_node) अणु
+	if (!rpc->pci_controller.of_node) {
 		dev_err(dev, "%pOF has no %s child node",
 			np, "PCI host bridge");
 		err = -EINVAL;
-		जाओ err_put_पूर्णांकc_node;
-	पूर्ण
+		goto err_put_intc_node;
+	}
 
 	mode = RT3883_PCI_MODE_NONE;
-	क्रम_each_available_child_of_node(rpc->pci_controller.of_node, child) अणु
-		पूर्णांक devfn;
+	for_each_available_child_of_node(rpc->pci_controller.of_node, child) {
+		int devfn;
 
-		अगर (!of_node_is_type(child, "pci"))
-			जारी;
+		if (!of_node_is_type(child, "pci"))
+			continue;
 
 		devfn = of_pci_get_devfn(child);
-		अगर (devfn < 0)
-			जारी;
+		if (devfn < 0)
+			continue;
 
-		चयन (PCI_SLOT(devfn)) अणु
-		हाल 1:
+		switch (PCI_SLOT(devfn)) {
+		case 1:
 			mode |= RT3883_PCI_MODE_PCIE;
-			अवरोध;
+			break;
 
-		हाल 17:
-		हाल 18:
+		case 17:
+		case 18:
 			mode |= RT3883_PCI_MODE_PCI;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (mode == RT3883_PCI_MODE_NONE) अणु
+	if (mode == RT3883_PCI_MODE_NONE) {
 		dev_err(dev, "unable to determine PCI mode\n");
 		err = -EINVAL;
-		जाओ err_put_hb_node;
-	पूर्ण
+		goto err_put_hb_node;
+	}
 
 	dev_info(dev, "mode:%s%s\n",
 		 (mode & RT3883_PCI_MODE_PCI) ? " PCI" : "",
@@ -515,71 +514,71 @@ pci_bus_to_rt3883_controller(काष्ठा pci_bus *bus)
 	rt3883_pci_w32(rpc, 0x28801814, RT3883_PCI_REG_SUBID(1));
 
 	err = rt3883_pci_irq_init(dev, rpc);
-	अगर (err)
-		जाओ err_put_hb_node;
+	if (err)
+		goto err_put_hb_node;
 
 	/* PCIe */
-	val = rt3883_pci_पढ़ो_cfg32(rpc, 0, 0x01, 0, PCI_COMMAND);
+	val = rt3883_pci_read_cfg32(rpc, 0, 0x01, 0, PCI_COMMAND);
 	val |= PCI_COMMAND_IO | PCI_COMMAND_MEMORY | PCI_COMMAND_MASTER;
-	rt3883_pci_ग_लिखो_cfg32(rpc, 0, 0x01, 0, PCI_COMMAND, val);
+	rt3883_pci_write_cfg32(rpc, 0, 0x01, 0, PCI_COMMAND, val);
 
 	/* PCI */
-	val = rt3883_pci_पढ़ो_cfg32(rpc, 0, 0x00, 0, PCI_COMMAND);
+	val = rt3883_pci_read_cfg32(rpc, 0, 0x00, 0, PCI_COMMAND);
 	val |= PCI_COMMAND_IO | PCI_COMMAND_MEMORY | PCI_COMMAND_MASTER;
-	rt3883_pci_ग_लिखो_cfg32(rpc, 0, 0x00, 0, PCI_COMMAND, val);
+	rt3883_pci_write_cfg32(rpc, 0, 0x00, 0, PCI_COMMAND, val);
 
-	अगर (mode == RT3883_PCI_MODE_PCIE) अणु
+	if (mode == RT3883_PCI_MODE_PCIE) {
 		rt3883_pci_w32(rpc, 0x03ff0001, RT3883_PCI_REG_BAR0SETUP(0));
 		rt3883_pci_w32(rpc, 0x03ff0001, RT3883_PCI_REG_BAR0SETUP(1));
 
-		rt3883_pci_ग_लिखो_cfg32(rpc, 0, RT3883_P2P_BR_DEVNUM, 0,
+		rt3883_pci_write_cfg32(rpc, 0, RT3883_P2P_BR_DEVNUM, 0,
 				       PCI_BASE_ADDRESS_0,
 				       RT3883_MEMORY_BASE);
-		/* flush ग_लिखो */
-		rt3883_pci_पढ़ो_cfg32(rpc, 0, RT3883_P2P_BR_DEVNUM, 0,
+		/* flush write */
+		rt3883_pci_read_cfg32(rpc, 0, RT3883_P2P_BR_DEVNUM, 0,
 				      PCI_BASE_ADDRESS_0);
-	पूर्ण अन्यथा अणु
-		rt3883_pci_ग_लिखो_cfg32(rpc, 0, RT3883_P2P_BR_DEVNUM, 0,
+	} else {
+		rt3883_pci_write_cfg32(rpc, 0, RT3883_P2P_BR_DEVNUM, 0,
 				       PCI_IO_BASE, 0x00000101);
-	पूर्ण
+	}
 
-	रेजिस्टर_pci_controller(&rpc->pci_controller);
+	register_pci_controller(&rpc->pci_controller);
 
-	वापस 0;
+	return 0;
 
 err_put_hb_node:
 	of_node_put(rpc->pci_controller.of_node);
-err_put_पूर्णांकc_node:
-	of_node_put(rpc->पूर्णांकc_of_node);
-	वापस err;
-पूर्ण
+err_put_intc_node:
+	of_node_put(rpc->intc_of_node);
+	return err;
+}
 
-पूर्णांक pcibios_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
-अणु
-	वापस of_irq_parse_and_map_pci(dev, slot, pin);
-पूर्ण
+int pcibios_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
+{
+	return of_irq_parse_and_map_pci(dev, slot, pin);
+}
 
-पूर्णांक pcibios_plat_dev_init(काष्ठा pci_dev *dev)
-अणु
-	वापस 0;
-पूर्ण
+int pcibios_plat_dev_init(struct pci_dev *dev)
+{
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id rt3883_pci_ids[] = अणु
-	अणु .compatible = "ralink,rt3883-pci" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id rt3883_pci_ids[] = {
+	{ .compatible = "ralink,rt3883-pci" },
+	{},
+};
 
-अटल काष्ठा platक्रमm_driver rt3883_pci_driver = अणु
+static struct platform_driver rt3883_pci_driver = {
 	.probe = rt3883_pci_probe,
-	.driver = अणु
+	.driver = {
 		.name = "rt3883-pci",
 		.of_match_table = of_match_ptr(rt3883_pci_ids),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init rt3883_pci_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&rt3883_pci_driver);
-पूर्ण
+static int __init rt3883_pci_init(void)
+{
+	return platform_driver_register(&rt3883_pci_driver);
+}
 
 postcore_initcall(rt3883_pci_init);

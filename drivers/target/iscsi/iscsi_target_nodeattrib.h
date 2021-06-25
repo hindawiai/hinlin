@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित ISCSI_TARGET_NODEATTRIB_H
-#घोषणा ISCSI_TARGET_NODEATTRIB_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef ISCSI_TARGET_NODEATTRIB_H
+#define ISCSI_TARGET_NODEATTRIB_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा iscsi_node_acl;
-काष्ठा iscsi_portal_group;
+struct iscsi_node_acl;
+struct iscsi_portal_group;
 
-बाह्य व्योम iscsit_set_शेष_node_attribues(काष्ठा iscsi_node_acl *,
-					      काष्ठा iscsi_portal_group *);
-बाह्य पूर्णांक iscsit_na_dataout_समयout(काष्ठा iscsi_node_acl *, u32);
-बाह्य पूर्णांक iscsit_na_dataout_समयout_retries(काष्ठा iscsi_node_acl *, u32);
-बाह्य पूर्णांक iscsit_na_nopin_समयout(काष्ठा iscsi_node_acl *, u32);
-बाह्य पूर्णांक iscsit_na_nopin_response_समयout(काष्ठा iscsi_node_acl *, u32);
-बाह्य पूर्णांक iscsit_na_अक्रमom_datain_pdu_offsets(काष्ठा iscsi_node_acl *, u32);
-बाह्य पूर्णांक iscsit_na_अक्रमom_datain_seq_offsets(काष्ठा iscsi_node_acl *, u32);
-बाह्य पूर्णांक iscsit_na_अक्रमom_r2t_offsets(काष्ठा iscsi_node_acl *, u32);
-बाह्य पूर्णांक iscsit_na_शेष_erl(काष्ठा iscsi_node_acl *, u32);
+extern void iscsit_set_default_node_attribues(struct iscsi_node_acl *,
+					      struct iscsi_portal_group *);
+extern int iscsit_na_dataout_timeout(struct iscsi_node_acl *, u32);
+extern int iscsit_na_dataout_timeout_retries(struct iscsi_node_acl *, u32);
+extern int iscsit_na_nopin_timeout(struct iscsi_node_acl *, u32);
+extern int iscsit_na_nopin_response_timeout(struct iscsi_node_acl *, u32);
+extern int iscsit_na_random_datain_pdu_offsets(struct iscsi_node_acl *, u32);
+extern int iscsit_na_random_datain_seq_offsets(struct iscsi_node_acl *, u32);
+extern int iscsit_na_random_r2t_offsets(struct iscsi_node_acl *, u32);
+extern int iscsit_na_default_erl(struct iscsi_node_acl *, u32);
 
-#पूर्ण_अगर /* ISCSI_TARGET_NODEATTRIB_H */
+#endif /* ISCSI_TARGET_NODEATTRIB_H */

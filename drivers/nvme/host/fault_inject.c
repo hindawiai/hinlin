@@ -1,83 +1,82 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * fault injection support क्रम nvme.
+ * fault injection support for nvme.
  *
  * Copyright (c) 2018, Oracle and/or its affiliates
  */
 
-#समावेश <linux/moduleparam.h>
-#समावेश "nvme.h"
+#include <linux/moduleparam.h>
+#include "nvme.h"
 
-अटल DECLARE_FAULT_ATTR(fail_शेष_attr);
-/* optional fault injection attributes boot समय option:
- * nvme_core.fail_request=<पूर्णांकerval>,<probability>,<space>,<बार>
+static DECLARE_FAULT_ATTR(fail_default_attr);
+/* optional fault injection attributes boot time option:
+ * nvme_core.fail_request=<interval>,<probability>,<space>,<times>
  */
-अटल अक्षर *fail_request;
-module_param(fail_request, अक्षरp, 0000);
+static char *fail_request;
+module_param(fail_request, charp, 0000);
 
-व्योम nvme_fault_inject_init(काष्ठा nvme_fault_inject *fault_inj,
-			    स्थिर अक्षर *dev_name)
-अणु
-	काष्ठा dentry *dir, *parent;
-	काष्ठा fault_attr *attr = &fault_inj->attr;
+void nvme_fault_inject_init(struct nvme_fault_inject *fault_inj,
+			    const char *dev_name)
+{
+	struct dentry *dir, *parent;
+	struct fault_attr *attr = &fault_inj->attr;
 
-	/* set शेष fault injection attribute */
-	अगर (fail_request)
-		setup_fault_attr(&fail_शेष_attr, fail_request);
+	/* set default fault injection attribute */
+	if (fail_request)
+		setup_fault_attr(&fail_default_attr, fail_request);
 
 	/* create debugfs directory and attribute */
-	parent = debugfs_create_dir(dev_name, शून्य);
-	अगर (!parent) अणु
+	parent = debugfs_create_dir(dev_name, NULL);
+	if (!parent) {
 		pr_warn("%s: failed to create debugfs directory\n", dev_name);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	*attr = fail_शेष_attr;
+	*attr = fail_default_attr;
 	dir = fault_create_debugfs_attr("fault_inject", parent, attr);
-	अगर (IS_ERR(dir)) अणु
+	if (IS_ERR(dir)) {
 		pr_warn("%s: failed to create debugfs attr\n", dev_name);
-		debugfs_हटाओ_recursive(parent);
-		वापस;
-	पूर्ण
+		debugfs_remove_recursive(parent);
+		return;
+	}
 	fault_inj->parent = parent;
 
-	/* create debugfs क्रम status code and करोnt_retry */
+	/* create debugfs for status code and dont_retry */
 	fault_inj->status = NVME_SC_INVALID_OPCODE;
-	fault_inj->करोnt_retry = true;
+	fault_inj->dont_retry = true;
 	debugfs_create_x16("status", 0600, dir,	&fault_inj->status);
-	debugfs_create_bool("dont_retry", 0600, dir, &fault_inj->करोnt_retry);
-पूर्ण
+	debugfs_create_bool("dont_retry", 0600, dir, &fault_inj->dont_retry);
+}
 
-व्योम nvme_fault_inject_fini(काष्ठा nvme_fault_inject *fault_inject)
-अणु
-	/* हटाओ debugfs directories */
-	debugfs_हटाओ_recursive(fault_inject->parent);
-पूर्ण
+void nvme_fault_inject_fini(struct nvme_fault_inject *fault_inject)
+{
+	/* remove debugfs directories */
+	debugfs_remove_recursive(fault_inject->parent);
+}
 
-व्योम nvme_should_fail(काष्ठा request *req)
-अणु
-	काष्ठा gendisk *disk = req->rq_disk;
-	काष्ठा nvme_fault_inject *fault_inject = शून्य;
+void nvme_should_fail(struct request *req)
+{
+	struct gendisk *disk = req->rq_disk;
+	struct nvme_fault_inject *fault_inject = NULL;
 	u16 status;
 
-	अगर (disk) अणु
-		काष्ठा nvme_ns *ns = disk->निजी_data;
+	if (disk) {
+		struct nvme_ns *ns = disk->private_data;
 
-		अगर (ns)
+		if (ns)
 			fault_inject = &ns->fault_inject;
-		अन्यथा
+		else
 			WARN_ONCE(1, "No namespace found for request\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		fault_inject = &nvme_req(req)->ctrl->fault_inject;
-	पूर्ण
+	}
 
-	अगर (fault_inject && should_fail(&fault_inject->attr, 1)) अणु
+	if (fault_inject && should_fail(&fault_inject->attr, 1)) {
 		/* inject status code and DNR bit */
 		status = fault_inject->status;
-		अगर (fault_inject->करोnt_retry)
+		if (fault_inject->dont_retry)
 			status |= NVME_SC_DNR;
 		nvme_req(req)->status =	status;
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(nvme_should_fail);

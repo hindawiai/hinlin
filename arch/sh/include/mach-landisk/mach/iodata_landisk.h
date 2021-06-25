@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_SH_IODATA_LANDISK_H
-#घोषणा __ASM_SH_IODATA_LANDISK_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_SH_IODATA_LANDISK_H
+#define __ASM_SH_IODATA_LANDISK_H
 
 /*
  * arch/sh/include/mach-landisk/mach/iodata_landisk.h
@@ -10,38 +9,38 @@
  *
  * IO-DATA LANDISK support
  */
-#समावेश <linux/sh_पूर्णांकc.h>
+#include <linux/sh_intc.h>
 
-/* Box specअगरic addresses.  */
+/* Box specific addresses.  */
 
-#घोषणा PA_USB		0xa4000000	/* USB Controller M66590 */
+#define PA_USB		0xa4000000	/* USB Controller M66590 */
 
-#घोषणा PA_ATARST	0xb0000000	/* ATA/FATA Access Control Register */
-#घोषणा PA_LED		0xb0000001	/* LED Control Register */
-#घोषणा PA_STATUS	0xb0000002	/* Switch Status Register */
-#घोषणा PA_SHUTDOWN	0xb0000003	/* Shutकरोwn Control Register */
-#घोषणा PA_PCIPME	0xb0000004	/* PCI PME Status Register */
-#घोषणा PA_IMASK	0xb0000005	/* Interrupt Mask Register */
-/* 2003.10.31 I-O DATA NSD NWG	add.	क्रम shutकरोwn port clear */
-#घोषणा PA_PWRINT_CLR	0xb0000006	/* Shutकरोwn Interrupt clear Register */
+#define PA_ATARST	0xb0000000	/* ATA/FATA Access Control Register */
+#define PA_LED		0xb0000001	/* LED Control Register */
+#define PA_STATUS	0xb0000002	/* Switch Status Register */
+#define PA_SHUTDOWN	0xb0000003	/* Shutdown Control Register */
+#define PA_PCIPME	0xb0000004	/* PCI PME Status Register */
+#define PA_IMASK	0xb0000005	/* Interrupt Mask Register */
+/* 2003.10.31 I-O DATA NSD NWG	add.	for shutdown port clear */
+#define PA_PWRINT_CLR	0xb0000006	/* Shutdown Interrupt clear Register */
 
-#घोषणा PA_PIDE_OFFSET	0x40		/* CF IDE Offset */
-#घोषणा PA_SIDE_OFFSET	0x40		/* HDD IDE Offset */
+#define PA_PIDE_OFFSET	0x40		/* CF IDE Offset */
+#define PA_SIDE_OFFSET	0x40		/* HDD IDE Offset */
 
-#घोषणा IRQ_PCIINTA	evt2irq(0x2a0)	/* PCI INTA IRQ */
-#घोषणा IRQ_PCIINTB	evt2irq(0x2c0)	/* PCI INTB IRQ */
-#घोषणा IRQ_PCIINTC	evt2irq(0x2e0)	/* PCI INTC IRQ */
-#घोषणा IRQ_PCIINTD	evt2irq(0x300)	/* PCI INTD IRQ */
-#घोषणा IRQ_ATA		evt2irq(0x320)	/* ATA IRQ */
-#घोषणा IRQ_FATA	evt2irq(0x340)	/* FATA IRQ */
-#घोषणा IRQ_POWER	evt2irq(0x360)	/* Power Switch IRQ */
-#घोषणा IRQ_BUTTON	evt2irq(0x380)	/* USL-5P Button IRQ */
-#घोषणा IRQ_FAULT	evt2irq(0x3a0)	/* USL-5P Fault  IRQ */
+#define IRQ_PCIINTA	evt2irq(0x2a0)	/* PCI INTA IRQ */
+#define IRQ_PCIINTB	evt2irq(0x2c0)	/* PCI INTB IRQ */
+#define IRQ_PCIINTC	evt2irq(0x2e0)	/* PCI INTC IRQ */
+#define IRQ_PCIINTD	evt2irq(0x300)	/* PCI INTD IRQ */
+#define IRQ_ATA		evt2irq(0x320)	/* ATA IRQ */
+#define IRQ_FATA	evt2irq(0x340)	/* FATA IRQ */
+#define IRQ_POWER	evt2irq(0x360)	/* Power Switch IRQ */
+#define IRQ_BUTTON	evt2irq(0x380)	/* USL-5P Button IRQ */
+#define IRQ_FAULT	evt2irq(0x3a0)	/* USL-5P Fault  IRQ */
 
-व्योम init_landisk_IRQ(व्योम);
+void init_landisk_IRQ(void);
 
-#घोषणा __IO_PREFIX landisk
-#समावेश <यंत्र/io_generic.h>
+#define __IO_PREFIX landisk
+#include <asm/io_generic.h>
 
-#पूर्ण_अगर  /* __ASM_SH_IODATA_LANDISK_H */
+#endif  /* __ASM_SH_IODATA_LANDISK_H */
 

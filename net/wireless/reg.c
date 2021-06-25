@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright 2002-2005, Instant802 Networks, Inc.
  * Copyright 2005-2006, Devicescape Software, Inc.
@@ -8,14 +7,14 @@
  * Copyright      2017  Intel Deutschland GmbH
  * Copyright (C) 2018 - 2021 Intel Corporation
  *
- * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
@@ -23,168 +22,168 @@
 
 
 /**
- * DOC: Wireless regulatory infraकाष्ठाure
+ * DOC: Wireless regulatory infrastructure
  *
- * The usual implementation is क्रम a driver to पढ़ो a device EEPROM to
- * determine which regulatory करोमुख्य it should be operating under, then
+ * The usual implementation is for a driver to read a device EEPROM to
+ * determine which regulatory domain it should be operating under, then
  * looking up the allowable channels in a driver-local table and finally
- * रेजिस्टरing those channels in the wiphy काष्ठाure.
+ * registering those channels in the wiphy structure.
  *
- * Another set of compliance enक्रमcement is क्रम drivers to use their
+ * Another set of compliance enforcement is for drivers to use their
  * own compliance limits which can be stored on the EEPROM. The host
  * driver or firmware may ensure these are used.
  *
  * In addition to all this we provide an extra layer of regulatory
- * conक्रमmance. For drivers which करो not have any regulatory
- * inक्रमmation CRDA provides the complete regulatory solution.
- * For others it provides a community efक्रमt on further restrictions
+ * conformance. For drivers which do not have any regulatory
+ * information CRDA provides the complete regulatory solution.
+ * For others it provides a community effort on further restrictions
  * to enhance compliance.
  *
  * Note: When number of rules --> infinity we will not be able to
  * index on alpha2 any more, instead we'll probably have to
- * rely on some SHA1 checksum of the regकरोमुख्य क्रम example.
+ * rely on some SHA1 checksum of the regdomain for example.
  *
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/export.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/list.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/nl80211.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/verअगरication.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/firmware.h>
-#समावेश <net/cfg80211.h>
-#समावेश "core.h"
-#समावेश "reg.h"
-#समावेश "rdev-ops.h"
-#समावेश "nl80211.h"
+#include <linux/kernel.h>
+#include <linux/export.h>
+#include <linux/slab.h>
+#include <linux/list.h>
+#include <linux/ctype.h>
+#include <linux/nl80211.h>
+#include <linux/platform_device.h>
+#include <linux/verification.h>
+#include <linux/moduleparam.h>
+#include <linux/firmware.h>
+#include <net/cfg80211.h>
+#include "core.h"
+#include "reg.h"
+#include "rdev-ops.h"
+#include "nl80211.h"
 
 /*
- * Grace period we give beक्रमe making sure all current पूर्णांकerfaces reside on
- * channels allowed by the current regulatory करोमुख्य.
+ * Grace period we give before making sure all current interfaces reside on
+ * channels allowed by the current regulatory domain.
  */
-#घोषणा REG_ENFORCE_GRACE_MS 60000
+#define REG_ENFORCE_GRACE_MS 60000
 
 /**
- * क्रमागत reg_request_treaपंचांगent - regulatory request treaपंचांगent
+ * enum reg_request_treatment - regulatory request treatment
  *
- * @REG_REQ_OK: जारी processing the regulatory request
+ * @REG_REQ_OK: continue processing the regulatory request
  * @REG_REQ_IGNORE: ignore the regulatory request
- * @REG_REQ_INTERSECT: the regulatory करोमुख्य resulting from this request should
- *	be पूर्णांकersected with the current one.
+ * @REG_REQ_INTERSECT: the regulatory domain resulting from this request should
+ *	be intersected with the current one.
  * @REG_REQ_ALREADY_SET: the regulatory request will not change the current
  *	regulatory settings, and no further processing is required.
  */
-क्रमागत reg_request_treaपंचांगent अणु
+enum reg_request_treatment {
 	REG_REQ_OK,
 	REG_REQ_IGNORE,
 	REG_REQ_INTERSECT,
 	REG_REQ_ALREADY_SET,
-पूर्ण;
+};
 
-अटल काष्ठा regulatory_request core_request_world = अणु
+static struct regulatory_request core_request_world = {
 	.initiator = NL80211_REGDOM_SET_BY_CORE,
 	.alpha2[0] = '0',
 	.alpha2[1] = '0',
-	.पूर्णांकersect = false,
+	.intersect = false,
 	.processed = true,
 	.country_ie_env = ENVIRON_ANY,
-पूर्ण;
+};
 
 /*
- * Receipt of inक्रमmation from last regulatory request,
- * रक्षित by RTNL (and can be accessed with RCU protection)
+ * Receipt of information from last regulatory request,
+ * protected by RTNL (and can be accessed with RCU protection)
  */
-अटल काष्ठा regulatory_request __rcu *last_request =
-	(व्योम __क्रमce __rcu *)&core_request_world;
+static struct regulatory_request __rcu *last_request =
+	(void __force __rcu *)&core_request_world;
 
 /* To trigger userspace events and load firmware */
-अटल काष्ठा platक्रमm_device *reg_pdev;
+static struct platform_device *reg_pdev;
 
 /*
- * Central wireless core regulatory करोमुख्यs, we only need two,
- * the current one and a world regulatory करोमुख्य in हाल we have no
- * inक्रमmation to give us an alpha2.
- * (रक्षित by RTNL, can be पढ़ो under RCU)
+ * Central wireless core regulatory domains, we only need two,
+ * the current one and a world regulatory domain in case we have no
+ * information to give us an alpha2.
+ * (protected by RTNL, can be read under RCU)
  */
-स्थिर काष्ठा ieee80211_regकरोमुख्य __rcu *cfg80211_regकरोमुख्य;
+const struct ieee80211_regdomain __rcu *cfg80211_regdomain;
 
 /*
- * Number of devices that रेजिस्टरed to the core
- * that support cellular base station regulatory hपूर्णांकs
- * (रक्षित by RTNL)
+ * Number of devices that registered to the core
+ * that support cellular base station regulatory hints
+ * (protected by RTNL)
  */
-अटल पूर्णांक reg_num_devs_support_basehपूर्णांक;
+static int reg_num_devs_support_basehint;
 
 /*
- * State variable indicating अगर the platक्रमm on which the devices
- * are attached is operating in an inकरोor environment. The state variable
- * is relevant क्रम all रेजिस्टरed devices.
+ * State variable indicating if the platform on which the devices
+ * are attached is operating in an indoor environment. The state variable
+ * is relevant for all registered devices.
  */
-अटल bool reg_is_inकरोor;
-अटल DEFINE_SPINLOCK(reg_inकरोor_lock);
+static bool reg_is_indoor;
+static DEFINE_SPINLOCK(reg_indoor_lock);
 
-/* Used to track the userspace process controlling the inकरोor setting */
-अटल u32 reg_is_inकरोor_portid;
+/* Used to track the userspace process controlling the indoor setting */
+static u32 reg_is_indoor_portid;
 
-अटल व्योम restore_regulatory_settings(bool reset_user, bool cached);
-अटल व्योम prपूर्णांक_regकरोमुख्य(स्थिर काष्ठा ieee80211_regकरोमुख्य *rd);
+static void restore_regulatory_settings(bool reset_user, bool cached);
+static void print_regdomain(const struct ieee80211_regdomain *rd);
 
-अटल स्थिर काष्ठा ieee80211_regकरोमुख्य *get_cfg80211_regकरोm(व्योम)
-अणु
-	वापस rcu_dereference_rtnl(cfg80211_regकरोमुख्य);
-पूर्ण
+static const struct ieee80211_regdomain *get_cfg80211_regdom(void)
+{
+	return rcu_dereference_rtnl(cfg80211_regdomain);
+}
 
 /*
- * Returns the regulatory करोमुख्य associated with the wiphy.
+ * Returns the regulatory domain associated with the wiphy.
  *
  * Requires any of RTNL, wiphy mutex or RCU protection.
  */
-स्थिर काष्ठा ieee80211_regकरोमुख्य *get_wiphy_regकरोm(काष्ठा wiphy *wiphy)
-अणु
-	वापस rcu_dereference_check(wiphy->regd,
+const struct ieee80211_regdomain *get_wiphy_regdom(struct wiphy *wiphy)
+{
+	return rcu_dereference_check(wiphy->regd,
 				     lockdep_is_held(&wiphy->mtx) ||
 				     lockdep_rtnl_is_held());
-पूर्ण
-EXPORT_SYMBOL(get_wiphy_regकरोm);
+}
+EXPORT_SYMBOL(get_wiphy_regdom);
 
-अटल स्थिर अक्षर *reg_dfs_region_str(क्रमागत nl80211_dfs_regions dfs_region)
-अणु
-	चयन (dfs_region) अणु
-	हाल NL80211_DFS_UNSET:
-		वापस "unset";
-	हाल NL80211_DFS_FCC:
-		वापस "FCC";
-	हाल NL80211_DFS_ETSI:
-		वापस "ETSI";
-	हाल NL80211_DFS_JP:
-		वापस "JP";
-	पूर्ण
-	वापस "Unknown";
-पूर्ण
+static const char *reg_dfs_region_str(enum nl80211_dfs_regions dfs_region)
+{
+	switch (dfs_region) {
+	case NL80211_DFS_UNSET:
+		return "unset";
+	case NL80211_DFS_FCC:
+		return "FCC";
+	case NL80211_DFS_ETSI:
+		return "ETSI";
+	case NL80211_DFS_JP:
+		return "JP";
+	}
+	return "Unknown";
+}
 
-क्रमागत nl80211_dfs_regions reg_get_dfs_region(काष्ठा wiphy *wiphy)
-अणु
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *regd = शून्य;
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *wiphy_regd = शून्य;
+enum nl80211_dfs_regions reg_get_dfs_region(struct wiphy *wiphy)
+{
+	const struct ieee80211_regdomain *regd = NULL;
+	const struct ieee80211_regdomain *wiphy_regd = NULL;
 
-	rcu_पढ़ो_lock();
-	regd = get_cfg80211_regकरोm();
+	rcu_read_lock();
+	regd = get_cfg80211_regdom();
 
-	अगर (!wiphy)
-		जाओ out;
+	if (!wiphy)
+		goto out;
 
-	wiphy_regd = get_wiphy_regकरोm(wiphy);
-	अगर (!wiphy_regd)
-		जाओ out;
+	wiphy_regd = get_wiphy_regdom(wiphy);
+	if (!wiphy_regd)
+		goto out;
 
-	अगर (wiphy_regd->dfs_region == regd->dfs_region)
-		जाओ out;
+	if (wiphy_regd->dfs_region == regd->dfs_region)
+		goto out;
 
 	pr_debug("%s: device specific dfs_region (%s) disagrees with cfg80211's central dfs_region (%s)\n",
 		 dev_name(&wiphy->dev),
@@ -192,57 +191,57 @@ EXPORT_SYMBOL(get_wiphy_regकरोm);
 		 reg_dfs_region_str(regd->dfs_region));
 
 out:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस regd->dfs_region;
-पूर्ण
+	return regd->dfs_region;
+}
 
-अटल व्योम rcu_मुक्त_regकरोm(स्थिर काष्ठा ieee80211_regकरोमुख्य *r)
-अणु
-	अगर (!r)
-		वापस;
-	kमुक्त_rcu((काष्ठा ieee80211_regकरोमुख्य *)r, rcu_head);
-पूर्ण
+static void rcu_free_regdom(const struct ieee80211_regdomain *r)
+{
+	if (!r)
+		return;
+	kfree_rcu((struct ieee80211_regdomain *)r, rcu_head);
+}
 
-अटल काष्ठा regulatory_request *get_last_request(व्योम)
-अणु
-	वापस rcu_dereference_rtnl(last_request);
-पूर्ण
+static struct regulatory_request *get_last_request(void)
+{
+	return rcu_dereference_rtnl(last_request);
+}
 
-/* Used to queue up regulatory hपूर्णांकs */
-अटल LIST_HEAD(reg_requests_list);
-अटल DEFINE_SPINLOCK(reg_requests_lock);
+/* Used to queue up regulatory hints */
+static LIST_HEAD(reg_requests_list);
+static DEFINE_SPINLOCK(reg_requests_lock);
 
-/* Used to queue up beacon hपूर्णांकs क्रम review */
-अटल LIST_HEAD(reg_pending_beacons);
-अटल DEFINE_SPINLOCK(reg_pending_beacons_lock);
+/* Used to queue up beacon hints for review */
+static LIST_HEAD(reg_pending_beacons);
+static DEFINE_SPINLOCK(reg_pending_beacons_lock);
 
-/* Used to keep track of processed beacon hपूर्णांकs */
-अटल LIST_HEAD(reg_beacon_list);
+/* Used to keep track of processed beacon hints */
+static LIST_HEAD(reg_beacon_list);
 
-काष्ठा reg_beacon अणु
-	काष्ठा list_head list;
-	काष्ठा ieee80211_channel chan;
-पूर्ण;
+struct reg_beacon {
+	struct list_head list;
+	struct ieee80211_channel chan;
+};
 
-अटल व्योम reg_check_chans_work(काष्ठा work_काष्ठा *work);
-अटल DECLARE_DELAYED_WORK(reg_check_chans, reg_check_chans_work);
+static void reg_check_chans_work(struct work_struct *work);
+static DECLARE_DELAYED_WORK(reg_check_chans, reg_check_chans_work);
 
-अटल व्योम reg_toकरो(काष्ठा work_काष्ठा *work);
-अटल DECLARE_WORK(reg_work, reg_toकरो);
+static void reg_todo(struct work_struct *work);
+static DECLARE_WORK(reg_work, reg_todo);
 
-/* We keep a अटल world regulatory करोमुख्य in हाल of the असलence of CRDA */
-अटल स्थिर काष्ठा ieee80211_regकरोमुख्य world_regकरोm = अणु
+/* We keep a static world regulatory domain in case of the absence of CRDA */
+static const struct ieee80211_regdomain world_regdom = {
 	.n_reg_rules = 8,
 	.alpha2 =  "00",
-	.reg_rules = अणु
+	.reg_rules = {
 		/* IEEE 802.11b/g, channels 1..11 */
 		REG_RULE(2412-10, 2462+10, 40, 6, 20, 0),
 		/* IEEE 802.11b/g, channels 12..13. */
 		REG_RULE(2467-10, 2472+10, 20, 6, 20,
 			NL80211_RRF_NO_IR | NL80211_RRF_AUTO_BW),
 		/* IEEE 802.11 channel 14 - Only JP enables
-		 * this and क्रम 802.11b only */
+		 * this and for 802.11b only */
 		REG_RULE(2484-10, 2484+10, 20, 6, 20,
 			NL80211_RRF_NO_IR |
 			NL80211_RRF_NO_OFDM),
@@ -268,922 +267,922 @@ out:
 
 		/* IEEE 802.11ad (60GHz), channels 1..3 */
 		REG_RULE(56160+2160*1-1080, 56160+2160*3+1080, 2160, 0, 0, 0),
-	पूर्ण
-पूर्ण;
+	}
+};
 
-/* रक्षित by RTNL */
-अटल स्थिर काष्ठा ieee80211_regकरोमुख्य *cfg80211_world_regकरोm =
-	&world_regकरोm;
+/* protected by RTNL */
+static const struct ieee80211_regdomain *cfg80211_world_regdom =
+	&world_regdom;
 
-अटल अक्षर *ieee80211_regकरोm = "00";
-अटल अक्षर user_alpha2[2];
-अटल स्थिर काष्ठा ieee80211_regकरोमुख्य *cfg80211_user_regकरोm;
+static char *ieee80211_regdom = "00";
+static char user_alpha2[2];
+static const struct ieee80211_regdomain *cfg80211_user_regdom;
 
-module_param(ieee80211_regकरोm, अक्षरp, 0444);
-MODULE_PARM_DESC(ieee80211_regकरोm, "IEEE 802.11 regulatory domain code");
+module_param(ieee80211_regdom, charp, 0444);
+MODULE_PARM_DESC(ieee80211_regdom, "IEEE 802.11 regulatory domain code");
 
-अटल व्योम reg_मुक्त_request(काष्ठा regulatory_request *request)
-अणु
-	अगर (request == &core_request_world)
-		वापस;
+static void reg_free_request(struct regulatory_request *request)
+{
+	if (request == &core_request_world)
+		return;
 
-	अगर (request != get_last_request())
-		kमुक्त(request);
-पूर्ण
+	if (request != get_last_request())
+		kfree(request);
+}
 
-अटल व्योम reg_मुक्त_last_request(व्योम)
-अणु
-	काष्ठा regulatory_request *lr = get_last_request();
+static void reg_free_last_request(void)
+{
+	struct regulatory_request *lr = get_last_request();
 
-	अगर (lr != &core_request_world && lr)
-		kमुक्त_rcu(lr, rcu_head);
-पूर्ण
+	if (lr != &core_request_world && lr)
+		kfree_rcu(lr, rcu_head);
+}
 
-अटल व्योम reg_update_last_request(काष्ठा regulatory_request *request)
-अणु
-	काष्ठा regulatory_request *lr;
+static void reg_update_last_request(struct regulatory_request *request)
+{
+	struct regulatory_request *lr;
 
 	lr = get_last_request();
-	अगर (lr == request)
-		वापस;
+	if (lr == request)
+		return;
 
-	reg_मुक्त_last_request();
-	rcu_assign_poपूर्णांकer(last_request, request);
-पूर्ण
+	reg_free_last_request();
+	rcu_assign_pointer(last_request, request);
+}
 
-अटल व्योम reset_regकरोमुख्यs(bool full_reset,
-			     स्थिर काष्ठा ieee80211_regकरोमुख्य *new_regकरोm)
-अणु
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *r;
+static void reset_regdomains(bool full_reset,
+			     const struct ieee80211_regdomain *new_regdom)
+{
+	const struct ieee80211_regdomain *r;
 
 	ASSERT_RTNL();
 
-	r = get_cfg80211_regकरोm();
+	r = get_cfg80211_regdom();
 
-	/* aव्योम मुक्तing अटल inक्रमmation or मुक्तing something twice */
-	अगर (r == cfg80211_world_regकरोm)
-		r = शून्य;
-	अगर (cfg80211_world_regकरोm == &world_regकरोm)
-		cfg80211_world_regकरोm = शून्य;
-	अगर (r == &world_regकरोm)
-		r = शून्य;
+	/* avoid freeing static information or freeing something twice */
+	if (r == cfg80211_world_regdom)
+		r = NULL;
+	if (cfg80211_world_regdom == &world_regdom)
+		cfg80211_world_regdom = NULL;
+	if (r == &world_regdom)
+		r = NULL;
 
-	rcu_मुक्त_regकरोm(r);
-	rcu_मुक्त_regकरोm(cfg80211_world_regकरोm);
+	rcu_free_regdom(r);
+	rcu_free_regdom(cfg80211_world_regdom);
 
-	cfg80211_world_regकरोm = &world_regकरोm;
-	rcu_assign_poपूर्णांकer(cfg80211_regकरोमुख्य, new_regकरोm);
+	cfg80211_world_regdom = &world_regdom;
+	rcu_assign_pointer(cfg80211_regdomain, new_regdom);
 
-	अगर (!full_reset)
-		वापस;
+	if (!full_reset)
+		return;
 
 	reg_update_last_request(&core_request_world);
-पूर्ण
+}
 
 /*
- * Dynamic world regulatory करोमुख्य requested by the wireless
+ * Dynamic world regulatory domain requested by the wireless
  * core upon initialization
  */
-अटल व्योम update_world_regकरोमुख्य(स्थिर काष्ठा ieee80211_regकरोमुख्य *rd)
-अणु
-	काष्ठा regulatory_request *lr;
+static void update_world_regdomain(const struct ieee80211_regdomain *rd)
+{
+	struct regulatory_request *lr;
 
 	lr = get_last_request();
 
 	WARN_ON(!lr);
 
-	reset_regकरोमुख्यs(false, rd);
+	reset_regdomains(false, rd);
 
-	cfg80211_world_regकरोm = rd;
-पूर्ण
+	cfg80211_world_regdom = rd;
+}
 
-bool is_world_regकरोm(स्थिर अक्षर *alpha2)
-अणु
-	अगर (!alpha2)
-		वापस false;
-	वापस alpha2[0] == '0' && alpha2[1] == '0';
-पूर्ण
+bool is_world_regdom(const char *alpha2)
+{
+	if (!alpha2)
+		return false;
+	return alpha2[0] == '0' && alpha2[1] == '0';
+}
 
-अटल bool is_alpha2_set(स्थिर अक्षर *alpha2)
-अणु
-	अगर (!alpha2)
-		वापस false;
-	वापस alpha2[0] && alpha2[1];
-पूर्ण
+static bool is_alpha2_set(const char *alpha2)
+{
+	if (!alpha2)
+		return false;
+	return alpha2[0] && alpha2[1];
+}
 
-अटल bool is_unknown_alpha2(स्थिर अक्षर *alpha2)
-अणु
-	अगर (!alpha2)
-		वापस false;
+static bool is_unknown_alpha2(const char *alpha2)
+{
+	if (!alpha2)
+		return false;
 	/*
-	 * Special हाल where regulatory करोमुख्य was built by driver
-	 * but a specअगरic alpha2 cannot be determined
+	 * Special case where regulatory domain was built by driver
+	 * but a specific alpha2 cannot be determined
 	 */
-	वापस alpha2[0] == '9' && alpha2[1] == '9';
-पूर्ण
+	return alpha2[0] == '9' && alpha2[1] == '9';
+}
 
-अटल bool is_पूर्णांकersected_alpha2(स्थिर अक्षर *alpha2)
-अणु
-	अगर (!alpha2)
-		वापस false;
+static bool is_intersected_alpha2(const char *alpha2)
+{
+	if (!alpha2)
+		return false;
 	/*
-	 * Special हाल where regulatory करोमुख्य is the
-	 * result of an पूर्णांकersection between two regulatory करोमुख्य
-	 * काष्ठाures
+	 * Special case where regulatory domain is the
+	 * result of an intersection between two regulatory domain
+	 * structures
 	 */
-	वापस alpha2[0] == '9' && alpha2[1] == '8';
-पूर्ण
+	return alpha2[0] == '9' && alpha2[1] == '8';
+}
 
-अटल bool is_an_alpha2(स्थिर अक्षर *alpha2)
-अणु
-	अगर (!alpha2)
-		वापस false;
-	वापस है_अक्षर(alpha2[0]) && है_अक्षर(alpha2[1]);
-पूर्ण
+static bool is_an_alpha2(const char *alpha2)
+{
+	if (!alpha2)
+		return false;
+	return isalpha(alpha2[0]) && isalpha(alpha2[1]);
+}
 
-अटल bool alpha2_equal(स्थिर अक्षर *alpha2_x, स्थिर अक्षर *alpha2_y)
-अणु
-	अगर (!alpha2_x || !alpha2_y)
-		वापस false;
-	वापस alpha2_x[0] == alpha2_y[0] && alpha2_x[1] == alpha2_y[1];
-पूर्ण
+static bool alpha2_equal(const char *alpha2_x, const char *alpha2_y)
+{
+	if (!alpha2_x || !alpha2_y)
+		return false;
+	return alpha2_x[0] == alpha2_y[0] && alpha2_x[1] == alpha2_y[1];
+}
 
-अटल bool regकरोm_changes(स्थिर अक्षर *alpha2)
-अणु
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *r = get_cfg80211_regकरोm();
+static bool regdom_changes(const char *alpha2)
+{
+	const struct ieee80211_regdomain *r = get_cfg80211_regdom();
 
-	अगर (!r)
-		वापस true;
-	वापस !alpha2_equal(r->alpha2, alpha2);
-पूर्ण
+	if (!r)
+		return true;
+	return !alpha2_equal(r->alpha2, alpha2);
+}
 
 /*
- * The NL80211_REGDOM_SET_BY_USER regकरोm alpha2 is cached, this lets
- * you know अगर a valid regulatory hपूर्णांक with NL80211_REGDOM_SET_BY_USER
+ * The NL80211_REGDOM_SET_BY_USER regdom alpha2 is cached, this lets
+ * you know if a valid regulatory hint with NL80211_REGDOM_SET_BY_USER
  * has ever been issued.
  */
-अटल bool is_user_regकरोm_saved(व्योम)
-अणु
-	अगर (user_alpha2[0] == '9' && user_alpha2[1] == '7')
-		वापस false;
+static bool is_user_regdom_saved(void)
+{
+	if (user_alpha2[0] == '9' && user_alpha2[1] == '7')
+		return false;
 
 	/* This would indicate a mistake on the design */
-	अगर (WARN(!is_world_regकरोm(user_alpha2) && !is_an_alpha2(user_alpha2),
+	if (WARN(!is_world_regdom(user_alpha2) && !is_an_alpha2(user_alpha2),
 		 "Unexpected user alpha2: %c%c\n",
 		 user_alpha2[0], user_alpha2[1]))
-		वापस false;
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल स्थिर काष्ठा ieee80211_regकरोमुख्य *
-reg_copy_regd(स्थिर काष्ठा ieee80211_regकरोमुख्य *src_regd)
-अणु
-	काष्ठा ieee80211_regकरोमुख्य *regd;
-	अचिन्हित पूर्णांक i;
+static const struct ieee80211_regdomain *
+reg_copy_regd(const struct ieee80211_regdomain *src_regd)
+{
+	struct ieee80211_regdomain *regd;
+	unsigned int i;
 
-	regd = kzalloc(काष्ठा_size(regd, reg_rules, src_regd->n_reg_rules),
+	regd = kzalloc(struct_size(regd, reg_rules, src_regd->n_reg_rules),
 		       GFP_KERNEL);
-	अगर (!regd)
-		वापस ERR_PTR(-ENOMEM);
+	if (!regd)
+		return ERR_PTR(-ENOMEM);
 
-	स_नकल(regd, src_regd, माप(काष्ठा ieee80211_regकरोमुख्य));
+	memcpy(regd, src_regd, sizeof(struct ieee80211_regdomain));
 
-	क्रम (i = 0; i < src_regd->n_reg_rules; i++)
-		स_नकल(&regd->reg_rules[i], &src_regd->reg_rules[i],
-		       माप(काष्ठा ieee80211_reg_rule));
+	for (i = 0; i < src_regd->n_reg_rules; i++)
+		memcpy(&regd->reg_rules[i], &src_regd->reg_rules[i],
+		       sizeof(struct ieee80211_reg_rule));
 
-	वापस regd;
-पूर्ण
+	return regd;
+}
 
-अटल व्योम cfg80211_save_user_regकरोm(स्थिर काष्ठा ieee80211_regकरोमुख्य *rd)
-अणु
+static void cfg80211_save_user_regdom(const struct ieee80211_regdomain *rd)
+{
 	ASSERT_RTNL();
 
-	अगर (!IS_ERR(cfg80211_user_regकरोm))
-		kमुक्त(cfg80211_user_regकरोm);
-	cfg80211_user_regकरोm = reg_copy_regd(rd);
-पूर्ण
+	if (!IS_ERR(cfg80211_user_regdom))
+		kfree(cfg80211_user_regdom);
+	cfg80211_user_regdom = reg_copy_regd(rd);
+}
 
-काष्ठा reg_regdb_apply_request अणु
-	काष्ठा list_head list;
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *regकरोm;
-पूर्ण;
+struct reg_regdb_apply_request {
+	struct list_head list;
+	const struct ieee80211_regdomain *regdom;
+};
 
-अटल LIST_HEAD(reg_regdb_apply_list);
-अटल DEFINE_MUTEX(reg_regdb_apply_mutex);
+static LIST_HEAD(reg_regdb_apply_list);
+static DEFINE_MUTEX(reg_regdb_apply_mutex);
 
-अटल व्योम reg_regdb_apply(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा reg_regdb_apply_request *request;
+static void reg_regdb_apply(struct work_struct *work)
+{
+	struct reg_regdb_apply_request *request;
 
 	rtnl_lock();
 
 	mutex_lock(&reg_regdb_apply_mutex);
-	जबतक (!list_empty(&reg_regdb_apply_list)) अणु
+	while (!list_empty(&reg_regdb_apply_list)) {
 		request = list_first_entry(&reg_regdb_apply_list,
-					   काष्ठा reg_regdb_apply_request,
+					   struct reg_regdb_apply_request,
 					   list);
 		list_del(&request->list);
 
-		set_regकरोm(request->regकरोm, REGD_SOURCE_INTERNAL_DB);
-		kमुक्त(request);
-	पूर्ण
+		set_regdom(request->regdom, REGD_SOURCE_INTERNAL_DB);
+		kfree(request);
+	}
 	mutex_unlock(&reg_regdb_apply_mutex);
 
 	rtnl_unlock();
-पूर्ण
+}
 
-अटल DECLARE_WORK(reg_regdb_work, reg_regdb_apply);
+static DECLARE_WORK(reg_regdb_work, reg_regdb_apply);
 
-अटल पूर्णांक reg_schedule_apply(स्थिर काष्ठा ieee80211_regकरोमुख्य *regकरोm)
-अणु
-	काष्ठा reg_regdb_apply_request *request;
+static int reg_schedule_apply(const struct ieee80211_regdomain *regdom)
+{
+	struct reg_regdb_apply_request *request;
 
-	request = kzalloc(माप(काष्ठा reg_regdb_apply_request), GFP_KERNEL);
-	अगर (!request) अणु
-		kमुक्त(regकरोm);
-		वापस -ENOMEM;
-	पूर्ण
+	request = kzalloc(sizeof(struct reg_regdb_apply_request), GFP_KERNEL);
+	if (!request) {
+		kfree(regdom);
+		return -ENOMEM;
+	}
 
-	request->regकरोm = regकरोm;
+	request->regdom = regdom;
 
 	mutex_lock(&reg_regdb_apply_mutex);
 	list_add_tail(&request->list, &reg_regdb_apply_list);
 	mutex_unlock(&reg_regdb_apply_mutex);
 
 	schedule_work(&reg_regdb_work);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_CFG80211_CRDA_SUPPORT
+#ifdef CONFIG_CFG80211_CRDA_SUPPORT
 /* Max number of consecutive attempts to communicate with CRDA  */
-#घोषणा REG_MAX_CRDA_TIMEOUTS 10
+#define REG_MAX_CRDA_TIMEOUTS 10
 
-अटल u32 reg_crda_समयouts;
+static u32 reg_crda_timeouts;
 
-अटल व्योम crda_समयout_work(काष्ठा work_काष्ठा *work);
-अटल DECLARE_DELAYED_WORK(crda_समयout, crda_समयout_work);
+static void crda_timeout_work(struct work_struct *work);
+static DECLARE_DELAYED_WORK(crda_timeout, crda_timeout_work);
 
-अटल व्योम crda_समयout_work(काष्ठा work_काष्ठा *work)
-अणु
+static void crda_timeout_work(struct work_struct *work)
+{
 	pr_debug("Timeout while waiting for CRDA to reply, restoring regulatory settings\n");
 	rtnl_lock();
-	reg_crda_समयouts++;
+	reg_crda_timeouts++;
 	restore_regulatory_settings(true, false);
 	rtnl_unlock();
-पूर्ण
+}
 
-अटल व्योम cancel_crda_समयout(व्योम)
-अणु
-	cancel_delayed_work(&crda_समयout);
-पूर्ण
+static void cancel_crda_timeout(void)
+{
+	cancel_delayed_work(&crda_timeout);
+}
 
-अटल व्योम cancel_crda_समयout_sync(व्योम)
-अणु
-	cancel_delayed_work_sync(&crda_समयout);
-पूर्ण
+static void cancel_crda_timeout_sync(void)
+{
+	cancel_delayed_work_sync(&crda_timeout);
+}
 
-अटल व्योम reset_crda_समयouts(व्योम)
-अणु
-	reg_crda_समयouts = 0;
-पूर्ण
+static void reset_crda_timeouts(void)
+{
+	reg_crda_timeouts = 0;
+}
 
 /*
  * This lets us keep regulatory code which is updated on a regulatory
  * basis in userspace.
  */
-अटल पूर्णांक call_crda(स्थिर अक्षर *alpha2)
-अणु
-	अक्षर country[12];
-	अक्षर *env[] = अणु country, शून्य पूर्ण;
-	पूर्णांक ret;
+static int call_crda(const char *alpha2)
+{
+	char country[12];
+	char *env[] = { country, NULL };
+	int ret;
 
-	snम_लिखो(country, माप(country), "COUNTRY=%c%c",
+	snprintf(country, sizeof(country), "COUNTRY=%c%c",
 		 alpha2[0], alpha2[1]);
 
-	अगर (reg_crda_समयouts > REG_MAX_CRDA_TIMEOUTS) अणु
+	if (reg_crda_timeouts > REG_MAX_CRDA_TIMEOUTS) {
 		pr_debug("Exceeded CRDA call max attempts. Not calling CRDA\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!is_world_regकरोm((अक्षर *) alpha2))
+	if (!is_world_regdom((char *) alpha2))
 		pr_debug("Calling CRDA for country: %c%c\n",
 			 alpha2[0], alpha2[1]);
-	अन्यथा
+	else
 		pr_debug("Calling CRDA to update world regulatory domain\n");
 
 	ret = kobject_uevent_env(&reg_pdev->dev.kobj, KOBJ_CHANGE, env);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	queue_delayed_work(प्रणाली_घातer_efficient_wq,
-			   &crda_समयout, msecs_to_jअगरfies(3142));
-	वापस 0;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम cancel_crda_समयout(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम cancel_crda_समयout_sync(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम reset_crda_समयouts(व्योम) अणुपूर्ण
-अटल अंतरभूत पूर्णांक call_crda(स्थिर अक्षर *alpha2)
-अणु
-	वापस -ENODATA;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_CFG80211_CRDA_SUPPORT */
+	queue_delayed_work(system_power_efficient_wq,
+			   &crda_timeout, msecs_to_jiffies(3142));
+	return 0;
+}
+#else
+static inline void cancel_crda_timeout(void) {}
+static inline void cancel_crda_timeout_sync(void) {}
+static inline void reset_crda_timeouts(void) {}
+static inline int call_crda(const char *alpha2)
+{
+	return -ENODATA;
+}
+#endif /* CONFIG_CFG80211_CRDA_SUPPORT */
 
 /* code to directly load a firmware database through request_firmware */
-अटल स्थिर काष्ठा fwdb_header *regdb;
+static const struct fwdb_header *regdb;
 
-काष्ठा fwdb_country अणु
+struct fwdb_country {
 	u8 alpha2[2];
 	__be16 coll_ptr;
-	/* this काष्ठा cannot be extended */
-पूर्ण __packed __aligned(4);
+	/* this struct cannot be extended */
+} __packed __aligned(4);
 
-काष्ठा fwdb_collection अणु
+struct fwdb_collection {
 	u8 len;
 	u8 n_rules;
 	u8 dfs_region;
 	/* no optional data yet */
-	/* aligned to 2, then followed by __be16 array of rule poपूर्णांकers */
-पूर्ण __packed __aligned(4);
+	/* aligned to 2, then followed by __be16 array of rule pointers */
+} __packed __aligned(4);
 
-क्रमागत fwdb_flags अणु
+enum fwdb_flags {
 	FWDB_FLAG_NO_OFDM	= BIT(0),
 	FWDB_FLAG_NO_OUTDOOR	= BIT(1),
 	FWDB_FLAG_DFS		= BIT(2),
 	FWDB_FLAG_NO_IR		= BIT(3),
 	FWDB_FLAG_AUTO_BW	= BIT(4),
-पूर्ण;
+};
 
-काष्ठा fwdb_wmm_ac अणु
+struct fwdb_wmm_ac {
 	u8 ecw;
-	u8 aअगरsn;
+	u8 aifsn;
 	__be16 cot;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा fwdb_wmm_rule अणु
-	काष्ठा fwdb_wmm_ac client[IEEE80211_NUM_ACS];
-	काष्ठा fwdb_wmm_ac ap[IEEE80211_NUM_ACS];
-पूर्ण __packed;
+struct fwdb_wmm_rule {
+	struct fwdb_wmm_ac client[IEEE80211_NUM_ACS];
+	struct fwdb_wmm_ac ap[IEEE80211_NUM_ACS];
+} __packed;
 
-काष्ठा fwdb_rule अणु
+struct fwdb_rule {
 	u8 len;
 	u8 flags;
 	__be16 max_eirp;
 	__be32 start, end, max_bw;
 	/* start of optional data */
-	__be16 cac_समयout;
+	__be16 cac_timeout;
 	__be16 wmm_ptr;
-पूर्ण __packed __aligned(4);
+} __packed __aligned(4);
 
-#घोषणा FWDB_MAGIC 0x52474442
-#घोषणा FWDB_VERSION 20
+#define FWDB_MAGIC 0x52474442
+#define FWDB_VERSION 20
 
-काष्ठा fwdb_header अणु
+struct fwdb_header {
 	__be32 magic;
 	__be32 version;
-	काष्ठा fwdb_country country[];
-पूर्ण __packed __aligned(4);
+	struct fwdb_country country[];
+} __packed __aligned(4);
 
-अटल पूर्णांक ecw2cw(पूर्णांक ecw)
-अणु
-	वापस (1 << ecw) - 1;
-पूर्ण
+static int ecw2cw(int ecw)
+{
+	return (1 << ecw) - 1;
+}
 
-अटल bool valid_wmm(काष्ठा fwdb_wmm_rule *rule)
-अणु
-	काष्ठा fwdb_wmm_ac *ac = (काष्ठा fwdb_wmm_ac *)rule;
-	पूर्णांक i;
+static bool valid_wmm(struct fwdb_wmm_rule *rule)
+{
+	struct fwdb_wmm_ac *ac = (struct fwdb_wmm_ac *)rule;
+	int i;
 
-	क्रम (i = 0; i < IEEE80211_NUM_ACS * 2; i++) अणु
+	for (i = 0; i < IEEE80211_NUM_ACS * 2; i++) {
 		u16 cw_min = ecw2cw((ac[i].ecw & 0xf0) >> 4);
 		u16 cw_max = ecw2cw(ac[i].ecw & 0x0f);
-		u8 aअगरsn = ac[i].aअगरsn;
+		u8 aifsn = ac[i].aifsn;
 
-		अगर (cw_min >= cw_max)
-			वापस false;
+		if (cw_min >= cw_max)
+			return false;
 
-		अगर (aअगरsn < 1)
-			वापस false;
-	पूर्ण
+		if (aifsn < 1)
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool valid_rule(स्थिर u8 *data, अचिन्हित पूर्णांक size, u16 rule_ptr)
-अणु
-	काष्ठा fwdb_rule *rule = (व्योम *)(data + (rule_ptr << 2));
+static bool valid_rule(const u8 *data, unsigned int size, u16 rule_ptr)
+{
+	struct fwdb_rule *rule = (void *)(data + (rule_ptr << 2));
 
-	अगर ((u8 *)rule + माप(rule->len) > data + size)
-		वापस false;
+	if ((u8 *)rule + sizeof(rule->len) > data + size)
+		return false;
 
 	/* mandatory fields */
-	अगर (rule->len < दुरत्वend(काष्ठा fwdb_rule, max_bw))
-		वापस false;
-	अगर (rule->len >= दुरत्वend(काष्ठा fwdb_rule, wmm_ptr)) अणु
+	if (rule->len < offsetofend(struct fwdb_rule, max_bw))
+		return false;
+	if (rule->len >= offsetofend(struct fwdb_rule, wmm_ptr)) {
 		u32 wmm_ptr = be16_to_cpu(rule->wmm_ptr) << 2;
-		काष्ठा fwdb_wmm_rule *wmm;
+		struct fwdb_wmm_rule *wmm;
 
-		अगर (wmm_ptr + माप(काष्ठा fwdb_wmm_rule) > size)
-			वापस false;
+		if (wmm_ptr + sizeof(struct fwdb_wmm_rule) > size)
+			return false;
 
-		wmm = (व्योम *)(data + wmm_ptr);
+		wmm = (void *)(data + wmm_ptr);
 
-		अगर (!valid_wmm(wmm))
-			वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+		if (!valid_wmm(wmm))
+			return false;
+	}
+	return true;
+}
 
-अटल bool valid_country(स्थिर u8 *data, अचिन्हित पूर्णांक size,
-			  स्थिर काष्ठा fwdb_country *country)
-अणु
-	अचिन्हित पूर्णांक ptr = be16_to_cpu(country->coll_ptr) << 2;
-	काष्ठा fwdb_collection *coll = (व्योम *)(data + ptr);
+static bool valid_country(const u8 *data, unsigned int size,
+			  const struct fwdb_country *country)
+{
+	unsigned int ptr = be16_to_cpu(country->coll_ptr) << 2;
+	struct fwdb_collection *coll = (void *)(data + ptr);
 	__be16 *rules_ptr;
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 
-	/* make sure we can पढ़ो len/n_rules */
-	अगर ((u8 *)coll + दुरत्वend(typeof(*coll), n_rules) > data + size)
-		वापस false;
+	/* make sure we can read len/n_rules */
+	if ((u8 *)coll + offsetofend(typeof(*coll), n_rules) > data + size)
+		return false;
 
-	/* make sure base काष्ठा and all rules fit */
-	अगर ((u8 *)coll + ALIGN(coll->len, 2) +
+	/* make sure base struct and all rules fit */
+	if ((u8 *)coll + ALIGN(coll->len, 2) +
 	    (coll->n_rules * 2) > data + size)
-		वापस false;
+		return false;
 
 	/* mandatory fields must exist */
-	अगर (coll->len < दुरत्वend(काष्ठा fwdb_collection, dfs_region))
-		वापस false;
+	if (coll->len < offsetofend(struct fwdb_collection, dfs_region))
+		return false;
 
-	rules_ptr = (व्योम *)((u8 *)coll + ALIGN(coll->len, 2));
+	rules_ptr = (void *)((u8 *)coll + ALIGN(coll->len, 2));
 
-	क्रम (i = 0; i < coll->n_rules; i++) अणु
+	for (i = 0; i < coll->n_rules; i++) {
 		u16 rule_ptr = be16_to_cpu(rules_ptr[i]);
 
-		अगर (!valid_rule(data, size, rule_ptr))
-			वापस false;
-	पूर्ण
+		if (!valid_rule(data, size, rule_ptr))
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-#अगर_घोषित CONFIG_CFG80211_REQUIRE_SIGNED_REGDB
-अटल काष्ठा key *builtin_regdb_keys;
+#ifdef CONFIG_CFG80211_REQUIRE_SIGNED_REGDB
+static struct key *builtin_regdb_keys;
 
-अटल व्योम __init load_keys_from_buffer(स्थिर u8 *p, अचिन्हित पूर्णांक buflen)
-अणु
-	स्थिर u8 *end = p + buflen;
-	माप_प्रकार plen;
+static void __init load_keys_from_buffer(const u8 *p, unsigned int buflen)
+{
+	const u8 *end = p + buflen;
+	size_t plen;
 	key_ref_t key;
 
-	जबतक (p < end) अणु
+	while (p < end) {
 		/* Each cert begins with an ASN.1 SEQUENCE tag and must be more
 		 * than 256 bytes in size.
 		 */
-		अगर (end - p < 4)
-			जाओ करोdgy_cert;
-		अगर (p[0] != 0x30 &&
+		if (end - p < 4)
+			goto dodgy_cert;
+		if (p[0] != 0x30 &&
 		    p[1] != 0x82)
-			जाओ करोdgy_cert;
+			goto dodgy_cert;
 		plen = (p[2] << 8) | p[3];
 		plen += 4;
-		अगर (plen > end - p)
-			जाओ करोdgy_cert;
+		if (plen > end - p)
+			goto dodgy_cert;
 
 		key = key_create_or_update(make_key_ref(builtin_regdb_keys, 1),
-					   "asymmetric", शून्य, p, plen,
+					   "asymmetric", NULL, p, plen,
 					   ((KEY_POS_ALL & ~KEY_POS_SETATTR) |
 					    KEY_USR_VIEW | KEY_USR_READ),
 					   KEY_ALLOC_NOT_IN_QUOTA |
 					   KEY_ALLOC_BUILT_IN |
 					   KEY_ALLOC_BYPASS_RESTRICTION);
-		अगर (IS_ERR(key)) अणु
+		if (IS_ERR(key)) {
 			pr_err("Problem loading in-kernel X.509 certificate (%ld)\n",
 			       PTR_ERR(key));
-		पूर्ण अन्यथा अणु
+		} else {
 			pr_notice("Loaded X.509 cert '%s'\n",
 				  key_ref_to_ptr(key)->description);
 			key_ref_put(key);
-		पूर्ण
+		}
 		p += plen;
-	पूर्ण
+	}
 
-	वापस;
+	return;
 
-करोdgy_cert:
+dodgy_cert:
 	pr_err("Problem parsing in-kernel X.509 certificate list\n");
-पूर्ण
+}
 
-अटल पूर्णांक __init load_builtin_regdb_keys(व्योम)
-अणु
+static int __init load_builtin_regdb_keys(void)
+{
 	builtin_regdb_keys =
 		keyring_alloc(".builtin_regdb_keys",
 			      KUIDT_INIT(0), KGIDT_INIT(0), current_cred(),
 			      ((KEY_POS_ALL & ~KEY_POS_SETATTR) |
 			      KEY_USR_VIEW | KEY_USR_READ | KEY_USR_SEARCH),
-			      KEY_ALLOC_NOT_IN_QUOTA, शून्य, शून्य);
-	अगर (IS_ERR(builtin_regdb_keys))
-		वापस PTR_ERR(builtin_regdb_keys);
+			      KEY_ALLOC_NOT_IN_QUOTA, NULL, NULL);
+	if (IS_ERR(builtin_regdb_keys))
+		return PTR_ERR(builtin_regdb_keys);
 
 	pr_notice("Loading compiled-in X.509 certificates for regulatory database\n");
 
-#अगर_घोषित CONFIG_CFG80211_USE_KERNEL_REGDB_KEYS
+#ifdef CONFIG_CFG80211_USE_KERNEL_REGDB_KEYS
 	load_keys_from_buffer(shipped_regdb_certs, shipped_regdb_certs_len);
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_CFG80211_EXTRA_REGDB_KEYसूची
-	अगर (CONFIG_CFG80211_EXTRA_REGDB_KEYसूची[0] != '\0')
+#endif
+#ifdef CONFIG_CFG80211_EXTRA_REGDB_KEYDIR
+	if (CONFIG_CFG80211_EXTRA_REGDB_KEYDIR[0] != '\0')
 		load_keys_from_buffer(extra_regdb_certs, extra_regdb_certs_len);
-#पूर्ण_अगर
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool regdb_has_valid_signature(स्थिर u8 *data, अचिन्हित पूर्णांक size)
-अणु
-	स्थिर काष्ठा firmware *sig;
+static bool regdb_has_valid_signature(const u8 *data, unsigned int size)
+{
+	const struct firmware *sig;
 	bool result;
 
-	अगर (request_firmware(&sig, "regulatory.db.p7s", &reg_pdev->dev))
-		वापस false;
+	if (request_firmware(&sig, "regulatory.db.p7s", &reg_pdev->dev))
+		return false;
 
-	result = verअगरy_pkcs7_signature(data, size, sig->data, sig->size,
+	result = verify_pkcs7_signature(data, size, sig->data, sig->size,
 					builtin_regdb_keys,
 					VERIFYING_UNSPECIFIED_SIGNATURE,
-					शून्य, शून्य) == 0;
+					NULL, NULL) == 0;
 
 	release_firmware(sig);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल व्योम मुक्त_regdb_keyring(व्योम)
-अणु
+static void free_regdb_keyring(void)
+{
 	key_put(builtin_regdb_keys);
-पूर्ण
-#अन्यथा
-अटल पूर्णांक load_builtin_regdb_keys(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+}
+#else
+static int load_builtin_regdb_keys(void)
+{
+	return 0;
+}
 
-अटल bool regdb_has_valid_signature(स्थिर u8 *data, अचिन्हित पूर्णांक size)
-अणु
-	वापस true;
-पूर्ण
+static bool regdb_has_valid_signature(const u8 *data, unsigned int size)
+{
+	return true;
+}
 
-अटल व्योम मुक्त_regdb_keyring(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_CFG80211_REQUIRE_SIGNED_REGDB */
+static void free_regdb_keyring(void)
+{
+}
+#endif /* CONFIG_CFG80211_REQUIRE_SIGNED_REGDB */
 
-अटल bool valid_regdb(स्थिर u8 *data, अचिन्हित पूर्णांक size)
-अणु
-	स्थिर काष्ठा fwdb_header *hdr = (व्योम *)data;
-	स्थिर काष्ठा fwdb_country *country;
+static bool valid_regdb(const u8 *data, unsigned int size)
+{
+	const struct fwdb_header *hdr = (void *)data;
+	const struct fwdb_country *country;
 
-	अगर (size < माप(*hdr))
-		वापस false;
+	if (size < sizeof(*hdr))
+		return false;
 
-	अगर (hdr->magic != cpu_to_be32(FWDB_MAGIC))
-		वापस false;
+	if (hdr->magic != cpu_to_be32(FWDB_MAGIC))
+		return false;
 
-	अगर (hdr->version != cpu_to_be32(FWDB_VERSION))
-		वापस false;
+	if (hdr->version != cpu_to_be32(FWDB_VERSION))
+		return false;
 
-	अगर (!regdb_has_valid_signature(data, size))
-		वापस false;
+	if (!regdb_has_valid_signature(data, size))
+		return false;
 
 	country = &hdr->country[0];
-	जबतक ((u8 *)(country + 1) <= data + size) अणु
-		अगर (!country->coll_ptr)
-			अवरोध;
-		अगर (!valid_country(data, size, country))
-			वापस false;
+	while ((u8 *)(country + 1) <= data + size) {
+		if (!country->coll_ptr)
+			break;
+		if (!valid_country(data, size, country))
+			return false;
 		country++;
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम set_wmm_rule(स्थिर काष्ठा fwdb_header *db,
-			 स्थिर काष्ठा fwdb_country *country,
-			 स्थिर काष्ठा fwdb_rule *rule,
-			 काष्ठा ieee80211_reg_rule *rrule)
-अणु
-	काष्ठा ieee80211_wmm_rule *wmm_rule = &rrule->wmm_rule;
-	काष्ठा fwdb_wmm_rule *wmm;
-	अचिन्हित पूर्णांक i, wmm_ptr;
+static void set_wmm_rule(const struct fwdb_header *db,
+			 const struct fwdb_country *country,
+			 const struct fwdb_rule *rule,
+			 struct ieee80211_reg_rule *rrule)
+{
+	struct ieee80211_wmm_rule *wmm_rule = &rrule->wmm_rule;
+	struct fwdb_wmm_rule *wmm;
+	unsigned int i, wmm_ptr;
 
 	wmm_ptr = be16_to_cpu(rule->wmm_ptr) << 2;
-	wmm = (व्योम *)((u8 *)db + wmm_ptr);
+	wmm = (void *)((u8 *)db + wmm_ptr);
 
-	अगर (!valid_wmm(wmm)) अणु
+	if (!valid_wmm(wmm)) {
 		pr_err("Invalid regulatory WMM rule %u-%u in domain %c%c\n",
 		       be32_to_cpu(rule->start), be32_to_cpu(rule->end),
 		       country->alpha2[0], country->alpha2[1]);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	क्रम (i = 0; i < IEEE80211_NUM_ACS; i++) अणु
+	for (i = 0; i < IEEE80211_NUM_ACS; i++) {
 		wmm_rule->client[i].cw_min =
 			ecw2cw((wmm->client[i].ecw & 0xf0) >> 4);
 		wmm_rule->client[i].cw_max = ecw2cw(wmm->client[i].ecw & 0x0f);
-		wmm_rule->client[i].aअगरsn =  wmm->client[i].aअगरsn;
+		wmm_rule->client[i].aifsn =  wmm->client[i].aifsn;
 		wmm_rule->client[i].cot =
 			1000 * be16_to_cpu(wmm->client[i].cot);
 		wmm_rule->ap[i].cw_min = ecw2cw((wmm->ap[i].ecw & 0xf0) >> 4);
 		wmm_rule->ap[i].cw_max = ecw2cw(wmm->ap[i].ecw & 0x0f);
-		wmm_rule->ap[i].aअगरsn = wmm->ap[i].aअगरsn;
+		wmm_rule->ap[i].aifsn = wmm->ap[i].aifsn;
 		wmm_rule->ap[i].cot = 1000 * be16_to_cpu(wmm->ap[i].cot);
-	पूर्ण
+	}
 
 	rrule->has_wmm = true;
-पूर्ण
+}
 
-अटल पूर्णांक __regdb_query_wmm(स्थिर काष्ठा fwdb_header *db,
-			     स्थिर काष्ठा fwdb_country *country, पूर्णांक freq,
-			     काष्ठा ieee80211_reg_rule *rrule)
-अणु
-	अचिन्हित पूर्णांक ptr = be16_to_cpu(country->coll_ptr) << 2;
-	काष्ठा fwdb_collection *coll = (व्योम *)((u8 *)db + ptr);
-	पूर्णांक i;
+static int __regdb_query_wmm(const struct fwdb_header *db,
+			     const struct fwdb_country *country, int freq,
+			     struct ieee80211_reg_rule *rrule)
+{
+	unsigned int ptr = be16_to_cpu(country->coll_ptr) << 2;
+	struct fwdb_collection *coll = (void *)((u8 *)db + ptr);
+	int i;
 
-	क्रम (i = 0; i < coll->n_rules; i++) अणु
-		__be16 *rules_ptr = (व्योम *)((u8 *)coll + ALIGN(coll->len, 2));
-		अचिन्हित पूर्णांक rule_ptr = be16_to_cpu(rules_ptr[i]) << 2;
-		काष्ठा fwdb_rule *rule = (व्योम *)((u8 *)db + rule_ptr);
+	for (i = 0; i < coll->n_rules; i++) {
+		__be16 *rules_ptr = (void *)((u8 *)coll + ALIGN(coll->len, 2));
+		unsigned int rule_ptr = be16_to_cpu(rules_ptr[i]) << 2;
+		struct fwdb_rule *rule = (void *)((u8 *)db + rule_ptr);
 
-		अगर (rule->len < दुरत्वend(काष्ठा fwdb_rule, wmm_ptr))
-			जारी;
+		if (rule->len < offsetofend(struct fwdb_rule, wmm_ptr))
+			continue;
 
-		अगर (freq >= KHZ_TO_MHZ(be32_to_cpu(rule->start)) &&
-		    freq <= KHZ_TO_MHZ(be32_to_cpu(rule->end))) अणु
+		if (freq >= KHZ_TO_MHZ(be32_to_cpu(rule->start)) &&
+		    freq <= KHZ_TO_MHZ(be32_to_cpu(rule->end))) {
 			set_wmm_rule(db, country, rule, rrule);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस -ENODATA;
-पूर्ण
+	return -ENODATA;
+}
 
-पूर्णांक reg_query_regdb_wmm(अक्षर *alpha2, पूर्णांक freq, काष्ठा ieee80211_reg_rule *rule)
-अणु
-	स्थिर काष्ठा fwdb_header *hdr = regdb;
-	स्थिर काष्ठा fwdb_country *country;
+int reg_query_regdb_wmm(char *alpha2, int freq, struct ieee80211_reg_rule *rule)
+{
+	const struct fwdb_header *hdr = regdb;
+	const struct fwdb_country *country;
 
-	अगर (!regdb)
-		वापस -ENODATA;
+	if (!regdb)
+		return -ENODATA;
 
-	अगर (IS_ERR(regdb))
-		वापस PTR_ERR(regdb);
+	if (IS_ERR(regdb))
+		return PTR_ERR(regdb);
 
 	country = &hdr->country[0];
-	जबतक (country->coll_ptr) अणु
-		अगर (alpha2_equal(alpha2, country->alpha2))
-			वापस __regdb_query_wmm(regdb, country, freq, rule);
+	while (country->coll_ptr) {
+		if (alpha2_equal(alpha2, country->alpha2))
+			return __regdb_query_wmm(regdb, country, freq, rule);
 
 		country++;
-	पूर्ण
+	}
 
-	वापस -ENODATA;
-पूर्ण
+	return -ENODATA;
+}
 EXPORT_SYMBOL(reg_query_regdb_wmm);
 
-अटल पूर्णांक regdb_query_country(स्थिर काष्ठा fwdb_header *db,
-			       स्थिर काष्ठा fwdb_country *country)
-अणु
-	अचिन्हित पूर्णांक ptr = be16_to_cpu(country->coll_ptr) << 2;
-	काष्ठा fwdb_collection *coll = (व्योम *)((u8 *)db + ptr);
-	काष्ठा ieee80211_regकरोमुख्य *regकरोm;
-	अचिन्हित पूर्णांक i;
+static int regdb_query_country(const struct fwdb_header *db,
+			       const struct fwdb_country *country)
+{
+	unsigned int ptr = be16_to_cpu(country->coll_ptr) << 2;
+	struct fwdb_collection *coll = (void *)((u8 *)db + ptr);
+	struct ieee80211_regdomain *regdom;
+	unsigned int i;
 
-	regकरोm = kzalloc(काष्ठा_size(regकरोm, reg_rules, coll->n_rules),
+	regdom = kzalloc(struct_size(regdom, reg_rules, coll->n_rules),
 			 GFP_KERNEL);
-	अगर (!regकरोm)
-		वापस -ENOMEM;
+	if (!regdom)
+		return -ENOMEM;
 
-	regकरोm->n_reg_rules = coll->n_rules;
-	regकरोm->alpha2[0] = country->alpha2[0];
-	regकरोm->alpha2[1] = country->alpha2[1];
-	regकरोm->dfs_region = coll->dfs_region;
+	regdom->n_reg_rules = coll->n_rules;
+	regdom->alpha2[0] = country->alpha2[0];
+	regdom->alpha2[1] = country->alpha2[1];
+	regdom->dfs_region = coll->dfs_region;
 
-	क्रम (i = 0; i < regकरोm->n_reg_rules; i++) अणु
-		__be16 *rules_ptr = (व्योम *)((u8 *)coll + ALIGN(coll->len, 2));
-		अचिन्हित पूर्णांक rule_ptr = be16_to_cpu(rules_ptr[i]) << 2;
-		काष्ठा fwdb_rule *rule = (व्योम *)((u8 *)db + rule_ptr);
-		काष्ठा ieee80211_reg_rule *rrule = &regकरोm->reg_rules[i];
+	for (i = 0; i < regdom->n_reg_rules; i++) {
+		__be16 *rules_ptr = (void *)((u8 *)coll + ALIGN(coll->len, 2));
+		unsigned int rule_ptr = be16_to_cpu(rules_ptr[i]) << 2;
+		struct fwdb_rule *rule = (void *)((u8 *)db + rule_ptr);
+		struct ieee80211_reg_rule *rrule = &regdom->reg_rules[i];
 
 		rrule->freq_range.start_freq_khz = be32_to_cpu(rule->start);
 		rrule->freq_range.end_freq_khz = be32_to_cpu(rule->end);
 		rrule->freq_range.max_bandwidth_khz = be32_to_cpu(rule->max_bw);
 
-		rrule->घातer_rule.max_antenna_gain = 0;
-		rrule->घातer_rule.max_eirp = be16_to_cpu(rule->max_eirp);
+		rrule->power_rule.max_antenna_gain = 0;
+		rrule->power_rule.max_eirp = be16_to_cpu(rule->max_eirp);
 
 		rrule->flags = 0;
-		अगर (rule->flags & FWDB_FLAG_NO_OFDM)
+		if (rule->flags & FWDB_FLAG_NO_OFDM)
 			rrule->flags |= NL80211_RRF_NO_OFDM;
-		अगर (rule->flags & FWDB_FLAG_NO_OUTDOOR)
+		if (rule->flags & FWDB_FLAG_NO_OUTDOOR)
 			rrule->flags |= NL80211_RRF_NO_OUTDOOR;
-		अगर (rule->flags & FWDB_FLAG_DFS)
+		if (rule->flags & FWDB_FLAG_DFS)
 			rrule->flags |= NL80211_RRF_DFS;
-		अगर (rule->flags & FWDB_FLAG_NO_IR)
+		if (rule->flags & FWDB_FLAG_NO_IR)
 			rrule->flags |= NL80211_RRF_NO_IR;
-		अगर (rule->flags & FWDB_FLAG_AUTO_BW)
+		if (rule->flags & FWDB_FLAG_AUTO_BW)
 			rrule->flags |= NL80211_RRF_AUTO_BW;
 
 		rrule->dfs_cac_ms = 0;
 
 		/* handle optional data */
-		अगर (rule->len >= दुरत्वend(काष्ठा fwdb_rule, cac_समयout))
+		if (rule->len >= offsetofend(struct fwdb_rule, cac_timeout))
 			rrule->dfs_cac_ms =
-				1000 * be16_to_cpu(rule->cac_समयout);
-		अगर (rule->len >= दुरत्वend(काष्ठा fwdb_rule, wmm_ptr))
+				1000 * be16_to_cpu(rule->cac_timeout);
+		if (rule->len >= offsetofend(struct fwdb_rule, wmm_ptr))
 			set_wmm_rule(db, country, rule, rrule);
-	पूर्ण
+	}
 
-	वापस reg_schedule_apply(regकरोm);
-पूर्ण
+	return reg_schedule_apply(regdom);
+}
 
-अटल पूर्णांक query_regdb(स्थिर अक्षर *alpha2)
-अणु
-	स्थिर काष्ठा fwdb_header *hdr = regdb;
-	स्थिर काष्ठा fwdb_country *country;
+static int query_regdb(const char *alpha2)
+{
+	const struct fwdb_header *hdr = regdb;
+	const struct fwdb_country *country;
 
 	ASSERT_RTNL();
 
-	अगर (IS_ERR(regdb))
-		वापस PTR_ERR(regdb);
+	if (IS_ERR(regdb))
+		return PTR_ERR(regdb);
 
 	country = &hdr->country[0];
-	जबतक (country->coll_ptr) अणु
-		अगर (alpha2_equal(alpha2, country->alpha2))
-			वापस regdb_query_country(regdb, country);
+	while (country->coll_ptr) {
+		if (alpha2_equal(alpha2, country->alpha2))
+			return regdb_query_country(regdb, country);
 		country++;
-	पूर्ण
+	}
 
-	वापस -ENODATA;
-पूर्ण
+	return -ENODATA;
+}
 
-अटल व्योम regdb_fw_cb(स्थिर काष्ठा firmware *fw, व्योम *context)
-अणु
-	पूर्णांक set_error = 0;
+static void regdb_fw_cb(const struct firmware *fw, void *context)
+{
+	int set_error = 0;
 	bool restore = true;
-	व्योम *db;
+	void *db;
 
-	अगर (!fw) अणु
+	if (!fw) {
 		pr_info("failed to load regulatory.db\n");
 		set_error = -ENODATA;
-	पूर्ण अन्यथा अगर (!valid_regdb(fw->data, fw->size)) अणु
+	} else if (!valid_regdb(fw->data, fw->size)) {
 		pr_info("loaded regulatory.db is malformed or signature is missing/invalid\n");
 		set_error = -EINVAL;
-	पूर्ण
+	}
 
 	rtnl_lock();
-	अगर (regdb && !IS_ERR(regdb)) अणु
-		/* negative हाल - a bug
-		 * positive हाल - can happen due to race in हाल of multiple cb's in
+	if (regdb && !IS_ERR(regdb)) {
+		/* negative case - a bug
+		 * positive case - can happen due to race in case of multiple cb's in
 		 * queue, due to usage of asynchronous callback
 		 *
-		 * Either हाल, just restore and मुक्त new db.
+		 * Either case, just restore and free new db.
 		 */
-	पूर्ण अन्यथा अगर (set_error) अणु
+	} else if (set_error) {
 		regdb = ERR_PTR(set_error);
-	पूर्ण अन्यथा अगर (fw) अणु
+	} else if (fw) {
 		db = kmemdup(fw->data, fw->size, GFP_KERNEL);
-		अगर (db) अणु
+		if (db) {
 			regdb = db;
 			restore = context && query_regdb(context);
-		पूर्ण अन्यथा अणु
+		} else {
 			restore = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (restore)
+	if (restore)
 		restore_regulatory_settings(true, false);
 
 	rtnl_unlock();
 
-	kमुक्त(context);
+	kfree(context);
 
 	release_firmware(fw);
-पूर्ण
+}
 
-अटल पूर्णांक query_regdb_file(स्थिर अक्षर *alpha2)
-अणु
+static int query_regdb_file(const char *alpha2)
+{
 	ASSERT_RTNL();
 
-	अगर (regdb)
-		वापस query_regdb(alpha2);
+	if (regdb)
+		return query_regdb(alpha2);
 
 	alpha2 = kmemdup(alpha2, 2, GFP_KERNEL);
-	अगर (!alpha2)
-		वापस -ENOMEM;
+	if (!alpha2)
+		return -ENOMEM;
 
-	वापस request_firmware_noरुको(THIS_MODULE, true, "regulatory.db",
+	return request_firmware_nowait(THIS_MODULE, true, "regulatory.db",
 				       &reg_pdev->dev, GFP_KERNEL,
-				       (व्योम *)alpha2, regdb_fw_cb);
-पूर्ण
+				       (void *)alpha2, regdb_fw_cb);
+}
 
-पूर्णांक reg_reload_regdb(व्योम)
-अणु
-	स्थिर काष्ठा firmware *fw;
-	व्योम *db;
-	पूर्णांक err;
+int reg_reload_regdb(void)
+{
+	const struct firmware *fw;
+	void *db;
+	int err;
 
 	err = request_firmware(&fw, "regulatory.db", &reg_pdev->dev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (!valid_regdb(fw->data, fw->size)) अणु
+	if (!valid_regdb(fw->data, fw->size)) {
 		err = -ENODATA;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	db = kmemdup(fw->data, fw->size, GFP_KERNEL);
-	अगर (!db) अणु
+	if (!db) {
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	rtnl_lock();
-	अगर (!IS_ERR_OR_शून्य(regdb))
-		kमुक्त(regdb);
+	if (!IS_ERR_OR_NULL(regdb))
+		kfree(regdb);
 	regdb = db;
 	rtnl_unlock();
 
  out:
 	release_firmware(fw);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल bool reg_query_database(काष्ठा regulatory_request *request)
-अणु
-	अगर (query_regdb_file(request->alpha2) == 0)
-		वापस true;
+static bool reg_query_database(struct regulatory_request *request)
+{
+	if (query_regdb_file(request->alpha2) == 0)
+		return true;
 
-	अगर (call_crda(request->alpha2) == 0)
-		वापस true;
+	if (call_crda(request->alpha2) == 0)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-bool reg_is_valid_request(स्थिर अक्षर *alpha2)
-अणु
-	काष्ठा regulatory_request *lr = get_last_request();
+bool reg_is_valid_request(const char *alpha2)
+{
+	struct regulatory_request *lr = get_last_request();
 
-	अगर (!lr || lr->processed)
-		वापस false;
+	if (!lr || lr->processed)
+		return false;
 
-	वापस alpha2_equal(lr->alpha2, alpha2);
-पूर्ण
+	return alpha2_equal(lr->alpha2, alpha2);
+}
 
-अटल स्थिर काष्ठा ieee80211_regकरोमुख्य *reg_get_regकरोमुख्य(काष्ठा wiphy *wiphy)
-अणु
-	काष्ठा regulatory_request *lr = get_last_request();
+static const struct ieee80211_regdomain *reg_get_regdomain(struct wiphy *wiphy)
+{
+	struct regulatory_request *lr = get_last_request();
 
 	/*
-	 * Follow the driver's regulatory करोमुख्य, अगर present, unless a country
+	 * Follow the driver's regulatory domain, if present, unless a country
 	 * IE has been processed or a user wants to help complaince further
 	 */
-	अगर (lr->initiator != NL80211_REGDOM_SET_BY_COUNTRY_IE &&
+	if (lr->initiator != NL80211_REGDOM_SET_BY_COUNTRY_IE &&
 	    lr->initiator != NL80211_REGDOM_SET_BY_USER &&
 	    wiphy->regd)
-		वापस get_wiphy_regकरोm(wiphy);
+		return get_wiphy_regdom(wiphy);
 
-	वापस get_cfg80211_regकरोm();
-पूर्ण
+	return get_cfg80211_regdom();
+}
 
-अटल अचिन्हित पूर्णांक
-reg_get_max_bandwidth_from_range(स्थिर काष्ठा ieee80211_regकरोमुख्य *rd,
-				 स्थिर काष्ठा ieee80211_reg_rule *rule)
-अणु
-	स्थिर काष्ठा ieee80211_freq_range *freq_range = &rule->freq_range;
-	स्थिर काष्ठा ieee80211_freq_range *freq_range_पंचांगp;
-	स्थिर काष्ठा ieee80211_reg_rule *पंचांगp;
+static unsigned int
+reg_get_max_bandwidth_from_range(const struct ieee80211_regdomain *rd,
+				 const struct ieee80211_reg_rule *rule)
+{
+	const struct ieee80211_freq_range *freq_range = &rule->freq_range;
+	const struct ieee80211_freq_range *freq_range_tmp;
+	const struct ieee80211_reg_rule *tmp;
 	u32 start_freq, end_freq, idx, no;
 
-	क्रम (idx = 0; idx < rd->n_reg_rules; idx++)
-		अगर (rule == &rd->reg_rules[idx])
-			अवरोध;
+	for (idx = 0; idx < rd->n_reg_rules; idx++)
+		if (rule == &rd->reg_rules[idx])
+			break;
 
-	अगर (idx == rd->n_reg_rules)
-		वापस 0;
+	if (idx == rd->n_reg_rules)
+		return 0;
 
 	/* get start_freq */
 	no = idx;
 
-	जबतक (no) अणु
-		पंचांगp = &rd->reg_rules[--no];
-		freq_range_पंचांगp = &पंचांगp->freq_range;
+	while (no) {
+		tmp = &rd->reg_rules[--no];
+		freq_range_tmp = &tmp->freq_range;
 
-		अगर (freq_range_पंचांगp->end_freq_khz < freq_range->start_freq_khz)
-			अवरोध;
+		if (freq_range_tmp->end_freq_khz < freq_range->start_freq_khz)
+			break;
 
-		freq_range = freq_range_पंचांगp;
-	पूर्ण
+		freq_range = freq_range_tmp;
+	}
 
 	start_freq = freq_range->start_freq_khz;
 
@@ -1191,102 +1190,102 @@ reg_get_max_bandwidth_from_range(स्थिर काष्ठा ieee80211_re
 	freq_range = &rule->freq_range;
 	no = idx;
 
-	जबतक (no < rd->n_reg_rules - 1) अणु
-		पंचांगp = &rd->reg_rules[++no];
-		freq_range_पंचांगp = &पंचांगp->freq_range;
+	while (no < rd->n_reg_rules - 1) {
+		tmp = &rd->reg_rules[++no];
+		freq_range_tmp = &tmp->freq_range;
 
-		अगर (freq_range_पंचांगp->start_freq_khz > freq_range->end_freq_khz)
-			अवरोध;
+		if (freq_range_tmp->start_freq_khz > freq_range->end_freq_khz)
+			break;
 
-		freq_range = freq_range_पंचांगp;
-	पूर्ण
+		freq_range = freq_range_tmp;
+	}
 
 	end_freq = freq_range->end_freq_khz;
 
-	वापस end_freq - start_freq;
-पूर्ण
+	return end_freq - start_freq;
+}
 
-अचिन्हित पूर्णांक reg_get_max_bandwidth(स्थिर काष्ठा ieee80211_regकरोमुख्य *rd,
-				   स्थिर काष्ठा ieee80211_reg_rule *rule)
-अणु
-	अचिन्हित पूर्णांक bw = reg_get_max_bandwidth_from_range(rd, rule);
+unsigned int reg_get_max_bandwidth(const struct ieee80211_regdomain *rd,
+				   const struct ieee80211_reg_rule *rule)
+{
+	unsigned int bw = reg_get_max_bandwidth_from_range(rd, rule);
 
-	अगर (rule->flags & NL80211_RRF_NO_160MHZ)
-		bw = min_t(अचिन्हित पूर्णांक, bw, MHZ_TO_KHZ(80));
-	अगर (rule->flags & NL80211_RRF_NO_80MHZ)
-		bw = min_t(अचिन्हित पूर्णांक, bw, MHZ_TO_KHZ(40));
+	if (rule->flags & NL80211_RRF_NO_160MHZ)
+		bw = min_t(unsigned int, bw, MHZ_TO_KHZ(80));
+	if (rule->flags & NL80211_RRF_NO_80MHZ)
+		bw = min_t(unsigned int, bw, MHZ_TO_KHZ(40));
 
 	/*
-	 * HT40+/HT40- limits are handled per-channel. Only limit BW अगर both
+	 * HT40+/HT40- limits are handled per-channel. Only limit BW if both
 	 * are not allowed.
 	 */
-	अगर (rule->flags & NL80211_RRF_NO_HT40MINUS &&
+	if (rule->flags & NL80211_RRF_NO_HT40MINUS &&
 	    rule->flags & NL80211_RRF_NO_HT40PLUS)
-		bw = min_t(अचिन्हित पूर्णांक, bw, MHZ_TO_KHZ(20));
+		bw = min_t(unsigned int, bw, MHZ_TO_KHZ(20));
 
-	वापस bw;
-पूर्ण
+	return bw;
+}
 
 /* Sanity check on a regulatory rule */
-अटल bool is_valid_reg_rule(स्थिर काष्ठा ieee80211_reg_rule *rule)
-अणु
-	स्थिर काष्ठा ieee80211_freq_range *freq_range = &rule->freq_range;
-	u32 freq_dअगरf;
+static bool is_valid_reg_rule(const struct ieee80211_reg_rule *rule)
+{
+	const struct ieee80211_freq_range *freq_range = &rule->freq_range;
+	u32 freq_diff;
 
-	अगर (freq_range->start_freq_khz <= 0 || freq_range->end_freq_khz <= 0)
-		वापस false;
+	if (freq_range->start_freq_khz <= 0 || freq_range->end_freq_khz <= 0)
+		return false;
 
-	अगर (freq_range->start_freq_khz > freq_range->end_freq_khz)
-		वापस false;
+	if (freq_range->start_freq_khz > freq_range->end_freq_khz)
+		return false;
 
-	freq_dअगरf = freq_range->end_freq_khz - freq_range->start_freq_khz;
+	freq_diff = freq_range->end_freq_khz - freq_range->start_freq_khz;
 
-	अगर (freq_range->end_freq_khz <= freq_range->start_freq_khz ||
-	    freq_range->max_bandwidth_khz > freq_dअगरf)
-		वापस false;
+	if (freq_range->end_freq_khz <= freq_range->start_freq_khz ||
+	    freq_range->max_bandwidth_khz > freq_diff)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool is_valid_rd(स्थिर काष्ठा ieee80211_regकरोमुख्य *rd)
-अणु
-	स्थिर काष्ठा ieee80211_reg_rule *reg_rule = शून्य;
-	अचिन्हित पूर्णांक i;
+static bool is_valid_rd(const struct ieee80211_regdomain *rd)
+{
+	const struct ieee80211_reg_rule *reg_rule = NULL;
+	unsigned int i;
 
-	अगर (!rd->n_reg_rules)
-		वापस false;
+	if (!rd->n_reg_rules)
+		return false;
 
-	अगर (WARN_ON(rd->n_reg_rules > NL80211_MAX_SUPP_REG_RULES))
-		वापस false;
+	if (WARN_ON(rd->n_reg_rules > NL80211_MAX_SUPP_REG_RULES))
+		return false;
 
-	क्रम (i = 0; i < rd->n_reg_rules; i++) अणु
+	for (i = 0; i < rd->n_reg_rules; i++) {
 		reg_rule = &rd->reg_rules[i];
-		अगर (!is_valid_reg_rule(reg_rule))
-			वापस false;
-	पूर्ण
+		if (!is_valid_reg_rule(reg_rule))
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /**
- * freq_in_rule_band - tells us अगर a frequency is in a frequency band
+ * freq_in_rule_band - tells us if a frequency is in a frequency band
  * @freq_range: frequency rule we want to query
  * @freq_khz: frequency we are inquiring about
  *
- * This lets us know अगर a specअगरic frequency rule is or is not relevant to
- * a specअगरic frequency's band. Bands are device specअगरic and artअगरicial
+ * This lets us know if a specific frequency rule is or is not relevant to
+ * a specific frequency's band. Bands are device specific and artificial
  * definitions (the "2.4 GHz band", the "5 GHz band" and the "60GHz band"),
- * however it is safe क्रम now to assume that a frequency rule should not be
- * part of a frequency's band अगर the start freq or end freq are off by more
- * than 2 GHz क्रम the 2.4 and 5 GHz bands, and by more than 20 GHz क्रम the
+ * however it is safe for now to assume that a frequency rule should not be
+ * part of a frequency's band if the start freq or end freq are off by more
+ * than 2 GHz for the 2.4 and 5 GHz bands, and by more than 20 GHz for the
  * 60 GHz band.
  * This resolution can be lowered and should be considered as we add
- * regulatory rule support क्रम other "bands".
+ * regulatory rule support for other "bands".
  **/
-अटल bool freq_in_rule_band(स्थिर काष्ठा ieee80211_freq_range *freq_range,
+static bool freq_in_rule_band(const struct ieee80211_freq_range *freq_range,
 			      u32 freq_khz)
-अणु
-#घोषणा ONE_GHZ_IN_KHZ	1000000
+{
+#define ONE_GHZ_IN_KHZ	1000000
 	/*
 	 * From 802.11ad: directional multi-gigabit (DMG):
 	 * Pertaining to operation in a frequency band containing a channel
@@ -1294,67 +1293,67 @@ reg_get_max_bandwidth_from_range(स्थिर काष्ठा ieee80211_re
 	 */
 	u32 limit = freq_khz > 45 * ONE_GHZ_IN_KHZ ?
 			20 * ONE_GHZ_IN_KHZ : 2 * ONE_GHZ_IN_KHZ;
-	अगर (असल(freq_khz - freq_range->start_freq_khz) <= limit)
-		वापस true;
-	अगर (असल(freq_khz - freq_range->end_freq_khz) <= limit)
-		वापस true;
-	वापस false;
-#अघोषित ONE_GHZ_IN_KHZ
-पूर्ण
+	if (abs(freq_khz - freq_range->start_freq_khz) <= limit)
+		return true;
+	if (abs(freq_khz - freq_range->end_freq_khz) <= limit)
+		return true;
+	return false;
+#undef ONE_GHZ_IN_KHZ
+}
 
 /*
  * Later on we can perhaps use the more restrictive DFS
- * region but we करोn't have inक्रमmation क्रम that yet so
- * क्रम now simply disallow conflicts.
+ * region but we don't have information for that yet so
+ * for now simply disallow conflicts.
  */
-अटल क्रमागत nl80211_dfs_regions
-reg_पूर्णांकersect_dfs_region(स्थिर क्रमागत nl80211_dfs_regions dfs_region1,
-			 स्थिर क्रमागत nl80211_dfs_regions dfs_region2)
-अणु
-	अगर (dfs_region1 != dfs_region2)
-		वापस NL80211_DFS_UNSET;
-	वापस dfs_region1;
-पूर्ण
+static enum nl80211_dfs_regions
+reg_intersect_dfs_region(const enum nl80211_dfs_regions dfs_region1,
+			 const enum nl80211_dfs_regions dfs_region2)
+{
+	if (dfs_region1 != dfs_region2)
+		return NL80211_DFS_UNSET;
+	return dfs_region1;
+}
 
-अटल व्योम reg_wmm_rules_पूर्णांकersect(स्थिर काष्ठा ieee80211_wmm_ac *wmm_ac1,
-				    स्थिर काष्ठा ieee80211_wmm_ac *wmm_ac2,
-				    काष्ठा ieee80211_wmm_ac *पूर्णांकersect)
-अणु
-	पूर्णांकersect->cw_min = max_t(u16, wmm_ac1->cw_min, wmm_ac2->cw_min);
-	पूर्णांकersect->cw_max = max_t(u16, wmm_ac1->cw_max, wmm_ac2->cw_max);
-	पूर्णांकersect->cot = min_t(u16, wmm_ac1->cot, wmm_ac2->cot);
-	पूर्णांकersect->aअगरsn = max_t(u8, wmm_ac1->aअगरsn, wmm_ac2->aअगरsn);
-पूर्ण
+static void reg_wmm_rules_intersect(const struct ieee80211_wmm_ac *wmm_ac1,
+				    const struct ieee80211_wmm_ac *wmm_ac2,
+				    struct ieee80211_wmm_ac *intersect)
+{
+	intersect->cw_min = max_t(u16, wmm_ac1->cw_min, wmm_ac2->cw_min);
+	intersect->cw_max = max_t(u16, wmm_ac1->cw_max, wmm_ac2->cw_max);
+	intersect->cot = min_t(u16, wmm_ac1->cot, wmm_ac2->cot);
+	intersect->aifsn = max_t(u8, wmm_ac1->aifsn, wmm_ac2->aifsn);
+}
 
 /*
- * Helper क्रम regकरोm_पूर्णांकersect(), this करोes the real
- * mathematical पूर्णांकersection fun
+ * Helper for regdom_intersect(), this does the real
+ * mathematical intersection fun
  */
-अटल पूर्णांक reg_rules_पूर्णांकersect(स्थिर काष्ठा ieee80211_regकरोमुख्य *rd1,
-			       स्थिर काष्ठा ieee80211_regकरोमुख्य *rd2,
-			       स्थिर काष्ठा ieee80211_reg_rule *rule1,
-			       स्थिर काष्ठा ieee80211_reg_rule *rule2,
-			       काष्ठा ieee80211_reg_rule *पूर्णांकersected_rule)
-अणु
-	स्थिर काष्ठा ieee80211_freq_range *freq_range1, *freq_range2;
-	काष्ठा ieee80211_freq_range *freq_range;
-	स्थिर काष्ठा ieee80211_घातer_rule *घातer_rule1, *घातer_rule2;
-	काष्ठा ieee80211_घातer_rule *घातer_rule;
-	स्थिर काष्ठा ieee80211_wmm_rule *wmm_rule1, *wmm_rule2;
-	काष्ठा ieee80211_wmm_rule *wmm_rule;
-	u32 freq_dअगरf, max_bandwidth1, max_bandwidth2;
+static int reg_rules_intersect(const struct ieee80211_regdomain *rd1,
+			       const struct ieee80211_regdomain *rd2,
+			       const struct ieee80211_reg_rule *rule1,
+			       const struct ieee80211_reg_rule *rule2,
+			       struct ieee80211_reg_rule *intersected_rule)
+{
+	const struct ieee80211_freq_range *freq_range1, *freq_range2;
+	struct ieee80211_freq_range *freq_range;
+	const struct ieee80211_power_rule *power_rule1, *power_rule2;
+	struct ieee80211_power_rule *power_rule;
+	const struct ieee80211_wmm_rule *wmm_rule1, *wmm_rule2;
+	struct ieee80211_wmm_rule *wmm_rule;
+	u32 freq_diff, max_bandwidth1, max_bandwidth2;
 
 	freq_range1 = &rule1->freq_range;
 	freq_range2 = &rule2->freq_range;
-	freq_range = &पूर्णांकersected_rule->freq_range;
+	freq_range = &intersected_rule->freq_range;
 
-	घातer_rule1 = &rule1->घातer_rule;
-	घातer_rule2 = &rule2->घातer_rule;
-	घातer_rule = &पूर्णांकersected_rule->घातer_rule;
+	power_rule1 = &rule1->power_rule;
+	power_rule2 = &rule2->power_rule;
+	power_rule = &intersected_rule->power_rule;
 
 	wmm_rule1 = &rule1->wmm_rule;
 	wmm_rule2 = &rule2->wmm_rule;
-	wmm_rule = &पूर्णांकersected_rule->wmm_rule;
+	wmm_rule = &intersected_rule->wmm_rule;
 
 	freq_range->start_freq_khz = max(freq_range1->start_freq_khz,
 					 freq_range2->start_freq_khz);
@@ -1364,317 +1363,317 @@ reg_पूर्णांकersect_dfs_region(स्थिर क्रमाग
 	max_bandwidth1 = freq_range1->max_bandwidth_khz;
 	max_bandwidth2 = freq_range2->max_bandwidth_khz;
 
-	अगर (rule1->flags & NL80211_RRF_AUTO_BW)
+	if (rule1->flags & NL80211_RRF_AUTO_BW)
 		max_bandwidth1 = reg_get_max_bandwidth(rd1, rule1);
-	अगर (rule2->flags & NL80211_RRF_AUTO_BW)
+	if (rule2->flags & NL80211_RRF_AUTO_BW)
 		max_bandwidth2 = reg_get_max_bandwidth(rd2, rule2);
 
 	freq_range->max_bandwidth_khz = min(max_bandwidth1, max_bandwidth2);
 
-	पूर्णांकersected_rule->flags = rule1->flags | rule2->flags;
+	intersected_rule->flags = rule1->flags | rule2->flags;
 
 	/*
-	 * In हाल NL80211_RRF_AUTO_BW requested क्रम both rules
-	 * set AUTO_BW in पूर्णांकersected rule also. Next we will
+	 * In case NL80211_RRF_AUTO_BW requested for both rules
+	 * set AUTO_BW in intersected rule also. Next we will
 	 * calculate BW correctly in handle_channel function.
-	 * In other हाल हटाओ AUTO_BW flag जबतक we calculate
-	 * maximum bandwidth correctly and स्वतः calculation is
+	 * In other case remove AUTO_BW flag while we calculate
+	 * maximum bandwidth correctly and auto calculation is
 	 * not required.
 	 */
-	अगर ((rule1->flags & NL80211_RRF_AUTO_BW) &&
+	if ((rule1->flags & NL80211_RRF_AUTO_BW) &&
 	    (rule2->flags & NL80211_RRF_AUTO_BW))
-		पूर्णांकersected_rule->flags |= NL80211_RRF_AUTO_BW;
-	अन्यथा
-		पूर्णांकersected_rule->flags &= ~NL80211_RRF_AUTO_BW;
+		intersected_rule->flags |= NL80211_RRF_AUTO_BW;
+	else
+		intersected_rule->flags &= ~NL80211_RRF_AUTO_BW;
 
-	freq_dअगरf = freq_range->end_freq_khz - freq_range->start_freq_khz;
-	अगर (freq_range->max_bandwidth_khz > freq_dअगरf)
-		freq_range->max_bandwidth_khz = freq_dअगरf;
+	freq_diff = freq_range->end_freq_khz - freq_range->start_freq_khz;
+	if (freq_range->max_bandwidth_khz > freq_diff)
+		freq_range->max_bandwidth_khz = freq_diff;
 
-	घातer_rule->max_eirp = min(घातer_rule1->max_eirp,
-		घातer_rule2->max_eirp);
-	घातer_rule->max_antenna_gain = min(घातer_rule1->max_antenna_gain,
-		घातer_rule2->max_antenna_gain);
+	power_rule->max_eirp = min(power_rule1->max_eirp,
+		power_rule2->max_eirp);
+	power_rule->max_antenna_gain = min(power_rule1->max_antenna_gain,
+		power_rule2->max_antenna_gain);
 
-	पूर्णांकersected_rule->dfs_cac_ms = max(rule1->dfs_cac_ms,
+	intersected_rule->dfs_cac_ms = max(rule1->dfs_cac_ms,
 					   rule2->dfs_cac_ms);
 
-	अगर (rule1->has_wmm && rule2->has_wmm) अणु
+	if (rule1->has_wmm && rule2->has_wmm) {
 		u8 ac;
 
-		क्रम (ac = 0; ac < IEEE80211_NUM_ACS; ac++) अणु
-			reg_wmm_rules_पूर्णांकersect(&wmm_rule1->client[ac],
+		for (ac = 0; ac < IEEE80211_NUM_ACS; ac++) {
+			reg_wmm_rules_intersect(&wmm_rule1->client[ac],
 						&wmm_rule2->client[ac],
 						&wmm_rule->client[ac]);
-			reg_wmm_rules_पूर्णांकersect(&wmm_rule1->ap[ac],
+			reg_wmm_rules_intersect(&wmm_rule1->ap[ac],
 						&wmm_rule2->ap[ac],
 						&wmm_rule->ap[ac]);
-		पूर्ण
+		}
 
-		पूर्णांकersected_rule->has_wmm = true;
-	पूर्ण अन्यथा अगर (rule1->has_wmm) अणु
+		intersected_rule->has_wmm = true;
+	} else if (rule1->has_wmm) {
 		*wmm_rule = *wmm_rule1;
-		पूर्णांकersected_rule->has_wmm = true;
-	पूर्ण अन्यथा अगर (rule2->has_wmm) अणु
+		intersected_rule->has_wmm = true;
+	} else if (rule2->has_wmm) {
 		*wmm_rule = *wmm_rule2;
-		पूर्णांकersected_rule->has_wmm = true;
-	पूर्ण अन्यथा अणु
-		पूर्णांकersected_rule->has_wmm = false;
-	पूर्ण
+		intersected_rule->has_wmm = true;
+	} else {
+		intersected_rule->has_wmm = false;
+	}
 
-	अगर (!is_valid_reg_rule(पूर्णांकersected_rule))
-		वापस -EINVAL;
+	if (!is_valid_reg_rule(intersected_rule))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* check whether old rule contains new rule */
-अटल bool rule_contains(काष्ठा ieee80211_reg_rule *r1,
-			  काष्ठा ieee80211_reg_rule *r2)
-अणु
-	/* क्रम simplicity, currently consider only same flags */
-	अगर (r1->flags != r2->flags)
-		वापस false;
+static bool rule_contains(struct ieee80211_reg_rule *r1,
+			  struct ieee80211_reg_rule *r2)
+{
+	/* for simplicity, currently consider only same flags */
+	if (r1->flags != r2->flags)
+		return false;
 
-	/* verअगरy r1 is more restrictive */
-	अगर ((r1->घातer_rule.max_antenna_gain >
-	     r2->घातer_rule.max_antenna_gain) ||
-	    r1->घातer_rule.max_eirp > r2->घातer_rule.max_eirp)
-		वापस false;
+	/* verify r1 is more restrictive */
+	if ((r1->power_rule.max_antenna_gain >
+	     r2->power_rule.max_antenna_gain) ||
+	    r1->power_rule.max_eirp > r2->power_rule.max_eirp)
+		return false;
 
 	/* make sure r2's range is contained within r1 */
-	अगर (r1->freq_range.start_freq_khz > r2->freq_range.start_freq_khz ||
+	if (r1->freq_range.start_freq_khz > r2->freq_range.start_freq_khz ||
 	    r1->freq_range.end_freq_khz < r2->freq_range.end_freq_khz)
-		वापस false;
+		return false;
 
-	/* and finally verअगरy that r1.max_bw >= r2.max_bw */
-	अगर (r1->freq_range.max_bandwidth_khz <
+	/* and finally verify that r1.max_bw >= r2.max_bw */
+	if (r1->freq_range.max_bandwidth_khz <
 	    r2->freq_range.max_bandwidth_khz)
-		वापस false;
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-/* add or extend current rules. करो nothing अगर rule is alपढ़ोy contained */
-अटल व्योम add_rule(काष्ठा ieee80211_reg_rule *rule,
-		     काष्ठा ieee80211_reg_rule *reg_rules, u32 *n_rules)
-अणु
-	काष्ठा ieee80211_reg_rule *पंचांगp_rule;
-	पूर्णांक i;
+/* add or extend current rules. do nothing if rule is already contained */
+static void add_rule(struct ieee80211_reg_rule *rule,
+		     struct ieee80211_reg_rule *reg_rules, u32 *n_rules)
+{
+	struct ieee80211_reg_rule *tmp_rule;
+	int i;
 
-	क्रम (i = 0; i < *n_rules; i++) अणु
-		पंचांगp_rule = &reg_rules[i];
-		/* rule is alपढ़ोy contained - करो nothing */
-		अगर (rule_contains(पंचांगp_rule, rule))
-			वापस;
+	for (i = 0; i < *n_rules; i++) {
+		tmp_rule = &reg_rules[i];
+		/* rule is already contained - do nothing */
+		if (rule_contains(tmp_rule, rule))
+			return;
 
-		/* extend rule अगर possible */
-		अगर (rule_contains(rule, पंचांगp_rule)) अणु
-			स_नकल(पंचांगp_rule, rule, माप(*rule));
-			वापस;
-		पूर्ण
-	पूर्ण
+		/* extend rule if possible */
+		if (rule_contains(rule, tmp_rule)) {
+			memcpy(tmp_rule, rule, sizeof(*rule));
+			return;
+		}
+	}
 
-	स_नकल(&reg_rules[*n_rules], rule, माप(*rule));
+	memcpy(&reg_rules[*n_rules], rule, sizeof(*rule));
 	(*n_rules)++;
-पूर्ण
+}
 
 /**
- * regकरोm_पूर्णांकersect - करो the पूर्णांकersection between two regulatory करोमुख्यs
- * @rd1: first regulatory करोमुख्य
- * @rd2: second regulatory करोमुख्य
+ * regdom_intersect - do the intersection between two regulatory domains
+ * @rd1: first regulatory domain
+ * @rd2: second regulatory domain
  *
- * Use this function to get the पूर्णांकersection between two regulatory करोमुख्यs.
- * Once completed we will mark the alpha2 क्रम the rd as पूर्णांकersected, "98",
- * as no one single alpha2 can represent this regulatory करोमुख्य.
+ * Use this function to get the intersection between two regulatory domains.
+ * Once completed we will mark the alpha2 for the rd as intersected, "98",
+ * as no one single alpha2 can represent this regulatory domain.
  *
- * Returns a poपूर्णांकer to the regulatory करोमुख्य काष्ठाure which will hold the
- * resulting पूर्णांकersection of rules between rd1 and rd2. We will
- * kzalloc() this काष्ठाure क्रम you.
+ * Returns a pointer to the regulatory domain structure which will hold the
+ * resulting intersection of rules between rd1 and rd2. We will
+ * kzalloc() this structure for you.
  */
-अटल काष्ठा ieee80211_regकरोमुख्य *
-regकरोm_पूर्णांकersect(स्थिर काष्ठा ieee80211_regकरोमुख्य *rd1,
-		 स्थिर काष्ठा ieee80211_regकरोमुख्य *rd2)
-अणु
-	पूर्णांक r;
-	अचिन्हित पूर्णांक x, y;
-	अचिन्हित पूर्णांक num_rules = 0;
-	स्थिर काष्ठा ieee80211_reg_rule *rule1, *rule2;
-	काष्ठा ieee80211_reg_rule पूर्णांकersected_rule;
-	काष्ठा ieee80211_regकरोमुख्य *rd;
+static struct ieee80211_regdomain *
+regdom_intersect(const struct ieee80211_regdomain *rd1,
+		 const struct ieee80211_regdomain *rd2)
+{
+	int r;
+	unsigned int x, y;
+	unsigned int num_rules = 0;
+	const struct ieee80211_reg_rule *rule1, *rule2;
+	struct ieee80211_reg_rule intersected_rule;
+	struct ieee80211_regdomain *rd;
 
-	अगर (!rd1 || !rd2)
-		वापस शून्य;
+	if (!rd1 || !rd2)
+		return NULL;
 
 	/*
 	 * First we get a count of the rules we'll need, then we actually
-	 * build them. This is to so we can दो_स्मृति() and मुक्त() a
-	 * regकरोमुख्य once. The reason we use reg_rules_पूर्णांकersect() here
-	 * is it will वापस -EINVAL अगर the rule computed makes no sense.
-	 * All rules that करो check out OK are valid.
+	 * build them. This is to so we can malloc() and free() a
+	 * regdomain once. The reason we use reg_rules_intersect() here
+	 * is it will return -EINVAL if the rule computed makes no sense.
+	 * All rules that do check out OK are valid.
 	 */
 
-	क्रम (x = 0; x < rd1->n_reg_rules; x++) अणु
+	for (x = 0; x < rd1->n_reg_rules; x++) {
 		rule1 = &rd1->reg_rules[x];
-		क्रम (y = 0; y < rd2->n_reg_rules; y++) अणु
+		for (y = 0; y < rd2->n_reg_rules; y++) {
 			rule2 = &rd2->reg_rules[y];
-			अगर (!reg_rules_पूर्णांकersect(rd1, rd2, rule1, rule2,
-						 &पूर्णांकersected_rule))
+			if (!reg_rules_intersect(rd1, rd2, rule1, rule2,
+						 &intersected_rule))
 				num_rules++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!num_rules)
-		वापस शून्य;
+	if (!num_rules)
+		return NULL;
 
-	rd = kzalloc(काष्ठा_size(rd, reg_rules, num_rules), GFP_KERNEL);
-	अगर (!rd)
-		वापस शून्य;
+	rd = kzalloc(struct_size(rd, reg_rules, num_rules), GFP_KERNEL);
+	if (!rd)
+		return NULL;
 
-	क्रम (x = 0; x < rd1->n_reg_rules; x++) अणु
+	for (x = 0; x < rd1->n_reg_rules; x++) {
 		rule1 = &rd1->reg_rules[x];
-		क्रम (y = 0; y < rd2->n_reg_rules; y++) अणु
+		for (y = 0; y < rd2->n_reg_rules; y++) {
 			rule2 = &rd2->reg_rules[y];
-			r = reg_rules_पूर्णांकersect(rd1, rd2, rule1, rule2,
-						&पूर्णांकersected_rule);
+			r = reg_rules_intersect(rd1, rd2, rule1, rule2,
+						&intersected_rule);
 			/*
-			 * No need to स_रखो here the पूर्णांकersected rule here as
+			 * No need to memset here the intersected rule here as
 			 * we're not using the stack anymore
 			 */
-			अगर (r)
-				जारी;
+			if (r)
+				continue;
 
-			add_rule(&पूर्णांकersected_rule, rd->reg_rules,
+			add_rule(&intersected_rule, rd->reg_rules,
 				 &rd->n_reg_rules);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	rd->alpha2[0] = '9';
 	rd->alpha2[1] = '8';
-	rd->dfs_region = reg_पूर्णांकersect_dfs_region(rd1->dfs_region,
+	rd->dfs_region = reg_intersect_dfs_region(rd1->dfs_region,
 						  rd2->dfs_region);
 
-	वापस rd;
-पूर्ण
+	return rd;
+}
 
 /*
- * XXX: add support क्रम the rest of क्रमागत nl80211_reg_rule_flags, we may
- * want to just have the channel काष्ठाure use these
+ * XXX: add support for the rest of enum nl80211_reg_rule_flags, we may
+ * want to just have the channel structure use these
  */
-अटल u32 map_regकरोm_flags(u32 rd_flags)
-अणु
+static u32 map_regdom_flags(u32 rd_flags)
+{
 	u32 channel_flags = 0;
-	अगर (rd_flags & NL80211_RRF_NO_IR_ALL)
+	if (rd_flags & NL80211_RRF_NO_IR_ALL)
 		channel_flags |= IEEE80211_CHAN_NO_IR;
-	अगर (rd_flags & NL80211_RRF_DFS)
+	if (rd_flags & NL80211_RRF_DFS)
 		channel_flags |= IEEE80211_CHAN_RADAR;
-	अगर (rd_flags & NL80211_RRF_NO_OFDM)
+	if (rd_flags & NL80211_RRF_NO_OFDM)
 		channel_flags |= IEEE80211_CHAN_NO_OFDM;
-	अगर (rd_flags & NL80211_RRF_NO_OUTDOOR)
+	if (rd_flags & NL80211_RRF_NO_OUTDOOR)
 		channel_flags |= IEEE80211_CHAN_INDOOR_ONLY;
-	अगर (rd_flags & NL80211_RRF_IR_CONCURRENT)
+	if (rd_flags & NL80211_RRF_IR_CONCURRENT)
 		channel_flags |= IEEE80211_CHAN_IR_CONCURRENT;
-	अगर (rd_flags & NL80211_RRF_NO_HT40MINUS)
+	if (rd_flags & NL80211_RRF_NO_HT40MINUS)
 		channel_flags |= IEEE80211_CHAN_NO_HT40MINUS;
-	अगर (rd_flags & NL80211_RRF_NO_HT40PLUS)
+	if (rd_flags & NL80211_RRF_NO_HT40PLUS)
 		channel_flags |= IEEE80211_CHAN_NO_HT40PLUS;
-	अगर (rd_flags & NL80211_RRF_NO_80MHZ)
+	if (rd_flags & NL80211_RRF_NO_80MHZ)
 		channel_flags |= IEEE80211_CHAN_NO_80MHZ;
-	अगर (rd_flags & NL80211_RRF_NO_160MHZ)
+	if (rd_flags & NL80211_RRF_NO_160MHZ)
 		channel_flags |= IEEE80211_CHAN_NO_160MHZ;
-	अगर (rd_flags & NL80211_RRF_NO_HE)
+	if (rd_flags & NL80211_RRF_NO_HE)
 		channel_flags |= IEEE80211_CHAN_NO_HE;
-	वापस channel_flags;
-पूर्ण
+	return channel_flags;
+}
 
-अटल स्थिर काष्ठा ieee80211_reg_rule *
+static const struct ieee80211_reg_rule *
 freq_reg_info_regd(u32 center_freq,
-		   स्थिर काष्ठा ieee80211_regकरोमुख्य *regd, u32 bw)
-अणु
-	पूर्णांक i;
+		   const struct ieee80211_regdomain *regd, u32 bw)
+{
+	int i;
 	bool band_rule_found = false;
 	bool bw_fits = false;
 
-	अगर (!regd)
-		वापस ERR_PTR(-EINVAL);
+	if (!regd)
+		return ERR_PTR(-EINVAL);
 
-	क्रम (i = 0; i < regd->n_reg_rules; i++) अणु
-		स्थिर काष्ठा ieee80211_reg_rule *rr;
-		स्थिर काष्ठा ieee80211_freq_range *fr = शून्य;
+	for (i = 0; i < regd->n_reg_rules; i++) {
+		const struct ieee80211_reg_rule *rr;
+		const struct ieee80211_freq_range *fr = NULL;
 
 		rr = &regd->reg_rules[i];
 		fr = &rr->freq_range;
 
 		/*
-		 * We only need to know अगर one frequency rule was
+		 * We only need to know if one frequency rule was
 		 * in center_freq's band, that's enough, so let's
-		 * not overग_लिखो it once found
+		 * not overwrite it once found
 		 */
-		अगर (!band_rule_found)
+		if (!band_rule_found)
 			band_rule_found = freq_in_rule_band(fr, center_freq);
 
-		bw_fits = cfg80211_करोes_bw_fit_range(fr, center_freq, bw);
+		bw_fits = cfg80211_does_bw_fit_range(fr, center_freq, bw);
 
-		अगर (band_rule_found && bw_fits)
-			वापस rr;
-	पूर्ण
+		if (band_rule_found && bw_fits)
+			return rr;
+	}
 
-	अगर (!band_rule_found)
-		वापस ERR_PTR(-दुस्फल);
+	if (!band_rule_found)
+		return ERR_PTR(-ERANGE);
 
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
+	return ERR_PTR(-EINVAL);
+}
 
-अटल स्थिर काष्ठा ieee80211_reg_rule *
-__freq_reg_info(काष्ठा wiphy *wiphy, u32 center_freq, u32 min_bw)
-अणु
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *regd = reg_get_regकरोमुख्य(wiphy);
-	अटल स्थिर u32 bws[] = अणु0, 1, 2, 4, 5, 8, 10, 16, 20पूर्ण;
-	स्थिर काष्ठा ieee80211_reg_rule *reg_rule = ERR_PTR(-दुस्फल);
-	पूर्णांक i = ARRAY_SIZE(bws) - 1;
+static const struct ieee80211_reg_rule *
+__freq_reg_info(struct wiphy *wiphy, u32 center_freq, u32 min_bw)
+{
+	const struct ieee80211_regdomain *regd = reg_get_regdomain(wiphy);
+	static const u32 bws[] = {0, 1, 2, 4, 5, 8, 10, 16, 20};
+	const struct ieee80211_reg_rule *reg_rule = ERR_PTR(-ERANGE);
+	int i = ARRAY_SIZE(bws) - 1;
 	u32 bw;
 
-	क्रम (bw = MHZ_TO_KHZ(bws[i]); bw >= min_bw; bw = MHZ_TO_KHZ(bws[i--])) अणु
+	for (bw = MHZ_TO_KHZ(bws[i]); bw >= min_bw; bw = MHZ_TO_KHZ(bws[i--])) {
 		reg_rule = freq_reg_info_regd(center_freq, regd, bw);
-		अगर (!IS_ERR(reg_rule))
-			वापस reg_rule;
-	पूर्ण
+		if (!IS_ERR(reg_rule))
+			return reg_rule;
+	}
 
-	वापस reg_rule;
-पूर्ण
+	return reg_rule;
+}
 
-स्थिर काष्ठा ieee80211_reg_rule *freq_reg_info(काष्ठा wiphy *wiphy,
+const struct ieee80211_reg_rule *freq_reg_info(struct wiphy *wiphy,
 					       u32 center_freq)
-अणु
+{
 	u32 min_bw = center_freq < MHZ_TO_KHZ(1000) ? 1 : 20;
 
-	वापस __freq_reg_info(wiphy, center_freq, MHZ_TO_KHZ(min_bw));
-पूर्ण
+	return __freq_reg_info(wiphy, center_freq, MHZ_TO_KHZ(min_bw));
+}
 EXPORT_SYMBOL(freq_reg_info);
 
-स्थिर अक्षर *reg_initiator_name(क्रमागत nl80211_reg_initiator initiator)
-अणु
-	चयन (initiator) अणु
-	हाल NL80211_REGDOM_SET_BY_CORE:
-		वापस "core";
-	हाल NL80211_REGDOM_SET_BY_USER:
-		वापस "user";
-	हाल NL80211_REGDOM_SET_BY_DRIVER:
-		वापस "driver";
-	हाल NL80211_REGDOM_SET_BY_COUNTRY_IE:
-		वापस "country element";
-	शेष:
+const char *reg_initiator_name(enum nl80211_reg_initiator initiator)
+{
+	switch (initiator) {
+	case NL80211_REGDOM_SET_BY_CORE:
+		return "core";
+	case NL80211_REGDOM_SET_BY_USER:
+		return "user";
+	case NL80211_REGDOM_SET_BY_DRIVER:
+		return "driver";
+	case NL80211_REGDOM_SET_BY_COUNTRY_IE:
+		return "country element";
+	default:
 		WARN_ON(1);
-		वापस "bug";
-	पूर्ण
-पूर्ण
+		return "bug";
+	}
+}
 EXPORT_SYMBOL(reg_initiator_name);
 
-अटल uपूर्णांक32_t reg_rule_to_chan_bw_flags(स्थिर काष्ठा ieee80211_regकरोमुख्य *regd,
-					  स्थिर काष्ठा ieee80211_reg_rule *reg_rule,
-					  स्थिर काष्ठा ieee80211_channel *chan)
-अणु
-	स्थिर काष्ठा ieee80211_freq_range *freq_range = शून्य;
+static uint32_t reg_rule_to_chan_bw_flags(const struct ieee80211_regdomain *regd,
+					  const struct ieee80211_reg_rule *reg_rule,
+					  const struct ieee80211_channel *chan)
+{
+	const struct ieee80211_freq_range *freq_range = NULL;
 	u32 max_bandwidth_khz, center_freq_khz, bw_flags = 0;
 	bool is_s1g = chan->band == NL80211_BAND_S1GHZ;
 
@@ -1682,290 +1681,290 @@ EXPORT_SYMBOL(reg_initiator_name);
 
 	max_bandwidth_khz = freq_range->max_bandwidth_khz;
 	center_freq_khz = ieee80211_channel_to_khz(chan);
-	/* Check अगर स्वतः calculation requested */
-	अगर (reg_rule->flags & NL80211_RRF_AUTO_BW)
+	/* Check if auto calculation requested */
+	if (reg_rule->flags & NL80211_RRF_AUTO_BW)
 		max_bandwidth_khz = reg_get_max_bandwidth(regd, reg_rule);
 
 	/* If we get a reg_rule we can assume that at least 5Mhz fit */
-	अगर (!cfg80211_करोes_bw_fit_range(freq_range,
+	if (!cfg80211_does_bw_fit_range(freq_range,
 					center_freq_khz,
 					MHZ_TO_KHZ(10)))
 		bw_flags |= IEEE80211_CHAN_NO_10MHZ;
-	अगर (!cfg80211_करोes_bw_fit_range(freq_range,
+	if (!cfg80211_does_bw_fit_range(freq_range,
 					center_freq_khz,
 					MHZ_TO_KHZ(20)))
 		bw_flags |= IEEE80211_CHAN_NO_20MHZ;
 
-	अगर (is_s1g) अणु
+	if (is_s1g) {
 		/* S1G is strict about non overlapping channels. We can
 		 * calculate which bandwidth is allowed per channel by finding
-		 * the largest bandwidth which cleanly भागides the freq_range.
+		 * the largest bandwidth which cleanly divides the freq_range.
 		 */
-		पूर्णांक edge_offset;
-		पूर्णांक ch_bw = max_bandwidth_khz;
+		int edge_offset;
+		int ch_bw = max_bandwidth_khz;
 
-		जबतक (ch_bw) अणु
+		while (ch_bw) {
 			edge_offset = (center_freq_khz - ch_bw / 2) -
 				      freq_range->start_freq_khz;
-			अगर (edge_offset % ch_bw == 0) अणु
-				चयन (KHZ_TO_MHZ(ch_bw)) अणु
-				हाल 1:
+			if (edge_offset % ch_bw == 0) {
+				switch (KHZ_TO_MHZ(ch_bw)) {
+				case 1:
 					bw_flags |= IEEE80211_CHAN_1MHZ;
-					अवरोध;
-				हाल 2:
+					break;
+				case 2:
 					bw_flags |= IEEE80211_CHAN_2MHZ;
-					अवरोध;
-				हाल 4:
+					break;
+				case 4:
 					bw_flags |= IEEE80211_CHAN_4MHZ;
-					अवरोध;
-				हाल 8:
+					break;
+				case 8:
 					bw_flags |= IEEE80211_CHAN_8MHZ;
-					अवरोध;
-				हाल 16:
+					break;
+				case 16:
 					bw_flags |= IEEE80211_CHAN_16MHZ;
-					अवरोध;
-				शेष:
+					break;
+				default:
 					/* If we got here, no bandwidths fit on
 					 * this frequency, ie. band edge.
 					 */
 					bw_flags |= IEEE80211_CHAN_DISABLED;
-					अवरोध;
-				पूर्ण
-				अवरोध;
-			पूर्ण
+					break;
+				}
+				break;
+			}
 			ch_bw /= 2;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (max_bandwidth_khz < MHZ_TO_KHZ(10))
+		}
+	} else {
+		if (max_bandwidth_khz < MHZ_TO_KHZ(10))
 			bw_flags |= IEEE80211_CHAN_NO_10MHZ;
-		अगर (max_bandwidth_khz < MHZ_TO_KHZ(20))
+		if (max_bandwidth_khz < MHZ_TO_KHZ(20))
 			bw_flags |= IEEE80211_CHAN_NO_20MHZ;
-		अगर (max_bandwidth_khz < MHZ_TO_KHZ(40))
+		if (max_bandwidth_khz < MHZ_TO_KHZ(40))
 			bw_flags |= IEEE80211_CHAN_NO_HT40;
-		अगर (max_bandwidth_khz < MHZ_TO_KHZ(80))
+		if (max_bandwidth_khz < MHZ_TO_KHZ(80))
 			bw_flags |= IEEE80211_CHAN_NO_80MHZ;
-		अगर (max_bandwidth_khz < MHZ_TO_KHZ(160))
+		if (max_bandwidth_khz < MHZ_TO_KHZ(160))
 			bw_flags |= IEEE80211_CHAN_NO_160MHZ;
-	पूर्ण
-	वापस bw_flags;
-पूर्ण
+	}
+	return bw_flags;
+}
 
-अटल व्योम handle_channel_single_rule(काष्ठा wiphy *wiphy,
-				       क्रमागत nl80211_reg_initiator initiator,
-				       काष्ठा ieee80211_channel *chan,
+static void handle_channel_single_rule(struct wiphy *wiphy,
+				       enum nl80211_reg_initiator initiator,
+				       struct ieee80211_channel *chan,
 				       u32 flags,
-				       काष्ठा regulatory_request *lr,
-				       काष्ठा wiphy *request_wiphy,
-				       स्थिर काष्ठा ieee80211_reg_rule *reg_rule)
-अणु
+				       struct regulatory_request *lr,
+				       struct wiphy *request_wiphy,
+				       const struct ieee80211_reg_rule *reg_rule)
+{
 	u32 bw_flags = 0;
-	स्थिर काष्ठा ieee80211_घातer_rule *घातer_rule = शून्य;
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *regd;
+	const struct ieee80211_power_rule *power_rule = NULL;
+	const struct ieee80211_regdomain *regd;
 
-	regd = reg_get_regकरोमुख्य(wiphy);
+	regd = reg_get_regdomain(wiphy);
 
-	घातer_rule = &reg_rule->घातer_rule;
+	power_rule = &reg_rule->power_rule;
 	bw_flags = reg_rule_to_chan_bw_flags(regd, reg_rule, chan);
 
-	अगर (lr->initiator == NL80211_REGDOM_SET_BY_DRIVER &&
+	if (lr->initiator == NL80211_REGDOM_SET_BY_DRIVER &&
 	    request_wiphy && request_wiphy == wiphy &&
-	    request_wiphy->regulatory_flags & REGULATORY_STRICT_REG) अणु
+	    request_wiphy->regulatory_flags & REGULATORY_STRICT_REG) {
 		/*
-		 * This guarantees the driver's requested regulatory करोमुख्य
-		 * will always be used as a base क्रम further regulatory
+		 * This guarantees the driver's requested regulatory domain
+		 * will always be used as a base for further regulatory
 		 * settings
 		 */
 		chan->flags = chan->orig_flags =
-			map_regकरोm_flags(reg_rule->flags) | bw_flags;
+			map_regdom_flags(reg_rule->flags) | bw_flags;
 		chan->max_antenna_gain = chan->orig_mag =
-			(पूर्णांक) MBI_TO_DBI(घातer_rule->max_antenna_gain);
-		chan->max_reg_घातer = chan->max_घातer = chan->orig_mpwr =
-			(पूर्णांक) MBM_TO_DBM(घातer_rule->max_eirp);
+			(int) MBI_TO_DBI(power_rule->max_antenna_gain);
+		chan->max_reg_power = chan->max_power = chan->orig_mpwr =
+			(int) MBM_TO_DBM(power_rule->max_eirp);
 
-		अगर (chan->flags & IEEE80211_CHAN_RADAR) अणु
+		if (chan->flags & IEEE80211_CHAN_RADAR) {
 			chan->dfs_cac_ms = IEEE80211_DFS_MIN_CAC_TIME_MS;
-			अगर (reg_rule->dfs_cac_ms)
+			if (reg_rule->dfs_cac_ms)
 				chan->dfs_cac_ms = reg_rule->dfs_cac_ms;
-		पूर्ण
+		}
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	chan->dfs_state = NL80211_DFS_USABLE;
-	chan->dfs_state_entered = jअगरfies;
+	chan->dfs_state_entered = jiffies;
 
 	chan->beacon_found = false;
-	chan->flags = flags | bw_flags | map_regकरोm_flags(reg_rule->flags);
+	chan->flags = flags | bw_flags | map_regdom_flags(reg_rule->flags);
 	chan->max_antenna_gain =
-		min_t(पूर्णांक, chan->orig_mag,
-		      MBI_TO_DBI(घातer_rule->max_antenna_gain));
-	chan->max_reg_घातer = (पूर्णांक) MBM_TO_DBM(घातer_rule->max_eirp);
+		min_t(int, chan->orig_mag,
+		      MBI_TO_DBI(power_rule->max_antenna_gain));
+	chan->max_reg_power = (int) MBM_TO_DBM(power_rule->max_eirp);
 
-	अगर (chan->flags & IEEE80211_CHAN_RADAR) अणु
-		अगर (reg_rule->dfs_cac_ms)
+	if (chan->flags & IEEE80211_CHAN_RADAR) {
+		if (reg_rule->dfs_cac_ms)
 			chan->dfs_cac_ms = reg_rule->dfs_cac_ms;
-		अन्यथा
+		else
 			chan->dfs_cac_ms = IEEE80211_DFS_MIN_CAC_TIME_MS;
-	पूर्ण
+	}
 
-	अगर (chan->orig_mpwr) अणु
+	if (chan->orig_mpwr) {
 		/*
 		 * Devices that use REGULATORY_COUNTRY_IE_FOLLOW_POWER
-		 * will always follow the passed country IE घातer settings.
+		 * will always follow the passed country IE power settings.
 		 */
-		अगर (initiator == NL80211_REGDOM_SET_BY_COUNTRY_IE &&
+		if (initiator == NL80211_REGDOM_SET_BY_COUNTRY_IE &&
 		    wiphy->regulatory_flags & REGULATORY_COUNTRY_IE_FOLLOW_POWER)
-			chan->max_घातer = chan->max_reg_घातer;
-		अन्यथा
-			chan->max_घातer = min(chan->orig_mpwr,
-					      chan->max_reg_घातer);
-	पूर्ण अन्यथा
-		chan->max_घातer = chan->max_reg_घातer;
-पूर्ण
+			chan->max_power = chan->max_reg_power;
+		else
+			chan->max_power = min(chan->orig_mpwr,
+					      chan->max_reg_power);
+	} else
+		chan->max_power = chan->max_reg_power;
+}
 
-अटल व्योम handle_channel_adjacent_rules(काष्ठा wiphy *wiphy,
-					  क्रमागत nl80211_reg_initiator initiator,
-					  काष्ठा ieee80211_channel *chan,
+static void handle_channel_adjacent_rules(struct wiphy *wiphy,
+					  enum nl80211_reg_initiator initiator,
+					  struct ieee80211_channel *chan,
 					  u32 flags,
-					  काष्ठा regulatory_request *lr,
-					  काष्ठा wiphy *request_wiphy,
-					  स्थिर काष्ठा ieee80211_reg_rule *rrule1,
-					  स्थिर काष्ठा ieee80211_reg_rule *rrule2,
-					  काष्ठा ieee80211_freq_range *comb_range)
-अणु
+					  struct regulatory_request *lr,
+					  struct wiphy *request_wiphy,
+					  const struct ieee80211_reg_rule *rrule1,
+					  const struct ieee80211_reg_rule *rrule2,
+					  struct ieee80211_freq_range *comb_range)
+{
 	u32 bw_flags1 = 0;
 	u32 bw_flags2 = 0;
-	स्थिर काष्ठा ieee80211_घातer_rule *घातer_rule1 = शून्य;
-	स्थिर काष्ठा ieee80211_घातer_rule *घातer_rule2 = शून्य;
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *regd;
+	const struct ieee80211_power_rule *power_rule1 = NULL;
+	const struct ieee80211_power_rule *power_rule2 = NULL;
+	const struct ieee80211_regdomain *regd;
 
-	regd = reg_get_regकरोमुख्य(wiphy);
+	regd = reg_get_regdomain(wiphy);
 
-	घातer_rule1 = &rrule1->घातer_rule;
-	घातer_rule2 = &rrule2->घातer_rule;
+	power_rule1 = &rrule1->power_rule;
+	power_rule2 = &rrule2->power_rule;
 	bw_flags1 = reg_rule_to_chan_bw_flags(regd, rrule1, chan);
 	bw_flags2 = reg_rule_to_chan_bw_flags(regd, rrule2, chan);
 
-	अगर (lr->initiator == NL80211_REGDOM_SET_BY_DRIVER &&
+	if (lr->initiator == NL80211_REGDOM_SET_BY_DRIVER &&
 	    request_wiphy && request_wiphy == wiphy &&
-	    request_wiphy->regulatory_flags & REGULATORY_STRICT_REG) अणु
-		/* This guarantees the driver's requested regulatory करोमुख्य
-		 * will always be used as a base क्रम further regulatory
+	    request_wiphy->regulatory_flags & REGULATORY_STRICT_REG) {
+		/* This guarantees the driver's requested regulatory domain
+		 * will always be used as a base for further regulatory
 		 * settings
 		 */
 		chan->flags =
-			map_regकरोm_flags(rrule1->flags) |
-			map_regकरोm_flags(rrule2->flags) |
+			map_regdom_flags(rrule1->flags) |
+			map_regdom_flags(rrule2->flags) |
 			bw_flags1 |
 			bw_flags2;
 		chan->orig_flags = chan->flags;
 		chan->max_antenna_gain =
-			min_t(पूर्णांक, MBI_TO_DBI(घातer_rule1->max_antenna_gain),
-			      MBI_TO_DBI(घातer_rule2->max_antenna_gain));
+			min_t(int, MBI_TO_DBI(power_rule1->max_antenna_gain),
+			      MBI_TO_DBI(power_rule2->max_antenna_gain));
 		chan->orig_mag = chan->max_antenna_gain;
-		chan->max_reg_घातer =
-			min_t(पूर्णांक, MBM_TO_DBM(घातer_rule1->max_eirp),
-			      MBM_TO_DBM(घातer_rule2->max_eirp));
-		chan->max_घातer = chan->max_reg_घातer;
-		chan->orig_mpwr = chan->max_reg_घातer;
+		chan->max_reg_power =
+			min_t(int, MBM_TO_DBM(power_rule1->max_eirp),
+			      MBM_TO_DBM(power_rule2->max_eirp));
+		chan->max_power = chan->max_reg_power;
+		chan->orig_mpwr = chan->max_reg_power;
 
-		अगर (chan->flags & IEEE80211_CHAN_RADAR) अणु
+		if (chan->flags & IEEE80211_CHAN_RADAR) {
 			chan->dfs_cac_ms = IEEE80211_DFS_MIN_CAC_TIME_MS;
-			अगर (rrule1->dfs_cac_ms || rrule2->dfs_cac_ms)
-				chan->dfs_cac_ms = max_t(अचिन्हित पूर्णांक,
+			if (rrule1->dfs_cac_ms || rrule2->dfs_cac_ms)
+				chan->dfs_cac_ms = max_t(unsigned int,
 							 rrule1->dfs_cac_ms,
 							 rrule2->dfs_cac_ms);
-		पूर्ण
+		}
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	chan->dfs_state = NL80211_DFS_USABLE;
-	chan->dfs_state_entered = jअगरfies;
+	chan->dfs_state_entered = jiffies;
 
 	chan->beacon_found = false;
 	chan->flags = flags | bw_flags1 | bw_flags2 |
-		      map_regकरोm_flags(rrule1->flags) |
-		      map_regकरोm_flags(rrule2->flags);
+		      map_regdom_flags(rrule1->flags) |
+		      map_regdom_flags(rrule2->flags);
 
-	/* reg_rule_to_chan_bw_flags may क्रमbids 10 and क्रमbids 20 MHz
-	 * (otherwise no adj. rule हाल), recheck thereक्रमe
+	/* reg_rule_to_chan_bw_flags may forbids 10 and forbids 20 MHz
+	 * (otherwise no adj. rule case), recheck therefore
 	 */
-	अगर (cfg80211_करोes_bw_fit_range(comb_range,
+	if (cfg80211_does_bw_fit_range(comb_range,
 				       ieee80211_channel_to_khz(chan),
 				       MHZ_TO_KHZ(10)))
 		chan->flags &= ~IEEE80211_CHAN_NO_10MHZ;
-	अगर (cfg80211_करोes_bw_fit_range(comb_range,
+	if (cfg80211_does_bw_fit_range(comb_range,
 				       ieee80211_channel_to_khz(chan),
 				       MHZ_TO_KHZ(20)))
 		chan->flags &= ~IEEE80211_CHAN_NO_20MHZ;
 
 	chan->max_antenna_gain =
-		min_t(पूर्णांक, chan->orig_mag,
-		      min_t(पूर्णांक,
-			    MBI_TO_DBI(घातer_rule1->max_antenna_gain),
-			    MBI_TO_DBI(घातer_rule2->max_antenna_gain)));
-	chan->max_reg_घातer = min_t(पूर्णांक,
-				    MBM_TO_DBM(घातer_rule1->max_eirp),
-				    MBM_TO_DBM(घातer_rule2->max_eirp));
+		min_t(int, chan->orig_mag,
+		      min_t(int,
+			    MBI_TO_DBI(power_rule1->max_antenna_gain),
+			    MBI_TO_DBI(power_rule2->max_antenna_gain)));
+	chan->max_reg_power = min_t(int,
+				    MBM_TO_DBM(power_rule1->max_eirp),
+				    MBM_TO_DBM(power_rule2->max_eirp));
 
-	अगर (chan->flags & IEEE80211_CHAN_RADAR) अणु
-		अगर (rrule1->dfs_cac_ms || rrule2->dfs_cac_ms)
-			chan->dfs_cac_ms = max_t(अचिन्हित पूर्णांक,
+	if (chan->flags & IEEE80211_CHAN_RADAR) {
+		if (rrule1->dfs_cac_ms || rrule2->dfs_cac_ms)
+			chan->dfs_cac_ms = max_t(unsigned int,
 						 rrule1->dfs_cac_ms,
 						 rrule2->dfs_cac_ms);
-		अन्यथा
+		else
 			chan->dfs_cac_ms = IEEE80211_DFS_MIN_CAC_TIME_MS;
-	पूर्ण
+	}
 
-	अगर (chan->orig_mpwr) अणु
+	if (chan->orig_mpwr) {
 		/* Devices that use REGULATORY_COUNTRY_IE_FOLLOW_POWER
-		 * will always follow the passed country IE घातer settings.
+		 * will always follow the passed country IE power settings.
 		 */
-		अगर (initiator == NL80211_REGDOM_SET_BY_COUNTRY_IE &&
+		if (initiator == NL80211_REGDOM_SET_BY_COUNTRY_IE &&
 		    wiphy->regulatory_flags & REGULATORY_COUNTRY_IE_FOLLOW_POWER)
-			chan->max_घातer = chan->max_reg_घातer;
-		अन्यथा
-			chan->max_घातer = min(chan->orig_mpwr,
-					      chan->max_reg_घातer);
-	पूर्ण अन्यथा अणु
-		chan->max_घातer = chan->max_reg_घातer;
-	पूर्ण
-पूर्ण
+			chan->max_power = chan->max_reg_power;
+		else
+			chan->max_power = min(chan->orig_mpwr,
+					      chan->max_reg_power);
+	} else {
+		chan->max_power = chan->max_reg_power;
+	}
+}
 
 /* Note that right now we assume the desired channel bandwidth
- * is always 20 MHz क्रम each inभागidual channel (HT40 uses 20 MHz
+ * is always 20 MHz for each individual channel (HT40 uses 20 MHz
  * per channel, the primary and the extension channel).
  */
-अटल व्योम handle_channel(काष्ठा wiphy *wiphy,
-			   क्रमागत nl80211_reg_initiator initiator,
-			   काष्ठा ieee80211_channel *chan)
-अणु
-	स्थिर u32 orig_chan_freq = ieee80211_channel_to_khz(chan);
-	काष्ठा regulatory_request *lr = get_last_request();
-	काष्ठा wiphy *request_wiphy = wiphy_idx_to_wiphy(lr->wiphy_idx);
-	स्थिर काष्ठा ieee80211_reg_rule *rrule = शून्य;
-	स्थिर काष्ठा ieee80211_reg_rule *rrule1 = शून्य;
-	स्थिर काष्ठा ieee80211_reg_rule *rrule2 = शून्य;
+static void handle_channel(struct wiphy *wiphy,
+			   enum nl80211_reg_initiator initiator,
+			   struct ieee80211_channel *chan)
+{
+	const u32 orig_chan_freq = ieee80211_channel_to_khz(chan);
+	struct regulatory_request *lr = get_last_request();
+	struct wiphy *request_wiphy = wiphy_idx_to_wiphy(lr->wiphy_idx);
+	const struct ieee80211_reg_rule *rrule = NULL;
+	const struct ieee80211_reg_rule *rrule1 = NULL;
+	const struct ieee80211_reg_rule *rrule2 = NULL;
 
 	u32 flags = chan->orig_flags;
 
 	rrule = freq_reg_info(wiphy, orig_chan_freq);
-	अगर (IS_ERR(rrule)) अणु
-		/* check क्रम adjacent match, thereक्रमe get rules क्रम
+	if (IS_ERR(rrule)) {
+		/* check for adjacent match, therefore get rules for
 		 * chan - 20 MHz and chan + 20 MHz and test
-		 * अगर reg rules are adjacent
+		 * if reg rules are adjacent
 		 */
 		rrule1 = freq_reg_info(wiphy,
 				       orig_chan_freq - MHZ_TO_KHZ(20));
 		rrule2 = freq_reg_info(wiphy,
 				       orig_chan_freq + MHZ_TO_KHZ(20));
-		अगर (!IS_ERR(rrule1) && !IS_ERR(rrule2)) अणु
-			काष्ठा ieee80211_freq_range comb_range;
+		if (!IS_ERR(rrule1) && !IS_ERR(rrule2)) {
+			struct ieee80211_freq_range comb_range;
 
-			अगर (rrule1->freq_range.end_freq_khz !=
+			if (rrule1->freq_range.end_freq_khz !=
 			    rrule2->freq_range.start_freq_khz)
-				जाओ disable_chan;
+				goto disable_chan;
 
 			comb_range.start_freq_khz =
 				rrule1->freq_range.start_freq_khz;
@@ -1976,1143 +1975,1143 @@ EXPORT_SYMBOL(reg_initiator_name);
 				      rrule1->freq_range.max_bandwidth_khz,
 				      rrule2->freq_range.max_bandwidth_khz);
 
-			अगर (!cfg80211_करोes_bw_fit_range(&comb_range,
+			if (!cfg80211_does_bw_fit_range(&comb_range,
 							orig_chan_freq,
 							MHZ_TO_KHZ(20)))
-				जाओ disable_chan;
+				goto disable_chan;
 
 			handle_channel_adjacent_rules(wiphy, initiator, chan,
 						      flags, lr, request_wiphy,
 						      rrule1, rrule2,
 						      &comb_range);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 disable_chan:
-		/* We will disable all channels that करो not match our
-		 * received regulatory rule unless the hपूर्णांक is coming
-		 * from a Country IE and the Country IE had no inक्रमmation
-		 * about a band. The IEEE 802.11 spec allows क्रम an AP
+		/* We will disable all channels that do not match our
+		 * received regulatory rule unless the hint is coming
+		 * from a Country IE and the Country IE had no information
+		 * about a band. The IEEE 802.11 spec allows for an AP
 		 * to send only a subset of the regulatory rules allowed,
 		 * so an AP in the US that only supports 2.4 GHz may only send
-		 * a country IE with inक्रमmation क्रम the 2.4 GHz band
-		 * जबतक 5 GHz is still supported.
+		 * a country IE with information for the 2.4 GHz band
+		 * while 5 GHz is still supported.
 		 */
-		अगर (initiator == NL80211_REGDOM_SET_BY_COUNTRY_IE &&
-		    PTR_ERR(rrule) == -दुस्फल)
-			वापस;
+		if (initiator == NL80211_REGDOM_SET_BY_COUNTRY_IE &&
+		    PTR_ERR(rrule) == -ERANGE)
+			return;
 
-		अगर (lr->initiator == NL80211_REGDOM_SET_BY_DRIVER &&
+		if (lr->initiator == NL80211_REGDOM_SET_BY_DRIVER &&
 		    request_wiphy && request_wiphy == wiphy &&
-		    request_wiphy->regulatory_flags & REGULATORY_STRICT_REG) अणु
+		    request_wiphy->regulatory_flags & REGULATORY_STRICT_REG) {
 			pr_debug("Disabling freq %d.%03d MHz for good\n",
 				 chan->center_freq, chan->freq_offset);
 			chan->orig_flags |= IEEE80211_CHAN_DISABLED;
 			chan->flags = chan->orig_flags;
-		पूर्ण अन्यथा अणु
+		} else {
 			pr_debug("Disabling freq %d.%03d MHz\n",
 				 chan->center_freq, chan->freq_offset);
 			chan->flags |= IEEE80211_CHAN_DISABLED;
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 
 	handle_channel_single_rule(wiphy, initiator, chan, flags, lr,
 				   request_wiphy, rrule);
-पूर्ण
+}
 
-अटल व्योम handle_band(काष्ठा wiphy *wiphy,
-			क्रमागत nl80211_reg_initiator initiator,
-			काष्ठा ieee80211_supported_band *sband)
-अणु
-	अचिन्हित पूर्णांक i;
+static void handle_band(struct wiphy *wiphy,
+			enum nl80211_reg_initiator initiator,
+			struct ieee80211_supported_band *sband)
+{
+	unsigned int i;
 
-	अगर (!sband)
-		वापस;
+	if (!sband)
+		return;
 
-	क्रम (i = 0; i < sband->n_channels; i++)
+	for (i = 0; i < sband->n_channels; i++)
 		handle_channel(wiphy, initiator, &sband->channels[i]);
-पूर्ण
+}
 
-अटल bool reg_request_cell_base(काष्ठा regulatory_request *request)
-अणु
-	अगर (request->initiator != NL80211_REGDOM_SET_BY_USER)
-		वापस false;
-	वापस request->user_reg_hपूर्णांक_type == NL80211_USER_REG_HINT_CELL_BASE;
-पूर्ण
+static bool reg_request_cell_base(struct regulatory_request *request)
+{
+	if (request->initiator != NL80211_REGDOM_SET_BY_USER)
+		return false;
+	return request->user_reg_hint_type == NL80211_USER_REG_HINT_CELL_BASE;
+}
 
-bool reg_last_request_cell_base(व्योम)
-अणु
-	वापस reg_request_cell_base(get_last_request());
-पूर्ण
+bool reg_last_request_cell_base(void)
+{
+	return reg_request_cell_base(get_last_request());
+}
 
-#अगर_घोषित CONFIG_CFG80211_REG_CELLULAR_HINTS
-/* Core specअगरic check */
-अटल क्रमागत reg_request_treaपंचांगent
-reg_ignore_cell_hपूर्णांक(काष्ठा regulatory_request *pending_request)
-अणु
-	काष्ठा regulatory_request *lr = get_last_request();
+#ifdef CONFIG_CFG80211_REG_CELLULAR_HINTS
+/* Core specific check */
+static enum reg_request_treatment
+reg_ignore_cell_hint(struct regulatory_request *pending_request)
+{
+	struct regulatory_request *lr = get_last_request();
 
-	अगर (!reg_num_devs_support_basehपूर्णांक)
-		वापस REG_REQ_IGNORE;
+	if (!reg_num_devs_support_basehint)
+		return REG_REQ_IGNORE;
 
-	अगर (reg_request_cell_base(lr) &&
-	    !regकरोm_changes(pending_request->alpha2))
-		वापस REG_REQ_ALREADY_SET;
+	if (reg_request_cell_base(lr) &&
+	    !regdom_changes(pending_request->alpha2))
+		return REG_REQ_ALREADY_SET;
 
-	वापस REG_REQ_OK;
-पूर्ण
+	return REG_REQ_OK;
+}
 
-/* Device specअगरic check */
-अटल bool reg_dev_ignore_cell_hपूर्णांक(काष्ठा wiphy *wiphy)
-अणु
-	वापस !(wiphy->features & NL80211_FEATURE_CELL_BASE_REG_HINTS);
-पूर्ण
-#अन्यथा
-अटल क्रमागत reg_request_treaपंचांगent
-reg_ignore_cell_hपूर्णांक(काष्ठा regulatory_request *pending_request)
-अणु
-	वापस REG_REQ_IGNORE;
-पूर्ण
+/* Device specific check */
+static bool reg_dev_ignore_cell_hint(struct wiphy *wiphy)
+{
+	return !(wiphy->features & NL80211_FEATURE_CELL_BASE_REG_HINTS);
+}
+#else
+static enum reg_request_treatment
+reg_ignore_cell_hint(struct regulatory_request *pending_request)
+{
+	return REG_REQ_IGNORE;
+}
 
-अटल bool reg_dev_ignore_cell_hपूर्णांक(काष्ठा wiphy *wiphy)
-अणु
-	वापस true;
-पूर्ण
-#पूर्ण_अगर
+static bool reg_dev_ignore_cell_hint(struct wiphy *wiphy)
+{
+	return true;
+}
+#endif
 
-अटल bool wiphy_strict_alpha2_regd(काष्ठा wiphy *wiphy)
-अणु
-	अगर (wiphy->regulatory_flags & REGULATORY_STRICT_REG &&
+static bool wiphy_strict_alpha2_regd(struct wiphy *wiphy)
+{
+	if (wiphy->regulatory_flags & REGULATORY_STRICT_REG &&
 	    !(wiphy->regulatory_flags & REGULATORY_CUSTOM_REG))
-		वापस true;
-	वापस false;
-पूर्ण
+		return true;
+	return false;
+}
 
-अटल bool ignore_reg_update(काष्ठा wiphy *wiphy,
-			      क्रमागत nl80211_reg_initiator initiator)
-अणु
-	काष्ठा regulatory_request *lr = get_last_request();
+static bool ignore_reg_update(struct wiphy *wiphy,
+			      enum nl80211_reg_initiator initiator)
+{
+	struct regulatory_request *lr = get_last_request();
 
-	अगर (wiphy->regulatory_flags & REGULATORY_WIPHY_SELF_MANAGED)
-		वापस true;
+	if (wiphy->regulatory_flags & REGULATORY_WIPHY_SELF_MANAGED)
+		return true;
 
-	अगर (!lr) अणु
+	if (!lr) {
 		pr_debug("Ignoring regulatory request set by %s since last_request is not set\n",
 			 reg_initiator_name(initiator));
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	अगर (initiator == NL80211_REGDOM_SET_BY_CORE &&
-	    wiphy->regulatory_flags & REGULATORY_CUSTOM_REG) अणु
+	if (initiator == NL80211_REGDOM_SET_BY_CORE &&
+	    wiphy->regulatory_flags & REGULATORY_CUSTOM_REG) {
 		pr_debug("Ignoring regulatory request set by %s since the driver uses its own custom regulatory domain\n",
 			 reg_initiator_name(initiator));
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
 	/*
 	 * wiphy->regd will be set once the device has its own
-	 * desired regulatory करोमुख्य set
+	 * desired regulatory domain set
 	 */
-	अगर (wiphy_strict_alpha2_regd(wiphy) && !wiphy->regd &&
+	if (wiphy_strict_alpha2_regd(wiphy) && !wiphy->regd &&
 	    initiator != NL80211_REGDOM_SET_BY_COUNTRY_IE &&
-	    !is_world_regकरोm(lr->alpha2)) अणु
+	    !is_world_regdom(lr->alpha2)) {
 		pr_debug("Ignoring regulatory request set by %s since the driver requires its own regulatory domain to be set first\n",
 			 reg_initiator_name(initiator));
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	अगर (reg_request_cell_base(lr))
-		वापस reg_dev_ignore_cell_hपूर्णांक(wiphy);
+	if (reg_request_cell_base(lr))
+		return reg_dev_ignore_cell_hint(wiphy);
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool reg_is_world_roaming(काष्ठा wiphy *wiphy)
-अणु
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *cr = get_cfg80211_regकरोm();
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *wr = get_wiphy_regकरोm(wiphy);
-	काष्ठा regulatory_request *lr = get_last_request();
+static bool reg_is_world_roaming(struct wiphy *wiphy)
+{
+	const struct ieee80211_regdomain *cr = get_cfg80211_regdom();
+	const struct ieee80211_regdomain *wr = get_wiphy_regdom(wiphy);
+	struct regulatory_request *lr = get_last_request();
 
-	अगर (is_world_regकरोm(cr->alpha2) || (wr && is_world_regकरोm(wr->alpha2)))
-		वापस true;
+	if (is_world_regdom(cr->alpha2) || (wr && is_world_regdom(wr->alpha2)))
+		return true;
 
-	अगर (lr && lr->initiator != NL80211_REGDOM_SET_BY_COUNTRY_IE &&
+	if (lr && lr->initiator != NL80211_REGDOM_SET_BY_COUNTRY_IE &&
 	    wiphy->regulatory_flags & REGULATORY_CUSTOM_REG)
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम handle_reg_beacon(काष्ठा wiphy *wiphy, अचिन्हित पूर्णांक chan_idx,
-			      काष्ठा reg_beacon *reg_beacon)
-अणु
-	काष्ठा ieee80211_supported_band *sband;
-	काष्ठा ieee80211_channel *chan;
+static void handle_reg_beacon(struct wiphy *wiphy, unsigned int chan_idx,
+			      struct reg_beacon *reg_beacon)
+{
+	struct ieee80211_supported_band *sband;
+	struct ieee80211_channel *chan;
 	bool channel_changed = false;
-	काष्ठा ieee80211_channel chan_beक्रमe;
+	struct ieee80211_channel chan_before;
 
 	sband = wiphy->bands[reg_beacon->chan.band];
 	chan = &sband->channels[chan_idx];
 
-	अगर (likely(!ieee80211_channel_equal(chan, &reg_beacon->chan)))
-		वापस;
+	if (likely(!ieee80211_channel_equal(chan, &reg_beacon->chan)))
+		return;
 
-	अगर (chan->beacon_found)
-		वापस;
+	if (chan->beacon_found)
+		return;
 
 	chan->beacon_found = true;
 
-	अगर (!reg_is_world_roaming(wiphy))
-		वापस;
+	if (!reg_is_world_roaming(wiphy))
+		return;
 
-	अगर (wiphy->regulatory_flags & REGULATORY_DISABLE_BEACON_HINTS)
-		वापस;
+	if (wiphy->regulatory_flags & REGULATORY_DISABLE_BEACON_HINTS)
+		return;
 
-	chan_beक्रमe = *chan;
+	chan_before = *chan;
 
-	अगर (chan->flags & IEEE80211_CHAN_NO_IR) अणु
+	if (chan->flags & IEEE80211_CHAN_NO_IR) {
 		chan->flags &= ~IEEE80211_CHAN_NO_IR;
 		channel_changed = true;
-	पूर्ण
+	}
 
-	अगर (channel_changed)
-		nl80211_send_beacon_hपूर्णांक_event(wiphy, &chan_beक्रमe, chan);
-पूर्ण
+	if (channel_changed)
+		nl80211_send_beacon_hint_event(wiphy, &chan_before, chan);
+}
 
 /*
  * Called when a scan on a wiphy finds a beacon on
  * new channel
  */
-अटल व्योम wiphy_update_new_beacon(काष्ठा wiphy *wiphy,
-				    काष्ठा reg_beacon *reg_beacon)
-अणु
-	अचिन्हित पूर्णांक i;
-	काष्ठा ieee80211_supported_band *sband;
+static void wiphy_update_new_beacon(struct wiphy *wiphy,
+				    struct reg_beacon *reg_beacon)
+{
+	unsigned int i;
+	struct ieee80211_supported_band *sband;
 
-	अगर (!wiphy->bands[reg_beacon->chan.band])
-		वापस;
+	if (!wiphy->bands[reg_beacon->chan.band])
+		return;
 
 	sband = wiphy->bands[reg_beacon->chan.band];
 
-	क्रम (i = 0; i < sband->n_channels; i++)
+	for (i = 0; i < sband->n_channels; i++)
 		handle_reg_beacon(wiphy, i, reg_beacon);
-पूर्ण
+}
 
 /*
  * Called upon reg changes or a new wiphy is added
  */
-अटल व्योम wiphy_update_beacon_reg(काष्ठा wiphy *wiphy)
-अणु
-	अचिन्हित पूर्णांक i;
-	काष्ठा ieee80211_supported_band *sband;
-	काष्ठा reg_beacon *reg_beacon;
+static void wiphy_update_beacon_reg(struct wiphy *wiphy)
+{
+	unsigned int i;
+	struct ieee80211_supported_band *sband;
+	struct reg_beacon *reg_beacon;
 
-	list_क्रम_each_entry(reg_beacon, &reg_beacon_list, list) अणु
-		अगर (!wiphy->bands[reg_beacon->chan.band])
-			जारी;
+	list_for_each_entry(reg_beacon, &reg_beacon_list, list) {
+		if (!wiphy->bands[reg_beacon->chan.band])
+			continue;
 		sband = wiphy->bands[reg_beacon->chan.band];
-		क्रम (i = 0; i < sband->n_channels; i++)
+		for (i = 0; i < sband->n_channels; i++)
 			handle_reg_beacon(wiphy, i, reg_beacon);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Reap the advantages of previously found beacons */
-अटल व्योम reg_process_beacons(काष्ठा wiphy *wiphy)
-अणु
+static void reg_process_beacons(struct wiphy *wiphy)
+{
 	/*
 	 * Means we are just firing up cfg80211, so no beacons would
 	 * have been processed yet.
 	 */
-	अगर (!last_request)
-		वापस;
+	if (!last_request)
+		return;
 	wiphy_update_beacon_reg(wiphy);
-पूर्ण
+}
 
-अटल bool is_ht40_allowed(काष्ठा ieee80211_channel *chan)
-अणु
-	अगर (!chan)
-		वापस false;
-	अगर (chan->flags & IEEE80211_CHAN_DISABLED)
-		वापस false;
+static bool is_ht40_allowed(struct ieee80211_channel *chan)
+{
+	if (!chan)
+		return false;
+	if (chan->flags & IEEE80211_CHAN_DISABLED)
+		return false;
 	/* This would happen when regulatory rules disallow HT40 completely */
-	अगर ((chan->flags & IEEE80211_CHAN_NO_HT40) == IEEE80211_CHAN_NO_HT40)
-		वापस false;
-	वापस true;
-पूर्ण
+	if ((chan->flags & IEEE80211_CHAN_NO_HT40) == IEEE80211_CHAN_NO_HT40)
+		return false;
+	return true;
+}
 
-अटल व्योम reg_process_ht_flags_channel(काष्ठा wiphy *wiphy,
-					 काष्ठा ieee80211_channel *channel)
-अणु
-	काष्ठा ieee80211_supported_band *sband = wiphy->bands[channel->band];
-	काष्ठा ieee80211_channel *channel_beक्रमe = शून्य, *channel_after = शून्य;
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *regd;
-	अचिन्हित पूर्णांक i;
+static void reg_process_ht_flags_channel(struct wiphy *wiphy,
+					 struct ieee80211_channel *channel)
+{
+	struct ieee80211_supported_band *sband = wiphy->bands[channel->band];
+	struct ieee80211_channel *channel_before = NULL, *channel_after = NULL;
+	const struct ieee80211_regdomain *regd;
+	unsigned int i;
 	u32 flags;
 
-	अगर (!is_ht40_allowed(channel)) अणु
+	if (!is_ht40_allowed(channel)) {
 		channel->flags |= IEEE80211_CHAN_NO_HT40;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * We need to ensure the extension channels exist to
 	 * be able to use HT40- or HT40+, this finds them (or not)
 	 */
-	क्रम (i = 0; i < sband->n_channels; i++) अणु
-		काष्ठा ieee80211_channel *c = &sband->channels[i];
+	for (i = 0; i < sband->n_channels; i++) {
+		struct ieee80211_channel *c = &sband->channels[i];
 
-		अगर (c->center_freq == (channel->center_freq - 20))
-			channel_beक्रमe = c;
-		अगर (c->center_freq == (channel->center_freq + 20))
+		if (c->center_freq == (channel->center_freq - 20))
+			channel_before = c;
+		if (c->center_freq == (channel->center_freq + 20))
 			channel_after = c;
-	पूर्ण
+	}
 
 	flags = 0;
-	regd = get_wiphy_regकरोm(wiphy);
-	अगर (regd) अणु
-		स्थिर काष्ठा ieee80211_reg_rule *reg_rule =
+	regd = get_wiphy_regdom(wiphy);
+	if (regd) {
+		const struct ieee80211_reg_rule *reg_rule =
 			freq_reg_info_regd(MHZ_TO_KHZ(channel->center_freq),
 					   regd, MHZ_TO_KHZ(20));
 
-		अगर (!IS_ERR(reg_rule))
+		if (!IS_ERR(reg_rule))
 			flags = reg_rule->flags;
-	पूर्ण
+	}
 
 	/*
 	 * Please note that this assumes target bandwidth is 20 MHz,
-	 * अगर that ever changes we also need to change the below logic
+	 * if that ever changes we also need to change the below logic
 	 * to include that as well.
 	 */
-	अगर (!is_ht40_allowed(channel_beक्रमe) ||
+	if (!is_ht40_allowed(channel_before) ||
 	    flags & NL80211_RRF_NO_HT40MINUS)
 		channel->flags |= IEEE80211_CHAN_NO_HT40MINUS;
-	अन्यथा
+	else
 		channel->flags &= ~IEEE80211_CHAN_NO_HT40MINUS;
 
-	अगर (!is_ht40_allowed(channel_after) ||
+	if (!is_ht40_allowed(channel_after) ||
 	    flags & NL80211_RRF_NO_HT40PLUS)
 		channel->flags |= IEEE80211_CHAN_NO_HT40PLUS;
-	अन्यथा
+	else
 		channel->flags &= ~IEEE80211_CHAN_NO_HT40PLUS;
-पूर्ण
+}
 
-अटल व्योम reg_process_ht_flags_band(काष्ठा wiphy *wiphy,
-				      काष्ठा ieee80211_supported_band *sband)
-अणु
-	अचिन्हित पूर्णांक i;
+static void reg_process_ht_flags_band(struct wiphy *wiphy,
+				      struct ieee80211_supported_band *sband)
+{
+	unsigned int i;
 
-	अगर (!sband)
-		वापस;
+	if (!sband)
+		return;
 
-	क्रम (i = 0; i < sband->n_channels; i++)
+	for (i = 0; i < sband->n_channels; i++)
 		reg_process_ht_flags_channel(wiphy, &sband->channels[i]);
-पूर्ण
+}
 
-अटल व्योम reg_process_ht_flags(काष्ठा wiphy *wiphy)
-अणु
-	क्रमागत nl80211_band band;
+static void reg_process_ht_flags(struct wiphy *wiphy)
+{
+	enum nl80211_band band;
 
-	अगर (!wiphy)
-		वापस;
+	if (!wiphy)
+		return;
 
-	क्रम (band = 0; band < NUM_NL80211_BANDS; band++)
+	for (band = 0; band < NUM_NL80211_BANDS; band++)
 		reg_process_ht_flags_band(wiphy, wiphy->bands[band]);
-पूर्ण
+}
 
-अटल व्योम reg_call_notअगरier(काष्ठा wiphy *wiphy,
-			      काष्ठा regulatory_request *request)
-अणु
-	अगर (wiphy->reg_notअगरier)
-		wiphy->reg_notअगरier(wiphy, request);
-पूर्ण
+static void reg_call_notifier(struct wiphy *wiphy,
+			      struct regulatory_request *request)
+{
+	if (wiphy->reg_notifier)
+		wiphy->reg_notifier(wiphy, request);
+}
 
-अटल bool reg_wdev_chan_valid(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev)
-अणु
-	काष्ठा cfg80211_chan_def chandef = अणुपूर्ण;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wiphy);
-	क्रमागत nl80211_अगरtype अगरtype;
+static bool reg_wdev_chan_valid(struct wiphy *wiphy, struct wireless_dev *wdev)
+{
+	struct cfg80211_chan_def chandef = {};
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wiphy);
+	enum nl80211_iftype iftype;
 
 	wdev_lock(wdev);
-	अगरtype = wdev->अगरtype;
+	iftype = wdev->iftype;
 
-	/* make sure the पूर्णांकerface is active */
-	अगर (!wdev->netdev || !netअगर_running(wdev->netdev))
-		जाओ wdev_inactive_unlock;
+	/* make sure the interface is active */
+	if (!wdev->netdev || !netif_running(wdev->netdev))
+		goto wdev_inactive_unlock;
 
-	चयन (अगरtype) अणु
-	हाल NL80211_IFTYPE_AP:
-	हाल NL80211_IFTYPE_P2P_GO:
-		अगर (!wdev->beacon_पूर्णांकerval)
-			जाओ wdev_inactive_unlock;
+	switch (iftype) {
+	case NL80211_IFTYPE_AP:
+	case NL80211_IFTYPE_P2P_GO:
+		if (!wdev->beacon_interval)
+			goto wdev_inactive_unlock;
 		chandef = wdev->chandef;
-		अवरोध;
-	हाल NL80211_IFTYPE_ADHOC:
-		अगर (!wdev->ssid_len)
-			जाओ wdev_inactive_unlock;
+		break;
+	case NL80211_IFTYPE_ADHOC:
+		if (!wdev->ssid_len)
+			goto wdev_inactive_unlock;
 		chandef = wdev->chandef;
-		अवरोध;
-	हाल NL80211_IFTYPE_STATION:
-	हाल NL80211_IFTYPE_P2P_CLIENT:
-		अगर (!wdev->current_bss ||
+		break;
+	case NL80211_IFTYPE_STATION:
+	case NL80211_IFTYPE_P2P_CLIENT:
+		if (!wdev->current_bss ||
 		    !wdev->current_bss->pub.channel)
-			जाओ wdev_inactive_unlock;
+			goto wdev_inactive_unlock;
 
-		अगर (!rdev->ops->get_channel ||
+		if (!rdev->ops->get_channel ||
 		    rdev_get_channel(rdev, wdev, &chandef))
 			cfg80211_chandef_create(&chandef,
 						wdev->current_bss->pub.channel,
 						NL80211_CHAN_NO_HT);
-		अवरोध;
-	हाल NL80211_IFTYPE_MONITOR:
-	हाल NL80211_IFTYPE_AP_VLAN:
-	हाल NL80211_IFTYPE_P2P_DEVICE:
-		/* no enक्रमcement required */
-		अवरोध;
-	शेष:
-		/* others not implemented क्रम now */
+		break;
+	case NL80211_IFTYPE_MONITOR:
+	case NL80211_IFTYPE_AP_VLAN:
+	case NL80211_IFTYPE_P2P_DEVICE:
+		/* no enforcement required */
+		break;
+	default:
+		/* others not implemented for now */
 		WARN_ON(1);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	wdev_unlock(wdev);
 
-	चयन (अगरtype) अणु
-	हाल NL80211_IFTYPE_AP:
-	हाल NL80211_IFTYPE_P2P_GO:
-	हाल NL80211_IFTYPE_ADHOC:
-		वापस cfg80211_reg_can_beacon_relax(wiphy, &chandef, अगरtype);
-	हाल NL80211_IFTYPE_STATION:
-	हाल NL80211_IFTYPE_P2P_CLIENT:
-		वापस cfg80211_chandef_usable(wiphy, &chandef,
+	switch (iftype) {
+	case NL80211_IFTYPE_AP:
+	case NL80211_IFTYPE_P2P_GO:
+	case NL80211_IFTYPE_ADHOC:
+		return cfg80211_reg_can_beacon_relax(wiphy, &chandef, iftype);
+	case NL80211_IFTYPE_STATION:
+	case NL80211_IFTYPE_P2P_CLIENT:
+		return cfg80211_chandef_usable(wiphy, &chandef,
 					       IEEE80211_CHAN_DISABLED);
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	वापस true;
+	return true;
 
 wdev_inactive_unlock:
 	wdev_unlock(wdev);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम reg_leave_invalid_chans(काष्ठा wiphy *wiphy)
-अणु
-	काष्ठा wireless_dev *wdev;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wiphy);
+static void reg_leave_invalid_chans(struct wiphy *wiphy)
+{
+	struct wireless_dev *wdev;
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wiphy);
 
 	ASSERT_RTNL();
 
-	list_क्रम_each_entry(wdev, &rdev->wiphy.wdev_list, list)
-		अगर (!reg_wdev_chan_valid(wiphy, wdev))
+	list_for_each_entry(wdev, &rdev->wiphy.wdev_list, list)
+		if (!reg_wdev_chan_valid(wiphy, wdev))
 			cfg80211_leave(rdev, wdev);
-पूर्ण
+}
 
-अटल व्योम reg_check_chans_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev;
+static void reg_check_chans_work(struct work_struct *work)
+{
+	struct cfg80211_registered_device *rdev;
 
 	pr_debug("Verifying active interfaces after reg change\n");
 	rtnl_lock();
 
-	list_क्रम_each_entry(rdev, &cfg80211_rdev_list, list)
-		अगर (!(rdev->wiphy.regulatory_flags &
+	list_for_each_entry(rdev, &cfg80211_rdev_list, list)
+		if (!(rdev->wiphy.regulatory_flags &
 		      REGULATORY_IGNORE_STALE_KICKOFF))
 			reg_leave_invalid_chans(&rdev->wiphy);
 
 	rtnl_unlock();
-पूर्ण
+}
 
-अटल व्योम reg_check_channels(व्योम)
-अणु
+static void reg_check_channels(void)
+{
 	/*
-	 * Give usermode a chance to करो something nicer (move to another
-	 * channel, orderly disconnection), beक्रमe क्रमcing a disconnection.
+	 * Give usermode a chance to do something nicer (move to another
+	 * channel, orderly disconnection), before forcing a disconnection.
 	 */
-	mod_delayed_work(प्रणाली_घातer_efficient_wq,
+	mod_delayed_work(system_power_efficient_wq,
 			 &reg_check_chans,
-			 msecs_to_jअगरfies(REG_ENFORCE_GRACE_MS));
-पूर्ण
+			 msecs_to_jiffies(REG_ENFORCE_GRACE_MS));
+}
 
-अटल व्योम wiphy_update_regulatory(काष्ठा wiphy *wiphy,
-				    क्रमागत nl80211_reg_initiator initiator)
-अणु
-	क्रमागत nl80211_band band;
-	काष्ठा regulatory_request *lr = get_last_request();
+static void wiphy_update_regulatory(struct wiphy *wiphy,
+				    enum nl80211_reg_initiator initiator)
+{
+	enum nl80211_band band;
+	struct regulatory_request *lr = get_last_request();
 
-	अगर (ignore_reg_update(wiphy, initiator)) अणु
+	if (ignore_reg_update(wiphy, initiator)) {
 		/*
-		 * Regulatory updates set by CORE are ignored क्रम custom
-		 * regulatory cards. Let us notअगरy the changes to the driver,
-		 * as some drivers used this to restore its orig_* reg करोमुख्य.
+		 * Regulatory updates set by CORE are ignored for custom
+		 * regulatory cards. Let us notify the changes to the driver,
+		 * as some drivers used this to restore its orig_* reg domain.
 		 */
-		अगर (initiator == NL80211_REGDOM_SET_BY_CORE &&
+		if (initiator == NL80211_REGDOM_SET_BY_CORE &&
 		    wiphy->regulatory_flags & REGULATORY_CUSTOM_REG &&
 		    !(wiphy->regulatory_flags &
 		      REGULATORY_WIPHY_SELF_MANAGED))
-			reg_call_notअगरier(wiphy, lr);
-		वापस;
-	पूर्ण
+			reg_call_notifier(wiphy, lr);
+		return;
+	}
 
-	lr->dfs_region = get_cfg80211_regकरोm()->dfs_region;
+	lr->dfs_region = get_cfg80211_regdom()->dfs_region;
 
-	क्रम (band = 0; band < NUM_NL80211_BANDS; band++)
+	for (band = 0; band < NUM_NL80211_BANDS; band++)
 		handle_band(wiphy, initiator, wiphy->bands[band]);
 
 	reg_process_beacons(wiphy);
 	reg_process_ht_flags(wiphy);
-	reg_call_notअगरier(wiphy, lr);
-पूर्ण
+	reg_call_notifier(wiphy, lr);
+}
 
-अटल व्योम update_all_wiphy_regulatory(क्रमागत nl80211_reg_initiator initiator)
-अणु
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev;
-	काष्ठा wiphy *wiphy;
+static void update_all_wiphy_regulatory(enum nl80211_reg_initiator initiator)
+{
+	struct cfg80211_registered_device *rdev;
+	struct wiphy *wiphy;
 
 	ASSERT_RTNL();
 
-	list_क्रम_each_entry(rdev, &cfg80211_rdev_list, list) अणु
+	list_for_each_entry(rdev, &cfg80211_rdev_list, list) {
 		wiphy = &rdev->wiphy;
 		wiphy_update_regulatory(wiphy, initiator);
-	पूर्ण
+	}
 
 	reg_check_channels();
-पूर्ण
+}
 
-अटल व्योम handle_channel_custom(काष्ठा wiphy *wiphy,
-				  काष्ठा ieee80211_channel *chan,
-				  स्थिर काष्ठा ieee80211_regकरोमुख्य *regd,
+static void handle_channel_custom(struct wiphy *wiphy,
+				  struct ieee80211_channel *chan,
+				  const struct ieee80211_regdomain *regd,
 				  u32 min_bw)
-अणु
+{
 	u32 bw_flags = 0;
-	स्थिर काष्ठा ieee80211_reg_rule *reg_rule = शून्य;
-	स्थिर काष्ठा ieee80211_घातer_rule *घातer_rule = शून्य;
+	const struct ieee80211_reg_rule *reg_rule = NULL;
+	const struct ieee80211_power_rule *power_rule = NULL;
 	u32 bw, center_freq_khz;
 
 	center_freq_khz = ieee80211_channel_to_khz(chan);
-	क्रम (bw = MHZ_TO_KHZ(20); bw >= min_bw; bw = bw / 2) अणु
+	for (bw = MHZ_TO_KHZ(20); bw >= min_bw; bw = bw / 2) {
 		reg_rule = freq_reg_info_regd(center_freq_khz, regd, bw);
-		अगर (!IS_ERR(reg_rule))
-			अवरोध;
-	पूर्ण
+		if (!IS_ERR(reg_rule))
+			break;
+	}
 
-	अगर (IS_ERR_OR_शून्य(reg_rule)) अणु
+	if (IS_ERR_OR_NULL(reg_rule)) {
 		pr_debug("Disabling freq %d.%03d MHz as custom regd has no rule that fits it\n",
 			 chan->center_freq, chan->freq_offset);
-		अगर (wiphy->regulatory_flags & REGULATORY_WIPHY_SELF_MANAGED) अणु
+		if (wiphy->regulatory_flags & REGULATORY_WIPHY_SELF_MANAGED) {
 			chan->flags |= IEEE80211_CHAN_DISABLED;
-		पूर्ण अन्यथा अणु
+		} else {
 			chan->orig_flags |= IEEE80211_CHAN_DISABLED;
 			chan->flags = chan->orig_flags;
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 
-	घातer_rule = &reg_rule->घातer_rule;
+	power_rule = &reg_rule->power_rule;
 	bw_flags = reg_rule_to_chan_bw_flags(regd, reg_rule, chan);
 
-	chan->dfs_state_entered = jअगरfies;
+	chan->dfs_state_entered = jiffies;
 	chan->dfs_state = NL80211_DFS_USABLE;
 
 	chan->beacon_found = false;
 
-	अगर (wiphy->regulatory_flags & REGULATORY_WIPHY_SELF_MANAGED)
+	if (wiphy->regulatory_flags & REGULATORY_WIPHY_SELF_MANAGED)
 		chan->flags = chan->orig_flags | bw_flags |
-			      map_regकरोm_flags(reg_rule->flags);
-	अन्यथा
-		chan->flags |= map_regकरोm_flags(reg_rule->flags) | bw_flags;
+			      map_regdom_flags(reg_rule->flags);
+	else
+		chan->flags |= map_regdom_flags(reg_rule->flags) | bw_flags;
 
-	chan->max_antenna_gain = (पूर्णांक) MBI_TO_DBI(घातer_rule->max_antenna_gain);
-	chan->max_reg_घातer = chan->max_घातer =
-		(पूर्णांक) MBM_TO_DBM(घातer_rule->max_eirp);
+	chan->max_antenna_gain = (int) MBI_TO_DBI(power_rule->max_antenna_gain);
+	chan->max_reg_power = chan->max_power =
+		(int) MBM_TO_DBM(power_rule->max_eirp);
 
-	अगर (chan->flags & IEEE80211_CHAN_RADAR) अणु
-		अगर (reg_rule->dfs_cac_ms)
+	if (chan->flags & IEEE80211_CHAN_RADAR) {
+		if (reg_rule->dfs_cac_ms)
 			chan->dfs_cac_ms = reg_rule->dfs_cac_ms;
-		अन्यथा
+		else
 			chan->dfs_cac_ms = IEEE80211_DFS_MIN_CAC_TIME_MS;
-	पूर्ण
+	}
 
-	chan->max_घातer = chan->max_reg_घातer;
-पूर्ण
+	chan->max_power = chan->max_reg_power;
+}
 
-अटल व्योम handle_band_custom(काष्ठा wiphy *wiphy,
-			       काष्ठा ieee80211_supported_band *sband,
-			       स्थिर काष्ठा ieee80211_regकरोमुख्य *regd)
-अणु
-	अचिन्हित पूर्णांक i;
+static void handle_band_custom(struct wiphy *wiphy,
+			       struct ieee80211_supported_band *sband,
+			       const struct ieee80211_regdomain *regd)
+{
+	unsigned int i;
 
-	अगर (!sband)
-		वापस;
+	if (!sband)
+		return;
 
 	/*
 	 * We currently assume that you always want at least 20 MHz,
-	 * otherwise channel 12 might get enabled अगर this rule is
+	 * otherwise channel 12 might get enabled if this rule is
 	 * compatible to US, which permits 2402 - 2472 MHz.
 	 */
-	क्रम (i = 0; i < sband->n_channels; i++)
+	for (i = 0; i < sband->n_channels; i++)
 		handle_channel_custom(wiphy, &sband->channels[i], regd,
 				      MHZ_TO_KHZ(20));
-पूर्ण
+}
 
 /* Used by drivers prior to wiphy registration */
-व्योम wiphy_apply_custom_regulatory(काष्ठा wiphy *wiphy,
-				   स्थिर काष्ठा ieee80211_regकरोमुख्य *regd)
-अणु
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *new_regd, *पंचांगp;
-	क्रमागत nl80211_band band;
-	अचिन्हित पूर्णांक bands_set = 0;
+void wiphy_apply_custom_regulatory(struct wiphy *wiphy,
+				   const struct ieee80211_regdomain *regd)
+{
+	const struct ieee80211_regdomain *new_regd, *tmp;
+	enum nl80211_band band;
+	unsigned int bands_set = 0;
 
 	WARN(!(wiphy->regulatory_flags & REGULATORY_CUSTOM_REG),
 	     "wiphy should have REGULATORY_CUSTOM_REG\n");
 	wiphy->regulatory_flags |= REGULATORY_CUSTOM_REG;
 
-	क्रम (band = 0; band < NUM_NL80211_BANDS; band++) अणु
-		अगर (!wiphy->bands[band])
-			जारी;
+	for (band = 0; band < NUM_NL80211_BANDS; band++) {
+		if (!wiphy->bands[band])
+			continue;
 		handle_band_custom(wiphy, wiphy->bands[band], regd);
 		bands_set++;
-	पूर्ण
+	}
 
 	/*
-	 * no poपूर्णांक in calling this अगर it won't have any effect
+	 * no point in calling this if it won't have any effect
 	 * on your device's supported bands.
 	 */
 	WARN_ON(!bands_set);
 	new_regd = reg_copy_regd(regd);
-	अगर (IS_ERR(new_regd))
-		वापस;
+	if (IS_ERR(new_regd))
+		return;
 
 	rtnl_lock();
 	wiphy_lock(wiphy);
 
-	पंचांगp = get_wiphy_regकरोm(wiphy);
-	rcu_assign_poपूर्णांकer(wiphy->regd, new_regd);
-	rcu_मुक्त_regकरोm(पंचांगp);
+	tmp = get_wiphy_regdom(wiphy);
+	rcu_assign_pointer(wiphy->regd, new_regd);
+	rcu_free_regdom(tmp);
 
 	wiphy_unlock(wiphy);
 	rtnl_unlock();
-पूर्ण
+}
 EXPORT_SYMBOL(wiphy_apply_custom_regulatory);
 
-अटल व्योम reg_set_request_processed(व्योम)
-अणु
+static void reg_set_request_processed(void)
+{
 	bool need_more_processing = false;
-	काष्ठा regulatory_request *lr = get_last_request();
+	struct regulatory_request *lr = get_last_request();
 
 	lr->processed = true;
 
 	spin_lock(&reg_requests_lock);
-	अगर (!list_empty(&reg_requests_list))
+	if (!list_empty(&reg_requests_list))
 		need_more_processing = true;
 	spin_unlock(&reg_requests_lock);
 
-	cancel_crda_समयout();
+	cancel_crda_timeout();
 
-	अगर (need_more_processing)
+	if (need_more_processing)
 		schedule_work(&reg_work);
-पूर्ण
+}
 
 /**
- * reg_process_hपूर्णांक_core - process core regulatory requests
+ * reg_process_hint_core - process core regulatory requests
  * @core_request: a pending core regulatory request
  *
- * The wireless subप्रणाली can use this function to process
+ * The wireless subsystem can use this function to process
  * a regulatory request issued by the regulatory core.
  */
-अटल क्रमागत reg_request_treaपंचांगent
-reg_process_hपूर्णांक_core(काष्ठा regulatory_request *core_request)
-अणु
-	अगर (reg_query_database(core_request)) अणु
-		core_request->पूर्णांकersect = false;
+static enum reg_request_treatment
+reg_process_hint_core(struct regulatory_request *core_request)
+{
+	if (reg_query_database(core_request)) {
+		core_request->intersect = false;
 		core_request->processed = false;
 		reg_update_last_request(core_request);
-		वापस REG_REQ_OK;
-	पूर्ण
+		return REG_REQ_OK;
+	}
 
-	वापस REG_REQ_IGNORE;
-पूर्ण
+	return REG_REQ_IGNORE;
+}
 
-अटल क्रमागत reg_request_treaपंचांगent
-__reg_process_hपूर्णांक_user(काष्ठा regulatory_request *user_request)
-अणु
-	काष्ठा regulatory_request *lr = get_last_request();
+static enum reg_request_treatment
+__reg_process_hint_user(struct regulatory_request *user_request)
+{
+	struct regulatory_request *lr = get_last_request();
 
-	अगर (reg_request_cell_base(user_request))
-		वापस reg_ignore_cell_hपूर्णांक(user_request);
+	if (reg_request_cell_base(user_request))
+		return reg_ignore_cell_hint(user_request);
 
-	अगर (reg_request_cell_base(lr))
-		वापस REG_REQ_IGNORE;
+	if (reg_request_cell_base(lr))
+		return REG_REQ_IGNORE;
 
-	अगर (lr->initiator == NL80211_REGDOM_SET_BY_COUNTRY_IE)
-		वापस REG_REQ_INTERSECT;
+	if (lr->initiator == NL80211_REGDOM_SET_BY_COUNTRY_IE)
+		return REG_REQ_INTERSECT;
 	/*
-	 * If the user knows better the user should set the regकरोm
-	 * to their country beक्रमe the IE is picked up
+	 * If the user knows better the user should set the regdom
+	 * to their country before the IE is picked up
 	 */
-	अगर (lr->initiator == NL80211_REGDOM_SET_BY_USER &&
-	    lr->पूर्णांकersect)
-		वापस REG_REQ_IGNORE;
+	if (lr->initiator == NL80211_REGDOM_SET_BY_USER &&
+	    lr->intersect)
+		return REG_REQ_IGNORE;
 	/*
 	 * Process user requests only after previous user/driver/core
 	 * requests have been processed
 	 */
-	अगर ((lr->initiator == NL80211_REGDOM_SET_BY_CORE ||
+	if ((lr->initiator == NL80211_REGDOM_SET_BY_CORE ||
 	     lr->initiator == NL80211_REGDOM_SET_BY_DRIVER ||
 	     lr->initiator == NL80211_REGDOM_SET_BY_USER) &&
-	    regकरोm_changes(lr->alpha2))
-		वापस REG_REQ_IGNORE;
+	    regdom_changes(lr->alpha2))
+		return REG_REQ_IGNORE;
 
-	अगर (!regकरोm_changes(user_request->alpha2))
-		वापस REG_REQ_ALREADY_SET;
+	if (!regdom_changes(user_request->alpha2))
+		return REG_REQ_ALREADY_SET;
 
-	वापस REG_REQ_OK;
-पूर्ण
+	return REG_REQ_OK;
+}
 
 /**
- * reg_process_hपूर्णांक_user - process user regulatory requests
+ * reg_process_hint_user - process user regulatory requests
  * @user_request: a pending user regulatory request
  *
- * The wireless subप्रणाली can use this function to process
+ * The wireless subsystem can use this function to process
  * a regulatory request initiated by userspace.
  */
-अटल क्रमागत reg_request_treaपंचांगent
-reg_process_hपूर्णांक_user(काष्ठा regulatory_request *user_request)
-अणु
-	क्रमागत reg_request_treaपंचांगent treaपंचांगent;
+static enum reg_request_treatment
+reg_process_hint_user(struct regulatory_request *user_request)
+{
+	enum reg_request_treatment treatment;
 
-	treaपंचांगent = __reg_process_hपूर्णांक_user(user_request);
-	अगर (treaपंचांगent == REG_REQ_IGNORE ||
-	    treaपंचांगent == REG_REQ_ALREADY_SET)
-		वापस REG_REQ_IGNORE;
+	treatment = __reg_process_hint_user(user_request);
+	if (treatment == REG_REQ_IGNORE ||
+	    treatment == REG_REQ_ALREADY_SET)
+		return REG_REQ_IGNORE;
 
-	user_request->पूर्णांकersect = treaपंचांगent == REG_REQ_INTERSECT;
+	user_request->intersect = treatment == REG_REQ_INTERSECT;
 	user_request->processed = false;
 
-	अगर (reg_query_database(user_request)) अणु
+	if (reg_query_database(user_request)) {
 		reg_update_last_request(user_request);
 		user_alpha2[0] = user_request->alpha2[0];
 		user_alpha2[1] = user_request->alpha2[1];
-		वापस REG_REQ_OK;
-	पूर्ण
+		return REG_REQ_OK;
+	}
 
-	वापस REG_REQ_IGNORE;
-पूर्ण
+	return REG_REQ_IGNORE;
+}
 
-अटल क्रमागत reg_request_treaपंचांगent
-__reg_process_hपूर्णांक_driver(काष्ठा regulatory_request *driver_request)
-अणु
-	काष्ठा regulatory_request *lr = get_last_request();
+static enum reg_request_treatment
+__reg_process_hint_driver(struct regulatory_request *driver_request)
+{
+	struct regulatory_request *lr = get_last_request();
 
-	अगर (lr->initiator == NL80211_REGDOM_SET_BY_CORE) अणु
-		अगर (regकरोm_changes(driver_request->alpha2))
-			वापस REG_REQ_OK;
-		वापस REG_REQ_ALREADY_SET;
-	पूर्ण
+	if (lr->initiator == NL80211_REGDOM_SET_BY_CORE) {
+		if (regdom_changes(driver_request->alpha2))
+			return REG_REQ_OK;
+		return REG_REQ_ALREADY_SET;
+	}
 
 	/*
-	 * This would happen अगर you unplug and plug your card
-	 * back in or अगर you add a new device क्रम which the previously
-	 * loaded card also agrees on the regulatory करोमुख्य.
+	 * This would happen if you unplug and plug your card
+	 * back in or if you add a new device for which the previously
+	 * loaded card also agrees on the regulatory domain.
 	 */
-	अगर (lr->initiator == NL80211_REGDOM_SET_BY_DRIVER &&
-	    !regकरोm_changes(driver_request->alpha2))
-		वापस REG_REQ_ALREADY_SET;
+	if (lr->initiator == NL80211_REGDOM_SET_BY_DRIVER &&
+	    !regdom_changes(driver_request->alpha2))
+		return REG_REQ_ALREADY_SET;
 
-	वापस REG_REQ_INTERSECT;
-पूर्ण
+	return REG_REQ_INTERSECT;
+}
 
 /**
- * reg_process_hपूर्णांक_driver - process driver regulatory requests
- * @wiphy: the wireless device क्रम the regulatory request
+ * reg_process_hint_driver - process driver regulatory requests
+ * @wiphy: the wireless device for the regulatory request
  * @driver_request: a pending driver regulatory request
  *
- * The wireless subप्रणाली can use this function to process
+ * The wireless subsystem can use this function to process
  * a regulatory request issued by an 802.11 driver.
  *
- * Returns one of the dअगरferent reg request treaपंचांगent values.
+ * Returns one of the different reg request treatment values.
  */
-अटल क्रमागत reg_request_treaपंचांगent
-reg_process_hपूर्णांक_driver(काष्ठा wiphy *wiphy,
-			काष्ठा regulatory_request *driver_request)
-अणु
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *regd, *पंचांगp;
-	क्रमागत reg_request_treaपंचांगent treaपंचांगent;
+static enum reg_request_treatment
+reg_process_hint_driver(struct wiphy *wiphy,
+			struct regulatory_request *driver_request)
+{
+	const struct ieee80211_regdomain *regd, *tmp;
+	enum reg_request_treatment treatment;
 
-	treaपंचांगent = __reg_process_hपूर्णांक_driver(driver_request);
+	treatment = __reg_process_hint_driver(driver_request);
 
-	चयन (treaपंचांगent) अणु
-	हाल REG_REQ_OK:
-		अवरोध;
-	हाल REG_REQ_IGNORE:
-		वापस REG_REQ_IGNORE;
-	हाल REG_REQ_INTERSECT:
-	हाल REG_REQ_ALREADY_SET:
-		regd = reg_copy_regd(get_cfg80211_regकरोm());
-		अगर (IS_ERR(regd))
-			वापस REG_REQ_IGNORE;
+	switch (treatment) {
+	case REG_REQ_OK:
+		break;
+	case REG_REQ_IGNORE:
+		return REG_REQ_IGNORE;
+	case REG_REQ_INTERSECT:
+	case REG_REQ_ALREADY_SET:
+		regd = reg_copy_regd(get_cfg80211_regdom());
+		if (IS_ERR(regd))
+			return REG_REQ_IGNORE;
 
-		पंचांगp = get_wiphy_regकरोm(wiphy);
+		tmp = get_wiphy_regdom(wiphy);
 		ASSERT_RTNL();
 		wiphy_lock(wiphy);
-		rcu_assign_poपूर्णांकer(wiphy->regd, regd);
+		rcu_assign_pointer(wiphy->regd, regd);
 		wiphy_unlock(wiphy);
-		rcu_मुक्त_regकरोm(पंचांगp);
-	पूर्ण
+		rcu_free_regdom(tmp);
+	}
 
 
-	driver_request->पूर्णांकersect = treaपंचांगent == REG_REQ_INTERSECT;
+	driver_request->intersect = treatment == REG_REQ_INTERSECT;
 	driver_request->processed = false;
 
 	/*
-	 * Since CRDA will not be called in this हाल as we alपढ़ोy
-	 * have applied the requested regulatory करोमुख्य beक्रमe we just
-	 * inक्रमm userspace we have processed the request
+	 * Since CRDA will not be called in this case as we already
+	 * have applied the requested regulatory domain before we just
+	 * inform userspace we have processed the request
 	 */
-	अगर (treaपंचांगent == REG_REQ_ALREADY_SET) अणु
+	if (treatment == REG_REQ_ALREADY_SET) {
 		nl80211_send_reg_change_event(driver_request);
 		reg_update_last_request(driver_request);
 		reg_set_request_processed();
-		वापस REG_REQ_ALREADY_SET;
-	पूर्ण
+		return REG_REQ_ALREADY_SET;
+	}
 
-	अगर (reg_query_database(driver_request)) अणु
+	if (reg_query_database(driver_request)) {
 		reg_update_last_request(driver_request);
-		वापस REG_REQ_OK;
-	पूर्ण
+		return REG_REQ_OK;
+	}
 
-	वापस REG_REQ_IGNORE;
-पूर्ण
+	return REG_REQ_IGNORE;
+}
 
-अटल क्रमागत reg_request_treaपंचांगent
-__reg_process_hपूर्णांक_country_ie(काष्ठा wiphy *wiphy,
-			      काष्ठा regulatory_request *country_ie_request)
-अणु
-	काष्ठा wiphy *last_wiphy = शून्य;
-	काष्ठा regulatory_request *lr = get_last_request();
+static enum reg_request_treatment
+__reg_process_hint_country_ie(struct wiphy *wiphy,
+			      struct regulatory_request *country_ie_request)
+{
+	struct wiphy *last_wiphy = NULL;
+	struct regulatory_request *lr = get_last_request();
 
-	अगर (reg_request_cell_base(lr)) अणु
+	if (reg_request_cell_base(lr)) {
 		/* Trust a Cell base station over the AP's country IE */
-		अगर (regकरोm_changes(country_ie_request->alpha2))
-			वापस REG_REQ_IGNORE;
-		वापस REG_REQ_ALREADY_SET;
-	पूर्ण अन्यथा अणु
-		अगर (wiphy->regulatory_flags & REGULATORY_COUNTRY_IE_IGNORE)
-			वापस REG_REQ_IGNORE;
-	पूर्ण
+		if (regdom_changes(country_ie_request->alpha2))
+			return REG_REQ_IGNORE;
+		return REG_REQ_ALREADY_SET;
+	} else {
+		if (wiphy->regulatory_flags & REGULATORY_COUNTRY_IE_IGNORE)
+			return REG_REQ_IGNORE;
+	}
 
-	अगर (unlikely(!is_an_alpha2(country_ie_request->alpha2)))
-		वापस -EINVAL;
+	if (unlikely(!is_an_alpha2(country_ie_request->alpha2)))
+		return -EINVAL;
 
-	अगर (lr->initiator != NL80211_REGDOM_SET_BY_COUNTRY_IE)
-		वापस REG_REQ_OK;
+	if (lr->initiator != NL80211_REGDOM_SET_BY_COUNTRY_IE)
+		return REG_REQ_OK;
 
 	last_wiphy = wiphy_idx_to_wiphy(lr->wiphy_idx);
 
-	अगर (last_wiphy != wiphy) अणु
+	if (last_wiphy != wiphy) {
 		/*
-		 * Two cards with two APs claiming dअगरferent
+		 * Two cards with two APs claiming different
 		 * Country IE alpha2s. We could
-		 * पूर्णांकersect them, but that seems unlikely
-		 * to be correct. Reject second one क्रम now.
+		 * intersect them, but that seems unlikely
+		 * to be correct. Reject second one for now.
 		 */
-		अगर (regकरोm_changes(country_ie_request->alpha2))
-			वापस REG_REQ_IGNORE;
-		वापस REG_REQ_ALREADY_SET;
-	पूर्ण
+		if (regdom_changes(country_ie_request->alpha2))
+			return REG_REQ_IGNORE;
+		return REG_REQ_ALREADY_SET;
+	}
 
-	अगर (regकरोm_changes(country_ie_request->alpha2))
-		वापस REG_REQ_OK;
-	वापस REG_REQ_ALREADY_SET;
-पूर्ण
+	if (regdom_changes(country_ie_request->alpha2))
+		return REG_REQ_OK;
+	return REG_REQ_ALREADY_SET;
+}
 
 /**
- * reg_process_hपूर्णांक_country_ie - process regulatory requests from country IEs
- * @wiphy: the wireless device क्रम the regulatory request
+ * reg_process_hint_country_ie - process regulatory requests from country IEs
+ * @wiphy: the wireless device for the regulatory request
  * @country_ie_request: a regulatory request from a country IE
  *
- * The wireless subप्रणाली can use this function to process
- * a regulatory request issued by a country Inक्रमmation Element.
+ * The wireless subsystem can use this function to process
+ * a regulatory request issued by a country Information Element.
  *
- * Returns one of the dअगरferent reg request treaपंचांगent values.
+ * Returns one of the different reg request treatment values.
  */
-अटल क्रमागत reg_request_treaपंचांगent
-reg_process_hपूर्णांक_country_ie(काष्ठा wiphy *wiphy,
-			    काष्ठा regulatory_request *country_ie_request)
-अणु
-	क्रमागत reg_request_treaपंचांगent treaपंचांगent;
+static enum reg_request_treatment
+reg_process_hint_country_ie(struct wiphy *wiphy,
+			    struct regulatory_request *country_ie_request)
+{
+	enum reg_request_treatment treatment;
 
-	treaपंचांगent = __reg_process_hपूर्णांक_country_ie(wiphy, country_ie_request);
+	treatment = __reg_process_hint_country_ie(wiphy, country_ie_request);
 
-	चयन (treaपंचांगent) अणु
-	हाल REG_REQ_OK:
-		अवरोध;
-	हाल REG_REQ_IGNORE:
-		वापस REG_REQ_IGNORE;
-	हाल REG_REQ_ALREADY_SET:
-		reg_मुक्त_request(country_ie_request);
-		वापस REG_REQ_ALREADY_SET;
-	हाल REG_REQ_INTERSECT:
+	switch (treatment) {
+	case REG_REQ_OK:
+		break;
+	case REG_REQ_IGNORE:
+		return REG_REQ_IGNORE;
+	case REG_REQ_ALREADY_SET:
+		reg_free_request(country_ie_request);
+		return REG_REQ_ALREADY_SET;
+	case REG_REQ_INTERSECT:
 		/*
-		 * This करोesn't happen yet, not sure we
-		 * ever want to support it क्रम this हाल.
+		 * This doesn't happen yet, not sure we
+		 * ever want to support it for this case.
 		 */
 		WARN_ONCE(1, "Unexpected intersection for country elements");
-		वापस REG_REQ_IGNORE;
-	पूर्ण
+		return REG_REQ_IGNORE;
+	}
 
-	country_ie_request->पूर्णांकersect = false;
+	country_ie_request->intersect = false;
 	country_ie_request->processed = false;
 
-	अगर (reg_query_database(country_ie_request)) अणु
+	if (reg_query_database(country_ie_request)) {
 		reg_update_last_request(country_ie_request);
-		वापस REG_REQ_OK;
-	पूर्ण
+		return REG_REQ_OK;
+	}
 
-	वापस REG_REQ_IGNORE;
-पूर्ण
+	return REG_REQ_IGNORE;
+}
 
-bool reg_dfs_करोमुख्य_same(काष्ठा wiphy *wiphy1, काष्ठा wiphy *wiphy2)
-अणु
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *wiphy1_regd = शून्य;
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *wiphy2_regd = शून्य;
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *cfg80211_regd = शून्य;
-	bool dfs_करोमुख्य_same;
+bool reg_dfs_domain_same(struct wiphy *wiphy1, struct wiphy *wiphy2)
+{
+	const struct ieee80211_regdomain *wiphy1_regd = NULL;
+	const struct ieee80211_regdomain *wiphy2_regd = NULL;
+	const struct ieee80211_regdomain *cfg80211_regd = NULL;
+	bool dfs_domain_same;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
-	cfg80211_regd = rcu_dereference(cfg80211_regकरोमुख्य);
+	cfg80211_regd = rcu_dereference(cfg80211_regdomain);
 	wiphy1_regd = rcu_dereference(wiphy1->regd);
-	अगर (!wiphy1_regd)
+	if (!wiphy1_regd)
 		wiphy1_regd = cfg80211_regd;
 
 	wiphy2_regd = rcu_dereference(wiphy2->regd);
-	अगर (!wiphy2_regd)
+	if (!wiphy2_regd)
 		wiphy2_regd = cfg80211_regd;
 
-	dfs_करोमुख्य_same = wiphy1_regd->dfs_region == wiphy2_regd->dfs_region;
+	dfs_domain_same = wiphy1_regd->dfs_region == wiphy2_regd->dfs_region;
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस dfs_करोमुख्य_same;
-पूर्ण
+	return dfs_domain_same;
+}
 
-अटल व्योम reg_copy_dfs_chan_state(काष्ठा ieee80211_channel *dst_chan,
-				    काष्ठा ieee80211_channel *src_chan)
-अणु
-	अगर (!(dst_chan->flags & IEEE80211_CHAN_RADAR) ||
+static void reg_copy_dfs_chan_state(struct ieee80211_channel *dst_chan,
+				    struct ieee80211_channel *src_chan)
+{
+	if (!(dst_chan->flags & IEEE80211_CHAN_RADAR) ||
 	    !(src_chan->flags & IEEE80211_CHAN_RADAR))
-		वापस;
+		return;
 
-	अगर (dst_chan->flags & IEEE80211_CHAN_DISABLED ||
+	if (dst_chan->flags & IEEE80211_CHAN_DISABLED ||
 	    src_chan->flags & IEEE80211_CHAN_DISABLED)
-		वापस;
+		return;
 
-	अगर (src_chan->center_freq == dst_chan->center_freq &&
-	    dst_chan->dfs_state == NL80211_DFS_USABLE) अणु
+	if (src_chan->center_freq == dst_chan->center_freq &&
+	    dst_chan->dfs_state == NL80211_DFS_USABLE) {
 		dst_chan->dfs_state = src_chan->dfs_state;
 		dst_chan->dfs_state_entered = src_chan->dfs_state_entered;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम wiphy_share_dfs_chan_state(काष्ठा wiphy *dst_wiphy,
-				       काष्ठा wiphy *src_wiphy)
-अणु
-	काष्ठा ieee80211_supported_band *src_sband, *dst_sband;
-	काष्ठा ieee80211_channel *src_chan, *dst_chan;
-	पूर्णांक i, j, band;
+static void wiphy_share_dfs_chan_state(struct wiphy *dst_wiphy,
+				       struct wiphy *src_wiphy)
+{
+	struct ieee80211_supported_band *src_sband, *dst_sband;
+	struct ieee80211_channel *src_chan, *dst_chan;
+	int i, j, band;
 
-	अगर (!reg_dfs_करोमुख्य_same(dst_wiphy, src_wiphy))
-		वापस;
+	if (!reg_dfs_domain_same(dst_wiphy, src_wiphy))
+		return;
 
-	क्रम (band = 0; band < NUM_NL80211_BANDS; band++) अणु
+	for (band = 0; band < NUM_NL80211_BANDS; band++) {
 		dst_sband = dst_wiphy->bands[band];
 		src_sband = src_wiphy->bands[band];
-		अगर (!dst_sband || !src_sband)
-			जारी;
+		if (!dst_sband || !src_sband)
+			continue;
 
-		क्रम (i = 0; i < dst_sband->n_channels; i++) अणु
+		for (i = 0; i < dst_sband->n_channels; i++) {
 			dst_chan = &dst_sband->channels[i];
-			क्रम (j = 0; j < src_sband->n_channels; j++) अणु
+			for (j = 0; j < src_sband->n_channels; j++) {
 				src_chan = &src_sband->channels[j];
 				reg_copy_dfs_chan_state(dst_chan, src_chan);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल व्योम wiphy_all_share_dfs_chan_state(काष्ठा wiphy *wiphy)
-अणु
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev;
+static void wiphy_all_share_dfs_chan_state(struct wiphy *wiphy)
+{
+	struct cfg80211_registered_device *rdev;
 
 	ASSERT_RTNL();
 
-	list_क्रम_each_entry(rdev, &cfg80211_rdev_list, list) अणु
-		अगर (wiphy == &rdev->wiphy)
-			जारी;
+	list_for_each_entry(rdev, &cfg80211_rdev_list, list) {
+		if (wiphy == &rdev->wiphy)
+			continue;
 		wiphy_share_dfs_chan_state(wiphy, &rdev->wiphy);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* This processes *all* regulatory hपूर्णांकs */
-अटल व्योम reg_process_hपूर्णांक(काष्ठा regulatory_request *reg_request)
-अणु
-	काष्ठा wiphy *wiphy = शून्य;
-	क्रमागत reg_request_treaपंचांगent treaपंचांगent;
-	क्रमागत nl80211_reg_initiator initiator = reg_request->initiator;
+/* This processes *all* regulatory hints */
+static void reg_process_hint(struct regulatory_request *reg_request)
+{
+	struct wiphy *wiphy = NULL;
+	enum reg_request_treatment treatment;
+	enum nl80211_reg_initiator initiator = reg_request->initiator;
 
-	अगर (reg_request->wiphy_idx != WIPHY_IDX_INVALID)
+	if (reg_request->wiphy_idx != WIPHY_IDX_INVALID)
 		wiphy = wiphy_idx_to_wiphy(reg_request->wiphy_idx);
 
-	चयन (initiator) अणु
-	हाल NL80211_REGDOM_SET_BY_CORE:
-		treaपंचांगent = reg_process_hपूर्णांक_core(reg_request);
-		अवरोध;
-	हाल NL80211_REGDOM_SET_BY_USER:
-		treaपंचांगent = reg_process_hपूर्णांक_user(reg_request);
-		अवरोध;
-	हाल NL80211_REGDOM_SET_BY_DRIVER:
-		अगर (!wiphy)
-			जाओ out_मुक्त;
-		treaपंचांगent = reg_process_hपूर्णांक_driver(wiphy, reg_request);
-		अवरोध;
-	हाल NL80211_REGDOM_SET_BY_COUNTRY_IE:
-		अगर (!wiphy)
-			जाओ out_मुक्त;
-		treaपंचांगent = reg_process_hपूर्णांक_country_ie(wiphy, reg_request);
-		अवरोध;
-	शेष:
+	switch (initiator) {
+	case NL80211_REGDOM_SET_BY_CORE:
+		treatment = reg_process_hint_core(reg_request);
+		break;
+	case NL80211_REGDOM_SET_BY_USER:
+		treatment = reg_process_hint_user(reg_request);
+		break;
+	case NL80211_REGDOM_SET_BY_DRIVER:
+		if (!wiphy)
+			goto out_free;
+		treatment = reg_process_hint_driver(wiphy, reg_request);
+		break;
+	case NL80211_REGDOM_SET_BY_COUNTRY_IE:
+		if (!wiphy)
+			goto out_free;
+		treatment = reg_process_hint_country_ie(wiphy, reg_request);
+		break;
+	default:
 		WARN(1, "invalid initiator %d\n", initiator);
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	अगर (treaपंचांगent == REG_REQ_IGNORE)
-		जाओ out_मुक्त;
+	if (treatment == REG_REQ_IGNORE)
+		goto out_free;
 
-	WARN(treaपंचांगent != REG_REQ_OK && treaपंचांगent != REG_REQ_ALREADY_SET,
-	     "unexpected treatment value %d\n", treaपंचांगent);
+	WARN(treatment != REG_REQ_OK && treatment != REG_REQ_ALREADY_SET,
+	     "unexpected treatment value %d\n", treatment);
 
 	/* This is required so that the orig_* parameters are saved.
-	 * NOTE: treaपंचांगent must be set क्रम any हाल that reaches here!
+	 * NOTE: treatment must be set for any case that reaches here!
 	 */
-	अगर (treaपंचांगent == REG_REQ_ALREADY_SET && wiphy &&
-	    wiphy->regulatory_flags & REGULATORY_STRICT_REG) अणु
+	if (treatment == REG_REQ_ALREADY_SET && wiphy &&
+	    wiphy->regulatory_flags & REGULATORY_STRICT_REG) {
 		wiphy_update_regulatory(wiphy, initiator);
 		wiphy_all_share_dfs_chan_state(wiphy);
 		reg_check_channels();
-	पूर्ण
+	}
 
-	वापस;
+	return;
 
-out_मुक्त:
-	reg_मुक्त_request(reg_request);
-पूर्ण
+out_free:
+	reg_free_request(reg_request);
+}
 
-अटल व्योम notअगरy_self_managed_wiphys(काष्ठा regulatory_request *request)
-अणु
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev;
-	काष्ठा wiphy *wiphy;
+static void notify_self_managed_wiphys(struct regulatory_request *request)
+{
+	struct cfg80211_registered_device *rdev;
+	struct wiphy *wiphy;
 
-	list_क्रम_each_entry(rdev, &cfg80211_rdev_list, list) अणु
+	list_for_each_entry(rdev, &cfg80211_rdev_list, list) {
 		wiphy = &rdev->wiphy;
-		अगर (wiphy->regulatory_flags & REGULATORY_WIPHY_SELF_MANAGED &&
+		if (wiphy->regulatory_flags & REGULATORY_WIPHY_SELF_MANAGED &&
 		    request->initiator == NL80211_REGDOM_SET_BY_USER)
-			reg_call_notअगरier(wiphy, request);
-	पूर्ण
-पूर्ण
+			reg_call_notifier(wiphy, request);
+	}
+}
 
 /*
- * Processes regulatory hपूर्णांकs, this is all the NL80211_REGDOM_SET_BY_*
- * Regulatory hपूर्णांकs come on a first come first serve basis and we
+ * Processes regulatory hints, this is all the NL80211_REGDOM_SET_BY_*
+ * Regulatory hints come on a first come first serve basis and we
  * must process each one atomically.
  */
-अटल व्योम reg_process_pending_hपूर्णांकs(व्योम)
-अणु
-	काष्ठा regulatory_request *reg_request, *lr;
+static void reg_process_pending_hints(void)
+{
+	struct regulatory_request *reg_request, *lr;
 
 	lr = get_last_request();
 
 	/* When last_request->processed becomes true this will be rescheduled */
-	अगर (lr && !lr->processed) अणु
+	if (lr && !lr->processed) {
 		pr_debug("Pending regulatory request, waiting for it to be processed...\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock(&reg_requests_lock);
 
-	अगर (list_empty(&reg_requests_list)) अणु
+	if (list_empty(&reg_requests_list)) {
 		spin_unlock(&reg_requests_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	reg_request = list_first_entry(&reg_requests_list,
-				       काष्ठा regulatory_request,
+				       struct regulatory_request,
 				       list);
 	list_del_init(&reg_request->list);
 
 	spin_unlock(&reg_requests_lock);
 
-	notअगरy_self_managed_wiphys(reg_request);
+	notify_self_managed_wiphys(reg_request);
 
-	reg_process_hपूर्णांक(reg_request);
+	reg_process_hint(reg_request);
 
 	lr = get_last_request();
 
 	spin_lock(&reg_requests_lock);
-	अगर (!list_empty(&reg_requests_list) && lr && lr->processed)
+	if (!list_empty(&reg_requests_list) && lr && lr->processed)
 		schedule_work(&reg_work);
 	spin_unlock(&reg_requests_lock);
-पूर्ण
+}
 
-/* Processes beacon hपूर्णांकs -- this has nothing to करो with country IEs */
-अटल व्योम reg_process_pending_beacon_hपूर्णांकs(व्योम)
-अणु
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev;
-	काष्ठा reg_beacon *pending_beacon, *पंचांगp;
+/* Processes beacon hints -- this has nothing to do with country IEs */
+static void reg_process_pending_beacon_hints(void)
+{
+	struct cfg80211_registered_device *rdev;
+	struct reg_beacon *pending_beacon, *tmp;
 
 	/* This goes through the _pending_ beacon list */
 	spin_lock_bh(&reg_pending_beacons_lock);
 
-	list_क्रम_each_entry_safe(pending_beacon, पंचांगp,
-				 &reg_pending_beacons, list) अणु
+	list_for_each_entry_safe(pending_beacon, tmp,
+				 &reg_pending_beacons, list) {
 		list_del_init(&pending_beacon->list);
 
-		/* Applies the beacon hपूर्णांक to current wiphys */
-		list_क्रम_each_entry(rdev, &cfg80211_rdev_list, list)
+		/* Applies the beacon hint to current wiphys */
+		list_for_each_entry(rdev, &cfg80211_rdev_list, list)
 			wiphy_update_new_beacon(&rdev->wiphy, pending_beacon);
 
-		/* Remembers the beacon hपूर्णांक क्रम new wiphys or reg changes */
+		/* Remembers the beacon hint for new wiphys or reg changes */
 		list_add_tail(&pending_beacon->list, &reg_beacon_list);
-	पूर्ण
+	}
 
 	spin_unlock_bh(&reg_pending_beacons_lock);
-पूर्ण
+}
 
-अटल व्योम reg_process_self_managed_hपूर्णांक(काष्ठा wiphy *wiphy)
-अणु
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wiphy);
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *पंचांगp;
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *regd;
-	क्रमागत nl80211_band band;
-	काष्ठा regulatory_request request = अणुपूर्ण;
+static void reg_process_self_managed_hint(struct wiphy *wiphy)
+{
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wiphy);
+	const struct ieee80211_regdomain *tmp;
+	const struct ieee80211_regdomain *regd;
+	enum nl80211_band band;
+	struct regulatory_request request = {};
 
 	ASSERT_RTNL();
-	lockdep_निश्चित_wiphy(wiphy);
+	lockdep_assert_wiphy(wiphy);
 
 	spin_lock(&reg_requests_lock);
 	regd = rdev->requested_regd;
-	rdev->requested_regd = शून्य;
+	rdev->requested_regd = NULL;
 	spin_unlock(&reg_requests_lock);
 
-	अगर (!regd)
-		वापस;
+	if (!regd)
+		return;
 
-	पंचांगp = get_wiphy_regकरोm(wiphy);
-	rcu_assign_poपूर्णांकer(wiphy->regd, regd);
-	rcu_मुक्त_regकरोm(पंचांगp);
+	tmp = get_wiphy_regdom(wiphy);
+	rcu_assign_pointer(wiphy->regd, regd);
+	rcu_free_regdom(tmp);
 
-	क्रम (band = 0; band < NUM_NL80211_BANDS; band++)
+	for (band = 0; band < NUM_NL80211_BANDS; band++)
 		handle_band_custom(wiphy, wiphy->bands[band], regd);
 
 	reg_process_ht_flags(wiphy);
@@ -3123,55 +3122,55 @@ out_मुक्त:
 	request.initiator = NL80211_REGDOM_SET_BY_DRIVER;
 
 	nl80211_send_wiphy_reg_change_event(&request);
-पूर्ण
+}
 
-अटल व्योम reg_process_self_managed_hपूर्णांकs(व्योम)
-अणु
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev;
+static void reg_process_self_managed_hints(void)
+{
+	struct cfg80211_registered_device *rdev;
 
 	ASSERT_RTNL();
 
-	list_क्रम_each_entry(rdev, &cfg80211_rdev_list, list) अणु
+	list_for_each_entry(rdev, &cfg80211_rdev_list, list) {
 		wiphy_lock(&rdev->wiphy);
-		reg_process_self_managed_hपूर्णांक(&rdev->wiphy);
+		reg_process_self_managed_hint(&rdev->wiphy);
 		wiphy_unlock(&rdev->wiphy);
-	पूर्ण
+	}
 
 	reg_check_channels();
-पूर्ण
+}
 
-अटल व्योम reg_toकरो(काष्ठा work_काष्ठा *work)
-अणु
+static void reg_todo(struct work_struct *work)
+{
 	rtnl_lock();
-	reg_process_pending_hपूर्णांकs();
-	reg_process_pending_beacon_hपूर्णांकs();
-	reg_process_self_managed_hपूर्णांकs();
+	reg_process_pending_hints();
+	reg_process_pending_beacon_hints();
+	reg_process_self_managed_hints();
 	rtnl_unlock();
-पूर्ण
+}
 
-अटल व्योम queue_regulatory_request(काष्ठा regulatory_request *request)
-अणु
-	request->alpha2[0] = बड़े(request->alpha2[0]);
-	request->alpha2[1] = बड़े(request->alpha2[1]);
+static void queue_regulatory_request(struct regulatory_request *request)
+{
+	request->alpha2[0] = toupper(request->alpha2[0]);
+	request->alpha2[1] = toupper(request->alpha2[1]);
 
 	spin_lock(&reg_requests_lock);
 	list_add_tail(&request->list, &reg_requests_list);
 	spin_unlock(&reg_requests_lock);
 
 	schedule_work(&reg_work);
-पूर्ण
+}
 
 /*
- * Core regulatory hपूर्णांक -- happens during cfg80211_init()
+ * Core regulatory hint -- happens during cfg80211_init()
  * and when we restore regulatory settings.
  */
-अटल पूर्णांक regulatory_hपूर्णांक_core(स्थिर अक्षर *alpha2)
-अणु
-	काष्ठा regulatory_request *request;
+static int regulatory_hint_core(const char *alpha2)
+{
+	struct regulatory_request *request;
 
-	request = kzalloc(माप(काष्ठा regulatory_request), GFP_KERNEL);
-	अगर (!request)
-		वापस -ENOMEM;
+	request = kzalloc(sizeof(struct regulatory_request), GFP_KERNEL);
+	if (!request)
+		return -ENOMEM;
 
 	request->alpha2[0] = alpha2[0];
 	request->alpha2[1] = alpha2[1];
@@ -3180,96 +3179,96 @@ out_मुक्त:
 
 	queue_regulatory_request(request);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* User hपूर्णांकs */
-पूर्णांक regulatory_hपूर्णांक_user(स्थिर अक्षर *alpha2,
-			 क्रमागत nl80211_user_reg_hपूर्णांक_type user_reg_hपूर्णांक_type)
-अणु
-	काष्ठा regulatory_request *request;
+/* User hints */
+int regulatory_hint_user(const char *alpha2,
+			 enum nl80211_user_reg_hint_type user_reg_hint_type)
+{
+	struct regulatory_request *request;
 
-	अगर (WARN_ON(!alpha2))
-		वापस -EINVAL;
+	if (WARN_ON(!alpha2))
+		return -EINVAL;
 
-	अगर (!is_world_regकरोm(alpha2) && !is_an_alpha2(alpha2))
-		वापस -EINVAL;
+	if (!is_world_regdom(alpha2) && !is_an_alpha2(alpha2))
+		return -EINVAL;
 
-	request = kzalloc(माप(काष्ठा regulatory_request), GFP_KERNEL);
-	अगर (!request)
-		वापस -ENOMEM;
+	request = kzalloc(sizeof(struct regulatory_request), GFP_KERNEL);
+	if (!request)
+		return -ENOMEM;
 
 	request->wiphy_idx = WIPHY_IDX_INVALID;
 	request->alpha2[0] = alpha2[0];
 	request->alpha2[1] = alpha2[1];
 	request->initiator = NL80211_REGDOM_SET_BY_USER;
-	request->user_reg_hपूर्णांक_type = user_reg_hपूर्णांक_type;
+	request->user_reg_hint_type = user_reg_hint_type;
 
 	/* Allow calling CRDA again */
-	reset_crda_समयouts();
+	reset_crda_timeouts();
 
 	queue_regulatory_request(request);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक regulatory_hपूर्णांक_inकरोor(bool is_inकरोor, u32 portid)
-अणु
-	spin_lock(&reg_inकरोor_lock);
+int regulatory_hint_indoor(bool is_indoor, u32 portid)
+{
+	spin_lock(&reg_indoor_lock);
 
 	/* It is possible that more than one user space process is trying to
-	 * configure the inकरोor setting. To handle such हालs, clear the inकरोor
-	 * setting in हाल that some process करोes not think that the device
-	 * is operating in an inकरोor environment. In addition, अगर a user space
-	 * process indicates that it is controlling the inकरोor setting, save its
+	 * configure the indoor setting. To handle such cases, clear the indoor
+	 * setting in case that some process does not think that the device
+	 * is operating in an indoor environment. In addition, if a user space
+	 * process indicates that it is controlling the indoor setting, save its
 	 * portid, i.e., make it the owner.
 	 */
-	reg_is_inकरोor = is_inकरोor;
-	अगर (reg_is_inकरोor) अणु
-		अगर (!reg_is_inकरोor_portid)
-			reg_is_inकरोor_portid = portid;
-	पूर्ण अन्यथा अणु
-		reg_is_inकरोor_portid = 0;
-	पूर्ण
+	reg_is_indoor = is_indoor;
+	if (reg_is_indoor) {
+		if (!reg_is_indoor_portid)
+			reg_is_indoor_portid = portid;
+	} else {
+		reg_is_indoor_portid = 0;
+	}
 
-	spin_unlock(&reg_inकरोor_lock);
+	spin_unlock(&reg_indoor_lock);
 
-	अगर (!is_inकरोor)
+	if (!is_indoor)
 		reg_check_channels();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम regulatory_netlink_notअगरy(u32 portid)
-अणु
-	spin_lock(&reg_inकरोor_lock);
+void regulatory_netlink_notify(u32 portid)
+{
+	spin_lock(&reg_indoor_lock);
 
-	अगर (reg_is_inकरोor_portid != portid) अणु
-		spin_unlock(&reg_inकरोor_lock);
-		वापस;
-	पूर्ण
+	if (reg_is_indoor_portid != portid) {
+		spin_unlock(&reg_indoor_lock);
+		return;
+	}
 
-	reg_is_inकरोor = false;
-	reg_is_inकरोor_portid = 0;
+	reg_is_indoor = false;
+	reg_is_indoor_portid = 0;
 
-	spin_unlock(&reg_inकरोor_lock);
+	spin_unlock(&reg_indoor_lock);
 
 	reg_check_channels();
-पूर्ण
+}
 
-/* Driver hपूर्णांकs */
-पूर्णांक regulatory_hपूर्णांक(काष्ठा wiphy *wiphy, स्थिर अक्षर *alpha2)
-अणु
-	काष्ठा regulatory_request *request;
+/* Driver hints */
+int regulatory_hint(struct wiphy *wiphy, const char *alpha2)
+{
+	struct regulatory_request *request;
 
-	अगर (WARN_ON(!alpha2 || !wiphy))
-		वापस -EINVAL;
+	if (WARN_ON(!alpha2 || !wiphy))
+		return -EINVAL;
 
 	wiphy->regulatory_flags &= ~REGULATORY_CUSTOM_REG;
 
-	request = kzalloc(माप(काष्ठा regulatory_request), GFP_KERNEL);
-	अगर (!request)
-		वापस -ENOMEM;
+	request = kzalloc(sizeof(struct regulatory_request), GFP_KERNEL);
+	if (!request)
+		return -ENOMEM;
 
 	request->wiphy_idx = get_wiphy_idx(wiphy);
 
@@ -3278,54 +3277,54 @@ out_मुक्त:
 	request->initiator = NL80211_REGDOM_SET_BY_DRIVER;
 
 	/* Allow calling CRDA again */
-	reset_crda_समयouts();
+	reset_crda_timeouts();
 
 	queue_regulatory_request(request);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(regulatory_hपूर्णांक);
+	return 0;
+}
+EXPORT_SYMBOL(regulatory_hint);
 
-व्योम regulatory_hपूर्णांक_country_ie(काष्ठा wiphy *wiphy, क्रमागत nl80211_band band,
-				स्थिर u8 *country_ie, u8 country_ie_len)
-अणु
-	अक्षर alpha2[2];
-	क्रमागत environment_cap env = ENVIRON_ANY;
-	काष्ठा regulatory_request *request = शून्य, *lr;
+void regulatory_hint_country_ie(struct wiphy *wiphy, enum nl80211_band band,
+				const u8 *country_ie, u8 country_ie_len)
+{
+	char alpha2[2];
+	enum environment_cap env = ENVIRON_ANY;
+	struct regulatory_request *request = NULL, *lr;
 
-	/* IE len must be evenly भागisible by 2 */
-	अगर (country_ie_len & 0x01)
-		वापस;
+	/* IE len must be evenly divisible by 2 */
+	if (country_ie_len & 0x01)
+		return;
 
-	अगर (country_ie_len < IEEE80211_COUNTRY_IE_MIN_LEN)
-		वापस;
+	if (country_ie_len < IEEE80211_COUNTRY_IE_MIN_LEN)
+		return;
 
-	request = kzalloc(माप(*request), GFP_KERNEL);
-	अगर (!request)
-		वापस;
+	request = kzalloc(sizeof(*request), GFP_KERNEL);
+	if (!request)
+		return;
 
 	alpha2[0] = country_ie[0];
 	alpha2[1] = country_ie[1];
 
-	अगर (country_ie[2] == 'I')
+	if (country_ie[2] == 'I')
 		env = ENVIRON_INDOOR;
-	अन्यथा अगर (country_ie[2] == 'O')
+	else if (country_ie[2] == 'O')
 		env = ENVIRON_OUTDOOR;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	lr = get_last_request();
 
-	अगर (unlikely(!lr))
-		जाओ out;
+	if (unlikely(!lr))
+		goto out;
 
 	/*
 	 * We will run this only upon a successful connection on cfg80211.
 	 * We leave conflict resolution to the workqueue, where can hold
 	 * the RTNL.
 	 */
-	अगर (lr->initiator == NL80211_REGDOM_SET_BY_COUNTRY_IE &&
+	if (lr->initiator == NL80211_REGDOM_SET_BY_COUNTRY_IE &&
 	    lr->wiphy_idx != WIPHY_IDX_INVALID)
-		जाओ out;
+		goto out;
 
 	request->wiphy_idx = get_wiphy_idx(wiphy);
 	request->alpha2[0] = alpha2[0];
@@ -3334,25 +3333,25 @@ EXPORT_SYMBOL(regulatory_hपूर्णांक);
 	request->country_ie_env = env;
 
 	/* Allow calling CRDA again */
-	reset_crda_समयouts();
+	reset_crda_timeouts();
 
 	queue_regulatory_request(request);
-	request = शून्य;
+	request = NULL;
 out:
-	kमुक्त(request);
-	rcu_पढ़ो_unlock();
-पूर्ण
+	kfree(request);
+	rcu_read_unlock();
+}
 
-अटल व्योम restore_alpha2(अक्षर *alpha2, bool reset_user)
-अणु
-	/* indicates there is no alpha2 to consider क्रम restoration */
+static void restore_alpha2(char *alpha2, bool reset_user)
+{
+	/* indicates there is no alpha2 to consider for restoration */
 	alpha2[0] = '9';
 	alpha2[1] = '7';
 
 	/* The user setting has precedence over the module parameter */
-	अगर (is_user_regकरोm_saved()) अणु
+	if (is_user_regdom_saved()) {
 		/* Unless we're asked to ignore it and reset it */
-		अगर (reset_user) अणु
+		if (reset_user) {
 			pr_debug("Restoring regulatory settings including user preference\n");
 			user_alpha2[0] = '9';
 			user_alpha2[1] = '7';
@@ -3360,88 +3359,88 @@ out:
 			/*
 			 * If we're ignoring user settings, we still need to
 			 * check the module parameter to ensure we put things
-			 * back as they were क्रम a full restore.
+			 * back as they were for a full restore.
 			 */
-			अगर (!is_world_regकरोm(ieee80211_regकरोm)) अणु
+			if (!is_world_regdom(ieee80211_regdom)) {
 				pr_debug("Keeping preference on module parameter ieee80211_regdom: %c%c\n",
-					 ieee80211_regकरोm[0], ieee80211_regकरोm[1]);
-				alpha2[0] = ieee80211_regकरोm[0];
-				alpha2[1] = ieee80211_regकरोm[1];
-			पूर्ण
-		पूर्ण अन्यथा अणु
+					 ieee80211_regdom[0], ieee80211_regdom[1]);
+				alpha2[0] = ieee80211_regdom[0];
+				alpha2[1] = ieee80211_regdom[1];
+			}
+		} else {
 			pr_debug("Restoring regulatory settings while preserving user preference for: %c%c\n",
 				 user_alpha2[0], user_alpha2[1]);
 			alpha2[0] = user_alpha2[0];
 			alpha2[1] = user_alpha2[1];
-		पूर्ण
-	पूर्ण अन्यथा अगर (!is_world_regकरोm(ieee80211_regकरोm)) अणु
+		}
+	} else if (!is_world_regdom(ieee80211_regdom)) {
 		pr_debug("Keeping preference on module parameter ieee80211_regdom: %c%c\n",
-			 ieee80211_regकरोm[0], ieee80211_regकरोm[1]);
-		alpha2[0] = ieee80211_regकरोm[0];
-		alpha2[1] = ieee80211_regकरोm[1];
-	पूर्ण अन्यथा
+			 ieee80211_regdom[0], ieee80211_regdom[1]);
+		alpha2[0] = ieee80211_regdom[0];
+		alpha2[1] = ieee80211_regdom[1];
+	} else
 		pr_debug("Restoring regulatory settings\n");
-पूर्ण
+}
 
-अटल व्योम restore_custom_reg_settings(काष्ठा wiphy *wiphy)
-अणु
-	काष्ठा ieee80211_supported_band *sband;
-	क्रमागत nl80211_band band;
-	काष्ठा ieee80211_channel *chan;
-	पूर्णांक i;
+static void restore_custom_reg_settings(struct wiphy *wiphy)
+{
+	struct ieee80211_supported_band *sband;
+	enum nl80211_band band;
+	struct ieee80211_channel *chan;
+	int i;
 
-	क्रम (band = 0; band < NUM_NL80211_BANDS; band++) अणु
+	for (band = 0; band < NUM_NL80211_BANDS; band++) {
 		sband = wiphy->bands[band];
-		अगर (!sband)
-			जारी;
-		क्रम (i = 0; i < sband->n_channels; i++) अणु
+		if (!sband)
+			continue;
+		for (i = 0; i < sband->n_channels; i++) {
 			chan = &sband->channels[i];
 			chan->flags = chan->orig_flags;
 			chan->max_antenna_gain = chan->orig_mag;
-			chan->max_घातer = chan->orig_mpwr;
+			chan->max_power = chan->orig_mpwr;
 			chan->beacon_found = false;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
  * Restoring regulatory settings involves ignoring any
- * possibly stale country IE inक्रमmation and user regulatory
- * settings अगर so desired, this includes any beacon hपूर्णांकs
+ * possibly stale country IE information and user regulatory
+ * settings if so desired, this includes any beacon hints
  * learned as we could have traveled outside to another country
- * after disconnection. To restore regulatory settings we करो
+ * after disconnection. To restore regulatory settings we do
  * exactly what we did at bootup:
  *
- *   - send a core regulatory hपूर्णांक
- *   - send a user regulatory hपूर्णांक अगर applicable
+ *   - send a core regulatory hint
+ *   - send a user regulatory hint if applicable
  *
- * Device drivers that send a regulatory hपूर्णांक क्रम a specअगरic country
- * keep their own regulatory करोमुख्य on wiphy->regd so that करोes
+ * Device drivers that send a regulatory hint for a specific country
+ * keep their own regulatory domain on wiphy->regd so that does
  * not need to be remembered.
  */
-अटल व्योम restore_regulatory_settings(bool reset_user, bool cached)
-अणु
-	अक्षर alpha2[2];
-	अक्षर world_alpha2[2];
-	काष्ठा reg_beacon *reg_beacon, *bपंचांगp;
-	LIST_HEAD(पंचांगp_reg_req_list);
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev;
+static void restore_regulatory_settings(bool reset_user, bool cached)
+{
+	char alpha2[2];
+	char world_alpha2[2];
+	struct reg_beacon *reg_beacon, *btmp;
+	LIST_HEAD(tmp_reg_req_list);
+	struct cfg80211_registered_device *rdev;
 
 	ASSERT_RTNL();
 
 	/*
-	 * Clear the inकरोor setting in हाल that it is not controlled by user
+	 * Clear the indoor setting in case that it is not controlled by user
 	 * space, as otherwise there is no guarantee that the device is still
-	 * operating in an inकरोor environment.
+	 * operating in an indoor environment.
 	 */
-	spin_lock(&reg_inकरोor_lock);
-	अगर (reg_is_inकरोor && !reg_is_inकरोor_portid) अणु
-		reg_is_inकरोor = false;
+	spin_lock(&reg_indoor_lock);
+	if (reg_is_indoor && !reg_is_indoor_portid) {
+		reg_is_indoor = false;
 		reg_check_channels();
-	पूर्ण
-	spin_unlock(&reg_inकरोor_lock);
+	}
+	spin_unlock(&reg_indoor_lock);
 
-	reset_regकरोमुख्यs(true, &world_regकरोm);
+	reset_regdomains(true, &world_regdom);
 	restore_alpha2(alpha2, reset_user);
 
 	/*
@@ -3451,173 +3450,173 @@ out:
 	 * settings.
 	 */
 	spin_lock(&reg_requests_lock);
-	list_splice_tail_init(&reg_requests_list, &पंचांगp_reg_req_list);
+	list_splice_tail_init(&reg_requests_list, &tmp_reg_req_list);
 	spin_unlock(&reg_requests_lock);
 
-	/* Clear beacon hपूर्णांकs */
+	/* Clear beacon hints */
 	spin_lock_bh(&reg_pending_beacons_lock);
-	list_क्रम_each_entry_safe(reg_beacon, bपंचांगp, &reg_pending_beacons, list) अणु
+	list_for_each_entry_safe(reg_beacon, btmp, &reg_pending_beacons, list) {
 		list_del(&reg_beacon->list);
-		kमुक्त(reg_beacon);
-	पूर्ण
+		kfree(reg_beacon);
+	}
 	spin_unlock_bh(&reg_pending_beacons_lock);
 
-	list_क्रम_each_entry_safe(reg_beacon, bपंचांगp, &reg_beacon_list, list) अणु
+	list_for_each_entry_safe(reg_beacon, btmp, &reg_beacon_list, list) {
 		list_del(&reg_beacon->list);
-		kमुक्त(reg_beacon);
-	पूर्ण
+		kfree(reg_beacon);
+	}
 
 	/* First restore to the basic regulatory settings */
-	world_alpha2[0] = cfg80211_world_regकरोm->alpha2[0];
-	world_alpha2[1] = cfg80211_world_regकरोm->alpha2[1];
+	world_alpha2[0] = cfg80211_world_regdom->alpha2[0];
+	world_alpha2[1] = cfg80211_world_regdom->alpha2[1];
 
-	list_क्रम_each_entry(rdev, &cfg80211_rdev_list, list) अणु
-		अगर (rdev->wiphy.regulatory_flags & REGULATORY_WIPHY_SELF_MANAGED)
-			जारी;
-		अगर (rdev->wiphy.regulatory_flags & REGULATORY_CUSTOM_REG)
+	list_for_each_entry(rdev, &cfg80211_rdev_list, list) {
+		if (rdev->wiphy.regulatory_flags & REGULATORY_WIPHY_SELF_MANAGED)
+			continue;
+		if (rdev->wiphy.regulatory_flags & REGULATORY_CUSTOM_REG)
 			restore_custom_reg_settings(&rdev->wiphy);
-	पूर्ण
+	}
 
-	अगर (cached && (!is_an_alpha2(alpha2) ||
-		       !IS_ERR_OR_शून्य(cfg80211_user_regकरोm))) अणु
-		reset_regकरोमुख्यs(false, cfg80211_world_regकरोm);
+	if (cached && (!is_an_alpha2(alpha2) ||
+		       !IS_ERR_OR_NULL(cfg80211_user_regdom))) {
+		reset_regdomains(false, cfg80211_world_regdom);
 		update_all_wiphy_regulatory(NL80211_REGDOM_SET_BY_CORE);
-		prपूर्णांक_regकरोमुख्य(get_cfg80211_regकरोm());
+		print_regdomain(get_cfg80211_regdom());
 		nl80211_send_reg_change_event(&core_request_world);
 		reg_set_request_processed();
 
-		अगर (is_an_alpha2(alpha2) &&
-		    !regulatory_hपूर्णांक_user(alpha2, NL80211_USER_REG_HINT_USER)) अणु
-			काष्ठा regulatory_request *ureq;
+		if (is_an_alpha2(alpha2) &&
+		    !regulatory_hint_user(alpha2, NL80211_USER_REG_HINT_USER)) {
+			struct regulatory_request *ureq;
 
 			spin_lock(&reg_requests_lock);
 			ureq = list_last_entry(&reg_requests_list,
-					       काष्ठा regulatory_request,
+					       struct regulatory_request,
 					       list);
 			list_del(&ureq->list);
 			spin_unlock(&reg_requests_lock);
 
-			notअगरy_self_managed_wiphys(ureq);
+			notify_self_managed_wiphys(ureq);
 			reg_update_last_request(ureq);
-			set_regकरोm(reg_copy_regd(cfg80211_user_regकरोm),
+			set_regdom(reg_copy_regd(cfg80211_user_regdom),
 				   REGD_SOURCE_CACHED);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		regulatory_hपूर्णांक_core(world_alpha2);
+		}
+	} else {
+		regulatory_hint_core(world_alpha2);
 
 		/*
-		 * This restores the ieee80211_regकरोm module parameter
+		 * This restores the ieee80211_regdom module parameter
 		 * preference or the last user requested regulatory
 		 * settings, user regulatory settings takes precedence.
 		 */
-		अगर (is_an_alpha2(alpha2))
-			regulatory_hपूर्णांक_user(alpha2, NL80211_USER_REG_HINT_USER);
-	पूर्ण
+		if (is_an_alpha2(alpha2))
+			regulatory_hint_user(alpha2, NL80211_USER_REG_HINT_USER);
+	}
 
 	spin_lock(&reg_requests_lock);
-	list_splice_tail_init(&पंचांगp_reg_req_list, &reg_requests_list);
+	list_splice_tail_init(&tmp_reg_req_list, &reg_requests_list);
 	spin_unlock(&reg_requests_lock);
 
 	pr_debug("Kicking the queue\n");
 
 	schedule_work(&reg_work);
-पूर्ण
+}
 
-अटल bool is_wiphy_all_set_reg_flag(क्रमागत ieee80211_regulatory_flags flag)
-अणु
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev;
-	काष्ठा wireless_dev *wdev;
+static bool is_wiphy_all_set_reg_flag(enum ieee80211_regulatory_flags flag)
+{
+	struct cfg80211_registered_device *rdev;
+	struct wireless_dev *wdev;
 
-	list_क्रम_each_entry(rdev, &cfg80211_rdev_list, list) अणु
-		list_क्रम_each_entry(wdev, &rdev->wiphy.wdev_list, list) अणु
+	list_for_each_entry(rdev, &cfg80211_rdev_list, list) {
+		list_for_each_entry(wdev, &rdev->wiphy.wdev_list, list) {
 			wdev_lock(wdev);
-			अगर (!(wdev->wiphy->regulatory_flags & flag)) अणु
+			if (!(wdev->wiphy->regulatory_flags & flag)) {
 				wdev_unlock(wdev);
-				वापस false;
-			पूर्ण
+				return false;
+			}
 			wdev_unlock(wdev);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम regulatory_hपूर्णांक_disconnect(व्योम)
-अणु
+void regulatory_hint_disconnect(void)
+{
 	/* Restore of regulatory settings is not required when wiphy(s)
-	 * ignore IE from connected access poपूर्णांक but clearance of beacon hपूर्णांकs
-	 * is required when wiphy(s) supports beacon hपूर्णांकs.
+	 * ignore IE from connected access point but clearance of beacon hints
+	 * is required when wiphy(s) supports beacon hints.
 	 */
-	अगर (is_wiphy_all_set_reg_flag(REGULATORY_COUNTRY_IE_IGNORE)) अणु
-		काष्ठा reg_beacon *reg_beacon, *bपंचांगp;
+	if (is_wiphy_all_set_reg_flag(REGULATORY_COUNTRY_IE_IGNORE)) {
+		struct reg_beacon *reg_beacon, *btmp;
 
-		अगर (is_wiphy_all_set_reg_flag(REGULATORY_DISABLE_BEACON_HINTS))
-			वापस;
+		if (is_wiphy_all_set_reg_flag(REGULATORY_DISABLE_BEACON_HINTS))
+			return;
 
 		spin_lock_bh(&reg_pending_beacons_lock);
-		list_क्रम_each_entry_safe(reg_beacon, bपंचांगp,
-					 &reg_pending_beacons, list) अणु
+		list_for_each_entry_safe(reg_beacon, btmp,
+					 &reg_pending_beacons, list) {
 			list_del(&reg_beacon->list);
-			kमुक्त(reg_beacon);
-		पूर्ण
+			kfree(reg_beacon);
+		}
 		spin_unlock_bh(&reg_pending_beacons_lock);
 
-		list_क्रम_each_entry_safe(reg_beacon, bपंचांगp,
-					 &reg_beacon_list, list) अणु
+		list_for_each_entry_safe(reg_beacon, btmp,
+					 &reg_beacon_list, list) {
 			list_del(&reg_beacon->list);
-			kमुक्त(reg_beacon);
-		पूर्ण
+			kfree(reg_beacon);
+		}
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	pr_debug("All devices are disconnected, going to restore regulatory settings\n");
 	restore_regulatory_settings(false, true);
-पूर्ण
+}
 
-अटल bool freq_is_chan_12_13_14(u32 freq)
-अणु
-	अगर (freq == ieee80211_channel_to_frequency(12, NL80211_BAND_2GHZ) ||
+static bool freq_is_chan_12_13_14(u32 freq)
+{
+	if (freq == ieee80211_channel_to_frequency(12, NL80211_BAND_2GHZ) ||
 	    freq == ieee80211_channel_to_frequency(13, NL80211_BAND_2GHZ) ||
 	    freq == ieee80211_channel_to_frequency(14, NL80211_BAND_2GHZ))
-		वापस true;
-	वापस false;
-पूर्ण
+		return true;
+	return false;
+}
 
-अटल bool pending_reg_beacon(काष्ठा ieee80211_channel *beacon_chan)
-अणु
-	काष्ठा reg_beacon *pending_beacon;
+static bool pending_reg_beacon(struct ieee80211_channel *beacon_chan)
+{
+	struct reg_beacon *pending_beacon;
 
-	list_क्रम_each_entry(pending_beacon, &reg_pending_beacons, list)
-		अगर (ieee80211_channel_equal(beacon_chan,
+	list_for_each_entry(pending_beacon, &reg_pending_beacons, list)
+		if (ieee80211_channel_equal(beacon_chan,
 					    &pending_beacon->chan))
-			वापस true;
-	वापस false;
-पूर्ण
+			return true;
+	return false;
+}
 
-पूर्णांक regulatory_hपूर्णांक_found_beacon(काष्ठा wiphy *wiphy,
-				 काष्ठा ieee80211_channel *beacon_chan,
+int regulatory_hint_found_beacon(struct wiphy *wiphy,
+				 struct ieee80211_channel *beacon_chan,
 				 gfp_t gfp)
-अणु
-	काष्ठा reg_beacon *reg_beacon;
+{
+	struct reg_beacon *reg_beacon;
 	bool processing;
 
-	अगर (beacon_chan->beacon_found ||
+	if (beacon_chan->beacon_found ||
 	    beacon_chan->flags & IEEE80211_CHAN_RADAR ||
 	    (beacon_chan->band == NL80211_BAND_2GHZ &&
 	     !freq_is_chan_12_13_14(beacon_chan->center_freq)))
-		वापस 0;
+		return 0;
 
 	spin_lock_bh(&reg_pending_beacons_lock);
 	processing = pending_reg_beacon(beacon_chan);
 	spin_unlock_bh(&reg_pending_beacons_lock);
 
-	अगर (processing)
-		वापस 0;
+	if (processing)
+		return 0;
 
-	reg_beacon = kzalloc(माप(काष्ठा reg_beacon), gfp);
-	अगर (!reg_beacon)
-		वापस -ENOMEM;
+	reg_beacon = kzalloc(sizeof(struct reg_beacon), gfp);
+	if (!reg_beacon)
+		return -ENOMEM;
 
 	pr_debug("Found new beacon on frequency: %d.%03d MHz (Ch %d) on %s\n",
 		 beacon_chan->center_freq, beacon_chan->freq_offset,
@@ -3625,8 +3624,8 @@ out:
 			 ieee80211_channel_to_khz(beacon_chan)),
 		 wiphy_name(wiphy));
 
-	स_नकल(&reg_beacon->chan, beacon_chan,
-	       माप(काष्ठा ieee80211_channel));
+	memcpy(&reg_beacon->chan, beacon_chan,
+	       sizeof(struct ieee80211_channel));
 
 	/*
 	 * Since we can be called from BH or and non-BH context
@@ -3638,352 +3637,352 @@ out:
 
 	schedule_work(&reg_work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम prपूर्णांक_rd_rules(स्थिर काष्ठा ieee80211_regकरोमुख्य *rd)
-अणु
-	अचिन्हित पूर्णांक i;
-	स्थिर काष्ठा ieee80211_reg_rule *reg_rule = शून्य;
-	स्थिर काष्ठा ieee80211_freq_range *freq_range = शून्य;
-	स्थिर काष्ठा ieee80211_घातer_rule *घातer_rule = शून्य;
-	अक्षर bw[32], cac_समय[32];
+static void print_rd_rules(const struct ieee80211_regdomain *rd)
+{
+	unsigned int i;
+	const struct ieee80211_reg_rule *reg_rule = NULL;
+	const struct ieee80211_freq_range *freq_range = NULL;
+	const struct ieee80211_power_rule *power_rule = NULL;
+	char bw[32], cac_time[32];
 
 	pr_debug("  (start_freq - end_freq @ bandwidth), (max_antenna_gain, max_eirp), (dfs_cac_time)\n");
 
-	क्रम (i = 0; i < rd->n_reg_rules; i++) अणु
+	for (i = 0; i < rd->n_reg_rules; i++) {
 		reg_rule = &rd->reg_rules[i];
 		freq_range = &reg_rule->freq_range;
-		घातer_rule = &reg_rule->घातer_rule;
+		power_rule = &reg_rule->power_rule;
 
-		अगर (reg_rule->flags & NL80211_RRF_AUTO_BW)
-			snम_लिखो(bw, माप(bw), "%d KHz, %u KHz AUTO",
+		if (reg_rule->flags & NL80211_RRF_AUTO_BW)
+			snprintf(bw, sizeof(bw), "%d KHz, %u KHz AUTO",
 				 freq_range->max_bandwidth_khz,
 				 reg_get_max_bandwidth(rd, reg_rule));
-		अन्यथा
-			snम_लिखो(bw, माप(bw), "%d KHz",
+		else
+			snprintf(bw, sizeof(bw), "%d KHz",
 				 freq_range->max_bandwidth_khz);
 
-		अगर (reg_rule->flags & NL80211_RRF_DFS)
-			scnम_लिखो(cac_समय, माप(cac_समय), "%u s",
+		if (reg_rule->flags & NL80211_RRF_DFS)
+			scnprintf(cac_time, sizeof(cac_time), "%u s",
 				  reg_rule->dfs_cac_ms/1000);
-		अन्यथा
-			scnम_लिखो(cac_समय, माप(cac_समय), "N/A");
+		else
+			scnprintf(cac_time, sizeof(cac_time), "N/A");
 
 
 		/*
-		 * There may not be करोcumentation क्रम max antenna gain
+		 * There may not be documentation for max antenna gain
 		 * in certain regions
 		 */
-		अगर (घातer_rule->max_antenna_gain)
+		if (power_rule->max_antenna_gain)
 			pr_debug("  (%d KHz - %d KHz @ %s), (%d mBi, %d mBm), (%s)\n",
 				freq_range->start_freq_khz,
 				freq_range->end_freq_khz,
 				bw,
-				घातer_rule->max_antenna_gain,
-				घातer_rule->max_eirp,
-				cac_समय);
-		अन्यथा
+				power_rule->max_antenna_gain,
+				power_rule->max_eirp,
+				cac_time);
+		else
 			pr_debug("  (%d KHz - %d KHz @ %s), (N/A, %d mBm), (%s)\n",
 				freq_range->start_freq_khz,
 				freq_range->end_freq_khz,
 				bw,
-				घातer_rule->max_eirp,
-				cac_समय);
-	पूर्ण
-पूर्ण
+				power_rule->max_eirp,
+				cac_time);
+	}
+}
 
-bool reg_supported_dfs_region(क्रमागत nl80211_dfs_regions dfs_region)
-अणु
-	चयन (dfs_region) अणु
-	हाल NL80211_DFS_UNSET:
-	हाल NL80211_DFS_FCC:
-	हाल NL80211_DFS_ETSI:
-	हाल NL80211_DFS_JP:
-		वापस true;
-	शेष:
+bool reg_supported_dfs_region(enum nl80211_dfs_regions dfs_region)
+{
+	switch (dfs_region) {
+	case NL80211_DFS_UNSET:
+	case NL80211_DFS_FCC:
+	case NL80211_DFS_ETSI:
+	case NL80211_DFS_JP:
+		return true;
+	default:
 		pr_debug("Ignoring unknown DFS master region: %d\n", dfs_region);
-		वापस false;
-	पूर्ण
-पूर्ण
+		return false;
+	}
+}
 
-अटल व्योम prपूर्णांक_regकरोमुख्य(स्थिर काष्ठा ieee80211_regकरोमुख्य *rd)
-अणु
-	काष्ठा regulatory_request *lr = get_last_request();
+static void print_regdomain(const struct ieee80211_regdomain *rd)
+{
+	struct regulatory_request *lr = get_last_request();
 
-	अगर (is_पूर्णांकersected_alpha2(rd->alpha2)) अणु
-		अगर (lr->initiator == NL80211_REGDOM_SET_BY_COUNTRY_IE) अणु
-			काष्ठा cfg80211_रेजिस्टरed_device *rdev;
+	if (is_intersected_alpha2(rd->alpha2)) {
+		if (lr->initiator == NL80211_REGDOM_SET_BY_COUNTRY_IE) {
+			struct cfg80211_registered_device *rdev;
 			rdev = cfg80211_rdev_by_wiphy_idx(lr->wiphy_idx);
-			अगर (rdev) अणु
+			if (rdev) {
 				pr_debug("Current regulatory domain updated by AP to: %c%c\n",
 					rdev->country_ie_alpha2[0],
 					rdev->country_ie_alpha2[1]);
-			पूर्ण अन्यथा
+			} else
 				pr_debug("Current regulatory domain intersected:\n");
-		पूर्ण अन्यथा
+		} else
 			pr_debug("Current regulatory domain intersected:\n");
-	पूर्ण अन्यथा अगर (is_world_regकरोm(rd->alpha2)) अणु
+	} else if (is_world_regdom(rd->alpha2)) {
 		pr_debug("World regulatory domain updated:\n");
-	पूर्ण अन्यथा अणु
-		अगर (is_unknown_alpha2(rd->alpha2))
+	} else {
+		if (is_unknown_alpha2(rd->alpha2))
 			pr_debug("Regulatory domain changed to driver built-in settings (unknown country)\n");
-		अन्यथा अणु
-			अगर (reg_request_cell_base(lr))
+		else {
+			if (reg_request_cell_base(lr))
 				pr_debug("Regulatory domain changed to country: %c%c by Cell Station\n",
 					rd->alpha2[0], rd->alpha2[1]);
-			अन्यथा
+			else
 				pr_debug("Regulatory domain changed to country: %c%c\n",
 					rd->alpha2[0], rd->alpha2[1]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	pr_debug(" DFS Master region: %s", reg_dfs_region_str(rd->dfs_region));
-	prपूर्णांक_rd_rules(rd);
-पूर्ण
+	print_rd_rules(rd);
+}
 
-अटल व्योम prपूर्णांक_regकरोमुख्य_info(स्थिर काष्ठा ieee80211_regकरोमुख्य *rd)
-अणु
+static void print_regdomain_info(const struct ieee80211_regdomain *rd)
+{
 	pr_debug("Regulatory domain: %c%c\n", rd->alpha2[0], rd->alpha2[1]);
-	prपूर्णांक_rd_rules(rd);
-पूर्ण
+	print_rd_rules(rd);
+}
 
-अटल पूर्णांक reg_set_rd_core(स्थिर काष्ठा ieee80211_regकरोमुख्य *rd)
-अणु
-	अगर (!is_world_regकरोm(rd->alpha2))
-		वापस -EINVAL;
-	update_world_regकरोमुख्य(rd);
-	वापस 0;
-पूर्ण
+static int reg_set_rd_core(const struct ieee80211_regdomain *rd)
+{
+	if (!is_world_regdom(rd->alpha2))
+		return -EINVAL;
+	update_world_regdomain(rd);
+	return 0;
+}
 
-अटल पूर्णांक reg_set_rd_user(स्थिर काष्ठा ieee80211_regकरोमुख्य *rd,
-			   काष्ठा regulatory_request *user_request)
-अणु
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *पूर्णांकersected_rd = शून्य;
+static int reg_set_rd_user(const struct ieee80211_regdomain *rd,
+			   struct regulatory_request *user_request)
+{
+	const struct ieee80211_regdomain *intersected_rd = NULL;
 
-	अगर (!regकरोm_changes(rd->alpha2))
-		वापस -EALREADY;
+	if (!regdom_changes(rd->alpha2))
+		return -EALREADY;
 
-	अगर (!is_valid_rd(rd)) अणु
+	if (!is_valid_rd(rd)) {
 		pr_err("Invalid regulatory domain detected: %c%c\n",
 		       rd->alpha2[0], rd->alpha2[1]);
-		prपूर्णांक_regकरोमुख्य_info(rd);
-		वापस -EINVAL;
-	पूर्ण
+		print_regdomain_info(rd);
+		return -EINVAL;
+	}
 
-	अगर (!user_request->पूर्णांकersect) अणु
-		reset_regकरोमुख्यs(false, rd);
-		वापस 0;
-	पूर्ण
+	if (!user_request->intersect) {
+		reset_regdomains(false, rd);
+		return 0;
+	}
 
-	पूर्णांकersected_rd = regकरोm_पूर्णांकersect(rd, get_cfg80211_regकरोm());
-	अगर (!पूर्णांकersected_rd)
-		वापस -EINVAL;
+	intersected_rd = regdom_intersect(rd, get_cfg80211_regdom());
+	if (!intersected_rd)
+		return -EINVAL;
 
-	kमुक्त(rd);
-	rd = शून्य;
-	reset_regकरोमुख्यs(false, पूर्णांकersected_rd);
+	kfree(rd);
+	rd = NULL;
+	reset_regdomains(false, intersected_rd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक reg_set_rd_driver(स्थिर काष्ठा ieee80211_regकरोमुख्य *rd,
-			     काष्ठा regulatory_request *driver_request)
-अणु
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *regd;
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *पूर्णांकersected_rd = शून्य;
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *पंचांगp;
-	काष्ठा wiphy *request_wiphy;
+static int reg_set_rd_driver(const struct ieee80211_regdomain *rd,
+			     struct regulatory_request *driver_request)
+{
+	const struct ieee80211_regdomain *regd;
+	const struct ieee80211_regdomain *intersected_rd = NULL;
+	const struct ieee80211_regdomain *tmp;
+	struct wiphy *request_wiphy;
 
-	अगर (is_world_regकरोm(rd->alpha2))
-		वापस -EINVAL;
+	if (is_world_regdom(rd->alpha2))
+		return -EINVAL;
 
-	अगर (!regकरोm_changes(rd->alpha2))
-		वापस -EALREADY;
+	if (!regdom_changes(rd->alpha2))
+		return -EALREADY;
 
-	अगर (!is_valid_rd(rd)) अणु
+	if (!is_valid_rd(rd)) {
 		pr_err("Invalid regulatory domain detected: %c%c\n",
 		       rd->alpha2[0], rd->alpha2[1]);
-		prपूर्णांक_regकरोमुख्य_info(rd);
-		वापस -EINVAL;
-	पूर्ण
+		print_regdomain_info(rd);
+		return -EINVAL;
+	}
 
 	request_wiphy = wiphy_idx_to_wiphy(driver_request->wiphy_idx);
-	अगर (!request_wiphy)
-		वापस -ENODEV;
+	if (!request_wiphy)
+		return -ENODEV;
 
-	अगर (!driver_request->पूर्णांकersect) अणु
+	if (!driver_request->intersect) {
 		ASSERT_RTNL();
 		wiphy_lock(request_wiphy);
-		अगर (request_wiphy->regd) अणु
+		if (request_wiphy->regd) {
 			wiphy_unlock(request_wiphy);
-			वापस -EALREADY;
-		पूर्ण
+			return -EALREADY;
+		}
 
 		regd = reg_copy_regd(rd);
-		अगर (IS_ERR(regd)) अणु
+		if (IS_ERR(regd)) {
 			wiphy_unlock(request_wiphy);
-			वापस PTR_ERR(regd);
-		पूर्ण
+			return PTR_ERR(regd);
+		}
 
-		rcu_assign_poपूर्णांकer(request_wiphy->regd, regd);
+		rcu_assign_pointer(request_wiphy->regd, regd);
 		wiphy_unlock(request_wiphy);
-		reset_regकरोमुख्यs(false, rd);
-		वापस 0;
-	पूर्ण
+		reset_regdomains(false, rd);
+		return 0;
+	}
 
-	पूर्णांकersected_rd = regकरोm_पूर्णांकersect(rd, get_cfg80211_regकरोm());
-	अगर (!पूर्णांकersected_rd)
-		वापस -EINVAL;
+	intersected_rd = regdom_intersect(rd, get_cfg80211_regdom());
+	if (!intersected_rd)
+		return -EINVAL;
 
 	/*
 	 * We can trash what CRDA provided now.
-	 * However अगर a driver requested this specअगरic regulatory
-	 * करोमुख्य we keep it क्रम its निजी use
+	 * However if a driver requested this specific regulatory
+	 * domain we keep it for its private use
 	 */
-	पंचांगp = get_wiphy_regकरोm(request_wiphy);
-	rcu_assign_poपूर्णांकer(request_wiphy->regd, rd);
-	rcu_मुक्त_regकरोm(पंचांगp);
+	tmp = get_wiphy_regdom(request_wiphy);
+	rcu_assign_pointer(request_wiphy->regd, rd);
+	rcu_free_regdom(tmp);
 
-	rd = शून्य;
+	rd = NULL;
 
-	reset_regकरोमुख्यs(false, पूर्णांकersected_rd);
+	reset_regdomains(false, intersected_rd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक reg_set_rd_country_ie(स्थिर काष्ठा ieee80211_regकरोमुख्य *rd,
-				 काष्ठा regulatory_request *country_ie_request)
-अणु
-	काष्ठा wiphy *request_wiphy;
+static int reg_set_rd_country_ie(const struct ieee80211_regdomain *rd,
+				 struct regulatory_request *country_ie_request)
+{
+	struct wiphy *request_wiphy;
 
-	अगर (!is_alpha2_set(rd->alpha2) && !is_an_alpha2(rd->alpha2) &&
+	if (!is_alpha2_set(rd->alpha2) && !is_an_alpha2(rd->alpha2) &&
 	    !is_unknown_alpha2(rd->alpha2))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/*
-	 * Lets only bother proceeding on the same alpha2 अगर the current
-	 * rd is non अटल (it means CRDA was present and was used last)
+	 * Lets only bother proceeding on the same alpha2 if the current
+	 * rd is non static (it means CRDA was present and was used last)
 	 * and the pending request came in from a country IE
 	 */
 
-	अगर (!is_valid_rd(rd)) अणु
+	if (!is_valid_rd(rd)) {
 		pr_err("Invalid regulatory domain detected: %c%c\n",
 		       rd->alpha2[0], rd->alpha2[1]);
-		prपूर्णांक_regकरोमुख्य_info(rd);
-		वापस -EINVAL;
-	पूर्ण
+		print_regdomain_info(rd);
+		return -EINVAL;
+	}
 
 	request_wiphy = wiphy_idx_to_wiphy(country_ie_request->wiphy_idx);
-	अगर (!request_wiphy)
-		वापस -ENODEV;
+	if (!request_wiphy)
+		return -ENODEV;
 
-	अगर (country_ie_request->पूर्णांकersect)
-		वापस -EINVAL;
+	if (country_ie_request->intersect)
+		return -EINVAL;
 
-	reset_regकरोमुख्यs(false, rd);
-	वापस 0;
-पूर्ण
+	reset_regdomains(false, rd);
+	return 0;
+}
 
 /*
- * Use this call to set the current regulatory करोमुख्य. Conflicts with
- * multiple drivers can be ironed out later. Caller must've alपढ़ोy
- * kदो_स्मृति'd the rd काष्ठाure.
+ * Use this call to set the current regulatory domain. Conflicts with
+ * multiple drivers can be ironed out later. Caller must've already
+ * kmalloc'd the rd structure.
  */
-पूर्णांक set_regकरोm(स्थिर काष्ठा ieee80211_regकरोमुख्य *rd,
-	       क्रमागत ieee80211_regd_source regd_src)
-अणु
-	काष्ठा regulatory_request *lr;
+int set_regdom(const struct ieee80211_regdomain *rd,
+	       enum ieee80211_regd_source regd_src)
+{
+	struct regulatory_request *lr;
 	bool user_reset = false;
-	पूर्णांक r;
+	int r;
 
-	अगर (IS_ERR_OR_शून्य(rd))
-		वापस -ENODATA;
+	if (IS_ERR_OR_NULL(rd))
+		return -ENODATA;
 
-	अगर (!reg_is_valid_request(rd->alpha2)) अणु
-		kमुक्त(rd);
-		वापस -EINVAL;
-	पूर्ण
+	if (!reg_is_valid_request(rd->alpha2)) {
+		kfree(rd);
+		return -EINVAL;
+	}
 
-	अगर (regd_src == REGD_SOURCE_CRDA)
-		reset_crda_समयouts();
+	if (regd_src == REGD_SOURCE_CRDA)
+		reset_crda_timeouts();
 
 	lr = get_last_request();
 
-	/* Note that this करोesn't update the wiphys, this is करोne below */
-	चयन (lr->initiator) अणु
-	हाल NL80211_REGDOM_SET_BY_CORE:
+	/* Note that this doesn't update the wiphys, this is done below */
+	switch (lr->initiator) {
+	case NL80211_REGDOM_SET_BY_CORE:
 		r = reg_set_rd_core(rd);
-		अवरोध;
-	हाल NL80211_REGDOM_SET_BY_USER:
-		cfg80211_save_user_regकरोm(rd);
+		break;
+	case NL80211_REGDOM_SET_BY_USER:
+		cfg80211_save_user_regdom(rd);
 		r = reg_set_rd_user(rd, lr);
 		user_reset = true;
-		अवरोध;
-	हाल NL80211_REGDOM_SET_BY_DRIVER:
+		break;
+	case NL80211_REGDOM_SET_BY_DRIVER:
 		r = reg_set_rd_driver(rd, lr);
-		अवरोध;
-	हाल NL80211_REGDOM_SET_BY_COUNTRY_IE:
+		break;
+	case NL80211_REGDOM_SET_BY_COUNTRY_IE:
 		r = reg_set_rd_country_ie(rd, lr);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN(1, "invalid initiator %d\n", lr->initiator);
-		kमुक्त(rd);
-		वापस -EINVAL;
-	पूर्ण
+		kfree(rd);
+		return -EINVAL;
+	}
 
-	अगर (r) अणु
-		चयन (r) अणु
-		हाल -EALREADY:
+	if (r) {
+		switch (r) {
+		case -EALREADY:
 			reg_set_request_processed();
-			अवरोध;
-		शेष:
-			/* Back to world regulatory in हाल of errors */
+			break;
+		default:
+			/* Back to world regulatory in case of errors */
 			restore_regulatory_settings(user_reset, false);
-		पूर्ण
+		}
 
-		kमुक्त(rd);
-		वापस r;
-	पूर्ण
+		kfree(rd);
+		return r;
+	}
 
-	/* This would make this whole thing poपूर्णांकless */
-	अगर (WARN_ON(!lr->पूर्णांकersect && rd != get_cfg80211_regकरोm()))
-		वापस -EINVAL;
+	/* This would make this whole thing pointless */
+	if (WARN_ON(!lr->intersect && rd != get_cfg80211_regdom()))
+		return -EINVAL;
 
-	/* update all wiphys now with the new established regulatory करोमुख्य */
+	/* update all wiphys now with the new established regulatory domain */
 	update_all_wiphy_regulatory(lr->initiator);
 
-	prपूर्णांक_regकरोमुख्य(get_cfg80211_regकरोm());
+	print_regdomain(get_cfg80211_regdom());
 
 	nl80211_send_reg_change_event(lr);
 
 	reg_set_request_processed();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __regulatory_set_wiphy_regd(काष्ठा wiphy *wiphy,
-				       काष्ठा ieee80211_regकरोमुख्य *rd)
-अणु
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *regd;
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *prev_regd;
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev;
+static int __regulatory_set_wiphy_regd(struct wiphy *wiphy,
+				       struct ieee80211_regdomain *rd)
+{
+	const struct ieee80211_regdomain *regd;
+	const struct ieee80211_regdomain *prev_regd;
+	struct cfg80211_registered_device *rdev;
 
-	अगर (WARN_ON(!wiphy || !rd))
-		वापस -EINVAL;
+	if (WARN_ON(!wiphy || !rd))
+		return -EINVAL;
 
-	अगर (WARN(!(wiphy->regulatory_flags & REGULATORY_WIPHY_SELF_MANAGED),
+	if (WARN(!(wiphy->regulatory_flags & REGULATORY_WIPHY_SELF_MANAGED),
 		 "wiphy should have REGULATORY_WIPHY_SELF_MANAGED\n"))
-		वापस -EPERM;
+		return -EPERM;
 
-	अगर (WARN(!is_valid_rd(rd), "Invalid regulatory domain detected\n")) अणु
-		prपूर्णांक_regकरोमुख्य_info(rd);
-		वापस -EINVAL;
-	पूर्ण
+	if (WARN(!is_valid_rd(rd), "Invalid regulatory domain detected\n")) {
+		print_regdomain_info(rd);
+		return -EINVAL;
+	}
 
 	regd = reg_copy_regd(rd);
-	अगर (IS_ERR(regd))
-		वापस PTR_ERR(regd);
+	if (IS_ERR(regd))
+		return PTR_ERR(regd);
 
 	rdev = wiphy_to_rdev(wiphy);
 
@@ -3992,172 +3991,172 @@ bool reg_supported_dfs_region(क्रमागत nl80211_dfs_regions dfs_regi
 	rdev->requested_regd = regd;
 	spin_unlock(&reg_requests_lock);
 
-	kमुक्त(prev_regd);
-	वापस 0;
-पूर्ण
+	kfree(prev_regd);
+	return 0;
+}
 
-पूर्णांक regulatory_set_wiphy_regd(काष्ठा wiphy *wiphy,
-			      काष्ठा ieee80211_regकरोमुख्य *rd)
-अणु
-	पूर्णांक ret = __regulatory_set_wiphy_regd(wiphy, rd);
+int regulatory_set_wiphy_regd(struct wiphy *wiphy,
+			      struct ieee80211_regdomain *rd)
+{
+	int ret = __regulatory_set_wiphy_regd(wiphy, rd);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	schedule_work(&reg_work);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(regulatory_set_wiphy_regd);
 
-पूर्णांक regulatory_set_wiphy_regd_sync(काष्ठा wiphy *wiphy,
-				   काष्ठा ieee80211_regकरोमुख्य *rd)
-अणु
-	पूर्णांक ret;
+int regulatory_set_wiphy_regd_sync(struct wiphy *wiphy,
+				   struct ieee80211_regdomain *rd)
+{
+	int ret;
 
 	ASSERT_RTNL();
 
 	ret = __regulatory_set_wiphy_regd(wiphy, rd);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* process the request immediately */
-	reg_process_self_managed_hपूर्णांक(wiphy);
+	reg_process_self_managed_hint(wiphy);
 	reg_check_channels();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(regulatory_set_wiphy_regd_sync);
 
-व्योम wiphy_regulatory_रेजिस्टर(काष्ठा wiphy *wiphy)
-अणु
-	काष्ठा regulatory_request *lr = get_last_request();
+void wiphy_regulatory_register(struct wiphy *wiphy)
+{
+	struct regulatory_request *lr = get_last_request();
 
-	/* self-managed devices ignore beacon hपूर्णांकs and country IE */
-	अगर (wiphy->regulatory_flags & REGULATORY_WIPHY_SELF_MANAGED) अणु
+	/* self-managed devices ignore beacon hints and country IE */
+	if (wiphy->regulatory_flags & REGULATORY_WIPHY_SELF_MANAGED) {
 		wiphy->regulatory_flags |= REGULATORY_DISABLE_BEACON_HINTS |
 					   REGULATORY_COUNTRY_IE_IGNORE;
 
 		/*
-		 * The last request may have been received beक्रमe this
-		 * registration call. Call the driver notअगरier अगर
+		 * The last request may have been received before this
+		 * registration call. Call the driver notifier if
 		 * initiator is USER.
 		 */
-		अगर (lr->initiator == NL80211_REGDOM_SET_BY_USER)
-			reg_call_notअगरier(wiphy, lr);
-	पूर्ण
+		if (lr->initiator == NL80211_REGDOM_SET_BY_USER)
+			reg_call_notifier(wiphy, lr);
+	}
 
-	अगर (!reg_dev_ignore_cell_hपूर्णांक(wiphy))
-		reg_num_devs_support_basehपूर्णांक++;
+	if (!reg_dev_ignore_cell_hint(wiphy))
+		reg_num_devs_support_basehint++;
 
 	wiphy_update_regulatory(wiphy, lr->initiator);
 	wiphy_all_share_dfs_chan_state(wiphy);
-पूर्ण
+}
 
-व्योम wiphy_regulatory_deरेजिस्टर(काष्ठा wiphy *wiphy)
-अणु
-	काष्ठा wiphy *request_wiphy = शून्य;
-	काष्ठा regulatory_request *lr;
+void wiphy_regulatory_deregister(struct wiphy *wiphy)
+{
+	struct wiphy *request_wiphy = NULL;
+	struct regulatory_request *lr;
 
 	lr = get_last_request();
 
-	अगर (!reg_dev_ignore_cell_hपूर्णांक(wiphy))
-		reg_num_devs_support_basehपूर्णांक--;
+	if (!reg_dev_ignore_cell_hint(wiphy))
+		reg_num_devs_support_basehint--;
 
-	rcu_मुक्त_regकरोm(get_wiphy_regकरोm(wiphy));
-	RCU_INIT_POINTER(wiphy->regd, शून्य);
+	rcu_free_regdom(get_wiphy_regdom(wiphy));
+	RCU_INIT_POINTER(wiphy->regd, NULL);
 
-	अगर (lr)
+	if (lr)
 		request_wiphy = wiphy_idx_to_wiphy(lr->wiphy_idx);
 
-	अगर (!request_wiphy || request_wiphy != wiphy)
-		वापस;
+	if (!request_wiphy || request_wiphy != wiphy)
+		return;
 
 	lr->wiphy_idx = WIPHY_IDX_INVALID;
 	lr->country_ie_env = ENVIRON_ANY;
-पूर्ण
+}
 
 /*
- * See FCC notices क्रम UNII band definitions
- *  5GHz: https://www.fcc.gov/करोcument/5-ghz-unlicensed-spectrum-unii
- *  6GHz: https://www.fcc.gov/करोcument/fcc-proposes-more-spectrum-unlicensed-use-0
+ * See FCC notices for UNII band definitions
+ *  5GHz: https://www.fcc.gov/document/5-ghz-unlicensed-spectrum-unii
+ *  6GHz: https://www.fcc.gov/document/fcc-proposes-more-spectrum-unlicensed-use-0
  */
-पूर्णांक cfg80211_get_unii(पूर्णांक freq)
-अणु
+int cfg80211_get_unii(int freq)
+{
 	/* UNII-1 */
-	अगर (freq >= 5150 && freq <= 5250)
-		वापस 0;
+	if (freq >= 5150 && freq <= 5250)
+		return 0;
 
 	/* UNII-2A */
-	अगर (freq > 5250 && freq <= 5350)
-		वापस 1;
+	if (freq > 5250 && freq <= 5350)
+		return 1;
 
 	/* UNII-2B */
-	अगर (freq > 5350 && freq <= 5470)
-		वापस 2;
+	if (freq > 5350 && freq <= 5470)
+		return 2;
 
 	/* UNII-2C */
-	अगर (freq > 5470 && freq <= 5725)
-		वापस 3;
+	if (freq > 5470 && freq <= 5725)
+		return 3;
 
 	/* UNII-3 */
-	अगर (freq > 5725 && freq <= 5825)
-		वापस 4;
+	if (freq > 5725 && freq <= 5825)
+		return 4;
 
 	/* UNII-5 */
-	अगर (freq > 5925 && freq <= 6425)
-		वापस 5;
+	if (freq > 5925 && freq <= 6425)
+		return 5;
 
 	/* UNII-6 */
-	अगर (freq > 6425 && freq <= 6525)
-		वापस 6;
+	if (freq > 6425 && freq <= 6525)
+		return 6;
 
 	/* UNII-7 */
-	अगर (freq > 6525 && freq <= 6875)
-		वापस 7;
+	if (freq > 6525 && freq <= 6875)
+		return 7;
 
 	/* UNII-8 */
-	अगर (freq > 6875 && freq <= 7125)
-		वापस 8;
+	if (freq > 6875 && freq <= 7125)
+		return 8;
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-bool regulatory_inकरोor_allowed(व्योम)
-अणु
-	वापस reg_is_inकरोor;
-पूर्ण
+bool regulatory_indoor_allowed(void)
+{
+	return reg_is_indoor;
+}
 
-bool regulatory_pre_cac_allowed(काष्ठा wiphy *wiphy)
-अणु
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *regd = शून्य;
-	स्थिर काष्ठा ieee80211_regकरोमुख्य *wiphy_regd = शून्य;
+bool regulatory_pre_cac_allowed(struct wiphy *wiphy)
+{
+	const struct ieee80211_regdomain *regd = NULL;
+	const struct ieee80211_regdomain *wiphy_regd = NULL;
 	bool pre_cac_allowed = false;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
-	regd = rcu_dereference(cfg80211_regकरोमुख्य);
+	regd = rcu_dereference(cfg80211_regdomain);
 	wiphy_regd = rcu_dereference(wiphy->regd);
-	अगर (!wiphy_regd) अणु
-		अगर (regd->dfs_region == NL80211_DFS_ETSI)
+	if (!wiphy_regd) {
+		if (regd->dfs_region == NL80211_DFS_ETSI)
 			pre_cac_allowed = true;
 
-		rcu_पढ़ो_unlock();
+		rcu_read_unlock();
 
-		वापस pre_cac_allowed;
-	पूर्ण
+		return pre_cac_allowed;
+	}
 
-	अगर (regd->dfs_region == wiphy_regd->dfs_region &&
+	if (regd->dfs_region == wiphy_regd->dfs_region &&
 	    wiphy_regd->dfs_region == NL80211_DFS_ETSI)
 		pre_cac_allowed = true;
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस pre_cac_allowed;
-पूर्ण
+	return pre_cac_allowed;
+}
 EXPORT_SYMBOL(regulatory_pre_cac_allowed);
 
-अटल व्योम cfg80211_check_and_end_cac(काष्ठा cfg80211_रेजिस्टरed_device *rdev)
-अणु
-	काष्ठा wireless_dev *wdev;
+static void cfg80211_check_and_end_cac(struct cfg80211_registered_device *rdev)
+{
+	struct wireless_dev *wdev;
 	/* If we finished CAC or received radar, we should end any
 	 * CAC running on the same channels.
 	 * the check !cfg80211_chandef_dfs_usable contain 2 options:
@@ -4165,153 +4164,153 @@ EXPORT_SYMBOL(regulatory_pre_cac_allowed);
 	 * event has effected another wdev state, or there is a channel
 	 * in unavailable state in wdev chandef - those the RADAR_DETECTED
 	 * event has effected another wdev state.
-	 * In both हालs we should end the CAC on the wdev.
+	 * In both cases we should end the CAC on the wdev.
 	 */
-	list_क्रम_each_entry(wdev, &rdev->wiphy.wdev_list, list) अणु
-		अगर (wdev->cac_started &&
+	list_for_each_entry(wdev, &rdev->wiphy.wdev_list, list) {
+		if (wdev->cac_started &&
 		    !cfg80211_chandef_dfs_usable(&rdev->wiphy, &wdev->chandef))
 			rdev_end_cac(rdev, wdev->netdev);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम regulatory_propagate_dfs_state(काष्ठा wiphy *wiphy,
-				    काष्ठा cfg80211_chan_def *chandef,
-				    क्रमागत nl80211_dfs_state dfs_state,
-				    क्रमागत nl80211_radar_event event)
-अणु
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev;
+void regulatory_propagate_dfs_state(struct wiphy *wiphy,
+				    struct cfg80211_chan_def *chandef,
+				    enum nl80211_dfs_state dfs_state,
+				    enum nl80211_radar_event event)
+{
+	struct cfg80211_registered_device *rdev;
 
 	ASSERT_RTNL();
 
-	अगर (WARN_ON(!cfg80211_chandef_valid(chandef)))
-		वापस;
+	if (WARN_ON(!cfg80211_chandef_valid(chandef)))
+		return;
 
-	list_क्रम_each_entry(rdev, &cfg80211_rdev_list, list) अणु
-		अगर (wiphy == &rdev->wiphy)
-			जारी;
+	list_for_each_entry(rdev, &cfg80211_rdev_list, list) {
+		if (wiphy == &rdev->wiphy)
+			continue;
 
-		अगर (!reg_dfs_करोमुख्य_same(wiphy, &rdev->wiphy))
-			जारी;
+		if (!reg_dfs_domain_same(wiphy, &rdev->wiphy))
+			continue;
 
-		अगर (!ieee80211_get_channel(&rdev->wiphy,
+		if (!ieee80211_get_channel(&rdev->wiphy,
 					   chandef->chan->center_freq))
-			जारी;
+			continue;
 
 		cfg80211_set_dfs_state(&rdev->wiphy, chandef, dfs_state);
 
-		अगर (event == NL80211_RADAR_DETECTED ||
-		    event == NL80211_RADAR_CAC_FINISHED) अणु
+		if (event == NL80211_RADAR_DETECTED ||
+		    event == NL80211_RADAR_CAC_FINISHED) {
 			cfg80211_sched_dfs_chan_update(rdev);
 			cfg80211_check_and_end_cac(rdev);
-		पूर्ण
+		}
 
-		nl80211_radar_notअगरy(rdev, chandef, event, शून्य, GFP_KERNEL);
-	पूर्ण
-पूर्ण
+		nl80211_radar_notify(rdev, chandef, event, NULL, GFP_KERNEL);
+	}
+}
 
-अटल पूर्णांक __init regulatory_init_db(व्योम)
-अणु
-	पूर्णांक err;
+static int __init regulatory_init_db(void)
+{
+	int err;
 
 	/*
 	 * It's possible that - due to other bugs/issues - cfg80211
 	 * never called regulatory_init() below, or that it failed;
-	 * in that हाल, करोn't try to करो any further work here as
-	 * it's करोomed to lead to crashes.
+	 * in that case, don't try to do any further work here as
+	 * it's doomed to lead to crashes.
 	 */
-	अगर (IS_ERR_OR_शून्य(reg_pdev))
-		वापस -EINVAL;
+	if (IS_ERR_OR_NULL(reg_pdev))
+		return -EINVAL;
 
 	err = load_builtin_regdb_keys();
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* We always try to get an update क्रम the अटल regकरोमुख्य */
-	err = regulatory_hपूर्णांक_core(cfg80211_world_regकरोm->alpha2);
-	अगर (err) अणु
-		अगर (err == -ENOMEM) अणु
-			platक्रमm_device_unरेजिस्टर(reg_pdev);
-			वापस err;
-		पूर्ण
+	/* We always try to get an update for the static regdomain */
+	err = regulatory_hint_core(cfg80211_world_regdom->alpha2);
+	if (err) {
+		if (err == -ENOMEM) {
+			platform_device_unregister(reg_pdev);
+			return err;
+		}
 		/*
-		 * N.B. kobject_uevent_env() can fail मुख्यly क्रम when we're out
+		 * N.B. kobject_uevent_env() can fail mainly for when we're out
 		 * memory which is handled and propagated appropriately above
 		 * but it can also fail during a netlink_broadcast() or during
-		 * early boot क्रम call_usermodehelper(). For now treat these
+		 * early boot for call_usermodehelper(). For now treat these
 		 * errors as non-fatal.
 		 */
 		pr_err("kobject_uevent_env() was unable to call CRDA during init\n");
-	पूर्ण
+	}
 
 	/*
-	 * Finally, अगर the user set the module parameter treat it
-	 * as a user hपूर्णांक.
+	 * Finally, if the user set the module parameter treat it
+	 * as a user hint.
 	 */
-	अगर (!is_world_regकरोm(ieee80211_regकरोm))
-		regulatory_hपूर्णांक_user(ieee80211_regकरोm,
+	if (!is_world_regdom(ieee80211_regdom))
+		regulatory_hint_user(ieee80211_regdom,
 				     NL80211_USER_REG_HINT_USER);
 
-	वापस 0;
-पूर्ण
-#अगर_अघोषित MODULE
+	return 0;
+}
+#ifndef MODULE
 late_initcall(regulatory_init_db);
-#पूर्ण_अगर
+#endif
 
-पूर्णांक __init regulatory_init(व्योम)
-अणु
-	reg_pdev = platक्रमm_device_रेजिस्टर_simple("regulatory", 0, शून्य, 0);
-	अगर (IS_ERR(reg_pdev))
-		वापस PTR_ERR(reg_pdev);
+int __init regulatory_init(void)
+{
+	reg_pdev = platform_device_register_simple("regulatory", 0, NULL, 0);
+	if (IS_ERR(reg_pdev))
+		return PTR_ERR(reg_pdev);
 
-	rcu_assign_poपूर्णांकer(cfg80211_regकरोमुख्य, cfg80211_world_regकरोm);
+	rcu_assign_pointer(cfg80211_regdomain, cfg80211_world_regdom);
 
 	user_alpha2[0] = '9';
 	user_alpha2[1] = '7';
 
-#अगर_घोषित MODULE
-	वापस regulatory_init_db();
-#अन्यथा
-	वापस 0;
-#पूर्ण_अगर
-पूर्ण
+#ifdef MODULE
+	return regulatory_init_db();
+#else
+	return 0;
+#endif
+}
 
-व्योम regulatory_निकास(व्योम)
-अणु
-	काष्ठा regulatory_request *reg_request, *पंचांगp;
-	काष्ठा reg_beacon *reg_beacon, *bपंचांगp;
+void regulatory_exit(void)
+{
+	struct regulatory_request *reg_request, *tmp;
+	struct reg_beacon *reg_beacon, *btmp;
 
 	cancel_work_sync(&reg_work);
-	cancel_crda_समयout_sync();
+	cancel_crda_timeout_sync();
 	cancel_delayed_work_sync(&reg_check_chans);
 
 	/* Lock to suppress warnings */
 	rtnl_lock();
-	reset_regकरोमुख्यs(true, शून्य);
+	reset_regdomains(true, NULL);
 	rtnl_unlock();
 
 	dev_set_uevent_suppress(&reg_pdev->dev, true);
 
-	platक्रमm_device_unरेजिस्टर(reg_pdev);
+	platform_device_unregister(reg_pdev);
 
-	list_क्रम_each_entry_safe(reg_beacon, bपंचांगp, &reg_pending_beacons, list) अणु
+	list_for_each_entry_safe(reg_beacon, btmp, &reg_pending_beacons, list) {
 		list_del(&reg_beacon->list);
-		kमुक्त(reg_beacon);
-	पूर्ण
+		kfree(reg_beacon);
+	}
 
-	list_क्रम_each_entry_safe(reg_beacon, bपंचांगp, &reg_beacon_list, list) अणु
+	list_for_each_entry_safe(reg_beacon, btmp, &reg_beacon_list, list) {
 		list_del(&reg_beacon->list);
-		kमुक्त(reg_beacon);
-	पूर्ण
+		kfree(reg_beacon);
+	}
 
-	list_क्रम_each_entry_safe(reg_request, पंचांगp, &reg_requests_list, list) अणु
+	list_for_each_entry_safe(reg_request, tmp, &reg_requests_list, list) {
 		list_del(&reg_request->list);
-		kमुक्त(reg_request);
-	पूर्ण
+		kfree(reg_request);
+	}
 
-	अगर (!IS_ERR_OR_शून्य(regdb))
-		kमुक्त(regdb);
-	अगर (!IS_ERR_OR_शून्य(cfg80211_user_regकरोm))
-		kमुक्त(cfg80211_user_regकरोm);
+	if (!IS_ERR_OR_NULL(regdb))
+		kfree(regdb);
+	if (!IS_ERR_OR_NULL(cfg80211_user_regdom))
+		kfree(cfg80211_user_regdom);
 
-	मुक्त_regdb_keyring();
-पूर्ण
+	free_regdb_keyring();
+}

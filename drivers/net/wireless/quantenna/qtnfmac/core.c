@@ -1,434 +1,433 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /* Copyright (c) 2015-2016 Quantenna Communications. All rights reserved. */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/nospec.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/if_ether.h>
+#include <linux/nospec.h>
 
-#समावेश "core.h"
-#समावेश "bus.h"
-#समावेश "trans.h"
-#समावेश "commands.h"
-#समावेश "cfg80211.h"
-#समावेश "event.h"
-#समावेश "util.h"
-#समावेश "switchdev.h"
+#include "core.h"
+#include "bus.h"
+#include "trans.h"
+#include "commands.h"
+#include "cfg80211.h"
+#include "event.h"
+#include "util.h"
+#include "switchdev.h"
 
-#घोषणा QTNF_PRIMARY_VIF_IDX	0
+#define QTNF_PRIMARY_VIF_IDX	0
 
-अटल bool slave_radar = true;
+static bool slave_radar = true;
 module_param(slave_radar, bool, 0644);
 MODULE_PARM_DESC(slave_radar, "set 0 to disable radar detection in slave mode");
 
-अटल bool dfs_offload;
+static bool dfs_offload;
 module_param(dfs_offload, bool, 0644);
 MODULE_PARM_DESC(dfs_offload, "set 1 to enable DFS offload to firmware");
 
-अटल काष्ठा dentry *qtnf_debugfs_dir;
+static struct dentry *qtnf_debugfs_dir;
 
-bool qtnf_slave_radar_get(व्योम)
-अणु
-	वापस slave_radar;
-पूर्ण
+bool qtnf_slave_radar_get(void)
+{
+	return slave_radar;
+}
 
-bool qtnf_dfs_offload_get(व्योम)
-अणु
-	वापस dfs_offload;
-पूर्ण
+bool qtnf_dfs_offload_get(void)
+{
+	return dfs_offload;
+}
 
-काष्ठा qtnf_wmac *qtnf_core_get_mac(स्थिर काष्ठा qtnf_bus *bus, u8 macid)
-अणु
-	काष्ठा qtnf_wmac *mac = शून्य;
+struct qtnf_wmac *qtnf_core_get_mac(const struct qtnf_bus *bus, u8 macid)
+{
+	struct qtnf_wmac *mac = NULL;
 
-	अगर (macid >= QTNF_MAX_MAC) अणु
+	if (macid >= QTNF_MAX_MAC) {
 		pr_err("invalid MAC index %u\n", macid);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	macid = array_index_nospec(macid, QTNF_MAX_MAC);
 	mac = bus->mac[macid];
 
-	अगर (unlikely(!mac)) अणु
+	if (unlikely(!mac)) {
 		pr_err("MAC%u: not initialized\n", macid);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस mac;
-पूर्ण
+	return mac;
+}
 
-/* Netdev handler क्रम खोलो.
+/* Netdev handler for open.
  */
-अटल पूर्णांक qtnf_netdev_खोलो(काष्ठा net_device *ndev)
-अणु
-	netअगर_carrier_off(ndev);
-	qtnf_netdev_upकरोwn(ndev, 1);
-	वापस 0;
-पूर्ण
+static int qtnf_netdev_open(struct net_device *ndev)
+{
+	netif_carrier_off(ndev);
+	qtnf_netdev_updown(ndev, 1);
+	return 0;
+}
 
-/* Netdev handler क्रम बंद.
+/* Netdev handler for close.
  */
-अटल पूर्णांक qtnf_netdev_बंद(काष्ठा net_device *ndev)
-अणु
-	netअगर_carrier_off(ndev);
-	qtnf_भव_पूर्णांकf_cleanup(ndev);
-	qtnf_netdev_upकरोwn(ndev, 0);
-	वापस 0;
-पूर्ण
+static int qtnf_netdev_close(struct net_device *ndev)
+{
+	netif_carrier_off(ndev);
+	qtnf_virtual_intf_cleanup(ndev);
+	qtnf_netdev_updown(ndev, 0);
+	return 0;
+}
 
-अटल व्योम qtnf_packet_send_hi_pri(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा qtnf_vअगर *vअगर = qtnf_netdev_get_priv(skb->dev);
+static void qtnf_packet_send_hi_pri(struct sk_buff *skb)
+{
+	struct qtnf_vif *vif = qtnf_netdev_get_priv(skb->dev);
 
-	skb_queue_tail(&vअगर->high_pri_tx_queue, skb);
-	queue_work(vअगर->mac->bus->hprio_workqueue, &vअगर->high_pri_tx_work);
-पूर्ण
+	skb_queue_tail(&vif->high_pri_tx_queue, skb);
+	queue_work(vif->mac->bus->hprio_workqueue, &vif->high_pri_tx_work);
+}
 
-/* Netdev handler क्रम data transmission.
+/* Netdev handler for data transmission.
  */
-अटल netdev_tx_t
-qtnf_netdev_hard_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *ndev)
-अणु
-	काष्ठा qtnf_vअगर *vअगर;
-	काष्ठा qtnf_wmac *mac;
+static netdev_tx_t
+qtnf_netdev_hard_start_xmit(struct sk_buff *skb, struct net_device *ndev)
+{
+	struct qtnf_vif *vif;
+	struct qtnf_wmac *mac;
 
-	vअगर = qtnf_netdev_get_priv(ndev);
+	vif = qtnf_netdev_get_priv(ndev);
 
-	अगर (unlikely(skb->dev != ndev)) अणु
+	if (unlikely(skb->dev != ndev)) {
 		pr_err_ratelimited("invalid skb->dev");
-		dev_kमुक्त_skb_any(skb);
-		वापस 0;
-	पूर्ण
+		dev_kfree_skb_any(skb);
+		return 0;
+	}
 
-	अगर (unlikely(vअगर->wdev.अगरtype == NL80211_IFTYPE_UNSPECIFIED)) अणु
+	if (unlikely(vif->wdev.iftype == NL80211_IFTYPE_UNSPECIFIED)) {
 		pr_err_ratelimited("%s: VIF not initialized\n", ndev->name);
-		dev_kमुक्त_skb_any(skb);
-		वापस 0;
-	पूर्ण
+		dev_kfree_skb_any(skb);
+		return 0;
+	}
 
-	mac = vअगर->mac;
-	अगर (unlikely(!mac)) अणु
+	mac = vif->mac;
+	if (unlikely(!mac)) {
 		pr_err_ratelimited("%s: NULL mac pointer", ndev->name);
-		dev_kमुक्त_skb_any(skb);
-		वापस 0;
-	पूर्ण
+		dev_kfree_skb_any(skb);
+		return 0;
+	}
 
-	अगर (!skb->len || (skb->len > ETH_FRAME_LEN)) अणु
+	if (!skb->len || (skb->len > ETH_FRAME_LEN)) {
 		pr_err_ratelimited("%s: invalid skb len %d\n", ndev->name,
 				   skb->len);
-		dev_kमुक्त_skb_any(skb);
+		dev_kfree_skb_any(skb);
 		ndev->stats.tx_dropped++;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* tx path is enabled: reset vअगर समयout */
-	vअगर->cons_tx_समयout_cnt = 0;
+	/* tx path is enabled: reset vif timeout */
+	vif->cons_tx_timeout_cnt = 0;
 
-	अगर (unlikely(skb->protocol == htons(ETH_P_PAE))) अणु
+	if (unlikely(skb->protocol == htons(ETH_P_PAE))) {
 		qtnf_packet_send_hi_pri(skb);
 		dev_sw_netstats_tx_add(ndev, 1, skb->len);
-		वापस NETDEV_TX_OK;
-	पूर्ण
+		return NETDEV_TX_OK;
+	}
 
-	वापस qtnf_bus_data_tx(mac->bus, skb, mac->macid, vअगर->vअगरid);
-पूर्ण
+	return qtnf_bus_data_tx(mac->bus, skb, mac->macid, vif->vifid);
+}
 
-/* Netdev handler क्रम transmission समयout.
+/* Netdev handler for transmission timeout.
  */
-अटल व्योम qtnf_netdev_tx_समयout(काष्ठा net_device *ndev, अचिन्हित पूर्णांक txqueue)
-अणु
-	काष्ठा qtnf_vअगर *vअगर = qtnf_netdev_get_priv(ndev);
-	काष्ठा qtnf_wmac *mac;
-	काष्ठा qtnf_bus *bus;
+static void qtnf_netdev_tx_timeout(struct net_device *ndev, unsigned int txqueue)
+{
+	struct qtnf_vif *vif = qtnf_netdev_get_priv(ndev);
+	struct qtnf_wmac *mac;
+	struct qtnf_bus *bus;
 
-	अगर (unlikely(!vअगर || !vअगर->mac || !vअगर->mac->bus))
-		वापस;
+	if (unlikely(!vif || !vif->mac || !vif->mac->bus))
+		return;
 
-	mac = vअगर->mac;
+	mac = vif->mac;
 	bus = mac->bus;
 
-	pr_warn("VIF%u.%u: Tx timeout- %lu\n", mac->macid, vअगर->vअगरid, jअगरfies);
+	pr_warn("VIF%u.%u: Tx timeout- %lu\n", mac->macid, vif->vifid, jiffies);
 
-	qtnf_bus_data_tx_समयout(bus, ndev);
+	qtnf_bus_data_tx_timeout(bus, ndev);
 	ndev->stats.tx_errors++;
 
-	अगर (++vअगर->cons_tx_समयout_cnt > QTNF_TX_TIMEOUT_TRSHLD) अणु
+	if (++vif->cons_tx_timeout_cnt > QTNF_TX_TIMEOUT_TRSHLD) {
 		pr_err("Tx timeout threshold exceeded !\n");
 		pr_err("schedule interface %s reset !\n", netdev_name(ndev));
-		queue_work(bus->workqueue, &vअगर->reset_work);
-	पूर्ण
-पूर्ण
+		queue_work(bus->workqueue, &vif->reset_work);
+	}
+}
 
-अटल पूर्णांक qtnf_netdev_set_mac_address(काष्ठा net_device *ndev, व्योम *addr)
-अणु
-	काष्ठा qtnf_vअगर *vअगर = qtnf_netdev_get_priv(ndev);
-	काष्ठा sockaddr *sa = addr;
-	पूर्णांक ret;
-	अचिन्हित अक्षर old_addr[ETH_ALEN];
+static int qtnf_netdev_set_mac_address(struct net_device *ndev, void *addr)
+{
+	struct qtnf_vif *vif = qtnf_netdev_get_priv(ndev);
+	struct sockaddr *sa = addr;
+	int ret;
+	unsigned char old_addr[ETH_ALEN];
 
-	स_नकल(old_addr, sa->sa_data, माप(old_addr));
+	memcpy(old_addr, sa->sa_data, sizeof(old_addr));
 
 	ret = eth_mac_addr(ndev, sa);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	qtnf_scan_करोne(vअगर->mac, true);
+	qtnf_scan_done(vif->mac, true);
 
-	ret = qtnf_cmd_send_change_पूर्णांकf_type(vअगर, vअगर->wdev.अगरtype,
-					     vअगर->wdev.use_4addr,
+	ret = qtnf_cmd_send_change_intf_type(vif, vif->wdev.iftype,
+					     vif->wdev.use_4addr,
 					     sa->sa_data);
 
-	अगर (ret)
-		स_नकल(ndev->dev_addr, old_addr, ETH_ALEN);
+	if (ret)
+		memcpy(ndev->dev_addr, old_addr, ETH_ALEN);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक qtnf_netdev_port_parent_id(काष्ठा net_device *ndev,
-				      काष्ठा netdev_phys_item_id *ppid)
-अणु
-	स्थिर काष्ठा qtnf_vअगर *vअगर = qtnf_netdev_get_priv(ndev);
-	स्थिर काष्ठा qtnf_bus *bus = vअगर->mac->bus;
+static int qtnf_netdev_port_parent_id(struct net_device *ndev,
+				      struct netdev_phys_item_id *ppid)
+{
+	const struct qtnf_vif *vif = qtnf_netdev_get_priv(ndev);
+	const struct qtnf_bus *bus = vif->mac->bus;
 
-	ppid->id_len = माप(bus->hw_id);
-	स_नकल(&ppid->id, bus->hw_id, ppid->id_len);
+	ppid->id_len = sizeof(bus->hw_id);
+	memcpy(&ppid->id, bus->hw_id, ppid->id_len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qtnf_netdev_alloc_pcpu_stats(काष्ठा net_device *dev)
-अणु
-	dev->tstats = netdev_alloc_pcpu_stats(काष्ठा pcpu_sw_netstats);
+static int qtnf_netdev_alloc_pcpu_stats(struct net_device *dev)
+{
+	dev->tstats = netdev_alloc_pcpu_stats(struct pcpu_sw_netstats);
 
-	वापस dev->tstats ? 0 : -ENOMEM;
-पूर्ण
+	return dev->tstats ? 0 : -ENOMEM;
+}
 
-अटल व्योम qtnf_netdev_मुक्त_pcpu_stats(काष्ठा net_device *dev)
-अणु
-	मुक्त_percpu(dev->tstats);
-पूर्ण
+static void qtnf_netdev_free_pcpu_stats(struct net_device *dev)
+{
+	free_percpu(dev->tstats);
+}
 
 /* Network device ops handlers */
-स्थिर काष्ठा net_device_ops qtnf_netdev_ops = अणु
-	.nकरो_init = qtnf_netdev_alloc_pcpu_stats,
-	.nकरो_uninit = qtnf_netdev_मुक्त_pcpu_stats,
-	.nकरो_खोलो = qtnf_netdev_खोलो,
-	.nकरो_stop = qtnf_netdev_बंद,
-	.nकरो_start_xmit = qtnf_netdev_hard_start_xmit,
-	.nकरो_tx_समयout = qtnf_netdev_tx_समयout,
-	.nकरो_get_stats64 = dev_get_tstats64,
-	.nकरो_set_mac_address = qtnf_netdev_set_mac_address,
-	.nकरो_get_port_parent_id = qtnf_netdev_port_parent_id,
-पूर्ण;
+const struct net_device_ops qtnf_netdev_ops = {
+	.ndo_init = qtnf_netdev_alloc_pcpu_stats,
+	.ndo_uninit = qtnf_netdev_free_pcpu_stats,
+	.ndo_open = qtnf_netdev_open,
+	.ndo_stop = qtnf_netdev_close,
+	.ndo_start_xmit = qtnf_netdev_hard_start_xmit,
+	.ndo_tx_timeout = qtnf_netdev_tx_timeout,
+	.ndo_get_stats64 = dev_get_tstats64,
+	.ndo_set_mac_address = qtnf_netdev_set_mac_address,
+	.ndo_get_port_parent_id = qtnf_netdev_port_parent_id,
+};
 
-अटल पूर्णांक qtnf_mac_init_single_band(काष्ठा wiphy *wiphy,
-				     काष्ठा qtnf_wmac *mac,
-				     क्रमागत nl80211_band band)
-अणु
-	पूर्णांक ret;
+static int qtnf_mac_init_single_band(struct wiphy *wiphy,
+				     struct qtnf_wmac *mac,
+				     enum nl80211_band band)
+{
+	int ret;
 
-	wiphy->bands[band] = kzalloc(माप(*wiphy->bands[band]), GFP_KERNEL);
-	अगर (!wiphy->bands[band])
-		वापस -ENOMEM;
+	wiphy->bands[band] = kzalloc(sizeof(*wiphy->bands[band]), GFP_KERNEL);
+	if (!wiphy->bands[band])
+		return -ENOMEM;
 
 	wiphy->bands[band]->band = band;
 
 	ret = qtnf_cmd_band_info_get(mac, wiphy->bands[band]);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("MAC%u: band %u: failed to get chans info: %d\n",
 		       mac->macid, band, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	qtnf_band_init_rates(wiphy->bands[band]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qtnf_mac_init_bands(काष्ठा qtnf_wmac *mac)
-अणु
-	काष्ठा wiphy *wiphy = priv_to_wiphy(mac);
-	पूर्णांक ret = 0;
+static int qtnf_mac_init_bands(struct qtnf_wmac *mac)
+{
+	struct wiphy *wiphy = priv_to_wiphy(mac);
+	int ret = 0;
 
-	अगर (mac->macinfo.bands_cap & QLINK_BAND_2GHZ) अणु
+	if (mac->macinfo.bands_cap & QLINK_BAND_2GHZ) {
 		ret = qtnf_mac_init_single_band(wiphy, mac, NL80211_BAND_2GHZ);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
-	अगर (mac->macinfo.bands_cap & QLINK_BAND_5GHZ) अणु
+	if (mac->macinfo.bands_cap & QLINK_BAND_5GHZ) {
 		ret = qtnf_mac_init_single_band(wiphy, mac, NL80211_BAND_5GHZ);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
-	अगर (mac->macinfo.bands_cap & QLINK_BAND_60GHZ)
+	if (mac->macinfo.bands_cap & QLINK_BAND_60GHZ)
 		ret = qtnf_mac_init_single_band(wiphy, mac, NL80211_BAND_60GHZ);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा qtnf_vअगर *qtnf_mac_get_मुक्त_vअगर(काष्ठा qtnf_wmac *mac)
-अणु
-	काष्ठा qtnf_vअगर *vअगर;
-	पूर्णांक i;
+struct qtnf_vif *qtnf_mac_get_free_vif(struct qtnf_wmac *mac)
+{
+	struct qtnf_vif *vif;
+	int i;
 
-	क्रम (i = 0; i < QTNF_MAX_INTF; i++) अणु
-		vअगर = &mac->अगरlist[i];
-		अगर (vअगर->wdev.अगरtype == NL80211_IFTYPE_UNSPECIFIED)
-			वापस vअगर;
-	पूर्ण
+	for (i = 0; i < QTNF_MAX_INTF; i++) {
+		vif = &mac->iflist[i];
+		if (vif->wdev.iftype == NL80211_IFTYPE_UNSPECIFIED)
+			return vif;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-काष्ठा qtnf_vअगर *qtnf_mac_get_base_vअगर(काष्ठा qtnf_wmac *mac)
-अणु
-	काष्ठा qtnf_vअगर *vअगर;
+struct qtnf_vif *qtnf_mac_get_base_vif(struct qtnf_wmac *mac)
+{
+	struct qtnf_vif *vif;
 
-	vअगर = &mac->अगरlist[QTNF_PRIMARY_VIF_IDX];
+	vif = &mac->iflist[QTNF_PRIMARY_VIF_IDX];
 
-	अगर (vअगर->wdev.अगरtype == NL80211_IFTYPE_UNSPECIFIED)
-		वापस शून्य;
+	if (vif->wdev.iftype == NL80211_IFTYPE_UNSPECIFIED)
+		return NULL;
 
-	वापस vअगर;
-पूर्ण
+	return vif;
+}
 
-व्योम qtnf_mac_अगरace_comb_मुक्त(काष्ठा qtnf_wmac *mac)
-अणु
-	काष्ठा ieee80211_अगरace_combination *comb;
-	पूर्णांक i;
+void qtnf_mac_iface_comb_free(struct qtnf_wmac *mac)
+{
+	struct ieee80211_iface_combination *comb;
+	int i;
 
-	अगर (mac->macinfo.अगर_comb) अणु
-		क्रम (i = 0; i < mac->macinfo.n_अगर_comb; i++) अणु
-			comb = &mac->macinfo.अगर_comb[i];
-			kमुक्त(comb->limits);
-			comb->limits = शून्य;
-		पूर्ण
+	if (mac->macinfo.if_comb) {
+		for (i = 0; i < mac->macinfo.n_if_comb; i++) {
+			comb = &mac->macinfo.if_comb[i];
+			kfree(comb->limits);
+			comb->limits = NULL;
+		}
 
-		kमुक्त(mac->macinfo.अगर_comb);
-		mac->macinfo.अगर_comb = शून्य;
-	पूर्ण
-पूर्ण
+		kfree(mac->macinfo.if_comb);
+		mac->macinfo.if_comb = NULL;
+	}
+}
 
-व्योम qtnf_mac_ext_caps_मुक्त(काष्ठा qtnf_wmac *mac)
-अणु
-	अगर (mac->macinfo.extended_capabilities_len) अणु
-		kमुक्त(mac->macinfo.extended_capabilities);
-		mac->macinfo.extended_capabilities = शून्य;
+void qtnf_mac_ext_caps_free(struct qtnf_wmac *mac)
+{
+	if (mac->macinfo.extended_capabilities_len) {
+		kfree(mac->macinfo.extended_capabilities);
+		mac->macinfo.extended_capabilities = NULL;
 
-		kमुक्त(mac->macinfo.extended_capabilities_mask);
-		mac->macinfo.extended_capabilities_mask = शून्य;
+		kfree(mac->macinfo.extended_capabilities_mask);
+		mac->macinfo.extended_capabilities_mask = NULL;
 
 		mac->macinfo.extended_capabilities_len = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम qtnf_vअगर_reset_handler(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा qtnf_vअगर *vअगर = container_of(work, काष्ठा qtnf_vअगर, reset_work);
+static void qtnf_vif_reset_handler(struct work_struct *work)
+{
+	struct qtnf_vif *vif = container_of(work, struct qtnf_vif, reset_work);
 
 	rtnl_lock();
 
-	अगर (vअगर->wdev.अगरtype == NL80211_IFTYPE_UNSPECIFIED) अणु
+	if (vif->wdev.iftype == NL80211_IFTYPE_UNSPECIFIED) {
 		rtnl_unlock();
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* stop tx completely */
-	netअगर_tx_stop_all_queues(vअगर->netdev);
-	अगर (netअगर_carrier_ok(vअगर->netdev))
-		netअगर_carrier_off(vअगर->netdev);
+	netif_tx_stop_all_queues(vif->netdev);
+	if (netif_carrier_ok(vif->netdev))
+		netif_carrier_off(vif->netdev);
 
-	qtnf_cfg80211_vअगर_reset(vअगर);
+	qtnf_cfg80211_vif_reset(vif);
 
 	rtnl_unlock();
-पूर्ण
+}
 
-अटल व्योम qtnf_mac_init_primary_पूर्णांकf(काष्ठा qtnf_wmac *mac)
-अणु
-	काष्ठा qtnf_vअगर *vअगर = &mac->अगरlist[QTNF_PRIMARY_VIF_IDX];
+static void qtnf_mac_init_primary_intf(struct qtnf_wmac *mac)
+{
+	struct qtnf_vif *vif = &mac->iflist[QTNF_PRIMARY_VIF_IDX];
 
-	vअगर->wdev.अगरtype = NL80211_IFTYPE_STATION;
-	vअगर->bss_priority = QTNF_DEF_BSS_PRIORITY;
-	vअगर->wdev.wiphy = priv_to_wiphy(mac);
-	INIT_WORK(&vअगर->reset_work, qtnf_vअगर_reset_handler);
-	vअगर->cons_tx_समयout_cnt = 0;
-पूर्ण
+	vif->wdev.iftype = NL80211_IFTYPE_STATION;
+	vif->bss_priority = QTNF_DEF_BSS_PRIORITY;
+	vif->wdev.wiphy = priv_to_wiphy(mac);
+	INIT_WORK(&vif->reset_work, qtnf_vif_reset_handler);
+	vif->cons_tx_timeout_cnt = 0;
+}
 
-अटल व्योम qtnf_mac_scan_finish(काष्ठा qtnf_wmac *mac, bool पातed)
-अणु
-	काष्ठा cfg80211_scan_info info = अणु
-		.पातed = पातed,
-	पूर्ण;
+static void qtnf_mac_scan_finish(struct qtnf_wmac *mac, bool aborted)
+{
+	struct cfg80211_scan_info info = {
+		.aborted = aborted,
+	};
 
 	mutex_lock(&mac->mac_lock);
 
-	अगर (mac->scan_req) अणु
-		cfg80211_scan_करोne(mac->scan_req, &info);
-		mac->scan_req = शून्य;
-	पूर्ण
+	if (mac->scan_req) {
+		cfg80211_scan_done(mac->scan_req, &info);
+		mac->scan_req = NULL;
+	}
 
 	mutex_unlock(&mac->mac_lock);
-पूर्ण
+}
 
-व्योम qtnf_scan_करोne(काष्ठा qtnf_wmac *mac, bool पातed)
-अणु
-	cancel_delayed_work_sync(&mac->scan_समयout);
-	qtnf_mac_scan_finish(mac, पातed);
-पूर्ण
+void qtnf_scan_done(struct qtnf_wmac *mac, bool aborted)
+{
+	cancel_delayed_work_sync(&mac->scan_timeout);
+	qtnf_mac_scan_finish(mac, aborted);
+}
 
-अटल व्योम qtnf_mac_scan_समयout(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा qtnf_wmac *mac =
-		container_of(work, काष्ठा qtnf_wmac, scan_समयout.work);
+static void qtnf_mac_scan_timeout(struct work_struct *work)
+{
+	struct qtnf_wmac *mac =
+		container_of(work, struct qtnf_wmac, scan_timeout.work);
 
 	pr_warn("MAC%d: scan timed out\n", mac->macid);
 	qtnf_mac_scan_finish(mac, true);
-पूर्ण
+}
 
-अटल व्योम qtnf_vअगर_send_data_high_pri(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा qtnf_vअगर *vअगर =
-		container_of(work, काष्ठा qtnf_vअगर, high_pri_tx_work);
-	काष्ठा sk_buff *skb;
+static void qtnf_vif_send_data_high_pri(struct work_struct *work)
+{
+	struct qtnf_vif *vif =
+		container_of(work, struct qtnf_vif, high_pri_tx_work);
+	struct sk_buff *skb;
 
-	अगर (!vअगर->netdev ||
-	    vअगर->wdev.अगरtype == NL80211_IFTYPE_UNSPECIFIED)
-		वापस;
+	if (!vif->netdev ||
+	    vif->wdev.iftype == NL80211_IFTYPE_UNSPECIFIED)
+		return;
 
-	जबतक ((skb = skb_dequeue(&vअगर->high_pri_tx_queue))) अणु
-		qtnf_cmd_send_frame(vअगर, 0, QLINK_FRAME_TX_FLAG_8023,
+	while ((skb = skb_dequeue(&vif->high_pri_tx_queue))) {
+		qtnf_cmd_send_frame(vif, 0, QLINK_FRAME_TX_FLAG_8023,
 				    0, skb->data, skb->len);
-		dev_kमुक्त_skb_any(skb);
-	पूर्ण
-पूर्ण
+		dev_kfree_skb_any(skb);
+	}
+}
 
-अटल काष्ठा qtnf_wmac *qtnf_core_mac_alloc(काष्ठा qtnf_bus *bus,
-					     अचिन्हित पूर्णांक macid)
-अणु
-	काष्ठा platक्रमm_device *pdev = शून्य;
-	काष्ठा qtnf_wmac *mac;
-	काष्ठा qtnf_vअगर *vअगर;
-	काष्ठा wiphy *wiphy;
-	अचिन्हित पूर्णांक i;
+static struct qtnf_wmac *qtnf_core_mac_alloc(struct qtnf_bus *bus,
+					     unsigned int macid)
+{
+	struct platform_device *pdev = NULL;
+	struct qtnf_wmac *mac;
+	struct qtnf_vif *vif;
+	struct wiphy *wiphy;
+	unsigned int i;
 
-	अगर (bus->hw_info.num_mac > 1) अणु
-		pdev = platक्रमm_device_रेजिस्टर_data(bus->dev,
+	if (bus->hw_info.num_mac > 1) {
+		pdev = platform_device_register_data(bus->dev,
 						     dev_name(bus->dev),
-						     macid, शून्य, 0);
-		अगर (IS_ERR(pdev))
-			वापस ERR_PTR(-EINVAL);
-	पूर्ण
+						     macid, NULL, 0);
+		if (IS_ERR(pdev))
+			return ERR_PTR(-EINVAL);
+	}
 
 	wiphy = qtnf_wiphy_allocate(bus, pdev);
-	अगर (!wiphy) अणु
-		अगर (pdev)
-			platक्रमm_device_unरेजिस्टर(pdev);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	if (!wiphy) {
+		if (pdev)
+			platform_device_unregister(pdev);
+		return ERR_PTR(-ENOMEM);
+	}
 
 	mac = wiphy_priv(wiphy);
 
@@ -436,513 +435,513 @@ out:
 	mac->pdev = pdev;
 	mac->bus = bus;
 	mutex_init(&mac->mac_lock);
-	INIT_DELAYED_WORK(&mac->scan_समयout, qtnf_mac_scan_समयout);
+	INIT_DELAYED_WORK(&mac->scan_timeout, qtnf_mac_scan_timeout);
 
-	क्रम (i = 0; i < QTNF_MAX_INTF; i++) अणु
-		vअगर = &mac->अगरlist[i];
+	for (i = 0; i < QTNF_MAX_INTF; i++) {
+		vif = &mac->iflist[i];
 
-		स_रखो(vअगर, 0, माप(*vअगर));
-		vअगर->wdev.अगरtype = NL80211_IFTYPE_UNSPECIFIED;
-		vअगर->mac = mac;
-		vअगर->vअगरid = i;
-		qtnf_sta_list_init(&vअगर->sta_list);
-		INIT_WORK(&vअगर->high_pri_tx_work, qtnf_vअगर_send_data_high_pri);
-		skb_queue_head_init(&vअगर->high_pri_tx_queue);
-	पूर्ण
+		memset(vif, 0, sizeof(*vif));
+		vif->wdev.iftype = NL80211_IFTYPE_UNSPECIFIED;
+		vif->mac = mac;
+		vif->vifid = i;
+		qtnf_sta_list_init(&vif->sta_list);
+		INIT_WORK(&vif->high_pri_tx_work, qtnf_vif_send_data_high_pri);
+		skb_queue_head_init(&vif->high_pri_tx_queue);
+	}
 
-	qtnf_mac_init_primary_पूर्णांकf(mac);
+	qtnf_mac_init_primary_intf(mac);
 	bus->mac[macid] = mac;
 
-	वापस mac;
-पूर्ण
+	return mac;
+}
 
-अटल स्थिर काष्ठा ethtool_ops qtnf_ethtool_ops = अणु
+static const struct ethtool_ops qtnf_ethtool_ops = {
 	.get_drvinfo = cfg80211_get_drvinfo,
-पूर्ण;
+};
 
-पूर्णांक qtnf_core_net_attach(काष्ठा qtnf_wmac *mac, काष्ठा qtnf_vअगर *vअगर,
-			 स्थिर अक्षर *name, अचिन्हित अक्षर name_assign_type)
-अणु
-	काष्ठा wiphy *wiphy = priv_to_wiphy(mac);
-	काष्ठा net_device *dev;
-	व्योम *qdev_vअगर;
-	पूर्णांक ret;
+int qtnf_core_net_attach(struct qtnf_wmac *mac, struct qtnf_vif *vif,
+			 const char *name, unsigned char name_assign_type)
+{
+	struct wiphy *wiphy = priv_to_wiphy(mac);
+	struct net_device *dev;
+	void *qdev_vif;
+	int ret;
 
-	dev = alloc_netdev_mqs(माप(काष्ठा qtnf_vअगर *), name,
+	dev = alloc_netdev_mqs(sizeof(struct qtnf_vif *), name,
 			       name_assign_type, ether_setup, 1, 1);
-	अगर (!dev)
-		वापस -ENOMEM;
+	if (!dev)
+		return -ENOMEM;
 
-	vअगर->netdev = dev;
+	vif->netdev = dev;
 
 	dev->netdev_ops = &qtnf_netdev_ops;
-	dev->needs_मुक्त_netdev = true;
+	dev->needs_free_netdev = true;
 	dev_net_set(dev, wiphy_net(wiphy));
-	dev->ieee80211_ptr = &vअगर->wdev;
-	ether_addr_copy(dev->dev_addr, vअगर->mac_addr);
+	dev->ieee80211_ptr = &vif->wdev;
+	ether_addr_copy(dev->dev_addr, vif->mac_addr);
 	dev->flags |= IFF_BROADCAST | IFF_MULTICAST;
-	dev->watchकरोg_समयo = QTNF_DEF_WDOG_TIMEOUT;
+	dev->watchdog_timeo = QTNF_DEF_WDOG_TIMEOUT;
 	dev->tx_queue_len = 100;
 	dev->ethtool_ops = &qtnf_ethtool_ops;
 
-	अगर (qtnf_hwcap_is_set(&mac->bus->hw_info, QLINK_HW_CAPAB_HW_BRIDGE))
-		dev->needed_tailroom = माप(काष्ठा qtnf_frame_meta_info);
+	if (qtnf_hwcap_is_set(&mac->bus->hw_info, QLINK_HW_CAPAB_HW_BRIDGE))
+		dev->needed_tailroom = sizeof(struct qtnf_frame_meta_info);
 
-	qdev_vअगर = netdev_priv(dev);
-	*((व्योम **)qdev_vअगर) = vअगर;
+	qdev_vif = netdev_priv(dev);
+	*((void **)qdev_vif) = vif;
 
 	SET_NETDEV_DEV(dev, wiphy_dev(wiphy));
 
-	ret = cfg80211_रेजिस्टर_netdevice(dev);
-	अगर (ret) अणु
-		मुक्त_netdev(dev);
-		vअगर->netdev = शून्य;
-	पूर्ण
+	ret = cfg80211_register_netdevice(dev);
+	if (ret) {
+		free_netdev(dev);
+		vif->netdev = NULL;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम qtnf_core_mac_detach(काष्ठा qtnf_bus *bus, अचिन्हित पूर्णांक macid)
-अणु
-	काष्ठा qtnf_wmac *mac;
-	काष्ठा wiphy *wiphy;
-	काष्ठा qtnf_vअगर *vअगर;
-	अचिन्हित पूर्णांक i;
-	क्रमागत nl80211_band band;
+static void qtnf_core_mac_detach(struct qtnf_bus *bus, unsigned int macid)
+{
+	struct qtnf_wmac *mac;
+	struct wiphy *wiphy;
+	struct qtnf_vif *vif;
+	unsigned int i;
+	enum nl80211_band band;
 
 	mac = bus->mac[macid];
 
-	अगर (!mac)
-		वापस;
+	if (!mac)
+		return;
 
 	wiphy = priv_to_wiphy(mac);
 
-	क्रम (i = 0; i < QTNF_MAX_INTF; i++) अणु
-		vअगर = &mac->अगरlist[i];
+	for (i = 0; i < QTNF_MAX_INTF; i++) {
+		vif = &mac->iflist[i];
 		rtnl_lock();
-		अगर (vअगर->netdev &&
-		    vअगर->wdev.अगरtype != NL80211_IFTYPE_UNSPECIFIED) अणु
-			qtnf_भव_पूर्णांकf_cleanup(vअगर->netdev);
-			qtnf_del_भव_पूर्णांकf(wiphy, &vअगर->wdev);
-		पूर्ण
+		if (vif->netdev &&
+		    vif->wdev.iftype != NL80211_IFTYPE_UNSPECIFIED) {
+			qtnf_virtual_intf_cleanup(vif->netdev);
+			qtnf_del_virtual_intf(wiphy, &vif->wdev);
+		}
 		rtnl_unlock();
-		qtnf_sta_list_मुक्त(&vअगर->sta_list);
-	पूर्ण
+		qtnf_sta_list_free(&vif->sta_list);
+	}
 
-	अगर (mac->wiphy_रेजिस्टरed)
-		wiphy_unरेजिस्टर(wiphy);
+	if (mac->wiphy_registered)
+		wiphy_unregister(wiphy);
 
-	क्रम (band = NL80211_BAND_2GHZ; band < NUM_NL80211_BANDS; ++band) अणु
-		अगर (!wiphy->bands[band])
-			जारी;
+	for (band = NL80211_BAND_2GHZ; band < NUM_NL80211_BANDS; ++band) {
+		if (!wiphy->bands[band])
+			continue;
 
-		kमुक्त(wiphy->bands[band]->अगरtype_data);
-		wiphy->bands[band]->n_अगरtype_data = 0;
+		kfree(wiphy->bands[band]->iftype_data);
+		wiphy->bands[band]->n_iftype_data = 0;
 
-		kमुक्त(wiphy->bands[band]->channels);
+		kfree(wiphy->bands[band]->channels);
 		wiphy->bands[band]->n_channels = 0;
 
-		kमुक्त(wiphy->bands[band]);
-		wiphy->bands[band] = शून्य;
-	पूर्ण
+		kfree(wiphy->bands[band]);
+		wiphy->bands[band] = NULL;
+	}
 
-	platक्रमm_device_unरेजिस्टर(mac->pdev);
-	qtnf_mac_अगरace_comb_मुक्त(mac);
-	qtnf_mac_ext_caps_मुक्त(mac);
-	kमुक्त(mac->macinfo.wowlan);
-	kमुक्त(mac->rd);
-	mac->rd = शून्य;
-	wiphy_मुक्त(wiphy);
-	bus->mac[macid] = शून्य;
-पूर्ण
+	platform_device_unregister(mac->pdev);
+	qtnf_mac_iface_comb_free(mac);
+	qtnf_mac_ext_caps_free(mac);
+	kfree(mac->macinfo.wowlan);
+	kfree(mac->rd);
+	mac->rd = NULL;
+	wiphy_free(wiphy);
+	bus->mac[macid] = NULL;
+}
 
-अटल पूर्णांक qtnf_core_mac_attach(काष्ठा qtnf_bus *bus, अचिन्हित पूर्णांक macid)
-अणु
-	काष्ठा qtnf_wmac *mac;
-	काष्ठा qtnf_vअगर *vअगर;
-	पूर्णांक ret;
+static int qtnf_core_mac_attach(struct qtnf_bus *bus, unsigned int macid)
+{
+	struct qtnf_wmac *mac;
+	struct qtnf_vif *vif;
+	int ret;
 
-	अगर (!(bus->hw_info.mac_biपंचांगap & BIT(macid))) अणु
+	if (!(bus->hw_info.mac_bitmap & BIT(macid))) {
 		pr_info("MAC%u is not active in FW\n", macid);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	mac = qtnf_core_mac_alloc(bus, macid);
-	अगर (IS_ERR(mac)) अणु
+	if (IS_ERR(mac)) {
 		pr_err("MAC%u allocation failed\n", macid);
-		वापस PTR_ERR(mac);
-	पूर्ण
+		return PTR_ERR(mac);
+	}
 
-	vअगर = qtnf_mac_get_base_vअगर(mac);
-	अगर (!vअगर) अणु
+	vif = qtnf_mac_get_base_vif(mac);
+	if (!vif) {
 		pr_err("MAC%u: primary VIF is not ready\n", macid);
 		ret = -EFAULT;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	ret = qtnf_cmd_send_add_पूर्णांकf(vअगर, vअगर->wdev.अगरtype,
-				     vअगर->wdev.use_4addr, vअगर->mac_addr);
-	अगर (ret) अणु
+	ret = qtnf_cmd_send_add_intf(vif, vif->wdev.iftype,
+				     vif->wdev.use_4addr, vif->mac_addr);
+	if (ret) {
 		pr_err("MAC%u: failed to add VIF\n", macid);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	ret = qtnf_cmd_get_mac_info(mac);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("MAC%u: failed to get MAC info\n", macid);
-		जाओ error_del_vअगर;
-	पूर्ण
+		goto error_del_vif;
+	}
 
 	/* Use MAC address of the first active radio as a unique device ID */
-	अगर (is_zero_ether_addr(mac->bus->hw_id))
+	if (is_zero_ether_addr(mac->bus->hw_id))
 		ether_addr_copy(mac->bus->hw_id, mac->macaddr);
 
 	ret = qtnf_mac_init_bands(mac);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("MAC%u: failed to init bands\n", macid);
-		जाओ error_del_vअगर;
-	पूर्ण
+		goto error_del_vif;
+	}
 
-	ret = qtnf_wiphy_रेजिस्टर(&bus->hw_info, mac);
-	अगर (ret) अणु
+	ret = qtnf_wiphy_register(&bus->hw_info, mac);
+	if (ret) {
 		pr_err("MAC%u: wiphy registration failed\n", macid);
-		जाओ error_del_vअगर;
-	पूर्ण
+		goto error_del_vif;
+	}
 
-	mac->wiphy_रेजिस्टरed = 1;
+	mac->wiphy_registered = 1;
 
 	rtnl_lock();
 	wiphy_lock(priv_to_wiphy(mac));
-	ret = qtnf_core_net_attach(mac, vअगर, "wlan%d", NET_NAME_ENUM);
+	ret = qtnf_core_net_attach(mac, vif, "wlan%d", NET_NAME_ENUM);
 	wiphy_unlock(priv_to_wiphy(mac));
 	rtnl_unlock();
 
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("MAC%u: failed to attach netdev\n", macid);
-		जाओ error_del_vअगर;
-	पूर्ण
+		goto error_del_vif;
+	}
 
-	अगर (qtnf_hwcap_is_set(&bus->hw_info, QLINK_HW_CAPAB_HW_BRIDGE)) अणु
-		ret = qtnf_cmd_netdev_changeupper(vअगर, vअगर->netdev->अगरindex);
-		अगर (ret)
-			जाओ error;
-	पूर्ण
+	if (qtnf_hwcap_is_set(&bus->hw_info, QLINK_HW_CAPAB_HW_BRIDGE)) {
+		ret = qtnf_cmd_netdev_changeupper(vif, vif->netdev->ifindex);
+		if (ret)
+			goto error;
+	}
 
 	pr_debug("MAC%u initialized\n", macid);
 
-	वापस 0;
+	return 0;
 
-error_del_vअगर:
-	qtnf_cmd_send_del_पूर्णांकf(vअगर);
-	vअगर->wdev.अगरtype = NL80211_IFTYPE_UNSPECIFIED;
+error_del_vif:
+	qtnf_cmd_send_del_intf(vif);
+	vif->wdev.iftype = NL80211_IFTYPE_UNSPECIFIED;
 error:
 	qtnf_core_mac_detach(bus, macid);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-bool qtnf_netdev_is_qtn(स्थिर काष्ठा net_device *ndev)
-अणु
-	वापस ndev->netdev_ops == &qtnf_netdev_ops;
-पूर्ण
+bool qtnf_netdev_is_qtn(const struct net_device *ndev)
+{
+	return ndev->netdev_ops == &qtnf_netdev_ops;
+}
 
-अटल पूर्णांक qtnf_check_br_ports(काष्ठा net_device *dev,
-			       काष्ठा netdev_nested_priv *priv)
-अणु
-	काष्ठा net_device *ndev = (काष्ठा net_device *)priv->data;
+static int qtnf_check_br_ports(struct net_device *dev,
+			       struct netdev_nested_priv *priv)
+{
+	struct net_device *ndev = (struct net_device *)priv->data;
 
-	अगर (dev != ndev && netdev_port_same_parent_id(dev, ndev))
-		वापस -ENOTSUPP;
+	if (dev != ndev && netdev_port_same_parent_id(dev, ndev))
+		return -ENOTSUPP;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qtnf_core_netdevice_event(काष्ठा notअगरier_block *nb,
-				     अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा net_device *ndev = netdev_notअगरier_info_to_dev(ptr);
-	स्थिर काष्ठा netdev_notअगरier_changeupper_info *info;
-	काष्ठा netdev_nested_priv priv = अणु
-		.data = (व्योम *)ndev,
-	पूर्ण;
-	काष्ठा net_device *brdev;
-	काष्ठा qtnf_vअगर *vअगर;
-	काष्ठा qtnf_bus *bus;
-	पूर्णांक br_करोमुख्य;
-	पूर्णांक ret = 0;
+static int qtnf_core_netdevice_event(struct notifier_block *nb,
+				     unsigned long event, void *ptr)
+{
+	struct net_device *ndev = netdev_notifier_info_to_dev(ptr);
+	const struct netdev_notifier_changeupper_info *info;
+	struct netdev_nested_priv priv = {
+		.data = (void *)ndev,
+	};
+	struct net_device *brdev;
+	struct qtnf_vif *vif;
+	struct qtnf_bus *bus;
+	int br_domain;
+	int ret = 0;
 
-	अगर (!qtnf_netdev_is_qtn(ndev))
-		वापस NOTIFY_DONE;
+	if (!qtnf_netdev_is_qtn(ndev))
+		return NOTIFY_DONE;
 
-	अगर (!net_eq(dev_net(ndev), &init_net))
-		वापस NOTIFY_OK;
+	if (!net_eq(dev_net(ndev), &init_net))
+		return NOTIFY_OK;
 
-	vअगर = qtnf_netdev_get_priv(ndev);
-	bus = vअगर->mac->bus;
+	vif = qtnf_netdev_get_priv(ndev);
+	bus = vif->mac->bus;
 
-	चयन (event) अणु
-	हाल NETDEV_CHANGEUPPER:
+	switch (event) {
+	case NETDEV_CHANGEUPPER:
 		info = ptr;
 		brdev = info->upper_dev;
 
-		अगर (!netअगर_is_bridge_master(brdev))
-			अवरोध;
+		if (!netif_is_bridge_master(brdev))
+			break;
 
 		pr_debug("[VIF%u.%u] change bridge: %s %s\n",
-			 vअगर->mac->macid, vअगर->vअगरid, netdev_name(brdev),
+			 vif->mac->macid, vif->vifid, netdev_name(brdev),
 			 info->linking ? "add" : "del");
 
-		अगर (IS_ENABLED(CONFIG_NET_SWITCHDEV) &&
+		if (IS_ENABLED(CONFIG_NET_SWITCHDEV) &&
 		    qtnf_hwcap_is_set(&bus->hw_info,
-				      QLINK_HW_CAPAB_HW_BRIDGE)) अणु
-			अगर (info->linking)
-				br_करोमुख्य = brdev->अगरindex;
-			अन्यथा
-				br_करोमुख्य = ndev->अगरindex;
+				      QLINK_HW_CAPAB_HW_BRIDGE)) {
+			if (info->linking)
+				br_domain = brdev->ifindex;
+			else
+				br_domain = ndev->ifindex;
 
-			ret = qtnf_cmd_netdev_changeupper(vअगर, br_करोमुख्य);
-		पूर्ण अन्यथा अणु
+			ret = qtnf_cmd_netdev_changeupper(vif, br_domain);
+		} else {
 			ret = netdev_walk_all_lower_dev(brdev,
 							qtnf_check_br_ports,
 							&priv);
-		पूर्ण
+		}
 
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस notअगरier_from_त्रुटि_सं(ret);
-पूर्ण
+	return notifier_from_errno(ret);
+}
 
-पूर्णांक qtnf_core_attach(काष्ठा qtnf_bus *bus)
-अणु
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+int qtnf_core_attach(struct qtnf_bus *bus)
+{
+	unsigned int i;
+	int ret;
 
 	qtnf_trans_init(bus);
 	qtnf_bus_data_rx_start(bus);
 
 	bus->workqueue = alloc_ordered_workqueue("QTNF_BUS", 0);
-	अगर (!bus->workqueue) अणु
+	if (!bus->workqueue) {
 		pr_err("failed to alloc main workqueue\n");
 		ret = -ENOMEM;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	bus->hprio_workqueue = alloc_workqueue("QTNF_HPRI", WQ_HIGHPRI, 0);
-	अगर (!bus->hprio_workqueue) अणु
+	if (!bus->hprio_workqueue) {
 		pr_err("failed to alloc high prio workqueue\n");
 		ret = -ENOMEM;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	INIT_WORK(&bus->event_work, qtnf_event_work_handler);
 
 	ret = qtnf_cmd_send_init_fw(bus);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("failed to init FW: %d\n", ret);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	अगर (QLINK_VER_MAJOR(bus->hw_info.ql_proto_ver) !=
-	    QLINK_PROTO_VER_MAJOR) अणु
+	if (QLINK_VER_MAJOR(bus->hw_info.ql_proto_ver) !=
+	    QLINK_PROTO_VER_MAJOR) {
 		pr_err("qlink driver vs FW version mismatch: %u vs %u\n",
 		       QLINK_PROTO_VER_MAJOR,
 		       QLINK_VER_MAJOR(bus->hw_info.ql_proto_ver));
 		ret = -EPROTONOSUPPORT;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	bus->fw_state = QTNF_FW_STATE_ACTIVE;
 	ret = qtnf_cmd_get_hw_info(bus);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("failed to get HW info: %d\n", ret);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	अगर (qtnf_hwcap_is_set(&bus->hw_info, QLINK_HW_CAPAB_HW_BRIDGE) &&
+	if (qtnf_hwcap_is_set(&bus->hw_info, QLINK_HW_CAPAB_HW_BRIDGE) &&
 	    bus->bus_ops->data_tx_use_meta_set)
 		bus->bus_ops->data_tx_use_meta_set(bus, true);
 
-	अगर (bus->hw_info.num_mac > QTNF_MAX_MAC) अणु
+	if (bus->hw_info.num_mac > QTNF_MAX_MAC) {
 		pr_err("no support for number of MACs=%u\n",
 		       bus->hw_info.num_mac);
-		ret = -दुस्फल;
-		जाओ error;
-	पूर्ण
+		ret = -ERANGE;
+		goto error;
+	}
 
-	क्रम (i = 0; i < bus->hw_info.num_mac; i++) अणु
+	for (i = 0; i < bus->hw_info.num_mac; i++) {
 		ret = qtnf_core_mac_attach(bus, i);
 
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("MAC%u: attach failed: %d\n", i, ret);
-			जाओ error;
-		पूर्ण
-	पूर्ण
+			goto error;
+		}
+	}
 
-	bus->netdev_nb.notअगरier_call = qtnf_core_netdevice_event;
-	ret = रेजिस्टर_netdevice_notअगरier(&bus->netdev_nb);
-	अगर (ret) अणु
+	bus->netdev_nb.notifier_call = qtnf_core_netdevice_event;
+	ret = register_netdevice_notifier(&bus->netdev_nb);
+	if (ret) {
 		pr_err("failed to register netdev notifier: %d\n", ret);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	bus->fw_state = QTNF_FW_STATE_RUNNING;
-	वापस 0;
+	return 0;
 
 error:
 	qtnf_core_detach(bus);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(qtnf_core_attach);
 
-व्योम qtnf_core_detach(काष्ठा qtnf_bus *bus)
-अणु
-	अचिन्हित पूर्णांक macid;
+void qtnf_core_detach(struct qtnf_bus *bus)
+{
+	unsigned int macid;
 
-	unरेजिस्टर_netdevice_notअगरier(&bus->netdev_nb);
+	unregister_netdevice_notifier(&bus->netdev_nb);
 	qtnf_bus_data_rx_stop(bus);
 
-	क्रम (macid = 0; macid < QTNF_MAX_MAC; macid++)
+	for (macid = 0; macid < QTNF_MAX_MAC; macid++)
 		qtnf_core_mac_detach(bus, macid);
 
-	अगर (qtnf_fw_is_up(bus))
+	if (qtnf_fw_is_up(bus))
 		qtnf_cmd_send_deinit_fw(bus);
 
 	bus->fw_state = QTNF_FW_STATE_DETACHED;
 
-	अगर (bus->workqueue) अणु
+	if (bus->workqueue) {
 		flush_workqueue(bus->workqueue);
 		destroy_workqueue(bus->workqueue);
-		bus->workqueue = शून्य;
-	पूर्ण
+		bus->workqueue = NULL;
+	}
 
-	अगर (bus->hprio_workqueue) अणु
+	if (bus->hprio_workqueue) {
 		flush_workqueue(bus->hprio_workqueue);
 		destroy_workqueue(bus->hprio_workqueue);
-		bus->hprio_workqueue = शून्य;
-	पूर्ण
+		bus->hprio_workqueue = NULL;
+	}
 
-	qtnf_trans_मुक्त(bus);
-पूर्ण
+	qtnf_trans_free(bus);
+}
 EXPORT_SYMBOL_GPL(qtnf_core_detach);
 
-अटल अंतरभूत पूर्णांक qtnf_is_frame_meta_magic_valid(काष्ठा qtnf_frame_meta_info *m)
-अणु
-	वापस m->magic_s == HBM_FRAME_META_MAGIC_PATTERN_S &&
+static inline int qtnf_is_frame_meta_magic_valid(struct qtnf_frame_meta_info *m)
+{
+	return m->magic_s == HBM_FRAME_META_MAGIC_PATTERN_S &&
 		m->magic_e == HBM_FRAME_META_MAGIC_PATTERN_E;
-पूर्ण
+}
 
-काष्ठा net_device *qtnf_classअगरy_skb(काष्ठा qtnf_bus *bus, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा qtnf_frame_meta_info *meta;
-	काष्ठा net_device *ndev = शून्य;
-	काष्ठा qtnf_wmac *mac;
-	काष्ठा qtnf_vअगर *vअगर;
+struct net_device *qtnf_classify_skb(struct qtnf_bus *bus, struct sk_buff *skb)
+{
+	struct qtnf_frame_meta_info *meta;
+	struct net_device *ndev = NULL;
+	struct qtnf_wmac *mac;
+	struct qtnf_vif *vif;
 
-	अगर (unlikely(bus->fw_state != QTNF_FW_STATE_RUNNING))
-		वापस शून्य;
+	if (unlikely(bus->fw_state != QTNF_FW_STATE_RUNNING))
+		return NULL;
 
-	meta = (काष्ठा qtnf_frame_meta_info *)
-		(skb_tail_poपूर्णांकer(skb) - माप(*meta));
+	meta = (struct qtnf_frame_meta_info *)
+		(skb_tail_pointer(skb) - sizeof(*meta));
 
-	अगर (unlikely(!qtnf_is_frame_meta_magic_valid(meta))) अणु
+	if (unlikely(!qtnf_is_frame_meta_magic_valid(meta))) {
 		pr_err_ratelimited("invalid magic 0x%x:0x%x\n",
 				   meta->magic_s, meta->magic_e);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (unlikely(meta->macid >= QTNF_MAX_MAC)) अणु
+	if (unlikely(meta->macid >= QTNF_MAX_MAC)) {
 		pr_err_ratelimited("invalid mac(%u)\n", meta->macid);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (unlikely(meta->अगरidx >= QTNF_MAX_INTF)) अणु
-		pr_err_ratelimited("invalid vif(%u)\n", meta->अगरidx);
-		जाओ out;
-	पूर्ण
+	if (unlikely(meta->ifidx >= QTNF_MAX_INTF)) {
+		pr_err_ratelimited("invalid vif(%u)\n", meta->ifidx);
+		goto out;
+	}
 
 	mac = bus->mac[meta->macid];
 
-	अगर (unlikely(!mac)) अणु
+	if (unlikely(!mac)) {
 		pr_err_ratelimited("mac(%d) does not exist\n", meta->macid);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	vअगर = &mac->अगरlist[meta->अगरidx];
+	vif = &mac->iflist[meta->ifidx];
 
-	अगर (unlikely(vअगर->wdev.अगरtype == NL80211_IFTYPE_UNSPECIFIED)) अणु
-		pr_err_ratelimited("vif(%u) does not exists\n", meta->अगरidx);
-		जाओ out;
-	पूर्ण
+	if (unlikely(vif->wdev.iftype == NL80211_IFTYPE_UNSPECIFIED)) {
+		pr_err_ratelimited("vif(%u) does not exists\n", meta->ifidx);
+		goto out;
+	}
 
-	ndev = vअगर->netdev;
+	ndev = vif->netdev;
 
-	अगर (unlikely(!ndev)) अणु
+	if (unlikely(!ndev)) {
 		pr_err_ratelimited("netdev for wlan%u.%u does not exists\n",
-				   meta->macid, meta->अगरidx);
-		जाओ out;
-	पूर्ण
+				   meta->macid, meta->ifidx);
+		goto out;
+	}
 
-	__skb_trim(skb, skb->len - माप(*meta));
+	__skb_trim(skb, skb->len - sizeof(*meta));
 	/* Firmware always handles packets that require flooding */
-	qtnfmac_चयन_mark_skb_flooded(skb);
+	qtnfmac_switch_mark_skb_flooded(skb);
 
 out:
-	वापस ndev;
-पूर्ण
-EXPORT_SYMBOL_GPL(qtnf_classअगरy_skb);
+	return ndev;
+}
+EXPORT_SYMBOL_GPL(qtnf_classify_skb);
 
-व्योम qtnf_wake_all_queues(काष्ठा net_device *ndev)
-अणु
-	काष्ठा qtnf_vअगर *vअगर = qtnf_netdev_get_priv(ndev);
-	काष्ठा qtnf_wmac *mac;
-	काष्ठा qtnf_bus *bus;
-	पूर्णांक macid;
-	पूर्णांक i;
+void qtnf_wake_all_queues(struct net_device *ndev)
+{
+	struct qtnf_vif *vif = qtnf_netdev_get_priv(ndev);
+	struct qtnf_wmac *mac;
+	struct qtnf_bus *bus;
+	int macid;
+	int i;
 
-	अगर (unlikely(!vअगर || !vअगर->mac || !vअगर->mac->bus))
-		वापस;
+	if (unlikely(!vif || !vif->mac || !vif->mac->bus))
+		return;
 
-	bus = vअगर->mac->bus;
+	bus = vif->mac->bus;
 
-	क्रम (macid = 0; macid < QTNF_MAX_MAC; macid++) अणु
-		अगर (!(bus->hw_info.mac_biपंचांगap & BIT(macid)))
-			जारी;
+	for (macid = 0; macid < QTNF_MAX_MAC; macid++) {
+		if (!(bus->hw_info.mac_bitmap & BIT(macid)))
+			continue;
 
 		mac = bus->mac[macid];
-		क्रम (i = 0; i < QTNF_MAX_INTF; i++) अणु
-			vअगर = &mac->अगरlist[i];
-			अगर (vअगर->netdev && netअगर_queue_stopped(vअगर->netdev))
-				netअगर_tx_wake_all_queues(vअगर->netdev);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		for (i = 0; i < QTNF_MAX_INTF; i++) {
+			vif = &mac->iflist[i];
+			if (vif->netdev && netif_queue_stopped(vif->netdev))
+				netif_tx_wake_all_queues(vif->netdev);
+		}
+	}
+}
 EXPORT_SYMBOL_GPL(qtnf_wake_all_queues);
 
-काष्ठा dentry *qtnf_get_debugfs_dir(व्योम)
-अणु
-	वापस qtnf_debugfs_dir;
-पूर्ण
+struct dentry *qtnf_get_debugfs_dir(void)
+{
+	return qtnf_debugfs_dir;
+}
 EXPORT_SYMBOL_GPL(qtnf_get_debugfs_dir);
 
-अटल पूर्णांक __init qtnf_core_रेजिस्टर(व्योम)
-अणु
-	qtnf_debugfs_dir = debugfs_create_dir(KBUILD_MODNAME, शून्य);
+static int __init qtnf_core_register(void)
+{
+	qtnf_debugfs_dir = debugfs_create_dir(KBUILD_MODNAME, NULL);
 
-	अगर (IS_ERR(qtnf_debugfs_dir))
-		qtnf_debugfs_dir = शून्य;
+	if (IS_ERR(qtnf_debugfs_dir))
+		qtnf_debugfs_dir = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास qtnf_core_निकास(व्योम)
-अणु
-	debugfs_हटाओ(qtnf_debugfs_dir);
-पूर्ण
+static void __exit qtnf_core_exit(void)
+{
+	debugfs_remove(qtnf_debugfs_dir);
+}
 
-module_init(qtnf_core_रेजिस्टर);
-module_निकास(qtnf_core_निकास);
+module_init(qtnf_core_register);
+module_exit(qtnf_core_exit);
 
 MODULE_AUTHOR("Quantenna Communications");
 MODULE_DESCRIPTION("Quantenna 802.11 wireless LAN FullMAC driver.");

@@ -1,59 +1,58 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * ADXL372 3-Axis Digital Accelerometer SPI driver
  *
  * Copyright 2018 Analog Devices Inc.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/spi/spi.h>
+#include <linux/module.h>
+#include <linux/regmap.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/spi/spi.h>
 
-#समावेश "adxl372.h"
+#include "adxl372.h"
 
-अटल स्थिर काष्ठा regmap_config adxl372_spi_regmap_config = अणु
+static const struct regmap_config adxl372_spi_regmap_config = {
 	.reg_bits = 7,
 	.pad_bits = 1,
 	.val_bits = 8,
-	.पढ़ो_flag_mask = BIT(0),
-	.पढ़ोable_noinc_reg = adxl372_पढ़ोable_noinc_reg,
-पूर्ण;
+	.read_flag_mask = BIT(0),
+	.readable_noinc_reg = adxl372_readable_noinc_reg,
+};
 
-अटल पूर्णांक adxl372_spi_probe(काष्ठा spi_device *spi)
-अणु
-	स्थिर काष्ठा spi_device_id *id = spi_get_device_id(spi);
-	काष्ठा regmap *regmap;
+static int adxl372_spi_probe(struct spi_device *spi)
+{
+	const struct spi_device_id *id = spi_get_device_id(spi);
+	struct regmap *regmap;
 
 	regmap = devm_regmap_init_spi(spi, &adxl372_spi_regmap_config);
-	अगर (IS_ERR(regmap))
-		वापस PTR_ERR(regmap);
+	if (IS_ERR(regmap))
+		return PTR_ERR(regmap);
 
-	वापस adxl372_probe(&spi->dev, regmap, spi->irq, id->name);
-पूर्ण
+	return adxl372_probe(&spi->dev, regmap, spi->irq, id->name);
+}
 
-अटल स्थिर काष्ठा spi_device_id adxl372_spi_id[] = अणु
-	अणु "adxl372", 0 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct spi_device_id adxl372_spi_id[] = {
+	{ "adxl372", 0 },
+	{}
+};
 MODULE_DEVICE_TABLE(spi, adxl372_spi_id);
 
-अटल स्थिर काष्ठा of_device_id adxl372_of_match[] = अणु
-	अणु .compatible = "adi,adxl372" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id adxl372_of_match[] = {
+	{ .compatible = "adi,adxl372" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, adxl372_of_match);
 
-अटल काष्ठा spi_driver adxl372_spi_driver = अणु
-	.driver = अणु
+static struct spi_driver adxl372_spi_driver = {
+	.driver = {
 		.name = "adxl372_spi",
 		.of_match_table = adxl372_of_match,
-	पूर्ण,
+	},
 	.probe = adxl372_spi_probe,
 	.id_table = adxl372_spi_id,
-पूर्ण;
+};
 
 module_spi_driver(adxl372_spi_driver);
 

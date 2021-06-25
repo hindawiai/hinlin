@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  *   Copyright (c) International Business Machines  Corp., 2000,2002
  *
- * uniupr.h - Unicode compressed हाल ranges
+ * uniupr.h - Unicode compressed case ranges
 */
 
-#अगर_अघोषित UNIUPR_NOUPPER
+#ifndef UNIUPR_NOUPPER
 /*
- * Latin upper हाल
+ * Latin upper case
  */
-चिन्हित अक्षर CअगरsUniUpperTable[512] = अणु
+signed char CifsUniUpperTable[512] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	/* 000-00f */
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	/* 010-01f */
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	/* 020-02f */
@@ -43,33 +42,33 @@
 	-1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, -79, 0, -1, /* 1d0-1df */
 	0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1,	/* 1e0-1ef */
 	0, 0, -1, -2, 0, -1, 0, 0, 0, -1, 0, -1, 0, -1, 0, -1,	/* 1f0-1ff */
-पूर्ण;
+};
 
-/* Upper हाल range - Greek */
-अटल चिन्हित अक्षर UniCaseRangeU03a0[47] = अणु
+/* Upper case range - Greek */
+static signed char UniCaseRangeU03a0[47] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -38, -37, -37, -37,	/* 3a0-3af */
 	0, -32, -32, -32, -32, -32, -32, -32, -32, -32, -32, -32, -32, -32, -32, -32,	/* 3b0-3bf */
 	-32, -32, -31, -32, -32, -32, -32, -32, -32, -32, -32, -32, -64,
 	-63, -63,
-पूर्ण;
+};
 
-/* Upper हाल range - Cyrillic */
-अटल चिन्हित अक्षर UniCaseRangeU0430[48] = अणु
+/* Upper case range - Cyrillic */
+static signed char UniCaseRangeU0430[48] = {
 	-32, -32, -32, -32, -32, -32, -32, -32, -32, -32, -32, -32, -32, -32, -32, -32,	/* 430-43f */
 	-32, -32, -32, -32, -32, -32, -32, -32, -32, -32, -32, -32, -32, -32, -32, -32,	/* 440-44f */
 	0, -80, -80, -80, -80, -80, -80, -80, -80, -80, -80, -80, -80, 0, -80, -80,	/* 450-45f */
-पूर्ण;
+};
 
-/* Upper हाल range - Extended cyrillic */
-अटल चिन्हित अक्षर UniCaseRangeU0490[61] = अणु
+/* Upper case range - Extended cyrillic */
+static signed char UniCaseRangeU0490[61] = {
 	0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1,	/* 490-49f */
 	0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1,	/* 4a0-4af */
 	0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1,	/* 4b0-4bf */
 	0, 0, -1, 0, -1, 0, 0, 0, -1, 0, 0, 0, -1,
-पूर्ण;
+};
 
-/* Upper हाल range - Extended latin and greek */
-अटल चिन्हित अक्षर UniCaseRangeU1e00[509] = अणु
+/* Upper case range - Extended latin and greek */
+static signed char UniCaseRangeU1e00[509] = {
 	0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1,	/* 1e00-1e0f */
 	0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1,	/* 1e10-1e1f */
 	0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1,	/* 1e20-1e2f */
@@ -102,32 +101,32 @@
 	8, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	/* 1fd0-1fdf */
 	8, 8, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	/* 1fe0-1fef */
 	0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-पूर्ण;
+};
 
-/* Upper हाल range - Wide latin */
-अटल चिन्हित अक्षर UniCaseRangeUff40[27] = अणु
+/* Upper case range - Wide latin */
+static signed char UniCaseRangeUff40[27] = {
 	0, -32, -32, -32, -32, -32, -32, -32, -32, -32, -32, -32, -32, -32, -32, -32,	/* ff40-ff4f */
 	-32, -32, -32, -32, -32, -32, -32, -32, -32, -32, -32,
-पूर्ण;
+};
 
 /*
  * Upper Case Range
  */
-स्थिर काष्ठा UniCaseRange CअगरsUniUpperRange[] = अणु
-	अणु0x03a0, 0x03ce, UniCaseRangeU03a0पूर्ण,
-	अणु0x0430, 0x045f, UniCaseRangeU0430पूर्ण,
-	अणु0x0490, 0x04cc, UniCaseRangeU0490पूर्ण,
-	अणु0x1e00, 0x1ffc, UniCaseRangeU1e00पूर्ण,
-	अणु0xff40, 0xff5a, UniCaseRangeUff40पूर्ण,
-	अणु0पूर्ण
-पूर्ण;
-#पूर्ण_अगर
+const struct UniCaseRange CifsUniUpperRange[] = {
+	{0x03a0, 0x03ce, UniCaseRangeU03a0},
+	{0x0430, 0x045f, UniCaseRangeU0430},
+	{0x0490, 0x04cc, UniCaseRangeU0490},
+	{0x1e00, 0x1ffc, UniCaseRangeU1e00},
+	{0xff40, 0xff5a, UniCaseRangeUff40},
+	{0}
+};
+#endif
 
-#अगर_अघोषित UNIUPR_NOLOWER
+#ifndef UNIUPR_NOLOWER
 /*
- * Latin lower हाल
+ * Latin lower case
  */
-चिन्हित अक्षर CअगरsUniLowerTable[512] = अणु
+signed char CifsUniLowerTable[512] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	/* 000-00f */
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	/* 010-01f */
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	/* 020-02f */
@@ -160,32 +159,32 @@
 	0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0,	/* 1d0-1df */
 	1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0,	/* 1e0-1ef */
 	0, 2, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0,	/* 1f0-1ff */
-पूर्ण;
+};
 
-/* Lower हाल range - Greek */
-अटल चिन्हित अक्षर UniCaseRangeL0380[44] = अणु
+/* Lower case range - Greek */
+static signed char UniCaseRangeL0380[44] = {
 	0, 0, 0, 0, 0, 0, 38, 0, 37, 37, 37, 0, 64, 0, 63, 63,	/* 380-38f */
 	0, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,	/* 390-39f */
 	32, 32, 0, 32, 32, 32, 32, 32, 32, 32, 32, 32,
-पूर्ण;
+};
 
-/* Lower हाल range - Cyrillic */
-अटल चिन्हित अक्षर UniCaseRangeL0400[48] = अणु
+/* Lower case range - Cyrillic */
+static signed char UniCaseRangeL0400[48] = {
 	0, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 0, 80, 80,	/* 400-40f */
 	32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,	/* 410-41f */
 	32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,	/* 420-42f */
-पूर्ण;
+};
 
-/* Lower हाल range - Extended cyrillic */
-अटल चिन्हित अक्षर UniCaseRangeL0490[60] = अणु
+/* Lower case range - Extended cyrillic */
+static signed char UniCaseRangeL0490[60] = {
 	1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0,	/* 490-49f */
 	1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0,	/* 4a0-4af */
 	1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0,	/* 4b0-4bf */
 	0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1,
-पूर्ण;
+};
 
-/* Lower हाल range - Extended latin and greek */
-अटल चिन्हित अक्षर UniCaseRangeL1e00[504] = अणु
+/* Lower case range - Extended latin and greek */
+static signed char UniCaseRangeL1e00[504] = {
 	1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0,	/* 1e00-1e0f */
 	1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0,	/* 1e10-1e1f */
 	1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0,	/* 1e20-1e2f */
@@ -218,23 +217,23 @@
 	0, 0, 0, 0, 0, 0, 0, 0, -8, -8, -100, -100, 0, 0, 0, 0,	/* 1fd0-1fdf */
 	0, 0, 0, 0, 0, 0, 0, 0, -8, -8, -112, -112, -7, 0, 0, 0,	/* 1fe0-1fef */
 	0, 0, 0, 0, 0, 0, 0, 0,
-पूर्ण;
+};
 
-/* Lower हाल range - Wide latin */
-अटल चिन्हित अक्षर UniCaseRangeLff20[27] = अणु
+/* Lower case range - Wide latin */
+static signed char UniCaseRangeLff20[27] = {
 	0, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,	/* ff20-ff2f */
 	32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
-पूर्ण;
+};
 
 /*
  * Lower Case Range
  */
-स्थिर काष्ठा UniCaseRange CअगरsUniLowerRange[] = अणु
-	अणु0x0380, 0x03ab, UniCaseRangeL0380पूर्ण,
-	अणु0x0400, 0x042f, UniCaseRangeL0400पूर्ण,
-	अणु0x0490, 0x04cb, UniCaseRangeL0490पूर्ण,
-	अणु0x1e00, 0x1ff7, UniCaseRangeL1e00पूर्ण,
-	अणु0xff20, 0xff3a, UniCaseRangeLff20पूर्ण,
-	अणु0पूर्ण
-पूर्ण;
-#पूर्ण_अगर
+const struct UniCaseRange CifsUniLowerRange[] = {
+	{0x0380, 0x03ab, UniCaseRangeL0380},
+	{0x0400, 0x042f, UniCaseRangeL0400},
+	{0x0490, 0x04cb, UniCaseRangeL0490},
+	{0x1e00, 0x1ff7, UniCaseRangeL1e00},
+	{0xff20, 0xff3a, UniCaseRangeLff20},
+	{0}
+};
+#endif

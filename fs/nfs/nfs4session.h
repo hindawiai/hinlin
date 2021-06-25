@@ -1,185 +1,184 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * fs/nfs/nfs4session.h
  *
  * Copyright (c) 2012 Trond Myklebust <Trond.Myklebust@netapp.com>
  *
  */
-#अगर_अघोषित __LINUX_FS_NFS_NFS4SESSION_H
-#घोषणा __LINUX_FS_NFS_NFS4SESSION_H
+#ifndef __LINUX_FS_NFS_NFS4SESSION_H
+#define __LINUX_FS_NFS_NFS4SESSION_H
 
 /* maximum number of slots to use */
-#घोषणा NFS4_DEF_SLOT_TABLE_SIZE (64U)
-#घोषणा NFS4_DEF_CB_SLOT_TABLE_SIZE (16U)
-#घोषणा NFS4_MAX_SLOT_TABLE (1024U)
-#घोषणा NFS4_NO_SLOT ((u32)-1)
+#define NFS4_DEF_SLOT_TABLE_SIZE (64U)
+#define NFS4_DEF_CB_SLOT_TABLE_SIZE (16U)
+#define NFS4_MAX_SLOT_TABLE (1024U)
+#define NFS4_NO_SLOT ((u32)-1)
 
-#अगर IS_ENABLED(CONFIG_NFS_V4)
+#if IS_ENABLED(CONFIG_NFS_V4)
 
 /* Sessions slot seqid */
-काष्ठा nfs4_slot अणु
-	काष्ठा nfs4_slot_table	*table;
-	काष्ठा nfs4_slot	*next;
-	अचिन्हित दीर्घ		generation;
+struct nfs4_slot {
+	struct nfs4_slot_table	*table;
+	struct nfs4_slot	*next;
+	unsigned long		generation;
 	u32			slot_nr;
 	u32		 	seq_nr;
 	u32		 	seq_nr_last_acked;
 	u32		 	seq_nr_highest_sent;
-	अचिन्हित पूर्णांक		privileged : 1,
-				seq_करोne : 1;
-पूर्ण;
+	unsigned int		privileged : 1,
+				seq_done : 1;
+};
 
 /* Sessions */
-क्रमागत nfs4_slot_tbl_state अणु
+enum nfs4_slot_tbl_state {
 	NFS4_SLOT_TBL_DRAINING,
-पूर्ण;
+};
 
-#घोषणा SLOT_TABLE_SZ DIV_ROUND_UP(NFS4_MAX_SLOT_TABLE, BITS_PER_LONG)
-काष्ठा nfs4_slot_table अणु
-	काष्ठा nfs4_session *session;		/* Parent session */
-	काष्ठा nfs4_slot *slots;		/* seqid per slot */
-	अचिन्हित दीर्घ   used_slots[SLOT_TABLE_SZ]; /* used/unused biपंचांगap */
+#define SLOT_TABLE_SZ DIV_ROUND_UP(NFS4_MAX_SLOT_TABLE, BITS_PER_LONG)
+struct nfs4_slot_table {
+	struct nfs4_session *session;		/* Parent session */
+	struct nfs4_slot *slots;		/* seqid per slot */
+	unsigned long   used_slots[SLOT_TABLE_SZ]; /* used/unused bitmap */
 	spinlock_t	slot_tbl_lock;
-	काष्ठा rpc_रुको_queue	slot_tbl_रुकोq;	/* allocators may रुको here */
-	रुको_queue_head_t	slot_रुकोq;	/* Completion रुको on slot */
+	struct rpc_wait_queue	slot_tbl_waitq;	/* allocators may wait here */
+	wait_queue_head_t	slot_waitq;	/* Completion wait on slot */
 	u32		max_slots;		/* # slots in table */
 	u32		max_slotid;		/* Max allowed slotid value */
 	u32		highest_used_slotid;	/* sent to server on each SEQ.
-						 * op क्रम dynamic resizing */
+						 * op for dynamic resizing */
 	u32		target_highest_slotid;	/* Server max_slot target */
 	u32		server_highest_slotid;	/* Server highest slotid */
 	s32		d_target_highest_slotid; /* Derivative */
 	s32		d2_target_highest_slotid; /* 2nd derivative */
-	अचिन्हित दीर्घ	generation;		/* Generation counter क्रम
+	unsigned long	generation;		/* Generation counter for
 						   target_highest_slotid */
-	काष्ठा completion complete;
-	अचिन्हित दीर्घ	slot_tbl_state;
-पूर्ण;
+	struct completion complete;
+	unsigned long	slot_tbl_state;
+};
 
 /*
  * Session related parameters
  */
-काष्ठा nfs4_session अणु
-	काष्ठा nfs4_sessionid		sess_id;
+struct nfs4_session {
+	struct nfs4_sessionid		sess_id;
 	u32				flags;
-	अचिन्हित दीर्घ			session_state;
+	unsigned long			session_state;
 	u32				hash_alg;
 	u32				ssv_len;
 
-	/* The क्रमe and back channel */
-	काष्ठा nfs4_channel_attrs	fc_attrs;
-	काष्ठा nfs4_slot_table		fc_slot_table;
-	काष्ठा nfs4_channel_attrs	bc_attrs;
-	काष्ठा nfs4_slot_table		bc_slot_table;
-	काष्ठा nfs_client		*clp;
-पूर्ण;
+	/* The fore and back channel */
+	struct nfs4_channel_attrs	fc_attrs;
+	struct nfs4_slot_table		fc_slot_table;
+	struct nfs4_channel_attrs	bc_attrs;
+	struct nfs4_slot_table		bc_slot_table;
+	struct nfs_client		*clp;
+};
 
-क्रमागत nfs4_session_state अणु
+enum nfs4_session_state {
 	NFS4_SESSION_INITING,
 	NFS4_SESSION_ESTABLISHED,
-पूर्ण;
+};
 
-बाह्य पूर्णांक nfs4_setup_slot_table(काष्ठा nfs4_slot_table *tbl,
-		अचिन्हित पूर्णांक max_reqs, स्थिर अक्षर *queue);
-बाह्य व्योम nfs4_shutकरोwn_slot_table(काष्ठा nfs4_slot_table *tbl);
-बाह्य काष्ठा nfs4_slot *nfs4_alloc_slot(काष्ठा nfs4_slot_table *tbl);
-बाह्य काष्ठा nfs4_slot *nfs4_lookup_slot(काष्ठा nfs4_slot_table *tbl, u32 slotid);
-बाह्य पूर्णांक nfs4_slot_रुको_on_seqid(काष्ठा nfs4_slot_table *tbl,
+extern int nfs4_setup_slot_table(struct nfs4_slot_table *tbl,
+		unsigned int max_reqs, const char *queue);
+extern void nfs4_shutdown_slot_table(struct nfs4_slot_table *tbl);
+extern struct nfs4_slot *nfs4_alloc_slot(struct nfs4_slot_table *tbl);
+extern struct nfs4_slot *nfs4_lookup_slot(struct nfs4_slot_table *tbl, u32 slotid);
+extern int nfs4_slot_wait_on_seqid(struct nfs4_slot_table *tbl,
 		u32 slotid, u32 seq_nr,
-		अचिन्हित दीर्घ समयout);
-बाह्य bool nfs4_try_to_lock_slot(काष्ठा nfs4_slot_table *tbl, काष्ठा nfs4_slot *slot);
-बाह्य व्योम nfs4_मुक्त_slot(काष्ठा nfs4_slot_table *tbl, काष्ठा nfs4_slot *slot);
-बाह्य व्योम nfs4_slot_tbl_drain_complete(काष्ठा nfs4_slot_table *tbl);
-bool nfs41_wake_and_assign_slot(काष्ठा nfs4_slot_table *tbl,
-		काष्ठा nfs4_slot *slot);
-व्योम nfs41_wake_slot_table(काष्ठा nfs4_slot_table *tbl);
+		unsigned long timeout);
+extern bool nfs4_try_to_lock_slot(struct nfs4_slot_table *tbl, struct nfs4_slot *slot);
+extern void nfs4_free_slot(struct nfs4_slot_table *tbl, struct nfs4_slot *slot);
+extern void nfs4_slot_tbl_drain_complete(struct nfs4_slot_table *tbl);
+bool nfs41_wake_and_assign_slot(struct nfs4_slot_table *tbl,
+		struct nfs4_slot *slot);
+void nfs41_wake_slot_table(struct nfs4_slot_table *tbl);
 
-अटल अंतरभूत bool nfs4_slot_tbl_draining(काष्ठा nfs4_slot_table *tbl)
-अणु
-	वापस !!test_bit(NFS4_SLOT_TBL_DRAINING, &tbl->slot_tbl_state);
-पूर्ण
+static inline bool nfs4_slot_tbl_draining(struct nfs4_slot_table *tbl)
+{
+	return !!test_bit(NFS4_SLOT_TBL_DRAINING, &tbl->slot_tbl_state);
+}
 
-अटल अंतरभूत bool nfs4_test_locked_slot(स्थिर काष्ठा nfs4_slot_table *tbl,
+static inline bool nfs4_test_locked_slot(const struct nfs4_slot_table *tbl,
 		u32 slotid)
-अणु
-	वापस !!test_bit(slotid, tbl->used_slots);
-पूर्ण
+{
+	return !!test_bit(slotid, tbl->used_slots);
+}
 
-अटल अंतरभूत काष्ठा nfs4_session *nfs4_get_session(स्थिर काष्ठा nfs_client *clp)
-अणु
-	वापस clp->cl_session;
-पूर्ण
+static inline struct nfs4_session *nfs4_get_session(const struct nfs_client *clp)
+{
+	return clp->cl_session;
+}
 
-#अगर defined(CONFIG_NFS_V4_1)
-बाह्य व्योम nfs41_set_target_slotid(काष्ठा nfs4_slot_table *tbl,
+#if defined(CONFIG_NFS_V4_1)
+extern void nfs41_set_target_slotid(struct nfs4_slot_table *tbl,
 		u32 target_highest_slotid);
-बाह्य व्योम nfs41_update_target_slotid(काष्ठा nfs4_slot_table *tbl,
-		काष्ठा nfs4_slot *slot,
-		काष्ठा nfs4_sequence_res *res);
+extern void nfs41_update_target_slotid(struct nfs4_slot_table *tbl,
+		struct nfs4_slot *slot,
+		struct nfs4_sequence_res *res);
 
-बाह्य पूर्णांक nfs4_setup_session_slot_tables(काष्ठा nfs4_session *ses);
+extern int nfs4_setup_session_slot_tables(struct nfs4_session *ses);
 
-बाह्य काष्ठा nfs4_session *nfs4_alloc_session(काष्ठा nfs_client *clp);
-बाह्य व्योम nfs4_destroy_session(काष्ठा nfs4_session *session);
-बाह्य पूर्णांक nfs4_init_session(काष्ठा nfs_client *clp);
-बाह्य पूर्णांक nfs4_init_ds_session(काष्ठा nfs_client *, अचिन्हित दीर्घ);
-
-/*
- * Determine अगर sessions are in use.
- */
-अटल अंतरभूत पूर्णांक nfs4_has_session(स्थिर काष्ठा nfs_client *clp)
-अणु
-	अगर (clp->cl_session)
-		वापस 1;
-	वापस 0;
-पूर्ण
-
-अटल अंतरभूत पूर्णांक nfs4_has_persistent_session(स्थिर काष्ठा nfs_client *clp)
-अणु
-	अगर (nfs4_has_session(clp))
-		वापस (clp->cl_session->flags & SESSION4_PERSIST);
-	वापस 0;
-पूर्ण
-
-अटल अंतरभूत व्योम nfs4_copy_sessionid(काष्ठा nfs4_sessionid *dst,
-		स्थिर काष्ठा nfs4_sessionid *src)
-अणु
-	स_नकल(dst->data, src->data, NFS4_MAX_SESSIONID_LEN);
-पूर्ण
-
-#अगर_घोषित CONFIG_CRC32
-/*
- * nfs_session_id_hash - calculate the crc32 hash क्रम the session id
- * @session - poपूर्णांकer to session
- */
-#घोषणा nfs_session_id_hash(sess_id) \
-	(~crc32_le(0xFFFFFFFF, &(sess_id)->data[0], माप((sess_id)->data)))
-#अन्यथा
-#घोषणा nfs_session_id_hash(session) (0)
-#पूर्ण_अगर
-#अन्यथा /* defined(CONFIG_NFS_V4_1) */
-
-अटल अंतरभूत पूर्णांक nfs4_init_session(काष्ठा nfs_client *clp)
-अणु
-	वापस 0;
-पूर्ण
+extern struct nfs4_session *nfs4_alloc_session(struct nfs_client *clp);
+extern void nfs4_destroy_session(struct nfs4_session *session);
+extern int nfs4_init_session(struct nfs_client *clp);
+extern int nfs4_init_ds_session(struct nfs_client *, unsigned long);
 
 /*
- * Determine अगर sessions are in use.
+ * Determine if sessions are in use.
  */
-अटल अंतरभूत पूर्णांक nfs4_has_session(स्थिर काष्ठा nfs_client *clp)
-अणु
-	वापस 0;
-पूर्ण
+static inline int nfs4_has_session(const struct nfs_client *clp)
+{
+	if (clp->cl_session)
+		return 1;
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक nfs4_has_persistent_session(स्थिर काष्ठा nfs_client *clp)
-अणु
-	वापस 0;
-पूर्ण
+static inline int nfs4_has_persistent_session(const struct nfs_client *clp)
+{
+	if (nfs4_has_session(clp))
+		return (clp->cl_session->flags & SESSION4_PERSIST);
+	return 0;
+}
 
-#घोषणा nfs_session_id_hash(session) (0)
+static inline void nfs4_copy_sessionid(struct nfs4_sessionid *dst,
+		const struct nfs4_sessionid *src)
+{
+	memcpy(dst->data, src->data, NFS4_MAX_SESSIONID_LEN);
+}
 
-#पूर्ण_अगर /* defined(CONFIG_NFS_V4_1) */
-#पूर्ण_अगर /* IS_ENABLED(CONFIG_NFS_V4) */
-#पूर्ण_अगर /* __LINUX_FS_NFS_NFS4SESSION_H */
+#ifdef CONFIG_CRC32
+/*
+ * nfs_session_id_hash - calculate the crc32 hash for the session id
+ * @session - pointer to session
+ */
+#define nfs_session_id_hash(sess_id) \
+	(~crc32_le(0xFFFFFFFF, &(sess_id)->data[0], sizeof((sess_id)->data)))
+#else
+#define nfs_session_id_hash(session) (0)
+#endif
+#else /* defined(CONFIG_NFS_V4_1) */
+
+static inline int nfs4_init_session(struct nfs_client *clp)
+{
+	return 0;
+}
+
+/*
+ * Determine if sessions are in use.
+ */
+static inline int nfs4_has_session(const struct nfs_client *clp)
+{
+	return 0;
+}
+
+static inline int nfs4_has_persistent_session(const struct nfs_client *clp)
+{
+	return 0;
+}
+
+#define nfs_session_id_hash(session) (0)
+
+#endif /* defined(CONFIG_NFS_V4_1) */
+#endif /* IS_ENABLED(CONFIG_NFS_V4) */
+#endif /* __LINUX_FS_NFS_NFS4SESSION_H */

@@ -1,58 +1,57 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Qualcomm SDM630/SDM636/SDM660 Network-on-Chip (NoC) QoS driver
  * Copyright (C) 2020, AngeloGioacchino Del Regno <kholk11@gmail.com>
  */
 
-#समावेश <dt-bindings/पूर्णांकerconnect/qcom,sdm660.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/device.h>
-#समावेश <linux/पूर्णांकerconnect-provider.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
+#include <dt-bindings/interconnect/qcom,sdm660.h>
+#include <linux/clk.h>
+#include <linux/device.h>
+#include <linux/interconnect-provider.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/of_platform.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
 
-#समावेश "smd-rpm.h"
+#include "smd-rpm.h"
 
-#घोषणा RPM_BUS_MASTER_REQ	0x73616d62
-#घोषणा RPM_BUS_SLAVE_REQ	0x766c7362
+#define RPM_BUS_MASTER_REQ	0x73616d62
+#define RPM_BUS_SLAVE_REQ	0x766c7362
 
 /* BIMC QoS */
-#घोषणा M_BKE_REG_BASE(n)		(0x300 + (0x4000 * n))
-#घोषणा M_BKE_EN_ADDR(n)		(M_BKE_REG_BASE(n))
-#घोषणा M_BKE_HEALTH_CFG_ADDR(i, n)	(M_BKE_REG_BASE(n) + 0x40 + (0x4 * i))
+#define M_BKE_REG_BASE(n)		(0x300 + (0x4000 * n))
+#define M_BKE_EN_ADDR(n)		(M_BKE_REG_BASE(n))
+#define M_BKE_HEALTH_CFG_ADDR(i, n)	(M_BKE_REG_BASE(n) + 0x40 + (0x4 * i))
 
-#घोषणा M_BKE_HEALTH_CFG_LIMITCMDS_MASK	0x80000000
-#घोषणा M_BKE_HEALTH_CFG_AREQPRIO_MASK	0x300
-#घोषणा M_BKE_HEALTH_CFG_PRIOLVL_MASK	0x3
-#घोषणा M_BKE_HEALTH_CFG_AREQPRIO_SHIFT	0x8
-#घोषणा M_BKE_HEALTH_CFG_LIMITCMDS_SHIFT 0x1f
+#define M_BKE_HEALTH_CFG_LIMITCMDS_MASK	0x80000000
+#define M_BKE_HEALTH_CFG_AREQPRIO_MASK	0x300
+#define M_BKE_HEALTH_CFG_PRIOLVL_MASK	0x3
+#define M_BKE_HEALTH_CFG_AREQPRIO_SHIFT	0x8
+#define M_BKE_HEALTH_CFG_LIMITCMDS_SHIFT 0x1f
 
-#घोषणा M_BKE_EN_EN_BMASK		0x1
+#define M_BKE_EN_EN_BMASK		0x1
 
-/* Valid क्रम both NoC and BIMC */
-#घोषणा NOC_QOS_MODE_FIXED		0x0
-#घोषणा NOC_QOS_MODE_LIMITER		0x1
-#घोषणा NOC_QOS_MODE_BYPASS		0x2
+/* Valid for both NoC and BIMC */
+#define NOC_QOS_MODE_FIXED		0x0
+#define NOC_QOS_MODE_LIMITER		0x1
+#define NOC_QOS_MODE_BYPASS		0x2
 
 /* NoC QoS */
-#घोषणा NOC_PERM_MODE_FIXED		1
-#घोषणा NOC_PERM_MODE_BYPASS		(1 << NOC_QOS_MODE_BYPASS)
+#define NOC_PERM_MODE_FIXED		1
+#define NOC_PERM_MODE_BYPASS		(1 << NOC_QOS_MODE_BYPASS)
 
-#घोषणा NOC_QOS_PRIORITYn_ADDR(n)	(0x8 + (n * 0x1000))
-#घोषणा NOC_QOS_PRIORITY_MASK		0xf
-#घोषणा NOC_QOS_PRIORITY_P1_SHIFT	0x2
-#घोषणा NOC_QOS_PRIORITY_P0_SHIFT	0x3
+#define NOC_QOS_PRIORITYn_ADDR(n)	(0x8 + (n * 0x1000))
+#define NOC_QOS_PRIORITY_MASK		0xf
+#define NOC_QOS_PRIORITY_P1_SHIFT	0x2
+#define NOC_QOS_PRIORITY_P0_SHIFT	0x3
 
-#घोषणा NOC_QOS_MODEn_ADDR(n)		(0xc + (n * 0x1000))
-#घोषणा NOC_QOS_MODEn_MASK		0x3
+#define NOC_QOS_MODEn_ADDR(n)		(0xc + (n * 0x1000))
+#define NOC_QOS_MODEn_MASK		0x3
 
-क्रमागत अणु
+enum {
 	SDM660_MASTER_IPA = 1,
 	SDM660_MASTER_CNOC_A2NOC,
 	SDM660_MASTER_SDCC_1,
@@ -158,93 +157,93 @@
 	SDM660_GNOC,
 	SDM660_MNOC,
 	SDM660_SNOC,
-पूर्ण;
+};
 
-#घोषणा to_qcom_provider(_provider) \
-	container_of(_provider, काष्ठा qcom_icc_provider, provider)
+#define to_qcom_provider(_provider) \
+	container_of(_provider, struct qcom_icc_provider, provider)
 
-अटल स्थिर काष्ठा clk_bulk_data bus_घड़ीs[] = अणु
-	अणु .id = "bus" पूर्ण,
-	अणु .id = "bus_a" पूर्ण,
-पूर्ण;
+static const struct clk_bulk_data bus_clocks[] = {
+	{ .id = "bus" },
+	{ .id = "bus_a" },
+};
 
-अटल स्थिर काष्ठा clk_bulk_data bus_mm_घड़ीs[] = अणु
-	अणु .id = "bus" पूर्ण,
-	अणु .id = "bus_a" पूर्ण,
-	अणु .id = "iface" पूर्ण,
-पूर्ण;
+static const struct clk_bulk_data bus_mm_clocks[] = {
+	{ .id = "bus" },
+	{ .id = "bus_a" },
+	{ .id = "iface" },
+};
 
 /**
- * काष्ठा qcom_icc_provider - Qualcomm specअगरic पूर्णांकerconnect provider
- * @provider: generic पूर्णांकerconnect provider
- * @bus_clks: the clk_bulk_data table of bus घड़ीs
+ * struct qcom_icc_provider - Qualcomm specific interconnect provider
+ * @provider: generic interconnect provider
+ * @bus_clks: the clk_bulk_data table of bus clocks
  * @num_clks: the total number of clk_bulk_data entries
- * @is_bimc_node: indicates whether to use bimc specअगरic setting
- * @regmap: regmap क्रम QoS रेजिस्टरs पढ़ो/ग_लिखो access
+ * @is_bimc_node: indicates whether to use bimc specific setting
+ * @regmap: regmap for QoS registers read/write access
  * @mmio: NoC base iospace
  */
-काष्ठा qcom_icc_provider अणु
-	काष्ठा icc_provider provider;
-	काष्ठा clk_bulk_data *bus_clks;
-	पूर्णांक num_clks;
+struct qcom_icc_provider {
+	struct icc_provider provider;
+	struct clk_bulk_data *bus_clks;
+	int num_clks;
 	bool is_bimc_node;
-	काष्ठा regmap *regmap;
-	व्योम __iomem *mmio;
-पूर्ण;
+	struct regmap *regmap;
+	void __iomem *mmio;
+};
 
-#घोषणा SDM660_MAX_LINKS	34
+#define SDM660_MAX_LINKS	34
 
 /**
- * काष्ठा qcom_icc_qos - Qualcomm specअगरic पूर्णांकerconnect QoS parameters
+ * struct qcom_icc_qos - Qualcomm specific interconnect QoS parameters
  * @areq_prio: node requests priority
- * @prio_level: priority level क्रम bus communication
- * @limit_commands: activate/deactivate limiter mode during runसमय
- * @ap_owned: indicates अगर the node is owned by the AP or by the RPM
- * @qos_mode: शेष qos mode क्रम this node
- * @qos_port: qos port number क्रम finding qos रेजिस्टरs of this node
+ * @prio_level: priority level for bus communication
+ * @limit_commands: activate/deactivate limiter mode during runtime
+ * @ap_owned: indicates if the node is owned by the AP or by the RPM
+ * @qos_mode: default qos mode for this node
+ * @qos_port: qos port number for finding qos registers of this node
  */
-काष्ठा qcom_icc_qos अणु
+struct qcom_icc_qos {
 	u32 areq_prio;
 	u32 prio_level;
 	bool limit_commands;
 	bool ap_owned;
-	पूर्णांक qos_mode;
-	पूर्णांक qos_port;
-पूर्ण;
+	int qos_mode;
+	int qos_port;
+};
 
 /**
- * काष्ठा qcom_icc_node - Qualcomm specअगरic पूर्णांकerconnect nodes
+ * struct qcom_icc_node - Qualcomm specific interconnect nodes
  * @name: the node name used in debugfs
- * @id: a unique node identअगरier
- * @links: an array of nodes where we can go next जबतक traversing
+ * @id: a unique node identifier
+ * @links: an array of nodes where we can go next while traversing
  * @num_links: the total number of @links
- * @buswidth: width of the पूर्णांकerconnect between a node and the bus (bytes)
- * @mas_rpm_id: RPM id क्रम devices that are bus masters
- * @slv_rpm_id: RPM id क्रम devices that are bus slaves
+ * @buswidth: width of the interconnect between a node and the bus (bytes)
+ * @mas_rpm_id: RPM id for devices that are bus masters
+ * @slv_rpm_id: RPM id for devices that are bus slaves
  * @qos: NoC QoS setting parameters
- * @rate: current bus घड़ी rate in Hz
+ * @rate: current bus clock rate in Hz
  */
-काष्ठा qcom_icc_node अणु
-	अचिन्हित अक्षर *name;
+struct qcom_icc_node {
+	unsigned char *name;
 	u16 id;
 	u16 links[SDM660_MAX_LINKS];
 	u16 num_links;
 	u16 buswidth;
-	पूर्णांक mas_rpm_id;
-	पूर्णांक slv_rpm_id;
-	काष्ठा qcom_icc_qos qos;
+	int mas_rpm_id;
+	int slv_rpm_id;
+	struct qcom_icc_qos qos;
 	u64 rate;
-पूर्ण;
+};
 
-काष्ठा qcom_icc_desc अणु
-	काष्ठा qcom_icc_node **nodes;
-	माप_प्रकार num_nodes;
-	स्थिर काष्ठा regmap_config *regmap_cfg;
-पूर्ण;
+struct qcom_icc_desc {
+	struct qcom_icc_node **nodes;
+	size_t num_nodes;
+	const struct regmap_config *regmap_cfg;
+};
 
-#घोषणा DEFINE_QNODE(_name, _id, _buswidth, _mas_rpm_id, _slv_rpm_id,	\
+#define DEFINE_QNODE(_name, _id, _buswidth, _mas_rpm_id, _slv_rpm_id,	\
 		     _ap_owned, _qos_mode, _qos_prio, _qos_port, ...)	\
-		अटल काष्ठा qcom_icc_node _name = अणु			\
+		static struct qcom_icc_node _name = {			\
 		.name = #_name,						\
 		.id = _id,						\
 		.buswidth = _buswidth,					\
@@ -255,9 +254,9 @@
 		.qos.areq_prio = _qos_prio,				\
 		.qos.prio_level = _qos_prio,				\
 		.qos.qos_port = _qos_port,				\
-		.num_links = ARRAY_SIZE(((पूर्णांक[])अणु __VA_ARGS__ पूर्ण)),	\
-		.links = अणु __VA_ARGS__ पूर्ण,				\
-	पूर्ण
+		.num_links = ARRAY_SIZE(((int[]){ __VA_ARGS__ })),	\
+		.links = { __VA_ARGS__ },				\
+	}
 
 DEFINE_QNODE(mas_ipa, SDM660_MASTER_IPA, 8, 59, -1, true, NOC_QOS_MODE_FIXED, 1, 3, SDM660_SLAVE_A2NOC_SNOC);
 DEFINE_QNODE(mas_cnoc_a2noc, SDM660_MASTER_CNOC_A2NOC, 8, 146, -1, true, -1, 0, -1, SDM660_SLAVE_A2NOC_SNOC);
@@ -354,10 +353,10 @@ DEFINE_QNODE(slv_snoc_bimc, SDM660_SLAVE_SNOC_BIMC, 16, -1, 24, false, -1, 0, -1
 DEFINE_QNODE(slv_snoc_cnoc, SDM660_SLAVE_SNOC_CNOC, 8, -1, 25, false, -1, 0, -1, SDM660_MASTER_SNOC_CNOC);
 DEFINE_QNODE(slv_imem, SDM660_SLAVE_IMEM, 8, -1, 26, false, -1, 0, -1, 0);
 DEFINE_QNODE(slv_pimem, SDM660_SLAVE_PIMEM, 8, -1, 166, false, -1, 0, -1, 0);
-DEFINE_QNODE(slv_qdss_sपंचांग, SDM660_SLAVE_QDSS_STM, 4, -1, 30, false, -1, 0, -1, 0);
+DEFINE_QNODE(slv_qdss_stm, SDM660_SLAVE_QDSS_STM, 4, -1, 30, false, -1, 0, -1, 0);
 DEFINE_QNODE(slv_srvc_snoc, SDM660_SLAVE_SRVC_SNOC, 16, -1, 29, false, -1, 0, -1, 0);
 
-अटल काष्ठा qcom_icc_node *sdm660_a2noc_nodes[] = अणु
+static struct qcom_icc_node *sdm660_a2noc_nodes[] = {
 	[MASTER_IPA] = &mas_ipa,
 	[MASTER_CNOC_A2NOC] = &mas_cnoc_a2noc,
 	[MASTER_SDCC_1] = &mas_sdcc_1,
@@ -369,23 +368,23 @@ DEFINE_QNODE(slv_srvc_snoc, SDM660_SLAVE_SRVC_SNOC, 16, -1, 29, false, -1, 0, -1
 	[MASTER_USB3] = &mas_usb3,
 	[MASTER_CRYPTO_C0] = &mas_crypto,
 	[SLAVE_A2NOC_SNOC] = &slv_a2noc_snoc,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_config sdm660_a2noc_regmap_config = अणु
+static const struct regmap_config sdm660_a2noc_regmap_config = {
 	.reg_bits	= 32,
 	.reg_stride	= 4,
 	.val_bits	= 32,
-	.max_रेजिस्टर	= 0x20000,
+	.max_register	= 0x20000,
 	.fast_io	= true,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_desc sdm660_a2noc = अणु
+static struct qcom_icc_desc sdm660_a2noc = {
 	.nodes = sdm660_a2noc_nodes,
 	.num_nodes = ARRAY_SIZE(sdm660_a2noc_nodes),
 	.regmap_cfg = &sdm660_a2noc_regmap_config,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_node *sdm660_bimc_nodes[] = अणु
+static struct qcom_icc_node *sdm660_bimc_nodes[] = {
 	[MASTER_GNOC_BIMC] = &mas_gnoc_bimc,
 	[MASTER_OXILI] = &mas_oxili,
 	[MASTER_MNOC_BIMC] = &mas_mnoc_bimc,
@@ -394,23 +393,23 @@ DEFINE_QNODE(slv_srvc_snoc, SDM660_SLAVE_SRVC_SNOC, 16, -1, 29, false, -1, 0, -1
 	[SLAVE_EBI] = &slv_ebi,
 	[SLAVE_HMSS_L3] = &slv_hmss_l3,
 	[SLAVE_BIMC_SNOC] = &slv_bimc_snoc,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_config sdm660_bimc_regmap_config = अणु
+static const struct regmap_config sdm660_bimc_regmap_config = {
 	.reg_bits	= 32,
 	.reg_stride	= 4,
 	.val_bits	= 32,
-	.max_रेजिस्टर	= 0x80000,
+	.max_register	= 0x80000,
 	.fast_io	= true,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_desc sdm660_bimc = अणु
+static struct qcom_icc_desc sdm660_bimc = {
 	.nodes = sdm660_bimc_nodes,
 	.num_nodes = ARRAY_SIZE(sdm660_bimc_nodes),
 	.regmap_cfg = &sdm660_bimc_regmap_config,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_node *sdm660_cnoc_nodes[] = अणु
+static struct qcom_icc_node *sdm660_cnoc_nodes[] = {
 	[MASTER_SNOC_CNOC] = &mas_snoc_cnoc,
 	[MASTER_QDSS_DAP] = &mas_qdss_dap,
 	[SLAVE_CNOC_A2NOC] = &slv_cnoc_a2noc,
@@ -447,43 +446,43 @@ DEFINE_QNODE(slv_srvc_snoc, SDM660_SLAVE_SRVC_SNOC, 16, -1, 29, false, -1, 0, -1
 	[SLAVE_USB_HS] = &slv_usb_hs,
 	[SLAVE_USB3_0] = &slv_usb3_0,
 	[SLAVE_SRVC_CNOC] = &slv_srvc_cnoc,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_config sdm660_cnoc_regmap_config = अणु
+static const struct regmap_config sdm660_cnoc_regmap_config = {
 	.reg_bits	= 32,
 	.reg_stride	= 4,
 	.val_bits	= 32,
-	.max_रेजिस्टर	= 0x10000,
+	.max_register	= 0x10000,
 	.fast_io	= true,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_desc sdm660_cnoc = अणु
+static struct qcom_icc_desc sdm660_cnoc = {
 	.nodes = sdm660_cnoc_nodes,
 	.num_nodes = ARRAY_SIZE(sdm660_cnoc_nodes),
 	.regmap_cfg = &sdm660_cnoc_regmap_config,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_node *sdm660_gnoc_nodes[] = अणु
+static struct qcom_icc_node *sdm660_gnoc_nodes[] = {
 	[MASTER_APSS_PROC] = &mas_apss_proc,
 	[SLAVE_GNOC_BIMC] = &slv_gnoc_bimc,
 	[SLAVE_GNOC_SNOC] = &slv_gnoc_snoc,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_config sdm660_gnoc_regmap_config = अणु
+static const struct regmap_config sdm660_gnoc_regmap_config = {
 	.reg_bits	= 32,
 	.reg_stride	= 4,
 	.val_bits	= 32,
-	.max_रेजिस्टर	= 0xe000,
+	.max_register	= 0xe000,
 	.fast_io	= true,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_desc sdm660_gnoc = अणु
+static struct qcom_icc_desc sdm660_gnoc = {
 	.nodes = sdm660_gnoc_nodes,
 	.num_nodes = ARRAY_SIZE(sdm660_gnoc_nodes),
 	.regmap_cfg = &sdm660_gnoc_regmap_config,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_node *sdm660_mnoc_nodes[] = अणु
+static struct qcom_icc_node *sdm660_mnoc_nodes[] = {
 	[MASTER_CPP] = &mas_cpp,
 	[MASTER_JPEG] = &mas_jpeg,
 	[MASTER_MDP_P0] = &mas_mdp_p0,
@@ -506,23 +505,23 @@ DEFINE_QNODE(slv_srvc_snoc, SDM660_SLAVE_SRVC_SNOC, 16, -1, 29, false, -1, 0, -1
 	[SLAVE_SMMU_CFG] = &slv_smmu_cfg,
 	[SLAVE_SRVC_MNOC] = &slv_srvc_mnoc,
 	[SLAVE_MNOC_BIMC] = &slv_mnoc_bimc,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_config sdm660_mnoc_regmap_config = अणु
+static const struct regmap_config sdm660_mnoc_regmap_config = {
 	.reg_bits	= 32,
 	.reg_stride	= 4,
 	.val_bits	= 32,
-	.max_रेजिस्टर	= 0x10000,
+	.max_register	= 0x10000,
 	.fast_io	= true,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_desc sdm660_mnoc = अणु
+static struct qcom_icc_desc sdm660_mnoc = {
 	.nodes = sdm660_mnoc_nodes,
 	.num_nodes = ARRAY_SIZE(sdm660_mnoc_nodes),
 	.regmap_cfg = &sdm660_mnoc_regmap_config,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_node *sdm660_snoc_nodes[] = अणु
+static struct qcom_icc_node *sdm660_snoc_nodes[] = {
 	[MASTER_QDSS_ETR] = &mas_qdss_etr,
 	[MASTER_QDSS_BAM] = &mas_qdss_bam,
 	[MASTER_SNOC_CFG] = &mas_snoc_cfg,
@@ -538,28 +537,28 @@ DEFINE_QNODE(slv_srvc_snoc, SDM660_SLAVE_SRVC_SNOC, 16, -1, 29, false, -1, 0, -1
 	[SLAVE_SNOC_CNOC] = &slv_snoc_cnoc,
 	[SLAVE_IMEM] = &slv_imem,
 	[SLAVE_PIMEM] = &slv_pimem,
-	[SLAVE_QDSS_STM] = &slv_qdss_sपंचांग,
+	[SLAVE_QDSS_STM] = &slv_qdss_stm,
 	[SLAVE_SRVC_SNOC] = &slv_srvc_snoc,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_config sdm660_snoc_regmap_config = अणु
+static const struct regmap_config sdm660_snoc_regmap_config = {
 	.reg_bits	= 32,
 	.reg_stride	= 4,
 	.val_bits	= 32,
-	.max_रेजिस्टर	= 0x20000,
+	.max_register	= 0x20000,
 	.fast_io	= true,
-पूर्ण;
+};
 
-अटल काष्ठा qcom_icc_desc sdm660_snoc = अणु
+static struct qcom_icc_desc sdm660_snoc = {
 	.nodes = sdm660_snoc_nodes,
 	.num_nodes = ARRAY_SIZE(sdm660_snoc_nodes),
 	.regmap_cfg = &sdm660_snoc_regmap_config,
-पूर्ण;
+};
 
-अटल पूर्णांक qcom_icc_bimc_set_qos_health(काष्ठा regmap *rmap,
-					काष्ठा qcom_icc_qos *qos,
-					पूर्णांक regnum)
-अणु
+static int qcom_icc_bimc_set_qos_health(struct regmap *rmap,
+					struct qcom_icc_qos *qos,
+					int regnum)
+{
 	u32 val;
 	u32 mask;
 
@@ -570,281 +569,281 @@ DEFINE_QNODE(slv_srvc_snoc, SDM660_SLAVE_SRVC_SNOC, 16, -1, 29, false, -1, 0, -1
 	mask |= M_BKE_HEALTH_CFG_AREQPRIO_MASK;
 
 	/* LIMITCMDS is not present on M_BKE_HEALTH_3 */
-	अगर (regnum != 3) अणु
+	if (regnum != 3) {
 		val |= qos->limit_commands << M_BKE_HEALTH_CFG_LIMITCMDS_SHIFT;
 		mask |= M_BKE_HEALTH_CFG_LIMITCMDS_MASK;
-	पूर्ण
+	}
 
-	वापस regmap_update_bits(rmap,
+	return regmap_update_bits(rmap,
 				  M_BKE_HEALTH_CFG_ADDR(regnum, qos->qos_port),
 				  mask, val);
-पूर्ण
+}
 
-अटल पूर्णांक qcom_icc_set_bimc_qos(काष्ठा icc_node *src, u64 max_bw,
+static int qcom_icc_set_bimc_qos(struct icc_node *src, u64 max_bw,
 				 bool bypass_mode)
-अणु
-	काष्ठा qcom_icc_provider *qp;
-	काष्ठा qcom_icc_node *qn;
-	काष्ठा icc_provider *provider;
+{
+	struct qcom_icc_provider *qp;
+	struct qcom_icc_node *qn;
+	struct icc_provider *provider;
 	u32 mode = NOC_QOS_MODE_BYPASS;
 	u32 val = 0;
-	पूर्णांक i, rc = 0;
+	int i, rc = 0;
 
 	qn = src->data;
 	provider = src->provider;
 	qp = to_qcom_provider(provider);
 
-	अगर (qn->qos.qos_mode != -1)
+	if (qn->qos.qos_mode != -1)
 		mode = qn->qos.qos_mode;
 
 	/* QoS Priority: The QoS Health parameters are getting considered
-	 * only अगर we are NOT in Bypass Mode.
+	 * only if we are NOT in Bypass Mode.
 	 */
-	अगर (mode != NOC_QOS_MODE_BYPASS) अणु
-		क्रम (i = 3; i >= 0; i--) अणु
+	if (mode != NOC_QOS_MODE_BYPASS) {
+		for (i = 3; i >= 0; i--) {
 			rc = qcom_icc_bimc_set_qos_health(qp->regmap,
 							  &qn->qos, i);
-			अगर (rc)
-				वापस rc;
-		पूर्ण
+			if (rc)
+				return rc;
+		}
 
 		/* Set BKE_EN to 1 when Fixed, Regulator or Limiter Mode */
 		val = 1;
-	पूर्ण
+	}
 
-	वापस regmap_update_bits(qp->regmap, M_BKE_EN_ADDR(qn->qos.qos_port),
+	return regmap_update_bits(qp->regmap, M_BKE_EN_ADDR(qn->qos.qos_port),
 				  M_BKE_EN_EN_BMASK, val);
-पूर्ण
+}
 
-अटल पूर्णांक qcom_icc_noc_set_qos_priority(काष्ठा regmap *rmap,
-					 काष्ठा qcom_icc_qos *qos)
-अणु
+static int qcom_icc_noc_set_qos_priority(struct regmap *rmap,
+					 struct qcom_icc_qos *qos)
+{
 	u32 val;
-	पूर्णांक rc;
+	int rc;
 
-	/* Must be updated one at a समय, P1 first, P0 last */
+	/* Must be updated one at a time, P1 first, P0 last */
 	val = qos->areq_prio << NOC_QOS_PRIORITY_P1_SHIFT;
 	rc = regmap_update_bits(rmap, NOC_QOS_PRIORITYn_ADDR(qos->qos_port),
 				NOC_QOS_PRIORITY_MASK, val);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	val = qos->prio_level << NOC_QOS_PRIORITY_P0_SHIFT;
-	वापस regmap_update_bits(rmap, NOC_QOS_PRIORITYn_ADDR(qos->qos_port),
+	return regmap_update_bits(rmap, NOC_QOS_PRIORITYn_ADDR(qos->qos_port),
 				  NOC_QOS_PRIORITY_MASK, val);
-पूर्ण
+}
 
-अटल पूर्णांक qcom_icc_set_noc_qos(काष्ठा icc_node *src, u64 max_bw)
-अणु
-	काष्ठा qcom_icc_provider *qp;
-	काष्ठा qcom_icc_node *qn;
-	काष्ठा icc_provider *provider;
+static int qcom_icc_set_noc_qos(struct icc_node *src, u64 max_bw)
+{
+	struct qcom_icc_provider *qp;
+	struct qcom_icc_node *qn;
+	struct icc_provider *provider;
 	u32 mode = NOC_QOS_MODE_BYPASS;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
 	qn = src->data;
 	provider = src->provider;
 	qp = to_qcom_provider(provider);
 
-	अगर (qn->qos.qos_port < 0) अणु
+	if (qn->qos.qos_port < 0) {
 		dev_dbg(src->provider->dev,
 			"NoC QoS: Skipping %s: vote aggregated on parent.\n",
 			qn->name);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (qn->qos.qos_mode != -1)
+	if (qn->qos.qos_mode != -1)
 		mode = qn->qos.qos_mode;
 
-	अगर (mode == NOC_QOS_MODE_FIXED) अणु
+	if (mode == NOC_QOS_MODE_FIXED) {
 		dev_dbg(src->provider->dev, "NoC QoS: %s: Set Fixed mode\n",
 			qn->name);
 		rc = qcom_icc_noc_set_qos_priority(qp->regmap, &qn->qos);
-		अगर (rc)
-			वापस rc;
-	पूर्ण अन्यथा अगर (mode == NOC_QOS_MODE_BYPASS) अणु
+		if (rc)
+			return rc;
+	} else if (mode == NOC_QOS_MODE_BYPASS) {
 		dev_dbg(src->provider->dev, "NoC QoS: %s: Set Bypass mode\n",
 			qn->name);
-	पूर्ण
+	}
 
-	वापस regmap_update_bits(qp->regmap,
+	return regmap_update_bits(qp->regmap,
 				  NOC_QOS_MODEn_ADDR(qn->qos.qos_port),
 				  NOC_QOS_MODEn_MASK, mode);
-पूर्ण
+}
 
-अटल पूर्णांक qcom_icc_qos_set(काष्ठा icc_node *node, u64 sum_bw)
-अणु
-	काष्ठा qcom_icc_provider *qp = to_qcom_provider(node->provider);
-	काष्ठा qcom_icc_node *qn = node->data;
+static int qcom_icc_qos_set(struct icc_node *node, u64 sum_bw)
+{
+	struct qcom_icc_provider *qp = to_qcom_provider(node->provider);
+	struct qcom_icc_node *qn = node->data;
 
 	dev_dbg(node->provider->dev, "Setting QoS for %s\n", qn->name);
 
-	अगर (qp->is_bimc_node)
-		वापस qcom_icc_set_bimc_qos(node, sum_bw,
+	if (qp->is_bimc_node)
+		return qcom_icc_set_bimc_qos(node, sum_bw,
 				(qn->qos.qos_mode == NOC_QOS_MODE_BYPASS));
 
-	वापस qcom_icc_set_noc_qos(node, sum_bw);
-पूर्ण
+	return qcom_icc_set_noc_qos(node, sum_bw);
+}
 
-अटल पूर्णांक qcom_icc_rpm_set(पूर्णांक mas_rpm_id, पूर्णांक slv_rpm_id, u64 sum_bw)
-अणु
-	पूर्णांक ret = 0;
+static int qcom_icc_rpm_set(int mas_rpm_id, int slv_rpm_id, u64 sum_bw)
+{
+	int ret = 0;
 
-	अगर (mas_rpm_id != -1) अणु
+	if (mas_rpm_id != -1) {
 		ret = qcom_icc_rpm_smd_send(QCOM_SMD_RPM_ACTIVE_STATE,
 					    RPM_BUS_MASTER_REQ,
 					    mas_rpm_id,
 					    sum_bw);
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("qcom_icc_rpm_smd_send mas %d error %d\n",
 			       mas_rpm_id, ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	अगर (slv_rpm_id != -1) अणु
+	if (slv_rpm_id != -1) {
 		ret = qcom_icc_rpm_smd_send(QCOM_SMD_RPM_ACTIVE_STATE,
 					    RPM_BUS_SLAVE_REQ,
 					    slv_rpm_id,
 					    sum_bw);
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("qcom_icc_rpm_smd_send slv %d error %d\n",
 			       slv_rpm_id, ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक qcom_icc_set(काष्ठा icc_node *src, काष्ठा icc_node *dst)
-अणु
-	काष्ठा qcom_icc_provider *qp;
-	काष्ठा qcom_icc_node *qn;
-	काष्ठा icc_provider *provider;
-	काष्ठा icc_node *n;
+static int qcom_icc_set(struct icc_node *src, struct icc_node *dst)
+{
+	struct qcom_icc_provider *qp;
+	struct qcom_icc_node *qn;
+	struct icc_provider *provider;
+	struct icc_node *n;
 	u64 sum_bw;
 	u64 max_peak_bw;
 	u64 rate;
 	u32 agg_avg = 0;
 	u32 agg_peak = 0;
-	पूर्णांक ret, i;
+	int ret, i;
 
 	qn = src->data;
 	provider = src->provider;
 	qp = to_qcom_provider(provider);
 
-	list_क्रम_each_entry(n, &provider->nodes, node_list)
+	list_for_each_entry(n, &provider->nodes, node_list)
 		provider->aggregate(n, 0, n->avg_bw, n->peak_bw,
 				    &agg_avg, &agg_peak);
 
 	sum_bw = icc_units_to_bps(agg_avg);
 	max_peak_bw = icc_units_to_bps(agg_peak);
 
-	अगर (!qn->qos.ap_owned) अणु
+	if (!qn->qos.ap_owned) {
 		/* send bandwidth request message to the RPM processor */
 		ret = qcom_icc_rpm_set(qn->mas_rpm_id, qn->slv_rpm_id, sum_bw);
-		अगर (ret)
-			वापस ret;
-	पूर्ण अन्यथा अगर (qn->qos.qos_mode != -1) अणु
+		if (ret)
+			return ret;
+	} else if (qn->qos.qos_mode != -1) {
 		/* set bandwidth directly from the AP */
 		ret = qcom_icc_qos_set(src, sum_bw);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	rate = max(sum_bw, max_peak_bw);
 
-	करो_भाग(rate, qn->buswidth);
+	do_div(rate, qn->buswidth);
 
-	अगर (qn->rate == rate)
-		वापस 0;
+	if (qn->rate == rate)
+		return 0;
 
-	क्रम (i = 0; i < qp->num_clks; i++) अणु
+	for (i = 0; i < qp->num_clks; i++) {
 		ret = clk_set_rate(qp->bus_clks[i].clk, rate);
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("%s clk_set_rate error: %d\n",
 			       qp->bus_clks[i].id, ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	qn->rate = rate;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qnoc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	स्थिर काष्ठा qcom_icc_desc *desc;
-	काष्ठा icc_onecell_data *data;
-	काष्ठा icc_provider *provider;
-	काष्ठा qcom_icc_node **qnodes;
-	काष्ठा qcom_icc_provider *qp;
-	काष्ठा icc_node *node;
-	काष्ठा resource *res;
-	माप_प्रकार num_nodes, i;
-	पूर्णांक ret;
+static int qnoc_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	const struct qcom_icc_desc *desc;
+	struct icc_onecell_data *data;
+	struct icc_provider *provider;
+	struct qcom_icc_node **qnodes;
+	struct qcom_icc_provider *qp;
+	struct icc_node *node;
+	struct resource *res;
+	size_t num_nodes, i;
+	int ret;
 
-	/* रुको क्रम the RPM proxy */
-	अगर (!qcom_icc_rpm_smd_available())
-		वापस -EPROBE_DEFER;
+	/* wait for the RPM proxy */
+	if (!qcom_icc_rpm_smd_available())
+		return -EPROBE_DEFER;
 
 	desc = of_device_get_match_data(dev);
-	अगर (!desc)
-		वापस -EINVAL;
+	if (!desc)
+		return -EINVAL;
 
 	qnodes = desc->nodes;
 	num_nodes = desc->num_nodes;
 
-	qp = devm_kzalloc(dev, माप(*qp), GFP_KERNEL);
-	अगर (!qp)
-		वापस -ENOMEM;
+	qp = devm_kzalloc(dev, sizeof(*qp), GFP_KERNEL);
+	if (!qp)
+		return -ENOMEM;
 
-	data = devm_kzalloc(dev, काष्ठा_size(data, nodes, num_nodes),
+	data = devm_kzalloc(dev, struct_size(data, nodes, num_nodes),
 			    GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	if (!data)
+		return -ENOMEM;
 
-	अगर (of_device_is_compatible(dev->of_node, "qcom,sdm660-mnoc")) अणु
-		qp->bus_clks = devm_kmemdup(dev, bus_mm_घड़ीs,
-					    माप(bus_mm_घड़ीs), GFP_KERNEL);
-		qp->num_clks = ARRAY_SIZE(bus_mm_घड़ीs);
-	पूर्ण अन्यथा अणु
-		अगर (of_device_is_compatible(dev->of_node, "qcom,sdm660-bimc"))
+	if (of_device_is_compatible(dev->of_node, "qcom,sdm660-mnoc")) {
+		qp->bus_clks = devm_kmemdup(dev, bus_mm_clocks,
+					    sizeof(bus_mm_clocks), GFP_KERNEL);
+		qp->num_clks = ARRAY_SIZE(bus_mm_clocks);
+	} else {
+		if (of_device_is_compatible(dev->of_node, "qcom,sdm660-bimc"))
 			qp->is_bimc_node = true;
 
-		qp->bus_clks = devm_kmemdup(dev, bus_घड़ीs, माप(bus_घड़ीs),
+		qp->bus_clks = devm_kmemdup(dev, bus_clocks, sizeof(bus_clocks),
 					    GFP_KERNEL);
-		qp->num_clks = ARRAY_SIZE(bus_घड़ीs);
-	पूर्ण
-	अगर (!qp->bus_clks)
-		वापस -ENOMEM;
+		qp->num_clks = ARRAY_SIZE(bus_clocks);
+	}
+	if (!qp->bus_clks)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res)
-		वापस -ENODEV;
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res)
+		return -ENODEV;
 
 	qp->mmio = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(qp->mmio)) अणु
+	if (IS_ERR(qp->mmio)) {
 		dev_err(dev, "Cannot ioremap interconnect bus resource\n");
-		वापस PTR_ERR(qp->mmio);
-	पूर्ण
+		return PTR_ERR(qp->mmio);
+	}
 
 	qp->regmap = devm_regmap_init_mmio(dev, qp->mmio, desc->regmap_cfg);
-	अगर (IS_ERR(qp->regmap)) अणु
+	if (IS_ERR(qp->regmap)) {
 		dev_err(dev, "Cannot regmap interconnect bus resource\n");
-		वापस PTR_ERR(qp->regmap);
-	पूर्ण
+		return PTR_ERR(qp->regmap);
+	}
 
 	ret = devm_clk_bulk_get(dev, qp->num_clks, qp->bus_clks);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = clk_bulk_prepare_enable(qp->num_clks, qp->bus_clks);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	provider = &qp->provider;
 	INIT_LIST_HEAD(&provider->nodes);
@@ -855,70 +854,70 @@ DEFINE_QNODE(slv_srvc_snoc, SDM660_SLAVE_SRVC_SNOC, 16, -1, 29, false, -1, 0, -1
 	provider->data = data;
 
 	ret = icc_provider_add(provider);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "error adding interconnect provider: %d\n", ret);
 		clk_bulk_disable_unprepare(qp->num_clks, qp->bus_clks);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	क्रम (i = 0; i < num_nodes; i++) अणु
-		माप_प्रकार j;
+	for (i = 0; i < num_nodes; i++) {
+		size_t j;
 
 		node = icc_node_create(qnodes[i]->id);
-		अगर (IS_ERR(node)) अणु
+		if (IS_ERR(node)) {
 			ret = PTR_ERR(node);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		node->name = qnodes[i]->name;
 		node->data = qnodes[i];
 		icc_node_add(node, provider);
 
-		क्रम (j = 0; j < qnodes[i]->num_links; j++)
+		for (j = 0; j < qnodes[i]->num_links; j++)
 			icc_link_create(node, qnodes[i]->links[j]);
 
 		data->nodes[i] = node;
-	पूर्ण
+	}
 	data->num_nodes = num_nodes;
-	platक्रमm_set_drvdata(pdev, qp);
+	platform_set_drvdata(pdev, qp);
 
-	वापस 0;
+	return 0;
 err:
-	icc_nodes_हटाओ(provider);
+	icc_nodes_remove(provider);
 	clk_bulk_disable_unprepare(qp->num_clks, qp->bus_clks);
 	icc_provider_del(provider);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक qnoc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा qcom_icc_provider *qp = platक्रमm_get_drvdata(pdev);
+static int qnoc_remove(struct platform_device *pdev)
+{
+	struct qcom_icc_provider *qp = platform_get_drvdata(pdev);
 
-	icc_nodes_हटाओ(&qp->provider);
+	icc_nodes_remove(&qp->provider);
 	clk_bulk_disable_unprepare(qp->num_clks, qp->bus_clks);
-	वापस icc_provider_del(&qp->provider);
-पूर्ण
+	return icc_provider_del(&qp->provider);
+}
 
-अटल स्थिर काष्ठा of_device_id sdm660_noc_of_match[] = अणु
-	अणु .compatible = "qcom,sdm660-a2noc", .data = &sdm660_a2noc पूर्ण,
-	अणु .compatible = "qcom,sdm660-bimc", .data = &sdm660_bimc पूर्ण,
-	अणु .compatible = "qcom,sdm660-cnoc", .data = &sdm660_cnoc पूर्ण,
-	अणु .compatible = "qcom,sdm660-gnoc", .data = &sdm660_gnoc पूर्ण,
-	अणु .compatible = "qcom,sdm660-mnoc", .data = &sdm660_mnoc पूर्ण,
-	अणु .compatible = "qcom,sdm660-snoc", .data = &sdm660_snoc पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id sdm660_noc_of_match[] = {
+	{ .compatible = "qcom,sdm660-a2noc", .data = &sdm660_a2noc },
+	{ .compatible = "qcom,sdm660-bimc", .data = &sdm660_bimc },
+	{ .compatible = "qcom,sdm660-cnoc", .data = &sdm660_cnoc },
+	{ .compatible = "qcom,sdm660-gnoc", .data = &sdm660_gnoc },
+	{ .compatible = "qcom,sdm660-mnoc", .data = &sdm660_mnoc },
+	{ .compatible = "qcom,sdm660-snoc", .data = &sdm660_snoc },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, sdm660_noc_of_match);
 
-अटल काष्ठा platक्रमm_driver sdm660_noc_driver = अणु
+static struct platform_driver sdm660_noc_driver = {
 	.probe = qnoc_probe,
-	.हटाओ = qnoc_हटाओ,
-	.driver = अणु
+	.remove = qnoc_remove,
+	.driver = {
 		.name = "qnoc-sdm660",
 		.of_match_table = sdm660_noc_of_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(sdm660_noc_driver);
+	},
+};
+module_platform_driver(sdm660_noc_driver);
 MODULE_DESCRIPTION("Qualcomm sdm660 NoC driver");
 MODULE_LICENSE("GPL v2");

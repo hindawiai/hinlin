@@ -1,14 +1,13 @@
-<शैली गुरु>
 /*
- * Copyright 2007 Matthieu CASTET <castet.matthieu@मुक्त.fr>
+ * Copyright 2007 Matthieu CASTET <castet.matthieu@free.fr>
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragr) shall be included in all copies or substantial portions of the
@@ -22,16 +21,16 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#समावेश "nv10.h"
-#समावेश "regs.h"
+#include "nv10.h"
+#include "regs.h"
 
-#समावेश <core/client.h>
-#समावेश <core/gpuobj.h>
-#समावेश <engine/fअगरo.h>
-#समावेश <engine/fअगरo/chan.h>
-#समावेश <subdev/fb.h>
+#include <core/client.h>
+#include <core/gpuobj.h>
+#include <engine/fifo.h>
+#include <engine/fifo/chan.h>
+#include <subdev/fb.h>
 
-काष्ठा pipe_state अणु
+struct pipe_state {
 	u32 pipe_0x0000[0x040/4];
 	u32 pipe_0x0040[0x010/4];
 	u32 pipe_0x0200[0x0c0/4];
@@ -42,9 +41,9 @@
 	u32 pipe_0x7000[0x130/4];
 	u32 pipe_0x7400[0x0c0/4];
 	u32 pipe_0x7800[0x0c0/4];
-पूर्ण;
+};
 
-अटल पूर्णांक nv10_gr_ctx_regs[] = अणु
+static int nv10_gr_ctx_regs[] = {
 	NV10_PGRAPH_CTX_SWITCH(0),
 	NV10_PGRAPH_CTX_SWITCH(1),
 	NV10_PGRAPH_CTX_SWITCH(2),
@@ -364,9 +363,9 @@
 	NV03_PGRAPH_Y_MISC,
 	NV04_PGRAPH_VALID1,
 	NV04_PGRAPH_VALID2,
-पूर्ण;
+};
 
-अटल पूर्णांक nv17_gr_ctx_regs[] = अणु
+static int nv17_gr_ctx_regs[] = {
 	NV10_PGRAPH_DEBUG_4,
 	0x004006b0,
 	0x00400eac,
@@ -385,75 +384,75 @@
 	0x00400ee0,
 	0x00400a00,
 	0x00400a04,
-पूर्ण;
+};
 
-#घोषणा nv10_gr(p) container_of((p), काष्ठा nv10_gr, base)
+#define nv10_gr(p) container_of((p), struct nv10_gr, base)
 
-काष्ठा nv10_gr अणु
-	काष्ठा nvkm_gr base;
-	काष्ठा nv10_gr_chan *chan[32];
+struct nv10_gr {
+	struct nvkm_gr base;
+	struct nv10_gr_chan *chan[32];
 	spinlock_t lock;
-पूर्ण;
+};
 
-#घोषणा nv10_gr_chan(p) container_of((p), काष्ठा nv10_gr_chan, object)
+#define nv10_gr_chan(p) container_of((p), struct nv10_gr_chan, object)
 
-काष्ठा nv10_gr_chan अणु
-	काष्ठा nvkm_object object;
-	काष्ठा nv10_gr *gr;
-	पूर्णांक chid;
-	पूर्णांक nv10[ARRAY_SIZE(nv10_gr_ctx_regs)];
-	पूर्णांक nv17[ARRAY_SIZE(nv17_gr_ctx_regs)];
-	काष्ठा pipe_state pipe_state;
-	u32 lma_winकरोw[4];
-पूर्ण;
+struct nv10_gr_chan {
+	struct nvkm_object object;
+	struct nv10_gr *gr;
+	int chid;
+	int nv10[ARRAY_SIZE(nv10_gr_ctx_regs)];
+	int nv17[ARRAY_SIZE(nv17_gr_ctx_regs)];
+	struct pipe_state pipe_state;
+	u32 lma_window[4];
+};
 
 
 /*******************************************************************************
  * Graphics object classes
  ******************************************************************************/
 
-#घोषणा PIPE_SAVE(gr, state, addr)					\
-	करो अणु								\
-		पूर्णांक __i;						\
+#define PIPE_SAVE(gr, state, addr)					\
+	do {								\
+		int __i;						\
 		nvkm_wr32(device, NV10_PGRAPH_PIPE_ADDRESS, addr);		\
-		क्रम (__i = 0; __i < ARRAY_SIZE(state); __i++)		\
+		for (__i = 0; __i < ARRAY_SIZE(state); __i++)		\
 			state[__i] = nvkm_rd32(device, NV10_PGRAPH_PIPE_DATA); \
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा PIPE_RESTORE(gr, state, addr)					\
-	करो अणु								\
-		पूर्णांक __i;						\
+#define PIPE_RESTORE(gr, state, addr)					\
+	do {								\
+		int __i;						\
 		nvkm_wr32(device, NV10_PGRAPH_PIPE_ADDRESS, addr);		\
-		क्रम (__i = 0; __i < ARRAY_SIZE(state); __i++)		\
+		for (__i = 0; __i < ARRAY_SIZE(state); __i++)		\
 			nvkm_wr32(device, NV10_PGRAPH_PIPE_DATA, state[__i]); \
-	पूर्ण जबतक (0)
+	} while (0)
 
-अटल व्योम
-nv17_gr_mthd_lma_winकरोw(काष्ठा nv10_gr_chan *chan, u32 mthd, u32 data)
-अणु
-	काष्ठा nvkm_device *device = chan->object.engine->subdev.device;
-	काष्ठा nvkm_gr *gr = &chan->gr->base;
-	काष्ठा pipe_state *pipe = &chan->pipe_state;
+static void
+nv17_gr_mthd_lma_window(struct nv10_gr_chan *chan, u32 mthd, u32 data)
+{
+	struct nvkm_device *device = chan->object.engine->subdev.device;
+	struct nvkm_gr *gr = &chan->gr->base;
+	struct pipe_state *pipe = &chan->pipe_state;
 	u32 pipe_0x0040[1], pipe_0x64c0[8], pipe_0x6a80[3], pipe_0x6ab0[3];
-	u32 xभ_शेषe0, xभ_शेषe1;
-	पूर्णांक i;
+	u32 xfmode0, xfmode1;
+	int i;
 
-	chan->lma_winकरोw[(mthd - 0x1638) / 4] = data;
+	chan->lma_window[(mthd - 0x1638) / 4] = data;
 
-	अगर (mthd != 0x1644)
-		वापस;
+	if (mthd != 0x1644)
+		return;
 
 	nv04_gr_idle(gr);
 
 	PIPE_SAVE(device, pipe_0x0040, 0x0040);
 	PIPE_SAVE(device, pipe->pipe_0x0200, 0x0200);
 
-	PIPE_RESTORE(device, chan->lma_winकरोw, 0x6790);
+	PIPE_RESTORE(device, chan->lma_window, 0x6790);
 
 	nv04_gr_idle(gr);
 
-	xभ_शेषe0 = nvkm_rd32(device, NV10_PGRAPH_XFMODE0);
-	xभ_शेषe1 = nvkm_rd32(device, NV10_PGRAPH_XFMODE1);
+	xfmode0 = nvkm_rd32(device, NV10_PGRAPH_XFMODE0);
+	xfmode1 = nvkm_rd32(device, NV10_PGRAPH_XFMODE1);
 
 	PIPE_SAVE(device, pipe->pipe_0x4400, 0x4400);
 	PIPE_SAVE(device, pipe_0x64c0, 0x64c0);
@@ -465,17 +464,17 @@ nv17_gr_mthd_lma_winकरोw(काष्ठा nv10_gr_chan *chan, u32 mthd, 
 	nvkm_wr32(device, NV10_PGRAPH_XFMODE0, 0x10000000);
 	nvkm_wr32(device, NV10_PGRAPH_XFMODE1, 0x00000000);
 	nvkm_wr32(device, NV10_PGRAPH_PIPE_ADDRESS, 0x000064c0);
-	क्रम (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
 		nvkm_wr32(device, NV10_PGRAPH_PIPE_DATA, 0x3f800000);
-	क्रम (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
 		nvkm_wr32(device, NV10_PGRAPH_PIPE_DATA, 0x00000000);
 
 	nvkm_wr32(device, NV10_PGRAPH_PIPE_ADDRESS, 0x00006ab0);
-	क्रम (i = 0; i < 3; i++)
+	for (i = 0; i < 3; i++)
 		nvkm_wr32(device, NV10_PGRAPH_PIPE_DATA, 0x3f800000);
 
 	nvkm_wr32(device, NV10_PGRAPH_PIPE_ADDRESS, 0x00006a80);
-	क्रम (i = 0; i < 3; i++)
+	for (i = 0; i < 3; i++)
 		nvkm_wr32(device, NV10_PGRAPH_PIPE_DATA, 0x00000000);
 
 	nvkm_wr32(device, NV10_PGRAPH_PIPE_ADDRESS, 0x00000040);
@@ -487,8 +486,8 @@ nv17_gr_mthd_lma_winकरोw(काष्ठा nv10_gr_chan *chan, u32 mthd, 
 
 	PIPE_RESTORE(device, pipe_0x0040, 0x0040);
 
-	nvkm_wr32(device, NV10_PGRAPH_XFMODE0, xभ_शेषe0);
-	nvkm_wr32(device, NV10_PGRAPH_XFMODE1, xभ_शेषe1);
+	nvkm_wr32(device, NV10_PGRAPH_XFMODE0, xfmode0);
+	nvkm_wr32(device, NV10_PGRAPH_XFMODE1, xfmode1);
 
 	PIPE_RESTORE(device, pipe_0x64c0, 0x64c0);
 	PIPE_RESTORE(device, pipe_0x6ab0, 0x6ab0);
@@ -499,70 +498,70 @@ nv17_gr_mthd_lma_winकरोw(काष्ठा nv10_gr_chan *chan, u32 mthd, 
 	nvkm_wr32(device, NV10_PGRAPH_PIPE_DATA, 0x00000000);
 
 	nv04_gr_idle(gr);
-पूर्ण
+}
 
-अटल व्योम
-nv17_gr_mthd_lma_enable(काष्ठा nv10_gr_chan *chan, u32 mthd, u32 data)
-अणु
-	काष्ठा nvkm_device *device = chan->object.engine->subdev.device;
-	काष्ठा nvkm_gr *gr = &chan->gr->base;
+static void
+nv17_gr_mthd_lma_enable(struct nv10_gr_chan *chan, u32 mthd, u32 data)
+{
+	struct nvkm_device *device = chan->object.engine->subdev.device;
+	struct nvkm_gr *gr = &chan->gr->base;
 
 	nv04_gr_idle(gr);
 
 	nvkm_mask(device, NV10_PGRAPH_DEBUG_4, 0x00000100, 0x00000100);
 	nvkm_mask(device, 0x4006b0, 0x08000000, 0x08000000);
-पूर्ण
+}
 
-अटल bool
-nv17_gr_mthd_celcius(काष्ठा nv10_gr_chan *chan, u32 mthd, u32 data)
-अणु
-	व्योम (*func)(काष्ठा nv10_gr_chan *, u32, u32);
-	चयन (mthd) अणु
-	हाल 0x1638 ... 0x1644:
-		     func = nv17_gr_mthd_lma_winकरोw; अवरोध;
-	हाल 0x1658: func = nv17_gr_mthd_lma_enable; अवरोध;
-	शेष:
-		वापस false;
-	पूर्ण
+static bool
+nv17_gr_mthd_celcius(struct nv10_gr_chan *chan, u32 mthd, u32 data)
+{
+	void (*func)(struct nv10_gr_chan *, u32, u32);
+	switch (mthd) {
+	case 0x1638 ... 0x1644:
+		     func = nv17_gr_mthd_lma_window; break;
+	case 0x1658: func = nv17_gr_mthd_lma_enable; break;
+	default:
+		return false;
+	}
 	func(chan, mthd, data);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool
-nv10_gr_mthd(काष्ठा nv10_gr_chan *chan, u8 class, u32 mthd, u32 data)
-अणु
-	bool (*func)(काष्ठा nv10_gr_chan *, u32, u32);
-	चयन (class) अणु
-	हाल 0x99: func = nv17_gr_mthd_celcius; अवरोध;
-	शेष:
-		वापस false;
-	पूर्ण
-	वापस func(chan, mthd, data);
-पूर्ण
+static bool
+nv10_gr_mthd(struct nv10_gr_chan *chan, u8 class, u32 mthd, u32 data)
+{
+	bool (*func)(struct nv10_gr_chan *, u32, u32);
+	switch (class) {
+	case 0x99: func = nv17_gr_mthd_celcius; break;
+	default:
+		return false;
+	}
+	return func(chan, mthd, data);
+}
 
 /*******************************************************************************
  * PGRAPH context
  ******************************************************************************/
 
-अटल काष्ठा nv10_gr_chan *
-nv10_gr_channel(काष्ठा nv10_gr *gr)
-अणु
-	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
-	काष्ठा nv10_gr_chan *chan = शून्य;
-	अगर (nvkm_rd32(device, 0x400144) & 0x00010000) अणु
-		पूर्णांक chid = nvkm_rd32(device, 0x400148) >> 24;
-		अगर (chid < ARRAY_SIZE(gr->chan))
+static struct nv10_gr_chan *
+nv10_gr_channel(struct nv10_gr *gr)
+{
+	struct nvkm_device *device = gr->base.engine.subdev.device;
+	struct nv10_gr_chan *chan = NULL;
+	if (nvkm_rd32(device, 0x400144) & 0x00010000) {
+		int chid = nvkm_rd32(device, 0x400148) >> 24;
+		if (chid < ARRAY_SIZE(gr->chan))
 			chan = gr->chan[chid];
-	पूर्ण
-	वापस chan;
-पूर्ण
+	}
+	return chan;
+}
 
-अटल व्योम
-nv10_gr_save_pipe(काष्ठा nv10_gr_chan *chan)
-अणु
-	काष्ठा nv10_gr *gr = chan->gr;
-	काष्ठा pipe_state *pipe = &chan->pipe_state;
-	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
+static void
+nv10_gr_save_pipe(struct nv10_gr_chan *chan)
+{
+	struct nv10_gr *gr = chan->gr;
+	struct pipe_state *pipe = &chan->pipe_state;
+	struct nvkm_device *device = gr->base.engine.subdev.device;
 
 	PIPE_SAVE(gr, pipe->pipe_0x4400, 0x4400);
 	PIPE_SAVE(gr, pipe->pipe_0x0200, 0x0200);
@@ -574,35 +573,35 @@ nv10_gr_save_pipe(काष्ठा nv10_gr_chan *chan)
 	PIPE_SAVE(gr, pipe->pipe_0x7800, 0x7800);
 	PIPE_SAVE(gr, pipe->pipe_0x0040, 0x0040);
 	PIPE_SAVE(gr, pipe->pipe_0x0000, 0x0000);
-पूर्ण
+}
 
-अटल व्योम
-nv10_gr_load_pipe(काष्ठा nv10_gr_chan *chan)
-अणु
-	काष्ठा nv10_gr *gr = chan->gr;
-	काष्ठा pipe_state *pipe = &chan->pipe_state;
-	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
-	u32 xभ_शेषe0, xभ_शेषe1;
-	पूर्णांक i;
+static void
+nv10_gr_load_pipe(struct nv10_gr_chan *chan)
+{
+	struct nv10_gr *gr = chan->gr;
+	struct pipe_state *pipe = &chan->pipe_state;
+	struct nvkm_device *device = gr->base.engine.subdev.device;
+	u32 xfmode0, xfmode1;
+	int i;
 
 	nv04_gr_idle(&gr->base);
 	/* XXX check haiku comments */
-	xभ_शेषe0 = nvkm_rd32(device, NV10_PGRAPH_XFMODE0);
-	xभ_शेषe1 = nvkm_rd32(device, NV10_PGRAPH_XFMODE1);
+	xfmode0 = nvkm_rd32(device, NV10_PGRAPH_XFMODE0);
+	xfmode1 = nvkm_rd32(device, NV10_PGRAPH_XFMODE1);
 	nvkm_wr32(device, NV10_PGRAPH_XFMODE0, 0x10000000);
 	nvkm_wr32(device, NV10_PGRAPH_XFMODE1, 0x00000000);
 	nvkm_wr32(device, NV10_PGRAPH_PIPE_ADDRESS, 0x000064c0);
-	क्रम (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
 		nvkm_wr32(device, NV10_PGRAPH_PIPE_DATA, 0x3f800000);
-	क्रम (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
 		nvkm_wr32(device, NV10_PGRAPH_PIPE_DATA, 0x00000000);
 
 	nvkm_wr32(device, NV10_PGRAPH_PIPE_ADDRESS, 0x00006ab0);
-	क्रम (i = 0; i < 3; i++)
+	for (i = 0; i < 3; i++)
 		nvkm_wr32(device, NV10_PGRAPH_PIPE_DATA, 0x3f800000);
 
 	nvkm_wr32(device, NV10_PGRAPH_PIPE_ADDRESS, 0x00006a80);
-	क्रम (i = 0; i < 3; i++)
+	for (i = 0; i < 3; i++)
 		nvkm_wr32(device, NV10_PGRAPH_PIPE_DATA, 0x00000000);
 
 	nvkm_wr32(device, NV10_PGRAPH_PIPE_ADDRESS, 0x00000040);
@@ -613,8 +612,8 @@ nv10_gr_load_pipe(काष्ठा nv10_gr_chan *chan)
 	nv04_gr_idle(&gr->base);
 
 	/* restore XFMODE */
-	nvkm_wr32(device, NV10_PGRAPH_XFMODE0, xभ_शेषe0);
-	nvkm_wr32(device, NV10_PGRAPH_XFMODE1, xभ_शेषe1);
+	nvkm_wr32(device, NV10_PGRAPH_XFMODE0, xfmode0);
+	nvkm_wr32(device, NV10_PGRAPH_XFMODE1, xfmode1);
 	PIPE_RESTORE(gr, pipe->pipe_0x6400, 0x6400);
 	PIPE_RESTORE(gr, pipe->pipe_0x6800, 0x6800);
 	PIPE_RESTORE(gr, pipe->pipe_0x6c00, 0x6c00);
@@ -625,37 +624,37 @@ nv10_gr_load_pipe(काष्ठा nv10_gr_chan *chan)
 	PIPE_RESTORE(gr, pipe->pipe_0x0000, 0x0000);
 	PIPE_RESTORE(gr, pipe->pipe_0x0040, 0x0040);
 	nv04_gr_idle(&gr->base);
-पूर्ण
+}
 
-अटल व्योम
-nv10_gr_create_pipe(काष्ठा nv10_gr_chan *chan)
-अणु
-	काष्ठा nv10_gr *gr = chan->gr;
-	काष्ठा nvkm_subdev *subdev = &gr->base.engine.subdev;
-	काष्ठा pipe_state *pipe_state = &chan->pipe_state;
+static void
+nv10_gr_create_pipe(struct nv10_gr_chan *chan)
+{
+	struct nv10_gr *gr = chan->gr;
+	struct nvkm_subdev *subdev = &gr->base.engine.subdev;
+	struct pipe_state *pipe_state = &chan->pipe_state;
 	u32 *pipe_state_addr;
-	पूर्णांक i;
-#घोषणा PIPE_INIT(addr) \
-	करो अणु \
+	int i;
+#define PIPE_INIT(addr) \
+	do { \
 		pipe_state_addr = pipe_state->pipe_##addr; \
-	पूर्ण जबतक (0)
-#घोषणा PIPE_INIT_END(addr) \
-	करो अणु \
+	} while (0)
+#define PIPE_INIT_END(addr) \
+	do { \
 		u32 *__end_addr = pipe_state->pipe_##addr + \
 				ARRAY_SIZE(pipe_state->pipe_##addr); \
-		अगर (pipe_state_addr != __end_addr) \
+		if (pipe_state_addr != __end_addr) \
 			nvkm_error(subdev, "incomplete pipe init for 0x%x :  %p/%p\n", \
 				addr, pipe_state_addr, __end_addr); \
-	पूर्ण जबतक (0)
-#घोषणा NV_WRITE_PIPE_INIT(value) *(pipe_state_addr++) = value
+	} while (0)
+#define NV_WRITE_PIPE_INIT(value) *(pipe_state_addr++) = value
 
 	PIPE_INIT(0x0200);
-	क्रम (i = 0; i < 48; i++)
+	for (i = 0; i < 48; i++)
 		NV_WRITE_PIPE_INIT(0x00000000);
 	PIPE_INIT_END(0x0200);
 
 	PIPE_INIT(0x6400);
-	क्रम (i = 0; i < 211; i++)
+	for (i = 0; i < 211; i++)
 		NV_WRITE_PIPE_INIT(0x00000000);
 	NV_WRITE_PIPE_INIT(0x3f800000);
 	NV_WRITE_PIPE_INIT(0x40000000);
@@ -685,10 +684,10 @@ nv10_gr_create_pipe(काष्ठा nv10_gr_chan *chan)
 	PIPE_INIT_END(0x6400);
 
 	PIPE_INIT(0x6800);
-	क्रम (i = 0; i < 162; i++)
+	for (i = 0; i < 162; i++)
 		NV_WRITE_PIPE_INIT(0x00000000);
 	NV_WRITE_PIPE_INIT(0x3f800000);
-	क्रम (i = 0; i < 25; i++)
+	for (i = 0; i < 25; i++)
 		NV_WRITE_PIPE_INIT(0x00000000);
 	PIPE_INIT_END(0x6800);
 
@@ -749,109 +748,109 @@ nv10_gr_create_pipe(काष्ठा nv10_gr_chan *chan)
 	NV_WRITE_PIPE_INIT(0x00000000);
 	NV_WRITE_PIPE_INIT(0x00000000);
 	NV_WRITE_PIPE_INIT(0x7149f2ca);
-	क्रम (i = 0; i < 35; i++)
+	for (i = 0; i < 35; i++)
 		NV_WRITE_PIPE_INIT(0x00000000);
 	PIPE_INIT_END(0x7000);
 
 	PIPE_INIT(0x7400);
-	क्रम (i = 0; i < 48; i++)
+	for (i = 0; i < 48; i++)
 		NV_WRITE_PIPE_INIT(0x00000000);
 	PIPE_INIT_END(0x7400);
 
 	PIPE_INIT(0x7800);
-	क्रम (i = 0; i < 48; i++)
+	for (i = 0; i < 48; i++)
 		NV_WRITE_PIPE_INIT(0x00000000);
 	PIPE_INIT_END(0x7800);
 
 	PIPE_INIT(0x4400);
-	क्रम (i = 0; i < 32; i++)
+	for (i = 0; i < 32; i++)
 		NV_WRITE_PIPE_INIT(0x00000000);
 	PIPE_INIT_END(0x4400);
 
 	PIPE_INIT(0x0000);
-	क्रम (i = 0; i < 16; i++)
+	for (i = 0; i < 16; i++)
 		NV_WRITE_PIPE_INIT(0x00000000);
 	PIPE_INIT_END(0x0000);
 
 	PIPE_INIT(0x0040);
-	क्रम (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
 		NV_WRITE_PIPE_INIT(0x00000000);
 	PIPE_INIT_END(0x0040);
 
-#अघोषित PIPE_INIT
-#अघोषित PIPE_INIT_END
-#अघोषित NV_WRITE_PIPE_INIT
-पूर्ण
+#undef PIPE_INIT
+#undef PIPE_INIT_END
+#undef NV_WRITE_PIPE_INIT
+}
 
-अटल पूर्णांक
-nv10_gr_ctx_regs_find_offset(काष्ठा nv10_gr *gr, पूर्णांक reg)
-अणु
-	काष्ठा nvkm_subdev *subdev = &gr->base.engine.subdev;
-	पूर्णांक i;
-	क्रम (i = 0; i < ARRAY_SIZE(nv10_gr_ctx_regs); i++) अणु
-		अगर (nv10_gr_ctx_regs[i] == reg)
-			वापस i;
-	पूर्ण
+static int
+nv10_gr_ctx_regs_find_offset(struct nv10_gr *gr, int reg)
+{
+	struct nvkm_subdev *subdev = &gr->base.engine.subdev;
+	int i;
+	for (i = 0; i < ARRAY_SIZE(nv10_gr_ctx_regs); i++) {
+		if (nv10_gr_ctx_regs[i] == reg)
+			return i;
+	}
 	nvkm_error(subdev, "unknown offset nv10_ctx_regs %d\n", reg);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक
-nv17_gr_ctx_regs_find_offset(काष्ठा nv10_gr *gr, पूर्णांक reg)
-अणु
-	काष्ठा nvkm_subdev *subdev = &gr->base.engine.subdev;
-	पूर्णांक i;
-	क्रम (i = 0; i < ARRAY_SIZE(nv17_gr_ctx_regs); i++) अणु
-		अगर (nv17_gr_ctx_regs[i] == reg)
-			वापस i;
-	पूर्ण
+static int
+nv17_gr_ctx_regs_find_offset(struct nv10_gr *gr, int reg)
+{
+	struct nvkm_subdev *subdev = &gr->base.engine.subdev;
+	int i;
+	for (i = 0; i < ARRAY_SIZE(nv17_gr_ctx_regs); i++) {
+		if (nv17_gr_ctx_regs[i] == reg)
+			return i;
+	}
 	nvkm_error(subdev, "unknown offset nv17_ctx_regs %d\n", reg);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल व्योम
-nv10_gr_load_dma_vtxbuf(काष्ठा nv10_gr_chan *chan, पूर्णांक chid, u32 inst)
-अणु
-	काष्ठा nv10_gr *gr = chan->gr;
-	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
-	u32 st2, st2_dl, st2_dh, fअगरo_ptr, fअगरo[0x60/4];
-	u32 ctx_user, ctx_चयन[5];
-	पूर्णांक i, subchan = -1;
+static void
+nv10_gr_load_dma_vtxbuf(struct nv10_gr_chan *chan, int chid, u32 inst)
+{
+	struct nv10_gr *gr = chan->gr;
+	struct nvkm_device *device = gr->base.engine.subdev.device;
+	u32 st2, st2_dl, st2_dh, fifo_ptr, fifo[0x60/4];
+	u32 ctx_user, ctx_switch[5];
+	int i, subchan = -1;
 
-	/* NV10TCL_DMA_VTXBUF (method 0x18c) modअगरies hidden state
+	/* NV10TCL_DMA_VTXBUF (method 0x18c) modifies hidden state
 	 * that cannot be restored via MMIO. Do it through the FIFO
 	 * instead.
 	 */
 
-	/* Look क्रम a celsius object */
-	क्रम (i = 0; i < 8; i++) अणु
-		पूर्णांक class = nvkm_rd32(device, NV10_PGRAPH_CTX_CACHE(i, 0)) & 0xfff;
+	/* Look for a celsius object */
+	for (i = 0; i < 8; i++) {
+		int class = nvkm_rd32(device, NV10_PGRAPH_CTX_CACHE(i, 0)) & 0xfff;
 
-		अगर (class == 0x56 || class == 0x96 || class == 0x99) अणु
+		if (class == 0x56 || class == 0x96 || class == 0x99) {
 			subchan = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (subchan < 0 || !inst)
-		वापस;
+	if (subchan < 0 || !inst)
+		return;
 
 	/* Save the current ctx object */
 	ctx_user = nvkm_rd32(device, NV10_PGRAPH_CTX_USER);
-	क्रम (i = 0; i < 5; i++)
-		ctx_चयन[i] = nvkm_rd32(device, NV10_PGRAPH_CTX_SWITCH(i));
+	for (i = 0; i < 5; i++)
+		ctx_switch[i] = nvkm_rd32(device, NV10_PGRAPH_CTX_SWITCH(i));
 
 	/* Save the FIFO state */
 	st2 = nvkm_rd32(device, NV10_PGRAPH_FFINTFC_ST2);
 	st2_dl = nvkm_rd32(device, NV10_PGRAPH_FFINTFC_ST2_DL);
 	st2_dh = nvkm_rd32(device, NV10_PGRAPH_FFINTFC_ST2_DH);
-	fअगरo_ptr = nvkm_rd32(device, NV10_PGRAPH_FFINTFC_FIFO_PTR);
+	fifo_ptr = nvkm_rd32(device, NV10_PGRAPH_FFINTFC_FIFO_PTR);
 
-	क्रम (i = 0; i < ARRAY_SIZE(fअगरo); i++)
-		fअगरo[i] = nvkm_rd32(device, 0x4007a0 + 4 * i);
+	for (i = 0; i < ARRAY_SIZE(fifo); i++)
+		fifo[i] = nvkm_rd32(device, 0x4007a0 + 4 * i);
 
 	/* Switch to the celsius subchannel */
-	क्रम (i = 0; i < 5; i++)
+	for (i = 0; i < 5; i++)
 		nvkm_wr32(device, NV10_PGRAPH_CTX_SWITCH(i),
 			nvkm_rd32(device, NV10_PGRAPH_CTX_CACHE(subchan, i)));
 	nvkm_mask(device, NV10_PGRAPH_CTX_USER, 0xe000, subchan << 13);
@@ -866,35 +865,35 @@ nv10_gr_load_dma_vtxbuf(काष्ठा nv10_gr_chan *chan, पूर्ण�
 	nvkm_mask(device, NV04_PGRAPH_FIFO, 0x00000001, 0x00000000);
 
 	/* Restore the FIFO state */
-	क्रम (i = 0; i < ARRAY_SIZE(fअगरo); i++)
-		nvkm_wr32(device, 0x4007a0 + 4 * i, fअगरo[i]);
+	for (i = 0; i < ARRAY_SIZE(fifo); i++)
+		nvkm_wr32(device, 0x4007a0 + 4 * i, fifo[i]);
 
-	nvkm_wr32(device, NV10_PGRAPH_FFINTFC_FIFO_PTR, fअगरo_ptr);
+	nvkm_wr32(device, NV10_PGRAPH_FFINTFC_FIFO_PTR, fifo_ptr);
 	nvkm_wr32(device, NV10_PGRAPH_FFINTFC_ST2, st2);
 	nvkm_wr32(device, NV10_PGRAPH_FFINTFC_ST2_DL, st2_dl);
 	nvkm_wr32(device, NV10_PGRAPH_FFINTFC_ST2_DH, st2_dh);
 
 	/* Restore the current ctx object */
-	क्रम (i = 0; i < 5; i++)
-		nvkm_wr32(device, NV10_PGRAPH_CTX_SWITCH(i), ctx_चयन[i]);
+	for (i = 0; i < 5; i++)
+		nvkm_wr32(device, NV10_PGRAPH_CTX_SWITCH(i), ctx_switch[i]);
 	nvkm_wr32(device, NV10_PGRAPH_CTX_USER, ctx_user);
-पूर्ण
+}
 
-अटल पूर्णांक
-nv10_gr_load_context(काष्ठा nv10_gr_chan *chan, पूर्णांक chid)
-अणु
-	काष्ठा nv10_gr *gr = chan->gr;
-	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
+static int
+nv10_gr_load_context(struct nv10_gr_chan *chan, int chid)
+{
+	struct nv10_gr *gr = chan->gr;
+	struct nvkm_device *device = gr->base.engine.subdev.device;
 	u32 inst;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(nv10_gr_ctx_regs); i++)
+	for (i = 0; i < ARRAY_SIZE(nv10_gr_ctx_regs); i++)
 		nvkm_wr32(device, nv10_gr_ctx_regs[i], chan->nv10[i]);
 
-	अगर (device->card_type >= NV_11 && device->chipset >= 0x17) अणु
-		क्रम (i = 0; i < ARRAY_SIZE(nv17_gr_ctx_regs); i++)
+	if (device->card_type >= NV_11 && device->chipset >= 0x17) {
+		for (i = 0; i < ARRAY_SIZE(nv17_gr_ctx_regs); i++)
 			nvkm_wr32(device, nv17_gr_ctx_regs[i], chan->nv17[i]);
-	पूर्ण
+	}
 
 	nv10_gr_load_pipe(chan);
 
@@ -904,115 +903,115 @@ nv10_gr_load_context(काष्ठा nv10_gr_chan *chan, पूर्णा�
 	nvkm_wr32(device, NV10_PGRAPH_CTX_CONTROL, 0x10010100);
 	nvkm_mask(device, NV10_PGRAPH_CTX_USER, 0xff000000, chid << 24);
 	nvkm_mask(device, NV10_PGRAPH_FFINTFC_ST2, 0x30000000, 0x00000000);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nv10_gr_unload_context(काष्ठा nv10_gr_chan *chan)
-अणु
-	काष्ठा nv10_gr *gr = chan->gr;
-	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
-	पूर्णांक i;
+static int
+nv10_gr_unload_context(struct nv10_gr_chan *chan)
+{
+	struct nv10_gr *gr = chan->gr;
+	struct nvkm_device *device = gr->base.engine.subdev.device;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(nv10_gr_ctx_regs); i++)
+	for (i = 0; i < ARRAY_SIZE(nv10_gr_ctx_regs); i++)
 		chan->nv10[i] = nvkm_rd32(device, nv10_gr_ctx_regs[i]);
 
-	अगर (device->card_type >= NV_11 && device->chipset >= 0x17) अणु
-		क्रम (i = 0; i < ARRAY_SIZE(nv17_gr_ctx_regs); i++)
+	if (device->card_type >= NV_11 && device->chipset >= 0x17) {
+		for (i = 0; i < ARRAY_SIZE(nv17_gr_ctx_regs); i++)
 			chan->nv17[i] = nvkm_rd32(device, nv17_gr_ctx_regs[i]);
-	पूर्ण
+	}
 
 	nv10_gr_save_pipe(chan);
 
 	nvkm_wr32(device, NV10_PGRAPH_CTX_CONTROL, 0x10000000);
 	nvkm_mask(device, NV10_PGRAPH_CTX_USER, 0xff000000, 0x1f000000);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-nv10_gr_context_चयन(काष्ठा nv10_gr *gr)
-अणु
-	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
-	काष्ठा nv10_gr_chan *prev = शून्य;
-	काष्ठा nv10_gr_chan *next = शून्य;
-	पूर्णांक chid;
+static void
+nv10_gr_context_switch(struct nv10_gr *gr)
+{
+	struct nvkm_device *device = gr->base.engine.subdev.device;
+	struct nv10_gr_chan *prev = NULL;
+	struct nv10_gr_chan *next = NULL;
+	int chid;
 
 	nv04_gr_idle(&gr->base);
 
 	/* If previous context is valid, we need to save it */
 	prev = nv10_gr_channel(gr);
-	अगर (prev)
+	if (prev)
 		nv10_gr_unload_context(prev);
 
-	/* load context क्रम next channel */
+	/* load context for next channel */
 	chid = (nvkm_rd32(device, NV04_PGRAPH_TRAPPED_ADDR) >> 20) & 0x1f;
 	next = gr->chan[chid];
-	अगर (next)
+	if (next)
 		nv10_gr_load_context(next, chid);
-पूर्ण
+}
 
-अटल पूर्णांक
-nv10_gr_chan_fini(काष्ठा nvkm_object *object, bool suspend)
-अणु
-	काष्ठा nv10_gr_chan *chan = nv10_gr_chan(object);
-	काष्ठा nv10_gr *gr = chan->gr;
-	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
-	अचिन्हित दीर्घ flags;
+static int
+nv10_gr_chan_fini(struct nvkm_object *object, bool suspend)
+{
+	struct nv10_gr_chan *chan = nv10_gr_chan(object);
+	struct nv10_gr *gr = chan->gr;
+	struct nvkm_device *device = gr->base.engine.subdev.device;
+	unsigned long flags;
 
 	spin_lock_irqsave(&gr->lock, flags);
 	nvkm_mask(device, NV04_PGRAPH_FIFO, 0x00000001, 0x00000000);
-	अगर (nv10_gr_channel(gr) == chan)
+	if (nv10_gr_channel(gr) == chan)
 		nv10_gr_unload_context(chan);
 	nvkm_mask(device, NV04_PGRAPH_FIFO, 0x00000001, 0x00000001);
 	spin_unlock_irqrestore(&gr->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम *
-nv10_gr_chan_dtor(काष्ठा nvkm_object *object)
-अणु
-	काष्ठा nv10_gr_chan *chan = nv10_gr_chan(object);
-	काष्ठा nv10_gr *gr = chan->gr;
-	अचिन्हित दीर्घ flags;
+static void *
+nv10_gr_chan_dtor(struct nvkm_object *object)
+{
+	struct nv10_gr_chan *chan = nv10_gr_chan(object);
+	struct nv10_gr *gr = chan->gr;
+	unsigned long flags;
 
 	spin_lock_irqsave(&gr->lock, flags);
-	gr->chan[chan->chid] = शून्य;
+	gr->chan[chan->chid] = NULL;
 	spin_unlock_irqrestore(&gr->lock, flags);
-	वापस chan;
-पूर्ण
+	return chan;
+}
 
-अटल स्थिर काष्ठा nvkm_object_func
-nv10_gr_chan = अणु
+static const struct nvkm_object_func
+nv10_gr_chan = {
 	.dtor = nv10_gr_chan_dtor,
 	.fini = nv10_gr_chan_fini,
-पूर्ण;
+};
 
-#घोषणा NV_WRITE_CTX(reg, val) करो अणु \
-	पूर्णांक offset = nv10_gr_ctx_regs_find_offset(gr, reg); \
-	अगर (offset > 0) \
+#define NV_WRITE_CTX(reg, val) do { \
+	int offset = nv10_gr_ctx_regs_find_offset(gr, reg); \
+	if (offset > 0) \
 		chan->nv10[offset] = val; \
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा NV17_WRITE_CTX(reg, val) करो अणु \
-	पूर्णांक offset = nv17_gr_ctx_regs_find_offset(gr, reg); \
-	अगर (offset > 0) \
+#define NV17_WRITE_CTX(reg, val) do { \
+	int offset = nv17_gr_ctx_regs_find_offset(gr, reg); \
+	if (offset > 0) \
 		chan->nv17[offset] = val; \
-	पूर्ण जबतक (0)
+	} while (0)
 
-पूर्णांक
-nv10_gr_chan_new(काष्ठा nvkm_gr *base, काष्ठा nvkm_fअगरo_chan *fअगरoch,
-		 स्थिर काष्ठा nvkm_oclass *oclass, काष्ठा nvkm_object **pobject)
-अणु
-	काष्ठा nv10_gr *gr = nv10_gr(base);
-	काष्ठा nv10_gr_chan *chan;
-	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
-	अचिन्हित दीर्घ flags;
+int
+nv10_gr_chan_new(struct nvkm_gr *base, struct nvkm_fifo_chan *fifoch,
+		 const struct nvkm_oclass *oclass, struct nvkm_object **pobject)
+{
+	struct nv10_gr *gr = nv10_gr(base);
+	struct nv10_gr_chan *chan;
+	struct nvkm_device *device = gr->base.engine.subdev.device;
+	unsigned long flags;
 
-	अगर (!(chan = kzalloc(माप(*chan), GFP_KERNEL)))
-		वापस -ENOMEM;
+	if (!(chan = kzalloc(sizeof(*chan), GFP_KERNEL)))
+		return -ENOMEM;
 	nvkm_object_ctor(&nv10_gr_chan, oclass, &chan->object);
 	chan->gr = gr;
-	chan->chid = fअगरoch->chid;
+	chan->chid = fifoch->chid;
 	*pobject = &chan->object;
 
 	NV_WRITE_CTX(0x00400e88, 0x08000000);
@@ -1022,7 +1021,7 @@ nv10_gr_chan_new(काष्ठा nvkm_gr *base, काष्ठा nvkm_fअ�
 	NV_WRITE_CTX(0x00400e14, 0x00001000);
 	NV_WRITE_CTX(0x00400e30, 0x00080008);
 	NV_WRITE_CTX(0x00400e34, 0x00080008);
-	अगर (device->card_type >= NV_11 && device->chipset >= 0x17) अणु
+	if (device->card_type >= NV_11 && device->chipset >= 0x17) {
 		/* is it really needed ??? */
 		NV17_WRITE_CTX(NV10_PGRAPH_DEBUG_4,
 			       nvkm_rd32(device, NV10_PGRAPH_DEBUG_4));
@@ -1031,7 +1030,7 @@ nv10_gr_chan_new(काष्ठा nvkm_gr *base, काष्ठा nvkm_fअ�
 		NV17_WRITE_CTX(0x00400eb0, 0x0fff0000);
 		NV17_WRITE_CTX(0x00400ec0, 0x00000080);
 		NV17_WRITE_CTX(0x00400ed0, 0x00000080);
-	पूर्ण
+	}
 	NV_WRITE_CTX(NV10_PGRAPH_CTX_USER, chan->chid << 24);
 
 	nv10_gr_create_pipe(chan);
@@ -1039,51 +1038,51 @@ nv10_gr_chan_new(काष्ठा nvkm_gr *base, काष्ठा nvkm_fअ�
 	spin_lock_irqsave(&gr->lock, flags);
 	gr->chan[chan->chid] = chan;
 	spin_unlock_irqrestore(&gr->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*******************************************************************************
  * PGRAPH engine/subdev functions
  ******************************************************************************/
 
-व्योम
-nv10_gr_tile(काष्ठा nvkm_gr *base, पूर्णांक i, काष्ठा nvkm_fb_tile *tile)
-अणु
-	काष्ठा nv10_gr *gr = nv10_gr(base);
-	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
-	काष्ठा nvkm_fअगरo *fअगरo = device->fअगरo;
-	अचिन्हित दीर्घ flags;
+void
+nv10_gr_tile(struct nvkm_gr *base, int i, struct nvkm_fb_tile *tile)
+{
+	struct nv10_gr *gr = nv10_gr(base);
+	struct nvkm_device *device = gr->base.engine.subdev.device;
+	struct nvkm_fifo *fifo = device->fifo;
+	unsigned long flags;
 
-	nvkm_fअगरo_छोड़ो(fअगरo, &flags);
+	nvkm_fifo_pause(fifo, &flags);
 	nv04_gr_idle(&gr->base);
 
 	nvkm_wr32(device, NV10_PGRAPH_TLIMIT(i), tile->limit);
 	nvkm_wr32(device, NV10_PGRAPH_TSIZE(i), tile->pitch);
 	nvkm_wr32(device, NV10_PGRAPH_TILE(i), tile->addr);
 
-	nvkm_fअगरo_start(fअगरo, &flags);
-पूर्ण
+	nvkm_fifo_start(fifo, &flags);
+}
 
-स्थिर काष्ठा nvkm_bitfield nv10_gr_पूर्णांकr_name[] = अणु
-	अणु NV_PGRAPH_INTR_NOTIFY, "NOTIFY" पूर्ण,
-	अणु NV_PGRAPH_INTR_ERROR,  "ERROR"  पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+const struct nvkm_bitfield nv10_gr_intr_name[] = {
+	{ NV_PGRAPH_INTR_NOTIFY, "NOTIFY" },
+	{ NV_PGRAPH_INTR_ERROR,  "ERROR"  },
+	{}
+};
 
-स्थिर काष्ठा nvkm_bitfield nv10_gr_nstatus[] = अणु
-	अणु NV10_PGRAPH_NSTATUS_STATE_IN_USE,       "STATE_IN_USE" पूर्ण,
-	अणु NV10_PGRAPH_NSTATUS_INVALID_STATE,      "INVALID_STATE" पूर्ण,
-	अणु NV10_PGRAPH_NSTATUS_BAD_ARGUMENT,       "BAD_ARGUMENT" पूर्ण,
-	अणु NV10_PGRAPH_NSTATUS_PROTECTION_FAULT,   "PROTECTION_FAULT" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+const struct nvkm_bitfield nv10_gr_nstatus[] = {
+	{ NV10_PGRAPH_NSTATUS_STATE_IN_USE,       "STATE_IN_USE" },
+	{ NV10_PGRAPH_NSTATUS_INVALID_STATE,      "INVALID_STATE" },
+	{ NV10_PGRAPH_NSTATUS_BAD_ARGUMENT,       "BAD_ARGUMENT" },
+	{ NV10_PGRAPH_NSTATUS_PROTECTION_FAULT,   "PROTECTION_FAULT" },
+	{}
+};
 
-व्योम
-nv10_gr_पूर्णांकr(काष्ठा nvkm_gr *base)
-अणु
-	काष्ठा nv10_gr *gr = nv10_gr(base);
-	काष्ठा nvkm_subdev *subdev = &gr->base.engine.subdev;
-	काष्ठा nvkm_device *device = subdev->device;
+void
+nv10_gr_intr(struct nvkm_gr *base)
+{
+	struct nv10_gr *gr = nv10_gr(base);
+	struct nvkm_subdev *subdev = &gr->base.engine.subdev;
+	struct nvkm_device *device = subdev->device;
 	u32 stat = nvkm_rd32(device, NV03_PGRAPH_INTR);
 	u32 nsource = nvkm_rd32(device, NV03_PGRAPH_NSOURCE);
 	u32 nstatus = nvkm_rd32(device, NV03_PGRAPH_NSTATUS);
@@ -1094,50 +1093,50 @@ nv10_gr_पूर्णांकr(काष्ठा nvkm_gr *base)
 	u32 data = nvkm_rd32(device, NV04_PGRAPH_TRAPPED_DATA);
 	u32 class = nvkm_rd32(device, 0x400160 + subc * 4) & 0xfff;
 	u32 show = stat;
-	अक्षर msg[128], src[128], sta[128];
-	काष्ठा nv10_gr_chan *chan;
-	अचिन्हित दीर्घ flags;
+	char msg[128], src[128], sta[128];
+	struct nv10_gr_chan *chan;
+	unsigned long flags;
 
 	spin_lock_irqsave(&gr->lock, flags);
 	chan = gr->chan[chid];
 
-	अगर (stat & NV_PGRAPH_INTR_ERROR) अणु
-		अगर (chan && (nsource & NV03_PGRAPH_NSOURCE_ILLEGAL_MTHD)) अणु
-			अगर (!nv10_gr_mthd(chan, class, mthd, data))
+	if (stat & NV_PGRAPH_INTR_ERROR) {
+		if (chan && (nsource & NV03_PGRAPH_NSOURCE_ILLEGAL_MTHD)) {
+			if (!nv10_gr_mthd(chan, class, mthd, data))
 				show &= ~NV_PGRAPH_INTR_ERROR;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (stat & NV_PGRAPH_INTR_CONTEXT_SWITCH) अणु
+	if (stat & NV_PGRAPH_INTR_CONTEXT_SWITCH) {
 		nvkm_wr32(device, NV03_PGRAPH_INTR, NV_PGRAPH_INTR_CONTEXT_SWITCH);
 		stat &= ~NV_PGRAPH_INTR_CONTEXT_SWITCH;
 		show &= ~NV_PGRAPH_INTR_CONTEXT_SWITCH;
-		nv10_gr_context_चयन(gr);
-	पूर्ण
+		nv10_gr_context_switch(gr);
+	}
 
 	nvkm_wr32(device, NV03_PGRAPH_INTR, stat);
 	nvkm_wr32(device, NV04_PGRAPH_FIFO, 0x00000001);
 
-	अगर (show) अणु
-		nvkm_snprपूर्णांकbf(msg, माप(msg), nv10_gr_पूर्णांकr_name, show);
-		nvkm_snprपूर्णांकbf(src, माप(src), nv04_gr_nsource, nsource);
-		nvkm_snprपूर्णांकbf(sta, माप(sta), nv10_gr_nstatus, nstatus);
+	if (show) {
+		nvkm_snprintbf(msg, sizeof(msg), nv10_gr_intr_name, show);
+		nvkm_snprintbf(src, sizeof(src), nv04_gr_nsource, nsource);
+		nvkm_snprintbf(sta, sizeof(sta), nv10_gr_nstatus, nstatus);
 		nvkm_error(subdev, "intr %08x [%s] nsource %08x [%s] "
 				   "nstatus %08x [%s] ch %d [%s] subc %d "
 				   "class %04x mthd %04x data %08x\n",
 			   show, msg, nsource, src, nstatus, sta, chid,
 			   chan ? chan->object.client->name : "unknown",
 			   subc, class, mthd, data);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&gr->lock, flags);
-पूर्ण
+}
 
-पूर्णांक
-nv10_gr_init(काष्ठा nvkm_gr *base)
-अणु
-	काष्ठा nv10_gr *gr = nv10_gr(base);
-	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
+int
+nv10_gr_init(struct nvkm_gr *base)
+{
+	struct nv10_gr *gr = nv10_gr(base);
+	struct nvkm_device *device = gr->base.engine.subdev.device;
 
 	nvkm_wr32(device, NV03_PGRAPH_INTR   , 0xFFFFFFFF);
 	nvkm_wr32(device, NV03_PGRAPH_INTR_EN, 0xFFFFFFFF);
@@ -1149,15 +1148,15 @@ nv10_gr_init(काष्ठा nvkm_gr *base)
 	nvkm_wr32(device, NV04_PGRAPH_DEBUG_2, 0x25f92ad9);
 	nvkm_wr32(device, NV04_PGRAPH_DEBUG_3, 0x55DE0830 | (1 << 29) | (1 << 31));
 
-	अगर (device->card_type >= NV_11 && device->chipset >= 0x17) अणु
+	if (device->card_type >= NV_11 && device->chipset >= 0x17) {
 		nvkm_wr32(device, NV10_PGRAPH_DEBUG_4, 0x1f000000);
 		nvkm_wr32(device, 0x400a10, 0x03ff3fb6);
 		nvkm_wr32(device, 0x400838, 0x002f8684);
 		nvkm_wr32(device, 0x40083c, 0x00115f3f);
 		nvkm_wr32(device, 0x4006b0, 0x40000020);
-	पूर्ण अन्यथा अणु
+	} else {
 		nvkm_wr32(device, NV10_PGRAPH_DEBUG_4, 0x00000000);
-	पूर्ण
+	}
 
 	nvkm_wr32(device, NV10_PGRAPH_CTX_SWITCH(0), 0x00000000);
 	nvkm_wr32(device, NV10_PGRAPH_CTX_SWITCH(1), 0x00000000);
@@ -1169,54 +1168,54 @@ nv10_gr_init(काष्ठा nvkm_gr *base)
 	nvkm_mask(device, NV10_PGRAPH_CTX_USER, 0xff000000, 0x1f000000);
 	nvkm_wr32(device, NV10_PGRAPH_CTX_CONTROL, 0x10000100);
 	nvkm_wr32(device, NV10_PGRAPH_FFINTFC_ST2, 0x08000000);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-nv10_gr_new_(स्थिर काष्ठा nvkm_gr_func *func, काष्ठा nvkm_device *device,
-	     क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_gr **pgr)
-अणु
-	काष्ठा nv10_gr *gr;
+int
+nv10_gr_new_(const struct nvkm_gr_func *func, struct nvkm_device *device,
+	     enum nvkm_subdev_type type, int inst, struct nvkm_gr **pgr)
+{
+	struct nv10_gr *gr;
 
-	अगर (!(gr = kzalloc(माप(*gr), GFP_KERNEL)))
-		वापस -ENOMEM;
+	if (!(gr = kzalloc(sizeof(*gr), GFP_KERNEL)))
+		return -ENOMEM;
 	spin_lock_init(&gr->lock);
 	*pgr = &gr->base;
 
-	वापस nvkm_gr_ctor(func, device, type, inst, true, &gr->base);
-पूर्ण
+	return nvkm_gr_ctor(func, device, type, inst, true, &gr->base);
+}
 
-अटल स्थिर काष्ठा nvkm_gr_func
-nv10_gr = अणु
+static const struct nvkm_gr_func
+nv10_gr = {
 	.init = nv10_gr_init,
-	.पूर्णांकr = nv10_gr_पूर्णांकr,
+	.intr = nv10_gr_intr,
 	.tile = nv10_gr_tile,
 	.chan_new = nv10_gr_chan_new,
-	.sclass = अणु
-		अणु -1, -1, 0x0012, &nv04_gr_object पूर्ण, /* beta1 */
-		अणु -1, -1, 0x0019, &nv04_gr_object पूर्ण, /* clip */
-		अणु -1, -1, 0x0030, &nv04_gr_object पूर्ण, /* null */
-		अणु -1, -1, 0x0039, &nv04_gr_object पूर्ण, /* m2mf */
-		अणु -1, -1, 0x0043, &nv04_gr_object पूर्ण, /* rop */
-		अणु -1, -1, 0x0044, &nv04_gr_object पूर्ण, /* pattern */
-		अणु -1, -1, 0x004a, &nv04_gr_object पूर्ण, /* gdi */
-		अणु -1, -1, 0x0052, &nv04_gr_object पूर्ण, /* swzsurf */
-		अणु -1, -1, 0x005f, &nv04_gr_object पूर्ण, /* blit */
-		अणु -1, -1, 0x0062, &nv04_gr_object पूर्ण, /* surf2d */
-		अणु -1, -1, 0x0072, &nv04_gr_object पूर्ण, /* beta4 */
-		अणु -1, -1, 0x0089, &nv04_gr_object पूर्ण, /* sअगरm */
-		अणु -1, -1, 0x008a, &nv04_gr_object पूर्ण, /* अगरc */
-		अणु -1, -1, 0x009f, &nv04_gr_object पूर्ण, /* blit */
-		अणु -1, -1, 0x0093, &nv04_gr_object पूर्ण, /* surf3d */
-		अणु -1, -1, 0x0094, &nv04_gr_object पूर्ण, /* ttri */
-		अणु -1, -1, 0x0095, &nv04_gr_object पूर्ण, /* mtri */
-		अणु -1, -1, 0x0056, &nv04_gr_object पूर्ण, /* celcius */
-		अणुपूर्ण
-	पूर्ण
-पूर्ण;
+	.sclass = {
+		{ -1, -1, 0x0012, &nv04_gr_object }, /* beta1 */
+		{ -1, -1, 0x0019, &nv04_gr_object }, /* clip */
+		{ -1, -1, 0x0030, &nv04_gr_object }, /* null */
+		{ -1, -1, 0x0039, &nv04_gr_object }, /* m2mf */
+		{ -1, -1, 0x0043, &nv04_gr_object }, /* rop */
+		{ -1, -1, 0x0044, &nv04_gr_object }, /* pattern */
+		{ -1, -1, 0x004a, &nv04_gr_object }, /* gdi */
+		{ -1, -1, 0x0052, &nv04_gr_object }, /* swzsurf */
+		{ -1, -1, 0x005f, &nv04_gr_object }, /* blit */
+		{ -1, -1, 0x0062, &nv04_gr_object }, /* surf2d */
+		{ -1, -1, 0x0072, &nv04_gr_object }, /* beta4 */
+		{ -1, -1, 0x0089, &nv04_gr_object }, /* sifm */
+		{ -1, -1, 0x008a, &nv04_gr_object }, /* ifc */
+		{ -1, -1, 0x009f, &nv04_gr_object }, /* blit */
+		{ -1, -1, 0x0093, &nv04_gr_object }, /* surf3d */
+		{ -1, -1, 0x0094, &nv04_gr_object }, /* ttri */
+		{ -1, -1, 0x0095, &nv04_gr_object }, /* mtri */
+		{ -1, -1, 0x0056, &nv04_gr_object }, /* celcius */
+		{}
+	}
+};
 
-पूर्णांक
-nv10_gr_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_gr **pgr)
-अणु
-	वापस nv10_gr_new_(&nv10_gr, device, type, inst, pgr);
-पूर्ण
+int
+nv10_gr_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst, struct nvkm_gr **pgr)
+{
+	return nv10_gr_new_(&nv10_gr, device, type, inst, pgr);
+}

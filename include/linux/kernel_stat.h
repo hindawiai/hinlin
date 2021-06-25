@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_KERNEL_STAT_H
-#घोषणा _LINUX_KERNEL_STAT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_KERNEL_STAT_H
+#define _LINUX_KERNEL_STAT_H
 
-#समावेश <linux/smp.h>
-#समावेश <linux/thपढ़ोs.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/vसमय.स>
-#समावेश <यंत्र/irq.h>
+#include <linux/smp.h>
+#include <linux/threads.h>
+#include <linux/percpu.h>
+#include <linux/cpumask.h>
+#include <linux/interrupt.h>
+#include <linux/sched.h>
+#include <linux/vtime.h>
+#include <asm/irq.h>
 
 /*
- * 'kernel_stat.h' contains the definitions needed क्रम करोing
- * some kernel statistics (CPU usage, context चयनes ...),
+ * 'kernel_stat.h' contains the definitions needed for doing
+ * some kernel statistics (CPU usage, context switches ...),
  * used by rstatd/perfmeter
  */
 
-क्रमागत cpu_usage_stat अणु
+enum cpu_usage_stat {
 	CPUTIME_USER,
 	CPUTIME_NICE,
 	CPUTIME_SYSTEM,
@@ -30,89 +29,89 @@
 	CPUTIME_GUEST,
 	CPUTIME_GUEST_NICE,
 	NR_STATS,
-पूर्ण;
+};
 
-काष्ठा kernel_cpustat अणु
+struct kernel_cpustat {
 	u64 cpustat[NR_STATS];
-पूर्ण;
+};
 
-काष्ठा kernel_stat अणु
-	अचिन्हित दीर्घ irqs_sum;
-	अचिन्हित पूर्णांक softirqs[NR_SOFTIRQS];
-पूर्ण;
+struct kernel_stat {
+	unsigned long irqs_sum;
+	unsigned int softirqs[NR_SOFTIRQS];
+};
 
-DECLARE_PER_CPU(काष्ठा kernel_stat, kstat);
-DECLARE_PER_CPU(काष्ठा kernel_cpustat, kernel_cpustat);
+DECLARE_PER_CPU(struct kernel_stat, kstat);
+DECLARE_PER_CPU(struct kernel_cpustat, kernel_cpustat);
 
-/* Must have preemption disabled क्रम this to be meaningful. */
-#घोषणा kstat_this_cpu this_cpu_ptr(&kstat)
-#घोषणा kcpustat_this_cpu this_cpu_ptr(&kernel_cpustat)
-#घोषणा kstat_cpu(cpu) per_cpu(kstat, cpu)
-#घोषणा kcpustat_cpu(cpu) per_cpu(kernel_cpustat, cpu)
+/* Must have preemption disabled for this to be meaningful. */
+#define kstat_this_cpu this_cpu_ptr(&kstat)
+#define kcpustat_this_cpu this_cpu_ptr(&kernel_cpustat)
+#define kstat_cpu(cpu) per_cpu(kstat, cpu)
+#define kcpustat_cpu(cpu) per_cpu(kernel_cpustat, cpu)
 
-बाह्य अचिन्हित दीर्घ दीर्घ nr_context_चयनes(व्योम);
+extern unsigned long long nr_context_switches(void);
 
-बाह्य अचिन्हित पूर्णांक kstat_irqs_cpu(अचिन्हित पूर्णांक irq, पूर्णांक cpu);
-बाह्य व्योम kstat_incr_irq_this_cpu(अचिन्हित पूर्णांक irq);
+extern unsigned int kstat_irqs_cpu(unsigned int irq, int cpu);
+extern void kstat_incr_irq_this_cpu(unsigned int irq);
 
-अटल अंतरभूत व्योम kstat_incr_softirqs_this_cpu(अचिन्हित पूर्णांक irq)
-अणु
+static inline void kstat_incr_softirqs_this_cpu(unsigned int irq)
+{
 	__this_cpu_inc(kstat.softirqs[irq]);
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक kstat_softirqs_cpu(अचिन्हित पूर्णांक irq, पूर्णांक cpu)
-अणु
-       वापस kstat_cpu(cpu).softirqs[irq];
-पूर्ण
-
-/*
- * Number of पूर्णांकerrupts per specअगरic IRQ source, since bootup
- */
-बाह्य अचिन्हित पूर्णांक kstat_irqs_usr(अचिन्हित पूर्णांक irq);
+static inline unsigned int kstat_softirqs_cpu(unsigned int irq, int cpu)
+{
+       return kstat_cpu(cpu).softirqs[irq];
+}
 
 /*
- * Number of पूर्णांकerrupts per cpu, since bootup
+ * Number of interrupts per specific IRQ source, since bootup
  */
-अटल अंतरभूत अचिन्हित पूर्णांक kstat_cpu_irqs_sum(अचिन्हित पूर्णांक cpu)
-अणु
-	वापस kstat_cpu(cpu).irqs_sum;
-पूर्ण
+extern unsigned int kstat_irqs_usr(unsigned int irq);
 
-#अगर_घोषित CONFIG_VIRT_CPU_ACCOUNTING_GEN
-बाह्य u64 kcpustat_field(काष्ठा kernel_cpustat *kcpustat,
-			  क्रमागत cpu_usage_stat usage, पूर्णांक cpu);
-बाह्य व्योम kcpustat_cpu_fetch(काष्ठा kernel_cpustat *dst, पूर्णांक cpu);
-#अन्यथा
-अटल अंतरभूत u64 kcpustat_field(काष्ठा kernel_cpustat *kcpustat,
-				 क्रमागत cpu_usage_stat usage, पूर्णांक cpu)
-अणु
-	वापस kcpustat->cpustat[usage];
-पूर्ण
+/*
+ * Number of interrupts per cpu, since bootup
+ */
+static inline unsigned int kstat_cpu_irqs_sum(unsigned int cpu)
+{
+	return kstat_cpu(cpu).irqs_sum;
+}
 
-अटल अंतरभूत व्योम kcpustat_cpu_fetch(काष्ठा kernel_cpustat *dst, पूर्णांक cpu)
-अणु
+#ifdef CONFIG_VIRT_CPU_ACCOUNTING_GEN
+extern u64 kcpustat_field(struct kernel_cpustat *kcpustat,
+			  enum cpu_usage_stat usage, int cpu);
+extern void kcpustat_cpu_fetch(struct kernel_cpustat *dst, int cpu);
+#else
+static inline u64 kcpustat_field(struct kernel_cpustat *kcpustat,
+				 enum cpu_usage_stat usage, int cpu)
+{
+	return kcpustat->cpustat[usage];
+}
+
+static inline void kcpustat_cpu_fetch(struct kernel_cpustat *dst, int cpu)
+{
 	*dst = kcpustat_cpu(cpu);
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif
 
-बाह्य व्योम account_user_समय(काष्ठा task_काष्ठा *, u64);
-बाह्य व्योम account_guest_समय(काष्ठा task_काष्ठा *, u64);
-बाह्य व्योम account_प्रणाली_समय(काष्ठा task_काष्ठा *, पूर्णांक, u64);
-बाह्य व्योम account_प्रणाली_index_समय(काष्ठा task_काष्ठा *, u64,
-				      क्रमागत cpu_usage_stat);
-बाह्य व्योम account_steal_समय(u64);
-बाह्य व्योम account_idle_समय(u64);
+extern void account_user_time(struct task_struct *, u64);
+extern void account_guest_time(struct task_struct *, u64);
+extern void account_system_time(struct task_struct *, int, u64);
+extern void account_system_index_time(struct task_struct *, u64,
+				      enum cpu_usage_stat);
+extern void account_steal_time(u64);
+extern void account_idle_time(u64);
 
-#अगर_घोषित CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
-अटल अंतरभूत व्योम account_process_tick(काष्ठा task_काष्ठा *tsk, पूर्णांक user)
-अणु
-	vसमय_flush(tsk);
-पूर्ण
-#अन्यथा
-बाह्य व्योम account_process_tick(काष्ठा task_काष्ठा *, पूर्णांक user);
-#पूर्ण_अगर
+#ifdef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
+static inline void account_process_tick(struct task_struct *tsk, int user)
+{
+	vtime_flush(tsk);
+}
+#else
+extern void account_process_tick(struct task_struct *, int user);
+#endif
 
-बाह्य व्योम account_idle_ticks(अचिन्हित दीर्घ ticks);
+extern void account_idle_ticks(unsigned long ticks);
 
-#पूर्ण_अगर /* _LINUX_KERNEL_STAT_H */
+#endif /* _LINUX_KERNEL_STAT_H */

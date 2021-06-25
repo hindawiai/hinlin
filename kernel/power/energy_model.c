@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Energy Model of devices
  *
@@ -8,331 +7,331 @@
  * Improvements provided by: Lukasz Luba, Arm ltd.
  */
 
-#घोषणा pr_fmt(fmt) "energy_model: " fmt
+#define pr_fmt(fmt) "energy_model: " fmt
 
-#समावेश <linux/cpu.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/energy_model.h>
-#समावेश <linux/sched/topology.h>
-#समावेश <linux/slab.h>
+#include <linux/cpu.h>
+#include <linux/cpumask.h>
+#include <linux/debugfs.h>
+#include <linux/energy_model.h>
+#include <linux/sched/topology.h>
+#include <linux/slab.h>
 
 /*
- * Mutex serializing the registrations of perक्रमmance करोमुख्यs and letting
+ * Mutex serializing the registrations of performance domains and letting
  * callbacks defined by drivers sleep.
  */
-अटल DEFINE_MUTEX(em_pd_mutex);
+static DEFINE_MUTEX(em_pd_mutex);
 
-अटल bool _is_cpu_device(काष्ठा device *dev)
-अणु
-	वापस (dev->bus == &cpu_subsys);
-पूर्ण
+static bool _is_cpu_device(struct device *dev)
+{
+	return (dev->bus == &cpu_subsys);
+}
 
-#अगर_घोषित CONFIG_DEBUG_FS
-अटल काष्ठा dentry *rootdir;
+#ifdef CONFIG_DEBUG_FS
+static struct dentry *rootdir;
 
-अटल व्योम em_debug_create_ps(काष्ठा em_perf_state *ps, काष्ठा dentry *pd)
-अणु
-	काष्ठा dentry *d;
-	अक्षर name[24];
+static void em_debug_create_ps(struct em_perf_state *ps, struct dentry *pd)
+{
+	struct dentry *d;
+	char name[24];
 
-	snम_लिखो(name, माप(name), "ps:%lu", ps->frequency);
+	snprintf(name, sizeof(name), "ps:%lu", ps->frequency);
 
 	/* Create per-ps directory */
 	d = debugfs_create_dir(name, pd);
-	debugfs_create_uदीर्घ("frequency", 0444, d, &ps->frequency);
-	debugfs_create_uदीर्घ("power", 0444, d, &ps->घातer);
-	debugfs_create_uदीर्घ("cost", 0444, d, &ps->cost);
-पूर्ण
+	debugfs_create_ulong("frequency", 0444, d, &ps->frequency);
+	debugfs_create_ulong("power", 0444, d, &ps->power);
+	debugfs_create_ulong("cost", 0444, d, &ps->cost);
+}
 
-अटल पूर्णांक em_debug_cpus_show(काष्ठा seq_file *s, व्योम *unused)
-अणु
-	seq_म_लिखो(s, "%*pbl\n", cpumask_pr_args(to_cpumask(s->निजी)));
+static int em_debug_cpus_show(struct seq_file *s, void *unused)
+{
+	seq_printf(s, "%*pbl\n", cpumask_pr_args(to_cpumask(s->private)));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(em_debug_cpus);
 
-अटल पूर्णांक em_debug_units_show(काष्ठा seq_file *s, व्योम *unused)
-अणु
-	काष्ठा em_perf_करोमुख्य *pd = s->निजी;
-	अक्षर *units = pd->milliwatts ? "milliWatts" : "bogoWatts";
+static int em_debug_units_show(struct seq_file *s, void *unused)
+{
+	struct em_perf_domain *pd = s->private;
+	char *units = pd->milliwatts ? "milliWatts" : "bogoWatts";
 
-	seq_म_लिखो(s, "%s\n", units);
+	seq_printf(s, "%s\n", units);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(em_debug_units);
 
-अटल व्योम em_debug_create_pd(काष्ठा device *dev)
-अणु
-	काष्ठा dentry *d;
-	पूर्णांक i;
+static void em_debug_create_pd(struct device *dev)
+{
+	struct dentry *d;
+	int i;
 
-	/* Create the directory of the perक्रमmance करोमुख्य */
+	/* Create the directory of the performance domain */
 	d = debugfs_create_dir(dev_name(dev), rootdir);
 
-	अगर (_is_cpu_device(dev))
+	if (_is_cpu_device(dev))
 		debugfs_create_file("cpus", 0444, d, dev->em_pd->cpus,
 				    &em_debug_cpus_fops);
 
 	debugfs_create_file("units", 0444, d, dev->em_pd, &em_debug_units_fops);
 
-	/* Create a sub-directory क्रम each perक्रमmance state */
-	क्रम (i = 0; i < dev->em_pd->nr_perf_states; i++)
+	/* Create a sub-directory for each performance state */
+	for (i = 0; i < dev->em_pd->nr_perf_states; i++)
 		em_debug_create_ps(&dev->em_pd->table[i], d);
 
-पूर्ण
+}
 
-अटल व्योम em_debug_हटाओ_pd(काष्ठा device *dev)
-अणु
-	काष्ठा dentry *debug_dir;
+static void em_debug_remove_pd(struct device *dev)
+{
+	struct dentry *debug_dir;
 
 	debug_dir = debugfs_lookup(dev_name(dev), rootdir);
-	debugfs_हटाओ_recursive(debug_dir);
-पूर्ण
+	debugfs_remove_recursive(debug_dir);
+}
 
-अटल पूर्णांक __init em_debug_init(व्योम)
-अणु
+static int __init em_debug_init(void)
+{
 	/* Create /sys/kernel/debug/energy_model directory */
-	rootdir = debugfs_create_dir("energy_model", शून्य);
+	rootdir = debugfs_create_dir("energy_model", NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 fs_initcall(em_debug_init);
-#अन्यथा /* CONFIG_DEBUG_FS */
-अटल व्योम em_debug_create_pd(काष्ठा device *dev) अणुपूर्ण
-अटल व्योम em_debug_हटाओ_pd(काष्ठा device *dev) अणुपूर्ण
-#पूर्ण_अगर
+#else /* CONFIG_DEBUG_FS */
+static void em_debug_create_pd(struct device *dev) {}
+static void em_debug_remove_pd(struct device *dev) {}
+#endif
 
-अटल पूर्णांक em_create_perf_table(काष्ठा device *dev, काष्ठा em_perf_करोमुख्य *pd,
-				पूर्णांक nr_states, काष्ठा em_data_callback *cb)
-अणु
-	अचिन्हित दीर्घ opp_eff, prev_opp_eff = अच_दीर्घ_उच्च;
-	अचिन्हित दीर्घ घातer, freq, prev_freq = 0;
-	काष्ठा em_perf_state *table;
-	पूर्णांक i, ret;
+static int em_create_perf_table(struct device *dev, struct em_perf_domain *pd,
+				int nr_states, struct em_data_callback *cb)
+{
+	unsigned long opp_eff, prev_opp_eff = ULONG_MAX;
+	unsigned long power, freq, prev_freq = 0;
+	struct em_perf_state *table;
+	int i, ret;
 	u64 fmax;
 
-	table = kसुस्मृति(nr_states, माप(*table), GFP_KERNEL);
-	अगर (!table)
-		वापस -ENOMEM;
+	table = kcalloc(nr_states, sizeof(*table), GFP_KERNEL);
+	if (!table)
+		return -ENOMEM;
 
-	/* Build the list of perक्रमmance states क्रम this perक्रमmance करोमुख्य */
-	क्रम (i = 0, freq = 0; i < nr_states; i++, freq++) अणु
+	/* Build the list of performance states for this performance domain */
+	for (i = 0, freq = 0; i < nr_states; i++, freq++) {
 		/*
-		 * active_घातer() is a driver callback which उच्चमानs 'freq' to
-		 * lowest perक्रमmance state of 'dev' above 'freq' and updates
+		 * active_power() is a driver callback which ceils 'freq' to
+		 * lowest performance state of 'dev' above 'freq' and updates
 		 * 'power' and 'freq' accordingly.
 		 */
-		ret = cb->active_घातer(&घातer, &freq, dev);
-		अगर (ret) अणु
+		ret = cb->active_power(&power, &freq, dev);
+		if (ret) {
 			dev_err(dev, "EM: invalid perf. state: %d\n",
 				ret);
-			जाओ मुक्त_ps_table;
-		पूर्ण
+			goto free_ps_table;
+		}
 
 		/*
-		 * We expect the driver callback to increase the frequency क्रम
-		 * higher perक्रमmance states.
+		 * We expect the driver callback to increase the frequency for
+		 * higher performance states.
 		 */
-		अगर (freq <= prev_freq) अणु
+		if (freq <= prev_freq) {
 			dev_err(dev, "EM: non-increasing freq: %lu\n",
 				freq);
-			जाओ मुक्त_ps_table;
-		पूर्ण
+			goto free_ps_table;
+		}
 
 		/*
-		 * The घातer वापसed by active_state() is expected to be
-		 * positive and to fit पूर्णांकo 16 bits.
+		 * The power returned by active_state() is expected to be
+		 * positive and to fit into 16 bits.
 		 */
-		अगर (!घातer || घातer > EM_MAX_POWER) अणु
+		if (!power || power > EM_MAX_POWER) {
 			dev_err(dev, "EM: invalid power: %lu\n",
-				घातer);
-			जाओ मुक्त_ps_table;
-		पूर्ण
+				power);
+			goto free_ps_table;
+		}
 
-		table[i].घातer = घातer;
+		table[i].power = power;
 		table[i].frequency = prev_freq = freq;
 
 		/*
 		 * The hertz/watts efficiency ratio should decrease as the
-		 * frequency grows on sane platक्रमms. But this isn't always
-		 * true in practice so warn the user अगर a higher OPP is more
-		 * घातer efficient than a lower one.
+		 * frequency grows on sane platforms. But this isn't always
+		 * true in practice so warn the user if a higher OPP is more
+		 * power efficient than a lower one.
 		 */
-		opp_eff = freq / घातer;
-		अगर (opp_eff >= prev_opp_eff)
+		opp_eff = freq / power;
+		if (opp_eff >= prev_opp_eff)
 			dev_dbg(dev, "EM: hertz/watts ratio non-monotonically decreasing: em_perf_state %d >= em_perf_state%d\n",
 					i, i - 1);
 		prev_opp_eff = opp_eff;
-	पूर्ण
+	}
 
-	/* Compute the cost of each perक्रमmance state. */
+	/* Compute the cost of each performance state. */
 	fmax = (u64) table[nr_states - 1].frequency;
-	क्रम (i = 0; i < nr_states; i++) अणु
-		table[i].cost = भाग64_u64(fmax * table[i].घातer,
+	for (i = 0; i < nr_states; i++) {
+		table[i].cost = div64_u64(fmax * table[i].power,
 					  table[i].frequency);
-	पूर्ण
+	}
 
 	pd->table = table;
 	pd->nr_perf_states = nr_states;
 
-	वापस 0;
+	return 0;
 
-मुक्त_ps_table:
-	kमुक्त(table);
-	वापस -EINVAL;
-पूर्ण
+free_ps_table:
+	kfree(table);
+	return -EINVAL;
+}
 
-अटल पूर्णांक em_create_pd(काष्ठा device *dev, पूर्णांक nr_states,
-			काष्ठा em_data_callback *cb, cpumask_t *cpus)
-अणु
-	काष्ठा em_perf_करोमुख्य *pd;
-	काष्ठा device *cpu_dev;
-	पूर्णांक cpu, ret;
+static int em_create_pd(struct device *dev, int nr_states,
+			struct em_data_callback *cb, cpumask_t *cpus)
+{
+	struct em_perf_domain *pd;
+	struct device *cpu_dev;
+	int cpu, ret;
 
-	अगर (_is_cpu_device(dev)) अणु
-		pd = kzalloc(माप(*pd) + cpumask_size(), GFP_KERNEL);
-		अगर (!pd)
-			वापस -ENOMEM;
+	if (_is_cpu_device(dev)) {
+		pd = kzalloc(sizeof(*pd) + cpumask_size(), GFP_KERNEL);
+		if (!pd)
+			return -ENOMEM;
 
 		cpumask_copy(em_span_cpus(pd), cpus);
-	पूर्ण अन्यथा अणु
-		pd = kzalloc(माप(*pd), GFP_KERNEL);
-		अगर (!pd)
-			वापस -ENOMEM;
-	पूर्ण
+	} else {
+		pd = kzalloc(sizeof(*pd), GFP_KERNEL);
+		if (!pd)
+			return -ENOMEM;
+	}
 
 	ret = em_create_perf_table(dev, pd, nr_states, cb);
-	अगर (ret) अणु
-		kमुक्त(pd);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		kfree(pd);
+		return ret;
+	}
 
-	अगर (_is_cpu_device(dev))
-		क्रम_each_cpu(cpu, cpus) अणु
+	if (_is_cpu_device(dev))
+		for_each_cpu(cpu, cpus) {
 			cpu_dev = get_cpu_device(cpu);
 			cpu_dev->em_pd = pd;
-		पूर्ण
+		}
 
 	dev->em_pd = pd;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * em_pd_get() - Return the perक्रमmance करोमुख्य क्रम a device
- * @dev : Device to find the perक्रमmance करोमुख्य क्रम
+ * em_pd_get() - Return the performance domain for a device
+ * @dev : Device to find the performance domain for
  *
- * Returns the perक्रमmance करोमुख्य to which @dev beदीर्घs, or शून्य अगर it करोesn't
+ * Returns the performance domain to which @dev belongs, or NULL if it doesn't
  * exist.
  */
-काष्ठा em_perf_करोमुख्य *em_pd_get(काष्ठा device *dev)
-अणु
-	अगर (IS_ERR_OR_शून्य(dev))
-		वापस शून्य;
+struct em_perf_domain *em_pd_get(struct device *dev)
+{
+	if (IS_ERR_OR_NULL(dev))
+		return NULL;
 
-	वापस dev->em_pd;
-पूर्ण
+	return dev->em_pd;
+}
 EXPORT_SYMBOL_GPL(em_pd_get);
 
 /**
- * em_cpu_get() - Return the perक्रमmance करोमुख्य क्रम a CPU
- * @cpu : CPU to find the perक्रमmance करोमुख्य क्रम
+ * em_cpu_get() - Return the performance domain for a CPU
+ * @cpu : CPU to find the performance domain for
  *
- * Returns the perक्रमmance करोमुख्य to which @cpu beदीर्घs, or शून्य अगर it करोesn't
+ * Returns the performance domain to which @cpu belongs, or NULL if it doesn't
  * exist.
  */
-काष्ठा em_perf_करोमुख्य *em_cpu_get(पूर्णांक cpu)
-अणु
-	काष्ठा device *cpu_dev;
+struct em_perf_domain *em_cpu_get(int cpu)
+{
+	struct device *cpu_dev;
 
 	cpu_dev = get_cpu_device(cpu);
-	अगर (!cpu_dev)
-		वापस शून्य;
+	if (!cpu_dev)
+		return NULL;
 
-	वापस em_pd_get(cpu_dev);
-पूर्ण
+	return em_pd_get(cpu_dev);
+}
 EXPORT_SYMBOL_GPL(em_cpu_get);
 
 /**
- * em_dev_रेजिस्टर_perf_करोमुख्य() - Register the Energy Model (EM) क्रम a device
- * @dev		: Device क्रम which the EM is to रेजिस्टर
- * @nr_states	: Number of perक्रमmance states to रेजिस्टर
+ * em_dev_register_perf_domain() - Register the Energy Model (EM) for a device
+ * @dev		: Device for which the EM is to register
+ * @nr_states	: Number of performance states to register
  * @cb		: Callback functions providing the data of the Energy Model
- * @cpus	: Poपूर्णांकer to cpumask_t, which in हाल of a CPU device is
+ * @cpus	: Pointer to cpumask_t, which in case of a CPU device is
  *		obligatory. It can be taken from i.e. 'policy->cpus'. For other
- *		type of devices this should be set to शून्य.
- * @milliwatts	: Flag indicating that the घातer values are in milliWatts or
+ *		type of devices this should be set to NULL.
+ * @milliwatts	: Flag indicating that the power values are in milliWatts or
  *		in some other scale. It must be set properly.
  *
- * Create Energy Model tables क्रम a perक्रमmance करोमुख्य using the callbacks
+ * Create Energy Model tables for a performance domain using the callbacks
  * defined in cb.
  *
  * The @milliwatts is important to set with correct value. Some kernel
- * sub-प्रणालीs might rely on this flag and check अगर all devices in the EM are
+ * sub-systems might rely on this flag and check if all devices in the EM are
  * using the same scale.
  *
- * If multiple clients रेजिस्टर the same perक्रमmance करोमुख्य, all but the first
+ * If multiple clients register the same performance domain, all but the first
  * registration will be ignored.
  *
  * Return 0 on success
  */
-पूर्णांक em_dev_रेजिस्टर_perf_करोमुख्य(काष्ठा device *dev, अचिन्हित पूर्णांक nr_states,
-				काष्ठा em_data_callback *cb, cpumask_t *cpus,
+int em_dev_register_perf_domain(struct device *dev, unsigned int nr_states,
+				struct em_data_callback *cb, cpumask_t *cpus,
 				bool milliwatts)
-अणु
-	अचिन्हित दीर्घ cap, prev_cap = 0;
-	पूर्णांक cpu, ret;
+{
+	unsigned long cap, prev_cap = 0;
+	int cpu, ret;
 
-	अगर (!dev || !nr_states || !cb)
-		वापस -EINVAL;
+	if (!dev || !nr_states || !cb)
+		return -EINVAL;
 
 	/*
-	 * Use a mutex to serialize the registration of perक्रमmance करोमुख्यs and
+	 * Use a mutex to serialize the registration of performance domains and
 	 * let the driver-defined callback functions sleep.
 	 */
 	mutex_lock(&em_pd_mutex);
 
-	अगर (dev->em_pd) अणु
+	if (dev->em_pd) {
 		ret = -EEXIST;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (_is_cpu_device(dev)) अणु
-		अगर (!cpus) अणु
+	if (_is_cpu_device(dev)) {
+		if (!cpus) {
 			dev_err(dev, "EM: invalid CPU mask\n");
 			ret = -EINVAL;
-			जाओ unlock;
-		पूर्ण
+			goto unlock;
+		}
 
-		क्रम_each_cpu(cpu, cpus) अणु
-			अगर (em_cpu_get(cpu)) अणु
+		for_each_cpu(cpu, cpus) {
+			if (em_cpu_get(cpu)) {
 				dev_err(dev, "EM: exists for CPU%d\n", cpu);
 				ret = -EEXIST;
-				जाओ unlock;
-			पूर्ण
+				goto unlock;
+			}
 			/*
-			 * All CPUs of a करोमुख्य must have the same
+			 * All CPUs of a domain must have the same
 			 * micro-architecture since they all share the same
 			 * table.
 			 */
 			cap = arch_scale_cpu_capacity(cpu);
-			अगर (prev_cap && prev_cap != cap) अणु
+			if (prev_cap && prev_cap != cap) {
 				dev_err(dev, "EM: CPUs of %*pbl must have the same capacity\n",
 					cpumask_pr_args(cpus));
 
 				ret = -EINVAL;
-				जाओ unlock;
-			पूर्ण
+				goto unlock;
+			}
 			prev_cap = cap;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ret = em_create_pd(dev, nr_states, cb, cpus);
-	अगर (ret)
-		जाओ unlock;
+	if (ret)
+		goto unlock;
 
 	dev->em_pd->milliwatts = milliwatts;
 
@@ -341,35 +340,35 @@ EXPORT_SYMBOL_GPL(em_cpu_get);
 
 unlock:
 	mutex_unlock(&em_pd_mutex);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(em_dev_रेजिस्टर_perf_करोमुख्य);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(em_dev_register_perf_domain);
 
 /**
- * em_dev_unरेजिस्टर_perf_करोमुख्य() - Unरेजिस्टर Energy Model (EM) क्रम a device
- * @dev		: Device क्रम which the EM is रेजिस्टरed
+ * em_dev_unregister_perf_domain() - Unregister Energy Model (EM) for a device
+ * @dev		: Device for which the EM is registered
  *
- * Unरेजिस्टर the EM क्रम the specअगरied @dev (but not a CPU device).
+ * Unregister the EM for the specified @dev (but not a CPU device).
  */
-व्योम em_dev_unरेजिस्टर_perf_करोमुख्य(काष्ठा device *dev)
-अणु
-	अगर (IS_ERR_OR_शून्य(dev) || !dev->em_pd)
-		वापस;
+void em_dev_unregister_perf_domain(struct device *dev)
+{
+	if (IS_ERR_OR_NULL(dev) || !dev->em_pd)
+		return;
 
-	अगर (_is_cpu_device(dev))
-		वापस;
+	if (_is_cpu_device(dev))
+		return;
 
 	/*
-	 * The mutex separates all रेजिस्टर/unरेजिस्टर requests and protects
+	 * The mutex separates all register/unregister requests and protects
 	 * from potential clean-up/setup issues in the debugfs directories.
 	 * The debugfs directory name is the same as device's name.
 	 */
 	mutex_lock(&em_pd_mutex);
-	em_debug_हटाओ_pd(dev);
+	em_debug_remove_pd(dev);
 
-	kमुक्त(dev->em_pd->table);
-	kमुक्त(dev->em_pd);
-	dev->em_pd = शून्य;
+	kfree(dev->em_pd->table);
+	kfree(dev->em_pd);
+	dev->em_pd = NULL;
 	mutex_unlock(&em_pd_mutex);
-पूर्ण
-EXPORT_SYMBOL_GPL(em_dev_unरेजिस्टर_perf_करोमुख्य);
+}
+EXPORT_SYMBOL_GPL(em_dev_unregister_perf_domain);

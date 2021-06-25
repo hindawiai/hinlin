@@ -1,187 +1,186 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Hardware monitoring driver क्रम Maxim MAX15301
+ * Hardware monitoring driver for Maxim MAX15301
  *
  * Copyright (c) 2021 Flextronics International Sweden AB
  *
- * Even though the specअगरication करोes not specअगरically mention it,
- * extensive empirical testing has revealed that स्वतः-detection of
- * limit-रेजिस्टरs will fail in a अक्रमom fashion unless the delay
- * parameter is set to above about 80us. The शेष delay is set
+ * Even though the specification does not specifically mention it,
+ * extensive empirical testing has revealed that auto-detection of
+ * limit-registers will fail in a random fashion unless the delay
+ * parameter is set to above about 80us. The default delay is set
  * to 100us to include some safety margin.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/kसमय.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/pmbus.h>
-#समावेश "pmbus.h"
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/err.h>
+#include <linux/slab.h>
+#include <linux/i2c.h>
+#include <linux/ktime.h>
+#include <linux/delay.h>
+#include <linux/pmbus.h>
+#include "pmbus.h"
 
-अटल स्थिर काष्ठा i2c_device_id max15301_id[] = अणु
-	अणु"bmr461", 0पूर्ण,
-	अणु"max15301", 0पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct i2c_device_id max15301_id[] = {
+	{"bmr461", 0},
+	{"max15301", 0},
+	{}
+};
 MODULE_DEVICE_TABLE(i2c, max15301_id);
 
-काष्ठा max15301_data अणु
-	पूर्णांक id;
-	kसमय_प्रकार access;		/* Chip access समय */
-	पूर्णांक delay;		/* Delay between chip accesses in us */
-	काष्ठा pmbus_driver_info info;
-पूर्ण;
+struct max15301_data {
+	int id;
+	ktime_t access;		/* Chip access time */
+	int delay;		/* Delay between chip accesses in us */
+	struct pmbus_driver_info info;
+};
 
-#घोषणा to_max15301_data(x)  container_of(x, काष्ठा max15301_data, info)
+#define to_max15301_data(x)  container_of(x, struct max15301_data, info)
 
-#घोषणा MAX15301_WAIT_TIME		100	/* us	*/
+#define MAX15301_WAIT_TIME		100	/* us	*/
 
-अटल uलघु delay = MAX15301_WAIT_TIME;
-module_param(delay, uलघु, 0644);
+static ushort delay = MAX15301_WAIT_TIME;
+module_param(delay, ushort, 0644);
 MODULE_PARM_DESC(delay, "Delay between chip accesses in us");
 
-अटल काष्ठा max15301_data max15301_data = अणु
-	.info = अणु
+static struct max15301_data max15301_data = {
+	.info = {
 		.pages = 1,
 		.func[0] = PMBUS_HAVE_VOUT | PMBUS_HAVE_STATUS_VOUT
 			| PMBUS_HAVE_VIN | PMBUS_HAVE_STATUS_INPUT
 			| PMBUS_HAVE_TEMP | PMBUS_HAVE_TEMP2
 			| PMBUS_HAVE_STATUS_TEMP
 			| PMBUS_HAVE_IOUT | PMBUS_HAVE_STATUS_IOUT,
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /* This chip needs a delay between accesses */
-अटल अंतरभूत व्योम max15301_रुको(स्थिर काष्ठा max15301_data *data)
-अणु
-	अगर (data->delay) अणु
-		s64 delta = kसमय_us_delta(kसमय_get(), data->access);
+static inline void max15301_wait(const struct max15301_data *data)
+{
+	if (data->delay) {
+		s64 delta = ktime_us_delta(ktime_get(), data->access);
 
-		अगर (delta < data->delay)
+		if (delta < data->delay)
 			udelay(data->delay - delta);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक max15301_पढ़ो_word_data(काष्ठा i2c_client *client, पूर्णांक page,
-				   पूर्णांक phase, पूर्णांक reg)
-अणु
-	स्थिर काष्ठा pmbus_driver_info *info = pmbus_get_driver_info(client);
-	काष्ठा max15301_data *data = to_max15301_data(info);
-	पूर्णांक ret;
+static int max15301_read_word_data(struct i2c_client *client, int page,
+				   int phase, int reg)
+{
+	const struct pmbus_driver_info *info = pmbus_get_driver_info(client);
+	struct max15301_data *data = to_max15301_data(info);
+	int ret;
 
-	अगर (page > 0)
-		वापस -ENXIO;
+	if (page > 0)
+		return -ENXIO;
 
-	अगर (reg >= PMBUS_VIRT_BASE)
-		वापस -ENXIO;
+	if (reg >= PMBUS_VIRT_BASE)
+		return -ENXIO;
 
-	max15301_रुको(data);
-	ret = pmbus_पढ़ो_word_data(client, page, phase, reg);
-	data->access = kसमय_get();
+	max15301_wait(data);
+	ret = pmbus_read_word_data(client, page, phase, reg);
+	data->access = ktime_get();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक max15301_पढ़ो_byte_data(काष्ठा i2c_client *client, पूर्णांक page, पूर्णांक reg)
-अणु
-	स्थिर काष्ठा pmbus_driver_info *info = pmbus_get_driver_info(client);
-	काष्ठा max15301_data *data = to_max15301_data(info);
-	पूर्णांक ret;
+static int max15301_read_byte_data(struct i2c_client *client, int page, int reg)
+{
+	const struct pmbus_driver_info *info = pmbus_get_driver_info(client);
+	struct max15301_data *data = to_max15301_data(info);
+	int ret;
 
-	अगर (page > 0)
-		वापस -ENXIO;
+	if (page > 0)
+		return -ENXIO;
 
-	max15301_रुको(data);
-	ret = pmbus_पढ़ो_byte_data(client, page, reg);
-	data->access = kसमय_get();
+	max15301_wait(data);
+	ret = pmbus_read_byte_data(client, page, reg);
+	data->access = ktime_get();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक max15301_ग_लिखो_word_data(काष्ठा i2c_client *client, पूर्णांक page, पूर्णांक reg,
+static int max15301_write_word_data(struct i2c_client *client, int page, int reg,
 				    u16 word)
-अणु
-	स्थिर काष्ठा pmbus_driver_info *info = pmbus_get_driver_info(client);
-	काष्ठा max15301_data *data = to_max15301_data(info);
-	पूर्णांक ret;
+{
+	const struct pmbus_driver_info *info = pmbus_get_driver_info(client);
+	struct max15301_data *data = to_max15301_data(info);
+	int ret;
 
-	अगर (page > 0)
-		वापस -ENXIO;
+	if (page > 0)
+		return -ENXIO;
 
-	अगर (reg >= PMBUS_VIRT_BASE)
-		वापस -ENXIO;
+	if (reg >= PMBUS_VIRT_BASE)
+		return -ENXIO;
 
-	max15301_रुको(data);
-	ret = pmbus_ग_लिखो_word_data(client, page, reg, word);
-	data->access = kसमय_get();
+	max15301_wait(data);
+	ret = pmbus_write_word_data(client, page, reg, word);
+	data->access = ktime_get();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक max15301_ग_लिखो_byte(काष्ठा i2c_client *client, पूर्णांक page, u8 value)
-अणु
-	स्थिर काष्ठा pmbus_driver_info *info = pmbus_get_driver_info(client);
-	काष्ठा max15301_data *data = to_max15301_data(info);
-	पूर्णांक ret;
+static int max15301_write_byte(struct i2c_client *client, int page, u8 value)
+{
+	const struct pmbus_driver_info *info = pmbus_get_driver_info(client);
+	struct max15301_data *data = to_max15301_data(info);
+	int ret;
 
-	अगर (page > 0)
-		वापस -ENXIO;
+	if (page > 0)
+		return -ENXIO;
 
-	max15301_रुको(data);
-	ret = pmbus_ग_लिखो_byte(client, page, value);
-	data->access = kसमय_get();
+	max15301_wait(data);
+	ret = pmbus_write_byte(client, page, value);
+	data->access = ktime_get();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक max15301_probe(काष्ठा i2c_client *client)
-अणु
-	पूर्णांक status;
+static int max15301_probe(struct i2c_client *client)
+{
+	int status;
 	u8 device_id[I2C_SMBUS_BLOCK_MAX + 1];
-	स्थिर काष्ठा i2c_device_id *mid;
-	काष्ठा pmbus_driver_info *info = &max15301_data.info;
+	const struct i2c_device_id *mid;
+	struct pmbus_driver_info *info = &max15301_data.info;
 
-	अगर (!i2c_check_functionality(client->adapter,
+	if (!i2c_check_functionality(client->adapter,
 				     I2C_FUNC_SMBUS_READ_BYTE_DATA
 				     | I2C_FUNC_SMBUS_BLOCK_DATA))
-		वापस -ENODEV;
+		return -ENODEV;
 
-	status = i2c_smbus_पढ़ो_block_data(client, PMBUS_IC_DEVICE_ID, device_id);
-	अगर (status < 0) अणु
+	status = i2c_smbus_read_block_data(client, PMBUS_IC_DEVICE_ID, device_id);
+	if (status < 0) {
 		dev_err(&client->dev, "Failed to read Device Id\n");
-		वापस status;
-	पूर्ण
-	क्रम (mid = max15301_id; mid->name[0]; mid++) अणु
-		अगर (!strnहालcmp(mid->name, device_id, म_माप(mid->name)))
-			अवरोध;
-	पूर्ण
-	अगर (!mid->name[0]) अणु
+		return status;
+	}
+	for (mid = max15301_id; mid->name[0]; mid++) {
+		if (!strncasecmp(mid->name, device_id, strlen(mid->name)))
+			break;
+	}
+	if (!mid->name[0]) {
 		dev_err(&client->dev, "Unsupported device\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	max15301_data.delay = delay;
 
-	info->पढ़ो_byte_data = max15301_पढ़ो_byte_data;
-	info->पढ़ो_word_data = max15301_पढ़ो_word_data;
-	info->ग_लिखो_byte = max15301_ग_लिखो_byte;
-	info->ग_लिखो_word_data = max15301_ग_लिखो_word_data;
+	info->read_byte_data = max15301_read_byte_data;
+	info->read_word_data = max15301_read_word_data;
+	info->write_byte = max15301_write_byte;
+	info->write_word_data = max15301_write_word_data;
 
-	वापस pmbus_करो_probe(client, info);
-पूर्ण
+	return pmbus_do_probe(client, info);
+}
 
-अटल काष्ठा i2c_driver max15301_driver = अणु
-	.driver = अणु
+static struct i2c_driver max15301_driver = {
+	.driver = {
 		   .name = "max15301",
-		   पूर्ण,
+		   },
 	.probe_new = max15301_probe,
 	.id_table = max15301_id,
-पूर्ण;
+};
 
 module_i2c_driver(max15301_driver);
 

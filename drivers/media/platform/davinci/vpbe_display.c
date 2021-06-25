@@ -1,96 +1,95 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2010 Texas Instruments Incorporated - https://www.ti.com/
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/रुको.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/videodev2.h>
-#समावेश <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/errno.h>
+#include <linux/interrupt.h>
+#include <linux/string.h>
+#include <linux/wait.h>
+#include <linux/time.h>
+#include <linux/platform_device.h>
+#include <linux/irq.h>
+#include <linux/mm.h>
+#include <linux/mutex.h>
+#include <linux/videodev2.h>
+#include <linux/slab.h>
 
 
-#समावेश <media/v4l2-dev.h>
-#समावेश <media/v4l2-common.h>
-#समावेश <media/v4l2-ioctl.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/davinci/vpbe_display.h>
-#समावेश <media/davinci/vpbe_types.h>
-#समावेश <media/davinci/vpbe.h>
-#समावेश <media/davinci/vpbe_venc.h>
-#समावेश <media/davinci/vpbe_osd.h>
-#समावेश "vpbe_venc_regs.h"
+#include <media/v4l2-dev.h>
+#include <media/v4l2-common.h>
+#include <media/v4l2-ioctl.h>
+#include <media/v4l2-device.h>
+#include <media/davinci/vpbe_display.h>
+#include <media/davinci/vpbe_types.h>
+#include <media/davinci/vpbe.h>
+#include <media/davinci/vpbe_venc.h>
+#include <media/davinci/vpbe_osd.h>
+#include "vpbe_venc_regs.h"
 
-#घोषणा VPBE_DISPLAY_DRIVER "vpbe-v4l2"
+#define VPBE_DISPLAY_DRIVER "vpbe-v4l2"
 
-अटल पूर्णांक debug;
+static int debug;
 
-#घोषणा VPBE_DEFAULT_NUM_BUFS 3
+#define VPBE_DEFAULT_NUM_BUFS 3
 
-module_param(debug, पूर्णांक, 0644);
+module_param(debug, int, 0644);
 
-अटल पूर्णांक vpbe_set_osd_display_params(काष्ठा vpbe_display *disp_dev,
-			काष्ठा vpbe_layer *layer);
+static int vpbe_set_osd_display_params(struct vpbe_display *disp_dev,
+			struct vpbe_layer *layer);
 
-अटल पूर्णांक venc_is_second_field(काष्ठा vpbe_display *disp_dev)
-अणु
-	काष्ठा vpbe_device *vpbe_dev = disp_dev->vpbe_dev;
-	पूर्णांक ret, val;
+static int venc_is_second_field(struct vpbe_display *disp_dev)
+{
+	struct vpbe_device *vpbe_dev = disp_dev->vpbe_dev;
+	int ret, val;
 
 	ret = v4l2_subdev_call(vpbe_dev->venc,
 			       core,
 			       ioctl,
 			       VENC_GET_FLD,
 			       &val);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		v4l2_err(&vpbe_dev->v4l2_dev,
 			 "Error in getting Field ID 0\n");
-		वापस 1;
-	पूर्ण
-	वापस val;
-पूर्ण
+		return 1;
+	}
+	return val;
+}
 
-अटल व्योम vpbe_isr_even_field(काष्ठा vpbe_display *disp_obj,
-				काष्ठा vpbe_layer *layer)
-अणु
-	अगर (layer->cur_frm == layer->next_frm)
-		वापस;
+static void vpbe_isr_even_field(struct vpbe_display *disp_obj,
+				struct vpbe_layer *layer)
+{
+	if (layer->cur_frm == layer->next_frm)
+		return;
 
-	layer->cur_frm->vb.vb2_buf.बारtamp = kसमय_get_ns();
-	vb2_buffer_करोne(&layer->cur_frm->vb.vb2_buf, VB2_BUF_STATE_DONE);
-	/* Make cur_frm poपूर्णांकing to next_frm */
+	layer->cur_frm->vb.vb2_buf.timestamp = ktime_get_ns();
+	vb2_buffer_done(&layer->cur_frm->vb.vb2_buf, VB2_BUF_STATE_DONE);
+	/* Make cur_frm pointing to next_frm */
 	layer->cur_frm = layer->next_frm;
-पूर्ण
+}
 
-अटल व्योम vpbe_isr_odd_field(काष्ठा vpbe_display *disp_obj,
-				काष्ठा vpbe_layer *layer)
-अणु
-	काष्ठा osd_state *osd_device = disp_obj->osd_device;
-	अचिन्हित दीर्घ addr;
+static void vpbe_isr_odd_field(struct vpbe_display *disp_obj,
+				struct vpbe_layer *layer)
+{
+	struct osd_state *osd_device = disp_obj->osd_device;
+	unsigned long addr;
 
 	spin_lock(&disp_obj->dma_queue_lock);
-	अगर (list_empty(&layer->dma_queue) ||
-		(layer->cur_frm != layer->next_frm)) अणु
+	if (list_empty(&layer->dma_queue) ||
+		(layer->cur_frm != layer->next_frm)) {
 		spin_unlock(&disp_obj->dma_queue_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 	/*
 	 * one field is displayed configure
-	 * the next frame अगर it is available
+	 * the next frame if it is available
 	 * otherwise hold on current frame
 	 * Get next from the buffer queue
 	 */
 	layer->next_frm = list_entry(layer->dma_queue.next,
-			  काष्ठा  vpbe_disp_buffer, list);
+			  struct  vpbe_disp_buffer, list);
 	/* Remove that from the buffer queue */
 	list_del(&layer->next_frm->list);
 	spin_unlock(&disp_obj->dma_queue_lock);
@@ -101,162 +100,162 @@ module_param(debug, पूर्णांक, 0644);
 			layer->layer_info.id,
 			addr,
 			disp_obj->cbcr_ofst);
-पूर्ण
+}
 
-/* पूर्णांकerrupt service routine */
-अटल irqवापस_t venc_isr(पूर्णांक irq, व्योम *arg)
-अणु
-	काष्ठा vpbe_display *disp_dev = (काष्ठा vpbe_display *)arg;
-	काष्ठा vpbe_layer *layer;
-	अटल अचिन्हित last_event;
-	अचिन्हित event = 0;
-	पूर्णांक fid;
-	पूर्णांक i;
+/* interrupt service routine */
+static irqreturn_t venc_isr(int irq, void *arg)
+{
+	struct vpbe_display *disp_dev = (struct vpbe_display *)arg;
+	struct vpbe_layer *layer;
+	static unsigned last_event;
+	unsigned event = 0;
+	int fid;
+	int i;
 
-	अगर (!arg || !disp_dev->dev[0])
-		वापस IRQ_HANDLED;
+	if (!arg || !disp_dev->dev[0])
+		return IRQ_HANDLED;
 
-	अगर (venc_is_second_field(disp_dev))
+	if (venc_is_second_field(disp_dev))
 		event |= VENC_SECOND_FIELD;
-	अन्यथा
+	else
 		event |= VENC_FIRST_FIELD;
 
-	अगर (event == (last_event & ~VENC_END_OF_FRAME)) अणु
+	if (event == (last_event & ~VENC_END_OF_FRAME)) {
 		/*
-		* If the display is non-पूर्णांकerlaced, then we need to flag the
-		* end-of-frame event at every पूर्णांकerrupt regardless of the
+		* If the display is non-interlaced, then we need to flag the
+		* end-of-frame event at every interrupt regardless of the
 		* value of the FIDST bit.  We can conclude that the display is
-		* non-पूर्णांकerlaced अगर the value of the FIDST bit is unchanged
-		* from the previous पूर्णांकerrupt.
+		* non-interlaced if the value of the FIDST bit is unchanged
+		* from the previous interrupt.
 		*/
 		event |= VENC_END_OF_FRAME;
-	पूर्ण अन्यथा अगर (event == VENC_SECOND_FIELD) अणु
-		/* end-of-frame क्रम पूर्णांकerlaced display */
+	} else if (event == VENC_SECOND_FIELD) {
+		/* end-of-frame for interlaced display */
 		event |= VENC_END_OF_FRAME;
-	पूर्ण
+	}
 	last_event = event;
 
-	क्रम (i = 0; i < VPBE_DISPLAY_MAX_DEVICES; i++) अणु
+	for (i = 0; i < VPBE_DISPLAY_MAX_DEVICES; i++) {
 		layer = disp_dev->dev[i];
 
-		अगर (!vb2_start_streaming_called(&layer->buffer_queue))
-			जारी;
+		if (!vb2_start_streaming_called(&layer->buffer_queue))
+			continue;
 
-		अगर (layer->layer_first_पूर्णांक) अणु
-			layer->layer_first_पूर्णांक = 0;
-			जारी;
-		पूर्ण
-		/* Check the field क्रमmat */
-		अगर ((V4L2_FIELD_NONE == layer->pix_fmt.field) &&
-			(event & VENC_END_OF_FRAME)) अणु
+		if (layer->layer_first_int) {
+			layer->layer_first_int = 0;
+			continue;
+		}
+		/* Check the field format */
+		if ((V4L2_FIELD_NONE == layer->pix_fmt.field) &&
+			(event & VENC_END_OF_FRAME)) {
 			/* Progressive mode */
 
 			vpbe_isr_even_field(disp_dev, layer);
 			vpbe_isr_odd_field(disp_dev, layer);
-		पूर्ण अन्यथा अणु
+		} else {
 		/* Interlaced mode */
 
 			layer->field_id ^= 1;
-			अगर (event & VENC_FIRST_FIELD)
+			if (event & VENC_FIRST_FIELD)
 				fid = 0;
-			अन्यथा
+			else
 				fid = 1;
 
 			/*
-			* If field id करोes not match with store
+			* If field id does not match with store
 			* field id
 			*/
-			अगर (fid != layer->field_id) अणु
+			if (fid != layer->field_id) {
 				/* Make them in sync */
 				layer->field_id = fid;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			/*
 			* device field id and local field id are
 			* in sync. If this is even field
 			*/
-			अगर (0 == fid)
+			if (0 == fid)
 				vpbe_isr_even_field(disp_dev, layer);
-			अन्यथा  /* odd field */
+			else  /* odd field */
 				vpbe_isr_odd_field(disp_dev, layer);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
  * vpbe_buffer_prepare()
  * This is the callback function called from vb2_qbuf() function
- * the buffer is prepared and user space भव address is converted पूर्णांकo
+ * the buffer is prepared and user space virtual address is converted into
  * physical address
  */
-अटल पूर्णांक vpbe_buffer_prepare(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_queue *q = vb->vb2_queue;
-	काष्ठा vpbe_layer *layer = vb2_get_drv_priv(q);
-	काष्ठा vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
-	अचिन्हित दीर्घ addr;
+static int vpbe_buffer_prepare(struct vb2_buffer *vb)
+{
+	struct vb2_queue *q = vb->vb2_queue;
+	struct vpbe_layer *layer = vb2_get_drv_priv(q);
+	struct vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
+	unsigned long addr;
 
 	v4l2_dbg(1, debug, &vpbe_dev->v4l2_dev,
 				"vpbe_buffer_prepare\n");
 
 	vb2_set_plane_payload(vb, 0, layer->pix_fmt.sizeimage);
-	अगर (vb2_get_plane_payload(vb, 0) > vb2_plane_size(vb, 0))
-		वापस -EINVAL;
+	if (vb2_get_plane_payload(vb, 0) > vb2_plane_size(vb, 0))
+		return -EINVAL;
 
 	addr = vb2_dma_contig_plane_dma_addr(vb, 0);
-	अगर (!IS_ALIGNED(addr, 8)) अणु
+	if (!IS_ALIGNED(addr, 8)) {
 		v4l2_err(&vpbe_dev->v4l2_dev,
 			 "buffer_prepare:offset is not aligned to 32 bytes\n");
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
 /*
  * vpbe_buffer_setup()
- * This function allocates memory क्रम the buffers
+ * This function allocates memory for the buffers
  */
-अटल पूर्णांक
-vpbe_buffer_queue_setup(काष्ठा vb2_queue *vq,
-			अचिन्हित पूर्णांक *nbuffers, अचिन्हित पूर्णांक *nplanes,
-			अचिन्हित पूर्णांक sizes[], काष्ठा device *alloc_devs[])
+static int
+vpbe_buffer_queue_setup(struct vb2_queue *vq,
+			unsigned int *nbuffers, unsigned int *nplanes,
+			unsigned int sizes[], struct device *alloc_devs[])
 
-अणु
+{
 	/* Get the file handle object and layer object */
-	काष्ठा vpbe_layer *layer = vb2_get_drv_priv(vq);
-	काष्ठा vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
+	struct vpbe_layer *layer = vb2_get_drv_priv(vq);
+	struct vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
 
 	v4l2_dbg(1, debug, &vpbe_dev->v4l2_dev, "vpbe_buffer_setup\n");
 
 	/* Store number of buffers allocated in numbuffer member */
-	अगर (vq->num_buffers + *nbuffers < VPBE_DEFAULT_NUM_BUFS)
+	if (vq->num_buffers + *nbuffers < VPBE_DEFAULT_NUM_BUFS)
 		*nbuffers = VPBE_DEFAULT_NUM_BUFS - vq->num_buffers;
 
-	अगर (*nplanes)
-		वापस sizes[0] < layer->pix_fmt.sizeimage ? -EINVAL : 0;
+	if (*nplanes)
+		return sizes[0] < layer->pix_fmt.sizeimage ? -EINVAL : 0;
 
 	*nplanes = 1;
 	sizes[0] = layer->pix_fmt.sizeimage;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * vpbe_buffer_queue()
  * This function adds the buffer to DMA queue
  */
-अटल व्योम vpbe_buffer_queue(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+static void vpbe_buffer_queue(struct vb2_buffer *vb)
+{
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
 	/* Get the file handle object and layer object */
-	काष्ठा vpbe_disp_buffer *buf = container_of(vbuf,
-				काष्ठा vpbe_disp_buffer, vb);
-	काष्ठा vpbe_layer *layer = vb2_get_drv_priv(vb->vb2_queue);
-	काष्ठा vpbe_display *disp = layer->disp_dev;
-	काष्ठा vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
-	अचिन्हित दीर्घ flags;
+	struct vpbe_disp_buffer *buf = container_of(vbuf,
+				struct vpbe_disp_buffer, vb);
+	struct vpbe_layer *layer = vb2_get_drv_priv(vb->vb2_queue);
+	struct vpbe_display *disp = layer->disp_dev;
+	struct vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
+	unsigned long flags;
 
 	v4l2_dbg(1, debug, &vpbe_dev->v4l2_dev,
 			"vpbe_buffer_queue\n");
@@ -265,19 +264,19 @@ vpbe_buffer_queue_setup(काष्ठा vb2_queue *vq,
 	spin_lock_irqsave(&disp->dma_queue_lock, flags);
 	list_add_tail(&buf->list, &layer->dma_queue);
 	spin_unlock_irqrestore(&disp->dma_queue_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक vpbe_start_streaming(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा vpbe_layer *layer = vb2_get_drv_priv(vq);
-	काष्ठा osd_state *osd_device = layer->disp_dev->osd_device;
-	पूर्णांक ret;
+static int vpbe_start_streaming(struct vb2_queue *vq, unsigned int count)
+{
+	struct vpbe_layer *layer = vb2_get_drv_priv(vq);
+	struct osd_state *osd_device = layer->disp_dev->osd_device;
+	int ret;
 
 	osd_device->ops.disable_layer(osd_device, layer->layer_info.id);
 
 	/* Get the next frame from the buffer queue */
 	layer->next_frm = layer->cur_frm = list_entry(layer->dma_queue.next,
-				काष्ठा vpbe_disp_buffer, list);
+				struct vpbe_disp_buffer, list);
 	/* Remove buffer from the buffer queue */
 	list_del(&layer->cur_frm->list);
 	/* Mark state of the current frame to active */
@@ -287,99 +286,99 @@ vpbe_buffer_queue_setup(काष्ठा vb2_queue *vq,
 
 	/* Set parameters in OSD and VENC */
 	ret = vpbe_set_osd_display_params(layer->disp_dev, layer);
-	अगर (ret < 0) अणु
-		काष्ठा vpbe_disp_buffer *buf, *पंचांगp;
+	if (ret < 0) {
+		struct vpbe_disp_buffer *buf, *tmp;
 
-		vb2_buffer_करोne(&layer->cur_frm->vb.vb2_buf,
+		vb2_buffer_done(&layer->cur_frm->vb.vb2_buf,
 				VB2_BUF_STATE_QUEUED);
-		list_क्रम_each_entry_safe(buf, पंचांगp, &layer->dma_queue, list) अणु
+		list_for_each_entry_safe(buf, tmp, &layer->dma_queue, list) {
 			list_del(&buf->list);
-			vb2_buffer_करोne(&buf->vb.vb2_buf,
+			vb2_buffer_done(&buf->vb.vb2_buf,
 					VB2_BUF_STATE_QUEUED);
-		पूर्ण
+		}
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * अगर request क्रमmat is yuv420 semiplanar, need to
-	 * enable both video winकरोws
+	 * if request format is yuv420 semiplanar, need to
+	 * enable both video windows
 	 */
-	layer->layer_first_पूर्णांक = 1;
+	layer->layer_first_int = 1;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम vpbe_stop_streaming(काष्ठा vb2_queue *vq)
-अणु
-	काष्ठा vpbe_layer *layer = vb2_get_drv_priv(vq);
-	काष्ठा osd_state *osd_device = layer->disp_dev->osd_device;
-	काष्ठा vpbe_display *disp = layer->disp_dev;
-	अचिन्हित दीर्घ flags;
+static void vpbe_stop_streaming(struct vb2_queue *vq)
+{
+	struct vpbe_layer *layer = vb2_get_drv_priv(vq);
+	struct osd_state *osd_device = layer->disp_dev->osd_device;
+	struct vpbe_display *disp = layer->disp_dev;
+	unsigned long flags;
 
-	अगर (!vb2_is_streaming(vq))
-		वापस;
+	if (!vb2_is_streaming(vq))
+		return;
 
 	osd_device->ops.disable_layer(osd_device, layer->layer_info.id);
 
 	/* release all active buffers */
 	spin_lock_irqsave(&disp->dma_queue_lock, flags);
-	अगर (layer->cur_frm == layer->next_frm) अणु
-		vb2_buffer_करोne(&layer->cur_frm->vb.vb2_buf,
+	if (layer->cur_frm == layer->next_frm) {
+		vb2_buffer_done(&layer->cur_frm->vb.vb2_buf,
 				VB2_BUF_STATE_ERROR);
-	पूर्ण अन्यथा अणु
-		अगर (layer->cur_frm)
-			vb2_buffer_करोne(&layer->cur_frm->vb.vb2_buf,
+	} else {
+		if (layer->cur_frm)
+			vb2_buffer_done(&layer->cur_frm->vb.vb2_buf,
 					VB2_BUF_STATE_ERROR);
-		अगर (layer->next_frm)
-			vb2_buffer_करोne(&layer->next_frm->vb.vb2_buf,
+		if (layer->next_frm)
+			vb2_buffer_done(&layer->next_frm->vb.vb2_buf,
 					VB2_BUF_STATE_ERROR);
-	पूर्ण
+	}
 
-	जबतक (!list_empty(&layer->dma_queue)) अणु
+	while (!list_empty(&layer->dma_queue)) {
 		layer->next_frm = list_entry(layer->dma_queue.next,
-						काष्ठा vpbe_disp_buffer, list);
+						struct vpbe_disp_buffer, list);
 		list_del(&layer->next_frm->list);
-		vb2_buffer_करोne(&layer->next_frm->vb.vb2_buf,
+		vb2_buffer_done(&layer->next_frm->vb.vb2_buf,
 				VB2_BUF_STATE_ERROR);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&disp->dma_queue_lock, flags);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा vb2_ops video_qops = अणु
+static const struct vb2_ops video_qops = {
 	.queue_setup = vpbe_buffer_queue_setup,
-	.रुको_prepare = vb2_ops_रुको_prepare,
-	.रुको_finish = vb2_ops_रुको_finish,
+	.wait_prepare = vb2_ops_wait_prepare,
+	.wait_finish = vb2_ops_wait_finish,
 	.buf_prepare = vpbe_buffer_prepare,
 	.start_streaming = vpbe_start_streaming,
 	.stop_streaming = vpbe_stop_streaming,
 	.buf_queue = vpbe_buffer_queue,
-पूर्ण;
+};
 
-अटल
-काष्ठा vpbe_layer*
-_vpbe_display_get_other_win_layer(काष्ठा vpbe_display *disp_dev,
-			काष्ठा vpbe_layer *layer)
-अणु
-	क्रमागत vpbe_display_device_id thiswin, otherwin;
+static
+struct vpbe_layer*
+_vpbe_display_get_other_win_layer(struct vpbe_display *disp_dev,
+			struct vpbe_layer *layer)
+{
+	enum vpbe_display_device_id thiswin, otherwin;
 	thiswin = layer->device_id;
 
 	otherwin = (thiswin == VPBE_DISPLAY_DEVICE_0) ?
 	VPBE_DISPLAY_DEVICE_1 : VPBE_DISPLAY_DEVICE_0;
-	वापस disp_dev->dev[otherwin];
-पूर्ण
+	return disp_dev->dev[otherwin];
+}
 
-अटल पूर्णांक vpbe_set_osd_display_params(काष्ठा vpbe_display *disp_dev,
-			काष्ठा vpbe_layer *layer)
-अणु
-	काष्ठा osd_layer_config *cfg  = &layer->layer_info.config;
-	काष्ठा osd_state *osd_device = disp_dev->osd_device;
-	काष्ठा vpbe_device *vpbe_dev = disp_dev->vpbe_dev;
-	अचिन्हित दीर्घ addr;
-	पूर्णांक ret;
+static int vpbe_set_osd_display_params(struct vpbe_display *disp_dev,
+			struct vpbe_layer *layer)
+{
+	struct osd_layer_config *cfg  = &layer->layer_info.config;
+	struct osd_state *osd_device = disp_dev->osd_device;
+	struct vpbe_device *vpbe_dev = disp_dev->vpbe_dev;
+	unsigned long addr;
+	int ret;
 
 	addr = vb2_dma_contig_plane_dma_addr(&layer->cur_frm->vb.vb2_buf, 0);
-	/* Set address in the display रेजिस्टरs */
+	/* Set address in the display registers */
 	osd_device->ops.start_layer(osd_device,
 				    layer->layer_info.id,
 				    addr,
@@ -387,62 +386,62 @@ _vpbe_display_get_other_win_layer(काष्ठा vpbe_display *disp_dev,
 
 	ret = osd_device->ops.enable_layer(osd_device,
 				layer->layer_info.id, 0);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		v4l2_err(&vpbe_dev->v4l2_dev,
 			"Error in enabling osd window layer 0\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	/* Enable the winकरोw */
+	/* Enable the window */
 	layer->layer_info.enable = 1;
-	अगर (cfg->pixfmt == PIXFMT_NV12) अणु
-		काष्ठा vpbe_layer *otherlayer =
+	if (cfg->pixfmt == PIXFMT_NV12) {
+		struct vpbe_layer *otherlayer =
 			_vpbe_display_get_other_win_layer(disp_dev, layer);
 
 		ret = osd_device->ops.enable_layer(osd_device,
 				otherlayer->layer_info.id, 1);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			v4l2_err(&vpbe_dev->v4l2_dev,
 				"Error in enabling osd window layer 1\n");
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 		otherlayer->layer_info.enable = 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल व्योम
-vpbe_disp_calculate_scale_factor(काष्ठा vpbe_display *disp_dev,
-			काष्ठा vpbe_layer *layer,
-			पूर्णांक expected_xsize, पूर्णांक expected_ysize)
-अणु
-	काष्ठा display_layer_info *layer_info = &layer->layer_info;
-	काष्ठा v4l2_pix_क्रमmat *pixfmt = &layer->pix_fmt;
-	काष्ठा osd_layer_config *cfg  = &layer->layer_info.config;
-	काष्ठा vpbe_device *vpbe_dev = disp_dev->vpbe_dev;
-	पूर्णांक calculated_xsize;
-	पूर्णांक h_exp = 0;
-	पूर्णांक v_exp = 0;
-	पूर्णांक h_scale;
-	पूर्णांक v_scale;
+static void
+vpbe_disp_calculate_scale_factor(struct vpbe_display *disp_dev,
+			struct vpbe_layer *layer,
+			int expected_xsize, int expected_ysize)
+{
+	struct display_layer_info *layer_info = &layer->layer_info;
+	struct v4l2_pix_format *pixfmt = &layer->pix_fmt;
+	struct osd_layer_config *cfg  = &layer->layer_info.config;
+	struct vpbe_device *vpbe_dev = disp_dev->vpbe_dev;
+	int calculated_xsize;
+	int h_exp = 0;
+	int v_exp = 0;
+	int h_scale;
+	int v_scale;
 
 	v4l2_std_id standard_id = vpbe_dev->current_timings.std_id;
 
 	/*
-	 * Application initially set the image क्रमmat. Current display
+	 * Application initially set the image format. Current display
 	 * size is obtained from the vpbe display controller. expected_xsize
 	 * and expected_ysize are set through S_SELECTION ioctl. Based on this,
-	 * driver will calculate the scale factors क्रम vertical and
+	 * driver will calculate the scale factors for vertical and
 	 * horizontal direction so that the image is displayed scaled
 	 * and expanded. Application uses expansion to display the image
 	 * in a square pixel. Otherwise it is displayed using displays
 	 * pixel aspect ratio.It is expected that application chooses
-	 * the crop coordinates क्रम cropped or scaled display. अगर crop
+	 * the crop coordinates for cropped or scaled display. if crop
 	 * size is less than the image size, it is displayed cropped or
 	 * it is displayed scaled and/or expanded.
 	 *
-	 * to begin with, set the crop winकरोw same as expected. Later we
-	 * will override with scaled winकरोw size
+	 * to begin with, set the crop window same as expected. Later we
+	 * will override with scaled window size
 	 */
 
 	cfg->xsize = pixfmt->width;
@@ -452,145 +451,145 @@ vpbe_disp_calculate_scale_factor(काष्ठा vpbe_display *disp_dev,
 	layer_info->h_exp = H_EXP_OFF;	/* no horizontal zoom */
 	layer_info->v_exp = V_EXP_OFF;	/* no horizontal zoom */
 
-	अगर (pixfmt->width < expected_xsize) अणु
+	if (pixfmt->width < expected_xsize) {
 		h_scale = vpbe_dev->current_timings.xres / pixfmt->width;
-		अगर (h_scale < 2)
+		if (h_scale < 2)
 			h_scale = 1;
-		अन्यथा अगर (h_scale >= 4)
+		else if (h_scale >= 4)
 			h_scale = 4;
-		अन्यथा
+		else
 			h_scale = 2;
 		cfg->xsize *= h_scale;
-		अगर (cfg->xsize < expected_xsize) अणु
-			अगर ((standard_id & V4L2_STD_525_60) ||
-			(standard_id & V4L2_STD_625_50)) अणु
+		if (cfg->xsize < expected_xsize) {
+			if ((standard_id & V4L2_STD_525_60) ||
+			(standard_id & V4L2_STD_625_50)) {
 				calculated_xsize = (cfg->xsize *
 					VPBE_DISPLAY_H_EXP_RATIO_N) /
 					VPBE_DISPLAY_H_EXP_RATIO_D;
-				अगर (calculated_xsize <= expected_xsize) अणु
+				if (calculated_xsize <= expected_xsize) {
 					h_exp = 1;
 					cfg->xsize = calculated_xsize;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-		अगर (h_scale == 2)
+				}
+			}
+		}
+		if (h_scale == 2)
 			layer_info->h_zoom = ZOOM_X2;
-		अन्यथा अगर (h_scale == 4)
+		else if (h_scale == 4)
 			layer_info->h_zoom = ZOOM_X4;
-		अगर (h_exp)
+		if (h_exp)
 			layer_info->h_exp = H_EXP_9_OVER_8;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* no scaling, only cropping. Set display area to crop area */
 		cfg->xsize = expected_xsize;
-	पूर्ण
+	}
 
-	अगर (pixfmt->height < expected_ysize) अणु
+	if (pixfmt->height < expected_ysize) {
 		v_scale = expected_ysize / pixfmt->height;
-		अगर (v_scale < 2)
+		if (v_scale < 2)
 			v_scale = 1;
-		अन्यथा अगर (v_scale >= 4)
+		else if (v_scale >= 4)
 			v_scale = 4;
-		अन्यथा
+		else
 			v_scale = 2;
 		cfg->ysize *= v_scale;
-		अगर (cfg->ysize < expected_ysize) अणु
-			अगर ((standard_id & V4L2_STD_625_50)) अणु
+		if (cfg->ysize < expected_ysize) {
+			if ((standard_id & V4L2_STD_625_50)) {
 				calculated_xsize = (cfg->ysize *
 					VPBE_DISPLAY_V_EXP_RATIO_N) /
 					VPBE_DISPLAY_V_EXP_RATIO_D;
-				अगर (calculated_xsize <= expected_ysize) अणु
+				if (calculated_xsize <= expected_ysize) {
 					v_exp = 1;
 					cfg->ysize = calculated_xsize;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-		अगर (v_scale == 2)
+				}
+			}
+		}
+		if (v_scale == 2)
 			layer_info->v_zoom = ZOOM_X2;
-		अन्यथा अगर (v_scale == 4)
+		else if (v_scale == 4)
 			layer_info->v_zoom = ZOOM_X4;
-		अगर (v_exp)
+		if (v_exp)
 			layer_info->v_exp = V_EXP_6_OVER_5;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* no scaling, only cropping. Set display area to crop area */
 		cfg->ysize = expected_ysize;
-	पूर्ण
+	}
 	v4l2_dbg(1, debug, &vpbe_dev->v4l2_dev,
 		"crop display xsize = %d, ysize = %d\n",
 		cfg->xsize, cfg->ysize);
-पूर्ण
+}
 
-अटल व्योम vpbe_disp_adj_position(काष्ठा vpbe_display *disp_dev,
-			काष्ठा vpbe_layer *layer,
-			पूर्णांक top, पूर्णांक left)
-अणु
-	काष्ठा osd_layer_config *cfg = &layer->layer_info.config;
-	काष्ठा vpbe_device *vpbe_dev = disp_dev->vpbe_dev;
+static void vpbe_disp_adj_position(struct vpbe_display *disp_dev,
+			struct vpbe_layer *layer,
+			int top, int left)
+{
+	struct osd_layer_config *cfg = &layer->layer_info.config;
+	struct vpbe_device *vpbe_dev = disp_dev->vpbe_dev;
 
-	cfg->xpos = min((अचिन्हित पूर्णांक)left,
+	cfg->xpos = min((unsigned int)left,
 			vpbe_dev->current_timings.xres - cfg->xsize);
-	cfg->ypos = min((अचिन्हित पूर्णांक)top,
+	cfg->ypos = min((unsigned int)top,
 			vpbe_dev->current_timings.yres - cfg->ysize);
 
 	v4l2_dbg(1, debug, &vpbe_dev->v4l2_dev,
 		"new xpos = %d, ypos = %d\n",
 		cfg->xpos, cfg->ypos);
-पूर्ण
+}
 
-अटल व्योम vpbe_disp_check_winकरोw_params(काष्ठा vpbe_display *disp_dev,
-			काष्ठा v4l2_rect *c)
-अणु
-	काष्ठा vpbe_device *vpbe_dev = disp_dev->vpbe_dev;
+static void vpbe_disp_check_window_params(struct vpbe_display *disp_dev,
+			struct v4l2_rect *c)
+{
+	struct vpbe_device *vpbe_dev = disp_dev->vpbe_dev;
 
-	अगर ((c->width == 0) ||
+	if ((c->width == 0) ||
 	  ((c->width + c->left) > vpbe_dev->current_timings.xres))
 		c->width = vpbe_dev->current_timings.xres - c->left;
 
-	अगर ((c->height == 0) || ((c->height + c->top) >
+	if ((c->height == 0) || ((c->height + c->top) >
 	  vpbe_dev->current_timings.yres))
 		c->height = vpbe_dev->current_timings.yres - c->top;
 
-	/* winकरोw height must be even क्रम पूर्णांकerlaced display */
-	अगर (vpbe_dev->current_timings.पूर्णांकerlaced)
+	/* window height must be even for interlaced display */
+	if (vpbe_dev->current_timings.interlaced)
 		c->height &= (~0x01);
 
-पूर्ण
+}
 
 /*
- * vpbe_try_क्रमmat()
+ * vpbe_try_format()
  * If user application provides width and height, and have bytesperline set
  * to zero, driver calculates bytesperline and sizeimage based on hardware
  * limits.
  */
-अटल पूर्णांक vpbe_try_क्रमmat(काष्ठा vpbe_display *disp_dev,
-			काष्ठा v4l2_pix_क्रमmat *pixfmt, पूर्णांक check)
-अणु
-	काष्ठा vpbe_device *vpbe_dev = disp_dev->vpbe_dev;
-	पूर्णांक min_height = 1;
-	पूर्णांक min_width = 32;
-	पूर्णांक max_height;
-	पूर्णांक max_width;
-	पूर्णांक bpp;
+static int vpbe_try_format(struct vpbe_display *disp_dev,
+			struct v4l2_pix_format *pixfmt, int check)
+{
+	struct vpbe_device *vpbe_dev = disp_dev->vpbe_dev;
+	int min_height = 1;
+	int min_width = 32;
+	int max_height;
+	int max_width;
+	int bpp;
 
-	अगर ((pixfmt->pixelक्रमmat != V4L2_PIX_FMT_UYVY) &&
-	    (pixfmt->pixelक्रमmat != V4L2_PIX_FMT_NV12))
-		/* choose शेष as V4L2_PIX_FMT_UYVY */
-		pixfmt->pixelक्रमmat = V4L2_PIX_FMT_UYVY;
+	if ((pixfmt->pixelformat != V4L2_PIX_FMT_UYVY) &&
+	    (pixfmt->pixelformat != V4L2_PIX_FMT_NV12))
+		/* choose default as V4L2_PIX_FMT_UYVY */
+		pixfmt->pixelformat = V4L2_PIX_FMT_UYVY;
 
-	/* Check the field क्रमmat */
-	अगर ((pixfmt->field != V4L2_FIELD_INTERLACED) &&
-		(pixfmt->field != V4L2_FIELD_NONE)) अणु
-		अगर (vpbe_dev->current_timings.पूर्णांकerlaced)
+	/* Check the field format */
+	if ((pixfmt->field != V4L2_FIELD_INTERLACED) &&
+		(pixfmt->field != V4L2_FIELD_NONE)) {
+		if (vpbe_dev->current_timings.interlaced)
 			pixfmt->field = V4L2_FIELD_INTERLACED;
-		अन्यथा
+		else
 			pixfmt->field = V4L2_FIELD_NONE;
-	पूर्ण
+	}
 
-	अगर (pixfmt->field == V4L2_FIELD_INTERLACED)
+	if (pixfmt->field == V4L2_FIELD_INTERLACED)
 		min_height = 2;
 
-	अगर (pixfmt->pixelक्रमmat == V4L2_PIX_FMT_NV12)
+	if (pixfmt->pixelformat == V4L2_PIX_FMT_NV12)
 		bpp = 1;
-	अन्यथा
+	else
 		bpp = 2;
 
 	max_width = vpbe_dev->current_timings.xres;
@@ -598,70 +597,70 @@ vpbe_disp_calculate_scale_factor(काष्ठा vpbe_display *disp_dev,
 
 	min_width /= bpp;
 
-	अगर (!pixfmt->width || (pixfmt->width < min_width) ||
-		(pixfmt->width > max_width)) अणु
+	if (!pixfmt->width || (pixfmt->width < min_width) ||
+		(pixfmt->width > max_width)) {
 		pixfmt->width = vpbe_dev->current_timings.xres;
-	पूर्ण
+	}
 
-	अगर (!pixfmt->height || (pixfmt->height  < min_height) ||
-		(pixfmt->height  > max_height)) अणु
+	if (!pixfmt->height || (pixfmt->height  < min_height) ||
+		(pixfmt->height  > max_height)) {
 		pixfmt->height = vpbe_dev->current_timings.yres;
-	पूर्ण
+	}
 
-	अगर (pixfmt->bytesperline < (pixfmt->width * bpp))
+	if (pixfmt->bytesperline < (pixfmt->width * bpp))
 		pixfmt->bytesperline = pixfmt->width * bpp;
 
 	/* Make the bytesperline 32 byte aligned */
 	pixfmt->bytesperline = ((pixfmt->width * bpp + 31) & ~31);
 
-	अगर (pixfmt->pixelक्रमmat == V4L2_PIX_FMT_NV12)
+	if (pixfmt->pixelformat == V4L2_PIX_FMT_NV12)
 		pixfmt->sizeimage = pixfmt->bytesperline * pixfmt->height +
 				(pixfmt->bytesperline * pixfmt->height >> 1);
-	अन्यथा
+	else
 		pixfmt->sizeimage = pixfmt->bytesperline * pixfmt->height;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vpbe_display_querycap(काष्ठा file *file, व्योम  *priv,
-			       काष्ठा v4l2_capability *cap)
-अणु
-	काष्ठा vpbe_layer *layer = video_drvdata(file);
-	काष्ठा vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
+static int vpbe_display_querycap(struct file *file, void  *priv,
+			       struct v4l2_capability *cap)
+{
+	struct vpbe_layer *layer = video_drvdata(file);
+	struct vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
 
-	snम_लिखो(cap->driver, माप(cap->driver), "%s",
+	snprintf(cap->driver, sizeof(cap->driver), "%s",
 		dev_name(vpbe_dev->pdev));
-	snम_लिखो(cap->bus_info, माप(cap->bus_info), "platform:%s",
+	snprintf(cap->bus_info, sizeof(cap->bus_info), "platform:%s",
 		 dev_name(vpbe_dev->pdev));
-	strscpy(cap->card, vpbe_dev->cfg->module_name, माप(cap->card));
+	strscpy(cap->card, vpbe_dev->cfg->module_name, sizeof(cap->card));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vpbe_display_s_selection(काष्ठा file *file, व्योम *priv,
-			     काष्ठा v4l2_selection *sel)
-अणु
-	काष्ठा vpbe_layer *layer = video_drvdata(file);
-	काष्ठा vpbe_display *disp_dev = layer->disp_dev;
-	काष्ठा vpbe_device *vpbe_dev = disp_dev->vpbe_dev;
-	काष्ठा osd_layer_config *cfg = &layer->layer_info.config;
-	काष्ठा osd_state *osd_device = disp_dev->osd_device;
-	काष्ठा v4l2_rect rect = sel->r;
-	पूर्णांक ret;
+static int vpbe_display_s_selection(struct file *file, void *priv,
+			     struct v4l2_selection *sel)
+{
+	struct vpbe_layer *layer = video_drvdata(file);
+	struct vpbe_display *disp_dev = layer->disp_dev;
+	struct vpbe_device *vpbe_dev = disp_dev->vpbe_dev;
+	struct osd_layer_config *cfg = &layer->layer_info.config;
+	struct osd_state *osd_device = disp_dev->osd_device;
+	struct v4l2_rect rect = sel->r;
+	int ret;
 
 	v4l2_dbg(1, debug, &vpbe_dev->v4l2_dev,
 		"VIDIOC_S_SELECTION, layer id = %d\n", layer->device_id);
 
-	अगर (sel->type != V4L2_BUF_TYPE_VIDEO_OUTPUT ||
+	if (sel->type != V4L2_BUF_TYPE_VIDEO_OUTPUT ||
 	    sel->target != V4L2_SEL_TGT_CROP)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (rect.top < 0)
+	if (rect.top < 0)
 		rect.top = 0;
-	अगर (rect.left < 0)
+	if (rect.left < 0)
 		rect.left = 0;
 
-	vpbe_disp_check_winकरोw_params(disp_dev, &rect);
+	vpbe_disp_check_window_params(disp_dev, &rect);
 
 	osd_device->ops.get_layer_config(osd_device,
 			layer->layer_info.id, cfg);
@@ -673,11 +672,11 @@ vpbe_disp_calculate_scale_factor(काष्ठा vpbe_display *disp_dev,
 					rect.left);
 	ret = osd_device->ops.set_layer_config(osd_device,
 				layer->layer_info.id, cfg);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		v4l2_err(&vpbe_dev->v4l2_dev,
 			"Error in set layer config:\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* apply zooming and h or v expansion */
 	osd_device->ops.set_zoom(osd_device,
@@ -687,260 +686,260 @@ vpbe_disp_calculate_scale_factor(काष्ठा vpbe_display *disp_dev,
 	ret = osd_device->ops.set_vid_expansion(osd_device,
 			layer->layer_info.h_exp,
 			layer->layer_info.v_exp);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		v4l2_err(&vpbe_dev->v4l2_dev,
 		"Error in set vid expansion:\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((layer->layer_info.h_zoom != ZOOM_X1) ||
+	if ((layer->layer_info.h_zoom != ZOOM_X1) ||
 		(layer->layer_info.v_zoom != ZOOM_X1) ||
 		(layer->layer_info.h_exp != H_EXP_OFF) ||
 		(layer->layer_info.v_exp != V_EXP_OFF))
 		/* Enable expansion filter */
-		osd_device->ops.set_पूर्णांकerpolation_filter(osd_device, 1);
-	अन्यथा
-		osd_device->ops.set_पूर्णांकerpolation_filter(osd_device, 0);
+		osd_device->ops.set_interpolation_filter(osd_device, 1);
+	else
+		osd_device->ops.set_interpolation_filter(osd_device, 0);
 
 	sel->r = rect;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vpbe_display_g_selection(काष्ठा file *file, व्योम *priv,
-				    काष्ठा v4l2_selection *sel)
-अणु
-	काष्ठा vpbe_layer *layer = video_drvdata(file);
-	काष्ठा osd_layer_config *cfg = &layer->layer_info.config;
-	काष्ठा vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
-	काष्ठा osd_state *osd_device = layer->disp_dev->osd_device;
-	काष्ठा v4l2_rect *rect = &sel->r;
+static int vpbe_display_g_selection(struct file *file, void *priv,
+				    struct v4l2_selection *sel)
+{
+	struct vpbe_layer *layer = video_drvdata(file);
+	struct osd_layer_config *cfg = &layer->layer_info.config;
+	struct vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
+	struct osd_state *osd_device = layer->disp_dev->osd_device;
+	struct v4l2_rect *rect = &sel->r;
 
 	v4l2_dbg(1, debug, &vpbe_dev->v4l2_dev,
 			"VIDIOC_G_SELECTION, layer id = %d\n",
 			layer->device_id);
 
-	अगर (sel->type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
-		वापस -EINVAL;
+	if (sel->type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
+		return -EINVAL;
 
-	चयन (sel->target) अणु
-	हाल V4L2_SEL_TGT_CROP:
+	switch (sel->target) {
+	case V4L2_SEL_TGT_CROP:
 		osd_device->ops.get_layer_config(osd_device,
 						 layer->layer_info.id, cfg);
 		rect->top = cfg->ypos;
 		rect->left = cfg->xpos;
 		rect->width = cfg->xsize;
 		rect->height = cfg->ysize;
-		अवरोध;
-	हाल V4L2_SEL_TGT_CROP_DEFAULT:
-	हाल V4L2_SEL_TGT_CROP_BOUNDS:
+		break;
+	case V4L2_SEL_TGT_CROP_DEFAULT:
+	case V4L2_SEL_TGT_CROP_BOUNDS:
 		rect->left = 0;
 		rect->top = 0;
 		rect->width = vpbe_dev->current_timings.xres;
 		rect->height = vpbe_dev->current_timings.yres;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vpbe_display_g_pixelaspect(काष्ठा file *file, व्योम *priv,
-				      पूर्णांक type, काष्ठा v4l2_fract *f)
-अणु
-	काष्ठा vpbe_layer *layer = video_drvdata(file);
-	काष्ठा vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
+static int vpbe_display_g_pixelaspect(struct file *file, void *priv,
+				      int type, struct v4l2_fract *f)
+{
+	struct vpbe_layer *layer = video_drvdata(file);
+	struct vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
 
 	v4l2_dbg(1, debug, &vpbe_dev->v4l2_dev, "VIDIOC_CROPCAP ioctl\n");
 
-	अगर (type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
-		वापस -EINVAL;
+	if (type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
+		return -EINVAL;
 
 	*f = vpbe_dev->current_timings.aspect;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vpbe_display_g_fmt(काष्ठा file *file, व्योम *priv,
-				काष्ठा v4l2_क्रमmat *fmt)
-अणु
-	काष्ठा vpbe_layer *layer = video_drvdata(file);
-	काष्ठा vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
+static int vpbe_display_g_fmt(struct file *file, void *priv,
+				struct v4l2_format *fmt)
+{
+	struct vpbe_layer *layer = video_drvdata(file);
+	struct vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
 
 	v4l2_dbg(1, debug, &vpbe_dev->v4l2_dev,
 			"VIDIOC_G_FMT, layer id = %d\n",
 			layer->device_id);
 
 	/* If buffer type is video output */
-	अगर (V4L2_BUF_TYPE_VIDEO_OUTPUT != fmt->type) अणु
+	if (V4L2_BUF_TYPE_VIDEO_OUTPUT != fmt->type) {
 		v4l2_err(&vpbe_dev->v4l2_dev, "invalid type\n");
-		वापस -EINVAL;
-	पूर्ण
-	/* Fill in the inक्रमmation about क्रमmat */
+		return -EINVAL;
+	}
+	/* Fill in the information about format */
 	fmt->fmt.pix = layer->pix_fmt;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vpbe_display_क्रमागत_fmt(काष्ठा file *file, व्योम  *priv,
-				   काष्ठा v4l2_fmtdesc *fmt)
-अणु
-	काष्ठा vpbe_layer *layer = video_drvdata(file);
-	काष्ठा vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
+static int vpbe_display_enum_fmt(struct file *file, void  *priv,
+				   struct v4l2_fmtdesc *fmt)
+{
+	struct vpbe_layer *layer = video_drvdata(file);
+	struct vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
 
 	v4l2_dbg(1, debug, &vpbe_dev->v4l2_dev,
 				"VIDIOC_ENUM_FMT, layer id = %d\n",
 				layer->device_id);
-	अगर (fmt->index > 1) अणु
+	if (fmt->index > 1) {
 		v4l2_err(&vpbe_dev->v4l2_dev, "Invalid format index\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Fill in the inक्रमmation about क्रमmat */
-	अगर (fmt->index == 0)
-		fmt->pixelक्रमmat = V4L2_PIX_FMT_UYVY;
-	अन्यथा
-		fmt->pixelक्रमmat = V4L2_PIX_FMT_NV12;
+	/* Fill in the information about format */
+	if (fmt->index == 0)
+		fmt->pixelformat = V4L2_PIX_FMT_UYVY;
+	else
+		fmt->pixelformat = V4L2_PIX_FMT_NV12;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vpbe_display_s_fmt(काष्ठा file *file, व्योम *priv,
-				काष्ठा v4l2_क्रमmat *fmt)
-अणु
-	काष्ठा vpbe_layer *layer = video_drvdata(file);
-	काष्ठा vpbe_display *disp_dev = layer->disp_dev;
-	काष्ठा vpbe_device *vpbe_dev = disp_dev->vpbe_dev;
-	काष्ठा osd_layer_config *cfg  = &layer->layer_info.config;
-	काष्ठा v4l2_pix_क्रमmat *pixfmt = &fmt->fmt.pix;
-	काष्ठा osd_state *osd_device = disp_dev->osd_device;
-	पूर्णांक ret;
+static int vpbe_display_s_fmt(struct file *file, void *priv,
+				struct v4l2_format *fmt)
+{
+	struct vpbe_layer *layer = video_drvdata(file);
+	struct vpbe_display *disp_dev = layer->disp_dev;
+	struct vpbe_device *vpbe_dev = disp_dev->vpbe_dev;
+	struct osd_layer_config *cfg  = &layer->layer_info.config;
+	struct v4l2_pix_format *pixfmt = &fmt->fmt.pix;
+	struct osd_state *osd_device = disp_dev->osd_device;
+	int ret;
 
 	v4l2_dbg(1, debug, &vpbe_dev->v4l2_dev,
 			"VIDIOC_S_FMT, layer id = %d\n",
 			layer->device_id);
 
-	अगर (vb2_is_busy(&layer->buffer_queue))
-		वापस -EBUSY;
+	if (vb2_is_busy(&layer->buffer_queue))
+		return -EBUSY;
 
-	अगर (V4L2_BUF_TYPE_VIDEO_OUTPUT != fmt->type) अणु
+	if (V4L2_BUF_TYPE_VIDEO_OUTPUT != fmt->type) {
 		v4l2_dbg(1, debug, &vpbe_dev->v4l2_dev, "invalid type\n");
-		वापस -EINVAL;
-	पूर्ण
-	/* Check क्रम valid pixel क्रमmat */
-	ret = vpbe_try_क्रमmat(disp_dev, pixfmt, 1);
-	अगर (ret)
-		वापस ret;
+		return -EINVAL;
+	}
+	/* Check for valid pixel format */
+	ret = vpbe_try_format(disp_dev, pixfmt, 1);
+	if (ret)
+		return ret;
 
 	/* YUV420 is requested, check availability of the
-	other video winकरोw */
+	other video window */
 
 	layer->pix_fmt = *pixfmt;
-	अगर (pixfmt->pixelक्रमmat == V4L2_PIX_FMT_NV12) अणु
-		काष्ठा vpbe_layer *otherlayer;
+	if (pixfmt->pixelformat == V4L2_PIX_FMT_NV12) {
+		struct vpbe_layer *otherlayer;
 
 		otherlayer = _vpbe_display_get_other_win_layer(disp_dev, layer);
-		/* अगर other layer is available, only
-		 * claim it, करो not configure it
+		/* if other layer is available, only
+		 * claim it, do not configure it
 		 */
 		ret = osd_device->ops.request_layer(osd_device,
 						    otherlayer->layer_info.id);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			v4l2_err(&vpbe_dev->v4l2_dev,
 				 "Display Manager failed to allocate layer\n");
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण
+			return -EBUSY;
+		}
+	}
 
 	/* Get osd layer config */
 	osd_device->ops.get_layer_config(osd_device,
 			layer->layer_info.id, cfg);
-	/* Store the pixel क्रमmat in the layer object */
+	/* Store the pixel format in the layer object */
 	cfg->xsize = pixfmt->width;
 	cfg->ysize = pixfmt->height;
 	cfg->line_length = pixfmt->bytesperline;
 	cfg->ypos = 0;
 	cfg->xpos = 0;
-	cfg->पूर्णांकerlaced = vpbe_dev->current_timings.पूर्णांकerlaced;
+	cfg->interlaced = vpbe_dev->current_timings.interlaced;
 
-	अगर (V4L2_PIX_FMT_UYVY == pixfmt->pixelक्रमmat)
+	if (V4L2_PIX_FMT_UYVY == pixfmt->pixelformat)
 		cfg->pixfmt = PIXFMT_YCBCRI;
 
-	/* Change of the शेष pixel क्रमmat क्रम both video winकरोws */
-	अगर (V4L2_PIX_FMT_NV12 == pixfmt->pixelक्रमmat) अणु
-		काष्ठा vpbe_layer *otherlayer;
+	/* Change of the default pixel format for both video windows */
+	if (V4L2_PIX_FMT_NV12 == pixfmt->pixelformat) {
+		struct vpbe_layer *otherlayer;
 		cfg->pixfmt = PIXFMT_NV12;
 		otherlayer = _vpbe_display_get_other_win_layer(disp_dev,
 								layer);
 		otherlayer->layer_info.config.pixfmt = PIXFMT_NV12;
-	पूर्ण
+	}
 
-	/* Set the layer config in the osd winकरोw */
+	/* Set the layer config in the osd window */
 	ret = osd_device->ops.set_layer_config(osd_device,
 				layer->layer_info.id, cfg);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		v4l2_err(&vpbe_dev->v4l2_dev,
 				"Error in S_FMT params:\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Readback and fill the local copy of current pix क्रमmat */
+	/* Readback and fill the local copy of current pix format */
 	osd_device->ops.get_layer_config(osd_device,
 			layer->layer_info.id, cfg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vpbe_display_try_fmt(काष्ठा file *file, व्योम *priv,
-				  काष्ठा v4l2_क्रमmat *fmt)
-अणु
-	काष्ठा vpbe_layer *layer = video_drvdata(file);
-	काष्ठा vpbe_display *disp_dev = layer->disp_dev;
-	काष्ठा vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
-	काष्ठा v4l2_pix_क्रमmat *pixfmt = &fmt->fmt.pix;
+static int vpbe_display_try_fmt(struct file *file, void *priv,
+				  struct v4l2_format *fmt)
+{
+	struct vpbe_layer *layer = video_drvdata(file);
+	struct vpbe_display *disp_dev = layer->disp_dev;
+	struct vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
+	struct v4l2_pix_format *pixfmt = &fmt->fmt.pix;
 
 	v4l2_dbg(1, debug, &vpbe_dev->v4l2_dev, "VIDIOC_TRY_FMT\n");
 
-	अगर (V4L2_BUF_TYPE_VIDEO_OUTPUT != fmt->type) अणु
+	if (V4L2_BUF_TYPE_VIDEO_OUTPUT != fmt->type) {
 		v4l2_err(&vpbe_dev->v4l2_dev, "invalid type\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Check क्रम valid field क्रमmat */
-	वापस  vpbe_try_क्रमmat(disp_dev, pixfmt, 0);
+	/* Check for valid field format */
+	return  vpbe_try_format(disp_dev, pixfmt, 0);
 
-पूर्ण
+}
 
 /*
  * vpbe_display_s_std - Set the given standard in the encoder
  *
- * Sets the standard अगर supported by the current encoder. Return the status.
+ * Sets the standard if supported by the current encoder. Return the status.
  * 0 - success & -EINVAL on error
  */
-अटल पूर्णांक vpbe_display_s_std(काष्ठा file *file, व्योम *priv,
+static int vpbe_display_s_std(struct file *file, void *priv,
 				v4l2_std_id std_id)
-अणु
-	काष्ठा vpbe_layer *layer = video_drvdata(file);
-	काष्ठा vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
-	पूर्णांक ret;
+{
+	struct vpbe_layer *layer = video_drvdata(file);
+	struct vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
+	int ret;
 
 	v4l2_dbg(1, debug, &vpbe_dev->v4l2_dev, "VIDIOC_S_STD\n");
 
-	अगर (vb2_is_busy(&layer->buffer_queue))
-		वापस -EBUSY;
+	if (vb2_is_busy(&layer->buffer_queue))
+		return -EBUSY;
 
-	अगर (vpbe_dev->ops.s_std) अणु
+	if (vpbe_dev->ops.s_std) {
 		ret = vpbe_dev->ops.s_std(vpbe_dev, std_id);
-		अगर (ret) अणु
+		if (ret) {
 			v4l2_err(&vpbe_dev->v4l2_dev,
 			"Failed to set standard for sub devices\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+			return -EINVAL;
+		}
+	} else {
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * vpbe_display_g_std - Get the standard in the current encoder
@@ -948,127 +947,127 @@ vpbe_disp_calculate_scale_factor(काष्ठा vpbe_display *disp_dev,
  * Get the standard in the current encoder. Return the status. 0 - success
  * -EINVAL on error
  */
-अटल पूर्णांक vpbe_display_g_std(काष्ठा file *file, व्योम *priv,
+static int vpbe_display_g_std(struct file *file, void *priv,
 				v4l2_std_id *std_id)
-अणु
-	काष्ठा vpbe_layer *layer = video_drvdata(file);
-	काष्ठा vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
+{
+	struct vpbe_layer *layer = video_drvdata(file);
+	struct vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
 
 	v4l2_dbg(1, debug, &vpbe_dev->v4l2_dev,	"VIDIOC_G_STD\n");
 
 	/* Get the standard from the current encoder */
-	अगर (vpbe_dev->current_timings.timings_type & VPBE_ENC_STD) अणु
+	if (vpbe_dev->current_timings.timings_type & VPBE_ENC_STD) {
 		*std_id = vpbe_dev->current_timings.std_id;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /*
- * vpbe_display_क्रमागत_output - क्रमागतerate outमाला_दो
+ * vpbe_display_enum_output - enumerate outputs
  *
- * Enumerates the outमाला_दो available at the vpbe display
- * वापसs the status, -EINVAL अगर end of output list
+ * Enumerates the outputs available at the vpbe display
+ * returns the status, -EINVAL if end of output list
  */
-अटल पूर्णांक vpbe_display_क्रमागत_output(काष्ठा file *file, व्योम *priv,
-				    काष्ठा v4l2_output *output)
-अणु
-	काष्ठा vpbe_layer *layer = video_drvdata(file);
-	काष्ठा vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
-	पूर्णांक ret;
+static int vpbe_display_enum_output(struct file *file, void *priv,
+				    struct v4l2_output *output)
+{
+	struct vpbe_layer *layer = video_drvdata(file);
+	struct vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
+	int ret;
 
 	v4l2_dbg(1, debug, &vpbe_dev->v4l2_dev,	"VIDIOC_ENUM_OUTPUT\n");
 
-	/* Enumerate outमाला_दो */
-	अगर (!vpbe_dev->ops.क्रमागत_outमाला_दो)
-		वापस -EINVAL;
+	/* Enumerate outputs */
+	if (!vpbe_dev->ops.enum_outputs)
+		return -EINVAL;
 
-	ret = vpbe_dev->ops.क्रमागत_outमाला_दो(vpbe_dev, output);
-	अगर (ret) अणु
+	ret = vpbe_dev->ops.enum_outputs(vpbe_dev, output);
+	if (ret) {
 		v4l2_dbg(1, debug, &vpbe_dev->v4l2_dev,
 			"Failed to enumerate outputs\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * vpbe_display_s_output - Set output to
- * the output specअगरied by the index
+ * the output specified by the index
  */
-अटल पूर्णांक vpbe_display_s_output(काष्ठा file *file, व्योम *priv,
-				अचिन्हित पूर्णांक i)
-अणु
-	काष्ठा vpbe_layer *layer = video_drvdata(file);
-	काष्ठा vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
-	पूर्णांक ret;
+static int vpbe_display_s_output(struct file *file, void *priv,
+				unsigned int i)
+{
+	struct vpbe_layer *layer = video_drvdata(file);
+	struct vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
+	int ret;
 
 	v4l2_dbg(1, debug, &vpbe_dev->v4l2_dev,	"VIDIOC_S_OUTPUT\n");
 
-	अगर (vb2_is_busy(&layer->buffer_queue))
-		वापस -EBUSY;
+	if (vb2_is_busy(&layer->buffer_queue))
+		return -EBUSY;
 
-	अगर (!vpbe_dev->ops.set_output)
-		वापस -EINVAL;
+	if (!vpbe_dev->ops.set_output)
+		return -EINVAL;
 
 	ret = vpbe_dev->ops.set_output(vpbe_dev, i);
-	अगर (ret) अणु
+	if (ret) {
 		v4l2_err(&vpbe_dev->v4l2_dev,
 			"Failed to set output for sub devices\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * vpbe_display_g_output - Get output from subdevice
- * क्रम a given by the index
+ * for a given by the index
  */
-अटल पूर्णांक vpbe_display_g_output(काष्ठा file *file, व्योम *priv,
-				अचिन्हित पूर्णांक *i)
-अणु
-	काष्ठा vpbe_layer *layer = video_drvdata(file);
-	काष्ठा vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
+static int vpbe_display_g_output(struct file *file, void *priv,
+				unsigned int *i)
+{
+	struct vpbe_layer *layer = video_drvdata(file);
+	struct vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
 
 	v4l2_dbg(1, debug, &vpbe_dev->v4l2_dev, "VIDIOC_G_OUTPUT\n");
 	/* Get the standard from the current encoder */
 	*i = vpbe_dev->current_out_index;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * vpbe_display_क्रमागत_dv_timings - Enumerate the dv timings
+ * vpbe_display_enum_dv_timings - Enumerate the dv timings
  *
- * क्रमागत the timings in the current encoder. Return the status. 0 - success
+ * enum the timings in the current encoder. Return the status. 0 - success
  * -EINVAL on error
  */
-अटल पूर्णांक
-vpbe_display_क्रमागत_dv_timings(काष्ठा file *file, व्योम *priv,
-			काष्ठा v4l2_क्रमागत_dv_timings *timings)
-अणु
-	काष्ठा vpbe_layer *layer = video_drvdata(file);
-	काष्ठा vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
-	पूर्णांक ret;
+static int
+vpbe_display_enum_dv_timings(struct file *file, void *priv,
+			struct v4l2_enum_dv_timings *timings)
+{
+	struct vpbe_layer *layer = video_drvdata(file);
+	struct vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
+	int ret;
 
 	v4l2_dbg(1, debug, &vpbe_dev->v4l2_dev, "VIDIOC_ENUM_DV_TIMINGS\n");
 
-	/* Enumerate outमाला_दो */
-	अगर (!vpbe_dev->ops.क्रमागत_dv_timings)
-		वापस -EINVAL;
+	/* Enumerate outputs */
+	if (!vpbe_dev->ops.enum_dv_timings)
+		return -EINVAL;
 
-	ret = vpbe_dev->ops.क्रमागत_dv_timings(vpbe_dev, timings);
-	अगर (ret) अणु
+	ret = vpbe_dev->ops.enum_dv_timings(vpbe_dev, timings);
+	if (ret) {
 		v4l2_err(&vpbe_dev->v4l2_dev,
 			"Failed to enumerate dv timings info\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * vpbe_display_s_dv_timings - Set the dv timings
@@ -1076,32 +1075,32 @@ vpbe_display_क्रमागत_dv_timings(काष्ठा file *file, व
  * Set the timings in the current encoder. Return the status. 0 - success
  * -EINVAL on error
  */
-अटल पूर्णांक
-vpbe_display_s_dv_timings(काष्ठा file *file, व्योम *priv,
-				काष्ठा v4l2_dv_timings *timings)
-अणु
-	काष्ठा vpbe_layer *layer = video_drvdata(file);
-	काष्ठा vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
-	पूर्णांक ret;
+static int
+vpbe_display_s_dv_timings(struct file *file, void *priv,
+				struct v4l2_dv_timings *timings)
+{
+	struct vpbe_layer *layer = video_drvdata(file);
+	struct vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
+	int ret;
 
 	v4l2_dbg(1, debug, &vpbe_dev->v4l2_dev, "VIDIOC_S_DV_TIMINGS\n");
 
-	अगर (vb2_is_busy(&layer->buffer_queue))
-		वापस -EBUSY;
+	if (vb2_is_busy(&layer->buffer_queue))
+		return -EBUSY;
 
 	/* Set the given standard in the encoder */
-	अगर (!vpbe_dev->ops.s_dv_timings)
-		वापस -EINVAL;
+	if (!vpbe_dev->ops.s_dv_timings)
+		return -EINVAL;
 
 	ret = vpbe_dev->ops.s_dv_timings(vpbe_dev, timings);
-	अगर (ret) अणु
+	if (ret) {
 		v4l2_err(&vpbe_dev->v4l2_dev,
 			"Failed to set the dv timings info\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * vpbe_display_g_dv_timings - Set the dv timings
@@ -1109,85 +1108,85 @@ vpbe_display_s_dv_timings(काष्ठा file *file, व्योम *priv,
  * Get the timings in the current encoder. Return the status. 0 - success
  * -EINVAL on error
  */
-अटल पूर्णांक
-vpbe_display_g_dv_timings(काष्ठा file *file, व्योम *priv,
-				काष्ठा v4l2_dv_timings *dv_timings)
-अणु
-	काष्ठा vpbe_layer *layer = video_drvdata(file);
-	काष्ठा vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
+static int
+vpbe_display_g_dv_timings(struct file *file, void *priv,
+				struct v4l2_dv_timings *dv_timings)
+{
+	struct vpbe_layer *layer = video_drvdata(file);
+	struct vpbe_device *vpbe_dev = layer->disp_dev->vpbe_dev;
 
 	v4l2_dbg(1, debug, &vpbe_dev->v4l2_dev, "VIDIOC_G_DV_TIMINGS\n");
 
 	/* Get the given standard in the encoder */
 
-	अगर (vpbe_dev->current_timings.timings_type &
-				VPBE_ENC_DV_TIMINGS) अणु
+	if (vpbe_dev->current_timings.timings_type &
+				VPBE_ENC_DV_TIMINGS) {
 		*dv_timings = vpbe_dev->current_timings.dv_timings;
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+	} else {
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * vpbe_display_खोलो()
- * It creates object of file handle काष्ठाure and stores it in निजी_data
- * member of filepoपूर्णांकer
+ * vpbe_display_open()
+ * It creates object of file handle structure and stores it in private_data
+ * member of filepointer
  */
-अटल पूर्णांक vpbe_display_खोलो(काष्ठा file *file)
-अणु
-	काष्ठा vpbe_layer *layer = video_drvdata(file);
-	काष्ठा vpbe_display *disp_dev = layer->disp_dev;
-	काष्ठा vpbe_device *vpbe_dev = disp_dev->vpbe_dev;
-	काष्ठा osd_state *osd_device = disp_dev->osd_device;
-	पूर्णांक err;
+static int vpbe_display_open(struct file *file)
+{
+	struct vpbe_layer *layer = video_drvdata(file);
+	struct vpbe_display *disp_dev = layer->disp_dev;
+	struct vpbe_device *vpbe_dev = disp_dev->vpbe_dev;
+	struct osd_state *osd_device = disp_dev->osd_device;
+	int err;
 
-	/* creating context क्रम file descriptor */
-	err = v4l2_fh_खोलो(file);
-	अगर (err) अणु
+	/* creating context for file descriptor */
+	err = v4l2_fh_open(file);
+	if (err) {
 		v4l2_err(&vpbe_dev->v4l2_dev, "v4l2_fh_open failed\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	/* leaving अगर layer is alपढ़ोy initialized */
-	अगर (!v4l2_fh_is_singular_file(file))
-		वापस err;
+	/* leaving if layer is already initialized */
+	if (!v4l2_fh_is_singular_file(file))
+		return err;
 
-	अगर (!layer->usrs) अणु
-		अगर (mutex_lock_पूर्णांकerruptible(&layer->opslock))
-			वापस -ERESTARTSYS;
-		/* First claim the layer क्रम this device */
+	if (!layer->usrs) {
+		if (mutex_lock_interruptible(&layer->opslock))
+			return -ERESTARTSYS;
+		/* First claim the layer for this device */
 		err = osd_device->ops.request_layer(osd_device,
 						layer->layer_info.id);
 		mutex_unlock(&layer->opslock);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			/* Couldn't get layer */
 			v4l2_err(&vpbe_dev->v4l2_dev,
 				"Display Manager failed to allocate layer\n");
 			v4l2_fh_release(file);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 	/* Increment layer usrs counter */
 	layer->usrs++;
 	v4l2_dbg(1, debug, &vpbe_dev->v4l2_dev,
 			"vpbe display device opened successfully\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * vpbe_display_release()
- * This function deletes buffer queue, मुक्तs the buffers and the davinci
+ * This function deletes buffer queue, frees the buffers and the davinci
  * display file * handle
  */
-अटल पूर्णांक vpbe_display_release(काष्ठा file *file)
-अणु
-	काष्ठा vpbe_layer *layer = video_drvdata(file);
-	काष्ठा osd_layer_config *cfg  = &layer->layer_info.config;
-	काष्ठा vpbe_display *disp_dev = layer->disp_dev;
-	काष्ठा vpbe_device *vpbe_dev = disp_dev->vpbe_dev;
-	काष्ठा osd_state *osd_device = disp_dev->osd_device;
+static int vpbe_display_release(struct file *file)
+{
+	struct vpbe_layer *layer = video_drvdata(file);
+	struct osd_layer_config *cfg  = &layer->layer_info.config;
+	struct vpbe_display *disp_dev = layer->disp_dev;
+	struct vpbe_device *vpbe_dev = disp_dev->vpbe_dev;
+	struct osd_state *osd_device = disp_dev->osd_device;
 
 	v4l2_dbg(1, debug, &vpbe_dev->v4l2_dev, "vpbe_display_release\n");
 
@@ -1198,35 +1197,35 @@ vpbe_display_g_dv_timings(काष्ठा file *file, व्योम *priv,
 	/* Decrement layer usrs counter */
 	layer->usrs--;
 	/* If this file handle has initialize encoder device, reset it */
-	अगर (!layer->usrs) अणु
-		अगर (cfg->pixfmt == PIXFMT_NV12) अणु
-			काष्ठा vpbe_layer *otherlayer;
+	if (!layer->usrs) {
+		if (cfg->pixfmt == PIXFMT_NV12) {
+			struct vpbe_layer *otherlayer;
 			otherlayer =
 			_vpbe_display_get_other_win_layer(disp_dev, layer);
 			osd_device->ops.disable_layer(osd_device,
 					otherlayer->layer_info.id);
 			osd_device->ops.release_layer(osd_device,
 					otherlayer->layer_info.id);
-		पूर्ण
+		}
 		osd_device->ops.disable_layer(osd_device,
 				layer->layer_info.id);
 		osd_device->ops.release_layer(osd_device,
 				layer->layer_info.id);
-	पूर्ण
+	}
 
-	_vb2_fop_release(file, शून्य);
+	_vb2_fop_release(file, NULL);
 	mutex_unlock(&layer->opslock);
 
 	disp_dev->cbcr_ofst = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* vpbe capture ioctl operations */
-अटल स्थिर काष्ठा v4l2_ioctl_ops vpbe_ioctl_ops = अणु
+static const struct v4l2_ioctl_ops vpbe_ioctl_ops = {
 	.vidioc_querycap	 = vpbe_display_querycap,
 	.vidioc_g_fmt_vid_out    = vpbe_display_g_fmt,
-	.vidioc_क्रमागत_fmt_vid_out = vpbe_display_क्रमागत_fmt,
+	.vidioc_enum_fmt_vid_out = vpbe_display_enum_fmt,
 	.vidioc_s_fmt_vid_out    = vpbe_display_s_fmt,
 	.vidioc_try_fmt_vid_out  = vpbe_display_try_fmt,
 
@@ -1246,53 +1245,53 @@ vpbe_display_g_dv_timings(काष्ठा file *file, व्योम *priv,
 	.vidioc_s_std		 = vpbe_display_s_std,
 	.vidioc_g_std		 = vpbe_display_g_std,
 
-	.vidioc_क्रमागत_output	 = vpbe_display_क्रमागत_output,
+	.vidioc_enum_output	 = vpbe_display_enum_output,
 	.vidioc_s_output	 = vpbe_display_s_output,
 	.vidioc_g_output	 = vpbe_display_g_output,
 
 	.vidioc_s_dv_timings	 = vpbe_display_s_dv_timings,
 	.vidioc_g_dv_timings	 = vpbe_display_g_dv_timings,
-	.vidioc_क्रमागत_dv_timings	 = vpbe_display_क्रमागत_dv_timings,
-पूर्ण;
+	.vidioc_enum_dv_timings	 = vpbe_display_enum_dv_timings,
+};
 
-अटल स्थिर काष्ठा v4l2_file_operations vpbe_fops = अणु
+static const struct v4l2_file_operations vpbe_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = vpbe_display_खोलो,
+	.open = vpbe_display_open,
 	.release = vpbe_display_release,
 	.unlocked_ioctl = video_ioctl2,
 	.mmap = vb2_fop_mmap,
 	.poll =  vb2_fop_poll,
-पूर्ण;
+};
 
-अटल पूर्णांक vpbe_device_get(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा vpbe_display *vpbe_disp  = data;
+static int vpbe_device_get(struct device *dev, void *data)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct vpbe_display *vpbe_disp  = data;
 
-	अगर (म_भेद("vpbe_controller", pdev->name) == 0)
-		vpbe_disp->vpbe_dev = platक्रमm_get_drvdata(pdev);
+	if (strcmp("vpbe_controller", pdev->name) == 0)
+		vpbe_disp->vpbe_dev = platform_get_drvdata(pdev);
 
-	अगर (म_माला(pdev->name, "vpbe-osd"))
-		vpbe_disp->osd_device = platक्रमm_get_drvdata(pdev);
+	if (strstr(pdev->name, "vpbe-osd"))
+		vpbe_disp->osd_device = platform_get_drvdata(pdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक init_vpbe_layer(पूर्णांक i, काष्ठा vpbe_display *disp_dev,
-			   काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा vpbe_layer *vpbe_display_layer = शून्य;
-	काष्ठा video_device *vbd = शून्य;
+static int init_vpbe_layer(int i, struct vpbe_display *disp_dev,
+			   struct platform_device *pdev)
+{
+	struct vpbe_layer *vpbe_display_layer = NULL;
+	struct video_device *vbd = NULL;
 
-	/* Allocate memory क्रम four plane display objects */
-	disp_dev->dev[i] = kzalloc(माप(*disp_dev->dev[i]), GFP_KERNEL);
-	अगर (!disp_dev->dev[i])
-		वापस  -ENOMEM;
+	/* Allocate memory for four plane display objects */
+	disp_dev->dev[i] = kzalloc(sizeof(*disp_dev->dev[i]), GFP_KERNEL);
+	if (!disp_dev->dev[i])
+		return  -ENOMEM;
 
 	spin_lock_init(&disp_dev->dev[i]->irqlock);
 	mutex_init(&disp_dev->dev[i]->opslock);
 
-	/* Get the poपूर्णांकer to the layer object */
+	/* Get the pointer to the layer object */
 	vpbe_display_layer = disp_dev->dev[i];
 	vbd = &vpbe_display_layer->video_dev;
 	/* Initialize field of video device */
@@ -1302,14 +1301,14 @@ vpbe_display_g_dv_timings(काष्ठा file *file, व्योम *priv,
 	vbd->minor	= -1;
 	vbd->v4l2_dev   = &disp_dev->vpbe_dev->v4l2_dev;
 	vbd->lock	= &vpbe_display_layer->opslock;
-	vbd->vfl_dir	= VFL_सूची_TX;
+	vbd->vfl_dir	= VFL_DIR_TX;
 	vbd->device_caps = V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_STREAMING;
 
-	अगर (disp_dev->vpbe_dev->current_timings.timings_type &
+	if (disp_dev->vpbe_dev->current_timings.timings_type &
 			VPBE_ENC_STD)
 		vbd->tvnorms = (V4L2_STD_525_60 | V4L2_STD_625_50);
 
-	snम_लिखो(vbd->name, माप(vbd->name),
+	snprintf(vbd->name, sizeof(vbd->name),
 			"DaVinci_VPBE Display_DRIVER_V%d.%d.%d",
 			(VPBE_DISPLAY_VERSION_CODE >> 16) & 0xff,
 			(VPBE_DISPLAY_VERSION_CODE >> 8) & 0xff,
@@ -1321,14 +1320,14 @@ vpbe_display_g_dv_timings(काष्ठा file *file, व्योम *priv,
 		((i == VPBE_DISPLAY_DEVICE_0) ? WIN_VID0 : WIN_VID1);
 
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक रेजिस्टर_device(काष्ठा vpbe_layer *vpbe_display_layer,
-			   काष्ठा vpbe_display *disp_dev,
-			   काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक err;
+static int register_device(struct vpbe_layer *vpbe_display_layer,
+			   struct vpbe_display *disp_dev,
+			   struct platform_device *pdev)
+{
+	int err;
 
 	v4l2_info(&disp_dev->vpbe_dev->v4l2_dev,
 		  "Trying to register VPBE display device.\n");
@@ -1338,175 +1337,175 @@ vpbe_display_g_dv_timings(काष्ठा file *file, व्योम *priv,
 		  &vpbe_display_layer->video_dev);
 
 	vpbe_display_layer->video_dev.queue = &vpbe_display_layer->buffer_queue;
-	err = video_रेजिस्टर_device(&vpbe_display_layer->video_dev,
+	err = video_register_device(&vpbe_display_layer->video_dev,
 				    VFL_TYPE_VIDEO,
 				    -1);
-	अगर (err)
-		वापस -ENODEV;
+	if (err)
+		return -ENODEV;
 
 	vpbe_display_layer->disp_dev = disp_dev;
-	/* set the driver data in platक्रमm device */
-	platक्रमm_set_drvdata(pdev, disp_dev);
+	/* set the driver data in platform device */
+	platform_set_drvdata(pdev, disp_dev);
 	video_set_drvdata(&vpbe_display_layer->video_dev,
 			  vpbe_display_layer);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 
 /*
  * vpbe_display_probe()
- * This function creates device entries by रेजिस्टर itself to the V4L2 driver
+ * This function creates device entries by register itself to the V4L2 driver
  * and initializes fields of each layer objects
  */
-अटल पूर्णांक vpbe_display_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा vpbe_display *disp_dev;
-	काष्ठा v4l2_device *v4l2_dev;
-	काष्ठा resource *res = शून्य;
-	काष्ठा vb2_queue *q;
-	पूर्णांक k;
-	पूर्णांक i;
-	पूर्णांक err;
-	पूर्णांक irq;
+static int vpbe_display_probe(struct platform_device *pdev)
+{
+	struct vpbe_display *disp_dev;
+	struct v4l2_device *v4l2_dev;
+	struct resource *res = NULL;
+	struct vb2_queue *q;
+	int k;
+	int i;
+	int err;
+	int irq;
 
-	prपूर्णांकk(KERN_DEBUG "vpbe_display_probe\n");
-	/* Allocate memory क्रम vpbe_display */
-	disp_dev = devm_kzalloc(&pdev->dev, माप(*disp_dev), GFP_KERNEL);
-	अगर (!disp_dev)
-		वापस -ENOMEM;
+	printk(KERN_DEBUG "vpbe_display_probe\n");
+	/* Allocate memory for vpbe_display */
+	disp_dev = devm_kzalloc(&pdev->dev, sizeof(*disp_dev), GFP_KERNEL);
+	if (!disp_dev)
+		return -ENOMEM;
 
 	spin_lock_init(&disp_dev->dma_queue_lock);
 	/*
-	 * Scan all the platक्रमm devices to find the vpbe
+	 * Scan all the platform devices to find the vpbe
 	 * controller device and get the vpbe_dev object
 	 */
-	err = bus_क्रम_each_dev(&platक्रमm_bus_type, शून्य, disp_dev,
+	err = bus_for_each_dev(&platform_bus_type, NULL, disp_dev,
 			vpbe_device_get);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	v4l2_dev = &disp_dev->vpbe_dev->v4l2_dev;
 	/* Initialize the vpbe display controller */
-	अगर (disp_dev->vpbe_dev->ops.initialize) अणु
+	if (disp_dev->vpbe_dev->ops.initialize) {
 		err = disp_dev->vpbe_dev->ops.initialize(&pdev->dev,
 							 disp_dev->vpbe_dev);
-		अगर (err) अणु
+		if (err) {
 			v4l2_err(v4l2_dev, "Error initing vpbe\n");
 			err = -ENOMEM;
-			जाओ probe_out;
-		पूर्ण
-	पूर्ण
+			goto probe_out;
+		}
+	}
 
-	क्रम (i = 0; i < VPBE_DISPLAY_MAX_DEVICES; i++) अणु
-		अगर (init_vpbe_layer(i, disp_dev, pdev)) अणु
+	for (i = 0; i < VPBE_DISPLAY_MAX_DEVICES; i++) {
+		if (init_vpbe_layer(i, disp_dev, pdev)) {
 			err = -ENODEV;
-			जाओ probe_out;
-		पूर्ण
-	पूर्ण
+			goto probe_out;
+		}
+	}
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
-	अगर (!res) अणु
+	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
+	if (!res) {
 		v4l2_err(v4l2_dev, "Unable to get VENC interrupt resource\n");
 		err = -ENODEV;
-		जाओ probe_out;
-	पूर्ण
+		goto probe_out;
+	}
 
 	irq = res->start;
 	err = devm_request_irq(&pdev->dev, irq, venc_isr, 0,
 			       VPBE_DISPLAY_DRIVER, disp_dev);
-	अगर (err) अणु
+	if (err) {
 		v4l2_err(v4l2_dev, "VPBE IRQ request failed\n");
-		जाओ probe_out;
-	पूर्ण
+		goto probe_out;
+	}
 
-	क्रम (i = 0; i < VPBE_DISPLAY_MAX_DEVICES; i++) अणु
+	for (i = 0; i < VPBE_DISPLAY_MAX_DEVICES; i++) {
 		/* initialize vb2 queue */
 		q = &disp_dev->dev[i]->buffer_queue;
-		स_रखो(q, 0, माप(*q));
+		memset(q, 0, sizeof(*q));
 		q->type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 		q->io_modes = VB2_MMAP | VB2_USERPTR | VB2_DMABUF;
 		q->drv_priv = disp_dev->dev[i];
 		q->ops = &video_qops;
 		q->mem_ops = &vb2_dma_contig_memops;
-		q->buf_काष्ठा_size = माप(काष्ठा vpbe_disp_buffer);
-		q->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+		q->buf_struct_size = sizeof(struct vpbe_disp_buffer);
+		q->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
 		q->min_buffers_needed = 1;
 		q->lock = &disp_dev->dev[i]->opslock;
 		q->dev = disp_dev->vpbe_dev->pdev;
 		err = vb2_queue_init(q);
-		अगर (err) अणु
+		if (err) {
 			v4l2_err(v4l2_dev, "vb2_queue_init() failed\n");
-			जाओ probe_out;
-		पूर्ण
+			goto probe_out;
+		}
 
 		INIT_LIST_HEAD(&disp_dev->dev[i]->dma_queue);
 
-		अगर (रेजिस्टर_device(disp_dev->dev[i], disp_dev, pdev)) अणु
+		if (register_device(disp_dev->dev[i], disp_dev, pdev)) {
 			err = -ENODEV;
-			जाओ probe_out;
-		पूर्ण
-	पूर्ण
+			goto probe_out;
+		}
+	}
 
 	v4l2_dbg(1, debug, v4l2_dev,
 		 "Successfully completed the probing of vpbe v4l2 device\n");
 
-	वापस 0;
+	return 0;
 
 probe_out:
-	क्रम (k = 0; k < VPBE_DISPLAY_MAX_DEVICES; k++) अणु
-		/* Unरेजिस्टर video device */
-		अगर (disp_dev->dev[k]) अणु
-			video_unरेजिस्टर_device(&disp_dev->dev[k]->video_dev);
-			kमुक्त(disp_dev->dev[k]);
-		पूर्ण
-	पूर्ण
-	वापस err;
-पूर्ण
+	for (k = 0; k < VPBE_DISPLAY_MAX_DEVICES; k++) {
+		/* Unregister video device */
+		if (disp_dev->dev[k]) {
+			video_unregister_device(&disp_dev->dev[k]->video_dev);
+			kfree(disp_dev->dev[k]);
+		}
+	}
+	return err;
+}
 
 /*
- * vpbe_display_हटाओ()
- * It un-रेजिस्टर hardware layer from V4L2 driver
+ * vpbe_display_remove()
+ * It un-register hardware layer from V4L2 driver
  */
-अटल पूर्णांक vpbe_display_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा vpbe_layer *vpbe_display_layer;
-	काष्ठा vpbe_display *disp_dev = platक्रमm_get_drvdata(pdev);
-	काष्ठा vpbe_device *vpbe_dev = disp_dev->vpbe_dev;
-	पूर्णांक i;
+static int vpbe_display_remove(struct platform_device *pdev)
+{
+	struct vpbe_layer *vpbe_display_layer;
+	struct vpbe_display *disp_dev = platform_get_drvdata(pdev);
+	struct vpbe_device *vpbe_dev = disp_dev->vpbe_dev;
+	int i;
 
 	v4l2_dbg(1, debug, &vpbe_dev->v4l2_dev, "vpbe_display_remove\n");
 
 	/* deinitialize the vpbe display controller */
-	अगर (vpbe_dev->ops.deinitialize)
+	if (vpbe_dev->ops.deinitialize)
 		vpbe_dev->ops.deinitialize(&pdev->dev, vpbe_dev);
-	/* un-रेजिस्टर device */
-	क्रम (i = 0; i < VPBE_DISPLAY_MAX_DEVICES; i++) अणु
-		/* Get the poपूर्णांकer to the layer object */
+	/* un-register device */
+	for (i = 0; i < VPBE_DISPLAY_MAX_DEVICES; i++) {
+		/* Get the pointer to the layer object */
 		vpbe_display_layer = disp_dev->dev[i];
-		/* Unरेजिस्टर video device */
-		video_unरेजिस्टर_device(&vpbe_display_layer->video_dev);
+		/* Unregister video device */
+		video_unregister_device(&vpbe_display_layer->video_dev);
 
-	पूर्ण
-	क्रम (i = 0; i < VPBE_DISPLAY_MAX_DEVICES; i++) अणु
-		kमुक्त(disp_dev->dev[i]);
-		disp_dev->dev[i] = शून्य;
-	पूर्ण
+	}
+	for (i = 0; i < VPBE_DISPLAY_MAX_DEVICES; i++) {
+		kfree(disp_dev->dev[i]);
+		disp_dev->dev[i] = NULL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver vpbe_display_driver = अणु
-	.driver = अणु
+static struct platform_driver vpbe_display_driver = {
+	.driver = {
 		.name = VPBE_DISPLAY_DRIVER,
-		.bus = &platक्रमm_bus_type,
-	पूर्ण,
+		.bus = &platform_bus_type,
+	},
 	.probe = vpbe_display_probe,
-	.हटाओ = vpbe_display_हटाओ,
-पूर्ण;
+	.remove = vpbe_display_remove,
+};
 
-module_platक्रमm_driver(vpbe_display_driver);
+module_platform_driver(vpbe_display_driver);
 
 MODULE_DESCRIPTION("TI DM644x/DM355/DM365 VPBE Display controller");
 MODULE_LICENSE("GPL");

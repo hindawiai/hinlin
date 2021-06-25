@@ -1,126 +1,125 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <linux/blkdev.h>
-#समावेश <linux/iversion.h>
-#समावेश "compression.h"
-#समावेश "ctree.h"
-#समावेश "delalloc-space.h"
-#समावेश "reflink.h"
-#समावेश "transaction.h"
+#include <linux/blkdev.h>
+#include <linux/iversion.h>
+#include "compression.h"
+#include "ctree.h"
+#include "delalloc-space.h"
+#include "reflink.h"
+#include "transaction.h"
 
-#घोषणा BTRFS_MAX_DEDUPE_LEN	SZ_16M
+#define BTRFS_MAX_DEDUPE_LEN	SZ_16M
 
-अटल पूर्णांक clone_finish_inode_update(काष्ठा btrfs_trans_handle *trans,
-				     काष्ठा inode *inode,
-				     u64 enकरोff,
-				     स्थिर u64 destoff,
-				     स्थिर u64 olen,
-				     पूर्णांक no_समय_update)
-अणु
-	काष्ठा btrfs_root *root = BTRFS_I(inode)->root;
-	पूर्णांक ret;
+static int clone_finish_inode_update(struct btrfs_trans_handle *trans,
+				     struct inode *inode,
+				     u64 endoff,
+				     const u64 destoff,
+				     const u64 olen,
+				     int no_time_update)
+{
+	struct btrfs_root *root = BTRFS_I(inode)->root;
+	int ret;
 
 	inode_inc_iversion(inode);
-	अगर (!no_समय_update)
-		inode->i_mसमय = inode->i_स_समय = current_समय(inode);
+	if (!no_time_update)
+		inode->i_mtime = inode->i_ctime = current_time(inode);
 	/*
 	 * We round up to the block size at eof when determining which
 	 * extents to clone above, but shouldn't round up the file size.
 	 */
-	अगर (enकरोff > destoff + olen)
-		enकरोff = destoff + olen;
-	अगर (enकरोff > inode->i_size) अणु
-		i_size_ग_लिखो(inode, enकरोff);
-		btrfs_inode_safe_disk_i_size_ग_लिखो(BTRFS_I(inode), 0);
-	पूर्ण
+	if (endoff > destoff + olen)
+		endoff = destoff + olen;
+	if (endoff > inode->i_size) {
+		i_size_write(inode, endoff);
+		btrfs_inode_safe_disk_i_size_write(BTRFS_I(inode), 0);
+	}
 
 	ret = btrfs_update_inode(trans, root, BTRFS_I(inode));
-	अगर (ret) अणु
-		btrfs_पात_transaction(trans, ret);
+	if (ret) {
+		btrfs_abort_transaction(trans, ret);
 		btrfs_end_transaction(trans);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	ret = btrfs_end_transaction(trans);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक copy_अंतरभूत_to_page(काष्ठा btrfs_inode *inode,
-			       स्थिर u64 file_offset,
-			       अक्षर *अंतरभूत_data,
-			       स्थिर u64 size,
-			       स्थिर u64 datal,
-			       स्थिर u8 comp_type)
-अणु
-	स्थिर u64 block_size = btrfs_inode_sectorsize(inode);
-	स्थिर u64 range_end = file_offset + block_size - 1;
-	स्थिर माप_प्रकार अंतरभूत_size = size - btrfs_file_extent_calc_अंतरभूत_size(0);
-	अक्षर *data_start = अंतरभूत_data + btrfs_file_extent_calc_अंतरभूत_size(0);
-	काष्ठा extent_changeset *data_reserved = शून्य;
-	काष्ठा page *page = शून्य;
-	काष्ठा address_space *mapping = inode->vfs_inode.i_mapping;
-	पूर्णांक ret;
+static int copy_inline_to_page(struct btrfs_inode *inode,
+			       const u64 file_offset,
+			       char *inline_data,
+			       const u64 size,
+			       const u64 datal,
+			       const u8 comp_type)
+{
+	const u64 block_size = btrfs_inode_sectorsize(inode);
+	const u64 range_end = file_offset + block_size - 1;
+	const size_t inline_size = size - btrfs_file_extent_calc_inline_size(0);
+	char *data_start = inline_data + btrfs_file_extent_calc_inline_size(0);
+	struct extent_changeset *data_reserved = NULL;
+	struct page *page = NULL;
+	struct address_space *mapping = inode->vfs_inode.i_mapping;
+	int ret;
 
 	ASSERT(IS_ALIGNED(file_offset, block_size));
 
 	/*
 	 * We have flushed and locked the ranges of the source and destination
-	 * inodes, we also have locked the inodes, so we are safe to करो a
-	 * reservation here. Also we must not करो the reservation जबतक holding
-	 * a transaction खोलो, otherwise we would deadlock.
+	 * inodes, we also have locked the inodes, so we are safe to do a
+	 * reservation here. Also we must not do the reservation while holding
+	 * a transaction open, otherwise we would deadlock.
 	 */
 	ret = btrfs_delalloc_reserve_space(inode, &data_reserved, file_offset,
 					   block_size);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	page = find_or_create_page(mapping, file_offset >> PAGE_SHIFT,
-				   btrfs_alloc_ग_लिखो_mask(mapping));
-	अगर (!page) अणु
+				   btrfs_alloc_write_mask(mapping));
+	if (!page) {
 		ret = -ENOMEM;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	ret = set_page_extent_mapped(page);
-	अगर (ret < 0)
-		जाओ out_unlock;
+	if (ret < 0)
+		goto out_unlock;
 
 	clear_extent_bit(&inode->io_tree, file_offset, range_end,
 			 EXTENT_DELALLOC | EXTENT_DO_ACCOUNTING | EXTENT_DEFRAG,
-			 0, 0, शून्य);
-	ret = btrfs_set_extent_delalloc(inode, file_offset, range_end, 0, शून्य);
-	अगर (ret)
-		जाओ out_unlock;
+			 0, 0, NULL);
+	ret = btrfs_set_extent_delalloc(inode, file_offset, range_end, 0, NULL);
+	if (ret)
+		goto out_unlock;
 
 	/*
 	 * After dirtying the page our caller will need to start a transaction,
-	 * and अगर we are low on metadata मुक्त space, that can cause flushing of
-	 * delalloc क्रम all inodes in order to get metadata space released.
-	 * However we are holding the range locked क्रम the whole duration of
-	 * the clone/dedupe operation, so we may deadlock अगर that happens and no
+	 * and if we are low on metadata free space, that can cause flushing of
+	 * delalloc for all inodes in order to get metadata space released.
+	 * However we are holding the range locked for the whole duration of
+	 * the clone/dedupe operation, so we may deadlock if that happens and no
 	 * other task releases enough space. So mark this inode as not being
-	 * possible to flush to aव्योम such deadlock. We will clear that flag
+	 * possible to flush to avoid such deadlock. We will clear that flag
 	 * when we finish cloning all extents, since a transaction is started
 	 * after finding each extent to clone.
 	 */
-	set_bit(BTRFS_INODE_NO_DELALLOC_FLUSH, &inode->runसमय_flags);
+	set_bit(BTRFS_INODE_NO_DELALLOC_FLUSH, &inode->runtime_flags);
 
-	अगर (comp_type == BTRFS_COMPRESS_NONE) अणु
-		स_नकल_to_page(page, 0, data_start, datal);
+	if (comp_type == BTRFS_COMPRESS_NONE) {
+		memcpy_to_page(page, 0, data_start, datal);
 		flush_dcache_page(page);
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = btrfs_decompress(comp_type, data_start, page, 0,
-				       अंतरभूत_size, datal);
-		अगर (ret)
-			जाओ out_unlock;
+				       inline_size, datal);
+		if (ret)
+			goto out_unlock;
 		flush_dcache_page(page);
-	पूर्ण
+	}
 
 	/*
-	 * If our अंतरभूत data is smaller then the block/page size, then the
-	 * reमुख्यing of the block/page is equivalent to zeroes. We had something
-	 * like the following करोne:
+	 * If our inline data is smaller then the block/page size, then the
+	 * remaining of the block/page is equivalent to zeroes. We had something
+	 * like the following done:
 	 *
 	 * $ xfs_io -f -c "pwrite -S 0xab 0 500" file
 	 * $ sync  # (or fsync)
@@ -129,122 +128,122 @@ out:
 	 *
 	 * So what's in the range [500, 4095] corresponds to zeroes.
 	 */
-	अगर (datal < block_size) अणु
+	if (datal < block_size) {
 		memzero_page(page, datal, block_size - datal);
 		flush_dcache_page(page);
-	पूर्ण
+	}
 
 	SetPageUptodate(page);
 	ClearPageChecked(page);
 	set_page_dirty(page);
 out_unlock:
-	अगर (page) अणु
+	if (page) {
 		unlock_page(page);
 		put_page(page);
-	पूर्ण
-	अगर (ret)
+	}
+	if (ret)
 		btrfs_delalloc_release_space(inode, data_reserved, file_offset,
 					     block_size, true);
 	btrfs_delalloc_release_extents(inode, block_size);
 out:
-	extent_changeset_मुक्त(data_reserved);
+	extent_changeset_free(data_reserved);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Deal with cloning of अंतरभूत extents. We try to copy the अंतरभूत extent from
+ * Deal with cloning of inline extents. We try to copy the inline extent from
  * the source inode to destination inode when possible. When not possible we
- * copy the अंतरभूत extent's data पूर्णांकo the respective page of the inode.
+ * copy the inline extent's data into the respective page of the inode.
  */
-अटल पूर्णांक clone_copy_अंतरभूत_extent(काष्ठा inode *dst,
-				    काष्ठा btrfs_path *path,
-				    काष्ठा btrfs_key *new_key,
-				    स्थिर u64 drop_start,
-				    स्थिर u64 datal,
-				    स्थिर u64 size,
-				    स्थिर u8 comp_type,
-				    अक्षर *अंतरभूत_data,
-				    काष्ठा btrfs_trans_handle **trans_out)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(dst->i_sb);
-	काष्ठा btrfs_root *root = BTRFS_I(dst)->root;
-	स्थिर u64 aligned_end = ALIGN(new_key->offset + datal,
+static int clone_copy_inline_extent(struct inode *dst,
+				    struct btrfs_path *path,
+				    struct btrfs_key *new_key,
+				    const u64 drop_start,
+				    const u64 datal,
+				    const u64 size,
+				    const u8 comp_type,
+				    char *inline_data,
+				    struct btrfs_trans_handle **trans_out)
+{
+	struct btrfs_fs_info *fs_info = btrfs_sb(dst->i_sb);
+	struct btrfs_root *root = BTRFS_I(dst)->root;
+	const u64 aligned_end = ALIGN(new_key->offset + datal,
 				      fs_info->sectorsize);
-	काष्ठा btrfs_trans_handle *trans = शून्य;
-	काष्ठा btrfs_drop_extents_args drop_args = अणु 0 पूर्ण;
-	पूर्णांक ret;
-	काष्ठा btrfs_key key;
+	struct btrfs_trans_handle *trans = NULL;
+	struct btrfs_drop_extents_args drop_args = { 0 };
+	int ret;
+	struct btrfs_key key;
 
-	अगर (new_key->offset > 0) अणु
-		ret = copy_अंतरभूत_to_page(BTRFS_I(dst), new_key->offset,
-					  अंतरभूत_data, size, datal, comp_type);
-		जाओ out;
-	पूर्ण
+	if (new_key->offset > 0) {
+		ret = copy_inline_to_page(BTRFS_I(dst), new_key->offset,
+					  inline_data, size, datal, comp_type);
+		goto out;
+	}
 
 	key.objectid = btrfs_ino(BTRFS_I(dst));
 	key.type = BTRFS_EXTENT_DATA_KEY;
 	key.offset = 0;
-	ret = btrfs_search_slot(शून्य, root, &key, path, 0, 0);
-	अगर (ret < 0) अणु
-		वापस ret;
-	पूर्ण अन्यथा अगर (ret > 0) अणु
-		अगर (path->slots[0] >= btrfs_header_nritems(path->nodes[0])) अणु
+	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	if (ret < 0) {
+		return ret;
+	} else if (ret > 0) {
+		if (path->slots[0] >= btrfs_header_nritems(path->nodes[0])) {
 			ret = btrfs_next_leaf(root, path);
-			अगर (ret < 0)
-				वापस ret;
-			अन्यथा अगर (ret > 0)
-				जाओ copy_अंतरभूत_extent;
-		पूर्ण
+			if (ret < 0)
+				return ret;
+			else if (ret > 0)
+				goto copy_inline_extent;
+		}
 		btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
-		अगर (key.objectid == btrfs_ino(BTRFS_I(dst)) &&
-		    key.type == BTRFS_EXTENT_DATA_KEY) अणु
+		if (key.objectid == btrfs_ino(BTRFS_I(dst)) &&
+		    key.type == BTRFS_EXTENT_DATA_KEY) {
 			/*
 			 * There's an implicit hole at file offset 0, copy the
-			 * अंतरभूत extent's data to the page.
+			 * inline extent's data to the page.
 			 */
 			ASSERT(key.offset > 0);
-			जाओ copy_to_page;
-		पूर्ण
-	पूर्ण अन्यथा अगर (i_size_पढ़ो(dst) <= datal) अणु
-		काष्ठा btrfs_file_extent_item *ei;
+			goto copy_to_page;
+		}
+	} else if (i_size_read(dst) <= datal) {
+		struct btrfs_file_extent_item *ei;
 
 		ei = btrfs_item_ptr(path->nodes[0], path->slots[0],
-				    काष्ठा btrfs_file_extent_item);
+				    struct btrfs_file_extent_item);
 		/*
-		 * If it's an अंतरभूत extent replace it with the source अंतरभूत
-		 * extent, otherwise copy the source अंतरभूत extent data पूर्णांकo
+		 * If it's an inline extent replace it with the source inline
+		 * extent, otherwise copy the source inline extent data into
 		 * the respective page at the destination inode.
 		 */
-		अगर (btrfs_file_extent_type(path->nodes[0], ei) ==
-		    BTRFS_खाता_EXTENT_INLINE)
-			जाओ copy_अंतरभूत_extent;
+		if (btrfs_file_extent_type(path->nodes[0], ei) ==
+		    BTRFS_FILE_EXTENT_INLINE)
+			goto copy_inline_extent;
 
-		जाओ copy_to_page;
-	पूर्ण
+		goto copy_to_page;
+	}
 
-copy_अंतरभूत_extent:
+copy_inline_extent:
 	/*
 	 * We have no extent items, or we have an extent at offset 0 which may
-	 * or may not be अंतरभूतd. All these हालs are dealt the same way.
+	 * or may not be inlined. All these cases are dealt the same way.
 	 */
-	अगर (i_size_पढ़ो(dst) > datal) अणु
+	if (i_size_read(dst) > datal) {
 		/*
 		 * At the destination offset 0 we have either a hole, a regular
-		 * extent or an अंतरभूत extent larger then the one we want to
-		 * clone. Deal with all these हालs by copying the अंतरभूत extent
-		 * data पूर्णांकo the respective page at the destination inode.
+		 * extent or an inline extent larger then the one we want to
+		 * clone. Deal with all these cases by copying the inline extent
+		 * data into the respective page at the destination inode.
 		 */
-		जाओ copy_to_page;
-	पूर्ण
+		goto copy_to_page;
+	}
 
 	/*
-	 * Release path beक्रमe starting a new transaction so we करोn't hold locks
+	 * Release path before starting a new transaction so we don't hold locks
 	 * that would confuse lockdep.
 	 */
 	btrfs_release_path(path);
 	/*
-	 * If we end up here it means were copy the अंतरभूत extent पूर्णांकo a leaf
+	 * If we end up here it means were copy the inline extent into a leaf
 	 * of the destination inode. We know we will drop or adjust at most one
 	 * extent item in the destination root.
 	 *
@@ -253,67 +252,67 @@ copy_अंतरभूत_extent:
 	 * 1 unit - inode update
 	 */
 	trans = btrfs_start_transaction(root, 3);
-	अगर (IS_ERR(trans)) अणु
+	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
-		trans = शून्य;
-		जाओ out;
-	पूर्ण
+		trans = NULL;
+		goto out;
+	}
 	drop_args.path = path;
 	drop_args.start = drop_start;
 	drop_args.end = aligned_end;
 	drop_args.drop_cache = true;
 	ret = btrfs_drop_extents(trans, root, BTRFS_I(dst), &drop_args);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 	ret = btrfs_insert_empty_item(trans, root, path, new_key, size);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	ग_लिखो_extent_buffer(path->nodes[0], अंतरभूत_data,
+	write_extent_buffer(path->nodes[0], inline_data,
 			    btrfs_item_ptr_offset(path->nodes[0],
 						  path->slots[0]),
 			    size);
 	btrfs_update_inode_bytes(BTRFS_I(dst), datal, drop_args.bytes_found);
-	set_bit(BTRFS_INODE_NEEDS_FULL_SYNC, &BTRFS_I(dst)->runसमय_flags);
+	set_bit(BTRFS_INODE_NEEDS_FULL_SYNC, &BTRFS_I(dst)->runtime_flags);
 	ret = btrfs_inode_set_file_extent_range(BTRFS_I(dst), 0, aligned_end);
 out:
-	अगर (!ret && !trans) अणु
+	if (!ret && !trans) {
 		/*
-		 * No transaction here means we copied the अंतरभूत extent पूर्णांकo a
+		 * No transaction here means we copied the inline extent into a
 		 * page of the destination inode.
 		 *
 		 * 1 unit to update inode item
 		 */
 		trans = btrfs_start_transaction(root, 1);
-		अगर (IS_ERR(trans)) अणु
+		if (IS_ERR(trans)) {
 			ret = PTR_ERR(trans);
-			trans = शून्य;
-		पूर्ण
-	पूर्ण
-	अगर (ret && trans) अणु
-		btrfs_पात_transaction(trans, ret);
+			trans = NULL;
+		}
+	}
+	if (ret && trans) {
+		btrfs_abort_transaction(trans, ret);
 		btrfs_end_transaction(trans);
-	पूर्ण
-	अगर (!ret)
+	}
+	if (!ret)
 		*trans_out = trans;
 
-	वापस ret;
+	return ret;
 
 copy_to_page:
 	/*
-	 * Release our path because we करोn't need it anymore and also because
-	 * copy_अंतरभूत_to_page() needs to reserve data and metadata, which may
+	 * Release our path because we don't need it anymore and also because
+	 * copy_inline_to_page() needs to reserve data and metadata, which may
 	 * need to flush delalloc when we are low on available space and
-	 * thereक्रमe cause a deadlock अगर ग_लिखोback of an अंतरभूत extent needs to
-	 * ग_लिखो to the same leaf or an ordered extent completion needs to ग_लिखो
+	 * therefore cause a deadlock if writeback of an inline extent needs to
+	 * write to the same leaf or an ordered extent completion needs to write
 	 * to the same leaf.
 	 */
 	btrfs_release_path(path);
 
-	ret = copy_अंतरभूत_to_page(BTRFS_I(dst), new_key->offset,
-				  अंतरभूत_data, size, datal, comp_type);
-	जाओ out;
-पूर्ण
+	ret = copy_inline_to_page(BTRFS_I(dst), new_key->offset,
+				  inline_data, size, datal, comp_type);
+	goto out;
+}
 
 /**
  * btrfs_clone() - clone a range from inode file to another
@@ -324,145 +323,145 @@ copy_to_page:
  * @olen: Original length, passed by user, of range to clone
  * @olen_aligned: Block-aligned value of olen
  * @destoff: Offset within @inode to start clone
- * @no_समय_update: Whether to update mसमय/स_समय on the target inode
+ * @no_time_update: Whether to update mtime/ctime on the target inode
  */
-अटल पूर्णांक btrfs_clone(काष्ठा inode *src, काष्ठा inode *inode,
-		       स्थिर u64 off, स्थिर u64 olen, स्थिर u64 olen_aligned,
-		       स्थिर u64 destoff, पूर्णांक no_समय_update)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
-	काष्ठा btrfs_path *path = शून्य;
-	काष्ठा extent_buffer *leaf;
-	काष्ठा btrfs_trans_handle *trans;
-	अक्षर *buf = शून्य;
-	काष्ठा btrfs_key key;
+static int btrfs_clone(struct inode *src, struct inode *inode,
+		       const u64 off, const u64 olen, const u64 olen_aligned,
+		       const u64 destoff, int no_time_update)
+{
+	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+	struct btrfs_path *path = NULL;
+	struct extent_buffer *leaf;
+	struct btrfs_trans_handle *trans;
+	char *buf = NULL;
+	struct btrfs_key key;
 	u32 nritems;
-	पूर्णांक slot;
-	पूर्णांक ret;
-	स्थिर u64 len = olen_aligned;
+	int slot;
+	int ret;
+	const u64 len = olen_aligned;
 	u64 last_dest_end = destoff;
 
 	ret = -ENOMEM;
-	buf = kvदो_स्मृति(fs_info->nodesize, GFP_KERNEL);
-	अगर (!buf)
-		वापस ret;
+	buf = kvmalloc(fs_info->nodesize, GFP_KERNEL);
+	if (!buf)
+		return ret;
 
 	path = btrfs_alloc_path();
-	अगर (!path) अणु
-		kvमुक्त(buf);
-		वापस ret;
-	पूर्ण
+	if (!path) {
+		kvfree(buf);
+		return ret;
+	}
 
-	path->पढ़ोa = READA_FORWARD;
+	path->reada = READA_FORWARD;
 	/* Clone data */
 	key.objectid = btrfs_ino(BTRFS_I(src));
 	key.type = BTRFS_EXTENT_DATA_KEY;
 	key.offset = off;
 
-	जबतक (1) अणु
+	while (1) {
 		u64 next_key_min_offset = key.offset + 1;
-		काष्ठा btrfs_file_extent_item *extent;
+		struct btrfs_file_extent_item *extent;
 		u64 extent_gen;
-		पूर्णांक type;
+		int type;
 		u32 size;
-		काष्ठा btrfs_key new_key;
+		struct btrfs_key new_key;
 		u64 disko = 0, diskl = 0;
 		u64 datao = 0, datal = 0;
 		u8 comp;
 		u64 drop_start;
 
 		/* Note the key will change type as we walk through the tree */
-		ret = btrfs_search_slot(शून्य, BTRFS_I(src)->root, &key, path,
+		ret = btrfs_search_slot(NULL, BTRFS_I(src)->root, &key, path,
 				0, 0);
-		अगर (ret < 0)
-			जाओ out;
+		if (ret < 0)
+			goto out;
 		/*
-		 * First search, अगर no extent item that starts at offset off was
+		 * First search, if no extent item that starts at offset off was
 		 * found but the previous item is an extent item, it's possible
-		 * it might overlap our target range, thereक्रमe process it.
+		 * it might overlap our target range, therefore process it.
 		 */
-		अगर (key.offset == off && ret > 0 && path->slots[0] > 0) अणु
+		if (key.offset == off && ret > 0 && path->slots[0] > 0) {
 			btrfs_item_key_to_cpu(path->nodes[0], &key,
 					      path->slots[0] - 1);
-			अगर (key.type == BTRFS_EXTENT_DATA_KEY)
+			if (key.type == BTRFS_EXTENT_DATA_KEY)
 				path->slots[0]--;
-		पूर्ण
+		}
 
 		nritems = btrfs_header_nritems(path->nodes[0]);
 process_slot:
-		अगर (path->slots[0] >= nritems) अणु
+		if (path->slots[0] >= nritems) {
 			ret = btrfs_next_leaf(BTRFS_I(src)->root, path);
-			अगर (ret < 0)
-				जाओ out;
-			अगर (ret > 0)
-				अवरोध;
+			if (ret < 0)
+				goto out;
+			if (ret > 0)
+				break;
 			nritems = btrfs_header_nritems(path->nodes[0]);
-		पूर्ण
+		}
 		leaf = path->nodes[0];
 		slot = path->slots[0];
 
 		btrfs_item_key_to_cpu(leaf, &key, slot);
-		अगर (key.type > BTRFS_EXTENT_DATA_KEY ||
+		if (key.type > BTRFS_EXTENT_DATA_KEY ||
 		    key.objectid != btrfs_ino(BTRFS_I(src)))
-			अवरोध;
+			break;
 
 		ASSERT(key.type == BTRFS_EXTENT_DATA_KEY);
 
 		extent = btrfs_item_ptr(leaf, slot,
-					काष्ठा btrfs_file_extent_item);
+					struct btrfs_file_extent_item);
 		extent_gen = btrfs_file_extent_generation(leaf, extent);
 		comp = btrfs_file_extent_compression(leaf, extent);
 		type = btrfs_file_extent_type(leaf, extent);
-		अगर (type == BTRFS_खाता_EXTENT_REG ||
-		    type == BTRFS_खाता_EXTENT_PREALLOC) अणु
+		if (type == BTRFS_FILE_EXTENT_REG ||
+		    type == BTRFS_FILE_EXTENT_PREALLOC) {
 			disko = btrfs_file_extent_disk_bytenr(leaf, extent);
 			diskl = btrfs_file_extent_disk_num_bytes(leaf, extent);
 			datao = btrfs_file_extent_offset(leaf, extent);
 			datal = btrfs_file_extent_num_bytes(leaf, extent);
-		पूर्ण अन्यथा अगर (type == BTRFS_खाता_EXTENT_INLINE) अणु
+		} else if (type == BTRFS_FILE_EXTENT_INLINE) {
 			/* Take upper bound, may be compressed */
 			datal = btrfs_file_extent_ram_bytes(leaf, extent);
-		पूर्ण
+		}
 
 		/*
 		 * The first search might have left us at an extent item that
-		 * ends beक्रमe our target range's start, can happen अगर we have
+		 * ends before our target range's start, can happen if we have
 		 * holes and NO_HOLES feature enabled.
 		 */
-		अगर (key.offset + datal <= off) अणु
+		if (key.offset + datal <= off) {
 			path->slots[0]++;
-			जाओ process_slot;
-		पूर्ण अन्यथा अगर (key.offset >= off + len) अणु
-			अवरोध;
-		पूर्ण
+			goto process_slot;
+		} else if (key.offset >= off + len) {
+			break;
+		}
 		next_key_min_offset = key.offset + datal;
 		size = btrfs_item_size_nr(leaf, slot);
-		पढ़ो_extent_buffer(leaf, buf, btrfs_item_ptr_offset(leaf, slot),
+		read_extent_buffer(leaf, buf, btrfs_item_ptr_offset(leaf, slot),
 				   size);
 
 		btrfs_release_path(path);
 
-		स_नकल(&new_key, &key, माप(new_key));
+		memcpy(&new_key, &key, sizeof(new_key));
 		new_key.objectid = btrfs_ino(BTRFS_I(inode));
-		अगर (off <= key.offset)
+		if (off <= key.offset)
 			new_key.offset = key.offset + destoff - off;
-		अन्यथा
+		else
 			new_key.offset = destoff;
 
 		/*
-		 * Deal with a hole that करोesn't have an extent item that
+		 * Deal with a hole that doesn't have an extent item that
 		 * represents it (NO_HOLES feature enabled).
 		 * This hole is either in the middle of the cloning range or at
 		 * the beginning (fully overlaps it or partially overlaps it).
 		 */
-		अगर (new_key.offset != last_dest_end)
+		if (new_key.offset != last_dest_end)
 			drop_start = last_dest_end;
-		अन्यथा
+		else
 			drop_start = new_key.offset;
 
-		अगर (type == BTRFS_खाता_EXTENT_REG ||
-		    type == BTRFS_खाता_EXTENT_PREALLOC) अणु
-			काष्ठा btrfs_replace_extent_info clone_info;
+		if (type == BTRFS_FILE_EXTENT_REG ||
+		    type == BTRFS_FILE_EXTENT_PREALLOC) {
+			struct btrfs_replace_extent_info clone_info;
 
 			/*
 			 *    a  | --- range to clone ---|  b
@@ -470,14 +469,14 @@ process_slot:
 			 */
 
 			/* Subtract range b */
-			अगर (key.offset + datal > off + len)
+			if (key.offset + datal > off + len)
 				datal = off + len - key.offset;
 
 			/* Subtract range a */
-			अगर (off > key.offset) अणु
+			if (off > key.offset) {
 				datao += off - key.offset;
 				datal -= off - key.offset;
-			पूर्ण
+			}
 
 			clone_info.disk_offset = disko;
 			clone_info.disk_len = diskl;
@@ -489,77 +488,77 @@ process_slot:
 			ret = btrfs_replace_file_extents(BTRFS_I(inode), path,
 					drop_start, new_key.offset + datal - 1,
 					&clone_info, &trans);
-			अगर (ret)
-				जाओ out;
-		पूर्ण अन्यथा अगर (type == BTRFS_खाता_EXTENT_INLINE) अणु
+			if (ret)
+				goto out;
+		} else if (type == BTRFS_FILE_EXTENT_INLINE) {
 			/*
 			 * Inline extents always have to start at file offset 0
 			 * and can never be bigger then the sector size. We can
-			 * never clone only parts of an अंतरभूत extent, since all
+			 * never clone only parts of an inline extent, since all
 			 * reflink operations must start at a sector size aligned
 			 * offset, and the length must be aligned too or end at
-			 * the i_size (which implies the whole अंतरभूतd data).
+			 * the i_size (which implies the whole inlined data).
 			 */
 			ASSERT(key.offset == 0);
 			ASSERT(datal <= fs_info->sectorsize);
-			अगर (key.offset != 0 || datal > fs_info->sectorsize)
-				वापस -EUCLEAN;
+			if (key.offset != 0 || datal > fs_info->sectorsize)
+				return -EUCLEAN;
 
-			ret = clone_copy_अंतरभूत_extent(inode, path, &new_key,
+			ret = clone_copy_inline_extent(inode, path, &new_key,
 						       drop_start, datal, size,
 						       comp, buf, &trans);
-			अगर (ret)
-				जाओ out;
-		पूर्ण
+			if (ret)
+				goto out;
+		}
 
 		btrfs_release_path(path);
 
 		/*
 		 * If this is a new extent update the last_reflink_trans of both
-		 * inodes. This is used by fsync to make sure it करोes not log
+		 * inodes. This is used by fsync to make sure it does not log
 		 * multiple checksum items with overlapping ranges. For older
-		 * extents we करोn't need to करो it since inode logging skips the
-		 * checksums क्रम older extents. Also ignore holes and अंतरभूत
-		 * extents because they करोn't have checksums in the csum tree.
+		 * extents we don't need to do it since inode logging skips the
+		 * checksums for older extents. Also ignore holes and inline
+		 * extents because they don't have checksums in the csum tree.
 		 */
-		अगर (extent_gen == trans->transid && disko > 0) अणु
+		if (extent_gen == trans->transid && disko > 0) {
 			BTRFS_I(src)->last_reflink_trans = trans->transid;
 			BTRFS_I(inode)->last_reflink_trans = trans->transid;
-		पूर्ण
+		}
 
 		last_dest_end = ALIGN(new_key.offset + datal,
 				      fs_info->sectorsize);
 		ret = clone_finish_inode_update(trans, inode, last_dest_end,
-						destoff, olen, no_समय_update);
-		अगर (ret)
-			जाओ out;
-		अगर (new_key.offset + datal >= destoff + len)
-			अवरोध;
+						destoff, olen, no_time_update);
+		if (ret)
+			goto out;
+		if (new_key.offset + datal >= destoff + len)
+			break;
 
 		btrfs_release_path(path);
 		key.offset = next_key_min_offset;
 
-		अगर (fatal_संकेत_pending(current)) अणु
+		if (fatal_signal_pending(current)) {
 			ret = -EINTR;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		cond_resched();
-	पूर्ण
+	}
 	ret = 0;
 
-	अगर (last_dest_end < destoff + len) अणु
+	if (last_dest_end < destoff + len) {
 		/*
 		 * We have an implicit hole that fully or partially overlaps our
 		 * cloning range at its end. This means that we either have the
 		 * NO_HOLES feature enabled or the implicit hole happened due to
-		 * mixing buffered and direct IO ग_लिखोs against this file.
+		 * mixing buffered and direct IO writes against this file.
 		 */
 		btrfs_release_path(path);
 
 		/*
 		 * When using NO_HOLES and we are cloning a range that covers
-		 * only a hole (no extents) पूर्णांकo a range beyond the current
+		 * only a hole (no extents) into a range beyond the current
 		 * i_size, punching a hole in the target range will not create
 		 * an extent map defining a hole, because the range starts at or
 		 * beyond current i_size. If the file previously had an i_size
@@ -567,342 +566,342 @@ process_slot:
 		 * need to make sure the next fsync is a full fsync, so that it
 		 * detects and logs a hole covering a range from the current
 		 * i_size to the new i_size. If the clone range covers extents,
-		 * besides a hole, then we know the full sync flag was alपढ़ोy
+		 * besides a hole, then we know the full sync flag was already
 		 * set by previous calls to btrfs_replace_file_extents() that
 		 * replaced file extent items.
 		 */
-		अगर (last_dest_end >= i_size_पढ़ो(inode))
+		if (last_dest_end >= i_size_read(inode))
 			set_bit(BTRFS_INODE_NEEDS_FULL_SYNC,
-				&BTRFS_I(inode)->runसमय_flags);
+				&BTRFS_I(inode)->runtime_flags);
 
 		ret = btrfs_replace_file_extents(BTRFS_I(inode), path,
-				last_dest_end, destoff + len - 1, शून्य, &trans);
-		अगर (ret)
-			जाओ out;
+				last_dest_end, destoff + len - 1, NULL, &trans);
+		if (ret)
+			goto out;
 
 		ret = clone_finish_inode_update(trans, inode, destoff + len,
-						destoff, olen, no_समय_update);
-	पूर्ण
+						destoff, olen, no_time_update);
+	}
 
 out:
-	btrfs_मुक्त_path(path);
-	kvमुक्त(buf);
-	clear_bit(BTRFS_INODE_NO_DELALLOC_FLUSH, &BTRFS_I(inode)->runसमय_flags);
+	btrfs_free_path(path);
+	kvfree(buf);
+	clear_bit(BTRFS_INODE_NO_DELALLOC_FLUSH, &BTRFS_I(inode)->runtime_flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम btrfs_द्विगुन_extent_unlock(काष्ठा inode *inode1, u64 loff1,
-				       काष्ठा inode *inode2, u64 loff2, u64 len)
-अणु
+static void btrfs_double_extent_unlock(struct inode *inode1, u64 loff1,
+				       struct inode *inode2, u64 loff2, u64 len)
+{
 	unlock_extent(&BTRFS_I(inode1)->io_tree, loff1, loff1 + len - 1);
 	unlock_extent(&BTRFS_I(inode2)->io_tree, loff2, loff2 + len - 1);
-पूर्ण
+}
 
-अटल व्योम btrfs_द्विगुन_extent_lock(काष्ठा inode *inode1, u64 loff1,
-				     काष्ठा inode *inode2, u64 loff2, u64 len)
-अणु
-	अगर (inode1 < inode2) अणु
+static void btrfs_double_extent_lock(struct inode *inode1, u64 loff1,
+				     struct inode *inode2, u64 loff2, u64 len)
+{
+	if (inode1 < inode2) {
 		swap(inode1, inode2);
 		swap(loff1, loff2);
-	पूर्ण अन्यथा अगर (inode1 == inode2 && loff2 < loff1) अणु
+	} else if (inode1 == inode2 && loff2 < loff1) {
 		swap(loff1, loff2);
-	पूर्ण
+	}
 	lock_extent(&BTRFS_I(inode1)->io_tree, loff1, loff1 + len - 1);
 	lock_extent(&BTRFS_I(inode2)->io_tree, loff2, loff2 + len - 1);
-पूर्ण
+}
 
-अटल व्योम btrfs_द्विगुन_mmap_lock(काष्ठा inode *inode1, काष्ठा inode *inode2)
-अणु
-	अगर (inode1 < inode2)
+static void btrfs_double_mmap_lock(struct inode *inode1, struct inode *inode2)
+{
+	if (inode1 < inode2)
 		swap(inode1, inode2);
-	करोwn_ग_लिखो(&BTRFS_I(inode1)->i_mmap_lock);
-	करोwn_ग_लिखो_nested(&BTRFS_I(inode2)->i_mmap_lock, SINGLE_DEPTH_NESTING);
-पूर्ण
+	down_write(&BTRFS_I(inode1)->i_mmap_lock);
+	down_write_nested(&BTRFS_I(inode2)->i_mmap_lock, SINGLE_DEPTH_NESTING);
+}
 
-अटल व्योम btrfs_द्विगुन_mmap_unlock(काष्ठा inode *inode1, काष्ठा inode *inode2)
-अणु
-	up_ग_लिखो(&BTRFS_I(inode1)->i_mmap_lock);
-	up_ग_लिखो(&BTRFS_I(inode2)->i_mmap_lock);
-पूर्ण
+static void btrfs_double_mmap_unlock(struct inode *inode1, struct inode *inode2)
+{
+	up_write(&BTRFS_I(inode1)->i_mmap_lock);
+	up_write(&BTRFS_I(inode2)->i_mmap_lock);
+}
 
-अटल पूर्णांक btrfs_extent_same_range(काष्ठा inode *src, u64 loff, u64 len,
-				   काष्ठा inode *dst, u64 dst_loff)
-अणु
-	स्थिर u64 bs = BTRFS_I(src)->root->fs_info->sb->s_blocksize;
-	पूर्णांक ret;
+static int btrfs_extent_same_range(struct inode *src, u64 loff, u64 len,
+				   struct inode *dst, u64 dst_loff)
+{
+	const u64 bs = BTRFS_I(src)->root->fs_info->sb->s_blocksize;
+	int ret;
 
 	/*
-	 * Lock destination range to serialize with concurrent पढ़ोpages() and
+	 * Lock destination range to serialize with concurrent readpages() and
 	 * source range to serialize with relocation.
 	 */
-	btrfs_द्विगुन_extent_lock(src, loff, dst, dst_loff, len);
+	btrfs_double_extent_lock(src, loff, dst, dst_loff, len);
 	ret = btrfs_clone(src, dst, loff, len, ALIGN(len, bs), dst_loff, 1);
-	btrfs_द्विगुन_extent_unlock(src, loff, dst, dst_loff, len);
+	btrfs_double_extent_unlock(src, loff, dst, dst_loff, len);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक btrfs_extent_same(काष्ठा inode *src, u64 loff, u64 olen,
-			     काष्ठा inode *dst, u64 dst_loff)
-अणु
-	पूर्णांक ret;
+static int btrfs_extent_same(struct inode *src, u64 loff, u64 olen,
+			     struct inode *dst, u64 dst_loff)
+{
+	int ret;
 	u64 i, tail_len, chunk_count;
-	काष्ठा btrfs_root *root_dst = BTRFS_I(dst)->root;
+	struct btrfs_root *root_dst = BTRFS_I(dst)->root;
 
 	spin_lock(&root_dst->root_item_lock);
-	अगर (root_dst->send_in_progress) अणु
+	if (root_dst->send_in_progress) {
 		btrfs_warn_rl(root_dst->fs_info,
 "cannot deduplicate to root %llu while send operations are using it (%d in progress)",
 			      root_dst->root_key.objectid,
 			      root_dst->send_in_progress);
 		spin_unlock(&root_dst->root_item_lock);
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 	root_dst->dedupe_in_progress++;
 	spin_unlock(&root_dst->root_item_lock);
 
 	tail_len = olen % BTRFS_MAX_DEDUPE_LEN;
-	chunk_count = भाग_u64(olen, BTRFS_MAX_DEDUPE_LEN);
+	chunk_count = div_u64(olen, BTRFS_MAX_DEDUPE_LEN);
 
-	क्रम (i = 0; i < chunk_count; i++) अणु
+	for (i = 0; i < chunk_count; i++) {
 		ret = btrfs_extent_same_range(src, loff, BTRFS_MAX_DEDUPE_LEN,
 					      dst, dst_loff);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
 		loff += BTRFS_MAX_DEDUPE_LEN;
 		dst_loff += BTRFS_MAX_DEDUPE_LEN;
-	पूर्ण
+	}
 
-	अगर (tail_len > 0)
+	if (tail_len > 0)
 		ret = btrfs_extent_same_range(src, loff, tail_len, dst, dst_loff);
 out:
 	spin_lock(&root_dst->root_item_lock);
 	root_dst->dedupe_in_progress--;
 	spin_unlock(&root_dst->root_item_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल noअंतरभूत पूर्णांक btrfs_clone_files(काष्ठा file *file, काष्ठा file *file_src,
+static noinline int btrfs_clone_files(struct file *file, struct file *file_src,
 					u64 off, u64 olen, u64 destoff)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा inode *src = file_inode(file_src);
-	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
-	पूर्णांक ret;
-	पूर्णांक wb_ret;
+{
+	struct inode *inode = file_inode(file);
+	struct inode *src = file_inode(file_src);
+	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+	int ret;
+	int wb_ret;
 	u64 len = olen;
 	u64 bs = fs_info->sb->s_blocksize;
 
 	/*
 	 * VFS's generic_remap_file_range_prep() protects us from cloning the
-	 * eof block पूर्णांकo the middle of a file, which would result in corruption
-	 * अगर the file size is not blocksize aligned. So we करोn't need to check
-	 * क्रम that हाल here.
+	 * eof block into the middle of a file, which would result in corruption
+	 * if the file size is not blocksize aligned. So we don't need to check
+	 * for that case here.
 	 */
-	अगर (off + len == src->i_size)
+	if (off + len == src->i_size)
 		len = ALIGN(src->i_size, bs) - off;
 
-	अगर (destoff > inode->i_size) अणु
-		स्थिर u64 wb_start = ALIGN_DOWN(inode->i_size, bs);
+	if (destoff > inode->i_size) {
+		const u64 wb_start = ALIGN_DOWN(inode->i_size, bs);
 
 		ret = btrfs_cont_expand(BTRFS_I(inode), inode->i_size, destoff);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 		/*
-		 * We may have truncated the last block अगर the inode's size is
-		 * not sector size aligned, so we need to रुको क्रम ग_लिखोback to
-		 * complete beक्रमe proceeding further, otherwise we can race
+		 * We may have truncated the last block if the inode's size is
+		 * not sector size aligned, so we need to wait for writeback to
+		 * complete before proceeding further, otherwise we can race
 		 * with cloning and attempt to increment a reference to an
-		 * extent that no दीर्घer exists (ग_लिखोback completed right after
-		 * we found the previous extent covering eof and beक्रमe we
+		 * extent that no longer exists (writeback completed right after
+		 * we found the previous extent covering eof and before we
 		 * attempted to increment its reference count).
 		 */
-		ret = btrfs_रुको_ordered_range(inode, wb_start,
+		ret = btrfs_wait_ordered_range(inode, wb_start,
 					       destoff - wb_start);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	/*
-	 * Lock destination range to serialize with concurrent पढ़ोpages() and
+	 * Lock destination range to serialize with concurrent readpages() and
 	 * source range to serialize with relocation.
 	 */
-	btrfs_द्विगुन_extent_lock(src, off, inode, destoff, len);
+	btrfs_double_extent_lock(src, off, inode, destoff, len);
 	ret = btrfs_clone(src, inode, off, olen, len, destoff, 0);
-	btrfs_द्विगुन_extent_unlock(src, off, inode, destoff, len);
+	btrfs_double_extent_unlock(src, off, inode, destoff, len);
 
 	/*
-	 * We may have copied an अंतरभूत extent पूर्णांकo a page of the destination
-	 * range, so रुको क्रम ग_लिखोback to complete beक्रमe truncating pages
-	 * from the page cache. This is a rare हाल.
+	 * We may have copied an inline extent into a page of the destination
+	 * range, so wait for writeback to complete before truncating pages
+	 * from the page cache. This is a rare case.
 	 */
-	wb_ret = btrfs_रुको_ordered_range(inode, destoff, len);
+	wb_ret = btrfs_wait_ordered_range(inode, destoff, len);
 	ret = ret ? ret : wb_ret;
 	/*
-	 * Truncate page cache pages so that future पढ़ोs will see the cloned
+	 * Truncate page cache pages so that future reads will see the cloned
 	 * data immediately and not the previous data.
 	 */
 	truncate_inode_pages_range(&inode->i_data,
-				round_करोwn(destoff, PAGE_SIZE),
+				round_down(destoff, PAGE_SIZE),
 				round_up(destoff + len, PAGE_SIZE) - 1);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक btrfs_remap_file_range_prep(काष्ठा file *file_in, loff_t pos_in,
-				       काष्ठा file *file_out, loff_t pos_out,
-				       loff_t *len, अचिन्हित पूर्णांक remap_flags)
-अणु
-	काष्ठा inode *inode_in = file_inode(file_in);
-	काष्ठा inode *inode_out = file_inode(file_out);
+static int btrfs_remap_file_range_prep(struct file *file_in, loff_t pos_in,
+				       struct file *file_out, loff_t pos_out,
+				       loff_t *len, unsigned int remap_flags)
+{
+	struct inode *inode_in = file_inode(file_in);
+	struct inode *inode_out = file_inode(file_out);
 	u64 bs = BTRFS_I(inode_out)->root->fs_info->sb->s_blocksize;
 	bool same_inode = inode_out == inode_in;
 	u64 wb_len;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!(remap_flags & REMAP_खाता_DEDUP)) अणु
-		काष्ठा btrfs_root *root_out = BTRFS_I(inode_out)->root;
+	if (!(remap_flags & REMAP_FILE_DEDUP)) {
+		struct btrfs_root *root_out = BTRFS_I(inode_out)->root;
 
-		अगर (btrfs_root_पढ़ोonly(root_out))
-			वापस -EROFS;
+		if (btrfs_root_readonly(root_out))
+			return -EROFS;
 
-		अगर (file_in->f_path.mnt != file_out->f_path.mnt ||
+		if (file_in->f_path.mnt != file_out->f_path.mnt ||
 		    inode_in->i_sb != inode_out->i_sb)
-			वापस -EXDEV;
-	पूर्ण
+			return -EXDEV;
+	}
 
 	/* Don't make the dst file partly checksummed */
-	अगर ((BTRFS_I(inode_in)->flags & BTRFS_INODE_NODATASUM) !=
-	    (BTRFS_I(inode_out)->flags & BTRFS_INODE_NODATASUM)) अणु
-		वापस -EINVAL;
-	पूर्ण
+	if ((BTRFS_I(inode_in)->flags & BTRFS_INODE_NODATASUM) !=
+	    (BTRFS_I(inode_out)->flags & BTRFS_INODE_NODATASUM)) {
+		return -EINVAL;
+	}
 
 	/*
-	 * Now that the inodes are locked, we need to start ग_लिखोback ourselves
-	 * and can not rely on the ग_लिखोback from the VFS's generic helper
+	 * Now that the inodes are locked, we need to start writeback ourselves
+	 * and can not rely on the writeback from the VFS's generic helper
 	 * generic_remap_file_range_prep() because:
 	 *
-	 * 1) For compression we must call filemap_fdataग_लिखो_range() range
-	 *    twice (btrfs_fdataग_लिखो_range() करोes it क्रम us), and the generic
+	 * 1) For compression we must call filemap_fdatawrite_range() range
+	 *    twice (btrfs_fdatawrite_range() does it for us), and the generic
 	 *    helper only calls it once;
 	 *
-	 * 2) filemap_fdataग_लिखो_range(), called by the generic helper only
-	 *    रुकोs क्रम the ग_लिखोback to complete, i.e. क्रम IO to be करोne, and
-	 *    not क्रम the ordered extents to complete. We need to रुको क्रम them
+	 * 2) filemap_fdatawrite_range(), called by the generic helper only
+	 *    waits for the writeback to complete, i.e. for IO to be done, and
+	 *    not for the ordered extents to complete. We need to wait for them
 	 *    to complete so that new file extent items are in the fs tree.
 	 */
-	अगर (*len == 0 && !(remap_flags & REMAP_खाता_DEDUP))
+	if (*len == 0 && !(remap_flags & REMAP_FILE_DEDUP))
 		wb_len = ALIGN(inode_in->i_size, bs) - ALIGN_DOWN(pos_in, bs);
-	अन्यथा
+	else
 		wb_len = ALIGN(*len, bs);
 
 	/*
-	 * Since we करोn't lock ranges, रुको क्रम ongoing lockless dio ग_लिखोs (as
-	 * any in progress could create its ordered extents after we रुको क्रम
+	 * Since we don't lock ranges, wait for ongoing lockless dio writes (as
+	 * any in progress could create its ordered extents after we wait for
 	 * existing ordered extents below).
 	 */
-	inode_dio_रुको(inode_in);
-	अगर (!same_inode)
-		inode_dio_रुको(inode_out);
+	inode_dio_wait(inode_in);
+	if (!same_inode)
+		inode_dio_wait(inode_out);
 
 	/*
-	 * Workaround to make sure NOCOW buffered ग_लिखो reach disk as NOCOW.
+	 * Workaround to make sure NOCOW buffered write reach disk as NOCOW.
 	 *
-	 * Btrfs' back references करो not have a block level granularity, they
+	 * Btrfs' back references do not have a block level granularity, they
 	 * work at the whole extent level.
-	 * NOCOW buffered ग_लिखो without data space reserved may not be able
+	 * NOCOW buffered write without data space reserved may not be able
 	 * to fall back to CoW due to lack of data space, thus could cause
 	 * data loss.
 	 *
-	 * Here we take a लघुcut by flushing the whole inode, so that all
-	 * nocow ग_लिखो should reach disk as nocow beक्रमe we increase the
-	 * reference of the extent. We could करो better by only flushing NOCOW
+	 * Here we take a shortcut by flushing the whole inode, so that all
+	 * nocow write should reach disk as nocow before we increase the
+	 * reference of the extent. We could do better by only flushing NOCOW
 	 * data, but that needs extra accounting.
 	 *
-	 * Also we करोn't need to check ASYNC_EXTENT, as async extent will be
+	 * Also we don't need to check ASYNC_EXTENT, as async extent will be
 	 * CoWed anyway, not affecting nocow part.
 	 */
 	ret = filemap_flush(inode_in->i_mapping);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = btrfs_रुको_ordered_range(inode_in, ALIGN_DOWN(pos_in, bs),
+	ret = btrfs_wait_ordered_range(inode_in, ALIGN_DOWN(pos_in, bs),
 				       wb_len);
-	अगर (ret < 0)
-		वापस ret;
-	ret = btrfs_रुको_ordered_range(inode_out, ALIGN_DOWN(pos_out, bs),
+	if (ret < 0)
+		return ret;
+	ret = btrfs_wait_ordered_range(inode_out, ALIGN_DOWN(pos_out, bs),
 				       wb_len);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस generic_remap_file_range_prep(file_in, pos_in, file_out, pos_out,
+	return generic_remap_file_range_prep(file_in, pos_in, file_out, pos_out,
 					    len, remap_flags);
-पूर्ण
+}
 
-अटल bool file_sync_ग_लिखो(स्थिर काष्ठा file *file)
-अणु
-	अगर (file->f_flags & (__O_SYNC | O_DSYNC))
-		वापस true;
-	अगर (IS_SYNC(file_inode(file)))
-		वापस true;
+static bool file_sync_write(const struct file *file)
+{
+	if (file->f_flags & (__O_SYNC | O_DSYNC))
+		return true;
+	if (IS_SYNC(file_inode(file)))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-loff_t btrfs_remap_file_range(काष्ठा file *src_file, loff_t off,
-		काष्ठा file *dst_file, loff_t destoff, loff_t len,
-		अचिन्हित पूर्णांक remap_flags)
-अणु
-	काष्ठा inode *src_inode = file_inode(src_file);
-	काष्ठा inode *dst_inode = file_inode(dst_file);
+loff_t btrfs_remap_file_range(struct file *src_file, loff_t off,
+		struct file *dst_file, loff_t destoff, loff_t len,
+		unsigned int remap_flags)
+{
+	struct inode *src_inode = file_inode(src_file);
+	struct inode *dst_inode = file_inode(dst_file);
 	bool same_inode = dst_inode == src_inode;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (remap_flags & ~(REMAP_खाता_DEDUP | REMAP_खाता_ADVISORY))
-		वापस -EINVAL;
+	if (remap_flags & ~(REMAP_FILE_DEDUP | REMAP_FILE_ADVISORY))
+		return -EINVAL;
 
-	अगर (same_inode) अणु
+	if (same_inode) {
 		btrfs_inode_lock(src_inode, BTRFS_ILOCK_MMAP);
-	पूर्ण अन्यथा अणु
+	} else {
 		lock_two_nondirectories(src_inode, dst_inode);
-		btrfs_द्विगुन_mmap_lock(src_inode, dst_inode);
-	पूर्ण
+		btrfs_double_mmap_lock(src_inode, dst_inode);
+	}
 
 	ret = btrfs_remap_file_range_prep(src_file, off, dst_file, destoff,
 					  &len, remap_flags);
-	अगर (ret < 0 || len == 0)
-		जाओ out_unlock;
+	if (ret < 0 || len == 0)
+		goto out_unlock;
 
-	अगर (remap_flags & REMAP_खाता_DEDUP)
+	if (remap_flags & REMAP_FILE_DEDUP)
 		ret = btrfs_extent_same(src_inode, off, len, dst_inode, destoff);
-	अन्यथा
+	else
 		ret = btrfs_clone_files(dst_file, src_file, off, len, destoff);
 
 out_unlock:
-	अगर (same_inode) अणु
+	if (same_inode) {
 		btrfs_inode_unlock(src_inode, BTRFS_ILOCK_MMAP);
-	पूर्ण अन्यथा अणु
-		btrfs_द्विगुन_mmap_unlock(src_inode, dst_inode);
+	} else {
+		btrfs_double_mmap_unlock(src_inode, dst_inode);
 		unlock_two_nondirectories(src_inode, dst_inode);
-	पूर्ण
+	}
 
 	/*
-	 * If either the source or the destination file was खोलोed with O_SYNC,
+	 * If either the source or the destination file was opened with O_SYNC,
 	 * O_DSYNC or has the S_SYNC attribute, fsync both the destination and
-	 * source files/ranges, so that after a successful वापस (0) followed
-	 * by a घातer failure results in the reflinked data to be पढ़ोable from
+	 * source files/ranges, so that after a successful return (0) followed
+	 * by a power failure results in the reflinked data to be readable from
 	 * both files/ranges.
 	 */
-	अगर (ret == 0 && len > 0 &&
-	    (file_sync_ग_लिखो(src_file) || file_sync_ग_लिखो(dst_file))) अणु
+	if (ret == 0 && len > 0 &&
+	    (file_sync_write(src_file) || file_sync_write(dst_file))) {
 		ret = btrfs_sync_file(src_file, off, off + len - 1, 0);
-		अगर (ret == 0)
+		if (ret == 0)
 			ret = btrfs_sync_file(dst_file, destoff,
 					      destoff + len - 1, 0);
-	पूर्ण
+	}
 
-	वापस ret < 0 ? ret : len;
-पूर्ण
+	return ret < 0 ? ret : len;
+}

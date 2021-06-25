@@ -1,106 +1,105 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVKM_PM_PRIV_H__
-#घोषणा __NVKM_PM_PRIV_H__
-#घोषणा nvkm_pm(p) container_of((p), काष्ठा nvkm_pm, engine)
-#समावेश <engine/pm.h>
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVKM_PM_PRIV_H__
+#define __NVKM_PM_PRIV_H__
+#define nvkm_pm(p) container_of((p), struct nvkm_pm, engine)
+#include <engine/pm.h>
 
-पूर्णांक nvkm_pm_ctor(स्थिर काष्ठा nvkm_pm_func *, काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक,
-		 काष्ठा nvkm_pm *);
+int nvkm_pm_ctor(const struct nvkm_pm_func *, struct nvkm_device *, enum nvkm_subdev_type, int,
+		 struct nvkm_pm *);
 
-काष्ठा nvkm_pm_func अणु
-	व्योम (*fini)(काष्ठा nvkm_pm *);
-पूर्ण;
+struct nvkm_pm_func {
+	void (*fini)(struct nvkm_pm *);
+};
 
-काष्ठा nvkm_perfctr अणु
-	काष्ठा list_head head;
-	u8 करोमुख्य;
-	u8  संकेत[4];
+struct nvkm_perfctr {
+	struct list_head head;
+	u8 domain;
+	u8  signal[4];
 	u64 source[4][8];
-	पूर्णांक slot;
+	int slot;
 	u32 logic_op;
 	u32 ctr;
-पूर्ण;
+};
 
-काष्ठा nvkm_specmux अणु
+struct nvkm_specmux {
 	u32 mask;
-	u8 shअगरt;
-	स्थिर अक्षर *name;
+	u8 shift;
+	const char *name;
 	bool enable;
-पूर्ण;
+};
 
-काष्ठा nvkm_specsrc अणु
+struct nvkm_specsrc {
 	u32 addr;
-	स्थिर काष्ठा nvkm_specmux *mux;
-	स्थिर अक्षर *name;
-पूर्ण;
+	const struct nvkm_specmux *mux;
+	const char *name;
+};
 
-काष्ठा nvkm_perfsrc अणु
-	काष्ठा list_head head;
-	अक्षर *name;
+struct nvkm_perfsrc {
+	struct list_head head;
+	char *name;
 	u32 addr;
 	u32 mask;
-	u8 shअगरt;
+	u8 shift;
 	bool enable;
-पूर्ण;
+};
 
-बाह्य स्थिर काष्ठा nvkm_specsrc nv50_zcull_sources[];
-बाह्य स्थिर काष्ठा nvkm_specsrc nv50_zrop_sources[];
-बाह्य स्थिर काष्ठा nvkm_specsrc g84_vfetch_sources[];
-बाह्य स्थिर काष्ठा nvkm_specsrc gt200_crop_sources[];
-बाह्य स्थिर काष्ठा nvkm_specsrc gt200_prop_sources[];
-बाह्य स्थिर काष्ठा nvkm_specsrc gt200_tex_sources[];
+extern const struct nvkm_specsrc nv50_zcull_sources[];
+extern const struct nvkm_specsrc nv50_zrop_sources[];
+extern const struct nvkm_specsrc g84_vfetch_sources[];
+extern const struct nvkm_specsrc gt200_crop_sources[];
+extern const struct nvkm_specsrc gt200_prop_sources[];
+extern const struct nvkm_specsrc gt200_tex_sources[];
 
-काष्ठा nvkm_specsig अणु
-	u8 संकेत;
-	स्थिर अक्षर *name;
-	स्थिर काष्ठा nvkm_specsrc *source;
-पूर्ण;
+struct nvkm_specsig {
+	u8 signal;
+	const char *name;
+	const struct nvkm_specsrc *source;
+};
 
-काष्ठा nvkm_perfsig अणु
-	स्थिर अक्षर *name;
+struct nvkm_perfsig {
+	const char *name;
 	u8 source[8];
-पूर्ण;
+};
 
-काष्ठा nvkm_specकरोm अणु
-	u16 संकेत_nr;
-	स्थिर काष्ठा nvkm_specsig *संकेत;
-	स्थिर काष्ठा nvkm_funcकरोm *func;
-पूर्ण;
+struct nvkm_specdom {
+	u16 signal_nr;
+	const struct nvkm_specsig *signal;
+	const struct nvkm_funcdom *func;
+};
 
-#घोषणा nvkm_perfकरोm(p) container_of((p), काष्ठा nvkm_perfकरोm, object)
-#समावेश <core/object.h>
+#define nvkm_perfdom(p) container_of((p), struct nvkm_perfdom, object)
+#include <core/object.h>
 
-काष्ठा nvkm_perfकरोm अणु
-	काष्ठा nvkm_object object;
-	काष्ठा nvkm_perfmon *perfmon;
-	काष्ठा list_head head;
-	काष्ठा list_head list;
-	स्थिर काष्ठा nvkm_funcकरोm *func;
-	काष्ठा nvkm_perfctr *ctr[4];
-	अक्षर name[32];
+struct nvkm_perfdom {
+	struct nvkm_object object;
+	struct nvkm_perfmon *perfmon;
+	struct list_head head;
+	struct list_head list;
+	const struct nvkm_funcdom *func;
+	struct nvkm_perfctr *ctr[4];
+	char name[32];
 	u32 addr;
 	u8  mode;
 	u32 clk;
-	u16 संकेत_nr;
-	काष्ठा nvkm_perfsig संकेत[];
-पूर्ण;
+	u16 signal_nr;
+	struct nvkm_perfsig signal[];
+};
 
-काष्ठा nvkm_funcकरोm अणु
-	व्योम (*init)(काष्ठा nvkm_pm *, काष्ठा nvkm_perfकरोm *,
-		     काष्ठा nvkm_perfctr *);
-	व्योम (*पढ़ो)(काष्ठा nvkm_pm *, काष्ठा nvkm_perfकरोm *,
-		     काष्ठा nvkm_perfctr *);
-	व्योम (*next)(काष्ठा nvkm_pm *, काष्ठा nvkm_perfकरोm *);
-पूर्ण;
+struct nvkm_funcdom {
+	void (*init)(struct nvkm_pm *, struct nvkm_perfdom *,
+		     struct nvkm_perfctr *);
+	void (*read)(struct nvkm_pm *, struct nvkm_perfdom *,
+		     struct nvkm_perfctr *);
+	void (*next)(struct nvkm_pm *, struct nvkm_perfdom *);
+};
 
-पूर्णांक nvkm_perfकरोm_new(काष्ठा nvkm_pm *, स्थिर अक्षर *, u32, u32, u32, u32,
-		     स्थिर काष्ठा nvkm_specकरोm *);
+int nvkm_perfdom_new(struct nvkm_pm *, const char *, u32, u32, u32, u32,
+		     const struct nvkm_specdom *);
 
-#घोषणा nvkm_perfmon(p) container_of((p), काष्ठा nvkm_perfmon, object)
+#define nvkm_perfmon(p) container_of((p), struct nvkm_perfmon, object)
 
-काष्ठा nvkm_perfmon अणु
-	काष्ठा nvkm_object object;
-	काष्ठा nvkm_pm *pm;
-पूर्ण;
-#पूर्ण_अगर
+struct nvkm_perfmon {
+	struct nvkm_object object;
+	struct nvkm_pm *pm;
+};
+#endif

@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Driver क्रम the SGS-Thomson M48T35 Timekeeper RAM chip
+ * Driver for the SGS-Thomson M48T35 Timekeeper RAM chip
  *
  * Copyright (C) 2000 Silicon Graphics, Inc.
  * Written by Ulf Carlsson (ulfc@engr.sgi.com)
  *
- * Copyright (C) 2008 Thomas Bogenकरोerfer
+ * Copyright (C) 2008 Thomas Bogendoerfer
  *
- * Based on code written by Paul Gorपंचांगaker.
+ * Based on code written by Paul Gortmaker.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/bcd.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/err.h>
+#include <linux/module.h>
+#include <linux/rtc.h>
+#include <linux/slab.h>
+#include <linux/platform_device.h>
+#include <linux/bcd.h>
+#include <linux/io.h>
+#include <linux/err.h>
 
-काष्ठा m48t35_rtc अणु
+struct m48t35_rtc {
 	u8	pad[0x7ff8];    /* starts at 0x7ff8 */
-#अगर_घोषित CONFIG_SGI_IP27
+#ifdef CONFIG_SGI_IP27
 	u8	hour;
 	u8	min;
 	u8	sec;
@@ -30,7 +29,7 @@
 	u8	month;
 	u8	date;
 	u8	day;
-#अन्यथा
+#else
 	u8	control;
 	u8	sec;
 	u8	min;
@@ -39,87 +38,87 @@
 	u8	date;
 	u8	month;
 	u8	year;
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-#घोषणा M48T35_RTC_SET		0x80
-#घोषणा M48T35_RTC_READ		0x40
+#define M48T35_RTC_SET		0x80
+#define M48T35_RTC_READ		0x40
 
-काष्ठा m48t35_priv अणु
-	काष्ठा rtc_device *rtc;
-	काष्ठा m48t35_rtc __iomem *reg;
-	माप_प्रकार size;
-	अचिन्हित दीर्घ baseaddr;
+struct m48t35_priv {
+	struct rtc_device *rtc;
+	struct m48t35_rtc __iomem *reg;
+	size_t size;
+	unsigned long baseaddr;
 	spinlock_t lock;
-पूर्ण;
+};
 
-अटल पूर्णांक m48t35_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा m48t35_priv *priv = dev_get_drvdata(dev);
+static int m48t35_read_time(struct device *dev, struct rtc_time *tm)
+{
+	struct m48t35_priv *priv = dev_get_drvdata(dev);
 	u8 control;
 
 	/*
-	 * Only the values that we पढ़ो from the RTC are set. We leave
-	 * पंचांग_wday, पंचांग_yday and पंचांग_isdst untouched. Even though the
+	 * Only the values that we read from the RTC are set. We leave
+	 * tm_wday, tm_yday and tm_isdst untouched. Even though the
 	 * RTC has RTC_DAY_OF_WEEK, we ignore it, as it is only updated
 	 * by the RTC when initially set to a non-zero value.
 	 */
 	spin_lock_irq(&priv->lock);
-	control = पढ़ोb(&priv->reg->control);
-	ग_लिखोb(control | M48T35_RTC_READ, &priv->reg->control);
-	पंचांग->पंचांग_sec = पढ़ोb(&priv->reg->sec);
-	पंचांग->पंचांग_min = पढ़ोb(&priv->reg->min);
-	पंचांग->पंचांग_hour = पढ़ोb(&priv->reg->hour);
-	पंचांग->पंचांग_mday = पढ़ोb(&priv->reg->date);
-	पंचांग->पंचांग_mon = पढ़ोb(&priv->reg->month);
-	पंचांग->पंचांग_year = पढ़ोb(&priv->reg->year);
-	ग_लिखोb(control, &priv->reg->control);
+	control = readb(&priv->reg->control);
+	writeb(control | M48T35_RTC_READ, &priv->reg->control);
+	tm->tm_sec = readb(&priv->reg->sec);
+	tm->tm_min = readb(&priv->reg->min);
+	tm->tm_hour = readb(&priv->reg->hour);
+	tm->tm_mday = readb(&priv->reg->date);
+	tm->tm_mon = readb(&priv->reg->month);
+	tm->tm_year = readb(&priv->reg->year);
+	writeb(control, &priv->reg->control);
 	spin_unlock_irq(&priv->lock);
 
-	पंचांग->पंचांग_sec = bcd2bin(पंचांग->पंचांग_sec);
-	पंचांग->पंचांग_min = bcd2bin(पंचांग->पंचांग_min);
-	पंचांग->पंचांग_hour = bcd2bin(पंचांग->पंचांग_hour);
-	पंचांग->पंचांग_mday = bcd2bin(पंचांग->पंचांग_mday);
-	पंचांग->पंचांग_mon = bcd2bin(पंचांग->पंचांग_mon);
-	पंचांग->पंचांग_year = bcd2bin(पंचांग->पंचांग_year);
+	tm->tm_sec = bcd2bin(tm->tm_sec);
+	tm->tm_min = bcd2bin(tm->tm_min);
+	tm->tm_hour = bcd2bin(tm->tm_hour);
+	tm->tm_mday = bcd2bin(tm->tm_mday);
+	tm->tm_mon = bcd2bin(tm->tm_mon);
+	tm->tm_year = bcd2bin(tm->tm_year);
 
 	/*
-	 * Account क्रम dअगरferences between how the RTC uses the values
-	 * and how they are defined in a काष्ठा rtc_समय;
+	 * Account for differences between how the RTC uses the values
+	 * and how they are defined in a struct rtc_time;
 	 */
-	पंचांग->पंचांग_year += 70;
-	अगर (पंचांग->पंचांग_year <= 69)
-		पंचांग->पंचांग_year += 100;
+	tm->tm_year += 70;
+	if (tm->tm_year <= 69)
+		tm->tm_year += 100;
 
-	पंचांग->पंचांग_mon--;
-	वापस 0;
-पूर्ण
+	tm->tm_mon--;
+	return 0;
+}
 
-अटल पूर्णांक m48t35_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा m48t35_priv *priv = dev_get_drvdata(dev);
-	अचिन्हित अक्षर mon, day, hrs, min, sec;
-	अचिन्हित पूर्णांक yrs;
+static int m48t35_set_time(struct device *dev, struct rtc_time *tm)
+{
+	struct m48t35_priv *priv = dev_get_drvdata(dev);
+	unsigned char mon, day, hrs, min, sec;
+	unsigned int yrs;
 	u8 control;
 
-	yrs = पंचांग->पंचांग_year + 1900;
-	mon = पंचांग->पंचांग_mon + 1;   /* पंचांग_mon starts at zero */
-	day = पंचांग->पंचांग_mday;
-	hrs = पंचांग->पंचांग_hour;
-	min = पंचांग->पंचांग_min;
-	sec = पंचांग->पंचांग_sec;
+	yrs = tm->tm_year + 1900;
+	mon = tm->tm_mon + 1;   /* tm_mon starts at zero */
+	day = tm->tm_mday;
+	hrs = tm->tm_hour;
+	min = tm->tm_min;
+	sec = tm->tm_sec;
 
-	अगर (yrs < 1970)
-		वापस -EINVAL;
+	if (yrs < 1970)
+		return -EINVAL;
 
 	yrs -= 1970;
-	अगर (yrs > 255)    /* They are अचिन्हित */
-		वापस -EINVAL;
+	if (yrs > 255)    /* They are unsigned */
+		return -EINVAL;
 
-	अगर (yrs > 169)
-		वापस -EINVAL;
+	if (yrs > 169)
+		return -EINVAL;
 
-	अगर (yrs >= 100)
+	if (yrs >= 100)
 		yrs -= 100;
 
 	sec = bin2bcd(sec);
@@ -130,63 +129,63 @@
 	yrs = bin2bcd(yrs);
 
 	spin_lock_irq(&priv->lock);
-	control = पढ़ोb(&priv->reg->control);
-	ग_लिखोb(control | M48T35_RTC_SET, &priv->reg->control);
-	ग_लिखोb(yrs, &priv->reg->year);
-	ग_लिखोb(mon, &priv->reg->month);
-	ग_लिखोb(day, &priv->reg->date);
-	ग_लिखोb(hrs, &priv->reg->hour);
-	ग_लिखोb(min, &priv->reg->min);
-	ग_लिखोb(sec, &priv->reg->sec);
-	ग_लिखोb(control, &priv->reg->control);
+	control = readb(&priv->reg->control);
+	writeb(control | M48T35_RTC_SET, &priv->reg->control);
+	writeb(yrs, &priv->reg->year);
+	writeb(mon, &priv->reg->month);
+	writeb(day, &priv->reg->date);
+	writeb(hrs, &priv->reg->hour);
+	writeb(min, &priv->reg->min);
+	writeb(sec, &priv->reg->sec);
+	writeb(control, &priv->reg->control);
 	spin_unlock_irq(&priv->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा rtc_class_ops m48t35_ops = अणु
-	.पढ़ो_समय	= m48t35_पढ़ो_समय,
-	.set_समय	= m48t35_set_समय,
-पूर्ण;
+static const struct rtc_class_ops m48t35_ops = {
+	.read_time	= m48t35_read_time,
+	.set_time	= m48t35_set_time,
+};
 
-अटल पूर्णांक m48t35_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource *res;
-	काष्ठा m48t35_priv *priv;
+static int m48t35_probe(struct platform_device *pdev)
+{
+	struct resource *res;
+	struct m48t35_priv *priv;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res)
-		वापस -ENODEV;
-	priv = devm_kzalloc(&pdev->dev, माप(काष्ठा m48t35_priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res)
+		return -ENODEV;
+	priv = devm_kzalloc(&pdev->dev, sizeof(struct m48t35_priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->size = resource_size(res);
-	अगर (!devm_request_mem_region(&pdev->dev, res->start, priv->size,
+	if (!devm_request_mem_region(&pdev->dev, res->start, priv->size,
 				     pdev->name))
-		वापस -EBUSY;
+		return -EBUSY;
 
 	priv->baseaddr = res->start;
 	priv->reg = devm_ioremap(&pdev->dev, priv->baseaddr, priv->size);
-	अगर (!priv->reg)
-		वापस -ENOMEM;
+	if (!priv->reg)
+		return -ENOMEM;
 
 	spin_lock_init(&priv->lock);
 
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 
-	priv->rtc = devm_rtc_device_रेजिस्टर(&pdev->dev, "m48t35",
+	priv->rtc = devm_rtc_device_register(&pdev->dev, "m48t35",
 				  &m48t35_ops, THIS_MODULE);
-	वापस PTR_ERR_OR_ZERO(priv->rtc);
-पूर्ण
+	return PTR_ERR_OR_ZERO(priv->rtc);
+}
 
-अटल काष्ठा platक्रमm_driver m48t35_platक्रमm_driver = अणु
-	.driver		= अणु
+static struct platform_driver m48t35_platform_driver = {
+	.driver		= {
 		.name	= "rtc-m48t35",
-	पूर्ण,
+	},
 	.probe		= m48t35_probe,
-पूर्ण;
+};
 
-module_platक्रमm_driver(m48t35_platक्रमm_driver);
+module_platform_driver(m48t35_platform_driver);
 
 MODULE_AUTHOR("Thomas Bogendoerfer <tsbogend@alpha.franken.de>");
 MODULE_DESCRIPTION("M48T35 RTC driver");

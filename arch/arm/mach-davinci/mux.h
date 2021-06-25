@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Pin-multiplex helper macros क्रम TI DaVinci family devices
+ * Pin-multiplex helper macros for TI DaVinci family devices
  *
  * Author: Vladimir Barinov, MontaVista Software, Inc. <source@mvista.com>
  *
@@ -11,13 +10,13 @@
  *
  * Copyright (C) 2008 Texas Instruments.
  */
-#अगर_अघोषित _MACH_DAVINCI_MUX_H_
-#घोषणा _MACH_DAVINCI_MUX_H_
+#ifndef _MACH_DAVINCI_MUX_H_
+#define _MACH_DAVINCI_MUX_H_
 
-#समावेश <mach/mux.h>
+#include <mach/mux.h>
 
-#घोषणा MUX_CFG(soc, desc, muxreg, mode_offset, mode_mask, mux_mode, dbg)\
-[soc##_##desc] = अणु							\
+#define MUX_CFG(soc, desc, muxreg, mode_offset, mode_mask, mux_mode, dbg)\
+[soc##_##desc] = {							\
 			.name =  #desc,					\
 			.debug = dbg,					\
 			.mux_reg_name = "PINMUX"#muxreg,		\
@@ -25,10 +24,10 @@
 			.mask_offset = mode_offset,			\
 			.mask = mode_mask,				\
 			.mode = mux_mode,				\
-		पूर्ण,
+		},
 
-#घोषणा INT_CFG(soc, desc, mode_offset, mode_mask, mux_mode, dbg)	\
-[soc##_##desc] = अणु							\
+#define INT_CFG(soc, desc, mode_offset, mode_mask, mux_mode, dbg)	\
+[soc##_##desc] = {							\
 			.name =  #desc,					\
 			.debug = dbg,					\
 			.mux_reg_name = "INTMUX",			\
@@ -36,10 +35,10 @@
 			.mask_offset = mode_offset,			\
 			.mask = mode_mask,				\
 			.mode = mux_mode,				\
-		पूर्ण,
+		},
 
-#घोषणा EVT_CFG(soc, desc, mode_offset, mode_mask, mux_mode, dbg)	\
-[soc##_##desc] = अणु							\
+#define EVT_CFG(soc, desc, mode_offset, mode_mask, mux_mode, dbg)	\
+[soc##_##desc] = {							\
 			.name =  #desc,					\
 			.debug = dbg,					\
 			.mux_reg_name = "EVTMUX",			\
@@ -47,6 +46,6 @@
 			.mask_offset = mode_offset,			\
 			.mask = mode_mask,				\
 			.mode = mux_mode,				\
-		पूर्ण,
+		},
 
-#पूर्ण_अगर /* _MACH_DAVINCI_MUX_H */
+#endif /* _MACH_DAVINCI_MUX_H */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* -*- linux-c -*- ------------------------------------------------------- *
  *
  *   Copyright (C) 1991, 1992 Linus Torvalds
@@ -11,369 +10,369 @@
  * Very basic string functions
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/सीमा.स>
-#समावेश <यंत्र/यंत्र.h>
-#समावेश "ctype.h"
-#समावेश "string.h"
+#include <linux/types.h>
+#include <linux/compiler.h>
+#include <linux/errno.h>
+#include <linux/limits.h>
+#include <asm/asm.h>
+#include "ctype.h"
+#include "string.h"
 
-#घोषणा KSTRTOX_OVERFLOW       (1U << 31)
+#define KSTRTOX_OVERFLOW       (1U << 31)
 
 /*
  * Undef these macros so that the functions that we provide
- * here will have the correct names regardless of how माला.स
- * may have chosen to #घोषणा them.
+ * here will have the correct names regardless of how string.h
+ * may have chosen to #define them.
  */
-#अघोषित स_नकल
-#अघोषित स_रखो
-#अघोषित स_भेद
+#undef memcpy
+#undef memset
+#undef memcmp
 
-पूर्णांक स_भेद(स्थिर व्योम *s1, स्थिर व्योम *s2, माप_प्रकार len)
-अणु
-	bool dअगरf;
-	यंत्र("repe; cmpsb" CC_SET(nz)
-	    : CC_OUT(nz) (dअगरf), "+D" (s1), "+S" (s2), "+c" (len));
-	वापस dअगरf;
-पूर्ण
+int memcmp(const void *s1, const void *s2, size_t len)
+{
+	bool diff;
+	asm("repe; cmpsb" CC_SET(nz)
+	    : CC_OUT(nz) (diff), "+D" (s1), "+S" (s2), "+c" (len));
+	return diff;
+}
 
 /*
- * Clang may lower `स_भेद == 0` to `bcmp == 0`.
+ * Clang may lower `memcmp == 0` to `bcmp == 0`.
  */
-पूर्णांक bcmp(स्थिर व्योम *s1, स्थिर व्योम *s2, माप_प्रकार len)
-अणु
-	वापस स_भेद(s1, s2, len);
-पूर्ण
+int bcmp(const void *s1, const void *s2, size_t len)
+{
+	return memcmp(s1, s2, len);
+}
 
-पूर्णांक म_भेद(स्थिर अक्षर *str1, स्थिर अक्षर *str2)
-अणु
-	स्थिर अचिन्हित अक्षर *s1 = (स्थिर अचिन्हित अक्षर *)str1;
-	स्थिर अचिन्हित अक्षर *s2 = (स्थिर अचिन्हित अक्षर *)str2;
-	पूर्णांक delta = 0;
+int strcmp(const char *str1, const char *str2)
+{
+	const unsigned char *s1 = (const unsigned char *)str1;
+	const unsigned char *s2 = (const unsigned char *)str2;
+	int delta = 0;
 
-	जबतक (*s1 || *s2) अणु
+	while (*s1 || *s2) {
 		delta = *s1 - *s2;
-		अगर (delta)
-			वापस delta;
+		if (delta)
+			return delta;
 		s1++;
 		s2++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-पूर्णांक म_भेदन(स्थिर अक्षर *cs, स्थिर अक्षर *ct, माप_प्रकार count)
-अणु
-	अचिन्हित अक्षर c1, c2;
+int strncmp(const char *cs, const char *ct, size_t count)
+{
+	unsigned char c1, c2;
 
-	जबतक (count) अणु
+	while (count) {
 		c1 = *cs++;
 		c2 = *ct++;
-		अगर (c1 != c2)
-			वापस c1 < c2 ? -1 : 1;
-		अगर (!c1)
-			अवरोध;
+		if (c1 != c2)
+			return c1 < c2 ? -1 : 1;
+		if (!c1)
+			break;
 		count--;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-माप_प्रकार strnlen(स्थिर अक्षर *s, माप_प्रकार maxlen)
-अणु
-	स्थिर अक्षर *es = s;
-	जबतक (*es && maxlen) अणु
+size_t strnlen(const char *s, size_t maxlen)
+{
+	const char *es = s;
+	while (*es && maxlen) {
 		es++;
 		maxlen--;
-	पूर्ण
+	}
 
-	वापस (es - s);
-पूर्ण
+	return (es - s);
+}
 
-अचिन्हित पूर्णांक atou(स्थिर अक्षर *s)
-अणु
-	अचिन्हित पूर्णांक i = 0;
-	जबतक (है_अंक(*s))
+unsigned int atou(const char *s)
+{
+	unsigned int i = 0;
+	while (isdigit(*s))
 		i = i * 10 + (*s++ - '0');
-	वापस i;
-पूर्ण
+	return i;
+}
 
-/* Works only क्रम digits and letters, but small and fast */
-#घोषणा TOLOWER(x) ((x) | 0x20)
+/* Works only for digits and letters, but small and fast */
+#define TOLOWER(x) ((x) | 0x20)
 
-अटल अचिन्हित पूर्णांक simple_guess_base(स्थिर अक्षर *cp)
-अणु
-	अगर (cp[0] == '0') अणु
-		अगर (TOLOWER(cp[1]) == 'x' && है_षष्ठादशक(cp[2]))
-			वापस 16;
-		अन्यथा
-			वापस 8;
-	पूर्ण अन्यथा अणु
-		वापस 10;
-	पूर्ण
-पूर्ण
+static unsigned int simple_guess_base(const char *cp)
+{
+	if (cp[0] == '0') {
+		if (TOLOWER(cp[1]) == 'x' && isxdigit(cp[2]))
+			return 16;
+		else
+			return 8;
+	} else {
+		return 10;
+	}
+}
 
 /**
- * simple_म_से_अदीर्घl - convert a string to an अचिन्हित दीर्घ दीर्घ
+ * simple_strtoull - convert a string to an unsigned long long
  * @cp: The start of the string
- * @endp: A poपूर्णांकer to the end of the parsed string will be placed here
+ * @endp: A pointer to the end of the parsed string will be placed here
  * @base: The number base to use
  */
-अचिन्हित दीर्घ दीर्घ simple_म_से_अदीर्घl(स्थिर अक्षर *cp, अक्षर **endp, अचिन्हित पूर्णांक base)
-अणु
-	अचिन्हित दीर्घ दीर्घ result = 0;
+unsigned long long simple_strtoull(const char *cp, char **endp, unsigned int base)
+{
+	unsigned long long result = 0;
 
-	अगर (!base)
+	if (!base)
 		base = simple_guess_base(cp);
 
-	अगर (base == 16 && cp[0] == '0' && TOLOWER(cp[1]) == 'x')
+	if (base == 16 && cp[0] == '0' && TOLOWER(cp[1]) == 'x')
 		cp += 2;
 
-	जबतक (है_षष्ठादशक(*cp)) अणु
-		अचिन्हित पूर्णांक value;
+	while (isxdigit(*cp)) {
+		unsigned int value;
 
-		value = है_अंक(*cp) ? *cp - '0' : TOLOWER(*cp) - 'a' + 10;
-		अगर (value >= base)
-			अवरोध;
+		value = isdigit(*cp) ? *cp - '0' : TOLOWER(*cp) - 'a' + 10;
+		if (value >= base)
+			break;
 		result = result * base + value;
 		cp++;
-	पूर्ण
-	अगर (endp)
-		*endp = (अक्षर *)cp;
+	}
+	if (endp)
+		*endp = (char *)cp;
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-दीर्घ simple_म_से_दीर्घ(स्थिर अक्षर *cp, अक्षर **endp, अचिन्हित पूर्णांक base)
-अणु
-	अगर (*cp == '-')
-		वापस -simple_म_से_अदीर्घl(cp + 1, endp, base);
+long simple_strtol(const char *cp, char **endp, unsigned int base)
+{
+	if (*cp == '-')
+		return -simple_strtoull(cp + 1, endp, base);
 
-	वापस simple_म_से_अदीर्घl(cp, endp, base);
-पूर्ण
+	return simple_strtoull(cp, endp, base);
+}
 
 /**
- * म_माप - Find the length of a string
+ * strlen - Find the length of a string
  * @s: The string to be sized
  */
-माप_प्रकार म_माप(स्थिर अक्षर *s)
-अणु
-	स्थिर अक्षर *sc;
+size_t strlen(const char *s)
+{
+	const char *sc;
 
-	क्रम (sc = s; *sc != '\0'; ++sc)
+	for (sc = s; *sc != '\0'; ++sc)
 		/* nothing */;
-	वापस sc - s;
-पूर्ण
+	return sc - s;
+}
 
 /**
- * म_माला - Find the first substring in a %NUL terminated string
+ * strstr - Find the first substring in a %NUL terminated string
  * @s1: The string to be searched
- * @s2: The string to search क्रम
+ * @s2: The string to search for
  */
-अक्षर *म_माला(स्थिर अक्षर *s1, स्थिर अक्षर *s2)
-अणु
-	माप_प्रकार l1, l2;
+char *strstr(const char *s1, const char *s2)
+{
+	size_t l1, l2;
 
-	l2 = म_माप(s2);
-	अगर (!l2)
-		वापस (अक्षर *)s1;
-	l1 = म_माप(s1);
-	जबतक (l1 >= l2) अणु
+	l2 = strlen(s2);
+	if (!l2)
+		return (char *)s1;
+	l1 = strlen(s1);
+	while (l1 >= l2) {
 		l1--;
-		अगर (!स_भेद(s1, s2, l2))
-			वापस (अक्षर *)s1;
+		if (!memcmp(s1, s2, l2))
+			return (char *)s1;
 		s1++;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	}
+	return NULL;
+}
 
 /**
- * म_अक्षर - Find the first occurrence of the अक्षरacter c in the string s.
+ * strchr - Find the first occurrence of the character c in the string s.
  * @s: the string to be searched
- * @c: the अक्षरacter to search क्रम
+ * @c: the character to search for
  */
-अक्षर *म_अक्षर(स्थिर अक्षर *s, पूर्णांक c)
-अणु
-	जबतक (*s != (अक्षर)c)
-		अगर (*s++ == '\0')
-			वापस शून्य;
-	वापस (अक्षर *)s;
-पूर्ण
+char *strchr(const char *s, int c)
+{
+	while (*s != (char)c)
+		if (*s++ == '\0')
+			return NULL;
+	return (char *)s;
+}
 
-अटल अंतरभूत u64 __भाग_u64_rem(u64 भागidend, u32 भागisor, u32 *reमुख्यder)
-अणु
-	जोड़ अणु
+static inline u64 __div_u64_rem(u64 dividend, u32 divisor, u32 *remainder)
+{
+	union {
 		u64 v64;
 		u32 v32[2];
-	पूर्ण d = अणु भागidend पूर्ण;
+	} d = { dividend };
 	u32 upper;
 
 	upper = d.v32[1];
 	d.v32[1] = 0;
-	अगर (upper >= भागisor) अणु
-		d.v32[1] = upper / भागisor;
-		upper %= भागisor;
-	पूर्ण
-	यंत्र ("divl %2" : "=a" (d.v32[0]), "=d" (*reमुख्यder) :
-		"rm" (भागisor), "0" (d.v32[0]), "1" (upper));
-	वापस d.v64;
-पूर्ण
+	if (upper >= divisor) {
+		d.v32[1] = upper / divisor;
+		upper %= divisor;
+	}
+	asm ("divl %2" : "=a" (d.v32[0]), "=d" (*remainder) :
+		"rm" (divisor), "0" (d.v32[0]), "1" (upper));
+	return d.v64;
+}
 
-अटल अंतरभूत u64 __भाग_u64(u64 भागidend, u32 भागisor)
-अणु
-	u32 reमुख्यder;
+static inline u64 __div_u64(u64 dividend, u32 divisor)
+{
+	u32 remainder;
 
-	वापस __भाग_u64_rem(भागidend, भागisor, &reमुख्यder);
-पूर्ण
+	return __div_u64_rem(dividend, divisor, &remainder);
+}
 
-अटल अंतरभूत अक्षर _छोटे(स्थिर अक्षर c)
-अणु
-	वापस c | 0x20;
-पूर्ण
+static inline char _tolower(const char c)
+{
+	return c | 0x20;
+}
 
-अटल स्थिर अक्षर *_parse_पूर्णांकeger_fixup_radix(स्थिर अक्षर *s, अचिन्हित पूर्णांक *base)
-अणु
-	अगर (*base == 0) अणु
-		अगर (s[0] == '0') अणु
-			अगर (_छोटे(s[1]) == 'x' && है_षष्ठादशक(s[2]))
+static const char *_parse_integer_fixup_radix(const char *s, unsigned int *base)
+{
+	if (*base == 0) {
+		if (s[0] == '0') {
+			if (_tolower(s[1]) == 'x' && isxdigit(s[2]))
 				*base = 16;
-			अन्यथा
+			else
 				*base = 8;
-		पूर्ण अन्यथा
+		} else
 			*base = 10;
-	पूर्ण
-	अगर (*base == 16 && s[0] == '0' && _tolower(s[1]) == 'x')
+	}
+	if (*base == 16 && s[0] == '0' && _tolower(s[1]) == 'x')
 		s += 2;
-	वापस s;
-पूर्ण
+	return s;
+}
 
 /*
- * Convert non-negative पूर्णांकeger string representation in explicitly given radix
- * to an पूर्णांकeger.
- * Return number of अक्षरacters consumed maybe or-ed with overflow bit.
- * If overflow occurs, result पूर्णांकeger (incorrect) is still वापसed.
+ * Convert non-negative integer string representation in explicitly given radix
+ * to an integer.
+ * Return number of characters consumed maybe or-ed with overflow bit.
+ * If overflow occurs, result integer (incorrect) is still returned.
  *
  * Don't you dare use this function.
  */
-अटल अचिन्हित पूर्णांक _parse_पूर्णांकeger(स्थिर अक्षर *s,
-				   अचिन्हित पूर्णांक base,
-				   अचिन्हित दीर्घ दीर्घ *p)
-अणु
-	अचिन्हित दीर्घ दीर्घ res;
-	अचिन्हित पूर्णांक rv;
+static unsigned int _parse_integer(const char *s,
+				   unsigned int base,
+				   unsigned long long *p)
+{
+	unsigned long long res;
+	unsigned int rv;
 
 	res = 0;
 	rv = 0;
-	जबतक (1) अणु
-		अचिन्हित पूर्णांक c = *s;
-		अचिन्हित पूर्णांक lc = c | 0x20; /* करोn't छोटे() this line */
-		अचिन्हित पूर्णांक val;
+	while (1) {
+		unsigned int c = *s;
+		unsigned int lc = c | 0x20; /* don't tolower() this line */
+		unsigned int val;
 
-		अगर ('0' <= c && c <= '9')
+		if ('0' <= c && c <= '9')
 			val = c - '0';
-		अन्यथा अगर ('a' <= lc && lc <= 'f')
+		else if ('a' <= lc && lc <= 'f')
 			val = lc - 'a' + 10;
-		अन्यथा
-			अवरोध;
+		else
+			break;
 
-		अगर (val >= base)
-			अवरोध;
+		if (val >= base)
+			break;
 		/*
-		 * Check क्रम overflow only अगर we are within range of
+		 * Check for overflow only if we are within range of
 		 * it in the max base we support (16)
 		 */
-		अगर (unlikely(res & (~0ull << 60))) अणु
-			अगर (res > __भाग_u64(ULदीर्घ_उच्च - val, base))
+		if (unlikely(res & (~0ull << 60))) {
+			if (res > __div_u64(ULLONG_MAX - val, base))
 				rv |= KSTRTOX_OVERFLOW;
-		पूर्ण
+		}
 		res = res * base + val;
 		rv++;
 		s++;
-	पूर्ण
+	}
 	*p = res;
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल पूर्णांक _kम_से_अदीर्घl(स्थिर अक्षर *s, अचिन्हित पूर्णांक base, अचिन्हित दीर्घ दीर्घ *res)
-अणु
-	अचिन्हित दीर्घ दीर्घ _res;
-	अचिन्हित पूर्णांक rv;
+static int _kstrtoull(const char *s, unsigned int base, unsigned long long *res)
+{
+	unsigned long long _res;
+	unsigned int rv;
 
-	s = _parse_पूर्णांकeger_fixup_radix(s, &base);
-	rv = _parse_पूर्णांकeger(s, base, &_res);
-	अगर (rv & KSTRTOX_OVERFLOW)
-		वापस -दुस्फल;
-	अगर (rv == 0)
-		वापस -EINVAL;
+	s = _parse_integer_fixup_radix(s, &base);
+	rv = _parse_integer(s, base, &_res);
+	if (rv & KSTRTOX_OVERFLOW)
+		return -ERANGE;
+	if (rv == 0)
+		return -EINVAL;
 	s += rv;
-	अगर (*s == '\n')
+	if (*s == '\n')
 		s++;
-	अगर (*s)
-		वापस -EINVAL;
+	if (*s)
+		return -EINVAL;
 	*res = _res;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * kम_से_अदीर्घl - convert a string to an अचिन्हित दीर्घ दीर्घ
+ * kstrtoull - convert a string to an unsigned long long
  * @s: The start of the string. The string must be null-terminated, and may also
- *  include a single newline beक्रमe its terminating null. The first अक्षरacter
+ *  include a single newline before its terminating null. The first character
  *  may also be a plus sign, but not a minus sign.
  * @base: The number base to use. The maximum supported base is 16. If base is
- *  given as 0, then the base of the string is स्वतःmatically detected with the
+ *  given as 0, then the base of the string is automatically detected with the
  *  conventional semantics - If it begins with 0x the number will be parsed as a
- *  hexadecimal (हाल insensitive), अगर it otherwise begins with 0, it will be
+ *  hexadecimal (case insensitive), if it otherwise begins with 0, it will be
  *  parsed as an octal number. Otherwise it will be parsed as a decimal.
- * @res: Where to ग_लिखो the result of the conversion on success.
+ * @res: Where to write the result of the conversion on success.
  *
- * Returns 0 on success, -दुस्फल on overflow and -EINVAL on parsing error.
- * Used as a replacement क्रम the obsolete simple_म_से_अदीर्घl. Return code must
+ * Returns 0 on success, -ERANGE on overflow and -EINVAL on parsing error.
+ * Used as a replacement for the obsolete simple_strtoull. Return code must
  * be checked.
  */
-पूर्णांक kम_से_अदीर्घl(स्थिर अक्षर *s, अचिन्हित पूर्णांक base, अचिन्हित दीर्घ दीर्घ *res)
-अणु
-	अगर (s[0] == '+')
+int kstrtoull(const char *s, unsigned int base, unsigned long long *res)
+{
+	if (s[0] == '+')
 		s++;
-	वापस _kम_से_अदीर्घl(s, base, res);
-पूर्ण
+	return _kstrtoull(s, base, res);
+}
 
-अटल पूर्णांक _kम_से_अदीर्घ(स्थिर अक्षर *s, अचिन्हित पूर्णांक base, अचिन्हित दीर्घ *res)
-अणु
-	अचिन्हित दीर्घ दीर्घ पंचांगp;
-	पूर्णांक rv;
+static int _kstrtoul(const char *s, unsigned int base, unsigned long *res)
+{
+	unsigned long long tmp;
+	int rv;
 
-	rv = kम_से_अदीर्घl(s, base, &पंचांगp);
-	अगर (rv < 0)
-		वापस rv;
-	अगर (पंचांगp != (अचिन्हित दीर्घ)पंचांगp)
-		वापस -दुस्फल;
-	*res = पंचांगp;
-	वापस 0;
-पूर्ण
+	rv = kstrtoull(s, base, &tmp);
+	if (rv < 0)
+		return rv;
+	if (tmp != (unsigned long)tmp)
+		return -ERANGE;
+	*res = tmp;
+	return 0;
+}
 
 /**
- * kम_से_अदीर्घ - convert a string to an अचिन्हित दीर्घ
+ * kstrtoul - convert a string to an unsigned long
  * @s: The start of the string. The string must be null-terminated, and may also
- *  include a single newline beक्रमe its terminating null. The first अक्षरacter
+ *  include a single newline before its terminating null. The first character
  *  may also be a plus sign, but not a minus sign.
  * @base: The number base to use. The maximum supported base is 16. If base is
- *  given as 0, then the base of the string is स्वतःmatically detected with the
+ *  given as 0, then the base of the string is automatically detected with the
  *  conventional semantics - If it begins with 0x the number will be parsed as a
- *  hexadecimal (हाल insensitive), अगर it otherwise begins with 0, it will be
+ *  hexadecimal (case insensitive), if it otherwise begins with 0, it will be
  *  parsed as an octal number. Otherwise it will be parsed as a decimal.
- * @res: Where to ग_लिखो the result of the conversion on success.
+ * @res: Where to write the result of the conversion on success.
  *
- * Returns 0 on success, -दुस्फल on overflow and -EINVAL on parsing error.
- * Used as a replacement क्रम the simple_म_से_अदीर्घl.
+ * Returns 0 on success, -ERANGE on overflow and -EINVAL on parsing error.
+ * Used as a replacement for the simple_strtoull.
  */
-पूर्णांक boot_kम_से_अदीर्घ(स्थिर अक्षर *s, अचिन्हित पूर्णांक base, अचिन्हित दीर्घ *res)
-अणु
+int boot_kstrtoul(const char *s, unsigned int base, unsigned long *res)
+{
 	/*
-	 * We want to लघुcut function call, but
-	 * __builtin_types_compatible_p(अचिन्हित दीर्घ, अचिन्हित दीर्घ दीर्घ) = 0.
+	 * We want to shortcut function call, but
+	 * __builtin_types_compatible_p(unsigned long, unsigned long long) = 0.
 	 */
-	अगर (माप(अचिन्हित दीर्घ) == माप(अचिन्हित दीर्घ दीर्घ) &&
-	    __alignof__(अचिन्हित दीर्घ) == __alignof__(अचिन्हित दीर्घ दीर्घ))
-		वापस kम_से_अदीर्घl(s, base, (अचिन्हित दीर्घ दीर्घ *)res);
-	अन्यथा
-		वापस _kम_से_अदीर्घ(s, base, res);
-पूर्ण
+	if (sizeof(unsigned long) == sizeof(unsigned long long) &&
+	    __alignof__(unsigned long) == __alignof__(unsigned long long))
+		return kstrtoull(s, base, (unsigned long long *)res);
+	else
+		return _kstrtoul(s, base, res);
+}

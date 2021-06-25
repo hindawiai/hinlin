@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
 /*
- *	Berkeley style UIO काष्ठाures	-	Alan Cox 1994.
+ *	Berkeley style UIO structures	-	Alan Cox 1994.
  *
- *		This program is मुक्त software; you can redistribute it and/or
- *		modअगरy it under the terms of the GNU General Public License
+ *		This program is free software; you can redistribute it and/or
+ *		modify it under the terms of the GNU General Public License
  *		as published by the Free Software Foundation; either version
  *		2 of the License, or (at your option) any later version.
  */
-#अगर_अघोषित _UAPI__LINUX_UIO_H
-#घोषणा _UAPI__LINUX_UIO_H
+#ifndef _UAPI__LINUX_UIO_H
+#define _UAPI__LINUX_UIO_H
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/types.h>
+#include <linux/compiler.h>
+#include <linux/types.h>
 
 
-काष्ठा iovec
-अणु
-	व्योम __user *iov_base;	/* BSD uses caddr_t (1003.1g requires व्योम *) */
-	__kernel_माप_प्रकार iov_len; /* Must be माप_प्रकार (1003.1g) */
-पूर्ण;
+struct iovec
+{
+	void __user *iov_base;	/* BSD uses caddr_t (1003.1g requires void *) */
+	__kernel_size_t iov_len; /* Must be size_t (1003.1g) */
+};
 
 /*
  *	UIO_MAXIOV shall be at least 16 1003.1g (5.4.1.1)
  */
  
-#घोषणा UIO_FASTIOV	8
-#घोषणा UIO_MAXIOV	1024
+#define UIO_FASTIOV	8
+#define UIO_MAXIOV	1024
 
 
-#पूर्ण_अगर /* _UAPI__LINUX_UIO_H */
+#endif /* _UAPI__LINUX_UIO_H */

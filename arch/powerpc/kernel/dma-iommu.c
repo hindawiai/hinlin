@@ -1,203 +1,202 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2006 Benjamin Herrenschmidt, IBM Corporation
  *
- * Provide शेष implementations of the DMA mapping callbacks क्रम
- * busses using the iommu infraकाष्ठाure
+ * Provide default implementations of the DMA mapping callbacks for
+ * busses using the iommu infrastructure
  */
 
-#समावेश <linux/dma-direct.h>
-#समावेश <linux/pci.h>
-#समावेश <यंत्र/iommu.h>
+#include <linux/dma-direct.h>
+#include <linux/pci.h>
+#include <asm/iommu.h>
 
-#अगर_घोषित CONFIG_ARCH_HAS_DMA_MAP_सूचीECT
-#घोषणा can_map_direct(dev, addr) \
+#ifdef CONFIG_ARCH_HAS_DMA_MAP_DIRECT
+#define can_map_direct(dev, addr) \
 	((dev)->bus_dma_limit >= phys_to_dma((dev), (addr)))
 
-bool arch_dma_map_page_direct(काष्ठा device *dev, phys_addr_t addr)
-अणु
-	अगर (likely(!dev->bus_dma_limit))
-		वापस false;
+bool arch_dma_map_page_direct(struct device *dev, phys_addr_t addr)
+{
+	if (likely(!dev->bus_dma_limit))
+		return false;
 
-	वापस can_map_direct(dev, addr);
-पूर्ण
+	return can_map_direct(dev, addr);
+}
 
-#घोषणा is_direct_handle(dev, h) ((h) >= (dev)->archdata.dma_offset)
+#define is_direct_handle(dev, h) ((h) >= (dev)->archdata.dma_offset)
 
-bool arch_dma_unmap_page_direct(काष्ठा device *dev, dma_addr_t dma_handle)
-अणु
-	अगर (likely(!dev->bus_dma_limit))
-		वापस false;
+bool arch_dma_unmap_page_direct(struct device *dev, dma_addr_t dma_handle)
+{
+	if (likely(!dev->bus_dma_limit))
+		return false;
 
-	वापस is_direct_handle(dev, dma_handle);
-पूर्ण
+	return is_direct_handle(dev, dma_handle);
+}
 
-bool arch_dma_map_sg_direct(काष्ठा device *dev, काष्ठा scatterlist *sg,
-			    पूर्णांक nents)
-अणु
-	काष्ठा scatterlist *s;
-	पूर्णांक i;
+bool arch_dma_map_sg_direct(struct device *dev, struct scatterlist *sg,
+			    int nents)
+{
+	struct scatterlist *s;
+	int i;
 
-	अगर (likely(!dev->bus_dma_limit))
-		वापस false;
+	if (likely(!dev->bus_dma_limit))
+		return false;
 
-	क्रम_each_sg(sg, s, nents, i) अणु
-		अगर (!can_map_direct(dev, sg_phys(s) + s->offset + s->length))
-			वापस false;
-	पूर्ण
+	for_each_sg(sg, s, nents, i) {
+		if (!can_map_direct(dev, sg_phys(s) + s->offset + s->length))
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-bool arch_dma_unmap_sg_direct(काष्ठा device *dev, काष्ठा scatterlist *sg,
-			      पूर्णांक nents)
-अणु
-	काष्ठा scatterlist *s;
-	पूर्णांक i;
+bool arch_dma_unmap_sg_direct(struct device *dev, struct scatterlist *sg,
+			      int nents)
+{
+	struct scatterlist *s;
+	int i;
 
-	अगर (likely(!dev->bus_dma_limit))
-		वापस false;
+	if (likely(!dev->bus_dma_limit))
+		return false;
 
-	क्रम_each_sg(sg, s, nents, i) अणु
-		अगर (!is_direct_handle(dev, s->dma_address + s->length))
-			वापस false;
-	पूर्ण
+	for_each_sg(sg, s, nents, i) {
+		if (!is_direct_handle(dev, s->dma_address + s->length))
+			return false;
+	}
 
-	वापस true;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_ARCH_HAS_DMA_MAP_सूचीECT */
+	return true;
+}
+#endif /* CONFIG_ARCH_HAS_DMA_MAP_DIRECT */
 
 /*
  * Generic iommu implementation
  */
 
 /* Allocates a contiguous real buffer and creates mappings over it.
- * Returns the भव address of the buffer and sets dma_handle
+ * Returns the virtual address of the buffer and sets dma_handle
  * to the dma address (mapping) of the first page.
  */
-अटल व्योम *dma_iommu_alloc_coherent(काष्ठा device *dev, माप_प्रकार size,
+static void *dma_iommu_alloc_coherent(struct device *dev, size_t size,
 				      dma_addr_t *dma_handle, gfp_t flag,
-				      अचिन्हित दीर्घ attrs)
-अणु
-	वापस iommu_alloc_coherent(dev, get_iommu_table_base(dev), size,
+				      unsigned long attrs)
+{
+	return iommu_alloc_coherent(dev, get_iommu_table_base(dev), size,
 				    dma_handle, dev->coherent_dma_mask, flag,
 				    dev_to_node(dev));
-पूर्ण
+}
 
-अटल व्योम dma_iommu_मुक्त_coherent(काष्ठा device *dev, माप_प्रकार size,
-				    व्योम *vaddr, dma_addr_t dma_handle,
-				    अचिन्हित दीर्घ attrs)
-अणु
-	iommu_मुक्त_coherent(get_iommu_table_base(dev), size, vaddr, dma_handle);
-पूर्ण
+static void dma_iommu_free_coherent(struct device *dev, size_t size,
+				    void *vaddr, dma_addr_t dma_handle,
+				    unsigned long attrs)
+{
+	iommu_free_coherent(get_iommu_table_base(dev), size, vaddr, dma_handle);
+}
 
-/* Creates TCEs क्रम a user provided buffer.  The user buffer must be
- * contiguous real kernel storage (not vदो_स्मृति).  The address passed here
- * comprises a page address and offset पूर्णांकo that page. The dma_addr_t
- * वापसed will poपूर्णांक to the same byte within the page as was passed in.
+/* Creates TCEs for a user provided buffer.  The user buffer must be
+ * contiguous real kernel storage (not vmalloc).  The address passed here
+ * comprises a page address and offset into that page. The dma_addr_t
+ * returned will point to the same byte within the page as was passed in.
  */
-अटल dma_addr_t dma_iommu_map_page(काष्ठा device *dev, काष्ठा page *page,
-				     अचिन्हित दीर्घ offset, माप_प्रकार size,
-				     क्रमागत dma_data_direction direction,
-				     अचिन्हित दीर्घ attrs)
-अणु
-	वापस iommu_map_page(dev, get_iommu_table_base(dev), page, offset,
+static dma_addr_t dma_iommu_map_page(struct device *dev, struct page *page,
+				     unsigned long offset, size_t size,
+				     enum dma_data_direction direction,
+				     unsigned long attrs)
+{
+	return iommu_map_page(dev, get_iommu_table_base(dev), page, offset,
 			      size, dma_get_mask(dev), direction, attrs);
-पूर्ण
+}
 
 
-अटल व्योम dma_iommu_unmap_page(काष्ठा device *dev, dma_addr_t dma_handle,
-				 माप_प्रकार size, क्रमागत dma_data_direction direction,
-				 अचिन्हित दीर्घ attrs)
-अणु
+static void dma_iommu_unmap_page(struct device *dev, dma_addr_t dma_handle,
+				 size_t size, enum dma_data_direction direction,
+				 unsigned long attrs)
+{
 	iommu_unmap_page(get_iommu_table_base(dev), dma_handle, size, direction,
 			 attrs);
-पूर्ण
+}
 
 
-अटल पूर्णांक dma_iommu_map_sg(काष्ठा device *dev, काष्ठा scatterlist *sglist,
-			    पूर्णांक nelems, क्रमागत dma_data_direction direction,
-			    अचिन्हित दीर्घ attrs)
-अणु
-	वापस ppc_iommu_map_sg(dev, get_iommu_table_base(dev), sglist, nelems,
+static int dma_iommu_map_sg(struct device *dev, struct scatterlist *sglist,
+			    int nelems, enum dma_data_direction direction,
+			    unsigned long attrs)
+{
+	return ppc_iommu_map_sg(dev, get_iommu_table_base(dev), sglist, nelems,
 				dma_get_mask(dev), direction, attrs);
-पूर्ण
+}
 
-अटल व्योम dma_iommu_unmap_sg(काष्ठा device *dev, काष्ठा scatterlist *sglist,
-		पूर्णांक nelems, क्रमागत dma_data_direction direction,
-		अचिन्हित दीर्घ attrs)
-अणु
+static void dma_iommu_unmap_sg(struct device *dev, struct scatterlist *sglist,
+		int nelems, enum dma_data_direction direction,
+		unsigned long attrs)
+{
 	ppc_iommu_unmap_sg(get_iommu_table_base(dev), sglist, nelems,
 			   direction, attrs);
-पूर्ण
+}
 
-अटल bool dma_iommu_bypass_supported(काष्ठा device *dev, u64 mask)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev);
-	काष्ठा pci_controller *phb = pci_bus_to_host(pdev->bus);
+static bool dma_iommu_bypass_supported(struct device *dev, u64 mask)
+{
+	struct pci_dev *pdev = to_pci_dev(dev);
+	struct pci_controller *phb = pci_bus_to_host(pdev->bus);
 
-	अगर (iommu_fixed_is_weak || !phb->controller_ops.iommu_bypass_supported)
-		वापस false;
-	वापस phb->controller_ops.iommu_bypass_supported(pdev, mask);
-पूर्ण
+	if (iommu_fixed_is_weak || !phb->controller_ops.iommu_bypass_supported)
+		return false;
+	return phb->controller_ops.iommu_bypass_supported(pdev, mask);
+}
 
 /* We support DMA to/from any memory page via the iommu */
-पूर्णांक dma_iommu_dma_supported(काष्ठा device *dev, u64 mask)
-अणु
-	काष्ठा iommu_table *tbl = get_iommu_table_base(dev);
+int dma_iommu_dma_supported(struct device *dev, u64 mask)
+{
+	struct iommu_table *tbl = get_iommu_table_base(dev);
 
-	अगर (dev_is_pci(dev) && dma_iommu_bypass_supported(dev, mask)) अणु
+	if (dev_is_pci(dev) && dma_iommu_bypass_supported(dev, mask)) {
 		/*
 		 * dma_iommu_bypass_supported() sets dma_max when there is
 		 * 1:1 mapping but it is somehow limited.
 		 * ibm,pmemory is one example.
 		 */
 		dev->dma_ops_bypass = dev->bus_dma_limit == 0;
-		अगर (!dev->dma_ops_bypass)
+		if (!dev->dma_ops_bypass)
 			dev_warn(dev,
 				 "iommu: 64-bit OK but direct DMA is limited by %llx\n",
 				 dev->bus_dma_limit);
-		अन्यथा
+		else
 			dev_dbg(dev, "iommu: 64-bit OK, using fixed ops\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (!tbl) अणु
+	if (!tbl) {
 		dev_err(dev, "Warning: IOMMU dma not supported: mask 0x%08llx, table unavailable\n", mask);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (tbl->it_offset > (mask >> tbl->it_page_shअगरt)) अणु
+	if (tbl->it_offset > (mask >> tbl->it_page_shift)) {
 		dev_info(dev, "Warning: IOMMU offset too big for device mask\n");
 		dev_info(dev, "mask: 0x%08llx, table offset: 0x%08lx\n",
-				mask, tbl->it_offset << tbl->it_page_shअगरt);
-		वापस 0;
-	पूर्ण
+				mask, tbl->it_offset << tbl->it_page_shift);
+		return 0;
+	}
 
 	dev_dbg(dev, "iommu: not 64-bit, using default ops\n");
 	dev->dma_ops_bypass = false;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-u64 dma_iommu_get_required_mask(काष्ठा device *dev)
-अणु
-	काष्ठा iommu_table *tbl = get_iommu_table_base(dev);
+u64 dma_iommu_get_required_mask(struct device *dev)
+{
+	struct iommu_table *tbl = get_iommu_table_base(dev);
 	u64 mask;
 
-	अगर (!tbl)
-		वापस 0;
+	if (!tbl)
+		return 0;
 
-	mask = 1ULL << (fls_दीर्घ(tbl->it_offset + tbl->it_size) +
-			tbl->it_page_shअगरt - 1);
+	mask = 1ULL << (fls_long(tbl->it_offset + tbl->it_size) +
+			tbl->it_page_shift - 1);
 	mask += mask - 1;
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-स्थिर काष्ठा dma_map_ops dma_iommu_ops = अणु
+const struct dma_map_ops dma_iommu_ops = {
 	.alloc			= dma_iommu_alloc_coherent,
-	.मुक्त			= dma_iommu_मुक्त_coherent,
+	.free			= dma_iommu_free_coherent,
 	.map_sg			= dma_iommu_map_sg,
 	.unmap_sg		= dma_iommu_unmap_sg,
 	.dma_supported		= dma_iommu_dma_supported,
@@ -207,5 +206,5 @@ u64 dma_iommu_get_required_mask(काष्ठा device *dev)
 	.mmap			= dma_common_mmap,
 	.get_sgtable		= dma_common_get_sgtable,
 	.alloc_pages		= dma_common_alloc_pages,
-	.मुक्त_pages		= dma_common_मुक्त_pages,
-पूर्ण;
+	.free_pages		= dma_common_free_pages,
+};

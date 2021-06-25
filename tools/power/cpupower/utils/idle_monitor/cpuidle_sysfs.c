@@ -1,213 +1,212 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  (C) 2010,2011       Thomas Renninger <trenn@suse.de>, Novell Inc
  */
 
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <मानक_निवेशt.h>
-#समावेश <माला.स>
-#समावेश <सीमा.स>
-#समावेश <cpuidle.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+#include <limits.h>
+#include <cpuidle.h>
 
-#समावेश "helpers/helpers.h"
-#समावेश "idle_monitor/cpupower-monitor.h"
+#include "helpers/helpers.h"
+#include "idle_monitor/cpupower-monitor.h"
 
-#घोषणा CPUIDLE_STATES_MAX 10
-अटल cstate_t cpuidle_cstates[CPUIDLE_STATES_MAX];
-काष्ठा cpuidle_monitor cpuidle_sysfs_monitor;
+#define CPUIDLE_STATES_MAX 10
+static cstate_t cpuidle_cstates[CPUIDLE_STATES_MAX];
+struct cpuidle_monitor cpuidle_sysfs_monitor;
 
-अटल अचिन्हित दीर्घ दीर्घ **previous_count;
-अटल अचिन्हित दीर्घ दीर्घ **current_count;
-अटल काष्ठा बारpec start_समय;
-अटल अचिन्हित दीर्घ दीर्घ समयdअगरf;
+static unsigned long long **previous_count;
+static unsigned long long **current_count;
+static struct timespec start_time;
+static unsigned long long timediff;
 
-अटल पूर्णांक cpuidle_get_count_percent(अचिन्हित पूर्णांक id, द्विगुन *percent,
-				     अचिन्हित पूर्णांक cpu)
-अणु
-	अचिन्हित दीर्घ दीर्घ statedअगरf = current_count[cpu][id]
+static int cpuidle_get_count_percent(unsigned int id, double *percent,
+				     unsigned int cpu)
+{
+	unsigned long long statediff = current_count[cpu][id]
 		- previous_count[cpu][id];
-	dprपूर्णांक("%s: - diff: %llu - percent: %f (%u)\n",
-	       cpuidle_cstates[id].name, समयdअगरf, *percent, cpu);
+	dprint("%s: - diff: %llu - percent: %f (%u)\n",
+	       cpuidle_cstates[id].name, timediff, *percent, cpu);
 
-	अगर (समयdअगरf == 0)
+	if (timediff == 0)
 		*percent = 0.0;
-	अन्यथा
-		*percent = ((100.0 * statedअगरf) / समयdअगरf);
+	else
+		*percent = ((100.0 * statediff) / timediff);
 
-	dprपूर्णांक("%s: - timediff: %llu - statediff: %llu - percent: %f (%u)\n",
-	       cpuidle_cstates[id].name, समयdअगरf, statedअगरf, *percent, cpu);
+	dprint("%s: - timediff: %llu - statediff: %llu - percent: %f (%u)\n",
+	       cpuidle_cstates[id].name, timediff, statediff, *percent, cpu);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cpuidle_start(व्योम)
-अणु
-	पूर्णांक cpu, state;
-	घड़ी_समय_लो(CLOCK_REALTIME, &start_समय);
-	क्रम (cpu = 0; cpu < cpu_count; cpu++) अणु
-		क्रम (state = 0; state < cpuidle_sysfs_monitor.hw_states_num;
-		     state++) अणु
+static int cpuidle_start(void)
+{
+	int cpu, state;
+	clock_gettime(CLOCK_REALTIME, &start_time);
+	for (cpu = 0; cpu < cpu_count; cpu++) {
+		for (state = 0; state < cpuidle_sysfs_monitor.hw_states_num;
+		     state++) {
 			previous_count[cpu][state] =
-				cpuidle_state_समय(cpu, state);
-			dprपूर्णांक("CPU %d - State: %d - Val: %llu\n",
+				cpuidle_state_time(cpu, state);
+			dprint("CPU %d - State: %d - Val: %llu\n",
 			       cpu, state, previous_count[cpu][state]);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक cpuidle_stop(व्योम)
-अणु
-	पूर्णांक cpu, state;
-	काष्ठा बारpec end_समय;
-	घड़ी_समय_लो(CLOCK_REALTIME, &end_समय);
-	समयdअगरf = बारpec_dअगरf_us(start_समय, end_समय);
+static int cpuidle_stop(void)
+{
+	int cpu, state;
+	struct timespec end_time;
+	clock_gettime(CLOCK_REALTIME, &end_time);
+	timediff = timespec_diff_us(start_time, end_time);
 
-	क्रम (cpu = 0; cpu < cpu_count; cpu++) अणु
-		क्रम (state = 0; state < cpuidle_sysfs_monitor.hw_states_num;
-		     state++) अणु
+	for (cpu = 0; cpu < cpu_count; cpu++) {
+		for (state = 0; state < cpuidle_sysfs_monitor.hw_states_num;
+		     state++) {
 			current_count[cpu][state] =
-				cpuidle_state_समय(cpu, state);
-			dprपूर्णांक("CPU %d - State: %d - Val: %llu\n",
+				cpuidle_state_time(cpu, state);
+			dprint("CPU %d - State: %d - Val: %llu\n",
 			       cpu, state, previous_count[cpu][state]);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-व्योम fix_up_पूर्णांकel_idle_driver_name(अक्षर *पंचांगp, पूर्णांक num)
-अणु
-	/* fix up cpuidle name क्रम पूर्णांकel idle driver */
-	अगर (!म_भेदन(पंचांगp, "NHM-", 4)) अणु
-		चयन (num) अणु
-		हाल 1:
-			म_नकल(पंचांगp, "C1");
-			अवरोध;
-		हाल 2:
-			म_नकल(पंचांगp, "C3");
-			अवरोध;
-		हाल 3:
-			म_नकल(पंचांगp, "C6");
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अगर (!म_भेदन(पंचांगp, "SNB-", 4)) अणु
-		चयन (num) अणु
-		हाल 1:
-			म_नकल(पंचांगp, "C1");
-			अवरोध;
-		हाल 2:
-			म_नकल(पंचांगp, "C3");
-			अवरोध;
-		हाल 3:
-			म_नकल(पंचांगp, "C6");
-			अवरोध;
-		हाल 4:
-			म_नकल(पंचांगp, "C7");
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अगर (!म_भेदन(पंचांगp, "ATM-", 4)) अणु
-		चयन (num) अणु
-		हाल 1:
-			म_नकल(पंचांगp, "C1");
-			अवरोध;
-		हाल 2:
-			म_नकल(पंचांगp, "C2");
-			अवरोध;
-		हाल 3:
-			म_नकल(पंचांगp, "C4");
-			अवरोध;
-		हाल 4:
-			म_नकल(पंचांगp, "C6");
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+void fix_up_intel_idle_driver_name(char *tmp, int num)
+{
+	/* fix up cpuidle name for intel idle driver */
+	if (!strncmp(tmp, "NHM-", 4)) {
+		switch (num) {
+		case 1:
+			strcpy(tmp, "C1");
+			break;
+		case 2:
+			strcpy(tmp, "C3");
+			break;
+		case 3:
+			strcpy(tmp, "C6");
+			break;
+		}
+	} else if (!strncmp(tmp, "SNB-", 4)) {
+		switch (num) {
+		case 1:
+			strcpy(tmp, "C1");
+			break;
+		case 2:
+			strcpy(tmp, "C3");
+			break;
+		case 3:
+			strcpy(tmp, "C6");
+			break;
+		case 4:
+			strcpy(tmp, "C7");
+			break;
+		}
+	} else if (!strncmp(tmp, "ATM-", 4)) {
+		switch (num) {
+		case 1:
+			strcpy(tmp, "C1");
+			break;
+		case 2:
+			strcpy(tmp, "C2");
+			break;
+		case 3:
+			strcpy(tmp, "C4");
+			break;
+		case 4:
+			strcpy(tmp, "C6");
+			break;
+		}
+	}
+}
 
-#अगर_घोषित __घातerpc__
-व्योम map_घातer_idle_state_name(अक्षर *पंचांगp)
-अणु
-	अगर (!म_भेदन(पंचांगp, "stop0_lite", CSTATE_NAME_LEN))
-		म_नकल(पंचांगp, "stop0L");
-	अन्यथा अगर (!म_भेदन(पंचांगp, "stop1_lite", CSTATE_NAME_LEN))
-		म_नकल(पंचांगp, "stop1L");
-	अन्यथा अगर (!म_भेदन(पंचांगp, "stop2_lite", CSTATE_NAME_LEN))
-		म_नकल(पंचांगp, "stop2L");
-पूर्ण
-#अन्यथा
-व्योम map_घातer_idle_state_name(अक्षर *पंचांगp) अणु पूर्ण
-#पूर्ण_अगर
+#ifdef __powerpc__
+void map_power_idle_state_name(char *tmp)
+{
+	if (!strncmp(tmp, "stop0_lite", CSTATE_NAME_LEN))
+		strcpy(tmp, "stop0L");
+	else if (!strncmp(tmp, "stop1_lite", CSTATE_NAME_LEN))
+		strcpy(tmp, "stop1L");
+	else if (!strncmp(tmp, "stop2_lite", CSTATE_NAME_LEN))
+		strcpy(tmp, "stop2L");
+}
+#else
+void map_power_idle_state_name(char *tmp) { }
+#endif
 
-अटल काष्ठा cpuidle_monitor *cpuidle_रेजिस्टर(व्योम)
-अणु
-	पूर्णांक num;
-	अक्षर *पंचांगp;
-	पूर्णांक this_cpu;
+static struct cpuidle_monitor *cpuidle_register(void)
+{
+	int num;
+	char *tmp;
+	int this_cpu;
 
-	this_cpu = sched_अ_लोpu();
+	this_cpu = sched_getcpu();
 
-	/* Assume idle state count is the same क्रम all CPUs */
+	/* Assume idle state count is the same for all CPUs */
 	cpuidle_sysfs_monitor.hw_states_num = cpuidle_state_count(this_cpu);
 
-	अगर (cpuidle_sysfs_monitor.hw_states_num <= 0)
-		वापस शून्य;
+	if (cpuidle_sysfs_monitor.hw_states_num <= 0)
+		return NULL;
 
-	क्रम (num = 0; num < cpuidle_sysfs_monitor.hw_states_num; num++) अणु
-		पंचांगp = cpuidle_state_name(this_cpu, num);
-		अगर (पंचांगp == शून्य)
-			जारी;
+	for (num = 0; num < cpuidle_sysfs_monitor.hw_states_num; num++) {
+		tmp = cpuidle_state_name(this_cpu, num);
+		if (tmp == NULL)
+			continue;
 
-		map_घातer_idle_state_name(पंचांगp);
-		fix_up_पूर्णांकel_idle_driver_name(पंचांगp, num);
-		म_नकलन(cpuidle_cstates[num].name, पंचांगp, CSTATE_NAME_LEN - 1);
-		मुक्त(पंचांगp);
+		map_power_idle_state_name(tmp);
+		fix_up_intel_idle_driver_name(tmp, num);
+		strncpy(cpuidle_cstates[num].name, tmp, CSTATE_NAME_LEN - 1);
+		free(tmp);
 
-		पंचांगp = cpuidle_state_desc(this_cpu, num);
-		अगर (पंचांगp == शून्य)
-			जारी;
-		म_नकलन(cpuidle_cstates[num].desc, पंचांगp,	CSTATE_DESC_LEN - 1);
-		मुक्त(पंचांगp);
+		tmp = cpuidle_state_desc(this_cpu, num);
+		if (tmp == NULL)
+			continue;
+		strncpy(cpuidle_cstates[num].desc, tmp,	CSTATE_DESC_LEN - 1);
+		free(tmp);
 
 		cpuidle_cstates[num].range = RANGE_THREAD;
 		cpuidle_cstates[num].id = num;
 		cpuidle_cstates[num].get_count_percent =
 			cpuidle_get_count_percent;
-	पूर्ण
+	}
 
 	/* Free this at program termination */
-	previous_count = दो_स्मृति(माप(दीर्घ दीर्घ *) * cpu_count);
-	current_count = दो_स्मृति(माप(दीर्घ दीर्घ *) * cpu_count);
-	क्रम (num = 0; num < cpu_count; num++) अणु
-		previous_count[num] = दो_स्मृति(माप(दीर्घ दीर्घ) *
+	previous_count = malloc(sizeof(long long *) * cpu_count);
+	current_count = malloc(sizeof(long long *) * cpu_count);
+	for (num = 0; num < cpu_count; num++) {
+		previous_count[num] = malloc(sizeof(long long) *
 					cpuidle_sysfs_monitor.hw_states_num);
-		current_count[num] = दो_स्मृति(माप(दीर्घ दीर्घ) *
+		current_count[num] = malloc(sizeof(long long) *
 					cpuidle_sysfs_monitor.hw_states_num);
-	पूर्ण
+	}
 
-	cpuidle_sysfs_monitor.name_len = म_माप(cpuidle_sysfs_monitor.name);
-	वापस &cpuidle_sysfs_monitor;
-पूर्ण
+	cpuidle_sysfs_monitor.name_len = strlen(cpuidle_sysfs_monitor.name);
+	return &cpuidle_sysfs_monitor;
+}
 
-व्योम cpuidle_unरेजिस्टर(व्योम)
-अणु
-	पूर्णांक num;
+void cpuidle_unregister(void)
+{
+	int num;
 
-	क्रम (num = 0; num < cpu_count; num++) अणु
-		मुक्त(previous_count[num]);
-		मुक्त(current_count[num]);
-	पूर्ण
-	मुक्त(previous_count);
-	मुक्त(current_count);
-पूर्ण
+	for (num = 0; num < cpu_count; num++) {
+		free(previous_count[num]);
+		free(current_count[num]);
+	}
+	free(previous_count);
+	free(current_count);
+}
 
-काष्ठा cpuidle_monitor cpuidle_sysfs_monitor = अणु
+struct cpuidle_monitor cpuidle_sysfs_monitor = {
 	.name			= "Idle_Stats",
 	.hw_states		= cpuidle_cstates,
 	.start			= cpuidle_start,
 	.stop			= cpuidle_stop,
-	.करो_रेजिस्टर		= cpuidle_रेजिस्टर,
-	.unरेजिस्टर		= cpuidle_unरेजिस्टर,
+	.do_register		= cpuidle_register,
+	.unregister		= cpuidle_unregister,
 	.flags.needs_root	= 0,
-	.overflow_s		= अच_पूर्णांक_उच्च,
-पूर्ण;
+	.overflow_s		= UINT_MAX,
+};

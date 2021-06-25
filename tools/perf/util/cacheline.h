@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित PERF_CACHELINE_H
-#घोषणा PERF_CACHELINE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef PERF_CACHELINE_H
+#define PERF_CACHELINE_H
 
-#समावेश <linux/compiler.h>
+#include <linux/compiler.h>
 
-पूर्णांक __pure cacheline_size(व्योम);
+int __pure cacheline_size(void);
 
-अटल अंतरभूत u64 cl_address(u64 address)
-अणु
-	/* वापस the cacheline of the address */
-	वापस (address & ~(cacheline_size() - 1));
-पूर्ण
+static inline u64 cl_address(u64 address)
+{
+	/* return the cacheline of the address */
+	return (address & ~(cacheline_size() - 1));
+}
 
-अटल अंतरभूत u64 cl_offset(u64 address)
-अणु
-	/* वापस the cacheline of the address */
-	वापस (address & (cacheline_size() - 1));
-पूर्ण
+static inline u64 cl_offset(u64 address)
+{
+	/* return the cacheline of the address */
+	return (address & (cacheline_size() - 1));
+}
 
-#पूर्ण_अगर // PERF_CACHELINE_H
+#endif // PERF_CACHELINE_H

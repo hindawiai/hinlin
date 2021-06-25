@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * sufile.c - NILFS segment usage file.
  *
@@ -9,104 +8,104 @@
  * Revised by Ryusuke Konishi.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश "mdt.h"
-#समावेश "sufile.h"
+#include <linux/kernel.h>
+#include <linux/fs.h>
+#include <linux/string.h>
+#include <linux/buffer_head.h>
+#include <linux/errno.h>
+#include "mdt.h"
+#include "sufile.h"
 
-#समावेश <trace/events/nilfs2.h>
+#include <trace/events/nilfs2.h>
 
 /**
- * काष्ठा nilfs_sufile_info - on-memory निजी data of sufile
- * @mi: on-memory निजी data of metadata file
+ * struct nilfs_sufile_info - on-memory private data of sufile
+ * @mi: on-memory private data of metadata file
  * @ncleansegs: number of clean segments
  * @allocmin: lower limit of allocatable segment range
  * @allocmax: upper limit of allocatable segment range
  */
-काष्ठा nilfs_sufile_info अणु
-	काष्ठा nilfs_mdt_info mi;
-	अचिन्हित दीर्घ ncleansegs;/* number of clean segments */
+struct nilfs_sufile_info {
+	struct nilfs_mdt_info mi;
+	unsigned long ncleansegs;/* number of clean segments */
 	__u64 allocmin;		/* lower limit of allocatable segment range */
 	__u64 allocmax;		/* upper limit of allocatable segment range */
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा nilfs_sufile_info *NILFS_SUI(काष्ठा inode *sufile)
-अणु
-	वापस (काष्ठा nilfs_sufile_info *)NILFS_MDT(sufile);
-पूर्ण
+static inline struct nilfs_sufile_info *NILFS_SUI(struct inode *sufile)
+{
+	return (struct nilfs_sufile_info *)NILFS_MDT(sufile);
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ
-nilfs_sufile_segment_usages_per_block(स्थिर काष्ठा inode *sufile)
-अणु
-	वापस NILFS_MDT(sufile)->mi_entries_per_block;
-पूर्ण
+static inline unsigned long
+nilfs_sufile_segment_usages_per_block(const struct inode *sufile)
+{
+	return NILFS_MDT(sufile)->mi_entries_per_block;
+}
 
-अटल अचिन्हित दीर्घ
-nilfs_sufile_get_blkoff(स्थिर काष्ठा inode *sufile, __u64 segnum)
-अणु
+static unsigned long
+nilfs_sufile_get_blkoff(const struct inode *sufile, __u64 segnum)
+{
 	__u64 t = segnum + NILFS_MDT(sufile)->mi_first_entry_offset;
 
-	करो_भाग(t, nilfs_sufile_segment_usages_per_block(sufile));
-	वापस (अचिन्हित दीर्घ)t;
-पूर्ण
+	do_div(t, nilfs_sufile_segment_usages_per_block(sufile));
+	return (unsigned long)t;
+}
 
-अटल अचिन्हित दीर्घ
-nilfs_sufile_get_offset(स्थिर काष्ठा inode *sufile, __u64 segnum)
-अणु
+static unsigned long
+nilfs_sufile_get_offset(const struct inode *sufile, __u64 segnum)
+{
 	__u64 t = segnum + NILFS_MDT(sufile)->mi_first_entry_offset;
 
-	वापस करो_भाग(t, nilfs_sufile_segment_usages_per_block(sufile));
-पूर्ण
+	return do_div(t, nilfs_sufile_segment_usages_per_block(sufile));
+}
 
-अटल अचिन्हित दीर्घ
-nilfs_sufile_segment_usages_in_block(स्थिर काष्ठा inode *sufile, __u64 curr,
+static unsigned long
+nilfs_sufile_segment_usages_in_block(const struct inode *sufile, __u64 curr,
 				     __u64 max)
-अणु
-	वापस min_t(अचिन्हित दीर्घ,
+{
+	return min_t(unsigned long,
 		     nilfs_sufile_segment_usages_per_block(sufile) -
 		     nilfs_sufile_get_offset(sufile, curr),
 		     max - curr + 1);
-पूर्ण
+}
 
-अटल काष्ठा nilfs_segment_usage *
-nilfs_sufile_block_get_segment_usage(स्थिर काष्ठा inode *sufile, __u64 segnum,
-				     काष्ठा buffer_head *bh, व्योम *kaddr)
-अणु
-	वापस kaddr + bh_offset(bh) +
+static struct nilfs_segment_usage *
+nilfs_sufile_block_get_segment_usage(const struct inode *sufile, __u64 segnum,
+				     struct buffer_head *bh, void *kaddr)
+{
+	return kaddr + bh_offset(bh) +
 		nilfs_sufile_get_offset(sufile, segnum) *
 		NILFS_MDT(sufile)->mi_entry_size;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक nilfs_sufile_get_header_block(काष्ठा inode *sufile,
-						काष्ठा buffer_head **bhp)
-अणु
-	वापस nilfs_mdt_get_block(sufile, 0, 0, शून्य, bhp);
-पूर्ण
+static inline int nilfs_sufile_get_header_block(struct inode *sufile,
+						struct buffer_head **bhp)
+{
+	return nilfs_mdt_get_block(sufile, 0, 0, NULL, bhp);
+}
 
-अटल अंतरभूत पूर्णांक
-nilfs_sufile_get_segment_usage_block(काष्ठा inode *sufile, __u64 segnum,
-				     पूर्णांक create, काष्ठा buffer_head **bhp)
-अणु
-	वापस nilfs_mdt_get_block(sufile,
+static inline int
+nilfs_sufile_get_segment_usage_block(struct inode *sufile, __u64 segnum,
+				     int create, struct buffer_head **bhp)
+{
+	return nilfs_mdt_get_block(sufile,
 				   nilfs_sufile_get_blkoff(sufile, segnum),
-				   create, शून्य, bhp);
-पूर्ण
+				   create, NULL, bhp);
+}
 
-अटल पूर्णांक nilfs_sufile_delete_segment_usage_block(काष्ठा inode *sufile,
+static int nilfs_sufile_delete_segment_usage_block(struct inode *sufile,
 						   __u64 segnum)
-अणु
-	वापस nilfs_mdt_delete_block(sufile,
+{
+	return nilfs_mdt_delete_block(sufile,
 				      nilfs_sufile_get_blkoff(sufile, segnum));
-पूर्ण
+}
 
-अटल व्योम nilfs_sufile_mod_counter(काष्ठा buffer_head *header_bh,
+static void nilfs_sufile_mod_counter(struct buffer_head *header_bh,
 				     u64 ncleanadd, u64 ndirtyadd)
-अणु
-	काष्ठा nilfs_sufile_header *header;
-	व्योम *kaddr;
+{
+	struct nilfs_sufile_header *header;
+	void *kaddr;
 
 	kaddr = kmap_atomic(header_bh->b_page);
 	header = kaddr + bh_offset(header_bh);
@@ -115,143 +114,143 @@ nilfs_sufile_get_segment_usage_block(काष्ठा inode *sufile, __u64 seg
 	kunmap_atomic(kaddr);
 
 	mark_buffer_dirty(header_bh);
-पूर्ण
+}
 
 /**
- * nilfs_sufile_get_ncleansegs - वापस the number of clean segments
+ * nilfs_sufile_get_ncleansegs - return the number of clean segments
  * @sufile: inode of segment usage file
  */
-अचिन्हित दीर्घ nilfs_sufile_get_ncleansegs(काष्ठा inode *sufile)
-अणु
-	वापस NILFS_SUI(sufile)->ncleansegs;
-पूर्ण
+unsigned long nilfs_sufile_get_ncleansegs(struct inode *sufile)
+{
+	return NILFS_SUI(sufile)->ncleansegs;
+}
 
 /**
- * nilfs_sufile_updatev - modअगरy multiple segment usages at a समय
+ * nilfs_sufile_updatev - modify multiple segment usages at a time
  * @sufile: inode of segment usage file
  * @segnumv: array of segment numbers
  * @nsegs: size of @segnumv array
  * @create: creation flag
- * @nकरोne: place to store number of modअगरied segments on @segnumv
- * @करोfunc: primitive operation क्रम the update
+ * @ndone: place to store number of modified segments on @segnumv
+ * @dofunc: primitive operation for the update
  *
- * Description: nilfs_sufile_updatev() repeatedly calls @करोfunc
- * against the given array of segments.  The @करोfunc is called with
+ * Description: nilfs_sufile_updatev() repeatedly calls @dofunc
+ * against the given array of segments.  The @dofunc is called with
  * buffers of a header block and the sufile block in which the target
- * segment usage entry is contained.  If @nकरोne is given, the number
- * of successfully modअगरied segments from the head is stored in the
- * place @nकरोne poपूर्णांकs to.
+ * segment usage entry is contained.  If @ndone is given, the number
+ * of successfully modified segments from the head is stored in the
+ * place @ndone points to.
  *
- * Return Value: On success, zero is वापसed.  On error, one of the
- * following negative error codes is वापसed.
+ * Return Value: On success, zero is returned.  On error, one of the
+ * following negative error codes is returned.
  *
  * %-EIO - I/O error.
  *
  * %-ENOMEM - Insufficient amount of memory available.
  *
- * %-ENOENT - Given segment usage is in hole block (may be वापसed अगर
+ * %-ENOENT - Given segment usage is in hole block (may be returned if
  *            @create is zero)
  *
  * %-EINVAL - Invalid segment usage number
  */
-पूर्णांक nilfs_sufile_updatev(काष्ठा inode *sufile, __u64 *segnumv, माप_प्रकार nsegs,
-			 पूर्णांक create, माप_प्रकार *nकरोne,
-			 व्योम (*करोfunc)(काष्ठा inode *, __u64,
-					काष्ठा buffer_head *,
-					काष्ठा buffer_head *))
-अणु
-	काष्ठा buffer_head *header_bh, *bh;
-	अचिन्हित दीर्घ blkoff, prev_blkoff;
+int nilfs_sufile_updatev(struct inode *sufile, __u64 *segnumv, size_t nsegs,
+			 int create, size_t *ndone,
+			 void (*dofunc)(struct inode *, __u64,
+					struct buffer_head *,
+					struct buffer_head *))
+{
+	struct buffer_head *header_bh, *bh;
+	unsigned long blkoff, prev_blkoff;
 	__u64 *seg;
-	माप_प्रकार nerr = 0, n = 0;
-	पूर्णांक ret = 0;
+	size_t nerr = 0, n = 0;
+	int ret = 0;
 
-	अगर (unlikely(nsegs == 0))
-		जाओ out;
+	if (unlikely(nsegs == 0))
+		goto out;
 
-	करोwn_ग_लिखो(&NILFS_MDT(sufile)->mi_sem);
-	क्रम (seg = segnumv; seg < segnumv + nsegs; seg++) अणु
-		अगर (unlikely(*seg >= nilfs_sufile_get_nsegments(sufile))) अणु
+	down_write(&NILFS_MDT(sufile)->mi_sem);
+	for (seg = segnumv; seg < segnumv + nsegs; seg++) {
+		if (unlikely(*seg >= nilfs_sufile_get_nsegments(sufile))) {
 			nilfs_warn(sufile->i_sb,
 				   "%s: invalid segment number: %llu",
-				   __func__, (अचिन्हित दीर्घ दीर्घ)*seg);
+				   __func__, (unsigned long long)*seg);
 			nerr++;
-		पूर्ण
-	पूर्ण
-	अगर (nerr > 0) अणु
+		}
+	}
+	if (nerr > 0) {
 		ret = -EINVAL;
-		जाओ out_sem;
-	पूर्ण
+		goto out_sem;
+	}
 
 	ret = nilfs_sufile_get_header_block(sufile, &header_bh);
-	अगर (ret < 0)
-		जाओ out_sem;
+	if (ret < 0)
+		goto out_sem;
 
 	seg = segnumv;
 	blkoff = nilfs_sufile_get_blkoff(sufile, *seg);
-	ret = nilfs_mdt_get_block(sufile, blkoff, create, शून्य, &bh);
-	अगर (ret < 0)
-		जाओ out_header;
+	ret = nilfs_mdt_get_block(sufile, blkoff, create, NULL, &bh);
+	if (ret < 0)
+		goto out_header;
 
-	क्रम (;;) अणु
-		करोfunc(sufile, *seg, header_bh, bh);
+	for (;;) {
+		dofunc(sufile, *seg, header_bh, bh);
 
-		अगर (++seg >= segnumv + nsegs)
-			अवरोध;
+		if (++seg >= segnumv + nsegs)
+			break;
 		prev_blkoff = blkoff;
 		blkoff = nilfs_sufile_get_blkoff(sufile, *seg);
-		अगर (blkoff == prev_blkoff)
-			जारी;
+		if (blkoff == prev_blkoff)
+			continue;
 
-		/* get dअगरferent block */
-		brअन्यथा(bh);
-		ret = nilfs_mdt_get_block(sufile, blkoff, create, शून्य, &bh);
-		अगर (unlikely(ret < 0))
-			जाओ out_header;
-	पूर्ण
-	brअन्यथा(bh);
+		/* get different block */
+		brelse(bh);
+		ret = nilfs_mdt_get_block(sufile, blkoff, create, NULL, &bh);
+		if (unlikely(ret < 0))
+			goto out_header;
+	}
+	brelse(bh);
 
  out_header:
 	n = seg - segnumv;
-	brअन्यथा(header_bh);
+	brelse(header_bh);
  out_sem:
-	up_ग_लिखो(&NILFS_MDT(sufile)->mi_sem);
+	up_write(&NILFS_MDT(sufile)->mi_sem);
  out:
-	अगर (nकरोne)
-		*nकरोne = n;
-	वापस ret;
-पूर्ण
+	if (ndone)
+		*ndone = n;
+	return ret;
+}
 
-पूर्णांक nilfs_sufile_update(काष्ठा inode *sufile, __u64 segnum, पूर्णांक create,
-			व्योम (*करोfunc)(काष्ठा inode *, __u64,
-				       काष्ठा buffer_head *,
-				       काष्ठा buffer_head *))
-अणु
-	काष्ठा buffer_head *header_bh, *bh;
-	पूर्णांक ret;
+int nilfs_sufile_update(struct inode *sufile, __u64 segnum, int create,
+			void (*dofunc)(struct inode *, __u64,
+				       struct buffer_head *,
+				       struct buffer_head *))
+{
+	struct buffer_head *header_bh, *bh;
+	int ret;
 
-	अगर (unlikely(segnum >= nilfs_sufile_get_nsegments(sufile))) अणु
+	if (unlikely(segnum >= nilfs_sufile_get_nsegments(sufile))) {
 		nilfs_warn(sufile->i_sb, "%s: invalid segment number: %llu",
-			   __func__, (अचिन्हित दीर्घ दीर्घ)segnum);
-		वापस -EINVAL;
-	पूर्ण
-	करोwn_ग_लिखो(&NILFS_MDT(sufile)->mi_sem);
+			   __func__, (unsigned long long)segnum);
+		return -EINVAL;
+	}
+	down_write(&NILFS_MDT(sufile)->mi_sem);
 
 	ret = nilfs_sufile_get_header_block(sufile, &header_bh);
-	अगर (ret < 0)
-		जाओ out_sem;
+	if (ret < 0)
+		goto out_sem;
 
 	ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, create, &bh);
-	अगर (!ret) अणु
-		करोfunc(sufile, segnum, header_bh, bh);
-		brअन्यथा(bh);
-	पूर्ण
-	brअन्यथा(header_bh);
+	if (!ret) {
+		dofunc(sufile, segnum, header_bh, bh);
+		brelse(bh);
+	}
+	brelse(header_bh);
 
  out_sem:
-	up_ग_लिखो(&NILFS_MDT(sufile)->mi_sem);
-	वापस ret;
-पूर्ण
+	up_write(&NILFS_MDT(sufile)->mi_sem);
+	return ret;
+}
 
 /**
  * nilfs_sufile_set_alloc_range - limit range of segment to be allocated
@@ -259,39 +258,39 @@ nilfs_sufile_get_segment_usage_block(काष्ठा inode *sufile, __u64 seg
  * @start: minimum segment number of allocatable region (inclusive)
  * @end: maximum segment number of allocatable region (inclusive)
  *
- * Return Value: On success, 0 is वापसed.  On error, one of the
- * following negative error codes is वापसed.
+ * Return Value: On success, 0 is returned.  On error, one of the
+ * following negative error codes is returned.
  *
- * %-दुस्फल - invalid segment region
+ * %-ERANGE - invalid segment region
  */
-पूर्णांक nilfs_sufile_set_alloc_range(काष्ठा inode *sufile, __u64 start, __u64 end)
-अणु
-	काष्ठा nilfs_sufile_info *sui = NILFS_SUI(sufile);
+int nilfs_sufile_set_alloc_range(struct inode *sufile, __u64 start, __u64 end)
+{
+	struct nilfs_sufile_info *sui = NILFS_SUI(sufile);
 	__u64 nsegs;
-	पूर्णांक ret = -दुस्फल;
+	int ret = -ERANGE;
 
-	करोwn_ग_लिखो(&NILFS_MDT(sufile)->mi_sem);
+	down_write(&NILFS_MDT(sufile)->mi_sem);
 	nsegs = nilfs_sufile_get_nsegments(sufile);
 
-	अगर (start <= end && end < nsegs) अणु
+	if (start <= end && end < nsegs) {
 		sui->allocmin = start;
 		sui->allocmax = end;
 		ret = 0;
-	पूर्ण
-	up_ग_लिखो(&NILFS_MDT(sufile)->mi_sem);
-	वापस ret;
-पूर्ण
+	}
+	up_write(&NILFS_MDT(sufile)->mi_sem);
+	return ret;
+}
 
 /**
  * nilfs_sufile_alloc - allocate a segment
  * @sufile: inode of segment usage file
- * @segnump: poपूर्णांकer to segment number
+ * @segnump: pointer to segment number
  *
  * Description: nilfs_sufile_alloc() allocates a clean segment.
  *
- * Return Value: On success, 0 is वापसed and the segment number of the
- * allocated segment is stored in the place poपूर्णांकed by @segnump. On error, one
- * of the following negative error codes is वापसed.
+ * Return Value: On success, 0 is returned and the segment number of the
+ * allocated segment is stored in the place pointed by @segnump. On error, one
+ * of the following negative error codes is returned.
  *
  * %-EIO - I/O error.
  *
@@ -299,23 +298,23 @@ nilfs_sufile_get_segment_usage_block(काष्ठा inode *sufile, __u64 seg
  *
  * %-ENOSPC - No clean segment left.
  */
-पूर्णांक nilfs_sufile_alloc(काष्ठा inode *sufile, __u64 *segnump)
-अणु
-	काष्ठा buffer_head *header_bh, *su_bh;
-	काष्ठा nilfs_sufile_header *header;
-	काष्ठा nilfs_segment_usage *su;
-	काष्ठा nilfs_sufile_info *sui = NILFS_SUI(sufile);
-	माप_प्रकार susz = NILFS_MDT(sufile)->mi_entry_size;
+int nilfs_sufile_alloc(struct inode *sufile, __u64 *segnump)
+{
+	struct buffer_head *header_bh, *su_bh;
+	struct nilfs_sufile_header *header;
+	struct nilfs_segment_usage *su;
+	struct nilfs_sufile_info *sui = NILFS_SUI(sufile);
+	size_t susz = NILFS_MDT(sufile)->mi_entry_size;
 	__u64 segnum, maxsegnum, last_alloc;
-	व्योम *kaddr;
-	अचिन्हित दीर्घ nsegments, nsus, cnt;
-	पूर्णांक ret, j;
+	void *kaddr;
+	unsigned long nsegments, nsus, cnt;
+	int ret, j;
 
-	करोwn_ग_लिखो(&NILFS_MDT(sufile)->mi_sem);
+	down_write(&NILFS_MDT(sufile)->mi_sem);
 
 	ret = nilfs_sufile_get_header_block(sufile, &header_bh);
-	अगर (ret < 0)
-		जाओ out_sem;
+	if (ret < 0)
+		goto out_sem;
 	kaddr = kmap_atomic(header_bh->b_page);
 	header = kaddr + bh_offset(header_bh);
 	last_alloc = le64_to_cpu(header->sh_last_alloc);
@@ -324,44 +323,44 @@ nilfs_sufile_get_segment_usage_block(काष्ठा inode *sufile, __u64 seg
 	nsegments = nilfs_sufile_get_nsegments(sufile);
 	maxsegnum = sui->allocmax;
 	segnum = last_alloc + 1;
-	अगर (segnum < sui->allocmin || segnum > sui->allocmax)
+	if (segnum < sui->allocmin || segnum > sui->allocmax)
 		segnum = sui->allocmin;
 
-	क्रम (cnt = 0; cnt < nsegments; cnt += nsus) अणु
-		अगर (segnum > maxsegnum) अणु
-			अगर (cnt < sui->allocmax - sui->allocmin + 1) अणु
+	for (cnt = 0; cnt < nsegments; cnt += nsus) {
+		if (segnum > maxsegnum) {
+			if (cnt < sui->allocmax - sui->allocmin + 1) {
 				/*
 				 * wrap around in the limited region.
-				 * अगर allocation started from
+				 * if allocation started from
 				 * sui->allocmin, this never happens.
 				 */
 				segnum = sui->allocmin;
 				maxsegnum = last_alloc;
-			पूर्ण अन्यथा अगर (segnum > sui->allocmin &&
-				   sui->allocmax + 1 < nsegments) अणु
+			} else if (segnum > sui->allocmin &&
+				   sui->allocmax + 1 < nsegments) {
 				segnum = sui->allocmax + 1;
 				maxsegnum = nsegments - 1;
-			पूर्ण अन्यथा अगर (sui->allocmin > 0)  अणु
+			} else if (sui->allocmin > 0)  {
 				segnum = 0;
 				maxsegnum = sui->allocmin - 1;
-			पूर्ण अन्यथा अणु
-				अवरोध; /* never happens */
-			पूर्ण
-		पूर्ण
+			} else {
+				break; /* never happens */
+			}
+		}
 		trace_nilfs2_segment_usage_check(sufile, segnum, cnt);
 		ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, 1,
 							   &su_bh);
-		अगर (ret < 0)
-			जाओ out_header;
+		if (ret < 0)
+			goto out_header;
 		kaddr = kmap_atomic(su_bh->b_page);
 		su = nilfs_sufile_block_get_segment_usage(
 			sufile, segnum, su_bh, kaddr);
 
 		nsus = nilfs_sufile_segment_usages_in_block(
 			sufile, segnum, maxsegnum);
-		क्रम (j = 0; j < nsus; j++, su = (व्योम *)su + susz, segnum++) अणु
-			अगर (!nilfs_segment_usage_clean(su))
-				जारी;
+		for (j = 0; j < nsus; j++, su = (void *)su + susz, segnum++) {
+			if (!nilfs_segment_usage_clean(su))
+				continue;
 			/* found a clean segment */
 			nilfs_segment_usage_set_dirty(su);
 			kunmap_atomic(kaddr);
@@ -377,44 +376,44 @@ nilfs_sufile_get_segment_usage_block(काष्ठा inode *sufile, __u64 seg
 			mark_buffer_dirty(header_bh);
 			mark_buffer_dirty(su_bh);
 			nilfs_mdt_mark_dirty(sufile);
-			brअन्यथा(su_bh);
+			brelse(su_bh);
 			*segnump = segnum;
 
 			trace_nilfs2_segment_usage_allocated(sufile, segnum);
 
-			जाओ out_header;
-		पूर्ण
+			goto out_header;
+		}
 
 		kunmap_atomic(kaddr);
-		brअन्यथा(su_bh);
-	पूर्ण
+		brelse(su_bh);
+	}
 
 	/* no segments left */
 	ret = -ENOSPC;
 
  out_header:
-	brअन्यथा(header_bh);
+	brelse(header_bh);
 
  out_sem:
-	up_ग_लिखो(&NILFS_MDT(sufile)->mi_sem);
-	वापस ret;
-पूर्ण
+	up_write(&NILFS_MDT(sufile)->mi_sem);
+	return ret;
+}
 
-व्योम nilfs_sufile_करो_cancel_मुक्त(काष्ठा inode *sufile, __u64 segnum,
-				 काष्ठा buffer_head *header_bh,
-				 काष्ठा buffer_head *su_bh)
-अणु
-	काष्ठा nilfs_segment_usage *su;
-	व्योम *kaddr;
+void nilfs_sufile_do_cancel_free(struct inode *sufile, __u64 segnum,
+				 struct buffer_head *header_bh,
+				 struct buffer_head *su_bh)
+{
+	struct nilfs_segment_usage *su;
+	void *kaddr;
 
 	kaddr = kmap_atomic(su_bh->b_page);
 	su = nilfs_sufile_block_get_segment_usage(sufile, segnum, su_bh, kaddr);
-	अगर (unlikely(!nilfs_segment_usage_clean(su))) अणु
+	if (unlikely(!nilfs_segment_usage_clean(su))) {
 		nilfs_warn(sufile->i_sb, "%s: segment %llu must be clean",
-			   __func__, (अचिन्हित दीर्घ दीर्घ)segnum);
+			   __func__, (unsigned long long)segnum);
 		kunmap_atomic(kaddr);
-		वापस;
-	पूर्ण
+		return;
+	}
 	nilfs_segment_usage_set_dirty(su);
 	kunmap_atomic(kaddr);
 
@@ -423,30 +422,30 @@ nilfs_sufile_get_segment_usage_block(काष्ठा inode *sufile, __u64 seg
 
 	mark_buffer_dirty(su_bh);
 	nilfs_mdt_mark_dirty(sufile);
-पूर्ण
+}
 
-व्योम nilfs_sufile_करो_scrap(काष्ठा inode *sufile, __u64 segnum,
-			   काष्ठा buffer_head *header_bh,
-			   काष्ठा buffer_head *su_bh)
-अणु
-	काष्ठा nilfs_segment_usage *su;
-	व्योम *kaddr;
-	पूर्णांक clean, dirty;
+void nilfs_sufile_do_scrap(struct inode *sufile, __u64 segnum,
+			   struct buffer_head *header_bh,
+			   struct buffer_head *su_bh)
+{
+	struct nilfs_segment_usage *su;
+	void *kaddr;
+	int clean, dirty;
 
 	kaddr = kmap_atomic(su_bh->b_page);
 	su = nilfs_sufile_block_get_segment_usage(sufile, segnum, su_bh, kaddr);
-	अगर (su->su_flags == cpu_to_le32(BIT(NILFS_SEGMENT_USAGE_सूचीTY)) &&
-	    su->su_nblocks == cpu_to_le32(0)) अणु
+	if (su->su_flags == cpu_to_le32(BIT(NILFS_SEGMENT_USAGE_DIRTY)) &&
+	    su->su_nblocks == cpu_to_le32(0)) {
 		kunmap_atomic(kaddr);
-		वापस;
-	पूर्ण
+		return;
+	}
 	clean = nilfs_segment_usage_clean(su);
 	dirty = nilfs_segment_usage_dirty(su);
 
 	/* make the segment garbage */
-	su->su_lasपंचांगod = cpu_to_le64(0);
+	su->su_lastmod = cpu_to_le64(0);
 	su->su_nblocks = cpu_to_le32(0);
-	su->su_flags = cpu_to_le32(BIT(NILFS_SEGMENT_USAGE_सूचीTY));
+	su->su_flags = cpu_to_le32(BIT(NILFS_SEGMENT_USAGE_DIRTY));
 	kunmap_atomic(kaddr);
 
 	nilfs_sufile_mod_counter(header_bh, clean ? (u64)-1 : 0, dirty ? 0 : 1);
@@ -454,24 +453,24 @@ nilfs_sufile_get_segment_usage_block(काष्ठा inode *sufile, __u64 seg
 
 	mark_buffer_dirty(su_bh);
 	nilfs_mdt_mark_dirty(sufile);
-पूर्ण
+}
 
-व्योम nilfs_sufile_करो_मुक्त(काष्ठा inode *sufile, __u64 segnum,
-			  काष्ठा buffer_head *header_bh,
-			  काष्ठा buffer_head *su_bh)
-अणु
-	काष्ठा nilfs_segment_usage *su;
-	व्योम *kaddr;
-	पूर्णांक sudirty;
+void nilfs_sufile_do_free(struct inode *sufile, __u64 segnum,
+			  struct buffer_head *header_bh,
+			  struct buffer_head *su_bh)
+{
+	struct nilfs_segment_usage *su;
+	void *kaddr;
+	int sudirty;
 
 	kaddr = kmap_atomic(su_bh->b_page);
 	su = nilfs_sufile_block_get_segment_usage(sufile, segnum, su_bh, kaddr);
-	अगर (nilfs_segment_usage_clean(su)) अणु
+	if (nilfs_segment_usage_clean(su)) {
 		nilfs_warn(sufile->i_sb, "%s: segment %llu is already clean",
-			   __func__, (अचिन्हित दीर्घ दीर्घ)segnum);
+			   __func__, (unsigned long long)segnum);
 		kunmap_atomic(kaddr);
-		वापस;
-	पूर्ण
+		return;
+	}
 	WARN_ON(nilfs_segment_usage_error(su));
 	WARN_ON(!nilfs_segment_usage_dirty(su));
 
@@ -485,138 +484,138 @@ nilfs_sufile_get_segment_usage_block(काष्ठा inode *sufile, __u64 seg
 
 	nilfs_mdt_mark_dirty(sufile);
 
-	trace_nilfs2_segment_usage_मुक्तd(sufile, segnum);
-पूर्ण
+	trace_nilfs2_segment_usage_freed(sufile, segnum);
+}
 
 /**
  * nilfs_sufile_mark_dirty - mark the buffer having a segment usage dirty
  * @sufile: inode of segment usage file
  * @segnum: segment number
  */
-पूर्णांक nilfs_sufile_mark_dirty(काष्ठा inode *sufile, __u64 segnum)
-अणु
-	काष्ठा buffer_head *bh;
-	पूर्णांक ret;
+int nilfs_sufile_mark_dirty(struct inode *sufile, __u64 segnum)
+{
+	struct buffer_head *bh;
+	int ret;
 
 	ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, 0, &bh);
-	अगर (!ret) अणु
+	if (!ret) {
 		mark_buffer_dirty(bh);
 		nilfs_mdt_mark_dirty(sufile);
-		brअन्यथा(bh);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		brelse(bh);
+	}
+	return ret;
+}
 
 /**
  * nilfs_sufile_set_segment_usage - set usage of a segment
  * @sufile: inode of segment usage file
  * @segnum: segment number
  * @nblocks: number of live blocks in the segment
- * @modसमय: modअगरication समय (option)
+ * @modtime: modification time (option)
  */
-पूर्णांक nilfs_sufile_set_segment_usage(काष्ठा inode *sufile, __u64 segnum,
-				   अचिन्हित दीर्घ nblocks, समय64_t modसमय)
-अणु
-	काष्ठा buffer_head *bh;
-	काष्ठा nilfs_segment_usage *su;
-	व्योम *kaddr;
-	पूर्णांक ret;
+int nilfs_sufile_set_segment_usage(struct inode *sufile, __u64 segnum,
+				   unsigned long nblocks, time64_t modtime)
+{
+	struct buffer_head *bh;
+	struct nilfs_segment_usage *su;
+	void *kaddr;
+	int ret;
 
-	करोwn_ग_लिखो(&NILFS_MDT(sufile)->mi_sem);
+	down_write(&NILFS_MDT(sufile)->mi_sem);
 	ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, 0, &bh);
-	अगर (ret < 0)
-		जाओ out_sem;
+	if (ret < 0)
+		goto out_sem;
 
 	kaddr = kmap_atomic(bh->b_page);
 	su = nilfs_sufile_block_get_segment_usage(sufile, segnum, bh, kaddr);
 	WARN_ON(nilfs_segment_usage_error(su));
-	अगर (modसमय)
-		su->su_lasपंचांगod = cpu_to_le64(modसमय);
+	if (modtime)
+		su->su_lastmod = cpu_to_le64(modtime);
 	su->su_nblocks = cpu_to_le32(nblocks);
 	kunmap_atomic(kaddr);
 
 	mark_buffer_dirty(bh);
 	nilfs_mdt_mark_dirty(sufile);
-	brअन्यथा(bh);
+	brelse(bh);
 
  out_sem:
-	up_ग_लिखो(&NILFS_MDT(sufile)->mi_sem);
-	वापस ret;
-पूर्ण
+	up_write(&NILFS_MDT(sufile)->mi_sem);
+	return ret;
+}
 
 /**
  * nilfs_sufile_get_stat - get segment usage statistics
  * @sufile: inode of segment usage file
- * @sustat: poपूर्णांकer to a काष्ठाure of segment usage statistics
+ * @sustat: pointer to a structure of segment usage statistics
  *
- * Description: nilfs_sufile_get_stat() वापसs inक्रमmation about segment
+ * Description: nilfs_sufile_get_stat() returns information about segment
  * usage.
  *
- * Return Value: On success, 0 is वापसed, and segment usage inक्रमmation is
- * stored in the place poपूर्णांकed by @sustat. On error, one of the following
- * negative error codes is वापसed.
+ * Return Value: On success, 0 is returned, and segment usage information is
+ * stored in the place pointed by @sustat. On error, one of the following
+ * negative error codes is returned.
  *
  * %-EIO - I/O error.
  *
  * %-ENOMEM - Insufficient amount of memory available.
  */
-पूर्णांक nilfs_sufile_get_stat(काष्ठा inode *sufile, काष्ठा nilfs_sustat *sustat)
-अणु
-	काष्ठा buffer_head *header_bh;
-	काष्ठा nilfs_sufile_header *header;
-	काष्ठा the_nilfs *nilfs = sufile->i_sb->s_fs_info;
-	व्योम *kaddr;
-	पूर्णांक ret;
+int nilfs_sufile_get_stat(struct inode *sufile, struct nilfs_sustat *sustat)
+{
+	struct buffer_head *header_bh;
+	struct nilfs_sufile_header *header;
+	struct the_nilfs *nilfs = sufile->i_sb->s_fs_info;
+	void *kaddr;
+	int ret;
 
-	करोwn_पढ़ो(&NILFS_MDT(sufile)->mi_sem);
+	down_read(&NILFS_MDT(sufile)->mi_sem);
 
 	ret = nilfs_sufile_get_header_block(sufile, &header_bh);
-	अगर (ret < 0)
-		जाओ out_sem;
+	if (ret < 0)
+		goto out_sem;
 
 	kaddr = kmap_atomic(header_bh->b_page);
 	header = kaddr + bh_offset(header_bh);
 	sustat->ss_nsegs = nilfs_sufile_get_nsegments(sufile);
 	sustat->ss_ncleansegs = le64_to_cpu(header->sh_ncleansegs);
 	sustat->ss_ndirtysegs = le64_to_cpu(header->sh_ndirtysegs);
-	sustat->ss_स_समय = nilfs->ns_स_समय;
-	sustat->ss_nongc_स_समय = nilfs->ns_nongc_स_समय;
+	sustat->ss_ctime = nilfs->ns_ctime;
+	sustat->ss_nongc_ctime = nilfs->ns_nongc_ctime;
 	spin_lock(&nilfs->ns_last_segment_lock);
 	sustat->ss_prot_seq = nilfs->ns_prot_seq;
 	spin_unlock(&nilfs->ns_last_segment_lock);
 	kunmap_atomic(kaddr);
-	brअन्यथा(header_bh);
+	brelse(header_bh);
 
  out_sem:
-	up_पढ़ो(&NILFS_MDT(sufile)->mi_sem);
-	वापस ret;
-पूर्ण
+	up_read(&NILFS_MDT(sufile)->mi_sem);
+	return ret;
+}
 
-व्योम nilfs_sufile_करो_set_error(काष्ठा inode *sufile, __u64 segnum,
-			       काष्ठा buffer_head *header_bh,
-			       काष्ठा buffer_head *su_bh)
-अणु
-	काष्ठा nilfs_segment_usage *su;
-	व्योम *kaddr;
-	पूर्णांक suclean;
+void nilfs_sufile_do_set_error(struct inode *sufile, __u64 segnum,
+			       struct buffer_head *header_bh,
+			       struct buffer_head *su_bh)
+{
+	struct nilfs_segment_usage *su;
+	void *kaddr;
+	int suclean;
 
 	kaddr = kmap_atomic(su_bh->b_page);
 	su = nilfs_sufile_block_get_segment_usage(sufile, segnum, su_bh, kaddr);
-	अगर (nilfs_segment_usage_error(su)) अणु
+	if (nilfs_segment_usage_error(su)) {
 		kunmap_atomic(kaddr);
-		वापस;
-	पूर्ण
+		return;
+	}
 	suclean = nilfs_segment_usage_clean(su);
 	nilfs_segment_usage_set_error(su);
 	kunmap_atomic(kaddr);
 
-	अगर (suclean) अणु
+	if (suclean) {
 		nilfs_sufile_mod_counter(header_bh, -1, 0);
 		NILFS_SUI(sufile)->ncleansegs--;
-	पूर्ण
+	}
 	mark_buffer_dirty(su_bh);
 	nilfs_mdt_mark_dirty(sufile);
-पूर्ण
+}
 
 /**
  * nilfs_sufile_truncate_range - truncate range of segment array
@@ -624,155 +623,155 @@ nilfs_sufile_get_segment_usage_block(काष्ठा inode *sufile, __u64 seg
  * @start: start segment number (inclusive)
  * @end: end segment number (inclusive)
  *
- * Return Value: On success, 0 is वापसed.  On error, one of the
- * following negative error codes is वापसed.
+ * Return Value: On success, 0 is returned.  On error, one of the
+ * following negative error codes is returned.
  *
  * %-EIO - I/O error.
  *
  * %-ENOMEM - Insufficient amount of memory available.
  *
- * %-EINVAL - Invalid number of segments specअगरied
+ * %-EINVAL - Invalid number of segments specified
  *
  * %-EBUSY - Dirty or active segments are present in the range
  */
-अटल पूर्णांक nilfs_sufile_truncate_range(काष्ठा inode *sufile,
+static int nilfs_sufile_truncate_range(struct inode *sufile,
 				       __u64 start, __u64 end)
-अणु
-	काष्ठा the_nilfs *nilfs = sufile->i_sb->s_fs_info;
-	काष्ठा buffer_head *header_bh;
-	काष्ठा buffer_head *su_bh;
-	काष्ठा nilfs_segment_usage *su, *su2;
-	माप_प्रकार susz = NILFS_MDT(sufile)->mi_entry_size;
-	अचिन्हित दीर्घ segusages_per_block;
-	अचिन्हित दीर्घ nsegs, ncleaned;
+{
+	struct the_nilfs *nilfs = sufile->i_sb->s_fs_info;
+	struct buffer_head *header_bh;
+	struct buffer_head *su_bh;
+	struct nilfs_segment_usage *su, *su2;
+	size_t susz = NILFS_MDT(sufile)->mi_entry_size;
+	unsigned long segusages_per_block;
+	unsigned long nsegs, ncleaned;
 	__u64 segnum;
-	व्योम *kaddr;
-	sमाप_प्रकार n, nc;
-	पूर्णांक ret;
-	पूर्णांक j;
+	void *kaddr;
+	ssize_t n, nc;
+	int ret;
+	int j;
 
 	nsegs = nilfs_sufile_get_nsegments(sufile);
 
 	ret = -EINVAL;
-	अगर (start > end || start >= nsegs)
-		जाओ out;
+	if (start > end || start >= nsegs)
+		goto out;
 
 	ret = nilfs_sufile_get_header_block(sufile, &header_bh);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	segusages_per_block = nilfs_sufile_segment_usages_per_block(sufile);
 	ncleaned = 0;
 
-	क्रम (segnum = start; segnum <= end; segnum += n) अणु
-		n = min_t(अचिन्हित दीर्घ,
+	for (segnum = start; segnum <= end; segnum += n) {
+		n = min_t(unsigned long,
 			  segusages_per_block -
 				  nilfs_sufile_get_offset(sufile, segnum),
 			  end - segnum + 1);
 		ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, 0,
 							   &su_bh);
-		अगर (ret < 0) अणु
-			अगर (ret != -ENOENT)
-				जाओ out_header;
+		if (ret < 0) {
+			if (ret != -ENOENT)
+				goto out_header;
 			/* hole */
-			जारी;
-		पूर्ण
+			continue;
+		}
 		kaddr = kmap_atomic(su_bh->b_page);
 		su = nilfs_sufile_block_get_segment_usage(
 			sufile, segnum, su_bh, kaddr);
 		su2 = su;
-		क्रम (j = 0; j < n; j++, su = (व्योम *)su + susz) अणु
-			अगर ((le32_to_cpu(su->su_flags) &
+		for (j = 0; j < n; j++, su = (void *)su + susz) {
+			if ((le32_to_cpu(su->su_flags) &
 			     ~BIT(NILFS_SEGMENT_USAGE_ERROR)) ||
-			    nilfs_segment_is_active(nilfs, segnum + j)) अणु
+			    nilfs_segment_is_active(nilfs, segnum + j)) {
 				ret = -EBUSY;
 				kunmap_atomic(kaddr);
-				brअन्यथा(su_bh);
-				जाओ out_header;
-			पूर्ण
-		पूर्ण
+				brelse(su_bh);
+				goto out_header;
+			}
+		}
 		nc = 0;
-		क्रम (su = su2, j = 0; j < n; j++, su = (व्योम *)su + susz) अणु
-			अगर (nilfs_segment_usage_error(su)) अणु
+		for (su = su2, j = 0; j < n; j++, su = (void *)su + susz) {
+			if (nilfs_segment_usage_error(su)) {
 				nilfs_segment_usage_set_clean(su);
 				nc++;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		kunmap_atomic(kaddr);
-		अगर (nc > 0) अणु
+		if (nc > 0) {
 			mark_buffer_dirty(su_bh);
 			ncleaned += nc;
-		पूर्ण
-		brअन्यथा(su_bh);
+		}
+		brelse(su_bh);
 
-		अगर (n == segusages_per_block) अणु
+		if (n == segusages_per_block) {
 			/* make hole */
 			nilfs_sufile_delete_segment_usage_block(sufile, segnum);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	ret = 0;
 
 out_header:
-	अगर (ncleaned > 0) अणु
+	if (ncleaned > 0) {
 		NILFS_SUI(sufile)->ncleansegs += ncleaned;
 		nilfs_sufile_mod_counter(header_bh, ncleaned, 0);
 		nilfs_mdt_mark_dirty(sufile);
-	पूर्ण
-	brअन्यथा(header_bh);
+	}
+	brelse(header_bh);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * nilfs_sufile_resize - resize segment array
  * @sufile: inode of segment usage file
  * @newnsegs: new number of segments
  *
- * Return Value: On success, 0 is वापसed.  On error, one of the
- * following negative error codes is वापसed.
+ * Return Value: On success, 0 is returned.  On error, one of the
+ * following negative error codes is returned.
  *
  * %-EIO - I/O error.
  *
  * %-ENOMEM - Insufficient amount of memory available.
  *
- * %-ENOSPC - Enough मुक्त space is not left क्रम shrinking
+ * %-ENOSPC - Enough free space is not left for shrinking
  *
  * %-EBUSY - Dirty or active segments exist in the region to be truncated
  */
-पूर्णांक nilfs_sufile_resize(काष्ठा inode *sufile, __u64 newnsegs)
-अणु
-	काष्ठा the_nilfs *nilfs = sufile->i_sb->s_fs_info;
-	काष्ठा buffer_head *header_bh;
-	काष्ठा nilfs_sufile_header *header;
-	काष्ठा nilfs_sufile_info *sui = NILFS_SUI(sufile);
-	व्योम *kaddr;
-	अचिन्हित दीर्घ nsegs, nrsvsegs;
-	पूर्णांक ret = 0;
+int nilfs_sufile_resize(struct inode *sufile, __u64 newnsegs)
+{
+	struct the_nilfs *nilfs = sufile->i_sb->s_fs_info;
+	struct buffer_head *header_bh;
+	struct nilfs_sufile_header *header;
+	struct nilfs_sufile_info *sui = NILFS_SUI(sufile);
+	void *kaddr;
+	unsigned long nsegs, nrsvsegs;
+	int ret = 0;
 
-	करोwn_ग_लिखो(&NILFS_MDT(sufile)->mi_sem);
+	down_write(&NILFS_MDT(sufile)->mi_sem);
 
 	nsegs = nilfs_sufile_get_nsegments(sufile);
-	अगर (nsegs == newnsegs)
-		जाओ out;
+	if (nsegs == newnsegs)
+		goto out;
 
 	ret = -ENOSPC;
 	nrsvsegs = nilfs_nrsvsegs(nilfs, newnsegs);
-	अगर (newnsegs < nsegs && nsegs - newnsegs + nrsvsegs > sui->ncleansegs)
-		जाओ out;
+	if (newnsegs < nsegs && nsegs - newnsegs + nrsvsegs > sui->ncleansegs)
+		goto out;
 
 	ret = nilfs_sufile_get_header_block(sufile, &header_bh);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
-	अगर (newnsegs > nsegs) अणु
+	if (newnsegs > nsegs) {
 		sui->ncleansegs += newnsegs - nsegs;
-	पूर्ण अन्यथा /* newnsegs < nsegs */ अणु
+	} else /* newnsegs < nsegs */ {
 		ret = nilfs_sufile_truncate_range(sufile, newnsegs, nsegs - 1);
-		अगर (ret < 0)
-			जाओ out_header;
+		if (ret < 0)
+			goto out_header;
 
 		sui->ncleansegs -= nsegs - newnsegs;
-	पूर्ण
+	}
 
 	kaddr = kmap_atomic(header_bh->b_page);
 	header = kaddr + bh_offset(header_bh);
@@ -784,11 +783,11 @@ out:
 	nilfs_set_nsegments(nilfs, newnsegs);
 
 out_header:
-	brअन्यथा(header_bh);
+	brelse(header_bh);
 out:
-	up_ग_लिखो(&NILFS_MDT(sufile)->mi_sem);
-	वापस ret;
-पूर्ण
+	up_write(&NILFS_MDT(sufile)->mi_sem);
+	return ret;
+}
 
 /**
  * nilfs_sufile_get_suinfo -
@@ -800,70 +799,70 @@ out:
  *
  * Description:
  *
- * Return Value: On success, 0 is वापसed and .... On error, one of the
- * following negative error codes is वापसed.
+ * Return Value: On success, 0 is returned and .... On error, one of the
+ * following negative error codes is returned.
  *
  * %-EIO - I/O error.
  *
  * %-ENOMEM - Insufficient amount of memory available.
  */
-sमाप_प्रकार nilfs_sufile_get_suinfo(काष्ठा inode *sufile, __u64 segnum, व्योम *buf,
-				अचिन्हित पूर्णांक sisz, माप_प्रकार nsi)
-अणु
-	काष्ठा buffer_head *su_bh;
-	काष्ठा nilfs_segment_usage *su;
-	काष्ठा nilfs_suinfo *si = buf;
-	माप_प्रकार susz = NILFS_MDT(sufile)->mi_entry_size;
-	काष्ठा the_nilfs *nilfs = sufile->i_sb->s_fs_info;
-	व्योम *kaddr;
-	अचिन्हित दीर्घ nsegs, segusages_per_block;
-	sमाप_प्रकार n;
-	पूर्णांक ret, i, j;
+ssize_t nilfs_sufile_get_suinfo(struct inode *sufile, __u64 segnum, void *buf,
+				unsigned int sisz, size_t nsi)
+{
+	struct buffer_head *su_bh;
+	struct nilfs_segment_usage *su;
+	struct nilfs_suinfo *si = buf;
+	size_t susz = NILFS_MDT(sufile)->mi_entry_size;
+	struct the_nilfs *nilfs = sufile->i_sb->s_fs_info;
+	void *kaddr;
+	unsigned long nsegs, segusages_per_block;
+	ssize_t n;
+	int ret, i, j;
 
-	करोwn_पढ़ो(&NILFS_MDT(sufile)->mi_sem);
+	down_read(&NILFS_MDT(sufile)->mi_sem);
 
 	segusages_per_block = nilfs_sufile_segment_usages_per_block(sufile);
-	nsegs = min_t(अचिन्हित दीर्घ,
+	nsegs = min_t(unsigned long,
 		      nilfs_sufile_get_nsegments(sufile) - segnum,
 		      nsi);
-	क्रम (i = 0; i < nsegs; i += n, segnum += n) अणु
-		n = min_t(अचिन्हित दीर्घ,
+	for (i = 0; i < nsegs; i += n, segnum += n) {
+		n = min_t(unsigned long,
 			  segusages_per_block -
 				  nilfs_sufile_get_offset(sufile, segnum),
 			  nsegs - i);
 		ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, 0,
 							   &su_bh);
-		अगर (ret < 0) अणु
-			अगर (ret != -ENOENT)
-				जाओ out;
+		if (ret < 0) {
+			if (ret != -ENOENT)
+				goto out;
 			/* hole */
-			स_रखो(si, 0, sisz * n);
-			si = (व्योम *)si + sisz * n;
-			जारी;
-		पूर्ण
+			memset(si, 0, sisz * n);
+			si = (void *)si + sisz * n;
+			continue;
+		}
 
 		kaddr = kmap_atomic(su_bh->b_page);
 		su = nilfs_sufile_block_get_segment_usage(
 			sufile, segnum, su_bh, kaddr);
-		क्रम (j = 0; j < n;
-		     j++, su = (व्योम *)su + susz, si = (व्योम *)si + sisz) अणु
-			si->sui_lasपंचांगod = le64_to_cpu(su->su_lasपंचांगod);
+		for (j = 0; j < n;
+		     j++, su = (void *)su + susz, si = (void *)si + sisz) {
+			si->sui_lastmod = le64_to_cpu(su->su_lastmod);
 			si->sui_nblocks = le32_to_cpu(su->su_nblocks);
 			si->sui_flags = le32_to_cpu(su->su_flags) &
 				~BIT(NILFS_SEGMENT_USAGE_ACTIVE);
-			अगर (nilfs_segment_is_active(nilfs, segnum + j))
+			if (nilfs_segment_is_active(nilfs, segnum + j))
 				si->sui_flags |=
 					BIT(NILFS_SEGMENT_USAGE_ACTIVE);
-		पूर्ण
+		}
 		kunmap_atomic(kaddr);
-		brअन्यथा(su_bh);
-	पूर्ण
+		brelse(su_bh);
+	}
 	ret = nsegs;
 
  out:
-	up_पढ़ो(&NILFS_MDT(sufile)->mi_sem);
-	वापस ret;
-पूर्ण
+	up_read(&NILFS_MDT(sufile)->mi_sem);
+	return ret;
+}
 
 /**
  * nilfs_sufile_set_suinfo - sets segment usage info
@@ -872,12 +871,12 @@ sमाप_प्रकार nilfs_sufile_get_suinfo(काष्ठा inode *
  * @supsz: byte size of suinfo_update
  * @nsup: size of suinfo_update array
  *
- * Description: Takes an array of nilfs_suinfo_update काष्ठाs and updates
+ * Description: Takes an array of nilfs_suinfo_update structs and updates
  * segment usage accordingly. Only the fields indicated by the sup_flags
  * are updated.
  *
- * Return Value: On success, 0 is वापसed. On error, one of the
- * following negative error codes is वापसed.
+ * Return Value: On success, 0 is returned. On error, one of the
+ * following negative error codes is returned.
  *
  * %-EIO - I/O error.
  *
@@ -885,59 +884,59 @@ sमाप_प्रकार nilfs_sufile_get_suinfo(काष्ठा inode *
  *
  * %-EINVAL - Invalid values in input (segment number, flags or nblocks)
  */
-sमाप_प्रकार nilfs_sufile_set_suinfo(काष्ठा inode *sufile, व्योम *buf,
-				अचिन्हित पूर्णांक supsz, माप_प्रकार nsup)
-अणु
-	काष्ठा the_nilfs *nilfs = sufile->i_sb->s_fs_info;
-	काष्ठा buffer_head *header_bh, *bh;
-	काष्ठा nilfs_suinfo_update *sup, *supend = buf + supsz * nsup;
-	काष्ठा nilfs_segment_usage *su;
-	व्योम *kaddr;
-	अचिन्हित दीर्घ blkoff, prev_blkoff;
-	पूर्णांक cleansi, cleansu, dirtysi, dirtysu;
-	दीर्घ ncleaned = 0, ndirtied = 0;
-	पूर्णांक ret = 0;
+ssize_t nilfs_sufile_set_suinfo(struct inode *sufile, void *buf,
+				unsigned int supsz, size_t nsup)
+{
+	struct the_nilfs *nilfs = sufile->i_sb->s_fs_info;
+	struct buffer_head *header_bh, *bh;
+	struct nilfs_suinfo_update *sup, *supend = buf + supsz * nsup;
+	struct nilfs_segment_usage *su;
+	void *kaddr;
+	unsigned long blkoff, prev_blkoff;
+	int cleansi, cleansu, dirtysi, dirtysu;
+	long ncleaned = 0, ndirtied = 0;
+	int ret = 0;
 
-	अगर (unlikely(nsup == 0))
-		वापस ret;
+	if (unlikely(nsup == 0))
+		return ret;
 
-	क्रम (sup = buf; sup < supend; sup = (व्योम *)sup + supsz) अणु
-		अगर (sup->sup_segnum >= nilfs->ns_nsegments
+	for (sup = buf; sup < supend; sup = (void *)sup + supsz) {
+		if (sup->sup_segnum >= nilfs->ns_nsegments
 			|| (sup->sup_flags &
 				(~0UL << __NR_NILFS_SUINFO_UPDATE_FIELDS))
 			|| (nilfs_suinfo_update_nblocks(sup) &&
 				sup->sup_sui.sui_nblocks >
 				nilfs->ns_blocks_per_segment))
-			वापस -EINVAL;
-	पूर्ण
+			return -EINVAL;
+	}
 
-	करोwn_ग_लिखो(&NILFS_MDT(sufile)->mi_sem);
+	down_write(&NILFS_MDT(sufile)->mi_sem);
 
 	ret = nilfs_sufile_get_header_block(sufile, &header_bh);
-	अगर (ret < 0)
-		जाओ out_sem;
+	if (ret < 0)
+		goto out_sem;
 
 	sup = buf;
 	blkoff = nilfs_sufile_get_blkoff(sufile, sup->sup_segnum);
-	ret = nilfs_mdt_get_block(sufile, blkoff, 1, शून्य, &bh);
-	अगर (ret < 0)
-		जाओ out_header;
+	ret = nilfs_mdt_get_block(sufile, blkoff, 1, NULL, &bh);
+	if (ret < 0)
+		goto out_header;
 
-	क्रम (;;) अणु
+	for (;;) {
 		kaddr = kmap_atomic(bh->b_page);
 		su = nilfs_sufile_block_get_segment_usage(
 			sufile, sup->sup_segnum, bh, kaddr);
 
-		अगर (nilfs_suinfo_update_lasपंचांगod(sup))
-			su->su_lasपंचांगod = cpu_to_le64(sup->sup_sui.sui_lasपंचांगod);
+		if (nilfs_suinfo_update_lastmod(sup))
+			su->su_lastmod = cpu_to_le64(sup->sup_sui.sui_lastmod);
 
-		अगर (nilfs_suinfo_update_nblocks(sup))
+		if (nilfs_suinfo_update_nblocks(sup))
 			su->su_nblocks = cpu_to_le32(sup->sup_sui.sui_nblocks);
 
-		अगर (nilfs_suinfo_update_flags(sup)) अणु
+		if (nilfs_suinfo_update_flags(sup)) {
 			/*
-			 * Active flag is a भव flag projected by running
-			 * nilfs kernel code - drop it not to ग_लिखो it to
+			 * Active flag is a virtual flag projected by running
+			 * nilfs kernel code - drop it not to write it to
 			 * disk.
 			 */
 			sup->sup_sui.sui_flags &=
@@ -948,58 +947,58 @@ sमाप_प्रकार nilfs_sufile_set_suinfo(काष्ठा inode *
 			dirtysi = nilfs_suinfo_dirty(&sup->sup_sui);
 			dirtysu = nilfs_segment_usage_dirty(su);
 
-			अगर (cleansi && !cleansu)
+			if (cleansi && !cleansu)
 				++ncleaned;
-			अन्यथा अगर (!cleansi && cleansu)
+			else if (!cleansi && cleansu)
 				--ncleaned;
 
-			अगर (dirtysi && !dirtysu)
+			if (dirtysi && !dirtysu)
 				++ndirtied;
-			अन्यथा अगर (!dirtysi && dirtysu)
+			else if (!dirtysi && dirtysu)
 				--ndirtied;
 
 			su->su_flags = cpu_to_le32(sup->sup_sui.sui_flags);
-		पूर्ण
+		}
 
 		kunmap_atomic(kaddr);
 
-		sup = (व्योम *)sup + supsz;
-		अगर (sup >= supend)
-			अवरोध;
+		sup = (void *)sup + supsz;
+		if (sup >= supend)
+			break;
 
 		prev_blkoff = blkoff;
 		blkoff = nilfs_sufile_get_blkoff(sufile, sup->sup_segnum);
-		अगर (blkoff == prev_blkoff)
-			जारी;
+		if (blkoff == prev_blkoff)
+			continue;
 
-		/* get dअगरferent block */
+		/* get different block */
 		mark_buffer_dirty(bh);
 		put_bh(bh);
-		ret = nilfs_mdt_get_block(sufile, blkoff, 1, शून्य, &bh);
-		अगर (unlikely(ret < 0))
-			जाओ out_mark;
-	पूर्ण
+		ret = nilfs_mdt_get_block(sufile, blkoff, 1, NULL, &bh);
+		if (unlikely(ret < 0))
+			goto out_mark;
+	}
 	mark_buffer_dirty(bh);
 	put_bh(bh);
 
  out_mark:
-	अगर (ncleaned || ndirtied) अणु
+	if (ncleaned || ndirtied) {
 		nilfs_sufile_mod_counter(header_bh, (u64)ncleaned,
 				(u64)ndirtied);
 		NILFS_SUI(sufile)->ncleansegs += ncleaned;
-	पूर्ण
+	}
 	nilfs_mdt_mark_dirty(sufile);
  out_header:
 	put_bh(header_bh);
  out_sem:
-	up_ग_लिखो(&NILFS_MDT(sufile)->mi_sem);
-	वापस ret;
-पूर्ण
+	up_write(&NILFS_MDT(sufile)->mi_sem);
+	return ret;
+}
 
 /**
  * nilfs_sufile_trim_fs() - trim ioctl handle function
  * @sufile: inode of segment usage file
- * @range: fstrim_range काष्ठाure
+ * @range: fstrim_range structure
  *
  * start:	First Byte to trim
  * len:		number of Bytes to trim from start
@@ -1007,23 +1006,23 @@ sमाप_प्रकार nilfs_sufile_set_suinfo(काष्ठा inode *
  *
  * Decription: nilfs_sufile_trim_fs goes through all segments containing bytes
  * from start to start+len. start is rounded up to the next block boundary
- * and start+len is rounded करोwn. For each clean segment blkdev_issue_discard
+ * and start+len is rounded down. For each clean segment blkdev_issue_discard
  * function is invoked.
  *
- * Return Value: On success, 0 is वापसed or negative error code, otherwise.
+ * Return Value: On success, 0 is returned or negative error code, otherwise.
  */
-पूर्णांक nilfs_sufile_trim_fs(काष्ठा inode *sufile, काष्ठा fstrim_range *range)
-अणु
-	काष्ठा the_nilfs *nilfs = sufile->i_sb->s_fs_info;
-	काष्ठा buffer_head *su_bh;
-	काष्ठा nilfs_segment_usage *su;
-	व्योम *kaddr;
-	माप_प्रकार n, i, susz = NILFS_MDT(sufile)->mi_entry_size;
+int nilfs_sufile_trim_fs(struct inode *sufile, struct fstrim_range *range)
+{
+	struct the_nilfs *nilfs = sufile->i_sb->s_fs_info;
+	struct buffer_head *su_bh;
+	struct nilfs_segment_usage *su;
+	void *kaddr;
+	size_t n, i, susz = NILFS_MDT(sufile)->mi_entry_size;
 	sector_t seg_start, seg_end, start_block, end_block;
 	sector_t start = 0, nblocks = 0;
 	u64 segnum, segnum_end, minlen, len, max_blocks, ndiscarded = 0;
-	पूर्णांक ret = 0;
-	अचिन्हित पूर्णांक sects_per_block;
+	int ret = 0;
+	unsigned int sects_per_block;
 
 	sects_per_block = (1 << nilfs->ns_blocksize_bits) /
 			bdev_logical_block_size(nilfs->ns_bdev);
@@ -1031,177 +1030,177 @@ sमाप_प्रकार nilfs_sufile_set_suinfo(काष्ठा inode *
 	minlen = range->minlen >> nilfs->ns_blocksize_bits;
 	max_blocks = ((u64)nilfs->ns_nsegments * nilfs->ns_blocks_per_segment);
 
-	अगर (!len || range->start >= max_blocks << nilfs->ns_blocksize_bits)
-		वापस -EINVAL;
+	if (!len || range->start >= max_blocks << nilfs->ns_blocksize_bits)
+		return -EINVAL;
 
 	start_block = (range->start + nilfs->ns_blocksize - 1) >>
 			nilfs->ns_blocksize_bits;
 
 	/*
 	 * range->len can be very large (actually, it is set to
-	 * ULदीर्घ_उच्च by शेष) - truncate upper end of the range
+	 * ULLONG_MAX by default) - truncate upper end of the range
 	 * carefully so as not to overflow.
 	 */
-	अगर (max_blocks - start_block < len)
+	if (max_blocks - start_block < len)
 		end_block = max_blocks - 1;
-	अन्यथा
+	else
 		end_block = start_block + len - 1;
 
 	segnum = nilfs_get_segnum_of_block(nilfs, start_block);
 	segnum_end = nilfs_get_segnum_of_block(nilfs, end_block);
 
-	करोwn_पढ़ो(&NILFS_MDT(sufile)->mi_sem);
+	down_read(&NILFS_MDT(sufile)->mi_sem);
 
-	जबतक (segnum <= segnum_end) अणु
+	while (segnum <= segnum_end) {
 		n = nilfs_sufile_segment_usages_in_block(sufile, segnum,
 				segnum_end);
 
 		ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, 0,
 							   &su_bh);
-		अगर (ret < 0) अणु
-			अगर (ret != -ENOENT)
-				जाओ out_sem;
+		if (ret < 0) {
+			if (ret != -ENOENT)
+				goto out_sem;
 			/* hole */
 			segnum += n;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		kaddr = kmap_atomic(su_bh->b_page);
 		su = nilfs_sufile_block_get_segment_usage(sufile, segnum,
 				su_bh, kaddr);
-		क्रम (i = 0; i < n; ++i, ++segnum, su = (व्योम *)su + susz) अणु
-			अगर (!nilfs_segment_usage_clean(su))
-				जारी;
+		for (i = 0; i < n; ++i, ++segnum, su = (void *)su + susz) {
+			if (!nilfs_segment_usage_clean(su))
+				continue;
 
 			nilfs_get_segment_range(nilfs, segnum, &seg_start,
 						&seg_end);
 
-			अगर (!nblocks) अणु
+			if (!nblocks) {
 				/* start new extent */
 				start = seg_start;
 				nblocks = seg_end - seg_start + 1;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			अगर (start + nblocks == seg_start) अणु
+			if (start + nblocks == seg_start) {
 				/* add to previous extent */
 				nblocks += seg_end - seg_start + 1;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			/* discard previous extent */
-			अगर (start < start_block) अणु
+			if (start < start_block) {
 				nblocks -= start_block - start;
 				start = start_block;
-			पूर्ण
+			}
 
-			अगर (nblocks >= minlen) अणु
+			if (nblocks >= minlen) {
 				kunmap_atomic(kaddr);
 
 				ret = blkdev_issue_discard(nilfs->ns_bdev,
 						start * sects_per_block,
 						nblocks * sects_per_block,
 						GFP_NOFS, 0);
-				अगर (ret < 0) अणु
+				if (ret < 0) {
 					put_bh(su_bh);
-					जाओ out_sem;
-				पूर्ण
+					goto out_sem;
+				}
 
 				ndiscarded += nblocks;
 				kaddr = kmap_atomic(su_bh->b_page);
 				su = nilfs_sufile_block_get_segment_usage(
 					sufile, segnum, su_bh, kaddr);
-			पूर्ण
+			}
 
 			/* start new extent */
 			start = seg_start;
 			nblocks = seg_end - seg_start + 1;
-		पूर्ण
+		}
 		kunmap_atomic(kaddr);
 		put_bh(su_bh);
-	पूर्ण
+	}
 
 
-	अगर (nblocks) अणु
+	if (nblocks) {
 		/* discard last extent */
-		अगर (start < start_block) अणु
+		if (start < start_block) {
 			nblocks -= start_block - start;
 			start = start_block;
-		पूर्ण
-		अगर (start + nblocks > end_block + 1)
+		}
+		if (start + nblocks > end_block + 1)
 			nblocks = end_block - start + 1;
 
-		अगर (nblocks >= minlen) अणु
+		if (nblocks >= minlen) {
 			ret = blkdev_issue_discard(nilfs->ns_bdev,
 					start * sects_per_block,
 					nblocks * sects_per_block,
 					GFP_NOFS, 0);
-			अगर (!ret)
+			if (!ret)
 				ndiscarded += nblocks;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 out_sem:
-	up_पढ़ो(&NILFS_MDT(sufile)->mi_sem);
+	up_read(&NILFS_MDT(sufile)->mi_sem);
 
 	range->len = ndiscarded << nilfs->ns_blocksize_bits;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * nilfs_sufile_पढ़ो - पढ़ो or get sufile inode
+ * nilfs_sufile_read - read or get sufile inode
  * @sb: super block instance
  * @susize: size of a segment usage entry
  * @raw_inode: on-disk sufile inode
  * @inodep: buffer to store the inode
  */
-पूर्णांक nilfs_sufile_पढ़ो(काष्ठा super_block *sb, माप_प्रकार susize,
-		      काष्ठा nilfs_inode *raw_inode, काष्ठा inode **inodep)
-अणु
-	काष्ठा inode *sufile;
-	काष्ठा nilfs_sufile_info *sui;
-	काष्ठा buffer_head *header_bh;
-	काष्ठा nilfs_sufile_header *header;
-	व्योम *kaddr;
-	पूर्णांक err;
+int nilfs_sufile_read(struct super_block *sb, size_t susize,
+		      struct nilfs_inode *raw_inode, struct inode **inodep)
+{
+	struct inode *sufile;
+	struct nilfs_sufile_info *sui;
+	struct buffer_head *header_bh;
+	struct nilfs_sufile_header *header;
+	void *kaddr;
+	int err;
 
-	अगर (susize > sb->s_blocksize) अणु
+	if (susize > sb->s_blocksize) {
 		nilfs_err(sb, "too large segment usage size: %zu bytes",
 			  susize);
-		वापस -EINVAL;
-	पूर्ण अन्यथा अगर (susize < NILFS_MIN_SEGMENT_USAGE_SIZE) अणु
+		return -EINVAL;
+	} else if (susize < NILFS_MIN_SEGMENT_USAGE_SIZE) {
 		nilfs_err(sb, "too small segment usage size: %zu bytes",
 			  susize);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	sufile = nilfs_iget_locked(sb, शून्य, NILFS_SUखाता_INO);
-	अगर (unlikely(!sufile))
-		वापस -ENOMEM;
-	अगर (!(sufile->i_state & I_NEW))
-		जाओ out;
+	sufile = nilfs_iget_locked(sb, NULL, NILFS_SUFILE_INO);
+	if (unlikely(!sufile))
+		return -ENOMEM;
+	if (!(sufile->i_state & I_NEW))
+		goto out;
 
-	err = nilfs_mdt_init(sufile, NILFS_MDT_GFP, माप(*sui));
-	अगर (err)
-		जाओ failed;
+	err = nilfs_mdt_init(sufile, NILFS_MDT_GFP, sizeof(*sui));
+	if (err)
+		goto failed;
 
 	nilfs_mdt_set_entry_size(sufile, susize,
-				 माप(काष्ठा nilfs_sufile_header));
+				 sizeof(struct nilfs_sufile_header));
 
-	err = nilfs_पढ़ो_inode_common(sufile, raw_inode);
-	अगर (err)
-		जाओ failed;
+	err = nilfs_read_inode_common(sufile, raw_inode);
+	if (err)
+		goto failed;
 
 	err = nilfs_sufile_get_header_block(sufile, &header_bh);
-	अगर (err)
-		जाओ failed;
+	if (err)
+		goto failed;
 
 	sui = NILFS_SUI(sufile);
 	kaddr = kmap_atomic(header_bh->b_page);
 	header = kaddr + bh_offset(header_bh);
 	sui->ncleansegs = le64_to_cpu(header->sh_ncleansegs);
 	kunmap_atomic(kaddr);
-	brअन्यथा(header_bh);
+	brelse(header_bh);
 
 	sui->allocmax = nilfs_sufile_get_nsegments(sufile) - 1;
 	sui->allocmin = 0;
@@ -1209,8 +1208,8 @@ out_sem:
 	unlock_new_inode(sufile);
  out:
 	*inodep = sufile;
-	वापस 0;
+	return 0;
  failed:
 	iget_failed(sufile);
-	वापस err;
-पूर्ण
+	return err;
+}

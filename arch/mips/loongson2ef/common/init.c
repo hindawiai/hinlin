@@ -1,48 +1,47 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2009 Lemote Inc.
  * Author: Wu Zhangjin, wuzhangjin@gmail.com
  */
 
-#समावेश <linux/memblock.h>
-#समावेश <यंत्र/bootinfo.h>
-#समावेश <यंत्र/traps.h>
-#समावेश <यंत्र/smp-ops.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/fw/fw.h>
+#include <linux/memblock.h>
+#include <asm/bootinfo.h>
+#include <asm/traps.h>
+#include <asm/smp-ops.h>
+#include <asm/cacheflush.h>
+#include <asm/fw/fw.h>
 
-#समावेश <loongson.h>
+#include <loongson.h>
 
-/* Loongson CPU address winकरोws config space base address */
-अचिन्हित दीर्घ __maybe_unused _loongson_addrwincfg_base;
+/* Loongson CPU address windows config space base address */
+unsigned long __maybe_unused _loongson_addrwincfg_base;
 
-अटल व्योम __init mips_nmi_setup(व्योम)
-अणु
-	व्योम *base;
+static void __init mips_nmi_setup(void)
+{
+	void *base;
 
-	base = (व्योम *)(CAC_BASE + 0x380);
-	स_नकल(base, except_vec_nmi, 0x80);
-	flush_icache_range((अचिन्हित दीर्घ)base, (अचिन्हित दीर्घ)base + 0x80);
-पूर्ण
+	base = (void *)(CAC_BASE + 0x380);
+	memcpy(base, except_vec_nmi, 0x80);
+	flush_icache_range((unsigned long)base, (unsigned long)base + 0x80);
+}
 
-व्योम __init prom_init(व्योम)
-अणु
-#अगर_घोषित CONFIG_CPU_SUPPORTS_ADDRWINCFG
-	_loongson_addrwincfg_base = (अचिन्हित दीर्घ)
+void __init prom_init(void)
+{
+#ifdef CONFIG_CPU_SUPPORTS_ADDRWINCFG
+	_loongson_addrwincfg_base = (unsigned long)
 		ioremap(LOONGSON_ADDRWINCFG_BASE, LOONGSON_ADDRWINCFG_SIZE);
-#पूर्ण_अगर
+#endif
 
 	fw_init_cmdline();
 	prom_init_machtype();
 	prom_init_env();
 
 	/* init base address of io space */
-	set_io_port_base((अचिन्हित दीर्घ)
+	set_io_port_base((unsigned long)
 		ioremap(LOONGSON_PCIIO_BASE, LOONGSON_PCIIO_SIZE));
 	prom_init_memory();
 
 	/*init the uart base address */
 	prom_init_uart_base();
 	board_nmi_handler_setup = mips_nmi_setup;
-पूर्ण
+}

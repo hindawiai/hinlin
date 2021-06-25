@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,116 +21,116 @@
  *
  */
 
-#समावेश "ppatomfwctrl.h"
-#समावेश "atomfirmware.h"
-#समावेश "atom.h"
-#समावेश "pp_debug.h"
+#include "ppatomfwctrl.h"
+#include "atomfirmware.h"
+#include "atom.h"
+#include "pp_debug.h"
 
-अटल स्थिर जोड़ atom_voltage_object_v4 *pp_atomfwctrl_lookup_voltage_type_v4(
-		स्थिर काष्ठा atom_voltage_objects_info_v4_1 *voltage_object_info_table,
-		uपूर्णांक8_t voltage_type, uपूर्णांक8_t voltage_mode)
-अणु
-	अचिन्हित पूर्णांक size = le16_to_cpu(
-			voltage_object_info_table->table_header.काष्ठाuresize);
-	अचिन्हित पूर्णांक offset =
-			दुरत्व(काष्ठा atom_voltage_objects_info_v4_1, voltage_object[0]);
-	अचिन्हित दीर्घ start = (अचिन्हित दीर्घ)voltage_object_info_table;
+static const union atom_voltage_object_v4 *pp_atomfwctrl_lookup_voltage_type_v4(
+		const struct atom_voltage_objects_info_v4_1 *voltage_object_info_table,
+		uint8_t voltage_type, uint8_t voltage_mode)
+{
+	unsigned int size = le16_to_cpu(
+			voltage_object_info_table->table_header.structuresize);
+	unsigned int offset =
+			offsetof(struct atom_voltage_objects_info_v4_1, voltage_object[0]);
+	unsigned long start = (unsigned long)voltage_object_info_table;
 
-	जबतक (offset < size) अणु
-		स्थिर जोड़ atom_voltage_object_v4 *voltage_object =
-			(स्थिर जोड़ atom_voltage_object_v4 *)(start + offset);
+	while (offset < size) {
+		const union atom_voltage_object_v4 *voltage_object =
+			(const union atom_voltage_object_v4 *)(start + offset);
 
-		अगर (voltage_type == voltage_object->gpio_voltage_obj.header.voltage_type &&
+		if (voltage_type == voltage_object->gpio_voltage_obj.header.voltage_type &&
 		    voltage_mode == voltage_object->gpio_voltage_obj.header.voltage_mode)
-			वापस voltage_object;
+			return voltage_object;
 
 		offset += le16_to_cpu(voltage_object->gpio_voltage_obj.header.object_size);
 
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा atom_voltage_objects_info_v4_1 *pp_atomfwctrl_get_voltage_info_table(
-		काष्ठा pp_hwmgr *hwmgr)
-अणु
-	स्थिर व्योम *table_address;
-	uपूर्णांक16_t idx;
+static struct atom_voltage_objects_info_v4_1 *pp_atomfwctrl_get_voltage_info_table(
+		struct pp_hwmgr *hwmgr)
+{
+	const void *table_address;
+	uint16_t idx;
 
 	idx = GetIndexIntoMasterDataTable(voltageobject_info);
 	table_address = smu_atom_get_data_table(hwmgr->adev,
-						idx, शून्य, शून्य, शून्य);
+						idx, NULL, NULL, NULL);
 
 	PP_ASSERT_WITH_CODE(table_address,
 			"Error retrieving BIOS Table Address!",
-			वापस शून्य);
+			return NULL);
 
-	वापस (काष्ठा atom_voltage_objects_info_v4_1 *)table_address;
-पूर्ण
+	return (struct atom_voltage_objects_info_v4_1 *)table_address;
+}
 
 /*
- * Returns TRUE अगर the given voltage type is controlled by GPIO pins.
+ * Returns TRUE if the given voltage type is controlled by GPIO pins.
  * voltage_type is one of SET_VOLTAGE_TYPE_ASIC_VDDC, SET_VOLTAGE_TYPE_ASIC_MVDDC, SET_VOLTAGE_TYPE_ASIC_MVDDQ.
  * voltage_mode is one of ATOM_SET_VOLTAGE, ATOM_SET_VOLTAGE_PHASE
  */
-bool pp_atomfwctrl_is_voltage_controlled_by_gpio_v4(काष्ठा pp_hwmgr *hwmgr,
-		uपूर्णांक8_t voltage_type, uपूर्णांक8_t voltage_mode)
-अणु
-	काष्ठा atom_voltage_objects_info_v4_1 *voltage_info =
-			(काष्ठा atom_voltage_objects_info_v4_1 *)
+bool pp_atomfwctrl_is_voltage_controlled_by_gpio_v4(struct pp_hwmgr *hwmgr,
+		uint8_t voltage_type, uint8_t voltage_mode)
+{
+	struct atom_voltage_objects_info_v4_1 *voltage_info =
+			(struct atom_voltage_objects_info_v4_1 *)
 			pp_atomfwctrl_get_voltage_info_table(hwmgr);
 	bool ret;
 
-	/* If we cannot find the table करो NOT try to control this voltage. */
+	/* If we cannot find the table do NOT try to control this voltage. */
 	PP_ASSERT_WITH_CODE(voltage_info,
 			"Could not find Voltage Table in BIOS.",
-			वापस false);
+			return false);
 
 	ret = (pp_atomfwctrl_lookup_voltage_type_v4(voltage_info,
 			voltage_type, voltage_mode)) ? true : false;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक pp_atomfwctrl_get_voltage_table_v4(काष्ठा pp_hwmgr *hwmgr,
-		uपूर्णांक8_t voltage_type, uपूर्णांक8_t voltage_mode,
-		काष्ठा pp_atomfwctrl_voltage_table *voltage_table)
-अणु
-	काष्ठा atom_voltage_objects_info_v4_1 *voltage_info =
-			(काष्ठा atom_voltage_objects_info_v4_1 *)
+int pp_atomfwctrl_get_voltage_table_v4(struct pp_hwmgr *hwmgr,
+		uint8_t voltage_type, uint8_t voltage_mode,
+		struct pp_atomfwctrl_voltage_table *voltage_table)
+{
+	struct atom_voltage_objects_info_v4_1 *voltage_info =
+			(struct atom_voltage_objects_info_v4_1 *)
 			pp_atomfwctrl_get_voltage_info_table(hwmgr);
-	स्थिर जोड़ atom_voltage_object_v4 *voltage_object;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक result = 0;
+	const union atom_voltage_object_v4 *voltage_object;
+	unsigned int i;
+	int result = 0;
 
 	PP_ASSERT_WITH_CODE(voltage_info,
 			"Could not find Voltage Table in BIOS.",
-			वापस -1);
+			return -1);
 
 	voltage_object = pp_atomfwctrl_lookup_voltage_type_v4(voltage_info,
 			voltage_type, voltage_mode);
 
-	अगर (!voltage_object)
-		वापस -1;
+	if (!voltage_object)
+		return -1;
 
 	voltage_table->count = 0;
-	अगर (voltage_mode == VOLTAGE_OBJ_GPIO_LUT) अणु
+	if (voltage_mode == VOLTAGE_OBJ_GPIO_LUT) {
 		PP_ASSERT_WITH_CODE(
 				(voltage_object->gpio_voltage_obj.gpio_entry_num <=
 				PP_ATOMFWCTRL_MAX_VOLTAGE_ENTRIES),
 				"Too many voltage entries!",
 				result = -1);
 
-		अगर (!result) अणु
-			क्रम (i = 0; i < voltage_object->gpio_voltage_obj.
-							gpio_entry_num; i++) अणु
+		if (!result) {
+			for (i = 0; i < voltage_object->gpio_voltage_obj.
+							gpio_entry_num; i++) {
 				voltage_table->entries[i].value =
 						le16_to_cpu(voltage_object->gpio_voltage_obj.
 						voltage_gpio_lut[i].voltage_level_mv);
 				voltage_table->entries[i].smio_low =
 						le32_to_cpu(voltage_object->gpio_voltage_obj.
 						voltage_gpio_lut[i].voltage_gpio_reg_val);
-			पूर्ण
+			}
 			voltage_table->count =
 					voltage_object->gpio_voltage_obj.gpio_entry_num;
 			voltage_table->mask_low =
@@ -139,8 +138,8 @@ bool pp_atomfwctrl_is_voltage_controlled_by_gpio_v4(काष्ठा pp_hwmgr 
 					voltage_object->gpio_voltage_obj.gpio_mask_val);
 			voltage_table->phase_delay =
 					voltage_object->gpio_voltage_obj.phase_delay_us;
-		पूर्ण
-	पूर्ण अन्यथा अगर (voltage_mode == VOLTAGE_OBJ_SVID2) अणु
+		}
+	} else if (voltage_mode == VOLTAGE_OBJ_SVID2) {
 		voltage_table->psi1_enable =
 			(voltage_object->svid2_voltage_obj.loadline_psi1 & 0x20) >> 5;
 		voltage_table->psi0_enable =
@@ -151,150 +150,150 @@ bool pp_atomfwctrl_is_voltage_controlled_by_gpio_v4(काष्ठा pp_hwmgr 
 			voltage_object->svid2_voltage_obj.telemetry_offset;
 		voltage_table->telemetry_slope =
 			voltage_object->svid2_voltage_obj.telemetry_gain;
-	पूर्ण अन्यथा
+	} else
 		PP_ASSERT_WITH_CODE(false,
 				"Unsupported Voltage Object Mode!",
 				result = -1);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
  
-अटल काष्ठा atom_gpio_pin_lut_v2_1 *pp_atomfwctrl_get_gpio_lookup_table(
-		काष्ठा pp_hwmgr *hwmgr)
-अणु
-	स्थिर व्योम *table_address;
-	uपूर्णांक16_t idx;
+static struct atom_gpio_pin_lut_v2_1 *pp_atomfwctrl_get_gpio_lookup_table(
+		struct pp_hwmgr *hwmgr)
+{
+	const void *table_address;
+	uint16_t idx;
 
 	idx = GetIndexIntoMasterDataTable(gpio_pin_lut);
 	table_address =	smu_atom_get_data_table(hwmgr->adev,
-			idx, शून्य, शून्य, शून्य);
+			idx, NULL, NULL, NULL);
 	PP_ASSERT_WITH_CODE(table_address,
 			"Error retrieving BIOS Table Address!",
-			वापस शून्य);
+			return NULL);
 
-	वापस (काष्ठा atom_gpio_pin_lut_v2_1 *)table_address;
-पूर्ण
+	return (struct atom_gpio_pin_lut_v2_1 *)table_address;
+}
 
-अटल bool pp_atomfwctrl_lookup_gpio_pin(
-		काष्ठा atom_gpio_pin_lut_v2_1 *gpio_lookup_table,
-		स्थिर uपूर्णांक32_t pin_id,
-		काष्ठा pp_atomfwctrl_gpio_pin_assignment *gpio_pin_assignment)
-अणु
-	अचिन्हित पूर्णांक size = le16_to_cpu(
-			gpio_lookup_table->table_header.काष्ठाuresize);
-	अचिन्हित पूर्णांक offset =
-			दुरत्व(काष्ठा atom_gpio_pin_lut_v2_1, gpio_pin[0]);
-	अचिन्हित दीर्घ start = (अचिन्हित दीर्घ)gpio_lookup_table;
+static bool pp_atomfwctrl_lookup_gpio_pin(
+		struct atom_gpio_pin_lut_v2_1 *gpio_lookup_table,
+		const uint32_t pin_id,
+		struct pp_atomfwctrl_gpio_pin_assignment *gpio_pin_assignment)
+{
+	unsigned int size = le16_to_cpu(
+			gpio_lookup_table->table_header.structuresize);
+	unsigned int offset =
+			offsetof(struct atom_gpio_pin_lut_v2_1, gpio_pin[0]);
+	unsigned long start = (unsigned long)gpio_lookup_table;
 
-	जबतक (offset < size) अणु
-		स्थिर काष्ठा  atom_gpio_pin_assignment *pin_assignment =
-				(स्थिर काष्ठा  atom_gpio_pin_assignment *)(start + offset);
+	while (offset < size) {
+		const struct  atom_gpio_pin_assignment *pin_assignment =
+				(const struct  atom_gpio_pin_assignment *)(start + offset);
 
-		अगर (pin_id == pin_assignment->gpio_id)  अणु
-			gpio_pin_assignment->uc_gpio_pin_bit_shअगरt =
-					pin_assignment->gpio_bitshअगरt;
+		if (pin_id == pin_assignment->gpio_id)  {
+			gpio_pin_assignment->uc_gpio_pin_bit_shift =
+					pin_assignment->gpio_bitshift;
 			gpio_pin_assignment->us_gpio_pin_aindex =
 					le16_to_cpu(pin_assignment->data_a_reg_index);
-			वापस true;
-		पूर्ण
-		offset += दुरत्व(काष्ठा atom_gpio_pin_assignment, gpio_id) + 1;
-	पूर्ण
-	वापस false;
-पूर्ण
+			return true;
+		}
+		offset += offsetof(struct atom_gpio_pin_assignment, gpio_id) + 1;
+	}
+	return false;
+}
 
 /*
- * Returns TRUE अगर the given pin id find in lookup table.
+ * Returns TRUE if the given pin id find in lookup table.
  */
-bool pp_atomfwctrl_get_pp_assign_pin(काष्ठा pp_hwmgr *hwmgr,
-		स्थिर uपूर्णांक32_t pin_id,
-		काष्ठा pp_atomfwctrl_gpio_pin_assignment *gpio_pin_assignment)
-अणु
+bool pp_atomfwctrl_get_pp_assign_pin(struct pp_hwmgr *hwmgr,
+		const uint32_t pin_id,
+		struct pp_atomfwctrl_gpio_pin_assignment *gpio_pin_assignment)
+{
 	bool ret = false;
-	काष्ठा atom_gpio_pin_lut_v2_1 *gpio_lookup_table =
+	struct atom_gpio_pin_lut_v2_1 *gpio_lookup_table =
 			pp_atomfwctrl_get_gpio_lookup_table(hwmgr);
 
-	/* If we cannot find the table करो NOT try to control this voltage. */
+	/* If we cannot find the table do NOT try to control this voltage. */
 	PP_ASSERT_WITH_CODE(gpio_lookup_table,
 			"Could not find GPIO lookup Table in BIOS.",
-			वापस false);
+			return false);
 
 	ret = pp_atomfwctrl_lookup_gpio_pin(gpio_lookup_table,
 			pin_id, gpio_pin_assignment);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Enter to SelfRefresh mode.
  * @param hwmgr
  */
-पूर्णांक pp_atomfwctrl_enter_self_refresh(काष्ठा pp_hwmgr *hwmgr)
-अणु
+int pp_atomfwctrl_enter_self_refresh(struct pp_hwmgr *hwmgr)
+{
 	/* 0 - no action
-	 * 1 - leave घातer to video memory always on
+	 * 1 - leave power to video memory always on
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/** pp_atomfwctrl_get_gpu_pll_भागiders_vega10().
+/** pp_atomfwctrl_get_gpu_pll_dividers_vega10().
  *
- * @param hwmgr       input parameter: poपूर्णांकer to HwMgr
- * @param घड़ी_प्रकारype  input parameter: Clock type: 1 - GFXCLK, 2 - UCLK, 0 - All other घड़ीs
- * @param घड़ी_value input parameter: Clock
- * @param भागiders    output parameter:Clock भागiders
+ * @param hwmgr       input parameter: pointer to HwMgr
+ * @param clock_type  input parameter: Clock type: 1 - GFXCLK, 2 - UCLK, 0 - All other clocks
+ * @param clock_value input parameter: Clock
+ * @param dividers    output parameter:Clock dividers
  */
-पूर्णांक pp_atomfwctrl_get_gpu_pll_भागiders_vega10(काष्ठा pp_hwmgr *hwmgr,
-		uपूर्णांक32_t घड़ी_प्रकारype, uपूर्णांक32_t घड़ी_value,
-		काष्ठा pp_atomfwctrl_घड़ी_भागiders_soc15 *भागiders)
-अणु
-	काष्ठा amdgpu_device *adev = hwmgr->adev;
-	काष्ठा compute_gpu_घड़ी_input_parameter_v1_8 pll_parameters;
-	काष्ठा compute_gpu_घड़ी_output_parameter_v1_8 *pll_output;
-	uपूर्णांक32_t idx;
+int pp_atomfwctrl_get_gpu_pll_dividers_vega10(struct pp_hwmgr *hwmgr,
+		uint32_t clock_type, uint32_t clock_value,
+		struct pp_atomfwctrl_clock_dividers_soc15 *dividers)
+{
+	struct amdgpu_device *adev = hwmgr->adev;
+	struct compute_gpu_clock_input_parameter_v1_8 pll_parameters;
+	struct compute_gpu_clock_output_parameter_v1_8 *pll_output;
+	uint32_t idx;
 
-	pll_parameters.gpuघड़ी_10khz = (uपूर्णांक32_t)घड़ी_value;
-	pll_parameters.gpu_घड़ी_प्रकारype = घड़ी_प्रकारype;
+	pll_parameters.gpuclock_10khz = (uint32_t)clock_value;
+	pll_parameters.gpu_clock_type = clock_type;
 
-	idx = GetIndexIntoMasterCmdTable(computegpuघड़ीparam);
+	idx = GetIndexIntoMasterCmdTable(computegpuclockparam);
 
-	अगर (amdgpu_atom_execute_table(
-		adev->mode_info.atom_context, idx, (uपूर्णांक32_t *)&pll_parameters))
-		वापस -EINVAL;
+	if (amdgpu_atom_execute_table(
+		adev->mode_info.atom_context, idx, (uint32_t *)&pll_parameters))
+		return -EINVAL;
 
-	pll_output = (काष्ठा compute_gpu_घड़ी_output_parameter_v1_8 *)
+	pll_output = (struct compute_gpu_clock_output_parameter_v1_8 *)
 			&pll_parameters;
-	भागiders->ulClock = le32_to_cpu(pll_output->gpuघड़ी_10khz);
-	भागiders->ulDid = le32_to_cpu(pll_output->dfs_did);
-	भागiders->ulPll_fb_mult = le32_to_cpu(pll_output->pll_fb_mult);
-	भागiders->ulPll_ss_fbsmult = le32_to_cpu(pll_output->pll_ss_fbsmult);
-	भागiders->usPll_ss_slew_frac = le16_to_cpu(pll_output->pll_ss_slew_frac);
-	भागiders->ucPll_ss_enable = pll_output->pll_ss_enable;
+	dividers->ulClock = le32_to_cpu(pll_output->gpuclock_10khz);
+	dividers->ulDid = le32_to_cpu(pll_output->dfs_did);
+	dividers->ulPll_fb_mult = le32_to_cpu(pll_output->pll_fb_mult);
+	dividers->ulPll_ss_fbsmult = le32_to_cpu(pll_output->pll_ss_fbsmult);
+	dividers->usPll_ss_slew_frac = le16_to_cpu(pll_output->pll_ss_slew_frac);
+	dividers->ucPll_ss_enable = pll_output->pll_ss_enable;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक pp_atomfwctrl_get_avfs_inक्रमmation(काष्ठा pp_hwmgr *hwmgr,
-		काष्ठा pp_atomfwctrl_avfs_parameters *param)
-अणु
-	uपूर्णांक16_t idx;
-	uपूर्णांक8_t क्रमmat_revision, content_revision;
+int pp_atomfwctrl_get_avfs_information(struct pp_hwmgr *hwmgr,
+		struct pp_atomfwctrl_avfs_parameters *param)
+{
+	uint16_t idx;
+	uint8_t format_revision, content_revision;
 
-	काष्ठा atom_asic_profiling_info_v4_1 *profile;
-	काष्ठा atom_asic_profiling_info_v4_2 *profile_v4_2;
+	struct atom_asic_profiling_info_v4_1 *profile;
+	struct atom_asic_profiling_info_v4_2 *profile_v4_2;
 
 	idx = GetIndexIntoMasterDataTable(asic_profiling_info);
-	profile = (काष्ठा atom_asic_profiling_info_v4_1 *)
+	profile = (struct atom_asic_profiling_info_v4_1 *)
 			smu_atom_get_data_table(hwmgr->adev,
-					idx, शून्य, शून्य, शून्य);
+					idx, NULL, NULL, NULL);
 
-	अगर (!profile)
-		वापस -1;
+	if (!profile)
+		return -1;
 
-	क्रमmat_revision = ((काष्ठा atom_common_table_header *)profile)->क्रमmat_revision;
-	content_revision = ((काष्ठा atom_common_table_header *)profile)->content_revision;
+	format_revision = ((struct atom_common_table_header *)profile)->format_revision;
+	content_revision = ((struct atom_common_table_header *)profile)->content_revision;
 
-	अगर (क्रमmat_revision == 4 && content_revision == 1) अणु
+	if (format_revision == 4 && content_revision == 1) {
 		param->ulMaxVddc = le32_to_cpu(profile->maxvddc);
 		param->ulMinVddc = le32_to_cpu(profile->minvddc);
 		param->ulMeanNsigmaAcontant0 =
@@ -305,10 +304,10 @@ bool pp_atomfwctrl_get_pp_assign_pin(काष्ठा pp_hwmgr *hwmgr,
 				le32_to_cpu(profile->avfs_meannsigma_acontant2);
 		param->usMeanNsigmaDcTolSigma =
 				le16_to_cpu(profile->avfs_meannsigma_dc_tol_sigma);
-		param->usMeanNsigmaPlatक्रमmMean =
-				le16_to_cpu(profile->avfs_meannsigma_platक्रमm_mean);
-		param->usMeanNsigmaPlatक्रमmSigma =
-				le16_to_cpu(profile->avfs_meannsigma_platक्रमm_sigma);
+		param->usMeanNsigmaPlatformMean =
+				le16_to_cpu(profile->avfs_meannsigma_platform_mean);
+		param->usMeanNsigmaPlatformSigma =
+				le16_to_cpu(profile->avfs_meannsigma_platform_sigma);
 		param->ulGbVdroopTableCksoffA0 =
 				le32_to_cpu(profile->gb_vdroop_table_cksoff_a0);
 		param->ulGbVdroopTableCksoffA1 =
@@ -373,8 +372,8 @@ bool pp_atomfwctrl_get_pp_assign_pin(काष्ठा pp_hwmgr *hwmgr,
 		param->ulAcgGbFuseTableB              = 0;
 		param->ucAcgEnableGbVdroopTable       = 0;
 		param->ucAcgEnableGbFuseTable         = 0;
-	पूर्ण अन्यथा अगर (क्रमmat_revision == 4 && content_revision == 2) अणु
-		profile_v4_2 = (काष्ठा atom_asic_profiling_info_v4_2 *)profile;
+	} else if (format_revision == 4 && content_revision == 2) {
+		profile_v4_2 = (struct atom_asic_profiling_info_v4_2 *)profile;
 		param->ulMaxVddc = le32_to_cpu(profile_v4_2->maxvddc);
 		param->ulMinVddc = le32_to_cpu(profile_v4_2->minvddc);
 		param->ulMeanNsigmaAcontant0 =
@@ -385,10 +384,10 @@ bool pp_atomfwctrl_get_pp_assign_pin(काष्ठा pp_hwmgr *hwmgr,
 				le32_to_cpu(profile_v4_2->avfs_meannsigma_acontant2);
 		param->usMeanNsigmaDcTolSigma =
 				le16_to_cpu(profile_v4_2->avfs_meannsigma_dc_tol_sigma);
-		param->usMeanNsigmaPlatक्रमmMean =
-				le16_to_cpu(profile_v4_2->avfs_meannsigma_platक्रमm_mean);
-		param->usMeanNsigmaPlatक्रमmSigma =
-				le16_to_cpu(profile_v4_2->avfs_meannsigma_platक्रमm_sigma);
+		param->usMeanNsigmaPlatformMean =
+				le16_to_cpu(profile_v4_2->avfs_meannsigma_platform_mean);
+		param->usMeanNsigmaPlatformSigma =
+				le16_to_cpu(profile_v4_2->avfs_meannsigma_platform_sigma);
 		param->ulGbVdroopTableCksoffA0 =
 				le32_to_cpu(profile_v4_2->gb_vdroop_table_cksoff_a0);
 		param->ulGbVdroopTableCksoffA1 =
@@ -453,29 +452,29 @@ bool pp_atomfwctrl_get_pp_assign_pin(काष्ठा pp_hwmgr *hwmgr,
 		param->ulAcgGbFuseTableB = le32_to_cpu(profile_v4_2->acg_avfsgb_fuse_table_b);
 		param->ucAcgEnableGbVdroopTable = le32_to_cpu(profile_v4_2->enable_acg_gb_vdroop_table);
 		param->ucAcgEnableGbFuseTable = le32_to_cpu(profile_v4_2->enable_acg_gb_fuse_table);
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_info("Invalid VBIOS AVFS ProfilingInfo Revision!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक pp_atomfwctrl_get_gpio_inक्रमmation(काष्ठा pp_hwmgr *hwmgr,
-		काष्ठा pp_atomfwctrl_gpio_parameters *param)
-अणु
-	काष्ठा atom_smu_info_v3_1 *info;
-	uपूर्णांक16_t idx;
+int pp_atomfwctrl_get_gpio_information(struct pp_hwmgr *hwmgr,
+		struct pp_atomfwctrl_gpio_parameters *param)
+{
+	struct atom_smu_info_v3_1 *info;
+	uint16_t idx;
 
 	idx = GetIndexIntoMasterDataTable(smu_info);
-	info = (काष्ठा atom_smu_info_v3_1 *)
+	info = (struct atom_smu_info_v3_1 *)
 		smu_atom_get_data_table(hwmgr->adev,
-				idx, शून्य, शून्य, शून्य);
+				idx, NULL, NULL, NULL);
 
-	अगर (!info) अणु
+	if (!info) {
 		pr_info("Error retrieving BIOS smu_info Table Address!");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	param->ucAcDcGpio       = info->ac_dc_gpio_bit;
 	param->ucAcDcPolarity   = info->ac_dc_polarity;
@@ -486,40 +485,40 @@ bool pp_atomfwctrl_get_pp_assign_pin(काष्ठा pp_hwmgr *hwmgr,
 	param->ucFwCtfGpio      = info->fw_ctf_gpio_bit;
 	param->ucFwCtfPolarity  = info->fw_ctf_polarity;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक pp_atomfwctrl_get_clk_inक्रमmation_by_clkid(काष्ठा pp_hwmgr *hwmgr,
-					       uपूर्णांक8_t clk_id, uपूर्णांक8_t syspll_id,
-					       uपूर्णांक32_t *frequency)
-अणु
-	काष्ठा amdgpu_device *adev = hwmgr->adev;
-	काष्ठा atom_get_smu_घड़ी_info_parameters_v3_1   parameters;
-	काष्ठा atom_get_smu_घड़ी_info_output_parameters_v3_1 *output;
-	uपूर्णांक32_t ix;
+int pp_atomfwctrl_get_clk_information_by_clkid(struct pp_hwmgr *hwmgr,
+					       uint8_t clk_id, uint8_t syspll_id,
+					       uint32_t *frequency)
+{
+	struct amdgpu_device *adev = hwmgr->adev;
+	struct atom_get_smu_clock_info_parameters_v3_1   parameters;
+	struct atom_get_smu_clock_info_output_parameters_v3_1 *output;
+	uint32_t ix;
 
 	parameters.clk_id = clk_id;
 	parameters.syspll_id = syspll_id;
 	parameters.command = GET_SMU_CLOCK_INFO_V3_1_GET_CLOCK_FREQ;
 	parameters.dfsdid = 0;
 
-	ix = GetIndexIntoMasterCmdTable(माला_लोmuघड़ीinfo);
+	ix = GetIndexIntoMasterCmdTable(getsmuclockinfo);
 
-	अगर (amdgpu_atom_execute_table(
-		adev->mode_info.atom_context, ix, (uपूर्णांक32_t *)&parameters))
-		वापस -EINVAL;
+	if (amdgpu_atom_execute_table(
+		adev->mode_info.atom_context, ix, (uint32_t *)&parameters))
+		return -EINVAL;
 
-	output = (काष्ठा atom_get_smu_घड़ी_info_output_parameters_v3_1 *)&parameters;
-	*frequency = le32_to_cpu(output->atom_smu_outअ_दोlkfreq.smu_घड़ी_freq_hz) / 10000;
+	output = (struct atom_get_smu_clock_info_output_parameters_v3_1 *)&parameters;
+	*frequency = le32_to_cpu(output->atom_smu_outputclkfreq.smu_clock_freq_hz) / 10000;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pp_atomfwctrl_copy_vbios_bootup_values_3_2(काष्ठा pp_hwmgr *hwmgr,
-			काष्ठा pp_atomfwctrl_bios_boot_up_values *boot_values,
-			काष्ठा atom_firmware_info_v3_2 *fw_info)
-अणु
-	uपूर्णांक32_t frequency = 0;
+static void pp_atomfwctrl_copy_vbios_bootup_values_3_2(struct pp_hwmgr *hwmgr,
+			struct pp_atomfwctrl_bios_boot_up_values *boot_values,
+			struct atom_firmware_info_v3_2 *fw_info)
+{
+	uint32_t frequency = 0;
 
 	boot_values->ulRevision = fw_info->firmware_revision;
 	boot_values->ulGfxClk   = fw_info->bootup_sclk_in10khz;
@@ -532,30 +531,30 @@ bool pp_atomfwctrl_get_pp_assign_pin(काष्ठा pp_hwmgr *hwmgr,
 	boot_values->ulSocClk   = 0;
 	boot_values->ulDCEFClk   = 0;
 
-	अगर (!pp_atomfwctrl_get_clk_inक्रमmation_by_clkid(hwmgr, SMU11_SYSPLL0_SOCCLK_ID, SMU11_SYSPLL0_ID, &frequency))
+	if (!pp_atomfwctrl_get_clk_information_by_clkid(hwmgr, SMU11_SYSPLL0_SOCCLK_ID, SMU11_SYSPLL0_ID, &frequency))
 		boot_values->ulSocClk   = frequency;
 
-	अगर (!pp_atomfwctrl_get_clk_inक्रमmation_by_clkid(hwmgr, SMU11_SYSPLL0_DCEFCLK_ID, SMU11_SYSPLL0_ID, &frequency))
+	if (!pp_atomfwctrl_get_clk_information_by_clkid(hwmgr, SMU11_SYSPLL0_DCEFCLK_ID, SMU11_SYSPLL0_ID, &frequency))
 		boot_values->ulDCEFClk  = frequency;
 
-	अगर (!pp_atomfwctrl_get_clk_inक्रमmation_by_clkid(hwmgr, SMU11_SYSPLL0_ECLK_ID, SMU11_SYSPLL0_ID, &frequency))
+	if (!pp_atomfwctrl_get_clk_information_by_clkid(hwmgr, SMU11_SYSPLL0_ECLK_ID, SMU11_SYSPLL0_ID, &frequency))
 		boot_values->ulEClk     = frequency;
 
-	अगर (!pp_atomfwctrl_get_clk_inक्रमmation_by_clkid(hwmgr, SMU11_SYSPLL0_VCLK_ID, SMU11_SYSPLL0_ID, &frequency))
+	if (!pp_atomfwctrl_get_clk_information_by_clkid(hwmgr, SMU11_SYSPLL0_VCLK_ID, SMU11_SYSPLL0_ID, &frequency))
 		boot_values->ulVClk     = frequency;
 
-	अगर (!pp_atomfwctrl_get_clk_inक्रमmation_by_clkid(hwmgr, SMU11_SYSPLL0_DCLK_ID, SMU11_SYSPLL0_ID, &frequency))
+	if (!pp_atomfwctrl_get_clk_information_by_clkid(hwmgr, SMU11_SYSPLL0_DCLK_ID, SMU11_SYSPLL0_ID, &frequency))
 		boot_values->ulDClk     = frequency;
 
-	अगर (!pp_atomfwctrl_get_clk_inक्रमmation_by_clkid(hwmgr, SMU11_SYSPLL1_0_FCLK_ID, SMU11_SYSPLL1_2_ID, &frequency))
+	if (!pp_atomfwctrl_get_clk_information_by_clkid(hwmgr, SMU11_SYSPLL1_0_FCLK_ID, SMU11_SYSPLL1_2_ID, &frequency))
 		boot_values->ulFClk     = frequency;
-पूर्ण
+}
 
-अटल व्योम pp_atomfwctrl_copy_vbios_bootup_values_3_1(काष्ठा pp_hwmgr *hwmgr,
-			काष्ठा pp_atomfwctrl_bios_boot_up_values *boot_values,
-			काष्ठा atom_firmware_info_v3_1 *fw_info)
-अणु
-	uपूर्णांक32_t frequency = 0;
+static void pp_atomfwctrl_copy_vbios_bootup_values_3_1(struct pp_hwmgr *hwmgr,
+			struct pp_atomfwctrl_bios_boot_up_values *boot_values,
+			struct atom_firmware_info_v3_1 *fw_info)
+{
+	uint32_t frequency = 0;
 
 	boot_values->ulRevision = fw_info->firmware_revision;
 	boot_values->ulGfxClk   = fw_info->bootup_sclk_in10khz;
@@ -568,70 +567,70 @@ bool pp_atomfwctrl_get_pp_assign_pin(काष्ठा pp_hwmgr *hwmgr,
 	boot_values->ulSocClk   = 0;
 	boot_values->ulDCEFClk   = 0;
 
-	अगर (!pp_atomfwctrl_get_clk_inक्रमmation_by_clkid(hwmgr, SMU9_SYSPLL0_SOCCLK_ID, 0, &frequency))
+	if (!pp_atomfwctrl_get_clk_information_by_clkid(hwmgr, SMU9_SYSPLL0_SOCCLK_ID, 0, &frequency))
 		boot_values->ulSocClk   = frequency;
 
-	अगर (!pp_atomfwctrl_get_clk_inक्रमmation_by_clkid(hwmgr, SMU9_SYSPLL0_DCEFCLK_ID, 0, &frequency))
+	if (!pp_atomfwctrl_get_clk_information_by_clkid(hwmgr, SMU9_SYSPLL0_DCEFCLK_ID, 0, &frequency))
 		boot_values->ulDCEFClk  = frequency;
 
-	अगर (!pp_atomfwctrl_get_clk_inक्रमmation_by_clkid(hwmgr, SMU9_SYSPLL0_ECLK_ID, 0, &frequency))
+	if (!pp_atomfwctrl_get_clk_information_by_clkid(hwmgr, SMU9_SYSPLL0_ECLK_ID, 0, &frequency))
 		boot_values->ulEClk     = frequency;
 
-	अगर (!pp_atomfwctrl_get_clk_inक्रमmation_by_clkid(hwmgr, SMU9_SYSPLL0_VCLK_ID, 0, &frequency))
+	if (!pp_atomfwctrl_get_clk_information_by_clkid(hwmgr, SMU9_SYSPLL0_VCLK_ID, 0, &frequency))
 		boot_values->ulVClk     = frequency;
 
-	अगर (!pp_atomfwctrl_get_clk_inक्रमmation_by_clkid(hwmgr, SMU9_SYSPLL0_DCLK_ID, 0, &frequency))
+	if (!pp_atomfwctrl_get_clk_information_by_clkid(hwmgr, SMU9_SYSPLL0_DCLK_ID, 0, &frequency))
 		boot_values->ulDClk     = frequency;
-पूर्ण
+}
 
-पूर्णांक pp_atomfwctrl_get_vbios_bootup_values(काष्ठा pp_hwmgr *hwmgr,
-			काष्ठा pp_atomfwctrl_bios_boot_up_values *boot_values)
-अणु
-	काष्ठा atom_firmware_info_v3_2 *fwinfo_3_2;
-	काष्ठा atom_firmware_info_v3_1 *fwinfo_3_1;
-	काष्ठा atom_common_table_header *info = शून्य;
-	uपूर्णांक16_t ix;
+int pp_atomfwctrl_get_vbios_bootup_values(struct pp_hwmgr *hwmgr,
+			struct pp_atomfwctrl_bios_boot_up_values *boot_values)
+{
+	struct atom_firmware_info_v3_2 *fwinfo_3_2;
+	struct atom_firmware_info_v3_1 *fwinfo_3_1;
+	struct atom_common_table_header *info = NULL;
+	uint16_t ix;
 
 	ix = GetIndexIntoMasterDataTable(firmwareinfo);
-	info = (काष्ठा atom_common_table_header *)
+	info = (struct atom_common_table_header *)
 		smu_atom_get_data_table(hwmgr->adev,
-				ix, शून्य, शून्य, शून्य);
+				ix, NULL, NULL, NULL);
 
-	अगर (!info) अणु
+	if (!info) {
 		pr_info("Error retrieving BIOS firmwareinfo!");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((info->क्रमmat_revision == 3) && (info->content_revision == 2)) अणु
-		fwinfo_3_2 = (काष्ठा atom_firmware_info_v3_2 *)info;
+	if ((info->format_revision == 3) && (info->content_revision == 2)) {
+		fwinfo_3_2 = (struct atom_firmware_info_v3_2 *)info;
 		pp_atomfwctrl_copy_vbios_bootup_values_3_2(hwmgr,
 				boot_values, fwinfo_3_2);
-	पूर्ण अन्यथा अगर ((info->क्रमmat_revision == 3) && (info->content_revision == 1)) अणु
-		fwinfo_3_1 = (काष्ठा atom_firmware_info_v3_1 *)info;
+	} else if ((info->format_revision == 3) && (info->content_revision == 1)) {
+		fwinfo_3_1 = (struct atom_firmware_info_v3_1 *)info;
 		pp_atomfwctrl_copy_vbios_bootup_values_3_1(hwmgr,
 				boot_values, fwinfo_3_1);
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_info("Fw info table revision does not match!");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक pp_atomfwctrl_get_smc_dpm_inक्रमmation(काष्ठा pp_hwmgr *hwmgr,
-		काष्ठा pp_atomfwctrl_smc_dpm_parameters *param)
-अणु
-	काष्ठा atom_smc_dpm_info_v4_1 *info;
-	uपूर्णांक16_t ix;
+int pp_atomfwctrl_get_smc_dpm_information(struct pp_hwmgr *hwmgr,
+		struct pp_atomfwctrl_smc_dpm_parameters *param)
+{
+	struct atom_smc_dpm_info_v4_1 *info;
+	uint16_t ix;
 
 	ix = GetIndexIntoMasterDataTable(smc_dpm_info);
-	info = (काष्ठा atom_smc_dpm_info_v4_1 *)
+	info = (struct atom_smc_dpm_info_v4_1 *)
 		smu_atom_get_data_table(hwmgr->adev,
-				ix, शून्य, शून्य, शून्य);
-	अगर (!info) अणु
+				ix, NULL, NULL, NULL);
+	if (!info) {
 		pr_info("Error retrieving BIOS Table Address!");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	param->liquid1_i2c_address = info->liquid1_i2c_address;
 	param->liquid2_i2c_address = info->liquid2_i2c_address;
@@ -689,23 +688,23 @@ bool pp_atomfwctrl_get_pp_assign_pin(काष्ठा pp_hwmgr *hwmgr,
 	param->ledpin1 = info->ledpin1;
 	param->ledpin2 = info->ledpin2;
 
-	param->pllgfxclkspपढ़ोenabled = info->pllgfxclkspपढ़ोenabled;
-	param->pllgfxclkspपढ़ोpercent = info->pllgfxclkspपढ़ोpercent;
-	param->pllgfxclkspपढ़ोfreq = info->pllgfxclkspपढ़ोfreq;
+	param->pllgfxclkspreadenabled = info->pllgfxclkspreadenabled;
+	param->pllgfxclkspreadpercent = info->pllgfxclkspreadpercent;
+	param->pllgfxclkspreadfreq = info->pllgfxclkspreadfreq;
 
-	param->uclkspपढ़ोenabled = info->uclkspपढ़ोenabled;
-	param->uclkspपढ़ोpercent = info->uclkspपढ़ोpercent;
-	param->uclkspपढ़ोfreq = info->uclkspपढ़ोfreq;
+	param->uclkspreadenabled = info->uclkspreadenabled;
+	param->uclkspreadpercent = info->uclkspreadpercent;
+	param->uclkspreadfreq = info->uclkspreadfreq;
 
-	param->socclkspपढ़ोenabled = info->socclkspपढ़ोenabled;
-	param->socclkspपढ़ोpercent = info->socclkspपढ़ोpercent;
-	param->socclkspपढ़ोfreq = info->socclkspपढ़ोfreq;
+	param->socclkspreadenabled = info->socclkspreadenabled;
+	param->socclkspreadpercent = info->socclkspreadpercent;
+	param->socclkspreadfreq = info->socclkspreadfreq;
 
-	param->acggfxclkspपढ़ोenabled = info->acggfxclkspपढ़ोenabled;
-	param->acggfxclkspपढ़ोpercent = info->acggfxclkspपढ़ोpercent;
-	param->acggfxclkspपढ़ोfreq = info->acggfxclkspपढ़ोfreq;
+	param->acggfxclkspreadenabled = info->acggfxclkspreadenabled;
+	param->acggfxclkspreadpercent = info->acggfxclkspreadpercent;
+	param->acggfxclkspreadfreq = info->acggfxclkspreadfreq;
 
 	param->Vr2_I2C_address = info->Vr2_I2C_address;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

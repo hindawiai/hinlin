@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * MEN Chameleon Bus.
  *
@@ -7,164 +6,164 @@
  * Author: Andreas Werner <andreas.werner@men.de>
  */
 
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/mcb.h>
-#समावेश <linux/पन.स>
-#समावेश "mcb-internal.h"
+#include <linux/platform_device.h>
+#include <linux/module.h>
+#include <linux/dmi.h>
+#include <linux/mcb.h>
+#include <linux/io.h>
+#include "mcb-internal.h"
 
-काष्ठा priv अणु
-	काष्ठा mcb_bus *bus;
-	काष्ठा resource *mem;
-	व्योम __iomem *base;
-पूर्ण;
+struct priv {
+	struct mcb_bus *bus;
+	struct resource *mem;
+	void __iomem *base;
+};
 
-अटल पूर्णांक mcb_lpc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource *res;
-	काष्ठा priv *priv;
-	पूर्णांक ret = 0;
+static int mcb_lpc_probe(struct platform_device *pdev)
+{
+	struct resource *res;
+	struct priv *priv;
+	int ret = 0;
 
-	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	priv->mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!priv->mem) अणु
+	priv->mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!priv->mem) {
 		dev_err(&pdev->dev, "No Memory resource\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	res = devm_request_mem_region(&pdev->dev, priv->mem->start,
 				      resource_size(priv->mem),
 				      KBUILD_MODNAME);
-	अगर (!res) अणु
+	if (!res) {
 		dev_err(&pdev->dev, "Failed to request IO memory\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	priv->base = devm_ioremap(&pdev->dev, priv->mem->start,
 				  resource_size(priv->mem));
-	अगर (!priv->base) अणु
+	if (!priv->base) {
 		dev_err(&pdev->dev, "Cannot ioremap\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 
 	priv->bus = mcb_alloc_bus(&pdev->dev);
-	अगर (IS_ERR(priv->bus))
-		वापस PTR_ERR(priv->bus);
+	if (IS_ERR(priv->bus))
+		return PTR_ERR(priv->bus);
 
 	ret = chameleon_parse_cells(priv->bus, priv->mem->start, priv->base);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		mcb_release_bus(priv->bus);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dev_dbg(&pdev->dev, "Found %d cells\n", ret);
 
 	mcb_bus_add_devices(priv->bus);
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
-अटल पूर्णांक mcb_lpc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा priv *priv = platक्रमm_get_drvdata(pdev);
+static int mcb_lpc_remove(struct platform_device *pdev)
+{
+	struct priv *priv = platform_get_drvdata(pdev);
 
 	mcb_release_bus(priv->bus);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_device *mcb_lpc_pdev;
+static struct platform_device *mcb_lpc_pdev;
 
-अटल पूर्णांक mcb_lpc_create_platक्रमm_device(स्थिर काष्ठा dmi_प्रणाली_id *id)
-अणु
-	काष्ठा resource *res = id->driver_data;
-	पूर्णांक ret;
+static int mcb_lpc_create_platform_device(const struct dmi_system_id *id)
+{
+	struct resource *res = id->driver_data;
+	int ret;
 
-	mcb_lpc_pdev = platक्रमm_device_alloc("mcb-lpc", -1);
-	अगर (!mcb_lpc_pdev)
-		वापस -ENOMEM;
+	mcb_lpc_pdev = platform_device_alloc("mcb-lpc", -1);
+	if (!mcb_lpc_pdev)
+		return -ENOMEM;
 
-	ret = platक्रमm_device_add_resources(mcb_lpc_pdev, res, 1);
-	अगर (ret)
-		जाओ out_put;
+	ret = platform_device_add_resources(mcb_lpc_pdev, res, 1);
+	if (ret)
+		goto out_put;
 
-	ret = platक्रमm_device_add(mcb_lpc_pdev);
-	अगर (ret)
-		जाओ out_put;
+	ret = platform_device_add(mcb_lpc_pdev);
+	if (ret)
+		goto out_put;
 
-	वापस 0;
+	return 0;
 
 out_put:
-	platक्रमm_device_put(mcb_lpc_pdev);
-	वापस ret;
-पूर्ण
+	platform_device_put(mcb_lpc_pdev);
+	return ret;
+}
 
-अटल काष्ठा resource sc24_fpga_resource = अणु
+static struct resource sc24_fpga_resource = {
 	.start = 0xe000e000,
 	.end = 0xe000e000 + CHAM_HEADER_SIZE,
 	.flags = IORESOURCE_MEM,
-पूर्ण;
+};
 
-अटल काष्ठा resource sc31_fpga_resource = अणु
+static struct resource sc31_fpga_resource = {
 	.start = 0xf000e000,
 	.end = 0xf000e000 + CHAM_HEADER_SIZE,
 	.flags = IORESOURCE_MEM,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_driver mcb_lpc_driver = अणु
-	.driver		= अणु
+static struct platform_driver mcb_lpc_driver = {
+	.driver		= {
 		.name = "mcb-lpc",
-	पूर्ण,
+	},
 	.probe		= mcb_lpc_probe,
-	.हटाओ		= mcb_lpc_हटाओ,
-पूर्ण;
+	.remove		= mcb_lpc_remove,
+};
 
-अटल स्थिर काष्ठा dmi_प्रणाली_id mcb_lpc_dmi_table[] = अणु
-	अणु
+static const struct dmi_system_id mcb_lpc_dmi_table[] = {
+	{
 		.ident = "SC24",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "MEN"),
 			DMI_MATCH(DMI_PRODUCT_VERSION, "14SC24"),
-		पूर्ण,
-		.driver_data = (व्योम *)&sc24_fpga_resource,
-		.callback = mcb_lpc_create_platक्रमm_device,
-	पूर्ण,
-	अणु
+		},
+		.driver_data = (void *)&sc24_fpga_resource,
+		.callback = mcb_lpc_create_platform_device,
+	},
+	{
 		.ident = "SC31",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "MEN"),
 			DMI_MATCH(DMI_PRODUCT_VERSION, "14SC31"),
-		पूर्ण,
-		.driver_data = (व्योम *)&sc31_fpga_resource,
-		.callback = mcb_lpc_create_platक्रमm_device,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+		},
+		.driver_data = (void *)&sc31_fpga_resource,
+		.callback = mcb_lpc_create_platform_device,
+	},
+	{}
+};
 MODULE_DEVICE_TABLE(dmi, mcb_lpc_dmi_table);
 
-अटल पूर्णांक __init mcb_lpc_init(व्योम)
-अणु
-	अगर (!dmi_check_प्रणाली(mcb_lpc_dmi_table))
-		वापस -ENODEV;
+static int __init mcb_lpc_init(void)
+{
+	if (!dmi_check_system(mcb_lpc_dmi_table))
+		return -ENODEV;
 
-	वापस platक्रमm_driver_रेजिस्टर(&mcb_lpc_driver);
-पूर्ण
+	return platform_driver_register(&mcb_lpc_driver);
+}
 
-अटल व्योम __निकास mcb_lpc_निकास(व्योम)
-अणु
-	platक्रमm_device_unरेजिस्टर(mcb_lpc_pdev);
-	platक्रमm_driver_unरेजिस्टर(&mcb_lpc_driver);
-पूर्ण
+static void __exit mcb_lpc_exit(void)
+{
+	platform_device_unregister(mcb_lpc_pdev);
+	platform_driver_unregister(&mcb_lpc_driver);
+}
 
 module_init(mcb_lpc_init);
-module_निकास(mcb_lpc_निकास);
+module_exit(mcb_lpc_exit);
 
 MODULE_AUTHOR("Andreas Werner <andreas.werner@men.de>");
 MODULE_LICENSE("GPL");

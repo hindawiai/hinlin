@@ -1,123 +1,122 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause)
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
 //
 // This file is provided under a dual BSD/GPLv2 license.  When using or
-// redistributing this file, you may करो so under either license.
+// redistributing this file, you may do so under either license.
 //
 // Copyright(c) 2018 Intel Corporation. All rights reserved.
 //
-// Author: Liam Girdwood <liam.r.girdwood@linux.पूर्णांकel.com>
+// Author: Liam Girdwood <liam.r.girdwood@linux.intel.com>
 //
 
-#समावेश <linux/module.h>
-#समावेश <sound/sof.h>
-#समावेश "sof-audio.h"
-#समावेश "sof-priv.h"
+#include <linux/module.h>
+#include <sound/sof.h>
+#include "sof-audio.h"
+#include "sof-priv.h"
 
-अटल काष्ठा snd_soc_card sof_nocodec_card = अणु
+static struct snd_soc_card sof_nocodec_card = {
 	.name = "nocodec", /* the sof- prefix is added by the core */
-	.topology_लघुname = "sof-nocodec",
+	.topology_shortname = "sof-nocodec",
 	.owner = THIS_MODULE
-पूर्ण;
+};
 
-अटल पूर्णांक sof_nocodec_bes_setup(काष्ठा device *dev,
-				 काष्ठा snd_soc_dai_driver *drv,
-				 काष्ठा snd_soc_dai_link *links,
-				 पूर्णांक link_num, काष्ठा snd_soc_card *card)
-अणु
-	काष्ठा snd_soc_dai_link_component *dlc;
-	पूर्णांक i;
+static int sof_nocodec_bes_setup(struct device *dev,
+				 struct snd_soc_dai_driver *drv,
+				 struct snd_soc_dai_link *links,
+				 int link_num, struct snd_soc_card *card)
+{
+	struct snd_soc_dai_link_component *dlc;
+	int i;
 
-	अगर (!drv || !links || !card)
-		वापस -EINVAL;
+	if (!drv || !links || !card)
+		return -EINVAL;
 
 	/* set up BE dai_links */
-	क्रम (i = 0; i < link_num; i++) अणु
-		dlc = devm_kzalloc(dev, 3 * माप(*dlc), GFP_KERNEL);
-		अगर (!dlc)
-			वापस -ENOMEM;
+	for (i = 0; i < link_num; i++) {
+		dlc = devm_kzalloc(dev, 3 * sizeof(*dlc), GFP_KERNEL);
+		if (!dlc)
+			return -ENOMEM;
 
-		links[i].name = devm_kaप्र_लिखो(dev, GFP_KERNEL,
+		links[i].name = devm_kasprintf(dev, GFP_KERNEL,
 					       "NoCodec-%d", i);
-		अगर (!links[i].name)
-			वापस -ENOMEM;
+		if (!links[i].name)
+			return -ENOMEM;
 
 		links[i].stream_name = links[i].name;
 
 		links[i].cpus = &dlc[0];
 		links[i].codecs = &dlc[1];
-		links[i].platक्रमms = &dlc[2];
+		links[i].platforms = &dlc[2];
 
 		links[i].num_cpus = 1;
 		links[i].num_codecs = 1;
-		links[i].num_platक्रमms = 1;
+		links[i].num_platforms = 1;
 
 		links[i].id = i;
 		links[i].no_pcm = 1;
 		links[i].cpus->dai_name = drv[i].name;
-		links[i].platक्रमms->name = dev_name(dev->parent);
+		links[i].platforms->name = dev_name(dev->parent);
 		links[i].codecs->dai_name = "snd-soc-dummy-dai";
 		links[i].codecs->name = "snd-soc-dummy";
-		अगर (drv[i].playback.channels_min)
+		if (drv[i].playback.channels_min)
 			links[i].dpcm_playback = 1;
-		अगर (drv[i].capture.channels_min)
+		if (drv[i].capture.channels_min)
 			links[i].dpcm_capture = 1;
 
 		links[i].be_hw_params_fixup = sof_pcm_dai_link_fixup;
-	पूर्ण
+	}
 
 	card->dai_link = links;
 	card->num_links = link_num;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sof_nocodec_setup(काष्ठा device *dev,
+static int sof_nocodec_setup(struct device *dev,
 			     u32 num_dai_drivers,
-			     काष्ठा snd_soc_dai_driver *dai_drivers)
-अणु
-	काष्ठा snd_soc_dai_link *links;
+			     struct snd_soc_dai_driver *dai_drivers)
+{
+	struct snd_soc_dai_link *links;
 
 	/* create dummy BE dai_links */
-	links = devm_kzalloc(dev, माप(काष्ठा snd_soc_dai_link) * num_dai_drivers, GFP_KERNEL);
-	अगर (!links)
-		वापस -ENOMEM;
+	links = devm_kzalloc(dev, sizeof(struct snd_soc_dai_link) * num_dai_drivers, GFP_KERNEL);
+	if (!links)
+		return -ENOMEM;
 
-	वापस sof_nocodec_bes_setup(dev, dai_drivers, links, num_dai_drivers, &sof_nocodec_card);
-पूर्ण
+	return sof_nocodec_bes_setup(dev, dai_drivers, links, num_dai_drivers, &sof_nocodec_card);
+}
 
-अटल पूर्णांक sof_nocodec_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा snd_soc_card *card = &sof_nocodec_card;
-	काष्ठा snd_soc_acpi_mach *mach;
-	पूर्णांक ret;
+static int sof_nocodec_probe(struct platform_device *pdev)
+{
+	struct snd_soc_card *card = &sof_nocodec_card;
+	struct snd_soc_acpi_mach *mach;
+	int ret;
 
 	card->dev = &pdev->dev;
-	card->topology_लघुname_created = true;
-	mach = pdev->dev.platक्रमm_data;
+	card->topology_shortname_created = true;
+	mach = pdev->dev.platform_data;
 
 	ret = sof_nocodec_setup(card->dev, mach->mach_params.num_dai_drivers,
 				mach->mach_params.dai_drivers);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस devm_snd_soc_रेजिस्टर_card(&pdev->dev, card);
-पूर्ण
+	return devm_snd_soc_register_card(&pdev->dev, card);
+}
 
-अटल पूर्णांक sof_nocodec_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस 0;
-पूर्ण
+static int sof_nocodec_remove(struct platform_device *pdev)
+{
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver sof_nocodec_audio = अणु
+static struct platform_driver sof_nocodec_audio = {
 	.probe = sof_nocodec_probe,
-	.हटाओ = sof_nocodec_हटाओ,
-	.driver = अणु
+	.remove = sof_nocodec_remove,
+	.driver = {
 		.name = "sof-nocodec",
 		.pm = &snd_soc_pm_ops,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(sof_nocodec_audio)
+	},
+};
+module_platform_driver(sof_nocodec_audio)
 
 MODULE_DESCRIPTION("ASoC sof nocodec");
 MODULE_AUTHOR("Liam Girdwood");

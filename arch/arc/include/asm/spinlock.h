@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
 
-#अगर_अघोषित __ASM_SPINLOCK_H
-#घोषणा __ASM_SPINLOCK_H
+#ifndef __ASM_SPINLOCK_H
+#define __ASM_SPINLOCK_H
 
-#समावेश <यंत्र/spinlock_types.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/barrier.h>
+#include <asm/spinlock_types.h>
+#include <asm/processor.h>
+#include <asm/barrier.h>
 
-#घोषणा arch_spin_is_locked(x)	((x)->slock != __ARCH_SPIN_LOCK_UNLOCKED__)
+#define arch_spin_is_locked(x)	((x)->slock != __ARCH_SPIN_LOCK_UNLOCKED__)
 
-#अगर_घोषित CONFIG_ARC_HAS_LLSC
+#ifdef CONFIG_ARC_HAS_LLSC
 
-अटल अंतरभूत व्योम arch_spin_lock(arch_spinlock_t *lock)
-अणु
-	अचिन्हित पूर्णांक val;
+static inline void arch_spin_lock(arch_spinlock_t *lock)
+{
+	unsigned int val;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	"1:	llock	%[val], [%[slock]]	\n"
-	"	breq	%[val], %[LOCKED], 1b	\n"	/* spin जबतक LOCKED */
+	"	breq	%[val], %[LOCKED], 1b	\n"	/* spin while LOCKED */
 	"	scond	%[LOCKED], [%[slock]]	\n"	/* acquire */
 	"	bnz	1b			\n"
 	"					\n"
@@ -32,23 +31,23 @@
 
 	/*
 	 * ACQUIRE barrier to ensure load/store after taking the lock
-	 * करोn't "bleed-up" out of the critical section (leak-in is allowed)
-	 * http://www.spinics.net/lists/kernel/msg2010409.hपंचांगl
+	 * don't "bleed-up" out of the critical section (leak-in is allowed)
+	 * http://www.spinics.net/lists/kernel/msg2010409.html
 	 *
 	 * ARCv2 only has load-load, store-store and all-all barrier
 	 * thus need the full all-all barrier
 	 */
 	smp_mb();
-पूर्ण
+}
 
 /* 1 - lock taken successfully */
-अटल अंतरभूत पूर्णांक arch_spin_trylock(arch_spinlock_t *lock)
-अणु
-	अचिन्हित पूर्णांक val, got_it = 0;
+static inline int arch_spin_trylock(arch_spinlock_t *lock)
+{
+	unsigned int val, got_it = 0;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	"1:	llock	%[val], [%[slock]]	\n"
-	"	breq	%[val], %[LOCKED], 4f	\n"	/* alपढ़ोy LOCKED, just bail */
+	"	breq	%[val], %[LOCKED], 4f	\n"	/* already LOCKED, just bail */
 	"	scond	%[LOCKED], [%[slock]]	\n"	/* acquire */
 	"	bnz	1b			\n"
 	"	mov	%[got_it], 1		\n"
@@ -62,39 +61,39 @@
 
 	smp_mb();
 
-	वापस got_it;
-पूर्ण
+	return got_it;
+}
 
-अटल अंतरभूत व्योम arch_spin_unlock(arch_spinlock_t *lock)
-अणु
+static inline void arch_spin_unlock(arch_spinlock_t *lock)
+{
 	smp_mb();
 
 	WRITE_ONCE(lock->slock, __ARCH_SPIN_LOCK_UNLOCKED__);
-पूर्ण
+}
 
 /*
- * Read-ग_लिखो spinlocks, allowing multiple पढ़ोers but only one ग_लिखोr.
+ * Read-write spinlocks, allowing multiple readers but only one writer.
  * Unfair locking as Writers could be starved indefinitely by Reader(s)
  */
 
-अटल अंतरभूत व्योम arch_पढ़ो_lock(arch_rwlock_t *rw)
-अणु
-	अचिन्हित पूर्णांक val;
+static inline void arch_read_lock(arch_rwlock_t *rw)
+{
+	unsigned int val;
 
 	/*
-	 * zero means ग_लिखोr holds the lock exclusively, deny Reader.
-	 * Otherwise grant lock to first/subseq पढ़ोer
+	 * zero means writer holds the lock exclusively, deny Reader.
+	 * Otherwise grant lock to first/subseq reader
 	 *
-	 * 	अगर (rw->counter > 0) अणु
+	 * 	if (rw->counter > 0) {
 	 *		rw->counter--;
 	 *		ret = 1;
-	 *	पूर्ण
+	 *	}
 	 */
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	"1:	llock	%[val], [%[rwlock]]	\n"
-	"	brls	%[val], %[WR_LOCKED], 1b\n"	/* <= 0: spin जबतक ग_लिखो locked */
-	"	sub	%[val], %[val], 1	\n"	/* पढ़ोer lock */
+	"	brls	%[val], %[WR_LOCKED], 1b\n"	/* <= 0: spin while write locked */
+	"	sub	%[val], %[val], 1	\n"	/* reader lock */
 	"	scond	%[val], [%[rwlock]]	\n"
 	"	bnz	1b			\n"
 	"					\n"
@@ -104,19 +103,19 @@
 	: "memory", "cc");
 
 	smp_mb();
-पूर्ण
+}
 
 /* 1 - lock taken successfully */
-अटल अंतरभूत पूर्णांक arch_पढ़ो_trylock(arch_rwlock_t *rw)
-अणु
-	अचिन्हित पूर्णांक val, got_it = 0;
+static inline int arch_read_trylock(arch_rwlock_t *rw)
+{
+	unsigned int val, got_it = 0;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	"1:	llock	%[val], [%[rwlock]]	\n"
-	"	brls	%[val], %[WR_LOCKED], 4f\n"	/* <= 0: alपढ़ोy ग_लिखो locked, bail */
+	"	brls	%[val], %[WR_LOCKED], 4f\n"	/* <= 0: already write locked, bail */
 	"	sub	%[val], %[val], 1	\n"	/* counter-- */
 	"	scond	%[val], [%[rwlock]]	\n"
-	"	bnz	1b			\n"	/* retry अगर collided with someone */
+	"	bnz	1b			\n"	/* retry if collided with someone */
 	"	mov	%[got_it], 1		\n"
 	"					\n"
 	"4: ; --- done ---			\n"
@@ -129,28 +128,28 @@
 
 	smp_mb();
 
-	वापस got_it;
-पूर्ण
+	return got_it;
+}
 
-अटल अंतरभूत व्योम arch_ग_लिखो_lock(arch_rwlock_t *rw)
-अणु
-	अचिन्हित पूर्णांक val;
+static inline void arch_write_lock(arch_rwlock_t *rw)
+{
+	unsigned int val;
 
 	/*
-	 * If पढ़ोer(s) hold lock (lock < __ARCH_RW_LOCK_UNLOCKED__),
-	 * deny ग_लिखोr. Otherwise अगर unlocked grant to ग_लिखोr
-	 * Hence the claim that Linux rwlocks are unfair to ग_लिखोrs.
-	 * (can be starved क्रम an indefinite समय by पढ़ोers).
+	 * If reader(s) hold lock (lock < __ARCH_RW_LOCK_UNLOCKED__),
+	 * deny writer. Otherwise if unlocked grant to writer
+	 * Hence the claim that Linux rwlocks are unfair to writers.
+	 * (can be starved for an indefinite time by readers).
 	 *
-	 *	अगर (rw->counter == __ARCH_RW_LOCK_UNLOCKED__) अणु
+	 *	if (rw->counter == __ARCH_RW_LOCK_UNLOCKED__) {
 	 *		rw->counter = 0;
 	 *		ret = 1;
-	 *	पूर्ण
+	 *	}
 	 */
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	"1:	llock	%[val], [%[rwlock]]	\n"
-	"	brne	%[val], %[UNLOCKED], 1b	\n"	/* जबतक !UNLOCKED spin */
+	"	brne	%[val], %[UNLOCKED], 1b	\n"	/* while !UNLOCKED spin */
 	"	mov	%[val], %[WR_LOCKED]	\n"
 	"	scond	%[val], [%[rwlock]]	\n"
 	"	bnz	1b			\n"
@@ -162,19 +161,19 @@
 	: "memory", "cc");
 
 	smp_mb();
-पूर्ण
+}
 
 /* 1 - lock taken successfully */
-अटल अंतरभूत पूर्णांक arch_ग_लिखो_trylock(arch_rwlock_t *rw)
-अणु
-	अचिन्हित पूर्णांक val, got_it = 0;
+static inline int arch_write_trylock(arch_rwlock_t *rw)
+{
+	unsigned int val, got_it = 0;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	"1:	llock	%[val], [%[rwlock]]	\n"
 	"	brne	%[val], %[UNLOCKED], 4f	\n"	/* !UNLOCKED, bail */
 	"	mov	%[val], %[WR_LOCKED]	\n"
 	"	scond	%[val], [%[rwlock]]	\n"
-	"	bnz	1b			\n"	/* retry अगर collided with someone */
+	"	bnz	1b			\n"	/* retry if collided with someone */
 	"	mov	%[got_it], 1		\n"
 	"					\n"
 	"4: ; --- done ---			\n"
@@ -188,19 +187,19 @@
 
 	smp_mb();
 
-	वापस got_it;
-पूर्ण
+	return got_it;
+}
 
-अटल अंतरभूत व्योम arch_पढ़ो_unlock(arch_rwlock_t *rw)
-अणु
-	अचिन्हित पूर्णांक val;
+static inline void arch_read_unlock(arch_rwlock_t *rw)
+{
+	unsigned int val;
 
 	smp_mb();
 
 	/*
 	 * rw->counter++;
 	 */
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	"1:	llock	%[val], [%[rwlock]]	\n"
 	"	add	%[val], %[val], 1	\n"
 	"	scond	%[val], [%[rwlock]]	\n"
@@ -209,29 +208,29 @@
 	: [val]		"=&r"	(val)
 	: [rwlock]	"r"	(&(rw->counter))
 	: "memory", "cc");
-पूर्ण
+}
 
-अटल अंतरभूत व्योम arch_ग_लिखो_unlock(arch_rwlock_t *rw)
-अणु
+static inline void arch_write_unlock(arch_rwlock_t *rw)
+{
 	smp_mb();
 
 	WRITE_ONCE(rw->counter, __ARCH_RW_LOCK_UNLOCKED__);
-पूर्ण
+}
 
-#अन्यथा	/* !CONFIG_ARC_HAS_LLSC */
+#else	/* !CONFIG_ARC_HAS_LLSC */
 
-अटल अंतरभूत व्योम arch_spin_lock(arch_spinlock_t *lock)
-अणु
-	अचिन्हित पूर्णांक val = __ARCH_SPIN_LOCK_LOCKED__;
+static inline void arch_spin_lock(arch_spinlock_t *lock)
+{
+	unsigned int val = __ARCH_SPIN_LOCK_LOCKED__;
 
 	/*
-	 * Per lkmm, smp_mb() is only required after _lock (and beक्रमe_unlock)
-	 * क्रम ACQ and REL semantics respectively. However EX based spinlocks
+	 * Per lkmm, smp_mb() is only required after _lock (and before_unlock)
+	 * for ACQ and REL semantics respectively. However EX based spinlocks
 	 * need the extra smp_mb to workaround a hardware quirk.
 	 */
 	smp_mb();
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	"1:	ex  %0, [%1]		\n"
 	"	breq  %0, %2, 1b	\n"
 	: "+&r" (val)
@@ -239,16 +238,16 @@
 	: "memory");
 
 	smp_mb();
-पूर्ण
+}
 
 /* 1 - lock taken successfully */
-अटल अंतरभूत पूर्णांक arch_spin_trylock(arch_spinlock_t *lock)
-अणु
-	अचिन्हित पूर्णांक val = __ARCH_SPIN_LOCK_LOCKED__;
+static inline int arch_spin_trylock(arch_spinlock_t *lock)
+{
+	unsigned int val = __ARCH_SPIN_LOCK_LOCKED__;
 
 	smp_mb();
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	"1:	ex  %0, [%1]		\n"
 	: "+r" (val)
 	: "r"(&(lock->slock))
@@ -256,26 +255,26 @@
 
 	smp_mb();
 
-	वापस (val == __ARCH_SPIN_LOCK_UNLOCKED__);
-पूर्ण
+	return (val == __ARCH_SPIN_LOCK_UNLOCKED__);
+}
 
-अटल अंतरभूत व्योम arch_spin_unlock(arch_spinlock_t *lock)
-अणु
-	अचिन्हित पूर्णांक val = __ARCH_SPIN_LOCK_UNLOCKED__;
+static inline void arch_spin_unlock(arch_spinlock_t *lock)
+{
+	unsigned int val = __ARCH_SPIN_LOCK_UNLOCKED__;
 
 	/*
-	 * RELEASE barrier: given the inकाष्ठाions avail on ARCv2, full barrier
+	 * RELEASE barrier: given the instructions avail on ARCv2, full barrier
 	 * is the only option
 	 */
 	smp_mb();
 
 	/*
 	 * EX is not really required here, a simple STore of 0 suffices.
-	 * However this causes tasklist livelocks in SystemC based SMP भव
-	 * platक्रमms where the प्रणालीc core scheduler uses EX as a cue क्रम
-	 * moving to next core. Do a git log of this file क्रम details
+	 * However this causes tasklist livelocks in SystemC based SMP virtual
+	 * platforms where the systemc core scheduler uses EX as a cue for
+	 * moving to next core. Do a git log of this file for details
 	 */
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	"	ex  %0, [%1]		\n"
 	: "+r" (val)
 	: "r"(&(lock->slock))
@@ -285,10 +284,10 @@
 	 * see pairing version/comment in arch_spin_lock above
 	 */
 	smp_mb();
-पूर्ण
+}
 
 /*
- * Read-ग_लिखो spinlocks, allowing multiple पढ़ोers but only one ग_लिखोr.
+ * Read-write spinlocks, allowing multiple readers but only one writer.
  * Unfair locking as Writers could be starved indefinitely by Reader(s)
  *
  * The spinlock itself is contained in @counter and access to it is
@@ -296,88 +295,88 @@
  */
 
 /* 1 - lock taken successfully */
-अटल अंतरभूत पूर्णांक arch_पढ़ो_trylock(arch_rwlock_t *rw)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
+static inline int arch_read_trylock(arch_rwlock_t *rw)
+{
+	int ret = 0;
+	unsigned long flags;
 
 	local_irq_save(flags);
 	arch_spin_lock(&(rw->lock_mutex));
 
 	/*
-	 * zero means ग_लिखोr holds the lock exclusively, deny Reader.
-	 * Otherwise grant lock to first/subseq पढ़ोer
+	 * zero means writer holds the lock exclusively, deny Reader.
+	 * Otherwise grant lock to first/subseq reader
 	 */
-	अगर (rw->counter > 0) अणु
+	if (rw->counter > 0) {
 		rw->counter--;
 		ret = 1;
-	पूर्ण
+	}
 
 	arch_spin_unlock(&(rw->lock_mutex));
 	local_irq_restore(flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* 1 - lock taken successfully */
-अटल अंतरभूत पूर्णांक arch_ग_लिखो_trylock(arch_rwlock_t *rw)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
+static inline int arch_write_trylock(arch_rwlock_t *rw)
+{
+	int ret = 0;
+	unsigned long flags;
 
 	local_irq_save(flags);
 	arch_spin_lock(&(rw->lock_mutex));
 
 	/*
-	 * If पढ़ोer(s) hold lock (lock < __ARCH_RW_LOCK_UNLOCKED__),
-	 * deny ग_लिखोr. Otherwise अगर unlocked grant to ग_लिखोr
-	 * Hence the claim that Linux rwlocks are unfair to ग_लिखोrs.
-	 * (can be starved क्रम an indefinite समय by पढ़ोers).
+	 * If reader(s) hold lock (lock < __ARCH_RW_LOCK_UNLOCKED__),
+	 * deny writer. Otherwise if unlocked grant to writer
+	 * Hence the claim that Linux rwlocks are unfair to writers.
+	 * (can be starved for an indefinite time by readers).
 	 */
-	अगर (rw->counter == __ARCH_RW_LOCK_UNLOCKED__) अणु
+	if (rw->counter == __ARCH_RW_LOCK_UNLOCKED__) {
 		rw->counter = 0;
 		ret = 1;
-	पूर्ण
+	}
 	arch_spin_unlock(&(rw->lock_mutex));
 	local_irq_restore(flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत व्योम arch_पढ़ो_lock(arch_rwlock_t *rw)
-अणु
-	जबतक (!arch_पढ़ो_trylock(rw))
+static inline void arch_read_lock(arch_rwlock_t *rw)
+{
+	while (!arch_read_trylock(rw))
 		cpu_relax();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम arch_ग_लिखो_lock(arch_rwlock_t *rw)
-अणु
-	जबतक (!arch_ग_लिखो_trylock(rw))
+static inline void arch_write_lock(arch_rwlock_t *rw)
+{
+	while (!arch_write_trylock(rw))
 		cpu_relax();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम arch_पढ़ो_unlock(arch_rwlock_t *rw)
-अणु
-	अचिन्हित दीर्घ flags;
+static inline void arch_read_unlock(arch_rwlock_t *rw)
+{
+	unsigned long flags;
 
 	local_irq_save(flags);
 	arch_spin_lock(&(rw->lock_mutex));
 	rw->counter++;
 	arch_spin_unlock(&(rw->lock_mutex));
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम arch_ग_लिखो_unlock(arch_rwlock_t *rw)
-अणु
-	अचिन्हित दीर्घ flags;
+static inline void arch_write_unlock(arch_rwlock_t *rw)
+{
+	unsigned long flags;
 
 	local_irq_save(flags);
 	arch_spin_lock(&(rw->lock_mutex));
 	rw->counter = __ARCH_RW_LOCK_UNLOCKED__;
 	arch_spin_unlock(&(rw->lock_mutex));
 	local_irq_restore(flags);
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर /* __ASM_SPINLOCK_H */
+#endif /* __ASM_SPINLOCK_H */

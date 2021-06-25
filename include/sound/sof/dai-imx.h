@@ -1,55 +1,54 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause) */
+/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause) */
 /*
  * Copyright 2019 NXP
  *
  * Author: Daniel Baluta <daniel.baluta@nxp.com>
  */
 
-#अगर_अघोषित __INCLUDE_SOUND_SOF_DAI_IMX_H__
-#घोषणा __INCLUDE_SOUND_SOF_DAI_IMX_H__
+#ifndef __INCLUDE_SOUND_SOF_DAI_IMX_H__
+#define __INCLUDE_SOUND_SOF_DAI_IMX_H__
 
-#समावेश <sound/sof/header.h>
+#include <sound/sof/header.h>
 
 /* ESAI Configuration Request - SOF_IPC_DAI_ESAI_CONFIG */
-काष्ठा sof_ipc_dai_esai_params अणु
-	काष्ठा sof_ipc_hdr hdr;
+struct sof_ipc_dai_esai_params {
+	struct sof_ipc_hdr hdr;
 
 	/* MCLK */
-	uपूर्णांक16_t reserved1;
-	uपूर्णांक16_t mclk_id;
-	uपूर्णांक32_t mclk_direction;
+	uint16_t reserved1;
+	uint16_t mclk_id;
+	uint32_t mclk_direction;
 
-	uपूर्णांक32_t mclk_rate;	/* MCLK frequency in Hz */
-	uपूर्णांक32_t fsync_rate;	/* FSYNC frequency in Hz */
-	uपूर्णांक32_t bclk_rate;	/* BCLK frequency in Hz */
+	uint32_t mclk_rate;	/* MCLK frequency in Hz */
+	uint32_t fsync_rate;	/* FSYNC frequency in Hz */
+	uint32_t bclk_rate;	/* BCLK frequency in Hz */
 
 	/* TDM */
-	uपूर्णांक32_t tdm_slots;
-	uपूर्णांक32_t rx_slots;
-	uपूर्णांक32_t tx_slots;
-	uपूर्णांक16_t tdm_slot_width;
-	uपूर्णांक16_t reserved2;	/* alignment */
-पूर्ण __packed;
+	uint32_t tdm_slots;
+	uint32_t rx_slots;
+	uint32_t tx_slots;
+	uint16_t tdm_slot_width;
+	uint16_t reserved2;	/* alignment */
+} __packed;
 
 /* SAI Configuration Request - SOF_IPC_DAI_SAI_CONFIG */
-काष्ठा sof_ipc_dai_sai_params अणु
-	काष्ठा sof_ipc_hdr hdr;
+struct sof_ipc_dai_sai_params {
+	struct sof_ipc_hdr hdr;
 
 	/* MCLK */
-	uपूर्णांक16_t reserved1;
-	uपूर्णांक16_t mclk_id;
-	uपूर्णांक32_t mclk_direction;
+	uint16_t reserved1;
+	uint16_t mclk_id;
+	uint32_t mclk_direction;
 
-	uपूर्णांक32_t mclk_rate;	/* MCLK frequency in Hz */
-	uपूर्णांक32_t fsync_rate;	/* FSYNC frequency in Hz */
-	uपूर्णांक32_t bclk_rate;	/* BCLK frequency in Hz */
+	uint32_t mclk_rate;	/* MCLK frequency in Hz */
+	uint32_t fsync_rate;	/* FSYNC frequency in Hz */
+	uint32_t bclk_rate;	/* BCLK frequency in Hz */
 
 	/* TDM */
-	uपूर्णांक32_t tdm_slots;
-	uपूर्णांक32_t rx_slots;
-	uपूर्णांक32_t tx_slots;
-	uपूर्णांक16_t tdm_slot_width;
-	uपूर्णांक16_t reserved2;	/* alignment */
-पूर्ण __packed;
-#पूर्ण_अगर
+	uint32_t tdm_slots;
+	uint32_t rx_slots;
+	uint32_t tx_slots;
+	uint16_t tdm_slot_width;
+	uint16_t reserved2;	/* alignment */
+} __packed;
+#endif

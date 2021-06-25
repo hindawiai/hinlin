@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * cimax2.c
  *
@@ -10,14 +9,14 @@
  * Copyright (C) 2009 Abylay Ospan <aospan@netup.ru>
  */
 
-#समावेश "cx23885.h"
-#समावेश "cimax2.h"
-#समावेश <media/dvb_ca_en50221.h>
+#include "cx23885.h"
+#include "cimax2.h"
+#include <media/dvb_ca_en50221.h>
 
-/* Max transfer size करोne by I2C transfer functions */
-#घोषणा MAX_XFER_SIZE  64
+/* Max transfer size done by I2C transfer functions */
+#define MAX_XFER_SIZE  64
 
-/**** Bit definitions क्रम MC417_RWD and MC417_OEN रेजिस्टरs  ***
+/**** Bit definitions for MC417_RWD and MC417_OEN registers  ***
   bits 31-16
 +-----------+
 | Reserved  |
@@ -32,415 +31,415 @@
 +-------+-------+-------+-------+-------+-------+-------+-------+
 ***/
 /* MC417 */
-#घोषणा NETUP_DATA		0x000000ff
-#घोषणा NETUP_WR		0x00008000
-#घोषणा NETUP_RD		0x00004000
-#घोषणा NETUP_ACK		0x00001000
-#घोषणा NETUP_ADHI		0x00000800
-#घोषणा NETUP_ADLO		0x00000400
-#घोषणा NETUP_CS1		0x00000200
-#घोषणा NETUP_CS0		0x00000100
-#घोषणा NETUP_EN_ALL		0x00001000
-#घोषणा NETUP_CTRL_OFF		(NETUP_CS1 | NETUP_CS0 | NETUP_WR | NETUP_RD)
-#घोषणा NETUP_CI_CTL		0x04
-#घोषणा NETUP_CI_RD		1
+#define NETUP_DATA		0x000000ff
+#define NETUP_WR		0x00008000
+#define NETUP_RD		0x00004000
+#define NETUP_ACK		0x00001000
+#define NETUP_ADHI		0x00000800
+#define NETUP_ADLO		0x00000400
+#define NETUP_CS1		0x00000200
+#define NETUP_CS0		0x00000100
+#define NETUP_EN_ALL		0x00001000
+#define NETUP_CTRL_OFF		(NETUP_CS1 | NETUP_CS0 | NETUP_WR | NETUP_RD)
+#define NETUP_CI_CTL		0x04
+#define NETUP_CI_RD		1
 
-#घोषणा NETUP_IRQ_DETAM		0x1
-#घोषणा NETUP_IRQ_IRQAM		0x4
+#define NETUP_IRQ_DETAM		0x1
+#define NETUP_IRQ_IRQAM		0x4
 
-अटल अचिन्हित पूर्णांक ci_dbg;
-module_param(ci_dbg, पूर्णांक, 0644);
+static unsigned int ci_dbg;
+module_param(ci_dbg, int, 0644);
 MODULE_PARM_DESC(ci_dbg, "Enable CI debugging");
 
-अटल अचिन्हित पूर्णांक ci_irq_enable;
-module_param(ci_irq_enable, पूर्णांक, 0644);
+static unsigned int ci_irq_enable;
+module_param(ci_irq_enable, int, 0644);
 MODULE_PARM_DESC(ci_irq_enable, "Enable IRQ from CAM");
 
-#घोषणा ci_dbg_prपूर्णांक(fmt, args...) \
-	करो अणु \
-		अगर (ci_dbg) \
-			prपूर्णांकk(KERN_DEBUG pr_fmt("%s: " fmt), \
+#define ci_dbg_print(fmt, args...) \
+	do { \
+		if (ci_dbg) \
+			printk(KERN_DEBUG pr_fmt("%s: " fmt), \
 			       __func__, ##args); \
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा ci_irq_flags() (ci_irq_enable ? NETUP_IRQ_IRQAM : 0)
+#define ci_irq_flags() (ci_irq_enable ? NETUP_IRQ_IRQAM : 0)
 
-/* stores all निजी variables क्रम communication with CI */
-काष्ठा netup_ci_state अणु
-	काष्ठा dvb_ca_en50221 ca;
-	काष्ठा mutex ca_mutex;
-	काष्ठा i2c_adapter *i2c_adap;
+/* stores all private variables for communication with CI */
+struct netup_ci_state {
+	struct dvb_ca_en50221 ca;
+	struct mutex ca_mutex;
+	struct i2c_adapter *i2c_adap;
 	u8 ci_i2c_addr;
-	पूर्णांक status;
-	काष्ठा work_काष्ठा work;
-	व्योम *priv;
+	int status;
+	struct work_struct work;
+	void *priv;
 	u8 current_irq_mode;
-	पूर्णांक current_ci_flag;
-	अचिन्हित दीर्घ next_status_checked_समय;
-पूर्ण;
+	int current_ci_flag;
+	unsigned long next_status_checked_time;
+};
 
 
-अटल पूर्णांक netup_पढ़ो_i2c(काष्ठा i2c_adapter *i2c_adap, u8 addr, u8 reg,
-						u8 *buf, पूर्णांक len)
-अणु
-	पूर्णांक ret;
-	काष्ठा i2c_msg msg[] = अणु
-		अणु
+static int netup_read_i2c(struct i2c_adapter *i2c_adap, u8 addr, u8 reg,
+						u8 *buf, int len)
+{
+	int ret;
+	struct i2c_msg msg[] = {
+		{
 			.addr	= addr,
 			.flags	= 0,
 			.buf	= &reg,
 			.len	= 1
-		पूर्ण, अणु
+		}, {
 			.addr	= addr,
 			.flags	= I2C_M_RD,
 			.buf	= buf,
 			.len	= len
-		पूर्ण
-	पूर्ण;
+		}
+	};
 
 	ret = i2c_transfer(i2c_adap, msg, 2);
 
-	अगर (ret != 2) अणु
-		ci_dbg_prपूर्णांक("%s: i2c read error, Reg = 0x%02x, Status = %d\n",
+	if (ret != 2) {
+		ci_dbg_print("%s: i2c read error, Reg = 0x%02x, Status = %d\n",
 						__func__, reg, ret);
 
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	ci_dbg_prपूर्णांक("%s: i2c read Addr=0x%04x, Reg = 0x%02x, data = %02x\n",
+	ci_dbg_print("%s: i2c read Addr=0x%04x, Reg = 0x%02x, data = %02x\n",
 						__func__, addr, reg, buf[0]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक netup_ग_लिखो_i2c(काष्ठा i2c_adapter *i2c_adap, u8 addr, u8 reg,
-						u8 *buf, पूर्णांक len)
-अणु
-	पूर्णांक ret;
+static int netup_write_i2c(struct i2c_adapter *i2c_adap, u8 addr, u8 reg,
+						u8 *buf, int len)
+{
+	int ret;
 	u8 buffer[MAX_XFER_SIZE];
 
-	काष्ठा i2c_msg msg = अणु
+	struct i2c_msg msg = {
 		.addr	= addr,
 		.flags	= 0,
 		.buf	= &buffer[0],
 		.len	= len + 1
-	पूर्ण;
+	};
 
-	अगर (1 + len > माप(buffer)) अणु
+	if (1 + len > sizeof(buffer)) {
 		pr_warn("%s: i2c wr reg=%04x: len=%d is too big!\n",
 		       KBUILD_MODNAME, reg, len);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	buffer[0] = reg;
-	स_नकल(&buffer[1], buf, len);
+	memcpy(&buffer[1], buf, len);
 
 	ret = i2c_transfer(i2c_adap, &msg, 1);
 
-	अगर (ret != 1) अणु
-		ci_dbg_prपूर्णांक("%s: i2c write error, Reg=[0x%02x], Status=%d\n",
+	if (ret != 1) {
+		ci_dbg_print("%s: i2c write error, Reg=[0x%02x], Status=%d\n",
 						__func__, reg, ret);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक netup_ci_get_mem(काष्ठा cx23885_dev *dev)
-अणु
-	पूर्णांक mem;
-	अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(1);
+static int netup_ci_get_mem(struct cx23885_dev *dev)
+{
+	int mem;
+	unsigned long timeout = jiffies + msecs_to_jiffies(1);
 
-	क्रम (;;) अणु
-		mem = cx_पढ़ो(MC417_RWD);
-		अगर ((mem & NETUP_ACK) == 0)
-			अवरोध;
-		अगर (समय_after(jअगरfies, समयout))
-			अवरोध;
+	for (;;) {
+		mem = cx_read(MC417_RWD);
+		if ((mem & NETUP_ACK) == 0)
+			break;
+		if (time_after(jiffies, timeout))
+			break;
 		udelay(1);
-	पूर्ण
+	}
 
 	cx_set(MC417_RWD, NETUP_CTRL_OFF);
 
-	वापस mem & 0xff;
-पूर्ण
+	return mem & 0xff;
+}
 
-अटल पूर्णांक netup_ci_op_cam(काष्ठा dvb_ca_en50221 *en50221, पूर्णांक slot,
-				u8 flag, u8 पढ़ो, पूर्णांक addr, u8 data)
-अणु
-	काष्ठा netup_ci_state *state = en50221->data;
-	काष्ठा cx23885_tsport *port = state->priv;
-	काष्ठा cx23885_dev *dev = port->dev;
+static int netup_ci_op_cam(struct dvb_ca_en50221 *en50221, int slot,
+				u8 flag, u8 read, int addr, u8 data)
+{
+	struct netup_ci_state *state = en50221->data;
+	struct cx23885_tsport *port = state->priv;
+	struct cx23885_dev *dev = port->dev;
 
 	u8 store;
-	पूर्णांक mem;
-	पूर्णांक ret;
+	int mem;
+	int ret;
 
-	अगर (0 != slot)
-		वापस -EINVAL;
+	if (0 != slot)
+		return -EINVAL;
 
-	अगर (state->current_ci_flag != flag) अणु
-		ret = netup_पढ़ो_i2c(state->i2c_adap, state->ci_i2c_addr,
+	if (state->current_ci_flag != flag) {
+		ret = netup_read_i2c(state->i2c_adap, state->ci_i2c_addr,
 				0, &store, 1);
-		अगर (ret != 0)
-			वापस ret;
+		if (ret != 0)
+			return ret;
 
 		store &= ~0x0c;
 		store |= flag;
 
-		ret = netup_ग_लिखो_i2c(state->i2c_adap, state->ci_i2c_addr,
+		ret = netup_write_i2c(state->i2c_adap, state->ci_i2c_addr,
 				0, &store, 1);
-		अगर (ret != 0)
-			वापस ret;
-	पूर्ण
+		if (ret != 0)
+			return ret;
+	}
 	state->current_ci_flag = flag;
 
 	mutex_lock(&dev->gpio_lock);
 
-	/* ग_लिखो addr */
-	cx_ग_लिखो(MC417_OEN, NETUP_EN_ALL);
-	cx_ग_लिखो(MC417_RWD, NETUP_CTRL_OFF |
+	/* write addr */
+	cx_write(MC417_OEN, NETUP_EN_ALL);
+	cx_write(MC417_RWD, NETUP_CTRL_OFF |
 				NETUP_ADLO | (0xff & addr));
 	cx_clear(MC417_RWD, NETUP_ADLO);
-	cx_ग_लिखो(MC417_RWD, NETUP_CTRL_OFF |
+	cx_write(MC417_RWD, NETUP_CTRL_OFF |
 				NETUP_ADHI | (0xff & (addr >> 8)));
 	cx_clear(MC417_RWD, NETUP_ADHI);
 
-	अगर (पढ़ो) अणु /* data in */
-		cx_ग_लिखो(MC417_OEN, NETUP_EN_ALL | NETUP_DATA);
-	पूर्ण अन्यथा /* data out */
-		cx_ग_लिखो(MC417_RWD, NETUP_CTRL_OFF | data);
+	if (read) { /* data in */
+		cx_write(MC417_OEN, NETUP_EN_ALL | NETUP_DATA);
+	} else /* data out */
+		cx_write(MC417_RWD, NETUP_CTRL_OFF | data);
 
 	/* choose chip */
 	cx_clear(MC417_RWD,
 			(state->ci_i2c_addr == 0x40) ? NETUP_CS0 : NETUP_CS1);
-	/* पढ़ो/ग_लिखो */
-	cx_clear(MC417_RWD, (पढ़ो) ? NETUP_RD : NETUP_WR);
+	/* read/write */
+	cx_clear(MC417_RWD, (read) ? NETUP_RD : NETUP_WR);
 	mem = netup_ci_get_mem(dev);
 
 	mutex_unlock(&dev->gpio_lock);
 
-	अगर (!पढ़ो)
-		अगर (mem < 0)
-			वापस -EREMOTEIO;
+	if (!read)
+		if (mem < 0)
+			return -EREMOTEIO;
 
-	ci_dbg_prपूर्णांक("%s: %s: chipaddr=[0x%x] addr=[0x%02x], %s=%x\n", __func__,
-			(पढ़ो) ? "read" : "write", state->ci_i2c_addr, addr,
+	ci_dbg_print("%s: %s: chipaddr=[0x%x] addr=[0x%02x], %s=%x\n", __func__,
+			(read) ? "read" : "write", state->ci_i2c_addr, addr,
 			(flag == NETUP_CI_CTL) ? "ctl" : "mem",
-			(पढ़ो) ? mem : data);
+			(read) ? mem : data);
 
-	अगर (पढ़ो)
-		वापस mem;
+	if (read)
+		return mem;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक netup_ci_पढ़ो_attribute_mem(काष्ठा dvb_ca_en50221 *en50221,
-						पूर्णांक slot, पूर्णांक addr)
-अणु
-	वापस netup_ci_op_cam(en50221, slot, 0, NETUP_CI_RD, addr, 0);
-पूर्ण
+int netup_ci_read_attribute_mem(struct dvb_ca_en50221 *en50221,
+						int slot, int addr)
+{
+	return netup_ci_op_cam(en50221, slot, 0, NETUP_CI_RD, addr, 0);
+}
 
-पूर्णांक netup_ci_ग_लिखो_attribute_mem(काष्ठा dvb_ca_en50221 *en50221,
-						पूर्णांक slot, पूर्णांक addr, u8 data)
-अणु
-	वापस netup_ci_op_cam(en50221, slot, 0, 0, addr, data);
-पूर्ण
+int netup_ci_write_attribute_mem(struct dvb_ca_en50221 *en50221,
+						int slot, int addr, u8 data)
+{
+	return netup_ci_op_cam(en50221, slot, 0, 0, addr, data);
+}
 
-पूर्णांक netup_ci_पढ़ो_cam_ctl(काष्ठा dvb_ca_en50221 *en50221, पूर्णांक slot,
+int netup_ci_read_cam_ctl(struct dvb_ca_en50221 *en50221, int slot,
 				 u8 addr)
-अणु
-	वापस netup_ci_op_cam(en50221, slot, NETUP_CI_CTL,
+{
+	return netup_ci_op_cam(en50221, slot, NETUP_CI_CTL,
 							NETUP_CI_RD, addr, 0);
-पूर्ण
+}
 
-पूर्णांक netup_ci_ग_लिखो_cam_ctl(काष्ठा dvb_ca_en50221 *en50221, पूर्णांक slot,
+int netup_ci_write_cam_ctl(struct dvb_ca_en50221 *en50221, int slot,
 							u8 addr, u8 data)
-अणु
-	वापस netup_ci_op_cam(en50221, slot, NETUP_CI_CTL, 0, addr, data);
-पूर्ण
+{
+	return netup_ci_op_cam(en50221, slot, NETUP_CI_CTL, 0, addr, data);
+}
 
-पूर्णांक netup_ci_slot_reset(काष्ठा dvb_ca_en50221 *en50221, पूर्णांक slot)
-अणु
-	काष्ठा netup_ci_state *state = en50221->data;
+int netup_ci_slot_reset(struct dvb_ca_en50221 *en50221, int slot)
+{
+	struct netup_ci_state *state = en50221->data;
 	u8 buf =  0x80;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (0 != slot)
-		वापस -EINVAL;
+	if (0 != slot)
+		return -EINVAL;
 
 	udelay(500);
-	ret = netup_ग_लिखो_i2c(state->i2c_adap, state->ci_i2c_addr,
+	ret = netup_write_i2c(state->i2c_adap, state->ci_i2c_addr,
 							0, &buf, 1);
 
-	अगर (ret != 0)
-		वापस ret;
+	if (ret != 0)
+		return ret;
 
 	udelay(500);
 
 	buf = 0x00;
-	ret = netup_ग_लिखो_i2c(state->i2c_adap, state->ci_i2c_addr,
+	ret = netup_write_i2c(state->i2c_adap, state->ci_i2c_addr,
 							0, &buf, 1);
 
 	msleep(1000);
-	dvb_ca_en50221_camपढ़ोy_irq(&state->ca, 0);
+	dvb_ca_en50221_camready_irq(&state->ca, 0);
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
-पूर्णांक netup_ci_slot_shutकरोwn(काष्ठा dvb_ca_en50221 *en50221, पूर्णांक slot)
-अणु
+int netup_ci_slot_shutdown(struct dvb_ca_en50221 *en50221, int slot)
+{
 	/* not implemented */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक netup_ci_set_irq(काष्ठा dvb_ca_en50221 *en50221, u8 irq_mode)
-अणु
-	काष्ठा netup_ci_state *state = en50221->data;
-	पूर्णांक ret;
+static int netup_ci_set_irq(struct dvb_ca_en50221 *en50221, u8 irq_mode)
+{
+	struct netup_ci_state *state = en50221->data;
+	int ret;
 
-	अगर (irq_mode == state->current_irq_mode)
-		वापस 0;
+	if (irq_mode == state->current_irq_mode)
+		return 0;
 
-	ci_dbg_prपूर्णांक("%s: chipaddr=[0x%x] setting ci IRQ to [0x%x] \n",
+	ci_dbg_print("%s: chipaddr=[0x%x] setting ci IRQ to [0x%x] \n",
 			__func__, state->ci_i2c_addr, irq_mode);
-	ret = netup_ग_लिखो_i2c(state->i2c_adap, state->ci_i2c_addr,
+	ret = netup_write_i2c(state->i2c_adap, state->ci_i2c_addr,
 							0x1b, &irq_mode, 1);
 
-	अगर (ret != 0)
-		वापस ret;
+	if (ret != 0)
+		return ret;
 
 	state->current_irq_mode = irq_mode;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक netup_ci_slot_ts_ctl(काष्ठा dvb_ca_en50221 *en50221, पूर्णांक slot)
-अणु
-	काष्ठा netup_ci_state *state = en50221->data;
+int netup_ci_slot_ts_ctl(struct dvb_ca_en50221 *en50221, int slot)
+{
+	struct netup_ci_state *state = en50221->data;
 	u8 buf;
 
-	अगर (0 != slot)
-		वापस -EINVAL;
+	if (0 != slot)
+		return -EINVAL;
 
-	netup_पढ़ो_i2c(state->i2c_adap, state->ci_i2c_addr,
+	netup_read_i2c(state->i2c_adap, state->ci_i2c_addr,
 			0, &buf, 1);
 	buf |= 0x60;
 
-	वापस netup_ग_लिखो_i2c(state->i2c_adap, state->ci_i2c_addr,
+	return netup_write_i2c(state->i2c_adap, state->ci_i2c_addr,
 							0, &buf, 1);
-पूर्ण
+}
 
 /* work handler */
-अटल व्योम netup_पढ़ो_ci_status(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा netup_ci_state *state =
-			container_of(work, काष्ठा netup_ci_state, work);
+static void netup_read_ci_status(struct work_struct *work)
+{
+	struct netup_ci_state *state =
+			container_of(work, struct netup_ci_state, work);
 	u8 buf[33];
-	पूर्णांक ret;
+	int ret;
 
 	/* CAM module IRQ processing. fast operation */
 	dvb_ca_en50221_frda_irq(&state->ca, 0);
 
 	/* CAM module INSERT/REMOVE processing. slow operation because of i2c
 	 * transfers */
-	अगर (समय_after(jअगरfies, state->next_status_checked_समय)
-			|| !state->status) अणु
-		ret = netup_पढ़ो_i2c(state->i2c_adap, state->ci_i2c_addr,
+	if (time_after(jiffies, state->next_status_checked_time)
+			|| !state->status) {
+		ret = netup_read_i2c(state->i2c_adap, state->ci_i2c_addr,
 				0, &buf[0], 33);
 
-		state->next_status_checked_समय = jअगरfies
-			+ msecs_to_jअगरfies(1000);
+		state->next_status_checked_time = jiffies
+			+ msecs_to_jiffies(1000);
 
-		अगर (ret != 0)
-			वापस;
+		if (ret != 0)
+			return;
 
-		ci_dbg_prपूर्णांक("%s: Slot Status Addr=[0x%04x], Reg=[0x%02x], data=%02x, TS config = %02x\n",
+		ci_dbg_print("%s: Slot Status Addr=[0x%04x], Reg=[0x%02x], data=%02x, TS config = %02x\n",
 			     __func__,	state->ci_i2c_addr, 0, buf[0], buf[0]);
 
 
-		अगर (buf[0] & 1)
+		if (buf[0] & 1)
 			state->status = DVB_CA_EN50221_POLL_CAM_PRESENT |
 				DVB_CA_EN50221_POLL_CAM_READY;
-		अन्यथा
+		else
 			state->status = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* CI irq handler */
-पूर्णांक netup_ci_slot_status(काष्ठा cx23885_dev *dev, u32 pci_status)
-अणु
-	काष्ठा cx23885_tsport *port = शून्य;
-	काष्ठा netup_ci_state *state = शून्य;
+int netup_ci_slot_status(struct cx23885_dev *dev, u32 pci_status)
+{
+	struct cx23885_tsport *port = NULL;
+	struct netup_ci_state *state = NULL;
 
-	ci_dbg_prपूर्णांक("%s:\n", __func__);
+	ci_dbg_print("%s:\n", __func__);
 
-	अगर (0 == (pci_status & (PCI_MSK_GPIO0 | PCI_MSK_GPIO1)))
-		वापस 0;
+	if (0 == (pci_status & (PCI_MSK_GPIO0 | PCI_MSK_GPIO1)))
+		return 0;
 
-	अगर (pci_status & PCI_MSK_GPIO0) अणु
+	if (pci_status & PCI_MSK_GPIO0) {
 		port = &dev->ts1;
 		state = port->port_priv;
 		schedule_work(&state->work);
-		ci_dbg_prपूर्णांक("%s: Wakeup CI0\n", __func__);
-	पूर्ण
+		ci_dbg_print("%s: Wakeup CI0\n", __func__);
+	}
 
-	अगर (pci_status & PCI_MSK_GPIO1) अणु
+	if (pci_status & PCI_MSK_GPIO1) {
 		port = &dev->ts2;
 		state = port->port_priv;
 		schedule_work(&state->work);
-		ci_dbg_prपूर्णांक("%s: Wakeup CI1\n", __func__);
-	पूर्ण
+		ci_dbg_print("%s: Wakeup CI1\n", __func__);
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-पूर्णांक netup_poll_ci_slot_status(काष्ठा dvb_ca_en50221 *en50221,
-				     पूर्णांक slot, पूर्णांक खोलो)
-अणु
-	काष्ठा netup_ci_state *state = en50221->data;
+int netup_poll_ci_slot_status(struct dvb_ca_en50221 *en50221,
+				     int slot, int open)
+{
+	struct netup_ci_state *state = en50221->data;
 
-	अगर (0 != slot)
-		वापस -EINVAL;
+	if (0 != slot)
+		return -EINVAL;
 
-	netup_ci_set_irq(en50221, खोलो ? (NETUP_IRQ_DETAM | ci_irq_flags())
+	netup_ci_set_irq(en50221, open ? (NETUP_IRQ_DETAM | ci_irq_flags())
 			: NETUP_IRQ_DETAM);
 
-	वापस state->status;
-पूर्ण
+	return state->status;
+}
 
-पूर्णांक netup_ci_init(काष्ठा cx23885_tsport *port)
-अणु
-	काष्ठा netup_ci_state *state;
-	u8 cimax_init[34] = अणु
+int netup_ci_init(struct cx23885_tsport *port)
+{
+	struct netup_ci_state *state;
+	u8 cimax_init[34] = {
 		0x00, /* module A control*/
-		0x00, /* स्वतः select mask high A */
-		0x00, /* स्वतः select mask low A */
-		0x00, /* स्वतः select pattern high A */
-		0x00, /* स्वतः select pattern low A */
-		0x44, /* memory access समय A */
+		0x00, /* auto select mask high A */
+		0x00, /* auto select mask low A */
+		0x00, /* auto select pattern high A */
+		0x00, /* auto select pattern low A */
+		0x44, /* memory access time A */
 		0x00, /* invert input A */
 		0x00, /* RFU */
 		0x00, /* RFU */
 		0x00, /* module B control*/
-		0x00, /* स्वतः select mask high B */
-		0x00, /* स्वतः select mask low B */
-		0x00, /* स्वतः select pattern high B */
-		0x00, /* स्वतः select pattern low B */
-		0x44, /* memory access समय B */
+		0x00, /* auto select mask high B */
+		0x00, /* auto select mask low B */
+		0x00, /* auto select pattern high B */
+		0x00, /* auto select pattern low B */
+		0x44, /* memory access time B */
 		0x00, /* invert input B */
 		0x00, /* RFU */
 		0x00, /* RFU */
-		0x00, /* स्वतः select mask high Ext */
-		0x00, /* स्वतः select mask low Ext */
-		0x00, /* स्वतः select pattern high Ext */
-		0x00, /* स्वतः select pattern low Ext */
+		0x00, /* auto select mask high Ext */
+		0x00, /* auto select mask low Ext */
+		0x00, /* auto select pattern high Ext */
+		0x00, /* auto select pattern low Ext */
 		0x00, /* RFU */
 		0x02, /* destination - module A */
-		0x01, /* घातer on (use it like store place) */
+		0x01, /* power on (use it like store place) */
 		0x00, /* RFU */
-		0x00, /* पूर्णांक status पढ़ो only */
+		0x00, /* int status read only */
 		ci_irq_flags() | NETUP_IRQ_DETAM, /* DETAM, IRQAM unmasked */
 		0x05, /* EXTINT=active-high, INT=push-pull */
 		0x00, /* USCG1 */
@@ -448,87 +447,87 @@ MODULE_PARM_DESC(ci_irq_enable, "Enable IRQ from CAM");
 		0x00, /* LOCK = 0 */
 		0x33, /* serial mode, rising in, rising out, MSB first*/
 		0x31, /* synchronization */
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
-	ci_dbg_prपूर्णांक("%s\n", __func__);
-	state = kzalloc(माप(काष्ठा netup_ci_state), GFP_KERNEL);
-	अगर (!state) अणु
-		ci_dbg_prपूर्णांक("%s: Unable create CI structure!\n", __func__);
+	ci_dbg_print("%s\n", __func__);
+	state = kzalloc(sizeof(struct netup_ci_state), GFP_KERNEL);
+	if (!state) {
+		ci_dbg_print("%s: Unable create CI structure!\n", __func__);
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	port->port_priv = state;
 
-	चयन (port->nr) अणु
-	हाल 1:
+	switch (port->nr) {
+	case 1:
 		state->ci_i2c_addr = 0x40;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		state->ci_i2c_addr = 0x41;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	state->i2c_adap = &port->dev->i2c_bus[0].i2c_adap;
 	state->ca.owner = THIS_MODULE;
-	state->ca.पढ़ो_attribute_mem = netup_ci_पढ़ो_attribute_mem;
-	state->ca.ग_लिखो_attribute_mem = netup_ci_ग_लिखो_attribute_mem;
-	state->ca.पढ़ो_cam_control = netup_ci_पढ़ो_cam_ctl;
-	state->ca.ग_लिखो_cam_control = netup_ci_ग_लिखो_cam_ctl;
+	state->ca.read_attribute_mem = netup_ci_read_attribute_mem;
+	state->ca.write_attribute_mem = netup_ci_write_attribute_mem;
+	state->ca.read_cam_control = netup_ci_read_cam_ctl;
+	state->ca.write_cam_control = netup_ci_write_cam_ctl;
 	state->ca.slot_reset = netup_ci_slot_reset;
-	state->ca.slot_shutकरोwn = netup_ci_slot_shutकरोwn;
+	state->ca.slot_shutdown = netup_ci_slot_shutdown;
 	state->ca.slot_ts_enable = netup_ci_slot_ts_ctl;
 	state->ca.poll_slot_status = netup_poll_ci_slot_status;
 	state->ca.data = state;
 	state->priv = port;
 	state->current_irq_mode = ci_irq_flags() | NETUP_IRQ_DETAM;
 
-	ret = netup_ग_लिखो_i2c(state->i2c_adap, state->ci_i2c_addr,
+	ret = netup_write_i2c(state->i2c_adap, state->ci_i2c_addr,
 						0, &cimax_init[0], 34);
-	/* lock रेजिस्टरs */
-	ret |= netup_ग_लिखो_i2c(state->i2c_adap, state->ci_i2c_addr,
+	/* lock registers */
+	ret |= netup_write_i2c(state->i2c_adap, state->ci_i2c_addr,
 						0x1f, &cimax_init[0x18], 1);
-	/* घातer on slots */
-	ret |= netup_ग_लिखो_i2c(state->i2c_adap, state->ci_i2c_addr,
+	/* power on slots */
+	ret |= netup_write_i2c(state->i2c_adap, state->ci_i2c_addr,
 						0x18, &cimax_init[0x18], 1);
 
-	अगर (0 != ret)
-		जाओ err;
+	if (0 != ret)
+		goto err;
 
 	ret = dvb_ca_en50221_init(&port->frontends.adapter,
 				   &state->ca,
 				   /* flags */ 0,
 				   /* n_slots */ 1);
-	अगर (0 != ret)
-		जाओ err;
+	if (0 != ret)
+		goto err;
 
-	INIT_WORK(&state->work, netup_पढ़ो_ci_status);
+	INIT_WORK(&state->work, netup_read_ci_status);
 	schedule_work(&state->work);
 
-	ci_dbg_prपूर्णांक("%s: CI initialized!\n", __func__);
+	ci_dbg_print("%s: CI initialized!\n", __func__);
 
-	वापस 0;
+	return 0;
 err:
-	ci_dbg_prपूर्णांक("%s: Cannot initialize CI: Error %d.\n", __func__, ret);
-	kमुक्त(state);
-	वापस ret;
-पूर्ण
+	ci_dbg_print("%s: Cannot initialize CI: Error %d.\n", __func__, ret);
+	kfree(state);
+	return ret;
+}
 
-व्योम netup_ci_निकास(काष्ठा cx23885_tsport *port)
-अणु
-	काष्ठा netup_ci_state *state;
+void netup_ci_exit(struct cx23885_tsport *port)
+{
+	struct netup_ci_state *state;
 
-	अगर (शून्य == port)
-		वापस;
+	if (NULL == port)
+		return;
 
-	state = (काष्ठा netup_ci_state *)port->port_priv;
-	अगर (शून्य == state)
-		वापस;
+	state = (struct netup_ci_state *)port->port_priv;
+	if (NULL == state)
+		return;
 
-	अगर (शून्य == state->ca.data)
-		वापस;
+	if (NULL == state->ca.data)
+		return;
 
 	dvb_ca_en50221_release(&state->ca);
-	kमुक्त(state);
-पूर्ण
+	kfree(state);
+}

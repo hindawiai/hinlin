@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * r8a77995 Clock Pulse Generator / Module Standby and Software Reset
  *
@@ -11,18 +10,18 @@
  * Copyright (C) 2015 Renesas Electronics Corp.
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/soc/renesas/rcar-rst.h>
+#include <linux/device.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/soc/renesas/rcar-rst.h>
 
-#समावेश <dt-bindings/घड़ी/r8a77995-cpg-mssr.h>
+#include <dt-bindings/clock/r8a77995-cpg-mssr.h>
 
-#समावेश "renesas-cpg-mssr.h"
-#समावेश "rcar-gen3-cpg.h"
+#include "renesas-cpg-mssr.h"
+#include "rcar-gen3-cpg.h"
 
-क्रमागत clk_ids अणु
-	/* Core Clock Outमाला_दो exported to DT */
+enum clk_ids {
+	/* Core Clock Outputs exported to DT */
 	LAST_DT_CORE_CLK = R8A77995_CLK_CPEX,
 
 	/* External Input Clocks */
@@ -48,10 +47,10 @@
 
 	/* Module Clocks */
 	MOD_CLK_BASE
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा cpg_core_clk r8a77995_core_clks[] __initस्थिर = अणु
-	/* External Clock Inमाला_दो */
+static const struct cpg_core_clk r8a77995_core_clks[] __initconst = {
+	/* External Clock Inputs */
 	DEF_INPUT("extal",     CLK_EXTAL),
 
 	/* Internal Core Clocks */
@@ -75,7 +74,7 @@
 
 	DEF_RATE(".oco",       CLK_OCO,            8 * 1000 * 1000),
 
-	/* Core Clock Outमाला_दो */
+	/* Core Clock Outputs */
 	DEF_FIXED("z2",        R8A77995_CLK_Z2,    CLK_PLL0D3,     1, 1),
 	DEF_FIXED("ztr",       R8A77995_CLK_ZTR,   CLK_PLL1,       6, 1),
 	DEF_FIXED("zt",        R8A77995_CLK_ZT,    CLK_PLL1,       4, 1),
@@ -109,9 +108,9 @@
 	DEF_DIV6P1("mso",      R8A77995_CLK_MSO,   CLK_PLL1D2,    0x014),
 
 	DEF_GEN3_RCKSEL("r",   R8A77995_CLK_R, CLK_RINT, 1, CLK_OCO, 61 * 4),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mssr_mod_clk r8a77995_mod_clks[] __initस्थिर = अणु
+static const struct mssr_mod_clk r8a77995_mod_clks[] __initconst = {
 	DEF_MOD("tmu4",			 121,	R8A77995_CLK_S1D4C),
 	DEF_MOD("tmu3",			 122,	R8A77995_CLK_S3D2C),
 	DEF_MOD("tmu2",			 123,	R8A77995_CLK_S3D2C),
@@ -186,12 +185,12 @@
 	DEF_MOD("scu-ctu0-mix0",	1021,	MOD_CLK_ID(1017)),
 	DEF_MOD("scu-src6",		1025,	MOD_CLK_ID(1017)),
 	DEF_MOD("scu-src5",		1026,	MOD_CLK_ID(1017)),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक r8a77995_crit_mod_clks[] __initस्थिर = अणु
+static const unsigned int r8a77995_crit_mod_clks[] __initconst = {
 	MOD_CLK_ID(402),	/* RWDT */
 	MOD_CLK_ID(408),	/* INTC-AP (GIC) */
-पूर्ण;
+};
 
 /*
  * CPG Clock Data
@@ -203,30 +202,30 @@
  * 0		48 x 1		x250/4		x100/3		x100/3
  * 1		48 x 1		x250/4		x100/3		x58/3
  */
-#घोषणा CPG_PLL_CONFIG_INDEX(md)	(((md) & BIT(19)) >> 19)
+#define CPG_PLL_CONFIG_INDEX(md)	(((md) & BIT(19)) >> 19)
 
-अटल स्थिर काष्ठा rcar_gen3_cpg_pll_config cpg_pll_configs[2] __initस्थिर = अणु
-	/* EXTAL भाग	PLL1 mult/भाग	PLL3 mult/भाग */
-	अणु 1,		100,	3,	100,	3,	पूर्ण,
-	अणु 1,		100,	3,	58,	3,	पूर्ण,
-पूर्ण;
+static const struct rcar_gen3_cpg_pll_config cpg_pll_configs[2] __initconst = {
+	/* EXTAL div	PLL1 mult/div	PLL3 mult/div */
+	{ 1,		100,	3,	100,	3,	},
+	{ 1,		100,	3,	58,	3,	},
+};
 
-अटल पूर्णांक __init r8a77995_cpg_mssr_init(काष्ठा device *dev)
-अणु
-	स्थिर काष्ठा rcar_gen3_cpg_pll_config *cpg_pll_config;
+static int __init r8a77995_cpg_mssr_init(struct device *dev)
+{
+	const struct rcar_gen3_cpg_pll_config *cpg_pll_config;
 	u32 cpg_mode;
-	पूर्णांक error;
+	int error;
 
-	error = rcar_rst_पढ़ो_mode_pins(&cpg_mode);
-	अगर (error)
-		वापस error;
+	error = rcar_rst_read_mode_pins(&cpg_mode);
+	if (error)
+		return error;
 
 	cpg_pll_config = &cpg_pll_configs[CPG_PLL_CONFIG_INDEX(cpg_mode)];
 
-	वापस rcar_gen3_cpg_init(cpg_pll_config, 0, cpg_mode);
-पूर्ण
+	return rcar_gen3_cpg_init(cpg_pll_config, 0, cpg_mode);
+}
 
-स्थिर काष्ठा cpg_mssr_info r8a77995_cpg_mssr_info __initस्थिर = अणु
+const struct cpg_mssr_info r8a77995_cpg_mssr_info __initconst = {
 	/* Core Clocks */
 	.core_clks = r8a77995_core_clks,
 	.num_core_clks = ARRAY_SIZE(r8a77995_core_clks),
@@ -244,5 +243,5 @@
 
 	/* Callbacks */
 	.init = r8a77995_cpg_mssr_init,
-	.cpg_clk_रेजिस्टर = rcar_gen3_cpg_clk_रेजिस्टर,
-पूर्ण;
+	.cpg_clk_register = rcar_gen3_cpg_clk_register,
+};

@@ -1,66 +1,65 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2013 Broadcom Corporation
  */
-#समावेश <linux/slab.h>
-#समावेश <linux/netdevice.h>
-#समावेश <net/cfg80211.h>
+#include <linux/slab.h>
+#include <linux/netdevice.h>
+#include <net/cfg80211.h>
 
-#समावेश <brcmu_wअगरi.h>
-#समावेश <brcmu_utils.h>
-#समावेश <defs.h>
-#समावेश "core.h"
-#समावेश "debug.h"
-#समावेश "fwil.h"
-#समावेश "fwil_types.h"
-#समावेश "btcoex.h"
-#समावेश "p2p.h"
-#समावेश "cfg80211.h"
+#include <brcmu_wifi.h>
+#include <brcmu_utils.h>
+#include <defs.h>
+#include "core.h"
+#include "debug.h"
+#include "fwil.h"
+#include "fwil_types.h"
+#include "btcoex.h"
+#include "p2p.h"
+#include "cfg80211.h"
 
 /* T1 start SCO/eSCO priority suppression */
-#घोषणा BRCMF_BTCOEX_OPPR_WIN_TIME   msecs_to_jअगरfies(2000)
+#define BRCMF_BTCOEX_OPPR_WIN_TIME   msecs_to_jiffies(2000)
 
-/* BT रेजिस्टरs values during DHCP */
-#घोषणा BRCMF_BT_DHCP_REG50 0x8022
-#घोषणा BRCMF_BT_DHCP_REG51 0
-#घोषणा BRCMF_BT_DHCP_REG64 0
-#घोषणा BRCMF_BT_DHCP_REG65 0
-#घोषणा BRCMF_BT_DHCP_REG71 0
-#घोषणा BRCMF_BT_DHCP_REG66 0x2710
-#घोषणा BRCMF_BT_DHCP_REG41 0x33
-#घोषणा BRCMF_BT_DHCP_REG68 0x190
+/* BT registers values during DHCP */
+#define BRCMF_BT_DHCP_REG50 0x8022
+#define BRCMF_BT_DHCP_REG51 0
+#define BRCMF_BT_DHCP_REG64 0
+#define BRCMF_BT_DHCP_REG65 0
+#define BRCMF_BT_DHCP_REG71 0
+#define BRCMF_BT_DHCP_REG66 0x2710
+#define BRCMF_BT_DHCP_REG41 0x33
+#define BRCMF_BT_DHCP_REG68 0x190
 
-/* number of samples क्रम SCO detection */
-#घोषणा BRCMF_BT_SCO_SAMPLES 12
+/* number of samples for SCO detection */
+#define BRCMF_BT_SCO_SAMPLES 12
 
 /**
-* क्रमागत brcmf_btcoex_state - BT coex DHCP state machine states
+* enum brcmf_btcoex_state - BT coex DHCP state machine states
 * @BRCMF_BT_DHCP_IDLE: DCHP is idle
-* @BRCMF_BT_DHCP_START: DHCP started, रुको beक्रमe
-*	boosting wअगरi priority
+* @BRCMF_BT_DHCP_START: DHCP started, wait before
+*	boosting wifi priority
 * @BRCMF_BT_DHCP_OPPR_WIN: graceful DHCP opportunity ended,
-*	boost wअगरi priority
-* @BRCMF_BT_DHCP_FLAG_FORCE_TIMEOUT: wअगरi priority boost end,
-*	restore शेषs
+*	boost wifi priority
+* @BRCMF_BT_DHCP_FLAG_FORCE_TIMEOUT: wifi priority boost end,
+*	restore defaults
 */
-क्रमागत brcmf_btcoex_state अणु
+enum brcmf_btcoex_state {
 	BRCMF_BT_DHCP_IDLE,
 	BRCMF_BT_DHCP_START,
 	BRCMF_BT_DHCP_OPPR_WIN,
 	BRCMF_BT_DHCP_FLAG_FORCE_TIMEOUT
-पूर्ण;
+};
 
 /**
- * काष्ठा brcmf_btcoex_info - BT coex related inक्रमmation
- * @vअगर: पूर्णांकerface क्रम which request was करोne.
- * @समयr: समयr क्रम DHCP state machine
- * @समयout: configured समयout.
- * @समयr_on:  DHCP समयr active
- * @dhcp_करोne: DHCP finished beक्रमe T1/T2 समयr expiration
+ * struct brcmf_btcoex_info - BT coex related information
+ * @vif: interface for which request was done.
+ * @timer: timer for DHCP state machine
+ * @timeout: configured timeout.
+ * @timer_on:  DHCP timer active
+ * @dhcp_done: DHCP finished before T1/T2 timer expiration
  * @bt_state: DHCP state machine state
  * @work: DHCP state machine work
- * @cfg: driver निजी data क्रम cfg80211 पूर्णांकerface
+ * @cfg: driver private data for cfg80211 interface
  * @reg66: saved value of btc_params 66
  * @reg41: saved value of btc_params 41
  * @reg68: saved value of btc_params 68
@@ -74,15 +73,15 @@
  * @saved_regs_part2: flag indicating regs 50,51,64,65,71
  *	have been saved
  */
-काष्ठा brcmf_btcoex_info अणु
-	काष्ठा brcmf_cfg80211_vअगर *vअगर;
-	काष्ठा समयr_list समयr;
-	u16 समयout;
-	bool समयr_on;
-	bool dhcp_करोne;
-	क्रमागत brcmf_btcoex_state bt_state;
-	काष्ठा work_काष्ठा work;
-	काष्ठा brcmf_cfg80211_info *cfg;
+struct brcmf_btcoex_info {
+	struct brcmf_cfg80211_vif *vif;
+	struct timer_list timer;
+	u16 timeout;
+	bool timer_on;
+	bool dhcp_done;
+	enum brcmf_btcoex_state bt_state;
+	struct work_struct work;
+	struct brcmf_cfg80211_info *cfg;
 	u32 reg66;
 	u32 reg41;
 	u32 reg68;
@@ -93,67 +92,67 @@
 	u32 reg65;
 	u32 reg71;
 	bool saved_regs_part2;
-पूर्ण;
+};
 
 /**
- * brcmf_btcoex_params_ग_लिखो() - ग_लिखो btc_params firmware variable
- * @अगरp: पूर्णांकerface
- * @addr: btc_params रेजिस्टर number
- * @data: data to ग_लिखो
+ * brcmf_btcoex_params_write() - write btc_params firmware variable
+ * @ifp: interface
+ * @addr: btc_params register number
+ * @data: data to write
  */
-अटल s32 brcmf_btcoex_params_ग_लिखो(काष्ठा brcmf_अगर *अगरp, u32 addr, u32 data)
-अणु
-	काष्ठा अणु
+static s32 brcmf_btcoex_params_write(struct brcmf_if *ifp, u32 addr, u32 data)
+{
+	struct {
 		__le32 addr;
 		__le32 data;
-	पूर्ण reg_ग_लिखो;
+	} reg_write;
 
-	reg_ग_लिखो.addr = cpu_to_le32(addr);
-	reg_ग_लिखो.data = cpu_to_le32(data);
-	वापस brcmf_fil_iovar_data_set(अगरp, "btc_params",
-					&reg_ग_लिखो, माप(reg_ग_लिखो));
-पूर्ण
+	reg_write.addr = cpu_to_le32(addr);
+	reg_write.data = cpu_to_le32(data);
+	return brcmf_fil_iovar_data_set(ifp, "btc_params",
+					&reg_write, sizeof(reg_write));
+}
 
 /**
- * brcmf_btcoex_params_पढ़ो() - पढ़ो btc_params firmware variable
- * @अगरp: पूर्णांकerface
- * @addr: btc_params रेजिस्टर number
- * @data: पढ़ो data
+ * brcmf_btcoex_params_read() - read btc_params firmware variable
+ * @ifp: interface
+ * @addr: btc_params register number
+ * @data: read data
  */
-अटल s32 brcmf_btcoex_params_पढ़ो(काष्ठा brcmf_अगर *अगरp, u32 addr, u32 *data)
-अणु
+static s32 brcmf_btcoex_params_read(struct brcmf_if *ifp, u32 addr, u32 *data)
+{
 	*data = addr;
 
-	वापस brcmf_fil_iovar_पूर्णांक_get(अगरp, "btc_params", data);
-पूर्ण
+	return brcmf_fil_iovar_int_get(ifp, "btc_params", data);
+}
 
 /**
- * brcmf_btcoex_boost_wअगरi() - control BT SCO/eSCO parameters
+ * brcmf_btcoex_boost_wifi() - control BT SCO/eSCO parameters
  * @btci: BT coex info
  * @trump_sco:
- *	true - set SCO/eSCO parameters क्रम compatibility
- *		during DHCP winकरोw
+ *	true - set SCO/eSCO parameters for compatibility
+ *		during DHCP window
  *	false - restore saved parameter values
  *
- * Enhanced BT COEX settings क्रम eSCO compatibility during DHCP winकरोw
+ * Enhanced BT COEX settings for eSCO compatibility during DHCP window
  */
-अटल व्योम brcmf_btcoex_boost_wअगरi(काष्ठा brcmf_btcoex_info *btci,
+static void brcmf_btcoex_boost_wifi(struct brcmf_btcoex_info *btci,
 				    bool trump_sco)
-अणु
-	काष्ठा brcmf_अगर *अगरp = brcmf_get_अगरp(btci->cfg->pub, 0);
+{
+	struct brcmf_if *ifp = brcmf_get_ifp(btci->cfg->pub, 0);
 
-	अगर (trump_sco && !btci->saved_regs_part2) अणु
+	if (trump_sco && !btci->saved_regs_part2) {
 		/* this should reduce eSCO agressive
-		 * retransmit w/o अवरोधing it
+		 * retransmit w/o breaking it
 		 */
 
 		/* save current */
 		brcmf_dbg(INFO, "new SCO/eSCO coex algo {save & override}\n");
-		brcmf_btcoex_params_पढ़ो(अगरp, 50, &btci->reg50);
-		brcmf_btcoex_params_पढ़ो(अगरp, 51, &btci->reg51);
-		brcmf_btcoex_params_पढ़ो(अगरp, 64, &btci->reg64);
-		brcmf_btcoex_params_पढ़ो(अगरp, 65, &btci->reg65);
-		brcmf_btcoex_params_पढ़ो(अगरp, 71, &btci->reg71);
+		brcmf_btcoex_params_read(ifp, 50, &btci->reg50);
+		brcmf_btcoex_params_read(ifp, 51, &btci->reg51);
+		brcmf_btcoex_params_read(ifp, 64, &btci->reg64);
+		brcmf_btcoex_params_read(ifp, 65, &btci->reg65);
+		brcmf_btcoex_params_read(ifp, 71, &btci->reg71);
 
 		btci->saved_regs_part2 = true;
 		brcmf_dbg(INFO,
@@ -161,21 +160,21 @@
 			  btci->reg50, btci->reg51, btci->reg64,
 			  btci->reg65, btci->reg71);
 
-		/* pacअगरy the eSco   */
-		brcmf_btcoex_params_ग_लिखो(अगरp, 50, BRCMF_BT_DHCP_REG50);
-		brcmf_btcoex_params_ग_लिखो(अगरp, 51, BRCMF_BT_DHCP_REG51);
-		brcmf_btcoex_params_ग_लिखो(अगरp, 64, BRCMF_BT_DHCP_REG64);
-		brcmf_btcoex_params_ग_लिखो(अगरp, 65, BRCMF_BT_DHCP_REG65);
-		brcmf_btcoex_params_ग_लिखो(अगरp, 71, BRCMF_BT_DHCP_REG71);
+		/* pacify the eSco   */
+		brcmf_btcoex_params_write(ifp, 50, BRCMF_BT_DHCP_REG50);
+		brcmf_btcoex_params_write(ifp, 51, BRCMF_BT_DHCP_REG51);
+		brcmf_btcoex_params_write(ifp, 64, BRCMF_BT_DHCP_REG64);
+		brcmf_btcoex_params_write(ifp, 65, BRCMF_BT_DHCP_REG65);
+		brcmf_btcoex_params_write(ifp, 71, BRCMF_BT_DHCP_REG71);
 
-	पूर्ण अन्यथा अगर (btci->saved_regs_part2) अणु
+	} else if (btci->saved_regs_part2) {
 		/* restore previously saved bt params */
 		brcmf_dbg(INFO, "Do new SCO/eSCO coex algo {restore}\n");
-		brcmf_btcoex_params_ग_लिखो(अगरp, 50, btci->reg50);
-		brcmf_btcoex_params_ग_लिखो(अगरp, 51, btci->reg51);
-		brcmf_btcoex_params_ग_लिखो(अगरp, 64, btci->reg64);
-		brcmf_btcoex_params_ग_लिखो(अगरp, 65, btci->reg65);
-		brcmf_btcoex_params_ग_लिखो(अगरp, 71, btci->reg71);
+		brcmf_btcoex_params_write(ifp, 50, btci->reg50);
+		brcmf_btcoex_params_write(ifp, 51, btci->reg51);
+		brcmf_btcoex_params_write(ifp, 64, btci->reg64);
+		brcmf_btcoex_params_write(ifp, 65, btci->reg65);
+		brcmf_btcoex_params_write(ifp, 71, btci->reg71);
 
 		brcmf_dbg(INFO,
 			  "restored bt_params[50,51,64,65,71]: 0x%x 0x%x 0x%x 0x%x 0x%x\n",
@@ -183,195 +182,195 @@
 			  btci->reg65, btci->reg71);
 
 		btci->saved_regs_part2 = false;
-	पूर्ण अन्यथा अणु
+	} else {
 		brcmf_dbg(INFO, "attempted to restore not saved BTCOEX params\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * brcmf_btcoex_is_sco_active() - check अगर SCO/eSCO is active
- * @अगरp: पूर्णांकerface
+ * brcmf_btcoex_is_sco_active() - check if SCO/eSCO is active
+ * @ifp: interface
  *
- * वापस: true अगर SCO/eSCO session is active
+ * return: true if SCO/eSCO session is active
  */
-अटल bool brcmf_btcoex_is_sco_active(काष्ठा brcmf_अगर *अगरp)
-अणु
-	पूर्णांक ioc_res = 0;
+static bool brcmf_btcoex_is_sco_active(struct brcmf_if *ifp)
+{
+	int ioc_res = 0;
 	bool res = false;
-	पूर्णांक sco_id_cnt = 0;
+	int sco_id_cnt = 0;
 	u32 param27;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < BRCMF_BT_SCO_SAMPLES; i++) अणु
-		ioc_res = brcmf_btcoex_params_पढ़ो(अगरp, 27, &param27);
+	for (i = 0; i < BRCMF_BT_SCO_SAMPLES; i++) {
+		ioc_res = brcmf_btcoex_params_read(ifp, 27, &param27);
 
-		अगर (ioc_res < 0) अणु
+		if (ioc_res < 0) {
 			brcmf_err("ioc read btc params error\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		brcmf_dbg(INFO, "sample[%d], btc_params 27:%x\n", i, param27);
 
-		अगर ((param27 & 0x6) == 2) अणु /* count both sco & esco  */
+		if ((param27 & 0x6) == 2) { /* count both sco & esco  */
 			sco_id_cnt++;
-		पूर्ण
+		}
 
-		अगर (sco_id_cnt > 2) अणु
+		if (sco_id_cnt > 2) {
 			brcmf_dbg(INFO,
 				  "sco/esco detected, pkt id_cnt:%d samples:%d\n",
 				  sco_id_cnt, i);
 			res = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	brcmf_dbg(TRACE, "exit: result=%d\n", res);
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /*
  * btcmf_btcoex_save_part1() - save first step parameters.
  */
-अटल व्योम btcmf_btcoex_save_part1(काष्ठा brcmf_btcoex_info *btci)
-अणु
-	काष्ठा brcmf_अगर *अगरp = btci->vअगर->अगरp;
+static void btcmf_btcoex_save_part1(struct brcmf_btcoex_info *btci)
+{
+	struct brcmf_if *ifp = btci->vif->ifp;
 
-	अगर (!btci->saved_regs_part1) अणु
+	if (!btci->saved_regs_part1) {
 		/* Retrieve and save original reg value */
-		brcmf_btcoex_params_पढ़ो(अगरp, 66, &btci->reg66);
-		brcmf_btcoex_params_पढ़ो(अगरp, 41, &btci->reg41);
-		brcmf_btcoex_params_पढ़ो(अगरp, 68, &btci->reg68);
+		brcmf_btcoex_params_read(ifp, 66, &btci->reg66);
+		brcmf_btcoex_params_read(ifp, 41, &btci->reg41);
+		brcmf_btcoex_params_read(ifp, 68, &btci->reg68);
 		btci->saved_regs_part1 = true;
 		brcmf_dbg(INFO,
 			  "saved btc_params regs (66,41,68) 0x%x 0x%x 0x%x\n",
 			  btci->reg66, btci->reg41,
 			  btci->reg68);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * brcmf_btcoex_restore_part1() - restore first step parameters.
  */
-अटल व्योम brcmf_btcoex_restore_part1(काष्ठा brcmf_btcoex_info *btci)
-अणु
-	काष्ठा brcmf_अगर *अगरp;
+static void brcmf_btcoex_restore_part1(struct brcmf_btcoex_info *btci)
+{
+	struct brcmf_if *ifp;
 
-	अगर (btci->saved_regs_part1) अणु
+	if (btci->saved_regs_part1) {
 		btci->saved_regs_part1 = false;
-		अगरp = btci->vअगर->अगरp;
-		brcmf_btcoex_params_ग_लिखो(अगरp, 66, btci->reg66);
-		brcmf_btcoex_params_ग_लिखो(अगरp, 41, btci->reg41);
-		brcmf_btcoex_params_ग_लिखो(अगरp, 68, btci->reg68);
+		ifp = btci->vif->ifp;
+		brcmf_btcoex_params_write(ifp, 66, btci->reg66);
+		brcmf_btcoex_params_write(ifp, 41, btci->reg41);
+		brcmf_btcoex_params_write(ifp, 68, btci->reg68);
 		brcmf_dbg(INFO,
 			  "restored btc_params regs {66,41,68} 0x%x 0x%x 0x%x\n",
 			  btci->reg66, btci->reg41,
 			  btci->reg68);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * brcmf_btcoex_समयrfunc() - BT coex समयr callback
+ * brcmf_btcoex_timerfunc() - BT coex timer callback
  */
-अटल व्योम brcmf_btcoex_समयrfunc(काष्ठा समयr_list *t)
-अणु
-	काष्ठा brcmf_btcoex_info *bt_local = from_समयr(bt_local, t, समयr);
+static void brcmf_btcoex_timerfunc(struct timer_list *t)
+{
+	struct brcmf_btcoex_info *bt_local = from_timer(bt_local, t, timer);
 	brcmf_dbg(TRACE, "enter\n");
 
-	bt_local->समयr_on = false;
+	bt_local->timer_on = false;
 	schedule_work(&bt_local->work);
-पूर्ण
+}
 
 /**
  * brcmf_btcoex_handler() - BT coex state machine work handler
  * @work: work
  */
-अटल व्योम brcmf_btcoex_handler(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा brcmf_btcoex_info *btci;
-	btci = container_of(work, काष्ठा brcmf_btcoex_info, work);
-	अगर (btci->समयr_on) अणु
-		btci->समयr_on = false;
-		del_समयr_sync(&btci->समयr);
-	पूर्ण
+static void brcmf_btcoex_handler(struct work_struct *work)
+{
+	struct brcmf_btcoex_info *btci;
+	btci = container_of(work, struct brcmf_btcoex_info, work);
+	if (btci->timer_on) {
+		btci->timer_on = false;
+		del_timer_sync(&btci->timer);
+	}
 
-	चयन (btci->bt_state) अणु
-	हाल BRCMF_BT_DHCP_START:
-		/* DHCP started provide OPPORTUNITY winकरोw
+	switch (btci->bt_state) {
+	case BRCMF_BT_DHCP_START:
+		/* DHCP started provide OPPORTUNITY window
 		   to get DHCP address
 		*/
 		brcmf_dbg(INFO, "DHCP started\n");
 		btci->bt_state = BRCMF_BT_DHCP_OPPR_WIN;
-		अगर (btci->समयout < BRCMF_BTCOEX_OPPR_WIN_TIME) अणु
-			mod_समयr(&btci->समयr, btci->समयr.expires);
-		पूर्ण अन्यथा अणु
-			btci->समयout -= BRCMF_BTCOEX_OPPR_WIN_TIME;
-			mod_समयr(&btci->समयr,
-				  jअगरfies + BRCMF_BTCOEX_OPPR_WIN_TIME);
-		पूर्ण
-		btci->समयr_on = true;
-		अवरोध;
+		if (btci->timeout < BRCMF_BTCOEX_OPPR_WIN_TIME) {
+			mod_timer(&btci->timer, btci->timer.expires);
+		} else {
+			btci->timeout -= BRCMF_BTCOEX_OPPR_WIN_TIME;
+			mod_timer(&btci->timer,
+				  jiffies + BRCMF_BTCOEX_OPPR_WIN_TIME);
+		}
+		btci->timer_on = true;
+		break;
 
-	हाल BRCMF_BT_DHCP_OPPR_WIN:
-		अगर (btci->dhcp_करोne) अणु
+	case BRCMF_BT_DHCP_OPPR_WIN:
+		if (btci->dhcp_done) {
 			brcmf_dbg(INFO, "DHCP done before T1 expiration\n");
-			जाओ idle;
-		पूर्ण
+			goto idle;
+		}
 
 		/* DHCP is not over yet, start lowering BT priority */
 		brcmf_dbg(INFO, "DHCP T1:%d expired\n",
-			  jअगरfies_to_msecs(BRCMF_BTCOEX_OPPR_WIN_TIME));
-		brcmf_btcoex_boost_wअगरi(btci, true);
+			  jiffies_to_msecs(BRCMF_BTCOEX_OPPR_WIN_TIME));
+		brcmf_btcoex_boost_wifi(btci, true);
 
 		btci->bt_state = BRCMF_BT_DHCP_FLAG_FORCE_TIMEOUT;
-		mod_समयr(&btci->समयr, jअगरfies + btci->समयout);
-		btci->समयr_on = true;
-		अवरोध;
+		mod_timer(&btci->timer, jiffies + btci->timeout);
+		btci->timer_on = true;
+		break;
 
-	हाल BRCMF_BT_DHCP_FLAG_FORCE_TIMEOUT:
-		अगर (btci->dhcp_करोne)
+	case BRCMF_BT_DHCP_FLAG_FORCE_TIMEOUT:
+		if (btci->dhcp_done)
 			brcmf_dbg(INFO, "DHCP done before T2 expiration\n");
-		अन्यथा
+		else
 			brcmf_dbg(INFO, "DHCP T2:%d expired\n",
 				  BRCMF_BT_DHCP_FLAG_FORCE_TIMEOUT);
 
-		जाओ idle;
+		goto idle;
 
-	शेष:
+	default:
 		brcmf_err("invalid state=%d !!!\n", btci->bt_state);
-		जाओ idle;
-	पूर्ण
+		goto idle;
+	}
 
-	वापस;
+	return;
 
 idle:
 	btci->bt_state = BRCMF_BT_DHCP_IDLE;
-	btci->समयr_on = false;
-	brcmf_btcoex_boost_wअगरi(btci, false);
-	cfg80211_crit_proto_stopped(&btci->vअगर->wdev, GFP_KERNEL);
+	btci->timer_on = false;
+	brcmf_btcoex_boost_wifi(btci, false);
+	cfg80211_crit_proto_stopped(&btci->vif->wdev, GFP_KERNEL);
 	brcmf_btcoex_restore_part1(btci);
-	btci->vअगर = शून्य;
-पूर्ण
+	btci->vif = NULL;
+}
 
 /**
  * brcmf_btcoex_attach() - initialize BT coex data
- * @cfg: driver निजी cfg80211 data
+ * @cfg: driver private cfg80211 data
  *
- * वापस: 0 on success
+ * return: 0 on success
  */
-पूर्णांक brcmf_btcoex_attach(काष्ठा brcmf_cfg80211_info *cfg)
-अणु
-	काष्ठा brcmf_btcoex_info *btci = शून्य;
+int brcmf_btcoex_attach(struct brcmf_cfg80211_info *cfg)
+{
+	struct brcmf_btcoex_info *btci = NULL;
 	brcmf_dbg(TRACE, "enter\n");
 
-	btci = kदो_स्मृति(माप(काष्ठा brcmf_btcoex_info), GFP_KERNEL);
-	अगर (!btci)
-		वापस -ENOMEM;
+	btci = kmalloc(sizeof(struct brcmf_btcoex_info), GFP_KERNEL);
+	if (!btci)
+		return -ENOMEM;
 
 	btci->bt_state = BRCMF_BT_DHCP_IDLE;
 
-	/* Set up समयr क्रम BT  */
-	btci->समयr_on = false;
-	btci->समयout = BRCMF_BTCOEX_OPPR_WIN_TIME;
-	समयr_setup(&btci->समयr, brcmf_btcoex_समयrfunc, 0);
+	/* Set up timer for BT  */
+	btci->timer_on = false;
+	btci->timeout = BRCMF_BTCOEX_OPPR_WIN_TIME;
+	timer_setup(&btci->timer, brcmf_btcoex_timerfunc, 0);
 	btci->cfg = cfg;
 	btci->saved_regs_part1 = false;
 	btci->saved_regs_part2 = false;
@@ -379,105 +378,105 @@ idle:
 	INIT_WORK(&btci->work, brcmf_btcoex_handler);
 
 	cfg->btcoex = btci;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * brcmf_btcoex_detach - clean BT coex data
- * @cfg: driver निजी cfg80211 data
+ * @cfg: driver private cfg80211 data
  */
-व्योम brcmf_btcoex_detach(काष्ठा brcmf_cfg80211_info *cfg)
-अणु
+void brcmf_btcoex_detach(struct brcmf_cfg80211_info *cfg)
+{
 	brcmf_dbg(TRACE, "enter\n");
 
-	अगर (!cfg->btcoex)
-		वापस;
+	if (!cfg->btcoex)
+		return;
 
-	अगर (cfg->btcoex->समयr_on) अणु
-		cfg->btcoex->समयr_on = false;
-		del_समयr_sync(&cfg->btcoex->समयr);
-	पूर्ण
+	if (cfg->btcoex->timer_on) {
+		cfg->btcoex->timer_on = false;
+		del_timer_sync(&cfg->btcoex->timer);
+	}
 
 	cancel_work_sync(&cfg->btcoex->work);
 
-	brcmf_btcoex_boost_wअगरi(cfg->btcoex, false);
+	brcmf_btcoex_boost_wifi(cfg->btcoex, false);
 	brcmf_btcoex_restore_part1(cfg->btcoex);
 
-	kमुक्त(cfg->btcoex);
-	cfg->btcoex = शून्य;
-पूर्ण
+	kfree(cfg->btcoex);
+	cfg->btcoex = NULL;
+}
 
-अटल व्योम brcmf_btcoex_dhcp_start(काष्ठा brcmf_btcoex_info *btci)
-अणु
-	काष्ठा brcmf_अगर *अगरp = btci->vअगर->अगरp;
+static void brcmf_btcoex_dhcp_start(struct brcmf_btcoex_info *btci)
+{
+	struct brcmf_if *ifp = btci->vif->ifp;
 
 	btcmf_btcoex_save_part1(btci);
 	/* set new regs values */
-	brcmf_btcoex_params_ग_लिखो(अगरp, 66, BRCMF_BT_DHCP_REG66);
-	brcmf_btcoex_params_ग_लिखो(अगरp, 41, BRCMF_BT_DHCP_REG41);
-	brcmf_btcoex_params_ग_लिखो(अगरp, 68, BRCMF_BT_DHCP_REG68);
-	btci->dhcp_करोne = false;
+	brcmf_btcoex_params_write(ifp, 66, BRCMF_BT_DHCP_REG66);
+	brcmf_btcoex_params_write(ifp, 41, BRCMF_BT_DHCP_REG41);
+	brcmf_btcoex_params_write(ifp, 68, BRCMF_BT_DHCP_REG68);
+	btci->dhcp_done = false;
 	btci->bt_state = BRCMF_BT_DHCP_START;
 	schedule_work(&btci->work);
 	brcmf_dbg(TRACE, "enable BT DHCP Timer\n");
-पूर्ण
+}
 
-अटल व्योम brcmf_btcoex_dhcp_end(काष्ठा brcmf_btcoex_info *btci)
-अणु
-	/* Stop any bt समयr because DHCP session is करोne */
-	btci->dhcp_करोne = true;
-	अगर (btci->समयr_on) अणु
+static void brcmf_btcoex_dhcp_end(struct brcmf_btcoex_info *btci)
+{
+	/* Stop any bt timer because DHCP session is done */
+	btci->dhcp_done = true;
+	if (btci->timer_on) {
 		brcmf_dbg(INFO, "disable BT DHCP Timer\n");
-		btci->समयr_on = false;
-		del_समयr_sync(&btci->समयr);
+		btci->timer_on = false;
+		del_timer_sync(&btci->timer);
 
-		/* schedule worker अगर transition to IDLE is needed */
-		अगर (btci->bt_state != BRCMF_BT_DHCP_IDLE) अणु
+		/* schedule worker if transition to IDLE is needed */
+		if (btci->bt_state != BRCMF_BT_DHCP_IDLE) {
 			brcmf_dbg(INFO, "bt_state:%d\n",
 				  btci->bt_state);
 			schedule_work(&btci->work);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/* Restore original values */
 		brcmf_btcoex_restore_part1(btci);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * brcmf_btcoex_set_mode - set BT coex mode
- * @mode: Wअगरi-Bluetooth coexistence mode
+ * @mode: Wifi-Bluetooth coexistence mode
  *
- * वापस: 0 on success
+ * return: 0 on success
  */
-पूर्णांक brcmf_btcoex_set_mode(काष्ठा brcmf_cfg80211_vअगर *vअगर,
-			  क्रमागत brcmf_btcoex_mode mode, u16 duration)
-अणु
-	काष्ठा brcmf_cfg80211_info *cfg = wiphy_to_cfg(vअगर->wdev.wiphy);
-	काष्ठा brcmf_btcoex_info *btci = cfg->btcoex;
-	काष्ठा brcmf_अगर *अगरp = brcmf_get_अगरp(cfg->pub, 0);
+int brcmf_btcoex_set_mode(struct brcmf_cfg80211_vif *vif,
+			  enum brcmf_btcoex_mode mode, u16 duration)
+{
+	struct brcmf_cfg80211_info *cfg = wiphy_to_cfg(vif->wdev.wiphy);
+	struct brcmf_btcoex_info *btci = cfg->btcoex;
+	struct brcmf_if *ifp = brcmf_get_ifp(cfg->pub, 0);
 
-	चयन (mode) अणु
-	हाल BRCMF_BTCOEX_DISABLED:
+	switch (mode) {
+	case BRCMF_BTCOEX_DISABLED:
 		brcmf_dbg(INFO, "DHCP session starts\n");
-		अगर (btci->bt_state != BRCMF_BT_DHCP_IDLE)
-			वापस -EBUSY;
-		/* Start BT समयr only क्रम SCO connection */
-		अगर (brcmf_btcoex_is_sco_active(अगरp)) अणु
-			btci->समयout = msecs_to_jअगरfies(duration);
-			btci->vअगर = vअगर;
+		if (btci->bt_state != BRCMF_BT_DHCP_IDLE)
+			return -EBUSY;
+		/* Start BT timer only for SCO connection */
+		if (brcmf_btcoex_is_sco_active(ifp)) {
+			btci->timeout = msecs_to_jiffies(duration);
+			btci->vif = vif;
 			brcmf_btcoex_dhcp_start(btci);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल BRCMF_BTCOEX_ENABLED:
+	case BRCMF_BTCOEX_ENABLED:
 		brcmf_dbg(INFO, "DHCP session ends\n");
-		अगर (btci->bt_state != BRCMF_BT_DHCP_IDLE &&
-		    vअगर == btci->vअगर) अणु
+		if (btci->bt_state != BRCMF_BT_DHCP_IDLE &&
+		    vif == btci->vif) {
 			brcmf_btcoex_dhcp_end(btci);
-		पूर्ण
-		अवरोध;
-	शेष:
+		}
+		break;
+	default:
 		brcmf_dbg(INFO, "Unknown mode, ignored\n");
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}

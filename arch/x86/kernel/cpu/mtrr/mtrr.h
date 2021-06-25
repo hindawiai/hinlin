@@ -1,81 +1,80 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * local MTRR defines.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/मानकघोष.स>
+#include <linux/types.h>
+#include <linux/stddef.h>
 
-#घोषणा MTRR_CHANGE_MASK_FIXED     0x01
-#घोषणा MTRR_CHANGE_MASK_VARIABLE  0x02
-#घोषणा MTRR_CHANGE_MASK_DEFTYPE   0x04
+#define MTRR_CHANGE_MASK_FIXED     0x01
+#define MTRR_CHANGE_MASK_VARIABLE  0x02
+#define MTRR_CHANGE_MASK_DEFTYPE   0x04
 
-बाह्य अचिन्हित पूर्णांक mtrr_usage_table[MTRR_MAX_VAR_RANGES];
+extern unsigned int mtrr_usage_table[MTRR_MAX_VAR_RANGES];
 
-काष्ठा mtrr_ops अणु
-	u32	venकरोr;
-	u32	use_पूर्णांकel_अगर;
-	व्योम	(*set)(अचिन्हित पूर्णांक reg, अचिन्हित दीर्घ base,
-		       अचिन्हित दीर्घ size, mtrr_type type);
-	व्योम	(*set_all)(व्योम);
+struct mtrr_ops {
+	u32	vendor;
+	u32	use_intel_if;
+	void	(*set)(unsigned int reg, unsigned long base,
+		       unsigned long size, mtrr_type type);
+	void	(*set_all)(void);
 
-	व्योम	(*get)(अचिन्हित पूर्णांक reg, अचिन्हित दीर्घ *base,
-		       अचिन्हित दीर्घ *size, mtrr_type *type);
-	पूर्णांक	(*get_मुक्त_region)(अचिन्हित दीर्घ base, अचिन्हित दीर्घ size,
-				   पूर्णांक replace_reg);
-	पूर्णांक	(*validate_add_page)(अचिन्हित दीर्घ base, अचिन्हित दीर्घ size,
-				     अचिन्हित पूर्णांक type);
-	पूर्णांक	(*have_wrcomb)(व्योम);
-पूर्ण;
+	void	(*get)(unsigned int reg, unsigned long *base,
+		       unsigned long *size, mtrr_type *type);
+	int	(*get_free_region)(unsigned long base, unsigned long size,
+				   int replace_reg);
+	int	(*validate_add_page)(unsigned long base, unsigned long size,
+				     unsigned int type);
+	int	(*have_wrcomb)(void);
+};
 
-बाह्य पूर्णांक generic_get_मुक्त_region(अचिन्हित दीर्घ base, अचिन्हित दीर्घ size,
-				   पूर्णांक replace_reg);
-बाह्य पूर्णांक generic_validate_add_page(अचिन्हित दीर्घ base, अचिन्हित दीर्घ size,
-				     अचिन्हित पूर्णांक type);
+extern int generic_get_free_region(unsigned long base, unsigned long size,
+				   int replace_reg);
+extern int generic_validate_add_page(unsigned long base, unsigned long size,
+				     unsigned int type);
 
-बाह्य स्थिर काष्ठा mtrr_ops generic_mtrr_ops;
+extern const struct mtrr_ops generic_mtrr_ops;
 
-बाह्य पूर्णांक positive_have_wrcomb(व्योम);
+extern int positive_have_wrcomb(void);
 
-/* library functions क्रम processor-specअगरic routines */
-काष्ठा set_mtrr_context अणु
-	अचिन्हित दीर्घ	flags;
-	अचिन्हित दीर्घ	cr4val;
+/* library functions for processor-specific routines */
+struct set_mtrr_context {
+	unsigned long	flags;
+	unsigned long	cr4val;
 	u32		deftype_lo;
 	u32		deftype_hi;
 	u32		ccr3;
-पूर्ण;
+};
 
-व्योम set_mtrr_करोne(काष्ठा set_mtrr_context *ctxt);
-व्योम set_mtrr_cache_disable(काष्ठा set_mtrr_context *ctxt);
-व्योम set_mtrr_prepare_save(काष्ठा set_mtrr_context *ctxt);
+void set_mtrr_done(struct set_mtrr_context *ctxt);
+void set_mtrr_cache_disable(struct set_mtrr_context *ctxt);
+void set_mtrr_prepare_save(struct set_mtrr_context *ctxt);
 
-व्योम fill_mtrr_var_range(अचिन्हित पूर्णांक index,
+void fill_mtrr_var_range(unsigned int index,
 		u32 base_lo, u32 base_hi, u32 mask_lo, u32 mask_hi);
-bool get_mtrr_state(व्योम);
-व्योम mtrr_bp_pat_init(व्योम);
+bool get_mtrr_state(void);
+void mtrr_bp_pat_init(void);
 
-बाह्य व्योम __init set_mtrr_ops(स्थिर काष्ठा mtrr_ops *ops);
+extern void __init set_mtrr_ops(const struct mtrr_ops *ops);
 
-बाह्य u64 size_or_mask, size_and_mask;
-बाह्य स्थिर काष्ठा mtrr_ops *mtrr_अगर;
+extern u64 size_or_mask, size_and_mask;
+extern const struct mtrr_ops *mtrr_if;
 
-#घोषणा is_cpu(vnd)	(mtrr_अगर && mtrr_अगर->venकरोr == X86_VENDOR_##vnd)
-#घोषणा use_पूर्णांकel()	(mtrr_अगर && mtrr_अगर->use_पूर्णांकel_अगर == 1)
+#define is_cpu(vnd)	(mtrr_if && mtrr_if->vendor == X86_VENDOR_##vnd)
+#define use_intel()	(mtrr_if && mtrr_if->use_intel_if == 1)
 
-बाह्य अचिन्हित पूर्णांक num_var_ranges;
-बाह्य u64 mtrr_tom2;
-बाह्य काष्ठा mtrr_state_type mtrr_state;
+extern unsigned int num_var_ranges;
+extern u64 mtrr_tom2;
+extern struct mtrr_state_type mtrr_state;
 
-व्योम mtrr_state_warn(व्योम);
-स्थिर अक्षर *mtrr_attrib_to_str(पूर्णांक x);
-व्योम mtrr_wrmsr(अचिन्हित, अचिन्हित, अचिन्हित);
+void mtrr_state_warn(void);
+const char *mtrr_attrib_to_str(int x);
+void mtrr_wrmsr(unsigned, unsigned, unsigned);
 
-/* CPU specअगरic mtrr init functions */
-पूर्णांक amd_init_mtrr(व्योम);
-पूर्णांक cyrix_init_mtrr(व्योम);
-पूर्णांक centaur_init_mtrr(व्योम);
+/* CPU specific mtrr init functions */
+int amd_init_mtrr(void);
+int cyrix_init_mtrr(void);
+int centaur_init_mtrr(void);
 
-बाह्य पूर्णांक changed_by_mtrr_cleanup;
-बाह्य पूर्णांक mtrr_cleanup(अचिन्हित address_bits);
+extern int changed_by_mtrr_cleanup;
+extern int mtrr_cleanup(unsigned address_bits);

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * TI OMAP4 ISS V4L2 Driver - ISP IPIPE module
  *
@@ -8,44 +7,44 @@
  * Author: Sergio Aguirre <sergio.a.aguirre@gmail.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/sched.h>
+#include <linux/module.h>
+#include <linux/uaccess.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/dma-mapping.h>
+#include <linux/mm.h>
+#include <linux/sched.h>
 
-#समावेश "iss.h"
-#समावेश "iss_regs.h"
-#समावेश "iss_ipipe.h"
+#include "iss.h"
+#include "iss_regs.h"
+#include "iss_ipipe.h"
 
-अटल काष्ठा v4l2_mbus_framefmt *
-__ipipe_get_क्रमmat(काष्ठा iss_ipipe_device *ipipe,
-		   काष्ठा v4l2_subdev_pad_config *cfg,
-		   अचिन्हित पूर्णांक pad,
-		   क्रमागत v4l2_subdev_क्रमmat_whence which);
+static struct v4l2_mbus_framefmt *
+__ipipe_get_format(struct iss_ipipe_device *ipipe,
+		   struct v4l2_subdev_pad_config *cfg,
+		   unsigned int pad,
+		   enum v4l2_subdev_format_whence which);
 
-अटल स्थिर अचिन्हित पूर्णांक ipipe_fmts[] = अणु
+static const unsigned int ipipe_fmts[] = {
 	MEDIA_BUS_FMT_SGRBG10_1X10,
 	MEDIA_BUS_FMT_SRGGB10_1X10,
 	MEDIA_BUS_FMT_SBGGR10_1X10,
 	MEDIA_BUS_FMT_SGBRG10_1X10,
-पूर्ण;
+};
 
 /*
- * ipipe_prपूर्णांक_status - Prपूर्णांक current IPIPE Module रेजिस्टर values.
- * @ipipe: Poपूर्णांकer to ISS ISP IPIPE device.
+ * ipipe_print_status - Print current IPIPE Module register values.
+ * @ipipe: Pointer to ISS ISP IPIPE device.
  *
- * Also prपूर्णांकs other debug inक्रमmation stored in the IPIPE module.
+ * Also prints other debug information stored in the IPIPE module.
  */
-#घोषणा IPIPE_PRINT_REGISTER(iss, name)\
+#define IPIPE_PRINT_REGISTER(iss, name)\
 	dev_dbg(iss->dev, "###IPIPE " #name "=0x%08x\n", \
-		iss_reg_पढ़ो(iss, OMAP4_ISS_MEM_ISP_IPIPE, IPIPE_##name))
+		iss_reg_read(iss, OMAP4_ISS_MEM_ISP_IPIPE, IPIPE_##name))
 
-अटल व्योम ipipe_prपूर्णांक_status(काष्ठा iss_ipipe_device *ipipe)
-अणु
-	काष्ठा iss_device *iss = to_iss_device(ipipe);
+static void ipipe_print_status(struct iss_ipipe_device *ipipe)
+{
+	struct iss_device *iss = to_iss_device(ipipe);
 
 	dev_dbg(iss->dev, "-------------IPIPE Register dump-------------\n");
 
@@ -61,61 +60,61 @@ __ipipe_get_क्रमmat(काष्ठा iss_ipipe_device *ipipe,
 	IPIPE_PRINT_REGISTER(iss, YUV_PHS);
 
 	dev_dbg(iss->dev, "-----------------------------------------------\n");
-पूर्ण
+}
 
 /*
  * ipipe_enable - Enable/Disable IPIPE.
  * @enable: enable flag
  *
  */
-अटल व्योम ipipe_enable(काष्ठा iss_ipipe_device *ipipe, u8 enable)
-अणु
-	काष्ठा iss_device *iss = to_iss_device(ipipe);
+static void ipipe_enable(struct iss_ipipe_device *ipipe, u8 enable)
+{
+	struct iss_device *iss = to_iss_device(ipipe);
 
 	iss_reg_update(iss, OMAP4_ISS_MEM_ISP_IPIPE, IPIPE_SRC_EN,
 		       IPIPE_SRC_EN_EN, enable ? IPIPE_SRC_EN_EN : 0);
-पूर्ण
+}
 
 /* -----------------------------------------------------------------------------
  * Format- and pipeline-related configuration helpers
  */
 
-अटल व्योम ipipe_configure(काष्ठा iss_ipipe_device *ipipe)
-अणु
-	काष्ठा iss_device *iss = to_iss_device(ipipe);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
+static void ipipe_configure(struct iss_ipipe_device *ipipe)
+{
+	struct iss_device *iss = to_iss_device(ipipe);
+	struct v4l2_mbus_framefmt *format;
 
 	/* IPIPE_PAD_SINK */
-	क्रमmat = &ipipe->क्रमmats[IPIPE_PAD_SINK];
+	format = &ipipe->formats[IPIPE_PAD_SINK];
 
 	/* NOTE: Currently just supporting pipeline IN: RGB, OUT: YUV422 */
-	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_IPIPE, IPIPE_SRC_FMT,
+	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_IPIPE, IPIPE_SRC_FMT,
 		      IPIPE_SRC_FMT_RAW2YUV);
 
 	/* Enable YUV444 -> YUV422 conversion */
-	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_IPIPE, IPIPE_YUV_PHS,
+	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_IPIPE, IPIPE_YUV_PHS,
 		      IPIPE_YUV_PHS_LPF);
 
-	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_IPIPE, IPIPE_SRC_VPS, 0);
-	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_IPIPE, IPIPE_SRC_HPS, 0);
-	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_IPIPE, IPIPE_SRC_VSZ,
-		      (क्रमmat->height - 2) & IPIPE_SRC_VSZ_MASK);
-	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_IPIPE, IPIPE_SRC_HSZ,
-		      (क्रमmat->width - 1) & IPIPE_SRC_HSZ_MASK);
+	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_IPIPE, IPIPE_SRC_VPS, 0);
+	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_IPIPE, IPIPE_SRC_HPS, 0);
+	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_IPIPE, IPIPE_SRC_VSZ,
+		      (format->height - 2) & IPIPE_SRC_VSZ_MASK);
+	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_IPIPE, IPIPE_SRC_HSZ,
+		      (format->width - 1) & IPIPE_SRC_HSZ_MASK);
 
-	/* Ignore ipipeअगर_wrt संकेत, and operate on-the-fly.  */
+	/* Ignore ipipeif_wrt signal, and operate on-the-fly.  */
 	iss_reg_clr(iss, OMAP4_ISS_MEM_ISP_IPIPE, IPIPE_SRC_MODE,
 		    IPIPE_SRC_MODE_WRT | IPIPE_SRC_MODE_OST);
 
-	/* HACK: Values tuned क्रम Ducati SW (OV) */
-	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_IPIPE, IPIPE_SRC_COL,
+	/* HACK: Values tuned for Ducati SW (OV) */
+	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_IPIPE, IPIPE_SRC_COL,
 		      IPIPE_SRC_COL_EE_B | IPIPE_SRC_COL_EO_GB |
 		      IPIPE_SRC_COL_OE_GR | IPIPE_SRC_COL_OO_R);
 
 	/* IPIPE_PAD_SOURCE_VP */
-	क्रमmat = &ipipe->क्रमmats[IPIPE_PAD_SOURCE_VP];
+	format = &ipipe->formats[IPIPE_PAD_SOURCE_VP];
 	/* Do nothing? */
-पूर्ण
+}
 
 /* -----------------------------------------------------------------------------
  * V4L2 subdev operations
@@ -126,302 +125,302 @@ __ipipe_get_क्रमmat(काष्ठा iss_ipipe_device *ipipe,
  * @sd: ISP IPIPE V4L2 subdevice
  * @enable: Enable/disable stream
  */
-अटल पूर्णांक ipipe_set_stream(काष्ठा v4l2_subdev *sd, पूर्णांक enable)
-अणु
-	काष्ठा iss_ipipe_device *ipipe = v4l2_get_subdevdata(sd);
-	काष्ठा iss_device *iss = to_iss_device(ipipe);
-	पूर्णांक ret = 0;
+static int ipipe_set_stream(struct v4l2_subdev *sd, int enable)
+{
+	struct iss_ipipe_device *ipipe = v4l2_get_subdevdata(sd);
+	struct iss_device *iss = to_iss_device(ipipe);
+	int ret = 0;
 
-	अगर (ipipe->state == ISS_PIPELINE_STREAM_STOPPED) अणु
-		अगर (enable == ISS_PIPELINE_STREAM_STOPPED)
-			वापस 0;
+	if (ipipe->state == ISS_PIPELINE_STREAM_STOPPED) {
+		if (enable == ISS_PIPELINE_STREAM_STOPPED)
+			return 0;
 
 		omap4iss_isp_subclk_enable(iss, OMAP4_ISS_ISP_SUBCLK_IPIPE);
 
 		/* Enable clk_arm_g0 */
-		iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_IPIPE, IPIPE_GCK_MMR,
+		iss_reg_write(iss, OMAP4_ISS_MEM_ISP_IPIPE, IPIPE_GCK_MMR,
 			      IPIPE_GCK_MMR_REG);
 
 		/* Enable clk_pix_g[3:0] */
-		iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_IPIPE, IPIPE_GCK_PIX,
+		iss_reg_write(iss, OMAP4_ISS_MEM_ISP_IPIPE, IPIPE_GCK_PIX,
 			      IPIPE_GCK_PIX_G3 | IPIPE_GCK_PIX_G2 |
 			      IPIPE_GCK_PIX_G1 | IPIPE_GCK_PIX_G0);
-	पूर्ण
+	}
 
-	चयन (enable) अणु
-	हाल ISS_PIPELINE_STREAM_CONTINUOUS:
+	switch (enable) {
+	case ISS_PIPELINE_STREAM_CONTINUOUS:
 
 		ipipe_configure(ipipe);
-		ipipe_prपूर्णांक_status(ipipe);
+		ipipe_print_status(ipipe);
 
 		atomic_set(&ipipe->stopping, 0);
 		ipipe_enable(ipipe, 1);
-		अवरोध;
+		break;
 
-	हाल ISS_PIPELINE_STREAM_STOPPED:
-		अगर (ipipe->state == ISS_PIPELINE_STREAM_STOPPED)
-			वापस 0;
-		अगर (omap4iss_module_sync_idle(&sd->entity, &ipipe->रुको,
+	case ISS_PIPELINE_STREAM_STOPPED:
+		if (ipipe->state == ISS_PIPELINE_STREAM_STOPPED)
+			return 0;
+		if (omap4iss_module_sync_idle(&sd->entity, &ipipe->wait,
 					      &ipipe->stopping))
 			ret = -ETIMEDOUT;
 
 		ipipe_enable(ipipe, 0);
 		omap4iss_isp_subclk_disable(iss, OMAP4_ISS_ISP_SUBCLK_IPIPE);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	ipipe->state = enable;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा v4l2_mbus_framefmt *
-__ipipe_get_क्रमmat(काष्ठा iss_ipipe_device *ipipe,
-		   काष्ठा v4l2_subdev_pad_config *cfg,
-		   अचिन्हित पूर्णांक pad,
-		   क्रमागत v4l2_subdev_क्रमmat_whence which)
-अणु
-	अगर (which == V4L2_SUBDEV_FORMAT_TRY)
-		वापस v4l2_subdev_get_try_क्रमmat(&ipipe->subdev, cfg, pad);
+static struct v4l2_mbus_framefmt *
+__ipipe_get_format(struct iss_ipipe_device *ipipe,
+		   struct v4l2_subdev_pad_config *cfg,
+		   unsigned int pad,
+		   enum v4l2_subdev_format_whence which)
+{
+	if (which == V4L2_SUBDEV_FORMAT_TRY)
+		return v4l2_subdev_get_try_format(&ipipe->subdev, cfg, pad);
 
-	वापस &ipipe->क्रमmats[pad];
-पूर्ण
+	return &ipipe->formats[pad];
+}
 
 /*
- * ipipe_try_क्रमmat - Try video क्रमmat on a pad
+ * ipipe_try_format - Try video format on a pad
  * @ipipe: ISS IPIPE device
  * @cfg: V4L2 subdev pad config
  * @pad: Pad number
  * @fmt: Format
  */
-अटल व्योम
-ipipe_try_क्रमmat(काष्ठा iss_ipipe_device *ipipe,
-		 काष्ठा v4l2_subdev_pad_config *cfg,
-		 अचिन्हित पूर्णांक pad,
-		 काष्ठा v4l2_mbus_framefmt *fmt,
-		 क्रमागत v4l2_subdev_क्रमmat_whence which)
-अणु
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
-	अचिन्हित पूर्णांक width = fmt->width;
-	अचिन्हित पूर्णांक height = fmt->height;
-	अचिन्हित पूर्णांक i;
+static void
+ipipe_try_format(struct iss_ipipe_device *ipipe,
+		 struct v4l2_subdev_pad_config *cfg,
+		 unsigned int pad,
+		 struct v4l2_mbus_framefmt *fmt,
+		 enum v4l2_subdev_format_whence which)
+{
+	struct v4l2_mbus_framefmt *format;
+	unsigned int width = fmt->width;
+	unsigned int height = fmt->height;
+	unsigned int i;
 
-	चयन (pad) अणु
-	हाल IPIPE_PAD_SINK:
-		क्रम (i = 0; i < ARRAY_SIZE(ipipe_fmts); i++) अणु
-			अगर (fmt->code == ipipe_fmts[i])
-				अवरोध;
-		पूर्ण
+	switch (pad) {
+	case IPIPE_PAD_SINK:
+		for (i = 0; i < ARRAY_SIZE(ipipe_fmts); i++) {
+			if (fmt->code == ipipe_fmts[i])
+				break;
+		}
 
-		/* If not found, use SGRBG10 as शेष */
-		अगर (i >= ARRAY_SIZE(ipipe_fmts))
+		/* If not found, use SGRBG10 as default */
+		if (i >= ARRAY_SIZE(ipipe_fmts))
 			fmt->code = MEDIA_BUS_FMT_SGRBG10_1X10;
 
 		/* Clamp the input size. */
 		fmt->width = clamp_t(u32, width, 1, 8192);
 		fmt->height = clamp_t(u32, height, 1, 8192);
 		fmt->colorspace = V4L2_COLORSPACE_SRGB;
-		अवरोध;
+		break;
 
-	हाल IPIPE_PAD_SOURCE_VP:
-		क्रमmat = __ipipe_get_क्रमmat(ipipe, cfg, IPIPE_PAD_SINK, which);
-		स_नकल(fmt, क्रमmat, माप(*fmt));
+	case IPIPE_PAD_SOURCE_VP:
+		format = __ipipe_get_format(ipipe, cfg, IPIPE_PAD_SINK, which);
+		memcpy(fmt, format, sizeof(*fmt));
 
 		fmt->code = MEDIA_BUS_FMT_UYVY8_1X16;
 		fmt->width = clamp_t(u32, width, 32, fmt->width);
 		fmt->height = clamp_t(u32, height, 32, fmt->height);
 		fmt->colorspace = V4L2_COLORSPACE_JPEG;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	fmt->field = V4L2_FIELD_NONE;
-पूर्ण
+}
 
 /*
- * ipipe_क्रमागत_mbus_code - Handle pixel क्रमmat क्रमागतeration
- * @sd     : poपूर्णांकer to v4l2 subdev काष्ठाure
+ * ipipe_enum_mbus_code - Handle pixel format enumeration
+ * @sd     : pointer to v4l2 subdev structure
  * @cfg    : V4L2 subdev pad config
- * @code   : poपूर्णांकer to v4l2_subdev_mbus_code_क्रमागत काष्ठाure
- * वापस -EINVAL or zero on success
+ * @code   : pointer to v4l2_subdev_mbus_code_enum structure
+ * return -EINVAL or zero on success
  */
-अटल पूर्णांक ipipe_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
-				काष्ठा v4l2_subdev_pad_config *cfg,
-				काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
-अणु
-	चयन (code->pad) अणु
-	हाल IPIPE_PAD_SINK:
-		अगर (code->index >= ARRAY_SIZE(ipipe_fmts))
-			वापस -EINVAL;
+static int ipipe_enum_mbus_code(struct v4l2_subdev *sd,
+				struct v4l2_subdev_pad_config *cfg,
+				struct v4l2_subdev_mbus_code_enum *code)
+{
+	switch (code->pad) {
+	case IPIPE_PAD_SINK:
+		if (code->index >= ARRAY_SIZE(ipipe_fmts))
+			return -EINVAL;
 
 		code->code = ipipe_fmts[code->index];
-		अवरोध;
+		break;
 
-	हाल IPIPE_PAD_SOURCE_VP:
-		/* FIXME: Forced क्रमmat conversion inside IPIPE ? */
-		अगर (code->index != 0)
-			वापस -EINVAL;
+	case IPIPE_PAD_SOURCE_VP:
+		/* FIXME: Forced format conversion inside IPIPE ? */
+		if (code->index != 0)
+			return -EINVAL;
 
 		code->code = MEDIA_BUS_FMT_UYVY8_1X16;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ipipe_क्रमागत_frame_size(काष्ठा v4l2_subdev *sd,
-				 काष्ठा v4l2_subdev_pad_config *cfg,
-				 काष्ठा v4l2_subdev_frame_size_क्रमागत *fse)
-अणु
-	काष्ठा iss_ipipe_device *ipipe = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt क्रमmat;
+static int ipipe_enum_frame_size(struct v4l2_subdev *sd,
+				 struct v4l2_subdev_pad_config *cfg,
+				 struct v4l2_subdev_frame_size_enum *fse)
+{
+	struct iss_ipipe_device *ipipe = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt format;
 
-	अगर (fse->index != 0)
-		वापस -EINVAL;
+	if (fse->index != 0)
+		return -EINVAL;
 
-	क्रमmat.code = fse->code;
-	क्रमmat.width = 1;
-	क्रमmat.height = 1;
-	ipipe_try_क्रमmat(ipipe, cfg, fse->pad, &क्रमmat, fse->which);
-	fse->min_width = क्रमmat.width;
-	fse->min_height = क्रमmat.height;
+	format.code = fse->code;
+	format.width = 1;
+	format.height = 1;
+	ipipe_try_format(ipipe, cfg, fse->pad, &format, fse->which);
+	fse->min_width = format.width;
+	fse->min_height = format.height;
 
-	अगर (क्रमmat.code != fse->code)
-		वापस -EINVAL;
+	if (format.code != fse->code)
+		return -EINVAL;
 
-	क्रमmat.code = fse->code;
-	क्रमmat.width = -1;
-	क्रमmat.height = -1;
-	ipipe_try_क्रमmat(ipipe, cfg, fse->pad, &क्रमmat, fse->which);
-	fse->max_width = क्रमmat.width;
-	fse->max_height = क्रमmat.height;
+	format.code = fse->code;
+	format.width = -1;
+	format.height = -1;
+	ipipe_try_format(ipipe, cfg, fse->pad, &format, fse->which);
+	fse->max_width = format.width;
+	fse->max_height = format.height;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * ipipe_get_क्रमmat - Retrieve the video क्रमmat on a pad
+ * ipipe_get_format - Retrieve the video format on a pad
  * @sd : ISP IPIPE V4L2 subdevice
  * @cfg: V4L2 subdev pad config
  * @fmt: Format
  *
- * Return 0 on success or -EINVAL अगर the pad is invalid or करोesn't correspond
- * to the क्रमmat type.
+ * Return 0 on success or -EINVAL if the pad is invalid or doesn't correspond
+ * to the format type.
  */
-अटल पूर्णांक ipipe_get_क्रमmat(काष्ठा v4l2_subdev *sd,
-			    काष्ठा v4l2_subdev_pad_config *cfg,
-			    काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा iss_ipipe_device *ipipe = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
+static int ipipe_get_format(struct v4l2_subdev *sd,
+			    struct v4l2_subdev_pad_config *cfg,
+			    struct v4l2_subdev_format *fmt)
+{
+	struct iss_ipipe_device *ipipe = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt *format;
 
-	क्रमmat = __ipipe_get_क्रमmat(ipipe, cfg, fmt->pad, fmt->which);
-	अगर (!क्रमmat)
-		वापस -EINVAL;
+	format = __ipipe_get_format(ipipe, cfg, fmt->pad, fmt->which);
+	if (!format)
+		return -EINVAL;
 
-	fmt->क्रमmat = *क्रमmat;
-	वापस 0;
-पूर्ण
+	fmt->format = *format;
+	return 0;
+}
 
 /*
- * ipipe_set_क्रमmat - Set the video क्रमmat on a pad
+ * ipipe_set_format - Set the video format on a pad
  * @sd : ISP IPIPE V4L2 subdevice
  * @cfg: V4L2 subdev pad config
  * @fmt: Format
  *
- * Return 0 on success or -EINVAL अगर the pad is invalid or करोesn't correspond
- * to the क्रमmat type.
+ * Return 0 on success or -EINVAL if the pad is invalid or doesn't correspond
+ * to the format type.
  */
-अटल पूर्णांक ipipe_set_क्रमmat(काष्ठा v4l2_subdev *sd,
-			    काष्ठा v4l2_subdev_pad_config *cfg,
-			    काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा iss_ipipe_device *ipipe = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
+static int ipipe_set_format(struct v4l2_subdev *sd,
+			    struct v4l2_subdev_pad_config *cfg,
+			    struct v4l2_subdev_format *fmt)
+{
+	struct iss_ipipe_device *ipipe = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt *format;
 
-	क्रमmat = __ipipe_get_क्रमmat(ipipe, cfg, fmt->pad, fmt->which);
-	अगर (!क्रमmat)
-		वापस -EINVAL;
+	format = __ipipe_get_format(ipipe, cfg, fmt->pad, fmt->which);
+	if (!format)
+		return -EINVAL;
 
-	ipipe_try_क्रमmat(ipipe, cfg, fmt->pad, &fmt->क्रमmat, fmt->which);
-	*क्रमmat = fmt->क्रमmat;
+	ipipe_try_format(ipipe, cfg, fmt->pad, &fmt->format, fmt->which);
+	*format = fmt->format;
 
-	/* Propagate the क्रमmat from sink to source */
-	अगर (fmt->pad == IPIPE_PAD_SINK) अणु
-		क्रमmat = __ipipe_get_क्रमmat(ipipe, cfg, IPIPE_PAD_SOURCE_VP,
+	/* Propagate the format from sink to source */
+	if (fmt->pad == IPIPE_PAD_SINK) {
+		format = __ipipe_get_format(ipipe, cfg, IPIPE_PAD_SOURCE_VP,
 					    fmt->which);
-		*क्रमmat = fmt->क्रमmat;
-		ipipe_try_क्रमmat(ipipe, cfg, IPIPE_PAD_SOURCE_VP, क्रमmat,
+		*format = fmt->format;
+		ipipe_try_format(ipipe, cfg, IPIPE_PAD_SOURCE_VP, format,
 				 fmt->which);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ipipe_link_validate(काष्ठा v4l2_subdev *sd, काष्ठा media_link *link,
-			       काष्ठा v4l2_subdev_क्रमmat *source_fmt,
-			       काष्ठा v4l2_subdev_क्रमmat *sink_fmt)
-अणु
-	/* Check अगर the two ends match */
-	अगर (source_fmt->क्रमmat.width != sink_fmt->क्रमmat.width ||
-	    source_fmt->क्रमmat.height != sink_fmt->क्रमmat.height)
-		वापस -EPIPE;
+static int ipipe_link_validate(struct v4l2_subdev *sd, struct media_link *link,
+			       struct v4l2_subdev_format *source_fmt,
+			       struct v4l2_subdev_format *sink_fmt)
+{
+	/* Check if the two ends match */
+	if (source_fmt->format.width != sink_fmt->format.width ||
+	    source_fmt->format.height != sink_fmt->format.height)
+		return -EPIPE;
 
-	अगर (source_fmt->क्रमmat.code != sink_fmt->क्रमmat.code)
-		वापस -EPIPE;
+	if (source_fmt->format.code != sink_fmt->format.code)
+		return -EPIPE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * ipipe_init_क्रमmats - Initialize क्रमmats on all pads
+ * ipipe_init_formats - Initialize formats on all pads
  * @sd: ISP IPIPE V4L2 subdevice
  * @fh: V4L2 subdev file handle
  *
- * Initialize all pad क्रमmats with शेष values. If fh is not शून्य, try
- * क्रमmats are initialized on the file handle. Otherwise active क्रमmats are
+ * Initialize all pad formats with default values. If fh is not NULL, try
+ * formats are initialized on the file handle. Otherwise active formats are
  * initialized on the device.
  */
-अटल पूर्णांक ipipe_init_क्रमmats(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_fh *fh)
-अणु
-	काष्ठा v4l2_subdev_क्रमmat क्रमmat;
+static int ipipe_init_formats(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
+{
+	struct v4l2_subdev_format format;
 
-	स_रखो(&क्रमmat, 0, माप(क्रमmat));
-	क्रमmat.pad = IPIPE_PAD_SINK;
-	क्रमmat.which = fh ? V4L2_SUBDEV_FORMAT_TRY : V4L2_SUBDEV_FORMAT_ACTIVE;
-	क्रमmat.क्रमmat.code = MEDIA_BUS_FMT_SGRBG10_1X10;
-	क्रमmat.क्रमmat.width = 4096;
-	क्रमmat.क्रमmat.height = 4096;
-	ipipe_set_क्रमmat(sd, fh ? fh->pad : शून्य, &क्रमmat);
+	memset(&format, 0, sizeof(format));
+	format.pad = IPIPE_PAD_SINK;
+	format.which = fh ? V4L2_SUBDEV_FORMAT_TRY : V4L2_SUBDEV_FORMAT_ACTIVE;
+	format.format.code = MEDIA_BUS_FMT_SGRBG10_1X10;
+	format.format.width = 4096;
+	format.format.height = 4096;
+	ipipe_set_format(sd, fh ? fh->pad : NULL, &format);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* V4L2 subdev video operations */
-अटल स्थिर काष्ठा v4l2_subdev_video_ops ipipe_v4l2_video_ops = अणु
+static const struct v4l2_subdev_video_ops ipipe_v4l2_video_ops = {
 	.s_stream = ipipe_set_stream,
-पूर्ण;
+};
 
 /* V4L2 subdev pad operations */
-अटल स्थिर काष्ठा v4l2_subdev_pad_ops ipipe_v4l2_pad_ops = अणु
-	.क्रमागत_mbus_code = ipipe_क्रमागत_mbus_code,
-	.क्रमागत_frame_size = ipipe_क्रमागत_frame_size,
-	.get_fmt = ipipe_get_क्रमmat,
-	.set_fmt = ipipe_set_क्रमmat,
+static const struct v4l2_subdev_pad_ops ipipe_v4l2_pad_ops = {
+	.enum_mbus_code = ipipe_enum_mbus_code,
+	.enum_frame_size = ipipe_enum_frame_size,
+	.get_fmt = ipipe_get_format,
+	.set_fmt = ipipe_set_format,
 	.link_validate = ipipe_link_validate,
-पूर्ण;
+};
 
 /* V4L2 subdev operations */
-अटल स्थिर काष्ठा v4l2_subdev_ops ipipe_v4l2_ops = अणु
+static const struct v4l2_subdev_ops ipipe_v4l2_ops = {
 	.video = &ipipe_v4l2_video_ops,
 	.pad = &ipipe_v4l2_pad_ops,
-पूर्ण;
+};
 
-/* V4L2 subdev पूर्णांकernal operations */
-अटल स्थिर काष्ठा v4l2_subdev_पूर्णांकernal_ops ipipe_v4l2_पूर्णांकernal_ops = अणु
-	.खोलो = ipipe_init_क्रमmats,
-पूर्ण;
+/* V4L2 subdev internal operations */
+static const struct v4l2_subdev_internal_ops ipipe_v4l2_internal_ops = {
+	.open = ipipe_init_formats,
+};
 
 /* -----------------------------------------------------------------------------
  * Media entity operations
@@ -434,58 +433,58 @@ ipipe_try_क्रमmat(काष्ठा iss_ipipe_device *ipipe,
  * @remote: Pad at the remote end of the link
  * @flags: Link flags
  *
- * वापस -EINVAL or zero on success
+ * return -EINVAL or zero on success
  */
-अटल पूर्णांक ipipe_link_setup(काष्ठा media_entity *entity,
-			    स्थिर काष्ठा media_pad *local,
-			    स्थिर काष्ठा media_pad *remote, u32 flags)
-अणु
-	काष्ठा v4l2_subdev *sd = media_entity_to_v4l2_subdev(entity);
-	काष्ठा iss_ipipe_device *ipipe = v4l2_get_subdevdata(sd);
-	काष्ठा iss_device *iss = to_iss_device(ipipe);
+static int ipipe_link_setup(struct media_entity *entity,
+			    const struct media_pad *local,
+			    const struct media_pad *remote, u32 flags)
+{
+	struct v4l2_subdev *sd = media_entity_to_v4l2_subdev(entity);
+	struct iss_ipipe_device *ipipe = v4l2_get_subdevdata(sd);
+	struct iss_device *iss = to_iss_device(ipipe);
 
-	अगर (!is_media_entity_v4l2_subdev(remote->entity))
-		वापस -EINVAL;
+	if (!is_media_entity_v4l2_subdev(remote->entity))
+		return -EINVAL;
 
-	चयन (local->index) अणु
-	हाल IPIPE_PAD_SINK:
+	switch (local->index) {
+	case IPIPE_PAD_SINK:
 		/* Read from IPIPEIF. */
-		अगर (!(flags & MEDIA_LNK_FL_ENABLED)) अणु
+		if (!(flags & MEDIA_LNK_FL_ENABLED)) {
 			ipipe->input = IPIPE_INPUT_NONE;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (ipipe->input != IPIPE_INPUT_NONE)
-			वापस -EBUSY;
+		if (ipipe->input != IPIPE_INPUT_NONE)
+			return -EBUSY;
 
-		अगर (remote->entity == &iss->ipipeअगर.subdev.entity)
+		if (remote->entity == &iss->ipipeif.subdev.entity)
 			ipipe->input = IPIPE_INPUT_IPIPEIF;
 
-		अवरोध;
+		break;
 
-	हाल IPIPE_PAD_SOURCE_VP:
+	case IPIPE_PAD_SOURCE_VP:
 		/* Send to RESIZER */
-		अगर (flags & MEDIA_LNK_FL_ENABLED) अणु
-			अगर (ipipe->output & ~IPIPE_OUTPUT_VP)
-				वापस -EBUSY;
+		if (flags & MEDIA_LNK_FL_ENABLED) {
+			if (ipipe->output & ~IPIPE_OUTPUT_VP)
+				return -EBUSY;
 			ipipe->output |= IPIPE_OUTPUT_VP;
-		पूर्ण अन्यथा अणु
+		} else {
 			ipipe->output &= ~IPIPE_OUTPUT_VP;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* media operations */
-अटल स्थिर काष्ठा media_entity_operations ipipe_media_ops = अणु
+static const struct media_entity_operations ipipe_media_ops = {
 	.link_setup = ipipe_link_setup,
 	.link_validate = v4l2_subdev_link_validate,
-पूर्ण;
+};
 
 /*
  * ipipe_init_entities - Initialize V4L2 subdev and media entity
@@ -493,19 +492,19 @@ ipipe_try_क्रमmat(काष्ठा iss_ipipe_device *ipipe,
  *
  * Return 0 on success and a negative error code on failure.
  */
-अटल पूर्णांक ipipe_init_entities(काष्ठा iss_ipipe_device *ipipe)
-अणु
-	काष्ठा v4l2_subdev *sd = &ipipe->subdev;
-	काष्ठा media_pad *pads = ipipe->pads;
-	काष्ठा media_entity *me = &sd->entity;
-	पूर्णांक ret;
+static int ipipe_init_entities(struct iss_ipipe_device *ipipe)
+{
+	struct v4l2_subdev *sd = &ipipe->subdev;
+	struct media_pad *pads = ipipe->pads;
+	struct media_entity *me = &sd->entity;
+	int ret;
 
 	ipipe->input = IPIPE_INPUT_NONE;
 
 	v4l2_subdev_init(sd, &ipipe_v4l2_ops);
-	sd->पूर्णांकernal_ops = &ipipe_v4l2_पूर्णांकernal_ops;
-	strscpy(sd->name, "OMAP4 ISS ISP IPIPE", माप(sd->name));
-	sd->grp_id = BIT(16);	/* group ID क्रम iss subdevs */
+	sd->internal_ops = &ipipe_v4l2_internal_ops;
+	strscpy(sd->name, "OMAP4 ISS ISP IPIPE", sizeof(sd->name));
+	sd->grp_id = BIT(16);	/* group ID for iss subdevs */
 	v4l2_set_subdevdata(sd, ipipe);
 	sd->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
 
@@ -514,35 +513,35 @@ ipipe_try_क्रमmat(काष्ठा iss_ipipe_device *ipipe,
 
 	me->ops = &ipipe_media_ops;
 	ret = media_entity_pads_init(me, IPIPE_PADS_NUM, pads);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ipipe_init_क्रमmats(sd, शून्य);
+	ipipe_init_formats(sd, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम omap4iss_ipipe_unरेजिस्टर_entities(काष्ठा iss_ipipe_device *ipipe)
-अणु
-	v4l2_device_unरेजिस्टर_subdev(&ipipe->subdev);
-पूर्ण
+void omap4iss_ipipe_unregister_entities(struct iss_ipipe_device *ipipe)
+{
+	v4l2_device_unregister_subdev(&ipipe->subdev);
+}
 
-पूर्णांक omap4iss_ipipe_रेजिस्टर_entities(काष्ठा iss_ipipe_device *ipipe,
-				     काष्ठा v4l2_device *vdev)
-अणु
-	पूर्णांक ret;
+int omap4iss_ipipe_register_entities(struct iss_ipipe_device *ipipe,
+				     struct v4l2_device *vdev)
+{
+	int ret;
 
 	/* Register the subdev and video node. */
-	ret = v4l2_device_रेजिस्टर_subdev(vdev, &ipipe->subdev);
-	अगर (ret < 0)
-		जाओ error;
+	ret = v4l2_device_register_subdev(vdev, &ipipe->subdev);
+	if (ret < 0)
+		goto error;
 
-	वापस 0;
+	return 0;
 
 error:
-	omap4iss_ipipe_unरेजिस्टर_entities(ipipe);
-	वापस ret;
-पूर्ण
+	omap4iss_ipipe_unregister_entities(ipipe);
+	return ret;
+}
 
 /* -----------------------------------------------------------------------------
  * ISP IPIPE initialisation and cleanup
@@ -550,29 +549,29 @@ error:
 
 /*
  * omap4iss_ipipe_init - IPIPE module initialization.
- * @iss: Device poपूर्णांकer specअगरic to the OMAP4 ISS.
+ * @iss: Device pointer specific to the OMAP4 ISS.
  *
- * TODO: Get the initialisation values from platक्रमm data.
+ * TODO: Get the initialisation values from platform data.
  *
  * Return 0 on success or a negative error code otherwise.
  */
-पूर्णांक omap4iss_ipipe_init(काष्ठा iss_device *iss)
-अणु
-	काष्ठा iss_ipipe_device *ipipe = &iss->ipipe;
+int omap4iss_ipipe_init(struct iss_device *iss)
+{
+	struct iss_ipipe_device *ipipe = &iss->ipipe;
 
 	ipipe->state = ISS_PIPELINE_STREAM_STOPPED;
-	init_रुकोqueue_head(&ipipe->रुको);
+	init_waitqueue_head(&ipipe->wait);
 
-	वापस ipipe_init_entities(ipipe);
-पूर्ण
+	return ipipe_init_entities(ipipe);
+}
 
 /*
  * omap4iss_ipipe_cleanup - IPIPE module cleanup.
- * @iss: Device poपूर्णांकer specअगरic to the OMAP4 ISS.
+ * @iss: Device pointer specific to the OMAP4 ISS.
  */
-व्योम omap4iss_ipipe_cleanup(काष्ठा iss_device *iss)
-अणु
-	काष्ठा iss_ipipe_device *ipipe = &iss->ipipe;
+void omap4iss_ipipe_cleanup(struct iss_device *iss)
+{
+	struct iss_ipipe_device *ipipe = &iss->ipipe;
 
 	media_entity_cleanup(&ipipe->subdev.entity);
-पूर्ण
+}

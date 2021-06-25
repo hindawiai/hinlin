@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * PCI Backend - Provides a Virtual PCI bus (with real devices)
  *               to the frontend
@@ -7,129 +6,129 @@
  *   Author: Ryan Wilson <hap9@epoch.ncsc.mil>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#घोषणा dev_fmt pr_fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define dev_fmt pr_fmt
 
-#समावेश <linux/list.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/mutex.h>
-#समावेश "pciback.h"
+#include <linux/list.h>
+#include <linux/slab.h>
+#include <linux/pci.h>
+#include <linux/mutex.h>
+#include "pciback.h"
 
-#घोषणा PCI_SLOT_MAX 32
+#define PCI_SLOT_MAX 32
 
-काष्ठा vpci_dev_data अणु
-	/* Access to dev_list must be रक्षित by lock */
-	काष्ठा list_head dev_list[PCI_SLOT_MAX];
-	काष्ठा mutex lock;
-पूर्ण;
+struct vpci_dev_data {
+	/* Access to dev_list must be protected by lock */
+	struct list_head dev_list[PCI_SLOT_MAX];
+	struct mutex lock;
+};
 
-अटल अंतरभूत काष्ठा list_head *list_first(काष्ठा list_head *head)
-अणु
-	वापस head->next;
-पूर्ण
+static inline struct list_head *list_first(struct list_head *head)
+{
+	return head->next;
+}
 
-अटल काष्ठा pci_dev *__xen_pcibk_get_pci_dev(काष्ठा xen_pcibk_device *pdev,
-					       अचिन्हित पूर्णांक करोमुख्य,
-					       अचिन्हित पूर्णांक bus,
-					       अचिन्हित पूर्णांक devfn)
-अणु
-	काष्ठा pci_dev_entry *entry;
-	काष्ठा pci_dev *dev = शून्य;
-	काष्ठा vpci_dev_data *vpci_dev = pdev->pci_dev_data;
+static struct pci_dev *__xen_pcibk_get_pci_dev(struct xen_pcibk_device *pdev,
+					       unsigned int domain,
+					       unsigned int bus,
+					       unsigned int devfn)
+{
+	struct pci_dev_entry *entry;
+	struct pci_dev *dev = NULL;
+	struct vpci_dev_data *vpci_dev = pdev->pci_dev_data;
 
-	अगर (करोमुख्य != 0 || bus != 0)
-		वापस शून्य;
+	if (domain != 0 || bus != 0)
+		return NULL;
 
-	अगर (PCI_SLOT(devfn) < PCI_SLOT_MAX) अणु
+	if (PCI_SLOT(devfn) < PCI_SLOT_MAX) {
 		mutex_lock(&vpci_dev->lock);
 
-		list_क्रम_each_entry(entry,
+		list_for_each_entry(entry,
 				    &vpci_dev->dev_list[PCI_SLOT(devfn)],
-				    list) अणु
-			अगर (PCI_FUNC(entry->dev->devfn) == PCI_FUNC(devfn)) अणु
+				    list) {
+			if (PCI_FUNC(entry->dev->devfn) == PCI_FUNC(devfn)) {
 				dev = entry->dev;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
 		mutex_unlock(&vpci_dev->lock);
-	पूर्ण
-	वापस dev;
-पूर्ण
+	}
+	return dev;
+}
 
-अटल अंतरभूत पूर्णांक match_slot(काष्ठा pci_dev *l, काष्ठा pci_dev *r)
-अणु
-	अगर (pci_करोमुख्य_nr(l->bus) == pci_करोमुख्य_nr(r->bus)
+static inline int match_slot(struct pci_dev *l, struct pci_dev *r)
+{
+	if (pci_domain_nr(l->bus) == pci_domain_nr(r->bus)
 	    && l->bus == r->bus && PCI_SLOT(l->devfn) == PCI_SLOT(r->devfn))
-		वापस 1;
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __xen_pcibk_add_pci_dev(काष्ठा xen_pcibk_device *pdev,
-				   काष्ठा pci_dev *dev, पूर्णांक devid,
+static int __xen_pcibk_add_pci_dev(struct xen_pcibk_device *pdev,
+				   struct pci_dev *dev, int devid,
 				   publish_pci_dev_cb publish_cb)
-अणु
-	पूर्णांक err = 0, slot, func = PCI_FUNC(dev->devfn);
-	काष्ठा pci_dev_entry *t, *dev_entry;
-	काष्ठा vpci_dev_data *vpci_dev = pdev->pci_dev_data;
+{
+	int err = 0, slot, func = PCI_FUNC(dev->devfn);
+	struct pci_dev_entry *t, *dev_entry;
+	struct vpci_dev_data *vpci_dev = pdev->pci_dev_data;
 
-	अगर ((dev->class >> 24) == PCI_BASE_CLASS_BRIDGE) अणु
+	if ((dev->class >> 24) == PCI_BASE_CLASS_BRIDGE) {
 		err = -EFAULT;
 		xenbus_dev_fatal(pdev->xdev, err,
 				 "Can't export bridges on the virtual PCI bus");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	dev_entry = kदो_स्मृति(माप(*dev_entry), GFP_KERNEL);
-	अगर (!dev_entry) अणु
+	dev_entry = kmalloc(sizeof(*dev_entry), GFP_KERNEL);
+	if (!dev_entry) {
 		err = -ENOMEM;
 		xenbus_dev_fatal(pdev->xdev, err,
 				 "Error adding entry to virtual PCI bus");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	dev_entry->dev = dev;
 
 	mutex_lock(&vpci_dev->lock);
 
 	/*
-	 * Keep multi-function devices together on the भव PCI bus, except
-	 * that we want to keep भव functions at func 0 on their own. They
+	 * Keep multi-function devices together on the virtual PCI bus, except
+	 * that we want to keep virtual functions at func 0 on their own. They
 	 * aren't multi-function devices and hence their presence at func 0
 	 * may cause guests to not scan the other functions.
 	 */
-	अगर (!dev->is_virtfn || func) अणु
-		क्रम (slot = 0; slot < PCI_SLOT_MAX; slot++) अणु
-			अगर (list_empty(&vpci_dev->dev_list[slot]))
-				जारी;
+	if (!dev->is_virtfn || func) {
+		for (slot = 0; slot < PCI_SLOT_MAX; slot++) {
+			if (list_empty(&vpci_dev->dev_list[slot]))
+				continue;
 
 			t = list_entry(list_first(&vpci_dev->dev_list[slot]),
-				       काष्ठा pci_dev_entry, list);
-			अगर (t->dev->is_virtfn && !PCI_FUNC(t->dev->devfn))
-				जारी;
+				       struct pci_dev_entry, list);
+			if (t->dev->is_virtfn && !PCI_FUNC(t->dev->devfn))
+				continue;
 
-			अगर (match_slot(dev, t->dev)) अणु
+			if (match_slot(dev, t->dev)) {
 				dev_info(&dev->dev, "vpci: assign to virtual slot %d func %d\n",
 					 slot, func);
 				list_add_tail(&dev_entry->list,
 					      &vpci_dev->dev_list[slot]);
-				जाओ unlock;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto unlock;
+			}
+		}
+	}
 
-	/* Assign to a new slot on the भव PCI bus */
-	क्रम (slot = 0; slot < PCI_SLOT_MAX; slot++) अणु
-		अगर (list_empty(&vpci_dev->dev_list[slot])) अणु
+	/* Assign to a new slot on the virtual PCI bus */
+	for (slot = 0; slot < PCI_SLOT_MAX; slot++) {
+		if (list_empty(&vpci_dev->dev_list[slot])) {
 			dev_info(&dev->dev, "vpci: assign to virtual slot %d\n",
 				 slot);
 			list_add_tail(&dev_entry->list,
 				      &vpci_dev->dev_list[slot]);
-			जाओ unlock;
-		पूर्ण
-	पूर्ण
+			goto unlock;
+		}
+	}
 
 	err = -ENOMEM;
 	xenbus_dev_fatal(pdev->xdev, err,
@@ -139,131 +138,131 @@ unlock:
 	mutex_unlock(&vpci_dev->lock);
 
 	/* Publish this device. */
-	अगर (!err)
+	if (!err)
 		err = publish_cb(pdev, 0, 0, PCI_DEVFN(slot, func), devid);
-	अन्यथा
-		kमुक्त(dev_entry);
+	else
+		kfree(dev_entry);
 
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __xen_pcibk_release_pci_dev(काष्ठा xen_pcibk_device *pdev,
-					काष्ठा pci_dev *dev, bool lock)
-अणु
-	पूर्णांक slot;
-	काष्ठा vpci_dev_data *vpci_dev = pdev->pci_dev_data;
-	काष्ठा pci_dev *found_dev = शून्य;
+static void __xen_pcibk_release_pci_dev(struct xen_pcibk_device *pdev,
+					struct pci_dev *dev, bool lock)
+{
+	int slot;
+	struct vpci_dev_data *vpci_dev = pdev->pci_dev_data;
+	struct pci_dev *found_dev = NULL;
 
 	mutex_lock(&vpci_dev->lock);
 
-	क्रम (slot = 0; slot < PCI_SLOT_MAX; slot++) अणु
-		काष्ठा pci_dev_entry *e;
+	for (slot = 0; slot < PCI_SLOT_MAX; slot++) {
+		struct pci_dev_entry *e;
 
-		list_क्रम_each_entry(e, &vpci_dev->dev_list[slot], list) अणु
-			अगर (e->dev == dev) अणु
+		list_for_each_entry(e, &vpci_dev->dev_list[slot], list) {
+			if (e->dev == dev) {
 				list_del(&e->list);
 				found_dev = e->dev;
-				kमुक्त(e);
-				जाओ out;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				kfree(e);
+				goto out;
+			}
+		}
+	}
 
 out:
 	mutex_unlock(&vpci_dev->lock);
 
-	अगर (found_dev) अणु
-		अगर (lock)
+	if (found_dev) {
+		if (lock)
 			device_lock(&found_dev->dev);
 		pcistub_put_pci_dev(found_dev);
-		अगर (lock)
+		if (lock)
 			device_unlock(&found_dev->dev);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक __xen_pcibk_init_devices(काष्ठा xen_pcibk_device *pdev)
-अणु
-	पूर्णांक slot;
-	काष्ठा vpci_dev_data *vpci_dev;
+static int __xen_pcibk_init_devices(struct xen_pcibk_device *pdev)
+{
+	int slot;
+	struct vpci_dev_data *vpci_dev;
 
-	vpci_dev = kदो_स्मृति(माप(*vpci_dev), GFP_KERNEL);
-	अगर (!vpci_dev)
-		वापस -ENOMEM;
+	vpci_dev = kmalloc(sizeof(*vpci_dev), GFP_KERNEL);
+	if (!vpci_dev)
+		return -ENOMEM;
 
 	mutex_init(&vpci_dev->lock);
 
-	क्रम (slot = 0; slot < PCI_SLOT_MAX; slot++)
+	for (slot = 0; slot < PCI_SLOT_MAX; slot++)
 		INIT_LIST_HEAD(&vpci_dev->dev_list[slot]);
 
 	pdev->pci_dev_data = vpci_dev;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __xen_pcibk_publish_pci_roots(काष्ठा xen_pcibk_device *pdev,
+static int __xen_pcibk_publish_pci_roots(struct xen_pcibk_device *pdev,
 					 publish_pci_root_cb publish_cb)
-अणु
+{
 	/* The Virtual PCI bus has only one root */
-	वापस publish_cb(pdev, 0, 0);
-पूर्ण
+	return publish_cb(pdev, 0, 0);
+}
 
-अटल व्योम __xen_pcibk_release_devices(काष्ठा xen_pcibk_device *pdev)
-अणु
-	पूर्णांक slot;
-	काष्ठा vpci_dev_data *vpci_dev = pdev->pci_dev_data;
+static void __xen_pcibk_release_devices(struct xen_pcibk_device *pdev)
+{
+	int slot;
+	struct vpci_dev_data *vpci_dev = pdev->pci_dev_data;
 
-	क्रम (slot = 0; slot < PCI_SLOT_MAX; slot++) अणु
-		काष्ठा pci_dev_entry *e, *पंचांगp;
-		list_क्रम_each_entry_safe(e, पंचांगp, &vpci_dev->dev_list[slot],
-					 list) अणु
-			काष्ठा pci_dev *dev = e->dev;
+	for (slot = 0; slot < PCI_SLOT_MAX; slot++) {
+		struct pci_dev_entry *e, *tmp;
+		list_for_each_entry_safe(e, tmp, &vpci_dev->dev_list[slot],
+					 list) {
+			struct pci_dev *dev = e->dev;
 			list_del(&e->list);
 			device_lock(&dev->dev);
 			pcistub_put_pci_dev(dev);
 			device_unlock(&dev->dev);
-			kमुक्त(e);
-		पूर्ण
-	पूर्ण
+			kfree(e);
+		}
+	}
 
-	kमुक्त(vpci_dev);
-	pdev->pci_dev_data = शून्य;
-पूर्ण
+	kfree(vpci_dev);
+	pdev->pci_dev_data = NULL;
+}
 
-अटल पूर्णांक __xen_pcibk_get_pcअगरront_dev(काष्ठा pci_dev *pcidev,
-					काष्ठा xen_pcibk_device *pdev,
-					अचिन्हित पूर्णांक *करोमुख्य, अचिन्हित पूर्णांक *bus,
-					अचिन्हित पूर्णांक *devfn)
-अणु
-	काष्ठा pci_dev_entry *entry;
-	काष्ठा vpci_dev_data *vpci_dev = pdev->pci_dev_data;
-	पूर्णांक found = 0, slot;
+static int __xen_pcibk_get_pcifront_dev(struct pci_dev *pcidev,
+					struct xen_pcibk_device *pdev,
+					unsigned int *domain, unsigned int *bus,
+					unsigned int *devfn)
+{
+	struct pci_dev_entry *entry;
+	struct vpci_dev_data *vpci_dev = pdev->pci_dev_data;
+	int found = 0, slot;
 
 	mutex_lock(&vpci_dev->lock);
-	क्रम (slot = 0; slot < PCI_SLOT_MAX; slot++) अणु
-		list_क्रम_each_entry(entry,
+	for (slot = 0; slot < PCI_SLOT_MAX; slot++) {
+		list_for_each_entry(entry,
 			    &vpci_dev->dev_list[slot],
-			    list) अणु
-			अगर (entry->dev == pcidev) अणु
+			    list) {
+			if (entry->dev == pcidev) {
 				found = 1;
-				*करोमुख्य = 0;
+				*domain = 0;
 				*bus = 0;
 				*devfn = PCI_DEVFN(slot,
 					 PCI_FUNC(pcidev->devfn));
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	mutex_unlock(&vpci_dev->lock);
-	वापस found;
-पूर्ण
+	return found;
+}
 
-स्थिर काष्ठा xen_pcibk_backend xen_pcibk_vpci_backend = अणु
+const struct xen_pcibk_backend xen_pcibk_vpci_backend = {
 	.name		= "vpci",
 	.init		= __xen_pcibk_init_devices,
-	.मुक्त		= __xen_pcibk_release_devices,
-	.find		= __xen_pcibk_get_pcअगरront_dev,
+	.free		= __xen_pcibk_release_devices,
+	.find		= __xen_pcibk_get_pcifront_dev,
 	.publish	= __xen_pcibk_publish_pci_roots,
 	.release	= __xen_pcibk_release_pci_dev,
 	.add		= __xen_pcibk_add_pci_dev,
 	.get		= __xen_pcibk_get_pci_dev,
-पूर्ण;
+};

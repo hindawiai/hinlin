@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर !defined(_TRACE_KVM_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_KVM_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#if !defined(_TRACE_KVM_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_KVM_H
 
-#समावेश <linux/tracepoपूर्णांक.h>
+#include <linux/tracepoint.h>
 
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM kvm
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM kvm
 
 /*
- * Tracepoपूर्णांक क्रम guest mode entry.
+ * Tracepoint for guest mode entry.
  */
 TRACE_EVENT(kvm_ppc_instr,
-	TP_PROTO(अचिन्हित पूर्णांक inst, अचिन्हित दीर्घ _pc, अचिन्हित पूर्णांक emulate),
+	TP_PROTO(unsigned int inst, unsigned long _pc, unsigned int emulate),
 	TP_ARGS(inst, _pc, emulate),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित पूर्णांक,	inst		)
-		__field(	अचिन्हित दीर्घ,	pc		)
-		__field(	अचिन्हित पूर्णांक,	emulate		)
+		__field(	unsigned int,	inst		)
+		__field(	unsigned long,	pc		)
+		__field(	unsigned int,	emulate		)
 	),
 
 	TP_fast_assign(
@@ -27,36 +26,36 @@ TRACE_EVENT(kvm_ppc_instr,
 		__entry->emulate	= emulate;
 	),
 
-	TP_prपूर्णांकk("inst %u pc 0x%lx emulate %u\n",
+	TP_printk("inst %u pc 0x%lx emulate %u\n",
 		  __entry->inst, __entry->pc, __entry->emulate)
 );
 
 TRACE_EVENT(kvm_stlb_inval,
-	TP_PROTO(अचिन्हित पूर्णांक stlb_index),
+	TP_PROTO(unsigned int stlb_index),
 	TP_ARGS(stlb_index),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित पूर्णांक,	stlb_index	)
+		__field(	unsigned int,	stlb_index	)
 	),
 
 	TP_fast_assign(
 		__entry->stlb_index	= stlb_index;
 	),
 
-	TP_prपूर्णांकk("stlb_index %u", __entry->stlb_index)
+	TP_printk("stlb_index %u", __entry->stlb_index)
 );
 
-TRACE_EVENT(kvm_stlb_ग_लिखो,
-	TP_PROTO(अचिन्हित पूर्णांक victim, अचिन्हित पूर्णांक tid, अचिन्हित पूर्णांक word0,
-		 अचिन्हित पूर्णांक word1, अचिन्हित पूर्णांक word2),
+TRACE_EVENT(kvm_stlb_write,
+	TP_PROTO(unsigned int victim, unsigned int tid, unsigned int word0,
+		 unsigned int word1, unsigned int word2),
 	TP_ARGS(victim, tid, word0, word1, word2),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित पूर्णांक,	victim		)
-		__field(	अचिन्हित पूर्णांक,	tid		)
-		__field(	अचिन्हित पूर्णांक,	word0		)
-		__field(	अचिन्हित पूर्णांक,	word1		)
-		__field(	अचिन्हित पूर्णांक,	word2		)
+		__field(	unsigned int,	victim		)
+		__field(	unsigned int,	tid		)
+		__field(	unsigned int,	word0		)
+		__field(	unsigned int,	word1		)
+		__field(	unsigned int,	word2		)
 	),
 
 	TP_fast_assign(
@@ -67,22 +66,22 @@ TRACE_EVENT(kvm_stlb_ग_लिखो,
 		__entry->word2		= word2;
 	),
 
-	TP_prपूर्णांकk("victim %u tid %u w0 %u w1 %u w2 %u",
+	TP_printk("victim %u tid %u w0 %u w1 %u w2 %u",
 		__entry->victim, __entry->tid, __entry->word0,
 		__entry->word1, __entry->word2)
 );
 
-TRACE_EVENT(kvm_gtlb_ग_लिखो,
-	TP_PROTO(अचिन्हित पूर्णांक gtlb_index, अचिन्हित पूर्णांक tid, अचिन्हित पूर्णांक word0,
-		 अचिन्हित पूर्णांक word1, अचिन्हित पूर्णांक word2),
+TRACE_EVENT(kvm_gtlb_write,
+	TP_PROTO(unsigned int gtlb_index, unsigned int tid, unsigned int word0,
+		 unsigned int word1, unsigned int word2),
 	TP_ARGS(gtlb_index, tid, word0, word1, word2),
 
 	TP_STRUCT__entry(
-		__field(	अचिन्हित पूर्णांक,	gtlb_index	)
-		__field(	अचिन्हित पूर्णांक,	tid		)
-		__field(	अचिन्हित पूर्णांक,	word0		)
-		__field(	अचिन्हित पूर्णांक,	word1		)
-		__field(	अचिन्हित पूर्णांक,	word2		)
+		__field(	unsigned int,	gtlb_index	)
+		__field(	unsigned int,	tid		)
+		__field(	unsigned int,	word0		)
+		__field(	unsigned int,	word1		)
+		__field(	unsigned int,	word2		)
 	),
 
 	TP_fast_assign(
@@ -93,13 +92,13 @@ TRACE_EVENT(kvm_gtlb_ग_लिखो,
 		__entry->word2		= word2;
 	),
 
-	TP_prपूर्णांकk("gtlb_index %u tid %u w0 %u w1 %u w2 %u",
+	TP_printk("gtlb_index %u tid %u w0 %u w1 %u w2 %u",
 		__entry->gtlb_index, __entry->tid, __entry->word0,
 		__entry->word1, __entry->word2)
 );
 
 TRACE_EVENT(kvm_check_requests,
-	TP_PROTO(काष्ठा kvm_vcpu *vcpu),
+	TP_PROTO(struct kvm_vcpu *vcpu),
 	TP_ARGS(vcpu),
 
 	TP_STRUCT__entry(
@@ -112,17 +111,17 @@ TRACE_EVENT(kvm_check_requests,
 		__entry->requests	= vcpu->requests;
 	),
 
-	TP_prपूर्णांकk("vcpu=%x requests=%x",
+	TP_printk("vcpu=%x requests=%x",
 		__entry->cpu_nr, __entry->requests)
 );
 
-#पूर्ण_अगर /* _TRACE_KVM_H */
+#endif /* _TRACE_KVM_H */
 
 /* This part must be outside protection */
-#अघोषित TRACE_INCLUDE_PATH
-#अघोषित TRACE_INCLUDE_खाता
+#undef TRACE_INCLUDE_PATH
+#undef TRACE_INCLUDE_FILE
 
-#घोषणा TRACE_INCLUDE_PATH .
-#घोषणा TRACE_INCLUDE_खाता trace
+#define TRACE_INCLUDE_PATH .
+#define TRACE_INCLUDE_FILE trace
 
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

@@ -1,18 +1,17 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Michael MIC implementation - optimized क्रम TKIP MIC operations
+ * Michael MIC implementation - optimized for TKIP MIC operations
  * Copyright 2002-2003, Instant802 Networks, Inc.
  */
-#समावेश <linux/types.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/ieee80211.h>
-#समावेश <यंत्र/unaligned.h>
+#include <linux/types.h>
+#include <linux/bitops.h>
+#include <linux/ieee80211.h>
+#include <asm/unaligned.h>
 
-#समावेश "michael.h"
+#include "michael.h"
 
-अटल व्योम michael_block(काष्ठा michael_mic_ctx *mctx, u32 val)
-अणु
+static void michael_block(struct michael_mic_ctx *mctx, u32 val)
+{
 	mctx->l ^= val;
 	mctx->r ^= rol32(mctx->l, 17);
 	mctx->l += mctx->r;
@@ -23,25 +22,25 @@
 	mctx->l += mctx->r;
 	mctx->r ^= ror32(mctx->l, 2);
 	mctx->l += mctx->r;
-पूर्ण
+}
 
-अटल व्योम michael_mic_hdr(काष्ठा michael_mic_ctx *mctx, स्थिर u8 *key,
-			    काष्ठा ieee80211_hdr *hdr)
-अणु
+static void michael_mic_hdr(struct michael_mic_ctx *mctx, const u8 *key,
+			    struct ieee80211_hdr *hdr)
+{
 	u8 *da, *sa, tid;
 
 	da = ieee80211_get_DA(hdr);
 	sa = ieee80211_get_SA(hdr);
-	अगर (ieee80211_is_data_qos(hdr->frame_control))
+	if (ieee80211_is_data_qos(hdr->frame_control))
 		tid = ieee80211_get_tid(hdr);
-	अन्यथा
+	else
 		tid = 0;
 
 	mctx->l = get_unaligned_le32(key);
 	mctx->r = get_unaligned_le32(key + 4);
 
 	/*
-	 * A pseuकरो header (DA, SA, Priority, 0, 0, 0) is used in Michael MIC
+	 * A pseudo header (DA, SA, Priority, 0, 0, 0) is used in Michael MIC
 	 * calculation, but it is _not_ transmitted
 	 */
 	michael_block(mctx, get_unaligned_le32(da));
@@ -49,14 +48,14 @@
 			    (get_unaligned_le16(sa) << 16));
 	michael_block(mctx, get_unaligned_le32(&sa[2]));
 	michael_block(mctx, tid);
-पूर्ण
+}
 
-व्योम michael_mic(स्थिर u8 *key, काष्ठा ieee80211_hdr *hdr,
-		 स्थिर u8 *data, माप_प्रकार data_len, u8 *mic)
-अणु
+void michael_mic(const u8 *key, struct ieee80211_hdr *hdr,
+		 const u8 *data, size_t data_len, u8 *mic)
+{
 	u32 val;
-	माप_प्रकार block, blocks, left;
-	काष्ठा michael_mic_ctx mctx;
+	size_t block, blocks, left;
+	struct michael_mic_ctx mctx;
 
 	michael_mic_hdr(&mctx, key, hdr);
 
@@ -64,21 +63,21 @@
 	blocks = data_len / 4;
 	left = data_len % 4;
 
-	क्रम (block = 0; block < blocks; block++)
+	for (block = 0; block < blocks; block++)
 		michael_block(&mctx, get_unaligned_le32(&data[block * 4]));
 
 	/* Partial block of 0..3 bytes and padding: 0x5a + 4..7 zeros to make
 	 * total length a multiple of 4. */
 	val = 0x5a;
-	जबतक (left > 0) अणु
+	while (left > 0) {
 		val <<= 8;
 		left--;
 		val |= data[blocks * 4 + left];
-	पूर्ण
+	}
 
 	michael_block(&mctx, val);
 	michael_block(&mctx, 0);
 
 	put_unaligned_le32(mctx.l, mic);
 	put_unaligned_le32(mctx.r, mic + 4);
-पूर्ण
+}

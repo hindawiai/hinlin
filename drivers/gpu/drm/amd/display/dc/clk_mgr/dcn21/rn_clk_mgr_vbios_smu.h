@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,19 +23,19 @@
  *
  */
 
-#अगर_अघोषित DAL_DC_RN_CLK_MGR_VBIOS_SMU_H_
-#घोषणा DAL_DC_RN_CLK_MGR_VBIOS_SMU_H_
+#ifndef DAL_DC_RN_CLK_MGR_VBIOS_SMU_H_
+#define DAL_DC_RN_CLK_MGR_VBIOS_SMU_H_
 
-पूर्णांक rn_vbios_smu_get_smu_version(काष्ठा clk_mgr_पूर्णांकernal *clk_mgr);
-पूर्णांक rn_vbios_smu_set_dispclk(काष्ठा clk_mgr_पूर्णांकernal *clk_mgr, पूर्णांक requested_dispclk_khz);
-पूर्णांक rn_vbios_smu_set_dprefclk(काष्ठा clk_mgr_पूर्णांकernal *clk_mgr);
-पूर्णांक rn_vbios_smu_set_hard_min_dcfclk(काष्ठा clk_mgr_पूर्णांकernal *clk_mgr, पूर्णांक requested_dcfclk_khz);
-पूर्णांक rn_vbios_smu_set_min_deep_sleep_dcfclk(काष्ठा clk_mgr_पूर्णांकernal *clk_mgr, पूर्णांक requested_min_ds_dcfclk_khz);
-व्योम rn_vbios_smu_set_phyclk(काष्ठा clk_mgr_पूर्णांकernal *clk_mgr, पूर्णांक requested_phyclk_khz);
-पूर्णांक rn_vbios_smu_set_dppclk(काष्ठा clk_mgr_पूर्णांकernal *clk_mgr, पूर्णांक requested_dpp_khz);
-व्योम rn_vbios_smu_set_dcn_low_घातer_state(काष्ठा clk_mgr_पूर्णांकernal *clk_mgr, पूर्णांक display_count);
-व्योम rn_vbios_smu_enable_48mhz_पंचांगdp_refclk_pwrdwn(काष्ठा clk_mgr_पूर्णांकernal *clk_mgr, bool enable);
-व्योम rn_vbios_smu_enable_pme_wa(काष्ठा clk_mgr_पूर्णांकernal *clk_mgr);
-पूर्णांक rn_vbios_smu_is_periodic_retraining_disabled(काष्ठा clk_mgr_पूर्णांकernal *clk_mgr);
+int rn_vbios_smu_get_smu_version(struct clk_mgr_internal *clk_mgr);
+int rn_vbios_smu_set_dispclk(struct clk_mgr_internal *clk_mgr, int requested_dispclk_khz);
+int rn_vbios_smu_set_dprefclk(struct clk_mgr_internal *clk_mgr);
+int rn_vbios_smu_set_hard_min_dcfclk(struct clk_mgr_internal *clk_mgr, int requested_dcfclk_khz);
+int rn_vbios_smu_set_min_deep_sleep_dcfclk(struct clk_mgr_internal *clk_mgr, int requested_min_ds_dcfclk_khz);
+void rn_vbios_smu_set_phyclk(struct clk_mgr_internal *clk_mgr, int requested_phyclk_khz);
+int rn_vbios_smu_set_dppclk(struct clk_mgr_internal *clk_mgr, int requested_dpp_khz);
+void rn_vbios_smu_set_dcn_low_power_state(struct clk_mgr_internal *clk_mgr, int display_count);
+void rn_vbios_smu_enable_48mhz_tmdp_refclk_pwrdwn(struct clk_mgr_internal *clk_mgr, bool enable);
+void rn_vbios_smu_enable_pme_wa(struct clk_mgr_internal *clk_mgr);
+int rn_vbios_smu_is_periodic_retraining_disabled(struct clk_mgr_internal *clk_mgr);
 
-#पूर्ण_अगर /* DAL_DC_DCN10_RV1_CLK_MGR_VBIOS_SMU_H_ */
+#endif /* DAL_DC_DCN10_RV1_CLK_MGR_VBIOS_SMU_H_ */

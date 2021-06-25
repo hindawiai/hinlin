@@ -1,848 +1,847 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Battery and Power Management code क्रम the Sharp SL-C7xx and SL-Cxx00
+ * Battery and Power Management code for the Sharp SL-C7xx and SL-Cxx00
  * series of PDAs
  *
- * Copyright (c) 2004-2005 Riअक्षरd Purdie
+ * Copyright (c) 2004-2005 Richard Purdie
  *
- * Based on code written by Sharp क्रम 2.4 kernels
+ * Based on code written by Sharp for 2.4 kernels
  */
 
-#अघोषित DEBUG
+#undef DEBUG
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/apm-emulation.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/suspend.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/interrupt.h>
+#include <linux/platform_device.h>
+#include <linux/apm-emulation.h>
+#include <linux/timer.h>
+#include <linux/delay.h>
+#include <linux/leds.h>
+#include <linux/suspend.h>
+#include <linux/gpio.h>
+#include <linux/io.h>
 
-#समावेश <यंत्र/mach-types.h>
-#समावेश "pm.h"
-#समावेश <mach/pxa2xx-regs.h>
-#समावेश "regs-rtc.h"
-#समावेश "sharpsl_pm.h"
+#include <asm/mach-types.h>
+#include "pm.h"
+#include <mach/pxa2xx-regs.h>
+#include "regs-rtc.h"
+#include "sharpsl_pm.h"
 
 /*
  * Constants
  */
-#घोषणा SHARPSL_CHARGE_ON_TIME_INTERVAL        (msecs_to_jअगरfies(1*60*1000))  /* 1 min */
-#घोषणा SHARPSL_CHARGE_FINISH_TIME             (msecs_to_jअगरfies(10*60*1000)) /* 10 min */
-#घोषणा SHARPSL_BATCHK_TIME                    (msecs_to_jअगरfies(15*1000))    /* 15 sec */
-#घोषणा SHARPSL_BATCHK_TIME_SUSPEND            (60*10)                        /* 10 min */
+#define SHARPSL_CHARGE_ON_TIME_INTERVAL        (msecs_to_jiffies(1*60*1000))  /* 1 min */
+#define SHARPSL_CHARGE_FINISH_TIME             (msecs_to_jiffies(10*60*1000)) /* 10 min */
+#define SHARPSL_BATCHK_TIME                    (msecs_to_jiffies(15*1000))    /* 15 sec */
+#define SHARPSL_BATCHK_TIME_SUSPEND            (60*10)                        /* 10 min */
 
-#घोषणा SHARPSL_WAIT_CO_TIME                   15  /* 15 sec */
-#घोषणा SHARPSL_WAIT_DISCHARGE_ON              100 /* 100 msec */
-#घोषणा SHARPSL_CHECK_BATTERY_WAIT_TIME_TEMP   10  /* 10 msec */
-#घोषणा SHARPSL_CHECK_BATTERY_WAIT_TIME_VOLT   10  /* 10 msec */
-#घोषणा SHARPSL_CHECK_BATTERY_WAIT_TIME_ACIN   10  /* 10 msec */
-#घोषणा SHARPSL_CHARGE_WAIT_TIME               15  /* 15 msec */
-#घोषणा SHARPSL_CHARGE_CO_CHECK_TIME           5   /* 5 msec */
-#घोषणा SHARPSL_CHARGE_RETRY_CNT               1   /* eqv. 10 min */
+#define SHARPSL_WAIT_CO_TIME                   15  /* 15 sec */
+#define SHARPSL_WAIT_DISCHARGE_ON              100 /* 100 msec */
+#define SHARPSL_CHECK_BATTERY_WAIT_TIME_TEMP   10  /* 10 msec */
+#define SHARPSL_CHECK_BATTERY_WAIT_TIME_VOLT   10  /* 10 msec */
+#define SHARPSL_CHECK_BATTERY_WAIT_TIME_ACIN   10  /* 10 msec */
+#define SHARPSL_CHARGE_WAIT_TIME               15  /* 15 msec */
+#define SHARPSL_CHARGE_CO_CHECK_TIME           5   /* 5 msec */
+#define SHARPSL_CHARGE_RETRY_CNT               1   /* eqv. 10 min */
 
 /*
  * Prototypes
  */
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक sharpsl_off_अक्षरge_battery(व्योम);
-अटल पूर्णांक sharpsl_check_battery_voltage(व्योम);
-#पूर्ण_अगर
-अटल पूर्णांक sharpsl_check_battery_temp(व्योम);
-अटल पूर्णांक sharpsl_ac_check(व्योम);
-अटल पूर्णांक sharpsl_average_value(पूर्णांक ad);
-अटल व्योम sharpsl_average_clear(व्योम);
-अटल व्योम sharpsl_अक्षरge_toggle(काष्ठा work_काष्ठा *निजी_);
-अटल व्योम sharpsl_battery_thपढ़ो(काष्ठा work_काष्ठा *निजी_);
+#ifdef CONFIG_PM
+static int sharpsl_off_charge_battery(void);
+static int sharpsl_check_battery_voltage(void);
+#endif
+static int sharpsl_check_battery_temp(void);
+static int sharpsl_ac_check(void);
+static int sharpsl_average_value(int ad);
+static void sharpsl_average_clear(void);
+static void sharpsl_charge_toggle(struct work_struct *private_);
+static void sharpsl_battery_thread(struct work_struct *private_);
 
 
 /*
  * Variables
  */
-काष्ठा sharpsl_pm_status sharpsl_pm;
-अटल DECLARE_DELAYED_WORK(toggle_अक्षरger, sharpsl_अक्षरge_toggle);
-अटल DECLARE_DELAYED_WORK(sharpsl_bat, sharpsl_battery_thपढ़ो);
-DEFINE_LED_TRIGGER(sharpsl_अक्षरge_led_trigger);
+struct sharpsl_pm_status sharpsl_pm;
+static DECLARE_DELAYED_WORK(toggle_charger, sharpsl_charge_toggle);
+static DECLARE_DELAYED_WORK(sharpsl_bat, sharpsl_battery_thread);
+DEFINE_LED_TRIGGER(sharpsl_charge_led_trigger);
 
 
 
-काष्ठा battery_thresh sharpsl_battery_levels_acin[] = अणु
-	अणु 213, 100पूर्ण,
-	अणु 212,  98पूर्ण,
-	अणु 211,  95पूर्ण,
-	अणु 210,  93पूर्ण,
-	अणु 209,  90पूर्ण,
-	अणु 208,  88पूर्ण,
-	अणु 207,  85पूर्ण,
-	अणु 206,  83पूर्ण,
-	अणु 205,  80पूर्ण,
-	अणु 204,  78पूर्ण,
-	अणु 203,  75पूर्ण,
-	अणु 202,  73पूर्ण,
-	अणु 201,  70पूर्ण,
-	अणु 200,  68पूर्ण,
-	अणु 199,  65पूर्ण,
-	अणु 198,  63पूर्ण,
-	अणु 197,  60पूर्ण,
-	अणु 196,  58पूर्ण,
-	अणु 195,  55पूर्ण,
-	अणु 194,  53पूर्ण,
-	अणु 193,  50पूर्ण,
-	अणु 192,  48पूर्ण,
-	अणु 192,  45पूर्ण,
-	अणु 191,  43पूर्ण,
-	अणु 191,  40पूर्ण,
-	अणु 190,  38पूर्ण,
-	अणु 190,  35पूर्ण,
-	अणु 189,  33पूर्ण,
-	अणु 188,  30पूर्ण,
-	अणु 187,  28पूर्ण,
-	अणु 186,  25पूर्ण,
-	अणु 185,  23पूर्ण,
-	अणु 184,  20पूर्ण,
-	अणु 183,  18पूर्ण,
-	अणु 182,  15पूर्ण,
-	अणु 181,  13पूर्ण,
-	अणु 180,  10पूर्ण,
-	अणु 179,   8पूर्ण,
-	अणु 178,   5पूर्ण,
-	अणु   0,   0पूर्ण,
-पूर्ण;
+struct battery_thresh sharpsl_battery_levels_acin[] = {
+	{ 213, 100},
+	{ 212,  98},
+	{ 211,  95},
+	{ 210,  93},
+	{ 209,  90},
+	{ 208,  88},
+	{ 207,  85},
+	{ 206,  83},
+	{ 205,  80},
+	{ 204,  78},
+	{ 203,  75},
+	{ 202,  73},
+	{ 201,  70},
+	{ 200,  68},
+	{ 199,  65},
+	{ 198,  63},
+	{ 197,  60},
+	{ 196,  58},
+	{ 195,  55},
+	{ 194,  53},
+	{ 193,  50},
+	{ 192,  48},
+	{ 192,  45},
+	{ 191,  43},
+	{ 191,  40},
+	{ 190,  38},
+	{ 190,  35},
+	{ 189,  33},
+	{ 188,  30},
+	{ 187,  28},
+	{ 186,  25},
+	{ 185,  23},
+	{ 184,  20},
+	{ 183,  18},
+	{ 182,  15},
+	{ 181,  13},
+	{ 180,  10},
+	{ 179,   8},
+	{ 178,   5},
+	{   0,   0},
+};
 
-काष्ठा battery_thresh sharpsl_battery_levels_noac[] = अणु
-	अणु 213, 100पूर्ण,
-	अणु 212,  98पूर्ण,
-	अणु 211,  95पूर्ण,
-	अणु 210,  93पूर्ण,
-	अणु 209,  90पूर्ण,
-	अणु 208,  88पूर्ण,
-	अणु 207,  85पूर्ण,
-	अणु 206,  83पूर्ण,
-	अणु 205,  80पूर्ण,
-	अणु 204,  78पूर्ण,
-	अणु 203,  75पूर्ण,
-	अणु 202,  73पूर्ण,
-	अणु 201,  70पूर्ण,
-	अणु 200,  68पूर्ण,
-	अणु 199,  65पूर्ण,
-	अणु 198,  63पूर्ण,
-	अणु 197,  60पूर्ण,
-	अणु 196,  58पूर्ण,
-	अणु 195,  55पूर्ण,
-	अणु 194,  53पूर्ण,
-	अणु 193,  50पूर्ण,
-	अणु 192,  48पूर्ण,
-	अणु 191,  45पूर्ण,
-	अणु 190,  43पूर्ण,
-	अणु 189,  40पूर्ण,
-	अणु 188,  38पूर्ण,
-	अणु 187,  35पूर्ण,
-	अणु 186,  33पूर्ण,
-	अणु 185,  30पूर्ण,
-	अणु 184,  28पूर्ण,
-	अणु 183,  25पूर्ण,
-	अणु 182,  23पूर्ण,
-	अणु 181,  20पूर्ण,
-	अणु 180,  18पूर्ण,
-	अणु 179,  15पूर्ण,
-	अणु 178,  13पूर्ण,
-	अणु 177,  10पूर्ण,
-	अणु 176,   8पूर्ण,
-	अणु 175,   5पूर्ण,
-	अणु   0,   0पूर्ण,
-पूर्ण;
+struct battery_thresh sharpsl_battery_levels_noac[] = {
+	{ 213, 100},
+	{ 212,  98},
+	{ 211,  95},
+	{ 210,  93},
+	{ 209,  90},
+	{ 208,  88},
+	{ 207,  85},
+	{ 206,  83},
+	{ 205,  80},
+	{ 204,  78},
+	{ 203,  75},
+	{ 202,  73},
+	{ 201,  70},
+	{ 200,  68},
+	{ 199,  65},
+	{ 198,  63},
+	{ 197,  60},
+	{ 196,  58},
+	{ 195,  55},
+	{ 194,  53},
+	{ 193,  50},
+	{ 192,  48},
+	{ 191,  45},
+	{ 190,  43},
+	{ 189,  40},
+	{ 188,  38},
+	{ 187,  35},
+	{ 186,  33},
+	{ 185,  30},
+	{ 184,  28},
+	{ 183,  25},
+	{ 182,  23},
+	{ 181,  20},
+	{ 180,  18},
+	{ 179,  15},
+	{ 178,  13},
+	{ 177,  10},
+	{ 176,   8},
+	{ 175,   5},
+	{   0,   0},
+};
 
 /* MAX1111 Commands */
-#घोषणा MAXCTRL_PD0      (1u << 0)
-#घोषणा MAXCTRL_PD1      (1u << 1)
-#घोषणा MAXCTRL_SGL      (1u << 2)
-#घोषणा MAXCTRL_UNI      (1u << 3)
-#घोषणा MAXCTRL_SEL_SH   4
-#घोषणा MAXCTRL_STR      (1u << 7)
+#define MAXCTRL_PD0      (1u << 0)
+#define MAXCTRL_PD1      (1u << 1)
+#define MAXCTRL_SGL      (1u << 2)
+#define MAXCTRL_UNI      (1u << 3)
+#define MAXCTRL_SEL_SH   4
+#define MAXCTRL_STR      (1u << 7)
 
-बाह्य पूर्णांक max1111_पढ़ो_channel(पूर्णांक);
+extern int max1111_read_channel(int);
 /*
  * Read MAX1111 ADC
  */
-पूर्णांक sharpsl_pm_pxa_पढ़ो_max1111(पूर्णांक channel)
-अणु
-	/* Ugly, better move this function पूर्णांकo another module */
-	अगर (machine_is_tosa())
-	    वापस 0;
+int sharpsl_pm_pxa_read_max1111(int channel)
+{
+	/* Ugly, better move this function into another module */
+	if (machine_is_tosa())
+	    return 0;
 
 	/* max1111 accepts channels from 0-3, however,
 	 * it is encoded from 0-7 here in the code.
 	 */
-	वापस max1111_पढ़ो_channel(channel >> 1);
-पूर्ण
+	return max1111_read_channel(channel >> 1);
+}
 
-अटल पूर्णांक get_percentage(पूर्णांक voltage)
-अणु
-	पूर्णांक i = sharpsl_pm.machinfo->bat_levels - 1;
-	पूर्णांक bl_status = sharpsl_pm.machinfo->backlight_get_status ? sharpsl_pm.machinfo->backlight_get_status() : 0;
-	काष्ठा battery_thresh *thresh;
+static int get_percentage(int voltage)
+{
+	int i = sharpsl_pm.machinfo->bat_levels - 1;
+	int bl_status = sharpsl_pm.machinfo->backlight_get_status ? sharpsl_pm.machinfo->backlight_get_status() : 0;
+	struct battery_thresh *thresh;
 
-	अगर (sharpsl_pm.अक्षरge_mode == CHRG_ON)
+	if (sharpsl_pm.charge_mode == CHRG_ON)
 		thresh = bl_status ? sharpsl_pm.machinfo->bat_levels_acin_bl : sharpsl_pm.machinfo->bat_levels_acin;
-	अन्यथा
+	else
 		thresh = bl_status ? sharpsl_pm.machinfo->bat_levels_noac_bl : sharpsl_pm.machinfo->bat_levels_noac;
 
-	जबतक (i > 0 && (voltage > thresh[i].voltage))
+	while (i > 0 && (voltage > thresh[i].voltage))
 		i--;
 
-	वापस thresh[i].percentage;
-पूर्ण
+	return thresh[i].percentage;
+}
 
-अटल पूर्णांक get_apm_status(पूर्णांक voltage)
-अणु
-	पूर्णांक low_thresh, high_thresh;
+static int get_apm_status(int voltage)
+{
+	int low_thresh, high_thresh;
 
-	अगर (sharpsl_pm.अक्षरge_mode == CHRG_ON) अणु
+	if (sharpsl_pm.charge_mode == CHRG_ON) {
 		high_thresh = sharpsl_pm.machinfo->status_high_acin;
 		low_thresh = sharpsl_pm.machinfo->status_low_acin;
-	पूर्ण अन्यथा अणु
+	} else {
 		high_thresh = sharpsl_pm.machinfo->status_high_noac;
 		low_thresh = sharpsl_pm.machinfo->status_low_noac;
-	पूर्ण
+	}
 
-	अगर (voltage >= high_thresh)
-		वापस APM_BATTERY_STATUS_HIGH;
-	अगर (voltage >= low_thresh)
-		वापस APM_BATTERY_STATUS_LOW;
-	वापस APM_BATTERY_STATUS_CRITICAL;
-पूर्ण
+	if (voltage >= high_thresh)
+		return APM_BATTERY_STATUS_HIGH;
+	if (voltage >= low_thresh)
+		return APM_BATTERY_STATUS_LOW;
+	return APM_BATTERY_STATUS_CRITICAL;
+}
 
-व्योम sharpsl_battery_kick(व्योम)
-अणु
-	schedule_delayed_work(&sharpsl_bat, msecs_to_jअगरfies(125));
-पूर्ण
+void sharpsl_battery_kick(void)
+{
+	schedule_delayed_work(&sharpsl_bat, msecs_to_jiffies(125));
+}
 EXPORT_SYMBOL(sharpsl_battery_kick);
 
 
-अटल व्योम sharpsl_battery_thपढ़ो(काष्ठा work_काष्ठा *निजी_)
-अणु
-	पूर्णांक voltage, percent, apm_status, i;
+static void sharpsl_battery_thread(struct work_struct *private_)
+{
+	int voltage, percent, apm_status, i;
 
-	अगर (!sharpsl_pm.machinfo)
-		वापस;
+	if (!sharpsl_pm.machinfo)
+		return;
 
-	sharpsl_pm.battstat.ac_status = (sharpsl_pm.machinfo->पढ़ो_devdata(SHARPSL_STATUS_ACIN) ? APM_AC_ONLINE : APM_AC_OFFLINE);
+	sharpsl_pm.battstat.ac_status = (sharpsl_pm.machinfo->read_devdata(SHARPSL_STATUS_ACIN) ? APM_AC_ONLINE : APM_AC_OFFLINE);
 
-	/* Corgi cannot confirm when battery fully अक्षरged so periodically kick! */
-	अगर (!sharpsl_pm.machinfo->batfull_irq && (sharpsl_pm.अक्षरge_mode == CHRG_ON)
-			&& समय_after(jअगरfies, sharpsl_pm.अक्षरge_start_समय +  SHARPSL_CHARGE_ON_TIME_INTERVAL))
-		schedule_delayed_work(&toggle_अक्षरger, 0);
+	/* Corgi cannot confirm when battery fully charged so periodically kick! */
+	if (!sharpsl_pm.machinfo->batfull_irq && (sharpsl_pm.charge_mode == CHRG_ON)
+			&& time_after(jiffies, sharpsl_pm.charge_start_time +  SHARPSL_CHARGE_ON_TIME_INTERVAL))
+		schedule_delayed_work(&toggle_charger, 0);
 
-	क्रम (i = 0; i < 5; i++) अणु
-		voltage = sharpsl_pm.machinfo->पढ़ो_devdata(SHARPSL_BATT_VOLT);
-		अगर (voltage > 0)
-			अवरोध;
-	पूर्ण
-	अगर (voltage <= 0) अणु
+	for (i = 0; i < 5; i++) {
+		voltage = sharpsl_pm.machinfo->read_devdata(SHARPSL_BATT_VOLT);
+		if (voltage > 0)
+			break;
+	}
+	if (voltage <= 0) {
 		voltage = sharpsl_pm.machinfo->bat_levels_noac[0].voltage;
 		dev_warn(sharpsl_pm.dev, "Warning: Cannot read main battery!\n");
-	पूर्ण
+	}
 
 	voltage = sharpsl_average_value(voltage);
 	apm_status = get_apm_status(voltage);
 	percent = get_percentage(voltage);
 
 	/* At low battery voltages, the voltage has a tendency to start
-	   creeping back up so we try to aव्योम this here */
-	अगर ((sharpsl_pm.battstat.ac_status == APM_AC_ONLINE)
+	   creeping back up so we try to avoid this here */
+	if ((sharpsl_pm.battstat.ac_status == APM_AC_ONLINE)
 	    || (apm_status == APM_BATTERY_STATUS_HIGH)
-	    || percent <= sharpsl_pm.battstat.मुख्यbat_percent) अणु
-		sharpsl_pm.battstat.मुख्यbat_voltage = voltage;
-		sharpsl_pm.battstat.मुख्यbat_status = apm_status;
-		sharpsl_pm.battstat.मुख्यbat_percent = percent;
-	पूर्ण
+	    || percent <= sharpsl_pm.battstat.mainbat_percent) {
+		sharpsl_pm.battstat.mainbat_voltage = voltage;
+		sharpsl_pm.battstat.mainbat_status = apm_status;
+		sharpsl_pm.battstat.mainbat_percent = percent;
+	}
 
 	dev_dbg(sharpsl_pm.dev, "Battery: voltage: %d, status: %d, percentage: %d, time: %ld\n", voltage,
-			sharpsl_pm.battstat.मुख्यbat_status, sharpsl_pm.battstat.मुख्यbat_percent, jअगरfies);
+			sharpsl_pm.battstat.mainbat_status, sharpsl_pm.battstat.mainbat_percent, jiffies);
 
-	/* Suspend अगर critical battery level */
-	अगर ((sharpsl_pm.battstat.ac_status != APM_AC_ONLINE)
-	     && (sharpsl_pm.battstat.मुख्यbat_status == APM_BATTERY_STATUS_CRITICAL)
-	     && !(sharpsl_pm.flags & SHARPSL_APM_QUEUED)) अणु
+	/* Suspend if critical battery level */
+	if ((sharpsl_pm.battstat.ac_status != APM_AC_ONLINE)
+	     && (sharpsl_pm.battstat.mainbat_status == APM_BATTERY_STATUS_CRITICAL)
+	     && !(sharpsl_pm.flags & SHARPSL_APM_QUEUED)) {
 		sharpsl_pm.flags |= SHARPSL_APM_QUEUED;
 		dev_err(sharpsl_pm.dev, "Fatal Off\n");
 		apm_queue_event(APM_CRITICAL_SUSPEND);
-	पूर्ण
+	}
 
 	schedule_delayed_work(&sharpsl_bat, SHARPSL_BATCHK_TIME);
-पूर्ण
+}
 
-व्योम sharpsl_pm_led(पूर्णांक val)
-अणु
-	अगर (val == SHARPSL_LED_ERROR) अणु
+void sharpsl_pm_led(int val)
+{
+	if (val == SHARPSL_LED_ERROR) {
 		dev_err(sharpsl_pm.dev, "Charging Error!\n");
-	पूर्ण अन्यथा अगर (val == SHARPSL_LED_ON) अणु
+	} else if (val == SHARPSL_LED_ON) {
 		dev_dbg(sharpsl_pm.dev, "Charge LED On\n");
-		led_trigger_event(sharpsl_अक्षरge_led_trigger, LED_FULL);
-	पूर्ण अन्यथा अणु
+		led_trigger_event(sharpsl_charge_led_trigger, LED_FULL);
+	} else {
 		dev_dbg(sharpsl_pm.dev, "Charge LED Off\n");
-		led_trigger_event(sharpsl_अक्षरge_led_trigger, LED_OFF);
-	पूर्ण
-पूर्ण
+		led_trigger_event(sharpsl_charge_led_trigger, LED_OFF);
+	}
+}
 
-अटल व्योम sharpsl_अक्षरge_on(व्योम)
-अणु
+static void sharpsl_charge_on(void)
+{
 	dev_dbg(sharpsl_pm.dev, "Turning Charger On\n");
 
 	sharpsl_pm.full_count = 0;
-	sharpsl_pm.अक्षरge_mode = CHRG_ON;
-	schedule_delayed_work(&toggle_अक्षरger, msecs_to_jअगरfies(250));
-	schedule_delayed_work(&sharpsl_bat, msecs_to_jअगरfies(500));
-पूर्ण
+	sharpsl_pm.charge_mode = CHRG_ON;
+	schedule_delayed_work(&toggle_charger, msecs_to_jiffies(250));
+	schedule_delayed_work(&sharpsl_bat, msecs_to_jiffies(500));
+}
 
-अटल व्योम sharpsl_अक्षरge_off(व्योम)
-अणु
+static void sharpsl_charge_off(void)
+{
 	dev_dbg(sharpsl_pm.dev, "Turning Charger Off\n");
 
-	sharpsl_pm.machinfo->अक्षरge(0);
+	sharpsl_pm.machinfo->charge(0);
 	sharpsl_pm_led(SHARPSL_LED_OFF);
-	sharpsl_pm.अक्षरge_mode = CHRG_OFF;
+	sharpsl_pm.charge_mode = CHRG_OFF;
 
 	schedule_delayed_work(&sharpsl_bat, 0);
-पूर्ण
+}
 
-अटल व्योम sharpsl_अक्षरge_error(व्योम)
-अणु
+static void sharpsl_charge_error(void)
+{
 	sharpsl_pm_led(SHARPSL_LED_ERROR);
-	sharpsl_pm.machinfo->अक्षरge(0);
-	sharpsl_pm.अक्षरge_mode = CHRG_ERROR;
-पूर्ण
+	sharpsl_pm.machinfo->charge(0);
+	sharpsl_pm.charge_mode = CHRG_ERROR;
+}
 
-अटल व्योम sharpsl_अक्षरge_toggle(काष्ठा work_काष्ठा *निजी_)
-अणु
-	dev_dbg(sharpsl_pm.dev, "Toggling Charger at time: %lx\n", jअगरfies);
+static void sharpsl_charge_toggle(struct work_struct *private_)
+{
+	dev_dbg(sharpsl_pm.dev, "Toggling Charger at time: %lx\n", jiffies);
 
-	अगर (!sharpsl_pm.machinfo->पढ़ो_devdata(SHARPSL_STATUS_ACIN)) अणु
-		sharpsl_अक्षरge_off();
-		वापस;
-	पूर्ण अन्यथा अगर ((sharpsl_check_battery_temp() < 0) || (sharpsl_ac_check() < 0)) अणु
-		sharpsl_अक्षरge_error();
-		वापस;
-	पूर्ण
+	if (!sharpsl_pm.machinfo->read_devdata(SHARPSL_STATUS_ACIN)) {
+		sharpsl_charge_off();
+		return;
+	} else if ((sharpsl_check_battery_temp() < 0) || (sharpsl_ac_check() < 0)) {
+		sharpsl_charge_error();
+		return;
+	}
 
 	sharpsl_pm_led(SHARPSL_LED_ON);
-	sharpsl_pm.machinfo->अक्षरge(0);
+	sharpsl_pm.machinfo->charge(0);
 	mdelay(SHARPSL_CHARGE_WAIT_TIME);
-	sharpsl_pm.machinfo->अक्षरge(1);
+	sharpsl_pm.machinfo->charge(1);
 
-	sharpsl_pm.अक्षरge_start_समय = jअगरfies;
-पूर्ण
+	sharpsl_pm.charge_start_time = jiffies;
+}
 
-अटल व्योम sharpsl_ac_समयr(काष्ठा समयr_list *unused)
-अणु
-	पूर्णांक acin = sharpsl_pm.machinfo->पढ़ो_devdata(SHARPSL_STATUS_ACIN);
+static void sharpsl_ac_timer(struct timer_list *unused)
+{
+	int acin = sharpsl_pm.machinfo->read_devdata(SHARPSL_STATUS_ACIN);
 
 	dev_dbg(sharpsl_pm.dev, "AC Status: %d\n", acin);
 
 	sharpsl_average_clear();
-	अगर (acin && (sharpsl_pm.अक्षरge_mode != CHRG_ON))
-		sharpsl_अक्षरge_on();
-	अन्यथा अगर (sharpsl_pm.अक्षरge_mode == CHRG_ON)
-		sharpsl_अक्षरge_off();
+	if (acin && (sharpsl_pm.charge_mode != CHRG_ON))
+		sharpsl_charge_on();
+	else if (sharpsl_pm.charge_mode == CHRG_ON)
+		sharpsl_charge_off();
 
 	schedule_delayed_work(&sharpsl_bat, 0);
-पूर्ण
+}
 
 
-अटल irqवापस_t sharpsl_ac_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
+static irqreturn_t sharpsl_ac_isr(int irq, void *dev_id)
+{
 	/* Delay the event slightly to debounce */
 	/* Must be a smaller delay than the chrg_full_isr below */
-	mod_समयr(&sharpsl_pm.ac_समयr, jअगरfies + msecs_to_jअगरfies(250));
+	mod_timer(&sharpsl_pm.ac_timer, jiffies + msecs_to_jiffies(250));
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम sharpsl_chrg_full_समयr(काष्ठा समयr_list *unused)
-अणु
-	dev_dbg(sharpsl_pm.dev, "Charge Full at time: %lx\n", jअगरfies);
+static void sharpsl_chrg_full_timer(struct timer_list *unused)
+{
+	dev_dbg(sharpsl_pm.dev, "Charge Full at time: %lx\n", jiffies);
 
 	sharpsl_pm.full_count++;
 
-	अगर (!sharpsl_pm.machinfo->पढ़ो_devdata(SHARPSL_STATUS_ACIN)) अणु
+	if (!sharpsl_pm.machinfo->read_devdata(SHARPSL_STATUS_ACIN)) {
 		dev_dbg(sharpsl_pm.dev, "Charge Full: AC removed - stop charging!\n");
-		अगर (sharpsl_pm.अक्षरge_mode == CHRG_ON)
-			sharpsl_अक्षरge_off();
-	पूर्ण अन्यथा अगर (sharpsl_pm.full_count < 2) अणु
+		if (sharpsl_pm.charge_mode == CHRG_ON)
+			sharpsl_charge_off();
+	} else if (sharpsl_pm.full_count < 2) {
 		dev_dbg(sharpsl_pm.dev, "Charge Full: Count too low\n");
-		schedule_delayed_work(&toggle_अक्षरger, 0);
-	पूर्ण अन्यथा अगर (समय_after(jअगरfies, sharpsl_pm.अक्षरge_start_समय + SHARPSL_CHARGE_FINISH_TIME)) अणु
+		schedule_delayed_work(&toggle_charger, 0);
+	} else if (time_after(jiffies, sharpsl_pm.charge_start_time + SHARPSL_CHARGE_FINISH_TIME)) {
 		dev_dbg(sharpsl_pm.dev, "Charge Full: Interrupt generated too slowly - retry.\n");
-		schedule_delayed_work(&toggle_अक्षरger, 0);
-	पूर्ण अन्यथा अणु
-		sharpsl_अक्षरge_off();
-		sharpsl_pm.अक्षरge_mode = CHRG_DONE;
+		schedule_delayed_work(&toggle_charger, 0);
+	} else {
+		sharpsl_charge_off();
+		sharpsl_pm.charge_mode = CHRG_DONE;
 		dev_dbg(sharpsl_pm.dev, "Charge Full: Charging Finished\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Charging Finished Interrupt (Not present on Corgi) */
-/* Can trigger at the same समय as an AC status change so
+/* Can trigger at the same time as an AC status change so
    delay until after that has been processed */
-अटल irqवापस_t sharpsl_chrg_full_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	अगर (sharpsl_pm.flags & SHARPSL_SUSPENDED)
-		वापस IRQ_HANDLED;
+static irqreturn_t sharpsl_chrg_full_isr(int irq, void *dev_id)
+{
+	if (sharpsl_pm.flags & SHARPSL_SUSPENDED)
+		return IRQ_HANDLED;
 
-	/* delay until after any ac पूर्णांकerrupt */
-	mod_समयr(&sharpsl_pm.chrg_full_समयr, jअगरfies + msecs_to_jअगरfies(500));
+	/* delay until after any ac interrupt */
+	mod_timer(&sharpsl_pm.chrg_full_timer, jiffies + msecs_to_jiffies(500));
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t sharpsl_fatal_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	पूर्णांक is_fatal = 0;
+static irqreturn_t sharpsl_fatal_isr(int irq, void *dev_id)
+{
+	int is_fatal = 0;
 
-	अगर (!sharpsl_pm.machinfo->पढ़ो_devdata(SHARPSL_STATUS_LOCK)) अणु
+	if (!sharpsl_pm.machinfo->read_devdata(SHARPSL_STATUS_LOCK)) {
 		dev_err(sharpsl_pm.dev, "Battery now Unlocked! Suspending.\n");
 		is_fatal = 1;
-	पूर्ण
+	}
 
-	अगर (!sharpsl_pm.machinfo->पढ़ो_devdata(SHARPSL_STATUS_FATAL)) अणु
+	if (!sharpsl_pm.machinfo->read_devdata(SHARPSL_STATUS_FATAL)) {
 		dev_err(sharpsl_pm.dev, "Fatal Batt Error! Suspending.\n");
 		is_fatal = 1;
-	पूर्ण
+	}
 
-	अगर (!(sharpsl_pm.flags & SHARPSL_APM_QUEUED) && is_fatal) अणु
+	if (!(sharpsl_pm.flags & SHARPSL_APM_QUEUED) && is_fatal) {
 		sharpsl_pm.flags |= SHARPSL_APM_QUEUED;
 		apm_queue_event(APM_CRITICAL_SUSPEND);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
- * Maपूर्णांकain an average of the last 10 पढ़ोings
+ * Maintain an average of the last 10 readings
  */
-#घोषणा SHARPSL_CNV_VALUE_NUM    10
-अटल पूर्णांक sharpsl_ad_index;
+#define SHARPSL_CNV_VALUE_NUM    10
+static int sharpsl_ad_index;
 
-अटल व्योम sharpsl_average_clear(व्योम)
-अणु
+static void sharpsl_average_clear(void)
+{
 	sharpsl_ad_index = 0;
-पूर्ण
+}
 
-अटल पूर्णांक sharpsl_average_value(पूर्णांक ad)
-अणु
-	पूर्णांक i, ad_val = 0;
-	अटल पूर्णांक sharpsl_ad[SHARPSL_CNV_VALUE_NUM+1];
+static int sharpsl_average_value(int ad)
+{
+	int i, ad_val = 0;
+	static int sharpsl_ad[SHARPSL_CNV_VALUE_NUM+1];
 
-	अगर (sharpsl_pm.battstat.मुख्यbat_status != APM_BATTERY_STATUS_HIGH) अणु
+	if (sharpsl_pm.battstat.mainbat_status != APM_BATTERY_STATUS_HIGH) {
 		sharpsl_ad_index = 0;
-		वापस ad;
-	पूर्ण
+		return ad;
+	}
 
 	sharpsl_ad[sharpsl_ad_index] = ad;
 	sharpsl_ad_index++;
-	अगर (sharpsl_ad_index >= SHARPSL_CNV_VALUE_NUM) अणु
-		क्रम (i = 0; i < (SHARPSL_CNV_VALUE_NUM-1); i++)
+	if (sharpsl_ad_index >= SHARPSL_CNV_VALUE_NUM) {
+		for (i = 0; i < (SHARPSL_CNV_VALUE_NUM-1); i++)
 			sharpsl_ad[i] = sharpsl_ad[i+1];
 		sharpsl_ad_index = SHARPSL_CNV_VALUE_NUM - 1;
-	पूर्ण
-	क्रम (i = 0; i < sharpsl_ad_index; i++)
+	}
+	for (i = 0; i < sharpsl_ad_index; i++)
 		ad_val += sharpsl_ad[i];
 
-	वापस ad_val / sharpsl_ad_index;
-पूर्ण
+	return ad_val / sharpsl_ad_index;
+}
 
 /*
- * Take an array of 5 पूर्णांकegers, हटाओ the maximum and minimum values
- * and वापस the average.
+ * Take an array of 5 integers, remove the maximum and minimum values
+ * and return the average.
  */
-अटल पूर्णांक get_select_val(पूर्णांक *val)
-अणु
-	पूर्णांक i, j, k, temp, sum = 0;
+static int get_select_val(int *val)
+{
+	int i, j, k, temp, sum = 0;
 
 	/* Find MAX val */
 	temp = val[0];
 	j = 0;
-	क्रम (i = 1; i < 5; i++) अणु
-		अगर (temp < val[i]) अणु
+	for (i = 1; i < 5; i++) {
+		if (temp < val[i]) {
 			temp = val[i];
 			j = i;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Find MIN val */
 	temp = val[4];
 	k = 4;
-	क्रम (i = 3; i >= 0; i--) अणु
-		अगर (temp > val[i]) अणु
+	for (i = 3; i >= 0; i--) {
+		if (temp > val[i]) {
 			temp = val[i];
 			k = i;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (i = 0; i < 5; i++)
-		अगर (i != j && i != k)
+	for (i = 0; i < 5; i++)
+		if (i != j && i != k)
 			sum += val[i];
 
 	dev_dbg(sharpsl_pm.dev, "Average: %d from values: %d, %d, %d, %d, %d\n", sum/3, val[0], val[1], val[2], val[3], val[4]);
 
-	वापस sum/3;
-पूर्ण
+	return sum/3;
+}
 
-अटल पूर्णांक sharpsl_check_battery_temp(व्योम)
-अणु
-	पूर्णांक val, i, buff[5];
+static int sharpsl_check_battery_temp(void)
+{
+	int val, i, buff[5];
 
 	/* Check battery temperature */
-	क्रम (i = 0; i < 5; i++) अणु
+	for (i = 0; i < 5; i++) {
 		mdelay(SHARPSL_CHECK_BATTERY_WAIT_TIME_TEMP);
 		sharpsl_pm.machinfo->measure_temp(1);
 		mdelay(SHARPSL_CHECK_BATTERY_WAIT_TIME_TEMP);
-		buff[i] = sharpsl_pm.machinfo->पढ़ो_devdata(SHARPSL_BATT_TEMP);
+		buff[i] = sharpsl_pm.machinfo->read_devdata(SHARPSL_BATT_TEMP);
 		sharpsl_pm.machinfo->measure_temp(0);
-	पूर्ण
+	}
 
 	val = get_select_val(buff);
 
 	dev_dbg(sharpsl_pm.dev, "Temperature: %d\n", val);
-	अगर (val > sharpsl_pm.machinfo->अक्षरge_on_temp) अणु
-		prपूर्णांकk(KERN_WARNING "Not charging: temperature out of limits.\n");
-		वापस -1;
-	पूर्ण
+	if (val > sharpsl_pm.machinfo->charge_on_temp) {
+		printk(KERN_WARNING "Not charging: temperature out of limits.\n");
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक sharpsl_check_battery_voltage(व्योम)
-अणु
-	पूर्णांक val, i, buff[5];
+#ifdef CONFIG_PM
+static int sharpsl_check_battery_voltage(void)
+{
+	int val, i, buff[5];
 
-	/* disable अक्षरge, enable disअक्षरge */
-	sharpsl_pm.machinfo->अक्षरge(0);
-	sharpsl_pm.machinfo->disअक्षरge(1);
+	/* disable charge, enable discharge */
+	sharpsl_pm.machinfo->charge(0);
+	sharpsl_pm.machinfo->discharge(1);
 	mdelay(SHARPSL_WAIT_DISCHARGE_ON);
 
-	अगर (sharpsl_pm.machinfo->disअक्षरge1)
-		sharpsl_pm.machinfo->disअक्षरge1(1);
+	if (sharpsl_pm.machinfo->discharge1)
+		sharpsl_pm.machinfo->discharge1(1);
 
 	/* Check battery voltage */
-	क्रम (i = 0; i < 5; i++) अणु
-		buff[i] = sharpsl_pm.machinfo->पढ़ो_devdata(SHARPSL_BATT_VOLT);
+	for (i = 0; i < 5; i++) {
+		buff[i] = sharpsl_pm.machinfo->read_devdata(SHARPSL_BATT_VOLT);
 		mdelay(SHARPSL_CHECK_BATTERY_WAIT_TIME_VOLT);
-	पूर्ण
+	}
 
-	अगर (sharpsl_pm.machinfo->disअक्षरge1)
-		sharpsl_pm.machinfo->disअक्षरge1(0);
+	if (sharpsl_pm.machinfo->discharge1)
+		sharpsl_pm.machinfo->discharge1(0);
 
-	sharpsl_pm.machinfo->disअक्षरge(0);
+	sharpsl_pm.machinfo->discharge(0);
 
 	val = get_select_val(buff);
 	dev_dbg(sharpsl_pm.dev, "Battery Voltage: %d\n", val);
 
-	अगर (val < sharpsl_pm.machinfo->अक्षरge_on_volt)
-		वापस -1;
+	if (val < sharpsl_pm.machinfo->charge_on_volt)
+		return -1;
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल पूर्णांक sharpsl_ac_check(व्योम)
-अणु
-	पूर्णांक temp, i, buff[5];
+static int sharpsl_ac_check(void)
+{
+	int temp, i, buff[5];
 
-	क्रम (i = 0; i < 5; i++) अणु
-		buff[i] = sharpsl_pm.machinfo->पढ़ो_devdata(SHARPSL_ACIN_VOLT);
+	for (i = 0; i < 5; i++) {
+		buff[i] = sharpsl_pm.machinfo->read_devdata(SHARPSL_ACIN_VOLT);
 		mdelay(SHARPSL_CHECK_BATTERY_WAIT_TIME_ACIN);
-	पूर्ण
+	}
 
 	temp = get_select_val(buff);
 	dev_dbg(sharpsl_pm.dev, "AC Voltage: %d\n", temp);
 
-	अगर ((temp > sharpsl_pm.machinfo->अक्षरge_acin_high) || (temp < sharpsl_pm.machinfo->अक्षरge_acin_low)) अणु
+	if ((temp > sharpsl_pm.machinfo->charge_acin_high) || (temp < sharpsl_pm.machinfo->charge_acin_low)) {
 		dev_err(sharpsl_pm.dev, "Error: AC check failed: voltage %d.\n", temp);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक sharpsl_pm_suspend(काष्ठा platक्रमm_device *pdev, pm_message_t state)
-अणु
+#ifdef CONFIG_PM
+static int sharpsl_pm_suspend(struct platform_device *pdev, pm_message_t state)
+{
 	sharpsl_pm.flags |= SHARPSL_SUSPENDED;
-	flush_delayed_work(&toggle_अक्षरger);
+	flush_delayed_work(&toggle_charger);
 	flush_delayed_work(&sharpsl_bat);
 
-	अगर (sharpsl_pm.अक्षरge_mode == CHRG_ON)
+	if (sharpsl_pm.charge_mode == CHRG_ON)
 		sharpsl_pm.flags |= SHARPSL_DO_OFFLINE_CHRG;
-	अन्यथा
+	else
 		sharpsl_pm.flags &= ~SHARPSL_DO_OFFLINE_CHRG;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sharpsl_pm_resume(काष्ठा platक्रमm_device *pdev)
-अणु
-	/* Clear the reset source indicators as they अवरोध the bootloader upon reboot */
+static int sharpsl_pm_resume(struct platform_device *pdev)
+{
+	/* Clear the reset source indicators as they break the bootloader upon reboot */
 	RCSR = 0x0f;
 	sharpsl_average_clear();
 	sharpsl_pm.flags &= ~SHARPSL_APM_QUEUED;
 	sharpsl_pm.flags &= ~SHARPSL_SUSPENDED;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम corgi_जाओ_sleep(अचिन्हित दीर्घ alarm_समय, अचिन्हित पूर्णांक alarm_enable, suspend_state_t state)
-अणु
+static void corgi_goto_sleep(unsigned long alarm_time, unsigned int alarm_enable, suspend_state_t state)
+{
 	dev_dbg(sharpsl_pm.dev, "Time is: %08x\n", RCNR);
 
 	dev_dbg(sharpsl_pm.dev, "Offline Charge Activate = %d\n", sharpsl_pm.flags & SHARPSL_DO_OFFLINE_CHRG);
-	/* not अक्षरging and AC-IN! */
+	/* not charging and AC-IN! */
 
-	अगर ((sharpsl_pm.flags & SHARPSL_DO_OFFLINE_CHRG) && (sharpsl_pm.machinfo->पढ़ो_devdata(SHARPSL_STATUS_ACIN))) अणु
+	if ((sharpsl_pm.flags & SHARPSL_DO_OFFLINE_CHRG) && (sharpsl_pm.machinfo->read_devdata(SHARPSL_STATUS_ACIN))) {
 		dev_dbg(sharpsl_pm.dev, "Activating Offline Charger...\n");
-		sharpsl_pm.अक्षरge_mode = CHRG_OFF;
+		sharpsl_pm.charge_mode = CHRG_OFF;
 		sharpsl_pm.flags &= ~SHARPSL_DO_OFFLINE_CHRG;
-		sharpsl_off_अक्षरge_battery();
-	पूर्ण
+		sharpsl_off_charge_battery();
+	}
 
 	sharpsl_pm.machinfo->presuspend();
 
 	PEDR = 0xffffffff; /* clear it */
 
 	sharpsl_pm.flags &= ~SHARPSL_ALARM_ACTIVE;
-	अगर ((sharpsl_pm.अक्षरge_mode == CHRG_ON) && ((alarm_enable && ((alarm_समय - RCNR) > (SHARPSL_BATCHK_TIME_SUSPEND + 30))) || !alarm_enable)) अणु
+	if ((sharpsl_pm.charge_mode == CHRG_ON) && ((alarm_enable && ((alarm_time - RCNR) > (SHARPSL_BATCHK_TIME_SUSPEND + 30))) || !alarm_enable)) {
 		RTSR &= RTSR_ALE;
 		RTAR = RCNR + SHARPSL_BATCHK_TIME_SUSPEND;
 		dev_dbg(sharpsl_pm.dev, "Charging alarm at: %08x\n", RTAR);
 		sharpsl_pm.flags |= SHARPSL_ALARM_ACTIVE;
-	पूर्ण अन्यथा अगर (alarm_enable) अणु
+	} else if (alarm_enable) {
 		RTSR &= RTSR_ALE;
-		RTAR = alarm_समय;
+		RTAR = alarm_time;
 		dev_dbg(sharpsl_pm.dev, "User alarm at: %08x\n", RTAR);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_dbg(sharpsl_pm.dev, "No alarms set.\n");
-	पूर्ण
+	}
 
 	pxa_pm_enter(state);
 
 	sharpsl_pm.machinfo->postsuspend();
 
 	dev_dbg(sharpsl_pm.dev, "Corgi woken up from suspend: %08x\n", PEDR);
-पूर्ण
+}
 
-अटल पूर्णांक corgi_enter_suspend(अचिन्हित दीर्घ alarm_समय, अचिन्हित पूर्णांक alarm_enable, suspend_state_t state)
-अणु
-	अगर (!sharpsl_pm.machinfo->should_wakeup(!(sharpsl_pm.flags & SHARPSL_ALARM_ACTIVE) && alarm_enable)) अणु
-		अगर (!(sharpsl_pm.flags & SHARPSL_ALARM_ACTIVE)) अणु
+static int corgi_enter_suspend(unsigned long alarm_time, unsigned int alarm_enable, suspend_state_t state)
+{
+	if (!sharpsl_pm.machinfo->should_wakeup(!(sharpsl_pm.flags & SHARPSL_ALARM_ACTIVE) && alarm_enable)) {
+		if (!(sharpsl_pm.flags & SHARPSL_ALARM_ACTIVE)) {
 			dev_dbg(sharpsl_pm.dev, "No user triggered wakeup events and not charging. Strange. Suspend.\n");
-			corgi_जाओ_sleep(alarm_समय, alarm_enable, state);
-			वापस 1;
-		पूर्ण
-		अगर (sharpsl_off_अक्षरge_battery()) अणु
+			corgi_goto_sleep(alarm_time, alarm_enable, state);
+			return 1;
+		}
+		if (sharpsl_off_charge_battery()) {
 			dev_dbg(sharpsl_pm.dev, "Charging. Suspend...\n");
-			corgi_जाओ_sleep(alarm_समय, alarm_enable, state);
-			वापस 1;
-		पूर्ण
+			corgi_goto_sleep(alarm_time, alarm_enable, state);
+			return 1;
+		}
 		dev_dbg(sharpsl_pm.dev, "User triggered wakeup in offline charger.\n");
-	पूर्ण
+	}
 
-	अगर ((!sharpsl_pm.machinfo->पढ़ो_devdata(SHARPSL_STATUS_LOCK)) ||
-	    (!sharpsl_pm.machinfo->पढ़ो_devdata(SHARPSL_STATUS_FATAL)))	अणु
+	if ((!sharpsl_pm.machinfo->read_devdata(SHARPSL_STATUS_LOCK)) ||
+	    (!sharpsl_pm.machinfo->read_devdata(SHARPSL_STATUS_FATAL)))	{
 		dev_err(sharpsl_pm.dev, "Fatal condition. Suspend.\n");
-		corgi_जाओ_sleep(alarm_समय, alarm_enable, state);
-		वापस 1;
-	पूर्ण
+		corgi_goto_sleep(alarm_time, alarm_enable, state);
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक corgi_pxa_pm_enter(suspend_state_t state)
-अणु
-	अचिन्हित दीर्घ alarm_समय = RTAR;
-	अचिन्हित पूर्णांक alarm_status = ((RTSR & RTSR_ALE) != 0);
+static int corgi_pxa_pm_enter(suspend_state_t state)
+{
+	unsigned long alarm_time = RTAR;
+	unsigned int alarm_status = ((RTSR & RTSR_ALE) != 0);
 
 	dev_dbg(sharpsl_pm.dev, "SharpSL suspending for first time.\n");
 
-	corgi_जाओ_sleep(alarm_समय, alarm_status, state);
+	corgi_goto_sleep(alarm_time, alarm_status, state);
 
-	जबतक (corgi_enter_suspend(alarm_समय, alarm_status, state))
-		अणुपूर्ण
+	while (corgi_enter_suspend(alarm_time, alarm_status, state))
+		{}
 
-	अगर (sharpsl_pm.machinfo->earlyresume)
+	if (sharpsl_pm.machinfo->earlyresume)
 		sharpsl_pm.machinfo->earlyresume();
 
 	dev_dbg(sharpsl_pm.dev, "SharpSL resuming...\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sharpsl_off_अक्षरge_error(व्योम)
-अणु
+static int sharpsl_off_charge_error(void)
+{
 	dev_err(sharpsl_pm.dev, "Offline Charger: Error occurred.\n");
-	sharpsl_pm.machinfo->अक्षरge(0);
+	sharpsl_pm.machinfo->charge(0);
 	sharpsl_pm_led(SHARPSL_LED_ERROR);
-	sharpsl_pm.अक्षरge_mode = CHRG_ERROR;
-	वापस 1;
-पूर्ण
+	sharpsl_pm.charge_mode = CHRG_ERROR;
+	return 1;
+}
 
 /*
- * Charging Control जबतक suspended
+ * Charging Control while suspended
  * Return 1 - go straight to sleep
  * Return 0 - sleep or wakeup depending on other factors
  */
-अटल पूर्णांक sharpsl_off_अक्षरge_battery(व्योम)
-अणु
-	पूर्णांक समय;
+static int sharpsl_off_charge_battery(void)
+{
+	int time;
 
-	dev_dbg(sharpsl_pm.dev, "Charge Mode: %d\n", sharpsl_pm.अक्षरge_mode);
+	dev_dbg(sharpsl_pm.dev, "Charge Mode: %d\n", sharpsl_pm.charge_mode);
 
-	अगर (sharpsl_pm.अक्षरge_mode == CHRG_OFF) अणु
+	if (sharpsl_pm.charge_mode == CHRG_OFF) {
 		dev_dbg(sharpsl_pm.dev, "Offline Charger: Step 1\n");
 
 		/* AC Check */
-		अगर ((sharpsl_ac_check() < 0) || (sharpsl_check_battery_temp() < 0))
-			वापस sharpsl_off_अक्षरge_error();
+		if ((sharpsl_ac_check() < 0) || (sharpsl_check_battery_temp() < 0))
+			return sharpsl_off_charge_error();
 
 		/* Start Charging */
 		sharpsl_pm_led(SHARPSL_LED_ON);
-		sharpsl_pm.machinfo->अक्षरge(0);
+		sharpsl_pm.machinfo->charge(0);
 		mdelay(SHARPSL_CHARGE_WAIT_TIME);
-		sharpsl_pm.machinfo->अक्षरge(1);
+		sharpsl_pm.machinfo->charge(1);
 
-		sharpsl_pm.अक्षरge_mode = CHRG_ON;
+		sharpsl_pm.charge_mode = CHRG_ON;
 		sharpsl_pm.full_count = 0;
 
-		वापस 1;
-	पूर्ण अन्यथा अगर (sharpsl_pm.अक्षरge_mode != CHRG_ON) अणु
-		वापस 1;
-	पूर्ण
+		return 1;
+	} else if (sharpsl_pm.charge_mode != CHRG_ON) {
+		return 1;
+	}
 
-	अगर (sharpsl_pm.full_count == 0) अणु
-		पूर्णांक समय;
+	if (sharpsl_pm.full_count == 0) {
+		int time;
 
 		dev_dbg(sharpsl_pm.dev, "Offline Charger: Step 2\n");
 
-		अगर ((sharpsl_check_battery_temp() < 0) || (sharpsl_check_battery_voltage() < 0))
-			वापस sharpsl_off_अक्षरge_error();
+		if ((sharpsl_check_battery_temp() < 0) || (sharpsl_check_battery_voltage() < 0))
+			return sharpsl_off_charge_error();
 
-		sharpsl_pm.machinfo->अक्षरge(0);
+		sharpsl_pm.machinfo->charge(0);
 		mdelay(SHARPSL_CHARGE_WAIT_TIME);
-		sharpsl_pm.machinfo->अक्षरge(1);
-		sharpsl_pm.अक्षरge_mode = CHRG_ON;
+		sharpsl_pm.machinfo->charge(1);
+		sharpsl_pm.charge_mode = CHRG_ON;
 
 		mdelay(SHARPSL_CHARGE_CO_CHECK_TIME);
 
-		समय = RCNR;
-		जबतक (1) अणु
-			/* Check अगर any wakeup event had occurred */
-			अगर (sharpsl_pm.machinfo->अक्षरger_wakeup())
-				वापस 0;
-			/* Check क्रम समयout */
-			अगर ((RCNR - समय) > SHARPSL_WAIT_CO_TIME)
-				वापस 1;
-			अगर (sharpsl_pm.machinfo->पढ़ो_devdata(SHARPSL_STATUS_CHRGFULL)) अणु
+		time = RCNR;
+		while (1) {
+			/* Check if any wakeup event had occurred */
+			if (sharpsl_pm.machinfo->charger_wakeup())
+				return 0;
+			/* Check for timeout */
+			if ((RCNR - time) > SHARPSL_WAIT_CO_TIME)
+				return 1;
+			if (sharpsl_pm.machinfo->read_devdata(SHARPSL_STATUS_CHRGFULL)) {
 				dev_dbg(sharpsl_pm.dev, "Offline Charger: Charge full occurred. Retrying to check\n");
 				sharpsl_pm.full_count++;
-				sharpsl_pm.machinfo->अक्षरge(0);
+				sharpsl_pm.machinfo->charge(0);
 				mdelay(SHARPSL_CHARGE_WAIT_TIME);
-				sharpsl_pm.machinfo->अक्षरge(1);
-				वापस 1;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				sharpsl_pm.machinfo->charge(1);
+				return 1;
+			}
+		}
+	}
 
 	dev_dbg(sharpsl_pm.dev, "Offline Charger: Step 3\n");
 
 	mdelay(SHARPSL_CHARGE_CO_CHECK_TIME);
 
-	समय = RCNR;
-	जबतक (1) अणु
-		/* Check अगर any wakeup event had occurred */
-		अगर (sharpsl_pm.machinfo->अक्षरger_wakeup())
-			वापस 0;
-		/* Check क्रम समयout */
-		अगर ((RCNR-समय) > SHARPSL_WAIT_CO_TIME) अणु
-			अगर (sharpsl_pm.full_count > SHARPSL_CHARGE_RETRY_CNT) अणु
+	time = RCNR;
+	while (1) {
+		/* Check if any wakeup event had occurred */
+		if (sharpsl_pm.machinfo->charger_wakeup())
+			return 0;
+		/* Check for timeout */
+		if ((RCNR-time) > SHARPSL_WAIT_CO_TIME) {
+			if (sharpsl_pm.full_count > SHARPSL_CHARGE_RETRY_CNT) {
 				dev_dbg(sharpsl_pm.dev, "Offline Charger: Not charged sufficiently. Retrying.\n");
 				sharpsl_pm.full_count = 0;
-			पूर्ण
+			}
 			sharpsl_pm.full_count++;
-			वापस 1;
-		पूर्ण
-		अगर (sharpsl_pm.machinfo->पढ़ो_devdata(SHARPSL_STATUS_CHRGFULL)) अणु
+			return 1;
+		}
+		if (sharpsl_pm.machinfo->read_devdata(SHARPSL_STATUS_CHRGFULL)) {
 			dev_dbg(sharpsl_pm.dev, "Offline Charger: Charging complete.\n");
 			sharpsl_pm_led(SHARPSL_LED_OFF);
-			sharpsl_pm.machinfo->अक्षरge(0);
-			sharpsl_pm.अक्षरge_mode = CHRG_DONE;
-			वापस 1;
-		पूर्ण
-	पूर्ण
-पूर्ण
-#अन्यथा
-#घोषणा sharpsl_pm_suspend	शून्य
-#घोषणा sharpsl_pm_resume	शून्य
-#पूर्ण_अगर
+			sharpsl_pm.machinfo->charge(0);
+			sharpsl_pm.charge_mode = CHRG_DONE;
+			return 1;
+		}
+	}
+}
+#else
+#define sharpsl_pm_suspend	NULL
+#define sharpsl_pm_resume	NULL
+#endif
 
-अटल sमाप_प्रकार battery_percentage_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", sharpsl_pm.battstat.मुख्यbat_percent);
-पूर्ण
+static ssize_t battery_percentage_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", sharpsl_pm.battstat.mainbat_percent);
+}
 
-अटल sमाप_प्रकार battery_voltage_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", sharpsl_pm.battstat.मुख्यbat_voltage);
-पूर्ण
+static ssize_t battery_voltage_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", sharpsl_pm.battstat.mainbat_voltage);
+}
 
-अटल DEVICE_ATTR_RO(battery_percentage);
-अटल DEVICE_ATTR_RO(battery_voltage);
+static DEVICE_ATTR_RO(battery_percentage);
+static DEVICE_ATTR_RO(battery_voltage);
 
-बाह्य व्योम (*apm_get_घातer_status)(काष्ठा apm_घातer_info *);
+extern void (*apm_get_power_status)(struct apm_power_info *);
 
-अटल व्योम sharpsl_apm_get_घातer_status(काष्ठा apm_घातer_info *info)
-अणु
+static void sharpsl_apm_get_power_status(struct apm_power_info *info)
+{
 	info->ac_line_status = sharpsl_pm.battstat.ac_status;
 
-	अगर (sharpsl_pm.अक्षरge_mode == CHRG_ON)
+	if (sharpsl_pm.charge_mode == CHRG_ON)
 		info->battery_status = APM_BATTERY_STATUS_CHARGING;
-	अन्यथा
-		info->battery_status = sharpsl_pm.battstat.मुख्यbat_status;
+	else
+		info->battery_status = sharpsl_pm.battstat.mainbat_status;
 
 	info->battery_flag = (1 << info->battery_status);
-	info->battery_lअगरe = sharpsl_pm.battstat.मुख्यbat_percent;
-पूर्ण
+	info->battery_life = sharpsl_pm.battstat.mainbat_percent;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल स्थिर काष्ठा platक्रमm_suspend_ops sharpsl_pm_ops = अणु
+#ifdef CONFIG_PM
+static const struct platform_suspend_ops sharpsl_pm_ops = {
 	.prepare	= pxa_pm_prepare,
 	.finish		= pxa_pm_finish,
 	.enter		= corgi_pxa_pm_enter,
 	.valid		= suspend_valid_only_mem,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल पूर्णांक sharpsl_pm_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret, irq;
+static int sharpsl_pm_probe(struct platform_device *pdev)
+{
+	int ret, irq;
 
-	अगर (!pdev->dev.platक्रमm_data)
-		वापस -EINVAL;
+	if (!pdev->dev.platform_data)
+		return -EINVAL;
 
 	sharpsl_pm.dev = &pdev->dev;
-	sharpsl_pm.machinfo = pdev->dev.platक्रमm_data;
-	sharpsl_pm.अक्षरge_mode = CHRG_OFF;
+	sharpsl_pm.machinfo = pdev->dev.platform_data;
+	sharpsl_pm.charge_mode = CHRG_OFF;
 	sharpsl_pm.flags = 0;
 
-	समयr_setup(&sharpsl_pm.ac_समयr, sharpsl_ac_समयr, 0);
+	timer_setup(&sharpsl_pm.ac_timer, sharpsl_ac_timer, 0);
 
-	समयr_setup(&sharpsl_pm.chrg_full_समयr, sharpsl_chrg_full_समयr, 0);
+	timer_setup(&sharpsl_pm.chrg_full_timer, sharpsl_chrg_full_timer, 0);
 
-	led_trigger_रेजिस्टर_simple("sharpsl-charge", &sharpsl_अक्षरge_led_trigger);
+	led_trigger_register_simple("sharpsl-charge", &sharpsl_charge_led_trigger);
 
 	sharpsl_pm.machinfo->init();
 
@@ -853,98 +852,98 @@ EXPORT_SYMBOL(sharpsl_battery_kick);
 	gpio_request(sharpsl_pm.machinfo->gpio_batlock, "Battery Lock");
 	gpio_direction_input(sharpsl_pm.machinfo->gpio_batlock);
 
-	/* Register पूर्णांकerrupt handlers */
+	/* Register interrupt handlers */
 	irq = gpio_to_irq(sharpsl_pm.machinfo->gpio_acin);
-	अगर (request_irq(irq, sharpsl_ac_isr, IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING, "AC Input Detect", sharpsl_ac_isr)) अणु
+	if (request_irq(irq, sharpsl_ac_isr, IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING, "AC Input Detect", sharpsl_ac_isr)) {
 		dev_err(sharpsl_pm.dev, "Could not get irq %d.\n", irq);
-	पूर्ण
+	}
 
 	irq = gpio_to_irq(sharpsl_pm.machinfo->gpio_batlock);
-	अगर (request_irq(irq, sharpsl_fatal_isr, IRQF_TRIGGER_FALLING, "Battery Cover", sharpsl_fatal_isr)) अणु
+	if (request_irq(irq, sharpsl_fatal_isr, IRQF_TRIGGER_FALLING, "Battery Cover", sharpsl_fatal_isr)) {
 		dev_err(sharpsl_pm.dev, "Could not get irq %d.\n", irq);
-	पूर्ण
+	}
 
-	अगर (sharpsl_pm.machinfo->gpio_fatal) अणु
+	if (sharpsl_pm.machinfo->gpio_fatal) {
 		irq = gpio_to_irq(sharpsl_pm.machinfo->gpio_fatal);
-		अगर (request_irq(irq, sharpsl_fatal_isr, IRQF_TRIGGER_FALLING, "Fatal Battery", sharpsl_fatal_isr)) अणु
+		if (request_irq(irq, sharpsl_fatal_isr, IRQF_TRIGGER_FALLING, "Fatal Battery", sharpsl_fatal_isr)) {
 			dev_err(sharpsl_pm.dev, "Could not get irq %d.\n", irq);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (sharpsl_pm.machinfo->batfull_irq) अणु
-		/* Register पूर्णांकerrupt handler. */
+	if (sharpsl_pm.machinfo->batfull_irq) {
+		/* Register interrupt handler. */
 		irq = gpio_to_irq(sharpsl_pm.machinfo->gpio_batfull);
-		अगर (request_irq(irq, sharpsl_chrg_full_isr, IRQF_TRIGGER_RISING, "CO", sharpsl_chrg_full_isr)) अणु
+		if (request_irq(irq, sharpsl_chrg_full_isr, IRQF_TRIGGER_RISING, "CO", sharpsl_chrg_full_isr)) {
 			dev_err(sharpsl_pm.dev, "Could not get irq %d.\n", irq);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ret = device_create_file(&pdev->dev, &dev_attr_battery_percentage);
 	ret |= device_create_file(&pdev->dev, &dev_attr_battery_voltage);
-	अगर (ret != 0)
+	if (ret != 0)
 		dev_warn(&pdev->dev, "Failed to register attributes (%d)\n", ret);
 
-	apm_get_घातer_status = sharpsl_apm_get_घातer_status;
+	apm_get_power_status = sharpsl_apm_get_power_status;
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 	suspend_set_ops(&sharpsl_pm_ops);
-#पूर्ण_अगर
+#endif
 
-	mod_समयr(&sharpsl_pm.ac_समयr, jअगरfies + msecs_to_jअगरfies(250));
+	mod_timer(&sharpsl_pm.ac_timer, jiffies + msecs_to_jiffies(250));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sharpsl_pm_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	suspend_set_ops(शून्य);
+static int sharpsl_pm_remove(struct platform_device *pdev)
+{
+	suspend_set_ops(NULL);
 
-	device_हटाओ_file(&pdev->dev, &dev_attr_battery_percentage);
-	device_हटाओ_file(&pdev->dev, &dev_attr_battery_voltage);
+	device_remove_file(&pdev->dev, &dev_attr_battery_percentage);
+	device_remove_file(&pdev->dev, &dev_attr_battery_voltage);
 
-	led_trigger_unरेजिस्टर_simple(sharpsl_अक्षरge_led_trigger);
+	led_trigger_unregister_simple(sharpsl_charge_led_trigger);
 
-	मुक्त_irq(gpio_to_irq(sharpsl_pm.machinfo->gpio_acin), sharpsl_ac_isr);
-	मुक्त_irq(gpio_to_irq(sharpsl_pm.machinfo->gpio_batlock), sharpsl_fatal_isr);
+	free_irq(gpio_to_irq(sharpsl_pm.machinfo->gpio_acin), sharpsl_ac_isr);
+	free_irq(gpio_to_irq(sharpsl_pm.machinfo->gpio_batlock), sharpsl_fatal_isr);
 
-	अगर (sharpsl_pm.machinfo->gpio_fatal)
-		मुक्त_irq(gpio_to_irq(sharpsl_pm.machinfo->gpio_fatal), sharpsl_fatal_isr);
+	if (sharpsl_pm.machinfo->gpio_fatal)
+		free_irq(gpio_to_irq(sharpsl_pm.machinfo->gpio_fatal), sharpsl_fatal_isr);
 
-	अगर (sharpsl_pm.machinfo->batfull_irq)
-		मुक्त_irq(gpio_to_irq(sharpsl_pm.machinfo->gpio_batfull), sharpsl_chrg_full_isr);
+	if (sharpsl_pm.machinfo->batfull_irq)
+		free_irq(gpio_to_irq(sharpsl_pm.machinfo->gpio_batfull), sharpsl_chrg_full_isr);
 
-	gpio_मुक्त(sharpsl_pm.machinfo->gpio_batlock);
-	gpio_मुक्त(sharpsl_pm.machinfo->gpio_batfull);
-	gpio_मुक्त(sharpsl_pm.machinfo->gpio_acin);
+	gpio_free(sharpsl_pm.machinfo->gpio_batlock);
+	gpio_free(sharpsl_pm.machinfo->gpio_batfull);
+	gpio_free(sharpsl_pm.machinfo->gpio_acin);
 
-	अगर (sharpsl_pm.machinfo->निकास)
-		sharpsl_pm.machinfo->निकास();
+	if (sharpsl_pm.machinfo->exit)
+		sharpsl_pm.machinfo->exit();
 
-	del_समयr_sync(&sharpsl_pm.chrg_full_समयr);
-	del_समयr_sync(&sharpsl_pm.ac_समयr);
+	del_timer_sync(&sharpsl_pm.chrg_full_timer);
+	del_timer_sync(&sharpsl_pm.ac_timer);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver sharpsl_pm_driver = अणु
+static struct platform_driver sharpsl_pm_driver = {
 	.probe		= sharpsl_pm_probe,
-	.हटाओ		= sharpsl_pm_हटाओ,
+	.remove		= sharpsl_pm_remove,
 	.suspend	= sharpsl_pm_suspend,
 	.resume		= sharpsl_pm_resume,
-	.driver		= अणु
+	.driver		= {
 		.name		= "sharpsl-pm",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक sharpsl_pm_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&sharpsl_pm_driver);
-पूर्ण
+static int sharpsl_pm_init(void)
+{
+	return platform_driver_register(&sharpsl_pm_driver);
+}
 
-अटल व्योम sharpsl_pm_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&sharpsl_pm_driver);
-पूर्ण
+static void sharpsl_pm_exit(void)
+{
+	platform_driver_unregister(&sharpsl_pm_driver);
+}
 
 late_initcall(sharpsl_pm_init);
-module_निकास(sharpsl_pm_निकास);
+module_exit(sharpsl_pm_exit);

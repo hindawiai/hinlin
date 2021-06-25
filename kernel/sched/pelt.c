@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Per Entity Load Tracking
  *
@@ -21,24 +20,24 @@
  *  Adaptive scheduling granularity, math enhancements by Peter Zijlstra
  *  Copyright (C) 2007 Red Hat, Inc., Peter Zijlstra
  *
- *  Move PELT related code from fair.c पूर्णांकo this pelt.c file
+ *  Move PELT related code from fair.c into this pelt.c file
  *  Author: Vincent Guittot <vincent.guittot@linaro.org>
  */
 
-#समावेश <linux/sched.h>
-#समावेश "sched.h"
-#समावेश "pelt.h"
+#include <linux/sched.h>
+#include "sched.h"
+#include "pelt.h"
 
 /*
  * Approximate:
  *   val * y^n,    where y^32 ~= 0.5 (~1 scheduling period)
  */
-अटल u64 decay_load(u64 val, u64 n)
-अणु
-	अचिन्हित पूर्णांक local_n;
+static u64 decay_load(u64 val, u64 n)
+{
+	unsigned int local_n;
 
-	अगर (unlikely(n > LOAD_AVG_PERIOD * 63))
-		वापस 0;
+	if (unlikely(n > LOAD_AVG_PERIOD * 63))
+		return 0;
 
 	/* after bounds checking we can collapse to 32-bit */
 	local_n = n;
@@ -48,19 +47,19 @@
 	 *    y^n = 1/2^(n/PERIOD) * y^(n%PERIOD)
 	 * With a look-up table which covers y^n (n<PERIOD)
 	 *
-	 * To achieve स्थिरant समय decay_load.
+	 * To achieve constant time decay_load.
 	 */
-	अगर (unlikely(local_n >= LOAD_AVG_PERIOD)) अणु
+	if (unlikely(local_n >= LOAD_AVG_PERIOD)) {
 		val >>= local_n / LOAD_AVG_PERIOD;
 		local_n %= LOAD_AVG_PERIOD;
-	पूर्ण
+	}
 
 	val = mul_u64_u32_shr(val, runnable_avg_yN_inv[local_n], 32);
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल u32 __accumulate_pelt_segments(u64 periods, u32 d1, u32 d3)
-अणु
+static u32 __accumulate_pelt_segments(u64 periods, u32 d1, u32 d3)
+{
 	u32 c1, c2, c3 = d3; /* y^0 == 1 */
 
 	/*
@@ -79,13 +78,13 @@
 	 */
 	c2 = LOAD_AVG_MAX - decay_load(LOAD_AVG_MAX, periods) - 1024;
 
-	वापस c1 + c2 + c3;
-पूर्ण
+	return c1 + c2 + c3;
+}
 
 /*
- * Accumulate the three separate parts of the sum; d1 the reमुख्यder
+ * Accumulate the three separate parts of the sum; d1 the remainder
  * of the last (incomplete) period, d2 the span of full periods and d3
- * the reमुख्यder of the (incomplete) current period.
+ * the remainder of the (incomplete) current period.
  *
  *           d1          d2           d3
  *           ^           ^            ^
@@ -103,10 +102,10 @@
  *      d1 y^p + 1024 \Sum y^n + d3 y^0		(Step 2)
  *                     n=1
  */
-अटल __always_अंतरभूत u32
-accumulate_sum(u64 delta, काष्ठा sched_avg *sa,
-	       अचिन्हित दीर्घ load, अचिन्हित दीर्घ runnable, पूर्णांक running)
-अणु
+static __always_inline u32
+accumulate_sum(u64 delta, struct sched_avg *sa,
+	       unsigned long load, unsigned long runnable, int running)
+{
 	u32 contrib = (u32)delta; /* p == 0 -> delta < 1024 */
 	u64 periods;
 
@@ -114,9 +113,9 @@ accumulate_sum(u64 delta, काष्ठा sched_avg *sa,
 	periods = delta / 1024; /* A period is 1024us (~1ms) */
 
 	/*
-	 * Step 1: decay old *_sum अगर we crossed period boundaries.
+	 * Step 1: decay old *_sum if we crossed period boundaries.
 	 */
-	अगर (periods) अणु
+	if (periods) {
 		sa->load_sum = decay_load(sa->load_sum, periods);
 		sa->runnable_sum =
 			decay_load(sa->runnable_sum, periods);
@@ -126,37 +125,37 @@ accumulate_sum(u64 delta, काष्ठा sched_avg *sa,
 		 * Step 2
 		 */
 		delta %= 1024;
-		अगर (load) अणु
+		if (load) {
 			/*
 			 * This relies on the:
 			 *
-			 * अगर (!load)
+			 * if (!load)
 			 *	runnable = running = 0;
 			 *
 			 * clause from ___update_load_sum(); this results in
 			 * the below usage of @contrib to disappear entirely,
-			 * so no poपूर्णांक in calculating it.
+			 * so no point in calculating it.
 			 */
 			contrib = __accumulate_pelt_segments(periods,
 					1024 - sa->period_contrib, delta);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	sa->period_contrib = delta;
 
-	अगर (load)
+	if (load)
 		sa->load_sum += load * contrib;
-	अगर (runnable)
+	if (runnable)
 		sa->runnable_sum += runnable * contrib << SCHED_CAPACITY_SHIFT;
-	अगर (running)
+	if (running)
 		sa->util_sum += contrib << SCHED_CAPACITY_SHIFT;
 
-	वापस periods;
-पूर्ण
+	return periods;
+}
 
 /*
  * We can represent the historical contribution to runnable average as the
- * coefficients of a geometric series.  To करो this we sub-भागide our runnable
- * history पूर्णांकo segments of approximately 1ms (1024us); label the segment that
+ * coefficients of a geometric series.  To do this we sub-divide our runnable
+ * history into segments of approximately 1ms (1024us); label the segment that
  * occurred N-ms ago p_N, with p_0 corresponding to the current period, e.g.
  *
  * [<- 1024us ->|<- 1024us ->|<- 1024us ->| ...
@@ -179,97 +178,97 @@ accumulate_sum(u64 delta, काष्ठा sched_avg *sa,
  * When a period "rolls over" and we have new u_0`, multiplying the previous
  * sum again by y is sufficient to update:
  *   load_avg = u_0` + y*(u_0 + u_1*y + u_2*y^2 + ... )
- *            = u_0 + u_1*y + u_2*y^2 + ... [re-labeling u_i --> u_अणुi+1पूर्ण]
+ *            = u_0 + u_1*y + u_2*y^2 + ... [re-labeling u_i --> u_{i+1}]
  */
-अटल __always_अंतरभूत पूर्णांक
-___update_load_sum(u64 now, काष्ठा sched_avg *sa,
-		  अचिन्हित दीर्घ load, अचिन्हित दीर्घ runnable, पूर्णांक running)
-अणु
+static __always_inline int
+___update_load_sum(u64 now, struct sched_avg *sa,
+		  unsigned long load, unsigned long runnable, int running)
+{
 	u64 delta;
 
-	delta = now - sa->last_update_समय;
+	delta = now - sa->last_update_time;
 	/*
-	 * This should only happen when समय goes backwards, which it
-	 * unक्रमtunately करोes during sched घड़ी init when we swap over to TSC.
+	 * This should only happen when time goes backwards, which it
+	 * unfortunately does during sched clock init when we swap over to TSC.
 	 */
-	अगर ((s64)delta < 0) अणु
-		sa->last_update_समय = now;
-		वापस 0;
-	पूर्ण
+	if ((s64)delta < 0) {
+		sa->last_update_time = now;
+		return 0;
+	}
 
 	/*
 	 * Use 1024ns as the unit of measurement since it's a reasonable
 	 * approximation of 1us and fast to compute.
 	 */
 	delta >>= 10;
-	अगर (!delta)
-		वापस 0;
+	if (!delta)
+		return 0;
 
-	sa->last_update_समय += delta << 10;
+	sa->last_update_time += delta << 10;
 
 	/*
-	 * running is a subset of runnable (weight) so running can't be set अगर
-	 * runnable is clear. But there are some corner हालs where the current
-	 * se has been alपढ़ोy dequeued but cfs_rq->curr still poपूर्णांकs to it.
-	 * This means that weight will be 0 but not running क्रम a sched_entity
-	 * but also क्रम a cfs_rq अगर the latter becomes idle. As an example,
+	 * running is a subset of runnable (weight) so running can't be set if
+	 * runnable is clear. But there are some corner cases where the current
+	 * se has been already dequeued but cfs_rq->curr still points to it.
+	 * This means that weight will be 0 but not running for a sched_entity
+	 * but also for a cfs_rq if the latter becomes idle. As an example,
 	 * this happens during idle_balance() which calls
 	 * update_blocked_averages().
 	 *
 	 * Also see the comment in accumulate_sum().
 	 */
-	अगर (!load)
+	if (!load)
 		runnable = running = 0;
 
 	/*
 	 * Now we know we crossed measurement unit boundaries. The *_avg
 	 * accrues by two steps:
 	 *
-	 * Step 1: accumulate *_sum since last_update_समय. If we haven't
+	 * Step 1: accumulate *_sum since last_update_time. If we haven't
 	 * crossed period boundaries, finish.
 	 */
-	अगर (!accumulate_sum(delta, sa, load, runnable, running))
-		वापस 0;
+	if (!accumulate_sum(delta, sa, load, runnable, running))
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
- * When syncing *_avg with *_sum, we must take पूर्णांकo account the current
- * position in the PELT segment otherwise the reमुख्यing part of the segment
- * will be considered as idle समय whereas it's not yet elapsed and this will
+ * When syncing *_avg with *_sum, we must take into account the current
+ * position in the PELT segment otherwise the remaining part of the segment
+ * will be considered as idle time whereas it's not yet elapsed and this will
  * generate unwanted oscillation in the range [1002..1024[.
  *
- * The max value of *_sum varies with the position in the समय segment and is
+ * The max value of *_sum varies with the position in the time segment and is
  * equals to :
  *
  *   LOAD_AVG_MAX*y + sa->period_contrib
  *
- * which can be simplअगरied पूर्णांकo:
+ * which can be simplified into:
  *
  *   LOAD_AVG_MAX - 1024 + sa->period_contrib
  *
  * because LOAD_AVG_MAX*y == LOAD_AVG_MAX-1024
  *
  * The same care must be taken when a sched entity is added, updated or
- * हटाओd from a cfs_rq and we need to update sched_avg. Scheduler entities
+ * removed from a cfs_rq and we need to update sched_avg. Scheduler entities
  * and the cfs rq, to which they are attached, have the same position in the
- * समय segment because they use the same घड़ी. This means that we can use
+ * time segment because they use the same clock. This means that we can use
  * the period_contrib of cfs_rq when updating the sched_avg of a sched_entity
- * अगर it's more convenient.
+ * if it's more convenient.
  */
-अटल __always_अंतरभूत व्योम
-___update_load_avg(काष्ठा sched_avg *sa, अचिन्हित दीर्घ load)
-अणु
-	u32 भागider = get_pelt_भागider(sa);
+static __always_inline void
+___update_load_avg(struct sched_avg *sa, unsigned long load)
+{
+	u32 divider = get_pelt_divider(sa);
 
 	/*
 	 * Step 2: update *_avg.
 	 */
-	sa->load_avg = भाग_u64(load * sa->load_sum, भागider);
-	sa->runnable_avg = भाग_u64(sa->runnable_sum, भागider);
-	WRITE_ONCE(sa->util_avg, sa->util_sum / भागider);
-पूर्ण
+	sa->load_avg = div_u64(load * sa->load_sum, divider);
+	sa->runnable_avg = div_u64(sa->runnable_sum, divider);
+	WRITE_ONCE(sa->util_avg, sa->util_sum / divider);
+}
 
 /*
  * sched_entity:
@@ -297,45 +296,45 @@ ___update_load_avg(काष्ठा sched_avg *sa, अचिन्हित �
  *   load_avg = \Sum se->avg.load_avg
  */
 
-पूर्णांक __update_load_avg_blocked_se(u64 now, काष्ठा sched_entity *se)
-अणु
-	अगर (___update_load_sum(now, &se->avg, 0, 0, 0)) अणु
+int __update_load_avg_blocked_se(u64 now, struct sched_entity *se)
+{
+	if (___update_load_sum(now, &se->avg, 0, 0, 0)) {
 		___update_load_avg(&se->avg, se_weight(se));
 		trace_pelt_se_tp(se);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक __update_load_avg_se(u64 now, काष्ठा cfs_rq *cfs_rq, काष्ठा sched_entity *se)
-अणु
-	अगर (___update_load_sum(now, &se->avg, !!se->on_rq, se_runnable(se),
-				cfs_rq->curr == se)) अणु
+int __update_load_avg_se(u64 now, struct cfs_rq *cfs_rq, struct sched_entity *se)
+{
+	if (___update_load_sum(now, &se->avg, !!se->on_rq, se_runnable(se),
+				cfs_rq->curr == se)) {
 
 		___update_load_avg(&se->avg, se_weight(se));
 		cfs_se_util_change(&se->avg);
 		trace_pelt_se_tp(se);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक __update_load_avg_cfs_rq(u64 now, काष्ठा cfs_rq *cfs_rq)
-अणु
-	अगर (___update_load_sum(now, &cfs_rq->avg,
-				scale_load_करोwn(cfs_rq->load.weight),
+int __update_load_avg_cfs_rq(u64 now, struct cfs_rq *cfs_rq)
+{
+	if (___update_load_sum(now, &cfs_rq->avg,
+				scale_load_down(cfs_rq->load.weight),
 				cfs_rq->h_nr_running,
-				cfs_rq->curr != शून्य)) अणु
+				cfs_rq->curr != NULL)) {
 
 		___update_load_avg(&cfs_rq->avg, 1);
 		trace_pelt_cfs_tp(cfs_rq);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * rt_rq:
@@ -348,20 +347,20 @@ ___update_load_avg(काष्ठा sched_avg *sa, अचिन्हित �
  *
  */
 
-पूर्णांक update_rt_rq_load_avg(u64 now, काष्ठा rq *rq, पूर्णांक running)
-अणु
-	अगर (___update_load_sum(now, &rq->avg_rt,
+int update_rt_rq_load_avg(u64 now, struct rq *rq, int running)
+{
+	if (___update_load_sum(now, &rq->avg_rt,
 				running,
 				running,
-				running)) अणु
+				running)) {
 
 		___update_load_avg(&rq->avg_rt, 1);
 		trace_pelt_rt_tp(rq);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * dl_rq:
@@ -374,22 +373,22 @@ ___update_load_avg(काष्ठा sched_avg *sa, अचिन्हित �
  *
  */
 
-पूर्णांक update_dl_rq_load_avg(u64 now, काष्ठा rq *rq, पूर्णांक running)
-अणु
-	अगर (___update_load_sum(now, &rq->avg_dl,
+int update_dl_rq_load_avg(u64 now, struct rq *rq, int running)
+{
+	if (___update_load_sum(now, &rq->avg_dl,
 				running,
 				running,
-				running)) अणु
+				running)) {
 
 		___update_load_avg(&rq->avg_dl, 1);
 		trace_pelt_dl_tp(rq);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_SCHED_THERMAL_PRESSURE
+#ifdef CONFIG_SCHED_THERMAL_PRESSURE
 /*
  * thermal:
  *
@@ -397,30 +396,30 @@ ___update_load_avg(काष्ठा sched_avg *sa, अचिन्हित �
  *
  *   util_avg and runnable_load_avg are not supported and meaningless.
  *
- * Unlike rt/dl utilization tracking that track समय spent by a cpu
+ * Unlike rt/dl utilization tracking that track time spent by a cpu
  * running a rt/dl task through util_avg, the average thermal pressure is
- * tracked through load_avg. This is because thermal pressure संकेत is
- * समय weighted "delta" capacity unlike util_avg which is binary.
+ * tracked through load_avg. This is because thermal pressure signal is
+ * time weighted "delta" capacity unlike util_avg which is binary.
  * "delta capacity" =  actual capacity  -
  *			capped capacity a cpu due to a thermal event.
  */
 
-पूर्णांक update_thermal_load_avg(u64 now, काष्ठा rq *rq, u64 capacity)
-अणु
-	अगर (___update_load_sum(now, &rq->avg_thermal,
+int update_thermal_load_avg(u64 now, struct rq *rq, u64 capacity)
+{
+	if (___update_load_sum(now, &rq->avg_thermal,
 			       capacity,
 			       capacity,
-			       capacity)) अणु
+			       capacity)) {
 		___update_load_avg(&rq->avg_thermal, 1);
 		trace_pelt_thermal_tp(rq);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-#अगर_घोषित CONFIG_HAVE_SCHED_AVG_IRQ
+#ifdef CONFIG_HAVE_SCHED_AVG_IRQ
 /*
  * irq:
  *
@@ -432,43 +431,43 @@ ___update_load_avg(काष्ठा sched_avg *sa, अचिन्हित �
  *
  */
 
-पूर्णांक update_irq_load_avg(काष्ठा rq *rq, u64 running)
-अणु
-	पूर्णांक ret = 0;
+int update_irq_load_avg(struct rq *rq, u64 running)
+{
+	int ret = 0;
 
 	/*
-	 * We can't use घड़ी_pelt because irq समय is not accounted in
-	 * घड़ी_प्रकारask. Instead we directly scale the running समय to
+	 * We can't use clock_pelt because irq time is not accounted in
+	 * clock_task. Instead we directly scale the running time to
 	 * reflect the real amount of computation
 	 */
 	running = cap_scale(running, arch_scale_freq_capacity(cpu_of(rq)));
 	running = cap_scale(running, arch_scale_cpu_capacity(cpu_of(rq)));
 
 	/*
-	 * We know the समय that has been used by पूर्णांकerrupt since last update
-	 * but we करोn't when. Let be pessimistic and assume that पूर्णांकerrupt has
-	 * happened just beक्रमe the update. This is not so far from reality
-	 * because पूर्णांकerrupt will most probably wake up task and trig an update
-	 * of rq घड़ी during which the metric is updated.
-	 * We start to decay with normal context समय and then we add the
-	 * पूर्णांकerrupt context समय.
-	 * We can safely हटाओ running from rq->घड़ी because
-	 * rq->घड़ी += delta with delta >= running
+	 * We know the time that has been used by interrupt since last update
+	 * but we don't when. Let be pessimistic and assume that interrupt has
+	 * happened just before the update. This is not so far from reality
+	 * because interrupt will most probably wake up task and trig an update
+	 * of rq clock during which the metric is updated.
+	 * We start to decay with normal context time and then we add the
+	 * interrupt context time.
+	 * We can safely remove running from rq->clock because
+	 * rq->clock += delta with delta >= running
 	 */
-	ret = ___update_load_sum(rq->घड़ी - running, &rq->avg_irq,
+	ret = ___update_load_sum(rq->clock - running, &rq->avg_irq,
 				0,
 				0,
 				0);
-	ret += ___update_load_sum(rq->घड़ी, &rq->avg_irq,
+	ret += ___update_load_sum(rq->clock, &rq->avg_irq,
 				1,
 				1,
 				1);
 
-	अगर (ret) अणु
+	if (ret) {
 		___update_load_avg(&rq->avg_irq, 1);
 		trace_pelt_irq_tp(rq);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif

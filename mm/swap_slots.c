@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Manage cache of swap slots to be used क्रम and वापसed from
+ * Manage cache of swap slots to be used for and returned from
  * swap.
  *
  * Copyright(c) 2016 Intel Corporation.
  *
- * Author: Tim Chen <tim.c.chen@linux.पूर्णांकel.com>
+ * Author: Tim Chen <tim.c.chen@linux.intel.com>
  *
  * We allocate the swap slots from the global pool and put
- * it पूर्णांकo local per cpu caches.  This has the advantage
- * of no needing to acquire the swap_info lock every समय
+ * it into local per cpu caches.  This has the advantage
+ * of no needing to acquire the swap_info lock every time
  * we need a new slot.
  *
- * There is also opportunity to simply वापस the slot
+ * There is also opportunity to simply return the slot
  * to local caches without needing to acquire swap_info
- * lock.  We करो not reuse the वापसed slots directly but
+ * lock.  We do not reuse the returned slots directly but
  * move them back to the global pool in a batch.  This
  * allows the slots to coalesce and reduce fragmentation.
  *
@@ -23,98 +22,98 @@
  * flag in map_count that prevents it from being allocated
  * again from the global pool.
  *
- * The swap slots cache is रक्षित by a mutex instead of
- * a spin lock as when we search क्रम slots with scan_swap_map,
+ * The swap slots cache is protected by a mutex instead of
+ * a spin lock as when we search for slots with scan_swap_map,
  * we can possibly sleep.
  */
 
-#समावेश <linux/swap_slots.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/mm.h>
+#include <linux/swap_slots.h>
+#include <linux/cpu.h>
+#include <linux/cpumask.h>
+#include <linux/vmalloc.h>
+#include <linux/mutex.h>
+#include <linux/mm.h>
 
-अटल DEFINE_PER_CPU(काष्ठा swap_slots_cache, swp_slots);
-अटल bool	swap_slot_cache_active;
+static DEFINE_PER_CPU(struct swap_slots_cache, swp_slots);
+static bool	swap_slot_cache_active;
 bool	swap_slot_cache_enabled;
-अटल bool	swap_slot_cache_initialized;
-अटल DEFINE_MUTEX(swap_slots_cache_mutex);
+static bool	swap_slot_cache_initialized;
+static DEFINE_MUTEX(swap_slots_cache_mutex);
 /* Serialize swap slots cache enable/disable operations */
-अटल DEFINE_MUTEX(swap_slots_cache_enable_mutex);
+static DEFINE_MUTEX(swap_slots_cache_enable_mutex);
 
-अटल व्योम __drain_swap_slots_cache(अचिन्हित पूर्णांक type);
-अटल व्योम deactivate_swap_slots_cache(व्योम);
-अटल व्योम reactivate_swap_slots_cache(व्योम);
+static void __drain_swap_slots_cache(unsigned int type);
+static void deactivate_swap_slots_cache(void);
+static void reactivate_swap_slots_cache(void);
 
-#घोषणा use_swap_slot_cache (swap_slot_cache_active && swap_slot_cache_enabled)
-#घोषणा SLOTS_CACHE 0x1
-#घोषणा SLOTS_CACHE_RET 0x2
+#define use_swap_slot_cache (swap_slot_cache_active && swap_slot_cache_enabled)
+#define SLOTS_CACHE 0x1
+#define SLOTS_CACHE_RET 0x2
 
-अटल व्योम deactivate_swap_slots_cache(व्योम)
-अणु
+static void deactivate_swap_slots_cache(void)
+{
 	mutex_lock(&swap_slots_cache_mutex);
 	swap_slot_cache_active = false;
 	__drain_swap_slots_cache(SLOTS_CACHE|SLOTS_CACHE_RET);
 	mutex_unlock(&swap_slots_cache_mutex);
-पूर्ण
+}
 
-अटल व्योम reactivate_swap_slots_cache(व्योम)
-अणु
+static void reactivate_swap_slots_cache(void)
+{
 	mutex_lock(&swap_slots_cache_mutex);
 	swap_slot_cache_active = true;
 	mutex_unlock(&swap_slots_cache_mutex);
-पूर्ण
+}
 
 /* Must not be called with cpu hot plug lock */
-व्योम disable_swap_slots_cache_lock(व्योम)
-अणु
+void disable_swap_slots_cache_lock(void)
+{
 	mutex_lock(&swap_slots_cache_enable_mutex);
 	swap_slot_cache_enabled = false;
-	अगर (swap_slot_cache_initialized) अणु
+	if (swap_slot_cache_initialized) {
 		/* serialize with cpu hotplug operations */
 		get_online_cpus();
 		__drain_swap_slots_cache(SLOTS_CACHE|SLOTS_CACHE_RET);
 		put_online_cpus();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __reenable_swap_slots_cache(व्योम)
-अणु
+static void __reenable_swap_slots_cache(void)
+{
 	swap_slot_cache_enabled = has_usable_swap();
-पूर्ण
+}
 
-व्योम reenable_swap_slots_cache_unlock(व्योम)
-अणु
+void reenable_swap_slots_cache_unlock(void)
+{
 	__reenable_swap_slots_cache();
 	mutex_unlock(&swap_slots_cache_enable_mutex);
-पूर्ण
+}
 
-अटल bool check_cache_active(व्योम)
-अणु
-	दीर्घ pages;
+static bool check_cache_active(void)
+{
+	long pages;
 
-	अगर (!swap_slot_cache_enabled)
-		वापस false;
+	if (!swap_slot_cache_enabled)
+		return false;
 
 	pages = get_nr_swap_pages();
-	अगर (!swap_slot_cache_active) अणु
-		अगर (pages > num_online_cpus() *
+	if (!swap_slot_cache_active) {
+		if (pages > num_online_cpus() *
 		    THRESHOLD_ACTIVATE_SWAP_SLOTS_CACHE)
 			reactivate_swap_slots_cache();
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* अगर global pool of slot caches too low, deactivate cache */
-	अगर (pages < num_online_cpus() * THRESHOLD_DEACTIVATE_SWAP_SLOTS_CACHE)
+	/* if global pool of slot caches too low, deactivate cache */
+	if (pages < num_online_cpus() * THRESHOLD_DEACTIVATE_SWAP_SLOTS_CACHE)
 		deactivate_swap_slots_cache();
 out:
-	वापस swap_slot_cache_active;
-पूर्ण
+	return swap_slot_cache_active;
+}
 
-अटल पूर्णांक alloc_swap_slot_cache(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा swap_slots_cache *cache;
+static int alloc_swap_slot_cache(unsigned int cpu)
+{
+	struct swap_slots_cache *cache;
 	swp_entry_t *slots, *slots_ret;
 
 	/*
@@ -122,41 +121,41 @@ out:
 	 * as kvzalloc could trigger reclaim and get_swap_page,
 	 * which can lock swap_slots_cache_mutex.
 	 */
-	slots = kvसुस्मृति(SWAP_SLOTS_CACHE_SIZE, माप(swp_entry_t),
+	slots = kvcalloc(SWAP_SLOTS_CACHE_SIZE, sizeof(swp_entry_t),
 			 GFP_KERNEL);
-	अगर (!slots)
-		वापस -ENOMEM;
+	if (!slots)
+		return -ENOMEM;
 
-	slots_ret = kvसुस्मृति(SWAP_SLOTS_CACHE_SIZE, माप(swp_entry_t),
+	slots_ret = kvcalloc(SWAP_SLOTS_CACHE_SIZE, sizeof(swp_entry_t),
 			     GFP_KERNEL);
-	अगर (!slots_ret) अणु
-		kvमुक्त(slots);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!slots_ret) {
+		kvfree(slots);
+		return -ENOMEM;
+	}
 
 	mutex_lock(&swap_slots_cache_mutex);
 	cache = &per_cpu(swp_slots, cpu);
-	अगर (cache->slots || cache->slots_ret) अणु
-		/* cache alपढ़ोy allocated */
+	if (cache->slots || cache->slots_ret) {
+		/* cache already allocated */
 		mutex_unlock(&swap_slots_cache_mutex);
 
-		kvमुक्त(slots);
-		kvमुक्त(slots_ret);
+		kvfree(slots);
+		kvfree(slots_ret);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!cache->lock_initialized) अणु
+	if (!cache->lock_initialized) {
 		mutex_init(&cache->alloc_lock);
-		spin_lock_init(&cache->मुक्त_lock);
+		spin_lock_init(&cache->free_lock);
 		cache->lock_initialized = true;
-	पूर्ण
+	}
 	cache->nr = 0;
 	cache->cur = 0;
 	cache->n_ret = 0;
 	/*
-	 * We initialized alloc_lock and मुक्त_lock earlier.  We use
-	 * !cache->slots or !cache->slots_ret to know अगर it is safe to acquire
+	 * We initialized alloc_lock and free_lock earlier.  We use
+	 * !cache->slots or !cache->slots_ret to know if it is safe to acquire
 	 * the corresponding lock and use the cache.  Memory barrier below
 	 * ensures the assumption.
 	 */
@@ -164,52 +163,52 @@ out:
 	cache->slots = slots;
 	cache->slots_ret = slots_ret;
 	mutex_unlock(&swap_slots_cache_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम drain_slots_cache_cpu(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक type,
-				  bool मुक्त_slots)
-अणु
-	काष्ठा swap_slots_cache *cache;
-	swp_entry_t *slots = शून्य;
+static void drain_slots_cache_cpu(unsigned int cpu, unsigned int type,
+				  bool free_slots)
+{
+	struct swap_slots_cache *cache;
+	swp_entry_t *slots = NULL;
 
 	cache = &per_cpu(swp_slots, cpu);
-	अगर ((type & SLOTS_CACHE) && cache->slots) अणु
+	if ((type & SLOTS_CACHE) && cache->slots) {
 		mutex_lock(&cache->alloc_lock);
-		swapcache_मुक्त_entries(cache->slots + cache->cur, cache->nr);
+		swapcache_free_entries(cache->slots + cache->cur, cache->nr);
 		cache->cur = 0;
 		cache->nr = 0;
-		अगर (मुक्त_slots && cache->slots) अणु
-			kvमुक्त(cache->slots);
-			cache->slots = शून्य;
-		पूर्ण
+		if (free_slots && cache->slots) {
+			kvfree(cache->slots);
+			cache->slots = NULL;
+		}
 		mutex_unlock(&cache->alloc_lock);
-	पूर्ण
-	अगर ((type & SLOTS_CACHE_RET) && cache->slots_ret) अणु
-		spin_lock_irq(&cache->मुक्त_lock);
-		swapcache_मुक्त_entries(cache->slots_ret, cache->n_ret);
+	}
+	if ((type & SLOTS_CACHE_RET) && cache->slots_ret) {
+		spin_lock_irq(&cache->free_lock);
+		swapcache_free_entries(cache->slots_ret, cache->n_ret);
 		cache->n_ret = 0;
-		अगर (मुक्त_slots && cache->slots_ret) अणु
+		if (free_slots && cache->slots_ret) {
 			slots = cache->slots_ret;
-			cache->slots_ret = शून्य;
-		पूर्ण
-		spin_unlock_irq(&cache->मुक्त_lock);
-		kvमुक्त(slots);
-	पूर्ण
-पूर्ण
+			cache->slots_ret = NULL;
+		}
+		spin_unlock_irq(&cache->free_lock);
+		kvfree(slots);
+	}
+}
 
-अटल व्योम __drain_swap_slots_cache(अचिन्हित पूर्णांक type)
-अणु
-	अचिन्हित पूर्णांक cpu;
+static void __drain_swap_slots_cache(unsigned int type)
+{
+	unsigned int cpu;
 
 	/*
 	 * This function is called during
 	 *	1) swapoff, when we have to make sure no
-	 *	   left over slots are in cache when we हटाओ
+	 *	   left over slots are in cache when we remove
 	 *	   a swap device;
 	 *      2) disabling of swap slot cache, when we run low
 	 *	   on swap slots when allocating memory and need
-	 *	   to वापस swap slots to global pool.
+	 *	   to return swap slots to global pool.
 	 *
 	 * We cannot acquire cpu hot plug lock here as
 	 * this function can be invoked in the cpu
@@ -220,135 +219,135 @@ out:
 	 *
 	 * Hence the loop over current online cpu below could miss cpu that
 	 * is being brought online but not yet marked as online.
-	 * That is okay as we करो not schedule and run anything on a
-	 * cpu beक्रमe it has been marked online. Hence, we will not
+	 * That is okay as we do not schedule and run anything on a
+	 * cpu before it has been marked online. Hence, we will not
 	 * fill any swap slots in slots cache of such cpu.
 	 * There are no slots on such cpu that need to be drained.
 	 */
-	क्रम_each_online_cpu(cpu)
+	for_each_online_cpu(cpu)
 		drain_slots_cache_cpu(cpu, type, false);
-पूर्ण
+}
 
-अटल पूर्णांक मुक्त_slot_cache(अचिन्हित पूर्णांक cpu)
-अणु
+static int free_slot_cache(unsigned int cpu)
+{
 	mutex_lock(&swap_slots_cache_mutex);
 	drain_slots_cache_cpu(cpu, SLOTS_CACHE | SLOTS_CACHE_RET, true);
 	mutex_unlock(&swap_slots_cache_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम enable_swap_slots_cache(व्योम)
-अणु
+void enable_swap_slots_cache(void)
+{
 	mutex_lock(&swap_slots_cache_enable_mutex);
-	अगर (!swap_slot_cache_initialized) अणु
-		पूर्णांक ret;
+	if (!swap_slot_cache_initialized) {
+		int ret;
 
 		ret = cpuhp_setup_state(CPUHP_AP_ONLINE_DYN, "swap_slots_cache",
-					alloc_swap_slot_cache, मुक्त_slot_cache);
-		अगर (WARN_ONCE(ret < 0, "Cache allocation failed (%s), operating "
+					alloc_swap_slot_cache, free_slot_cache);
+		if (WARN_ONCE(ret < 0, "Cache allocation failed (%s), operating "
 				       "without swap slots cache.\n", __func__))
-			जाओ out_unlock;
+			goto out_unlock;
 
 		swap_slot_cache_initialized = true;
-	पूर्ण
+	}
 
 	__reenable_swap_slots_cache();
 out_unlock:
 	mutex_unlock(&swap_slots_cache_enable_mutex);
-पूर्ण
+}
 
 /* called with swap slot cache's alloc lock held */
-अटल पूर्णांक refill_swap_slots_cache(काष्ठा swap_slots_cache *cache)
-अणु
-	अगर (!use_swap_slot_cache || cache->nr)
-		वापस 0;
+static int refill_swap_slots_cache(struct swap_slots_cache *cache)
+{
+	if (!use_swap_slot_cache || cache->nr)
+		return 0;
 
 	cache->cur = 0;
-	अगर (swap_slot_cache_active)
+	if (swap_slot_cache_active)
 		cache->nr = get_swap_pages(SWAP_SLOTS_CACHE_SIZE,
 					   cache->slots, 1);
 
-	वापस cache->nr;
-पूर्ण
+	return cache->nr;
+}
 
-पूर्णांक मुक्त_swap_slot(swp_entry_t entry)
-अणु
-	काष्ठा swap_slots_cache *cache;
+int free_swap_slot(swp_entry_t entry)
+{
+	struct swap_slots_cache *cache;
 
 	cache = raw_cpu_ptr(&swp_slots);
-	अगर (likely(use_swap_slot_cache && cache->slots_ret)) अणु
-		spin_lock_irq(&cache->मुक्त_lock);
-		/* Swap slots cache may be deactivated beक्रमe acquiring lock */
-		अगर (!use_swap_slot_cache || !cache->slots_ret) अणु
-			spin_unlock_irq(&cache->मुक्त_lock);
-			जाओ direct_मुक्त;
-		पूर्ण
-		अगर (cache->n_ret >= SWAP_SLOTS_CACHE_SIZE) अणु
+	if (likely(use_swap_slot_cache && cache->slots_ret)) {
+		spin_lock_irq(&cache->free_lock);
+		/* Swap slots cache may be deactivated before acquiring lock */
+		if (!use_swap_slot_cache || !cache->slots_ret) {
+			spin_unlock_irq(&cache->free_lock);
+			goto direct_free;
+		}
+		if (cache->n_ret >= SWAP_SLOTS_CACHE_SIZE) {
 			/*
 			 * Return slots to global pool.
 			 * The current swap_map value is SWAP_HAS_CACHE.
-			 * Set it to 0 to indicate it is available क्रम
+			 * Set it to 0 to indicate it is available for
 			 * allocation in global pool
 			 */
-			swapcache_मुक्त_entries(cache->slots_ret, cache->n_ret);
+			swapcache_free_entries(cache->slots_ret, cache->n_ret);
 			cache->n_ret = 0;
-		पूर्ण
+		}
 		cache->slots_ret[cache->n_ret++] = entry;
-		spin_unlock_irq(&cache->मुक्त_lock);
-	पूर्ण अन्यथा अणु
-direct_मुक्त:
-		swapcache_मुक्त_entries(&entry, 1);
-	पूर्ण
+		spin_unlock_irq(&cache->free_lock);
+	} else {
+direct_free:
+		swapcache_free_entries(&entry, 1);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-swp_entry_t get_swap_page(काष्ठा page *page)
-अणु
+swp_entry_t get_swap_page(struct page *page)
+{
 	swp_entry_t entry;
-	काष्ठा swap_slots_cache *cache;
+	struct swap_slots_cache *cache;
 
 	entry.val = 0;
 
-	अगर (PageTransHuge(page)) अणु
-		अगर (IS_ENABLED(CONFIG_THP_SWAP))
+	if (PageTransHuge(page)) {
+		if (IS_ENABLED(CONFIG_THP_SWAP))
 			get_swap_pages(1, &entry, HPAGE_PMD_NR);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * Preemption is allowed here, because we may sleep
 	 * in refill_swap_slots_cache().  But it is safe, because
-	 * accesses to the per-CPU data काष्ठाure are रक्षित by the
+	 * accesses to the per-CPU data structure are protected by the
 	 * mutex cache->alloc_lock.
 	 *
-	 * The alloc path here करोes not touch cache->slots_ret
-	 * so cache->मुक्त_lock is not taken.
+	 * The alloc path here does not touch cache->slots_ret
+	 * so cache->free_lock is not taken.
 	 */
 	cache = raw_cpu_ptr(&swp_slots);
 
-	अगर (likely(check_cache_active() && cache->slots)) अणु
+	if (likely(check_cache_active() && cache->slots)) {
 		mutex_lock(&cache->alloc_lock);
-		अगर (cache->slots) अणु
+		if (cache->slots) {
 repeat:
-			अगर (cache->nr) अणु
+			if (cache->nr) {
 				entry = cache->slots[cache->cur];
 				cache->slots[cache->cur++].val = 0;
 				cache->nr--;
-			पूर्ण अन्यथा अगर (refill_swap_slots_cache(cache)) अणु
-				जाओ repeat;
-			पूर्ण
-		पूर्ण
+			} else if (refill_swap_slots_cache(cache)) {
+				goto repeat;
+			}
+		}
 		mutex_unlock(&cache->alloc_lock);
-		अगर (entry.val)
-			जाओ out;
-	पूर्ण
+		if (entry.val)
+			goto out;
+	}
 
 	get_swap_pages(1, &entry, 1);
 out:
-	अगर (mem_cgroup_try_अक्षरge_swap(page, entry)) अणु
+	if (mem_cgroup_try_charge_swap(page, entry)) {
 		put_swap_page(page, entry);
 		entry.val = 0;
-	पूर्ण
-	वापस entry;
-पूर्ण
+	}
+	return entry;
+}

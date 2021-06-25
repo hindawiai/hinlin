@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * An hwmon driver क्रम the Analog Devices AD7414
+ * An hwmon driver for the Analog Devices AD7414
  *
  * Copyright 2006 Stefan Roese <sr at denx.de>, DENX Software Engineering
  *
@@ -10,221 +9,221 @@
  *
  * Copyright (c) 2008 Spansion Inc.
  *   Frank Edelhaeuser <frank.edelhaeuser at spansion.com>
- *   (converted to "new style" I2C driver model, हटाओd checkpatch.pl warnings)
+ *   (converted to "new style" I2C driver model, removed checkpatch.pl warnings)
  *
  * Based on ad7418.c
  * Copyright 2006 Tower Technologies, Alessandro Zummo <a.zummo at towertech.it>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/hwmon-sysfs.h>
-#समावेश <linux/err.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/jiffies.h>
+#include <linux/i2c.h>
+#include <linux/hwmon.h>
+#include <linux/hwmon-sysfs.h>
+#include <linux/err.h>
+#include <linux/mutex.h>
+#include <linux/sysfs.h>
+#include <linux/slab.h>
 
 
-/* AD7414 रेजिस्टरs */
-#घोषणा AD7414_REG_TEMP		0x00
-#घोषणा AD7414_REG_CONF		0x01
-#घोषणा AD7414_REG_T_HIGH	0x02
-#घोषणा AD7414_REG_T_LOW	0x03
+/* AD7414 registers */
+#define AD7414_REG_TEMP		0x00
+#define AD7414_REG_CONF		0x01
+#define AD7414_REG_T_HIGH	0x02
+#define AD7414_REG_T_LOW	0x03
 
-अटल u8 AD7414_REG_LIMIT[] = अणु AD7414_REG_T_HIGH, AD7414_REG_T_LOW पूर्ण;
+static u8 AD7414_REG_LIMIT[] = { AD7414_REG_T_HIGH, AD7414_REG_T_LOW };
 
-काष्ठा ad7414_data अणु
-	काष्ठा i2c_client	*client;
-	काष्ठा mutex		lock;	/* atomic पढ़ो data updates */
-	अक्षर			valid;	/* !=0 अगर following fields are valid */
-	अचिन्हित दीर्घ		next_update;	/* In jअगरfies */
+struct ad7414_data {
+	struct i2c_client	*client;
+	struct mutex		lock;	/* atomic read data updates */
+	char			valid;	/* !=0 if following fields are valid */
+	unsigned long		next_update;	/* In jiffies */
 	s16			temp_input;	/* Register values */
 	s8			temps[ARRAY_SIZE(AD7414_REG_LIMIT)];
-पूर्ण;
+};
 
 /* REG: (0.25C/bit, two's complement) << 6 */
-अटल अंतरभूत पूर्णांक ad7414_temp_from_reg(s16 reg)
-अणु
+static inline int ad7414_temp_from_reg(s16 reg)
+{
 	/*
-	 * use पूर्णांकeger भागision instead of equivalent right shअगरt to
-	 * guarantee arithmetic shअगरt and preserve the sign
+	 * use integer division instead of equivalent right shift to
+	 * guarantee arithmetic shift and preserve the sign
 	 */
-	वापस ((पूर्णांक)reg / 64) * 250;
-पूर्ण
+	return ((int)reg / 64) * 250;
+}
 
-अटल अंतरभूत पूर्णांक ad7414_पढ़ो(काष्ठा i2c_client *client, u8 reg)
-अणु
-	अगर (reg == AD7414_REG_TEMP)
-		वापस i2c_smbus_पढ़ो_word_swapped(client, reg);
-	अन्यथा
-		वापस i2c_smbus_पढ़ो_byte_data(client, reg);
-पूर्ण
+static inline int ad7414_read(struct i2c_client *client, u8 reg)
+{
+	if (reg == AD7414_REG_TEMP)
+		return i2c_smbus_read_word_swapped(client, reg);
+	else
+		return i2c_smbus_read_byte_data(client, reg);
+}
 
-अटल अंतरभूत पूर्णांक ad7414_ग_लिखो(काष्ठा i2c_client *client, u8 reg, u8 value)
-अणु
-	वापस i2c_smbus_ग_लिखो_byte_data(client, reg, value);
-पूर्ण
+static inline int ad7414_write(struct i2c_client *client, u8 reg, u8 value)
+{
+	return i2c_smbus_write_byte_data(client, reg, value);
+}
 
-अटल काष्ठा ad7414_data *ad7414_update_device(काष्ठा device *dev)
-अणु
-	काष्ठा ad7414_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
+static struct ad7414_data *ad7414_update_device(struct device *dev)
+{
+	struct ad7414_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
 
 	mutex_lock(&data->lock);
 
-	अगर (समय_after(jअगरfies, data->next_update) || !data->valid) अणु
-		पूर्णांक value, i;
+	if (time_after(jiffies, data->next_update) || !data->valid) {
+		int value, i;
 
 		dev_dbg(&client->dev, "starting ad7414 update\n");
 
-		value = ad7414_पढ़ो(client, AD7414_REG_TEMP);
-		अगर (value < 0)
+		value = ad7414_read(client, AD7414_REG_TEMP);
+		if (value < 0)
 			dev_dbg(&client->dev, "AD7414_REG_TEMP err %d\n",
 				value);
-		अन्यथा
+		else
 			data->temp_input = value;
 
-		क्रम (i = 0; i < ARRAY_SIZE(AD7414_REG_LIMIT); ++i) अणु
-			value = ad7414_पढ़ो(client, AD7414_REG_LIMIT[i]);
-			अगर (value < 0)
+		for (i = 0; i < ARRAY_SIZE(AD7414_REG_LIMIT); ++i) {
+			value = ad7414_read(client, AD7414_REG_LIMIT[i]);
+			if (value < 0)
 				dev_dbg(&client->dev, "AD7414 reg %d err %d\n",
 					AD7414_REG_LIMIT[i], value);
-			अन्यथा
+			else
 				data->temps[i] = value;
-		पूर्ण
+		}
 
-		data->next_update = jअगरfies + HZ + HZ / 2;
+		data->next_update = jiffies + HZ + HZ / 2;
 		data->valid = 1;
-	पूर्ण
+	}
 
 	mutex_unlock(&data->lock);
 
-	वापस data;
-पूर्ण
+	return data;
+}
 
-अटल sमाप_प्रकार temp_input_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा ad7414_data *data = ad7414_update_device(dev);
-	वापस प्र_लिखो(buf, "%d\n", ad7414_temp_from_reg(data->temp_input));
-पूर्ण
-अटल SENSOR_DEVICE_ATTR_RO(temp1_input, temp_input, 0);
+static ssize_t temp_input_show(struct device *dev,
+			       struct device_attribute *attr, char *buf)
+{
+	struct ad7414_data *data = ad7414_update_device(dev);
+	return sprintf(buf, "%d\n", ad7414_temp_from_reg(data->temp_input));
+}
+static SENSOR_DEVICE_ATTR_RO(temp1_input, temp_input, 0);
 
-अटल sमाप_प्रकार max_min_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			    अक्षर *buf)
-अणु
-	पूर्णांक index = to_sensor_dev_attr(attr)->index;
-	काष्ठा ad7414_data *data = ad7414_update_device(dev);
-	वापस प्र_लिखो(buf, "%d\n", data->temps[index] * 1000);
-पूर्ण
+static ssize_t max_min_show(struct device *dev, struct device_attribute *attr,
+			    char *buf)
+{
+	int index = to_sensor_dev_attr(attr)->index;
+	struct ad7414_data *data = ad7414_update_device(dev);
+	return sprintf(buf, "%d\n", data->temps[index] * 1000);
+}
 
-अटल sमाप_प्रकार max_min_store(काष्ठा device *dev,
-			     काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
-			     माप_प्रकार count)
-अणु
-	काष्ठा ad7414_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	पूर्णांक index = to_sensor_dev_attr(attr)->index;
+static ssize_t max_min_store(struct device *dev,
+			     struct device_attribute *attr, const char *buf,
+			     size_t count)
+{
+	struct ad7414_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	int index = to_sensor_dev_attr(attr)->index;
 	u8 reg = AD7414_REG_LIMIT[index];
-	दीर्घ temp;
-	पूर्णांक ret = kम_से_दीर्घ(buf, 10, &temp);
+	long temp;
+	int ret = kstrtol(buf, 10, &temp);
 
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	temp = clamp_val(temp, -40000, 85000);
 	temp = (temp + (temp < 0 ? -500 : 500)) / 1000;
 
 	mutex_lock(&data->lock);
 	data->temps[index] = temp;
-	ad7414_ग_लिखो(client, reg, temp);
+	ad7414_write(client, reg, temp);
 	mutex_unlock(&data->lock);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल SENSOR_DEVICE_ATTR_RW(temp1_max, max_min, 0);
-अटल SENSOR_DEVICE_ATTR_RW(temp1_min, max_min, 1);
+static SENSOR_DEVICE_ATTR_RW(temp1_max, max_min, 0);
+static SENSOR_DEVICE_ATTR_RW(temp1_min, max_min, 1);
 
-अटल sमाप_प्रकार alarm_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  अक्षर *buf)
-अणु
-	पूर्णांक bitnr = to_sensor_dev_attr(attr)->index;
-	काष्ठा ad7414_data *data = ad7414_update_device(dev);
-	पूर्णांक value = (data->temp_input >> bitnr) & 1;
-	वापस प्र_लिखो(buf, "%d\n", value);
-पूर्ण
+static ssize_t alarm_show(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	int bitnr = to_sensor_dev_attr(attr)->index;
+	struct ad7414_data *data = ad7414_update_device(dev);
+	int value = (data->temp_input >> bitnr) & 1;
+	return sprintf(buf, "%d\n", value);
+}
 
-अटल SENSOR_DEVICE_ATTR_RO(temp1_min_alarm, alarm, 3);
-अटल SENSOR_DEVICE_ATTR_RO(temp1_max_alarm, alarm, 4);
+static SENSOR_DEVICE_ATTR_RO(temp1_min_alarm, alarm, 3);
+static SENSOR_DEVICE_ATTR_RO(temp1_max_alarm, alarm, 4);
 
-अटल काष्ठा attribute *ad7414_attrs[] = अणु
+static struct attribute *ad7414_attrs[] = {
 	&sensor_dev_attr_temp1_input.dev_attr.attr,
 	&sensor_dev_attr_temp1_max.dev_attr.attr,
 	&sensor_dev_attr_temp1_min.dev_attr.attr,
 	&sensor_dev_attr_temp1_max_alarm.dev_attr.attr,
 	&sensor_dev_attr_temp1_min_alarm.dev_attr.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
 ATTRIBUTE_GROUPS(ad7414);
 
-अटल पूर्णांक ad7414_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा device *dev = &client->dev;
-	काष्ठा ad7414_data *data;
-	काष्ठा device *hwmon_dev;
-	पूर्णांक conf;
+static int ad7414_probe(struct i2c_client *client)
+{
+	struct device *dev = &client->dev;
+	struct ad7414_data *data;
+	struct device *hwmon_dev;
+	int conf;
 
-	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE_DATA |
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE_DATA |
 				     I2C_FUNC_SMBUS_READ_WORD_DATA))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	data = devm_kzalloc(dev, माप(काष्ठा ad7414_data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(dev, sizeof(struct ad7414_data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	data->client = client;
 	mutex_init(&data->lock);
 
 	dev_info(&client->dev, "chip found\n");
 
-	/* Make sure the chip is घातered up. */
-	conf = i2c_smbus_पढ़ो_byte_data(client, AD7414_REG_CONF);
-	अगर (conf < 0)
+	/* Make sure the chip is powered up. */
+	conf = i2c_smbus_read_byte_data(client, AD7414_REG_CONF);
+	if (conf < 0)
 		dev_warn(dev, "ad7414_probe unable to read config register.\n");
-	अन्यथा अणु
+	else {
 		conf &= ~(1 << 7);
-		i2c_smbus_ग_लिखो_byte_data(client, AD7414_REG_CONF, conf);
-	पूर्ण
+		i2c_smbus_write_byte_data(client, AD7414_REG_CONF, conf);
+	}
 
-	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_groups(dev,
+	hwmon_dev = devm_hwmon_device_register_with_groups(dev,
 							   client->name,
 							   data, ad7414_groups);
-	वापस PTR_ERR_OR_ZERO(hwmon_dev);
-पूर्ण
+	return PTR_ERR_OR_ZERO(hwmon_dev);
+}
 
-अटल स्थिर काष्ठा i2c_device_id ad7414_id[] = अणु
-	अणु "ad7414", 0 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct i2c_device_id ad7414_id[] = {
+	{ "ad7414", 0 },
+	{}
+};
 MODULE_DEVICE_TABLE(i2c, ad7414_id);
 
-अटल स्थिर काष्ठा of_device_id __maybe_unused ad7414_of_match[] = अणु
-	अणु .compatible = "ad,ad7414" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id __maybe_unused ad7414_of_match[] = {
+	{ .compatible = "ad,ad7414" },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, ad7414_of_match);
 
-अटल काष्ठा i2c_driver ad7414_driver = अणु
-	.driver = अणु
+static struct i2c_driver ad7414_driver = {
+	.driver = {
 		.name	= "ad7414",
 		.of_match_table = of_match_ptr(ad7414_of_match),
-	पूर्ण,
+	},
 	.probe_new = ad7414_probe,
 	.id_table = ad7414_id,
-पूर्ण;
+};
 
 module_i2c_driver(ad7414_driver);
 

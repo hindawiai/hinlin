@@ -1,73 +1,72 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/netfilter.h>
-#समावेश <net/flow_offload.h>
-#समावेश <net/netfilter/nf_tables.h>
-#समावेश <net/netfilter/nf_tables_offload.h>
-#समावेश <net/pkt_cls.h>
+/* SPDX-License-Identifier: GPL-2.0 */
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/netfilter.h>
+#include <net/flow_offload.h>
+#include <net/netfilter/nf_tables.h>
+#include <net/netfilter/nf_tables_offload.h>
+#include <net/pkt_cls.h>
 
-अटल काष्ठा nft_flow_rule *nft_flow_rule_alloc(पूर्णांक num_actions)
-अणु
-	काष्ठा nft_flow_rule *flow;
+static struct nft_flow_rule *nft_flow_rule_alloc(int num_actions)
+{
+	struct nft_flow_rule *flow;
 
-	flow = kzalloc(माप(काष्ठा nft_flow_rule), GFP_KERNEL);
-	अगर (!flow)
-		वापस शून्य;
+	flow = kzalloc(sizeof(struct nft_flow_rule), GFP_KERNEL);
+	if (!flow)
+		return NULL;
 
 	flow->rule = flow_rule_alloc(num_actions);
-	अगर (!flow->rule) अणु
-		kमुक्त(flow);
-		वापस शून्य;
-	पूर्ण
+	if (!flow->rule) {
+		kfree(flow);
+		return NULL;
+	}
 
 	flow->rule->match.dissector	= &flow->match.dissector;
 	flow->rule->match.mask		= &flow->match.mask;
 	flow->rule->match.key		= &flow->match.key;
 
-	वापस flow;
-पूर्ण
+	return flow;
+}
 
-व्योम nft_flow_rule_set_addr_type(काष्ठा nft_flow_rule *flow,
-				 क्रमागत flow_dissector_key_id addr_type)
-अणु
-	काष्ठा nft_flow_match *match = &flow->match;
-	काष्ठा nft_flow_key *mask = &match->mask;
-	काष्ठा nft_flow_key *key = &match->key;
+void nft_flow_rule_set_addr_type(struct nft_flow_rule *flow,
+				 enum flow_dissector_key_id addr_type)
+{
+	struct nft_flow_match *match = &flow->match;
+	struct nft_flow_key *mask = &match->mask;
+	struct nft_flow_key *key = &match->key;
 
-	अगर (match->dissector.used_keys & BIT(FLOW_DISSECTOR_KEY_CONTROL))
-		वापस;
+	if (match->dissector.used_keys & BIT(FLOW_DISSECTOR_KEY_CONTROL))
+		return;
 
 	key->control.addr_type = addr_type;
 	mask->control.addr_type = 0xffff;
 	match->dissector.used_keys |= BIT(FLOW_DISSECTOR_KEY_CONTROL);
 	match->dissector.offset[FLOW_DISSECTOR_KEY_CONTROL] =
-		दुरत्व(काष्ठा nft_flow_key, control);
-पूर्ण
+		offsetof(struct nft_flow_key, control);
+}
 
-काष्ठा nft_offload_ethertype अणु
+struct nft_offload_ethertype {
 	__be16 value;
 	__be16 mask;
-पूर्ण;
+};
 
-अटल व्योम nft_flow_rule_transfer_vlan(काष्ठा nft_offload_ctx *ctx,
-					काष्ठा nft_flow_rule *flow)
-अणु
-	काष्ठा nft_flow_match *match = &flow->match;
-	काष्ठा nft_offload_ethertype ethertype;
+static void nft_flow_rule_transfer_vlan(struct nft_offload_ctx *ctx,
+					struct nft_flow_rule *flow)
+{
+	struct nft_flow_match *match = &flow->match;
+	struct nft_offload_ethertype ethertype;
 
-	अगर (match->dissector.used_keys & BIT(FLOW_DISSECTOR_KEY_CONTROL) &&
+	if (match->dissector.used_keys & BIT(FLOW_DISSECTOR_KEY_CONTROL) &&
 	    match->key.basic.n_proto != htons(ETH_P_8021Q) &&
 	    match->key.basic.n_proto != htons(ETH_P_8021AD))
-		वापस;
+		return;
 
 	ethertype.value = match->key.basic.n_proto;
 	ethertype.mask = match->mask.basic.n_proto;
 
-	अगर (match->dissector.used_keys & BIT(FLOW_DISSECTOR_KEY_VLAN) &&
+	if (match->dissector.used_keys & BIT(FLOW_DISSECTOR_KEY_VLAN) &&
 	    (match->key.vlan.vlan_tpid == htons(ETH_P_8021Q) ||
-	     match->key.vlan.vlan_tpid == htons(ETH_P_8021AD))) अणु
+	     match->key.vlan.vlan_tpid == htons(ETH_P_8021AD))) {
 		match->key.basic.n_proto = match->key.cvlan.vlan_tpid;
 		match->mask.basic.n_proto = match->mask.cvlan.vlan_tpid;
 		match->key.cvlan.vlan_tpid = match->key.vlan.vlan_tpid;
@@ -75,316 +74,316 @@
 		match->key.vlan.vlan_tpid = ethertype.value;
 		match->mask.vlan.vlan_tpid = ethertype.mask;
 		match->dissector.offset[FLOW_DISSECTOR_KEY_CVLAN] =
-			दुरत्व(काष्ठा nft_flow_key, cvlan);
+			offsetof(struct nft_flow_key, cvlan);
 		match->dissector.used_keys |= BIT(FLOW_DISSECTOR_KEY_CVLAN);
-	पूर्ण अन्यथा अणु
+	} else {
 		match->key.basic.n_proto = match->key.vlan.vlan_tpid;
 		match->mask.basic.n_proto = match->mask.vlan.vlan_tpid;
 		match->key.vlan.vlan_tpid = ethertype.value;
 		match->mask.vlan.vlan_tpid = ethertype.mask;
 		match->dissector.offset[FLOW_DISSECTOR_KEY_VLAN] =
-			दुरत्व(काष्ठा nft_flow_key, vlan);
+			offsetof(struct nft_flow_key, vlan);
 		match->dissector.used_keys |= BIT(FLOW_DISSECTOR_KEY_VLAN);
-	पूर्ण
-पूर्ण
+	}
+}
 
-काष्ठा nft_flow_rule *nft_flow_rule_create(काष्ठा net *net,
-					   स्थिर काष्ठा nft_rule *rule)
-अणु
-	काष्ठा nft_offload_ctx *ctx;
-	काष्ठा nft_flow_rule *flow;
-	पूर्णांक num_actions = 0, err;
-	काष्ठा nft_expr *expr;
+struct nft_flow_rule *nft_flow_rule_create(struct net *net,
+					   const struct nft_rule *rule)
+{
+	struct nft_offload_ctx *ctx;
+	struct nft_flow_rule *flow;
+	int num_actions = 0, err;
+	struct nft_expr *expr;
 
 	expr = nft_expr_first(rule);
-	जबतक (nft_expr_more(rule, expr)) अणु
-		अगर (expr->ops->offload_flags & NFT_OFFLOAD_F_ACTION)
+	while (nft_expr_more(rule, expr)) {
+		if (expr->ops->offload_flags & NFT_OFFLOAD_F_ACTION)
 			num_actions++;
 
 		expr = nft_expr_next(expr);
-	पूर्ण
+	}
 
-	अगर (num_actions == 0)
-		वापस ERR_PTR(-EOPNOTSUPP);
+	if (num_actions == 0)
+		return ERR_PTR(-EOPNOTSUPP);
 
 	flow = nft_flow_rule_alloc(num_actions);
-	अगर (!flow)
-		वापस ERR_PTR(-ENOMEM);
+	if (!flow)
+		return ERR_PTR(-ENOMEM);
 
 	expr = nft_expr_first(rule);
 
-	ctx = kzalloc(माप(काष्ठा nft_offload_ctx), GFP_KERNEL);
-	अगर (!ctx) अणु
+	ctx = kzalloc(sizeof(struct nft_offload_ctx), GFP_KERNEL);
+	if (!ctx) {
 		err = -ENOMEM;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 	ctx->net = net;
 	ctx->dep.type = NFT_OFFLOAD_DEP_UNSPEC;
 
-	जबतक (nft_expr_more(rule, expr)) अणु
-		अगर (!expr->ops->offload) अणु
+	while (nft_expr_more(rule, expr)) {
+		if (!expr->ops->offload) {
 			err = -EOPNOTSUPP;
-			जाओ err_out;
-		पूर्ण
+			goto err_out;
+		}
 		err = expr->ops->offload(ctx, flow, expr);
-		अगर (err < 0)
-			जाओ err_out;
+		if (err < 0)
+			goto err_out;
 
 		expr = nft_expr_next(expr);
-	पूर्ण
+	}
 	nft_flow_rule_transfer_vlan(ctx, flow);
 
 	flow->proto = ctx->dep.l3num;
-	kमुक्त(ctx);
+	kfree(ctx);
 
-	वापस flow;
+	return flow;
 err_out:
-	kमुक्त(ctx);
+	kfree(ctx);
 	nft_flow_rule_destroy(flow);
 
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-व्योम nft_flow_rule_destroy(काष्ठा nft_flow_rule *flow)
-अणु
-	काष्ठा flow_action_entry *entry;
-	पूर्णांक i;
+void nft_flow_rule_destroy(struct nft_flow_rule *flow)
+{
+	struct flow_action_entry *entry;
+	int i;
 
-	flow_action_क्रम_each(i, entry, &flow->rule->action) अणु
-		चयन (entry->id) अणु
-		हाल FLOW_ACTION_REसूचीECT:
-		हाल FLOW_ACTION_MIRRED:
+	flow_action_for_each(i, entry, &flow->rule->action) {
+		switch (entry->id) {
+		case FLOW_ACTION_REDIRECT:
+		case FLOW_ACTION_MIRRED:
 			dev_put(entry->dev);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	kमुक्त(flow->rule);
-	kमुक्त(flow);
-पूर्ण
+			break;
+		default:
+			break;
+		}
+	}
+	kfree(flow->rule);
+	kfree(flow);
+}
 
-व्योम nft_offload_set_dependency(काष्ठा nft_offload_ctx *ctx,
-				क्रमागत nft_offload_dep_type type)
-अणु
+void nft_offload_set_dependency(struct nft_offload_ctx *ctx,
+				enum nft_offload_dep_type type)
+{
 	ctx->dep.type = type;
-पूर्ण
+}
 
-व्योम nft_offload_update_dependency(काष्ठा nft_offload_ctx *ctx,
-				   स्थिर व्योम *data, u32 len)
-अणु
-	चयन (ctx->dep.type) अणु
-	हाल NFT_OFFLOAD_DEP_NETWORK:
-		WARN_ON(len != माप(__u16));
-		स_नकल(&ctx->dep.l3num, data, माप(__u16));
-		अवरोध;
-	हाल NFT_OFFLOAD_DEP_TRANSPORT:
-		WARN_ON(len != माप(__u8));
-		स_नकल(&ctx->dep.protonum, data, माप(__u8));
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+void nft_offload_update_dependency(struct nft_offload_ctx *ctx,
+				   const void *data, u32 len)
+{
+	switch (ctx->dep.type) {
+	case NFT_OFFLOAD_DEP_NETWORK:
+		WARN_ON(len != sizeof(__u16));
+		memcpy(&ctx->dep.l3num, data, sizeof(__u16));
+		break;
+	case NFT_OFFLOAD_DEP_TRANSPORT:
+		WARN_ON(len != sizeof(__u8));
+		memcpy(&ctx->dep.protonum, data, sizeof(__u8));
+		break;
+	default:
+		break;
+	}
 	ctx->dep.type = NFT_OFFLOAD_DEP_UNSPEC;
-पूर्ण
+}
 
-अटल व्योम nft_flow_offload_common_init(काष्ठा flow_cls_common_offload *common,
-					 __be16 proto, पूर्णांक priority,
-					 काष्ठा netlink_ext_ack *extack)
-अणु
+static void nft_flow_offload_common_init(struct flow_cls_common_offload *common,
+					 __be16 proto, int priority,
+					 struct netlink_ext_ack *extack)
+{
 	common->protocol = proto;
 	common->prio = priority;
 	common->extack = extack;
-पूर्ण
+}
 
-अटल पूर्णांक nft_setup_cb_call(क्रमागत tc_setup_type type, व्योम *type_data,
-			     काष्ठा list_head *cb_list)
-अणु
-	काष्ठा flow_block_cb *block_cb;
-	पूर्णांक err;
+static int nft_setup_cb_call(enum tc_setup_type type, void *type_data,
+			     struct list_head *cb_list)
+{
+	struct flow_block_cb *block_cb;
+	int err;
 
-	list_क्रम_each_entry(block_cb, cb_list, list) अणु
+	list_for_each_entry(block_cb, cb_list, list) {
 		err = block_cb->cb(type, type_data, block_cb->cb_priv);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (err < 0)
+			return err;
+	}
+	return 0;
+}
 
-पूर्णांक nft_chain_offload_priority(काष्ठा nft_base_chain *basechain)
-अणु
-	अगर (basechain->ops.priority <= 0 ||
-	    basechain->ops.priority > अच_लघु_उच्च)
-		वापस -1;
+int nft_chain_offload_priority(struct nft_base_chain *basechain)
+{
+	if (basechain->ops.priority <= 0 ||
+	    basechain->ops.priority > USHRT_MAX)
+		return -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nft_flow_cls_offload_setup(काष्ठा flow_cls_offload *cls_flow,
-				       स्थिर काष्ठा nft_base_chain *basechain,
-				       स्थिर काष्ठा nft_rule *rule,
-				       स्थिर काष्ठा nft_flow_rule *flow,
-				       काष्ठा netlink_ext_ack *extack,
-				       क्रमागत flow_cls_command command)
-अणु
+static void nft_flow_cls_offload_setup(struct flow_cls_offload *cls_flow,
+				       const struct nft_base_chain *basechain,
+				       const struct nft_rule *rule,
+				       const struct nft_flow_rule *flow,
+				       struct netlink_ext_ack *extack,
+				       enum flow_cls_command command)
+{
 	__be16 proto = ETH_P_ALL;
 
-	स_रखो(cls_flow, 0, माप(*cls_flow));
+	memset(cls_flow, 0, sizeof(*cls_flow));
 
-	अगर (flow)
+	if (flow)
 		proto = flow->proto;
 
 	nft_flow_offload_common_init(&cls_flow->common, proto,
 				     basechain->ops.priority, extack);
 	cls_flow->command = command;
-	cls_flow->cookie = (अचिन्हित दीर्घ) rule;
-	अगर (flow)
+	cls_flow->cookie = (unsigned long) rule;
+	if (flow)
 		cls_flow->rule = flow->rule;
-पूर्ण
+}
 
-अटल पूर्णांक nft_flow_offload_cmd(स्थिर काष्ठा nft_chain *chain,
-				स्थिर काष्ठा nft_rule *rule,
-				काष्ठा nft_flow_rule *flow,
-				क्रमागत flow_cls_command command,
-				काष्ठा flow_cls_offload *cls_flow)
-अणु
-	काष्ठा netlink_ext_ack extack = अणुपूर्ण;
-	काष्ठा nft_base_chain *basechain;
+static int nft_flow_offload_cmd(const struct nft_chain *chain,
+				const struct nft_rule *rule,
+				struct nft_flow_rule *flow,
+				enum flow_cls_command command,
+				struct flow_cls_offload *cls_flow)
+{
+	struct netlink_ext_ack extack = {};
+	struct nft_base_chain *basechain;
 
-	अगर (!nft_is_base_chain(chain))
-		वापस -EOPNOTSUPP;
+	if (!nft_is_base_chain(chain))
+		return -EOPNOTSUPP;
 
 	basechain = nft_base_chain(chain);
 	nft_flow_cls_offload_setup(cls_flow, basechain, rule, flow, &extack,
 				   command);
 
-	वापस nft_setup_cb_call(TC_SETUP_CLSFLOWER, cls_flow,
+	return nft_setup_cb_call(TC_SETUP_CLSFLOWER, cls_flow,
 				 &basechain->flow_block.cb_list);
-पूर्ण
+}
 
-अटल पूर्णांक nft_flow_offload_rule(स्थिर काष्ठा nft_chain *chain,
-				 काष्ठा nft_rule *rule,
-				 काष्ठा nft_flow_rule *flow,
-				 क्रमागत flow_cls_command command)
-अणु
-	काष्ठा flow_cls_offload cls_flow;
+static int nft_flow_offload_rule(const struct nft_chain *chain,
+				 struct nft_rule *rule,
+				 struct nft_flow_rule *flow,
+				 enum flow_cls_command command)
+{
+	struct flow_cls_offload cls_flow;
 
-	वापस nft_flow_offload_cmd(chain, rule, flow, command, &cls_flow);
-पूर्ण
+	return nft_flow_offload_cmd(chain, rule, flow, command, &cls_flow);
+}
 
-पूर्णांक nft_flow_rule_stats(स्थिर काष्ठा nft_chain *chain,
-			स्थिर काष्ठा nft_rule *rule)
-अणु
-	काष्ठा flow_cls_offload cls_flow = अणुपूर्ण;
-	काष्ठा nft_expr *expr, *next;
-	पूर्णांक err;
+int nft_flow_rule_stats(const struct nft_chain *chain,
+			const struct nft_rule *rule)
+{
+	struct flow_cls_offload cls_flow = {};
+	struct nft_expr *expr, *next;
+	int err;
 
-	err = nft_flow_offload_cmd(chain, rule, शून्य, FLOW_CLS_STATS,
+	err = nft_flow_offload_cmd(chain, rule, NULL, FLOW_CLS_STATS,
 				   &cls_flow);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	nft_rule_क्रम_each_expr(expr, next, rule) अणु
-		अगर (expr->ops->offload_stats)
+	nft_rule_for_each_expr(expr, next, rule) {
+		if (expr->ops->offload_stats)
 			expr->ops->offload_stats(expr, &cls_flow.stats);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nft_flow_offload_bind(काष्ठा flow_block_offload *bo,
-				 काष्ठा nft_base_chain *basechain)
-अणु
+static int nft_flow_offload_bind(struct flow_block_offload *bo,
+				 struct nft_base_chain *basechain)
+{
 	list_splice(&bo->cb_list, &basechain->flow_block.cb_list);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nft_flow_offload_unbind(काष्ठा flow_block_offload *bo,
-				   काष्ठा nft_base_chain *basechain)
-अणु
-	काष्ठा flow_block_cb *block_cb, *next;
-	काष्ठा flow_cls_offload cls_flow;
-	काष्ठा netlink_ext_ack extack;
-	काष्ठा nft_chain *chain;
-	काष्ठा nft_rule *rule;
+static int nft_flow_offload_unbind(struct flow_block_offload *bo,
+				   struct nft_base_chain *basechain)
+{
+	struct flow_block_cb *block_cb, *next;
+	struct flow_cls_offload cls_flow;
+	struct netlink_ext_ack extack;
+	struct nft_chain *chain;
+	struct nft_rule *rule;
 
 	chain = &basechain->chain;
-	list_क्रम_each_entry(rule, &chain->rules, list) अणु
-		स_रखो(&extack, 0, माप(extack));
-		nft_flow_cls_offload_setup(&cls_flow, basechain, rule, शून्य,
+	list_for_each_entry(rule, &chain->rules, list) {
+		memset(&extack, 0, sizeof(extack));
+		nft_flow_cls_offload_setup(&cls_flow, basechain, rule, NULL,
 					   &extack, FLOW_CLS_DESTROY);
 		nft_setup_cb_call(TC_SETUP_CLSFLOWER, &cls_flow, &bo->cb_list);
-	पूर्ण
+	}
 
-	list_क्रम_each_entry_safe(block_cb, next, &bo->cb_list, list) अणु
+	list_for_each_entry_safe(block_cb, next, &bo->cb_list, list) {
 		list_del(&block_cb->list);
-		flow_block_cb_मुक्त(block_cb);
-	पूर्ण
+		flow_block_cb_free(block_cb);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nft_block_setup(काष्ठा nft_base_chain *basechain,
-			   काष्ठा flow_block_offload *bo,
-			   क्रमागत flow_block_command cmd)
-अणु
-	पूर्णांक err;
+static int nft_block_setup(struct nft_base_chain *basechain,
+			   struct flow_block_offload *bo,
+			   enum flow_block_command cmd)
+{
+	int err;
 
-	चयन (cmd) अणु
-	हाल FLOW_BLOCK_BIND:
+	switch (cmd) {
+	case FLOW_BLOCK_BIND:
 		err = nft_flow_offload_bind(bo, basechain);
-		अवरोध;
-	हाल FLOW_BLOCK_UNBIND:
+		break;
+	case FLOW_BLOCK_UNBIND:
 		err = nft_flow_offload_unbind(bo, basechain);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON_ONCE(1);
 		err = -EOPNOTSUPP;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम nft_flow_block_offload_init(काष्ठा flow_block_offload *bo,
-					काष्ठा net *net,
-					क्रमागत flow_block_command cmd,
-					काष्ठा nft_base_chain *basechain,
-					काष्ठा netlink_ext_ack *extack)
-अणु
-	स_रखो(bo, 0, माप(*bo));
+static void nft_flow_block_offload_init(struct flow_block_offload *bo,
+					struct net *net,
+					enum flow_block_command cmd,
+					struct nft_base_chain *basechain,
+					struct netlink_ext_ack *extack)
+{
+	memset(bo, 0, sizeof(*bo));
 	bo->net		= net;
 	bo->block	= &basechain->flow_block;
 	bo->command	= cmd;
 	bo->binder_type	= FLOW_BLOCK_BINDER_TYPE_CLSACT_INGRESS;
 	bo->extack	= extack;
 	INIT_LIST_HEAD(&bo->cb_list);
-पूर्ण
+}
 
-अटल पूर्णांक nft_block_offload_cmd(काष्ठा nft_base_chain *chain,
-				 काष्ठा net_device *dev,
-				 क्रमागत flow_block_command cmd)
-अणु
-	काष्ठा netlink_ext_ack extack = अणुपूर्ण;
-	काष्ठा flow_block_offload bo;
-	पूर्णांक err;
+static int nft_block_offload_cmd(struct nft_base_chain *chain,
+				 struct net_device *dev,
+				 enum flow_block_command cmd)
+{
+	struct netlink_ext_ack extack = {};
+	struct flow_block_offload bo;
+	int err;
 
 	nft_flow_block_offload_init(&bo, dev_net(dev), cmd, chain, &extack);
 
-	err = dev->netdev_ops->nकरो_setup_tc(dev, TC_SETUP_BLOCK, &bo);
-	अगर (err < 0)
-		वापस err;
+	err = dev->netdev_ops->ndo_setup_tc(dev, TC_SETUP_BLOCK, &bo);
+	if (err < 0)
+		return err;
 
-	वापस nft_block_setup(chain, &bo, cmd);
-पूर्ण
+	return nft_block_setup(chain, &bo, cmd);
+}
 
-अटल व्योम nft_indr_block_cleanup(काष्ठा flow_block_cb *block_cb)
-अणु
-	काष्ठा nft_base_chain *basechain = block_cb->indr.data;
-	काष्ठा net_device *dev = block_cb->indr.dev;
-	काष्ठा netlink_ext_ack extack = अणुपूर्ण;
-	काष्ठा nftables_pernet *nft_net;
-	काष्ठा net *net = dev_net(dev);
-	काष्ठा flow_block_offload bo;
+static void nft_indr_block_cleanup(struct flow_block_cb *block_cb)
+{
+	struct nft_base_chain *basechain = block_cb->indr.data;
+	struct net_device *dev = block_cb->indr.dev;
+	struct netlink_ext_ack extack = {};
+	struct nftables_pernet *nft_net;
+	struct net *net = dev_net(dev);
+	struct flow_block_offload bo;
 
 	nft_flow_block_offload_init(&bo, dev_net(dev), FLOW_BLOCK_UNBIND,
 				    basechain, &extack);
@@ -394,296 +393,296 @@ err_out:
 	list_move(&block_cb->list, &bo.cb_list);
 	nft_flow_offload_unbind(&bo, basechain);
 	mutex_unlock(&nft_net->commit_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक nft_indr_block_offload_cmd(काष्ठा nft_base_chain *basechain,
-				      काष्ठा net_device *dev,
-				      क्रमागत flow_block_command cmd)
-अणु
-	काष्ठा netlink_ext_ack extack = अणुपूर्ण;
-	काष्ठा flow_block_offload bo;
-	पूर्णांक err;
+static int nft_indr_block_offload_cmd(struct nft_base_chain *basechain,
+				      struct net_device *dev,
+				      enum flow_block_command cmd)
+{
+	struct netlink_ext_ack extack = {};
+	struct flow_block_offload bo;
+	int err;
 
 	nft_flow_block_offload_init(&bo, dev_net(dev), cmd, basechain, &extack);
 
-	err = flow_indr_dev_setup_offload(dev, शून्य, TC_SETUP_BLOCK, basechain, &bo,
+	err = flow_indr_dev_setup_offload(dev, NULL, TC_SETUP_BLOCK, basechain, &bo,
 					  nft_indr_block_cleanup);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (list_empty(&bo.cb_list))
-		वापस -EOPNOTSUPP;
+	if (list_empty(&bo.cb_list))
+		return -EOPNOTSUPP;
 
-	वापस nft_block_setup(basechain, &bo, cmd);
-पूर्ण
+	return nft_block_setup(basechain, &bo, cmd);
+}
 
-अटल पूर्णांक nft_chain_offload_cmd(काष्ठा nft_base_chain *basechain,
-				 काष्ठा net_device *dev,
-				 क्रमागत flow_block_command cmd)
-अणु
-	पूर्णांक err;
+static int nft_chain_offload_cmd(struct nft_base_chain *basechain,
+				 struct net_device *dev,
+				 enum flow_block_command cmd)
+{
+	int err;
 
-	अगर (dev->netdev_ops->nकरो_setup_tc)
+	if (dev->netdev_ops->ndo_setup_tc)
 		err = nft_block_offload_cmd(basechain, dev, cmd);
-	अन्यथा
+	else
 		err = nft_indr_block_offload_cmd(basechain, dev, cmd);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक nft_flow_block_chain(काष्ठा nft_base_chain *basechain,
-				स्थिर काष्ठा net_device *this_dev,
-				क्रमागत flow_block_command cmd)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा nft_hook *hook;
-	पूर्णांक err, i = 0;
+static int nft_flow_block_chain(struct nft_base_chain *basechain,
+				const struct net_device *this_dev,
+				enum flow_block_command cmd)
+{
+	struct net_device *dev;
+	struct nft_hook *hook;
+	int err, i = 0;
 
-	list_क्रम_each_entry(hook, &basechain->hook_list, list) अणु
+	list_for_each_entry(hook, &basechain->hook_list, list) {
 		dev = hook->ops.dev;
-		अगर (this_dev && this_dev != dev)
-			जारी;
+		if (this_dev && this_dev != dev)
+			continue;
 
 		err = nft_chain_offload_cmd(basechain, dev, cmd);
-		अगर (err < 0 && cmd == FLOW_BLOCK_BIND) अणु
-			अगर (!this_dev)
-				जाओ err_flow_block;
+		if (err < 0 && cmd == FLOW_BLOCK_BIND) {
+			if (!this_dev)
+				goto err_flow_block;
 
-			वापस err;
-		पूर्ण
+			return err;
+		}
 		i++;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err_flow_block:
-	list_क्रम_each_entry(hook, &basechain->hook_list, list) अणु
-		अगर (i-- <= 0)
-			अवरोध;
+	list_for_each_entry(hook, &basechain->hook_list, list) {
+		if (i-- <= 0)
+			break;
 
 		dev = hook->ops.dev;
 		nft_chain_offload_cmd(basechain, dev, FLOW_BLOCK_UNBIND);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल पूर्णांक nft_flow_offload_chain(काष्ठा nft_chain *chain, u8 *ppolicy,
-				  क्रमागत flow_block_command cmd)
-अणु
-	काष्ठा nft_base_chain *basechain;
+static int nft_flow_offload_chain(struct nft_chain *chain, u8 *ppolicy,
+				  enum flow_block_command cmd)
+{
+	struct nft_base_chain *basechain;
 	u8 policy;
 
-	अगर (!nft_is_base_chain(chain))
-		वापस -EOPNOTSUPP;
+	if (!nft_is_base_chain(chain))
+		return -EOPNOTSUPP;
 
 	basechain = nft_base_chain(chain);
 	policy = ppolicy ? *ppolicy : basechain->policy;
 
-	/* Only शेष policy to accept is supported क्रम now. */
-	अगर (cmd == FLOW_BLOCK_BIND && policy == NF_DROP)
-		वापस -EOPNOTSUPP;
+	/* Only default policy to accept is supported for now. */
+	if (cmd == FLOW_BLOCK_BIND && policy == NF_DROP)
+		return -EOPNOTSUPP;
 
-	वापस nft_flow_block_chain(basechain, शून्य, cmd);
-पूर्ण
+	return nft_flow_block_chain(basechain, NULL, cmd);
+}
 
-अटल व्योम nft_flow_rule_offload_पात(काष्ठा net *net,
-					काष्ठा nft_trans *trans)
-अणु
-	काष्ठा nftables_pernet *nft_net = nft_pernet(net);
-	पूर्णांक err = 0;
+static void nft_flow_rule_offload_abort(struct net *net,
+					struct nft_trans *trans)
+{
+	struct nftables_pernet *nft_net = nft_pernet(net);
+	int err = 0;
 
-	list_क्रम_each_entry_जारी_reverse(trans, &nft_net->commit_list, list) अणु
-		अगर (trans->ctx.family != NFPROTO_NETDEV)
-			जारी;
+	list_for_each_entry_continue_reverse(trans, &nft_net->commit_list, list) {
+		if (trans->ctx.family != NFPROTO_NETDEV)
+			continue;
 
-		चयन (trans->msg_type) अणु
-		हाल NFT_MSG_NEWCHAIN:
-			अगर (!(trans->ctx.chain->flags & NFT_CHAIN_HW_OFFLOAD) ||
+		switch (trans->msg_type) {
+		case NFT_MSG_NEWCHAIN:
+			if (!(trans->ctx.chain->flags & NFT_CHAIN_HW_OFFLOAD) ||
 			    nft_trans_chain_update(trans))
-				जारी;
+				continue;
 
-			err = nft_flow_offload_chain(trans->ctx.chain, शून्य,
+			err = nft_flow_offload_chain(trans->ctx.chain, NULL,
 						     FLOW_BLOCK_UNBIND);
-			अवरोध;
-		हाल NFT_MSG_DELCHAIN:
-			अगर (!(trans->ctx.chain->flags & NFT_CHAIN_HW_OFFLOAD))
-				जारी;
+			break;
+		case NFT_MSG_DELCHAIN:
+			if (!(trans->ctx.chain->flags & NFT_CHAIN_HW_OFFLOAD))
+				continue;
 
-			err = nft_flow_offload_chain(trans->ctx.chain, शून्य,
+			err = nft_flow_offload_chain(trans->ctx.chain, NULL,
 						     FLOW_BLOCK_BIND);
-			अवरोध;
-		हाल NFT_MSG_NEWRULE:
-			अगर (!(trans->ctx.chain->flags & NFT_CHAIN_HW_OFFLOAD))
-				जारी;
+			break;
+		case NFT_MSG_NEWRULE:
+			if (!(trans->ctx.chain->flags & NFT_CHAIN_HW_OFFLOAD))
+				continue;
 
 			err = nft_flow_offload_rule(trans->ctx.chain,
 						    nft_trans_rule(trans),
-						    शून्य, FLOW_CLS_DESTROY);
-			अवरोध;
-		हाल NFT_MSG_DELRULE:
-			अगर (!(trans->ctx.chain->flags & NFT_CHAIN_HW_OFFLOAD))
-				जारी;
+						    NULL, FLOW_CLS_DESTROY);
+			break;
+		case NFT_MSG_DELRULE:
+			if (!(trans->ctx.chain->flags & NFT_CHAIN_HW_OFFLOAD))
+				continue;
 
 			err = nft_flow_offload_rule(trans->ctx.chain,
 						    nft_trans_rule(trans),
 						    nft_trans_flow_rule(trans),
 						    FLOW_CLS_REPLACE);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (WARN_ON_ONCE(err))
-			अवरोध;
-	पूर्ण
-पूर्ण
+		if (WARN_ON_ONCE(err))
+			break;
+	}
+}
 
-पूर्णांक nft_flow_rule_offload_commit(काष्ठा net *net)
-अणु
-	काष्ठा nftables_pernet *nft_net = nft_pernet(net);
-	काष्ठा nft_trans *trans;
-	पूर्णांक err = 0;
+int nft_flow_rule_offload_commit(struct net *net)
+{
+	struct nftables_pernet *nft_net = nft_pernet(net);
+	struct nft_trans *trans;
+	int err = 0;
 	u8 policy;
 
-	list_क्रम_each_entry(trans, &nft_net->commit_list, list) अणु
-		अगर (trans->ctx.family != NFPROTO_NETDEV)
-			जारी;
+	list_for_each_entry(trans, &nft_net->commit_list, list) {
+		if (trans->ctx.family != NFPROTO_NETDEV)
+			continue;
 
-		चयन (trans->msg_type) अणु
-		हाल NFT_MSG_NEWCHAIN:
-			अगर (!(trans->ctx.chain->flags & NFT_CHAIN_HW_OFFLOAD) ||
+		switch (trans->msg_type) {
+		case NFT_MSG_NEWCHAIN:
+			if (!(trans->ctx.chain->flags & NFT_CHAIN_HW_OFFLOAD) ||
 			    nft_trans_chain_update(trans))
-				जारी;
+				continue;
 
 			policy = nft_trans_chain_policy(trans);
 			err = nft_flow_offload_chain(trans->ctx.chain, &policy,
 						     FLOW_BLOCK_BIND);
-			अवरोध;
-		हाल NFT_MSG_DELCHAIN:
-			अगर (!(trans->ctx.chain->flags & NFT_CHAIN_HW_OFFLOAD))
-				जारी;
+			break;
+		case NFT_MSG_DELCHAIN:
+			if (!(trans->ctx.chain->flags & NFT_CHAIN_HW_OFFLOAD))
+				continue;
 
 			policy = nft_trans_chain_policy(trans);
 			err = nft_flow_offload_chain(trans->ctx.chain, &policy,
 						     FLOW_BLOCK_UNBIND);
-			अवरोध;
-		हाल NFT_MSG_NEWRULE:
-			अगर (!(trans->ctx.chain->flags & NFT_CHAIN_HW_OFFLOAD))
-				जारी;
+			break;
+		case NFT_MSG_NEWRULE:
+			if (!(trans->ctx.chain->flags & NFT_CHAIN_HW_OFFLOAD))
+				continue;
 
-			अगर (trans->ctx.flags & NLM_F_REPLACE ||
-			    !(trans->ctx.flags & NLM_F_APPEND)) अणु
+			if (trans->ctx.flags & NLM_F_REPLACE ||
+			    !(trans->ctx.flags & NLM_F_APPEND)) {
 				err = -EOPNOTSUPP;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			err = nft_flow_offload_rule(trans->ctx.chain,
 						    nft_trans_rule(trans),
 						    nft_trans_flow_rule(trans),
 						    FLOW_CLS_REPLACE);
-			अवरोध;
-		हाल NFT_MSG_DELRULE:
-			अगर (!(trans->ctx.chain->flags & NFT_CHAIN_HW_OFFLOAD))
-				जारी;
+			break;
+		case NFT_MSG_DELRULE:
+			if (!(trans->ctx.chain->flags & NFT_CHAIN_HW_OFFLOAD))
+				continue;
 
 			err = nft_flow_offload_rule(trans->ctx.chain,
 						    nft_trans_rule(trans),
-						    शून्य, FLOW_CLS_DESTROY);
-			अवरोध;
-		पूर्ण
+						    NULL, FLOW_CLS_DESTROY);
+			break;
+		}
 
-		अगर (err) अणु
-			nft_flow_rule_offload_पात(net, trans);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		if (err) {
+			nft_flow_rule_offload_abort(net, trans);
+			break;
+		}
+	}
 
-	list_क्रम_each_entry(trans, &nft_net->commit_list, list) अणु
-		अगर (trans->ctx.family != NFPROTO_NETDEV)
-			जारी;
+	list_for_each_entry(trans, &nft_net->commit_list, list) {
+		if (trans->ctx.family != NFPROTO_NETDEV)
+			continue;
 
-		चयन (trans->msg_type) अणु
-		हाल NFT_MSG_NEWRULE:
-		हाल NFT_MSG_DELRULE:
-			अगर (!(trans->ctx.chain->flags & NFT_CHAIN_HW_OFFLOAD))
-				जारी;
+		switch (trans->msg_type) {
+		case NFT_MSG_NEWRULE:
+		case NFT_MSG_DELRULE:
+			if (!(trans->ctx.chain->flags & NFT_CHAIN_HW_OFFLOAD))
+				continue;
 
 			nft_flow_rule_destroy(nft_trans_flow_rule(trans));
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			break;
+		}
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा nft_chain *__nft_offload_get_chain(स्थिर काष्ठा nftables_pernet *nft_net,
-						 काष्ठा net_device *dev)
-अणु
-	काष्ठा nft_base_chain *basechain;
-	काष्ठा nft_hook *hook, *found;
-	स्थिर काष्ठा nft_table *table;
-	काष्ठा nft_chain *chain;
+static struct nft_chain *__nft_offload_get_chain(const struct nftables_pernet *nft_net,
+						 struct net_device *dev)
+{
+	struct nft_base_chain *basechain;
+	struct nft_hook *hook, *found;
+	const struct nft_table *table;
+	struct nft_chain *chain;
 
-	list_क्रम_each_entry(table, &nft_net->tables, list) अणु
-		अगर (table->family != NFPROTO_NETDEV)
-			जारी;
+	list_for_each_entry(table, &nft_net->tables, list) {
+		if (table->family != NFPROTO_NETDEV)
+			continue;
 
-		list_क्रम_each_entry(chain, &table->chains, list) अणु
-			अगर (!nft_is_base_chain(chain) ||
+		list_for_each_entry(chain, &table->chains, list) {
+			if (!nft_is_base_chain(chain) ||
 			    !(chain->flags & NFT_CHAIN_HW_OFFLOAD))
-				जारी;
+				continue;
 
-			found = शून्य;
+			found = NULL;
 			basechain = nft_base_chain(chain);
-			list_क्रम_each_entry(hook, &basechain->hook_list, list) अणु
-				अगर (hook->ops.dev != dev)
-					जारी;
+			list_for_each_entry(hook, &basechain->hook_list, list) {
+				if (hook->ops.dev != dev)
+					continue;
 
 				found = hook;
-				अवरोध;
-			पूर्ण
-			अगर (!found)
-				जारी;
+				break;
+			}
+			if (!found)
+				continue;
 
-			वापस chain;
-		पूर्ण
-	पूर्ण
+			return chain;
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक nft_offload_netdev_event(काष्ठा notअगरier_block *this,
-				    अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
-	काष्ठा nftables_pernet *nft_net;
-	काष्ठा net *net = dev_net(dev);
-	काष्ठा nft_chain *chain;
+static int nft_offload_netdev_event(struct notifier_block *this,
+				    unsigned long event, void *ptr)
+{
+	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
+	struct nftables_pernet *nft_net;
+	struct net *net = dev_net(dev);
+	struct nft_chain *chain;
 
-	अगर (event != NETDEV_UNREGISTER)
-		वापस NOTIFY_DONE;
+	if (event != NETDEV_UNREGISTER)
+		return NOTIFY_DONE;
 
 	nft_net = nft_pernet(net);
 	mutex_lock(&nft_net->commit_mutex);
 	chain = __nft_offload_get_chain(nft_net, dev);
-	अगर (chain)
+	if (chain)
 		nft_flow_block_chain(nft_base_chain(chain), dev,
 				     FLOW_BLOCK_UNBIND);
 
 	mutex_unlock(&nft_net->commit_mutex);
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block nft_offload_netdev_notअगरier = अणु
-	.notअगरier_call	= nft_offload_netdev_event,
-पूर्ण;
+static struct notifier_block nft_offload_netdev_notifier = {
+	.notifier_call	= nft_offload_netdev_event,
+};
 
-पूर्णांक nft_offload_init(व्योम)
-अणु
-	वापस रेजिस्टर_netdevice_notअगरier(&nft_offload_netdev_notअगरier);
-पूर्ण
+int nft_offload_init(void)
+{
+	return register_netdevice_notifier(&nft_offload_netdev_notifier);
+}
 
-व्योम nft_offload_निकास(व्योम)
-अणु
-	unरेजिस्टर_netdevice_notअगरier(&nft_offload_netdev_notअगरier);
-पूर्ण
+void nft_offload_exit(void)
+{
+	unregister_netdevice_notifier(&nft_offload_netdev_notifier);
+}

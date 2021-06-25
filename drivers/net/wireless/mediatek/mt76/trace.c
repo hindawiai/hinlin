@@ -1,16 +1,15 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
 
-#समावेश <linux/module.h>
+#include <linux/module.h>
 
-#अगर_अघोषित __CHECKER__
-#घोषणा CREATE_TRACE_POINTS
-#समावेश "trace.h"
+#ifndef __CHECKER__
+#define CREATE_TRACE_POINTS
+#include "trace.h"
 
-EXPORT_TRACEPOINT_SYMBOL_GPL(mac_txकरोne);
+EXPORT_TRACEPOINT_SYMBOL_GPL(mac_txdone);
 EXPORT_TRACEPOINT_SYMBOL_GPL(dev_irq);
 
-#पूर्ण_अगर
+#endif

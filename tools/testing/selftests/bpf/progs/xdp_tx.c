@@ -1,13 +1,12 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <linux/bpf.h>
-#समावेश <bpf/bpf_helpers.h>
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
 
 SEC("tx")
-पूर्णांक xdp_tx(काष्ठा xdp_md *xdp)
-अणु
-	वापस XDP_TX;
-पूर्ण
+int xdp_tx(struct xdp_md *xdp)
+{
+	return XDP_TX;
+}
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";

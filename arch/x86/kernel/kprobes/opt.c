@@ -1,113 +1,112 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Kernel Probes Jump Optimization (Optprobes)
  *
  * Copyright (C) IBM Corporation, 2002, 2004
  * Copyright (C) Hitachi Ltd., 2012
  */
-#समावेश <linux/kprobes.h>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/hardirq.h>
-#समावेश <linux/preempt.h>
-#समावेश <linux/extable.h>
-#समावेश <linux/kdebug.h>
-#समावेश <linux/kallsyms.h>
-#समावेश <linux/ftrace.h>
-#समावेश <linux/objtool.h>
-#समावेश <linux/pgtable.h>
-#समावेश <linux/अटल_call.h>
+#include <linux/kprobes.h>
+#include <linux/perf_event.h>
+#include <linux/ptrace.h>
+#include <linux/string.h>
+#include <linux/slab.h>
+#include <linux/hardirq.h>
+#include <linux/preempt.h>
+#include <linux/extable.h>
+#include <linux/kdebug.h>
+#include <linux/kallsyms.h>
+#include <linux/ftrace.h>
+#include <linux/objtool.h>
+#include <linux/pgtable.h>
+#include <linux/static_call.h>
 
-#समावेश <यंत्र/text-patching.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/desc.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/alternative.h>
-#समावेश <यंत्र/insn.h>
-#समावेश <यंत्र/debugreg.h>
-#समावेश <यंत्र/set_memory.h>
-#समावेश <यंत्र/sections.h>
-#समावेश <यंत्र/nospec-branch.h>
+#include <asm/text-patching.h>
+#include <asm/cacheflush.h>
+#include <asm/desc.h>
+#include <linux/uaccess.h>
+#include <asm/alternative.h>
+#include <asm/insn.h>
+#include <asm/debugreg.h>
+#include <asm/set_memory.h>
+#include <asm/sections.h>
+#include <asm/nospec-branch.h>
 
-#समावेश "common.h"
+#include "common.h"
 
-अचिन्हित दीर्घ __recover_optprobed_insn(kprobe_opcode_t *buf, अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा optimized_kprobe *op;
-	काष्ठा kprobe *kp;
-	दीर्घ offs;
-	पूर्णांक i;
+unsigned long __recover_optprobed_insn(kprobe_opcode_t *buf, unsigned long addr)
+{
+	struct optimized_kprobe *op;
+	struct kprobe *kp;
+	long offs;
+	int i;
 
-	क्रम (i = 0; i < JMP32_INSN_SIZE; i++) अणु
-		kp = get_kprobe((व्योम *)addr - i);
+	for (i = 0; i < JMP32_INSN_SIZE; i++) {
+		kp = get_kprobe((void *)addr - i);
 		/* This function only handles jump-optimized kprobe */
-		अगर (kp && kprobe_optimized(kp)) अणु
-			op = container_of(kp, काष्ठा optimized_kprobe, kp);
+		if (kp && kprobe_optimized(kp)) {
+			op = container_of(kp, struct optimized_kprobe, kp);
 			/* If op->list is not empty, op is under optimizing */
-			अगर (list_empty(&op->list))
-				जाओ found;
-		पूर्ण
-	पूर्ण
+			if (list_empty(&op->list))
+				goto found;
+		}
+	}
 
-	वापस addr;
+	return addr;
 found:
 	/*
 	 * If the kprobe can be optimized, original bytes which can be
-	 * overwritten by jump destination address. In this हाल, original
+	 * overwritten by jump destination address. In this case, original
 	 * bytes must be recovered from op->optinsn.copied_insn buffer.
 	 */
-	अगर (copy_from_kernel_nofault(buf, (व्योम *)addr,
-		MAX_INSN_SIZE * माप(kprobe_opcode_t)))
-		वापस 0UL;
+	if (copy_from_kernel_nofault(buf, (void *)addr,
+		MAX_INSN_SIZE * sizeof(kprobe_opcode_t)))
+		return 0UL;
 
-	अगर (addr == (अचिन्हित दीर्घ)kp->addr) अणु
+	if (addr == (unsigned long)kp->addr) {
 		buf[0] = kp->opcode;
-		स_नकल(buf + 1, op->optinsn.copied_insn, DISP32_SIZE);
-	पूर्ण अन्यथा अणु
-		offs = addr - (अचिन्हित दीर्घ)kp->addr - 1;
-		स_नकल(buf, op->optinsn.copied_insn + offs, DISP32_SIZE - offs);
-	पूर्ण
+		memcpy(buf + 1, op->optinsn.copied_insn, DISP32_SIZE);
+	} else {
+		offs = addr - (unsigned long)kp->addr - 1;
+		memcpy(buf, op->optinsn.copied_insn + offs, DISP32_SIZE - offs);
+	}
 
-	वापस (अचिन्हित दीर्घ)buf;
-पूर्ण
+	return (unsigned long)buf;
+}
 
-अटल व्योम synthesize_clac(kprobe_opcode_t *addr)
-अणु
+static void synthesize_clac(kprobe_opcode_t *addr)
+{
 	/*
-	 * Can't be अटल_cpu_has() due to how objtool treats this feature bit.
+	 * Can't be static_cpu_has() due to how objtool treats this feature bit.
 	 * This isn't a fast path anyway.
 	 */
-	अगर (!boot_cpu_has(X86_FEATURE_SMAP))
-		वापस;
+	if (!boot_cpu_has(X86_FEATURE_SMAP))
+		return;
 
 	/* Replace the NOP3 with CLAC */
 	addr[0] = 0x0f;
 	addr[1] = 0x01;
 	addr[2] = 0xca;
-पूर्ण
+}
 
-/* Insert a move inकाष्ठाion which sets a poपूर्णांकer to eax/rdi (1st arg). */
-अटल व्योम synthesize_set_arg1(kprobe_opcode_t *addr, अचिन्हित दीर्घ val)
-अणु
-#अगर_घोषित CONFIG_X86_64
+/* Insert a move instruction which sets a pointer to eax/rdi (1st arg). */
+static void synthesize_set_arg1(kprobe_opcode_t *addr, unsigned long val)
+{
+#ifdef CONFIG_X86_64
 	*addr++ = 0x48;
 	*addr++ = 0xbf;
-#अन्यथा
+#else
 	*addr++ = 0xb8;
-#पूर्ण_अगर
-	*(अचिन्हित दीर्घ *)addr = val;
-पूर्ण
+#endif
+	*(unsigned long *)addr = val;
+}
 
-यंत्र (
+asm (
 			".pushsection .rodata\n"
 			"optprobe_template_func:\n"
 			".global optprobe_template_entry\n"
 			"optprobe_template_entry:\n"
-#अगर_घोषित CONFIG_X86_64
-			/* We करोn't bother saving the ss रेजिस्टर */
+#ifdef CONFIG_X86_64
+			/* We don't bother saving the ss register */
 			"	pushq %rsp\n"
 			"	pushfq\n"
 			".global optprobe_template_clac\n"
@@ -129,7 +128,7 @@ found:
 			/* Skip flags entry */
 			"	addq $8, %rsp\n"
 			"	popfq\n"
-#अन्यथा /* CONFIG_X86_32 */
+#else /* CONFIG_X86_32 */
 			"	pushl %esp\n"
 			"	pushfl\n"
 			".global optprobe_template_clac\n"
@@ -143,386 +142,386 @@ found:
 			".global optprobe_template_call\n"
 			"optprobe_template_call:\n"
 			ASM_NOP5
-			/* Move flags पूर्णांकo esp */
+			/* Move flags into esp */
 			"	movl 14*4(%esp), %edx\n"
 			"	movl %edx, 15*4(%esp)\n"
 			RESTORE_REGS_STRING
 			/* Skip flags entry */
 			"	addl $4, %esp\n"
 			"	popfl\n"
-#पूर्ण_अगर
+#endif
 			".global optprobe_template_end\n"
 			"optprobe_template_end:\n"
 			".popsection\n");
 
-व्योम optprobe_ढाँचा_func(व्योम);
-STACK_FRAME_NON_STANDARD(optprobe_ढाँचा_func);
+void optprobe_template_func(void);
+STACK_FRAME_NON_STANDARD(optprobe_template_func);
 
-#घोषणा TMPL_CLAC_IDX \
-	((दीर्घ)optprobe_ढाँचा_clac - (दीर्घ)optprobe_ढाँचा_entry)
-#घोषणा TMPL_MOVE_IDX \
-	((दीर्घ)optprobe_ढाँचा_val - (दीर्घ)optprobe_ढाँचा_entry)
-#घोषणा TMPL_CALL_IDX \
-	((दीर्घ)optprobe_ढाँचा_call - (दीर्घ)optprobe_ढाँचा_entry)
-#घोषणा TMPL_END_IDX \
-	((दीर्घ)optprobe_ढाँचा_end - (दीर्घ)optprobe_ढाँचा_entry)
+#define TMPL_CLAC_IDX \
+	((long)optprobe_template_clac - (long)optprobe_template_entry)
+#define TMPL_MOVE_IDX \
+	((long)optprobe_template_val - (long)optprobe_template_entry)
+#define TMPL_CALL_IDX \
+	((long)optprobe_template_call - (long)optprobe_template_entry)
+#define TMPL_END_IDX \
+	((long)optprobe_template_end - (long)optprobe_template_entry)
 
 /* Optimized kprobe call back function: called from optinsn */
-अटल व्योम
-optimized_callback(काष्ठा optimized_kprobe *op, काष्ठा pt_regs *regs)
-अणु
-	/* This is possible अगर op is under delayed unoptimizing */
-	अगर (kprobe_disabled(&op->kp))
-		वापस;
+static void
+optimized_callback(struct optimized_kprobe *op, struct pt_regs *regs)
+{
+	/* This is possible if op is under delayed unoptimizing */
+	if (kprobe_disabled(&op->kp))
+		return;
 
 	preempt_disable();
-	अगर (kprobe_running()) अणु
+	if (kprobe_running()) {
 		kprobes_inc_nmissed_count(&op->kp);
-	पूर्ण अन्यथा अणु
-		काष्ठा kprobe_ctlblk *kcb = get_kprobe_ctlblk();
-		/* Save skipped रेजिस्टरs */
+	} else {
+		struct kprobe_ctlblk *kcb = get_kprobe_ctlblk();
+		/* Save skipped registers */
 		regs->cs = __KERNEL_CS;
-#अगर_घोषित CONFIG_X86_32
+#ifdef CONFIG_X86_32
 		regs->gs = 0;
-#पूर्ण_अगर
-		regs->ip = (अचिन्हित दीर्घ)op->kp.addr + INT3_INSN_SIZE;
+#endif
+		regs->ip = (unsigned long)op->kp.addr + INT3_INSN_SIZE;
 		regs->orig_ax = ~0UL;
 
-		__this_cpu_ग_लिखो(current_kprobe, &op->kp);
+		__this_cpu_write(current_kprobe, &op->kp);
 		kcb->kprobe_status = KPROBE_HIT_ACTIVE;
 		opt_pre_handler(&op->kp, regs);
-		__this_cpu_ग_लिखो(current_kprobe, शून्य);
-	पूर्ण
+		__this_cpu_write(current_kprobe, NULL);
+	}
 	preempt_enable();
-पूर्ण
+}
 NOKPROBE_SYMBOL(optimized_callback);
 
-अटल पूर्णांक copy_optimized_inकाष्ठाions(u8 *dest, u8 *src, u8 *real)
-अणु
-	काष्ठा insn insn;
-	पूर्णांक len = 0, ret;
+static int copy_optimized_instructions(u8 *dest, u8 *src, u8 *real)
+{
+	struct insn insn;
+	int len = 0, ret;
 
-	जबतक (len < JMP32_INSN_SIZE) अणु
-		ret = __copy_inकाष्ठाion(dest + len, src + len, real + len, &insn);
-		अगर (!ret || !can_boost(&insn, src + len))
-			वापस -EINVAL;
+	while (len < JMP32_INSN_SIZE) {
+		ret = __copy_instruction(dest + len, src + len, real + len, &insn);
+		if (!ret || !can_boost(&insn, src + len))
+			return -EINVAL;
 		len += ret;
-	पूर्ण
+	}
 	/* Check whether the address range is reserved */
-	अगर (ftrace_text_reserved(src, src + len - 1) ||
+	if (ftrace_text_reserved(src, src + len - 1) ||
 	    alternatives_text_reserved(src, src + len - 1) ||
 	    jump_label_text_reserved(src, src + len - 1) ||
-	    अटल_call_text_reserved(src, src + len - 1))
-		वापस -EBUSY;
+	    static_call_text_reserved(src, src + len - 1))
+		return -EBUSY;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
 /* Check whether insn is indirect jump */
-अटल पूर्णांक __insn_is_indirect_jump(काष्ठा insn *insn)
-अणु
-	वापस ((insn->opcode.bytes[0] == 0xff &&
+static int __insn_is_indirect_jump(struct insn *insn)
+{
+	return ((insn->opcode.bytes[0] == 0xff &&
 		(X86_MODRM_REG(insn->modrm.value) & 6) == 4) || /* Jump */
 		insn->opcode.bytes[0] == 0xea);	/* Segment based jump */
-पूर्ण
+}
 
-/* Check whether insn jumps पूर्णांकo specअगरied address range */
-अटल पूर्णांक insn_jump_पूर्णांकo_range(काष्ठा insn *insn, अचिन्हित दीर्घ start, पूर्णांक len)
-अणु
-	अचिन्हित दीर्घ target = 0;
+/* Check whether insn jumps into specified address range */
+static int insn_jump_into_range(struct insn *insn, unsigned long start, int len)
+{
+	unsigned long target = 0;
 
-	चयन (insn->opcode.bytes[0]) अणु
-	हाल 0xe0:	/* loopne */
-	हाल 0xe1:	/* loope */
-	हाल 0xe2:	/* loop */
-	हाल 0xe3:	/* jcxz */
-	हाल 0xe9:	/* near relative jump */
-	हाल 0xeb:	/* लघु relative jump */
-		अवरोध;
-	हाल 0x0f:
-		अगर ((insn->opcode.bytes[1] & 0xf0) == 0x80) /* jcc near */
-			अवरोध;
-		वापस 0;
-	शेष:
-		अगर ((insn->opcode.bytes[0] & 0xf0) == 0x70) /* jcc लघु */
-			अवरोध;
-		वापस 0;
-	पूर्ण
-	target = (अचिन्हित दीर्घ)insn->next_byte + insn->immediate.value;
+	switch (insn->opcode.bytes[0]) {
+	case 0xe0:	/* loopne */
+	case 0xe1:	/* loope */
+	case 0xe2:	/* loop */
+	case 0xe3:	/* jcxz */
+	case 0xe9:	/* near relative jump */
+	case 0xeb:	/* short relative jump */
+		break;
+	case 0x0f:
+		if ((insn->opcode.bytes[1] & 0xf0) == 0x80) /* jcc near */
+			break;
+		return 0;
+	default:
+		if ((insn->opcode.bytes[0] & 0xf0) == 0x70) /* jcc short */
+			break;
+		return 0;
+	}
+	target = (unsigned long)insn->next_byte + insn->immediate.value;
 
-	वापस (start <= target && target <= start + len);
-पूर्ण
+	return (start <= target && target <= start + len);
+}
 
-अटल पूर्णांक insn_is_indirect_jump(काष्ठा insn *insn)
-अणु
-	पूर्णांक ret = __insn_is_indirect_jump(insn);
+static int insn_is_indirect_jump(struct insn *insn)
+{
+	int ret = __insn_is_indirect_jump(insn);
 
-#अगर_घोषित CONFIG_RETPOLINE
+#ifdef CONFIG_RETPOLINE
 	/*
 	 * Jump to x86_indirect_thunk_* is treated as an indirect jump.
 	 * Note that even with CONFIG_RETPOLINE=y, the kernel compiled with
 	 * older gcc may use indirect jump. So we add this check instead of
 	 * replace indirect-jump check.
 	 */
-	अगर (!ret)
-		ret = insn_jump_पूर्णांकo_range(insn,
-				(अचिन्हित दीर्घ)__indirect_thunk_start,
-				(अचिन्हित दीर्घ)__indirect_thunk_end -
-				(अचिन्हित दीर्घ)__indirect_thunk_start);
-#पूर्ण_अगर
-	वापस ret;
-पूर्ण
+	if (!ret)
+		ret = insn_jump_into_range(insn,
+				(unsigned long)__indirect_thunk_start,
+				(unsigned long)__indirect_thunk_end -
+				(unsigned long)__indirect_thunk_start);
+#endif
+	return ret;
+}
 
-अटल bool is_padding_पूर्णांक3(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ eaddr)
-अणु
-	अचिन्हित अक्षर ops;
+static bool is_padding_int3(unsigned long addr, unsigned long eaddr)
+{
+	unsigned char ops;
 
-	क्रम (; addr < eaddr; addr++) अणु
-		अगर (get_kernel_nofault(ops, (व्योम *)addr) < 0 ||
+	for (; addr < eaddr; addr++) {
+		if (get_kernel_nofault(ops, (void *)addr) < 0 ||
 		    ops != INT3_INSN_OPCODE)
-			वापस false;
-	पूर्ण
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-/* Decode whole function to ensure any inकाष्ठाions करोn't jump पूर्णांकo target */
-अटल पूर्णांक can_optimize(अचिन्हित दीर्घ paddr)
-अणु
-	अचिन्हित दीर्घ addr, size = 0, offset = 0;
-	काष्ठा insn insn;
+/* Decode whole function to ensure any instructions don't jump into target */
+static int can_optimize(unsigned long paddr)
+{
+	unsigned long addr, size = 0, offset = 0;
+	struct insn insn;
 	kprobe_opcode_t buf[MAX_INSN_SIZE];
 
 	/* Lookup symbol including addr */
-	अगर (!kallsyms_lookup_size_offset(paddr, &size, &offset))
-		वापस 0;
+	if (!kallsyms_lookup_size_offset(paddr, &size, &offset))
+		return 0;
 
 	/*
 	 * Do not optimize in the entry code due to the unstable
-	 * stack handling and रेजिस्टरs setup.
+	 * stack handling and registers setup.
 	 */
-	अगर (((paddr >= (अचिन्हित दीर्घ)__entry_text_start) &&
-	     (paddr <  (अचिन्हित दीर्घ)__entry_text_end)))
-		वापस 0;
+	if (((paddr >= (unsigned long)__entry_text_start) &&
+	     (paddr <  (unsigned long)__entry_text_end)))
+		return 0;
 
-	/* Check there is enough space क्रम a relative jump. */
-	अगर (size - offset < JMP32_INSN_SIZE)
-		वापस 0;
+	/* Check there is enough space for a relative jump. */
+	if (size - offset < JMP32_INSN_SIZE)
+		return 0;
 
-	/* Decode inकाष्ठाions */
+	/* Decode instructions */
 	addr = paddr - offset;
-	जबतक (addr < paddr - offset + size) अणु /* Decode until function end */
-		अचिन्हित दीर्घ recovered_insn;
-		पूर्णांक ret;
+	while (addr < paddr - offset + size) { /* Decode until function end */
+		unsigned long recovered_insn;
+		int ret;
 
-		अगर (search_exception_tables(addr))
+		if (search_exception_tables(addr))
 			/*
-			 * Since some fixup code will jumps पूर्णांकo this function,
+			 * Since some fixup code will jumps into this function,
 			 * we can't optimize kprobe in this function.
 			 */
-			वापस 0;
-		recovered_insn = recover_probed_inकाष्ठाion(buf, addr);
-		अगर (!recovered_insn)
-			वापस 0;
+			return 0;
+		recovered_insn = recover_probed_instruction(buf, addr);
+		if (!recovered_insn)
+			return 0;
 
-		ret = insn_decode_kernel(&insn, (व्योम *)recovered_insn);
-		अगर (ret < 0)
-			वापस 0;
+		ret = insn_decode_kernel(&insn, (void *)recovered_insn);
+		if (ret < 0)
+			return 0;
 
 		/*
-		 * In the हाल of detecting unknown अवरोधpoपूर्णांक, this could be
+		 * In the case of detecting unknown breakpoint, this could be
 		 * a padding INT3 between functions. Let's check that all the
 		 * rest of the bytes are also INT3.
 		 */
-		अगर (insn.opcode.bytes[0] == INT3_INSN_OPCODE)
-			वापस is_padding_पूर्णांक3(addr, paddr - offset + size) ? 1 : 0;
+		if (insn.opcode.bytes[0] == INT3_INSN_OPCODE)
+			return is_padding_int3(addr, paddr - offset + size) ? 1 : 0;
 
 		/* Recover address */
-		insn.kaddr = (व्योम *)addr;
-		insn.next_byte = (व्योम *)(addr + insn.length);
-		/* Check any inकाष्ठाions करोn't jump पूर्णांकo target */
-		अगर (insn_is_indirect_jump(&insn) ||
-		    insn_jump_पूर्णांकo_range(&insn, paddr + INT3_INSN_SIZE,
+		insn.kaddr = (void *)addr;
+		insn.next_byte = (void *)(addr + insn.length);
+		/* Check any instructions don't jump into target */
+		if (insn_is_indirect_jump(&insn) ||
+		    insn_jump_into_range(&insn, paddr + INT3_INSN_SIZE,
 					 DISP32_SIZE))
-			वापस 0;
+			return 0;
 		addr += insn.length;
-	पूर्ण
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /* Check optimized_kprobe can actually be optimized. */
-पूर्णांक arch_check_optimized_kprobe(काष्ठा optimized_kprobe *op)
-अणु
-	पूर्णांक i;
-	काष्ठा kprobe *p;
+int arch_check_optimized_kprobe(struct optimized_kprobe *op)
+{
+	int i;
+	struct kprobe *p;
 
-	क्रम (i = 1; i < op->optinsn.size; i++) अणु
+	for (i = 1; i < op->optinsn.size; i++) {
 		p = get_kprobe(op->kp.addr + i);
-		अगर (p && !kprobe_disabled(p))
-			वापस -EEXIST;
-	पूर्ण
+		if (p && !kprobe_disabled(p))
+			return -EEXIST;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Check the addr is within the optimized inकाष्ठाions. */
-पूर्णांक arch_within_optimized_kprobe(काष्ठा optimized_kprobe *op,
-				 अचिन्हित दीर्घ addr)
-अणु
-	वापस ((अचिन्हित दीर्घ)op->kp.addr <= addr &&
-		(अचिन्हित दीर्घ)op->kp.addr + op->optinsn.size > addr);
-पूर्ण
+/* Check the addr is within the optimized instructions. */
+int arch_within_optimized_kprobe(struct optimized_kprobe *op,
+				 unsigned long addr)
+{
+	return ((unsigned long)op->kp.addr <= addr &&
+		(unsigned long)op->kp.addr + op->optinsn.size > addr);
+}
 
-/* Free optimized inकाष्ठाion slot */
-अटल
-व्योम __arch_हटाओ_optimized_kprobe(काष्ठा optimized_kprobe *op, पूर्णांक dirty)
-अणु
+/* Free optimized instruction slot */
+static
+void __arch_remove_optimized_kprobe(struct optimized_kprobe *op, int dirty)
+{
 	u8 *slot = op->optinsn.insn;
-	अगर (slot) अणु
-		पूर्णांक len = TMPL_END_IDX + op->optinsn.size + JMP32_INSN_SIZE;
+	if (slot) {
+		int len = TMPL_END_IDX + op->optinsn.size + JMP32_INSN_SIZE;
 
-		/* Record the perf event beक्रमe मुक्तing the slot */
-		अगर (dirty)
-			perf_event_text_poke(slot, slot, len, शून्य, 0);
+		/* Record the perf event before freeing the slot */
+		if (dirty)
+			perf_event_text_poke(slot, slot, len, NULL, 0);
 
-		मुक्त_optinsn_slot(slot, dirty);
-		op->optinsn.insn = शून्य;
+		free_optinsn_slot(slot, dirty);
+		op->optinsn.insn = NULL;
 		op->optinsn.size = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम arch_हटाओ_optimized_kprobe(काष्ठा optimized_kprobe *op)
-अणु
-	__arch_हटाओ_optimized_kprobe(op, 1);
-पूर्ण
+void arch_remove_optimized_kprobe(struct optimized_kprobe *op)
+{
+	__arch_remove_optimized_kprobe(op, 1);
+}
 
 /*
- * Copy replacing target inकाष्ठाions
- * Target inकाष्ठाions MUST be relocatable (checked inside)
+ * Copy replacing target instructions
+ * Target instructions MUST be relocatable (checked inside)
  * This is called when new aggr(opt)probe is allocated or reused.
  */
-पूर्णांक arch_prepare_optimized_kprobe(काष्ठा optimized_kprobe *op,
-				  काष्ठा kprobe *__unused)
-अणु
-	u8 *buf = शून्य, *slot;
-	पूर्णांक ret, len;
-	दीर्घ rel;
+int arch_prepare_optimized_kprobe(struct optimized_kprobe *op,
+				  struct kprobe *__unused)
+{
+	u8 *buf = NULL, *slot;
+	int ret, len;
+	long rel;
 
-	अगर (!can_optimize((अचिन्हित दीर्घ)op->kp.addr))
-		वापस -EILSEQ;
+	if (!can_optimize((unsigned long)op->kp.addr))
+		return -EILSEQ;
 
 	buf = kzalloc(MAX_OPTINSN_SIZE, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
 	op->optinsn.insn = slot = get_optinsn_slot();
-	अगर (!slot) अणु
+	if (!slot) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * Verअगरy अगर the address gap is in 2GB range, because this uses
+	 * Verify if the address gap is in 2GB range, because this uses
 	 * a relative jump.
 	 */
-	rel = (दीर्घ)slot - (दीर्घ)op->kp.addr + JMP32_INSN_SIZE;
-	अगर (असल(rel) > 0x7fffffff) अणु
-		ret = -दुस्फल;
-		जाओ err;
-	पूर्ण
+	rel = (long)slot - (long)op->kp.addr + JMP32_INSN_SIZE;
+	if (abs(rel) > 0x7fffffff) {
+		ret = -ERANGE;
+		goto err;
+	}
 
-	/* Copy arch-dep-instance from ढाँचा */
-	स_नकल(buf, optprobe_ढाँचा_entry, TMPL_END_IDX);
+	/* Copy arch-dep-instance from template */
+	memcpy(buf, optprobe_template_entry, TMPL_END_IDX);
 
-	/* Copy inकाष्ठाions पूर्णांकo the out-of-line buffer */
-	ret = copy_optimized_inकाष्ठाions(buf + TMPL_END_IDX, op->kp.addr,
+	/* Copy instructions into the out-of-line buffer */
+	ret = copy_optimized_instructions(buf + TMPL_END_IDX, op->kp.addr,
 					  slot + TMPL_END_IDX);
-	अगर (ret < 0)
-		जाओ err;
+	if (ret < 0)
+		goto err;
 	op->optinsn.size = ret;
 	len = TMPL_END_IDX + op->optinsn.size;
 
 	synthesize_clac(buf + TMPL_CLAC_IDX);
 
-	/* Set probe inक्रमmation */
-	synthesize_set_arg1(buf + TMPL_MOVE_IDX, (अचिन्हित दीर्घ)op);
+	/* Set probe information */
+	synthesize_set_arg1(buf + TMPL_MOVE_IDX, (unsigned long)op);
 
 	/* Set probe function call */
 	synthesize_relcall(buf + TMPL_CALL_IDX,
 			   slot + TMPL_CALL_IDX, optimized_callback);
 
-	/* Set वापसing jmp inकाष्ठाion at the tail of out-of-line buffer */
+	/* Set returning jmp instruction at the tail of out-of-line buffer */
 	synthesize_reljump(buf + len, slot + len,
 			   (u8 *)op->kp.addr + op->optinsn.size);
 	len += JMP32_INSN_SIZE;
 
 	/*
 	 * Note	len = TMPL_END_IDX + op->optinsn.size + JMP32_INSN_SIZE is also
-	 * used in __arch_हटाओ_optimized_kprobe().
+	 * used in __arch_remove_optimized_kprobe().
 	 */
 
-	/* We have to use text_poke() क्रम inकाष्ठाion buffer because it is RO */
-	perf_event_text_poke(slot, शून्य, 0, buf, len);
+	/* We have to use text_poke() for instruction buffer because it is RO */
+	perf_event_text_poke(slot, NULL, 0, buf, len);
 	text_poke(slot, buf, len);
 
 	ret = 0;
 out:
-	kमुक्त(buf);
-	वापस ret;
+	kfree(buf);
+	return ret;
 
 err:
-	__arch_हटाओ_optimized_kprobe(op, 0);
-	जाओ out;
-पूर्ण
+	__arch_remove_optimized_kprobe(op, 0);
+	goto out;
+}
 
 /*
- * Replace अवरोधpoपूर्णांकs (INT3) with relative jumps (JMP.d32).
+ * Replace breakpoints (INT3) with relative jumps (JMP.d32).
  * Caller must call with locking kprobe_mutex and text_mutex.
  *
  * The caller will have installed a regular kprobe and after that issued
- * syncrhonize_rcu_tasks(), this ensures that the inकाष्ठाion(s) that live in
+ * syncrhonize_rcu_tasks(), this ensures that the instruction(s) that live in
  * the 4 bytes after the INT3 are unused and can now be overwritten.
  */
-व्योम arch_optimize_kprobes(काष्ठा list_head *oplist)
-अणु
-	काष्ठा optimized_kprobe *op, *पंचांगp;
+void arch_optimize_kprobes(struct list_head *oplist)
+{
+	struct optimized_kprobe *op, *tmp;
 	u8 insn_buff[JMP32_INSN_SIZE];
 
-	list_क्रम_each_entry_safe(op, पंचांगp, oplist, list) अणु
-		s32 rel = (s32)((दीर्घ)op->optinsn.insn -
-			((दीर्घ)op->kp.addr + JMP32_INSN_SIZE));
+	list_for_each_entry_safe(op, tmp, oplist, list) {
+		s32 rel = (s32)((long)op->optinsn.insn -
+			((long)op->kp.addr + JMP32_INSN_SIZE));
 
 		WARN_ON(kprobe_disabled(&op->kp));
 
-		/* Backup inकाष्ठाions which will be replaced by jump address */
-		स_नकल(op->optinsn.copied_insn, op->kp.addr + INT3_INSN_SIZE,
+		/* Backup instructions which will be replaced by jump address */
+		memcpy(op->optinsn.copied_insn, op->kp.addr + INT3_INSN_SIZE,
 		       DISP32_SIZE);
 
 		insn_buff[0] = JMP32_INSN_OPCODE;
 		*(s32 *)(&insn_buff[1]) = rel;
 
-		text_poke_bp(op->kp.addr, insn_buff, JMP32_INSN_SIZE, शून्य);
+		text_poke_bp(op->kp.addr, insn_buff, JMP32_INSN_SIZE, NULL);
 
 		list_del_init(&op->list);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Replace a relative jump (JMP.d32) with a अवरोधpoपूर्णांक (INT3).
+ * Replace a relative jump (JMP.d32) with a breakpoint (INT3).
  *
- * After that, we can restore the 4 bytes after the INT3 to unकरो what
+ * After that, we can restore the 4 bytes after the INT3 to undo what
  * arch_optimize_kprobes() scribbled. This is safe since those bytes will be
  * unused once the INT3 lands.
  */
-व्योम arch_unoptimize_kprobe(काष्ठा optimized_kprobe *op)
-अणु
-	u8 new[JMP32_INSN_SIZE] = अणु INT3_INSN_OPCODE, पूर्ण;
+void arch_unoptimize_kprobe(struct optimized_kprobe *op)
+{
+	u8 new[JMP32_INSN_SIZE] = { INT3_INSN_OPCODE, };
 	u8 old[JMP32_INSN_SIZE];
 	u8 *addr = op->kp.addr;
 
-	स_नकल(old, op->kp.addr, JMP32_INSN_SIZE);
-	स_नकल(new + INT3_INSN_SIZE,
+	memcpy(old, op->kp.addr, JMP32_INSN_SIZE);
+	memcpy(new + INT3_INSN_SIZE,
 	       op->optinsn.copied_insn,
 	       JMP32_INSN_SIZE - INT3_INSN_SIZE);
 
@@ -534,36 +533,36 @@ err:
 	text_poke_sync();
 
 	perf_event_text_poke(op->kp.addr, old, JMP32_INSN_SIZE, new, JMP32_INSN_SIZE);
-पूर्ण
+}
 
 /*
- * Recover original inकाष्ठाions and अवरोधpoपूर्णांकs from relative jumps.
+ * Recover original instructions and breakpoints from relative jumps.
  * Caller must call with locking kprobe_mutex.
  */
-बाह्य व्योम arch_unoptimize_kprobes(काष्ठा list_head *oplist,
-				    काष्ठा list_head *करोne_list)
-अणु
-	काष्ठा optimized_kprobe *op, *पंचांगp;
+extern void arch_unoptimize_kprobes(struct list_head *oplist,
+				    struct list_head *done_list)
+{
+	struct optimized_kprobe *op, *tmp;
 
-	list_क्रम_each_entry_safe(op, पंचांगp, oplist, list) अणु
+	list_for_each_entry_safe(op, tmp, oplist, list) {
 		arch_unoptimize_kprobe(op);
-		list_move(&op->list, करोne_list);
-	पूर्ण
-पूर्ण
+		list_move(&op->list, done_list);
+	}
+}
 
-पूर्णांक setup_detour_execution(काष्ठा kprobe *p, काष्ठा pt_regs *regs, पूर्णांक reenter)
-अणु
-	काष्ठा optimized_kprobe *op;
+int setup_detour_execution(struct kprobe *p, struct pt_regs *regs, int reenter)
+{
+	struct optimized_kprobe *op;
 
-	अगर (p->flags & KPROBE_FLAG_OPTIMIZED) अणु
+	if (p->flags & KPROBE_FLAG_OPTIMIZED) {
 		/* This kprobe is really able to run optimized path. */
-		op = container_of(p, काष्ठा optimized_kprobe, kp);
-		/* Detour through copied inकाष्ठाions */
-		regs->ip = (अचिन्हित दीर्घ)op->optinsn.insn + TMPL_END_IDX;
-		अगर (!reenter)
+		op = container_of(p, struct optimized_kprobe, kp);
+		/* Detour through copied instructions */
+		regs->ip = (unsigned long)op->optinsn.insn + TMPL_END_IDX;
+		if (!reenter)
 			reset_current_kprobe();
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 1;
+	}
+	return 0;
+}
 NOKPROBE_SYMBOL(setup_detour_execution);

@@ -1,194 +1,193 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause) */
+/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause) */
 /* Copyright (C) 2015-2018 Netronome Systems, Inc. */
 
 /*
- * nfp_मुख्य.h
+ * nfp_main.h
  * Author: Jason McMullan <jason.mcmullan@netronome.com>
  */
 
-#अगर_अघोषित NFP_MAIN_H
-#घोषणा NFP_MAIN_H
+#ifndef NFP_MAIN_H
+#define NFP_MAIN_H
 
-#समावेश <linux/ethtool.h>
-#समावेश <linux/list.h>
-#समावेश <linux/types.h>
-#समावेश <linux/msi.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/workqueue.h>
-#समावेश <net/devlink.h>
+#include <linux/ethtool.h>
+#include <linux/list.h>
+#include <linux/types.h>
+#include <linux/msi.h>
+#include <linux/mutex.h>
+#include <linux/pci.h>
+#include <linux/workqueue.h>
+#include <net/devlink.h>
 
-काष्ठा dentry;
-काष्ठा device;
-काष्ठा pci_dev;
+struct dentry;
+struct device;
+struct pci_dev;
 
-काष्ठा nfp_cpp;
-काष्ठा nfp_cpp_area;
-काष्ठा nfp_eth_table;
-काष्ठा nfp_hwinfo;
-काष्ठा nfp_mip;
-काष्ठा nfp_net;
-काष्ठा nfp_nsp_identअगरy;
-काष्ठा nfp_port;
-काष्ठा nfp_rtsym;
-काष्ठा nfp_rtsym_table;
-काष्ठा nfp_shared_buf;
+struct nfp_cpp;
+struct nfp_cpp_area;
+struct nfp_eth_table;
+struct nfp_hwinfo;
+struct nfp_mip;
+struct nfp_net;
+struct nfp_nsp_identify;
+struct nfp_port;
+struct nfp_rtsym;
+struct nfp_rtsym_table;
+struct nfp_shared_buf;
 
 /**
- * काष्ठा nfp_dumpspec - NFP FW dump specअगरication काष्ठाure
+ * struct nfp_dumpspec - NFP FW dump specification structure
  * @size:	Size of the data
- * @data:	Sequence of TLVs, each being an inकाष्ठाion to dump some data
+ * @data:	Sequence of TLVs, each being an instruction to dump some data
  *		from FW
  */
-काष्ठा nfp_dumpspec अणु
+struct nfp_dumpspec {
 	u32 size;
 	u8 data[];
-पूर्ण;
+};
 
 /**
- * काष्ठा nfp_pf - NFP PF-specअगरic device काष्ठाure
- * @pdev:		Backpoपूर्णांकer to PCI device
- * @cpp:		Poपूर्णांकer to the CPP handle
- * @app:		Poपूर्णांकer to the APP handle
- * @data_vnic_bar:	Poपूर्णांकer to the CPP area क्रम the data vNICs' BARs
- * @ctrl_vnic_bar:	Poपूर्णांकer to the CPP area क्रम the ctrl vNIC's BAR
- * @qc_area:		Poपूर्णांकer to the CPP area क्रम the queues
- * @mac_stats_bar:	Poपूर्णांकer to the CPP area क्रम the MAC stats
- * @mac_stats_mem:	Poपूर्णांकer to mapped MAC stats area
- * @vf_cfg_bar:		Poपूर्णांकer to the CPP area क्रम the VF configuration BAR
- * @vf_cfg_mem:		Poपूर्णांकer to mapped VF configuration area
- * @vfcfg_tbl2_area:	Poपूर्णांकer to the CPP area क्रम the VF config table
- * @vfcfg_tbl2:		Poपूर्णांकer to mapped VF config table
+ * struct nfp_pf - NFP PF-specific device structure
+ * @pdev:		Backpointer to PCI device
+ * @cpp:		Pointer to the CPP handle
+ * @app:		Pointer to the APP handle
+ * @data_vnic_bar:	Pointer to the CPP area for the data vNICs' BARs
+ * @ctrl_vnic_bar:	Pointer to the CPP area for the ctrl vNIC's BAR
+ * @qc_area:		Pointer to the CPP area for the queues
+ * @mac_stats_bar:	Pointer to the CPP area for the MAC stats
+ * @mac_stats_mem:	Pointer to mapped MAC stats area
+ * @vf_cfg_bar:		Pointer to the CPP area for the VF configuration BAR
+ * @vf_cfg_mem:		Pointer to mapped VF configuration area
+ * @vfcfg_tbl2_area:	Pointer to the CPP area for the VF config table
+ * @vfcfg_tbl2:		Pointer to mapped VF config table
  * @mbox:		RTSym of per-PCI PF mailbox (under devlink lock)
- * @irq_entries:	Array of MSI-X entries क्रम all vNICs
- * @limit_vfs:		Number of VFs supported by firmware (~0 क्रम PCI limit)
+ * @irq_entries:	Array of MSI-X entries for all vNICs
+ * @limit_vfs:		Number of VFs supported by firmware (~0 for PCI limit)
  * @num_vfs:		Number of SR-IOV VFs enabled
  * @fw_loaded:		Is the firmware loaded?
- * @unload_fw_on_हटाओ:Do we need to unload firmware on driver removal?
- * @ctrl_vnic:		Poपूर्णांकer to the control vNIC अगर available
+ * @unload_fw_on_remove:Do we need to unload firmware on driver removal?
+ * @ctrl_vnic:		Pointer to the control vNIC if available
  * @mip:		MIP handle
  * @rtbl:		RTsym table
  * @hwinfo:		HWInfo table
- * @dumpspec:		Debug dump specअगरication
+ * @dumpspec:		Debug dump specification
  * @dump_flag:		Store dump flag between set_dump and get_dump_flag
  * @dump_len:		Store dump length between set_dump and get_dump_flag
  * @eth_tbl:		NSP ETH table
- * @nspi:		NSP identअगरication info
- * @hwmon_dev:		poपूर्णांकer to hwmon device
+ * @nspi:		NSP identification info
+ * @hwmon_dev:		pointer to hwmon device
  * @ddir:		Per-device debugfs directory
  * @max_data_vnics:	Number of data vNICs app firmware supports
  * @num_vnics:		Number of vNICs spawned
- * @vnics:		Linked list of vNIC काष्ठाures (काष्ठा nfp_net)
- * @ports:		Linked list of port काष्ठाures (काष्ठा nfp_port)
- * @wq:			Workqueue क्रम running works which need to grab @lock
- * @port_refresh_work:	Work entry क्रम taking netdevs out
- * @shared_bufs:	Array of shared buffer काष्ठाures अगर FW has any SBs
+ * @vnics:		Linked list of vNIC structures (struct nfp_net)
+ * @ports:		Linked list of port structures (struct nfp_port)
+ * @wq:			Workqueue for running works which need to grab @lock
+ * @port_refresh_work:	Work entry for taking netdevs out
+ * @shared_bufs:	Array of shared buffer structures if FW has any SBs
  * @num_shared_bufs:	Number of elements in @shared_bufs
  * @lock:		Protects all fields which may change after probe
  */
-काष्ठा nfp_pf अणु
-	काष्ठा pci_dev *pdev;
+struct nfp_pf {
+	struct pci_dev *pdev;
 
-	काष्ठा nfp_cpp *cpp;
+	struct nfp_cpp *cpp;
 
-	काष्ठा nfp_app *app;
+	struct nfp_app *app;
 
-	काष्ठा nfp_cpp_area *data_vnic_bar;
-	काष्ठा nfp_cpp_area *ctrl_vnic_bar;
-	काष्ठा nfp_cpp_area *qc_area;
-	काष्ठा nfp_cpp_area *mac_stats_bar;
+	struct nfp_cpp_area *data_vnic_bar;
+	struct nfp_cpp_area *ctrl_vnic_bar;
+	struct nfp_cpp_area *qc_area;
+	struct nfp_cpp_area *mac_stats_bar;
 	u8 __iomem *mac_stats_mem;
-	काष्ठा nfp_cpp_area *vf_cfg_bar;
+	struct nfp_cpp_area *vf_cfg_bar;
 	u8 __iomem *vf_cfg_mem;
-	काष्ठा nfp_cpp_area *vfcfg_tbl2_area;
+	struct nfp_cpp_area *vfcfg_tbl2_area;
 	u8 __iomem *vfcfg_tbl2;
 
-	स्थिर काष्ठा nfp_rtsym *mbox;
+	const struct nfp_rtsym *mbox;
 
-	काष्ठा msix_entry *irq_entries;
+	struct msix_entry *irq_entries;
 
-	अचिन्हित पूर्णांक limit_vfs;
-	अचिन्हित पूर्णांक num_vfs;
+	unsigned int limit_vfs;
+	unsigned int num_vfs;
 
 	bool fw_loaded;
-	bool unload_fw_on_हटाओ;
+	bool unload_fw_on_remove;
 
-	काष्ठा nfp_net *ctrl_vnic;
+	struct nfp_net *ctrl_vnic;
 
-	स्थिर काष्ठा nfp_mip *mip;
-	काष्ठा nfp_rtsym_table *rtbl;
-	काष्ठा nfp_hwinfo *hwinfo;
-	काष्ठा nfp_dumpspec *dumpspec;
+	const struct nfp_mip *mip;
+	struct nfp_rtsym_table *rtbl;
+	struct nfp_hwinfo *hwinfo;
+	struct nfp_dumpspec *dumpspec;
 	u32 dump_flag;
 	u32 dump_len;
-	काष्ठा nfp_eth_table *eth_tbl;
-	काष्ठा nfp_nsp_identअगरy *nspi;
+	struct nfp_eth_table *eth_tbl;
+	struct nfp_nsp_identify *nspi;
 
-	काष्ठा device *hwmon_dev;
+	struct device *hwmon_dev;
 
-	काष्ठा dentry *ddir;
+	struct dentry *ddir;
 
-	अचिन्हित पूर्णांक max_data_vnics;
-	अचिन्हित पूर्णांक num_vnics;
+	unsigned int max_data_vnics;
+	unsigned int num_vnics;
 
-	काष्ठा list_head vnics;
-	काष्ठा list_head ports;
+	struct list_head vnics;
+	struct list_head ports;
 
-	काष्ठा workqueue_काष्ठा *wq;
-	काष्ठा work_काष्ठा port_refresh_work;
+	struct workqueue_struct *wq;
+	struct work_struct port_refresh_work;
 
-	काष्ठा nfp_shared_buf *shared_bufs;
-	अचिन्हित पूर्णांक num_shared_bufs;
+	struct nfp_shared_buf *shared_bufs;
+	unsigned int num_shared_bufs;
 
-	काष्ठा mutex lock;
-पूर्ण;
+	struct mutex lock;
+};
 
-बाह्य काष्ठा pci_driver nfp_netvf_pci_driver;
+extern struct pci_driver nfp_netvf_pci_driver;
 
-बाह्य स्थिर काष्ठा devlink_ops nfp_devlink_ops;
+extern const struct devlink_ops nfp_devlink_ops;
 
-पूर्णांक nfp_net_pci_probe(काष्ठा nfp_pf *pf);
-व्योम nfp_net_pci_हटाओ(काष्ठा nfp_pf *pf);
+int nfp_net_pci_probe(struct nfp_pf *pf);
+void nfp_net_pci_remove(struct nfp_pf *pf);
 
-पूर्णांक nfp_hwmon_रेजिस्टर(काष्ठा nfp_pf *pf);
-व्योम nfp_hwmon_unरेजिस्टर(काष्ठा nfp_pf *pf);
+int nfp_hwmon_register(struct nfp_pf *pf);
+void nfp_hwmon_unregister(struct nfp_pf *pf);
 
-व्योम
-nfp_net_get_mac_addr(काष्ठा nfp_pf *pf, काष्ठा net_device *netdev,
-		     काष्ठा nfp_port *port);
+void
+nfp_net_get_mac_addr(struct nfp_pf *pf, struct net_device *netdev,
+		     struct nfp_port *port);
 
-bool nfp_ctrl_tx(काष्ठा nfp_net *nn, काष्ठा sk_buff *skb);
+bool nfp_ctrl_tx(struct nfp_net *nn, struct sk_buff *skb);
 
-पूर्णांक nfp_pf_rtsym_पढ़ो_optional(काष्ठा nfp_pf *pf, स्थिर अक्षर *क्रमmat,
-			       अचिन्हित पूर्णांक शेष_val);
+int nfp_pf_rtsym_read_optional(struct nfp_pf *pf, const char *format,
+			       unsigned int default_val);
 u8 __iomem *
-nfp_pf_map_rtsym(काष्ठा nfp_pf *pf, स्थिर अक्षर *name, स्थिर अक्षर *sym_fmt,
-		 अचिन्हित पूर्णांक min_size, काष्ठा nfp_cpp_area **area);
-पूर्णांक nfp_mbox_cmd(काष्ठा nfp_pf *pf, u32 cmd, व्योम *in_data, u64 in_length,
-		 व्योम *out_data, u64 out_length);
-पूर्णांक nfp_flash_update_common(काष्ठा nfp_pf *pf, स्थिर काष्ठा firmware *fw,
-			    काष्ठा netlink_ext_ack *extack);
+nfp_pf_map_rtsym(struct nfp_pf *pf, const char *name, const char *sym_fmt,
+		 unsigned int min_size, struct nfp_cpp_area **area);
+int nfp_mbox_cmd(struct nfp_pf *pf, u32 cmd, void *in_data, u64 in_length,
+		 void *out_data, u64 out_length);
+int nfp_flash_update_common(struct nfp_pf *pf, const struct firmware *fw,
+			    struct netlink_ext_ack *extack);
 
-क्रमागत nfp_dump_diag अणु
+enum nfp_dump_diag {
 	NFP_DUMP_NSP_DIAG = 0,
-पूर्ण;
+};
 
-काष्ठा nfp_dumpspec *
-nfp_net_dump_load_dumpspec(काष्ठा nfp_cpp *cpp, काष्ठा nfp_rtsym_table *rtbl);
-s64 nfp_net_dump_calculate_size(काष्ठा nfp_pf *pf, काष्ठा nfp_dumpspec *spec,
+struct nfp_dumpspec *
+nfp_net_dump_load_dumpspec(struct nfp_cpp *cpp, struct nfp_rtsym_table *rtbl);
+s64 nfp_net_dump_calculate_size(struct nfp_pf *pf, struct nfp_dumpspec *spec,
 				u32 flag);
-पूर्णांक nfp_net_dump_populate_buffer(काष्ठा nfp_pf *pf, काष्ठा nfp_dumpspec *spec,
-				 काष्ठा ethtool_dump *dump_param, व्योम *dest);
+int nfp_net_dump_populate_buffer(struct nfp_pf *pf, struct nfp_dumpspec *spec,
+				 struct ethtool_dump *dump_param, void *dest);
 
-पूर्णांक nfp_shared_buf_रेजिस्टर(काष्ठा nfp_pf *pf);
-व्योम nfp_shared_buf_unरेजिस्टर(काष्ठा nfp_pf *pf);
-पूर्णांक nfp_shared_buf_pool_get(काष्ठा nfp_pf *pf, अचिन्हित पूर्णांक sb, u16 pool_index,
-			    काष्ठा devlink_sb_pool_info *pool_info);
-पूर्णांक nfp_shared_buf_pool_set(काष्ठा nfp_pf *pf, अचिन्हित पूर्णांक sb,
+int nfp_shared_buf_register(struct nfp_pf *pf);
+void nfp_shared_buf_unregister(struct nfp_pf *pf);
+int nfp_shared_buf_pool_get(struct nfp_pf *pf, unsigned int sb, u16 pool_index,
+			    struct devlink_sb_pool_info *pool_info);
+int nfp_shared_buf_pool_set(struct nfp_pf *pf, unsigned int sb,
 			    u16 pool_index, u32 size,
-			    क्रमागत devlink_sb_threshold_type threshold_type);
+			    enum devlink_sb_threshold_type threshold_type);
 
-पूर्णांक nfp_devlink_params_रेजिस्टर(काष्ठा nfp_pf *pf);
-व्योम nfp_devlink_params_unरेजिस्टर(काष्ठा nfp_pf *pf);
-#पूर्ण_अगर /* NFP_MAIN_H */
+int nfp_devlink_params_register(struct nfp_pf *pf);
+void nfp_devlink_params_unregister(struct nfp_pf *pf);
+#endif /* NFP_MAIN_H */

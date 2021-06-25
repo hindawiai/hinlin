@@ -1,47 +1,46 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित RELOCS_H
-#घोषणा RELOCS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef RELOCS_H
+#define RELOCS_H
 
-#समावेश <मानकपन.स>
-#समावेश <मानकतर्क.स>
-#समावेश <मानककोष.स>
-#समावेश <मानक_निवेशt.h>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <माला.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <unistd.h>
-#समावेश <elf.h>
-#समावेश <byteswap.h>
-#घोषणा USE_BSD
-#समावेश <endian.h>
-#समावेश <regex.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <inttypes.h>
+#include <string.h>
+#include <errno.h>
+#include <unistd.h>
+#include <elf.h>
+#include <byteswap.h>
+#define USE_BSD
+#include <endian.h>
+#include <regex.h>
 
-व्योम die(अक्षर *fmt, ...);
+void die(char *fmt, ...);
 
 /*
- * Introduced क्रम MIPSr6
+ * Introduced for MIPSr6
  */
-#अगर_अघोषित R_MIPS_PC21_S2
-#घोषणा R_MIPS_PC21_S2		60
-#पूर्ण_अगर
+#ifndef R_MIPS_PC21_S2
+#define R_MIPS_PC21_S2		60
+#endif
 
-#अगर_अघोषित R_MIPS_PC26_S2
-#घोषणा R_MIPS_PC26_S2		61
-#पूर्ण_अगर
+#ifndef R_MIPS_PC26_S2
+#define R_MIPS_PC26_S2		61
+#endif
 
-#घोषणा ARRAY_SIZE(x) (माप(x) / माप((x)[0]))
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
-क्रमागत symtype अणु
+enum symtype {
 	S_ABS,
 	S_REL,
 	S_SEG,
 	S_LIN,
 	S_NSYMTYPES
-पूर्ण;
+};
 
-व्योम process_32(खाता *fp, पूर्णांक as_text, पूर्णांक as_bin,
-		पूर्णांक show_reloc_info, पूर्णांक keep_relocs);
-व्योम process_64(खाता *fp, पूर्णांक as_text, पूर्णांक as_bin,
-		पूर्णांक show_reloc_info, पूर्णांक keep_relocs);
-#पूर्ण_अगर /* RELOCS_H */
+void process_32(FILE *fp, int as_text, int as_bin,
+		int show_reloc_info, int keep_relocs);
+void process_64(FILE *fp, int as_text, int as_bin,
+		int show_reloc_info, int keep_relocs);
+#endif /* RELOCS_H */

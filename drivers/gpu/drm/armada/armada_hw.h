@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 Russell King
- *  Rewritten from the करोvefb driver, and Armada510 manuals.
+ *  Rewritten from the dovefb driver, and Armada510 manuals.
  */
-#अगर_अघोषित ARMADA_HW_H
-#घोषणा ARMADA_HW_H
+#ifndef ARMADA_HW_H
+#define ARMADA_HW_H
 
 /*
- * Note: the following रेजिस्टरs are written from IRQ context:
+ * Note: the following registers are written from IRQ context:
  *  LCD_SPU_V_PORCH, LCD_SPU_ADV_REG, LCD_SPUT_V_H_TOTAL
  *  LCD_SPU_DMA_START_ADDR_[YUV][01], LCD_SPU_DMA_PITCH_YC,
  *  LCD_SPU_DMA_PITCH_UV, LCD_SPU_DMA_OVSA_HPXL_VLN,
  *  LCD_SPU_DMA_HPXL_VLN, LCD_SPU_DZM_HPXL_VLN, LCD_SPU_DMA_CTRL0
  */
-क्रमागत अणु
+enum {
 	LCD_SPU_ADV_REG			= 0x0084,	/* Armada 510 */
 	LCD_SPU_DMA_START_ADDR_Y0	= 0x00c0,
 	LCD_SPU_DMA_START_ADDR_U0	= 0x00c4,
@@ -72,10 +71,10 @@
 	LCD_SPU_IOPAD_CONTROL		= 0x01bc,
 	LCD_SPU_IRQ_ENA			= 0x01c0,
 	LCD_SPU_IRQ_ISR			= 0x01c4,
-पूर्ण;
+};
 
 /* For LCD_SPU_ADV_REG */
-क्रमागत अणु
+enum {
 	ADV_VSYNC_L_OFF	= 0xfff << 20,
 	ADV_GRACOLORKEY	= 1 << 19,
 	ADV_VIDCOLORKEY	= 1 << 18,
@@ -84,19 +83,19 @@
 	ADV_HWC32ENABLE	= 1 << 13,
 	ADV_VSYNCOFFEN	= 1 << 12,
 	ADV_VSYNC_H_OFF	= 0xfff << 0,
-पूर्ण;
+};
 
 /* LCD_CFG_RDREG4F - Armada 510 only */
-क्रमागत अणु
+enum {
 	CFG_SRAM_WAIT	= BIT(11),
 	CFG_SMPN_FASTTX	= BIT(10),
 	CFG_DMA_ARB	= BIT(9),
 	CFG_DMA_WM_EN	= BIT(8),
 	CFG_DMA_WM_MASK	= 0xff,
-#घोषणा CFG_DMA_WM(x)	((x) & CFG_DMA_WM_MASK)
-पूर्ण;
+#define CFG_DMA_WM(x)	((x) & CFG_DMA_WM_MASK)
+};
 
-क्रमागत अणु
+enum {
 	CFG_565		= 0,
 	CFG_1555	= 1,
 	CFG_888PACK	= 2,
@@ -111,10 +110,10 @@
 	CFG_SWAPUV	= 1 << 3,
 	CFG_SWAPYU	= 1 << 2,
 	CFG_YUV2RGB	= 1 << 1,
-पूर्ण;
+};
 
 /* For LCD_SPU_DMA_CTRL0 */
-क्रमागत अणु
+enum {
 	CFG_NOBLENDING	= 1 << 31,
 	CFG_GAMMA_ENA	= 1 << 30,
 	CFG_CBSH_ENA	= 1 << 29,
@@ -124,22 +123,22 @@
 	CFG_HWC_1BITENA	= 1 << 25,
 	CFG_HWC_ENA	= 1 << 24,
 	CFG_DMAFORMAT	= 0xf << 20,
-#घोषणा	CFG_DMA_FMT(x)	((x) << 20)
+#define	CFG_DMA_FMT(x)	((x) << 20)
 	CFG_GRAFORMAT	= 0xf << 16,
-#घोषणा	CFG_GRA_FMT(x)	((x) << 16)
-#घोषणा CFG_GRA_MOD(x)	((x) << 8)
+#define	CFG_GRA_FMT(x)	((x) << 16)
+#define CFG_GRA_MOD(x)	((x) << 8)
 	CFG_GRA_FTOGGLE	= 1 << 15,
 	CFG_GRA_HSMOOTH	= 1 << 14,
 	CFG_GRA_TSTMODE	= 1 << 13,
 	CFG_GRA_ENA	= 1 << 8,
-#घोषणा CFG_DMA_MOD(x)	((x) << 0)
+#define CFG_DMA_MOD(x)	((x) << 0)
 	CFG_DMA_FTOGGLE	= 1 << 7,
 	CFG_DMA_HSMOOTH	= 1 << 6,
 	CFG_DMA_TSTMODE	= 1 << 5,
 	CFG_DMA_ENA	= 1 << 0,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	CKMODE_DISABLE	= 0,
 	CKMODE_Y	= 1,
 	CKMODE_U	= 2,
@@ -148,14 +147,14 @@
 	CKMODE_R	= 5,
 	CKMODE_G	= 6,
 	CKMODE_B	= 7,
-पूर्ण;
+};
 
 /* For LCD_SPU_DMA_CTRL1 */
-क्रमागत अणु
+enum {
 	CFG_FRAME_TRIG		= 1 << 31,
 	CFG_VSYNC_INV		= 1 << 27,
 	CFG_CKMODE_MASK		= 0x7 << 24,
-#घोषणा CFG_CKMODE(x)		((x) << 24)
+#define CFG_CKMODE(x)		((x) << 24)
 	CFG_CARRY		= 1 << 23,
 	CFG_GATED_CLK		= 1 << 21,
 	CFG_PWRDN_ENA		= 1 << 20,
@@ -168,12 +167,12 @@
 	CFG_ALPHAM_GRA		= 0x1 << 16,
 	CFG_ALPHAM_CFG		= 0x2 << 16,
 	CFG_ALPHA_MASK		= 0xff << 8,
-#घोषणा CFG_ALPHA(x)		((x) << 8)
+#define CFG_ALPHA(x)		((x) << 8)
 	CFG_PIXCMD_MASK		= 0xff,
-पूर्ण;
+};
 
 /* For LCD_SPU_SRAM_CTRL */
-क्रमागत अणु
+enum {
 	SRAM_READ	= 0 << 14,
 	SRAM_WRITE	= 2 << 14,
 	SRAM_INIT	= 3 << 14,
@@ -188,26 +187,26 @@
 	SRAM_HWC32_RAMB	= 0xe << 8,
 	SRAM_HWC32_TRAN	= 0xf << 8,
 	SRAM_HWC	= 0xf << 8,
-पूर्ण;
+};
 
 /* For LCD_SPU_SRAM_PARA1 */
-क्रमागत अणु
+enum {
 	CFG_CSB_256x32	= 1 << 15,	/* cursor */
 	CFG_CSB_256x24	= 1 << 14,	/* palette */
 	CFG_CSB_256x8	= 1 << 13,	/* gamma */
-	CFG_PDWN1920x32	= 1 << 8,	/* Armada 510: घातer करोwn vscale ram */
-	CFG_PDWN256x32	= 1 << 7,	/* घातer करोwn cursor */
-	CFG_PDWN256x24	= 1 << 6,	/* घातer करोwn palette */
-	CFG_PDWN256x8	= 1 << 5,	/* घातer करोwn gamma */
-	CFG_PDWNHWC	= 1 << 4,	/* Armada 510: घातer करोwn all hwc ram */
-	CFG_PDWN32x32	= 1 << 3,	/* घातer करोwn slave->smart ram */
-	CFG_PDWN16x66	= 1 << 2,	/* घातer करोwn UV fअगरo */
-	CFG_PDWN32x66	= 1 << 1,	/* घातer करोwn Y fअगरo */
-	CFG_PDWN64x66	= 1 << 0,	/* घातer करोwn graphic fअगरo */
-पूर्ण;
+	CFG_PDWN1920x32	= 1 << 8,	/* Armada 510: power down vscale ram */
+	CFG_PDWN256x32	= 1 << 7,	/* power down cursor */
+	CFG_PDWN256x24	= 1 << 6,	/* power down palette */
+	CFG_PDWN256x8	= 1 << 5,	/* power down gamma */
+	CFG_PDWNHWC	= 1 << 4,	/* Armada 510: power down all hwc ram */
+	CFG_PDWN32x32	= 1 << 3,	/* power down slave->smart ram */
+	CFG_PDWN16x66	= 1 << 2,	/* power down UV fifo */
+	CFG_PDWN32x66	= 1 << 1,	/* power down Y fifo */
+	CFG_PDWN64x66	= 1 << 0,	/* power down graphic fifo */
+};
 
 /* For LCD_CFG_SCLK_DIV */
-क्रमागत अणु
+enum {
 	/* Armada 510 */
 	SCLK_510_AXI		= 0x0 << 30,
 	SCLK_510_EXTCLK0	= 0x1 << 30,
@@ -224,10 +223,10 @@
 	SCLK_16X_PLL		= 0x8 << 28,
 	SCLK_16X_FRAC_DIV_MASK	= 0xfff << 16,
 	SCLK_16X_INT_DIV_MASK	= 0xffff << 0,
-पूर्ण;
+};
 
 /* For LCD_SPU_DUMB_CTRL */
-क्रमागत अणु
+enum {
 	DUMB16_RGB565_0	= 0x0 << 28,
 	DUMB16_RGB565_1	= 0x1 << 28,
 	DUMB18_RGB666_0	= 0x2 << 28,
@@ -246,10 +245,10 @@
 	CFG_INV_HSYNC	= 1 << 2,	/* Normally active high */
 	CFG_INV_PCLK	= 1 << 1,
 	CFG_DUMB_ENA	= 1 << 0,
-पूर्ण;
+};
 
 /* For LCD_SPU_IOPAD_CONTROL */
-क्रमागत अणु
+enum {
 	CFG_VSCALE_LN_EN	= 3 << 18,
 	CFG_GRA_VM_ENA		= 1 << 15,
 	CFG_DMA_VM_ENA		= 1 << 13,
@@ -269,12 +268,12 @@
 	CFG_IOPAD_SMART18	= 0x6 << 0,
 	CFG_IOPAD_SMART16	= 0x7 << 0,
 	CFG_IOPAD_SMART8	= 0x8 << 0,
-पूर्ण;
+};
 
-#घोषणा IOPAD_DUMB24                0x0
+#define IOPAD_DUMB24                0x0
 
 /* For LCD_SPU_IRQ_ENA */
-क्रमागत अणु
+enum {
 	DMA_FRAME_IRQ0_ENA	= 1 << 31,
 	DMA_FRAME_IRQ1_ENA	= 1 << 30,
 	DMA_FRAME_IRQ_ENA	= DMA_FRAME_IRQ0_ENA | DMA_FRAME_IRQ1_ENA,
@@ -292,10 +291,10 @@
 	PWRDN_IRQ_ENA		= 1 << 17,
 	ERR_IRQ_ENA		= 1 << 16,
 	CLEAN_SPU_IRQ_ISR	= 0xffff,
-पूर्ण;
+};
 
 /* For LCD_SPU_IRQ_ISR */
-क्रमागत अणु
+enum {
 	DMA_FRAME_IRQ0		= 1 << 31,
 	DMA_FRAME_IRQ1		= 1 << 30,
 	DMA_FRAME_IRQ		= DMA_FRAME_IRQ0 | DMA_FRAME_IRQ1,
@@ -326,6 +325,6 @@
 	DMA_FF_ALLEMPTY		= 1 << 2,
 	GRA_FF_ALLEMPTY		= 1 << 1,
 	PWRDN_IRQ_LEVEL		= 1 << 0,
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

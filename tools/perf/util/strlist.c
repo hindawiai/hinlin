@@ -1,176 +1,175 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * (c) 2009 Arnalकरो Carvalho de Melo <acme@redhat.com>
+ * (c) 2009 Arnaldo Carvalho de Melo <acme@redhat.com>
  */
 
-#समावेश "strlist.h"
-#समावेश <त्रुटिसं.स>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <unistd.h>
-#समावेश <linux/zभाग.स>
+#include "strlist.h"
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <linux/zalloc.h>
 
-अटल
-काष्ठा rb_node *strlist__node_new(काष्ठा rblist *rblist, स्थिर व्योम *entry)
-अणु
-	स्थिर अक्षर *s = entry;
-	काष्ठा rb_node *rc = शून्य;
-	काष्ठा strlist *strlist = container_of(rblist, काष्ठा strlist, rblist);
-	काष्ठा str_node *snode = दो_स्मृति(माप(*snode));
+static
+struct rb_node *strlist__node_new(struct rblist *rblist, const void *entry)
+{
+	const char *s = entry;
+	struct rb_node *rc = NULL;
+	struct strlist *strlist = container_of(rblist, struct strlist, rblist);
+	struct str_node *snode = malloc(sizeof(*snode));
 
-	अगर (snode != शून्य) अणु
-		अगर (strlist->dupstr) अणु
+	if (snode != NULL) {
+		if (strlist->dupstr) {
 			s = strdup(s);
-			अगर (s == शून्य)
-				जाओ out_delete;
-		पूर्ण
+			if (s == NULL)
+				goto out_delete;
+		}
 		snode->s = s;
 		rc = &snode->rb_node;
-	पूर्ण
+	}
 
-	वापस rc;
+	return rc;
 
 out_delete:
-	मुक्त(snode);
-	वापस शून्य;
-पूर्ण
+	free(snode);
+	return NULL;
+}
 
-अटल व्योम str_node__delete(काष्ठा str_node *snode, bool dupstr)
-अणु
-	अगर (dupstr)
-		zमुक्त((अक्षर **)&snode->s);
-	मुक्त(snode);
-पूर्ण
+static void str_node__delete(struct str_node *snode, bool dupstr)
+{
+	if (dupstr)
+		zfree((char **)&snode->s);
+	free(snode);
+}
 
-अटल
-व्योम strlist__node_delete(काष्ठा rblist *rblist, काष्ठा rb_node *rb_node)
-अणु
-	काष्ठा strlist *slist = container_of(rblist, काष्ठा strlist, rblist);
-	काष्ठा str_node *snode = container_of(rb_node, काष्ठा str_node, rb_node);
+static
+void strlist__node_delete(struct rblist *rblist, struct rb_node *rb_node)
+{
+	struct strlist *slist = container_of(rblist, struct strlist, rblist);
+	struct str_node *snode = container_of(rb_node, struct str_node, rb_node);
 
 	str_node__delete(snode, slist->dupstr);
-पूर्ण
+}
 
-अटल पूर्णांक strlist__node_cmp(काष्ठा rb_node *rb_node, स्थिर व्योम *entry)
-अणु
-	स्थिर अक्षर *str = entry;
-	काष्ठा str_node *snode = container_of(rb_node, काष्ठा str_node, rb_node);
+static int strlist__node_cmp(struct rb_node *rb_node, const void *entry)
+{
+	const char *str = entry;
+	struct str_node *snode = container_of(rb_node, struct str_node, rb_node);
 
-	वापस म_भेद(snode->s, str);
-पूर्ण
+	return strcmp(snode->s, str);
+}
 
-पूर्णांक strlist__add(काष्ठा strlist *slist, स्थिर अक्षर *new_entry)
-अणु
-	वापस rblist__add_node(&slist->rblist, new_entry);
-पूर्ण
+int strlist__add(struct strlist *slist, const char *new_entry)
+{
+	return rblist__add_node(&slist->rblist, new_entry);
+}
 
-पूर्णांक strlist__load(काष्ठा strlist *slist, स्थिर अक्षर *filename)
-अणु
-	अक्षर entry[1024];
-	पूर्णांक err;
-	खाता *fp = ख_खोलो(filename, "r");
+int strlist__load(struct strlist *slist, const char *filename)
+{
+	char entry[1024];
+	int err;
+	FILE *fp = fopen(filename, "r");
 
-	अगर (fp == शून्य)
-		वापस -त्रुटि_सं;
+	if (fp == NULL)
+		return -errno;
 
-	जबतक (ख_माला_लो(entry, माप(entry), fp) != शून्य) अणु
-		स्थिर माप_प्रकार len = म_माप(entry);
+	while (fgets(entry, sizeof(entry), fp) != NULL) {
+		const size_t len = strlen(entry);
 
-		अगर (len == 0)
-			जारी;
+		if (len == 0)
+			continue;
 		entry[len - 1] = '\0';
 
 		err = strlist__add(slist, entry);
-		अगर (err != 0)
-			जाओ out;
-	पूर्ण
+		if (err != 0)
+			goto out;
+	}
 
 	err = 0;
 out:
-	ख_बंद(fp);
-	वापस err;
-पूर्ण
+	fclose(fp);
+	return err;
+}
 
-व्योम strlist__हटाओ(काष्ठा strlist *slist, काष्ठा str_node *snode)
-अणु
-	rblist__हटाओ_node(&slist->rblist, &snode->rb_node);
-पूर्ण
+void strlist__remove(struct strlist *slist, struct str_node *snode)
+{
+	rblist__remove_node(&slist->rblist, &snode->rb_node);
+}
 
-काष्ठा str_node *strlist__find(काष्ठा strlist *slist, स्थिर अक्षर *entry)
-अणु
-	काष्ठा str_node *snode = शून्य;
-	काष्ठा rb_node *rb_node = rblist__find(&slist->rblist, entry);
+struct str_node *strlist__find(struct strlist *slist, const char *entry)
+{
+	struct str_node *snode = NULL;
+	struct rb_node *rb_node = rblist__find(&slist->rblist, entry);
 
-	अगर (rb_node)
-		snode = container_of(rb_node, काष्ठा str_node, rb_node);
+	if (rb_node)
+		snode = container_of(rb_node, struct str_node, rb_node);
 
-	वापस snode;
-पूर्ण
+	return snode;
+}
 
-अटल पूर्णांक strlist__parse_list_entry(काष्ठा strlist *slist, स्थिर अक्षर *s,
-				     स्थिर अक्षर *subst_dir)
-अणु
-	पूर्णांक err;
-	अक्षर *subst = शून्य;
+static int strlist__parse_list_entry(struct strlist *slist, const char *s,
+				     const char *subst_dir)
+{
+	int err;
+	char *subst = NULL;
 
-	अगर (म_भेदन(s, "file://", 7) == 0)
-		वापस strlist__load(slist, s + 7);
+	if (strncmp(s, "file://", 7) == 0)
+		return strlist__load(slist, s + 7);
 
-	अगर (subst_dir) अणु
+	if (subst_dir) {
 		err = -ENOMEM;
-		अगर (aप्र_लिखो(&subst, "%s/%s", subst_dir, s) < 0)
-			जाओ out;
+		if (asprintf(&subst, "%s/%s", subst_dir, s) < 0)
+			goto out;
 
-		अगर (access(subst, F_OK) == 0) अणु
+		if (access(subst, F_OK) == 0) {
 			err = strlist__load(slist, subst);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (slist->file_only) अणु
+		if (slist->file_only) {
 			err = -ENOENT;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	err = strlist__add(slist, s);
 out:
-	मुक्त(subst);
-	वापस err;
-पूर्ण
+	free(subst);
+	return err;
+}
 
-अटल पूर्णांक strlist__parse_list(काष्ठा strlist *slist, स्थिर अक्षर *s, स्थिर अक्षर *subst_dir)
-अणु
-	अक्षर *sep;
-	पूर्णांक err;
+static int strlist__parse_list(struct strlist *slist, const char *s, const char *subst_dir)
+{
+	char *sep;
+	int err;
 
-	जबतक ((sep = म_अक्षर(s, ',')) != शून्य) अणु
+	while ((sep = strchr(s, ',')) != NULL) {
 		*sep = '\0';
 		err = strlist__parse_list_entry(slist, s, subst_dir);
 		*sep = ',';
-		अगर (err != 0)
-			वापस err;
+		if (err != 0)
+			return err;
 		s = sep + 1;
-	पूर्ण
+	}
 
-	वापस *s ? strlist__parse_list_entry(slist, s, subst_dir) : 0;
-पूर्ण
+	return *s ? strlist__parse_list_entry(slist, s, subst_dir) : 0;
+}
 
-काष्ठा strlist *strlist__new(स्थिर अक्षर *list, स्थिर काष्ठा strlist_config *config)
-अणु
-	काष्ठा strlist *slist = दो_स्मृति(माप(*slist));
+struct strlist *strlist__new(const char *list, const struct strlist_config *config)
+{
+	struct strlist *slist = malloc(sizeof(*slist));
 
-	अगर (slist != शून्य) अणु
+	if (slist != NULL) {
 		bool dupstr = true;
 		bool file_only = false;
-		स्थिर अक्षर *स_नाम = शून्य;
+		const char *dirname = NULL;
 
-		अगर (config) अणु
-			dupstr = !config->करोnt_dupstr;
-			स_नाम = config->स_नाम;
+		if (config) {
+			dupstr = !config->dont_dupstr;
+			dirname = config->dirname;
 			file_only = config->file_only;
-		पूर्ण
+		}
 
 		rblist__init(&slist->rblist);
 		slist->rblist.node_cmp    = strlist__node_cmp;
@@ -180,30 +179,30 @@ out:
 		slist->dupstr	 = dupstr;
 		slist->file_only = file_only;
 
-		अगर (list && strlist__parse_list(slist, list, स_नाम) != 0)
-			जाओ out_error;
-	पूर्ण
+		if (list && strlist__parse_list(slist, list, dirname) != 0)
+			goto out_error;
+	}
 
-	वापस slist;
+	return slist;
 out_error:
-	मुक्त(slist);
-	वापस शून्य;
-पूर्ण
+	free(slist);
+	return NULL;
+}
 
-व्योम strlist__delete(काष्ठा strlist *slist)
-अणु
-	अगर (slist != शून्य)
+void strlist__delete(struct strlist *slist)
+{
+	if (slist != NULL)
 		rblist__delete(&slist->rblist);
-पूर्ण
+}
 
-काष्ठा str_node *strlist__entry(स्थिर काष्ठा strlist *slist, अचिन्हित पूर्णांक idx)
-अणु
-	काष्ठा str_node *snode = शून्य;
-	काष्ठा rb_node *rb_node;
+struct str_node *strlist__entry(const struct strlist *slist, unsigned int idx)
+{
+	struct str_node *snode = NULL;
+	struct rb_node *rb_node;
 
 	rb_node = rblist__entry(&slist->rblist, idx);
-	अगर (rb_node)
-		snode = container_of(rb_node, काष्ठा str_node, rb_node);
+	if (rb_node)
+		snode = container_of(rb_node, struct str_node, rb_node);
 
-	वापस snode;
-पूर्ण
+	return snode;
+}

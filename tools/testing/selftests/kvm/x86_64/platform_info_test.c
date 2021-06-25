@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Test क्रम x86 KVM_CAP_MSR_PLATFORM_INFO
+ * Test for x86 KVM_CAP_MSR_PLATFORM_INFO
  *
  * Copyright (C) 2018, Google LLC.
  *
  * This work is licensed under the terms of the GNU GPL, version 2.
  *
- * Verअगरies expected behavior of controlling guest access to
+ * Verifies expected behavior of controlling guest access to
  * MSR_PLATFORM_INFO.
  */
 
-#घोषणा _GNU_SOURCE /* क्रम program_invocation_लघु_name */
-#समावेश <fcntl.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sys/ioctl.h>
+#define _GNU_SOURCE /* for program_invocation_short_name */
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
 
-#समावेश "test_util.h"
-#समावेश "kvm_util.h"
-#समावेश "processor.h"
+#include "test_util.h"
+#include "kvm_util.h"
+#include "processor.h"
 
-#घोषणा VCPU_ID 0
-#घोषणा MSR_PLATFORM_INFO_MAX_TURBO_RATIO 0xff00
+#define VCPU_ID 0
+#define MSR_PLATFORM_INFO_MAX_TURBO_RATIO 0xff00
 
-अटल व्योम guest_code(व्योम)
-अणु
-	uपूर्णांक64_t msr_platक्रमm_info;
+static void guest_code(void)
+{
+	uint64_t msr_platform_info;
 
-	क्रम (;;) अणु
-		msr_platक्रमm_info = rdmsr(MSR_PLATFORM_INFO);
-		GUEST_SYNC(msr_platक्रमm_info);
-		यंत्र अस्थिर ("inc %r11");
-	पूर्ण
-पूर्ण
+	for (;;) {
+		msr_platform_info = rdmsr(MSR_PLATFORM_INFO);
+		GUEST_SYNC(msr_platform_info);
+		asm volatile ("inc %r11");
+	}
+}
 
-अटल व्योम set_msr_platक्रमm_info_enabled(काष्ठा kvm_vm *vm, bool enable)
-अणु
-	काष्ठा kvm_enable_cap cap = अणुपूर्ण;
+static void set_msr_platform_info_enabled(struct kvm_vm *vm, bool enable)
+{
+	struct kvm_enable_cap cap = {};
 
 	cap.cap = KVM_CAP_MSR_PLATFORM_INFO;
 	cap.flags = 0;
-	cap.args[0] = (पूर्णांक)enable;
+	cap.args[0] = (int)enable;
 	vm_enable_cap(vm, &cap);
-पूर्ण
+}
 
-अटल व्योम test_msr_platक्रमm_info_enabled(काष्ठा kvm_vm *vm)
-अणु
-	काष्ठा kvm_run *run = vcpu_state(vm, VCPU_ID);
-	काष्ठा ucall uc;
+static void test_msr_platform_info_enabled(struct kvm_vm *vm)
+{
+	struct kvm_run *run = vcpu_state(vm, VCPU_ID);
+	struct ucall uc;
 
-	set_msr_platक्रमm_info_enabled(vm, true);
+	set_msr_platform_info_enabled(vm, true);
 	vcpu_run(vm, VCPU_ID);
-	TEST_ASSERT(run->निकास_reason == KVM_EXIT_IO,
+	TEST_ASSERT(run->exit_reason == KVM_EXIT_IO,
 			"Exit_reason other than KVM_EXIT_IO: %u (%s),\n",
-			run->निकास_reason,
-			निकास_reason_str(run->निकास_reason));
+			run->exit_reason,
+			exit_reason_str(run->exit_reason));
 	get_ucall(vm, VCPU_ID, &uc);
 	TEST_ASSERT(uc.cmd == UCALL_SYNC,
 			"Received ucall other than UCALL_SYNC: %lu\n", uc.cmd);
@@ -64,45 +63,45 @@
 		MSR_PLATFORM_INFO_MAX_TURBO_RATIO,
 		"Expected MSR_PLATFORM_INFO to have max turbo ratio mask: %i.",
 		MSR_PLATFORM_INFO_MAX_TURBO_RATIO);
-पूर्ण
+}
 
-अटल व्योम test_msr_platक्रमm_info_disabled(काष्ठा kvm_vm *vm)
-अणु
-	काष्ठा kvm_run *run = vcpu_state(vm, VCPU_ID);
+static void test_msr_platform_info_disabled(struct kvm_vm *vm)
+{
+	struct kvm_run *run = vcpu_state(vm, VCPU_ID);
 
-	set_msr_platक्रमm_info_enabled(vm, false);
+	set_msr_platform_info_enabled(vm, false);
 	vcpu_run(vm, VCPU_ID);
-	TEST_ASSERT(run->निकास_reason == KVM_EXIT_SHUTDOWN,
+	TEST_ASSERT(run->exit_reason == KVM_EXIT_SHUTDOWN,
 			"Exit_reason other than KVM_EXIT_SHUTDOWN: %u (%s)\n",
-			run->निकास_reason,
-			निकास_reason_str(run->निकास_reason));
-पूर्ण
+			run->exit_reason,
+			exit_reason_str(run->exit_reason));
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	काष्ठा kvm_vm *vm;
-	पूर्णांक rv;
-	uपूर्णांक64_t msr_platक्रमm_info;
+int main(int argc, char *argv[])
+{
+	struct kvm_vm *vm;
+	int rv;
+	uint64_t msr_platform_info;
 
-	/* Tell मानक_निकास not to buffer its content */
-	रखो_बफ(मानक_निकास, शून्य);
+	/* Tell stdout not to buffer its content */
+	setbuf(stdout, NULL);
 
 	rv = kvm_check_cap(KVM_CAP_MSR_PLATFORM_INFO);
-	अगर (!rv) अणु
-		prपूर्णांक_skip("KVM_CAP_MSR_PLATFORM_INFO not supported");
-		निकास(KSFT_SKIP);
-	पूर्ण
+	if (!rv) {
+		print_skip("KVM_CAP_MSR_PLATFORM_INFO not supported");
+		exit(KSFT_SKIP);
+	}
 
-	vm = vm_create_शेष(VCPU_ID, 0, guest_code);
+	vm = vm_create_default(VCPU_ID, 0, guest_code);
 
-	msr_platक्रमm_info = vcpu_get_msr(vm, VCPU_ID, MSR_PLATFORM_INFO);
+	msr_platform_info = vcpu_get_msr(vm, VCPU_ID, MSR_PLATFORM_INFO);
 	vcpu_set_msr(vm, VCPU_ID, MSR_PLATFORM_INFO,
-		msr_platक्रमm_info | MSR_PLATFORM_INFO_MAX_TURBO_RATIO);
-	test_msr_platक्रमm_info_enabled(vm);
-	test_msr_platक्रमm_info_disabled(vm);
-	vcpu_set_msr(vm, VCPU_ID, MSR_PLATFORM_INFO, msr_platक्रमm_info);
+		msr_platform_info | MSR_PLATFORM_INFO_MAX_TURBO_RATIO);
+	test_msr_platform_info_enabled(vm);
+	test_msr_platform_info_disabled(vm);
+	vcpu_set_msr(vm, VCPU_ID, MSR_PLATFORM_INFO, msr_platform_info);
 
-	kvm_vm_मुक्त(vm);
+	kvm_vm_free(vm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

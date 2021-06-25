@@ -1,157 +1,156 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause
+// SPDX-License-Identifier: BSD-3-Clause
 /*
  * Loopback test application
  *
  * Copyright 2015 Google Inc.
  * Copyright 2015 Linaro Ltd.
  */
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <मानकपन.स>
-#समावेश <माला.स>
-#समावेश <मानककोष.स>
-#समावेश <मानक_निवेशt.h>
-#समावेश <poll.h>
-#समावेश <sys/types.h>
-#समावेश <समय.स>
-#समावेश <unistd.h>
-#समावेश <dirent.h>
-#समावेश <संकेत.स>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <poll.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
+#include <dirent.h>
+#include <signal.h>
 
-#घोषणा MAX_NUM_DEVICES 10
-#घोषणा MAX_SYSFS_PREFIX 0x80
-#घोषणा MAX_SYSFS_PATH	0x200
-#घोषणा CSV_MAX_LINE	0x1000
-#घोषणा SYSFS_MAX_INT	0x20
-#घोषणा MAX_STR_LEN	255
-#घोषणा DEFAULT_ASYNC_TIMEOUT 200000
+#define MAX_NUM_DEVICES 10
+#define MAX_SYSFS_PREFIX 0x80
+#define MAX_SYSFS_PATH	0x200
+#define CSV_MAX_LINE	0x1000
+#define SYSFS_MAX_INT	0x20
+#define MAX_STR_LEN	255
+#define DEFAULT_ASYNC_TIMEOUT 200000
 
-काष्ठा dict अणु
-	अक्षर *name;
-	पूर्णांक type;
-पूर्ण;
+struct dict {
+	char *name;
+	int type;
+};
 
-अटल काष्ठा dict dict[] = अणु
-	अणु"ping", 2पूर्ण,
-	अणु"transfer", 3पूर्ण,
-	अणु"sink", 4पूर्ण,
-	अणुशून्य,पूर्ण		/* list termination */
-पूर्ण;
+static struct dict dict[] = {
+	{"ping", 2},
+	{"transfer", 3},
+	{"sink", 4},
+	{NULL,}		/* list termination */
+};
 
-काष्ठा loopback_results अणु
-	भग्न latency_avg;
-	uपूर्णांक32_t latency_max;
-	uपूर्णांक32_t latency_min;
-	uपूर्णांक32_t latency_jitter;
+struct loopback_results {
+	float latency_avg;
+	uint32_t latency_max;
+	uint32_t latency_min;
+	uint32_t latency_jitter;
 
-	भग्न request_avg;
-	uपूर्णांक32_t request_max;
-	uपूर्णांक32_t request_min;
-	uपूर्णांक32_t request_jitter;
+	float request_avg;
+	uint32_t request_max;
+	uint32_t request_min;
+	uint32_t request_jitter;
 
-	भग्न throughput_avg;
-	uपूर्णांक32_t throughput_max;
-	uपूर्णांक32_t throughput_min;
-	uपूर्णांक32_t throughput_jitter;
+	float throughput_avg;
+	uint32_t throughput_max;
+	uint32_t throughput_min;
+	uint32_t throughput_jitter;
 
-	भग्न apbridge_unipro_latency_avg;
-	uपूर्णांक32_t apbridge_unipro_latency_max;
-	uपूर्णांक32_t apbridge_unipro_latency_min;
-	uपूर्णांक32_t apbridge_unipro_latency_jitter;
+	float apbridge_unipro_latency_avg;
+	uint32_t apbridge_unipro_latency_max;
+	uint32_t apbridge_unipro_latency_min;
+	uint32_t apbridge_unipro_latency_jitter;
 
-	भग्न gbphy_firmware_latency_avg;
-	uपूर्णांक32_t gbphy_firmware_latency_max;
-	uपूर्णांक32_t gbphy_firmware_latency_min;
-	uपूर्णांक32_t gbphy_firmware_latency_jitter;
+	float gbphy_firmware_latency_avg;
+	uint32_t gbphy_firmware_latency_max;
+	uint32_t gbphy_firmware_latency_min;
+	uint32_t gbphy_firmware_latency_jitter;
 
-	uपूर्णांक32_t error;
-पूर्ण;
+	uint32_t error;
+};
 
-काष्ठा loopback_device अणु
-	अक्षर name[MAX_STR_LEN];
-	अक्षर sysfs_entry[MAX_SYSFS_PATH];
-	अक्षर debugfs_entry[MAX_SYSFS_PATH];
-	काष्ठा loopback_results results;
-पूर्ण;
+struct loopback_device {
+	char name[MAX_STR_LEN];
+	char sysfs_entry[MAX_SYSFS_PATH];
+	char debugfs_entry[MAX_SYSFS_PATH];
+	struct loopback_results results;
+};
 
-काष्ठा loopback_test अणु
-	पूर्णांक verbose;
-	पूर्णांक debug;
-	पूर्णांक raw_data_dump;
-	पूर्णांक porcelain;
-	पूर्णांक mask;
-	पूर्णांक size;
-	पूर्णांक iteration_max;
-	पूर्णांक aggregate_output;
-	पूर्णांक test_id;
-	पूर्णांक device_count;
-	पूर्णांक list_devices;
-	पूर्णांक use_async;
-	पूर्णांक async_समयout;
-	पूर्णांक async_outstanding_operations;
-	पूर्णांक us_रुको;
-	पूर्णांक file_output;
-	पूर्णांक stop_all;
-	पूर्णांक poll_count;
-	अक्षर test_name[MAX_STR_LEN];
-	अक्षर sysfs_prefix[MAX_SYSFS_PREFIX];
-	अक्षर debugfs_prefix[MAX_SYSFS_PREFIX];
-	काष्ठा बारpec poll_समयout;
-	काष्ठा loopback_device devices[MAX_NUM_DEVICES];
-	काष्ठा loopback_results aggregate_results;
-	काष्ठा pollfd fds[MAX_NUM_DEVICES];
-पूर्ण;
+struct loopback_test {
+	int verbose;
+	int debug;
+	int raw_data_dump;
+	int porcelain;
+	int mask;
+	int size;
+	int iteration_max;
+	int aggregate_output;
+	int test_id;
+	int device_count;
+	int list_devices;
+	int use_async;
+	int async_timeout;
+	int async_outstanding_operations;
+	int us_wait;
+	int file_output;
+	int stop_all;
+	int poll_count;
+	char test_name[MAX_STR_LEN];
+	char sysfs_prefix[MAX_SYSFS_PREFIX];
+	char debugfs_prefix[MAX_SYSFS_PREFIX];
+	struct timespec poll_timeout;
+	struct loopback_device devices[MAX_NUM_DEVICES];
+	struct loopback_results aggregate_results;
+	struct pollfd fds[MAX_NUM_DEVICES];
+};
 
-काष्ठा loopback_test t;
+struct loopback_test t;
 
-/* Helper macros to calculate the aggregate results क्रम all devices */
-अटल अंतरभूत पूर्णांक device_enabled(काष्ठा loopback_test *t, पूर्णांक dev_idx);
+/* Helper macros to calculate the aggregate results for all devices */
+static inline int device_enabled(struct loopback_test *t, int dev_idx);
 
-#घोषणा GET_MAX(field)							\
-अटल पूर्णांक get_##field##_aggregate(काष्ठा loopback_test *t)		\
-अणु									\
-	uपूर्णांक32_t max = 0;						\
-	पूर्णांक i;								\
-	क्रम (i = 0; i < t->device_count; i++) अणु				\
-		अगर (!device_enabled(t, i))				\
-			जारी;					\
-		अगर (t->devices[i].results.field > max)			\
+#define GET_MAX(field)							\
+static int get_##field##_aggregate(struct loopback_test *t)		\
+{									\
+	uint32_t max = 0;						\
+	int i;								\
+	for (i = 0; i < t->device_count; i++) {				\
+		if (!device_enabled(t, i))				\
+			continue;					\
+		if (t->devices[i].results.field > max)			\
 			max = t->devices[i].results.field;		\
-	पूर्ण								\
-	वापस max;							\
-पूर्ण									\
+	}								\
+	return max;							\
+}									\
 
-#घोषणा GET_MIN(field)							\
-अटल पूर्णांक get_##field##_aggregate(काष्ठा loopback_test *t)		\
-अणु									\
-	uपूर्णांक32_t min = ~0;						\
-	पूर्णांक i;								\
-	क्रम (i = 0; i < t->device_count; i++) अणु				\
-		अगर (!device_enabled(t, i))				\
-			जारी;					\
-		अगर (t->devices[i].results.field < min)			\
+#define GET_MIN(field)							\
+static int get_##field##_aggregate(struct loopback_test *t)		\
+{									\
+	uint32_t min = ~0;						\
+	int i;								\
+	for (i = 0; i < t->device_count; i++) {				\
+		if (!device_enabled(t, i))				\
+			continue;					\
+		if (t->devices[i].results.field < min)			\
 			min = t->devices[i].results.field;		\
-	पूर्ण								\
-	वापस min;							\
-पूर्ण									\
+	}								\
+	return min;							\
+}									\
 
-#घोषणा GET_AVG(field)							\
-अटल पूर्णांक get_##field##_aggregate(काष्ठा loopback_test *t)		\
-अणु									\
-	uपूर्णांक32_t val = 0;						\
-	uपूर्णांक32_t count = 0;						\
-	पूर्णांक i;								\
-	क्रम (i = 0; i < t->device_count; i++) अणु				\
-		अगर (!device_enabled(t, i))				\
-			जारी;					\
+#define GET_AVG(field)							\
+static int get_##field##_aggregate(struct loopback_test *t)		\
+{									\
+	uint32_t val = 0;						\
+	uint32_t count = 0;						\
+	int i;								\
+	for (i = 0; i < t->device_count; i++) {				\
+		if (!device_enabled(t, i))				\
+			continue;					\
 		count++;						\
 		val += t->devices[i].results.field;			\
-	पूर्ण								\
-	अगर (count)							\
+	}								\
+	if (count)							\
 		val /= count;						\
-	वापस val;							\
-पूर्ण									\
+	return val;							\
+}									\
 
 GET_MAX(throughput_max);
 GET_MAX(request_max);
@@ -169,14 +168,14 @@ GET_AVG(latency_avg);
 GET_AVG(apbridge_unipro_latency_avg);
 GET_AVG(gbphy_firmware_latency_avg);
 
-व्योम पात(व्योम)
-अणु
-	_निकास(1);
-पूर्ण
+void abort(void)
+{
+	_exit(1);
+}
 
-व्योम usage(व्योम)
-अणु
-	ख_लिखो(मानक_त्रुटि, "Usage: loopback_test TEST [SIZE] ITERATIONS [SYSPATH] [DBGPATH]\n\n"
+void usage(void)
+{
+	fprintf(stderr, "Usage: loopback_test TEST [SIZE] ITERATIONS [SYSPATH] [DBGPATH]\n\n"
 	"  Run TEST for a number of ITERATIONS with operation data SIZE bytes\n"
 	"  TEST may be \'ping\' \'transfer\' or \'sink\'\n"
 	"  SIZE indicates the size of transfer <= greybus max payload bytes\n"
@@ -218,148 +217,148 @@ GET_AVG(gbphy_firmware_latency_avg);
 	"  loopback_test -t transfer -s 128 -i 10000 -m 9\n"
 	"  loopback_test -t ping -s 0 128 -i -S /sys/bus/greybus/devices/ -D /sys/kernel/debug/gb_loopback/\n"
 	"  loopback_test -t sink -s 2030 -i 32768 -S /sys/bus/greybus/devices/ -D /sys/kernel/debug/gb_loopback/\n");
-	पात();
-पूर्ण
+	abort();
+}
 
-अटल अंतरभूत पूर्णांक device_enabled(काष्ठा loopback_test *t, पूर्णांक dev_idx)
-अणु
-	अगर (!t->mask || (t->mask & (1 << dev_idx)))
-		वापस 1;
+static inline int device_enabled(struct loopback_test *t, int dev_idx)
+{
+	if (!t->mask || (t->mask & (1 << dev_idx)))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम show_loopback_devices(काष्ठा loopback_test *t)
-अणु
-	पूर्णांक i;
+static void show_loopback_devices(struct loopback_test *t)
+{
+	int i;
 
-	अगर (t->device_count == 0) अणु
-		म_लिखो("No loopback devices.\n");
-		वापस;
-	पूर्ण
+	if (t->device_count == 0) {
+		printf("No loopback devices.\n");
+		return;
+	}
 
-	क्रम (i = 0; i < t->device_count; i++)
-		म_लिखो("device[%d] = %s\n", i, t->devices[i].name);
+	for (i = 0; i < t->device_count; i++)
+		printf("device[%d] = %s\n", i, t->devices[i].name);
 
-पूर्ण
+}
 
-पूर्णांक खोलो_sysfs(स्थिर अक्षर *sys_pfx, स्थिर अक्षर *node, पूर्णांक flags)
-अणु
-	पूर्णांक fd;
-	अक्षर path[MAX_SYSFS_PATH];
+int open_sysfs(const char *sys_pfx, const char *node, int flags)
+{
+	int fd;
+	char path[MAX_SYSFS_PATH];
 
-	snम_लिखो(path, माप(path), "%s%s", sys_pfx, node);
-	fd = खोलो(path, flags);
-	अगर (fd < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "unable to open %s\n", path);
-		पात();
-	पूर्ण
-	वापस fd;
-पूर्ण
+	snprintf(path, sizeof(path), "%s%s", sys_pfx, node);
+	fd = open(path, flags);
+	if (fd < 0) {
+		fprintf(stderr, "unable to open %s\n", path);
+		abort();
+	}
+	return fd;
+}
 
-पूर्णांक पढ़ो_sysfs_पूर्णांक_fd(पूर्णांक fd, स्थिर अक्षर *sys_pfx, स्थिर अक्षर *node)
-अणु
-	अक्षर buf[SYSFS_MAX_INT];
+int read_sysfs_int_fd(int fd, const char *sys_pfx, const char *node)
+{
+	char buf[SYSFS_MAX_INT];
 
-	अगर (पढ़ो(fd, buf, माप(buf)) < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "unable to read from %s%s %s\n", sys_pfx, node,
-			म_त्रुटि(त्रुटि_सं));
-		बंद(fd);
-		पात();
-	पूर्ण
-	वापस म_से_प(buf);
-पूर्ण
+	if (read(fd, buf, sizeof(buf)) < 0) {
+		fprintf(stderr, "unable to read from %s%s %s\n", sys_pfx, node,
+			strerror(errno));
+		close(fd);
+		abort();
+	}
+	return atoi(buf);
+}
 
-भग्न पढ़ो_sysfs_भग्न_fd(पूर्णांक fd, स्थिर अक्षर *sys_pfx, स्थिर अक्षर *node)
-अणु
-	अक्षर buf[SYSFS_MAX_INT];
+float read_sysfs_float_fd(int fd, const char *sys_pfx, const char *node)
+{
+	char buf[SYSFS_MAX_INT];
 
-	अगर (पढ़ो(fd, buf, माप(buf)) < 0) अणु
+	if (read(fd, buf, sizeof(buf)) < 0) {
 
-		ख_लिखो(मानक_त्रुटि, "unable to read from %s%s %s\n", sys_pfx, node,
-			म_त्रुटि(त्रुटि_सं));
-		बंद(fd);
-		पात();
-	पूर्ण
-	वापस म_से_भ(buf);
-पूर्ण
+		fprintf(stderr, "unable to read from %s%s %s\n", sys_pfx, node,
+			strerror(errno));
+		close(fd);
+		abort();
+	}
+	return atof(buf);
+}
 
-पूर्णांक पढ़ो_sysfs_पूर्णांक(स्थिर अक्षर *sys_pfx, स्थिर अक्षर *node)
-अणु
-	पूर्णांक fd, val;
+int read_sysfs_int(const char *sys_pfx, const char *node)
+{
+	int fd, val;
 
-	fd = खोलो_sysfs(sys_pfx, node, O_RDONLY);
-	val = पढ़ो_sysfs_पूर्णांक_fd(fd, sys_pfx, node);
-	बंद(fd);
-	वापस val;
-पूर्ण
+	fd = open_sysfs(sys_pfx, node, O_RDONLY);
+	val = read_sysfs_int_fd(fd, sys_pfx, node);
+	close(fd);
+	return val;
+}
 
-भग्न पढ़ो_sysfs_भग्न(स्थिर अक्षर *sys_pfx, स्थिर अक्षर *node)
-अणु
-	पूर्णांक fd;
-	भग्न val;
+float read_sysfs_float(const char *sys_pfx, const char *node)
+{
+	int fd;
+	float val;
 
-	fd = खोलो_sysfs(sys_pfx, node, O_RDONLY);
-	val = पढ़ो_sysfs_भग्न_fd(fd, sys_pfx, node);
-	बंद(fd);
-	वापस val;
-पूर्ण
+	fd = open_sysfs(sys_pfx, node, O_RDONLY);
+	val = read_sysfs_float_fd(fd, sys_pfx, node);
+	close(fd);
+	return val;
+}
 
-व्योम ग_लिखो_sysfs_val(स्थिर अक्षर *sys_pfx, स्थिर अक्षर *node, पूर्णांक val)
-अणु
-	पूर्णांक fd, len;
-	अक्षर buf[SYSFS_MAX_INT];
+void write_sysfs_val(const char *sys_pfx, const char *node, int val)
+{
+	int fd, len;
+	char buf[SYSFS_MAX_INT];
 
-	fd = खोलो_sysfs(sys_pfx, node, O_RDWR);
-	len = snम_लिखो(buf, माप(buf), "%d", val);
-	अगर (ग_लिखो(fd, buf, len) < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "unable to write to %s%s %s\n", sys_pfx, node,
-			म_त्रुटि(त्रुटि_सं));
-		बंद(fd);
-		पात();
-	पूर्ण
-	बंद(fd);
-पूर्ण
+	fd = open_sysfs(sys_pfx, node, O_RDWR);
+	len = snprintf(buf, sizeof(buf), "%d", val);
+	if (write(fd, buf, len) < 0) {
+		fprintf(stderr, "unable to write to %s%s %s\n", sys_pfx, node,
+			strerror(errno));
+		close(fd);
+		abort();
+	}
+	close(fd);
+}
 
-अटल पूर्णांक get_results(काष्ठा loopback_test *t)
-अणु
-	काष्ठा loopback_device *d;
-	काष्ठा loopback_results *r;
-	पूर्णांक i;
+static int get_results(struct loopback_test *t)
+{
+	struct loopback_device *d;
+	struct loopback_results *r;
+	int i;
 
-	क्रम (i = 0; i < t->device_count; i++) अणु
-		अगर (!device_enabled(t, i))
-			जारी;
+	for (i = 0; i < t->device_count; i++) {
+		if (!device_enabled(t, i))
+			continue;
 
 		d = &t->devices[i];
 		r = &d->results;
 
-		r->error = पढ़ो_sysfs_पूर्णांक(d->sysfs_entry, "error");
-		r->request_min = पढ़ो_sysfs_पूर्णांक(d->sysfs_entry, "requests_per_second_min");
-		r->request_max = पढ़ो_sysfs_पूर्णांक(d->sysfs_entry, "requests_per_second_max");
-		r->request_avg = पढ़ो_sysfs_भग्न(d->sysfs_entry, "requests_per_second_avg");
+		r->error = read_sysfs_int(d->sysfs_entry, "error");
+		r->request_min = read_sysfs_int(d->sysfs_entry, "requests_per_second_min");
+		r->request_max = read_sysfs_int(d->sysfs_entry, "requests_per_second_max");
+		r->request_avg = read_sysfs_float(d->sysfs_entry, "requests_per_second_avg");
 
-		r->latency_min = पढ़ो_sysfs_पूर्णांक(d->sysfs_entry, "latency_min");
-		r->latency_max = पढ़ो_sysfs_पूर्णांक(d->sysfs_entry, "latency_max");
-		r->latency_avg = पढ़ो_sysfs_भग्न(d->sysfs_entry, "latency_avg");
+		r->latency_min = read_sysfs_int(d->sysfs_entry, "latency_min");
+		r->latency_max = read_sysfs_int(d->sysfs_entry, "latency_max");
+		r->latency_avg = read_sysfs_float(d->sysfs_entry, "latency_avg");
 
-		r->throughput_min = पढ़ो_sysfs_पूर्णांक(d->sysfs_entry, "throughput_min");
-		r->throughput_max = पढ़ो_sysfs_पूर्णांक(d->sysfs_entry, "throughput_max");
-		r->throughput_avg = पढ़ो_sysfs_भग्न(d->sysfs_entry, "throughput_avg");
+		r->throughput_min = read_sysfs_int(d->sysfs_entry, "throughput_min");
+		r->throughput_max = read_sysfs_int(d->sysfs_entry, "throughput_max");
+		r->throughput_avg = read_sysfs_float(d->sysfs_entry, "throughput_avg");
 
 		r->apbridge_unipro_latency_min =
-			पढ़ो_sysfs_पूर्णांक(d->sysfs_entry, "apbridge_unipro_latency_min");
+			read_sysfs_int(d->sysfs_entry, "apbridge_unipro_latency_min");
 		r->apbridge_unipro_latency_max =
-			पढ़ो_sysfs_पूर्णांक(d->sysfs_entry, "apbridge_unipro_latency_max");
+			read_sysfs_int(d->sysfs_entry, "apbridge_unipro_latency_max");
 		r->apbridge_unipro_latency_avg =
-			पढ़ो_sysfs_भग्न(d->sysfs_entry, "apbridge_unipro_latency_avg");
+			read_sysfs_float(d->sysfs_entry, "apbridge_unipro_latency_avg");
 
 		r->gbphy_firmware_latency_min =
-			पढ़ो_sysfs_पूर्णांक(d->sysfs_entry, "gbphy_firmware_latency_min");
+			read_sysfs_int(d->sysfs_entry, "gbphy_firmware_latency_min");
 		r->gbphy_firmware_latency_max =
-			पढ़ो_sysfs_पूर्णांक(d->sysfs_entry, "gbphy_firmware_latency_max");
+			read_sysfs_int(d->sysfs_entry, "gbphy_firmware_latency_max");
 		r->gbphy_firmware_latency_avg =
-			पढ़ो_sysfs_भग्न(d->sysfs_entry, "gbphy_firmware_latency_avg");
+			read_sysfs_float(d->sysfs_entry, "gbphy_firmware_latency_avg");
 
 		r->request_jitter = r->request_max - r->request_min;
 		r->latency_jitter = r->latency_max - r->latency_min;
@@ -369,10 +368,10 @@ GET_AVG(gbphy_firmware_latency_avg);
 		r->gbphy_firmware_latency_jitter =
 			r->gbphy_firmware_latency_max - r->gbphy_firmware_latency_min;
 
-	पूर्ण
+	}
 
 	/*calculate the aggregate results of all enabled devices */
-	अगर (t->aggregate_output) अणु
+	if (t->aggregate_output) {
 		r = &t->aggregate_results;
 
 		r->request_min = get_request_min_aggregate(t);
@@ -409,26 +408,26 @@ GET_AVG(gbphy_firmware_latency_avg);
 		r->gbphy_firmware_latency_jitter =
 			r->gbphy_firmware_latency_max - r->gbphy_firmware_latency_min;
 
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक क्रमmat_output(काष्ठा loopback_test *t,
-		  काष्ठा loopback_results *r,
-		  स्थिर अक्षर *dev_name,
-		  अक्षर *buf, पूर्णांक buf_len,
-		  काष्ठा पंचांग *पंचांग)
-अणु
-	पूर्णांक len = 0;
+int format_output(struct loopback_test *t,
+		  struct loopback_results *r,
+		  const char *dev_name,
+		  char *buf, int buf_len,
+		  struct tm *tm)
+{
+	int len = 0;
 
-	स_रखो(buf, 0x00, buf_len);
-	len = snम_लिखो(buf, buf_len, "%u-%u-%u %u:%u:%u",
-		       पंचांग->पंचांग_year + 1900, पंचांग->पंचांग_mon + 1, पंचांग->पंचांग_mday,
-		       पंचांग->पंचांग_hour, पंचांग->पंचांग_min, पंचांग->पंचांग_sec);
+	memset(buf, 0x00, buf_len);
+	len = snprintf(buf, buf_len, "%u-%u-%u %u:%u:%u",
+		       tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
+		       tm->tm_hour, tm->tm_min, tm->tm_sec);
 
-	अगर (t->porcelain) अणु
-		len += snम_लिखो(&buf[len], buf_len - len,
+	if (t->porcelain) {
+		len += snprintf(&buf[len], buf_len - len,
 			"\n test:\t\t\t%s\n path:\t\t\t%s\n size:\t\t\t%u\n iterations:\t\t%u\n errors:\t\t%u\n async:\t\t\t%s\n",
 			t->test_name,
 			dev_name,
@@ -437,557 +436,557 @@ GET_AVG(gbphy_firmware_latency_avg);
 			r->error,
 			t->use_async ? "Enabled" : "Disabled");
 
-		len += snम_लिखो(&buf[len], buf_len - len,
+		len += snprintf(&buf[len], buf_len - len,
 			" requests per-sec:\tmin=%u, max=%u, average=%f, jitter=%u\n",
 			r->request_min,
 			r->request_max,
 			r->request_avg,
 			r->request_jitter);
 
-		len += snम_लिखो(&buf[len], buf_len - len,
+		len += snprintf(&buf[len], buf_len - len,
 			" ap-throughput B/s:\tmin=%u max=%u average=%f jitter=%u\n",
 			r->throughput_min,
 			r->throughput_max,
 			r->throughput_avg,
 			r->throughput_jitter);
-		len += snम_लिखो(&buf[len], buf_len - len,
+		len += snprintf(&buf[len], buf_len - len,
 			" ap-latency usec:\tmin=%u max=%u average=%f jitter=%u\n",
 			r->latency_min,
 			r->latency_max,
 			r->latency_avg,
 			r->latency_jitter);
-		len += snम_लिखो(&buf[len], buf_len - len,
+		len += snprintf(&buf[len], buf_len - len,
 			" apbridge-latency usec:\tmin=%u max=%u average=%f jitter=%u\n",
 			r->apbridge_unipro_latency_min,
 			r->apbridge_unipro_latency_max,
 			r->apbridge_unipro_latency_avg,
 			r->apbridge_unipro_latency_jitter);
 
-		len += snम_लिखो(&buf[len], buf_len - len,
+		len += snprintf(&buf[len], buf_len - len,
 			" gbphy-latency usec:\tmin=%u max=%u average=%f jitter=%u\n",
 			r->gbphy_firmware_latency_min,
 			r->gbphy_firmware_latency_max,
 			r->gbphy_firmware_latency_avg,
 			r->gbphy_firmware_latency_jitter);
 
-	पूर्ण अन्यथा अणु
-		len += snम_लिखो(&buf[len], buf_len - len, ",%s,%s,%u,%u,%u",
+	} else {
+		len += snprintf(&buf[len], buf_len - len, ",%s,%s,%u,%u,%u",
 			t->test_name, dev_name, t->size, t->iteration_max,
 			r->error);
 
-		len += snम_लिखो(&buf[len], buf_len - len, ",%u,%u,%f,%u",
+		len += snprintf(&buf[len], buf_len - len, ",%u,%u,%f,%u",
 			r->request_min,
 			r->request_max,
 			r->request_avg,
 			r->request_jitter);
 
-		len += snम_लिखो(&buf[len], buf_len - len, ",%u,%u,%f,%u",
+		len += snprintf(&buf[len], buf_len - len, ",%u,%u,%f,%u",
 			r->latency_min,
 			r->latency_max,
 			r->latency_avg,
 			r->latency_jitter);
 
-		len += snम_लिखो(&buf[len], buf_len - len, ",%u,%u,%f,%u",
+		len += snprintf(&buf[len], buf_len - len, ",%u,%u,%f,%u",
 			r->throughput_min,
 			r->throughput_max,
 			r->throughput_avg,
 			r->throughput_jitter);
 
-		len += snम_लिखो(&buf[len], buf_len - len, ",%u,%u,%f,%u",
+		len += snprintf(&buf[len], buf_len - len, ",%u,%u,%f,%u",
 			r->apbridge_unipro_latency_min,
 			r->apbridge_unipro_latency_max,
 			r->apbridge_unipro_latency_avg,
 			r->apbridge_unipro_latency_jitter);
 
-		len += snम_लिखो(&buf[len], buf_len - len, ",%u,%u,%f,%u",
+		len += snprintf(&buf[len], buf_len - len, ",%u,%u,%f,%u",
 			r->gbphy_firmware_latency_min,
 			r->gbphy_firmware_latency_max,
 			r->gbphy_firmware_latency_avg,
 			r->gbphy_firmware_latency_jitter);
-	पूर्ण
+	}
 
-	म_लिखो("\n%s\n", buf);
+	printf("\n%s\n", buf);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल पूर्णांक log_results(काष्ठा loopback_test *t)
-अणु
-	पूर्णांक fd, i, len, ret;
-	काष्ठा पंचांग पंचांग;
-	समय_प्रकार local_समय;
-	अक्षर file_name[MAX_SYSFS_PATH];
-	अक्षर data[CSV_MAX_LINE];
+static int log_results(struct loopback_test *t)
+{
+	int fd, i, len, ret;
+	struct tm tm;
+	time_t local_time;
+	char file_name[MAX_SYSFS_PATH];
+	char data[CSV_MAX_LINE];
 
-	local_समय = समय(शून्य);
-	पंचांग = *स_स्थानीय(&local_समय);
+	local_time = time(NULL);
+	tm = *localtime(&local_time);
 
 	/*
 	 * file name will test_name_size_iteration_max.csv
-	 * every समय the same test with the same parameters is run we will then
+	 * every time the same test with the same parameters is run we will then
 	 * append to the same CSV with datestamp - representing each test
 	 * dataset.
 	 */
-	अगर (t->file_output && !t->porcelain) अणु
-		snम_लिखो(file_name, माप(file_name), "%s_%d_%d.csv",
+	if (t->file_output && !t->porcelain) {
+		snprintf(file_name, sizeof(file_name), "%s_%d_%d.csv",
 			 t->test_name, t->size, t->iteration_max);
 
-		fd = खोलो(file_name, O_WRONLY | O_CREAT | O_APPEND, 0644);
-		अगर (fd < 0) अणु
-			ख_लिखो(मानक_त्रुटि, "unable to open %s for appendation\n", file_name);
-			पात();
-		पूर्ण
+		fd = open(file_name, O_WRONLY | O_CREAT | O_APPEND, 0644);
+		if (fd < 0) {
+			fprintf(stderr, "unable to open %s for appendation\n", file_name);
+			abort();
+		}
 
-	पूर्ण
-	क्रम (i = 0; i < t->device_count; i++) अणु
-		अगर (!device_enabled(t, i))
-			जारी;
+	}
+	for (i = 0; i < t->device_count; i++) {
+		if (!device_enabled(t, i))
+			continue;
 
-		len = क्रमmat_output(t, &t->devices[i].results,
+		len = format_output(t, &t->devices[i].results,
 				    t->devices[i].name,
-				    data, माप(data), &पंचांग);
-		अगर (t->file_output && !t->porcelain) अणु
-			ret = ग_लिखो(fd, data, len);
-			अगर (ret == -1)
-				ख_लिखो(मानक_त्रुटि, "unable to write %d bytes to csv.\n", len);
-		पूर्ण
+				    data, sizeof(data), &tm);
+		if (t->file_output && !t->porcelain) {
+			ret = write(fd, data, len);
+			if (ret == -1)
+				fprintf(stderr, "unable to write %d bytes to csv.\n", len);
+		}
 
-	पूर्ण
+	}
 
 
-	अगर (t->aggregate_output) अणु
-		len = क्रमmat_output(t, &t->aggregate_results, "aggregate",
-				    data, माप(data), &पंचांग);
-		अगर (t->file_output && !t->porcelain) अणु
-			ret = ग_लिखो(fd, data, len);
-			अगर (ret == -1)
-				ख_लिखो(मानक_त्रुटि, "unable to write %d bytes to csv.\n", len);
-		पूर्ण
-	पूर्ण
+	if (t->aggregate_output) {
+		len = format_output(t, &t->aggregate_results, "aggregate",
+				    data, sizeof(data), &tm);
+		if (t->file_output && !t->porcelain) {
+			ret = write(fd, data, len);
+			if (ret == -1)
+				fprintf(stderr, "unable to write %d bytes to csv.\n", len);
+		}
+	}
 
-	अगर (t->file_output && !t->porcelain)
-		बंद(fd);
+	if (t->file_output && !t->porcelain)
+		close(fd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक is_loopback_device(स्थिर अक्षर *path, स्थिर अक्षर *node)
-अणु
-	अक्षर file[MAX_SYSFS_PATH];
+int is_loopback_device(const char *path, const char *node)
+{
+	char file[MAX_SYSFS_PATH];
 
-	snम_लिखो(file, MAX_SYSFS_PATH, "%s%s/iteration_count", path, node);
-	अगर (access(file, F_OK) == 0)
-		वापस 1;
-	वापस 0;
-पूर्ण
+	snprintf(file, MAX_SYSFS_PATH, "%s%s/iteration_count", path, node);
+	if (access(file, F_OK) == 0)
+		return 1;
+	return 0;
+}
 
-पूर्णांक find_loopback_devices(काष्ठा loopback_test *t)
-अणु
-	काष्ठा dirent **namelist;
-	पूर्णांक i, n, ret;
-	अचिन्हित पूर्णांक dev_id;
-	काष्ठा loopback_device *d;
+int find_loopback_devices(struct loopback_test *t)
+{
+	struct dirent **namelist;
+	int i, n, ret;
+	unsigned int dev_id;
+	struct loopback_device *d;
 
-	n = scandir(t->sysfs_prefix, &namelist, शून्य, alphasort);
-	अगर (n < 0) अणु
-		लिखो_त्रुटि("scandir");
+	n = scandir(t->sysfs_prefix, &namelist, NULL, alphasort);
+	if (n < 0) {
+		perror("scandir");
 		ret = -ENODEV;
-		जाओ baddir;
-	पूर्ण
+		goto baddir;
+	}
 
 	/* Don't include '.' and '..' */
-	अगर (n <= 2) अणु
+	if (n <= 2) {
 		ret = -ENOMEM;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	क्रम (i = 0; i < n; i++) अणु
-		ret = माला_पूछो(namelist[i]->d_name, "gb_loopback%u", &dev_id);
-		अगर (ret != 1)
-			जारी;
+	for (i = 0; i < n; i++) {
+		ret = sscanf(namelist[i]->d_name, "gb_loopback%u", &dev_id);
+		if (ret != 1)
+			continue;
 
-		अगर (!is_loopback_device(t->sysfs_prefix, namelist[i]->d_name))
-			जारी;
+		if (!is_loopback_device(t->sysfs_prefix, namelist[i]->d_name))
+			continue;
 
-		अगर (t->device_count == MAX_NUM_DEVICES) अणु
-			ख_लिखो(मानक_त्रुटि, "max number of devices reached!\n");
-			अवरोध;
-		पूर्ण
+		if (t->device_count == MAX_NUM_DEVICES) {
+			fprintf(stderr, "max number of devices reached!\n");
+			break;
+		}
 
 		d = &t->devices[t->device_count++];
-		snम_लिखो(d->name, MAX_STR_LEN, "gb_loopback%u", dev_id);
+		snprintf(d->name, MAX_STR_LEN, "gb_loopback%u", dev_id);
 
-		snम_लिखो(d->sysfs_entry, MAX_SYSFS_PATH, "%s%s/",
+		snprintf(d->sysfs_entry, MAX_SYSFS_PATH, "%s%s/",
 			 t->sysfs_prefix, d->name);
 
-		snम_लिखो(d->debugfs_entry, MAX_SYSFS_PATH, "%sraw_latency_%s",
+		snprintf(d->debugfs_entry, MAX_SYSFS_PATH, "%sraw_latency_%s",
 			 t->debugfs_prefix, d->name);
 
-		अगर (t->debug)
-			म_लिखो("add %s %s\n", d->sysfs_entry, d->debugfs_entry);
-	पूर्ण
+		if (t->debug)
+			printf("add %s %s\n", d->sysfs_entry, d->debugfs_entry);
+	}
 
 	ret = 0;
-करोne:
-	क्रम (i = 0; i < n; i++)
-		मुक्त(namelist[i]);
-	मुक्त(namelist);
+done:
+	for (i = 0; i < n; i++)
+		free(namelist[i]);
+	free(namelist);
 baddir:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक खोलो_poll_files(काष्ठा loopback_test *t)
-अणु
-	काष्ठा loopback_device *dev;
-	अक्षर buf[MAX_SYSFS_PATH + MAX_STR_LEN];
-	अक्षर dummy;
-	पूर्णांक fds_idx = 0;
-	पूर्णांक i;
+static int open_poll_files(struct loopback_test *t)
+{
+	struct loopback_device *dev;
+	char buf[MAX_SYSFS_PATH + MAX_STR_LEN];
+	char dummy;
+	int fds_idx = 0;
+	int i;
 
-	क्रम (i = 0; i < t->device_count; i++) अणु
+	for (i = 0; i < t->device_count; i++) {
 		dev = &t->devices[i];
 
-		अगर (!device_enabled(t, i))
-			जारी;
+		if (!device_enabled(t, i))
+			continue;
 
-		snम_लिखो(buf, माप(buf), "%s%s", dev->sysfs_entry, "iteration_count");
-		t->fds[fds_idx].fd = खोलो(buf, O_RDONLY);
-		अगर (t->fds[fds_idx].fd < 0) अणु
-			ख_लिखो(मानक_त्रुटि, "Error opening poll file!\n");
-			जाओ err;
-		पूर्ण
-		पढ़ो(t->fds[fds_idx].fd, &dummy, 1);
+		snprintf(buf, sizeof(buf), "%s%s", dev->sysfs_entry, "iteration_count");
+		t->fds[fds_idx].fd = open(buf, O_RDONLY);
+		if (t->fds[fds_idx].fd < 0) {
+			fprintf(stderr, "Error opening poll file!\n");
+			goto err;
+		}
+		read(t->fds[fds_idx].fd, &dummy, 1);
 		t->fds[fds_idx].events = POLLERR | POLLPRI;
 		t->fds[fds_idx].revents = 0;
 		fds_idx++;
-	पूर्ण
+	}
 
 	t->poll_count = fds_idx;
 
-	वापस 0;
+	return 0;
 
 err:
-	क्रम (i = 0; i < fds_idx; i++)
-		बंद(t->fds[i].fd);
+	for (i = 0; i < fds_idx; i++)
+		close(t->fds[i].fd);
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक बंद_poll_files(काष्ठा loopback_test *t)
-अणु
-	पूर्णांक i;
-	क्रम (i = 0; i < t->poll_count; i++)
-		बंद(t->fds[i].fd);
+static int close_poll_files(struct loopback_test *t)
+{
+	int i;
+	for (i = 0; i < t->poll_count; i++)
+		close(t->fds[i].fd);
 
-	वापस 0;
-पूर्ण
-अटल पूर्णांक is_complete(काष्ठा loopback_test *t)
-अणु
-	पूर्णांक iteration_count;
-	पूर्णांक i;
+	return 0;
+}
+static int is_complete(struct loopback_test *t)
+{
+	int iteration_count;
+	int i;
 
-	क्रम (i = 0; i < t->device_count; i++) अणु
-		अगर (!device_enabled(t, i))
-			जारी;
+	for (i = 0; i < t->device_count; i++) {
+		if (!device_enabled(t, i))
+			continue;
 
-		iteration_count = पढ़ो_sysfs_पूर्णांक(t->devices[i].sysfs_entry,
+		iteration_count = read_sysfs_int(t->devices[i].sysfs_entry,
 						 "iteration_count");
 
 		/* at least one device did not finish yet */
-		अगर (iteration_count != t->iteration_max)
-			वापस 0;
-	पूर्ण
+		if (iteration_count != t->iteration_max)
+			return 0;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम stop_tests(काष्ठा loopback_test *t)
-अणु
-	पूर्णांक i;
+static void stop_tests(struct loopback_test *t)
+{
+	int i;
 
-	क्रम (i = 0; i < t->device_count; i++) अणु
-		अगर (!device_enabled(t, i))
-			जारी;
-		ग_लिखो_sysfs_val(t->devices[i].sysfs_entry, "type", 0);
-	पूर्ण
-पूर्ण
+	for (i = 0; i < t->device_count; i++) {
+		if (!device_enabled(t, i))
+			continue;
+		write_sysfs_val(t->devices[i].sysfs_entry, "type", 0);
+	}
+}
 
-अटल व्योम handler(पूर्णांक sig) अणु /* करो nothing */  पूर्ण
+static void handler(int sig) { /* do nothing */  }
 
-अटल पूर्णांक रुको_क्रम_complete(काष्ठा loopback_test *t)
-अणु
-	पूर्णांक number_of_events = 0;
-	अक्षर dummy;
-	पूर्णांक ret;
-	पूर्णांक i;
-	काष्ठा बारpec *ts = शून्य;
-	काष्ठा sigaction sa;
+static int wait_for_complete(struct loopback_test *t)
+{
+	int number_of_events = 0;
+	char dummy;
+	int ret;
+	int i;
+	struct timespec *ts = NULL;
+	struct sigaction sa;
 	sigset_t mask_old, mask;
 
 	sigemptyset(&mask);
 	sigemptyset(&mask_old);
-	sigaddset(&mask, संक_विघ्न);
+	sigaddset(&mask, SIGINT);
 	sigprocmask(SIG_BLOCK, &mask, &mask_old);
 
 	sa.sa_handler = handler;
 	sa.sa_flags = 0;
 	sigemptyset(&sa.sa_mask);
-	अगर (sigaction(संक_विघ्न, &sa, शून्य) == -1) अणु
-		ख_लिखो(मानक_त्रुटि, "sigaction error\n");
-		वापस -1;
-	पूर्ण
+	if (sigaction(SIGINT, &sa, NULL) == -1) {
+		fprintf(stderr, "sigaction error\n");
+		return -1;
+	}
 
-	अगर (t->poll_समयout.tv_sec != 0)
-		ts = &t->poll_समयout;
+	if (t->poll_timeout.tv_sec != 0)
+		ts = &t->poll_timeout;
 
-	जबतक (1) अणु
+	while (1) {
 
 		ret = ppoll(t->fds, t->poll_count, ts, &mask_old);
-		अगर (ret <= 0) अणु
+		if (ret <= 0) {
 			stop_tests(t);
-			ख_लिखो(मानक_त्रुटि, "Poll exit with errno %d\n", त्रुटि_सं);
-			वापस -1;
-		पूर्ण
+			fprintf(stderr, "Poll exit with errno %d\n", errno);
+			return -1;
+		}
 
-		क्रम (i = 0; i < t->poll_count; i++) अणु
-			अगर (t->fds[i].revents & POLLPRI) अणु
-				/* Dummy पढ़ो to clear the event */
-				पढ़ो(t->fds[i].fd, &dummy, 1);
+		for (i = 0; i < t->poll_count; i++) {
+			if (t->fds[i].revents & POLLPRI) {
+				/* Dummy read to clear the event */
+				read(t->fds[i].fd, &dummy, 1);
 				number_of_events++;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (number_of_events == t->poll_count)
-			अवरोध;
-	पूर्ण
+		if (number_of_events == t->poll_count)
+			break;
+	}
 
-	अगर (!is_complete(t)) अणु
-		ख_लिखो(मानक_त्रुटि, "Iteration count did not finish!\n");
-		वापस -1;
-	पूर्ण
+	if (!is_complete(t)) {
+		fprintf(stderr, "Iteration count did not finish!\n");
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम prepare_devices(काष्ठा loopback_test *t)
-अणु
-	पूर्णांक i;
+static void prepare_devices(struct loopback_test *t)
+{
+	int i;
 
 	/*
 	 * Cancel any running tests on enabled devices. If
 	 * stop_all option is given, stop test on all devices.
 	 */
-	क्रम (i = 0; i < t->device_count; i++)
-		अगर (t->stop_all || device_enabled(t, i))
-			ग_लिखो_sysfs_val(t->devices[i].sysfs_entry, "type", 0);
+	for (i = 0; i < t->device_count; i++)
+		if (t->stop_all || device_enabled(t, i))
+			write_sysfs_val(t->devices[i].sysfs_entry, "type", 0);
 
 
-	क्रम (i = 0; i < t->device_count; i++) अणु
-		अगर (!device_enabled(t, i))
-			जारी;
+	for (i = 0; i < t->device_count; i++) {
+		if (!device_enabled(t, i))
+			continue;
 
-		ग_लिखो_sysfs_val(t->devices[i].sysfs_entry, "us_wait",
-				t->us_रुको);
+		write_sysfs_val(t->devices[i].sysfs_entry, "us_wait",
+				t->us_wait);
 
 		/* Set operation size */
-		ग_लिखो_sysfs_val(t->devices[i].sysfs_entry, "size", t->size);
+		write_sysfs_val(t->devices[i].sysfs_entry, "size", t->size);
 
 		/* Set iterations */
-		ग_लिखो_sysfs_val(t->devices[i].sysfs_entry, "iteration_max",
+		write_sysfs_val(t->devices[i].sysfs_entry, "iteration_max",
 				t->iteration_max);
 
-		अगर (t->use_async) अणु
-			ग_लिखो_sysfs_val(t->devices[i].sysfs_entry, "async", 1);
-			ग_लिखो_sysfs_val(t->devices[i].sysfs_entry,
-					"timeout", t->async_समयout);
-			ग_लिखो_sysfs_val(t->devices[i].sysfs_entry,
+		if (t->use_async) {
+			write_sysfs_val(t->devices[i].sysfs_entry, "async", 1);
+			write_sysfs_val(t->devices[i].sysfs_entry,
+					"timeout", t->async_timeout);
+			write_sysfs_val(t->devices[i].sysfs_entry,
 					"outstanding_operations_max",
 					t->async_outstanding_operations);
-		पूर्ण अन्यथा अणु
-			ग_लिखो_sysfs_val(t->devices[i].sysfs_entry, "async", 0);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		} else {
+			write_sysfs_val(t->devices[i].sysfs_entry, "async", 0);
+		}
+	}
+}
 
-अटल पूर्णांक start(काष्ठा loopback_test *t)
-अणु
-	पूर्णांक i;
+static int start(struct loopback_test *t)
+{
+	int i;
 
 	/* the test starts by writing test_id to the type file. */
-	क्रम (i = 0; i < t->device_count; i++) अणु
-		अगर (!device_enabled(t, i))
-			जारी;
+	for (i = 0; i < t->device_count; i++) {
+		if (!device_enabled(t, i))
+			continue;
 
-		ग_लिखो_sysfs_val(t->devices[i].sysfs_entry, "type", t->test_id);
-	पूर्ण
+		write_sysfs_val(t->devices[i].sysfs_entry, "type", t->test_id);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-व्योम loopback_run(काष्ठा loopback_test *t)
-अणु
-	पूर्णांक i;
-	पूर्णांक ret;
+void loopback_run(struct loopback_test *t)
+{
+	int i;
+	int ret;
 
-	क्रम (i = 0; dict[i].name != शून्य; i++) अणु
-		अगर (म_माला(dict[i].name, t->test_name))
+	for (i = 0; dict[i].name != NULL; i++) {
+		if (strstr(dict[i].name, t->test_name))
 			t->test_id = dict[i].type;
-	पूर्ण
-	अगर (!t->test_id) अणु
-		ख_लिखो(मानक_त्रुटि, "invalid test %s\n", t->test_name);
+	}
+	if (!t->test_id) {
+		fprintf(stderr, "invalid test %s\n", t->test_name);
 		usage();
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	prepare_devices(t);
 
-	ret = खोलो_poll_files(t);
-	अगर (ret)
-		जाओ err;
+	ret = open_poll_files(t);
+	if (ret)
+		goto err;
 
 	start(t);
 
-	ret = रुको_क्रम_complete(t);
-	बंद_poll_files(t);
-	अगर (ret)
-		जाओ err;
+	ret = wait_for_complete(t);
+	close_poll_files(t);
+	if (ret)
+		goto err;
 
 
 	get_results(t);
 
 	log_results(t);
 
-	वापस;
+	return;
 
 err:
-	म_लिखो("Error running test\n");
-	वापस;
-पूर्ण
+	printf("Error running test\n");
+	return;
+}
 
-अटल पूर्णांक sanity_check(काष्ठा loopback_test *t)
-अणु
-	पूर्णांक i;
+static int sanity_check(struct loopback_test *t)
+{
+	int i;
 
-	अगर (t->device_count == 0) अणु
-		ख_लिखो(मानक_त्रुटि, "No loopback devices found\n");
-		वापस -1;
-	पूर्ण
+	if (t->device_count == 0) {
+		fprintf(stderr, "No loopback devices found\n");
+		return -1;
+	}
 
-	क्रम (i = 0; i < MAX_NUM_DEVICES; i++) अणु
-		अगर (!device_enabled(t, i))
-			जारी;
+	for (i = 0; i < MAX_NUM_DEVICES; i++) {
+		if (!device_enabled(t, i))
+			continue;
 
-		अगर (t->mask && !म_भेद(t->devices[i].name, "")) अणु
-			ख_लिखो(मानक_त्रुटि, "Bad device mask %x\n", (1 << i));
-			वापस -1;
-		पूर्ण
+		if (t->mask && !strcmp(t->devices[i].name, "")) {
+			fprintf(stderr, "Bad device mask %x\n", (1 << i));
+			return -1;
+		}
 
-	पूर्ण
+	}
 
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	पूर्णांक o, ret;
-	अक्षर *sysfs_prefix = "/sys/class/gb_loopback/";
-	अक्षर *debugfs_prefix = "/sys/kernel/debug/gb_loopback/";
+int main(int argc, char *argv[])
+{
+	int o, ret;
+	char *sysfs_prefix = "/sys/class/gb_loopback/";
+	char *debugfs_prefix = "/sys/kernel/debug/gb_loopback/";
 
-	स_रखो(&t, 0, माप(t));
+	memset(&t, 0, sizeof(t));
 
-	जबतक ((o = getopt(argc, argv,
-			   "t:s:i:S:D:m:v::d::r::p::a::l::x::o:O:c:w:z::f::")) != -1) अणु
-		चयन (o) अणु
-		हाल 't':
-			snम_लिखो(t.test_name, MAX_STR_LEN, "%s", optarg);
-			अवरोध;
-		हाल 's':
-			t.size = म_से_प(optarg);
-			अवरोध;
-		हाल 'i':
-			t.iteration_max = म_से_प(optarg);
-			अवरोध;
-		हाल 'S':
-			snम_लिखो(t.sysfs_prefix, MAX_SYSFS_PREFIX, "%s", optarg);
-			अवरोध;
-		हाल 'D':
-			snम_लिखो(t.debugfs_prefix, MAX_SYSFS_PREFIX, "%s", optarg);
-			अवरोध;
-		हाल 'm':
-			t.mask = म_से_द(optarg);
-			अवरोध;
-		हाल 'v':
+	while ((o = getopt(argc, argv,
+			   "t:s:i:S:D:m:v::d::r::p::a::l::x::o:O:c:w:z::f::")) != -1) {
+		switch (o) {
+		case 't':
+			snprintf(t.test_name, MAX_STR_LEN, "%s", optarg);
+			break;
+		case 's':
+			t.size = atoi(optarg);
+			break;
+		case 'i':
+			t.iteration_max = atoi(optarg);
+			break;
+		case 'S':
+			snprintf(t.sysfs_prefix, MAX_SYSFS_PREFIX, "%s", optarg);
+			break;
+		case 'D':
+			snprintf(t.debugfs_prefix, MAX_SYSFS_PREFIX, "%s", optarg);
+			break;
+		case 'm':
+			t.mask = atol(optarg);
+			break;
+		case 'v':
 			t.verbose = 1;
-			अवरोध;
-		हाल 'd':
+			break;
+		case 'd':
 			t.debug = 1;
-			अवरोध;
-		हाल 'r':
+			break;
+		case 'r':
 			t.raw_data_dump = 1;
-			अवरोध;
-		हाल 'p':
+			break;
+		case 'p':
 			t.porcelain = 1;
-			अवरोध;
-		हाल 'a':
+			break;
+		case 'a':
 			t.aggregate_output = 1;
-			अवरोध;
-		हाल 'l':
+			break;
+		case 'l':
 			t.list_devices = 1;
-			अवरोध;
-		हाल 'x':
+			break;
+		case 'x':
 			t.use_async = 1;
-			अवरोध;
-		हाल 'o':
-			t.async_समयout = म_से_प(optarg);
-			अवरोध;
-		हाल 'O':
-			t.poll_समयout.tv_sec = म_से_प(optarg);
-			अवरोध;
-		हाल 'c':
-			t.async_outstanding_operations = म_से_प(optarg);
-			अवरोध;
-		हाल 'w':
-			t.us_रुको = म_से_प(optarg);
-			अवरोध;
-		हाल 'z':
+			break;
+		case 'o':
+			t.async_timeout = atoi(optarg);
+			break;
+		case 'O':
+			t.poll_timeout.tv_sec = atoi(optarg);
+			break;
+		case 'c':
+			t.async_outstanding_operations = atoi(optarg);
+			break;
+		case 'w':
+			t.us_wait = atoi(optarg);
+			break;
+		case 'z':
 			t.file_output = 1;
-			अवरोध;
-		हाल 'f':
+			break;
+		case 'f':
 			t.stop_all = 1;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			usage();
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (!म_भेद(t.sysfs_prefix, ""))
-		snम_लिखो(t.sysfs_prefix, MAX_SYSFS_PREFIX, "%s", sysfs_prefix);
+	if (!strcmp(t.sysfs_prefix, ""))
+		snprintf(t.sysfs_prefix, MAX_SYSFS_PREFIX, "%s", sysfs_prefix);
 
-	अगर (!म_भेद(t.debugfs_prefix, ""))
-		snम_लिखो(t.debugfs_prefix, MAX_SYSFS_PREFIX, "%s", debugfs_prefix);
+	if (!strcmp(t.debugfs_prefix, ""))
+		snprintf(t.debugfs_prefix, MAX_SYSFS_PREFIX, "%s", debugfs_prefix);
 
 	ret = find_loopback_devices(&t);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = sanity_check(&t);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (t.list_devices) अणु
+	if (t.list_devices) {
 		show_loopback_devices(&t);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (t.test_name[0] == '\0' || t.iteration_max == 0)
+	if (t.test_name[0] == '\0' || t.iteration_max == 0)
 		usage();
 
-	अगर (t.async_समयout == 0)
-		t.async_समयout = DEFAULT_ASYNC_TIMEOUT;
+	if (t.async_timeout == 0)
+		t.async_timeout = DEFAULT_ASYNC_TIMEOUT;
 
 	loopback_run(&t);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

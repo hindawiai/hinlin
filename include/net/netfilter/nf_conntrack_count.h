@@ -1,40 +1,39 @@
-<शैली गुरु>
-#अगर_अघोषित _NF_CONNTRACK_COUNT_H
-#घोषणा _NF_CONNTRACK_COUNT_H
+#ifndef _NF_CONNTRACK_COUNT_H
+#define _NF_CONNTRACK_COUNT_H
 
-#समावेश <linux/list.h>
-#समावेश <linux/spinlock.h>
-#समावेश <net/netfilter/nf_conntrack_tuple.h>
-#समावेश <net/netfilter/nf_conntrack_zones.h>
+#include <linux/list.h>
+#include <linux/spinlock.h>
+#include <net/netfilter/nf_conntrack_tuple.h>
+#include <net/netfilter/nf_conntrack_zones.h>
 
-काष्ठा nf_conncount_data;
+struct nf_conncount_data;
 
-काष्ठा nf_conncount_list अणु
+struct nf_conncount_list {
 	spinlock_t list_lock;
-	काष्ठा list_head head;	/* connections with the same filtering key */
-	अचिन्हित पूर्णांक count;	/* length of list */
-पूर्ण;
+	struct list_head head;	/* connections with the same filtering key */
+	unsigned int count;	/* length of list */
+};
 
-काष्ठा nf_conncount_data *nf_conncount_init(काष्ठा net *net, अचिन्हित पूर्णांक family,
-					    अचिन्हित पूर्णांक keylen);
-व्योम nf_conncount_destroy(काष्ठा net *net, अचिन्हित पूर्णांक family,
-			  काष्ठा nf_conncount_data *data);
+struct nf_conncount_data *nf_conncount_init(struct net *net, unsigned int family,
+					    unsigned int keylen);
+void nf_conncount_destroy(struct net *net, unsigned int family,
+			  struct nf_conncount_data *data);
 
-अचिन्हित पूर्णांक nf_conncount_count(काष्ठा net *net,
-				काष्ठा nf_conncount_data *data,
-				स्थिर u32 *key,
-				स्थिर काष्ठा nf_conntrack_tuple *tuple,
-				स्थिर काष्ठा nf_conntrack_zone *zone);
+unsigned int nf_conncount_count(struct net *net,
+				struct nf_conncount_data *data,
+				const u32 *key,
+				const struct nf_conntrack_tuple *tuple,
+				const struct nf_conntrack_zone *zone);
 
-पूर्णांक nf_conncount_add(काष्ठा net *net, काष्ठा nf_conncount_list *list,
-		     स्थिर काष्ठा nf_conntrack_tuple *tuple,
-		     स्थिर काष्ठा nf_conntrack_zone *zone);
+int nf_conncount_add(struct net *net, struct nf_conncount_list *list,
+		     const struct nf_conntrack_tuple *tuple,
+		     const struct nf_conntrack_zone *zone);
 
-व्योम nf_conncount_list_init(काष्ठा nf_conncount_list *list);
+void nf_conncount_list_init(struct nf_conncount_list *list);
 
-bool nf_conncount_gc_list(काष्ठा net *net,
-			  काष्ठा nf_conncount_list *list);
+bool nf_conncount_gc_list(struct net *net,
+			  struct nf_conncount_list *list);
 
-व्योम nf_conncount_cache_मुक्त(काष्ठा nf_conncount_list *list);
+void nf_conncount_cache_free(struct nf_conncount_list *list);
 
-#पूर्ण_अगर
+#endif

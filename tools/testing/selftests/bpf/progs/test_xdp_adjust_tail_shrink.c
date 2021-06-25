@@ -1,31 +1,30 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2018 Facebook
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of version 2 of the GNU General Public
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
  */
-#समावेश <linux/bpf.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <bpf/bpf_helpers.h>
+#include <linux/bpf.h>
+#include <linux/if_ether.h>
+#include <bpf/bpf_helpers.h>
 
-पूर्णांक _version SEC("version") = 1;
+int _version SEC("version") = 1;
 
 SEC("xdp_adjust_tail_shrink")
-पूर्णांक _xdp_adjust_tail_shrink(काष्ठा xdp_md *xdp)
-अणु
-	व्योम *data_end = (व्योम *)(दीर्घ)xdp->data_end;
-	व्योम *data = (व्योम *)(दीर्घ)xdp->data;
-	पूर्णांक offset = 0;
+int _xdp_adjust_tail_shrink(struct xdp_md *xdp)
+{
+	void *data_end = (void *)(long)xdp->data_end;
+	void *data = (void *)(long)xdp->data;
+	int offset = 0;
 
-	अगर (data_end - data == 54) /* माप(pkt_v4) */
+	if (data_end - data == 54) /* sizeof(pkt_v4) */
 		offset = 256; /* shrink too much */
-	अन्यथा
+	else
 		offset = 20;
-	अगर (bpf_xdp_adjust_tail(xdp, 0 - offset))
-		वापस XDP_DROP;
-	वापस XDP_TX;
-पूर्ण
+	if (bpf_xdp_adjust_tail(xdp, 0 - offset))
+		return XDP_DROP;
+	return XDP_TX;
+}
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";

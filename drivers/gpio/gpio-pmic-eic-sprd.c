@@ -1,286 +1,285 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2018 Spपढ़ोtrum Communications Inc.
+ * Copyright (C) 2018 Spreadtrum Communications Inc.
  * Copyright (C) 2018 Linaro Ltd.
  */
 
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
+#include <linux/gpio/driver.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
 
-/* EIC रेजिस्टरs definition */
-#घोषणा SPRD_PMIC_EIC_DATA		0x0
-#घोषणा SPRD_PMIC_EIC_DMSK		0x4
-#घोषणा SPRD_PMIC_EIC_IEV		0x14
-#घोषणा SPRD_PMIC_EIC_IE		0x18
-#घोषणा SPRD_PMIC_EIC_RIS		0x1c
-#घोषणा SPRD_PMIC_EIC_MIS		0x20
-#घोषणा SPRD_PMIC_EIC_IC		0x24
-#घोषणा SPRD_PMIC_EIC_TRIG		0x28
-#घोषणा SPRD_PMIC_EIC_CTRL0		0x40
+/* EIC registers definition */
+#define SPRD_PMIC_EIC_DATA		0x0
+#define SPRD_PMIC_EIC_DMSK		0x4
+#define SPRD_PMIC_EIC_IEV		0x14
+#define SPRD_PMIC_EIC_IE		0x18
+#define SPRD_PMIC_EIC_RIS		0x1c
+#define SPRD_PMIC_EIC_MIS		0x20
+#define SPRD_PMIC_EIC_IC		0x24
+#define SPRD_PMIC_EIC_TRIG		0x28
+#define SPRD_PMIC_EIC_CTRL0		0x40
 
 /*
  * The PMIC EIC controller only has one bank, and each bank now can contain
  * 16 EICs.
  */
-#घोषणा SPRD_PMIC_EIC_PER_BANK_NR	16
-#घोषणा SPRD_PMIC_EIC_NR		SPRD_PMIC_EIC_PER_BANK_NR
-#घोषणा SPRD_PMIC_EIC_DATA_MASK		GENMASK(15, 0)
-#घोषणा SPRD_PMIC_EIC_BIT(x)		((x) & (SPRD_PMIC_EIC_PER_BANK_NR - 1))
-#घोषणा SPRD_PMIC_EIC_DBNC_MASK		GENMASK(11, 0)
+#define SPRD_PMIC_EIC_PER_BANK_NR	16
+#define SPRD_PMIC_EIC_NR		SPRD_PMIC_EIC_PER_BANK_NR
+#define SPRD_PMIC_EIC_DATA_MASK		GENMASK(15, 0)
+#define SPRD_PMIC_EIC_BIT(x)		((x) & (SPRD_PMIC_EIC_PER_BANK_NR - 1))
+#define SPRD_PMIC_EIC_DBNC_MASK		GENMASK(11, 0)
 
 /*
- * These रेजिस्टरs are modअगरied under the irq bus lock and cached to aव्योम
- * unnecessary ग_लिखोs in bus_sync_unlock.
+ * These registers are modified under the irq bus lock and cached to avoid
+ * unnecessary writes in bus_sync_unlock.
  */
-क्रमागत अणु
+enum {
 	REG_IEV,
 	REG_IE,
 	REG_TRIG,
 	CACHE_NR_REGS
-पूर्ण;
+};
 
 /**
- * काष्ठा sprd_pmic_eic - PMIC EIC controller
- * @chip: the gpio_chip काष्ठाure.
- * @पूर्णांकc: the irq_chip काष्ठाure.
+ * struct sprd_pmic_eic - PMIC EIC controller
+ * @chip: the gpio_chip structure.
+ * @intc: the irq_chip structure.
  * @map:  the regmap from the parent device.
  * @offset: the EIC controller's offset address of the PMIC.
- * @reg: the array to cache the EIC रेजिस्टरs.
- * @buslock: क्रम bus lock/sync and unlock.
- * @irq: the पूर्णांकerrupt number of the PMIC EIC conteroller.
+ * @reg: the array to cache the EIC registers.
+ * @buslock: for bus lock/sync and unlock.
+ * @irq: the interrupt number of the PMIC EIC conteroller.
  */
-काष्ठा sprd_pmic_eic अणु
-	काष्ठा gpio_chip chip;
-	काष्ठा irq_chip पूर्णांकc;
-	काष्ठा regmap *map;
+struct sprd_pmic_eic {
+	struct gpio_chip chip;
+	struct irq_chip intc;
+	struct regmap *map;
 	u32 offset;
 	u8 reg[CACHE_NR_REGS];
-	काष्ठा mutex buslock;
-	पूर्णांक irq;
-पूर्ण;
+	struct mutex buslock;
+	int irq;
+};
 
-अटल व्योम sprd_pmic_eic_update(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
-				 u16 reg, अचिन्हित पूर्णांक val)
-अणु
-	काष्ठा sprd_pmic_eic *pmic_eic = gpiochip_get_data(chip);
-	u32 shअगरt = SPRD_PMIC_EIC_BIT(offset);
+static void sprd_pmic_eic_update(struct gpio_chip *chip, unsigned int offset,
+				 u16 reg, unsigned int val)
+{
+	struct sprd_pmic_eic *pmic_eic = gpiochip_get_data(chip);
+	u32 shift = SPRD_PMIC_EIC_BIT(offset);
 
 	regmap_update_bits(pmic_eic->map, pmic_eic->offset + reg,
-			   BIT(shअगरt), val << shअगरt);
-पूर्ण
+			   BIT(shift), val << shift);
+}
 
-अटल पूर्णांक sprd_pmic_eic_पढ़ो(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
+static int sprd_pmic_eic_read(struct gpio_chip *chip, unsigned int offset,
 			      u16 reg)
-अणु
-	काष्ठा sprd_pmic_eic *pmic_eic = gpiochip_get_data(chip);
+{
+	struct sprd_pmic_eic *pmic_eic = gpiochip_get_data(chip);
 	u32 value;
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_पढ़ो(pmic_eic->map, pmic_eic->offset + reg, &value);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(pmic_eic->map, pmic_eic->offset + reg, &value);
+	if (ret)
+		return ret;
 
-	वापस !!(value & BIT(SPRD_PMIC_EIC_BIT(offset)));
-पूर्ण
+	return !!(value & BIT(SPRD_PMIC_EIC_BIT(offset)));
+}
 
-अटल पूर्णांक sprd_pmic_eic_request(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
-अणु
+static int sprd_pmic_eic_request(struct gpio_chip *chip, unsigned int offset)
+{
 	sprd_pmic_eic_update(chip, offset, SPRD_PMIC_EIC_DMSK, 1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sprd_pmic_eic_मुक्त(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
-अणु
+static void sprd_pmic_eic_free(struct gpio_chip *chip, unsigned int offset)
+{
 	sprd_pmic_eic_update(chip, offset, SPRD_PMIC_EIC_DMSK, 0);
-पूर्ण
+}
 
-अटल पूर्णांक sprd_pmic_eic_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
-अणु
-	वापस sprd_pmic_eic_पढ़ो(chip, offset, SPRD_PMIC_EIC_DATA);
-पूर्ण
+static int sprd_pmic_eic_get(struct gpio_chip *chip, unsigned int offset)
+{
+	return sprd_pmic_eic_read(chip, offset, SPRD_PMIC_EIC_DATA);
+}
 
-अटल पूर्णांक sprd_pmic_eic_direction_input(काष्ठा gpio_chip *chip,
-					 अचिन्हित पूर्णांक offset)
-अणु
-	/* EICs are always input, nothing need to करो here. */
-	वापस 0;
-पूर्ण
+static int sprd_pmic_eic_direction_input(struct gpio_chip *chip,
+					 unsigned int offset)
+{
+	/* EICs are always input, nothing need to do here. */
+	return 0;
+}
 
-अटल व्योम sprd_pmic_eic_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
-			      पूर्णांक value)
-अणु
-	/* EICs are always input, nothing need to करो here. */
-पूर्ण
+static void sprd_pmic_eic_set(struct gpio_chip *chip, unsigned int offset,
+			      int value)
+{
+	/* EICs are always input, nothing need to do here. */
+}
 
-अटल पूर्णांक sprd_pmic_eic_set_debounce(काष्ठा gpio_chip *chip,
-				      अचिन्हित पूर्णांक offset,
-				      अचिन्हित पूर्णांक debounce)
-अणु
-	काष्ठा sprd_pmic_eic *pmic_eic = gpiochip_get_data(chip);
+static int sprd_pmic_eic_set_debounce(struct gpio_chip *chip,
+				      unsigned int offset,
+				      unsigned int debounce)
+{
+	struct sprd_pmic_eic *pmic_eic = gpiochip_get_data(chip);
 	u32 reg, value;
-	पूर्णांक ret;
+	int ret;
 
 	reg = SPRD_PMIC_EIC_CTRL0 + SPRD_PMIC_EIC_BIT(offset) * 0x4;
-	ret = regmap_पढ़ो(pmic_eic->map, pmic_eic->offset + reg, &value);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(pmic_eic->map, pmic_eic->offset + reg, &value);
+	if (ret)
+		return ret;
 
 	value &= ~SPRD_PMIC_EIC_DBNC_MASK;
 	value |= (debounce / 1000) & SPRD_PMIC_EIC_DBNC_MASK;
-	वापस regmap_ग_लिखो(pmic_eic->map, pmic_eic->offset + reg, value);
-पूर्ण
+	return regmap_write(pmic_eic->map, pmic_eic->offset + reg, value);
+}
 
-अटल पूर्णांक sprd_pmic_eic_set_config(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
-				    अचिन्हित दीर्घ config)
-अणु
-	अचिन्हित दीर्घ param = pinconf_to_config_param(config);
+static int sprd_pmic_eic_set_config(struct gpio_chip *chip, unsigned int offset,
+				    unsigned long config)
+{
+	unsigned long param = pinconf_to_config_param(config);
 	u32 arg = pinconf_to_config_argument(config);
 
-	अगर (param == PIN_CONFIG_INPUT_DEBOUNCE)
-		वापस sprd_pmic_eic_set_debounce(chip, offset, arg);
+	if (param == PIN_CONFIG_INPUT_DEBOUNCE)
+		return sprd_pmic_eic_set_debounce(chip, offset, arg);
 
-	वापस -ENOTSUPP;
-पूर्ण
+	return -ENOTSUPP;
+}
 
-अटल व्योम sprd_pmic_eic_irq_mask(काष्ठा irq_data *data)
-अणु
-	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(data);
-	काष्ठा sprd_pmic_eic *pmic_eic = gpiochip_get_data(chip);
+static void sprd_pmic_eic_irq_mask(struct irq_data *data)
+{
+	struct gpio_chip *chip = irq_data_get_irq_chip_data(data);
+	struct sprd_pmic_eic *pmic_eic = gpiochip_get_data(chip);
 
 	pmic_eic->reg[REG_IE] = 0;
 	pmic_eic->reg[REG_TRIG] = 0;
-पूर्ण
+}
 
-अटल व्योम sprd_pmic_eic_irq_unmask(काष्ठा irq_data *data)
-अणु
-	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(data);
-	काष्ठा sprd_pmic_eic *pmic_eic = gpiochip_get_data(chip);
+static void sprd_pmic_eic_irq_unmask(struct irq_data *data)
+{
+	struct gpio_chip *chip = irq_data_get_irq_chip_data(data);
+	struct sprd_pmic_eic *pmic_eic = gpiochip_get_data(chip);
 
 	pmic_eic->reg[REG_IE] = 1;
 	pmic_eic->reg[REG_TRIG] = 1;
-पूर्ण
+}
 
-अटल पूर्णांक sprd_pmic_eic_irq_set_type(काष्ठा irq_data *data,
-				      अचिन्हित पूर्णांक flow_type)
-अणु
-	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(data);
-	काष्ठा sprd_pmic_eic *pmic_eic = gpiochip_get_data(chip);
+static int sprd_pmic_eic_irq_set_type(struct irq_data *data,
+				      unsigned int flow_type)
+{
+	struct gpio_chip *chip = irq_data_get_irq_chip_data(data);
+	struct sprd_pmic_eic *pmic_eic = gpiochip_get_data(chip);
 
-	चयन (flow_type) अणु
-	हाल IRQ_TYPE_LEVEL_HIGH:
+	switch (flow_type) {
+	case IRQ_TYPE_LEVEL_HIGH:
 		pmic_eic->reg[REG_IEV] = 1;
-		अवरोध;
-	हाल IRQ_TYPE_LEVEL_LOW:
+		break;
+	case IRQ_TYPE_LEVEL_LOW:
 		pmic_eic->reg[REG_IEV] = 0;
-		अवरोध;
-	हाल IRQ_TYPE_EDGE_RISING:
-	हाल IRQ_TYPE_EDGE_FALLING:
-	हाल IRQ_TYPE_EDGE_BOTH:
+		break;
+	case IRQ_TYPE_EDGE_RISING:
+	case IRQ_TYPE_EDGE_FALLING:
+	case IRQ_TYPE_EDGE_BOTH:
 		/*
 		 * Will set the trigger level according to current EIC level
-		 * in irq_bus_sync_unlock() पूर्णांकerface, so here nothing to करो.
+		 * in irq_bus_sync_unlock() interface, so here nothing to do.
 		 */
-		अवरोध;
-	शेष:
-		वापस -ENOTSUPP;
-	पूर्ण
+		break;
+	default:
+		return -ENOTSUPP;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sprd_pmic_eic_bus_lock(काष्ठा irq_data *data)
-अणु
-	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(data);
-	काष्ठा sprd_pmic_eic *pmic_eic = gpiochip_get_data(chip);
+static void sprd_pmic_eic_bus_lock(struct irq_data *data)
+{
+	struct gpio_chip *chip = irq_data_get_irq_chip_data(data);
+	struct sprd_pmic_eic *pmic_eic = gpiochip_get_data(chip);
 
 	mutex_lock(&pmic_eic->buslock);
-पूर्ण
+}
 
-अटल व्योम sprd_pmic_eic_bus_sync_unlock(काष्ठा irq_data *data)
-अणु
-	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(data);
-	काष्ठा sprd_pmic_eic *pmic_eic = gpiochip_get_data(chip);
+static void sprd_pmic_eic_bus_sync_unlock(struct irq_data *data)
+{
+	struct gpio_chip *chip = irq_data_get_irq_chip_data(data);
+	struct sprd_pmic_eic *pmic_eic = gpiochip_get_data(chip);
 	u32 trigger = irqd_get_trigger_type(data);
 	u32 offset = irqd_to_hwirq(data);
-	पूर्णांक state;
+	int state;
 
 	/* Set irq type */
-	अगर (trigger & IRQ_TYPE_EDGE_BOTH) अणु
+	if (trigger & IRQ_TYPE_EDGE_BOTH) {
 		state = sprd_pmic_eic_get(chip, offset);
-		अगर (state)
+		if (state)
 			sprd_pmic_eic_update(chip, offset, SPRD_PMIC_EIC_IEV, 0);
-		अन्यथा
+		else
 			sprd_pmic_eic_update(chip, offset, SPRD_PMIC_EIC_IEV, 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		sprd_pmic_eic_update(chip, offset, SPRD_PMIC_EIC_IEV,
 				     pmic_eic->reg[REG_IEV]);
-	पूर्ण
+	}
 
 	/* Set irq unmask */
 	sprd_pmic_eic_update(chip, offset, SPRD_PMIC_EIC_IE,
 			     pmic_eic->reg[REG_IE]);
-	/* Generate trigger start pulse क्रम debounce EIC */
+	/* Generate trigger start pulse for debounce EIC */
 	sprd_pmic_eic_update(chip, offset, SPRD_PMIC_EIC_TRIG,
 			     pmic_eic->reg[REG_TRIG]);
 
 	mutex_unlock(&pmic_eic->buslock);
-पूर्ण
+}
 
-अटल व्योम sprd_pmic_eic_toggle_trigger(काष्ठा gpio_chip *chip,
-					 अचिन्हित पूर्णांक irq, अचिन्हित पूर्णांक offset)
-अणु
+static void sprd_pmic_eic_toggle_trigger(struct gpio_chip *chip,
+					 unsigned int irq, unsigned int offset)
+{
 	u32 trigger = irq_get_trigger_type(irq);
-	पूर्णांक state, post_state;
+	int state, post_state;
 
-	अगर (!(trigger & IRQ_TYPE_EDGE_BOTH))
-		वापस;
+	if (!(trigger & IRQ_TYPE_EDGE_BOTH))
+		return;
 
 	state = sprd_pmic_eic_get(chip, offset);
 retry:
-	अगर (state)
+	if (state)
 		sprd_pmic_eic_update(chip, offset, SPRD_PMIC_EIC_IEV, 0);
-	अन्यथा
+	else
 		sprd_pmic_eic_update(chip, offset, SPRD_PMIC_EIC_IEV, 1);
 
 	post_state = sprd_pmic_eic_get(chip, offset);
-	अगर (state != post_state) अणु
+	if (state != post_state) {
 		dev_warn(chip->parent, "PMIC EIC level was changed.\n");
 		state = post_state;
-		जाओ retry;
-	पूर्ण
+		goto retry;
+	}
 
 	/* Set irq unmask */
 	sprd_pmic_eic_update(chip, offset, SPRD_PMIC_EIC_IE, 1);
-	/* Generate trigger start pulse क्रम debounce EIC */
+	/* Generate trigger start pulse for debounce EIC */
 	sprd_pmic_eic_update(chip, offset, SPRD_PMIC_EIC_TRIG, 1);
-पूर्ण
+}
 
-अटल irqवापस_t sprd_pmic_eic_irq_handler(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा sprd_pmic_eic *pmic_eic = data;
-	काष्ठा gpio_chip *chip = &pmic_eic->chip;
-	अचिन्हित दीर्घ status;
+static irqreturn_t sprd_pmic_eic_irq_handler(int irq, void *data)
+{
+	struct sprd_pmic_eic *pmic_eic = data;
+	struct gpio_chip *chip = &pmic_eic->chip;
+	unsigned long status;
 	u32 n, girq, val;
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_पढ़ो(pmic_eic->map, pmic_eic->offset + SPRD_PMIC_EIC_MIS,
+	ret = regmap_read(pmic_eic->map, pmic_eic->offset + SPRD_PMIC_EIC_MIS,
 			  &val);
-	अगर (ret)
-		वापस IRQ_RETVAL(ret);
+	if (ret)
+		return IRQ_RETVAL(ret);
 
 	status = val & SPRD_PMIC_EIC_DATA_MASK;
 
-	क्रम_each_set_bit(n, &status, chip->ngpio) अणु
-		/* Clear the पूर्णांकerrupt */
+	for_each_set_bit(n, &status, chip->ngpio) {
+		/* Clear the interrupt */
 		sprd_pmic_eic_update(chip, n, SPRD_PMIC_EIC_IC, 1);
 
-		girq = irq_find_mapping(chip->irq.करोमुख्य, n);
+		girq = irq_find_mapping(chip->irq.domain, n);
 		handle_nested_irq(girq);
 
 		/*
@@ -288,45 +287,45 @@ retry:
 		 * toggle the level trigger to emulate the edge trigger.
 		 */
 		sprd_pmic_eic_toggle_trigger(chip, girq, n);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक sprd_pmic_eic_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा gpio_irq_chip *irq;
-	काष्ठा sprd_pmic_eic *pmic_eic;
-	पूर्णांक ret;
+static int sprd_pmic_eic_probe(struct platform_device *pdev)
+{
+	struct gpio_irq_chip *irq;
+	struct sprd_pmic_eic *pmic_eic;
+	int ret;
 
-	pmic_eic = devm_kzalloc(&pdev->dev, माप(*pmic_eic), GFP_KERNEL);
-	अगर (!pmic_eic)
-		वापस -ENOMEM;
+	pmic_eic = devm_kzalloc(&pdev->dev, sizeof(*pmic_eic), GFP_KERNEL);
+	if (!pmic_eic)
+		return -ENOMEM;
 
 	mutex_init(&pmic_eic->buslock);
 
-	pmic_eic->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (pmic_eic->irq < 0)
-		वापस pmic_eic->irq;
+	pmic_eic->irq = platform_get_irq(pdev, 0);
+	if (pmic_eic->irq < 0)
+		return pmic_eic->irq;
 
-	pmic_eic->map = dev_get_regmap(pdev->dev.parent, शून्य);
-	अगर (!pmic_eic->map)
-		वापस -ENODEV;
+	pmic_eic->map = dev_get_regmap(pdev->dev.parent, NULL);
+	if (!pmic_eic->map)
+		return -ENODEV;
 
-	ret = of_property_पढ़ो_u32(pdev->dev.of_node, "reg", &pmic_eic->offset);
-	अगर (ret) अणु
+	ret = of_property_read_u32(pdev->dev.of_node, "reg", &pmic_eic->offset);
+	if (ret) {
 		dev_err(&pdev->dev, "Failed to get PMIC EIC base address.\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = devm_request_thपढ़ोed_irq(&pdev->dev, pmic_eic->irq, शून्य,
+	ret = devm_request_threaded_irq(&pdev->dev, pmic_eic->irq, NULL,
 					sprd_pmic_eic_irq_handler,
 					IRQF_ONESHOT | IRQF_NO_SUSPEND,
 					dev_name(&pdev->dev), pmic_eic);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Failed to request PMIC EIC IRQ.\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	pmic_eic->chip.label = dev_name(&pdev->dev);
 	pmic_eic->chip.ngpio = SPRD_PMIC_EIC_NR;
@@ -335,48 +334,48 @@ retry:
 	pmic_eic->chip.of_node = pdev->dev.of_node;
 	pmic_eic->chip.direction_input = sprd_pmic_eic_direction_input;
 	pmic_eic->chip.request = sprd_pmic_eic_request;
-	pmic_eic->chip.मुक्त = sprd_pmic_eic_मुक्त;
+	pmic_eic->chip.free = sprd_pmic_eic_free;
 	pmic_eic->chip.set_config = sprd_pmic_eic_set_config;
 	pmic_eic->chip.set = sprd_pmic_eic_set;
 	pmic_eic->chip.get = sprd_pmic_eic_get;
 
-	pmic_eic->पूर्णांकc.name = dev_name(&pdev->dev);
-	pmic_eic->पूर्णांकc.irq_mask = sprd_pmic_eic_irq_mask;
-	pmic_eic->पूर्णांकc.irq_unmask = sprd_pmic_eic_irq_unmask;
-	pmic_eic->पूर्णांकc.irq_set_type = sprd_pmic_eic_irq_set_type;
-	pmic_eic->पूर्णांकc.irq_bus_lock = sprd_pmic_eic_bus_lock;
-	pmic_eic->पूर्णांकc.irq_bus_sync_unlock = sprd_pmic_eic_bus_sync_unlock;
-	pmic_eic->पूर्णांकc.flags = IRQCHIP_SKIP_SET_WAKE;
+	pmic_eic->intc.name = dev_name(&pdev->dev);
+	pmic_eic->intc.irq_mask = sprd_pmic_eic_irq_mask;
+	pmic_eic->intc.irq_unmask = sprd_pmic_eic_irq_unmask;
+	pmic_eic->intc.irq_set_type = sprd_pmic_eic_irq_set_type;
+	pmic_eic->intc.irq_bus_lock = sprd_pmic_eic_bus_lock;
+	pmic_eic->intc.irq_bus_sync_unlock = sprd_pmic_eic_bus_sync_unlock;
+	pmic_eic->intc.flags = IRQCHIP_SKIP_SET_WAKE;
 
 	irq = &pmic_eic->chip.irq;
-	irq->chip = &pmic_eic->पूर्णांकc;
-	irq->thपढ़ोed = true;
+	irq->chip = &pmic_eic->intc;
+	irq->threaded = true;
 
 	ret = devm_gpiochip_add_data(&pdev->dev, &pmic_eic->chip, pmic_eic);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "Could not register gpiochip %d.\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	platक्रमm_set_drvdata(pdev, pmic_eic);
-	वापस 0;
-पूर्ण
+	platform_set_drvdata(pdev, pmic_eic);
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id sprd_pmic_eic_of_match[] = अणु
-	अणु .compatible = "sprd,sc2731-eic", पूर्ण,
-	अणु /* end of list */ पूर्ण
-पूर्ण;
+static const struct of_device_id sprd_pmic_eic_of_match[] = {
+	{ .compatible = "sprd,sc2731-eic", },
+	{ /* end of list */ }
+};
 MODULE_DEVICE_TABLE(of, sprd_pmic_eic_of_match);
 
-अटल काष्ठा platक्रमm_driver sprd_pmic_eic_driver = अणु
+static struct platform_driver sprd_pmic_eic_driver = {
 	.probe = sprd_pmic_eic_probe,
-	.driver = अणु
+	.driver = {
 		.name = "sprd-pmic-eic",
 		.of_match_table	= sprd_pmic_eic_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(sprd_pmic_eic_driver);
+module_platform_driver(sprd_pmic_eic_driver);
 
 MODULE_DESCRIPTION("Spreadtrum PMIC EIC driver");
 MODULE_LICENSE("GPL v2");

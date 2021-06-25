@@ -1,2464 +1,2463 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *  Kernel समयkeeping code and accessor functions. Based on code from
- *  समयr.c, moved in commit 8524070b7982.
+ *  Kernel timekeeping code and accessor functions. Based on code from
+ *  timer.c, moved in commit 8524070b7982.
  */
-#समावेश <linux/समयkeeper_पूर्णांकernal.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/init.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/nmi.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/loadavg.h>
-#समावेश <linux/sched/घड़ी.h>
-#समावेश <linux/syscore_ops.h>
-#समावेश <linux/घड़ीsource.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/tick.h>
-#समावेश <linux/stop_machine.h>
-#समावेश <linux/pvघड़ी_gtod.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/audit.h>
+#include <linux/timekeeper_internal.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/percpu.h>
+#include <linux/init.h>
+#include <linux/mm.h>
+#include <linux/nmi.h>
+#include <linux/sched.h>
+#include <linux/sched/loadavg.h>
+#include <linux/sched/clock.h>
+#include <linux/syscore_ops.h>
+#include <linux/clocksource.h>
+#include <linux/jiffies.h>
+#include <linux/time.h>
+#include <linux/tick.h>
+#include <linux/stop_machine.h>
+#include <linux/pvclock_gtod.h>
+#include <linux/compiler.h>
+#include <linux/audit.h>
 
-#समावेश "tick-internal.h"
-#समावेश "ntp_internal.h"
-#समावेश "timekeeping_internal.h"
+#include "tick-internal.h"
+#include "ntp_internal.h"
+#include "timekeeping_internal.h"
 
-#घोषणा TK_CLEAR_NTP		(1 << 0)
-#घोषणा TK_MIRROR		(1 << 1)
-#घोषणा TK_CLOCK_WAS_SET	(1 << 2)
+#define TK_CLEAR_NTP		(1 << 0)
+#define TK_MIRROR		(1 << 1)
+#define TK_CLOCK_WAS_SET	(1 << 2)
 
-क्रमागत समयkeeping_adv_mode अणु
-	/* Update समयkeeper when a tick has passed */
+enum timekeeping_adv_mode {
+	/* Update timekeeper when a tick has passed */
 	TK_ADV_TICK,
 
-	/* Update समयkeeper on a direct frequency change */
+	/* Update timekeeper on a direct frequency change */
 	TK_ADV_FREQ
-पूर्ण;
+};
 
-DEFINE_RAW_SPINLOCK(समयkeeper_lock);
+DEFINE_RAW_SPINLOCK(timekeeper_lock);
 
 /*
- * The most important data क्रम पढ़ोout fits पूर्णांकo a single 64 byte
+ * The most important data for readout fits into a single 64 byte
  * cache line.
  */
-अटल काष्ठा अणु
+static struct {
 	seqcount_raw_spinlock_t	seq;
-	काष्ठा समयkeeper	समयkeeper;
-पूर्ण tk_core ____cacheline_aligned = अणु
-	.seq = SEQCNT_RAW_SPINLOCK_ZERO(tk_core.seq, &समयkeeper_lock),
-पूर्ण;
+	struct timekeeper	timekeeper;
+} tk_core ____cacheline_aligned = {
+	.seq = SEQCNT_RAW_SPINLOCK_ZERO(tk_core.seq, &timekeeper_lock),
+};
 
-अटल काष्ठा समयkeeper shaकरोw_समयkeeper;
+static struct timekeeper shadow_timekeeper;
 
-/* flag क्रम अगर समयkeeping is suspended */
-पूर्णांक __पढ़ो_mostly समयkeeping_suspended;
+/* flag for if timekeeping is suspended */
+int __read_mostly timekeeping_suspended;
 
 /**
- * काष्ठा tk_fast - NMI safe समयkeeper
- * @seq:	Sequence counter क्रम protecting updates. The lowest bit
- *		is the index क्रम the tk_पढ़ो_base array
- * @base:	tk_पढ़ो_base array. Access is indexed by the lowest bit of
+ * struct tk_fast - NMI safe timekeeper
+ * @seq:	Sequence counter for protecting updates. The lowest bit
+ *		is the index for the tk_read_base array
+ * @base:	tk_read_base array. Access is indexed by the lowest bit of
  *		@seq.
  *
- * See @update_fast_समयkeeper() below.
+ * See @update_fast_timekeeper() below.
  */
-काष्ठा tk_fast अणु
+struct tk_fast {
 	seqcount_latch_t	seq;
-	काष्ठा tk_पढ़ो_base	base[2];
-पूर्ण;
+	struct tk_read_base	base[2];
+};
 
-/* Suspend-समय cycles value क्रम halted fast समयkeeper. */
-अटल u64 cycles_at_suspend;
+/* Suspend-time cycles value for halted fast timekeeper. */
+static u64 cycles_at_suspend;
 
-अटल u64 dummy_घड़ी_पढ़ो(काष्ठा घड़ीsource *cs)
-अणु
-	अगर (समयkeeping_suspended)
-		वापस cycles_at_suspend;
-	वापस local_घड़ी();
-पूर्ण
+static u64 dummy_clock_read(struct clocksource *cs)
+{
+	if (timekeeping_suspended)
+		return cycles_at_suspend;
+	return local_clock();
+}
 
-अटल काष्ठा घड़ीsource dummy_घड़ी = अणु
-	.पढ़ो = dummy_घड़ी_पढ़ो,
-पूर्ण;
+static struct clocksource dummy_clock = {
+	.read = dummy_clock_read,
+};
 
 /*
- * Boot समय initialization which allows local_घड़ी() to be utilized
- * during early boot when घड़ीsources are not available. local_घड़ी()
- * वापसs nanoseconds alपढ़ोy so no conversion is required, hence mult=1
- * and shअगरt=0. When the first proper घड़ीsource is installed then
- * the fast समय keepers are updated with the correct values.
+ * Boot time initialization which allows local_clock() to be utilized
+ * during early boot when clocksources are not available. local_clock()
+ * returns nanoseconds already so no conversion is required, hence mult=1
+ * and shift=0. When the first proper clocksource is installed then
+ * the fast time keepers are updated with the correct values.
  */
-#घोषणा FAST_TK_INIT						\
-	अणु							\
-		.घड़ी		= &dummy_घड़ी,			\
+#define FAST_TK_INIT						\
+	{							\
+		.clock		= &dummy_clock,			\
 		.mask		= CLOCKSOURCE_MASK(64),		\
 		.mult		= 1,				\
-		.shअगरt		= 0,				\
-	पूर्ण
+		.shift		= 0,				\
+	}
 
-अटल काष्ठा tk_fast tk_fast_mono ____cacheline_aligned = अणु
+static struct tk_fast tk_fast_mono ____cacheline_aligned = {
 	.seq     = SEQCNT_LATCH_ZERO(tk_fast_mono.seq),
 	.base[0] = FAST_TK_INIT,
 	.base[1] = FAST_TK_INIT,
-पूर्ण;
+};
 
-अटल काष्ठा tk_fast tk_fast_raw  ____cacheline_aligned = अणु
+static struct tk_fast tk_fast_raw  ____cacheline_aligned = {
 	.seq     = SEQCNT_LATCH_ZERO(tk_fast_raw.seq),
 	.base[0] = FAST_TK_INIT,
 	.base[1] = FAST_TK_INIT,
-पूर्ण;
+};
 
-अटल अंतरभूत व्योम tk_normalize_xसमय(काष्ठा समयkeeper *tk)
-अणु
-	जबतक (tk->tkr_mono.xसमय_nsec >= ((u64)NSEC_PER_SEC << tk->tkr_mono.shअगरt)) अणु
-		tk->tkr_mono.xसमय_nsec -= (u64)NSEC_PER_SEC << tk->tkr_mono.shअगरt;
-		tk->xसमय_sec++;
-	पूर्ण
-	जबतक (tk->tkr_raw.xसमय_nsec >= ((u64)NSEC_PER_SEC << tk->tkr_raw.shअगरt)) अणु
-		tk->tkr_raw.xसमय_nsec -= (u64)NSEC_PER_SEC << tk->tkr_raw.shअगरt;
+static inline void tk_normalize_xtime(struct timekeeper *tk)
+{
+	while (tk->tkr_mono.xtime_nsec >= ((u64)NSEC_PER_SEC << tk->tkr_mono.shift)) {
+		tk->tkr_mono.xtime_nsec -= (u64)NSEC_PER_SEC << tk->tkr_mono.shift;
+		tk->xtime_sec++;
+	}
+	while (tk->tkr_raw.xtime_nsec >= ((u64)NSEC_PER_SEC << tk->tkr_raw.shift)) {
+		tk->tkr_raw.xtime_nsec -= (u64)NSEC_PER_SEC << tk->tkr_raw.shift;
 		tk->raw_sec++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत काष्ठा बारpec64 tk_xसमय(स्थिर काष्ठा समयkeeper *tk)
-अणु
-	काष्ठा बारpec64 ts;
+static inline struct timespec64 tk_xtime(const struct timekeeper *tk)
+{
+	struct timespec64 ts;
 
-	ts.tv_sec = tk->xसमय_sec;
-	ts.tv_nsec = (दीर्घ)(tk->tkr_mono.xसमय_nsec >> tk->tkr_mono.shअगरt);
-	वापस ts;
-पूर्ण
+	ts.tv_sec = tk->xtime_sec;
+	ts.tv_nsec = (long)(tk->tkr_mono.xtime_nsec >> tk->tkr_mono.shift);
+	return ts;
+}
 
-अटल व्योम tk_set_xसमय(काष्ठा समयkeeper *tk, स्थिर काष्ठा बारpec64 *ts)
-अणु
-	tk->xसमय_sec = ts->tv_sec;
-	tk->tkr_mono.xसमय_nsec = (u64)ts->tv_nsec << tk->tkr_mono.shअगरt;
-पूर्ण
+static void tk_set_xtime(struct timekeeper *tk, const struct timespec64 *ts)
+{
+	tk->xtime_sec = ts->tv_sec;
+	tk->tkr_mono.xtime_nsec = (u64)ts->tv_nsec << tk->tkr_mono.shift;
+}
 
-अटल व्योम tk_xसमय_add(काष्ठा समयkeeper *tk, स्थिर काष्ठा बारpec64 *ts)
-अणु
-	tk->xसमय_sec += ts->tv_sec;
-	tk->tkr_mono.xसमय_nsec += (u64)ts->tv_nsec << tk->tkr_mono.shअगरt;
-	tk_normalize_xसमय(tk);
-पूर्ण
+static void tk_xtime_add(struct timekeeper *tk, const struct timespec64 *ts)
+{
+	tk->xtime_sec += ts->tv_sec;
+	tk->tkr_mono.xtime_nsec += (u64)ts->tv_nsec << tk->tkr_mono.shift;
+	tk_normalize_xtime(tk);
+}
 
-अटल व्योम tk_set_wall_to_mono(काष्ठा समयkeeper *tk, काष्ठा बारpec64 wपंचांग)
-अणु
-	काष्ठा बारpec64 पंचांगp;
+static void tk_set_wall_to_mono(struct timekeeper *tk, struct timespec64 wtm)
+{
+	struct timespec64 tmp;
 
 	/*
-	 * Verअगरy consistency of: offset_real = -wall_to_monotonic
-	 * beक्रमe modअगरying anything
+	 * Verify consistency of: offset_real = -wall_to_monotonic
+	 * before modifying anything
 	 */
-	set_normalized_बारpec64(&पंचांगp, -tk->wall_to_monotonic.tv_sec,
+	set_normalized_timespec64(&tmp, -tk->wall_to_monotonic.tv_sec,
 					-tk->wall_to_monotonic.tv_nsec);
-	WARN_ON_ONCE(tk->offs_real != बारpec64_to_kसमय(पंचांगp));
-	tk->wall_to_monotonic = wपंचांग;
-	set_normalized_बारpec64(&पंचांगp, -wपंचांग.tv_sec, -wपंचांग.tv_nsec);
-	tk->offs_real = बारpec64_to_kसमय(पंचांगp);
-	tk->offs_tai = kसमय_add(tk->offs_real, kसमय_set(tk->tai_offset, 0));
-पूर्ण
+	WARN_ON_ONCE(tk->offs_real != timespec64_to_ktime(tmp));
+	tk->wall_to_monotonic = wtm;
+	set_normalized_timespec64(&tmp, -wtm.tv_sec, -wtm.tv_nsec);
+	tk->offs_real = timespec64_to_ktime(tmp);
+	tk->offs_tai = ktime_add(tk->offs_real, ktime_set(tk->tai_offset, 0));
+}
 
-अटल अंतरभूत व्योम tk_update_sleep_समय(काष्ठा समयkeeper *tk, kसमय_प्रकार delta)
-अणु
-	tk->offs_boot = kसमय_add(tk->offs_boot, delta);
+static inline void tk_update_sleep_time(struct timekeeper *tk, ktime_t delta)
+{
+	tk->offs_boot = ktime_add(tk->offs_boot, delta);
 	/*
-	 * Timespec representation क्रम VDSO update to aव्योम 64bit भागision
+	 * Timespec representation for VDSO update to avoid 64bit division
 	 * on every update.
 	 */
-	tk->monotonic_to_boot = kसमय_प्रकारo_बारpec64(tk->offs_boot);
-पूर्ण
+	tk->monotonic_to_boot = ktime_to_timespec64(tk->offs_boot);
+}
 
 /*
- * tk_घड़ी_पढ़ो - atomic घड़ीsource पढ़ो() helper
+ * tk_clock_read - atomic clocksource read() helper
  *
- * This helper is necessary to use in the पढ़ो paths because, जबतक the
- * seqcount ensures we करोn't वापस a bad value जबतक काष्ठाures are updated,
- * it करोesn't protect from potential crashes. There is the possibility that
- * the tkr's घड़ीsource may change between the पढ़ो reference, and the
- * घड़ी reference passed to the पढ़ो function.  This can cause crashes अगर
- * the wrong घड़ीsource is passed to the wrong पढ़ो function.
- * This isn't necessary to use when holding the समयkeeper_lock or करोing
- * a पढ़ो of the fast-समयkeeper tkrs (which is रक्षित by its own locking
+ * This helper is necessary to use in the read paths because, while the
+ * seqcount ensures we don't return a bad value while structures are updated,
+ * it doesn't protect from potential crashes. There is the possibility that
+ * the tkr's clocksource may change between the read reference, and the
+ * clock reference passed to the read function.  This can cause crashes if
+ * the wrong clocksource is passed to the wrong read function.
+ * This isn't necessary to use when holding the timekeeper_lock or doing
+ * a read of the fast-timekeeper tkrs (which is protected by its own locking
  * and update logic).
  */
-अटल अंतरभूत u64 tk_घड़ी_पढ़ो(स्थिर काष्ठा tk_पढ़ो_base *tkr)
-अणु
-	काष्ठा घड़ीsource *घड़ी = READ_ONCE(tkr->घड़ी);
+static inline u64 tk_clock_read(const struct tk_read_base *tkr)
+{
+	struct clocksource *clock = READ_ONCE(tkr->clock);
 
-	वापस घड़ी->पढ़ो(घड़ी);
-पूर्ण
+	return clock->read(clock);
+}
 
-#अगर_घोषित CONFIG_DEBUG_TIMEKEEPING
-#घोषणा WARNING_FREQ (HZ*300) /* 5 minute rate-limiting */
+#ifdef CONFIG_DEBUG_TIMEKEEPING
+#define WARNING_FREQ (HZ*300) /* 5 minute rate-limiting */
 
-अटल व्योम समयkeeping_check_update(काष्ठा समयkeeper *tk, u64 offset)
-अणु
+static void timekeeping_check_update(struct timekeeper *tk, u64 offset)
+{
 
-	u64 max_cycles = tk->tkr_mono.घड़ी->max_cycles;
-	स्थिर अक्षर *name = tk->tkr_mono.घड़ी->name;
+	u64 max_cycles = tk->tkr_mono.clock->max_cycles;
+	const char *name = tk->tkr_mono.clock->name;
 
-	अगर (offset > max_cycles) अणु
-		prपूर्णांकk_deferred("WARNING: timekeeping: Cycle offset (%lld) is larger than allowed by the '%s' clock's max_cycles value (%lld): time overflow danger\n",
+	if (offset > max_cycles) {
+		printk_deferred("WARNING: timekeeping: Cycle offset (%lld) is larger than allowed by the '%s' clock's max_cycles value (%lld): time overflow danger\n",
 				offset, name, max_cycles);
-		prपूर्णांकk_deferred("         timekeeping: Your kernel is sick, but tries to cope by capping time updates\n");
-	पूर्ण अन्यथा अणु
-		अगर (offset > (max_cycles >> 1)) अणु
-			prपूर्णांकk_deferred("INFO: timekeeping: Cycle offset (%lld) is larger than the '%s' clock's 50%% safety margin (%lld)\n",
+		printk_deferred("         timekeeping: Your kernel is sick, but tries to cope by capping time updates\n");
+	} else {
+		if (offset > (max_cycles >> 1)) {
+			printk_deferred("INFO: timekeeping: Cycle offset (%lld) is larger than the '%s' clock's 50%% safety margin (%lld)\n",
 					offset, name, max_cycles >> 1);
-			prपूर्णांकk_deferred("      timekeeping: Your kernel is still fine, but is feeling a bit nervous\n");
-		पूर्ण
-	पूर्ण
+			printk_deferred("      timekeeping: Your kernel is still fine, but is feeling a bit nervous\n");
+		}
+	}
 
-	अगर (tk->underflow_seen) अणु
-		अगर (jअगरfies - tk->last_warning > WARNING_FREQ) अणु
-			prपूर्णांकk_deferred("WARNING: Underflow in clocksource '%s' observed, time update ignored.\n", name);
-			prपूर्णांकk_deferred("         Please report this, consider using a different clocksource, if possible.\n");
-			prपूर्णांकk_deferred("         Your kernel is probably still fine.\n");
-			tk->last_warning = jअगरfies;
-		पूर्ण
+	if (tk->underflow_seen) {
+		if (jiffies - tk->last_warning > WARNING_FREQ) {
+			printk_deferred("WARNING: Underflow in clocksource '%s' observed, time update ignored.\n", name);
+			printk_deferred("         Please report this, consider using a different clocksource, if possible.\n");
+			printk_deferred("         Your kernel is probably still fine.\n");
+			tk->last_warning = jiffies;
+		}
 		tk->underflow_seen = 0;
-	पूर्ण
+	}
 
-	अगर (tk->overflow_seen) अणु
-		अगर (jअगरfies - tk->last_warning > WARNING_FREQ) अणु
-			prपूर्णांकk_deferred("WARNING: Overflow in clocksource '%s' observed, time update capped.\n", name);
-			prपूर्णांकk_deferred("         Please report this, consider using a different clocksource, if possible.\n");
-			prपूर्णांकk_deferred("         Your kernel is probably still fine.\n");
-			tk->last_warning = jअगरfies;
-		पूर्ण
+	if (tk->overflow_seen) {
+		if (jiffies - tk->last_warning > WARNING_FREQ) {
+			printk_deferred("WARNING: Overflow in clocksource '%s' observed, time update capped.\n", name);
+			printk_deferred("         Please report this, consider using a different clocksource, if possible.\n");
+			printk_deferred("         Your kernel is probably still fine.\n");
+			tk->last_warning = jiffies;
+		}
 		tk->overflow_seen = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत u64 समयkeeping_get_delta(स्थिर काष्ठा tk_पढ़ो_base *tkr)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
+static inline u64 timekeeping_get_delta(const struct tk_read_base *tkr)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
 	u64 now, last, mask, max, delta;
-	अचिन्हित पूर्णांक seq;
+	unsigned int seq;
 
 	/*
-	 * Since we're called holding a seqcount, the data may shअगरt
-	 * under us जबतक we're करोing the calculation. This can cause
+	 * Since we're called holding a seqcount, the data may shift
+	 * under us while we're doing the calculation. This can cause
 	 * false positives, since we'd note a problem but throw the
 	 * results away. So nest another seqcount here to atomically
-	 * grab the poपूर्णांकs we are checking with.
+	 * grab the points we are checking with.
 	 */
-	करो अणु
-		seq = पढ़ो_seqcount_begin(&tk_core.seq);
-		now = tk_घड़ी_पढ़ो(tkr);
+	do {
+		seq = read_seqcount_begin(&tk_core.seq);
+		now = tk_clock_read(tkr);
 		last = tkr->cycle_last;
 		mask = tkr->mask;
-		max = tkr->घड़ी->max_cycles;
-	पूर्ण जबतक (पढ़ो_seqcount_retry(&tk_core.seq, seq));
+		max = tkr->clock->max_cycles;
+	} while (read_seqcount_retry(&tk_core.seq, seq));
 
-	delta = घड़ीsource_delta(now, last, mask);
+	delta = clocksource_delta(now, last, mask);
 
 	/*
-	 * Try to catch underflows by checking अगर we are seeing small
+	 * Try to catch underflows by checking if we are seeing small
 	 * mask-relative negative values.
 	 */
-	अगर (unlikely((~delta & mask) < (mask >> 3))) अणु
+	if (unlikely((~delta & mask) < (mask >> 3))) {
 		tk->underflow_seen = 1;
 		delta = 0;
-	पूर्ण
+	}
 
-	/* Cap delta value to the max_cycles values to aव्योम mult overflows */
-	अगर (unlikely(delta > max)) अणु
+	/* Cap delta value to the max_cycles values to avoid mult overflows */
+	if (unlikely(delta > max)) {
 		tk->overflow_seen = 1;
-		delta = tkr->घड़ी->max_cycles;
-	पूर्ण
+		delta = tkr->clock->max_cycles;
+	}
 
-	वापस delta;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम समयkeeping_check_update(काष्ठा समयkeeper *tk, u64 offset)
-अणु
-पूर्ण
-अटल अंतरभूत u64 समयkeeping_get_delta(स्थिर काष्ठा tk_पढ़ो_base *tkr)
-अणु
+	return delta;
+}
+#else
+static inline void timekeeping_check_update(struct timekeeper *tk, u64 offset)
+{
+}
+static inline u64 timekeeping_get_delta(const struct tk_read_base *tkr)
+{
 	u64 cycle_now, delta;
 
-	/* पढ़ो घड़ीsource */
-	cycle_now = tk_घड़ी_पढ़ो(tkr);
+	/* read clocksource */
+	cycle_now = tk_clock_read(tkr);
 
-	/* calculate the delta since the last update_wall_समय */
-	delta = घड़ीsource_delta(cycle_now, tkr->cycle_last, tkr->mask);
+	/* calculate the delta since the last update_wall_time */
+	delta = clocksource_delta(cycle_now, tkr->cycle_last, tkr->mask);
 
-	वापस delta;
-पूर्ण
-#पूर्ण_अगर
+	return delta;
+}
+#endif
 
 /**
- * tk_setup_पूर्णांकernals - Set up पूर्णांकernals to use घड़ीsource घड़ी.
+ * tk_setup_internals - Set up internals to use clocksource clock.
  *
- * @tk:		The target समयkeeper to setup.
- * @घड़ी:		Poपूर्णांकer to घड़ीsource.
+ * @tk:		The target timekeeper to setup.
+ * @clock:		Pointer to clocksource.
  *
- * Calculates a fixed cycle/nsec पूर्णांकerval क्रम a given घड़ीsource/adjusपंचांगent
- * pair and पूर्णांकerval request.
+ * Calculates a fixed cycle/nsec interval for a given clocksource/adjustment
+ * pair and interval request.
  *
- * Unless you're the समयkeeping code, you should not be using this!
+ * Unless you're the timekeeping code, you should not be using this!
  */
-अटल व्योम tk_setup_पूर्णांकernals(काष्ठा समयkeeper *tk, काष्ठा घड़ीsource *घड़ी)
-अणु
-	u64 पूर्णांकerval;
-	u64 पंचांगp, ntpपूर्णांकerval;
-	काष्ठा घड़ीsource *old_घड़ी;
+static void tk_setup_internals(struct timekeeper *tk, struct clocksource *clock)
+{
+	u64 interval;
+	u64 tmp, ntpinterval;
+	struct clocksource *old_clock;
 
 	++tk->cs_was_changed_seq;
-	old_घड़ी = tk->tkr_mono.घड़ी;
-	tk->tkr_mono.घड़ी = घड़ी;
-	tk->tkr_mono.mask = घड़ी->mask;
-	tk->tkr_mono.cycle_last = tk_घड़ी_पढ़ो(&tk->tkr_mono);
+	old_clock = tk->tkr_mono.clock;
+	tk->tkr_mono.clock = clock;
+	tk->tkr_mono.mask = clock->mask;
+	tk->tkr_mono.cycle_last = tk_clock_read(&tk->tkr_mono);
 
-	tk->tkr_raw.घड़ी = घड़ी;
-	tk->tkr_raw.mask = घड़ी->mask;
+	tk->tkr_raw.clock = clock;
+	tk->tkr_raw.mask = clock->mask;
 	tk->tkr_raw.cycle_last = tk->tkr_mono.cycle_last;
 
 	/* Do the ns -> cycle conversion first, using original mult */
-	पंचांगp = NTP_INTERVAL_LENGTH;
-	पंचांगp <<= घड़ी->shअगरt;
-	ntpपूर्णांकerval = पंचांगp;
-	पंचांगp += घड़ी->mult/2;
-	करो_भाग(पंचांगp, घड़ी->mult);
-	अगर (पंचांगp == 0)
-		पंचांगp = 1;
+	tmp = NTP_INTERVAL_LENGTH;
+	tmp <<= clock->shift;
+	ntpinterval = tmp;
+	tmp += clock->mult/2;
+	do_div(tmp, clock->mult);
+	if (tmp == 0)
+		tmp = 1;
 
-	पूर्णांकerval = (u64) पंचांगp;
-	tk->cycle_पूर्णांकerval = पूर्णांकerval;
+	interval = (u64) tmp;
+	tk->cycle_interval = interval;
 
-	/* Go back from cycles -> shअगरted ns */
-	tk->xसमय_पूर्णांकerval = पूर्णांकerval * घड़ी->mult;
-	tk->xसमय_reमुख्यder = ntpपूर्णांकerval - tk->xसमय_पूर्णांकerval;
-	tk->raw_पूर्णांकerval = पूर्णांकerval * घड़ी->mult;
+	/* Go back from cycles -> shifted ns */
+	tk->xtime_interval = interval * clock->mult;
+	tk->xtime_remainder = ntpinterval - tk->xtime_interval;
+	tk->raw_interval = interval * clock->mult;
 
-	 /* अगर changing घड़ीs, convert xसमय_nsec shअगरt units */
-	अगर (old_घड़ी) अणु
-		पूर्णांक shअगरt_change = घड़ी->shअगरt - old_घड़ी->shअगरt;
-		अगर (shअगरt_change < 0) अणु
-			tk->tkr_mono.xसमय_nsec >>= -shअगरt_change;
-			tk->tkr_raw.xसमय_nsec >>= -shअगरt_change;
-		पूर्ण अन्यथा अणु
-			tk->tkr_mono.xसमय_nsec <<= shअगरt_change;
-			tk->tkr_raw.xसमय_nsec <<= shअगरt_change;
-		पूर्ण
-	पूर्ण
+	 /* if changing clocks, convert xtime_nsec shift units */
+	if (old_clock) {
+		int shift_change = clock->shift - old_clock->shift;
+		if (shift_change < 0) {
+			tk->tkr_mono.xtime_nsec >>= -shift_change;
+			tk->tkr_raw.xtime_nsec >>= -shift_change;
+		} else {
+			tk->tkr_mono.xtime_nsec <<= shift_change;
+			tk->tkr_raw.xtime_nsec <<= shift_change;
+		}
+	}
 
-	tk->tkr_mono.shअगरt = घड़ी->shअगरt;
-	tk->tkr_raw.shअगरt = घड़ी->shअगरt;
+	tk->tkr_mono.shift = clock->shift;
+	tk->tkr_raw.shift = clock->shift;
 
 	tk->ntp_error = 0;
-	tk->ntp_error_shअगरt = NTP_SCALE_SHIFT - घड़ी->shअगरt;
-	tk->ntp_tick = ntpपूर्णांकerval << tk->ntp_error_shअगरt;
+	tk->ntp_error_shift = NTP_SCALE_SHIFT - clock->shift;
+	tk->ntp_tick = ntpinterval << tk->ntp_error_shift;
 
 	/*
-	 * The समयkeeper keeps its own mult values क्रम the currently
-	 * active घड़ीsource. These value will be adjusted via NTP
-	 * to counteract घड़ी drअगरting.
+	 * The timekeeper keeps its own mult values for the currently
+	 * active clocksource. These value will be adjusted via NTP
+	 * to counteract clock drifting.
 	 */
-	tk->tkr_mono.mult = घड़ी->mult;
-	tk->tkr_raw.mult = घड़ी->mult;
+	tk->tkr_mono.mult = clock->mult;
+	tk->tkr_raw.mult = clock->mult;
 	tk->ntp_err_mult = 0;
 	tk->skip_second_overflow = 0;
-पूर्ण
+}
 
 /* Timekeeper helper functions. */
 
-अटल अंतरभूत u64 समयkeeping_delta_to_ns(स्थिर काष्ठा tk_पढ़ो_base *tkr, u64 delta)
-अणु
+static inline u64 timekeeping_delta_to_ns(const struct tk_read_base *tkr, u64 delta)
+{
 	u64 nsec;
 
-	nsec = delta * tkr->mult + tkr->xसमय_nsec;
-	nsec >>= tkr->shअगरt;
+	nsec = delta * tkr->mult + tkr->xtime_nsec;
+	nsec >>= tkr->shift;
 
-	वापस nsec;
-पूर्ण
+	return nsec;
+}
 
-अटल अंतरभूत u64 समयkeeping_get_ns(स्थिर काष्ठा tk_पढ़ो_base *tkr)
-अणु
+static inline u64 timekeeping_get_ns(const struct tk_read_base *tkr)
+{
 	u64 delta;
 
-	delta = समयkeeping_get_delta(tkr);
-	वापस समयkeeping_delta_to_ns(tkr, delta);
-पूर्ण
+	delta = timekeeping_get_delta(tkr);
+	return timekeeping_delta_to_ns(tkr, delta);
+}
 
-अटल अंतरभूत u64 समयkeeping_cycles_to_ns(स्थिर काष्ठा tk_पढ़ो_base *tkr, u64 cycles)
-अणु
+static inline u64 timekeeping_cycles_to_ns(const struct tk_read_base *tkr, u64 cycles)
+{
 	u64 delta;
 
-	/* calculate the delta since the last update_wall_समय */
-	delta = घड़ीsource_delta(cycles, tkr->cycle_last, tkr->mask);
-	वापस समयkeeping_delta_to_ns(tkr, delta);
-पूर्ण
+	/* calculate the delta since the last update_wall_time */
+	delta = clocksource_delta(cycles, tkr->cycle_last, tkr->mask);
+	return timekeeping_delta_to_ns(tkr, delta);
+}
 
 /**
- * update_fast_समयkeeper - Update the fast and NMI safe monotonic समयkeeper.
- * @tkr: Timekeeping पढ़ोout base from which we take the update
- * @tkf: Poपूर्णांकer to NMI safe समयkeeper
+ * update_fast_timekeeper - Update the fast and NMI safe monotonic timekeeper.
+ * @tkr: Timekeeping readout base from which we take the update
+ * @tkf: Pointer to NMI safe timekeeper
  *
  * We want to use this from any context including NMI and tracing /
- * instrumenting the समयkeeping code itself.
+ * instrumenting the timekeeping code itself.
  *
- * Employ the latch technique; see @raw_ग_लिखो_seqcount_latch.
+ * Employ the latch technique; see @raw_write_seqcount_latch.
  *
- * So अगर a NMI hits the update of base[0] then it will use base[1]
- * which is still consistent. In the worst हाल this can result is a
- * slightly wrong बारtamp (a few nanoseconds). See
- * @kसमय_get_mono_fast_ns.
+ * So if a NMI hits the update of base[0] then it will use base[1]
+ * which is still consistent. In the worst case this can result is a
+ * slightly wrong timestamp (a few nanoseconds). See
+ * @ktime_get_mono_fast_ns.
  */
-अटल व्योम update_fast_समयkeeper(स्थिर काष्ठा tk_पढ़ो_base *tkr,
-				   काष्ठा tk_fast *tkf)
-अणु
-	काष्ठा tk_पढ़ो_base *base = tkf->base;
+static void update_fast_timekeeper(const struct tk_read_base *tkr,
+				   struct tk_fast *tkf)
+{
+	struct tk_read_base *base = tkf->base;
 
-	/* Force पढ़ोers off to base[1] */
-	raw_ग_लिखो_seqcount_latch(&tkf->seq);
+	/* Force readers off to base[1] */
+	raw_write_seqcount_latch(&tkf->seq);
 
 	/* Update base[0] */
-	स_नकल(base, tkr, माप(*base));
+	memcpy(base, tkr, sizeof(*base));
 
-	/* Force पढ़ोers back to base[0] */
-	raw_ग_लिखो_seqcount_latch(&tkf->seq);
+	/* Force readers back to base[0] */
+	raw_write_seqcount_latch(&tkf->seq);
 
 	/* Update base[1] */
-	स_नकल(base + 1, base, माप(*base));
-पूर्ण
+	memcpy(base + 1, base, sizeof(*base));
+}
 
-अटल __always_अंतरभूत u64 __kसमय_get_fast_ns(काष्ठा tk_fast *tkf)
-अणु
-	काष्ठा tk_पढ़ो_base *tkr;
-	अचिन्हित पूर्णांक seq;
+static __always_inline u64 __ktime_get_fast_ns(struct tk_fast *tkf)
+{
+	struct tk_read_base *tkr;
+	unsigned int seq;
 	u64 now;
 
-	करो अणु
-		seq = raw_पढ़ो_seqcount_latch(&tkf->seq);
+	do {
+		seq = raw_read_seqcount_latch(&tkf->seq);
 		tkr = tkf->base + (seq & 0x01);
-		now = kसमय_प्रकारo_ns(tkr->base);
+		now = ktime_to_ns(tkr->base);
 
-		now += समयkeeping_delta_to_ns(tkr,
-				घड़ीsource_delta(
-					tk_घड़ी_पढ़ो(tkr),
+		now += timekeeping_delta_to_ns(tkr,
+				clocksource_delta(
+					tk_clock_read(tkr),
 					tkr->cycle_last,
 					tkr->mask));
-	पूर्ण जबतक (पढ़ो_seqcount_latch_retry(&tkf->seq, seq));
+	} while (read_seqcount_latch_retry(&tkf->seq, seq));
 
-	वापस now;
-पूर्ण
+	return now;
+}
 
 /**
- * kसमय_get_mono_fast_ns - Fast NMI safe access to घड़ी monotonic
+ * ktime_get_mono_fast_ns - Fast NMI safe access to clock monotonic
  *
- * This बारtamp is not guaranteed to be monotonic across an update.
- * The बारtamp is calculated by:
+ * This timestamp is not guaranteed to be monotonic across an update.
+ * The timestamp is calculated by:
  *
- *	now = base_mono + घड़ी_delta * slope
+ *	now = base_mono + clock_delta * slope
  *
- * So अगर the update lowers the slope, पढ़ोers who are क्रमced to the
+ * So if the update lowers the slope, readers who are forced to the
  * not yet updated second array are still using the old steeper slope.
  *
- * पंचांगono
+ * tmono
  * ^
  * |    o  n
  * |   o n
  * |  u
  * | o
  * |o
- * |12345678---> पढ़ोer order
+ * |12345678---> reader order
  *
  * o = old slope
  * u = update
  * n = new slope
  *
- * So पढ़ोer 6 will observe समय going backwards versus पढ़ोer 5.
+ * So reader 6 will observe time going backwards versus reader 5.
  *
  * While other CPUs are likely to be able to observe that, the only way
- * क्रम a CPU local observation is when an NMI hits in the middle of
+ * for a CPU local observation is when an NMI hits in the middle of
  * the update. Timestamps taken from that NMI context might be ahead
- * of the following बारtamps. Callers need to be aware of that and
+ * of the following timestamps. Callers need to be aware of that and
  * deal with it.
  */
-u64 kसमय_get_mono_fast_ns(व्योम)
-अणु
-	वापस __kसमय_get_fast_ns(&tk_fast_mono);
-पूर्ण
-EXPORT_SYMBOL_GPL(kसमय_get_mono_fast_ns);
+u64 ktime_get_mono_fast_ns(void)
+{
+	return __ktime_get_fast_ns(&tk_fast_mono);
+}
+EXPORT_SYMBOL_GPL(ktime_get_mono_fast_ns);
 
 /**
- * kसमय_get_raw_fast_ns - Fast NMI safe access to घड़ी monotonic raw
+ * ktime_get_raw_fast_ns - Fast NMI safe access to clock monotonic raw
  *
- * Contrary to kसमय_get_mono_fast_ns() this is always correct because the
+ * Contrary to ktime_get_mono_fast_ns() this is always correct because the
  * conversion factor is not affected by NTP/PTP correction.
  */
-u64 kसमय_get_raw_fast_ns(व्योम)
-अणु
-	वापस __kसमय_get_fast_ns(&tk_fast_raw);
-पूर्ण
-EXPORT_SYMBOL_GPL(kसमय_get_raw_fast_ns);
+u64 ktime_get_raw_fast_ns(void)
+{
+	return __ktime_get_fast_ns(&tk_fast_raw);
+}
+EXPORT_SYMBOL_GPL(ktime_get_raw_fast_ns);
 
 /**
- * kसमय_get_boot_fast_ns - NMI safe and fast access to boot घड़ी.
+ * ktime_get_boot_fast_ns - NMI safe and fast access to boot clock.
  *
  * To keep it NMI safe since we're accessing from tracing, we're not using a
- * separate समयkeeper with updates to monotonic घड़ी and boot offset
- * रक्षित with seqcounts. This has the following minor side effects:
+ * separate timekeeper with updates to monotonic clock and boot offset
+ * protected with seqcounts. This has the following minor side effects:
  *
- * (1) Its possible that a बारtamp be taken after the boot offset is updated
- * but beक्रमe the समयkeeper is updated. If this happens, the new boot offset
- * is added to the old समयkeeping making the घड़ी appear to update slightly
+ * (1) Its possible that a timestamp be taken after the boot offset is updated
+ * but before the timekeeper is updated. If this happens, the new boot offset
+ * is added to the old timekeeping making the clock appear to update slightly
  * earlier:
  *    CPU 0                                        CPU 1
- *    समयkeeping_inject_sleepसमय64()
- *    __समयkeeping_inject_sleepसमय(tk, delta);
- *                                                 बारtamp();
- *    समयkeeping_update(tk, TK_CLEAR_NTP...);
+ *    timekeeping_inject_sleeptime64()
+ *    __timekeeping_inject_sleeptime(tk, delta);
+ *                                                 timestamp();
+ *    timekeeping_update(tk, TK_CLEAR_NTP...);
  *
- * (2) On 32-bit प्रणालीs, the 64-bit boot offset (tk->offs_boot) may be
+ * (2) On 32-bit systems, the 64-bit boot offset (tk->offs_boot) may be
  * partially updated.  Since the tk->offs_boot update is a rare event, this
  * should be a rare occurrence which postprocessing should be able to handle.
  *
- * The caveats vs. बारtamp ordering as करोcumented क्रम kसमय_get_fast_ns()
+ * The caveats vs. timestamp ordering as documented for ktime_get_fast_ns()
  * apply as well.
  */
-u64 notrace kसमय_get_boot_fast_ns(व्योम)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
+u64 notrace ktime_get_boot_fast_ns(void)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
 
-	वापस (kसमय_get_mono_fast_ns() + kसमय_प्रकारo_ns(tk->offs_boot));
-पूर्ण
-EXPORT_SYMBOL_GPL(kसमय_get_boot_fast_ns);
+	return (ktime_get_mono_fast_ns() + ktime_to_ns(tk->offs_boot));
+}
+EXPORT_SYMBOL_GPL(ktime_get_boot_fast_ns);
 
-अटल __always_अंतरभूत u64 __kसमय_get_real_fast(काष्ठा tk_fast *tkf, u64 *mono)
-अणु
-	काष्ठा tk_पढ़ो_base *tkr;
+static __always_inline u64 __ktime_get_real_fast(struct tk_fast *tkf, u64 *mono)
+{
+	struct tk_read_base *tkr;
 	u64 basem, baser, delta;
-	अचिन्हित पूर्णांक seq;
+	unsigned int seq;
 
-	करो अणु
-		seq = raw_पढ़ो_seqcount_latch(&tkf->seq);
+	do {
+		seq = raw_read_seqcount_latch(&tkf->seq);
 		tkr = tkf->base + (seq & 0x01);
-		basem = kसमय_प्रकारo_ns(tkr->base);
-		baser = kसमय_प्रकारo_ns(tkr->base_real);
+		basem = ktime_to_ns(tkr->base);
+		baser = ktime_to_ns(tkr->base_real);
 
-		delta = समयkeeping_delta_to_ns(tkr,
-				घड़ीsource_delta(tk_घड़ी_पढ़ो(tkr),
+		delta = timekeeping_delta_to_ns(tkr,
+				clocksource_delta(tk_clock_read(tkr),
 				tkr->cycle_last, tkr->mask));
-	पूर्ण जबतक (पढ़ो_seqcount_latch_retry(&tkf->seq, seq));
+	} while (read_seqcount_latch_retry(&tkf->seq, seq));
 
-	अगर (mono)
+	if (mono)
 		*mono = basem + delta;
-	वापस baser + delta;
-पूर्ण
+	return baser + delta;
+}
 
 /**
- * kसमय_get_real_fast_ns: - NMI safe and fast access to घड़ी realसमय.
+ * ktime_get_real_fast_ns: - NMI safe and fast access to clock realtime.
  *
- * See kसमय_get_fast_ns() क्रम करोcumentation of the समय stamp ordering.
+ * See ktime_get_fast_ns() for documentation of the time stamp ordering.
  */
-u64 kसमय_get_real_fast_ns(व्योम)
-अणु
-	वापस __kसमय_get_real_fast(&tk_fast_mono, शून्य);
-पूर्ण
-EXPORT_SYMBOL_GPL(kसमय_get_real_fast_ns);
+u64 ktime_get_real_fast_ns(void)
+{
+	return __ktime_get_real_fast(&tk_fast_mono, NULL);
+}
+EXPORT_SYMBOL_GPL(ktime_get_real_fast_ns);
 
 /**
- * kसमय_get_fast_बारtamps: - NMI safe बारtamps
- * @snapshot:	Poपूर्णांकer to बारtamp storage
+ * ktime_get_fast_timestamps: - NMI safe timestamps
+ * @snapshot:	Pointer to timestamp storage
  *
- * Stores घड़ी monotonic, bootसमय and realसमय बारtamps.
+ * Stores clock monotonic, boottime and realtime timestamps.
  *
- * Boot समय is a racy access on 32bit प्रणालीs अगर the sleep समय injection
- * happens late during resume and not in समयkeeping_resume(). That could
- * be aव्योमed by expanding काष्ठा tk_पढ़ो_base with boot offset क्रम 32bit
+ * Boot time is a racy access on 32bit systems if the sleep time injection
+ * happens late during resume and not in timekeeping_resume(). That could
+ * be avoided by expanding struct tk_read_base with boot offset for 32bit
  * and adding more overhead to the update. As this is a hard to observe
- * once per resume event which can be filtered with reasonable efक्रमt using
- * the accurate mono/real बारtamps, it's probably not worth the trouble.
+ * once per resume event which can be filtered with reasonable effort using
+ * the accurate mono/real timestamps, it's probably not worth the trouble.
  *
  * Aside of that it might be possible on 32 and 64 bit to observe the
- * following when the sleep समय injection happens late:
+ * following when the sleep time injection happens late:
  *
  * CPU 0				CPU 1
- * समयkeeping_resume()
- * kसमय_get_fast_बारtamps()
- *	mono, real = __kसमय_get_real_fast()
- *					inject_sleep_समय()
+ * timekeeping_resume()
+ * ktime_get_fast_timestamps()
+ *	mono, real = __ktime_get_real_fast()
+ *					inject_sleep_time()
  *					   update boot offset
  *	boot = mono + bootoffset;
  *
- * That means that boot समय alपढ़ोy has the sleep समय adjusपंचांगent, but
- * real समय करोes not. On the next पढ़ोout both are in sync again.
+ * That means that boot time already has the sleep time adjustment, but
+ * real time does not. On the next readout both are in sync again.
  *
- * Preventing this क्रम 64bit is not really feasible without destroying the
- * careful cache layout of the समयkeeper because the sequence count and
- * काष्ठा tk_पढ़ो_base would then need two cache lines instead of one.
+ * Preventing this for 64bit is not really feasible without destroying the
+ * careful cache layout of the timekeeper because the sequence count and
+ * struct tk_read_base would then need two cache lines instead of one.
  *
- * Access to the समय keeper घड़ी source is disabled across the innermost
- * steps of suspend/resume. The accessors still work, but the बारtamps
- * are frozen until समय keeping is resumed which happens very early.
+ * Access to the time keeper clock source is disabled across the innermost
+ * steps of suspend/resume. The accessors still work, but the timestamps
+ * are frozen until time keeping is resumed which happens very early.
  *
- * For regular suspend/resume there is no observable dअगरference vs. sched
- * घड़ी, but it might affect some of the nasty low level debug prपूर्णांकks.
+ * For regular suspend/resume there is no observable difference vs. sched
+ * clock, but it might affect some of the nasty low level debug printks.
  *
- * OTOH, access to sched घड़ी is not guaranteed across suspend/resume on
- * all प्रणालीs either so it depends on the hardware in use.
+ * OTOH, access to sched clock is not guaranteed across suspend/resume on
+ * all systems either so it depends on the hardware in use.
  *
  * If that turns out to be a real problem then this could be mitigated by
- * using sched घड़ी in a similar way as during early boot. But it's not as
+ * using sched clock in a similar way as during early boot. But it's not as
  * trivial as on early boot because it needs some careful protection
- * against the घड़ी monotonic बारtamp jumping backwards on resume.
+ * against the clock monotonic timestamp jumping backwards on resume.
  */
-व्योम kसमय_get_fast_बारtamps(काष्ठा kसमय_प्रकारimestamps *snapshot)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
+void ktime_get_fast_timestamps(struct ktime_timestamps *snapshot)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
 
-	snapshot->real = __kसमय_get_real_fast(&tk_fast_mono, &snapshot->mono);
-	snapshot->boot = snapshot->mono + kसमय_प्रकारo_ns(data_race(tk->offs_boot));
-पूर्ण
+	snapshot->real = __ktime_get_real_fast(&tk_fast_mono, &snapshot->mono);
+	snapshot->boot = snapshot->mono + ktime_to_ns(data_race(tk->offs_boot));
+}
 
 /**
- * halt_fast_समयkeeper - Prevent fast समयkeeper from accessing घड़ीsource.
+ * halt_fast_timekeeper - Prevent fast timekeeper from accessing clocksource.
  * @tk: Timekeeper to snapshot.
  *
- * It generally is unsafe to access the घड़ीsource after समयkeeping has been
- * suspended, so take a snapshot of the पढ़ोout base of @tk and use it as the
- * fast समयkeeper's पढ़ोout base जबतक suspended.  It will वापस the same
- * number of cycles every समय until समयkeeping is resumed at which समय the
- * proper पढ़ोout base क्रम the fast समयkeeper will be restored स्वतःmatically.
+ * It generally is unsafe to access the clocksource after timekeeping has been
+ * suspended, so take a snapshot of the readout base of @tk and use it as the
+ * fast timekeeper's readout base while suspended.  It will return the same
+ * number of cycles every time until timekeeping is resumed at which time the
+ * proper readout base for the fast timekeeper will be restored automatically.
  */
-अटल व्योम halt_fast_समयkeeper(स्थिर काष्ठा समयkeeper *tk)
-अणु
-	अटल काष्ठा tk_पढ़ो_base tkr_dummy;
-	स्थिर काष्ठा tk_पढ़ो_base *tkr = &tk->tkr_mono;
+static void halt_fast_timekeeper(const struct timekeeper *tk)
+{
+	static struct tk_read_base tkr_dummy;
+	const struct tk_read_base *tkr = &tk->tkr_mono;
 
-	स_नकल(&tkr_dummy, tkr, माप(tkr_dummy));
-	cycles_at_suspend = tk_घड़ी_पढ़ो(tkr);
-	tkr_dummy.घड़ी = &dummy_घड़ी;
+	memcpy(&tkr_dummy, tkr, sizeof(tkr_dummy));
+	cycles_at_suspend = tk_clock_read(tkr);
+	tkr_dummy.clock = &dummy_clock;
 	tkr_dummy.base_real = tkr->base + tk->offs_real;
-	update_fast_समयkeeper(&tkr_dummy, &tk_fast_mono);
+	update_fast_timekeeper(&tkr_dummy, &tk_fast_mono);
 
 	tkr = &tk->tkr_raw;
-	स_नकल(&tkr_dummy, tkr, माप(tkr_dummy));
-	tkr_dummy.घड़ी = &dummy_घड़ी;
-	update_fast_समयkeeper(&tkr_dummy, &tk_fast_raw);
-पूर्ण
+	memcpy(&tkr_dummy, tkr, sizeof(tkr_dummy));
+	tkr_dummy.clock = &dummy_clock;
+	update_fast_timekeeper(&tkr_dummy, &tk_fast_raw);
+}
 
-अटल RAW_NOTIFIER_HEAD(pvघड़ी_gtod_chain);
+static RAW_NOTIFIER_HEAD(pvclock_gtod_chain);
 
-अटल व्योम update_pvघड़ी_gtod(काष्ठा समयkeeper *tk, bool was_set)
-अणु
-	raw_notअगरier_call_chain(&pvघड़ी_gtod_chain, was_set, tk);
-पूर्ण
-
-/**
- * pvघड़ी_gtod_रेजिस्टर_notअगरier - रेजिस्टर a pvघड़ी समयdata update listener
- * @nb: Poपूर्णांकer to the notअगरier block to रेजिस्टर
- */
-पूर्णांक pvघड़ी_gtod_रेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
-
-	raw_spin_lock_irqsave(&समयkeeper_lock, flags);
-	ret = raw_notअगरier_chain_रेजिस्टर(&pvघड़ी_gtod_chain, nb);
-	update_pvघड़ी_gtod(tk, true);
-	raw_spin_unlock_irqrestore(&समयkeeper_lock, flags);
-
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(pvघड़ी_gtod_रेजिस्टर_notअगरier);
+static void update_pvclock_gtod(struct timekeeper *tk, bool was_set)
+{
+	raw_notifier_call_chain(&pvclock_gtod_chain, was_set, tk);
+}
 
 /**
- * pvघड़ी_gtod_unरेजिस्टर_notअगरier - unरेजिस्टर a pvघड़ी
- * समयdata update listener
- * @nb: Poपूर्णांकer to the notअगरier block to unरेजिस्टर
+ * pvclock_gtod_register_notifier - register a pvclock timedata update listener
+ * @nb: Pointer to the notifier block to register
  */
-पूर्णांक pvघड़ी_gtod_unरेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+int pvclock_gtod_register_notifier(struct notifier_block *nb)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+	unsigned long flags;
+	int ret;
 
-	raw_spin_lock_irqsave(&समयkeeper_lock, flags);
-	ret = raw_notअगरier_chain_unरेजिस्टर(&pvघड़ी_gtod_chain, nb);
-	raw_spin_unlock_irqrestore(&समयkeeper_lock, flags);
+	raw_spin_lock_irqsave(&timekeeper_lock, flags);
+	ret = raw_notifier_chain_register(&pvclock_gtod_chain, nb);
+	update_pvclock_gtod(tk, true);
+	raw_spin_unlock_irqrestore(&timekeeper_lock, flags);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(pvघड़ी_gtod_unरेजिस्टर_notअगरier);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(pvclock_gtod_register_notifier);
+
+/**
+ * pvclock_gtod_unregister_notifier - unregister a pvclock
+ * timedata update listener
+ * @nb: Pointer to the notifier block to unregister
+ */
+int pvclock_gtod_unregister_notifier(struct notifier_block *nb)
+{
+	unsigned long flags;
+	int ret;
+
+	raw_spin_lock_irqsave(&timekeeper_lock, flags);
+	ret = raw_notifier_chain_unregister(&pvclock_gtod_chain, nb);
+	raw_spin_unlock_irqrestore(&timekeeper_lock, flags);
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(pvclock_gtod_unregister_notifier);
 
 /*
- * tk_update_leap_state - helper to update the next_leap_kसमय
+ * tk_update_leap_state - helper to update the next_leap_ktime
  */
-अटल अंतरभूत व्योम tk_update_leap_state(काष्ठा समयkeeper *tk)
-अणु
-	tk->next_leap_kसमय = ntp_get_next_leap();
-	अगर (tk->next_leap_kसमय != KTIME_MAX)
-		/* Convert to monotonic समय */
-		tk->next_leap_kसमय = kसमय_sub(tk->next_leap_kसमय, tk->offs_real);
-पूर्ण
+static inline void tk_update_leap_state(struct timekeeper *tk)
+{
+	tk->next_leap_ktime = ntp_get_next_leap();
+	if (tk->next_leap_ktime != KTIME_MAX)
+		/* Convert to monotonic time */
+		tk->next_leap_ktime = ktime_sub(tk->next_leap_ktime, tk->offs_real);
+}
 
 /*
- * Update the kसमय_प्रकार based scalar nsec members of the समयkeeper
+ * Update the ktime_t based scalar nsec members of the timekeeper
  */
-अटल अंतरभूत व्योम tk_update_kसमय_data(काष्ठा समयkeeper *tk)
-अणु
+static inline void tk_update_ktime_data(struct timekeeper *tk)
+{
 	u64 seconds;
 	u32 nsec;
 
 	/*
-	 * The xसमय based monotonic पढ़ोout is:
-	 *	nsec = (xसमय_sec + wपंचांग_sec) * 1e9 + wपंचांग_nsec + now();
-	 * The kसमय based monotonic पढ़ोout is:
+	 * The xtime based monotonic readout is:
+	 *	nsec = (xtime_sec + wtm_sec) * 1e9 + wtm_nsec + now();
+	 * The ktime based monotonic readout is:
 	 *	nsec = base_mono + now();
-	 * ==> base_mono = (xसमय_sec + wपंचांग_sec) * 1e9 + wपंचांग_nsec
+	 * ==> base_mono = (xtime_sec + wtm_sec) * 1e9 + wtm_nsec
 	 */
-	seconds = (u64)(tk->xसमय_sec + tk->wall_to_monotonic.tv_sec);
+	seconds = (u64)(tk->xtime_sec + tk->wall_to_monotonic.tv_sec);
 	nsec = (u32) tk->wall_to_monotonic.tv_nsec;
-	tk->tkr_mono.base = ns_to_kसमय(seconds * NSEC_PER_SEC + nsec);
+	tk->tkr_mono.base = ns_to_ktime(seconds * NSEC_PER_SEC + nsec);
 
 	/*
-	 * The sum of the nanoseconds portions of xसमय and
+	 * The sum of the nanoseconds portions of xtime and
 	 * wall_to_monotonic can be greater/equal one second. Take
-	 * this पूर्णांकo account beक्रमe updating tk->kसमय_sec.
+	 * this into account before updating tk->ktime_sec.
 	 */
-	nsec += (u32)(tk->tkr_mono.xसमय_nsec >> tk->tkr_mono.shअगरt);
-	अगर (nsec >= NSEC_PER_SEC)
+	nsec += (u32)(tk->tkr_mono.xtime_nsec >> tk->tkr_mono.shift);
+	if (nsec >= NSEC_PER_SEC)
 		seconds++;
-	tk->kसमय_sec = seconds;
+	tk->ktime_sec = seconds;
 
 	/* Update the monotonic raw base */
-	tk->tkr_raw.base = ns_to_kसमय(tk->raw_sec * NSEC_PER_SEC);
-पूर्ण
+	tk->tkr_raw.base = ns_to_ktime(tk->raw_sec * NSEC_PER_SEC);
+}
 
-/* must hold समयkeeper_lock */
-अटल व्योम समयkeeping_update(काष्ठा समयkeeper *tk, अचिन्हित पूर्णांक action)
-अणु
-	अगर (action & TK_CLEAR_NTP) अणु
+/* must hold timekeeper_lock */
+static void timekeeping_update(struct timekeeper *tk, unsigned int action)
+{
+	if (action & TK_CLEAR_NTP) {
 		tk->ntp_error = 0;
 		ntp_clear();
-	पूर्ण
+	}
 
 	tk_update_leap_state(tk);
-	tk_update_kसमय_data(tk);
+	tk_update_ktime_data(tk);
 
 	update_vsyscall(tk);
-	update_pvघड़ी_gtod(tk, action & TK_CLOCK_WAS_SET);
+	update_pvclock_gtod(tk, action & TK_CLOCK_WAS_SET);
 
 	tk->tkr_mono.base_real = tk->tkr_mono.base + tk->offs_real;
-	update_fast_समयkeeper(&tk->tkr_mono, &tk_fast_mono);
-	update_fast_समयkeeper(&tk->tkr_raw,  &tk_fast_raw);
+	update_fast_timekeeper(&tk->tkr_mono, &tk_fast_mono);
+	update_fast_timekeeper(&tk->tkr_raw,  &tk_fast_raw);
 
-	अगर (action & TK_CLOCK_WAS_SET)
-		tk->घड़ी_was_set_seq++;
+	if (action & TK_CLOCK_WAS_SET)
+		tk->clock_was_set_seq++;
 	/*
-	 * The mirroring of the data to the shaकरोw-समयkeeper needs
-	 * to happen last here to ensure we करोn't over-ग_लिखो the
-	 * समयkeeper काष्ठाure on the next update with stale data
+	 * The mirroring of the data to the shadow-timekeeper needs
+	 * to happen last here to ensure we don't over-write the
+	 * timekeeper structure on the next update with stale data
 	 */
-	अगर (action & TK_MIRROR)
-		स_नकल(&shaकरोw_समयkeeper, &tk_core.समयkeeper,
-		       माप(tk_core.समयkeeper));
-पूर्ण
+	if (action & TK_MIRROR)
+		memcpy(&shadow_timekeeper, &tk_core.timekeeper,
+		       sizeof(tk_core.timekeeper));
+}
 
 /**
- * समयkeeping_क्रमward_now - update घड़ी to the current समय
- * @tk:		Poपूर्णांकer to the समयkeeper to update
+ * timekeeping_forward_now - update clock to the current time
+ * @tk:		Pointer to the timekeeper to update
  *
- * Forward the current घड़ी to update its state since the last call to
- * update_wall_समय(). This is useful beक्रमe signअगरicant घड़ी changes,
- * as it aव्योमs having to deal with this समय offset explicitly.
+ * Forward the current clock to update its state since the last call to
+ * update_wall_time(). This is useful before significant clock changes,
+ * as it avoids having to deal with this time offset explicitly.
  */
-अटल व्योम समयkeeping_क्रमward_now(काष्ठा समयkeeper *tk)
-अणु
+static void timekeeping_forward_now(struct timekeeper *tk)
+{
 	u64 cycle_now, delta;
 
-	cycle_now = tk_घड़ी_पढ़ो(&tk->tkr_mono);
-	delta = घड़ीsource_delta(cycle_now, tk->tkr_mono.cycle_last, tk->tkr_mono.mask);
+	cycle_now = tk_clock_read(&tk->tkr_mono);
+	delta = clocksource_delta(cycle_now, tk->tkr_mono.cycle_last, tk->tkr_mono.mask);
 	tk->tkr_mono.cycle_last = cycle_now;
 	tk->tkr_raw.cycle_last  = cycle_now;
 
-	tk->tkr_mono.xसमय_nsec += delta * tk->tkr_mono.mult;
-	tk->tkr_raw.xसमय_nsec += delta * tk->tkr_raw.mult;
+	tk->tkr_mono.xtime_nsec += delta * tk->tkr_mono.mult;
+	tk->tkr_raw.xtime_nsec += delta * tk->tkr_raw.mult;
 
-	tk_normalize_xसमय(tk);
-पूर्ण
+	tk_normalize_xtime(tk);
+}
 
 /**
- * kसमय_get_real_ts64 - Returns the समय of day in a बारpec64.
- * @ts:		poपूर्णांकer to the बारpec to be set
+ * ktime_get_real_ts64 - Returns the time of day in a timespec64.
+ * @ts:		pointer to the timespec to be set
  *
- * Returns the समय of day in a बारpec64 (WARN अगर suspended).
+ * Returns the time of day in a timespec64 (WARN if suspended).
  */
-व्योम kसमय_get_real_ts64(काष्ठा बारpec64 *ts)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	अचिन्हित पूर्णांक seq;
+void ktime_get_real_ts64(struct timespec64 *ts)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+	unsigned int seq;
 	u64 nsecs;
 
-	WARN_ON(समयkeeping_suspended);
+	WARN_ON(timekeeping_suspended);
 
-	करो अणु
-		seq = पढ़ो_seqcount_begin(&tk_core.seq);
+	do {
+		seq = read_seqcount_begin(&tk_core.seq);
 
-		ts->tv_sec = tk->xसमय_sec;
-		nsecs = समयkeeping_get_ns(&tk->tkr_mono);
+		ts->tv_sec = tk->xtime_sec;
+		nsecs = timekeeping_get_ns(&tk->tkr_mono);
 
-	पूर्ण जबतक (पढ़ो_seqcount_retry(&tk_core.seq, seq));
+	} while (read_seqcount_retry(&tk_core.seq, seq));
 
 	ts->tv_nsec = 0;
-	बारpec64_add_ns(ts, nsecs);
-पूर्ण
-EXPORT_SYMBOL(kसमय_get_real_ts64);
+	timespec64_add_ns(ts, nsecs);
+}
+EXPORT_SYMBOL(ktime_get_real_ts64);
 
-kसमय_प्रकार kसमय_get(व्योम)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	अचिन्हित पूर्णांक seq;
-	kसमय_प्रकार base;
+ktime_t ktime_get(void)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+	unsigned int seq;
+	ktime_t base;
 	u64 nsecs;
 
-	WARN_ON(समयkeeping_suspended);
+	WARN_ON(timekeeping_suspended);
 
-	करो अणु
-		seq = पढ़ो_seqcount_begin(&tk_core.seq);
+	do {
+		seq = read_seqcount_begin(&tk_core.seq);
 		base = tk->tkr_mono.base;
-		nsecs = समयkeeping_get_ns(&tk->tkr_mono);
+		nsecs = timekeeping_get_ns(&tk->tkr_mono);
 
-	पूर्ण जबतक (पढ़ो_seqcount_retry(&tk_core.seq, seq));
+	} while (read_seqcount_retry(&tk_core.seq, seq));
 
-	वापस kसमय_add_ns(base, nsecs);
-पूर्ण
-EXPORT_SYMBOL_GPL(kसमय_get);
+	return ktime_add_ns(base, nsecs);
+}
+EXPORT_SYMBOL_GPL(ktime_get);
 
-u32 kसमय_get_resolution_ns(व्योम)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	अचिन्हित पूर्णांक seq;
+u32 ktime_get_resolution_ns(void)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+	unsigned int seq;
 	u32 nsecs;
 
-	WARN_ON(समयkeeping_suspended);
+	WARN_ON(timekeeping_suspended);
 
-	करो अणु
-		seq = पढ़ो_seqcount_begin(&tk_core.seq);
-		nsecs = tk->tkr_mono.mult >> tk->tkr_mono.shअगरt;
-	पूर्ण जबतक (पढ़ो_seqcount_retry(&tk_core.seq, seq));
+	do {
+		seq = read_seqcount_begin(&tk_core.seq);
+		nsecs = tk->tkr_mono.mult >> tk->tkr_mono.shift;
+	} while (read_seqcount_retry(&tk_core.seq, seq));
 
-	वापस nsecs;
-पूर्ण
-EXPORT_SYMBOL_GPL(kसमय_get_resolution_ns);
+	return nsecs;
+}
+EXPORT_SYMBOL_GPL(ktime_get_resolution_ns);
 
-अटल kसमय_प्रकार *offsets[TK_OFFS_MAX] = अणु
-	[TK_OFFS_REAL]	= &tk_core.समयkeeper.offs_real,
-	[TK_OFFS_BOOT]	= &tk_core.समयkeeper.offs_boot,
-	[TK_OFFS_TAI]	= &tk_core.समयkeeper.offs_tai,
-पूर्ण;
+static ktime_t *offsets[TK_OFFS_MAX] = {
+	[TK_OFFS_REAL]	= &tk_core.timekeeper.offs_real,
+	[TK_OFFS_BOOT]	= &tk_core.timekeeper.offs_boot,
+	[TK_OFFS_TAI]	= &tk_core.timekeeper.offs_tai,
+};
 
-kसमय_प्रकार kसमय_get_with_offset(क्रमागत tk_offsets offs)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	अचिन्हित पूर्णांक seq;
-	kसमय_प्रकार base, *offset = offsets[offs];
+ktime_t ktime_get_with_offset(enum tk_offsets offs)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+	unsigned int seq;
+	ktime_t base, *offset = offsets[offs];
 	u64 nsecs;
 
-	WARN_ON(समयkeeping_suspended);
+	WARN_ON(timekeeping_suspended);
 
-	करो अणु
-		seq = पढ़ो_seqcount_begin(&tk_core.seq);
-		base = kसमय_add(tk->tkr_mono.base, *offset);
-		nsecs = समयkeeping_get_ns(&tk->tkr_mono);
+	do {
+		seq = read_seqcount_begin(&tk_core.seq);
+		base = ktime_add(tk->tkr_mono.base, *offset);
+		nsecs = timekeeping_get_ns(&tk->tkr_mono);
 
-	पूर्ण जबतक (पढ़ो_seqcount_retry(&tk_core.seq, seq));
+	} while (read_seqcount_retry(&tk_core.seq, seq));
 
-	वापस kसमय_add_ns(base, nsecs);
+	return ktime_add_ns(base, nsecs);
 
-पूर्ण
-EXPORT_SYMBOL_GPL(kसमय_get_with_offset);
+}
+EXPORT_SYMBOL_GPL(ktime_get_with_offset);
 
-kसमय_प्रकार kसमय_get_coarse_with_offset(क्रमागत tk_offsets offs)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	अचिन्हित पूर्णांक seq;
-	kसमय_प्रकार base, *offset = offsets[offs];
+ktime_t ktime_get_coarse_with_offset(enum tk_offsets offs)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+	unsigned int seq;
+	ktime_t base, *offset = offsets[offs];
 	u64 nsecs;
 
-	WARN_ON(समयkeeping_suspended);
+	WARN_ON(timekeeping_suspended);
 
-	करो अणु
-		seq = पढ़ो_seqcount_begin(&tk_core.seq);
-		base = kसमय_add(tk->tkr_mono.base, *offset);
-		nsecs = tk->tkr_mono.xसमय_nsec >> tk->tkr_mono.shअगरt;
+	do {
+		seq = read_seqcount_begin(&tk_core.seq);
+		base = ktime_add(tk->tkr_mono.base, *offset);
+		nsecs = tk->tkr_mono.xtime_nsec >> tk->tkr_mono.shift;
 
-	पूर्ण जबतक (पढ़ो_seqcount_retry(&tk_core.seq, seq));
+	} while (read_seqcount_retry(&tk_core.seq, seq));
 
-	वापस kसमय_add_ns(base, nsecs);
-पूर्ण
-EXPORT_SYMBOL_GPL(kसमय_get_coarse_with_offset);
+	return ktime_add_ns(base, nsecs);
+}
+EXPORT_SYMBOL_GPL(ktime_get_coarse_with_offset);
 
 /**
- * kसमय_mono_to_any() - convert monotonic समय to any other समय
- * @पंचांगono:	समय to convert.
+ * ktime_mono_to_any() - convert monotonic time to any other time
+ * @tmono:	time to convert.
  * @offs:	which offset to use
  */
-kसमय_प्रकार kसमय_mono_to_any(kसमय_प्रकार पंचांगono, क्रमागत tk_offsets offs)
-अणु
-	kसमय_प्रकार *offset = offsets[offs];
-	अचिन्हित पूर्णांक seq;
-	kसमय_प्रकार tconv;
+ktime_t ktime_mono_to_any(ktime_t tmono, enum tk_offsets offs)
+{
+	ktime_t *offset = offsets[offs];
+	unsigned int seq;
+	ktime_t tconv;
 
-	करो अणु
-		seq = पढ़ो_seqcount_begin(&tk_core.seq);
-		tconv = kसमय_add(पंचांगono, *offset);
-	पूर्ण जबतक (पढ़ो_seqcount_retry(&tk_core.seq, seq));
+	do {
+		seq = read_seqcount_begin(&tk_core.seq);
+		tconv = ktime_add(tmono, *offset);
+	} while (read_seqcount_retry(&tk_core.seq, seq));
 
-	वापस tconv;
-पूर्ण
-EXPORT_SYMBOL_GPL(kसमय_mono_to_any);
+	return tconv;
+}
+EXPORT_SYMBOL_GPL(ktime_mono_to_any);
 
 /**
- * kसमय_get_raw - Returns the raw monotonic समय in kसमय_प्रकार क्रमmat
+ * ktime_get_raw - Returns the raw monotonic time in ktime_t format
  */
-kसमय_प्रकार kसमय_get_raw(व्योम)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	अचिन्हित पूर्णांक seq;
-	kसमय_प्रकार base;
+ktime_t ktime_get_raw(void)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+	unsigned int seq;
+	ktime_t base;
 	u64 nsecs;
 
-	करो अणु
-		seq = पढ़ो_seqcount_begin(&tk_core.seq);
+	do {
+		seq = read_seqcount_begin(&tk_core.seq);
 		base = tk->tkr_raw.base;
-		nsecs = समयkeeping_get_ns(&tk->tkr_raw);
+		nsecs = timekeeping_get_ns(&tk->tkr_raw);
 
-	पूर्ण जबतक (पढ़ो_seqcount_retry(&tk_core.seq, seq));
+	} while (read_seqcount_retry(&tk_core.seq, seq));
 
-	वापस kसमय_add_ns(base, nsecs);
-पूर्ण
-EXPORT_SYMBOL_GPL(kसमय_get_raw);
+	return ktime_add_ns(base, nsecs);
+}
+EXPORT_SYMBOL_GPL(ktime_get_raw);
 
 /**
- * kसमय_get_ts64 - get the monotonic घड़ी in बारpec64 क्रमmat
- * @ts:		poपूर्णांकer to बारpec variable
+ * ktime_get_ts64 - get the monotonic clock in timespec64 format
+ * @ts:		pointer to timespec variable
  *
- * The function calculates the monotonic घड़ी from the realसमय
- * घड़ी and the wall_to_monotonic offset and stores the result
- * in normalized बारpec64 क्रमmat in the variable poपूर्णांकed to by @ts.
+ * The function calculates the monotonic clock from the realtime
+ * clock and the wall_to_monotonic offset and stores the result
+ * in normalized timespec64 format in the variable pointed to by @ts.
  */
-व्योम kसमय_get_ts64(काष्ठा बारpec64 *ts)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	काष्ठा बारpec64 tomono;
-	अचिन्हित पूर्णांक seq;
+void ktime_get_ts64(struct timespec64 *ts)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+	struct timespec64 tomono;
+	unsigned int seq;
 	u64 nsec;
 
-	WARN_ON(समयkeeping_suspended);
+	WARN_ON(timekeeping_suspended);
 
-	करो अणु
-		seq = पढ़ो_seqcount_begin(&tk_core.seq);
-		ts->tv_sec = tk->xसमय_sec;
-		nsec = समयkeeping_get_ns(&tk->tkr_mono);
+	do {
+		seq = read_seqcount_begin(&tk_core.seq);
+		ts->tv_sec = tk->xtime_sec;
+		nsec = timekeeping_get_ns(&tk->tkr_mono);
 		tomono = tk->wall_to_monotonic;
 
-	पूर्ण जबतक (पढ़ो_seqcount_retry(&tk_core.seq, seq));
+	} while (read_seqcount_retry(&tk_core.seq, seq));
 
 	ts->tv_sec += tomono.tv_sec;
 	ts->tv_nsec = 0;
-	बारpec64_add_ns(ts, nsec + tomono.tv_nsec);
-पूर्ण
-EXPORT_SYMBOL_GPL(kसमय_get_ts64);
+	timespec64_add_ns(ts, nsec + tomono.tv_nsec);
+}
+EXPORT_SYMBOL_GPL(ktime_get_ts64);
 
 /**
- * kसमय_get_seconds - Get the seconds portion of CLOCK_MONOTONIC
+ * ktime_get_seconds - Get the seconds portion of CLOCK_MONOTONIC
  *
  * Returns the seconds portion of CLOCK_MONOTONIC with a single non
- * serialized पढ़ो. tk->kसमय_sec is of type 'unsigned long' so this
- * works on both 32 and 64 bit प्रणालीs. On 32 bit प्रणालीs the पढ़ोout
- * covers ~136 years of upसमय which should be enough to prevent
+ * serialized read. tk->ktime_sec is of type 'unsigned long' so this
+ * works on both 32 and 64 bit systems. On 32 bit systems the readout
+ * covers ~136 years of uptime which should be enough to prevent
  * premature wrap arounds.
  */
-समय64_t kसमय_get_seconds(व्योम)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
+time64_t ktime_get_seconds(void)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
 
-	WARN_ON(समयkeeping_suspended);
-	वापस tk->kसमय_sec;
-पूर्ण
-EXPORT_SYMBOL_GPL(kसमय_get_seconds);
+	WARN_ON(timekeeping_suspended);
+	return tk->ktime_sec;
+}
+EXPORT_SYMBOL_GPL(ktime_get_seconds);
 
 /**
- * kसमय_get_real_seconds - Get the seconds portion of CLOCK_REALTIME
+ * ktime_get_real_seconds - Get the seconds portion of CLOCK_REALTIME
  *
- * Returns the wall घड़ी seconds since 1970.
+ * Returns the wall clock seconds since 1970.
  *
- * For 64bit प्रणालीs the fast access to tk->xसमय_sec is preserved. On
- * 32bit प्रणालीs the access must be रक्षित with the sequence
- * counter to provide "atomic" access to the 64bit tk->xसमय_sec
+ * For 64bit systems the fast access to tk->xtime_sec is preserved. On
+ * 32bit systems the access must be protected with the sequence
+ * counter to provide "atomic" access to the 64bit tk->xtime_sec
  * value.
  */
-समय64_t kसमय_get_real_seconds(व्योम)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	समय64_t seconds;
-	अचिन्हित पूर्णांक seq;
+time64_t ktime_get_real_seconds(void)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+	time64_t seconds;
+	unsigned int seq;
 
-	अगर (IS_ENABLED(CONFIG_64BIT))
-		वापस tk->xसमय_sec;
+	if (IS_ENABLED(CONFIG_64BIT))
+		return tk->xtime_sec;
 
-	करो अणु
-		seq = पढ़ो_seqcount_begin(&tk_core.seq);
-		seconds = tk->xसमय_sec;
+	do {
+		seq = read_seqcount_begin(&tk_core.seq);
+		seconds = tk->xtime_sec;
 
-	पूर्ण जबतक (पढ़ो_seqcount_retry(&tk_core.seq, seq));
+	} while (read_seqcount_retry(&tk_core.seq, seq));
 
-	वापस seconds;
-पूर्ण
-EXPORT_SYMBOL_GPL(kसमय_get_real_seconds);
-
-/**
- * __kसमय_get_real_seconds - The same as kसमय_get_real_seconds
- * but without the sequence counter protect. This पूर्णांकernal function
- * is called just when समयkeeping lock is alपढ़ोy held.
- */
-noinstr समय64_t __kसमय_get_real_seconds(व्योम)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-
-	वापस tk->xसमय_sec;
-पूर्ण
+	return seconds;
+}
+EXPORT_SYMBOL_GPL(ktime_get_real_seconds);
 
 /**
- * kसमय_get_snapshot - snapshots the realसमय/monotonic raw घड़ीs with counter
- * @sysसमय_snapshot:	poपूर्णांकer to काष्ठा receiving the प्रणाली समय snapshot
+ * __ktime_get_real_seconds - The same as ktime_get_real_seconds
+ * but without the sequence counter protect. This internal function
+ * is called just when timekeeping lock is already held.
  */
-व्योम kसमय_get_snapshot(काष्ठा प्रणाली_समय_snapshot *sysसमय_snapshot)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	अचिन्हित पूर्णांक seq;
-	kसमय_प्रकार base_raw;
-	kसमय_प्रकार base_real;
+noinstr time64_t __ktime_get_real_seconds(void)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+
+	return tk->xtime_sec;
+}
+
+/**
+ * ktime_get_snapshot - snapshots the realtime/monotonic raw clocks with counter
+ * @systime_snapshot:	pointer to struct receiving the system time snapshot
+ */
+void ktime_get_snapshot(struct system_time_snapshot *systime_snapshot)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+	unsigned int seq;
+	ktime_t base_raw;
+	ktime_t base_real;
 	u64 nsec_raw;
 	u64 nsec_real;
 	u64 now;
 
-	WARN_ON_ONCE(समयkeeping_suspended);
+	WARN_ON_ONCE(timekeeping_suspended);
 
-	करो अणु
-		seq = पढ़ो_seqcount_begin(&tk_core.seq);
-		now = tk_घड़ी_पढ़ो(&tk->tkr_mono);
-		sysसमय_snapshot->cs_id = tk->tkr_mono.घड़ी->id;
-		sysसमय_snapshot->cs_was_changed_seq = tk->cs_was_changed_seq;
-		sysसमय_snapshot->घड़ी_was_set_seq = tk->घड़ी_was_set_seq;
-		base_real = kसमय_add(tk->tkr_mono.base,
-				      tk_core.समयkeeper.offs_real);
+	do {
+		seq = read_seqcount_begin(&tk_core.seq);
+		now = tk_clock_read(&tk->tkr_mono);
+		systime_snapshot->cs_id = tk->tkr_mono.clock->id;
+		systime_snapshot->cs_was_changed_seq = tk->cs_was_changed_seq;
+		systime_snapshot->clock_was_set_seq = tk->clock_was_set_seq;
+		base_real = ktime_add(tk->tkr_mono.base,
+				      tk_core.timekeeper.offs_real);
 		base_raw = tk->tkr_raw.base;
-		nsec_real = समयkeeping_cycles_to_ns(&tk->tkr_mono, now);
-		nsec_raw  = समयkeeping_cycles_to_ns(&tk->tkr_raw, now);
-	पूर्ण जबतक (पढ़ो_seqcount_retry(&tk_core.seq, seq));
+		nsec_real = timekeeping_cycles_to_ns(&tk->tkr_mono, now);
+		nsec_raw  = timekeeping_cycles_to_ns(&tk->tkr_raw, now);
+	} while (read_seqcount_retry(&tk_core.seq, seq));
 
-	sysसमय_snapshot->cycles = now;
-	sysसमय_snapshot->real = kसमय_add_ns(base_real, nsec_real);
-	sysसमय_snapshot->raw = kसमय_add_ns(base_raw, nsec_raw);
-पूर्ण
-EXPORT_SYMBOL_GPL(kसमय_get_snapshot);
+	systime_snapshot->cycles = now;
+	systime_snapshot->real = ktime_add_ns(base_real, nsec_real);
+	systime_snapshot->raw = ktime_add_ns(base_raw, nsec_raw);
+}
+EXPORT_SYMBOL_GPL(ktime_get_snapshot);
 
-/* Scale base by mult/भाग checking क्रम overflow */
-अटल पूर्णांक scale64_check_overflow(u64 mult, u64 भाग, u64 *base)
-अणु
-	u64 पंचांगp, rem;
+/* Scale base by mult/div checking for overflow */
+static int scale64_check_overflow(u64 mult, u64 div, u64 *base)
+{
+	u64 tmp, rem;
 
-	पंचांगp = भाग64_u64_rem(*base, भाग, &rem);
+	tmp = div64_u64_rem(*base, div, &rem);
 
-	अगर (((पूर्णांक)माप(u64)*8 - fls64(mult) < fls64(पंचांगp)) ||
-	    ((पूर्णांक)माप(u64)*8 - fls64(mult) < fls64(rem)))
-		वापस -EOVERFLOW;
-	पंचांगp *= mult;
+	if (((int)sizeof(u64)*8 - fls64(mult) < fls64(tmp)) ||
+	    ((int)sizeof(u64)*8 - fls64(mult) < fls64(rem)))
+		return -EOVERFLOW;
+	tmp *= mult;
 
-	rem = भाग64_u64(rem * mult, भाग);
-	*base = पंचांगp + rem;
-	वापस 0;
-पूर्ण
+	rem = div64_u64(rem * mult, div);
+	*base = tmp + rem;
+	return 0;
+}
 
 /**
- * adjust_historical_crosststamp - adjust crossबारtamp previous to current पूर्णांकerval
+ * adjust_historical_crosststamp - adjust crosstimestamp previous to current interval
  * @history:			Snapshot representing start of history
- * @partial_history_cycles:	Cycle offset पूर्णांकo history (fractional part)
+ * @partial_history_cycles:	Cycle offset into history (fractional part)
  * @total_history_cycles:	Total history length in cycles
- * @discontinuity:		True indicates घड़ी was set on history period
- * @ts:				Cross बारtamp that should be adjusted using
+ * @discontinuity:		True indicates clock was set on history period
+ * @ts:				Cross timestamp that should be adjusted using
  *	partial/total ratio
  *
- * Helper function used by get_device_प्रणाली_crosststamp() to correct the
- * crossबारtamp corresponding to the start of the current पूर्णांकerval to the
- * प्रणाली counter value (बारtamp poपूर्णांक) provided by the driver. The
+ * Helper function used by get_device_system_crosststamp() to correct the
+ * crosstimestamp corresponding to the start of the current interval to the
+ * system counter value (timestamp point) provided by the driver. The
  * total_history_* quantities are the total history starting at the provided
- * reference poपूर्णांक and ending at the start of the current पूर्णांकerval. The cycle
- * count between the driver बारtamp poपूर्णांक and the start of the current
- * पूर्णांकerval is partial_history_cycles.
+ * reference point and ending at the start of the current interval. The cycle
+ * count between the driver timestamp point and the start of the current
+ * interval is partial_history_cycles.
  */
-अटल पूर्णांक adjust_historical_crosststamp(काष्ठा प्रणाली_समय_snapshot *history,
+static int adjust_historical_crosststamp(struct system_time_snapshot *history,
 					 u64 partial_history_cycles,
 					 u64 total_history_cycles,
 					 bool discontinuity,
-					 काष्ठा प्रणाली_device_crosststamp *ts)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
+					 struct system_device_crosststamp *ts)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
 	u64 corr_raw, corr_real;
-	bool पूर्णांकerp_क्रमward;
-	पूर्णांक ret;
+	bool interp_forward;
+	int ret;
 
-	अगर (total_history_cycles == 0 || partial_history_cycles == 0)
-		वापस 0;
+	if (total_history_cycles == 0 || partial_history_cycles == 0)
+		return 0;
 
-	/* Interpolate लघुest distance from beginning or end of history */
-	पूर्णांकerp_क्रमward = partial_history_cycles > total_history_cycles / 2;
-	partial_history_cycles = पूर्णांकerp_क्रमward ?
+	/* Interpolate shortest distance from beginning or end of history */
+	interp_forward = partial_history_cycles > total_history_cycles / 2;
+	partial_history_cycles = interp_forward ?
 		total_history_cycles - partial_history_cycles :
 		partial_history_cycles;
 
 	/*
-	 * Scale the monotonic raw समय delta by:
+	 * Scale the monotonic raw time delta by:
 	 *	partial_history_cycles / total_history_cycles
 	 */
-	corr_raw = (u64)kसमय_प्रकारo_ns(
-		kसमय_sub(ts->sys_monoraw, history->raw));
+	corr_raw = (u64)ktime_to_ns(
+		ktime_sub(ts->sys_monoraw, history->raw));
 	ret = scale64_check_overflow(partial_history_cycles,
 				     total_history_cycles, &corr_raw);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
 	 * If there is a discontinuity in the history, scale monotonic raw
 	 *	correction by:
-	 *	mult(real)/mult(raw) yielding the realसमय correction
-	 * Otherwise, calculate the realसमय correction similar to monotonic
+	 *	mult(real)/mult(raw) yielding the realtime correction
+	 * Otherwise, calculate the realtime correction similar to monotonic
 	 *	raw calculation
 	 */
-	अगर (discontinuity) अणु
-		corr_real = mul_u64_u32_भाग
+	if (discontinuity) {
+		corr_real = mul_u64_u32_div
 			(corr_raw, tk->tkr_mono.mult, tk->tkr_raw.mult);
-	पूर्ण अन्यथा अणु
-		corr_real = (u64)kसमय_प्रकारo_ns(
-			kसमय_sub(ts->sys_realसमय, history->real));
+	} else {
+		corr_real = (u64)ktime_to_ns(
+			ktime_sub(ts->sys_realtime, history->real));
 		ret = scale64_check_overflow(partial_history_cycles,
 					     total_history_cycles, &corr_real);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	/* Fixup monotonic raw and real समय समय values */
-	अगर (पूर्णांकerp_क्रमward) अणु
-		ts->sys_monoraw = kसमय_add_ns(history->raw, corr_raw);
-		ts->sys_realसमय = kसमय_add_ns(history->real, corr_real);
-	पूर्ण अन्यथा अणु
-		ts->sys_monoraw = kसमय_sub_ns(ts->sys_monoraw, corr_raw);
-		ts->sys_realसमय = kसमय_sub_ns(ts->sys_realसमय, corr_real);
-	पूर्ण
+	/* Fixup monotonic raw and real time time values */
+	if (interp_forward) {
+		ts->sys_monoraw = ktime_add_ns(history->raw, corr_raw);
+		ts->sys_realtime = ktime_add_ns(history->real, corr_real);
+	} else {
+		ts->sys_monoraw = ktime_sub_ns(ts->sys_monoraw, corr_raw);
+		ts->sys_realtime = ktime_sub_ns(ts->sys_realtime, corr_real);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * cycle_between - true अगर test occurs chronologically between beक्रमe and after
+ * cycle_between - true if test occurs chronologically between before and after
  */
-अटल bool cycle_between(u64 beक्रमe, u64 test, u64 after)
-अणु
-	अगर (test > beक्रमe && test < after)
-		वापस true;
-	अगर (test < beक्रमe && beक्रमe > after)
-		वापस true;
-	वापस false;
-पूर्ण
+static bool cycle_between(u64 before, u64 test, u64 after)
+{
+	if (test > before && test < after)
+		return true;
+	if (test < before && before > after)
+		return true;
+	return false;
+}
 
 /**
- * get_device_प्रणाली_crosststamp - Synchronously capture प्रणाली/device बारtamp
- * @get_समय_fn:	Callback to get simultaneous device समय and
- *	प्रणाली counter from the device driver
- * @ctx:		Context passed to get_समय_fn()
- * @history_begin:	Historical reference poपूर्णांक used to पूर्णांकerpolate प्रणाली
- *	समय when counter provided by the driver is beक्रमe the current पूर्णांकerval
- * @xtstamp:		Receives simultaneously captured प्रणाली and device समय
+ * get_device_system_crosststamp - Synchronously capture system/device timestamp
+ * @get_time_fn:	Callback to get simultaneous device time and
+ *	system counter from the device driver
+ * @ctx:		Context passed to get_time_fn()
+ * @history_begin:	Historical reference point used to interpolate system
+ *	time when counter provided by the driver is before the current interval
+ * @xtstamp:		Receives simultaneously captured system and device time
  *
- * Reads a बारtamp from a device and correlates it to प्रणाली समय
+ * Reads a timestamp from a device and correlates it to system time
  */
-पूर्णांक get_device_प्रणाली_crosststamp(पूर्णांक (*get_समय_fn)
-				  (kसमय_प्रकार *device_समय,
-				   काष्ठा प्रणाली_counterval_t *sys_counterval,
-				   व्योम *ctx),
-				  व्योम *ctx,
-				  काष्ठा प्रणाली_समय_snapshot *history_begin,
-				  काष्ठा प्रणाली_device_crosststamp *xtstamp)
-अणु
-	काष्ठा प्रणाली_counterval_t प्रणाली_counterval;
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	u64 cycles, now, पूर्णांकerval_start;
-	अचिन्हित पूर्णांक घड़ी_was_set_seq = 0;
-	kसमय_प्रकार base_real, base_raw;
+int get_device_system_crosststamp(int (*get_time_fn)
+				  (ktime_t *device_time,
+				   struct system_counterval_t *sys_counterval,
+				   void *ctx),
+				  void *ctx,
+				  struct system_time_snapshot *history_begin,
+				  struct system_device_crosststamp *xtstamp)
+{
+	struct system_counterval_t system_counterval;
+	struct timekeeper *tk = &tk_core.timekeeper;
+	u64 cycles, now, interval_start;
+	unsigned int clock_was_set_seq = 0;
+	ktime_t base_real, base_raw;
 	u64 nsec_real, nsec_raw;
 	u8 cs_was_changed_seq;
-	अचिन्हित पूर्णांक seq;
-	bool करो_पूर्णांकerp;
-	पूर्णांक ret;
+	unsigned int seq;
+	bool do_interp;
+	int ret;
 
-	करो अणु
-		seq = पढ़ो_seqcount_begin(&tk_core.seq);
+	do {
+		seq = read_seqcount_begin(&tk_core.seq);
 		/*
-		 * Try to synchronously capture device समय and a प्रणाली
-		 * counter value calling back पूर्णांकo the device driver
+		 * Try to synchronously capture device time and a system
+		 * counter value calling back into the device driver
 		 */
-		ret = get_समय_fn(&xtstamp->device, &प्रणाली_counterval, ctx);
-		अगर (ret)
-			वापस ret;
-
-		/*
-		 * Verअगरy that the घड़ीsource associated with the captured
-		 * प्रणाली counter value is the same as the currently installed
-		 * समयkeeper घड़ीsource
-		 */
-		अगर (tk->tkr_mono.घड़ी != प्रणाली_counterval.cs)
-			वापस -ENODEV;
-		cycles = प्रणाली_counterval.cycles;
+		ret = get_time_fn(&xtstamp->device, &system_counterval, ctx);
+		if (ret)
+			return ret;
 
 		/*
-		 * Check whether the प्रणाली counter value provided by the
-		 * device driver is on the current समयkeeping पूर्णांकerval.
+		 * Verify that the clocksource associated with the captured
+		 * system counter value is the same as the currently installed
+		 * timekeeper clocksource
 		 */
-		now = tk_घड़ी_पढ़ो(&tk->tkr_mono);
-		पूर्णांकerval_start = tk->tkr_mono.cycle_last;
-		अगर (!cycle_between(पूर्णांकerval_start, cycles, now)) अणु
-			घड़ी_was_set_seq = tk->घड़ी_was_set_seq;
+		if (tk->tkr_mono.clock != system_counterval.cs)
+			return -ENODEV;
+		cycles = system_counterval.cycles;
+
+		/*
+		 * Check whether the system counter value provided by the
+		 * device driver is on the current timekeeping interval.
+		 */
+		now = tk_clock_read(&tk->tkr_mono);
+		interval_start = tk->tkr_mono.cycle_last;
+		if (!cycle_between(interval_start, cycles, now)) {
+			clock_was_set_seq = tk->clock_was_set_seq;
 			cs_was_changed_seq = tk->cs_was_changed_seq;
-			cycles = पूर्णांकerval_start;
-			करो_पूर्णांकerp = true;
-		पूर्ण अन्यथा अणु
-			करो_पूर्णांकerp = false;
-		पूर्ण
+			cycles = interval_start;
+			do_interp = true;
+		} else {
+			do_interp = false;
+		}
 
-		base_real = kसमय_add(tk->tkr_mono.base,
-				      tk_core.समयkeeper.offs_real);
+		base_real = ktime_add(tk->tkr_mono.base,
+				      tk_core.timekeeper.offs_real);
 		base_raw = tk->tkr_raw.base;
 
-		nsec_real = समयkeeping_cycles_to_ns(&tk->tkr_mono,
-						     प्रणाली_counterval.cycles);
-		nsec_raw = समयkeeping_cycles_to_ns(&tk->tkr_raw,
-						    प्रणाली_counterval.cycles);
-	पूर्ण जबतक (पढ़ो_seqcount_retry(&tk_core.seq, seq));
+		nsec_real = timekeeping_cycles_to_ns(&tk->tkr_mono,
+						     system_counterval.cycles);
+		nsec_raw = timekeeping_cycles_to_ns(&tk->tkr_raw,
+						    system_counterval.cycles);
+	} while (read_seqcount_retry(&tk_core.seq, seq));
 
-	xtstamp->sys_realसमय = kसमय_add_ns(base_real, nsec_real);
-	xtstamp->sys_monoraw = kसमय_add_ns(base_raw, nsec_raw);
+	xtstamp->sys_realtime = ktime_add_ns(base_real, nsec_real);
+	xtstamp->sys_monoraw = ktime_add_ns(base_raw, nsec_raw);
 
 	/*
-	 * Interpolate अगर necessary, adjusting back from the start of the
-	 * current पूर्णांकerval
+	 * Interpolate if necessary, adjusting back from the start of the
+	 * current interval
 	 */
-	अगर (करो_पूर्णांकerp) अणु
+	if (do_interp) {
 		u64 partial_history_cycles, total_history_cycles;
 		bool discontinuity;
 
 		/*
 		 * Check that the counter value occurs after the provided
-		 * history reference and that the history करोesn't cross a
-		 * घड़ीsource change
+		 * history reference and that the history doesn't cross a
+		 * clocksource change
 		 */
-		अगर (!history_begin ||
+		if (!history_begin ||
 		    !cycle_between(history_begin->cycles,
-				   प्रणाली_counterval.cycles, cycles) ||
+				   system_counterval.cycles, cycles) ||
 		    history_begin->cs_was_changed_seq != cs_was_changed_seq)
-			वापस -EINVAL;
-		partial_history_cycles = cycles - प्रणाली_counterval.cycles;
+			return -EINVAL;
+		partial_history_cycles = cycles - system_counterval.cycles;
 		total_history_cycles = cycles - history_begin->cycles;
 		discontinuity =
-			history_begin->घड़ी_was_set_seq != घड़ी_was_set_seq;
+			history_begin->clock_was_set_seq != clock_was_set_seq;
 
 		ret = adjust_historical_crosststamp(history_begin,
 						    partial_history_cycles,
 						    total_history_cycles,
 						    discontinuity, xtstamp);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(get_device_प्रणाली_crosststamp);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(get_device_system_crosststamp);
 
 /**
- * करो_समय_रखोofday64 - Sets the समय of day.
- * @ts:     poपूर्णांकer to the बारpec64 variable containing the new समय
+ * do_settimeofday64 - Sets the time of day.
+ * @ts:     pointer to the timespec64 variable containing the new time
  *
- * Sets the समय of day to the new समय and update NTP and notअगरy hrसमयrs
+ * Sets the time of day to the new time and update NTP and notify hrtimers
  */
-पूर्णांक करो_समय_रखोofday64(स्थिर काष्ठा बारpec64 *ts)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	काष्ठा बारpec64 ts_delta, xt;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+int do_settimeofday64(const struct timespec64 *ts)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+	struct timespec64 ts_delta, xt;
+	unsigned long flags;
+	int ret = 0;
 
-	अगर (!बारpec64_valid_settod(ts))
-		वापस -EINVAL;
+	if (!timespec64_valid_settod(ts))
+		return -EINVAL;
 
-	raw_spin_lock_irqsave(&समयkeeper_lock, flags);
-	ग_लिखो_seqcount_begin(&tk_core.seq);
+	raw_spin_lock_irqsave(&timekeeper_lock, flags);
+	write_seqcount_begin(&tk_core.seq);
 
-	समयkeeping_क्रमward_now(tk);
+	timekeeping_forward_now(tk);
 
-	xt = tk_xसमय(tk);
+	xt = tk_xtime(tk);
 	ts_delta.tv_sec = ts->tv_sec - xt.tv_sec;
 	ts_delta.tv_nsec = ts->tv_nsec - xt.tv_nsec;
 
-	अगर (बारpec64_compare(&tk->wall_to_monotonic, &ts_delta) > 0) अणु
+	if (timespec64_compare(&tk->wall_to_monotonic, &ts_delta) > 0) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	tk_set_wall_to_mono(tk, बारpec64_sub(tk->wall_to_monotonic, ts_delta));
+	tk_set_wall_to_mono(tk, timespec64_sub(tk->wall_to_monotonic, ts_delta));
 
-	tk_set_xसमय(tk, ts);
+	tk_set_xtime(tk, ts);
 out:
-	समयkeeping_update(tk, TK_CLEAR_NTP | TK_MIRROR | TK_CLOCK_WAS_SET);
+	timekeeping_update(tk, TK_CLEAR_NTP | TK_MIRROR | TK_CLOCK_WAS_SET);
 
-	ग_लिखो_seqcount_end(&tk_core.seq);
-	raw_spin_unlock_irqrestore(&समयkeeper_lock, flags);
+	write_seqcount_end(&tk_core.seq);
+	raw_spin_unlock_irqrestore(&timekeeper_lock, flags);
 
-	/* संकेत hrसमयrs about समय change */
-	घड़ी_was_set();
+	/* signal hrtimers about time change */
+	clock_was_set();
 
-	अगर (!ret)
+	if (!ret)
 		audit_tk_injoffset(ts_delta);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(करो_समय_रखोofday64);
+	return ret;
+}
+EXPORT_SYMBOL(do_settimeofday64);
 
 /**
- * समयkeeping_inject_offset - Adds or subtracts from the current समय.
- * @ts:		Poपूर्णांकer to the बारpec variable containing the offset
+ * timekeeping_inject_offset - Adds or subtracts from the current time.
+ * @ts:		Pointer to the timespec variable containing the offset
  *
- * Adds or subtracts an offset value from the current समय.
+ * Adds or subtracts an offset value from the current time.
  */
-अटल पूर्णांक समयkeeping_inject_offset(स्थिर काष्ठा बारpec64 *ts)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	अचिन्हित दीर्घ flags;
-	काष्ठा बारpec64 पंचांगp;
-	पूर्णांक ret = 0;
+static int timekeeping_inject_offset(const struct timespec64 *ts)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+	unsigned long flags;
+	struct timespec64 tmp;
+	int ret = 0;
 
-	अगर (ts->tv_nsec < 0 || ts->tv_nsec >= NSEC_PER_SEC)
-		वापस -EINVAL;
+	if (ts->tv_nsec < 0 || ts->tv_nsec >= NSEC_PER_SEC)
+		return -EINVAL;
 
-	raw_spin_lock_irqsave(&समयkeeper_lock, flags);
-	ग_लिखो_seqcount_begin(&tk_core.seq);
+	raw_spin_lock_irqsave(&timekeeper_lock, flags);
+	write_seqcount_begin(&tk_core.seq);
 
-	समयkeeping_क्रमward_now(tk);
+	timekeeping_forward_now(tk);
 
 	/* Make sure the proposed value is valid */
-	पंचांगp = बारpec64_add(tk_xसमय(tk), *ts);
-	अगर (बारpec64_compare(&tk->wall_to_monotonic, ts) > 0 ||
-	    !बारpec64_valid_settod(&पंचांगp)) अणु
+	tmp = timespec64_add(tk_xtime(tk), *ts);
+	if (timespec64_compare(&tk->wall_to_monotonic, ts) > 0 ||
+	    !timespec64_valid_settod(&tmp)) {
 		ret = -EINVAL;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	tk_xसमय_add(tk, ts);
-	tk_set_wall_to_mono(tk, बारpec64_sub(tk->wall_to_monotonic, *ts));
+	tk_xtime_add(tk, ts);
+	tk_set_wall_to_mono(tk, timespec64_sub(tk->wall_to_monotonic, *ts));
 
-error: /* even अगर we error out, we क्रमwarded the समय, so call update */
-	समयkeeping_update(tk, TK_CLEAR_NTP | TK_MIRROR | TK_CLOCK_WAS_SET);
+error: /* even if we error out, we forwarded the time, so call update */
+	timekeeping_update(tk, TK_CLEAR_NTP | TK_MIRROR | TK_CLOCK_WAS_SET);
 
-	ग_लिखो_seqcount_end(&tk_core.seq);
-	raw_spin_unlock_irqrestore(&समयkeeper_lock, flags);
+	write_seqcount_end(&tk_core.seq);
+	raw_spin_unlock_irqrestore(&timekeeper_lock, flags);
 
-	/* संकेत hrसमयrs about समय change */
-	घड़ी_was_set();
+	/* signal hrtimers about time change */
+	clock_was_set();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Indicates अगर there is an offset between the प्रणाली घड़ी and the hardware
- * घड़ी/persistent घड़ी/rtc.
+ * Indicates if there is an offset between the system clock and the hardware
+ * clock/persistent clock/rtc.
  */
-पूर्णांक persistent_घड़ी_is_local;
+int persistent_clock_is_local;
 
 /*
- * Adjust the समय obtained from the CMOS to be UTC समय instead of
- * local समय.
+ * Adjust the time obtained from the CMOS to be UTC time instead of
+ * local time.
  *
  * This is ugly, but preferable to the alternatives.  Otherwise we
- * would either need to ग_लिखो a program to करो it in /etc/rc (and risk
- * confusion अगर the program माला_लो run more than once; it would also be
- * hard to make the program warp the घड़ी precisely n hours)  or
- * compile in the समयzone inक्रमmation पूर्णांकo the kernel.  Bad, bad....
+ * would either need to write a program to do it in /etc/rc (and risk
+ * confusion if the program gets run more than once; it would also be
+ * hard to make the program warp the clock precisely n hours)  or
+ * compile in the timezone information into the kernel.  Bad, bad....
  *
  *						- TYT, 1992-01-01
  *
- * The best thing to करो is to keep the CMOS घड़ी in universal समय (UTC)
- * as real UNIX machines always करो it. This aव्योमs all headaches about
- * daylight saving बार and warping kernel घड़ीs.
+ * The best thing to do is to keep the CMOS clock in universal time (UTC)
+ * as real UNIX machines always do it. This avoids all headaches about
+ * daylight saving times and warping kernel clocks.
  */
-व्योम समयkeeping_warp_घड़ी(व्योम)
-अणु
-	अगर (sys_tz.tz_minuteswest != 0) अणु
-		काष्ठा बारpec64 adjust;
+void timekeeping_warp_clock(void)
+{
+	if (sys_tz.tz_minuteswest != 0) {
+		struct timespec64 adjust;
 
-		persistent_घड़ी_is_local = 1;
+		persistent_clock_is_local = 1;
 		adjust.tv_sec = sys_tz.tz_minuteswest * 60;
 		adjust.tv_nsec = 0;
-		समयkeeping_inject_offset(&adjust);
-	पूर्ण
-पूर्ण
+		timekeeping_inject_offset(&adjust);
+	}
+}
 
 /*
- * __समयkeeping_set_tai_offset - Sets the TAI offset from UTC and monotonic
+ * __timekeeping_set_tai_offset - Sets the TAI offset from UTC and monotonic
  */
-अटल व्योम __समयkeeping_set_tai_offset(काष्ठा समयkeeper *tk, s32 tai_offset)
-अणु
+static void __timekeeping_set_tai_offset(struct timekeeper *tk, s32 tai_offset)
+{
 	tk->tai_offset = tai_offset;
-	tk->offs_tai = kसमय_add(tk->offs_real, kसमय_set(tai_offset, 0));
-पूर्ण
+	tk->offs_tai = ktime_add(tk->offs_real, ktime_set(tai_offset, 0));
+}
 
 /*
- * change_घड़ीsource - Swaps घड़ीsources अगर a new one is available
+ * change_clocksource - Swaps clocksources if a new one is available
  *
- * Accumulates current समय पूर्णांकerval and initializes new घड़ीsource
+ * Accumulates current time interval and initializes new clocksource
  */
-अटल पूर्णांक change_घड़ीsource(व्योम *data)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	काष्ठा घड़ीsource *new, *old = शून्य;
-	अचिन्हित दीर्घ flags;
+static int change_clocksource(void *data)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+	struct clocksource *new, *old = NULL;
+	unsigned long flags;
 	bool change = false;
 
-	new = (काष्ठा घड़ीsource *) data;
+	new = (struct clocksource *) data;
 
 	/*
 	 * If the cs is in module, get a module reference. Succeeds
-	 * क्रम built-in code (owner == शून्य) as well.
+	 * for built-in code (owner == NULL) as well.
 	 */
-	अगर (try_module_get(new->owner)) अणु
-		अगर (!new->enable || new->enable(new) == 0)
+	if (try_module_get(new->owner)) {
+		if (!new->enable || new->enable(new) == 0)
 			change = true;
-		अन्यथा
+		else
 			module_put(new->owner);
-	पूर्ण
+	}
 
-	raw_spin_lock_irqsave(&समयkeeper_lock, flags);
-	ग_लिखो_seqcount_begin(&tk_core.seq);
+	raw_spin_lock_irqsave(&timekeeper_lock, flags);
+	write_seqcount_begin(&tk_core.seq);
 
-	समयkeeping_क्रमward_now(tk);
+	timekeeping_forward_now(tk);
 
-	अगर (change) अणु
-		old = tk->tkr_mono.घड़ी;
-		tk_setup_पूर्णांकernals(tk, new);
-	पूर्ण
+	if (change) {
+		old = tk->tkr_mono.clock;
+		tk_setup_internals(tk, new);
+	}
 
-	समयkeeping_update(tk, TK_CLEAR_NTP | TK_MIRROR | TK_CLOCK_WAS_SET);
+	timekeeping_update(tk, TK_CLEAR_NTP | TK_MIRROR | TK_CLOCK_WAS_SET);
 
-	ग_लिखो_seqcount_end(&tk_core.seq);
-	raw_spin_unlock_irqrestore(&समयkeeper_lock, flags);
+	write_seqcount_end(&tk_core.seq);
+	raw_spin_unlock_irqrestore(&timekeeper_lock, flags);
 
-	अगर (old) अणु
-		अगर (old->disable)
+	if (old) {
+		if (old->disable)
 			old->disable(old);
 
 		module_put(old->owner);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-
-/**
- * समयkeeping_notअगरy - Install a new घड़ी source
- * @घड़ी:		poपूर्णांकer to the घड़ी source
- *
- * This function is called from घड़ीsource.c after a new, better घड़ी
- * source has been रेजिस्टरed. The caller holds the घड़ीsource_mutex.
- */
-पूर्णांक समयkeeping_notअगरy(काष्ठा घड़ीsource *घड़ी)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-
-	अगर (tk->tkr_mono.घड़ी == घड़ी)
-		वापस 0;
-	stop_machine(change_घड़ीsource, घड़ी, शून्य);
-	tick_घड़ी_notअगरy();
-	वापस tk->tkr_mono.घड़ी == घड़ी ? 0 : -1;
-पूर्ण
+	return 0;
+}
 
 /**
- * kसमय_get_raw_ts64 - Returns the raw monotonic समय in a बारpec
- * @ts:		poपूर्णांकer to the बारpec64 to be set
+ * timekeeping_notify - Install a new clock source
+ * @clock:		pointer to the clock source
  *
- * Returns the raw monotonic समय (completely un-modअगरied by ntp)
+ * This function is called from clocksource.c after a new, better clock
+ * source has been registered. The caller holds the clocksource_mutex.
  */
-व्योम kसमय_get_raw_ts64(काष्ठा बारpec64 *ts)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	अचिन्हित पूर्णांक seq;
+int timekeeping_notify(struct clocksource *clock)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+
+	if (tk->tkr_mono.clock == clock)
+		return 0;
+	stop_machine(change_clocksource, clock, NULL);
+	tick_clock_notify();
+	return tk->tkr_mono.clock == clock ? 0 : -1;
+}
+
+/**
+ * ktime_get_raw_ts64 - Returns the raw monotonic time in a timespec
+ * @ts:		pointer to the timespec64 to be set
+ *
+ * Returns the raw monotonic time (completely un-modified by ntp)
+ */
+void ktime_get_raw_ts64(struct timespec64 *ts)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+	unsigned int seq;
 	u64 nsecs;
 
-	करो अणु
-		seq = पढ़ो_seqcount_begin(&tk_core.seq);
+	do {
+		seq = read_seqcount_begin(&tk_core.seq);
 		ts->tv_sec = tk->raw_sec;
-		nsecs = समयkeeping_get_ns(&tk->tkr_raw);
+		nsecs = timekeeping_get_ns(&tk->tkr_raw);
 
-	पूर्ण जबतक (पढ़ो_seqcount_retry(&tk_core.seq, seq));
+	} while (read_seqcount_retry(&tk_core.seq, seq));
 
 	ts->tv_nsec = 0;
-	बारpec64_add_ns(ts, nsecs);
-पूर्ण
-EXPORT_SYMBOL(kसमय_get_raw_ts64);
+	timespec64_add_ns(ts, nsecs);
+}
+EXPORT_SYMBOL(ktime_get_raw_ts64);
 
 
 /**
- * समयkeeping_valid_क्रम_hres - Check अगर समयkeeping is suitable क्रम hres
+ * timekeeping_valid_for_hres - Check if timekeeping is suitable for hres
  */
-पूर्णांक समयkeeping_valid_क्रम_hres(व्योम)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	अचिन्हित पूर्णांक seq;
-	पूर्णांक ret;
+int timekeeping_valid_for_hres(void)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+	unsigned int seq;
+	int ret;
 
-	करो अणु
-		seq = पढ़ो_seqcount_begin(&tk_core.seq);
+	do {
+		seq = read_seqcount_begin(&tk_core.seq);
 
-		ret = tk->tkr_mono.घड़ी->flags & CLOCK_SOURCE_VALID_FOR_HRES;
+		ret = tk->tkr_mono.clock->flags & CLOCK_SOURCE_VALID_FOR_HRES;
 
-	पूर्ण जबतक (पढ़ो_seqcount_retry(&tk_core.seq, seq));
+	} while (read_seqcount_retry(&tk_core.seq, seq));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * समयkeeping_max_deferment - Returns max समय the घड़ीsource can be deferred
+ * timekeeping_max_deferment - Returns max time the clocksource can be deferred
  */
-u64 समयkeeping_max_deferment(व्योम)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	अचिन्हित पूर्णांक seq;
+u64 timekeeping_max_deferment(void)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+	unsigned int seq;
 	u64 ret;
 
-	करो अणु
-		seq = पढ़ो_seqcount_begin(&tk_core.seq);
+	do {
+		seq = read_seqcount_begin(&tk_core.seq);
 
-		ret = tk->tkr_mono.घड़ी->max_idle_ns;
+		ret = tk->tkr_mono.clock->max_idle_ns;
 
-	पूर्ण जबतक (पढ़ो_seqcount_retry(&tk_core.seq, seq));
+	} while (read_seqcount_retry(&tk_core.seq, seq));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * पढ़ो_persistent_घड़ी64 -  Return समय from the persistent घड़ी.
- * @ts: Poपूर्णांकer to the storage क्रम the पढ़ोout value
+ * read_persistent_clock64 -  Return time from the persistent clock.
+ * @ts: Pointer to the storage for the readout value
  *
- * Weak dummy function क्रम arches that करो not yet support it.
- * Reads the समय from the battery backed persistent घड़ी.
- * Returns a बारpec with tv_sec=0 and tv_nsec=0 अगर unsupported.
+ * Weak dummy function for arches that do not yet support it.
+ * Reads the time from the battery backed persistent clock.
+ * Returns a timespec with tv_sec=0 and tv_nsec=0 if unsupported.
  *
- *  XXX - Do be sure to हटाओ it once all arches implement it.
+ *  XXX - Do be sure to remove it once all arches implement it.
  */
-व्योम __weak पढ़ो_persistent_घड़ी64(काष्ठा बारpec64 *ts)
-अणु
+void __weak read_persistent_clock64(struct timespec64 *ts)
+{
 	ts->tv_sec = 0;
 	ts->tv_nsec = 0;
-पूर्ण
+}
 
 /**
- * पढ़ो_persistent_wall_and_boot_offset - Read persistent घड़ी, and also offset
+ * read_persistent_wall_and_boot_offset - Read persistent clock, and also offset
  *                                        from the boot.
  *
- * Weak dummy function क्रम arches that करो not yet support it.
- * @wall_समय:	- current समय as वापसed by persistent घड़ी
- * @boot_offset: - offset that is defined as wall_समय - boot_समय
+ * Weak dummy function for arches that do not yet support it.
+ * @wall_time:	- current time as returned by persistent clock
+ * @boot_offset: - offset that is defined as wall_time - boot_time
  *
- * The शेष function calculates offset based on the current value of
- * local_घड़ी(). This way architectures that support sched_घड़ी() but करोn't
- * support dedicated boot समय घड़ी will provide the best estimate of the
- * boot समय.
+ * The default function calculates offset based on the current value of
+ * local_clock(). This way architectures that support sched_clock() but don't
+ * support dedicated boot time clock will provide the best estimate of the
+ * boot time.
  */
-व्योम __weak __init
-पढ़ो_persistent_wall_and_boot_offset(काष्ठा बारpec64 *wall_समय,
-				     काष्ठा बारpec64 *boot_offset)
-अणु
-	पढ़ो_persistent_घड़ी64(wall_समय);
-	*boot_offset = ns_to_बारpec64(local_घड़ी());
-पूर्ण
+void __weak __init
+read_persistent_wall_and_boot_offset(struct timespec64 *wall_time,
+				     struct timespec64 *boot_offset)
+{
+	read_persistent_clock64(wall_time);
+	*boot_offset = ns_to_timespec64(local_clock());
+}
 
 /*
- * Flag reflecting whether समयkeeping_resume() has injected sleepसमय.
+ * Flag reflecting whether timekeeping_resume() has injected sleeptime.
  *
  * The flag starts of false and is only set when a suspend reaches
- * समयkeeping_suspend(), समयkeeping_resume() sets it to false when the
- * समयkeeper घड़ीsource is not stopping across suspend and has been
- * used to update sleep समय. If the समयkeeper घड़ीsource has stopped
+ * timekeeping_suspend(), timekeeping_resume() sets it to false when the
+ * timekeeper clocksource is not stopping across suspend and has been
+ * used to update sleep time. If the timekeeper clocksource has stopped
  * then the flag stays true and is used by the RTC resume code to decide
- * whether sleepसमय must be injected and अगर so the flag माला_लो false then.
+ * whether sleeptime must be injected and if so the flag gets false then.
  *
- * If a suspend fails beक्रमe reaching समयkeeping_resume() then the flag
- * stays false and prevents erroneous sleepसमय injection.
+ * If a suspend fails before reaching timekeeping_resume() then the flag
+ * stays false and prevents erroneous sleeptime injection.
  */
-अटल bool suspend_timing_needed;
+static bool suspend_timing_needed;
 
-/* Flag क्रम अगर there is a persistent घड़ी on this platक्रमm */
-अटल bool persistent_घड़ी_exists;
+/* Flag for if there is a persistent clock on this platform */
+static bool persistent_clock_exists;
 
 /*
- * समयkeeping_init - Initializes the घड़ीsource and common समयkeeping values
+ * timekeeping_init - Initializes the clocksource and common timekeeping values
  */
-व्योम __init समयkeeping_init(व्योम)
-अणु
-	काष्ठा बारpec64 wall_समय, boot_offset, wall_to_mono;
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	काष्ठा घड़ीsource *घड़ी;
-	अचिन्हित दीर्घ flags;
+void __init timekeeping_init(void)
+{
+	struct timespec64 wall_time, boot_offset, wall_to_mono;
+	struct timekeeper *tk = &tk_core.timekeeper;
+	struct clocksource *clock;
+	unsigned long flags;
 
-	पढ़ो_persistent_wall_and_boot_offset(&wall_समय, &boot_offset);
-	अगर (बारpec64_valid_settod(&wall_समय) &&
-	    बारpec64_to_ns(&wall_समय) > 0) अणु
-		persistent_घड़ी_exists = true;
-	पूर्ण अन्यथा अगर (बारpec64_to_ns(&wall_समय) != 0) अणु
+	read_persistent_wall_and_boot_offset(&wall_time, &boot_offset);
+	if (timespec64_valid_settod(&wall_time) &&
+	    timespec64_to_ns(&wall_time) > 0) {
+		persistent_clock_exists = true;
+	} else if (timespec64_to_ns(&wall_time) != 0) {
 		pr_warn("Persistent clock returned invalid value");
-		wall_समय = (काष्ठा बारpec64)अणु0पूर्ण;
-	पूर्ण
+		wall_time = (struct timespec64){0};
+	}
 
-	अगर (बारpec64_compare(&wall_समय, &boot_offset) < 0)
-		boot_offset = (काष्ठा बारpec64)अणु0पूर्ण;
+	if (timespec64_compare(&wall_time, &boot_offset) < 0)
+		boot_offset = (struct timespec64){0};
 
 	/*
 	 * We want set wall_to_mono, so the following is true:
-	 * wall समय + wall_to_mono = boot समय
+	 * wall time + wall_to_mono = boot time
 	 */
-	wall_to_mono = बारpec64_sub(boot_offset, wall_समय);
+	wall_to_mono = timespec64_sub(boot_offset, wall_time);
 
-	raw_spin_lock_irqsave(&समयkeeper_lock, flags);
-	ग_लिखो_seqcount_begin(&tk_core.seq);
+	raw_spin_lock_irqsave(&timekeeper_lock, flags);
+	write_seqcount_begin(&tk_core.seq);
 	ntp_init();
 
-	घड़ी = घड़ीsource_शेष_घड़ी();
-	अगर (घड़ी->enable)
-		घड़ी->enable(घड़ी);
-	tk_setup_पूर्णांकernals(tk, घड़ी);
+	clock = clocksource_default_clock();
+	if (clock->enable)
+		clock->enable(clock);
+	tk_setup_internals(tk, clock);
 
-	tk_set_xसमय(tk, &wall_समय);
+	tk_set_xtime(tk, &wall_time);
 	tk->raw_sec = 0;
 
 	tk_set_wall_to_mono(tk, wall_to_mono);
 
-	समयkeeping_update(tk, TK_MIRROR | TK_CLOCK_WAS_SET);
+	timekeeping_update(tk, TK_MIRROR | TK_CLOCK_WAS_SET);
 
-	ग_लिखो_seqcount_end(&tk_core.seq);
-	raw_spin_unlock_irqrestore(&समयkeeper_lock, flags);
-पूर्ण
+	write_seqcount_end(&tk_core.seq);
+	raw_spin_unlock_irqrestore(&timekeeper_lock, flags);
+}
 
-/* समय in seconds when suspend began क्रम persistent घड़ी */
-अटल काष्ठा बारpec64 समयkeeping_suspend_समय;
+/* time in seconds when suspend began for persistent clock */
+static struct timespec64 timekeeping_suspend_time;
 
 /**
- * __समयkeeping_inject_sleepसमय - Internal function to add sleep पूर्णांकerval
- * @tk:		Poपूर्णांकer to the समयkeeper to be updated
- * @delta:	Poपूर्णांकer to the delta value in बारpec64 क्रमmat
+ * __timekeeping_inject_sleeptime - Internal function to add sleep interval
+ * @tk:		Pointer to the timekeeper to be updated
+ * @delta:	Pointer to the delta value in timespec64 format
  *
- * Takes a बारpec offset measuring a suspend पूर्णांकerval and properly
- * adds the sleep offset to the समयkeeping variables.
+ * Takes a timespec offset measuring a suspend interval and properly
+ * adds the sleep offset to the timekeeping variables.
  */
-अटल व्योम __समयkeeping_inject_sleepसमय(काष्ठा समयkeeper *tk,
-					   स्थिर काष्ठा बारpec64 *delta)
-अणु
-	अगर (!बारpec64_valid_strict(delta)) अणु
-		prपूर्णांकk_deferred(KERN_WARNING
+static void __timekeeping_inject_sleeptime(struct timekeeper *tk,
+					   const struct timespec64 *delta)
+{
+	if (!timespec64_valid_strict(delta)) {
+		printk_deferred(KERN_WARNING
 				"__timekeeping_inject_sleeptime: Invalid "
 				"sleep delta value!\n");
-		वापस;
-	पूर्ण
-	tk_xसमय_add(tk, delta);
-	tk_set_wall_to_mono(tk, बारpec64_sub(tk->wall_to_monotonic, *delta));
-	tk_update_sleep_समय(tk, बारpec64_to_kसमय(*delta));
-	tk_debug_account_sleep_समय(delta);
-पूर्ण
+		return;
+	}
+	tk_xtime_add(tk, delta);
+	tk_set_wall_to_mono(tk, timespec64_sub(tk->wall_to_monotonic, *delta));
+	tk_update_sleep_time(tk, timespec64_to_ktime(*delta));
+	tk_debug_account_sleep_time(delta);
+}
 
-#अगर defined(CONFIG_PM_SLEEP) && defined(CONFIG_RTC_HCTOSYS_DEVICE)
+#if defined(CONFIG_PM_SLEEP) && defined(CONFIG_RTC_HCTOSYS_DEVICE)
 /**
- * We have three kinds of समय sources to use क्रम sleep समय
+ * We have three kinds of time sources to use for sleep time
  * injection, the preference order is:
- * 1) non-stop घड़ीsource
- * 2) persistent घड़ी (ie: RTC accessible when irqs are off)
+ * 1) non-stop clocksource
+ * 2) persistent clock (ie: RTC accessible when irqs are off)
  * 3) RTC
  *
- * 1) and 2) are used by समयkeeping, 3) by RTC subप्रणाली.
- * If प्रणाली has neither 1) nor 2), 3) will be used finally.
+ * 1) and 2) are used by timekeeping, 3) by RTC subsystem.
+ * If system has neither 1) nor 2), 3) will be used finally.
  *
  *
- * If समयkeeping has injected sleepसमय via either 1) or 2),
- * 3) becomes needless, so in this हाल we करोn't need to call
- * rtc_resume(), and this is what समयkeeping_rtc_skipresume()
+ * If timekeeping has injected sleeptime via either 1) or 2),
+ * 3) becomes needless, so in this case we don't need to call
+ * rtc_resume(), and this is what timekeeping_rtc_skipresume()
  * means.
  */
-bool समयkeeping_rtc_skipresume(व्योम)
-अणु
-	वापस !suspend_timing_needed;
-पूर्ण
+bool timekeeping_rtc_skipresume(void)
+{
+	return !suspend_timing_needed;
+}
 
 /**
- * 1) can be determined whether to use or not only when करोing
- * समयkeeping_resume() which is invoked after rtc_suspend(),
- * so we can't skip rtc_suspend() surely अगर प्रणाली has 1).
+ * 1) can be determined whether to use or not only when doing
+ * timekeeping_resume() which is invoked after rtc_suspend(),
+ * so we can't skip rtc_suspend() surely if system has 1).
  *
- * But अगर प्रणाली has 2), 2) will definitely be used, so in this
- * हाल we करोn't need to call rtc_suspend(), and this is what
- * समयkeeping_rtc_skipsuspend() means.
+ * But if system has 2), 2) will definitely be used, so in this
+ * case we don't need to call rtc_suspend(), and this is what
+ * timekeeping_rtc_skipsuspend() means.
  */
-bool समयkeeping_rtc_skipsuspend(व्योम)
-अणु
-	वापस persistent_घड़ी_exists;
-पूर्ण
+bool timekeeping_rtc_skipsuspend(void)
+{
+	return persistent_clock_exists;
+}
 
 /**
- * समयkeeping_inject_sleepसमय64 - Adds suspend पूर्णांकerval to समयekeeping values
- * @delta: poपूर्णांकer to a बारpec64 delta value
+ * timekeeping_inject_sleeptime64 - Adds suspend interval to timeekeeping values
+ * @delta: pointer to a timespec64 delta value
  *
- * This hook is क्रम architectures that cannot support पढ़ो_persistent_घड़ी64
- * because their RTC/persistent घड़ी is only accessible when irqs are enabled.
- * and also करोn't have an effective nonstop घड़ीsource.
+ * This hook is for architectures that cannot support read_persistent_clock64
+ * because their RTC/persistent clock is only accessible when irqs are enabled.
+ * and also don't have an effective nonstop clocksource.
  *
  * This function should only be called by rtc_resume(), and allows
- * a suspend offset to be injected पूर्णांकo the समयkeeping values.
+ * a suspend offset to be injected into the timekeeping values.
  */
-व्योम समयkeeping_inject_sleepसमय64(स्थिर काष्ठा बारpec64 *delta)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	अचिन्हित दीर्घ flags;
+void timekeeping_inject_sleeptime64(const struct timespec64 *delta)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+	unsigned long flags;
 
-	raw_spin_lock_irqsave(&समयkeeper_lock, flags);
-	ग_लिखो_seqcount_begin(&tk_core.seq);
+	raw_spin_lock_irqsave(&timekeeper_lock, flags);
+	write_seqcount_begin(&tk_core.seq);
 
 	suspend_timing_needed = false;
 
-	समयkeeping_क्रमward_now(tk);
+	timekeeping_forward_now(tk);
 
-	__समयkeeping_inject_sleepसमय(tk, delta);
+	__timekeeping_inject_sleeptime(tk, delta);
 
-	समयkeeping_update(tk, TK_CLEAR_NTP | TK_MIRROR | TK_CLOCK_WAS_SET);
+	timekeeping_update(tk, TK_CLEAR_NTP | TK_MIRROR | TK_CLOCK_WAS_SET);
 
-	ग_लिखो_seqcount_end(&tk_core.seq);
-	raw_spin_unlock_irqrestore(&समयkeeper_lock, flags);
+	write_seqcount_end(&tk_core.seq);
+	raw_spin_unlock_irqrestore(&timekeeper_lock, flags);
 
-	/* संकेत hrसमयrs about समय change */
-	घड़ी_was_set();
-पूर्ण
-#पूर्ण_अगर
+	/* signal hrtimers about time change */
+	clock_was_set();
+}
+#endif
 
 /**
- * समयkeeping_resume - Resumes the generic समयkeeping subप्रणाली.
+ * timekeeping_resume - Resumes the generic timekeeping subsystem.
  */
-व्योम समयkeeping_resume(व्योम)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	काष्ठा घड़ीsource *घड़ी = tk->tkr_mono.घड़ी;
-	अचिन्हित दीर्घ flags;
-	काष्ठा बारpec64 ts_new, ts_delta;
+void timekeeping_resume(void)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+	struct clocksource *clock = tk->tkr_mono.clock;
+	unsigned long flags;
+	struct timespec64 ts_new, ts_delta;
 	u64 cycle_now, nsec;
-	bool inject_sleepसमय = false;
+	bool inject_sleeptime = false;
 
-	पढ़ो_persistent_घड़ी64(&ts_new);
+	read_persistent_clock64(&ts_new);
 
-	घड़ीevents_resume();
-	घड़ीsource_resume();
+	clockevents_resume();
+	clocksource_resume();
 
-	raw_spin_lock_irqsave(&समयkeeper_lock, flags);
-	ग_लिखो_seqcount_begin(&tk_core.seq);
+	raw_spin_lock_irqsave(&timekeeper_lock, flags);
+	write_seqcount_begin(&tk_core.seq);
 
 	/*
-	 * After प्रणाली resumes, we need to calculate the suspended समय and
-	 * compensate it क्रम the OS समय. There are 3 sources that could be
-	 * used: Nonstop घड़ीsource during suspend, persistent घड़ी and rtc
+	 * After system resumes, we need to calculate the suspended time and
+	 * compensate it for the OS time. There are 3 sources that could be
+	 * used: Nonstop clocksource during suspend, persistent clock and rtc
 	 * device.
 	 *
-	 * One specअगरic platक्रमm may have 1 or 2 or all of them, and the
+	 * One specific platform may have 1 or 2 or all of them, and the
 	 * preference will be:
-	 *	suspend-nonstop घड़ीsource -> persistent घड़ी -> rtc
-	 * The less preferred source will only be tried अगर there is no better
+	 *	suspend-nonstop clocksource -> persistent clock -> rtc
+	 * The less preferred source will only be tried if there is no better
 	 * usable source. The rtc part is handled separately in rtc core code.
 	 */
-	cycle_now = tk_घड़ी_पढ़ो(&tk->tkr_mono);
-	nsec = घड़ीsource_stop_suspend_timing(घड़ी, cycle_now);
-	अगर (nsec > 0) अणु
-		ts_delta = ns_to_बारpec64(nsec);
-		inject_sleepसमय = true;
-	पूर्ण अन्यथा अगर (बारpec64_compare(&ts_new, &समयkeeping_suspend_समय) > 0) अणु
-		ts_delta = बारpec64_sub(ts_new, समयkeeping_suspend_समय);
-		inject_sleepसमय = true;
-	पूर्ण
+	cycle_now = tk_clock_read(&tk->tkr_mono);
+	nsec = clocksource_stop_suspend_timing(clock, cycle_now);
+	if (nsec > 0) {
+		ts_delta = ns_to_timespec64(nsec);
+		inject_sleeptime = true;
+	} else if (timespec64_compare(&ts_new, &timekeeping_suspend_time) > 0) {
+		ts_delta = timespec64_sub(ts_new, timekeeping_suspend_time);
+		inject_sleeptime = true;
+	}
 
-	अगर (inject_sleepसमय) अणु
+	if (inject_sleeptime) {
 		suspend_timing_needed = false;
-		__समयkeeping_inject_sleepसमय(tk, &ts_delta);
-	पूर्ण
+		__timekeeping_inject_sleeptime(tk, &ts_delta);
+	}
 
 	/* Re-base the last cycle value */
 	tk->tkr_mono.cycle_last = cycle_now;
 	tk->tkr_raw.cycle_last  = cycle_now;
 
 	tk->ntp_error = 0;
-	समयkeeping_suspended = 0;
-	समयkeeping_update(tk, TK_MIRROR | TK_CLOCK_WAS_SET);
-	ग_लिखो_seqcount_end(&tk_core.seq);
-	raw_spin_unlock_irqrestore(&समयkeeper_lock, flags);
+	timekeeping_suspended = 0;
+	timekeeping_update(tk, TK_MIRROR | TK_CLOCK_WAS_SET);
+	write_seqcount_end(&tk_core.seq);
+	raw_spin_unlock_irqrestore(&timekeeper_lock, flags);
 
-	touch_softlockup_watchकरोg();
+	touch_softlockup_watchdog();
 
 	tick_resume();
-	hrसमयrs_resume();
-पूर्ण
+	hrtimers_resume();
+}
 
-पूर्णांक समयkeeping_suspend(व्योम)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	अचिन्हित दीर्घ flags;
-	काष्ठा बारpec64		delta, delta_delta;
-	अटल काष्ठा बारpec64	old_delta;
-	काष्ठा घड़ीsource *curr_घड़ी;
+int timekeeping_suspend(void)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+	unsigned long flags;
+	struct timespec64		delta, delta_delta;
+	static struct timespec64	old_delta;
+	struct clocksource *curr_clock;
 	u64 cycle_now;
 
-	पढ़ो_persistent_घड़ी64(&समयkeeping_suspend_समय);
+	read_persistent_clock64(&timekeeping_suspend_time);
 
 	/*
-	 * On some प्रणालीs the persistent_घड़ी can not be detected at
-	 * समयkeeping_init by its वापस value, so अगर we see a valid
-	 * value वापसed, update the persistent_घड़ी_exists flag.
+	 * On some systems the persistent_clock can not be detected at
+	 * timekeeping_init by its return value, so if we see a valid
+	 * value returned, update the persistent_clock_exists flag.
 	 */
-	अगर (समयkeeping_suspend_समय.tv_sec || समयkeeping_suspend_समय.tv_nsec)
-		persistent_घड़ी_exists = true;
+	if (timekeeping_suspend_time.tv_sec || timekeeping_suspend_time.tv_nsec)
+		persistent_clock_exists = true;
 
 	suspend_timing_needed = true;
 
-	raw_spin_lock_irqsave(&समयkeeper_lock, flags);
-	ग_लिखो_seqcount_begin(&tk_core.seq);
-	समयkeeping_क्रमward_now(tk);
-	समयkeeping_suspended = 1;
+	raw_spin_lock_irqsave(&timekeeper_lock, flags);
+	write_seqcount_begin(&tk_core.seq);
+	timekeeping_forward_now(tk);
+	timekeeping_suspended = 1;
 
 	/*
-	 * Since we've called क्रमward_now, cycle_last stores the value
-	 * just पढ़ो from the current घड़ीsource. Save this to potentially
+	 * Since we've called forward_now, cycle_last stores the value
+	 * just read from the current clocksource. Save this to potentially
 	 * use in suspend timing.
 	 */
-	curr_घड़ी = tk->tkr_mono.घड़ी;
+	curr_clock = tk->tkr_mono.clock;
 	cycle_now = tk->tkr_mono.cycle_last;
-	घड़ीsource_start_suspend_timing(curr_घड़ी, cycle_now);
+	clocksource_start_suspend_timing(curr_clock, cycle_now);
 
-	अगर (persistent_घड़ी_exists) अणु
+	if (persistent_clock_exists) {
 		/*
-		 * To aव्योम drअगरt caused by repeated suspend/resumes,
-		 * which each can add ~1 second drअगरt error,
-		 * try to compensate so the dअगरference in प्रणाली समय
-		 * and persistent_घड़ी समय stays बंद to स्थिरant.
+		 * To avoid drift caused by repeated suspend/resumes,
+		 * which each can add ~1 second drift error,
+		 * try to compensate so the difference in system time
+		 * and persistent_clock time stays close to constant.
 		 */
-		delta = बारpec64_sub(tk_xसमय(tk), समयkeeping_suspend_समय);
-		delta_delta = बारpec64_sub(delta, old_delta);
-		अगर (असल(delta_delta.tv_sec) >= 2) अणु
+		delta = timespec64_sub(tk_xtime(tk), timekeeping_suspend_time);
+		delta_delta = timespec64_sub(delta, old_delta);
+		if (abs(delta_delta.tv_sec) >= 2) {
 			/*
-			 * अगर delta_delta is too large, assume समय correction
+			 * if delta_delta is too large, assume time correction
 			 * has occurred and set old_delta to the current delta.
 			 */
 			old_delta = delta;
-		पूर्ण अन्यथा अणु
-			/* Otherwise try to adjust old_प्रणाली to compensate */
-			समयkeeping_suspend_समय =
-				बारpec64_add(समयkeeping_suspend_समय, delta_delta);
-		पूर्ण
-	पूर्ण
+		} else {
+			/* Otherwise try to adjust old_system to compensate */
+			timekeeping_suspend_time =
+				timespec64_add(timekeeping_suspend_time, delta_delta);
+		}
+	}
 
-	समयkeeping_update(tk, TK_MIRROR);
-	halt_fast_समयkeeper(tk);
-	ग_लिखो_seqcount_end(&tk_core.seq);
-	raw_spin_unlock_irqrestore(&समयkeeper_lock, flags);
+	timekeeping_update(tk, TK_MIRROR);
+	halt_fast_timekeeper(tk);
+	write_seqcount_end(&tk_core.seq);
+	raw_spin_unlock_irqrestore(&timekeeper_lock, flags);
 
 	tick_suspend();
-	घड़ीsource_suspend();
-	घड़ीevents_suspend();
+	clocksource_suspend();
+	clockevents_suspend();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* sysfs resume/suspend bits क्रम समयkeeping */
-अटल काष्ठा syscore_ops समयkeeping_syscore_ops = अणु
-	.resume		= समयkeeping_resume,
-	.suspend	= समयkeeping_suspend,
-पूर्ण;
+/* sysfs resume/suspend bits for timekeeping */
+static struct syscore_ops timekeeping_syscore_ops = {
+	.resume		= timekeeping_resume,
+	.suspend	= timekeeping_suspend,
+};
 
-अटल पूर्णांक __init समयkeeping_init_ops(व्योम)
-अणु
-	रेजिस्टर_syscore_ops(&समयkeeping_syscore_ops);
-	वापस 0;
-पूर्ण
-device_initcall(समयkeeping_init_ops);
+static int __init timekeeping_init_ops(void)
+{
+	register_syscore_ops(&timekeeping_syscore_ops);
+	return 0;
+}
+device_initcall(timekeeping_init_ops);
 
 /*
- * Apply a multiplier adjusपंचांगent to the समयkeeper
+ * Apply a multiplier adjustment to the timekeeper
  */
-अटल __always_अंतरभूत व्योम समयkeeping_apply_adjusपंचांगent(काष्ठा समयkeeper *tk,
+static __always_inline void timekeeping_apply_adjustment(struct timekeeper *tk,
 							 s64 offset,
 							 s32 mult_adj)
-अणु
-	s64 पूर्णांकerval = tk->cycle_पूर्णांकerval;
+{
+	s64 interval = tk->cycle_interval;
 
-	अगर (mult_adj == 0) अणु
-		वापस;
-	पूर्ण अन्यथा अगर (mult_adj == -1) अणु
-		पूर्णांकerval = -पूर्णांकerval;
+	if (mult_adj == 0) {
+		return;
+	} else if (mult_adj == -1) {
+		interval = -interval;
 		offset = -offset;
-	पूर्ण अन्यथा अगर (mult_adj != 1) अणु
-		पूर्णांकerval *= mult_adj;
+	} else if (mult_adj != 1) {
+		interval *= mult_adj;
 		offset *= mult_adj;
-	पूर्ण
+	}
 
 	/*
 	 * So the following can be confusing.
 	 *
-	 * To keep things simple, lets assume mult_adj == 1 क्रम now.
+	 * To keep things simple, lets assume mult_adj == 1 for now.
 	 *
-	 * When mult_adj != 1, remember that the पूर्णांकerval and offset values
+	 * When mult_adj != 1, remember that the interval and offset values
 	 * have been appropriately scaled so the math is the same.
 	 *
 	 * The basic idea here is that we're increasing the multiplier
-	 * by one, this causes the xसमय_पूर्णांकerval to be incremented by
-	 * one cycle_पूर्णांकerval. This is because:
-	 *	xसमय_पूर्णांकerval = cycle_पूर्णांकerval * mult
-	 * So अगर mult is being incremented by one:
-	 *	xसमय_पूर्णांकerval = cycle_पूर्णांकerval * (mult + 1)
+	 * by one, this causes the xtime_interval to be incremented by
+	 * one cycle_interval. This is because:
+	 *	xtime_interval = cycle_interval * mult
+	 * So if mult is being incremented by one:
+	 *	xtime_interval = cycle_interval * (mult + 1)
 	 * Its the same as:
-	 *	xसमय_पूर्णांकerval = (cycle_पूर्णांकerval * mult) + cycle_पूर्णांकerval
-	 * Which can be लघुened to:
-	 *	xसमय_पूर्णांकerval += cycle_पूर्णांकerval
+	 *	xtime_interval = (cycle_interval * mult) + cycle_interval
+	 * Which can be shortened to:
+	 *	xtime_interval += cycle_interval
 	 *
 	 * So offset stores the non-accumulated cycles. Thus the current
-	 * समय (in shअगरted nanoseconds) is:
-	 *	now = (offset * adj) + xसमय_nsec
-	 * Now, even though we're adjusting the घड़ी frequency, we have
-	 * to keep समय consistent. In other words, we can't jump back
-	 * in समय, and we also want to aव्योम jumping क्रमward in समय.
+	 * time (in shifted nanoseconds) is:
+	 *	now = (offset * adj) + xtime_nsec
+	 * Now, even though we're adjusting the clock frequency, we have
+	 * to keep time consistent. In other words, we can't jump back
+	 * in time, and we also want to avoid jumping forward in time.
 	 *
-	 * So given the same offset value, we need the समय to be the same
-	 * both beक्रमe and after the freq adjusपंचांगent.
-	 *	now = (offset * adj_1) + xसमय_nsec_1
-	 *	now = (offset * adj_2) + xसमय_nsec_2
+	 * So given the same offset value, we need the time to be the same
+	 * both before and after the freq adjustment.
+	 *	now = (offset * adj_1) + xtime_nsec_1
+	 *	now = (offset * adj_2) + xtime_nsec_2
 	 * So:
-	 *	(offset * adj_1) + xसमय_nsec_1 =
-	 *		(offset * adj_2) + xसमय_nsec_2
+	 *	(offset * adj_1) + xtime_nsec_1 =
+	 *		(offset * adj_2) + xtime_nsec_2
 	 * And we know:
 	 *	adj_2 = adj_1 + 1
 	 * So:
-	 *	(offset * adj_1) + xसमय_nsec_1 =
-	 *		(offset * (adj_1+1)) + xसमय_nsec_2
-	 *	(offset * adj_1) + xसमय_nsec_1 =
-	 *		(offset * adj_1) + offset + xसमय_nsec_2
+	 *	(offset * adj_1) + xtime_nsec_1 =
+	 *		(offset * (adj_1+1)) + xtime_nsec_2
+	 *	(offset * adj_1) + xtime_nsec_1 =
+	 *		(offset * adj_1) + offset + xtime_nsec_2
 	 * Canceling the sides:
-	 *	xसमय_nsec_1 = offset + xसमय_nsec_2
+	 *	xtime_nsec_1 = offset + xtime_nsec_2
 	 * Which gives us:
-	 *	xसमय_nsec_2 = xसमय_nsec_1 - offset
-	 * Which simplअगरies to:
-	 *	xसमय_nsec -= offset
+	 *	xtime_nsec_2 = xtime_nsec_1 - offset
+	 * Which simplifies to:
+	 *	xtime_nsec -= offset
 	 */
-	अगर ((mult_adj > 0) && (tk->tkr_mono.mult + mult_adj < mult_adj)) अणु
-		/* NTP adjusपंचांगent caused घड़ीsource mult overflow */
+	if ((mult_adj > 0) && (tk->tkr_mono.mult + mult_adj < mult_adj)) {
+		/* NTP adjustment caused clocksource mult overflow */
 		WARN_ON_ONCE(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	tk->tkr_mono.mult += mult_adj;
-	tk->xसमय_पूर्णांकerval += पूर्णांकerval;
-	tk->tkr_mono.xसमय_nsec -= offset;
-पूर्ण
+	tk->xtime_interval += interval;
+	tk->tkr_mono.xtime_nsec -= offset;
+}
 
 /*
- * Adjust the समयkeeper's multiplier to the correct frequency
+ * Adjust the timekeeper's multiplier to the correct frequency
  * and also to reduce the accumulated error value.
  */
-अटल व्योम समयkeeping_adjust(काष्ठा समयkeeper *tk, s64 offset)
-अणु
+static void timekeeping_adjust(struct timekeeper *tk, s64 offset)
+{
 	u32 mult;
 
 	/*
 	 * Determine the multiplier from the current NTP tick length.
-	 * Aव्योम expensive भागision when the tick length करोesn't change.
+	 * Avoid expensive division when the tick length doesn't change.
 	 */
-	अगर (likely(tk->ntp_tick == ntp_tick_length())) अणु
+	if (likely(tk->ntp_tick == ntp_tick_length())) {
 		mult = tk->tkr_mono.mult - tk->ntp_err_mult;
-	पूर्ण अन्यथा अणु
+	} else {
 		tk->ntp_tick = ntp_tick_length();
-		mult = भाग64_u64((tk->ntp_tick >> tk->ntp_error_shअगरt) -
-				 tk->xसमय_reमुख्यder, tk->cycle_पूर्णांकerval);
-	पूर्ण
+		mult = div64_u64((tk->ntp_tick >> tk->ntp_error_shift) -
+				 tk->xtime_remainder, tk->cycle_interval);
+	}
 
 	/*
-	 * If the घड़ी is behind the NTP समय, increase the multiplier by 1
-	 * to catch up with it. If it's ahead and there was a reमुख्यder in the
-	 * tick भागision, the घड़ी will slow करोwn. Otherwise it will stay
-	 * ahead until the tick length changes to a non-भागisible value.
+	 * If the clock is behind the NTP time, increase the multiplier by 1
+	 * to catch up with it. If it's ahead and there was a remainder in the
+	 * tick division, the clock will slow down. Otherwise it will stay
+	 * ahead until the tick length changes to a non-divisible value.
 	 */
 	tk->ntp_err_mult = tk->ntp_error > 0 ? 1 : 0;
 	mult += tk->ntp_err_mult;
 
-	समयkeeping_apply_adjusपंचांगent(tk, offset, mult - tk->tkr_mono.mult);
+	timekeeping_apply_adjustment(tk, offset, mult - tk->tkr_mono.mult);
 
-	अगर (unlikely(tk->tkr_mono.घड़ी->maxadj &&
-		(असल(tk->tkr_mono.mult - tk->tkr_mono.घड़ी->mult)
-			> tk->tkr_mono.घड़ी->maxadj))) अणु
-		prपूर्णांकk_once(KERN_WARNING
+	if (unlikely(tk->tkr_mono.clock->maxadj &&
+		(abs(tk->tkr_mono.mult - tk->tkr_mono.clock->mult)
+			> tk->tkr_mono.clock->maxadj))) {
+		printk_once(KERN_WARNING
 			"Adjusting %s more than 11%% (%ld vs %ld)\n",
-			tk->tkr_mono.घड़ी->name, (दीर्घ)tk->tkr_mono.mult,
-			(दीर्घ)tk->tkr_mono.घड़ी->mult + tk->tkr_mono.घड़ी->maxadj);
-	पूर्ण
+			tk->tkr_mono.clock->name, (long)tk->tkr_mono.mult,
+			(long)tk->tkr_mono.clock->mult + tk->tkr_mono.clock->maxadj);
+	}
 
 	/*
-	 * It may be possible that when we entered this function, xसमय_nsec
-	 * was very small.  Further, अगर we're slightly speeding the घड़ीsource
+	 * It may be possible that when we entered this function, xtime_nsec
+	 * was very small.  Further, if we're slightly speeding the clocksource
 	 * in the code above, its possible the required corrective factor to
-	 * xसमय_nsec could cause it to underflow.
+	 * xtime_nsec could cause it to underflow.
 	 *
-	 * Now, since we have alपढ़ोy accumulated the second and the NTP
-	 * subप्रणाली has been notअगरied via second_overflow(), we need to skip
+	 * Now, since we have already accumulated the second and the NTP
+	 * subsystem has been notified via second_overflow(), we need to skip
 	 * the next update.
 	 */
-	अगर (unlikely((s64)tk->tkr_mono.xसमय_nsec < 0)) अणु
-		tk->tkr_mono.xसमय_nsec += (u64)NSEC_PER_SEC <<
-							tk->tkr_mono.shअगरt;
-		tk->xसमय_sec--;
+	if (unlikely((s64)tk->tkr_mono.xtime_nsec < 0)) {
+		tk->tkr_mono.xtime_nsec += (u64)NSEC_PER_SEC <<
+							tk->tkr_mono.shift;
+		tk->xtime_sec--;
 		tk->skip_second_overflow = 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * accumulate_nsecs_to_secs - Accumulates nsecs पूर्णांकo secs
+ * accumulate_nsecs_to_secs - Accumulates nsecs into secs
  *
  * Helper function that accumulates the nsecs greater than a second
- * from the xसमय_nsec field to the xसमय_secs field.
- * It also calls पूर्णांकo the NTP code to handle leapsecond processing.
+ * from the xtime_nsec field to the xtime_secs field.
+ * It also calls into the NTP code to handle leapsecond processing.
  */
-अटल अंतरभूत अचिन्हित पूर्णांक accumulate_nsecs_to_secs(काष्ठा समयkeeper *tk)
-अणु
-	u64 nsecps = (u64)NSEC_PER_SEC << tk->tkr_mono.shअगरt;
-	अचिन्हित पूर्णांक घड़ी_set = 0;
+static inline unsigned int accumulate_nsecs_to_secs(struct timekeeper *tk)
+{
+	u64 nsecps = (u64)NSEC_PER_SEC << tk->tkr_mono.shift;
+	unsigned int clock_set = 0;
 
-	जबतक (tk->tkr_mono.xसमय_nsec >= nsecps) अणु
-		पूर्णांक leap;
+	while (tk->tkr_mono.xtime_nsec >= nsecps) {
+		int leap;
 
-		tk->tkr_mono.xसमय_nsec -= nsecps;
-		tk->xसमय_sec++;
+		tk->tkr_mono.xtime_nsec -= nsecps;
+		tk->xtime_sec++;
 
 		/*
-		 * Skip NTP update अगर this second was accumulated beक्रमe,
-		 * i.e. xसमय_nsec underflowed in समयkeeping_adjust()
+		 * Skip NTP update if this second was accumulated before,
+		 * i.e. xtime_nsec underflowed in timekeeping_adjust()
 		 */
-		अगर (unlikely(tk->skip_second_overflow)) अणु
+		if (unlikely(tk->skip_second_overflow)) {
 			tk->skip_second_overflow = 0;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* Figure out अगर its a leap sec and apply अगर needed */
-		leap = second_overflow(tk->xसमय_sec);
-		अगर (unlikely(leap)) अणु
-			काष्ठा बारpec64 ts;
+		/* Figure out if its a leap sec and apply if needed */
+		leap = second_overflow(tk->xtime_sec);
+		if (unlikely(leap)) {
+			struct timespec64 ts;
 
-			tk->xसमय_sec += leap;
+			tk->xtime_sec += leap;
 
 			ts.tv_sec = leap;
 			ts.tv_nsec = 0;
 			tk_set_wall_to_mono(tk,
-				बारpec64_sub(tk->wall_to_monotonic, ts));
+				timespec64_sub(tk->wall_to_monotonic, ts));
 
-			__समयkeeping_set_tai_offset(tk, tk->tai_offset - leap);
+			__timekeeping_set_tai_offset(tk, tk->tai_offset - leap);
 
-			घड़ी_set = TK_CLOCK_WAS_SET;
-		पूर्ण
-	पूर्ण
-	वापस घड़ी_set;
-पूर्ण
+			clock_set = TK_CLOCK_WAS_SET;
+		}
+	}
+	return clock_set;
+}
 
 /*
- * logarithmic_accumulation - shअगरted accumulation of cycles
+ * logarithmic_accumulation - shifted accumulation of cycles
  *
- * This functions accumulates a shअगरted पूर्णांकerval of cycles पूर्णांकo
- * a shअगरted पूर्णांकerval nanoseconds. Allows क्रम O(log) accumulation
+ * This functions accumulates a shifted interval of cycles into
+ * a shifted interval nanoseconds. Allows for O(log) accumulation
  * loop.
  *
  * Returns the unconsumed cycles.
  */
-अटल u64 logarithmic_accumulation(काष्ठा समयkeeper *tk, u64 offset,
-				    u32 shअगरt, अचिन्हित पूर्णांक *घड़ी_set)
-अणु
-	u64 पूर्णांकerval = tk->cycle_पूर्णांकerval << shअगरt;
+static u64 logarithmic_accumulation(struct timekeeper *tk, u64 offset,
+				    u32 shift, unsigned int *clock_set)
+{
+	u64 interval = tk->cycle_interval << shift;
 	u64 snsec_per_sec;
 
-	/* If the offset is smaller than a shअगरted पूर्णांकerval, करो nothing */
-	अगर (offset < पूर्णांकerval)
-		वापस offset;
+	/* If the offset is smaller than a shifted interval, do nothing */
+	if (offset < interval)
+		return offset;
 
-	/* Accumulate one shअगरted पूर्णांकerval */
-	offset -= पूर्णांकerval;
-	tk->tkr_mono.cycle_last += पूर्णांकerval;
-	tk->tkr_raw.cycle_last  += पूर्णांकerval;
+	/* Accumulate one shifted interval */
+	offset -= interval;
+	tk->tkr_mono.cycle_last += interval;
+	tk->tkr_raw.cycle_last  += interval;
 
-	tk->tkr_mono.xसमय_nsec += tk->xसमय_पूर्णांकerval << shअगरt;
-	*घड़ी_set |= accumulate_nsecs_to_secs(tk);
+	tk->tkr_mono.xtime_nsec += tk->xtime_interval << shift;
+	*clock_set |= accumulate_nsecs_to_secs(tk);
 
-	/* Accumulate raw समय */
-	tk->tkr_raw.xसमय_nsec += tk->raw_पूर्णांकerval << shअगरt;
-	snsec_per_sec = (u64)NSEC_PER_SEC << tk->tkr_raw.shअगरt;
-	जबतक (tk->tkr_raw.xसमय_nsec >= snsec_per_sec) अणु
-		tk->tkr_raw.xसमय_nsec -= snsec_per_sec;
+	/* Accumulate raw time */
+	tk->tkr_raw.xtime_nsec += tk->raw_interval << shift;
+	snsec_per_sec = (u64)NSEC_PER_SEC << tk->tkr_raw.shift;
+	while (tk->tkr_raw.xtime_nsec >= snsec_per_sec) {
+		tk->tkr_raw.xtime_nsec -= snsec_per_sec;
 		tk->raw_sec++;
-	पूर्ण
+	}
 
-	/* Accumulate error between NTP and घड़ी पूर्णांकerval */
-	tk->ntp_error += tk->ntp_tick << shअगरt;
-	tk->ntp_error -= (tk->xसमय_पूर्णांकerval + tk->xसमय_reमुख्यder) <<
-						(tk->ntp_error_shअगरt + shअगरt);
+	/* Accumulate error between NTP and clock interval */
+	tk->ntp_error += tk->ntp_tick << shift;
+	tk->ntp_error -= (tk->xtime_interval + tk->xtime_remainder) <<
+						(tk->ntp_error_shift + shift);
 
-	वापस offset;
-पूर्ण
+	return offset;
+}
 
 /*
- * समयkeeping_advance - Updates the समयkeeper to the current समय and
+ * timekeeping_advance - Updates the timekeeper to the current time and
  * current NTP tick length
  */
-अटल व्योम समयkeeping_advance(क्रमागत समयkeeping_adv_mode mode)
-अणु
-	काष्ठा समयkeeper *real_tk = &tk_core.समयkeeper;
-	काष्ठा समयkeeper *tk = &shaकरोw_समयkeeper;
+static void timekeeping_advance(enum timekeeping_adv_mode mode)
+{
+	struct timekeeper *real_tk = &tk_core.timekeeper;
+	struct timekeeper *tk = &shadow_timekeeper;
 	u64 offset;
-	पूर्णांक shअगरt = 0, maxshअगरt;
-	अचिन्हित पूर्णांक घड़ी_set = 0;
-	अचिन्हित दीर्घ flags;
+	int shift = 0, maxshift;
+	unsigned int clock_set = 0;
+	unsigned long flags;
 
-	raw_spin_lock_irqsave(&समयkeeper_lock, flags);
+	raw_spin_lock_irqsave(&timekeeper_lock, flags);
 
 	/* Make sure we're fully resumed: */
-	अगर (unlikely(समयkeeping_suspended))
-		जाओ out;
+	if (unlikely(timekeeping_suspended))
+		goto out;
 
-	offset = घड़ीsource_delta(tk_घड़ी_पढ़ो(&tk->tkr_mono),
+	offset = clocksource_delta(tk_clock_read(&tk->tkr_mono),
 				   tk->tkr_mono.cycle_last, tk->tkr_mono.mask);
 
-	/* Check अगर there's really nothing to करो */
-	अगर (offset < real_tk->cycle_पूर्णांकerval && mode == TK_ADV_TICK)
-		जाओ out;
+	/* Check if there's really nothing to do */
+	if (offset < real_tk->cycle_interval && mode == TK_ADV_TICK)
+		goto out;
 
 	/* Do some additional sanity checking */
-	समयkeeping_check_update(tk, offset);
+	timekeeping_check_update(tk, offset);
 
 	/*
-	 * With NO_HZ we may have to accumulate many cycle_पूर्णांकervals
-	 * (think "ticks") worth of समय at once. To करो this efficiently,
-	 * we calculate the largest करोubling multiple of cycle_पूर्णांकervals
+	 * With NO_HZ we may have to accumulate many cycle_intervals
+	 * (think "ticks") worth of time at once. To do this efficiently,
+	 * we calculate the largest doubling multiple of cycle_intervals
 	 * that is smaller than the offset.  We then accumulate that
 	 * chunk in one go, and then try to consume the next smaller
-	 * द्विगुनd multiple.
+	 * doubled multiple.
 	 */
-	shअगरt = ilog2(offset) - ilog2(tk->cycle_पूर्णांकerval);
-	shअगरt = max(0, shअगरt);
-	/* Bound shअगरt to one less than what overflows tick_length */
-	maxshअगरt = (64 - (ilog2(ntp_tick_length())+1)) - 1;
-	shअगरt = min(shअगरt, maxshअगरt);
-	जबतक (offset >= tk->cycle_पूर्णांकerval) अणु
-		offset = logarithmic_accumulation(tk, offset, shअगरt,
-							&घड़ी_set);
-		अगर (offset < tk->cycle_पूर्णांकerval<<shअगरt)
-			shअगरt--;
-	पूर्ण
+	shift = ilog2(offset) - ilog2(tk->cycle_interval);
+	shift = max(0, shift);
+	/* Bound shift to one less than what overflows tick_length */
+	maxshift = (64 - (ilog2(ntp_tick_length())+1)) - 1;
+	shift = min(shift, maxshift);
+	while (offset >= tk->cycle_interval) {
+		offset = logarithmic_accumulation(tk, offset, shift,
+							&clock_set);
+		if (offset < tk->cycle_interval<<shift)
+			shift--;
+	}
 
 	/* Adjust the multiplier to correct NTP error */
-	समयkeeping_adjust(tk, offset);
+	timekeeping_adjust(tk, offset);
 
 	/*
 	 * Finally, make sure that after the rounding
-	 * xसमय_nsec isn't larger than NSEC_PER_SEC
+	 * xtime_nsec isn't larger than NSEC_PER_SEC
 	 */
-	घड़ी_set |= accumulate_nsecs_to_secs(tk);
+	clock_set |= accumulate_nsecs_to_secs(tk);
 
-	ग_लिखो_seqcount_begin(&tk_core.seq);
+	write_seqcount_begin(&tk_core.seq);
 	/*
-	 * Update the real समयkeeper.
+	 * Update the real timekeeper.
 	 *
-	 * We could aव्योम this स_नकल by चयनing poपूर्णांकers, but that
-	 * requires changes to all other समयkeeper usage sites as
-	 * well, i.e. move the समयkeeper poपूर्णांकer getter पूर्णांकo the
-	 * spinlocked/seqcount रक्षित sections. And we trade this
-	 * स_नकल under the tk_core.seq against one beक्रमe we start
+	 * We could avoid this memcpy by switching pointers, but that
+	 * requires changes to all other timekeeper usage sites as
+	 * well, i.e. move the timekeeper pointer getter into the
+	 * spinlocked/seqcount protected sections. And we trade this
+	 * memcpy under the tk_core.seq against one before we start
 	 * updating.
 	 */
-	समयkeeping_update(tk, घड़ी_set);
-	स_नकल(real_tk, tk, माप(*tk));
-	/* The स_नकल must come last. Do not put anything here! */
-	ग_लिखो_seqcount_end(&tk_core.seq);
+	timekeeping_update(tk, clock_set);
+	memcpy(real_tk, tk, sizeof(*tk));
+	/* The memcpy must come last. Do not put anything here! */
+	write_seqcount_end(&tk_core.seq);
 out:
-	raw_spin_unlock_irqrestore(&समयkeeper_lock, flags);
-	अगर (घड़ी_set)
+	raw_spin_unlock_irqrestore(&timekeeper_lock, flags);
+	if (clock_set)
 		/* Have to call _delayed version, since in irq context*/
-		घड़ी_was_set_delayed();
-पूर्ण
+		clock_was_set_delayed();
+}
 
 /**
- * update_wall_समय - Uses the current घड़ीsource to increment the wall समय
+ * update_wall_time - Uses the current clocksource to increment the wall time
  *
  */
-व्योम update_wall_समय(व्योम)
-अणु
-	समयkeeping_advance(TK_ADV_TICK);
-पूर्ण
+void update_wall_time(void)
+{
+	timekeeping_advance(TK_ADV_TICK);
+}
 
 /**
- * getbootसमय64 - Return the real समय of प्रणाली boot.
- * @ts:		poपूर्णांकer to the बारpec64 to be set
+ * getboottime64 - Return the real time of system boot.
+ * @ts:		pointer to the timespec64 to be set
  *
- * Returns the wall-समय of boot in a बारpec64.
+ * Returns the wall-time of boot in a timespec64.
  *
  * This is based on the wall_to_monotonic offset and the total suspend
- * समय. Calls to समय_रखोofday will affect the value वापसed (which
- * basically means that however wrong your real समय घड़ी is at boot समय,
- * you get the right समय here).
+ * time. Calls to settimeofday will affect the value returned (which
+ * basically means that however wrong your real time clock is at boot time,
+ * you get the right time here).
  */
-व्योम getbootसमय64(काष्ठा बारpec64 *ts)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	kसमय_प्रकार t = kसमय_sub(tk->offs_real, tk->offs_boot);
+void getboottime64(struct timespec64 *ts)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+	ktime_t t = ktime_sub(tk->offs_real, tk->offs_boot);
 
-	*ts = kसमय_प्रकारo_बारpec64(t);
-पूर्ण
-EXPORT_SYMBOL_GPL(getbootसमय64);
+	*ts = ktime_to_timespec64(t);
+}
+EXPORT_SYMBOL_GPL(getboottime64);
 
-व्योम kसमय_get_coarse_real_ts64(काष्ठा बारpec64 *ts)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	अचिन्हित पूर्णांक seq;
+void ktime_get_coarse_real_ts64(struct timespec64 *ts)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+	unsigned int seq;
 
-	करो अणु
-		seq = पढ़ो_seqcount_begin(&tk_core.seq);
+	do {
+		seq = read_seqcount_begin(&tk_core.seq);
 
-		*ts = tk_xसमय(tk);
-	पूर्ण जबतक (पढ़ो_seqcount_retry(&tk_core.seq, seq));
-पूर्ण
-EXPORT_SYMBOL(kसमय_get_coarse_real_ts64);
+		*ts = tk_xtime(tk);
+	} while (read_seqcount_retry(&tk_core.seq, seq));
+}
+EXPORT_SYMBOL(ktime_get_coarse_real_ts64);
 
-व्योम kसमय_get_coarse_ts64(काष्ठा बारpec64 *ts)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	काष्ठा बारpec64 now, mono;
-	अचिन्हित पूर्णांक seq;
+void ktime_get_coarse_ts64(struct timespec64 *ts)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+	struct timespec64 now, mono;
+	unsigned int seq;
 
-	करो अणु
-		seq = पढ़ो_seqcount_begin(&tk_core.seq);
+	do {
+		seq = read_seqcount_begin(&tk_core.seq);
 
-		now = tk_xसमय(tk);
+		now = tk_xtime(tk);
 		mono = tk->wall_to_monotonic;
-	पूर्ण जबतक (पढ़ो_seqcount_retry(&tk_core.seq, seq));
+	} while (read_seqcount_retry(&tk_core.seq, seq));
 
-	set_normalized_बारpec64(ts, now.tv_sec + mono.tv_sec,
+	set_normalized_timespec64(ts, now.tv_sec + mono.tv_sec,
 				now.tv_nsec + mono.tv_nsec);
-पूर्ण
-EXPORT_SYMBOL(kसमय_get_coarse_ts64);
+}
+EXPORT_SYMBOL(ktime_get_coarse_ts64);
 
 /*
- * Must hold jअगरfies_lock
+ * Must hold jiffies_lock
  */
-व्योम करो_समयr(अचिन्हित दीर्घ ticks)
-अणु
-	jअगरfies_64 += ticks;
+void do_timer(unsigned long ticks)
+{
+	jiffies_64 += ticks;
 	calc_global_load();
-पूर्ण
+}
 
 /**
- * kसमय_get_update_offsets_now - hrसमयr helper
- * @cwsseq:	poपूर्णांकer to check and store the घड़ी was set sequence number
- * @offs_real:	poपूर्णांकer to storage क्रम monotonic -> realसमय offset
- * @offs_boot:	poपूर्णांकer to storage क्रम monotonic -> bootसमय offset
- * @offs_tai:	poपूर्णांकer to storage क्रम monotonic -> घड़ी tai offset
+ * ktime_get_update_offsets_now - hrtimer helper
+ * @cwsseq:	pointer to check and store the clock was set sequence number
+ * @offs_real:	pointer to storage for monotonic -> realtime offset
+ * @offs_boot:	pointer to storage for monotonic -> boottime offset
+ * @offs_tai:	pointer to storage for monotonic -> clock tai offset
  *
- * Returns current monotonic समय and updates the offsets अगर the
- * sequence number in @cwsseq and समयkeeper.घड़ी_was_set_seq are
- * dअगरferent.
+ * Returns current monotonic time and updates the offsets if the
+ * sequence number in @cwsseq and timekeeper.clock_was_set_seq are
+ * different.
  *
- * Called from hrसमयr_पूर्णांकerrupt() or retrigger_next_event()
+ * Called from hrtimer_interrupt() or retrigger_next_event()
  */
-kसमय_प्रकार kसमय_get_update_offsets_now(अचिन्हित पूर्णांक *cwsseq, kसमय_प्रकार *offs_real,
-				     kसमय_प्रकार *offs_boot, kसमय_प्रकार *offs_tai)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	अचिन्हित पूर्णांक seq;
-	kसमय_प्रकार base;
+ktime_t ktime_get_update_offsets_now(unsigned int *cwsseq, ktime_t *offs_real,
+				     ktime_t *offs_boot, ktime_t *offs_tai)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+	unsigned int seq;
+	ktime_t base;
 	u64 nsecs;
 
-	करो अणु
-		seq = पढ़ो_seqcount_begin(&tk_core.seq);
+	do {
+		seq = read_seqcount_begin(&tk_core.seq);
 
 		base = tk->tkr_mono.base;
-		nsecs = समयkeeping_get_ns(&tk->tkr_mono);
-		base = kसमय_add_ns(base, nsecs);
+		nsecs = timekeeping_get_ns(&tk->tkr_mono);
+		base = ktime_add_ns(base, nsecs);
 
-		अगर (*cwsseq != tk->घड़ी_was_set_seq) अणु
-			*cwsseq = tk->घड़ी_was_set_seq;
+		if (*cwsseq != tk->clock_was_set_seq) {
+			*cwsseq = tk->clock_was_set_seq;
 			*offs_real = tk->offs_real;
 			*offs_boot = tk->offs_boot;
 			*offs_tai = tk->offs_tai;
-		पूर्ण
+		}
 
-		/* Handle leapsecond insertion adjusपंचांगents */
-		अगर (unlikely(base >= tk->next_leap_kसमय))
-			*offs_real = kसमय_sub(tk->offs_real, kसमय_set(1, 0));
+		/* Handle leapsecond insertion adjustments */
+		if (unlikely(base >= tk->next_leap_ktime))
+			*offs_real = ktime_sub(tk->offs_real, ktime_set(1, 0));
 
-	पूर्ण जबतक (पढ़ो_seqcount_retry(&tk_core.seq, seq));
+	} while (read_seqcount_retry(&tk_core.seq, seq));
 
-	वापस base;
-पूर्ण
+	return base;
+}
 
 /*
- * समयkeeping_validate_समयx - Ensures the समयx is ok क्रम use in करो_adjसमयx
+ * timekeeping_validate_timex - Ensures the timex is ok for use in do_adjtimex
  */
-अटल पूर्णांक समयkeeping_validate_समयx(स्थिर काष्ठा __kernel_समयx *txc)
-अणु
-	अगर (txc->modes & ADJ_ADJTIME) अणु
+static int timekeeping_validate_timex(const struct __kernel_timex *txc)
+{
+	if (txc->modes & ADJ_ADJTIME) {
 		/* singleshot must not be used with any other mode bits */
-		अगर (!(txc->modes & ADJ_OFFSET_SINGLESHOT))
-			वापस -EINVAL;
-		अगर (!(txc->modes & ADJ_OFFSET_READONLY) &&
+		if (!(txc->modes & ADJ_OFFSET_SINGLESHOT))
+			return -EINVAL;
+		if (!(txc->modes & ADJ_OFFSET_READONLY) &&
 		    !capable(CAP_SYS_TIME))
-			वापस -EPERM;
-	पूर्ण अन्यथा अणु
-		/* In order to modअगरy anything, you gotta be super-user! */
-		अगर (txc->modes && !capable(CAP_SYS_TIME))
-			वापस -EPERM;
+			return -EPERM;
+	} else {
+		/* In order to modify anything, you gotta be super-user! */
+		if (txc->modes && !capable(CAP_SYS_TIME))
+			return -EPERM;
 		/*
-		 * अगर the quartz is off by more than 10% then
+		 * if the quartz is off by more than 10% then
 		 * something is VERY wrong!
 		 */
-		अगर (txc->modes & ADJ_TICK &&
+		if (txc->modes & ADJ_TICK &&
 		    (txc->tick <  900000/USER_HZ ||
 		     txc->tick > 1100000/USER_HZ))
-			वापस -EINVAL;
-	पूर्ण
+			return -EINVAL;
+	}
 
-	अगर (txc->modes & ADJ_SETOFFSET) अणु
-		/* In order to inject समय, you gotta be super-user! */
-		अगर (!capable(CAP_SYS_TIME))
-			वापस -EPERM;
+	if (txc->modes & ADJ_SETOFFSET) {
+		/* In order to inject time, you gotta be super-user! */
+		if (!capable(CAP_SYS_TIME))
+			return -EPERM;
 
 		/*
-		 * Validate अगर a बारpec/समयval used to inject a समय
+		 * Validate if a timespec/timeval used to inject a time
 		 * offset is valid.  Offsets can be positive or negative, so
-		 * we करोn't check tv_sec. The value of the समयval/बारpec
+		 * we don't check tv_sec. The value of the timeval/timespec
 		 * is the sum of its fields,but *NOTE*:
 		 * The field tv_usec/tv_nsec must always be non-negative and
 		 * we can't have more nanoseconds/microseconds than a second.
 		 */
-		अगर (txc->समय.tv_usec < 0)
-			वापस -EINVAL;
+		if (txc->time.tv_usec < 0)
+			return -EINVAL;
 
-		अगर (txc->modes & ADJ_न_अंकO) अणु
-			अगर (txc->समय.tv_usec >= NSEC_PER_SEC)
-				वापस -EINVAL;
-		पूर्ण अन्यथा अणु
-			अगर (txc->समय.tv_usec >= USEC_PER_SEC)
-				वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+		if (txc->modes & ADJ_NANO) {
+			if (txc->time.tv_usec >= NSEC_PER_SEC)
+				return -EINVAL;
+		} else {
+			if (txc->time.tv_usec >= USEC_PER_SEC)
+				return -EINVAL;
+		}
+	}
 
 	/*
-	 * Check क्रम potential multiplication overflows that can
-	 * only happen on 64-bit प्रणालीs:
+	 * Check for potential multiplication overflows that can
+	 * only happen on 64-bit systems:
 	 */
-	अगर ((txc->modes & ADJ_FREQUENCY) && (BITS_PER_LONG == 64)) अणु
-		अगर (Lदीर्घ_न्यून / PPM_SCALE > txc->freq)
-			वापस -EINVAL;
-		अगर (Lदीर्घ_उच्च / PPM_SCALE < txc->freq)
-			वापस -EINVAL;
-	पूर्ण
+	if ((txc->modes & ADJ_FREQUENCY) && (BITS_PER_LONG == 64)) {
+		if (LLONG_MIN / PPM_SCALE > txc->freq)
+			return -EINVAL;
+		if (LLONG_MAX / PPM_SCALE < txc->freq)
+			return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /**
- * करो_adjसमयx() - Accessor function to NTP __करो_adjसमयx function
+ * do_adjtimex() - Accessor function to NTP __do_adjtimex function
  */
-पूर्णांक करो_adjसमयx(काष्ठा __kernel_समयx *txc)
-अणु
-	काष्ठा समयkeeper *tk = &tk_core.समयkeeper;
-	काष्ठा audit_ntp_data ad;
-	अचिन्हित दीर्घ flags;
-	काष्ठा बारpec64 ts;
+int do_adjtimex(struct __kernel_timex *txc)
+{
+	struct timekeeper *tk = &tk_core.timekeeper;
+	struct audit_ntp_data ad;
+	unsigned long flags;
+	struct timespec64 ts;
 	s32 orig_tai, tai;
-	पूर्णांक ret;
+	int ret;
 
-	/* Validate the data beक्रमe disabling पूर्णांकerrupts */
-	ret = समयkeeping_validate_समयx(txc);
-	अगर (ret)
-		वापस ret;
+	/* Validate the data before disabling interrupts */
+	ret = timekeeping_validate_timex(txc);
+	if (ret)
+		return ret;
 
-	अगर (txc->modes & ADJ_SETOFFSET) अणु
-		काष्ठा बारpec64 delta;
-		delta.tv_sec  = txc->समय.tv_sec;
-		delta.tv_nsec = txc->समय.tv_usec;
-		अगर (!(txc->modes & ADJ_न_अंकO))
+	if (txc->modes & ADJ_SETOFFSET) {
+		struct timespec64 delta;
+		delta.tv_sec  = txc->time.tv_sec;
+		delta.tv_nsec = txc->time.tv_usec;
+		if (!(txc->modes & ADJ_NANO))
 			delta.tv_nsec *= 1000;
-		ret = समयkeeping_inject_offset(&delta);
-		अगर (ret)
-			वापस ret;
+		ret = timekeeping_inject_offset(&delta);
+		if (ret)
+			return ret;
 
 		audit_tk_injoffset(delta);
-	पूर्ण
+	}
 
 	audit_ntp_init(&ad);
 
-	kसमय_get_real_ts64(&ts);
+	ktime_get_real_ts64(&ts);
 
-	raw_spin_lock_irqsave(&समयkeeper_lock, flags);
-	ग_लिखो_seqcount_begin(&tk_core.seq);
+	raw_spin_lock_irqsave(&timekeeper_lock, flags);
+	write_seqcount_begin(&tk_core.seq);
 
 	orig_tai = tai = tk->tai_offset;
-	ret = __करो_adjसमयx(txc, &ts, &tai, &ad);
+	ret = __do_adjtimex(txc, &ts, &tai, &ad);
 
-	अगर (tai != orig_tai) अणु
-		__समयkeeping_set_tai_offset(tk, tai);
-		समयkeeping_update(tk, TK_MIRROR | TK_CLOCK_WAS_SET);
-	पूर्ण
+	if (tai != orig_tai) {
+		__timekeeping_set_tai_offset(tk, tai);
+		timekeeping_update(tk, TK_MIRROR | TK_CLOCK_WAS_SET);
+	}
 	tk_update_leap_state(tk);
 
-	ग_लिखो_seqcount_end(&tk_core.seq);
-	raw_spin_unlock_irqrestore(&समयkeeper_lock, flags);
+	write_seqcount_end(&tk_core.seq);
+	raw_spin_unlock_irqrestore(&timekeeper_lock, flags);
 
 	audit_ntp_log(&ad);
 
-	/* Update the multiplier immediately अगर frequency was set directly */
-	अगर (txc->modes & (ADJ_FREQUENCY | ADJ_TICK))
-		समयkeeping_advance(TK_ADV_FREQ);
+	/* Update the multiplier immediately if frequency was set directly */
+	if (txc->modes & (ADJ_FREQUENCY | ADJ_TICK))
+		timekeeping_advance(TK_ADV_FREQ);
 
-	अगर (tai != orig_tai)
-		घड़ी_was_set();
+	if (tai != orig_tai)
+		clock_was_set();
 
-	ntp_notअगरy_cmos_समयr();
+	ntp_notify_cmos_timer();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_NTP_PPS
+#ifdef CONFIG_NTP_PPS
 /**
  * hardpps() - Accessor function to NTP __hardpps function
  */
-व्योम hardpps(स्थिर काष्ठा बारpec64 *phase_ts, स्थिर काष्ठा बारpec64 *raw_ts)
-अणु
-	अचिन्हित दीर्घ flags;
+void hardpps(const struct timespec64 *phase_ts, const struct timespec64 *raw_ts)
+{
+	unsigned long flags;
 
-	raw_spin_lock_irqsave(&समयkeeper_lock, flags);
-	ग_लिखो_seqcount_begin(&tk_core.seq);
+	raw_spin_lock_irqsave(&timekeeper_lock, flags);
+	write_seqcount_begin(&tk_core.seq);
 
 	__hardpps(phase_ts, raw_ts);
 
-	ग_लिखो_seqcount_end(&tk_core.seq);
-	raw_spin_unlock_irqrestore(&समयkeeper_lock, flags);
-पूर्ण
+	write_seqcount_end(&tk_core.seq);
+	raw_spin_unlock_irqrestore(&timekeeper_lock, flags);
+}
 EXPORT_SYMBOL(hardpps);
-#पूर्ण_अगर /* CONFIG_NTP_PPS */
+#endif /* CONFIG_NTP_PPS */

@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * sisfb.h - definitions क्रम the SiS framebuffer driver
+ * sisfb.h - definitions for the SiS framebuffer driver
  *
  * Copyright (C) 2001-2005 by Thomas Winischhofer, Vienna, Austria.
  */
-#अगर_अघोषित _LINUX_SISFB_H_
-#घोषणा _LINUX_SISFB_H_
+#ifndef _LINUX_SISFB_H_
+#define _LINUX_SISFB_H_
 
 
-#समावेश <linux/pci.h>
-#समावेश <uapi/video/sisfb.h>
+#include <linux/pci.h>
+#include <uapi/video/sisfb.h>
 
-#घोषणा	UNKNOWN_VGA  0
-#घोषणा	SIS_300_VGA  1
-#घोषणा	SIS_315_VGA  2
+#define	UNKNOWN_VGA  0
+#define	SIS_300_VGA  1
+#define	SIS_315_VGA  2
 
-#घोषणा SISFB_HAVE_MALLOC_NEW
-बाह्य व्योम sis_दो_स्मृति(काष्ठा sis_memreq *req);
-बाह्य व्योम sis_दो_स्मृति_new(काष्ठा pci_dev *pdev, काष्ठा sis_memreq *req);
+#define SISFB_HAVE_MALLOC_NEW
+extern void sis_malloc(struct sis_memreq *req);
+extern void sis_malloc_new(struct pci_dev *pdev, struct sis_memreq *req);
 
-बाह्य व्योम sis_मुक्त(u32 base);
-बाह्य व्योम sis_मुक्त_new(काष्ठा pci_dev *pdev, u32 base);
-#पूर्ण_अगर
+extern void sis_free(u32 base);
+extern void sis_free_new(struct pci_dev *pdev, u32 base);
+#endif

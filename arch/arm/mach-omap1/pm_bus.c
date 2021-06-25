@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Runसमय PM support code क्रम OMAP1
+ * Runtime PM support code for OMAP1
  *
  * Author: Kevin Hilman, Deep Root Systems, LLC
  *
@@ -10,38 +9,38 @@
  * License version 2. This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/pm_घड़ी.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/err.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/io.h>
+#include <linux/pm_runtime.h>
+#include <linux/pm_clock.h>
+#include <linux/platform_device.h>
+#include <linux/mutex.h>
+#include <linux/clk.h>
+#include <linux/err.h>
 
-#समावेश "soc.h"
+#include "soc.h"
 
-अटल काष्ठा dev_pm_करोमुख्य शेष_pm_करोमुख्य = अणु
-	.ops = अणु
+static struct dev_pm_domain default_pm_domain = {
+	.ops = {
 		USE_PM_CLK_RUNTIME_OPS
 		USE_PLATFORM_PM_SLEEP_OPS
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा pm_clk_notअगरier_block platक्रमm_bus_notअगरier = अणु
-	.pm_करोमुख्य = &शेष_pm_करोमुख्य,
-	.con_ids = अणु "ick", "fck", शून्य, पूर्ण,
-पूर्ण;
+static struct pm_clk_notifier_block platform_bus_notifier = {
+	.pm_domain = &default_pm_domain,
+	.con_ids = { "ick", "fck", NULL, },
+};
 
-अटल पूर्णांक __init omap1_pm_runसमय_init(व्योम)
-अणु
-	अगर (!cpu_class_is_omap1())
-		वापस -ENODEV;
+static int __init omap1_pm_runtime_init(void)
+{
+	if (!cpu_class_is_omap1())
+		return -ENODEV;
 
-	pm_clk_add_notअगरier(&platक्रमm_bus_type, &platक्रमm_bus_notअगरier);
+	pm_clk_add_notifier(&platform_bus_type, &platform_bus_notifier);
 
-	वापस 0;
-पूर्ण
-core_initcall(omap1_pm_runसमय_init);
+	return 0;
+}
+core_initcall(omap1_pm_runtime_init);
 

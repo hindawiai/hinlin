@@ -1,201 +1,200 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*=============================================================================
  *
- * A  PCMCIA client driver क्रम the Raylink wireless LAN card.
- * The starting poपूर्णांक क्रम this module was the skeleton.c in the
- * PCMCIA 2.9.12 package written by David Hinds, dahinds@users.sourceक्रमge.net
+ * A  PCMCIA client driver for the Raylink wireless LAN card.
+ * The starting point for this module was the skeleton.c in the
+ * PCMCIA 2.9.12 package written by David Hinds, dahinds@users.sourceforge.net
  *
  * Copyright (c) 1998  Corey Thomas (corey@world.std.com)
  *
  * Changes:
- * Arnalकरो Carvalho de Melo <acme@conectiva.com.br> - 08/08/2000
- * - reorganize kदो_स्मृतिs in ray_attach, checking all क्रम failure
- *   and releasing the previous allocations अगर one fails
+ * Arnaldo Carvalho de Melo <acme@conectiva.com.br> - 08/08/2000
+ * - reorganize kmallocs in ray_attach, checking all for failure
+ *   and releasing the previous allocations if one fails
  *
  * Daniele Bellucci <bellucda@tiscali.it> - 07/10/2003
  * - Audit copy_to_user in ioctl(SIOCGIWESSID)
  *
 =============================================================================*/
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/समयr.h>
-#समावेश <linux/init.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/ieee80211.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/proc_fs.h>
+#include <linux/ptrace.h>
+#include <linux/seq_file.h>
+#include <linux/string.h>
+#include <linux/timer.h>
+#include <linux/init.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/if_arp.h>
+#include <linux/ioport.h>
+#include <linux/skbuff.h>
+#include <linux/ieee80211.h>
 
-#समावेश <pcmcia/cistpl.h>
-#समावेश <pcmcia/cisreg.h>
-#समावेश <pcmcia/ds.h>
+#include <pcmcia/cistpl.h>
+#include <pcmcia/cisreg.h>
+#include <pcmcia/ds.h>
 
-#समावेश <linux/wireless.h>
-#समावेश <net/iw_handler.h>
+#include <linux/wireless.h>
+#include <net/iw_handler.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/byteorder.h>
-#समावेश <linux/uaccess.h>
+#include <asm/io.h>
+#include <asm/byteorder.h>
+#include <linux/uaccess.h>
 
-/* Warning : these stuff will slow करोwn the driver... */
-#घोषणा WIRELESS_SPY		/* Enable spying addresses */
-/* Definitions we need क्रम spy */
-प्रकार काष्ठा iw_statistics iw_stats;
-प्रकार u_अक्षर mac_addr[ETH_ALEN];	/* Hardware address */
+/* Warning : these stuff will slow down the driver... */
+#define WIRELESS_SPY		/* Enable spying addresses */
+/* Definitions we need for spy */
+typedef struct iw_statistics iw_stats;
+typedef u_char mac_addr[ETH_ALEN];	/* Hardware address */
 
-#समावेश "rayctl.h"
-#समावेश "ray_cs.h"
+#include "rayctl.h"
+#include "ray_cs.h"
 
 
 /** Prototypes based on PCMCIA skeleton driver *******************************/
-अटल पूर्णांक ray_config(काष्ठा pcmcia_device *link);
-अटल व्योम ray_release(काष्ठा pcmcia_device *link);
-अटल व्योम ray_detach(काष्ठा pcmcia_device *p_dev);
+static int ray_config(struct pcmcia_device *link);
+static void ray_release(struct pcmcia_device *link);
+static void ray_detach(struct pcmcia_device *p_dev);
 
-/***** Prototypes indicated by device काष्ठाure ******************************/
-अटल पूर्णांक ray_dev_बंद(काष्ठा net_device *dev);
-अटल पूर्णांक ray_dev_config(काष्ठा net_device *dev, काष्ठा अगरmap *map);
-अटल काष्ठा net_device_stats *ray_get_stats(काष्ठा net_device *dev);
-अटल पूर्णांक ray_dev_init(काष्ठा net_device *dev);
+/***** Prototypes indicated by device structure ******************************/
+static int ray_dev_close(struct net_device *dev);
+static int ray_dev_config(struct net_device *dev, struct ifmap *map);
+static struct net_device_stats *ray_get_stats(struct net_device *dev);
+static int ray_dev_init(struct net_device *dev);
 
-अटल पूर्णांक ray_खोलो(काष्ठा net_device *dev);
-अटल netdev_tx_t ray_dev_start_xmit(काष्ठा sk_buff *skb,
-					    काष्ठा net_device *dev);
-अटल व्योम set_multicast_list(काष्ठा net_device *dev);
-अटल व्योम ray_update_multi_list(काष्ठा net_device *dev, पूर्णांक all);
-अटल पूर्णांक translate_frame(ray_dev_t *local, काष्ठा tx_msg __iomem *ptx,
-			   अचिन्हित अक्षर *data, पूर्णांक len);
-अटल व्योम ray_build_header(ray_dev_t *local, काष्ठा tx_msg __iomem *ptx,
-			     UCHAR msg_type, अचिन्हित अक्षर *data);
-अटल व्योम untranslate(ray_dev_t *local, काष्ठा sk_buff *skb, पूर्णांक len);
-अटल iw_stats *ray_get_wireless_stats(काष्ठा net_device *dev);
-अटल स्थिर काष्ठा iw_handler_def ray_handler_def;
+static int ray_open(struct net_device *dev);
+static netdev_tx_t ray_dev_start_xmit(struct sk_buff *skb,
+					    struct net_device *dev);
+static void set_multicast_list(struct net_device *dev);
+static void ray_update_multi_list(struct net_device *dev, int all);
+static int translate_frame(ray_dev_t *local, struct tx_msg __iomem *ptx,
+			   unsigned char *data, int len);
+static void ray_build_header(ray_dev_t *local, struct tx_msg __iomem *ptx,
+			     UCHAR msg_type, unsigned char *data);
+static void untranslate(ray_dev_t *local, struct sk_buff *skb, int len);
+static iw_stats *ray_get_wireless_stats(struct net_device *dev);
+static const struct iw_handler_def ray_handler_def;
 
-/***** Prototypes क्रम raylink functions **************************************/
-अटल व्योम authenticate(ray_dev_t *local);
-अटल पूर्णांक build_auth_frame(ray_dev_t *local, UCHAR *dest, पूर्णांक auth_type);
-अटल व्योम authenticate_समयout(काष्ठा समयr_list *t);
-अटल पूर्णांक get_मुक्त_ccs(ray_dev_t *local);
-अटल पूर्णांक get_मुक्त_tx_ccs(ray_dev_t *local);
-अटल व्योम init_startup_params(ray_dev_t *local);
-अटल पूर्णांक parse_addr(अक्षर *in_str, UCHAR *out);
-अटल पूर्णांक ray_hw_xmit(अचिन्हित अक्षर *data, पूर्णांक len, काष्ठा net_device *dev, UCHAR type);
-अटल पूर्णांक ray_init(काष्ठा net_device *dev);
-अटल पूर्णांक पूर्णांकerrupt_ecf(ray_dev_t *local, पूर्णांक ccs);
-अटल व्योम ray_reset(काष्ठा net_device *dev);
-अटल व्योम ray_update_parm(काष्ठा net_device *dev, UCHAR objid, UCHAR *value, पूर्णांक len);
-अटल व्योम verअगरy_dl_startup(काष्ठा समयr_list *t);
+/***** Prototypes for raylink functions **************************************/
+static void authenticate(ray_dev_t *local);
+static int build_auth_frame(ray_dev_t *local, UCHAR *dest, int auth_type);
+static void authenticate_timeout(struct timer_list *t);
+static int get_free_ccs(ray_dev_t *local);
+static int get_free_tx_ccs(ray_dev_t *local);
+static void init_startup_params(ray_dev_t *local);
+static int parse_addr(char *in_str, UCHAR *out);
+static int ray_hw_xmit(unsigned char *data, int len, struct net_device *dev, UCHAR type);
+static int ray_init(struct net_device *dev);
+static int interrupt_ecf(ray_dev_t *local, int ccs);
+static void ray_reset(struct net_device *dev);
+static void ray_update_parm(struct net_device *dev, UCHAR objid, UCHAR *value, int len);
+static void verify_dl_startup(struct timer_list *t);
 
-/* Prototypes क्रम पूर्णांकerrpt समय functions **********************************/
-अटल irqवापस_t ray_पूर्णांकerrupt(पूर्णांक reg, व्योम *dev_id);
-अटल व्योम clear_पूर्णांकerrupt(ray_dev_t *local);
-अटल व्योम rx_deauthenticate(ray_dev_t *local, काष्ठा rcs __iomem *prcs,
-			      अचिन्हित पूर्णांक pkt_addr, पूर्णांक rx_len);
-अटल पूर्णांक copy_from_rx_buff(ray_dev_t *local, UCHAR *dest, पूर्णांक pkt_addr, पूर्णांक len);
-अटल व्योम ray_rx(काष्ठा net_device *dev, ray_dev_t *local, काष्ठा rcs __iomem *prcs);
-अटल व्योम release_frag_chain(ray_dev_t *local, काष्ठा rcs __iomem *prcs);
-अटल व्योम rx_authenticate(ray_dev_t *local, काष्ठा rcs __iomem *prcs,
-			    अचिन्हित पूर्णांक pkt_addr, पूर्णांक rx_len);
-अटल व्योम rx_data(काष्ठा net_device *dev, काष्ठा rcs __iomem *prcs,
-		    अचिन्हित पूर्णांक pkt_addr, पूर्णांक rx_len);
-अटल व्योम associate(ray_dev_t *local);
+/* Prototypes for interrpt time functions **********************************/
+static irqreturn_t ray_interrupt(int reg, void *dev_id);
+static void clear_interrupt(ray_dev_t *local);
+static void rx_deauthenticate(ray_dev_t *local, struct rcs __iomem *prcs,
+			      unsigned int pkt_addr, int rx_len);
+static int copy_from_rx_buff(ray_dev_t *local, UCHAR *dest, int pkt_addr, int len);
+static void ray_rx(struct net_device *dev, ray_dev_t *local, struct rcs __iomem *prcs);
+static void release_frag_chain(ray_dev_t *local, struct rcs __iomem *prcs);
+static void rx_authenticate(ray_dev_t *local, struct rcs __iomem *prcs,
+			    unsigned int pkt_addr, int rx_len);
+static void rx_data(struct net_device *dev, struct rcs __iomem *prcs,
+		    unsigned int pkt_addr, int rx_len);
+static void associate(ray_dev_t *local);
 
 /* Card command functions */
-अटल पूर्णांक dl_startup_params(काष्ठा net_device *dev);
-अटल व्योम join_net(काष्ठा समयr_list *t);
-अटल व्योम start_net(काष्ठा समयr_list *t);
+static int dl_startup_params(struct net_device *dev);
+static void join_net(struct timer_list *t);
+static void start_net(struct timer_list *t);
 
 /*===========================================================================*/
 /* Parameters that can be set with 'insmod' */
 
-/* ADHOC=0, Infraकाष्ठाure=1 */
-अटल पूर्णांक net_type = ADHOC;
+/* ADHOC=0, Infrastructure=1 */
+static int net_type = ADHOC;
 
-/* Hop dwell समय in Kus (1024 us units defined by 802.11) */
-अटल पूर्णांक hop_dwell = 128;
+/* Hop dwell time in Kus (1024 us units defined by 802.11) */
+static int hop_dwell = 128;
 
 /* Beacon period in Kus */
-अटल पूर्णांक beacon_period = 256;
+static int beacon_period = 256;
 
-/* घातer save mode (0 = off, 1 = save घातer) */
-अटल पूर्णांक psm;
+/* power save mode (0 = off, 1 = save power) */
+static int psm;
 
-/* String क्रम network's Extended Service Set ID. 32 Characters max */
-अटल अक्षर *essid;
+/* String for network's Extended Service Set ID. 32 Characters max */
+static char *essid;
 
 /* Default to encapsulation unless translation requested */
-अटल bool translate = true;
+static bool translate = true;
 
-अटल पूर्णांक country = USA;
+static int country = USA;
 
-अटल पूर्णांक snअगरfer;
+static int sniffer;
 
-अटल पूर्णांक bc;
+static int bc;
 
-/* 48 bit physical card address अगर overriding card's real physical
+/* 48 bit physical card address if overriding card's real physical
  * address is required.  Since IEEE 802.11 addresses are 48 bits
- * like ethernet, an पूर्णांक can't be used, so a string is used. To
+ * like ethernet, an int can't be used, so a string is used. To
  * allow use of addresses starting with a decimal digit, the first
- * अक्षरacter must be a letter and will be ignored. This letter is
+ * character must be a letter and will be ignored. This letter is
  * followed by up to 12 hex digits which are the address.  If less
  * than 12 digits are used, the address will be left filled with 0's.
  * Note that bit 0 of the first byte is the broadcast bit, and evil
- * things will happen अगर it is not 0 in a card address.
+ * things will happen if it is not 0 in a card address.
  */
-अटल अक्षर *phy_addr = शून्य;
+static char *phy_addr = NULL;
 
-अटल अचिन्हित पूर्णांक ray_mem_speed = 500;
+static unsigned int ray_mem_speed = 500;
 
 /* WARNING: THIS DRIVER IS NOT CAPABLE OF HANDLING MULTIPLE DEVICES! */
-अटल काष्ठा pcmcia_device *this_device = शून्य;
+static struct pcmcia_device *this_device = NULL;
 
 MODULE_AUTHOR("Corey Thomas <corey@world.std.com>");
 MODULE_DESCRIPTION("Raylink/WebGear wireless LAN driver");
 MODULE_LICENSE("GPL");
 
-module_param(net_type, पूर्णांक, 0);
-module_param(hop_dwell, पूर्णांक, 0);
-module_param(beacon_period, पूर्णांक, 0);
-module_param(psm, पूर्णांक, 0);
-module_param(essid, अक्षरp, 0);
+module_param(net_type, int, 0);
+module_param(hop_dwell, int, 0);
+module_param(beacon_period, int, 0);
+module_param(psm, int, 0);
+module_param(essid, charp, 0);
 module_param(translate, bool, 0);
-module_param(country, पूर्णांक, 0);
-module_param(snअगरfer, पूर्णांक, 0);
-module_param(bc, पूर्णांक, 0);
-module_param(phy_addr, अक्षरp, 0);
-module_param(ray_mem_speed, पूर्णांक, 0);
+module_param(country, int, 0);
+module_param(sniffer, int, 0);
+module_param(bc, int, 0);
+module_param(phy_addr, charp, 0);
+module_param(ray_mem_speed, int, 0);
 
-अटल स्थिर UCHAR b5_शेष_startup_parms[] = अणु
+static const UCHAR b5_default_startup_parms[] = {
 	0, 0,			/* Adhoc station */
-	'L', 'I', 'N', 'U', 'X', 0, 0, 0,	/* 32 अक्षर ESSID */
+	'L', 'I', 'N', 'U', 'X', 0, 0, 0,	/* 32 char ESSID */
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	1, 0,			/* Active scan, CA Mode */
-	0, 0, 0, 0, 0, 0,	/* No शेष MAC addr  */
+	0, 0, 0, 0, 0, 0,	/* No default MAC addr  */
 	0x7f, 0xff,		/* Frag threshold */
-	0x00, 0x80,		/* Hop समय 128 Kus */
+	0x00, 0x80,		/* Hop time 128 Kus */
 	0x01, 0x00,		/* Beacon period 256 Kus */
-	0x01, 0x07, 0xa3,	/* DTIM, retries, ack समयout */
+	0x01, 0x07, 0xa3,	/* DTIM, retries, ack timeout */
 	0x1d, 0x82, 0x4e,	/* SIFS, DIFS, PIFS */
 	0x7f, 0xff,		/* RTS threshold */
 	0x04, 0xe2, 0x38, 0xA4,	/* scan_dwell, max_scan_dwell */
-	0x05,			/* assoc resp समयout thresh */
+	0x05,			/* assoc resp timeout thresh */
 	0x08, 0x02, 0x08,	/* adhoc, infra, super cycle max */
 	0,			/* Promiscuous mode */
 	0x0c, 0x0bd,		/* Unique word */
-	0x32,			/* Slot समय */
+	0x32,			/* Slot time */
 	0xff, 0xff,		/* roam-low snr, low snr count */
 	0x05, 0xff,		/* Infra, adhoc missed bcn thresh */
 	0x01, 0x0b, 0x4f,	/* USA, hop pattern, hop pat length */
-/* b4 - b5 dअगरferences start here */
+/* b4 - b5 differences start here */
 	0x00, 0x3f,		/* CW max */
 	0x00, 0x0f,		/* CW min */
 	0x04, 0x08,		/* Noise gain, limit offset */
@@ -205,32 +204,32 @@ module_param(ray_mem_speed, पूर्णांक, 0);
 	0,			/* allow broadcast SSID probe resp */
 	0, 0,			/* privacy must start, can join */
 	2, 0, 0, 0, 0, 0, 0, 0	/* basic rate set */
-पूर्ण;
+};
 
-अटल स्थिर UCHAR b4_शेष_startup_parms[] = अणु
+static const UCHAR b4_default_startup_parms[] = {
 	0, 0,			/* Adhoc station */
-	'L', 'I', 'N', 'U', 'X', 0, 0, 0,	/* 32 अक्षर ESSID */
+	'L', 'I', 'N', 'U', 'X', 0, 0, 0,	/* 32 char ESSID */
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	1, 0,			/* Active scan, CA Mode */
-	0, 0, 0, 0, 0, 0,	/* No शेष MAC addr  */
+	0, 0, 0, 0, 0, 0,	/* No default MAC addr  */
 	0x7f, 0xff,		/* Frag threshold */
-	0x02, 0x00,		/* Hop समय */
+	0x02, 0x00,		/* Hop time */
 	0x00, 0x01,		/* Beacon period */
-	0x01, 0x07, 0xa3,	/* DTIM, retries, ack समयout */
+	0x01, 0x07, 0xa3,	/* DTIM, retries, ack timeout */
 	0x1d, 0x82, 0xce,	/* SIFS, DIFS, PIFS */
 	0x7f, 0xff,		/* RTS threshold */
 	0xfb, 0x1e, 0xc7, 0x5c,	/* scan_dwell, max_scan_dwell */
-	0x05,			/* assoc resp समयout thresh */
+	0x05,			/* assoc resp timeout thresh */
 	0x04, 0x02, 0x4,	/* adhoc, infra, super cycle max */
 	0,			/* Promiscuous mode */
 	0x0c, 0x0bd,		/* Unique word */
-	0x4e,			/* Slot समय (TBD seems wrong) */
+	0x4e,			/* Slot time (TBD seems wrong) */
 	0xff, 0xff,		/* roam-low snr, low snr count */
 	0x05, 0xff,		/* Infra, adhoc missed bcn thresh */
 	0x01, 0x0b, 0x4e,	/* USA, hop pattern, hop pat length */
-/* b4 - b5 dअगरferences start here */
+/* b4 - b5 differences start here */
 	0x3f, 0x0f,		/* CW max, min */
 	0x04, 0x08,		/* Noise gain, limit offset */
 	0x28, 0x28,		/* det rssi, med busy offsets */
@@ -239,50 +238,50 @@ module_param(ray_mem_speed, पूर्णांक, 0);
 	0,			/* rx/tx delay */
 	0, 0, 0, 0, 0, 0,	/* current BSS id */
 	0			/* hop set */
-पूर्ण;
+};
 
 /*===========================================================================*/
-अटल स्थिर u8 eth2_llc[] = अणु 0xaa, 0xaa, 3, 0, 0, 0 पूर्ण;
+static const u8 eth2_llc[] = { 0xaa, 0xaa, 3, 0, 0, 0 };
 
-अटल स्थिर अक्षर hop_pattern_length[] = अणु 1,
+static const char hop_pattern_length[] = { 1,
 	USA_HOP_MOD, EUROPE_HOP_MOD,
 	JAPAN_HOP_MOD, KOREA_HOP_MOD,
 	SPAIN_HOP_MOD, FRANCE_HOP_MOD,
 	ISRAEL_HOP_MOD, AUSTRALIA_HOP_MOD,
 	JAPAN_TEST_HOP_MOD
-पूर्ण;
+};
 
-अटल स्थिर अक्षर rcsid[] =
+static const char rcsid[] =
     "Raylink/WebGear wireless LAN - Corey <Thomas corey@world.std.com>";
 
-अटल स्थिर काष्ठा net_device_ops ray_netdev_ops = अणु
-	.nकरो_init 		= ray_dev_init,
-	.nकरो_खोलो 		= ray_खोलो,
-	.nकरो_stop 		= ray_dev_बंद,
-	.nकरो_start_xmit		= ray_dev_start_xmit,
-	.nकरो_set_config		= ray_dev_config,
-	.nकरो_get_stats		= ray_get_stats,
-	.nकरो_set_rx_mode	= set_multicast_list,
-	.nकरो_set_mac_address 	= eth_mac_addr,
-	.nकरो_validate_addr	= eth_validate_addr,
-पूर्ण;
+static const struct net_device_ops ray_netdev_ops = {
+	.ndo_init 		= ray_dev_init,
+	.ndo_open 		= ray_open,
+	.ndo_stop 		= ray_dev_close,
+	.ndo_start_xmit		= ray_dev_start_xmit,
+	.ndo_set_config		= ray_dev_config,
+	.ndo_get_stats		= ray_get_stats,
+	.ndo_set_rx_mode	= set_multicast_list,
+	.ndo_set_mac_address 	= eth_mac_addr,
+	.ndo_validate_addr	= eth_validate_addr,
+};
 
-अटल पूर्णांक ray_probe(काष्ठा pcmcia_device *p_dev)
-अणु
+static int ray_probe(struct pcmcia_device *p_dev)
+{
 	ray_dev_t *local;
-	काष्ठा net_device *dev;
+	struct net_device *dev;
 
 	dev_dbg(&p_dev->dev, "ray_attach()\n");
 
-	/* Allocate space क्रम निजी device-specअगरic data */
-	dev = alloc_etherdev(माप(ray_dev_t));
-	अगर (!dev)
-		जाओ fail_alloc_dev;
+	/* Allocate space for private device-specific data */
+	dev = alloc_etherdev(sizeof(ray_dev_t));
+	if (!dev)
+		goto fail_alloc_dev;
 
 	local = netdev_priv(dev);
 	local->finder = p_dev;
 
-	/* The io काष्ठाure describes IO port mapping. None used here */
+	/* The io structure describes IO port mapping. None used here */
 	p_dev->resource[0]->end = 0;
 	p_dev->resource[0]->flags |= IO_DATA_PATH_WIDTH_8;
 
@@ -297,191 +296,191 @@ module_param(ray_mem_speed, पूर्णांक, 0);
 	local->authentication_state = UNAUTHENTICATED;
 	local->num_multi = 0;
 	dev_dbg(&p_dev->dev, "ray_attach p_dev = %p,  dev = %p,  local = %p, intr = %p\n",
-	      p_dev, dev, local, &ray_पूर्णांकerrupt);
+	      p_dev, dev, local, &ray_interrupt);
 
-	/* Raylink entries in the device काष्ठाure */
+	/* Raylink entries in the device structure */
 	dev->netdev_ops = &ray_netdev_ops;
 	dev->wireless_handlers = &ray_handler_def;
-#अगर_घोषित WIRELESS_SPY
+#ifdef WIRELESS_SPY
 	local->wireless_data.spy_data = &local->spy_data;
 	dev->wireless_data = &local->wireless_data;
-#पूर्ण_अगर /* WIRELESS_SPY */
+#endif /* WIRELESS_SPY */
 
 
 	dev_dbg(&p_dev->dev, "ray_cs ray_attach calling ether_setup.)\n");
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 
-	समयr_setup(&local->समयr, शून्य, 0);
+	timer_setup(&local->timer, NULL, 0);
 
 	this_device = p_dev;
-	वापस ray_config(p_dev);
+	return ray_config(p_dev);
 
 fail_alloc_dev:
-	वापस -ENOMEM;
-पूर्ण /* ray_attach */
+	return -ENOMEM;
+} /* ray_attach */
 
-अटल व्योम ray_detach(काष्ठा pcmcia_device *link)
-अणु
-	काष्ठा net_device *dev;
+static void ray_detach(struct pcmcia_device *link)
+{
+	struct net_device *dev;
 	ray_dev_t *local;
 
 	dev_dbg(&link->dev, "ray_detach\n");
 
-	this_device = शून्य;
+	this_device = NULL;
 	dev = link->priv;
 
 	ray_release(link);
 
 	local = netdev_priv(dev);
-	del_समयr_sync(&local->समयr);
+	del_timer_sync(&local->timer);
 
-	अगर (link->priv) अणु
-		unरेजिस्टर_netdev(dev);
-		मुक्त_netdev(dev);
-	पूर्ण
+	if (link->priv) {
+		unregister_netdev(dev);
+		free_netdev(dev);
+	}
 	dev_dbg(&link->dev, "ray_cs ray_detach ending\n");
-पूर्ण /* ray_detach */
+} /* ray_detach */
 
-#घोषणा MAX_TUPLE_SIZE 128
-अटल पूर्णांक ray_config(काष्ठा pcmcia_device *link)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक i;
-	काष्ठा net_device *dev = (काष्ठा net_device *)link->priv;
+#define MAX_TUPLE_SIZE 128
+static int ray_config(struct pcmcia_device *link)
+{
+	int ret = 0;
+	int i;
+	struct net_device *dev = (struct net_device *)link->priv;
 	ray_dev_t *local = netdev_priv(dev);
 
 	dev_dbg(&link->dev, "ray_config\n");
 
 	/* Determine card type and firmware version */
-	prपूर्णांकk(KERN_INFO "ray_cs Detected: %s%s%s%s\n",
+	printk(KERN_INFO "ray_cs Detected: %s%s%s%s\n",
 	       link->prod_id[0] ? link->prod_id[0] : " ",
 	       link->prod_id[1] ? link->prod_id[1] : " ",
 	       link->prod_id[2] ? link->prod_id[2] : " ",
 	       link->prod_id[3] ? link->prod_id[3] : " ");
 
-	/* Now allocate an पूर्णांकerrupt line.  Note that this करोes not
-	   actually assign a handler to the पूर्णांकerrupt.
+	/* Now allocate an interrupt line.  Note that this does not
+	   actually assign a handler to the interrupt.
 	 */
-	ret = pcmcia_request_irq(link, ray_पूर्णांकerrupt);
-	अगर (ret)
-		जाओ failed;
+	ret = pcmcia_request_irq(link, ray_interrupt);
+	if (ret)
+		goto failed;
 	dev->irq = link->irq;
 
 	ret = pcmcia_enable_device(link);
-	अगर (ret)
-		जाओ failed;
+	if (ret)
+		goto failed;
 
-/*** Set up 32k winकरोw क्रम shared memory (transmit and control) ************/
+/*** Set up 32k window for shared memory (transmit and control) ************/
 	link->resource[2]->flags |= WIN_DATA_WIDTH_8 | WIN_MEMORY_TYPE_CM | WIN_ENABLE | WIN_USE_WAIT;
 	link->resource[2]->start = 0;
 	link->resource[2]->end = 0x8000;
-	ret = pcmcia_request_winकरोw(link, link->resource[2], ray_mem_speed);
-	अगर (ret)
-		जाओ failed;
+	ret = pcmcia_request_window(link, link->resource[2], ray_mem_speed);
+	if (ret)
+		goto failed;
 	ret = pcmcia_map_mem_page(link, link->resource[2], 0);
-	अगर (ret)
-		जाओ failed;
+	if (ret)
+		goto failed;
 	local->sram = ioremap(link->resource[2]->start,
 			resource_size(link->resource[2]));
 
-/*** Set up 16k winकरोw क्रम shared memory (receive buffer) ***************/
+/*** Set up 16k window for shared memory (receive buffer) ***************/
 	link->resource[3]->flags |=
 	    WIN_DATA_WIDTH_8 | WIN_MEMORY_TYPE_CM | WIN_ENABLE | WIN_USE_WAIT;
 	link->resource[3]->start = 0;
 	link->resource[3]->end = 0x4000;
-	ret = pcmcia_request_winकरोw(link, link->resource[3], ray_mem_speed);
-	अगर (ret)
-		जाओ failed;
+	ret = pcmcia_request_window(link, link->resource[3], ray_mem_speed);
+	if (ret)
+		goto failed;
 	ret = pcmcia_map_mem_page(link, link->resource[3], 0x8000);
-	अगर (ret)
-		जाओ failed;
+	if (ret)
+		goto failed;
 	local->rmem = ioremap(link->resource[3]->start,
 			resource_size(link->resource[3]));
 
-/*** Set up winकरोw क्रम attribute memory ***********************************/
+/*** Set up window for attribute memory ***********************************/
 	link->resource[4]->flags |=
 	    WIN_DATA_WIDTH_8 | WIN_MEMORY_TYPE_AM | WIN_ENABLE | WIN_USE_WAIT;
 	link->resource[4]->start = 0;
 	link->resource[4]->end = 0x1000;
-	ret = pcmcia_request_winकरोw(link, link->resource[4], ray_mem_speed);
-	अगर (ret)
-		जाओ failed;
+	ret = pcmcia_request_window(link, link->resource[4], ray_mem_speed);
+	if (ret)
+		goto failed;
 	ret = pcmcia_map_mem_page(link, link->resource[4], 0);
-	अगर (ret)
-		जाओ failed;
+	if (ret)
+		goto failed;
 	local->amem = ioremap(link->resource[4]->start,
 			resource_size(link->resource[4]));
 
 	dev_dbg(&link->dev, "ray_config sram=%p\n", local->sram);
 	dev_dbg(&link->dev, "ray_config rmem=%p\n", local->rmem);
 	dev_dbg(&link->dev, "ray_config amem=%p\n", local->amem);
-	अगर (ray_init(dev) < 0) अणु
+	if (ray_init(dev) < 0) {
 		ray_release(link);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	SET_NETDEV_DEV(dev, &link->dev);
-	i = रेजिस्टर_netdev(dev);
-	अगर (i != 0) अणु
-		prपूर्णांकk("ray_config register_netdev() failed\n");
+	i = register_netdev(dev);
+	if (i != 0) {
+		printk("ray_config register_netdev() failed\n");
 		ray_release(link);
-		वापस i;
-	पूर्ण
+		return i;
+	}
 
-	prपूर्णांकk(KERN_INFO "%s: RayLink, irq %d, hw_addr %pM\n",
+	printk(KERN_INFO "%s: RayLink, irq %d, hw_addr %pM\n",
 	       dev->name, dev->irq, dev->dev_addr);
 
-	वापस 0;
+	return 0;
 
 failed:
 	ray_release(link);
-	वापस -ENODEV;
-पूर्ण /* ray_config */
+	return -ENODEV;
+} /* ray_config */
 
-अटल अंतरभूत काष्ठा ccs __iomem *ccs_base(ray_dev_t *dev)
-अणु
-	वापस dev->sram + CCS_BASE;
-पूर्ण
+static inline struct ccs __iomem *ccs_base(ray_dev_t *dev)
+{
+	return dev->sram + CCS_BASE;
+}
 
-अटल अंतरभूत काष्ठा rcs __iomem *rcs_base(ray_dev_t *dev)
-अणु
+static inline struct rcs __iomem *rcs_base(ray_dev_t *dev)
+{
 	/*
 	 * This looks nonsensical, since there is a separate
-	 * RCS_BASE. But the dअगरference between a "struct rcs"
+	 * RCS_BASE. But the difference between a "struct rcs"
 	 * and a "struct ccs" ends up being in the _index_ off
-	 * the base, so the base poपूर्णांकer is the same क्रम both
+	 * the base, so the base pointer is the same for both
 	 * ccs/rcs.
 	 */
-	वापस dev->sram + CCS_BASE;
-पूर्ण
+	return dev->sram + CCS_BASE;
+}
 
 /*===========================================================================*/
-अटल पूर्णांक ray_init(काष्ठा net_device *dev)
-अणु
-	पूर्णांक i;
-	काष्ठा ccs __iomem *pccs;
+static int ray_init(struct net_device *dev)
+{
+	int i;
+	struct ccs __iomem *pccs;
 	ray_dev_t *local = netdev_priv(dev);
-	काष्ठा pcmcia_device *link = local->finder;
+	struct pcmcia_device *link = local->finder;
 	dev_dbg(&link->dev, "ray_init(0x%p)\n", dev);
-	अगर (!(pcmcia_dev_present(link))) अणु
+	if (!(pcmcia_dev_present(link))) {
 		dev_dbg(&link->dev, "ray_init - device not present\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	local->net_type = net_type;
 	local->sta_type = TYPE_STA;
 
 	/* Copy the startup results to local memory */
-	स_नकल_fromio(&local->startup_res, local->sram + ECF_TO_HOST_BASE,
-		      माप(काष्ठा startup_res_6));
+	memcpy_fromio(&local->startup_res, local->sram + ECF_TO_HOST_BASE,
+		      sizeof(struct startup_res_6));
 
 	/* Check Power up test status and get mac address from card */
-	अगर (local->startup_res.startup_word != 0x80) अणु
-		prपूर्णांकk(KERN_INFO "ray_init ERROR card status = %2x\n",
+	if (local->startup_res.startup_word != 0x80) {
+		printk(KERN_INFO "ray_init ERROR card status = %2x\n",
 		       local->startup_res.startup_word);
 		local->card_status = CARD_INIT_ERROR;
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	local->fw_ver = local->startup_res.firmware_version[0];
 	local->fw_bld = local->startup_res.firmware_version[1];
@@ -490,246 +489,246 @@ failed:
 	      local->fw_bld);
 
 	local->tib_length = 0x20;
-	अगर ((local->fw_ver == 5) && (local->fw_bld >= 30))
+	if ((local->fw_ver == 5) && (local->fw_bld >= 30))
 		local->tib_length = local->startup_res.tib_length;
 	dev_dbg(&link->dev, "ray_init tib_length = 0x%02x\n", local->tib_length);
-	/* Initialize CCS's to buffer मुक्त state */
+	/* Initialize CCS's to buffer free state */
 	pccs = ccs_base(local);
-	क्रम (i = 0; i < NUMBER_OF_CCS; i++) अणु
-		ग_लिखोb(CCS_BUFFER_FREE, &(pccs++)->buffer_status);
-	पूर्ण
+	for (i = 0; i < NUMBER_OF_CCS; i++) {
+		writeb(CCS_BUFFER_FREE, &(pccs++)->buffer_status);
+	}
 	init_startup_params(local);
 
 	/* copy mac address to startup parameters */
-	अगर (!parse_addr(phy_addr, local->sparm.b4.a_mac_addr)) अणु
-		स_नकल(&local->sparm.b4.a_mac_addr,
+	if (!parse_addr(phy_addr, local->sparm.b4.a_mac_addr)) {
+		memcpy(&local->sparm.b4.a_mac_addr,
 		       &local->startup_res.station_addr, ADDRLEN);
-	पूर्ण
+	}
 
-	clear_पूर्णांकerrupt(local);	/* Clear any पूर्णांकerrupt from the card */
+	clear_interrupt(local);	/* Clear any interrupt from the card */
 	local->card_status = CARD_AWAITING_PARAM;
 	dev_dbg(&link->dev, "ray_init ending\n");
-	वापस 0;
-पूर्ण /* ray_init */
+	return 0;
+} /* ray_init */
 
 /*===========================================================================*/
-/* Download startup parameters to the card and command it to पढ़ो them       */
-अटल पूर्णांक dl_startup_params(काष्ठा net_device *dev)
-अणु
-	पूर्णांक ccsindex;
+/* Download startup parameters to the card and command it to read them       */
+static int dl_startup_params(struct net_device *dev)
+{
+	int ccsindex;
 	ray_dev_t *local = netdev_priv(dev);
-	काष्ठा ccs __iomem *pccs;
-	काष्ठा pcmcia_device *link = local->finder;
+	struct ccs __iomem *pccs;
+	struct pcmcia_device *link = local->finder;
 
 	dev_dbg(&link->dev, "dl_startup_params entered\n");
-	अगर (!(pcmcia_dev_present(link))) अणु
+	if (!(pcmcia_dev_present(link))) {
 		dev_dbg(&link->dev, "ray_cs dl_startup_params - device not present\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	/* Copy parameters to host to ECF area */
-	अगर (local->fw_ver == 0x55)
-		स_नकल_toio(local->sram + HOST_TO_ECF_BASE, &local->sparm.b4,
-			    माप(काष्ठा b4_startup_params));
-	अन्यथा
-		स_नकल_toio(local->sram + HOST_TO_ECF_BASE, &local->sparm.b5,
-			    माप(काष्ठा b5_startup_params));
+	if (local->fw_ver == 0x55)
+		memcpy_toio(local->sram + HOST_TO_ECF_BASE, &local->sparm.b4,
+			    sizeof(struct b4_startup_params));
+	else
+		memcpy_toio(local->sram + HOST_TO_ECF_BASE, &local->sparm.b5,
+			    sizeof(struct b5_startup_params));
 
-	/* Fill in the CCS fields क्रम the ECF */
-	अगर ((ccsindex = get_मुक्त_ccs(local)) < 0)
-		वापस -1;
+	/* Fill in the CCS fields for the ECF */
+	if ((ccsindex = get_free_ccs(local)) < 0)
+		return -1;
 	local->dl_param_ccs = ccsindex;
 	pccs = ccs_base(local) + ccsindex;
-	ग_लिखोb(CCS_DOWNLOAD_STARTUP_PARAMS, &pccs->cmd);
+	writeb(CCS_DOWNLOAD_STARTUP_PARAMS, &pccs->cmd);
 	dev_dbg(&link->dev, "dl_startup_params start ccsindex = %d\n",
 	      local->dl_param_ccs);
 	/* Interrupt the firmware to process the command */
-	अगर (पूर्णांकerrupt_ecf(local, ccsindex)) अणु
-		prपूर्णांकk(KERN_INFO "ray dl_startup_params failed - "
+	if (interrupt_ecf(local, ccsindex)) {
+		printk(KERN_INFO "ray dl_startup_params failed - "
 		       "ECF not ready for intr\n");
 		local->card_status = CARD_DL_PARAM_ERROR;
-		ग_लिखोb(CCS_BUFFER_FREE, &(pccs++)->buffer_status);
-		वापस -2;
-	पूर्ण
+		writeb(CCS_BUFFER_FREE, &(pccs++)->buffer_status);
+		return -2;
+	}
 	local->card_status = CARD_DL_PARAM;
-	/* Start kernel समयr to रुको क्रम dl startup to complete. */
-	local->समयr.expires = jअगरfies + HZ / 2;
-	local->समयr.function = verअगरy_dl_startup;
-	add_समयr(&local->समयr);
+	/* Start kernel timer to wait for dl startup to complete. */
+	local->timer.expires = jiffies + HZ / 2;
+	local->timer.function = verify_dl_startup;
+	add_timer(&local->timer);
 	dev_dbg(&link->dev,
 	      "ray_cs dl_startup_params started timer for verify_dl_startup\n");
-	वापस 0;
-पूर्ण /* dl_startup_params */
+	return 0;
+} /* dl_startup_params */
 
 /*===========================================================================*/
-अटल व्योम init_startup_params(ray_dev_t *local)
-अणु
-	पूर्णांक i;
+static void init_startup_params(ray_dev_t *local)
+{
+	int i;
 
-	अगर (country > JAPAN_TEST)
+	if (country > JAPAN_TEST)
 		country = USA;
-	अन्यथा अगर (country < USA)
+	else if (country < USA)
 		country = USA;
-	/* काष्ठाure क्रम hop समय and beacon period is defined here using
-	 * New 802.11D6.1 क्रमmat.  Card firmware is still using old क्रमmat
+	/* structure for hop time and beacon period is defined here using
+	 * New 802.11D6.1 format.  Card firmware is still using old format
 	 * until version 6.
-	 *    Beक्रमe                    After
-	 *    a_hop_समय ms byte        a_hop_समय ms byte
-	 *    a_hop_समय 2s byte        a_hop_समय ls byte
-	 *    a_hop_समय ls byte        a_beacon_period ms byte
+	 *    Before                    After
+	 *    a_hop_time ms byte        a_hop_time ms byte
+	 *    a_hop_time 2s byte        a_hop_time ls byte
+	 *    a_hop_time ls byte        a_beacon_period ms byte
 	 *    a_beacon_period           a_beacon_period ls byte
 	 *
-	 *    a_hop_समय = uS           a_hop_समय = KuS
+	 *    a_hop_time = uS           a_hop_time = KuS
 	 *    a_beacon_period = hops    a_beacon_period = KuS
 	 *//* 64ms = 010000 */
-	अगर (local->fw_ver == 0x55) अणु
-		स_नकल(&local->sparm.b4, b4_शेष_startup_parms,
-		       माप(काष्ठा b4_startup_params));
-		/* Translate sane kus input values to old build 4/5 क्रमmat */
-		/* i = hop समय in uS truncated to 3 bytes */
+	if (local->fw_ver == 0x55) {
+		memcpy(&local->sparm.b4, b4_default_startup_parms,
+		       sizeof(struct b4_startup_params));
+		/* Translate sane kus input values to old build 4/5 format */
+		/* i = hop time in uS truncated to 3 bytes */
 		i = (hop_dwell * 1024) & 0xffffff;
-		local->sparm.b4.a_hop_समय[0] = (i >> 16) & 0xff;
-		local->sparm.b4.a_hop_समय[1] = (i >> 8) & 0xff;
+		local->sparm.b4.a_hop_time[0] = (i >> 16) & 0xff;
+		local->sparm.b4.a_hop_time[1] = (i >> 8) & 0xff;
 		local->sparm.b4.a_beacon_period[0] = 0;
 		local->sparm.b4.a_beacon_period[1] =
 		    ((beacon_period / hop_dwell) - 1) & 0xff;
 		local->sparm.b4.a_curr_country_code = country;
 		local->sparm.b4.a_hop_pattern_length =
-		    hop_pattern_length[(पूर्णांक)country] - 1;
-		अगर (bc) अणु
-			local->sparm.b4.a_ack_समयout = 0x50;
-			local->sparm.b4.a_sअगरs = 0x3f;
-		पूर्ण
-	पूर्ण अन्यथा अणु /* Version 5 uses real kus values */
-		स_नकल((UCHAR *) &local->sparm.b5, b5_शेष_startup_parms,
-		       माप(काष्ठा b5_startup_params));
+		    hop_pattern_length[(int)country] - 1;
+		if (bc) {
+			local->sparm.b4.a_ack_timeout = 0x50;
+			local->sparm.b4.a_sifs = 0x3f;
+		}
+	} else { /* Version 5 uses real kus values */
+		memcpy((UCHAR *) &local->sparm.b5, b5_default_startup_parms,
+		       sizeof(struct b5_startup_params));
 
-		local->sparm.b5.a_hop_समय[0] = (hop_dwell >> 8) & 0xff;
-		local->sparm.b5.a_hop_समय[1] = hop_dwell & 0xff;
+		local->sparm.b5.a_hop_time[0] = (hop_dwell >> 8) & 0xff;
+		local->sparm.b5.a_hop_time[1] = hop_dwell & 0xff;
 		local->sparm.b5.a_beacon_period[0] =
 		    (beacon_period >> 8) & 0xff;
 		local->sparm.b5.a_beacon_period[1] = beacon_period & 0xff;
-		अगर (psm)
-			local->sparm.b5.a_घातer_mgt_state = 1;
+		if (psm)
+			local->sparm.b5.a_power_mgt_state = 1;
 		local->sparm.b5.a_curr_country_code = country;
 		local->sparm.b5.a_hop_pattern_length =
-		    hop_pattern_length[(पूर्णांक)country];
-	पूर्ण
+		    hop_pattern_length[(int)country];
+	}
 
 	local->sparm.b4.a_network_type = net_type & 0x01;
 	local->sparm.b4.a_acting_as_ap_status = TYPE_STA;
 
-	अगर (essid != शून्य)
-		म_नकलन(local->sparm.b4.a_current_ess_id, essid, ESSID_SIZE);
-पूर्ण /* init_startup_params */
+	if (essid != NULL)
+		strncpy(local->sparm.b4.a_current_ess_id, essid, ESSID_SIZE);
+} /* init_startup_params */
 
 /*===========================================================================*/
-अटल व्योम verअगरy_dl_startup(काष्ठा समयr_list *t)
-अणु
-	ray_dev_t *local = from_समयr(local, t, समयr);
-	काष्ठा ccs __iomem *pccs = ccs_base(local) + local->dl_param_ccs;
+static void verify_dl_startup(struct timer_list *t)
+{
+	ray_dev_t *local = from_timer(local, t, timer);
+	struct ccs __iomem *pccs = ccs_base(local) + local->dl_param_ccs;
 	UCHAR status;
-	काष्ठा pcmcia_device *link = local->finder;
+	struct pcmcia_device *link = local->finder;
 
-	अगर (!(pcmcia_dev_present(link))) अणु
+	if (!(pcmcia_dev_present(link))) {
 		dev_dbg(&link->dev, "ray_cs verify_dl_startup - device not present\n");
-		वापस;
-	पूर्ण
-#अगर 0
-	अणु
-		पूर्णांक i;
-		prपूर्णांकk(KERN_DEBUG
+		return;
+	}
+#if 0
+	{
+		int i;
+		printk(KERN_DEBUG
 		       "verify_dl_startup parameters sent via ccs %d:\n",
 		       local->dl_param_ccs);
-		क्रम (i = 0; i < माप(काष्ठा b5_startup_params); i++) अणु
-			prपूर्णांकk(" %2x",
-			       (अचिन्हित पूर्णांक)पढ़ोb(local->sram +
+		for (i = 0; i < sizeof(struct b5_startup_params); i++) {
+			printk(" %2x",
+			       (unsigned int)readb(local->sram +
 						   HOST_TO_ECF_BASE + i));
-		पूर्ण
-		prपूर्णांकk("\n");
-	पूर्ण
-#पूर्ण_अगर
+		}
+		printk("\n");
+	}
+#endif
 
-	status = पढ़ोb(&pccs->buffer_status);
-	अगर (status != CCS_BUFFER_FREE) अणु
-		prपूर्णांकk(KERN_INFO
+	status = readb(&pccs->buffer_status);
+	if (status != CCS_BUFFER_FREE) {
+		printk(KERN_INFO
 		       "Download startup params failed.  Status = %d\n",
 		       status);
 		local->card_status = CARD_DL_PARAM_ERROR;
-		वापस;
-	पूर्ण
-	अगर (local->sparm.b4.a_network_type == ADHOC)
-		start_net(&local->समयr);
-	अन्यथा
-		join_net(&local->समयr);
-पूर्ण /* end verअगरy_dl_startup */
+		return;
+	}
+	if (local->sparm.b4.a_network_type == ADHOC)
+		start_net(&local->timer);
+	else
+		join_net(&local->timer);
+} /* end verify_dl_startup */
 
 /*===========================================================================*/
 /* Command card to start a network */
-अटल व्योम start_net(काष्ठा समयr_list *t)
-अणु
-	ray_dev_t *local = from_समयr(local, t, समयr);
-	काष्ठा ccs __iomem *pccs;
-	पूर्णांक ccsindex;
-	काष्ठा pcmcia_device *link = local->finder;
-	अगर (!(pcmcia_dev_present(link))) अणु
+static void start_net(struct timer_list *t)
+{
+	ray_dev_t *local = from_timer(local, t, timer);
+	struct ccs __iomem *pccs;
+	int ccsindex;
+	struct pcmcia_device *link = local->finder;
+	if (!(pcmcia_dev_present(link))) {
 		dev_dbg(&link->dev, "ray_cs start_net - device not present\n");
-		वापस;
-	पूर्ण
-	/* Fill in the CCS fields क्रम the ECF */
-	अगर ((ccsindex = get_मुक्त_ccs(local)) < 0)
-		वापस;
+		return;
+	}
+	/* Fill in the CCS fields for the ECF */
+	if ((ccsindex = get_free_ccs(local)) < 0)
+		return;
 	pccs = ccs_base(local) + ccsindex;
-	ग_लिखोb(CCS_START_NETWORK, &pccs->cmd);
-	ग_लिखोb(0, &pccs->var.start_network.update_param);
+	writeb(CCS_START_NETWORK, &pccs->cmd);
+	writeb(0, &pccs->var.start_network.update_param);
 	/* Interrupt the firmware to process the command */
-	अगर (पूर्णांकerrupt_ecf(local, ccsindex)) अणु
+	if (interrupt_ecf(local, ccsindex)) {
 		dev_dbg(&link->dev, "ray start net failed - card not ready for intr\n");
-		ग_लिखोb(CCS_BUFFER_FREE, &(pccs++)->buffer_status);
-		वापस;
-	पूर्ण
+		writeb(CCS_BUFFER_FREE, &(pccs++)->buffer_status);
+		return;
+	}
 	local->card_status = CARD_DOING_ACQ;
-पूर्ण /* end start_net */
+} /* end start_net */
 
 /*===========================================================================*/
 /* Command card to join a network */
-अटल व्योम join_net(काष्ठा समयr_list *t)
-अणु
-	ray_dev_t *local = from_समयr(local, t, समयr);
+static void join_net(struct timer_list *t)
+{
+	ray_dev_t *local = from_timer(local, t, timer);
 
-	काष्ठा ccs __iomem *pccs;
-	पूर्णांक ccsindex;
-	काष्ठा pcmcia_device *link = local->finder;
+	struct ccs __iomem *pccs;
+	int ccsindex;
+	struct pcmcia_device *link = local->finder;
 
-	अगर (!(pcmcia_dev_present(link))) अणु
+	if (!(pcmcia_dev_present(link))) {
 		dev_dbg(&link->dev, "ray_cs join_net - device not present\n");
-		वापस;
-	पूर्ण
-	/* Fill in the CCS fields क्रम the ECF */
-	अगर ((ccsindex = get_मुक्त_ccs(local)) < 0)
-		वापस;
+		return;
+	}
+	/* Fill in the CCS fields for the ECF */
+	if ((ccsindex = get_free_ccs(local)) < 0)
+		return;
 	pccs = ccs_base(local) + ccsindex;
-	ग_लिखोb(CCS_JOIN_NETWORK, &pccs->cmd);
-	ग_लिखोb(0, &pccs->var.join_network.update_param);
-	ग_लिखोb(0, &pccs->var.join_network.net_initiated);
+	writeb(CCS_JOIN_NETWORK, &pccs->cmd);
+	writeb(0, &pccs->var.join_network.update_param);
+	writeb(0, &pccs->var.join_network.net_initiated);
 	/* Interrupt the firmware to process the command */
-	अगर (पूर्णांकerrupt_ecf(local, ccsindex)) अणु
+	if (interrupt_ecf(local, ccsindex)) {
 		dev_dbg(&link->dev, "ray join net failed - card not ready for intr\n");
-		ग_लिखोb(CCS_BUFFER_FREE, &(pccs++)->buffer_status);
-		वापस;
-	पूर्ण
+		writeb(CCS_BUFFER_FREE, &(pccs++)->buffer_status);
+		return;
+	}
 	local->card_status = CARD_DOING_ACQ;
-पूर्ण
+}
 
 
-अटल व्योम ray_release(काष्ठा pcmcia_device *link)
-अणु
-	काष्ठा net_device *dev = link->priv;
+static void ray_release(struct pcmcia_device *link)
+{
+	struct net_device *dev = link->priv;
 	ray_dev_t *local = netdev_priv(dev);
 
 	dev_dbg(&link->dev, "ray_release\n");
 
-	del_समयr(&local->समयr);
+	del_timer(&local->timer);
 
 	iounmap(local->sram);
 	iounmap(local->rmem);
@@ -737,242 +736,242 @@ failed:
 	pcmcia_disable_device(link);
 
 	dev_dbg(&link->dev, "ray_release ending\n");
-पूर्ण
+}
 
-अटल पूर्णांक ray_suspend(काष्ठा pcmcia_device *link)
-अणु
-	काष्ठा net_device *dev = link->priv;
+static int ray_suspend(struct pcmcia_device *link)
+{
+	struct net_device *dev = link->priv;
 
-	अगर (link->खोलो)
-		netअगर_device_detach(dev);
+	if (link->open)
+		netif_device_detach(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ray_resume(काष्ठा pcmcia_device *link)
-अणु
-	काष्ठा net_device *dev = link->priv;
+static int ray_resume(struct pcmcia_device *link)
+{
+	struct net_device *dev = link->priv;
 
-	अगर (link->खोलो) अणु
+	if (link->open) {
 		ray_reset(dev);
-		netअगर_device_attach(dev);
-	पूर्ण
+		netif_device_attach(dev);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*===========================================================================*/
-अटल पूर्णांक ray_dev_init(काष्ठा net_device *dev)
-अणु
-#अगर_घोषित RAY_IMMEDIATE_INIT
-	पूर्णांक i;
-#पूर्ण_अगर /* RAY_IMMEDIATE_INIT */
+static int ray_dev_init(struct net_device *dev)
+{
+#ifdef RAY_IMMEDIATE_INIT
+	int i;
+#endif /* RAY_IMMEDIATE_INIT */
 	ray_dev_t *local = netdev_priv(dev);
-	काष्ठा pcmcia_device *link = local->finder;
+	struct pcmcia_device *link = local->finder;
 
 	dev_dbg(&link->dev, "ray_dev_init(dev=%p)\n", dev);
-	अगर (!(pcmcia_dev_present(link))) अणु
+	if (!(pcmcia_dev_present(link))) {
 		dev_dbg(&link->dev, "ray_dev_init - device not present\n");
-		वापस -1;
-	पूर्ण
-#अगर_घोषित RAY_IMMEDIATE_INIT
+		return -1;
+	}
+#ifdef RAY_IMMEDIATE_INIT
 	/* Download startup parameters */
-	अगर ((i = dl_startup_params(dev)) < 0) अणु
-		prपूर्णांकk(KERN_INFO "ray_dev_init dl_startup_params failed - "
+	if ((i = dl_startup_params(dev)) < 0) {
+		printk(KERN_INFO "ray_dev_init dl_startup_params failed - "
 		       "returns 0x%x\n", i);
-		वापस -1;
-	पूर्ण
-#अन्यथा /* RAY_IMMEDIATE_INIT */
+		return -1;
+	}
+#else /* RAY_IMMEDIATE_INIT */
 	/* Postpone the card init so that we can still configure the card,
-	 * क्रम example using the Wireless Extensions. The init will happen
-	 * in ray_खोलो() - Jean II */
+	 * for example using the Wireless Extensions. The init will happen
+	 * in ray_open() - Jean II */
 	dev_dbg(&link->dev,
 	      "ray_dev_init: postponing card init to ray_open() ; Status = %d\n",
 	      local->card_status);
-#पूर्ण_अगर /* RAY_IMMEDIATE_INIT */
+#endif /* RAY_IMMEDIATE_INIT */
 
 	/* copy mac and broadcast addresses to linux device */
-	स_नकल(dev->dev_addr, &local->sparm.b4.a_mac_addr, ADDRLEN);
+	memcpy(dev->dev_addr, &local->sparm.b4.a_mac_addr, ADDRLEN);
 	eth_broadcast_addr(dev->broadcast);
 
 	dev_dbg(&link->dev, "ray_dev_init ending\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*===========================================================================*/
-अटल पूर्णांक ray_dev_config(काष्ठा net_device *dev, काष्ठा अगरmap *map)
-अणु
+static int ray_dev_config(struct net_device *dev, struct ifmap *map)
+{
 	ray_dev_t *local = netdev_priv(dev);
-	काष्ठा pcmcia_device *link = local->finder;
-	/* Dummy routine to satisfy device काष्ठाure */
+	struct pcmcia_device *link = local->finder;
+	/* Dummy routine to satisfy device structure */
 	dev_dbg(&link->dev, "ray_dev_config(dev=%p,ifmap=%p)\n", dev, map);
-	अगर (!(pcmcia_dev_present(link))) अणु
+	if (!(pcmcia_dev_present(link))) {
 		dev_dbg(&link->dev, "ray_dev_config - device not present\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*===========================================================================*/
-अटल netdev_tx_t ray_dev_start_xmit(काष्ठा sk_buff *skb,
-					    काष्ठा net_device *dev)
-अणु
+static netdev_tx_t ray_dev_start_xmit(struct sk_buff *skb,
+					    struct net_device *dev)
+{
 	ray_dev_t *local = netdev_priv(dev);
-	काष्ठा pcmcia_device *link = local->finder;
-	लघु length = skb->len;
+	struct pcmcia_device *link = local->finder;
+	short length = skb->len;
 
-	अगर (!pcmcia_dev_present(link)) अणु
+	if (!pcmcia_dev_present(link)) {
 		dev_dbg(&link->dev, "ray_dev_start_xmit - device not present\n");
-		dev_kमुक्त_skb(skb);
-		वापस NETDEV_TX_OK;
-	पूर्ण
+		dev_kfree_skb(skb);
+		return NETDEV_TX_OK;
+	}
 
 	dev_dbg(&link->dev, "ray_dev_start_xmit(skb=%p, dev=%p)\n", skb, dev);
-	अगर (local->authentication_state == NEED_TO_AUTH) अणु
+	if (local->authentication_state == NEED_TO_AUTH) {
 		dev_dbg(&link->dev, "ray_cs Sending authentication request.\n");
-		अगर (!build_auth_frame(local, local->auth_id, OPEN_AUTH_REQUEST)) अणु
+		if (!build_auth_frame(local, local->auth_id, OPEN_AUTH_REQUEST)) {
 			local->authentication_state = AUTHENTICATED;
-			netअगर_stop_queue(dev);
-			वापस NETDEV_TX_BUSY;
-		पूर्ण
-	पूर्ण
+			netif_stop_queue(dev);
+			return NETDEV_TX_BUSY;
+		}
+	}
 
-	अगर (length < ETH_ZLEN) अणु
-		अगर (skb_padto(skb, ETH_ZLEN))
-			वापस NETDEV_TX_OK;
+	if (length < ETH_ZLEN) {
+		if (skb_padto(skb, ETH_ZLEN))
+			return NETDEV_TX_OK;
 		length = ETH_ZLEN;
-	पूर्ण
-	चयन (ray_hw_xmit(skb->data, length, dev, DATA_TYPE)) अणु
-	हाल XMIT_NO_CCS:
-	हाल XMIT_NEED_AUTH:
-		netअगर_stop_queue(dev);
-		वापस NETDEV_TX_BUSY;
-	हाल XMIT_NO_INTR:
-	हाल XMIT_MSG_BAD:
-	हाल XMIT_OK:
-	शेष:
-		dev_kमुक्त_skb(skb);
-	पूर्ण
+	}
+	switch (ray_hw_xmit(skb->data, length, dev, DATA_TYPE)) {
+	case XMIT_NO_CCS:
+	case XMIT_NEED_AUTH:
+		netif_stop_queue(dev);
+		return NETDEV_TX_BUSY;
+	case XMIT_NO_INTR:
+	case XMIT_MSG_BAD:
+	case XMIT_OK:
+	default:
+		dev_kfree_skb(skb);
+	}
 
-	वापस NETDEV_TX_OK;
-पूर्ण /* ray_dev_start_xmit */
+	return NETDEV_TX_OK;
+} /* ray_dev_start_xmit */
 
 /*===========================================================================*/
-अटल पूर्णांक ray_hw_xmit(अचिन्हित अक्षर *data, पूर्णांक len, काष्ठा net_device *dev,
+static int ray_hw_xmit(unsigned char *data, int len, struct net_device *dev,
 		       UCHAR msg_type)
-अणु
+{
 	ray_dev_t *local = netdev_priv(dev);
-	काष्ठा ccs __iomem *pccs;
-	पूर्णांक ccsindex;
-	पूर्णांक offset;
-	काष्ठा tx_msg __iomem *ptx;	/* Address of xmit buffer in PC space */
-	लघु पूर्णांक addr;		/* Address of xmit buffer in card space */
+	struct ccs __iomem *pccs;
+	int ccsindex;
+	int offset;
+	struct tx_msg __iomem *ptx;	/* Address of xmit buffer in PC space */
+	short int addr;		/* Address of xmit buffer in card space */
 
 	pr_debug("ray_hw_xmit(data=%p, len=%d, dev=%p)\n", data, len, dev);
-	अगर (len + TX_HEADER_LENGTH > TX_BUF_SIZE) अणु
-		prपूर्णांकk(KERN_INFO "ray_hw_xmit packet too large: %d bytes\n",
+	if (len + TX_HEADER_LENGTH > TX_BUF_SIZE) {
+		printk(KERN_INFO "ray_hw_xmit packet too large: %d bytes\n",
 		       len);
-		वापस XMIT_MSG_BAD;
-	पूर्ण
-	चयन (ccsindex = get_मुक्त_tx_ccs(local)) अणु
-	हाल ECCSBUSY:
+		return XMIT_MSG_BAD;
+	}
+	switch (ccsindex = get_free_tx_ccs(local)) {
+	case ECCSBUSY:
 		pr_debug("ray_hw_xmit tx_ccs table busy\n");
 		fallthrough;
-	हाल ECCSFULL:
+	case ECCSFULL:
 		pr_debug("ray_hw_xmit No free tx ccs\n");
 		fallthrough;
-	हाल ECARDGONE:
-		netअगर_stop_queue(dev);
-		वापस XMIT_NO_CCS;
-	शेष:
-		अवरोध;
-	पूर्ण
+	case ECARDGONE:
+		netif_stop_queue(dev);
+		return XMIT_NO_CCS;
+	default:
+		break;
+	}
 	addr = TX_BUF_BASE + (ccsindex << 11);
 
-	अगर (msg_type == DATA_TYPE) अणु
+	if (msg_type == DATA_TYPE) {
 		local->stats.tx_bytes += len;
 		local->stats.tx_packets++;
-	पूर्ण
+	}
 
 	ptx = local->sram + addr;
 
 	ray_build_header(local, ptx, msg_type, data);
-	अगर (translate) अणु
+	if (translate) {
 		offset = translate_frame(local, ptx, data, len);
-	पूर्ण अन्यथा अणु /* Encapsulate frame */
+	} else { /* Encapsulate frame */
 		/* TBD TIB length will move address of ptx->var */
-		स_नकल_toio(&ptx->var, data, len);
+		memcpy_toio(&ptx->var, data, len);
 		offset = 0;
-	पूर्ण
+	}
 
 	/* fill in the CCS */
 	pccs = ccs_base(local) + ccsindex;
 	len += TX_HEADER_LENGTH + offset;
-	ग_लिखोb(CCS_TX_REQUEST, &pccs->cmd);
-	ग_लिखोb(addr >> 8, &pccs->var.tx_request.tx_data_ptr[0]);
-	ग_लिखोb(local->tib_length, &pccs->var.tx_request.tx_data_ptr[1]);
-	ग_लिखोb(len >> 8, &pccs->var.tx_request.tx_data_length[0]);
-	ग_लिखोb(len & 0xff, &pccs->var.tx_request.tx_data_length[1]);
+	writeb(CCS_TX_REQUEST, &pccs->cmd);
+	writeb(addr >> 8, &pccs->var.tx_request.tx_data_ptr[0]);
+	writeb(local->tib_length, &pccs->var.tx_request.tx_data_ptr[1]);
+	writeb(len >> 8, &pccs->var.tx_request.tx_data_length[0]);
+	writeb(len & 0xff, &pccs->var.tx_request.tx_data_length[1]);
 /* TBD still need psm_cam? */
-	ग_लिखोb(PSM_CAM, &pccs->var.tx_request.घात_sav_mode);
-	ग_लिखोb(local->net_शेष_tx_rate, &pccs->var.tx_request.tx_rate);
-	ग_लिखोb(0, &pccs->var.tx_request.antenna);
+	writeb(PSM_CAM, &pccs->var.tx_request.pow_sav_mode);
+	writeb(local->net_default_tx_rate, &pccs->var.tx_request.tx_rate);
+	writeb(0, &pccs->var.tx_request.antenna);
 	pr_debug("ray_hw_xmit default_tx_rate = 0x%x\n",
-	      local->net_शेष_tx_rate);
+	      local->net_default_tx_rate);
 
 	/* Interrupt the firmware to process the command */
-	अगर (पूर्णांकerrupt_ecf(local, ccsindex)) अणु
+	if (interrupt_ecf(local, ccsindex)) {
 		pr_debug("ray_hw_xmit failed - ECF not ready for intr\n");
 /* TBD very inefficient to copy packet to buffer, and then not
    send it, but the alternative is to queue the messages and that
-   won't be करोne क्रम a जबतक.  Maybe set tbusy until a CCS is मुक्त?
+   won't be done for a while.  Maybe set tbusy until a CCS is free?
 */
-		ग_लिखोb(CCS_BUFFER_FREE, &pccs->buffer_status);
-		वापस XMIT_NO_INTR;
-	पूर्ण
-	वापस XMIT_OK;
-पूर्ण /* end ray_hw_xmit */
+		writeb(CCS_BUFFER_FREE, &pccs->buffer_status);
+		return XMIT_NO_INTR;
+	}
+	return XMIT_OK;
+} /* end ray_hw_xmit */
 
 /*===========================================================================*/
-अटल पूर्णांक translate_frame(ray_dev_t *local, काष्ठा tx_msg __iomem *ptx,
-			   अचिन्हित अक्षर *data, पूर्णांक len)
-अणु
-	__be16 proto = ((काष्ठा ethhdr *)data)->h_proto;
-	अगर (ntohs(proto) >= ETH_P_802_3_MIN) अणु /* DIX II ethernet frame */
+static int translate_frame(ray_dev_t *local, struct tx_msg __iomem *ptx,
+			   unsigned char *data, int len)
+{
+	__be16 proto = ((struct ethhdr *)data)->h_proto;
+	if (ntohs(proto) >= ETH_P_802_3_MIN) { /* DIX II ethernet frame */
 		pr_debug("ray_cs translate_frame DIX II\n");
 		/* Copy LLC header to card buffer */
-		स_नकल_toio(&ptx->var, eth2_llc, माप(eth2_llc));
-		स_नकल_toio(((व्योम __iomem *)&ptx->var) + माप(eth2_llc),
+		memcpy_toio(&ptx->var, eth2_llc, sizeof(eth2_llc));
+		memcpy_toio(((void __iomem *)&ptx->var) + sizeof(eth2_llc),
 			    (UCHAR *) &proto, 2);
-		अगर (proto == htons(ETH_P_AARP) || proto == htons(ETH_P_IPX)) अणु
+		if (proto == htons(ETH_P_AARP) || proto == htons(ETH_P_IPX)) {
 			/* This is the selective translation table, only 2 entries */
-			ग_लिखोb(0xf8,
-			       &((काष्ठा snaphdr_t __iomem *)ptx->var)->org[2]);
-		पूर्ण
+			writeb(0xf8,
+			       &((struct snaphdr_t __iomem *)ptx->var)->org[2]);
+		}
 		/* Copy body of ethernet packet without ethernet header */
-		स_नकल_toio((व्योम __iomem *)&ptx->var +
-			    माप(काष्ठा snaphdr_t), data + ETH_HLEN,
+		memcpy_toio((void __iomem *)&ptx->var +
+			    sizeof(struct snaphdr_t), data + ETH_HLEN,
 			    len - ETH_HLEN);
-		वापस (पूर्णांक)माप(काष्ठा snaphdr_t) - ETH_HLEN;
-	पूर्ण अन्यथा अणु /* alपढ़ोy  802 type, and proto is length */
+		return (int)sizeof(struct snaphdr_t) - ETH_HLEN;
+	} else { /* already  802 type, and proto is length */
 		pr_debug("ray_cs translate_frame 802\n");
-		अगर (proto == htons(0xffff)) अणु /* evil netware IPX 802.3 without LLC */
+		if (proto == htons(0xffff)) { /* evil netware IPX 802.3 without LLC */
 			pr_debug("ray_cs translate_frame evil IPX\n");
-			स_नकल_toio(&ptx->var, data + ETH_HLEN, len - ETH_HLEN);
-			वापस 0 - ETH_HLEN;
-		पूर्ण
-		स_नकल_toio(&ptx->var, data + ETH_HLEN, len - ETH_HLEN);
-		वापस 0 - ETH_HLEN;
-	पूर्ण
-	/* TBD करो other frame types */
-पूर्ण /* end translate_frame */
+			memcpy_toio(&ptx->var, data + ETH_HLEN, len - ETH_HLEN);
+			return 0 - ETH_HLEN;
+		}
+		memcpy_toio(&ptx->var, data + ETH_HLEN, len - ETH_HLEN);
+		return 0 - ETH_HLEN;
+	}
+	/* TBD do other frame types */
+} /* end translate_frame */
 
 /*===========================================================================*/
-अटल व्योम ray_build_header(ray_dev_t *local, काष्ठा tx_msg __iomem *ptx,
-			     UCHAR msg_type, अचिन्हित अक्षर *data)
-अणु
-	ग_लिखोb(PROTOCOL_VER | msg_type, &ptx->mac.frame_ctl_1);
+static void ray_build_header(ray_dev_t *local, struct tx_msg __iomem *ptx,
+			     UCHAR msg_type, unsigned char *data)
+{
+	writeb(PROTOCOL_VER | msg_type, &ptx->mac.frame_ctl_1);
 /*** IEEE 802.11 Address field assignments *************
 		TODS	FROMDS	addr_1		addr_2		addr_3	addr_4
 Adhoc		0	0	dest		src (terminal)	BSSID	N/A
@@ -980,31 +979,31 @@ AP to Terminal	0	1	dest		AP(BSSID)	source	N/A
 Terminal to AP	1	0	AP(BSSID)	src (terminal)	dest	N/A
 AP to AP	1	1	dest AP		src AP		dest	source
 *******************************************************/
-	अगर (local->net_type == ADHOC) अणु
-		ग_लिखोb(0, &ptx->mac.frame_ctl_2);
-		स_नकल_toio(ptx->mac.addr_1, ((काष्ठा ethhdr *)data)->h_dest,
+	if (local->net_type == ADHOC) {
+		writeb(0, &ptx->mac.frame_ctl_2);
+		memcpy_toio(ptx->mac.addr_1, ((struct ethhdr *)data)->h_dest,
 			    2 * ADDRLEN);
-		स_नकल_toio(ptx->mac.addr_3, local->bss_id, ADDRLEN);
-	पूर्ण अन्यथा अणु /* infraकाष्ठाure */
+		memcpy_toio(ptx->mac.addr_3, local->bss_id, ADDRLEN);
+	} else { /* infrastructure */
 
-		अगर (local->sparm.b4.a_acting_as_ap_status) अणु
-			ग_लिखोb(FC2_FROM_DS, &ptx->mac.frame_ctl_2);
-			स_नकल_toio(ptx->mac.addr_1,
-				    ((काष्ठा ethhdr *)data)->h_dest, ADDRLEN);
-			स_नकल_toio(ptx->mac.addr_2, local->bss_id, 6);
-			स_नकल_toio(ptx->mac.addr_3,
-				    ((काष्ठा ethhdr *)data)->h_source, ADDRLEN);
-		पूर्ण अन्यथा अणु /* Terminal */
+		if (local->sparm.b4.a_acting_as_ap_status) {
+			writeb(FC2_FROM_DS, &ptx->mac.frame_ctl_2);
+			memcpy_toio(ptx->mac.addr_1,
+				    ((struct ethhdr *)data)->h_dest, ADDRLEN);
+			memcpy_toio(ptx->mac.addr_2, local->bss_id, 6);
+			memcpy_toio(ptx->mac.addr_3,
+				    ((struct ethhdr *)data)->h_source, ADDRLEN);
+		} else { /* Terminal */
 
-			ग_लिखोb(FC2_TO_DS, &ptx->mac.frame_ctl_2);
-			स_नकल_toio(ptx->mac.addr_1, local->bss_id, ADDRLEN);
-			स_नकल_toio(ptx->mac.addr_2,
-				    ((काष्ठा ethhdr *)data)->h_source, ADDRLEN);
-			स_नकल_toio(ptx->mac.addr_3,
-				    ((काष्ठा ethhdr *)data)->h_dest, ADDRLEN);
-		पूर्ण
-	पूर्ण
-पूर्ण /* end encapsulate_frame */
+			writeb(FC2_TO_DS, &ptx->mac.frame_ctl_2);
+			memcpy_toio(ptx->mac.addr_1, local->bss_id, ADDRLEN);
+			memcpy_toio(ptx->mac.addr_2,
+				    ((struct ethhdr *)data)->h_source, ADDRLEN);
+			memcpy_toio(ptx->mac.addr_3,
+				    ((struct ethhdr *)data)->h_dest, ADDRLEN);
+		}
+	}
+} /* end encapsulate_frame */
 
 /*====================================================================*/
 
@@ -1012,195 +1011,195 @@ AP to AP	1	1	dest AP		src AP		dest	source
 /*
  * Wireless Handler : get protocol name
  */
-अटल पूर्णांक ray_get_name(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	म_नकल(wrqu->name, "IEEE 802.11-FH");
-	वापस 0;
-पूर्ण
+static int ray_get_name(struct net_device *dev, struct iw_request_info *info,
+			union iwreq_data *wrqu, char *extra)
+{
+	strcpy(wrqu->name, "IEEE 802.11-FH");
+	return 0;
+}
 
 /*------------------------------------------------------------------*/
 /*
  * Wireless Handler : set frequency
  */
-अटल पूर्णांक ray_set_freq(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
+static int ray_set_freq(struct net_device *dev, struct iw_request_info *info,
+			union iwreq_data *wrqu, char *extra)
+{
 	ray_dev_t *local = netdev_priv(dev);
-	पूर्णांक err = -EINPROGRESS;	/* Call commit handler */
+	int err = -EINPROGRESS;	/* Call commit handler */
 
-	/* Reject अगर card is alपढ़ोy initialised */
-	अगर (local->card_status != CARD_AWAITING_PARAM)
-		वापस -EBUSY;
+	/* Reject if card is already initialised */
+	if (local->card_status != CARD_AWAITING_PARAM)
+		return -EBUSY;
 
 	/* Setting by channel number */
-	अगर ((wrqu->freq.m > USA_HOP_MOD) || (wrqu->freq.e > 0))
+	if ((wrqu->freq.m > USA_HOP_MOD) || (wrqu->freq.e > 0))
 		err = -EOPNOTSUPP;
-	अन्यथा
+	else
 		local->sparm.b5.a_hop_pattern = wrqu->freq.m;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*------------------------------------------------------------------*/
 /*
  * Wireless Handler : get frequency
  */
-अटल पूर्णांक ray_get_freq(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
+static int ray_get_freq(struct net_device *dev, struct iw_request_info *info,
+			union iwreq_data *wrqu, char *extra)
+{
 	ray_dev_t *local = netdev_priv(dev);
 
 	wrqu->freq.m = local->sparm.b5.a_hop_pattern;
 	wrqu->freq.e = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*------------------------------------------------------------------*/
 /*
  * Wireless Handler : set ESSID
  */
-अटल पूर्णांक ray_set_essid(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			 जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
+static int ray_set_essid(struct net_device *dev, struct iw_request_info *info,
+			 union iwreq_data *wrqu, char *extra)
+{
 	ray_dev_t *local = netdev_priv(dev);
 
-	/* Reject अगर card is alपढ़ोy initialised */
-	अगर (local->card_status != CARD_AWAITING_PARAM)
-		वापस -EBUSY;
+	/* Reject if card is already initialised */
+	if (local->card_status != CARD_AWAITING_PARAM)
+		return -EBUSY;
 
-	/* Check अगर we asked क्रम `any' */
-	अगर (wrqu->essid.flags == 0)
-		/* Corey : can you करो that ? */
-		वापस -EOPNOTSUPP;
+	/* Check if we asked for `any' */
+	if (wrqu->essid.flags == 0)
+		/* Corey : can you do that ? */
+		return -EOPNOTSUPP;
 
 	/* Check the size of the string */
-	अगर (wrqu->essid.length > IW_ESSID_MAX_SIZE)
-		वापस -E2BIG;
+	if (wrqu->essid.length > IW_ESSID_MAX_SIZE)
+		return -E2BIG;
 
 	/* Set the ESSID in the card */
-	स_रखो(local->sparm.b5.a_current_ess_id, 0, IW_ESSID_MAX_SIZE);
-	स_नकल(local->sparm.b5.a_current_ess_id, extra, wrqu->essid.length);
+	memset(local->sparm.b5.a_current_ess_id, 0, IW_ESSID_MAX_SIZE);
+	memcpy(local->sparm.b5.a_current_ess_id, extra, wrqu->essid.length);
 
-	वापस -EINPROGRESS;	/* Call commit handler */
-पूर्ण
+	return -EINPROGRESS;	/* Call commit handler */
+}
 
 /*------------------------------------------------------------------*/
 /*
  * Wireless Handler : get ESSID
  */
-अटल पूर्णांक ray_get_essid(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			 जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
+static int ray_get_essid(struct net_device *dev, struct iw_request_info *info,
+			 union iwreq_data *wrqu, char *extra)
+{
 	ray_dev_t *local = netdev_priv(dev);
-	UCHAR पंचांगp[IW_ESSID_MAX_SIZE + 1];
+	UCHAR tmp[IW_ESSID_MAX_SIZE + 1];
 
 	/* Get the essid that was set */
-	स_नकल(extra, local->sparm.b5.a_current_ess_id, IW_ESSID_MAX_SIZE);
-	स_नकल(पंचांगp, local->sparm.b5.a_current_ess_id, IW_ESSID_MAX_SIZE);
-	पंचांगp[IW_ESSID_MAX_SIZE] = '\0';
+	memcpy(extra, local->sparm.b5.a_current_ess_id, IW_ESSID_MAX_SIZE);
+	memcpy(tmp, local->sparm.b5.a_current_ess_id, IW_ESSID_MAX_SIZE);
+	tmp[IW_ESSID_MAX_SIZE] = '\0';
 
 	/* Push it out ! */
-	wrqu->essid.length = म_माप(पंचांगp);
+	wrqu->essid.length = strlen(tmp);
 	wrqu->essid.flags = 1;	/* active */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*------------------------------------------------------------------*/
 /*
  * Wireless Handler : get AP address
  */
-अटल पूर्णांक ray_get_wap(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-		       जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
+static int ray_get_wap(struct net_device *dev, struct iw_request_info *info,
+		       union iwreq_data *wrqu, char *extra)
+{
 	ray_dev_t *local = netdev_priv(dev);
 
-	स_नकल(wrqu->ap_addr.sa_data, local->bss_id, ETH_ALEN);
+	memcpy(wrqu->ap_addr.sa_data, local->bss_id, ETH_ALEN);
 	wrqu->ap_addr.sa_family = ARPHRD_ETHER;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*------------------------------------------------------------------*/
 /*
  * Wireless Handler : set Bit-Rate
  */
-अटल पूर्णांक ray_set_rate(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
+static int ray_set_rate(struct net_device *dev, struct iw_request_info *info,
+			union iwreq_data *wrqu, char *extra)
+{
 	ray_dev_t *local = netdev_priv(dev);
 
-	/* Reject अगर card is alपढ़ोy initialised */
-	अगर (local->card_status != CARD_AWAITING_PARAM)
-		वापस -EBUSY;
+	/* Reject if card is already initialised */
+	if (local->card_status != CARD_AWAITING_PARAM)
+		return -EBUSY;
 
-	/* Check अगर rate is in range */
-	अगर ((wrqu->bitrate.value != 1000000) && (wrqu->bitrate.value != 2000000))
-		वापस -EINVAL;
+	/* Check if rate is in range */
+	if ((wrqu->bitrate.value != 1000000) && (wrqu->bitrate.value != 2000000))
+		return -EINVAL;
 
-	/* Hack क्रम 1.5 Mb/s instead of 2 Mb/s */
-	अगर ((local->fw_ver == 0x55) &&	/* Please check */
+	/* Hack for 1.5 Mb/s instead of 2 Mb/s */
+	if ((local->fw_ver == 0x55) &&	/* Please check */
 	    (wrqu->bitrate.value == 2000000))
-		local->net_शेष_tx_rate = 3;
-	अन्यथा
-		local->net_शेष_tx_rate = wrqu->bitrate.value / 500000;
+		local->net_default_tx_rate = 3;
+	else
+		local->net_default_tx_rate = wrqu->bitrate.value / 500000;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*------------------------------------------------------------------*/
 /*
  * Wireless Handler : get Bit-Rate
  */
-अटल पूर्णांक ray_get_rate(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
+static int ray_get_rate(struct net_device *dev, struct iw_request_info *info,
+			union iwreq_data *wrqu, char *extra)
+{
 	ray_dev_t *local = netdev_priv(dev);
 
-	अगर (local->net_शेष_tx_rate == 3)
+	if (local->net_default_tx_rate == 3)
 		wrqu->bitrate.value = 2000000;	/* Hum... */
-	अन्यथा
-		wrqu->bitrate.value = local->net_शेष_tx_rate * 500000;
-	wrqu->bitrate.fixed = 0;	/* We are in स्वतः mode */
+	else
+		wrqu->bitrate.value = local->net_default_tx_rate * 500000;
+	wrqu->bitrate.fixed = 0;	/* We are in auto mode */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*------------------------------------------------------------------*/
 /*
  * Wireless Handler : set RTS threshold
  */
-अटल पूर्णांक ray_set_rts(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-		       जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
+static int ray_set_rts(struct net_device *dev, struct iw_request_info *info,
+		       union iwreq_data *wrqu, char *extra)
+{
 	ray_dev_t *local = netdev_priv(dev);
-	पूर्णांक rthr = wrqu->rts.value;
+	int rthr = wrqu->rts.value;
 
-	/* Reject अगर card is alपढ़ोy initialised */
-	अगर (local->card_status != CARD_AWAITING_PARAM)
-		वापस -EBUSY;
+	/* Reject if card is already initialised */
+	if (local->card_status != CARD_AWAITING_PARAM)
+		return -EBUSY;
 
-	/* अगर(wrq->u.rts.fixed == 0) we should complain */
-	अगर (wrqu->rts.disabled)
+	/* if(wrq->u.rts.fixed == 0) we should complain */
+	if (wrqu->rts.disabled)
 		rthr = 32767;
-	अन्यथा अणु
-		अगर ((rthr < 0) || (rthr > 2347))   /* What's the max packet size ??? */
-			वापस -EINVAL;
-	पूर्ण
+	else {
+		if ((rthr < 0) || (rthr > 2347))   /* What's the max packet size ??? */
+			return -EINVAL;
+	}
 	local->sparm.b5.a_rts_threshold[0] = (rthr >> 8) & 0xFF;
 	local->sparm.b5.a_rts_threshold[1] = rthr & 0xFF;
 
-	वापस -EINPROGRESS;	/* Call commit handler */
-पूर्ण
+	return -EINPROGRESS;	/* Call commit handler */
+}
 
 /*------------------------------------------------------------------*/
 /*
  * Wireless Handler : get RTS threshold
  */
-अटल पूर्णांक ray_get_rts(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-		       जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
+static int ray_get_rts(struct net_device *dev, struct iw_request_info *info,
+		       union iwreq_data *wrqu, char *extra)
+{
 	ray_dev_t *local = netdev_priv(dev);
 
 	wrqu->rts.value = (local->sparm.b5.a_rts_threshold[0] << 8)
@@ -1208,43 +1207,43 @@ AP to AP	1	1	dest AP		src AP		dest	source
 	wrqu->rts.disabled = (wrqu->rts.value == 32767);
 	wrqu->rts.fixed = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*------------------------------------------------------------------*/
 /*
  * Wireless Handler : set Fragmentation threshold
  */
-अटल पूर्णांक ray_set_frag(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
+static int ray_set_frag(struct net_device *dev, struct iw_request_info *info,
+			union iwreq_data *wrqu, char *extra)
+{
 	ray_dev_t *local = netdev_priv(dev);
-	पूर्णांक fthr = wrqu->frag.value;
+	int fthr = wrqu->frag.value;
 
-	/* Reject अगर card is alपढ़ोy initialised */
-	अगर (local->card_status != CARD_AWAITING_PARAM)
-		वापस -EBUSY;
+	/* Reject if card is already initialised */
+	if (local->card_status != CARD_AWAITING_PARAM)
+		return -EBUSY;
 
-	/* अगर(wrq->u.frag.fixed == 0) should complain */
-	अगर (wrqu->frag.disabled)
+	/* if(wrq->u.frag.fixed == 0) should complain */
+	if (wrqu->frag.disabled)
 		fthr = 32767;
-	अन्यथा अणु
-		अगर ((fthr < 256) || (fthr > 2347))	/* To check out ! */
-			वापस -EINVAL;
-	पूर्ण
+	else {
+		if ((fthr < 256) || (fthr > 2347))	/* To check out ! */
+			return -EINVAL;
+	}
 	local->sparm.b5.a_frag_threshold[0] = (fthr >> 8) & 0xFF;
 	local->sparm.b5.a_frag_threshold[1] = fthr & 0xFF;
 
-	वापस -EINPROGRESS;	/* Call commit handler */
-पूर्ण
+	return -EINPROGRESS;	/* Call commit handler */
+}
 
 /*------------------------------------------------------------------*/
 /*
  * Wireless Handler : get Fragmentation threshold
  */
-अटल पूर्णांक ray_get_frag(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
+static int ray_get_frag(struct net_device *dev, struct iw_request_info *info,
+			union iwreq_data *wrqu, char *extra)
+{
 	ray_dev_t *local = netdev_priv(dev);
 
 	wrqu->frag.value = (local->sparm.b5.a_frag_threshold[0] << 8)
@@ -1252,76 +1251,76 @@ AP to AP	1	1	dest AP		src AP		dest	source
 	wrqu->frag.disabled = (wrqu->frag.value == 32767);
 	wrqu->frag.fixed = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*------------------------------------------------------------------*/
 /*
  * Wireless Handler : set Mode of Operation
  */
-अटल पूर्णांक ray_set_mode(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
+static int ray_set_mode(struct net_device *dev, struct iw_request_info *info,
+			union iwreq_data *wrqu, char *extra)
+{
 	ray_dev_t *local = netdev_priv(dev);
-	पूर्णांक err = -EINPROGRESS;	/* Call commit handler */
-	अक्षर card_mode = 1;
+	int err = -EINPROGRESS;	/* Call commit handler */
+	char card_mode = 1;
 
-	/* Reject अगर card is alपढ़ोy initialised */
-	अगर (local->card_status != CARD_AWAITING_PARAM)
-		वापस -EBUSY;
+	/* Reject if card is already initialised */
+	if (local->card_status != CARD_AWAITING_PARAM)
+		return -EBUSY;
 
-	चयन (wrqu->mode) अणु
-	हाल IW_MODE_ADHOC:
+	switch (wrqu->mode) {
+	case IW_MODE_ADHOC:
 		card_mode = 0;
 		fallthrough;
-	हाल IW_MODE_INFRA:
+	case IW_MODE_INFRA:
 		local->sparm.b5.a_network_type = card_mode;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = -EINVAL;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*------------------------------------------------------------------*/
 /*
  * Wireless Handler : get Mode of Operation
  */
-अटल पूर्णांक ray_get_mode(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
+static int ray_get_mode(struct net_device *dev, struct iw_request_info *info,
+			union iwreq_data *wrqu, char *extra)
+{
 	ray_dev_t *local = netdev_priv(dev);
 
-	अगर (local->sparm.b5.a_network_type)
+	if (local->sparm.b5.a_network_type)
 		wrqu->mode = IW_MODE_INFRA;
-	अन्यथा
+	else
 		wrqu->mode = IW_MODE_ADHOC;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*------------------------------------------------------------------*/
 /*
  * Wireless Handler : get range info
  */
-अटल पूर्णांक ray_get_range(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			 जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा iw_range *range = (काष्ठा iw_range *)extra;
+static int ray_get_range(struct net_device *dev, struct iw_request_info *info,
+			 union iwreq_data *wrqu, char *extra)
+{
+	struct iw_range *range = (struct iw_range *)extra;
 
-	स_रखो(range, 0, माप(काष्ठा iw_range));
+	memset(range, 0, sizeof(struct iw_range));
 
-	/* Set the length (very important क्रम backward compatibility) */
-	wrqu->data.length = माप(काष्ठा iw_range);
+	/* Set the length (very important for backward compatibility) */
+	wrqu->data.length = sizeof(struct iw_range);
 
 	/* Set the Wireless Extension versions */
 	range->we_version_compiled = WIRELESS_EXT;
 	range->we_version_source = 9;
 
-	/* Set inक्रमmation in the range काष्ठा */
+	/* Set information in the range struct */
 	range->throughput = 1.1 * 1000 * 1000;	/* Put the right number here */
-	range->num_channels = hop_pattern_length[(पूर्णांक)country];
+	range->num_channels = hop_pattern_length[(int)country];
 	range->num_frequency = 0;
 	range->max_qual.qual = 0;
 	range->max_qual.level = 255;	/* What's the correct value ? */
@@ -1329,92 +1328,92 @@ AP to AP	1	1	dest AP		src AP		dest	source
 	range->num_bitrates = 2;
 	range->bitrate[0] = 1000000;	/* 1 Mb/s */
 	range->bitrate[1] = 2000000;	/* 2 Mb/s */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*------------------------------------------------------------------*/
 /*
  * Wireless Private Handler : set framing mode
  */
-अटल पूर्णांक ray_set_framing(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			   जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
+static int ray_set_framing(struct net_device *dev, struct iw_request_info *info,
+			   union iwreq_data *wrqu, char *extra)
+{
 	translate = !!*(extra);	/* Set framing mode */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*------------------------------------------------------------------*/
 /*
  * Wireless Private Handler : get framing mode
  */
-अटल पूर्णांक ray_get_framing(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			   जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
+static int ray_get_framing(struct net_device *dev, struct iw_request_info *info,
+			   union iwreq_data *wrqu, char *extra)
+{
 	*(extra) = translate;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*------------------------------------------------------------------*/
 /*
  * Wireless Private Handler : get country
  */
-अटल पूर्णांक ray_get_country(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			   जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
+static int ray_get_country(struct net_device *dev, struct iw_request_info *info,
+			   union iwreq_data *wrqu, char *extra)
+{
 	*(extra) = country;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*------------------------------------------------------------------*/
 /*
  * Commit handler : called after a bunch of SET operations
  */
-अटल पूर्णांक ray_commit(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-		      जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	वापस 0;
-पूर्ण
+static int ray_commit(struct net_device *dev, struct iw_request_info *info,
+		      union iwreq_data *wrqu, char *extra)
+{
+	return 0;
+}
 
 /*------------------------------------------------------------------*/
 /*
- * Stats handler : वापस Wireless Stats
+ * Stats handler : return Wireless Stats
  */
-अटल iw_stats *ray_get_wireless_stats(काष्ठा net_device *dev)
-अणु
+static iw_stats *ray_get_wireless_stats(struct net_device *dev)
+{
 	ray_dev_t *local = netdev_priv(dev);
-	काष्ठा pcmcia_device *link = local->finder;
-	काष्ठा status __iomem *p = local->sram + STATUS_BASE;
+	struct pcmcia_device *link = local->finder;
+	struct status __iomem *p = local->sram + STATUS_BASE;
 
 	local->wstats.status = local->card_status;
-#अगर_घोषित WIRELESS_SPY
-	अगर ((local->spy_data.spy_number > 0)
-	    && (local->sparm.b5.a_network_type == 0)) अणु
+#ifdef WIRELESS_SPY
+	if ((local->spy_data.spy_number > 0)
+	    && (local->sparm.b5.a_network_type == 0)) {
 		/* Get it from the first node in spy list */
 		local->wstats.qual.qual = local->spy_data.spy_stat[0].qual;
 		local->wstats.qual.level = local->spy_data.spy_stat[0].level;
 		local->wstats.qual.noise = local->spy_data.spy_stat[0].noise;
 		local->wstats.qual.updated =
 		    local->spy_data.spy_stat[0].updated;
-	पूर्ण
-#पूर्ण_अगर /* WIRELESS_SPY */
+	}
+#endif /* WIRELESS_SPY */
 
-	अगर (pcmcia_dev_present(link)) अणु
-		local->wstats.qual.noise = पढ़ोb(&p->rxnoise);
+	if (pcmcia_dev_present(link)) {
+		local->wstats.qual.noise = readb(&p->rxnoise);
 		local->wstats.qual.updated |= 4;
-	पूर्ण
+	}
 
-	वापस &local->wstats;
-पूर्ण /* end ray_get_wireless_stats */
+	return &local->wstats;
+} /* end ray_get_wireless_stats */
 
 /*------------------------------------------------------------------*/
 /*
  * Structures to export the Wireless Handlers
  */
 
-अटल स्थिर iw_handler ray_handler[] = अणु
+static const iw_handler ray_handler[] = {
 	IW_HANDLER(SIOCSIWCOMMIT, ray_commit),
 	IW_HANDLER(SIOCGIWNAME, ray_get_name),
 	IW_HANDLER(SIOCSIWFREQ, ray_set_freq),
@@ -1422,12 +1421,12 @@ AP to AP	1	1	dest AP		src AP		dest	source
 	IW_HANDLER(SIOCSIWMODE, ray_set_mode),
 	IW_HANDLER(SIOCGIWMODE, ray_get_mode),
 	IW_HANDLER(SIOCGIWRANGE, ray_get_range),
-#अगर_घोषित WIRELESS_SPY
+#ifdef WIRELESS_SPY
 	IW_HANDLER(SIOCSIWSPY, iw_handler_set_spy),
 	IW_HANDLER(SIOCGIWSPY, iw_handler_get_spy),
 	IW_HANDLER(SIOCSIWTHRSPY, iw_handler_set_thrspy),
 	IW_HANDLER(SIOCGIWTHRSPY, iw_handler_get_thrspy),
-#पूर्ण_अगर /* WIRELESS_SPY */
+#endif /* WIRELESS_SPY */
 	IW_HANDLER(SIOCGIWAP, ray_get_wap),
 	IW_HANDLER(SIOCSIWESSID, ray_set_essid),
 	IW_HANDLER(SIOCGIWESSID, ray_get_essid),
@@ -1437,918 +1436,918 @@ AP to AP	1	1	dest AP		src AP		dest	source
 	IW_HANDLER(SIOCGIWRTS, ray_get_rts),
 	IW_HANDLER(SIOCSIWFRAG, ray_set_frag),
 	IW_HANDLER(SIOCGIWFRAG, ray_get_frag),
-पूर्ण;
+};
 
-#घोषणा SIOCSIPFRAMING	SIOCIWFIRSTPRIV	/* Set framing mode */
-#घोषणा SIOCGIPFRAMING	SIOCIWFIRSTPRIV + 1	/* Get framing mode */
-#घोषणा SIOCGIPCOUNTRY	SIOCIWFIRSTPRIV + 3	/* Get country code */
+#define SIOCSIPFRAMING	SIOCIWFIRSTPRIV	/* Set framing mode */
+#define SIOCGIPFRAMING	SIOCIWFIRSTPRIV + 1	/* Get framing mode */
+#define SIOCGIPCOUNTRY	SIOCIWFIRSTPRIV + 3	/* Get country code */
 
-अटल स्थिर iw_handler ray_निजी_handler[] = अणु
+static const iw_handler ray_private_handler[] = {
 	[0] = ray_set_framing,
 	[1] = ray_get_framing,
 	[3] = ray_get_country,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iw_priv_args ray_निजी_args[] = अणु
+static const struct iw_priv_args ray_private_args[] = {
 /* cmd,		set_args,	get_args,	name */
-	अणुSIOCSIPFRAMING, IW_PRIV_TYPE_BYTE | IW_PRIV_SIZE_FIXED | 1, 0,
-	 "set_framing"पूर्ण,
-	अणुSIOCGIPFRAMING, 0, IW_PRIV_TYPE_BYTE | IW_PRIV_SIZE_FIXED | 1,
-	 "get_framing"पूर्ण,
-	अणुSIOCGIPCOUNTRY, 0, IW_PRIV_TYPE_BYTE | IW_PRIV_SIZE_FIXED | 1,
-	 "get_country"पूर्ण,
-पूर्ण;
+	{SIOCSIPFRAMING, IW_PRIV_TYPE_BYTE | IW_PRIV_SIZE_FIXED | 1, 0,
+	 "set_framing"},
+	{SIOCGIPFRAMING, 0, IW_PRIV_TYPE_BYTE | IW_PRIV_SIZE_FIXED | 1,
+	 "get_framing"},
+	{SIOCGIPCOUNTRY, 0, IW_PRIV_TYPE_BYTE | IW_PRIV_SIZE_FIXED | 1,
+	 "get_country"},
+};
 
-अटल स्थिर काष्ठा iw_handler_def ray_handler_def = अणु
+static const struct iw_handler_def ray_handler_def = {
 	.num_standard = ARRAY_SIZE(ray_handler),
-	.num_निजी = ARRAY_SIZE(ray_निजी_handler),
-	.num_निजी_args = ARRAY_SIZE(ray_निजी_args),
+	.num_private = ARRAY_SIZE(ray_private_handler),
+	.num_private_args = ARRAY_SIZE(ray_private_args),
 	.standard = ray_handler,
-	.निजी = ray_निजी_handler,
-	.निजी_args = ray_निजी_args,
+	.private = ray_private_handler,
+	.private_args = ray_private_args,
 	.get_wireless_stats = ray_get_wireless_stats,
-पूर्ण;
+};
 
 /*===========================================================================*/
-अटल पूर्णांक ray_खोलो(काष्ठा net_device *dev)
-अणु
+static int ray_open(struct net_device *dev)
+{
 	ray_dev_t *local = netdev_priv(dev);
-	काष्ठा pcmcia_device *link;
+	struct pcmcia_device *link;
 	link = local->finder;
 
 	dev_dbg(&link->dev, "ray_open('%s')\n", dev->name);
 
-	अगर (link->खोलो == 0)
+	if (link->open == 0)
 		local->num_multi = 0;
-	link->खोलो++;
+	link->open++;
 
-	/* If the card is not started, समय to start it ! - Jean II */
-	अगर (local->card_status == CARD_AWAITING_PARAM) अणु
-		पूर्णांक i;
+	/* If the card is not started, time to start it ! - Jean II */
+	if (local->card_status == CARD_AWAITING_PARAM) {
+		int i;
 
 		dev_dbg(&link->dev, "ray_open: doing init now !\n");
 
 		/* Download startup parameters */
-		अगर ((i = dl_startup_params(dev)) < 0) अणु
-			prपूर्णांकk(KERN_INFO
+		if ((i = dl_startup_params(dev)) < 0) {
+			printk(KERN_INFO
 			       "ray_dev_init dl_startup_params failed - "
 			       "returns 0x%x\n", i);
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			return -1;
+		}
+	}
 
-	अगर (snअगरfer)
-		netअगर_stop_queue(dev);
-	अन्यथा
-		netअगर_start_queue(dev);
+	if (sniffer)
+		netif_stop_queue(dev);
+	else
+		netif_start_queue(dev);
 
 	dev_dbg(&link->dev, "ray_open ending\n");
-	वापस 0;
-पूर्ण /* end ray_खोलो */
+	return 0;
+} /* end ray_open */
 
 /*===========================================================================*/
-अटल पूर्णांक ray_dev_बंद(काष्ठा net_device *dev)
-अणु
+static int ray_dev_close(struct net_device *dev)
+{
 	ray_dev_t *local = netdev_priv(dev);
-	काष्ठा pcmcia_device *link;
+	struct pcmcia_device *link;
 	link = local->finder;
 
 	dev_dbg(&link->dev, "ray_dev_close('%s')\n", dev->name);
 
-	link->खोलो--;
-	netअगर_stop_queue(dev);
+	link->open--;
+	netif_stop_queue(dev);
 
 	/* In here, we should stop the hardware (stop card from beeing active)
-	 * and set local->card_status to CARD_AWAITING_PARAM, so that जबतक the
-	 * card is बंदd we can chage its configuration.
+	 * and set local->card_status to CARD_AWAITING_PARAM, so that while the
+	 * card is closed we can chage its configuration.
 	 * Probably also need a COR reset to get sane state - Jean II */
 
-	वापस 0;
-पूर्ण /* end ray_dev_बंद */
+	return 0;
+} /* end ray_dev_close */
 
 /*===========================================================================*/
-अटल व्योम ray_reset(काष्ठा net_device *dev)
-अणु
+static void ray_reset(struct net_device *dev)
+{
 	pr_debug("ray_reset entered\n");
-पूर्ण
+}
 
 /*===========================================================================*/
-/* Cause a firmware पूर्णांकerrupt अगर it is पढ़ोy क्रम one                         */
-/* Return nonzero अगर not पढ़ोy                                               */
-अटल पूर्णांक पूर्णांकerrupt_ecf(ray_dev_t *local, पूर्णांक ccs)
-अणु
-	पूर्णांक i = 50;
-	काष्ठा pcmcia_device *link = local->finder;
+/* Cause a firmware interrupt if it is ready for one                         */
+/* Return nonzero if not ready                                               */
+static int interrupt_ecf(ray_dev_t *local, int ccs)
+{
+	int i = 50;
+	struct pcmcia_device *link = local->finder;
 
-	अगर (!(pcmcia_dev_present(link))) अणु
+	if (!(pcmcia_dev_present(link))) {
 		dev_dbg(&link->dev, "ray_cs interrupt_ecf - device not present\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	dev_dbg(&link->dev, "interrupt_ecf(local=%p, ccs = 0x%x\n", local, ccs);
 
-	जबतक (i &&
-	       (पढ़ोb(local->amem + CIS_OFFSET + ECF_INTR_OFFSET) &
+	while (i &&
+	       (readb(local->amem + CIS_OFFSET + ECF_INTR_OFFSET) &
 		ECF_INTR_SET))
 		i--;
-	अगर (i == 0) अणु
+	if (i == 0) {
 		dev_dbg(&link->dev, "ray_cs interrupt_ecf card not ready for interrupt\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	/* Fill the mailbox, then kick the card */
-	ग_लिखोb(ccs, local->sram + SCB_BASE);
-	ग_लिखोb(ECF_INTR_SET, local->amem + CIS_OFFSET + ECF_INTR_OFFSET);
-	वापस 0;
-पूर्ण /* पूर्णांकerrupt_ecf */
+	writeb(ccs, local->sram + SCB_BASE);
+	writeb(ECF_INTR_SET, local->amem + CIS_OFFSET + ECF_INTR_OFFSET);
+	return 0;
+} /* interrupt_ecf */
 
 /*===========================================================================*/
-/* Get next मुक्त transmit CCS                                                */
+/* Get next free transmit CCS                                                */
 /* Return - index of current tx ccs                                          */
-अटल पूर्णांक get_मुक्त_tx_ccs(ray_dev_t *local)
-अणु
-	पूर्णांक i;
-	काष्ठा ccs __iomem *pccs = ccs_base(local);
-	काष्ठा pcmcia_device *link = local->finder;
+static int get_free_tx_ccs(ray_dev_t *local)
+{
+	int i;
+	struct ccs __iomem *pccs = ccs_base(local);
+	struct pcmcia_device *link = local->finder;
 
-	अगर (!(pcmcia_dev_present(link))) अणु
+	if (!(pcmcia_dev_present(link))) {
 		dev_dbg(&link->dev, "ray_cs get_free_tx_ccs - device not present\n");
-		वापस ECARDGONE;
-	पूर्ण
+		return ECARDGONE;
+	}
 
-	अगर (test_and_set_bit(0, &local->tx_ccs_lock)) अणु
+	if (test_and_set_bit(0, &local->tx_ccs_lock)) {
 		dev_dbg(&link->dev, "ray_cs tx_ccs_lock busy\n");
-		वापस ECCSBUSY;
-	पूर्ण
+		return ECCSBUSY;
+	}
 
-	क्रम (i = 0; i < NUMBER_OF_TX_CCS; i++) अणु
-		अगर (पढ़ोb(&(pccs + i)->buffer_status) == CCS_BUFFER_FREE) अणु
-			ग_लिखोb(CCS_BUFFER_BUSY, &(pccs + i)->buffer_status);
-			ग_लिखोb(CCS_END_LIST, &(pccs + i)->link);
+	for (i = 0; i < NUMBER_OF_TX_CCS; i++) {
+		if (readb(&(pccs + i)->buffer_status) == CCS_BUFFER_FREE) {
+			writeb(CCS_BUFFER_BUSY, &(pccs + i)->buffer_status);
+			writeb(CCS_END_LIST, &(pccs + i)->link);
 			local->tx_ccs_lock = 0;
-			वापस i;
-		पूर्ण
-	पूर्ण
+			return i;
+		}
+	}
 	local->tx_ccs_lock = 0;
 	dev_dbg(&link->dev, "ray_cs ERROR no free tx CCS for raylink card\n");
-	वापस ECCSFULL;
-पूर्ण /* get_मुक्त_tx_ccs */
+	return ECCSFULL;
+} /* get_free_tx_ccs */
 
 /*===========================================================================*/
-/* Get next मुक्त CCS                                                         */
+/* Get next free CCS                                                         */
 /* Return - index of current ccs                                             */
-अटल पूर्णांक get_मुक्त_ccs(ray_dev_t *local)
-अणु
-	पूर्णांक i;
-	काष्ठा ccs __iomem *pccs = ccs_base(local);
-	काष्ठा pcmcia_device *link = local->finder;
+static int get_free_ccs(ray_dev_t *local)
+{
+	int i;
+	struct ccs __iomem *pccs = ccs_base(local);
+	struct pcmcia_device *link = local->finder;
 
-	अगर (!(pcmcia_dev_present(link))) अणु
+	if (!(pcmcia_dev_present(link))) {
 		dev_dbg(&link->dev, "ray_cs get_free_ccs - device not present\n");
-		वापस ECARDGONE;
-	पूर्ण
-	अगर (test_and_set_bit(0, &local->ccs_lock)) अणु
+		return ECARDGONE;
+	}
+	if (test_and_set_bit(0, &local->ccs_lock)) {
 		dev_dbg(&link->dev, "ray_cs ccs_lock busy\n");
-		वापस ECCSBUSY;
-	पूर्ण
+		return ECCSBUSY;
+	}
 
-	क्रम (i = NUMBER_OF_TX_CCS; i < NUMBER_OF_CCS; i++) अणु
-		अगर (पढ़ोb(&(pccs + i)->buffer_status) == CCS_BUFFER_FREE) अणु
-			ग_लिखोb(CCS_BUFFER_BUSY, &(pccs + i)->buffer_status);
-			ग_लिखोb(CCS_END_LIST, &(pccs + i)->link);
+	for (i = NUMBER_OF_TX_CCS; i < NUMBER_OF_CCS; i++) {
+		if (readb(&(pccs + i)->buffer_status) == CCS_BUFFER_FREE) {
+			writeb(CCS_BUFFER_BUSY, &(pccs + i)->buffer_status);
+			writeb(CCS_END_LIST, &(pccs + i)->link);
 			local->ccs_lock = 0;
-			वापस i;
-		पूर्ण
-	पूर्ण
+			return i;
+		}
+	}
 	local->ccs_lock = 0;
 	dev_dbg(&link->dev, "ray_cs ERROR no free CCS for raylink card\n");
-	वापस ECCSFULL;
-पूर्ण /* get_मुक्त_ccs */
+	return ECCSFULL;
+} /* get_free_ccs */
 
 /*===========================================================================*/
-अटल व्योम authenticate_समयout(काष्ठा समयr_list *t)
-अणु
-	ray_dev_t *local = from_समयr(local, t, समयr);
-	del_समयr(&local->समयr);
-	prपूर्णांकk(KERN_INFO "ray_cs Authentication with access point failed"
+static void authenticate_timeout(struct timer_list *t)
+{
+	ray_dev_t *local = from_timer(local, t, timer);
+	del_timer(&local->timer);
+	printk(KERN_INFO "ray_cs Authentication with access point failed"
 	       " - timeout\n");
-	join_net(&local->समयr);
-पूर्ण
+	join_net(&local->timer);
+}
 
 /*===========================================================================*/
-अटल पूर्णांक parse_addr(अक्षर *in_str, UCHAR *out)
-अणु
-	पूर्णांक len;
-	पूर्णांक i, j, k;
-	पूर्णांक status;
+static int parse_addr(char *in_str, UCHAR *out)
+{
+	int len;
+	int i, j, k;
+	int status;
 
-	अगर (in_str == शून्य)
-		वापस 0;
-	अगर ((len = म_माप(in_str)) < 2)
-		वापस 0;
-	स_रखो(out, 0, ADDRLEN);
+	if (in_str == NULL)
+		return 0;
+	if ((len = strlen(in_str)) < 2)
+		return 0;
+	memset(out, 0, ADDRLEN);
 
 	status = 1;
 	j = len - 1;
-	अगर (j > 12)
+	if (j > 12)
 		j = 12;
 	i = 5;
 
-	जबतक (j > 0) अणु
-		अगर ((k = hex_to_bin(in_str[j--])) != -1)
+	while (j > 0) {
+		if ((k = hex_to_bin(in_str[j--])) != -1)
 			out[i] = k;
-		अन्यथा
-			वापस 0;
+		else
+			return 0;
 
-		अगर (j == 0)
-			अवरोध;
-		अगर ((k = hex_to_bin(in_str[j--])) != -1)
+		if (j == 0)
+			break;
+		if ((k = hex_to_bin(in_str[j--])) != -1)
 			out[i] += k << 4;
-		अन्यथा
-			वापस 0;
-		अगर (!i--)
-			अवरोध;
-	पूर्ण
-	वापस status;
-पूर्ण
+		else
+			return 0;
+		if (!i--)
+			break;
+	}
+	return status;
+}
 
 /*===========================================================================*/
-अटल काष्ठा net_device_stats *ray_get_stats(काष्ठा net_device *dev)
-अणु
+static struct net_device_stats *ray_get_stats(struct net_device *dev)
+{
 	ray_dev_t *local = netdev_priv(dev);
-	काष्ठा pcmcia_device *link = local->finder;
-	काष्ठा status __iomem *p = local->sram + STATUS_BASE;
-	अगर (!(pcmcia_dev_present(link))) अणु
+	struct pcmcia_device *link = local->finder;
+	struct status __iomem *p = local->sram + STATUS_BASE;
+	if (!(pcmcia_dev_present(link))) {
 		dev_dbg(&link->dev, "ray_cs net_device_stats - device not present\n");
-		वापस &local->stats;
-	पूर्ण
-	अगर (पढ़ोb(&p->mrx_overflow_क्रम_host)) अणु
-		local->stats.rx_over_errors += swab16(पढ़ोw(&p->mrx_overflow));
-		ग_लिखोb(0, &p->mrx_overflow);
-		ग_लिखोb(0, &p->mrx_overflow_क्रम_host);
-	पूर्ण
-	अगर (पढ़ोb(&p->mrx_checksum_error_क्रम_host)) अणु
+		return &local->stats;
+	}
+	if (readb(&p->mrx_overflow_for_host)) {
+		local->stats.rx_over_errors += swab16(readw(&p->mrx_overflow));
+		writeb(0, &p->mrx_overflow);
+		writeb(0, &p->mrx_overflow_for_host);
+	}
+	if (readb(&p->mrx_checksum_error_for_host)) {
 		local->stats.rx_crc_errors +=
-		    swab16(पढ़ोw(&p->mrx_checksum_error));
-		ग_लिखोb(0, &p->mrx_checksum_error);
-		ग_लिखोb(0, &p->mrx_checksum_error_क्रम_host);
-	पूर्ण
-	अगर (पढ़ोb(&p->rx_hec_error_क्रम_host)) अणु
-		local->stats.rx_frame_errors += swab16(पढ़ोw(&p->rx_hec_error));
-		ग_लिखोb(0, &p->rx_hec_error);
-		ग_लिखोb(0, &p->rx_hec_error_क्रम_host);
-	पूर्ण
-	वापस &local->stats;
-पूर्ण
+		    swab16(readw(&p->mrx_checksum_error));
+		writeb(0, &p->mrx_checksum_error);
+		writeb(0, &p->mrx_checksum_error_for_host);
+	}
+	if (readb(&p->rx_hec_error_for_host)) {
+		local->stats.rx_frame_errors += swab16(readw(&p->rx_hec_error));
+		writeb(0, &p->rx_hec_error);
+		writeb(0, &p->rx_hec_error_for_host);
+	}
+	return &local->stats;
+}
 
 /*===========================================================================*/
-अटल व्योम ray_update_parm(काष्ठा net_device *dev, UCHAR objid, UCHAR *value,
-			    पूर्णांक len)
-अणु
+static void ray_update_parm(struct net_device *dev, UCHAR objid, UCHAR *value,
+			    int len)
+{
 	ray_dev_t *local = netdev_priv(dev);
-	काष्ठा pcmcia_device *link = local->finder;
-	पूर्णांक ccsindex;
-	पूर्णांक i;
-	काष्ठा ccs __iomem *pccs;
+	struct pcmcia_device *link = local->finder;
+	int ccsindex;
+	int i;
+	struct ccs __iomem *pccs;
 
-	अगर (!(pcmcia_dev_present(link))) अणु
+	if (!(pcmcia_dev_present(link))) {
 		dev_dbg(&link->dev, "ray_update_parm - device not present\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर ((ccsindex = get_मुक्त_ccs(local)) < 0) अणु
+	if ((ccsindex = get_free_ccs(local)) < 0) {
 		dev_dbg(&link->dev, "ray_update_parm - No free ccs\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 	pccs = ccs_base(local) + ccsindex;
-	ग_लिखोb(CCS_UPDATE_PARAMS, &pccs->cmd);
-	ग_लिखोb(objid, &pccs->var.update_param.object_id);
-	ग_लिखोb(1, &pccs->var.update_param.number_objects);
-	ग_लिखोb(0, &pccs->var.update_param.failure_cause);
-	क्रम (i = 0; i < len; i++) अणु
-		ग_लिखोb(value[i], local->sram + HOST_TO_ECF_BASE);
-	पूर्ण
+	writeb(CCS_UPDATE_PARAMS, &pccs->cmd);
+	writeb(objid, &pccs->var.update_param.object_id);
+	writeb(1, &pccs->var.update_param.number_objects);
+	writeb(0, &pccs->var.update_param.failure_cause);
+	for (i = 0; i < len; i++) {
+		writeb(value[i], local->sram + HOST_TO_ECF_BASE);
+	}
 	/* Interrupt the firmware to process the command */
-	अगर (पूर्णांकerrupt_ecf(local, ccsindex)) अणु
+	if (interrupt_ecf(local, ccsindex)) {
 		dev_dbg(&link->dev, "ray_cs associate failed - ECF not ready for intr\n");
-		ग_लिखोb(CCS_BUFFER_FREE, &(pccs++)->buffer_status);
-	पूर्ण
-पूर्ण
+		writeb(CCS_BUFFER_FREE, &(pccs++)->buffer_status);
+	}
+}
 
 /*===========================================================================*/
-अटल व्योम ray_update_multi_list(काष्ठा net_device *dev, पूर्णांक all)
-अणु
-	पूर्णांक ccsindex;
-	काष्ठा ccs __iomem *pccs;
+static void ray_update_multi_list(struct net_device *dev, int all)
+{
+	int ccsindex;
+	struct ccs __iomem *pccs;
 	ray_dev_t *local = netdev_priv(dev);
-	काष्ठा pcmcia_device *link = local->finder;
-	व्योम __iomem *p = local->sram + HOST_TO_ECF_BASE;
+	struct pcmcia_device *link = local->finder;
+	void __iomem *p = local->sram + HOST_TO_ECF_BASE;
 
-	अगर (!(pcmcia_dev_present(link))) अणु
+	if (!(pcmcia_dev_present(link))) {
 		dev_dbg(&link->dev, "ray_update_multi_list - device not present\n");
-		वापस;
-	पूर्ण अन्यथा
+		return;
+	} else
 		dev_dbg(&link->dev, "ray_update_multi_list(%p)\n", dev);
-	अगर ((ccsindex = get_मुक्त_ccs(local)) < 0) अणु
+	if ((ccsindex = get_free_ccs(local)) < 0) {
 		dev_dbg(&link->dev, "ray_update_multi - No free ccs\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 	pccs = ccs_base(local) + ccsindex;
-	ग_लिखोb(CCS_UPDATE_MULTICAST_LIST, &pccs->cmd);
+	writeb(CCS_UPDATE_MULTICAST_LIST, &pccs->cmd);
 
-	अगर (all) अणु
-		ग_लिखोb(0xff, &pccs->var);
+	if (all) {
+		writeb(0xff, &pccs->var);
 		local->num_multi = 0xff;
-	पूर्ण अन्यथा अणु
-		काष्ठा netdev_hw_addr *ha;
-		पूर्णांक i = 0;
+	} else {
+		struct netdev_hw_addr *ha;
+		int i = 0;
 
 		/* Copy the kernel's list of MC addresses to card */
-		netdev_क्रम_each_mc_addr(ha, dev) अणु
-			स_नकल_toio(p, ha->addr, ETH_ALEN);
+		netdev_for_each_mc_addr(ha, dev) {
+			memcpy_toio(p, ha->addr, ETH_ALEN);
 			dev_dbg(&link->dev, "ray_update_multi add addr %pm\n",
 				ha->addr);
 			p += ETH_ALEN;
 			i++;
-		पूर्ण
-		अगर (i > 256 / ADDRLEN)
+		}
+		if (i > 256 / ADDRLEN)
 			i = 256 / ADDRLEN;
-		ग_लिखोb((UCHAR) i, &pccs->var);
+		writeb((UCHAR) i, &pccs->var);
 		dev_dbg(&link->dev, "ray_cs update_multi %d addresses in list\n", i);
 		/* Interrupt the firmware to process the command */
 		local->num_multi = i;
-	पूर्ण
-	अगर (पूर्णांकerrupt_ecf(local, ccsindex)) अणु
+	}
+	if (interrupt_ecf(local, ccsindex)) {
 		dev_dbg(&link->dev,
 		      "ray_cs update_multi failed - ECF not ready for intr\n");
-		ग_लिखोb(CCS_BUFFER_FREE, &(pccs++)->buffer_status);
-	पूर्ण
-पूर्ण /* end ray_update_multi_list */
+		writeb(CCS_BUFFER_FREE, &(pccs++)->buffer_status);
+	}
+} /* end ray_update_multi_list */
 
 /*===========================================================================*/
-अटल व्योम set_multicast_list(काष्ठा net_device *dev)
-अणु
+static void set_multicast_list(struct net_device *dev)
+{
 	ray_dev_t *local = netdev_priv(dev);
 	UCHAR promisc;
 
 	pr_debug("ray_cs set_multicast_list(%p)\n", dev);
 
-	अगर (dev->flags & IFF_PROMISC) अणु
-		अगर (local->sparm.b5.a_promiscuous_mode == 0) अणु
+	if (dev->flags & IFF_PROMISC) {
+		if (local->sparm.b5.a_promiscuous_mode == 0) {
 			pr_debug("ray_cs set_multicast_list promisc on\n");
 			local->sparm.b5.a_promiscuous_mode = 1;
 			promisc = 1;
 			ray_update_parm(dev, OBJID_promiscuous_mode,
-					&promisc, माप(promisc));
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (local->sparm.b5.a_promiscuous_mode == 1) अणु
+					&promisc, sizeof(promisc));
+		}
+	} else {
+		if (local->sparm.b5.a_promiscuous_mode == 1) {
 			pr_debug("ray_cs set_multicast_list promisc off\n");
 			local->sparm.b5.a_promiscuous_mode = 0;
 			promisc = 0;
 			ray_update_parm(dev, OBJID_promiscuous_mode,
-					&promisc, माप(promisc));
-		पूर्ण
-	पूर्ण
+					&promisc, sizeof(promisc));
+		}
+	}
 
-	अगर (dev->flags & IFF_ALLMULTI)
+	if (dev->flags & IFF_ALLMULTI)
 		ray_update_multi_list(dev, 1);
-	अन्यथा अणु
-		अगर (local->num_multi != netdev_mc_count(dev))
+	else {
+		if (local->num_multi != netdev_mc_count(dev))
 			ray_update_multi_list(dev, 0);
-	पूर्ण
-पूर्ण /* end set_multicast_list */
+	}
+} /* end set_multicast_list */
 
 /*=============================================================================
- * All routines below here are run at पूर्णांकerrupt समय.
+ * All routines below here are run at interrupt time.
 =============================================================================*/
-अटल irqवापस_t ray_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा net_device *dev = (काष्ठा net_device *)dev_id;
-	काष्ठा pcmcia_device *link;
+static irqreturn_t ray_interrupt(int irq, void *dev_id)
+{
+	struct net_device *dev = (struct net_device *)dev_id;
+	struct pcmcia_device *link;
 	ray_dev_t *local;
-	काष्ठा ccs __iomem *pccs;
-	काष्ठा rcs __iomem *prcs;
+	struct ccs __iomem *pccs;
+	struct rcs __iomem *prcs;
 	UCHAR rcsindex;
-	UCHAR पंचांगp;
+	UCHAR tmp;
 	UCHAR cmd;
 	UCHAR status;
-	UCHAR memपंचांगp[ESSID_SIZE + 1];
+	UCHAR memtmp[ESSID_SIZE + 1];
 
 
-	अगर (dev == शून्य)	/* Note that we want पूर्णांकerrupts with dev->start == 0 */
-		वापस IRQ_NONE;
+	if (dev == NULL)	/* Note that we want interrupts with dev->start == 0 */
+		return IRQ_NONE;
 
 	pr_debug("ray_cs: interrupt for *dev=%p\n", dev);
 
 	local = netdev_priv(dev);
 	link = local->finder;
-	अगर (!pcmcia_dev_present(link)) अणु
+	if (!pcmcia_dev_present(link)) {
 		pr_debug(
 			"ray_cs interrupt from device not present or suspended.\n");
-		वापस IRQ_NONE;
-	पूर्ण
-	rcsindex = पढ़ोb(&((काष्ठा scb __iomem *)(local->sram))->rcs_index);
+		return IRQ_NONE;
+	}
+	rcsindex = readb(&((struct scb __iomem *)(local->sram))->rcs_index);
 
-	अगर (rcsindex >= (NUMBER_OF_CCS + NUMBER_OF_RCS)) अणु
+	if (rcsindex >= (NUMBER_OF_CCS + NUMBER_OF_RCS)) {
 		dev_dbg(&link->dev, "ray_cs interrupt bad rcsindex = 0x%x\n", rcsindex);
-		clear_पूर्णांकerrupt(local);
-		वापस IRQ_HANDLED;
-	पूर्ण
-	अगर (rcsindex < NUMBER_OF_CCS) अणु /* If it's a वापसed CCS */
+		clear_interrupt(local);
+		return IRQ_HANDLED;
+	}
+	if (rcsindex < NUMBER_OF_CCS) { /* If it's a returned CCS */
 		pccs = ccs_base(local) + rcsindex;
-		cmd = पढ़ोb(&pccs->cmd);
-		status = पढ़ोb(&pccs->buffer_status);
-		चयन (cmd) अणु
-		हाल CCS_DOWNLOAD_STARTUP_PARAMS:	/* Happens in firmware someday */
-			del_समयr(&local->समयr);
-			अगर (status == CCS_COMMAND_COMPLETE) अणु
+		cmd = readb(&pccs->cmd);
+		status = readb(&pccs->buffer_status);
+		switch (cmd) {
+		case CCS_DOWNLOAD_STARTUP_PARAMS:	/* Happens in firmware someday */
+			del_timer(&local->timer);
+			if (status == CCS_COMMAND_COMPLETE) {
 				dev_dbg(&link->dev,
 				      "ray_cs interrupt download_startup_parameters OK\n");
-			पूर्ण अन्यथा अणु
+			} else {
 				dev_dbg(&link->dev,
 				      "ray_cs interrupt download_startup_parameters fail\n");
-			पूर्ण
-			अवरोध;
-		हाल CCS_UPDATE_PARAMS:
+			}
+			break;
+		case CCS_UPDATE_PARAMS:
 			dev_dbg(&link->dev, "ray_cs interrupt update params done\n");
-			अगर (status != CCS_COMMAND_COMPLETE) अणु
-				पंचांगp =
-				    पढ़ोb(&pccs->var.update_param.
+			if (status != CCS_COMMAND_COMPLETE) {
+				tmp =
+				    readb(&pccs->var.update_param.
 					  failure_cause);
 				dev_dbg(&link->dev,
 				      "ray_cs interrupt update params failed - reason %d\n",
-				      पंचांगp);
-			पूर्ण
-			अवरोध;
-		हाल CCS_REPORT_PARAMS:
+				      tmp);
+			}
+			break;
+		case CCS_REPORT_PARAMS:
 			dev_dbg(&link->dev, "ray_cs interrupt report params done\n");
-			अवरोध;
-		हाल CCS_UPDATE_MULTICAST_LIST:	/* Note that this CCS isn't वापसed */
+			break;
+		case CCS_UPDATE_MULTICAST_LIST:	/* Note that this CCS isn't returned */
 			dev_dbg(&link->dev,
 			      "ray_cs interrupt CCS Update Multicast List done\n");
-			अवरोध;
-		हाल CCS_UPDATE_POWER_SAVINGS_MODE:
+			break;
+		case CCS_UPDATE_POWER_SAVINGS_MODE:
 			dev_dbg(&link->dev,
 			      "ray_cs interrupt update power save mode done\n");
-			अवरोध;
-		हाल CCS_START_NETWORK:
-		हाल CCS_JOIN_NETWORK:
-			स_नकल(memपंचांगp, local->sparm.b4.a_current_ess_id,
+			break;
+		case CCS_START_NETWORK:
+		case CCS_JOIN_NETWORK:
+			memcpy(memtmp, local->sparm.b4.a_current_ess_id,
 								ESSID_SIZE);
-			memपंचांगp[ESSID_SIZE] = '\0';
+			memtmp[ESSID_SIZE] = '\0';
 
-			अगर (status == CCS_COMMAND_COMPLETE) अणु
-				अगर (पढ़ोb
+			if (status == CCS_COMMAND_COMPLETE) {
+				if (readb
 				    (&pccs->var.start_network.net_initiated) ==
-				    1) अणु
+				    1) {
 					dev_dbg(&link->dev,
 					      "ray_cs interrupt network \"%s\" started\n",
-					      memपंचांगp);
-				पूर्ण अन्यथा अणु
+					      memtmp);
+				} else {
 					dev_dbg(&link->dev,
 					      "ray_cs interrupt network \"%s\" joined\n",
-					      memपंचांगp);
-				पूर्ण
-				स_नकल_fromio(&local->bss_id,
+					      memtmp);
+				}
+				memcpy_fromio(&local->bss_id,
 					      pccs->var.start_network.bssid,
 					      ADDRLEN);
 
-				अगर (local->fw_ver == 0x55)
-					local->net_शेष_tx_rate = 3;
-				अन्यथा
-					local->net_शेष_tx_rate =
-					    पढ़ोb(&pccs->var.start_network.
-						  net_शेष_tx_rate);
+				if (local->fw_ver == 0x55)
+					local->net_default_tx_rate = 3;
+				else
+					local->net_default_tx_rate =
+					    readb(&pccs->var.start_network.
+						  net_default_tx_rate);
 				local->encryption =
-				    पढ़ोb(&pccs->var.start_network.encryption);
-				अगर (!snअगरfer && (local->net_type == INFRA)
-				    && !(local->sparm.b4.a_acting_as_ap_status)) अणु
+				    readb(&pccs->var.start_network.encryption);
+				if (!sniffer && (local->net_type == INFRA)
+				    && !(local->sparm.b4.a_acting_as_ap_status)) {
 					authenticate(local);
-				पूर्ण
+				}
 				local->card_status = CARD_ACQ_COMPLETE;
-			पूर्ण अन्यथा अणु
+			} else {
 				local->card_status = CARD_ACQ_FAILED;
 
-				del_समयr(&local->समयr);
-				local->समयr.expires = jअगरfies + HZ * 5;
-				अगर (status == CCS_START_NETWORK) अणु
+				del_timer(&local->timer);
+				local->timer.expires = jiffies + HZ * 5;
+				if (status == CCS_START_NETWORK) {
 					dev_dbg(&link->dev,
 					      "ray_cs interrupt network \"%s\" start failed\n",
-					      memपंचांगp);
-					local->समयr.function = start_net;
-				पूर्ण अन्यथा अणु
+					      memtmp);
+					local->timer.function = start_net;
+				} else {
 					dev_dbg(&link->dev,
 					      "ray_cs interrupt network \"%s\" join failed\n",
-					      memपंचांगp);
-					local->समयr.function = join_net;
-				पूर्ण
-				add_समयr(&local->समयr);
-			पूर्ण
-			अवरोध;
-		हाल CCS_START_ASSOCIATION:
-			अगर (status == CCS_COMMAND_COMPLETE) अणु
+					      memtmp);
+					local->timer.function = join_net;
+				}
+				add_timer(&local->timer);
+			}
+			break;
+		case CCS_START_ASSOCIATION:
+			if (status == CCS_COMMAND_COMPLETE) {
 				local->card_status = CARD_ASSOC_COMPLETE;
 				dev_dbg(&link->dev, "ray_cs association successful\n");
-			पूर्ण अन्यथा अणु
+			} else {
 				dev_dbg(&link->dev, "ray_cs association failed,\n");
 				local->card_status = CARD_ASSOC_FAILED;
-				join_net(&local->समयr);
-			पूर्ण
-			अवरोध;
-		हाल CCS_TX_REQUEST:
-			अगर (status == CCS_COMMAND_COMPLETE) अणु
+				join_net(&local->timer);
+			}
+			break;
+		case CCS_TX_REQUEST:
+			if (status == CCS_COMMAND_COMPLETE) {
 				dev_dbg(&link->dev,
 				      "ray_cs interrupt tx request complete\n");
-			पूर्ण अन्यथा अणु
+			} else {
 				dev_dbg(&link->dev,
 				      "ray_cs interrupt tx request failed\n");
-			पूर्ण
-			अगर (!snअगरfer)
-				netअगर_start_queue(dev);
-			netअगर_wake_queue(dev);
-			अवरोध;
-		हाल CCS_TEST_MEMORY:
+			}
+			if (!sniffer)
+				netif_start_queue(dev);
+			netif_wake_queue(dev);
+			break;
+		case CCS_TEST_MEMORY:
 			dev_dbg(&link->dev, "ray_cs interrupt mem test done\n");
-			अवरोध;
-		हाल CCS_SHUTDOWN:
+			break;
+		case CCS_SHUTDOWN:
 			dev_dbg(&link->dev,
 			      "ray_cs interrupt Unexpected CCS returned - Shutdown\n");
-			अवरोध;
-		हाल CCS_DUMP_MEMORY:
+			break;
+		case CCS_DUMP_MEMORY:
 			dev_dbg(&link->dev, "ray_cs interrupt dump memory done\n");
-			अवरोध;
-		हाल CCS_START_TIMER:
+			break;
+		case CCS_START_TIMER:
 			dev_dbg(&link->dev,
 			      "ray_cs interrupt DING - raylink timer expired\n");
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_dbg(&link->dev,
 			      "ray_cs interrupt Unexpected CCS 0x%x returned 0x%x\n",
 			      rcsindex, cmd);
-		पूर्ण
-		ग_लिखोb(CCS_BUFFER_FREE, &pccs->buffer_status);
-	पूर्ण अन्यथा अणु /* It's an RCS */
+		}
+		writeb(CCS_BUFFER_FREE, &pccs->buffer_status);
+	} else { /* It's an RCS */
 
 		prcs = rcs_base(local) + rcsindex;
 
-		चयन (पढ़ोb(&prcs->पूर्णांकerrupt_id)) अणु
-		हाल PROCESS_RX_PACKET:
+		switch (readb(&prcs->interrupt_id)) {
+		case PROCESS_RX_PACKET:
 			ray_rx(dev, local, prcs);
-			अवरोध;
-		हाल REJOIN_NET_COMPLETE:
+			break;
+		case REJOIN_NET_COMPLETE:
 			dev_dbg(&link->dev, "ray_cs interrupt rejoin net complete\n");
 			local->card_status = CARD_ACQ_COMPLETE;
-			/* करो we need to clear tx buffers CCS's? */
-			अगर (local->sparm.b4.a_network_type == ADHOC) अणु
-				अगर (!snअगरfer)
-					netअगर_start_queue(dev);
-			पूर्ण अन्यथा अणु
-				स_नकल_fromio(&local->bss_id,
+			/* do we need to clear tx buffers CCS's? */
+			if (local->sparm.b4.a_network_type == ADHOC) {
+				if (!sniffer)
+					netif_start_queue(dev);
+			} else {
+				memcpy_fromio(&local->bss_id,
 					      prcs->var.rejoin_net_complete.
 					      bssid, ADDRLEN);
 				dev_dbg(&link->dev, "ray_cs new BSSID = %pm\n",
 					local->bss_id);
-				अगर (!snअगरfer)
+				if (!sniffer)
 					authenticate(local);
-			पूर्ण
-			अवरोध;
-		हाल ROAMING_INITIATED:
+			}
+			break;
+		case ROAMING_INITIATED:
 			dev_dbg(&link->dev, "ray_cs interrupt roaming initiated\n");
-			netअगर_stop_queue(dev);
+			netif_stop_queue(dev);
 			local->card_status = CARD_DOING_ACQ;
-			अवरोध;
-		हाल JAPAN_CALL_SIGN_RXD:
+			break;
+		case JAPAN_CALL_SIGN_RXD:
 			dev_dbg(&link->dev, "ray_cs interrupt japan call sign rx\n");
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_dbg(&link->dev,
 			      "ray_cs Unexpected interrupt for RCS 0x%x cmd = 0x%x\n",
 			      rcsindex,
-			      (अचिन्हित पूर्णांक)पढ़ोb(&prcs->पूर्णांकerrupt_id));
-			अवरोध;
-		पूर्ण
-		ग_लिखोb(CCS_BUFFER_FREE, &prcs->buffer_status);
-	पूर्ण
-	clear_पूर्णांकerrupt(local);
-	वापस IRQ_HANDLED;
-पूर्ण /* ray_पूर्णांकerrupt */
+			      (unsigned int)readb(&prcs->interrupt_id));
+			break;
+		}
+		writeb(CCS_BUFFER_FREE, &prcs->buffer_status);
+	}
+	clear_interrupt(local);
+	return IRQ_HANDLED;
+} /* ray_interrupt */
 
 /*===========================================================================*/
-अटल व्योम ray_rx(काष्ठा net_device *dev, ray_dev_t *local,
-		   काष्ठा rcs __iomem *prcs)
-अणु
-	पूर्णांक rx_len;
-	अचिन्हित पूर्णांक pkt_addr;
-	व्योम __iomem *pmsg;
+static void ray_rx(struct net_device *dev, ray_dev_t *local,
+		   struct rcs __iomem *prcs)
+{
+	int rx_len;
+	unsigned int pkt_addr;
+	void __iomem *pmsg;
 	pr_debug("ray_rx process rx packet\n");
 
 	/* Calculate address of packet within Rx buffer */
-	pkt_addr = ((पढ़ोb(&prcs->var.rx_packet.rx_data_ptr[0]) << 8)
-		    + पढ़ोb(&prcs->var.rx_packet.rx_data_ptr[1])) & RX_BUFF_END;
+	pkt_addr = ((readb(&prcs->var.rx_packet.rx_data_ptr[0]) << 8)
+		    + readb(&prcs->var.rx_packet.rx_data_ptr[1])) & RX_BUFF_END;
 	/* Length of first packet fragment */
-	rx_len = (पढ़ोb(&prcs->var.rx_packet.rx_data_length[0]) << 8)
-	    + पढ़ोb(&prcs->var.rx_packet.rx_data_length[1]);
+	rx_len = (readb(&prcs->var.rx_packet.rx_data_length[0]) << 8)
+	    + readb(&prcs->var.rx_packet.rx_data_length[1]);
 
-	local->last_rsl = पढ़ोb(&prcs->var.rx_packet.rx_sig_lev);
+	local->last_rsl = readb(&prcs->var.rx_packet.rx_sig_lev);
 	pmsg = local->rmem + pkt_addr;
-	चयन (पढ़ोb(pmsg)) अणु
-	हाल DATA_TYPE:
+	switch (readb(pmsg)) {
+	case DATA_TYPE:
 		pr_debug("ray_rx data type\n");
 		rx_data(dev, prcs, pkt_addr, rx_len);
-		अवरोध;
-	हाल AUTHENTIC_TYPE:
+		break;
+	case AUTHENTIC_TYPE:
 		pr_debug("ray_rx authentic type\n");
-		अगर (snअगरfer)
+		if (sniffer)
 			rx_data(dev, prcs, pkt_addr, rx_len);
-		अन्यथा
+		else
 			rx_authenticate(local, prcs, pkt_addr, rx_len);
-		अवरोध;
-	हाल DEAUTHENTIC_TYPE:
+		break;
+	case DEAUTHENTIC_TYPE:
 		pr_debug("ray_rx deauth type\n");
-		अगर (snअगरfer)
+		if (sniffer)
 			rx_data(dev, prcs, pkt_addr, rx_len);
-		अन्यथा
+		else
 			rx_deauthenticate(local, prcs, pkt_addr, rx_len);
-		अवरोध;
-	हाल शून्य_MSG_TYPE:
+		break;
+	case NULL_MSG_TYPE:
 		pr_debug("ray_cs rx NULL msg\n");
-		अवरोध;
-	हाल BEACON_TYPE:
+		break;
+	case BEACON_TYPE:
 		pr_debug("ray_rx beacon type\n");
-		अगर (snअगरfer)
+		if (sniffer)
 			rx_data(dev, prcs, pkt_addr, rx_len);
 
 		copy_from_rx_buff(local, (UCHAR *) &local->last_bcn, pkt_addr,
-				  rx_len < माप(काष्ठा beacon_rx) ?
-				  rx_len : माप(काष्ठा beacon_rx));
+				  rx_len < sizeof(struct beacon_rx) ?
+				  rx_len : sizeof(struct beacon_rx));
 
 		local->beacon_rxed = 1;
 		/* Get the statistics so the card counters never overflow */
 		ray_get_stats(dev);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_debug("ray_cs unknown pkt type %2x\n",
-		      (अचिन्हित पूर्णांक)पढ़ोb(pmsg));
-		अवरोध;
-	पूर्ण
+		      (unsigned int)readb(pmsg));
+		break;
+	}
 
-पूर्ण /* end ray_rx */
+} /* end ray_rx */
 
 /*===========================================================================*/
-अटल व्योम rx_data(काष्ठा net_device *dev, काष्ठा rcs __iomem *prcs,
-		    अचिन्हित पूर्णांक pkt_addr, पूर्णांक rx_len)
-अणु
-	काष्ठा sk_buff *skb = शून्य;
-	काष्ठा rcs __iomem *prcslink = prcs;
+static void rx_data(struct net_device *dev, struct rcs __iomem *prcs,
+		    unsigned int pkt_addr, int rx_len)
+{
+	struct sk_buff *skb = NULL;
+	struct rcs __iomem *prcslink = prcs;
 	ray_dev_t *local = netdev_priv(dev);
 	UCHAR *rx_ptr;
-	पूर्णांक total_len;
-	पूर्णांक पंचांगp;
-#अगर_घोषित WIRELESS_SPY
-	पूर्णांक siglev = local->last_rsl;
-	u_अक्षर linksrcaddr[ETH_ALEN];	/* Other end of the wireless link */
-#पूर्ण_अगर
+	int total_len;
+	int tmp;
+#ifdef WIRELESS_SPY
+	int siglev = local->last_rsl;
+	u_char linksrcaddr[ETH_ALEN];	/* Other end of the wireless link */
+#endif
 
-	अगर (!snअगरfer) अणु
-		अगर (translate) अणु
-/* TBD length needs fixing क्रम translated header */
-			अगर (rx_len < (ETH_HLEN + RX_MAC_HEADER_LENGTH) ||
+	if (!sniffer) {
+		if (translate) {
+/* TBD length needs fixing for translated header */
+			if (rx_len < (ETH_HLEN + RX_MAC_HEADER_LENGTH) ||
 			    rx_len >
 			    (dev->mtu + RX_MAC_HEADER_LENGTH + ETH_HLEN +
-			     FCS_LEN)) अणु
+			     FCS_LEN)) {
 				pr_debug(
 				      "ray_cs invalid packet length %d received\n",
 				      rx_len);
-				वापस;
-			पूर्ण
-		पूर्ण अन्यथा अणु /* encapsulated ethernet */
+				return;
+			}
+		} else { /* encapsulated ethernet */
 
-			अगर (rx_len < (ETH_HLEN + RX_MAC_HEADER_LENGTH) ||
+			if (rx_len < (ETH_HLEN + RX_MAC_HEADER_LENGTH) ||
 			    rx_len >
 			    (dev->mtu + RX_MAC_HEADER_LENGTH + ETH_HLEN +
-			     FCS_LEN)) अणु
+			     FCS_LEN)) {
 				pr_debug(
 				      "ray_cs invalid packet length %d received\n",
 				      rx_len);
-				वापस;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return;
+			}
+		}
+	}
 	pr_debug("ray_cs rx_data packet\n");
-	/* If fragmented packet, verअगरy sizes of fragments add up */
-	अगर (पढ़ोb(&prcs->var.rx_packet.next_frag_rcs_index) != 0xFF) अणु
+	/* If fragmented packet, verify sizes of fragments add up */
+	if (readb(&prcs->var.rx_packet.next_frag_rcs_index) != 0xFF) {
 		pr_debug("ray_cs rx'ed fragment\n");
-		पंचांगp = (पढ़ोb(&prcs->var.rx_packet.totalpacketlength[0]) << 8)
-		    + पढ़ोb(&prcs->var.rx_packet.totalpacketlength[1]);
-		total_len = पंचांगp;
+		tmp = (readb(&prcs->var.rx_packet.totalpacketlength[0]) << 8)
+		    + readb(&prcs->var.rx_packet.totalpacketlength[1]);
+		total_len = tmp;
 		prcslink = prcs;
-		करो अणु
-			पंचांगp -=
-			    (पढ़ोb(&prcslink->var.rx_packet.rx_data_length[0])
+		do {
+			tmp -=
+			    (readb(&prcslink->var.rx_packet.rx_data_length[0])
 			     << 8)
-			    + पढ़ोb(&prcslink->var.rx_packet.rx_data_length[1]);
-			अगर (पढ़ोb(&prcslink->var.rx_packet.next_frag_rcs_index)
-			    == 0xFF || पंचांगp < 0)
-				अवरोध;
+			    + readb(&prcslink->var.rx_packet.rx_data_length[1]);
+			if (readb(&prcslink->var.rx_packet.next_frag_rcs_index)
+			    == 0xFF || tmp < 0)
+				break;
 			prcslink = rcs_base(local)
-			    + पढ़ोb(&prcslink->link_field);
-		पूर्ण जबतक (1);
+			    + readb(&prcslink->link_field);
+		} while (1);
 
-		अगर (पंचांगp < 0) अणु
+		if (tmp < 0) {
 			pr_debug(
 			      "ray_cs rx_data fragment lengths don't add up\n");
 			local->stats.rx_dropped++;
 			release_frag_chain(local, prcs);
-			वापस;
-		पूर्ण
-	पूर्ण अन्यथा अणु /* Single unfragmented packet */
+			return;
+		}
+	} else { /* Single unfragmented packet */
 		total_len = rx_len;
-	पूर्ण
+	}
 
 	skb = dev_alloc_skb(total_len + 5);
-	अगर (skb == शून्य) अणु
+	if (skb == NULL) {
 		pr_debug("ray_cs rx_data could not allocate skb\n");
 		local->stats.rx_dropped++;
-		अगर (पढ़ोb(&prcs->var.rx_packet.next_frag_rcs_index) != 0xFF)
+		if (readb(&prcs->var.rx_packet.next_frag_rcs_index) != 0xFF)
 			release_frag_chain(local, prcs);
-		वापस;
-	पूर्ण
+		return;
+	}
 	skb_reserve(skb, 2);	/* Align IP on 16 byte (TBD check this) */
 
 	pr_debug("ray_cs rx_data total_len = %x, rx_len = %x\n", total_len,
 	      rx_len);
 
 /************************/
-	/* Reserve enough room क्रम the whole damn packet. */
+	/* Reserve enough room for the whole damn packet. */
 	rx_ptr = skb_put(skb, total_len);
 	/* Copy the whole packet to sk_buff */
 	rx_ptr +=
 	    copy_from_rx_buff(local, rx_ptr, pkt_addr & RX_BUFF_END, rx_len);
 	/* Get source address */
-#अगर_घोषित WIRELESS_SPY
+#ifdef WIRELESS_SPY
 	skb_copy_from_linear_data_offset(skb,
-					 दुरत्व(काष्ठा mac_header, addr_2),
+					 offsetof(struct mac_header, addr_2),
 					 linksrcaddr, ETH_ALEN);
-#पूर्ण_अगर
-	/* Now, deal with encapsulation/translation/snअगरfer */
-	अगर (!snअगरfer) अणु
-		अगर (!translate) अणु
+#endif
+	/* Now, deal with encapsulation/translation/sniffer */
+	if (!sniffer) {
+		if (!translate) {
 			/* Encapsulated ethernet, so just lop off 802.11 MAC header */
 /* TBD reserve            skb_reserve( skb, RX_MAC_HEADER_LENGTH); */
 			skb_pull(skb, RX_MAC_HEADER_LENGTH);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Do translation */
 			untranslate(local, skb, total_len);
-		पूर्ण
-	पूर्ण अन्यथा अणु /* snअगरfer mode, so just pass whole packet */
-	पूर्ण
+		}
+	} else { /* sniffer mode, so just pass whole packet */
+	}
 
 /************************/
-	/* Now pick up the rest of the fragments अगर any */
-	पंचांगp = 17;
-	अगर (पढ़ोb(&prcs->var.rx_packet.next_frag_rcs_index) != 0xFF) अणु
+	/* Now pick up the rest of the fragments if any */
+	tmp = 17;
+	if (readb(&prcs->var.rx_packet.next_frag_rcs_index) != 0xFF) {
 		prcslink = prcs;
 		pr_debug("ray_cs rx_data in fragment loop\n");
-		करो अणु
+		do {
 			prcslink = rcs_base(local)
 			    +
-			    पढ़ोb(&prcslink->var.rx_packet.next_frag_rcs_index);
+			    readb(&prcslink->var.rx_packet.next_frag_rcs_index);
 			rx_len =
-			    ((पढ़ोb(&prcslink->var.rx_packet.rx_data_length[0])
+			    ((readb(&prcslink->var.rx_packet.rx_data_length[0])
 			      << 8)
 			     +
-			     पढ़ोb(&prcslink->var.rx_packet.rx_data_length[1]))
+			     readb(&prcslink->var.rx_packet.rx_data_length[1]))
 			    & RX_BUFF_END;
 			pkt_addr =
-			    ((पढ़ोb(&prcslink->var.rx_packet.rx_data_ptr[0]) <<
+			    ((readb(&prcslink->var.rx_packet.rx_data_ptr[0]) <<
 			      8)
-			     + पढ़ोb(&prcslink->var.rx_packet.rx_data_ptr[1]))
+			     + readb(&prcslink->var.rx_packet.rx_data_ptr[1]))
 			    & RX_BUFF_END;
 
 			rx_ptr +=
 			    copy_from_rx_buff(local, rx_ptr, pkt_addr, rx_len);
 
-		पूर्ण जबतक (पंचांगp-- &&
-			 पढ़ोb(&prcslink->var.rx_packet.next_frag_rcs_index) !=
+		} while (tmp-- &&
+			 readb(&prcslink->var.rx_packet.next_frag_rcs_index) !=
 			 0xFF);
 		release_frag_chain(local, prcs);
-	पूर्ण
+	}
 
 	skb->protocol = eth_type_trans(skb, dev);
-	netअगर_rx(skb);
+	netif_rx(skb);
 	local->stats.rx_packets++;
 	local->stats.rx_bytes += total_len;
 
-	/* Gather संकेत strength per address */
-#अगर_घोषित WIRELESS_SPY
-	/* For the Access Poपूर्णांक or the node having started the ad-hoc net
-	 * note : ad-hoc work only in some specअगरic configurations, but we
+	/* Gather signal strength per address */
+#ifdef WIRELESS_SPY
+	/* For the Access Point or the node having started the ad-hoc net
+	 * note : ad-hoc work only in some specific configurations, but we
 	 * kludge in ray_get_wireless_stats... */
-	अगर (!स_भेद(linksrcaddr, local->bss_id, ETH_ALEN)) अणु
+	if (!memcmp(linksrcaddr, local->bss_id, ETH_ALEN)) {
 		/* Update statistics */
 		/*local->wstats.qual.qual = none ? */
 		local->wstats.qual.level = siglev;
 		/*local->wstats.qual.noise = none ? */
 		local->wstats.qual.updated = 0x2;
-	पूर्ण
+	}
 	/* Now, update the spy stuff */
-	अणु
-		काष्ठा iw_quality wstats;
+	{
+		struct iw_quality wstats;
 		wstats.level = siglev;
 		/* wstats.noise = none ? */
 		/* wstats.qual = none ? */
 		wstats.updated = 0x2;
 		/* Update spy records */
 		wireless_spy_update(dev, linksrcaddr, &wstats);
-	पूर्ण
-#पूर्ण_अगर /* WIRELESS_SPY */
-पूर्ण /* end rx_data */
+	}
+#endif /* WIRELESS_SPY */
+} /* end rx_data */
 
 /*===========================================================================*/
-अटल व्योम untranslate(ray_dev_t *local, काष्ठा sk_buff *skb, पूर्णांक len)
-अणु
+static void untranslate(ray_dev_t *local, struct sk_buff *skb, int len)
+{
 	snaphdr_t *psnap = (snaphdr_t *) (skb->data + RX_MAC_HEADER_LENGTH);
-	काष्ठा ieee80211_hdr *pmac = (काष्ठा ieee80211_hdr *)skb->data;
+	struct ieee80211_hdr *pmac = (struct ieee80211_hdr *)skb->data;
 	__be16 type = *(__be16 *) psnap->ethertype;
-	पूर्णांक delta;
-	काष्ठा ethhdr *peth;
+	int delta;
+	struct ethhdr *peth;
 	UCHAR srcaddr[ADDRLEN];
 	UCHAR destaddr[ADDRLEN];
-	अटल स्थिर UCHAR org_bridge[3] = अणु 0, 0, 0xf8 पूर्ण;
-	अटल स्थिर UCHAR org_1042[3] = अणु 0, 0, 0 पूर्ण;
+	static const UCHAR org_bridge[3] = { 0, 0, 0xf8 };
+	static const UCHAR org_1042[3] = { 0, 0, 0 };
 
-	स_नकल(destaddr, ieee80211_get_DA(pmac), ADDRLEN);
-	स_नकल(srcaddr, ieee80211_get_SA(pmac), ADDRLEN);
+	memcpy(destaddr, ieee80211_get_DA(pmac), ADDRLEN);
+	memcpy(srcaddr, ieee80211_get_SA(pmac), ADDRLEN);
 
-#अगर 0
-	अगर अणु
-		prपूर्णांक_hex_dump(KERN_DEBUG, "skb->data before untranslate: ",
+#if 0
+	if {
+		print_hex_dump(KERN_DEBUG, "skb->data before untranslate: ",
 			       DUMP_PREFIX_NONE, 16, 1,
 			       skb->data, 64, true);
-		prपूर्णांकk(KERN_DEBUG
+		printk(KERN_DEBUG
 		       "type = %08x, xsap = %02x%02x%02x, org = %02x02x02x\n",
 		       ntohs(type), psnap->dsap, psnap->ssap, psnap->ctrl,
 		       psnap->org[0], psnap->org[1], psnap->org[2]);
-		prपूर्णांकk(KERN_DEBUG "untranslate skb->data = %p\n", skb->data);
-	पूर्ण
-#पूर्ण_अगर
+		printk(KERN_DEBUG "untranslate skb->data = %p\n", skb->data);
+	}
+#endif
 
-	अगर (psnap->dsap != 0xaa || psnap->ssap != 0xaa || psnap->ctrl != 3) अणु
+	if (psnap->dsap != 0xaa || psnap->ssap != 0xaa || psnap->ctrl != 3) {
 		/* not a snap type so leave it alone */
 		pr_debug("ray_cs untranslate NOT SNAP %02x %02x %02x\n",
 		      psnap->dsap, psnap->ssap, psnap->ctrl);
 
 		delta = RX_MAC_HEADER_LENGTH - ETH_HLEN;
-		peth = (काष्ठा ethhdr *)(skb->data + delta);
+		peth = (struct ethhdr *)(skb->data + delta);
 		peth->h_proto = htons(len - RX_MAC_HEADER_LENGTH);
-	पूर्ण अन्यथा अणु /* Its a SNAP */
-		अगर (स_भेद(psnap->org, org_bridge, 3) == 0) अणु
+	} else { /* Its a SNAP */
+		if (memcmp(psnap->org, org_bridge, 3) == 0) {
 		/* EtherII and nuke the LLC */
 			pr_debug("ray_cs untranslate Bridge encap\n");
 			delta = RX_MAC_HEADER_LENGTH
-			    + माप(काष्ठा snaphdr_t) - ETH_HLEN;
-			peth = (काष्ठा ethhdr *)(skb->data + delta);
+			    + sizeof(struct snaphdr_t) - ETH_HLEN;
+			peth = (struct ethhdr *)(skb->data + delta);
 			peth->h_proto = type;
-		पूर्ण अन्यथा अगर (स_भेद(psnap->org, org_1042, 3) == 0) अणु
-			चयन (ntohs(type)) अणु
-			हाल ETH_P_IPX:
-			हाल ETH_P_AARP:
+		} else if (memcmp(psnap->org, org_1042, 3) == 0) {
+			switch (ntohs(type)) {
+			case ETH_P_IPX:
+			case ETH_P_AARP:
 				pr_debug("ray_cs untranslate RFC IPX/AARP\n");
 				delta = RX_MAC_HEADER_LENGTH - ETH_HLEN;
-				peth = (काष्ठा ethhdr *)(skb->data + delta);
+				peth = (struct ethhdr *)(skb->data + delta);
 				peth->h_proto =
 				    htons(len - RX_MAC_HEADER_LENGTH);
-				अवरोध;
-			शेष:
+				break;
+			default:
 				pr_debug("ray_cs untranslate RFC default\n");
 				delta = RX_MAC_HEADER_LENGTH +
-				    माप(काष्ठा snaphdr_t) - ETH_HLEN;
-				peth = (काष्ठा ethhdr *)(skb->data + delta);
+				    sizeof(struct snaphdr_t) - ETH_HLEN;
+				peth = (struct ethhdr *)(skb->data + delta);
 				peth->h_proto = type;
-				अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			prपूर्णांकk("ray_cs untranslate very confused by packet\n");
+				break;
+			}
+		} else {
+			printk("ray_cs untranslate very confused by packet\n");
 			delta = RX_MAC_HEADER_LENGTH - ETH_HLEN;
-			peth = (काष्ठा ethhdr *)(skb->data + delta);
+			peth = (struct ethhdr *)(skb->data + delta);
 			peth->h_proto = type;
-		पूर्ण
-	पूर्ण
+		}
+	}
 /* TBD reserve  skb_reserve(skb, delta); */
 	skb_pull(skb, delta);
 	pr_debug("untranslate after skb_pull(%d), skb->data = %p\n", delta,
 	      skb->data);
-	स_नकल(peth->h_dest, destaddr, ADDRLEN);
-	स_नकल(peth->h_source, srcaddr, ADDRLEN);
-#अगर 0
-	अणु
-		पूर्णांक i;
-		prपूर्णांकk(KERN_DEBUG "skb->data after untranslate:");
-		क्रम (i = 0; i < 64; i++)
-			prपूर्णांकk("%02x ", skb->data[i]);
-		prपूर्णांकk("\n");
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण /* end untranslate */
+	memcpy(peth->h_dest, destaddr, ADDRLEN);
+	memcpy(peth->h_source, srcaddr, ADDRLEN);
+#if 0
+	{
+		int i;
+		printk(KERN_DEBUG "skb->data after untranslate:");
+		for (i = 0; i < 64; i++)
+			printk("%02x ", skb->data[i]);
+		printk("\n");
+	}
+#endif
+} /* end untranslate */
 
 /*===========================================================================*/
 /* Copy data from circular receive buffer to PC memory.
@@ -2356,174 +2355,174 @@ AP to AP	1	1	dest AP		src AP		dest	source
  * pkt_addr = source address in receive buffer
  * len      = length of packet to copy
  */
-अटल पूर्णांक copy_from_rx_buff(ray_dev_t *local, UCHAR *dest, पूर्णांक pkt_addr,
-			     पूर्णांक length)
-अणु
-	पूर्णांक wrap_bytes = (pkt_addr + length) - (RX_BUFF_END + 1);
-	अगर (wrap_bytes <= 0) अणु
-		स_नकल_fromio(dest, local->rmem + pkt_addr, length);
-	पूर्ण अन्यथा अणु /* Packet wrapped in circular buffer */
+static int copy_from_rx_buff(ray_dev_t *local, UCHAR *dest, int pkt_addr,
+			     int length)
+{
+	int wrap_bytes = (pkt_addr + length) - (RX_BUFF_END + 1);
+	if (wrap_bytes <= 0) {
+		memcpy_fromio(dest, local->rmem + pkt_addr, length);
+	} else { /* Packet wrapped in circular buffer */
 
-		स_नकल_fromio(dest, local->rmem + pkt_addr,
+		memcpy_fromio(dest, local->rmem + pkt_addr,
 			      length - wrap_bytes);
-		स_नकल_fromio(dest + length - wrap_bytes, local->rmem,
+		memcpy_fromio(dest + length - wrap_bytes, local->rmem,
 			      wrap_bytes);
-	पूर्ण
-	वापस length;
-पूर्ण
+	}
+	return length;
+}
 
 /*===========================================================================*/
-अटल व्योम release_frag_chain(ray_dev_t *local, काष्ठा rcs __iomem *prcs)
-अणु
-	काष्ठा rcs __iomem *prcslink = prcs;
-	पूर्णांक पंचांगp = 17;
-	अचिन्हित rcsindex = पढ़ोb(&prcs->var.rx_packet.next_frag_rcs_index);
+static void release_frag_chain(ray_dev_t *local, struct rcs __iomem *prcs)
+{
+	struct rcs __iomem *prcslink = prcs;
+	int tmp = 17;
+	unsigned rcsindex = readb(&prcs->var.rx_packet.next_frag_rcs_index);
 
-	जबतक (पंचांगp--) अणु
-		ग_लिखोb(CCS_BUFFER_FREE, &prcslink->buffer_status);
-		अगर (rcsindex >= (NUMBER_OF_CCS + NUMBER_OF_RCS)) अणु
+	while (tmp--) {
+		writeb(CCS_BUFFER_FREE, &prcslink->buffer_status);
+		if (rcsindex >= (NUMBER_OF_CCS + NUMBER_OF_RCS)) {
 			pr_debug("ray_cs interrupt bad rcsindex = 0x%x\n",
 			      rcsindex);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		prcslink = rcs_base(local) + rcsindex;
-		rcsindex = पढ़ोb(&prcslink->var.rx_packet.next_frag_rcs_index);
-	पूर्ण
-	ग_लिखोb(CCS_BUFFER_FREE, &prcslink->buffer_status);
-पूर्ण
+		rcsindex = readb(&prcslink->var.rx_packet.next_frag_rcs_index);
+	}
+	writeb(CCS_BUFFER_FREE, &prcslink->buffer_status);
+}
 
 /*===========================================================================*/
-अटल व्योम authenticate(ray_dev_t *local)
-अणु
-	काष्ठा pcmcia_device *link = local->finder;
+static void authenticate(ray_dev_t *local)
+{
+	struct pcmcia_device *link = local->finder;
 	dev_dbg(&link->dev, "ray_cs Starting authentication.\n");
-	अगर (!(pcmcia_dev_present(link))) अणु
+	if (!(pcmcia_dev_present(link))) {
 		dev_dbg(&link->dev, "ray_cs authenticate - device not present\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	del_समयr(&local->समयr);
-	अगर (build_auth_frame(local, local->bss_id, OPEN_AUTH_REQUEST)) अणु
-		local->समयr.function = join_net;
-	पूर्ण अन्यथा अणु
-		local->समयr.function = authenticate_समयout;
-	पूर्ण
-	local->समयr.expires = jअगरfies + HZ * 2;
-	add_समयr(&local->समयr);
+	del_timer(&local->timer);
+	if (build_auth_frame(local, local->bss_id, OPEN_AUTH_REQUEST)) {
+		local->timer.function = join_net;
+	} else {
+		local->timer.function = authenticate_timeout;
+	}
+	local->timer.expires = jiffies + HZ * 2;
+	add_timer(&local->timer);
 	local->authentication_state = AWAITING_RESPONSE;
-पूर्ण /* end authenticate */
+} /* end authenticate */
 
 /*===========================================================================*/
-अटल व्योम rx_authenticate(ray_dev_t *local, काष्ठा rcs __iomem *prcs,
-			    अचिन्हित पूर्णांक pkt_addr, पूर्णांक rx_len)
-अणु
+static void rx_authenticate(ray_dev_t *local, struct rcs __iomem *prcs,
+			    unsigned int pkt_addr, int rx_len)
+{
 	UCHAR buff[256];
-	काष्ठा ray_rx_msg *msg = (काष्ठा ray_rx_msg *) buff;
+	struct ray_rx_msg *msg = (struct ray_rx_msg *) buff;
 
-	del_समयr(&local->समयr);
+	del_timer(&local->timer);
 
 	copy_from_rx_buff(local, buff, pkt_addr, rx_len & 0xff);
-	/* अगर we are trying to get authenticated */
-	अगर (local->sparm.b4.a_network_type == ADHOC) अणु
+	/* if we are trying to get authenticated */
+	if (local->sparm.b4.a_network_type == ADHOC) {
 		pr_debug("ray_cs rx_auth var= %02x %02x %02x %02x %02x %02x\n",
 		      msg->var[0], msg->var[1], msg->var[2], msg->var[3],
 		      msg->var[4], msg->var[5]);
-		अगर (msg->var[2] == 1) अणु
+		if (msg->var[2] == 1) {
 			pr_debug("ray_cs Sending authentication response.\n");
-			अगर (!build_auth_frame
-			    (local, msg->mac.addr_2, OPEN_AUTH_RESPONSE)) अणु
+			if (!build_auth_frame
+			    (local, msg->mac.addr_2, OPEN_AUTH_RESPONSE)) {
 				local->authentication_state = NEED_TO_AUTH;
-				स_नकल(local->auth_id, msg->mac.addr_2,
+				memcpy(local->auth_id, msg->mac.addr_2,
 				       ADDRLEN);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु /* Infraकाष्ठाure network */
+			}
+		}
+	} else { /* Infrastructure network */
 
-		अगर (local->authentication_state == AWAITING_RESPONSE) अणु
-			/* Verअगरy authentication sequence #2 and success */
-			अगर (msg->var[2] == 2) अणु
-				अगर ((msg->var[3] | msg->var[4]) == 0) अणु
+		if (local->authentication_state == AWAITING_RESPONSE) {
+			/* Verify authentication sequence #2 and success */
+			if (msg->var[2] == 2) {
+				if ((msg->var[3] | msg->var[4]) == 0) {
 					pr_debug("Authentication successful\n");
 					local->card_status = CARD_AUTH_COMPLETE;
 					associate(local);
 					local->authentication_state =
 					    AUTHENTICATED;
-				पूर्ण अन्यथा अणु
+				} else {
 					pr_debug("Authentication refused\n");
 					local->card_status = CARD_AUTH_REFUSED;
-					join_net(&local->समयr);
+					join_net(&local->timer);
 					local->authentication_state =
 					    UNAUTHENTICATED;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				}
+			}
+		}
+	}
 
-पूर्ण /* end rx_authenticate */
+} /* end rx_authenticate */
 
 /*===========================================================================*/
-अटल व्योम associate(ray_dev_t *local)
-अणु
-	काष्ठा ccs __iomem *pccs;
-	काष्ठा pcmcia_device *link = local->finder;
-	काष्ठा net_device *dev = link->priv;
-	पूर्णांक ccsindex;
-	अगर (!(pcmcia_dev_present(link))) अणु
+static void associate(ray_dev_t *local)
+{
+	struct ccs __iomem *pccs;
+	struct pcmcia_device *link = local->finder;
+	struct net_device *dev = link->priv;
+	int ccsindex;
+	if (!(pcmcia_dev_present(link))) {
 		dev_dbg(&link->dev, "ray_cs associate - device not present\n");
-		वापस;
-	पूर्ण
-	/* If no tx buffers available, वापस */
-	अगर ((ccsindex = get_मुक्त_ccs(local)) < 0) अणु
-/* TBD should never be here but... what अगर we are? */
+		return;
+	}
+	/* If no tx buffers available, return */
+	if ((ccsindex = get_free_ccs(local)) < 0) {
+/* TBD should never be here but... what if we are? */
 		dev_dbg(&link->dev, "ray_cs associate - No free ccs\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 	dev_dbg(&link->dev, "ray_cs Starting association with access point\n");
 	pccs = ccs_base(local) + ccsindex;
 	/* fill in the CCS */
-	ग_लिखोb(CCS_START_ASSOCIATION, &pccs->cmd);
+	writeb(CCS_START_ASSOCIATION, &pccs->cmd);
 	/* Interrupt the firmware to process the command */
-	अगर (पूर्णांकerrupt_ecf(local, ccsindex)) अणु
+	if (interrupt_ecf(local, ccsindex)) {
 		dev_dbg(&link->dev, "ray_cs associate failed - ECF not ready for intr\n");
-		ग_लिखोb(CCS_BUFFER_FREE, &(pccs++)->buffer_status);
+		writeb(CCS_BUFFER_FREE, &(pccs++)->buffer_status);
 
-		del_समयr(&local->समयr);
-		local->समयr.expires = jअगरfies + HZ * 2;
-		local->समयr.function = join_net;
-		add_समयr(&local->समयr);
+		del_timer(&local->timer);
+		local->timer.expires = jiffies + HZ * 2;
+		local->timer.function = join_net;
+		add_timer(&local->timer);
 		local->card_status = CARD_ASSOC_FAILED;
-		वापस;
-	पूर्ण
-	अगर (!snअगरfer)
-		netअगर_start_queue(dev);
+		return;
+	}
+	if (!sniffer)
+		netif_start_queue(dev);
 
-पूर्ण /* end associate */
+} /* end associate */
 
 /*===========================================================================*/
-अटल व्योम rx_deauthenticate(ray_dev_t *local, काष्ठा rcs __iomem *prcs,
-			      अचिन्हित पूर्णांक pkt_addr, पूर्णांक rx_len)
-अणु
+static void rx_deauthenticate(ray_dev_t *local, struct rcs __iomem *prcs,
+			      unsigned int pkt_addr, int rx_len)
+{
 /*  UCHAR buff[256];
-    काष्ठा ray_rx_msg *msg = (काष्ठा ray_rx_msg *) buff;
+    struct ray_rx_msg *msg = (struct ray_rx_msg *) buff;
 */
 	pr_debug("Deauthentication frame received\n");
 	local->authentication_state = UNAUTHENTICATED;
 	/* Need to reauthenticate or rejoin depending on reason code */
 /*  copy_from_rx_buff(local, buff, pkt_addr, rx_len & 0xff);
  */
-पूर्ण
+}
 
 /*===========================================================================*/
-अटल व्योम clear_पूर्णांकerrupt(ray_dev_t *local)
-अणु
-	ग_लिखोb(0, local->amem + CIS_OFFSET + HCS_INTR_OFFSET);
-पूर्ण
+static void clear_interrupt(ray_dev_t *local)
+{
+	writeb(0, local->amem + CIS_OFFSET + HCS_INTR_OFFSET);
+}
 
 /*===========================================================================*/
-#अगर_घोषित CONFIG_PROC_FS
-#घोषणा MAXDATA (PAGE_SIZE - 80)
+#ifdef CONFIG_PROC_FS
+#define MAXDATA (PAGE_SIZE - 80)
 
-अटल स्थिर अक्षर *card_status[] = अणु
+static const char *card_status[] = {
 	"Card inserted - uninitialized",	/* 0 */
 	"Card not downloaded",			/* 1 */
 	"Waiting for download parameters",	/* 2 */
@@ -2538,281 +2537,281 @@ AP to AP	1	1	dest AP		src AP		dest	source
 	"Acquisition failed",			/* 14 */
 	"Authentication refused",		/* 15 */
 	"Association failed"			/* 16 */
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *nettype[] = अणु "Adhoc", "Infra " पूर्ण;
-अटल स्थिर अक्षर *framing[] = अणु "Encapsulation", "Translation" पूर्ण
+static const char *nettype[] = { "Adhoc", "Infra " };
+static const char *framing[] = { "Encapsulation", "Translation" }
 
 ;
 /*===========================================================================*/
-अटल पूर्णांक ray_cs_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-/* Prपूर्णांक current values which are not available via other means
- * eg अगरconfig
+static int ray_cs_proc_show(struct seq_file *m, void *v)
+{
+/* Print current values which are not available via other means
+ * eg ifconfig
  */
-	पूर्णांक i;
-	काष्ठा pcmcia_device *link;
-	काष्ठा net_device *dev;
+	int i;
+	struct pcmcia_device *link;
+	struct net_device *dev;
 	ray_dev_t *local;
 	UCHAR *p;
-	काष्ठा freq_hop_element *pfh;
+	struct freq_hop_element *pfh;
 	UCHAR c[33];
 
 	link = this_device;
-	अगर (!link)
-		वापस 0;
-	dev = (काष्ठा net_device *)link->priv;
-	अगर (!dev)
-		वापस 0;
+	if (!link)
+		return 0;
+	dev = (struct net_device *)link->priv;
+	if (!dev)
+		return 0;
 	local = netdev_priv(dev);
-	अगर (!local)
-		वापस 0;
+	if (!local)
+		return 0;
 
-	seq_माला_दो(m, "Raylink Wireless LAN driver status\n");
-	seq_म_लिखो(m, "%s\n", rcsid);
-	/* build 4 करोes not report version, and field is 0x55 after memtest */
-	seq_माला_दो(m, "Firmware version     = ");
-	अगर (local->fw_ver == 0x55)
-		seq_माला_दो(m, "4 - Use dump_cis for more details\n");
-	अन्यथा
-		seq_म_लिखो(m, "%2d.%02d.%02d\n",
+	seq_puts(m, "Raylink Wireless LAN driver status\n");
+	seq_printf(m, "%s\n", rcsid);
+	/* build 4 does not report version, and field is 0x55 after memtest */
+	seq_puts(m, "Firmware version     = ");
+	if (local->fw_ver == 0x55)
+		seq_puts(m, "4 - Use dump_cis for more details\n");
+	else
+		seq_printf(m, "%2d.%02d.%02d\n",
 			   local->fw_ver, local->fw_bld, local->fw_var);
 
-	क्रम (i = 0; i < 32; i++)
+	for (i = 0; i < 32; i++)
 		c[i] = local->sparm.b5.a_current_ess_id[i];
 	c[32] = 0;
-	seq_म_लिखो(m, "%s network ESSID = \"%s\"\n",
+	seq_printf(m, "%s network ESSID = \"%s\"\n",
 		   nettype[local->sparm.b5.a_network_type], c);
 
 	p = local->bss_id;
-	seq_म_लिखो(m, "BSSID                = %pM\n", p);
+	seq_printf(m, "BSSID                = %pM\n", p);
 
-	seq_म_लिखो(m, "Country code         = %d\n",
+	seq_printf(m, "Country code         = %d\n",
 		   local->sparm.b5.a_curr_country_code);
 
 	i = local->card_status;
-	अगर (i < 0)
+	if (i < 0)
 		i = 10;
-	अगर (i > 16)
+	if (i > 16)
 		i = 10;
-	seq_म_लिखो(m, "Card status          = %s\n", card_status[i]);
+	seq_printf(m, "Card status          = %s\n", card_status[i]);
 
-	seq_म_लिखो(m, "Framing mode         = %s\n", framing[translate]);
+	seq_printf(m, "Framing mode         = %s\n", framing[translate]);
 
-	seq_म_लिखो(m, "Last pkt signal lvl  = %d\n", local->last_rsl);
+	seq_printf(m, "Last pkt signal lvl  = %d\n", local->last_rsl);
 
-	अगर (local->beacon_rxed) अणु
+	if (local->beacon_rxed) {
 		/* Pull some fields out of last beacon received */
-		seq_म_लिखो(m, "Beacon Interval      = %d Kus\n",
-			   local->last_bcn.beacon_पूर्णांकvl[0]
-			   + 256 * local->last_bcn.beacon_पूर्णांकvl[1]);
+		seq_printf(m, "Beacon Interval      = %d Kus\n",
+			   local->last_bcn.beacon_intvl[0]
+			   + 256 * local->last_bcn.beacon_intvl[1]);
 
 		p = local->last_bcn.elements;
-		अगर (p[0] == C_ESSID_ELEMENT_ID)
+		if (p[0] == C_ESSID_ELEMENT_ID)
 			p += p[1] + 2;
-		अन्यथा अणु
-			seq_म_लिखो(m,
+		else {
+			seq_printf(m,
 				   "Parse beacon failed at essid element id = %d\n",
 				   p[0]);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		अगर (p[0] == C_SUPPORTED_RATES_ELEMENT_ID) अणु
-			seq_माला_दो(m, "Supported rate codes = ");
-			क्रम (i = 2; i < p[1] + 2; i++)
-				seq_म_लिखो(m, "0x%02x ", p[i]);
-			seq_अ_दो(m, '\n');
+		if (p[0] == C_SUPPORTED_RATES_ELEMENT_ID) {
+			seq_puts(m, "Supported rate codes = ");
+			for (i = 2; i < p[1] + 2; i++)
+				seq_printf(m, "0x%02x ", p[i]);
+			seq_putc(m, '\n');
 			p += p[1] + 2;
-		पूर्ण अन्यथा अणु
-			seq_माला_दो(m, "Parse beacon failed at rates element\n");
-			वापस 0;
-		पूर्ण
+		} else {
+			seq_puts(m, "Parse beacon failed at rates element\n");
+			return 0;
+		}
 
-		अगर (p[0] == C_FH_PARAM_SET_ELEMENT_ID) अणु
-			pfh = (काष्ठा freq_hop_element *)p;
-			seq_म_लिखो(m, "Hop dwell            = %d Kus\n",
-				   pfh->dwell_समय[0] +
-				   256 * pfh->dwell_समय[1]);
-			seq_म_लिखो(m, "Hop set              = %d\n",
+		if (p[0] == C_FH_PARAM_SET_ELEMENT_ID) {
+			pfh = (struct freq_hop_element *)p;
+			seq_printf(m, "Hop dwell            = %d Kus\n",
+				   pfh->dwell_time[0] +
+				   256 * pfh->dwell_time[1]);
+			seq_printf(m, "Hop set              = %d\n",
 				   pfh->hop_set);
-			seq_म_लिखो(m, "Hop pattern          = %d\n",
+			seq_printf(m, "Hop pattern          = %d\n",
 				   pfh->hop_pattern);
-			seq_म_लिखो(m, "Hop index            = %d\n",
+			seq_printf(m, "Hop index            = %d\n",
 				   pfh->hop_index);
 			p += p[1] + 2;
-		पूर्ण अन्यथा अणु
-			seq_माला_दो(m,
+		} else {
+			seq_puts(m,
 				 "Parse beacon failed at FH param element\n");
-			वापस 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		seq_माला_दो(m, "No beacons received\n");
-	पूर्ण
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+			return 0;
+		}
+	} else {
+		seq_puts(m, "No beacons received\n");
+	}
+	return 0;
+}
+#endif
 /*===========================================================================*/
-अटल पूर्णांक build_auth_frame(ray_dev_t *local, UCHAR *dest, पूर्णांक auth_type)
-अणु
-	पूर्णांक addr;
-	काष्ठा ccs __iomem *pccs;
-	काष्ठा tx_msg __iomem *ptx;
-	पूर्णांक ccsindex;
+static int build_auth_frame(ray_dev_t *local, UCHAR *dest, int auth_type)
+{
+	int addr;
+	struct ccs __iomem *pccs;
+	struct tx_msg __iomem *ptx;
+	int ccsindex;
 
-	/* If no tx buffers available, वापस */
-	अगर ((ccsindex = get_मुक्त_tx_ccs(local)) < 0) अणु
+	/* If no tx buffers available, return */
+	if ((ccsindex = get_free_tx_ccs(local)) < 0) {
 		pr_debug("ray_cs send authenticate - No free tx ccs\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	pccs = ccs_base(local) + ccsindex;
 
 	/* Address in card space */
 	addr = TX_BUF_BASE + (ccsindex << 11);
 	/* fill in the CCS */
-	ग_लिखोb(CCS_TX_REQUEST, &pccs->cmd);
-	ग_लिखोb(addr >> 8, pccs->var.tx_request.tx_data_ptr);
-	ग_लिखोb(0x20, pccs->var.tx_request.tx_data_ptr + 1);
-	ग_लिखोb(TX_AUTHENTICATE_LENGTH_MSB, pccs->var.tx_request.tx_data_length);
-	ग_लिखोb(TX_AUTHENTICATE_LENGTH_LSB,
+	writeb(CCS_TX_REQUEST, &pccs->cmd);
+	writeb(addr >> 8, pccs->var.tx_request.tx_data_ptr);
+	writeb(0x20, pccs->var.tx_request.tx_data_ptr + 1);
+	writeb(TX_AUTHENTICATE_LENGTH_MSB, pccs->var.tx_request.tx_data_length);
+	writeb(TX_AUTHENTICATE_LENGTH_LSB,
 	       pccs->var.tx_request.tx_data_length + 1);
-	ग_लिखोb(0, &pccs->var.tx_request.घात_sav_mode);
+	writeb(0, &pccs->var.tx_request.pow_sav_mode);
 
 	ptx = local->sram + addr;
 	/* fill in the mac header */
-	ग_लिखोb(PROTOCOL_VER | AUTHENTIC_TYPE, &ptx->mac.frame_ctl_1);
-	ग_लिखोb(0, &ptx->mac.frame_ctl_2);
+	writeb(PROTOCOL_VER | AUTHENTIC_TYPE, &ptx->mac.frame_ctl_1);
+	writeb(0, &ptx->mac.frame_ctl_2);
 
-	स_नकल_toio(ptx->mac.addr_1, dest, ADDRLEN);
-	स_नकल_toio(ptx->mac.addr_2, local->sparm.b4.a_mac_addr, ADDRLEN);
-	स_नकल_toio(ptx->mac.addr_3, local->bss_id, ADDRLEN);
+	memcpy_toio(ptx->mac.addr_1, dest, ADDRLEN);
+	memcpy_toio(ptx->mac.addr_2, local->sparm.b4.a_mac_addr, ADDRLEN);
+	memcpy_toio(ptx->mac.addr_3, local->bss_id, ADDRLEN);
 
 	/* Fill in msg body with protocol 00 00, sequence 01 00 ,status 00 00 */
-	स_रखो_io(ptx->var, 0, 6);
-	ग_लिखोb(auth_type & 0xff, ptx->var + 2);
+	memset_io(ptx->var, 0, 6);
+	writeb(auth_type & 0xff, ptx->var + 2);
 
 	/* Interrupt the firmware to process the command */
-	अगर (पूर्णांकerrupt_ecf(local, ccsindex)) अणु
+	if (interrupt_ecf(local, ccsindex)) {
 		pr_debug(
 		      "ray_cs send authentication request failed - ECF not ready for intr\n");
-		ग_लिखोb(CCS_BUFFER_FREE, &(pccs++)->buffer_status);
-		वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण /* End build_auth_frame */
+		writeb(CCS_BUFFER_FREE, &(pccs++)->buffer_status);
+		return -1;
+	}
+	return 0;
+} /* End build_auth_frame */
 
 /*===========================================================================*/
-#अगर_घोषित CONFIG_PROC_FS
-अटल sमाप_प्रकार ray_cs_essid_proc_ग_लिखो(काष्ठा file *file,
-		स्थिर अक्षर __user *buffer, माप_प्रकार count, loff_t *pos)
-अणु
-	अटल अक्षर proc_essid[33];
-	अचिन्हित पूर्णांक len = count;
+#ifdef CONFIG_PROC_FS
+static ssize_t ray_cs_essid_proc_write(struct file *file,
+		const char __user *buffer, size_t count, loff_t *pos)
+{
+	static char proc_essid[33];
+	unsigned int len = count;
 
-	अगर (len > 32)
+	if (len > 32)
 		len = 32;
-	स_रखो(proc_essid, 0, 33);
-	अगर (copy_from_user(proc_essid, buffer, len))
-		वापस -EFAULT;
+	memset(proc_essid, 0, 33);
+	if (copy_from_user(proc_essid, buffer, len))
+		return -EFAULT;
 	essid = proc_essid;
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा proc_ops ray_cs_essid_proc_ops = अणु
-	.proc_ग_लिखो	= ray_cs_essid_proc_ग_लिखो,
+static const struct proc_ops ray_cs_essid_proc_ops = {
+	.proc_write	= ray_cs_essid_proc_write,
 	.proc_lseek	= noop_llseek,
-पूर्ण;
+};
 
-अटल sमाप_प्रकार पूर्णांक_proc_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer,
-			      माप_प्रकार count, loff_t *pos)
-अणु
-	अटल अक्षर proc_number[10];
-	अक्षर *p;
-	पूर्णांक nr, len;
+static ssize_t int_proc_write(struct file *file, const char __user *buffer,
+			      size_t count, loff_t *pos)
+{
+	static char proc_number[10];
+	char *p;
+	int nr, len;
 
-	अगर (!count)
-		वापस 0;
+	if (!count)
+		return 0;
 
-	अगर (count > 9)
-		वापस -EINVAL;
-	अगर (copy_from_user(proc_number, buffer, count))
-		वापस -EFAULT;
+	if (count > 9)
+		return -EINVAL;
+	if (copy_from_user(proc_number, buffer, count))
+		return -EFAULT;
 	p = proc_number;
 	nr = 0;
 	len = count;
-	करो अणु
-		अचिन्हित पूर्णांक c = *p - '0';
-		अगर (c > 9)
-			वापस -EINVAL;
+	do {
+		unsigned int c = *p - '0';
+		if (c > 9)
+			return -EINVAL;
 		nr = nr * 10 + c;
 		p++;
-	पूर्ण जबतक (--len);
-	*(पूर्णांक *)PDE_DATA(file_inode(file)) = nr;
-	वापस count;
-पूर्ण
+	} while (--len);
+	*(int *)PDE_DATA(file_inode(file)) = nr;
+	return count;
+}
 
-अटल स्थिर काष्ठा proc_ops पूर्णांक_proc_ops = अणु
-	.proc_ग_लिखो	= पूर्णांक_proc_ग_लिखो,
+static const struct proc_ops int_proc_ops = {
+	.proc_write	= int_proc_write,
 	.proc_lseek	= noop_llseek,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल स्थिर काष्ठा pcmcia_device_id ray_ids[] = अणु
+static const struct pcmcia_device_id ray_ids[] = {
 	PCMCIA_DEVICE_MANF_CARD(0x01a6, 0x0000),
-	PCMCIA_DEVICE_शून्य,
-पूर्ण;
+	PCMCIA_DEVICE_NULL,
+};
 
 MODULE_DEVICE_TABLE(pcmcia, ray_ids);
 
-अटल काष्ठा pcmcia_driver ray_driver = अणु
+static struct pcmcia_driver ray_driver = {
 	.owner = THIS_MODULE,
 	.name = "ray_cs",
 	.probe = ray_probe,
-	.हटाओ = ray_detach,
+	.remove = ray_detach,
 	.id_table = ray_ids,
 	.suspend = ray_suspend,
 	.resume = ray_resume,
-पूर्ण;
+};
 
-अटल पूर्णांक __init init_ray_cs(व्योम)
-अणु
-	पूर्णांक rc;
+static int __init init_ray_cs(void)
+{
+	int rc;
 
 	pr_debug("%s\n", rcsid);
-	rc = pcmcia_रेजिस्टर_driver(&ray_driver);
+	rc = pcmcia_register_driver(&ray_driver);
 	pr_debug("raylink init_module register_pcmcia_driver returns 0x%x\n",
 	      rc);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-#अगर_घोषित CONFIG_PROC_FS
-	proc_सूची_गढ़ो("driver/ray_cs", शून्य);
+#ifdef CONFIG_PROC_FS
+	proc_mkdir("driver/ray_cs", NULL);
 
-	proc_create_single("driver/ray_cs/ray_cs", 0, शून्य, ray_cs_proc_show);
-	proc_create("driver/ray_cs/essid", 0200, शून्य, &ray_cs_essid_proc_ops);
-	proc_create_data("driver/ray_cs/net_type", 0200, शून्य, &पूर्णांक_proc_ops,
+	proc_create_single("driver/ray_cs/ray_cs", 0, NULL, ray_cs_proc_show);
+	proc_create("driver/ray_cs/essid", 0200, NULL, &ray_cs_essid_proc_ops);
+	proc_create_data("driver/ray_cs/net_type", 0200, NULL, &int_proc_ops,
 			 &net_type);
-	proc_create_data("driver/ray_cs/translate", 0200, शून्य, &पूर्णांक_proc_ops,
+	proc_create_data("driver/ray_cs/translate", 0200, NULL, &int_proc_ops,
 			 &translate);
-#पूर्ण_अगर
+#endif
 	translate = !!translate;
-	वापस 0;
-पूर्ण /* init_ray_cs */
+	return 0;
+} /* init_ray_cs */
 
 /*===========================================================================*/
 
-अटल व्योम __निकास निकास_ray_cs(व्योम)
-अणु
+static void __exit exit_ray_cs(void)
+{
 	pr_debug("ray_cs: cleanup_module\n");
 
-#अगर_घोषित CONFIG_PROC_FS
-	हटाओ_proc_subtree("driver/ray_cs", शून्य);
-#पूर्ण_अगर
+#ifdef CONFIG_PROC_FS
+	remove_proc_subtree("driver/ray_cs", NULL);
+#endif
 
-	pcmcia_unरेजिस्टर_driver(&ray_driver);
-पूर्ण /* निकास_ray_cs */
+	pcmcia_unregister_driver(&ray_driver);
+} /* exit_ray_cs */
 
 module_init(init_ray_cs);
-module_निकास(निकास_ray_cs);
+module_exit(exit_ray_cs);
 
 /*===========================================================================*/

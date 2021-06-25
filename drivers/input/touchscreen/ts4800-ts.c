@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Touchscreen driver क्रम the TS-4800 board
+ * Touchscreen driver for the TS-4800 board
  *
  * Copyright (c) 2015 - Savoir-faire Linux
  *
@@ -9,167 +8,167 @@
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/input.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
+#include <linux/bitops.h>
+#include <linux/input.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/mfd/syscon.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
 
-/* polling पूर्णांकerval in ms */
-#घोषणा POLL_INTERVAL		3
+/* polling interval in ms */
+#define POLL_INTERVAL		3
 
-#घोषणा DEBOUNCE_COUNT		1
+#define DEBOUNCE_COUNT		1
 
 /* sensor values are 12-bit wide */
-#घोषणा MAX_12BIT		((1 << 12) - 1)
+#define MAX_12BIT		((1 << 12) - 1)
 
-#घोषणा PENDOWN_MASK		0x1
+#define PENDOWN_MASK		0x1
 
-#घोषणा X_OFFSET		0x0
-#घोषणा Y_OFFSET		0x2
+#define X_OFFSET		0x0
+#define Y_OFFSET		0x2
 
-काष्ठा ts4800_ts अणु
-	काष्ठा input_dev        *input;
-	काष्ठा device           *dev;
-	अक्षर                    phys[32];
+struct ts4800_ts {
+	struct input_dev        *input;
+	struct device           *dev;
+	char                    phys[32];
 
-	व्योम __iomem            *base;
-	काष्ठा regmap           *regmap;
-	अचिन्हित पूर्णांक            reg;
-	अचिन्हित पूर्णांक            bit;
+	void __iomem            *base;
+	struct regmap           *regmap;
+	unsigned int            reg;
+	unsigned int            bit;
 
-	bool                    penकरोwn;
-	पूर्णांक                     debounce;
-पूर्ण;
+	bool                    pendown;
+	int                     debounce;
+};
 
-अटल पूर्णांक ts4800_ts_खोलो(काष्ठा input_dev *input_dev)
-अणु
-	काष्ठा ts4800_ts *ts = input_get_drvdata(input_dev);
-	पूर्णांक error;
+static int ts4800_ts_open(struct input_dev *input_dev)
+{
+	struct ts4800_ts *ts = input_get_drvdata(input_dev);
+	int error;
 
-	ts->penकरोwn = false;
+	ts->pendown = false;
 	ts->debounce = DEBOUNCE_COUNT;
 
 	error = regmap_update_bits(ts->regmap, ts->reg, ts->bit, ts->bit);
-	अगर (error) अणु
+	if (error) {
 		dev_warn(ts->dev, "Failed to enable touchscreen: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ts4800_ts_बंद(काष्ठा input_dev *input_dev)
-अणु
-	काष्ठा ts4800_ts *ts = input_get_drvdata(input_dev);
-	पूर्णांक ret;
+static void ts4800_ts_close(struct input_dev *input_dev)
+{
+	struct ts4800_ts *ts = input_get_drvdata(input_dev);
+	int ret;
 
 	ret = regmap_update_bits(ts->regmap, ts->reg, ts->bit, 0);
-	अगर (ret)
+	if (ret)
 		dev_warn(ts->dev, "Failed to disable touchscreen\n");
 
-पूर्ण
+}
 
-अटल व्योम ts4800_ts_poll(काष्ठा input_dev *input_dev)
-अणु
-	काष्ठा ts4800_ts *ts = input_get_drvdata(input_dev);
-	u16 last_x = पढ़ोw(ts->base + X_OFFSET);
-	u16 last_y = पढ़ोw(ts->base + Y_OFFSET);
-	bool penकरोwn = last_x & PENDOWN_MASK;
+static void ts4800_ts_poll(struct input_dev *input_dev)
+{
+	struct ts4800_ts *ts = input_get_drvdata(input_dev);
+	u16 last_x = readw(ts->base + X_OFFSET);
+	u16 last_y = readw(ts->base + Y_OFFSET);
+	bool pendown = last_x & PENDOWN_MASK;
 
-	अगर (penकरोwn) अणु
-		अगर (ts->debounce) अणु
+	if (pendown) {
+		if (ts->debounce) {
 			ts->debounce--;
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		अगर (!ts->penकरोwn) अणु
+		if (!ts->pendown) {
 			input_report_key(input_dev, BTN_TOUCH, 1);
-			ts->penकरोwn = true;
-		पूर्ण
+			ts->pendown = true;
+		}
 
 		last_x = ((~last_x) >> 4) & MAX_12BIT;
 		last_y = ((~last_y) >> 4) & MAX_12BIT;
 
-		input_report_असल(input_dev, ABS_X, last_x);
-		input_report_असल(input_dev, ABS_Y, last_y);
+		input_report_abs(input_dev, ABS_X, last_x);
+		input_report_abs(input_dev, ABS_Y, last_y);
 		input_sync(input_dev);
-	पूर्ण अन्यथा अगर (ts->penकरोwn) अणु
-		ts->penकरोwn = false;
+	} else if (ts->pendown) {
+		ts->pendown = false;
 		ts->debounce = DEBOUNCE_COUNT;
 		input_report_key(input_dev, BTN_TOUCH, 0);
 		input_sync(input_dev);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ts4800_parse_dt(काष्ठा platक्रमm_device *pdev,
-			   काष्ठा ts4800_ts *ts)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा device_node *syscon_np;
+static int ts4800_parse_dt(struct platform_device *pdev,
+			   struct ts4800_ts *ts)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *np = dev->of_node;
+	struct device_node *syscon_np;
 	u32 reg, bit;
-	पूर्णांक error;
+	int error;
 
 	syscon_np = of_parse_phandle(np, "syscon", 0);
-	अगर (!syscon_np) अणु
+	if (!syscon_np) {
 		dev_err(dev, "no syscon property\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	ts->regmap = syscon_node_to_regmap(syscon_np);
 	of_node_put(syscon_np);
-	अगर (IS_ERR(ts->regmap)) अणु
+	if (IS_ERR(ts->regmap)) {
 		dev_err(dev, "cannot get parent's regmap\n");
-		वापस PTR_ERR(ts->regmap);
-	पूर्ण
+		return PTR_ERR(ts->regmap);
+	}
 
-	error = of_property_पढ़ो_u32_index(np, "syscon", 1, &reg);
-	अगर (error < 0) अणु
+	error = of_property_read_u32_index(np, "syscon", 1, &reg);
+	if (error < 0) {
 		dev_err(dev, "no offset in syscon\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	ts->reg = reg;
 
-	error = of_property_पढ़ो_u32_index(np, "syscon", 2, &bit);
-	अगर (error < 0) अणु
+	error = of_property_read_u32_index(np, "syscon", 2, &bit);
+	if (error < 0) {
 		dev_err(dev, "no bit in syscon\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	ts->bit = BIT(bit);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ts4800_ts_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा input_dev *input_dev;
-	काष्ठा ts4800_ts *ts;
-	पूर्णांक error;
+static int ts4800_ts_probe(struct platform_device *pdev)
+{
+	struct input_dev *input_dev;
+	struct ts4800_ts *ts;
+	int error;
 
-	ts = devm_kzalloc(&pdev->dev, माप(*ts), GFP_KERNEL);
-	अगर (!ts)
-		वापस -ENOMEM;
+	ts = devm_kzalloc(&pdev->dev, sizeof(*ts), GFP_KERNEL);
+	if (!ts)
+		return -ENOMEM;
 
 	error = ts4800_parse_dt(pdev, ts);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	ts->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(ts->base))
-		वापस PTR_ERR(ts->base);
+	ts->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(ts->base))
+		return PTR_ERR(ts->base);
 
 	input_dev = devm_input_allocate_device(&pdev->dev);
-	अगर (!input_dev)
-		वापस -ENOMEM;
+	if (!input_dev)
+		return -ENOMEM;
 
-	snम_लिखो(ts->phys, माप(ts->phys), "%s/input0", dev_name(&pdev->dev));
+	snprintf(ts->phys, sizeof(ts->phys), "%s/input0", dev_name(&pdev->dev));
 	ts->input = input_dev;
 	ts->dev = &pdev->dev;
 
@@ -178,45 +177,45 @@
 	input_dev->name = "TS-4800 Touchscreen";
 	input_dev->phys = ts->phys;
 
-	input_dev->खोलो = ts4800_ts_खोलो;
-	input_dev->बंद = ts4800_ts_बंद;
+	input_dev->open = ts4800_ts_open;
+	input_dev->close = ts4800_ts_close;
 
 	input_set_capability(input_dev, EV_KEY, BTN_TOUCH);
-	input_set_असल_params(input_dev, ABS_X, 0, MAX_12BIT, 0, 0);
-	input_set_असल_params(input_dev, ABS_Y, 0, MAX_12BIT, 0, 0);
+	input_set_abs_params(input_dev, ABS_X, 0, MAX_12BIT, 0, 0);
+	input_set_abs_params(input_dev, ABS_Y, 0, MAX_12BIT, 0, 0);
 
 	error = input_setup_polling(input_dev, ts4800_ts_poll);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&pdev->dev, "Unable to set up polling: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	input_set_poll_पूर्णांकerval(input_dev, POLL_INTERVAL);
+	input_set_poll_interval(input_dev, POLL_INTERVAL);
 
-	error = input_रेजिस्टर_device(input_dev);
-	अगर (error) अणु
+	error = input_register_device(input_dev);
+	if (error) {
 		dev_err(&pdev->dev,
 			"Unable to register input device: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id ts4800_ts_of_match[] = अणु
-	अणु .compatible = "technologic,ts4800-ts", पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id ts4800_ts_of_match[] = {
+	{ .compatible = "technologic,ts4800-ts", },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, ts4800_ts_of_match);
 
-अटल काष्ठा platक्रमm_driver ts4800_ts_driver = अणु
-	.driver = अणु
+static struct platform_driver ts4800_ts_driver = {
+	.driver = {
 		.name = "ts4800-ts",
 		.of_match_table = ts4800_ts_of_match,
-	पूर्ण,
+	},
 	.probe = ts4800_ts_probe,
-पूर्ण;
-module_platक्रमm_driver(ts4800_ts_driver);
+};
+module_platform_driver(ts4800_ts_driver);
 
 MODULE_AUTHOR("Damien Riegel <damien.riegel@savoirfairelinux.com>");
 MODULE_DESCRIPTION("TS-4800 Touchscreen Driver");

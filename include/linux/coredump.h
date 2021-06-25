@@ -1,41 +1,40 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_COREDUMP_H
-#घोषणा _LINUX_COREDUMP_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_COREDUMP_H
+#define _LINUX_COREDUMP_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/fs.h>
-#समावेश <यंत्र/siginfo.h>
+#include <linux/types.h>
+#include <linux/mm.h>
+#include <linux/fs.h>
+#include <asm/siginfo.h>
 
-#अगर_घोषित CONFIG_COREDUMP
-काष्ठा core_vma_metadata अणु
-	अचिन्हित दीर्घ start, end;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ dump_size;
-पूर्ण;
+#ifdef CONFIG_COREDUMP
+struct core_vma_metadata {
+	unsigned long start, end;
+	unsigned long flags;
+	unsigned long dump_size;
+};
 
-बाह्य पूर्णांक core_uses_pid;
-बाह्य अक्षर core_pattern[];
-बाह्य अचिन्हित पूर्णांक core_pipe_limit;
+extern int core_uses_pid;
+extern char core_pattern[];
+extern unsigned int core_pipe_limit;
 
 /*
- * These are the only things you should करो on a core-file: use only these
- * functions to ग_लिखो out all the necessary info.
+ * These are the only things you should do on a core-file: use only these
+ * functions to write out all the necessary info.
  */
-काष्ठा coredump_params;
-बाह्य व्योम dump_skip_to(काष्ठा coredump_params *cprm, अचिन्हित दीर्घ to);
-बाह्य व्योम dump_skip(काष्ठा coredump_params *cprm, माप_प्रकार nr);
-बाह्य पूर्णांक dump_emit(काष्ठा coredump_params *cprm, स्थिर व्योम *addr, पूर्णांक nr);
-बाह्य पूर्णांक dump_align(काष्ठा coredump_params *cprm, पूर्णांक align);
-पूर्णांक dump_user_range(काष्ठा coredump_params *cprm, अचिन्हित दीर्घ start,
-		    अचिन्हित दीर्घ len);
-पूर्णांक dump_vma_snapshot(काष्ठा coredump_params *cprm, पूर्णांक *vma_count,
-		      काष्ठा core_vma_metadata **vma_meta,
-		      माप_प्रकार *vma_data_size_ptr);
-बाह्य व्योम करो_coredump(स्थिर kernel_siginfo_t *siginfo);
-#अन्यथा
-अटल अंतरभूत व्योम करो_coredump(स्थिर kernel_siginfo_t *siginfo) अणुपूर्ण
-#पूर्ण_अगर
+struct coredump_params;
+extern void dump_skip_to(struct coredump_params *cprm, unsigned long to);
+extern void dump_skip(struct coredump_params *cprm, size_t nr);
+extern int dump_emit(struct coredump_params *cprm, const void *addr, int nr);
+extern int dump_align(struct coredump_params *cprm, int align);
+int dump_user_range(struct coredump_params *cprm, unsigned long start,
+		    unsigned long len);
+int dump_vma_snapshot(struct coredump_params *cprm, int *vma_count,
+		      struct core_vma_metadata **vma_meta,
+		      size_t *vma_data_size_ptr);
+extern void do_coredump(const kernel_siginfo_t *siginfo);
+#else
+static inline void do_coredump(const kernel_siginfo_t *siginfo) {}
+#endif
 
-#पूर्ण_अगर /* _LINUX_COREDUMP_H */
+#endif /* _LINUX_COREDUMP_H */

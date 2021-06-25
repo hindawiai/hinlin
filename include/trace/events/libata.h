@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM libata
+/* SPDX-License-Identifier: GPL-2.0 */
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM libata
 
-#अगर !defined(_TRACE_LIBATA_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_LIBATA_H
+#if !defined(_TRACE_LIBATA_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_LIBATA_H
 
-#समावेश <linux/ata.h>
-#समावेश <linux/libata.h>
-#समावेश <linux/tracepoपूर्णांक.h>
-#समावेश <linux/trace_seq.h>
+#include <linux/ata.h>
+#include <linux/libata.h>
+#include <linux/tracepoint.h>
+#include <linux/trace_seq.h>
 
-#घोषणा ata_opcode_name(opcode)	अणु opcode, #opcode पूर्ण
-#घोषणा show_opcode_name(val)					\
-	__prपूर्णांक_symbolic(val,					\
+#define ata_opcode_name(opcode)	{ opcode, #opcode }
+#define show_opcode_name(val)					\
+	__print_symbolic(val,					\
 		 ata_opcode_name(ATA_CMD_DEV_RESET),		\
 		 ata_opcode_name(ATA_CMD_CHK_POWER),		\
 		 ata_opcode_name(ATA_CMD_STANDBY),		\
@@ -108,9 +107,9 @@
 		 ata_opcode_name(ATA_CMD_WRITE_LONG),		\
 		 ata_opcode_name(ATA_CMD_WRITE_LONG_ONCE))
 
-#घोषणा ata_error_name(result)	अणु result, #result पूर्ण
-#घोषणा show_error_name(val)				\
-	__prपूर्णांक_symbolic(val,				\
+#define ata_error_name(result)	{ result, #result }
+#define show_error_name(val)				\
+	__print_symbolic(val,				\
 		ata_error_name(ATA_ICRC),		\
 		ata_error_name(ATA_UNC),		\
 		ata_error_name(ATA_MC),			\
@@ -120,9 +119,9 @@
 		ata_error_name(ATA_TRK0NF),		\
 		ata_error_name(ATA_AMNF))
 
-#घोषणा ata_protocol_name(proto)	अणु proto, #proto पूर्ण
-#घोषणा show_protocol_name(val)				\
-	__prपूर्णांक_symbolic(val,				\
+#define ata_protocol_name(proto)	{ proto, #proto }
+#define show_protocol_name(val)				\
+	__print_symbolic(val,				\
 		ata_protocol_name(ATA_PROT_UNKNOWN),	\
 		ata_protocol_name(ATA_PROT_NODATA),	\
 		ata_protocol_name(ATA_PROT_PIO),	\
@@ -133,51 +132,51 @@
 		ata_protocol_name(ATAPI_PROT_PIO),	\
 		ata_protocol_name(ATAPI_PROT_DMA))
 
-स्थिर अक्षर *libata_trace_parse_status(काष्ठा trace_seq*, अचिन्हित अक्षर);
-#घोषणा __parse_status(s) libata_trace_parse_status(p, s)
+const char *libata_trace_parse_status(struct trace_seq*, unsigned char);
+#define __parse_status(s) libata_trace_parse_status(p, s)
 
-स्थिर अक्षर *libata_trace_parse_eh_action(काष्ठा trace_seq *, अचिन्हित पूर्णांक);
-#घोषणा __parse_eh_action(a) libata_trace_parse_eh_action(p, a)
+const char *libata_trace_parse_eh_action(struct trace_seq *, unsigned int);
+#define __parse_eh_action(a) libata_trace_parse_eh_action(p, a)
 
-स्थिर अक्षर *libata_trace_parse_eh_err_mask(काष्ठा trace_seq *, अचिन्हित पूर्णांक);
-#घोषणा __parse_eh_err_mask(m) libata_trace_parse_eh_err_mask(p, m)
+const char *libata_trace_parse_eh_err_mask(struct trace_seq *, unsigned int);
+#define __parse_eh_err_mask(m) libata_trace_parse_eh_err_mask(p, m)
 
-स्थिर अक्षर *libata_trace_parse_qc_flags(काष्ठा trace_seq *, अचिन्हित पूर्णांक);
-#घोषणा __parse_qc_flags(f) libata_trace_parse_qc_flags(p, f)
+const char *libata_trace_parse_qc_flags(struct trace_seq *, unsigned int);
+#define __parse_qc_flags(f) libata_trace_parse_qc_flags(p, f)
 
-स्थिर अक्षर *libata_trace_parse_subcmd(काष्ठा trace_seq *, अचिन्हित अक्षर,
-				      अचिन्हित अक्षर, अचिन्हित अक्षर);
-#घोषणा __parse_subcmd(c,f,h) libata_trace_parse_subcmd(p, c, f, h)
+const char *libata_trace_parse_subcmd(struct trace_seq *, unsigned char,
+				      unsigned char, unsigned char);
+#define __parse_subcmd(c,f,h) libata_trace_parse_subcmd(p, c, f, h)
 
 TRACE_EVENT(ata_qc_issue,
 
-	TP_PROTO(काष्ठा ata_queued_cmd *qc),
+	TP_PROTO(struct ata_queued_cmd *qc),
 
 	TP_ARGS(qc),
 
 	TP_STRUCT__entry(
-		__field( अचिन्हित पूर्णांक,	ata_port )
-		__field( अचिन्हित पूर्णांक,	ata_dev	)
-		__field( अचिन्हित पूर्णांक,	tag	)
-		__field( अचिन्हित अक्षर,	cmd	)
-		__field( अचिन्हित अक्षर,	dev	)
-		__field( अचिन्हित अक्षर,	lbal	)
-		__field( अचिन्हित अक्षर,	lbam	)
-		__field( अचिन्हित अक्षर,	lbah	)
-		__field( अचिन्हित अक्षर,	nsect	)
-		__field( अचिन्हित अक्षर,	feature	)
-		__field( अचिन्हित अक्षर,	hob_lbal )
-		__field( अचिन्हित अक्षर,	hob_lbam )
-		__field( अचिन्हित अक्षर,	hob_lbah )
-		__field( अचिन्हित अक्षर,	hob_nsect )
-		__field( अचिन्हित अक्षर,	hob_feature )
-		__field( अचिन्हित अक्षर,	ctl )
-		__field( अचिन्हित अक्षर,	proto )
-		__field( अचिन्हित दीर्घ,	flags )
+		__field( unsigned int,	ata_port )
+		__field( unsigned int,	ata_dev	)
+		__field( unsigned int,	tag	)
+		__field( unsigned char,	cmd	)
+		__field( unsigned char,	dev	)
+		__field( unsigned char,	lbal	)
+		__field( unsigned char,	lbam	)
+		__field( unsigned char,	lbah	)
+		__field( unsigned char,	nsect	)
+		__field( unsigned char,	feature	)
+		__field( unsigned char,	hob_lbal )
+		__field( unsigned char,	hob_lbam )
+		__field( unsigned char,	hob_lbah )
+		__field( unsigned char,	hob_nsect )
+		__field( unsigned char,	hob_feature )
+		__field( unsigned char,	ctl )
+		__field( unsigned char,	proto )
+		__field( unsigned long,	flags )
 	),
 
 	TP_fast_assign(
-		__entry->ata_port	= qc->ap->prपूर्णांक_id;
+		__entry->ata_port	= qc->ap->print_id;
 		__entry->ata_dev	= qc->dev->link->pmp + qc->dev->devno;
 		__entry->tag		= qc->tag;
 		__entry->proto		= qc->tf.protocol;
@@ -195,7 +194,7 @@ TRACE_EVENT(ata_qc_issue,
 		__entry->hob_nsect	= qc->tf.hob_nsect;
 	),
 
-	TP_prपूर्णांकk("ata_port=%u ata_dev=%u tag=%d proto=%s cmd=%s%s " \
+	TP_printk("ata_port=%u ata_dev=%u tag=%d proto=%s cmd=%s%s " \
 		  " tf=(%02x/%02x:%02x:%02x:%02x:%02x/%02x:%02x:%02x:%02x:%02x/%02x)",
 		  __entry->ata_port, __entry->ata_dev, __entry->tag,
 		  show_protocol_name(__entry->proto),
@@ -208,34 +207,34 @@ TRACE_EVENT(ata_qc_issue,
 		  __entry->dev)
 );
 
-DECLARE_EVENT_CLASS(ata_qc_complete_ढाँचा,
+DECLARE_EVENT_CLASS(ata_qc_complete_template,
 
-	TP_PROTO(काष्ठा ata_queued_cmd *qc),
+	TP_PROTO(struct ata_queued_cmd *qc),
 
 	TP_ARGS(qc),
 
 	TP_STRUCT__entry(
-		__field( अचिन्हित पूर्णांक,	ata_port )
-		__field( अचिन्हित पूर्णांक,	ata_dev	)
-		__field( अचिन्हित पूर्णांक,	tag	)
-		__field( अचिन्हित अक्षर,	status	)
-		__field( अचिन्हित अक्षर,	dev	)
-		__field( अचिन्हित अक्षर,	lbal	)
-		__field( अचिन्हित अक्षर,	lbam	)
-		__field( अचिन्हित अक्षर,	lbah	)
-		__field( अचिन्हित अक्षर,	nsect	)
-		__field( अचिन्हित अक्षर,	error	)
-		__field( अचिन्हित अक्षर,	hob_lbal )
-		__field( अचिन्हित अक्षर,	hob_lbam )
-		__field( अचिन्हित अक्षर,	hob_lbah )
-		__field( अचिन्हित अक्षर,	hob_nsect )
-		__field( अचिन्हित अक्षर,	hob_feature )
-		__field( अचिन्हित अक्षर,	ctl )
-		__field( अचिन्हित दीर्घ,	flags )
+		__field( unsigned int,	ata_port )
+		__field( unsigned int,	ata_dev	)
+		__field( unsigned int,	tag	)
+		__field( unsigned char,	status	)
+		__field( unsigned char,	dev	)
+		__field( unsigned char,	lbal	)
+		__field( unsigned char,	lbam	)
+		__field( unsigned char,	lbah	)
+		__field( unsigned char,	nsect	)
+		__field( unsigned char,	error	)
+		__field( unsigned char,	hob_lbal )
+		__field( unsigned char,	hob_lbam )
+		__field( unsigned char,	hob_lbah )
+		__field( unsigned char,	hob_nsect )
+		__field( unsigned char,	hob_feature )
+		__field( unsigned char,	ctl )
+		__field( unsigned long,	flags )
 	),
 
 	TP_fast_assign(
-		__entry->ata_port	= qc->ap->prपूर्णांक_id;
+		__entry->ata_port	= qc->ap->print_id;
 		__entry->ata_dev	= qc->dev->link->pmp + qc->dev->devno;
 		__entry->tag		= qc->tag;
 		__entry->status		= qc->result_tf.command;
@@ -252,7 +251,7 @@ DECLARE_EVENT_CLASS(ata_qc_complete_ढाँचा,
 		__entry->hob_nsect	= qc->result_tf.hob_nsect;
 	),
 
-	TP_prपूर्णांकk("ata_port=%u ata_dev=%u tag=%d flags=%s status=%s " \
+	TP_printk("ata_port=%u ata_dev=%u tag=%d flags=%s status=%s " \
 		  " res=(%02x/%02x:%02x:%02x:%02x:%02x/%02x:%02x:%02x:%02x:%02x/%02x)",
 		  __entry->ata_port, __entry->ata_dev, __entry->tag,
 		  __parse_qc_flags(__entry->flags),
@@ -264,73 +263,73 @@ DECLARE_EVENT_CLASS(ata_qc_complete_ढाँचा,
 		  __entry->dev)
 );
 
-DEFINE_EVENT(ata_qc_complete_ढाँचा, ata_qc_complete_पूर्णांकernal,
-	     TP_PROTO(काष्ठा ata_queued_cmd *qc),
+DEFINE_EVENT(ata_qc_complete_template, ata_qc_complete_internal,
+	     TP_PROTO(struct ata_queued_cmd *qc),
 	     TP_ARGS(qc));
 
-DEFINE_EVENT(ata_qc_complete_ढाँचा, ata_qc_complete_failed,
-	     TP_PROTO(काष्ठा ata_queued_cmd *qc),
+DEFINE_EVENT(ata_qc_complete_template, ata_qc_complete_failed,
+	     TP_PROTO(struct ata_queued_cmd *qc),
 	     TP_ARGS(qc));
 
-DEFINE_EVENT(ata_qc_complete_ढाँचा, ata_qc_complete_करोne,
-	     TP_PROTO(काष्ठा ata_queued_cmd *qc),
+DEFINE_EVENT(ata_qc_complete_template, ata_qc_complete_done,
+	     TP_PROTO(struct ata_queued_cmd *qc),
 	     TP_ARGS(qc));
 
-TRACE_EVENT(ata_eh_link_स्वतःpsy,
+TRACE_EVENT(ata_eh_link_autopsy,
 
-	TP_PROTO(काष्ठा ata_device *dev, अचिन्हित पूर्णांक eh_action, अचिन्हित पूर्णांक eh_err_mask),
+	TP_PROTO(struct ata_device *dev, unsigned int eh_action, unsigned int eh_err_mask),
 
 	TP_ARGS(dev, eh_action, eh_err_mask),
 
 	TP_STRUCT__entry(
-		__field( अचिन्हित पूर्णांक,	ata_port )
-		__field( अचिन्हित पूर्णांक,	ata_dev	)
-		__field( अचिन्हित पूर्णांक,	eh_action )
-		__field( अचिन्हित पूर्णांक,	eh_err_mask)
+		__field( unsigned int,	ata_port )
+		__field( unsigned int,	ata_dev	)
+		__field( unsigned int,	eh_action )
+		__field( unsigned int,	eh_err_mask)
 	),
 
 	TP_fast_assign(
-		__entry->ata_port	= dev->link->ap->prपूर्णांक_id;
+		__entry->ata_port	= dev->link->ap->print_id;
 		__entry->ata_dev	= dev->link->pmp + dev->devno;
 		__entry->eh_action	= eh_action;
 		__entry->eh_err_mask	= eh_err_mask;
 	),
 
-	TP_prपूर्णांकk("ata_port=%u ata_dev=%u eh_action=%s err_mask=%s",
+	TP_printk("ata_port=%u ata_dev=%u eh_action=%s err_mask=%s",
 		  __entry->ata_port, __entry->ata_dev,
 		  __parse_eh_action(__entry->eh_action),
 		  __parse_eh_err_mask(__entry->eh_err_mask))
 );
 
-TRACE_EVENT(ata_eh_link_स्वतःpsy_qc,
+TRACE_EVENT(ata_eh_link_autopsy_qc,
 
-	TP_PROTO(काष्ठा ata_queued_cmd *qc),
+	TP_PROTO(struct ata_queued_cmd *qc),
 
 	TP_ARGS(qc),
 
 	TP_STRUCT__entry(
-		__field( अचिन्हित पूर्णांक,	ata_port )
-		__field( अचिन्हित पूर्णांक,	ata_dev	)
-		__field( अचिन्हित पूर्णांक,	tag	)
-		__field( अचिन्हित पूर्णांक,	qc_flags )
-		__field( अचिन्हित पूर्णांक,	eh_err_mask)
+		__field( unsigned int,	ata_port )
+		__field( unsigned int,	ata_dev	)
+		__field( unsigned int,	tag	)
+		__field( unsigned int,	qc_flags )
+		__field( unsigned int,	eh_err_mask)
 	),
 
 	TP_fast_assign(
-		__entry->ata_port	= qc->ap->prपूर्णांक_id;
+		__entry->ata_port	= qc->ap->print_id;
 		__entry->ata_dev	= qc->dev->link->pmp + qc->dev->devno;
 		__entry->tag		= qc->tag;
 		__entry->qc_flags	= qc->flags;
 		__entry->eh_err_mask	= qc->err_mask;
 	),
 
-	TP_prपूर्णांकk("ata_port=%u ata_dev=%u tag=%d flags=%s err_mask=%s",
+	TP_printk("ata_port=%u ata_dev=%u tag=%d flags=%s err_mask=%s",
 		  __entry->ata_port, __entry->ata_dev, __entry->tag,
 		  __parse_qc_flags(__entry->qc_flags),
 		  __parse_eh_err_mask(__entry->eh_err_mask))
 );
 
-#पूर्ण_अगर /*  _TRACE_LIBATA_H */
+#endif /*  _TRACE_LIBATA_H */
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

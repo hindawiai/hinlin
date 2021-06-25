@@ -1,387 +1,386 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *
  * Copyright (C) 2014 ARM Limited
  */
 
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/hrसमयr.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
+#include <linux/ctype.h>
+#include <linux/hrtimer.h>
+#include <linux/idr.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/perf_event.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
 
-#घोषणा CCN_NUM_XP_PORTS 2
-#घोषणा CCN_NUM_VCS 4
-#घोषणा CCN_NUM_REGIONS	256
-#घोषणा CCN_REGION_SIZE	0x10000
+#define CCN_NUM_XP_PORTS 2
+#define CCN_NUM_VCS 4
+#define CCN_NUM_REGIONS	256
+#define CCN_REGION_SIZE	0x10000
 
-#घोषणा CCN_ALL_OLY_ID			0xff00
-#घोषणा CCN_ALL_OLY_ID__OLY_ID__SHIFT			0
-#घोषणा CCN_ALL_OLY_ID__OLY_ID__MASK			0x1f
-#घोषणा CCN_ALL_OLY_ID__NODE_ID__SHIFT			8
-#घोषणा CCN_ALL_OLY_ID__NODE_ID__MASK			0x3f
+#define CCN_ALL_OLY_ID			0xff00
+#define CCN_ALL_OLY_ID__OLY_ID__SHIFT			0
+#define CCN_ALL_OLY_ID__OLY_ID__MASK			0x1f
+#define CCN_ALL_OLY_ID__NODE_ID__SHIFT			8
+#define CCN_ALL_OLY_ID__NODE_ID__MASK			0x3f
 
-#घोषणा CCN_MN_ERRINT_STATUS		0x0008
-#घोषणा CCN_MN_ERRINT_STATUS__INTREQ__DESSERT		0x11
-#घोषणा CCN_MN_ERRINT_STATUS__ALL_ERRORS__ENABLE	0x02
-#घोषणा CCN_MN_ERRINT_STATUS__ALL_ERRORS__DISABLED	0x20
-#घोषणा CCN_MN_ERRINT_STATUS__ALL_ERRORS__DISABLE	0x22
-#घोषणा CCN_MN_ERRINT_STATUS__CORRECTED_ERRORS_ENABLE	0x04
-#घोषणा CCN_MN_ERRINT_STATUS__CORRECTED_ERRORS_DISABLED	0x40
-#घोषणा CCN_MN_ERRINT_STATUS__CORRECTED_ERRORS_DISABLE	0x44
-#घोषणा CCN_MN_ERRINT_STATUS__PMU_EVENTS__ENABLE	0x08
-#घोषणा CCN_MN_ERRINT_STATUS__PMU_EVENTS__DISABLED	0x80
-#घोषणा CCN_MN_ERRINT_STATUS__PMU_EVENTS__DISABLE	0x88
-#घोषणा CCN_MN_OLY_COMP_LIST_63_0	0x01e0
-#घोषणा CCN_MN_ERR_SIG_VAL_63_0		0x0300
-#घोषणा CCN_MN_ERR_SIG_VAL_63_0__DT			(1 << 1)
+#define CCN_MN_ERRINT_STATUS		0x0008
+#define CCN_MN_ERRINT_STATUS__INTREQ__DESSERT		0x11
+#define CCN_MN_ERRINT_STATUS__ALL_ERRORS__ENABLE	0x02
+#define CCN_MN_ERRINT_STATUS__ALL_ERRORS__DISABLED	0x20
+#define CCN_MN_ERRINT_STATUS__ALL_ERRORS__DISABLE	0x22
+#define CCN_MN_ERRINT_STATUS__CORRECTED_ERRORS_ENABLE	0x04
+#define CCN_MN_ERRINT_STATUS__CORRECTED_ERRORS_DISABLED	0x40
+#define CCN_MN_ERRINT_STATUS__CORRECTED_ERRORS_DISABLE	0x44
+#define CCN_MN_ERRINT_STATUS__PMU_EVENTS__ENABLE	0x08
+#define CCN_MN_ERRINT_STATUS__PMU_EVENTS__DISABLED	0x80
+#define CCN_MN_ERRINT_STATUS__PMU_EVENTS__DISABLE	0x88
+#define CCN_MN_OLY_COMP_LIST_63_0	0x01e0
+#define CCN_MN_ERR_SIG_VAL_63_0		0x0300
+#define CCN_MN_ERR_SIG_VAL_63_0__DT			(1 << 1)
 
-#घोषणा CCN_DT_ACTIVE_DSM		0x0000
-#घोषणा CCN_DT_ACTIVE_DSM__DSM_ID__SHIFT(n)		((n) * 8)
-#घोषणा CCN_DT_ACTIVE_DSM__DSM_ID__MASK			0xff
-#घोषणा CCN_DT_CTL			0x0028
-#घोषणा CCN_DT_CTL__DT_EN				(1 << 0)
-#घोषणा CCN_DT_PMEVCNT(n)		(0x0100 + (n) * 0x8)
-#घोषणा CCN_DT_PMCCNTR			0x0140
-#घोषणा CCN_DT_PMCCNTRSR		0x0190
-#घोषणा CCN_DT_PMOVSR			0x0198
-#घोषणा CCN_DT_PMOVSR_CLR		0x01a0
-#घोषणा CCN_DT_PMOVSR_CLR__MASK				0x1f
-#घोषणा CCN_DT_PMCR			0x01a8
-#घोषणा CCN_DT_PMCR__OVFL_INTR_EN			(1 << 6)
-#घोषणा CCN_DT_PMCR__PMU_EN				(1 << 0)
-#घोषणा CCN_DT_PMSR			0x01b0
-#घोषणा CCN_DT_PMSR_REQ			0x01b8
-#घोषणा CCN_DT_PMSR_CLR			0x01c0
+#define CCN_DT_ACTIVE_DSM		0x0000
+#define CCN_DT_ACTIVE_DSM__DSM_ID__SHIFT(n)		((n) * 8)
+#define CCN_DT_ACTIVE_DSM__DSM_ID__MASK			0xff
+#define CCN_DT_CTL			0x0028
+#define CCN_DT_CTL__DT_EN				(1 << 0)
+#define CCN_DT_PMEVCNT(n)		(0x0100 + (n) * 0x8)
+#define CCN_DT_PMCCNTR			0x0140
+#define CCN_DT_PMCCNTRSR		0x0190
+#define CCN_DT_PMOVSR			0x0198
+#define CCN_DT_PMOVSR_CLR		0x01a0
+#define CCN_DT_PMOVSR_CLR__MASK				0x1f
+#define CCN_DT_PMCR			0x01a8
+#define CCN_DT_PMCR__OVFL_INTR_EN			(1 << 6)
+#define CCN_DT_PMCR__PMU_EN				(1 << 0)
+#define CCN_DT_PMSR			0x01b0
+#define CCN_DT_PMSR_REQ			0x01b8
+#define CCN_DT_PMSR_CLR			0x01c0
 
-#घोषणा CCN_HNF_PMU_EVENT_SEL		0x0600
-#घोषणा CCN_HNF_PMU_EVENT_SEL__ID__SHIFT(n)		((n) * 4)
-#घोषणा CCN_HNF_PMU_EVENT_SEL__ID__MASK			0xf
+#define CCN_HNF_PMU_EVENT_SEL		0x0600
+#define CCN_HNF_PMU_EVENT_SEL__ID__SHIFT(n)		((n) * 4)
+#define CCN_HNF_PMU_EVENT_SEL__ID__MASK			0xf
 
-#घोषणा CCN_XP_DT_CONFIG		0x0300
-#घोषणा CCN_XP_DT_CONFIG__DT_CFG__SHIFT(n)		((n) * 4)
-#घोषणा CCN_XP_DT_CONFIG__DT_CFG__MASK			0xf
-#घोषणा CCN_XP_DT_CONFIG__DT_CFG__PASS_THROUGH		0x0
-#घोषणा CCN_XP_DT_CONFIG__DT_CFG__WATCHPOINT_0_OR_1	0x1
-#घोषणा CCN_XP_DT_CONFIG__DT_CFG__WATCHPOINT(n)		(0x2 + (n))
-#घोषणा CCN_XP_DT_CONFIG__DT_CFG__XP_PMU_EVENT(n)	(0x4 + (n))
-#घोषणा CCN_XP_DT_CONFIG__DT_CFG__DEVICE_PMU_EVENT(d, n) (0x8 + (d) * 4 + (n))
-#घोषणा CCN_XP_DT_INTERFACE_SEL		0x0308
-#घोषणा CCN_XP_DT_INTERFACE_SEL__DT_IO_SEL__SHIFT(n)	(0 + (n) * 8)
-#घोषणा CCN_XP_DT_INTERFACE_SEL__DT_IO_SEL__MASK	0x1
-#घोषणा CCN_XP_DT_INTERFACE_SEL__DT_DEV_SEL__SHIFT(n)	(1 + (n) * 8)
-#घोषणा CCN_XP_DT_INTERFACE_SEL__DT_DEV_SEL__MASK	0x1
-#घोषणा CCN_XP_DT_INTERFACE_SEL__DT_VC_SEL__SHIFT(n)	(2 + (n) * 8)
-#घोषणा CCN_XP_DT_INTERFACE_SEL__DT_VC_SEL__MASK	0x3
-#घोषणा CCN_XP_DT_CMP_VAL_L(n)		(0x0310 + (n) * 0x40)
-#घोषणा CCN_XP_DT_CMP_VAL_H(n)		(0x0318 + (n) * 0x40)
-#घोषणा CCN_XP_DT_CMP_MASK_L(n)		(0x0320 + (n) * 0x40)
-#घोषणा CCN_XP_DT_CMP_MASK_H(n)		(0x0328 + (n) * 0x40)
-#घोषणा CCN_XP_DT_CONTROL		0x0370
-#घोषणा CCN_XP_DT_CONTROL__DT_ENABLE			(1 << 0)
-#घोषणा CCN_XP_DT_CONTROL__WP_ARM_SEL__SHIFT(n)		(12 + (n) * 4)
-#घोषणा CCN_XP_DT_CONTROL__WP_ARM_SEL__MASK		0xf
-#घोषणा CCN_XP_DT_CONTROL__WP_ARM_SEL__ALWAYS		0xf
-#घोषणा CCN_XP_PMU_EVENT_SEL		0x0600
-#घोषणा CCN_XP_PMU_EVENT_SEL__ID__SHIFT(n)		((n) * 7)
-#घोषणा CCN_XP_PMU_EVENT_SEL__ID__MASK			0x3f
+#define CCN_XP_DT_CONFIG		0x0300
+#define CCN_XP_DT_CONFIG__DT_CFG__SHIFT(n)		((n) * 4)
+#define CCN_XP_DT_CONFIG__DT_CFG__MASK			0xf
+#define CCN_XP_DT_CONFIG__DT_CFG__PASS_THROUGH		0x0
+#define CCN_XP_DT_CONFIG__DT_CFG__WATCHPOINT_0_OR_1	0x1
+#define CCN_XP_DT_CONFIG__DT_CFG__WATCHPOINT(n)		(0x2 + (n))
+#define CCN_XP_DT_CONFIG__DT_CFG__XP_PMU_EVENT(n)	(0x4 + (n))
+#define CCN_XP_DT_CONFIG__DT_CFG__DEVICE_PMU_EVENT(d, n) (0x8 + (d) * 4 + (n))
+#define CCN_XP_DT_INTERFACE_SEL		0x0308
+#define CCN_XP_DT_INTERFACE_SEL__DT_IO_SEL__SHIFT(n)	(0 + (n) * 8)
+#define CCN_XP_DT_INTERFACE_SEL__DT_IO_SEL__MASK	0x1
+#define CCN_XP_DT_INTERFACE_SEL__DT_DEV_SEL__SHIFT(n)	(1 + (n) * 8)
+#define CCN_XP_DT_INTERFACE_SEL__DT_DEV_SEL__MASK	0x1
+#define CCN_XP_DT_INTERFACE_SEL__DT_VC_SEL__SHIFT(n)	(2 + (n) * 8)
+#define CCN_XP_DT_INTERFACE_SEL__DT_VC_SEL__MASK	0x3
+#define CCN_XP_DT_CMP_VAL_L(n)		(0x0310 + (n) * 0x40)
+#define CCN_XP_DT_CMP_VAL_H(n)		(0x0318 + (n) * 0x40)
+#define CCN_XP_DT_CMP_MASK_L(n)		(0x0320 + (n) * 0x40)
+#define CCN_XP_DT_CMP_MASK_H(n)		(0x0328 + (n) * 0x40)
+#define CCN_XP_DT_CONTROL		0x0370
+#define CCN_XP_DT_CONTROL__DT_ENABLE			(1 << 0)
+#define CCN_XP_DT_CONTROL__WP_ARM_SEL__SHIFT(n)		(12 + (n) * 4)
+#define CCN_XP_DT_CONTROL__WP_ARM_SEL__MASK		0xf
+#define CCN_XP_DT_CONTROL__WP_ARM_SEL__ALWAYS		0xf
+#define CCN_XP_PMU_EVENT_SEL		0x0600
+#define CCN_XP_PMU_EVENT_SEL__ID__SHIFT(n)		((n) * 7)
+#define CCN_XP_PMU_EVENT_SEL__ID__MASK			0x3f
 
-#घोषणा CCN_SBAS_PMU_EVENT_SEL		0x0600
-#घोषणा CCN_SBAS_PMU_EVENT_SEL__ID__SHIFT(n)		((n) * 4)
-#घोषणा CCN_SBAS_PMU_EVENT_SEL__ID__MASK		0xf
+#define CCN_SBAS_PMU_EVENT_SEL		0x0600
+#define CCN_SBAS_PMU_EVENT_SEL__ID__SHIFT(n)		((n) * 4)
+#define CCN_SBAS_PMU_EVENT_SEL__ID__MASK		0xf
 
-#घोषणा CCN_RNI_PMU_EVENT_SEL		0x0600
-#घोषणा CCN_RNI_PMU_EVENT_SEL__ID__SHIFT(n)		((n) * 4)
-#घोषणा CCN_RNI_PMU_EVENT_SEL__ID__MASK			0xf
+#define CCN_RNI_PMU_EVENT_SEL		0x0600
+#define CCN_RNI_PMU_EVENT_SEL__ID__SHIFT(n)		((n) * 4)
+#define CCN_RNI_PMU_EVENT_SEL__ID__MASK			0xf
 
-#घोषणा CCN_TYPE_MN	0x01
-#घोषणा CCN_TYPE_DT	0x02
-#घोषणा CCN_TYPE_HNF	0x04
-#घोषणा CCN_TYPE_HNI	0x05
-#घोषणा CCN_TYPE_XP	0x08
-#घोषणा CCN_TYPE_SBSX	0x0c
-#घोषणा CCN_TYPE_SBAS	0x10
-#घोषणा CCN_TYPE_RNI_1P	0x14
-#घोषणा CCN_TYPE_RNI_2P	0x15
-#घोषणा CCN_TYPE_RNI_3P	0x16
-#घोषणा CCN_TYPE_RND_1P	0x18 /* RN-D = RN-I + DVM */
-#घोषणा CCN_TYPE_RND_2P	0x19
-#घोषणा CCN_TYPE_RND_3P	0x1a
-#घोषणा CCN_TYPE_CYCLES	0xff /* Pseuकरोtype */
+#define CCN_TYPE_MN	0x01
+#define CCN_TYPE_DT	0x02
+#define CCN_TYPE_HNF	0x04
+#define CCN_TYPE_HNI	0x05
+#define CCN_TYPE_XP	0x08
+#define CCN_TYPE_SBSX	0x0c
+#define CCN_TYPE_SBAS	0x10
+#define CCN_TYPE_RNI_1P	0x14
+#define CCN_TYPE_RNI_2P	0x15
+#define CCN_TYPE_RNI_3P	0x16
+#define CCN_TYPE_RND_1P	0x18 /* RN-D = RN-I + DVM */
+#define CCN_TYPE_RND_2P	0x19
+#define CCN_TYPE_RND_3P	0x1a
+#define CCN_TYPE_CYCLES	0xff /* Pseudotype */
 
-#घोषणा CCN_EVENT_WATCHPOINT 0xfe /* Pseuकरोevent */
+#define CCN_EVENT_WATCHPOINT 0xfe /* Pseudoevent */
 
-#घोषणा CCN_NUM_PMU_EVENTS		4
-#घोषणा CCN_NUM_XP_WATCHPOINTS		2 /* See DT.dbg_id.num_watchpoपूर्णांकs */
-#घोषणा CCN_NUM_PMU_EVENT_COUNTERS	8 /* See DT.dbg_id.num_pmucntr */
-#घोषणा CCN_IDX_PMU_CYCLE_COUNTER	CCN_NUM_PMU_EVENT_COUNTERS
+#define CCN_NUM_PMU_EVENTS		4
+#define CCN_NUM_XP_WATCHPOINTS		2 /* See DT.dbg_id.num_watchpoints */
+#define CCN_NUM_PMU_EVENT_COUNTERS	8 /* See DT.dbg_id.num_pmucntr */
+#define CCN_IDX_PMU_CYCLE_COUNTER	CCN_NUM_PMU_EVENT_COUNTERS
 
-#घोषणा CCN_NUM_PREDEFINED_MASKS	4
-#घोषणा CCN_IDX_MASK_ANY		(CCN_NUM_PMU_EVENT_COUNTERS + 0)
-#घोषणा CCN_IDX_MASK_EXACT		(CCN_NUM_PMU_EVENT_COUNTERS + 1)
-#घोषणा CCN_IDX_MASK_ORDER		(CCN_NUM_PMU_EVENT_COUNTERS + 2)
-#घोषणा CCN_IDX_MASK_OPCODE		(CCN_NUM_PMU_EVENT_COUNTERS + 3)
+#define CCN_NUM_PREDEFINED_MASKS	4
+#define CCN_IDX_MASK_ANY		(CCN_NUM_PMU_EVENT_COUNTERS + 0)
+#define CCN_IDX_MASK_EXACT		(CCN_NUM_PMU_EVENT_COUNTERS + 1)
+#define CCN_IDX_MASK_ORDER		(CCN_NUM_PMU_EVENT_COUNTERS + 2)
+#define CCN_IDX_MASK_OPCODE		(CCN_NUM_PMU_EVENT_COUNTERS + 3)
 
-काष्ठा arm_ccn_component अणु
-	व्योम __iomem *base;
+struct arm_ccn_component {
+	void __iomem *base;
 	u32 type;
 
 	DECLARE_BITMAP(pmu_events_mask, CCN_NUM_PMU_EVENTS);
-	जोड़ अणु
-		काष्ठा अणु
+	union {
+		struct {
 			DECLARE_BITMAP(dt_cmp_mask, CCN_NUM_XP_WATCHPOINTS);
-		पूर्ण xp;
-	पूर्ण;
-पूर्ण;
+		} xp;
+	};
+};
 
-#घोषणा pmu_to_arm_ccn(_pmu) container_of(container_of(_pmu, \
-	काष्ठा arm_ccn_dt, pmu), काष्ठा arm_ccn, dt)
+#define pmu_to_arm_ccn(_pmu) container_of(container_of(_pmu, \
+	struct arm_ccn_dt, pmu), struct arm_ccn, dt)
 
-काष्ठा arm_ccn_dt अणु
-	पूर्णांक id;
-	व्योम __iomem *base;
+struct arm_ccn_dt {
+	int id;
+	void __iomem *base;
 
 	spinlock_t config_lock;
 
 	DECLARE_BITMAP(pmu_counters_mask, CCN_NUM_PMU_EVENT_COUNTERS + 1);
-	काष्ठा अणु
-		काष्ठा arm_ccn_component *source;
-		काष्ठा perf_event *event;
-	पूर्ण pmu_counters[CCN_NUM_PMU_EVENT_COUNTERS + 1];
+	struct {
+		struct arm_ccn_component *source;
+		struct perf_event *event;
+	} pmu_counters[CCN_NUM_PMU_EVENT_COUNTERS + 1];
 
-	काष्ठा अणु
+	struct {
 	       u64 l, h;
-	पूर्ण cmp_mask[CCN_NUM_PMU_EVENT_COUNTERS + CCN_NUM_PREDEFINED_MASKS];
+	} cmp_mask[CCN_NUM_PMU_EVENT_COUNTERS + CCN_NUM_PREDEFINED_MASKS];
 
-	काष्ठा hrसमयr hrसमयr;
+	struct hrtimer hrtimer;
 
-	अचिन्हित पूर्णांक cpu;
-	काष्ठा hlist_node node;
+	unsigned int cpu;
+	struct hlist_node node;
 
-	काष्ठा pmu pmu;
-पूर्ण;
+	struct pmu pmu;
+};
 
-काष्ठा arm_ccn अणु
-	काष्ठा device *dev;
-	व्योम __iomem *base;
-	अचिन्हित पूर्णांक irq;
+struct arm_ccn {
+	struct device *dev;
+	void __iomem *base;
+	unsigned int irq;
 
-	अचिन्हित sbas_present:1;
-	अचिन्हित sbsx_present:1;
+	unsigned sbas_present:1;
+	unsigned sbsx_present:1;
 
-	पूर्णांक num_nodes;
-	काष्ठा arm_ccn_component *node;
+	int num_nodes;
+	struct arm_ccn_component *node;
 
-	पूर्णांक num_xps;
-	काष्ठा arm_ccn_component *xp;
+	int num_xps;
+	struct arm_ccn_component *xp;
 
-	काष्ठा arm_ccn_dt dt;
-	पूर्णांक mn_id;
-पूर्ण;
+	struct arm_ccn_dt dt;
+	int mn_id;
+};
 
-अटल पूर्णांक arm_ccn_node_to_xp(पूर्णांक node)
-अणु
-	वापस node / CCN_NUM_XP_PORTS;
-पूर्ण
+static int arm_ccn_node_to_xp(int node)
+{
+	return node / CCN_NUM_XP_PORTS;
+}
 
-अटल पूर्णांक arm_ccn_node_to_xp_port(पूर्णांक node)
-अणु
-	वापस node % CCN_NUM_XP_PORTS;
-पूर्ण
+static int arm_ccn_node_to_xp_port(int node)
+{
+	return node % CCN_NUM_XP_PORTS;
+}
 
 
 /*
- * Bit shअगरts and masks in these defines must be kept in sync with
+ * Bit shifts and masks in these defines must be kept in sync with
  * arm_ccn_pmu_config_set() and CCN_FORMAT_ATTRs below!
  */
-#घोषणा CCN_CONFIG_NODE(_config)	(((_config) >> 0) & 0xff)
-#घोषणा CCN_CONFIG_XP(_config)		(((_config) >> 0) & 0xff)
-#घोषणा CCN_CONFIG_TYPE(_config)	(((_config) >> 8) & 0xff)
-#घोषणा CCN_CONFIG_EVENT(_config)	(((_config) >> 16) & 0xff)
-#घोषणा CCN_CONFIG_PORT(_config)	(((_config) >> 24) & 0x3)
-#घोषणा CCN_CONFIG_BUS(_config)		(((_config) >> 24) & 0x3)
-#घोषणा CCN_CONFIG_VC(_config)		(((_config) >> 26) & 0x7)
-#घोषणा CCN_CONFIG_सूची(_config)		(((_config) >> 29) & 0x1)
-#घोषणा CCN_CONFIG_MASK(_config)	(((_config) >> 30) & 0xf)
+#define CCN_CONFIG_NODE(_config)	(((_config) >> 0) & 0xff)
+#define CCN_CONFIG_XP(_config)		(((_config) >> 0) & 0xff)
+#define CCN_CONFIG_TYPE(_config)	(((_config) >> 8) & 0xff)
+#define CCN_CONFIG_EVENT(_config)	(((_config) >> 16) & 0xff)
+#define CCN_CONFIG_PORT(_config)	(((_config) >> 24) & 0x3)
+#define CCN_CONFIG_BUS(_config)		(((_config) >> 24) & 0x3)
+#define CCN_CONFIG_VC(_config)		(((_config) >> 26) & 0x7)
+#define CCN_CONFIG_DIR(_config)		(((_config) >> 29) & 0x1)
+#define CCN_CONFIG_MASK(_config)	(((_config) >> 30) & 0xf)
 
-अटल व्योम arm_ccn_pmu_config_set(u64 *config, u32 node_xp, u32 type, u32 port)
-अणु
+static void arm_ccn_pmu_config_set(u64 *config, u32 node_xp, u32 type, u32 port)
+{
 	*config &= ~((0xff << 0) | (0xff << 8) | (0x3 << 24));
 	*config |= (node_xp << 0) | (type << 8) | (port << 24);
-पूर्ण
+}
 
-अटल sमाप_प्रकार arm_ccn_pmu_क्रमmat_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dev_ext_attribute *ea = container_of(attr,
-			काष्ठा dev_ext_attribute, attr);
+static ssize_t arm_ccn_pmu_format_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct dev_ext_attribute *ea = container_of(attr,
+			struct dev_ext_attribute, attr);
 
-	वापस sysfs_emit(buf, "%s\n", (अक्षर *)ea->var);
-पूर्ण
+	return sysfs_emit(buf, "%s\n", (char *)ea->var);
+}
 
-#घोषणा CCN_FORMAT_ATTR(_name, _config) \
-	काष्ठा dev_ext_attribute arm_ccn_pmu_क्रमmat_attr_##_name = \
-			अणु __ATTR(_name, S_IRUGO, arm_ccn_pmu_क्रमmat_show, \
-			शून्य), _config पूर्ण
+#define CCN_FORMAT_ATTR(_name, _config) \
+	struct dev_ext_attribute arm_ccn_pmu_format_attr_##_name = \
+			{ __ATTR(_name, S_IRUGO, arm_ccn_pmu_format_show, \
+			NULL), _config }
 
-अटल CCN_FORMAT_ATTR(node, "config:0-7");
-अटल CCN_FORMAT_ATTR(xp, "config:0-7");
-अटल CCN_FORMAT_ATTR(type, "config:8-15");
-अटल CCN_FORMAT_ATTR(event, "config:16-23");
-अटल CCN_FORMAT_ATTR(port, "config:24-25");
-अटल CCN_FORMAT_ATTR(bus, "config:24-25");
-अटल CCN_FORMAT_ATTR(vc, "config:26-28");
-अटल CCN_FORMAT_ATTR(dir, "config:29-29");
-अटल CCN_FORMAT_ATTR(mask, "config:30-33");
-अटल CCN_FORMAT_ATTR(cmp_l, "config1:0-62");
-अटल CCN_FORMAT_ATTR(cmp_h, "config2:0-59");
+static CCN_FORMAT_ATTR(node, "config:0-7");
+static CCN_FORMAT_ATTR(xp, "config:0-7");
+static CCN_FORMAT_ATTR(type, "config:8-15");
+static CCN_FORMAT_ATTR(event, "config:16-23");
+static CCN_FORMAT_ATTR(port, "config:24-25");
+static CCN_FORMAT_ATTR(bus, "config:24-25");
+static CCN_FORMAT_ATTR(vc, "config:26-28");
+static CCN_FORMAT_ATTR(dir, "config:29-29");
+static CCN_FORMAT_ATTR(mask, "config:30-33");
+static CCN_FORMAT_ATTR(cmp_l, "config1:0-62");
+static CCN_FORMAT_ATTR(cmp_h, "config2:0-59");
 
-अटल काष्ठा attribute *arm_ccn_pmu_क्रमmat_attrs[] = अणु
-	&arm_ccn_pmu_क्रमmat_attr_node.attr.attr,
-	&arm_ccn_pmu_क्रमmat_attr_xp.attr.attr,
-	&arm_ccn_pmu_क्रमmat_attr_type.attr.attr,
-	&arm_ccn_pmu_क्रमmat_attr_event.attr.attr,
-	&arm_ccn_pmu_क्रमmat_attr_port.attr.attr,
-	&arm_ccn_pmu_क्रमmat_attr_bus.attr.attr,
-	&arm_ccn_pmu_क्रमmat_attr_vc.attr.attr,
-	&arm_ccn_pmu_क्रमmat_attr_dir.attr.attr,
-	&arm_ccn_pmu_क्रमmat_attr_mask.attr.attr,
-	&arm_ccn_pmu_क्रमmat_attr_cmp_l.attr.attr,
-	&arm_ccn_pmu_क्रमmat_attr_cmp_h.attr.attr,
-	शून्य
-पूर्ण;
+static struct attribute *arm_ccn_pmu_format_attrs[] = {
+	&arm_ccn_pmu_format_attr_node.attr.attr,
+	&arm_ccn_pmu_format_attr_xp.attr.attr,
+	&arm_ccn_pmu_format_attr_type.attr.attr,
+	&arm_ccn_pmu_format_attr_event.attr.attr,
+	&arm_ccn_pmu_format_attr_port.attr.attr,
+	&arm_ccn_pmu_format_attr_bus.attr.attr,
+	&arm_ccn_pmu_format_attr_vc.attr.attr,
+	&arm_ccn_pmu_format_attr_dir.attr.attr,
+	&arm_ccn_pmu_format_attr_mask.attr.attr,
+	&arm_ccn_pmu_format_attr_cmp_l.attr.attr,
+	&arm_ccn_pmu_format_attr_cmp_h.attr.attr,
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group arm_ccn_pmu_क्रमmat_attr_group = अणु
+static const struct attribute_group arm_ccn_pmu_format_attr_group = {
 	.name = "format",
-	.attrs = arm_ccn_pmu_क्रमmat_attrs,
-पूर्ण;
+	.attrs = arm_ccn_pmu_format_attrs,
+};
 
 
-काष्ठा arm_ccn_pmu_event अणु
-	काष्ठा device_attribute attr;
+struct arm_ccn_pmu_event {
+	struct device_attribute attr;
 	u32 type;
 	u32 event;
-	पूर्णांक num_ports;
-	पूर्णांक num_vcs;
-	स्थिर अक्षर *def;
-	पूर्णांक mask;
-पूर्ण;
+	int num_ports;
+	int num_vcs;
+	const char *def;
+	int mask;
+};
 
-#घोषणा CCN_EVENT_ATTR(_name) \
-	__ATTR(_name, S_IRUGO, arm_ccn_pmu_event_show, शून्य)
+#define CCN_EVENT_ATTR(_name) \
+	__ATTR(_name, S_IRUGO, arm_ccn_pmu_event_show, NULL)
 
 /*
- * Events defined in TRM क्रम MN, HN-I and SBSX are actually watchpoपूर्णांकs set on
+ * Events defined in TRM for MN, HN-I and SBSX are actually watchpoints set on
  * their ports in XP they are connected to. For the sake of usability they are
- * explicitly defined here (and translated पूर्णांकo a relevant watchpoपूर्णांक in
+ * explicitly defined here (and translated into a relevant watchpoint in
  * arm_ccn_pmu_event_init()) so the user can easily request them without deep
- * knowledge of the flit क्रमmat.
+ * knowledge of the flit format.
  */
 
-#घोषणा CCN_EVENT_MN(_name, _def, _mask) अणु .attr = CCN_EVENT_ATTR(mn_##_name), \
+#define CCN_EVENT_MN(_name, _def, _mask) { .attr = CCN_EVENT_ATTR(mn_##_name), \
 		.type = CCN_TYPE_MN, .event = CCN_EVENT_WATCHPOINT, \
 		.num_ports = CCN_NUM_XP_PORTS, .num_vcs = CCN_NUM_VCS, \
-		.def = _def, .mask = _mask, पूर्ण
+		.def = _def, .mask = _mask, }
 
-#घोषणा CCN_EVENT_HNI(_name, _def, _mask) अणु \
+#define CCN_EVENT_HNI(_name, _def, _mask) { \
 		.attr = CCN_EVENT_ATTR(hni_##_name), .type = CCN_TYPE_HNI, \
 		.event = CCN_EVENT_WATCHPOINT, .num_ports = CCN_NUM_XP_PORTS, \
-		.num_vcs = CCN_NUM_VCS, .def = _def, .mask = _mask, पूर्ण
+		.num_vcs = CCN_NUM_VCS, .def = _def, .mask = _mask, }
 
-#घोषणा CCN_EVENT_SBSX(_name, _def, _mask) अणु \
+#define CCN_EVENT_SBSX(_name, _def, _mask) { \
 		.attr = CCN_EVENT_ATTR(sbsx_##_name), .type = CCN_TYPE_SBSX, \
 		.event = CCN_EVENT_WATCHPOINT, .num_ports = CCN_NUM_XP_PORTS, \
-		.num_vcs = CCN_NUM_VCS, .def = _def, .mask = _mask, पूर्ण
+		.num_vcs = CCN_NUM_VCS, .def = _def, .mask = _mask, }
 
-#घोषणा CCN_EVENT_HNF(_name, _event) अणु .attr = CCN_EVENT_ATTR(hnf_##_name), \
-		.type = CCN_TYPE_HNF, .event = _event, पूर्ण
+#define CCN_EVENT_HNF(_name, _event) { .attr = CCN_EVENT_ATTR(hnf_##_name), \
+		.type = CCN_TYPE_HNF, .event = _event, }
 
-#घोषणा CCN_EVENT_XP(_name, _event) अणु .attr = CCN_EVENT_ATTR(xp_##_name), \
+#define CCN_EVENT_XP(_name, _event) { .attr = CCN_EVENT_ATTR(xp_##_name), \
 		.type = CCN_TYPE_XP, .event = _event, \
-		.num_ports = CCN_NUM_XP_PORTS, .num_vcs = CCN_NUM_VCS, पूर्ण
+		.num_ports = CCN_NUM_XP_PORTS, .num_vcs = CCN_NUM_VCS, }
 
 /*
- * RN-I & RN-D (RN-D = RN-I + DVM) nodes have dअगरferent type ID depending
+ * RN-I & RN-D (RN-D = RN-I + DVM) nodes have different type ID depending
  * on configuration. One of them is picked to represent the whole group,
  * as they all share the same event types.
  */
-#घोषणा CCN_EVENT_RNI(_name, _event) अणु .attr = CCN_EVENT_ATTR(rni_##_name), \
-		.type = CCN_TYPE_RNI_3P, .event = _event, पूर्ण
+#define CCN_EVENT_RNI(_name, _event) { .attr = CCN_EVENT_ATTR(rni_##_name), \
+		.type = CCN_TYPE_RNI_3P, .event = _event, }
 
-#घोषणा CCN_EVENT_SBAS(_name, _event) अणु .attr = CCN_EVENT_ATTR(sbas_##_name), \
-		.type = CCN_TYPE_SBAS, .event = _event, पूर्ण
+#define CCN_EVENT_SBAS(_name, _event) { .attr = CCN_EVENT_ATTR(sbas_##_name), \
+		.type = CCN_TYPE_SBAS, .event = _event, }
 
-#घोषणा CCN_EVENT_CYCLES(_name) अणु .attr = CCN_EVENT_ATTR(_name), \
-		.type = CCN_TYPE_CYCLES पूर्ण
+#define CCN_EVENT_CYCLES(_name) { .attr = CCN_EVENT_ATTR(_name), \
+		.type = CCN_TYPE_CYCLES }
 
 
-अटल sमाप_प्रकार arm_ccn_pmu_event_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा arm_ccn *ccn = pmu_to_arm_ccn(dev_get_drvdata(dev));
-	काष्ठा arm_ccn_pmu_event *event = container_of(attr,
-			काष्ठा arm_ccn_pmu_event, attr);
-	पूर्णांक res;
+static ssize_t arm_ccn_pmu_event_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct arm_ccn *ccn = pmu_to_arm_ccn(dev_get_drvdata(dev));
+	struct arm_ccn_pmu_event *event = container_of(attr,
+			struct arm_ccn_pmu_event, attr);
+	int res;
 
 	res = sysfs_emit(buf, "type=0x%x", event->type);
-	अगर (event->event)
+	if (event->event)
 		res += sysfs_emit_at(buf, res, ",event=0x%x", event->event);
-	अगर (event->def)
+	if (event->def)
 		res += sysfs_emit_at(buf, res, ",%s", event->def);
-	अगर (event->mask)
+	if (event->mask)
 		res += sysfs_emit_at(buf, res, ",mask=0x%x", event->mask);
 
 	/* Arguments required by an event */
-	चयन (event->type) अणु
-	हाल CCN_TYPE_CYCLES:
-		अवरोध;
-	हाल CCN_TYPE_XP:
+	switch (event->type) {
+	case CCN_TYPE_CYCLES:
+		break;
+	case CCN_TYPE_XP:
 		res += sysfs_emit_at(buf, res, ",xp=?,vc=?");
-		अगर (event->event == CCN_EVENT_WATCHPOINT)
+		if (event->event == CCN_EVENT_WATCHPOINT)
 			res += sysfs_emit_at(buf, res,
 					",port=?,dir=?,cmp_l=?,cmp_h=?,mask=?");
-		अन्यथा
+		else
 			res += sysfs_emit_at(buf, res, ",bus=?");
 
-		अवरोध;
-	हाल CCN_TYPE_MN:
+		break;
+	case CCN_TYPE_MN:
 		res += sysfs_emit_at(buf, res, ",node=%d", ccn->mn_id);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		res += sysfs_emit_at(buf, res, ",node=?");
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	res += sysfs_emit_at(buf, res, "\n");
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल umode_t arm_ccn_pmu_events_is_visible(काष्ठा kobject *kobj,
-				     काष्ठा attribute *attr, पूर्णांक index)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा arm_ccn *ccn = pmu_to_arm_ccn(dev_get_drvdata(dev));
-	काष्ठा device_attribute *dev_attr = container_of(attr,
-			काष्ठा device_attribute, attr);
-	काष्ठा arm_ccn_pmu_event *event = container_of(dev_attr,
-			काष्ठा arm_ccn_pmu_event, attr);
+static umode_t arm_ccn_pmu_events_is_visible(struct kobject *kobj,
+				     struct attribute *attr, int index)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct arm_ccn *ccn = pmu_to_arm_ccn(dev_get_drvdata(dev));
+	struct device_attribute *dev_attr = container_of(attr,
+			struct device_attribute, attr);
+	struct arm_ccn_pmu_event *event = container_of(dev_attr,
+			struct arm_ccn_pmu_event, attr);
 
-	अगर (event->type == CCN_TYPE_SBAS && !ccn->sbas_present)
-		वापस 0;
-	अगर (event->type == CCN_TYPE_SBSX && !ccn->sbsx_present)
-		वापस 0;
+	if (event->type == CCN_TYPE_SBAS && !ccn->sbas_present)
+		return 0;
+	if (event->type == CCN_TYPE_SBSX && !ccn->sbsx_present)
+		return 0;
 
-	वापस attr->mode;
-पूर्ण
+	return attr->mode;
+}
 
-अटल काष्ठा arm_ccn_pmu_event arm_ccn_pmu_events[] = अणु
+static struct arm_ccn_pmu_event arm_ccn_pmu_events[] = {
 	CCN_EVENT_MN(eobarrier, "dir=1,vc=0,cmp_h=0x1c00", CCN_IDX_MASK_OPCODE),
 	CCN_EVENT_MN(ecbarrier, "dir=1,vc=0,cmp_h=0x1e00", CCN_IDX_MASK_OPCODE),
 	CCN_EVENT_MN(dvmop, "dir=1,vc=0,cmp_h=0x2800", CCN_IDX_MASK_OPCODE),
@@ -422,10 +421,10 @@
 	CCN_EVENT_RNI(wrt_full, 0x9),
 	CCN_EVENT_RNI(txreq_flits_replayed, 0xa),
 	CCN_EVENT_XP(upload_starvation, 0x1),
-	CCN_EVENT_XP(करोwnload_starvation, 0x2),
+	CCN_EVENT_XP(download_starvation, 0x2),
 	CCN_EVENT_XP(respin, 0x3),
 	CCN_EVENT_XP(valid_flit, 0x4),
-	CCN_EVENT_XP(watchpoपूर्णांक, CCN_EVENT_WATCHPOINT),
+	CCN_EVENT_XP(watchpoint, CCN_EVENT_WATCHPOINT),
 	CCN_EVENT_SBAS(rdata_beats_p0, 0x1),
 	CCN_EVENT_SBAS(rxdat_flits, 0x4),
 	CCN_EVENT_SBAS(txdat_flits, 0x5),
@@ -435,94 +434,94 @@
 	CCN_EVENT_SBAS(wrt_full, 0x9),
 	CCN_EVENT_SBAS(txreq_flits_replayed, 0xa),
 	CCN_EVENT_CYCLES(cycles),
-पूर्ण;
+};
 
 /* Populated in arm_ccn_init() */
-अटल काष्ठा attribute
+static struct attribute
 		*arm_ccn_pmu_events_attrs[ARRAY_SIZE(arm_ccn_pmu_events) + 1];
 
-अटल स्थिर काष्ठा attribute_group arm_ccn_pmu_events_attr_group = अणु
+static const struct attribute_group arm_ccn_pmu_events_attr_group = {
 	.name = "events",
 	.is_visible = arm_ccn_pmu_events_is_visible,
 	.attrs = arm_ccn_pmu_events_attrs,
-पूर्ण;
+};
 
 
-अटल u64 *arm_ccn_pmu_get_cmp_mask(काष्ठा arm_ccn *ccn, स्थिर अक्षर *name)
-अणु
-	अचिन्हित दीर्घ i;
+static u64 *arm_ccn_pmu_get_cmp_mask(struct arm_ccn *ccn, const char *name)
+{
+	unsigned long i;
 
-	अगर (WARN_ON(!name || !name[0] || !है_षष्ठादशक(name[0]) || !name[1]))
-		वापस शून्य;
-	i = है_अंक(name[0]) ? name[0] - '0' : 0xa + tolower(name[0]) - 'a';
+	if (WARN_ON(!name || !name[0] || !isxdigit(name[0]) || !name[1]))
+		return NULL;
+	i = isdigit(name[0]) ? name[0] - '0' : 0xa + tolower(name[0]) - 'a';
 
-	चयन (name[1]) अणु
-	हाल 'l':
-		वापस &ccn->dt.cmp_mask[i].l;
-	हाल 'h':
-		वापस &ccn->dt.cmp_mask[i].h;
-	शेष:
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+	switch (name[1]) {
+	case 'l':
+		return &ccn->dt.cmp_mask[i].l;
+	case 'h':
+		return &ccn->dt.cmp_mask[i].h;
+	default:
+		return NULL;
+	}
+}
 
-अटल sमाप_प्रकार arm_ccn_pmu_cmp_mask_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा arm_ccn *ccn = pmu_to_arm_ccn(dev_get_drvdata(dev));
+static ssize_t arm_ccn_pmu_cmp_mask_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct arm_ccn *ccn = pmu_to_arm_ccn(dev_get_drvdata(dev));
 	u64 *mask = arm_ccn_pmu_get_cmp_mask(ccn, attr->attr.name);
 
-	वापस mask ? sysfs_emit(buf, "0x%016llx\n", *mask) : -EINVAL;
-पूर्ण
+	return mask ? sysfs_emit(buf, "0x%016llx\n", *mask) : -EINVAL;
+}
 
-अटल sमाप_प्रकार arm_ccn_pmu_cmp_mask_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा arm_ccn *ccn = pmu_to_arm_ccn(dev_get_drvdata(dev));
+static ssize_t arm_ccn_pmu_cmp_mask_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct arm_ccn *ccn = pmu_to_arm_ccn(dev_get_drvdata(dev));
 	u64 *mask = arm_ccn_pmu_get_cmp_mask(ccn, attr->attr.name);
-	पूर्णांक err = -EINVAL;
+	int err = -EINVAL;
 
-	अगर (mask)
-		err = kम_से_अदीर्घl(buf, 0, mask);
+	if (mask)
+		err = kstrtoull(buf, 0, mask);
 
-	वापस err ? err : count;
-पूर्ण
+	return err ? err : count;
+}
 
-#घोषणा CCN_CMP_MASK_ATTR(_name) \
-	काष्ठा device_attribute arm_ccn_pmu_cmp_mask_attr_##_name = \
+#define CCN_CMP_MASK_ATTR(_name) \
+	struct device_attribute arm_ccn_pmu_cmp_mask_attr_##_name = \
 			__ATTR(_name, S_IRUGO | S_IWUSR, \
 			arm_ccn_pmu_cmp_mask_show, arm_ccn_pmu_cmp_mask_store)
 
-#घोषणा CCN_CMP_MASK_ATTR_RO(_name) \
-	काष्ठा device_attribute arm_ccn_pmu_cmp_mask_attr_##_name = \
-			__ATTR(_name, S_IRUGO, arm_ccn_pmu_cmp_mask_show, शून्य)
+#define CCN_CMP_MASK_ATTR_RO(_name) \
+	struct device_attribute arm_ccn_pmu_cmp_mask_attr_##_name = \
+			__ATTR(_name, S_IRUGO, arm_ccn_pmu_cmp_mask_show, NULL)
 
-अटल CCN_CMP_MASK_ATTR(0l);
-अटल CCN_CMP_MASK_ATTR(0h);
-अटल CCN_CMP_MASK_ATTR(1l);
-अटल CCN_CMP_MASK_ATTR(1h);
-अटल CCN_CMP_MASK_ATTR(2l);
-अटल CCN_CMP_MASK_ATTR(2h);
-अटल CCN_CMP_MASK_ATTR(3l);
-अटल CCN_CMP_MASK_ATTR(3h);
-अटल CCN_CMP_MASK_ATTR(4l);
-अटल CCN_CMP_MASK_ATTR(4h);
-अटल CCN_CMP_MASK_ATTR(5l);
-अटल CCN_CMP_MASK_ATTR(5h);
-अटल CCN_CMP_MASK_ATTR(6l);
-अटल CCN_CMP_MASK_ATTR(6h);
-अटल CCN_CMP_MASK_ATTR(7l);
-अटल CCN_CMP_MASK_ATTR(7h);
-अटल CCN_CMP_MASK_ATTR_RO(8l);
-अटल CCN_CMP_MASK_ATTR_RO(8h);
-अटल CCN_CMP_MASK_ATTR_RO(9l);
-अटल CCN_CMP_MASK_ATTR_RO(9h);
-अटल CCN_CMP_MASK_ATTR_RO(al);
-अटल CCN_CMP_MASK_ATTR_RO(ah);
-अटल CCN_CMP_MASK_ATTR_RO(bl);
-अटल CCN_CMP_MASK_ATTR_RO(bh);
+static CCN_CMP_MASK_ATTR(0l);
+static CCN_CMP_MASK_ATTR(0h);
+static CCN_CMP_MASK_ATTR(1l);
+static CCN_CMP_MASK_ATTR(1h);
+static CCN_CMP_MASK_ATTR(2l);
+static CCN_CMP_MASK_ATTR(2h);
+static CCN_CMP_MASK_ATTR(3l);
+static CCN_CMP_MASK_ATTR(3h);
+static CCN_CMP_MASK_ATTR(4l);
+static CCN_CMP_MASK_ATTR(4h);
+static CCN_CMP_MASK_ATTR(5l);
+static CCN_CMP_MASK_ATTR(5h);
+static CCN_CMP_MASK_ATTR(6l);
+static CCN_CMP_MASK_ATTR(6h);
+static CCN_CMP_MASK_ATTR(7l);
+static CCN_CMP_MASK_ATTR(7h);
+static CCN_CMP_MASK_ATTR_RO(8l);
+static CCN_CMP_MASK_ATTR_RO(8h);
+static CCN_CMP_MASK_ATTR_RO(9l);
+static CCN_CMP_MASK_ATTR_RO(9h);
+static CCN_CMP_MASK_ATTR_RO(al);
+static CCN_CMP_MASK_ATTR_RO(ah);
+static CCN_CMP_MASK_ATTR_RO(bl);
+static CCN_CMP_MASK_ATTR_RO(bh);
 
-अटल काष्ठा attribute *arm_ccn_pmu_cmp_mask_attrs[] = अणु
+static struct attribute *arm_ccn_pmu_cmp_mask_attrs[] = {
 	&arm_ccn_pmu_cmp_mask_attr_0l.attr, &arm_ccn_pmu_cmp_mask_attr_0h.attr,
 	&arm_ccn_pmu_cmp_mask_attr_1l.attr, &arm_ccn_pmu_cmp_mask_attr_1h.attr,
 	&arm_ccn_pmu_cmp_mask_attr_2l.attr, &arm_ccn_pmu_cmp_mask_attr_2h.attr,
@@ -535,217 +534,217 @@
 	&arm_ccn_pmu_cmp_mask_attr_9l.attr, &arm_ccn_pmu_cmp_mask_attr_9h.attr,
 	&arm_ccn_pmu_cmp_mask_attr_al.attr, &arm_ccn_pmu_cmp_mask_attr_ah.attr,
 	&arm_ccn_pmu_cmp_mask_attr_bl.attr, &arm_ccn_pmu_cmp_mask_attr_bh.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group arm_ccn_pmu_cmp_mask_attr_group = अणु
+static const struct attribute_group arm_ccn_pmu_cmp_mask_attr_group = {
 	.name = "cmp_mask",
 	.attrs = arm_ccn_pmu_cmp_mask_attrs,
-पूर्ण;
+};
 
-अटल sमाप_प्रकार arm_ccn_pmu_cpumask_show(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा arm_ccn *ccn = pmu_to_arm_ccn(dev_get_drvdata(dev));
+static ssize_t arm_ccn_pmu_cpumask_show(struct device *dev,
+				     struct device_attribute *attr, char *buf)
+{
+	struct arm_ccn *ccn = pmu_to_arm_ccn(dev_get_drvdata(dev));
 
-	वापस cpumap_prपूर्णांक_to_pagebuf(true, buf, cpumask_of(ccn->dt.cpu));
-पूर्ण
+	return cpumap_print_to_pagebuf(true, buf, cpumask_of(ccn->dt.cpu));
+}
 
-अटल काष्ठा device_attribute arm_ccn_pmu_cpumask_attr =
-		__ATTR(cpumask, S_IRUGO, arm_ccn_pmu_cpumask_show, शून्य);
+static struct device_attribute arm_ccn_pmu_cpumask_attr =
+		__ATTR(cpumask, S_IRUGO, arm_ccn_pmu_cpumask_show, NULL);
 
-अटल काष्ठा attribute *arm_ccn_pmu_cpumask_attrs[] = अणु
+static struct attribute *arm_ccn_pmu_cpumask_attrs[] = {
 	&arm_ccn_pmu_cpumask_attr.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group arm_ccn_pmu_cpumask_attr_group = अणु
+static const struct attribute_group arm_ccn_pmu_cpumask_attr_group = {
 	.attrs = arm_ccn_pmu_cpumask_attrs,
-पूर्ण;
+};
 
 /*
  * Default poll period is 10ms, which is way over the top anyway,
- * as in the worst हाल scenario (an event every cycle), with 1GHz
- * घड़ीed bus, the smallest, 32 bit counter will overflow in
+ * as in the worst case scenario (an event every cycle), with 1GHz
+ * clocked bus, the smallest, 32 bit counter will overflow in
  * more than 4s.
  */
-अटल अचिन्हित पूर्णांक arm_ccn_pmu_poll_period_us = 10000;
-module_param_named(pmu_poll_period_us, arm_ccn_pmu_poll_period_us, uपूर्णांक,
+static unsigned int arm_ccn_pmu_poll_period_us = 10000;
+module_param_named(pmu_poll_period_us, arm_ccn_pmu_poll_period_us, uint,
 		S_IRUGO | S_IWUSR);
 
-अटल kसमय_प्रकार arm_ccn_pmu_समयr_period(व्योम)
-अणु
-	वापस ns_to_kसमय((u64)arm_ccn_pmu_poll_period_us * 1000);
-पूर्ण
+static ktime_t arm_ccn_pmu_timer_period(void)
+{
+	return ns_to_ktime((u64)arm_ccn_pmu_poll_period_us * 1000);
+}
 
 
-अटल स्थिर काष्ठा attribute_group *arm_ccn_pmu_attr_groups[] = अणु
+static const struct attribute_group *arm_ccn_pmu_attr_groups[] = {
 	&arm_ccn_pmu_events_attr_group,
-	&arm_ccn_pmu_क्रमmat_attr_group,
+	&arm_ccn_pmu_format_attr_group,
 	&arm_ccn_pmu_cmp_mask_attr_group,
 	&arm_ccn_pmu_cpumask_attr_group,
-	शून्य
-पूर्ण;
+	NULL
+};
 
 
-अटल पूर्णांक arm_ccn_pmu_alloc_bit(अचिन्हित दीर्घ *biपंचांगap, अचिन्हित दीर्घ size)
-अणु
-	पूर्णांक bit;
+static int arm_ccn_pmu_alloc_bit(unsigned long *bitmap, unsigned long size)
+{
+	int bit;
 
-	करो अणु
-		bit = find_first_zero_bit(biपंचांगap, size);
-		अगर (bit >= size)
-			वापस -EAGAIN;
-	पूर्ण जबतक (test_and_set_bit(bit, biपंचांगap));
+	do {
+		bit = find_first_zero_bit(bitmap, size);
+		if (bit >= size)
+			return -EAGAIN;
+	} while (test_and_set_bit(bit, bitmap));
 
-	वापस bit;
-पूर्ण
+	return bit;
+}
 
 /* All RN-I and RN-D nodes have identical PMUs */
-अटल पूर्णांक arm_ccn_pmu_type_eq(u32 a, u32 b)
-अणु
-	अगर (a == b)
-		वापस 1;
+static int arm_ccn_pmu_type_eq(u32 a, u32 b)
+{
+	if (a == b)
+		return 1;
 
-	चयन (a) अणु
-	हाल CCN_TYPE_RNI_1P:
-	हाल CCN_TYPE_RNI_2P:
-	हाल CCN_TYPE_RNI_3P:
-	हाल CCN_TYPE_RND_1P:
-	हाल CCN_TYPE_RND_2P:
-	हाल CCN_TYPE_RND_3P:
-		चयन (b) अणु
-		हाल CCN_TYPE_RNI_1P:
-		हाल CCN_TYPE_RNI_2P:
-		हाल CCN_TYPE_RNI_3P:
-		हाल CCN_TYPE_RND_1P:
-		हाल CCN_TYPE_RND_2P:
-		हाल CCN_TYPE_RND_3P:
-			वापस 1;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+	switch (a) {
+	case CCN_TYPE_RNI_1P:
+	case CCN_TYPE_RNI_2P:
+	case CCN_TYPE_RNI_3P:
+	case CCN_TYPE_RND_1P:
+	case CCN_TYPE_RND_2P:
+	case CCN_TYPE_RND_3P:
+		switch (b) {
+		case CCN_TYPE_RNI_1P:
+		case CCN_TYPE_RNI_2P:
+		case CCN_TYPE_RNI_3P:
+		case CCN_TYPE_RND_1P:
+		case CCN_TYPE_RND_2P:
+		case CCN_TYPE_RND_3P:
+			return 1;
+		}
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक arm_ccn_pmu_event_alloc(काष्ठा perf_event *event)
-अणु
-	काष्ठा arm_ccn *ccn = pmu_to_arm_ccn(event->pmu);
-	काष्ठा hw_perf_event *hw = &event->hw;
+static int arm_ccn_pmu_event_alloc(struct perf_event *event)
+{
+	struct arm_ccn *ccn = pmu_to_arm_ccn(event->pmu);
+	struct hw_perf_event *hw = &event->hw;
 	u32 node_xp, type, event_id;
-	काष्ठा arm_ccn_component *source;
-	पूर्णांक bit;
+	struct arm_ccn_component *source;
+	int bit;
 
 	node_xp = CCN_CONFIG_NODE(event->attr.config);
 	type = CCN_CONFIG_TYPE(event->attr.config);
 	event_id = CCN_CONFIG_EVENT(event->attr.config);
 
 	/* Allocate the cycle counter */
-	अगर (type == CCN_TYPE_CYCLES) अणु
-		अगर (test_and_set_bit(CCN_IDX_PMU_CYCLE_COUNTER,
+	if (type == CCN_TYPE_CYCLES) {
+		if (test_and_set_bit(CCN_IDX_PMU_CYCLE_COUNTER,
 				ccn->dt.pmu_counters_mask))
-			वापस -EAGAIN;
+			return -EAGAIN;
 
 		hw->idx = CCN_IDX_PMU_CYCLE_COUNTER;
 		ccn->dt.pmu_counters[CCN_IDX_PMU_CYCLE_COUNTER].event = event;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Allocate an event counter */
 	hw->idx = arm_ccn_pmu_alloc_bit(ccn->dt.pmu_counters_mask,
 			CCN_NUM_PMU_EVENT_COUNTERS);
-	अगर (hw->idx < 0) अणु
+	if (hw->idx < 0) {
 		dev_dbg(ccn->dev, "No more counters available!\n");
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
-	अगर (type == CCN_TYPE_XP)
+	if (type == CCN_TYPE_XP)
 		source = &ccn->xp[node_xp];
-	अन्यथा
+	else
 		source = &ccn->node[node_xp];
 	ccn->dt.pmu_counters[hw->idx].source = source;
 
-	/* Allocate an event source or a watchpoपूर्णांक */
-	अगर (type == CCN_TYPE_XP && event_id == CCN_EVENT_WATCHPOINT)
+	/* Allocate an event source or a watchpoint */
+	if (type == CCN_TYPE_XP && event_id == CCN_EVENT_WATCHPOINT)
 		bit = arm_ccn_pmu_alloc_bit(source->xp.dt_cmp_mask,
 				CCN_NUM_XP_WATCHPOINTS);
-	अन्यथा
+	else
 		bit = arm_ccn_pmu_alloc_bit(source->pmu_events_mask,
 				CCN_NUM_PMU_EVENTS);
-	अगर (bit < 0) अणु
+	if (bit < 0) {
 		dev_dbg(ccn->dev, "No more event sources/watchpoints on node/XP %d!\n",
 				node_xp);
 		clear_bit(hw->idx, ccn->dt.pmu_counters_mask);
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 	hw->config_base = bit;
 
 	ccn->dt.pmu_counters[hw->idx].event = event;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम arm_ccn_pmu_event_release(काष्ठा perf_event *event)
-अणु
-	काष्ठा arm_ccn *ccn = pmu_to_arm_ccn(event->pmu);
-	काष्ठा hw_perf_event *hw = &event->hw;
+static void arm_ccn_pmu_event_release(struct perf_event *event)
+{
+	struct arm_ccn *ccn = pmu_to_arm_ccn(event->pmu);
+	struct hw_perf_event *hw = &event->hw;
 
-	अगर (hw->idx == CCN_IDX_PMU_CYCLE_COUNTER) अणु
+	if (hw->idx == CCN_IDX_PMU_CYCLE_COUNTER) {
 		clear_bit(CCN_IDX_PMU_CYCLE_COUNTER, ccn->dt.pmu_counters_mask);
-	पूर्ण अन्यथा अणु
-		काष्ठा arm_ccn_component *source =
+	} else {
+		struct arm_ccn_component *source =
 				ccn->dt.pmu_counters[hw->idx].source;
 
-		अगर (CCN_CONFIG_TYPE(event->attr.config) == CCN_TYPE_XP &&
+		if (CCN_CONFIG_TYPE(event->attr.config) == CCN_TYPE_XP &&
 				CCN_CONFIG_EVENT(event->attr.config) ==
 				CCN_EVENT_WATCHPOINT)
 			clear_bit(hw->config_base, source->xp.dt_cmp_mask);
-		अन्यथा
+		else
 			clear_bit(hw->config_base, source->pmu_events_mask);
 		clear_bit(hw->idx, ccn->dt.pmu_counters_mask);
-	पूर्ण
+	}
 
-	ccn->dt.pmu_counters[hw->idx].source = शून्य;
-	ccn->dt.pmu_counters[hw->idx].event = शून्य;
-पूर्ण
+	ccn->dt.pmu_counters[hw->idx].source = NULL;
+	ccn->dt.pmu_counters[hw->idx].event = NULL;
+}
 
-अटल पूर्णांक arm_ccn_pmu_event_init(काष्ठा perf_event *event)
-अणु
-	काष्ठा arm_ccn *ccn;
-	काष्ठा hw_perf_event *hw = &event->hw;
+static int arm_ccn_pmu_event_init(struct perf_event *event)
+{
+	struct arm_ccn *ccn;
+	struct hw_perf_event *hw = &event->hw;
 	u32 node_xp, type, event_id;
-	पूर्णांक valid;
-	पूर्णांक i;
-	काष्ठा perf_event *sibling;
+	int valid;
+	int i;
+	struct perf_event *sibling;
 
-	अगर (event->attr.type != event->pmu->type)
-		वापस -ENOENT;
+	if (event->attr.type != event->pmu->type)
+		return -ENOENT;
 
 	ccn = pmu_to_arm_ccn(event->pmu);
 
-	अगर (hw->sample_period) अणु
+	if (hw->sample_period) {
 		dev_dbg(ccn->dev, "Sampling not supported!\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (has_branch_stack(event)) अणु
+	if (has_branch_stack(event)) {
 		dev_dbg(ccn->dev, "Can't exclude execution levels!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (event->cpu < 0) अणु
+	if (event->cpu < 0) {
 		dev_dbg(ccn->dev, "Can't provide per-task data!\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 	/*
 	 * Many perf core operations (eg. events rotation) operate on a
-	 * single CPU context. This is obvious क्रम CPU PMUs, where one
+	 * single CPU context. This is obvious for CPU PMUs, where one
 	 * expects the same sets of events being observed on all CPUs,
-	 * but can lead to issues क्रम off-core PMUs, like CCN, where each
-	 * event could be theoretically asचिन्हित to a dअगरferent CPU. To
-	 * mitigate this, we enक्रमce CPU assignment to one, selected
+	 * but can lead to issues for off-core PMUs, like CCN, where each
+	 * event could be theoretically assigned to a different CPU. To
+	 * mitigate this, we enforce CPU assignment to one, selected
 	 * processor (the one described in the "cpumask" attribute).
 	 */
 	event->cpu = ccn->dt.cpu;
@@ -755,65 +754,65 @@ module_param_named(pmu_poll_period_us, arm_ccn_pmu_poll_period_us, uपूर्
 	event_id = CCN_CONFIG_EVENT(event->attr.config);
 
 	/* Validate node/xp vs topology */
-	चयन (type) अणु
-	हाल CCN_TYPE_MN:
-		अगर (node_xp != ccn->mn_id) अणु
+	switch (type) {
+	case CCN_TYPE_MN:
+		if (node_xp != ccn->mn_id) {
 			dev_dbg(ccn->dev, "Invalid MN ID %d!\n", node_xp);
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	हाल CCN_TYPE_XP:
-		अगर (node_xp >= ccn->num_xps) अणु
+			return -EINVAL;
+		}
+		break;
+	case CCN_TYPE_XP:
+		if (node_xp >= ccn->num_xps) {
 			dev_dbg(ccn->dev, "Invalid XP ID %d!\n", node_xp);
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	हाल CCN_TYPE_CYCLES:
-		अवरोध;
-	शेष:
-		अगर (node_xp >= ccn->num_nodes) अणु
+			return -EINVAL;
+		}
+		break;
+	case CCN_TYPE_CYCLES:
+		break;
+	default:
+		if (node_xp >= ccn->num_nodes) {
 			dev_dbg(ccn->dev, "Invalid node ID %d!\n", node_xp);
-			वापस -EINVAL;
-		पूर्ण
-		अगर (!arm_ccn_pmu_type_eq(type, ccn->node[node_xp].type)) अणु
+			return -EINVAL;
+		}
+		if (!arm_ccn_pmu_type_eq(type, ccn->node[node_xp].type)) {
 			dev_dbg(ccn->dev, "Invalid type 0x%x for node %d!\n",
 					type, node_xp);
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			return -EINVAL;
+		}
+		break;
+	}
 
-	/* Validate event ID vs available क्रम the type */
-	क्रम (i = 0, valid = 0; i < ARRAY_SIZE(arm_ccn_pmu_events) && !valid;
-			i++) अणु
-		काष्ठा arm_ccn_pmu_event *e = &arm_ccn_pmu_events[i];
+	/* Validate event ID vs available for the type */
+	for (i = 0, valid = 0; i < ARRAY_SIZE(arm_ccn_pmu_events) && !valid;
+			i++) {
+		struct arm_ccn_pmu_event *e = &arm_ccn_pmu_events[i];
 		u32 port = CCN_CONFIG_PORT(event->attr.config);
 		u32 vc = CCN_CONFIG_VC(event->attr.config);
 
-		अगर (!arm_ccn_pmu_type_eq(type, e->type))
-			जारी;
-		अगर (event_id != e->event)
-			जारी;
-		अगर (e->num_ports && port >= e->num_ports) अणु
+		if (!arm_ccn_pmu_type_eq(type, e->type))
+			continue;
+		if (event_id != e->event)
+			continue;
+		if (e->num_ports && port >= e->num_ports) {
 			dev_dbg(ccn->dev, "Invalid port %d for node/XP %d!\n",
 					port, node_xp);
-			वापस -EINVAL;
-		पूर्ण
-		अगर (e->num_vcs && vc >= e->num_vcs) अणु
+			return -EINVAL;
+		}
+		if (e->num_vcs && vc >= e->num_vcs) {
 			dev_dbg(ccn->dev, "Invalid vc %d for node/XP %d!\n",
 					vc, node_xp);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		valid = 1;
-	पूर्ण
-	अगर (!valid) अणु
+	}
+	if (!valid) {
 		dev_dbg(ccn->dev, "Invalid event 0x%x for node/XP %d!\n",
 				event_id, node_xp);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Watchpoपूर्णांक-based event क्रम a node is actually set on XP */
-	अगर (event_id == CCN_EVENT_WATCHPOINT && type != CCN_TYPE_XP) अणु
+	/* Watchpoint-based event for a node is actually set on XP */
+	if (event_id == CCN_EVENT_WATCHPOINT && type != CCN_TYPE_XP) {
 		u32 port;
 
 		type = CCN_TYPE_XP;
@@ -822,132 +821,132 @@ module_param_named(pmu_poll_period_us, arm_ccn_pmu_poll_period_us, uपूर्
 
 		arm_ccn_pmu_config_set(&event->attr.config,
 				node_xp, type, port);
-	पूर्ण
+	}
 
 	/*
 	 * We must NOT create groups containing mixed PMUs, although software
-	 * events are acceptable (क्रम example to create a CCN group
-	 * periodically पढ़ो when a hrसमयr aka cpu-घड़ी leader triggers).
+	 * events are acceptable (for example to create a CCN group
+	 * periodically read when a hrtimer aka cpu-clock leader triggers).
 	 */
-	अगर (event->group_leader->pmu != event->pmu &&
+	if (event->group_leader->pmu != event->pmu &&
 			!is_software_event(event->group_leader))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	क्रम_each_sibling_event(sibling, event->group_leader) अणु
-		अगर (sibling->pmu != event->pmu &&
+	for_each_sibling_event(sibling, event->group_leader) {
+		if (sibling->pmu != event->pmu &&
 				!is_software_event(sibling))
-			वापस -EINVAL;
-	पूर्ण
+			return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u64 arm_ccn_pmu_पढ़ो_counter(काष्ठा arm_ccn *ccn, पूर्णांक idx)
-अणु
+static u64 arm_ccn_pmu_read_counter(struct arm_ccn *ccn, int idx)
+{
 	u64 res;
 
-	अगर (idx == CCN_IDX_PMU_CYCLE_COUNTER) अणु
-#अगर_घोषित पढ़ोq
-		res = पढ़ोq(ccn->dt.base + CCN_DT_PMCCNTR);
-#अन्यथा
-		/* 40 bit counter, can करो snapshot and पढ़ो in two parts */
-		ग_लिखोl(0x1, ccn->dt.base + CCN_DT_PMSR_REQ);
-		जबतक (!(पढ़ोl(ccn->dt.base + CCN_DT_PMSR) & 0x1))
+	if (idx == CCN_IDX_PMU_CYCLE_COUNTER) {
+#ifdef readq
+		res = readq(ccn->dt.base + CCN_DT_PMCCNTR);
+#else
+		/* 40 bit counter, can do snapshot and read in two parts */
+		writel(0x1, ccn->dt.base + CCN_DT_PMSR_REQ);
+		while (!(readl(ccn->dt.base + CCN_DT_PMSR) & 0x1))
 			;
-		ग_लिखोl(0x1, ccn->dt.base + CCN_DT_PMSR_CLR);
-		res = पढ़ोl(ccn->dt.base + CCN_DT_PMCCNTRSR + 4) & 0xff;
+		writel(0x1, ccn->dt.base + CCN_DT_PMSR_CLR);
+		res = readl(ccn->dt.base + CCN_DT_PMCCNTRSR + 4) & 0xff;
 		res <<= 32;
-		res |= पढ़ोl(ccn->dt.base + CCN_DT_PMCCNTRSR);
-#पूर्ण_अगर
-	पूर्ण अन्यथा अणु
-		res = पढ़ोl(ccn->dt.base + CCN_DT_PMEVCNT(idx));
-	पूर्ण
+		res |= readl(ccn->dt.base + CCN_DT_PMCCNTRSR);
+#endif
+	} else {
+		res = readl(ccn->dt.base + CCN_DT_PMEVCNT(idx));
+	}
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल व्योम arm_ccn_pmu_event_update(काष्ठा perf_event *event)
-अणु
-	काष्ठा arm_ccn *ccn = pmu_to_arm_ccn(event->pmu);
-	काष्ठा hw_perf_event *hw = &event->hw;
+static void arm_ccn_pmu_event_update(struct perf_event *event)
+{
+	struct arm_ccn *ccn = pmu_to_arm_ccn(event->pmu);
+	struct hw_perf_event *hw = &event->hw;
 	u64 prev_count, new_count, mask;
 
-	करो अणु
-		prev_count = local64_पढ़ो(&hw->prev_count);
-		new_count = arm_ccn_pmu_पढ़ो_counter(ccn, hw->idx);
-	पूर्ण जबतक (local64_xchg(&hw->prev_count, new_count) != prev_count);
+	do {
+		prev_count = local64_read(&hw->prev_count);
+		new_count = arm_ccn_pmu_read_counter(ccn, hw->idx);
+	} while (local64_xchg(&hw->prev_count, new_count) != prev_count);
 
 	mask = (1LLU << (hw->idx == CCN_IDX_PMU_CYCLE_COUNTER ? 40 : 32)) - 1;
 
 	local64_add((new_count - prev_count) & mask, &event->count);
-पूर्ण
+}
 
-अटल व्योम arm_ccn_pmu_xp_dt_config(काष्ठा perf_event *event, पूर्णांक enable)
-अणु
-	काष्ठा arm_ccn *ccn = pmu_to_arm_ccn(event->pmu);
-	काष्ठा hw_perf_event *hw = &event->hw;
-	काष्ठा arm_ccn_component *xp;
+static void arm_ccn_pmu_xp_dt_config(struct perf_event *event, int enable)
+{
+	struct arm_ccn *ccn = pmu_to_arm_ccn(event->pmu);
+	struct hw_perf_event *hw = &event->hw;
+	struct arm_ccn_component *xp;
 	u32 val, dt_cfg;
 
-	/* Nothing to करो क्रम cycle counter */
-	अगर (hw->idx == CCN_IDX_PMU_CYCLE_COUNTER)
-		वापस;
+	/* Nothing to do for cycle counter */
+	if (hw->idx == CCN_IDX_PMU_CYCLE_COUNTER)
+		return;
 
-	अगर (CCN_CONFIG_TYPE(event->attr.config) == CCN_TYPE_XP)
+	if (CCN_CONFIG_TYPE(event->attr.config) == CCN_TYPE_XP)
 		xp = &ccn->xp[CCN_CONFIG_XP(event->attr.config)];
-	अन्यथा
+	else
 		xp = &ccn->xp[arm_ccn_node_to_xp(
 				CCN_CONFIG_NODE(event->attr.config))];
 
-	अगर (enable)
+	if (enable)
 		dt_cfg = hw->event_base;
-	अन्यथा
+	else
 		dt_cfg = CCN_XP_DT_CONFIG__DT_CFG__PASS_THROUGH;
 
 	spin_lock(&ccn->dt.config_lock);
 
-	val = पढ़ोl(xp->base + CCN_XP_DT_CONFIG);
+	val = readl(xp->base + CCN_XP_DT_CONFIG);
 	val &= ~(CCN_XP_DT_CONFIG__DT_CFG__MASK <<
 			CCN_XP_DT_CONFIG__DT_CFG__SHIFT(hw->idx));
 	val |= dt_cfg << CCN_XP_DT_CONFIG__DT_CFG__SHIFT(hw->idx);
-	ग_लिखोl(val, xp->base + CCN_XP_DT_CONFIG);
+	writel(val, xp->base + CCN_XP_DT_CONFIG);
 
 	spin_unlock(&ccn->dt.config_lock);
-पूर्ण
+}
 
-अटल व्योम arm_ccn_pmu_event_start(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
-	काष्ठा arm_ccn *ccn = pmu_to_arm_ccn(event->pmu);
-	काष्ठा hw_perf_event *hw = &event->hw;
+static void arm_ccn_pmu_event_start(struct perf_event *event, int flags)
+{
+	struct arm_ccn *ccn = pmu_to_arm_ccn(event->pmu);
+	struct hw_perf_event *hw = &event->hw;
 
 	local64_set(&event->hw.prev_count,
-			arm_ccn_pmu_पढ़ो_counter(ccn, hw->idx));
+			arm_ccn_pmu_read_counter(ccn, hw->idx));
 	hw->state = 0;
 
 	/* Set the DT bus input, engaging the counter */
 	arm_ccn_pmu_xp_dt_config(event, 1);
-पूर्ण
+}
 
-अटल व्योम arm_ccn_pmu_event_stop(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
-	काष्ठा hw_perf_event *hw = &event->hw;
+static void arm_ccn_pmu_event_stop(struct perf_event *event, int flags)
+{
+	struct hw_perf_event *hw = &event->hw;
 
 	/* Disable counting, setting the DT bus to pass-through mode */
 	arm_ccn_pmu_xp_dt_config(event, 0);
 
-	अगर (flags & PERF_EF_UPDATE)
+	if (flags & PERF_EF_UPDATE)
 		arm_ccn_pmu_event_update(event);
 
 	hw->state |= PERF_HES_STOPPED;
-पूर्ण
+}
 
-अटल व्योम arm_ccn_pmu_xp_watchpoपूर्णांक_config(काष्ठा perf_event *event)
-अणु
-	काष्ठा arm_ccn *ccn = pmu_to_arm_ccn(event->pmu);
-	काष्ठा hw_perf_event *hw = &event->hw;
-	काष्ठा arm_ccn_component *source =
+static void arm_ccn_pmu_xp_watchpoint_config(struct perf_event *event)
+{
+	struct arm_ccn *ccn = pmu_to_arm_ccn(event->pmu);
+	struct hw_perf_event *hw = &event->hw;
+	struct arm_ccn_component *source =
 			ccn->dt.pmu_counters[hw->idx].source;
-	अचिन्हित दीर्घ wp = hw->config_base;
+	unsigned long wp = hw->config_base;
 	u32 val;
 	u64 cmp_l = event->attr.config1;
 	u64 cmp_h = event->attr.config2;
@@ -956,11 +955,11 @@ module_param_named(pmu_poll_period_us, arm_ccn_pmu_poll_period_us, uपूर्
 
 	hw->event_base = CCN_XP_DT_CONFIG__DT_CFG__WATCHPOINT(wp);
 
-	/* Direction (RX/TX), device (port) & भव channel */
-	val = पढ़ोl(source->base + CCN_XP_DT_INTERFACE_SEL);
+	/* Direction (RX/TX), device (port) & virtual channel */
+	val = readl(source->base + CCN_XP_DT_INTERFACE_SEL);
 	val &= ~(CCN_XP_DT_INTERFACE_SEL__DT_IO_SEL__MASK <<
 			CCN_XP_DT_INTERFACE_SEL__DT_IO_SEL__SHIFT(wp));
-	val |= CCN_CONFIG_सूची(event->attr.config) <<
+	val |= CCN_CONFIG_DIR(event->attr.config) <<
 			CCN_XP_DT_INTERFACE_SEL__DT_IO_SEL__SHIFT(wp);
 	val &= ~(CCN_XP_DT_INTERFACE_SEL__DT_DEV_SEL__MASK <<
 			CCN_XP_DT_INTERFACE_SEL__DT_DEV_SEL__SHIFT(wp));
@@ -970,30 +969,30 @@ module_param_named(pmu_poll_period_us, arm_ccn_pmu_poll_period_us, uपूर्
 			CCN_XP_DT_INTERFACE_SEL__DT_VC_SEL__SHIFT(wp));
 	val |= CCN_CONFIG_VC(event->attr.config) <<
 			CCN_XP_DT_INTERFACE_SEL__DT_VC_SEL__SHIFT(wp);
-	ग_लिखोl(val, source->base + CCN_XP_DT_INTERFACE_SEL);
+	writel(val, source->base + CCN_XP_DT_INTERFACE_SEL);
 
 	/* Comparison values */
-	ग_लिखोl(cmp_l & 0xffffffff, source->base + CCN_XP_DT_CMP_VAL_L(wp));
-	ग_लिखोl((cmp_l >> 32) & 0x7fffffff,
+	writel(cmp_l & 0xffffffff, source->base + CCN_XP_DT_CMP_VAL_L(wp));
+	writel((cmp_l >> 32) & 0x7fffffff,
 			source->base + CCN_XP_DT_CMP_VAL_L(wp) + 4);
-	ग_लिखोl(cmp_h & 0xffffffff, source->base + CCN_XP_DT_CMP_VAL_H(wp));
-	ग_लिखोl((cmp_h >> 32) & 0x0fffffff,
+	writel(cmp_h & 0xffffffff, source->base + CCN_XP_DT_CMP_VAL_H(wp));
+	writel((cmp_h >> 32) & 0x0fffffff,
 			source->base + CCN_XP_DT_CMP_VAL_H(wp) + 4);
 
 	/* Mask */
-	ग_लिखोl(mask_l & 0xffffffff, source->base + CCN_XP_DT_CMP_MASK_L(wp));
-	ग_लिखोl((mask_l >> 32) & 0x7fffffff,
+	writel(mask_l & 0xffffffff, source->base + CCN_XP_DT_CMP_MASK_L(wp));
+	writel((mask_l >> 32) & 0x7fffffff,
 			source->base + CCN_XP_DT_CMP_MASK_L(wp) + 4);
-	ग_लिखोl(mask_h & 0xffffffff, source->base + CCN_XP_DT_CMP_MASK_H(wp));
-	ग_लिखोl((mask_h >> 32) & 0x0fffffff,
+	writel(mask_h & 0xffffffff, source->base + CCN_XP_DT_CMP_MASK_H(wp));
+	writel((mask_h >> 32) & 0x0fffffff,
 			source->base + CCN_XP_DT_CMP_MASK_H(wp) + 4);
-पूर्ण
+}
 
-अटल व्योम arm_ccn_pmu_xp_event_config(काष्ठा perf_event *event)
-अणु
-	काष्ठा arm_ccn *ccn = pmu_to_arm_ccn(event->pmu);
-	काष्ठा hw_perf_event *hw = &event->hw;
-	काष्ठा arm_ccn_component *source =
+static void arm_ccn_pmu_xp_event_config(struct perf_event *event)
+{
+	struct arm_ccn *ccn = pmu_to_arm_ccn(event->pmu);
+	struct hw_perf_event *hw = &event->hw;
+	struct arm_ccn_component *source =
 			ccn->dt.pmu_counters[hw->idx].source;
 	u32 val, id;
 
@@ -1003,18 +1002,18 @@ module_param_named(pmu_poll_period_us, arm_ccn_pmu_poll_period_us, uपूर्
 			(CCN_CONFIG_BUS(event->attr.config) << 3) |
 			(CCN_CONFIG_EVENT(event->attr.config) << 0);
 
-	val = पढ़ोl(source->base + CCN_XP_PMU_EVENT_SEL);
+	val = readl(source->base + CCN_XP_PMU_EVENT_SEL);
 	val &= ~(CCN_XP_PMU_EVENT_SEL__ID__MASK <<
 			CCN_XP_PMU_EVENT_SEL__ID__SHIFT(hw->config_base));
 	val |= id << CCN_XP_PMU_EVENT_SEL__ID__SHIFT(hw->config_base);
-	ग_लिखोl(val, source->base + CCN_XP_PMU_EVENT_SEL);
-पूर्ण
+	writel(val, source->base + CCN_XP_PMU_EVENT_SEL);
+}
 
-अटल व्योम arm_ccn_pmu_node_event_config(काष्ठा perf_event *event)
-अणु
-	काष्ठा arm_ccn *ccn = pmu_to_arm_ccn(event->pmu);
-	काष्ठा hw_perf_event *hw = &event->hw;
-	काष्ठा arm_ccn_component *source =
+static void arm_ccn_pmu_node_event_config(struct perf_event *event)
+{
+	struct arm_ccn *ccn = pmu_to_arm_ccn(event->pmu);
+	struct hw_perf_event *hw = &event->hw;
+	struct arm_ccn_component *source =
 			ccn->dt.pmu_counters[hw->idx].source;
 	u32 type = CCN_CONFIG_TYPE(event->attr.config);
 	u32 val, port;
@@ -1034,213 +1033,213 @@ module_param_named(pmu_poll_period_us, arm_ccn_pmu_poll_period_us, uपूर्
 			CCN_SBAS_PMU_EVENT_SEL__ID__MASK);
 	BUILD_BUG_ON(CCN_SBAS_PMU_EVENT_SEL__ID__MASK !=
 			CCN_RNI_PMU_EVENT_SEL__ID__MASK);
-	अगर (WARN_ON(type != CCN_TYPE_HNF && type != CCN_TYPE_SBAS &&
+	if (WARN_ON(type != CCN_TYPE_HNF && type != CCN_TYPE_SBAS &&
 			!arm_ccn_pmu_type_eq(type, CCN_TYPE_RNI_3P)))
-		वापस;
+		return;
 
-	/* Set the event id क्रम the pre-allocated counter */
-	val = पढ़ोl(source->base + CCN_HNF_PMU_EVENT_SEL);
+	/* Set the event id for the pre-allocated counter */
+	val = readl(source->base + CCN_HNF_PMU_EVENT_SEL);
 	val &= ~(CCN_HNF_PMU_EVENT_SEL__ID__MASK <<
 		CCN_HNF_PMU_EVENT_SEL__ID__SHIFT(hw->config_base));
 	val |= CCN_CONFIG_EVENT(event->attr.config) <<
 		CCN_HNF_PMU_EVENT_SEL__ID__SHIFT(hw->config_base);
-	ग_लिखोl(val, source->base + CCN_HNF_PMU_EVENT_SEL);
-पूर्ण
+	writel(val, source->base + CCN_HNF_PMU_EVENT_SEL);
+}
 
-अटल व्योम arm_ccn_pmu_event_config(काष्ठा perf_event *event)
-अणु
-	काष्ठा arm_ccn *ccn = pmu_to_arm_ccn(event->pmu);
-	काष्ठा hw_perf_event *hw = &event->hw;
+static void arm_ccn_pmu_event_config(struct perf_event *event)
+{
+	struct arm_ccn *ccn = pmu_to_arm_ccn(event->pmu);
+	struct hw_perf_event *hw = &event->hw;
 	u32 xp, offset, val;
 
 	/* Cycle counter requires no setup */
-	अगर (hw->idx == CCN_IDX_PMU_CYCLE_COUNTER)
-		वापस;
+	if (hw->idx == CCN_IDX_PMU_CYCLE_COUNTER)
+		return;
 
-	अगर (CCN_CONFIG_TYPE(event->attr.config) == CCN_TYPE_XP)
+	if (CCN_CONFIG_TYPE(event->attr.config) == CCN_TYPE_XP)
 		xp = CCN_CONFIG_XP(event->attr.config);
-	अन्यथा
+	else
 		xp = arm_ccn_node_to_xp(CCN_CONFIG_NODE(event->attr.config));
 
 	spin_lock(&ccn->dt.config_lock);
 
-	/* Set the DT bus "distance" रेजिस्टर */
+	/* Set the DT bus "distance" register */
 	offset = (hw->idx / 4) * 4;
-	val = पढ़ोl(ccn->dt.base + CCN_DT_ACTIVE_DSM + offset);
+	val = readl(ccn->dt.base + CCN_DT_ACTIVE_DSM + offset);
 	val &= ~(CCN_DT_ACTIVE_DSM__DSM_ID__MASK <<
 			CCN_DT_ACTIVE_DSM__DSM_ID__SHIFT(hw->idx % 4));
 	val |= xp << CCN_DT_ACTIVE_DSM__DSM_ID__SHIFT(hw->idx % 4);
-	ग_लिखोl(val, ccn->dt.base + CCN_DT_ACTIVE_DSM + offset);
+	writel(val, ccn->dt.base + CCN_DT_ACTIVE_DSM + offset);
 
-	अगर (CCN_CONFIG_TYPE(event->attr.config) == CCN_TYPE_XP) अणु
-		अगर (CCN_CONFIG_EVENT(event->attr.config) ==
+	if (CCN_CONFIG_TYPE(event->attr.config) == CCN_TYPE_XP) {
+		if (CCN_CONFIG_EVENT(event->attr.config) ==
 				CCN_EVENT_WATCHPOINT)
-			arm_ccn_pmu_xp_watchpoपूर्णांक_config(event);
-		अन्यथा
+			arm_ccn_pmu_xp_watchpoint_config(event);
+		else
 			arm_ccn_pmu_xp_event_config(event);
-	पूर्ण अन्यथा अणु
+	} else {
 		arm_ccn_pmu_node_event_config(event);
-	पूर्ण
+	}
 
 	spin_unlock(&ccn->dt.config_lock);
-पूर्ण
+}
 
-अटल पूर्णांक arm_ccn_pmu_active_counters(काष्ठा arm_ccn *ccn)
-अणु
-	वापस biपंचांगap_weight(ccn->dt.pmu_counters_mask,
+static int arm_ccn_pmu_active_counters(struct arm_ccn *ccn)
+{
+	return bitmap_weight(ccn->dt.pmu_counters_mask,
 			     CCN_NUM_PMU_EVENT_COUNTERS + 1);
-पूर्ण
+}
 
-अटल पूर्णांक arm_ccn_pmu_event_add(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
-	पूर्णांक err;
-	काष्ठा hw_perf_event *hw = &event->hw;
-	काष्ठा arm_ccn *ccn = pmu_to_arm_ccn(event->pmu);
+static int arm_ccn_pmu_event_add(struct perf_event *event, int flags)
+{
+	int err;
+	struct hw_perf_event *hw = &event->hw;
+	struct arm_ccn *ccn = pmu_to_arm_ccn(event->pmu);
 
 	err = arm_ccn_pmu_event_alloc(event);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/*
-	 * Pin the समयr, so that the overflows are handled by the chosen
+	 * Pin the timer, so that the overflows are handled by the chosen
 	 * event->cpu (this is the same one as presented in "cpumask"
 	 * attribute).
 	 */
-	अगर (!ccn->irq && arm_ccn_pmu_active_counters(ccn) == 1)
-		hrसमयr_start(&ccn->dt.hrसमयr, arm_ccn_pmu_समयr_period(),
+	if (!ccn->irq && arm_ccn_pmu_active_counters(ccn) == 1)
+		hrtimer_start(&ccn->dt.hrtimer, arm_ccn_pmu_timer_period(),
 			      HRTIMER_MODE_REL_PINNED);
 
 	arm_ccn_pmu_event_config(event);
 
 	hw->state = PERF_HES_STOPPED;
 
-	अगर (flags & PERF_EF_START)
+	if (flags & PERF_EF_START)
 		arm_ccn_pmu_event_start(event, PERF_EF_UPDATE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम arm_ccn_pmu_event_del(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
-	काष्ठा arm_ccn *ccn = pmu_to_arm_ccn(event->pmu);
+static void arm_ccn_pmu_event_del(struct perf_event *event, int flags)
+{
+	struct arm_ccn *ccn = pmu_to_arm_ccn(event->pmu);
 
 	arm_ccn_pmu_event_stop(event, PERF_EF_UPDATE);
 
 	arm_ccn_pmu_event_release(event);
 
-	अगर (!ccn->irq && arm_ccn_pmu_active_counters(ccn) == 0)
-		hrसमयr_cancel(&ccn->dt.hrसमयr);
-पूर्ण
+	if (!ccn->irq && arm_ccn_pmu_active_counters(ccn) == 0)
+		hrtimer_cancel(&ccn->dt.hrtimer);
+}
 
-अटल व्योम arm_ccn_pmu_event_पढ़ो(काष्ठा perf_event *event)
-अणु
+static void arm_ccn_pmu_event_read(struct perf_event *event)
+{
 	arm_ccn_pmu_event_update(event);
-पूर्ण
+}
 
-अटल व्योम arm_ccn_pmu_enable(काष्ठा pmu *pmu)
-अणु
-	काष्ठा arm_ccn *ccn = pmu_to_arm_ccn(pmu);
+static void arm_ccn_pmu_enable(struct pmu *pmu)
+{
+	struct arm_ccn *ccn = pmu_to_arm_ccn(pmu);
 
-	u32 val = पढ़ोl(ccn->dt.base + CCN_DT_PMCR);
+	u32 val = readl(ccn->dt.base + CCN_DT_PMCR);
 	val |= CCN_DT_PMCR__PMU_EN;
-	ग_लिखोl(val, ccn->dt.base + CCN_DT_PMCR);
-पूर्ण
+	writel(val, ccn->dt.base + CCN_DT_PMCR);
+}
 
-अटल व्योम arm_ccn_pmu_disable(काष्ठा pmu *pmu)
-अणु
-	काष्ठा arm_ccn *ccn = pmu_to_arm_ccn(pmu);
+static void arm_ccn_pmu_disable(struct pmu *pmu)
+{
+	struct arm_ccn *ccn = pmu_to_arm_ccn(pmu);
 
-	u32 val = पढ़ोl(ccn->dt.base + CCN_DT_PMCR);
+	u32 val = readl(ccn->dt.base + CCN_DT_PMCR);
 	val &= ~CCN_DT_PMCR__PMU_EN;
-	ग_लिखोl(val, ccn->dt.base + CCN_DT_PMCR);
-पूर्ण
+	writel(val, ccn->dt.base + CCN_DT_PMCR);
+}
 
-अटल irqवापस_t arm_ccn_pmu_overflow_handler(काष्ठा arm_ccn_dt *dt)
-अणु
-	u32 pmovsr = पढ़ोl(dt->base + CCN_DT_PMOVSR);
-	पूर्णांक idx;
+static irqreturn_t arm_ccn_pmu_overflow_handler(struct arm_ccn_dt *dt)
+{
+	u32 pmovsr = readl(dt->base + CCN_DT_PMOVSR);
+	int idx;
 
-	अगर (!pmovsr)
-		वापस IRQ_NONE;
+	if (!pmovsr)
+		return IRQ_NONE;
 
-	ग_लिखोl(pmovsr, dt->base + CCN_DT_PMOVSR_CLR);
+	writel(pmovsr, dt->base + CCN_DT_PMOVSR_CLR);
 
 	BUILD_BUG_ON(CCN_IDX_PMU_CYCLE_COUNTER != CCN_NUM_PMU_EVENT_COUNTERS);
 
-	क्रम (idx = 0; idx < CCN_NUM_PMU_EVENT_COUNTERS + 1; idx++) अणु
-		काष्ठा perf_event *event = dt->pmu_counters[idx].event;
-		पूर्णांक overflowed = pmovsr & BIT(idx);
+	for (idx = 0; idx < CCN_NUM_PMU_EVENT_COUNTERS + 1; idx++) {
+		struct perf_event *event = dt->pmu_counters[idx].event;
+		int overflowed = pmovsr & BIT(idx);
 
 		WARN_ON_ONCE(overflowed && !event &&
 				idx != CCN_IDX_PMU_CYCLE_COUNTER);
 
-		अगर (!event || !overflowed)
-			जारी;
+		if (!event || !overflowed)
+			continue;
 
 		arm_ccn_pmu_event_update(event);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल क्रमागत hrसमयr_restart arm_ccn_pmu_समयr_handler(काष्ठा hrसमयr *hrसमयr)
-अणु
-	काष्ठा arm_ccn_dt *dt = container_of(hrसमयr, काष्ठा arm_ccn_dt,
-			hrसमयr);
-	अचिन्हित दीर्घ flags;
+static enum hrtimer_restart arm_ccn_pmu_timer_handler(struct hrtimer *hrtimer)
+{
+	struct arm_ccn_dt *dt = container_of(hrtimer, struct arm_ccn_dt,
+			hrtimer);
+	unsigned long flags;
 
 	local_irq_save(flags);
 	arm_ccn_pmu_overflow_handler(dt);
 	local_irq_restore(flags);
 
-	hrसमयr_क्रमward_now(hrसमयr, arm_ccn_pmu_समयr_period());
-	वापस HRTIMER_RESTART;
-पूर्ण
+	hrtimer_forward_now(hrtimer, arm_ccn_pmu_timer_period());
+	return HRTIMER_RESTART;
+}
 
 
-अटल पूर्णांक arm_ccn_pmu_offline_cpu(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node)
-अणु
-	काष्ठा arm_ccn_dt *dt = hlist_entry_safe(node, काष्ठा arm_ccn_dt, node);
-	काष्ठा arm_ccn *ccn = container_of(dt, काष्ठा arm_ccn, dt);
-	अचिन्हित पूर्णांक target;
+static int arm_ccn_pmu_offline_cpu(unsigned int cpu, struct hlist_node *node)
+{
+	struct arm_ccn_dt *dt = hlist_entry_safe(node, struct arm_ccn_dt, node);
+	struct arm_ccn *ccn = container_of(dt, struct arm_ccn, dt);
+	unsigned int target;
 
-	अगर (cpu != dt->cpu)
-		वापस 0;
+	if (cpu != dt->cpu)
+		return 0;
 	target = cpumask_any_but(cpu_online_mask, cpu);
-	अगर (target >= nr_cpu_ids)
-		वापस 0;
+	if (target >= nr_cpu_ids)
+		return 0;
 	perf_pmu_migrate_context(&dt->pmu, cpu, target);
 	dt->cpu = target;
-	अगर (ccn->irq)
-		WARN_ON(irq_set_affinity_hपूर्णांक(ccn->irq, cpumask_of(dt->cpu)));
-	वापस 0;
-पूर्ण
+	if (ccn->irq)
+		WARN_ON(irq_set_affinity_hint(ccn->irq, cpumask_of(dt->cpu)));
+	return 0;
+}
 
-अटल DEFINE_IDA(arm_ccn_pmu_ida);
+static DEFINE_IDA(arm_ccn_pmu_ida);
 
-अटल पूर्णांक arm_ccn_pmu_init(काष्ठा arm_ccn *ccn)
-अणु
-	पूर्णांक i;
-	अक्षर *name;
-	पूर्णांक err;
+static int arm_ccn_pmu_init(struct arm_ccn *ccn)
+{
+	int i;
+	char *name;
+	int err;
 
-	/* Initialize DT subप्रणाली */
+	/* Initialize DT subsystem */
 	ccn->dt.base = ccn->base + CCN_REGION_SIZE;
 	spin_lock_init(&ccn->dt.config_lock);
-	ग_लिखोl(CCN_DT_PMOVSR_CLR__MASK, ccn->dt.base + CCN_DT_PMOVSR_CLR);
-	ग_लिखोl(CCN_DT_CTL__DT_EN, ccn->dt.base + CCN_DT_CTL);
-	ग_लिखोl(CCN_DT_PMCR__OVFL_INTR_EN | CCN_DT_PMCR__PMU_EN,
+	writel(CCN_DT_PMOVSR_CLR__MASK, ccn->dt.base + CCN_DT_PMOVSR_CLR);
+	writel(CCN_DT_CTL__DT_EN, ccn->dt.base + CCN_DT_CTL);
+	writel(CCN_DT_PMCR__OVFL_INTR_EN | CCN_DT_PMCR__PMU_EN,
 			ccn->dt.base + CCN_DT_PMCR);
-	ग_लिखोl(0x1, ccn->dt.base + CCN_DT_PMSR_CLR);
-	क्रम (i = 0; i < ccn->num_xps; i++) अणु
-		ग_लिखोl(0, ccn->xp[i].base + CCN_XP_DT_CONFIG);
-		ग_लिखोl((CCN_XP_DT_CONTROL__WP_ARM_SEL__ALWAYS <<
+	writel(0x1, ccn->dt.base + CCN_DT_PMSR_CLR);
+	for (i = 0; i < ccn->num_xps; i++) {
+		writel(0, ccn->xp[i].base + CCN_XP_DT_CONFIG);
+		writel((CCN_XP_DT_CONTROL__WP_ARM_SEL__ALWAYS <<
 				CCN_XP_DT_CONTROL__WP_ARM_SEL__SHIFT(0)) |
 				(CCN_XP_DT_CONTROL__WP_ARM_SEL__ALWAYS <<
 				CCN_XP_DT_CONTROL__WP_ARM_SEL__SHIFT(1)) |
 				CCN_XP_DT_CONTROL__DT_ENABLE,
 				ccn->xp[i].base + CCN_XP_DT_CONTROL);
-	पूर्ण
+	}
 	ccn->dt.cmp_mask[CCN_IDX_MASK_ANY].l = ~0;
 	ccn->dt.cmp_mask[CCN_IDX_MASK_ANY].h = ~0;
 	ccn->dt.cmp_mask[CCN_IDX_MASK_EXACT].l = 0;
@@ -1252,19 +1251,19 @@ module_param_named(pmu_poll_period_us, arm_ccn_pmu_poll_period_us, uपूर्
 
 	/* Get a convenient /sys/event_source/devices/ name */
 	ccn->dt.id = ida_simple_get(&arm_ccn_pmu_ida, 0, 0, GFP_KERNEL);
-	अगर (ccn->dt.id == 0) अणु
+	if (ccn->dt.id == 0) {
 		name = "ccn";
-	पूर्ण अन्यथा अणु
-		name = devm_kaप्र_लिखो(ccn->dev, GFP_KERNEL, "ccn_%d",
+	} else {
+		name = devm_kasprintf(ccn->dev, GFP_KERNEL, "ccn_%d",
 				      ccn->dt.id);
-		अगर (!name) अणु
+		if (!name) {
 			err = -ENOMEM;
-			जाओ error_choose_name;
-		पूर्ण
-	पूर्ण
+			goto error_choose_name;
+		}
+	}
 
 	/* Perf driver registration */
-	ccn->dt.pmu = (काष्ठा pmu) अणु
+	ccn->dt.pmu = (struct pmu) {
 		.module = THIS_MODULE,
 		.attr_groups = arm_ccn_pmu_attr_groups,
 		.task_ctx_nr = perf_invalid_context,
@@ -1273,307 +1272,307 @@ module_param_named(pmu_poll_period_us, arm_ccn_pmu_poll_period_us, uपूर्
 		.del = arm_ccn_pmu_event_del,
 		.start = arm_ccn_pmu_event_start,
 		.stop = arm_ccn_pmu_event_stop,
-		.पढ़ो = arm_ccn_pmu_event_पढ़ो,
+		.read = arm_ccn_pmu_event_read,
 		.pmu_enable = arm_ccn_pmu_enable,
 		.pmu_disable = arm_ccn_pmu_disable,
 		.capabilities = PERF_PMU_CAP_NO_EXCLUDE,
-	पूर्ण;
+	};
 
-	/* No overflow पूर्णांकerrupt? Have to use a समयr instead. */
-	अगर (!ccn->irq) अणु
+	/* No overflow interrupt? Have to use a timer instead. */
+	if (!ccn->irq) {
 		dev_info(ccn->dev, "No access to interrupts, using timer.\n");
-		hrसमयr_init(&ccn->dt.hrसमयr, CLOCK_MONOTONIC,
+		hrtimer_init(&ccn->dt.hrtimer, CLOCK_MONOTONIC,
 				HRTIMER_MODE_REL);
-		ccn->dt.hrसमयr.function = arm_ccn_pmu_समयr_handler;
-	पूर्ण
+		ccn->dt.hrtimer.function = arm_ccn_pmu_timer_handler;
+	}
 
 	/* Pick one CPU which we will use to collect data from CCN... */
 	ccn->dt.cpu = raw_smp_processor_id();
 
-	/* Also make sure that the overflow पूर्णांकerrupt is handled by this CPU */
-	अगर (ccn->irq) अणु
-		err = irq_set_affinity_hपूर्णांक(ccn->irq, cpumask_of(ccn->dt.cpu));
-		अगर (err) अणु
+	/* Also make sure that the overflow interrupt is handled by this CPU */
+	if (ccn->irq) {
+		err = irq_set_affinity_hint(ccn->irq, cpumask_of(ccn->dt.cpu));
+		if (err) {
 			dev_err(ccn->dev, "Failed to set interrupt affinity!\n");
-			जाओ error_set_affinity;
-		पूर्ण
-	पूर्ण
+			goto error_set_affinity;
+		}
+	}
 
 	cpuhp_state_add_instance_nocalls(CPUHP_AP_PERF_ARM_CCN_ONLINE,
 					 &ccn->dt.node);
 
-	err = perf_pmu_रेजिस्टर(&ccn->dt.pmu, name, -1);
-	अगर (err)
-		जाओ error_pmu_रेजिस्टर;
+	err = perf_pmu_register(&ccn->dt.pmu, name, -1);
+	if (err)
+		goto error_pmu_register;
 
-	वापस 0;
+	return 0;
 
-error_pmu_रेजिस्टर:
-	cpuhp_state_हटाओ_instance_nocalls(CPUHP_AP_PERF_ARM_CCN_ONLINE,
+error_pmu_register:
+	cpuhp_state_remove_instance_nocalls(CPUHP_AP_PERF_ARM_CCN_ONLINE,
 					    &ccn->dt.node);
 error_set_affinity:
 error_choose_name:
-	ida_simple_हटाओ(&arm_ccn_pmu_ida, ccn->dt.id);
-	क्रम (i = 0; i < ccn->num_xps; i++)
-		ग_लिखोl(0, ccn->xp[i].base + CCN_XP_DT_CONTROL);
-	ग_लिखोl(0, ccn->dt.base + CCN_DT_PMCR);
-	वापस err;
-पूर्ण
+	ida_simple_remove(&arm_ccn_pmu_ida, ccn->dt.id);
+	for (i = 0; i < ccn->num_xps; i++)
+		writel(0, ccn->xp[i].base + CCN_XP_DT_CONTROL);
+	writel(0, ccn->dt.base + CCN_DT_PMCR);
+	return err;
+}
 
-अटल व्योम arm_ccn_pmu_cleanup(काष्ठा arm_ccn *ccn)
-अणु
-	पूर्णांक i;
+static void arm_ccn_pmu_cleanup(struct arm_ccn *ccn)
+{
+	int i;
 
-	cpuhp_state_हटाओ_instance_nocalls(CPUHP_AP_PERF_ARM_CCN_ONLINE,
+	cpuhp_state_remove_instance_nocalls(CPUHP_AP_PERF_ARM_CCN_ONLINE,
 					    &ccn->dt.node);
-	अगर (ccn->irq)
-		irq_set_affinity_hपूर्णांक(ccn->irq, शून्य);
-	क्रम (i = 0; i < ccn->num_xps; i++)
-		ग_लिखोl(0, ccn->xp[i].base + CCN_XP_DT_CONTROL);
-	ग_लिखोl(0, ccn->dt.base + CCN_DT_PMCR);
-	perf_pmu_unरेजिस्टर(&ccn->dt.pmu);
-	ida_simple_हटाओ(&arm_ccn_pmu_ida, ccn->dt.id);
-पूर्ण
+	if (ccn->irq)
+		irq_set_affinity_hint(ccn->irq, NULL);
+	for (i = 0; i < ccn->num_xps; i++)
+		writel(0, ccn->xp[i].base + CCN_XP_DT_CONTROL);
+	writel(0, ccn->dt.base + CCN_DT_PMCR);
+	perf_pmu_unregister(&ccn->dt.pmu);
+	ida_simple_remove(&arm_ccn_pmu_ida, ccn->dt.id);
+}
 
-अटल पूर्णांक arm_ccn_क्रम_each_valid_region(काष्ठा arm_ccn *ccn,
-		पूर्णांक (*callback)(काष्ठा arm_ccn *ccn, पूर्णांक region,
-		व्योम __iomem *base, u32 type, u32 id))
-अणु
-	पूर्णांक region;
+static int arm_ccn_for_each_valid_region(struct arm_ccn *ccn,
+		int (*callback)(struct arm_ccn *ccn, int region,
+		void __iomem *base, u32 type, u32 id))
+{
+	int region;
 
-	क्रम (region = 0; region < CCN_NUM_REGIONS; region++) अणु
+	for (region = 0; region < CCN_NUM_REGIONS; region++) {
 		u32 val, type, id;
-		व्योम __iomem *base;
-		पूर्णांक err;
+		void __iomem *base;
+		int err;
 
-		val = पढ़ोl(ccn->base + CCN_MN_OLY_COMP_LIST_63_0 +
+		val = readl(ccn->base + CCN_MN_OLY_COMP_LIST_63_0 +
 				4 * (region / 32));
-		अगर (!(val & (1 << (region % 32))))
-			जारी;
+		if (!(val & (1 << (region % 32))))
+			continue;
 
 		base = ccn->base + region * CCN_REGION_SIZE;
-		val = पढ़ोl(base + CCN_ALL_OLY_ID);
+		val = readl(base + CCN_ALL_OLY_ID);
 		type = (val >> CCN_ALL_OLY_ID__OLY_ID__SHIFT) &
 				CCN_ALL_OLY_ID__OLY_ID__MASK;
 		id = (val >> CCN_ALL_OLY_ID__NODE_ID__SHIFT) &
 				CCN_ALL_OLY_ID__NODE_ID__MASK;
 
 		err = callback(ccn, region, base, type, id);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक arm_ccn_get_nodes_num(काष्ठा arm_ccn *ccn, पूर्णांक region,
-		व्योम __iomem *base, u32 type, u32 id)
-अणु
+static int arm_ccn_get_nodes_num(struct arm_ccn *ccn, int region,
+		void __iomem *base, u32 type, u32 id)
+{
 
-	अगर (type == CCN_TYPE_XP && id >= ccn->num_xps)
+	if (type == CCN_TYPE_XP && id >= ccn->num_xps)
 		ccn->num_xps = id + 1;
-	अन्यथा अगर (id >= ccn->num_nodes)
+	else if (id >= ccn->num_nodes)
 		ccn->num_nodes = id + 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक arm_ccn_init_nodes(काष्ठा arm_ccn *ccn, पूर्णांक region,
-		व्योम __iomem *base, u32 type, u32 id)
-अणु
-	काष्ठा arm_ccn_component *component;
+static int arm_ccn_init_nodes(struct arm_ccn *ccn, int region,
+		void __iomem *base, u32 type, u32 id)
+{
+	struct arm_ccn_component *component;
 
 	dev_dbg(ccn->dev, "Region %d: id=%u, type=0x%02x\n", region, id, type);
 
-	चयन (type) अणु
-	हाल CCN_TYPE_MN:
+	switch (type) {
+	case CCN_TYPE_MN:
 		ccn->mn_id = id;
-		वापस 0;
-	हाल CCN_TYPE_DT:
-		वापस 0;
-	हाल CCN_TYPE_XP:
+		return 0;
+	case CCN_TYPE_DT:
+		return 0;
+	case CCN_TYPE_XP:
 		component = &ccn->xp[id];
-		अवरोध;
-	हाल CCN_TYPE_SBSX:
+		break;
+	case CCN_TYPE_SBSX:
 		ccn->sbsx_present = 1;
 		component = &ccn->node[id];
-		अवरोध;
-	हाल CCN_TYPE_SBAS:
+		break;
+	case CCN_TYPE_SBAS:
 		ccn->sbas_present = 1;
 		fallthrough;
-	शेष:
+	default:
 		component = &ccn->node[id];
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	component->base = base;
 	component->type = type;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल irqवापस_t arm_ccn_error_handler(काष्ठा arm_ccn *ccn,
-		स्थिर u32 *err_sig_val)
-अणु
+static irqreturn_t arm_ccn_error_handler(struct arm_ccn *ccn,
+		const u32 *err_sig_val)
+{
 	/* This should be really handled by firmware... */
 	dev_err(ccn->dev, "Error reported in %08x%08x%08x%08x%08x%08x.\n",
 			err_sig_val[5], err_sig_val[4], err_sig_val[3],
 			err_sig_val[2], err_sig_val[1], err_sig_val[0]);
 	dev_err(ccn->dev, "Disabling interrupt generation for all errors.\n");
-	ग_लिखोl(CCN_MN_ERRINT_STATUS__ALL_ERRORS__DISABLE,
+	writel(CCN_MN_ERRINT_STATUS__ALL_ERRORS__DISABLE,
 			ccn->base + CCN_MN_ERRINT_STATUS);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 
-अटल irqवापस_t arm_ccn_irq_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	irqवापस_t res = IRQ_NONE;
-	काष्ठा arm_ccn *ccn = dev_id;
+static irqreturn_t arm_ccn_irq_handler(int irq, void *dev_id)
+{
+	irqreturn_t res = IRQ_NONE;
+	struct arm_ccn *ccn = dev_id;
 	u32 err_sig_val[6];
 	u32 err_or;
-	पूर्णांक i;
+	int i;
 
-	/* PMU overflow is a special हाल */
-	err_or = err_sig_val[0] = पढ़ोl(ccn->base + CCN_MN_ERR_SIG_VAL_63_0);
-	अगर (err_or & CCN_MN_ERR_SIG_VAL_63_0__DT) अणु
+	/* PMU overflow is a special case */
+	err_or = err_sig_val[0] = readl(ccn->base + CCN_MN_ERR_SIG_VAL_63_0);
+	if (err_or & CCN_MN_ERR_SIG_VAL_63_0__DT) {
 		err_or &= ~CCN_MN_ERR_SIG_VAL_63_0__DT;
 		res = arm_ccn_pmu_overflow_handler(&ccn->dt);
-	पूर्ण
+	}
 
-	/* Have to पढ़ो all err_sig_vals to clear them */
-	क्रम (i = 1; i < ARRAY_SIZE(err_sig_val); i++) अणु
-		err_sig_val[i] = पढ़ोl(ccn->base +
+	/* Have to read all err_sig_vals to clear them */
+	for (i = 1; i < ARRAY_SIZE(err_sig_val); i++) {
+		err_sig_val[i] = readl(ccn->base +
 				CCN_MN_ERR_SIG_VAL_63_0 + i * 4);
 		err_or |= err_sig_val[i];
-	पूर्ण
-	अगर (err_or)
+	}
+	if (err_or)
 		res |= arm_ccn_error_handler(ccn, err_sig_val);
 
-	अगर (res != IRQ_NONE)
-		ग_लिखोl(CCN_MN_ERRINT_STATUS__INTREQ__DESSERT,
+	if (res != IRQ_NONE)
+		writel(CCN_MN_ERRINT_STATUS__INTREQ__DESSERT,
 				ccn->base + CCN_MN_ERRINT_STATUS);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
 
-अटल पूर्णांक arm_ccn_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा arm_ccn *ccn;
-	काष्ठा resource *res;
-	अचिन्हित पूर्णांक irq;
-	पूर्णांक err;
+static int arm_ccn_probe(struct platform_device *pdev)
+{
+	struct arm_ccn *ccn;
+	struct resource *res;
+	unsigned int irq;
+	int err;
 
-	ccn = devm_kzalloc(&pdev->dev, माप(*ccn), GFP_KERNEL);
-	अगर (!ccn)
-		वापस -ENOMEM;
+	ccn = devm_kzalloc(&pdev->dev, sizeof(*ccn), GFP_KERNEL);
+	if (!ccn)
+		return -ENOMEM;
 	ccn->dev = &pdev->dev;
-	platक्रमm_set_drvdata(pdev, ccn);
+	platform_set_drvdata(pdev, ccn);
 
-	ccn->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(ccn->base))
-		वापस PTR_ERR(ccn->base);
+	ccn->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(ccn->base))
+		return PTR_ERR(ccn->base);
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
-	अगर (!res)
-		वापस -EINVAL;
+	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
+	if (!res)
+		return -EINVAL;
 	irq = res->start;
 
-	/* Check अगर we can use the पूर्णांकerrupt */
-	ग_लिखोl(CCN_MN_ERRINT_STATUS__PMU_EVENTS__DISABLE,
+	/* Check if we can use the interrupt */
+	writel(CCN_MN_ERRINT_STATUS__PMU_EVENTS__DISABLE,
 			ccn->base + CCN_MN_ERRINT_STATUS);
-	अगर (पढ़ोl(ccn->base + CCN_MN_ERRINT_STATUS) &
-			CCN_MN_ERRINT_STATUS__PMU_EVENTS__DISABLED) अणु
-		/* Can set 'disable' bits, so can acknowledge पूर्णांकerrupts */
-		ग_लिखोl(CCN_MN_ERRINT_STATUS__PMU_EVENTS__ENABLE,
+	if (readl(ccn->base + CCN_MN_ERRINT_STATUS) &
+			CCN_MN_ERRINT_STATUS__PMU_EVENTS__DISABLED) {
+		/* Can set 'disable' bits, so can acknowledge interrupts */
+		writel(CCN_MN_ERRINT_STATUS__PMU_EVENTS__ENABLE,
 				ccn->base + CCN_MN_ERRINT_STATUS);
 		err = devm_request_irq(ccn->dev, irq, arm_ccn_irq_handler,
 				       IRQF_NOBALANCING | IRQF_NO_THREAD,
 				       dev_name(ccn->dev), ccn);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		ccn->irq = irq;
-	पूर्ण
+	}
 
 
 	/* Build topology */
 
-	err = arm_ccn_क्रम_each_valid_region(ccn, arm_ccn_get_nodes_num);
-	अगर (err)
-		वापस err;
+	err = arm_ccn_for_each_valid_region(ccn, arm_ccn_get_nodes_num);
+	if (err)
+		return err;
 
-	ccn->node = devm_kसुस्मृति(ccn->dev, ccn->num_nodes, माप(*ccn->node),
+	ccn->node = devm_kcalloc(ccn->dev, ccn->num_nodes, sizeof(*ccn->node),
 				 GFP_KERNEL);
-	ccn->xp = devm_kसुस्मृति(ccn->dev, ccn->num_xps, माप(*ccn->node),
+	ccn->xp = devm_kcalloc(ccn->dev, ccn->num_xps, sizeof(*ccn->node),
 			       GFP_KERNEL);
-	अगर (!ccn->node || !ccn->xp)
-		वापस -ENOMEM;
+	if (!ccn->node || !ccn->xp)
+		return -ENOMEM;
 
-	err = arm_ccn_क्रम_each_valid_region(ccn, arm_ccn_init_nodes);
-	अगर (err)
-		वापस err;
+	err = arm_ccn_for_each_valid_region(ccn, arm_ccn_init_nodes);
+	if (err)
+		return err;
 
-	वापस arm_ccn_pmu_init(ccn);
-पूर्ण
+	return arm_ccn_pmu_init(ccn);
+}
 
-अटल पूर्णांक arm_ccn_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा arm_ccn *ccn = platक्रमm_get_drvdata(pdev);
+static int arm_ccn_remove(struct platform_device *pdev)
+{
+	struct arm_ccn *ccn = platform_get_drvdata(pdev);
 
 	arm_ccn_pmu_cleanup(ccn);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id arm_ccn_match[] = अणु
-	अणु .compatible = "arm,ccn-502", पूर्ण,
-	अणु .compatible = "arm,ccn-504", पूर्ण,
-	अणु .compatible = "arm,ccn-512", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id arm_ccn_match[] = {
+	{ .compatible = "arm,ccn-502", },
+	{ .compatible = "arm,ccn-504", },
+	{ .compatible = "arm,ccn-512", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, arm_ccn_match);
 
-अटल काष्ठा platक्रमm_driver arm_ccn_driver = अणु
-	.driver = अणु
+static struct platform_driver arm_ccn_driver = {
+	.driver = {
 		.name = "arm-ccn",
 		.of_match_table = arm_ccn_match,
 		.suppress_bind_attrs = true,
-	पूर्ण,
+	},
 	.probe = arm_ccn_probe,
-	.हटाओ = arm_ccn_हटाओ,
-पूर्ण;
+	.remove = arm_ccn_remove,
+};
 
-अटल पूर्णांक __init arm_ccn_init(व्योम)
-अणु
-	पूर्णांक i, ret;
+static int __init arm_ccn_init(void)
+{
+	int i, ret;
 
 	ret = cpuhp_setup_state_multi(CPUHP_AP_PERF_ARM_CCN_ONLINE,
-				      "perf/arm/ccn:online", शून्य,
+				      "perf/arm/ccn:online", NULL,
 				      arm_ccn_pmu_offline_cpu);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	क्रम (i = 0; i < ARRAY_SIZE(arm_ccn_pmu_events); i++)
+	for (i = 0; i < ARRAY_SIZE(arm_ccn_pmu_events); i++)
 		arm_ccn_pmu_events_attrs[i] = &arm_ccn_pmu_events[i].attr.attr;
 
-	ret = platक्रमm_driver_रेजिस्टर(&arm_ccn_driver);
-	अगर (ret)
-		cpuhp_हटाओ_multi_state(CPUHP_AP_PERF_ARM_CCN_ONLINE);
-	वापस ret;
-पूर्ण
+	ret = platform_driver_register(&arm_ccn_driver);
+	if (ret)
+		cpuhp_remove_multi_state(CPUHP_AP_PERF_ARM_CCN_ONLINE);
+	return ret;
+}
 
-अटल व्योम __निकास arm_ccn_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&arm_ccn_driver);
-	cpuhp_हटाओ_multi_state(CPUHP_AP_PERF_ARM_CCN_ONLINE);
-पूर्ण
+static void __exit arm_ccn_exit(void)
+{
+	platform_driver_unregister(&arm_ccn_driver);
+	cpuhp_remove_multi_state(CPUHP_AP_PERF_ARM_CCN_ONLINE);
+}
 
 module_init(arm_ccn_init);
-module_निकास(arm_ccn_निकास);
+module_exit(arm_ccn_exit);
 
 MODULE_AUTHOR("Pawel Moll <pawel.moll@arm.com>");
 MODULE_LICENSE("GPL v2");

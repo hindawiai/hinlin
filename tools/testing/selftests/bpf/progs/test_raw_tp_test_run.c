@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
 
-#समावेश "vmlinux.h"
-#समावेश <bpf/bpf_helpers.h>
-#समावेश <bpf/bpf_tracing.h>
+#include "vmlinux.h"
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_tracing.h>
 
 __u32 count = 0;
 __u32 on_cpu = 0xffffffff;
 
 SEC("raw_tp/task_rename")
-पूर्णांक BPF_PROG(नाम, काष्ठा task_काष्ठा *task, अक्षर *comm)
-अणु
+int BPF_PROG(rename, struct task_struct *task, char *comm)
+{
 
 	count++;
-	अगर ((__u64) task == 0x1234ULL && (__u64) comm == 0x5678ULL) अणु
+	if ((__u64) task == 0x1234ULL && (__u64) comm == 0x5678ULL) {
 		on_cpu = bpf_get_smp_processor_id();
-		वापस (दीर्घ)task + (दीर्घ)comm;
-	पूर्ण
+		return (long)task + (long)comm;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";

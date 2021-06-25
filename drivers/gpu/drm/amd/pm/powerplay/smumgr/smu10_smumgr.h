@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,30 +21,30 @@
  *
  */
 
-#अगर_अघोषित PP_SMU10_SMUMANAGER_H
-#घोषणा PP_SMU10_SMUMANAGER_H
+#ifndef PP_SMU10_SMUMANAGER_H
+#define PP_SMU10_SMUMANAGER_H
 
-#समावेश "rv_ppsmc.h"
-#समावेश "smu10_driver_if.h"
+#include "rv_ppsmc.h"
+#include "smu10_driver_if.h"
 
-#घोषणा MAX_SMU_TABLE 2
+#define MAX_SMU_TABLE 2
 
-काष्ठा smu_table_entry अणु
-	uपूर्णांक32_t version;
-	uपूर्णांक32_t size;
-	uपूर्णांक32_t table_id;
-	uपूर्णांक64_t mc_addr;
-	व्योम *table;
-	काष्ठा amdgpu_bo *handle;
-पूर्ण;
+struct smu_table_entry {
+	uint32_t version;
+	uint32_t size;
+	uint32_t table_id;
+	uint64_t mc_addr;
+	void *table;
+	struct amdgpu_bo *handle;
+};
 
-काष्ठा smu_table_array अणु
-	काष्ठा smu_table_entry entry[MAX_SMU_TABLE];
-पूर्ण;
+struct smu_table_array {
+	struct smu_table_entry entry[MAX_SMU_TABLE];
+};
 
-काष्ठा smu10_smumgr अणु
-	काष्ठा smu_table_array            smu_tables;
-पूर्ण;
+struct smu10_smumgr {
+	struct smu_table_array            smu_tables;
+};
 
 
-#पूर्ण_अगर
+#endif

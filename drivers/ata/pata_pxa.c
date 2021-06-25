@@ -1,147 +1,146 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Generic PXA PATA driver
  *
  * Copyright (C) 2010 Marek Vasut <marek.vasut@gmail.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/ata.h>
-#समावेश <linux/libata.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/completion.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/blkdev.h>
+#include <linux/ata.h>
+#include <linux/libata.h>
+#include <linux/platform_device.h>
+#include <linux/dmaengine.h>
+#include <linux/slab.h>
+#include <linux/completion.h>
 
-#समावेश <scsi/scsi_host.h>
+#include <scsi/scsi_host.h>
 
-#समावेश <linux/platक्रमm_data/ata-pxa.h>
+#include <linux/platform_data/ata-pxa.h>
 
-#घोषणा DRV_NAME	"pata_pxa"
-#घोषणा DRV_VERSION	"0.1"
+#define DRV_NAME	"pata_pxa"
+#define DRV_VERSION	"0.1"
 
-काष्ठा pata_pxa_data अणु
-	काष्ठा dma_chan		*dma_chan;
+struct pata_pxa_data {
+	struct dma_chan		*dma_chan;
 	dma_cookie_t		dma_cookie;
-	काष्ठा completion	dma_करोne;
-पूर्ण;
+	struct completion	dma_done;
+};
 
 /*
- * DMA पूर्णांकerrupt handler.
+ * DMA interrupt handler.
  */
-अटल व्योम pxa_ata_dma_irq(व्योम *d)
-अणु
-	काष्ठा pata_pxa_data *pd = d;
-	क्रमागत dma_status status;
+static void pxa_ata_dma_irq(void *d)
+{
+	struct pata_pxa_data *pd = d;
+	enum dma_status status;
 
-	status = dmaengine_tx_status(pd->dma_chan, pd->dma_cookie, शून्य);
-	अगर (status == DMA_ERROR || status == DMA_COMPLETE)
-		complete(&pd->dma_करोne);
-पूर्ण
+	status = dmaengine_tx_status(pd->dma_chan, pd->dma_cookie, NULL);
+	if (status == DMA_ERROR || status == DMA_COMPLETE)
+		complete(&pd->dma_done);
+}
 
 /*
- * Prepare taskfile क्रम submission.
+ * Prepare taskfile for submission.
  */
-अटल क्रमागत ata_completion_errors pxa_qc_prep(काष्ठा ata_queued_cmd *qc)
-अणु
-	काष्ठा pata_pxa_data *pd = qc->ap->निजी_data;
-	काष्ठा dma_async_tx_descriptor *tx;
-	क्रमागत dma_transfer_direction dir;
+static enum ata_completion_errors pxa_qc_prep(struct ata_queued_cmd *qc)
+{
+	struct pata_pxa_data *pd = qc->ap->private_data;
+	struct dma_async_tx_descriptor *tx;
+	enum dma_transfer_direction dir;
 
-	अगर (!(qc->flags & ATA_QCFLAG_DMAMAP))
-		वापस AC_ERR_OK;
+	if (!(qc->flags & ATA_QCFLAG_DMAMAP))
+		return AC_ERR_OK;
 
 	dir = (qc->dma_dir == DMA_TO_DEVICE ? DMA_MEM_TO_DEV : DMA_DEV_TO_MEM);
 	tx = dmaengine_prep_slave_sg(pd->dma_chan, qc->sg, qc->n_elem, dir,
 				     DMA_PREP_INTERRUPT);
-	अगर (!tx) अणु
+	if (!tx) {
 		ata_dev_err(qc->dev, "prep_slave_sg() failed\n");
-		वापस AC_ERR_OK;
-	पूर्ण
+		return AC_ERR_OK;
+	}
 	tx->callback = pxa_ata_dma_irq;
 	tx->callback_param = pd;
 	pd->dma_cookie = dmaengine_submit(tx);
 
-	वापस AC_ERR_OK;
-पूर्ण
+	return AC_ERR_OK;
+}
 
 /*
- * Configure the DMA controller, load the DMA descriptors, but करोn't start the
+ * Configure the DMA controller, load the DMA descriptors, but don't start the
  * DMA controller yet. Only issue the ATA command.
  */
-अटल व्योम pxa_bmdma_setup(काष्ठा ata_queued_cmd *qc)
-अणु
+static void pxa_bmdma_setup(struct ata_queued_cmd *qc)
+{
 	qc->ap->ops->sff_exec_command(qc->ap, &qc->tf);
-पूर्ण
+}
 
 /*
  * Execute the DMA transfer.
  */
-अटल व्योम pxa_bmdma_start(काष्ठा ata_queued_cmd *qc)
-अणु
-	काष्ठा pata_pxa_data *pd = qc->ap->निजी_data;
-	init_completion(&pd->dma_करोne);
+static void pxa_bmdma_start(struct ata_queued_cmd *qc)
+{
+	struct pata_pxa_data *pd = qc->ap->private_data;
+	init_completion(&pd->dma_done);
 	dma_async_issue_pending(pd->dma_chan);
-पूर्ण
+}
 
 /*
  * Wait until the DMA transfer completes, then stop the DMA controller.
  */
-अटल व्योम pxa_bmdma_stop(काष्ठा ata_queued_cmd *qc)
-अणु
-	काष्ठा pata_pxa_data *pd = qc->ap->निजी_data;
-	क्रमागत dma_status status;
+static void pxa_bmdma_stop(struct ata_queued_cmd *qc)
+{
+	struct pata_pxa_data *pd = qc->ap->private_data;
+	enum dma_status status;
 
-	status = dmaengine_tx_status(pd->dma_chan, pd->dma_cookie, शून्य);
-	अगर (status != DMA_ERROR && status != DMA_COMPLETE &&
-	    रुको_क्रम_completion_समयout(&pd->dma_करोne, HZ))
+	status = dmaengine_tx_status(pd->dma_chan, pd->dma_cookie, NULL);
+	if (status != DMA_ERROR && status != DMA_COMPLETE &&
+	    wait_for_completion_timeout(&pd->dma_done, HZ))
 		ata_dev_err(qc->dev, "Timeout waiting for DMA completion!");
 
 	dmaengine_terminate_all(pd->dma_chan);
-पूर्ण
+}
 
 /*
  * Read DMA status. The bmdma_stop() will take care of properly finishing the
- * DMA transfer so we always have DMA-complete पूर्णांकerrupt here.
+ * DMA transfer so we always have DMA-complete interrupt here.
  */
-अटल अचिन्हित अक्षर pxa_bmdma_status(काष्ठा ata_port *ap)
-अणु
-	काष्ठा pata_pxa_data *pd = ap->निजी_data;
-	अचिन्हित अक्षर ret = ATA_DMA_INTR;
-	काष्ठा dma_tx_state state;
-	क्रमागत dma_status status;
+static unsigned char pxa_bmdma_status(struct ata_port *ap)
+{
+	struct pata_pxa_data *pd = ap->private_data;
+	unsigned char ret = ATA_DMA_INTR;
+	struct dma_tx_state state;
+	enum dma_status status;
 
 	status = dmaengine_tx_status(pd->dma_chan, pd->dma_cookie, &state);
-	अगर (status != DMA_COMPLETE)
+	if (status != DMA_COMPLETE)
 		ret |= ATA_DMA_ERR;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * No IRQ रेजिस्टर present so we करो nothing.
+ * No IRQ register present so we do nothing.
  */
-अटल व्योम pxa_irq_clear(काष्ठा ata_port *ap)
-अणु
-पूर्ण
+static void pxa_irq_clear(struct ata_port *ap)
+{
+}
 
 /*
- * Check क्रम ATAPI DMA. ATAPI DMA is unsupported by this driver. It's still
+ * Check for ATAPI DMA. ATAPI DMA is unsupported by this driver. It's still
  * unclear why ATAPI has DMA issues.
  */
-अटल पूर्णांक pxa_check_atapi_dma(काष्ठा ata_queued_cmd *qc)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static int pxa_check_atapi_dma(struct ata_queued_cmd *qc)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल काष्ठा scsi_host_ढाँचा pxa_ata_sht = अणु
+static struct scsi_host_template pxa_ata_sht = {
 	ATA_BMDMA_SHT(DRV_NAME),
-पूर्ण;
+};
 
-अटल काष्ठा ata_port_operations pxa_ata_port_ops = अणु
+static struct ata_port_operations pxa_ata_port_ops = {
 	.inherits		= &ata_bmdma_port_ops,
 	.cable_detect		= ata_cable_40wire,
 
@@ -155,20 +154,20 @@
 	.sff_irq_clear		= pxa_irq_clear,
 
 	.qc_prep		= pxa_qc_prep,
-पूर्ण;
+};
 
-अटल पूर्णांक pxa_ata_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ata_host *host;
-	काष्ठा ata_port *ap;
-	काष्ठा pata_pxa_data *data;
-	काष्ठा resource *cmd_res;
-	काष्ठा resource *ctl_res;
-	काष्ठा resource *dma_res;
-	काष्ठा resource *irq_res;
-	काष्ठा pata_pxa_pdata *pdata = dev_get_platdata(&pdev->dev);
-	काष्ठा dma_slave_config	config;
-	पूर्णांक ret = 0;
+static int pxa_ata_probe(struct platform_device *pdev)
+{
+	struct ata_host *host;
+	struct ata_port *ap;
+	struct pata_pxa_data *data;
+	struct resource *cmd_res;
+	struct resource *ctl_res;
+	struct resource *dma_res;
+	struct resource *irq_res;
+	struct pata_pxa_pdata *pdata = dev_get_platdata(&pdev->dev);
+	struct dma_slave_config	config;
+	int ret = 0;
 
 	/*
 	 * Resource validation, three resources are needed:
@@ -177,45 +176,45 @@
 	 *  - DMA port base address
 	 *  - IRQ pin
 	 */
-	अगर (pdev->num_resources != 4) अणु
+	if (pdev->num_resources != 4) {
 		dev_err(&pdev->dev, "invalid number of resources\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
 	 * CMD port base address
 	 */
-	cmd_res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (unlikely(cmd_res == शून्य))
-		वापस -EINVAL;
+	cmd_res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (unlikely(cmd_res == NULL))
+		return -EINVAL;
 
 	/*
 	 * CTL port base address
 	 */
-	ctl_res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
-	अगर (unlikely(ctl_res == शून्य))
-		वापस -EINVAL;
+	ctl_res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+	if (unlikely(ctl_res == NULL))
+		return -EINVAL;
 
 	/*
 	 * DMA port base address
 	 */
-	dma_res = platक्रमm_get_resource(pdev, IORESOURCE_DMA, 0);
-	अगर (unlikely(dma_res == शून्य))
-		वापस -EINVAL;
+	dma_res = platform_get_resource(pdev, IORESOURCE_DMA, 0);
+	if (unlikely(dma_res == NULL))
+		return -EINVAL;
 
 	/*
 	 * IRQ pin
 	 */
-	irq_res = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
-	अगर (unlikely(irq_res == शून्य))
-		वापस -EINVAL;
+	irq_res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
+	if (unlikely(irq_res == NULL))
+		return -EINVAL;
 
 	/*
 	 * Allocate the host
 	 */
 	host = ata_host_alloc(&pdev->dev, 1);
-	अगर (!host)
-		वापस -ENOMEM;
+	if (!host)
+		return -ENOMEM;
 
 	ap		= host->ports[0];
 	ap->ops		= &pxa_ata_port_ops;
@@ -230,41 +229,41 @@
 						resource_size(dma_res));
 
 	/*
-	 * Adjust रेजिस्टर offsets
+	 * Adjust register offsets
 	 */
 	ap->ioaddr.altstatus_addr = ap->ioaddr.ctl_addr;
 	ap->ioaddr.data_addr	= ap->ioaddr.cmd_addr +
-					(ATA_REG_DATA << pdata->reg_shअगरt);
+					(ATA_REG_DATA << pdata->reg_shift);
 	ap->ioaddr.error_addr	= ap->ioaddr.cmd_addr +
-					(ATA_REG_ERR << pdata->reg_shअगरt);
+					(ATA_REG_ERR << pdata->reg_shift);
 	ap->ioaddr.feature_addr	= ap->ioaddr.cmd_addr +
-					(ATA_REG_FEATURE << pdata->reg_shअगरt);
+					(ATA_REG_FEATURE << pdata->reg_shift);
 	ap->ioaddr.nsect_addr	= ap->ioaddr.cmd_addr +
-					(ATA_REG_NSECT << pdata->reg_shअगरt);
+					(ATA_REG_NSECT << pdata->reg_shift);
 	ap->ioaddr.lbal_addr	= ap->ioaddr.cmd_addr +
-					(ATA_REG_LBAL << pdata->reg_shअगरt);
+					(ATA_REG_LBAL << pdata->reg_shift);
 	ap->ioaddr.lbam_addr	= ap->ioaddr.cmd_addr +
-					(ATA_REG_LBAM << pdata->reg_shअगरt);
+					(ATA_REG_LBAM << pdata->reg_shift);
 	ap->ioaddr.lbah_addr	= ap->ioaddr.cmd_addr +
-					(ATA_REG_LBAH << pdata->reg_shअगरt);
+					(ATA_REG_LBAH << pdata->reg_shift);
 	ap->ioaddr.device_addr	= ap->ioaddr.cmd_addr +
-					(ATA_REG_DEVICE << pdata->reg_shअगरt);
+					(ATA_REG_DEVICE << pdata->reg_shift);
 	ap->ioaddr.status_addr	= ap->ioaddr.cmd_addr +
-					(ATA_REG_STATUS << pdata->reg_shअगरt);
+					(ATA_REG_STATUS << pdata->reg_shift);
 	ap->ioaddr.command_addr	= ap->ioaddr.cmd_addr +
-					(ATA_REG_CMD << pdata->reg_shअगरt);
+					(ATA_REG_CMD << pdata->reg_shift);
 
 	/*
-	 * Allocate and load driver's पूर्णांकernal data काष्ठाure
+	 * Allocate and load driver's internal data structure
 	 */
-	data = devm_kzalloc(&pdev->dev, माप(काष्ठा pata_pxa_data),
+	data = devm_kzalloc(&pdev->dev, sizeof(struct pata_pxa_data),
 								GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	if (!data)
+		return -ENOMEM;
 
-	ap->निजी_data = data;
+	ap->private_data = data;
 
-	स_रखो(&config, 0, माप(config));
+	memset(&config, 0, sizeof(config));
 	config.src_addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
 	config.dst_addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
 	config.src_addr = dma_res->start;
@@ -277,46 +276,46 @@
 	 */
 	data->dma_chan =
 		dma_request_slave_channel(&pdev->dev, "data");
-	अगर (!data->dma_chan)
-		वापस -EBUSY;
+	if (!data->dma_chan)
+		return -EBUSY;
 	ret = dmaengine_slave_config(data->dma_chan, &config);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "dma configuration failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
 	 * Activate the ATA host
 	 */
-	ret = ata_host_activate(host, irq_res->start, ata_sff_पूर्णांकerrupt,
+	ret = ata_host_activate(host, irq_res->start, ata_sff_interrupt,
 				pdata->irq_flags, &pxa_ata_sht);
-	अगर (ret)
+	if (ret)
 		dma_release_channel(data->dma_chan);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pxa_ata_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ata_host *host = platक्रमm_get_drvdata(pdev);
-	काष्ठा pata_pxa_data *data = host->ports[0]->निजी_data;
+static int pxa_ata_remove(struct platform_device *pdev)
+{
+	struct ata_host *host = platform_get_drvdata(pdev);
+	struct pata_pxa_data *data = host->ports[0]->private_data;
 
 	dma_release_channel(data->dma_chan);
 
 	ata_host_detach(host);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver pxa_ata_driver = अणु
+static struct platform_driver pxa_ata_driver = {
 	.probe		= pxa_ata_probe,
-	.हटाओ		= pxa_ata_हटाओ,
-	.driver		= अणु
+	.remove		= pxa_ata_remove,
+	.driver		= {
 		.name		= DRV_NAME,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(pxa_ata_driver);
+module_platform_driver(pxa_ata_driver);
 
 MODULE_AUTHOR("Marek Vasut <marek.vasut@gmail.com>");
 MODULE_DESCRIPTION("DMA-capable driver for PATA on PXA CPU");

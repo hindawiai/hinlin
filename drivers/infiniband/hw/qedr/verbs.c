@@ -1,24 +1,23 @@
-<शैली गुरु>
 /* QLogic qedr NIC Driver
  * Copyright (c) 2015-2016  QLogic Corporation
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and /or other materials
+ *        disclaimer in the documentation and /or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,106 +29,106 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/crc32.h>
-#समावेश <net/ip.h>
-#समावेश <net/ipv6.h>
-#समावेश <net/udp.h>
-#समावेश <linux/iommu.h>
+#include <linux/dma-mapping.h>
+#include <linux/crc32.h>
+#include <net/ip.h>
+#include <net/ipv6.h>
+#include <net/udp.h>
+#include <linux/iommu.h>
 
-#समावेश <rdma/ib_verbs.h>
-#समावेश <rdma/ib_user_verbs.h>
-#समावेश <rdma/iw_cm.h>
-#समावेश <rdma/ib_uस्मृति.स>
-#समावेश <rdma/ib_addr.h>
-#समावेश <rdma/ib_cache.h>
-#समावेश <rdma/uverbs_ioctl.h>
+#include <rdma/ib_verbs.h>
+#include <rdma/ib_user_verbs.h>
+#include <rdma/iw_cm.h>
+#include <rdma/ib_umem.h>
+#include <rdma/ib_addr.h>
+#include <rdma/ib_cache.h>
+#include <rdma/uverbs_ioctl.h>
 
-#समावेश <linux/qed/common_hsi.h>
-#समावेश "qedr_hsi_rdma.h"
-#समावेश <linux/qed/qed_अगर.h>
-#समावेश "qedr.h"
-#समावेश "verbs.h"
-#समावेश <rdma/qedr-abi.h>
-#समावेश "qedr_roce_cm.h"
-#समावेश "qedr_iw_cm.h"
+#include <linux/qed/common_hsi.h>
+#include "qedr_hsi_rdma.h"
+#include <linux/qed/qed_if.h>
+#include "qedr.h"
+#include "verbs.h"
+#include <rdma/qedr-abi.h>
+#include "qedr_roce_cm.h"
+#include "qedr_iw_cm.h"
 
-#घोषणा QEDR_SRQ_WQE_ELEM_SIZE	माप(जोड़ rdma_srq_elm)
-#घोषणा	RDMA_MAX_SGE_PER_SRQ	(4)
-#घोषणा RDMA_MAX_SRQ_WQE_SIZE	(RDMA_MAX_SGE_PER_SRQ + 1)
+#define QEDR_SRQ_WQE_ELEM_SIZE	sizeof(union rdma_srq_elm)
+#define	RDMA_MAX_SGE_PER_SRQ	(4)
+#define RDMA_MAX_SRQ_WQE_SIZE	(RDMA_MAX_SGE_PER_SRQ + 1)
 
-#घोषणा DB_ADDR_SHIFT(addr)		((addr) << DB_PWM_ADDR_OFFSET_SHIFT)
+#define DB_ADDR_SHIFT(addr)		((addr) << DB_PWM_ADDR_OFFSET_SHIFT)
 
-क्रमागत अणु
+enum {
 	QEDR_USER_MMAP_IO_WC = 0,
 	QEDR_USER_MMAP_PHYS_PAGE,
-पूर्ण;
+};
 
-अटल अंतरभूत पूर्णांक qedr_ib_copy_to_udata(काष्ठा ib_udata *udata, व्योम *src,
-					माप_प्रकार len)
-अणु
-	माप_प्रकार min_len = min_t(माप_प्रकार, len, udata->outlen);
+static inline int qedr_ib_copy_to_udata(struct ib_udata *udata, void *src,
+					size_t len)
+{
+	size_t min_len = min_t(size_t, len, udata->outlen);
 
-	वापस ib_copy_to_udata(udata, src, min_len);
-पूर्ण
+	return ib_copy_to_udata(udata, src, min_len);
+}
 
-पूर्णांक qedr_query_pkey(काष्ठा ib_device *ibdev, u32 port, u16 index, u16 *pkey)
-अणु
-	अगर (index >= QEDR_ROCE_PKEY_TABLE_LEN)
-		वापस -EINVAL;
+int qedr_query_pkey(struct ib_device *ibdev, u32 port, u16 index, u16 *pkey)
+{
+	if (index >= QEDR_ROCE_PKEY_TABLE_LEN)
+		return -EINVAL;
 
 	*pkey = QEDR_ROCE_PKEY_DEFAULT;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक qedr_iw_query_gid(काष्ठा ib_device *ibdev, u32 port,
-		      पूर्णांक index, जोड़ ib_gid *sgid)
-अणु
-	काष्ठा qedr_dev *dev = get_qedr_dev(ibdev);
+int qedr_iw_query_gid(struct ib_device *ibdev, u32 port,
+		      int index, union ib_gid *sgid)
+{
+	struct qedr_dev *dev = get_qedr_dev(ibdev);
 
-	स_रखो(sgid->raw, 0, माप(sgid->raw));
+	memset(sgid->raw, 0, sizeof(sgid->raw));
 	ether_addr_copy(sgid->raw, dev->ndev->dev_addr);
 
 	DP_DEBUG(dev, QEDR_MSG_INIT, "QUERY sgid[%d]=%llx:%llx\n", index,
-		 sgid->global.पूर्णांकerface_id, sgid->global.subnet_prefix);
+		 sgid->global.interface_id, sgid->global.subnet_prefix);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक qedr_query_srq(काष्ठा ib_srq *ibsrq, काष्ठा ib_srq_attr *srq_attr)
-अणु
-	काष्ठा qedr_dev *dev = get_qedr_dev(ibsrq->device);
-	काष्ठा qedr_device_attr *qattr = &dev->attr;
-	काष्ठा qedr_srq *srq = get_qedr_srq(ibsrq);
+int qedr_query_srq(struct ib_srq *ibsrq, struct ib_srq_attr *srq_attr)
+{
+	struct qedr_dev *dev = get_qedr_dev(ibsrq->device);
+	struct qedr_device_attr *qattr = &dev->attr;
+	struct qedr_srq *srq = get_qedr_srq(ibsrq);
 
 	srq_attr->srq_limit = srq->srq_limit;
 	srq_attr->max_wr = qattr->max_srq_wr;
 	srq_attr->max_sge = qattr->max_sge;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक qedr_query_device(काष्ठा ib_device *ibdev,
-		      काष्ठा ib_device_attr *attr, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा qedr_dev *dev = get_qedr_dev(ibdev);
-	काष्ठा qedr_device_attr *qattr = &dev->attr;
+int qedr_query_device(struct ib_device *ibdev,
+		      struct ib_device_attr *attr, struct ib_udata *udata)
+{
+	struct qedr_dev *dev = get_qedr_dev(ibdev);
+	struct qedr_device_attr *qattr = &dev->attr;
 
-	अगर (!dev->rdma_ctx) अणु
+	if (!dev->rdma_ctx) {
 		DP_ERR(dev,
 		       "qedr_query_device called with invalid params rdma_ctx=%p\n",
 		       dev->rdma_ctx);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	स_रखो(attr, 0, माप(*attr));
+	memset(attr, 0, sizeof(*attr));
 
 	attr->fw_ver = qattr->fw_ver;
 	attr->sys_image_guid = qattr->sys_image_guid;
 	attr->max_mr_size = qattr->max_mr_size;
 	attr->page_size_cap = qattr->page_size_caps;
-	attr->venकरोr_id = qattr->venकरोr_id;
-	attr->venकरोr_part_id = qattr->venकरोr_part_id;
+	attr->vendor_id = qattr->vendor_id;
+	attr->vendor_part_id = qattr->vendor_part_id;
 	attr->hw_ver = qattr->hw_ver;
 	attr->max_qp = qattr->max_qp;
 	attr->max_qp_wr = max_t(u32, qattr->max_sqe, qattr->max_rqe);
@@ -137,7 +136,7 @@
 	    IB_DEVICE_RC_RNR_NAK_GEN |
 	    IB_DEVICE_LOCAL_DMA_LKEY | IB_DEVICE_MEM_MGT_EXTENSIONS;
 
-	अगर (!rdma_protocol_iwarp(&dev->ibdev, 1))
+	if (!rdma_protocol_iwarp(&dev->ibdev, 1))
 		attr->device_cap_flags |= IB_DEVICE_XRC;
 	attr->max_send_sge = qattr->max_sge;
 	attr->max_recv_sge = qattr->max_sge;
@@ -163,91 +162,91 @@
 	attr->max_pkeys = qattr->max_pkey;
 	attr->max_ah = qattr->max_ah;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम get_link_speed_and_width(पूर्णांक speed, u16 *ib_speed,
+static inline void get_link_speed_and_width(int speed, u16 *ib_speed,
 					    u8 *ib_width)
-अणु
-	चयन (speed) अणु
-	हाल 1000:
+{
+	switch (speed) {
+	case 1000:
 		*ib_speed = IB_SPEED_SDR;
 		*ib_width = IB_WIDTH_1X;
-		अवरोध;
-	हाल 10000:
+		break;
+	case 10000:
 		*ib_speed = IB_SPEED_QDR;
 		*ib_width = IB_WIDTH_1X;
-		अवरोध;
+		break;
 
-	हाल 20000:
+	case 20000:
 		*ib_speed = IB_SPEED_DDR;
 		*ib_width = IB_WIDTH_4X;
-		अवरोध;
+		break;
 
-	हाल 25000:
+	case 25000:
 		*ib_speed = IB_SPEED_EDR;
 		*ib_width = IB_WIDTH_1X;
-		अवरोध;
+		break;
 
-	हाल 40000:
+	case 40000:
 		*ib_speed = IB_SPEED_QDR;
 		*ib_width = IB_WIDTH_4X;
-		अवरोध;
+		break;
 
-	हाल 50000:
+	case 50000:
 		*ib_speed = IB_SPEED_HDR;
 		*ib_width = IB_WIDTH_1X;
-		अवरोध;
+		break;
 
-	हाल 100000:
+	case 100000:
 		*ib_speed = IB_SPEED_EDR;
 		*ib_width = IB_WIDTH_4X;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		/* Unsupported */
 		*ib_speed = IB_SPEED_SDR;
 		*ib_width = IB_WIDTH_1X;
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक qedr_query_port(काष्ठा ib_device *ibdev, u32 port,
-		    काष्ठा ib_port_attr *attr)
-अणु
-	काष्ठा qedr_dev *dev;
-	काष्ठा qed_rdma_port *rdma_port;
+int qedr_query_port(struct ib_device *ibdev, u32 port,
+		    struct ib_port_attr *attr)
+{
+	struct qedr_dev *dev;
+	struct qed_rdma_port *rdma_port;
 
 	dev = get_qedr_dev(ibdev);
 
-	अगर (!dev->rdma_ctx) अणु
+	if (!dev->rdma_ctx) {
 		DP_ERR(dev, "rdma_ctx is NULL\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	rdma_port = dev->ops->rdma_query_port(dev->rdma_ctx);
 
-	/* *attr being zeroed by the caller, aव्योम zeroing it here */
-	अगर (rdma_port->port_state == QED_RDMA_PORT_UP) अणु
+	/* *attr being zeroed by the caller, avoid zeroing it here */
+	if (rdma_port->port_state == QED_RDMA_PORT_UP) {
 		attr->state = IB_PORT_ACTIVE;
 		attr->phys_state = IB_PORT_PHYS_STATE_LINK_UP;
-	पूर्ण अन्यथा अणु
+	} else {
 		attr->state = IB_PORT_DOWN;
 		attr->phys_state = IB_PORT_PHYS_STATE_DISABLED;
-	पूर्ण
+	}
 	attr->max_mtu = IB_MTU_4096;
 	attr->lid = 0;
 	attr->lmc = 0;
 	attr->sm_lid = 0;
 	attr->sm_sl = 0;
 	attr->ip_gids = true;
-	अगर (rdma_protocol_iwarp(&dev->ibdev, 1)) अणु
+	if (rdma_protocol_iwarp(&dev->ibdev, 1)) {
 		attr->active_mtu = iboe_get_mtu(dev->iwarp_max_mtu);
 		attr->gid_tbl_len = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		attr->active_mtu = iboe_get_mtu(dev->ndev->mtu);
 		attr->gid_tbl_len = QEDR_MAX_SGID;
 		attr->pkey_tbl_len = QEDR_ROCE_PKEY_TABLE_LEN;
-	पूर्ण
+	}
 	attr->bad_pkey_cntr = rdma_port->pkey_bad_counter;
 	attr->qkey_viol_cntr = 0;
 	get_link_speed_and_width(rdma_port->link_speed,
@@ -255,52 +254,52 @@
 	attr->max_msg_sz = rdma_port->max_msg_size;
 	attr->max_vl_num = 4;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक qedr_alloc_ucontext(काष्ठा ib_ucontext *uctx, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा ib_device *ibdev = uctx->device;
-	पूर्णांक rc;
-	काष्ठा qedr_ucontext *ctx = get_qedr_ucontext(uctx);
-	काष्ठा qedr_alloc_ucontext_resp uresp = अणुपूर्ण;
-	काष्ठा qedr_alloc_ucontext_req ureq = अणुपूर्ण;
-	काष्ठा qedr_dev *dev = get_qedr_dev(ibdev);
-	काष्ठा qed_rdma_add_user_out_params oparams;
-	काष्ठा qedr_user_mmap_entry *entry;
+int qedr_alloc_ucontext(struct ib_ucontext *uctx, struct ib_udata *udata)
+{
+	struct ib_device *ibdev = uctx->device;
+	int rc;
+	struct qedr_ucontext *ctx = get_qedr_ucontext(uctx);
+	struct qedr_alloc_ucontext_resp uresp = {};
+	struct qedr_alloc_ucontext_req ureq = {};
+	struct qedr_dev *dev = get_qedr_dev(ibdev);
+	struct qed_rdma_add_user_out_params oparams;
+	struct qedr_user_mmap_entry *entry;
 
-	अगर (!udata)
-		वापस -EFAULT;
+	if (!udata)
+		return -EFAULT;
 
-	अगर (udata->inlen) अणु
+	if (udata->inlen) {
 		rc = ib_copy_from_udata(&ureq, udata,
-					min(माप(ureq), udata->inlen));
-		अगर (rc) अणु
+					min(sizeof(ureq), udata->inlen));
+		if (rc) {
 			DP_ERR(dev, "Problem copying data from user space\n");
-			वापस -EFAULT;
-		पूर्ण
+			return -EFAULT;
+		}
 		ctx->edpm_mode = !!(ureq.context_flags &
 				    QEDR_ALLOC_UCTX_EDPM_MODE);
 		ctx->db_rec = !!(ureq.context_flags & QEDR_ALLOC_UCTX_DB_REC);
-	पूर्ण
+	}
 
 	rc = dev->ops->rdma_add_user(dev->rdma_ctx, &oparams);
-	अगर (rc) अणु
+	if (rc) {
 		DP_ERR(dev,
 		       "failed to allocate a DPI for a new RoCE application, rc=%d. To overcome this consider to increase the number of DPIs, increase the doorbell BAR size or just close unnecessary RoCE applications. In order to increase the number of DPIs consult the qedr readme\n",
 		       rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	ctx->dpi = oparams.dpi;
 	ctx->dpi_addr = oparams.dpi_addr;
 	ctx->dpi_phys_addr = oparams.dpi_phys_addr;
 	ctx->dpi_size = oparams.dpi_size;
-	entry = kzalloc(माप(*entry), GFP_KERNEL);
-	अगर (!entry) अणु
+	entry = kzalloc(sizeof(*entry), GFP_KERNEL);
+	if (!entry) {
 		rc = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	entry->io_address = ctx->dpi_phys_addr;
 	entry->length = ctx->dpi_size;
@@ -309,27 +308,27 @@
 	entry->dev = dev;
 	rc = rdma_user_mmap_entry_insert(uctx, &entry->rdma_entry,
 					 ctx->dpi_size);
-	अगर (rc) अणु
-		kमुक्त(entry);
-		जाओ err;
-	पूर्ण
+	if (rc) {
+		kfree(entry);
+		goto err;
+	}
 	ctx->db_mmap_entry = &entry->rdma_entry;
 
-	अगर (!dev->user_dpm_enabled)
+	if (!dev->user_dpm_enabled)
 		uresp.dpm_flags = 0;
-	अन्यथा अगर (rdma_protocol_iwarp(&dev->ibdev, 1))
+	else if (rdma_protocol_iwarp(&dev->ibdev, 1))
 		uresp.dpm_flags = QEDR_DPM_TYPE_IWARP_LEGACY;
-	अन्यथा
+	else
 		uresp.dpm_flags = QEDR_DPM_TYPE_ROCE_ENHANCED |
 				  QEDR_DPM_TYPE_ROCE_LEGACY |
 				  QEDR_DPM_TYPE_ROCE_EDPM_MODE;
 
-	अगर (ureq.context_flags & QEDR_SUPPORT_DPM_SIZES) अणु
+	if (ureq.context_flags & QEDR_SUPPORT_DPM_SIZES) {
 		uresp.dpm_flags |= QEDR_DPM_SIZES_SET;
 		uresp.ldpm_limit_size = QEDR_LDPM_MAX_SIZE;
 		uresp.edpm_trans_size = QEDR_EDPM_TRANS_SIZE;
 		uresp.edpm_limit_size = QEDR_EDPM_MAX_SIZE;
-	पूर्ण
+	}
 
 	uresp.wids_enabled = 1;
 	uresp.wid_count = oparams.wid_count;
@@ -343,55 +342,55 @@
 	uresp.sges_per_srq_wr = dev->attr.max_srq_sge;
 	uresp.max_cqes = QEDR_MAX_CQES;
 
-	rc = qedr_ib_copy_to_udata(udata, &uresp, माप(uresp));
-	अगर (rc)
-		जाओ err;
+	rc = qedr_ib_copy_to_udata(udata, &uresp, sizeof(uresp));
+	if (rc)
+		goto err;
 
 	ctx->dev = dev;
 
 	DP_DEBUG(dev, QEDR_MSG_INIT, "Allocating user context %p\n",
 		 &ctx->ibucontext);
-	वापस 0;
+	return 0;
 
 err:
-	अगर (!ctx->db_mmap_entry)
-		dev->ops->rdma_हटाओ_user(dev->rdma_ctx, ctx->dpi);
-	अन्यथा
-		rdma_user_mmap_entry_हटाओ(ctx->db_mmap_entry);
+	if (!ctx->db_mmap_entry)
+		dev->ops->rdma_remove_user(dev->rdma_ctx, ctx->dpi);
+	else
+		rdma_user_mmap_entry_remove(ctx->db_mmap_entry);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-व्योम qedr_dealloc_ucontext(काष्ठा ib_ucontext *ibctx)
-अणु
-	काष्ठा qedr_ucontext *uctx = get_qedr_ucontext(ibctx);
+void qedr_dealloc_ucontext(struct ib_ucontext *ibctx)
+{
+	struct qedr_ucontext *uctx = get_qedr_ucontext(ibctx);
 
 	DP_DEBUG(uctx->dev, QEDR_MSG_INIT, "Deallocating user context %p\n",
 		 uctx);
 
-	rdma_user_mmap_entry_हटाओ(uctx->db_mmap_entry);
-पूर्ण
+	rdma_user_mmap_entry_remove(uctx->db_mmap_entry);
+}
 
-व्योम qedr_mmap_मुक्त(काष्ठा rdma_user_mmap_entry *rdma_entry)
-अणु
-	काष्ठा qedr_user_mmap_entry *entry = get_qedr_mmap_entry(rdma_entry);
-	काष्ठा qedr_dev *dev = entry->dev;
+void qedr_mmap_free(struct rdma_user_mmap_entry *rdma_entry)
+{
+	struct qedr_user_mmap_entry *entry = get_qedr_mmap_entry(rdma_entry);
+	struct qedr_dev *dev = entry->dev;
 
-	अगर (entry->mmap_flag == QEDR_USER_MMAP_PHYS_PAGE)
-		मुक्त_page((अचिन्हित दीर्घ)entry->address);
-	अन्यथा अगर (entry->mmap_flag == QEDR_USER_MMAP_IO_WC)
-		dev->ops->rdma_हटाओ_user(dev->rdma_ctx, entry->dpi);
+	if (entry->mmap_flag == QEDR_USER_MMAP_PHYS_PAGE)
+		free_page((unsigned long)entry->address);
+	else if (entry->mmap_flag == QEDR_USER_MMAP_IO_WC)
+		dev->ops->rdma_remove_user(dev->rdma_ctx, entry->dpi);
 
-	kमुक्त(entry);
-पूर्ण
+	kfree(entry);
+}
 
-पूर्णांक qedr_mmap(काष्ठा ib_ucontext *ucontext, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा ib_device *dev = ucontext->device;
-	माप_प्रकार length = vma->vm_end - vma->vm_start;
-	काष्ठा rdma_user_mmap_entry *rdma_entry;
-	काष्ठा qedr_user_mmap_entry *entry;
-	पूर्णांक rc = 0;
+int qedr_mmap(struct ib_ucontext *ucontext, struct vm_area_struct *vma)
+{
+	struct ib_device *dev = ucontext->device;
+	size_t length = vma->vm_end - vma->vm_start;
+	struct rdma_user_mmap_entry *rdma_entry;
+	struct qedr_user_mmap_entry *entry;
+	int rc = 0;
 	u64 pfn;
 
 	ibdev_dbg(dev,
@@ -399,213 +398,213 @@ err:
 		  vma->vm_start, vma->vm_end, length, vma->vm_pgoff);
 
 	rdma_entry = rdma_user_mmap_entry_get(ucontext, vma);
-	अगर (!rdma_entry) अणु
+	if (!rdma_entry) {
 		ibdev_dbg(dev, "pgoff[%#lx] does not have valid entry\n",
 			  vma->vm_pgoff);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	entry = get_qedr_mmap_entry(rdma_entry);
 	ibdev_dbg(dev,
 		  "Mapping address[%#llx], length[%#zx], mmap_flag[%d]\n",
 		  entry->io_address, length, entry->mmap_flag);
 
-	चयन (entry->mmap_flag) अणु
-	हाल QEDR_USER_MMAP_IO_WC:
+	switch (entry->mmap_flag) {
+	case QEDR_USER_MMAP_IO_WC:
 		pfn = entry->io_address >> PAGE_SHIFT;
 		rc = rdma_user_mmap_io(ucontext, vma, pfn, length,
-				       pgprot_ग_लिखोcombine(vma->vm_page_prot),
+				       pgprot_writecombine(vma->vm_page_prot),
 				       rdma_entry);
-		अवरोध;
-	हाल QEDR_USER_MMAP_PHYS_PAGE:
+		break;
+	case QEDR_USER_MMAP_PHYS_PAGE:
 		rc = vm_insert_page(vma, vma->vm_start,
 				    virt_to_page(entry->address));
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rc = -EINVAL;
-	पूर्ण
+	}
 
-	अगर (rc)
+	if (rc)
 		ibdev_dbg(dev,
 			  "Couldn't mmap address[%#llx] length[%#zx] mmap_flag[%d] err[%d]\n",
 			  entry->io_address, length, entry->mmap_flag, rc);
 
 	rdma_user_mmap_entry_put(rdma_entry);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक qedr_alloc_pd(काष्ठा ib_pd *ibpd, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा ib_device *ibdev = ibpd->device;
-	काष्ठा qedr_dev *dev = get_qedr_dev(ibdev);
-	काष्ठा qedr_pd *pd = get_qedr_pd(ibpd);
+int qedr_alloc_pd(struct ib_pd *ibpd, struct ib_udata *udata)
+{
+	struct ib_device *ibdev = ibpd->device;
+	struct qedr_dev *dev = get_qedr_dev(ibdev);
+	struct qedr_pd *pd = get_qedr_pd(ibpd);
 	u16 pd_id;
-	पूर्णांक rc;
+	int rc;
 
 	DP_DEBUG(dev, QEDR_MSG_INIT, "Function called from: %s\n",
 		 udata ? "User Lib" : "Kernel");
 
-	अगर (!dev->rdma_ctx) अणु
+	if (!dev->rdma_ctx) {
 		DP_ERR(dev, "invalid RDMA context\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	rc = dev->ops->rdma_alloc_pd(dev->rdma_ctx, &pd_id);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	pd->pd_id = pd_id;
 
-	अगर (udata) अणु
-		काष्ठा qedr_alloc_pd_uresp uresp = अणु
+	if (udata) {
+		struct qedr_alloc_pd_uresp uresp = {
 			.pd_id = pd_id,
-		पूर्ण;
-		काष्ठा qedr_ucontext *context = rdma_udata_to_drv_context(
-			udata, काष्ठा qedr_ucontext, ibucontext);
+		};
+		struct qedr_ucontext *context = rdma_udata_to_drv_context(
+			udata, struct qedr_ucontext, ibucontext);
 
-		rc = qedr_ib_copy_to_udata(udata, &uresp, माप(uresp));
-		अगर (rc) अणु
+		rc = qedr_ib_copy_to_udata(udata, &uresp, sizeof(uresp));
+		if (rc) {
 			DP_ERR(dev, "copy error pd_id=0x%x.\n", pd_id);
 			dev->ops->rdma_dealloc_pd(dev->rdma_ctx, pd_id);
-			वापस rc;
-		पूर्ण
+			return rc;
+		}
 
 		pd->uctx = context;
 		pd->uctx->pd = pd;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक qedr_dealloc_pd(काष्ठा ib_pd *ibpd, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा qedr_dev *dev = get_qedr_dev(ibpd->device);
-	काष्ठा qedr_pd *pd = get_qedr_pd(ibpd);
+int qedr_dealloc_pd(struct ib_pd *ibpd, struct ib_udata *udata)
+{
+	struct qedr_dev *dev = get_qedr_dev(ibpd->device);
+	struct qedr_pd *pd = get_qedr_pd(ibpd);
 
 	DP_DEBUG(dev, QEDR_MSG_INIT, "Deallocating PD %d\n", pd->pd_id);
 	dev->ops->rdma_dealloc_pd(dev->rdma_ctx, pd->pd_id);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-पूर्णांक qedr_alloc_xrcd(काष्ठा ib_xrcd *ibxrcd, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा qedr_dev *dev = get_qedr_dev(ibxrcd->device);
-	काष्ठा qedr_xrcd *xrcd = get_qedr_xrcd(ibxrcd);
+int qedr_alloc_xrcd(struct ib_xrcd *ibxrcd, struct ib_udata *udata)
+{
+	struct qedr_dev *dev = get_qedr_dev(ibxrcd->device);
+	struct qedr_xrcd *xrcd = get_qedr_xrcd(ibxrcd);
 
-	वापस dev->ops->rdma_alloc_xrcd(dev->rdma_ctx, &xrcd->xrcd_id);
-पूर्ण
+	return dev->ops->rdma_alloc_xrcd(dev->rdma_ctx, &xrcd->xrcd_id);
+}
 
-पूर्णांक qedr_dealloc_xrcd(काष्ठा ib_xrcd *ibxrcd, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा qedr_dev *dev = get_qedr_dev(ibxrcd->device);
+int qedr_dealloc_xrcd(struct ib_xrcd *ibxrcd, struct ib_udata *udata)
+{
+	struct qedr_dev *dev = get_qedr_dev(ibxrcd->device);
 	u16 xrcd_id = get_qedr_xrcd(ibxrcd)->xrcd_id;
 
 	dev->ops->rdma_dealloc_xrcd(dev->rdma_ctx, xrcd_id);
-	वापस 0;
-पूर्ण
-अटल व्योम qedr_मुक्त_pbl(काष्ठा qedr_dev *dev,
-			  काष्ठा qedr_pbl_info *pbl_info, काष्ठा qedr_pbl *pbl)
-अणु
-	काष्ठा pci_dev *pdev = dev->pdev;
-	पूर्णांक i;
+	return 0;
+}
+static void qedr_free_pbl(struct qedr_dev *dev,
+			  struct qedr_pbl_info *pbl_info, struct qedr_pbl *pbl)
+{
+	struct pci_dev *pdev = dev->pdev;
+	int i;
 
-	क्रम (i = 0; i < pbl_info->num_pbls; i++) अणु
-		अगर (!pbl[i].va)
-			जारी;
-		dma_मुक्त_coherent(&pdev->dev, pbl_info->pbl_size,
+	for (i = 0; i < pbl_info->num_pbls; i++) {
+		if (!pbl[i].va)
+			continue;
+		dma_free_coherent(&pdev->dev, pbl_info->pbl_size,
 				  pbl[i].va, pbl[i].pa);
-	पूर्ण
+	}
 
-	kमुक्त(pbl);
-पूर्ण
+	kfree(pbl);
+}
 
-#घोषणा MIN_FW_PBL_PAGE_SIZE (4 * 1024)
-#घोषणा MAX_FW_PBL_PAGE_SIZE (64 * 1024)
+#define MIN_FW_PBL_PAGE_SIZE (4 * 1024)
+#define MAX_FW_PBL_PAGE_SIZE (64 * 1024)
 
-#घोषणा NUM_PBES_ON_PAGE(_page_size) (_page_size / माप(u64))
-#घोषणा MAX_PBES_ON_PAGE NUM_PBES_ON_PAGE(MAX_FW_PBL_PAGE_SIZE)
-#घोषणा MAX_PBES_TWO_LAYER (MAX_PBES_ON_PAGE * MAX_PBES_ON_PAGE)
+#define NUM_PBES_ON_PAGE(_page_size) (_page_size / sizeof(u64))
+#define MAX_PBES_ON_PAGE NUM_PBES_ON_PAGE(MAX_FW_PBL_PAGE_SIZE)
+#define MAX_PBES_TWO_LAYER (MAX_PBES_ON_PAGE * MAX_PBES_ON_PAGE)
 
-अटल काष्ठा qedr_pbl *qedr_alloc_pbl_tbl(काष्ठा qedr_dev *dev,
-					   काष्ठा qedr_pbl_info *pbl_info,
+static struct qedr_pbl *qedr_alloc_pbl_tbl(struct qedr_dev *dev,
+					   struct qedr_pbl_info *pbl_info,
 					   gfp_t flags)
-अणु
-	काष्ठा pci_dev *pdev = dev->pdev;
-	काष्ठा qedr_pbl *pbl_table;
-	dma_addr_t *pbl_मुख्य_tbl;
+{
+	struct pci_dev *pdev = dev->pdev;
+	struct qedr_pbl *pbl_table;
+	dma_addr_t *pbl_main_tbl;
 	dma_addr_t pa;
-	व्योम *va;
-	पूर्णांक i;
+	void *va;
+	int i;
 
-	pbl_table = kसुस्मृति(pbl_info->num_pbls, माप(*pbl_table), flags);
-	अगर (!pbl_table)
-		वापस ERR_PTR(-ENOMEM);
+	pbl_table = kcalloc(pbl_info->num_pbls, sizeof(*pbl_table), flags);
+	if (!pbl_table)
+		return ERR_PTR(-ENOMEM);
 
-	क्रम (i = 0; i < pbl_info->num_pbls; i++) अणु
+	for (i = 0; i < pbl_info->num_pbls; i++) {
 		va = dma_alloc_coherent(&pdev->dev, pbl_info->pbl_size, &pa,
 					flags);
-		अगर (!va)
-			जाओ err;
+		if (!va)
+			goto err;
 
 		pbl_table[i].va = va;
 		pbl_table[i].pa = pa;
-	पूर्ण
+	}
 
-	/* Two-Layer PBLs, अगर we have more than one pbl we need to initialize
-	 * the first one with physical poपूर्णांकers to all of the rest
+	/* Two-Layer PBLs, if we have more than one pbl we need to initialize
+	 * the first one with physical pointers to all of the rest
 	 */
-	pbl_मुख्य_tbl = (dma_addr_t *)pbl_table[0].va;
-	क्रम (i = 0; i < pbl_info->num_pbls - 1; i++)
-		pbl_मुख्य_tbl[i] = pbl_table[i + 1].pa;
+	pbl_main_tbl = (dma_addr_t *)pbl_table[0].va;
+	for (i = 0; i < pbl_info->num_pbls - 1; i++)
+		pbl_main_tbl[i] = pbl_table[i + 1].pa;
 
-	वापस pbl_table;
+	return pbl_table;
 
 err:
-	क्रम (i--; i >= 0; i--)
-		dma_मुक्त_coherent(&pdev->dev, pbl_info->pbl_size,
+	for (i--; i >= 0; i--)
+		dma_free_coherent(&pdev->dev, pbl_info->pbl_size,
 				  pbl_table[i].va, pbl_table[i].pa);
 
-	qedr_मुक्त_pbl(dev, pbl_info, pbl_table);
+	qedr_free_pbl(dev, pbl_info, pbl_table);
 
-	वापस ERR_PTR(-ENOMEM);
-पूर्ण
+	return ERR_PTR(-ENOMEM);
+}
 
-अटल पूर्णांक qedr_prepare_pbl_tbl(काष्ठा qedr_dev *dev,
-				काष्ठा qedr_pbl_info *pbl_info,
-				u32 num_pbes, पूर्णांक two_layer_capable)
-अणु
+static int qedr_prepare_pbl_tbl(struct qedr_dev *dev,
+				struct qedr_pbl_info *pbl_info,
+				u32 num_pbes, int two_layer_capable)
+{
 	u32 pbl_capacity;
 	u32 pbl_size;
 	u32 num_pbls;
 
-	अगर ((num_pbes > MAX_PBES_ON_PAGE) && two_layer_capable) अणु
-		अगर (num_pbes > MAX_PBES_TWO_LAYER) अणु
+	if ((num_pbes > MAX_PBES_ON_PAGE) && two_layer_capable) {
+		if (num_pbes > MAX_PBES_TWO_LAYER) {
 			DP_ERR(dev, "prepare pbl table: too many pages %d\n",
 			       num_pbes);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		/* calculate required pbl page size */
 		pbl_size = MIN_FW_PBL_PAGE_SIZE;
 		pbl_capacity = NUM_PBES_ON_PAGE(pbl_size) *
 			       NUM_PBES_ON_PAGE(pbl_size);
 
-		जबतक (pbl_capacity < num_pbes) अणु
+		while (pbl_capacity < num_pbes) {
 			pbl_size *= 2;
-			pbl_capacity = pbl_size / माप(u64);
+			pbl_capacity = pbl_size / sizeof(u64);
 			pbl_capacity = pbl_capacity * pbl_capacity;
-		पूर्ण
+		}
 
 		num_pbls = DIV_ROUND_UP(num_pbes, NUM_PBES_ON_PAGE(pbl_size));
-		num_pbls++;	/* One क्रम the layer0 ( poपूर्णांकs to the pbls) */
+		num_pbls++;	/* One for the layer0 ( points to the pbls) */
 		pbl_info->two_layered = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* One layered PBL */
 		num_pbls = 1;
 		pbl_size = max_t(u32, MIN_FW_PBL_PAGE_SIZE,
-				 roundup_घात_of_two((num_pbes * माप(u64))));
+				 roundup_pow_of_two((num_pbes * sizeof(u64))));
 		pbl_info->two_layered = false;
-	पूर्ण
+	}
 
 	pbl_info->num_pbls = num_pbls;
 	pbl_info->pbl_size = pbl_size;
@@ -615,38 +614,38 @@ err:
 		 "prepare pbl table: num_pbes=%d, num_pbls=%d, pbl_size=%d\n",
 		 pbl_info->num_pbes, pbl_info->num_pbls, pbl_info->pbl_size);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qedr_populate_pbls(काष्ठा qedr_dev *dev, काष्ठा ib_umem *umem,
-			       काष्ठा qedr_pbl *pbl,
-			       काष्ठा qedr_pbl_info *pbl_info, u32 pg_shअगरt)
-अणु
-	पूर्णांक pbe_cnt, total_num_pbes = 0;
-	काष्ठा qedr_pbl *pbl_tbl;
-	काष्ठा ib_block_iter biter;
-	काष्ठा regpair *pbe;
+static void qedr_populate_pbls(struct qedr_dev *dev, struct ib_umem *umem,
+			       struct qedr_pbl *pbl,
+			       struct qedr_pbl_info *pbl_info, u32 pg_shift)
+{
+	int pbe_cnt, total_num_pbes = 0;
+	struct qedr_pbl *pbl_tbl;
+	struct ib_block_iter biter;
+	struct regpair *pbe;
 
-	अगर (!pbl_info->num_pbes)
-		वापस;
+	if (!pbl_info->num_pbes)
+		return;
 
-	/* If we have a two layered pbl, the first pbl poपूर्णांकs to the rest
+	/* If we have a two layered pbl, the first pbl points to the rest
 	 * of the pbls and the first entry lays on the second pbl in the table
 	 */
-	अगर (pbl_info->two_layered)
+	if (pbl_info->two_layered)
 		pbl_tbl = &pbl[1];
-	अन्यथा
+	else
 		pbl_tbl = pbl;
 
-	pbe = (काष्ठा regpair *)pbl_tbl->va;
-	अगर (!pbe) अणु
+	pbe = (struct regpair *)pbl_tbl->va;
+	if (!pbe) {
 		DP_ERR(dev, "cannot populate PBL due to a NULL PBE\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	pbe_cnt = 0;
 
-	rdma_umem_क्रम_each_dma_block (umem, &biter, BIT(pg_shअगरt)) अणु
+	rdma_umem_for_each_dma_block (umem, &biter, BIT(pg_shift)) {
 		u64 pg_addr = rdma_block_iter_dma_address(&biter);
 
 		pbe->lo = cpu_to_le32(pg_addr);
@@ -656,114 +655,114 @@ err:
 		total_num_pbes++;
 		pbe++;
 
-		अगर (total_num_pbes == pbl_info->num_pbes)
-			वापस;
+		if (total_num_pbes == pbl_info->num_pbes)
+			return;
 
 		/* If the given pbl is full storing the pbes, move to next pbl.
 		 */
-		अगर (pbe_cnt == (pbl_info->pbl_size / माप(u64))) अणु
+		if (pbe_cnt == (pbl_info->pbl_size / sizeof(u64))) {
 			pbl_tbl++;
-			pbe = (काष्ठा regpair *)pbl_tbl->va;
+			pbe = (struct regpair *)pbl_tbl->va;
 			pbe_cnt = 0;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक qedr_db_recovery_add(काष्ठा qedr_dev *dev,
-				व्योम __iomem *db_addr,
-				व्योम *db_data,
-				क्रमागत qed_db_rec_width db_width,
-				क्रमागत qed_db_rec_space db_space)
-अणु
-	अगर (!db_data) अणु
+static int qedr_db_recovery_add(struct qedr_dev *dev,
+				void __iomem *db_addr,
+				void *db_data,
+				enum qed_db_rec_width db_width,
+				enum qed_db_rec_space db_space)
+{
+	if (!db_data) {
 		DP_DEBUG(dev, QEDR_MSG_INIT, "avoiding db rec since old lib\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस dev->ops->common->db_recovery_add(dev->cdev, db_addr, db_data,
+	return dev->ops->common->db_recovery_add(dev->cdev, db_addr, db_data,
 						 db_width, db_space);
-पूर्ण
+}
 
-अटल व्योम qedr_db_recovery_del(काष्ठा qedr_dev *dev,
-				 व्योम __iomem *db_addr,
-				 व्योम *db_data)
-अणु
-	अगर (!db_data) अणु
+static void qedr_db_recovery_del(struct qedr_dev *dev,
+				 void __iomem *db_addr,
+				 void *db_data)
+{
+	if (!db_data) {
 		DP_DEBUG(dev, QEDR_MSG_INIT, "avoiding db rec since old lib\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Ignore वापस code as there is not much we can करो about it. Error
-	 * log will be prपूर्णांकed inside.
+	/* Ignore return code as there is not much we can do about it. Error
+	 * log will be printed inside.
 	 */
 	dev->ops->common->db_recovery_del(dev->cdev, db_addr, db_data);
-पूर्ण
+}
 
-अटल पूर्णांक qedr_copy_cq_uresp(काष्ठा qedr_dev *dev,
-			      काष्ठा qedr_cq *cq, काष्ठा ib_udata *udata,
+static int qedr_copy_cq_uresp(struct qedr_dev *dev,
+			      struct qedr_cq *cq, struct ib_udata *udata,
 			      u32 db_offset)
-अणु
-	काष्ठा qedr_create_cq_uresp uresp;
-	पूर्णांक rc;
+{
+	struct qedr_create_cq_uresp uresp;
+	int rc;
 
-	स_रखो(&uresp, 0, माप(uresp));
+	memset(&uresp, 0, sizeof(uresp));
 
 	uresp.db_offset = db_offset;
 	uresp.icid = cq->icid;
-	अगर (cq->q.db_mmap_entry)
+	if (cq->q.db_mmap_entry)
 		uresp.db_rec_addr =
 			rdma_user_mmap_get_offset(cq->q.db_mmap_entry);
 
-	rc = qedr_ib_copy_to_udata(udata, &uresp, माप(uresp));
-	अगर (rc)
+	rc = qedr_ib_copy_to_udata(udata, &uresp, sizeof(uresp));
+	if (rc)
 		DP_ERR(dev, "copy error cqid=0x%x.\n", cq->icid);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम consume_cqe(काष्ठा qedr_cq *cq)
-अणु
-	अगर (cq->latest_cqe == cq->toggle_cqe)
+static void consume_cqe(struct qedr_cq *cq)
+{
+	if (cq->latest_cqe == cq->toggle_cqe)
 		cq->pbl_toggle ^= RDMA_CQE_REQUESTER_TOGGLE_BIT_MASK;
 
 	cq->latest_cqe = qed_chain_consume(&cq->pbl);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक qedr_align_cq_entries(पूर्णांक entries)
-अणु
+static inline int qedr_align_cq_entries(int entries)
+{
 	u64 size, aligned_size;
 
-	/* We allocate an extra entry that we करोn't report to the FW. */
+	/* We allocate an extra entry that we don't report to the FW. */
 	size = (entries + 1) * QEDR_CQE_SIZE;
 	aligned_size = ALIGN(size, PAGE_SIZE);
 
-	वापस aligned_size / QEDR_CQE_SIZE;
-पूर्ण
+	return aligned_size / QEDR_CQE_SIZE;
+}
 
-अटल पूर्णांक qedr_init_user_db_rec(काष्ठा ib_udata *udata,
-				 काष्ठा qedr_dev *dev, काष्ठा qedr_userq *q,
+static int qedr_init_user_db_rec(struct ib_udata *udata,
+				 struct qedr_dev *dev, struct qedr_userq *q,
 				 bool requires_db_rec)
-अणु
-	काष्ठा qedr_ucontext *uctx =
-		rdma_udata_to_drv_context(udata, काष्ठा qedr_ucontext,
+{
+	struct qedr_ucontext *uctx =
+		rdma_udata_to_drv_context(udata, struct qedr_ucontext,
 					  ibucontext);
-	काष्ठा qedr_user_mmap_entry *entry;
-	पूर्णांक rc;
+	struct qedr_user_mmap_entry *entry;
+	int rc;
 
-	/* Aborting क्रम non करोorbell userqueue (SRQ) or non-supporting lib */
-	अगर (requires_db_rec == 0 || !uctx->db_rec)
-		वापस 0;
+	/* Aborting for non doorbell userqueue (SRQ) or non-supporting lib */
+	if (requires_db_rec == 0 || !uctx->db_rec)
+		return 0;
 
-	/* Allocate a page क्रम करोorbell recovery, add to mmap */
-	q->db_rec_data = (व्योम *)get_zeroed_page(GFP_USER);
-	अगर (!q->db_rec_data) अणु
+	/* Allocate a page for doorbell recovery, add to mmap */
+	q->db_rec_data = (void *)get_zeroed_page(GFP_USER);
+	if (!q->db_rec_data) {
 		DP_ERR(dev, "get_zeroed_page failed\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	entry = kzalloc(माप(*entry), GFP_KERNEL);
-	अगर (!entry)
-		जाओ err_मुक्त_db_data;
+	entry = kzalloc(sizeof(*entry), GFP_KERNEL);
+	if (!entry)
+		goto err_free_db_data;
 
 	entry->address = q->db_rec_data;
 	entry->length = PAGE_SIZE;
@@ -771,747 +770,747 @@ err:
 	rc = rdma_user_mmap_entry_insert(&uctx->ibucontext,
 					 &entry->rdma_entry,
 					 PAGE_SIZE);
-	अगर (rc)
-		जाओ err_मुक्त_entry;
+	if (rc)
+		goto err_free_entry;
 
 	q->db_mmap_entry = &entry->rdma_entry;
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_entry:
-	kमुक्त(entry);
+err_free_entry:
+	kfree(entry);
 
-err_मुक्त_db_data:
-	मुक्त_page((अचिन्हित दीर्घ)q->db_rec_data);
-	q->db_rec_data = शून्य;
-	वापस -ENOMEM;
-पूर्ण
+err_free_db_data:
+	free_page((unsigned long)q->db_rec_data);
+	q->db_rec_data = NULL;
+	return -ENOMEM;
+}
 
-अटल अंतरभूत पूर्णांक qedr_init_user_queue(काष्ठा ib_udata *udata,
-				       काष्ठा qedr_dev *dev,
-				       काष्ठा qedr_userq *q, u64 buf_addr,
-				       माप_प्रकार buf_len, bool requires_db_rec,
-				       पूर्णांक access,
-				       पूर्णांक alloc_and_init)
-अणु
+static inline int qedr_init_user_queue(struct ib_udata *udata,
+				       struct qedr_dev *dev,
+				       struct qedr_userq *q, u64 buf_addr,
+				       size_t buf_len, bool requires_db_rec,
+				       int access,
+				       int alloc_and_init)
+{
 	u32 fw_pages;
-	पूर्णांक rc;
+	int rc;
 
 	q->buf_addr = buf_addr;
 	q->buf_len = buf_len;
 	q->umem = ib_umem_get(&dev->ibdev, q->buf_addr, q->buf_len, access);
-	अगर (IS_ERR(q->umem)) अणु
+	if (IS_ERR(q->umem)) {
 		DP_ERR(dev, "create user queue: failed ib_umem_get, got %ld\n",
 		       PTR_ERR(q->umem));
-		वापस PTR_ERR(q->umem);
-	पूर्ण
+		return PTR_ERR(q->umem);
+	}
 
 	fw_pages = ib_umem_num_dma_blocks(q->umem, 1 << FW_PAGE_SHIFT);
 	rc = qedr_prepare_pbl_tbl(dev, &q->pbl_info, fw_pages, 0);
-	अगर (rc)
-		जाओ err0;
+	if (rc)
+		goto err0;
 
-	अगर (alloc_and_init) अणु
+	if (alloc_and_init) {
 		q->pbl_tbl = qedr_alloc_pbl_tbl(dev, &q->pbl_info, GFP_KERNEL);
-		अगर (IS_ERR(q->pbl_tbl)) अणु
+		if (IS_ERR(q->pbl_tbl)) {
 			rc = PTR_ERR(q->pbl_tbl);
-			जाओ err0;
-		पूर्ण
+			goto err0;
+		}
 		qedr_populate_pbls(dev, q->umem, q->pbl_tbl, &q->pbl_info,
 				   FW_PAGE_SHIFT);
-	पूर्ण अन्यथा अणु
-		q->pbl_tbl = kzalloc(माप(*q->pbl_tbl), GFP_KERNEL);
-		अगर (!q->pbl_tbl) अणु
+	} else {
+		q->pbl_tbl = kzalloc(sizeof(*q->pbl_tbl), GFP_KERNEL);
+		if (!q->pbl_tbl) {
 			rc = -ENOMEM;
-			जाओ err0;
-		पूर्ण
-	पूर्ण
+			goto err0;
+		}
+	}
 
-	/* mmap the user address used to store करोorbell data क्रम recovery */
-	वापस qedr_init_user_db_rec(udata, dev, q, requires_db_rec);
+	/* mmap the user address used to store doorbell data for recovery */
+	return qedr_init_user_db_rec(udata, dev, q, requires_db_rec);
 
 err0:
 	ib_umem_release(q->umem);
-	q->umem = शून्य;
+	q->umem = NULL;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल अंतरभूत व्योम qedr_init_cq_params(काष्ठा qedr_cq *cq,
-				       काष्ठा qedr_ucontext *ctx,
-				       काष्ठा qedr_dev *dev, पूर्णांक vector,
-				       पूर्णांक chain_entries, पूर्णांक page_cnt,
+static inline void qedr_init_cq_params(struct qedr_cq *cq,
+				       struct qedr_ucontext *ctx,
+				       struct qedr_dev *dev, int vector,
+				       int chain_entries, int page_cnt,
 				       u64 pbl_ptr,
-				       काष्ठा qed_rdma_create_cq_in_params
+				       struct qed_rdma_create_cq_in_params
 				       *params)
-अणु
-	स_रखो(params, 0, माप(*params));
-	params->cq_handle_hi = upper_32_bits((uपूर्णांकptr_t)cq);
-	params->cq_handle_lo = lower_32_bits((uपूर्णांकptr_t)cq);
+{
+	memset(params, 0, sizeof(*params));
+	params->cq_handle_hi = upper_32_bits((uintptr_t)cq);
+	params->cq_handle_lo = lower_32_bits((uintptr_t)cq);
 	params->cnq_id = vector;
 	params->cq_size = chain_entries - 1;
 	params->dpi = (ctx) ? ctx->dpi : dev->dpi;
 	params->pbl_num_pages = page_cnt;
 	params->pbl_ptr = pbl_ptr;
 	params->pbl_two_level = 0;
-पूर्ण
+}
 
-अटल व्योम करोorbell_cq(काष्ठा qedr_cq *cq, u32 cons, u8 flags)
-अणु
+static void doorbell_cq(struct qedr_cq *cq, u32 cons, u8 flags)
+{
 	cq->db.data.agg_flags = flags;
 	cq->db.data.value = cpu_to_le32(cons);
-	ग_लिखोq(cq->db.raw, cq->db_addr);
-पूर्ण
+	writeq(cq->db.raw, cq->db_addr);
+}
 
-पूर्णांक qedr_arm_cq(काष्ठा ib_cq *ibcq, क्रमागत ib_cq_notअगरy_flags flags)
-अणु
-	काष्ठा qedr_cq *cq = get_qedr_cq(ibcq);
-	अचिन्हित दीर्घ sflags;
-	काष्ठा qedr_dev *dev;
+int qedr_arm_cq(struct ib_cq *ibcq, enum ib_cq_notify_flags flags)
+{
+	struct qedr_cq *cq = get_qedr_cq(ibcq);
+	unsigned long sflags;
+	struct qedr_dev *dev;
 
 	dev = get_qedr_dev(ibcq->device);
 
-	अगर (cq->destroyed) अणु
+	if (cq->destroyed) {
 		DP_ERR(dev,
 		       "warning: arm was invoked after destroy for cq %p (icid=%d)\n",
 		       cq, cq->icid);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 
-	अगर (cq->cq_type == QEDR_CQ_TYPE_GSI)
-		वापस 0;
+	if (cq->cq_type == QEDR_CQ_TYPE_GSI)
+		return 0;
 
 	spin_lock_irqsave(&cq->cq_lock, sflags);
 
 	cq->arm_flags = 0;
 
-	अगर (flags & IB_CQ_SOLICITED)
+	if (flags & IB_CQ_SOLICITED)
 		cq->arm_flags |= DQ_UCM_ROCE_CQ_ARM_SE_CF_CMD;
 
-	अगर (flags & IB_CQ_NEXT_COMP)
+	if (flags & IB_CQ_NEXT_COMP)
 		cq->arm_flags |= DQ_UCM_ROCE_CQ_ARM_CF_CMD;
 
-	करोorbell_cq(cq, cq->cq_cons - 1, cq->arm_flags);
+	doorbell_cq(cq, cq->cq_cons - 1, cq->arm_flags);
 
 	spin_unlock_irqrestore(&cq->cq_lock, sflags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक qedr_create_cq(काष्ठा ib_cq *ibcq, स्थिर काष्ठा ib_cq_init_attr *attr,
-		   काष्ठा ib_udata *udata)
-अणु
-	काष्ठा ib_device *ibdev = ibcq->device;
-	काष्ठा qedr_ucontext *ctx = rdma_udata_to_drv_context(
-		udata, काष्ठा qedr_ucontext, ibucontext);
-	काष्ठा qed_rdma_destroy_cq_out_params destroy_oparams;
-	काष्ठा qed_rdma_destroy_cq_in_params destroy_iparams;
-	काष्ठा qed_chain_init_params chain_params = अणु
+int qedr_create_cq(struct ib_cq *ibcq, const struct ib_cq_init_attr *attr,
+		   struct ib_udata *udata)
+{
+	struct ib_device *ibdev = ibcq->device;
+	struct qedr_ucontext *ctx = rdma_udata_to_drv_context(
+		udata, struct qedr_ucontext, ibucontext);
+	struct qed_rdma_destroy_cq_out_params destroy_oparams;
+	struct qed_rdma_destroy_cq_in_params destroy_iparams;
+	struct qed_chain_init_params chain_params = {
 		.mode		= QED_CHAIN_MODE_PBL,
-		.पूर्णांकended_use	= QED_CHAIN_USE_TO_CONSUME,
+		.intended_use	= QED_CHAIN_USE_TO_CONSUME,
 		.cnt_type	= QED_CHAIN_CNT_TYPE_U32,
-		.elem_size	= माप(जोड़ rdma_cqe),
-	पूर्ण;
-	काष्ठा qedr_dev *dev = get_qedr_dev(ibdev);
-	काष्ठा qed_rdma_create_cq_in_params params;
-	काष्ठा qedr_create_cq_ureq ureq = अणुपूर्ण;
-	पूर्णांक vector = attr->comp_vector;
-	पूर्णांक entries = attr->cqe;
-	काष्ठा qedr_cq *cq = get_qedr_cq(ibcq);
-	पूर्णांक chain_entries;
+		.elem_size	= sizeof(union rdma_cqe),
+	};
+	struct qedr_dev *dev = get_qedr_dev(ibdev);
+	struct qed_rdma_create_cq_in_params params;
+	struct qedr_create_cq_ureq ureq = {};
+	int vector = attr->comp_vector;
+	int entries = attr->cqe;
+	struct qedr_cq *cq = get_qedr_cq(ibcq);
+	int chain_entries;
 	u32 db_offset;
-	पूर्णांक page_cnt;
+	int page_cnt;
 	u64 pbl_ptr;
 	u16 icid;
-	पूर्णांक rc;
+	int rc;
 
 	DP_DEBUG(dev, QEDR_MSG_INIT,
 		 "create_cq: called from %s. entries=%d, vector=%d\n",
 		 udata ? "User Lib" : "Kernel", entries, vector);
 
-	अगर (attr->flags)
-		वापस -EOPNOTSUPP;
+	if (attr->flags)
+		return -EOPNOTSUPP;
 
-	अगर (entries > QEDR_MAX_CQES) अणु
+	if (entries > QEDR_MAX_CQES) {
 		DP_ERR(dev,
 		       "create cq: the number of entries %d is too high. Must be equal or below %d.\n",
 		       entries, QEDR_MAX_CQES);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	chain_entries = qedr_align_cq_entries(entries);
-	chain_entries = min_t(पूर्णांक, chain_entries, QEDR_MAX_CQES);
+	chain_entries = min_t(int, chain_entries, QEDR_MAX_CQES);
 	chain_params.num_elems = chain_entries;
 
 	/* calc db offset. user will add DPI base, kernel will add db addr */
 	db_offset = DB_ADDR_SHIFT(DQ_PWM_OFFSET_UCM_RDMA_CQ_CONS_32BIT);
 
-	अगर (udata) अणु
-		अगर (ib_copy_from_udata(&ureq, udata, min(माप(ureq),
-							 udata->inlen))) अणु
+	if (udata) {
+		if (ib_copy_from_udata(&ureq, udata, min(sizeof(ureq),
+							 udata->inlen))) {
 			DP_ERR(dev,
 			       "create cq: problem copying data from user space\n");
-			जाओ err0;
-		पूर्ण
+			goto err0;
+		}
 
-		अगर (!ureq.len) अणु
+		if (!ureq.len) {
 			DP_ERR(dev,
 			       "create cq: cannot create a cq with 0 entries\n");
-			जाओ err0;
-		पूर्ण
+			goto err0;
+		}
 
 		cq->cq_type = QEDR_CQ_TYPE_USER;
 
 		rc = qedr_init_user_queue(udata, dev, &cq->q, ureq.addr,
 					  ureq.len, true, IB_ACCESS_LOCAL_WRITE,
 					  1);
-		अगर (rc)
-			जाओ err0;
+		if (rc)
+			goto err0;
 
 		pbl_ptr = cq->q.pbl_tbl->pa;
 		page_cnt = cq->q.pbl_info.num_pbes;
 
 		cq->ibcq.cqe = chain_entries;
 		cq->q.db_addr = ctx->dpi_addr + db_offset;
-	पूर्ण अन्यथा अणु
+	} else {
 		cq->cq_type = QEDR_CQ_TYPE_KERNEL;
 
 		rc = dev->ops->common->chain_alloc(dev->cdev, &cq->pbl,
 						   &chain_params);
-		अगर (rc)
-			जाओ err0;
+		if (rc)
+			goto err0;
 
 		page_cnt = qed_chain_get_page_cnt(&cq->pbl);
 		pbl_ptr = qed_chain_get_pbl_phys(&cq->pbl);
 		cq->ibcq.cqe = cq->pbl.capacity;
-	पूर्ण
+	}
 
 	qedr_init_cq_params(cq, ctx, dev, vector, chain_entries, page_cnt,
 			    pbl_ptr, &params);
 
 	rc = dev->ops->rdma_create_cq(dev->rdma_ctx, &params, &icid);
-	अगर (rc)
-		जाओ err1;
+	if (rc)
+		goto err1;
 
 	cq->icid = icid;
 	cq->sig = QEDR_CQ_MAGIC_NUMBER;
 	spin_lock_init(&cq->cq_lock);
 
-	अगर (udata) अणु
+	if (udata) {
 		rc = qedr_copy_cq_uresp(dev, cq, udata, db_offset);
-		अगर (rc)
-			जाओ err2;
+		if (rc)
+			goto err2;
 
 		rc = qedr_db_recovery_add(dev, cq->q.db_addr,
 					  &cq->q.db_rec_data->db_data,
 					  DB_REC_WIDTH_64B,
 					  DB_REC_USER);
-		अगर (rc)
-			जाओ err2;
+		if (rc)
+			goto err2;
 
-	पूर्ण अन्यथा अणु
-		/* Generate करोorbell address. */
+	} else {
+		/* Generate doorbell address. */
 		cq->db.data.icid = cq->icid;
 		cq->db_addr = dev->db_addr + db_offset;
 		cq->db.data.params = DB_AGG_CMD_MAX <<
 		    RDMA_PWM_VAL32_DATA_AGG_CMD_SHIFT;
 
-		/* poपूर्णांक to the very last element, passing it we will toggle */
+		/* point to the very last element, passing it we will toggle */
 		cq->toggle_cqe = qed_chain_get_last_elem(&cq->pbl);
 		cq->pbl_toggle = RDMA_CQE_REQUESTER_TOGGLE_BIT_MASK;
-		cq->latest_cqe = शून्य;
+		cq->latest_cqe = NULL;
 		consume_cqe(cq);
 		cq->cq_cons = qed_chain_get_cons_idx_u32(&cq->pbl);
 
 		rc = qedr_db_recovery_add(dev, cq->db_addr, &cq->db.data,
 					  DB_REC_WIDTH_64B, DB_REC_KERNEL);
-		अगर (rc)
-			जाओ err2;
-	पूर्ण
+		if (rc)
+			goto err2;
+	}
 
 	DP_DEBUG(dev, QEDR_MSG_CQ,
 		 "create cq: icid=0x%0x, addr=%p, size(entries)=0x%0x\n",
 		 cq->icid, cq, params.cq_size);
 
-	वापस 0;
+	return 0;
 
 err2:
 	destroy_iparams.icid = cq->icid;
 	dev->ops->rdma_destroy_cq(dev->rdma_ctx, &destroy_iparams,
 				  &destroy_oparams);
 err1:
-	अगर (udata) अणु
-		qedr_मुक्त_pbl(dev, &cq->q.pbl_info, cq->q.pbl_tbl);
+	if (udata) {
+		qedr_free_pbl(dev, &cq->q.pbl_info, cq->q.pbl_tbl);
 		ib_umem_release(cq->q.umem);
-		अगर (cq->q.db_mmap_entry)
-			rdma_user_mmap_entry_हटाओ(cq->q.db_mmap_entry);
-	पूर्ण अन्यथा अणु
-		dev->ops->common->chain_मुक्त(dev->cdev, &cq->pbl);
-	पूर्ण
+		if (cq->q.db_mmap_entry)
+			rdma_user_mmap_entry_remove(cq->q.db_mmap_entry);
+	} else {
+		dev->ops->common->chain_free(dev->cdev, &cq->pbl);
+	}
 err0:
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-पूर्णांक qedr_resize_cq(काष्ठा ib_cq *ibcq, पूर्णांक new_cnt, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा qedr_dev *dev = get_qedr_dev(ibcq->device);
-	काष्ठा qedr_cq *cq = get_qedr_cq(ibcq);
+int qedr_resize_cq(struct ib_cq *ibcq, int new_cnt, struct ib_udata *udata)
+{
+	struct qedr_dev *dev = get_qedr_dev(ibcq->device);
+	struct qedr_cq *cq = get_qedr_cq(ibcq);
 
 	DP_ERR(dev, "cq %p RESIZE NOT SUPPORTED\n", cq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा QEDR_DESTROY_CQ_MAX_ITERATIONS		(10)
-#घोषणा QEDR_DESTROY_CQ_ITER_DURATION		(10)
+#define QEDR_DESTROY_CQ_MAX_ITERATIONS		(10)
+#define QEDR_DESTROY_CQ_ITER_DURATION		(10)
 
-पूर्णांक qedr_destroy_cq(काष्ठा ib_cq *ibcq, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा qedr_dev *dev = get_qedr_dev(ibcq->device);
-	काष्ठा qed_rdma_destroy_cq_out_params oparams;
-	काष्ठा qed_rdma_destroy_cq_in_params iparams;
-	काष्ठा qedr_cq *cq = get_qedr_cq(ibcq);
-	पूर्णांक iter;
+int qedr_destroy_cq(struct ib_cq *ibcq, struct ib_udata *udata)
+{
+	struct qedr_dev *dev = get_qedr_dev(ibcq->device);
+	struct qed_rdma_destroy_cq_out_params oparams;
+	struct qed_rdma_destroy_cq_in_params iparams;
+	struct qedr_cq *cq = get_qedr_cq(ibcq);
+	int iter;
 
 	DP_DEBUG(dev, QEDR_MSG_CQ, "destroy cq %p (icid=%d)\n", cq, cq->icid);
 
 	cq->destroyed = 1;
 
-	/* GSIs CQs are handled by driver, so they करोn't exist in the FW */
-	अगर (cq->cq_type == QEDR_CQ_TYPE_GSI) अणु
+	/* GSIs CQs are handled by driver, so they don't exist in the FW */
+	if (cq->cq_type == QEDR_CQ_TYPE_GSI) {
 		qedr_db_recovery_del(dev, cq->db_addr, &cq->db.data);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	iparams.icid = cq->icid;
 	dev->ops->rdma_destroy_cq(dev->rdma_ctx, &iparams, &oparams);
-	dev->ops->common->chain_मुक्त(dev->cdev, &cq->pbl);
+	dev->ops->common->chain_free(dev->cdev, &cq->pbl);
 
-	अगर (udata) अणु
-		qedr_मुक्त_pbl(dev, &cq->q.pbl_info, cq->q.pbl_tbl);
+	if (udata) {
+		qedr_free_pbl(dev, &cq->q.pbl_info, cq->q.pbl_tbl);
 		ib_umem_release(cq->q.umem);
 
-		अगर (cq->q.db_rec_data) अणु
+		if (cq->q.db_rec_data) {
 			qedr_db_recovery_del(dev, cq->q.db_addr,
 					     &cq->q.db_rec_data->db_data);
-			rdma_user_mmap_entry_हटाओ(cq->q.db_mmap_entry);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			rdma_user_mmap_entry_remove(cq->q.db_mmap_entry);
+		}
+	} else {
 		qedr_db_recovery_del(dev, cq->db_addr, &cq->db.data);
-	पूर्ण
+	}
 
-	/* We करोn't want the IRQ handler to handle a non-existing CQ so we
-	 * रुको until all CNQ पूर्णांकerrupts, अगर any, are received. This will always
+	/* We don't want the IRQ handler to handle a non-existing CQ so we
+	 * wait until all CNQ interrupts, if any, are received. This will always
 	 * happen and will always happen very fast. If not, then a serious error
-	 * has occured. That is why we can use a दीर्घ delay.
-	 * We spin क्रम a लघु समय so we करोnै t lose समय on context चयनing
-	 * in हाल all the completions are handled in that span. Otherwise
-	 * we sleep क्रम a जबतक and check again. Since the CNQ may be
+	 * has occured. That is why we can use a long delay.
+	 * We spin for a short time so we don’t lose time on context switching
+	 * in case all the completions are handled in that span. Otherwise
+	 * we sleep for a while and check again. Since the CNQ may be
 	 * associated with (only) the current CPU we use msleep to allow the
-	 * current CPU to be मुक्तd.
-	 * The CNQ notअगरication is increased in qedr_irq_handler().
+	 * current CPU to be freed.
+	 * The CNQ notification is increased in qedr_irq_handler().
 	 */
 	iter = QEDR_DESTROY_CQ_MAX_ITERATIONS;
-	जबतक (oparams.num_cq_notअगर != READ_ONCE(cq->cnq_notअगर) && iter) अणु
+	while (oparams.num_cq_notif != READ_ONCE(cq->cnq_notif) && iter) {
 		udelay(QEDR_DESTROY_CQ_ITER_DURATION);
 		iter--;
-	पूर्ण
+	}
 
 	iter = QEDR_DESTROY_CQ_MAX_ITERATIONS;
-	जबतक (oparams.num_cq_notअगर != READ_ONCE(cq->cnq_notअगर) && iter) अणु
+	while (oparams.num_cq_notif != READ_ONCE(cq->cnq_notif) && iter) {
 		msleep(QEDR_DESTROY_CQ_ITER_DURATION);
 		iter--;
-	पूर्ण
+	}
 
-	/* Note that we करोn't need to have explicit code to रुको क्रम the
+	/* Note that we don't need to have explicit code to wait for the
 	 * completion of the event handler because it is invoked from the EQ.
 	 * Since the destroy CQ ramrod has also been received on the EQ we can
 	 * be certain that there's no event handler in process.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक get_gid_info_from_table(काष्ठा ib_qp *ibqp,
-					  काष्ठा ib_qp_attr *attr,
-					  पूर्णांक attr_mask,
-					  काष्ठा qed_rdma_modअगरy_qp_in_params
+static inline int get_gid_info_from_table(struct ib_qp *ibqp,
+					  struct ib_qp_attr *attr,
+					  int attr_mask,
+					  struct qed_rdma_modify_qp_in_params
 					  *qp_params)
-अणु
-	स्थिर काष्ठा ib_gid_attr *gid_attr;
-	क्रमागत rdma_network_type nw_type;
-	स्थिर काष्ठा ib_global_route *grh = rdma_ah_पढ़ो_grh(&attr->ah_attr);
+{
+	const struct ib_gid_attr *gid_attr;
+	enum rdma_network_type nw_type;
+	const struct ib_global_route *grh = rdma_ah_read_grh(&attr->ah_attr);
 	u32 ipv4_addr;
-	पूर्णांक ret;
-	पूर्णांक i;
+	int ret;
+	int i;
 
 	gid_attr = grh->sgid_attr;
-	ret = rdma_पढ़ो_gid_l2_fields(gid_attr, &qp_params->vlan_id, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = rdma_read_gid_l2_fields(gid_attr, &qp_params->vlan_id, NULL);
+	if (ret)
+		return ret;
 
 	nw_type = rdma_gid_attr_network_type(gid_attr);
-	चयन (nw_type) अणु
-	हाल RDMA_NETWORK_IPV6:
-		स_नकल(&qp_params->sgid.bytes[0], &gid_attr->gid.raw[0],
-		       माप(qp_params->sgid));
-		स_नकल(&qp_params->dgid.bytes[0],
+	switch (nw_type) {
+	case RDMA_NETWORK_IPV6:
+		memcpy(&qp_params->sgid.bytes[0], &gid_attr->gid.raw[0],
+		       sizeof(qp_params->sgid));
+		memcpy(&qp_params->dgid.bytes[0],
 		       &grh->dgid,
-		       माप(qp_params->dgid));
+		       sizeof(qp_params->dgid));
 		qp_params->roce_mode = ROCE_V2_IPV6;
-		SET_FIELD(qp_params->modअगरy_flags,
+		SET_FIELD(qp_params->modify_flags,
 			  QED_ROCE_MODIFY_QP_VALID_ROCE_MODE, 1);
-		अवरोध;
-	हाल RDMA_NETWORK_ROCE_V1:
-		स_नकल(&qp_params->sgid.bytes[0], &gid_attr->gid.raw[0],
-		       माप(qp_params->sgid));
-		स_नकल(&qp_params->dgid.bytes[0],
+		break;
+	case RDMA_NETWORK_ROCE_V1:
+		memcpy(&qp_params->sgid.bytes[0], &gid_attr->gid.raw[0],
+		       sizeof(qp_params->sgid));
+		memcpy(&qp_params->dgid.bytes[0],
 		       &grh->dgid,
-		       माप(qp_params->dgid));
+		       sizeof(qp_params->dgid));
 		qp_params->roce_mode = ROCE_V1;
-		अवरोध;
-	हाल RDMA_NETWORK_IPV4:
-		स_रखो(&qp_params->sgid, 0, माप(qp_params->sgid));
-		स_रखो(&qp_params->dgid, 0, माप(qp_params->dgid));
+		break;
+	case RDMA_NETWORK_IPV4:
+		memset(&qp_params->sgid, 0, sizeof(qp_params->sgid));
+		memset(&qp_params->dgid, 0, sizeof(qp_params->dgid));
 		ipv4_addr = qedr_get_ipv4_from_gid(gid_attr->gid.raw);
 		qp_params->sgid.ipv4_addr = ipv4_addr;
 		ipv4_addr =
 		    qedr_get_ipv4_from_gid(grh->dgid.raw);
 		qp_params->dgid.ipv4_addr = ipv4_addr;
-		SET_FIELD(qp_params->modअगरy_flags,
+		SET_FIELD(qp_params->modify_flags,
 			  QED_ROCE_MODIFY_QP_VALID_ROCE_MODE, 1);
 		qp_params->roce_mode = ROCE_V2_IPV4;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	क्रम (i = 0; i < 4; i++) अणु
+	for (i = 0; i < 4; i++) {
 		qp_params->sgid.dwords[i] = ntohl(qp_params->sgid.dwords[i]);
 		qp_params->dgid.dwords[i] = ntohl(qp_params->dgid.dwords[i]);
-	पूर्ण
+	}
 
-	अगर (qp_params->vlan_id >= VLAN_CFI_MASK)
+	if (qp_params->vlan_id >= VLAN_CFI_MASK)
 		qp_params->vlan_id = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qedr_check_qp_attrs(काष्ठा ib_pd *ibpd, काष्ठा qedr_dev *dev,
-			       काष्ठा ib_qp_init_attr *attrs,
-			       काष्ठा ib_udata *udata)
-अणु
-	काष्ठा qedr_device_attr *qattr = &dev->attr;
+static int qedr_check_qp_attrs(struct ib_pd *ibpd, struct qedr_dev *dev,
+			       struct ib_qp_init_attr *attrs,
+			       struct ib_udata *udata)
+{
+	struct qedr_device_attr *qattr = &dev->attr;
 
 	/* QP0... attrs->qp_type == IB_QPT_GSI */
-	अगर (attrs->qp_type != IB_QPT_RC &&
+	if (attrs->qp_type != IB_QPT_RC &&
 	    attrs->qp_type != IB_QPT_GSI &&
 	    attrs->qp_type != IB_QPT_XRC_INI &&
-	    attrs->qp_type != IB_QPT_XRC_TGT) अणु
+	    attrs->qp_type != IB_QPT_XRC_TGT) {
 		DP_DEBUG(dev, QEDR_MSG_QP,
 			 "create qp: unsupported qp type=0x%x requested\n",
 			 attrs->qp_type);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (attrs->cap.max_send_wr > qattr->max_sqe) अणु
+	if (attrs->cap.max_send_wr > qattr->max_sqe) {
 		DP_ERR(dev,
 		       "create qp: cannot create a SQ with %d elements (max_send_wr=0x%x)\n",
 		       attrs->cap.max_send_wr, qattr->max_sqe);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (attrs->cap.max_अंतरभूत_data > qattr->max_अंतरभूत) अणु
+	if (attrs->cap.max_inline_data > qattr->max_inline) {
 		DP_ERR(dev,
 		       "create qp: unsupported inline data size=0x%x requested (max_inline=0x%x)\n",
-		       attrs->cap.max_अंतरभूत_data, qattr->max_अंतरभूत);
-		वापस -EINVAL;
-	पूर्ण
+		       attrs->cap.max_inline_data, qattr->max_inline);
+		return -EINVAL;
+	}
 
-	अगर (attrs->cap.max_send_sge > qattr->max_sge) अणु
+	if (attrs->cap.max_send_sge > qattr->max_sge) {
 		DP_ERR(dev,
 		       "create qp: unsupported send_sge=0x%x requested (max_send_sge=0x%x)\n",
 		       attrs->cap.max_send_sge, qattr->max_sge);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (attrs->cap.max_recv_sge > qattr->max_sge) अणु
+	if (attrs->cap.max_recv_sge > qattr->max_sge) {
 		DP_ERR(dev,
 		       "create qp: unsupported recv_sge=0x%x requested (max_recv_sge=0x%x)\n",
 		       attrs->cap.max_recv_sge, qattr->max_sge);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* verअगरy consumer QPs are not trying to use GSI QP's CQ.
+	/* verify consumer QPs are not trying to use GSI QP's CQ.
 	 * TGT QP isn't associated with RQ/SQ
 	 */
-	अगर ((attrs->qp_type != IB_QPT_GSI) && (dev->gsi_qp_created) &&
+	if ((attrs->qp_type != IB_QPT_GSI) && (dev->gsi_qp_created) &&
 	    (attrs->qp_type != IB_QPT_XRC_TGT) &&
-	    (attrs->qp_type != IB_QPT_XRC_INI)) अणु
-		काष्ठा qedr_cq *send_cq = get_qedr_cq(attrs->send_cq);
-		काष्ठा qedr_cq *recv_cq = get_qedr_cq(attrs->recv_cq);
+	    (attrs->qp_type != IB_QPT_XRC_INI)) {
+		struct qedr_cq *send_cq = get_qedr_cq(attrs->send_cq);
+		struct qedr_cq *recv_cq = get_qedr_cq(attrs->recv_cq);
 
-		अगर ((send_cq->cq_type == QEDR_CQ_TYPE_GSI) ||
-		    (recv_cq->cq_type == QEDR_CQ_TYPE_GSI)) अणु
+		if ((send_cq->cq_type == QEDR_CQ_TYPE_GSI) ||
+		    (recv_cq->cq_type == QEDR_CQ_TYPE_GSI)) {
 			DP_ERR(dev,
 			       "create qp: consumer QP cannot use GSI CQs.\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qedr_copy_srq_uresp(काष्ठा qedr_dev *dev,
-			       काष्ठा qedr_srq *srq, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा qedr_create_srq_uresp uresp = अणुपूर्ण;
-	पूर्णांक rc;
+static int qedr_copy_srq_uresp(struct qedr_dev *dev,
+			       struct qedr_srq *srq, struct ib_udata *udata)
+{
+	struct qedr_create_srq_uresp uresp = {};
+	int rc;
 
 	uresp.srq_id = srq->srq_id;
 
-	rc = ib_copy_to_udata(udata, &uresp, माप(uresp));
-	अगर (rc)
+	rc = ib_copy_to_udata(udata, &uresp, sizeof(uresp));
+	if (rc)
 		DP_ERR(dev, "create srq: problem copying data to user space\n");
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम qedr_copy_rq_uresp(काष्ठा qedr_dev *dev,
-			       काष्ठा qedr_create_qp_uresp *uresp,
-			       काष्ठा qedr_qp *qp)
-अणु
-	/* iWARP requires two करोorbells per RQ. */
-	अगर (rdma_protocol_iwarp(&dev->ibdev, 1)) अणु
+static void qedr_copy_rq_uresp(struct qedr_dev *dev,
+			       struct qedr_create_qp_uresp *uresp,
+			       struct qedr_qp *qp)
+{
+	/* iWARP requires two doorbells per RQ. */
+	if (rdma_protocol_iwarp(&dev->ibdev, 1)) {
 		uresp->rq_db_offset =
 		    DB_ADDR_SHIFT(DQ_PWM_OFFSET_TCM_IWARP_RQ_PROD);
 		uresp->rq_db2_offset = DB_ADDR_SHIFT(DQ_PWM_OFFSET_TCM_FLAGS);
-	पूर्ण अन्यथा अणु
+	} else {
 		uresp->rq_db_offset =
 		    DB_ADDR_SHIFT(DQ_PWM_OFFSET_TCM_ROCE_RQ_PROD);
-	पूर्ण
+	}
 
 	uresp->rq_icid = qp->icid;
-	अगर (qp->urq.db_mmap_entry)
+	if (qp->urq.db_mmap_entry)
 		uresp->rq_db_rec_addr =
 			rdma_user_mmap_get_offset(qp->urq.db_mmap_entry);
-पूर्ण
+}
 
-अटल व्योम qedr_copy_sq_uresp(काष्ठा qedr_dev *dev,
-			       काष्ठा qedr_create_qp_uresp *uresp,
-			       काष्ठा qedr_qp *qp)
-अणु
+static void qedr_copy_sq_uresp(struct qedr_dev *dev,
+			       struct qedr_create_qp_uresp *uresp,
+			       struct qedr_qp *qp)
+{
 	uresp->sq_db_offset = DB_ADDR_SHIFT(DQ_PWM_OFFSET_XCM_RDMA_SQ_PROD);
 
-	/* iWARP uses the same cid क्रम rq and sq */
-	अगर (rdma_protocol_iwarp(&dev->ibdev, 1))
+	/* iWARP uses the same cid for rq and sq */
+	if (rdma_protocol_iwarp(&dev->ibdev, 1))
 		uresp->sq_icid = qp->icid;
-	अन्यथा
+	else
 		uresp->sq_icid = qp->icid + 1;
 
-	अगर (qp->usq.db_mmap_entry)
+	if (qp->usq.db_mmap_entry)
 		uresp->sq_db_rec_addr =
 			rdma_user_mmap_get_offset(qp->usq.db_mmap_entry);
-पूर्ण
+}
 
-अटल पूर्णांक qedr_copy_qp_uresp(काष्ठा qedr_dev *dev,
-			      काष्ठा qedr_qp *qp, काष्ठा ib_udata *udata,
-			      काष्ठा qedr_create_qp_uresp *uresp)
-अणु
-	पूर्णांक rc;
+static int qedr_copy_qp_uresp(struct qedr_dev *dev,
+			      struct qedr_qp *qp, struct ib_udata *udata,
+			      struct qedr_create_qp_uresp *uresp)
+{
+	int rc;
 
-	स_रखो(uresp, 0, माप(*uresp));
+	memset(uresp, 0, sizeof(*uresp));
 
-	अगर (qedr_qp_has_sq(qp))
+	if (qedr_qp_has_sq(qp))
 		qedr_copy_sq_uresp(dev, uresp, qp);
 
-	अगर (qedr_qp_has_rq(qp))
+	if (qedr_qp_has_rq(qp))
 		qedr_copy_rq_uresp(dev, uresp, qp);
 
 	uresp->atomic_supported = dev->atomic_cap != IB_ATOMIC_NONE;
 	uresp->qp_id = qp->qp_id;
 
-	rc = qedr_ib_copy_to_udata(udata, uresp, माप(*uresp));
-	अगर (rc)
+	rc = qedr_ib_copy_to_udata(udata, uresp, sizeof(*uresp));
+	if (rc)
 		DP_ERR(dev,
 		       "create qp: failed a copy to user space with qp icid=0x%x.\n",
 		       qp->icid);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम qedr_set_common_qp_params(काष्ठा qedr_dev *dev,
-				      काष्ठा qedr_qp *qp,
-				      काष्ठा qedr_pd *pd,
-				      काष्ठा ib_qp_init_attr *attrs)
-अणु
+static void qedr_set_common_qp_params(struct qedr_dev *dev,
+				      struct qedr_qp *qp,
+				      struct qedr_pd *pd,
+				      struct ib_qp_init_attr *attrs)
+{
 	spin_lock_init(&qp->q_lock);
-	अगर (rdma_protocol_iwarp(&dev->ibdev, 1)) अणु
+	if (rdma_protocol_iwarp(&dev->ibdev, 1)) {
 		kref_init(&qp->refcnt);
 		init_completion(&qp->iwarp_cm_comp);
-	पूर्ण
+	}
 
 	qp->pd = pd;
 	qp->qp_type = attrs->qp_type;
-	qp->max_अंतरभूत_data = attrs->cap.max_अंतरभूत_data;
+	qp->max_inline_data = attrs->cap.max_inline_data;
 	qp->state = QED_ROCE_QP_STATE_RESET;
-	qp->संकेतed = (attrs->sq_sig_type == IB_SIGNAL_ALL_WR) ? true : false;
+	qp->signaled = (attrs->sq_sig_type == IB_SIGNAL_ALL_WR) ? true : false;
 	qp->dev = dev;
-	अगर (qedr_qp_has_sq(qp)) अणु
+	if (qedr_qp_has_sq(qp)) {
 		qp->sq.max_sges = attrs->cap.max_send_sge;
 		qp->sq_cq = get_qedr_cq(attrs->send_cq);
 		DP_DEBUG(dev, QEDR_MSG_QP,
 			 "SQ params:\tsq_max_sges = %d, sq_cq_id = %d\n",
 			 qp->sq.max_sges, qp->sq_cq->icid);
-	पूर्ण
+	}
 
-	अगर (attrs->srq)
+	if (attrs->srq)
 		qp->srq = get_qedr_srq(attrs->srq);
 
-	अगर (qedr_qp_has_rq(qp)) अणु
+	if (qedr_qp_has_rq(qp)) {
 		qp->rq_cq = get_qedr_cq(attrs->recv_cq);
 		qp->rq.max_sges = attrs->cap.max_recv_sge;
 		DP_DEBUG(dev, QEDR_MSG_QP,
 			 "RQ params:\trq_max_sges = %d, rq_cq_id = %d\n",
 			 qp->rq.max_sges, qp->rq_cq->icid);
-	पूर्ण
+	}
 
 	DP_DEBUG(dev, QEDR_MSG_QP,
 		 "QP params:\tpd = %d, qp_type = %d, max_inline_data = %d, state = %d, signaled = %d, use_srq=%d\n",
-		 pd->pd_id, qp->qp_type, qp->max_अंतरभूत_data,
-		 qp->state, qp->संकेतed, (attrs->srq) ? 1 : 0);
+		 pd->pd_id, qp->qp_type, qp->max_inline_data,
+		 qp->state, qp->signaled, (attrs->srq) ? 1 : 0);
 	DP_DEBUG(dev, QEDR_MSG_QP,
 		 "SQ params:\tsq_max_sges = %d, sq_cq_id = %d\n",
 		 qp->sq.max_sges, qp->sq_cq->icid);
-पूर्ण
+}
 
-अटल पूर्णांक qedr_set_roce_db_info(काष्ठा qedr_dev *dev, काष्ठा qedr_qp *qp)
-अणु
-	पूर्णांक rc = 0;
+static int qedr_set_roce_db_info(struct qedr_dev *dev, struct qedr_qp *qp)
+{
+	int rc = 0;
 
-	अगर (qedr_qp_has_sq(qp)) अणु
+	if (qedr_qp_has_sq(qp)) {
 		qp->sq.db = dev->db_addr +
 			    DB_ADDR_SHIFT(DQ_PWM_OFFSET_XCM_RDMA_SQ_PROD);
 		qp->sq.db_data.data.icid = qp->icid + 1;
 		rc = qedr_db_recovery_add(dev, qp->sq.db, &qp->sq.db_data,
 					  DB_REC_WIDTH_32B, DB_REC_KERNEL);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		if (rc)
+			return rc;
+	}
 
-	अगर (qedr_qp_has_rq(qp)) अणु
+	if (qedr_qp_has_rq(qp)) {
 		qp->rq.db = dev->db_addr +
 			    DB_ADDR_SHIFT(DQ_PWM_OFFSET_TCM_ROCE_RQ_PROD);
 		qp->rq.db_data.data.icid = qp->icid;
 		rc = qedr_db_recovery_add(dev, qp->rq.db, &qp->rq.db_data,
 					  DB_REC_WIDTH_32B, DB_REC_KERNEL);
-		अगर (rc && qedr_qp_has_sq(qp))
+		if (rc && qedr_qp_has_sq(qp))
 			qedr_db_recovery_del(dev, qp->sq.db, &qp->sq.db_data);
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक qedr_check_srq_params(काष्ठा qedr_dev *dev,
-				 काष्ठा ib_srq_init_attr *attrs,
-				 काष्ठा ib_udata *udata)
-अणु
-	काष्ठा qedr_device_attr *qattr = &dev->attr;
+static int qedr_check_srq_params(struct qedr_dev *dev,
+				 struct ib_srq_init_attr *attrs,
+				 struct ib_udata *udata)
+{
+	struct qedr_device_attr *qattr = &dev->attr;
 
-	अगर (attrs->attr.max_wr > qattr->max_srq_wr) अणु
+	if (attrs->attr.max_wr > qattr->max_srq_wr) {
 		DP_ERR(dev,
 		       "create srq: unsupported srq_wr=0x%x requested (max_srq_wr=0x%x)\n",
 		       attrs->attr.max_wr, qattr->max_srq_wr);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (attrs->attr.max_sge > qattr->max_sge) अणु
+	if (attrs->attr.max_sge > qattr->max_sge) {
 		DP_ERR(dev,
 		       "create srq: unsupported sge=0x%x requested (max_srq_sge=0x%x)\n",
 		       attrs->attr.max_sge, qattr->max_sge);
-	पूर्ण
+	}
 
-	अगर (!udata && attrs->srq_type == IB_SRQT_XRC) अणु
+	if (!udata && attrs->srq_type == IB_SRQT_XRC) {
 		DP_ERR(dev, "XRC SRQs are not supported in kernel-space\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qedr_मुक्त_srq_user_params(काष्ठा qedr_srq *srq)
-अणु
-	qedr_मुक्त_pbl(srq->dev, &srq->usrq.pbl_info, srq->usrq.pbl_tbl);
+static void qedr_free_srq_user_params(struct qedr_srq *srq)
+{
+	qedr_free_pbl(srq->dev, &srq->usrq.pbl_info, srq->usrq.pbl_tbl);
 	ib_umem_release(srq->usrq.umem);
 	ib_umem_release(srq->prod_umem);
-पूर्ण
+}
 
-अटल व्योम qedr_मुक्त_srq_kernel_params(काष्ठा qedr_srq *srq)
-अणु
-	काष्ठा qedr_srq_hwq_info *hw_srq = &srq->hw_srq;
-	काष्ठा qedr_dev *dev = srq->dev;
+static void qedr_free_srq_kernel_params(struct qedr_srq *srq)
+{
+	struct qedr_srq_hwq_info *hw_srq = &srq->hw_srq;
+	struct qedr_dev *dev = srq->dev;
 
-	dev->ops->common->chain_मुक्त(dev->cdev, &hw_srq->pbl);
+	dev->ops->common->chain_free(dev->cdev, &hw_srq->pbl);
 
-	dma_मुक्त_coherent(&dev->pdev->dev, माप(काष्ठा rdma_srq_producers),
+	dma_free_coherent(&dev->pdev->dev, sizeof(struct rdma_srq_producers),
 			  hw_srq->virt_prod_pair_addr,
 			  hw_srq->phy_prod_pair_addr);
-पूर्ण
+}
 
-अटल पूर्णांक qedr_init_srq_user_params(काष्ठा ib_udata *udata,
-				     काष्ठा qedr_srq *srq,
-				     काष्ठा qedr_create_srq_ureq *ureq,
-				     पूर्णांक access)
-अणु
-	काष्ठा scatterlist *sg;
-	पूर्णांक rc;
+static int qedr_init_srq_user_params(struct ib_udata *udata,
+				     struct qedr_srq *srq,
+				     struct qedr_create_srq_ureq *ureq,
+				     int access)
+{
+	struct scatterlist *sg;
+	int rc;
 
 	rc = qedr_init_user_queue(udata, srq->dev, &srq->usrq, ureq->srq_addr,
 				  ureq->srq_len, false, access, 1);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	srq->prod_umem = ib_umem_get(srq->ibsrq.device, ureq->prod_pair_addr,
-				     माप(काष्ठा rdma_srq_producers), access);
-	अगर (IS_ERR(srq->prod_umem)) अणु
-		qedr_मुक्त_pbl(srq->dev, &srq->usrq.pbl_info, srq->usrq.pbl_tbl);
+				     sizeof(struct rdma_srq_producers), access);
+	if (IS_ERR(srq->prod_umem)) {
+		qedr_free_pbl(srq->dev, &srq->usrq.pbl_info, srq->usrq.pbl_tbl);
 		ib_umem_release(srq->usrq.umem);
 		DP_ERR(srq->dev,
 		       "create srq: failed ib_umem_get for producer, got %ld\n",
 		       PTR_ERR(srq->prod_umem));
-		वापस PTR_ERR(srq->prod_umem);
-	पूर्ण
+		return PTR_ERR(srq->prod_umem);
+	}
 
 	sg = srq->prod_umem->sg_head.sgl;
 	srq->hw_srq.phy_prod_pair_addr = sg_dma_address(sg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qedr_alloc_srq_kernel_params(काष्ठा qedr_srq *srq,
-					काष्ठा qedr_dev *dev,
-					काष्ठा ib_srq_init_attr *init_attr)
-अणु
-	काष्ठा qedr_srq_hwq_info *hw_srq = &srq->hw_srq;
-	काष्ठा qed_chain_init_params params = अणु
+static int qedr_alloc_srq_kernel_params(struct qedr_srq *srq,
+					struct qedr_dev *dev,
+					struct ib_srq_init_attr *init_attr)
+{
+	struct qedr_srq_hwq_info *hw_srq = &srq->hw_srq;
+	struct qed_chain_init_params params = {
 		.mode		= QED_CHAIN_MODE_PBL,
-		.पूर्णांकended_use	= QED_CHAIN_USE_TO_CONSUME_PRODUCE,
+		.intended_use	= QED_CHAIN_USE_TO_CONSUME_PRODUCE,
 		.cnt_type	= QED_CHAIN_CNT_TYPE_U32,
 		.elem_size	= QEDR_SRQ_WQE_ELEM_SIZE,
-	पूर्ण;
+	};
 	dma_addr_t phy_prod_pair_addr;
 	u32 num_elems;
-	व्योम *va;
-	पूर्णांक rc;
+	void *va;
+	int rc;
 
 	va = dma_alloc_coherent(&dev->pdev->dev,
-				माप(काष्ठा rdma_srq_producers),
+				sizeof(struct rdma_srq_producers),
 				&phy_prod_pair_addr, GFP_KERNEL);
-	अगर (!va) अणु
+	if (!va) {
 		DP_ERR(dev,
 		       "create srq: failed to allocate dma memory for producer\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	hw_srq->phy_prod_pair_addr = phy_prod_pair_addr;
 	hw_srq->virt_prod_pair_addr = va;
@@ -1520,45 +1519,45 @@ err0:
 	params.num_elems = num_elems;
 
 	rc = dev->ops->common->chain_alloc(dev->cdev, &hw_srq->pbl, &params);
-	अगर (rc)
-		जाओ err0;
+	if (rc)
+		goto err0;
 
 	hw_srq->num_elems = num_elems;
 
-	वापस 0;
+	return 0;
 
 err0:
-	dma_मुक्त_coherent(&dev->pdev->dev, माप(काष्ठा rdma_srq_producers),
+	dma_free_coherent(&dev->pdev->dev, sizeof(struct rdma_srq_producers),
 			  va, phy_prod_pair_addr);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक qedr_create_srq(काष्ठा ib_srq *ibsrq, काष्ठा ib_srq_init_attr *init_attr,
-		    काष्ठा ib_udata *udata)
-अणु
-	काष्ठा qed_rdma_destroy_srq_in_params destroy_in_params;
-	काष्ठा qed_rdma_create_srq_in_params in_params = अणुपूर्ण;
-	काष्ठा qedr_dev *dev = get_qedr_dev(ibsrq->device);
-	काष्ठा qed_rdma_create_srq_out_params out_params;
-	काष्ठा qedr_pd *pd = get_qedr_pd(ibsrq->pd);
-	काष्ठा qedr_create_srq_ureq ureq = अणुपूर्ण;
+int qedr_create_srq(struct ib_srq *ibsrq, struct ib_srq_init_attr *init_attr,
+		    struct ib_udata *udata)
+{
+	struct qed_rdma_destroy_srq_in_params destroy_in_params;
+	struct qed_rdma_create_srq_in_params in_params = {};
+	struct qedr_dev *dev = get_qedr_dev(ibsrq->device);
+	struct qed_rdma_create_srq_out_params out_params;
+	struct qedr_pd *pd = get_qedr_pd(ibsrq->pd);
+	struct qedr_create_srq_ureq ureq = {};
 	u64 pbl_base_addr, phy_prod_pair_addr;
-	काष्ठा qedr_srq_hwq_info *hw_srq;
+	struct qedr_srq_hwq_info *hw_srq;
 	u32 page_cnt, page_size;
-	काष्ठा qedr_srq *srq = get_qedr_srq(ibsrq);
-	पूर्णांक rc = 0;
+	struct qedr_srq *srq = get_qedr_srq(ibsrq);
+	int rc = 0;
 
 	DP_DEBUG(dev, QEDR_MSG_QP,
 		 "create SRQ called from %s (pd %p)\n",
 		 (udata) ? "User lib" : "kernel", pd);
 
-	अगर (init_attr->srq_type != IB_SRQT_BASIC &&
+	if (init_attr->srq_type != IB_SRQT_BASIC &&
 	    init_attr->srq_type != IB_SRQT_XRC)
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
 	rc = qedr_check_srq_params(dev, init_attr, udata);
-	अगर (rc)
-		वापस -EINVAL;
+	if (rc)
+		return -EINVAL;
 
 	srq->dev = dev;
 	srq->is_xrc = (init_attr->srq_type == IB_SRQT_XRC);
@@ -1568,197 +1567,197 @@ err0:
 	hw_srq->max_wr = init_attr->attr.max_wr;
 	hw_srq->max_sges = init_attr->attr.max_sge;
 
-	अगर (udata) अणु
-		अगर (ib_copy_from_udata(&ureq, udata, min(माप(ureq),
-							 udata->inlen))) अणु
+	if (udata) {
+		if (ib_copy_from_udata(&ureq, udata, min(sizeof(ureq),
+							 udata->inlen))) {
 			DP_ERR(dev,
 			       "create srq: problem copying data from user space\n");
-			जाओ err0;
-		पूर्ण
+			goto err0;
+		}
 
 		rc = qedr_init_srq_user_params(udata, srq, &ureq, 0);
-		अगर (rc)
-			जाओ err0;
+		if (rc)
+			goto err0;
 
 		page_cnt = srq->usrq.pbl_info.num_pbes;
 		pbl_base_addr = srq->usrq.pbl_tbl->pa;
 		phy_prod_pair_addr = hw_srq->phy_prod_pair_addr;
 		page_size = PAGE_SIZE;
-	पूर्ण अन्यथा अणु
-		काष्ठा qed_chain *pbl;
+	} else {
+		struct qed_chain *pbl;
 
 		rc = qedr_alloc_srq_kernel_params(srq, dev, init_attr);
-		अगर (rc)
-			जाओ err0;
+		if (rc)
+			goto err0;
 
 		pbl = &hw_srq->pbl;
 		page_cnt = qed_chain_get_page_cnt(pbl);
 		pbl_base_addr = qed_chain_get_pbl_phys(pbl);
 		phy_prod_pair_addr = hw_srq->phy_prod_pair_addr;
 		page_size = QED_CHAIN_PAGE_SIZE;
-	पूर्ण
+	}
 
 	in_params.pd_id = pd->pd_id;
 	in_params.pbl_base_addr = pbl_base_addr;
 	in_params.prod_pair_addr = phy_prod_pair_addr;
 	in_params.num_pages = page_cnt;
 	in_params.page_size = page_size;
-	अगर (srq->is_xrc) अणु
-		काष्ठा qedr_xrcd *xrcd = get_qedr_xrcd(init_attr->ext.xrc.xrcd);
-		काष्ठा qedr_cq *cq = get_qedr_cq(init_attr->ext.cq);
+	if (srq->is_xrc) {
+		struct qedr_xrcd *xrcd = get_qedr_xrcd(init_attr->ext.xrc.xrcd);
+		struct qedr_cq *cq = get_qedr_cq(init_attr->ext.cq);
 
 		in_params.is_xrc = 1;
 		in_params.xrcd_id = xrcd->xrcd_id;
 		in_params.cq_cid = cq->icid;
-	पूर्ण
+	}
 
 	rc = dev->ops->rdma_create_srq(dev->rdma_ctx, &in_params, &out_params);
-	अगर (rc)
-		जाओ err1;
+	if (rc)
+		goto err1;
 
 	srq->srq_id = out_params.srq_id;
 
-	अगर (udata) अणु
+	if (udata) {
 		rc = qedr_copy_srq_uresp(dev, srq, udata);
-		अगर (rc)
-			जाओ err2;
-	पूर्ण
+		if (rc)
+			goto err2;
+	}
 
 	rc = xa_insert_irq(&dev->srqs, srq->srq_id, srq, GFP_KERNEL);
-	अगर (rc)
-		जाओ err2;
+	if (rc)
+		goto err2;
 
 	DP_DEBUG(dev, QEDR_MSG_SRQ,
 		 "create srq: created srq with srq_id=0x%0x\n", srq->srq_id);
-	वापस 0;
+	return 0;
 
 err2:
 	destroy_in_params.srq_id = srq->srq_id;
 
 	dev->ops->rdma_destroy_srq(dev->rdma_ctx, &destroy_in_params);
 err1:
-	अगर (udata)
-		qedr_मुक्त_srq_user_params(srq);
-	अन्यथा
-		qedr_मुक्त_srq_kernel_params(srq);
+	if (udata)
+		qedr_free_srq_user_params(srq);
+	else
+		qedr_free_srq_kernel_params(srq);
 err0:
-	वापस -EFAULT;
-पूर्ण
+	return -EFAULT;
+}
 
-पूर्णांक qedr_destroy_srq(काष्ठा ib_srq *ibsrq, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा qed_rdma_destroy_srq_in_params in_params = अणुपूर्ण;
-	काष्ठा qedr_dev *dev = get_qedr_dev(ibsrq->device);
-	काष्ठा qedr_srq *srq = get_qedr_srq(ibsrq);
+int qedr_destroy_srq(struct ib_srq *ibsrq, struct ib_udata *udata)
+{
+	struct qed_rdma_destroy_srq_in_params in_params = {};
+	struct qedr_dev *dev = get_qedr_dev(ibsrq->device);
+	struct qedr_srq *srq = get_qedr_srq(ibsrq);
 
 	xa_erase_irq(&dev->srqs, srq->srq_id);
 	in_params.srq_id = srq->srq_id;
 	in_params.is_xrc = srq->is_xrc;
 	dev->ops->rdma_destroy_srq(dev->rdma_ctx, &in_params);
 
-	अगर (ibsrq->uobject)
-		qedr_मुक्त_srq_user_params(srq);
-	अन्यथा
-		qedr_मुक्त_srq_kernel_params(srq);
+	if (ibsrq->uobject)
+		qedr_free_srq_user_params(srq);
+	else
+		qedr_free_srq_kernel_params(srq);
 
 	DP_DEBUG(dev, QEDR_MSG_SRQ,
 		 "destroy srq: destroyed srq with srq_id=0x%0x\n",
 		 srq->srq_id);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक qedr_modअगरy_srq(काष्ठा ib_srq *ibsrq, काष्ठा ib_srq_attr *attr,
-		    क्रमागत ib_srq_attr_mask attr_mask, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा qed_rdma_modअगरy_srq_in_params in_params = अणुपूर्ण;
-	काष्ठा qedr_dev *dev = get_qedr_dev(ibsrq->device);
-	काष्ठा qedr_srq *srq = get_qedr_srq(ibsrq);
-	पूर्णांक rc;
+int qedr_modify_srq(struct ib_srq *ibsrq, struct ib_srq_attr *attr,
+		    enum ib_srq_attr_mask attr_mask, struct ib_udata *udata)
+{
+	struct qed_rdma_modify_srq_in_params in_params = {};
+	struct qedr_dev *dev = get_qedr_dev(ibsrq->device);
+	struct qedr_srq *srq = get_qedr_srq(ibsrq);
+	int rc;
 
-	अगर (attr_mask & IB_SRQ_MAX_WR) अणु
+	if (attr_mask & IB_SRQ_MAX_WR) {
 		DP_ERR(dev,
 		       "modify srq: invalid attribute mask=0x%x specified for %p\n",
 		       attr_mask, srq);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (attr_mask & IB_SRQ_LIMIT) अणु
-		अगर (attr->srq_limit >= srq->hw_srq.max_wr) अणु
+	if (attr_mask & IB_SRQ_LIMIT) {
+		if (attr->srq_limit >= srq->hw_srq.max_wr) {
 			DP_ERR(dev,
 			       "modify srq: invalid srq_limit=0x%x (max_srq_limit=0x%x)\n",
 			       attr->srq_limit, srq->hw_srq.max_wr);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		in_params.srq_id = srq->srq_id;
 		in_params.wqe_limit = attr->srq_limit;
-		rc = dev->ops->rdma_modअगरy_srq(dev->rdma_ctx, &in_params);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		rc = dev->ops->rdma_modify_srq(dev->rdma_ctx, &in_params);
+		if (rc)
+			return rc;
+	}
 
 	srq->srq_limit = attr->srq_limit;
 
 	DP_DEBUG(dev, QEDR_MSG_SRQ,
 		 "modify srq: modified srq with srq_id=0x%0x\n", srq->srq_id);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल क्रमागत qed_rdma_qp_type qedr_ib_to_qed_qp_type(क्रमागत ib_qp_type ib_qp_type)
-अणु
-	चयन (ib_qp_type) अणु
-	हाल IB_QPT_RC:
-		वापस QED_RDMA_QP_TYPE_RC;
-	हाल IB_QPT_XRC_INI:
-		वापस QED_RDMA_QP_TYPE_XRC_INI;
-	हाल IB_QPT_XRC_TGT:
-		वापस QED_RDMA_QP_TYPE_XRC_TGT;
-	शेष:
-		वापस QED_RDMA_QP_TYPE_INVAL;
-	पूर्ण
-पूर्ण
+static enum qed_rdma_qp_type qedr_ib_to_qed_qp_type(enum ib_qp_type ib_qp_type)
+{
+	switch (ib_qp_type) {
+	case IB_QPT_RC:
+		return QED_RDMA_QP_TYPE_RC;
+	case IB_QPT_XRC_INI:
+		return QED_RDMA_QP_TYPE_XRC_INI;
+	case IB_QPT_XRC_TGT:
+		return QED_RDMA_QP_TYPE_XRC_TGT;
+	default:
+		return QED_RDMA_QP_TYPE_INVAL;
+	}
+}
 
-अटल अंतरभूत व्योम
-qedr_init_common_qp_in_params(काष्ठा qedr_dev *dev,
-			      काष्ठा qedr_pd *pd,
-			      काष्ठा qedr_qp *qp,
-			      काष्ठा ib_qp_init_attr *attrs,
+static inline void
+qedr_init_common_qp_in_params(struct qedr_dev *dev,
+			      struct qedr_pd *pd,
+			      struct qedr_qp *qp,
+			      struct ib_qp_init_attr *attrs,
 			      bool fmr_and_reserved_lkey,
-			      काष्ठा qed_rdma_create_qp_in_params *params)
-अणु
+			      struct qed_rdma_create_qp_in_params *params)
+{
 	/* QP handle to be written in an async event */
-	params->qp_handle_async_lo = lower_32_bits((uपूर्णांकptr_t) qp);
-	params->qp_handle_async_hi = upper_32_bits((uपूर्णांकptr_t) qp);
+	params->qp_handle_async_lo = lower_32_bits((uintptr_t) qp);
+	params->qp_handle_async_hi = upper_32_bits((uintptr_t) qp);
 
-	params->संकेत_all = (attrs->sq_sig_type == IB_SIGNAL_ALL_WR);
+	params->signal_all = (attrs->sq_sig_type == IB_SIGNAL_ALL_WR);
 	params->fmr_and_reserved_lkey = fmr_and_reserved_lkey;
 	params->qp_type = qedr_ib_to_qed_qp_type(attrs->qp_type);
 	params->stats_queue = 0;
 
-	अगर (pd) अणु
+	if (pd) {
 		params->pd = pd->pd_id;
 		params->dpi = pd->uctx ? pd->uctx->dpi : dev->dpi;
-	पूर्ण
+	}
 
-	अगर (qedr_qp_has_sq(qp))
+	if (qedr_qp_has_sq(qp))
 		params->sq_cq_id = get_qedr_cq(attrs->send_cq)->icid;
 
-	अगर (qedr_qp_has_rq(qp))
+	if (qedr_qp_has_rq(qp))
 		params->rq_cq_id = get_qedr_cq(attrs->recv_cq)->icid;
 
-	अगर (qedr_qp_has_srq(qp)) अणु
+	if (qedr_qp_has_srq(qp)) {
 		params->rq_cq_id = get_qedr_cq(attrs->recv_cq)->icid;
 		params->srq_id = qp->srq->srq_id;
 		params->use_srq = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		params->srq_id = 0;
 		params->use_srq = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम qedr_qp_user_prपूर्णांक(काष्ठा qedr_dev *dev, काष्ठा qedr_qp *qp)
-अणु
+static inline void qedr_qp_user_print(struct qedr_dev *dev, struct qedr_qp *qp)
+{
 	DP_DEBUG(dev, QEDR_MSG_QP, "create qp: successfully created user QP. "
 		 "qp=%p. "
 		 "sq_addr=0x%llx, "
@@ -1771,184 +1770,184 @@ qedr_init_common_qp_in_params(काष्ठा qedr_dev *dev,
 		 qedr_qp_has_sq(qp) ? qp->usq.buf_len : 0,
 		 qedr_qp_has_rq(qp) ? qp->urq.buf_addr : 0x0,
 		 qedr_qp_has_sq(qp) ? qp->urq.buf_len : 0);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-qedr_iwarp_populate_user_qp(काष्ठा qedr_dev *dev,
-			    काष्ठा qedr_qp *qp,
-			    काष्ठा qed_rdma_create_qp_out_params *out_params)
-अणु
+static inline void
+qedr_iwarp_populate_user_qp(struct qedr_dev *dev,
+			    struct qedr_qp *qp,
+			    struct qed_rdma_create_qp_out_params *out_params)
+{
 	qp->usq.pbl_tbl->va = out_params->sq_pbl_virt;
 	qp->usq.pbl_tbl->pa = out_params->sq_pbl_phys;
 
 	qedr_populate_pbls(dev, qp->usq.umem, qp->usq.pbl_tbl,
 			   &qp->usq.pbl_info, FW_PAGE_SHIFT);
-	अगर (!qp->srq) अणु
+	if (!qp->srq) {
 		qp->urq.pbl_tbl->va = out_params->rq_pbl_virt;
 		qp->urq.pbl_tbl->pa = out_params->rq_pbl_phys;
-	पूर्ण
+	}
 
 	qedr_populate_pbls(dev, qp->urq.umem, qp->urq.pbl_tbl,
 			   &qp->urq.pbl_info, FW_PAGE_SHIFT);
-पूर्ण
+}
 
-अटल व्योम qedr_cleanup_user(काष्ठा qedr_dev *dev,
-			      काष्ठा qedr_ucontext *ctx,
-			      काष्ठा qedr_qp *qp)
-अणु
-	अगर (qedr_qp_has_sq(qp)) अणु
+static void qedr_cleanup_user(struct qedr_dev *dev,
+			      struct qedr_ucontext *ctx,
+			      struct qedr_qp *qp)
+{
+	if (qedr_qp_has_sq(qp)) {
 		ib_umem_release(qp->usq.umem);
-		qp->usq.umem = शून्य;
-	पूर्ण
+		qp->usq.umem = NULL;
+	}
 
-	अगर (qedr_qp_has_rq(qp)) अणु
+	if (qedr_qp_has_rq(qp)) {
 		ib_umem_release(qp->urq.umem);
-		qp->urq.umem = शून्य;
-	पूर्ण
+		qp->urq.umem = NULL;
+	}
 
-	अगर (rdma_protocol_roce(&dev->ibdev, 1)) अणु
-		qedr_मुक्त_pbl(dev, &qp->usq.pbl_info, qp->usq.pbl_tbl);
-		qedr_मुक्त_pbl(dev, &qp->urq.pbl_info, qp->urq.pbl_tbl);
-	पूर्ण अन्यथा अणु
-		kमुक्त(qp->usq.pbl_tbl);
-		kमुक्त(qp->urq.pbl_tbl);
-	पूर्ण
+	if (rdma_protocol_roce(&dev->ibdev, 1)) {
+		qedr_free_pbl(dev, &qp->usq.pbl_info, qp->usq.pbl_tbl);
+		qedr_free_pbl(dev, &qp->urq.pbl_info, qp->urq.pbl_tbl);
+	} else {
+		kfree(qp->usq.pbl_tbl);
+		kfree(qp->urq.pbl_tbl);
+	}
 
-	अगर (qp->usq.db_rec_data) अणु
+	if (qp->usq.db_rec_data) {
 		qedr_db_recovery_del(dev, qp->usq.db_addr,
 				     &qp->usq.db_rec_data->db_data);
-		rdma_user_mmap_entry_हटाओ(qp->usq.db_mmap_entry);
-	पूर्ण
+		rdma_user_mmap_entry_remove(qp->usq.db_mmap_entry);
+	}
 
-	अगर (qp->urq.db_rec_data) अणु
+	if (qp->urq.db_rec_data) {
 		qedr_db_recovery_del(dev, qp->urq.db_addr,
 				     &qp->urq.db_rec_data->db_data);
-		rdma_user_mmap_entry_हटाओ(qp->urq.db_mmap_entry);
-	पूर्ण
+		rdma_user_mmap_entry_remove(qp->urq.db_mmap_entry);
+	}
 
-	अगर (rdma_protocol_iwarp(&dev->ibdev, 1))
+	if (rdma_protocol_iwarp(&dev->ibdev, 1))
 		qedr_db_recovery_del(dev, qp->urq.db_rec_db2_addr,
 				     &qp->urq.db_rec_db2_data);
-पूर्ण
+}
 
-अटल पूर्णांक qedr_create_user_qp(काष्ठा qedr_dev *dev,
-			       काष्ठा qedr_qp *qp,
-			       काष्ठा ib_pd *ibpd,
-			       काष्ठा ib_udata *udata,
-			       काष्ठा ib_qp_init_attr *attrs)
-अणु
-	काष्ठा qed_rdma_create_qp_in_params in_params;
-	काष्ठा qed_rdma_create_qp_out_params out_params;
-	काष्ठा qedr_create_qp_uresp uresp = अणुपूर्ण;
-	काष्ठा qedr_create_qp_ureq ureq = अणुपूर्ण;
-	पूर्णांक alloc_and_init = rdma_protocol_roce(&dev->ibdev, 1);
-	काष्ठा qedr_ucontext *ctx = शून्य;
-	काष्ठा qedr_pd *pd = शून्य;
-	पूर्णांक rc = 0;
+static int qedr_create_user_qp(struct qedr_dev *dev,
+			       struct qedr_qp *qp,
+			       struct ib_pd *ibpd,
+			       struct ib_udata *udata,
+			       struct ib_qp_init_attr *attrs)
+{
+	struct qed_rdma_create_qp_in_params in_params;
+	struct qed_rdma_create_qp_out_params out_params;
+	struct qedr_create_qp_uresp uresp = {};
+	struct qedr_create_qp_ureq ureq = {};
+	int alloc_and_init = rdma_protocol_roce(&dev->ibdev, 1);
+	struct qedr_ucontext *ctx = NULL;
+	struct qedr_pd *pd = NULL;
+	int rc = 0;
 
 	qp->create_type = QEDR_QP_CREATE_USER;
 
-	अगर (ibpd) अणु
+	if (ibpd) {
 		pd = get_qedr_pd(ibpd);
 		ctx = pd->uctx;
-	पूर्ण
+	}
 
-	अगर (udata) अणु
-		rc = ib_copy_from_udata(&ureq, udata, min(माप(ureq),
+	if (udata) {
+		rc = ib_copy_from_udata(&ureq, udata, min(sizeof(ureq),
 					udata->inlen));
-		अगर (rc) अणु
+		if (rc) {
 			DP_ERR(dev, "Problem copying data from user space\n");
-			वापस rc;
-		पूर्ण
-	पूर्ण
+			return rc;
+		}
+	}
 
-	अगर (qedr_qp_has_sq(qp)) अणु
-		/* SQ - पढ़ो access only (0) */
+	if (qedr_qp_has_sq(qp)) {
+		/* SQ - read access only (0) */
 		rc = qedr_init_user_queue(udata, dev, &qp->usq, ureq.sq_addr,
 					  ureq.sq_len, true, 0, alloc_and_init);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		if (rc)
+			return rc;
+	}
 
-	अगर (qedr_qp_has_rq(qp)) अणु
-		/* RQ - पढ़ो access only (0) */
+	if (qedr_qp_has_rq(qp)) {
+		/* RQ - read access only (0) */
 		rc = qedr_init_user_queue(udata, dev, &qp->urq, ureq.rq_addr,
 					  ureq.rq_len, true, 0, alloc_and_init);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		if (rc)
+			return rc;
+	}
 
-	स_रखो(&in_params, 0, माप(in_params));
+	memset(&in_params, 0, sizeof(in_params));
 	qedr_init_common_qp_in_params(dev, pd, qp, attrs, false, &in_params);
 	in_params.qp_handle_lo = ureq.qp_handle_lo;
 	in_params.qp_handle_hi = ureq.qp_handle_hi;
 
-	अगर (qp->qp_type == IB_QPT_XRC_TGT) अणु
-		काष्ठा qedr_xrcd *xrcd = get_qedr_xrcd(attrs->xrcd);
+	if (qp->qp_type == IB_QPT_XRC_TGT) {
+		struct qedr_xrcd *xrcd = get_qedr_xrcd(attrs->xrcd);
 
 		in_params.xrcd_id = xrcd->xrcd_id;
 		in_params.qp_handle_lo = qp->qp_id;
 		in_params.use_srq = 1;
-	पूर्ण
+	}
 
-	अगर (qedr_qp_has_sq(qp)) अणु
+	if (qedr_qp_has_sq(qp)) {
 		in_params.sq_num_pages = qp->usq.pbl_info.num_pbes;
 		in_params.sq_pbl_ptr = qp->usq.pbl_tbl->pa;
-	पूर्ण
+	}
 
-	अगर (qedr_qp_has_rq(qp)) अणु
+	if (qedr_qp_has_rq(qp)) {
 		in_params.rq_num_pages = qp->urq.pbl_info.num_pbes;
 		in_params.rq_pbl_ptr = qp->urq.pbl_tbl->pa;
-	पूर्ण
+	}
 
-	अगर (ctx)
+	if (ctx)
 		SET_FIELD(in_params.flags, QED_ROCE_EDPM_MODE, ctx->edpm_mode);
 
 	qp->qed_qp = dev->ops->rdma_create_qp(dev->rdma_ctx,
 					      &in_params, &out_params);
 
-	अगर (!qp->qed_qp) अणु
+	if (!qp->qed_qp) {
 		rc = -ENOMEM;
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 
-	अगर (rdma_protocol_iwarp(&dev->ibdev, 1))
+	if (rdma_protocol_iwarp(&dev->ibdev, 1))
 		qedr_iwarp_populate_user_qp(dev, qp, &out_params);
 
 	qp->qp_id = out_params.qp_id;
 	qp->icid = out_params.icid;
 
-	अगर (udata) अणु
+	if (udata) {
 		rc = qedr_copy_qp_uresp(dev, qp, udata, &uresp);
-		अगर (rc)
-			जाओ err;
-	पूर्ण
+		if (rc)
+			goto err;
+	}
 
 	/* db offset was calculated in copy_qp_uresp, now set in the user q */
-	अगर (qedr_qp_has_sq(qp)) अणु
+	if (qedr_qp_has_sq(qp)) {
 		qp->usq.db_addr = ctx->dpi_addr + uresp.sq_db_offset;
 		rc = qedr_db_recovery_add(dev, qp->usq.db_addr,
 					  &qp->usq.db_rec_data->db_data,
 					  DB_REC_WIDTH_32B,
 					  DB_REC_USER);
-		अगर (rc)
-			जाओ err;
-	पूर्ण
+		if (rc)
+			goto err;
+	}
 
-	अगर (qedr_qp_has_rq(qp)) अणु
+	if (qedr_qp_has_rq(qp)) {
 		qp->urq.db_addr = ctx->dpi_addr + uresp.rq_db_offset;
 		rc = qedr_db_recovery_add(dev, qp->urq.db_addr,
 					  &qp->urq.db_rec_data->db_data,
 					  DB_REC_WIDTH_32B,
 					  DB_REC_USER);
-		अगर (rc)
-			जाओ err;
-	पूर्ण
+		if (rc)
+			goto err;
+	}
 
-	अगर (rdma_protocol_iwarp(&dev->ibdev, 1)) अणु
+	if (rdma_protocol_iwarp(&dev->ibdev, 1)) {
 		qp->urq.db_rec_db2_addr = ctx->dpi_addr + uresp.rq_db2_offset;
 
-		/* calculate the db_rec_db2 data since it is स्थिरant so no
+		/* calculate the db_rec_db2 data since it is constant so no
 		 * need to reflect from user
 		 */
 		qp->urq.db_rec_db2_data.data.icid = cpu_to_le16(qp->icid);
@@ -1959,24 +1958,24 @@ qedr_iwarp_populate_user_qp(काष्ठा qedr_dev *dev,
 					  &qp->urq.db_rec_db2_data,
 					  DB_REC_WIDTH_32B,
 					  DB_REC_USER);
-		अगर (rc)
-			जाओ err;
-	पूर्ण
-	qedr_qp_user_prपूर्णांक(dev, qp);
-	वापस rc;
+		if (rc)
+			goto err;
+	}
+	qedr_qp_user_print(dev, qp);
+	return rc;
 err:
 	rc = dev->ops->rdma_destroy_qp(dev->rdma_ctx, qp->qed_qp);
-	अगर (rc)
+	if (rc)
 		DP_ERR(dev, "create qp: fatal fault. rc=%d", rc);
 
 err1:
 	qedr_cleanup_user(dev, ctx, qp);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक qedr_set_iwarp_db_info(काष्ठा qedr_dev *dev, काष्ठा qedr_qp *qp)
-अणु
-	पूर्णांक rc;
+static int qedr_set_iwarp_db_info(struct qedr_dev *dev, struct qedr_qp *qp)
+{
+	int rc;
 
 	qp->sq.db = dev->db_addr +
 	    DB_ADDR_SHIFT(DQ_PWM_OFFSET_XCM_RDMA_SQ_PROD);
@@ -1986,8 +1985,8 @@ err1:
 				  &qp->sq.db_data,
 				  DB_REC_WIDTH_32B,
 				  DB_REC_KERNEL);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	qp->rq.db = dev->db_addr +
 		    DB_ADDR_SHIFT(DQ_PWM_OFFSET_TCM_IWARP_RQ_PROD);
@@ -2001,47 +2000,47 @@ err1:
 				  &qp->rq.db_data,
 				  DB_REC_WIDTH_32B,
 				  DB_REC_KERNEL);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	rc = qedr_db_recovery_add(dev, qp->rq.iwarp_db2,
 				  &qp->rq.iwarp_db2_data,
 				  DB_REC_WIDTH_32B,
 				  DB_REC_KERNEL);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक
-qedr_roce_create_kernel_qp(काष्ठा qedr_dev *dev,
-			   काष्ठा qedr_qp *qp,
-			   काष्ठा qed_rdma_create_qp_in_params *in_params,
+static int
+qedr_roce_create_kernel_qp(struct qedr_dev *dev,
+			   struct qedr_qp *qp,
+			   struct qed_rdma_create_qp_in_params *in_params,
 			   u32 n_sq_elems, u32 n_rq_elems)
-अणु
-	काष्ठा qed_rdma_create_qp_out_params out_params;
-	काष्ठा qed_chain_init_params params = अणु
+{
+	struct qed_rdma_create_qp_out_params out_params;
+	struct qed_chain_init_params params = {
 		.mode		= QED_CHAIN_MODE_PBL,
 		.cnt_type	= QED_CHAIN_CNT_TYPE_U32,
-	पूर्ण;
-	पूर्णांक rc;
+	};
+	int rc;
 
-	params.पूर्णांकended_use = QED_CHAIN_USE_TO_PRODUCE;
+	params.intended_use = QED_CHAIN_USE_TO_PRODUCE;
 	params.num_elems = n_sq_elems;
 	params.elem_size = QEDR_SQE_ELEMENT_SIZE;
 
 	rc = dev->ops->common->chain_alloc(dev->cdev, &qp->sq.pbl, &params);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	in_params->sq_num_pages = qed_chain_get_page_cnt(&qp->sq.pbl);
 	in_params->sq_pbl_ptr = qed_chain_get_pbl_phys(&qp->sq.pbl);
 
-	params.पूर्णांकended_use = QED_CHAIN_USE_TO_CONSUME_PRODUCE;
+	params.intended_use = QED_CHAIN_USE_TO_CONSUME_PRODUCE;
 	params.num_elems = n_rq_elems;
 	params.elem_size = QEDR_RQE_ELEMENT_SIZE;
 
 	rc = dev->ops->common->chain_alloc(dev->cdev, &qp->rq.pbl, &params);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	in_params->rq_num_pages = qed_chain_get_page_cnt(&qp->rq.pbl);
 	in_params->rq_pbl_ptr = qed_chain_get_pbl_phys(&qp->rq.pbl);
@@ -2049,27 +2048,27 @@ qedr_roce_create_kernel_qp(काष्ठा qedr_dev *dev,
 	qp->qed_qp = dev->ops->rdma_create_qp(dev->rdma_ctx,
 					      in_params, &out_params);
 
-	अगर (!qp->qed_qp)
-		वापस -EINVAL;
+	if (!qp->qed_qp)
+		return -EINVAL;
 
 	qp->qp_id = out_params.qp_id;
 	qp->icid = out_params.icid;
 
-	वापस qedr_set_roce_db_info(dev, qp);
-पूर्ण
+	return qedr_set_roce_db_info(dev, qp);
+}
 
-अटल पूर्णांक
-qedr_iwarp_create_kernel_qp(काष्ठा qedr_dev *dev,
-			    काष्ठा qedr_qp *qp,
-			    काष्ठा qed_rdma_create_qp_in_params *in_params,
+static int
+qedr_iwarp_create_kernel_qp(struct qedr_dev *dev,
+			    struct qedr_qp *qp,
+			    struct qed_rdma_create_qp_in_params *in_params,
 			    u32 n_sq_elems, u32 n_rq_elems)
-अणु
-	काष्ठा qed_rdma_create_qp_out_params out_params;
-	काष्ठा qed_chain_init_params params = अणु
+{
+	struct qed_rdma_create_qp_out_params out_params;
+	struct qed_chain_init_params params = {
 		.mode		= QED_CHAIN_MODE_PBL,
 		.cnt_type	= QED_CHAIN_CNT_TYPE_U32,
-	पूर्ण;
-	पूर्णांक rc;
+	};
+	int rc;
 
 	in_params->sq_num_pages = QED_CHAIN_PAGE_CNT(n_sq_elems,
 						     QEDR_SQE_ELEMENT_SIZE,
@@ -2083,119 +2082,119 @@ qedr_iwarp_create_kernel_qp(काष्ठा qedr_dev *dev,
 	qp->qed_qp = dev->ops->rdma_create_qp(dev->rdma_ctx,
 					      in_params, &out_params);
 
-	अगर (!qp->qed_qp)
-		वापस -EINVAL;
+	if (!qp->qed_qp)
+		return -EINVAL;
 
 	/* Now we allocate the chain */
 
-	params.पूर्णांकended_use = QED_CHAIN_USE_TO_PRODUCE;
+	params.intended_use = QED_CHAIN_USE_TO_PRODUCE;
 	params.num_elems = n_sq_elems;
 	params.elem_size = QEDR_SQE_ELEMENT_SIZE;
 	params.ext_pbl_virt = out_params.sq_pbl_virt;
 	params.ext_pbl_phys = out_params.sq_pbl_phys;
 
 	rc = dev->ops->common->chain_alloc(dev->cdev, &qp->sq.pbl, &params);
-	अगर (rc)
-		जाओ err;
+	if (rc)
+		goto err;
 
-	params.पूर्णांकended_use = QED_CHAIN_USE_TO_CONSUME_PRODUCE;
+	params.intended_use = QED_CHAIN_USE_TO_CONSUME_PRODUCE;
 	params.num_elems = n_rq_elems;
 	params.elem_size = QEDR_RQE_ELEMENT_SIZE;
 	params.ext_pbl_virt = out_params.rq_pbl_virt;
 	params.ext_pbl_phys = out_params.rq_pbl_phys;
 
 	rc = dev->ops->common->chain_alloc(dev->cdev, &qp->rq.pbl, &params);
-	अगर (rc)
-		जाओ err;
+	if (rc)
+		goto err;
 
 	qp->qp_id = out_params.qp_id;
 	qp->icid = out_params.icid;
 
-	वापस qedr_set_iwarp_db_info(dev, qp);
+	return qedr_set_iwarp_db_info(dev, qp);
 
 err:
 	dev->ops->rdma_destroy_qp(dev->rdma_ctx, qp->qed_qp);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम qedr_cleanup_kernel(काष्ठा qedr_dev *dev, काष्ठा qedr_qp *qp)
-अणु
-	dev->ops->common->chain_मुक्त(dev->cdev, &qp->sq.pbl);
-	kमुक्त(qp->wqe_wr_id);
+static void qedr_cleanup_kernel(struct qedr_dev *dev, struct qedr_qp *qp)
+{
+	dev->ops->common->chain_free(dev->cdev, &qp->sq.pbl);
+	kfree(qp->wqe_wr_id);
 
-	dev->ops->common->chain_मुक्त(dev->cdev, &qp->rq.pbl);
-	kमुक्त(qp->rqe_wr_id);
+	dev->ops->common->chain_free(dev->cdev, &qp->rq.pbl);
+	kfree(qp->rqe_wr_id);
 
-	/* GSI qp is not रेजिस्टरed to db mechanism so no need to delete */
-	अगर (qp->qp_type == IB_QPT_GSI)
-		वापस;
+	/* GSI qp is not registered to db mechanism so no need to delete */
+	if (qp->qp_type == IB_QPT_GSI)
+		return;
 
 	qedr_db_recovery_del(dev, qp->sq.db, &qp->sq.db_data);
 
-	अगर (!qp->srq) अणु
+	if (!qp->srq) {
 		qedr_db_recovery_del(dev, qp->rq.db, &qp->rq.db_data);
 
-		अगर (rdma_protocol_iwarp(&dev->ibdev, 1))
+		if (rdma_protocol_iwarp(&dev->ibdev, 1))
 			qedr_db_recovery_del(dev, qp->rq.iwarp_db2,
 					     &qp->rq.iwarp_db2_data);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक qedr_create_kernel_qp(काष्ठा qedr_dev *dev,
-				 काष्ठा qedr_qp *qp,
-				 काष्ठा ib_pd *ibpd,
-				 काष्ठा ib_qp_init_attr *attrs)
-अणु
-	काष्ठा qed_rdma_create_qp_in_params in_params;
-	काष्ठा qedr_pd *pd = get_qedr_pd(ibpd);
-	पूर्णांक rc = -EINVAL;
+static int qedr_create_kernel_qp(struct qedr_dev *dev,
+				 struct qedr_qp *qp,
+				 struct ib_pd *ibpd,
+				 struct ib_qp_init_attr *attrs)
+{
+	struct qed_rdma_create_qp_in_params in_params;
+	struct qedr_pd *pd = get_qedr_pd(ibpd);
+	int rc = -EINVAL;
 	u32 n_rq_elems;
 	u32 n_sq_elems;
 	u32 n_sq_entries;
 
-	स_रखो(&in_params, 0, माप(in_params));
+	memset(&in_params, 0, sizeof(in_params));
 	qp->create_type = QEDR_QP_CREATE_KERNEL;
 
 	/* A single work request may take up to QEDR_MAX_SQ_WQE_SIZE elements in
-	 * the ring. The ring should allow at least a single WR, even अगर the
+	 * the ring. The ring should allow at least a single WR, even if the
 	 * user requested none, due to allocation issues.
 	 * We should add an extra WR since the prod and cons indices of
 	 * wqe_wr_id are managed in such a way that the WQ is considered full
-	 * when (prod+1)%max_wr==cons. We currently करोn't करो that because we
-	 * द्विगुन the number of entries due an iSER issue that pushes far more
+	 * when (prod+1)%max_wr==cons. We currently don't do that because we
+	 * double the number of entries due an iSER issue that pushes far more
 	 * WRs than indicated. If we decline its ib_post_send() then we get
-	 * error prपूर्णांकs in the dmesg we'd like to aव्योम.
+	 * error prints in the dmesg we'd like to avoid.
 	 */
 	qp->sq.max_wr = min_t(u32, attrs->cap.max_send_wr * dev->wq_multiplier,
 			      dev->attr.max_sqe);
 
-	qp->wqe_wr_id = kसुस्मृति(qp->sq.max_wr, माप(*qp->wqe_wr_id),
+	qp->wqe_wr_id = kcalloc(qp->sq.max_wr, sizeof(*qp->wqe_wr_id),
 				GFP_KERNEL);
-	अगर (!qp->wqe_wr_id) अणु
+	if (!qp->wqe_wr_id) {
 		DP_ERR(dev, "create qp: failed SQ shadow memory allocation\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* QP handle to be written in CQE */
-	in_params.qp_handle_lo = lower_32_bits((uपूर्णांकptr_t) qp);
-	in_params.qp_handle_hi = upper_32_bits((uपूर्णांकptr_t) qp);
+	in_params.qp_handle_lo = lower_32_bits((uintptr_t) qp);
+	in_params.qp_handle_hi = upper_32_bits((uintptr_t) qp);
 
 	/* A single work request may take up to QEDR_MAX_RQ_WQE_SIZE elements in
-	 * the ring. There ring should allow at least a single WR, even अगर the
+	 * the ring. There ring should allow at least a single WR, even if the
 	 * user requested none, due to allocation issues.
 	 */
 	qp->rq.max_wr = (u16) max_t(u32, attrs->cap.max_recv_wr, 1);
 
-	/* Allocate driver पूर्णांकernal RQ array */
-	qp->rqe_wr_id = kसुस्मृति(qp->rq.max_wr, माप(*qp->rqe_wr_id),
+	/* Allocate driver internal RQ array */
+	qp->rqe_wr_id = kcalloc(qp->rq.max_wr, sizeof(*qp->rqe_wr_id),
 				GFP_KERNEL);
-	अगर (!qp->rqe_wr_id) अणु
+	if (!qp->rqe_wr_id) {
 		DP_ERR(dev,
 		       "create qp: failed RQ shadow memory allocation\n");
-		kमुक्त(qp->wqe_wr_id);
-		वापस -ENOMEM;
-	पूर्ण
+		kfree(qp->wqe_wr_id);
+		return -ENOMEM;
+	}
 
 	qedr_init_common_qp_in_params(dev, pd, qp, attrs, true, &in_params);
 
@@ -2206,68 +2205,68 @@ err:
 
 	n_rq_elems = qp->rq.max_wr * QEDR_MAX_RQE_ELEMENTS_PER_RQE;
 
-	अगर (rdma_protocol_iwarp(&dev->ibdev, 1))
+	if (rdma_protocol_iwarp(&dev->ibdev, 1))
 		rc = qedr_iwarp_create_kernel_qp(dev, qp, &in_params,
 						 n_sq_elems, n_rq_elems);
-	अन्यथा
+	else
 		rc = qedr_roce_create_kernel_qp(dev, qp, &in_params,
 						n_sq_elems, n_rq_elems);
-	अगर (rc)
+	if (rc)
 		qedr_cleanup_kernel(dev, qp);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक qedr_मुक्त_qp_resources(काष्ठा qedr_dev *dev, काष्ठा qedr_qp *qp,
-				  काष्ठा ib_udata *udata)
-अणु
-	काष्ठा qedr_ucontext *ctx =
-		rdma_udata_to_drv_context(udata, काष्ठा qedr_ucontext,
+static int qedr_free_qp_resources(struct qedr_dev *dev, struct qedr_qp *qp,
+				  struct ib_udata *udata)
+{
+	struct qedr_ucontext *ctx =
+		rdma_udata_to_drv_context(udata, struct qedr_ucontext,
 					  ibucontext);
-	पूर्णांक rc;
+	int rc;
 
-	अगर (qp->qp_type != IB_QPT_GSI) अणु
+	if (qp->qp_type != IB_QPT_GSI) {
 		rc = dev->ops->rdma_destroy_qp(dev->rdma_ctx, qp->qed_qp);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		if (rc)
+			return rc;
+	}
 
-	अगर (qp->create_type == QEDR_QP_CREATE_USER)
+	if (qp->create_type == QEDR_QP_CREATE_USER)
 		qedr_cleanup_user(dev, ctx, qp);
-	अन्यथा
+	else
 		qedr_cleanup_kernel(dev, qp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा ib_qp *qedr_create_qp(काष्ठा ib_pd *ibpd,
-			     काष्ठा ib_qp_init_attr *attrs,
-			     काष्ठा ib_udata *udata)
-अणु
-	काष्ठा qedr_xrcd *xrcd = शून्य;
-	काष्ठा qedr_pd *pd = शून्य;
-	काष्ठा qedr_dev *dev;
-	काष्ठा qedr_qp *qp;
-	काष्ठा ib_qp *ibqp;
-	पूर्णांक rc = 0;
+struct ib_qp *qedr_create_qp(struct ib_pd *ibpd,
+			     struct ib_qp_init_attr *attrs,
+			     struct ib_udata *udata)
+{
+	struct qedr_xrcd *xrcd = NULL;
+	struct qedr_pd *pd = NULL;
+	struct qedr_dev *dev;
+	struct qedr_qp *qp;
+	struct ib_qp *ibqp;
+	int rc = 0;
 
-	अगर (attrs->create_flags)
-		वापस ERR_PTR(-EOPNOTSUPP);
+	if (attrs->create_flags)
+		return ERR_PTR(-EOPNOTSUPP);
 
-	अगर (attrs->qp_type == IB_QPT_XRC_TGT) अणु
+	if (attrs->qp_type == IB_QPT_XRC_TGT) {
 		xrcd = get_qedr_xrcd(attrs->xrcd);
 		dev = get_qedr_dev(xrcd->ibxrcd.device);
-	पूर्ण अन्यथा अणु
+	} else {
 		pd = get_qedr_pd(ibpd);
 		dev = get_qedr_dev(ibpd->device);
-	पूर्ण
+	}
 
 	DP_DEBUG(dev, QEDR_MSG_QP, "create qp: called from %s, pd=%p\n",
 		 udata ? "user library" : "kernel", pd);
 
 	rc = qedr_check_qp_attrs(ibpd, dev, attrs, udata);
-	अगर (rc)
-		वापस ERR_PTR(rc);
+	if (rc)
+		return ERR_PTR(rc);
 
 	DP_DEBUG(dev, QEDR_MSG_QP,
 		 "create qp: called from %s, event_handler=%p, eepd=%p sq_cq=%p, sq_icid=%d, rq_cq=%p, rq_icid=%d\n",
@@ -2277,299 +2276,299 @@ err:
 		 get_qedr_cq(attrs->recv_cq),
 		 attrs->recv_cq ? get_qedr_cq(attrs->recv_cq)->icid : 0);
 
-	qp = kzalloc(माप(*qp), GFP_KERNEL);
-	अगर (!qp) अणु
+	qp = kzalloc(sizeof(*qp), GFP_KERNEL);
+	if (!qp) {
 		DP_ERR(dev, "create qp: failed allocating memory\n");
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 
 	qedr_set_common_qp_params(dev, qp, pd, attrs);
 
-	अगर (attrs->qp_type == IB_QPT_GSI) अणु
+	if (attrs->qp_type == IB_QPT_GSI) {
 		ibqp = qedr_create_gsi_qp(dev, attrs, qp);
-		अगर (IS_ERR(ibqp))
-			kमुक्त(qp);
-		वापस ibqp;
-	पूर्ण
+		if (IS_ERR(ibqp))
+			kfree(qp);
+		return ibqp;
+	}
 
-	अगर (udata || xrcd)
+	if (udata || xrcd)
 		rc = qedr_create_user_qp(dev, qp, ibpd, udata, attrs);
-	अन्यथा
+	else
 		rc = qedr_create_kernel_qp(dev, qp, ibpd, attrs);
 
-	अगर (rc)
-		जाओ out_मुक्त_qp;
+	if (rc)
+		goto out_free_qp;
 
 	qp->ibqp.qp_num = qp->qp_id;
 
-	अगर (rdma_protocol_iwarp(&dev->ibdev, 1)) अणु
+	if (rdma_protocol_iwarp(&dev->ibdev, 1)) {
 		rc = xa_insert(&dev->qps, qp->qp_id, qp, GFP_KERNEL);
-		अगर (rc)
-			जाओ out_मुक्त_qp_resources;
-	पूर्ण
+		if (rc)
+			goto out_free_qp_resources;
+	}
 
-	वापस &qp->ibqp;
+	return &qp->ibqp;
 
-out_मुक्त_qp_resources:
-	qedr_मुक्त_qp_resources(dev, qp, udata);
-out_मुक्त_qp:
-	kमुक्त(qp);
+out_free_qp_resources:
+	qedr_free_qp_resources(dev, qp, udata);
+out_free_qp:
+	kfree(qp);
 
-	वापस ERR_PTR(-EFAULT);
-पूर्ण
+	return ERR_PTR(-EFAULT);
+}
 
-अटल क्रमागत ib_qp_state qedr_get_ibqp_state(क्रमागत qed_roce_qp_state qp_state)
-अणु
-	चयन (qp_state) अणु
-	हाल QED_ROCE_QP_STATE_RESET:
-		वापस IB_QPS_RESET;
-	हाल QED_ROCE_QP_STATE_INIT:
-		वापस IB_QPS_INIT;
-	हाल QED_ROCE_QP_STATE_RTR:
-		वापस IB_QPS_RTR;
-	हाल QED_ROCE_QP_STATE_RTS:
-		वापस IB_QPS_RTS;
-	हाल QED_ROCE_QP_STATE_SQD:
-		वापस IB_QPS_SQD;
-	हाल QED_ROCE_QP_STATE_ERR:
-		वापस IB_QPS_ERR;
-	हाल QED_ROCE_QP_STATE_SQE:
-		वापस IB_QPS_SQE;
-	पूर्ण
-	वापस IB_QPS_ERR;
-पूर्ण
+static enum ib_qp_state qedr_get_ibqp_state(enum qed_roce_qp_state qp_state)
+{
+	switch (qp_state) {
+	case QED_ROCE_QP_STATE_RESET:
+		return IB_QPS_RESET;
+	case QED_ROCE_QP_STATE_INIT:
+		return IB_QPS_INIT;
+	case QED_ROCE_QP_STATE_RTR:
+		return IB_QPS_RTR;
+	case QED_ROCE_QP_STATE_RTS:
+		return IB_QPS_RTS;
+	case QED_ROCE_QP_STATE_SQD:
+		return IB_QPS_SQD;
+	case QED_ROCE_QP_STATE_ERR:
+		return IB_QPS_ERR;
+	case QED_ROCE_QP_STATE_SQE:
+		return IB_QPS_SQE;
+	}
+	return IB_QPS_ERR;
+}
 
-अटल क्रमागत qed_roce_qp_state qedr_get_state_from_ibqp(
-					क्रमागत ib_qp_state qp_state)
-अणु
-	चयन (qp_state) अणु
-	हाल IB_QPS_RESET:
-		वापस QED_ROCE_QP_STATE_RESET;
-	हाल IB_QPS_INIT:
-		वापस QED_ROCE_QP_STATE_INIT;
-	हाल IB_QPS_RTR:
-		वापस QED_ROCE_QP_STATE_RTR;
-	हाल IB_QPS_RTS:
-		वापस QED_ROCE_QP_STATE_RTS;
-	हाल IB_QPS_SQD:
-		वापस QED_ROCE_QP_STATE_SQD;
-	हाल IB_QPS_ERR:
-		वापस QED_ROCE_QP_STATE_ERR;
-	शेष:
-		वापस QED_ROCE_QP_STATE_ERR;
-	पूर्ण
-पूर्ण
+static enum qed_roce_qp_state qedr_get_state_from_ibqp(
+					enum ib_qp_state qp_state)
+{
+	switch (qp_state) {
+	case IB_QPS_RESET:
+		return QED_ROCE_QP_STATE_RESET;
+	case IB_QPS_INIT:
+		return QED_ROCE_QP_STATE_INIT;
+	case IB_QPS_RTR:
+		return QED_ROCE_QP_STATE_RTR;
+	case IB_QPS_RTS:
+		return QED_ROCE_QP_STATE_RTS;
+	case IB_QPS_SQD:
+		return QED_ROCE_QP_STATE_SQD;
+	case IB_QPS_ERR:
+		return QED_ROCE_QP_STATE_ERR;
+	default:
+		return QED_ROCE_QP_STATE_ERR;
+	}
+}
 
-अटल व्योम qedr_reset_qp_hwq_info(काष्ठा qedr_qp_hwq_info *qph)
-अणु
+static void qedr_reset_qp_hwq_info(struct qedr_qp_hwq_info *qph)
+{
 	qed_chain_reset(&qph->pbl);
 	qph->prod = 0;
 	qph->cons = 0;
 	qph->wqe_cons = 0;
 	qph->db_data.data.value = cpu_to_le16(0);
-पूर्ण
+}
 
-अटल पूर्णांक qedr_update_qp_state(काष्ठा qedr_dev *dev,
-				काष्ठा qedr_qp *qp,
-				क्रमागत qed_roce_qp_state cur_state,
-				क्रमागत qed_roce_qp_state new_state)
-अणु
-	पूर्णांक status = 0;
+static int qedr_update_qp_state(struct qedr_dev *dev,
+				struct qedr_qp *qp,
+				enum qed_roce_qp_state cur_state,
+				enum qed_roce_qp_state new_state)
+{
+	int status = 0;
 
-	अगर (new_state == cur_state)
-		वापस 0;
+	if (new_state == cur_state)
+		return 0;
 
-	चयन (cur_state) अणु
-	हाल QED_ROCE_QP_STATE_RESET:
-		चयन (new_state) अणु
-		हाल QED_ROCE_QP_STATE_INIT:
+	switch (cur_state) {
+	case QED_ROCE_QP_STATE_RESET:
+		switch (new_state) {
+		case QED_ROCE_QP_STATE_INIT:
 			qp->prev_wqe_size = 0;
 			qedr_reset_qp_hwq_info(&qp->sq);
 			qedr_reset_qp_hwq_info(&qp->rq);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			status = -EINVAL;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल QED_ROCE_QP_STATE_INIT:
-		चयन (new_state) अणु
-		हाल QED_ROCE_QP_STATE_RTR:
-			/* Update करोorbell (in हाल post_recv was
-			 * करोne beक्रमe move to RTR)
+			break;
+		}
+		break;
+	case QED_ROCE_QP_STATE_INIT:
+		switch (new_state) {
+		case QED_ROCE_QP_STATE_RTR:
+			/* Update doorbell (in case post_recv was
+			 * done before move to RTR)
 			 */
 
-			अगर (rdma_protocol_roce(&dev->ibdev, 1)) अणु
-				ग_लिखोl(qp->rq.db_data.raw, qp->rq.db);
-			पूर्ण
-			अवरोध;
-		हाल QED_ROCE_QP_STATE_ERR:
-			अवरोध;
-		शेष:
+			if (rdma_protocol_roce(&dev->ibdev, 1)) {
+				writel(qp->rq.db_data.raw, qp->rq.db);
+			}
+			break;
+		case QED_ROCE_QP_STATE_ERR:
+			break;
+		default:
 			/* Invalid state change. */
 			status = -EINVAL;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल QED_ROCE_QP_STATE_RTR:
+			break;
+		}
+		break;
+	case QED_ROCE_QP_STATE_RTR:
 		/* RTR->XXX */
-		चयन (new_state) अणु
-		हाल QED_ROCE_QP_STATE_RTS:
-			अवरोध;
-		हाल QED_ROCE_QP_STATE_ERR:
-			अवरोध;
-		शेष:
+		switch (new_state) {
+		case QED_ROCE_QP_STATE_RTS:
+			break;
+		case QED_ROCE_QP_STATE_ERR:
+			break;
+		default:
 			/* Invalid state change. */
 			status = -EINVAL;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल QED_ROCE_QP_STATE_RTS:
+			break;
+		}
+		break;
+	case QED_ROCE_QP_STATE_RTS:
 		/* RTS->XXX */
-		चयन (new_state) अणु
-		हाल QED_ROCE_QP_STATE_SQD:
-			अवरोध;
-		हाल QED_ROCE_QP_STATE_ERR:
-			अवरोध;
-		शेष:
+		switch (new_state) {
+		case QED_ROCE_QP_STATE_SQD:
+			break;
+		case QED_ROCE_QP_STATE_ERR:
+			break;
+		default:
 			/* Invalid state change. */
 			status = -EINVAL;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल QED_ROCE_QP_STATE_SQD:
+			break;
+		}
+		break;
+	case QED_ROCE_QP_STATE_SQD:
 		/* SQD->XXX */
-		चयन (new_state) अणु
-		हाल QED_ROCE_QP_STATE_RTS:
-		हाल QED_ROCE_QP_STATE_ERR:
-			अवरोध;
-		शेष:
+		switch (new_state) {
+		case QED_ROCE_QP_STATE_RTS:
+		case QED_ROCE_QP_STATE_ERR:
+			break;
+		default:
 			/* Invalid state change. */
 			status = -EINVAL;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल QED_ROCE_QP_STATE_ERR:
+			break;
+		}
+		break;
+	case QED_ROCE_QP_STATE_ERR:
 		/* ERR->XXX */
-		चयन (new_state) अणु
-		हाल QED_ROCE_QP_STATE_RESET:
-			अगर ((qp->rq.prod != qp->rq.cons) ||
-			    (qp->sq.prod != qp->sq.cons)) अणु
+		switch (new_state) {
+		case QED_ROCE_QP_STATE_RESET:
+			if ((qp->rq.prod != qp->rq.cons) ||
+			    (qp->sq.prod != qp->sq.cons)) {
 				DP_NOTICE(dev,
 					  "Error->Reset with rq/sq not empty rq.prod=%x rq.cons=%x sq.prod=%x sq.cons=%x\n",
 					  qp->rq.prod, qp->rq.cons, qp->sq.prod,
 					  qp->sq.cons);
 				status = -EINVAL;
-			पूर्ण
-			अवरोध;
-		शेष:
+			}
+			break;
+		default:
 			status = -EINVAL;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	शेष:
+			break;
+		}
+		break;
+	default:
 		status = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-पूर्णांक qedr_modअगरy_qp(काष्ठा ib_qp *ibqp, काष्ठा ib_qp_attr *attr,
-		   पूर्णांक attr_mask, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा qedr_qp *qp = get_qedr_qp(ibqp);
-	काष्ठा qed_rdma_modअगरy_qp_in_params qp_params = अणु 0 पूर्ण;
-	काष्ठा qedr_dev *dev = get_qedr_dev(&qp->dev->ibdev);
-	स्थिर काष्ठा ib_global_route *grh = rdma_ah_पढ़ो_grh(&attr->ah_attr);
-	क्रमागत ib_qp_state old_qp_state, new_qp_state;
-	क्रमागत qed_roce_qp_state cur_state;
-	पूर्णांक rc = 0;
+int qedr_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
+		   int attr_mask, struct ib_udata *udata)
+{
+	struct qedr_qp *qp = get_qedr_qp(ibqp);
+	struct qed_rdma_modify_qp_in_params qp_params = { 0 };
+	struct qedr_dev *dev = get_qedr_dev(&qp->dev->ibdev);
+	const struct ib_global_route *grh = rdma_ah_read_grh(&attr->ah_attr);
+	enum ib_qp_state old_qp_state, new_qp_state;
+	enum qed_roce_qp_state cur_state;
+	int rc = 0;
 
 	DP_DEBUG(dev, QEDR_MSG_QP,
 		 "modify qp: qp %p attr_mask=0x%x, state=%d", qp, attr_mask,
 		 attr->qp_state);
 
-	अगर (attr_mask & ~IB_QP_ATTR_STANDARD_BITS)
-		वापस -EOPNOTSUPP;
+	if (attr_mask & ~IB_QP_ATTR_STANDARD_BITS)
+		return -EOPNOTSUPP;
 
 	old_qp_state = qedr_get_ibqp_state(qp->state);
-	अगर (attr_mask & IB_QP_STATE)
+	if (attr_mask & IB_QP_STATE)
 		new_qp_state = attr->qp_state;
-	अन्यथा
+	else
 		new_qp_state = old_qp_state;
 
-	अगर (rdma_protocol_roce(&dev->ibdev, 1)) अणु
-		अगर (!ib_modअगरy_qp_is_ok(old_qp_state, new_qp_state,
-					ibqp->qp_type, attr_mask)) अणु
+	if (rdma_protocol_roce(&dev->ibdev, 1)) {
+		if (!ib_modify_qp_is_ok(old_qp_state, new_qp_state,
+					ibqp->qp_type, attr_mask)) {
 			DP_ERR(dev,
 			       "modify qp: invalid attribute mask=0x%x specified for\n"
 			       "qpn=0x%x of type=0x%x old_qp_state=0x%x, new_qp_state=0x%x\n",
 			       attr_mask, qp->qp_id, ibqp->qp_type,
 			       old_qp_state, new_qp_state);
 			rc = -EINVAL;
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
 	/* Translate the masks... */
-	अगर (attr_mask & IB_QP_STATE) अणु
-		SET_FIELD(qp_params.modअगरy_flags,
+	if (attr_mask & IB_QP_STATE) {
+		SET_FIELD(qp_params.modify_flags,
 			  QED_RDMA_MODIFY_QP_VALID_NEW_STATE, 1);
 		qp_params.new_state = qedr_get_state_from_ibqp(attr->qp_state);
-	पूर्ण
+	}
 
-	अगर (attr_mask & IB_QP_EN_SQD_ASYNC_NOTIFY)
+	if (attr_mask & IB_QP_EN_SQD_ASYNC_NOTIFY)
 		qp_params.sqd_async = true;
 
-	अगर (attr_mask & IB_QP_PKEY_INDEX) अणु
-		SET_FIELD(qp_params.modअगरy_flags,
+	if (attr_mask & IB_QP_PKEY_INDEX) {
+		SET_FIELD(qp_params.modify_flags,
 			  QED_ROCE_MODIFY_QP_VALID_PKEY, 1);
-		अगर (attr->pkey_index >= QEDR_ROCE_PKEY_TABLE_LEN) अणु
+		if (attr->pkey_index >= QEDR_ROCE_PKEY_TABLE_LEN) {
 			rc = -EINVAL;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		qp_params.pkey = QEDR_ROCE_PKEY_DEFAULT;
-	पूर्ण
+	}
 
-	अगर (attr_mask & IB_QP_QKEY)
+	if (attr_mask & IB_QP_QKEY)
 		qp->qkey = attr->qkey;
 
-	अगर (attr_mask & IB_QP_ACCESS_FLAGS) अणु
-		SET_FIELD(qp_params.modअगरy_flags,
+	if (attr_mask & IB_QP_ACCESS_FLAGS) {
+		SET_FIELD(qp_params.modify_flags,
 			  QED_RDMA_MODIFY_QP_VALID_RDMA_OPS_EN, 1);
-		qp_params.incoming_rdma_पढ़ो_en = attr->qp_access_flags &
+		qp_params.incoming_rdma_read_en = attr->qp_access_flags &
 						  IB_ACCESS_REMOTE_READ;
-		qp_params.incoming_rdma_ग_लिखो_en = attr->qp_access_flags &
+		qp_params.incoming_rdma_write_en = attr->qp_access_flags &
 						   IB_ACCESS_REMOTE_WRITE;
 		qp_params.incoming_atomic_en = attr->qp_access_flags &
 					       IB_ACCESS_REMOTE_ATOMIC;
-	पूर्ण
+	}
 
-	अगर (attr_mask & (IB_QP_AV | IB_QP_PATH_MTU)) अणु
-		अगर (rdma_protocol_iwarp(&dev->ibdev, 1))
-			वापस -EINVAL;
+	if (attr_mask & (IB_QP_AV | IB_QP_PATH_MTU)) {
+		if (rdma_protocol_iwarp(&dev->ibdev, 1))
+			return -EINVAL;
 
-		अगर (attr_mask & IB_QP_PATH_MTU) अणु
-			अगर (attr->path_mtu < IB_MTU_256 ||
-			    attr->path_mtu > IB_MTU_4096) अणु
+		if (attr_mask & IB_QP_PATH_MTU) {
+			if (attr->path_mtu < IB_MTU_256 ||
+			    attr->path_mtu > IB_MTU_4096) {
 				pr_err("error: Only MTU sizes of 256, 512, 1024, 2048 and 4096 are supported by RoCE\n");
 				rc = -EINVAL;
-				जाओ err;
-			पूर्ण
-			qp->mtu = min(ib_mtu_क्रमागत_to_पूर्णांक(attr->path_mtu),
-				      ib_mtu_क्रमागत_to_पूर्णांक(iboe_get_mtu
+				goto err;
+			}
+			qp->mtu = min(ib_mtu_enum_to_int(attr->path_mtu),
+				      ib_mtu_enum_to_int(iboe_get_mtu
 							 (dev->ndev->mtu)));
-		पूर्ण
+		}
 
-		अगर (!qp->mtu) अणु
+		if (!qp->mtu) {
 			qp->mtu =
-			ib_mtu_क्रमागत_to_पूर्णांक(iboe_get_mtu(dev->ndev->mtu));
+			ib_mtu_enum_to_int(iboe_get_mtu(dev->ndev->mtu));
 			pr_err("Fixing zeroed MTU to qp->mtu = %d\n", qp->mtu);
-		पूर्ण
+		}
 
-		SET_FIELD(qp_params.modअगरy_flags,
+		SET_FIELD(qp_params.modify_flags,
 			  QED_ROCE_MODIFY_QP_VALID_ADDRESS_VECTOR, 1);
 
 		qp_params.traffic_class_tos = grh->traffic_class;
@@ -2579,17 +2578,17 @@ out_मुक्त_qp:
 		qp->sgid_idx = grh->sgid_index;
 
 		rc = get_gid_info_from_table(ibqp, attr, attr_mask, &qp_params);
-		अगर (rc) अणु
+		if (rc) {
 			DP_ERR(dev,
 			       "modify qp: problems with GID index %d (rc=%d)\n",
 			       grh->sgid_index, rc);
-			वापस rc;
-		पूर्ण
+			return rc;
+		}
 
 		rc = qedr_get_dmac(dev, &attr->ah_attr,
 				   qp_params.remote_mac_addr);
-		अगर (rc)
-			वापस rc;
+		if (rc)
+			return rc;
 
 		qp_params.use_local_mac = true;
 		ether_addr_copy(qp_params.local_mac_addr, dev->ndev->dev_addr);
@@ -2605,171 +2604,171 @@ out_मुक्त_qp:
 
 		qp_params.mtu = qp->mtu;
 		qp_params.lb_indication = false;
-	पूर्ण
+	}
 
-	अगर (!qp_params.mtu) अणु
+	if (!qp_params.mtu) {
 		/* Stay with current MTU */
-		अगर (qp->mtu)
+		if (qp->mtu)
 			qp_params.mtu = qp->mtu;
-		अन्यथा
+		else
 			qp_params.mtu =
-			    ib_mtu_क्रमागत_to_पूर्णांक(iboe_get_mtu(dev->ndev->mtu));
-	पूर्ण
+			    ib_mtu_enum_to_int(iboe_get_mtu(dev->ndev->mtu));
+	}
 
-	अगर (attr_mask & IB_QP_TIMEOUT) अणु
-		SET_FIELD(qp_params.modअगरy_flags,
+	if (attr_mask & IB_QP_TIMEOUT) {
+		SET_FIELD(qp_params.modify_flags,
 			  QED_ROCE_MODIFY_QP_VALID_ACK_TIMEOUT, 1);
 
-		/* The received समयout value is an exponent used like this:
+		/* The received timeout value is an exponent used like this:
 		 *    "12.7.34 LOCAL ACK TIMEOUT
-		 *    Value representing the transport (ACK) समयout क्रम use by
-		 *    the remote, expressed as: 4.096 * 2^समयout [usec]"
-		 * The FW expects समयout in msec so we need to भागide the usec
+		 *    Value representing the transport (ACK) timeout for use by
+		 *    the remote, expressed as: 4.096 * 2^timeout [usec]"
+		 * The FW expects timeout in msec so we need to divide the usec
 		 * result by 1000. We'll approximate 1000~2^10, and 4.096 ~ 2^2,
-		 * so we get: 2^2 * 2^समयout / 2^10 = 2^(समयout - 8).
+		 * so we get: 2^2 * 2^timeout / 2^10 = 2^(timeout - 8).
 		 * The value of zero means infinite so we use a 'max_t' to make
 		 * sure that sub 1 msec values will be configured as 1 msec.
 		 */
-		अगर (attr->समयout)
-			qp_params.ack_समयout =
-					1 << max_t(पूर्णांक, attr->समयout - 8, 0);
-		अन्यथा
-			qp_params.ack_समयout = 0;
-	पूर्ण
+		if (attr->timeout)
+			qp_params.ack_timeout =
+					1 << max_t(int, attr->timeout - 8, 0);
+		else
+			qp_params.ack_timeout = 0;
+	}
 
-	अगर (attr_mask & IB_QP_RETRY_CNT) अणु
-		SET_FIELD(qp_params.modअगरy_flags,
+	if (attr_mask & IB_QP_RETRY_CNT) {
+		SET_FIELD(qp_params.modify_flags,
 			  QED_ROCE_MODIFY_QP_VALID_RETRY_CNT, 1);
 		qp_params.retry_cnt = attr->retry_cnt;
-	पूर्ण
+	}
 
-	अगर (attr_mask & IB_QP_RNR_RETRY) अणु
-		SET_FIELD(qp_params.modअगरy_flags,
+	if (attr_mask & IB_QP_RNR_RETRY) {
+		SET_FIELD(qp_params.modify_flags,
 			  QED_ROCE_MODIFY_QP_VALID_RNR_RETRY_CNT, 1);
 		qp_params.rnr_retry_cnt = attr->rnr_retry;
-	पूर्ण
+	}
 
-	अगर (attr_mask & IB_QP_RQ_PSN) अणु
-		SET_FIELD(qp_params.modअगरy_flags,
+	if (attr_mask & IB_QP_RQ_PSN) {
+		SET_FIELD(qp_params.modify_flags,
 			  QED_ROCE_MODIFY_QP_VALID_RQ_PSN, 1);
 		qp_params.rq_psn = attr->rq_psn;
 		qp->rq_psn = attr->rq_psn;
-	पूर्ण
+	}
 
-	अगर (attr_mask & IB_QP_MAX_QP_RD_ATOMIC) अणु
-		अगर (attr->max_rd_atomic > dev->attr.max_qp_req_rd_atomic_resc) अणु
+	if (attr_mask & IB_QP_MAX_QP_RD_ATOMIC) {
+		if (attr->max_rd_atomic > dev->attr.max_qp_req_rd_atomic_resc) {
 			rc = -EINVAL;
 			DP_ERR(dev,
 			       "unsupported max_rd_atomic=%d, supported=%d\n",
 			       attr->max_rd_atomic,
 			       dev->attr.max_qp_req_rd_atomic_resc);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		SET_FIELD(qp_params.modअगरy_flags,
+		SET_FIELD(qp_params.modify_flags,
 			  QED_RDMA_MODIFY_QP_VALID_MAX_RD_ATOMIC_REQ, 1);
 		qp_params.max_rd_atomic_req = attr->max_rd_atomic;
-	पूर्ण
+	}
 
-	अगर (attr_mask & IB_QP_MIN_RNR_TIMER) अणु
-		SET_FIELD(qp_params.modअगरy_flags,
+	if (attr_mask & IB_QP_MIN_RNR_TIMER) {
+		SET_FIELD(qp_params.modify_flags,
 			  QED_ROCE_MODIFY_QP_VALID_MIN_RNR_NAK_TIMER, 1);
-		qp_params.min_rnr_nak_समयr = attr->min_rnr_समयr;
-	पूर्ण
+		qp_params.min_rnr_nak_timer = attr->min_rnr_timer;
+	}
 
-	अगर (attr_mask & IB_QP_SQ_PSN) अणु
-		SET_FIELD(qp_params.modअगरy_flags,
+	if (attr_mask & IB_QP_SQ_PSN) {
+		SET_FIELD(qp_params.modify_flags,
 			  QED_ROCE_MODIFY_QP_VALID_SQ_PSN, 1);
 		qp_params.sq_psn = attr->sq_psn;
 		qp->sq_psn = attr->sq_psn;
-	पूर्ण
+	}
 
-	अगर (attr_mask & IB_QP_MAX_DEST_RD_ATOMIC) अणु
-		अगर (attr->max_dest_rd_atomic >
-		    dev->attr.max_qp_resp_rd_atomic_resc) अणु
+	if (attr_mask & IB_QP_MAX_DEST_RD_ATOMIC) {
+		if (attr->max_dest_rd_atomic >
+		    dev->attr.max_qp_resp_rd_atomic_resc) {
 			DP_ERR(dev,
 			       "unsupported max_dest_rd_atomic=%d, supported=%d\n",
 			       attr->max_dest_rd_atomic,
 			       dev->attr.max_qp_resp_rd_atomic_resc);
 
 			rc = -EINVAL;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		SET_FIELD(qp_params.modअगरy_flags,
+		SET_FIELD(qp_params.modify_flags,
 			  QED_RDMA_MODIFY_QP_VALID_MAX_RD_ATOMIC_RESP, 1);
 		qp_params.max_rd_atomic_resp = attr->max_dest_rd_atomic;
-	पूर्ण
+	}
 
-	अगर (attr_mask & IB_QP_DEST_QPN) अणु
-		SET_FIELD(qp_params.modअगरy_flags,
+	if (attr_mask & IB_QP_DEST_QPN) {
+		SET_FIELD(qp_params.modify_flags,
 			  QED_ROCE_MODIFY_QP_VALID_DEST_QP, 1);
 
 		qp_params.dest_qp = attr->dest_qp_num;
 		qp->dest_qp_num = attr->dest_qp_num;
-	पूर्ण
+	}
 
 	cur_state = qp->state;
 
-	/* Update the QP state beक्रमe the actual ramrod to prevent a race with
-	 * fast path. Modअगरying the QP state to error will cause the device to
-	 * flush the CQEs and जबतक polling the flushed CQEs will considered as
-	 * a potential issue अगर the QP isn't in error state.
+	/* Update the QP state before the actual ramrod to prevent a race with
+	 * fast path. Modifying the QP state to error will cause the device to
+	 * flush the CQEs and while polling the flushed CQEs will considered as
+	 * a potential issue if the QP isn't in error state.
 	 */
-	अगर ((attr_mask & IB_QP_STATE) && qp->qp_type != IB_QPT_GSI &&
+	if ((attr_mask & IB_QP_STATE) && qp->qp_type != IB_QPT_GSI &&
 	    !udata && qp_params.new_state == QED_ROCE_QP_STATE_ERR)
 		qp->state = QED_ROCE_QP_STATE_ERR;
 
-	अगर (qp->qp_type != IB_QPT_GSI)
-		rc = dev->ops->rdma_modअगरy_qp(dev->rdma_ctx,
+	if (qp->qp_type != IB_QPT_GSI)
+		rc = dev->ops->rdma_modify_qp(dev->rdma_ctx,
 					      qp->qed_qp, &qp_params);
 
-	अगर (attr_mask & IB_QP_STATE) अणु
-		अगर ((qp->qp_type != IB_QPT_GSI) && (!udata))
+	if (attr_mask & IB_QP_STATE) {
+		if ((qp->qp_type != IB_QPT_GSI) && (!udata))
 			rc = qedr_update_qp_state(dev, qp, cur_state,
 						  qp_params.new_state);
 		qp->state = qp_params.new_state;
-	पूर्ण
+	}
 
 err:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक qedr_to_ib_qp_acc_flags(काष्ठा qed_rdma_query_qp_out_params *params)
-अणु
-	पूर्णांक ib_qp_acc_flags = 0;
+static int qedr_to_ib_qp_acc_flags(struct qed_rdma_query_qp_out_params *params)
+{
+	int ib_qp_acc_flags = 0;
 
-	अगर (params->incoming_rdma_ग_लिखो_en)
+	if (params->incoming_rdma_write_en)
 		ib_qp_acc_flags |= IB_ACCESS_REMOTE_WRITE;
-	अगर (params->incoming_rdma_पढ़ो_en)
+	if (params->incoming_rdma_read_en)
 		ib_qp_acc_flags |= IB_ACCESS_REMOTE_READ;
-	अगर (params->incoming_atomic_en)
+	if (params->incoming_atomic_en)
 		ib_qp_acc_flags |= IB_ACCESS_REMOTE_ATOMIC;
 	ib_qp_acc_flags |= IB_ACCESS_LOCAL_WRITE;
-	वापस ib_qp_acc_flags;
-पूर्ण
+	return ib_qp_acc_flags;
+}
 
-पूर्णांक qedr_query_qp(काष्ठा ib_qp *ibqp,
-		  काष्ठा ib_qp_attr *qp_attr,
-		  पूर्णांक attr_mask, काष्ठा ib_qp_init_attr *qp_init_attr)
-अणु
-	काष्ठा qed_rdma_query_qp_out_params params;
-	काष्ठा qedr_qp *qp = get_qedr_qp(ibqp);
-	काष्ठा qedr_dev *dev = qp->dev;
-	पूर्णांक rc = 0;
+int qedr_query_qp(struct ib_qp *ibqp,
+		  struct ib_qp_attr *qp_attr,
+		  int attr_mask, struct ib_qp_init_attr *qp_init_attr)
+{
+	struct qed_rdma_query_qp_out_params params;
+	struct qedr_qp *qp = get_qedr_qp(ibqp);
+	struct qedr_dev *dev = qp->dev;
+	int rc = 0;
 
-	स_रखो(&params, 0, माप(params));
+	memset(&params, 0, sizeof(params));
 
 	rc = dev->ops->rdma_query_qp(dev->rdma_ctx, qp->qed_qp, &params);
-	अगर (rc)
-		जाओ err;
+	if (rc)
+		goto err;
 
-	स_रखो(qp_attr, 0, माप(*qp_attr));
-	स_रखो(qp_init_attr, 0, माप(*qp_init_attr));
+	memset(qp_attr, 0, sizeof(*qp_attr));
+	memset(qp_init_attr, 0, sizeof(*qp_init_attr));
 
 	qp_attr->qp_state = qedr_get_ibqp_state(params.state);
 	qp_attr->cur_qp_state = qedr_get_ibqp_state(params.state);
-	qp_attr->path_mtu = ib_mtu_पूर्णांक_to_क्रमागत(params.mtu);
+	qp_attr->path_mtu = ib_mtu_int_to_enum(params.mtu);
 	qp_attr->path_mig_state = IB_MIG_MIGRATED;
 	qp_attr->rq_psn = params.rq_psn;
 	qp_attr->sq_psn = params.sq_psn;
@@ -2781,234 +2780,234 @@ err:
 	qp_attr->cap.max_recv_wr = qp->rq.max_wr;
 	qp_attr->cap.max_send_sge = qp->sq.max_sges;
 	qp_attr->cap.max_recv_sge = qp->rq.max_sges;
-	qp_attr->cap.max_अंतरभूत_data = dev->attr.max_अंतरभूत;
+	qp_attr->cap.max_inline_data = dev->attr.max_inline;
 	qp_init_attr->cap = qp_attr->cap;
 
 	qp_attr->ah_attr.type = RDMA_AH_ATTR_TYPE_ROCE;
-	rdma_ah_set_grh(&qp_attr->ah_attr, शून्य,
+	rdma_ah_set_grh(&qp_attr->ah_attr, NULL,
 			params.flow_label, qp->sgid_idx,
 			params.hop_limit_ttl, params.traffic_class_tos);
 	rdma_ah_set_dgid_raw(&qp_attr->ah_attr, &params.dgid.bytes[0]);
 	rdma_ah_set_port_num(&qp_attr->ah_attr, 1);
 	rdma_ah_set_sl(&qp_attr->ah_attr, 0);
-	qp_attr->समयout = params.समयout;
+	qp_attr->timeout = params.timeout;
 	qp_attr->rnr_retry = params.rnr_retry;
 	qp_attr->retry_cnt = params.retry_cnt;
-	qp_attr->min_rnr_समयr = params.min_rnr_nak_समयr;
+	qp_attr->min_rnr_timer = params.min_rnr_nak_timer;
 	qp_attr->pkey_index = params.pkey_index;
 	qp_attr->port_num = 1;
 	rdma_ah_set_path_bits(&qp_attr->ah_attr, 0);
-	rdma_ah_set_अटल_rate(&qp_attr->ah_attr, 0);
+	rdma_ah_set_static_rate(&qp_attr->ah_attr, 0);
 	qp_attr->alt_pkey_index = 0;
 	qp_attr->alt_port_num = 0;
-	qp_attr->alt_समयout = 0;
-	स_रखो(&qp_attr->alt_ah_attr, 0, माप(qp_attr->alt_ah_attr));
+	qp_attr->alt_timeout = 0;
+	memset(&qp_attr->alt_ah_attr, 0, sizeof(qp_attr->alt_ah_attr));
 
 	qp_attr->sq_draining = (params.state == QED_ROCE_QP_STATE_SQD) ? 1 : 0;
 	qp_attr->max_dest_rd_atomic = params.max_dest_rd_atomic;
 	qp_attr->max_rd_atomic = params.max_rd_atomic;
-	qp_attr->en_sqd_async_notअगरy = (params.sqd_async) ? 1 : 0;
+	qp_attr->en_sqd_async_notify = (params.sqd_async) ? 1 : 0;
 
 	DP_DEBUG(dev, QEDR_MSG_QP, "QEDR_QUERY_QP: max_inline_data=%d\n",
-		 qp_attr->cap.max_अंतरभूत_data);
+		 qp_attr->cap.max_inline_data);
 
 err:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक qedr_destroy_qp(काष्ठा ib_qp *ibqp, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा qedr_qp *qp = get_qedr_qp(ibqp);
-	काष्ठा qedr_dev *dev = qp->dev;
-	काष्ठा ib_qp_attr attr;
-	पूर्णांक attr_mask = 0;
+int qedr_destroy_qp(struct ib_qp *ibqp, struct ib_udata *udata)
+{
+	struct qedr_qp *qp = get_qedr_qp(ibqp);
+	struct qedr_dev *dev = qp->dev;
+	struct ib_qp_attr attr;
+	int attr_mask = 0;
 
 	DP_DEBUG(dev, QEDR_MSG_QP, "destroy qp: destroying %p, qp type=%d\n",
 		 qp, qp->qp_type);
 
-	अगर (rdma_protocol_roce(&dev->ibdev, 1)) अणु
-		अगर ((qp->state != QED_ROCE_QP_STATE_RESET) &&
+	if (rdma_protocol_roce(&dev->ibdev, 1)) {
+		if ((qp->state != QED_ROCE_QP_STATE_RESET) &&
 		    (qp->state != QED_ROCE_QP_STATE_ERR) &&
-		    (qp->state != QED_ROCE_QP_STATE_INIT)) अणु
+		    (qp->state != QED_ROCE_QP_STATE_INIT)) {
 
 			attr.qp_state = IB_QPS_ERR;
 			attr_mask |= IB_QP_STATE;
 
 			/* Change the QP state to ERROR */
-			qedr_modअगरy_qp(ibqp, &attr, attr_mask, शून्य);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			qedr_modify_qp(ibqp, &attr, attr_mask, NULL);
+		}
+	} else {
 		/* If connection establishment started the WAIT_FOR_CONNECT
-		 * bit will be on and we need to Wait क्रम the establishment
-		 * to complete beक्रमe destroying the qp.
+		 * bit will be on and we need to Wait for the establishment
+		 * to complete before destroying the qp.
 		 */
-		अगर (test_and_set_bit(QEDR_IWARP_CM_WAIT_FOR_CONNECT,
+		if (test_and_set_bit(QEDR_IWARP_CM_WAIT_FOR_CONNECT,
 				     &qp->iwarp_cm_flags))
-			रुको_क्रम_completion(&qp->iwarp_cm_comp);
+			wait_for_completion(&qp->iwarp_cm_comp);
 
 		/* If graceful disconnect started, the WAIT_FOR_DISCONNECT
-		 * bit will be on, and we need to रुको क्रम the disconnect to
-		 * complete beक्रमe continuing. We can use the same completion,
-		 * iwarp_cm_comp, since this is the only place that रुकोs क्रम
+		 * bit will be on, and we need to wait for the disconnect to
+		 * complete before continuing. We can use the same completion,
+		 * iwarp_cm_comp, since this is the only place that waits for
 		 * this completion and it is sequential. In addition,
-		 * disconnect can't occur beक्रमe the connection is fully
-		 * established, thereक्रमe अगर WAIT_FOR_DISCONNECT is on it
-		 * means WAIT_FOR_CONNECT is also on and the completion क्रम
-		 * CONNECT alपढ़ोy occurred.
+		 * disconnect can't occur before the connection is fully
+		 * established, therefore if WAIT_FOR_DISCONNECT is on it
+		 * means WAIT_FOR_CONNECT is also on and the completion for
+		 * CONNECT already occurred.
 		 */
-		अगर (test_and_set_bit(QEDR_IWARP_CM_WAIT_FOR_DISCONNECT,
+		if (test_and_set_bit(QEDR_IWARP_CM_WAIT_FOR_DISCONNECT,
 				     &qp->iwarp_cm_flags))
-			रुको_क्रम_completion(&qp->iwarp_cm_comp);
-	पूर्ण
+			wait_for_completion(&qp->iwarp_cm_comp);
+	}
 
-	अगर (qp->qp_type == IB_QPT_GSI)
+	if (qp->qp_type == IB_QPT_GSI)
 		qedr_destroy_gsi_qp(dev);
 
-	/* We need to हटाओ the entry from the xarray beक्रमe we release the
-	 * qp_id to aव्योम a race of the qp_id being पुनः_स्मृतिated and failing
+	/* We need to remove the entry from the xarray before we release the
+	 * qp_id to avoid a race of the qp_id being reallocated and failing
 	 * on xa_insert
 	 */
-	अगर (rdma_protocol_iwarp(&dev->ibdev, 1))
+	if (rdma_protocol_iwarp(&dev->ibdev, 1))
 		xa_erase(&dev->qps, qp->qp_id);
 
-	qedr_मुक्त_qp_resources(dev, qp, udata);
+	qedr_free_qp_resources(dev, qp, udata);
 
-	अगर (rdma_protocol_iwarp(&dev->ibdev, 1))
+	if (rdma_protocol_iwarp(&dev->ibdev, 1))
 		qedr_iw_qp_rem_ref(&qp->ibqp);
-	अन्यथा
-		kमुक्त(qp);
+	else
+		kfree(qp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक qedr_create_ah(काष्ठा ib_ah *ibah, काष्ठा rdma_ah_init_attr *init_attr,
-		   काष्ठा ib_udata *udata)
-अणु
-	काष्ठा qedr_ah *ah = get_qedr_ah(ibah);
+int qedr_create_ah(struct ib_ah *ibah, struct rdma_ah_init_attr *init_attr,
+		   struct ib_udata *udata)
+{
+	struct qedr_ah *ah = get_qedr_ah(ibah);
 
 	rdma_copy_ah_attr(&ah->attr, init_attr->ah_attr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक qedr_destroy_ah(काष्ठा ib_ah *ibah, u32 flags)
-अणु
-	काष्ठा qedr_ah *ah = get_qedr_ah(ibah);
+int qedr_destroy_ah(struct ib_ah *ibah, u32 flags)
+{
+	struct qedr_ah *ah = get_qedr_ah(ibah);
 
 	rdma_destroy_ah_attr(&ah->attr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम मुक्त_mr_info(काष्ठा qedr_dev *dev, काष्ठा mr_info *info)
-अणु
-	काष्ठा qedr_pbl *pbl, *पंचांगp;
+static void free_mr_info(struct qedr_dev *dev, struct mr_info *info)
+{
+	struct qedr_pbl *pbl, *tmp;
 
-	अगर (info->pbl_table)
+	if (info->pbl_table)
 		list_add_tail(&info->pbl_table->list_entry,
-			      &info->मुक्त_pbl_list);
+			      &info->free_pbl_list);
 
-	अगर (!list_empty(&info->inuse_pbl_list))
-		list_splice(&info->inuse_pbl_list, &info->मुक्त_pbl_list);
+	if (!list_empty(&info->inuse_pbl_list))
+		list_splice(&info->inuse_pbl_list, &info->free_pbl_list);
 
-	list_क्रम_each_entry_safe(pbl, पंचांगp, &info->मुक्त_pbl_list, list_entry) अणु
+	list_for_each_entry_safe(pbl, tmp, &info->free_pbl_list, list_entry) {
 		list_del(&pbl->list_entry);
-		qedr_मुक्त_pbl(dev, &info->pbl_info, pbl);
-	पूर्ण
-पूर्ण
+		qedr_free_pbl(dev, &info->pbl_info, pbl);
+	}
+}
 
-अटल पूर्णांक init_mr_info(काष्ठा qedr_dev *dev, काष्ठा mr_info *info,
-			माप_प्रकार page_list_len, bool two_layered)
-अणु
-	काष्ठा qedr_pbl *पंचांगp;
-	पूर्णांक rc;
+static int init_mr_info(struct qedr_dev *dev, struct mr_info *info,
+			size_t page_list_len, bool two_layered)
+{
+	struct qedr_pbl *tmp;
+	int rc;
 
-	INIT_LIST_HEAD(&info->मुक्त_pbl_list);
+	INIT_LIST_HEAD(&info->free_pbl_list);
 	INIT_LIST_HEAD(&info->inuse_pbl_list);
 
 	rc = qedr_prepare_pbl_tbl(dev, &info->pbl_info,
 				  page_list_len, two_layered);
-	अगर (rc)
-		जाओ करोne;
+	if (rc)
+		goto done;
 
 	info->pbl_table = qedr_alloc_pbl_tbl(dev, &info->pbl_info, GFP_KERNEL);
-	अगर (IS_ERR(info->pbl_table)) अणु
+	if (IS_ERR(info->pbl_table)) {
 		rc = PTR_ERR(info->pbl_table);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	DP_DEBUG(dev, QEDR_MSG_MR, "pbl_table_pa = %pa\n",
 		 &info->pbl_table->pa);
 
-	/* in usual हाल we use 2 PBLs, so we add one to मुक्त
+	/* in usual case we use 2 PBLs, so we add one to free
 	 * list and allocating another one
 	 */
-	पंचांगp = qedr_alloc_pbl_tbl(dev, &info->pbl_info, GFP_KERNEL);
-	अगर (IS_ERR(पंचांगp)) अणु
+	tmp = qedr_alloc_pbl_tbl(dev, &info->pbl_info, GFP_KERNEL);
+	if (IS_ERR(tmp)) {
 		DP_DEBUG(dev, QEDR_MSG_MR, "Extra PBL is not allocated\n");
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	list_add_tail(&पंचांगp->list_entry, &info->मुक्त_pbl_list);
+	list_add_tail(&tmp->list_entry, &info->free_pbl_list);
 
-	DP_DEBUG(dev, QEDR_MSG_MR, "extra pbl_table_pa = %pa\n", &पंचांगp->pa);
+	DP_DEBUG(dev, QEDR_MSG_MR, "extra pbl_table_pa = %pa\n", &tmp->pa);
 
-करोne:
-	अगर (rc)
-		मुक्त_mr_info(dev, info);
+done:
+	if (rc)
+		free_mr_info(dev, info);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-काष्ठा ib_mr *qedr_reg_user_mr(काष्ठा ib_pd *ibpd, u64 start, u64 len,
-			       u64 usr_addr, पूर्णांक acc, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा qedr_dev *dev = get_qedr_dev(ibpd->device);
-	काष्ठा qedr_mr *mr;
-	काष्ठा qedr_pd *pd;
-	पूर्णांक rc = -ENOMEM;
+struct ib_mr *qedr_reg_user_mr(struct ib_pd *ibpd, u64 start, u64 len,
+			       u64 usr_addr, int acc, struct ib_udata *udata)
+{
+	struct qedr_dev *dev = get_qedr_dev(ibpd->device);
+	struct qedr_mr *mr;
+	struct qedr_pd *pd;
+	int rc = -ENOMEM;
 
 	pd = get_qedr_pd(ibpd);
 	DP_DEBUG(dev, QEDR_MSG_MR,
 		 "qedr_register user mr pd = %d start = %lld, len = %lld, usr_addr = %lld, acc = %d\n",
 		 pd->pd_id, start, len, usr_addr, acc);
 
-	अगर (acc & IB_ACCESS_REMOTE_WRITE && !(acc & IB_ACCESS_LOCAL_WRITE))
-		वापस ERR_PTR(-EINVAL);
+	if (acc & IB_ACCESS_REMOTE_WRITE && !(acc & IB_ACCESS_LOCAL_WRITE))
+		return ERR_PTR(-EINVAL);
 
-	mr = kzalloc(माप(*mr), GFP_KERNEL);
-	अगर (!mr)
-		वापस ERR_PTR(rc);
+	mr = kzalloc(sizeof(*mr), GFP_KERNEL);
+	if (!mr)
+		return ERR_PTR(rc);
 
 	mr->type = QEDR_MR_USER;
 
 	mr->umem = ib_umem_get(ibpd->device, start, len, acc);
-	अगर (IS_ERR(mr->umem)) अणु
+	if (IS_ERR(mr->umem)) {
 		rc = -EFAULT;
-		जाओ err0;
-	पूर्ण
+		goto err0;
+	}
 
 	rc = init_mr_info(dev, &mr->info,
 			  ib_umem_num_dma_blocks(mr->umem, PAGE_SIZE), 1);
-	अगर (rc)
-		जाओ err1;
+	if (rc)
+		goto err1;
 
 	qedr_populate_pbls(dev, mr->umem, mr->info.pbl_table,
 			   &mr->info.pbl_info, PAGE_SHIFT);
 
 	rc = dev->ops->rdma_alloc_tid(dev->rdma_ctx, &mr->hw_mr.itid);
-	अगर (rc) अणु
+	if (rc) {
 		DP_ERR(dev, "roce alloc tid returned an error %d\n", rc);
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 
-	/* Index only, 18 bit दीर्घ, lkey = itid << 8 | key */
+	/* Index only, 18 bit long, lkey = itid << 8 | key */
 	mr->hw_mr.tid_type = QED_RDMA_TID_REGISTERED_MR;
 	mr->hw_mr.key = 0;
 	mr->hw_mr.pd = pd->pd_id;
-	mr->hw_mr.local_पढ़ो = 1;
-	mr->hw_mr.local_ग_लिखो = (acc & IB_ACCESS_LOCAL_WRITE) ? 1 : 0;
-	mr->hw_mr.remote_पढ़ो = (acc & IB_ACCESS_REMOTE_READ) ? 1 : 0;
-	mr->hw_mr.remote_ग_लिखो = (acc & IB_ACCESS_REMOTE_WRITE) ? 1 : 0;
+	mr->hw_mr.local_read = 1;
+	mr->hw_mr.local_write = (acc & IB_ACCESS_LOCAL_WRITE) ? 1 : 0;
+	mr->hw_mr.remote_read = (acc & IB_ACCESS_REMOTE_READ) ? 1 : 0;
+	mr->hw_mr.remote_write = (acc & IB_ACCESS_REMOTE_WRITE) ? 1 : 0;
 	mr->hw_mr.remote_atomic = (acc & IB_ACCESS_REMOTE_ATOMIC) ? 1 : 0;
 	mr->hw_mr.mw_bind = false;
 	mr->hw_mr.pbl_ptr = mr->info.pbl_table[0].pa;
@@ -3020,90 +3019,90 @@ err:
 	mr->hw_mr.phy_mr = false;
 	mr->hw_mr.dma_mr = false;
 
-	rc = dev->ops->rdma_रेजिस्टर_tid(dev->rdma_ctx, &mr->hw_mr);
-	अगर (rc) अणु
+	rc = dev->ops->rdma_register_tid(dev->rdma_ctx, &mr->hw_mr);
+	if (rc) {
 		DP_ERR(dev, "roce register tid returned an error %d\n", rc);
-		जाओ err2;
-	पूर्ण
+		goto err2;
+	}
 
 	mr->ibmr.lkey = mr->hw_mr.itid << 8 | mr->hw_mr.key;
-	अगर (mr->hw_mr.remote_ग_लिखो || mr->hw_mr.remote_पढ़ो ||
+	if (mr->hw_mr.remote_write || mr->hw_mr.remote_read ||
 	    mr->hw_mr.remote_atomic)
 		mr->ibmr.rkey = mr->hw_mr.itid << 8 | mr->hw_mr.key;
 
 	DP_DEBUG(dev, QEDR_MSG_MR, "register user mr lkey: %x\n",
 		 mr->ibmr.lkey);
-	वापस &mr->ibmr;
+	return &mr->ibmr;
 
 err2:
-	dev->ops->rdma_मुक्त_tid(dev->rdma_ctx, mr->hw_mr.itid);
+	dev->ops->rdma_free_tid(dev->rdma_ctx, mr->hw_mr.itid);
 err1:
-	qedr_मुक्त_pbl(dev, &mr->info.pbl_info, mr->info.pbl_table);
+	qedr_free_pbl(dev, &mr->info.pbl_info, mr->info.pbl_table);
 err0:
-	kमुक्त(mr);
-	वापस ERR_PTR(rc);
-पूर्ण
+	kfree(mr);
+	return ERR_PTR(rc);
+}
 
-पूर्णांक qedr_dereg_mr(काष्ठा ib_mr *ib_mr, काष्ठा ib_udata *udata)
-अणु
-	काष्ठा qedr_mr *mr = get_qedr_mr(ib_mr);
-	काष्ठा qedr_dev *dev = get_qedr_dev(ib_mr->device);
-	पूर्णांक rc = 0;
+int qedr_dereg_mr(struct ib_mr *ib_mr, struct ib_udata *udata)
+{
+	struct qedr_mr *mr = get_qedr_mr(ib_mr);
+	struct qedr_dev *dev = get_qedr_dev(ib_mr->device);
+	int rc = 0;
 
-	rc = dev->ops->rdma_deरेजिस्टर_tid(dev->rdma_ctx, mr->hw_mr.itid);
-	अगर (rc)
-		वापस rc;
+	rc = dev->ops->rdma_deregister_tid(dev->rdma_ctx, mr->hw_mr.itid);
+	if (rc)
+		return rc;
 
-	dev->ops->rdma_मुक्त_tid(dev->rdma_ctx, mr->hw_mr.itid);
+	dev->ops->rdma_free_tid(dev->rdma_ctx, mr->hw_mr.itid);
 
-	अगर (mr->type != QEDR_MR_DMA)
-		मुक्त_mr_info(dev, &mr->info);
+	if (mr->type != QEDR_MR_DMA)
+		free_mr_info(dev, &mr->info);
 
-	/* it could be user रेजिस्टरed memory. */
+	/* it could be user registered memory. */
 	ib_umem_release(mr->umem);
 
-	kमुक्त(mr);
+	kfree(mr);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल काष्ठा qedr_mr *__qedr_alloc_mr(काष्ठा ib_pd *ibpd,
-				       पूर्णांक max_page_list_len)
-अणु
-	काष्ठा qedr_pd *pd = get_qedr_pd(ibpd);
-	काष्ठा qedr_dev *dev = get_qedr_dev(ibpd->device);
-	काष्ठा qedr_mr *mr;
-	पूर्णांक rc = -ENOMEM;
+static struct qedr_mr *__qedr_alloc_mr(struct ib_pd *ibpd,
+				       int max_page_list_len)
+{
+	struct qedr_pd *pd = get_qedr_pd(ibpd);
+	struct qedr_dev *dev = get_qedr_dev(ibpd->device);
+	struct qedr_mr *mr;
+	int rc = -ENOMEM;
 
 	DP_DEBUG(dev, QEDR_MSG_MR,
 		 "qedr_alloc_frmr pd = %d max_page_list_len= %d\n", pd->pd_id,
 		 max_page_list_len);
 
-	mr = kzalloc(माप(*mr), GFP_KERNEL);
-	अगर (!mr)
-		वापस ERR_PTR(rc);
+	mr = kzalloc(sizeof(*mr), GFP_KERNEL);
+	if (!mr)
+		return ERR_PTR(rc);
 
 	mr->dev = dev;
 	mr->type = QEDR_MR_FRMR;
 
 	rc = init_mr_info(dev, &mr->info, max_page_list_len, 1);
-	अगर (rc)
-		जाओ err0;
+	if (rc)
+		goto err0;
 
 	rc = dev->ops->rdma_alloc_tid(dev->rdma_ctx, &mr->hw_mr.itid);
-	अगर (rc) अणु
+	if (rc) {
 		DP_ERR(dev, "roce alloc tid returned an error %d\n", rc);
-		जाओ err0;
-	पूर्ण
+		goto err0;
+	}
 
-	/* Index only, 18 bit दीर्घ, lkey = itid << 8 | key */
+	/* Index only, 18 bit long, lkey = itid << 8 | key */
 	mr->hw_mr.tid_type = QED_RDMA_TID_FMR;
 	mr->hw_mr.key = 0;
 	mr->hw_mr.pd = pd->pd_id;
-	mr->hw_mr.local_पढ़ो = 1;
-	mr->hw_mr.local_ग_लिखो = 0;
-	mr->hw_mr.remote_पढ़ो = 0;
-	mr->hw_mr.remote_ग_लिखो = 0;
+	mr->hw_mr.local_read = 1;
+	mr->hw_mr.local_write = 0;
+	mr->hw_mr.remote_read = 0;
+	mr->hw_mr.remote_write = 0;
 	mr->hw_mr.remote_atomic = 0;
 	mr->hw_mr.mw_bind = false;
 	mr->hw_mr.pbl_ptr = 0;
@@ -3114,216 +3113,216 @@ err0:
 	mr->hw_mr.phy_mr = true;
 	mr->hw_mr.dma_mr = false;
 
-	rc = dev->ops->rdma_रेजिस्टर_tid(dev->rdma_ctx, &mr->hw_mr);
-	अगर (rc) अणु
+	rc = dev->ops->rdma_register_tid(dev->rdma_ctx, &mr->hw_mr);
+	if (rc) {
 		DP_ERR(dev, "roce register tid returned an error %d\n", rc);
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 
 	mr->ibmr.lkey = mr->hw_mr.itid << 8 | mr->hw_mr.key;
 	mr->ibmr.rkey = mr->ibmr.lkey;
 
 	DP_DEBUG(dev, QEDR_MSG_MR, "alloc frmr: %x\n", mr->ibmr.lkey);
-	वापस mr;
+	return mr;
 
 err1:
-	dev->ops->rdma_मुक्त_tid(dev->rdma_ctx, mr->hw_mr.itid);
+	dev->ops->rdma_free_tid(dev->rdma_ctx, mr->hw_mr.itid);
 err0:
-	kमुक्त(mr);
-	वापस ERR_PTR(rc);
-पूर्ण
+	kfree(mr);
+	return ERR_PTR(rc);
+}
 
-काष्ठा ib_mr *qedr_alloc_mr(काष्ठा ib_pd *ibpd, क्रमागत ib_mr_type mr_type,
+struct ib_mr *qedr_alloc_mr(struct ib_pd *ibpd, enum ib_mr_type mr_type,
 			    u32 max_num_sg)
-अणु
-	काष्ठा qedr_mr *mr;
+{
+	struct qedr_mr *mr;
 
-	अगर (mr_type != IB_MR_TYPE_MEM_REG)
-		वापस ERR_PTR(-EINVAL);
+	if (mr_type != IB_MR_TYPE_MEM_REG)
+		return ERR_PTR(-EINVAL);
 
 	mr = __qedr_alloc_mr(ibpd, max_num_sg);
 
-	अगर (IS_ERR(mr))
-		वापस ERR_PTR(-EINVAL);
+	if (IS_ERR(mr))
+		return ERR_PTR(-EINVAL);
 
-	वापस &mr->ibmr;
-पूर्ण
+	return &mr->ibmr;
+}
 
-अटल पूर्णांक qedr_set_page(काष्ठा ib_mr *ibmr, u64 addr)
-अणु
-	काष्ठा qedr_mr *mr = get_qedr_mr(ibmr);
-	काष्ठा qedr_pbl *pbl_table;
-	काष्ठा regpair *pbe;
+static int qedr_set_page(struct ib_mr *ibmr, u64 addr)
+{
+	struct qedr_mr *mr = get_qedr_mr(ibmr);
+	struct qedr_pbl *pbl_table;
+	struct regpair *pbe;
 	u32 pbes_in_page;
 
-	अगर (unlikely(mr->npages == mr->info.pbl_info.num_pbes)) अणु
+	if (unlikely(mr->npages == mr->info.pbl_info.num_pbes)) {
 		DP_ERR(mr->dev, "qedr_set_page fails when %d\n", mr->npages);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	DP_DEBUG(mr->dev, QEDR_MSG_MR, "qedr_set_page pages[%d] = 0x%llx\n",
 		 mr->npages, addr);
 
-	pbes_in_page = mr->info.pbl_info.pbl_size / माप(u64);
+	pbes_in_page = mr->info.pbl_info.pbl_size / sizeof(u64);
 	pbl_table = mr->info.pbl_table + (mr->npages / pbes_in_page);
-	pbe = (काष्ठा regpair *)pbl_table->va;
+	pbe = (struct regpair *)pbl_table->va;
 	pbe +=  mr->npages % pbes_in_page;
 	pbe->lo = cpu_to_le32((u32)addr);
 	pbe->hi = cpu_to_le32((u32)upper_32_bits(addr));
 
 	mr->npages++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम handle_completed_mrs(काष्ठा qedr_dev *dev, काष्ठा mr_info *info)
-अणु
-	पूर्णांक work = info->completed - info->completed_handled - 1;
+static void handle_completed_mrs(struct qedr_dev *dev, struct mr_info *info)
+{
+	int work = info->completed - info->completed_handled - 1;
 
 	DP_DEBUG(dev, QEDR_MSG_MR, "Special FMR work = %d\n", work);
-	जबतक (work-- > 0 && !list_empty(&info->inuse_pbl_list)) अणु
-		काष्ठा qedr_pbl *pbl;
+	while (work-- > 0 && !list_empty(&info->inuse_pbl_list)) {
+		struct qedr_pbl *pbl;
 
-		/* Free all the page list that are possible to be मुक्तd
+		/* Free all the page list that are possible to be freed
 		 * (all the ones that were invalidated), under the assumption
-		 * that अगर an FMR was completed successfully that means that
-		 * अगर there was an invalidate operation beक्रमe it also ended
+		 * that if an FMR was completed successfully that means that
+		 * if there was an invalidate operation before it also ended
 		 */
 		pbl = list_first_entry(&info->inuse_pbl_list,
-				       काष्ठा qedr_pbl, list_entry);
-		list_move_tail(&pbl->list_entry, &info->मुक्त_pbl_list);
+				       struct qedr_pbl, list_entry);
+		list_move_tail(&pbl->list_entry, &info->free_pbl_list);
 		info->completed_handled++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक qedr_map_mr_sg(काष्ठा ib_mr *ibmr, काष्ठा scatterlist *sg,
-		   पूर्णांक sg_nents, अचिन्हित पूर्णांक *sg_offset)
-अणु
-	काष्ठा qedr_mr *mr = get_qedr_mr(ibmr);
+int qedr_map_mr_sg(struct ib_mr *ibmr, struct scatterlist *sg,
+		   int sg_nents, unsigned int *sg_offset)
+{
+	struct qedr_mr *mr = get_qedr_mr(ibmr);
 
 	mr->npages = 0;
 
 	handle_completed_mrs(mr->dev, &mr->info);
-	वापस ib_sg_to_pages(ibmr, sg, sg_nents, शून्य, qedr_set_page);
-पूर्ण
+	return ib_sg_to_pages(ibmr, sg, sg_nents, NULL, qedr_set_page);
+}
 
-काष्ठा ib_mr *qedr_get_dma_mr(काष्ठा ib_pd *ibpd, पूर्णांक acc)
-अणु
-	काष्ठा qedr_dev *dev = get_qedr_dev(ibpd->device);
-	काष्ठा qedr_pd *pd = get_qedr_pd(ibpd);
-	काष्ठा qedr_mr *mr;
-	पूर्णांक rc;
+struct ib_mr *qedr_get_dma_mr(struct ib_pd *ibpd, int acc)
+{
+	struct qedr_dev *dev = get_qedr_dev(ibpd->device);
+	struct qedr_pd *pd = get_qedr_pd(ibpd);
+	struct qedr_mr *mr;
+	int rc;
 
-	mr = kzalloc(माप(*mr), GFP_KERNEL);
-	अगर (!mr)
-		वापस ERR_PTR(-ENOMEM);
+	mr = kzalloc(sizeof(*mr), GFP_KERNEL);
+	if (!mr)
+		return ERR_PTR(-ENOMEM);
 
 	mr->type = QEDR_MR_DMA;
 
 	rc = dev->ops->rdma_alloc_tid(dev->rdma_ctx, &mr->hw_mr.itid);
-	अगर (rc) अणु
+	if (rc) {
 		DP_ERR(dev, "roce alloc tid returned an error %d\n", rc);
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 
-	/* index only, 18 bit दीर्घ, lkey = itid << 8 | key */
+	/* index only, 18 bit long, lkey = itid << 8 | key */
 	mr->hw_mr.tid_type = QED_RDMA_TID_REGISTERED_MR;
 	mr->hw_mr.pd = pd->pd_id;
-	mr->hw_mr.local_पढ़ो = 1;
-	mr->hw_mr.local_ग_लिखो = (acc & IB_ACCESS_LOCAL_WRITE) ? 1 : 0;
-	mr->hw_mr.remote_पढ़ो = (acc & IB_ACCESS_REMOTE_READ) ? 1 : 0;
-	mr->hw_mr.remote_ग_लिखो = (acc & IB_ACCESS_REMOTE_WRITE) ? 1 : 0;
+	mr->hw_mr.local_read = 1;
+	mr->hw_mr.local_write = (acc & IB_ACCESS_LOCAL_WRITE) ? 1 : 0;
+	mr->hw_mr.remote_read = (acc & IB_ACCESS_REMOTE_READ) ? 1 : 0;
+	mr->hw_mr.remote_write = (acc & IB_ACCESS_REMOTE_WRITE) ? 1 : 0;
 	mr->hw_mr.remote_atomic = (acc & IB_ACCESS_REMOTE_ATOMIC) ? 1 : 0;
 	mr->hw_mr.dma_mr = true;
 
-	rc = dev->ops->rdma_रेजिस्टर_tid(dev->rdma_ctx, &mr->hw_mr);
-	अगर (rc) अणु
+	rc = dev->ops->rdma_register_tid(dev->rdma_ctx, &mr->hw_mr);
+	if (rc) {
 		DP_ERR(dev, "roce register tid returned an error %d\n", rc);
-		जाओ err2;
-	पूर्ण
+		goto err2;
+	}
 
 	mr->ibmr.lkey = mr->hw_mr.itid << 8 | mr->hw_mr.key;
-	अगर (mr->hw_mr.remote_ग_लिखो || mr->hw_mr.remote_पढ़ो ||
+	if (mr->hw_mr.remote_write || mr->hw_mr.remote_read ||
 	    mr->hw_mr.remote_atomic)
 		mr->ibmr.rkey = mr->hw_mr.itid << 8 | mr->hw_mr.key;
 
 	DP_DEBUG(dev, QEDR_MSG_MR, "get dma mr: lkey = %x\n", mr->ibmr.lkey);
-	वापस &mr->ibmr;
+	return &mr->ibmr;
 
 err2:
-	dev->ops->rdma_मुक्त_tid(dev->rdma_ctx, mr->hw_mr.itid);
+	dev->ops->rdma_free_tid(dev->rdma_ctx, mr->hw_mr.itid);
 err1:
-	kमुक्त(mr);
-	वापस ERR_PTR(rc);
-पूर्ण
+	kfree(mr);
+	return ERR_PTR(rc);
+}
 
-अटल अंतरभूत पूर्णांक qedr_wq_is_full(काष्ठा qedr_qp_hwq_info *wq)
-अणु
-	वापस (((wq->prod + 1) % wq->max_wr) == wq->cons);
-पूर्ण
+static inline int qedr_wq_is_full(struct qedr_qp_hwq_info *wq)
+{
+	return (((wq->prod + 1) % wq->max_wr) == wq->cons);
+}
 
-अटल पूर्णांक sge_data_len(काष्ठा ib_sge *sg_list, पूर्णांक num_sge)
-अणु
-	पूर्णांक i, len = 0;
+static int sge_data_len(struct ib_sge *sg_list, int num_sge)
+{
+	int i, len = 0;
 
-	क्रम (i = 0; i < num_sge; i++)
+	for (i = 0; i < num_sge; i++)
 		len += sg_list[i].length;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल व्योम swap_wqe_data64(u64 *p)
-अणु
-	पूर्णांक i;
+static void swap_wqe_data64(u64 *p)
+{
+	int i;
 
-	क्रम (i = 0; i < QEDR_SQE_ELEMENT_SIZE / माप(u64); i++, p++)
+	for (i = 0; i < QEDR_SQE_ELEMENT_SIZE / sizeof(u64); i++, p++)
 		*p = cpu_to_be64(cpu_to_le64(*p));
-पूर्ण
+}
 
-अटल u32 qedr_prepare_sq_अंतरभूत_data(काष्ठा qedr_dev *dev,
-				       काष्ठा qedr_qp *qp, u8 *wqe_size,
-				       स्थिर काष्ठा ib_send_wr *wr,
-				       स्थिर काष्ठा ib_send_wr **bad_wr,
+static u32 qedr_prepare_sq_inline_data(struct qedr_dev *dev,
+				       struct qedr_qp *qp, u8 *wqe_size,
+				       const struct ib_send_wr *wr,
+				       const struct ib_send_wr **bad_wr,
 				       u8 *bits, u8 bit)
-अणु
+{
 	u32 data_size = sge_data_len(wr->sg_list, wr->num_sge);
-	अक्षर *seg_prt, *wqe;
-	पूर्णांक i, seg_siz;
+	char *seg_prt, *wqe;
+	int i, seg_siz;
 
-	अगर (data_size > ROCE_REQ_MAX_INLINE_DATA_SIZE) अणु
+	if (data_size > ROCE_REQ_MAX_INLINE_DATA_SIZE) {
 		DP_ERR(dev, "Too much inline data in WR: %d\n", data_size);
 		*bad_wr = wr;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!data_size)
-		वापस data_size;
+	if (!data_size)
+		return data_size;
 
 	*bits |= bit;
 
-	seg_prt = शून्य;
-	wqe = शून्य;
+	seg_prt = NULL;
+	wqe = NULL;
 	seg_siz = 0;
 
-	/* Copy data अंतरभूत */
-	क्रम (i = 0; i < wr->num_sge; i++) अणु
+	/* Copy data inline */
+	for (i = 0; i < wr->num_sge; i++) {
 		u32 len = wr->sg_list[i].length;
-		व्योम *src = (व्योम *)(uपूर्णांकptr_t)wr->sg_list[i].addr;
+		void *src = (void *)(uintptr_t)wr->sg_list[i].addr;
 
-		जबतक (len > 0) अणु
+		while (len > 0) {
 			u32 cur;
 
 			/* New segment required */
-			अगर (!seg_siz) अणु
-				wqe = (अक्षर *)qed_chain_produce(&qp->sq.pbl);
+			if (!seg_siz) {
+				wqe = (char *)qed_chain_produce(&qp->sq.pbl);
 				seg_prt = wqe;
-				seg_siz = माप(काष्ठा rdma_sq_common_wqe);
+				seg_siz = sizeof(struct rdma_sq_common_wqe);
 				(*wqe_size)++;
-			पूर्ण
+			}
 
 			/* Calculate currently allowed length */
 			cur = min_t(u32, len, seg_siz);
-			स_नकल(seg_prt, src, cur);
+			memcpy(seg_prt, src, cur);
 
 			/* Update segment variables */
 			seg_prt += cur;
@@ -3334,109 +3333,109 @@ err1:
 			len -= cur;
 
 			/* Swap fully-completed segments */
-			अगर (!seg_siz)
+			if (!seg_siz)
 				swap_wqe_data64((u64 *)wqe);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* swap last not completed segment */
-	अगर (seg_siz)
+	if (seg_siz)
 		swap_wqe_data64((u64 *)wqe);
 
-	वापस data_size;
-पूर्ण
+	return data_size;
+}
 
-#घोषणा RQ_SGE_SET(sge, vaddr, vlength, vflags)			\
-	करो अणु							\
+#define RQ_SGE_SET(sge, vaddr, vlength, vflags)			\
+	do {							\
 		DMA_REGPAIR_LE(sge->addr, vaddr);		\
 		(sge)->length = cpu_to_le32(vlength);		\
 		(sge)->flags = cpu_to_le32(vflags);		\
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा SRQ_HDR_SET(hdr, vwr_id, num_sge)			\
-	करो अणु							\
+#define SRQ_HDR_SET(hdr, vwr_id, num_sge)			\
+	do {							\
 		DMA_REGPAIR_LE(hdr->wr_id, vwr_id);		\
 		(hdr)->num_sges = num_sge;			\
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा SRQ_SGE_SET(sge, vaddr, vlength, vlkey)			\
-	करो अणु							\
+#define SRQ_SGE_SET(sge, vaddr, vlength, vlkey)			\
+	do {							\
 		DMA_REGPAIR_LE(sge->addr, vaddr);		\
 		(sge)->length = cpu_to_le32(vlength);		\
 		(sge)->l_key = cpu_to_le32(vlkey);		\
-	पूर्ण जबतक (0)
+	} while (0)
 
-अटल u32 qedr_prepare_sq_sges(काष्ठा qedr_qp *qp, u8 *wqe_size,
-				स्थिर काष्ठा ib_send_wr *wr)
-अणु
+static u32 qedr_prepare_sq_sges(struct qedr_qp *qp, u8 *wqe_size,
+				const struct ib_send_wr *wr)
+{
 	u32 data_size = 0;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < wr->num_sge; i++) अणु
-		काष्ठा rdma_sq_sge *sge = qed_chain_produce(&qp->sq.pbl);
+	for (i = 0; i < wr->num_sge; i++) {
+		struct rdma_sq_sge *sge = qed_chain_produce(&qp->sq.pbl);
 
 		DMA_REGPAIR_LE(sge->addr, wr->sg_list[i].addr);
 		sge->l_key = cpu_to_le32(wr->sg_list[i].lkey);
 		sge->length = cpu_to_le32(wr->sg_list[i].length);
 		data_size += wr->sg_list[i].length;
-	पूर्ण
+	}
 
-	अगर (wqe_size)
+	if (wqe_size)
 		*wqe_size += wr->num_sge;
 
-	वापस data_size;
-पूर्ण
+	return data_size;
+}
 
-अटल u32 qedr_prepare_sq_rdma_data(काष्ठा qedr_dev *dev,
-				     काष्ठा qedr_qp *qp,
-				     काष्ठा rdma_sq_rdma_wqe_1st *rwqe,
-				     काष्ठा rdma_sq_rdma_wqe_2nd *rwqe2,
-				     स्थिर काष्ठा ib_send_wr *wr,
-				     स्थिर काष्ठा ib_send_wr **bad_wr)
-अणु
+static u32 qedr_prepare_sq_rdma_data(struct qedr_dev *dev,
+				     struct qedr_qp *qp,
+				     struct rdma_sq_rdma_wqe_1st *rwqe,
+				     struct rdma_sq_rdma_wqe_2nd *rwqe2,
+				     const struct ib_send_wr *wr,
+				     const struct ib_send_wr **bad_wr)
+{
 	rwqe2->r_key = cpu_to_le32(rdma_wr(wr)->rkey);
 	DMA_REGPAIR_LE(rwqe2->remote_va, rdma_wr(wr)->remote_addr);
 
-	अगर (wr->send_flags & IB_SEND_INLINE &&
+	if (wr->send_flags & IB_SEND_INLINE &&
 	    (wr->opcode == IB_WR_RDMA_WRITE_WITH_IMM ||
-	     wr->opcode == IB_WR_RDMA_WRITE)) अणु
+	     wr->opcode == IB_WR_RDMA_WRITE)) {
 		u8 flags = 0;
 
 		SET_FIELD2(flags, RDMA_SQ_RDMA_WQE_1ST_INLINE_FLG, 1);
-		वापस qedr_prepare_sq_अंतरभूत_data(dev, qp, &rwqe->wqe_size, wr,
+		return qedr_prepare_sq_inline_data(dev, qp, &rwqe->wqe_size, wr,
 						   bad_wr, &rwqe->flags, flags);
-	पूर्ण
+	}
 
-	वापस qedr_prepare_sq_sges(qp, &rwqe->wqe_size, wr);
-पूर्ण
+	return qedr_prepare_sq_sges(qp, &rwqe->wqe_size, wr);
+}
 
-अटल u32 qedr_prepare_sq_send_data(काष्ठा qedr_dev *dev,
-				     काष्ठा qedr_qp *qp,
-				     काष्ठा rdma_sq_send_wqe_1st *swqe,
-				     काष्ठा rdma_sq_send_wqe_2st *swqe2,
-				     स्थिर काष्ठा ib_send_wr *wr,
-				     स्थिर काष्ठा ib_send_wr **bad_wr)
-अणु
-	स_रखो(swqe2, 0, माप(*swqe2));
-	अगर (wr->send_flags & IB_SEND_INLINE) अणु
+static u32 qedr_prepare_sq_send_data(struct qedr_dev *dev,
+				     struct qedr_qp *qp,
+				     struct rdma_sq_send_wqe_1st *swqe,
+				     struct rdma_sq_send_wqe_2st *swqe2,
+				     const struct ib_send_wr *wr,
+				     const struct ib_send_wr **bad_wr)
+{
+	memset(swqe2, 0, sizeof(*swqe2));
+	if (wr->send_flags & IB_SEND_INLINE) {
 		u8 flags = 0;
 
 		SET_FIELD2(flags, RDMA_SQ_SEND_WQE_INLINE_FLG, 1);
-		वापस qedr_prepare_sq_अंतरभूत_data(dev, qp, &swqe->wqe_size, wr,
+		return qedr_prepare_sq_inline_data(dev, qp, &swqe->wqe_size, wr,
 						   bad_wr, &swqe->flags, flags);
-	पूर्ण
+	}
 
-	वापस qedr_prepare_sq_sges(qp, &swqe->wqe_size, wr);
-पूर्ण
+	return qedr_prepare_sq_sges(qp, &swqe->wqe_size, wr);
+}
 
-अटल पूर्णांक qedr_prepare_reg(काष्ठा qedr_qp *qp,
-			    काष्ठा rdma_sq_fmr_wqe_1st *fwqe1,
-			    स्थिर काष्ठा ib_reg_wr *wr)
-अणु
-	काष्ठा qedr_mr *mr = get_qedr_mr(wr->mr);
-	काष्ठा rdma_sq_fmr_wqe_2nd *fwqe2;
+static int qedr_prepare_reg(struct qedr_qp *qp,
+			    struct rdma_sq_fmr_wqe_1st *fwqe1,
+			    const struct ib_reg_wr *wr)
+{
+	struct qedr_mr *mr = get_qedr_mr(wr->mr);
+	struct rdma_sq_fmr_wqe_2nd *fwqe2;
 
-	fwqe2 = (काष्ठा rdma_sq_fmr_wqe_2nd *)qed_chain_produce(&qp->sq.pbl);
+	fwqe2 = (struct rdma_sq_fmr_wqe_2nd *)qed_chain_produce(&qp->sq.pbl);
 	fwqe1->addr.hi = upper_32_bits(mr->ibmr.iova);
 	fwqe1->addr.lo = lower_32_bits(mr->ibmr.iova);
 	fwqe1->l_key = wr->key;
@@ -3464,105 +3463,105 @@ err1:
 
 	qp->wqe_wr_id[qp->sq.prod].mr = mr;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल क्रमागत ib_wc_opcode qedr_ib_to_wc_opcode(क्रमागत ib_wr_opcode opcode)
-अणु
-	चयन (opcode) अणु
-	हाल IB_WR_RDMA_WRITE:
-	हाल IB_WR_RDMA_WRITE_WITH_IMM:
-		वापस IB_WC_RDMA_WRITE;
-	हाल IB_WR_SEND_WITH_IMM:
-	हाल IB_WR_SEND:
-	हाल IB_WR_SEND_WITH_INV:
-		वापस IB_WC_SEND;
-	हाल IB_WR_RDMA_READ:
-	हाल IB_WR_RDMA_READ_WITH_INV:
-		वापस IB_WC_RDMA_READ;
-	हाल IB_WR_ATOMIC_CMP_AND_SWP:
-		वापस IB_WC_COMP_SWAP;
-	हाल IB_WR_ATOMIC_FETCH_AND_ADD:
-		वापस IB_WC_FETCH_ADD;
-	हाल IB_WR_REG_MR:
-		वापस IB_WC_REG_MR;
-	हाल IB_WR_LOCAL_INV:
-		वापस IB_WC_LOCAL_INV;
-	शेष:
-		वापस IB_WC_SEND;
-	पूर्ण
-पूर्ण
+static enum ib_wc_opcode qedr_ib_to_wc_opcode(enum ib_wr_opcode opcode)
+{
+	switch (opcode) {
+	case IB_WR_RDMA_WRITE:
+	case IB_WR_RDMA_WRITE_WITH_IMM:
+		return IB_WC_RDMA_WRITE;
+	case IB_WR_SEND_WITH_IMM:
+	case IB_WR_SEND:
+	case IB_WR_SEND_WITH_INV:
+		return IB_WC_SEND;
+	case IB_WR_RDMA_READ:
+	case IB_WR_RDMA_READ_WITH_INV:
+		return IB_WC_RDMA_READ;
+	case IB_WR_ATOMIC_CMP_AND_SWP:
+		return IB_WC_COMP_SWAP;
+	case IB_WR_ATOMIC_FETCH_AND_ADD:
+		return IB_WC_FETCH_ADD;
+	case IB_WR_REG_MR:
+		return IB_WC_REG_MR;
+	case IB_WR_LOCAL_INV:
+		return IB_WC_LOCAL_INV;
+	default:
+		return IB_WC_SEND;
+	}
+}
 
-अटल अंतरभूत bool qedr_can_post_send(काष्ठा qedr_qp *qp,
-				      स्थिर काष्ठा ib_send_wr *wr)
-अणु
-	पूर्णांक wq_is_full, err_wr, pbl_is_full;
-	काष्ठा qedr_dev *dev = qp->dev;
+static inline bool qedr_can_post_send(struct qedr_qp *qp,
+				      const struct ib_send_wr *wr)
+{
+	int wq_is_full, err_wr, pbl_is_full;
+	struct qedr_dev *dev = qp->dev;
 
 	/* prevent SQ overflow and/or processing of a bad WR */
 	err_wr = wr->num_sge > qp->sq.max_sges;
 	wq_is_full = qedr_wq_is_full(&qp->sq);
 	pbl_is_full = qed_chain_get_elem_left_u32(&qp->sq.pbl) <
 		      QEDR_MAX_SQE_ELEMENTS_PER_SQE;
-	अगर (wq_is_full || err_wr || pbl_is_full) अणु
-		अगर (wq_is_full && !(qp->err_biपंचांगap & QEDR_QP_ERR_SQ_FULL)) अणु
+	if (wq_is_full || err_wr || pbl_is_full) {
+		if (wq_is_full && !(qp->err_bitmap & QEDR_QP_ERR_SQ_FULL)) {
 			DP_ERR(dev,
 			       "error: WQ is full. Post send on QP %p failed (this error appears only once)\n",
 			       qp);
-			qp->err_biपंचांगap |= QEDR_QP_ERR_SQ_FULL;
-		पूर्ण
+			qp->err_bitmap |= QEDR_QP_ERR_SQ_FULL;
+		}
 
-		अगर (err_wr && !(qp->err_biपंचांगap & QEDR_QP_ERR_BAD_SR)) अणु
+		if (err_wr && !(qp->err_bitmap & QEDR_QP_ERR_BAD_SR)) {
 			DP_ERR(dev,
 			       "error: WR is bad. Post send on QP %p failed (this error appears only once)\n",
 			       qp);
-			qp->err_biपंचांगap |= QEDR_QP_ERR_BAD_SR;
-		पूर्ण
+			qp->err_bitmap |= QEDR_QP_ERR_BAD_SR;
+		}
 
-		अगर (pbl_is_full &&
-		    !(qp->err_biपंचांगap & QEDR_QP_ERR_SQ_PBL_FULL)) अणु
+		if (pbl_is_full &&
+		    !(qp->err_bitmap & QEDR_QP_ERR_SQ_PBL_FULL)) {
 			DP_ERR(dev,
 			       "error: WQ PBL is full. Post send on QP %p failed (this error appears only once)\n",
 			       qp);
-			qp->err_biपंचांगap |= QEDR_QP_ERR_SQ_PBL_FULL;
-		पूर्ण
-		वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+			qp->err_bitmap |= QEDR_QP_ERR_SQ_PBL_FULL;
+		}
+		return false;
+	}
+	return true;
+}
 
-अटल पूर्णांक __qedr_post_send(काष्ठा ib_qp *ibqp, स्थिर काष्ठा ib_send_wr *wr,
-			    स्थिर काष्ठा ib_send_wr **bad_wr)
-अणु
-	काष्ठा qedr_dev *dev = get_qedr_dev(ibqp->device);
-	काष्ठा qedr_qp *qp = get_qedr_qp(ibqp);
-	काष्ठा rdma_sq_atomic_wqe_1st *awqe1;
-	काष्ठा rdma_sq_atomic_wqe_2nd *awqe2;
-	काष्ठा rdma_sq_atomic_wqe_3rd *awqe3;
-	काष्ठा rdma_sq_send_wqe_2st *swqe2;
-	काष्ठा rdma_sq_local_inv_wqe *iwqe;
-	काष्ठा rdma_sq_rdma_wqe_2nd *rwqe2;
-	काष्ठा rdma_sq_send_wqe_1st *swqe;
-	काष्ठा rdma_sq_rdma_wqe_1st *rwqe;
-	काष्ठा rdma_sq_fmr_wqe_1st *fwqe1;
-	काष्ठा rdma_sq_common_wqe *wqe;
+static int __qedr_post_send(struct ib_qp *ibqp, const struct ib_send_wr *wr,
+			    const struct ib_send_wr **bad_wr)
+{
+	struct qedr_dev *dev = get_qedr_dev(ibqp->device);
+	struct qedr_qp *qp = get_qedr_qp(ibqp);
+	struct rdma_sq_atomic_wqe_1st *awqe1;
+	struct rdma_sq_atomic_wqe_2nd *awqe2;
+	struct rdma_sq_atomic_wqe_3rd *awqe3;
+	struct rdma_sq_send_wqe_2st *swqe2;
+	struct rdma_sq_local_inv_wqe *iwqe;
+	struct rdma_sq_rdma_wqe_2nd *rwqe2;
+	struct rdma_sq_send_wqe_1st *swqe;
+	struct rdma_sq_rdma_wqe_1st *rwqe;
+	struct rdma_sq_fmr_wqe_1st *fwqe1;
+	struct rdma_sq_common_wqe *wqe;
 	u32 length;
-	पूर्णांक rc = 0;
+	int rc = 0;
 	bool comp;
 
-	अगर (!qedr_can_post_send(qp, wr)) अणु
+	if (!qedr_can_post_send(qp, wr)) {
 		*bad_wr = wr;
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	wqe = qed_chain_produce(&qp->sq.pbl);
-	qp->wqe_wr_id[qp->sq.prod].संकेतed =
-		!!(wr->send_flags & IB_SEND_SIGNALED) || qp->संकेतed;
+	qp->wqe_wr_id[qp->sq.prod].signaled =
+		!!(wr->send_flags & IB_SEND_SIGNALED) || qp->signaled;
 
 	wqe->flags = 0;
 	SET_FIELD2(wqe->flags, RDMA_SQ_SEND_WQE_SE_FLG,
 		   !!(wr->send_flags & IB_SEND_SOLICITED));
-	comp = (!!(wr->send_flags & IB_SEND_SIGNALED)) || qp->संकेतed;
+	comp = (!!(wr->send_flags & IB_SEND_SIGNALED)) || qp->signaled;
 	SET_FIELD2(wqe->flags, RDMA_SQ_SEND_WQE_COMP_FLG, comp);
 	SET_FIELD2(wqe->flags, RDMA_SQ_SEND_WQE_RD_FENCE_FLG,
 		   !!(wr->send_flags & IB_SEND_FENCE));
@@ -3570,15 +3569,15 @@ err1:
 
 	qp->wqe_wr_id[qp->sq.prod].opcode = qedr_ib_to_wc_opcode(wr->opcode);
 
-	चयन (wr->opcode) अणु
-	हाल IB_WR_SEND_WITH_IMM:
-		अगर (unlikely(rdma_protocol_iwarp(&dev->ibdev, 1))) अणु
+	switch (wr->opcode) {
+	case IB_WR_SEND_WITH_IMM:
+		if (unlikely(rdma_protocol_iwarp(&dev->ibdev, 1))) {
 			rc = -EINVAL;
 			*bad_wr = wr;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		wqe->req_type = RDMA_SQ_REQ_TYPE_SEND_WITH_IMM;
-		swqe = (काष्ठा rdma_sq_send_wqe_1st *)wqe;
+		swqe = (struct rdma_sq_send_wqe_1st *)wqe;
 		swqe->wqe_size = 2;
 		swqe2 = qed_chain_produce(&qp->sq.pbl);
 
@@ -3589,10 +3588,10 @@ err1:
 		qp->wqe_wr_id[qp->sq.prod].wqe_size = swqe->wqe_size;
 		qp->prev_wqe_size = swqe->wqe_size;
 		qp->wqe_wr_id[qp->sq.prod].bytes_len = swqe->length;
-		अवरोध;
-	हाल IB_WR_SEND:
+		break;
+	case IB_WR_SEND:
 		wqe->req_type = RDMA_SQ_REQ_TYPE_SEND;
-		swqe = (काष्ठा rdma_sq_send_wqe_1st *)wqe;
+		swqe = (struct rdma_sq_send_wqe_1st *)wqe;
 
 		swqe->wqe_size = 2;
 		swqe2 = qed_chain_produce(&qp->sq.pbl);
@@ -3602,10 +3601,10 @@ err1:
 		qp->wqe_wr_id[qp->sq.prod].wqe_size = swqe->wqe_size;
 		qp->prev_wqe_size = swqe->wqe_size;
 		qp->wqe_wr_id[qp->sq.prod].bytes_len = swqe->length;
-		अवरोध;
-	हाल IB_WR_SEND_WITH_INV:
+		break;
+	case IB_WR_SEND_WITH_INV:
 		wqe->req_type = RDMA_SQ_REQ_TYPE_SEND_WITH_INVALIDATE;
-		swqe = (काष्ठा rdma_sq_send_wqe_1st *)wqe;
+		swqe = (struct rdma_sq_send_wqe_1st *)wqe;
 		swqe2 = qed_chain_produce(&qp->sq.pbl);
 		swqe->wqe_size = 2;
 		swqe->inv_key_or_imm_data = cpu_to_le32(wr->ex.invalidate_rkey);
@@ -3615,16 +3614,16 @@ err1:
 		qp->wqe_wr_id[qp->sq.prod].wqe_size = swqe->wqe_size;
 		qp->prev_wqe_size = swqe->wqe_size;
 		qp->wqe_wr_id[qp->sq.prod].bytes_len = swqe->length;
-		अवरोध;
+		break;
 
-	हाल IB_WR_RDMA_WRITE_WITH_IMM:
-		अगर (unlikely(rdma_protocol_iwarp(&dev->ibdev, 1))) अणु
+	case IB_WR_RDMA_WRITE_WITH_IMM:
+		if (unlikely(rdma_protocol_iwarp(&dev->ibdev, 1))) {
 			rc = -EINVAL;
 			*bad_wr = wr;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		wqe->req_type = RDMA_SQ_REQ_TYPE_RDMA_WR_WITH_IMM;
-		rwqe = (काष्ठा rdma_sq_rdma_wqe_1st *)wqe;
+		rwqe = (struct rdma_sq_rdma_wqe_1st *)wqe;
 
 		rwqe->wqe_size = 2;
 		rwqe->imm_data = htonl(cpu_to_le32(wr->ex.imm_data));
@@ -3635,10 +3634,10 @@ err1:
 		qp->wqe_wr_id[qp->sq.prod].wqe_size = rwqe->wqe_size;
 		qp->prev_wqe_size = rwqe->wqe_size;
 		qp->wqe_wr_id[qp->sq.prod].bytes_len = rwqe->length;
-		अवरोध;
-	हाल IB_WR_RDMA_WRITE:
+		break;
+	case IB_WR_RDMA_WRITE:
 		wqe->req_type = RDMA_SQ_REQ_TYPE_RDMA_WR;
-		rwqe = (काष्ठा rdma_sq_rdma_wqe_1st *)wqe;
+		rwqe = (struct rdma_sq_rdma_wqe_1st *)wqe;
 
 		rwqe->wqe_size = 2;
 		rwqe2 = qed_chain_produce(&qp->sq.pbl);
@@ -3648,14 +3647,14 @@ err1:
 		qp->wqe_wr_id[qp->sq.prod].wqe_size = rwqe->wqe_size;
 		qp->prev_wqe_size = rwqe->wqe_size;
 		qp->wqe_wr_id[qp->sq.prod].bytes_len = rwqe->length;
-		अवरोध;
-	हाल IB_WR_RDMA_READ_WITH_INV:
+		break;
+	case IB_WR_RDMA_READ_WITH_INV:
 		SET_FIELD2(wqe->flags, RDMA_SQ_RDMA_WQE_1ST_READ_INV_FLG, 1);
 		fallthrough;	/* same is identical to RDMA READ */
 
-	हाल IB_WR_RDMA_READ:
+	case IB_WR_RDMA_READ:
 		wqe->req_type = RDMA_SQ_REQ_TYPE_RDMA_RD;
-		rwqe = (काष्ठा rdma_sq_rdma_wqe_1st *)wqe;
+		rwqe = (struct rdma_sq_rdma_wqe_1st *)wqe;
 
 		rwqe->wqe_size = 2;
 		rwqe2 = qed_chain_produce(&qp->sq.pbl);
@@ -3665,11 +3664,11 @@ err1:
 		qp->wqe_wr_id[qp->sq.prod].wqe_size = rwqe->wqe_size;
 		qp->prev_wqe_size = rwqe->wqe_size;
 		qp->wqe_wr_id[qp->sq.prod].bytes_len = rwqe->length;
-		अवरोध;
+		break;
 
-	हाल IB_WR_ATOMIC_CMP_AND_SWP:
-	हाल IB_WR_ATOMIC_FETCH_AND_ADD:
-		awqe1 = (काष्ठा rdma_sq_atomic_wqe_1st *)wqe;
+	case IB_WR_ATOMIC_CMP_AND_SWP:
+	case IB_WR_ATOMIC_FETCH_AND_ADD:
+		awqe1 = (struct rdma_sq_atomic_wqe_1st *)wqe;
 		awqe1->wqe_size = 4;
 
 		awqe2 = qed_chain_produce(&qp->sq.pbl);
@@ -3678,60 +3677,60 @@ err1:
 
 		awqe3 = qed_chain_produce(&qp->sq.pbl);
 
-		अगर (wr->opcode == IB_WR_ATOMIC_FETCH_AND_ADD) अणु
+		if (wr->opcode == IB_WR_ATOMIC_FETCH_AND_ADD) {
 			wqe->req_type = RDMA_SQ_REQ_TYPE_ATOMIC_ADD;
 			DMA_REGPAIR_LE(awqe3->swap_data,
 				       atomic_wr(wr)->compare_add);
-		पूर्ण अन्यथा अणु
+		} else {
 			wqe->req_type = RDMA_SQ_REQ_TYPE_ATOMIC_CMP_AND_SWAP;
 			DMA_REGPAIR_LE(awqe3->swap_data,
 				       atomic_wr(wr)->swap);
 			DMA_REGPAIR_LE(awqe3->cmp_data,
 				       atomic_wr(wr)->compare_add);
-		पूर्ण
+		}
 
-		qedr_prepare_sq_sges(qp, शून्य, wr);
+		qedr_prepare_sq_sges(qp, NULL, wr);
 
 		qp->wqe_wr_id[qp->sq.prod].wqe_size = awqe1->wqe_size;
 		qp->prev_wqe_size = awqe1->wqe_size;
-		अवरोध;
+		break;
 
-	हाल IB_WR_LOCAL_INV:
-		iwqe = (काष्ठा rdma_sq_local_inv_wqe *)wqe;
+	case IB_WR_LOCAL_INV:
+		iwqe = (struct rdma_sq_local_inv_wqe *)wqe;
 		iwqe->wqe_size = 1;
 
 		iwqe->req_type = RDMA_SQ_REQ_TYPE_LOCAL_INVALIDATE;
 		iwqe->inv_l_key = wr->ex.invalidate_rkey;
 		qp->wqe_wr_id[qp->sq.prod].wqe_size = iwqe->wqe_size;
 		qp->prev_wqe_size = iwqe->wqe_size;
-		अवरोध;
-	हाल IB_WR_REG_MR:
+		break;
+	case IB_WR_REG_MR:
 		DP_DEBUG(dev, QEDR_MSG_CQ, "REG_MR\n");
 		wqe->req_type = RDMA_SQ_REQ_TYPE_FAST_MR;
-		fwqe1 = (काष्ठा rdma_sq_fmr_wqe_1st *)wqe;
+		fwqe1 = (struct rdma_sq_fmr_wqe_1st *)wqe;
 		fwqe1->wqe_size = 2;
 
 		rc = qedr_prepare_reg(qp, fwqe1, reg_wr(wr));
-		अगर (rc) अणु
+		if (rc) {
 			DP_ERR(dev, "IB_REG_MR failed rc=%d\n", rc);
 			*bad_wr = wr;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		qp->wqe_wr_id[qp->sq.prod].wqe_size = fwqe1->wqe_size;
 		qp->prev_wqe_size = fwqe1->wqe_size;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		DP_ERR(dev, "invalid opcode 0x%x!\n", wr->opcode);
 		rc = -EINVAL;
 		*bad_wr = wr;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (*bad_wr) अणु
+	if (*bad_wr) {
 		u16 value;
 
-		/* Restore prod to its position beक्रमe
+		/* Restore prod to its position before
 		 * this WR was processed
 		 */
 		value = le16_to_cpu(qp->sq.db_data.data.value);
@@ -3741,43 +3740,43 @@ err1:
 		qp->prev_wqe_size = wqe->prev_wqe_size;
 		rc = -EINVAL;
 		DP_ERR(dev, "POST SEND FAILED\n");
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक qedr_post_send(काष्ठा ib_qp *ibqp, स्थिर काष्ठा ib_send_wr *wr,
-		   स्थिर काष्ठा ib_send_wr **bad_wr)
-अणु
-	काष्ठा qedr_dev *dev = get_qedr_dev(ibqp->device);
-	काष्ठा qedr_qp *qp = get_qedr_qp(ibqp);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc = 0;
+int qedr_post_send(struct ib_qp *ibqp, const struct ib_send_wr *wr,
+		   const struct ib_send_wr **bad_wr)
+{
+	struct qedr_dev *dev = get_qedr_dev(ibqp->device);
+	struct qedr_qp *qp = get_qedr_qp(ibqp);
+	unsigned long flags;
+	int rc = 0;
 
-	*bad_wr = शून्य;
+	*bad_wr = NULL;
 
-	अगर (qp->qp_type == IB_QPT_GSI)
-		वापस qedr_gsi_post_send(ibqp, wr, bad_wr);
+	if (qp->qp_type == IB_QPT_GSI)
+		return qedr_gsi_post_send(ibqp, wr, bad_wr);
 
 	spin_lock_irqsave(&qp->q_lock, flags);
 
-	अगर (rdma_protocol_roce(&dev->ibdev, 1)) अणु
-		अगर ((qp->state != QED_ROCE_QP_STATE_RTS) &&
+	if (rdma_protocol_roce(&dev->ibdev, 1)) {
+		if ((qp->state != QED_ROCE_QP_STATE_RTS) &&
 		    (qp->state != QED_ROCE_QP_STATE_ERR) &&
-		    (qp->state != QED_ROCE_QP_STATE_SQD)) अणु
+		    (qp->state != QED_ROCE_QP_STATE_SQD)) {
 			spin_unlock_irqrestore(&qp->q_lock, flags);
 			*bad_wr = wr;
 			DP_DEBUG(dev, QEDR_MSG_CQ,
 				 "QP in wrong state! QP icid=0x%x state %d\n",
 				 qp->icid, qp->state);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	जबतक (wr) अणु
+	while (wr) {
 		rc = __qedr_post_send(ibqp, wr, bad_wr);
-		अगर (rc)
-			अवरोध;
+		if (rc)
+			break;
 
 		qp->wqe_wr_id[qp->sq.prod].wr_id = wr->wr_id;
 
@@ -3786,71 +3785,71 @@ err1:
 		qp->sq.db_data.data.value++;
 
 		wr = wr->next;
-	पूर्ण
+	}
 
-	/* Trigger करोorbell
+	/* Trigger doorbell
 	 * If there was a failure in the first WR then it will be triggered in
-	 * vane. However this is not harmful (as दीर्घ as the producer value is
-	 * unchanged). For perक्रमmance reasons we aव्योम checking क्रम this
-	 * redundant करोorbell.
+	 * vane. However this is not harmful (as long as the producer value is
+	 * unchanged). For performance reasons we avoid checking for this
+	 * redundant doorbell.
 	 *
 	 * qp->wqe_wr_id is accessed during qedr_poll_cq, as
-	 * soon as we give the करोorbell, we could get a completion
-	 * क्रम this wr, thereक्रमe we need to make sure that the
-	 * memory is updated beक्रमe giving the करोorbell.
-	 * During qedr_poll_cq, rmb is called beक्रमe accessing the
-	 * cqe. This covers क्रम the smp_rmb as well.
+	 * soon as we give the doorbell, we could get a completion
+	 * for this wr, therefore we need to make sure that the
+	 * memory is updated before giving the doorbell.
+	 * During qedr_poll_cq, rmb is called before accessing the
+	 * cqe. This covers for the smp_rmb as well.
 	 */
 	smp_wmb();
-	ग_लिखोl(qp->sq.db_data.raw, qp->sq.db);
+	writel(qp->sq.db_data.raw, qp->sq.db);
 
 	spin_unlock_irqrestore(&qp->q_lock, flags);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल u32 qedr_srq_elem_left(काष्ठा qedr_srq_hwq_info *hw_srq)
-अणु
+static u32 qedr_srq_elem_left(struct qedr_srq_hwq_info *hw_srq)
+{
 	u32 used;
 
 	/* Calculate number of elements used based on producer
 	 * count and consumer count and subtract it from max
 	 * work request supported so that we get elements left.
 	 */
-	used = hw_srq->wr_prod_cnt - (u32)atomic_पढ़ो(&hw_srq->wr_cons_cnt);
+	used = hw_srq->wr_prod_cnt - (u32)atomic_read(&hw_srq->wr_cons_cnt);
 
-	वापस hw_srq->max_wr - used;
-पूर्ण
+	return hw_srq->max_wr - used;
+}
 
-पूर्णांक qedr_post_srq_recv(काष्ठा ib_srq *ibsrq, स्थिर काष्ठा ib_recv_wr *wr,
-		       स्थिर काष्ठा ib_recv_wr **bad_wr)
-अणु
-	काष्ठा qedr_srq *srq = get_qedr_srq(ibsrq);
-	काष्ठा qedr_srq_hwq_info *hw_srq;
-	काष्ठा qedr_dev *dev = srq->dev;
-	काष्ठा qed_chain *pbl;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक status = 0;
+int qedr_post_srq_recv(struct ib_srq *ibsrq, const struct ib_recv_wr *wr,
+		       const struct ib_recv_wr **bad_wr)
+{
+	struct qedr_srq *srq = get_qedr_srq(ibsrq);
+	struct qedr_srq_hwq_info *hw_srq;
+	struct qedr_dev *dev = srq->dev;
+	struct qed_chain *pbl;
+	unsigned long flags;
+	int status = 0;
 	u32 num_sge;
 
 	spin_lock_irqsave(&srq->lock, flags);
 
 	hw_srq = &srq->hw_srq;
 	pbl = &srq->hw_srq.pbl;
-	जबतक (wr) अणु
-		काष्ठा rdma_srq_wqe_header *hdr;
-		पूर्णांक i;
+	while (wr) {
+		struct rdma_srq_wqe_header *hdr;
+		int i;
 
-		अगर (!qedr_srq_elem_left(hw_srq) ||
-		    wr->num_sge > srq->hw_srq.max_sges) अणु
+		if (!qedr_srq_elem_left(hw_srq) ||
+		    wr->num_sge > srq->hw_srq.max_sges) {
 			DP_ERR(dev, "Can't post WR  (%d,%d) || (%d > %d)\n",
 			       hw_srq->wr_prod_cnt,
-			       atomic_पढ़ो(&hw_srq->wr_cons_cnt),
+			       atomic_read(&hw_srq->wr_cons_cnt),
 			       wr->num_sge, srq->hw_srq.max_sges);
 			status = -ENOMEM;
 			*bad_wr = wr;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		hdr = qed_chain_produce(pbl);
 		num_sge = wr->num_sge;
@@ -3865,8 +3864,8 @@ err1:
 			 "SRQ WR: SGEs: %d with wr_id[%d] = %llx\n",
 			 wr->num_sge, hw_srq->wqe_prod, wr->wr_id);
 
-		क्रम (i = 0; i < wr->num_sge; i++) अणु
-			काष्ठा rdma_srq_sge *srq_sge = qed_chain_produce(pbl);
+		for (i = 0; i < wr->num_sge; i++) {
+			struct rdma_srq_sge *srq_sge = qed_chain_produce(pbl);
 
 			/* Set SGE length, lkey and address */
 			SRQ_SGE_SET(srq_sge, wr->sg_list[i].addr,
@@ -3877,9 +3876,9 @@ err1:
 				 i, srq_sge->length, srq_sge->l_key,
 				 srq_sge->addr.hi, srq_sge->addr.lo);
 			hw_srq->sge_prod++;
-		पूर्ण
+		}
 
-		/* Update WQE and SGE inक्रमmation beक्रमe
+		/* Update WQE and SGE information before
 		 * updating producer.
 		 */
 		dma_wmb();
@@ -3894,57 +3893,57 @@ err1:
 		srq->hw_srq.virt_prod_pair_addr->wqe_prod = cpu_to_le32(hw_srq->wqe_prod);
 
 		wr = wr->next;
-	पूर्ण
+	}
 
 	DP_DEBUG(dev, QEDR_MSG_SRQ, "POST: Elements in S-RQ: %d\n",
 		 qed_chain_get_elem_left(pbl));
 	spin_unlock_irqrestore(&srq->lock, flags);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-पूर्णांक qedr_post_recv(काष्ठा ib_qp *ibqp, स्थिर काष्ठा ib_recv_wr *wr,
-		   स्थिर काष्ठा ib_recv_wr **bad_wr)
-अणु
-	काष्ठा qedr_qp *qp = get_qedr_qp(ibqp);
-	काष्ठा qedr_dev *dev = qp->dev;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक status = 0;
+int qedr_post_recv(struct ib_qp *ibqp, const struct ib_recv_wr *wr,
+		   const struct ib_recv_wr **bad_wr)
+{
+	struct qedr_qp *qp = get_qedr_qp(ibqp);
+	struct qedr_dev *dev = qp->dev;
+	unsigned long flags;
+	int status = 0;
 
-	अगर (qp->qp_type == IB_QPT_GSI)
-		वापस qedr_gsi_post_recv(ibqp, wr, bad_wr);
+	if (qp->qp_type == IB_QPT_GSI)
+		return qedr_gsi_post_recv(ibqp, wr, bad_wr);
 
 	spin_lock_irqsave(&qp->q_lock, flags);
 
-	अगर (qp->state == QED_ROCE_QP_STATE_RESET) अणु
+	if (qp->state == QED_ROCE_QP_STATE_RESET) {
 		spin_unlock_irqrestore(&qp->q_lock, flags);
 		*bad_wr = wr;
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	जबतक (wr) अणु
-		पूर्णांक i;
+	while (wr) {
+		int i;
 
-		अगर (qed_chain_get_elem_left_u32(&qp->rq.pbl) <
+		if (qed_chain_get_elem_left_u32(&qp->rq.pbl) <
 		    QEDR_MAX_RQE_ELEMENTS_PER_RQE ||
-		    wr->num_sge > qp->rq.max_sges) अणु
+		    wr->num_sge > qp->rq.max_sges) {
 			DP_ERR(dev, "Can't post WR  (%d < %d) || (%d > %d)\n",
 			       qed_chain_get_elem_left_u32(&qp->rq.pbl),
 			       QEDR_MAX_RQE_ELEMENTS_PER_RQE, wr->num_sge,
 			       qp->rq.max_sges);
 			status = -ENOMEM;
 			*bad_wr = wr;
-			अवरोध;
-		पूर्ण
-		क्रम (i = 0; i < wr->num_sge; i++) अणु
+			break;
+		}
+		for (i = 0; i < wr->num_sge; i++) {
 			u32 flags = 0;
-			काष्ठा rdma_rq_sge *rqe =
+			struct rdma_rq_sge *rqe =
 			    qed_chain_produce(&qp->rq.pbl);
 
 			/* First one must include the number
 			 * of SGE in the list
 			 */
-			अगर (!i)
+			if (!i)
 				SET_FIELD(flags, RDMA_RQ_SGE_NUM_SGES,
 					  wr->num_sge);
 
@@ -3953,15 +3952,15 @@ err1:
 
 			RQ_SGE_SET(rqe, wr->sg_list[i].addr,
 				   wr->sg_list[i].length, flags);
-		पूर्ण
+		}
 
-		/* Special हाल of no sges. FW requires between 1-4 sges...
-		 * in this हाल we need to post 1 sge with length zero. this is
-		 * because rdma ग_लिखो with immediate consumes an RQ.
+		/* Special case of no sges. FW requires between 1-4 sges...
+		 * in this case we need to post 1 sge with length zero. this is
+		 * because rdma write with immediate consumes an RQ.
 		 */
-		अगर (!wr->num_sge) अणु
+		if (!wr->num_sge) {
 			u32 flags = 0;
-			काष्ठा rdma_rq_sge *rqe =
+			struct rdma_rq_sge *rqe =
 			    qed_chain_produce(&qp->rq.pbl);
 
 			/* First one must include the number
@@ -3972,7 +3971,7 @@ err1:
 
 			RQ_SGE_SET(rqe, 0, 0, flags);
 			i = 1;
-		पूर्ण
+		}
 
 		qp->rqe_wr_id[qp->rq.prod].wr_id = wr->wr_id;
 		qp->rqe_wr_id[qp->rq.prod].wqe_size = i;
@@ -3980,92 +3979,92 @@ err1:
 		qedr_inc_sw_prod(&qp->rq);
 
 		/* qp->rqe_wr_id is accessed during qedr_poll_cq, as
-		 * soon as we give the करोorbell, we could get a completion
-		 * क्रम this wr, thereक्रमe we need to make sure that the
-		 * memory is update beक्रमe giving the करोorbell.
-		 * During qedr_poll_cq, rmb is called beक्रमe accessing the
-		 * cqe. This covers क्रम the smp_rmb as well.
+		 * soon as we give the doorbell, we could get a completion
+		 * for this wr, therefore we need to make sure that the
+		 * memory is update before giving the doorbell.
+		 * During qedr_poll_cq, rmb is called before accessing the
+		 * cqe. This covers for the smp_rmb as well.
 		 */
 		smp_wmb();
 
 		qp->rq.db_data.data.value++;
 
-		ग_लिखोl(qp->rq.db_data.raw, qp->rq.db);
+		writel(qp->rq.db_data.raw, qp->rq.db);
 
-		अगर (rdma_protocol_iwarp(&dev->ibdev, 1)) अणु
-			ग_लिखोl(qp->rq.iwarp_db2_data.raw, qp->rq.iwarp_db2);
-		पूर्ण
+		if (rdma_protocol_iwarp(&dev->ibdev, 1)) {
+			writel(qp->rq.iwarp_db2_data.raw, qp->rq.iwarp_db2);
+		}
 
 		wr = wr->next;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&qp->q_lock, flags);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक is_valid_cqe(काष्ठा qedr_cq *cq, जोड़ rdma_cqe *cqe)
-अणु
-	काष्ठा rdma_cqe_requester *resp_cqe = &cqe->req;
+static int is_valid_cqe(struct qedr_cq *cq, union rdma_cqe *cqe)
+{
+	struct rdma_cqe_requester *resp_cqe = &cqe->req;
 
-	वापस (resp_cqe->flags & RDMA_CQE_REQUESTER_TOGGLE_BIT_MASK) ==
+	return (resp_cqe->flags & RDMA_CQE_REQUESTER_TOGGLE_BIT_MASK) ==
 		cq->pbl_toggle;
-पूर्ण
+}
 
-अटल काष्ठा qedr_qp *cqe_get_qp(जोड़ rdma_cqe *cqe)
-अणु
-	काष्ठा rdma_cqe_requester *resp_cqe = &cqe->req;
-	काष्ठा qedr_qp *qp;
+static struct qedr_qp *cqe_get_qp(union rdma_cqe *cqe)
+{
+	struct rdma_cqe_requester *resp_cqe = &cqe->req;
+	struct qedr_qp *qp;
 
-	qp = (काष्ठा qedr_qp *)(uपूर्णांकptr_t)HILO_GEN(resp_cqe->qp_handle.hi,
+	qp = (struct qedr_qp *)(uintptr_t)HILO_GEN(resp_cqe->qp_handle.hi,
 						   resp_cqe->qp_handle.lo,
 						   u64);
-	वापस qp;
-पूर्ण
+	return qp;
+}
 
-अटल क्रमागत rdma_cqe_type cqe_get_type(जोड़ rdma_cqe *cqe)
-अणु
-	काष्ठा rdma_cqe_requester *resp_cqe = &cqe->req;
+static enum rdma_cqe_type cqe_get_type(union rdma_cqe *cqe)
+{
+	struct rdma_cqe_requester *resp_cqe = &cqe->req;
 
-	वापस GET_FIELD(resp_cqe->flags, RDMA_CQE_REQUESTER_TYPE);
-पूर्ण
+	return GET_FIELD(resp_cqe->flags, RDMA_CQE_REQUESTER_TYPE);
+}
 
 /* Return latest CQE (needs processing) */
-अटल जोड़ rdma_cqe *get_cqe(काष्ठा qedr_cq *cq)
-अणु
-	वापस cq->latest_cqe;
-पूर्ण
+static union rdma_cqe *get_cqe(struct qedr_cq *cq)
+{
+	return cq->latest_cqe;
+}
 
-/* In fmr we need to increase the number of fmr completed counter क्रम the fmr
- * algorithm determining whether we can मुक्त a pbl or not.
- * we need to perक्रमm this whether the work request was संकेतed or not. क्रम
- * this purpose we call this function from the condition that checks अगर a wr
- * should be skipped, to make sure we करोn't miss it ( possibly this fmr
- * operation was not संकेतted)
+/* In fmr we need to increase the number of fmr completed counter for the fmr
+ * algorithm determining whether we can free a pbl or not.
+ * we need to perform this whether the work request was signaled or not. for
+ * this purpose we call this function from the condition that checks if a wr
+ * should be skipped, to make sure we don't miss it ( possibly this fmr
+ * operation was not signalted)
  */
-अटल अंतरभूत व्योम qedr_chk_अगर_fmr(काष्ठा qedr_qp *qp)
-अणु
-	अगर (qp->wqe_wr_id[qp->sq.cons].opcode == IB_WC_REG_MR)
+static inline void qedr_chk_if_fmr(struct qedr_qp *qp)
+{
+	if (qp->wqe_wr_id[qp->sq.cons].opcode == IB_WC_REG_MR)
 		qp->wqe_wr_id[qp->sq.cons].mr->info.completed++;
-पूर्ण
+}
 
-अटल पूर्णांक process_req(काष्ठा qedr_dev *dev, काष्ठा qedr_qp *qp,
-		       काष्ठा qedr_cq *cq, पूर्णांक num_entries,
-		       काष्ठा ib_wc *wc, u16 hw_cons, क्रमागत ib_wc_status status,
-		       पूर्णांक क्रमce)
-अणु
+static int process_req(struct qedr_dev *dev, struct qedr_qp *qp,
+		       struct qedr_cq *cq, int num_entries,
+		       struct ib_wc *wc, u16 hw_cons, enum ib_wc_status status,
+		       int force)
+{
 	u16 cnt = 0;
 
-	जबतक (num_entries && qp->sq.wqe_cons != hw_cons) अणु
-		अगर (!qp->wqe_wr_id[qp->sq.cons].संकेतed && !क्रमce) अणु
-			qedr_chk_अगर_fmr(qp);
+	while (num_entries && qp->sq.wqe_cons != hw_cons) {
+		if (!qp->wqe_wr_id[qp->sq.cons].signaled && !force) {
+			qedr_chk_if_fmr(qp);
 			/* skip WC */
-			जाओ next_cqe;
-		पूर्ण
+			goto next_cqe;
+		}
 
 		/* fill WC */
 		wc->status = status;
-		wc->venकरोr_err = 0;
+		wc->vendor_err = 0;
 		wc->wc_flags = 0;
 		wc->src_qp = qp->id;
 		wc->qp = &qp->ibqp;
@@ -4073,272 +4072,272 @@ err1:
 		wc->wr_id = qp->wqe_wr_id[qp->sq.cons].wr_id;
 		wc->opcode = qp->wqe_wr_id[qp->sq.cons].opcode;
 
-		चयन (wc->opcode) अणु
-		हाल IB_WC_RDMA_WRITE:
+		switch (wc->opcode) {
+		case IB_WC_RDMA_WRITE:
 			wc->byte_len = qp->wqe_wr_id[qp->sq.cons].bytes_len;
-			अवरोध;
-		हाल IB_WC_COMP_SWAP:
-		हाल IB_WC_FETCH_ADD:
+			break;
+		case IB_WC_COMP_SWAP:
+		case IB_WC_FETCH_ADD:
 			wc->byte_len = 8;
-			अवरोध;
-		हाल IB_WC_REG_MR:
+			break;
+		case IB_WC_REG_MR:
 			qp->wqe_wr_id[qp->sq.cons].mr->info.completed++;
-			अवरोध;
-		हाल IB_WC_RDMA_READ:
-		हाल IB_WC_SEND:
+			break;
+		case IB_WC_RDMA_READ:
+		case IB_WC_SEND:
 			wc->byte_len = qp->wqe_wr_id[qp->sq.cons].bytes_len;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+			break;
+		default:
+			break;
+		}
 
 		num_entries--;
 		wc++;
 		cnt++;
 next_cqe:
-		जबतक (qp->wqe_wr_id[qp->sq.cons].wqe_size--)
+		while (qp->wqe_wr_id[qp->sq.cons].wqe_size--)
 			qed_chain_consume(&qp->sq.pbl);
 		qedr_inc_sw_cons(&qp->sq);
-	पूर्ण
+	}
 
-	वापस cnt;
-पूर्ण
+	return cnt;
+}
 
-अटल पूर्णांक qedr_poll_cq_req(काष्ठा qedr_dev *dev,
-			    काष्ठा qedr_qp *qp, काष्ठा qedr_cq *cq,
-			    पूर्णांक num_entries, काष्ठा ib_wc *wc,
-			    काष्ठा rdma_cqe_requester *req)
-अणु
-	पूर्णांक cnt = 0;
+static int qedr_poll_cq_req(struct qedr_dev *dev,
+			    struct qedr_qp *qp, struct qedr_cq *cq,
+			    int num_entries, struct ib_wc *wc,
+			    struct rdma_cqe_requester *req)
+{
+	int cnt = 0;
 
-	चयन (req->status) अणु
-	हाल RDMA_CQE_REQ_STS_OK:
+	switch (req->status) {
+	case RDMA_CQE_REQ_STS_OK:
 		cnt = process_req(dev, qp, cq, num_entries, wc, req->sq_cons,
 				  IB_WC_SUCCESS, 0);
-		अवरोध;
-	हाल RDMA_CQE_REQ_STS_WORK_REQUEST_FLUSHED_ERR:
-		अगर (qp->state != QED_ROCE_QP_STATE_ERR)
+		break;
+	case RDMA_CQE_REQ_STS_WORK_REQUEST_FLUSHED_ERR:
+		if (qp->state != QED_ROCE_QP_STATE_ERR)
 			DP_DEBUG(dev, QEDR_MSG_CQ,
 				 "Error: POLL CQ with RDMA_CQE_REQ_STS_WORK_REQUEST_FLUSHED_ERR. CQ icid=0x%x, QP icid=0x%x\n",
 				 cq->icid, qp->icid);
 		cnt = process_req(dev, qp, cq, num_entries, wc, req->sq_cons,
 				  IB_WC_WR_FLUSH_ERR, 1);
-		अवरोध;
-	शेष:
-		/* process all WQE beक्रमe the cosumer */
+		break;
+	default:
+		/* process all WQE before the cosumer */
 		qp->state = QED_ROCE_QP_STATE_ERR;
 		cnt = process_req(dev, qp, cq, num_entries, wc,
 				  req->sq_cons - 1, IB_WC_SUCCESS, 0);
 		wc += cnt;
-		/* अगर we have extra WC fill it with actual error info */
-		अगर (cnt < num_entries) अणु
-			क्रमागत ib_wc_status wc_status;
+		/* if we have extra WC fill it with actual error info */
+		if (cnt < num_entries) {
+			enum ib_wc_status wc_status;
 
-			चयन (req->status) अणु
-			हाल RDMA_CQE_REQ_STS_BAD_RESPONSE_ERR:
+			switch (req->status) {
+			case RDMA_CQE_REQ_STS_BAD_RESPONSE_ERR:
 				DP_ERR(dev,
 				       "Error: POLL CQ with RDMA_CQE_REQ_STS_BAD_RESPONSE_ERR. CQ icid=0x%x, QP icid=0x%x\n",
 				       cq->icid, qp->icid);
 				wc_status = IB_WC_BAD_RESP_ERR;
-				अवरोध;
-			हाल RDMA_CQE_REQ_STS_LOCAL_LENGTH_ERR:
+				break;
+			case RDMA_CQE_REQ_STS_LOCAL_LENGTH_ERR:
 				DP_ERR(dev,
 				       "Error: POLL CQ with RDMA_CQE_REQ_STS_LOCAL_LENGTH_ERR. CQ icid=0x%x, QP icid=0x%x\n",
 				       cq->icid, qp->icid);
 				wc_status = IB_WC_LOC_LEN_ERR;
-				अवरोध;
-			हाल RDMA_CQE_REQ_STS_LOCAL_QP_OPERATION_ERR:
+				break;
+			case RDMA_CQE_REQ_STS_LOCAL_QP_OPERATION_ERR:
 				DP_ERR(dev,
 				       "Error: POLL CQ with RDMA_CQE_REQ_STS_LOCAL_QP_OPERATION_ERR. CQ icid=0x%x, QP icid=0x%x\n",
 				       cq->icid, qp->icid);
 				wc_status = IB_WC_LOC_QP_OP_ERR;
-				अवरोध;
-			हाल RDMA_CQE_REQ_STS_LOCAL_PROTECTION_ERR:
+				break;
+			case RDMA_CQE_REQ_STS_LOCAL_PROTECTION_ERR:
 				DP_ERR(dev,
 				       "Error: POLL CQ with RDMA_CQE_REQ_STS_LOCAL_PROTECTION_ERR. CQ icid=0x%x, QP icid=0x%x\n",
 				       cq->icid, qp->icid);
 				wc_status = IB_WC_LOC_PROT_ERR;
-				अवरोध;
-			हाल RDMA_CQE_REQ_STS_MEMORY_MGT_OPERATION_ERR:
+				break;
+			case RDMA_CQE_REQ_STS_MEMORY_MGT_OPERATION_ERR:
 				DP_ERR(dev,
 				       "Error: POLL CQ with RDMA_CQE_REQ_STS_MEMORY_MGT_OPERATION_ERR. CQ icid=0x%x, QP icid=0x%x\n",
 				       cq->icid, qp->icid);
 				wc_status = IB_WC_MW_BIND_ERR;
-				अवरोध;
-			हाल RDMA_CQE_REQ_STS_REMOTE_INVALID_REQUEST_ERR:
+				break;
+			case RDMA_CQE_REQ_STS_REMOTE_INVALID_REQUEST_ERR:
 				DP_ERR(dev,
 				       "Error: POLL CQ with RDMA_CQE_REQ_STS_REMOTE_INVALID_REQUEST_ERR. CQ icid=0x%x, QP icid=0x%x\n",
 				       cq->icid, qp->icid);
 				wc_status = IB_WC_REM_INV_REQ_ERR;
-				अवरोध;
-			हाल RDMA_CQE_REQ_STS_REMOTE_ACCESS_ERR:
+				break;
+			case RDMA_CQE_REQ_STS_REMOTE_ACCESS_ERR:
 				DP_ERR(dev,
 				       "Error: POLL CQ with RDMA_CQE_REQ_STS_REMOTE_ACCESS_ERR. CQ icid=0x%x, QP icid=0x%x\n",
 				       cq->icid, qp->icid);
 				wc_status = IB_WC_REM_ACCESS_ERR;
-				अवरोध;
-			हाल RDMA_CQE_REQ_STS_REMOTE_OPERATION_ERR:
+				break;
+			case RDMA_CQE_REQ_STS_REMOTE_OPERATION_ERR:
 				DP_ERR(dev,
 				       "Error: POLL CQ with RDMA_CQE_REQ_STS_REMOTE_OPERATION_ERR. CQ icid=0x%x, QP icid=0x%x\n",
 				       cq->icid, qp->icid);
 				wc_status = IB_WC_REM_OP_ERR;
-				अवरोध;
-			हाल RDMA_CQE_REQ_STS_RNR_NAK_RETRY_CNT_ERR:
+				break;
+			case RDMA_CQE_REQ_STS_RNR_NAK_RETRY_CNT_ERR:
 				DP_ERR(dev,
 				       "Error: POLL CQ with RDMA_CQE_REQ_STS_RNR_NAK_RETRY_CNT_ERR. CQ icid=0x%x, QP icid=0x%x\n",
 				       cq->icid, qp->icid);
 				wc_status = IB_WC_RNR_RETRY_EXC_ERR;
-				अवरोध;
-			हाल RDMA_CQE_REQ_STS_TRANSPORT_RETRY_CNT_ERR:
+				break;
+			case RDMA_CQE_REQ_STS_TRANSPORT_RETRY_CNT_ERR:
 				DP_ERR(dev,
 				       "Error: POLL CQ with ROCE_CQE_REQ_STS_TRANSPORT_RETRY_CNT_ERR. CQ icid=0x%x, QP icid=0x%x\n",
 				       cq->icid, qp->icid);
 				wc_status = IB_WC_RETRY_EXC_ERR;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				DP_ERR(dev,
 				       "Error: POLL CQ with IB_WC_GENERAL_ERR. CQ icid=0x%x, QP icid=0x%x\n",
 				       cq->icid, qp->icid);
 				wc_status = IB_WC_GENERAL_ERR;
-			पूर्ण
+			}
 			cnt += process_req(dev, qp, cq, 1, wc, req->sq_cons,
 					   wc_status, 1);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस cnt;
-पूर्ण
+	return cnt;
+}
 
-अटल अंतरभूत पूर्णांक qedr_cqe_resp_status_to_ib(u8 status)
-अणु
-	चयन (status) अणु
-	हाल RDMA_CQE_RESP_STS_LOCAL_ACCESS_ERR:
-		वापस IB_WC_LOC_ACCESS_ERR;
-	हाल RDMA_CQE_RESP_STS_LOCAL_LENGTH_ERR:
-		वापस IB_WC_LOC_LEN_ERR;
-	हाल RDMA_CQE_RESP_STS_LOCAL_QP_OPERATION_ERR:
-		वापस IB_WC_LOC_QP_OP_ERR;
-	हाल RDMA_CQE_RESP_STS_LOCAL_PROTECTION_ERR:
-		वापस IB_WC_LOC_PROT_ERR;
-	हाल RDMA_CQE_RESP_STS_MEMORY_MGT_OPERATION_ERR:
-		वापस IB_WC_MW_BIND_ERR;
-	हाल RDMA_CQE_RESP_STS_REMOTE_INVALID_REQUEST_ERR:
-		वापस IB_WC_REM_INV_RD_REQ_ERR;
-	हाल RDMA_CQE_RESP_STS_OK:
-		वापस IB_WC_SUCCESS;
-	शेष:
-		वापस IB_WC_GENERAL_ERR;
-	पूर्ण
-पूर्ण
+static inline int qedr_cqe_resp_status_to_ib(u8 status)
+{
+	switch (status) {
+	case RDMA_CQE_RESP_STS_LOCAL_ACCESS_ERR:
+		return IB_WC_LOC_ACCESS_ERR;
+	case RDMA_CQE_RESP_STS_LOCAL_LENGTH_ERR:
+		return IB_WC_LOC_LEN_ERR;
+	case RDMA_CQE_RESP_STS_LOCAL_QP_OPERATION_ERR:
+		return IB_WC_LOC_QP_OP_ERR;
+	case RDMA_CQE_RESP_STS_LOCAL_PROTECTION_ERR:
+		return IB_WC_LOC_PROT_ERR;
+	case RDMA_CQE_RESP_STS_MEMORY_MGT_OPERATION_ERR:
+		return IB_WC_MW_BIND_ERR;
+	case RDMA_CQE_RESP_STS_REMOTE_INVALID_REQUEST_ERR:
+		return IB_WC_REM_INV_RD_REQ_ERR;
+	case RDMA_CQE_RESP_STS_OK:
+		return IB_WC_SUCCESS;
+	default:
+		return IB_WC_GENERAL_ERR;
+	}
+}
 
-अटल अंतरभूत पूर्णांक qedr_set_ok_cqe_resp_wc(काष्ठा rdma_cqe_responder *resp,
-					  काष्ठा ib_wc *wc)
-अणु
+static inline int qedr_set_ok_cqe_resp_wc(struct rdma_cqe_responder *resp,
+					  struct ib_wc *wc)
+{
 	wc->status = IB_WC_SUCCESS;
 	wc->byte_len = le32_to_cpu(resp->length);
 
-	अगर (resp->flags & QEDR_RESP_IMM) अणु
+	if (resp->flags & QEDR_RESP_IMM) {
 		wc->ex.imm_data = cpu_to_be32(le32_to_cpu(resp->imm_data_or_inv_r_Key));
 		wc->wc_flags |= IB_WC_WITH_IMM;
 
-		अगर (resp->flags & QEDR_RESP_RDMA)
+		if (resp->flags & QEDR_RESP_RDMA)
 			wc->opcode = IB_WC_RECV_RDMA_WITH_IMM;
 
-		अगर (resp->flags & QEDR_RESP_INV)
-			वापस -EINVAL;
+		if (resp->flags & QEDR_RESP_INV)
+			return -EINVAL;
 
-	पूर्ण अन्यथा अगर (resp->flags & QEDR_RESP_INV) अणु
+	} else if (resp->flags & QEDR_RESP_INV) {
 		wc->ex.imm_data = le32_to_cpu(resp->imm_data_or_inv_r_Key);
 		wc->wc_flags |= IB_WC_WITH_INVALIDATE;
 
-		अगर (resp->flags & QEDR_RESP_RDMA)
-			वापस -EINVAL;
+		if (resp->flags & QEDR_RESP_RDMA)
+			return -EINVAL;
 
-	पूर्ण अन्यथा अगर (resp->flags & QEDR_RESP_RDMA) अणु
-		वापस -EINVAL;
-	पूर्ण
+	} else if (resp->flags & QEDR_RESP_RDMA) {
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __process_resp_one(काष्ठा qedr_dev *dev, काष्ठा qedr_qp *qp,
-			       काष्ठा qedr_cq *cq, काष्ठा ib_wc *wc,
-			       काष्ठा rdma_cqe_responder *resp, u64 wr_id)
-अणु
-	/* Must fill fields beक्रमe qedr_set_ok_cqe_resp_wc() */
+static void __process_resp_one(struct qedr_dev *dev, struct qedr_qp *qp,
+			       struct qedr_cq *cq, struct ib_wc *wc,
+			       struct rdma_cqe_responder *resp, u64 wr_id)
+{
+	/* Must fill fields before qedr_set_ok_cqe_resp_wc() */
 	wc->opcode = IB_WC_RECV;
 	wc->wc_flags = 0;
 
-	अगर (likely(resp->status == RDMA_CQE_RESP_STS_OK)) अणु
-		अगर (qedr_set_ok_cqe_resp_wc(resp, wc))
+	if (likely(resp->status == RDMA_CQE_RESP_STS_OK)) {
+		if (qedr_set_ok_cqe_resp_wc(resp, wc))
 			DP_ERR(dev,
 			       "CQ %p (icid=%d) has invalid CQE responder flags=0x%x\n",
 			       cq, cq->icid, resp->flags);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		wc->status = qedr_cqe_resp_status_to_ib(resp->status);
-		अगर (wc->status == IB_WC_GENERAL_ERR)
+		if (wc->status == IB_WC_GENERAL_ERR)
 			DP_ERR(dev,
 			       "CQ %p (icid=%d) contains an invalid CQE status %d\n",
 			       cq, cq->icid, resp->status);
-	पूर्ण
+	}
 
 	/* Fill the rest of the WC */
-	wc->venकरोr_err = 0;
+	wc->vendor_err = 0;
 	wc->src_qp = qp->id;
 	wc->qp = &qp->ibqp;
 	wc->wr_id = wr_id;
-पूर्ण
+}
 
-अटल पूर्णांक process_resp_one_srq(काष्ठा qedr_dev *dev, काष्ठा qedr_qp *qp,
-				काष्ठा qedr_cq *cq, काष्ठा ib_wc *wc,
-				काष्ठा rdma_cqe_responder *resp)
-अणु
-	काष्ठा qedr_srq *srq = qp->srq;
+static int process_resp_one_srq(struct qedr_dev *dev, struct qedr_qp *qp,
+				struct qedr_cq *cq, struct ib_wc *wc,
+				struct rdma_cqe_responder *resp)
+{
+	struct qedr_srq *srq = qp->srq;
 	u64 wr_id;
 
 	wr_id = HILO_GEN(le32_to_cpu(resp->srq_wr_id.hi),
 			 le32_to_cpu(resp->srq_wr_id.lo), u64);
 
-	अगर (resp->status == RDMA_CQE_RESP_STS_WORK_REQUEST_FLUSHED_ERR) अणु
+	if (resp->status == RDMA_CQE_RESP_STS_WORK_REQUEST_FLUSHED_ERR) {
 		wc->status = IB_WC_WR_FLUSH_ERR;
-		wc->venकरोr_err = 0;
+		wc->vendor_err = 0;
 		wc->wr_id = wr_id;
 		wc->byte_len = 0;
 		wc->src_qp = qp->id;
 		wc->qp = &qp->ibqp;
 		wc->wr_id = wr_id;
-	पूर्ण अन्यथा अणु
+	} else {
 		__process_resp_one(dev, qp, cq, wc, resp, wr_id);
-	पूर्ण
+	}
 	atomic_inc(&srq->hw_srq.wr_cons_cnt);
 
-	वापस 1;
-पूर्ण
-अटल पूर्णांक process_resp_one(काष्ठा qedr_dev *dev, काष्ठा qedr_qp *qp,
-			    काष्ठा qedr_cq *cq, काष्ठा ib_wc *wc,
-			    काष्ठा rdma_cqe_responder *resp)
-अणु
+	return 1;
+}
+static int process_resp_one(struct qedr_dev *dev, struct qedr_qp *qp,
+			    struct qedr_cq *cq, struct ib_wc *wc,
+			    struct rdma_cqe_responder *resp)
+{
 	u64 wr_id = qp->rqe_wr_id[qp->rq.cons].wr_id;
 
 	__process_resp_one(dev, qp, cq, wc, resp, wr_id);
 
-	जबतक (qp->rqe_wr_id[qp->rq.cons].wqe_size--)
+	while (qp->rqe_wr_id[qp->rq.cons].wqe_size--)
 		qed_chain_consume(&qp->rq.pbl);
 	qedr_inc_sw_cons(&qp->rq);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक process_resp_flush(काष्ठा qedr_qp *qp, काष्ठा qedr_cq *cq,
-			      पूर्णांक num_entries, काष्ठा ib_wc *wc, u16 hw_cons)
-अणु
+static int process_resp_flush(struct qedr_qp *qp, struct qedr_cq *cq,
+			      int num_entries, struct ib_wc *wc, u16 hw_cons)
+{
 	u16 cnt = 0;
 
-	जबतक (num_entries && qp->rq.wqe_cons != hw_cons) अणु
+	while (num_entries && qp->rq.wqe_cons != hw_cons) {
 		/* fill WC */
 		wc->status = IB_WC_WR_FLUSH_ERR;
-		wc->venकरोr_err = 0;
+		wc->vendor_err = 0;
 		wc->wc_flags = 0;
 		wc->src_qp = qp->id;
 		wc->byte_len = 0;
@@ -4347,148 +4346,148 @@ next_cqe:
 		num_entries--;
 		wc++;
 		cnt++;
-		जबतक (qp->rqe_wr_id[qp->rq.cons].wqe_size--)
+		while (qp->rqe_wr_id[qp->rq.cons].wqe_size--)
 			qed_chain_consume(&qp->rq.pbl);
 		qedr_inc_sw_cons(&qp->rq);
-	पूर्ण
+	}
 
-	वापस cnt;
-पूर्ण
+	return cnt;
+}
 
-अटल व्योम try_consume_resp_cqe(काष्ठा qedr_cq *cq, काष्ठा qedr_qp *qp,
-				 काष्ठा rdma_cqe_responder *resp, पूर्णांक *update)
-अणु
-	अगर (le16_to_cpu(resp->rq_cons_or_srq_id) == qp->rq.wqe_cons) अणु
+static void try_consume_resp_cqe(struct qedr_cq *cq, struct qedr_qp *qp,
+				 struct rdma_cqe_responder *resp, int *update)
+{
+	if (le16_to_cpu(resp->rq_cons_or_srq_id) == qp->rq.wqe_cons) {
 		consume_cqe(cq);
 		*update |= 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक qedr_poll_cq_resp_srq(काष्ठा qedr_dev *dev, काष्ठा qedr_qp *qp,
-				 काष्ठा qedr_cq *cq, पूर्णांक num_entries,
-				 काष्ठा ib_wc *wc,
-				 काष्ठा rdma_cqe_responder *resp)
-अणु
-	पूर्णांक cnt;
+static int qedr_poll_cq_resp_srq(struct qedr_dev *dev, struct qedr_qp *qp,
+				 struct qedr_cq *cq, int num_entries,
+				 struct ib_wc *wc,
+				 struct rdma_cqe_responder *resp)
+{
+	int cnt;
 
 	cnt = process_resp_one_srq(dev, qp, cq, wc, resp);
 	consume_cqe(cq);
 
-	वापस cnt;
-पूर्ण
+	return cnt;
+}
 
-अटल पूर्णांक qedr_poll_cq_resp(काष्ठा qedr_dev *dev, काष्ठा qedr_qp *qp,
-			     काष्ठा qedr_cq *cq, पूर्णांक num_entries,
-			     काष्ठा ib_wc *wc, काष्ठा rdma_cqe_responder *resp,
-			     पूर्णांक *update)
-अणु
-	पूर्णांक cnt;
+static int qedr_poll_cq_resp(struct qedr_dev *dev, struct qedr_qp *qp,
+			     struct qedr_cq *cq, int num_entries,
+			     struct ib_wc *wc, struct rdma_cqe_responder *resp,
+			     int *update)
+{
+	int cnt;
 
-	अगर (resp->status == RDMA_CQE_RESP_STS_WORK_REQUEST_FLUSHED_ERR) अणु
+	if (resp->status == RDMA_CQE_RESP_STS_WORK_REQUEST_FLUSHED_ERR) {
 		cnt = process_resp_flush(qp, cq, num_entries, wc,
 					 resp->rq_cons_or_srq_id);
 		try_consume_resp_cqe(cq, qp, resp, update);
-	पूर्ण अन्यथा अणु
+	} else {
 		cnt = process_resp_one(dev, qp, cq, wc, resp);
 		consume_cqe(cq);
 		*update |= 1;
-	पूर्ण
+	}
 
-	वापस cnt;
-पूर्ण
+	return cnt;
+}
 
-अटल व्योम try_consume_req_cqe(काष्ठा qedr_cq *cq, काष्ठा qedr_qp *qp,
-				काष्ठा rdma_cqe_requester *req, पूर्णांक *update)
-अणु
-	अगर (le16_to_cpu(req->sq_cons) == qp->sq.wqe_cons) अणु
+static void try_consume_req_cqe(struct qedr_cq *cq, struct qedr_qp *qp,
+				struct rdma_cqe_requester *req, int *update)
+{
+	if (le16_to_cpu(req->sq_cons) == qp->sq.wqe_cons) {
 		consume_cqe(cq);
 		*update |= 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक qedr_poll_cq(काष्ठा ib_cq *ibcq, पूर्णांक num_entries, काष्ठा ib_wc *wc)
-अणु
-	काष्ठा qedr_dev *dev = get_qedr_dev(ibcq->device);
-	काष्ठा qedr_cq *cq = get_qedr_cq(ibcq);
-	जोड़ rdma_cqe *cqe;
+int qedr_poll_cq(struct ib_cq *ibcq, int num_entries, struct ib_wc *wc)
+{
+	struct qedr_dev *dev = get_qedr_dev(ibcq->device);
+	struct qedr_cq *cq = get_qedr_cq(ibcq);
+	union rdma_cqe *cqe;
 	u32 old_cons, new_cons;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक update = 0;
-	पूर्णांक करोne = 0;
+	unsigned long flags;
+	int update = 0;
+	int done = 0;
 
-	अगर (cq->destroyed) अणु
+	if (cq->destroyed) {
 		DP_ERR(dev,
 		       "warning: poll was invoked after destroy for cq %p (icid=%d)\n",
 		       cq, cq->icid);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (cq->cq_type == QEDR_CQ_TYPE_GSI)
-		वापस qedr_gsi_poll_cq(ibcq, num_entries, wc);
+	if (cq->cq_type == QEDR_CQ_TYPE_GSI)
+		return qedr_gsi_poll_cq(ibcq, num_entries, wc);
 
 	spin_lock_irqsave(&cq->cq_lock, flags);
 	cqe = cq->latest_cqe;
 	old_cons = qed_chain_get_cons_idx_u32(&cq->pbl);
-	जबतक (num_entries && is_valid_cqe(cq, cqe)) अणु
-		काष्ठा qedr_qp *qp;
-		पूर्णांक cnt = 0;
+	while (num_entries && is_valid_cqe(cq, cqe)) {
+		struct qedr_qp *qp;
+		int cnt = 0;
 
-		/* prevent speculative पढ़ोs of any field of CQE */
+		/* prevent speculative reads of any field of CQE */
 		rmb();
 
 		qp = cqe_get_qp(cqe);
-		अगर (!qp) अणु
+		if (!qp) {
 			WARN(1, "Error: CQE QP pointer is NULL. CQE=%p\n", cqe);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		wc->qp = &qp->ibqp;
 
-		चयन (cqe_get_type(cqe)) अणु
-		हाल RDMA_CQE_TYPE_REQUESTER:
+		switch (cqe_get_type(cqe)) {
+		case RDMA_CQE_TYPE_REQUESTER:
 			cnt = qedr_poll_cq_req(dev, qp, cq, num_entries, wc,
 					       &cqe->req);
 			try_consume_req_cqe(cq, qp, &cqe->req, &update);
-			अवरोध;
-		हाल RDMA_CQE_TYPE_RESPONDER_RQ:
+			break;
+		case RDMA_CQE_TYPE_RESPONDER_RQ:
 			cnt = qedr_poll_cq_resp(dev, qp, cq, num_entries, wc,
 						&cqe->resp, &update);
-			अवरोध;
-		हाल RDMA_CQE_TYPE_RESPONDER_SRQ:
+			break;
+		case RDMA_CQE_TYPE_RESPONDER_SRQ:
 			cnt = qedr_poll_cq_resp_srq(dev, qp, cq, num_entries,
 						    wc, &cqe->resp);
 			update = 1;
-			अवरोध;
-		हाल RDMA_CQE_TYPE_INVALID:
-		शेष:
+			break;
+		case RDMA_CQE_TYPE_INVALID:
+		default:
 			DP_ERR(dev, "Error: invalid CQE type = %d\n",
 			       cqe_get_type(cqe));
-		पूर्ण
+		}
 		num_entries -= cnt;
 		wc += cnt;
-		करोne += cnt;
+		done += cnt;
 
 		cqe = get_cqe(cq);
-	पूर्ण
+	}
 	new_cons = qed_chain_get_cons_idx_u32(&cq->pbl);
 
 	cq->cq_cons += new_cons - old_cons;
 
-	अगर (update)
-		/* करोorbell notअगरies abount latest VALID entry,
-		 * but chain alपढ़ोy poपूर्णांक to the next INVALID one
+	if (update)
+		/* doorbell notifies abount latest VALID entry,
+		 * but chain already point to the next INVALID one
 		 */
-		करोorbell_cq(cq, cq->cq_cons - 1, cq->arm_flags);
+		doorbell_cq(cq, cq->cq_cons - 1, cq->arm_flags);
 
 	spin_unlock_irqrestore(&cq->cq_lock, flags);
-	वापस करोne;
-पूर्ण
+	return done;
+}
 
-पूर्णांक qedr_process_mad(काष्ठा ib_device *ibdev, पूर्णांक process_mad_flags,
-		     u32 port_num, स्थिर काष्ठा ib_wc *in_wc,
-		     स्थिर काष्ठा ib_grh *in_grh, स्थिर काष्ठा ib_mad *in,
-		     काष्ठा ib_mad *out_mad, माप_प्रकार *out_mad_size,
+int qedr_process_mad(struct ib_device *ibdev, int process_mad_flags,
+		     u32 port_num, const struct ib_wc *in_wc,
+		     const struct ib_grh *in_grh, const struct ib_mad *in,
+		     struct ib_mad *out_mad, size_t *out_mad_size,
 		     u16 *out_mad_pkey_index)
-अणु
-	वापस IB_MAD_RESULT_SUCCESS;
-पूर्ण
+{
+	return IB_MAD_RESULT_SUCCESS;
+}

@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * SiS 300/540/630[S]/730[S],
  * SiS 315[E|PRO]/550/[M]65x/[M]66x[F|M|G]X/[M]74x[GX]/330/[M]76x[GX],
  * XGI V3XT/V5/V8, Z7
- * frame buffer driver क्रम Linux kernels >= 2.4.14 and >=2.6.3
+ * frame buffer driver for Linux kernels >= 2.4.14 and >=2.6.3
  *
  * Copyright (C) 2001-2005 Thomas Winischhofer, Vienna, Austria.
  *
@@ -14,100 +13,100 @@
  *		SiS (www.sis.com)
  *		Copyright (C) 1999 Silicon Integrated Systems, Inc.
  *
- * See http://www.winischhofer.net/ क्रम more inक्रमmation and updates
+ * See http://www.winischhofer.net/ for more information and updates
  *
  * Originally based on the VBE 2.0 compliant graphic boards framebuffer driver,
  * which is (c) 1998 Gerd Knorr <kraxel@goldbach.in-berlin.de>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/screen_info.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/selection.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/init.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/capability.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/types.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/पन.स>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/kernel.h>
+#include <linux/spinlock.h>
+#include <linux/errno.h>
+#include <linux/string.h>
+#include <linux/mm.h>
+#include <linux/screen_info.h>
+#include <linux/slab.h>
+#include <linux/fb.h>
+#include <linux/selection.h>
+#include <linux/ioport.h>
+#include <linux/init.h>
+#include <linux/pci.h>
+#include <linux/vmalloc.h>
+#include <linux/capability.h>
+#include <linux/fs.h>
+#include <linux/types.h>
+#include <linux/uaccess.h>
+#include <asm/io.h>
 
-#समावेश "sis.h"
-#समावेश "sis_main.h"
-#समावेश "init301.h"
+#include "sis.h"
+#include "sis_main.h"
+#include "init301.h"
 
-#अगर !defined(CONFIG_FB_SIS_300) && !defined(CONFIG_FB_SIS_315)
+#if !defined(CONFIG_FB_SIS_300) && !defined(CONFIG_FB_SIS_315)
 #warning Neither CONFIG_FB_SIS_300 nor CONFIG_FB_SIS_315 is set
 #warning sisfb will not work!
-#पूर्ण_अगर
+#endif
 
 /* ---------------------- Prototypes ------------------------- */
 
 /* Interface used by the world */
-#अगर_अघोषित MODULE
-अटल पूर्णांक sisfb_setup(अक्षर *options);
-#पूर्ण_अगर
+#ifndef MODULE
+static int sisfb_setup(char *options);
+#endif
 
 /* Interface to the low level console driver */
-अटल पूर्णांक sisfb_init(व्योम);
+static int sisfb_init(void);
 
 /* fbdev routines */
-अटल पूर्णांक	sisfb_get_fix(काष्ठा fb_fix_screeninfo *fix, पूर्णांक con,
-				काष्ठा fb_info *info);
+static int	sisfb_get_fix(struct fb_fix_screeninfo *fix, int con,
+				struct fb_info *info);
 
-अटल पूर्णांक	sisfb_ioctl(काष्ठा fb_info *info, अचिन्हित पूर्णांक cmd,
-			    अचिन्हित दीर्घ arg);
-अटल पूर्णांक	sisfb_set_par(काष्ठा fb_info *info);
-अटल पूर्णांक	sisfb_blank(पूर्णांक blank,
-				काष्ठा fb_info *info);
+static int	sisfb_ioctl(struct fb_info *info, unsigned int cmd,
+			    unsigned long arg);
+static int	sisfb_set_par(struct fb_info *info);
+static int	sisfb_blank(int blank,
+				struct fb_info *info);
 
-अटल व्योम sisfb_handle_command(काष्ठा sis_video_info *ivideo,
-				 काष्ठा sisfb_cmd *sisfb_command);
+static void sisfb_handle_command(struct sis_video_info *ivideo,
+				 struct sisfb_cmd *sisfb_command);
 
-अटल व्योम	sisfb_search_mode(अक्षर *name, bool quiet);
-अटल पूर्णांक	sisfb_validate_mode(काष्ठा sis_video_info *ivideo, पूर्णांक modeindex, u32 vbflags);
-अटल u8	sisfb_search_refresh_rate(काष्ठा sis_video_info *ivideo, अचिन्हित पूर्णांक rate,
-				पूर्णांक index);
-अटल पूर्णांक	sisfb_setcolreg(अचिन्हित regno, अचिन्हित red, अचिन्हित green,
-				अचिन्हित blue, अचिन्हित transp,
-				काष्ठा fb_info *fb_info);
-अटल पूर्णांक	sisfb_करो_set_var(काष्ठा fb_var_screeninfo *var, पूर्णांक isactive,
-				काष्ठा fb_info *info);
-अटल व्योम	sisfb_pre_seपंचांगode(काष्ठा sis_video_info *ivideo);
-अटल व्योम	sisfb_post_seपंचांगode(काष्ठा sis_video_info *ivideo);
-अटल bool	sisfb_CheckVBRetrace(काष्ठा sis_video_info *ivideo);
-अटल bool	sisfbcheckvretracecrt2(काष्ठा sis_video_info *ivideo);
-अटल bool	sisfbcheckvretracecrt1(काष्ठा sis_video_info *ivideo);
-अटल bool	sisfb_bridgeisslave(काष्ठा sis_video_info *ivideo);
-अटल व्योम	sisfb_detect_VB_connect(काष्ठा sis_video_info *ivideo);
-अटल व्योम	sisfb_get_VB_type(काष्ठा sis_video_info *ivideo);
-अटल व्योम	sisfb_set_TVxposoffset(काष्ठा sis_video_info *ivideo, पूर्णांक val);
-अटल व्योम	sisfb_set_TVyposoffset(काष्ठा sis_video_info *ivideo, पूर्णांक val);
+static void	sisfb_search_mode(char *name, bool quiet);
+static int	sisfb_validate_mode(struct sis_video_info *ivideo, int modeindex, u32 vbflags);
+static u8	sisfb_search_refresh_rate(struct sis_video_info *ivideo, unsigned int rate,
+				int index);
+static int	sisfb_setcolreg(unsigned regno, unsigned red, unsigned green,
+				unsigned blue, unsigned transp,
+				struct fb_info *fb_info);
+static int	sisfb_do_set_var(struct fb_var_screeninfo *var, int isactive,
+				struct fb_info *info);
+static void	sisfb_pre_setmode(struct sis_video_info *ivideo);
+static void	sisfb_post_setmode(struct sis_video_info *ivideo);
+static bool	sisfb_CheckVBRetrace(struct sis_video_info *ivideo);
+static bool	sisfbcheckvretracecrt2(struct sis_video_info *ivideo);
+static bool	sisfbcheckvretracecrt1(struct sis_video_info *ivideo);
+static bool	sisfb_bridgeisslave(struct sis_video_info *ivideo);
+static void	sisfb_detect_VB_connect(struct sis_video_info *ivideo);
+static void	sisfb_get_VB_type(struct sis_video_info *ivideo);
+static void	sisfb_set_TVxposoffset(struct sis_video_info *ivideo, int val);
+static void	sisfb_set_TVyposoffset(struct sis_video_info *ivideo, int val);
 
 /* Internal heap routines */
-अटल पूर्णांक		sisfb_heap_init(काष्ठा sis_video_info *ivideo);
-अटल काष्ठा SIS_OH *	sisfb_poh_new_node(काष्ठा SIS_HEAP *memheap);
-अटल काष्ठा SIS_OH *	sisfb_poh_allocate(काष्ठा SIS_HEAP *memheap, u32 size);
-अटल व्योम		sisfb_delete_node(काष्ठा SIS_OH *poh);
-अटल व्योम		sisfb_insert_node(काष्ठा SIS_OH *pohList, काष्ठा SIS_OH *poh);
-अटल काष्ठा SIS_OH *	sisfb_poh_मुक्त(काष्ठा SIS_HEAP *memheap, u32 base);
-अटल व्योम		sisfb_मुक्त_node(काष्ठा SIS_HEAP *memheap, काष्ठा SIS_OH *poh);
+static int		sisfb_heap_init(struct sis_video_info *ivideo);
+static struct SIS_OH *	sisfb_poh_new_node(struct SIS_HEAP *memheap);
+static struct SIS_OH *	sisfb_poh_allocate(struct SIS_HEAP *memheap, u32 size);
+static void		sisfb_delete_node(struct SIS_OH *poh);
+static void		sisfb_insert_node(struct SIS_OH *pohList, struct SIS_OH *poh);
+static struct SIS_OH *	sisfb_poh_free(struct SIS_HEAP *memheap, u32 base);
+static void		sisfb_free_node(struct SIS_HEAP *memheap, struct SIS_OH *poh);
 
 
 /* ------------------ Internal helper routines ----------------- */
 
-अटल व्योम __init
-sisfb_setशेषparms(व्योम)
-अणु
+static void __init
+sisfb_setdefaultparms(void)
+{
 	sisfb_off		= 0;
 	sisfb_parm_mem		= 0;
 	sisfb_accel		= -1;
@@ -118,7 +117,7 @@ sisfb_setशेषparms(व्योम)
 	sisfb_mode_idx		= -1;
 	sisfb_parm_rate		= -1;
 	sisfb_crt1off		= 0;
-	sisfb_क्रमcecrt1		= -1;
+	sisfb_forcecrt1		= -1;
 	sisfb_crt2type		= -1;
 	sisfb_crt2flags		= 0;
 	sisfb_pdc		= 0xff;
@@ -133,357 +132,357 @@ sisfb_setशेषparms(व्योम)
 	sisfb_tvxposoffset	= 0;
 	sisfb_tvyposoffset	= 0;
 	sisfb_nocrt2rate	= 0;
-#अगर !defined(__i386__) && !defined(__x86_64__)
+#if !defined(__i386__) && !defined(__x86_64__)
 	sisfb_resetcard		= 0;
 	sisfb_videoram		= 0;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 /* ------------- Parameter parsing -------------- */
 
-अटल व्योम sisfb_search_vesamode(अचिन्हित पूर्णांक vesamode, bool quiet)
-अणु
-	पूर्णांक i = 0, j = 0;
+static void sisfb_search_vesamode(unsigned int vesamode, bool quiet)
+{
+	int i = 0, j = 0;
 
-	/* We करोn't know the hardware specs yet and there is no ivideo */
+	/* We don't know the hardware specs yet and there is no ivideo */
 
-	अगर(vesamode == 0) अणु
-		अगर(!quiet)
-			prपूर्णांकk(KERN_ERR "sisfb: Invalid mode. Using default.\n");
+	if(vesamode == 0) {
+		if(!quiet)
+			printk(KERN_ERR "sisfb: Invalid mode. Using default.\n");
 
 		sisfb_mode_idx = DEFAULT_MODE;
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	vesamode &= 0x1dff;  /* Clean VESA mode number from other flags */
 
-	जबतक(sisbios_mode[i++].mode_no[0] != 0) अणु
-		अगर( (sisbios_mode[i-1].vesa_mode_no_1 == vesamode) ||
-		    (sisbios_mode[i-1].vesa_mode_no_2 == vesamode) ) अणु
-			अगर(sisfb_fstn) अणु
-				अगर(sisbios_mode[i-1].mode_no[1] == 0x50 ||
+	while(sisbios_mode[i++].mode_no[0] != 0) {
+		if( (sisbios_mode[i-1].vesa_mode_no_1 == vesamode) ||
+		    (sisbios_mode[i-1].vesa_mode_no_2 == vesamode) ) {
+			if(sisfb_fstn) {
+				if(sisbios_mode[i-1].mode_no[1] == 0x50 ||
 				   sisbios_mode[i-1].mode_no[1] == 0x56 ||
 				   sisbios_mode[i-1].mode_no[1] == 0x53)
-					जारी;
-			पूर्ण अन्यथा अणु
-				अगर(sisbios_mode[i-1].mode_no[1] == 0x5a ||
+					continue;
+			} else {
+				if(sisbios_mode[i-1].mode_no[1] == 0x5a ||
 				   sisbios_mode[i-1].mode_no[1] == 0x5b)
-					जारी;
-			पूर्ण
+					continue;
+			}
 			sisfb_mode_idx = i - 1;
 			j = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर((!j) && !quiet)
-		prपूर्णांकk(KERN_ERR "sisfb: Invalid VESA mode 0x%x'\n", vesamode);
-पूर्ण
+			break;
+		}
+	}
+	if((!j) && !quiet)
+		printk(KERN_ERR "sisfb: Invalid VESA mode 0x%x'\n", vesamode);
+}
 
-अटल व्योम sisfb_search_mode(अक्षर *name, bool quiet)
-अणु
-	अचिन्हित पूर्णांक j = 0, xres = 0, yres = 0, depth = 0, rate = 0;
-	पूर्णांक i = 0;
-	अक्षर strbuf[16], strbuf1[20];
-	अक्षर *nameptr = name;
+static void sisfb_search_mode(char *name, bool quiet)
+{
+	unsigned int j = 0, xres = 0, yres = 0, depth = 0, rate = 0;
+	int i = 0;
+	char strbuf[16], strbuf1[20];
+	char *nameptr = name;
 
-	/* We करोn't know the hardware specs yet and there is no ivideo */
+	/* We don't know the hardware specs yet and there is no ivideo */
 
-	अगर(name == शून्य) अणु
-		अगर(!quiet)
-			prपूर्णांकk(KERN_ERR "sisfb: Internal error, using default mode.\n");
-
-		sisfb_mode_idx = DEFAULT_MODE;
-		वापस;
-	पूर्ण
-
-	अगर(!strnहालcmp(name, sisbios_mode[MODE_INDEX_NONE].name, म_माप(name))) अणु
-		अगर(!quiet)
-			prपूर्णांकk(KERN_ERR "sisfb: Mode 'none' not supported anymore. Using default.\n");
+	if(name == NULL) {
+		if(!quiet)
+			printk(KERN_ERR "sisfb: Internal error, using default mode.\n");
 
 		sisfb_mode_idx = DEFAULT_MODE;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर(म_माप(name) <= 19) अणु
-		म_नकल(strbuf1, name);
-		क्रम(i = 0; i < म_माप(strbuf1); i++) अणु
-			अगर(strbuf1[i] < '0' || strbuf1[i] > '9') strbuf1[i] = ' ';
-		पूर्ण
+	if(!strncasecmp(name, sisbios_mode[MODE_INDEX_NONE].name, strlen(name))) {
+		if(!quiet)
+			printk(KERN_ERR "sisfb: Mode 'none' not supported anymore. Using default.\n");
 
-		/* This करोes some fuzzy mode naming detection */
-		अगर(माला_पूछो(strbuf1, "%u %u %u %u", &xres, &yres, &depth, &rate) == 4) अणु
-			अगर((rate <= 32) || (depth > 32)) अणु
+		sisfb_mode_idx = DEFAULT_MODE;
+		return;
+	}
+
+	if(strlen(name) <= 19) {
+		strcpy(strbuf1, name);
+		for(i = 0; i < strlen(strbuf1); i++) {
+			if(strbuf1[i] < '0' || strbuf1[i] > '9') strbuf1[i] = ' ';
+		}
+
+		/* This does some fuzzy mode naming detection */
+		if(sscanf(strbuf1, "%u %u %u %u", &xres, &yres, &depth, &rate) == 4) {
+			if((rate <= 32) || (depth > 32)) {
 				j = rate; rate = depth; depth = j;
-			पूर्ण
-			प्र_लिखो(strbuf, "%ux%ux%u", xres, yres, depth);
+			}
+			sprintf(strbuf, "%ux%ux%u", xres, yres, depth);
 			nameptr = strbuf;
 			sisfb_parm_rate = rate;
-		पूर्ण अन्यथा अगर(माला_पूछो(strbuf1, "%u %u %u", &xres, &yres, &depth) == 3) अणु
-			प्र_लिखो(strbuf, "%ux%ux%u", xres, yres, depth);
+		} else if(sscanf(strbuf1, "%u %u %u", &xres, &yres, &depth) == 3) {
+			sprintf(strbuf, "%ux%ux%u", xres, yres, depth);
 			nameptr = strbuf;
-		पूर्ण अन्यथा अणु
+		} else {
 			xres = 0;
-			अगर((माला_पूछो(strbuf1, "%u %u", &xres, &yres) == 2) && (xres != 0)) अणु
-				प्र_लिखो(strbuf, "%ux%ux8", xres, yres);
+			if((sscanf(strbuf1, "%u %u", &xres, &yres) == 2) && (xres != 0)) {
+				sprintf(strbuf, "%ux%ux8", xres, yres);
 				nameptr = strbuf;
-			पूर्ण अन्यथा अणु
-				sisfb_search_vesamode(simple_म_से_अदीर्घ(name, शून्य, 0), quiet);
-				वापस;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			} else {
+				sisfb_search_vesamode(simple_strtoul(name, NULL, 0), quiet);
+				return;
+			}
+		}
+	}
 
 	i = 0; j = 0;
-	जबतक(sisbios_mode[i].mode_no[0] != 0) अणु
-		अगर(!strnहालcmp(nameptr, sisbios_mode[i++].name, म_माप(nameptr))) अणु
-			अगर(sisfb_fstn) अणु
-				अगर(sisbios_mode[i-1].mode_no[1] == 0x50 ||
+	while(sisbios_mode[i].mode_no[0] != 0) {
+		if(!strncasecmp(nameptr, sisbios_mode[i++].name, strlen(nameptr))) {
+			if(sisfb_fstn) {
+				if(sisbios_mode[i-1].mode_no[1] == 0x50 ||
 				   sisbios_mode[i-1].mode_no[1] == 0x56 ||
 				   sisbios_mode[i-1].mode_no[1] == 0x53)
-					जारी;
-			पूर्ण अन्यथा अणु
-				अगर(sisbios_mode[i-1].mode_no[1] == 0x5a ||
+					continue;
+			} else {
+				if(sisbios_mode[i-1].mode_no[1] == 0x5a ||
 				   sisbios_mode[i-1].mode_no[1] == 0x5b)
-					जारी;
-			पूर्ण
+					continue;
+			}
 			sisfb_mode_idx = i - 1;
 			j = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर((!j) && !quiet)
-		prपूर्णांकk(KERN_ERR "sisfb: Invalid mode '%s'\n", nameptr);
-पूर्ण
+	if((!j) && !quiet)
+		printk(KERN_ERR "sisfb: Invalid mode '%s'\n", nameptr);
+}
 
-#अगर_अघोषित MODULE
-अटल व्योम sisfb_get_vga_mode_from_kernel(व्योम)
-अणु
-#अगर_घोषित CONFIG_X86
-	अक्षर mymode[32];
-	पूर्णांक  mydepth = screen_info.lfb_depth;
+#ifndef MODULE
+static void sisfb_get_vga_mode_from_kernel(void)
+{
+#ifdef CONFIG_X86
+	char mymode[32];
+	int  mydepth = screen_info.lfb_depth;
 
-	अगर(screen_info.orig_video_isVGA != VIDEO_TYPE_VLFB) वापस;
+	if(screen_info.orig_video_isVGA != VIDEO_TYPE_VLFB) return;
 
-	अगर( (screen_info.lfb_width >= 320) && (screen_info.lfb_width <= 2048) &&
+	if( (screen_info.lfb_width >= 320) && (screen_info.lfb_width <= 2048) &&
 	    (screen_info.lfb_height >= 200) && (screen_info.lfb_height <= 1536) &&
-	    (mydepth >= 8) && (mydepth <= 32) ) अणु
+	    (mydepth >= 8) && (mydepth <= 32) ) {
 
-		अगर(mydepth == 24) mydepth = 32;
+		if(mydepth == 24) mydepth = 32;
 
-		प्र_लिखो(mymode, "%ux%ux%u", screen_info.lfb_width,
+		sprintf(mymode, "%ux%ux%u", screen_info.lfb_width,
 					screen_info.lfb_height,
 					mydepth);
 
-		prपूर्णांकk(KERN_DEBUG
+		printk(KERN_DEBUG
 			"sisfb: Using vga mode %s pre-set by kernel as default\n",
 			mymode);
 
 		sisfb_search_mode(mymode, true);
-	पूर्ण
-#पूर्ण_अगर
-	वापस;
-पूर्ण
-#पूर्ण_अगर
+	}
+#endif
+	return;
+}
+#endif
 
-अटल व्योम __init
-sisfb_search_crt2type(स्थिर अक्षर *name)
-अणु
-	पूर्णांक i = 0;
+static void __init
+sisfb_search_crt2type(const char *name)
+{
+	int i = 0;
 
-	/* We करोn't know the hardware specs yet and there is no ivideo */
+	/* We don't know the hardware specs yet and there is no ivideo */
 
-	अगर(name == शून्य) वापस;
+	if(name == NULL) return;
 
-	जबतक(sis_crt2type[i].type_no != -1) अणु
-		अगर(!strnहालcmp(name, sis_crt2type[i].name, म_माप(sis_crt2type[i].name))) अणु
+	while(sis_crt2type[i].type_no != -1) {
+		if(!strncasecmp(name, sis_crt2type[i].name, strlen(sis_crt2type[i].name))) {
 			sisfb_crt2type = sis_crt2type[i].type_no;
 			sisfb_tvplug = sis_crt2type[i].tvplug_no;
 			sisfb_crt2flags = sis_crt2type[i].flags;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		i++;
-	पूर्ण
+	}
 
 	sisfb_dstn = (sisfb_crt2flags & FL_550_DSTN) ? 1 : 0;
 	sisfb_fstn = (sisfb_crt2flags & FL_550_FSTN) ? 1 : 0;
 
-	अगर(sisfb_crt2type < 0)
-		prपूर्णांकk(KERN_ERR "sisfb: Invalid CRT2 type: %s\n", name);
-पूर्ण
+	if(sisfb_crt2type < 0)
+		printk(KERN_ERR "sisfb: Invalid CRT2 type: %s\n", name);
+}
 
-अटल व्योम __init
-sisfb_search_tvstd(स्थिर अक्षर *name)
-अणु
-	पूर्णांक i = 0;
+static void __init
+sisfb_search_tvstd(const char *name)
+{
+	int i = 0;
 
-	/* We करोn't know the hardware specs yet and there is no ivideo */
+	/* We don't know the hardware specs yet and there is no ivideo */
 
-	अगर(name == शून्य)
-		वापस;
+	if(name == NULL)
+		return;
 
-	जबतक(sis_tvtype[i].type_no != -1) अणु
-		अगर(!strnहालcmp(name, sis_tvtype[i].name, म_माप(sis_tvtype[i].name))) अणु
+	while(sis_tvtype[i].type_no != -1) {
+		if(!strncasecmp(name, sis_tvtype[i].name, strlen(sis_tvtype[i].name))) {
 			sisfb_tvstd = sis_tvtype[i].type_no;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		i++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __init
-sisfb_search_specialtiming(स्थिर अक्षर *name)
-अणु
-	पूर्णांक i = 0;
+static void __init
+sisfb_search_specialtiming(const char *name)
+{
+	int i = 0;
 	bool found = false;
 
-	/* We करोn't know the hardware specs yet and there is no ivideo */
+	/* We don't know the hardware specs yet and there is no ivideo */
 
-	अगर(name == शून्य)
-		वापस;
+	if(name == NULL)
+		return;
 
-	अगर(!strnहालcmp(name, "none", 4)) अणु
+	if(!strncasecmp(name, "none", 4)) {
 		sisfb_specialtiming = CUT_FORCENONE;
-		prपूर्णांकk(KERN_DEBUG "sisfb: Special timing disabled\n");
-	पूर्ण अन्यथा अणु
-		जबतक(mycustomttable[i].chipID != 0) अणु
-			अगर(!strnहालcmp(name,mycustomttable[i].optionName,
-			   म_माप(mycustomttable[i].optionName))) अणु
+		printk(KERN_DEBUG "sisfb: Special timing disabled\n");
+	} else {
+		while(mycustomttable[i].chipID != 0) {
+			if(!strncasecmp(name,mycustomttable[i].optionName,
+			   strlen(mycustomttable[i].optionName))) {
 				sisfb_specialtiming = mycustomttable[i].SpecialID;
 				found = true;
-				prपूर्णांकk(KERN_INFO "sisfb: Special timing for %s %s forced (\"%s\")\n",
-					mycustomttable[i].venकरोrName,
+				printk(KERN_INFO "sisfb: Special timing for %s %s forced (\"%s\")\n",
+					mycustomttable[i].vendorName,
 					mycustomttable[i].cardName,
 					mycustomttable[i].optionName);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			i++;
-		पूर्ण
-		अगर(!found) अणु
-			prपूर्णांकk(KERN_WARNING "sisfb: Invalid SpecialTiming parameter, valid are:");
-			prपूर्णांकk(KERN_WARNING "\t\"none\" (to disable special timings)\n");
+		}
+		if(!found) {
+			printk(KERN_WARNING "sisfb: Invalid SpecialTiming parameter, valid are:");
+			printk(KERN_WARNING "\t\"none\" (to disable special timings)\n");
 			i = 0;
-			जबतक(mycustomttable[i].chipID != 0) अणु
-				prपूर्णांकk(KERN_WARNING "\t\"%s\" (for %s %s)\n",
+			while(mycustomttable[i].chipID != 0) {
+				printk(KERN_WARNING "\t\"%s\" (for %s %s)\n",
 					mycustomttable[i].optionName,
-					mycustomttable[i].venकरोrName,
+					mycustomttable[i].vendorName,
 					mycustomttable[i].cardName);
 				i++;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
 /* ----------- Various detection routines ----------- */
 
-अटल व्योम sisfb_detect_custom_timing(काष्ठा sis_video_info *ivideo)
-अणु
-	अचिन्हित अक्षर *biosver = शून्य;
-	अचिन्हित अक्षर *biosdate = शून्य;
-	bool footprपूर्णांक;
+static void sisfb_detect_custom_timing(struct sis_video_info *ivideo)
+{
+	unsigned char *biosver = NULL;
+	unsigned char *biosdate = NULL;
+	bool footprint;
 	u32 chksum = 0;
-	पूर्णांक i, j;
+	int i, j;
 
-	अगर(ivideo->SiS_Pr.UseROM) अणु
+	if(ivideo->SiS_Pr.UseROM) {
 		biosver = ivideo->SiS_Pr.VirtualRomBase + 0x06;
 		biosdate = ivideo->SiS_Pr.VirtualRomBase + 0x2c;
-		क्रम(i = 0; i < 32768; i++)
+		for(i = 0; i < 32768; i++)
 			chksum += ivideo->SiS_Pr.VirtualRomBase[i];
-	पूर्ण
+	}
 
 	i = 0;
-	करो अणु
-		अगर( (mycustomttable[i].chipID == ivideo->chip)			&&
-		    ((!म_माप(mycustomttable[i].biosversion)) ||
+	do {
+		if( (mycustomttable[i].chipID == ivideo->chip)			&&
+		    ((!strlen(mycustomttable[i].biosversion)) ||
 		     (ivideo->SiS_Pr.UseROM &&
-		      (!म_भेदन(mycustomttable[i].biosversion, biosver,
-				म_माप(mycustomttable[i].biosversion)))))	&&
-		    ((!म_माप(mycustomttable[i].biosdate)) ||
+		      (!strncmp(mycustomttable[i].biosversion, biosver,
+				strlen(mycustomttable[i].biosversion)))))	&&
+		    ((!strlen(mycustomttable[i].biosdate)) ||
 		     (ivideo->SiS_Pr.UseROM &&
-		      (!म_भेदन(mycustomttable[i].biosdate, biosdate,
-				म_माप(mycustomttable[i].biosdate)))))		&&
+		      (!strncmp(mycustomttable[i].biosdate, biosdate,
+				strlen(mycustomttable[i].biosdate)))))		&&
 		    ((!mycustomttable[i].bioschksum) ||
 		     (ivideo->SiS_Pr.UseROM &&
 		      (mycustomttable[i].bioschksum == chksum)))		&&
-		    (mycustomttable[i].pcisubsysvenकरोr == ivideo->subsysvenकरोr) &&
-		    (mycustomttable[i].pcisubsyscard == ivideo->subsysdevice) ) अणु
-			footprपूर्णांक = true;
-			क्रम(j = 0; j < 5; j++) अणु
-				अगर(mycustomttable[i].biosFootprपूर्णांकAddr[j]) अणु
-					अगर(ivideo->SiS_Pr.UseROM) अणु
-						अगर(ivideo->SiS_Pr.VirtualRomBase[mycustomttable[i].biosFootprपूर्णांकAddr[j]] !=
-							mycustomttable[i].biosFootprपूर्णांकData[j]) अणु
-							footprपूर्णांक = false;
-						पूर्ण
-					पूर्ण अन्यथा
-						footprपूर्णांक = false;
-				पूर्ण
-			पूर्ण
-			अगर(footprपूर्णांक) अणु
+		    (mycustomttable[i].pcisubsysvendor == ivideo->subsysvendor) &&
+		    (mycustomttable[i].pcisubsyscard == ivideo->subsysdevice) ) {
+			footprint = true;
+			for(j = 0; j < 5; j++) {
+				if(mycustomttable[i].biosFootprintAddr[j]) {
+					if(ivideo->SiS_Pr.UseROM) {
+						if(ivideo->SiS_Pr.VirtualRomBase[mycustomttable[i].biosFootprintAddr[j]] !=
+							mycustomttable[i].biosFootprintData[j]) {
+							footprint = false;
+						}
+					} else
+						footprint = false;
+				}
+			}
+			if(footprint) {
 				ivideo->SiS_Pr.SiS_CustomT = mycustomttable[i].SpecialID;
-				prपूर्णांकk(KERN_DEBUG "sisfb: Identified [%s %s], special timing applies\n",
-					mycustomttable[i].venकरोrName,
+				printk(KERN_DEBUG "sisfb: Identified [%s %s], special timing applies\n",
+					mycustomttable[i].vendorName,
 				mycustomttable[i].cardName);
-				prपूर्णांकk(KERN_DEBUG "sisfb: [specialtiming parameter name: %s]\n",
+				printk(KERN_DEBUG "sisfb: [specialtiming parameter name: %s]\n",
 					mycustomttable[i].optionName);
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 		i++;
-	पूर्ण जबतक(mycustomttable[i].chipID);
-पूर्ण
+	} while(mycustomttable[i].chipID);
+}
 
-अटल bool sisfb_पूर्णांकerpret_edid(काष्ठा sisfb_monitor *monitor, u8 *buffer)
-अणु
-	पूर्णांक i, j, xres, yres, refresh, index;
+static bool sisfb_interpret_edid(struct sisfb_monitor *monitor, u8 *buffer)
+{
+	int i, j, xres, yres, refresh, index;
 	u32 emodes;
 
-	अगर(buffer[0] != 0x00 || buffer[1] != 0xff ||
+	if(buffer[0] != 0x00 || buffer[1] != 0xff ||
 	   buffer[2] != 0xff || buffer[3] != 0xff ||
 	   buffer[4] != 0xff || buffer[5] != 0xff ||
-	   buffer[6] != 0xff || buffer[7] != 0x00) अणु
-		prपूर्णांकk(KERN_DEBUG "sisfb: Bad EDID header\n");
-		वापस false;
-	पूर्ण
+	   buffer[6] != 0xff || buffer[7] != 0x00) {
+		printk(KERN_DEBUG "sisfb: Bad EDID header\n");
+		return false;
+	}
 
-	अगर(buffer[0x12] != 0x01) अणु
-		prपूर्णांकk(KERN_INFO "sisfb: EDID version %d not supported\n",
+	if(buffer[0x12] != 0x01) {
+		printk(KERN_INFO "sisfb: EDID version %d not supported\n",
 			buffer[0x12]);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	monitor->feature = buffer[0x18];
 
-	अगर(!(buffer[0x14] & 0x80)) अणु
-		अगर(!(buffer[0x14] & 0x08)) अणु
-			prपूर्णांकk(KERN_INFO
+	if(!(buffer[0x14] & 0x80)) {
+		if(!(buffer[0x14] & 0x08)) {
+			printk(KERN_INFO
 				"sisfb: WARNING: Monitor does not support separate syncs\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर(buffer[0x13] >= 0x01) अणु
-	   /* EDID V1 rev 1 and 2: Search क्रम monitor descriptor
+	if(buffer[0x13] >= 0x01) {
+	   /* EDID V1 rev 1 and 2: Search for monitor descriptor
 	    * to extract ranges
 	    */
 	    j = 0x36;
-	    क्रम(i=0; i<4; i++) अणु
-	       अगर(buffer[j]     == 0x00 && buffer[j + 1] == 0x00 &&
+	    for(i=0; i<4; i++) {
+	       if(buffer[j]     == 0x00 && buffer[j + 1] == 0x00 &&
 		  buffer[j + 2] == 0x00 && buffer[j + 3] == 0xfd &&
-		  buffer[j + 4] == 0x00) अणु
+		  buffer[j + 4] == 0x00) {
 		  monitor->hmin = buffer[j + 7];
 		  monitor->hmax = buffer[j + 8];
 		  monitor->vmin = buffer[j + 5];
 		  monitor->vmax = buffer[j + 6];
-		  monitor->dघड़ीmax = buffer[j + 9] * 10 * 1000;
+		  monitor->dclockmax = buffer[j + 9] * 10 * 1000;
 		  monitor->datavalid = true;
-		  अवरोध;
-	       पूर्ण
+		  break;
+	       }
 	       j += 18;
-	    पूर्ण
-	पूर्ण
+	    }
+	}
 
-	अगर(!monitor->datavalid) अणु
+	if(!monitor->datavalid) {
 	   /* Otherwise: Get a range from the list of supported
 	    * Estabished Timings. This is not entirely accurate,
 	    * because fixed frequency monitors are not supported
@@ -491,420 +490,420 @@ sisfb_search_specialtiming(स्थिर अक्षर *name)
 	    */
 	   monitor->hmin = 65535; monitor->hmax = 0;
 	   monitor->vmin = 65535; monitor->vmax = 0;
-	   monitor->dघड़ीmax = 0;
+	   monitor->dclockmax = 0;
 	   emodes = buffer[0x23] | (buffer[0x24] << 8) | (buffer[0x25] << 16);
-	   क्रम(i = 0; i < 13; i++) अणु
-	      अगर(emodes & sisfb_ddcsmodes[i].mask) अणु
-		 अगर(monitor->hmin > sisfb_ddcsmodes[i].h) monitor->hmin = sisfb_ddcsmodes[i].h;
-		 अगर(monitor->hmax < sisfb_ddcsmodes[i].h) monitor->hmax = sisfb_ddcsmodes[i].h + 1;
-		 अगर(monitor->vmin > sisfb_ddcsmodes[i].v) monitor->vmin = sisfb_ddcsmodes[i].v;
-		 अगर(monitor->vmax < sisfb_ddcsmodes[i].v) monitor->vmax = sisfb_ddcsmodes[i].v;
-		 अगर(monitor->dघड़ीmax < sisfb_ddcsmodes[i].d) monitor->dघड़ीmax = sisfb_ddcsmodes[i].d;
-	      पूर्ण
-	   पूर्ण
+	   for(i = 0; i < 13; i++) {
+	      if(emodes & sisfb_ddcsmodes[i].mask) {
+		 if(monitor->hmin > sisfb_ddcsmodes[i].h) monitor->hmin = sisfb_ddcsmodes[i].h;
+		 if(monitor->hmax < sisfb_ddcsmodes[i].h) monitor->hmax = sisfb_ddcsmodes[i].h + 1;
+		 if(monitor->vmin > sisfb_ddcsmodes[i].v) monitor->vmin = sisfb_ddcsmodes[i].v;
+		 if(monitor->vmax < sisfb_ddcsmodes[i].v) monitor->vmax = sisfb_ddcsmodes[i].v;
+		 if(monitor->dclockmax < sisfb_ddcsmodes[i].d) monitor->dclockmax = sisfb_ddcsmodes[i].d;
+	      }
+	   }
 	   index = 0x26;
-	   क्रम(i = 0; i < 8; i++) अणु
+	   for(i = 0; i < 8; i++) {
 	      xres = (buffer[index] + 31) * 8;
-	      चयन(buffer[index + 1] & 0xc0) अणु
-		 हाल 0xc0: yres = (xres * 9) / 16; अवरोध;
-		 हाल 0x80: yres = (xres * 4) /  5; अवरोध;
-		 हाल 0x40: yres = (xres * 3) /  4; अवरोध;
-		 शेष:   yres = xres;	    अवरोध;
-	      पूर्ण
+	      switch(buffer[index + 1] & 0xc0) {
+		 case 0xc0: yres = (xres * 9) / 16; break;
+		 case 0x80: yres = (xres * 4) /  5; break;
+		 case 0x40: yres = (xres * 3) /  4; break;
+		 default:   yres = xres;	    break;
+	      }
 	      refresh = (buffer[index + 1] & 0x3f) + 60;
-	      अगर((xres >= 640) && (yres >= 480)) अणु
-		 क्रम(j = 0; j < 8; j++) अणु
-		    अगर((xres == sisfb_ddcभ_शेषes[j].x) &&
-		       (yres == sisfb_ddcभ_शेषes[j].y) &&
-		       (refresh == sisfb_ddcभ_शेषes[j].v)) अणु
-		      अगर(monitor->hmin > sisfb_ddcभ_शेषes[j].h) monitor->hmin = sisfb_ddcभ_शेषes[j].h;
-		      अगर(monitor->hmax < sisfb_ddcभ_शेषes[j].h) monitor->hmax = sisfb_ddcभ_शेषes[j].h + 1;
-		      अगर(monitor->vmin > sisfb_ddcsmodes[j].v) monitor->vmin = sisfb_ddcsmodes[j].v;
-		      अगर(monitor->vmax < sisfb_ddcsmodes[j].v) monitor->vmax = sisfb_ddcsmodes[j].v;
-		      अगर(monitor->dघड़ीmax < sisfb_ddcsmodes[j].d) monitor->dघड़ीmax = sisfb_ddcsmodes[j].d;
-		    पूर्ण
-		 पूर्ण
-	      पूर्ण
+	      if((xres >= 640) && (yres >= 480)) {
+		 for(j = 0; j < 8; j++) {
+		    if((xres == sisfb_ddcfmodes[j].x) &&
+		       (yres == sisfb_ddcfmodes[j].y) &&
+		       (refresh == sisfb_ddcfmodes[j].v)) {
+		      if(monitor->hmin > sisfb_ddcfmodes[j].h) monitor->hmin = sisfb_ddcfmodes[j].h;
+		      if(monitor->hmax < sisfb_ddcfmodes[j].h) monitor->hmax = sisfb_ddcfmodes[j].h + 1;
+		      if(monitor->vmin > sisfb_ddcsmodes[j].v) monitor->vmin = sisfb_ddcsmodes[j].v;
+		      if(monitor->vmax < sisfb_ddcsmodes[j].v) monitor->vmax = sisfb_ddcsmodes[j].v;
+		      if(monitor->dclockmax < sisfb_ddcsmodes[j].d) monitor->dclockmax = sisfb_ddcsmodes[j].d;
+		    }
+		 }
+	      }
 	      index += 2;
-	   पूर्ण
-	   अगर((monitor->hmin <= monitor->hmax) && (monitor->vmin <= monitor->vmax)) अणु
+	   }
+	   if((monitor->hmin <= monitor->hmax) && (monitor->vmin <= monitor->vmax)) {
 	      monitor->datavalid = true;
-	   पूर्ण
-	पूर्ण
+	   }
+	}
 
-	वापस monitor->datavalid;
-पूर्ण
+	return monitor->datavalid;
+}
 
-अटल व्योम sisfb_handle_ddc(काष्ठा sis_video_info *ivideo,
-			     काष्ठा sisfb_monitor *monitor, पूर्णांक crtno)
-अणु
-	अचिन्हित लघु temp, i, realcrtno = crtno;
-	अचिन्हित अक्षर  buffer[256];
+static void sisfb_handle_ddc(struct sis_video_info *ivideo,
+			     struct sisfb_monitor *monitor, int crtno)
+{
+	unsigned short temp, i, realcrtno = crtno;
+	unsigned char  buffer[256];
 
 	monitor->datavalid = false;
 
-	अगर(crtno) अणु
-	   अगर(ivideo->vbflags & CRT2_LCD)      realcrtno = 1;
-	   अन्यथा अगर(ivideo->vbflags & CRT2_VGA) realcrtno = 2;
-	   अन्यथा वापस;
-	पूर्ण
+	if(crtno) {
+	   if(ivideo->vbflags & CRT2_LCD)      realcrtno = 1;
+	   else if(ivideo->vbflags & CRT2_VGA) realcrtno = 2;
+	   else return;
+	}
 
-	अगर((ivideo->sisfb_crt1off) && (!crtno))
-		वापस;
+	if((ivideo->sisfb_crt1off) && (!crtno))
+		return;
 
 	temp = SiS_HandleDDC(&ivideo->SiS_Pr, ivideo->vbflags, ivideo->sisvga_engine,
 				realcrtno, 0, &buffer[0], ivideo->vbflags2);
-	अगर((!temp) || (temp == 0xffff)) अणु
-	   prपूर्णांकk(KERN_INFO "sisfb: CRT%d DDC probing failed\n", crtno + 1);
-	   वापस;
-	पूर्ण अन्यथा अणु
-	   prपूर्णांकk(KERN_INFO "sisfb: CRT%d DDC supported\n", crtno + 1);
-	   prपूर्णांकk(KERN_INFO "sisfb: CRT%d DDC level: %s%s%s%s\n",
+	if((!temp) || (temp == 0xffff)) {
+	   printk(KERN_INFO "sisfb: CRT%d DDC probing failed\n", crtno + 1);
+	   return;
+	} else {
+	   printk(KERN_INFO "sisfb: CRT%d DDC supported\n", crtno + 1);
+	   printk(KERN_INFO "sisfb: CRT%d DDC level: %s%s%s%s\n",
 		crtno + 1,
 		(temp & 0x1a) ? "" : "[none of the supported]",
 		(temp & 0x02) ? "2 " : "",
 		(temp & 0x08) ? "D&P" : "",
 		(temp & 0x10) ? "FPDI-2" : "");
-	   अगर(temp & 0x02) अणु
+	   if(temp & 0x02) {
 	      i = 3;  /* Number of retrys */
-	      करो अणु
+	      do {
 		 temp = SiS_HandleDDC(&ivideo->SiS_Pr, ivideo->vbflags, ivideo->sisvga_engine,
 				     realcrtno, 1, &buffer[0], ivideo->vbflags2);
-	      पूर्ण जबतक((temp) && i--);
-	      अगर(!temp) अणु
-		 अगर(sisfb_पूर्णांकerpret_edid(monitor, &buffer[0])) अणु
-		    prपूर्णांकk(KERN_INFO "sisfb: Monitor range H %d-%dKHz, V %d-%dHz, Max. dotclock %dMHz\n",
+	      } while((temp) && i--);
+	      if(!temp) {
+		 if(sisfb_interpret_edid(monitor, &buffer[0])) {
+		    printk(KERN_INFO "sisfb: Monitor range H %d-%dKHz, V %d-%dHz, Max. dotclock %dMHz\n",
 			monitor->hmin, monitor->hmax, monitor->vmin, monitor->vmax,
-			monitor->dघड़ीmax / 1000);
-		 पूर्ण अन्यथा अणु
-		    prपूर्णांकk(KERN_INFO "sisfb: CRT%d DDC EDID corrupt\n", crtno + 1);
-		 पूर्ण
-	      पूर्ण अन्यथा अणु
-		 prपूर्णांकk(KERN_INFO "sisfb: CRT%d DDC reading failed\n", crtno + 1);
-	      पूर्ण
-	   पूर्ण अन्यथा अणु
-	      prपूर्णांकk(KERN_INFO "sisfb: VESA D&P and FPDI-2 not supported yet\n");
-	   पूर्ण
-	पूर्ण
-पूर्ण
+			monitor->dclockmax / 1000);
+		 } else {
+		    printk(KERN_INFO "sisfb: CRT%d DDC EDID corrupt\n", crtno + 1);
+		 }
+	      } else {
+		 printk(KERN_INFO "sisfb: CRT%d DDC reading failed\n", crtno + 1);
+	      }
+	   } else {
+	      printk(KERN_INFO "sisfb: VESA D&P and FPDI-2 not supported yet\n");
+	   }
+	}
+}
 
 /* -------------- Mode validation --------------- */
 
-अटल bool
-sisfb_verअगरy_rate(काष्ठा sis_video_info *ivideo, काष्ठा sisfb_monitor *monitor,
-		पूर्णांक mode_idx, पूर्णांक rate_idx, पूर्णांक rate)
-अणु
-	पूर्णांक htotal, vtotal;
-	अचिन्हित पूर्णांक dघड़ी, hsync;
+static bool
+sisfb_verify_rate(struct sis_video_info *ivideo, struct sisfb_monitor *monitor,
+		int mode_idx, int rate_idx, int rate)
+{
+	int htotal, vtotal;
+	unsigned int dclock, hsync;
 
-	अगर(!monitor->datavalid)
-		वापस true;
+	if(!monitor->datavalid)
+		return true;
 
-	अगर(mode_idx < 0)
-		वापस false;
+	if(mode_idx < 0)
+		return false;
 
-	/* Skip क्रम 320x200, 320x240, 640x400 */
-	चयन(sisbios_mode[mode_idx].mode_no[ivideo->mni]) अणु
-	हाल 0x59:
-	हाल 0x41:
-	हाल 0x4f:
-	हाल 0x50:
-	हाल 0x56:
-	हाल 0x53:
-	हाल 0x2f:
-	हाल 0x5d:
-	हाल 0x5e:
-		वापस true;
-#अगर_घोषित CONFIG_FB_SIS_315
-	हाल 0x5a:
-	हाल 0x5b:
-		अगर(ivideo->sisvga_engine == SIS_315_VGA) वापस true;
-#पूर्ण_अगर
-	पूर्ण
+	/* Skip for 320x200, 320x240, 640x400 */
+	switch(sisbios_mode[mode_idx].mode_no[ivideo->mni]) {
+	case 0x59:
+	case 0x41:
+	case 0x4f:
+	case 0x50:
+	case 0x56:
+	case 0x53:
+	case 0x2f:
+	case 0x5d:
+	case 0x5e:
+		return true;
+#ifdef CONFIG_FB_SIS_315
+	case 0x5a:
+	case 0x5b:
+		if(ivideo->sisvga_engine == SIS_315_VGA) return true;
+#endif
+	}
 
-	अगर(rate < (monitor->vmin - 1))
-		वापस false;
-	अगर(rate > (monitor->vmax + 1))
-		वापस false;
+	if(rate < (monitor->vmin - 1))
+		return false;
+	if(rate > (monitor->vmax + 1))
+		return false;
 
-	अगर(sisfb_gettotalfrommode(&ivideo->SiS_Pr,
+	if(sisfb_gettotalfrommode(&ivideo->SiS_Pr,
 				  sisbios_mode[mode_idx].mode_no[ivideo->mni],
-				  &htotal, &vtotal, rate_idx)) अणु
-		dघड़ी = (htotal * vtotal * rate) / 1000;
-		अगर(dघड़ी > (monitor->dघड़ीmax + 1000))
-			वापस false;
-		hsync = dघड़ी / htotal;
-		अगर(hsync < (monitor->hmin - 1))
-			वापस false;
-		अगर(hsync > (monitor->hmax + 1))
-			वापस false;
-        पूर्ण अन्यथा अणु
-		वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+				  &htotal, &vtotal, rate_idx)) {
+		dclock = (htotal * vtotal * rate) / 1000;
+		if(dclock > (monitor->dclockmax + 1000))
+			return false;
+		hsync = dclock / htotal;
+		if(hsync < (monitor->hmin - 1))
+			return false;
+		if(hsync > (monitor->hmax + 1))
+			return false;
+        } else {
+		return false;
+	}
+	return true;
+}
 
-अटल पूर्णांक
-sisfb_validate_mode(काष्ठा sis_video_info *ivideo, पूर्णांक myindex, u32 vbflags)
-अणु
+static int
+sisfb_validate_mode(struct sis_video_info *ivideo, int myindex, u32 vbflags)
+{
 	u16 xres=0, yres, myres;
 
-#अगर_घोषित CONFIG_FB_SIS_300
-	अगर(ivideo->sisvga_engine == SIS_300_VGA) अणु
-		अगर(!(sisbios_mode[myindex].chipset & MD_SIS300))
-			वापस -1 ;
-	पूर्ण
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_FB_SIS_315
-	अगर(ivideo->sisvga_engine == SIS_315_VGA) अणु
-		अगर(!(sisbios_mode[myindex].chipset & MD_SIS315))
-			वापस -1;
-	पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_FB_SIS_300
+	if(ivideo->sisvga_engine == SIS_300_VGA) {
+		if(!(sisbios_mode[myindex].chipset & MD_SIS300))
+			return -1 ;
+	}
+#endif
+#ifdef CONFIG_FB_SIS_315
+	if(ivideo->sisvga_engine == SIS_315_VGA) {
+		if(!(sisbios_mode[myindex].chipset & MD_SIS315))
+			return -1;
+	}
+#endif
 
 	myres = sisbios_mode[myindex].yres;
 
-	चयन(vbflags & VB_DISPTYPE_DISP2) अणु
+	switch(vbflags & VB_DISPTYPE_DISP2) {
 
-	हाल CRT2_LCD:
+	case CRT2_LCD:
 		xres = ivideo->lcdxres; yres = ivideo->lcdyres;
 
-		अगर((ivideo->SiS_Pr.SiS_CustomT != CUT_PANEL848) &&
-		   (ivideo->SiS_Pr.SiS_CustomT != CUT_PANEL856)) अणु
-			अगर(sisbios_mode[myindex].xres > xres)
-				वापस -1;
-			अगर(myres > yres)
-				वापस -1;
-		पूर्ण
+		if((ivideo->SiS_Pr.SiS_CustomT != CUT_PANEL848) &&
+		   (ivideo->SiS_Pr.SiS_CustomT != CUT_PANEL856)) {
+			if(sisbios_mode[myindex].xres > xres)
+				return -1;
+			if(myres > yres)
+				return -1;
+		}
 
-		अगर(ivideo->sisfb_fstn) अणु
-			अगर(sisbios_mode[myindex].xres == 320) अणु
-				अगर(myres == 240) अणु
-					चयन(sisbios_mode[myindex].mode_no[1]) अणु
-						हाल 0x50: myindex = MODE_FSTN_8;  अवरोध;
-						हाल 0x56: myindex = MODE_FSTN_16; अवरोध;
-						हाल 0x53: वापस -1;
-					पूर्ण
-				पूर्ण
-			पूर्ण
-		पूर्ण
+		if(ivideo->sisfb_fstn) {
+			if(sisbios_mode[myindex].xres == 320) {
+				if(myres == 240) {
+					switch(sisbios_mode[myindex].mode_no[1]) {
+						case 0x50: myindex = MODE_FSTN_8;  break;
+						case 0x56: myindex = MODE_FSTN_16; break;
+						case 0x53: return -1;
+					}
+				}
+			}
+		}
 
-		अगर(SiS_GetModeID_LCD(ivideo->sisvga_engine, vbflags, sisbios_mode[myindex].xres,
+		if(SiS_GetModeID_LCD(ivideo->sisvga_engine, vbflags, sisbios_mode[myindex].xres,
 			 	sisbios_mode[myindex].yres, 0, ivideo->sisfb_fstn,
-			 	ivideo->SiS_Pr.SiS_CustomT, xres, yres, ivideo->vbflags2) < 0x14) अणु
-			वापस -1;
-		पूर्ण
-		अवरोध;
+			 	ivideo->SiS_Pr.SiS_CustomT, xres, yres, ivideo->vbflags2) < 0x14) {
+			return -1;
+		}
+		break;
 
-	हाल CRT2_TV:
-		अगर(SiS_GetModeID_TV(ivideo->sisvga_engine, vbflags, sisbios_mode[myindex].xres,
-				sisbios_mode[myindex].yres, 0, ivideo->vbflags2) < 0x14) अणु
-			वापस -1;
-		पूर्ण
-		अवरोध;
+	case CRT2_TV:
+		if(SiS_GetModeID_TV(ivideo->sisvga_engine, vbflags, sisbios_mode[myindex].xres,
+				sisbios_mode[myindex].yres, 0, ivideo->vbflags2) < 0x14) {
+			return -1;
+		}
+		break;
 
-	हाल CRT2_VGA:
-		अगर(SiS_GetModeID_VGA2(ivideo->sisvga_engine, vbflags, sisbios_mode[myindex].xres,
-				sisbios_mode[myindex].yres, 0, ivideo->vbflags2) < 0x14) अणु
-			वापस -1;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+	case CRT2_VGA:
+		if(SiS_GetModeID_VGA2(ivideo->sisvga_engine, vbflags, sisbios_mode[myindex].xres,
+				sisbios_mode[myindex].yres, 0, ivideo->vbflags2) < 0x14) {
+			return -1;
+		}
+		break;
+	}
 
-	वापस myindex;
-पूर्ण
+	return myindex;
+}
 
-अटल u8
-sisfb_search_refresh_rate(काष्ठा sis_video_info *ivideo, अचिन्हित पूर्णांक rate, पूर्णांक mode_idx)
-अणु
-	पूर्णांक i = 0;
+static u8
+sisfb_search_refresh_rate(struct sis_video_info *ivideo, unsigned int rate, int mode_idx)
+{
+	int i = 0;
 	u16 xres = sisbios_mode[mode_idx].xres;
 	u16 yres = sisbios_mode[mode_idx].yres;
 
 	ivideo->rate_idx = 0;
-	जबतक((sisfb_vrate[i].idx != 0) && (sisfb_vrate[i].xres <= xres)) अणु
-		अगर((sisfb_vrate[i].xres == xres) && (sisfb_vrate[i].yres == yres)) अणु
-			अगर(sisfb_vrate[i].refresh == rate) अणु
+	while((sisfb_vrate[i].idx != 0) && (sisfb_vrate[i].xres <= xres)) {
+		if((sisfb_vrate[i].xres == xres) && (sisfb_vrate[i].yres == yres)) {
+			if(sisfb_vrate[i].refresh == rate) {
 				ivideo->rate_idx = sisfb_vrate[i].idx;
-				अवरोध;
-			पूर्ण अन्यथा अगर(sisfb_vrate[i].refresh > rate) अणु
-				अगर((sisfb_vrate[i].refresh - rate) <= 3) अणु
+				break;
+			} else if(sisfb_vrate[i].refresh > rate) {
+				if((sisfb_vrate[i].refresh - rate) <= 3) {
 					DPRINTK("sisfb: Adjusting rate from %d up to %d\n",
 						rate, sisfb_vrate[i].refresh);
 					ivideo->rate_idx = sisfb_vrate[i].idx;
 					ivideo->refresh_rate = sisfb_vrate[i].refresh;
-				पूर्ण अन्यथा अगर((sisfb_vrate[i].idx != 1) &&
-						((rate - sisfb_vrate[i-1].refresh) <= 2)) अणु
+				} else if((sisfb_vrate[i].idx != 1) &&
+						((rate - sisfb_vrate[i-1].refresh) <= 2)) {
 					DPRINTK("sisfb: Adjusting rate from %d down to %d\n",
 						rate, sisfb_vrate[i-1].refresh);
 					ivideo->rate_idx = sisfb_vrate[i-1].idx;
 					ivideo->refresh_rate = sisfb_vrate[i-1].refresh;
-				पूर्ण
-				अवरोध;
-			पूर्ण अन्यथा अगर((rate - sisfb_vrate[i].refresh) <= 2) अणु
+				}
+				break;
+			} else if((rate - sisfb_vrate[i].refresh) <= 2) {
 				DPRINTK("sisfb: Adjusting rate from %d down to %d\n",
 						rate, sisfb_vrate[i].refresh);
 				ivideo->rate_idx = sisfb_vrate[i].idx;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 		i++;
-	पूर्ण
-	अगर(ivideo->rate_idx > 0) अणु
-		वापस ivideo->rate_idx;
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_INFO "sisfb: Unsupported rate %d for %dx%d\n",
+	}
+	if(ivideo->rate_idx > 0) {
+		return ivideo->rate_idx;
+	} else {
+		printk(KERN_INFO "sisfb: Unsupported rate %d for %dx%d\n",
 				rate, xres, yres);
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 
-अटल bool
-sisfb_bridgeisslave(काष्ठा sis_video_info *ivideo)
-अणु
-	अचिन्हित अक्षर P1_00;
+static bool
+sisfb_bridgeisslave(struct sis_video_info *ivideo)
+{
+	unsigned char P1_00;
 
-	अगर(!(ivideo->vbflags2 & VB2_VIDEOBRIDGE))
-		वापस false;
+	if(!(ivideo->vbflags2 & VB2_VIDEOBRIDGE))
+		return false;
 
 	P1_00 = SiS_GetReg(SISPART1, 0x00);
-	अगर( ((ivideo->sisvga_engine == SIS_300_VGA) && (P1_00 & 0xa0) == 0x20) ||
-	    ((ivideo->sisvga_engine == SIS_315_VGA) && (P1_00 & 0x50) == 0x10) ) अणु
-		वापस true;
-	पूर्ण अन्यथा अणु
-		वापस false;
-	पूर्ण
-पूर्ण
+	if( ((ivideo->sisvga_engine == SIS_300_VGA) && (P1_00 & 0xa0) == 0x20) ||
+	    ((ivideo->sisvga_engine == SIS_315_VGA) && (P1_00 & 0x50) == 0x10) ) {
+		return true;
+	} else {
+		return false;
+	}
+}
 
-अटल bool
-sisfballowretracecrt1(काष्ठा sis_video_info *ivideo)
-अणु
+static bool
+sisfballowretracecrt1(struct sis_video_info *ivideo)
+{
 	u8 temp;
 
 	temp = SiS_GetReg(SISCR, 0x17);
-	अगर(!(temp & 0x80))
-		वापस false;
+	if(!(temp & 0x80))
+		return false;
 
 	temp = SiS_GetReg(SISSR, 0x1f);
-	अगर(temp & 0xc0)
-		वापस false;
+	if(temp & 0xc0)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool
-sisfbcheckvretracecrt1(काष्ठा sis_video_info *ivideo)
-अणु
-	अगर(!sisfballowretracecrt1(ivideo))
-		वापस false;
+static bool
+sisfbcheckvretracecrt1(struct sis_video_info *ivideo)
+{
+	if(!sisfballowretracecrt1(ivideo))
+		return false;
 
-	अगर (SiS_GetRegByte(SISINPSTAT) & 0x08)
-		वापस true;
-	अन्यथा
-		वापस false;
-पूर्ण
+	if (SiS_GetRegByte(SISINPSTAT) & 0x08)
+		return true;
+	else
+		return false;
+}
 
-अटल व्योम
-sisfbरुकोretracecrt1(काष्ठा sis_video_info *ivideo)
-अणु
-	पूर्णांक watchकरोg;
+static void
+sisfbwaitretracecrt1(struct sis_video_info *ivideo)
+{
+	int watchdog;
 
-	अगर(!sisfballowretracecrt1(ivideo))
-		वापस;
+	if(!sisfballowretracecrt1(ivideo))
+		return;
 
-	watchकरोg = 65536;
-	जबतक ((!(SiS_GetRegByte(SISINPSTAT) & 0x08)) && --watchकरोg);
-	watchकरोg = 65536;
-	जबतक ((SiS_GetRegByte(SISINPSTAT) & 0x08) && --watchकरोg);
-पूर्ण
+	watchdog = 65536;
+	while ((!(SiS_GetRegByte(SISINPSTAT) & 0x08)) && --watchdog);
+	watchdog = 65536;
+	while ((SiS_GetRegByte(SISINPSTAT) & 0x08) && --watchdog);
+}
 
-अटल bool
-sisfbcheckvretracecrt2(काष्ठा sis_video_info *ivideo)
-अणु
-	अचिन्हित अक्षर temp, reg;
+static bool
+sisfbcheckvretracecrt2(struct sis_video_info *ivideo)
+{
+	unsigned char temp, reg;
 
-	चयन(ivideo->sisvga_engine) अणु
-	हाल SIS_300_VGA: reg = 0x25; अवरोध;
-	हाल SIS_315_VGA: reg = 0x30; अवरोध;
-	शेष:	  वापस false;
-	पूर्ण
+	switch(ivideo->sisvga_engine) {
+	case SIS_300_VGA: reg = 0x25; break;
+	case SIS_315_VGA: reg = 0x30; break;
+	default:	  return false;
+	}
 
 	temp = SiS_GetReg(SISPART1, reg);
-	अगर(temp & 0x02)
-		वापस true;
-	अन्यथा
-		वापस false;
-पूर्ण
+	if(temp & 0x02)
+		return true;
+	else
+		return false;
+}
 
-अटल bool
-sisfb_CheckVBRetrace(काष्ठा sis_video_info *ivideo)
-अणु
-	अगर(ivideo->currentvbflags & VB_DISPTYPE_DISP2) अणु
-		अगर(!sisfb_bridgeisslave(ivideo)) अणु
-			वापस sisfbcheckvretracecrt2(ivideo);
-		पूर्ण
-	पूर्ण
-	वापस sisfbcheckvretracecrt1(ivideo);
-पूर्ण
+static bool
+sisfb_CheckVBRetrace(struct sis_video_info *ivideo)
+{
+	if(ivideo->currentvbflags & VB_DISPTYPE_DISP2) {
+		if(!sisfb_bridgeisslave(ivideo)) {
+			return sisfbcheckvretracecrt2(ivideo);
+		}
+	}
+	return sisfbcheckvretracecrt1(ivideo);
+}
 
-अटल u32
-sisfb_setupvbblankflags(काष्ठा sis_video_info *ivideo, u32 *vcount, u32 *hcount)
-अणु
+static u32
+sisfb_setupvbblankflags(struct sis_video_info *ivideo, u32 *vcount, u32 *hcount)
+{
 	u8 idx, reg1, reg2, reg3, reg4;
 	u32 ret = 0;
 
 	(*vcount) = (*hcount) = 0;
 
-	अगर((ivideo->currentvbflags & VB_DISPTYPE_DISP2) && (!(sisfb_bridgeisslave(ivideo)))) अणु
+	if((ivideo->currentvbflags & VB_DISPTYPE_DISP2) && (!(sisfb_bridgeisslave(ivideo)))) {
 
 		ret |= (FB_VBLANK_HAVE_VSYNC  |
 			FB_VBLANK_HAVE_HBLANK |
 			FB_VBLANK_HAVE_VBLANK |
 			FB_VBLANK_HAVE_VCOUNT |
 			FB_VBLANK_HAVE_HCOUNT);
-		चयन(ivideo->sisvga_engine) अणु
-			हाल SIS_300_VGA: idx = 0x25; अवरोध;
-			शेष:
-			हाल SIS_315_VGA: idx = 0x30; अवरोध;
-		पूर्ण
+		switch(ivideo->sisvga_engine) {
+			case SIS_300_VGA: idx = 0x25; break;
+			default:
+			case SIS_315_VGA: idx = 0x30; break;
+		}
 		reg1 = SiS_GetReg(SISPART1, (idx+0)); /* 30 */
 		reg2 = SiS_GetReg(SISPART1, (idx+1)); /* 31 */
 		reg3 = SiS_GetReg(SISPART1, (idx+2)); /* 32 */
 		reg4 = SiS_GetReg(SISPART1, (idx+3)); /* 33 */
-		अगर(reg1 & 0x01) ret |= FB_VBLANK_VBLANKING;
-		अगर(reg1 & 0x02) ret |= FB_VBLANK_VSYNCING;
-		अगर(reg4 & 0x80) ret |= FB_VBLANK_HBLANKING;
+		if(reg1 & 0x01) ret |= FB_VBLANK_VBLANKING;
+		if(reg1 & 0x02) ret |= FB_VBLANK_VSYNCING;
+		if(reg4 & 0x80) ret |= FB_VBLANK_HBLANKING;
 		(*vcount) = reg3 | ((reg4 & 0x70) << 4);
 		(*hcount) = reg2 | ((reg4 & 0x0f) << 8);
 
-	पूर्ण अन्यथा अगर(sisfballowretracecrt1(ivideo)) अणु
+	} else if(sisfballowretracecrt1(ivideo)) {
 
 		ret |= (FB_VBLANK_HAVE_VSYNC  |
 			FB_VBLANK_HAVE_VBLANK |
 			FB_VBLANK_HAVE_VCOUNT |
 			FB_VBLANK_HAVE_HCOUNT);
 		reg1 = SiS_GetRegByte(SISINPSTAT);
-		अगर(reg1 & 0x08) ret |= FB_VBLANK_VSYNCING;
-		अगर(reg1 & 0x01) ret |= FB_VBLANK_VBLANKING;
+		if(reg1 & 0x08) ret |= FB_VBLANK_VSYNCING;
+		if(reg1 & 0x01) ret |= FB_VBLANK_VBLANKING;
 		reg1 = SiS_GetReg(SISCR, 0x20);
 		reg1 = SiS_GetReg(SISCR, 0x1b);
 		reg2 = SiS_GetReg(SISCR, 0x1c);
 		reg3 = SiS_GetReg(SISCR, 0x1d);
 		(*vcount) = reg2 | ((reg3 & 0x07) << 8);
 		(*hcount) = (reg1 | ((reg3 & 0x10) << 4)) << 3;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-sisfb_myblank(काष्ठा sis_video_info *ivideo, पूर्णांक blank)
-अणु
+static int
+sisfb_myblank(struct sis_video_info *ivideo, int blank)
+{
 	u8 sr01, sr11, sr1f, cr63=0, p2_0, p1_13;
 	bool backlight = true;
 
-	चयन(blank) अणु
-		हाल FB_BLANK_UNBLANK:	/* on */
+	switch(blank) {
+		case FB_BLANK_UNBLANK:	/* on */
 			sr01  = 0x00;
 			sr11  = 0x00;
 			sr1f  = 0x00;
@@ -912,8 +911,8 @@ sisfb_myblank(काष्ठा sis_video_info *ivideo, पूर्णां�
 			p2_0  = 0x20;
 			p1_13 = 0x00;
 			backlight = true;
-			अवरोध;
-		हाल FB_BLANK_NORMAL:	/* blank */
+			break;
+		case FB_BLANK_NORMAL:	/* blank */
 			sr01  = 0x20;
 			sr11  = 0x00;
 			sr1f  = 0x00;
@@ -921,8 +920,8 @@ sisfb_myblank(काष्ठा sis_video_info *ivideo, पूर्णां�
 			p2_0  = 0x20;
 			p1_13 = 0x00;
 			backlight = true;
-			अवरोध;
-		हाल FB_BLANK_VSYNC_SUSPEND:	/* no vsync */
+			break;
+		case FB_BLANK_VSYNC_SUSPEND:	/* no vsync */
 			sr01  = 0x20;
 			sr11  = 0x08;
 			sr1f  = 0x80;
@@ -930,8 +929,8 @@ sisfb_myblank(काष्ठा sis_video_info *ivideo, पूर्णां�
 			p2_0  = 0x40;
 			p1_13 = 0x80;
 			backlight = false;
-			अवरोध;
-		हाल FB_BLANK_HSYNC_SUSPEND:	/* no hsync */
+			break;
+		case FB_BLANK_HSYNC_SUSPEND:	/* no hsync */
 			sr01  = 0x20;
 			sr11  = 0x08;
 			sr1f  = 0x40;
@@ -939,8 +938,8 @@ sisfb_myblank(काष्ठा sis_video_info *ivideo, पूर्णां�
 			p2_0  = 0x80;
 			p1_13 = 0x40;
 			backlight = false;
-			अवरोध;
-		हाल FB_BLANK_POWERDOWN:	/* off */
+			break;
+		case FB_BLANK_POWERDOWN:	/* off */
 			sr01  = 0x20;
 			sr11  = 0x08;
 			sr1f  = 0xc0;
@@ -948,225 +947,225 @@ sisfb_myblank(काष्ठा sis_video_info *ivideo, पूर्णां�
 			p2_0  = 0xc0;
 			p1_13 = 0xc0;
 			backlight = false;
-			अवरोध;
-		शेष:
-			वापस 1;
-	पूर्ण
+			break;
+		default:
+			return 1;
+	}
 
-	अगर(ivideo->currentvbflags & VB_DISPTYPE_CRT1) अणु
+	if(ivideo->currentvbflags & VB_DISPTYPE_CRT1) {
 
-		अगर( (!ivideo->sisfb_thismonitor.datavalid) ||
+		if( (!ivideo->sisfb_thismonitor.datavalid) ||
 		    ((ivideo->sisfb_thismonitor.datavalid) &&
-		     (ivideo->sisfb_thismonitor.feature & 0xe0))) अणु
+		     (ivideo->sisfb_thismonitor.feature & 0xe0))) {
 
-			अगर(ivideo->sisvga_engine == SIS_315_VGA) अणु
+			if(ivideo->sisvga_engine == SIS_315_VGA) {
 				SiS_SetRegANDOR(SISCR, ivideo->SiS_Pr.SiS_MyCR63, 0xbf, cr63);
-			पूर्ण
+			}
 
-			अगर(!(sisfb_bridgeisslave(ivideo))) अणु
+			if(!(sisfb_bridgeisslave(ivideo))) {
 				SiS_SetRegANDOR(SISSR, 0x01, ~0x20, sr01);
 				SiS_SetRegANDOR(SISSR, 0x1f, 0x3f, sr1f);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-	पूर्ण
+	}
 
-	अगर(ivideo->currentvbflags & CRT2_LCD) अणु
+	if(ivideo->currentvbflags & CRT2_LCD) {
 
-		अगर(ivideo->vbflags2 & VB2_SISLVDSBRIDGE) अणु
-			अगर(backlight) अणु
+		if(ivideo->vbflags2 & VB2_SISLVDSBRIDGE) {
+			if(backlight) {
 				SiS_SiS30xBLOn(&ivideo->SiS_Pr);
-			पूर्ण अन्यथा अणु
+			} else {
 				SiS_SiS30xBLOff(&ivideo->SiS_Pr);
-			पूर्ण
-		पूर्ण अन्यथा अगर(ivideo->sisvga_engine == SIS_315_VGA) अणु
-#अगर_घोषित CONFIG_FB_SIS_315
-			अगर(ivideo->vbflags2 & VB2_CHRONTEL) अणु
-				अगर(backlight) अणु
+			}
+		} else if(ivideo->sisvga_engine == SIS_315_VGA) {
+#ifdef CONFIG_FB_SIS_315
+			if(ivideo->vbflags2 & VB2_CHRONTEL) {
+				if(backlight) {
 					SiS_Chrontel701xBLOn(&ivideo->SiS_Pr);
-				पूर्ण अन्यथा अणु
+				} else {
 					SiS_Chrontel701xBLOff(&ivideo->SiS_Pr);
-				पूर्ण
-			पूर्ण
-#पूर्ण_अगर
-		पूर्ण
+				}
+			}
+#endif
+		}
 
-		अगर(((ivideo->sisvga_engine == SIS_300_VGA) &&
+		if(((ivideo->sisvga_engine == SIS_300_VGA) &&
 		    (ivideo->vbflags2 & (VB2_301|VB2_30xBDH|VB2_LVDS))) ||
 		   ((ivideo->sisvga_engine == SIS_315_VGA) &&
-		    ((ivideo->vbflags2 & (VB2_LVDS | VB2_CHRONTEL)) == VB2_LVDS))) अणु
+		    ((ivideo->vbflags2 & (VB2_LVDS | VB2_CHRONTEL)) == VB2_LVDS))) {
 			SiS_SetRegANDOR(SISSR, 0x11, ~0x0c, sr11);
-		पूर्ण
+		}
 
-		अगर(ivideo->sisvga_engine == SIS_300_VGA) अणु
-			अगर((ivideo->vbflags2 & VB2_30xB) &&
-			   (!(ivideo->vbflags2 & VB2_30xBDH))) अणु
+		if(ivideo->sisvga_engine == SIS_300_VGA) {
+			if((ivideo->vbflags2 & VB2_30xB) &&
+			   (!(ivideo->vbflags2 & VB2_30xBDH))) {
 				SiS_SetRegANDOR(SISPART1, 0x13, 0x3f, p1_13);
-			पूर्ण
-		पूर्ण अन्यथा अगर(ivideo->sisvga_engine == SIS_315_VGA) अणु
-			अगर((ivideo->vbflags2 & VB2_30xB) &&
-			   (!(ivideo->vbflags2 & VB2_30xBDH))) अणु
+			}
+		} else if(ivideo->sisvga_engine == SIS_315_VGA) {
+			if((ivideo->vbflags2 & VB2_30xB) &&
+			   (!(ivideo->vbflags2 & VB2_30xBDH))) {
 				SiS_SetRegANDOR(SISPART2, 0x00, 0x1f, p2_0);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-	पूर्ण अन्यथा अगर(ivideo->currentvbflags & CRT2_VGA) अणु
+	} else if(ivideo->currentvbflags & CRT2_VGA) {
 
-		अगर(ivideo->vbflags2 & VB2_30xB) अणु
+		if(ivideo->vbflags2 & VB2_30xB) {
 			SiS_SetRegANDOR(SISPART2, 0x00, 0x1f, p2_0);
-		पूर्ण
+		}
 
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* ------------- Callbacks from init.c/init301.c  -------------- */
 
-#अगर_घोषित CONFIG_FB_SIS_300
-अचिन्हित पूर्णांक
-sisfb_पढ़ो_nbridge_pci_dword(काष्ठा SiS_Private *SiS_Pr, पूर्णांक reg)
-अणु
-   काष्ठा sis_video_info *ivideo = (काष्ठा sis_video_info *)SiS_Pr->ivideo;
+#ifdef CONFIG_FB_SIS_300
+unsigned int
+sisfb_read_nbridge_pci_dword(struct SiS_Private *SiS_Pr, int reg)
+{
+   struct sis_video_info *ivideo = (struct sis_video_info *)SiS_Pr->ivideo;
    u32 val = 0;
 
-   pci_पढ़ो_config_dword(ivideo->nbridge, reg, &val);
-   वापस (अचिन्हित पूर्णांक)val;
-पूर्ण
+   pci_read_config_dword(ivideo->nbridge, reg, &val);
+   return (unsigned int)val;
+}
 
-व्योम
-sisfb_ग_लिखो_nbridge_pci_dword(काष्ठा SiS_Private *SiS_Pr, पूर्णांक reg, अचिन्हित पूर्णांक val)
-अणु
-   काष्ठा sis_video_info *ivideo = (काष्ठा sis_video_info *)SiS_Pr->ivideo;
+void
+sisfb_write_nbridge_pci_dword(struct SiS_Private *SiS_Pr, int reg, unsigned int val)
+{
+   struct sis_video_info *ivideo = (struct sis_video_info *)SiS_Pr->ivideo;
 
-   pci_ग_लिखो_config_dword(ivideo->nbridge, reg, (u32)val);
-पूर्ण
+   pci_write_config_dword(ivideo->nbridge, reg, (u32)val);
+}
 
-अचिन्हित पूर्णांक
-sisfb_पढ़ो_lpc_pci_dword(काष्ठा SiS_Private *SiS_Pr, पूर्णांक reg)
-अणु
-   काष्ठा sis_video_info *ivideo = (काष्ठा sis_video_info *)SiS_Pr->ivideo;
+unsigned int
+sisfb_read_lpc_pci_dword(struct SiS_Private *SiS_Pr, int reg)
+{
+   struct sis_video_info *ivideo = (struct sis_video_info *)SiS_Pr->ivideo;
    u32 val = 0;
 
-   अगर(!ivideo->lpcdev) वापस 0;
+   if(!ivideo->lpcdev) return 0;
 
-   pci_पढ़ो_config_dword(ivideo->lpcdev, reg, &val);
-   वापस (अचिन्हित पूर्णांक)val;
-पूर्ण
-#पूर्ण_अगर
+   pci_read_config_dword(ivideo->lpcdev, reg, &val);
+   return (unsigned int)val;
+}
+#endif
 
-#अगर_घोषित CONFIG_FB_SIS_315
-व्योम
-sisfb_ग_लिखो_nbridge_pci_byte(काष्ठा SiS_Private *SiS_Pr, पूर्णांक reg, अचिन्हित अक्षर val)
-अणु
-   काष्ठा sis_video_info *ivideo = (काष्ठा sis_video_info *)SiS_Pr->ivideo;
+#ifdef CONFIG_FB_SIS_315
+void
+sisfb_write_nbridge_pci_byte(struct SiS_Private *SiS_Pr, int reg, unsigned char val)
+{
+   struct sis_video_info *ivideo = (struct sis_video_info *)SiS_Pr->ivideo;
 
-   pci_ग_लिखो_config_byte(ivideo->nbridge, reg, (u8)val);
-पूर्ण
+   pci_write_config_byte(ivideo->nbridge, reg, (u8)val);
+}
 
-अचिन्हित पूर्णांक
-sisfb_पढ़ो_mio_pci_word(काष्ठा SiS_Private *SiS_Pr, पूर्णांक reg)
-अणु
-   काष्ठा sis_video_info *ivideo = (काष्ठा sis_video_info *)SiS_Pr->ivideo;
+unsigned int
+sisfb_read_mio_pci_word(struct SiS_Private *SiS_Pr, int reg)
+{
+   struct sis_video_info *ivideo = (struct sis_video_info *)SiS_Pr->ivideo;
    u16 val = 0;
 
-   अगर(!ivideo->lpcdev) वापस 0;
+   if(!ivideo->lpcdev) return 0;
 
-   pci_पढ़ो_config_word(ivideo->lpcdev, reg, &val);
-   वापस (अचिन्हित पूर्णांक)val;
-पूर्ण
-#पूर्ण_अगर
+   pci_read_config_word(ivideo->lpcdev, reg, &val);
+   return (unsigned int)val;
+}
+#endif
 
-/* ----------- FBDev related routines क्रम all series ----------- */
+/* ----------- FBDev related routines for all series ----------- */
 
-अटल पूर्णांक
-sisfb_get_cmap_len(स्थिर काष्ठा fb_var_screeninfo *var)
-अणु
-	वापस (var->bits_per_pixel == 8) ? 256 : 16;
-पूर्ण
+static int
+sisfb_get_cmap_len(const struct fb_var_screeninfo *var)
+{
+	return (var->bits_per_pixel == 8) ? 256 : 16;
+}
 
-अटल व्योम
-sisfb_set_vparms(काष्ठा sis_video_info *ivideo)
-अणु
-	चयन(ivideo->video_bpp) अणु
-	हाल 8:
+static void
+sisfb_set_vparms(struct sis_video_info *ivideo)
+{
+	switch(ivideo->video_bpp) {
+	case 8:
 		ivideo->DstColor = 0x0000;
 		ivideo->SiS310_AccelDepth = 0x00000000;
 		ivideo->video_cmap_len = 256;
-		अवरोध;
-	हाल 16:
+		break;
+	case 16:
 		ivideo->DstColor = 0x8000;
 		ivideo->SiS310_AccelDepth = 0x00010000;
 		ivideo->video_cmap_len = 16;
-		अवरोध;
-	हाल 32:
+		break;
+	case 32:
 		ivideo->DstColor = 0xC000;
 		ivideo->SiS310_AccelDepth = 0x00020000;
 		ivideo->video_cmap_len = 16;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ivideo->video_cmap_len = 16;
-		prपूर्णांकk(KERN_ERR "sisfb: Unsupported depth %d", ivideo->video_bpp);
+		printk(KERN_ERR "sisfb: Unsupported depth %d", ivideo->video_bpp);
 		ivideo->accel = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक
-sisfb_calc_maxyres(काष्ठा sis_video_info *ivideo, काष्ठा fb_var_screeninfo *var)
-अणु
-	पूर्णांक maxyres = ivideo->sisfb_mem / (var->xres_भव * (var->bits_per_pixel >> 3));
+static int
+sisfb_calc_maxyres(struct sis_video_info *ivideo, struct fb_var_screeninfo *var)
+{
+	int maxyres = ivideo->sisfb_mem / (var->xres_virtual * (var->bits_per_pixel >> 3));
 
-	अगर(maxyres > 32767) maxyres = 32767;
+	if(maxyres > 32767) maxyres = 32767;
 
-	वापस maxyres;
-पूर्ण
+	return maxyres;
+}
 
-अटल व्योम
-sisfb_calc_pitch(काष्ठा sis_video_info *ivideo, काष्ठा fb_var_screeninfo *var)
-अणु
-	ivideo->video_linelength = var->xres_भव * (var->bits_per_pixel >> 3);
+static void
+sisfb_calc_pitch(struct sis_video_info *ivideo, struct fb_var_screeninfo *var)
+{
+	ivideo->video_linelength = var->xres_virtual * (var->bits_per_pixel >> 3);
 	ivideo->scrnpitchCRT1 = ivideo->video_linelength;
-	अगर(!(ivideo->currentvbflags & CRT1_LCDA)) अणु
-		अगर((var->vmode & FB_VMODE_MASK) == FB_VMODE_INTERLACED) अणु
+	if(!(ivideo->currentvbflags & CRT1_LCDA)) {
+		if((var->vmode & FB_VMODE_MASK) == FB_VMODE_INTERLACED) {
 			ivideo->scrnpitchCRT1 <<= 1;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम
-sisfb_set_pitch(काष्ठा sis_video_info *ivideo)
-अणु
+static void
+sisfb_set_pitch(struct sis_video_info *ivideo)
+{
 	bool isslavemode = false;
-	अचिन्हित लघु HDisplay1 = ivideo->scrnpitchCRT1 >> 3;
-	अचिन्हित लघु HDisplay2 = ivideo->video_linelength >> 3;
+	unsigned short HDisplay1 = ivideo->scrnpitchCRT1 >> 3;
+	unsigned short HDisplay2 = ivideo->video_linelength >> 3;
 
-	अगर(sisfb_bridgeisslave(ivideo)) isslavemode = true;
+	if(sisfb_bridgeisslave(ivideo)) isslavemode = true;
 
-	/* We need to set pitch क्रम CRT1 अगर bridge is in slave mode, too */
-	अगर((ivideo->currentvbflags & VB_DISPTYPE_DISP1) || (isslavemode)) अणु
+	/* We need to set pitch for CRT1 if bridge is in slave mode, too */
+	if((ivideo->currentvbflags & VB_DISPTYPE_DISP1) || (isslavemode)) {
 		SiS_SetReg(SISCR, 0x13, (HDisplay1 & 0xFF));
 		SiS_SetRegANDOR(SISSR, 0x0E, 0xF0, (HDisplay1 >> 8));
-	पूर्ण
+	}
 
-	/* We must not set the pitch क्रम CRT2 अगर bridge is in slave mode */
-	अगर((ivideo->currentvbflags & VB_DISPTYPE_DISP2) && (!isslavemode)) अणु
-		SiS_SetRegOR(SISPART1, ivideo->CRT2_ग_लिखो_enable, 0x01);
+	/* We must not set the pitch for CRT2 if bridge is in slave mode */
+	if((ivideo->currentvbflags & VB_DISPTYPE_DISP2) && (!isslavemode)) {
+		SiS_SetRegOR(SISPART1, ivideo->CRT2_write_enable, 0x01);
 		SiS_SetReg(SISPART1, 0x07, (HDisplay2 & 0xFF));
 		SiS_SetRegANDOR(SISPART1, 0x09, 0xF0, (HDisplay2 >> 8));
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-sisfb_bpp_to_var(काष्ठा sis_video_info *ivideo, काष्ठा fb_var_screeninfo *var)
-अणु
+static void
+sisfb_bpp_to_var(struct sis_video_info *ivideo, struct fb_var_screeninfo *var)
+{
 	ivideo->video_cmap_len = sisfb_get_cmap_len(var);
 
-	चयन(var->bits_per_pixel) अणु
-	हाल 8:
+	switch(var->bits_per_pixel) {
+	case 8:
 		var->red.offset = var->green.offset = var->blue.offset = 0;
 		var->red.length = var->green.length = var->blue.length = 8;
-		अवरोध;
-	हाल 16:
+		break;
+	case 16:
 		var->red.offset = 11;
 		var->red.length = 5;
 		var->green.offset = 5;
@@ -1175,8 +1174,8 @@ sisfb_bpp_to_var(काष्ठा sis_video_info *ivideo, काष्ठा f
 		var->blue.length = 5;
 		var->transp.offset = 0;
 		var->transp.length = 0;
-		अवरोध;
-	हाल 32:
+		break;
+	case 32:
 		var->red.offset = 16;
 		var->red.length = 8;
 		var->green.offset = 8;
@@ -1185,132 +1184,132 @@ sisfb_bpp_to_var(काष्ठा sis_video_info *ivideo, काष्ठा f
 		var->blue.length = 8;
 		var->transp.offset = 24;
 		var->transp.length = 8;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक
-sisfb_set_mode(काष्ठा sis_video_info *ivideo, पूर्णांक clrscrn)
-अणु
-	अचिन्हित लघु modeno = ivideo->mode_no;
+static int
+sisfb_set_mode(struct sis_video_info *ivideo, int clrscrn)
+{
+	unsigned short modeno = ivideo->mode_no;
 
 	/* >=2.6.12's fbcon clears the screen anyway */
 	modeno |= 0x80;
 
 	SiS_SetReg(SISSR, IND_SIS_PASSWORD, SIS_PASSWORD);
 
-	sisfb_pre_seपंचांगode(ivideo);
+	sisfb_pre_setmode(ivideo);
 
-	अगर(!SiSSetMode(&ivideo->SiS_Pr, modeno)) अणु
-		prपूर्णांकk(KERN_ERR "sisfb: Setting mode[0x%x] failed\n", ivideo->mode_no);
-		वापस -EINVAL;
-	पूर्ण
+	if(!SiSSetMode(&ivideo->SiS_Pr, modeno)) {
+		printk(KERN_ERR "sisfb: Setting mode[0x%x] failed\n", ivideo->mode_no);
+		return -EINVAL;
+	}
 
 	SiS_SetReg(SISSR, IND_SIS_PASSWORD, SIS_PASSWORD);
 
-	sisfb_post_seपंचांगode(ivideo);
+	sisfb_post_setmode(ivideo);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक
-sisfb_करो_set_var(काष्ठा fb_var_screeninfo *var, पूर्णांक isactive, काष्ठा fb_info *info)
-अणु
-	काष्ठा sis_video_info *ivideo = (काष्ठा sis_video_info *)info->par;
-	अचिन्हित पूर्णांक htotal = 0, vtotal = 0;
-	अचिन्हित पूर्णांक drate = 0, hrate = 0;
-	पूर्णांक found_mode = 0, ret;
-	पूर्णांक old_mode;
-	u32 pixघड़ी;
+static int
+sisfb_do_set_var(struct fb_var_screeninfo *var, int isactive, struct fb_info *info)
+{
+	struct sis_video_info *ivideo = (struct sis_video_info *)info->par;
+	unsigned int htotal = 0, vtotal = 0;
+	unsigned int drate = 0, hrate = 0;
+	int found_mode = 0, ret;
+	int old_mode;
+	u32 pixclock;
 
 	htotal = var->left_margin + var->xres + var->right_margin + var->hsync_len;
 
 	vtotal = var->upper_margin + var->lower_margin + var->vsync_len;
 
-	pixघड़ी = var->pixघड़ी;
+	pixclock = var->pixclock;
 
-	अगर((var->vmode & FB_VMODE_MASK) == FB_VMODE_NONINTERLACED) अणु
+	if((var->vmode & FB_VMODE_MASK) == FB_VMODE_NONINTERLACED) {
 		vtotal += var->yres;
 		vtotal <<= 1;
-	पूर्ण अन्यथा अगर((var->vmode & FB_VMODE_MASK) == FB_VMODE_DOUBLE) अणु
+	} else if((var->vmode & FB_VMODE_MASK) == FB_VMODE_DOUBLE) {
 		vtotal += var->yres;
 		vtotal <<= 2;
-	पूर्ण अन्यथा अगर((var->vmode & FB_VMODE_MASK) == FB_VMODE_INTERLACED) अणु
+	} else if((var->vmode & FB_VMODE_MASK) == FB_VMODE_INTERLACED) {
 		vtotal += var->yres;
 		vtotal <<= 1;
-	पूर्ण अन्यथा 	vtotal += var->yres;
+	} else 	vtotal += var->yres;
 
-	अगर(!(htotal) || !(vtotal)) अणु
+	if(!(htotal) || !(vtotal)) {
 		DPRINTK("sisfb: Invalid 'var' information\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर(pixघड़ी && htotal && vtotal) अणु
-		drate = 1000000000 / pixघड़ी;
+	if(pixclock && htotal && vtotal) {
+		drate = 1000000000 / pixclock;
 		hrate = (drate * 1000) / htotal;
-		ivideo->refresh_rate = (अचिन्हित पूर्णांक) (hrate * 2 / vtotal);
-	पूर्ण अन्यथा अणु
+		ivideo->refresh_rate = (unsigned int) (hrate * 2 / vtotal);
+	} else {
 		ivideo->refresh_rate = 60;
-	पूर्ण
+	}
 
 	old_mode = ivideo->sisfb_mode_idx;
 	ivideo->sisfb_mode_idx = 0;
 
-	जबतक( (sisbios_mode[ivideo->sisfb_mode_idx].mode_no[0] != 0) &&
-	       (sisbios_mode[ivideo->sisfb_mode_idx].xres <= var->xres) ) अणु
-		अगर( (sisbios_mode[ivideo->sisfb_mode_idx].xres == var->xres) &&
+	while( (sisbios_mode[ivideo->sisfb_mode_idx].mode_no[0] != 0) &&
+	       (sisbios_mode[ivideo->sisfb_mode_idx].xres <= var->xres) ) {
+		if( (sisbios_mode[ivideo->sisfb_mode_idx].xres == var->xres) &&
 		    (sisbios_mode[ivideo->sisfb_mode_idx].yres == var->yres) &&
-		    (sisbios_mode[ivideo->sisfb_mode_idx].bpp == var->bits_per_pixel)) अणु
+		    (sisbios_mode[ivideo->sisfb_mode_idx].bpp == var->bits_per_pixel)) {
 			ivideo->mode_no = sisbios_mode[ivideo->sisfb_mode_idx].mode_no[ivideo->mni];
 			found_mode = 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ivideo->sisfb_mode_idx++;
-	पूर्ण
+	}
 
-	अगर(found_mode) अणु
+	if(found_mode) {
 		ivideo->sisfb_mode_idx = sisfb_validate_mode(ivideo,
 				ivideo->sisfb_mode_idx, ivideo->currentvbflags);
-	पूर्ण अन्यथा अणु
+	} else {
 		ivideo->sisfb_mode_idx = -1;
-	पूर्ण
+	}
 
-       	अगर(ivideo->sisfb_mode_idx < 0) अणु
-		prपूर्णांकk(KERN_ERR "sisfb: Mode %dx%dx%d not supported\n", var->xres,
+       	if(ivideo->sisfb_mode_idx < 0) {
+		printk(KERN_ERR "sisfb: Mode %dx%dx%d not supported\n", var->xres,
 		       var->yres, var->bits_per_pixel);
 		ivideo->sisfb_mode_idx = old_mode;
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ivideo->mode_no = sisbios_mode[ivideo->sisfb_mode_idx].mode_no[ivideo->mni];
 
-	अगर(sisfb_search_refresh_rate(ivideo, ivideo->refresh_rate, ivideo->sisfb_mode_idx) == 0) अणु
+	if(sisfb_search_refresh_rate(ivideo, ivideo->refresh_rate, ivideo->sisfb_mode_idx) == 0) {
 		ivideo->rate_idx = sisbios_mode[ivideo->sisfb_mode_idx].rate_idx;
 		ivideo->refresh_rate = 60;
-	पूर्ण
+	}
 
-	अगर(isactive) अणु
+	if(isactive) {
 		/* If acceleration to be used? Need to know
-		 * beक्रमe pre/post_set_mode()
+		 * before pre/post_set_mode()
 		 */
 		ivideo->accel = 0;
-#अगर defined(FBINFO_HWACCEL_DISABLED) && defined(FBINFO_HWACCEL_XPAN)
-#अगर_घोषित STUPID_ACCELF_TEXT_SHIT
-		अगर(var->accel_flags & FB_ACCELF_TEXT) अणु
+#if defined(FBINFO_HWACCEL_DISABLED) && defined(FBINFO_HWACCEL_XPAN)
+#ifdef STUPID_ACCELF_TEXT_SHIT
+		if(var->accel_flags & FB_ACCELF_TEXT) {
 			info->flags &= ~FBINFO_HWACCEL_DISABLED;
-		पूर्ण अन्यथा अणु
+		} else {
 			info->flags |= FBINFO_HWACCEL_DISABLED;
-		पूर्ण
-#पूर्ण_अगर
-		अगर(!(info->flags & FBINFO_HWACCEL_DISABLED)) ivideo->accel = -1;
-#अन्यथा
-		अगर(var->accel_flags & FB_ACCELF_TEXT) ivideo->accel = -1;
-#पूर्ण_अगर
+		}
+#endif
+		if(!(info->flags & FBINFO_HWACCEL_DISABLED)) ivideo->accel = -1;
+#else
+		if(var->accel_flags & FB_ACCELF_TEXT) ivideo->accel = -1;
+#endif
 
-		अगर((ret = sisfb_set_mode(ivideo, 1))) अणु
-			वापस ret;
-		पूर्ण
+		if((ret = sisfb_set_mode(ivideo, 1))) {
+			return ret;
+		}
 
 		ivideo->video_bpp    = sisbios_mode[ivideo->sisfb_mode_idx].bpp;
 		ivideo->video_width  = sisbios_mode[ivideo->sisfb_mode_idx].xres;
@@ -1327,205 +1326,205 @@ sisfb_करो_set_var(काष्ठा fb_var_screeninfo *var, पूर्�
 		ivideo->current_htotal = htotal;
 		ivideo->current_vtotal = vtotal;
 		ivideo->current_linelength = ivideo->video_linelength;
-		ivideo->current_pixघड़ी = var->pixघड़ी;
+		ivideo->current_pixclock = var->pixclock;
 		ivideo->current_refresh_rate = ivideo->refresh_rate;
 		ivideo->sisfb_lastrates[ivideo->mode_no] = ivideo->refresh_rate;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-sisfb_set_base_CRT1(काष्ठा sis_video_info *ivideo, अचिन्हित पूर्णांक base)
-अणु
+static void
+sisfb_set_base_CRT1(struct sis_video_info *ivideo, unsigned int base)
+{
 	SiS_SetReg(SISSR, IND_SIS_PASSWORD, SIS_PASSWORD);
 
 	SiS_SetReg(SISCR, 0x0D, base & 0xFF);
 	SiS_SetReg(SISCR, 0x0C, (base >> 8) & 0xFF);
 	SiS_SetReg(SISSR, 0x0D, (base >> 16) & 0xFF);
-	अगर(ivideo->sisvga_engine == SIS_315_VGA) अणु
+	if(ivideo->sisvga_engine == SIS_315_VGA) {
 		SiS_SetRegANDOR(SISSR, 0x37, 0xFE, (base >> 24) & 0x01);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-sisfb_set_base_CRT2(काष्ठा sis_video_info *ivideo, अचिन्हित पूर्णांक base)
-अणु
-	अगर(ivideo->currentvbflags & VB_DISPTYPE_DISP2) अणु
-		SiS_SetRegOR(SISPART1, ivideo->CRT2_ग_लिखो_enable, 0x01);
+static void
+sisfb_set_base_CRT2(struct sis_video_info *ivideo, unsigned int base)
+{
+	if(ivideo->currentvbflags & VB_DISPTYPE_DISP2) {
+		SiS_SetRegOR(SISPART1, ivideo->CRT2_write_enable, 0x01);
 		SiS_SetReg(SISPART1, 0x06, (base & 0xFF));
 		SiS_SetReg(SISPART1, 0x05, ((base >> 8) & 0xFF));
 		SiS_SetReg(SISPART1, 0x04, ((base >> 16) & 0xFF));
-		अगर(ivideo->sisvga_engine == SIS_315_VGA) अणु
+		if(ivideo->sisvga_engine == SIS_315_VGA) {
 			SiS_SetRegANDOR(SISPART1, 0x02, 0x7F, ((base >> 24) & 0x01) << 7);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक
-sisfb_pan_var(काष्ठा sis_video_info *ivideo, काष्ठा fb_info *info,
-	      काष्ठा fb_var_screeninfo *var)
-अणु
-	ivideo->current_base = var->yoffset * info->var.xres_भव
+static int
+sisfb_pan_var(struct sis_video_info *ivideo, struct fb_info *info,
+	      struct fb_var_screeninfo *var)
+{
+	ivideo->current_base = var->yoffset * info->var.xres_virtual
 			     + var->xoffset;
 
 	/* calculate base bpp dep. */
-	चयन (info->var.bits_per_pixel) अणु
-	हाल 32:
-		अवरोध;
-	हाल 16:
+	switch (info->var.bits_per_pixel) {
+	case 32:
+		break;
+	case 16:
 		ivideo->current_base >>= 1;
-		अवरोध;
-	हाल 8:
-	शेष:
+		break;
+	case 8:
+	default:
 		ivideo->current_base >>= 2;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	ivideo->current_base += (ivideo->video_offset >> 2);
 
 	sisfb_set_base_CRT1(ivideo, ivideo->current_base);
 	sisfb_set_base_CRT2(ivideo, ivideo->current_base);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-sisfb_खोलो(काष्ठा fb_info *info, पूर्णांक user)
-अणु
-	वापस 0;
-पूर्ण
+static int
+sisfb_open(struct fb_info *info, int user)
+{
+	return 0;
+}
 
-अटल पूर्णांक
-sisfb_release(काष्ठा fb_info *info, पूर्णांक user)
-अणु
-	वापस 0;
-पूर्ण
+static int
+sisfb_release(struct fb_info *info, int user)
+{
+	return 0;
+}
 
-अटल पूर्णांक
-sisfb_setcolreg(अचिन्हित regno, अचिन्हित red, अचिन्हित green, अचिन्हित blue,
-		अचिन्हित transp, काष्ठा fb_info *info)
-अणु
-	काष्ठा sis_video_info *ivideo = (काष्ठा sis_video_info *)info->par;
+static int
+sisfb_setcolreg(unsigned regno, unsigned red, unsigned green, unsigned blue,
+		unsigned transp, struct fb_info *info)
+{
+	struct sis_video_info *ivideo = (struct sis_video_info *)info->par;
 
-	अगर(regno >= sisfb_get_cmap_len(&info->var))
-		वापस 1;
+	if(regno >= sisfb_get_cmap_len(&info->var))
+		return 1;
 
-	चयन(info->var.bits_per_pixel) अणु
-	हाल 8:
+	switch(info->var.bits_per_pixel) {
+	case 8:
 		SiS_SetRegByte(SISDACA, regno);
 		SiS_SetRegByte(SISDACD, (red >> 10));
 		SiS_SetRegByte(SISDACD, (green >> 10));
 		SiS_SetRegByte(SISDACD, (blue >> 10));
-		अगर(ivideo->currentvbflags & VB_DISPTYPE_DISP2) अणु
+		if(ivideo->currentvbflags & VB_DISPTYPE_DISP2) {
 			SiS_SetRegByte(SISDAC2A, regno);
 			SiS_SetRegByte(SISDAC2D, (red >> 8));
 			SiS_SetRegByte(SISDAC2D, (green >> 8));
 			SiS_SetRegByte(SISDAC2D, (blue >> 8));
-		पूर्ण
-		अवरोध;
-	हाल 16:
-		अगर (regno >= 16)
-			अवरोध;
+		}
+		break;
+	case 16:
+		if (regno >= 16)
+			break;
 
-		((u32 *)(info->pseuकरो_palette))[regno] =
+		((u32 *)(info->pseudo_palette))[regno] =
 				(red & 0xf800)          |
 				((green & 0xfc00) >> 5) |
 				((blue & 0xf800) >> 11);
-		अवरोध;
-	हाल 32:
-		अगर (regno >= 16)
-			अवरोध;
+		break;
+	case 32:
+		if (regno >= 16)
+			break;
 
 		red >>= 8;
 		green >>= 8;
 		blue >>= 8;
-		((u32 *)(info->pseuकरो_palette))[regno] =
+		((u32 *)(info->pseudo_palette))[regno] =
 				(red << 16) | (green << 8) | (blue);
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक
-sisfb_set_par(काष्ठा fb_info *info)
-अणु
-	पूर्णांक err;
+static int
+sisfb_set_par(struct fb_info *info)
+{
+	int err;
 
-	अगर((err = sisfb_करो_set_var(&info->var, 1, info)))
-		वापस err;
+	if((err = sisfb_do_set_var(&info->var, 1, info)))
+		return err;
 
 	sisfb_get_fix(&info->fix, -1, info);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-sisfb_check_var(काष्ठा fb_var_screeninfo *var, काष्ठा fb_info *info)
-अणु
-	काष्ठा sis_video_info *ivideo = (काष्ठा sis_video_info *)info->par;
-	अचिन्हित पूर्णांक htotal = 0, vtotal = 0, myrateindex = 0;
-	अचिन्हित पूर्णांक drate = 0, hrate = 0, maxyres;
-	पूर्णांक found_mode = 0;
-	पूर्णांक refresh_rate, search_idx, tidx;
-	bool recalc_घड़ी = false;
-	u32 pixघड़ी;
+static int
+sisfb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
+{
+	struct sis_video_info *ivideo = (struct sis_video_info *)info->par;
+	unsigned int htotal = 0, vtotal = 0, myrateindex = 0;
+	unsigned int drate = 0, hrate = 0, maxyres;
+	int found_mode = 0;
+	int refresh_rate, search_idx, tidx;
+	bool recalc_clock = false;
+	u32 pixclock;
 
 	htotal = var->left_margin + var->xres + var->right_margin + var->hsync_len;
 
 	vtotal = var->upper_margin + var->lower_margin + var->vsync_len;
 
-	pixघड़ी = var->pixघड़ी;
+	pixclock = var->pixclock;
 
-	अगर((var->vmode & FB_VMODE_MASK) == FB_VMODE_NONINTERLACED) अणु
+	if((var->vmode & FB_VMODE_MASK) == FB_VMODE_NONINTERLACED) {
 		vtotal += var->yres;
 		vtotal <<= 1;
-	पूर्ण अन्यथा अगर((var->vmode & FB_VMODE_MASK) == FB_VMODE_DOUBLE) अणु
+	} else if((var->vmode & FB_VMODE_MASK) == FB_VMODE_DOUBLE) {
 		vtotal += var->yres;
 		vtotal <<= 2;
-	पूर्ण अन्यथा अगर((var->vmode & FB_VMODE_MASK) == FB_VMODE_INTERLACED) अणु
+	} else if((var->vmode & FB_VMODE_MASK) == FB_VMODE_INTERLACED) {
 		vtotal += var->yres;
 		vtotal <<= 1;
-	पूर्ण अन्यथा
+	} else
 		vtotal += var->yres;
 
-	अगर(!(htotal) || !(vtotal)) अणु
+	if(!(htotal) || !(vtotal)) {
 		SISFAIL("sisfb: no valid timing data");
-	पूर्ण
+	}
 
 	search_idx = 0;
-	जबतक( (sisbios_mode[search_idx].mode_no[0] != 0) &&
-	       (sisbios_mode[search_idx].xres <= var->xres) ) अणु
-		अगर( (sisbios_mode[search_idx].xres == var->xres) &&
+	while( (sisbios_mode[search_idx].mode_no[0] != 0) &&
+	       (sisbios_mode[search_idx].xres <= var->xres) ) {
+		if( (sisbios_mode[search_idx].xres == var->xres) &&
 		    (sisbios_mode[search_idx].yres == var->yres) &&
-		    (sisbios_mode[search_idx].bpp == var->bits_per_pixel)) अणु
-			अगर((tidx = sisfb_validate_mode(ivideo, search_idx,
-						ivideo->currentvbflags)) > 0) अणु
+		    (sisbios_mode[search_idx].bpp == var->bits_per_pixel)) {
+			if((tidx = sisfb_validate_mode(ivideo, search_idx,
+						ivideo->currentvbflags)) > 0) {
 				found_mode = 1;
 				search_idx = tidx;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 		search_idx++;
-	पूर्ण
+	}
 
-	अगर(!found_mode) अणु
+	if(!found_mode) {
 		search_idx = 0;
-		जबतक(sisbios_mode[search_idx].mode_no[0] != 0) अणु
-		   अगर( (var->xres <= sisbios_mode[search_idx].xres) &&
+		while(sisbios_mode[search_idx].mode_no[0] != 0) {
+		   if( (var->xres <= sisbios_mode[search_idx].xres) &&
 		       (var->yres <= sisbios_mode[search_idx].yres) &&
-		       (var->bits_per_pixel == sisbios_mode[search_idx].bpp) ) अणु
-			अगर((tidx = sisfb_validate_mode(ivideo,search_idx,
-						ivideo->currentvbflags)) > 0) अणु
+		       (var->bits_per_pixel == sisbios_mode[search_idx].bpp) ) {
+			if((tidx = sisfb_validate_mode(ivideo,search_idx,
+						ivideo->currentvbflags)) > 0) {
 				found_mode = 1;
 				search_idx = tidx;
-				अवरोध;
-			पूर्ण
-		   पूर्ण
+				break;
+			}
+		   }
 		   search_idx++;
-		पूर्ण
-		अगर(found_mode) अणु
-			prपूर्णांकk(KERN_DEBUG
+		}
+		if(found_mode) {
+			printk(KERN_DEBUG
 				"sisfb: Adapted from %dx%dx%d to %dx%dx%d\n",
 				var->xres, var->yres, var->bits_per_pixel,
 				sisbios_mode[search_idx].xres,
@@ -1533,113 +1532,113 @@ sisfb_check_var(काष्ठा fb_var_screeninfo *var, काष्ठा fb
 				var->bits_per_pixel);
 			var->xres = sisbios_mode[search_idx].xres;
 			var->yres = sisbios_mode[search_idx].yres;
-		पूर्ण अन्यथा अणु
-			prपूर्णांकk(KERN_ERR
+		} else {
+			printk(KERN_ERR
 				"sisfb: Failed to find supported mode near %dx%dx%d\n",
 				var->xres, var->yres, var->bits_per_pixel);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर( ((ivideo->vbflags2 & VB2_LVDS) ||
+	if( ((ivideo->vbflags2 & VB2_LVDS) ||
 	     ((ivideo->vbflags2 & VB2_30xBDH) && (ivideo->currentvbflags & CRT2_LCD))) &&
-	    (var->bits_per_pixel == 8) ) अणु
+	    (var->bits_per_pixel == 8) ) {
 		/* Slave modes on LVDS and 301B-DH */
 		refresh_rate = 60;
-		recalc_घड़ी = true;
-	पूर्ण अन्यथा अगर( (ivideo->current_htotal == htotal) &&
+		recalc_clock = true;
+	} else if( (ivideo->current_htotal == htotal) &&
 		   (ivideo->current_vtotal == vtotal) &&
-		   (ivideo->current_pixघड़ी == pixघड़ी) ) अणु
+		   (ivideo->current_pixclock == pixclock) ) {
 		/* x=x & y=y & c=c -> assume depth change */
-		drate = 1000000000 / pixघड़ी;
+		drate = 1000000000 / pixclock;
 		hrate = (drate * 1000) / htotal;
-		refresh_rate = (अचिन्हित पूर्णांक) (hrate * 2 / vtotal);
-	पूर्ण अन्यथा अगर( ( (ivideo->current_htotal != htotal) ||
+		refresh_rate = (unsigned int) (hrate * 2 / vtotal);
+	} else if( ( (ivideo->current_htotal != htotal) ||
 		     (ivideo->current_vtotal != vtotal) ) &&
-		   (ivideo->current_pixघड़ी == var->pixघड़ी) ) अणु
-		/* x!=x | y!=y & c=c -> invalid pixघड़ी */
-		अगर(ivideo->sisfb_lastrates[sisbios_mode[search_idx].mode_no[ivideo->mni]]) अणु
+		   (ivideo->current_pixclock == var->pixclock) ) {
+		/* x!=x | y!=y & c=c -> invalid pixclock */
+		if(ivideo->sisfb_lastrates[sisbios_mode[search_idx].mode_no[ivideo->mni]]) {
 			refresh_rate =
 				ivideo->sisfb_lastrates[sisbios_mode[search_idx].mode_no[ivideo->mni]];
-		पूर्ण अन्यथा अगर(ivideo->sisfb_parm_rate != -1) अणु
+		} else if(ivideo->sisfb_parm_rate != -1) {
 			/* Sic, sisfb_parm_rate - want to know originally desired rate here */
 			refresh_rate = ivideo->sisfb_parm_rate;
-		पूर्ण अन्यथा अणु
+		} else {
 			refresh_rate = 60;
-		पूर्ण
-		recalc_घड़ी = true;
-	पूर्ण अन्यथा अगर((pixघड़ी) && (htotal) && (vtotal)) अणु
-		drate = 1000000000 / pixघड़ी;
+		}
+		recalc_clock = true;
+	} else if((pixclock) && (htotal) && (vtotal)) {
+		drate = 1000000000 / pixclock;
 		hrate = (drate * 1000) / htotal;
-		refresh_rate = (अचिन्हित पूर्णांक) (hrate * 2 / vtotal);
-	पूर्ण अन्यथा अगर(ivideo->current_refresh_rate) अणु
+		refresh_rate = (unsigned int) (hrate * 2 / vtotal);
+	} else if(ivideo->current_refresh_rate) {
 		refresh_rate = ivideo->current_refresh_rate;
-		recalc_घड़ी = true;
-	पूर्ण अन्यथा अणु
+		recalc_clock = true;
+	} else {
 		refresh_rate = 60;
-		recalc_घड़ी = true;
-	पूर्ण
+		recalc_clock = true;
+	}
 
 	myrateindex = sisfb_search_refresh_rate(ivideo, refresh_rate, search_idx);
 
-	/* Eventually recalculate timing and घड़ी */
-	अगर(recalc_घड़ी) अणु
-		अगर(!myrateindex) myrateindex = sisbios_mode[search_idx].rate_idx;
-		var->pixघड़ी = (u32) (1000000000 / sisfb_mode_rate_to_dघड़ी(&ivideo->SiS_Pr,
+	/* Eventually recalculate timing and clock */
+	if(recalc_clock) {
+		if(!myrateindex) myrateindex = sisbios_mode[search_idx].rate_idx;
+		var->pixclock = (u32) (1000000000 / sisfb_mode_rate_to_dclock(&ivideo->SiS_Pr,
 						sisbios_mode[search_idx].mode_no[ivideo->mni],
 						myrateindex));
 		sisfb_mode_rate_to_ddata(&ivideo->SiS_Pr,
 					sisbios_mode[search_idx].mode_no[ivideo->mni],
 					myrateindex, var);
-		अगर((var->vmode & FB_VMODE_MASK) == FB_VMODE_DOUBLE) अणु
-			var->pixघड़ी <<= 1;
-		पूर्ण
-	पूर्ण
+		if((var->vmode & FB_VMODE_MASK) == FB_VMODE_DOUBLE) {
+			var->pixclock <<= 1;
+		}
+	}
 
-	अगर(ivideo->sisfb_thismonitor.datavalid) अणु
-		अगर(!sisfb_verअगरy_rate(ivideo, &ivideo->sisfb_thismonitor, search_idx,
-				myrateindex, refresh_rate)) अणु
-			prपूर्णांकk(KERN_INFO
+	if(ivideo->sisfb_thismonitor.datavalid) {
+		if(!sisfb_verify_rate(ivideo, &ivideo->sisfb_thismonitor, search_idx,
+				myrateindex, refresh_rate)) {
+			printk(KERN_INFO
 				"sisfb: WARNING: Refresh rate exceeds monitor specs!\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Adapt RGB settings */
 	sisfb_bpp_to_var(ivideo, var);
 
-	अगर(var->xres > var->xres_भव)
-		var->xres_भव = var->xres;
+	if(var->xres > var->xres_virtual)
+		var->xres_virtual = var->xres;
 
-	अगर(ivideo->sisfb_ypan) अणु
+	if(ivideo->sisfb_ypan) {
 		maxyres = sisfb_calc_maxyres(ivideo, var);
-		अगर(ivideo->sisfb_max) अणु
-			var->yres_भव = maxyres;
-		पूर्ण अन्यथा अणु
-			अगर(var->yres_भव > maxyres) अणु
-				var->yres_भव = maxyres;
-			पूर्ण
-		पूर्ण
-		अगर(var->yres_भव <= var->yres) अणु
-			var->yres_भव = var->yres;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर(var->yres != var->yres_भव) अणु
-			var->yres_भव = var->yres;
-		पूर्ण
+		if(ivideo->sisfb_max) {
+			var->yres_virtual = maxyres;
+		} else {
+			if(var->yres_virtual > maxyres) {
+				var->yres_virtual = maxyres;
+			}
+		}
+		if(var->yres_virtual <= var->yres) {
+			var->yres_virtual = var->yres;
+		}
+	} else {
+		if(var->yres != var->yres_virtual) {
+			var->yres_virtual = var->yres;
+		}
 		var->xoffset = 0;
 		var->yoffset = 0;
-	पूर्ण
+	}
 
-	/* Truncate offsets to maximum अगर too high */
-	अगर(var->xoffset > var->xres_भव - var->xres) अणु
-		var->xoffset = var->xres_भव - var->xres - 1;
-	पूर्ण
+	/* Truncate offsets to maximum if too high */
+	if(var->xoffset > var->xres_virtual - var->xres) {
+		var->xoffset = var->xres_virtual - var->xres - 1;
+	}
 
-	अगर(var->yoffset > var->yres_भव - var->yres) अणु
-		var->yoffset = var->yres_भव - var->yres - 1;
-	पूर्ण
+	if(var->yoffset > var->yres_virtual - var->yres) {
+		var->yoffset = var->yres_virtual - var->yres - 1;
+	}
 
-	/* Set everything अन्यथा to 0 */
+	/* Set everything else to 0 */
 	var->red.msb_right =
 		var->green.msb_right =
 		var->blue.msb_right =
@@ -1647,119 +1646,119 @@ sisfb_check_var(काष्ठा fb_var_screeninfo *var, काष्ठा fb
 		var->transp.length =
 		var->transp.msb_right = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-sisfb_pan_display(काष्ठा fb_var_screeninfo *var, काष्ठा fb_info* info)
-अणु
-	काष्ठा sis_video_info *ivideo = (काष्ठा sis_video_info *)info->par;
-	पूर्णांक err;
+static int
+sisfb_pan_display(struct fb_var_screeninfo *var, struct fb_info* info)
+{
+	struct sis_video_info *ivideo = (struct sis_video_info *)info->par;
+	int err;
 
-	अगर (var->vmode & FB_VMODE_YWRAP)
-		वापस -EINVAL;
+	if (var->vmode & FB_VMODE_YWRAP)
+		return -EINVAL;
 
-	अगर (var->xoffset + info->var.xres > info->var.xres_भव ||
-	    var->yoffset + info->var.yres > info->var.yres_भव)
-		वापस -EINVAL;
+	if (var->xoffset + info->var.xres > info->var.xres_virtual ||
+	    var->yoffset + info->var.yres > info->var.yres_virtual)
+		return -EINVAL;
 
 	err = sisfb_pan_var(ivideo, info, var);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	info->var.xoffset = var->xoffset;
 	info->var.yoffset = var->yoffset;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-sisfb_blank(पूर्णांक blank, काष्ठा fb_info *info)
-अणु
-	काष्ठा sis_video_info *ivideo = (काष्ठा sis_video_info *)info->par;
+static int
+sisfb_blank(int blank, struct fb_info *info)
+{
+	struct sis_video_info *ivideo = (struct sis_video_info *)info->par;
 
-	वापस sisfb_myblank(ivideo, blank);
-पूर्ण
+	return sisfb_myblank(ivideo, blank);
+}
 
-/* ----------- FBDev related routines क्रम all series ---------- */
+/* ----------- FBDev related routines for all series ---------- */
 
-अटल पूर्णांक	sisfb_ioctl(काष्ठा fb_info *info, अचिन्हित पूर्णांक cmd,
-			    अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा sis_video_info	*ivideo = (काष्ठा sis_video_info *)info->par;
-	काष्ठा sis_memreq	sismemreq;
-	काष्ठा fb_vblank	sisvbblank;
+static int	sisfb_ioctl(struct fb_info *info, unsigned int cmd,
+			    unsigned long arg)
+{
+	struct sis_video_info	*ivideo = (struct sis_video_info *)info->par;
+	struct sis_memreq	sismemreq;
+	struct fb_vblank	sisvbblank;
 	u32			gpu32 = 0;
-#अगर_अघोषित __user
-#घोषणा __user
-#पूर्ण_अगर
+#ifndef __user
+#define __user
+#endif
 	u32 __user 		*argp = (u32 __user *)arg;
 
-	चयन(cmd) अणु
-	   हाल FBIO_ALLOC:
-		अगर(!capable(CAP_SYS_RAWIO))
-			वापस -EPERM;
+	switch(cmd) {
+	   case FBIO_ALLOC:
+		if(!capable(CAP_SYS_RAWIO))
+			return -EPERM;
 
-		अगर(copy_from_user(&sismemreq, (व्योम __user *)arg, माप(sismemreq)))
-			वापस -EFAULT;
+		if(copy_from_user(&sismemreq, (void __user *)arg, sizeof(sismemreq)))
+			return -EFAULT;
 
-		sis_दो_स्मृति(&sismemreq);
+		sis_malloc(&sismemreq);
 
-		अगर(copy_to_user((व्योम __user *)arg, &sismemreq, माप(sismemreq))) अणु
-			sis_मुक्त((u32)sismemreq.offset);
-			वापस -EFAULT;
-		पूर्ण
-		अवरोध;
+		if(copy_to_user((void __user *)arg, &sismemreq, sizeof(sismemreq))) {
+			sis_free((u32)sismemreq.offset);
+			return -EFAULT;
+		}
+		break;
 
-	   हाल FBIO_FREE:
-		अगर(!capable(CAP_SYS_RAWIO))
-			वापस -EPERM;
+	   case FBIO_FREE:
+		if(!capable(CAP_SYS_RAWIO))
+			return -EPERM;
 
-		अगर(get_user(gpu32, argp))
-			वापस -EFAULT;
+		if(get_user(gpu32, argp))
+			return -EFAULT;
 
-		sis_मुक्त(gpu32);
-		अवरोध;
+		sis_free(gpu32);
+		break;
 
-	   हाल FBIOGET_VBLANK:
+	   case FBIOGET_VBLANK:
 
-		स_रखो(&sisvbblank, 0, माप(काष्ठा fb_vblank));
+		memset(&sisvbblank, 0, sizeof(struct fb_vblank));
 
 		sisvbblank.count = 0;
 		sisvbblank.flags = sisfb_setupvbblankflags(ivideo, &sisvbblank.vcount, &sisvbblank.hcount);
 
-		अगर(copy_to_user((व्योम __user *)arg, &sisvbblank, माप(sisvbblank)))
-			वापस -EFAULT;
+		if(copy_to_user((void __user *)arg, &sisvbblank, sizeof(sisvbblank)))
+			return -EFAULT;
 
-		अवरोध;
+		break;
 
-	   हाल SISFB_GET_INFO_SIZE:
-		वापस put_user(माप(काष्ठा sisfb_info), argp);
+	   case SISFB_GET_INFO_SIZE:
+		return put_user(sizeof(struct sisfb_info), argp);
 
-	   हाल SISFB_GET_INFO_OLD:
-		अगर(ivideo->warncount++ < 10)
-			prपूर्णांकk(KERN_INFO
+	   case SISFB_GET_INFO_OLD:
+		if(ivideo->warncount++ < 10)
+			printk(KERN_INFO
 				"sisfb: Deprecated ioctl call received - update your application!\n");
 		fallthrough;
-	   हाल SISFB_GET_INFO:  /* For communication with X driver */
+	   case SISFB_GET_INFO:  /* For communication with X driver */
 		ivideo->sisfb_infoblock.sisfb_id         = SISFB_ID;
 		ivideo->sisfb_infoblock.sisfb_version    = VER_MAJOR;
 		ivideo->sisfb_infoblock.sisfb_revision   = VER_MINOR;
 		ivideo->sisfb_infoblock.sisfb_patchlevel = VER_LEVEL;
 		ivideo->sisfb_infoblock.chip_id = ivideo->chip_id;
-		ivideo->sisfb_infoblock.sisfb_pci_venकरोr = ivideo->chip_venकरोr;
+		ivideo->sisfb_infoblock.sisfb_pci_vendor = ivideo->chip_vendor;
 		ivideo->sisfb_infoblock.memory = ivideo->video_size / 1024;
 		ivideo->sisfb_infoblock.heapstart = ivideo->heapstart / 1024;
-		अगर(ivideo->modechanged) अणु
+		if(ivideo->modechanged) {
 			ivideo->sisfb_infoblock.fbvidmode = ivideo->mode_no;
-		पूर्ण अन्यथा अणु
+		} else {
 			ivideo->sisfb_infoblock.fbvidmode = ivideo->modeprechange;
-		पूर्ण
+		}
 		ivideo->sisfb_infoblock.sisfb_caps = ivideo->caps;
 		ivideo->sisfb_infoblock.sisfb_tqlen = ivideo->cmdQueueSize / 1024;
 		ivideo->sisfb_infoblock.sisfb_pcibus = ivideo->pcibus;
 		ivideo->sisfb_infoblock.sisfb_pcislot = ivideo->pcislot;
-		ivideo->sisfb_infoblock.sisfb_pcअगरunc = ivideo->pcअगरunc;
+		ivideo->sisfb_infoblock.sisfb_pcifunc = ivideo->pcifunc;
 		ivideo->sisfb_infoblock.sisfb_lcdpdc = ivideo->detectedpdc;
 		ivideo->sisfb_infoblock.sisfb_lcdpdca = ivideo->detectedpdca;
 		ivideo->sisfb_infoblock.sisfb_lcda = ivideo->detectedlcda;
@@ -1784,96 +1783,96 @@ sisfb_blank(पूर्णांक blank, काष्ठा fb_info *info)
 		ivideo->sisfb_infoblock.sisfb_card_posted = ivideo->sisfb_card_posted ? 1 : 0;
 		ivideo->sisfb_infoblock.sisfb_was_boot_device = ivideo->sisfb_was_boot_device ? 1 : 0;
 
-		अगर(copy_to_user((व्योम __user *)arg, &ivideo->sisfb_infoblock,
-						माप(ivideo->sisfb_infoblock)))
-			वापस -EFAULT;
+		if(copy_to_user((void __user *)arg, &ivideo->sisfb_infoblock,
+						sizeof(ivideo->sisfb_infoblock)))
+			return -EFAULT;
 
-	        अवरोध;
+	        break;
 
-	   हाल SISFB_GET_VBRSTATUS_OLD:
-		अगर(ivideo->warncount++ < 10)
-			prपूर्णांकk(KERN_INFO
+	   case SISFB_GET_VBRSTATUS_OLD:
+		if(ivideo->warncount++ < 10)
+			printk(KERN_INFO
 				"sisfb: Deprecated ioctl call received - update your application!\n");
 		fallthrough;
-	   हाल SISFB_GET_VBRSTATUS:
-		अगर(sisfb_CheckVBRetrace(ivideo))
-			वापस put_user((u32)1, argp);
-		अन्यथा
-			वापस put_user((u32)0, argp);
+	   case SISFB_GET_VBRSTATUS:
+		if(sisfb_CheckVBRetrace(ivideo))
+			return put_user((u32)1, argp);
+		else
+			return put_user((u32)0, argp);
 
-	   हाल SISFB_GET_AUTOMAXIMIZE_OLD:
-		अगर(ivideo->warncount++ < 10)
-			prपूर्णांकk(KERN_INFO
+	   case SISFB_GET_AUTOMAXIMIZE_OLD:
+		if(ivideo->warncount++ < 10)
+			printk(KERN_INFO
 				"sisfb: Deprecated ioctl call received - update your application!\n");
 		fallthrough;
-	   हाल SISFB_GET_AUTOMAXIMIZE:
-		अगर(ivideo->sisfb_max)
-			वापस put_user((u32)1, argp);
-		अन्यथा
-			वापस put_user((u32)0, argp);
+	   case SISFB_GET_AUTOMAXIMIZE:
+		if(ivideo->sisfb_max)
+			return put_user((u32)1, argp);
+		else
+			return put_user((u32)0, argp);
 
-	   हाल SISFB_SET_AUTOMAXIMIZE_OLD:
-		अगर(ivideo->warncount++ < 10)
-			prपूर्णांकk(KERN_INFO
+	   case SISFB_SET_AUTOMAXIMIZE_OLD:
+		if(ivideo->warncount++ < 10)
+			printk(KERN_INFO
 				"sisfb: Deprecated ioctl call received - update your application!\n");
 		fallthrough;
-	   हाल SISFB_SET_AUTOMAXIMIZE:
-		अगर(get_user(gpu32, argp))
-			वापस -EFAULT;
+	   case SISFB_SET_AUTOMAXIMIZE:
+		if(get_user(gpu32, argp))
+			return -EFAULT;
 
 		ivideo->sisfb_max = (gpu32) ? 1 : 0;
-		अवरोध;
+		break;
 
-	   हाल SISFB_SET_TVPOSOFFSET:
-		अगर(get_user(gpu32, argp))
-			वापस -EFAULT;
+	   case SISFB_SET_TVPOSOFFSET:
+		if(get_user(gpu32, argp))
+			return -EFAULT;
 
-		sisfb_set_TVxposoffset(ivideo, ((पूर्णांक)(gpu32 >> 16)) - 32);
-		sisfb_set_TVyposoffset(ivideo, ((पूर्णांक)(gpu32 & 0xffff)) - 32);
-		अवरोध;
+		sisfb_set_TVxposoffset(ivideo, ((int)(gpu32 >> 16)) - 32);
+		sisfb_set_TVyposoffset(ivideo, ((int)(gpu32 & 0xffff)) - 32);
+		break;
 
-	   हाल SISFB_GET_TVPOSOFFSET:
-		वापस put_user((u32)(((ivideo->tvxpos+32)<<16)|((ivideo->tvypos+32)&0xffff)),
+	   case SISFB_GET_TVPOSOFFSET:
+		return put_user((u32)(((ivideo->tvxpos+32)<<16)|((ivideo->tvypos+32)&0xffff)),
 							argp);
 
-	   हाल SISFB_COMMAND:
-		अगर(copy_from_user(&ivideo->sisfb_command, (व्योम __user *)arg,
-							माप(काष्ठा sisfb_cmd)))
-			वापस -EFAULT;
+	   case SISFB_COMMAND:
+		if(copy_from_user(&ivideo->sisfb_command, (void __user *)arg,
+							sizeof(struct sisfb_cmd)))
+			return -EFAULT;
 
 		sisfb_handle_command(ivideo, &ivideo->sisfb_command);
 
-		अगर(copy_to_user((व्योम __user *)arg, &ivideo->sisfb_command,
-							माप(काष्ठा sisfb_cmd)))
-			वापस -EFAULT;
+		if(copy_to_user((void __user *)arg, &ivideo->sisfb_command,
+							sizeof(struct sisfb_cmd)))
+			return -EFAULT;
 
-		अवरोध;
+		break;
 
-	   हाल SISFB_SET_LOCK:
-		अगर(get_user(gpu32, argp))
-			वापस -EFAULT;
+	   case SISFB_SET_LOCK:
+		if(get_user(gpu32, argp))
+			return -EFAULT;
 
 		ivideo->sisfblocked = (gpu32) ? 1 : 0;
-		अवरोध;
+		break;
 
-	   शेष:
-#अगर_घोषित SIS_NEW_CONFIG_COMPAT
-		वापस -ENOIOCTLCMD;
-#अन्यथा
-		वापस -EINVAL;
-#पूर्ण_अगर
-	पूर्ण
-	वापस 0;
-पूर्ण
+	   default:
+#ifdef SIS_NEW_CONFIG_COMPAT
+		return -ENOIOCTLCMD;
+#else
+		return -EINVAL;
+#endif
+	}
+	return 0;
+}
 
-अटल पूर्णांक
-sisfb_get_fix(काष्ठा fb_fix_screeninfo *fix, पूर्णांक con, काष्ठा fb_info *info)
-अणु
-	काष्ठा sis_video_info *ivideo = (काष्ठा sis_video_info *)info->par;
+static int
+sisfb_get_fix(struct fb_fix_screeninfo *fix, int con, struct fb_info *info)
+{
+	struct sis_video_info *ivideo = (struct sis_video_info *)info->par;
 
-	स_रखो(fix, 0, माप(काष्ठा fb_fix_screeninfo));
+	memset(fix, 0, sizeof(struct fb_fix_screeninfo));
 
-	strlcpy(fix->id, ivideo->myid, माप(fix->id));
+	strlcpy(fix->id, ivideo->myid, sizeof(fix->id));
 
 	mutex_lock(&info->mm_lock);
 	fix->smem_start  = ivideo->video_base + ivideo->video_offset;
@@ -1888,28 +1887,28 @@ sisfb_get_fix(काष्ठा fb_fix_screeninfo *fix, पूर्णां�
 	fix->line_length = ivideo->video_linelength;
 	fix->mmio_start  = ivideo->mmio_base;
 	fix->mmio_len    = ivideo->mmio_size;
-	अगर(ivideo->sisvga_engine == SIS_300_VGA) अणु
+	if(ivideo->sisvga_engine == SIS_300_VGA) {
 		fix->accel = FB_ACCEL_SIS_GLAMOUR;
-	पूर्ण अन्यथा अगर((ivideo->chip == SIS_330) ||
+	} else if((ivideo->chip == SIS_330) ||
 		  (ivideo->chip == SIS_760) ||
-		  (ivideo->chip == SIS_761)) अणु
+		  (ivideo->chip == SIS_761)) {
 		fix->accel = FB_ACCEL_SIS_XABRE;
-	पूर्ण अन्यथा अगर(ivideo->chip == XGI_20) अणु
+	} else if(ivideo->chip == XGI_20) {
 		fix->accel = FB_ACCEL_XGI_VOLARI_Z;
-	पूर्ण अन्यथा अगर(ivideo->chip >= XGI_40) अणु
+	} else if(ivideo->chip >= XGI_40) {
 		fix->accel = FB_ACCEL_XGI_VOLARI_V;
-	पूर्ण अन्यथा अणु
+	} else {
 		fix->accel = FB_ACCEL_SIS_GLAMOUR_2;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* ----------------  fb_ops काष्ठाures ----------------- */
+/* ----------------  fb_ops structures ----------------- */
 
-अटल स्थिर काष्ठा fb_ops sisfb_ops = अणु
+static const struct fb_ops sisfb_ops = {
 	.owner		= THIS_MODULE,
-	.fb_खोलो	= sisfb_खोलो,
+	.fb_open	= sisfb_open,
 	.fb_release	= sisfb_release,
 	.fb_check_var	= sisfb_check_var,
 	.fb_set_par	= sisfb_set_par,
@@ -1920,447 +1919,447 @@ sisfb_get_fix(काष्ठा fb_fix_screeninfo *fix, पूर्णां�
 	.fb_copyarea	= fbcon_sis_copyarea,
 	.fb_imageblit	= cfb_imageblit,
 	.fb_sync	= fbcon_sis_sync,
-#अगर_घोषित SIS_NEW_CONFIG_COMPAT
+#ifdef SIS_NEW_CONFIG_COMPAT
 	.fb_compat_ioctl= sisfb_ioctl,
-#पूर्ण_अगर
+#endif
 	.fb_ioctl	= sisfb_ioctl
-पूर्ण;
+};
 
 /* ---------------- Chip generation dependent routines ---------------- */
 
-अटल काष्ठा pci_dev *sisfb_get_northbridge(पूर्णांक basechipid)
-अणु
-	काष्ठा pci_dev *pdev = शून्य;
-	पूर्णांक nbridgक्रमागत, nbridgeidx, i;
-	अटल स्थिर अचिन्हित लघु nbridgeids[] = अणु
-		PCI_DEVICE_ID_SI_540,	/* क्रम SiS 540 VGA */
-		PCI_DEVICE_ID_SI_630,	/* क्रम SiS 630/730 VGA */
+static struct pci_dev *sisfb_get_northbridge(int basechipid)
+{
+	struct pci_dev *pdev = NULL;
+	int nbridgenum, nbridgeidx, i;
+	static const unsigned short nbridgeids[] = {
+		PCI_DEVICE_ID_SI_540,	/* for SiS 540 VGA */
+		PCI_DEVICE_ID_SI_630,	/* for SiS 630/730 VGA */
 		PCI_DEVICE_ID_SI_730,
-		PCI_DEVICE_ID_SI_550,   /* क्रम SiS 550 VGA */
-		PCI_DEVICE_ID_SI_650,   /* क्रम SiS 650/651/740 VGA */
+		PCI_DEVICE_ID_SI_550,   /* for SiS 550 VGA */
+		PCI_DEVICE_ID_SI_650,   /* for SiS 650/651/740 VGA */
 		PCI_DEVICE_ID_SI_651,
 		PCI_DEVICE_ID_SI_740,
-		PCI_DEVICE_ID_SI_661,	/* क्रम SiS 661/741/660/760/761 VGA */
+		PCI_DEVICE_ID_SI_661,	/* for SiS 661/741/660/760/761 VGA */
 		PCI_DEVICE_ID_SI_741,
 		PCI_DEVICE_ID_SI_660,
 		PCI_DEVICE_ID_SI_760,
 		PCI_DEVICE_ID_SI_761
-	पूर्ण;
+	};
 
-	चयन(basechipid) अणु
-#अगर_घोषित CONFIG_FB_SIS_300
-	हाल SIS_540:	nbridgeidx = 0; nbridgक्रमागत = 1; अवरोध;
-	हाल SIS_630:	nbridgeidx = 1; nbridgक्रमागत = 2; अवरोध;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_FB_SIS_315
-	हाल SIS_550:   nbridgeidx = 3; nbridgक्रमागत = 1; अवरोध;
-	हाल SIS_650:	nbridgeidx = 4; nbridgक्रमागत = 3; अवरोध;
-	हाल SIS_660:	nbridgeidx = 7; nbridgक्रमागत = 5; अवरोध;
-#पूर्ण_अगर
-	शेष:	वापस शून्य;
-	पूर्ण
-	क्रम(i = 0; i < nbridgक्रमागत; i++) अणु
-		अगर((pdev = pci_get_device(PCI_VENDOR_ID_SI,
-				nbridgeids[nbridgeidx+i], शून्य)))
-			अवरोध;
-	पूर्ण
-	वापस pdev;
-पूर्ण
+	switch(basechipid) {
+#ifdef CONFIG_FB_SIS_300
+	case SIS_540:	nbridgeidx = 0; nbridgenum = 1; break;
+	case SIS_630:	nbridgeidx = 1; nbridgenum = 2; break;
+#endif
+#ifdef CONFIG_FB_SIS_315
+	case SIS_550:   nbridgeidx = 3; nbridgenum = 1; break;
+	case SIS_650:	nbridgeidx = 4; nbridgenum = 3; break;
+	case SIS_660:	nbridgeidx = 7; nbridgenum = 5; break;
+#endif
+	default:	return NULL;
+	}
+	for(i = 0; i < nbridgenum; i++) {
+		if((pdev = pci_get_device(PCI_VENDOR_ID_SI,
+				nbridgeids[nbridgeidx+i], NULL)))
+			break;
+	}
+	return pdev;
+}
 
-अटल पूर्णांक sisfb_get_dram_size(काष्ठा sis_video_info *ivideo)
-अणु
-#अगर defined(CONFIG_FB_SIS_300) || defined(CONFIG_FB_SIS_315)
+static int sisfb_get_dram_size(struct sis_video_info *ivideo)
+{
+#if defined(CONFIG_FB_SIS_300) || defined(CONFIG_FB_SIS_315)
 	u8 reg;
-#पूर्ण_अगर
+#endif
 
 	ivideo->video_size = 0;
 	ivideo->UMAsize = ivideo->LFBsize = 0;
 
-	चयन(ivideo->chip) अणु
-#अगर_घोषित CONFIG_FB_SIS_300
-	हाल SIS_300:
+	switch(ivideo->chip) {
+#ifdef CONFIG_FB_SIS_300
+	case SIS_300:
 		reg = SiS_GetReg(SISSR, 0x14);
 		ivideo->video_size = ((reg & 0x3F) + 1) << 20;
-		अवरोध;
-	हाल SIS_540:
-	हाल SIS_630:
-	हाल SIS_730:
-		अगर(!ivideo->nbridge)
-			वापस -1;
-		pci_पढ़ो_config_byte(ivideo->nbridge, 0x63, &reg);
+		break;
+	case SIS_540:
+	case SIS_630:
+	case SIS_730:
+		if(!ivideo->nbridge)
+			return -1;
+		pci_read_config_byte(ivideo->nbridge, 0x63, &reg);
 		ivideo->video_size = 1 << (((reg & 0x70) >> 4) + 21);
-		अवरोध;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_FB_SIS_315
-	हाल SIS_315H:
-	हाल SIS_315PRO:
-	हाल SIS_315:
+		break;
+#endif
+#ifdef CONFIG_FB_SIS_315
+	case SIS_315H:
+	case SIS_315PRO:
+	case SIS_315:
 		reg = SiS_GetReg(SISSR, 0x14);
 		ivideo->video_size = (1 << ((reg & 0xf0) >> 4)) << 20;
-		चयन((reg >> 2) & 0x03) अणु
-		हाल 0x01:
-		हाल 0x03:
+		switch((reg >> 2) & 0x03) {
+		case 0x01:
+		case 0x03:
 			ivideo->video_size <<= 1;
-			अवरोध;
-		हाल 0x02:
+			break;
+		case 0x02:
 			ivideo->video_size += (ivideo->video_size/2);
-		पूर्ण
-		अवरोध;
-	हाल SIS_330:
+		}
+		break;
+	case SIS_330:
 		reg = SiS_GetReg(SISSR, 0x14);
 		ivideo->video_size = (1 << ((reg & 0xf0) >> 4)) << 20;
-		अगर(reg & 0x0c) ivideo->video_size <<= 1;
-		अवरोध;
-	हाल SIS_550:
-	हाल SIS_650:
-	हाल SIS_740:
+		if(reg & 0x0c) ivideo->video_size <<= 1;
+		break;
+	case SIS_550:
+	case SIS_650:
+	case SIS_740:
 		reg = SiS_GetReg(SISSR, 0x14);
 		ivideo->video_size = (((reg & 0x3f) + 1) << 2) << 20;
-		अवरोध;
-	हाल SIS_661:
-	हाल SIS_741:
+		break;
+	case SIS_661:
+	case SIS_741:
 		reg = SiS_GetReg(SISCR, 0x79);
 		ivideo->video_size = (1 << ((reg & 0xf0) >> 4)) << 20;
-		अवरोध;
-	हाल SIS_660:
-	हाल SIS_760:
-	हाल SIS_761:
+		break;
+	case SIS_660:
+	case SIS_760:
+	case SIS_761:
 		reg = SiS_GetReg(SISCR, 0x79);
 		reg = (reg & 0xf0) >> 4;
-		अगर(reg)	अणु
+		if(reg)	{
 			ivideo->video_size = (1 << reg) << 20;
 			ivideo->UMAsize = ivideo->video_size;
-		पूर्ण
+		}
 		reg = SiS_GetReg(SISCR, 0x78);
 		reg &= 0x30;
-		अगर(reg) अणु
-			अगर(reg == 0x10) अणु
+		if(reg) {
+			if(reg == 0x10) {
 				ivideo->LFBsize = (32 << 20);
-			पूर्ण अन्यथा अणु
+			} else {
 				ivideo->LFBsize = (64 << 20);
-			पूर्ण
+			}
 			ivideo->video_size += ivideo->LFBsize;
-		पूर्ण
-		अवरोध;
-	हाल SIS_340:
-	हाल XGI_20:
-	हाल XGI_40:
+		}
+		break;
+	case SIS_340:
+	case XGI_20:
+	case XGI_40:
 		reg = SiS_GetReg(SISSR, 0x14);
 		ivideo->video_size = (1 << ((reg & 0xf0) >> 4)) << 20;
-		अगर(ivideo->chip != XGI_20) अणु
+		if(ivideo->chip != XGI_20) {
 			reg = (reg & 0x0c) >> 2;
-			अगर(ivideo->revision_id == 2) अणु
-				अगर(reg & 0x01) reg = 0x02;
-				अन्यथा	       reg = 0x00;
-			पूर्ण
-			अगर(reg == 0x02)		ivideo->video_size <<= 1;
-			अन्यथा अगर(reg == 0x03)	ivideo->video_size <<= 2;
-		पूर्ण
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
-		वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			if(ivideo->revision_id == 2) {
+				if(reg & 0x01) reg = 0x02;
+				else	       reg = 0x00;
+			}
+			if(reg == 0x02)		ivideo->video_size <<= 1;
+			else if(reg == 0x03)	ivideo->video_size <<= 2;
+		}
+		break;
+#endif
+	default:
+		return -1;
+	}
+	return 0;
+}
 
 /* -------------- video bridge device detection --------------- */
 
-अटल व्योम sisfb_detect_VB_connect(काष्ठा sis_video_info *ivideo)
-अणु
+static void sisfb_detect_VB_connect(struct sis_video_info *ivideo)
+{
 	u8 cr32, temp;
 
 	/* No CRT2 on XGI Z7 */
-	अगर(ivideo->chip == XGI_20) अणु
+	if(ivideo->chip == XGI_20) {
 		ivideo->sisfb_crt1off = 0;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-#अगर_घोषित CONFIG_FB_SIS_300
-	अगर(ivideo->sisvga_engine == SIS_300_VGA) अणु
+#ifdef CONFIG_FB_SIS_300
+	if(ivideo->sisvga_engine == SIS_300_VGA) {
 		temp = SiS_GetReg(SISSR, 0x17);
-		अगर((temp & 0x0F) && (ivideo->chip != SIS_300)) अणु
+		if((temp & 0x0F) && (ivideo->chip != SIS_300)) {
 			/* PAL/NTSC is stored on SR16 on such machines */
-			अगर(!(ivideo->vbflags & (TV_PAL | TV_NTSC | TV_PALM | TV_PALN))) अणु
+			if(!(ivideo->vbflags & (TV_PAL | TV_NTSC | TV_PALM | TV_PALN))) {
 				temp = SiS_GetReg(SISSR, 0x16);
-				अगर(temp & 0x20)
+				if(temp & 0x20)
 					ivideo->vbflags |= TV_PAL;
-				अन्यथा
+				else
 					ivideo->vbflags |= TV_NTSC;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+			}
+		}
+	}
+#endif
 
 	cr32 = SiS_GetReg(SISCR, 0x32);
 
-	अगर(cr32 & SIS_CRT1) अणु
+	if(cr32 & SIS_CRT1) {
 		ivideo->sisfb_crt1off = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		ivideo->sisfb_crt1off = (cr32 & 0xDF) ? 1 : 0;
-	पूर्ण
+	}
 
 	ivideo->vbflags &= ~(CRT2_TV | CRT2_LCD | CRT2_VGA);
 
-	अगर(cr32 & SIS_VB_TV)   ivideo->vbflags |= CRT2_TV;
-	अगर(cr32 & SIS_VB_LCD)  ivideo->vbflags |= CRT2_LCD;
-	अगर(cr32 & SIS_VB_CRT2) ivideo->vbflags |= CRT2_VGA;
+	if(cr32 & SIS_VB_TV)   ivideo->vbflags |= CRT2_TV;
+	if(cr32 & SIS_VB_LCD)  ivideo->vbflags |= CRT2_LCD;
+	if(cr32 & SIS_VB_CRT2) ivideo->vbflags |= CRT2_VGA;
 
-	/* Check given parms क्रम hardware compatibility.
-	 * (Cannot करो this in the search_xx routines since we करोn't
+	/* Check given parms for hardware compatibility.
+	 * (Cannot do this in the search_xx routines since we don't
 	 * know what hardware we are running on then)
 	 */
 
-	अगर(ivideo->chip != SIS_550) अणु
+	if(ivideo->chip != SIS_550) {
 	   ivideo->sisfb_dstn = ivideo->sisfb_fstn = 0;
-	पूर्ण
+	}
 
-	अगर(ivideo->sisfb_tvplug != -1) अणु
-	   अगर( (ivideo->sisvga_engine != SIS_315_VGA) ||
-	       (!(ivideo->vbflags2 & VB2_SISYPBPRBRIDGE)) ) अणु
-	      अगर(ivideo->sisfb_tvplug & TV_YPBPR) अणु
+	if(ivideo->sisfb_tvplug != -1) {
+	   if( (ivideo->sisvga_engine != SIS_315_VGA) ||
+	       (!(ivideo->vbflags2 & VB2_SISYPBPRBRIDGE)) ) {
+	      if(ivideo->sisfb_tvplug & TV_YPBPR) {
 		 ivideo->sisfb_tvplug = -1;
-		 prपूर्णांकk(KERN_ERR "sisfb: YPbPr not supported\n");
-	      पूर्ण
-	   पूर्ण
-	पूर्ण
-	अगर(ivideo->sisfb_tvplug != -1) अणु
-	   अगर( (ivideo->sisvga_engine != SIS_315_VGA) ||
-	       (!(ivideo->vbflags2 & VB2_SISHIVISIONBRIDGE)) ) अणु
-	      अगर(ivideo->sisfb_tvplug & TV_HIVISION) अणु
+		 printk(KERN_ERR "sisfb: YPbPr not supported\n");
+	      }
+	   }
+	}
+	if(ivideo->sisfb_tvplug != -1) {
+	   if( (ivideo->sisvga_engine != SIS_315_VGA) ||
+	       (!(ivideo->vbflags2 & VB2_SISHIVISIONBRIDGE)) ) {
+	      if(ivideo->sisfb_tvplug & TV_HIVISION) {
 		 ivideo->sisfb_tvplug = -1;
-		 prपूर्णांकk(KERN_ERR "sisfb: HiVision not supported\n");
-	      पूर्ण
-	   पूर्ण
-	पूर्ण
-	अगर(ivideo->sisfb_tvstd != -1) अणु
-	   अगर( (!(ivideo->vbflags2 & VB2_SISBRIDGE)) &&
+		 printk(KERN_ERR "sisfb: HiVision not supported\n");
+	      }
+	   }
+	}
+	if(ivideo->sisfb_tvstd != -1) {
+	   if( (!(ivideo->vbflags2 & VB2_SISBRIDGE)) &&
 	       (!((ivideo->sisvga_engine == SIS_315_VGA) &&
-			(ivideo->vbflags2 & VB2_CHRONTEL))) ) अणु
-	      अगर(ivideo->sisfb_tvstd & (TV_PALM | TV_PALN | TV_NTSCJ)) अणु
+			(ivideo->vbflags2 & VB2_CHRONTEL))) ) {
+	      if(ivideo->sisfb_tvstd & (TV_PALM | TV_PALN | TV_NTSCJ)) {
 		 ivideo->sisfb_tvstd = -1;
-		 prपूर्णांकk(KERN_ERR "sisfb: PALM/PALN/NTSCJ not supported\n");
-	      पूर्ण
-	   पूर्ण
-	पूर्ण
+		 printk(KERN_ERR "sisfb: PALM/PALN/NTSCJ not supported\n");
+	      }
+	   }
+	}
 
 	/* Detect/set TV plug & type */
-	अगर(ivideo->sisfb_tvplug != -1) अणु
+	if(ivideo->sisfb_tvplug != -1) {
 		ivideo->vbflags |= ivideo->sisfb_tvplug;
-	पूर्ण अन्यथा अणु
-		अगर(cr32 & SIS_VB_YPBPR)     	 ivideo->vbflags |= (TV_YPBPR|TV_YPBPR525I); /* शेष: 480i */
-		अन्यथा अगर(cr32 & SIS_VB_HIVISION)  ivideo->vbflags |= TV_HIVISION;
-		अन्यथा अगर(cr32 & SIS_VB_SCART)     ivideo->vbflags |= TV_SCART;
-		अन्यथा अणु
-			अगर(cr32 & SIS_VB_SVIDEO)    ivideo->vbflags |= TV_SVIDEO;
-			अगर(cr32 & SIS_VB_COMPOSITE) ivideo->vbflags |= TV_AVIDEO;
-		पूर्ण
-	पूर्ण
+	} else {
+		if(cr32 & SIS_VB_YPBPR)     	 ivideo->vbflags |= (TV_YPBPR|TV_YPBPR525I); /* default: 480i */
+		else if(cr32 & SIS_VB_HIVISION)  ivideo->vbflags |= TV_HIVISION;
+		else if(cr32 & SIS_VB_SCART)     ivideo->vbflags |= TV_SCART;
+		else {
+			if(cr32 & SIS_VB_SVIDEO)    ivideo->vbflags |= TV_SVIDEO;
+			if(cr32 & SIS_VB_COMPOSITE) ivideo->vbflags |= TV_AVIDEO;
+		}
+	}
 
-	अगर(!(ivideo->vbflags & (TV_YPBPR | TV_HIVISION))) अणु
-	    अगर(ivideo->sisfb_tvstd != -1) अणु
+	if(!(ivideo->vbflags & (TV_YPBPR | TV_HIVISION))) {
+	    if(ivideo->sisfb_tvstd != -1) {
 	       ivideo->vbflags &= ~(TV_NTSC | TV_PAL | TV_PALM | TV_PALN | TV_NTSCJ);
 	       ivideo->vbflags |= ivideo->sisfb_tvstd;
-	    पूर्ण
-	    अगर(ivideo->vbflags & TV_SCART) अणु
+	    }
+	    if(ivideo->vbflags & TV_SCART) {
 	       ivideo->vbflags &= ~(TV_NTSC | TV_PALM | TV_PALN | TV_NTSCJ);
 	       ivideo->vbflags |= TV_PAL;
-	    पूर्ण
-	    अगर(!(ivideo->vbflags & (TV_PAL | TV_NTSC | TV_PALM | TV_PALN | TV_NTSCJ))) अणु
-		अगर(ivideo->sisvga_engine == SIS_300_VGA) अणु
+	    }
+	    if(!(ivideo->vbflags & (TV_PAL | TV_NTSC | TV_PALM | TV_PALN | TV_NTSCJ))) {
+		if(ivideo->sisvga_engine == SIS_300_VGA) {
 			temp = SiS_GetReg(SISSR, 0x38);
-			अगर(temp & 0x01) ivideo->vbflags |= TV_PAL;
-			अन्यथा		ivideo->vbflags |= TV_NTSC;
-		पूर्ण अन्यथा अगर((ivideo->chip <= SIS_315PRO) || (ivideo->chip >= SIS_330)) अणु
+			if(temp & 0x01) ivideo->vbflags |= TV_PAL;
+			else		ivideo->vbflags |= TV_NTSC;
+		} else if((ivideo->chip <= SIS_315PRO) || (ivideo->chip >= SIS_330)) {
 			temp = SiS_GetReg(SISSR, 0x38);
-			अगर(temp & 0x01) ivideo->vbflags |= TV_PAL;
-			अन्यथा		ivideo->vbflags |= TV_NTSC;
-		पूर्ण अन्यथा अणु
+			if(temp & 0x01) ivideo->vbflags |= TV_PAL;
+			else		ivideo->vbflags |= TV_NTSC;
+		} else {
 			temp = SiS_GetReg(SISCR, 0x79);
-			अगर(temp & 0x20)	ivideo->vbflags |= TV_PAL;
-			अन्यथा		ivideo->vbflags |= TV_NTSC;
-		पूर्ण
-	    पूर्ण
-	पूर्ण
+			if(temp & 0x20)	ivideo->vbflags |= TV_PAL;
+			else		ivideo->vbflags |= TV_NTSC;
+		}
+	    }
+	}
 
-	/* Copy क्रमceCRT1 option to CRT1off अगर option is given */
-	अगर(ivideo->sisfb_क्रमcecrt1 != -1) अणु
-	   ivideo->sisfb_crt1off = (ivideo->sisfb_क्रमcecrt1) ? 0 : 1;
-	पूर्ण
-पूर्ण
+	/* Copy forceCRT1 option to CRT1off if option is given */
+	if(ivideo->sisfb_forcecrt1 != -1) {
+	   ivideo->sisfb_crt1off = (ivideo->sisfb_forcecrt1) ? 0 : 1;
+	}
+}
 
 /* ------------------ Sensing routines ------------------ */
 
-अटल bool sisfb_test_DDC1(काष्ठा sis_video_info *ivideo)
-अणु
-    अचिन्हित लघु old;
-    पूर्णांक count = 48;
+static bool sisfb_test_DDC1(struct sis_video_info *ivideo)
+{
+    unsigned short old;
+    int count = 48;
 
     old = SiS_ReadDDC1Bit(&ivideo->SiS_Pr);
-    करो अणु
-	अगर(old != SiS_ReadDDC1Bit(&ivideo->SiS_Pr)) अवरोध;
-    पूर्ण जबतक(count--);
-    वापस (count != -1);
-पूर्ण
+    do {
+	if(old != SiS_ReadDDC1Bit(&ivideo->SiS_Pr)) break;
+    } while(count--);
+    return (count != -1);
+}
 
-अटल व्योम sisfb_sense_crt1(काष्ठा sis_video_info *ivideo)
-अणु
-    bool mustरुको = false;
+static void sisfb_sense_crt1(struct sis_video_info *ivideo)
+{
+    bool mustwait = false;
     u8  sr1F, cr17;
-#अगर_घोषित CONFIG_FB_SIS_315
+#ifdef CONFIG_FB_SIS_315
     u8  cr63=0;
-#पूर्ण_अगर
+#endif
     u16 temp = 0xffff;
-    पूर्णांक i;
+    int i;
 
     sr1F = SiS_GetReg(SISSR, 0x1F);
     SiS_SetRegOR(SISSR, 0x1F, 0x04);
     SiS_SetRegAND(SISSR, 0x1F, 0x3F);
-    अगर(sr1F & 0xc0) mustरुको = true;
+    if(sr1F & 0xc0) mustwait = true;
 
-#अगर_घोषित CONFIG_FB_SIS_315
-    अगर(ivideo->sisvga_engine == SIS_315_VGA) अणु
+#ifdef CONFIG_FB_SIS_315
+    if(ivideo->sisvga_engine == SIS_315_VGA) {
        cr63 = SiS_GetReg(SISCR, ivideo->SiS_Pr.SiS_MyCR63);
        cr63 &= 0x40;
        SiS_SetRegAND(SISCR, ivideo->SiS_Pr.SiS_MyCR63, 0xBF);
-    पूर्ण
-#पूर्ण_अगर
+    }
+#endif
 
     cr17 = SiS_GetReg(SISCR, 0x17);
     cr17 &= 0x80;
-    अगर(!cr17) अणु
+    if(!cr17) {
        SiS_SetRegOR(SISCR, 0x17, 0x80);
-       mustरुको = true;
+       mustwait = true;
        SiS_SetReg(SISSR, 0x00, 0x01);
        SiS_SetReg(SISSR, 0x00, 0x03);
-    पूर्ण
+    }
 
-    अगर(mustरुको) अणु
-       क्रम(i=0; i < 10; i++) sisfbरुकोretracecrt1(ivideo);
-    पूर्ण
+    if(mustwait) {
+       for(i=0; i < 10; i++) sisfbwaitretracecrt1(ivideo);
+    }
 
-#अगर_घोषित CONFIG_FB_SIS_315
-    अगर(ivideo->chip >= SIS_330) अणु
+#ifdef CONFIG_FB_SIS_315
+    if(ivideo->chip >= SIS_330) {
        SiS_SetRegAND(SISCR, 0x32, ~0x20);
-       अगर(ivideo->chip >= SIS_340) अणु
+       if(ivideo->chip >= SIS_340) {
 	   SiS_SetReg(SISCR, 0x57, 0x4a);
-       पूर्ण अन्यथा अणु
+       } else {
 	   SiS_SetReg(SISCR, 0x57, 0x5f);
-       पूर्ण
+       }
 	SiS_SetRegOR(SISCR, 0x53, 0x02);
-	जबतक ((SiS_GetRegByte(SISINPSTAT)) & 0x01)    अवरोध;
-	जबतक (!((SiS_GetRegByte(SISINPSTAT)) & 0x01)) अवरोध;
-	अगर ((SiS_GetRegByte(SISMISCW)) & 0x10) temp = 1;
+	while ((SiS_GetRegByte(SISINPSTAT)) & 0x01)    break;
+	while (!((SiS_GetRegByte(SISINPSTAT)) & 0x01)) break;
+	if ((SiS_GetRegByte(SISMISCW)) & 0x10) temp = 1;
 	SiS_SetRegAND(SISCR, 0x53, 0xfd);
 	SiS_SetRegAND(SISCR, 0x57, 0x00);
-    पूर्ण
-#पूर्ण_अगर
+    }
+#endif
 
-    अगर(temp == 0xffff) अणु
+    if(temp == 0xffff) {
        i = 3;
-       करो अणु
+       do {
 	  temp = SiS_HandleDDC(&ivideo->SiS_Pr, ivideo->vbflags,
-		ivideo->sisvga_engine, 0, 0, शून्य, ivideo->vbflags2);
-       पूर्ण जबतक(((temp == 0) || (temp == 0xffff)) && i--);
+		ivideo->sisvga_engine, 0, 0, NULL, ivideo->vbflags2);
+       } while(((temp == 0) || (temp == 0xffff)) && i--);
 
-       अगर((temp == 0) || (temp == 0xffff)) अणु
-          अगर(sisfb_test_DDC1(ivideo)) temp = 1;
-       पूर्ण
-    पूर्ण
+       if((temp == 0) || (temp == 0xffff)) {
+          if(sisfb_test_DDC1(ivideo)) temp = 1;
+       }
+    }
 
-    अगर((temp) && (temp != 0xffff)) अणु
+    if((temp) && (temp != 0xffff)) {
        SiS_SetRegOR(SISCR, 0x32, 0x20);
-    पूर्ण
+    }
 
-#अगर_घोषित CONFIG_FB_SIS_315
-    अगर(ivideo->sisvga_engine == SIS_315_VGA) अणु
+#ifdef CONFIG_FB_SIS_315
+    if(ivideo->sisvga_engine == SIS_315_VGA) {
 	SiS_SetRegANDOR(SISCR, ivideo->SiS_Pr.SiS_MyCR63, 0xBF, cr63);
-    पूर्ण
-#पूर्ण_अगर
+    }
+#endif
 
     SiS_SetRegANDOR(SISCR, 0x17, 0x7F, cr17);
 
     SiS_SetReg(SISSR, 0x1F, sr1F);
-पूर्ण
+}
 
 /* Determine and detect attached devices on SiS30x */
-अटल व्योम SiS_SenseLCD(काष्ठा sis_video_info *ivideo)
-अणु
-	अचिन्हित अक्षर buffer[256];
-	अचिन्हित लघु temp, realcrtno, i;
+static void SiS_SenseLCD(struct sis_video_info *ivideo)
+{
+	unsigned char buffer[256];
+	unsigned short temp, realcrtno, i;
 	u8 reg, cr37 = 0, paneltype = 0;
 	u16 xres, yres;
 
 	ivideo->SiS_Pr.PanelSelfDetected = false;
 
-	/* LCD detection only क्रम TMDS bridges */
-	अगर(!(ivideo->vbflags2 & VB2_SISTMDSBRIDGE))
-		वापस;
-	अगर(ivideo->vbflags2 & VB2_30xBDH)
-		वापस;
+	/* LCD detection only for TMDS bridges */
+	if(!(ivideo->vbflags2 & VB2_SISTMDSBRIDGE))
+		return;
+	if(ivideo->vbflags2 & VB2_30xBDH)
+		return;
 
-	/* If LCD alपढ़ोy set up by BIOS, skip it */
+	/* If LCD already set up by BIOS, skip it */
 	reg = SiS_GetReg(SISCR, 0x32);
-	अगर(reg & 0x08)
-		वापस;
+	if(reg & 0x08)
+		return;
 
 	realcrtno = 1;
-	अगर(ivideo->SiS_Pr.DDCPortMixup)
+	if(ivideo->SiS_Pr.DDCPortMixup)
 		realcrtno = 0;
 
 	/* Check DDC capabilities */
 	temp = SiS_HandleDDC(&ivideo->SiS_Pr, ivideo->vbflags, ivideo->sisvga_engine,
 				realcrtno, 0, &buffer[0], ivideo->vbflags2);
 
-	अगर((!temp) || (temp == 0xffff) || (!(temp & 0x02)))
-		वापस;
+	if((!temp) || (temp == 0xffff) || (!(temp & 0x02)))
+		return;
 
 	/* Read DDC data */
 	i = 3;  /* Number of retrys */
-	करो अणु
+	do {
 		temp = SiS_HandleDDC(&ivideo->SiS_Pr, ivideo->vbflags,
 				ivideo->sisvga_engine, realcrtno, 1,
 				&buffer[0], ivideo->vbflags2);
-	पूर्ण जबतक((temp) && i--);
+	} while((temp) && i--);
 
-	अगर(temp)
-		वापस;
+	if(temp)
+		return;
 
 	/* No digital device */
-	अगर(!(buffer[0x14] & 0x80))
-		वापस;
+	if(!(buffer[0x14] & 0x80))
+		return;
 
 	/* First detailed timing preferred timing? */
-	अगर(!(buffer[0x18] & 0x02))
-		वापस;
+	if(!(buffer[0x18] & 0x02))
+		return;
 
 	xres = buffer[0x38] | ((buffer[0x3a] & 0xf0) << 4);
 	yres = buffer[0x3b] | ((buffer[0x3d] & 0xf0) << 4);
 
-	चयन(xres) अणु
-		हाल 1024:
-			अगर(yres == 768)
+	switch(xres) {
+		case 1024:
+			if(yres == 768)
 				paneltype = 0x02;
-			अवरोध;
-		हाल 1280:
-			अगर(yres == 1024)
+			break;
+		case 1280:
+			if(yres == 1024)
 				paneltype = 0x03;
-			अवरोध;
-		हाल 1600:
-			अगर((yres == 1200) && (ivideo->vbflags2 & VB2_30xC))
+			break;
+		case 1600:
+			if((yres == 1200) && (ivideo->vbflags2 & VB2_30xC))
 				paneltype = 0x0b;
-			अवरोध;
-	पूर्ण
+			break;
+	}
 
-	अगर(!paneltype)
-		वापस;
+	if(!paneltype)
+		return;
 
-	अगर(buffer[0x23])
+	if(buffer[0x23])
 		cr37 |= 0x10;
 
-	अगर((buffer[0x47] & 0x18) == 0x18)
+	if((buffer[0x47] & 0x18) == 0x18)
 		cr37 |= ((((buffer[0x47] & 0x06) ^ 0x06) << 5) | 0x20);
-	अन्यथा
+	else
 		cr37 |= 0xc0;
 
 	SiS_SetReg(SISCR, 0x36, paneltype);
@@ -2369,15 +2368,15 @@ sisfb_get_fix(काष्ठा fb_fix_screeninfo *fix, पूर्णां�
 	SiS_SetRegOR(SISCR, 0x32, 0x08);
 
 	ivideo->SiS_Pr.PanelSelfDetected = true;
-पूर्ण
+}
 
-अटल पूर्णांक SISDoSense(काष्ठा sis_video_info *ivideo, u16 type, u16 test)
-अणु
-    पूर्णांक temp, mytest, result, i, j;
+static int SISDoSense(struct sis_video_info *ivideo, u16 type, u16 test)
+{
+    int temp, mytest, result, i, j;
 
-    क्रम(j = 0; j < 10; j++) अणु
+    for(j = 0; j < 10; j++) {
        result = 0;
-       क्रम(i = 0; i < 3; i++) अणु
+       for(i = 0; i < 3; i++) {
           mytest = test;
 	   SiS_SetReg(SISPART4, 0x11, (type & 0x00ff));
           temp = (type >> 8) | (mytest & 0x00ff);
@@ -2388,137 +2387,137 @@ sisfb_get_fix(काष्ठा fb_fix_screeninfo *fix, पूर्णां�
 	   temp = SiS_GetReg(SISPART4, 0x03);
           temp ^= 0x0e;
           temp &= mytest;
-          अगर(temp == mytest) result++;
-#अगर 1
+          if(temp == mytest) result++;
+#if 1
 	  SiS_SetReg(SISPART4, 0x11, 0x00);
 	  SiS_SetRegAND(SISPART4, 0x10, 0xe0);
 	  SiS_DDC2Delay(&ivideo->SiS_Pr, 0x1000);
-#पूर्ण_अगर
-       पूर्ण
-       अगर((result == 0) || (result >= 2)) अवरोध;
-    पूर्ण
-    वापस result;
-पूर्ण
+#endif
+       }
+       if((result == 0) || (result >= 2)) break;
+    }
+    return result;
+}
 
-अटल व्योम SiS_Sense30x(काष्ठा sis_video_info *ivideo)
-अणु
+static void SiS_Sense30x(struct sis_video_info *ivideo)
+{
     u8  backupP4_0d,backupP2_00,backupP2_4d,backupSR_1e,biosflag=0;
     u16 svhs=0, svhs_c=0;
     u16 cvbs=0, cvbs_c=0;
     u16 vga2=0, vga2_c=0;
-    पूर्णांक myflag, result;
-    अक्षर stdstr[] = "sisfb: Detected";
-    अक्षर tvstr[]  = "TV connected to";
+    int myflag, result;
+    char stdstr[] = "sisfb: Detected";
+    char tvstr[]  = "TV connected to";
 
-    अगर(ivideo->vbflags2 & VB2_301) अणु
+    if(ivideo->vbflags2 & VB2_301) {
        svhs = 0x00b9; cvbs = 0x00b3; vga2 = 0x00d1;
        myflag = SiS_GetReg(SISPART4, 0x01);
-       अगर(myflag & 0x04) अणु
+       if(myflag & 0x04) {
 	  svhs = 0x00dd; cvbs = 0x00ee; vga2 = 0x00fd;
-       पूर्ण
-    पूर्ण अन्यथा अगर(ivideo->vbflags2 & (VB2_301B | VB2_302B)) अणु
+       }
+    } else if(ivideo->vbflags2 & (VB2_301B | VB2_302B)) {
        svhs = 0x016b; cvbs = 0x0174; vga2 = 0x0190;
-    पूर्ण अन्यथा अगर(ivideo->vbflags2 & (VB2_301LV | VB2_302LV)) अणु
+    } else if(ivideo->vbflags2 & (VB2_301LV | VB2_302LV)) {
        svhs = 0x0200; cvbs = 0x0100;
-    पूर्ण अन्यथा अगर(ivideo->vbflags2 & (VB2_301C | VB2_302ELV | VB2_307T | VB2_307LV)) अणु
+    } else if(ivideo->vbflags2 & (VB2_301C | VB2_302ELV | VB2_307T | VB2_307LV)) {
        svhs = 0x016b; cvbs = 0x0110; vga2 = 0x0190;
-    पूर्ण अन्यथा
-       वापस;
+    } else
+       return;
 
     vga2_c = 0x0e08; svhs_c = 0x0404; cvbs_c = 0x0804;
-    अगर(ivideo->vbflags & (VB2_301LV|VB2_302LV|VB2_302ELV|VB2_307LV)) अणु
+    if(ivideo->vbflags & (VB2_301LV|VB2_302LV|VB2_302ELV|VB2_307LV)) {
        svhs_c = 0x0408; cvbs_c = 0x0808;
-    पूर्ण
+    }
 
     biosflag = 2;
-    अगर(ivideo->haveXGIROM) अणु
+    if(ivideo->haveXGIROM) {
        biosflag = ivideo->bios_abase[0x58] & 0x03;
-    पूर्ण अन्यथा अगर(ivideo->newrom) अणु
-       अगर(ivideo->bios_abase[0x5d] & 0x04) biosflag |= 0x01;
-    पूर्ण अन्यथा अगर(ivideo->sisvga_engine == SIS_300_VGA) अणु
-       अगर(ivideo->bios_abase) अणु
+    } else if(ivideo->newrom) {
+       if(ivideo->bios_abase[0x5d] & 0x04) biosflag |= 0x01;
+    } else if(ivideo->sisvga_engine == SIS_300_VGA) {
+       if(ivideo->bios_abase) {
           biosflag = ivideo->bios_abase[0xfe] & 0x03;
-       पूर्ण
-    पूर्ण
+       }
+    }
 
-    अगर(ivideo->chip == SIS_300) अणु
+    if(ivideo->chip == SIS_300) {
        myflag = SiS_GetReg(SISSR, 0x3b);
-       अगर(!(myflag & 0x01)) vga2 = vga2_c = 0;
-    पूर्ण
+       if(!(myflag & 0x01)) vga2 = vga2_c = 0;
+    }
 
-    अगर(!(ivideo->vbflags2 & VB2_SISVGA2BRIDGE)) अणु
+    if(!(ivideo->vbflags2 & VB2_SISVGA2BRIDGE)) {
        vga2 = vga2_c = 0;
-    पूर्ण
+    }
 
     backupSR_1e = SiS_GetReg(SISSR, 0x1e);
     SiS_SetRegOR(SISSR, 0x1e, 0x20);
 
     backupP4_0d = SiS_GetReg(SISPART4, 0x0d);
-    अगर(ivideo->vbflags2 & VB2_30xC) अणु
+    if(ivideo->vbflags2 & VB2_30xC) {
 	SiS_SetRegANDOR(SISPART4, 0x0d, ~0x07, 0x01);
-    पूर्ण अन्यथा अणु
+    } else {
        SiS_SetRegOR(SISPART4, 0x0d, 0x04);
-    पूर्ण
+    }
     SiS_DDC2Delay(&ivideo->SiS_Pr, 0x2000);
 
     backupP2_00 = SiS_GetReg(SISPART2, 0x00);
     SiS_SetReg(SISPART2, 0x00, ((backupP2_00 | 0x1c) & 0xfc));
 
     backupP2_4d = SiS_GetReg(SISPART2, 0x4d);
-    अगर(ivideo->vbflags2 & VB2_SISYPBPRBRIDGE) अणु
+    if(ivideo->vbflags2 & VB2_SISYPBPRBRIDGE) {
 	SiS_SetReg(SISPART2, 0x4d, (backupP2_4d & ~0x10));
-    पूर्ण
+    }
 
-    अगर(!(ivideo->vbflags2 & VB2_30xCLV)) अणु
+    if(!(ivideo->vbflags2 & VB2_30xCLV)) {
        SISDoSense(ivideo, 0, 0);
-    पूर्ण
+    }
 
     SiS_SetRegAND(SISCR, 0x32, ~0x14);
 
-    अगर(vga2_c || vga2) अणु
-       अगर(SISDoSense(ivideo, vga2, vga2_c)) अणु
-          अगर(biosflag & 0x01) अणु
-	     prपूर्णांकk(KERN_INFO "%s %s SCART output\n", stdstr, tvstr);
+    if(vga2_c || vga2) {
+       if(SISDoSense(ivideo, vga2, vga2_c)) {
+          if(biosflag & 0x01) {
+	     printk(KERN_INFO "%s %s SCART output\n", stdstr, tvstr);
 	     SiS_SetRegOR(SISCR, 0x32, 0x04);
-	  पूर्ण अन्यथा अणु
-	     prपूर्णांकk(KERN_INFO "%s secondary VGA connection\n", stdstr);
+	  } else {
+	     printk(KERN_INFO "%s secondary VGA connection\n", stdstr);
 	     SiS_SetRegOR(SISCR, 0x32, 0x10);
-	  पूर्ण
-       पूर्ण
-    पूर्ण
+	  }
+       }
+    }
 
     SiS_SetRegAND(SISCR, 0x32, 0x3f);
 
-    अगर(ivideo->vbflags2 & VB2_30xCLV) अणु
+    if(ivideo->vbflags2 & VB2_30xCLV) {
        SiS_SetRegOR(SISPART4, 0x0d, 0x04);
-    पूर्ण
+    }
 
-    अगर((ivideo->sisvga_engine == SIS_315_VGA) && (ivideo->vbflags2 & VB2_SISYPBPRBRIDGE)) अणु
+    if((ivideo->sisvga_engine == SIS_315_VGA) && (ivideo->vbflags2 & VB2_SISYPBPRBRIDGE)) {
        SiS_SetReg(SISPART2, 0x4d, (backupP2_4d | 0x10));
        SiS_DDC2Delay(&ivideo->SiS_Pr, 0x2000);
-       अगर((result = SISDoSense(ivideo, svhs, 0x0604))) अणु
-          अगर((result = SISDoSense(ivideo, cvbs, 0x0804))) अणु
-	     prपूर्णांकk(KERN_INFO "%s %s YPbPr component output\n", stdstr, tvstr);
+       if((result = SISDoSense(ivideo, svhs, 0x0604))) {
+          if((result = SISDoSense(ivideo, cvbs, 0x0804))) {
+	     printk(KERN_INFO "%s %s YPbPr component output\n", stdstr, tvstr);
 	     SiS_SetRegOR(SISCR, 0x32, 0x80);
-	  पूर्ण
-       पूर्ण
+	  }
+       }
        SiS_SetReg(SISPART2, 0x4d, backupP2_4d);
-    पूर्ण
+    }
 
     SiS_SetRegAND(SISCR, 0x32, ~0x03);
 
-    अगर(!(ivideo->vbflags & TV_YPBPR)) अणु
-       अगर((result = SISDoSense(ivideo, svhs, svhs_c))) अणु
-          prपूर्णांकk(KERN_INFO "%s %s SVIDEO output\n", stdstr, tvstr);
+    if(!(ivideo->vbflags & TV_YPBPR)) {
+       if((result = SISDoSense(ivideo, svhs, svhs_c))) {
+          printk(KERN_INFO "%s %s SVIDEO output\n", stdstr, tvstr);
 	   SiS_SetRegOR(SISCR, 0x32, 0x02);
-       पूर्ण
-       अगर((biosflag & 0x02) || (!result)) अणु
-          अगर(SISDoSense(ivideo, cvbs, cvbs_c)) अणु
-	     prपूर्णांकk(KERN_INFO "%s %s COMPOSITE output\n", stdstr, tvstr);
+       }
+       if((biosflag & 0x02) || (!result)) {
+          if(SISDoSense(ivideo, cvbs, cvbs_c)) {
+	     printk(KERN_INFO "%s %s COMPOSITE output\n", stdstr, tvstr);
 	     SiS_SetRegOR(SISCR, 0x32, 0x01);
-          पूर्ण
-       पूर्ण
-    पूर्ण
+          }
+       }
+    }
 
     SISDoSense(ivideo, 0, 0);
 
@@ -2526,101 +2525,101 @@ sisfb_get_fix(काष्ठा fb_fix_screeninfo *fix, पूर्णां�
     SiS_SetReg(SISPART4, 0x0d, backupP4_0d);
     SiS_SetReg(SISSR, 0x1e, backupSR_1e);
 
-    अगर(ivideo->vbflags2 & VB2_30xCLV) अणु
+    if(ivideo->vbflags2 & VB2_30xCLV) {
 	biosflag = SiS_GetReg(SISPART2, 0x00);
-       अगर(biosflag & 0x20) अणु
-          क्रम(myflag = 2; myflag > 0; myflag--) अणु
+       if(biosflag & 0x20) {
+          for(myflag = 2; myflag > 0; myflag--) {
 	     biosflag ^= 0x20;
 	     SiS_SetReg(SISPART2, 0x00, biosflag);
-	  पूर्ण
-       पूर्ण
-    पूर्ण
+	  }
+       }
+    }
 
     SiS_SetReg(SISPART2, 0x00, backupP2_00);
-पूर्ण
+}
 
 /* Determine and detect attached TV's on Chrontel */
-अटल व्योम SiS_SenseCh(काष्ठा sis_video_info *ivideo)
-अणु
-#अगर defined(CONFIG_FB_SIS_300) || defined(CONFIG_FB_SIS_315)
+static void SiS_SenseCh(struct sis_video_info *ivideo)
+{
+#if defined(CONFIG_FB_SIS_300) || defined(CONFIG_FB_SIS_315)
     u8 temp1, temp2;
-    अक्षर stdstr[] = "sisfb: Chrontel: Detected TV connected to";
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_FB_SIS_300
-    अचिन्हित अक्षर test[3];
-    पूर्णांक i;
-#पूर्ण_अगर
+    char stdstr[] = "sisfb: Chrontel: Detected TV connected to";
+#endif
+#ifdef CONFIG_FB_SIS_300
+    unsigned char test[3];
+    int i;
+#endif
 
-    अगर(ivideo->chip < SIS_315H) अणु
+    if(ivideo->chip < SIS_315H) {
 
-#अगर_घोषित CONFIG_FB_SIS_300
+#ifdef CONFIG_FB_SIS_300
        ivideo->SiS_Pr.SiS_IF_DEF_CH70xx = 1;		/* Chrontel 700x */
-       SiS_SetChrontelGPIO(&ivideo->SiS_Pr, 0x9c);	/* Set general purpose IO क्रम Chrontel communication */
+       SiS_SetChrontelGPIO(&ivideo->SiS_Pr, 0x9c);	/* Set general purpose IO for Chrontel communication */
        SiS_DDC2Delay(&ivideo->SiS_Pr, 1000);
        temp1 = SiS_GetCH700x(&ivideo->SiS_Pr, 0x25);
-       /* See Chrontel TB31 क्रम explanation */
+       /* See Chrontel TB31 for explanation */
        temp2 = SiS_GetCH700x(&ivideo->SiS_Pr, 0x0e);
-       अगर(((temp2 & 0x07) == 0x01) || (temp2 & 0x04)) अणु
+       if(((temp2 & 0x07) == 0x01) || (temp2 & 0x04)) {
 	  SiS_SetCH700x(&ivideo->SiS_Pr, 0x0e, 0x0b);
 	  SiS_DDC2Delay(&ivideo->SiS_Pr, 300);
-       पूर्ण
+       }
        temp2 = SiS_GetCH700x(&ivideo->SiS_Pr, 0x25);
-       अगर(temp2 != temp1) temp1 = temp2;
+       if(temp2 != temp1) temp1 = temp2;
 
-       अगर((temp1 >= 0x22) && (temp1 <= 0x50)) अणु
-	   /* Read घातer status */
+       if((temp1 >= 0x22) && (temp1 <= 0x50)) {
+	   /* Read power status */
 	   temp1 = SiS_GetCH700x(&ivideo->SiS_Pr, 0x0e);
-	   अगर((temp1 & 0x03) != 0x03) अणु
-		/* Power all outमाला_दो */
+	   if((temp1 & 0x03) != 0x03) {
+		/* Power all outputs */
 		SiS_SetCH700x(&ivideo->SiS_Pr, 0x0e,0x0b);
 		SiS_DDC2Delay(&ivideo->SiS_Pr, 300);
-	   पूर्ण
+	   }
 	   /* Sense connected TV devices */
-	   क्रम(i = 0; i < 3; i++) अणु
+	   for(i = 0; i < 3; i++) {
 	       SiS_SetCH700x(&ivideo->SiS_Pr, 0x10, 0x01);
 	       SiS_DDC2Delay(&ivideo->SiS_Pr, 0x96);
 	       SiS_SetCH700x(&ivideo->SiS_Pr, 0x10, 0x00);
 	       SiS_DDC2Delay(&ivideo->SiS_Pr, 0x96);
 	       temp1 = SiS_GetCH700x(&ivideo->SiS_Pr, 0x10);
-	       अगर(!(temp1 & 0x08))       test[i] = 0x02;
-	       अन्यथा अगर(!(temp1 & 0x02))  test[i] = 0x01;
-	       अन्यथा                      test[i] = 0;
+	       if(!(temp1 & 0x08))       test[i] = 0x02;
+	       else if(!(temp1 & 0x02))  test[i] = 0x01;
+	       else                      test[i] = 0;
 	       SiS_DDC2Delay(&ivideo->SiS_Pr, 0x96);
-	   पूर्ण
+	   }
 
-	   अगर(test[0] == test[1])      temp1 = test[0];
-	   अन्यथा अगर(test[0] == test[2]) temp1 = test[0];
-	   अन्यथा अगर(test[1] == test[2]) temp1 = test[1];
-	   अन्यथा अणु
-		prपूर्णांकk(KERN_INFO
+	   if(test[0] == test[1])      temp1 = test[0];
+	   else if(test[0] == test[2]) temp1 = test[0];
+	   else if(test[1] == test[2]) temp1 = test[1];
+	   else {
+		printk(KERN_INFO
 			"sisfb: TV detection unreliable - test results varied\n");
 		temp1 = test[2];
-	   पूर्ण
-	   अगर(temp1 == 0x02) अणु
-		prपूर्णांकk(KERN_INFO "%s SVIDEO output\n", stdstr);
+	   }
+	   if(temp1 == 0x02) {
+		printk(KERN_INFO "%s SVIDEO output\n", stdstr);
 		ivideo->vbflags |= TV_SVIDEO;
 		SiS_SetRegOR(SISCR, 0x32, 0x02);
 		SiS_SetRegAND(SISCR, 0x32, ~0x05);
-	   पूर्ण अन्यथा अगर (temp1 == 0x01) अणु
-		prपूर्णांकk(KERN_INFO "%s CVBS output\n", stdstr);
+	   } else if (temp1 == 0x01) {
+		printk(KERN_INFO "%s CVBS output\n", stdstr);
 		ivideo->vbflags |= TV_AVIDEO;
 		SiS_SetRegOR(SISCR, 0x32, 0x01);
 		SiS_SetRegAND(SISCR, 0x32, ~0x06);
-	   पूर्ण अन्यथा अणु
+	   } else {
 		SiS_SetCH70xxANDOR(&ivideo->SiS_Pr, 0x0e, 0x01, 0xF8);
 		SiS_SetRegAND(SISCR, 0x32, ~0x07);
-	   पूर्ण
-       पूर्ण अन्यथा अगर(temp1 == 0) अणु
+	   }
+       } else if(temp1 == 0) {
 	  SiS_SetCH70xxANDOR(&ivideo->SiS_Pr, 0x0e, 0x01, 0xF8);
 	  SiS_SetRegAND(SISCR, 0x32, ~0x07);
-       पूर्ण
-       /* Set general purpose IO क्रम Chrontel communication */
+       }
+       /* Set general purpose IO for Chrontel communication */
        SiS_SetChrontelGPIO(&ivideo->SiS_Pr, 0x00);
-#पूर्ण_अगर
+#endif
 
-    पूर्ण अन्यथा अणु
+    } else {
 
-#अगर_घोषित CONFIG_FB_SIS_315
+#ifdef CONFIG_FB_SIS_315
 	ivideo->SiS_Pr.SiS_IF_DEF_CH70xx = 2;		/* Chrontel 7019 */
 	temp1 = SiS_GetCH701x(&ivideo->SiS_Pr, 0x49);
 	SiS_SetCH701x(&ivideo->SiS_Pr, 0x49, 0x20);
@@ -2635,186 +2634,186 @@ sisfb_get_fix(काष्ठा fb_fix_screeninfo *fix, पूर्णां�
 	temp2 = SiS_GetCH701x(&ivideo->SiS_Pr, 0x20);
 	SiS_SetCH701x(&ivideo->SiS_Pr, 0x49, temp1);
 	temp1 = 0;
-	अगर(temp2 & 0x02) temp1 |= 0x01;
-	अगर(temp2 & 0x10) temp1 |= 0x01;
-	अगर(temp2 & 0x04) temp1 |= 0x02;
-	अगर( (temp1 & 0x01) && (temp1 & 0x02) ) temp1 = 0x04;
-	चयन(temp1) अणु
-	हाल 0x01:
-	     prपूर्णांकk(KERN_INFO "%s CVBS output\n", stdstr);
+	if(temp2 & 0x02) temp1 |= 0x01;
+	if(temp2 & 0x10) temp1 |= 0x01;
+	if(temp2 & 0x04) temp1 |= 0x02;
+	if( (temp1 & 0x01) && (temp1 & 0x02) ) temp1 = 0x04;
+	switch(temp1) {
+	case 0x01:
+	     printk(KERN_INFO "%s CVBS output\n", stdstr);
 	     ivideo->vbflags |= TV_AVIDEO;
 	     SiS_SetRegOR(SISCR, 0x32, 0x01);
 	     SiS_SetRegAND(SISCR, 0x32, ~0x06);
-	     अवरोध;
-	हाल 0x02:
-	     prपूर्णांकk(KERN_INFO "%s SVIDEO output\n", stdstr);
+	     break;
+	case 0x02:
+	     printk(KERN_INFO "%s SVIDEO output\n", stdstr);
 	     ivideo->vbflags |= TV_SVIDEO;
 	     SiS_SetRegOR(SISCR, 0x32, 0x02);
 	     SiS_SetRegAND(SISCR, 0x32, ~0x05);
-	     अवरोध;
-	हाल 0x04:
-	     prपूर्णांकk(KERN_INFO "%s SCART output\n", stdstr);
+	     break;
+	case 0x04:
+	     printk(KERN_INFO "%s SCART output\n", stdstr);
 	     SiS_SetRegOR(SISCR, 0x32, 0x04);
 	     SiS_SetRegAND(SISCR, 0x32, ~0x03);
-	     अवरोध;
-	शेष:
+	     break;
+	default:
 	     SiS_SetRegAND(SISCR, 0x32, ~0x07);
-	पूर्ण
-#पूर्ण_अगर
-    पूर्ण
-पूर्ण
+	}
+#endif
+    }
+}
 
-अटल व्योम sisfb_get_VB_type(काष्ठा sis_video_info *ivideo)
-अणु
-	अक्षर stdstr[]    = "sisfb: Detected";
-	अक्षर bridgestr[] = "video bridge";
+static void sisfb_get_VB_type(struct sis_video_info *ivideo)
+{
+	char stdstr[]    = "sisfb: Detected";
+	char bridgestr[] = "video bridge";
 	u8 vb_chipid;
 	u8 reg;
 
 	/* No CRT2 on XGI Z7 */
-	अगर(ivideo->chip == XGI_20)
-		वापस;
+	if(ivideo->chip == XGI_20)
+		return;
 
 	vb_chipid = SiS_GetReg(SISPART4, 0x00);
-	चयन(vb_chipid) अणु
-	हाल 0x01:
+	switch(vb_chipid) {
+	case 0x01:
 		reg = SiS_GetReg(SISPART4, 0x01);
-		अगर(reg < 0xb0) अणु
+		if(reg < 0xb0) {
 			ivideo->vbflags |= VB_301;	/* Deprecated */
 			ivideo->vbflags2 |= VB2_301;
-			prपूर्णांकk(KERN_INFO "%s SiS301 %s\n", stdstr, bridgestr);
-		पूर्ण अन्यथा अगर(reg < 0xc0) अणु
+			printk(KERN_INFO "%s SiS301 %s\n", stdstr, bridgestr);
+		} else if(reg < 0xc0) {
 			ivideo->vbflags |= VB_301B;	/* Deprecated */
 			ivideo->vbflags2 |= VB2_301B;
 			reg = SiS_GetReg(SISPART4, 0x23);
-			अगर(!(reg & 0x02)) अणु
+			if(!(reg & 0x02)) {
 			   ivideo->vbflags |= VB_30xBDH;	/* Deprecated */
 			   ivideo->vbflags2 |= VB2_30xBDH;
-			   prपूर्णांकk(KERN_INFO "%s SiS301B-DH %s\n", stdstr, bridgestr);
-			पूर्ण अन्यथा अणु
-			   prपूर्णांकk(KERN_INFO "%s SiS301B %s\n", stdstr, bridgestr);
-			पूर्ण
-		पूर्ण अन्यथा अगर(reg < 0xd0) अणु
+			   printk(KERN_INFO "%s SiS301B-DH %s\n", stdstr, bridgestr);
+			} else {
+			   printk(KERN_INFO "%s SiS301B %s\n", stdstr, bridgestr);
+			}
+		} else if(reg < 0xd0) {
 			ivideo->vbflags |= VB_301C;	/* Deprecated */
 			ivideo->vbflags2 |= VB2_301C;
-			prपूर्णांकk(KERN_INFO "%s SiS301C %s\n", stdstr, bridgestr);
-		पूर्ण अन्यथा अगर(reg < 0xe0) अणु
+			printk(KERN_INFO "%s SiS301C %s\n", stdstr, bridgestr);
+		} else if(reg < 0xe0) {
 			ivideo->vbflags |= VB_301LV;	/* Deprecated */
 			ivideo->vbflags2 |= VB2_301LV;
-			prपूर्णांकk(KERN_INFO "%s SiS301LV %s\n", stdstr, bridgestr);
-		पूर्ण अन्यथा अगर(reg <= 0xe1) अणु
+			printk(KERN_INFO "%s SiS301LV %s\n", stdstr, bridgestr);
+		} else if(reg <= 0xe1) {
 			reg = SiS_GetReg(SISPART4, 0x39);
-			अगर(reg == 0xff) अणु
+			if(reg == 0xff) {
 			   ivideo->vbflags |= VB_302LV;	/* Deprecated */
 			   ivideo->vbflags2 |= VB2_302LV;
-			   prपूर्णांकk(KERN_INFO "%s SiS302LV %s\n", stdstr, bridgestr);
-			पूर्ण अन्यथा अणु
+			   printk(KERN_INFO "%s SiS302LV %s\n", stdstr, bridgestr);
+			} else {
 			   ivideo->vbflags |= VB_301C;	/* Deprecated */
 			   ivideo->vbflags2 |= VB2_301C;
-			   prपूर्णांकk(KERN_INFO "%s SiS301C(P4) %s\n", stdstr, bridgestr);
-#अगर 0
+			   printk(KERN_INFO "%s SiS301C(P4) %s\n", stdstr, bridgestr);
+#if 0
 			   ivideo->vbflags |= VB_302ELV;	/* Deprecated */
 			   ivideo->vbflags2 |= VB2_302ELV;
-			   prपूर्णांकk(KERN_INFO "%s SiS302ELV %s\n", stdstr, bridgestr);
-#पूर्ण_अगर
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	हाल 0x02:
+			   printk(KERN_INFO "%s SiS302ELV %s\n", stdstr, bridgestr);
+#endif
+			}
+		}
+		break;
+	case 0x02:
 		ivideo->vbflags |= VB_302B;	/* Deprecated */
 		ivideo->vbflags2 |= VB2_302B;
-		prपूर्णांकk(KERN_INFO "%s SiS302B %s\n", stdstr, bridgestr);
-		अवरोध;
-	पूर्ण
+		printk(KERN_INFO "%s SiS302B %s\n", stdstr, bridgestr);
+		break;
+	}
 
-	अगर((!(ivideo->vbflags2 & VB2_VIDEOBRIDGE)) && (ivideo->chip != SIS_300)) अणु
+	if((!(ivideo->vbflags2 & VB2_VIDEOBRIDGE)) && (ivideo->chip != SIS_300)) {
 		reg = SiS_GetReg(SISCR, 0x37);
 		reg &= SIS_EXTERNAL_CHIP_MASK;
 		reg >>= 1;
-		अगर(ivideo->sisvga_engine == SIS_300_VGA) अणु
-#अगर_घोषित CONFIG_FB_SIS_300
-			चयन(reg) अणु
-			   हाल SIS_EXTERNAL_CHIP_LVDS:
+		if(ivideo->sisvga_engine == SIS_300_VGA) {
+#ifdef CONFIG_FB_SIS_300
+			switch(reg) {
+			   case SIS_EXTERNAL_CHIP_LVDS:
 				ivideo->vbflags |= VB_LVDS;	/* Deprecated */
 				ivideo->vbflags2 |= VB2_LVDS;
-				अवरोध;
-			   हाल SIS_EXTERNAL_CHIP_TRUMPION:
+				break;
+			   case SIS_EXTERNAL_CHIP_TRUMPION:
 				ivideo->vbflags |= (VB_LVDS | VB_TRUMPION);	/* Deprecated */
 				ivideo->vbflags2 |= (VB2_LVDS | VB2_TRUMPION);
-				अवरोध;
-			   हाल SIS_EXTERNAL_CHIP_CHRONTEL:
+				break;
+			   case SIS_EXTERNAL_CHIP_CHRONTEL:
 				ivideo->vbflags |= VB_CHRONTEL;	/* Deprecated */
 				ivideo->vbflags2 |= VB2_CHRONTEL;
-				अवरोध;
-			   हाल SIS_EXTERNAL_CHIP_LVDS_CHRONTEL:
+				break;
+			   case SIS_EXTERNAL_CHIP_LVDS_CHRONTEL:
 				ivideo->vbflags |= (VB_LVDS | VB_CHRONTEL);	/* Deprecated */
 				ivideo->vbflags2 |= (VB2_LVDS | VB2_CHRONTEL);
-				अवरोध;
-			पूर्ण
-			अगर(ivideo->vbflags2 & VB2_CHRONTEL) ivideo->chronteltype = 1;
-#पूर्ण_अगर
-		पूर्ण अन्यथा अगर(ivideo->chip < SIS_661) अणु
-#अगर_घोषित CONFIG_FB_SIS_315
-			चयन (reg) अणु
-			   हाल SIS310_EXTERNAL_CHIP_LVDS:
+				break;
+			}
+			if(ivideo->vbflags2 & VB2_CHRONTEL) ivideo->chronteltype = 1;
+#endif
+		} else if(ivideo->chip < SIS_661) {
+#ifdef CONFIG_FB_SIS_315
+			switch (reg) {
+			   case SIS310_EXTERNAL_CHIP_LVDS:
 				ivideo->vbflags |= VB_LVDS;	/* Deprecated */
 				ivideo->vbflags2 |= VB2_LVDS;
-				अवरोध;
-			   हाल SIS310_EXTERNAL_CHIP_LVDS_CHRONTEL:
+				break;
+			   case SIS310_EXTERNAL_CHIP_LVDS_CHRONTEL:
 				ivideo->vbflags |= (VB_LVDS | VB_CHRONTEL);	/* Deprecated */
 				ivideo->vbflags2 |= (VB2_LVDS | VB2_CHRONTEL);
-				अवरोध;
-			पूर्ण
-			अगर(ivideo->vbflags2 & VB2_CHRONTEL) ivideo->chronteltype = 2;
-#पूर्ण_अगर
-		पूर्ण अन्यथा अगर(ivideo->chip >= SIS_661) अणु
-#अगर_घोषित CONFIG_FB_SIS_315
+				break;
+			}
+			if(ivideo->vbflags2 & VB2_CHRONTEL) ivideo->chronteltype = 2;
+#endif
+		} else if(ivideo->chip >= SIS_661) {
+#ifdef CONFIG_FB_SIS_315
 			reg = SiS_GetReg(SISCR, 0x38);
 			reg >>= 5;
-			चयन(reg) अणु
-			   हाल 0x02:
+			switch(reg) {
+			   case 0x02:
 				ivideo->vbflags |= VB_LVDS;	/* Deprecated */
 				ivideo->vbflags2 |= VB2_LVDS;
-				अवरोध;
-			   हाल 0x03:
+				break;
+			   case 0x03:
 				ivideo->vbflags |= (VB_LVDS | VB_CHRONTEL);	/* Deprecated */
 				ivideo->vbflags2 |= (VB2_LVDS | VB2_CHRONTEL);
-				अवरोध;
-			   हाल 0x04:
+				break;
+			   case 0x04:
 				ivideo->vbflags |= (VB_LVDS | VB_CONEXANT);	/* Deprecated */
 				ivideo->vbflags2 |= (VB2_LVDS | VB2_CONEXANT);
-				अवरोध;
-			पूर्ण
-			अगर(ivideo->vbflags2 & VB2_CHRONTEL) ivideo->chronteltype = 2;
-#पूर्ण_अगर
-		पूर्ण
-		अगर(ivideo->vbflags2 & VB2_LVDS) अणु
-		   prपूर्णांकk(KERN_INFO "%s LVDS transmitter\n", stdstr);
-		पूर्ण
-		अगर((ivideo->sisvga_engine == SIS_300_VGA) && (ivideo->vbflags2 & VB2_TRUMPION)) अणु
-		   prपूर्णांकk(KERN_INFO "%s Trumpion Zurac LCD scaler\n", stdstr);
-		पूर्ण
-		अगर(ivideo->vbflags2 & VB2_CHRONTEL) अणु
-		   prपूर्णांकk(KERN_INFO "%s Chrontel TV encoder\n", stdstr);
-		पूर्ण
-		अगर((ivideo->chip >= SIS_661) && (ivideo->vbflags2 & VB2_CONEXANT)) अणु
-		   prपूर्णांकk(KERN_INFO "%s Conexant external device\n", stdstr);
-		पूर्ण
-	पूर्ण
+				break;
+			}
+			if(ivideo->vbflags2 & VB2_CHRONTEL) ivideo->chronteltype = 2;
+#endif
+		}
+		if(ivideo->vbflags2 & VB2_LVDS) {
+		   printk(KERN_INFO "%s LVDS transmitter\n", stdstr);
+		}
+		if((ivideo->sisvga_engine == SIS_300_VGA) && (ivideo->vbflags2 & VB2_TRUMPION)) {
+		   printk(KERN_INFO "%s Trumpion Zurac LCD scaler\n", stdstr);
+		}
+		if(ivideo->vbflags2 & VB2_CHRONTEL) {
+		   printk(KERN_INFO "%s Chrontel TV encoder\n", stdstr);
+		}
+		if((ivideo->chip >= SIS_661) && (ivideo->vbflags2 & VB2_CONEXANT)) {
+		   printk(KERN_INFO "%s Conexant external device\n", stdstr);
+		}
+	}
 
-	अगर(ivideo->vbflags2 & VB2_SISBRIDGE) अणु
+	if(ivideo->vbflags2 & VB2_SISBRIDGE) {
 		SiS_SenseLCD(ivideo);
 		SiS_Sense30x(ivideo);
-	पूर्ण अन्यथा अगर(ivideo->vbflags2 & VB2_CHRONTEL) अणु
+	} else if(ivideo->vbflags2 & VB2_CHRONTEL) {
 		SiS_SenseCh(ivideo);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* ---------- Engine initialization routines ------------ */
 
-अटल व्योम
-sisfb_engine_init(काष्ठा sis_video_info *ivideo)
-अणु
+static void
+sisfb_engine_init(struct sis_video_info *ivideo)
+{
 
 	/* Initialize command queue (we use MMIO only) */
 
@@ -2825,8 +2824,8 @@ sisfb_engine_init(काष्ठा sis_video_info *ivideo)
 			  VM_CMD_QUEUE_CAP   |
 			  AGP_CMD_QUEUE_CAP);
 
-#अगर_घोषित CONFIG_FB_SIS_300
-	अगर(ivideo->sisvga_engine == SIS_300_VGA) अणु
+#ifdef CONFIG_FB_SIS_300
+	if(ivideo->sisvga_engine == SIS_300_VGA) {
 		u32 tqueue_pos;
 		u8 tq_state;
 
@@ -2841,50 +2840,50 @@ sisfb_engine_init(काष्ठा sis_video_info *ivideo)
 		SiS_SetReg(SISSR, IND_SIS_TURBOQUEUE_ADR, (u8)(tqueue_pos & 0xff));
 
 		ivideo->caps |= TURBO_QUEUE_CAP;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-#अगर_घोषित CONFIG_FB_SIS_315
-	अगर(ivideo->sisvga_engine == SIS_315_VGA) अणु
+#ifdef CONFIG_FB_SIS_315
+	if(ivideo->sisvga_engine == SIS_315_VGA) {
 		u32 tempq = 0, templ;
 		u8  temp;
 
-		अगर(ivideo->chip == XGI_20) अणु
-			चयन(ivideo->cmdQueueSize) अणु
-			हाल (64 * 1024):
+		if(ivideo->chip == XGI_20) {
+			switch(ivideo->cmdQueueSize) {
+			case (64 * 1024):
 				temp = SIS_CMD_QUEUE_SIZE_Z7_64k;
-				अवरोध;
-			हाल (128 * 1024):
-			शेष:
+				break;
+			case (128 * 1024):
+			default:
 				temp = SIS_CMD_QUEUE_SIZE_Z7_128k;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			चयन(ivideo->cmdQueueSize) अणु
-			हाल (4 * 1024 * 1024):
+			}
+		} else {
+			switch(ivideo->cmdQueueSize) {
+			case (4 * 1024 * 1024):
 				temp = SIS_CMD_QUEUE_SIZE_4M;
-				अवरोध;
-			हाल (2 * 1024 * 1024):
+				break;
+			case (2 * 1024 * 1024):
 				temp = SIS_CMD_QUEUE_SIZE_2M;
-				अवरोध;
-			हाल (1 * 1024 * 1024):
+				break;
+			case (1 * 1024 * 1024):
 				temp = SIS_CMD_QUEUE_SIZE_1M;
-				अवरोध;
-			शेष:
-			हाल (512 * 1024):
+				break;
+			default:
+			case (512 * 1024):
 				temp = SIS_CMD_QUEUE_SIZE_512k;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		SiS_SetReg(SISSR, IND_SIS_CMDQUEUE_THRESHOLD, COMMAND_QUEUE_THRESHOLD);
 		SiS_SetReg(SISSR, IND_SIS_CMDQUEUE_SET, SIS_CMD_QUEUE_RESET);
 
-		अगर((ivideo->chip >= XGI_40) && ivideo->modechanged) अणु
-			/* Must disable dual pipe on XGI_40. Can't करो
+		if((ivideo->chip >= XGI_40) && ivideo->modechanged) {
+			/* Must disable dual pipe on XGI_40. Can't do
 			 * this in MMIO mode, because it requires
 			 * setting/clearing a bit in the MMIO fire trigger
-			 * रेजिस्टर.
+			 * register.
 			 */
-			अगर(!((templ = MMIO_IN32(ivideo->mmio_vbase, 0x8240)) & (1 << 10))) अणु
+			if(!((templ = MMIO_IN32(ivideo->mmio_vbase, 0x8240)) & (1 << 10))) {
 
 				MMIO_OUT32(ivideo->mmio_vbase, Q_WRITE_PTR, 0);
 
@@ -2896,10 +2895,10 @@ sisfb_engine_init(काष्ठा sis_video_info *ivideo)
 				tempq = (u32)(ivideo->video_size - ivideo->cmdQueueSize);
 				MMIO_OUT32(ivideo->mmio_vbase, Q_BASE_ADDR, tempq);
 
-				ग_लिखोl(0x16800000 + 0x8240, ivideo->video_vbase + tempq);
-				ग_लिखोl(templ | (1 << 10), ivideo->video_vbase + tempq + 4);
-				ग_लिखोl(0x168F0000, ivideo->video_vbase + tempq + 8);
-				ग_लिखोl(0x168F0000, ivideo->video_vbase + tempq + 12);
+				writel(0x16800000 + 0x8240, ivideo->video_vbase + tempq);
+				writel(templ | (1 << 10), ivideo->video_vbase + tempq + 4);
+				writel(0x168F0000, ivideo->video_vbase + tempq + 8);
+				writel(0x168F0000, ivideo->video_vbase + tempq + 12);
 
 				MMIO_OUT32(ivideo->mmio_vbase, Q_WRITE_PTR, (tempq + 16));
 
@@ -2907,8 +2906,8 @@ sisfb_engine_init(काष्ठा sis_video_info *ivideo)
 
 				SiS_SetReg(SISSR, IND_SIS_CMDQUEUE_SET, SIS_CMD_QUEUE_RESET);
 
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		tempq = MMIO_IN32(ivideo->mmio_vbase, MMIO_QUEUE_READPORT);
 		MMIO_OUT32(ivideo->mmio_vbase, MMIO_QUEUE_WRITEPORT, tempq);
@@ -2920,114 +2919,114 @@ sisfb_engine_init(काष्ठा sis_video_info *ivideo)
 		MMIO_OUT32(ivideo->mmio_vbase, MMIO_QUEUE_PHYBASE, tempq);
 
 		ivideo->caps |= MMIO_CMD_QUEUE_CAP;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
 	ivideo->engineok = 1;
-पूर्ण
+}
 
-अटल व्योम sisfb_detect_lcd_type(काष्ठा sis_video_info *ivideo)
-अणु
+static void sisfb_detect_lcd_type(struct sis_video_info *ivideo)
+{
 	u8 reg;
-	पूर्णांक i;
+	int i;
 
 	reg = SiS_GetReg(SISCR, 0x36);
 	reg &= 0x0f;
-	अगर(ivideo->sisvga_engine == SIS_300_VGA) अणु
+	if(ivideo->sisvga_engine == SIS_300_VGA) {
 		ivideo->CRT2LCDType = sis300paneltype[reg];
-	पूर्ण अन्यथा अगर(ivideo->chip >= SIS_661) अणु
+	} else if(ivideo->chip >= SIS_661) {
 		ivideo->CRT2LCDType = sis661paneltype[reg];
-	पूर्ण अन्यथा अणु
+	} else {
 		ivideo->CRT2LCDType = sis310paneltype[reg];
-		अगर((ivideo->chip == SIS_550) && (sisfb_fstn)) अणु
-			अगर((ivideo->CRT2LCDType != LCD_320x240_2) &&
-			   (ivideo->CRT2LCDType != LCD_320x240_3)) अणु
+		if((ivideo->chip == SIS_550) && (sisfb_fstn)) {
+			if((ivideo->CRT2LCDType != LCD_320x240_2) &&
+			   (ivideo->CRT2LCDType != LCD_320x240_3)) {
 				ivideo->CRT2LCDType = LCD_320x240;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर(ivideo->CRT2LCDType == LCD_UNKNOWN) अणु
+	if(ivideo->CRT2LCDType == LCD_UNKNOWN) {
 		/* For broken BIOSes: Assume 1024x768, RGB18 */
 		ivideo->CRT2LCDType = LCD_1024x768;
 		SiS_SetRegANDOR(SISCR, 0x36, 0xf0, 0x02);
 		SiS_SetRegANDOR(SISCR, 0x37, 0xee, 0x01);
-		prपूर्णांकk(KERN_DEBUG "sisfb: Invalid panel ID (%02x), assuming 1024x768, RGB18\n", reg);
-	पूर्ण
+		printk(KERN_DEBUG "sisfb: Invalid panel ID (%02x), assuming 1024x768, RGB18\n", reg);
+	}
 
-	क्रम(i = 0; i < SIS_LCD_NUMBER; i++) अणु
-		अगर(ivideo->CRT2LCDType == sis_lcd_data[i].lcdtype) अणु
+	for(i = 0; i < SIS_LCD_NUMBER; i++) {
+		if(ivideo->CRT2LCDType == sis_lcd_data[i].lcdtype) {
 			ivideo->lcdxres = sis_lcd_data[i].xres;
 			ivideo->lcdyres = sis_lcd_data[i].yres;
-			ivideo->lcddeभ_शेषeidx = sis_lcd_data[i].शेष_mode_idx;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			ivideo->lcddefmodeidx = sis_lcd_data[i].default_mode_idx;
+			break;
+		}
+	}
 
-#अगर_घोषित CONFIG_FB_SIS_300
-	अगर(ivideo->SiS_Pr.SiS_CustomT == CUT_BARCO1366) अणु
+#ifdef CONFIG_FB_SIS_300
+	if(ivideo->SiS_Pr.SiS_CustomT == CUT_BARCO1366) {
 		ivideo->lcdxres = 1360; ivideo->lcdyres = 1024;
-		ivideo->lcddeभ_शेषeidx = DEFAULT_MODE_1360;
-	पूर्ण अन्यथा अगर(ivideo->SiS_Pr.SiS_CustomT == CUT_PANEL848) अणु
+		ivideo->lcddefmodeidx = DEFAULT_MODE_1360;
+	} else if(ivideo->SiS_Pr.SiS_CustomT == CUT_PANEL848) {
 		ivideo->lcdxres =  848; ivideo->lcdyres =  480;
-		ivideo->lcddeभ_शेषeidx = DEFAULT_MODE_848;
-	पूर्ण अन्यथा अगर(ivideo->SiS_Pr.SiS_CustomT == CUT_PANEL856) अणु
+		ivideo->lcddefmodeidx = DEFAULT_MODE_848;
+	} else if(ivideo->SiS_Pr.SiS_CustomT == CUT_PANEL856) {
 		ivideo->lcdxres =  856; ivideo->lcdyres =  480;
-		ivideo->lcddeभ_शेषeidx = DEFAULT_MODE_856;
-	पूर्ण
-#पूर्ण_अगर
+		ivideo->lcddefmodeidx = DEFAULT_MODE_856;
+	}
+#endif
 
-	prपूर्णांकk(KERN_DEBUG "sisfb: Detected %dx%d flat panel\n",
+	printk(KERN_DEBUG "sisfb: Detected %dx%d flat panel\n",
 			ivideo->lcdxres, ivideo->lcdyres);
-पूर्ण
+}
 
-अटल व्योम sisfb_save_pdc_emi(काष्ठा sis_video_info *ivideo)
-अणु
-#अगर_घोषित CONFIG_FB_SIS_300
-	/* Save the current PanelDelayCompensation अगर the LCD is currently used */
-	अगर(ivideo->sisvga_engine == SIS_300_VGA) अणु
-		अगर(ivideo->vbflags2 & (VB2_LVDS | VB2_30xBDH)) अणु
-			पूर्णांक पंचांगp;
-			पंचांगp = SiS_GetReg(SISCR, 0x30);
-			अगर(पंचांगp & 0x20) अणु
-				/* Currently on LCD? If yes, पढ़ो current pdc */
+static void sisfb_save_pdc_emi(struct sis_video_info *ivideo)
+{
+#ifdef CONFIG_FB_SIS_300
+	/* Save the current PanelDelayCompensation if the LCD is currently used */
+	if(ivideo->sisvga_engine == SIS_300_VGA) {
+		if(ivideo->vbflags2 & (VB2_LVDS | VB2_30xBDH)) {
+			int tmp;
+			tmp = SiS_GetReg(SISCR, 0x30);
+			if(tmp & 0x20) {
+				/* Currently on LCD? If yes, read current pdc */
 				ivideo->detectedpdc = SiS_GetReg(SISPART1, 0x13);
 				ivideo->detectedpdc &= 0x3c;
-				अगर(ivideo->SiS_Pr.PDC == -1) अणु
+				if(ivideo->SiS_Pr.PDC == -1) {
 					/* Let option override detection */
 					ivideo->SiS_Pr.PDC = ivideo->detectedpdc;
-				पूर्ण
-				prपूर्णांकk(KERN_INFO "sisfb: Detected LCD PDC 0x%02x\n",
+				}
+				printk(KERN_INFO "sisfb: Detected LCD PDC 0x%02x\n",
 					ivideo->detectedpdc);
-			पूर्ण
-			अगर((ivideo->SiS_Pr.PDC != -1) &&
-			   (ivideo->SiS_Pr.PDC != ivideo->detectedpdc)) अणु
-				prपूर्णांकk(KERN_INFO "sisfb: Using LCD PDC 0x%02x\n",
+			}
+			if((ivideo->SiS_Pr.PDC != -1) &&
+			   (ivideo->SiS_Pr.PDC != ivideo->detectedpdc)) {
+				printk(KERN_INFO "sisfb: Using LCD PDC 0x%02x\n",
 					ivideo->SiS_Pr.PDC);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+			}
+		}
+	}
+#endif
 
-#अगर_घोषित CONFIG_FB_SIS_315
-	अगर(ivideo->sisvga_engine == SIS_315_VGA) अणु
+#ifdef CONFIG_FB_SIS_315
+	if(ivideo->sisvga_engine == SIS_315_VGA) {
 
 		/* Try to find about LCDA */
-		अगर(ivideo->vbflags2 & VB2_SISLCDABRIDGE) अणु
-			पूर्णांक पंचांगp;
-			पंचांगp = SiS_GetReg(SISPART1, 0x13);
-			अगर(पंचांगp & 0x04) अणु
+		if(ivideo->vbflags2 & VB2_SISLCDABRIDGE) {
+			int tmp;
+			tmp = SiS_GetReg(SISPART1, 0x13);
+			if(tmp & 0x04) {
 				ivideo->SiS_Pr.SiS_UseLCDA = true;
 				ivideo->detectedlcda = 0x03;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/* Save PDC */
-		अगर(ivideo->vbflags2 & VB2_SISLVDSBRIDGE) अणु
-			पूर्णांक पंचांगp;
-			पंचांगp = SiS_GetReg(SISCR, 0x30);
-			अगर((पंचांगp & 0x20) || (ivideo->detectedlcda != 0xff)) अणु
-				/* Currently on LCD? If yes, पढ़ो current pdc */
+		if(ivideo->vbflags2 & VB2_SISLVDSBRIDGE) {
+			int tmp;
+			tmp = SiS_GetReg(SISCR, 0x30);
+			if((tmp & 0x20) || (ivideo->detectedlcda != 0xff)) {
+				/* Currently on LCD? If yes, read current pdc */
 				u8 pdc;
 				pdc = SiS_GetReg(SISPART1, 0x2D);
 				ivideo->detectedpdc  = (pdc & 0x0f) << 1;
@@ -3036,76 +3035,76 @@ sisfb_engine_init(काष्ठा sis_video_info *ivideo)
 				ivideo->detectedpdc |= ((pdc >> 7) & 0x01);
 				pdc = SiS_GetReg(SISPART1, 0x20);
 				ivideo->detectedpdca |= ((pdc >> 6) & 0x01);
-				अगर(ivideo->newrom) अणु
+				if(ivideo->newrom) {
 					/* New ROM invalidates other PDC resp. */
-					अगर(ivideo->detectedlcda != 0xff) अणु
+					if(ivideo->detectedlcda != 0xff) {
 						ivideo->detectedpdc = 0xff;
-					पूर्ण अन्यथा अणु
+					} else {
 						ivideo->detectedpdca = 0xff;
-					पूर्ण
-				पूर्ण
-				अगर(ivideo->SiS_Pr.PDC == -1) अणु
-					अगर(ivideo->detectedpdc != 0xff) अणु
+					}
+				}
+				if(ivideo->SiS_Pr.PDC == -1) {
+					if(ivideo->detectedpdc != 0xff) {
 						ivideo->SiS_Pr.PDC = ivideo->detectedpdc;
-					पूर्ण
-				पूर्ण
-				अगर(ivideo->SiS_Pr.PDCA == -1) अणु
-					अगर(ivideo->detectedpdca != 0xff) अणु
+					}
+				}
+				if(ivideo->SiS_Pr.PDCA == -1) {
+					if(ivideo->detectedpdca != 0xff) {
 						ivideo->SiS_Pr.PDCA = ivideo->detectedpdca;
-					पूर्ण
-				पूर्ण
-				अगर(ivideo->detectedpdc != 0xff) अणु
-					prपूर्णांकk(KERN_INFO
+					}
+				}
+				if(ivideo->detectedpdc != 0xff) {
+					printk(KERN_INFO
 						"sisfb: Detected LCD PDC 0x%02x (for LCD=CRT2)\n",
 						ivideo->detectedpdc);
-				पूर्ण
-				अगर(ivideo->detectedpdca != 0xff) अणु
-					prपूर्णांकk(KERN_INFO
+				}
+				if(ivideo->detectedpdca != 0xff) {
+					printk(KERN_INFO
 						"sisfb: Detected LCD PDC1 0x%02x (for LCD=CRT1)\n",
 						ivideo->detectedpdca);
-				पूर्ण
-			पूर्ण
+				}
+			}
 
 			/* Save EMI */
-			अगर(ivideo->vbflags2 & VB2_SISEMIBRIDGE) अणु
+			if(ivideo->vbflags2 & VB2_SISEMIBRIDGE) {
 				ivideo->SiS_Pr.EMI_30 = SiS_GetReg(SISPART4, 0x30);
 				ivideo->SiS_Pr.EMI_31 = SiS_GetReg(SISPART4, 0x31);
 				ivideo->SiS_Pr.EMI_32 = SiS_GetReg(SISPART4, 0x32);
 				ivideo->SiS_Pr.EMI_33 = SiS_GetReg(SISPART4, 0x33);
 				ivideo->SiS_Pr.HaveEMI = true;
-				अगर((पंचांगp & 0x20) || (ivideo->detectedlcda != 0xff)) अणु
+				if((tmp & 0x20) || (ivideo->detectedlcda != 0xff)) {
 					ivideo->SiS_Pr.HaveEMILCD = true;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				}
+			}
+		}
 
 		/* Let user override detected PDCs (all bridges) */
-		अगर(ivideo->vbflags2 & VB2_30xBLV) अणु
-			अगर((ivideo->SiS_Pr.PDC != -1) &&
-			   (ivideo->SiS_Pr.PDC != ivideo->detectedpdc)) अणु
-				prपूर्णांकk(KERN_INFO "sisfb: Using LCD PDC 0x%02x (for LCD=CRT2)\n",
+		if(ivideo->vbflags2 & VB2_30xBLV) {
+			if((ivideo->SiS_Pr.PDC != -1) &&
+			   (ivideo->SiS_Pr.PDC != ivideo->detectedpdc)) {
+				printk(KERN_INFO "sisfb: Using LCD PDC 0x%02x (for LCD=CRT2)\n",
 					ivideo->SiS_Pr.PDC);
-			पूर्ण
-			अगर((ivideo->SiS_Pr.PDCA != -1) &&
-			   (ivideo->SiS_Pr.PDCA != ivideo->detectedpdca)) अणु
-				prपूर्णांकk(KERN_INFO "sisfb: Using LCD PDC1 0x%02x (for LCD=CRT1)\n",
+			}
+			if((ivideo->SiS_Pr.PDCA != -1) &&
+			   (ivideo->SiS_Pr.PDCA != ivideo->detectedpdca)) {
+				printk(KERN_INFO "sisfb: Using LCD PDC1 0x%02x (for LCD=CRT1)\n",
 				 ivideo->SiS_Pr.PDCA);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+	}
+#endif
+}
 
 /* -------------------- Memory manager routines ---------------------- */
 
-अटल u32 sisfb_getheapstart(काष्ठा sis_video_info *ivideo)
-अणु
+static u32 sisfb_getheapstart(struct sis_video_info *ivideo)
+{
 	u32 ret = ivideo->sisfb_parm_mem * 1024;
 	u32 maxoffs = ivideo->video_size - ivideo->hwcursor_size - ivideo->cmdQueueSize;
 	u32 def;
 
-	/* Calculate heap start = end of memory क्रम console
+	/* Calculate heap start = end of memory for console
 	 *
 	 * CCCCCCCCDDDDDDDDDDDDDDDDDDDDDDDDDDDDHHHHQQQQQQQQQQ
 	 * C = console, D = heap, H = HWCursor, Q = cmd-queue
@@ -3113,74 +3112,74 @@ sisfb_engine_init(काष्ठा sis_video_info *ivideo)
 	 * On 76x in UMA+LFB mode, the layout is as follows:
 	 * DDDDDDDDDDDCCCCCCCCCCCCCCCCCCCCCCCCHHHHQQQQQQQQQQQ
 	 * where the heap is the entire UMA area, eventually
-	 * पूर्णांकo the LFB area अगर the given mem parameter is
+	 * into the LFB area if the given mem parameter is
 	 * higher than the size of the UMA memory.
 	 *
 	 * Basically given by "mem" parameter
 	 *
 	 * maximum = videosize - cmd_queue - hwcursor
 	 *           (results in a heap of size 0)
-	 * शेष = SiS 300: depends on videosize
+	 * default = SiS 300: depends on videosize
 	 *           SiS 315/330/340/XGI: 32k below max
 	 */
 
-	अगर(ivideo->sisvga_engine == SIS_300_VGA) अणु
-		अगर(ivideo->video_size > 0x1000000) अणु
+	if(ivideo->sisvga_engine == SIS_300_VGA) {
+		if(ivideo->video_size > 0x1000000) {
 			def = 0xc00000;
-		पूर्ण अन्यथा अगर(ivideo->video_size > 0x800000) अणु
+		} else if(ivideo->video_size > 0x800000) {
 			def = 0x800000;
-		पूर्ण अन्यथा अणु
+		} else {
 			def = 0x400000;
-		पूर्ण
-	पूर्ण अन्यथा अगर(ivideo->UMAsize && ivideo->LFBsize) अणु
+		}
+	} else if(ivideo->UMAsize && ivideo->LFBsize) {
 		ret = def = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		def = maxoffs - 0x8000;
-	पूर्ण
+	}
 
-	/* Use शेष क्रम secondary card क्रम now (FIXME) */
-	अगर((!ret) || (ret > maxoffs) || (ivideo->cardnumber != 0))
+	/* Use default for secondary card for now (FIXME) */
+	if((!ret) || (ret > maxoffs) || (ivideo->cardnumber != 0))
 		ret = def;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u32 sisfb_getheapsize(काष्ठा sis_video_info *ivideo)
-अणु
+static u32 sisfb_getheapsize(struct sis_video_info *ivideo)
+{
 	u32 max = ivideo->video_size - ivideo->hwcursor_size - ivideo->cmdQueueSize;
 	u32 ret = 0;
 
-	अगर(ivideo->UMAsize && ivideo->LFBsize) अणु
-		अगर( (!ivideo->sisfb_parm_mem)			||
+	if(ivideo->UMAsize && ivideo->LFBsize) {
+		if( (!ivideo->sisfb_parm_mem)			||
 		    ((ivideo->sisfb_parm_mem * 1024) > max)	||
-		    ((max - (ivideo->sisfb_parm_mem * 1024)) < ivideo->UMAsize) ) अणु
+		    ((max - (ivideo->sisfb_parm_mem * 1024)) < ivideo->UMAsize) ) {
 			ret = ivideo->UMAsize;
 			max -= ivideo->UMAsize;
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = max - (ivideo->sisfb_parm_mem * 1024);
 			max = ivideo->sisfb_parm_mem * 1024;
-		पूर्ण
+		}
 		ivideo->video_offset = ret;
 		ivideo->sisfb_mem = max;
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = max - ivideo->heapstart;
 		ivideo->sisfb_mem = ivideo->heapstart;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sisfb_heap_init(काष्ठा sis_video_info *ivideo)
-अणु
-	काष्ठा SIS_OH *poh;
+static int sisfb_heap_init(struct sis_video_info *ivideo)
+{
+	struct SIS_OH *poh;
 
 	ivideo->video_offset = 0;
-	अगर(ivideo->sisfb_parm_mem) अणु
-		अगर( (ivideo->sisfb_parm_mem < (2 * 1024 * 1024)) ||
-		    (ivideo->sisfb_parm_mem > ivideo->video_size) ) अणु
+	if(ivideo->sisfb_parm_mem) {
+		if( (ivideo->sisfb_parm_mem < (2 * 1024 * 1024)) ||
+		    (ivideo->sisfb_parm_mem > ivideo->video_size) ) {
 			ivideo->sisfb_parm_mem = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ivideo->heapstart = sisfb_getheapstart(ivideo);
 	ivideo->sisfb_heap_size = sisfb_getheapsize(ivideo);
@@ -3188,344 +3187,344 @@ sisfb_engine_init(काष्ठा sis_video_info *ivideo)
 	ivideo->sisfb_heap_start = ivideo->video_vbase + ivideo->heapstart;
 	ivideo->sisfb_heap_end   = ivideo->sisfb_heap_start + ivideo->sisfb_heap_size;
 
-	prपूर्णांकk(KERN_INFO "sisfb: Memory heap starting at %dK, size %dK\n",
-		(पूर्णांक)(ivideo->heapstart / 1024), (पूर्णांक)(ivideo->sisfb_heap_size / 1024));
+	printk(KERN_INFO "sisfb: Memory heap starting at %dK, size %dK\n",
+		(int)(ivideo->heapstart / 1024), (int)(ivideo->sisfb_heap_size / 1024));
 
 	ivideo->sisfb_heap.vinfo = ivideo;
 
-	ivideo->sisfb_heap.poha_chain = शून्य;
-	ivideo->sisfb_heap.poh_मुक्तlist = शून्य;
+	ivideo->sisfb_heap.poha_chain = NULL;
+	ivideo->sisfb_heap.poh_freelist = NULL;
 
 	poh = sisfb_poh_new_node(&ivideo->sisfb_heap);
-	अगर(poh == शून्य)
-		वापस 1;
+	if(poh == NULL)
+		return 1;
 
-	poh->poh_next = &ivideo->sisfb_heap.oh_मुक्त;
-	poh->poh_prev = &ivideo->sisfb_heap.oh_मुक्त;
+	poh->poh_next = &ivideo->sisfb_heap.oh_free;
+	poh->poh_prev = &ivideo->sisfb_heap.oh_free;
 	poh->size = ivideo->sisfb_heap_size;
 	poh->offset = ivideo->heapstart;
 
-	ivideo->sisfb_heap.oh_मुक्त.poh_next = poh;
-	ivideo->sisfb_heap.oh_मुक्त.poh_prev = poh;
-	ivideo->sisfb_heap.oh_मुक्त.size = 0;
-	ivideo->sisfb_heap.max_मुक्तsize = poh->size;
+	ivideo->sisfb_heap.oh_free.poh_next = poh;
+	ivideo->sisfb_heap.oh_free.poh_prev = poh;
+	ivideo->sisfb_heap.oh_free.size = 0;
+	ivideo->sisfb_heap.max_freesize = poh->size;
 
 	ivideo->sisfb_heap.oh_used.poh_next = &ivideo->sisfb_heap.oh_used;
 	ivideo->sisfb_heap.oh_used.poh_prev = &ivideo->sisfb_heap.oh_used;
 	ivideo->sisfb_heap.oh_used.size = SENTINEL;
 
-	अगर(ivideo->cardnumber == 0) अणु
+	if(ivideo->cardnumber == 0) {
 		/* For the first card, make this heap the "global" one
-		 * क्रम old DRM (which could handle only one card)
+		 * for old DRM (which could handle only one card)
 		 */
 		sisfb_heap = &ivideo->sisfb_heap;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा SIS_OH *
-sisfb_poh_new_node(काष्ठा SIS_HEAP *memheap)
-अणु
-	काष्ठा SIS_OHALLOC	*poha;
-	काष्ठा SIS_OH		*poh;
-	अचिन्हित दीर्घ		cOhs;
-	पूर्णांक			i;
+static struct SIS_OH *
+sisfb_poh_new_node(struct SIS_HEAP *memheap)
+{
+	struct SIS_OHALLOC	*poha;
+	struct SIS_OH		*poh;
+	unsigned long		cOhs;
+	int			i;
 
-	अगर(memheap->poh_मुक्तlist == शून्य) अणु
-		poha = kदो_स्मृति(SIS_OH_ALLOC_SIZE, GFP_KERNEL);
-		अगर(!poha)
-			वापस शून्य;
+	if(memheap->poh_freelist == NULL) {
+		poha = kmalloc(SIS_OH_ALLOC_SIZE, GFP_KERNEL);
+		if(!poha)
+			return NULL;
 
 		poha->poha_next = memheap->poha_chain;
 		memheap->poha_chain = poha;
 
-		cOhs = (SIS_OH_ALLOC_SIZE - माप(काष्ठा SIS_OHALLOC)) / माप(काष्ठा SIS_OH) + 1;
+		cOhs = (SIS_OH_ALLOC_SIZE - sizeof(struct SIS_OHALLOC)) / sizeof(struct SIS_OH) + 1;
 
 		poh = &poha->aoh[0];
-		क्रम(i = cOhs - 1; i != 0; i--) अणु
+		for(i = cOhs - 1; i != 0; i--) {
 			poh->poh_next = poh + 1;
 			poh = poh + 1;
-		पूर्ण
+		}
 
-		poh->poh_next = शून्य;
-		memheap->poh_मुक्तlist = &poha->aoh[0];
-	पूर्ण
+		poh->poh_next = NULL;
+		memheap->poh_freelist = &poha->aoh[0];
+	}
 
-	poh = memheap->poh_मुक्तlist;
-	memheap->poh_मुक्तlist = poh->poh_next;
+	poh = memheap->poh_freelist;
+	memheap->poh_freelist = poh->poh_next;
 
-	वापस poh;
-पूर्ण
+	return poh;
+}
 
-अटल काष्ठा SIS_OH *
-sisfb_poh_allocate(काष्ठा SIS_HEAP *memheap, u32 size)
-अणु
-	काष्ठा SIS_OH	*pohThis;
-	काष्ठा SIS_OH	*pohRoot;
-	पूर्णांक		bAllocated = 0;
+static struct SIS_OH *
+sisfb_poh_allocate(struct SIS_HEAP *memheap, u32 size)
+{
+	struct SIS_OH	*pohThis;
+	struct SIS_OH	*pohRoot;
+	int		bAllocated = 0;
 
-	अगर(size > memheap->max_मुक्तsize) अणु
+	if(size > memheap->max_freesize) {
 		DPRINTK("sisfb: Can't allocate %dk video memory\n",
-			(अचिन्हित पूर्णांक) size / 1024);
-		वापस शून्य;
-	पूर्ण
+			(unsigned int) size / 1024);
+		return NULL;
+	}
 
-	pohThis = memheap->oh_मुक्त.poh_next;
+	pohThis = memheap->oh_free.poh_next;
 
-	जबतक(pohThis != &memheap->oh_मुक्त) अणु
-		अगर(size <= pohThis->size) अणु
+	while(pohThis != &memheap->oh_free) {
+		if(size <= pohThis->size) {
 			bAllocated = 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		pohThis = pohThis->poh_next;
-	पूर्ण
+	}
 
-	अगर(!bAllocated) अणु
+	if(!bAllocated) {
 		DPRINTK("sisfb: Can't allocate %dk video memory\n",
-			(अचिन्हित पूर्णांक) size / 1024);
-		वापस शून्य;
-	पूर्ण
+			(unsigned int) size / 1024);
+		return NULL;
+	}
 
-	अगर(size == pohThis->size) अणु
+	if(size == pohThis->size) {
 		pohRoot = pohThis;
 		sisfb_delete_node(pohThis);
-	पूर्ण अन्यथा अणु
+	} else {
 		pohRoot = sisfb_poh_new_node(memheap);
-		अगर(pohRoot == शून्य)
-			वापस शून्य;
+		if(pohRoot == NULL)
+			return NULL;
 
 		pohRoot->offset = pohThis->offset;
 		pohRoot->size = size;
 
 		pohThis->offset += size;
 		pohThis->size -= size;
-	पूर्ण
+	}
 
-	memheap->max_मुक्तsize -= size;
+	memheap->max_freesize -= size;
 
 	pohThis = &memheap->oh_used;
 	sisfb_insert_node(pohThis, pohRoot);
 
-	वापस pohRoot;
-पूर्ण
+	return pohRoot;
+}
 
-अटल व्योम
-sisfb_delete_node(काष्ठा SIS_OH *poh)
-अणु
+static void
+sisfb_delete_node(struct SIS_OH *poh)
+{
 	poh->poh_prev->poh_next = poh->poh_next;
 	poh->poh_next->poh_prev = poh->poh_prev;
-पूर्ण
+}
 
-अटल व्योम
-sisfb_insert_node(काष्ठा SIS_OH *pohList, काष्ठा SIS_OH *poh)
-अणु
-	काष्ठा SIS_OH *pohTemp = pohList->poh_next;
+static void
+sisfb_insert_node(struct SIS_OH *pohList, struct SIS_OH *poh)
+{
+	struct SIS_OH *pohTemp = pohList->poh_next;
 
 	pohList->poh_next = poh;
 	pohTemp->poh_prev = poh;
 
 	poh->poh_prev = pohList;
 	poh->poh_next = pohTemp;
-पूर्ण
+}
 
-अटल काष्ठा SIS_OH *
-sisfb_poh_मुक्त(काष्ठा SIS_HEAP *memheap, u32 base)
-अणु
-	काष्ठा SIS_OH *pohThis;
-	काष्ठा SIS_OH *poh_मुक्तd;
-	काष्ठा SIS_OH *poh_prev;
-	काष्ठा SIS_OH *poh_next;
+static struct SIS_OH *
+sisfb_poh_free(struct SIS_HEAP *memheap, u32 base)
+{
+	struct SIS_OH *pohThis;
+	struct SIS_OH *poh_freed;
+	struct SIS_OH *poh_prev;
+	struct SIS_OH *poh_next;
 	u32    ulUpper;
 	u32    ulLower;
-	पूर्णांक    foundNode = 0;
+	int    foundNode = 0;
 
-	poh_मुक्तd = memheap->oh_used.poh_next;
+	poh_freed = memheap->oh_used.poh_next;
 
-	जबतक(poh_मुक्तd != &memheap->oh_used) अणु
-		अगर(poh_मुक्तd->offset == base) अणु
+	while(poh_freed != &memheap->oh_used) {
+		if(poh_freed->offset == base) {
 			foundNode = 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		poh_मुक्तd = poh_मुक्तd->poh_next;
-	पूर्ण
+		poh_freed = poh_freed->poh_next;
+	}
 
-	अगर(!foundNode)
-		वापस शून्य;
+	if(!foundNode)
+		return NULL;
 
-	memheap->max_मुक्तsize += poh_मुक्तd->size;
+	memheap->max_freesize += poh_freed->size;
 
-	poh_prev = poh_next = शून्य;
-	ulUpper = poh_मुक्तd->offset + poh_मुक्तd->size;
-	ulLower = poh_मुक्तd->offset;
+	poh_prev = poh_next = NULL;
+	ulUpper = poh_freed->offset + poh_freed->size;
+	ulLower = poh_freed->offset;
 
-	pohThis = memheap->oh_मुक्त.poh_next;
+	pohThis = memheap->oh_free.poh_next;
 
-	जबतक(pohThis != &memheap->oh_मुक्त) अणु
-		अगर(pohThis->offset == ulUpper) अणु
+	while(pohThis != &memheap->oh_free) {
+		if(pohThis->offset == ulUpper) {
 			poh_next = pohThis;
-		पूर्ण अन्यथा अगर((pohThis->offset + pohThis->size) == ulLower) अणु
+		} else if((pohThis->offset + pohThis->size) == ulLower) {
 			poh_prev = pohThis;
-		पूर्ण
+		}
 		pohThis = pohThis->poh_next;
-	पूर्ण
+	}
 
-	sisfb_delete_node(poh_मुक्तd);
+	sisfb_delete_node(poh_freed);
 
-	अगर(poh_prev && poh_next) अणु
-		poh_prev->size += (poh_मुक्तd->size + poh_next->size);
+	if(poh_prev && poh_next) {
+		poh_prev->size += (poh_freed->size + poh_next->size);
 		sisfb_delete_node(poh_next);
-		sisfb_मुक्त_node(memheap, poh_मुक्तd);
-		sisfb_मुक्त_node(memheap, poh_next);
-		वापस poh_prev;
-	पूर्ण
+		sisfb_free_node(memheap, poh_freed);
+		sisfb_free_node(memheap, poh_next);
+		return poh_prev;
+	}
 
-	अगर(poh_prev) अणु
-		poh_prev->size += poh_मुक्तd->size;
-		sisfb_मुक्त_node(memheap, poh_मुक्तd);
-		वापस poh_prev;
-	पूर्ण
+	if(poh_prev) {
+		poh_prev->size += poh_freed->size;
+		sisfb_free_node(memheap, poh_freed);
+		return poh_prev;
+	}
 
-	अगर(poh_next) अणु
-		poh_next->size += poh_मुक्तd->size;
-		poh_next->offset = poh_मुक्तd->offset;
-		sisfb_मुक्त_node(memheap, poh_मुक्तd);
-		वापस poh_next;
-	पूर्ण
+	if(poh_next) {
+		poh_next->size += poh_freed->size;
+		poh_next->offset = poh_freed->offset;
+		sisfb_free_node(memheap, poh_freed);
+		return poh_next;
+	}
 
-	sisfb_insert_node(&memheap->oh_मुक्त, poh_मुक्तd);
+	sisfb_insert_node(&memheap->oh_free, poh_freed);
 
-	वापस poh_मुक्तd;
-पूर्ण
+	return poh_freed;
+}
 
-अटल व्योम
-sisfb_मुक्त_node(काष्ठा SIS_HEAP *memheap, काष्ठा SIS_OH *poh)
-अणु
-	अगर(poh == शून्य)
-		वापस;
+static void
+sisfb_free_node(struct SIS_HEAP *memheap, struct SIS_OH *poh)
+{
+	if(poh == NULL)
+		return;
 
-	poh->poh_next = memheap->poh_मुक्तlist;
-	memheap->poh_मुक्तlist = poh;
-पूर्ण
+	poh->poh_next = memheap->poh_freelist;
+	memheap->poh_freelist = poh;
+}
 
-अटल व्योम
-sis_पूर्णांक_दो_स्मृति(काष्ठा sis_video_info *ivideo, काष्ठा sis_memreq *req)
-अणु
-	काष्ठा SIS_OH *poh = शून्य;
+static void
+sis_int_malloc(struct sis_video_info *ivideo, struct sis_memreq *req)
+{
+	struct SIS_OH *poh = NULL;
 
-	अगर((ivideo) && (ivideo->sisfb_id == SISFB_ID) && (!ivideo->havenoheap))
+	if((ivideo) && (ivideo->sisfb_id == SISFB_ID) && (!ivideo->havenoheap))
 		poh = sisfb_poh_allocate(&ivideo->sisfb_heap, (u32)req->size);
 
-	अगर(poh == शून्य) अणु
+	if(poh == NULL) {
 		req->offset = req->size = 0;
 		DPRINTK("sisfb: Video RAM allocation failed\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		req->offset = poh->offset;
 		req->size = poh->size;
 		DPRINTK("sisfb: Video RAM allocation succeeded: 0x%lx\n",
 			(poh->offset + ivideo->video_vbase));
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम
-sis_दो_स्मृति(काष्ठा sis_memreq *req)
-अणु
-	काष्ठा sis_video_info *ivideo = sisfb_heap->vinfo;
+void
+sis_malloc(struct sis_memreq *req)
+{
+	struct sis_video_info *ivideo = sisfb_heap->vinfo;
 
-	अगर(&ivideo->sisfb_heap == sisfb_heap)
-		sis_पूर्णांक_दो_स्मृति(ivideo, req);
-	अन्यथा
+	if(&ivideo->sisfb_heap == sisfb_heap)
+		sis_int_malloc(ivideo, req);
+	else
 		req->offset = req->size = 0;
-पूर्ण
+}
 
-व्योम
-sis_दो_स्मृति_new(काष्ठा pci_dev *pdev, काष्ठा sis_memreq *req)
-अणु
-	काष्ठा sis_video_info *ivideo = pci_get_drvdata(pdev);
+void
+sis_malloc_new(struct pci_dev *pdev, struct sis_memreq *req)
+{
+	struct sis_video_info *ivideo = pci_get_drvdata(pdev);
 
-	sis_पूर्णांक_दो_स्मृति(ivideo, req);
-पूर्ण
+	sis_int_malloc(ivideo, req);
+}
 
-/* sis_मुक्त: u32 because "base" is offset inside video ram, can never be >4GB */
+/* sis_free: u32 because "base" is offset inside video ram, can never be >4GB */
 
-अटल व्योम
-sis_पूर्णांक_मुक्त(काष्ठा sis_video_info *ivideo, u32 base)
-अणु
-	काष्ठा SIS_OH *poh;
+static void
+sis_int_free(struct sis_video_info *ivideo, u32 base)
+{
+	struct SIS_OH *poh;
 
-	अगर((!ivideo) || (ivideo->sisfb_id != SISFB_ID) || (ivideo->havenoheap))
-		वापस;
+	if((!ivideo) || (ivideo->sisfb_id != SISFB_ID) || (ivideo->havenoheap))
+		return;
 
-	poh = sisfb_poh_मुक्त(&ivideo->sisfb_heap, base);
+	poh = sisfb_poh_free(&ivideo->sisfb_heap, base);
 
-	अगर(poh == शून्य) अणु
+	if(poh == NULL) {
 		DPRINTK("sisfb: sisfb_poh_free() failed at base 0x%x\n",
-			(अचिन्हित पूर्णांक) base);
-	पूर्ण
-पूर्ण
+			(unsigned int) base);
+	}
+}
 
-व्योम
-sis_मुक्त(u32 base)
-अणु
-	काष्ठा sis_video_info *ivideo = sisfb_heap->vinfo;
+void
+sis_free(u32 base)
+{
+	struct sis_video_info *ivideo = sisfb_heap->vinfo;
 
-	sis_पूर्णांक_मुक्त(ivideo, base);
-पूर्ण
+	sis_int_free(ivideo, base);
+}
 
-व्योम
-sis_मुक्त_new(काष्ठा pci_dev *pdev, u32 base)
-अणु
-	काष्ठा sis_video_info *ivideo = pci_get_drvdata(pdev);
+void
+sis_free_new(struct pci_dev *pdev, u32 base)
+{
+	struct sis_video_info *ivideo = pci_get_drvdata(pdev);
 
-	sis_पूर्णांक_मुक्त(ivideo, base);
-पूर्ण
+	sis_int_free(ivideo, base);
+}
 
 /* --------------------- SetMode routines ------------------------- */
 
-अटल व्योम
-sisfb_check_engine_and_sync(काष्ठा sis_video_info *ivideo)
-अणु
+static void
+sisfb_check_engine_and_sync(struct sis_video_info *ivideo)
+{
 	u8 cr30, cr31;
 
-	/* Check अगर MMIO and engines are enabled,
-	 * and sync in हाल they are. Can't use
+	/* Check if MMIO and engines are enabled,
+	 * and sync in case they are. Can't use
 	 * ivideo->accel here, as this might have
-	 * been changed beक्रमe this is called.
+	 * been changed before this is called.
 	 */
 	cr30 = SiS_GetReg(SISSR, IND_SIS_PCI_ADDRESS_SET);
 	cr31 = SiS_GetReg(SISSR, IND_SIS_MODULE_ENABLE);
 	/* MMIO and 2D/3D engine enabled? */
-	अगर((cr30 & SIS_MEM_MAP_IO_ENABLE) && (cr31 & 0x42)) अणु
-#अगर_घोषित CONFIG_FB_SIS_300
-		अगर(ivideo->sisvga_engine == SIS_300_VGA) अणु
+	if((cr30 & SIS_MEM_MAP_IO_ENABLE) && (cr31 & 0x42)) {
+#ifdef CONFIG_FB_SIS_300
+		if(ivideo->sisvga_engine == SIS_300_VGA) {
 			/* Don't care about TurboQueue. It's
 			 * enough to know that the engines
 			 * are enabled
 			 */
 			sisfb_syncaccel(ivideo);
-		पूर्ण
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_FB_SIS_315
-		अगर(ivideo->sisvga_engine == SIS_315_VGA) अणु
+		}
+#endif
+#ifdef CONFIG_FB_SIS_315
+		if(ivideo->sisvga_engine == SIS_315_VGA) {
 			/* Check that any queue mode is
 			 * enabled, and that the queue
 			 * is not in the state of "reset"
 			 */
 			cr30 = SiS_GetReg(SISSR, 0x26);
-			अगर((cr30 & 0xe0) && (!(cr30 & 0x01))) अणु
+			if((cr30 & 0xe0) && (!(cr30 & 0x01))) {
 				sisfb_syncaccel(ivideo);
-			पूर्ण
-		पूर्ण
-#पूर्ण_अगर
-	पूर्ण
-पूर्ण
+			}
+		}
+#endif
+	}
+}
 
-अटल व्योम
-sisfb_pre_seपंचांगode(काष्ठा sis_video_info *ivideo)
-अणु
+static void
+sisfb_pre_setmode(struct sis_video_info *ivideo)
+{
 	u8 cr30 = 0, cr31 = 0, cr33 = 0, cr35 = 0, cr38 = 0;
-	पूर्णांक tvregnum = 0;
+	int tvregnum = 0;
 
 	ivideo->currentvbflags &= (VB_VIDEOBRIDGE | VB_DISPTYPE_DISP2);
 
@@ -3537,203 +3536,203 @@ sisfb_pre_seपंचांगode(काष्ठा sis_video_info *ivideo)
 
 	cr33 = ivideo->rate_idx & 0x0F;
 
-#अगर_घोषित CONFIG_FB_SIS_315
-	अगर(ivideo->sisvga_engine == SIS_315_VGA) अणु
-	   अगर(ivideo->chip >= SIS_661) अणु
+#ifdef CONFIG_FB_SIS_315
+	if(ivideo->sisvga_engine == SIS_315_VGA) {
+	   if(ivideo->chip >= SIS_661) {
 	      cr38 = SiS_GetReg(SISCR, 0x38);
 	      cr38 &= ~0x07;  /* Clear LCDA/DualEdge and YPbPr bits */
-	   पूर्ण अन्यथा अणु
+	   } else {
 	      tvregnum = 0x38;
 	      cr38 = SiS_GetReg(SISCR, tvregnum);
 	      cr38 &= ~0x3b;  /* Clear LCDA/DualEdge and YPbPr bits */
-	   पूर्ण
-	पूर्ण
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_FB_SIS_300
-	अगर(ivideo->sisvga_engine == SIS_300_VGA) अणु
+	   }
+	}
+#endif
+#ifdef CONFIG_FB_SIS_300
+	if(ivideo->sisvga_engine == SIS_300_VGA) {
 	   tvregnum = 0x35;
 	   cr38 = SiS_GetReg(SISCR, tvregnum);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
 	SiS_SetEnableDstn(&ivideo->SiS_Pr, false);
 	SiS_SetEnableFstn(&ivideo->SiS_Pr, false);
 	ivideo->curFSTN = ivideo->curDSTN = 0;
 
-	चयन(ivideo->currentvbflags & VB_DISPTYPE_DISP2) अणु
+	switch(ivideo->currentvbflags & VB_DISPTYPE_DISP2) {
 
-	   हाल CRT2_TV:
+	   case CRT2_TV:
 	      cr38 &= ~0xc0;   /* Clear PAL-M / PAL-N bits */
-	      अगर((ivideo->vbflags & TV_YPBPR) && (ivideo->vbflags2 & VB2_SISYPBPRBRIDGE)) अणु
-#अगर_घोषित CONFIG_FB_SIS_315
-		 अगर(ivideo->chip >= SIS_661) अणु
+	      if((ivideo->vbflags & TV_YPBPR) && (ivideo->vbflags2 & VB2_SISYPBPRBRIDGE)) {
+#ifdef CONFIG_FB_SIS_315
+		 if(ivideo->chip >= SIS_661) {
 		    cr38 |= 0x04;
-		    अगर(ivideo->vbflags & TV_YPBPR525P)       cr35 |= 0x20;
-		    अन्यथा अगर(ivideo->vbflags & TV_YPBPR750P)  cr35 |= 0x40;
-		    अन्यथा अगर(ivideo->vbflags & TV_YPBPR1080I) cr35 |= 0x60;
+		    if(ivideo->vbflags & TV_YPBPR525P)       cr35 |= 0x20;
+		    else if(ivideo->vbflags & TV_YPBPR750P)  cr35 |= 0x40;
+		    else if(ivideo->vbflags & TV_YPBPR1080I) cr35 |= 0x60;
 		    cr30 |= SIS_SIMULTANEOUS_VIEW_ENABLE;
 		    cr35 &= ~0x01;
 		    ivideo->currentvbflags |= (TV_YPBPR | (ivideo->vbflags & TV_YPBPRALL));
-		 पूर्ण अन्यथा अगर(ivideo->sisvga_engine == SIS_315_VGA) अणु
+		 } else if(ivideo->sisvga_engine == SIS_315_VGA) {
 		    cr30 |= (0x80 | SIS_SIMULTANEOUS_VIEW_ENABLE);
 		    cr38 |= 0x08;
-		    अगर(ivideo->vbflags & TV_YPBPR525P)       cr38 |= 0x10;
-		    अन्यथा अगर(ivideo->vbflags & TV_YPBPR750P)  cr38 |= 0x20;
-		    अन्यथा अगर(ivideo->vbflags & TV_YPBPR1080I) cr38 |= 0x30;
+		    if(ivideo->vbflags & TV_YPBPR525P)       cr38 |= 0x10;
+		    else if(ivideo->vbflags & TV_YPBPR750P)  cr38 |= 0x20;
+		    else if(ivideo->vbflags & TV_YPBPR1080I) cr38 |= 0x30;
 		    cr31 &= ~0x01;
 		    ivideo->currentvbflags |= (TV_YPBPR | (ivideo->vbflags & TV_YPBPRALL));
-		 पूर्ण
-#पूर्ण_अगर
-	      पूर्ण अन्यथा अगर((ivideo->vbflags & TV_HIVISION) &&
-				(ivideo->vbflags2 & VB2_SISHIVISIONBRIDGE)) अणु
-		 अगर(ivideo->chip >= SIS_661) अणु
+		 }
+#endif
+	      } else if((ivideo->vbflags & TV_HIVISION) &&
+				(ivideo->vbflags2 & VB2_SISHIVISIONBRIDGE)) {
+		 if(ivideo->chip >= SIS_661) {
 		    cr38 |= 0x04;
 		    cr35 |= 0x60;
-		 पूर्ण अन्यथा अणु
+		 } else {
 		    cr30 |= 0x80;
-		 पूर्ण
+		 }
 		 cr30 |= SIS_SIMULTANEOUS_VIEW_ENABLE;
 		 cr31 |= 0x01;
 		 cr35 |= 0x01;
 		 ivideo->currentvbflags |= TV_HIVISION;
-	      पूर्ण अन्यथा अगर(ivideo->vbflags & TV_SCART) अणु
+	      } else if(ivideo->vbflags & TV_SCART) {
 		 cr30 = (SIS_VB_OUTPUT_SCART | SIS_SIMULTANEOUS_VIEW_ENABLE);
 		 cr31 |= 0x01;
 		 cr35 |= 0x01;
 		 ivideo->currentvbflags |= TV_SCART;
-	      पूर्ण अन्यथा अणु
-		 अगर(ivideo->vbflags & TV_SVIDEO) अणु
+	      } else {
+		 if(ivideo->vbflags & TV_SVIDEO) {
 		    cr30 = (SIS_VB_OUTPUT_SVIDEO | SIS_SIMULTANEOUS_VIEW_ENABLE);
 		    ivideo->currentvbflags |= TV_SVIDEO;
-		 पूर्ण
-		 अगर(ivideo->vbflags & TV_AVIDEO) अणु
+		 }
+		 if(ivideo->vbflags & TV_AVIDEO) {
 		    cr30 = (SIS_VB_OUTPUT_COMPOSITE | SIS_SIMULTANEOUS_VIEW_ENABLE);
 		    ivideo->currentvbflags |= TV_AVIDEO;
-		 पूर्ण
-	      पूर्ण
+		 }
+	      }
 	      cr31 |= SIS_DRIVER_MODE;
 
-	      अगर(ivideo->vbflags & (TV_AVIDEO | TV_SVIDEO)) अणु
-		 अगर(ivideo->vbflags & TV_PAL) अणु
+	      if(ivideo->vbflags & (TV_AVIDEO | TV_SVIDEO)) {
+		 if(ivideo->vbflags & TV_PAL) {
 		    cr31 |= 0x01; cr35 |= 0x01;
 		    ivideo->currentvbflags |= TV_PAL;
-		    अगर(ivideo->vbflags & TV_PALM) अणु
+		    if(ivideo->vbflags & TV_PALM) {
 		       cr38 |= 0x40; cr35 |= 0x04;
 		       ivideo->currentvbflags |= TV_PALM;
-		    पूर्ण अन्यथा अगर(ivideo->vbflags & TV_PALN) अणु
+		    } else if(ivideo->vbflags & TV_PALN) {
 		       cr38 |= 0x80; cr35 |= 0x08;
 		       ivideo->currentvbflags |= TV_PALN;
-		    पूर्ण
-		 पूर्ण अन्यथा अणु
+		    }
+		 } else {
 		    cr31 &= ~0x01; cr35 &= ~0x01;
 		    ivideo->currentvbflags |= TV_NTSC;
-		    अगर(ivideo->vbflags & TV_NTSCJ) अणु
+		    if(ivideo->vbflags & TV_NTSCJ) {
 		       cr38 |= 0x40; cr35 |= 0x02;
 		       ivideo->currentvbflags |= TV_NTSCJ;
-		    पूर्ण
-		 पूर्ण
-	      पूर्ण
-	      अवरोध;
+		    }
+		 }
+	      }
+	      break;
 
-	   हाल CRT2_LCD:
+	   case CRT2_LCD:
 	      cr30  = (SIS_VB_OUTPUT_LCD | SIS_SIMULTANEOUS_VIEW_ENABLE);
 	      cr31 |= SIS_DRIVER_MODE;
 	      SiS_SetEnableDstn(&ivideo->SiS_Pr, ivideo->sisfb_dstn);
 	      SiS_SetEnableFstn(&ivideo->SiS_Pr, ivideo->sisfb_fstn);
 	      ivideo->curFSTN = ivideo->sisfb_fstn;
 	      ivideo->curDSTN = ivideo->sisfb_dstn;
-	      अवरोध;
+	      break;
 
-	   हाल CRT2_VGA:
+	   case CRT2_VGA:
 	      cr30 = (SIS_VB_OUTPUT_CRT2 | SIS_SIMULTANEOUS_VIEW_ENABLE);
 	      cr31 |= SIS_DRIVER_MODE;
-	      अगर(ivideo->sisfb_nocrt2rate) अणु
+	      if(ivideo->sisfb_nocrt2rate) {
 		 cr33 |= (sisbios_mode[ivideo->sisfb_mode_idx].rate_idx << 4);
-	      पूर्ण अन्यथा अणु
+	      } else {
 		 cr33 |= ((ivideo->rate_idx & 0x0F) << 4);
-	      पूर्ण
-	      अवरोध;
+	      }
+	      break;
 
-	   शेष:	/* disable CRT2 */
+	   default:	/* disable CRT2 */
 	      cr30 = 0x00;
 	      cr31 |= (SIS_DRIVER_MODE | SIS_VB_OUTPUT_DISABLE);
-	पूर्ण
+	}
 
 	SiS_SetReg(SISCR, 0x30, cr30);
 	SiS_SetReg(SISCR, 0x33, cr33);
 
-	अगर(ivideo->chip >= SIS_661) अणु
-#अगर_घोषित CONFIG_FB_SIS_315
+	if(ivideo->chip >= SIS_661) {
+#ifdef CONFIG_FB_SIS_315
 	   cr31 &= ~0x01;                          /* Clear PAL flag (now in CR35) */
 	   SiS_SetRegANDOR(SISCR, 0x35, ~0x10, cr35); /* Leave overscan bit alone */
 	   cr38 &= 0x07;                           /* Use only LCDA and HiVision/YPbPr bits */
 	   SiS_SetRegANDOR(SISCR, 0x38, 0xf8, cr38);
-#पूर्ण_अगर
-	पूर्ण अन्यथा अगर(ivideo->chip != SIS_300) अणु
+#endif
+	} else if(ivideo->chip != SIS_300) {
 	   SiS_SetReg(SISCR, tvregnum, cr38);
-	पूर्ण
+	}
 	SiS_SetReg(SISCR, 0x31, cr31);
 
 	ivideo->SiS_Pr.SiS_UseOEM = ivideo->sisfb_useoem;
 
 	sisfb_check_engine_and_sync(ivideo);
-पूर्ण
+}
 
-/* Fix SR11 क्रम 661 and later */
-#अगर_घोषित CONFIG_FB_SIS_315
-अटल व्योम
-sisfb_fixup_SR11(काष्ठा sis_video_info *ivideo)
-अणु
-	u8  पंचांगpreg;
+/* Fix SR11 for 661 and later */
+#ifdef CONFIG_FB_SIS_315
+static void
+sisfb_fixup_SR11(struct sis_video_info *ivideo)
+{
+	u8  tmpreg;
 
-	अगर(ivideo->chip >= SIS_661) अणु
-		पंचांगpreg = SiS_GetReg(SISSR, 0x11);
-		अगर(पंचांगpreg & 0x20) अणु
-			पंचांगpreg = SiS_GetReg(SISSR, 0x3e);
-			पंचांगpreg = (पंचांगpreg + 1) & 0xff;
-			SiS_SetReg(SISSR, 0x3e, पंचांगpreg);
-			पंचांगpreg = SiS_GetReg(SISSR, 0x11);
-		पूर्ण
-		अगर(पंचांगpreg & 0xf0) अणु
+	if(ivideo->chip >= SIS_661) {
+		tmpreg = SiS_GetReg(SISSR, 0x11);
+		if(tmpreg & 0x20) {
+			tmpreg = SiS_GetReg(SISSR, 0x3e);
+			tmpreg = (tmpreg + 1) & 0xff;
+			SiS_SetReg(SISSR, 0x3e, tmpreg);
+			tmpreg = SiS_GetReg(SISSR, 0x11);
+		}
+		if(tmpreg & 0xf0) {
 			SiS_SetRegAND(SISSR, 0x11, 0x0f);
-		पूर्ण
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+		}
+	}
+}
+#endif
 
-अटल व्योम
-sisfb_set_TVxposoffset(काष्ठा sis_video_info *ivideo, पूर्णांक val)
-अणु
-	अगर(val > 32) val = 32;
-	अगर(val < -32) val = -32;
+static void
+sisfb_set_TVxposoffset(struct sis_video_info *ivideo, int val)
+{
+	if(val > 32) val = 32;
+	if(val < -32) val = -32;
 	ivideo->tvxpos = val;
 
-	अगर(ivideo->sisfblocked) वापस;
-	अगर(!ivideo->modechanged) वापस;
+	if(ivideo->sisfblocked) return;
+	if(!ivideo->modechanged) return;
 
-	अगर(ivideo->currentvbflags & CRT2_TV) अणु
+	if(ivideo->currentvbflags & CRT2_TV) {
 
-		अगर(ivideo->vbflags2 & VB2_CHRONTEL) अणु
+		if(ivideo->vbflags2 & VB2_CHRONTEL) {
 
-			पूर्णांक x = ivideo->tvx;
+			int x = ivideo->tvx;
 
-			चयन(ivideo->chronteltype) अणु
-			हाल 1:
+			switch(ivideo->chronteltype) {
+			case 1:
 				x += val;
-				अगर(x < 0) x = 0;
+				if(x < 0) x = 0;
 				SiS_SetReg(SISSR, 0x05, 0x86);
 				SiS_SetCH700x(&ivideo->SiS_Pr, 0x0a, (x & 0xff));
 				SiS_SetCH70xxANDOR(&ivideo->SiS_Pr, 0x08, ((x & 0x0100) >> 7), 0xFD);
-				अवरोध;
-			हाल 2:
+				break;
+			case 2:
 				/* Not supported by hardware */
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-		पूर्ण अन्यथा अगर(ivideo->vbflags2 & VB2_SISBRIDGE) अणु
+		} else if(ivideo->vbflags2 & VB2_SISBRIDGE) {
 
 			u8 p2_1f,p2_20,p2_2b,p2_42,p2_43;
-			अचिन्हित लघु temp;
+			unsigned short temp;
 
 			p2_1f = ivideo->p2_1f;
 			p2_20 = ivideo->p2_20;
@@ -3755,131 +3754,131 @@ sisfb_set_TVxposoffset(काष्ठा sis_video_info *ivideo, पूर्�
 			SiS_SetRegANDOR(SISPART2, 0x2b, 0xF0, p2_2b);
 			SiS_SetRegANDOR(SISPART2, 0x42, 0x0F, p2_42);
 			SiS_SetReg(SISPART2, 0x43, p2_43);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम
-sisfb_set_TVyposoffset(काष्ठा sis_video_info *ivideo, पूर्णांक val)
-अणु
-	अगर(val > 32) val = 32;
-	अगर(val < -32) val = -32;
+static void
+sisfb_set_TVyposoffset(struct sis_video_info *ivideo, int val)
+{
+	if(val > 32) val = 32;
+	if(val < -32) val = -32;
 	ivideo->tvypos = val;
 
-	अगर(ivideo->sisfblocked) वापस;
-	अगर(!ivideo->modechanged) वापस;
+	if(ivideo->sisfblocked) return;
+	if(!ivideo->modechanged) return;
 
-	अगर(ivideo->currentvbflags & CRT2_TV) अणु
+	if(ivideo->currentvbflags & CRT2_TV) {
 
-		अगर(ivideo->vbflags2 & VB2_CHRONTEL) अणु
+		if(ivideo->vbflags2 & VB2_CHRONTEL) {
 
-			पूर्णांक y = ivideo->tvy;
+			int y = ivideo->tvy;
 
-			चयन(ivideo->chronteltype) अणु
-			हाल 1:
+			switch(ivideo->chronteltype) {
+			case 1:
 				y -= val;
-				अगर(y < 0) y = 0;
+				if(y < 0) y = 0;
 				SiS_SetReg(SISSR, 0x05, 0x86);
 				SiS_SetCH700x(&ivideo->SiS_Pr, 0x0b, (y & 0xff));
 				SiS_SetCH70xxANDOR(&ivideo->SiS_Pr, 0x08, ((y & 0x0100) >> 8), 0xFE);
-				अवरोध;
-			हाल 2:
+				break;
+			case 2:
 				/* Not supported by hardware */
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-		पूर्ण अन्यथा अगर(ivideo->vbflags2 & VB2_SISBRIDGE) अणु
+		} else if(ivideo->vbflags2 & VB2_SISBRIDGE) {
 
-			अक्षर p2_01, p2_02;
+			char p2_01, p2_02;
 			val /= 2;
 			p2_01 = ivideo->p2_01;
 			p2_02 = ivideo->p2_02;
 
 			p2_01 += val;
 			p2_02 += val;
-			अगर(!(ivideo->currentvbflags & (TV_HIVISION | TV_YPBPR))) अणु
-				जबतक((p2_01 <= 0) || (p2_02 <= 0)) अणु
+			if(!(ivideo->currentvbflags & (TV_HIVISION | TV_YPBPR))) {
+				while((p2_01 <= 0) || (p2_02 <= 0)) {
 					p2_01 += 2;
 					p2_02 += 2;
-				पूर्ण
-			पूर्ण
+				}
+			}
 			SiS_SetReg(SISPART2, 0x01, p2_01);
 			SiS_SetReg(SISPART2, 0x02, p2_02);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम
-sisfb_post_seपंचांगode(काष्ठा sis_video_info *ivideo)
-अणु
+static void
+sisfb_post_setmode(struct sis_video_info *ivideo)
+{
 	bool crt1isoff = false;
-	bool करोit = true;
-#अगर defined(CONFIG_FB_SIS_300) || defined(CONFIG_FB_SIS_315)
+	bool doit = true;
+#if defined(CONFIG_FB_SIS_300) || defined(CONFIG_FB_SIS_315)
 	u8 reg;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_FB_SIS_315
+#endif
+#ifdef CONFIG_FB_SIS_315
 	u8 reg1;
-#पूर्ण_अगर
+#endif
 
 	SiS_SetReg(SISSR, 0x05, 0x86);
 
-#अगर_घोषित CONFIG_FB_SIS_315
+#ifdef CONFIG_FB_SIS_315
 	sisfb_fixup_SR11(ivideo);
-#पूर्ण_अगर
+#endif
 
 	/* Now we actually HAVE changed the display mode */
 	ivideo->modechanged = 1;
 
-	/* We can't चयन off CRT1 अगर bridge is in slave mode */
-	अगर(ivideo->vbflags2 & VB2_VIDEOBRIDGE) अणु
-		अगर(sisfb_bridgeisslave(ivideo)) करोit = false;
-	पूर्ण अन्यथा
+	/* We can't switch off CRT1 if bridge is in slave mode */
+	if(ivideo->vbflags2 & VB2_VIDEOBRIDGE) {
+		if(sisfb_bridgeisslave(ivideo)) doit = false;
+	} else
 		ivideo->sisfb_crt1off = 0;
 
-#अगर_घोषित CONFIG_FB_SIS_300
-	अगर(ivideo->sisvga_engine == SIS_300_VGA) अणु
-		अगर((ivideo->sisfb_crt1off) && (करोit)) अणु
+#ifdef CONFIG_FB_SIS_300
+	if(ivideo->sisvga_engine == SIS_300_VGA) {
+		if((ivideo->sisfb_crt1off) && (doit)) {
 			crt1isoff = true;
 			reg = 0x00;
-		पूर्ण अन्यथा अणु
+		} else {
 			crt1isoff = false;
 			reg = 0x80;
-		पूर्ण
+		}
 		SiS_SetRegANDOR(SISCR, 0x17, 0x7f, reg);
-	पूर्ण
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_FB_SIS_315
-	अगर(ivideo->sisvga_engine == SIS_315_VGA) अणु
-		अगर((ivideo->sisfb_crt1off) && (करोit)) अणु
+	}
+#endif
+#ifdef CONFIG_FB_SIS_315
+	if(ivideo->sisvga_engine == SIS_315_VGA) {
+		if((ivideo->sisfb_crt1off) && (doit)) {
 			crt1isoff = true;
 			reg  = 0x40;
 			reg1 = 0xc0;
-		पूर्ण अन्यथा अणु
+		} else {
 			crt1isoff = false;
 			reg  = 0x00;
 			reg1 = 0x00;
-		पूर्ण
+		}
 		SiS_SetRegANDOR(SISCR, ivideo->SiS_Pr.SiS_MyCR63, ~0x40, reg);
 		SiS_SetRegANDOR(SISSR, 0x1f, 0x3f, reg1);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	अगर(crt1isoff) अणु
+	if(crt1isoff) {
 		ivideo->currentvbflags &= ~VB_DISPTYPE_CRT1;
 		ivideo->currentvbflags |= VB_SINGLE_MODE;
-	पूर्ण अन्यथा अणु
+	} else {
 		ivideo->currentvbflags |= VB_DISPTYPE_CRT1;
-		अगर(ivideo->currentvbflags & VB_DISPTYPE_CRT2) अणु
+		if(ivideo->currentvbflags & VB_DISPTYPE_CRT2) {
 			ivideo->currentvbflags |= VB_MIRROR_MODE;
-		पूर्ण अन्यथा अणु
+		} else {
 			ivideo->currentvbflags |= VB_SINGLE_MODE;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	SiS_SetRegAND(SISSR, IND_SIS_RAMDAC_CONTROL, ~0x04);
 
-	अगर(ivideo->currentvbflags & CRT2_TV) अणु
-		अगर(ivideo->vbflags2 & VB2_SISBRIDGE) अणु
+	if(ivideo->currentvbflags & CRT2_TV) {
+		if(ivideo->vbflags2 & VB2_SISBRIDGE) {
 			ivideo->p2_1f = SiS_GetReg(SISPART2, 0x1f);
 			ivideo->p2_20 = SiS_GetReg(SISPART2, 0x20);
 			ivideo->p2_2b = SiS_GetReg(SISPART2, 0x2b);
@@ -3887,326 +3886,326 @@ sisfb_post_seपंचांगode(काष्ठा sis_video_info *ivideo)
 			ivideo->p2_43 = SiS_GetReg(SISPART2, 0x43);
 			ivideo->p2_01 = SiS_GetReg(SISPART2, 0x01);
 			ivideo->p2_02 = SiS_GetReg(SISPART2, 0x02);
-		पूर्ण अन्यथा अगर(ivideo->vbflags2 & VB2_CHRONTEL) अणु
-			अगर(ivideo->chronteltype == 1) अणु
+		} else if(ivideo->vbflags2 & VB2_CHRONTEL) {
+			if(ivideo->chronteltype == 1) {
 				ivideo->tvx = SiS_GetCH700x(&ivideo->SiS_Pr, 0x0a);
 				ivideo->tvx |= (((SiS_GetCH700x(&ivideo->SiS_Pr, 0x08) & 0x02) >> 1) << 8);
 				ivideo->tvy = SiS_GetCH700x(&ivideo->SiS_Pr, 0x0b);
 				ivideo->tvy |= ((SiS_GetCH700x(&ivideo->SiS_Pr, 0x08) & 0x01) << 8);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर(ivideo->tvxpos) अणु
+	if(ivideo->tvxpos) {
 		sisfb_set_TVxposoffset(ivideo, ivideo->tvxpos);
-	पूर्ण
-	अगर(ivideo->tvypos) अणु
+	}
+	if(ivideo->tvypos) {
 		sisfb_set_TVyposoffset(ivideo, ivideo->tvypos);
-	पूर्ण
+	}
 
 	/* Eventually sync engines */
 	sisfb_check_engine_and_sync(ivideo);
 
 	/* (Re-)Initialize chip engines */
-	अगर(ivideo->accel) अणु
+	if(ivideo->accel) {
 		sisfb_engine_init(ivideo);
-	पूर्ण अन्यथा अणु
+	} else {
 		ivideo->engineok = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक
-sisfb_reset_mode(काष्ठा sis_video_info *ivideo)
-अणु
-	अगर(sisfb_set_mode(ivideo, 0))
-		वापस 1;
+static int
+sisfb_reset_mode(struct sis_video_info *ivideo)
+{
+	if(sisfb_set_mode(ivideo, 0))
+		return 1;
 
 	sisfb_set_pitch(ivideo);
 	sisfb_set_base_CRT1(ivideo, ivideo->current_base);
 	sisfb_set_base_CRT2(ivideo, ivideo->current_base);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-sisfb_handle_command(काष्ठा sis_video_info *ivideo, काष्ठा sisfb_cmd *sisfb_command)
-अणु
-	पूर्णांक mycrt1off;
+static void
+sisfb_handle_command(struct sis_video_info *ivideo, struct sisfb_cmd *sisfb_command)
+{
+	int mycrt1off;
 
-	चयन(sisfb_command->sisfb_cmd) अणु
-	हाल SISFB_CMD_GETVBFLAGS:
-		अगर(!ivideo->modechanged) अणु
+	switch(sisfb_command->sisfb_cmd) {
+	case SISFB_CMD_GETVBFLAGS:
+		if(!ivideo->modechanged) {
 			sisfb_command->sisfb_result[0] = SISFB_CMD_ERR_EARLY;
-		पूर्ण अन्यथा अणु
+		} else {
 			sisfb_command->sisfb_result[0] = SISFB_CMD_ERR_OK;
 			sisfb_command->sisfb_result[1] = ivideo->currentvbflags;
 			sisfb_command->sisfb_result[2] = ivideo->vbflags2;
-		पूर्ण
-		अवरोध;
-	हाल SISFB_CMD_SWITCHCRT1:
+		}
+		break;
+	case SISFB_CMD_SWITCHCRT1:
 		/* arg[0]: 0 = off, 1 = on, 99 = query */
-		अगर(!ivideo->modechanged) अणु
+		if(!ivideo->modechanged) {
 			sisfb_command->sisfb_result[0] = SISFB_CMD_ERR_EARLY;
-		पूर्ण अन्यथा अगर(sisfb_command->sisfb_arg[0] == 99) अणु
+		} else if(sisfb_command->sisfb_arg[0] == 99) {
 			/* Query */
 			sisfb_command->sisfb_result[1] = ivideo->sisfb_crt1off ? 0 : 1;
 			sisfb_command->sisfb_result[0] = SISFB_CMD_ERR_OK;
-		पूर्ण अन्यथा अगर(ivideo->sisfblocked) अणु
+		} else if(ivideo->sisfblocked) {
 			sisfb_command->sisfb_result[0] = SISFB_CMD_ERR_LOCKED;
-		पूर्ण अन्यथा अगर((!(ivideo->currentvbflags & CRT2_ENABLE)) &&
-					(sisfb_command->sisfb_arg[0] == 0)) अणु
+		} else if((!(ivideo->currentvbflags & CRT2_ENABLE)) &&
+					(sisfb_command->sisfb_arg[0] == 0)) {
 			sisfb_command->sisfb_result[0] = SISFB_CMD_ERR_NOCRT2;
-		पूर्ण अन्यथा अणु
+		} else {
 			sisfb_command->sisfb_result[0] = SISFB_CMD_ERR_OK;
 			mycrt1off = sisfb_command->sisfb_arg[0] ? 0 : 1;
-			अगर( ((ivideo->currentvbflags & VB_DISPTYPE_CRT1) && mycrt1off) ||
-			    ((!(ivideo->currentvbflags & VB_DISPTYPE_CRT1)) && !mycrt1off) ) अणु
+			if( ((ivideo->currentvbflags & VB_DISPTYPE_CRT1) && mycrt1off) ||
+			    ((!(ivideo->currentvbflags & VB_DISPTYPE_CRT1)) && !mycrt1off) ) {
 				ivideo->sisfb_crt1off = mycrt1off;
-				अगर(sisfb_reset_mode(ivideo)) अणु
+				if(sisfb_reset_mode(ivideo)) {
 					sisfb_command->sisfb_result[0] = SISFB_CMD_ERR_OTHER;
-				पूर्ण
-			पूर्ण
+				}
+			}
 			sisfb_command->sisfb_result[1] = ivideo->sisfb_crt1off ? 0 : 1;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 	/* more to come */
-	शेष:
+	default:
 		sisfb_command->sisfb_result[0] = SISFB_CMD_ERR_UNKNOWN;
-		prपूर्णांकk(KERN_ERR "sisfb: Unknown command 0x%x\n",
+		printk(KERN_ERR "sisfb: Unknown command 0x%x\n",
 			sisfb_command->sisfb_cmd);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अगर_अघोषित MODULE
-अटल पूर्णांक __init sisfb_setup(अक्षर *options)
-अणु
-	अक्षर *this_opt;
+#ifndef MODULE
+static int __init sisfb_setup(char *options)
+{
+	char *this_opt;
 
-	sisfb_setशेषparms();
+	sisfb_setdefaultparms();
 
-	अगर(!options || !(*options))
-		वापस 0;
+	if(!options || !(*options))
+		return 0;
 
-	जबतक((this_opt = strsep(&options, ",")) != शून्य) अणु
+	while((this_opt = strsep(&options, ",")) != NULL) {
 
-		अगर(!(*this_opt)) जारी;
+		if(!(*this_opt)) continue;
 
-		अगर(!strnहालcmp(this_opt, "off", 3)) अणु
+		if(!strncasecmp(this_opt, "off", 3)) {
 			sisfb_off = 1;
-		पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "forcecrt2type:", 14)) अणु
-			/* Need to check crt2 type first क्रम fstn/dstn */
+		} else if(!strncasecmp(this_opt, "forcecrt2type:", 14)) {
+			/* Need to check crt2 type first for fstn/dstn */
 			sisfb_search_crt2type(this_opt + 14);
-		पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "tvmode:",7)) अणु
+		} else if(!strncasecmp(this_opt, "tvmode:",7)) {
 			sisfb_search_tvstd(this_opt + 7);
-		पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "tvstandard:",11)) अणु
+		} else if(!strncasecmp(this_opt, "tvstandard:",11)) {
 			sisfb_search_tvstd(this_opt + 11);
-		पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "mode:", 5)) अणु
+		} else if(!strncasecmp(this_opt, "mode:", 5)) {
 			sisfb_search_mode(this_opt + 5, false);
-		पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "vesa:", 5)) अणु
-			sisfb_search_vesamode(simple_म_से_अदीर्घ(this_opt + 5, शून्य, 0), false);
-		पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "rate:", 5)) अणु
-			sisfb_parm_rate = simple_म_से_अदीर्घ(this_opt + 5, शून्य, 0);
-		पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "forcecrt1:", 10)) अणु
-			sisfb_क्रमcecrt1 = (पूर्णांक)simple_म_से_अदीर्घ(this_opt + 10, शून्य, 0);
-		पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "mem:",4)) अणु
-			sisfb_parm_mem = simple_म_से_अदीर्घ(this_opt + 4, शून्य, 0);
-		पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "pdc:", 4)) अणु
-			sisfb_pdc = simple_म_से_अदीर्घ(this_opt + 4, शून्य, 0);
-		पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "pdc1:", 5)) अणु
-			sisfb_pdca = simple_म_से_अदीर्घ(this_opt + 5, शून्य, 0);
-		पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "noaccel", 7)) अणु
+		} else if(!strncasecmp(this_opt, "vesa:", 5)) {
+			sisfb_search_vesamode(simple_strtoul(this_opt + 5, NULL, 0), false);
+		} else if(!strncasecmp(this_opt, "rate:", 5)) {
+			sisfb_parm_rate = simple_strtoul(this_opt + 5, NULL, 0);
+		} else if(!strncasecmp(this_opt, "forcecrt1:", 10)) {
+			sisfb_forcecrt1 = (int)simple_strtoul(this_opt + 10, NULL, 0);
+		} else if(!strncasecmp(this_opt, "mem:",4)) {
+			sisfb_parm_mem = simple_strtoul(this_opt + 4, NULL, 0);
+		} else if(!strncasecmp(this_opt, "pdc:", 4)) {
+			sisfb_pdc = simple_strtoul(this_opt + 4, NULL, 0);
+		} else if(!strncasecmp(this_opt, "pdc1:", 5)) {
+			sisfb_pdca = simple_strtoul(this_opt + 5, NULL, 0);
+		} else if(!strncasecmp(this_opt, "noaccel", 7)) {
 			sisfb_accel = 0;
-		पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "accel", 5)) अणु
+		} else if(!strncasecmp(this_opt, "accel", 5)) {
 			sisfb_accel = -1;
-		पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "noypan", 6)) अणु
+		} else if(!strncasecmp(this_opt, "noypan", 6)) {
 			sisfb_ypan = 0;
-		पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "ypan", 4)) अणु
+		} else if(!strncasecmp(this_opt, "ypan", 4)) {
 			sisfb_ypan = -1;
-		पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "nomax", 5)) अणु
+		} else if(!strncasecmp(this_opt, "nomax", 5)) {
 			sisfb_max = 0;
-		पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "max", 3)) अणु
+		} else if(!strncasecmp(this_opt, "max", 3)) {
 			sisfb_max = -1;
-		पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "userom:", 7)) अणु
-			sisfb_userom = (पूर्णांक)simple_म_से_अदीर्घ(this_opt + 7, शून्य, 0);
-		पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "useoem:", 7)) अणु
-			sisfb_useoem = (पूर्णांक)simple_म_से_अदीर्घ(this_opt + 7, शून्य, 0);
-		पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "nocrt2rate", 10)) अणु
+		} else if(!strncasecmp(this_opt, "userom:", 7)) {
+			sisfb_userom = (int)simple_strtoul(this_opt + 7, NULL, 0);
+		} else if(!strncasecmp(this_opt, "useoem:", 7)) {
+			sisfb_useoem = (int)simple_strtoul(this_opt + 7, NULL, 0);
+		} else if(!strncasecmp(this_opt, "nocrt2rate", 10)) {
 			sisfb_nocrt2rate = 1;
-		पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "scalelcd:", 9)) अणु
-			अचिन्हित दीर्घ temp = 2;
-			temp = simple_म_से_अदीर्घ(this_opt + 9, शून्य, 0);
-			अगर((temp == 0) || (temp == 1)) अणु
+		} else if(!strncasecmp(this_opt, "scalelcd:", 9)) {
+			unsigned long temp = 2;
+			temp = simple_strtoul(this_opt + 9, NULL, 0);
+			if((temp == 0) || (temp == 1)) {
 			   sisfb_scalelcd = temp ^ 1;
-			पूर्ण
-		पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "tvxposoffset:", 13)) अणु
-			पूर्णांक temp = 0;
-			temp = (पूर्णांक)simple_म_से_दीर्घ(this_opt + 13, शून्य, 0);
-			अगर((temp >= -32) && (temp <= 32)) अणु
+			}
+		} else if(!strncasecmp(this_opt, "tvxposoffset:", 13)) {
+			int temp = 0;
+			temp = (int)simple_strtol(this_opt + 13, NULL, 0);
+			if((temp >= -32) && (temp <= 32)) {
 			   sisfb_tvxposoffset = temp;
-			पूर्ण
-		पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "tvyposoffset:", 13)) अणु
-			पूर्णांक temp = 0;
-			temp = (पूर्णांक)simple_म_से_दीर्घ(this_opt + 13, शून्य, 0);
-			अगर((temp >= -32) && (temp <= 32)) अणु
+			}
+		} else if(!strncasecmp(this_opt, "tvyposoffset:", 13)) {
+			int temp = 0;
+			temp = (int)simple_strtol(this_opt + 13, NULL, 0);
+			if((temp >= -32) && (temp <= 32)) {
 			   sisfb_tvyposoffset = temp;
-			पूर्ण
-		पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "specialtiming:", 14)) अणु
+			}
+		} else if(!strncasecmp(this_opt, "specialtiming:", 14)) {
 			sisfb_search_specialtiming(this_opt + 14);
-		पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "lvdshl:", 7)) अणु
-			पूर्णांक temp = 4;
-			temp = simple_म_से_अदीर्घ(this_opt + 7, शून्य, 0);
-			अगर((temp >= 0) && (temp <= 3)) अणु
+		} else if(!strncasecmp(this_opt, "lvdshl:", 7)) {
+			int temp = 4;
+			temp = simple_strtoul(this_opt + 7, NULL, 0);
+			if((temp >= 0) && (temp <= 3)) {
 			   sisfb_lvdshl = temp;
-			पूर्ण
-		पूर्ण अन्यथा अगर(this_opt[0] >= '0' && this_opt[0] <= '9') अणु
+			}
+		} else if(this_opt[0] >= '0' && this_opt[0] <= '9') {
 			sisfb_search_mode(this_opt, true);
-#अगर !defined(__i386__) && !defined(__x86_64__)
-		पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "resetcard", 9)) अणु
+#if !defined(__i386__) && !defined(__x86_64__)
+		} else if(!strncasecmp(this_opt, "resetcard", 9)) {
 			sisfb_resetcard = 1;
-	        पूर्ण अन्यथा अगर(!strnहालcmp(this_opt, "videoram:", 9)) अणु
-			sisfb_videoram = simple_म_से_अदीर्घ(this_opt + 9, शून्य, 0);
-#पूर्ण_अगर
-		पूर्ण अन्यथा अणु
-			prपूर्णांकk(KERN_INFO "sisfb: Invalid option %s\n", this_opt);
-		पूर्ण
+	        } else if(!strncasecmp(this_opt, "videoram:", 9)) {
+			sisfb_videoram = simple_strtoul(this_opt + 9, NULL, 0);
+#endif
+		} else {
+			printk(KERN_INFO "sisfb: Invalid option %s\n", this_opt);
+		}
 
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल पूर्णांक sisfb_check_rom(व्योम __iomem *rom_base,
-			   काष्ठा sis_video_info *ivideo)
-अणु
-	व्योम __iomem *rom;
-	पूर्णांक romptr;
+static int sisfb_check_rom(void __iomem *rom_base,
+			   struct sis_video_info *ivideo)
+{
+	void __iomem *rom;
+	int romptr;
 
-	अगर((पढ़ोb(rom_base) != 0x55) || (पढ़ोb(rom_base + 1) != 0xaa))
-		वापस 0;
+	if((readb(rom_base) != 0x55) || (readb(rom_base + 1) != 0xaa))
+		return 0;
 
-	romptr = (पढ़ोb(rom_base + 0x18) | (पढ़ोb(rom_base + 0x19) << 8));
-	अगर(romptr > (0x10000 - 8))
-		वापस 0;
+	romptr = (readb(rom_base + 0x18) | (readb(rom_base + 0x19) << 8));
+	if(romptr > (0x10000 - 8))
+		return 0;
 
 	rom = rom_base + romptr;
 
-	अगर((पढ़ोb(rom)     != 'P') || (readb(rom + 1) != 'C') ||
-	   (पढ़ोb(rom + 2) != 'I') || (readb(rom + 3) != 'R'))
-		वापस 0;
+	if((readb(rom)     != 'P') || (readb(rom + 1) != 'C') ||
+	   (readb(rom + 2) != 'I') || (readb(rom + 3) != 'R'))
+		return 0;
 
-	अगर((पढ़ोb(rom + 4) | (पढ़ोb(rom + 5) << 8)) != ivideo->chip_venकरोr)
-		वापस 0;
+	if((readb(rom + 4) | (readb(rom + 5) << 8)) != ivideo->chip_vendor)
+		return 0;
 
-	अगर((पढ़ोb(rom + 6) | (पढ़ोb(rom + 7) << 8)) != ivideo->chip_id)
-		वापस 0;
+	if((readb(rom + 6) | (readb(rom + 7) << 8)) != ivideo->chip_id)
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल अचिन्हित अक्षर *sisfb_find_rom(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा sis_video_info *ivideo = pci_get_drvdata(pdev);
-	व्योम __iomem *rom_base;
-	अचिन्हित अक्षर *myrombase = शून्य;
-	माप_प्रकार romsize;
+static unsigned char *sisfb_find_rom(struct pci_dev *pdev)
+{
+	struct sis_video_info *ivideo = pci_get_drvdata(pdev);
+	void __iomem *rom_base;
+	unsigned char *myrombase = NULL;
+	size_t romsize;
 
 	/* First, try the official pci ROM functions (except
-	 * on पूर्णांकegrated chipsets which have no ROM).
+	 * on integrated chipsets which have no ROM).
 	 */
 
-	अगर(!ivideo->nbridge) अणु
+	if(!ivideo->nbridge) {
 
-		अगर((rom_base = pci_map_rom(pdev, &romsize))) अणु
+		if((rom_base = pci_map_rom(pdev, &romsize))) {
 
-			अगर(sisfb_check_rom(rom_base, ivideo)) अणु
+			if(sisfb_check_rom(rom_base, ivideo)) {
 
-				अगर((myrombase = vदो_स्मृति(65536))) अणु
-					स_नकल_fromio(myrombase, rom_base,
+				if((myrombase = vmalloc(65536))) {
+					memcpy_fromio(myrombase, rom_base,
 							(romsize > 65536) ? 65536 : romsize);
-				पूर्ण
-			पूर्ण
+				}
+			}
 			pci_unmap_rom(pdev, rom_base);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर(myrombase) वापस myrombase;
+	if(myrombase) return myrombase;
 
-	/* Otherwise करो it the conventional way. */
+	/* Otherwise do it the conventional way. */
 
-#अगर defined(__i386__) || defined(__x86_64__)
-	अणु
+#if defined(__i386__) || defined(__x86_64__)
+	{
 		u32 temp;
 
-		क्रम (temp = 0x000c0000; temp < 0x000f0000; temp += 0x00001000) अणु
+		for (temp = 0x000c0000; temp < 0x000f0000; temp += 0x00001000) {
 
 			rom_base = ioremap(temp, 65536);
-			अगर (!rom_base)
-				जारी;
+			if (!rom_base)
+				continue;
 
-			अगर (!sisfb_check_rom(rom_base, ivideo)) अणु
+			if (!sisfb_check_rom(rom_base, ivideo)) {
 				iounmap(rom_base);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			अगर ((myrombase = vदो_स्मृति(65536)))
-				स_नकल_fromio(myrombase, rom_base, 65536);
+			if ((myrombase = vmalloc(65536)))
+				memcpy_fromio(myrombase, rom_base, 65536);
 
 			iounmap(rom_base);
-			अवरोध;
+			break;
 
-		पूर्ण
+		}
 
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	वापस myrombase;
-पूर्ण
+	return myrombase;
+}
 
-अटल व्योम sisfb_post_map_vram(काष्ठा sis_video_info *ivideo,
-				अचिन्हित पूर्णांक *mapsize, अचिन्हित पूर्णांक min)
-अणु
-	अगर (*mapsize < (min << 20))
-		वापस;
+static void sisfb_post_map_vram(struct sis_video_info *ivideo,
+				unsigned int *mapsize, unsigned int min)
+{
+	if (*mapsize < (min << 20))
+		return;
 
 	ivideo->video_vbase = ioremap_wc(ivideo->video_base, (*mapsize));
 
-	अगर(!ivideo->video_vbase) अणु
-		prपूर्णांकk(KERN_ERR
+	if(!ivideo->video_vbase) {
+		printk(KERN_ERR
 			"sisfb: Unable to map maximum video RAM for size detection\n");
 		(*mapsize) >>= 1;
-		जबतक((!(ivideo->video_vbase = ioremap_wc(ivideo->video_base, (*mapsize))))) अणु
+		while((!(ivideo->video_vbase = ioremap_wc(ivideo->video_base, (*mapsize))))) {
 			(*mapsize) >>= 1;
-			अगर((*mapsize) < (min << 20))
-				अवरोध;
-		पूर्ण
-		अगर(ivideo->video_vbase) अणु
-			prपूर्णांकk(KERN_ERR
+			if((*mapsize) < (min << 20))
+				break;
+		}
+		if(ivideo->video_vbase) {
+			printk(KERN_ERR
 				"sisfb: Video RAM size detection limited to %dMB\n",
-				(पूर्णांक)((*mapsize) >> 20));
-		पूर्ण
-	पूर्ण
-पूर्ण
+				(int)((*mapsize) >> 20));
+		}
+	}
+}
 
-#अगर_घोषित CONFIG_FB_SIS_300
-अटल पूर्णांक sisfb_post_300_buswidth(काष्ठा sis_video_info *ivideo)
-अणु
-	व्योम __iomem *FBAddress = ivideo->video_vbase;
-	अचिन्हित लघु temp;
-	अचिन्हित अक्षर reg;
-	पूर्णांक i, j;
+#ifdef CONFIG_FB_SIS_300
+static int sisfb_post_300_buswidth(struct sis_video_info *ivideo)
+{
+	void __iomem *FBAddress = ivideo->video_vbase;
+	unsigned short temp;
+	unsigned char reg;
+	int i, j;
 
 	SiS_SetRegAND(SISSR, 0x15, 0xFB);
 	SiS_SetRegOR(SISSR, 0x15, 0x04);
 	SiS_SetReg(SISSR, 0x13, 0x00);
 	SiS_SetReg(SISSR, 0x14, 0xBF);
 
-	क्रम(i = 0; i < 2; i++) अणु
+	for(i = 0; i < 2; i++) {
 		temp = 0x1234;
-		क्रम(j = 0; j < 4; j++) अणु
-			ग_लिखोw(temp, FBAddress);
-			अगर(पढ़ोw(FBAddress) == temp)
-				अवरोध;
+		for(j = 0; j < 4; j++) {
+			writew(temp, FBAddress);
+			if(readw(FBAddress) == temp)
+				break;
 			SiS_SetRegOR(SISSR, 0x3c, 0x01);
 			reg = SiS_GetReg(SISSR, 0x05);
 			reg = SiS_GetReg(SISSR, 0x05);
@@ -4214,71 +4213,71 @@ sisfb_handle_command(काष्ठा sis_video_info *ivideo, काष्ठ�
 			reg = SiS_GetReg(SISSR, 0x05);
 			reg = SiS_GetReg(SISSR, 0x05);
 			temp++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	ग_लिखोl(0x01234567L, FBAddress);
-	ग_लिखोl(0x456789ABL, (FBAddress + 4));
-	ग_लिखोl(0x89ABCDEFL, (FBAddress + 8));
-	ग_लिखोl(0xCDEF0123L, (FBAddress + 12));
+	writel(0x01234567L, FBAddress);
+	writel(0x456789ABL, (FBAddress + 4));
+	writel(0x89ABCDEFL, (FBAddress + 8));
+	writel(0xCDEF0123L, (FBAddress + 12));
 
 	reg = SiS_GetReg(SISSR, 0x3b);
-	अगर(reg & 0x01) अणु
-		अगर(पढ़ोl((FBAddress + 12)) == 0xCDEF0123L)
-			वापस 4;	/* Channel A 128bit */
-	पूर्ण
+	if(reg & 0x01) {
+		if(readl((FBAddress + 12)) == 0xCDEF0123L)
+			return 4;	/* Channel A 128bit */
+	}
 
-	अगर(पढ़ोl((FBAddress + 4)) == 0x456789ABL)
-		वापस 2;		/* Channel B 64bit */
+	if(readl((FBAddress + 4)) == 0x456789ABL)
+		return 2;		/* Channel B 64bit */
 
-	वापस 1;			/* 32bit */
-पूर्ण
+	return 1;			/* 32bit */
+}
 
-अटल स्थिर अचिन्हित लघु SiS_DRAMType[17][5] = अणु
-	अणु0x0C,0x0A,0x02,0x40,0x39पूर्ण,
-	अणु0x0D,0x0A,0x01,0x40,0x48पूर्ण,
-	अणु0x0C,0x09,0x02,0x20,0x35पूर्ण,
-	अणु0x0D,0x09,0x01,0x20,0x44पूर्ण,
-	अणु0x0C,0x08,0x02,0x10,0x31पूर्ण,
-	अणु0x0D,0x08,0x01,0x10,0x40पूर्ण,
-	अणु0x0C,0x0A,0x01,0x20,0x34पूर्ण,
-	अणु0x0C,0x09,0x01,0x08,0x32पूर्ण,
-	अणु0x0B,0x08,0x02,0x08,0x21पूर्ण,
-	अणु0x0C,0x08,0x01,0x08,0x30पूर्ण,
-	अणु0x0A,0x08,0x02,0x04,0x11पूर्ण,
-	अणु0x0B,0x0A,0x01,0x10,0x28पूर्ण,
-	अणु0x09,0x08,0x02,0x02,0x01पूर्ण,
-	अणु0x0B,0x09,0x01,0x08,0x24पूर्ण,
-	अणु0x0B,0x08,0x01,0x04,0x20पूर्ण,
-	अणु0x0A,0x08,0x01,0x02,0x10पूर्ण,
-	अणु0x09,0x08,0x01,0x01,0x00पूर्ण
-पूर्ण;
+static const unsigned short SiS_DRAMType[17][5] = {
+	{0x0C,0x0A,0x02,0x40,0x39},
+	{0x0D,0x0A,0x01,0x40,0x48},
+	{0x0C,0x09,0x02,0x20,0x35},
+	{0x0D,0x09,0x01,0x20,0x44},
+	{0x0C,0x08,0x02,0x10,0x31},
+	{0x0D,0x08,0x01,0x10,0x40},
+	{0x0C,0x0A,0x01,0x20,0x34},
+	{0x0C,0x09,0x01,0x08,0x32},
+	{0x0B,0x08,0x02,0x08,0x21},
+	{0x0C,0x08,0x01,0x08,0x30},
+	{0x0A,0x08,0x02,0x04,0x11},
+	{0x0B,0x0A,0x01,0x10,0x28},
+	{0x09,0x08,0x02,0x02,0x01},
+	{0x0B,0x09,0x01,0x08,0x24},
+	{0x0B,0x08,0x01,0x04,0x20},
+	{0x0A,0x08,0x01,0x02,0x10},
+	{0x09,0x08,0x01,0x01,0x00}
+};
 
-अटल पूर्णांक sisfb_post_300_rwtest(काष्ठा sis_video_info *ivideo, पूर्णांक iteration,
-				 पूर्णांक buswidth, पूर्णांक PseuकरोRankCapacity,
-				 पूर्णांक PseuकरोAdrPinCount, अचिन्हित पूर्णांक mapsize)
-अणु
-	व्योम __iomem *FBAddr = ivideo->video_vbase;
-	अचिन्हित लघु sr14;
-	अचिन्हित पूर्णांक k, RankCapacity, PageCapacity, BankNumHigh, BankNumMid;
-	अचिन्हित पूर्णांक PhysicalAdrOtherPage, PhysicalAdrHigh, PhysicalAdrHalfPage;
+static int sisfb_post_300_rwtest(struct sis_video_info *ivideo, int iteration,
+				 int buswidth, int PseudoRankCapacity,
+				 int PseudoAdrPinCount, unsigned int mapsize)
+{
+	void __iomem *FBAddr = ivideo->video_vbase;
+	unsigned short sr14;
+	unsigned int k, RankCapacity, PageCapacity, BankNumHigh, BankNumMid;
+	unsigned int PhysicalAdrOtherPage, PhysicalAdrHigh, PhysicalAdrHalfPage;
 
-	 क्रम(k = 0; k < ARRAY_SIZE(SiS_DRAMType); k++) अणु
+	 for(k = 0; k < ARRAY_SIZE(SiS_DRAMType); k++) {
 
 		RankCapacity = buswidth * SiS_DRAMType[k][3];
 
-		अगर(RankCapacity != PseuकरोRankCapacity)
-			जारी;
+		if(RankCapacity != PseudoRankCapacity)
+			continue;
 
-		अगर((SiS_DRAMType[k][2] + SiS_DRAMType[k][0]) > PseuकरोAdrPinCount)
-			जारी;
+		if((SiS_DRAMType[k][2] + SiS_DRAMType[k][0]) > PseudoAdrPinCount)
+			continue;
 
 		BankNumHigh = RankCapacity * 16 * iteration - 1;
-		अगर(iteration == 3) अणु             /* Rank No */
+		if(iteration == 3) {             /* Rank No */
 			BankNumMid  = RankCapacity * 16 - 1;
-		पूर्ण अन्यथा अणु
+		} else {
 			BankNumMid  = RankCapacity * 16 * iteration / 2 - 1;
-		पूर्ण
+		}
 
 		PageCapacity = (1 << SiS_DRAMType[k][1]) * buswidth * 4;
 		PhysicalAdrHigh = BankNumHigh;
@@ -4288,93 +4287,93 @@ sisfb_handle_command(काष्ठा sis_video_info *ivideo, काष्ठ�
 		SiS_SetRegAND(SISSR, 0x15, 0xFB); /* Test */
 		SiS_SetRegOR(SISSR, 0x15, 0x04);  /* Test */
 		sr14 = (SiS_DRAMType[k][3] * buswidth) - 1;
-		अगर(buswidth == 4)      sr14 |= 0x80;
-		अन्यथा अगर(buswidth == 2) sr14 |= 0x40;
+		if(buswidth == 4)      sr14 |= 0x80;
+		else if(buswidth == 2) sr14 |= 0x40;
 		SiS_SetReg(SISSR, 0x13, SiS_DRAMType[k][4]);
 		SiS_SetReg(SISSR, 0x14, sr14);
 
 		BankNumHigh <<= 16;
 		BankNumMid <<= 16;
 
-		अगर((BankNumHigh + PhysicalAdrHigh      >= mapsize) ||
+		if((BankNumHigh + PhysicalAdrHigh      >= mapsize) ||
 		   (BankNumMid  + PhysicalAdrHigh      >= mapsize) ||
 		   (BankNumHigh + PhysicalAdrHalfPage  >= mapsize) ||
 		   (BankNumHigh + PhysicalAdrOtherPage >= mapsize))
-			जारी;
+			continue;
 
 		/* Write data */
-		ग_लिखोw(((अचिन्हित लघु)PhysicalAdrHigh),
+		writew(((unsigned short)PhysicalAdrHigh),
 				(FBAddr + BankNumHigh + PhysicalAdrHigh));
-		ग_लिखोw(((अचिन्हित लघु)BankNumMid),
+		writew(((unsigned short)BankNumMid),
 				(FBAddr + BankNumMid  + PhysicalAdrHigh));
-		ग_लिखोw(((अचिन्हित लघु)PhysicalAdrHalfPage),
+		writew(((unsigned short)PhysicalAdrHalfPage),
 				(FBAddr + BankNumHigh + PhysicalAdrHalfPage));
-		ग_लिखोw(((अचिन्हित लघु)PhysicalAdrOtherPage),
+		writew(((unsigned short)PhysicalAdrOtherPage),
 				(FBAddr + BankNumHigh + PhysicalAdrOtherPage));
 
 		/* Read data */
-		अगर(पढ़ोw(FBAddr + BankNumHigh + PhysicalAdrHigh) == PhysicalAdrHigh)
-			वापस 1;
-	पूर्ण
+		if(readw(FBAddr + BankNumHigh + PhysicalAdrHigh) == PhysicalAdrHigh)
+			return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sisfb_post_300_ramsize(काष्ठा pci_dev *pdev, अचिन्हित पूर्णांक mapsize)
-अणु
-	काष्ठा	sis_video_info *ivideo = pci_get_drvdata(pdev);
-	पूर्णांक	i, j, buswidth;
-	पूर्णांक	PseuकरोRankCapacity, PseuकरोAdrPinCount;
+static void sisfb_post_300_ramsize(struct pci_dev *pdev, unsigned int mapsize)
+{
+	struct	sis_video_info *ivideo = pci_get_drvdata(pdev);
+	int	i, j, buswidth;
+	int	PseudoRankCapacity, PseudoAdrPinCount;
 
 	buswidth = sisfb_post_300_buswidth(ivideo);
 
-	क्रम(i = 6; i >= 0; i--) अणु
-		PseuकरोRankCapacity = 1 << i;
-		क्रम(j = 4; j >= 1; j--) अणु
-			PseuकरोAdrPinCount = 15 - j;
-			अगर((PseuकरोRankCapacity * j) <= 64) अणु
-				अगर(sisfb_post_300_rwtest(ivideo,
+	for(i = 6; i >= 0; i--) {
+		PseudoRankCapacity = 1 << i;
+		for(j = 4; j >= 1; j--) {
+			PseudoAdrPinCount = 15 - j;
+			if((PseudoRankCapacity * j) <= 64) {
+				if(sisfb_post_300_rwtest(ivideo,
 						j,
 						buswidth,
-						PseuकरोRankCapacity,
-						PseuकरोAdrPinCount,
+						PseudoRankCapacity,
+						PseudoAdrPinCount,
 						mapsize))
-					वापस;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+					return;
+			}
+		}
+	}
+}
 
-अटल व्योम sisfb_post_sis300(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा sis_video_info *ivideo = pci_get_drvdata(pdev);
-	अचिन्हित अक्षर *bios = ivideo->SiS_Pr.VirtualRomBase;
+static void sisfb_post_sis300(struct pci_dev *pdev)
+{
+	struct sis_video_info *ivideo = pci_get_drvdata(pdev);
+	unsigned char *bios = ivideo->SiS_Pr.VirtualRomBase;
 	u8  reg, v1, v2, v3, v4, v5, v6, v7, v8;
 	u16 index, rindex, memtype = 0;
-	अचिन्हित पूर्णांक mapsize;
+	unsigned int mapsize;
 
-	अगर(!ivideo->SiS_Pr.UseROM)
-		bios = शून्य;
+	if(!ivideo->SiS_Pr.UseROM)
+		bios = NULL;
 
 	SiS_SetReg(SISSR, 0x05, 0x86);
 
-	अगर(bios) अणु
-		अगर(bios[0x52] & 0x80) अणु
+	if(bios) {
+		if(bios[0x52] & 0x80) {
 			memtype = bios[0x52];
-		पूर्ण अन्यथा अणु
+		} else {
 			memtype = SiS_GetReg(SISSR, 0x3a);
-		पूर्ण
+		}
 		memtype &= 0x07;
-	पूर्ण
+	}
 
 	v3 = 0x80; v6 = 0x80;
-	अगर(ivideo->revision_id <= 0x13) अणु
+	if(ivideo->revision_id <= 0x13) {
 		v1 = 0x44; v2 = 0x42;
 		v4 = 0x44; v5 = 0x42;
-	पूर्ण अन्यथा अणु
+	} else {
 		v1 = 0x68; v2 = 0x43; /* Assume 125Mhz MCLK */
 		v4 = 0x68; v5 = 0x43; /* Assume 125Mhz ECLK */
-		अगर(bios) अणु
+		if(bios) {
 			index = memtype * 5;
 			rindex = index + 0x54;
 			v1 = bios[rindex++];
@@ -4384,8 +4383,8 @@ sisfb_handle_command(काष्ठा sis_video_info *ivideo, काष्ठ�
 			v4 = bios[rindex++];
 			v5 = bios[rindex++];
 			v6 = bios[rindex++];
-		पूर्ण
-	पूर्ण
+		}
+	}
 	SiS_SetReg(SISSR, 0x28, v1);
 	SiS_SetReg(SISSR, 0x29, v2);
 	SiS_SetReg(SISSR, 0x2a, v3);
@@ -4394,15 +4393,15 @@ sisfb_handle_command(काष्ठा sis_video_info *ivideo, काष्ठ�
 	SiS_SetReg(SISSR, 0x30, v6);
 
 	v1 = 0x10;
-	अगर(bios)
+	if(bios)
 		v1 = bios[0xa4];
 	SiS_SetReg(SISSR, 0x07, v1);       /* DAC speed */
 
-	SiS_SetReg(SISSR, 0x11, 0x0f);     /* DDC, घातer save */
+	SiS_SetReg(SISSR, 0x11, 0x0f);     /* DDC, power save */
 
 	v1 = 0x01; v2 = 0x43; v3 = 0x1e; v4 = 0x2a;
 	v5 = 0x06; v6 = 0x00; v7 = 0x00; v8 = 0x00;
-	अगर(bios) अणु
+	if(bios) {
 		memtype += 0xa5;
 		v1 = bios[memtype];
 		v2 = bios[memtype + 8];
@@ -4412,8 +4411,8 @@ sisfb_handle_command(काष्ठा sis_video_info *ivideo, काष्ठ�
 		v6 = bios[memtype + 40];
 		v7 = bios[memtype + 48];
 		v8 = bios[memtype + 56];
-	पूर्ण
-	अगर(ivideo->revision_id >= 0x80)
+	}
+	if(ivideo->revision_id >= 0x80)
 		v3 &= 0xfd;
 	SiS_SetReg(SISSR, 0x15, v1);       /* Ram type (assuming 0, BIOS 0xa5 step 8) */
 	SiS_SetReg(SISSR, 0x16, v2);
@@ -4425,22 +4424,22 @@ sisfb_handle_command(काष्ठा sis_video_info *ivideo, काष्ठ�
 	SiS_SetReg(SISSR, 0x1c, v8);	   /* ---- */
 	SiS_SetRegAND(SISSR, 0x15, 0xfb);
 	SiS_SetRegOR(SISSR, 0x15, 0x04);
-	अगर(bios) अणु
-		अगर(bios[0x53] & 0x02) अणु
+	if(bios) {
+		if(bios[0x53] & 0x02) {
 			SiS_SetRegOR(SISSR, 0x19, 0x20);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	v1 = 0x04;			   /* DAC pedestal (BIOS 0xe5) */
-	अगर(ivideo->revision_id >= 0x80)
+	if(ivideo->revision_id >= 0x80)
 		v1 |= 0x01;
 	SiS_SetReg(SISSR, 0x1f, v1);
 	SiS_SetReg(SISSR, 0x20, 0xa4);     /* linear & relocated io & disable a0000 */
 	v1 = 0xf6; v2 = 0x0d; v3 = 0x00;
-	अगर(bios) अणु
+	if(bios) {
 		v1 = bios[0xe8];
 		v2 = bios[0xe9];
 		v3 = bios[0xea];
-	पूर्ण
+	}
 	SiS_SetReg(SISSR, 0x23, v1);
 	SiS_SetReg(SISSR, 0x24, v2);
 	SiS_SetReg(SISSR, 0x25, v3);
@@ -4450,39 +4449,39 @@ sisfb_handle_command(काष्ठा sis_video_info *ivideo, काष्ठ�
 	SiS_SetRegOR(SISPART1, 0x24, 0x01);   /* unlock crt2 */
 	SiS_SetReg(SISPART1, 0x00, 0x00);
 	v1 = 0x40; v2 = 0x11;
-	अगर(bios) अणु
+	if(bios) {
 		v1 = bios[0xec];
 		v2 = bios[0xeb];
-	पूर्ण
+	}
 	SiS_SetReg(SISPART1, 0x02, v1);
 
-	अगर(ivideo->revision_id >= 0x80)
+	if(ivideo->revision_id >= 0x80)
 		v2 &= ~0x01;
 
 	reg = SiS_GetReg(SISPART4, 0x00);
-	अगर((reg == 1) || (reg == 2)) अणु
+	if((reg == 1) || (reg == 2)) {
 		SiS_SetReg(SISCR, 0x37, 0x02);
 		SiS_SetReg(SISPART2, 0x00, 0x1c);
 		v4 = 0x00; v5 = 0x00; v6 = 0x10;
-		अगर(ivideo->SiS_Pr.UseROM) अणु
+		if(ivideo->SiS_Pr.UseROM) {
 			v4 = bios[0xf5];
 			v5 = bios[0xf6];
 			v6 = bios[0xf7];
-		पूर्ण
+		}
 		SiS_SetReg(SISPART4, 0x0d, v4);
 		SiS_SetReg(SISPART4, 0x0e, v5);
 		SiS_SetReg(SISPART4, 0x10, v6);
 		SiS_SetReg(SISPART4, 0x0f, 0x3f);
 		reg = SiS_GetReg(SISPART4, 0x01);
-		अगर(reg >= 0xb0) अणु
+		if(reg >= 0xb0) {
 			reg = SiS_GetReg(SISPART4, 0x23);
 			reg &= 0x20;
 			reg <<= 1;
 			SiS_SetReg(SISPART4, 0x23, reg);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		v2 &= ~0x10;
-	पूर्ण
+	}
 	SiS_SetReg(SISSR, 0x32, v2);
 
 	SiS_SetRegAND(SISPART1, 0x24, 0xfe);  /* Lock CRT2 */
@@ -4491,49 +4490,49 @@ sisfb_handle_command(काष्ठा sis_video_info *ivideo, काष्ठ�
 	reg &= 0xc3;
 	SiS_SetReg(SISCR, 0x35, reg);
 	SiS_SetReg(SISCR, 0x83, 0x00);
-#अगर !defined(__i386__) && !defined(__x86_64__)
-	अगर(sisfb_videoram) अणु
+#if !defined(__i386__) && !defined(__x86_64__)
+	if(sisfb_videoram) {
 		SiS_SetReg(SISSR, 0x13, 0x28);  /* ? */
 		reg = ((sisfb_videoram >> 10) - 1) | 0x40;
 		SiS_SetReg(SISSR, 0x14, reg);
-	पूर्ण अन्यथा अणु
-#पूर्ण_अगर
-		/* Need to map max FB size क्रम finding out about RAM size */
+	} else {
+#endif
+		/* Need to map max FB size for finding out about RAM size */
 		mapsize = ivideo->video_size;
 		sisfb_post_map_vram(ivideo, &mapsize, 4);
 
-		अगर(ivideo->video_vbase) अणु
+		if(ivideo->video_vbase) {
 			sisfb_post_300_ramsize(pdev, mapsize);
 			iounmap(ivideo->video_vbase);
-		पूर्ण अन्यथा अणु
-			prपूर्णांकk(KERN_DEBUG
+		} else {
+			printk(KERN_DEBUG
 				"sisfb: Failed to map memory for size detection, assuming 8MB\n");
 			SiS_SetReg(SISSR, 0x13, 0x28);  /* ? */
-			SiS_SetReg(SISSR, 0x14, 0x47);  /* 8MB, 64bit शेष */
-		पूर्ण
-#अगर !defined(__i386__) && !defined(__x86_64__)
-	पूर्ण
-#पूर्ण_अगर
-	अगर(bios) अणु
+			SiS_SetReg(SISSR, 0x14, 0x47);  /* 8MB, 64bit default */
+		}
+#if !defined(__i386__) && !defined(__x86_64__)
+	}
+#endif
+	if(bios) {
 		v1 = bios[0xe6];
 		v2 = bios[0xe7];
-	पूर्ण अन्यथा अणु
+	} else {
 		reg = SiS_GetReg(SISSR, 0x3a);
-		अगर((reg & 0x30) == 0x30) अणु
+		if((reg & 0x30) == 0x30) {
 			v1 = 0x04; /* PCI */
 			v2 = 0x92;
-		पूर्ण अन्यथा अणु
+		} else {
 			v1 = 0x14; /* AGP */
 			v2 = 0xb2;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	SiS_SetReg(SISSR, 0x21, v1);
 	SiS_SetReg(SISSR, 0x22, v2);
 
 	/* Sense CRT1 */
 	sisfb_sense_crt1(ivideo);
 
-	/* Set शेष mode, करोn't clear screen */
+	/* Set default mode, don't clear screen */
 	ivideo->SiS_Pr.SiS_UseOEM = false;
 	SiS_SetEnableDstn(&ivideo->SiS_Pr, false);
 	SiS_SetEnableFstn(&ivideo->SiS_Pr, false);
@@ -4551,90 +4550,90 @@ sisfb_handle_command(काष्ठा sis_video_info *ivideo, काष्ठ�
 
 	/* Let everyone know what the current mode is */
 	ivideo->modeprechange = 0x2e;
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-#अगर_घोषित CONFIG_FB_SIS_315
-#अगर 0
-अटल व्योम sisfb_post_sis315330(काष्ठा pci_dev *pdev)
-अणु
+#ifdef CONFIG_FB_SIS_315
+#if 0
+static void sisfb_post_sis315330(struct pci_dev *pdev)
+{
 	/* TODO */
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल अंतरभूत पूर्णांक sisfb_xgi_is21(काष्ठा sis_video_info *ivideo)
-अणु
-	वापस ivideo->chip_real_id == XGI_21;
-पूर्ण
+static inline int sisfb_xgi_is21(struct sis_video_info *ivideo)
+{
+	return ivideo->chip_real_id == XGI_21;
+}
 
-अटल व्योम sisfb_post_xgi_delay(काष्ठा sis_video_info *ivideo, पूर्णांक delay)
-अणु
-	अचिन्हित पूर्णांक i;
+static void sisfb_post_xgi_delay(struct sis_video_info *ivideo, int delay)
+{
+	unsigned int i;
 	u8 reg;
 
-	क्रम(i = 0; i <= (delay * 10 * 36); i++) अणु
+	for(i = 0; i <= (delay * 10 * 36); i++) {
 		reg = SiS_GetReg(SISSR, 0x05);
 		reg++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक sisfb_find_host_bridge(काष्ठा sis_video_info *ivideo,
-				  काष्ठा pci_dev *mypdev,
-				  अचिन्हित लघु pcivenकरोr)
-अणु
-	काष्ठा pci_dev *pdev = शून्य;
-	अचिन्हित लघु temp;
-	पूर्णांक ret = 0;
+static int sisfb_find_host_bridge(struct sis_video_info *ivideo,
+				  struct pci_dev *mypdev,
+				  unsigned short pcivendor)
+{
+	struct pci_dev *pdev = NULL;
+	unsigned short temp;
+	int ret = 0;
 
-	जबतक((pdev = pci_get_class(PCI_CLASS_BRIDGE_HOST, pdev))) अणु
-		temp = pdev->venकरोr;
-		अगर(temp == pcivenकरोr) अणु
+	while((pdev = pci_get_class(PCI_CLASS_BRIDGE_HOST, pdev))) {
+		temp = pdev->vendor;
+		if(temp == pcivendor) {
 			ret = 1;
 			pci_dev_put(pdev);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sisfb_post_xgi_rwtest(काष्ठा sis_video_info *ivideo, पूर्णांक starta,
-				 अचिन्हित पूर्णांक enda, अचिन्हित पूर्णांक mapsize)
-अणु
-	अचिन्हित पूर्णांक pos;
-	पूर्णांक i;
+static int sisfb_post_xgi_rwtest(struct sis_video_info *ivideo, int starta,
+				 unsigned int enda, unsigned int mapsize)
+{
+	unsigned int pos;
+	int i;
 
-	ग_लिखोl(0, ivideo->video_vbase);
+	writel(0, ivideo->video_vbase);
 
-	क्रम(i = starta; i <= enda; i++) अणु
+	for(i = starta; i <= enda; i++) {
 		pos = 1 << i;
-		अगर(pos < mapsize)
-			ग_लिखोl(pos, ivideo->video_vbase + pos);
-	पूर्ण
+		if(pos < mapsize)
+			writel(pos, ivideo->video_vbase + pos);
+	}
 
 	sisfb_post_xgi_delay(ivideo, 150);
 
-	अगर(पढ़ोl(ivideo->video_vbase) != 0)
-		वापस 0;
+	if(readl(ivideo->video_vbase) != 0)
+		return 0;
 
-	क्रम(i = starta; i <= enda; i++) अणु
+	for(i = starta; i <= enda; i++) {
 		pos = 1 << i;
-		अगर(pos < mapsize) अणु
-			अगर(पढ़ोl(ivideo->video_vbase + pos) != pos)
-				वापस 0;
-		पूर्ण अन्यथा
-			वापस 0;
-	पूर्ण
+		if(pos < mapsize) {
+			if(readl(ivideo->video_vbase + pos) != pos)
+				return 0;
+		} else
+			return 0;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक sisfb_post_xgi_ramsize(काष्ठा sis_video_info *ivideo)
-अणु
-	अचिन्हित पूर्णांक buswidth, ranksize, channelab, mapsize;
-	पूर्णांक i, j, k, l, status;
+static int sisfb_post_xgi_ramsize(struct sis_video_info *ivideo)
+{
+	unsigned int buswidth, ranksize, channelab, mapsize;
+	int i, j, k, l, status;
 	u8 reg, sr14;
-	अटल स्थिर u8 dramsr13[12 * 5] = अणु
+	static const u8 dramsr13[12 * 5] = {
 		0x02, 0x0e, 0x0b, 0x80, 0x5d,
 		0x02, 0x0e, 0x0a, 0x40, 0x59,
 		0x02, 0x0d, 0x0b, 0x40, 0x4d,
@@ -4647,188 +4646,188 @@ sisfb_handle_command(काष्ठा sis_video_info *ivideo, काष्ठ�
 		0x02, 0x0d, 0x08, 0x08, 0x41,
 		0x02, 0x0c, 0x09, 0x08, 0x35,
 		0x02, 0x0c, 0x08, 0x04, 0x31
-	पूर्ण;
-	अटल स्थिर u8 dramsr13_4[4 * 5] = अणु
+	};
+	static const u8 dramsr13_4[4 * 5] = {
 		0x02, 0x0d, 0x09, 0x40, 0x45,
 		0x02, 0x0c, 0x09, 0x20, 0x35,
 		0x02, 0x0c, 0x08, 0x10, 0x31,
 		0x02, 0x0b, 0x08, 0x08, 0x21
-	पूर्ण;
+	};
 
 	/* Enable linear mode, disable 0xa0000 address decoding */
 	/* We disable a0000 address decoding, because
-	 * - अगर running on x86, अगर the card is disabled, it means
-	 *   that another card is in the प्रणाली. We करोn't want
-	 *   to पूर्णांकerphere with that primary card's texपंचांगode.
-	 * - अगर running on non-x86, there usually is no VGA winकरोw
+	 * - if running on x86, if the card is disabled, it means
+	 *   that another card is in the system. We don't want
+	 *   to interphere with that primary card's textmode.
+	 * - if running on non-x86, there usually is no VGA window
 	 *   at a0000.
 	 */
 	SiS_SetRegOR(SISSR, 0x20, (0x80 | 0x04));
 
-	/* Need to map max FB size क्रम finding out about RAM size */
+	/* Need to map max FB size for finding out about RAM size */
 	mapsize = ivideo->video_size;
 	sisfb_post_map_vram(ivideo, &mapsize, 32);
 
-	अगर(!ivideo->video_vbase) अणु
-		prपूर्णांकk(KERN_ERR "sisfb: Unable to detect RAM size. Setting default.\n");
+	if(!ivideo->video_vbase) {
+		printk(KERN_ERR "sisfb: Unable to detect RAM size. Setting default.\n");
 		SiS_SetReg(SISSR, 0x13, 0x35);
 		SiS_SetReg(SISSR, 0x14, 0x41);
 		/* TODO */
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	/* Non-पूर्णांकerleaving */
+	/* Non-interleaving */
 	SiS_SetReg(SISSR, 0x15, 0x00);
 	/* No tiling */
 	SiS_SetReg(SISSR, 0x1c, 0x00);
 
-	अगर(ivideo->chip == XGI_20) अणु
+	if(ivideo->chip == XGI_20) {
 
 		channelab = 1;
 		reg = SiS_GetReg(SISCR, 0x97);
-		अगर(!(reg & 0x01)) अणु	/* Single 32/16 */
+		if(!(reg & 0x01)) {	/* Single 32/16 */
 			buswidth = 32;
 			SiS_SetReg(SISSR, 0x13, 0xb1);
 			SiS_SetReg(SISSR, 0x14, 0x52);
 			sisfb_post_xgi_delay(ivideo, 1);
 			sr14 = 0x02;
-			अगर(sisfb_post_xgi_rwtest(ivideo, 23, 24, mapsize))
-				जाओ bail_out;
+			if(sisfb_post_xgi_rwtest(ivideo, 23, 24, mapsize))
+				goto bail_out;
 
 			SiS_SetReg(SISSR, 0x13, 0x31);
 			SiS_SetReg(SISSR, 0x14, 0x42);
 			sisfb_post_xgi_delay(ivideo, 1);
-			अगर(sisfb_post_xgi_rwtest(ivideo, 23, 23, mapsize))
-				जाओ bail_out;
+			if(sisfb_post_xgi_rwtest(ivideo, 23, 23, mapsize))
+				goto bail_out;
 
 			buswidth = 16;
 			SiS_SetReg(SISSR, 0x13, 0xb1);
 			SiS_SetReg(SISSR, 0x14, 0x41);
 			sisfb_post_xgi_delay(ivideo, 1);
 			sr14 = 0x01;
-			अगर(sisfb_post_xgi_rwtest(ivideo, 22, 23, mapsize))
-				जाओ bail_out;
-			अन्यथा
+			if(sisfb_post_xgi_rwtest(ivideo, 22, 23, mapsize))
+				goto bail_out;
+			else
 				SiS_SetReg(SISSR, 0x13, 0x31);
-		पूर्ण अन्यथा अणु		/* Dual 16/8 */
+		} else {		/* Dual 16/8 */
 			buswidth = 16;
 			SiS_SetReg(SISSR, 0x13, 0xb1);
 			SiS_SetReg(SISSR, 0x14, 0x41);
 			sisfb_post_xgi_delay(ivideo, 1);
 			sr14 = 0x01;
-			अगर(sisfb_post_xgi_rwtest(ivideo, 22, 23, mapsize))
-				जाओ bail_out;
+			if(sisfb_post_xgi_rwtest(ivideo, 22, 23, mapsize))
+				goto bail_out;
 
 			SiS_SetReg(SISSR, 0x13, 0x31);
 			SiS_SetReg(SISSR, 0x14, 0x31);
 			sisfb_post_xgi_delay(ivideo, 1);
-			अगर(sisfb_post_xgi_rwtest(ivideo, 22, 22, mapsize))
-				जाओ bail_out;
+			if(sisfb_post_xgi_rwtest(ivideo, 22, 22, mapsize))
+				goto bail_out;
 
 			buswidth = 8;
 			SiS_SetReg(SISSR, 0x13, 0xb1);
 			SiS_SetReg(SISSR, 0x14, 0x30);
 			sisfb_post_xgi_delay(ivideo, 1);
 			sr14 = 0x00;
-			अगर(sisfb_post_xgi_rwtest(ivideo, 21, 22, mapsize))
-				जाओ bail_out;
-			अन्यथा
+			if(sisfb_post_xgi_rwtest(ivideo, 21, 22, mapsize))
+				goto bail_out;
+			else
 				SiS_SetReg(SISSR, 0x13, 0x31);
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा अणु	/* XGI_40 */
+	} else {	/* XGI_40 */
 
 		reg = SiS_GetReg(SISCR, 0x97);
-		अगर(!(reg & 0x10)) अणु
+		if(!(reg & 0x10)) {
 			reg = SiS_GetReg(SISSR, 0x39);
 			reg >>= 1;
-		पूर्ण
+		}
 
-		अगर(reg & 0x01) अणु	/* DDRII */
+		if(reg & 0x01) {	/* DDRII */
 			buswidth = 32;
-			अगर(ivideo->revision_id == 2) अणु
+			if(ivideo->revision_id == 2) {
 				channelab = 2;
 				SiS_SetReg(SISSR, 0x13, 0xa1);
 				SiS_SetReg(SISSR, 0x14, 0x44);
 				sr14 = 0x04;
 				sisfb_post_xgi_delay(ivideo, 1);
-				अगर(sisfb_post_xgi_rwtest(ivideo, 23, 24, mapsize))
-					जाओ bail_out;
+				if(sisfb_post_xgi_rwtest(ivideo, 23, 24, mapsize))
+					goto bail_out;
 
 				SiS_SetReg(SISSR, 0x13, 0x21);
 				SiS_SetReg(SISSR, 0x14, 0x34);
-				अगर(sisfb_post_xgi_rwtest(ivideo, 22, 23, mapsize))
-					जाओ bail_out;
+				if(sisfb_post_xgi_rwtest(ivideo, 22, 23, mapsize))
+					goto bail_out;
 
 				channelab = 1;
 				SiS_SetReg(SISSR, 0x13, 0xa1);
 				SiS_SetReg(SISSR, 0x14, 0x40);
 				sr14 = 0x00;
-				अगर(sisfb_post_xgi_rwtest(ivideo, 22, 23, mapsize))
-					जाओ bail_out;
+				if(sisfb_post_xgi_rwtest(ivideo, 22, 23, mapsize))
+					goto bail_out;
 
 				SiS_SetReg(SISSR, 0x13, 0x21);
 				SiS_SetReg(SISSR, 0x14, 0x30);
-			पूर्ण अन्यथा अणु
+			} else {
 				channelab = 3;
 				SiS_SetReg(SISSR, 0x13, 0xa1);
 				SiS_SetReg(SISSR, 0x14, 0x4c);
 				sr14 = 0x0c;
 				sisfb_post_xgi_delay(ivideo, 1);
-				अगर(sisfb_post_xgi_rwtest(ivideo, 23, 25, mapsize))
-					जाओ bail_out;
+				if(sisfb_post_xgi_rwtest(ivideo, 23, 25, mapsize))
+					goto bail_out;
 
 				channelab = 2;
 				SiS_SetReg(SISSR, 0x14, 0x48);
 				sisfb_post_xgi_delay(ivideo, 1);
 				sr14 = 0x08;
-				अगर(sisfb_post_xgi_rwtest(ivideo, 23, 24, mapsize))
-					जाओ bail_out;
+				if(sisfb_post_xgi_rwtest(ivideo, 23, 24, mapsize))
+					goto bail_out;
 
 				SiS_SetReg(SISSR, 0x13, 0x21);
 				SiS_SetReg(SISSR, 0x14, 0x3c);
 				sr14 = 0x0c;
 
-				अगर(sisfb_post_xgi_rwtest(ivideo, 23, 24, mapsize)) अणु
+				if(sisfb_post_xgi_rwtest(ivideo, 23, 24, mapsize)) {
 					channelab = 3;
-				पूर्ण अन्यथा अणु
+				} else {
 					channelab = 2;
 					SiS_SetReg(SISSR, 0x14, 0x38);
 					sr14 = 0x08;
-				पूर्ण
-			पूर्ण
+				}
+			}
 			sisfb_post_xgi_delay(ivideo, 1);
 
-		पूर्ण अन्यथा अणु	/* DDR */
+		} else {	/* DDR */
 
 			buswidth = 64;
-			अगर(ivideo->revision_id == 2) अणु
+			if(ivideo->revision_id == 2) {
 				channelab = 1;
 				SiS_SetReg(SISSR, 0x13, 0xa1);
 				SiS_SetReg(SISSR, 0x14, 0x52);
 				sisfb_post_xgi_delay(ivideo, 1);
 				sr14 = 0x02;
-				अगर(sisfb_post_xgi_rwtest(ivideo, 23, 24, mapsize))
-					जाओ bail_out;
+				if(sisfb_post_xgi_rwtest(ivideo, 23, 24, mapsize))
+					goto bail_out;
 
 				SiS_SetReg(SISSR, 0x13, 0x21);
 				SiS_SetReg(SISSR, 0x14, 0x42);
-			पूर्ण अन्यथा अणु
+			} else {
 				channelab = 2;
 				SiS_SetReg(SISSR, 0x13, 0xa1);
 				SiS_SetReg(SISSR, 0x14, 0x5a);
 				sisfb_post_xgi_delay(ivideo, 1);
 				sr14 = 0x0a;
-				अगर(sisfb_post_xgi_rwtest(ivideo, 24, 25, mapsize))
-					जाओ bail_out;
+				if(sisfb_post_xgi_rwtest(ivideo, 24, 25, mapsize))
+					goto bail_out;
 
 				SiS_SetReg(SISSR, 0x13, 0x21);
 				SiS_SetReg(SISSR, 0x14, 0x4a);
-			पूर्ण
+			}
 			sisfb_post_xgi_delay(ivideo, 1);
 
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 bail_out:
 	SiS_SetRegANDOR(SISSR, 0x14, 0xf0, sr14);
@@ -4838,7 +4837,7 @@ bail_out:
 	k = (ivideo->chip == XGI_20) ? 12 : 4;
 	status = -EIO;
 
-	क्रम(i = 0; i < k; i++) अणु
+	for(i = 0; i < k; i++) {
 
 		reg = (ivideo->chip == XGI_20) ?
 				dramsr13[(i * 5) + 4] : dramsr13_4[(i * 5) + 4];
@@ -4849,43 +4848,43 @@ bail_out:
 				dramsr13[(i * 5) + 3] : dramsr13_4[(i * 5) + 3];
 
 		reg = SiS_GetReg(SISSR, 0x13);
-		अगर(reg & 0x80) ranksize <<= 1;
+		if(reg & 0x80) ranksize <<= 1;
 
-		अगर(ivideo->chip == XGI_20) अणु
-			अगर(buswidth == 16)      ranksize <<= 1;
-			अन्यथा अगर(buswidth == 32) ranksize <<= 2;
-		पूर्ण अन्यथा अणु
-			अगर(buswidth == 64)      ranksize <<= 1;
-		पूर्ण
+		if(ivideo->chip == XGI_20) {
+			if(buswidth == 16)      ranksize <<= 1;
+			else if(buswidth == 32) ranksize <<= 2;
+		} else {
+			if(buswidth == 64)      ranksize <<= 1;
+		}
 
 		reg = 0;
 		l = channelab;
-		अगर(l == 3) l = 4;
-		अगर((ranksize * l) <= 256) अणु
-			जबतक((ranksize >>= 1)) reg += 0x10;
-		पूर्ण
+		if(l == 3) l = 4;
+		if((ranksize * l) <= 256) {
+			while((ranksize >>= 1)) reg += 0x10;
+		}
 
-		अगर(!reg) जारी;
+		if(!reg) continue;
 
 		SiS_SetRegANDOR(SISSR, 0x14, 0x0f, (reg & 0xf0));
 		sisfb_post_xgi_delay(ivideo, 1);
 
-		अगर (sisfb_post_xgi_rwtest(ivideo, j, ((reg >> 4) + channelab - 2 + 20), mapsize)) अणु
+		if (sisfb_post_xgi_rwtest(ivideo, j, ((reg >> 4) + channelab - 2 + 20), mapsize)) {
 			status = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	iounmap(ivideo->video_vbase);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम sisfb_post_xgi_setघड़ीs(काष्ठा sis_video_info *ivideo, u8 regb)
-अणु
+static void sisfb_post_xgi_setclocks(struct sis_video_info *ivideo, u8 regb)
+{
 	u8 v1, v2, v3;
-	पूर्णांक index;
-	अटल स्थिर u8 cs90[8 * 3] = अणु
+	int index;
+	static const u8 cs90[8 * 3] = {
 		0x16, 0x01, 0x01,
 		0x3e, 0x03, 0x01,
 		0x7c, 0x08, 0x01,
@@ -4894,8 +4893,8 @@ bail_out:
 		0x5c, 0x23, 0x01,
 		0x5c, 0x23, 0x01,
 		0x5c, 0x23, 0x01
-	पूर्ण;
-	अटल स्थिर u8 csb8[8 * 3] = अणु
+	};
+	static const u8 csb8[8 * 3] = {
 		0x5c, 0x23, 0x01,
 		0x29, 0x01, 0x01,
 		0x7c, 0x08, 0x01,
@@ -4904,17 +4903,17 @@ bail_out:
 		0x5c, 0x23, 0x01,
 		0x5c, 0x23, 0x01,
 		0x5c, 0x23, 0x01
-	पूर्ण;
+	};
 
 	regb = 0;  /* ! */
 
 	index = regb * 3;
 	v1 = cs90[index]; v2 = cs90[index + 1]; v3 = cs90[index + 2];
-	अगर(ivideo->haveXGIROM) अणु
+	if(ivideo->haveXGIROM) {
 		v1 = ivideo->bios_abase[0x90 + index];
 		v2 = ivideo->bios_abase[0x90 + index + 1];
 		v3 = ivideo->bios_abase[0x90 + index + 2];
-	पूर्ण
+	}
 	SiS_SetReg(SISSR, 0x28, v1);
 	SiS_SetReg(SISSR, 0x29, v2);
 	SiS_SetReg(SISSR, 0x2a, v3);
@@ -4923,23 +4922,23 @@ bail_out:
 	sisfb_post_xgi_delay(ivideo, 0x43);
 	index = regb * 3;
 	v1 = csb8[index]; v2 = csb8[index + 1]; v3 = csb8[index + 2];
-	अगर(ivideo->haveXGIROM) अणु
+	if(ivideo->haveXGIROM) {
 		v1 = ivideo->bios_abase[0xb8 + index];
 		v2 = ivideo->bios_abase[0xb8 + index + 1];
 		v3 = ivideo->bios_abase[0xb8 + index + 2];
-	पूर्ण
+	}
 	SiS_SetReg(SISSR, 0x2e, v1);
 	SiS_SetReg(SISSR, 0x2f, v2);
 	SiS_SetReg(SISSR, 0x30, v3);
 	sisfb_post_xgi_delay(ivideo, 0x43);
 	sisfb_post_xgi_delay(ivideo, 0x43);
 	sisfb_post_xgi_delay(ivideo, 0x43);
-पूर्ण
+}
 
-अटल व्योम sisfb_post_xgi_ddr2_mrs_शेष(काष्ठा sis_video_info *ivideo,
+static void sisfb_post_xgi_ddr2_mrs_default(struct sis_video_info *ivideo,
 					    u8 regb)
-अणु
-	अचिन्हित अक्षर *bios = ivideo->bios_abase;
+{
+	unsigned char *bios = ivideo->bios_abase;
 	u8 v1;
 
 	SiS_SetReg(SISSR, 0x28, 0x64);
@@ -4955,7 +4954,7 @@ bail_out:
 	SiS_SetReg(SISSR, 0x16, 0x80);
 	sisfb_post_xgi_delay(ivideo, 1);
 	SiS_SetReg(SISCR, 0x97, 0x11);
-	sisfb_post_xgi_setघड़ीs(ivideo, regb);
+	sisfb_post_xgi_setclocks(ivideo, regb);
 	sisfb_post_xgi_delay(ivideo, 0x46);
 	SiS_SetReg(SISSR, 0x18, 0xc5);
 	SiS_SetReg(SISSR, 0x19, 0x23);
@@ -4967,19 +4966,19 @@ bail_out:
 	SiS_SetReg(SISSR, 0x1b, 0x00);
 	sisfb_post_xgi_delay(ivideo, 1);
 	v1 = 0x31;
-	अगर (ivideo->haveXGIROM) अणु
+	if (ivideo->haveXGIROM) {
 		v1 = bios[0xf0];
-	पूर्ण
+	}
 	SiS_SetReg(SISSR, 0x18, v1);
 	SiS_SetReg(SISSR, 0x19, 0x06);
 	SiS_SetReg(SISSR, 0x16, 0x04);
 	SiS_SetReg(SISSR, 0x16, 0x84);
 	sisfb_post_xgi_delay(ivideo, 1);
-पूर्ण
+}
 
-अटल व्योम sisfb_post_xgi_ddr2_mrs_xg21(काष्ठा sis_video_info *ivideo)
-अणु
-	sisfb_post_xgi_setघड़ीs(ivideo, 1);
+static void sisfb_post_xgi_ddr2_mrs_xg21(struct sis_video_info *ivideo)
+{
+	sisfb_post_xgi_setclocks(ivideo, 1);
 
 	SiS_SetReg(SISCR, 0x97, 0x11);
 	sisfb_post_xgi_delay(ivideo, 0x46);
@@ -5016,20 +5015,20 @@ bail_out:
 	SiS_SetReg(SISSR, 0x16, 0x05);
 	SiS_SetReg(SISSR, 0x16, 0x85);
 	sisfb_post_xgi_delay(ivideo, 1);
-पूर्ण
+}
 
-अटल व्योम sisfb_post_xgi_ddr2(काष्ठा sis_video_info *ivideo, u8 regb)
-अणु
-	अचिन्हित अक्षर *bios = ivideo->bios_abase;
-	अटल स्थिर u8 cs158[8] = अणु
+static void sisfb_post_xgi_ddr2(struct sis_video_info *ivideo, u8 regb)
+{
+	unsigned char *bios = ivideo->bios_abase;
+	static const u8 cs158[8] = {
 		0x88, 0xaa, 0x48, 0x00, 0x00, 0x00, 0x00, 0x00
-	पूर्ण;
-	अटल स्थिर u8 cs160[8] = अणु
+	};
+	static const u8 cs160[8] = {
 		0x44, 0x77, 0x77, 0x00, 0x00, 0x00, 0x00, 0x00
-	पूर्ण;
-	अटल स्थिर u8 cs168[8] = अणु
+	};
+	static const u8 cs168[8] = {
 		0x48, 0x78, 0x88, 0x00, 0x00, 0x00, 0x00, 0x00
-	पूर्ण;
+	};
 	u8 v1;
 	u8 v2;
 	u8 v3;
@@ -5041,11 +5040,11 @@ bail_out:
 	SiS_SetReg(SISCR, 0x86, 0x88);
 	SiS_GetReg(SISCR, 0x86);
 	v1 = cs168[regb]; v2 = cs160[regb]; v3 = cs158[regb];
-	अगर (ivideo->haveXGIROM) अणु
+	if (ivideo->haveXGIROM) {
 		v1 = bios[regb + 0x168];
 		v2 = bios[regb + 0x160];
 		v3 = bios[regb + 0x158];
-	पूर्ण
+	}
 	SiS_SetReg(SISCR, 0x86, v1);
 	SiS_SetReg(SISCR, 0x82, 0x77);
 	SiS_SetReg(SISCR, 0x85, 0x00);
@@ -5056,98 +5055,98 @@ bail_out:
 	SiS_SetReg(SISCR, 0x82, v3);
 	SiS_SetReg(SISCR, 0x98, 0x01);
 	SiS_SetReg(SISCR, 0x9a, 0x02);
-	अगर (sisfb_xgi_is21(ivideo))
+	if (sisfb_xgi_is21(ivideo))
 		sisfb_post_xgi_ddr2_mrs_xg21(ivideo);
-	अन्यथा
-		sisfb_post_xgi_ddr2_mrs_शेष(ivideo, regb);
-पूर्ण
+	else
+		sisfb_post_xgi_ddr2_mrs_default(ivideo, regb);
+}
 
-अटल u8 sisfb_post_xgi_ramtype(काष्ठा sis_video_info *ivideo)
-अणु
-	अचिन्हित अक्षर *bios = ivideo->bios_abase;
+static u8 sisfb_post_xgi_ramtype(struct sis_video_info *ivideo)
+{
+	unsigned char *bios = ivideo->bios_abase;
 	u8 ramtype;
 	u8 reg;
 	u8 v1;
 
 	ramtype = 0x00; v1 = 0x10;
-	अगर (ivideo->haveXGIROM) अणु
+	if (ivideo->haveXGIROM) {
 		ramtype = bios[0x62];
 		v1 = bios[0x1d2];
-	पूर्ण
-	अगर (!(ramtype & 0x80)) अणु
-		अगर (sisfb_xgi_is21(ivideo)) अणु
+	}
+	if (!(ramtype & 0x80)) {
+		if (sisfb_xgi_is21(ivideo)) {
 			SiS_SetRegAND(SISCR, 0xb4, 0xfd); /* GPIO control */
 			SiS_SetRegOR(SISCR, 0x4a, 0x80);  /* GPIOH EN */
 			reg = SiS_GetReg(SISCR, 0x48);
 			SiS_SetRegOR(SISCR, 0xb4, 0x02);
 			ramtype = reg & 0x01;		  /* GPIOH */
-		पूर्ण अन्यथा अगर (ivideo->chip == XGI_20) अणु
+		} else if (ivideo->chip == XGI_20) {
 			SiS_SetReg(SISCR, 0x97, v1);
 			reg = SiS_GetReg(SISCR, 0x97);
-			अगर (reg & 0x10) अणु
+			if (reg & 0x10) {
 				ramtype = (reg & 0x01) << 1;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			reg = SiS_GetReg(SISSR, 0x39);
 			ramtype = reg & 0x02;
-			अगर (!(ramtype)) अणु
+			if (!(ramtype)) {
 				reg = SiS_GetReg(SISSR, 0x3a);
 				ramtype = (reg >> 1) & 0x01;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	ramtype &= 0x07;
 
-	वापस ramtype;
-पूर्ण
+	return ramtype;
+}
 
-अटल पूर्णांक sisfb_post_xgi(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा sis_video_info *ivideo = pci_get_drvdata(pdev);
-	अचिन्हित अक्षर *bios = ivideo->bios_abase;
-	काष्ठा pci_dev *mypdev = शून्य;
-	स्थिर u8 *ptr, *ptr2;
+static int sisfb_post_xgi(struct pci_dev *pdev)
+{
+	struct sis_video_info *ivideo = pci_get_drvdata(pdev);
+	unsigned char *bios = ivideo->bios_abase;
+	struct pci_dev *mypdev = NULL;
+	const u8 *ptr, *ptr2;
 	u8 v1, v2, v3, v4, v5, reg, ramtype;
 	u32 rega, regb, regd;
-	पूर्णांक i, j, k, index;
-	अटल स्थिर u8 cs78[3] = अणु 0xf6, 0x0d, 0x00 पूर्ण;
-	अटल स्थिर u8 cs76[2] = अणु 0xa3, 0xfb पूर्ण;
-	अटल स्थिर u8 cs7b[3] = अणु 0xc0, 0x11, 0x00 पूर्ण;
-	अटल स्थिर u8 cs158[8] = अणु
+	int i, j, k, index;
+	static const u8 cs78[3] = { 0xf6, 0x0d, 0x00 };
+	static const u8 cs76[2] = { 0xa3, 0xfb };
+	static const u8 cs7b[3] = { 0xc0, 0x11, 0x00 };
+	static const u8 cs158[8] = {
 		0x88, 0xaa, 0x48, 0x00, 0x00, 0x00, 0x00, 0x00
-	पूर्ण;
-	अटल स्थिर u8 cs160[8] = अणु
+	};
+	static const u8 cs160[8] = {
 		0x44, 0x77, 0x77, 0x00, 0x00, 0x00, 0x00, 0x00
-	पूर्ण;
-	अटल स्थिर u8 cs168[8] = अणु
+	};
+	static const u8 cs168[8] = {
 		0x48, 0x78, 0x88, 0x00, 0x00, 0x00, 0x00, 0x00
-	पूर्ण;
-	अटल स्थिर u8 cs128[3 * 8] = अणु
+	};
+	static const u8 cs128[3 * 8] = {
 		0x90, 0x28, 0x24, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x77, 0x44, 0x44, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x77, 0x44, 0x44, 0x00, 0x00, 0x00, 0x00, 0x00
-	पूर्ण;
-	अटल स्थिर u8 cs148[2 * 8] = अणु
+	};
+	static const u8 cs148[2 * 8] = {
 		0x55, 0x55, 0x55, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-	पूर्ण;
-	अटल स्थिर u8 cs31a[8 * 4] = अणु
+	};
+	static const u8 cs31a[8 * 4] = {
 		0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
 		0xaa, 0xaa, 0xaa, 0xaa, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-	पूर्ण;
-	अटल स्थिर u8 cs33a[8 * 4] = अणु
+	};
+	static const u8 cs33a[8 * 4] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-	पूर्ण;
-	अटल स्थिर u8 cs45a[8 * 2] = अणु
+	};
+	static const u8 cs45a[8 * 2] = {
 		0x00, 0x00, 0xa0, 0x00, 0xa0, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-	पूर्ण;
-	अटल स्थिर u8 cs170[7 * 8] = अणु
+	};
+	static const u8 cs170[7 * 8] = {
 		0x54, 0x32, 0x44, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x54, 0x43, 0x44, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x0a, 0x05, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -5155,16 +5154,16 @@ bail_out:
 		0x10, 0x0a, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x11, 0x0c, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x05, 0x05, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00
-	पूर्ण;
-	अटल स्थिर u8 cs1a8[3 * 8] = अणु
+	};
+	static const u8 cs1a8[3 * 8] = {
 		0xf0, 0xf0, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x05, 0x02, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-	पूर्ण;
-	अटल स्थिर u8 cs100[2 * 8] = अणु
+	};
+	static const u8 cs100[2 * 8] = {
 		0xc4, 0x04, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0xc4, 0x04, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00
-	पूर्ण;
+	};
 
 	/* VGA enable */
 	reg = SiS_GetRegByte(SISVGAENABLE) | 0x01;
@@ -5177,42 +5176,42 @@ bail_out:
 	/* Unlock SR */
 	SiS_SetReg(SISSR, 0x05, 0x86);
 	reg = SiS_GetReg(SISSR, 0x05);
-	अगर(reg != 0xa1)
-		वापस 0;
+	if(reg != 0xa1)
+		return 0;
 
 	/* Clear some regs */
-	क्रम(i = 0; i < 0x22; i++) अणु
-		अगर(0x06 + i == 0x20) जारी;
+	for(i = 0; i < 0x22; i++) {
+		if(0x06 + i == 0x20) continue;
 		SiS_SetReg(SISSR, 0x06 + i, 0x00);
-	पूर्ण
-	क्रम(i = 0; i < 0x0b; i++) अणु
+	}
+	for(i = 0; i < 0x0b; i++) {
 		SiS_SetReg(SISSR, 0x31 + i, 0x00);
-	पूर्ण
-	क्रम(i = 0; i < 0x10; i++) अणु
+	}
+	for(i = 0; i < 0x10; i++) {
 		SiS_SetReg(SISCR, 0x30 + i, 0x00);
-	पूर्ण
+	}
 
 	ptr = cs78;
-	अगर(ivideo->haveXGIROM) अणु
-		ptr = (स्थिर u8 *)&bios[0x78];
-	पूर्ण
-	क्रम(i = 0; i < 3; i++) अणु
+	if(ivideo->haveXGIROM) {
+		ptr = (const u8 *)&bios[0x78];
+	}
+	for(i = 0; i < 3; i++) {
 		SiS_SetReg(SISSR, 0x23 + i, ptr[i]);
-	पूर्ण
+	}
 
 	ptr = cs76;
-	अगर(ivideo->haveXGIROM) अणु
-		ptr = (स्थिर u8 *)&bios[0x76];
-	पूर्ण
-	क्रम(i = 0; i < 2; i++) अणु
+	if(ivideo->haveXGIROM) {
+		ptr = (const u8 *)&bios[0x76];
+	}
+	for(i = 0; i < 2; i++) {
 		SiS_SetReg(SISSR, 0x21 + i, ptr[i]);
-	पूर्ण
+	}
 
 	v1 = 0x18; v2 = 0x00;
-	अगर(ivideo->haveXGIROM) अणु
+	if(ivideo->haveXGIROM) {
 		v1 = bios[0x74];
 		v2 = bios[0x75];
-	पूर्ण
+	}
 	SiS_SetReg(SISSR, 0x07, v1);
 	SiS_SetReg(SISSR, 0x11, 0x0f);
 	SiS_SetReg(SISSR, 0x1f, v2);
@@ -5221,34 +5220,34 @@ bail_out:
 	SiS_SetReg(SISSR, 0x27, 0x74);
 
 	ptr = cs7b;
-	अगर(ivideo->haveXGIROM) अणु
-		ptr = (स्थिर u8 *)&bios[0x7b];
-	पूर्ण
-	क्रम(i = 0; i < 3; i++) अणु
+	if(ivideo->haveXGIROM) {
+		ptr = (const u8 *)&bios[0x7b];
+	}
+	for(i = 0; i < 3; i++) {
 		SiS_SetReg(SISSR, 0x31 + i, ptr[i]);
-	पूर्ण
+	}
 
-	अगर(ivideo->chip == XGI_40) अणु
-		अगर(ivideo->revision_id == 2) अणु
+	if(ivideo->chip == XGI_40) {
+		if(ivideo->revision_id == 2) {
 			SiS_SetRegANDOR(SISSR, 0x3b, 0x3f, 0xc0);
-		पूर्ण
+		}
 		SiS_SetReg(SISCR, 0x7d, 0xfe);
 		SiS_SetReg(SISCR, 0x7e, 0x0f);
-	पूर्ण
-	अगर(ivideo->revision_id == 0) अणु	/* 40 *and* 20? */
+	}
+	if(ivideo->revision_id == 0) {	/* 40 *and* 20? */
 		SiS_SetRegAND(SISCR, 0x58, 0xd7);
 		reg = SiS_GetReg(SISCR, 0xcb);
-		अगर(reg & 0x20) अणु
+		if(reg & 0x20) {
 			SiS_SetRegANDOR(SISCR, 0x58, 0xd7, (reg & 0x10) ? 0x08 : 0x20); /* =0x28 Z7 ? */
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	reg = (ivideo->chip == XGI_40) ? 0x20 : 0x00;
 	SiS_SetRegANDOR(SISCR, 0x38, 0x1f, reg);
 
-	अगर(ivideo->chip == XGI_20) अणु
+	if(ivideo->chip == XGI_20) {
 		SiS_SetReg(SISSR, 0x36, 0x70);
-	पूर्ण अन्यथा अणु
+	} else {
 		SiS_SetReg(SISVID, 0x00, 0x86);
 		SiS_SetReg(SISVID, 0x32, 0x00);
 		SiS_SetReg(SISVID, 0x30, 0x00);
@@ -5265,7 +5264,7 @@ bail_out:
 		SiS_SetRegAND(SISPART1, 0x50, 0xfe);
 
 		reg = SiS_GetReg(SISPART4, 0x00);
-		अगर(reg == 1 || reg == 2) अणु
+		if(reg == 1 || reg == 2) {
 			SiS_SetReg(SISPART2, 0x00, 0x1c);
 			SiS_SetReg(SISPART4, 0x0d, bios[0x7f]);
 			SiS_SetReg(SISPART4, 0x0e, bios[0x80]);
@@ -5273,94 +5272,94 @@ bail_out:
 			SiS_SetRegAND(SISPART4, 0x0f, 0x3f);
 
 			reg = SiS_GetReg(SISPART4, 0x01);
-			अगर((reg & 0xf0) >= 0xb0) अणु
+			if((reg & 0xf0) >= 0xb0) {
 				reg = SiS_GetReg(SISPART4, 0x23);
-				अगर(reg & 0x20) reg |= 0x40;
+				if(reg & 0x20) reg |= 0x40;
 				SiS_SetReg(SISPART4, 0x23, reg);
 				reg = (reg & 0x20) ? 0x02 : 0x00;
 				SiS_SetRegANDOR(SISPART1, 0x1e, 0xfd, reg);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		v1 = bios[0x77];
 
 		reg = SiS_GetReg(SISSR, 0x3b);
-		अगर(reg & 0x02) अणु
+		if(reg & 0x02) {
 			reg = SiS_GetReg(SISSR, 0x3a);
 			v2 = (reg & 0x30) >> 3;
-			अगर(!(v2 & 0x04)) v2 ^= 0x02;
+			if(!(v2 & 0x04)) v2 ^= 0x02;
 			reg = SiS_GetReg(SISSR, 0x39);
-			अगर(reg & 0x80) v2 |= 0x80;
+			if(reg & 0x80) v2 |= 0x80;
 			v2 |= 0x01;
 
-			अगर((mypdev = pci_get_device(PCI_VENDOR_ID_SI, 0x0730, शून्य))) अणु
+			if((mypdev = pci_get_device(PCI_VENDOR_ID_SI, 0x0730, NULL))) {
 				pci_dev_put(mypdev);
-				अगर(((v2 & 0x06) == 2) || ((v2 & 0x06) == 4))
+				if(((v2 & 0x06) == 2) || ((v2 & 0x06) == 4))
 					v2 &= 0xf9;
 				v2 |= 0x08;
 				v1 &= 0xfe;
-			पूर्ण अन्यथा अणु
-				mypdev = pci_get_device(PCI_VENDOR_ID_SI, 0x0735, शून्य);
-				अगर(!mypdev)
-					mypdev = pci_get_device(PCI_VENDOR_ID_SI, 0x0645, शून्य);
-				अगर(!mypdev)
-					mypdev = pci_get_device(PCI_VENDOR_ID_SI, 0x0650, शून्य);
-				अगर(mypdev) अणु
-					pci_पढ़ो_config_dword(mypdev, 0x94, &regd);
+			} else {
+				mypdev = pci_get_device(PCI_VENDOR_ID_SI, 0x0735, NULL);
+				if(!mypdev)
+					mypdev = pci_get_device(PCI_VENDOR_ID_SI, 0x0645, NULL);
+				if(!mypdev)
+					mypdev = pci_get_device(PCI_VENDOR_ID_SI, 0x0650, NULL);
+				if(mypdev) {
+					pci_read_config_dword(mypdev, 0x94, &regd);
 					regd &= 0xfffffeff;
-					pci_ग_लिखो_config_dword(mypdev, 0x94, regd);
+					pci_write_config_dword(mypdev, 0x94, regd);
 					v1 &= 0xfe;
 					pci_dev_put(mypdev);
-				पूर्ण अन्यथा अगर(sisfb_find_host_bridge(ivideo, pdev, PCI_VENDOR_ID_SI)) अणु
+				} else if(sisfb_find_host_bridge(ivideo, pdev, PCI_VENDOR_ID_SI)) {
 					v1 &= 0xfe;
-				पूर्ण अन्यथा अगर(sisfb_find_host_bridge(ivideo, pdev, 0x1106) ||
+				} else if(sisfb_find_host_bridge(ivideo, pdev, 0x1106) ||
 					  sisfb_find_host_bridge(ivideo, pdev, 0x1022) ||
 					  sisfb_find_host_bridge(ivideo, pdev, 0x700e) ||
-					  sisfb_find_host_bridge(ivideo, pdev, 0x10de)) अणु
-					अगर((v2 & 0x06) == 4)
+					  sisfb_find_host_bridge(ivideo, pdev, 0x10de)) {
+					if((v2 & 0x06) == 4)
 						v2 ^= 0x06;
 					v2 |= 0x08;
-				पूर्ण
-			पूर्ण
+				}
+			}
 			SiS_SetRegANDOR(SISCR, 0x5f, 0xf0, v2);
-		पूर्ण
+		}
 		SiS_SetReg(SISSR, 0x22, v1);
 
-		अगर(ivideo->revision_id == 2) अणु
+		if(ivideo->revision_id == 2) {
 			v1 = SiS_GetReg(SISSR, 0x3b);
 			v2 = SiS_GetReg(SISSR, 0x3a);
 			regd = bios[0x90 + 3] | (bios[0x90 + 4] << 8);
-			अगर( (!(v1 & 0x02)) && (v2 & 0x30) && (regd < 0xcf) )
+			if( (!(v1 & 0x02)) && (v2 & 0x30) && (regd < 0xcf) )
 				SiS_SetRegANDOR(SISCR, 0x5f, 0xf1, 0x01);
 
-			अगर((mypdev = pci_get_device(0x10de, 0x01e0, शून्य))) अणु
-				/* TODO: set CR5f &0xf1 | 0x01 क्रम version 6570
-				 * of nक्रमce 2 ROM
+			if((mypdev = pci_get_device(0x10de, 0x01e0, NULL))) {
+				/* TODO: set CR5f &0xf1 | 0x01 for version 6570
+				 * of nforce 2 ROM
 				 */
-				अगर(0)
+				if(0)
 					SiS_SetRegANDOR(SISCR, 0x5f, 0xf1, 0x01);
 				pci_dev_put(mypdev);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		v1 = 0x30;
 		reg = SiS_GetReg(SISSR, 0x3b);
 		v2 = SiS_GetReg(SISCR, 0x5f);
-		अगर((!(reg & 0x02)) && (v2 & 0x0e))
+		if((!(reg & 0x02)) && (v2 & 0x0e))
 			v1 |= 0x08;
 		SiS_SetReg(SISSR, 0x27, v1);
 
-		अगर(bios[0x64] & 0x01) अणु
+		if(bios[0x64] & 0x01) {
 			SiS_SetRegANDOR(SISCR, 0x5f, 0xf0, bios[0x64]);
-		पूर्ण
+		}
 
 		v1 = bios[0x4f7];
-		pci_पढ़ो_config_dword(pdev, 0x50, &regd);
+		pci_read_config_dword(pdev, 0x50, &regd);
 		regd = (regd >> 20) & 0x0f;
-		अगर(regd == 1) अणु
+		if(regd == 1) {
 			v1 &= 0xfc;
 			SiS_SetRegOR(SISCR, 0x5f, 0x08);
-		पूर्ण
+		}
 		SiS_SetReg(SISCR, 0x48, v1);
 
 		SiS_SetRegANDOR(SISCR, 0x47, 0x04, bios[0x4f6] & 0xfb);
@@ -5375,12 +5374,12 @@ bail_out:
 		SiS_SetRegANDOR(SISCR, 0x75, 0xe0, bios[0x4ff] & 0x1f);
 		SiS_SetRegANDOR(SISCR, 0x76, 0xe0, bios[0x500] & 0x1f);
 		v1 = bios[0x501];
-		अगर((mypdev = pci_get_device(0x8086, 0x2530, शून्य))) अणु
+		if((mypdev = pci_get_device(0x8086, 0x2530, NULL))) {
 			v1 = 0xf0;
 			pci_dev_put(mypdev);
-		पूर्ण
+		}
 		SiS_SetReg(SISCR, 0x77, v1);
-	पूर्ण
+	}
 
 	/* RAM type:
 	 *
@@ -5388,195 +5387,195 @@ bail_out:
 	 *
 	 * The code seems to written so that regb should equal ramtype,
 	 * however, so far it has been hardcoded to 0. Enable other values only
-	 * on XGI Z9, as it passes the POST, and add a warning क्रम others.
+	 * on XGI Z9, as it passes the POST, and add a warning for others.
 	 */
 	ramtype = sisfb_post_xgi_ramtype(ivideo);
-	अगर (!sisfb_xgi_is21(ivideo) && ramtype) अणु
+	if (!sisfb_xgi_is21(ivideo) && ramtype) {
 		dev_warn(&pdev->dev,
 			 "RAM type something else than expected: %d\n",
 			 ramtype);
 		regb = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		regb = ramtype;
-	पूर्ण
+	}
 
 	v1 = 0xff;
-	अगर(ivideo->haveXGIROM) अणु
+	if(ivideo->haveXGIROM) {
 		v1 = bios[0x140 + regb];
-	पूर्ण
+	}
 	SiS_SetReg(SISCR, 0x6d, v1);
 
 	ptr = cs128;
-	अगर(ivideo->haveXGIROM) अणु
-		ptr = (स्थिर u8 *)&bios[0x128];
-	पूर्ण
-	क्रम(i = 0, j = 0; i < 3; i++, j += 8) अणु
+	if(ivideo->haveXGIROM) {
+		ptr = (const u8 *)&bios[0x128];
+	}
+	for(i = 0, j = 0; i < 3; i++, j += 8) {
 		SiS_SetReg(SISCR, 0x68 + i, ptr[j + regb]);
-	पूर्ण
+	}
 
 	ptr  = cs31a;
 	ptr2 = cs33a;
-	अगर(ivideo->haveXGIROM) अणु
+	if(ivideo->haveXGIROM) {
 		index = (ivideo->chip == XGI_20) ? 0x31a : 0x3a6;
-		ptr  = (स्थिर u8 *)&bios[index];
-		ptr2 = (स्थिर u8 *)&bios[index + 0x20];
-	पूर्ण
-	क्रम(i = 0; i < 2; i++) अणु
-		अगर(i == 0) अणु
+		ptr  = (const u8 *)&bios[index];
+		ptr2 = (const u8 *)&bios[index + 0x20];
+	}
+	for(i = 0; i < 2; i++) {
+		if(i == 0) {
 			regd = le32_to_cpu(((u32 *)ptr)[regb]);
 			rega = 0x6b;
-		पूर्ण अन्यथा अणु
+		} else {
 			regd = le32_to_cpu(((u32 *)ptr2)[regb]);
 			rega = 0x6e;
-		पूर्ण
+		}
 		reg = 0x00;
-		क्रम(j = 0; j < 16; j++) अणु
+		for(j = 0; j < 16; j++) {
 			reg &= 0xf3;
-			अगर(regd & 0x01) reg |= 0x04;
-			अगर(regd & 0x02) reg |= 0x08;
+			if(regd & 0x01) reg |= 0x04;
+			if(regd & 0x02) reg |= 0x08;
 			regd >>= 2;
 			SiS_SetReg(SISCR, rega, reg);
 			reg = SiS_GetReg(SISCR, rega);
 			reg = SiS_GetReg(SISCR, rega);
 			reg += 0x10;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	SiS_SetRegAND(SISCR, 0x6e, 0xfc);
 
-	ptr  = शून्य;
-	अगर(ivideo->haveXGIROM) अणु
+	ptr  = NULL;
+	if(ivideo->haveXGIROM) {
 		index = (ivideo->chip == XGI_20) ? 0x35a : 0x3e6;
-		ptr  = (स्थिर u8 *)&bios[index];
-	पूर्ण
-	क्रम(i = 0; i < 4; i++) अणु
+		ptr  = (const u8 *)&bios[index];
+	}
+	for(i = 0; i < 4; i++) {
 		SiS_SetRegANDOR(SISCR, 0x6e, 0xfc, i);
 		reg = 0x00;
-		क्रम(j = 0; j < 2; j++) अणु
+		for(j = 0; j < 2; j++) {
 			regd = 0;
-			अगर(ptr) अणु
+			if(ptr) {
 				regd = le32_to_cpu(((u32 *)ptr)[regb * 8]);
 				ptr += 4;
-			पूर्ण
+			}
 			/* reg = 0x00; */
-			क्रम(k = 0; k < 16; k++) अणु
+			for(k = 0; k < 16; k++) {
 				reg &= 0xfc;
-				अगर(regd & 0x01) reg |= 0x01;
-				अगर(regd & 0x02) reg |= 0x02;
+				if(regd & 0x01) reg |= 0x01;
+				if(regd & 0x02) reg |= 0x02;
 				regd >>= 2;
 				SiS_SetReg(SISCR, 0x6f, reg);
 				reg = SiS_GetReg(SISCR, 0x6f);
 				reg = SiS_GetReg(SISCR, 0x6f);
 				reg += 0x08;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	ptr  = cs148;
-	अगर(ivideo->haveXGIROM) अणु
-		ptr  = (स्थिर u8 *)&bios[0x148];
-	पूर्ण
-	क्रम(i = 0, j = 0; i < 2; i++, j += 8) अणु
+	if(ivideo->haveXGIROM) {
+		ptr  = (const u8 *)&bios[0x148];
+	}
+	for(i = 0, j = 0; i < 2; i++, j += 8) {
 		SiS_SetReg(SISCR, 0x80 + i, ptr[j + regb]);
-	पूर्ण
+	}
 
 	SiS_SetRegAND(SISCR, 0x89, 0x8f);
 
 	ptr  = cs45a;
-	अगर(ivideo->haveXGIROM) अणु
+	if(ivideo->haveXGIROM) {
 		index = (ivideo->chip == XGI_20) ? 0x45a : 0x4e6;
-		ptr  = (स्थिर u8 *)&bios[index];
-	पूर्ण
-	regd = le16_to_cpu(((स्थिर u16 *)ptr)[regb]);
+		ptr  = (const u8 *)&bios[index];
+	}
+	regd = le16_to_cpu(((const u16 *)ptr)[regb]);
 	reg = 0x80;
-	क्रम(i = 0; i < 5; i++) अणु
+	for(i = 0; i < 5; i++) {
 		reg &= 0xfc;
-		अगर(regd & 0x01) reg |= 0x01;
-		अगर(regd & 0x02) reg |= 0x02;
+		if(regd & 0x01) reg |= 0x01;
+		if(regd & 0x02) reg |= 0x02;
 		regd >>= 2;
 		SiS_SetReg(SISCR, 0x89, reg);
 		reg = SiS_GetReg(SISCR, 0x89);
 		reg = SiS_GetReg(SISCR, 0x89);
 		reg += 0x10;
-	पूर्ण
+	}
 
 	v1 = 0xb5; v2 = 0x20; v3 = 0xf0; v4 = 0x13;
-	अगर(ivideo->haveXGIROM) अणु
+	if(ivideo->haveXGIROM) {
 		v1 = bios[0x118 + regb];
 		v2 = bios[0xf8 + regb];
 		v3 = bios[0x120 + regb];
 		v4 = bios[0x1ca];
-	पूर्ण
+	}
 	SiS_SetReg(SISCR, 0x45, v1 & 0x0f);
 	SiS_SetReg(SISCR, 0x99, (v1 >> 4) & 0x07);
 	SiS_SetRegOR(SISCR, 0x40, v1 & 0x80);
 	SiS_SetReg(SISCR, 0x41, v2);
 
 	ptr  = cs170;
-	अगर(ivideo->haveXGIROM) अणु
-		ptr  = (स्थिर u8 *)&bios[0x170];
-	पूर्ण
-	क्रम(i = 0, j = 0; i < 7; i++, j += 8) अणु
+	if(ivideo->haveXGIROM) {
+		ptr  = (const u8 *)&bios[0x170];
+	}
+	for(i = 0, j = 0; i < 7; i++, j += 8) {
 		SiS_SetReg(SISCR, 0x90 + i, ptr[j + regb]);
-	पूर्ण
+	}
 
 	SiS_SetReg(SISCR, 0x59, v3);
 
 	ptr  = cs1a8;
-	अगर(ivideo->haveXGIROM) अणु
-		ptr  = (स्थिर u8 *)&bios[0x1a8];
-	पूर्ण
-	क्रम(i = 0, j = 0; i < 3; i++, j += 8) अणु
+	if(ivideo->haveXGIROM) {
+		ptr  = (const u8 *)&bios[0x1a8];
+	}
+	for(i = 0, j = 0; i < 3; i++, j += 8) {
 		SiS_SetReg(SISCR, 0xc3 + i, ptr[j + regb]);
-	पूर्ण
+	}
 
 	ptr  = cs100;
-	अगर(ivideo->haveXGIROM) अणु
-		ptr  = (स्थिर u8 *)&bios[0x100];
-	पूर्ण
-	क्रम(i = 0, j = 0; i < 2; i++, j += 8) अणु
+	if(ivideo->haveXGIROM) {
+		ptr  = (const u8 *)&bios[0x100];
+	}
+	for(i = 0, j = 0; i < 2; i++, j += 8) {
 		SiS_SetReg(SISCR, 0x8a + i, ptr[j + regb]);
-	पूर्ण
+	}
 
 	SiS_SetReg(SISCR, 0xcf, v4);
 
 	SiS_SetReg(SISCR, 0x83, 0x09);
 	SiS_SetReg(SISCR, 0x87, 0x00);
 
-	अगर(ivideo->chip == XGI_40) अणु
-		अगर( (ivideo->revision_id == 1) ||
-		    (ivideo->revision_id == 2) ) अणु
+	if(ivideo->chip == XGI_40) {
+		if( (ivideo->revision_id == 1) ||
+		    (ivideo->revision_id == 2) ) {
 			SiS_SetReg(SISCR, 0x8c, 0x87);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (regb == 1)
+	if (regb == 1)
 		SiS_SetReg(SISSR, 0x17, 0x80);		/* DDR2 */
-	अन्यथा
+	else
 		SiS_SetReg(SISSR, 0x17, 0x00);		/* DDR1 */
 	SiS_SetReg(SISSR, 0x1a, 0x87);
 
-	अगर(ivideo->chip == XGI_20) अणु
+	if(ivideo->chip == XGI_20) {
 		SiS_SetReg(SISSR, 0x15, 0x00);
 		SiS_SetReg(SISSR, 0x1c, 0x00);
-	पूर्ण
+	}
 
-	चयन(ramtype) अणु
-	हाल 0:
-		sisfb_post_xgi_setघड़ीs(ivideo, regb);
-		अगर((ivideo->chip == XGI_20) ||
+	switch(ramtype) {
+	case 0:
+		sisfb_post_xgi_setclocks(ivideo, regb);
+		if((ivideo->chip == XGI_20) ||
 		   (ivideo->revision_id == 1)   ||
-		   (ivideo->revision_id == 2)) अणु
+		   (ivideo->revision_id == 2)) {
 			v1 = cs158[regb]; v2 = cs160[regb]; v3 = cs168[regb];
-			अगर(ivideo->haveXGIROM) अणु
+			if(ivideo->haveXGIROM) {
 				v1 = bios[regb + 0x158];
 				v2 = bios[regb + 0x160];
 				v3 = bios[regb + 0x168];
-			पूर्ण
+			}
 			SiS_SetReg(SISCR, 0x82, v1);
 			SiS_SetReg(SISCR, 0x85, v2);
 			SiS_SetReg(SISCR, 0x86, v3);
-		पूर्ण अन्यथा अणु
+		} else {
 			SiS_SetReg(SISCR, 0x82, 0x88);
 			SiS_SetReg(SISCR, 0x86, 0x00);
 			reg = SiS_GetReg(SISCR, 0x86);
@@ -5590,48 +5589,48 @@ bail_out:
 			reg = SiS_GetReg(SISCR, 0x85);
 			SiS_SetReg(SISCR, 0x85, bios[regb + 0x160]);
 			SiS_SetReg(SISCR, 0x82, bios[regb + 0x158]);
-		पूर्ण
-		अगर(ivideo->chip == XGI_40) अणु
+		}
+		if(ivideo->chip == XGI_40) {
 			SiS_SetReg(SISCR, 0x97, 0x00);
-		पूर्ण
+		}
 		SiS_SetReg(SISCR, 0x98, 0x01);
 		SiS_SetReg(SISCR, 0x9a, 0x02);
 
 		SiS_SetReg(SISSR, 0x18, 0x01);
-		अगर((ivideo->chip == XGI_20) ||
-		   (ivideo->revision_id == 2)) अणु
+		if((ivideo->chip == XGI_20) ||
+		   (ivideo->revision_id == 2)) {
 			SiS_SetReg(SISSR, 0x19, 0x40);
-		पूर्ण अन्यथा अणु
+		} else {
 			SiS_SetReg(SISSR, 0x19, 0x20);
-		पूर्ण
+		}
 		SiS_SetReg(SISSR, 0x16, 0x00);
 		SiS_SetReg(SISSR, 0x16, 0x80);
-		अगर((ivideo->chip == XGI_20) || (bios[0x1cb] != 0x0c)) अणु
+		if((ivideo->chip == XGI_20) || (bios[0x1cb] != 0x0c)) {
 			sisfb_post_xgi_delay(ivideo, 0x43);
 			sisfb_post_xgi_delay(ivideo, 0x43);
 			sisfb_post_xgi_delay(ivideo, 0x43);
 			SiS_SetReg(SISSR, 0x18, 0x00);
-			अगर((ivideo->chip == XGI_20) ||
-			   (ivideo->revision_id == 2)) अणु
+			if((ivideo->chip == XGI_20) ||
+			   (ivideo->revision_id == 2)) {
 				SiS_SetReg(SISSR, 0x19, 0x40);
-			पूर्ण अन्यथा अणु
+			} else {
 				SiS_SetReg(SISSR, 0x19, 0x20);
-			पूर्ण
-		पूर्ण अन्यथा अगर((ivideo->chip == XGI_40) && (bios[0x1cb] == 0x0c)) अणु
+			}
+		} else if((ivideo->chip == XGI_40) && (bios[0x1cb] == 0x0c)) {
 			/* SiS_SetReg(SISSR, 0x16, 0x0c); */ /* ? */
-		पूर्ण
+		}
 		SiS_SetReg(SISSR, 0x16, 0x00);
 		SiS_SetReg(SISSR, 0x16, 0x80);
 		sisfb_post_xgi_delay(ivideo, 4);
 		v1 = 0x31; v2 = 0x03; v3 = 0x83; v4 = 0x03; v5 = 0x83;
-		अगर(ivideo->haveXGIROM) अणु
+		if(ivideo->haveXGIROM) {
 			v1 = bios[0xf0];
 			index = (ivideo->chip == XGI_20) ? 0x4b2 : 0x53e;
 			v2 = bios[index];
 			v3 = bios[index + 1];
 			v4 = bios[index + 2];
 			v5 = bios[index + 3];
-		पूर्ण
+		}
 		SiS_SetReg(SISSR, 0x18, v1);
 		SiS_SetReg(SISSR, 0x19, ((ivideo->chip == XGI_20) ? 0x02 : 0x01));
 		SiS_SetReg(SISSR, 0x16, v2);
@@ -5644,19 +5643,19 @@ bail_out:
 		SiS_SetReg(SISSR, 0x16, v4);
 		SiS_SetReg(SISSR, 0x16, v5);
 		SiS_SetReg(SISSR, 0x1b, 0x00);
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		sisfb_post_xgi_ddr2(ivideo, regb);
-		अवरोध;
-	शेष:
-		sisfb_post_xgi_setघड़ीs(ivideo, regb);
-		अगर((ivideo->chip == XGI_40) &&
+		break;
+	default:
+		sisfb_post_xgi_setclocks(ivideo, regb);
+		if((ivideo->chip == XGI_40) &&
 		   ((ivideo->revision_id == 1) ||
-		    (ivideo->revision_id == 2))) अणु
+		    (ivideo->revision_id == 2))) {
 			SiS_SetReg(SISCR, 0x82, bios[regb + 0x158]);
 			SiS_SetReg(SISCR, 0x85, bios[regb + 0x160]);
 			SiS_SetReg(SISCR, 0x86, bios[regb + 0x168]);
-		पूर्ण अन्यथा अणु
+		} else {
 			SiS_SetReg(SISCR, 0x82, 0x88);
 			SiS_SetReg(SISCR, 0x86, 0x00);
 			reg = SiS_GetReg(SISCR, 0x86);
@@ -5667,32 +5666,32 @@ bail_out:
 			SiS_SetReg(SISCR, 0x85, 0x88);
 			reg = SiS_GetReg(SISCR, 0x85);
 			v1 = cs160[regb]; v2 = cs158[regb];
-			अगर(ivideo->haveXGIROM) अणु
+			if(ivideo->haveXGIROM) {
 				v1 = bios[regb + 0x160];
 				v2 = bios[regb + 0x158];
-			पूर्ण
+			}
 			SiS_SetReg(SISCR, 0x85, v1);
 			SiS_SetReg(SISCR, 0x82, v2);
-		पूर्ण
-		अगर(ivideo->chip == XGI_40) अणु
+		}
+		if(ivideo->chip == XGI_40) {
 			SiS_SetReg(SISCR, 0x97, 0x11);
-		पूर्ण
-		अगर((ivideo->chip == XGI_40) && (ivideo->revision_id == 2)) अणु
+		}
+		if((ivideo->chip == XGI_40) && (ivideo->revision_id == 2)) {
 			SiS_SetReg(SISCR, 0x98, 0x01);
-		पूर्ण अन्यथा अणु
+		} else {
 			SiS_SetReg(SISCR, 0x98, 0x03);
-		पूर्ण
+		}
 		SiS_SetReg(SISCR, 0x9a, 0x02);
 
-		अगर(ivideo->chip == XGI_40) अणु
+		if(ivideo->chip == XGI_40) {
 			SiS_SetReg(SISSR, 0x18, 0x01);
-		पूर्ण अन्यथा अणु
+		} else {
 			SiS_SetReg(SISSR, 0x18, 0x00);
-		पूर्ण
+		}
 		SiS_SetReg(SISSR, 0x19, 0x40);
 		SiS_SetReg(SISSR, 0x16, 0x00);
 		SiS_SetReg(SISSR, 0x16, 0x80);
-		अगर((ivideo->chip == XGI_40) && (bios[0x1cb] != 0x0c)) अणु
+		if((ivideo->chip == XGI_40) && (bios[0x1cb] != 0x0c)) {
 			sisfb_post_xgi_delay(ivideo, 0x43);
 			sisfb_post_xgi_delay(ivideo, 0x43);
 			sisfb_post_xgi_delay(ivideo, 0x43);
@@ -5700,64 +5699,64 @@ bail_out:
 			SiS_SetReg(SISSR, 0x19, 0x40);
 			SiS_SetReg(SISSR, 0x16, 0x00);
 			SiS_SetReg(SISSR, 0x16, 0x80);
-		पूर्ण
+		}
 		sisfb_post_xgi_delay(ivideo, 4);
 		v1 = 0x31;
-		अगर(ivideo->haveXGIROM) अणु
+		if(ivideo->haveXGIROM) {
 			v1 = bios[0xf0];
-		पूर्ण
+		}
 		SiS_SetReg(SISSR, 0x18, v1);
 		SiS_SetReg(SISSR, 0x19, 0x01);
-		अगर(ivideo->chip == XGI_40) अणु
+		if(ivideo->chip == XGI_40) {
 			SiS_SetReg(SISSR, 0x16, bios[0x53e]);
 			SiS_SetReg(SISSR, 0x16, bios[0x53f]);
-		पूर्ण अन्यथा अणु
+		} else {
 			SiS_SetReg(SISSR, 0x16, 0x05);
 			SiS_SetReg(SISSR, 0x16, 0x85);
-		पूर्ण
+		}
 		sisfb_post_xgi_delay(ivideo, 0x43);
-		अगर(ivideo->chip == XGI_40) अणु
+		if(ivideo->chip == XGI_40) {
 			SiS_SetReg(SISSR, 0x1b, 0x01);
-		पूर्ण अन्यथा अणु
+		} else {
 			SiS_SetReg(SISSR, 0x1b, 0x03);
-		पूर्ण
+		}
 		sisfb_post_xgi_delay(ivideo, 0x22);
 		SiS_SetReg(SISSR, 0x18, v1);
 		SiS_SetReg(SISSR, 0x19, 0x00);
-		अगर(ivideo->chip == XGI_40) अणु
+		if(ivideo->chip == XGI_40) {
 			SiS_SetReg(SISSR, 0x16, bios[0x540]);
 			SiS_SetReg(SISSR, 0x16, bios[0x541]);
-		पूर्ण अन्यथा अणु
+		} else {
 			SiS_SetReg(SISSR, 0x16, 0x05);
 			SiS_SetReg(SISSR, 0x16, 0x85);
-		पूर्ण
+		}
 		SiS_SetReg(SISSR, 0x1b, 0x00);
-	पूर्ण
+	}
 
 	regb = 0;	/* ! */
 	v1 = 0x03;
-	अगर(ivideo->haveXGIROM) अणु
+	if(ivideo->haveXGIROM) {
 		v1 = bios[0x110 + regb];
-	पूर्ण
+	}
 	SiS_SetReg(SISSR, 0x1b, v1);
 
 	/* RAM size */
 	v1 = 0x00; v2 = 0x00;
-	अगर(ivideo->haveXGIROM) अणु
+	if(ivideo->haveXGIROM) {
 		v1 = bios[0x62];
 		v2 = bios[0x63];
-	पूर्ण
+	}
 	regb = 0;	/* ! */
 	regd = 1 << regb;
-	अगर((v1 & 0x40) && (v2 & regd) && ivideo->haveXGIROM) अणु
+	if((v1 & 0x40) && (v2 & regd) && ivideo->haveXGIROM) {
 
 		SiS_SetReg(SISSR, 0x13, bios[regb + 0xe0]);
 		SiS_SetReg(SISSR, 0x14, bios[regb + 0xe0 + 8]);
 
-	पूर्ण अन्यथा अणु
-		पूर्णांक err;
+	} else {
+		int err;
 
-		/* Set शेष mode, करोn't clear screen */
+		/* Set default mode, don't clear screen */
 		ivideo->SiS_Pr.SiS_UseOEM = false;
 		SiS_SetEnableDstn(&ivideo->SiS_Pr, false);
 		SiS_SetEnableFstn(&ivideo->SiS_Pr, false);
@@ -5767,46 +5766,46 @@ bail_out:
 
 		SiS_SetReg(SISSR, 0x05, 0x86);
 
-		/* Disable पढ़ो-cache */
+		/* Disable read-cache */
 		SiS_SetRegAND(SISSR, 0x21, 0xdf);
 		err = sisfb_post_xgi_ramsize(ivideo);
-		/* Enable पढ़ो-cache */
+		/* Enable read-cache */
 		SiS_SetRegOR(SISSR, 0x21, 0x20);
 
-		अगर (err) अणु
+		if (err) {
 			dev_err(&pdev->dev,
 				"%s: RAM size detection failed: %d\n",
 				__func__, err);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-#अगर 0
-	prपूर्णांकk(KERN_DEBUG "-----------------\n");
-	क्रम(i = 0; i < 0xff; i++) अणु
+#if 0
+	printk(KERN_DEBUG "-----------------\n");
+	for(i = 0; i < 0xff; i++) {
 		reg = SiS_GetReg(SISCR, i);
-		prपूर्णांकk(KERN_DEBUG "CR%02x(%x) = 0x%02x\n", i, SISCR, reg);
-	पूर्ण
-	क्रम(i = 0; i < 0x40; i++) अणु
+		printk(KERN_DEBUG "CR%02x(%x) = 0x%02x\n", i, SISCR, reg);
+	}
+	for(i = 0; i < 0x40; i++) {
 		reg = SiS_GetReg(SISSR, i);
-		prपूर्णांकk(KERN_DEBUG "SR%02x(%x) = 0x%02x\n", i, SISSR, reg);
-	पूर्ण
-	prपूर्णांकk(KERN_DEBUG "-----------------\n");
-#पूर्ण_अगर
+		printk(KERN_DEBUG "SR%02x(%x) = 0x%02x\n", i, SISSR, reg);
+	}
+	printk(KERN_DEBUG "-----------------\n");
+#endif
 
 	/* Sense CRT1 */
-	अगर(ivideo->chip == XGI_20) अणु
+	if(ivideo->chip == XGI_20) {
 		SiS_SetRegOR(SISCR, 0x32, 0x20);
-	पूर्ण अन्यथा अणु
+	} else {
 		reg = SiS_GetReg(SISPART4, 0x00);
-		अगर((reg == 1) || (reg == 2)) अणु
+		if((reg == 1) || (reg == 2)) {
 			sisfb_sense_crt1(ivideo);
-		पूर्ण अन्यथा अणु
+		} else {
 			SiS_SetRegOR(SISCR, 0x32, 0x20);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Set शेष mode, करोn't clear screen */
+	/* Set default mode, don't clear screen */
 	ivideo->SiS_Pr.SiS_UseOEM = false;
 	SiS_SetEnableDstn(&ivideo->SiS_Pr, false);
 	SiS_SetEnableFstn(&ivideo->SiS_Pr, false);
@@ -5824,76 +5823,76 @@ bail_out:
 	/* Let everyone know what the current mode is */
 	ivideo->modeprechange = 0x2e;
 
-	अगर(ivideo->chip == XGI_40) अणु
+	if(ivideo->chip == XGI_40) {
 		reg = SiS_GetReg(SISCR, 0xca);
 		v1 = SiS_GetReg(SISCR, 0xcc);
-		अगर((reg & 0x10) && (!(v1 & 0x04))) अणु
-			prपूर्णांकk(KERN_ERR
+		if((reg & 0x10) && (!(v1 & 0x04))) {
+			printk(KERN_ERR
 				"sisfb: Please connect power to the card.\n");
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस 1;
-पूर्ण
-#पूर्ण_अगर
+	return 1;
+}
+#endif
 
-अटल पूर्णांक sisfb_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
-अणु
-	काष्ठा sisfb_chip_info	*chipinfo = &sisfb_chip_info[ent->driver_data];
-	काष्ठा sis_video_info	*ivideo = शून्य;
-	काष्ठा fb_info		*sis_fb_info = शून्य;
+static int sisfb_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
+{
+	struct sisfb_chip_info	*chipinfo = &sisfb_chip_info[ent->driver_data];
+	struct sis_video_info	*ivideo = NULL;
+	struct fb_info		*sis_fb_info = NULL;
 	u16 reg16;
 	u8  reg;
-	पूर्णांक i, ret;
+	int i, ret;
 
-	अगर(sisfb_off)
-		वापस -ENXIO;
+	if(sisfb_off)
+		return -ENXIO;
 
-	sis_fb_info = framebuffer_alloc(माप(*ivideo), &pdev->dev);
-	अगर(!sis_fb_info)
-		वापस -ENOMEM;
+	sis_fb_info = framebuffer_alloc(sizeof(*ivideo), &pdev->dev);
+	if(!sis_fb_info)
+		return -ENOMEM;
 
-	ivideo = (काष्ठा sis_video_info *)sis_fb_info->par;
+	ivideo = (struct sis_video_info *)sis_fb_info->par;
 	ivideo->memyselfandi = sis_fb_info;
 
 	ivideo->sisfb_id = SISFB_ID;
 
-	अगर(card_list == शून्य) अणु
+	if(card_list == NULL) {
 		ivideo->cardnumber = 0;
-	पूर्ण अन्यथा अणु
-		काष्ठा sis_video_info *countvideo = card_list;
+	} else {
+		struct sis_video_info *countvideo = card_list;
 		ivideo->cardnumber = 1;
-		जबतक((countvideo = countvideo->next) != शून्य)
+		while((countvideo = countvideo->next) != NULL)
 			ivideo->cardnumber++;
-	पूर्ण
+	}
 
-	strlcpy(ivideo->myid, chipinfo->chip_name, माप(ivideo->myid));
+	strlcpy(ivideo->myid, chipinfo->chip_name, sizeof(ivideo->myid));
 
 	ivideo->warncount = 0;
 	ivideo->chip_id = pdev->device;
-	ivideo->chip_venकरोr = pdev->venकरोr;
+	ivideo->chip_vendor = pdev->vendor;
 	ivideo->revision_id = pdev->revision;
 	ivideo->SiS_Pr.ChipRevision = ivideo->revision_id;
-	pci_पढ़ो_config_word(pdev, PCI_COMMAND, &reg16);
+	pci_read_config_word(pdev, PCI_COMMAND, &reg16);
 	ivideo->sisvga_enabled = reg16 & 0x01;
 	ivideo->pcibus = pdev->bus->number;
 	ivideo->pcislot = PCI_SLOT(pdev->devfn);
-	ivideo->pcअगरunc = PCI_FUNC(pdev->devfn);
-	ivideo->subsysvenकरोr = pdev->subप्रणाली_venकरोr;
-	ivideo->subsysdevice = pdev->subप्रणाली_device;
+	ivideo->pcifunc = PCI_FUNC(pdev->devfn);
+	ivideo->subsysvendor = pdev->subsystem_vendor;
+	ivideo->subsysdevice = pdev->subsystem_device;
 
-#अगर_अघोषित MODULE
-	अगर(sisfb_mode_idx == -1) अणु
+#ifndef MODULE
+	if(sisfb_mode_idx == -1) {
 		sisfb_get_vga_mode_from_kernel();
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
 	ivideo->chip = chipinfo->chip;
 	ivideo->chip_real_id = chipinfo->chip;
 	ivideo->sisvga_engine = chipinfo->vgaengine;
 	ivideo->hwcursor_size = chipinfo->hwcursor_size;
-	ivideo->CRT2_ग_लिखो_enable = chipinfo->CRT2_ग_लिखो_enable;
+	ivideo->CRT2_write_enable = chipinfo->CRT2_write_enable;
 	ivideo->mni = chipinfo->mni;
 
 	ivideo->detectedpdc  = 0xff;
@@ -5908,16 +5907,16 @@ bail_out:
 
 	ivideo->sisfb_was_boot_device = 0;
 
-	अगर(pdev->resource[PCI_ROM_RESOURCE].flags & IORESOURCE_ROM_SHADOW) अणु
-		अगर(ivideo->sisvga_enabled)
+	if(pdev->resource[PCI_ROM_RESOURCE].flags & IORESOURCE_ROM_SHADOW) {
+		if(ivideo->sisvga_enabled)
 			ivideo->sisfb_was_boot_device = 1;
-		अन्यथा अणु
-			prपूर्णांकk(KERN_DEBUG "sisfb: PCI device is disabled, "
+		else {
+			printk(KERN_DEBUG "sisfb: PCI device is disabled, "
 				"but marked as boot video device ???\n");
-			prपूर्णांकk(KERN_DEBUG "sisfb: I will not accept this "
+			printk(KERN_DEBUG "sisfb: I will not accept this "
 				"as the primary VGA device\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ivideo->sisfb_parm_mem = sisfb_parm_mem;
 	ivideo->sisfb_accel = sisfb_accel;
@@ -5928,7 +5927,7 @@ bail_out:
 	ivideo->sisfb_mode_idx = sisfb_mode_idx;
 	ivideo->sisfb_parm_rate = sisfb_parm_rate;
 	ivideo->sisfb_crt1off = sisfb_crt1off;
-	ivideo->sisfb_क्रमcecrt1 = sisfb_क्रमcecrt1;
+	ivideo->sisfb_forcecrt1 = sisfb_forcecrt1;
 	ivideo->sisfb_crt2type = sisfb_crt2type;
 	ivideo->sisfb_crt2flags = sisfb_crt2flags;
 	/* pdc(a), scalelcd, special timing, lvdshl handled below */
@@ -5940,9 +5939,9 @@ bail_out:
 	ivideo->tvypos = sisfb_tvyposoffset;
 	ivideo->sisfb_nocrt2rate = sisfb_nocrt2rate;
 	ivideo->refresh_rate = 0;
-	अगर(ivideo->sisfb_parm_rate != -1) अणु
+	if(ivideo->sisfb_parm_rate != -1) {
 		ivideo->refresh_rate = ivideo->sisfb_parm_rate;
-	पूर्ण
+	}
 
 	ivideo->SiS_Pr.UsePanelScaler = sisfb_scalelcd;
 	ivideo->SiS_Pr.CenterScreen = -1;
@@ -5961,77 +5960,77 @@ bail_out:
 	ivideo->SiS_Pr.PDC  = -1;
 	ivideo->SiS_Pr.PDCA = -1;
 	ivideo->SiS_Pr.DDCPortMixup = false;
-#अगर_घोषित CONFIG_FB_SIS_315
-	अगर(ivideo->chip >= SIS_330) अणु
+#ifdef CONFIG_FB_SIS_315
+	if(ivideo->chip >= SIS_330) {
 		ivideo->SiS_Pr.SiS_MyCR63 = 0x53;
-		अगर(ivideo->chip >= SIS_661) अणु
+		if(ivideo->chip >= SIS_661) {
 			ivideo->SiS_Pr.SiS_SensibleSR11 = true;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+		}
+	}
+#endif
 
-	स_नकल(&ivideo->शेष_var, &my_शेष_var, माप(my_शेष_var));
+	memcpy(&ivideo->default_var, &my_default_var, sizeof(my_default_var));
 
 	pci_set_drvdata(pdev, ivideo);
 
-	/* Patch special हालs */
-	अगर((ivideo->nbridge = sisfb_get_northbridge(ivideo->chip))) अणु
-		चयन(ivideo->nbridge->device) अणु
-#अगर_घोषित CONFIG_FB_SIS_300
-		हाल PCI_DEVICE_ID_SI_730:
+	/* Patch special cases */
+	if((ivideo->nbridge = sisfb_get_northbridge(ivideo->chip))) {
+		switch(ivideo->nbridge->device) {
+#ifdef CONFIG_FB_SIS_300
+		case PCI_DEVICE_ID_SI_730:
 			ivideo->chip = SIS_730;
-			म_नकल(ivideo->myid, "SiS 730");
-			अवरोध;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_FB_SIS_315
-		हाल PCI_DEVICE_ID_SI_651:
+			strcpy(ivideo->myid, "SiS 730");
+			break;
+#endif
+#ifdef CONFIG_FB_SIS_315
+		case PCI_DEVICE_ID_SI_651:
 			/* ivideo->chip is ok */
-			म_नकल(ivideo->myid, "SiS 651");
-			अवरोध;
-		हाल PCI_DEVICE_ID_SI_740:
+			strcpy(ivideo->myid, "SiS 651");
+			break;
+		case PCI_DEVICE_ID_SI_740:
 			ivideo->chip = SIS_740;
-			म_नकल(ivideo->myid, "SiS 740");
-			अवरोध;
-		हाल PCI_DEVICE_ID_SI_661:
+			strcpy(ivideo->myid, "SiS 740");
+			break;
+		case PCI_DEVICE_ID_SI_661:
 			ivideo->chip = SIS_661;
-			म_नकल(ivideo->myid, "SiS 661");
-			अवरोध;
-		हाल PCI_DEVICE_ID_SI_741:
+			strcpy(ivideo->myid, "SiS 661");
+			break;
+		case PCI_DEVICE_ID_SI_741:
 			ivideo->chip = SIS_741;
-			म_नकल(ivideo->myid, "SiS 741");
-			अवरोध;
-		हाल PCI_DEVICE_ID_SI_760:
+			strcpy(ivideo->myid, "SiS 741");
+			break;
+		case PCI_DEVICE_ID_SI_760:
 			ivideo->chip = SIS_760;
-			म_नकल(ivideo->myid, "SiS 760");
-			अवरोध;
-		हाल PCI_DEVICE_ID_SI_761:
+			strcpy(ivideo->myid, "SiS 760");
+			break;
+		case PCI_DEVICE_ID_SI_761:
 			ivideo->chip = SIS_761;
-			म_नकल(ivideo->myid, "SiS 761");
-			अवरोध;
-#पूर्ण_अगर
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			strcpy(ivideo->myid, "SiS 761");
+			break;
+#endif
+		default:
+			break;
+		}
+	}
 
 	ivideo->SiS_Pr.ChipType = ivideo->chip;
 
-	ivideo->SiS_Pr.ivideo = (व्योम *)ivideo;
+	ivideo->SiS_Pr.ivideo = (void *)ivideo;
 
-#अगर_घोषित CONFIG_FB_SIS_315
-	अगर((ivideo->SiS_Pr.ChipType == SIS_315PRO) ||
-	   (ivideo->SiS_Pr.ChipType == SIS_315)) अणु
+#ifdef CONFIG_FB_SIS_315
+	if((ivideo->SiS_Pr.ChipType == SIS_315PRO) ||
+	   (ivideo->SiS_Pr.ChipType == SIS_315)) {
 		ivideo->SiS_Pr.ChipType = SIS_315H;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	अगर(!ivideo->sisvga_enabled) अणु
-		अगर(pci_enable_device(pdev)) अणु
+	if(!ivideo->sisvga_enabled) {
+		if(pci_enable_device(pdev)) {
 			pci_dev_put(ivideo->nbridge);
 			framebuffer_release(sis_fb_info);
-			वापस -EIO;
-		पूर्ण
-	पूर्ण
+			return -EIO;
+		}
+	}
 
 	ivideo->video_base = pci_resource_start(pdev, 0);
 	ivideo->video_size = pci_resource_len(pdev, 0);
@@ -6042,237 +6041,237 @@ bail_out:
 
 	SiSRegInit(&ivideo->SiS_Pr, ivideo->SiS_Pr.IOAddress);
 
-#अगर_घोषित CONFIG_FB_SIS_300
-	/* Find PCI प्रणालीs क्रम Chrontel/GPIO communication setup */
-	अगर(ivideo->chip == SIS_630) अणु
+#ifdef CONFIG_FB_SIS_300
+	/* Find PCI systems for Chrontel/GPIO communication setup */
+	if(ivideo->chip == SIS_630) {
 		i = 0;
-        	करो अणु
-			अगर(mychswtable[i].subsysVenकरोr == ivideo->subsysvenकरोr &&
-			   mychswtable[i].subsysCard   == ivideo->subsysdevice) अणु
+        	do {
+			if(mychswtable[i].subsysVendor == ivideo->subsysvendor &&
+			   mychswtable[i].subsysCard   == ivideo->subsysdevice) {
 				ivideo->SiS_Pr.SiS_ChSW = true;
-				prपूर्णांकk(KERN_DEBUG "sisfb: Identified [%s %s] "
+				printk(KERN_DEBUG "sisfb: Identified [%s %s] "
 					"requiring Chrontel/GPIO setup\n",
-					mychswtable[i].venकरोrName,
+					mychswtable[i].vendorName,
 					mychswtable[i].cardName);
-				ivideo->lpcdev = pci_get_device(PCI_VENDOR_ID_SI, 0x0008, शून्य);
-				अवरोध;
-			पूर्ण
+				ivideo->lpcdev = pci_get_device(PCI_VENDOR_ID_SI, 0x0008, NULL);
+				break;
+			}
 			i++;
-		पूर्ण जबतक(mychswtable[i].subsysVenकरोr != 0);
-	पूर्ण
-#पूर्ण_अगर
+		} while(mychswtable[i].subsysVendor != 0);
+	}
+#endif
 
-#अगर_घोषित CONFIG_FB_SIS_315
-	अगर((ivideo->chip == SIS_760) && (ivideo->nbridge)) अणु
+#ifdef CONFIG_FB_SIS_315
+	if((ivideo->chip == SIS_760) && (ivideo->nbridge)) {
 		ivideo->lpcdev = pci_get_slot(ivideo->nbridge->bus, (2 << 3));
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
 	SiS_SetReg(SISSR, 0x05, 0x86);
 
-	अगर( (!ivideo->sisvga_enabled)
-#अगर !defined(__i386__) && !defined(__x86_64__)
+	if( (!ivideo->sisvga_enabled)
+#if !defined(__i386__) && !defined(__x86_64__)
 			      || (sisfb_resetcard)
-#पूर्ण_अगर
-						   ) अणु
-		क्रम(i = 0x30; i <= 0x3f; i++) अणु
+#endif
+						   ) {
+		for(i = 0x30; i <= 0x3f; i++) {
 			SiS_SetReg(SISCR, i, 0x00);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Find out about current video mode */
 	ivideo->modeprechange = 0x03;
 	reg = SiS_GetReg(SISCR, 0x34);
-	अगर(reg & 0x7f) अणु
+	if(reg & 0x7f) {
 		ivideo->modeprechange = reg & 0x7f;
-	पूर्ण अन्यथा अगर(ivideo->sisvga_enabled) अणु
-#अगर defined(__i386__) || defined(__x86_64__)
-		अचिन्हित अक्षर __iomem *tt = ioremap(0x400, 0x100);
-		अगर(tt) अणु
-			ivideo->modeprechange = पढ़ोb(tt + 0x49);
+	} else if(ivideo->sisvga_enabled) {
+#if defined(__i386__) || defined(__x86_64__)
+		unsigned char __iomem *tt = ioremap(0x400, 0x100);
+		if(tt) {
+			ivideo->modeprechange = readb(tt + 0x49);
 			iounmap(tt);
-		पूर्ण
-#पूर्ण_अगर
-	पूर्ण
+		}
+#endif
+	}
 
 	/* Search and copy ROM image */
-	ivideo->bios_abase = शून्य;
-	ivideo->SiS_Pr.VirtualRomBase = शून्य;
+	ivideo->bios_abase = NULL;
+	ivideo->SiS_Pr.VirtualRomBase = NULL;
 	ivideo->SiS_Pr.UseROM = false;
 	ivideo->haveXGIROM = ivideo->SiS_Pr.SiS_XGIROM = false;
-	अगर(ivideo->sisfb_userom) अणु
+	if(ivideo->sisfb_userom) {
 		ivideo->SiS_Pr.VirtualRomBase = sisfb_find_rom(pdev);
 		ivideo->bios_abase = ivideo->SiS_Pr.VirtualRomBase;
 		ivideo->SiS_Pr.UseROM = (bool)(ivideo->SiS_Pr.VirtualRomBase);
-		prपूर्णांकk(KERN_INFO "sisfb: Video ROM %sfound\n",
+		printk(KERN_INFO "sisfb: Video ROM %sfound\n",
 			ivideo->SiS_Pr.UseROM ? "" : "not ");
-		अगर((ivideo->SiS_Pr.UseROM) && (ivideo->chip >= XGI_20)) अणु
+		if((ivideo->SiS_Pr.UseROM) && (ivideo->chip >= XGI_20)) {
 		   ivideo->SiS_Pr.UseROM = false;
 		   ivideo->haveXGIROM = ivideo->SiS_Pr.SiS_XGIROM = true;
-		   अगर( (ivideo->revision_id == 2) &&
-		       (!(ivideo->bios_abase[0x1d1] & 0x01)) ) अणु
+		   if( (ivideo->revision_id == 2) &&
+		       (!(ivideo->bios_abase[0x1d1] & 0x01)) ) {
 			ivideo->SiS_Pr.DDCPortMixup = true;
-		   पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_INFO "sisfb: Video ROM usage disabled\n");
-	पूर्ण
+		   }
+		}
+	} else {
+		printk(KERN_INFO "sisfb: Video ROM usage disabled\n");
+	}
 
-	/* Find प्रणालीs क्रम special custom timing */
-	अगर(ivideo->SiS_Pr.SiS_CustomT == CUT_NONE) अणु
+	/* Find systems for special custom timing */
+	if(ivideo->SiS_Pr.SiS_CustomT == CUT_NONE) {
 		sisfb_detect_custom_timing(ivideo);
-	पूर्ण
+	}
 
-#अगर_घोषित CONFIG_FB_SIS_315
-	अगर (ivideo->chip == XGI_20) अणु
-		/* Check अगर our Z7 chip is actually Z9 */
+#ifdef CONFIG_FB_SIS_315
+	if (ivideo->chip == XGI_20) {
+		/* Check if our Z7 chip is actually Z9 */
 		SiS_SetRegOR(SISCR, 0x4a, 0x40);	/* GPIOG EN */
 		reg = SiS_GetReg(SISCR, 0x48);
-		अगर (reg & 0x02) अणु			/* GPIOG */
+		if (reg & 0x02) {			/* GPIOG */
 			ivideo->chip_real_id = XGI_21;
 			dev_info(&pdev->dev, "Z9 detected\n");
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+		}
+	}
+#endif
 
-	/* POST card in हाल this has not been करोne by the BIOS */
-	अगर( (!ivideo->sisvga_enabled)
-#अगर !defined(__i386__) && !defined(__x86_64__)
+	/* POST card in case this has not been done by the BIOS */
+	if( (!ivideo->sisvga_enabled)
+#if !defined(__i386__) && !defined(__x86_64__)
 			     || (sisfb_resetcard)
-#पूर्ण_अगर
-						 ) अणु
-#अगर_घोषित CONFIG_FB_SIS_300
-		अगर(ivideo->sisvga_engine == SIS_300_VGA) अणु
-			अगर(ivideo->chip == SIS_300) अणु
+#endif
+						 ) {
+#ifdef CONFIG_FB_SIS_300
+		if(ivideo->sisvga_engine == SIS_300_VGA) {
+			if(ivideo->chip == SIS_300) {
 				sisfb_post_sis300(pdev);
 				ivideo->sisfb_can_post = 1;
-			पूर्ण
-		पूर्ण
-#पूर्ण_अगर
+			}
+		}
+#endif
 
-#अगर_घोषित CONFIG_FB_SIS_315
-		अगर(ivideo->sisvga_engine == SIS_315_VGA) अणु
-			पूर्णांक result = 1;
-		/*	अगर((ivideo->chip == SIS_315H)   ||
+#ifdef CONFIG_FB_SIS_315
+		if(ivideo->sisvga_engine == SIS_315_VGA) {
+			int result = 1;
+		/*	if((ivideo->chip == SIS_315H)   ||
 			   (ivideo->chip == SIS_315)    ||
 			   (ivideo->chip == SIS_315PRO) ||
-			   (ivideo->chip == SIS_330)) अणु
+			   (ivideo->chip == SIS_330)) {
 				sisfb_post_sis315330(pdev);
-			पूर्ण अन्यथा */ अगर(ivideo->chip == XGI_20) अणु
+			} else */ if(ivideo->chip == XGI_20) {
 				result = sisfb_post_xgi(pdev);
 				ivideo->sisfb_can_post = 1;
-			पूर्ण अन्यथा अगर((ivideo->chip == XGI_40) && ivideo->haveXGIROM) अणु
+			} else if((ivideo->chip == XGI_40) && ivideo->haveXGIROM) {
 				result = sisfb_post_xgi(pdev);
 				ivideo->sisfb_can_post = 1;
-			पूर्ण अन्यथा अणु
-				prपूर्णांकk(KERN_INFO "sisfb: Card is not "
+			} else {
+				printk(KERN_INFO "sisfb: Card is not "
 					"POSTed and sisfb can't do this either.\n");
-			पूर्ण
-			अगर(!result) अणु
-				prपूर्णांकk(KERN_ERR "sisfb: Failed to POST card\n");
+			}
+			if(!result) {
+				printk(KERN_ERR "sisfb: Failed to POST card\n");
 				ret = -ENODEV;
-				जाओ error_3;
-			पूर्ण
-		पूर्ण
-#पूर्ण_अगर
-	पूर्ण
+				goto error_3;
+			}
+		}
+#endif
+	}
 
 	ivideo->sisfb_card_posted = 1;
 
 	/* Find out about RAM size */
-	अगर(sisfb_get_dram_size(ivideo)) अणु
-		prपूर्णांकk(KERN_INFO "sisfb: Fatal error: Unable to determine VRAM size.\n");
+	if(sisfb_get_dram_size(ivideo)) {
+		printk(KERN_INFO "sisfb: Fatal error: Unable to determine VRAM size.\n");
 		ret = -ENODEV;
-		जाओ error_3;
-	पूर्ण
+		goto error_3;
+	}
 
 
 	/* Enable PCI addressing and MMIO */
-	अगर((ivideo->sisfb_mode_idx < 0) ||
-	   ((sisbios_mode[ivideo->sisfb_mode_idx].mode_no[ivideo->mni]) != 0xFF)) अणु
+	if((ivideo->sisfb_mode_idx < 0) ||
+	   ((sisbios_mode[ivideo->sisfb_mode_idx].mode_no[ivideo->mni]) != 0xFF)) {
 		/* Enable PCI_LINEAR_ADDRESSING and MMIO_ENABLE  */
 		SiS_SetRegOR(SISSR, IND_SIS_PCI_ADDRESS_SET, (SIS_PCI_ADDR_ENABLE | SIS_MEM_MAP_IO_ENABLE));
 		/* Enable 2D accelerator engine */
 		SiS_SetRegOR(SISSR, IND_SIS_MODULE_ENABLE, SIS_ENABLE_2D);
-	पूर्ण
+	}
 
-	अगर(sisfb_pdc != 0xff) अणु
-		अगर(ivideo->sisvga_engine == SIS_300_VGA)
+	if(sisfb_pdc != 0xff) {
+		if(ivideo->sisvga_engine == SIS_300_VGA)
 			sisfb_pdc &= 0x3c;
-		अन्यथा
+		else
 			sisfb_pdc &= 0x1f;
 		ivideo->SiS_Pr.PDC = sisfb_pdc;
-	पूर्ण
-#अगर_घोषित CONFIG_FB_SIS_315
-	अगर(ivideo->sisvga_engine == SIS_315_VGA) अणु
-		अगर(sisfb_pdca != 0xff)
+	}
+#ifdef CONFIG_FB_SIS_315
+	if(ivideo->sisvga_engine == SIS_315_VGA) {
+		if(sisfb_pdca != 0xff)
 			ivideo->SiS_Pr.PDCA = sisfb_pdca & 0x1f;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	अगर(!request_mem_region(ivideo->video_base, ivideo->video_size, "sisfb FB")) अणु
-		prपूर्णांकk(KERN_ERR "sisfb: Fatal error: Unable to reserve %dMB framebuffer memory\n",
-				(पूर्णांक)(ivideo->video_size >> 20));
-		prपूर्णांकk(KERN_ERR "sisfb: Is there another framebuffer driver active?\n");
+	if(!request_mem_region(ivideo->video_base, ivideo->video_size, "sisfb FB")) {
+		printk(KERN_ERR "sisfb: Fatal error: Unable to reserve %dMB framebuffer memory\n",
+				(int)(ivideo->video_size >> 20));
+		printk(KERN_ERR "sisfb: Is there another framebuffer driver active?\n");
 		ret = -ENODEV;
-		जाओ error_3;
-	पूर्ण
+		goto error_3;
+	}
 
-	अगर(!request_mem_region(ivideo->mmio_base, ivideo->mmio_size, "sisfb MMIO")) अणु
-		prपूर्णांकk(KERN_ERR "sisfb: Fatal error: Unable to reserve MMIO region\n");
+	if(!request_mem_region(ivideo->mmio_base, ivideo->mmio_size, "sisfb MMIO")) {
+		printk(KERN_ERR "sisfb: Fatal error: Unable to reserve MMIO region\n");
 		ret = -ENODEV;
-		जाओ error_2;
-	पूर्ण
+		goto error_2;
+	}
 
 	ivideo->video_vbase = ioremap_wc(ivideo->video_base, ivideo->video_size);
 	ivideo->SiS_Pr.VideoMemoryAddress = ivideo->video_vbase;
-	अगर(!ivideo->video_vbase) अणु
-		prपूर्णांकk(KERN_ERR "sisfb: Fatal error: Unable to map framebuffer memory\n");
+	if(!ivideo->video_vbase) {
+		printk(KERN_ERR "sisfb: Fatal error: Unable to map framebuffer memory\n");
 		ret = -ENODEV;
-		जाओ error_1;
-	पूर्ण
+		goto error_1;
+	}
 
 	ivideo->mmio_vbase = ioremap(ivideo->mmio_base, ivideo->mmio_size);
-	अगर(!ivideo->mmio_vbase) अणु
-		prपूर्णांकk(KERN_ERR "sisfb: Fatal error: Unable to map MMIO region\n");
+	if(!ivideo->mmio_vbase) {
+		printk(KERN_ERR "sisfb: Fatal error: Unable to map MMIO region\n");
 		ret = -ENODEV;
 error_0:	iounmap(ivideo->video_vbase);
 error_1:	release_mem_region(ivideo->video_base, ivideo->video_size);
 error_2:	release_mem_region(ivideo->mmio_base, ivideo->mmio_size);
-error_3:	vमुक्त(ivideo->bios_abase);
+error_3:	vfree(ivideo->bios_abase);
 		pci_dev_put(ivideo->lpcdev);
 		pci_dev_put(ivideo->nbridge);
-		अगर(!ivideo->sisvga_enabled)
+		if(!ivideo->sisvga_enabled)
 			pci_disable_device(pdev);
 		framebuffer_release(sis_fb_info);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	prपूर्णांकk(KERN_INFO "sisfb: Video RAM at 0x%lx, mapped to 0x%lx, size %ldk\n",
-		ivideo->video_base, (अचिन्हित दीर्घ)ivideo->video_vbase, ivideo->video_size / 1024);
+	printk(KERN_INFO "sisfb: Video RAM at 0x%lx, mapped to 0x%lx, size %ldk\n",
+		ivideo->video_base, (unsigned long)ivideo->video_vbase, ivideo->video_size / 1024);
 
-	अगर(ivideo->video_offset) अणु
-		prपूर्णांकk(KERN_INFO "sisfb: Viewport offset %ldk\n",
+	if(ivideo->video_offset) {
+		printk(KERN_INFO "sisfb: Viewport offset %ldk\n",
 			ivideo->video_offset / 1024);
-	पूर्ण
+	}
 
-	prपूर्णांकk(KERN_INFO "sisfb: MMIO at 0x%lx, mapped to 0x%lx, size %ldk\n",
-		ivideo->mmio_base, (अचिन्हित दीर्घ)ivideo->mmio_vbase, ivideo->mmio_size / 1024);
+	printk(KERN_INFO "sisfb: MMIO at 0x%lx, mapped to 0x%lx, size %ldk\n",
+		ivideo->mmio_base, (unsigned long)ivideo->mmio_vbase, ivideo->mmio_size / 1024);
 
 
 	/* Determine the size of the command queue */
-	अगर(ivideo->sisvga_engine == SIS_300_VGA) अणु
+	if(ivideo->sisvga_engine == SIS_300_VGA) {
 		ivideo->cmdQueueSize = TURBO_QUEUE_AREA_SIZE;
-	पूर्ण अन्यथा अणु
-		अगर(ivideo->chip == XGI_20) अणु
+	} else {
+		if(ivideo->chip == XGI_20) {
 			ivideo->cmdQueueSize = COMMAND_QUEUE_AREA_SIZE_Z7;
-		पूर्ण अन्यथा अणु
+		} else {
 			ivideo->cmdQueueSize = COMMAND_QUEUE_AREA_SIZE;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Engines are no दीर्घer initialized here; this is
-	 * now करोne after the first mode-चयन (अगर the
+	/* Engines are no longer initialized here; this is
+	 * now done after the first mode-switch (if the
 	 * submitted var has its acceleration flags set).
 	 */
 
@@ -6284,133 +6283,133 @@ error_3:	vमुक्त(ivideo->bios_abase);
 	ivideo->caps |= HW_CURSOR_CAP;
 
 	/* Initialize offscreen memory manager */
-	अगर((ivideo->havenoheap = sisfb_heap_init(ivideo))) अणु
-		prपूर्णांकk(KERN_WARNING "sisfb: Failed to initialize offscreen memory heap\n");
-	पूर्ण
+	if((ivideo->havenoheap = sisfb_heap_init(ivideo))) {
+		printk(KERN_WARNING "sisfb: Failed to initialize offscreen memory heap\n");
+	}
 
-	/* Used क्रम clearing the screen only, thereक्रमe respect our mem limit */
+	/* Used for clearing the screen only, therefore respect our mem limit */
 	ivideo->SiS_Pr.VideoMemoryAddress += ivideo->video_offset;
 	ivideo->SiS_Pr.VideoMemorySize = ivideo->sisfb_mem;
 
 	ivideo->vbflags = 0;
-	ivideo->lcddeभ_शेषeidx = DEFAULT_LCDMODE;
-	ivideo->tvdeभ_शेषeidx  = DEFAULT_TVMODE;
-	ivideo->deभ_शेषeidx    = DEFAULT_MODE;
+	ivideo->lcddefmodeidx = DEFAULT_LCDMODE;
+	ivideo->tvdefmodeidx  = DEFAULT_TVMODE;
+	ivideo->defmodeidx    = DEFAULT_MODE;
 
 	ivideo->newrom = 0;
-	अगर(ivideo->chip < XGI_20) अणु
-		अगर(ivideo->bios_abase) अणु
+	if(ivideo->chip < XGI_20) {
+		if(ivideo->bios_abase) {
 			ivideo->newrom = SiSDetermineROMLayout661(&ivideo->SiS_Pr);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर((ivideo->sisfb_mode_idx < 0) ||
-	   ((sisbios_mode[ivideo->sisfb_mode_idx].mode_no[ivideo->mni]) != 0xFF)) अणु
+	if((ivideo->sisfb_mode_idx < 0) ||
+	   ((sisbios_mode[ivideo->sisfb_mode_idx].mode_no[ivideo->mni]) != 0xFF)) {
 
 		sisfb_sense_crt1(ivideo);
 
 		sisfb_get_VB_type(ivideo);
 
-		अगर(ivideo->vbflags2 & VB2_VIDEOBRIDGE) अणु
+		if(ivideo->vbflags2 & VB2_VIDEOBRIDGE) {
 			sisfb_detect_VB_connect(ivideo);
-		पूर्ण
+		}
 
 		ivideo->currentvbflags = ivideo->vbflags & (VB_VIDEOBRIDGE | TV_STANDARD);
 
 		/* Decide on which CRT2 device to use */
-		अगर(ivideo->vbflags2 & VB2_VIDEOBRIDGE) अणु
-			अगर(ivideo->sisfb_crt2type != -1) अणु
-				अगर((ivideo->sisfb_crt2type == CRT2_LCD) &&
-				   (ivideo->vbflags & CRT2_LCD)) अणु
+		if(ivideo->vbflags2 & VB2_VIDEOBRIDGE) {
+			if(ivideo->sisfb_crt2type != -1) {
+				if((ivideo->sisfb_crt2type == CRT2_LCD) &&
+				   (ivideo->vbflags & CRT2_LCD)) {
 					ivideo->currentvbflags |= CRT2_LCD;
-				पूर्ण अन्यथा अगर(ivideo->sisfb_crt2type != CRT2_LCD) अणु
+				} else if(ivideo->sisfb_crt2type != CRT2_LCD) {
 					ivideo->currentvbflags |= ivideo->sisfb_crt2type;
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				/* Chrontel 700x TV detection often unreliable, thereक्रमe
-				 * use a dअगरferent शेष order on such machines
+				}
+			} else {
+				/* Chrontel 700x TV detection often unreliable, therefore
+				 * use a different default order on such machines
 				 */
-				अगर((ivideo->sisvga_engine == SIS_300_VGA) &&
-				   (ivideo->vbflags2 & VB2_CHRONTEL)) अणु
-					अगर(ivideo->vbflags & CRT2_LCD)
+				if((ivideo->sisvga_engine == SIS_300_VGA) &&
+				   (ivideo->vbflags2 & VB2_CHRONTEL)) {
+					if(ivideo->vbflags & CRT2_LCD)
 						ivideo->currentvbflags |= CRT2_LCD;
-					अन्यथा अगर(ivideo->vbflags & CRT2_TV)
+					else if(ivideo->vbflags & CRT2_TV)
 						ivideo->currentvbflags |= CRT2_TV;
-					अन्यथा अगर(ivideo->vbflags & CRT2_VGA)
+					else if(ivideo->vbflags & CRT2_VGA)
 						ivideo->currentvbflags |= CRT2_VGA;
-				पूर्ण अन्यथा अणु
-					अगर(ivideo->vbflags & CRT2_TV)
+				} else {
+					if(ivideo->vbflags & CRT2_TV)
 						ivideo->currentvbflags |= CRT2_TV;
-					अन्यथा अगर(ivideo->vbflags & CRT2_LCD)
+					else if(ivideo->vbflags & CRT2_LCD)
 						ivideo->currentvbflags |= CRT2_LCD;
-					अन्यथा अगर(ivideo->vbflags & CRT2_VGA)
+					else if(ivideo->vbflags & CRT2_VGA)
 						ivideo->currentvbflags |= CRT2_VGA;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				}
+			}
+		}
 
-		अगर(ivideo->vbflags & CRT2_LCD) अणु
+		if(ivideo->vbflags & CRT2_LCD) {
 			sisfb_detect_lcd_type(ivideo);
-		पूर्ण
+		}
 
 		sisfb_save_pdc_emi(ivideo);
 
-		अगर(!ivideo->sisfb_crt1off) अणु
+		if(!ivideo->sisfb_crt1off) {
 			sisfb_handle_ddc(ivideo, &ivideo->sisfb_thismonitor, 0);
-		पूर्ण अन्यथा अणु
-			अगर((ivideo->vbflags2 & VB2_SISTMDSBRIDGE) &&
-			   (ivideo->vbflags & (CRT2_VGA | CRT2_LCD))) अणु
+		} else {
+			if((ivideo->vbflags2 & VB2_SISTMDSBRIDGE) &&
+			   (ivideo->vbflags & (CRT2_VGA | CRT2_LCD))) {
 				sisfb_handle_ddc(ivideo, &ivideo->sisfb_thismonitor, 1);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर(ivideo->sisfb_mode_idx >= 0) अणु
-			पूर्णांक bu = ivideo->sisfb_mode_idx;
+		if(ivideo->sisfb_mode_idx >= 0) {
+			int bu = ivideo->sisfb_mode_idx;
 			ivideo->sisfb_mode_idx = sisfb_validate_mode(ivideo,
 					ivideo->sisfb_mode_idx, ivideo->currentvbflags);
-			अगर(bu != ivideo->sisfb_mode_idx) अणु
-				prपूर्णांकk(KERN_ERR "Mode %dx%dx%d failed validation\n",
+			if(bu != ivideo->sisfb_mode_idx) {
+				printk(KERN_ERR "Mode %dx%dx%d failed validation\n",
 					sisbios_mode[bu].xres,
 					sisbios_mode[bu].yres,
 					sisbios_mode[bu].bpp);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर(ivideo->sisfb_mode_idx < 0) अणु
-			चयन(ivideo->currentvbflags & VB_DISPTYPE_DISP2) अणु
-			   हाल CRT2_LCD:
-				ivideo->sisfb_mode_idx = ivideo->lcddeभ_शेषeidx;
-				अवरोध;
-			   हाल CRT2_TV:
-				ivideo->sisfb_mode_idx = ivideo->tvdeभ_शेषeidx;
-				अवरोध;
-			   शेष:
-				ivideo->sisfb_mode_idx = ivideo->deभ_शेषeidx;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+		if(ivideo->sisfb_mode_idx < 0) {
+			switch(ivideo->currentvbflags & VB_DISPTYPE_DISP2) {
+			   case CRT2_LCD:
+				ivideo->sisfb_mode_idx = ivideo->lcddefmodeidx;
+				break;
+			   case CRT2_TV:
+				ivideo->sisfb_mode_idx = ivideo->tvdefmodeidx;
+				break;
+			   default:
+				ivideo->sisfb_mode_idx = ivideo->defmodeidx;
+				break;
+			}
+		}
 
 		ivideo->mode_no = sisbios_mode[ivideo->sisfb_mode_idx].mode_no[ivideo->mni];
 
-		अगर(ivideo->refresh_rate != 0) अणु
+		if(ivideo->refresh_rate != 0) {
 			sisfb_search_refresh_rate(ivideo, ivideo->refresh_rate,
 						ivideo->sisfb_mode_idx);
-		पूर्ण
+		}
 
-		अगर(ivideo->rate_idx == 0) अणु
+		if(ivideo->rate_idx == 0) {
 			ivideo->rate_idx = sisbios_mode[ivideo->sisfb_mode_idx].rate_idx;
 			ivideo->refresh_rate = 60;
-		पूर्ण
+		}
 
-		अगर(ivideo->sisfb_thismonitor.datavalid) अणु
-			अगर(!sisfb_verअगरy_rate(ivideo, &ivideo->sisfb_thismonitor,
+		if(ivideo->sisfb_thismonitor.datavalid) {
+			if(!sisfb_verify_rate(ivideo, &ivideo->sisfb_thismonitor,
 						ivideo->sisfb_mode_idx,
 						ivideo->rate_idx,
-						ivideo->refresh_rate)) अणु
-				prपूर्णांकk(KERN_INFO "sisfb: WARNING: Refresh rate "
+						ivideo->refresh_rate)) {
+				printk(KERN_INFO "sisfb: WARNING: Refresh rate "
 							"exceeds monitor specs!\n");
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		ivideo->video_bpp = sisbios_mode[ivideo->sisfb_mode_idx].bpp;
 		ivideo->video_width = sisbios_mode[ivideo->sisfb_mode_idx].xres;
@@ -6418,83 +6417,83 @@ error_3:	vमुक्त(ivideo->bios_abase);
 
 		sisfb_set_vparms(ivideo);
 
-		prपूर्णांकk(KERN_INFO "sisfb: Default mode is %dx%dx%d (%dHz)\n",
+		printk(KERN_INFO "sisfb: Default mode is %dx%dx%d (%dHz)\n",
 			ivideo->video_width, ivideo->video_height, ivideo->video_bpp,
 			ivideo->refresh_rate);
 
-		/* Set up the शेष var according to chosen शेष display mode */
-		ivideo->शेष_var.xres = ivideo->शेष_var.xres_भव = ivideo->video_width;
-		ivideo->शेष_var.yres = ivideo->शेष_var.yres_भव = ivideo->video_height;
-		ivideo->शेष_var.bits_per_pixel = ivideo->video_bpp;
+		/* Set up the default var according to chosen default display mode */
+		ivideo->default_var.xres = ivideo->default_var.xres_virtual = ivideo->video_width;
+		ivideo->default_var.yres = ivideo->default_var.yres_virtual = ivideo->video_height;
+		ivideo->default_var.bits_per_pixel = ivideo->video_bpp;
 
-		sisfb_bpp_to_var(ivideo, &ivideo->शेष_var);
+		sisfb_bpp_to_var(ivideo, &ivideo->default_var);
 
-		ivideo->शेष_var.pixघड़ी = (u32) (1000000000 /
-			sisfb_mode_rate_to_dघड़ी(&ivideo->SiS_Pr, ivideo->mode_no, ivideo->rate_idx));
+		ivideo->default_var.pixclock = (u32) (1000000000 /
+			sisfb_mode_rate_to_dclock(&ivideo->SiS_Pr, ivideo->mode_no, ivideo->rate_idx));
 
-		अगर(sisfb_mode_rate_to_ddata(&ivideo->SiS_Pr, ivideo->mode_no,
-						ivideo->rate_idx, &ivideo->शेष_var)) अणु
-			अगर((ivideo->शेष_var.vmode & FB_VMODE_MASK) == FB_VMODE_DOUBLE) अणु
-				ivideo->शेष_var.pixघड़ी <<= 1;
-			पूर्ण
-		पूर्ण
+		if(sisfb_mode_rate_to_ddata(&ivideo->SiS_Pr, ivideo->mode_no,
+						ivideo->rate_idx, &ivideo->default_var)) {
+			if((ivideo->default_var.vmode & FB_VMODE_MASK) == FB_VMODE_DOUBLE) {
+				ivideo->default_var.pixclock <<= 1;
+			}
+		}
 
-		अगर(ivideo->sisfb_ypan) अणु
+		if(ivideo->sisfb_ypan) {
 			/* Maximize regardless of sisfb_max at startup */
-			ivideo->शेष_var.yres_भव =
-				sisfb_calc_maxyres(ivideo, &ivideo->शेष_var);
-			अगर(ivideo->शेष_var.yres_भव < ivideo->शेष_var.yres) अणु
-				ivideo->शेष_var.yres_भव = ivideo->शेष_var.yres;
-			पूर्ण
-		पूर्ण
+			ivideo->default_var.yres_virtual =
+				sisfb_calc_maxyres(ivideo, &ivideo->default_var);
+			if(ivideo->default_var.yres_virtual < ivideo->default_var.yres) {
+				ivideo->default_var.yres_virtual = ivideo->default_var.yres;
+			}
+		}
 
-		sisfb_calc_pitch(ivideo, &ivideo->शेष_var);
+		sisfb_calc_pitch(ivideo, &ivideo->default_var);
 
 		ivideo->accel = 0;
-		अगर(ivideo->sisfb_accel) अणु
+		if(ivideo->sisfb_accel) {
 			ivideo->accel = -1;
-#अगर_घोषित STUPID_ACCELF_TEXT_SHIT
-			ivideo->शेष_var.accel_flags |= FB_ACCELF_TEXT;
-#पूर्ण_अगर
-		पूर्ण
+#ifdef STUPID_ACCELF_TEXT_SHIT
+			ivideo->default_var.accel_flags |= FB_ACCELF_TEXT;
+#endif
+		}
 		sisfb_initaccel(ivideo);
 
-#अगर defined(FBINFO_HWACCEL_DISABLED) && defined(FBINFO_HWACCEL_XPAN)
+#if defined(FBINFO_HWACCEL_DISABLED) && defined(FBINFO_HWACCEL_XPAN)
 		sis_fb_info->flags = FBINFO_DEFAULT 		|
 				     FBINFO_HWACCEL_YPAN 	|
 				     FBINFO_HWACCEL_XPAN 	|
 				     FBINFO_HWACCEL_COPYAREA 	|
 				     FBINFO_HWACCEL_FILLRECT 	|
 				     ((ivideo->accel) ? 0 : FBINFO_HWACCEL_DISABLED);
-#अन्यथा
+#else
 		sis_fb_info->flags = FBINFO_FLAG_DEFAULT;
-#पूर्ण_अगर
-		sis_fb_info->var = ivideo->शेष_var;
+#endif
+		sis_fb_info->var = ivideo->default_var;
 		sis_fb_info->fix = ivideo->sisfb_fix;
 		sis_fb_info->screen_base = ivideo->video_vbase + ivideo->video_offset;
 		sis_fb_info->fbops = &sisfb_ops;
-		sis_fb_info->pseuकरो_palette = ivideo->pseuकरो_palette;
+		sis_fb_info->pseudo_palette = ivideo->pseudo_palette;
 
 		fb_alloc_cmap(&sis_fb_info->cmap, 256 , 0);
 
-		prपूर्णांकk(KERN_DEBUG "sisfb: Initial vbflags 0x%x\n", (पूर्णांक)ivideo->vbflags);
+		printk(KERN_DEBUG "sisfb: Initial vbflags 0x%x\n", (int)ivideo->vbflags);
 
 		ivideo->wc_cookie = arch_phys_wc_add(ivideo->video_base,
 						     ivideo->video_size);
-		अगर(रेजिस्टर_framebuffer(sis_fb_info) < 0) अणु
-			prपूर्णांकk(KERN_ERR "sisfb: Fatal error: Failed to register framebuffer\n");
+		if(register_framebuffer(sis_fb_info) < 0) {
+			printk(KERN_ERR "sisfb: Fatal error: Failed to register framebuffer\n");
 			ret = -EINVAL;
 			iounmap(ivideo->mmio_vbase);
-			जाओ error_0;
-		पूर्ण
+			goto error_0;
+		}
 
-		ivideo->रेजिस्टरed = 1;
+		ivideo->registered = 1;
 
 		/* Enlist us */
 		ivideo->next = card_list;
 		card_list = ivideo;
 
-		prपूर्णांकk(KERN_INFO "sisfb: 2D acceleration is %s, y-panning %s\n",
+		printk(KERN_INFO "sisfb: 2D acceleration is %s, y-panning %s\n",
 			ivideo->sisfb_accel ? "enabled" : "disabled",
 			ivideo->sisfb_ypan  ?
 				(ivideo->sisfb_max ? "enabled (auto-max)" :
@@ -6505,23 +6504,23 @@ error_3:	vमुक्त(ivideo->bios_abase);
 		fb_info(sis_fb_info, "%s frame buffer device version %d.%d.%d\n",
 			ivideo->myid, VER_MAJOR, VER_MINOR, VER_LEVEL);
 
-		prपूर्णांकk(KERN_INFO "sisfb: Copyright (C) 2001-2005 Thomas Winischhofer\n");
+		printk(KERN_INFO "sisfb: Copyright (C) 2001-2005 Thomas Winischhofer\n");
 
-	पूर्ण	/* अगर mode = "none" */
+	}	/* if mode = "none" */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*****************************************************/
 /*                PCI DEVICE HANDLING                */
 /*****************************************************/
 
-अटल व्योम sisfb_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा sis_video_info	*ivideo = pci_get_drvdata(pdev);
-	काष्ठा fb_info		*sis_fb_info = ivideo->memyselfandi;
-	पूर्णांक			रेजिस्टरed = ivideo->रेजिस्टरed;
-	पूर्णांक			modechanged = ivideo->modechanged;
+static void sisfb_remove(struct pci_dev *pdev)
+{
+	struct sis_video_info	*ivideo = pci_get_drvdata(pdev);
+	struct fb_info		*sis_fb_info = ivideo->memyselfandi;
+	int			registered = ivideo->registered;
+	int			modechanged = ivideo->modechanged;
 
 	/* Unmap */
 	iounmap(ivideo->mmio_vbase);
@@ -6531,7 +6530,7 @@ error_3:	vमुक्त(ivideo->bios_abase);
 	release_mem_region(ivideo->video_base, ivideo->video_size);
 	release_mem_region(ivideo->mmio_base, ivideo->mmio_size);
 
-	vमुक्त(ivideo->bios_abase);
+	vfree(ivideo->bios_abase);
 
 	pci_dev_put(ivideo->lpcdev);
 
@@ -6542,202 +6541,202 @@ error_3:	vमुक्त(ivideo->bios_abase);
 	/* If device was disabled when starting, disable
 	 * it when quitting.
 	 */
-	अगर(!ivideo->sisvga_enabled)
+	if(!ivideo->sisvga_enabled)
 		pci_disable_device(pdev);
 
-	/* Unरेजिस्टर the framebuffer */
-	अगर(ivideo->रेजिस्टरed) अणु
-		unरेजिस्टर_framebuffer(sis_fb_info);
+	/* Unregister the framebuffer */
+	if(ivideo->registered) {
+		unregister_framebuffer(sis_fb_info);
 		framebuffer_release(sis_fb_info);
-	पूर्ण
+	}
 
-	/* OK, our ivideo is gone क्रम good from here. */
+	/* OK, our ivideo is gone for good from here. */
 
 	/* TODO: Restore the initial mode
 	 * This sounds easy but is as good as impossible
 	 * on many machines with SiS chip and video bridge
-	 * since text modes are always set up dअगरferently
+	 * since text modes are always set up differently
 	 * from machine to machine. Depends on the type
-	 * of पूर्णांकegration between chipset and bridge.
+	 * of integration between chipset and bridge.
 	 */
-	अगर(रेजिस्टरed && modechanged)
-		prपूर्णांकk(KERN_INFO
+	if(registered && modechanged)
+		printk(KERN_INFO
 			"sisfb: Restoring of text mode not supported yet\n");
-पूर्ण;
+};
 
-अटल काष्ठा pci_driver sisfb_driver = अणु
+static struct pci_driver sisfb_driver = {
 	.name		= "sisfb",
 	.id_table 	= sisfb_pci_table,
 	.probe		= sisfb_probe,
-	.हटाओ 	= sisfb_हटाओ,
-पूर्ण;
+	.remove 	= sisfb_remove,
+};
 
-अटल पूर्णांक __init sisfb_init(व्योम)
-अणु
-#अगर_अघोषित MODULE
-	अक्षर *options = शून्य;
+static int __init sisfb_init(void)
+{
+#ifndef MODULE
+	char *options = NULL;
 
-	अगर(fb_get_options("sisfb", &options))
-		वापस -ENODEV;
+	if(fb_get_options("sisfb", &options))
+		return -ENODEV;
 
 	sisfb_setup(options);
-#पूर्ण_अगर
-	वापस pci_रेजिस्टर_driver(&sisfb_driver);
-पूर्ण
+#endif
+	return pci_register_driver(&sisfb_driver);
+}
 
-#अगर_अघोषित MODULE
+#ifndef MODULE
 module_init(sisfb_init);
-#पूर्ण_अगर
+#endif
 
 /*****************************************************/
 /*                      MODULE                       */
 /*****************************************************/
 
-#अगर_घोषित MODULE
+#ifdef MODULE
 
-अटल अक्षर		*mode = शून्य;
-अटल पूर्णांक		vesa = -1;
-अटल अचिन्हित पूर्णांक	rate = 0;
-अटल अचिन्हित पूर्णांक	crt1off = 1;
-अटल अचिन्हित पूर्णांक	mem = 0;
-अटल अक्षर		*क्रमcecrt2type = शून्य;
-अटल पूर्णांक		क्रमcecrt1 = -1;
-अटल पूर्णांक		pdc = -1;
-अटल पूर्णांक		pdc1 = -1;
-अटल पूर्णांक		noaccel = -1;
-अटल पूर्णांक		noypan  = -1;
-अटल पूर्णांक		nomax = -1;
-अटल पूर्णांक		userom = -1;
-अटल पूर्णांक		useoem = -1;
-अटल अक्षर		*tvstandard = शून्य;
-अटल पूर्णांक		nocrt2rate = 0;
-अटल पूर्णांक		scalelcd = -1;
-अटल अक्षर		*specialtiming = शून्य;
-अटल पूर्णांक		lvdshl = -1;
-अटल पूर्णांक		tvxposoffset = 0, tvyposoffset = 0;
-#अगर !defined(__i386__) && !defined(__x86_64__)
-अटल पूर्णांक		resetcard = 0;
-अटल पूर्णांक		videoram = 0;
-#पूर्ण_अगर
+static char		*mode = NULL;
+static int		vesa = -1;
+static unsigned int	rate = 0;
+static unsigned int	crt1off = 1;
+static unsigned int	mem = 0;
+static char		*forcecrt2type = NULL;
+static int		forcecrt1 = -1;
+static int		pdc = -1;
+static int		pdc1 = -1;
+static int		noaccel = -1;
+static int		noypan  = -1;
+static int		nomax = -1;
+static int		userom = -1;
+static int		useoem = -1;
+static char		*tvstandard = NULL;
+static int		nocrt2rate = 0;
+static int		scalelcd = -1;
+static char		*specialtiming = NULL;
+static int		lvdshl = -1;
+static int		tvxposoffset = 0, tvyposoffset = 0;
+#if !defined(__i386__) && !defined(__x86_64__)
+static int		resetcard = 0;
+static int		videoram = 0;
+#endif
 
-अटल पूर्णांक __init sisfb_init_module(व्योम)
-अणु
-	sisfb_setशेषparms();
+static int __init sisfb_init_module(void)
+{
+	sisfb_setdefaultparms();
 
-	अगर(rate)
+	if(rate)
 		sisfb_parm_rate = rate;
 
-	अगर((scalelcd == 0) || (scalelcd == 1))
+	if((scalelcd == 0) || (scalelcd == 1))
 		sisfb_scalelcd = scalelcd ^ 1;
 
-	/* Need to check crt2 type first क्रम fstn/dstn */
+	/* Need to check crt2 type first for fstn/dstn */
 
-	अगर(क्रमcecrt2type)
-		sisfb_search_crt2type(क्रमcecrt2type);
+	if(forcecrt2type)
+		sisfb_search_crt2type(forcecrt2type);
 
-	अगर(tvstandard)
+	if(tvstandard)
 		sisfb_search_tvstd(tvstandard);
 
-	अगर(mode)
+	if(mode)
 		sisfb_search_mode(mode, false);
-	अन्यथा अगर(vesa != -1)
+	else if(vesa != -1)
 		sisfb_search_vesamode(vesa, false);
 
 	sisfb_crt1off = (crt1off == 0) ? 1 : 0;
 
-	sisfb_क्रमcecrt1 = क्रमcecrt1;
-	अगर(क्रमcecrt1 == 1)
+	sisfb_forcecrt1 = forcecrt1;
+	if(forcecrt1 == 1)
 		sisfb_crt1off = 0;
-	अन्यथा अगर(क्रमcecrt1 == 0)
+	else if(forcecrt1 == 0)
 		sisfb_crt1off = 1;
 
-	अगर(noaccel == 1)
+	if(noaccel == 1)
 		sisfb_accel = 0;
-	अन्यथा अगर(noaccel == 0)
+	else if(noaccel == 0)
 		sisfb_accel = 1;
 
-	अगर(noypan == 1)
+	if(noypan == 1)
 		sisfb_ypan = 0;
-	अन्यथा अगर(noypan == 0)
+	else if(noypan == 0)
 		sisfb_ypan = 1;
 
-	अगर(nomax == 1)
+	if(nomax == 1)
 		sisfb_max = 0;
-	अन्यथा अगर(nomax == 0)
+	else if(nomax == 0)
 		sisfb_max = 1;
 
-	अगर(mem)
+	if(mem)
 		sisfb_parm_mem = mem;
 
-	अगर(userom != -1)
+	if(userom != -1)
 		sisfb_userom = userom;
 
-	अगर(useoem != -1)
+	if(useoem != -1)
 		sisfb_useoem = useoem;
 
-        अगर(pdc != -1)
+        if(pdc != -1)
 		sisfb_pdc  = (pdc  & 0x7f);
 
-	अगर(pdc1 != -1)
+	if(pdc1 != -1)
 		sisfb_pdca = (pdc1 & 0x1f);
 
 	sisfb_nocrt2rate = nocrt2rate;
 
-	अगर(specialtiming)
+	if(specialtiming)
 		sisfb_search_specialtiming(specialtiming);
 
-	अगर((lvdshl >= 0) && (lvdshl <= 3))
+	if((lvdshl >= 0) && (lvdshl <= 3))
 		sisfb_lvdshl = lvdshl;
 
 	sisfb_tvxposoffset = tvxposoffset;
 	sisfb_tvyposoffset = tvyposoffset;
 
-#अगर !defined(__i386__) && !defined(__x86_64__)
+#if !defined(__i386__) && !defined(__x86_64__)
 	sisfb_resetcard = (resetcard) ? 1 : 0;
-	अगर(videoram)
+	if(videoram)
 		sisfb_videoram = videoram;
-#पूर्ण_अगर
+#endif
 
-	वापस sisfb_init();
-पूर्ण
+	return sisfb_init();
+}
 
-अटल व्योम __निकास sisfb_हटाओ_module(व्योम)
-अणु
-	pci_unरेजिस्टर_driver(&sisfb_driver);
-	prपूर्णांकk(KERN_DEBUG "sisfb: Module unloaded\n");
-पूर्ण
+static void __exit sisfb_remove_module(void)
+{
+	pci_unregister_driver(&sisfb_driver);
+	printk(KERN_DEBUG "sisfb: Module unloaded\n");
+}
 
 module_init(sisfb_init_module);
-module_निकास(sisfb_हटाओ_module);
+module_exit(sisfb_remove_module);
 
 MODULE_DESCRIPTION("SiS 300/540/630/730/315/55x/65x/661/74x/330/76x/34x, XGI V3XT/V5/V8/Z7 framebuffer device driver");
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Thomas Winischhofer <thomas@winischhofer.net>, Others");
 
-module_param(mem, पूर्णांक, 0);
-module_param(noaccel, पूर्णांक, 0);
-module_param(noypan, पूर्णांक, 0);
-module_param(nomax, पूर्णांक, 0);
-module_param(userom, पूर्णांक, 0);
-module_param(useoem, पूर्णांक, 0);
-module_param(mode, अक्षरp, 0);
-module_param(vesa, पूर्णांक, 0);
-module_param(rate, पूर्णांक, 0);
-module_param(क्रमcecrt1, पूर्णांक, 0);
-module_param(क्रमcecrt2type, अक्षरp, 0);
-module_param(scalelcd, पूर्णांक, 0);
-module_param(pdc, पूर्णांक, 0);
-module_param(pdc1, पूर्णांक, 0);
-module_param(specialtiming, अक्षरp, 0);
-module_param(lvdshl, पूर्णांक, 0);
-module_param(tvstandard, अक्षरp, 0);
-module_param(tvxposoffset, पूर्णांक, 0);
-module_param(tvyposoffset, पूर्णांक, 0);
-module_param(nocrt2rate, पूर्णांक, 0);
-#अगर !defined(__i386__) && !defined(__x86_64__)
-module_param(resetcard, पूर्णांक, 0);
-module_param(videoram, पूर्णांक, 0);
-#पूर्ण_अगर
+module_param(mem, int, 0);
+module_param(noaccel, int, 0);
+module_param(noypan, int, 0);
+module_param(nomax, int, 0);
+module_param(userom, int, 0);
+module_param(useoem, int, 0);
+module_param(mode, charp, 0);
+module_param(vesa, int, 0);
+module_param(rate, int, 0);
+module_param(forcecrt1, int, 0);
+module_param(forcecrt2type, charp, 0);
+module_param(scalelcd, int, 0);
+module_param(pdc, int, 0);
+module_param(pdc1, int, 0);
+module_param(specialtiming, charp, 0);
+module_param(lvdshl, int, 0);
+module_param(tvstandard, charp, 0);
+module_param(tvxposoffset, int, 0);
+module_param(tvyposoffset, int, 0);
+module_param(nocrt2rate, int, 0);
+#if !defined(__i386__) && !defined(__x86_64__)
+module_param(resetcard, int, 0);
+module_param(videoram, int, 0);
+#endif
 
 MODULE_PARM_DESC(mem,
 	"\nDetermines the beginning of the video memory heap in KB. This heap is used\n"
@@ -6777,12 +6776,12 @@ MODULE_PARM_DESC(rate,
 	  "If the mode is specified in the format XxY-Depth@Rate, this parameter\n"
 	  "will be ignored (default: 60)\n");
 
-MODULE_PARM_DESC(क्रमcecrt1,
+MODULE_PARM_DESC(forcecrt1,
 	"\nNormally, the driver autodetects whether or not CRT1 (external VGA) is \n"
 	  "connected. With this option, the detection can be overridden (1=CRT1 ON,\n"
 	  "0=CRT1 OFF) (default: [autodetected])\n");
 
-MODULE_PARM_DESC(क्रमcecrt2type,
+MODULE_PARM_DESC(forcecrt2type,
 	"\nIf this option is omitted, the driver autodetects CRT2 output devices, such as\n"
 	  "LCD, TV or secondary VGA. With this option, this autodetection can be\n"
 	  "overridden. Possible parameters are LCD, TV, VGA or NONE. NONE disables CRT2.\n"
@@ -6806,13 +6805,13 @@ MODULE_PARM_DESC(pdc,
 	  "other values (on 300 series: between 4 and 60 in steps of 4; otherwise: any\n"
 	  "value from 0 to 31). (default: autodetected, if LCD is active during start)\n");
 
-#अगर_घोषित CONFIG_FB_SIS_315
+#ifdef CONFIG_FB_SIS_315
 MODULE_PARM_DESC(pdc1,
 	"\nThis is same as pdc, but for LCD-via CRT1. Hence, this is for the 315/330/340\n"
 	  "series only. (default: autodetected if LCD is in LCD-via-CRT1 mode during\n"
 	  "startup) - Note: currently, this has no effect because LCD-via-CRT1 is not\n"
 	  "implemented yet.\n");
-#पूर्ण_अगर
+#endif
 
 MODULE_PARM_DESC(specialtiming,
 	"\nPlease refer to documentation for more information on this option.\n");
@@ -6836,8 +6835,8 @@ MODULE_PARM_DESC(nocrt2rate,
 	"\nSetting this to 1 will force the driver to use the default refresh rate for\n"
 	  "CRT2 if CRT2 type is VGA. (default: 0, use same rate as CRT1)\n");
 
-#अगर !defined(__i386__) && !defined(__x86_64__)
-#अगर_घोषित CONFIG_FB_SIS_300
+#if !defined(__i386__) && !defined(__x86_64__)
+#ifdef CONFIG_FB_SIS_300
 MODULE_PARM_DESC(resetcard,
 	"\nSet this to 1 in order to reset (POST) the card on non-x86 machines where\n"
 	  "the BIOS did not POST the card (only supported for SiS 300/305 and XGI cards\n"
@@ -6847,16 +6846,16 @@ MODULE_PARM_DESC(videoram,
 	"\nSet this to the amount of video RAM (in kilobyte) the card has. Required on\n"
 	  "some non-x86 architectures where the memory auto detection fails. Only\n"
 	  "relevant if resetcard is set, too. SiS300/305 only. Default: [auto-detect]\n");
-#पूर्ण_अगर
-#पूर्ण_अगर
+#endif
+#endif
 
-#पूर्ण_अगर 	   /*  /MODULE  */
+#endif 	   /*  /MODULE  */
 
-/* _GPL only क्रम new symbols. */
-EXPORT_SYMBOL(sis_दो_स्मृति);
-EXPORT_SYMBOL(sis_मुक्त);
-EXPORT_SYMBOL_GPL(sis_दो_स्मृति_new);
-EXPORT_SYMBOL_GPL(sis_मुक्त_new);
+/* _GPL only for new symbols. */
+EXPORT_SYMBOL(sis_malloc);
+EXPORT_SYMBOL(sis_free);
+EXPORT_SYMBOL_GPL(sis_malloc_new);
+EXPORT_SYMBOL_GPL(sis_free_new);
 
 
 

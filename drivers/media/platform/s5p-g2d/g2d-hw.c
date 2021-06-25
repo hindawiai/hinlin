@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Samsung S5P G2D - 2D Graphics Accelerator Driver
  *
@@ -7,22 +6,22 @@
  * Kamil Debski, <k.debski@samsung.com>
  */
 
-#समावेश <linux/पन.स>
+#include <linux/io.h>
 
-#समावेश "g2d.h"
-#समावेश "g2d-regs.h"
+#include "g2d.h"
+#include "g2d-regs.h"
 
-#घोषणा w(x, a)	ग_लिखोl((x), d->regs + (a))
-#घोषणा r(a)	पढ़ोl(d->regs + (a))
+#define w(x, a)	writel((x), d->regs + (a))
+#define r(a)	readl(d->regs + (a))
 
-/* g2d_reset clears all g2d रेजिस्टरs */
-व्योम g2d_reset(काष्ठा g2d_dev *d)
-अणु
+/* g2d_reset clears all g2d registers */
+void g2d_reset(struct g2d_dev *d)
+{
 	w(1, SOFT_RESET_REG);
-पूर्ण
+}
 
-व्योम g2d_set_src_size(काष्ठा g2d_dev *d, काष्ठा g2d_frame *f)
-अणु
+void g2d_set_src_size(struct g2d_dev *d, struct g2d_frame *f)
+{
 	u32 n;
 
 	w(0, SRC_SELECT_REG);
@@ -39,15 +38,15 @@
 	w(n, SRC_RIGHT_BOTTOM_REG);
 
 	w(f->fmt->hw, SRC_COLOR_MODE_REG);
-पूर्ण
+}
 
-व्योम g2d_set_src_addr(काष्ठा g2d_dev *d, dma_addr_t a)
-अणु
+void g2d_set_src_addr(struct g2d_dev *d, dma_addr_t a)
+{
 	w(a, SRC_BASE_ADDR_REG);
-पूर्ण
+}
 
-व्योम g2d_set_dst_size(काष्ठा g2d_dev *d, काष्ठा g2d_frame *f)
-अणु
+void g2d_set_dst_size(struct g2d_dev *d, struct g2d_frame *f)
+{
 	u32 n;
 
 	w(0, DST_SELECT_REG);
@@ -64,51 +63,51 @@
 	w(n, DST_RIGHT_BOTTOM_REG);
 
 	w(f->fmt->hw, DST_COLOR_MODE_REG);
-पूर्ण
+}
 
-व्योम g2d_set_dst_addr(काष्ठा g2d_dev *d, dma_addr_t a)
-अणु
+void g2d_set_dst_addr(struct g2d_dev *d, dma_addr_t a)
+{
 	w(a, DST_BASE_ADDR_REG);
-पूर्ण
+}
 
-व्योम g2d_set_rop4(काष्ठा g2d_dev *d, u32 r)
-अणु
+void g2d_set_rop4(struct g2d_dev *d, u32 r)
+{
 	w(r, ROP4_REG);
-पूर्ण
+}
 
-व्योम g2d_set_flip(काष्ठा g2d_dev *d, u32 r)
-अणु
-	w(r, SRC_MSK_सूचीECT_REG);
-पूर्ण
+void g2d_set_flip(struct g2d_dev *d, u32 r)
+{
+	w(r, SRC_MSK_DIRECT_REG);
+}
 
-व्योम g2d_set_v41_stretch(काष्ठा g2d_dev *d, काष्ठा g2d_frame *src,
-					काष्ठा g2d_frame *dst)
-अणु
+void g2d_set_v41_stretch(struct g2d_dev *d, struct g2d_frame *src,
+					struct g2d_frame *dst)
+{
 	w(DEFAULT_SCALE_MODE, SRC_SCALE_CTRL_REG);
 
 	/* inversed scaling factor: src is numerator */
 	w((src->c_width << 16) / dst->c_width, SRC_XSCALE_REG);
 	w((src->c_height << 16) / dst->c_height, SRC_YSCALE_REG);
-पूर्ण
+}
 
-व्योम g2d_set_cmd(काष्ठा g2d_dev *d, u32 c)
-अणु
+void g2d_set_cmd(struct g2d_dev *d, u32 c)
+{
 	w(c, BITBLT_COMMAND_REG);
-पूर्ण
+}
 
-व्योम g2d_start(काष्ठा g2d_dev *d)
-अणु
+void g2d_start(struct g2d_dev *d)
+{
 	/* Clear cache */
-	अगर (d->variant->hw_rev == TYPE_G2D_3X)
+	if (d->variant->hw_rev == TYPE_G2D_3X)
 		w(0x7, CACHECTL_REG);
 
-	/* Enable पूर्णांकerrupt */
+	/* Enable interrupt */
 	w(1, INTEN_REG);
 	/* Start G2D engine */
 	w(1, BITBLT_START_REG);
-पूर्ण
+}
 
-व्योम g2d_clear_पूर्णांक(काष्ठा g2d_dev *d)
-अणु
+void g2d_clear_int(struct g2d_dev *d)
+{
 	w(1, INTC_PEND_REG);
-पूर्ण
+}

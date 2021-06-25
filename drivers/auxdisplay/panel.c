@@ -1,12 +1,11 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Front panel driver क्रम Linux
+ * Front panel driver for Linux
  * Copyright (C) 2000-2008, Willy Tarreau <w@1wt.eu>
  * Copyright (C) 2016-2017 Glider bvba
  *
  * This code drives an LCD module (/dev/lcd), and a keypad (/dev/keypad)
- * connected to a parallel prपूर्णांकer port.
+ * connected to a parallel printer port.
  *
  * The LCD module may either be an HD44780-like 8-bit parallel LCD, or a 1-bit
  * serial module compatible with Samsung's KS0074. The pins may be connected in
@@ -16,7 +15,7 @@
  * data output pins or to the ground. The combinations have to be hard-coded
  * in the driver, though several profiles exist and adding new ones is easy.
  *
- * Several profiles are provided क्रम commonly found LCD+keypad modules on the
+ * Several profiles are provided for commonly found LCD+keypad modules on the
  * market, such as those found in Nexcom's appliances.
  *
  * FIXME:
@@ -24,485 +23,485 @@
  *        be rewritten. It may even be buggy.
  *
  * TODO:
- *	- करोcument 24 keys keyboard (3 rows of 8 cols, 32 diodes + 2 inमाला_दो)
- *      - make the LCD a part of a भव screen of Vx*Vy
- *	- make the inमाला_दो list smp-safe
- *      - change the keyboard to a द्विगुन mapping : संकेतs -> key_id -> values
- *        so that applications can change values without knowing संकेतs
+ *	- document 24 keys keyboard (3 rows of 8 cols, 32 diodes + 2 inputs)
+ *      - make the LCD a part of a virtual screen of Vx*Vy
+ *	- make the inputs list smp-safe
+ *      - change the keyboard to a double mapping : signals -> key_id -> values
+ *        so that applications can change values without knowing signals
  *
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
+#include <linux/module.h>
 
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/parport.h>
-#समावेश <linux/list.h>
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/signal.h>
+#include <linux/sched.h>
+#include <linux/spinlock.h>
+#include <linux/interrupt.h>
+#include <linux/miscdevice.h>
+#include <linux/slab.h>
+#include <linux/ioport.h>
+#include <linux/fcntl.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/kernel.h>
+#include <linux/ctype.h>
+#include <linux/parport.h>
+#include <linux/list.h>
 
-#समावेश <linux/पन.स>
-#समावेश <linux/uaccess.h>
+#include <linux/io.h>
+#include <linux/uaccess.h>
 
-#समावेश "charlcd.h"
-#समावेश "hd44780_common.h"
+#include "charlcd.h"
+#include "hd44780_common.h"
 
-#घोषणा LCD_MAXBYTES		256	/* max burst ग_लिखो */
+#define LCD_MAXBYTES		256	/* max burst write */
 
-#घोषणा KEYPAD_BUFFER		64
+#define KEYPAD_BUFFER		64
 
 /* poll the keyboard this every second */
-#घोषणा INPUT_POLL_TIME		(HZ / 50)
-/* a key starts to repeat after this बार INPUT_POLL_TIME */
-#घोषणा KEYPAD_REP_START	(10)
-/* a key repeats this बार INPUT_POLL_TIME */
-#घोषणा KEYPAD_REP_DELAY	(2)
+#define INPUT_POLL_TIME		(HZ / 50)
+/* a key starts to repeat after this times INPUT_POLL_TIME */
+#define KEYPAD_REP_START	(10)
+/* a key repeats this times INPUT_POLL_TIME */
+#define KEYPAD_REP_DELAY	(2)
 
 /* converts an r_str() input to an active high, bits string : 000BAOSE */
-#घोषणा PNL_PINPUT(a)		((((अचिन्हित अक्षर)(a)) ^ 0x7F) >> 3)
+#define PNL_PINPUT(a)		((((unsigned char)(a)) ^ 0x7F) >> 3)
 
-#घोषणा PNL_PBUSY		0x80	/* inverted input, active low */
-#घोषणा PNL_PACK		0x40	/* direct input, active low */
-#घोषणा PNL_POUTPA		0x20	/* direct input, active high */
-#घोषणा PNL_PSELECD		0x10	/* direct input, active high */
-#घोषणा PNL_PERRORP		0x08	/* direct input, active low */
+#define PNL_PBUSY		0x80	/* inverted input, active low */
+#define PNL_PACK		0x40	/* direct input, active low */
+#define PNL_POUTPA		0x20	/* direct input, active high */
+#define PNL_PSELECD		0x10	/* direct input, active high */
+#define PNL_PERRORP		0x08	/* direct input, active low */
 
-#घोषणा PNL_PBIसूची		0x20	/* bi-directional ports */
-/* high to पढ़ो data in or-ed with data out */
-#घोषणा PNL_PINTEN		0x10
-#घोषणा PNL_PSELECP		0x08	/* inverted output, active low */
-#घोषणा PNL_PINITP		0x04	/* direct output, active low */
-#घोषणा PNL_PAUTOLF		0x02	/* inverted output, active low */
-#घोषणा PNL_PSTROBE		0x01	/* inverted output */
+#define PNL_PBIDIR		0x20	/* bi-directional ports */
+/* high to read data in or-ed with data out */
+#define PNL_PINTEN		0x10
+#define PNL_PSELECP		0x08	/* inverted output, active low */
+#define PNL_PINITP		0x04	/* direct output, active low */
+#define PNL_PAUTOLF		0x02	/* inverted output, active low */
+#define PNL_PSTROBE		0x01	/* inverted output */
 
-#घोषणा PNL_PD0			0x01
-#घोषणा PNL_PD1			0x02
-#घोषणा PNL_PD2			0x04
-#घोषणा PNL_PD3			0x08
-#घोषणा PNL_PD4			0x10
-#घोषणा PNL_PD5			0x20
-#घोषणा PNL_PD6			0x40
-#घोषणा PNL_PD7			0x80
+#define PNL_PD0			0x01
+#define PNL_PD1			0x02
+#define PNL_PD2			0x04
+#define PNL_PD3			0x08
+#define PNL_PD4			0x10
+#define PNL_PD5			0x20
+#define PNL_PD6			0x40
+#define PNL_PD7			0x80
 
-#घोषणा PIN_NONE		0
-#घोषणा PIN_STROBE		1
-#घोषणा PIN_D0			2
-#घोषणा PIN_D1			3
-#घोषणा PIN_D2			4
-#घोषणा PIN_D3			5
-#घोषणा PIN_D4			6
-#घोषणा PIN_D5			7
-#घोषणा PIN_D6			8
-#घोषणा PIN_D7			9
-#घोषणा PIN_AUTOLF		14
-#घोषणा PIN_INITP		16
-#घोषणा PIN_SELECP		17
-#घोषणा PIN_NOT_SET		127
+#define PIN_NONE		0
+#define PIN_STROBE		1
+#define PIN_D0			2
+#define PIN_D1			3
+#define PIN_D2			4
+#define PIN_D3			5
+#define PIN_D4			6
+#define PIN_D5			7
+#define PIN_D6			8
+#define PIN_D7			9
+#define PIN_AUTOLF		14
+#define PIN_INITP		16
+#define PIN_SELECP		17
+#define PIN_NOT_SET		127
 
-#घोषणा NOT_SET			-1
+#define NOT_SET			-1
 
-/* macros to simplअगरy use of the parallel port */
-#घोषणा r_ctr(x)        (parport_पढ़ो_control((x)->port))
-#घोषणा r_dtr(x)        (parport_पढ़ो_data((x)->port))
-#घोषणा r_str(x)        (parport_पढ़ो_status((x)->port))
-#घोषणा w_ctr(x, y)     (parport_ग_लिखो_control((x)->port, (y)))
-#घोषणा w_dtr(x, y)     (parport_ग_लिखो_data((x)->port, (y)))
+/* macros to simplify use of the parallel port */
+#define r_ctr(x)        (parport_read_control((x)->port))
+#define r_dtr(x)        (parport_read_data((x)->port))
+#define r_str(x)        (parport_read_status((x)->port))
+#define w_ctr(x, y)     (parport_write_control((x)->port, (y)))
+#define w_dtr(x, y)     (parport_write_data((x)->port, (y)))
 
 /* this defines which bits are to be used and which ones to be ignored */
 /* logical or of the output bits involved in the scan matrix */
-अटल __u8 scan_mask_o;
+static __u8 scan_mask_o;
 /* logical or of the input bits involved in the scan matrix */
-अटल __u8 scan_mask_i;
+static __u8 scan_mask_i;
 
-क्रमागत input_type अणु
+enum input_type {
 	INPUT_TYPE_STD,
 	INPUT_TYPE_KBD,
-पूर्ण;
+};
 
-क्रमागत input_state अणु
+enum input_state {
 	INPUT_ST_LOW,
 	INPUT_ST_RISING,
 	INPUT_ST_HIGH,
 	INPUT_ST_FALLING,
-पूर्ण;
+};
 
-काष्ठा logical_input अणु
-	काष्ठा list_head list;
+struct logical_input {
+	struct list_head list;
 	__u64 mask;
 	__u64 value;
-	क्रमागत input_type type;
-	क्रमागत input_state state;
-	__u8 rise_समय, fall_समय;
-	__u8 rise_समयr, fall_समयr, high_समयr;
+	enum input_type type;
+	enum input_state state;
+	__u8 rise_time, fall_time;
+	__u8 rise_timer, fall_timer, high_timer;
 
-	जोड़ अणु
-		काष्ठा अणु	/* valid when type == INPUT_TYPE_STD */
-			व्योम (*press_fct)(पूर्णांक);
-			व्योम (*release_fct)(पूर्णांक);
-			पूर्णांक press_data;
-			पूर्णांक release_data;
-		पूर्ण std;
-		काष्ठा अणु	/* valid when type == INPUT_TYPE_KBD */
-			अक्षर press_str[माप(व्योम *) + माप(पूर्णांक)] __nonstring;
-			अक्षर repeat_str[माप(व्योम *) + माप(पूर्णांक)] __nonstring;
-			अक्षर release_str[माप(व्योम *) + माप(पूर्णांक)] __nonstring;
-		पूर्ण kbd;
-	पूर्ण u;
-पूर्ण;
+	union {
+		struct {	/* valid when type == INPUT_TYPE_STD */
+			void (*press_fct)(int);
+			void (*release_fct)(int);
+			int press_data;
+			int release_data;
+		} std;
+		struct {	/* valid when type == INPUT_TYPE_KBD */
+			char press_str[sizeof(void *) + sizeof(int)] __nonstring;
+			char repeat_str[sizeof(void *) + sizeof(int)] __nonstring;
+			char release_str[sizeof(void *) + sizeof(int)] __nonstring;
+		} kbd;
+	} u;
+};
 
-अटल LIST_HEAD(logical_inमाला_दो);	/* list of all defined logical inमाला_दो */
+static LIST_HEAD(logical_inputs);	/* list of all defined logical inputs */
 
 /* physical contacts history
  * Physical contacts are a 45 bits string of 9 groups of 5 bits each.
  * The 8 lower groups correspond to output bits 0 to 7, and the 9th group
  * corresponds to the ground.
- * Within each group, bits are stored in the same order as पढ़ो on the port :
+ * Within each group, bits are stored in the same order as read on the port :
  * BAPSE (busy=4, ack=3, paper empty=2, select=1, error=0).
  * So, each __u64 is represented like this :
  * 0000000000000000000BAPSEBAPSEBAPSEBAPSEBAPSEBAPSEBAPSEBAPSEBAPSE
  * <-----unused------><gnd><d07><d06><d05><d04><d03><d02><d01><d00>
  */
 
-/* what has just been पढ़ो from the I/O ports */
-अटल __u64 phys_पढ़ो;
-/* previous phys_पढ़ो */
-अटल __u64 phys_पढ़ो_prev;
-/* stabilized phys_पढ़ो (phys_पढ़ो|phys_पढ़ो_prev) */
-अटल __u64 phys_curr;
+/* what has just been read from the I/O ports */
+static __u64 phys_read;
+/* previous phys_read */
+static __u64 phys_read_prev;
+/* stabilized phys_read (phys_read|phys_read_prev) */
+static __u64 phys_curr;
 /* previous phys_curr */
-अटल __u64 phys_prev;
-/* 0 means that at least one logical संकेत needs be computed */
-अटल अक्षर inमाला_दो_stable;
+static __u64 phys_prev;
+/* 0 means that at least one logical signal needs be computed */
+static char inputs_stable;
 
-/* these variables are specअगरic to the keypad */
-अटल काष्ठा अणु
+/* these variables are specific to the keypad */
+static struct {
 	bool enabled;
-पूर्ण keypad;
+} keypad;
 
-अटल अक्षर keypad_buffer[KEYPAD_BUFFER];
-अटल पूर्णांक keypad_buflen;
-अटल पूर्णांक keypad_start;
-अटल अक्षर keypressed;
-अटल रुको_queue_head_t keypad_पढ़ो_रुको;
+static char keypad_buffer[KEYPAD_BUFFER];
+static int keypad_buflen;
+static int keypad_start;
+static char keypressed;
+static wait_queue_head_t keypad_read_wait;
 
-/* lcd-specअगरic variables */
-अटल काष्ठा अणु
+/* lcd-specific variables */
+static struct {
 	bool enabled;
 	bool initialized;
 
-	पूर्णांक अक्षरset;
-	पूर्णांक proto;
+	int charset;
+	int proto;
 
-	/* TODO: use जोड़ here? */
-	काष्ठा अणु
-		पूर्णांक e;
-		पूर्णांक rs;
-		पूर्णांक rw;
-		पूर्णांक cl;
-		पूर्णांक da;
-		पूर्णांक bl;
-	पूर्ण pins;
+	/* TODO: use union here? */
+	struct {
+		int e;
+		int rs;
+		int rw;
+		int cl;
+		int da;
+		int bl;
+	} pins;
 
-	काष्ठा अक्षरlcd *अक्षरlcd;
-पूर्ण lcd;
+	struct charlcd *charlcd;
+} lcd;
 
-/* Needed only क्रम init */
-अटल पूर्णांक selected_lcd_type = NOT_SET;
+/* Needed only for init */
+static int selected_lcd_type = NOT_SET;
 
 /*
- * Bit masks to convert LCD संकेतs to parallel port outमाला_दो.
- * _d_ are values क्रम data port, _c_ are क्रम control port.
- * [0] = संकेत OFF, [1] = संकेत ON, [2] = mask
+ * Bit masks to convert LCD signals to parallel port outputs.
+ * _d_ are values for data port, _c_ are for control port.
+ * [0] = signal OFF, [1] = signal ON, [2] = mask
  */
-#घोषणा BIT_CLR		0
-#घोषणा BIT_SET		1
-#घोषणा BIT_MSK		2
-#घोषणा BIT_STATES	3
+#define BIT_CLR		0
+#define BIT_SET		1
+#define BIT_MSK		2
+#define BIT_STATES	3
 /*
- * one entry क्रम each bit on the LCD
+ * one entry for each bit on the LCD
  */
-#घोषणा LCD_BIT_E	0
-#घोषणा LCD_BIT_RS	1
-#घोषणा LCD_BIT_RW	2
-#घोषणा LCD_BIT_BL	3
-#घोषणा LCD_BIT_CL	4
-#घोषणा LCD_BIT_DA	5
-#घोषणा LCD_BITS	6
+#define LCD_BIT_E	0
+#define LCD_BIT_RS	1
+#define LCD_BIT_RW	2
+#define LCD_BIT_BL	3
+#define LCD_BIT_CL	4
+#define LCD_BIT_DA	5
+#define LCD_BITS	6
 
 /*
  * each bit can be either connected to a DATA or CTRL port
  */
-#घोषणा LCD_PORT_C	0
-#घोषणा LCD_PORT_D	1
-#घोषणा LCD_PORTS	2
+#define LCD_PORT_C	0
+#define LCD_PORT_D	1
+#define LCD_PORTS	2
 
-अटल अचिन्हित अक्षर lcd_bits[LCD_PORTS][LCD_BITS][BIT_STATES];
+static unsigned char lcd_bits[LCD_PORTS][LCD_BITS][BIT_STATES];
 
 /*
  * LCD protocols
  */
-#घोषणा LCD_PROTO_PARALLEL      0
-#घोषणा LCD_PROTO_SERIAL        1
-#घोषणा LCD_PROTO_TI_DA8XX_LCD	2
+#define LCD_PROTO_PARALLEL      0
+#define LCD_PROTO_SERIAL        1
+#define LCD_PROTO_TI_DA8XX_LCD	2
 
 /*
- * LCD अक्षरacter sets
+ * LCD character sets
  */
-#घोषणा LCD_CHARSET_NORMAL      0
-#घोषणा LCD_CHARSET_KS0074      1
+#define LCD_CHARSET_NORMAL      0
+#define LCD_CHARSET_KS0074      1
 
 /*
  * LCD types
  */
-#घोषणा LCD_TYPE_NONE		0
-#घोषणा LCD_TYPE_CUSTOM		1
-#घोषणा LCD_TYPE_OLD		2
-#घोषणा LCD_TYPE_KS0074		3
-#घोषणा LCD_TYPE_HANTRONIX	4
-#घोषणा LCD_TYPE_NEXCOM		5
+#define LCD_TYPE_NONE		0
+#define LCD_TYPE_CUSTOM		1
+#define LCD_TYPE_OLD		2
+#define LCD_TYPE_KS0074		3
+#define LCD_TYPE_HANTRONIX	4
+#define LCD_TYPE_NEXCOM		5
 
 /*
  * keypad types
  */
-#घोषणा KEYPAD_TYPE_NONE	0
-#घोषणा KEYPAD_TYPE_OLD		1
-#घोषणा KEYPAD_TYPE_NEW		2
-#घोषणा KEYPAD_TYPE_NEXCOM	3
+#define KEYPAD_TYPE_NONE	0
+#define KEYPAD_TYPE_OLD		1
+#define KEYPAD_TYPE_NEW		2
+#define KEYPAD_TYPE_NEXCOM	3
 
 /*
  * panel profiles
  */
-#घोषणा PANEL_PROखाता_CUSTOM	0
-#घोषणा PANEL_PROखाता_OLD	1
-#घोषणा PANEL_PROखाता_NEW	2
-#घोषणा PANEL_PROखाता_HANTRONIX	3
-#घोषणा PANEL_PROखाता_NEXCOM	4
-#घोषणा PANEL_PROखाता_LARGE	5
+#define PANEL_PROFILE_CUSTOM	0
+#define PANEL_PROFILE_OLD	1
+#define PANEL_PROFILE_NEW	2
+#define PANEL_PROFILE_HANTRONIX	3
+#define PANEL_PROFILE_NEXCOM	4
+#define PANEL_PROFILE_LARGE	5
 
 /*
- * Conकाष्ठा custom config from the kernel's configuration
+ * Construct custom config from the kernel's configuration
  */
-#घोषणा DEFAULT_PARPORT         0
-#घोषणा DEFAULT_PROखाता         PANEL_PROखाता_LARGE
-#घोषणा DEFAULT_KEYPAD_TYPE     KEYPAD_TYPE_OLD
-#घोषणा DEFAULT_LCD_TYPE        LCD_TYPE_OLD
-#घोषणा DEFAULT_LCD_HEIGHT      2
-#घोषणा DEFAULT_LCD_WIDTH       40
-#घोषणा DEFAULT_LCD_CHARSET     LCD_CHARSET_NORMAL
-#घोषणा DEFAULT_LCD_PROTO       LCD_PROTO_PARALLEL
+#define DEFAULT_PARPORT         0
+#define DEFAULT_PROFILE         PANEL_PROFILE_LARGE
+#define DEFAULT_KEYPAD_TYPE     KEYPAD_TYPE_OLD
+#define DEFAULT_LCD_TYPE        LCD_TYPE_OLD
+#define DEFAULT_LCD_HEIGHT      2
+#define DEFAULT_LCD_WIDTH       40
+#define DEFAULT_LCD_CHARSET     LCD_CHARSET_NORMAL
+#define DEFAULT_LCD_PROTO       LCD_PROTO_PARALLEL
 
-#घोषणा DEFAULT_LCD_PIN_E       PIN_AUTOLF
-#घोषणा DEFAULT_LCD_PIN_RS      PIN_SELECP
-#घोषणा DEFAULT_LCD_PIN_RW      PIN_INITP
-#घोषणा DEFAULT_LCD_PIN_SCL     PIN_STROBE
-#घोषणा DEFAULT_LCD_PIN_SDA     PIN_D0
-#घोषणा DEFAULT_LCD_PIN_BL      PIN_NOT_SET
+#define DEFAULT_LCD_PIN_E       PIN_AUTOLF
+#define DEFAULT_LCD_PIN_RS      PIN_SELECP
+#define DEFAULT_LCD_PIN_RW      PIN_INITP
+#define DEFAULT_LCD_PIN_SCL     PIN_STROBE
+#define DEFAULT_LCD_PIN_SDA     PIN_D0
+#define DEFAULT_LCD_PIN_BL      PIN_NOT_SET
 
-#अगर_घोषित CONFIG_PANEL_PARPORT
-#अघोषित DEFAULT_PARPORT
-#घोषणा DEFAULT_PARPORT CONFIG_PANEL_PARPORT
-#पूर्ण_अगर
+#ifdef CONFIG_PANEL_PARPORT
+#undef DEFAULT_PARPORT
+#define DEFAULT_PARPORT CONFIG_PANEL_PARPORT
+#endif
 
-#अगर_घोषित CONFIG_PANEL_PROखाता
-#अघोषित DEFAULT_PROखाता
-#घोषणा DEFAULT_PROखाता CONFIG_PANEL_PROखाता
-#पूर्ण_अगर
+#ifdef CONFIG_PANEL_PROFILE
+#undef DEFAULT_PROFILE
+#define DEFAULT_PROFILE CONFIG_PANEL_PROFILE
+#endif
 
-#अगर DEFAULT_PROखाता == 0	/* custom */
-#अगर_घोषित CONFIG_PANEL_KEYPAD
-#अघोषित DEFAULT_KEYPAD_TYPE
-#घोषणा DEFAULT_KEYPAD_TYPE CONFIG_PANEL_KEYPAD
-#पूर्ण_अगर
+#if DEFAULT_PROFILE == 0	/* custom */
+#ifdef CONFIG_PANEL_KEYPAD
+#undef DEFAULT_KEYPAD_TYPE
+#define DEFAULT_KEYPAD_TYPE CONFIG_PANEL_KEYPAD
+#endif
 
-#अगर_घोषित CONFIG_PANEL_LCD
-#अघोषित DEFAULT_LCD_TYPE
-#घोषणा DEFAULT_LCD_TYPE CONFIG_PANEL_LCD
-#पूर्ण_अगर
+#ifdef CONFIG_PANEL_LCD
+#undef DEFAULT_LCD_TYPE
+#define DEFAULT_LCD_TYPE CONFIG_PANEL_LCD
+#endif
 
-#अगर_घोषित CONFIG_PANEL_LCD_HEIGHT
-#अघोषित DEFAULT_LCD_HEIGHT
-#घोषणा DEFAULT_LCD_HEIGHT CONFIG_PANEL_LCD_HEIGHT
-#पूर्ण_अगर
+#ifdef CONFIG_PANEL_LCD_HEIGHT
+#undef DEFAULT_LCD_HEIGHT
+#define DEFAULT_LCD_HEIGHT CONFIG_PANEL_LCD_HEIGHT
+#endif
 
-#अगर_घोषित CONFIG_PANEL_LCD_WIDTH
-#अघोषित DEFAULT_LCD_WIDTH
-#घोषणा DEFAULT_LCD_WIDTH CONFIG_PANEL_LCD_WIDTH
-#पूर्ण_अगर
+#ifdef CONFIG_PANEL_LCD_WIDTH
+#undef DEFAULT_LCD_WIDTH
+#define DEFAULT_LCD_WIDTH CONFIG_PANEL_LCD_WIDTH
+#endif
 
-#अगर_घोषित CONFIG_PANEL_LCD_BWIDTH
-#अघोषित DEFAULT_LCD_BWIDTH
-#घोषणा DEFAULT_LCD_BWIDTH CONFIG_PANEL_LCD_BWIDTH
-#पूर्ण_अगर
+#ifdef CONFIG_PANEL_LCD_BWIDTH
+#undef DEFAULT_LCD_BWIDTH
+#define DEFAULT_LCD_BWIDTH CONFIG_PANEL_LCD_BWIDTH
+#endif
 
-#अगर_घोषित CONFIG_PANEL_LCD_HWIDTH
-#अघोषित DEFAULT_LCD_HWIDTH
-#घोषणा DEFAULT_LCD_HWIDTH CONFIG_PANEL_LCD_HWIDTH
-#पूर्ण_अगर
+#ifdef CONFIG_PANEL_LCD_HWIDTH
+#undef DEFAULT_LCD_HWIDTH
+#define DEFAULT_LCD_HWIDTH CONFIG_PANEL_LCD_HWIDTH
+#endif
 
-#अगर_घोषित CONFIG_PANEL_LCD_CHARSET
-#अघोषित DEFAULT_LCD_CHARSET
-#घोषणा DEFAULT_LCD_CHARSET CONFIG_PANEL_LCD_CHARSET
-#पूर्ण_अगर
+#ifdef CONFIG_PANEL_LCD_CHARSET
+#undef DEFAULT_LCD_CHARSET
+#define DEFAULT_LCD_CHARSET CONFIG_PANEL_LCD_CHARSET
+#endif
 
-#अगर_घोषित CONFIG_PANEL_LCD_PROTO
-#अघोषित DEFAULT_LCD_PROTO
-#घोषणा DEFAULT_LCD_PROTO CONFIG_PANEL_LCD_PROTO
-#पूर्ण_अगर
+#ifdef CONFIG_PANEL_LCD_PROTO
+#undef DEFAULT_LCD_PROTO
+#define DEFAULT_LCD_PROTO CONFIG_PANEL_LCD_PROTO
+#endif
 
-#अगर_घोषित CONFIG_PANEL_LCD_PIN_E
-#अघोषित DEFAULT_LCD_PIN_E
-#घोषणा DEFAULT_LCD_PIN_E CONFIG_PANEL_LCD_PIN_E
-#पूर्ण_अगर
+#ifdef CONFIG_PANEL_LCD_PIN_E
+#undef DEFAULT_LCD_PIN_E
+#define DEFAULT_LCD_PIN_E CONFIG_PANEL_LCD_PIN_E
+#endif
 
-#अगर_घोषित CONFIG_PANEL_LCD_PIN_RS
-#अघोषित DEFAULT_LCD_PIN_RS
-#घोषणा DEFAULT_LCD_PIN_RS CONFIG_PANEL_LCD_PIN_RS
-#पूर्ण_अगर
+#ifdef CONFIG_PANEL_LCD_PIN_RS
+#undef DEFAULT_LCD_PIN_RS
+#define DEFAULT_LCD_PIN_RS CONFIG_PANEL_LCD_PIN_RS
+#endif
 
-#अगर_घोषित CONFIG_PANEL_LCD_PIN_RW
-#अघोषित DEFAULT_LCD_PIN_RW
-#घोषणा DEFAULT_LCD_PIN_RW CONFIG_PANEL_LCD_PIN_RW
-#पूर्ण_अगर
+#ifdef CONFIG_PANEL_LCD_PIN_RW
+#undef DEFAULT_LCD_PIN_RW
+#define DEFAULT_LCD_PIN_RW CONFIG_PANEL_LCD_PIN_RW
+#endif
 
-#अगर_घोषित CONFIG_PANEL_LCD_PIN_SCL
-#अघोषित DEFAULT_LCD_PIN_SCL
-#घोषणा DEFAULT_LCD_PIN_SCL CONFIG_PANEL_LCD_PIN_SCL
-#पूर्ण_अगर
+#ifdef CONFIG_PANEL_LCD_PIN_SCL
+#undef DEFAULT_LCD_PIN_SCL
+#define DEFAULT_LCD_PIN_SCL CONFIG_PANEL_LCD_PIN_SCL
+#endif
 
-#अगर_घोषित CONFIG_PANEL_LCD_PIN_SDA
-#अघोषित DEFAULT_LCD_PIN_SDA
-#घोषणा DEFAULT_LCD_PIN_SDA CONFIG_PANEL_LCD_PIN_SDA
-#पूर्ण_अगर
+#ifdef CONFIG_PANEL_LCD_PIN_SDA
+#undef DEFAULT_LCD_PIN_SDA
+#define DEFAULT_LCD_PIN_SDA CONFIG_PANEL_LCD_PIN_SDA
+#endif
 
-#अगर_घोषित CONFIG_PANEL_LCD_PIN_BL
-#अघोषित DEFAULT_LCD_PIN_BL
-#घोषणा DEFAULT_LCD_PIN_BL CONFIG_PANEL_LCD_PIN_BL
-#पूर्ण_अगर
+#ifdef CONFIG_PANEL_LCD_PIN_BL
+#undef DEFAULT_LCD_PIN_BL
+#define DEFAULT_LCD_PIN_BL CONFIG_PANEL_LCD_PIN_BL
+#endif
 
-#पूर्ण_अगर /* DEFAULT_PROखाता == 0 */
+#endif /* DEFAULT_PROFILE == 0 */
 
 /* global variables */
 
-/* Device single-खोलो policy control */
-अटल atomic_t keypad_available = ATOMIC_INIT(1);
+/* Device single-open policy control */
+static atomic_t keypad_available = ATOMIC_INIT(1);
 
-अटल काष्ठा pardevice *pprt;
+static struct pardevice *pprt;
 
-अटल पूर्णांक keypad_initialized;
+static int keypad_initialized;
 
-अटल DEFINE_SPINLOCK(pprt_lock);
-अटल काष्ठा समयr_list scan_समयr;
+static DEFINE_SPINLOCK(pprt_lock);
+static struct timer_list scan_timer;
 
 MODULE_DESCRIPTION("Generic parallel port LCD/Keypad driver");
 
-अटल पूर्णांक parport = DEFAULT_PARPORT;
-module_param(parport, पूर्णांक, 0000);
+static int parport = DEFAULT_PARPORT;
+module_param(parport, int, 0000);
 MODULE_PARM_DESC(parport, "Parallel port index (0=lpt1, 1=lpt2, ...)");
 
-अटल पूर्णांक profile = DEFAULT_PROखाता;
-module_param(profile, पूर्णांक, 0000);
+static int profile = DEFAULT_PROFILE;
+module_param(profile, int, 0000);
 MODULE_PARM_DESC(profile,
 		 "1=16x2 old kp; 2=serial 16x2, new kp; 3=16x2 hantronix; "
 		 "4=16x2 nexcom; default=40x2, old kp");
 
-अटल पूर्णांक keypad_type = NOT_SET;
-module_param(keypad_type, पूर्णांक, 0000);
+static int keypad_type = NOT_SET;
+module_param(keypad_type, int, 0000);
 MODULE_PARM_DESC(keypad_type,
 		 "Keypad type: 0=none, 1=old 6 keys, 2=new 6+1 keys, 3=nexcom 4 keys");
 
-अटल पूर्णांक lcd_type = NOT_SET;
-module_param(lcd_type, पूर्णांक, 0000);
+static int lcd_type = NOT_SET;
+module_param(lcd_type, int, 0000);
 MODULE_PARM_DESC(lcd_type,
 		 "LCD type: 0=none, 1=compiled-in, 2=old, 3=serial ks0074, 4=hantronix, 5=nexcom");
 
-अटल पूर्णांक lcd_height = NOT_SET;
-module_param(lcd_height, पूर्णांक, 0000);
+static int lcd_height = NOT_SET;
+module_param(lcd_height, int, 0000);
 MODULE_PARM_DESC(lcd_height, "Number of lines on the LCD");
 
-अटल पूर्णांक lcd_width = NOT_SET;
-module_param(lcd_width, पूर्णांक, 0000);
+static int lcd_width = NOT_SET;
+module_param(lcd_width, int, 0000);
 MODULE_PARM_DESC(lcd_width, "Number of columns on the LCD");
 
-अटल पूर्णांक lcd_bwidth = NOT_SET;	/* पूर्णांकernal buffer width (usually 40) */
-module_param(lcd_bwidth, पूर्णांक, 0000);
+static int lcd_bwidth = NOT_SET;	/* internal buffer width (usually 40) */
+module_param(lcd_bwidth, int, 0000);
 MODULE_PARM_DESC(lcd_bwidth, "Internal LCD line width (40)");
 
-अटल पूर्णांक lcd_hwidth = NOT_SET;	/* hardware buffer width (usually 64) */
-module_param(lcd_hwidth, पूर्णांक, 0000);
+static int lcd_hwidth = NOT_SET;	/* hardware buffer width (usually 64) */
+module_param(lcd_hwidth, int, 0000);
 MODULE_PARM_DESC(lcd_hwidth, "LCD line hardware address (64)");
 
-अटल पूर्णांक lcd_अक्षरset = NOT_SET;
-module_param(lcd_अक्षरset, पूर्णांक, 0000);
-MODULE_PARM_DESC(lcd_अक्षरset, "LCD character set: 0=standard, 1=KS0074");
+static int lcd_charset = NOT_SET;
+module_param(lcd_charset, int, 0000);
+MODULE_PARM_DESC(lcd_charset, "LCD character set: 0=standard, 1=KS0074");
 
-अटल पूर्णांक lcd_proto = NOT_SET;
-module_param(lcd_proto, पूर्णांक, 0000);
+static int lcd_proto = NOT_SET;
+module_param(lcd_proto, int, 0000);
 MODULE_PARM_DESC(lcd_proto,
 		 "LCD communication: 0=parallel (//), 1=serial, 2=TI LCD Interface");
 
 /*
- * These are the parallel port pins the LCD control संकेतs are connected to.
- * Set this to 0 अगर the संकेत is not used. Set it to its opposite value
- * (negative) अगर the संकेत is negated. -MAXINT is used to indicate that the
- * pin has not been explicitly specअगरied.
+ * These are the parallel port pins the LCD control signals are connected to.
+ * Set this to 0 if the signal is not used. Set it to its opposite value
+ * (negative) if the signal is negated. -MAXINT is used to indicate that the
+ * pin has not been explicitly specified.
  *
- * WARNING! no check will be perक्रमmed about collisions with keypad !
+ * WARNING! no check will be performed about collisions with keypad !
  */
 
-अटल पूर्णांक lcd_e_pin  = PIN_NOT_SET;
-module_param(lcd_e_pin, पूर्णांक, 0000);
+static int lcd_e_pin  = PIN_NOT_SET;
+module_param(lcd_e_pin, int, 0000);
 MODULE_PARM_DESC(lcd_e_pin,
 		 "# of the // port pin connected to LCD 'E' signal, with polarity (-17..17)");
 
-अटल पूर्णांक lcd_rs_pin = PIN_NOT_SET;
-module_param(lcd_rs_pin, पूर्णांक, 0000);
+static int lcd_rs_pin = PIN_NOT_SET;
+module_param(lcd_rs_pin, int, 0000);
 MODULE_PARM_DESC(lcd_rs_pin,
 		 "# of the // port pin connected to LCD 'RS' signal, with polarity (-17..17)");
 
-अटल पूर्णांक lcd_rw_pin = PIN_NOT_SET;
-module_param(lcd_rw_pin, पूर्णांक, 0000);
+static int lcd_rw_pin = PIN_NOT_SET;
+module_param(lcd_rw_pin, int, 0000);
 MODULE_PARM_DESC(lcd_rw_pin,
 		 "# of the // port pin connected to LCD 'RW' signal, with polarity (-17..17)");
 
-अटल पूर्णांक lcd_cl_pin = PIN_NOT_SET;
-module_param(lcd_cl_pin, पूर्णांक, 0000);
+static int lcd_cl_pin = PIN_NOT_SET;
+module_param(lcd_cl_pin, int, 0000);
 MODULE_PARM_DESC(lcd_cl_pin,
 		 "# of the // port pin connected to serial LCD 'SCL' signal, with polarity (-17..17)");
 
-अटल पूर्णांक lcd_da_pin = PIN_NOT_SET;
-module_param(lcd_da_pin, पूर्णांक, 0000);
+static int lcd_da_pin = PIN_NOT_SET;
+module_param(lcd_da_pin, int, 0000);
 MODULE_PARM_DESC(lcd_da_pin,
 		 "# of the // port pin connected to serial LCD 'SDA' signal, with polarity (-17..17)");
 
-अटल पूर्णांक lcd_bl_pin = PIN_NOT_SET;
-module_param(lcd_bl_pin, पूर्णांक, 0000);
+static int lcd_bl_pin = PIN_NOT_SET;
+module_param(lcd_bl_pin, int, 0000);
 MODULE_PARM_DESC(lcd_bl_pin,
 		 "# of the // port pin connected to LCD backlight, with polarity (-17..17)");
 
 /* Deprecated module parameters - consider not using them anymore */
 
-अटल पूर्णांक lcd_enabled = NOT_SET;
-module_param(lcd_enabled, पूर्णांक, 0000);
+static int lcd_enabled = NOT_SET;
+module_param(lcd_enabled, int, 0000);
 MODULE_PARM_DESC(lcd_enabled, "Deprecated option, use lcd_type instead");
 
-अटल पूर्णांक keypad_enabled = NOT_SET;
-module_param(keypad_enabled, पूर्णांक, 0000);
+static int keypad_enabled = NOT_SET;
+module_param(keypad_enabled, int, 0000);
 MODULE_PARM_DESC(keypad_enabled, "Deprecated option, use keypad_type instead");
 
-/* क्रम some LCD drivers (ks0074) we need a अक्षरset conversion table. */
-अटल स्थिर अचिन्हित अक्षर lcd_अक्षर_conv_ks0074[256] = अणु
+/* for some LCD drivers (ks0074) we need a charset conversion table. */
+static const unsigned char lcd_char_conv_ks0074[256] = {
 	/*          0|8   1|9   2|A   3|B   4|C   5|D   6|E   7|F */
 	/* 0x00 */ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 	/* 0x08 */ 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
@@ -536,97 +535,97 @@ MODULE_PARM_DESC(keypad_enabled, "Deprecated option, use keypad_type instead");
 	/* 0xE8 */ 0xa4, 0xa5, 0xc7, 0xf6, 0xa7, 0xe8, 0x69, 0x69,
 	/* 0xF0 */ 0xed, 0x7d, 0xa8, 0xe4, 0xec, 0x5c, 0x5c, 0x25,
 	/* 0xF8 */ 0xac, 0xa6, 0xea, 0xef, 0x7e, 0xeb, 0xb2, 0x79,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर old_keypad_profile[][4][9] = अणु
-	अणु"S0", "Left\n", "Left\n", ""पूर्ण,
-	अणु"S1", "Down\n", "Down\n", ""पूर्ण,
-	अणु"S2", "Up\n", "Up\n", ""पूर्ण,
-	अणु"S3", "Right\n", "Right\n", ""पूर्ण,
-	अणु"S4", "Esc\n", "Esc\n", ""पूर्ण,
-	अणु"S5", "Ret\n", "Ret\n", ""पूर्ण,
-	अणु"", "", "", ""पूर्ण
-पूर्ण;
+static const char old_keypad_profile[][4][9] = {
+	{"S0", "Left\n", "Left\n", ""},
+	{"S1", "Down\n", "Down\n", ""},
+	{"S2", "Up\n", "Up\n", ""},
+	{"S3", "Right\n", "Right\n", ""},
+	{"S4", "Esc\n", "Esc\n", ""},
+	{"S5", "Ret\n", "Ret\n", ""},
+	{"", "", "", ""}
+};
 
-/* संकेतs, press, repeat, release */
-अटल स्थिर अक्षर new_keypad_profile[][4][9] = अणु
-	अणु"S0", "Left\n", "Left\n", ""पूर्ण,
-	अणु"S1", "Down\n", "Down\n", ""पूर्ण,
-	अणु"S2", "Up\n", "Up\n", ""पूर्ण,
-	अणु"S3", "Right\n", "Right\n", ""पूर्ण,
-	अणु"S4s5", "", "Esc\n", "Esc\n"पूर्ण,
-	अणु"s4S5", "", "Ret\n", "Ret\n"पूर्ण,
-	अणु"S4S5", "Help\n", "", ""पूर्ण,
-	/* add new संकेतs above this line */
-	अणु"", "", "", ""पूर्ण
-पूर्ण;
+/* signals, press, repeat, release */
+static const char new_keypad_profile[][4][9] = {
+	{"S0", "Left\n", "Left\n", ""},
+	{"S1", "Down\n", "Down\n", ""},
+	{"S2", "Up\n", "Up\n", ""},
+	{"S3", "Right\n", "Right\n", ""},
+	{"S4s5", "", "Esc\n", "Esc\n"},
+	{"s4S5", "", "Ret\n", "Ret\n"},
+	{"S4S5", "Help\n", "", ""},
+	/* add new signals above this line */
+	{"", "", "", ""}
+};
 
-/* संकेतs, press, repeat, release */
-अटल स्थिर अक्षर nexcom_keypad_profile[][4][9] = अणु
-	अणु"a-p-e-", "Down\n", "Down\n", ""पूर्ण,
-	अणु"a-p-E-", "Ret\n", "Ret\n", ""पूर्ण,
-	अणु"a-P-E-", "Esc\n", "Esc\n", ""पूर्ण,
-	अणु"a-P-e-", "Up\n", "Up\n", ""पूर्ण,
-	/* add new संकेतs above this line */
-	अणु"", "", "", ""पूर्ण
-पूर्ण;
+/* signals, press, repeat, release */
+static const char nexcom_keypad_profile[][4][9] = {
+	{"a-p-e-", "Down\n", "Down\n", ""},
+	{"a-p-E-", "Ret\n", "Ret\n", ""},
+	{"a-P-E-", "Esc\n", "Esc\n", ""},
+	{"a-P-e-", "Up\n", "Up\n", ""},
+	/* add new signals above this line */
+	{"", "", "", ""}
+};
 
-अटल स्थिर अक्षर (*keypad_profile)[4][9] = old_keypad_profile;
+static const char (*keypad_profile)[4][9] = old_keypad_profile;
 
-अटल DECLARE_BITMAP(bits, LCD_BITS);
+static DECLARE_BITMAP(bits, LCD_BITS);
 
-अटल व्योम lcd_get_bits(अचिन्हित पूर्णांक port, पूर्णांक *val)
-अणु
-	अचिन्हित पूर्णांक bit, state;
+static void lcd_get_bits(unsigned int port, int *val)
+{
+	unsigned int bit, state;
 
-	क्रम (bit = 0; bit < LCD_BITS; bit++) अणु
+	for (bit = 0; bit < LCD_BITS; bit++) {
 		state = test_bit(bit, bits) ? BIT_SET : BIT_CLR;
 		*val &= lcd_bits[port][bit][BIT_MSK];
 		*val |= lcd_bits[port][bit][state];
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* sets data port bits according to current संकेतs values */
-अटल पूर्णांक set_data_bits(व्योम)
-अणु
-	पूर्णांक val;
+/* sets data port bits according to current signals values */
+static int set_data_bits(void)
+{
+	int val;
 
 	val = r_dtr(pprt);
 	lcd_get_bits(LCD_PORT_D, &val);
 	w_dtr(pprt, val);
-	वापस val;
-पूर्ण
+	return val;
+}
 
-/* sets ctrl port bits according to current संकेतs values */
-अटल पूर्णांक set_ctrl_bits(व्योम)
-अणु
-	पूर्णांक val;
+/* sets ctrl port bits according to current signals values */
+static int set_ctrl_bits(void)
+{
+	int val;
 
 	val = r_ctr(pprt);
 	lcd_get_bits(LCD_PORT_C, &val);
 	w_ctr(pprt, val);
-	वापस val;
-पूर्ण
+	return val;
+}
 
-/* sets ctrl & data port bits according to current संकेतs values */
-अटल व्योम panel_set_bits(व्योम)
-अणु
+/* sets ctrl & data port bits according to current signals values */
+static void panel_set_bits(void)
+{
 	set_data_bits();
 	set_ctrl_bits();
-पूर्ण
+}
 
 /*
  * Converts a parallel port pin (from -25 to 25) to data and control ports
- * masks, and data and control port bits. The संकेत will be considered
- * unconnected अगर it's on pin 0 or an invalid pin (<-25 or >25).
+ * masks, and data and control port bits. The signal will be considered
+ * unconnected if it's on pin 0 or an invalid pin (<-25 or >25).
  *
  * Result will be used this way :
- *   out(dport, in(dport) & d_val[2] | d_val[संकेत_state])
- *   out(cport, in(cport) & c_val[2] | c_val[संकेत_state])
+ *   out(dport, in(dport) & d_val[2] | d_val[signal_state])
+ *   out(cport, in(cport) & c_val[2] | c_val[signal_state])
  */
-अटल व्योम pin_to_bits(पूर्णांक pin, अचिन्हित अक्षर *d_val, अचिन्हित अक्षर *c_val)
-अणु
-	पूर्णांक d_bit, c_bit, inv;
+static void pin_to_bits(int pin, unsigned char *d_val, unsigned char *c_val)
+{
+	int d_bit, c_bit, inv;
 
 	d_val[0] = 0;
 	c_val[0] = 0;
@@ -635,371 +634,371 @@ MODULE_PARM_DESC(keypad_enabled, "Deprecated option, use keypad_type instead");
 	d_val[2] = 0xFF;
 	c_val[2] = 0xFF;
 
-	अगर (pin == 0)
-		वापस;
+	if (pin == 0)
+		return;
 
 	inv = (pin < 0);
-	अगर (inv)
+	if (inv)
 		pin = -pin;
 
 	d_bit = 0;
 	c_bit = 0;
 
-	चयन (pin) अणु
-	हाल PIN_STROBE:	/* strobe, inverted */
+	switch (pin) {
+	case PIN_STROBE:	/* strobe, inverted */
 		c_bit = PNL_PSTROBE;
 		inv = !inv;
-		अवरोध;
-	हाल PIN_D0...PIN_D7:	/* D0 - D7 = 2 - 9 */
+		break;
+	case PIN_D0...PIN_D7:	/* D0 - D7 = 2 - 9 */
 		d_bit = 1 << (pin - 2);
-		अवरोध;
-	हाल PIN_AUTOLF:	/* स्वतःfeed, inverted */
+		break;
+	case PIN_AUTOLF:	/* autofeed, inverted */
 		c_bit = PNL_PAUTOLF;
 		inv = !inv;
-		अवरोध;
-	हाल PIN_INITP:		/* init, direct */
+		break;
+	case PIN_INITP:		/* init, direct */
 		c_bit = PNL_PINITP;
-		अवरोध;
-	हाल PIN_SELECP:	/* select_in, inverted */
+		break;
+	case PIN_SELECP:	/* select_in, inverted */
 		c_bit = PNL_PSELECP;
 		inv = !inv;
-		अवरोध;
-	शेष:		/* unknown pin, ignore */
-		अवरोध;
-	पूर्ण
+		break;
+	default:		/* unknown pin, ignore */
+		break;
+	}
 
-	अगर (c_bit) अणु
+	if (c_bit) {
 		c_val[2] &= ~c_bit;
 		c_val[!inv] = c_bit;
-	पूर्ण अन्यथा अगर (d_bit) अणु
+	} else if (d_bit) {
 		d_val[2] &= ~d_bit;
 		d_val[!inv] = d_bit;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * send a serial byte to the LCD panel. The caller is responsible क्रम locking
- * अगर needed.
+ * send a serial byte to the LCD panel. The caller is responsible for locking
+ * if needed.
  */
-अटल व्योम lcd_send_serial(पूर्णांक byte)
-अणु
-	पूर्णांक bit;
+static void lcd_send_serial(int byte)
+{
+	int bit;
 
 	/*
-	 * the data bit is set on D0, and the घड़ी on STROBE.
-	 * LCD पढ़ोs D0 on STROBE's rising edge.
+	 * the data bit is set on D0, and the clock on STROBE.
+	 * LCD reads D0 on STROBE's rising edge.
 	 */
-	क्रम (bit = 0; bit < 8; bit++) अणु
+	for (bit = 0; bit < 8; bit++) {
 		clear_bit(LCD_BIT_CL, bits);	/* CLK low */
 		panel_set_bits();
-		अगर (byte & 1) अणु
+		if (byte & 1) {
 			set_bit(LCD_BIT_DA, bits);
-		पूर्ण अन्यथा अणु
+		} else {
 			clear_bit(LCD_BIT_DA, bits);
-		पूर्ण
+		}
 
 		panel_set_bits();
-		udelay(2);  /* मुख्यtain the data during 2 us beक्रमe CLK up */
+		udelay(2);  /* maintain the data during 2 us before CLK up */
 		set_bit(LCD_BIT_CL, bits);	/* CLK high */
 		panel_set_bits();
-		udelay(1);  /* मुख्यtain the strobe during 1 us */
+		udelay(1);  /* maintain the strobe during 1 us */
 		byte >>= 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* turn the backlight on or off */
-अटल व्योम lcd_backlight(काष्ठा अक्षरlcd *अक्षरlcd, क्रमागत अक्षरlcd_onoff on)
-अणु
-	अगर (lcd.pins.bl == PIN_NONE)
-		वापस;
+static void lcd_backlight(struct charlcd *charlcd, enum charlcd_onoff on)
+{
+	if (lcd.pins.bl == PIN_NONE)
+		return;
 
 	/* The backlight is activated by setting the AUTOFEED line to +5V  */
 	spin_lock_irq(&pprt_lock);
-	अगर (on)
+	if (on)
 		set_bit(LCD_BIT_BL, bits);
-	अन्यथा
+	else
 		clear_bit(LCD_BIT_BL, bits);
 	panel_set_bits();
 	spin_unlock_irq(&pprt_lock);
-पूर्ण
+}
 
 /* send a command to the LCD panel in serial mode */
-अटल व्योम lcd_ग_लिखो_cmd_s(काष्ठा hd44780_common *hdc, पूर्णांक cmd)
-अणु
+static void lcd_write_cmd_s(struct hd44780_common *hdc, int cmd)
+{
 	spin_lock_irq(&pprt_lock);
 	lcd_send_serial(0x1F);	/* R/W=W, RS=0 */
 	lcd_send_serial(cmd & 0x0F);
 	lcd_send_serial((cmd >> 4) & 0x0F);
-	udelay(40);		/* the लघुest command takes at least 40 us */
+	udelay(40);		/* the shortest command takes at least 40 us */
 	spin_unlock_irq(&pprt_lock);
-पूर्ण
+}
 
 /* send data to the LCD panel in serial mode */
-अटल व्योम lcd_ग_लिखो_data_s(काष्ठा hd44780_common *hdc, पूर्णांक data)
-अणु
+static void lcd_write_data_s(struct hd44780_common *hdc, int data)
+{
 	spin_lock_irq(&pprt_lock);
 	lcd_send_serial(0x5F);	/* R/W=W, RS=1 */
 	lcd_send_serial(data & 0x0F);
 	lcd_send_serial((data >> 4) & 0x0F);
-	udelay(40);		/* the लघुest data takes at least 40 us */
+	udelay(40);		/* the shortest data takes at least 40 us */
 	spin_unlock_irq(&pprt_lock);
-पूर्ण
+}
 
 /* send a command to the LCD panel in 8 bits parallel mode */
-अटल व्योम lcd_ग_लिखो_cmd_p8(काष्ठा hd44780_common *hdc, पूर्णांक cmd)
-अणु
+static void lcd_write_cmd_p8(struct hd44780_common *hdc, int cmd)
+{
 	spin_lock_irq(&pprt_lock);
 	/* present the data to the data port */
 	w_dtr(pprt, cmd);
-	udelay(20);	/* मुख्यtain the data during 20 us beक्रमe the strobe */
+	udelay(20);	/* maintain the data during 20 us before the strobe */
 
 	set_bit(LCD_BIT_E, bits);
 	clear_bit(LCD_BIT_RS, bits);
 	clear_bit(LCD_BIT_RW, bits);
 	set_ctrl_bits();
 
-	udelay(40);	/* मुख्यtain the strobe during 40 us */
+	udelay(40);	/* maintain the strobe during 40 us */
 
 	clear_bit(LCD_BIT_E, bits);
 	set_ctrl_bits();
 
-	udelay(120);	/* the लघुest command takes at least 120 us */
+	udelay(120);	/* the shortest command takes at least 120 us */
 	spin_unlock_irq(&pprt_lock);
-पूर्ण
+}
 
 /* send data to the LCD panel in 8 bits parallel mode */
-अटल व्योम lcd_ग_लिखो_data_p8(काष्ठा hd44780_common *hdc, पूर्णांक data)
-अणु
+static void lcd_write_data_p8(struct hd44780_common *hdc, int data)
+{
 	spin_lock_irq(&pprt_lock);
 	/* present the data to the data port */
 	w_dtr(pprt, data);
-	udelay(20);	/* मुख्यtain the data during 20 us beक्रमe the strobe */
+	udelay(20);	/* maintain the data during 20 us before the strobe */
 
 	set_bit(LCD_BIT_E, bits);
 	set_bit(LCD_BIT_RS, bits);
 	clear_bit(LCD_BIT_RW, bits);
 	set_ctrl_bits();
 
-	udelay(40);	/* मुख्यtain the strobe during 40 us */
+	udelay(40);	/* maintain the strobe during 40 us */
 
 	clear_bit(LCD_BIT_E, bits);
 	set_ctrl_bits();
 
-	udelay(45);	/* the लघुest data takes at least 45 us */
+	udelay(45);	/* the shortest data takes at least 45 us */
 	spin_unlock_irq(&pprt_lock);
-पूर्ण
+}
 
 /* send a command to the TI LCD panel */
-अटल व्योम lcd_ग_लिखो_cmd_tilcd(काष्ठा hd44780_common *hdc, पूर्णांक cmd)
-अणु
+static void lcd_write_cmd_tilcd(struct hd44780_common *hdc, int cmd)
+{
 	spin_lock_irq(&pprt_lock);
 	/* present the data to the control port */
 	w_ctr(pprt, cmd);
 	udelay(60);
 	spin_unlock_irq(&pprt_lock);
-पूर्ण
+}
 
 /* send data to the TI LCD panel */
-अटल व्योम lcd_ग_लिखो_data_tilcd(काष्ठा hd44780_common *hdc, पूर्णांक data)
-अणु
+static void lcd_write_data_tilcd(struct hd44780_common *hdc, int data)
+{
 	spin_lock_irq(&pprt_lock);
 	/* present the data to the data port */
 	w_dtr(pprt, data);
 	udelay(60);
 	spin_unlock_irq(&pprt_lock);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा अक्षरlcd_ops अक्षरlcd_ops = अणु
+static const struct charlcd_ops charlcd_ops = {
 	.backlight	= lcd_backlight,
-	.prपूर्णांक		= hd44780_common_prपूर्णांक,
-	.जाओxy		= hd44780_common_जाओxy,
+	.print		= hd44780_common_print,
+	.gotoxy		= hd44780_common_gotoxy,
 	.home		= hd44780_common_home,
 	.clear_display	= hd44780_common_clear_display,
 	.init_display	= hd44780_common_init_display,
-	.shअगरt_cursor	= hd44780_common_shअगरt_cursor,
-	.shअगरt_display	= hd44780_common_shअगरt_display,
+	.shift_cursor	= hd44780_common_shift_cursor,
+	.shift_display	= hd44780_common_shift_display,
 	.display	= hd44780_common_display,
 	.cursor		= hd44780_common_cursor,
 	.blink		= hd44780_common_blink,
 	.fontsize	= hd44780_common_fontsize,
 	.lines		= hd44780_common_lines,
-	.redefine_अक्षर	= hd44780_common_redefine_अक्षर,
-पूर्ण;
+	.redefine_char	= hd44780_common_redefine_char,
+};
 
 /* initialize the LCD driver */
-अटल व्योम lcd_init(व्योम)
-अणु
-	काष्ठा अक्षरlcd *अक्षरlcd;
-	काष्ठा hd44780_common *hdc;
+static void lcd_init(void)
+{
+	struct charlcd *charlcd;
+	struct hd44780_common *hdc;
 
 	hdc = hd44780_common_alloc();
-	अगर (!hdc)
-		वापस;
+	if (!hdc)
+		return;
 
-	अक्षरlcd = अक्षरlcd_alloc();
-	अगर (!अक्षरlcd) अणु
-		kमुक्त(hdc);
-		वापस;
-	पूर्ण
+	charlcd = charlcd_alloc();
+	if (!charlcd) {
+		kfree(hdc);
+		return;
+	}
 
 	hdc->hd44780 = &lcd;
-	अक्षरlcd->drvdata = hdc;
+	charlcd->drvdata = hdc;
 
 	/*
-	 * Init lcd काष्ठा with load-समय values to preserve exact
-	 * current functionality (at least क्रम now).
+	 * Init lcd struct with load-time values to preserve exact
+	 * current functionality (at least for now).
 	 */
-	अक्षरlcd->height = lcd_height;
-	अक्षरlcd->width = lcd_width;
+	charlcd->height = lcd_height;
+	charlcd->width = lcd_width;
 	hdc->bwidth = lcd_bwidth;
 	hdc->hwidth = lcd_hwidth;
 
-	चयन (selected_lcd_type) अणु
-	हाल LCD_TYPE_OLD:
+	switch (selected_lcd_type) {
+	case LCD_TYPE_OLD:
 		/* parallel mode, 8 bits */
 		lcd.proto = LCD_PROTO_PARALLEL;
-		lcd.अक्षरset = LCD_CHARSET_NORMAL;
+		lcd.charset = LCD_CHARSET_NORMAL;
 		lcd.pins.e = PIN_STROBE;
 		lcd.pins.rs = PIN_AUTOLF;
 
-		अक्षरlcd->width = 40;
+		charlcd->width = 40;
 		hdc->bwidth = 40;
 		hdc->hwidth = 64;
-		अक्षरlcd->height = 2;
-		अवरोध;
-	हाल LCD_TYPE_KS0074:
+		charlcd->height = 2;
+		break;
+	case LCD_TYPE_KS0074:
 		/* serial mode, ks0074 */
 		lcd.proto = LCD_PROTO_SERIAL;
-		lcd.अक्षरset = LCD_CHARSET_KS0074;
+		lcd.charset = LCD_CHARSET_KS0074;
 		lcd.pins.bl = PIN_AUTOLF;
 		lcd.pins.cl = PIN_STROBE;
 		lcd.pins.da = PIN_D0;
 
-		अक्षरlcd->width = 16;
+		charlcd->width = 16;
 		hdc->bwidth = 40;
 		hdc->hwidth = 16;
-		अक्षरlcd->height = 2;
-		अवरोध;
-	हाल LCD_TYPE_NEXCOM:
+		charlcd->height = 2;
+		break;
+	case LCD_TYPE_NEXCOM:
 		/* parallel mode, 8 bits, generic */
 		lcd.proto = LCD_PROTO_PARALLEL;
-		lcd.अक्षरset = LCD_CHARSET_NORMAL;
+		lcd.charset = LCD_CHARSET_NORMAL;
 		lcd.pins.e = PIN_AUTOLF;
 		lcd.pins.rs = PIN_SELECP;
 		lcd.pins.rw = PIN_INITP;
 
-		अक्षरlcd->width = 16;
+		charlcd->width = 16;
 		hdc->bwidth = 40;
 		hdc->hwidth = 64;
-		अक्षरlcd->height = 2;
-		अवरोध;
-	हाल LCD_TYPE_CUSTOM:
+		charlcd->height = 2;
+		break;
+	case LCD_TYPE_CUSTOM:
 		/* customer-defined */
 		lcd.proto = DEFAULT_LCD_PROTO;
-		lcd.अक्षरset = DEFAULT_LCD_CHARSET;
-		/* शेष geometry will be set later */
-		अवरोध;
-	हाल LCD_TYPE_HANTRONIX:
+		lcd.charset = DEFAULT_LCD_CHARSET;
+		/* default geometry will be set later */
+		break;
+	case LCD_TYPE_HANTRONIX:
 		/* parallel mode, 8 bits, hantronix-like */
-	शेष:
+	default:
 		lcd.proto = LCD_PROTO_PARALLEL;
-		lcd.अक्षरset = LCD_CHARSET_NORMAL;
+		lcd.charset = LCD_CHARSET_NORMAL;
 		lcd.pins.e = PIN_STROBE;
 		lcd.pins.rs = PIN_SELECP;
 
-		अक्षरlcd->width = 16;
+		charlcd->width = 16;
 		hdc->bwidth = 40;
 		hdc->hwidth = 64;
-		अक्षरlcd->height = 2;
-		अवरोध;
-	पूर्ण
+		charlcd->height = 2;
+		break;
+	}
 
-	/* Overग_लिखो with module params set on loading */
-	अगर (lcd_height != NOT_SET)
-		अक्षरlcd->height = lcd_height;
-	अगर (lcd_width != NOT_SET)
-		अक्षरlcd->width = lcd_width;
-	अगर (lcd_bwidth != NOT_SET)
+	/* Overwrite with module params set on loading */
+	if (lcd_height != NOT_SET)
+		charlcd->height = lcd_height;
+	if (lcd_width != NOT_SET)
+		charlcd->width = lcd_width;
+	if (lcd_bwidth != NOT_SET)
 		hdc->bwidth = lcd_bwidth;
-	अगर (lcd_hwidth != NOT_SET)
+	if (lcd_hwidth != NOT_SET)
 		hdc->hwidth = lcd_hwidth;
-	अगर (lcd_अक्षरset != NOT_SET)
-		lcd.अक्षरset = lcd_अक्षरset;
-	अगर (lcd_proto != NOT_SET)
+	if (lcd_charset != NOT_SET)
+		lcd.charset = lcd_charset;
+	if (lcd_proto != NOT_SET)
 		lcd.proto = lcd_proto;
-	अगर (lcd_e_pin != PIN_NOT_SET)
+	if (lcd_e_pin != PIN_NOT_SET)
 		lcd.pins.e = lcd_e_pin;
-	अगर (lcd_rs_pin != PIN_NOT_SET)
+	if (lcd_rs_pin != PIN_NOT_SET)
 		lcd.pins.rs = lcd_rs_pin;
-	अगर (lcd_rw_pin != PIN_NOT_SET)
+	if (lcd_rw_pin != PIN_NOT_SET)
 		lcd.pins.rw = lcd_rw_pin;
-	अगर (lcd_cl_pin != PIN_NOT_SET)
+	if (lcd_cl_pin != PIN_NOT_SET)
 		lcd.pins.cl = lcd_cl_pin;
-	अगर (lcd_da_pin != PIN_NOT_SET)
+	if (lcd_da_pin != PIN_NOT_SET)
 		lcd.pins.da = lcd_da_pin;
-	अगर (lcd_bl_pin != PIN_NOT_SET)
+	if (lcd_bl_pin != PIN_NOT_SET)
 		lcd.pins.bl = lcd_bl_pin;
 
-	/* this is used to catch wrong and शेष values */
-	अगर (अक्षरlcd->width <= 0)
-		अक्षरlcd->width = DEFAULT_LCD_WIDTH;
-	अगर (hdc->bwidth <= 0)
+	/* this is used to catch wrong and default values */
+	if (charlcd->width <= 0)
+		charlcd->width = DEFAULT_LCD_WIDTH;
+	if (hdc->bwidth <= 0)
 		hdc->bwidth = DEFAULT_LCD_BWIDTH;
-	अगर (hdc->hwidth <= 0)
+	if (hdc->hwidth <= 0)
 		hdc->hwidth = DEFAULT_LCD_HWIDTH;
-	अगर (अक्षरlcd->height <= 0)
-		अक्षरlcd->height = DEFAULT_LCD_HEIGHT;
+	if (charlcd->height <= 0)
+		charlcd->height = DEFAULT_LCD_HEIGHT;
 
-	अगर (lcd.proto == LCD_PROTO_SERIAL) अणु	/* SERIAL */
-		अक्षरlcd->ops = &अक्षरlcd_ops;
-		hdc->ग_लिखो_data = lcd_ग_लिखो_data_s;
-		hdc->ग_लिखो_cmd = lcd_ग_लिखो_cmd_s;
+	if (lcd.proto == LCD_PROTO_SERIAL) {	/* SERIAL */
+		charlcd->ops = &charlcd_ops;
+		hdc->write_data = lcd_write_data_s;
+		hdc->write_cmd = lcd_write_cmd_s;
 
-		अगर (lcd.pins.cl == PIN_NOT_SET)
+		if (lcd.pins.cl == PIN_NOT_SET)
 			lcd.pins.cl = DEFAULT_LCD_PIN_SCL;
-		अगर (lcd.pins.da == PIN_NOT_SET)
+		if (lcd.pins.da == PIN_NOT_SET)
 			lcd.pins.da = DEFAULT_LCD_PIN_SDA;
 
-	पूर्ण अन्यथा अगर (lcd.proto == LCD_PROTO_PARALLEL) अणु	/* PARALLEL */
-		अक्षरlcd->ops = &अक्षरlcd_ops;
-		hdc->ग_लिखो_data = lcd_ग_लिखो_data_p8;
-		hdc->ग_लिखो_cmd = lcd_ग_लिखो_cmd_p8;
+	} else if (lcd.proto == LCD_PROTO_PARALLEL) {	/* PARALLEL */
+		charlcd->ops = &charlcd_ops;
+		hdc->write_data = lcd_write_data_p8;
+		hdc->write_cmd = lcd_write_cmd_p8;
 
-		अगर (lcd.pins.e == PIN_NOT_SET)
+		if (lcd.pins.e == PIN_NOT_SET)
 			lcd.pins.e = DEFAULT_LCD_PIN_E;
-		अगर (lcd.pins.rs == PIN_NOT_SET)
+		if (lcd.pins.rs == PIN_NOT_SET)
 			lcd.pins.rs = DEFAULT_LCD_PIN_RS;
-		अगर (lcd.pins.rw == PIN_NOT_SET)
+		if (lcd.pins.rw == PIN_NOT_SET)
 			lcd.pins.rw = DEFAULT_LCD_PIN_RW;
-	पूर्ण अन्यथा अणु
-		अक्षरlcd->ops = &अक्षरlcd_ops;
-		hdc->ग_लिखो_data = lcd_ग_लिखो_data_tilcd;
-		hdc->ग_लिखो_cmd = lcd_ग_लिखो_cmd_tilcd;
-	पूर्ण
+	} else {
+		charlcd->ops = &charlcd_ops;
+		hdc->write_data = lcd_write_data_tilcd;
+		hdc->write_cmd = lcd_write_cmd_tilcd;
+	}
 
-	अगर (lcd.pins.bl == PIN_NOT_SET)
+	if (lcd.pins.bl == PIN_NOT_SET)
 		lcd.pins.bl = DEFAULT_LCD_PIN_BL;
 
-	अगर (lcd.pins.e == PIN_NOT_SET)
+	if (lcd.pins.e == PIN_NOT_SET)
 		lcd.pins.e = PIN_NONE;
-	अगर (lcd.pins.rs == PIN_NOT_SET)
+	if (lcd.pins.rs == PIN_NOT_SET)
 		lcd.pins.rs = PIN_NONE;
-	अगर (lcd.pins.rw == PIN_NOT_SET)
+	if (lcd.pins.rw == PIN_NOT_SET)
 		lcd.pins.rw = PIN_NONE;
-	अगर (lcd.pins.bl == PIN_NOT_SET)
+	if (lcd.pins.bl == PIN_NOT_SET)
 		lcd.pins.bl = PIN_NONE;
-	अगर (lcd.pins.cl == PIN_NOT_SET)
+	if (lcd.pins.cl == PIN_NOT_SET)
 		lcd.pins.cl = PIN_NONE;
-	अगर (lcd.pins.da == PIN_NOT_SET)
+	if (lcd.pins.da == PIN_NOT_SET)
 		lcd.pins.da = PIN_NONE;
 
-	अगर (lcd.अक्षरset == NOT_SET)
-		lcd.अक्षरset = DEFAULT_LCD_CHARSET;
+	if (lcd.charset == NOT_SET)
+		lcd.charset = DEFAULT_LCD_CHARSET;
 
-	अगर (lcd.अक्षरset == LCD_CHARSET_KS0074)
-		अक्षरlcd->अक्षर_conv = lcd_अक्षर_conv_ks0074;
-	अन्यथा
-		अक्षरlcd->अक्षर_conv = शून्य;
+	if (lcd.charset == LCD_CHARSET_KS0074)
+		charlcd->char_conv = lcd_char_conv_ks0074;
+	else
+		charlcd->char_conv = NULL;
 
 	pin_to_bits(lcd.pins.e, lcd_bits[LCD_PORT_D][LCD_BIT_E],
 		    lcd_bits[LCD_PORT_C][LCD_BIT_E]);
@@ -1014,371 +1013,371 @@ MODULE_PARM_DESC(keypad_enabled, "Deprecated option, use keypad_type instead");
 	pin_to_bits(lcd.pins.da, lcd_bits[LCD_PORT_D][LCD_BIT_DA],
 		    lcd_bits[LCD_PORT_C][LCD_BIT_DA]);
 
-	lcd.अक्षरlcd = अक्षरlcd;
+	lcd.charlcd = charlcd;
 	lcd.initialized = true;
-पूर्ण
+}
 
 /*
- * These are the file operation function क्रम user access to /dev/keypad
+ * These are the file operation function for user access to /dev/keypad
  */
 
-अटल sमाप_प्रकार keypad_पढ़ो(काष्ठा file *file,
-			   अक्षर __user *buf, माप_प्रकार count, loff_t *ppos)
-अणु
-	अचिन्हित i = *ppos;
-	अक्षर __user *पंचांगp = buf;
+static ssize_t keypad_read(struct file *file,
+			   char __user *buf, size_t count, loff_t *ppos)
+{
+	unsigned i = *ppos;
+	char __user *tmp = buf;
 
-	अगर (keypad_buflen == 0) अणु
-		अगर (file->f_flags & O_NONBLOCK)
-			वापस -EAGAIN;
+	if (keypad_buflen == 0) {
+		if (file->f_flags & O_NONBLOCK)
+			return -EAGAIN;
 
-		अगर (रुको_event_पूर्णांकerruptible(keypad_पढ़ो_रुको,
+		if (wait_event_interruptible(keypad_read_wait,
 					     keypad_buflen != 0))
-			वापस -EINTR;
-	पूर्ण
+			return -EINTR;
+	}
 
-	क्रम (; count-- > 0 && (keypad_buflen > 0);
-	     ++i, ++पंचांगp, --keypad_buflen) अणु
-		put_user(keypad_buffer[keypad_start], पंचांगp);
+	for (; count-- > 0 && (keypad_buflen > 0);
+	     ++i, ++tmp, --keypad_buflen) {
+		put_user(keypad_buffer[keypad_start], tmp);
 		keypad_start = (keypad_start + 1) % KEYPAD_BUFFER;
-	पूर्ण
+	}
 	*ppos = i;
 
-	वापस पंचांगp - buf;
-पूर्ण
+	return tmp - buf;
+}
 
-अटल पूर्णांक keypad_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	पूर्णांक ret;
+static int keypad_open(struct inode *inode, struct file *file)
+{
+	int ret;
 
 	ret = -EBUSY;
-	अगर (!atomic_dec_and_test(&keypad_available))
-		जाओ fail;	/* खोलो only once at a समय */
+	if (!atomic_dec_and_test(&keypad_available))
+		goto fail;	/* open only once at a time */
 
 	ret = -EPERM;
-	अगर (file->f_mode & FMODE_WRITE)	/* device is पढ़ो-only */
-		जाओ fail;
+	if (file->f_mode & FMODE_WRITE)	/* device is read-only */
+		goto fail;
 
-	keypad_buflen = 0;	/* flush the buffer on खोलोing */
-	वापस 0;
+	keypad_buflen = 0;	/* flush the buffer on opening */
+	return 0;
  fail:
 	atomic_inc(&keypad_available);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक keypad_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
+static int keypad_release(struct inode *inode, struct file *file)
+{
 	atomic_inc(&keypad_available);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations keypad_fops = अणु
-	.पढ़ो    = keypad_पढ़ो,		/* पढ़ो */
-	.खोलो    = keypad_खोलो,		/* खोलो */
-	.release = keypad_release,	/* बंद */
-	.llseek  = शेष_llseek,
-पूर्ण;
+static const struct file_operations keypad_fops = {
+	.read    = keypad_read,		/* read */
+	.open    = keypad_open,		/* open */
+	.release = keypad_release,	/* close */
+	.llseek  = default_llseek,
+};
 
-अटल काष्ठा miscdevice keypad_dev = अणु
+static struct miscdevice keypad_dev = {
 	.minor	= KEYPAD_MINOR,
 	.name	= "keypad",
 	.fops	= &keypad_fops,
-पूर्ण;
+};
 
-अटल व्योम keypad_send_key(स्थिर अक्षर *string, पूर्णांक max_len)
-अणु
-	/* send the key to the device only अगर a process is attached to it. */
-	अगर (!atomic_पढ़ो(&keypad_available)) अणु
-		जबतक (max_len-- && keypad_buflen < KEYPAD_BUFFER && *string) अणु
+static void keypad_send_key(const char *string, int max_len)
+{
+	/* send the key to the device only if a process is attached to it. */
+	if (!atomic_read(&keypad_available)) {
+		while (max_len-- && keypad_buflen < KEYPAD_BUFFER && *string) {
 			keypad_buffer[(keypad_start + keypad_buflen++) %
 				      KEYPAD_BUFFER] = *string++;
-		पूर्ण
-		wake_up_पूर्णांकerruptible(&keypad_पढ़ो_रुको);
-	पूर्ण
-पूर्ण
+		}
+		wake_up_interruptible(&keypad_read_wait);
+	}
+}
 
-/* this function scans all the bits involving at least one logical संकेत,
- * and माला_दो the results in the bitfield "phys_read" (one bit per established
+/* this function scans all the bits involving at least one logical signal,
+ * and puts the results in the bitfield "phys_read" (one bit per established
  * contact), and sets "phys_read_prev" to "phys_read".
  *
- * Note: to debounce input संकेतs, we will only consider as चयनed a संकेत
- * which is stable across 2 measures. Signals which are dअगरferent between two
- * पढ़ोs will be kept as they previously were in their logical क्रमm (phys_prev).
- * A संकेत which has just चयनed will have a 1 in
- * (phys_पढ़ो ^ phys_पढ़ो_prev).
+ * Note: to debounce input signals, we will only consider as switched a signal
+ * which is stable across 2 measures. Signals which are different between two
+ * reads will be kept as they previously were in their logical form (phys_prev).
+ * A signal which has just switched will have a 1 in
+ * (phys_read ^ phys_read_prev).
  */
-अटल व्योम phys_scan_contacts(व्योम)
-अणु
-	पूर्णांक bit, bitval;
-	अक्षर oldval;
-	अक्षर biपंचांगask;
-	अक्षर gndmask;
+static void phys_scan_contacts(void)
+{
+	int bit, bitval;
+	char oldval;
+	char bitmask;
+	char gndmask;
 
 	phys_prev = phys_curr;
-	phys_पढ़ो_prev = phys_पढ़ो;
-	phys_पढ़ो = 0;		/* flush all संकेतs */
+	phys_read_prev = phys_read;
+	phys_read = 0;		/* flush all signals */
 
-	/* keep track of old value, with all outमाला_दो disabled */
+	/* keep track of old value, with all outputs disabled */
 	oldval = r_dtr(pprt) | scan_mask_o;
-	/* activate all keyboard outमाला_दो (active low) */
+	/* activate all keyboard outputs (active low) */
 	w_dtr(pprt, oldval & ~scan_mask_o);
 
-	/* will have a 1 क्रम each bit set to gnd */
-	biपंचांगask = PNL_PINPUT(r_str(pprt)) & scan_mask_i;
-	/* disable all matrix संकेतs */
+	/* will have a 1 for each bit set to gnd */
+	bitmask = PNL_PINPUT(r_str(pprt)) & scan_mask_i;
+	/* disable all matrix signals */
 	w_dtr(pprt, oldval);
 
-	/* now that all outमाला_दो are cleared, the only active input bits are
+	/* now that all outputs are cleared, the only active input bits are
 	 * directly connected to the ground
 	 */
 
-	/* 1 क्रम each grounded input */
+	/* 1 for each grounded input */
 	gndmask = PNL_PINPUT(r_str(pprt)) & scan_mask_i;
 
-	/* grounded inमाला_दो are संकेतs 40-44 */
-	phys_पढ़ो |= (__u64)gndmask << 40;
+	/* grounded inputs are signals 40-44 */
+	phys_read |= (__u64)gndmask << 40;
 
-	अगर (biपंचांगask != gndmask) अणु
+	if (bitmask != gndmask) {
 		/*
-		 * since clearing the outमाला_दो changed some inमाला_दो, we know
-		 * that some input संकेतs are currently tied to some outमाला_दो.
+		 * since clearing the outputs changed some inputs, we know
+		 * that some input signals are currently tied to some outputs.
 		 * So we'll scan them.
 		 */
-		क्रम (bit = 0; bit < 8; bit++) अणु
+		for (bit = 0; bit < 8; bit++) {
 			bitval = BIT(bit);
 
-			अगर (!(scan_mask_o & bitval))	/* skip unused bits */
-				जारी;
+			if (!(scan_mask_o & bitval))	/* skip unused bits */
+				continue;
 
 			w_dtr(pprt, oldval & ~bitval);	/* enable this output */
-			biपंचांगask = PNL_PINPUT(r_str(pprt)) & ~gndmask;
-			phys_पढ़ो |= (__u64)biपंचांगask << (5 * bit);
-		पूर्ण
-		w_dtr(pprt, oldval);	/* disable all outमाला_दो */
-	पूर्ण
+			bitmask = PNL_PINPUT(r_str(pprt)) & ~gndmask;
+			phys_read |= (__u64)bitmask << (5 * bit);
+		}
+		w_dtr(pprt, oldval);	/* disable all outputs */
+	}
 	/*
 	 * this is easy: use old bits when they are flapping,
 	 * use new ones when stable
 	 */
-	phys_curr = (phys_prev & (phys_पढ़ो ^ phys_पढ़ो_prev)) |
-		    (phys_पढ़ो & ~(phys_पढ़ो ^ phys_पढ़ो_prev));
-पूर्ण
+	phys_curr = (phys_prev & (phys_read ^ phys_read_prev)) |
+		    (phys_read & ~(phys_read ^ phys_read_prev));
+}
 
-अटल अंतरभूत पूर्णांक input_state_high(काष्ठा logical_input *input)
-अणु
-#अगर 0
+static inline int input_state_high(struct logical_input *input)
+{
+#if 0
 	/* FIXME:
 	 * this is an invalid test. It tries to catch
 	 * transitions from single-key to multiple-key, but
-	 * करोesn't take पूर्णांकo account the contacts polarity.
+	 * doesn't take into account the contacts polarity.
 	 * The only solution to the problem is to parse keys
 	 * from the most complex to the simplest combinations,
 	 * and mark them as 'caught' once a combination
-	 * matches, then unmatch it क्रम all other ones.
+	 * matches, then unmatch it for all other ones.
 	 */
 
-	/* try to catch dangerous transitions हालs :
-	 * someone adds a bit, so this संकेत was a false
+	/* try to catch dangerous transitions cases :
+	 * someone adds a bit, so this signal was a false
 	 * positive resulting from a transition. We should
-	 * invalidate the संकेत immediately and not call the
+	 * invalidate the signal immediately and not call the
 	 * release function.
-	 * eg: 0 -(press A)-> A -(press B)-> AB : करोn't match A's release.
+	 * eg: 0 -(press A)-> A -(press B)-> AB : don't match A's release.
 	 */
-	अगर (((phys_prev & input->mask) == input->value) &&
-	    ((phys_curr & input->mask) >  input->value)) अणु
+	if (((phys_prev & input->mask) == input->value) &&
+	    ((phys_curr & input->mask) >  input->value)) {
 		input->state = INPUT_ST_LOW; /* invalidate */
-		वापस 1;
-	पूर्ण
-#पूर्ण_अगर
+		return 1;
+	}
+#endif
 
-	अगर ((phys_curr & input->mask) == input->value) अणु
-		अगर ((input->type == INPUT_TYPE_STD) &&
-		    (input->high_समयr == 0)) अणु
-			input->high_समयr++;
-			अगर (input->u.std.press_fct)
+	if ((phys_curr & input->mask) == input->value) {
+		if ((input->type == INPUT_TYPE_STD) &&
+		    (input->high_timer == 0)) {
+			input->high_timer++;
+			if (input->u.std.press_fct)
 				input->u.std.press_fct(input->u.std.press_data);
-		पूर्ण अन्यथा अगर (input->type == INPUT_TYPE_KBD) अणु
+		} else if (input->type == INPUT_TYPE_KBD) {
 			/* will turn on the light */
 			keypressed = 1;
 
-			अगर (input->high_समयr == 0) अणु
-				अक्षर *press_str = input->u.kbd.press_str;
+			if (input->high_timer == 0) {
+				char *press_str = input->u.kbd.press_str;
 
-				अगर (press_str[0]) अणु
-					पूर्णांक s = माप(input->u.kbd.press_str);
+				if (press_str[0]) {
+					int s = sizeof(input->u.kbd.press_str);
 
 					keypad_send_key(press_str, s);
-				पूर्ण
-			पूर्ण
+				}
+			}
 
-			अगर (input->u.kbd.repeat_str[0]) अणु
-				अक्षर *repeat_str = input->u.kbd.repeat_str;
+			if (input->u.kbd.repeat_str[0]) {
+				char *repeat_str = input->u.kbd.repeat_str;
 
-				अगर (input->high_समयr >= KEYPAD_REP_START) अणु
-					पूर्णांक s = माप(input->u.kbd.repeat_str);
+				if (input->high_timer >= KEYPAD_REP_START) {
+					int s = sizeof(input->u.kbd.repeat_str);
 
-					input->high_समयr -= KEYPAD_REP_DELAY;
+					input->high_timer -= KEYPAD_REP_DELAY;
 					keypad_send_key(repeat_str, s);
-				पूर्ण
+				}
 				/* we will need to come back here soon */
-				inमाला_दो_stable = 0;
-			पूर्ण
+				inputs_stable = 0;
+			}
 
-			अगर (input->high_समयr < 255)
-				input->high_समयr++;
-		पूर्ण
-		वापस 1;
-	पूर्ण
+			if (input->high_timer < 255)
+				input->high_timer++;
+		}
+		return 1;
+	}
 
-	/* अन्यथा संकेत falling करोwn. Let's fall through. */
+	/* else signal falling down. Let's fall through. */
 	input->state = INPUT_ST_FALLING;
-	input->fall_समयr = 0;
+	input->fall_timer = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम input_state_falling(काष्ठा logical_input *input)
-अणु
-#अगर 0
+static inline void input_state_falling(struct logical_input *input)
+{
+#if 0
 	/* FIXME !!! same comment as in input_state_high */
-	अगर (((phys_prev & input->mask) == input->value) &&
-	    ((phys_curr & input->mask) >  input->value)) अणु
+	if (((phys_prev & input->mask) == input->value) &&
+	    ((phys_curr & input->mask) >  input->value)) {
 		input->state = INPUT_ST_LOW;	/* invalidate */
-		वापस;
-	पूर्ण
-#पूर्ण_अगर
+		return;
+	}
+#endif
 
-	अगर ((phys_curr & input->mask) == input->value) अणु
-		अगर (input->type == INPUT_TYPE_KBD) अणु
+	if ((phys_curr & input->mask) == input->value) {
+		if (input->type == INPUT_TYPE_KBD) {
 			/* will turn on the light */
 			keypressed = 1;
 
-			अगर (input->u.kbd.repeat_str[0]) अणु
-				अक्षर *repeat_str = input->u.kbd.repeat_str;
+			if (input->u.kbd.repeat_str[0]) {
+				char *repeat_str = input->u.kbd.repeat_str;
 
-				अगर (input->high_समयr >= KEYPAD_REP_START) अणु
-					पूर्णांक s = माप(input->u.kbd.repeat_str);
+				if (input->high_timer >= KEYPAD_REP_START) {
+					int s = sizeof(input->u.kbd.repeat_str);
 
-					input->high_समयr -= KEYPAD_REP_DELAY;
+					input->high_timer -= KEYPAD_REP_DELAY;
 					keypad_send_key(repeat_str, s);
-				पूर्ण
+				}
 				/* we will need to come back here soon */
-				inमाला_दो_stable = 0;
-			पूर्ण
+				inputs_stable = 0;
+			}
 
-			अगर (input->high_समयr < 255)
-				input->high_समयr++;
-		पूर्ण
+			if (input->high_timer < 255)
+				input->high_timer++;
+		}
 		input->state = INPUT_ST_HIGH;
-	पूर्ण अन्यथा अगर (input->fall_समयr >= input->fall_समय) अणु
+	} else if (input->fall_timer >= input->fall_time) {
 		/* call release event */
-		अगर (input->type == INPUT_TYPE_STD) अणु
-			व्योम (*release_fct)(पूर्णांक) = input->u.std.release_fct;
+		if (input->type == INPUT_TYPE_STD) {
+			void (*release_fct)(int) = input->u.std.release_fct;
 
-			अगर (release_fct)
+			if (release_fct)
 				release_fct(input->u.std.release_data);
-		पूर्ण अन्यथा अगर (input->type == INPUT_TYPE_KBD) अणु
-			अक्षर *release_str = input->u.kbd.release_str;
+		} else if (input->type == INPUT_TYPE_KBD) {
+			char *release_str = input->u.kbd.release_str;
 
-			अगर (release_str[0]) अणु
-				पूर्णांक s = माप(input->u.kbd.release_str);
+			if (release_str[0]) {
+				int s = sizeof(input->u.kbd.release_str);
 
 				keypad_send_key(release_str, s);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		input->state = INPUT_ST_LOW;
-	पूर्ण अन्यथा अणु
-		input->fall_समयr++;
-		inमाला_दो_stable = 0;
-	पूर्ण
-पूर्ण
+	} else {
+		input->fall_timer++;
+		inputs_stable = 0;
+	}
+}
 
-अटल व्योम panel_process_inमाला_दो(व्योम)
-अणु
-	काष्ठा logical_input *input;
+static void panel_process_inputs(void)
+{
+	struct logical_input *input;
 
 	keypressed = 0;
-	inमाला_दो_stable = 1;
-	list_क्रम_each_entry(input, &logical_inमाला_दो, list) अणु
-		चयन (input->state) अणु
-		हाल INPUT_ST_LOW:
-			अगर ((phys_curr & input->mask) != input->value)
-				अवरोध;
-			/* अगर all needed ones were alपढ़ोy set previously,
-			 * this means that this logical संकेत has been
+	inputs_stable = 1;
+	list_for_each_entry(input, &logical_inputs, list) {
+		switch (input->state) {
+		case INPUT_ST_LOW:
+			if ((phys_curr & input->mask) != input->value)
+				break;
+			/* if all needed ones were already set previously,
+			 * this means that this logical signal has been
 			 * activated by the releasing of another combined
-			 * संकेत, so we करोn't want to match.
+			 * signal, so we don't want to match.
 			 * eg: AB -(release B)-> A -(release A)-> 0 :
-			 *     करोn't match A.
+			 *     don't match A.
 			 */
-			अगर ((phys_prev & input->mask) == input->value)
-				अवरोध;
-			input->rise_समयr = 0;
+			if ((phys_prev & input->mask) == input->value)
+				break;
+			input->rise_timer = 0;
 			input->state = INPUT_ST_RISING;
 			fallthrough;
-		हाल INPUT_ST_RISING:
-			अगर ((phys_curr & input->mask) != input->value) अणु
+		case INPUT_ST_RISING:
+			if ((phys_curr & input->mask) != input->value) {
 				input->state = INPUT_ST_LOW;
-				अवरोध;
-			पूर्ण
-			अगर (input->rise_समयr < input->rise_समय) अणु
-				inमाला_दो_stable = 0;
-				input->rise_समयr++;
-				अवरोध;
-			पूर्ण
-			input->high_समयr = 0;
+				break;
+			}
+			if (input->rise_timer < input->rise_time) {
+				inputs_stable = 0;
+				input->rise_timer++;
+				break;
+			}
+			input->high_timer = 0;
 			input->state = INPUT_ST_HIGH;
 			fallthrough;
-		हाल INPUT_ST_HIGH:
-			अगर (input_state_high(input))
-				अवरोध;
+		case INPUT_ST_HIGH:
+			if (input_state_high(input))
+				break;
 			fallthrough;
-		हाल INPUT_ST_FALLING:
+		case INPUT_ST_FALLING:
 			input_state_falling(input);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम panel_scan_समयr(काष्ठा समयr_list *unused)
-अणु
-	अगर (keypad.enabled && keypad_initialized) अणु
-		अगर (spin_trylock_irq(&pprt_lock)) अणु
+static void panel_scan_timer(struct timer_list *unused)
+{
+	if (keypad.enabled && keypad_initialized) {
+		if (spin_trylock_irq(&pprt_lock)) {
 			phys_scan_contacts();
 
-			/* no need क्रम the parport anymore */
+			/* no need for the parport anymore */
 			spin_unlock_irq(&pprt_lock);
-		पूर्ण
+		}
 
-		अगर (!inमाला_दो_stable || phys_curr != phys_prev)
-			panel_process_inमाला_दो();
-	पूर्ण
+		if (!inputs_stable || phys_curr != phys_prev)
+			panel_process_inputs();
+	}
 
-	अगर (keypressed && lcd.enabled && lcd.initialized)
-		अक्षरlcd_poke(lcd.अक्षरlcd);
+	if (keypressed && lcd.enabled && lcd.initialized)
+		charlcd_poke(lcd.charlcd);
 
-	mod_समयr(&scan_समयr, jअगरfies + INPUT_POLL_TIME);
-पूर्ण
+	mod_timer(&scan_timer, jiffies + INPUT_POLL_TIME);
+}
 
-अटल व्योम init_scan_समयr(व्योम)
-अणु
-	अगर (scan_समयr.function)
-		वापस;		/* alपढ़ोy started */
+static void init_scan_timer(void)
+{
+	if (scan_timer.function)
+		return;		/* already started */
 
-	समयr_setup(&scan_समयr, panel_scan_समयr, 0);
-	scan_समयr.expires = jअगरfies + INPUT_POLL_TIME;
-	add_समयr(&scan_समयr);
-पूर्ण
+	timer_setup(&scan_timer, panel_scan_timer, 0);
+	scan_timer.expires = jiffies + INPUT_POLL_TIME;
+	add_timer(&scan_timer);
+}
 
-/* converts a name of the क्रमm "({BbAaPpSsEe}{01234567-})*" to a series of bits.
- * अगर <omask> or <imask> are non-null, they will be or'ed with the bits
+/* converts a name of the form "({BbAaPpSsEe}{01234567-})*" to a series of bits.
+ * if <omask> or <imask> are non-null, they will be or'ed with the bits
  * corresponding to out and in bits respectively.
- * वापसs 1 अगर ok, 0 अगर error (in which हाल, nothing is written).
+ * returns 1 if ok, 0 if error (in which case, nothing is written).
  */
-अटल u8 input_name2mask(स्थिर अक्षर *name, __u64 *mask, __u64 *value,
+static u8 input_name2mask(const char *name, __u64 *mask, __u64 *value,
 			  u8 *imask, u8 *omask)
-अणु
-	स्थिर अक्षर sigtab[] = "EeSsPpAaBb";
+{
+	const char sigtab[] = "EeSsPpAaBb";
 	u8 im, om;
 	__u64 m, v;
 
@@ -1386,13 +1385,13 @@ MODULE_PARM_DESC(keypad_enabled, "Deprecated option, use keypad_type instead");
 	im = 0;
 	m = 0ULL;
 	v = 0ULL;
-	जबतक (*name) अणु
-		पूर्णांक in, out, bit, neg;
-		स्थिर अक्षर *idx;
+	while (*name) {
+		int in, out, bit, neg;
+		const char *idx;
 
-		idx = म_अक्षर(sigtab, *name);
-		अगर (!idx)
-			वापस 0;	/* input name not found */
+		idx = strchr(sigtab, *name);
+		if (!idx)
+			return 0;	/* input name not found */
 
 		in = idx - sigtab;
 		neg = (in & 1);	/* odd (lower) names are negated */
@@ -1400,291 +1399,291 @@ MODULE_PARM_DESC(keypad_enabled, "Deprecated option, use keypad_type instead");
 		im |= BIT(in);
 
 		name++;
-		अगर (*name >= '0' && *name <= '7') अणु
+		if (*name >= '0' && *name <= '7') {
 			out = *name - '0';
 			om |= BIT(out);
-		पूर्ण अन्यथा अगर (*name == '-') अणु
+		} else if (*name == '-') {
 			out = 8;
-		पूर्ण अन्यथा अणु
-			वापस 0;	/* unknown bit name */
-		पूर्ण
+		} else {
+			return 0;	/* unknown bit name */
+		}
 
 		bit = (out * 5) + in;
 
 		m |= 1ULL << bit;
-		अगर (!neg)
+		if (!neg)
 			v |= 1ULL << bit;
 		name++;
-	पूर्ण
+	}
 	*mask = m;
 	*value = v;
-	अगर (imask)
+	if (imask)
 		*imask |= im;
-	अगर (omask)
+	if (omask)
 		*omask |= om;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-/* tries to bind a key to the संकेत name <name>. The key will send the
- * strings <press>, <repeat>, <release> क्रम these respective events.
- * Returns the poपूर्णांकer to the new key अगर ok, शून्य अगर the key could not be bound.
+/* tries to bind a key to the signal name <name>. The key will send the
+ * strings <press>, <repeat>, <release> for these respective events.
+ * Returns the pointer to the new key if ok, NULL if the key could not be bound.
  */
-अटल काष्ठा logical_input *panel_bind_key(स्थिर अक्षर *name, स्थिर अक्षर *press,
-					    स्थिर अक्षर *repeat,
-					    स्थिर अक्षर *release)
-अणु
-	काष्ठा logical_input *key;
+static struct logical_input *panel_bind_key(const char *name, const char *press,
+					    const char *repeat,
+					    const char *release)
+{
+	struct logical_input *key;
 
-	key = kzalloc(माप(*key), GFP_KERNEL);
-	अगर (!key)
-		वापस शून्य;
+	key = kzalloc(sizeof(*key), GFP_KERNEL);
+	if (!key)
+		return NULL;
 
-	अगर (!input_name2mask(name, &key->mask, &key->value, &scan_mask_i,
-			     &scan_mask_o)) अणु
-		kमुक्त(key);
-		वापस शून्य;
-	पूर्ण
+	if (!input_name2mask(name, &key->mask, &key->value, &scan_mask_i,
+			     &scan_mask_o)) {
+		kfree(key);
+		return NULL;
+	}
 
 	key->type = INPUT_TYPE_KBD;
 	key->state = INPUT_ST_LOW;
-	key->rise_समय = 1;
-	key->fall_समय = 1;
+	key->rise_time = 1;
+	key->fall_time = 1;
 
-	म_नकलन(key->u.kbd.press_str, press, माप(key->u.kbd.press_str));
-	म_नकलन(key->u.kbd.repeat_str, repeat, माप(key->u.kbd.repeat_str));
-	म_नकलन(key->u.kbd.release_str, release,
-		माप(key->u.kbd.release_str));
-	list_add(&key->list, &logical_inमाला_दो);
-	वापस key;
-पूर्ण
+	strncpy(key->u.kbd.press_str, press, sizeof(key->u.kbd.press_str));
+	strncpy(key->u.kbd.repeat_str, repeat, sizeof(key->u.kbd.repeat_str));
+	strncpy(key->u.kbd.release_str, release,
+		sizeof(key->u.kbd.release_str));
+	list_add(&key->list, &logical_inputs);
+	return key;
+}
 
-#अगर 0
-/* tries to bind a callback function to the संकेत name <name>. The function
- * <press_fct> will be called with the <press_data> arg when the संकेत is
- * activated, and so on क्रम <release_fct>/<release_data>
- * Returns the poपूर्णांकer to the new संकेत अगर ok, शून्य अगर the संकेत could not
+#if 0
+/* tries to bind a callback function to the signal name <name>. The function
+ * <press_fct> will be called with the <press_data> arg when the signal is
+ * activated, and so on for <release_fct>/<release_data>
+ * Returns the pointer to the new signal if ok, NULL if the signal could not
  * be bound.
  */
-अटल काष्ठा logical_input *panel_bind_callback(अक्षर *name,
-						 व्योम (*press_fct)(पूर्णांक),
-						 पूर्णांक press_data,
-						 व्योम (*release_fct)(पूर्णांक),
-						 पूर्णांक release_data)
-अणु
-	काष्ठा logical_input *callback;
+static struct logical_input *panel_bind_callback(char *name,
+						 void (*press_fct)(int),
+						 int press_data,
+						 void (*release_fct)(int),
+						 int release_data)
+{
+	struct logical_input *callback;
 
-	callback = kदो_स्मृति(माप(*callback), GFP_KERNEL);
-	अगर (!callback)
-		वापस शून्य;
+	callback = kmalloc(sizeof(*callback), GFP_KERNEL);
+	if (!callback)
+		return NULL;
 
-	स_रखो(callback, 0, माप(काष्ठा logical_input));
-	अगर (!input_name2mask(name, &callback->mask, &callback->value,
+	memset(callback, 0, sizeof(struct logical_input));
+	if (!input_name2mask(name, &callback->mask, &callback->value,
 			     &scan_mask_i, &scan_mask_o))
-		वापस शून्य;
+		return NULL;
 
 	callback->type = INPUT_TYPE_STD;
 	callback->state = INPUT_ST_LOW;
-	callback->rise_समय = 1;
-	callback->fall_समय = 1;
+	callback->rise_time = 1;
+	callback->fall_time = 1;
 	callback->u.std.press_fct = press_fct;
 	callback->u.std.press_data = press_data;
 	callback->u.std.release_fct = release_fct;
 	callback->u.std.release_data = release_data;
-	list_add(&callback->list, &logical_inमाला_दो);
-	वापस callback;
-पूर्ण
-#पूर्ण_अगर
+	list_add(&callback->list, &logical_inputs);
+	return callback;
+}
+#endif
 
-अटल व्योम keypad_init(व्योम)
-अणु
-	पूर्णांक keynum;
+static void keypad_init(void)
+{
+	int keynum;
 
-	init_रुकोqueue_head(&keypad_पढ़ो_रुको);
+	init_waitqueue_head(&keypad_read_wait);
 	keypad_buflen = 0;	/* flushes any eventual noisy keystroke */
 
 	/* Let's create all known keys */
 
-	क्रम (keynum = 0; keypad_profile[keynum][0][0]; keynum++) अणु
+	for (keynum = 0; keypad_profile[keynum][0][0]; keynum++) {
 		panel_bind_key(keypad_profile[keynum][0],
 			       keypad_profile[keynum][1],
 			       keypad_profile[keynum][2],
 			       keypad_profile[keynum][3]);
-	पूर्ण
+	}
 
-	init_scan_समयr();
+	init_scan_timer();
 	keypad_initialized = 1;
-पूर्ण
+}
 
 /**************************************************/
 /* device initialization                          */
 /**************************************************/
 
-अटल व्योम panel_attach(काष्ठा parport *port)
-अणु
-	काष्ठा pardev_cb panel_cb;
+static void panel_attach(struct parport *port)
+{
+	struct pardev_cb panel_cb;
 
-	अगर (port->number != parport)
-		वापस;
+	if (port->number != parport)
+		return;
 
-	अगर (pprt) अणु
+	if (pprt) {
 		pr_err("%s: port->number=%d parport=%d, already registered!\n",
 		       __func__, port->number, parport);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	स_रखो(&panel_cb, 0, माप(panel_cb));
-	panel_cb.निजी = &pprt;
+	memset(&panel_cb, 0, sizeof(panel_cb));
+	panel_cb.private = &pprt;
 	/* panel_cb.flags = 0 should be PARPORT_DEV_EXCL? */
 
-	pprt = parport_रेजिस्टर_dev_model(port, "panel", &panel_cb, 0);
-	अगर (!pprt) अणु
+	pprt = parport_register_dev_model(port, "panel", &panel_cb, 0);
+	if (!pprt) {
 		pr_err("%s: port->number=%d parport=%d, parport_register_device() failed\n",
 		       __func__, port->number, parport);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (parport_claim(pprt)) अणु
+	if (parport_claim(pprt)) {
 		pr_err("could not claim access to parport%d. Aborting.\n",
 		       parport);
-		जाओ err_unreg_device;
-	पूर्ण
+		goto err_unreg_device;
+	}
 
-	/* must init LCD first, just in हाल an IRQ from the keypad is
+	/* must init LCD first, just in case an IRQ from the keypad is
 	 * generated at keypad init
 	 */
-	अगर (lcd.enabled) अणु
+	if (lcd.enabled) {
 		lcd_init();
-		अगर (!lcd.अक्षरlcd || अक्षरlcd_रेजिस्टर(lcd.अक्षरlcd))
-			जाओ err_unreg_device;
-	पूर्ण
+		if (!lcd.charlcd || charlcd_register(lcd.charlcd))
+			goto err_unreg_device;
+	}
 
-	अगर (keypad.enabled) अणु
+	if (keypad.enabled) {
 		keypad_init();
-		अगर (misc_रेजिस्टर(&keypad_dev))
-			जाओ err_lcd_unreg;
-	पूर्ण
-	वापस;
+		if (misc_register(&keypad_dev))
+			goto err_lcd_unreg;
+	}
+	return;
 
 err_lcd_unreg:
-	अगर (scan_समयr.function)
-		del_समयr_sync(&scan_समयr);
-	अगर (lcd.enabled)
-		अक्षरlcd_unरेजिस्टर(lcd.अक्षरlcd);
+	if (scan_timer.function)
+		del_timer_sync(&scan_timer);
+	if (lcd.enabled)
+		charlcd_unregister(lcd.charlcd);
 err_unreg_device:
-	kमुक्त(lcd.अक्षरlcd);
-	lcd.अक्षरlcd = शून्य;
-	parport_unरेजिस्टर_device(pprt);
-	pprt = शून्य;
-पूर्ण
+	kfree(lcd.charlcd);
+	lcd.charlcd = NULL;
+	parport_unregister_device(pprt);
+	pprt = NULL;
+}
 
-अटल व्योम panel_detach(काष्ठा parport *port)
-अणु
-	अगर (port->number != parport)
-		वापस;
+static void panel_detach(struct parport *port)
+{
+	if (port->number != parport)
+		return;
 
-	अगर (!pprt) अणु
+	if (!pprt) {
 		pr_err("%s: port->number=%d parport=%d, nothing to unregister.\n",
 		       __func__, port->number, parport);
-		वापस;
-	पूर्ण
-	अगर (scan_समयr.function)
-		del_समयr_sync(&scan_समयr);
+		return;
+	}
+	if (scan_timer.function)
+		del_timer_sync(&scan_timer);
 
-	अगर (keypad.enabled) अणु
-		misc_deरेजिस्टर(&keypad_dev);
+	if (keypad.enabled) {
+		misc_deregister(&keypad_dev);
 		keypad_initialized = 0;
-	पूर्ण
+	}
 
-	अगर (lcd.enabled) अणु
-		अक्षरlcd_unरेजिस्टर(lcd.अक्षरlcd);
+	if (lcd.enabled) {
+		charlcd_unregister(lcd.charlcd);
 		lcd.initialized = false;
-		kमुक्त(lcd.अक्षरlcd->drvdata);
-		kमुक्त(lcd.अक्षरlcd);
-		lcd.अक्षरlcd = शून्य;
-	पूर्ण
+		kfree(lcd.charlcd->drvdata);
+		kfree(lcd.charlcd);
+		lcd.charlcd = NULL;
+	}
 
-	/* TODO: मुक्त all input संकेतs */
+	/* TODO: free all input signals */
 	parport_release(pprt);
-	parport_unरेजिस्टर_device(pprt);
-	pprt = शून्य;
-पूर्ण
+	parport_unregister_device(pprt);
+	pprt = NULL;
+}
 
-अटल काष्ठा parport_driver panel_driver = अणु
+static struct parport_driver panel_driver = {
 	.name = "panel",
 	.match_port = panel_attach,
 	.detach = panel_detach,
 	.devmodel = true,
-पूर्ण;
+};
 
 /* init function */
-अटल पूर्णांक __init panel_init_module(व्योम)
-अणु
-	पूर्णांक selected_keypad_type = NOT_SET, err;
+static int __init panel_init_module(void)
+{
+	int selected_keypad_type = NOT_SET, err;
 
 	/* take care of an eventual profile */
-	चयन (profile) अणु
-	हाल PANEL_PROखाता_CUSTOM:
+	switch (profile) {
+	case PANEL_PROFILE_CUSTOM:
 		/* custom profile */
 		selected_keypad_type = DEFAULT_KEYPAD_TYPE;
 		selected_lcd_type = DEFAULT_LCD_TYPE;
-		अवरोध;
-	हाल PANEL_PROखाता_OLD:
+		break;
+	case PANEL_PROFILE_OLD:
 		/* 8 bits, 2*16, old keypad */
 		selected_keypad_type = KEYPAD_TYPE_OLD;
 		selected_lcd_type = LCD_TYPE_OLD;
 
 		/* TODO: This two are a little hacky, sort it out later */
-		अगर (lcd_width == NOT_SET)
+		if (lcd_width == NOT_SET)
 			lcd_width = 16;
-		अगर (lcd_hwidth == NOT_SET)
+		if (lcd_hwidth == NOT_SET)
 			lcd_hwidth = 16;
-		अवरोध;
-	हाल PANEL_PROखाता_NEW:
+		break;
+	case PANEL_PROFILE_NEW:
 		/* serial, 2*16, new keypad */
 		selected_keypad_type = KEYPAD_TYPE_NEW;
 		selected_lcd_type = LCD_TYPE_KS0074;
-		अवरोध;
-	हाल PANEL_PROखाता_HANTRONIX:
+		break;
+	case PANEL_PROFILE_HANTRONIX:
 		/* 8 bits, 2*16 hantronix-like, no keypad */
 		selected_keypad_type = KEYPAD_TYPE_NONE;
 		selected_lcd_type = LCD_TYPE_HANTRONIX;
-		अवरोध;
-	हाल PANEL_PROखाता_NEXCOM:
+		break;
+	case PANEL_PROFILE_NEXCOM:
 		/* generic 8 bits, 2*16, nexcom keypad, eg. Nexcom. */
 		selected_keypad_type = KEYPAD_TYPE_NEXCOM;
 		selected_lcd_type = LCD_TYPE_NEXCOM;
-		अवरोध;
-	हाल PANEL_PROखाता_LARGE:
+		break;
+	case PANEL_PROFILE_LARGE:
 		/* 8 bits, 2*40, old keypad */
 		selected_keypad_type = KEYPAD_TYPE_OLD;
 		selected_lcd_type = LCD_TYPE_OLD;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/*
-	 * Overग_लिखो selection with module param values (both keypad and lcd),
+	 * Overwrite selection with module param values (both keypad and lcd),
 	 * where the deprecated params have lower prio.
 	 */
-	अगर (keypad_enabled != NOT_SET)
+	if (keypad_enabled != NOT_SET)
 		selected_keypad_type = keypad_enabled;
-	अगर (keypad_type != NOT_SET)
+	if (keypad_type != NOT_SET)
 		selected_keypad_type = keypad_type;
 
 	keypad.enabled = (selected_keypad_type > 0);
 
-	अगर (lcd_enabled != NOT_SET)
+	if (lcd_enabled != NOT_SET)
 		selected_lcd_type = lcd_enabled;
-	अगर (lcd_type != NOT_SET)
+	if (lcd_type != NOT_SET)
 		selected_lcd_type = lcd_type;
 
 	lcd.enabled = (selected_lcd_type > 0);
 
-	अगर (lcd.enabled) अणु
+	if (lcd.enabled) {
 		/*
-		 * Init lcd काष्ठा with load-समय values to preserve exact
-		 * current functionality (at least क्रम now).
+		 * Init lcd struct with load-time values to preserve exact
+		 * current functionality (at least for now).
 		 */
-		lcd.अक्षरset = lcd_अक्षरset;
+		lcd.charset = lcd_charset;
 		lcd.proto = lcd_proto;
 		lcd.pins.e = lcd_e_pin;
 		lcd.pins.rs = lcd_rs_pin;
@@ -1692,49 +1691,49 @@ err_unreg_device:
 		lcd.pins.cl = lcd_cl_pin;
 		lcd.pins.da = lcd_da_pin;
 		lcd.pins.bl = lcd_bl_pin;
-	पूर्ण
+	}
 
-	चयन (selected_keypad_type) अणु
-	हाल KEYPAD_TYPE_OLD:
+	switch (selected_keypad_type) {
+	case KEYPAD_TYPE_OLD:
 		keypad_profile = old_keypad_profile;
-		अवरोध;
-	हाल KEYPAD_TYPE_NEW:
+		break;
+	case KEYPAD_TYPE_NEW:
 		keypad_profile = new_keypad_profile;
-		अवरोध;
-	हाल KEYPAD_TYPE_NEXCOM:
+		break;
+	case KEYPAD_TYPE_NEXCOM:
 		keypad_profile = nexcom_keypad_profile;
-		अवरोध;
-	शेष:
-		keypad_profile = शून्य;
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		keypad_profile = NULL;
+		break;
+	}
 
-	अगर (!lcd.enabled && !keypad.enabled) अणु
-		/* no device enabled, let's निकास */
+	if (!lcd.enabled && !keypad.enabled) {
+		/* no device enabled, let's exit */
 		pr_err("panel driver disabled.\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	err = parport_रेजिस्टर_driver(&panel_driver);
-	अगर (err) अणु
+	err = parport_register_driver(&panel_driver);
+	if (err) {
 		pr_err("could not register with parport. Aborting.\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (pprt)
+	if (pprt)
 		pr_info("panel driver registered on parport%d (io=0x%lx).\n",
 			parport, pprt->port->base);
-	अन्यथा
+	else
 		pr_info("panel driver not yet registered\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास panel_cleanup_module(व्योम)
-अणु
-	parport_unरेजिस्टर_driver(&panel_driver);
-पूर्ण
+static void __exit panel_cleanup_module(void)
+{
+	parport_unregister_driver(&panel_driver);
+}
 
 module_init(panel_init_module);
-module_निकास(panel_cleanup_module);
+module_exit(panel_cleanup_module);
 MODULE_AUTHOR("Willy Tarreau");
 MODULE_LICENSE("GPL");

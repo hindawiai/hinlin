@@ -1,659 +1,658 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2016 IBM Corp.
  */
 
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश "../core.h"
-#समावेश "pinctrl-aspeed.h"
+#include <linux/mfd/syscon.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include "../core.h"
+#include "pinctrl-aspeed.h"
 
-पूर्णांक aspeed_pinctrl_get_groups_count(काष्ठा pinctrl_dev *pctldev)
-अणु
-	काष्ठा aspeed_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
+int aspeed_pinctrl_get_groups_count(struct pinctrl_dev *pctldev)
+{
+	struct aspeed_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस pdata->pinmux.ngroups;
-पूर्ण
+	return pdata->pinmux.ngroups;
+}
 
-स्थिर अक्षर *aspeed_pinctrl_get_group_name(काष्ठा pinctrl_dev *pctldev,
-		अचिन्हित पूर्णांक group)
-अणु
-	काष्ठा aspeed_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
+const char *aspeed_pinctrl_get_group_name(struct pinctrl_dev *pctldev,
+		unsigned int group)
+{
+	struct aspeed_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस pdata->pinmux.groups[group].name;
-पूर्ण
+	return pdata->pinmux.groups[group].name;
+}
 
-पूर्णांक aspeed_pinctrl_get_group_pins(काष्ठा pinctrl_dev *pctldev,
-				  अचिन्हित पूर्णांक group, स्थिर अचिन्हित पूर्णांक **pins,
-				  अचिन्हित पूर्णांक *npins)
-अणु
-	काष्ठा aspeed_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
+int aspeed_pinctrl_get_group_pins(struct pinctrl_dev *pctldev,
+				  unsigned int group, const unsigned int **pins,
+				  unsigned int *npins)
+{
+	struct aspeed_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
 
 	*pins = &pdata->pinmux.groups[group].pins[0];
 	*npins = pdata->pinmux.groups[group].npins;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम aspeed_pinctrl_pin_dbg_show(काष्ठा pinctrl_dev *pctldev,
-				 काष्ठा seq_file *s, अचिन्हित पूर्णांक offset)
-अणु
-	seq_म_लिखो(s, " %s", dev_name(pctldev->dev));
-पूर्ण
+void aspeed_pinctrl_pin_dbg_show(struct pinctrl_dev *pctldev,
+				 struct seq_file *s, unsigned int offset)
+{
+	seq_printf(s, " %s", dev_name(pctldev->dev));
+}
 
-पूर्णांक aspeed_pinmux_get_fn_count(काष्ठा pinctrl_dev *pctldev)
-अणु
-	काष्ठा aspeed_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
+int aspeed_pinmux_get_fn_count(struct pinctrl_dev *pctldev)
+{
+	struct aspeed_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस pdata->pinmux.nfunctions;
-पूर्ण
+	return pdata->pinmux.nfunctions;
+}
 
-स्थिर अक्षर *aspeed_pinmux_get_fn_name(काष्ठा pinctrl_dev *pctldev,
-				      अचिन्हित पूर्णांक function)
-अणु
-	काष्ठा aspeed_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
+const char *aspeed_pinmux_get_fn_name(struct pinctrl_dev *pctldev,
+				      unsigned int function)
+{
+	struct aspeed_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस pdata->pinmux.functions[function].name;
-पूर्ण
+	return pdata->pinmux.functions[function].name;
+}
 
-पूर्णांक aspeed_pinmux_get_fn_groups(काष्ठा pinctrl_dev *pctldev,
-				अचिन्हित पूर्णांक function,
-				स्थिर अक्षर * स्थिर **groups,
-				अचिन्हित पूर्णांक * स्थिर num_groups)
-अणु
-	काष्ठा aspeed_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
+int aspeed_pinmux_get_fn_groups(struct pinctrl_dev *pctldev,
+				unsigned int function,
+				const char * const **groups,
+				unsigned int * const num_groups)
+{
+	struct aspeed_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
 
 	*groups = pdata->pinmux.functions[function].groups;
 	*num_groups = pdata->pinmux.functions[function].ngroups;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aspeed_sig_expr_enable(काष्ठा aspeed_pinmux_data *ctx,
-				  स्थिर काष्ठा aspeed_sig_expr *expr)
-अणु
-	पूर्णांक ret;
+static int aspeed_sig_expr_enable(struct aspeed_pinmux_data *ctx,
+				  const struct aspeed_sig_expr *expr)
+{
+	int ret;
 
-	pr_debug("Enabling signal %s for %s\n", expr->संकेत,
+	pr_debug("Enabling signal %s for %s\n", expr->signal,
 		 expr->function);
 
 	ret = aspeed_sig_expr_eval(ctx, expr, true);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (!ret)
-		वापस aspeed_sig_expr_set(ctx, expr, true);
+	if (!ret)
+		return aspeed_sig_expr_set(ctx, expr, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aspeed_sig_expr_disable(काष्ठा aspeed_pinmux_data *ctx,
-				   स्थिर काष्ठा aspeed_sig_expr *expr)
-अणु
-	पूर्णांक ret;
+static int aspeed_sig_expr_disable(struct aspeed_pinmux_data *ctx,
+				   const struct aspeed_sig_expr *expr)
+{
+	int ret;
 
-	pr_debug("Disabling signal %s for %s\n", expr->संकेत,
+	pr_debug("Disabling signal %s for %s\n", expr->signal,
 		 expr->function);
 
 	ret = aspeed_sig_expr_eval(ctx, expr, true);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (ret)
-		वापस aspeed_sig_expr_set(ctx, expr, false);
+	if (ret)
+		return aspeed_sig_expr_set(ctx, expr, false);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * aspeed_disable_sig() - Disable a संकेत on a pin by disabling all provided
- * संकेत expressions.
+ * aspeed_disable_sig() - Disable a signal on a pin by disabling all provided
+ * signal expressions.
  *
  * @ctx: The pinmux context
- * @exprs: The list of संकेत expressions (from a priority level on a pin)
+ * @exprs: The list of signal expressions (from a priority level on a pin)
  *
- * Return: 0 अगर all expressions are disabled, otherwise a negative error code
+ * Return: 0 if all expressions are disabled, otherwise a negative error code
  */
-अटल पूर्णांक aspeed_disable_sig(काष्ठा aspeed_pinmux_data *ctx,
-			      स्थिर काष्ठा aspeed_sig_expr **exprs)
-अणु
-	पूर्णांक ret = 0;
+static int aspeed_disable_sig(struct aspeed_pinmux_data *ctx,
+			      const struct aspeed_sig_expr **exprs)
+{
+	int ret = 0;
 
-	अगर (!exprs)
-		वापस true;
+	if (!exprs)
+		return true;
 
-	जबतक (*exprs && !ret) अणु
+	while (*exprs && !ret) {
 		ret = aspeed_sig_expr_disable(ctx, *exprs);
 		exprs++;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * Search क्रम the संकेत expression needed to enable the pin's संकेत क्रम the
+ * Search for the signal expression needed to enable the pin's signal for the
  * requested function.
  *
- * @exprs: List of संकेत expressions (haystack)
+ * @exprs: List of signal expressions (haystack)
  * @name: The name of the requested function (needle)
  *
- * Return: A poपूर्णांकer to the संकेत expression whose function tag matches the
- * provided name, otherwise शून्य.
+ * Return: A pointer to the signal expression whose function tag matches the
+ * provided name, otherwise NULL.
  *
  */
-अटल स्थिर काष्ठा aspeed_sig_expr *aspeed_find_expr_by_name(
-		स्थिर काष्ठा aspeed_sig_expr **exprs, स्थिर अक्षर *name)
-अणु
-	जबतक (*exprs) अणु
-		अगर (म_भेद((*exprs)->function, name) == 0)
-			वापस *exprs;
+static const struct aspeed_sig_expr *aspeed_find_expr_by_name(
+		const struct aspeed_sig_expr **exprs, const char *name)
+{
+	while (*exprs) {
+		if (strcmp((*exprs)->function, name) == 0)
+			return *exprs;
 		exprs++;
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल अक्षर *get_defined_attribute(स्थिर काष्ठा aspeed_pin_desc *pdesc,
-				   स्थिर अक्षर *(*get)(
-					   स्थिर काष्ठा aspeed_sig_expr *))
-अणु
-	अक्षर *found = शून्य;
-	माप_प्रकार len = 0;
-	स्थिर काष्ठा aspeed_sig_expr ***prios, **funcs, *expr;
+static char *get_defined_attribute(const struct aspeed_pin_desc *pdesc,
+				   const char *(*get)(
+					   const struct aspeed_sig_expr *))
+{
+	char *found = NULL;
+	size_t len = 0;
+	const struct aspeed_sig_expr ***prios, **funcs, *expr;
 
 	prios = pdesc->prios;
 
-	जबतक ((funcs = *prios)) अणु
-		जबतक ((expr = *funcs)) अणु
-			स्थिर अक्षर *str = get(expr);
-			माप_प्रकार delta = म_माप(str) + 2;
-			अक्षर *expanded;
+	while ((funcs = *prios)) {
+		while ((expr = *funcs)) {
+			const char *str = get(expr);
+			size_t delta = strlen(str) + 2;
+			char *expanded;
 
-			expanded = kपुनः_स्मृति(found, len + delta + 1, GFP_KERNEL);
-			अगर (!expanded) अणु
-				kमुक्त(found);
-				वापस expanded;
-			पूर्ण
+			expanded = krealloc(found, len + delta + 1, GFP_KERNEL);
+			if (!expanded) {
+				kfree(found);
+				return expanded;
+			}
 
 			found = expanded;
 			found[len] = '\0';
 			len += delta;
 
-			म_जोड़ो(found, str);
-			म_जोड़ो(found, ", ");
+			strcat(found, str);
+			strcat(found, ", ");
 
 			funcs++;
-		पूर्ण
+		}
 		prios++;
-	पूर्ण
+	}
 
-	अगर (len < 2) अणु
-		kमुक्त(found);
-		वापस शून्य;
-	पूर्ण
+	if (len < 2) {
+		kfree(found);
+		return NULL;
+	}
 
 	found[len - 2] = '\0';
 
-	वापस found;
-पूर्ण
+	return found;
+}
 
-अटल स्थिर अक्षर *aspeed_sig_expr_function(स्थिर काष्ठा aspeed_sig_expr *expr)
-अणु
-	वापस expr->function;
-पूर्ण
+static const char *aspeed_sig_expr_function(const struct aspeed_sig_expr *expr)
+{
+	return expr->function;
+}
 
-अटल अक्षर *get_defined_functions(स्थिर काष्ठा aspeed_pin_desc *pdesc)
-अणु
-	वापस get_defined_attribute(pdesc, aspeed_sig_expr_function);
-पूर्ण
+static char *get_defined_functions(const struct aspeed_pin_desc *pdesc)
+{
+	return get_defined_attribute(pdesc, aspeed_sig_expr_function);
+}
 
-अटल स्थिर अक्षर *aspeed_sig_expr_संकेत(स्थिर काष्ठा aspeed_sig_expr *expr)
-अणु
-	वापस expr->संकेत;
-पूर्ण
+static const char *aspeed_sig_expr_signal(const struct aspeed_sig_expr *expr)
+{
+	return expr->signal;
+}
 
-अटल अक्षर *get_defined_संकेतs(स्थिर काष्ठा aspeed_pin_desc *pdesc)
-अणु
-	वापस get_defined_attribute(pdesc, aspeed_sig_expr_संकेत);
-पूर्ण
+static char *get_defined_signals(const struct aspeed_pin_desc *pdesc)
+{
+	return get_defined_attribute(pdesc, aspeed_sig_expr_signal);
+}
 
-पूर्णांक aspeed_pinmux_set_mux(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक function,
-			  अचिन्हित पूर्णांक group)
-अणु
-	पूर्णांक i;
-	पूर्णांक ret;
-	काष्ठा aspeed_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
-	स्थिर काष्ठा aspeed_pin_group *pgroup = &pdata->pinmux.groups[group];
-	स्थिर काष्ठा aspeed_pin_function *pfunc =
+int aspeed_pinmux_set_mux(struct pinctrl_dev *pctldev, unsigned int function,
+			  unsigned int group)
+{
+	int i;
+	int ret;
+	struct aspeed_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
+	const struct aspeed_pin_group *pgroup = &pdata->pinmux.groups[group];
+	const struct aspeed_pin_function *pfunc =
 		&pdata->pinmux.functions[function];
 
-	क्रम (i = 0; i < pgroup->npins; i++) अणु
-		पूर्णांक pin = pgroup->pins[i];
-		स्थिर काष्ठा aspeed_pin_desc *pdesc = pdata->pins[pin].drv_data;
-		स्थिर काष्ठा aspeed_sig_expr *expr = शून्य;
-		स्थिर काष्ठा aspeed_sig_expr **funcs;
-		स्थिर काष्ठा aspeed_sig_expr ***prios;
+	for (i = 0; i < pgroup->npins; i++) {
+		int pin = pgroup->pins[i];
+		const struct aspeed_pin_desc *pdesc = pdata->pins[pin].drv_data;
+		const struct aspeed_sig_expr *expr = NULL;
+		const struct aspeed_sig_expr **funcs;
+		const struct aspeed_sig_expr ***prios;
 
 		pr_debug("Muxing pin %s for %s\n", pdesc->name, pfunc->name);
 
-		अगर (!pdesc)
-			वापस -EINVAL;
+		if (!pdesc)
+			return -EINVAL;
 
 		prios = pdesc->prios;
 
-		अगर (!prios)
-			जारी;
+		if (!prios)
+			continue;
 
 		/* Disable functions at a higher priority than that requested */
-		जबतक ((funcs = *prios)) अणु
+		while ((funcs = *prios)) {
 			expr = aspeed_find_expr_by_name(funcs, pfunc->name);
 
-			अगर (expr)
-				अवरोध;
+			if (expr)
+				break;
 
 			ret = aspeed_disable_sig(&pdata->pinmux, funcs);
-			अगर (ret)
-				वापस ret;
+			if (ret)
+				return ret;
 
 			prios++;
-		पूर्ण
+		}
 
-		अगर (!expr) अणु
-			अक्षर *functions = get_defined_functions(pdesc);
-			अक्षर *संकेतs = get_defined_संकेतs(pdesc);
+		if (!expr) {
+			char *functions = get_defined_functions(pdesc);
+			char *signals = get_defined_signals(pdesc);
 
 			pr_warn("No function %s found on pin %s (%d). Found signal(s) %s for function(s) %s\n",
-				pfunc->name, pdesc->name, pin, संकेतs,
+				pfunc->name, pdesc->name, pin, signals,
 				functions);
-			kमुक्त(संकेतs);
-			kमुक्त(functions);
+			kfree(signals);
+			kfree(functions);
 
-			वापस -ENXIO;
-		पूर्ण
+			return -ENXIO;
+		}
 
 		ret = aspeed_sig_expr_enable(&pdata->pinmux, expr);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		pr_debug("Muxed pin %s as %s for %s\n", pdesc->name, expr->संकेत,
+		pr_debug("Muxed pin %s as %s for %s\n", pdesc->name, expr->signal,
 			 expr->function);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool aspeed_expr_is_gpio(स्थिर काष्ठा aspeed_sig_expr *expr)
-अणु
+static bool aspeed_expr_is_gpio(const struct aspeed_sig_expr *expr)
+{
 	/*
-	 * We need to dअगरferentiate between GPIO and non-GPIO संकेतs to
-	 * implement the gpio_request_enable() पूर्णांकerface. For better or worse
+	 * We need to differentiate between GPIO and non-GPIO signals to
+	 * implement the gpio_request_enable() interface. For better or worse
 	 * the ASPEED pinctrl driver uses the expression names to determine
-	 * whether an expression will mux a pin क्रम GPIO.
+	 * whether an expression will mux a pin for GPIO.
 	 *
 	 * Generally we have the following - A GPIO such as B1 has:
 	 *
-	 *    - expr->संकेत set to "GPIOB1"
+	 *    - expr->signal set to "GPIOB1"
 	 *    - expr->function set to "GPIOB1"
 	 *
 	 * Using this fact we can determine whether the provided expression is
-	 * a GPIO expression by testing the संकेत name क्रम the string prefix
+	 * a GPIO expression by testing the signal name for the string prefix
 	 * "GPIO".
 	 *
 	 * However, some GPIOs are input-only, and the ASPEED datasheets name
-	 * them dअगरferently. An input-only GPIO such as T0 has:
+	 * them differently. An input-only GPIO such as T0 has:
 	 *
-	 *    - expr->संकेत set to "GPIT0"
+	 *    - expr->signal set to "GPIT0"
 	 *    - expr->function set to "GPIT0"
 	 *
 	 * It's tempting to generalise the prefix test from "GPIO" to "GPI" to
-	 * account क्रम both GPIOs and GPIs, but in करोing so we run aground on
+	 * account for both GPIOs and GPIs, but in doing so we run aground on
 	 * another feature:
 	 *
 	 * Some pins in the ASPEED BMC SoCs have a "pass-through" GPIO
 	 * function where the input state of one pin is replicated as the
-	 * output state of another (as अगर they were लघुed together - a mux
+	 * output state of another (as if they were shorted together - a mux
 	 * configuration that is typically enabled by hardware strapping).
-	 * This feature allows the BMC to pass e.g. घातer button state through
-	 * to the host जबतक the BMC is yet to boot, but take control of the
+	 * This feature allows the BMC to pass e.g. power button state through
+	 * to the host while the BMC is yet to boot, but take control of the
 	 * button state once the BMC has booted by muxing each pin as a
-	 * separate, pin-specअगरic GPIO.
+	 * separate, pin-specific GPIO.
 	 *
-	 * Conceptually this pass-through mode is a क्रमm of GPIO and is named
+	 * Conceptually this pass-through mode is a form of GPIO and is named
 	 * as such in the datasheets, e.g. "GPID0". This naming similarity
-	 * trips us up with the simple GPI-prefixed-संकेत-name scheme
+	 * trips us up with the simple GPI-prefixed-signal-name scheme
 	 * discussed above, as the pass-through configuration is not what we
-	 * want when muxing a pin as GPIO क्रम the GPIO subप्रणाली.
+	 * want when muxing a pin as GPIO for the GPIO subsystem.
 	 *
 	 * On e.g. the AST2400, a pass-through function "GPID0" is grouped on
 	 * balls A18 and D16, where we have:
 	 *
 	 *    For ball A18:
-	 *    - expr->संकेत set to "GPID0IN"
+	 *    - expr->signal set to "GPID0IN"
 	 *    - expr->function set to "GPID0"
 	 *
 	 *    For ball D16:
-	 *    - expr->संकेत set to "GPID0OUT"
+	 *    - expr->signal set to "GPID0OUT"
 	 *    - expr->function set to "GPID0"
 	 *
-	 * By contrast, the pin-specअगरic GPIO expressions क्रम the same pins are
+	 * By contrast, the pin-specific GPIO expressions for the same pins are
 	 * as follows:
 	 *
 	 *    For ball A18:
-	 *    - expr->संकेत looks like "GPIOD0"
+	 *    - expr->signal looks like "GPIOD0"
 	 *    - expr->function looks like "GPIOD0"
 	 *
 	 *    For ball D16:
-	 *    - expr->संकेत looks like "GPIOD1"
+	 *    - expr->signal looks like "GPIOD1"
 	 *    - expr->function looks like "GPIOD1"
 	 *
-	 * Testing both the संकेत _and_ function names gives us the means
-	 * dअगरferentiate the pass-through GPIO pinmux configuration from the
-	 * pin-specअगरic configuration that the GPIO subप्रणाली is after: An
-	 * expression is a pin-specअगरic (non-pass-through) GPIO configuration
-	 * अगर the संकेत prefix is "GPI" and the संकेत name matches the
+	 * Testing both the signal _and_ function names gives us the means
+	 * differentiate the pass-through GPIO pinmux configuration from the
+	 * pin-specific configuration that the GPIO subsystem is after: An
+	 * expression is a pin-specific (non-pass-through) GPIO configuration
+	 * if the signal prefix is "GPI" and the signal name matches the
 	 * function name.
 	 */
-	वापस !म_भेदन(expr->संकेत, "GPI", 3) &&
-			!म_भेद(expr->संकेत, expr->function);
-पूर्ण
+	return !strncmp(expr->signal, "GPI", 3) &&
+			!strcmp(expr->signal, expr->function);
+}
 
-अटल bool aspeed_gpio_in_exprs(स्थिर काष्ठा aspeed_sig_expr **exprs)
-अणु
-	अगर (!exprs)
-		वापस false;
+static bool aspeed_gpio_in_exprs(const struct aspeed_sig_expr **exprs)
+{
+	if (!exprs)
+		return false;
 
-	जबतक (*exprs) अणु
-		अगर (aspeed_expr_is_gpio(*exprs))
-			वापस true;
+	while (*exprs) {
+		if (aspeed_expr_is_gpio(*exprs))
+			return true;
 		exprs++;
-	पूर्ण
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-पूर्णांक aspeed_gpio_request_enable(काष्ठा pinctrl_dev *pctldev,
-			       काष्ठा pinctrl_gpio_range *range,
-			       अचिन्हित पूर्णांक offset)
-अणु
-	पूर्णांक ret;
-	काष्ठा aspeed_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
-	स्थिर काष्ठा aspeed_pin_desc *pdesc = pdata->pins[offset].drv_data;
-	स्थिर काष्ठा aspeed_sig_expr ***prios, **funcs, *expr;
+int aspeed_gpio_request_enable(struct pinctrl_dev *pctldev,
+			       struct pinctrl_gpio_range *range,
+			       unsigned int offset)
+{
+	int ret;
+	struct aspeed_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
+	const struct aspeed_pin_desc *pdesc = pdata->pins[offset].drv_data;
+	const struct aspeed_sig_expr ***prios, **funcs, *expr;
 
-	अगर (!pdesc)
-		वापस -EINVAL;
+	if (!pdesc)
+		return -EINVAL;
 
 	prios = pdesc->prios;
 
-	अगर (!prios)
-		वापस -ENXIO;
+	if (!prios)
+		return -ENXIO;
 
 	pr_debug("Muxing pin %s for GPIO\n", pdesc->name);
 
 	/* Disable any functions of higher priority than GPIO */
-	जबतक ((funcs = *prios)) अणु
-		अगर (aspeed_gpio_in_exprs(funcs))
-			अवरोध;
+	while ((funcs = *prios)) {
+		if (aspeed_gpio_in_exprs(funcs))
+			break;
 
 		ret = aspeed_disable_sig(&pdata->pinmux, funcs);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		prios++;
-	पूर्ण
+	}
 
-	अगर (!funcs) अणु
-		अक्षर *संकेतs = get_defined_संकेतs(pdesc);
+	if (!funcs) {
+		char *signals = get_defined_signals(pdesc);
 
 		pr_warn("No GPIO signal type found on pin %s (%d). Found: %s\n",
-			pdesc->name, offset, संकेतs);
-		kमुक्त(संकेतs);
+			pdesc->name, offset, signals);
+		kfree(signals);
 
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	expr = *funcs;
 
 	/*
 	 * Disabling all higher-priority expressions is enough to enable the
-	 * lowest-priority संकेत type. As such it has no associated
+	 * lowest-priority signal type. As such it has no associated
 	 * expression.
 	 */
-	अगर (!expr) अणु
+	if (!expr) {
 		pr_debug("Muxed pin %s as GPIO\n", pdesc->name);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
-	 * If GPIO is not the lowest priority संकेत type, assume there is only
+	 * If GPIO is not the lowest priority signal type, assume there is only
 	 * one expression defined to enable the GPIO function
 	 */
 	ret = aspeed_sig_expr_enable(&pdata->pinmux, expr);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	pr_debug("Muxed pin %s as %s\n", pdesc->name, expr->संकेत);
+	pr_debug("Muxed pin %s as %s\n", pdesc->name, expr->signal);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक aspeed_pinctrl_probe(काष्ठा platक्रमm_device *pdev,
-			 काष्ठा pinctrl_desc *pdesc,
-			 काष्ठा aspeed_pinctrl_data *pdata)
-अणु
-	काष्ठा device *parent;
-	काष्ठा pinctrl_dev *pctl;
+int aspeed_pinctrl_probe(struct platform_device *pdev,
+			 struct pinctrl_desc *pdesc,
+			 struct aspeed_pinctrl_data *pdata)
+{
+	struct device *parent;
+	struct pinctrl_dev *pctl;
 
 	parent = pdev->dev.parent;
-	अगर (!parent) अणु
+	if (!parent) {
 		dev_err(&pdev->dev, "No parent for syscon pincontroller\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	pdata->scu = syscon_node_to_regmap(parent->of_node);
-	अगर (IS_ERR(pdata->scu)) अणु
+	if (IS_ERR(pdata->scu)) {
 		dev_err(&pdev->dev, "No regmap for syscon pincontroller parent\n");
-		वापस PTR_ERR(pdata->scu);
-	पूर्ण
+		return PTR_ERR(pdata->scu);
+	}
 
 	pdata->pinmux.maps[ASPEED_IP_SCU] = pdata->scu;
 
-	pctl = pinctrl_रेजिस्टर(pdesc, &pdev->dev, pdata);
+	pctl = pinctrl_register(pdesc, &pdev->dev, pdata);
 
-	अगर (IS_ERR(pctl)) अणु
+	if (IS_ERR(pctl)) {
 		dev_err(&pdev->dev, "Failed to register pinctrl\n");
-		वापस PTR_ERR(pctl);
-	पूर्ण
+		return PTR_ERR(pctl);
+	}
 
-	platक्रमm_set_drvdata(pdev, pdata);
+	platform_set_drvdata(pdev, pdata);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत bool pin_in_config_range(अचिन्हित पूर्णांक offset,
-		स्थिर काष्ठा aspeed_pin_config *config)
-अणु
-	वापस offset >= config->pins[0] && offset <= config->pins[1];
-पूर्ण
+static inline bool pin_in_config_range(unsigned int offset,
+		const struct aspeed_pin_config *config)
+{
+	return offset >= config->pins[0] && offset <= config->pins[1];
+}
 
-अटल अंतरभूत स्थिर काष्ठा aspeed_pin_config *find_pinconf_config(
-		स्थिर काष्ठा aspeed_pinctrl_data *pdata,
-		अचिन्हित पूर्णांक offset,
-		क्रमागत pin_config_param param)
-अणु
-	अचिन्हित पूर्णांक i;
+static inline const struct aspeed_pin_config *find_pinconf_config(
+		const struct aspeed_pinctrl_data *pdata,
+		unsigned int offset,
+		enum pin_config_param param)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < pdata->nconfigs; i++) अणु
-		अगर (param == pdata->configs[i].param &&
+	for (i = 0; i < pdata->nconfigs; i++) {
+		if (param == pdata->configs[i].param &&
 				pin_in_config_range(offset, &pdata->configs[i]))
-			वापस &pdata->configs[i];
-	पूर्ण
+			return &pdata->configs[i];
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-क्रमागत aspeed_pin_config_map_type अणु MAP_TYPE_ARG, MAP_TYPE_VAL पूर्ण;
+enum aspeed_pin_config_map_type { MAP_TYPE_ARG, MAP_TYPE_VAL };
 
-अटल स्थिर काष्ठा aspeed_pin_config_map *find_pinconf_map(
-		स्थिर काष्ठा aspeed_pinctrl_data *pdata,
-		क्रमागत pin_config_param param,
-		क्रमागत aspeed_pin_config_map_type type,
+static const struct aspeed_pin_config_map *find_pinconf_map(
+		const struct aspeed_pinctrl_data *pdata,
+		enum pin_config_param param,
+		enum aspeed_pin_config_map_type type,
 		s64 value)
-अणु
-	पूर्णांक i;
+{
+	int i;
 
-	क्रम (i = 0; i < pdata->nconfmaps; i++) अणु
-		स्थिर काष्ठा aspeed_pin_config_map *elem;
+	for (i = 0; i < pdata->nconfmaps; i++) {
+		const struct aspeed_pin_config_map *elem;
 		bool match;
 
 		elem = &pdata->confmaps[i];
 
-		चयन (type) अणु
-		हाल MAP_TYPE_ARG:
+		switch (type) {
+		case MAP_TYPE_ARG:
 			match = (elem->arg == -1 || elem->arg == value);
-			अवरोध;
-		हाल MAP_TYPE_VAL:
+			break;
+		case MAP_TYPE_VAL:
 			match = (elem->val == value);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (param == elem->param && match)
-			वापस elem;
-	पूर्ण
+		if (param == elem->param && match)
+			return elem;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-पूर्णांक aspeed_pin_config_get(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक offset,
-		अचिन्हित दीर्घ *config)
-अणु
-	स्थिर क्रमागत pin_config_param param = pinconf_to_config_param(*config);
-	स्थिर काष्ठा aspeed_pin_config_map *pmap;
-	स्थिर काष्ठा aspeed_pinctrl_data *pdata;
-	स्थिर काष्ठा aspeed_pin_config *pconf;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक rc = 0;
+int aspeed_pin_config_get(struct pinctrl_dev *pctldev, unsigned int offset,
+		unsigned long *config)
+{
+	const enum pin_config_param param = pinconf_to_config_param(*config);
+	const struct aspeed_pin_config_map *pmap;
+	const struct aspeed_pinctrl_data *pdata;
+	const struct aspeed_pin_config *pconf;
+	unsigned int val;
+	int rc = 0;
 	u32 arg;
 
 	pdata = pinctrl_dev_get_drvdata(pctldev);
 	pconf = find_pinconf_config(pdata, offset, param);
-	अगर (!pconf)
-		वापस -ENOTSUPP;
+	if (!pconf)
+		return -ENOTSUPP;
 
-	rc = regmap_पढ़ो(pdata->scu, pconf->reg, &val);
-	अगर (rc < 0)
-		वापस rc;
+	rc = regmap_read(pdata->scu, pconf->reg, &val);
+	if (rc < 0)
+		return rc;
 
 	pmap = find_pinconf_map(pdata, param, MAP_TYPE_VAL,
 			(val & pconf->mask) >> __ffs(pconf->mask));
 
-	अगर (!pmap)
-		वापस -EINVAL;
+	if (!pmap)
+		return -EINVAL;
 
-	अगर (param == PIN_CONFIG_DRIVE_STRENGTH)
+	if (param == PIN_CONFIG_DRIVE_STRENGTH)
 		arg = (u32) pmap->arg;
-	अन्यथा अगर (param == PIN_CONFIG_BIAS_PULL_DOWN)
+	else if (param == PIN_CONFIG_BIAS_PULL_DOWN)
 		arg = !!pmap->arg;
-	अन्यथा
+	else
 		arg = 1;
 
-	अगर (!arg)
-		वापस -EINVAL;
+	if (!arg)
+		return -EINVAL;
 
 	*config = pinconf_to_config_packed(param, arg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक aspeed_pin_config_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक offset,
-		अचिन्हित दीर्घ *configs, अचिन्हित पूर्णांक num_configs)
-अणु
-	स्थिर काष्ठा aspeed_pinctrl_data *pdata;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक rc = 0;
+int aspeed_pin_config_set(struct pinctrl_dev *pctldev, unsigned int offset,
+		unsigned long *configs, unsigned int num_configs)
+{
+	const struct aspeed_pinctrl_data *pdata;
+	unsigned int i;
+	int rc = 0;
 
 	pdata = pinctrl_dev_get_drvdata(pctldev);
 
-	क्रम (i = 0; i < num_configs; i++) अणु
-		स्थिर काष्ठा aspeed_pin_config_map *pmap;
-		स्थिर काष्ठा aspeed_pin_config *pconf;
-		क्रमागत pin_config_param param;
-		अचिन्हित पूर्णांक val;
+	for (i = 0; i < num_configs; i++) {
+		const struct aspeed_pin_config_map *pmap;
+		const struct aspeed_pin_config *pconf;
+		enum pin_config_param param;
+		unsigned int val;
 		u32 arg;
 
 		param = pinconf_to_config_param(configs[i]);
 		arg = pinconf_to_config_argument(configs[i]);
 
 		pconf = find_pinconf_config(pdata, offset, param);
-		अगर (!pconf)
-			वापस -ENOTSUPP;
+		if (!pconf)
+			return -ENOTSUPP;
 
 		pmap = find_pinconf_map(pdata, param, MAP_TYPE_ARG, arg);
 
-		अगर (WARN_ON(!pmap))
-			वापस -EINVAL;
+		if (WARN_ON(!pmap))
+			return -EINVAL;
 
 		val = pmap->val << __ffs(pconf->mask);
 
 		rc = regmap_update_bits(pdata->scu, pconf->reg,
 					pconf->mask, val);
 
-		अगर (rc < 0)
-			वापस rc;
+		if (rc < 0)
+			return rc;
 
 		pr_debug("%s: Set SCU%02X[0x%08X]=0x%X for param %d(=%d) on pin %d\n",
 				__func__, pconf->reg, pconf->mask,
 				val, param, arg, offset);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक aspeed_pin_config_group_get(काष्ठा pinctrl_dev *pctldev,
-		अचिन्हित पूर्णांक selector,
-		अचिन्हित दीर्घ *config)
-अणु
-	स्थिर अचिन्हित पूर्णांक *pins;
-	अचिन्हित पूर्णांक npins;
-	पूर्णांक rc;
+int aspeed_pin_config_group_get(struct pinctrl_dev *pctldev,
+		unsigned int selector,
+		unsigned long *config)
+{
+	const unsigned int *pins;
+	unsigned int npins;
+	int rc;
 
 	rc = aspeed_pinctrl_get_group_pins(pctldev, selector, &pins, &npins);
-	अगर (rc < 0)
-		वापस rc;
+	if (rc < 0)
+		return rc;
 
-	अगर (!npins)
-		वापस -ENODEV;
+	if (!npins)
+		return -ENODEV;
 
 	rc = aspeed_pin_config_get(pctldev, pins[0], config);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक aspeed_pin_config_group_set(काष्ठा pinctrl_dev *pctldev,
-		अचिन्हित पूर्णांक selector,
-		अचिन्हित दीर्घ *configs,
-		अचिन्हित पूर्णांक num_configs)
-अणु
-	स्थिर अचिन्हित पूर्णांक *pins;
-	अचिन्हित पूर्णांक npins;
-	पूर्णांक rc;
-	पूर्णांक i;
+int aspeed_pin_config_group_set(struct pinctrl_dev *pctldev,
+		unsigned int selector,
+		unsigned long *configs,
+		unsigned int num_configs)
+{
+	const unsigned int *pins;
+	unsigned int npins;
+	int rc;
+	int i;
 
 	pr_debug("%s: Fetching pins for group selector %d\n",
 			__func__, selector);
 	rc = aspeed_pinctrl_get_group_pins(pctldev, selector, &pins, &npins);
-	अगर (rc < 0)
-		वापस rc;
+	if (rc < 0)
+		return rc;
 
-	क्रम (i = 0; i < npins; i++) अणु
+	for (i = 0; i < npins; i++) {
 		rc = aspeed_pin_config_set(pctldev, pins[i], configs,
 				num_configs);
-		अगर (rc < 0)
-			वापस rc;
-	पूर्ण
+		if (rc < 0)
+			return rc;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

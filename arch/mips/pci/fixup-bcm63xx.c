@@ -1,22 +1,21 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
- * Copyright (C) 2008 Maxime Bizon <mbizon@मुक्तbox.fr>
+ * Copyright (C) 2008 Maxime Bizon <mbizon@freebox.fr>
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/pci.h>
-#समावेश <bcm63xx_cpu.h>
+#include <linux/types.h>
+#include <linux/pci.h>
+#include <bcm63xx_cpu.h>
 
-पूर्णांक pcibios_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
-अणु
-	वापस bcm63xx_get_irq_number(IRQ_PCI);
-पूर्ण
+int pcibios_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
+{
+	return bcm63xx_get_irq_number(IRQ_PCI);
+}
 
-पूर्णांक pcibios_plat_dev_init(काष्ठा pci_dev *dev)
-अणु
-	वापस 0;
-पूर्ण
+int pcibios_plat_dev_init(struct pci_dev *dev)
+{
+	return 0;
+}

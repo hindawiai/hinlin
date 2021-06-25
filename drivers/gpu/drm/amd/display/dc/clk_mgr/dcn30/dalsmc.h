@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -25,38 +24,38 @@
  */
 
 // TEMPORARY until this exists in the proper location
-#अगर_अघोषित DALSMC_H
-#घोषणा DALSMC_H
+#ifndef DALSMC_H
+#define DALSMC_H
 
-#घोषणा DALSMC_VERSION 0x1
+#define DALSMC_VERSION 0x1
 
 // SMU Response Codes:
-#घोषणा DALSMC_Result_OK                   0x1
-#घोषणा DALSMC_Result_Failed               0xFF
-#घोषणा DALSMC_Result_UnknownCmd           0xFE
-#घोषणा DALSMC_Result_CmdRejectedPrereq    0xFD
-#घोषणा DALSMC_Result_CmdRejectedBusy      0xFC
+#define DALSMC_Result_OK                   0x1
+#define DALSMC_Result_Failed               0xFF
+#define DALSMC_Result_UnknownCmd           0xFE
+#define DALSMC_Result_CmdRejectedPrereq    0xFD
+#define DALSMC_Result_CmdRejectedBusy      0xFC
 
 
 
 // Message Definitions:
-#घोषणा DALSMC_MSG_TestMessage                    0x1
-#घोषणा DALSMC_MSG_GetSmuVersion                  0x2
-#घोषणा DALSMC_MSG_GetDriverIfVersion             0x3
-#घोषणा DALSMC_MSG_GetMsgHeaderVersion            0x4
-#घोषणा DALSMC_MSG_SetDalDramAddrHigh             0x5
-#घोषणा DALSMC_MSG_SetDalDramAddrLow              0x6
-#घोषणा DALSMC_MSG_TransferTableSmu2Dram          0x7
-#घोषणा DALSMC_MSG_TransferTableDram2Smu          0x8
-#घोषणा DALSMC_MSG_SetHardMinByFreq               0x9
-#घोषणा DALSMC_MSG_SetHardMaxByFreq               0xA
-#घोषणा DALSMC_MSG_GetDpmFreqByIndex              0xB
-#घोषणा DALSMC_MSG_GetDcModeMaxDpmFreq            0xC
-#घोषणा DALSMC_MSG_SetMinDeepSleepDcefclk         0xD
-#घोषणा DALSMC_MSG_NumOfDisplays                  0xE
-#घोषणा DALSMC_MSG_SetDisplayRefreshFromMall      0xF
-#घोषणा DALSMC_MSG_SetExternalClientDfCstateAllow 0x10
-#घोषणा DALSMC_MSG_BacoAudioD3PME                 0x11
-#घोषणा DALSMC_Message_Count                      0x12
+#define DALSMC_MSG_TestMessage                    0x1
+#define DALSMC_MSG_GetSmuVersion                  0x2
+#define DALSMC_MSG_GetDriverIfVersion             0x3
+#define DALSMC_MSG_GetMsgHeaderVersion            0x4
+#define DALSMC_MSG_SetDalDramAddrHigh             0x5
+#define DALSMC_MSG_SetDalDramAddrLow              0x6
+#define DALSMC_MSG_TransferTableSmu2Dram          0x7
+#define DALSMC_MSG_TransferTableDram2Smu          0x8
+#define DALSMC_MSG_SetHardMinByFreq               0x9
+#define DALSMC_MSG_SetHardMaxByFreq               0xA
+#define DALSMC_MSG_GetDpmFreqByIndex              0xB
+#define DALSMC_MSG_GetDcModeMaxDpmFreq            0xC
+#define DALSMC_MSG_SetMinDeepSleepDcefclk         0xD
+#define DALSMC_MSG_NumOfDisplays                  0xE
+#define DALSMC_MSG_SetDisplayRefreshFromMall      0xF
+#define DALSMC_MSG_SetExternalClientDfCstateAllow 0x10
+#define DALSMC_MSG_BacoAudioD3PME                 0x11
+#define DALSMC_Message_Count                      0x12
 
-#पूर्ण_अगर
+#endif

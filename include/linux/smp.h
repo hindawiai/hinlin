@@ -1,236 +1,235 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX_SMP_H
-#घोषणा __LINUX_SMP_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX_SMP_H
+#define __LINUX_SMP_H
 
 /*
  *	Generic SMP support
  *		Alan Cox. <alan@redhat.com>
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/list.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/init.h>
-#समावेश <linux/smp_types.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/list.h>
+#include <linux/cpumask.h>
+#include <linux/init.h>
+#include <linux/smp_types.h>
 
-प्रकार व्योम (*smp_call_func_t)(व्योम *info);
-प्रकार bool (*smp_cond_func_t)(पूर्णांक cpu, व्योम *info);
+typedef void (*smp_call_func_t)(void *info);
+typedef bool (*smp_cond_func_t)(int cpu, void *info);
 
 /*
- * काष्ठाure shares (partial) layout with काष्ठा irq_work
+ * structure shares (partial) layout with struct irq_work
  */
-काष्ठा __call_single_data अणु
-	काष्ठा __call_single_node node;
+struct __call_single_data {
+	struct __call_single_node node;
 	smp_call_func_t func;
-	व्योम *info;
-पूर्ण;
+	void *info;
+};
 
-#घोषणा CSD_INIT(_func, _info) \
-	(काष्ठा __call_single_data)अणु .func = (_func), .info = (_info), पूर्ण
+#define CSD_INIT(_func, _info) \
+	(struct __call_single_data){ .func = (_func), .info = (_info), }
 
-/* Use __aligned() to aव्योम to use 2 cache lines क्रम 1 csd */
-प्रकार काष्ठा __call_single_data call_single_data_t
-	__aligned(माप(काष्ठा __call_single_data));
+/* Use __aligned() to avoid to use 2 cache lines for 1 csd */
+typedef struct __call_single_data call_single_data_t
+	__aligned(sizeof(struct __call_single_data));
 
-#घोषणा INIT_CSD(_csd, _func, _info)		\
-करो अणु						\
+#define INIT_CSD(_csd, _func, _info)		\
+do {						\
 	*(_csd) = CSD_INIT((_func), (_info));	\
-पूर्ण जबतक (0)
+} while (0)
 
 /*
- * Enqueue a llist_node on the call_single_queue; be very careful, पढ़ो
+ * Enqueue a llist_node on the call_single_queue; be very careful, read
  * flush_smp_call_function_queue() in detail.
  */
-बाह्य व्योम __smp_call_single_queue(पूर्णांक cpu, काष्ठा llist_node *node);
+extern void __smp_call_single_queue(int cpu, struct llist_node *node);
 
-/* total number of cpus in this प्रणाली (may exceed NR_CPUS) */
-बाह्य अचिन्हित पूर्णांक total_cpus;
+/* total number of cpus in this system (may exceed NR_CPUS) */
+extern unsigned int total_cpus;
 
-पूर्णांक smp_call_function_single(पूर्णांक cpuid, smp_call_func_t func, व्योम *info,
-			     पूर्णांक रुको);
+int smp_call_function_single(int cpuid, smp_call_func_t func, void *info,
+			     int wait);
 
-व्योम on_each_cpu_cond_mask(smp_cond_func_t cond_func, smp_call_func_t func,
-			   व्योम *info, bool रुको, स्थिर काष्ठा cpumask *mask);
+void on_each_cpu_cond_mask(smp_cond_func_t cond_func, smp_call_func_t func,
+			   void *info, bool wait, const struct cpumask *mask);
 
-पूर्णांक smp_call_function_single_async(पूर्णांक cpu, काष्ठा __call_single_data *csd);
+int smp_call_function_single_async(int cpu, struct __call_single_data *csd);
 
 /*
- * Cpus stopping functions in panic. All have शेष weak definitions.
+ * Cpus stopping functions in panic. All have default weak definitions.
  * Architecture-dependent code may override them.
  */
-व्योम panic_smp_self_stop(व्योम);
-व्योम nmi_panic_self_stop(काष्ठा pt_regs *regs);
-व्योम crash_smp_send_stop(व्योम);
+void panic_smp_self_stop(void);
+void nmi_panic_self_stop(struct pt_regs *regs);
+void crash_smp_send_stop(void);
 
 /*
  * Call a function on all processors
  */
-अटल अंतरभूत व्योम on_each_cpu(smp_call_func_t func, व्योम *info, पूर्णांक रुको)
-अणु
-	on_each_cpu_cond_mask(शून्य, func, info, रुको, cpu_online_mask);
-पूर्ण
+static inline void on_each_cpu(smp_call_func_t func, void *info, int wait)
+{
+	on_each_cpu_cond_mask(NULL, func, info, wait, cpu_online_mask);
+}
 
 /**
- * on_each_cpu_mask(): Run a function on processors specअगरied by
+ * on_each_cpu_mask(): Run a function on processors specified by
  * cpumask, which may include the local processor.
  * @mask: The set of cpus to run on (only runs on online subset).
  * @func: The function to run. This must be fast and non-blocking.
- * @info: An arbitrary poपूर्णांकer to pass to the function.
- * @रुको: If true, रुको (atomically) until function has completed
+ * @info: An arbitrary pointer to pass to the function.
+ * @wait: If true, wait (atomically) until function has completed
  *        on other CPUs.
  *
- * If @रुको is true, then वापसs once @func has वापसed.
+ * If @wait is true, then returns once @func has returned.
  *
- * You must not call this function with disabled पूर्णांकerrupts or from a
- * hardware पूर्णांकerrupt handler or from a bottom half handler.  The
- * exception is that it may be used during early boot जबतक
+ * You must not call this function with disabled interrupts or from a
+ * hardware interrupt handler or from a bottom half handler.  The
+ * exception is that it may be used during early boot while
  * early_boot_irqs_disabled is set.
  */
-अटल अंतरभूत व्योम on_each_cpu_mask(स्थिर काष्ठा cpumask *mask,
-				    smp_call_func_t func, व्योम *info, bool रुको)
-अणु
-	on_each_cpu_cond_mask(शून्य, func, info, रुको, mask);
-पूर्ण
+static inline void on_each_cpu_mask(const struct cpumask *mask,
+				    smp_call_func_t func, void *info, bool wait)
+{
+	on_each_cpu_cond_mask(NULL, func, info, wait, mask);
+}
 
 /*
- * Call a function on each processor क्रम which the supplied function
- * cond_func वापसs a positive value. This may include the local
- * processor.  May be used during early boot जबतक early_boot_irqs_disabled is
+ * Call a function on each processor for which the supplied function
+ * cond_func returns a positive value. This may include the local
+ * processor.  May be used during early boot while early_boot_irqs_disabled is
  * set. Use local_irq_save/restore() instead of local_irq_disable/enable().
  */
-अटल अंतरभूत व्योम on_each_cpu_cond(smp_cond_func_t cond_func,
-				    smp_call_func_t func, व्योम *info, bool रुको)
-अणु
-	on_each_cpu_cond_mask(cond_func, func, info, रुको, cpu_online_mask);
-पूर्ण
+static inline void on_each_cpu_cond(smp_cond_func_t cond_func,
+				    smp_call_func_t func, void *info, bool wait)
+{
+	on_each_cpu_cond_mask(cond_func, func, info, wait, cpu_online_mask);
+}
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 
-#समावेश <linux/preempt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/thपढ़ो_info.h>
-#समावेश <यंत्र/smp.h>
+#include <linux/preempt.h>
+#include <linux/kernel.h>
+#include <linux/compiler.h>
+#include <linux/thread_info.h>
+#include <asm/smp.h>
 
 /*
- * मुख्य cross-CPU पूर्णांकerfaces, handles INIT, TLB flush, STOP, etc.
- * (defined in यंत्र header):
+ * main cross-CPU interfaces, handles INIT, TLB flush, STOP, etc.
+ * (defined in asm header):
  */
 
 /*
  * stops all CPUs but the current one:
  */
-बाह्य व्योम smp_send_stop(व्योम);
+extern void smp_send_stop(void);
 
 /*
  * sends a 'reschedule' event to another CPU:
  */
-बाह्य व्योम smp_send_reschedule(पूर्णांक cpu);
+extern void smp_send_reschedule(int cpu);
 
 
 /*
- * Prepare machine क्रम booting other CPUs.
+ * Prepare machine for booting other CPUs.
  */
-बाह्य व्योम smp_prepare_cpus(अचिन्हित पूर्णांक max_cpus);
+extern void smp_prepare_cpus(unsigned int max_cpus);
 
 /*
  * Bring a CPU up
  */
-बाह्य पूर्णांक __cpu_up(अचिन्हित पूर्णांक cpunum, काष्ठा task_काष्ठा *tidle);
+extern int __cpu_up(unsigned int cpunum, struct task_struct *tidle);
 
 /*
  * Final polishing of CPUs
  */
-बाह्य व्योम smp_cpus_करोne(अचिन्हित पूर्णांक max_cpus);
+extern void smp_cpus_done(unsigned int max_cpus);
 
 /*
  * Call a function on all other processors
  */
-व्योम smp_call_function(smp_call_func_t func, व्योम *info, पूर्णांक रुको);
-व्योम smp_call_function_many(स्थिर काष्ठा cpumask *mask,
-			    smp_call_func_t func, व्योम *info, bool रुको);
+void smp_call_function(smp_call_func_t func, void *info, int wait);
+void smp_call_function_many(const struct cpumask *mask,
+			    smp_call_func_t func, void *info, bool wait);
 
-पूर्णांक smp_call_function_any(स्थिर काष्ठा cpumask *mask,
-			  smp_call_func_t func, व्योम *info, पूर्णांक रुको);
+int smp_call_function_any(const struct cpumask *mask,
+			  smp_call_func_t func, void *info, int wait);
 
-व्योम kick_all_cpus_sync(व्योम);
-व्योम wake_up_all_idle_cpus(व्योम);
+void kick_all_cpus_sync(void);
+void wake_up_all_idle_cpus(void);
 
 /*
  * Generic and arch helpers
  */
-व्योम __init call_function_init(व्योम);
-व्योम generic_smp_call_function_single_पूर्णांकerrupt(व्योम);
-#घोषणा generic_smp_call_function_पूर्णांकerrupt \
-	generic_smp_call_function_single_पूर्णांकerrupt
+void __init call_function_init(void);
+void generic_smp_call_function_single_interrupt(void);
+#define generic_smp_call_function_interrupt \
+	generic_smp_call_function_single_interrupt
 
 /*
  * Mark the boot cpu "online" so that it can call console drivers in
- * prपूर्णांकk() and can access its per-cpu storage.
+ * printk() and can access its per-cpu storage.
  */
-व्योम smp_prepare_boot_cpu(व्योम);
+void smp_prepare_boot_cpu(void);
 
-बाह्य अचिन्हित पूर्णांक setup_max_cpus;
-बाह्य व्योम __init setup_nr_cpu_ids(व्योम);
-बाह्य व्योम __init smp_init(व्योम);
+extern unsigned int setup_max_cpus;
+extern void __init setup_nr_cpu_ids(void);
+extern void __init smp_init(void);
 
-बाह्य पूर्णांक __boot_cpu_id;
+extern int __boot_cpu_id;
 
-अटल अंतरभूत पूर्णांक get_boot_cpu_id(व्योम)
-अणु
-	वापस __boot_cpu_id;
-पूर्ण
+static inline int get_boot_cpu_id(void)
+{
+	return __boot_cpu_id;
+}
 
-#अन्यथा /* !SMP */
+#else /* !SMP */
 
-अटल अंतरभूत व्योम smp_send_stop(व्योम) अणु पूर्ण
+static inline void smp_send_stop(void) { }
 
 /*
- *	These macros fold the SMP functionality पूर्णांकo a single CPU प्रणाली
+ *	These macros fold the SMP functionality into a single CPU system
  */
-#घोषणा raw_smp_processor_id()			0
-अटल अंतरभूत व्योम up_smp_call_function(smp_call_func_t func, व्योम *info)
-अणु
-पूर्ण
-#घोषणा smp_call_function(func, info, रुको) \
+#define raw_smp_processor_id()			0
+static inline void up_smp_call_function(smp_call_func_t func, void *info)
+{
+}
+#define smp_call_function(func, info, wait) \
 			(up_smp_call_function(func, info))
 
-अटल अंतरभूत व्योम smp_send_reschedule(पूर्णांक cpu) अणु पूर्ण
-#घोषणा smp_prepare_boot_cpu()			करो अणुपूर्ण जबतक (0)
-#घोषणा smp_call_function_many(mask, func, info, रुको) \
+static inline void smp_send_reschedule(int cpu) { }
+#define smp_prepare_boot_cpu()			do {} while (0)
+#define smp_call_function_many(mask, func, info, wait) \
 			(up_smp_call_function(func, info))
-अटल अंतरभूत व्योम call_function_init(व्योम) अणु पूर्ण
+static inline void call_function_init(void) { }
 
-अटल अंतरभूत पूर्णांक
-smp_call_function_any(स्थिर काष्ठा cpumask *mask, smp_call_func_t func,
-		      व्योम *info, पूर्णांक रुको)
-अणु
-	वापस smp_call_function_single(0, func, info, रुको);
-पूर्ण
+static inline int
+smp_call_function_any(const struct cpumask *mask, smp_call_func_t func,
+		      void *info, int wait)
+{
+	return smp_call_function_single(0, func, info, wait);
+}
 
-अटल अंतरभूत व्योम kick_all_cpus_sync(व्योम) अणु  पूर्ण
-अटल अंतरभूत व्योम wake_up_all_idle_cpus(व्योम) अणु  पूर्ण
+static inline void kick_all_cpus_sync(void) {  }
+static inline void wake_up_all_idle_cpus(void) {  }
 
-#अगर_घोषित CONFIG_UP_LATE_INIT
-बाह्य व्योम __init up_late_init(व्योम);
-अटल अंतरभूत व्योम smp_init(व्योम) अणु up_late_init(); पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम smp_init(व्योम) अणु पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_UP_LATE_INIT
+extern void __init up_late_init(void);
+static inline void smp_init(void) { up_late_init(); }
+#else
+static inline void smp_init(void) { }
+#endif
 
-अटल अंतरभूत पूर्णांक get_boot_cpu_id(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static inline int get_boot_cpu_id(void)
+{
+	return 0;
+}
 
-#पूर्ण_अगर /* !SMP */
+#endif /* !SMP */
 
 /**
  * raw_processor_id() - get the current (unstable) CPU id
  *
- * For then you know what you are करोing and need an unstable
+ * For then you know what you are doing and need an unstable
  * CPU id.
  */
 
@@ -246,46 +245,46 @@ smp_call_function_any(स्थिर काष्ठा cpumask *mask, smp_call
  *  - preemption is disabled;
  *  - the task is CPU affine.
  *
- * When CONFIG_DEBUG_PREEMPT; we verअगरy these assumption and WARN
+ * When CONFIG_DEBUG_PREEMPT; we verify these assumption and WARN
  * when smp_processor_id() is used when the CPU id is not stable.
  */
 
 /*
- * Allow the architecture to dअगरferentiate between a stable and unstable पढ़ो.
- * For example, x86 uses an IRQ-safe यंत्र-अस्थिर पढ़ो क्रम the unstable but a
- * regular यंत्र पढ़ो क्रम the stable.
+ * Allow the architecture to differentiate between a stable and unstable read.
+ * For example, x86 uses an IRQ-safe asm-volatile read for the unstable but a
+ * regular asm read for the stable.
  */
-#अगर_अघोषित __smp_processor_id
-#घोषणा __smp_processor_id(x) raw_smp_processor_id(x)
-#पूर्ण_अगर
+#ifndef __smp_processor_id
+#define __smp_processor_id(x) raw_smp_processor_id(x)
+#endif
 
-#अगर_घोषित CONFIG_DEBUG_PREEMPT
-  बाह्य अचिन्हित पूर्णांक debug_smp_processor_id(व्योम);
+#ifdef CONFIG_DEBUG_PREEMPT
+  extern unsigned int debug_smp_processor_id(void);
 # define smp_processor_id() debug_smp_processor_id()
-#अन्यथा
+#else
 # define smp_processor_id() __smp_processor_id()
-#पूर्ण_अगर
+#endif
 
-#घोषणा get_cpu()		(अणु preempt_disable(); __smp_processor_id(); पूर्ण)
-#घोषणा put_cpu()		preempt_enable()
+#define get_cpu()		({ preempt_disable(); __smp_processor_id(); })
+#define put_cpu()		preempt_enable()
 
 /*
- * Callback to arch code अगर there's nosmp or maxcpus=0 on the
+ * Callback to arch code if there's nosmp or maxcpus=0 on the
  * boot command line:
  */
-बाह्य व्योम arch_disable_smp_support(व्योम);
+extern void arch_disable_smp_support(void);
 
-बाह्य व्योम arch_thaw_secondary_cpus_begin(व्योम);
-बाह्य व्योम arch_thaw_secondary_cpus_end(व्योम);
+extern void arch_thaw_secondary_cpus_begin(void);
+extern void arch_thaw_secondary_cpus_end(void);
 
-व्योम smp_setup_processor_id(व्योम);
+void smp_setup_processor_id(void);
 
-पूर्णांक smp_call_on_cpu(अचिन्हित पूर्णांक cpu, पूर्णांक (*func)(व्योम *), व्योम *par,
+int smp_call_on_cpu(unsigned int cpu, int (*func)(void *), void *par,
 		    bool phys);
 
 /* SMP core functions */
-पूर्णांक smpcfd_prepare_cpu(अचिन्हित पूर्णांक cpu);
-पूर्णांक smpcfd_dead_cpu(अचिन्हित पूर्णांक cpu);
-पूर्णांक smpcfd_dying_cpu(अचिन्हित पूर्णांक cpu);
+int smpcfd_prepare_cpu(unsigned int cpu);
+int smpcfd_dead_cpu(unsigned int cpu);
+int smpcfd_dying_cpu(unsigned int cpu);
 
-#पूर्ण_अगर /* __LINUX_SMP_H */
+#endif /* __LINUX_SMP_H */

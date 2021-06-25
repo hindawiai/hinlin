@@ -1,114 +1,113 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) 2017 Netronome Systems, Inc.
  * Copyright (C) 2019 Mellanox Technologies. All rights reserved
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sysfs.h>
+#include <linux/device.h>
+#include <linux/idr.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/mutex.h>
+#include <linux/rtnetlink.h>
+#include <linux/slab.h>
+#include <linux/sysfs.h>
 
-#समावेश "netdevsim.h"
+#include "netdevsim.h"
 
-अटल DEFINE_IDA(nsim_bus_dev_ids);
-अटल LIST_HEAD(nsim_bus_dev_list);
-अटल DEFINE_MUTEX(nsim_bus_dev_list_lock);
-अटल bool nsim_bus_enable;
+static DEFINE_IDA(nsim_bus_dev_ids);
+static LIST_HEAD(nsim_bus_dev_list);
+static DEFINE_MUTEX(nsim_bus_dev_list_lock);
+static bool nsim_bus_enable;
 
-अटल काष्ठा nsim_bus_dev *to_nsim_bus_dev(काष्ठा device *dev)
-अणु
-	वापस container_of(dev, काष्ठा nsim_bus_dev, dev);
-पूर्ण
+static struct nsim_bus_dev *to_nsim_bus_dev(struct device *dev)
+{
+	return container_of(dev, struct nsim_bus_dev, dev);
+}
 
-अटल पूर्णांक nsim_bus_dev_vfs_enable(काष्ठा nsim_bus_dev *nsim_bus_dev,
-				   अचिन्हित पूर्णांक num_vfs)
-अणु
-	nsim_bus_dev->vfconfigs = kसुस्मृति(num_vfs,
-					  माप(काष्ठा nsim_vf_config),
+static int nsim_bus_dev_vfs_enable(struct nsim_bus_dev *nsim_bus_dev,
+				   unsigned int num_vfs)
+{
+	nsim_bus_dev->vfconfigs = kcalloc(num_vfs,
+					  sizeof(struct nsim_vf_config),
 					  GFP_KERNEL | __GFP_NOWARN);
-	अगर (!nsim_bus_dev->vfconfigs)
-		वापस -ENOMEM;
+	if (!nsim_bus_dev->vfconfigs)
+		return -ENOMEM;
 	nsim_bus_dev->num_vfs = num_vfs;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nsim_bus_dev_vfs_disable(काष्ठा nsim_bus_dev *nsim_bus_dev)
-अणु
-	kमुक्त(nsim_bus_dev->vfconfigs);
-	nsim_bus_dev->vfconfigs = शून्य;
+static void nsim_bus_dev_vfs_disable(struct nsim_bus_dev *nsim_bus_dev)
+{
+	kfree(nsim_bus_dev->vfconfigs);
+	nsim_bus_dev->vfconfigs = NULL;
 	nsim_bus_dev->num_vfs = 0;
-पूर्ण
+}
 
-अटल sमाप_प्रकार
-nsim_bus_dev_numvfs_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा nsim_bus_dev *nsim_bus_dev = to_nsim_bus_dev(dev);
-	अचिन्हित पूर्णांक num_vfs;
-	पूर्णांक ret;
+static ssize_t
+nsim_bus_dev_numvfs_store(struct device *dev, struct device_attribute *attr,
+			  const char *buf, size_t count)
+{
+	struct nsim_bus_dev *nsim_bus_dev = to_nsim_bus_dev(dev);
+	unsigned int num_vfs;
+	int ret;
 
-	ret = kstrtouपूर्णांक(buf, 0, &num_vfs);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtouint(buf, 0, &num_vfs);
+	if (ret)
+		return ret;
 
 	rtnl_lock();
-	अगर (nsim_bus_dev->num_vfs == num_vfs)
-		जाओ निकास_good;
-	अगर (nsim_bus_dev->num_vfs && num_vfs) अणु
+	if (nsim_bus_dev->num_vfs == num_vfs)
+		goto exit_good;
+	if (nsim_bus_dev->num_vfs && num_vfs) {
 		ret = -EBUSY;
-		जाओ निकास_unlock;
-	पूर्ण
+		goto exit_unlock;
+	}
 
-	अगर (num_vfs) अणु
+	if (num_vfs) {
 		ret = nsim_bus_dev_vfs_enable(nsim_bus_dev, num_vfs);
-		अगर (ret)
-			जाओ निकास_unlock;
-	पूर्ण अन्यथा अणु
+		if (ret)
+			goto exit_unlock;
+	} else {
 		nsim_bus_dev_vfs_disable(nsim_bus_dev);
-	पूर्ण
-निकास_good:
+	}
+exit_good:
 	ret = count;
-निकास_unlock:
+exit_unlock:
 	rtnl_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार
-nsim_bus_dev_numvfs_show(काष्ठा device *dev,
-			 काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा nsim_bus_dev *nsim_bus_dev = to_nsim_bus_dev(dev);
+static ssize_t
+nsim_bus_dev_numvfs_show(struct device *dev,
+			 struct device_attribute *attr, char *buf)
+{
+	struct nsim_bus_dev *nsim_bus_dev = to_nsim_bus_dev(dev);
 
-	वापस प्र_लिखो(buf, "%u\n", nsim_bus_dev->num_vfs);
-पूर्ण
+	return sprintf(buf, "%u\n", nsim_bus_dev->num_vfs);
+}
 
-अटल काष्ठा device_attribute nsim_bus_dev_numvfs_attr =
+static struct device_attribute nsim_bus_dev_numvfs_attr =
 	__ATTR(sriov_numvfs, 0664, nsim_bus_dev_numvfs_show,
 	       nsim_bus_dev_numvfs_store);
 
-अटल sमाप_प्रकार
-new_port_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-	       स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा nsim_bus_dev *nsim_bus_dev = to_nsim_bus_dev(dev);
-	काष्ठा nsim_dev *nsim_dev = dev_get_drvdata(dev);
-	काष्ठा devlink *devlink;
-	अचिन्हित पूर्णांक port_index;
-	पूर्णांक ret;
+static ssize_t
+new_port_store(struct device *dev, struct device_attribute *attr,
+	       const char *buf, size_t count)
+{
+	struct nsim_bus_dev *nsim_bus_dev = to_nsim_bus_dev(dev);
+	struct nsim_dev *nsim_dev = dev_get_drvdata(dev);
+	struct devlink *devlink;
+	unsigned int port_index;
+	int ret;
 
-	/* Prevent to use nsim_bus_dev beक्रमe initialization. */
-	अगर (!smp_load_acquire(&nsim_bus_dev->init))
-		वापस -EBUSY;
-	ret = kstrtouपूर्णांक(buf, 0, &port_index);
-	अगर (ret)
-		वापस ret;
+	/* Prevent to use nsim_bus_dev before initialization. */
+	if (!smp_load_acquire(&nsim_bus_dev->init))
+		return -EBUSY;
+	ret = kstrtouint(buf, 0, &port_index);
+	if (ret)
+		return ret;
 
 	devlink = priv_to_devlink(nsim_dev);
 
@@ -117,27 +116,27 @@ new_port_store(काष्ठा device *dev, काष्ठा device_attribu
 	ret = nsim_dev_port_add(nsim_bus_dev, port_index);
 	devlink_reload_enable(devlink);
 	mutex_unlock(&nsim_bus_dev->nsim_bus_reload_lock);
-	वापस ret ? ret : count;
-पूर्ण
+	return ret ? ret : count;
+}
 
-अटल काष्ठा device_attribute nsim_bus_dev_new_port_attr = __ATTR_WO(new_port);
+static struct device_attribute nsim_bus_dev_new_port_attr = __ATTR_WO(new_port);
 
-अटल sमाप_प्रकार
-del_port_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-	       स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा nsim_bus_dev *nsim_bus_dev = to_nsim_bus_dev(dev);
-	काष्ठा nsim_dev *nsim_dev = dev_get_drvdata(dev);
-	काष्ठा devlink *devlink;
-	अचिन्हित पूर्णांक port_index;
-	पूर्णांक ret;
+static ssize_t
+del_port_store(struct device *dev, struct device_attribute *attr,
+	       const char *buf, size_t count)
+{
+	struct nsim_bus_dev *nsim_bus_dev = to_nsim_bus_dev(dev);
+	struct nsim_dev *nsim_dev = dev_get_drvdata(dev);
+	struct devlink *devlink;
+	unsigned int port_index;
+	int ret;
 
-	/* Prevent to use nsim_bus_dev beक्रमe initialization. */
-	अगर (!smp_load_acquire(&nsim_bus_dev->init))
-		वापस -EBUSY;
-	ret = kstrtouपूर्णांक(buf, 0, &port_index);
-	अगर (ret)
-		वापस ret;
+	/* Prevent to use nsim_bus_dev before initialization. */
+	if (!smp_load_acquire(&nsim_bus_dev->init))
+		return -EBUSY;
+	ret = kstrtouint(buf, 0, &port_index);
+	if (ret)
+		return ret;
 
 	devlink = priv_to_devlink(nsim_dev);
 
@@ -146,78 +145,78 @@ del_port_store(काष्ठा device *dev, काष्ठा device_attribu
 	ret = nsim_dev_port_del(nsim_bus_dev, port_index);
 	devlink_reload_enable(devlink);
 	mutex_unlock(&nsim_bus_dev->nsim_bus_reload_lock);
-	वापस ret ? ret : count;
-पूर्ण
+	return ret ? ret : count;
+}
 
-अटल काष्ठा device_attribute nsim_bus_dev_del_port_attr = __ATTR_WO(del_port);
+static struct device_attribute nsim_bus_dev_del_port_attr = __ATTR_WO(del_port);
 
-अटल काष्ठा attribute *nsim_bus_dev_attrs[] = अणु
+static struct attribute *nsim_bus_dev_attrs[] = {
 	&nsim_bus_dev_numvfs_attr.attr,
 	&nsim_bus_dev_new_port_attr.attr,
 	&nsim_bus_dev_del_port_attr.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group nsim_bus_dev_attr_group = अणु
+static const struct attribute_group nsim_bus_dev_attr_group = {
 	.attrs = nsim_bus_dev_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *nsim_bus_dev_attr_groups[] = अणु
+static const struct attribute_group *nsim_bus_dev_attr_groups[] = {
 	&nsim_bus_dev_attr_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल व्योम nsim_bus_dev_release(काष्ठा device *dev)
-अणु
-	काष्ठा nsim_bus_dev *nsim_bus_dev = to_nsim_bus_dev(dev);
+static void nsim_bus_dev_release(struct device *dev)
+{
+	struct nsim_bus_dev *nsim_bus_dev = to_nsim_bus_dev(dev);
 
 	nsim_bus_dev_vfs_disable(nsim_bus_dev);
-पूर्ण
+}
 
-अटल काष्ठा device_type nsim_bus_dev_type = अणु
+static struct device_type nsim_bus_dev_type = {
 	.groups = nsim_bus_dev_attr_groups,
 	.release = nsim_bus_dev_release,
-पूर्ण;
+};
 
-अटल काष्ठा nsim_bus_dev *
-nsim_bus_dev_new(अचिन्हित पूर्णांक id, अचिन्हित पूर्णांक port_count);
+static struct nsim_bus_dev *
+nsim_bus_dev_new(unsigned int id, unsigned int port_count);
 
-अटल sमाप_प्रकार
-new_device_store(काष्ठा bus_type *bus, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा nsim_bus_dev *nsim_bus_dev;
-	अचिन्हित पूर्णांक port_count;
-	अचिन्हित पूर्णांक id;
-	पूर्णांक err;
+static ssize_t
+new_device_store(struct bus_type *bus, const char *buf, size_t count)
+{
+	struct nsim_bus_dev *nsim_bus_dev;
+	unsigned int port_count;
+	unsigned int id;
+	int err;
 
-	err = माला_पूछो(buf, "%u %u", &id, &port_count);
-	चयन (err) अणु
-	हाल 1:
+	err = sscanf(buf, "%u %u", &id, &port_count);
+	switch (err) {
+	case 1:
 		port_count = 1;
 		fallthrough;
-	हाल 2:
-		अगर (id > पूर्णांक_उच्च) अणु
+	case 2:
+		if (id > INT_MAX) {
 			pr_err("Value of \"id\" is too big.\n");
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	शेष:
+			return -EINVAL;
+		}
+		break;
+	default:
 		pr_err("Format for adding new device is \"id port_count\" (uint uint).\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_lock(&nsim_bus_dev_list_lock);
-	/* Prevent to use resource beक्रमe initialization. */
-	अगर (!smp_load_acquire(&nsim_bus_enable)) अणु
+	/* Prevent to use resource before initialization. */
+	if (!smp_load_acquire(&nsim_bus_enable)) {
 		err = -EBUSY;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	nsim_bus_dev = nsim_bus_dev_new(id, port_count);
-	अगर (IS_ERR(nsim_bus_dev)) अणु
+	if (IS_ERR(nsim_bus_dev)) {
 		err = PTR_ERR(nsim_bus_dev);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/* Allow using nsim_bus_dev */
 	smp_store_release(&nsim_bus_dev->init, true);
@@ -225,106 +224,106 @@ new_device_store(काष्ठा bus_type *bus, स्थिर अक्ष�
 	list_add_tail(&nsim_bus_dev->list, &nsim_bus_dev_list);
 	mutex_unlock(&nsim_bus_dev_list_lock);
 
-	वापस count;
+	return count;
 err:
 	mutex_unlock(&nsim_bus_dev_list_lock);
-	वापस err;
-पूर्ण
-अटल BUS_ATTR_WO(new_device);
+	return err;
+}
+static BUS_ATTR_WO(new_device);
 
-अटल व्योम nsim_bus_dev_del(काष्ठा nsim_bus_dev *nsim_bus_dev);
+static void nsim_bus_dev_del(struct nsim_bus_dev *nsim_bus_dev);
 
-अटल sमाप_प्रकार
-del_device_store(काष्ठा bus_type *bus, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा nsim_bus_dev *nsim_bus_dev, *पंचांगp;
-	अचिन्हित पूर्णांक id;
-	पूर्णांक err;
+static ssize_t
+del_device_store(struct bus_type *bus, const char *buf, size_t count)
+{
+	struct nsim_bus_dev *nsim_bus_dev, *tmp;
+	unsigned int id;
+	int err;
 
-	err = माला_पूछो(buf, "%u", &id);
-	चयन (err) अणु
-	हाल 1:
-		अगर (id > पूर्णांक_उच्च) अणु
+	err = sscanf(buf, "%u", &id);
+	switch (err) {
+	case 1:
+		if (id > INT_MAX) {
 			pr_err("Value of \"id\" is too big.\n");
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	शेष:
+			return -EINVAL;
+		}
+		break;
+	default:
 		pr_err("Format for deleting device is \"id\" (uint).\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = -ENOENT;
 	mutex_lock(&nsim_bus_dev_list_lock);
-	/* Prevent to use resource beक्रमe initialization. */
-	अगर (!smp_load_acquire(&nsim_bus_enable)) अणु
+	/* Prevent to use resource before initialization. */
+	if (!smp_load_acquire(&nsim_bus_enable)) {
 		mutex_unlock(&nsim_bus_dev_list_lock);
-		वापस -EBUSY;
-	पूर्ण
-	list_क्रम_each_entry_safe(nsim_bus_dev, पंचांगp, &nsim_bus_dev_list, list) अणु
-		अगर (nsim_bus_dev->dev.id != id)
-			जारी;
+		return -EBUSY;
+	}
+	list_for_each_entry_safe(nsim_bus_dev, tmp, &nsim_bus_dev_list, list) {
+		if (nsim_bus_dev->dev.id != id)
+			continue;
 		list_del(&nsim_bus_dev->list);
 		nsim_bus_dev_del(nsim_bus_dev);
 		err = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	mutex_unlock(&nsim_bus_dev_list_lock);
-	वापस !err ? count : err;
-पूर्ण
-अटल BUS_ATTR_WO(del_device);
+	return !err ? count : err;
+}
+static BUS_ATTR_WO(del_device);
 
-अटल काष्ठा attribute *nsim_bus_attrs[] = अणु
+static struct attribute *nsim_bus_attrs[] = {
 	&bus_attr_new_device.attr,
 	&bus_attr_del_device.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 ATTRIBUTE_GROUPS(nsim_bus);
 
-अटल पूर्णांक nsim_bus_probe(काष्ठा device *dev)
-अणु
-	काष्ठा nsim_bus_dev *nsim_bus_dev = to_nsim_bus_dev(dev);
+static int nsim_bus_probe(struct device *dev)
+{
+	struct nsim_bus_dev *nsim_bus_dev = to_nsim_bus_dev(dev);
 
-	वापस nsim_dev_probe(nsim_bus_dev);
-पूर्ण
+	return nsim_dev_probe(nsim_bus_dev);
+}
 
-अटल पूर्णांक nsim_bus_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा nsim_bus_dev *nsim_bus_dev = to_nsim_bus_dev(dev);
+static int nsim_bus_remove(struct device *dev)
+{
+	struct nsim_bus_dev *nsim_bus_dev = to_nsim_bus_dev(dev);
 
-	nsim_dev_हटाओ(nsim_bus_dev);
-	वापस 0;
-पूर्ण
+	nsim_dev_remove(nsim_bus_dev);
+	return 0;
+}
 
-अटल पूर्णांक nsim_num_vf(काष्ठा device *dev)
-अणु
-	काष्ठा nsim_bus_dev *nsim_bus_dev = to_nsim_bus_dev(dev);
+static int nsim_num_vf(struct device *dev)
+{
+	struct nsim_bus_dev *nsim_bus_dev = to_nsim_bus_dev(dev);
 
-	वापस nsim_bus_dev->num_vfs;
-पूर्ण
+	return nsim_bus_dev->num_vfs;
+}
 
-अटल काष्ठा bus_type nsim_bus = अणु
+static struct bus_type nsim_bus = {
 	.name		= DRV_NAME,
 	.dev_name	= DRV_NAME,
 	.bus_groups	= nsim_bus_groups,
 	.probe		= nsim_bus_probe,
-	.हटाओ		= nsim_bus_हटाओ,
+	.remove		= nsim_bus_remove,
 	.num_vf		= nsim_num_vf,
-पूर्ण;
+};
 
-अटल काष्ठा nsim_bus_dev *
-nsim_bus_dev_new(अचिन्हित पूर्णांक id, अचिन्हित पूर्णांक port_count)
-अणु
-	काष्ठा nsim_bus_dev *nsim_bus_dev;
-	पूर्णांक err;
+static struct nsim_bus_dev *
+nsim_bus_dev_new(unsigned int id, unsigned int port_count)
+{
+	struct nsim_bus_dev *nsim_bus_dev;
+	int err;
 
-	nsim_bus_dev = kzalloc(माप(*nsim_bus_dev), GFP_KERNEL);
-	अगर (!nsim_bus_dev)
-		वापस ERR_PTR(-ENOMEM);
+	nsim_bus_dev = kzalloc(sizeof(*nsim_bus_dev), GFP_KERNEL);
+	if (!nsim_bus_dev)
+		return ERR_PTR(-ENOMEM);
 
 	err = ida_alloc_range(&nsim_bus_dev_ids, id, id, GFP_KERNEL);
-	अगर (err < 0)
-		जाओ err_nsim_bus_dev_मुक्त;
+	if (err < 0)
+		goto err_nsim_bus_dev_free;
 	nsim_bus_dev->dev.id = err;
 	nsim_bus_dev->dev.bus = &nsim_bus;
 	nsim_bus_dev->dev.type = &nsim_bus_dev_type;
@@ -334,66 +333,66 @@ nsim_bus_dev_new(अचिन्हित पूर्णांक id, अचि
 	/* Disallow using nsim_bus_dev */
 	smp_store_release(&nsim_bus_dev->init, false);
 
-	err = device_रेजिस्टर(&nsim_bus_dev->dev);
-	अगर (err)
-		जाओ err_nsim_bus_dev_id_मुक्त;
-	वापस nsim_bus_dev;
+	err = device_register(&nsim_bus_dev->dev);
+	if (err)
+		goto err_nsim_bus_dev_id_free;
+	return nsim_bus_dev;
 
-err_nsim_bus_dev_id_मुक्त:
-	ida_मुक्त(&nsim_bus_dev_ids, nsim_bus_dev->dev.id);
-err_nsim_bus_dev_मुक्त:
-	kमुक्त(nsim_bus_dev);
-	वापस ERR_PTR(err);
-पूर्ण
+err_nsim_bus_dev_id_free:
+	ida_free(&nsim_bus_dev_ids, nsim_bus_dev->dev.id);
+err_nsim_bus_dev_free:
+	kfree(nsim_bus_dev);
+	return ERR_PTR(err);
+}
 
-अटल व्योम nsim_bus_dev_del(काष्ठा nsim_bus_dev *nsim_bus_dev)
-अणु
+static void nsim_bus_dev_del(struct nsim_bus_dev *nsim_bus_dev)
+{
 	/* Disallow using nsim_bus_dev */
 	smp_store_release(&nsim_bus_dev->init, false);
-	device_unरेजिस्टर(&nsim_bus_dev->dev);
-	ida_मुक्त(&nsim_bus_dev_ids, nsim_bus_dev->dev.id);
-	kमुक्त(nsim_bus_dev);
-पूर्ण
+	device_unregister(&nsim_bus_dev->dev);
+	ida_free(&nsim_bus_dev_ids, nsim_bus_dev->dev.id);
+	kfree(nsim_bus_dev);
+}
 
-अटल काष्ठा device_driver nsim_driver = अणु
+static struct device_driver nsim_driver = {
 	.name		= DRV_NAME,
 	.bus		= &nsim_bus,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-पूर्णांक nsim_bus_init(व्योम)
-अणु
-	पूर्णांक err;
+int nsim_bus_init(void)
+{
+	int err;
 
-	err = bus_रेजिस्टर(&nsim_bus);
-	अगर (err)
-		वापस err;
-	err = driver_रेजिस्टर(&nsim_driver);
-	अगर (err)
-		जाओ err_bus_unरेजिस्टर;
+	err = bus_register(&nsim_bus);
+	if (err)
+		return err;
+	err = driver_register(&nsim_driver);
+	if (err)
+		goto err_bus_unregister;
 	/* Allow using resources */
 	smp_store_release(&nsim_bus_enable, true);
-	वापस 0;
+	return 0;
 
-err_bus_unरेजिस्टर:
-	bus_unरेजिस्टर(&nsim_bus);
-	वापस err;
-पूर्ण
+err_bus_unregister:
+	bus_unregister(&nsim_bus);
+	return err;
+}
 
-व्योम nsim_bus_निकास(व्योम)
-अणु
-	काष्ठा nsim_bus_dev *nsim_bus_dev, *पंचांगp;
+void nsim_bus_exit(void)
+{
+	struct nsim_bus_dev *nsim_bus_dev, *tmp;
 
 	/* Disallow using resources */
 	smp_store_release(&nsim_bus_enable, false);
 
 	mutex_lock(&nsim_bus_dev_list_lock);
-	list_क्रम_each_entry_safe(nsim_bus_dev, पंचांगp, &nsim_bus_dev_list, list) अणु
+	list_for_each_entry_safe(nsim_bus_dev, tmp, &nsim_bus_dev_list, list) {
 		list_del(&nsim_bus_dev->list);
 		nsim_bus_dev_del(nsim_bus_dev);
-	पूर्ण
+	}
 	mutex_unlock(&nsim_bus_dev_list_lock);
 
-	driver_unरेजिस्टर(&nsim_driver);
-	bus_unरेजिस्टर(&nsim_bus);
-पूर्ण
+	driver_unregister(&nsim_driver);
+	bus_unregister(&nsim_bus);
+}

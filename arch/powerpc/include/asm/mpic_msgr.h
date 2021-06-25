@@ -1,130 +1,129 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright 2011-2012, Meaकरोr Inge, Mentor Graphics Corporation.
+ * Copyright 2011-2012, Meador Inge, Mentor Graphics Corporation.
  */
 
-#अगर_अघोषित _ASM_MPIC_MSGR_H
-#घोषणा _ASM_MPIC_MSGR_H
+#ifndef _ASM_MPIC_MSGR_H
+#define _ASM_MPIC_MSGR_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/spinlock.h>
-#समावेश <यंत्र/smp.h>
-#समावेश <यंत्र/पन.स>
+#include <linux/types.h>
+#include <linux/spinlock.h>
+#include <asm/smp.h>
+#include <asm/io.h>
 
-काष्ठा mpic_msgr अणु
+struct mpic_msgr {
 	u32 __iomem *base;
 	u32 __iomem *mer;
-	पूर्णांक irq;
-	अचिन्हित अक्षर in_use;
+	int irq;
+	unsigned char in_use;
 	raw_spinlock_t lock;
-	पूर्णांक num;
-पूर्ण;
+	int num;
+};
 
-/* Get a message रेजिस्टर
+/* Get a message register
  *
- * @reg_num:	the MPIC message रेजिस्टर to get
+ * @reg_num:	the MPIC message register to get
  *
- * A poपूर्णांकer to the message रेजिस्टर is वापसed.  If
- * the message रेजिस्टर asked क्रम is alपढ़ोy in use, then
- * EBUSY is वापसed.  If the number given is not associated
- * with an actual message रेजिस्टर, then ENODEV is वापसed.
- * Successfully getting the रेजिस्टर marks it as in use.
+ * A pointer to the message register is returned.  If
+ * the message register asked for is already in use, then
+ * EBUSY is returned.  If the number given is not associated
+ * with an actual message register, then ENODEV is returned.
+ * Successfully getting the register marks it as in use.
  */
-बाह्य काष्ठा mpic_msgr *mpic_msgr_get(अचिन्हित पूर्णांक reg_num);
+extern struct mpic_msgr *mpic_msgr_get(unsigned int reg_num);
 
-/* Relinquish a message रेजिस्टर
+/* Relinquish a message register
  *
- * @msgr:	the message रेजिस्टर to वापस
+ * @msgr:	the message register to return
  *
- * Disables the given message रेजिस्टर and marks it as मुक्त.
+ * Disables the given message register and marks it as free.
  * After this call has completed successully the message
- * रेजिस्टर is available to be acquired by a call to
+ * register is available to be acquired by a call to
  * mpic_msgr_get.
  */
-बाह्य व्योम mpic_msgr_put(काष्ठा mpic_msgr *msgr);
+extern void mpic_msgr_put(struct mpic_msgr *msgr);
 
-/* Enable a message रेजिस्टर
+/* Enable a message register
  *
- * @msgr:	the message रेजिस्टर to enable
+ * @msgr:	the message register to enable
  *
- * The given message रेजिस्टर is enabled क्रम sending
+ * The given message register is enabled for sending
  * messages.
  */
-बाह्य व्योम mpic_msgr_enable(काष्ठा mpic_msgr *msgr);
+extern void mpic_msgr_enable(struct mpic_msgr *msgr);
 
-/* Disable a message रेजिस्टर
+/* Disable a message register
  *
- * @msgr:	the message रेजिस्टर to disable
+ * @msgr:	the message register to disable
  *
- * The given message रेजिस्टर is disabled क्रम sending
+ * The given message register is disabled for sending
  * messages.
  */
-बाह्य व्योम mpic_msgr_disable(काष्ठा mpic_msgr *msgr);
+extern void mpic_msgr_disable(struct mpic_msgr *msgr);
 
-/* Write a message to a message रेजिस्टर
+/* Write a message to a message register
  *
- * @msgr:	the message रेजिस्टर to ग_लिखो to
- * @message:	the message to ग_लिखो
+ * @msgr:	the message register to write to
+ * @message:	the message to write
  *
  * The given 32-bit message is written to the given message
- * रेजिस्टर.  Writing to an enabled message रेजिस्टरs fires
- * an पूर्णांकerrupt.
+ * register.  Writing to an enabled message registers fires
+ * an interrupt.
  */
-अटल अंतरभूत व्योम mpic_msgr_ग_लिखो(काष्ठा mpic_msgr *msgr, u32 message)
-अणु
+static inline void mpic_msgr_write(struct mpic_msgr *msgr, u32 message)
+{
 	out_be32(msgr->base, message);
-पूर्ण
+}
 
-/* Read a message from a message रेजिस्टर
+/* Read a message from a message register
  *
- * @msgr:	the message रेजिस्टर to पढ़ो from
+ * @msgr:	the message register to read from
  *
- * Returns the 32-bit value currently in the given message रेजिस्टर.
- * Upon पढ़ोing the रेजिस्टर any पूर्णांकerrupts क्रम that रेजिस्टर are
+ * Returns the 32-bit value currently in the given message register.
+ * Upon reading the register any interrupts for that register are
  * cleared.
  */
-अटल अंतरभूत u32 mpic_msgr_पढ़ो(काष्ठा mpic_msgr *msgr)
-अणु
-	वापस in_be32(msgr->base);
-पूर्ण
+static inline u32 mpic_msgr_read(struct mpic_msgr *msgr)
+{
+	return in_be32(msgr->base);
+}
 
-/* Clear a message रेजिस्टर
+/* Clear a message register
  *
- * @msgr:	the message रेजिस्टर to clear
+ * @msgr:	the message register to clear
  *
- * Clears any पूर्णांकerrupts associated with the given message रेजिस्टर.
+ * Clears any interrupts associated with the given message register.
  */
-अटल अंतरभूत व्योम mpic_msgr_clear(काष्ठा mpic_msgr *msgr)
-अणु
-	(व्योम) mpic_msgr_पढ़ो(msgr);
-पूर्ण
+static inline void mpic_msgr_clear(struct mpic_msgr *msgr)
+{
+	(void) mpic_msgr_read(msgr);
+}
 
-/* Set the destination CPU क्रम the message रेजिस्टर
+/* Set the destination CPU for the message register
  *
- * @msgr:	the message रेजिस्टर whose destination is to be set
- * @cpu_num:	the Linux CPU number to bind the message रेजिस्टर to
+ * @msgr:	the message register whose destination is to be set
+ * @cpu_num:	the Linux CPU number to bind the message register to
  *
  * Note that the CPU number given is the CPU number used by the kernel
  * and *not* the actual hardware CPU number.
  */
-अटल अंतरभूत व्योम mpic_msgr_set_destination(काष्ठा mpic_msgr *msgr,
+static inline void mpic_msgr_set_destination(struct mpic_msgr *msgr,
 					     u32 cpu_num)
-अणु
+{
 	out_be32(msgr->base, 1 << get_hard_smp_processor_id(cpu_num));
-पूर्ण
+}
 
-/* Get the IRQ number क्रम the message रेजिस्टर
- * @msgr:	the message रेजिस्टर whose IRQ is to be वापसed
+/* Get the IRQ number for the message register
+ * @msgr:	the message register whose IRQ is to be returned
  *
- * Returns the IRQ number associated with the given message रेजिस्टर.
- * 0 is वापसed अगर this message रेजिस्टर is not capable of receiving
- * पूर्णांकerrupts.  What message रेजिस्टर can and cannot receive पूर्णांकerrupts is
- * specअगरied in the device tree क्रम the प्रणाली.
+ * Returns the IRQ number associated with the given message register.
+ * 0 is returned if this message register is not capable of receiving
+ * interrupts.  What message register can and cannot receive interrupts is
+ * specified in the device tree for the system.
  */
-अटल अंतरभूत पूर्णांक mpic_msgr_get_irq(काष्ठा mpic_msgr *msgr)
-अणु
-	वापस msgr->irq;
-पूर्ण
+static inline int mpic_msgr_get_irq(struct mpic_msgr *msgr)
+{
+	return msgr->irq;
+}
 
-#पूर्ण_अगर
+#endif

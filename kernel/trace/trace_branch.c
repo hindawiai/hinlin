@@ -1,456 +1,455 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * unlikely profiler
  *
  * Copyright (C) 2008 Steven Rostedt <srostedt@redhat.com>
  */
-#समावेश <linux/kallsyms.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/irqflags.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/module.h>
-#समावेश <linux/ftrace.h>
-#समावेश <linux/hash.h>
-#समावेश <linux/fs.h>
-#समावेश <यंत्र/local.h>
+#include <linux/kallsyms.h>
+#include <linux/seq_file.h>
+#include <linux/spinlock.h>
+#include <linux/irqflags.h>
+#include <linux/uaccess.h>
+#include <linux/module.h>
+#include <linux/ftrace.h>
+#include <linux/hash.h>
+#include <linux/fs.h>
+#include <asm/local.h>
 
-#समावेश "trace.h"
-#समावेश "trace_stat.h"
-#समावेश "trace_output.h"
+#include "trace.h"
+#include "trace_stat.h"
+#include "trace_output.h"
 
-#अगर_घोषित CONFIG_BRANCH_TRACER
+#ifdef CONFIG_BRANCH_TRACER
 
-अटल काष्ठा tracer branch_trace;
-अटल पूर्णांक branch_tracing_enabled __पढ़ो_mostly;
-अटल DEFINE_MUTEX(branch_tracing_mutex);
+static struct tracer branch_trace;
+static int branch_tracing_enabled __read_mostly;
+static DEFINE_MUTEX(branch_tracing_mutex);
 
-अटल काष्ठा trace_array *branch_tracer;
+static struct trace_array *branch_tracer;
 
-अटल व्योम
-probe_likely_condition(काष्ठा ftrace_likely_data *f, पूर्णांक val, पूर्णांक expect)
-अणु
-	काष्ठा trace_event_call *call = &event_branch;
-	काष्ठा trace_array *tr = branch_tracer;
-	काष्ठा trace_buffer *buffer;
-	काष्ठा trace_array_cpu *data;
-	काष्ठा ring_buffer_event *event;
-	काष्ठा trace_branch *entry;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक trace_ctx;
-	स्थिर अक्षर *p;
+static void
+probe_likely_condition(struct ftrace_likely_data *f, int val, int expect)
+{
+	struct trace_event_call *call = &event_branch;
+	struct trace_array *tr = branch_tracer;
+	struct trace_buffer *buffer;
+	struct trace_array_cpu *data;
+	struct ring_buffer_event *event;
+	struct trace_branch *entry;
+	unsigned long flags;
+	unsigned int trace_ctx;
+	const char *p;
 
-	अगर (current->trace_recursion & TRACE_BRANCH_BIT)
-		वापस;
+	if (current->trace_recursion & TRACE_BRANCH_BIT)
+		return;
 
 	/*
-	 * I would love to save just the ftrace_likely_data poपूर्णांकer, but
+	 * I would love to save just the ftrace_likely_data pointer, but
 	 * this code can also be used by modules. Ugly things can happen
-	 * अगर the module is unloaded, and then we go and पढ़ो the
-	 * poपूर्णांकer.  This is slower, but much safer.
+	 * if the module is unloaded, and then we go and read the
+	 * pointer.  This is slower, but much safer.
 	 */
 
-	अगर (unlikely(!tr))
-		वापस;
+	if (unlikely(!tr))
+		return;
 
 	raw_local_irq_save(flags);
 	current->trace_recursion |= TRACE_BRANCH_BIT;
 	data = this_cpu_ptr(tr->array_buffer.data);
-	अगर (atomic_पढ़ो(&data->disabled))
-		जाओ out;
+	if (atomic_read(&data->disabled))
+		goto out;
 
 	trace_ctx = tracing_gen_ctx_flags(flags);
 	buffer = tr->array_buffer.buffer;
 	event = trace_buffer_lock_reserve(buffer, TRACE_BRANCH,
-					  माप(*entry), trace_ctx);
-	अगर (!event)
-		जाओ out;
+					  sizeof(*entry), trace_ctx);
+	if (!event)
+		goto out;
 
 	entry	= ring_buffer_event_data(event);
 
 	/* Strip off the path, only save the file */
-	p = f->data.file + म_माप(f->data.file);
-	जबतक (p >= f->data.file && *p != '/')
+	p = f->data.file + strlen(f->data.file);
+	while (p >= f->data.file && *p != '/')
 		p--;
 	p++;
 
-	म_नकलन(entry->func, f->data.func, TRACE_FUNC_SIZE);
-	म_नकलन(entry->file, p, TRACE_खाता_SIZE);
+	strncpy(entry->func, f->data.func, TRACE_FUNC_SIZE);
+	strncpy(entry->file, p, TRACE_FILE_SIZE);
 	entry->func[TRACE_FUNC_SIZE] = 0;
-	entry->file[TRACE_खाता_SIZE] = 0;
-	entry->स्थिरant = f->स्थिरant;
+	entry->file[TRACE_FILE_SIZE] = 0;
+	entry->constant = f->constant;
 	entry->line = f->data.line;
 	entry->correct = val == expect;
 
-	अगर (!call_filter_check_discard(call, entry, buffer, event))
+	if (!call_filter_check_discard(call, entry, buffer, event))
 		trace_buffer_unlock_commit_nostack(buffer, event);
 
  out:
 	current->trace_recursion &= ~TRACE_BRANCH_BIT;
 	raw_local_irq_restore(flags);
-पूर्ण
+}
 
-अटल अंतरभूत
-व्योम trace_likely_condition(काष्ठा ftrace_likely_data *f, पूर्णांक val, पूर्णांक expect)
-अणु
-	अगर (!branch_tracing_enabled)
-		वापस;
+static inline
+void trace_likely_condition(struct ftrace_likely_data *f, int val, int expect)
+{
+	if (!branch_tracing_enabled)
+		return;
 
 	probe_likely_condition(f, val, expect);
-पूर्ण
+}
 
-पूर्णांक enable_branch_tracing(काष्ठा trace_array *tr)
-अणु
+int enable_branch_tracing(struct trace_array *tr)
+{
 	mutex_lock(&branch_tracing_mutex);
 	branch_tracer = tr;
 	/*
-	 * Must be seen beक्रमe enabling. The पढ़ोer is a condition
-	 * where we करो not need a matching rmb()
+	 * Must be seen before enabling. The reader is a condition
+	 * where we do not need a matching rmb()
 	 */
 	smp_wmb();
 	branch_tracing_enabled++;
 	mutex_unlock(&branch_tracing_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम disable_branch_tracing(व्योम)
-अणु
+void disable_branch_tracing(void)
+{
 	mutex_lock(&branch_tracing_mutex);
 
-	अगर (!branch_tracing_enabled)
-		जाओ out_unlock;
+	if (!branch_tracing_enabled)
+		goto out_unlock;
 
 	branch_tracing_enabled--;
 
  out_unlock:
 	mutex_unlock(&branch_tracing_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक branch_trace_init(काष्ठा trace_array *tr)
-अणु
-	वापस enable_branch_tracing(tr);
-पूर्ण
+static int branch_trace_init(struct trace_array *tr)
+{
+	return enable_branch_tracing(tr);
+}
 
-अटल व्योम branch_trace_reset(काष्ठा trace_array *tr)
-अणु
+static void branch_trace_reset(struct trace_array *tr)
+{
 	disable_branch_tracing();
-पूर्ण
+}
 
-अटल क्रमागत prपूर्णांक_line_t trace_branch_prपूर्णांक(काष्ठा trace_iterator *iter,
-					    पूर्णांक flags, काष्ठा trace_event *event)
-अणु
-	काष्ठा trace_branch *field;
+static enum print_line_t trace_branch_print(struct trace_iterator *iter,
+					    int flags, struct trace_event *event)
+{
+	struct trace_branch *field;
 
 	trace_assign_type(field, iter->ent);
 
-	trace_seq_म_लिखो(&iter->seq, "[%s] %s:%s:%d\n",
+	trace_seq_printf(&iter->seq, "[%s] %s:%s:%d\n",
 			 field->correct ? "  ok  " : " MISS ",
 			 field->func,
 			 field->file,
 			 field->line);
 
-	वापस trace_handle_वापस(&iter->seq);
-पूर्ण
+	return trace_handle_return(&iter->seq);
+}
 
-अटल व्योम branch_prपूर्णांक_header(काष्ठा seq_file *s)
-अणु
-	seq_माला_दो(s, "#           TASK-PID    CPU#    TIMESTAMP  CORRECT"
+static void branch_print_header(struct seq_file *s)
+{
+	seq_puts(s, "#           TASK-PID    CPU#    TIMESTAMP  CORRECT"
 		    "  FUNC:FILE:LINE\n"
 		    "#              | |       |          |         |   "
 		    "    |\n");
-पूर्ण
+}
 
-अटल काष्ठा trace_event_functions trace_branch_funcs = अणु
-	.trace		= trace_branch_prपूर्णांक,
-पूर्ण;
+static struct trace_event_functions trace_branch_funcs = {
+	.trace		= trace_branch_print,
+};
 
-अटल काष्ठा trace_event trace_branch_event = अणु
+static struct trace_event trace_branch_event = {
 	.type		= TRACE_BRANCH,
 	.funcs		= &trace_branch_funcs,
-पूर्ण;
+};
 
-अटल काष्ठा tracer branch_trace __पढ़ो_mostly =
-अणु
+static struct tracer branch_trace __read_mostly =
+{
 	.name		= "branch",
 	.init		= branch_trace_init,
 	.reset		= branch_trace_reset,
-#अगर_घोषित CONFIG_FTRACE_SELFTEST
+#ifdef CONFIG_FTRACE_SELFTEST
 	.selftest	= trace_selftest_startup_branch,
-#पूर्ण_अगर /* CONFIG_FTRACE_SELFTEST */
-	.prपूर्णांक_header	= branch_prपूर्णांक_header,
-पूर्ण;
+#endif /* CONFIG_FTRACE_SELFTEST */
+	.print_header	= branch_print_header,
+};
 
-__init अटल पूर्णांक init_branch_tracer(व्योम)
-अणु
-	पूर्णांक ret;
+__init static int init_branch_tracer(void)
+{
+	int ret;
 
-	ret = रेजिस्टर_trace_event(&trace_branch_event);
-	अगर (!ret) अणु
-		prपूर्णांकk(KERN_WARNING "Warning: could not register "
+	ret = register_trace_event(&trace_branch_event);
+	if (!ret) {
+		printk(KERN_WARNING "Warning: could not register "
 				    "branch events\n");
-		वापस 1;
-	पूर्ण
-	वापस रेजिस्टर_tracer(&branch_trace);
-पूर्ण
+		return 1;
+	}
+	return register_tracer(&branch_trace);
+}
 core_initcall(init_branch_tracer);
 
-#अन्यथा
-अटल अंतरभूत
-व्योम trace_likely_condition(काष्ठा ftrace_likely_data *f, पूर्णांक val, पूर्णांक expect)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_BRANCH_TRACER */
+#else
+static inline
+void trace_likely_condition(struct ftrace_likely_data *f, int val, int expect)
+{
+}
+#endif /* CONFIG_BRANCH_TRACER */
 
-व्योम ftrace_likely_update(काष्ठा ftrace_likely_data *f, पूर्णांक val,
-			  पूर्णांक expect, पूर्णांक is_स्थिरant)
-अणु
-	अचिन्हित दीर्घ flags = user_access_save();
+void ftrace_likely_update(struct ftrace_likely_data *f, int val,
+			  int expect, int is_constant)
+{
+	unsigned long flags = user_access_save();
 
-	/* A स्थिरant is always correct */
-	अगर (is_स्थिरant) अणु
-		f->स्थिरant++;
+	/* A constant is always correct */
+	if (is_constant) {
+		f->constant++;
 		val = expect;
-	पूर्ण
+	}
 	/*
-	 * I would love to have a trace poपूर्णांक here instead, but the
-	 * trace poपूर्णांक code is so inundated with unlikely and likely
-	 * conditions that the recursive nighपंचांगare that exists is too
-	 * much to try to get working. At least क्रम now.
+	 * I would love to have a trace point here instead, but the
+	 * trace point code is so inundated with unlikely and likely
+	 * conditions that the recursive nightmare that exists is too
+	 * much to try to get working. At least for now.
 	 */
 	trace_likely_condition(f, val, expect);
 
 	/* FIXME: Make this atomic! */
-	अगर (val == expect)
+	if (val == expect)
 		f->data.correct++;
-	अन्यथा
+	else
 		f->data.incorrect++;
 
 	user_access_restore(flags);
-पूर्ण
+}
 EXPORT_SYMBOL(ftrace_likely_update);
 
-बाह्य अचिन्हित दीर्घ __start_annotated_branch_profile[];
-बाह्य अचिन्हित दीर्घ __stop_annotated_branch_profile[];
+extern unsigned long __start_annotated_branch_profile[];
+extern unsigned long __stop_annotated_branch_profile[];
 
-अटल पूर्णांक annotated_branch_stat_headers(काष्ठा seq_file *m)
-अणु
-	seq_माला_दो(m, " correct incorrect  % "
+static int annotated_branch_stat_headers(struct seq_file *m)
+{
+	seq_puts(m, " correct incorrect  % "
 		    "       Function                "
 		    "  File              Line\n"
 		    " ------- ---------  - "
 		    "       --------                "
 		    "  ----              ----\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत दीर्घ get_incorrect_percent(स्थिर काष्ठा ftrace_branch_data *p)
-अणु
-	दीर्घ percent;
+static inline long get_incorrect_percent(const struct ftrace_branch_data *p)
+{
+	long percent;
 
-	अगर (p->correct) अणु
+	if (p->correct) {
 		percent = p->incorrect * 100;
 		percent /= p->correct + p->incorrect;
-	पूर्ण अन्यथा
+	} else
 		percent = p->incorrect ? 100 : -1;
 
-	वापस percent;
-पूर्ण
+	return percent;
+}
 
-अटल स्थिर अक्षर *branch_stat_process_file(काष्ठा ftrace_branch_data *p)
-अणु
-	स्थिर अक्षर *f;
+static const char *branch_stat_process_file(struct ftrace_branch_data *p)
+{
+	const char *f;
 
-	/* Only prपूर्णांक the file, not the path */
-	f = p->file + म_माप(p->file);
-	जबतक (f >= p->file && *f != '/')
+	/* Only print the file, not the path */
+	f = p->file + strlen(p->file);
+	while (f >= p->file && *f != '/')
 		f--;
-	वापस ++f;
-पूर्ण
+	return ++f;
+}
 
-अटल व्योम branch_stat_show(काष्ठा seq_file *m,
-			     काष्ठा ftrace_branch_data *p, स्थिर अक्षर *f)
-अणु
-	दीर्घ percent;
+static void branch_stat_show(struct seq_file *m,
+			     struct ftrace_branch_data *p, const char *f)
+{
+	long percent;
 
 	/*
 	 * The miss is overlayed on correct, and hit on incorrect.
 	 */
 	percent = get_incorrect_percent(p);
 
-	अगर (percent < 0)
-		seq_माला_दो(m, "  X ");
-	अन्यथा
-		seq_म_लिखो(m, "%3ld ", percent);
+	if (percent < 0)
+		seq_puts(m, "  X ");
+	else
+		seq_printf(m, "%3ld ", percent);
 
-	seq_म_लिखो(m, "%-30.30s %-20.20s %d\n", p->func, f, p->line);
-पूर्ण
+	seq_printf(m, "%-30.30s %-20.20s %d\n", p->func, f, p->line);
+}
 
-अटल पूर्णांक branch_stat_show_normal(काष्ठा seq_file *m,
-				   काष्ठा ftrace_branch_data *p, स्थिर अक्षर *f)
-अणु
-	seq_म_लिखो(m, "%8lu %8lu ",  p->correct, p->incorrect);
+static int branch_stat_show_normal(struct seq_file *m,
+				   struct ftrace_branch_data *p, const char *f)
+{
+	seq_printf(m, "%8lu %8lu ",  p->correct, p->incorrect);
 	branch_stat_show(m, p, f);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक annotate_branch_stat_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा ftrace_likely_data *p = v;
-	स्थिर अक्षर *f;
-	पूर्णांक l;
+static int annotate_branch_stat_show(struct seq_file *m, void *v)
+{
+	struct ftrace_likely_data *p = v;
+	const char *f;
+	int l;
 
 	f = branch_stat_process_file(&p->data);
 
-	अगर (!p->स्थिरant)
-		वापस branch_stat_show_normal(m, &p->data, f);
+	if (!p->constant)
+		return branch_stat_show_normal(m, &p->data, f);
 
-	l = snम_लिखो(शून्य, 0, "/%lu", p->स्थिरant);
+	l = snprintf(NULL, 0, "/%lu", p->constant);
 	l = l > 8 ? 0 : 8 - l;
 
-	seq_म_लिखो(m, "%8lu/%lu %*lu ",
-		   p->data.correct, p->स्थिरant, l, p->data.incorrect);
+	seq_printf(m, "%8lu/%lu %*lu ",
+		   p->data.correct, p->constant, l, p->data.incorrect);
 	branch_stat_show(m, &p->data, f);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम *annotated_branch_stat_start(काष्ठा tracer_stat *trace)
-अणु
-	वापस __start_annotated_branch_profile;
-पूर्ण
+static void *annotated_branch_stat_start(struct tracer_stat *trace)
+{
+	return __start_annotated_branch_profile;
+}
 
-अटल व्योम *
-annotated_branch_stat_next(व्योम *v, पूर्णांक idx)
-अणु
-	काष्ठा ftrace_likely_data *p = v;
+static void *
+annotated_branch_stat_next(void *v, int idx)
+{
+	struct ftrace_likely_data *p = v;
 
 	++p;
 
-	अगर ((व्योम *)p >= (व्योम *)__stop_annotated_branch_profile)
-		वापस शून्य;
+	if ((void *)p >= (void *)__stop_annotated_branch_profile)
+		return NULL;
 
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल पूर्णांक annotated_branch_stat_cmp(स्थिर व्योम *p1, स्थिर व्योम *p2)
-अणु
-	स्थिर काष्ठा ftrace_branch_data *a = p1;
-	स्थिर काष्ठा ftrace_branch_data *b = p2;
+static int annotated_branch_stat_cmp(const void *p1, const void *p2)
+{
+	const struct ftrace_branch_data *a = p1;
+	const struct ftrace_branch_data *b = p2;
 
-	दीर्घ percent_a, percent_b;
+	long percent_a, percent_b;
 
 	percent_a = get_incorrect_percent(a);
 	percent_b = get_incorrect_percent(b);
 
-	अगर (percent_a < percent_b)
-		वापस -1;
-	अगर (percent_a > percent_b)
-		वापस 1;
+	if (percent_a < percent_b)
+		return -1;
+	if (percent_a > percent_b)
+		return 1;
 
-	अगर (a->incorrect < b->incorrect)
-		वापस -1;
-	अगर (a->incorrect > b->incorrect)
-		वापस 1;
+	if (a->incorrect < b->incorrect)
+		return -1;
+	if (a->incorrect > b->incorrect)
+		return 1;
 
 	/*
-	 * Since the above shows worse (incorrect) हालs
-	 * first, we जारी that by showing best (correct)
-	 * हालs last.
+	 * Since the above shows worse (incorrect) cases
+	 * first, we continue that by showing best (correct)
+	 * cases last.
 	 */
-	अगर (a->correct > b->correct)
-		वापस -1;
-	अगर (a->correct < b->correct)
-		वापस 1;
+	if (a->correct > b->correct)
+		return -1;
+	if (a->correct < b->correct)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा tracer_stat annotated_branch_stats = अणु
+static struct tracer_stat annotated_branch_stats = {
 	.name = "branch_annotated",
 	.stat_start = annotated_branch_stat_start,
 	.stat_next = annotated_branch_stat_next,
 	.stat_cmp = annotated_branch_stat_cmp,
 	.stat_headers = annotated_branch_stat_headers,
 	.stat_show = annotate_branch_stat_show
-पूर्ण;
+};
 
-__init अटल पूर्णांक init_annotated_branch_stats(व्योम)
-अणु
-	पूर्णांक ret;
+__init static int init_annotated_branch_stats(void)
+{
+	int ret;
 
-	ret = रेजिस्टर_stat_tracer(&annotated_branch_stats);
-	अगर (!ret) अणु
-		prपूर्णांकk(KERN_WARNING "Warning: could not register "
+	ret = register_stat_tracer(&annotated_branch_stats);
+	if (!ret) {
+		printk(KERN_WARNING "Warning: could not register "
 				    "annotated branches stats\n");
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 1;
+	}
+	return 0;
+}
 fs_initcall(init_annotated_branch_stats);
 
-#अगर_घोषित CONFIG_PROखाता_ALL_BRANCHES
+#ifdef CONFIG_PROFILE_ALL_BRANCHES
 
-बाह्य अचिन्हित दीर्घ __start_branch_profile[];
-बाह्य अचिन्हित दीर्घ __stop_branch_profile[];
+extern unsigned long __start_branch_profile[];
+extern unsigned long __stop_branch_profile[];
 
-अटल पूर्णांक all_branch_stat_headers(काष्ठा seq_file *m)
-अणु
-	seq_माला_दो(m, "   miss      hit    % "
+static int all_branch_stat_headers(struct seq_file *m)
+{
+	seq_puts(m, "   miss      hit    % "
 		    "       Function                "
 		    "  File              Line\n"
 		    " ------- ---------  - "
 		    "       --------                "
 		    "  ----              ----\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम *all_branch_stat_start(काष्ठा tracer_stat *trace)
-अणु
-	वापस __start_branch_profile;
-पूर्ण
+static void *all_branch_stat_start(struct tracer_stat *trace)
+{
+	return __start_branch_profile;
+}
 
-अटल व्योम *
-all_branch_stat_next(व्योम *v, पूर्णांक idx)
-अणु
-	काष्ठा ftrace_branch_data *p = v;
+static void *
+all_branch_stat_next(void *v, int idx)
+{
+	struct ftrace_branch_data *p = v;
 
 	++p;
 
-	अगर ((व्योम *)p >= (व्योम *)__stop_branch_profile)
-		वापस शून्य;
+	if ((void *)p >= (void *)__stop_branch_profile)
+		return NULL;
 
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल पूर्णांक all_branch_stat_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा ftrace_branch_data *p = v;
-	स्थिर अक्षर *f;
+static int all_branch_stat_show(struct seq_file *m, void *v)
+{
+	struct ftrace_branch_data *p = v;
+	const char *f;
 
 	f = branch_stat_process_file(p);
-	वापस branch_stat_show_normal(m, p, f);
-पूर्ण
+	return branch_stat_show_normal(m, p, f);
+}
 
-अटल काष्ठा tracer_stat all_branch_stats = अणु
+static struct tracer_stat all_branch_stats = {
 	.name = "branch_all",
 	.stat_start = all_branch_stat_start,
 	.stat_next = all_branch_stat_next,
 	.stat_headers = all_branch_stat_headers,
 	.stat_show = all_branch_stat_show
-पूर्ण;
+};
 
-__init अटल पूर्णांक all_annotated_branch_stats(व्योम)
-अणु
-	पूर्णांक ret;
+__init static int all_annotated_branch_stats(void)
+{
+	int ret;
 
-	ret = रेजिस्टर_stat_tracer(&all_branch_stats);
-	अगर (!ret) अणु
-		prपूर्णांकk(KERN_WARNING "Warning: could not register "
+	ret = register_stat_tracer(&all_branch_stats);
+	if (!ret) {
+		printk(KERN_WARNING "Warning: could not register "
 				    "all branches stats\n");
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 1;
+	}
+	return 0;
+}
 fs_initcall(all_annotated_branch_stats);
-#पूर्ण_अगर /* CONFIG_PROखाता_ALL_BRANCHES */
+#endif /* CONFIG_PROFILE_ALL_BRANCHES */

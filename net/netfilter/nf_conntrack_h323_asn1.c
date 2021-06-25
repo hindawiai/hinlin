@@ -1,134 +1,133 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * BER and PER decoding library क्रम H.323 conntrack/NAT module.
+ * BER and PER decoding library for H.323 conntrack/NAT module.
  *
- * Copyright (c) 2006 by Jing Min Zhao <zhaojingmin@users.sourceक्रमge.net>
+ * Copyright (c) 2006 by Jing Min Zhao <zhaojingmin@users.sourceforge.net>
  *
- * See nf_conntrack_helper_h323_asn1.h क्रम details.
+ * See nf_conntrack_helper_h323_asn1.h for details.
  */
 
-#अगर_घोषित __KERNEL__
-#समावेश <linux/kernel.h>
-#अन्यथा
-#समावेश <मानकपन.स>
-#पूर्ण_अगर
-#समावेश <linux/netfilter/nf_conntrack_h323_asn1.h>
+#ifdef __KERNEL__
+#include <linux/kernel.h>
+#else
+#include <stdio.h>
+#endif
+#include <linux/netfilter/nf_conntrack_h323_asn1.h>
 
 /* Trace Flag */
-#अगर_अघोषित H323_TRACE
-#घोषणा H323_TRACE 0
-#पूर्ण_अगर
+#ifndef H323_TRACE
+#define H323_TRACE 0
+#endif
 
-#अगर H323_TRACE
-#घोषणा TAB_SIZE 4
-#घोषणा IFTHEN(cond, act) अगर(cond)अणुact;पूर्ण
-#अगर_घोषित __KERNEL__
-#घोषणा PRINT prपूर्णांकk
-#अन्यथा
-#घोषणा PRINT म_लिखो
-#पूर्ण_अगर
-#घोषणा FNAME(name) name,
-#अन्यथा
-#घोषणा IFTHEN(cond, act)
-#घोषणा PRINT(fmt, args...)
-#घोषणा FNAME(name)
-#पूर्ण_अगर
+#if H323_TRACE
+#define TAB_SIZE 4
+#define IFTHEN(cond, act) if(cond){act;}
+#ifdef __KERNEL__
+#define PRINT printk
+#else
+#define PRINT printf
+#endif
+#define FNAME(name) name,
+#else
+#define IFTHEN(cond, act)
+#define PRINT(fmt, args...)
+#define FNAME(name)
+#endif
 
 /* ASN.1 Types */
-#घोषणा NUL 0
-#घोषणा BOOL 1
-#घोषणा OID 2
-#घोषणा INT 3
-#घोषणा ENUM 4
-#घोषणा BITSTR 5
-#घोषणा NUMSTR 6
-#घोषणा NUMDGT 6
-#घोषणा TBCDSTR 6
-#घोषणा OCTSTR 7
-#घोषणा PRTSTR 7
-#घोषणा IA5STR 7
-#घोषणा GENSTR 7
-#घोषणा BMPSTR 8
-#घोषणा SEQ 9
-#घोषणा SET 9
-#घोषणा SEQOF 10
-#घोषणा SETOF 10
-#घोषणा CHOICE 11
+#define NUL 0
+#define BOOL 1
+#define OID 2
+#define INT 3
+#define ENUM 4
+#define BITSTR 5
+#define NUMSTR 6
+#define NUMDGT 6
+#define TBCDSTR 6
+#define OCTSTR 7
+#define PRTSTR 7
+#define IA5STR 7
+#define GENSTR 7
+#define BMPSTR 8
+#define SEQ 9
+#define SET 9
+#define SEQOF 10
+#define SETOF 10
+#define CHOICE 11
 
-/* Constraपूर्णांक Types */
-#घोषणा FIXD 0
-/* #घोषणा BITS 1-8 */
-#घोषणा BYTE 9
-#घोषणा WORD 10
-#घोषणा CONS 11
-#घोषणा SEMI 12
-#घोषणा UNCO 13
+/* Constraint Types */
+#define FIXD 0
+/* #define BITS 1-8 */
+#define BYTE 9
+#define WORD 10
+#define CONS 11
+#define SEMI 12
+#define UNCO 13
 
 /* ASN.1 Type Attributes */
-#घोषणा SKIP 0
-#घोषणा STOP 1
-#घोषणा DECODE 2
-#घोषणा EXT 4
-#घोषणा OPEN 8
-#घोषणा OPT 16
+#define SKIP 0
+#define STOP 1
+#define DECODE 2
+#define EXT 4
+#define OPEN 8
+#define OPT 16
 
 
 /* ASN.1 Field Structure */
-प्रकार काष्ठा field_t अणु
-#अगर H323_TRACE
-	अक्षर *name;
-#पूर्ण_अगर
-	अचिन्हित अक्षर type;
-	अचिन्हित अक्षर sz;
-	अचिन्हित अक्षर lb;
-	अचिन्हित अक्षर ub;
-	अचिन्हित लघु attr;
-	अचिन्हित लघु offset;
-	स्थिर काष्ठा field_t *fields;
-पूर्ण field_t;
+typedef struct field_t {
+#if H323_TRACE
+	char *name;
+#endif
+	unsigned char type;
+	unsigned char sz;
+	unsigned char lb;
+	unsigned char ub;
+	unsigned short attr;
+	unsigned short offset;
+	const struct field_t *fields;
+} field_t;
 
 /* Bit Stream */
-काष्ठा bitstr अणु
-	अचिन्हित अक्षर *buf;
-	अचिन्हित अक्षर *beg;
-	अचिन्हित अक्षर *end;
-	अचिन्हित अक्षर *cur;
-	अचिन्हित पूर्णांक bit;
-पूर्ण;
+struct bitstr {
+	unsigned char *buf;
+	unsigned char *beg;
+	unsigned char *end;
+	unsigned char *cur;
+	unsigned int bit;
+};
 
 /* Tool Functions */
-#घोषणा INC_BIT(bs) अगर((++(bs)->bit)>7)अणु(bs)->cur++;(bs)->bit=0;पूर्ण
-#घोषणा INC_BITS(bs,b) अगर(((bs)->bit+=(b))>7)अणु(bs)->cur+=(bs)->bit>>3;(bs)->bit&=7;पूर्ण
-#घोषणा BYTE_ALIGN(bs) अगर((bs)->bit)अणु(bs)->cur++;(bs)->bit=0;पूर्ण
-अटल अचिन्हित पूर्णांक get_len(काष्ठा bitstr *bs);
-अटल अचिन्हित पूर्णांक get_bit(काष्ठा bitstr *bs);
-अटल अचिन्हित पूर्णांक get_bits(काष्ठा bitstr *bs, अचिन्हित पूर्णांक b);
-अटल अचिन्हित पूर्णांक get_biपंचांगap(काष्ठा bitstr *bs, अचिन्हित पूर्णांक b);
-अटल अचिन्हित पूर्णांक get_uपूर्णांक(काष्ठा bitstr *bs, पूर्णांक b);
+#define INC_BIT(bs) if((++(bs)->bit)>7){(bs)->cur++;(bs)->bit=0;}
+#define INC_BITS(bs,b) if(((bs)->bit+=(b))>7){(bs)->cur+=(bs)->bit>>3;(bs)->bit&=7;}
+#define BYTE_ALIGN(bs) if((bs)->bit){(bs)->cur++;(bs)->bit=0;}
+static unsigned int get_len(struct bitstr *bs);
+static unsigned int get_bit(struct bitstr *bs);
+static unsigned int get_bits(struct bitstr *bs, unsigned int b);
+static unsigned int get_bitmap(struct bitstr *bs, unsigned int b);
+static unsigned int get_uint(struct bitstr *bs, int b);
 
 /* Decoder Functions */
-अटल पूर्णांक decode_nul(काष्ठा bitstr *bs, स्थिर काष्ठा field_t *f, अक्षर *base, पूर्णांक level);
-अटल पूर्णांक decode_bool(काष्ठा bitstr *bs, स्थिर काष्ठा field_t *f, अक्षर *base, पूर्णांक level);
-अटल पूर्णांक decode_oid(काष्ठा bitstr *bs, स्थिर काष्ठा field_t *f, अक्षर *base, पूर्णांक level);
-अटल पूर्णांक decode_पूर्णांक(काष्ठा bitstr *bs, स्थिर काष्ठा field_t *f, अक्षर *base, पूर्णांक level);
-अटल पूर्णांक decode_क्रमागत(काष्ठा bitstr *bs, स्थिर काष्ठा field_t *f, अक्षर *base, पूर्णांक level);
-अटल पूर्णांक decode_bitstr(काष्ठा bitstr *bs, स्थिर काष्ठा field_t *f, अक्षर *base, पूर्णांक level);
-अटल पूर्णांक decode_numstr(काष्ठा bitstr *bs, स्थिर काष्ठा field_t *f, अक्षर *base, पूर्णांक level);
-अटल पूर्णांक decode_octstr(काष्ठा bitstr *bs, स्थिर काष्ठा field_t *f, अक्षर *base, पूर्णांक level);
-अटल पूर्णांक decode_bmpstr(काष्ठा bitstr *bs, स्थिर काष्ठा field_t *f, अक्षर *base, पूर्णांक level);
-अटल पूर्णांक decode_seq(काष्ठा bitstr *bs, स्थिर काष्ठा field_t *f, अक्षर *base, पूर्णांक level);
-अटल पूर्णांक decode_seqof(काष्ठा bitstr *bs, स्थिर काष्ठा field_t *f, अक्षर *base, पूर्णांक level);
-अटल पूर्णांक decode_choice(काष्ठा bitstr *bs, स्थिर काष्ठा field_t *f, अक्षर *base, पूर्णांक level);
+static int decode_nul(struct bitstr *bs, const struct field_t *f, char *base, int level);
+static int decode_bool(struct bitstr *bs, const struct field_t *f, char *base, int level);
+static int decode_oid(struct bitstr *bs, const struct field_t *f, char *base, int level);
+static int decode_int(struct bitstr *bs, const struct field_t *f, char *base, int level);
+static int decode_enum(struct bitstr *bs, const struct field_t *f, char *base, int level);
+static int decode_bitstr(struct bitstr *bs, const struct field_t *f, char *base, int level);
+static int decode_numstr(struct bitstr *bs, const struct field_t *f, char *base, int level);
+static int decode_octstr(struct bitstr *bs, const struct field_t *f, char *base, int level);
+static int decode_bmpstr(struct bitstr *bs, const struct field_t *f, char *base, int level);
+static int decode_seq(struct bitstr *bs, const struct field_t *f, char *base, int level);
+static int decode_seqof(struct bitstr *bs, const struct field_t *f, char *base, int level);
+static int decode_choice(struct bitstr *bs, const struct field_t *f, char *base, int level);
 
 /* Decoder Functions Vector */
-प्रकार पूर्णांक (*decoder_t)(काष्ठा bitstr *, स्थिर काष्ठा field_t *, अक्षर *, पूर्णांक);
-अटल स्थिर decoder_t Decoders[] = अणु
+typedef int (*decoder_t)(struct bitstr *, const struct field_t *, char *, int);
+static const decoder_t Decoders[] = {
 	decode_nul,
 	decode_bool,
 	decode_oid,
-	decode_पूर्णांक,
-	decode_क्रमागत,
+	decode_int,
+	decode_enum,
 	decode_bitstr,
 	decode_numstr,
 	decode_octstr,
@@ -136,805 +135,805 @@
 	decode_seq,
 	decode_seqof,
 	decode_choice,
-पूर्ण;
+};
 
 /*
  * H.323 Types
  */
-#समावेश "nf_conntrack_h323_types.c"
+#include "nf_conntrack_h323_types.c"
 
 /*
  * Functions
  */
 
 /* Assume bs is aligned && v < 16384 */
-अटल अचिन्हित पूर्णांक get_len(काष्ठा bitstr *bs)
-अणु
-	अचिन्हित पूर्णांक v;
+static unsigned int get_len(struct bitstr *bs)
+{
+	unsigned int v;
 
 	v = *bs->cur++;
 
-	अगर (v & 0x80) अणु
+	if (v & 0x80) {
 		v &= 0x3f;
 		v <<= 8;
 		v += *bs->cur++;
-	पूर्ण
+	}
 
-	वापस v;
-पूर्ण
+	return v;
+}
 
-अटल पूर्णांक nf_h323_error_boundary(काष्ठा bitstr *bs, माप_प्रकार bytes, माप_प्रकार bits)
-अणु
+static int nf_h323_error_boundary(struct bitstr *bs, size_t bytes, size_t bits)
+{
 	bits += bs->bit;
 	bytes += bits / BITS_PER_BYTE;
-	अगर (bits % BITS_PER_BYTE > 0)
+	if (bits % BITS_PER_BYTE > 0)
 		bytes++;
 
-	अगर (bs->cur + bytes > bs->end)
-		वापस 1;
+	if (bs->cur + bytes > bs->end)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक get_bit(काष्ठा bitstr *bs)
-अणु
-	अचिन्हित पूर्णांक b = (*bs->cur) & (0x80 >> bs->bit);
+static unsigned int get_bit(struct bitstr *bs)
+{
+	unsigned int b = (*bs->cur) & (0x80 >> bs->bit);
 
 	INC_BIT(bs);
 
-	वापस b;
-पूर्ण
+	return b;
+}
 
 /* Assume b <= 8 */
-अटल अचिन्हित पूर्णांक get_bits(काष्ठा bitstr *bs, अचिन्हित पूर्णांक b)
-अणु
-	अचिन्हित पूर्णांक v, l;
+static unsigned int get_bits(struct bitstr *bs, unsigned int b)
+{
+	unsigned int v, l;
 
 	v = (*bs->cur) & (0xffU >> bs->bit);
 	l = b + bs->bit;
 
-	अगर (l < 8) अणु
+	if (l < 8) {
 		v >>= 8 - l;
 		bs->bit = l;
-	पूर्ण अन्यथा अगर (l == 8) अणु
+	} else if (l == 8) {
 		bs->cur++;
 		bs->bit = 0;
-	पूर्ण अन्यथा अणु		/* l > 8 */
+	} else {		/* l > 8 */
 
 		v <<= 8;
 		v += *(++bs->cur);
 		v >>= 16 - l;
 		bs->bit = l - 8;
-	पूर्ण
+	}
 
-	वापस v;
-पूर्ण
+	return v;
+}
 
 /* Assume b <= 32 */
-अटल अचिन्हित पूर्णांक get_biपंचांगap(काष्ठा bitstr *bs, अचिन्हित पूर्णांक b)
-अणु
-	अचिन्हित पूर्णांक v, l, shअगरt, bytes;
+static unsigned int get_bitmap(struct bitstr *bs, unsigned int b)
+{
+	unsigned int v, l, shift, bytes;
 
-	अगर (!b)
-		वापस 0;
+	if (!b)
+		return 0;
 
 	l = bs->bit + b;
 
-	अगर (l < 8) अणु
-		v = (अचिन्हित पूर्णांक)(*bs->cur) << (bs->bit + 24);
+	if (l < 8) {
+		v = (unsigned int)(*bs->cur) << (bs->bit + 24);
 		bs->bit = l;
-	पूर्ण अन्यथा अगर (l == 8) अणु
-		v = (अचिन्हित पूर्णांक)(*bs->cur++) << (bs->bit + 24);
+	} else if (l == 8) {
+		v = (unsigned int)(*bs->cur++) << (bs->bit + 24);
 		bs->bit = 0;
-	पूर्ण अन्यथा अणु
-		क्रम (bytes = l >> 3, shअगरt = 24, v = 0; bytes;
-		     bytes--, shअगरt -= 8)
-			v |= (अचिन्हित पूर्णांक)(*bs->cur++) << shअगरt;
+	} else {
+		for (bytes = l >> 3, shift = 24, v = 0; bytes;
+		     bytes--, shift -= 8)
+			v |= (unsigned int)(*bs->cur++) << shift;
 
-		अगर (l < 32) अणु
-			v |= (अचिन्हित पूर्णांक)(*bs->cur) << shअगरt;
+		if (l < 32) {
+			v |= (unsigned int)(*bs->cur) << shift;
 			v <<= bs->bit;
-		पूर्ण अन्यथा अगर (l > 32) अणु
+		} else if (l > 32) {
 			v <<= bs->bit;
 			v |= (*bs->cur) >> (8 - bs->bit);
-		पूर्ण
+		}
 
 		bs->bit = l & 0x7;
-	पूर्ण
+	}
 
 	v &= 0xffffffff << (32 - b);
 
-	वापस v;
-पूर्ण
+	return v;
+}
 
 /*
- * Assume bs is aligned and माप(अचिन्हित पूर्णांक) == 4
+ * Assume bs is aligned and sizeof(unsigned int) == 4
  */
-अटल अचिन्हित पूर्णांक get_uपूर्णांक(काष्ठा bitstr *bs, पूर्णांक b)
-अणु
-	अचिन्हित पूर्णांक v = 0;
+static unsigned int get_uint(struct bitstr *bs, int b)
+{
+	unsigned int v = 0;
 
-	चयन (b) अणु
-	हाल 4:
+	switch (b) {
+	case 4:
 		v |= *bs->cur++;
 		v <<= 8;
 		fallthrough;
-	हाल 3:
+	case 3:
 		v |= *bs->cur++;
 		v <<= 8;
 		fallthrough;
-	हाल 2:
+	case 2:
 		v |= *bs->cur++;
 		v <<= 8;
 		fallthrough;
-	हाल 1:
+	case 1:
 		v |= *bs->cur++;
-		अवरोध;
-	पूर्ण
-	वापस v;
-पूर्ण
+		break;
+	}
+	return v;
+}
 
-अटल पूर्णांक decode_nul(काष्ठा bitstr *bs, स्थिर काष्ठा field_t *f,
-                      अक्षर *base, पूर्णांक level)
-अणु
+static int decode_nul(struct bitstr *bs, const struct field_t *f,
+                      char *base, int level)
+{
 	PRINT("%*.s%s\n", level * TAB_SIZE, " ", f->name);
 
-	वापस H323_ERROR_NONE;
-पूर्ण
+	return H323_ERROR_NONE;
+}
 
-अटल पूर्णांक decode_bool(काष्ठा bitstr *bs, स्थिर काष्ठा field_t *f,
-                       अक्षर *base, पूर्णांक level)
-अणु
+static int decode_bool(struct bitstr *bs, const struct field_t *f,
+                       char *base, int level)
+{
 	PRINT("%*.s%s\n", level * TAB_SIZE, " ", f->name);
 
 	INC_BIT(bs);
-	अगर (nf_h323_error_boundary(bs, 0, 0))
-		वापस H323_ERROR_BOUND;
-	वापस H323_ERROR_NONE;
-पूर्ण
+	if (nf_h323_error_boundary(bs, 0, 0))
+		return H323_ERROR_BOUND;
+	return H323_ERROR_NONE;
+}
 
-अटल पूर्णांक decode_oid(काष्ठा bitstr *bs, स्थिर काष्ठा field_t *f,
-                      अक्षर *base, पूर्णांक level)
-अणु
-	पूर्णांक len;
+static int decode_oid(struct bitstr *bs, const struct field_t *f,
+                      char *base, int level)
+{
+	int len;
 
 	PRINT("%*.s%s\n", level * TAB_SIZE, " ", f->name);
 
 	BYTE_ALIGN(bs);
-	अगर (nf_h323_error_boundary(bs, 1, 0))
-		वापस H323_ERROR_BOUND;
+	if (nf_h323_error_boundary(bs, 1, 0))
+		return H323_ERROR_BOUND;
 
 	len = *bs->cur++;
 	bs->cur += len;
-	अगर (nf_h323_error_boundary(bs, 0, 0))
-		वापस H323_ERROR_BOUND;
+	if (nf_h323_error_boundary(bs, 0, 0))
+		return H323_ERROR_BOUND;
 
-	वापस H323_ERROR_NONE;
-पूर्ण
+	return H323_ERROR_NONE;
+}
 
-अटल पूर्णांक decode_पूर्णांक(काष्ठा bitstr *bs, स्थिर काष्ठा field_t *f,
-                      अक्षर *base, पूर्णांक level)
-अणु
-	अचिन्हित पूर्णांक len;
+static int decode_int(struct bitstr *bs, const struct field_t *f,
+                      char *base, int level)
+{
+	unsigned int len;
 
 	PRINT("%*.s%s", level * TAB_SIZE, " ", f->name);
 
-	चयन (f->sz) अणु
-	हाल BYTE:		/* Range == 256 */
+	switch (f->sz) {
+	case BYTE:		/* Range == 256 */
 		BYTE_ALIGN(bs);
 		bs->cur++;
-		अवरोध;
-	हाल WORD:		/* 257 <= Range <= 64K */
+		break;
+	case WORD:		/* 257 <= Range <= 64K */
 		BYTE_ALIGN(bs);
 		bs->cur += 2;
-		अवरोध;
-	हाल CONS:		/* 64K < Range < 4G */
-		अगर (nf_h323_error_boundary(bs, 0, 2))
-			वापस H323_ERROR_BOUND;
+		break;
+	case CONS:		/* 64K < Range < 4G */
+		if (nf_h323_error_boundary(bs, 0, 2))
+			return H323_ERROR_BOUND;
 		len = get_bits(bs, 2) + 1;
 		BYTE_ALIGN(bs);
-		अगर (base && (f->attr & DECODE)) अणु	/* समयToLive */
-			अचिन्हित पूर्णांक v = get_uपूर्णांक(bs, len) + f->lb;
+		if (base && (f->attr & DECODE)) {	/* timeToLive */
+			unsigned int v = get_uint(bs, len) + f->lb;
 			PRINT(" = %u", v);
-			*((अचिन्हित पूर्णांक *)(base + f->offset)) = v;
-		पूर्ण
+			*((unsigned int *)(base + f->offset)) = v;
+		}
 		bs->cur += len;
-		अवरोध;
-	हाल UNCO:
+		break;
+	case UNCO:
 		BYTE_ALIGN(bs);
-		अगर (nf_h323_error_boundary(bs, 2, 0))
-			वापस H323_ERROR_BOUND;
+		if (nf_h323_error_boundary(bs, 2, 0))
+			return H323_ERROR_BOUND;
 		len = get_len(bs);
 		bs->cur += len;
-		अवरोध;
-	शेष:		/* 2 <= Range <= 255 */
+		break;
+	default:		/* 2 <= Range <= 255 */
 		INC_BITS(bs, f->sz);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	PRINT("\n");
 
-	अगर (nf_h323_error_boundary(bs, 0, 0))
-		वापस H323_ERROR_BOUND;
-	वापस H323_ERROR_NONE;
-पूर्ण
+	if (nf_h323_error_boundary(bs, 0, 0))
+		return H323_ERROR_BOUND;
+	return H323_ERROR_NONE;
+}
 
-अटल पूर्णांक decode_क्रमागत(काष्ठा bitstr *bs, स्थिर काष्ठा field_t *f,
-                       अक्षर *base, पूर्णांक level)
-अणु
+static int decode_enum(struct bitstr *bs, const struct field_t *f,
+                       char *base, int level)
+{
 	PRINT("%*.s%s\n", level * TAB_SIZE, " ", f->name);
 
-	अगर ((f->attr & EXT) && get_bit(bs)) अणु
+	if ((f->attr & EXT) && get_bit(bs)) {
 		INC_BITS(bs, 7);
-	पूर्ण अन्यथा अणु
+	} else {
 		INC_BITS(bs, f->sz);
-	पूर्ण
+	}
 
-	अगर (nf_h323_error_boundary(bs, 0, 0))
-		वापस H323_ERROR_BOUND;
-	वापस H323_ERROR_NONE;
-पूर्ण
+	if (nf_h323_error_boundary(bs, 0, 0))
+		return H323_ERROR_BOUND;
+	return H323_ERROR_NONE;
+}
 
-अटल पूर्णांक decode_bitstr(काष्ठा bitstr *bs, स्थिर काष्ठा field_t *f,
-                         अक्षर *base, पूर्णांक level)
-अणु
-	अचिन्हित पूर्णांक len;
+static int decode_bitstr(struct bitstr *bs, const struct field_t *f,
+                         char *base, int level)
+{
+	unsigned int len;
 
 	PRINT("%*.s%s\n", level * TAB_SIZE, " ", f->name);
 
 	BYTE_ALIGN(bs);
-	चयन (f->sz) अणु
-	हाल FIXD:		/* fixed length > 16 */
+	switch (f->sz) {
+	case FIXD:		/* fixed length > 16 */
 		len = f->lb;
-		अवरोध;
-	हाल WORD:		/* 2-byte length */
-		अगर (nf_h323_error_boundary(bs, 2, 0))
-			वापस H323_ERROR_BOUND;
+		break;
+	case WORD:		/* 2-byte length */
+		if (nf_h323_error_boundary(bs, 2, 0))
+			return H323_ERROR_BOUND;
 		len = (*bs->cur++) << 8;
 		len += (*bs->cur++) + f->lb;
-		अवरोध;
-	हाल SEMI:
-		अगर (nf_h323_error_boundary(bs, 2, 0))
-			वापस H323_ERROR_BOUND;
+		break;
+	case SEMI:
+		if (nf_h323_error_boundary(bs, 2, 0))
+			return H323_ERROR_BOUND;
 		len = get_len(bs);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		len = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	bs->cur += len >> 3;
 	bs->bit = len & 7;
 
-	अगर (nf_h323_error_boundary(bs, 0, 0))
-		वापस H323_ERROR_BOUND;
-	वापस H323_ERROR_NONE;
-पूर्ण
+	if (nf_h323_error_boundary(bs, 0, 0))
+		return H323_ERROR_BOUND;
+	return H323_ERROR_NONE;
+}
 
-अटल पूर्णांक decode_numstr(काष्ठा bitstr *bs, स्थिर काष्ठा field_t *f,
-                         अक्षर *base, पूर्णांक level)
-अणु
-	अचिन्हित पूर्णांक len;
+static int decode_numstr(struct bitstr *bs, const struct field_t *f,
+                         char *base, int level)
+{
+	unsigned int len;
 
 	PRINT("%*.s%s\n", level * TAB_SIZE, " ", f->name);
 
 	/* 2 <= Range <= 255 */
-	अगर (nf_h323_error_boundary(bs, 0, f->sz))
-		वापस H323_ERROR_BOUND;
+	if (nf_h323_error_boundary(bs, 0, f->sz))
+		return H323_ERROR_BOUND;
 	len = get_bits(bs, f->sz) + f->lb;
 
 	BYTE_ALIGN(bs);
 	INC_BITS(bs, (len << 2));
 
-	अगर (nf_h323_error_boundary(bs, 0, 0))
-		वापस H323_ERROR_BOUND;
-	वापस H323_ERROR_NONE;
-पूर्ण
+	if (nf_h323_error_boundary(bs, 0, 0))
+		return H323_ERROR_BOUND;
+	return H323_ERROR_NONE;
+}
 
-अटल पूर्णांक decode_octstr(काष्ठा bitstr *bs, स्थिर काष्ठा field_t *f,
-                         अक्षर *base, पूर्णांक level)
-अणु
-	अचिन्हित पूर्णांक len;
+static int decode_octstr(struct bitstr *bs, const struct field_t *f,
+                         char *base, int level)
+{
+	unsigned int len;
 
 	PRINT("%*.s%s", level * TAB_SIZE, " ", f->name);
 
-	चयन (f->sz) अणु
-	हाल FIXD:		/* Range == 1 */
-		अगर (f->lb > 2) अणु
+	switch (f->sz) {
+	case FIXD:		/* Range == 1 */
+		if (f->lb > 2) {
 			BYTE_ALIGN(bs);
-			अगर (base && (f->attr & DECODE)) अणु
+			if (base && (f->attr & DECODE)) {
 				/* The IP Address */
 				IFTHEN(f->lb == 4,
 				       PRINT(" = %d.%d.%d.%d:%d",
 					     bs->cur[0], bs->cur[1],
 					     bs->cur[2], bs->cur[3],
 					     bs->cur[4] * 256 + bs->cur[5]));
-				*((अचिन्हित पूर्णांक *)(base + f->offset)) =
+				*((unsigned int *)(base + f->offset)) =
 				    bs->cur - bs->buf;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		len = f->lb;
-		अवरोध;
-	हाल BYTE:		/* Range == 256 */
+		break;
+	case BYTE:		/* Range == 256 */
 		BYTE_ALIGN(bs);
-		अगर (nf_h323_error_boundary(bs, 1, 0))
-			वापस H323_ERROR_BOUND;
+		if (nf_h323_error_boundary(bs, 1, 0))
+			return H323_ERROR_BOUND;
 		len = (*bs->cur++) + f->lb;
-		अवरोध;
-	हाल SEMI:
+		break;
+	case SEMI:
 		BYTE_ALIGN(bs);
-		अगर (nf_h323_error_boundary(bs, 2, 0))
-			वापस H323_ERROR_BOUND;
+		if (nf_h323_error_boundary(bs, 2, 0))
+			return H323_ERROR_BOUND;
 		len = get_len(bs) + f->lb;
-		अवरोध;
-	शेष:		/* 2 <= Range <= 255 */
-		अगर (nf_h323_error_boundary(bs, 0, f->sz))
-			वापस H323_ERROR_BOUND;
+		break;
+	default:		/* 2 <= Range <= 255 */
+		if (nf_h323_error_boundary(bs, 0, f->sz))
+			return H323_ERROR_BOUND;
 		len = get_bits(bs, f->sz) + f->lb;
 		BYTE_ALIGN(bs);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	bs->cur += len;
 
 	PRINT("\n");
 
-	अगर (nf_h323_error_boundary(bs, 0, 0))
-		वापस H323_ERROR_BOUND;
-	वापस H323_ERROR_NONE;
-पूर्ण
+	if (nf_h323_error_boundary(bs, 0, 0))
+		return H323_ERROR_BOUND;
+	return H323_ERROR_NONE;
+}
 
-अटल पूर्णांक decode_bmpstr(काष्ठा bitstr *bs, स्थिर काष्ठा field_t *f,
-                         अक्षर *base, पूर्णांक level)
-अणु
-	अचिन्हित पूर्णांक len;
+static int decode_bmpstr(struct bitstr *bs, const struct field_t *f,
+                         char *base, int level)
+{
+	unsigned int len;
 
 	PRINT("%*.s%s\n", level * TAB_SIZE, " ", f->name);
 
-	चयन (f->sz) अणु
-	हाल BYTE:		/* Range == 256 */
+	switch (f->sz) {
+	case BYTE:		/* Range == 256 */
 		BYTE_ALIGN(bs);
-		अगर (nf_h323_error_boundary(bs, 1, 0))
-			वापस H323_ERROR_BOUND;
+		if (nf_h323_error_boundary(bs, 1, 0))
+			return H323_ERROR_BOUND;
 		len = (*bs->cur++) + f->lb;
-		अवरोध;
-	शेष:		/* 2 <= Range <= 255 */
-		अगर (nf_h323_error_boundary(bs, 0, f->sz))
-			वापस H323_ERROR_BOUND;
+		break;
+	default:		/* 2 <= Range <= 255 */
+		if (nf_h323_error_boundary(bs, 0, f->sz))
+			return H323_ERROR_BOUND;
 		len = get_bits(bs, f->sz) + f->lb;
 		BYTE_ALIGN(bs);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	bs->cur += len << 1;
 
-	अगर (nf_h323_error_boundary(bs, 0, 0))
-		वापस H323_ERROR_BOUND;
-	वापस H323_ERROR_NONE;
-पूर्ण
+	if (nf_h323_error_boundary(bs, 0, 0))
+		return H323_ERROR_BOUND;
+	return H323_ERROR_NONE;
+}
 
-अटल पूर्णांक decode_seq(काष्ठा bitstr *bs, स्थिर काष्ठा field_t *f,
-                      अक्षर *base, पूर्णांक level)
-अणु
-	अचिन्हित पूर्णांक ext, bmp, i, opt, len = 0, bmp2, bmp2_len;
-	पूर्णांक err;
-	स्थिर काष्ठा field_t *son;
-	अचिन्हित अक्षर *beg = शून्य;
+static int decode_seq(struct bitstr *bs, const struct field_t *f,
+                      char *base, int level)
+{
+	unsigned int ext, bmp, i, opt, len = 0, bmp2, bmp2_len;
+	int err;
+	const struct field_t *son;
+	unsigned char *beg = NULL;
 
 	PRINT("%*.s%s\n", level * TAB_SIZE, " ", f->name);
 
 	/* Decode? */
-	base = (base && (f->attr & DECODE)) ? base + f->offset : शून्य;
+	base = (base && (f->attr & DECODE)) ? base + f->offset : NULL;
 
 	/* Extensible? */
-	अगर (nf_h323_error_boundary(bs, 0, 1))
-		वापस H323_ERROR_BOUND;
+	if (nf_h323_error_boundary(bs, 0, 1))
+		return H323_ERROR_BOUND;
 	ext = (f->attr & EXT) ? get_bit(bs) : 0;
 
-	/* Get fields biपंचांगap */
-	अगर (nf_h323_error_boundary(bs, 0, f->sz))
-		वापस H323_ERROR_BOUND;
-	bmp = get_biपंचांगap(bs, f->sz);
-	अगर (base)
-		*(अचिन्हित पूर्णांक *)base = bmp;
+	/* Get fields bitmap */
+	if (nf_h323_error_boundary(bs, 0, f->sz))
+		return H323_ERROR_BOUND;
+	bmp = get_bitmap(bs, f->sz);
+	if (base)
+		*(unsigned int *)base = bmp;
 
 	/* Decode the root components */
-	क्रम (i = opt = 0, son = f->fields; i < f->lb; i++, son++) अणु
-		अगर (son->attr & STOP) अणु
+	for (i = opt = 0, son = f->fields; i < f->lb; i++, son++) {
+		if (son->attr & STOP) {
 			PRINT("%*.s%s\n", (level + 1) * TAB_SIZE, " ",
 			      son->name);
-			वापस H323_ERROR_STOP;
-		पूर्ण
+			return H323_ERROR_STOP;
+		}
 
-		अगर (son->attr & OPT) अणु	/* Optional component */
-			अगर (!((0x80000000U >> (opt++)) & bmp))	/* Not exist */
-				जारी;
-		पूर्ण
+		if (son->attr & OPT) {	/* Optional component */
+			if (!((0x80000000U >> (opt++)) & bmp))	/* Not exist */
+				continue;
+		}
 
 		/* Decode */
-		अगर (son->attr & OPEN) अणु	/* Open field */
-			अगर (nf_h323_error_boundary(bs, 2, 0))
-				वापस H323_ERROR_BOUND;
+		if (son->attr & OPEN) {	/* Open field */
+			if (nf_h323_error_boundary(bs, 2, 0))
+				return H323_ERROR_BOUND;
 			len = get_len(bs);
-			अगर (nf_h323_error_boundary(bs, len, 0))
-				वापस H323_ERROR_BOUND;
-			अगर (!base || !(son->attr & DECODE)) अणु
+			if (nf_h323_error_boundary(bs, len, 0))
+				return H323_ERROR_BOUND;
+			if (!base || !(son->attr & DECODE)) {
 				PRINT("%*.s%s\n", (level + 1) * TAB_SIZE,
 				      " ", son->name);
 				bs->cur += len;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			beg = bs->cur;
 
 			/* Decode */
-			अगर ((err = (Decoders[son->type]) (bs, son, base,
+			if ((err = (Decoders[son->type]) (bs, son, base,
 							  level + 1)) <
 			    H323_ERROR_NONE)
-				वापस err;
+				return err;
 
 			bs->cur = beg + len;
 			bs->bit = 0;
-		पूर्ण अन्यथा अगर ((err = (Decoders[son->type]) (bs, son, base,
+		} else if ((err = (Decoders[son->type]) (bs, son, base,
 							 level + 1)) <
 			   H323_ERROR_NONE)
-			वापस err;
-	पूर्ण
+			return err;
+	}
 
 	/* No extension? */
-	अगर (!ext)
-		वापस H323_ERROR_NONE;
+	if (!ext)
+		return H323_ERROR_NONE;
 
-	/* Get the extension biपंचांगap */
-	अगर (nf_h323_error_boundary(bs, 0, 7))
-		वापस H323_ERROR_BOUND;
+	/* Get the extension bitmap */
+	if (nf_h323_error_boundary(bs, 0, 7))
+		return H323_ERROR_BOUND;
 	bmp2_len = get_bits(bs, 7) + 1;
-	अगर (nf_h323_error_boundary(bs, 0, bmp2_len))
-		वापस H323_ERROR_BOUND;
-	bmp2 = get_biपंचांगap(bs, bmp2_len);
+	if (nf_h323_error_boundary(bs, 0, bmp2_len))
+		return H323_ERROR_BOUND;
+	bmp2 = get_bitmap(bs, bmp2_len);
 	bmp |= bmp2 >> f->sz;
-	अगर (base)
-		*(अचिन्हित पूर्णांक *)base = bmp;
+	if (base)
+		*(unsigned int *)base = bmp;
 	BYTE_ALIGN(bs);
 
 	/* Decode the extension components */
-	क्रम (opt = 0; opt < bmp2_len; opt++, i++, son++) अणु
+	for (opt = 0; opt < bmp2_len; opt++, i++, son++) {
 		/* Check Range */
-		अगर (i >= f->ub) अणु	/* Newer Version? */
-			अगर (nf_h323_error_boundary(bs, 2, 0))
-				वापस H323_ERROR_BOUND;
+		if (i >= f->ub) {	/* Newer Version? */
+			if (nf_h323_error_boundary(bs, 2, 0))
+				return H323_ERROR_BOUND;
 			len = get_len(bs);
-			अगर (nf_h323_error_boundary(bs, len, 0))
-				वापस H323_ERROR_BOUND;
+			if (nf_h323_error_boundary(bs, len, 0))
+				return H323_ERROR_BOUND;
 			bs->cur += len;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (son->attr & STOP) अणु
+		if (son->attr & STOP) {
 			PRINT("%*.s%s\n", (level + 1) * TAB_SIZE, " ",
 			      son->name);
-			वापस H323_ERROR_STOP;
-		पूर्ण
+			return H323_ERROR_STOP;
+		}
 
-		अगर (!((0x80000000 >> opt) & bmp2))	/* Not present */
-			जारी;
+		if (!((0x80000000 >> opt) & bmp2))	/* Not present */
+			continue;
 
-		अगर (nf_h323_error_boundary(bs, 2, 0))
-			वापस H323_ERROR_BOUND;
+		if (nf_h323_error_boundary(bs, 2, 0))
+			return H323_ERROR_BOUND;
 		len = get_len(bs);
-		अगर (nf_h323_error_boundary(bs, len, 0))
-			वापस H323_ERROR_BOUND;
-		अगर (!base || !(son->attr & DECODE)) अणु
+		if (nf_h323_error_boundary(bs, len, 0))
+			return H323_ERROR_BOUND;
+		if (!base || !(son->attr & DECODE)) {
 			PRINT("%*.s%s\n", (level + 1) * TAB_SIZE, " ",
 			      son->name);
 			bs->cur += len;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		beg = bs->cur;
 
-		अगर ((err = (Decoders[son->type]) (bs, son, base,
+		if ((err = (Decoders[son->type]) (bs, son, base,
 						  level + 1)) <
 		    H323_ERROR_NONE)
-			वापस err;
+			return err;
 
 		bs->cur = beg + len;
 		bs->bit = 0;
-	पूर्ण
-	वापस H323_ERROR_NONE;
-पूर्ण
+	}
+	return H323_ERROR_NONE;
+}
 
-अटल पूर्णांक decode_seqof(काष्ठा bitstr *bs, स्थिर काष्ठा field_t *f,
-                        अक्षर *base, पूर्णांक level)
-अणु
-	अचिन्हित पूर्णांक count, effective_count = 0, i, len = 0;
-	पूर्णांक err;
-	स्थिर काष्ठा field_t *son;
-	अचिन्हित अक्षर *beg = शून्य;
+static int decode_seqof(struct bitstr *bs, const struct field_t *f,
+                        char *base, int level)
+{
+	unsigned int count, effective_count = 0, i, len = 0;
+	int err;
+	const struct field_t *son;
+	unsigned char *beg = NULL;
 
 	PRINT("%*.s%s\n", level * TAB_SIZE, " ", f->name);
 
 	/* Decode? */
-	base = (base && (f->attr & DECODE)) ? base + f->offset : शून्य;
+	base = (base && (f->attr & DECODE)) ? base + f->offset : NULL;
 
 	/* Decode item count */
-	चयन (f->sz) अणु
-	हाल BYTE:
+	switch (f->sz) {
+	case BYTE:
 		BYTE_ALIGN(bs);
-		अगर (nf_h323_error_boundary(bs, 1, 0))
-			वापस H323_ERROR_BOUND;
+		if (nf_h323_error_boundary(bs, 1, 0))
+			return H323_ERROR_BOUND;
 		count = *bs->cur++;
-		अवरोध;
-	हाल WORD:
+		break;
+	case WORD:
 		BYTE_ALIGN(bs);
-		अगर (nf_h323_error_boundary(bs, 2, 0))
-			वापस H323_ERROR_BOUND;
+		if (nf_h323_error_boundary(bs, 2, 0))
+			return H323_ERROR_BOUND;
 		count = *bs->cur++;
 		count <<= 8;
 		count += *bs->cur++;
-		अवरोध;
-	हाल SEMI:
+		break;
+	case SEMI:
 		BYTE_ALIGN(bs);
-		अगर (nf_h323_error_boundary(bs, 2, 0))
-			वापस H323_ERROR_BOUND;
+		if (nf_h323_error_boundary(bs, 2, 0))
+			return H323_ERROR_BOUND;
 		count = get_len(bs);
-		अवरोध;
-	शेष:
-		अगर (nf_h323_error_boundary(bs, 0, f->sz))
-			वापस H323_ERROR_BOUND;
+		break;
+	default:
+		if (nf_h323_error_boundary(bs, 0, f->sz))
+			return H323_ERROR_BOUND;
 		count = get_bits(bs, f->sz);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	count += f->lb;
 
 	/* Write Count */
-	अगर (base) अणु
+	if (base) {
 		effective_count = count > f->ub ? f->ub : count;
-		*(अचिन्हित पूर्णांक *)base = effective_count;
-		base += माप(अचिन्हित पूर्णांक);
-	पूर्ण
+		*(unsigned int *)base = effective_count;
+		base += sizeof(unsigned int);
+	}
 
 	/* Decode nested field */
 	son = f->fields;
-	अगर (base)
+	if (base)
 		base -= son->offset;
-	क्रम (i = 0; i < count; i++) अणु
-		अगर (son->attr & OPEN) अणु
+	for (i = 0; i < count; i++) {
+		if (son->attr & OPEN) {
 			BYTE_ALIGN(bs);
-			अगर (nf_h323_error_boundary(bs, 2, 0))
-				वापस H323_ERROR_BOUND;
+			if (nf_h323_error_boundary(bs, 2, 0))
+				return H323_ERROR_BOUND;
 			len = get_len(bs);
-			अगर (nf_h323_error_boundary(bs, len, 0))
-				वापस H323_ERROR_BOUND;
-			अगर (!base || !(son->attr & DECODE)) अणु
+			if (nf_h323_error_boundary(bs, len, 0))
+				return H323_ERROR_BOUND;
+			if (!base || !(son->attr & DECODE)) {
 				PRINT("%*.s%s\n", (level + 1) * TAB_SIZE,
 				      " ", son->name);
 				bs->cur += len;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			beg = bs->cur;
 
-			अगर ((err = (Decoders[son->type]) (bs, son,
+			if ((err = (Decoders[son->type]) (bs, son,
 							  i <
 							  effective_count ?
-							  base : शून्य,
+							  base : NULL,
 							  level + 1)) <
 			    H323_ERROR_NONE)
-				वापस err;
+				return err;
 
 			bs->cur = beg + len;
 			bs->bit = 0;
-		पूर्ण अन्यथा
-			अगर ((err = (Decoders[son->type]) (bs, son,
+		} else
+			if ((err = (Decoders[son->type]) (bs, son,
 							  i <
 							  effective_count ?
-							  base : शून्य,
+							  base : NULL,
 							  level + 1)) <
 			    H323_ERROR_NONE)
-				वापस err;
+				return err;
 
-		अगर (base)
+		if (base)
 			base += son->offset;
-	पूर्ण
+	}
 
-	वापस H323_ERROR_NONE;
-पूर्ण
+	return H323_ERROR_NONE;
+}
 
-अटल पूर्णांक decode_choice(काष्ठा bitstr *bs, स्थिर काष्ठा field_t *f,
-                         अक्षर *base, पूर्णांक level)
-अणु
-	अचिन्हित पूर्णांक type, ext, len = 0;
-	पूर्णांक err;
-	स्थिर काष्ठा field_t *son;
-	अचिन्हित अक्षर *beg = शून्य;
+static int decode_choice(struct bitstr *bs, const struct field_t *f,
+                         char *base, int level)
+{
+	unsigned int type, ext, len = 0;
+	int err;
+	const struct field_t *son;
+	unsigned char *beg = NULL;
 
 	PRINT("%*.s%s\n", level * TAB_SIZE, " ", f->name);
 
 	/* Decode? */
-	base = (base && (f->attr & DECODE)) ? base + f->offset : शून्य;
+	base = (base && (f->attr & DECODE)) ? base + f->offset : NULL;
 
 	/* Decode the choice index number */
-	अगर (nf_h323_error_boundary(bs, 0, 1))
-		वापस H323_ERROR_BOUND;
-	अगर ((f->attr & EXT) && get_bit(bs)) अणु
+	if (nf_h323_error_boundary(bs, 0, 1))
+		return H323_ERROR_BOUND;
+	if ((f->attr & EXT) && get_bit(bs)) {
 		ext = 1;
-		अगर (nf_h323_error_boundary(bs, 0, 7))
-			वापस H323_ERROR_BOUND;
+		if (nf_h323_error_boundary(bs, 0, 7))
+			return H323_ERROR_BOUND;
 		type = get_bits(bs, 7) + f->lb;
-	पूर्ण अन्यथा अणु
+	} else {
 		ext = 0;
-		अगर (nf_h323_error_boundary(bs, 0, f->sz))
-			वापस H323_ERROR_BOUND;
+		if (nf_h323_error_boundary(bs, 0, f->sz))
+			return H323_ERROR_BOUND;
 		type = get_bits(bs, f->sz);
-		अगर (type >= f->lb)
-			वापस H323_ERROR_RANGE;
-	पूर्ण
+		if (type >= f->lb)
+			return H323_ERROR_RANGE;
+	}
 
 	/* Write Type */
-	अगर (base)
-		*(अचिन्हित पूर्णांक *)base = type;
+	if (base)
+		*(unsigned int *)base = type;
 
 	/* Check Range */
-	अगर (type >= f->ub) अणु	/* Newer version? */
+	if (type >= f->ub) {	/* Newer version? */
 		BYTE_ALIGN(bs);
-		अगर (nf_h323_error_boundary(bs, 2, 0))
-			वापस H323_ERROR_BOUND;
+		if (nf_h323_error_boundary(bs, 2, 0))
+			return H323_ERROR_BOUND;
 		len = get_len(bs);
-		अगर (nf_h323_error_boundary(bs, len, 0))
-			वापस H323_ERROR_BOUND;
+		if (nf_h323_error_boundary(bs, len, 0))
+			return H323_ERROR_BOUND;
 		bs->cur += len;
-		वापस H323_ERROR_NONE;
-	पूर्ण
+		return H323_ERROR_NONE;
+	}
 
 	/* Transfer to son level */
 	son = &f->fields[type];
-	अगर (son->attr & STOP) अणु
+	if (son->attr & STOP) {
 		PRINT("%*.s%s\n", (level + 1) * TAB_SIZE, " ", son->name);
-		वापस H323_ERROR_STOP;
-	पूर्ण
+		return H323_ERROR_STOP;
+	}
 
-	अगर (ext || (son->attr & OPEN)) अणु
+	if (ext || (son->attr & OPEN)) {
 		BYTE_ALIGN(bs);
-		अगर (nf_h323_error_boundary(bs, len, 0))
-			वापस H323_ERROR_BOUND;
+		if (nf_h323_error_boundary(bs, len, 0))
+			return H323_ERROR_BOUND;
 		len = get_len(bs);
-		अगर (nf_h323_error_boundary(bs, len, 0))
-			वापस H323_ERROR_BOUND;
-		अगर (!base || !(son->attr & DECODE)) अणु
+		if (nf_h323_error_boundary(bs, len, 0))
+			return H323_ERROR_BOUND;
+		if (!base || !(son->attr & DECODE)) {
 			PRINT("%*.s%s\n", (level + 1) * TAB_SIZE, " ",
 			      son->name);
 			bs->cur += len;
-			वापस H323_ERROR_NONE;
-		पूर्ण
+			return H323_ERROR_NONE;
+		}
 		beg = bs->cur;
 
-		अगर ((err = (Decoders[son->type]) (bs, son, base, level + 1)) <
+		if ((err = (Decoders[son->type]) (bs, son, base, level + 1)) <
 		    H323_ERROR_NONE)
-			वापस err;
+			return err;
 
 		bs->cur = beg + len;
 		bs->bit = 0;
-	पूर्ण अन्यथा अगर ((err = (Decoders[son->type]) (bs, son, base, level + 1)) <
+	} else if ((err = (Decoders[son->type]) (bs, son, base, level + 1)) <
 		   H323_ERROR_NONE)
-		वापस err;
+		return err;
 
-	वापस H323_ERROR_NONE;
-पूर्ण
+	return H323_ERROR_NONE;
+}
 
-पूर्णांक DecodeRasMessage(अचिन्हित अक्षर *buf, माप_प्रकार sz, RasMessage *ras)
-अणु
-	अटल स्थिर काष्ठा field_t ras_message = अणु
+int DecodeRasMessage(unsigned char *buf, size_t sz, RasMessage *ras)
+{
+	static const struct field_t ras_message = {
 		FNAME("RasMessage") CHOICE, 5, 24, 32, DECODE | EXT,
 		0, _RasMessage
-	पूर्ण;
-	काष्ठा bitstr bs;
+	};
+	struct bitstr bs;
 
 	bs.buf = bs.beg = bs.cur = buf;
 	bs.end = buf + sz;
 	bs.bit = 0;
 
-	वापस decode_choice(&bs, &ras_message, (अक्षर *) ras, 0);
-पूर्ण
+	return decode_choice(&bs, &ras_message, (char *) ras, 0);
+}
 
-अटल पूर्णांक DecodeH323_UserInक्रमmation(अचिन्हित अक्षर *buf, अचिन्हित अक्षर *beg,
-				      माप_प्रकार sz, H323_UserInक्रमmation *uuie)
-अणु
-	अटल स्थिर काष्ठा field_t h323_userinक्रमmation = अणु
+static int DecodeH323_UserInformation(unsigned char *buf, unsigned char *beg,
+				      size_t sz, H323_UserInformation *uuie)
+{
+	static const struct field_t h323_userinformation = {
 		FNAME("H323-UserInformation") SEQ, 1, 2, 2, DECODE | EXT,
-		0, _H323_UserInक्रमmation
-	पूर्ण;
-	काष्ठा bitstr bs;
+		0, _H323_UserInformation
+	};
+	struct bitstr bs;
 
 	bs.buf = buf;
 	bs.beg = bs.cur = beg;
 	bs.end = beg + sz;
 	bs.bit = 0;
 
-	वापस decode_seq(&bs, &h323_userinक्रमmation, (अक्षर *) uuie, 0);
-पूर्ण
+	return decode_seq(&bs, &h323_userinformation, (char *) uuie, 0);
+}
 
-पूर्णांक DecodeMulसमयdiaSystemControlMessage(अचिन्हित अक्षर *buf, माप_प्रकार sz,
-					 MulसमयdiaSystemControlMessage *
+int DecodeMultimediaSystemControlMessage(unsigned char *buf, size_t sz,
+					 MultimediaSystemControlMessage *
 					 mscm)
-अणु
-	अटल स्थिर काष्ठा field_t mulसमयdiaप्रणालीcontrolmessage = अणु
+{
+	static const struct field_t multimediasystemcontrolmessage = {
 		FNAME("MultimediaSystemControlMessage") CHOICE, 2, 4, 4,
-		DECODE | EXT, 0, _MulसमयdiaSystemControlMessage
-	पूर्ण;
-	काष्ठा bitstr bs;
+		DECODE | EXT, 0, _MultimediaSystemControlMessage
+	};
+	struct bitstr bs;
 
 	bs.buf = bs.beg = bs.cur = buf;
 	bs.end = buf + sz;
 	bs.bit = 0;
 
-	वापस decode_choice(&bs, &mulसमयdiaप्रणालीcontrolmessage,
-			     (अक्षर *) mscm, 0);
-पूर्ण
+	return decode_choice(&bs, &multimediasystemcontrolmessage,
+			     (char *) mscm, 0);
+}
 
-पूर्णांक DecodeQ931(अचिन्हित अक्षर *buf, माप_प्रकार sz, Q931 *q931)
-अणु
-	अचिन्हित अक्षर *p = buf;
-	पूर्णांक len;
+int DecodeQ931(unsigned char *buf, size_t sz, Q931 *q931)
+{
+	unsigned char *p = buf;
+	int len;
 
-	अगर (!p || sz < 1)
-		वापस H323_ERROR_BOUND;
+	if (!p || sz < 1)
+		return H323_ERROR_BOUND;
 
 	/* Protocol Discriminator */
-	अगर (*p != 0x08) अणु
+	if (*p != 0x08) {
 		PRINT("Unknown Protocol Discriminator\n");
-		वापस H323_ERROR_RANGE;
-	पूर्ण
+		return H323_ERROR_RANGE;
+	}
 	p++;
 	sz--;
 
 	/* CallReferenceValue */
-	अगर (sz < 1)
-		वापस H323_ERROR_BOUND;
+	if (sz < 1)
+		return H323_ERROR_BOUND;
 	len = *p++;
 	sz--;
-	अगर (sz < len)
-		वापस H323_ERROR_BOUND;
+	if (sz < len)
+		return H323_ERROR_BOUND;
 	p += len;
 	sz -= len;
 
 	/* Message Type */
-	अगर (sz < 2)
-		वापस H323_ERROR_BOUND;
+	if (sz < 2)
+		return H323_ERROR_BOUND;
 	q931->MessageType = *p++;
 	sz--;
 	PRINT("MessageType = %02X\n", q931->MessageType);
-	अगर (*p & 0x80) अणु
+	if (*p & 0x80) {
 		p++;
 		sz--;
-	पूर्ण
+	}
 
-	/* Decode Inक्रमmation Elements */
-	जबतक (sz > 0) अणु
-		अगर (*p == 0x7e) अणु	/* UserUserIE */
-			अगर (sz < 3)
-				अवरोध;
+	/* Decode Information Elements */
+	while (sz > 0) {
+		if (*p == 0x7e) {	/* UserUserIE */
+			if (sz < 3)
+				break;
 			p++;
 			len = *p++ << 8;
 			len |= *p++;
 			sz -= 3;
-			अगर (sz < len)
-				अवरोध;
+			if (sz < len)
+				break;
 			p++;
 			len--;
-			वापस DecodeH323_UserInक्रमmation(buf, p, len,
+			return DecodeH323_UserInformation(buf, p, len,
 							  &q931->UUIE);
-		पूर्ण
+		}
 		p++;
 		sz--;
-		अगर (sz < 1)
-			अवरोध;
+		if (sz < 1)
+			break;
 		len = *p++;
 		sz--;
-		अगर (sz < len)
-			अवरोध;
+		if (sz < len)
+			break;
 		p += len;
 		sz -= len;
-	पूर्ण
+	}
 
 	PRINT("Q.931 UUIE not found\n");
 
-	वापस H323_ERROR_BOUND;
-पूर्ण
+	return H323_ERROR_BOUND;
+}

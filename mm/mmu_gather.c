@@ -1,347 +1,346 @@
-<शैली गुरु>
-#समावेश <linux/gfp.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mmdebug.h>
-#समावेश <linux/mm_types.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/swap.h>
+#include <linux/gfp.h>
+#include <linux/highmem.h>
+#include <linux/kernel.h>
+#include <linux/mmdebug.h>
+#include <linux/mm_types.h>
+#include <linux/pagemap.h>
+#include <linux/rcupdate.h>
+#include <linux/smp.h>
+#include <linux/swap.h>
 
-#समावेश <यंत्र/pgभाग.स>
-#समावेश <यंत्र/tlb.h>
+#include <asm/pgalloc.h>
+#include <asm/tlb.h>
 
-#अगर_अघोषित CONFIG_MMU_GATHER_NO_GATHER
+#ifndef CONFIG_MMU_GATHER_NO_GATHER
 
-अटल bool tlb_next_batch(काष्ठा mmu_gather *tlb)
-अणु
-	काष्ठा mmu_gather_batch *batch;
+static bool tlb_next_batch(struct mmu_gather *tlb)
+{
+	struct mmu_gather_batch *batch;
 
 	batch = tlb->active;
-	अगर (batch->next) अणु
+	if (batch->next) {
 		tlb->active = batch->next;
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	अगर (tlb->batch_count == MAX_GATHER_BATCH_COUNT)
-		वापस false;
+	if (tlb->batch_count == MAX_GATHER_BATCH_COUNT)
+		return false;
 
-	batch = (व्योम *)__get_मुक्त_pages(GFP_NOWAIT | __GFP_NOWARN, 0);
-	अगर (!batch)
-		वापस false;
+	batch = (void *)__get_free_pages(GFP_NOWAIT | __GFP_NOWARN, 0);
+	if (!batch)
+		return false;
 
 	tlb->batch_count++;
-	batch->next = शून्य;
+	batch->next = NULL;
 	batch->nr   = 0;
 	batch->max  = MAX_GATHER_BATCH;
 
 	tlb->active->next = batch;
 	tlb->active = batch;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम tlb_batch_pages_flush(काष्ठा mmu_gather *tlb)
-अणु
-	काष्ठा mmu_gather_batch *batch;
+static void tlb_batch_pages_flush(struct mmu_gather *tlb)
+{
+	struct mmu_gather_batch *batch;
 
-	क्रम (batch = &tlb->local; batch && batch->nr; batch = batch->next) अणु
-		मुक्त_pages_and_swap_cache(batch->pages, batch->nr);
+	for (batch = &tlb->local; batch && batch->nr; batch = batch->next) {
+		free_pages_and_swap_cache(batch->pages, batch->nr);
 		batch->nr = 0;
-	पूर्ण
+	}
 	tlb->active = &tlb->local;
-पूर्ण
+}
 
-अटल व्योम tlb_batch_list_मुक्त(काष्ठा mmu_gather *tlb)
-अणु
-	काष्ठा mmu_gather_batch *batch, *next;
+static void tlb_batch_list_free(struct mmu_gather *tlb)
+{
+	struct mmu_gather_batch *batch, *next;
 
-	क्रम (batch = tlb->local.next; batch; batch = next) अणु
+	for (batch = tlb->local.next; batch; batch = next) {
 		next = batch->next;
-		मुक्त_pages((अचिन्हित दीर्घ)batch, 0);
-	पूर्ण
-	tlb->local.next = शून्य;
-पूर्ण
+		free_pages((unsigned long)batch, 0);
+	}
+	tlb->local.next = NULL;
+}
 
-bool __tlb_हटाओ_page_size(काष्ठा mmu_gather *tlb, काष्ठा page *page, पूर्णांक page_size)
-अणु
-	काष्ठा mmu_gather_batch *batch;
+bool __tlb_remove_page_size(struct mmu_gather *tlb, struct page *page, int page_size)
+{
+	struct mmu_gather_batch *batch;
 
 	VM_BUG_ON(!tlb->end);
 
-#अगर_घोषित CONFIG_MMU_GATHER_PAGE_SIZE
+#ifdef CONFIG_MMU_GATHER_PAGE_SIZE
 	VM_WARN_ON(tlb->page_size != page_size);
-#पूर्ण_अगर
+#endif
 
 	batch = tlb->active;
 	/*
-	 * Add the page and check अगर we are full. If so
-	 * क्रमce a flush.
+	 * Add the page and check if we are full. If so
+	 * force a flush.
 	 */
 	batch->pages[batch->nr++] = page;
-	अगर (batch->nr == batch->max) अणु
-		अगर (!tlb_next_batch(tlb))
-			वापस true;
+	if (batch->nr == batch->max) {
+		if (!tlb_next_batch(tlb))
+			return true;
 		batch = tlb->active;
-	पूर्ण
+	}
 	VM_BUG_ON_PAGE(batch->nr > batch->max, page);
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-#पूर्ण_अगर /* MMU_GATHER_NO_GATHER */
+#endif /* MMU_GATHER_NO_GATHER */
 
-#अगर_घोषित CONFIG_MMU_GATHER_TABLE_FREE
+#ifdef CONFIG_MMU_GATHER_TABLE_FREE
 
-अटल व्योम __tlb_हटाओ_table_मुक्त(काष्ठा mmu_table_batch *batch)
-अणु
-	पूर्णांक i;
+static void __tlb_remove_table_free(struct mmu_table_batch *batch)
+{
+	int i;
 
-	क्रम (i = 0; i < batch->nr; i++)
-		__tlb_हटाओ_table(batch->tables[i]);
+	for (i = 0; i < batch->nr; i++)
+		__tlb_remove_table(batch->tables[i]);
 
-	मुक्त_page((अचिन्हित दीर्घ)batch);
-पूर्ण
+	free_page((unsigned long)batch);
+}
 
-#अगर_घोषित CONFIG_MMU_GATHER_RCU_TABLE_FREE
+#ifdef CONFIG_MMU_GATHER_RCU_TABLE_FREE
 
 /*
- * Semi RCU मुक्तing of the page directories.
+ * Semi RCU freeing of the page directories.
  *
  * This is needed by some architectures to implement software pagetable walkers.
  *
- * gup_fast() and other software pagetable walkers करो a lockless page-table
- * walk and thereक्रमe needs some synchronization with the मुक्तing of the page
+ * gup_fast() and other software pagetable walkers do a lockless page-table
+ * walk and therefore needs some synchronization with the freeing of the page
  * directories. The chosen means to accomplish that is by disabling IRQs over
  * the walk.
  *
- * Architectures that use IPIs to flush TLBs will then स्वतःmagically DTRT,
- * since we unlink the page, flush TLBs, मुक्त the page. Since the disabling of
- * IRQs delays the completion of the TLB flush we can never observe an alपढ़ोy
- * मुक्तd page.
+ * Architectures that use IPIs to flush TLBs will then automagically DTRT,
+ * since we unlink the page, flush TLBs, free the page. Since the disabling of
+ * IRQs delays the completion of the TLB flush we can never observe an already
+ * freed page.
  *
- * Architectures that करो not have this (PPC) need to delay the मुक्तing by some
+ * Architectures that do not have this (PPC) need to delay the freeing by some
  * other means, this is that means.
  *
- * What we करो is batch the मुक्तd directory pages (tables) and RCU मुक्त them.
+ * What we do is batch the freed directory pages (tables) and RCU free them.
  * We use the sched RCU variant, as that guarantees that IRQ/preempt disabling
  * holds off grace periods.
  *
  * However, in order to batch these pages we need to allocate storage, this
  * allocation is deep inside the MM code and can thus easily fail on memory
- * pressure. To guarantee progress we fall back to single table मुक्तing, see
- * the implementation of tlb_हटाओ_table_one().
+ * pressure. To guarantee progress we fall back to single table freeing, see
+ * the implementation of tlb_remove_table_one().
  *
  */
 
-अटल व्योम tlb_हटाओ_table_smp_sync(व्योम *arg)
-अणु
-	/* Simply deliver the पूर्णांकerrupt */
-पूर्ण
+static void tlb_remove_table_smp_sync(void *arg)
+{
+	/* Simply deliver the interrupt */
+}
 
-अटल व्योम tlb_हटाओ_table_sync_one(व्योम)
-अणु
+static void tlb_remove_table_sync_one(void)
+{
 	/*
 	 * This isn't an RCU grace period and hence the page-tables cannot be
-	 * assumed to be actually RCU-मुक्तd.
+	 * assumed to be actually RCU-freed.
 	 *
-	 * It is however sufficient क्रम software page-table walkers that rely on
+	 * It is however sufficient for software page-table walkers that rely on
 	 * IRQ disabling.
 	 */
-	smp_call_function(tlb_हटाओ_table_smp_sync, शून्य, 1);
-पूर्ण
+	smp_call_function(tlb_remove_table_smp_sync, NULL, 1);
+}
 
-अटल व्योम tlb_हटाओ_table_rcu(काष्ठा rcu_head *head)
-अणु
-	__tlb_हटाओ_table_मुक्त(container_of(head, काष्ठा mmu_table_batch, rcu));
-पूर्ण
+static void tlb_remove_table_rcu(struct rcu_head *head)
+{
+	__tlb_remove_table_free(container_of(head, struct mmu_table_batch, rcu));
+}
 
-अटल व्योम tlb_हटाओ_table_मुक्त(काष्ठा mmu_table_batch *batch)
-अणु
-	call_rcu(&batch->rcu, tlb_हटाओ_table_rcu);
-पूर्ण
+static void tlb_remove_table_free(struct mmu_table_batch *batch)
+{
+	call_rcu(&batch->rcu, tlb_remove_table_rcu);
+}
 
-#अन्यथा /* !CONFIG_MMU_GATHER_RCU_TABLE_FREE */
+#else /* !CONFIG_MMU_GATHER_RCU_TABLE_FREE */
 
-अटल व्योम tlb_हटाओ_table_sync_one(व्योम) अणु पूर्ण
+static void tlb_remove_table_sync_one(void) { }
 
-अटल व्योम tlb_हटाओ_table_मुक्त(काष्ठा mmu_table_batch *batch)
-अणु
-	__tlb_हटाओ_table_मुक्त(batch);
-पूर्ण
+static void tlb_remove_table_free(struct mmu_table_batch *batch)
+{
+	__tlb_remove_table_free(batch);
+}
 
-#पूर्ण_अगर /* CONFIG_MMU_GATHER_RCU_TABLE_FREE */
+#endif /* CONFIG_MMU_GATHER_RCU_TABLE_FREE */
 
 /*
- * If we want tlb_हटाओ_table() to imply TLB invalidates.
+ * If we want tlb_remove_table() to imply TLB invalidates.
  */
-अटल अंतरभूत व्योम tlb_table_invalidate(काष्ठा mmu_gather *tlb)
-अणु
-	अगर (tlb_needs_table_invalidate()) अणु
+static inline void tlb_table_invalidate(struct mmu_gather *tlb)
+{
+	if (tlb_needs_table_invalidate()) {
 		/*
 		 * Invalidate page-table caches used by hardware walkers. Then
-		 * we still need to RCU-sched रुको जबतक मुक्तing the pages
+		 * we still need to RCU-sched wait while freeing the pages
 		 * because software walkers can still be in-flight.
 		 */
 		tlb_flush_mmu_tlbonly(tlb);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम tlb_हटाओ_table_one(व्योम *table)
-अणु
-	tlb_हटाओ_table_sync_one();
-	__tlb_हटाओ_table(table);
-पूर्ण
+static void tlb_remove_table_one(void *table)
+{
+	tlb_remove_table_sync_one();
+	__tlb_remove_table(table);
+}
 
-अटल व्योम tlb_table_flush(काष्ठा mmu_gather *tlb)
-अणु
-	काष्ठा mmu_table_batch **batch = &tlb->batch;
+static void tlb_table_flush(struct mmu_gather *tlb)
+{
+	struct mmu_table_batch **batch = &tlb->batch;
 
-	अगर (*batch) अणु
+	if (*batch) {
 		tlb_table_invalidate(tlb);
-		tlb_हटाओ_table_मुक्त(*batch);
-		*batch = शून्य;
-	पूर्ण
-पूर्ण
+		tlb_remove_table_free(*batch);
+		*batch = NULL;
+	}
+}
 
-व्योम tlb_हटाओ_table(काष्ठा mmu_gather *tlb, व्योम *table)
-अणु
-	काष्ठा mmu_table_batch **batch = &tlb->batch;
+void tlb_remove_table(struct mmu_gather *tlb, void *table)
+{
+	struct mmu_table_batch **batch = &tlb->batch;
 
-	अगर (*batch == शून्य) अणु
-		*batch = (काष्ठा mmu_table_batch *)__get_मुक्त_page(GFP_NOWAIT | __GFP_NOWARN);
-		अगर (*batch == शून्य) अणु
+	if (*batch == NULL) {
+		*batch = (struct mmu_table_batch *)__get_free_page(GFP_NOWAIT | __GFP_NOWARN);
+		if (*batch == NULL) {
 			tlb_table_invalidate(tlb);
-			tlb_हटाओ_table_one(table);
-			वापस;
-		पूर्ण
+			tlb_remove_table_one(table);
+			return;
+		}
 		(*batch)->nr = 0;
-	पूर्ण
+	}
 
 	(*batch)->tables[(*batch)->nr++] = table;
-	अगर ((*batch)->nr == MAX_TABLE_BATCH)
+	if ((*batch)->nr == MAX_TABLE_BATCH)
 		tlb_table_flush(tlb);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम tlb_table_init(काष्ठा mmu_gather *tlb)
-अणु
-	tlb->batch = शून्य;
-पूर्ण
+static inline void tlb_table_init(struct mmu_gather *tlb)
+{
+	tlb->batch = NULL;
+}
 
-#अन्यथा /* !CONFIG_MMU_GATHER_TABLE_FREE */
+#else /* !CONFIG_MMU_GATHER_TABLE_FREE */
 
-अटल अंतरभूत व्योम tlb_table_flush(काष्ठा mmu_gather *tlb) अणु पूर्ण
-अटल अंतरभूत व्योम tlb_table_init(काष्ठा mmu_gather *tlb) अणु पूर्ण
+static inline void tlb_table_flush(struct mmu_gather *tlb) { }
+static inline void tlb_table_init(struct mmu_gather *tlb) { }
 
-#पूर्ण_अगर /* CONFIG_MMU_GATHER_TABLE_FREE */
+#endif /* CONFIG_MMU_GATHER_TABLE_FREE */
 
-अटल व्योम tlb_flush_mmu_मुक्त(काष्ठा mmu_gather *tlb)
-अणु
+static void tlb_flush_mmu_free(struct mmu_gather *tlb)
+{
 	tlb_table_flush(tlb);
-#अगर_अघोषित CONFIG_MMU_GATHER_NO_GATHER
+#ifndef CONFIG_MMU_GATHER_NO_GATHER
 	tlb_batch_pages_flush(tlb);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-व्योम tlb_flush_mmu(काष्ठा mmu_gather *tlb)
-अणु
+void tlb_flush_mmu(struct mmu_gather *tlb)
+{
 	tlb_flush_mmu_tlbonly(tlb);
-	tlb_flush_mmu_मुक्त(tlb);
-पूर्ण
+	tlb_flush_mmu_free(tlb);
+}
 
-अटल व्योम __tlb_gather_mmu(काष्ठा mmu_gather *tlb, काष्ठा mm_काष्ठा *mm,
+static void __tlb_gather_mmu(struct mmu_gather *tlb, struct mm_struct *mm,
 			     bool fullmm)
-अणु
+{
 	tlb->mm = mm;
 	tlb->fullmm = fullmm;
 
-#अगर_अघोषित CONFIG_MMU_GATHER_NO_GATHER
+#ifndef CONFIG_MMU_GATHER_NO_GATHER
 	tlb->need_flush_all = 0;
-	tlb->local.next = शून्य;
+	tlb->local.next = NULL;
 	tlb->local.nr   = 0;
 	tlb->local.max  = ARRAY_SIZE(tlb->__pages);
 	tlb->active     = &tlb->local;
 	tlb->batch_count = 0;
-#पूर्ण_अगर
+#endif
 
 	tlb_table_init(tlb);
-#अगर_घोषित CONFIG_MMU_GATHER_PAGE_SIZE
+#ifdef CONFIG_MMU_GATHER_PAGE_SIZE
 	tlb->page_size = 0;
-#पूर्ण_अगर
+#endif
 
 	__tlb_reset_range(tlb);
 	inc_tlb_flush_pending(tlb->mm);
-पूर्ण
+}
 
 /**
- * tlb_gather_mmu - initialize an mmu_gather काष्ठाure क्रम page-table tear-करोwn
- * @tlb: the mmu_gather काष्ठाure to initialize
- * @mm: the mm_काष्ठा of the target address space
+ * tlb_gather_mmu - initialize an mmu_gather structure for page-table tear-down
+ * @tlb: the mmu_gather structure to initialize
+ * @mm: the mm_struct of the target address space
  *
- * Called to initialize an (on-stack) mmu_gather काष्ठाure क्रम page-table
- * tear-करोwn from @mm.
+ * Called to initialize an (on-stack) mmu_gather structure for page-table
+ * tear-down from @mm.
  */
-व्योम tlb_gather_mmu(काष्ठा mmu_gather *tlb, काष्ठा mm_काष्ठा *mm)
-अणु
+void tlb_gather_mmu(struct mmu_gather *tlb, struct mm_struct *mm)
+{
 	__tlb_gather_mmu(tlb, mm, false);
-पूर्ण
+}
 
 /**
- * tlb_gather_mmu_fullmm - initialize an mmu_gather काष्ठाure क्रम page-table tear-करोwn
- * @tlb: the mmu_gather काष्ठाure to initialize
- * @mm: the mm_काष्ठा of the target address space
+ * tlb_gather_mmu_fullmm - initialize an mmu_gather structure for page-table tear-down
+ * @tlb: the mmu_gather structure to initialize
+ * @mm: the mm_struct of the target address space
  *
- * In this हाल, @mm is without users and we're going to destroy the
- * full address space (निकास/execve).
+ * In this case, @mm is without users and we're going to destroy the
+ * full address space (exit/execve).
  *
- * Called to initialize an (on-stack) mmu_gather काष्ठाure क्रम page-table
- * tear-करोwn from @mm.
+ * Called to initialize an (on-stack) mmu_gather structure for page-table
+ * tear-down from @mm.
  */
-व्योम tlb_gather_mmu_fullmm(काष्ठा mmu_gather *tlb, काष्ठा mm_काष्ठा *mm)
-अणु
+void tlb_gather_mmu_fullmm(struct mmu_gather *tlb, struct mm_struct *mm)
+{
 	__tlb_gather_mmu(tlb, mm, true);
-पूर्ण
+}
 
 /**
- * tlb_finish_mmu - finish an mmu_gather काष्ठाure
- * @tlb: the mmu_gather काष्ठाure to finish
+ * tlb_finish_mmu - finish an mmu_gather structure
+ * @tlb: the mmu_gather structure to finish
  *
- * Called at the end of the shootकरोwn operation to मुक्त up any resources that
+ * Called at the end of the shootdown operation to free up any resources that
  * were required.
  */
-व्योम tlb_finish_mmu(काष्ठा mmu_gather *tlb)
-अणु
+void tlb_finish_mmu(struct mmu_gather *tlb)
+{
 	/*
-	 * If there are parallel thपढ़ोs are करोing PTE changes on same range
-	 * under non-exclusive lock (e.g., mmap_lock पढ़ो-side) but defer TLB
-	 * flush by batching, one thपढ़ो may end up seeing inconsistent PTEs
-	 * and result in having stale TLB entries.  So flush TLB क्रमcefully
-	 * अगर we detect parallel PTE batching thपढ़ोs.
+	 * If there are parallel threads are doing PTE changes on same range
+	 * under non-exclusive lock (e.g., mmap_lock read-side) but defer TLB
+	 * flush by batching, one thread may end up seeing inconsistent PTEs
+	 * and result in having stale TLB entries.  So flush TLB forcefully
+	 * if we detect parallel PTE batching threads.
 	 *
-	 * However, some syscalls, e.g. munmap(), may मुक्त page tables, this
-	 * needs क्रमce flush everything in the given range. Otherwise this
-	 * may result in having stale TLB entries क्रम some architectures,
-	 * e.g. aarch64, that could specअगरy flush what level TLB.
+	 * However, some syscalls, e.g. munmap(), may free page tables, this
+	 * needs force flush everything in the given range. Otherwise this
+	 * may result in having stale TLB entries for some architectures,
+	 * e.g. aarch64, that could specify flush what level TLB.
 	 */
-	अगर (mm_tlb_flush_nested(tlb->mm)) अणु
+	if (mm_tlb_flush_nested(tlb->mm)) {
 		/*
-		 * The aarch64 yields better perक्रमmance with fullmm by
-		 * aव्योमing multiple CPUs spamming TLBI messages at the
-		 * same समय.
+		 * The aarch64 yields better performance with fullmm by
+		 * avoiding multiple CPUs spamming TLBI messages at the
+		 * same time.
 		 *
-		 * On x86 non-fullmm करोesn't yield signअगरicant dअगरference
+		 * On x86 non-fullmm doesn't yield significant difference
 		 * against fullmm.
 		 */
 		tlb->fullmm = 1;
 		__tlb_reset_range(tlb);
-		tlb->मुक्तd_tables = 1;
-	पूर्ण
+		tlb->freed_tables = 1;
+	}
 
 	tlb_flush_mmu(tlb);
 
-#अगर_अघोषित CONFIG_MMU_GATHER_NO_GATHER
-	tlb_batch_list_मुक्त(tlb);
-#पूर्ण_अगर
+#ifndef CONFIG_MMU_GATHER_NO_GATHER
+	tlb_batch_list_free(tlb);
+#endif
 	dec_tlb_flush_pending(tlb->mm);
-पूर्ण
+}

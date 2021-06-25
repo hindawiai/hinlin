@@ -1,46 +1,45 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * O(1) TX queue with built-in allocator.
  *
  * Copyright (c) 2017-2020, Silicon Laboratories, Inc.
  * Copyright (c) 2010, ST-Ericsson
  */
-#अगर_अघोषित WFX_QUEUE_H
-#घोषणा WFX_QUEUE_H
+#ifndef WFX_QUEUE_H
+#define WFX_QUEUE_H
 
-#समावेश <linux/skbuff.h>
-#समावेश <linux/atomic.h>
+#include <linux/skbuff.h>
+#include <linux/atomic.h>
 
-काष्ठा wfx_dev;
-काष्ठा wfx_vअगर;
+struct wfx_dev;
+struct wfx_vif;
 
-काष्ठा wfx_queue अणु
-	काष्ठा sk_buff_head	normal;
-	काष्ठा sk_buff_head	cab; // Content After (DTIM) Beacon
+struct wfx_queue {
+	struct sk_buff_head	normal;
+	struct sk_buff_head	cab; // Content After (DTIM) Beacon
 	atomic_t		pending_frames;
-	पूर्णांक			priority;
-पूर्ण;
+	int			priority;
+};
 
-व्योम wfx_tx_lock(काष्ठा wfx_dev *wdev);
-व्योम wfx_tx_unlock(काष्ठा wfx_dev *wdev);
-व्योम wfx_tx_flush(काष्ठा wfx_dev *wdev);
-व्योम wfx_tx_lock_flush(काष्ठा wfx_dev *wdev);
+void wfx_tx_lock(struct wfx_dev *wdev);
+void wfx_tx_unlock(struct wfx_dev *wdev);
+void wfx_tx_flush(struct wfx_dev *wdev);
+void wfx_tx_lock_flush(struct wfx_dev *wdev);
 
-व्योम wfx_tx_queues_init(काष्ठा wfx_vअगर *wvअगर);
-व्योम wfx_tx_queues_check_empty(काष्ठा wfx_vअगर *wvअगर);
-bool wfx_tx_queues_has_cab(काष्ठा wfx_vअगर *wvअगर);
-व्योम wfx_tx_queues_put(काष्ठा wfx_vअगर *wvअगर, काष्ठा sk_buff *skb);
-काष्ठा hअगर_msg *wfx_tx_queues_get(काष्ठा wfx_dev *wdev);
+void wfx_tx_queues_init(struct wfx_vif *wvif);
+void wfx_tx_queues_check_empty(struct wfx_vif *wvif);
+bool wfx_tx_queues_has_cab(struct wfx_vif *wvif);
+void wfx_tx_queues_put(struct wfx_vif *wvif, struct sk_buff *skb);
+struct hif_msg *wfx_tx_queues_get(struct wfx_dev *wdev);
 
-bool wfx_tx_queue_empty(काष्ठा wfx_vअगर *wvअगर, काष्ठा wfx_queue *queue);
-व्योम wfx_tx_queue_drop(काष्ठा wfx_vअगर *wvअगर, काष्ठा wfx_queue *queue,
-		       काष्ठा sk_buff_head *dropped);
+bool wfx_tx_queue_empty(struct wfx_vif *wvif, struct wfx_queue *queue);
+void wfx_tx_queue_drop(struct wfx_vif *wvif, struct wfx_queue *queue,
+		       struct sk_buff_head *dropped);
 
-काष्ठा sk_buff *wfx_pending_get(काष्ठा wfx_dev *wdev, u32 packet_id);
-व्योम wfx_pending_drop(काष्ठा wfx_dev *wdev, काष्ठा sk_buff_head *dropped);
-अचिन्हित पूर्णांक wfx_pending_get_pkt_us_delay(काष्ठा wfx_dev *wdev,
-					  काष्ठा sk_buff *skb);
-व्योम wfx_pending_dump_old_frames(काष्ठा wfx_dev *wdev, अचिन्हित पूर्णांक limit_ms);
+struct sk_buff *wfx_pending_get(struct wfx_dev *wdev, u32 packet_id);
+void wfx_pending_drop(struct wfx_dev *wdev, struct sk_buff_head *dropped);
+unsigned int wfx_pending_get_pkt_us_delay(struct wfx_dev *wdev,
+					  struct sk_buff *skb);
+void wfx_pending_dump_old_frames(struct wfx_dev *wdev, unsigned int limit_ms);
 
-#पूर्ण_अगर /* WFX_QUEUE_H */
+#endif /* WFX_QUEUE_H */

@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (c) 2014 Samsung Electronics Co., Ltd
  *              http://www.samsung.com
  */
 
-#अगर_अघोषित __LINUX_MFD_S2MPS13_H
-#घोषणा __LINUX_MFD_S2MPS13_H
+#ifndef __LINUX_MFD_S2MPS13_H
+#define __LINUX_MFD_S2MPS13_H
 
-/* S2MPS13 रेजिस्टरs */
-क्रमागत s2mps13_reg अणु
+/* S2MPS13 registers */
+enum s2mps13_reg {
 	S2MPS13_REG_ID,
 	S2MPS13_REG_INT1,
 	S2MPS13_REG_INT2,
@@ -109,10 +108,10 @@
 	S2MPS13_REG_LDODSCH3,
 	S2MPS13_REG_LDODSCH4,
 	S2MPS13_REG_LDODSCH5,
-पूर्ण;
+};
 
 /*  regulator ids */
-क्रमागत s2mps13_regulators अणु
+enum s2mps13_regulators {
 	S2MPS13_LDO1,
 	S2MPS13_LDO2,
 	S2MPS13_LDO3,
@@ -165,14 +164,14 @@
 	S2MPS13_BUCK10,
 
 	S2MPS13_REGULATOR_MAX,
-पूर्ण;
+};
 
 /*
  * Default ramp delay in uv/us. Datasheet says that ramp delay can be
- * controlled however it करोes not specअगरy which रेजिस्टर is used क्रम that.
- * Let's assume that शेष value will be set.
+ * controlled however it does not specify which register is used for that.
+ * Let's assume that default value will be set.
  */
-#घोषणा S2MPS13_BUCK_RAMP_DELAY		12500
-#घोषणा S2MPS13_REG_WRSTBI_MASK		BIT(5)
+#define S2MPS13_BUCK_RAMP_DELAY		12500
+#define S2MPS13_REG_WRSTBI_MASK		BIT(5)
 
-#पूर्ण_अगर /*  __LINUX_MFD_S2MPS13_H */
+#endif /*  __LINUX_MFD_S2MPS13_H */

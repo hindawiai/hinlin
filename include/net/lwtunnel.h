@@ -1,264 +1,263 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __NET_LWTUNNEL_H
-#घोषणा __NET_LWTUNNEL_H 1
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __NET_LWTUNNEL_H
+#define __NET_LWTUNNEL_H 1
 
-#समावेश <linux/lwtunnel.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/types.h>
-#समावेश <net/route.h>
+#include <linux/lwtunnel.h>
+#include <linux/netdevice.h>
+#include <linux/skbuff.h>
+#include <linux/types.h>
+#include <net/route.h>
 
-#घोषणा LWTUNNEL_HASH_BITS   7
-#घोषणा LWTUNNEL_HASH_SIZE   (1 << LWTUNNEL_HASH_BITS)
+#define LWTUNNEL_HASH_BITS   7
+#define LWTUNNEL_HASH_SIZE   (1 << LWTUNNEL_HASH_BITS)
 
 /* lw tunnel state flags */
-#घोषणा LWTUNNEL_STATE_OUTPUT_REसूचीECT	BIT(0)
-#घोषणा LWTUNNEL_STATE_INPUT_REसूचीECT	BIT(1)
-#घोषणा LWTUNNEL_STATE_XMIT_REसूचीECT	BIT(2)
+#define LWTUNNEL_STATE_OUTPUT_REDIRECT	BIT(0)
+#define LWTUNNEL_STATE_INPUT_REDIRECT	BIT(1)
+#define LWTUNNEL_STATE_XMIT_REDIRECT	BIT(2)
 
-क्रमागत अणु
+enum {
 	LWTUNNEL_XMIT_DONE,
 	LWTUNNEL_XMIT_CONTINUE,
-पूर्ण;
+};
 
 
-काष्ठा lwtunnel_state अणु
+struct lwtunnel_state {
 	__u16		type;
 	__u16		flags;
 	__u16		headroom;
 	atomic_t	refcnt;
-	पूर्णांक		(*orig_output)(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb);
-	पूर्णांक		(*orig_input)(काष्ठा sk_buff *);
-	काष्ठा		rcu_head rcu;
+	int		(*orig_output)(struct net *net, struct sock *sk, struct sk_buff *skb);
+	int		(*orig_input)(struct sk_buff *);
+	struct		rcu_head rcu;
 	__u8            data[];
-पूर्ण;
+};
 
-काष्ठा lwtunnel_encap_ops अणु
-	पूर्णांक (*build_state)(काष्ठा net *net, काष्ठा nlattr *encap,
-			   अचिन्हित पूर्णांक family, स्थिर व्योम *cfg,
-			   काष्ठा lwtunnel_state **ts,
-			   काष्ठा netlink_ext_ack *extack);
-	व्योम (*destroy_state)(काष्ठा lwtunnel_state *lws);
-	पूर्णांक (*output)(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb);
-	पूर्णांक (*input)(काष्ठा sk_buff *skb);
-	पूर्णांक (*fill_encap)(काष्ठा sk_buff *skb,
-			  काष्ठा lwtunnel_state *lwtstate);
-	पूर्णांक (*get_encap_size)(काष्ठा lwtunnel_state *lwtstate);
-	पूर्णांक (*cmp_encap)(काष्ठा lwtunnel_state *a, काष्ठा lwtunnel_state *b);
-	पूर्णांक (*xmit)(काष्ठा sk_buff *skb);
+struct lwtunnel_encap_ops {
+	int (*build_state)(struct net *net, struct nlattr *encap,
+			   unsigned int family, const void *cfg,
+			   struct lwtunnel_state **ts,
+			   struct netlink_ext_ack *extack);
+	void (*destroy_state)(struct lwtunnel_state *lws);
+	int (*output)(struct net *net, struct sock *sk, struct sk_buff *skb);
+	int (*input)(struct sk_buff *skb);
+	int (*fill_encap)(struct sk_buff *skb,
+			  struct lwtunnel_state *lwtstate);
+	int (*get_encap_size)(struct lwtunnel_state *lwtstate);
+	int (*cmp_encap)(struct lwtunnel_state *a, struct lwtunnel_state *b);
+	int (*xmit)(struct sk_buff *skb);
 
-	काष्ठा module *owner;
-पूर्ण;
+	struct module *owner;
+};
 
-#अगर_घोषित CONFIG_LWTUNNEL
-व्योम lwtstate_मुक्त(काष्ठा lwtunnel_state *lws);
+#ifdef CONFIG_LWTUNNEL
+void lwtstate_free(struct lwtunnel_state *lws);
 
-अटल अंतरभूत काष्ठा lwtunnel_state *
-lwtstate_get(काष्ठा lwtunnel_state *lws)
-अणु
-	अगर (lws)
+static inline struct lwtunnel_state *
+lwtstate_get(struct lwtunnel_state *lws)
+{
+	if (lws)
 		atomic_inc(&lws->refcnt);
 
-	वापस lws;
-पूर्ण
+	return lws;
+}
 
-अटल अंतरभूत व्योम lwtstate_put(काष्ठा lwtunnel_state *lws)
-अणु
-	अगर (!lws)
-		वापस;
+static inline void lwtstate_put(struct lwtunnel_state *lws)
+{
+	if (!lws)
+		return;
 
-	अगर (atomic_dec_and_test(&lws->refcnt))
-		lwtstate_मुक्त(lws);
-पूर्ण
+	if (atomic_dec_and_test(&lws->refcnt))
+		lwtstate_free(lws);
+}
 
-अटल अंतरभूत bool lwtunnel_output_redirect(काष्ठा lwtunnel_state *lwtstate)
-अणु
-	अगर (lwtstate && (lwtstate->flags & LWTUNNEL_STATE_OUTPUT_REसूचीECT))
-		वापस true;
+static inline bool lwtunnel_output_redirect(struct lwtunnel_state *lwtstate)
+{
+	if (lwtstate && (lwtstate->flags & LWTUNNEL_STATE_OUTPUT_REDIRECT))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल अंतरभूत bool lwtunnel_input_redirect(काष्ठा lwtunnel_state *lwtstate)
-अणु
-	अगर (lwtstate && (lwtstate->flags & LWTUNNEL_STATE_INPUT_REसूचीECT))
-		वापस true;
+static inline bool lwtunnel_input_redirect(struct lwtunnel_state *lwtstate)
+{
+	if (lwtstate && (lwtstate->flags & LWTUNNEL_STATE_INPUT_REDIRECT))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल अंतरभूत bool lwtunnel_xmit_redirect(काष्ठा lwtunnel_state *lwtstate)
-अणु
-	अगर (lwtstate && (lwtstate->flags & LWTUNNEL_STATE_XMIT_REसूचीECT))
-		वापस true;
+static inline bool lwtunnel_xmit_redirect(struct lwtunnel_state *lwtstate)
+{
+	if (lwtstate && (lwtstate->flags & LWTUNNEL_STATE_XMIT_REDIRECT))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक lwtunnel_headroom(काष्ठा lwtunnel_state *lwtstate,
-					     अचिन्हित पूर्णांक mtu)
-अणु
-	अगर ((lwtunnel_xmit_redirect(lwtstate) ||
+static inline unsigned int lwtunnel_headroom(struct lwtunnel_state *lwtstate,
+					     unsigned int mtu)
+{
+	if ((lwtunnel_xmit_redirect(lwtstate) ||
 	     lwtunnel_output_redirect(lwtstate)) && lwtstate->headroom < mtu)
-		वापस lwtstate->headroom;
+		return lwtstate->headroom;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक lwtunnel_encap_add_ops(स्थिर काष्ठा lwtunnel_encap_ops *op,
-			   अचिन्हित पूर्णांक num);
-पूर्णांक lwtunnel_encap_del_ops(स्थिर काष्ठा lwtunnel_encap_ops *op,
-			   अचिन्हित पूर्णांक num);
-पूर्णांक lwtunnel_valid_encap_type(u16 encap_type,
-			      काष्ठा netlink_ext_ack *extack);
-पूर्णांक lwtunnel_valid_encap_type_attr(काष्ठा nlattr *attr, पूर्णांक len,
-				   काष्ठा netlink_ext_ack *extack);
-पूर्णांक lwtunnel_build_state(काष्ठा net *net, u16 encap_type,
-			 काष्ठा nlattr *encap,
-			 अचिन्हित पूर्णांक family, स्थिर व्योम *cfg,
-			 काष्ठा lwtunnel_state **lws,
-			 काष्ठा netlink_ext_ack *extack);
-पूर्णांक lwtunnel_fill_encap(काष्ठा sk_buff *skb, काष्ठा lwtunnel_state *lwtstate,
-			पूर्णांक encap_attr, पूर्णांक encap_type_attr);
-पूर्णांक lwtunnel_get_encap_size(काष्ठा lwtunnel_state *lwtstate);
-काष्ठा lwtunnel_state *lwtunnel_state_alloc(पूर्णांक hdr_len);
-पूर्णांक lwtunnel_cmp_encap(काष्ठा lwtunnel_state *a, काष्ठा lwtunnel_state *b);
-पूर्णांक lwtunnel_output(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb);
-पूर्णांक lwtunnel_input(काष्ठा sk_buff *skb);
-पूर्णांक lwtunnel_xmit(काष्ठा sk_buff *skb);
-पूर्णांक bpf_lwt_push_ip_encap(काष्ठा sk_buff *skb, व्योम *hdr, u32 len,
+int lwtunnel_encap_add_ops(const struct lwtunnel_encap_ops *op,
+			   unsigned int num);
+int lwtunnel_encap_del_ops(const struct lwtunnel_encap_ops *op,
+			   unsigned int num);
+int lwtunnel_valid_encap_type(u16 encap_type,
+			      struct netlink_ext_ack *extack);
+int lwtunnel_valid_encap_type_attr(struct nlattr *attr, int len,
+				   struct netlink_ext_ack *extack);
+int lwtunnel_build_state(struct net *net, u16 encap_type,
+			 struct nlattr *encap,
+			 unsigned int family, const void *cfg,
+			 struct lwtunnel_state **lws,
+			 struct netlink_ext_ack *extack);
+int lwtunnel_fill_encap(struct sk_buff *skb, struct lwtunnel_state *lwtstate,
+			int encap_attr, int encap_type_attr);
+int lwtunnel_get_encap_size(struct lwtunnel_state *lwtstate);
+struct lwtunnel_state *lwtunnel_state_alloc(int hdr_len);
+int lwtunnel_cmp_encap(struct lwtunnel_state *a, struct lwtunnel_state *b);
+int lwtunnel_output(struct net *net, struct sock *sk, struct sk_buff *skb);
+int lwtunnel_input(struct sk_buff *skb);
+int lwtunnel_xmit(struct sk_buff *skb);
+int bpf_lwt_push_ip_encap(struct sk_buff *skb, void *hdr, u32 len,
 			  bool ingress);
 
-अटल अंतरभूत व्योम lwtunnel_set_redirect(काष्ठा dst_entry *dst)
-अणु
-	अगर (lwtunnel_output_redirect(dst->lwtstate)) अणु
+static inline void lwtunnel_set_redirect(struct dst_entry *dst)
+{
+	if (lwtunnel_output_redirect(dst->lwtstate)) {
 		dst->lwtstate->orig_output = dst->output;
 		dst->output = lwtunnel_output;
-	पूर्ण
-	अगर (lwtunnel_input_redirect(dst->lwtstate)) अणु
+	}
+	if (lwtunnel_input_redirect(dst->lwtstate)) {
 		dst->lwtstate->orig_input = dst->input;
 		dst->input = lwtunnel_input;
-	पूर्ण
-पूर्ण
-#अन्यथा
+	}
+}
+#else
 
-अटल अंतरभूत व्योम lwtstate_मुक्त(काष्ठा lwtunnel_state *lws)
-अणु
-पूर्ण
+static inline void lwtstate_free(struct lwtunnel_state *lws)
+{
+}
 
-अटल अंतरभूत काष्ठा lwtunnel_state *
-lwtstate_get(काष्ठा lwtunnel_state *lws)
-अणु
-	वापस lws;
-पूर्ण
+static inline struct lwtunnel_state *
+lwtstate_get(struct lwtunnel_state *lws)
+{
+	return lws;
+}
 
-अटल अंतरभूत व्योम lwtstate_put(काष्ठा lwtunnel_state *lws)
-अणु
-पूर्ण
+static inline void lwtstate_put(struct lwtunnel_state *lws)
+{
+}
 
-अटल अंतरभूत bool lwtunnel_output_redirect(काष्ठा lwtunnel_state *lwtstate)
-अणु
-	वापस false;
-पूर्ण
+static inline bool lwtunnel_output_redirect(struct lwtunnel_state *lwtstate)
+{
+	return false;
+}
 
-अटल अंतरभूत bool lwtunnel_input_redirect(काष्ठा lwtunnel_state *lwtstate)
-अणु
-	वापस false;
-पूर्ण
+static inline bool lwtunnel_input_redirect(struct lwtunnel_state *lwtstate)
+{
+	return false;
+}
 
-अटल अंतरभूत bool lwtunnel_xmit_redirect(काष्ठा lwtunnel_state *lwtstate)
-अणु
-	वापस false;
-पूर्ण
+static inline bool lwtunnel_xmit_redirect(struct lwtunnel_state *lwtstate)
+{
+	return false;
+}
 
-अटल अंतरभूत व्योम lwtunnel_set_redirect(काष्ठा dst_entry *dst)
-अणु
-पूर्ण
+static inline void lwtunnel_set_redirect(struct dst_entry *dst)
+{
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक lwtunnel_headroom(काष्ठा lwtunnel_state *lwtstate,
-					     अचिन्हित पूर्णांक mtu)
-अणु
-	वापस 0;
-पूर्ण
+static inline unsigned int lwtunnel_headroom(struct lwtunnel_state *lwtstate,
+					     unsigned int mtu)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक lwtunnel_encap_add_ops(स्थिर काष्ठा lwtunnel_encap_ops *op,
-					 अचिन्हित पूर्णांक num)
-अणु
-	वापस -EOPNOTSUPP;
+static inline int lwtunnel_encap_add_ops(const struct lwtunnel_encap_ops *op,
+					 unsigned int num)
+{
+	return -EOPNOTSUPP;
 
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक lwtunnel_encap_del_ops(स्थिर काष्ठा lwtunnel_encap_ops *op,
-					 अचिन्हित पूर्णांक num)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int lwtunnel_encap_del_ops(const struct lwtunnel_encap_ops *op,
+					 unsigned int num)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक lwtunnel_valid_encap_type(u16 encap_type,
-					    काष्ठा netlink_ext_ack *extack)
-अणु
+static inline int lwtunnel_valid_encap_type(u16 encap_type,
+					    struct netlink_ext_ack *extack)
+{
 	NL_SET_ERR_MSG(extack, "CONFIG_LWTUNNEL is not enabled in this kernel");
-	वापस -EOPNOTSUPP;
-पूर्ण
-अटल अंतरभूत पूर्णांक lwtunnel_valid_encap_type_attr(काष्ठा nlattr *attr, पूर्णांक len,
-						 काष्ठा netlink_ext_ack *extack)
-अणु
-	/* वापस 0 since we are not walking attr looking क्रम
+	return -EOPNOTSUPP;
+}
+static inline int lwtunnel_valid_encap_type_attr(struct nlattr *attr, int len,
+						 struct netlink_ext_ack *extack)
+{
+	/* return 0 since we are not walking attr looking for
 	 * RTA_ENCAP_TYPE attribute on nexthops.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक lwtunnel_build_state(काष्ठा net *net, u16 encap_type,
-				       काष्ठा nlattr *encap,
-				       अचिन्हित पूर्णांक family, स्थिर व्योम *cfg,
-				       काष्ठा lwtunnel_state **lws,
-				       काष्ठा netlink_ext_ack *extack)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int lwtunnel_build_state(struct net *net, u16 encap_type,
+				       struct nlattr *encap,
+				       unsigned int family, const void *cfg,
+				       struct lwtunnel_state **lws,
+				       struct netlink_ext_ack *extack)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक lwtunnel_fill_encap(काष्ठा sk_buff *skb,
-				      काष्ठा lwtunnel_state *lwtstate,
-				      पूर्णांक encap_attr, पूर्णांक encap_type_attr)
-अणु
-	वापस 0;
-पूर्ण
+static inline int lwtunnel_fill_encap(struct sk_buff *skb,
+				      struct lwtunnel_state *lwtstate,
+				      int encap_attr, int encap_type_attr)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक lwtunnel_get_encap_size(काष्ठा lwtunnel_state *lwtstate)
-अणु
-	वापस 0;
-पूर्ण
+static inline int lwtunnel_get_encap_size(struct lwtunnel_state *lwtstate)
+{
+	return 0;
+}
 
-अटल अंतरभूत काष्ठा lwtunnel_state *lwtunnel_state_alloc(पूर्णांक hdr_len)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct lwtunnel_state *lwtunnel_state_alloc(int hdr_len)
+{
+	return NULL;
+}
 
-अटल अंतरभूत पूर्णांक lwtunnel_cmp_encap(काष्ठा lwtunnel_state *a,
-				     काष्ठा lwtunnel_state *b)
-अणु
-	वापस 0;
-पूर्ण
+static inline int lwtunnel_cmp_encap(struct lwtunnel_state *a,
+				     struct lwtunnel_state *b)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक lwtunnel_output(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int lwtunnel_output(struct net *net, struct sock *sk, struct sk_buff *skb)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक lwtunnel_input(काष्ठा sk_buff *skb)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int lwtunnel_input(struct sk_buff *skb)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक lwtunnel_xmit(काष्ठा sk_buff *skb)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int lwtunnel_xmit(struct sk_buff *skb)
+{
+	return -EOPNOTSUPP;
+}
 
-#पूर्ण_अगर /* CONFIG_LWTUNNEL */
+#endif /* CONFIG_LWTUNNEL */
 
-#घोषणा MODULE_ALIAS_RTNL_LWT(encap_type) MODULE_ALIAS("rtnl-lwt-" __stringअगरy(encap_type))
+#define MODULE_ALIAS_RTNL_LWT(encap_type) MODULE_ALIAS("rtnl-lwt-" __stringify(encap_type))
 
-#पूर्ण_अगर /* __NET_LWTUNNEL_H */
+#endif /* __NET_LWTUNNEL_H */

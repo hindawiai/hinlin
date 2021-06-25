@@ -1,36 +1,35 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#समावेश <linux/माला.स> /* क्रम स_नकल() */
+#include <linux/string.h> /* for memcpy() */
 
-#समावेश <type_support.h>
-#समावेश "system_global.h"
-#समावेश "vamem.h"
-#समावेश "ia_css_types.h"
-#समावेश "ia_css_gc2_table.host.h"
+#include <type_support.h>
+#include "system_global.h"
+#include "vamem.h"
+#include "ia_css_types.h"
+#include "ia_css_gc2_table.host.h"
 
-काष्ठा ia_css_rgb_gamma_table शेष_r_gamma_table;
-काष्ठा ia_css_rgb_gamma_table शेष_g_gamma_table;
-काष्ठा ia_css_rgb_gamma_table शेष_b_gamma_table;
+struct ia_css_rgb_gamma_table default_r_gamma_table;
+struct ia_css_rgb_gamma_table default_g_gamma_table;
+struct ia_css_rgb_gamma_table default_b_gamma_table;
 
-/* Identical शेष gamma table क्रम R, G, and B. */
+/* Identical default gamma table for R, G, and B. */
 
 
-अटल स्थिर uपूर्णांक16_t
-शेष_gamma_table_data[IA_CSS_VAMEM_2_RGB_GAMMA_TABLE_SIZE] = अणु
+static const uint16_t
+default_gamma_table_data[IA_CSS_VAMEM_2_RGB_GAMMA_TABLE_SIZE] = {
 	0,   72,  144,  216,  288,  360,  426,  486,
 	541,  592,  641,  687,  730,  772,  812,  850,
 	887,  923,  958,  991, 1024, 1055, 1086, 1117,
@@ -64,18 +63,18 @@
 	3967, 3975, 3984, 3992, 4000, 4008, 4016, 4024,
 	4032, 4040, 4048, 4056, 4064, 4072, 4080, 4088,
 	4095
-पूर्ण;
+};
 
-व्योम
-ia_css_config_rgb_gamma_tables(व्योम)
-अणु
-	शेष_r_gamma_table.vamem_type   = IA_CSS_VAMEM_TYPE_2;
-	शेष_g_gamma_table.vamem_type   = IA_CSS_VAMEM_TYPE_2;
-	शेष_b_gamma_table.vamem_type   = IA_CSS_VAMEM_TYPE_2;
-	स_नकल(शेष_r_gamma_table.data.vamem_2, शेष_gamma_table_data,
-	       माप(शेष_gamma_table_data));
-	स_नकल(शेष_g_gamma_table.data.vamem_2, शेष_gamma_table_data,
-	       माप(शेष_gamma_table_data));
-	स_नकल(शेष_b_gamma_table.data.vamem_2, शेष_gamma_table_data,
-	       माप(शेष_gamma_table_data));
-पूर्ण
+void
+ia_css_config_rgb_gamma_tables(void)
+{
+	default_r_gamma_table.vamem_type   = IA_CSS_VAMEM_TYPE_2;
+	default_g_gamma_table.vamem_type   = IA_CSS_VAMEM_TYPE_2;
+	default_b_gamma_table.vamem_type   = IA_CSS_VAMEM_TYPE_2;
+	memcpy(default_r_gamma_table.data.vamem_2, default_gamma_table_data,
+	       sizeof(default_gamma_table_data));
+	memcpy(default_g_gamma_table.data.vamem_2, default_gamma_table_data,
+	       sizeof(default_gamma_table_data));
+	memcpy(default_b_gamma_table.data.vamem_2, default_gamma_table_data,
+	       sizeof(default_gamma_table_data));
+}

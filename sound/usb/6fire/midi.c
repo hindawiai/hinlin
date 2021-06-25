@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Linux driver क्रम TerraTec DMX 6Fire USB
+ * Linux driver for TerraTec DMX 6Fire USB
  *
  * Rawmidi driver
  *
@@ -10,160 +9,160 @@
  * Copyright:	(C) Torsten Schenk
  */
 
-#समावेश <sound/rawmidi.h>
+#include <sound/rawmidi.h>
 
-#समावेश "midi.h"
-#समावेश "chip.h"
-#समावेश "comm.h"
+#include "midi.h"
+#include "chip.h"
+#include "comm.h"
 
-क्रमागत अणु
-	MIDI_बफ_मानE = 64
-पूर्ण;
+enum {
+	MIDI_BUFSIZE = 64
+};
 
-अटल व्योम usb6fire_midi_out_handler(काष्ठा urb *urb)
-अणु
-	काष्ठा midi_runसमय *rt = urb->context;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+static void usb6fire_midi_out_handler(struct urb *urb)
+{
+	struct midi_runtime *rt = urb->context;
+	int ret;
+	unsigned long flags;
 
 	spin_lock_irqsave(&rt->out_lock, flags);
 
-	अगर (rt->out) अणु
+	if (rt->out) {
 		ret = snd_rawmidi_transmit(rt->out, rt->out_buffer + 4,
-				MIDI_बफ_मानE - 4);
-		अगर (ret > 0) अणु /* more data available, send next packet */
+				MIDI_BUFSIZE - 4);
+		if (ret > 0) { /* more data available, send next packet */
 			rt->out_buffer[1] = ret + 2;
 			rt->out_buffer[3] = rt->out_serial++;
 			urb->transfer_buffer_length = ret + 4;
 
 			ret = usb_submit_urb(urb, GFP_ATOMIC);
-			अगर (ret < 0)
+			if (ret < 0)
 				dev_err(&urb->dev->dev,
 					"midi out urb submit failed: %d\n",
 					ret);
-		पूर्ण अन्यथा /* no more data to transmit */
-			rt->out = शून्य;
-	पूर्ण
+		} else /* no more data to transmit */
+			rt->out = NULL;
+	}
 	spin_unlock_irqrestore(&rt->out_lock, flags);
-पूर्ण
+}
 
-अटल व्योम usb6fire_midi_in_received(
-		काष्ठा midi_runसमय *rt, u8 *data, पूर्णांक length)
-अणु
-	अचिन्हित दीर्घ flags;
+static void usb6fire_midi_in_received(
+		struct midi_runtime *rt, u8 *data, int length)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&rt->in_lock, flags);
-	अगर (rt->in)
+	if (rt->in)
 		snd_rawmidi_receive(rt->in, data, length);
 	spin_unlock_irqrestore(&rt->in_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक usb6fire_midi_out_खोलो(काष्ठा snd_rawmidi_substream *alsa_sub)
-अणु
-	वापस 0;
-पूर्ण
+static int usb6fire_midi_out_open(struct snd_rawmidi_substream *alsa_sub)
+{
+	return 0;
+}
 
-अटल पूर्णांक usb6fire_midi_out_बंद(काष्ठा snd_rawmidi_substream *alsa_sub)
-अणु
-	वापस 0;
-पूर्ण
+static int usb6fire_midi_out_close(struct snd_rawmidi_substream *alsa_sub)
+{
+	return 0;
+}
 
-अटल व्योम usb6fire_midi_out_trigger(
-		काष्ठा snd_rawmidi_substream *alsa_sub, पूर्णांक up)
-अणु
-	काष्ठा midi_runसमय *rt = alsa_sub->rmidi->निजी_data;
-	काष्ठा urb *urb = &rt->out_urb;
+static void usb6fire_midi_out_trigger(
+		struct snd_rawmidi_substream *alsa_sub, int up)
+{
+	struct midi_runtime *rt = alsa_sub->rmidi->private_data;
+	struct urb *urb = &rt->out_urb;
 	__s8 ret;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&rt->out_lock, flags);
-	अगर (up) अणु /* start transfer */
-		अगर (rt->out) अणु /* we are alपढ़ोy transmitting so just वापस */
+	if (up) { /* start transfer */
+		if (rt->out) { /* we are already transmitting so just return */
 			spin_unlock_irqrestore(&rt->out_lock, flags);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		ret = snd_rawmidi_transmit(alsa_sub, rt->out_buffer + 4,
-				MIDI_बफ_मानE - 4);
-		अगर (ret > 0) अणु
+				MIDI_BUFSIZE - 4);
+		if (ret > 0) {
 			rt->out_buffer[1] = ret + 2;
 			rt->out_buffer[3] = rt->out_serial++;
 			urb->transfer_buffer_length = ret + 4;
 
 			ret = usb_submit_urb(urb, GFP_ATOMIC);
-			अगर (ret < 0)
+			if (ret < 0)
 				dev_err(&urb->dev->dev,
 					"midi out urb submit failed: %d\n",
 					ret);
-			अन्यथा
+			else
 				rt->out = alsa_sub;
-		पूर्ण
-	पूर्ण अन्यथा अगर (rt->out == alsa_sub)
-		rt->out = शून्य;
+		}
+	} else if (rt->out == alsa_sub)
+		rt->out = NULL;
 	spin_unlock_irqrestore(&rt->out_lock, flags);
-पूर्ण
+}
 
-अटल व्योम usb6fire_midi_out_drain(काष्ठा snd_rawmidi_substream *alsa_sub)
-अणु
-	काष्ठा midi_runसमय *rt = alsa_sub->rmidi->निजी_data;
-	पूर्णांक retry = 0;
+static void usb6fire_midi_out_drain(struct snd_rawmidi_substream *alsa_sub)
+{
+	struct midi_runtime *rt = alsa_sub->rmidi->private_data;
+	int retry = 0;
 
-	जबतक (rt->out && retry++ < 100)
+	while (rt->out && retry++ < 100)
 		msleep(10);
-पूर्ण
+}
 
-अटल पूर्णांक usb6fire_midi_in_खोलो(काष्ठा snd_rawmidi_substream *alsa_sub)
-अणु
-	वापस 0;
-पूर्ण
+static int usb6fire_midi_in_open(struct snd_rawmidi_substream *alsa_sub)
+{
+	return 0;
+}
 
-अटल पूर्णांक usb6fire_midi_in_बंद(काष्ठा snd_rawmidi_substream *alsa_sub)
-अणु
-	वापस 0;
-पूर्ण
+static int usb6fire_midi_in_close(struct snd_rawmidi_substream *alsa_sub)
+{
+	return 0;
+}
 
-अटल व्योम usb6fire_midi_in_trigger(
-		काष्ठा snd_rawmidi_substream *alsa_sub, पूर्णांक up)
-अणु
-	काष्ठा midi_runसमय *rt = alsa_sub->rmidi->निजी_data;
-	अचिन्हित दीर्घ flags;
+static void usb6fire_midi_in_trigger(
+		struct snd_rawmidi_substream *alsa_sub, int up)
+{
+	struct midi_runtime *rt = alsa_sub->rmidi->private_data;
+	unsigned long flags;
 
 	spin_lock_irqsave(&rt->in_lock, flags);
-	अगर (up)
+	if (up)
 		rt->in = alsa_sub;
-	अन्यथा
-		rt->in = शून्य;
+	else
+		rt->in = NULL;
 	spin_unlock_irqrestore(&rt->in_lock, flags);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा snd_rawmidi_ops out_ops = अणु
-	.खोलो = usb6fire_midi_out_खोलो,
-	.बंद = usb6fire_midi_out_बंद,
+static const struct snd_rawmidi_ops out_ops = {
+	.open = usb6fire_midi_out_open,
+	.close = usb6fire_midi_out_close,
 	.trigger = usb6fire_midi_out_trigger,
 	.drain = usb6fire_midi_out_drain
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_rawmidi_ops in_ops = अणु
-	.खोलो = usb6fire_midi_in_खोलो,
-	.बंद = usb6fire_midi_in_बंद,
+static const struct snd_rawmidi_ops in_ops = {
+	.open = usb6fire_midi_in_open,
+	.close = usb6fire_midi_in_close,
 	.trigger = usb6fire_midi_in_trigger
-पूर्ण;
+};
 
-पूर्णांक usb6fire_midi_init(काष्ठा sfire_chip *chip)
-अणु
-	पूर्णांक ret;
-	काष्ठा midi_runसमय *rt = kzalloc(माप(काष्ठा midi_runसमय),
+int usb6fire_midi_init(struct sfire_chip *chip)
+{
+	int ret;
+	struct midi_runtime *rt = kzalloc(sizeof(struct midi_runtime),
 			GFP_KERNEL);
-	काष्ठा comm_runसमय *comm_rt = chip->comm;
+	struct comm_runtime *comm_rt = chip->comm;
 
-	अगर (!rt)
-		वापस -ENOMEM;
+	if (!rt)
+		return -ENOMEM;
 
-	rt->out_buffer = kzalloc(MIDI_बफ_मानE, GFP_KERNEL);
-	अगर (!rt->out_buffer) अणु
-		kमुक्त(rt);
-		वापस -ENOMEM;
-	पूर्ण
+	rt->out_buffer = kzalloc(MIDI_BUFSIZE, GFP_KERNEL);
+	if (!rt->out_buffer) {
+		kfree(rt);
+		return -ENOMEM;
+	}
 
 	rt->chip = chip;
 	rt->in_received = usb6fire_midi_in_received;
@@ -177,14 +176,14 @@
 			usb6fire_midi_out_handler);
 
 	ret = snd_rawmidi_new(chip->card, "6FireUSB", 0, 1, 1, &rt->instance);
-	अगर (ret < 0) अणु
-		kमुक्त(rt->out_buffer);
-		kमुक्त(rt);
+	if (ret < 0) {
+		kfree(rt->out_buffer);
+		kfree(rt);
 		dev_err(&chip->dev->dev, "unable to create midi.\n");
-		वापस ret;
-	पूर्ण
-	rt->instance->निजी_data = rt;
-	म_नकल(rt->instance->name, "DMX6FireUSB MIDI");
+		return ret;
+	}
+	rt->instance->private_data = rt;
+	strcpy(rt->instance->name, "DMX6FireUSB MIDI");
 	rt->instance->info_flags = SNDRV_RAWMIDI_INFO_OUTPUT |
 			SNDRV_RAWMIDI_INFO_INPUT |
 			SNDRV_RAWMIDI_INFO_DUPLEX;
@@ -194,22 +193,22 @@
 			&in_ops);
 
 	chip->midi = rt;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम usb6fire_midi_पात(काष्ठा sfire_chip *chip)
-अणु
-	काष्ठा midi_runसमय *rt = chip->midi;
+void usb6fire_midi_abort(struct sfire_chip *chip)
+{
+	struct midi_runtime *rt = chip->midi;
 
-	अगर (rt)
+	if (rt)
 		usb_poison_urb(&rt->out_urb);
-पूर्ण
+}
 
-व्योम usb6fire_midi_destroy(काष्ठा sfire_chip *chip)
-अणु
-	काष्ठा midi_runसमय *rt = chip->midi;
+void usb6fire_midi_destroy(struct sfire_chip *chip)
+{
+	struct midi_runtime *rt = chip->midi;
 
-	kमुक्त(rt->out_buffer);
-	kमुक्त(rt);
-	chip->midi = शून्य;
-पूर्ण
+	kfree(rt->out_buffer);
+	kfree(rt);
+	chip->midi = NULL;
+}

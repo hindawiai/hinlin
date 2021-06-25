@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * mmio_warning_test
  *
@@ -6,122 +5,122 @@
  *
  * This work is licensed under the terms of the GNU GPL, version 2.
  *
- * Test that we करोn't get a kernel warning when we call KVM_RUN after a
+ * Test that we don't get a kernel warning when we call KVM_RUN after a
  * triple fault occurs.  To get the triple fault to occur we call KVM_RUN
  * on a VCPU that hasn't been properly setup.
  *
  */
 
-#घोषणा _GNU_SOURCE
-#समावेश <fcntl.h>
-#समावेश <kvm_util.h>
-#समावेश <linux/kvm.h>
-#समावेश <processor.h>
-#समावेश <pthपढ़ो.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sys/ioctl.h>
-#समावेश <sys/mman.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/types.h>
-#समावेश <sys/रुको.h>
-#समावेश <test_util.h>
-#समावेश <unistd.h>
+#define _GNU_SOURCE
+#include <fcntl.h>
+#include <kvm_util.h>
+#include <linux/kvm.h>
+#include <processor.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <test_util.h>
+#include <unistd.h>
 
-#घोषणा NTHREAD 4
-#घोषणा NPROCESS 5
+#define NTHREAD 4
+#define NPROCESS 5
 
-काष्ठा thपढ़ो_context अणु
-	पूर्णांक kvmcpu;
-	काष्ठा kvm_run *run;
-पूर्ण;
+struct thread_context {
+	int kvmcpu;
+	struct kvm_run *run;
+};
 
-व्योम *thr(व्योम *arg)
-अणु
-	काष्ठा thपढ़ो_context *tc = (काष्ठा thपढ़ो_context *)arg;
-	पूर्णांक res;
-	पूर्णांक kvmcpu = tc->kvmcpu;
-	काष्ठा kvm_run *run = tc->run;
+void *thr(void *arg)
+{
+	struct thread_context *tc = (struct thread_context *)arg;
+	int res;
+	int kvmcpu = tc->kvmcpu;
+	struct kvm_run *run = tc->run;
 
 	res = ioctl(kvmcpu, KVM_RUN, 0);
 	pr_info("ret1=%d exit_reason=%d suberror=%d\n",
-		res, run->निकास_reason, run->पूर्णांकernal.suberror);
+		res, run->exit_reason, run->internal.suberror);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम test(व्योम)
-अणु
-	पूर्णांक i, kvm, kvmvm, kvmcpu;
-	pthपढ़ो_t th[NTHREAD];
-	काष्ठा kvm_run *run;
-	काष्ठा thपढ़ो_context tc;
+void test(void)
+{
+	int i, kvm, kvmvm, kvmcpu;
+	pthread_t th[NTHREAD];
+	struct kvm_run *run;
+	struct thread_context tc;
 
-	kvm = खोलो("/dev/kvm", O_RDWR);
+	kvm = open("/dev/kvm", O_RDWR);
 	TEST_ASSERT(kvm != -1, "failed to open /dev/kvm");
 	kvmvm = ioctl(kvm, KVM_CREATE_VM, 0);
 	TEST_ASSERT(kvmvm != -1, "KVM_CREATE_VM failed");
 	kvmcpu = ioctl(kvmvm, KVM_CREATE_VCPU, 0);
 	TEST_ASSERT(kvmcpu != -1, "KVM_CREATE_VCPU failed");
-	run = (काष्ठा kvm_run *)mmap(0, 4096, PROT_READ|PROT_WRITE, MAP_SHARED,
+	run = (struct kvm_run *)mmap(0, 4096, PROT_READ|PROT_WRITE, MAP_SHARED,
 				    kvmcpu, 0);
 	tc.kvmcpu = kvmcpu;
 	tc.run = run;
-	बेक्रम(getpid());
-	क्रम (i = 0; i < NTHREAD; i++) अणु
-		pthपढ़ो_create(&th[i], शून्य, thr, (व्योम *)(uपूर्णांकptr_t)&tc);
-		usleep(अक्रम() % 10000);
-	पूर्ण
-	क्रम (i = 0; i < NTHREAD; i++)
-		pthपढ़ो_join(th[i], शून्य);
-पूर्ण
+	srand(getpid());
+	for (i = 0; i < NTHREAD; i++) {
+		pthread_create(&th[i], NULL, thr, (void *)(uintptr_t)&tc);
+		usleep(rand() % 10000);
+	}
+	for (i = 0; i < NTHREAD; i++)
+		pthread_join(th[i], NULL);
+}
 
-पूर्णांक get_warnings_count(व्योम)
-अणु
-	पूर्णांक warnings;
-	खाता *f;
+int get_warnings_count(void)
+{
+	int warnings;
+	FILE *f;
 
-	f = pखोलो("dmesg | grep \"WARNING:\" | wc -l", "r");
-	ख_पूछो(f, "%d", &warnings);
-	ख_बंद(f);
+	f = popen("dmesg | grep \"WARNING:\" | wc -l", "r");
+	fscanf(f, "%d", &warnings);
+	fclose(f);
 
-	वापस warnings;
-पूर्ण
+	return warnings;
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	पूर्णांक warnings_beक्रमe, warnings_after;
+int main(void)
+{
+	int warnings_before, warnings_after;
 
-	अगर (!is_पूर्णांकel_cpu()) अणु
-		prपूर्णांक_skip("Must be run on an Intel CPU");
-		निकास(KSFT_SKIP);
-	पूर्ण
+	if (!is_intel_cpu()) {
+		print_skip("Must be run on an Intel CPU");
+		exit(KSFT_SKIP);
+	}
 
-	अगर (vm_is_unrestricted_guest(शून्य)) अणु
-		prपूर्णांक_skip("Unrestricted guest must be disabled");
-		निकास(KSFT_SKIP);
-	पूर्ण
+	if (vm_is_unrestricted_guest(NULL)) {
+		print_skip("Unrestricted guest must be disabled");
+		exit(KSFT_SKIP);
+	}
 
-	warnings_beक्रमe = get_warnings_count();
+	warnings_before = get_warnings_count();
 
-	क्रम (पूर्णांक i = 0; i < NPROCESS; ++i) अणु
-		पूर्णांक status;
-		पूर्णांक pid = विभाजन();
+	for (int i = 0; i < NPROCESS; ++i) {
+		int status;
+		int pid = fork();
 
-		अगर (pid < 0)
-			निकास(1);
-		अगर (pid == 0) अणु
+		if (pid < 0)
+			exit(1);
+		if (pid == 0) {
 			test();
-			निकास(0);
-		पूर्ण
-		जबतक (रुकोpid(pid, &status, __WALL) != pid)
+			exit(0);
+		}
+		while (waitpid(pid, &status, __WALL) != pid)
 			;
-	पूर्ण
+	}
 
 	warnings_after = get_warnings_count();
-	TEST_ASSERT(warnings_beक्रमe == warnings_after,
+	TEST_ASSERT(warnings_before == warnings_after,
 		   "Warnings found in kernel.  Run 'dmesg' to inspect them.");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

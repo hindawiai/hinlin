@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * An rtc driver क्रम the Dallas/Maxim DS1685/DS1687 and related real-समय
+ * An rtc driver for the Dallas/Maxim DS1685/DS1687 and related real-time
  * chips.
  *
  * Copyright (C) 2011-2014 Joshua Kinard <kumba@gentoo.org>.
@@ -14,239 +13,239 @@
  *    Application Note 90, Using the Multiplex Bus RTC Extended Features.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/bcd.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/workqueue.h>
+#include <linux/bcd.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/rtc.h>
+#include <linux/workqueue.h>
 
-#समावेश <linux/rtc/ds1685.h>
+#include <linux/rtc/ds1685.h>
 
-#अगर_घोषित CONFIG_PROC_FS
-#समावेश <linux/proc_fs.h>
-#पूर्ण_अगर
+#ifdef CONFIG_PROC_FS
+#include <linux/proc_fs.h>
+#endif
 
 
 /* ----------------------------------------------------------------------- */
 /*
- *  Standard पढ़ो/ग_लिखो
- *  all रेजिस्टरs are mapped in CPU address space
+ *  Standard read/write
+ *  all registers are mapped in CPU address space
  */
 
 /**
- * ds1685_पढ़ो - पढ़ो a value from an rtc रेजिस्टर.
- * @rtc: poपूर्णांकer to the ds1685 rtc काष्ठाure.
- * @reg: the रेजिस्टर address to पढ़ो.
+ * ds1685_read - read a value from an rtc register.
+ * @rtc: pointer to the ds1685 rtc structure.
+ * @reg: the register address to read.
  */
-अटल u8
-ds1685_पढ़ो(काष्ठा ds1685_priv *rtc, पूर्णांक reg)
-अणु
-	वापस पढ़ोb((u8 __iomem *)rtc->regs +
+static u8
+ds1685_read(struct ds1685_priv *rtc, int reg)
+{
+	return readb((u8 __iomem *)rtc->regs +
 		     (reg * rtc->regstep));
-पूर्ण
+}
 
 /**
- * ds1685_ग_लिखो - ग_लिखो a value to an rtc रेजिस्टर.
- * @rtc: poपूर्णांकer to the ds1685 rtc काष्ठाure.
- * @reg: the रेजिस्टर address to ग_लिखो.
- * @value: value to ग_लिखो to the रेजिस्टर.
+ * ds1685_write - write a value to an rtc register.
+ * @rtc: pointer to the ds1685 rtc structure.
+ * @reg: the register address to write.
+ * @value: value to write to the register.
  */
-अटल व्योम
-ds1685_ग_लिखो(काष्ठा ds1685_priv *rtc, पूर्णांक reg, u8 value)
-अणु
-	ग_लिखोb(value, ((u8 __iomem *)rtc->regs +
+static void
+ds1685_write(struct ds1685_priv *rtc, int reg, u8 value)
+{
+	writeb(value, ((u8 __iomem *)rtc->regs +
 		       (reg * rtc->regstep)));
-पूर्ण
+}
 /* ----------------------------------------------------------------------- */
 
 /*
- * Indirect पढ़ो/ग_लिखो functions
- * access happens via address and data रेजिस्टर mapped in CPU address space
+ * Indirect read/write functions
+ * access happens via address and data register mapped in CPU address space
  */
 
 /**
- * ds1685_indirect_पढ़ो - पढ़ो a value from an rtc रेजिस्टर.
- * @rtc: poपूर्णांकer to the ds1685 rtc काष्ठाure.
- * @reg: the रेजिस्टर address to पढ़ो.
+ * ds1685_indirect_read - read a value from an rtc register.
+ * @rtc: pointer to the ds1685 rtc structure.
+ * @reg: the register address to read.
  */
-अटल u8
-ds1685_indirect_पढ़ो(काष्ठा ds1685_priv *rtc, पूर्णांक reg)
-अणु
-	ग_लिखोb(reg, rtc->regs);
-	वापस पढ़ोb(rtc->data);
-पूर्ण
+static u8
+ds1685_indirect_read(struct ds1685_priv *rtc, int reg)
+{
+	writeb(reg, rtc->regs);
+	return readb(rtc->data);
+}
 
 /**
- * ds1685_indirect_ग_लिखो - ग_लिखो a value to an rtc रेजिस्टर.
- * @rtc: poपूर्णांकer to the ds1685 rtc काष्ठाure.
- * @reg: the रेजिस्टर address to ग_लिखो.
- * @value: value to ग_लिखो to the रेजिस्टर.
+ * ds1685_indirect_write - write a value to an rtc register.
+ * @rtc: pointer to the ds1685 rtc structure.
+ * @reg: the register address to write.
+ * @value: value to write to the register.
  */
-अटल व्योम
-ds1685_indirect_ग_लिखो(काष्ठा ds1685_priv *rtc, पूर्णांक reg, u8 value)
-अणु
-	ग_लिखोb(reg, rtc->regs);
-	ग_लिखोb(value, rtc->data);
-पूर्ण
+static void
+ds1685_indirect_write(struct ds1685_priv *rtc, int reg, u8 value)
+{
+	writeb(reg, rtc->regs);
+	writeb(value, rtc->data);
+}
 
 /* ----------------------------------------------------------------------- */
 /* Inlined functions */
 
 /**
- * ds1685_rtc_bcd2bin - bcd2bin wrapper in हाल platक्रमm करोesn't support BCD.
- * @rtc: poपूर्णांकer to the ds1685 rtc काष्ठाure.
- * @val: u8 समय value to consider converting.
- * @bcd_mask: u8 mask value अगर BCD mode is used.
- * @bin_mask: u8 mask value अगर BIN mode is used.
+ * ds1685_rtc_bcd2bin - bcd2bin wrapper in case platform doesn't support BCD.
+ * @rtc: pointer to the ds1685 rtc structure.
+ * @val: u8 time value to consider converting.
+ * @bcd_mask: u8 mask value if BCD mode is used.
+ * @bin_mask: u8 mask value if BIN mode is used.
  *
- * Returns the value, converted to BIN अगर originally in BCD and bcd_mode TRUE.
+ * Returns the value, converted to BIN if originally in BCD and bcd_mode TRUE.
  */
-अटल अंतरभूत u8
-ds1685_rtc_bcd2bin(काष्ठा ds1685_priv *rtc, u8 val, u8 bcd_mask, u8 bin_mask)
-अणु
-	अगर (rtc->bcd_mode)
-		वापस (bcd2bin(val) & bcd_mask);
+static inline u8
+ds1685_rtc_bcd2bin(struct ds1685_priv *rtc, u8 val, u8 bcd_mask, u8 bin_mask)
+{
+	if (rtc->bcd_mode)
+		return (bcd2bin(val) & bcd_mask);
 
-	वापस (val & bin_mask);
-पूर्ण
+	return (val & bin_mask);
+}
 
 /**
- * ds1685_rtc_bin2bcd - bin2bcd wrapper in हाल platक्रमm करोesn't support BCD.
- * @rtc: poपूर्णांकer to the ds1685 rtc काष्ठाure.
- * @val: u8 समय value to consider converting.
- * @bin_mask: u8 mask value अगर BIN mode is used.
- * @bcd_mask: u8 mask value अगर BCD mode is used.
+ * ds1685_rtc_bin2bcd - bin2bcd wrapper in case platform doesn't support BCD.
+ * @rtc: pointer to the ds1685 rtc structure.
+ * @val: u8 time value to consider converting.
+ * @bin_mask: u8 mask value if BIN mode is used.
+ * @bcd_mask: u8 mask value if BCD mode is used.
  *
- * Returns the value, converted to BCD अगर originally in BIN and bcd_mode TRUE.
+ * Returns the value, converted to BCD if originally in BIN and bcd_mode TRUE.
  */
-अटल अंतरभूत u8
-ds1685_rtc_bin2bcd(काष्ठा ds1685_priv *rtc, u8 val, u8 bin_mask, u8 bcd_mask)
-अणु
-	अगर (rtc->bcd_mode)
-		वापस (bin2bcd(val) & bcd_mask);
+static inline u8
+ds1685_rtc_bin2bcd(struct ds1685_priv *rtc, u8 val, u8 bin_mask, u8 bcd_mask)
+{
+	if (rtc->bcd_mode)
+		return (bin2bcd(val) & bcd_mask);
 
-	वापस (val & bin_mask);
-पूर्ण
+	return (val & bin_mask);
+}
 
 /**
  * s1685_rtc_check_mday - check validity of the day of month.
- * @rtc: poपूर्णांकer to the ds1685 rtc काष्ठाure.
+ * @rtc: pointer to the ds1685 rtc structure.
  * @mday: day of month.
  *
- * Returns -गलत_तर्क अगर the day of month is not within 1..31 range.
+ * Returns -EDOM if the day of month is not within 1..31 range.
  */
-अटल अंतरभूत पूर्णांक
-ds1685_rtc_check_mday(काष्ठा ds1685_priv *rtc, u8 mday)
-अणु
-	अगर (rtc->bcd_mode) अणु
-		अगर (mday < 0x01 || mday > 0x31 || (mday & 0x0f) > 0x09)
-			वापस -गलत_तर्क;
-	पूर्ण अन्यथा अणु
-		अगर (mday < 1 || mday > 31)
-			वापस -गलत_तर्क;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static inline int
+ds1685_rtc_check_mday(struct ds1685_priv *rtc, u8 mday)
+{
+	if (rtc->bcd_mode) {
+		if (mday < 0x01 || mday > 0x31 || (mday & 0x0f) > 0x09)
+			return -EDOM;
+	} else {
+		if (mday < 1 || mday > 31)
+			return -EDOM;
+	}
+	return 0;
+}
 
 /**
- * ds1685_rtc_चयन_to_bank0 - चयन the rtc to bank 0.
- * @rtc: poपूर्णांकer to the ds1685 rtc काष्ठाure.
+ * ds1685_rtc_switch_to_bank0 - switch the rtc to bank 0.
+ * @rtc: pointer to the ds1685 rtc structure.
  */
-अटल अंतरभूत व्योम
-ds1685_rtc_चयन_to_bank0(काष्ठा ds1685_priv *rtc)
-अणु
-	rtc->ग_लिखो(rtc, RTC_CTRL_A,
-		   (rtc->पढ़ो(rtc, RTC_CTRL_A) & ~(RTC_CTRL_A_DV0)));
-पूर्ण
+static inline void
+ds1685_rtc_switch_to_bank0(struct ds1685_priv *rtc)
+{
+	rtc->write(rtc, RTC_CTRL_A,
+		   (rtc->read(rtc, RTC_CTRL_A) & ~(RTC_CTRL_A_DV0)));
+}
 
 /**
- * ds1685_rtc_चयन_to_bank1 - चयन the rtc to bank 1.
- * @rtc: poपूर्णांकer to the ds1685 rtc काष्ठाure.
+ * ds1685_rtc_switch_to_bank1 - switch the rtc to bank 1.
+ * @rtc: pointer to the ds1685 rtc structure.
  */
-अटल अंतरभूत व्योम
-ds1685_rtc_चयन_to_bank1(काष्ठा ds1685_priv *rtc)
-अणु
-	rtc->ग_लिखो(rtc, RTC_CTRL_A,
-		   (rtc->पढ़ो(rtc, RTC_CTRL_A) | RTC_CTRL_A_DV0));
-पूर्ण
+static inline void
+ds1685_rtc_switch_to_bank1(struct ds1685_priv *rtc)
+{
+	rtc->write(rtc, RTC_CTRL_A,
+		   (rtc->read(rtc, RTC_CTRL_A) | RTC_CTRL_A_DV0));
+}
 
 /**
- * ds1685_rtc_begin_data_access - prepare the rtc क्रम data access.
- * @rtc: poपूर्णांकer to the ds1685 rtc काष्ठाure.
+ * ds1685_rtc_begin_data_access - prepare the rtc for data access.
+ * @rtc: pointer to the ds1685 rtc structure.
  *
- * This takes several steps to prepare the rtc क्रम access to get/set समय
- * and alarm values from the rtc रेजिस्टरs:
+ * This takes several steps to prepare the rtc for access to get/set time
+ * and alarm values from the rtc registers:
  *  - Sets the SET bit in Control Register B.
  *  - Reads Ext Control Register 4A and checks the INCR bit.
- *  - If INCR is active, a लघु delay is added beक्रमe Ext Control Register 4A
- *    is पढ़ो again in a loop until INCR is inactive.
+ *  - If INCR is active, a short delay is added before Ext Control Register 4A
+ *    is read again in a loop until INCR is inactive.
  *  - Switches the rtc to bank 1.  This allows access to all relevant
- *    data क्रम normal rtc operation, as bank 0 contains only the nvram.
+ *    data for normal rtc operation, as bank 0 contains only the nvram.
  */
-अटल अंतरभूत व्योम
-ds1685_rtc_begin_data_access(काष्ठा ds1685_priv *rtc)
-अणु
+static inline void
+ds1685_rtc_begin_data_access(struct ds1685_priv *rtc)
+{
 	/* Set the SET bit in Ctrl B */
-	rtc->ग_लिखो(rtc, RTC_CTRL_B,
-		   (rtc->पढ़ो(rtc, RTC_CTRL_B) | RTC_CTRL_B_SET));
+	rtc->write(rtc, RTC_CTRL_B,
+		   (rtc->read(rtc, RTC_CTRL_B) | RTC_CTRL_B_SET));
 
 	/* Switch to Bank 1 */
-	ds1685_rtc_चयन_to_bank1(rtc);
+	ds1685_rtc_switch_to_bank1(rtc);
 
-	/* Read Ext Ctrl 4A and check the INCR bit to aव्योम a lockout. */
-	जबतक (rtc->पढ़ो(rtc, RTC_EXT_CTRL_4A) & RTC_CTRL_4A_INCR)
+	/* Read Ext Ctrl 4A and check the INCR bit to avoid a lockout. */
+	while (rtc->read(rtc, RTC_EXT_CTRL_4A) & RTC_CTRL_4A_INCR)
 		cpu_relax();
-पूर्ण
+}
 
 /**
  * ds1685_rtc_end_data_access - end data access on the rtc.
- * @rtc: poपूर्णांकer to the ds1685 rtc काष्ठाure.
+ * @rtc: pointer to the ds1685 rtc structure.
  *
  * This ends what was started by ds1685_rtc_begin_data_access:
  *  - Switches the rtc back to bank 0.
  *  - Clears the SET bit in Control Register B.
  */
-अटल अंतरभूत व्योम
-ds1685_rtc_end_data_access(काष्ठा ds1685_priv *rtc)
-अणु
+static inline void
+ds1685_rtc_end_data_access(struct ds1685_priv *rtc)
+{
 	/* Switch back to Bank 0 */
-	ds1685_rtc_चयन_to_bank0(rtc);
+	ds1685_rtc_switch_to_bank0(rtc);
 
 	/* Clear the SET bit in Ctrl B */
-	rtc->ग_लिखो(rtc, RTC_CTRL_B,
-		   (rtc->पढ़ो(rtc, RTC_CTRL_B) & ~(RTC_CTRL_B_SET)));
-पूर्ण
+	rtc->write(rtc, RTC_CTRL_B,
+		   (rtc->read(rtc, RTC_CTRL_B) & ~(RTC_CTRL_B_SET)));
+}
 
 /**
  * ds1685_rtc_get_ssn - retrieve the silicon serial number.
- * @rtc: poपूर्णांकer to the ds1685 rtc काष्ठाure.
+ * @rtc: pointer to the ds1685 rtc structure.
  * @ssn: u8 array to hold the bits of the silicon serial number.
  *
- * This number starts at 0x40, and is 8-bytes दीर्घ, ending at 0x47. The
+ * This number starts at 0x40, and is 8-bytes long, ending at 0x47. The
  * first byte is the model number, the next six bytes are the serial number
- * digits, and the final byte is a CRC check byte.  Together, they क्रमm the
+ * digits, and the final byte is a CRC check byte.  Together, they form the
  * silicon serial number.
  *
- * These values are stored in bank1, so ds1685_rtc_चयन_to_bank1 must be
- * called first beक्रमe calling this function, अन्यथा data will be पढ़ो out of
- * the bank0 NVRAM.  Be sure to call ds1685_rtc_चयन_to_bank0 when करोne.
+ * These values are stored in bank1, so ds1685_rtc_switch_to_bank1 must be
+ * called first before calling this function, else data will be read out of
+ * the bank0 NVRAM.  Be sure to call ds1685_rtc_switch_to_bank0 when done.
  */
-अटल अंतरभूत व्योम
-ds1685_rtc_get_ssn(काष्ठा ds1685_priv *rtc, u8 *ssn)
-अणु
-	ssn[0] = rtc->पढ़ो(rtc, RTC_BANK1_SSN_MODEL);
-	ssn[1] = rtc->पढ़ो(rtc, RTC_BANK1_SSN_BYTE_1);
-	ssn[2] = rtc->पढ़ो(rtc, RTC_BANK1_SSN_BYTE_2);
-	ssn[3] = rtc->पढ़ो(rtc, RTC_BANK1_SSN_BYTE_3);
-	ssn[4] = rtc->पढ़ो(rtc, RTC_BANK1_SSN_BYTE_4);
-	ssn[5] = rtc->पढ़ो(rtc, RTC_BANK1_SSN_BYTE_5);
-	ssn[6] = rtc->पढ़ो(rtc, RTC_BANK1_SSN_BYTE_6);
-	ssn[7] = rtc->पढ़ो(rtc, RTC_BANK1_SSN_CRC);
-पूर्ण
+static inline void
+ds1685_rtc_get_ssn(struct ds1685_priv *rtc, u8 *ssn)
+{
+	ssn[0] = rtc->read(rtc, RTC_BANK1_SSN_MODEL);
+	ssn[1] = rtc->read(rtc, RTC_BANK1_SSN_BYTE_1);
+	ssn[2] = rtc->read(rtc, RTC_BANK1_SSN_BYTE_2);
+	ssn[3] = rtc->read(rtc, RTC_BANK1_SSN_BYTE_3);
+	ssn[4] = rtc->read(rtc, RTC_BANK1_SSN_BYTE_4);
+	ssn[5] = rtc->read(rtc, RTC_BANK1_SSN_BYTE_5);
+	ssn[6] = rtc->read(rtc, RTC_BANK1_SSN_BYTE_6);
+	ssn[7] = rtc->read(rtc, RTC_BANK1_SSN_CRC);
+}
 /* ----------------------------------------------------------------------- */
 
 
@@ -254,276 +253,276 @@ ds1685_rtc_get_ssn(काष्ठा ds1685_priv *rtc, u8 *ssn)
 /* Read/Set Time & Alarm functions */
 
 /**
- * ds1685_rtc_पढ़ो_समय - पढ़ोs the समय रेजिस्टरs.
- * @dev: poपूर्णांकer to device काष्ठाure.
- * @पंचांग: poपूर्णांकer to rtc_समय काष्ठाure.
+ * ds1685_rtc_read_time - reads the time registers.
+ * @dev: pointer to device structure.
+ * @tm: pointer to rtc_time structure.
  */
-अटल पूर्णांक
-ds1685_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा ds1685_priv *rtc = dev_get_drvdata(dev);
+static int
+ds1685_rtc_read_time(struct device *dev, struct rtc_time *tm)
+{
+	struct ds1685_priv *rtc = dev_get_drvdata(dev);
 	u8 century;
 	u8 seconds, minutes, hours, wday, mday, month, years;
 
-	/* Fetch the समय info from the RTC रेजिस्टरs. */
+	/* Fetch the time info from the RTC registers. */
 	ds1685_rtc_begin_data_access(rtc);
-	seconds = rtc->पढ़ो(rtc, RTC_SECS);
-	minutes = rtc->पढ़ो(rtc, RTC_MINS);
-	hours   = rtc->पढ़ो(rtc, RTC_HRS);
-	wday    = rtc->पढ़ो(rtc, RTC_WDAY);
-	mday    = rtc->पढ़ो(rtc, RTC_MDAY);
-	month   = rtc->पढ़ो(rtc, RTC_MONTH);
-	years   = rtc->पढ़ो(rtc, RTC_YEAR);
-	century = rtc->पढ़ो(rtc, RTC_CENTURY);
+	seconds = rtc->read(rtc, RTC_SECS);
+	minutes = rtc->read(rtc, RTC_MINS);
+	hours   = rtc->read(rtc, RTC_HRS);
+	wday    = rtc->read(rtc, RTC_WDAY);
+	mday    = rtc->read(rtc, RTC_MDAY);
+	month   = rtc->read(rtc, RTC_MONTH);
+	years   = rtc->read(rtc, RTC_YEAR);
+	century = rtc->read(rtc, RTC_CENTURY);
 	ds1685_rtc_end_data_access(rtc);
 
-	/* bcd2bin अगर needed, perक्रमm fixups, and store to rtc_समय. */
+	/* bcd2bin if needed, perform fixups, and store to rtc_time. */
 	years        = ds1685_rtc_bcd2bin(rtc, years, RTC_YEAR_BCD_MASK,
 					  RTC_YEAR_BIN_MASK);
 	century      = ds1685_rtc_bcd2bin(rtc, century, RTC_CENTURY_MASK,
 					  RTC_CENTURY_MASK);
-	पंचांग->पंचांग_sec   = ds1685_rtc_bcd2bin(rtc, seconds, RTC_SECS_BCD_MASK,
+	tm->tm_sec   = ds1685_rtc_bcd2bin(rtc, seconds, RTC_SECS_BCD_MASK,
 					  RTC_SECS_BIN_MASK);
-	पंचांग->पंचांग_min   = ds1685_rtc_bcd2bin(rtc, minutes, RTC_MINS_BCD_MASK,
+	tm->tm_min   = ds1685_rtc_bcd2bin(rtc, minutes, RTC_MINS_BCD_MASK,
 					  RTC_MINS_BIN_MASK);
-	पंचांग->पंचांग_hour  = ds1685_rtc_bcd2bin(rtc, hours, RTC_HRS_24_BCD_MASK,
+	tm->tm_hour  = ds1685_rtc_bcd2bin(rtc, hours, RTC_HRS_24_BCD_MASK,
 					  RTC_HRS_24_BIN_MASK);
-	पंचांग->पंचांग_wday  = (ds1685_rtc_bcd2bin(rtc, wday, RTC_WDAY_MASK,
+	tm->tm_wday  = (ds1685_rtc_bcd2bin(rtc, wday, RTC_WDAY_MASK,
 					   RTC_WDAY_MASK) - 1);
-	पंचांग->पंचांग_mday  = ds1685_rtc_bcd2bin(rtc, mday, RTC_MDAY_BCD_MASK,
+	tm->tm_mday  = ds1685_rtc_bcd2bin(rtc, mday, RTC_MDAY_BCD_MASK,
 					  RTC_MDAY_BIN_MASK);
-	पंचांग->पंचांग_mon   = (ds1685_rtc_bcd2bin(rtc, month, RTC_MONTH_BCD_MASK,
+	tm->tm_mon   = (ds1685_rtc_bcd2bin(rtc, month, RTC_MONTH_BCD_MASK,
 					   RTC_MONTH_BIN_MASK) - 1);
-	पंचांग->पंचांग_year  = ((years + (century * 100)) - 1900);
-	पंचांग->पंचांग_yday  = rtc_year_days(पंचांग->पंचांग_mday, पंचांग->पंचांग_mon, पंचांग->पंचांग_year);
-	पंचांग->पंचांग_isdst = 0; /* RTC has hardcoded समयzone, so करोn't use. */
+	tm->tm_year  = ((years + (century * 100)) - 1900);
+	tm->tm_yday  = rtc_year_days(tm->tm_mday, tm->tm_mon, tm->tm_year);
+	tm->tm_isdst = 0; /* RTC has hardcoded timezone, so don't use. */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ds1685_rtc_set_समय - sets the समय रेजिस्टरs.
- * @dev: poपूर्णांकer to device काष्ठाure.
- * @पंचांग: poपूर्णांकer to rtc_समय काष्ठाure.
+ * ds1685_rtc_set_time - sets the time registers.
+ * @dev: pointer to device structure.
+ * @tm: pointer to rtc_time structure.
  */
-अटल पूर्णांक
-ds1685_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा ds1685_priv *rtc = dev_get_drvdata(dev);
+static int
+ds1685_rtc_set_time(struct device *dev, struct rtc_time *tm)
+{
+	struct ds1685_priv *rtc = dev_get_drvdata(dev);
 	u8 ctrlb, seconds, minutes, hours, wday, mday, month, years, century;
 
-	/* Fetch the समय info from rtc_समय. */
-	seconds = ds1685_rtc_bin2bcd(rtc, पंचांग->पंचांग_sec, RTC_SECS_BIN_MASK,
+	/* Fetch the time info from rtc_time. */
+	seconds = ds1685_rtc_bin2bcd(rtc, tm->tm_sec, RTC_SECS_BIN_MASK,
 				     RTC_SECS_BCD_MASK);
-	minutes = ds1685_rtc_bin2bcd(rtc, पंचांग->पंचांग_min, RTC_MINS_BIN_MASK,
+	minutes = ds1685_rtc_bin2bcd(rtc, tm->tm_min, RTC_MINS_BIN_MASK,
 				     RTC_MINS_BCD_MASK);
-	hours   = ds1685_rtc_bin2bcd(rtc, पंचांग->पंचांग_hour, RTC_HRS_24_BIN_MASK,
+	hours   = ds1685_rtc_bin2bcd(rtc, tm->tm_hour, RTC_HRS_24_BIN_MASK,
 				     RTC_HRS_24_BCD_MASK);
-	wday    = ds1685_rtc_bin2bcd(rtc, (पंचांग->पंचांग_wday + 1), RTC_WDAY_MASK,
+	wday    = ds1685_rtc_bin2bcd(rtc, (tm->tm_wday + 1), RTC_WDAY_MASK,
 				     RTC_WDAY_MASK);
-	mday    = ds1685_rtc_bin2bcd(rtc, पंचांग->पंचांग_mday, RTC_MDAY_BIN_MASK,
+	mday    = ds1685_rtc_bin2bcd(rtc, tm->tm_mday, RTC_MDAY_BIN_MASK,
 				     RTC_MDAY_BCD_MASK);
-	month   = ds1685_rtc_bin2bcd(rtc, (पंचांग->पंचांग_mon + 1), RTC_MONTH_BIN_MASK,
+	month   = ds1685_rtc_bin2bcd(rtc, (tm->tm_mon + 1), RTC_MONTH_BIN_MASK,
 				     RTC_MONTH_BCD_MASK);
-	years   = ds1685_rtc_bin2bcd(rtc, (पंचांग->पंचांग_year % 100),
+	years   = ds1685_rtc_bin2bcd(rtc, (tm->tm_year % 100),
 				     RTC_YEAR_BIN_MASK, RTC_YEAR_BCD_MASK);
-	century = ds1685_rtc_bin2bcd(rtc, ((पंचांग->पंचांग_year + 1900) / 100),
+	century = ds1685_rtc_bin2bcd(rtc, ((tm->tm_year + 1900) / 100),
 				     RTC_CENTURY_MASK, RTC_CENTURY_MASK);
 
 	/*
-	 * Perक्रमm Sanity Checks:
+	 * Perform Sanity Checks:
 	 *   - Months: !> 12, Month Day != 0.
 	 *   - Month Day !> Max days in current month.
 	 *   - Hours !>= 24, Mins !>= 60, Secs !>= 60, & Weekday !> 7.
 	 */
-	अगर ((पंचांग->पंचांग_mon > 11) || (mday == 0))
-		वापस -गलत_तर्क;
+	if ((tm->tm_mon > 11) || (mday == 0))
+		return -EDOM;
 
-	अगर (पंचांग->पंचांग_mday > rtc_month_days(पंचांग->पंचांग_mon, पंचांग->पंचांग_year))
-		वापस -गलत_तर्क;
+	if (tm->tm_mday > rtc_month_days(tm->tm_mon, tm->tm_year))
+		return -EDOM;
 
-	अगर ((पंचांग->पंचांग_hour >= 24) || (पंचांग->पंचांग_min >= 60) ||
-	    (पंचांग->पंचांग_sec >= 60)  || (wday > 7))
-		वापस -गलत_तर्क;
+	if ((tm->tm_hour >= 24) || (tm->tm_min >= 60) ||
+	    (tm->tm_sec >= 60)  || (wday > 7))
+		return -EDOM;
 
 	/*
-	 * Set the data mode to use and store the समय values in the
-	 * RTC रेजिस्टरs.
+	 * Set the data mode to use and store the time values in the
+	 * RTC registers.
 	 */
 	ds1685_rtc_begin_data_access(rtc);
-	ctrlb = rtc->पढ़ो(rtc, RTC_CTRL_B);
-	अगर (rtc->bcd_mode)
+	ctrlb = rtc->read(rtc, RTC_CTRL_B);
+	if (rtc->bcd_mode)
 		ctrlb &= ~(RTC_CTRL_B_DM);
-	अन्यथा
+	else
 		ctrlb |= RTC_CTRL_B_DM;
-	rtc->ग_लिखो(rtc, RTC_CTRL_B, ctrlb);
-	rtc->ग_लिखो(rtc, RTC_SECS, seconds);
-	rtc->ग_लिखो(rtc, RTC_MINS, minutes);
-	rtc->ग_लिखो(rtc, RTC_HRS, hours);
-	rtc->ग_लिखो(rtc, RTC_WDAY, wday);
-	rtc->ग_लिखो(rtc, RTC_MDAY, mday);
-	rtc->ग_लिखो(rtc, RTC_MONTH, month);
-	rtc->ग_लिखो(rtc, RTC_YEAR, years);
-	rtc->ग_लिखो(rtc, RTC_CENTURY, century);
+	rtc->write(rtc, RTC_CTRL_B, ctrlb);
+	rtc->write(rtc, RTC_SECS, seconds);
+	rtc->write(rtc, RTC_MINS, minutes);
+	rtc->write(rtc, RTC_HRS, hours);
+	rtc->write(rtc, RTC_WDAY, wday);
+	rtc->write(rtc, RTC_MDAY, mday);
+	rtc->write(rtc, RTC_MONTH, month);
+	rtc->write(rtc, RTC_YEAR, years);
+	rtc->write(rtc, RTC_CENTURY, century);
 	ds1685_rtc_end_data_access(rtc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ds1685_rtc_पढ़ो_alarm - पढ़ोs the alarm रेजिस्टरs.
- * @dev: poपूर्णांकer to device काष्ठाure.
- * @alrm: poपूर्णांकer to rtc_wkalrm काष्ठाure.
+ * ds1685_rtc_read_alarm - reads the alarm registers.
+ * @dev: pointer to device structure.
+ * @alrm: pointer to rtc_wkalrm structure.
  *
- * There are three primary alarm रेजिस्टरs: seconds, minutes, and hours.
- * A fourth alarm रेजिस्टर क्रम the month date is also available in bank1 क्रम
+ * There are three primary alarm registers: seconds, minutes, and hours.
+ * A fourth alarm register for the month date is also available in bank1 for
  * kickstart/wakeup features.  The DS1685/DS1687 manual states that a
- * "don't care" value ranging from 0xc0 to 0xff may be written पूर्णांकo one or
+ * "don't care" value ranging from 0xc0 to 0xff may be written into one or
  * more of the three alarm bytes to act as a wildcard value.  The fourth
- * byte करोesn't support a "don't care" value.
+ * byte doesn't support a "don't care" value.
  */
-अटल पूर्णांक
-ds1685_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	काष्ठा ds1685_priv *rtc = dev_get_drvdata(dev);
+static int
+ds1685_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	struct ds1685_priv *rtc = dev_get_drvdata(dev);
 	u8 seconds, minutes, hours, mday, ctrlb, ctrlc;
-	पूर्णांक ret;
+	int ret;
 
-	/* Fetch the alarm info from the RTC alarm रेजिस्टरs. */
+	/* Fetch the alarm info from the RTC alarm registers. */
 	ds1685_rtc_begin_data_access(rtc);
-	seconds	= rtc->पढ़ो(rtc, RTC_SECS_ALARM);
-	minutes	= rtc->पढ़ो(rtc, RTC_MINS_ALARM);
-	hours	= rtc->पढ़ो(rtc, RTC_HRS_ALARM);
-	mday	= rtc->पढ़ो(rtc, RTC_MDAY_ALARM);
-	ctrlb	= rtc->पढ़ो(rtc, RTC_CTRL_B);
-	ctrlc	= rtc->पढ़ो(rtc, RTC_CTRL_C);
+	seconds	= rtc->read(rtc, RTC_SECS_ALARM);
+	minutes	= rtc->read(rtc, RTC_MINS_ALARM);
+	hours	= rtc->read(rtc, RTC_HRS_ALARM);
+	mday	= rtc->read(rtc, RTC_MDAY_ALARM);
+	ctrlb	= rtc->read(rtc, RTC_CTRL_B);
+	ctrlc	= rtc->read(rtc, RTC_CTRL_C);
 	ds1685_rtc_end_data_access(rtc);
 
-	/* Check the month date क्रम validity. */
+	/* Check the month date for validity. */
 	ret = ds1685_rtc_check_mday(rtc, mday);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
 	 * Check the three alarm bytes.
 	 *
-	 * The Linux RTC प्रणाली करोesn't support the "don't care" capability
-	 * of this RTC chip.  We check क्रम it anyways in हाल support is
+	 * The Linux RTC system doesn't support the "don't care" capability
+	 * of this RTC chip.  We check for it anyways in case support is
 	 * added in the future and only assign when we care.
 	 */
-	अगर (likely(seconds < 0xc0))
-		alrm->समय.पंचांग_sec = ds1685_rtc_bcd2bin(rtc, seconds,
+	if (likely(seconds < 0xc0))
+		alrm->time.tm_sec = ds1685_rtc_bcd2bin(rtc, seconds,
 						       RTC_SECS_BCD_MASK,
 						       RTC_SECS_BIN_MASK);
 
-	अगर (likely(minutes < 0xc0))
-		alrm->समय.पंचांग_min = ds1685_rtc_bcd2bin(rtc, minutes,
+	if (likely(minutes < 0xc0))
+		alrm->time.tm_min = ds1685_rtc_bcd2bin(rtc, minutes,
 						       RTC_MINS_BCD_MASK,
 						       RTC_MINS_BIN_MASK);
 
-	अगर (likely(hours < 0xc0))
-		alrm->समय.पंचांग_hour = ds1685_rtc_bcd2bin(rtc, hours,
+	if (likely(hours < 0xc0))
+		alrm->time.tm_hour = ds1685_rtc_bcd2bin(rtc, hours,
 							RTC_HRS_24_BCD_MASK,
 							RTC_HRS_24_BIN_MASK);
 
 	/* Write the data to rtc_wkalrm. */
-	alrm->समय.पंचांग_mday = ds1685_rtc_bcd2bin(rtc, mday, RTC_MDAY_BCD_MASK,
+	alrm->time.tm_mday = ds1685_rtc_bcd2bin(rtc, mday, RTC_MDAY_BCD_MASK,
 						RTC_MDAY_BIN_MASK);
 	alrm->enabled = !!(ctrlb & RTC_CTRL_B_AIE);
 	alrm->pending = !!(ctrlc & RTC_CTRL_C_AF);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ds1685_rtc_set_alarm - sets the alarm in रेजिस्टरs.
- * @dev: poपूर्णांकer to device काष्ठाure.
- * @alrm: poपूर्णांकer to rtc_wkalrm काष्ठाure.
+ * ds1685_rtc_set_alarm - sets the alarm in registers.
+ * @dev: pointer to device structure.
+ * @alrm: pointer to rtc_wkalrm structure.
  */
-अटल पूर्णांक
-ds1685_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	काष्ठा ds1685_priv *rtc = dev_get_drvdata(dev);
+static int
+ds1685_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	struct ds1685_priv *rtc = dev_get_drvdata(dev);
 	u8 ctrlb, seconds, minutes, hours, mday;
-	पूर्णांक ret;
+	int ret;
 
 	/* Fetch the alarm info and convert to BCD. */
-	seconds	= ds1685_rtc_bin2bcd(rtc, alrm->समय.पंचांग_sec,
+	seconds	= ds1685_rtc_bin2bcd(rtc, alrm->time.tm_sec,
 				     RTC_SECS_BIN_MASK,
 				     RTC_SECS_BCD_MASK);
-	minutes	= ds1685_rtc_bin2bcd(rtc, alrm->समय.पंचांग_min,
+	minutes	= ds1685_rtc_bin2bcd(rtc, alrm->time.tm_min,
 				     RTC_MINS_BIN_MASK,
 				     RTC_MINS_BCD_MASK);
-	hours	= ds1685_rtc_bin2bcd(rtc, alrm->समय.पंचांग_hour,
+	hours	= ds1685_rtc_bin2bcd(rtc, alrm->time.tm_hour,
 				     RTC_HRS_24_BIN_MASK,
 				     RTC_HRS_24_BCD_MASK);
-	mday	= ds1685_rtc_bin2bcd(rtc, alrm->समय.पंचांग_mday,
+	mday	= ds1685_rtc_bin2bcd(rtc, alrm->time.tm_mday,
 				     RTC_MDAY_BIN_MASK,
 				     RTC_MDAY_BCD_MASK);
 
-	/* Check the month date क्रम validity. */
+	/* Check the month date for validity. */
 	ret = ds1685_rtc_check_mday(rtc, mday);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
 	 * Check the three alarm bytes.
 	 *
-	 * The Linux RTC प्रणाली करोesn't support the "don't care" capability
-	 * of this RTC chip because rtc_valid_पंचांग tries to validate every
+	 * The Linux RTC system doesn't support the "don't care" capability
+	 * of this RTC chip because rtc_valid_tm tries to validate every
 	 * field, and we only support four fields.  We put the support
-	 * here anyways क्रम the future.
+	 * here anyways for the future.
 	 */
-	अगर (unlikely(seconds >= 0xc0))
+	if (unlikely(seconds >= 0xc0))
 		seconds = 0xff;
 
-	अगर (unlikely(minutes >= 0xc0))
+	if (unlikely(minutes >= 0xc0))
 		minutes = 0xff;
 
-	अगर (unlikely(hours >= 0xc0))
+	if (unlikely(hours >= 0xc0))
 		hours = 0xff;
 
-	alrm->समय.पंचांग_mon	= -1;
-	alrm->समय.पंचांग_year	= -1;
-	alrm->समय.पंचांग_wday	= -1;
-	alrm->समय.पंचांग_yday	= -1;
-	alrm->समय.पंचांग_isdst	= -1;
+	alrm->time.tm_mon	= -1;
+	alrm->time.tm_year	= -1;
+	alrm->time.tm_wday	= -1;
+	alrm->time.tm_yday	= -1;
+	alrm->time.tm_isdst	= -1;
 
-	/* Disable the alarm पूर्णांकerrupt first. */
+	/* Disable the alarm interrupt first. */
 	ds1685_rtc_begin_data_access(rtc);
-	ctrlb = rtc->पढ़ो(rtc, RTC_CTRL_B);
-	rtc->ग_लिखो(rtc, RTC_CTRL_B, (ctrlb & ~(RTC_CTRL_B_AIE)));
+	ctrlb = rtc->read(rtc, RTC_CTRL_B);
+	rtc->write(rtc, RTC_CTRL_B, (ctrlb & ~(RTC_CTRL_B_AIE)));
 
 	/* Read ctrlc to clear RTC_CTRL_C_AF. */
-	rtc->पढ़ो(rtc, RTC_CTRL_C);
+	rtc->read(rtc, RTC_CTRL_C);
 
 	/*
-	 * Set the data mode to use and store the समय values in the
-	 * RTC रेजिस्टरs.
+	 * Set the data mode to use and store the time values in the
+	 * RTC registers.
 	 */
-	ctrlb = rtc->पढ़ो(rtc, RTC_CTRL_B);
-	अगर (rtc->bcd_mode)
+	ctrlb = rtc->read(rtc, RTC_CTRL_B);
+	if (rtc->bcd_mode)
 		ctrlb &= ~(RTC_CTRL_B_DM);
-	अन्यथा
+	else
 		ctrlb |= RTC_CTRL_B_DM;
-	rtc->ग_लिखो(rtc, RTC_CTRL_B, ctrlb);
-	rtc->ग_लिखो(rtc, RTC_SECS_ALARM, seconds);
-	rtc->ग_लिखो(rtc, RTC_MINS_ALARM, minutes);
-	rtc->ग_लिखो(rtc, RTC_HRS_ALARM, hours);
-	rtc->ग_लिखो(rtc, RTC_MDAY_ALARM, mday);
+	rtc->write(rtc, RTC_CTRL_B, ctrlb);
+	rtc->write(rtc, RTC_SECS_ALARM, seconds);
+	rtc->write(rtc, RTC_MINS_ALARM, minutes);
+	rtc->write(rtc, RTC_HRS_ALARM, hours);
+	rtc->write(rtc, RTC_MDAY_ALARM, mday);
 
-	/* Re-enable the alarm अगर needed. */
-	अगर (alrm->enabled) अणु
-		ctrlb = rtc->पढ़ो(rtc, RTC_CTRL_B);
+	/* Re-enable the alarm if needed. */
+	if (alrm->enabled) {
+		ctrlb = rtc->read(rtc, RTC_CTRL_B);
 		ctrlb |= RTC_CTRL_B_AIE;
-		rtc->ग_लिखो(rtc, RTC_CTRL_B, ctrlb);
-	पूर्ण
+		rtc->write(rtc, RTC_CTRL_B, ctrlb);
+	}
 
 	/* Done! */
 	ds1685_rtc_end_data_access(rtc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 /* ----------------------------------------------------------------------- */
 
 
@@ -532,27 +531,27 @@ ds1685_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkal
 
 /**
  * ds1685_rtc_alarm_irq_enable - replaces ioctl() RTC_AIE on/off.
- * @dev: poपूर्णांकer to device काष्ठाure.
+ * @dev: pointer to device structure.
  * @enabled: flag indicating whether to enable or disable.
  */
-अटल पूर्णांक
-ds1685_rtc_alarm_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enabled)
-अणु
-	काष्ठा ds1685_priv *rtc = dev_get_drvdata(dev);
+static int
+ds1685_rtc_alarm_irq_enable(struct device *dev, unsigned int enabled)
+{
+	struct ds1685_priv *rtc = dev_get_drvdata(dev);
 
-	/* Flip the requisite पूर्णांकerrupt-enable bit. */
-	अगर (enabled)
-		rtc->ग_लिखो(rtc, RTC_CTRL_B, (rtc->पढ़ो(rtc, RTC_CTRL_B) |
+	/* Flip the requisite interrupt-enable bit. */
+	if (enabled)
+		rtc->write(rtc, RTC_CTRL_B, (rtc->read(rtc, RTC_CTRL_B) |
 					     RTC_CTRL_B_AIE));
-	अन्यथा
-		rtc->ग_लिखो(rtc, RTC_CTRL_B, (rtc->पढ़ो(rtc, RTC_CTRL_B) &
+	else
+		rtc->write(rtc, RTC_CTRL_B, (rtc->read(rtc, RTC_CTRL_B) &
 					     ~(RTC_CTRL_B_AIE)));
 
 	/* Read Control C to clear all the flag bits. */
-	rtc->पढ़ो(rtc, RTC_CTRL_C);
+	rtc->read(rtc, RTC_CTRL_C);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 /* ----------------------------------------------------------------------- */
 
 
@@ -560,236 +559,236 @@ ds1685_rtc_alarm_irq_enable(काष्ठा device *dev, अचिन्ह�
 /* IRQ handler */
 
 /**
- * ds1685_rtc_extended_irq - take care of extended पूर्णांकerrupts
- * @rtc: poपूर्णांकer to the ds1685 rtc काष्ठाure.
- * @pdev: platक्रमm device poपूर्णांकer.
+ * ds1685_rtc_extended_irq - take care of extended interrupts
+ * @rtc: pointer to the ds1685 rtc structure.
+ * @pdev: platform device pointer.
  */
-अटल व्योम
-ds1685_rtc_extended_irq(काष्ठा ds1685_priv *rtc, काष्ठा platक्रमm_device *pdev)
-अणु
+static void
+ds1685_rtc_extended_irq(struct ds1685_priv *rtc, struct platform_device *pdev)
+{
 	u8 ctrl4a, ctrl4b;
 
-	ds1685_rtc_चयन_to_bank1(rtc);
-	ctrl4a = rtc->पढ़ो(rtc, RTC_EXT_CTRL_4A);
-	ctrl4b = rtc->पढ़ो(rtc, RTC_EXT_CTRL_4B);
+	ds1685_rtc_switch_to_bank1(rtc);
+	ctrl4a = rtc->read(rtc, RTC_EXT_CTRL_4A);
+	ctrl4b = rtc->read(rtc, RTC_EXT_CTRL_4B);
 
 	/*
-	 * Check क्रम a kickstart पूर्णांकerrupt. With Vcc applied, this
-	 * typically means that the घातer button was pressed, so we
-	 * begin the shutकरोwn sequence.
+	 * Check for a kickstart interrupt. With Vcc applied, this
+	 * typically means that the power button was pressed, so we
+	 * begin the shutdown sequence.
 	 */
-	अगर ((ctrl4b & RTC_CTRL_4B_KSE) && (ctrl4a & RTC_CTRL_4A_KF)) अणु
+	if ((ctrl4b & RTC_CTRL_4B_KSE) && (ctrl4a & RTC_CTRL_4A_KF)) {
 		/* Briefly disable kickstarts to debounce button presses. */
-		rtc->ग_लिखो(rtc, RTC_EXT_CTRL_4B,
-			   (rtc->पढ़ो(rtc, RTC_EXT_CTRL_4B) &
+		rtc->write(rtc, RTC_EXT_CTRL_4B,
+			   (rtc->read(rtc, RTC_EXT_CTRL_4B) &
 			    ~(RTC_CTRL_4B_KSE)));
 
 		/* Clear the kickstart flag. */
-		rtc->ग_लिखो(rtc, RTC_EXT_CTRL_4A,
+		rtc->write(rtc, RTC_EXT_CTRL_4A,
 			   (ctrl4a & ~(RTC_CTRL_4A_KF)));
 
 
 		/*
-		 * Sleep 500ms beक्रमe re-enabling kickstarts.  This allows
-		 * adequate समय to aव्योम पढ़ोing संकेत jitter as additional
+		 * Sleep 500ms before re-enabling kickstarts.  This allows
+		 * adequate time to avoid reading signal jitter as additional
 		 * button presses.
 		 */
 		msleep(500);
-		rtc->ग_लिखो(rtc, RTC_EXT_CTRL_4B,
-			   (rtc->पढ़ो(rtc, RTC_EXT_CTRL_4B) |
+		rtc->write(rtc, RTC_EXT_CTRL_4B,
+			   (rtc->read(rtc, RTC_EXT_CTRL_4B) |
 			    RTC_CTRL_4B_KSE));
 
-		/* Call the platक्रमm pre-घातeroff function. Else, shutकरोwn. */
-		अगर (rtc->prepare_घातeroff != शून्य)
-			rtc->prepare_घातeroff();
-		अन्यथा
-			ds1685_rtc_घातeroff(pdev);
-	पूर्ण
+		/* Call the platform pre-poweroff function. Else, shutdown. */
+		if (rtc->prepare_poweroff != NULL)
+			rtc->prepare_poweroff();
+		else
+			ds1685_rtc_poweroff(pdev);
+	}
 
 	/*
-	 * Check क्रम a wake-up पूर्णांकerrupt.  With Vcc applied, this is
-	 * essentially a second alarm पूर्णांकerrupt, except it takes पूर्णांकo
-	 * account the 'date' रेजिस्टर in bank1 in addition to the
-	 * standard three alarm रेजिस्टरs.
+	 * Check for a wake-up interrupt.  With Vcc applied, this is
+	 * essentially a second alarm interrupt, except it takes into
+	 * account the 'date' register in bank1 in addition to the
+	 * standard three alarm registers.
 	 */
-	अगर ((ctrl4b & RTC_CTRL_4B_WIE) && (ctrl4a & RTC_CTRL_4A_WF)) अणु
-		rtc->ग_लिखो(rtc, RTC_EXT_CTRL_4A,
+	if ((ctrl4b & RTC_CTRL_4B_WIE) && (ctrl4a & RTC_CTRL_4A_WF)) {
+		rtc->write(rtc, RTC_EXT_CTRL_4A,
 			   (ctrl4a & ~(RTC_CTRL_4A_WF)));
 
-		/* Call the platक्रमm wake_alarm function अगर defined. */
-		अगर (rtc->wake_alarm != शून्य)
+		/* Call the platform wake_alarm function if defined. */
+		if (rtc->wake_alarm != NULL)
 			rtc->wake_alarm();
-		अन्यथा
+		else
 			dev_warn(&pdev->dev,
 				 "Wake Alarm IRQ just occurred!\n");
-	पूर्ण
+	}
 
 	/*
-	 * Check क्रम a ram-clear पूर्णांकerrupt.  This happens अगर RIE=1 and RF=0
+	 * Check for a ram-clear interrupt.  This happens if RIE=1 and RF=0
 	 * when RCE=1 in 4B.  This clears all NVRAM bytes in bank0 by setting
 	 * each byte to a logic 1.  This has no effect on any extended
-	 * NV-SRAM that might be present, nor on the समय/calendar/alarm
-	 * रेजिस्टरs.  After a ram-clear is completed, there is a minimum
-	 * recovery समय of ~150ms in which all पढ़ोs/ग_लिखोs are locked out.
-	 * NOTE: A ram-clear can still occur अगर RCE=1 and RIE=0.  We cannot
+	 * NV-SRAM that might be present, nor on the time/calendar/alarm
+	 * registers.  After a ram-clear is completed, there is a minimum
+	 * recovery time of ~150ms in which all reads/writes are locked out.
+	 * NOTE: A ram-clear can still occur if RCE=1 and RIE=0.  We cannot
 	 * catch this scenario.
 	 */
-	अगर ((ctrl4b & RTC_CTRL_4B_RIE) && (ctrl4a & RTC_CTRL_4A_RF)) अणु
-		rtc->ग_लिखो(rtc, RTC_EXT_CTRL_4A,
+	if ((ctrl4b & RTC_CTRL_4B_RIE) && (ctrl4a & RTC_CTRL_4A_RF)) {
+		rtc->write(rtc, RTC_EXT_CTRL_4A,
 			   (ctrl4a & ~(RTC_CTRL_4A_RF)));
 		msleep(150);
 
-		/* Call the platक्रमm post_ram_clear function अगर defined. */
-		अगर (rtc->post_ram_clear != शून्य)
+		/* Call the platform post_ram_clear function if defined. */
+		if (rtc->post_ram_clear != NULL)
 			rtc->post_ram_clear();
-		अन्यथा
+		else
 			dev_warn(&pdev->dev,
 				 "RAM-Clear IRQ just occurred!\n");
-	पूर्ण
-	ds1685_rtc_चयन_to_bank0(rtc);
-पूर्ण
+	}
+	ds1685_rtc_switch_to_bank0(rtc);
+}
 
 /**
  * ds1685_rtc_irq_handler - IRQ handler.
  * @irq: IRQ number.
- * @dev_id: platक्रमm device poपूर्णांकer.
+ * @dev_id: platform device pointer.
  */
-अटल irqवापस_t
-ds1685_rtc_irq_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा platक्रमm_device *pdev = dev_id;
-	काष्ठा ds1685_priv *rtc = platक्रमm_get_drvdata(pdev);
+static irqreturn_t
+ds1685_rtc_irq_handler(int irq, void *dev_id)
+{
+	struct platform_device *pdev = dev_id;
+	struct ds1685_priv *rtc = platform_get_drvdata(pdev);
 	u8 ctrlb, ctrlc;
-	अचिन्हित दीर्घ events = 0;
+	unsigned long events = 0;
 	u8 num_irqs = 0;
 
-	/* Abort early अगर the device isn't पढ़ोy yet (i.e., DEBUG_SHIRQ). */
-	अगर (unlikely(!rtc))
-		वापस IRQ_HANDLED;
+	/* Abort early if the device isn't ready yet (i.e., DEBUG_SHIRQ). */
+	if (unlikely(!rtc))
+		return IRQ_HANDLED;
 
 	rtc_lock(rtc->dev);
 
-	/* Ctrlb holds the पूर्णांकerrupt-enable bits and ctrlc the flag bits. */
-	ctrlb = rtc->पढ़ो(rtc, RTC_CTRL_B);
-	ctrlc = rtc->पढ़ो(rtc, RTC_CTRL_C);
+	/* Ctrlb holds the interrupt-enable bits and ctrlc the flag bits. */
+	ctrlb = rtc->read(rtc, RTC_CTRL_B);
+	ctrlc = rtc->read(rtc, RTC_CTRL_C);
 
 	/* Is the IRQF bit set? */
-	अगर (likely(ctrlc & RTC_CTRL_C_IRQF)) अणु
+	if (likely(ctrlc & RTC_CTRL_C_IRQF)) {
 		/*
-		 * We need to determine अगर it was one of the standard
+		 * We need to determine if it was one of the standard
 		 * events: PF, AF, or UF.  If so, we handle them and
 		 * update the RTC core.
 		 */
-		अगर (likely(ctrlc & RTC_CTRL_B_PAU_MASK)) अणु
+		if (likely(ctrlc & RTC_CTRL_B_PAU_MASK)) {
 			events = RTC_IRQF;
 
-			/* Check क्रम a periodic पूर्णांकerrupt. */
-			अगर ((ctrlb & RTC_CTRL_B_PIE) &&
-			    (ctrlc & RTC_CTRL_C_PF)) अणु
+			/* Check for a periodic interrupt. */
+			if ((ctrlb & RTC_CTRL_B_PIE) &&
+			    (ctrlc & RTC_CTRL_C_PF)) {
 				events |= RTC_PF;
 				num_irqs++;
-			पूर्ण
+			}
 
-			/* Check क्रम an alarm पूर्णांकerrupt. */
-			अगर ((ctrlb & RTC_CTRL_B_AIE) &&
-			    (ctrlc & RTC_CTRL_C_AF)) अणु
+			/* Check for an alarm interrupt. */
+			if ((ctrlb & RTC_CTRL_B_AIE) &&
+			    (ctrlc & RTC_CTRL_C_AF)) {
 				events |= RTC_AF;
 				num_irqs++;
-			पूर्ण
+			}
 
-			/* Check क्रम an update पूर्णांकerrupt. */
-			अगर ((ctrlb & RTC_CTRL_B_UIE) &&
-			    (ctrlc & RTC_CTRL_C_UF)) अणु
+			/* Check for an update interrupt. */
+			if ((ctrlb & RTC_CTRL_B_UIE) &&
+			    (ctrlc & RTC_CTRL_C_UF)) {
 				events |= RTC_UF;
 				num_irqs++;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			/*
-			 * One of the "extended" पूर्णांकerrupts was received that
+			 * One of the "extended" interrupts was received that
 			 * is not recognized by the RTC core.
 			 */
 			ds1685_rtc_extended_irq(rtc, pdev);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	rtc_update_irq(rtc->dev, num_irqs, events);
 	rtc_unlock(rtc->dev);
 
-	वापस events ? IRQ_HANDLED : IRQ_NONE;
-पूर्ण
+	return events ? IRQ_HANDLED : IRQ_NONE;
+}
 /* ----------------------------------------------------------------------- */
 
 
 /* ----------------------------------------------------------------------- */
-/* ProcFS पूर्णांकerface */
+/* ProcFS interface */
 
-#अगर_घोषित CONFIG_PROC_FS
-#घोषणा NUM_REGS	6	/* Num of control रेजिस्टरs. */
-#घोषणा NUM_BITS	8	/* Num bits per रेजिस्टर. */
-#घोषणा NUM_SPACES	4	/* Num spaces between each bit. */
+#ifdef CONFIG_PROC_FS
+#define NUM_REGS	6	/* Num of control registers. */
+#define NUM_BITS	8	/* Num bits per register. */
+#define NUM_SPACES	4	/* Num spaces between each bit. */
 
 /*
  * Periodic Interrupt Rates.
  */
-अटल स्थिर अक्षर *ds1685_rtc_pirq_rate[16] = अणु
+static const char *ds1685_rtc_pirq_rate[16] = {
 	"none", "3.90625ms", "7.8125ms", "0.122070ms", "0.244141ms",
 	"0.488281ms", "0.9765625ms", "1.953125ms", "3.90625ms", "7.8125ms",
 	"15.625ms", "31.25ms", "62.5ms", "125ms", "250ms", "500ms"
-पूर्ण;
+};
 
 /*
  * Square-Wave Output Frequencies.
  */
-अटल स्थिर अक्षर *ds1685_rtc_sqw_freq[16] = अणु
+static const char *ds1685_rtc_sqw_freq[16] = {
 	"none", "256Hz", "128Hz", "8192Hz", "4096Hz", "2048Hz", "1024Hz",
 	"512Hz", "256Hz", "128Hz", "64Hz", "32Hz", "16Hz", "8Hz", "4Hz", "2Hz"
-पूर्ण;
+};
 
 /**
  * ds1685_rtc_proc - procfs access function.
- * @dev: poपूर्णांकer to device काष्ठाure.
- * @seq: poपूर्णांकer to seq_file काष्ठाure.
+ * @dev: pointer to device structure.
+ * @seq: pointer to seq_file structure.
  */
-अटल पूर्णांक
-ds1685_rtc_proc(काष्ठा device *dev, काष्ठा seq_file *seq)
-अणु
-	काष्ठा ds1685_priv *rtc = dev_get_drvdata(dev);
+static int
+ds1685_rtc_proc(struct device *dev, struct seq_file *seq)
+{
+	struct ds1685_priv *rtc = dev_get_drvdata(dev);
 	u8 ctrla, ctrlb, ctrld, ctrl4a, ctrl4b, ssn[8];
-	अक्षर *model;
+	char *model;
 
-	/* Read all the relevant data from the control रेजिस्टरs. */
-	ds1685_rtc_चयन_to_bank1(rtc);
+	/* Read all the relevant data from the control registers. */
+	ds1685_rtc_switch_to_bank1(rtc);
 	ds1685_rtc_get_ssn(rtc, ssn);
-	ctrla = rtc->पढ़ो(rtc, RTC_CTRL_A);
-	ctrlb = rtc->पढ़ो(rtc, RTC_CTRL_B);
-	ctrld = rtc->पढ़ो(rtc, RTC_CTRL_D);
-	ctrl4a = rtc->पढ़ो(rtc, RTC_EXT_CTRL_4A);
-	ctrl4b = rtc->पढ़ो(rtc, RTC_EXT_CTRL_4B);
-	ds1685_rtc_चयन_to_bank0(rtc);
+	ctrla = rtc->read(rtc, RTC_CTRL_A);
+	ctrlb = rtc->read(rtc, RTC_CTRL_B);
+	ctrld = rtc->read(rtc, RTC_CTRL_D);
+	ctrl4a = rtc->read(rtc, RTC_EXT_CTRL_4A);
+	ctrl4b = rtc->read(rtc, RTC_EXT_CTRL_4B);
+	ds1685_rtc_switch_to_bank0(rtc);
 
 	/* Determine the RTC model. */
-	चयन (ssn[0]) अणु
-	हाल RTC_MODEL_DS1685:
+	switch (ssn[0]) {
+	case RTC_MODEL_DS1685:
 		model = "DS1685/DS1687\0";
-		अवरोध;
-	हाल RTC_MODEL_DS1689:
+		break;
+	case RTC_MODEL_DS1689:
 		model = "DS1689/DS1693\0";
-		अवरोध;
-	हाल RTC_MODEL_DS17285:
+		break;
+	case RTC_MODEL_DS17285:
 		model = "DS17285/DS17287\0";
-		अवरोध;
-	हाल RTC_MODEL_DS17485:
+		break;
+	case RTC_MODEL_DS17485:
 		model = "DS17485/DS17487\0";
-		अवरोध;
-	हाल RTC_MODEL_DS17885:
+		break;
+	case RTC_MODEL_DS17885:
 		model = "DS17885/DS17887\0";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		model = "Unknown\0";
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	/* Prपूर्णांक out the inक्रमmation. */
-	seq_म_लिखो(seq,
+	/* Print out the information. */
+	seq_printf(seq,
 	   "Model\t\t: %s\n"
 	   "Oscillator\t: %s\n"
 	   "12/24hr\t\t: %s\n"
@@ -816,379 +815,379 @@ ds1685_rtc_proc(काष्ठा device *dev, काष्ठा seq_file *seq
 	   (!((ctrl4b & RTC_CTRL_4B_E32K)) ?
 	    ds1685_rtc_sqw_freq[(ctrla & RTC_CTRL_A_RS_MASK)] : "32768Hz"),
 	   ssn);
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा ds1685_rtc_proc शून्य
-#पूर्ण_अगर /* CONFIG_PROC_FS */
+	return 0;
+}
+#else
+#define ds1685_rtc_proc NULL
+#endif /* CONFIG_PROC_FS */
 /* ----------------------------------------------------------------------- */
 
 
 /* ----------------------------------------------------------------------- */
 /* RTC Class operations */
 
-अटल स्थिर काष्ठा rtc_class_ops
-ds1685_rtc_ops = अणु
+static const struct rtc_class_ops
+ds1685_rtc_ops = {
 	.proc = ds1685_rtc_proc,
-	.पढ़ो_समय = ds1685_rtc_पढ़ो_समय,
-	.set_समय = ds1685_rtc_set_समय,
-	.पढ़ो_alarm = ds1685_rtc_पढ़ो_alarm,
+	.read_time = ds1685_rtc_read_time,
+	.set_time = ds1685_rtc_set_time,
+	.read_alarm = ds1685_rtc_read_alarm,
 	.set_alarm = ds1685_rtc_set_alarm,
 	.alarm_irq_enable = ds1685_rtc_alarm_irq_enable,
-पूर्ण;
+};
 /* ----------------------------------------------------------------------- */
 
-अटल पूर्णांक ds1685_nvram_पढ़ो(व्योम *priv, अचिन्हित पूर्णांक pos, व्योम *val,
-			     माप_प्रकार size)
-अणु
-	काष्ठा ds1685_priv *rtc = priv;
-	काष्ठा mutex *rtc_mutex = &rtc->dev->ops_lock;
-	sमाप_प्रकार count;
+static int ds1685_nvram_read(void *priv, unsigned int pos, void *val,
+			     size_t size)
+{
+	struct ds1685_priv *rtc = priv;
+	struct mutex *rtc_mutex = &rtc->dev->ops_lock;
+	ssize_t count;
 	u8 *buf = val;
-	पूर्णांक err;
+	int err;
 
-	err = mutex_lock_पूर्णांकerruptible(rtc_mutex);
-	अगर (err)
-		वापस err;
+	err = mutex_lock_interruptible(rtc_mutex);
+	if (err)
+		return err;
 
-	ds1685_rtc_चयन_to_bank0(rtc);
+	ds1685_rtc_switch_to_bank0(rtc);
 
-	/* Read NVRAM in समय and bank0 रेजिस्टरs. */
-	क्रम (count = 0; size > 0 && pos < NVRAM_TOTAL_SZ_BANK0;
-	     count++, size--) अणु
-		अगर (count < NVRAM_SZ_TIME)
-			*buf++ = rtc->पढ़ो(rtc, (NVRAM_TIME_BASE + pos++));
-		अन्यथा
-			*buf++ = rtc->पढ़ो(rtc, (NVRAM_BANK0_BASE + pos++));
-	पूर्ण
+	/* Read NVRAM in time and bank0 registers. */
+	for (count = 0; size > 0 && pos < NVRAM_TOTAL_SZ_BANK0;
+	     count++, size--) {
+		if (count < NVRAM_SZ_TIME)
+			*buf++ = rtc->read(rtc, (NVRAM_TIME_BASE + pos++));
+		else
+			*buf++ = rtc->read(rtc, (NVRAM_BANK0_BASE + pos++));
+	}
 
-#अगर_अघोषित CONFIG_RTC_DRV_DS1689
-	अगर (size > 0) अणु
-		ds1685_rtc_चयन_to_bank1(rtc);
+#ifndef CONFIG_RTC_DRV_DS1689
+	if (size > 0) {
+		ds1685_rtc_switch_to_bank1(rtc);
 
-#अगर_अघोषित CONFIG_RTC_DRV_DS1685
+#ifndef CONFIG_RTC_DRV_DS1685
 		/* Enable burst-mode on DS17x85/DS17x87 */
-		rtc->ग_लिखो(rtc, RTC_EXT_CTRL_4A,
-			   (rtc->पढ़ो(rtc, RTC_EXT_CTRL_4A) |
+		rtc->write(rtc, RTC_EXT_CTRL_4A,
+			   (rtc->read(rtc, RTC_EXT_CTRL_4A) |
 			    RTC_CTRL_4A_BME));
 
-		/* We need one ग_लिखो to RTC_BANK1_RAM_ADDR_LSB to start
-		 * पढ़ोing with burst-mode */
-		rtc->ग_लिखो(rtc, RTC_BANK1_RAM_ADDR_LSB,
+		/* We need one write to RTC_BANK1_RAM_ADDR_LSB to start
+		 * reading with burst-mode */
+		rtc->write(rtc, RTC_BANK1_RAM_ADDR_LSB,
 			   (pos - NVRAM_TOTAL_SZ_BANK0));
-#पूर्ण_अगर
+#endif
 
-		/* Read NVRAM in bank1 रेजिस्टरs. */
-		क्रम (count = 0; size > 0 && pos < NVRAM_TOTAL_SZ;
-		     count++, size--) अणु
-#अगर_घोषित CONFIG_RTC_DRV_DS1685
-			/* DS1685/DS1687 has to ग_लिखो to RTC_BANK1_RAM_ADDR
-			 * beक्रमe each पढ़ो. */
-			rtc->ग_लिखो(rtc, RTC_BANK1_RAM_ADDR,
+		/* Read NVRAM in bank1 registers. */
+		for (count = 0; size > 0 && pos < NVRAM_TOTAL_SZ;
+		     count++, size--) {
+#ifdef CONFIG_RTC_DRV_DS1685
+			/* DS1685/DS1687 has to write to RTC_BANK1_RAM_ADDR
+			 * before each read. */
+			rtc->write(rtc, RTC_BANK1_RAM_ADDR,
 				   (pos - NVRAM_TOTAL_SZ_BANK0));
-#पूर्ण_अगर
-			*buf++ = rtc->पढ़ो(rtc, RTC_BANK1_RAM_DATA_PORT);
+#endif
+			*buf++ = rtc->read(rtc, RTC_BANK1_RAM_DATA_PORT);
 			pos++;
-		पूर्ण
+		}
 
-#अगर_अघोषित CONFIG_RTC_DRV_DS1685
+#ifndef CONFIG_RTC_DRV_DS1685
 		/* Disable burst-mode on DS17x85/DS17x87 */
-		rtc->ग_लिखो(rtc, RTC_EXT_CTRL_4A,
-			   (rtc->पढ़ो(rtc, RTC_EXT_CTRL_4A) &
+		rtc->write(rtc, RTC_EXT_CTRL_4A,
+			   (rtc->read(rtc, RTC_EXT_CTRL_4A) &
 			    ~(RTC_CTRL_4A_BME)));
-#पूर्ण_अगर
-		ds1685_rtc_चयन_to_bank0(rtc);
-	पूर्ण
-#पूर्ण_अगर /* !CONFIG_RTC_DRV_DS1689 */
+#endif
+		ds1685_rtc_switch_to_bank0(rtc);
+	}
+#endif /* !CONFIG_RTC_DRV_DS1689 */
 	mutex_unlock(rtc_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ds1685_nvram_ग_लिखो(व्योम *priv, अचिन्हित पूर्णांक pos, व्योम *val,
-			      माप_प्रकार size)
-अणु
-	काष्ठा ds1685_priv *rtc = priv;
-	काष्ठा mutex *rtc_mutex = &rtc->dev->ops_lock;
-	sमाप_प्रकार count;
+static int ds1685_nvram_write(void *priv, unsigned int pos, void *val,
+			      size_t size)
+{
+	struct ds1685_priv *rtc = priv;
+	struct mutex *rtc_mutex = &rtc->dev->ops_lock;
+	ssize_t count;
 	u8 *buf = val;
-	पूर्णांक err;
+	int err;
 
-	err = mutex_lock_पूर्णांकerruptible(rtc_mutex);
-	अगर (err)
-		वापस err;
+	err = mutex_lock_interruptible(rtc_mutex);
+	if (err)
+		return err;
 
-	ds1685_rtc_चयन_to_bank0(rtc);
+	ds1685_rtc_switch_to_bank0(rtc);
 
-	/* Write NVRAM in समय and bank0 रेजिस्टरs. */
-	क्रम (count = 0; size > 0 && pos < NVRAM_TOTAL_SZ_BANK0;
+	/* Write NVRAM in time and bank0 registers. */
+	for (count = 0; size > 0 && pos < NVRAM_TOTAL_SZ_BANK0;
 	     count++, size--)
-		अगर (count < NVRAM_SZ_TIME)
-			rtc->ग_लिखो(rtc, (NVRAM_TIME_BASE + pos++),
+		if (count < NVRAM_SZ_TIME)
+			rtc->write(rtc, (NVRAM_TIME_BASE + pos++),
 				   *buf++);
-		अन्यथा
-			rtc->ग_लिखो(rtc, (NVRAM_BANK0_BASE), *buf++);
+		else
+			rtc->write(rtc, (NVRAM_BANK0_BASE), *buf++);
 
-#अगर_अघोषित CONFIG_RTC_DRV_DS1689
-	अगर (size > 0) अणु
-		ds1685_rtc_चयन_to_bank1(rtc);
+#ifndef CONFIG_RTC_DRV_DS1689
+	if (size > 0) {
+		ds1685_rtc_switch_to_bank1(rtc);
 
-#अगर_अघोषित CONFIG_RTC_DRV_DS1685
+#ifndef CONFIG_RTC_DRV_DS1685
 		/* Enable burst-mode on DS17x85/DS17x87 */
-		rtc->ग_लिखो(rtc, RTC_EXT_CTRL_4A,
-			   (rtc->पढ़ो(rtc, RTC_EXT_CTRL_4A) |
+		rtc->write(rtc, RTC_EXT_CTRL_4A,
+			   (rtc->read(rtc, RTC_EXT_CTRL_4A) |
 			    RTC_CTRL_4A_BME));
 
-		/* We need one ग_लिखो to RTC_BANK1_RAM_ADDR_LSB to start
+		/* We need one write to RTC_BANK1_RAM_ADDR_LSB to start
 		 * writing with burst-mode */
-		rtc->ग_लिखो(rtc, RTC_BANK1_RAM_ADDR_LSB,
+		rtc->write(rtc, RTC_BANK1_RAM_ADDR_LSB,
 			   (pos - NVRAM_TOTAL_SZ_BANK0));
-#पूर्ण_अगर
+#endif
 
-		/* Write NVRAM in bank1 रेजिस्टरs. */
-		क्रम (count = 0; size > 0 && pos < NVRAM_TOTAL_SZ;
-		     count++, size--) अणु
-#अगर_घोषित CONFIG_RTC_DRV_DS1685
-			/* DS1685/DS1687 has to ग_लिखो to RTC_BANK1_RAM_ADDR
-			 * beक्रमe each पढ़ो. */
-			rtc->ग_लिखो(rtc, RTC_BANK1_RAM_ADDR,
+		/* Write NVRAM in bank1 registers. */
+		for (count = 0; size > 0 && pos < NVRAM_TOTAL_SZ;
+		     count++, size--) {
+#ifdef CONFIG_RTC_DRV_DS1685
+			/* DS1685/DS1687 has to write to RTC_BANK1_RAM_ADDR
+			 * before each read. */
+			rtc->write(rtc, RTC_BANK1_RAM_ADDR,
 				   (pos - NVRAM_TOTAL_SZ_BANK0));
-#पूर्ण_अगर
-			rtc->ग_लिखो(rtc, RTC_BANK1_RAM_DATA_PORT, *buf++);
+#endif
+			rtc->write(rtc, RTC_BANK1_RAM_DATA_PORT, *buf++);
 			pos++;
-		पूर्ण
+		}
 
-#अगर_अघोषित CONFIG_RTC_DRV_DS1685
+#ifndef CONFIG_RTC_DRV_DS1685
 		/* Disable burst-mode on DS17x85/DS17x87 */
-		rtc->ग_लिखो(rtc, RTC_EXT_CTRL_4A,
-			   (rtc->पढ़ो(rtc, RTC_EXT_CTRL_4A) &
+		rtc->write(rtc, RTC_EXT_CTRL_4A,
+			   (rtc->read(rtc, RTC_EXT_CTRL_4A) &
 			    ~(RTC_CTRL_4A_BME)));
-#पूर्ण_अगर
-		ds1685_rtc_चयन_to_bank0(rtc);
-	पूर्ण
-#पूर्ण_अगर /* !CONFIG_RTC_DRV_DS1689 */
+#endif
+		ds1685_rtc_switch_to_bank0(rtc);
+	}
+#endif /* !CONFIG_RTC_DRV_DS1689 */
 	mutex_unlock(rtc_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* ----------------------------------------------------------------------- */
-/* SysFS पूर्णांकerface */
+/* SysFS interface */
 
 /**
- * ds1685_rtc_sysfs_battery_show - sysfs file क्रम मुख्य battery status.
- * @dev: poपूर्णांकer to device काष्ठाure.
- * @attr: poपूर्णांकer to device_attribute काष्ठाure.
- * @buf: poपूर्णांकer to अक्षर array to hold the output.
+ * ds1685_rtc_sysfs_battery_show - sysfs file for main battery status.
+ * @dev: pointer to device structure.
+ * @attr: pointer to device_attribute structure.
+ * @buf: pointer to char array to hold the output.
  */
-अटल sमाप_प्रकार
-ds1685_rtc_sysfs_battery_show(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा ds1685_priv *rtc = dev_get_drvdata(dev->parent);
+static ssize_t
+ds1685_rtc_sysfs_battery_show(struct device *dev,
+			      struct device_attribute *attr, char *buf)
+{
+	struct ds1685_priv *rtc = dev_get_drvdata(dev->parent);
 	u8 ctrld;
 
-	ctrld = rtc->पढ़ो(rtc, RTC_CTRL_D);
+	ctrld = rtc->read(rtc, RTC_CTRL_D);
 
-	वापस प्र_लिखो(buf, "%s\n",
+	return sprintf(buf, "%s\n",
 			(ctrld & RTC_CTRL_D_VRT) ? "ok" : "not ok or N/A");
-पूर्ण
-अटल DEVICE_ATTR(battery, S_IRUGO, ds1685_rtc_sysfs_battery_show, शून्य);
+}
+static DEVICE_ATTR(battery, S_IRUGO, ds1685_rtc_sysfs_battery_show, NULL);
 
 /**
- * ds1685_rtc_sysfs_auxbatt_show - sysfs file क्रम aux battery status.
- * @dev: poपूर्णांकer to device काष्ठाure.
- * @attr: poपूर्णांकer to device_attribute काष्ठाure.
- * @buf: poपूर्णांकer to अक्षर array to hold the output.
+ * ds1685_rtc_sysfs_auxbatt_show - sysfs file for aux battery status.
+ * @dev: pointer to device structure.
+ * @attr: pointer to device_attribute structure.
+ * @buf: pointer to char array to hold the output.
  */
-अटल sमाप_प्रकार
-ds1685_rtc_sysfs_auxbatt_show(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा ds1685_priv *rtc = dev_get_drvdata(dev->parent);
+static ssize_t
+ds1685_rtc_sysfs_auxbatt_show(struct device *dev,
+			      struct device_attribute *attr, char *buf)
+{
+	struct ds1685_priv *rtc = dev_get_drvdata(dev->parent);
 	u8 ctrl4a;
 
-	ds1685_rtc_चयन_to_bank1(rtc);
-	ctrl4a = rtc->पढ़ो(rtc, RTC_EXT_CTRL_4A);
-	ds1685_rtc_चयन_to_bank0(rtc);
+	ds1685_rtc_switch_to_bank1(rtc);
+	ctrl4a = rtc->read(rtc, RTC_EXT_CTRL_4A);
+	ds1685_rtc_switch_to_bank0(rtc);
 
-	वापस प्र_लिखो(buf, "%s\n",
+	return sprintf(buf, "%s\n",
 			(ctrl4a & RTC_CTRL_4A_VRT2) ? "ok" : "not ok or N/A");
-पूर्ण
-अटल DEVICE_ATTR(auxbatt, S_IRUGO, ds1685_rtc_sysfs_auxbatt_show, शून्य);
+}
+static DEVICE_ATTR(auxbatt, S_IRUGO, ds1685_rtc_sysfs_auxbatt_show, NULL);
 
 /**
- * ds1685_rtc_sysfs_serial_show - sysfs file क्रम silicon serial number.
- * @dev: poपूर्णांकer to device काष्ठाure.
- * @attr: poपूर्णांकer to device_attribute काष्ठाure.
- * @buf: poपूर्णांकer to अक्षर array to hold the output.
+ * ds1685_rtc_sysfs_serial_show - sysfs file for silicon serial number.
+ * @dev: pointer to device structure.
+ * @attr: pointer to device_attribute structure.
+ * @buf: pointer to char array to hold the output.
  */
-अटल sमाप_प्रकार
-ds1685_rtc_sysfs_serial_show(काष्ठा device *dev,
-			     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा ds1685_priv *rtc = dev_get_drvdata(dev->parent);
+static ssize_t
+ds1685_rtc_sysfs_serial_show(struct device *dev,
+			     struct device_attribute *attr, char *buf)
+{
+	struct ds1685_priv *rtc = dev_get_drvdata(dev->parent);
 	u8 ssn[8];
 
-	ds1685_rtc_चयन_to_bank1(rtc);
+	ds1685_rtc_switch_to_bank1(rtc);
 	ds1685_rtc_get_ssn(rtc, ssn);
-	ds1685_rtc_चयन_to_bank0(rtc);
+	ds1685_rtc_switch_to_bank0(rtc);
 
-	वापस प्र_लिखो(buf, "%8phC\n", ssn);
-पूर्ण
-अटल DEVICE_ATTR(serial, S_IRUGO, ds1685_rtc_sysfs_serial_show, शून्य);
+	return sprintf(buf, "%8phC\n", ssn);
+}
+static DEVICE_ATTR(serial, S_IRUGO, ds1685_rtc_sysfs_serial_show, NULL);
 
 /*
- * काष्ठा ds1685_rtc_sysfs_misc_attrs - list क्रम misc RTC features.
+ * struct ds1685_rtc_sysfs_misc_attrs - list for misc RTC features.
  */
-अटल काष्ठा attribute*
-ds1685_rtc_sysfs_misc_attrs[] = अणु
+static struct attribute*
+ds1685_rtc_sysfs_misc_attrs[] = {
 	&dev_attr_battery.attr,
 	&dev_attr_auxbatt.attr,
 	&dev_attr_serial.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
 /*
- * काष्ठा ds1685_rtc_sysfs_misc_grp - attr group क्रम misc RTC features.
+ * struct ds1685_rtc_sysfs_misc_grp - attr group for misc RTC features.
  */
-अटल स्थिर काष्ठा attribute_group
-ds1685_rtc_sysfs_misc_grp = अणु
+static const struct attribute_group
+ds1685_rtc_sysfs_misc_grp = {
 	.name = "misc",
 	.attrs = ds1685_rtc_sysfs_misc_attrs,
-पूर्ण;
+};
 
 /* ----------------------------------------------------------------------- */
 /* Driver Probe/Removal */
 
 /**
  * ds1685_rtc_probe - initializes rtc driver.
- * @pdev: poपूर्णांकer to platक्रमm_device काष्ठाure.
+ * @pdev: pointer to platform_device structure.
  */
-अटल पूर्णांक
-ds1685_rtc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा rtc_device *rtc_dev;
-	काष्ठा ds1685_priv *rtc;
-	काष्ठा ds1685_rtc_platक्रमm_data *pdata;
+static int
+ds1685_rtc_probe(struct platform_device *pdev)
+{
+	struct rtc_device *rtc_dev;
+	struct ds1685_priv *rtc;
+	struct ds1685_rtc_platform_data *pdata;
 	u8 ctrla, ctrlb, hours;
-	अचिन्हित अक्षर am_pm;
-	पूर्णांक ret = 0;
-	काष्ठा nvmem_config nvmem_cfg = अणु
+	unsigned char am_pm;
+	int ret = 0;
+	struct nvmem_config nvmem_cfg = {
 		.name = "ds1685_nvram",
 		.size = NVRAM_TOTAL_SZ,
-		.reg_पढ़ो = ds1685_nvram_पढ़ो,
-		.reg_ग_लिखो = ds1685_nvram_ग_लिखो,
-	पूर्ण;
+		.reg_read = ds1685_nvram_read,
+		.reg_write = ds1685_nvram_write,
+	};
 
-	/* Get the platक्रमm data. */
-	pdata = (काष्ठा ds1685_rtc_platक्रमm_data *) pdev->dev.platक्रमm_data;
-	अगर (!pdata)
-		वापस -ENODEV;
+	/* Get the platform data. */
+	pdata = (struct ds1685_rtc_platform_data *) pdev->dev.platform_data;
+	if (!pdata)
+		return -ENODEV;
 
-	/* Allocate memory क्रम the rtc device. */
-	rtc = devm_kzalloc(&pdev->dev, माप(*rtc), GFP_KERNEL);
-	अगर (!rtc)
-		वापस -ENOMEM;
+	/* Allocate memory for the rtc device. */
+	rtc = devm_kzalloc(&pdev->dev, sizeof(*rtc), GFP_KERNEL);
+	if (!rtc)
+		return -ENOMEM;
 
 	/* Setup resources and access functions */
-	चयन (pdata->access_type) अणु
-	हाल ds1685_reg_direct:
-		rtc->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
-		अगर (IS_ERR(rtc->regs))
-			वापस PTR_ERR(rtc->regs);
-		rtc->पढ़ो = ds1685_पढ़ो;
-		rtc->ग_लिखो = ds1685_ग_लिखो;
-		अवरोध;
-	हाल ds1685_reg_indirect:
-		rtc->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
-		अगर (IS_ERR(rtc->regs))
-			वापस PTR_ERR(rtc->regs);
-		rtc->data = devm_platक्रमm_ioremap_resource(pdev, 1);
-		अगर (IS_ERR(rtc->data))
-			वापस PTR_ERR(rtc->data);
-		rtc->पढ़ो = ds1685_indirect_पढ़ो;
-		rtc->ग_लिखो = ds1685_indirect_ग_लिखो;
-		अवरोध;
-	पूर्ण
+	switch (pdata->access_type) {
+	case ds1685_reg_direct:
+		rtc->regs = devm_platform_ioremap_resource(pdev, 0);
+		if (IS_ERR(rtc->regs))
+			return PTR_ERR(rtc->regs);
+		rtc->read = ds1685_read;
+		rtc->write = ds1685_write;
+		break;
+	case ds1685_reg_indirect:
+		rtc->regs = devm_platform_ioremap_resource(pdev, 0);
+		if (IS_ERR(rtc->regs))
+			return PTR_ERR(rtc->regs);
+		rtc->data = devm_platform_ioremap_resource(pdev, 1);
+		if (IS_ERR(rtc->data))
+			return PTR_ERR(rtc->data);
+		rtc->read = ds1685_indirect_read;
+		rtc->write = ds1685_indirect_write;
+		break;
+	}
 
-	अगर (!rtc->पढ़ो || !rtc->ग_लिखो)
-		वापस -ENXIO;
+	if (!rtc->read || !rtc->write)
+		return -ENXIO;
 
-	/* Get the रेजिस्टर step size. */
-	अगर (pdata->regstep > 0)
+	/* Get the register step size. */
+	if (pdata->regstep > 0)
 		rtc->regstep = pdata->regstep;
-	अन्यथा
+	else
 		rtc->regstep = 1;
 
-	/* Platक्रमm pre-shutकरोwn function, अगर defined. */
-	अगर (pdata->plat_prepare_घातeroff)
-		rtc->prepare_घातeroff = pdata->plat_prepare_घातeroff;
+	/* Platform pre-shutdown function, if defined. */
+	if (pdata->plat_prepare_poweroff)
+		rtc->prepare_poweroff = pdata->plat_prepare_poweroff;
 
-	/* Platक्रमm wake_alarm function, अगर defined. */
-	अगर (pdata->plat_wake_alarm)
+	/* Platform wake_alarm function, if defined. */
+	if (pdata->plat_wake_alarm)
 		rtc->wake_alarm = pdata->plat_wake_alarm;
 
-	/* Platक्रमm post_ram_clear function, अगर defined. */
-	अगर (pdata->plat_post_ram_clear)
+	/* Platform post_ram_clear function, if defined. */
+	if (pdata->plat_post_ram_clear)
 		rtc->post_ram_clear = pdata->plat_post_ram_clear;
 
 	/* set the driver data. */
-	platक्रमm_set_drvdata(pdev, rtc);
+	platform_set_drvdata(pdev, rtc);
 
-	/* Turn the oscillator on अगर is not alपढ़ोy on (DV1 = 1). */
-	ctrla = rtc->पढ़ो(rtc, RTC_CTRL_A);
-	अगर (!(ctrla & RTC_CTRL_A_DV1))
+	/* Turn the oscillator on if is not already on (DV1 = 1). */
+	ctrla = rtc->read(rtc, RTC_CTRL_A);
+	if (!(ctrla & RTC_CTRL_A_DV1))
 		ctrla |= RTC_CTRL_A_DV1;
 
-	/* Enable the countकरोwn chain (DV2 = 0) */
+	/* Enable the countdown chain (DV2 = 0) */
 	ctrla &= ~(RTC_CTRL_A_DV2);
 
 	/* Clear RS3-RS0 in Control A. */
 	ctrla &= ~(RTC_CTRL_A_RS_MASK);
 
 	/*
-	 * All करोne with Control A.  Switch to Bank 1 क्रम the reमुख्यder of
+	 * All done with Control A.  Switch to Bank 1 for the remainder of
 	 * the RTC setup so we have access to the extended functions.
 	 */
 	ctrla |= RTC_CTRL_A_DV0;
-	rtc->ग_लिखो(rtc, RTC_CTRL_A, ctrla);
+	rtc->write(rtc, RTC_CTRL_A, ctrla);
 
 	/* Default to 32768kHz output. */
-	rtc->ग_लिखो(rtc, RTC_EXT_CTRL_4B,
-		   (rtc->पढ़ो(rtc, RTC_EXT_CTRL_4B) | RTC_CTRL_4B_E32K));
+	rtc->write(rtc, RTC_EXT_CTRL_4B,
+		   (rtc->read(rtc, RTC_EXT_CTRL_4B) | RTC_CTRL_4B_E32K));
 
-	/* Set the SET bit in Control B so we can करो some housekeeping. */
-	rtc->ग_लिखो(rtc, RTC_CTRL_B,
-		   (rtc->पढ़ो(rtc, RTC_CTRL_B) | RTC_CTRL_B_SET));
+	/* Set the SET bit in Control B so we can do some housekeeping. */
+	rtc->write(rtc, RTC_CTRL_B,
+		   (rtc->read(rtc, RTC_CTRL_B) | RTC_CTRL_B_SET));
 
-	/* Read Ext Ctrl 4A and check the INCR bit to aव्योम a lockout. */
-	जबतक (rtc->पढ़ो(rtc, RTC_EXT_CTRL_4A) & RTC_CTRL_4A_INCR)
+	/* Read Ext Ctrl 4A and check the INCR bit to avoid a lockout. */
+	while (rtc->read(rtc, RTC_EXT_CTRL_4A) & RTC_CTRL_4A_INCR)
 		cpu_relax();
 
 	/*
-	 * If the platक्रमm supports BCD mode, then set DM=0 in Control B.
-	 * Otherwise, set DM=1 क्रम BIN mode.
+	 * If the platform supports BCD mode, then set DM=0 in Control B.
+	 * Otherwise, set DM=1 for BIN mode.
 	 */
-	ctrlb = rtc->पढ़ो(rtc, RTC_CTRL_B);
-	अगर (pdata->bcd_mode)
+	ctrlb = rtc->read(rtc, RTC_CTRL_B);
+	if (pdata->bcd_mode)
 		ctrlb &= ~(RTC_CTRL_B_DM);
-	अन्यथा
+	else
 		ctrlb |= RTC_CTRL_B_DM;
 	rtc->bcd_mode = pdata->bcd_mode;
 
 	/*
 	 * Disable Daylight Savings Time (DSE = 0).
-	 * The RTC has hardcoded समयzone inक्रमmation that is rendered
+	 * The RTC has hardcoded timezone information that is rendered
 	 * obselete.  We'll let the OS deal with DST settings instead.
 	 */
-	अगर (ctrlb & RTC_CTRL_B_DSE)
+	if (ctrlb & RTC_CTRL_B_DSE)
 		ctrlb &= ~(RTC_CTRL_B_DSE);
 
 	/* Force 24-hour mode (2412 = 1). */
-	अगर (!(ctrlb & RTC_CTRL_B_2412)) अणु
-		/* Reinitialize the समय hours. */
-		hours = rtc->पढ़ो(rtc, RTC_HRS);
+	if (!(ctrlb & RTC_CTRL_B_2412)) {
+		/* Reinitialize the time hours. */
+		hours = rtc->read(rtc, RTC_HRS);
 		am_pm = hours & RTC_HRS_AMPM_MASK;
 		hours = ds1685_rtc_bcd2bin(rtc, hours, RTC_HRS_12_BCD_MASK,
 					   RTC_HRS_12_BIN_MASK);
@@ -1198,70 +1197,70 @@ ds1685_rtc_probe(काष्ठा platक्रमm_device *pdev)
 		ctrlb |= RTC_CTRL_B_2412;
 
 		/* Write back to Control B, including DM & DSE bits. */
-		rtc->ग_लिखो(rtc, RTC_CTRL_B, ctrlb);
+		rtc->write(rtc, RTC_CTRL_B, ctrlb);
 
-		/* Write the समय hours back. */
-		rtc->ग_लिखो(rtc, RTC_HRS,
+		/* Write the time hours back. */
+		rtc->write(rtc, RTC_HRS,
 			   ds1685_rtc_bin2bcd(rtc, hours,
 					      RTC_HRS_24_BIN_MASK,
 					      RTC_HRS_24_BCD_MASK));
 
 		/* Reinitialize the alarm hours. */
-		hours = rtc->पढ़ो(rtc, RTC_HRS_ALARM);
+		hours = rtc->read(rtc, RTC_HRS_ALARM);
 		am_pm = hours & RTC_HRS_AMPM_MASK;
 		hours = ds1685_rtc_bcd2bin(rtc, hours, RTC_HRS_12_BCD_MASK,
 					   RTC_HRS_12_BIN_MASK);
 		hours = ((hours == 12) ? 0 : ((am_pm) ? hours + 12 : hours));
 
 		/* Write the alarm hours back. */
-		rtc->ग_लिखो(rtc, RTC_HRS_ALARM,
+		rtc->write(rtc, RTC_HRS_ALARM,
 			   ds1685_rtc_bin2bcd(rtc, hours,
 					      RTC_HRS_24_BIN_MASK,
 					      RTC_HRS_24_BCD_MASK));
-	पूर्ण अन्यथा अणु
-		/* 24-hour mode is alपढ़ोy set, so ग_लिखो Control B back. */
-		rtc->ग_लिखो(rtc, RTC_CTRL_B, ctrlb);
-	पूर्ण
+	} else {
+		/* 24-hour mode is already set, so write Control B back. */
+		rtc->write(rtc, RTC_CTRL_B, ctrlb);
+	}
 
 	/* Unset the SET bit in Control B so the RTC can update. */
-	rtc->ग_लिखो(rtc, RTC_CTRL_B,
-		   (rtc->पढ़ो(rtc, RTC_CTRL_B) & ~(RTC_CTRL_B_SET)));
+	rtc->write(rtc, RTC_CTRL_B,
+		   (rtc->read(rtc, RTC_CTRL_B) & ~(RTC_CTRL_B_SET)));
 
-	/* Check the मुख्य battery. */
-	अगर (!(rtc->पढ़ो(rtc, RTC_CTRL_D) & RTC_CTRL_D_VRT))
+	/* Check the main battery. */
+	if (!(rtc->read(rtc, RTC_CTRL_D) & RTC_CTRL_D_VRT))
 		dev_warn(&pdev->dev,
 			 "Main battery is exhausted! RTC may be invalid!\n");
 
 	/* Check the auxillary battery.  It is optional. */
-	अगर (!(rtc->पढ़ो(rtc, RTC_EXT_CTRL_4A) & RTC_CTRL_4A_VRT2))
+	if (!(rtc->read(rtc, RTC_EXT_CTRL_4A) & RTC_CTRL_4A_VRT2))
 		dev_warn(&pdev->dev,
 			 "Aux battery is exhausted or not available.\n");
 
 	/* Read Ctrl B and clear PIE/AIE/UIE. */
-	rtc->ग_लिखो(rtc, RTC_CTRL_B,
-		   (rtc->पढ़ो(rtc, RTC_CTRL_B) & ~(RTC_CTRL_B_PAU_MASK)));
+	rtc->write(rtc, RTC_CTRL_B,
+		   (rtc->read(rtc, RTC_CTRL_B) & ~(RTC_CTRL_B_PAU_MASK)));
 
-	/* Reading Ctrl C स्वतः-clears PF/AF/UF. */
-	rtc->पढ़ो(rtc, RTC_CTRL_C);
+	/* Reading Ctrl C auto-clears PF/AF/UF. */
+	rtc->read(rtc, RTC_CTRL_C);
 
 	/* Read Ctrl 4B and clear RIE/WIE/KSE. */
-	rtc->ग_लिखो(rtc, RTC_EXT_CTRL_4B,
-		   (rtc->पढ़ो(rtc, RTC_EXT_CTRL_4B) & ~(RTC_CTRL_4B_RWK_MASK)));
+	rtc->write(rtc, RTC_EXT_CTRL_4B,
+		   (rtc->read(rtc, RTC_EXT_CTRL_4B) & ~(RTC_CTRL_4B_RWK_MASK)));
 
 	/* Clear RF/WF/KF in Ctrl 4A. */
-	rtc->ग_लिखो(rtc, RTC_EXT_CTRL_4A,
-		   (rtc->पढ़ो(rtc, RTC_EXT_CTRL_4A) & ~(RTC_CTRL_4A_RWK_MASK)));
+	rtc->write(rtc, RTC_EXT_CTRL_4A,
+		   (rtc->read(rtc, RTC_EXT_CTRL_4A) & ~(RTC_CTRL_4A_RWK_MASK)));
 
 	/*
-	 * Re-enable KSE to handle घातer button events.  We करो not enable
-	 * WIE or RIE by शेष.
+	 * Re-enable KSE to handle power button events.  We do not enable
+	 * WIE or RIE by default.
 	 */
-	rtc->ग_लिखो(rtc, RTC_EXT_CTRL_4B,
-		   (rtc->पढ़ो(rtc, RTC_EXT_CTRL_4B) | RTC_CTRL_4B_KSE));
+	rtc->write(rtc, RTC_EXT_CTRL_4B,
+		   (rtc->read(rtc, RTC_EXT_CTRL_4B) | RTC_CTRL_4B_KSE));
 
 	rtc_dev = devm_rtc_allocate_device(&pdev->dev);
-	अगर (IS_ERR(rtc_dev))
-		वापस PTR_ERR(rtc_dev);
+	if (IS_ERR(rtc_dev))
+		return PTR_ERR(rtc_dev);
 
 	rtc_dev->ops = &ds1685_rtc_ops;
 
@@ -1272,98 +1271,98 @@ ds1685_rtc_probe(काष्ठा platक्रमm_device *pdev)
 	/* Maximum periodic rate is 8192Hz (0.122070ms). */
 	rtc_dev->max_user_freq = RTC_MAX_USER_FREQ;
 
-	/* See अगर the platक्रमm करोesn't support UIE. */
-	अगर (pdata->uie_unsupported)
+	/* See if the platform doesn't support UIE. */
+	if (pdata->uie_unsupported)
 		rtc_dev->uie_unsupported = 1;
 
 	rtc->dev = rtc_dev;
 
 	/*
-	 * Fetch the IRQ and setup the पूर्णांकerrupt handler.
+	 * Fetch the IRQ and setup the interrupt handler.
 	 *
-	 * Not all platक्रमms have the IRQF pin tied to something.  If not, the
-	 * RTC will still set the *IE / *F flags and उठाओ IRQF in ctrlc, but
-	 * there won't be an स्वतःmatic way of notअगरying the kernel about it,
+	 * Not all platforms have the IRQF pin tied to something.  If not, the
+	 * RTC will still set the *IE / *F flags and raise IRQF in ctrlc, but
+	 * there won't be an automatic way of notifying the kernel about it,
 	 * unless ctrlc is explicitly polled.
 	 */
-	अगर (!pdata->no_irq) अणु
-		ret = platक्रमm_get_irq(pdev, 0);
-		अगर (ret <= 0)
-			वापस ret;
+	if (!pdata->no_irq) {
+		ret = platform_get_irq(pdev, 0);
+		if (ret <= 0)
+			return ret;
 
 		rtc->irq_num = ret;
 
 		/* Request an IRQ. */
-		ret = devm_request_thपढ़ोed_irq(&pdev->dev, rtc->irq_num,
-				       शून्य, ds1685_rtc_irq_handler,
+		ret = devm_request_threaded_irq(&pdev->dev, rtc->irq_num,
+				       NULL, ds1685_rtc_irq_handler,
 				       IRQF_SHARED | IRQF_ONESHOT,
 				       pdev->name, pdev);
 
-		/* Check to see अगर something came back. */
-		अगर (unlikely(ret)) अणु
+		/* Check to see if something came back. */
+		if (unlikely(ret)) {
 			dev_warn(&pdev->dev,
 				 "RTC interrupt not available\n");
 			rtc->irq_num = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	rtc->no_irq = pdata->no_irq;
 
 	/* Setup complete. */
-	ds1685_rtc_चयन_to_bank0(rtc);
+	ds1685_rtc_switch_to_bank0(rtc);
 
 	ret = rtc_add_group(rtc_dev, &ds1685_rtc_sysfs_misc_grp);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	nvmem_cfg.priv = rtc;
-	ret = devm_rtc_nvmem_रेजिस्टर(rtc_dev, &nvmem_cfg);
-	अगर (ret)
-		वापस ret;
+	ret = devm_rtc_nvmem_register(rtc_dev, &nvmem_cfg);
+	if (ret)
+		return ret;
 
-	वापस devm_rtc_रेजिस्टर_device(rtc_dev);
-पूर्ण
+	return devm_rtc_register_device(rtc_dev);
+}
 
 /**
- * ds1685_rtc_हटाओ - हटाओs rtc driver.
- * @pdev: poपूर्णांकer to platक्रमm_device काष्ठाure.
+ * ds1685_rtc_remove - removes rtc driver.
+ * @pdev: pointer to platform_device structure.
  */
-अटल पूर्णांक
-ds1685_rtc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ds1685_priv *rtc = platक्रमm_get_drvdata(pdev);
+static int
+ds1685_rtc_remove(struct platform_device *pdev)
+{
+	struct ds1685_priv *rtc = platform_get_drvdata(pdev);
 
 	/* Read Ctrl B and clear PIE/AIE/UIE. */
-	rtc->ग_लिखो(rtc, RTC_CTRL_B,
-		   (rtc->पढ़ो(rtc, RTC_CTRL_B) &
+	rtc->write(rtc, RTC_CTRL_B,
+		   (rtc->read(rtc, RTC_CTRL_B) &
 		    ~(RTC_CTRL_B_PAU_MASK)));
 
-	/* Reading Ctrl C स्वतः-clears PF/AF/UF. */
-	rtc->पढ़ो(rtc, RTC_CTRL_C);
+	/* Reading Ctrl C auto-clears PF/AF/UF. */
+	rtc->read(rtc, RTC_CTRL_C);
 
 	/* Read Ctrl 4B and clear RIE/WIE/KSE. */
-	rtc->ग_लिखो(rtc, RTC_EXT_CTRL_4B,
-		   (rtc->पढ़ो(rtc, RTC_EXT_CTRL_4B) &
+	rtc->write(rtc, RTC_EXT_CTRL_4B,
+		   (rtc->read(rtc, RTC_EXT_CTRL_4B) &
 		    ~(RTC_CTRL_4B_RWK_MASK)));
 
 	/* Manually clear RF/WF/KF in Ctrl 4A. */
-	rtc->ग_लिखो(rtc, RTC_EXT_CTRL_4A,
-		   (rtc->पढ़ो(rtc, RTC_EXT_CTRL_4A) &
+	rtc->write(rtc, RTC_EXT_CTRL_4A,
+		   (rtc->read(rtc, RTC_EXT_CTRL_4A) &
 		    ~(RTC_CTRL_4A_RWK_MASK)));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * ds1685_rtc_driver - rtc driver properties.
  */
-अटल काष्ठा platक्रमm_driver ds1685_rtc_driver = अणु
-	.driver		= अणु
+static struct platform_driver ds1685_rtc_driver = {
+	.driver		= {
 		.name	= "rtc-ds1685",
-	पूर्ण,
+	},
 	.probe		= ds1685_rtc_probe,
-	.हटाओ		= ds1685_rtc_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(ds1685_rtc_driver);
+	.remove		= ds1685_rtc_remove,
+};
+module_platform_driver(ds1685_rtc_driver);
 /* ----------------------------------------------------------------------- */
 
 
@@ -1371,50 +1370,50 @@ module_platक्रमm_driver(ds1685_rtc_driver);
 /* Poweroff function */
 
 /**
- * ds1685_rtc_घातeroff - uses the RTC chip to घातer the प्रणाली off.
- * @pdev: poपूर्णांकer to platक्रमm_device काष्ठाure.
+ * ds1685_rtc_poweroff - uses the RTC chip to power the system off.
+ * @pdev: pointer to platform_device structure.
  */
-व्योम __noवापस
-ds1685_rtc_घातeroff(काष्ठा platक्रमm_device *pdev)
-अणु
+void __noreturn
+ds1685_rtc_poweroff(struct platform_device *pdev)
+{
 	u8 ctrla, ctrl4a, ctrl4b;
-	काष्ठा ds1685_priv *rtc;
+	struct ds1685_priv *rtc;
 
-	/* Check क्रम valid RTC data, अन्यथा, spin क्रमever. */
-	अगर (unlikely(!pdev)) अणु
+	/* Check for valid RTC data, else, spin forever. */
+	if (unlikely(!pdev)) {
 		pr_emerg("platform device data not available, spinning forever ...\n");
-		जबतक(1);
+		while(1);
 		unreachable();
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Get the rtc data. */
-		rtc = platक्रमm_get_drvdata(pdev);
+		rtc = platform_get_drvdata(pdev);
 
 		/*
 		 * Disable our IRQ.  We're powering down, so we're not
 		 * going to worry about cleaning up.  Most of that should
-		 * have been taken care of by the shutकरोwn scripts and this
+		 * have been taken care of by the shutdown scripts and this
 		 * is the final function call.
 		 */
-		अगर (!rtc->no_irq)
+		if (!rtc->no_irq)
 			disable_irq_nosync(rtc->irq_num);
 
-		/* Oscillator must be on and the countकरोwn chain enabled. */
-		ctrla = rtc->पढ़ो(rtc, RTC_CTRL_A);
+		/* Oscillator must be on and the countdown chain enabled. */
+		ctrla = rtc->read(rtc, RTC_CTRL_A);
 		ctrla |= RTC_CTRL_A_DV1;
 		ctrla &= ~(RTC_CTRL_A_DV2);
-		rtc->ग_लिखो(rtc, RTC_CTRL_A, ctrla);
+		rtc->write(rtc, RTC_CTRL_A, ctrla);
 
 		/*
 		 * Read Control 4A and check the status of the auxillary
 		 * battery.  This must be present and working (VRT2 = 1)
-		 * क्रम wakeup and kickstart functionality to be useful.
+		 * for wakeup and kickstart functionality to be useful.
 		 */
-		ds1685_rtc_चयन_to_bank1(rtc);
-		ctrl4a = rtc->पढ़ो(rtc, RTC_EXT_CTRL_4A);
-		अगर (ctrl4a & RTC_CTRL_4A_VRT2) अणु
-			/* Clear all of the पूर्णांकerrupt flags on Control 4A. */
+		ds1685_rtc_switch_to_bank1(rtc);
+		ctrl4a = rtc->read(rtc, RTC_EXT_CTRL_4A);
+		if (ctrl4a & RTC_CTRL_4A_VRT2) {
+			/* Clear all of the interrupt flags on Control 4A. */
 			ctrl4a &= ~(RTC_CTRL_4A_RWK_MASK);
-			rtc->ग_लिखो(rtc, RTC_EXT_CTRL_4A, ctrl4a);
+			rtc->write(rtc, RTC_EXT_CTRL_4A, ctrl4a);
 
 			/*
 			 * The auxillary battery is present and working.
@@ -1422,24 +1421,24 @@ ds1685_rtc_घातeroff(काष्ठा platक्रमm_device *pdev)
 			 * wake-up (WIE=1), and enable kickstart (KSE=1)
 			 * in Control 4B.
 			 */
-			ctrl4b = rtc->पढ़ो(rtc, RTC_EXT_CTRL_4B);
+			ctrl4b = rtc->read(rtc, RTC_EXT_CTRL_4B);
 			ctrl4b |= (RTC_CTRL_4B_ABE | RTC_CTRL_4B_WIE |
 				   RTC_CTRL_4B_KSE);
-			rtc->ग_लिखो(rtc, RTC_EXT_CTRL_4B, ctrl4b);
-		पूर्ण
+			rtc->write(rtc, RTC_EXT_CTRL_4B, ctrl4b);
+		}
 
-		/* Set PAB to 1 in Control 4A to घातer the प्रणाली करोwn. */
+		/* Set PAB to 1 in Control 4A to power the system down. */
 		dev_warn(&pdev->dev, "Powerdown.\n");
 		msleep(20);
-		rtc->ग_लिखो(rtc, RTC_EXT_CTRL_4A,
+		rtc->write(rtc, RTC_EXT_CTRL_4A,
 			   (ctrl4a | RTC_CTRL_4A_PAB));
 
-		/* Spin ... we करो not चयन back to bank0. */
-		जबतक(1);
+		/* Spin ... we do not switch back to bank0. */
+		while(1);
 		unreachable();
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(ds1685_rtc_घातeroff);
+	}
+}
+EXPORT_SYMBOL(ds1685_rtc_poweroff);
 /* ----------------------------------------------------------------------- */
 
 

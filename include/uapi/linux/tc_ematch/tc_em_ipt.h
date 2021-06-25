@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित __LINUX_TC_EM_IPT_H
-#घोषणा __LINUX_TC_EM_IPT_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef __LINUX_TC_EM_IPT_H
+#define __LINUX_TC_EM_IPT_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/pkt_cls.h>
+#include <linux/types.h>
+#include <linux/pkt_cls.h>
 
-क्रमागत अणु
+enum {
 	TCA_EM_IPT_UNSPEC,
 	TCA_EM_IPT_HOOK,
 	TCA_EM_IPT_MATCH_NAME,
@@ -14,8 +13,8 @@
 	TCA_EM_IPT_NFPROTO,
 	TCA_EM_IPT_MATCH_DATA,
 	__TCA_EM_IPT_MAX
-पूर्ण;
+};
 
-#घोषणा TCA_EM_IPT_MAX (__TCA_EM_IPT_MAX - 1)
+#define TCA_EM_IPT_MAX (__TCA_EM_IPT_MAX - 1)
 
-#पूर्ण_अगर
+#endif

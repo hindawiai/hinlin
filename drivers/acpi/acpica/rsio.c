@@ -1,16 +1,15 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /*******************************************************************************
  *
  * Module Name: rsio - IO and DMA resource descriptors
  *
  ******************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acresrc.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acresrc.h"
 
-#घोषणा _COMPONENT          ACPI_RESOURCES
+#define _COMPONENT          ACPI_RESOURCES
 ACPI_MODULE_NAME("rsio")
 
 /*******************************************************************************
@@ -18,20 +17,20 @@ ACPI_MODULE_NAME("rsio")
  * acpi_rs_convert_io
  *
  ******************************************************************************/
-काष्ठा acpi_rsconvert_info acpi_rs_convert_io[5] = अणु
-	अणुACPI_RSC_INITGET, ACPI_RESOURCE_TYPE_IO,
-	 ACPI_RS_SIZE(काष्ठा acpi_resource_io),
-	 ACPI_RSC_TABLE_SIZE(acpi_rs_convert_io)पूर्ण,
+struct acpi_rsconvert_info acpi_rs_convert_io[5] = {
+	{ACPI_RSC_INITGET, ACPI_RESOURCE_TYPE_IO,
+	 ACPI_RS_SIZE(struct acpi_resource_io),
+	 ACPI_RSC_TABLE_SIZE(acpi_rs_convert_io)},
 
-	अणुACPI_RSC_INITSET, ACPI_RESOURCE_NAME_IO,
-	 माप(काष्ठा aml_resource_io),
-	 0पूर्ण,
+	{ACPI_RSC_INITSET, ACPI_RESOURCE_NAME_IO,
+	 sizeof(struct aml_resource_io),
+	 0},
 
 	/* Decode flag */
 
-	अणुACPI_RSC_1BITFLAG, ACPI_RS_OFFSET(data.io.io_decode),
+	{ACPI_RSC_1BITFLAG, ACPI_RS_OFFSET(data.io.io_decode),
 	 AML_OFFSET(io.flags),
-	 0पूर्ण,
+	 0},
 	/*
 	 * These fields are contiguous in both the source and destination:
 	 * Address Alignment
@@ -39,14 +38,14 @@ ACPI_MODULE_NAME("rsio")
 	 * Minimum Base Address
 	 * Maximum Base Address
 	 */
-	अणुACPI_RSC_MOVE8, ACPI_RS_OFFSET(data.io.alignment),
+	{ACPI_RSC_MOVE8, ACPI_RS_OFFSET(data.io.alignment),
 	 AML_OFFSET(io.alignment),
-	 2पूर्ण,
+	 2},
 
-	अणुACPI_RSC_MOVE16, ACPI_RS_OFFSET(data.io.minimum),
+	{ACPI_RSC_MOVE16, ACPI_RS_OFFSET(data.io.minimum),
 	 AML_OFFSET(io.minimum),
-	 2पूर्ण
-पूर्ण;
+	 2}
+};
 
 /*******************************************************************************
  *
@@ -54,27 +53,27 @@ ACPI_MODULE_NAME("rsio")
  *
  ******************************************************************************/
 
-काष्ठा acpi_rsconvert_info acpi_rs_convert_fixed_io[4] = अणु
-	अणुACPI_RSC_INITGET, ACPI_RESOURCE_TYPE_FIXED_IO,
-	 ACPI_RS_SIZE(काष्ठा acpi_resource_fixed_io),
-	 ACPI_RSC_TABLE_SIZE(acpi_rs_convert_fixed_io)पूर्ण,
+struct acpi_rsconvert_info acpi_rs_convert_fixed_io[4] = {
+	{ACPI_RSC_INITGET, ACPI_RESOURCE_TYPE_FIXED_IO,
+	 ACPI_RS_SIZE(struct acpi_resource_fixed_io),
+	 ACPI_RSC_TABLE_SIZE(acpi_rs_convert_fixed_io)},
 
-	अणुACPI_RSC_INITSET, ACPI_RESOURCE_NAME_FIXED_IO,
-	 माप(काष्ठा aml_resource_fixed_io),
-	 0पूर्ण,
+	{ACPI_RSC_INITSET, ACPI_RESOURCE_NAME_FIXED_IO,
+	 sizeof(struct aml_resource_fixed_io),
+	 0},
 	/*
 	 * These fields are contiguous in both the source and destination:
 	 * Base Address
 	 * Length
 	 */
-	अणुACPI_RSC_MOVE8, ACPI_RS_OFFSET(data.fixed_io.address_length),
+	{ACPI_RSC_MOVE8, ACPI_RS_OFFSET(data.fixed_io.address_length),
 	 AML_OFFSET(fixed_io.address_length),
-	 1पूर्ण,
+	 1},
 
-	अणुACPI_RSC_MOVE16, ACPI_RS_OFFSET(data.fixed_io.address),
+	{ACPI_RSC_MOVE16, ACPI_RS_OFFSET(data.fixed_io.address),
 	 AML_OFFSET(fixed_io.address),
-	 1पूर्ण
-पूर्ण;
+	 1}
+};
 
 /*******************************************************************************
  *
@@ -82,14 +81,14 @@ ACPI_MODULE_NAME("rsio")
  *
  ******************************************************************************/
 
-काष्ठा acpi_rsconvert_info acpi_rs_convert_generic_reg[4] = अणु
-	अणुACPI_RSC_INITGET, ACPI_RESOURCE_TYPE_GENERIC_REGISTER,
-	 ACPI_RS_SIZE(काष्ठा acpi_resource_generic_रेजिस्टर),
-	 ACPI_RSC_TABLE_SIZE(acpi_rs_convert_generic_reg)पूर्ण,
+struct acpi_rsconvert_info acpi_rs_convert_generic_reg[4] = {
+	{ACPI_RSC_INITGET, ACPI_RESOURCE_TYPE_GENERIC_REGISTER,
+	 ACPI_RS_SIZE(struct acpi_resource_generic_register),
+	 ACPI_RSC_TABLE_SIZE(acpi_rs_convert_generic_reg)},
 
-	अणुACPI_RSC_INITSET, ACPI_RESOURCE_NAME_GENERIC_REGISTER,
-	 माप(काष्ठा aml_resource_generic_रेजिस्टर),
-	 0पूर्ण,
+	{ACPI_RSC_INITSET, ACPI_RESOURCE_NAME_GENERIC_REGISTER,
+	 sizeof(struct aml_resource_generic_register),
+	 0},
 	/*
 	 * These fields are contiguous in both the source and destination:
 	 * Address Space ID
@@ -97,16 +96,16 @@ ACPI_MODULE_NAME("rsio")
 	 * Register Bit Offset
 	 * Access Size
 	 */
-	अणुACPI_RSC_MOVE8, ACPI_RS_OFFSET(data.generic_reg.space_id),
+	{ACPI_RSC_MOVE8, ACPI_RS_OFFSET(data.generic_reg.space_id),
 	 AML_OFFSET(generic_reg.address_space_id),
-	 4पूर्ण,
+	 4},
 
 	/* Get the Register Address */
 
-	अणुACPI_RSC_MOVE64, ACPI_RS_OFFSET(data.generic_reg.address),
+	{ACPI_RSC_MOVE64, ACPI_RS_OFFSET(data.generic_reg.address),
 	 AML_OFFSET(generic_reg.address),
-	 1पूर्ण
-पूर्ण;
+	 1}
+};
 
 /*******************************************************************************
  *
@@ -114,15 +113,15 @@ ACPI_MODULE_NAME("rsio")
  *
  ******************************************************************************/
 
-काष्ठा acpi_rsconvert_info acpi_rs_convert_end_dpf[2] = अणु
-	अणुACPI_RSC_INITGET, ACPI_RESOURCE_TYPE_END_DEPENDENT,
+struct acpi_rsconvert_info acpi_rs_convert_end_dpf[2] = {
+	{ACPI_RSC_INITGET, ACPI_RESOURCE_TYPE_END_DEPENDENT,
 	 ACPI_RS_SIZE_MIN,
-	 ACPI_RSC_TABLE_SIZE(acpi_rs_convert_end_dpf)पूर्ण,
+	 ACPI_RSC_TABLE_SIZE(acpi_rs_convert_end_dpf)},
 
-	अणुACPI_RSC_INITSET, ACPI_RESOURCE_NAME_END_DEPENDENT,
-	 माप(काष्ठा aml_resource_end_dependent),
-	 0पूर्ण
-पूर्ण;
+	{ACPI_RSC_INITSET, ACPI_RESOURCE_NAME_END_DEPENDENT,
+	 sizeof(struct aml_resource_end_dependent),
+	 0}
+};
 
 /*******************************************************************************
  *
@@ -130,20 +129,20 @@ ACPI_MODULE_NAME("rsio")
  *
  ******************************************************************************/
 
-काष्ठा acpi_rsconvert_info acpi_rs_convert_end_tag[2] = अणु
-	अणुACPI_RSC_INITGET, ACPI_RESOURCE_TYPE_END_TAG,
+struct acpi_rsconvert_info acpi_rs_convert_end_tag[2] = {
+	{ACPI_RSC_INITGET, ACPI_RESOURCE_TYPE_END_TAG,
 	 ACPI_RS_SIZE_MIN,
-	 ACPI_RSC_TABLE_SIZE(acpi_rs_convert_end_tag)पूर्ण,
+	 ACPI_RSC_TABLE_SIZE(acpi_rs_convert_end_tag)},
 
 	/*
 	 * Note: The checksum field is set to zero, meaning that the resource
-	 * data is treated as अगर the checksum operation succeeded.
+	 * data is treated as if the checksum operation succeeded.
 	 * (ACPI Spec 1.0b Section 6.4.2.8)
 	 */
-	अणुACPI_RSC_INITSET, ACPI_RESOURCE_NAME_END_TAG,
-	 माप(काष्ठा aml_resource_end_tag),
-	 0पूर्ण
-पूर्ण;
+	{ACPI_RSC_INITSET, ACPI_RESOURCE_NAME_END_TAG,
+	 sizeof(struct aml_resource_end_tag),
+	 0}
+};
 
 /*******************************************************************************
  *
@@ -151,39 +150,39 @@ ACPI_MODULE_NAME("rsio")
  *
  ******************************************************************************/
 
-काष्ठा acpi_rsconvert_info acpi_rs_get_start_dpf[6] = अणु
-	अणुACPI_RSC_INITGET, ACPI_RESOURCE_TYPE_START_DEPENDENT,
-	 ACPI_RS_SIZE(काष्ठा acpi_resource_start_dependent),
-	 ACPI_RSC_TABLE_SIZE(acpi_rs_get_start_dpf)पूर्ण,
+struct acpi_rsconvert_info acpi_rs_get_start_dpf[6] = {
+	{ACPI_RSC_INITGET, ACPI_RESOURCE_TYPE_START_DEPENDENT,
+	 ACPI_RS_SIZE(struct acpi_resource_start_dependent),
+	 ACPI_RSC_TABLE_SIZE(acpi_rs_get_start_dpf)},
 
-	/* Defaults क्रम Compatibility and Perक्रमmance priorities */
+	/* Defaults for Compatibility and Performance priorities */
 
-	अणुACPI_RSC_SET8, ACPI_RS_OFFSET(data.start_dpf.compatibility_priority),
+	{ACPI_RSC_SET8, ACPI_RS_OFFSET(data.start_dpf.compatibility_priority),
 	 ACPI_ACCEPTABLE_CONFIGURATION,
-	 2पूर्ण,
+	 2},
 
-	/* Get the descriptor length (0 or 1 क्रम Start Dpf descriptor) */
+	/* Get the descriptor length (0 or 1 for Start Dpf descriptor) */
 
-	अणुACPI_RSC_1BITFLAG, ACPI_RS_OFFSET(data.start_dpf.descriptor_length),
+	{ACPI_RSC_1BITFLAG, ACPI_RS_OFFSET(data.start_dpf.descriptor_length),
 	 AML_OFFSET(start_dpf.descriptor_type),
-	 0पूर्ण,
+	 0},
 
-	/* All करोne अगर there is no flag byte present in the descriptor */
+	/* All done if there is no flag byte present in the descriptor */
 
-	अणुACPI_RSC_EXIT_NE, ACPI_RSC_COMPARE_AML_LENGTH, 0, 1पूर्ण,
+	{ACPI_RSC_EXIT_NE, ACPI_RSC_COMPARE_AML_LENGTH, 0, 1},
 
 	/* Flag byte is present, get the flags */
 
-	अणुACPI_RSC_2BITFLAG,
+	{ACPI_RSC_2BITFLAG,
 	 ACPI_RS_OFFSET(data.start_dpf.compatibility_priority),
 	 AML_OFFSET(start_dpf.flags),
-	 0पूर्ण,
+	 0},
 
-	अणुACPI_RSC_2BITFLAG,
-	 ACPI_RS_OFFSET(data.start_dpf.perक्रमmance_robustness),
+	{ACPI_RSC_2BITFLAG,
+	 ACPI_RS_OFFSET(data.start_dpf.performance_robustness),
 	 AML_OFFSET(start_dpf.flags),
-	 2पूर्ण
-पूर्ण;
+	 2}
+};
 
 /*******************************************************************************
  *
@@ -191,65 +190,65 @@ ACPI_MODULE_NAME("rsio")
  *
  ******************************************************************************/
 
-काष्ठा acpi_rsconvert_info acpi_rs_set_start_dpf[10] = अणु
-	/* Start with a शेष descriptor of length 1 */
+struct acpi_rsconvert_info acpi_rs_set_start_dpf[10] = {
+	/* Start with a default descriptor of length 1 */
 
-	अणुACPI_RSC_INITSET, ACPI_RESOURCE_NAME_START_DEPENDENT,
-	 माप(काष्ठा aml_resource_start_dependent),
-	 ACPI_RSC_TABLE_SIZE(acpi_rs_set_start_dpf)पूर्ण,
+	{ACPI_RSC_INITSET, ACPI_RESOURCE_NAME_START_DEPENDENT,
+	 sizeof(struct aml_resource_start_dependent),
+	 ACPI_RSC_TABLE_SIZE(acpi_rs_set_start_dpf)},
 
-	/* Set the शेष flag values */
+	/* Set the default flag values */
 
-	अणुACPI_RSC_2BITFLAG,
+	{ACPI_RSC_2BITFLAG,
 	 ACPI_RS_OFFSET(data.start_dpf.compatibility_priority),
 	 AML_OFFSET(start_dpf.flags),
-	 0पूर्ण,
+	 0},
 
-	अणुACPI_RSC_2BITFLAG,
-	 ACPI_RS_OFFSET(data.start_dpf.perक्रमmance_robustness),
+	{ACPI_RSC_2BITFLAG,
+	 ACPI_RS_OFFSET(data.start_dpf.performance_robustness),
 	 AML_OFFSET(start_dpf.flags),
-	 2पूर्ण,
+	 2},
 	/*
-	 * All करोne अगर the output descriptor length is required to be 1
+	 * All done if the output descriptor length is required to be 1
 	 * (i.e., optimization to 0 bytes cannot be attempted)
 	 */
-	अणुACPI_RSC_EXIT_EQ, ACPI_RSC_COMPARE_VALUE,
+	{ACPI_RSC_EXIT_EQ, ACPI_RSC_COMPARE_VALUE,
 	 ACPI_RS_OFFSET(data.start_dpf.descriptor_length),
-	 1पूर्ण,
+	 1},
 
 	/* Set length to 0 bytes (no flags byte) */
 
-	अणुACPI_RSC_LENGTH, 0, 0,
-	 माप(काष्ठा aml_resource_start_dependent_noprio)पूर्ण,
+	{ACPI_RSC_LENGTH, 0, 0,
+	 sizeof(struct aml_resource_start_dependent_noprio)},
 
 	/*
-	 * All करोne अगर the output descriptor length is required to be 0.
+	 * All done if the output descriptor length is required to be 0.
 	 *
-	 * TBD: Perhaps we should check क्रम error अगर input flags are not
+	 * TBD: Perhaps we should check for error if input flags are not
 	 * compatible with a 0-byte descriptor.
 	 */
-	अणुACPI_RSC_EXIT_EQ, ACPI_RSC_COMPARE_VALUE,
+	{ACPI_RSC_EXIT_EQ, ACPI_RSC_COMPARE_VALUE,
 	 ACPI_RS_OFFSET(data.start_dpf.descriptor_length),
-	 0पूर्ण,
+	 0},
 
 	/* Reset length to 1 byte (descriptor with flags byte) */
 
-	अणुACPI_RSC_LENGTH, 0, 0, माप(काष्ठा aml_resource_start_dependent)पूर्ण,
+	{ACPI_RSC_LENGTH, 0, 0, sizeof(struct aml_resource_start_dependent)},
 
 	/*
-	 * All करोne अगर flags byte is necessary -- अगर either priority value
+	 * All done if flags byte is necessary -- if either priority value
 	 * is not ACPI_ACCEPTABLE_CONFIGURATION
 	 */
-	अणुACPI_RSC_EXIT_NE, ACPI_RSC_COMPARE_VALUE,
+	{ACPI_RSC_EXIT_NE, ACPI_RSC_COMPARE_VALUE,
 	 ACPI_RS_OFFSET(data.start_dpf.compatibility_priority),
-	 ACPI_ACCEPTABLE_CONFIGURATIONपूर्ण,
+	 ACPI_ACCEPTABLE_CONFIGURATION},
 
-	अणुACPI_RSC_EXIT_NE, ACPI_RSC_COMPARE_VALUE,
-	 ACPI_RS_OFFSET(data.start_dpf.perक्रमmance_robustness),
-	 ACPI_ACCEPTABLE_CONFIGURATIONपूर्ण,
+	{ACPI_RSC_EXIT_NE, ACPI_RSC_COMPARE_VALUE,
+	 ACPI_RS_OFFSET(data.start_dpf.performance_robustness),
+	 ACPI_ACCEPTABLE_CONFIGURATION},
 
 	/* Flag byte is not necessary */
 
-	अणुACPI_RSC_LENGTH, 0, 0,
-	 माप(काष्ठा aml_resource_start_dependent_noprio)पूर्ण
-पूर्ण;
+	{ACPI_RSC_LENGTH, 0, 0,
+	 sizeof(struct aml_resource_start_dependent_noprio)}
+};

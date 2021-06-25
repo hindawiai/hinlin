@@ -1,137 +1,136 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  max517.c - Support क्रम Maxim MAX517, MAX518 and MAX519
+ *  max517.c - Support for Maxim MAX517, MAX518 and MAX519
  *
  *  Copyright (C) 2010, 2011 Roland Stigge <stigge@antcom.de>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/err.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/jiffies.h>
+#include <linux/i2c.h>
+#include <linux/err.h>
 
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
-#समावेश <linux/iio/dac/max517.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
+#include <linux/iio/dac/max517.h>
 
-#घोषणा MAX517_DRV_NAME	"max517"
+#define MAX517_DRV_NAME	"max517"
 
 /* Commands */
-#घोषणा COMMAND_CHANNEL0	0x00
-#घोषणा COMMAND_CHANNEL1	0x01 /* क्रम MAX518 and MAX519 */
-#घोषणा COMMAND_PD		0x08 /* Power Down */
+#define COMMAND_CHANNEL0	0x00
+#define COMMAND_CHANNEL1	0x01 /* for MAX518 and MAX519 */
+#define COMMAND_PD		0x08 /* Power Down */
 
-क्रमागत max517_device_ids अणु
+enum max517_device_ids {
 	ID_MAX517,
 	ID_MAX518,
 	ID_MAX519,
 	ID_MAX520,
 	ID_MAX521,
-पूर्ण;
+};
 
-काष्ठा max517_data अणु
-	काष्ठा i2c_client	*client;
-	अचिन्हित लघु		vref_mv[8];
-पूर्ण;
+struct max517_data {
+	struct i2c_client	*client;
+	unsigned short		vref_mv[8];
+};
 
 /*
  * channel: bit 0: channel 1
  *          bit 1: channel 2
  * (this way, it's possible to set both channels at once)
  */
-अटल पूर्णांक max517_set_value(काष्ठा iio_dev *indio_dev,
-	दीर्घ val, पूर्णांक channel)
-अणु
-	काष्ठा max517_data *data = iio_priv(indio_dev);
-	काष्ठा i2c_client *client = data->client;
+static int max517_set_value(struct iio_dev *indio_dev,
+	long val, int channel)
+{
+	struct max517_data *data = iio_priv(indio_dev);
+	struct i2c_client *client = data->client;
 	u8 outbuf[2];
-	पूर्णांक res;
+	int res;
 
-	अगर (val < 0 || val > 255)
-		वापस -EINVAL;
+	if (val < 0 || val > 255)
+		return -EINVAL;
 
 	outbuf[0] = channel;
 	outbuf[1] = val;
 
 	res = i2c_master_send(client, outbuf, 2);
-	अगर (res < 0)
-		वापस res;
-	अन्यथा अगर (res != 2)
-		वापस -EIO;
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (res < 0)
+		return res;
+	else if (res != 2)
+		return -EIO;
+	else
+		return 0;
+}
 
-अटल पूर्णांक max517_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			   काष्ठा iio_chan_spec स्थिर *chan,
-			   पूर्णांक *val,
-			   पूर्णांक *val2,
-			   दीर्घ m)
-अणु
-	काष्ठा max517_data *data = iio_priv(indio_dev);
+static int max517_read_raw(struct iio_dev *indio_dev,
+			   struct iio_chan_spec const *chan,
+			   int *val,
+			   int *val2,
+			   long m)
+{
+	struct max517_data *data = iio_priv(indio_dev);
 
-	चयन (m) अणु
-	हाल IIO_CHAN_INFO_SCALE:
+	switch (m) {
+	case IIO_CHAN_INFO_SCALE:
 		/* Corresponds to Vref / 2^(bits) */
 		*val = data->vref_mv[chan->channel];
 		*val2 = 8;
-		वापस IIO_VAL_FRACTIONAL_LOG2;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+		return IIO_VAL_FRACTIONAL_LOG2;
+	default:
+		break;
+	}
+	return -EINVAL;
+}
 
-अटल पूर्णांक max517_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
-	काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक val, पूर्णांक val2, दीर्घ mask)
-अणु
-	पूर्णांक ret;
+static int max517_write_raw(struct iio_dev *indio_dev,
+	struct iio_chan_spec const *chan, int val, int val2, long mask)
+{
+	int ret;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
 		ret = max517_set_value(indio_dev, val, chan->channel);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __maybe_unused max517_suspend(काष्ठा device *dev)
-अणु
+static int __maybe_unused max517_suspend(struct device *dev)
+{
 	u8 outbuf = COMMAND_PD;
 
-	वापस i2c_master_send(to_i2c_client(dev), &outbuf, 1);
-पूर्ण
+	return i2c_master_send(to_i2c_client(dev), &outbuf, 1);
+}
 
-अटल पूर्णांक __maybe_unused max517_resume(काष्ठा device *dev)
-अणु
+static int __maybe_unused max517_resume(struct device *dev)
+{
 	u8 outbuf = 0;
 
-	वापस i2c_master_send(to_i2c_client(dev), &outbuf, 1);
-पूर्ण
+	return i2c_master_send(to_i2c_client(dev), &outbuf, 1);
+}
 
-अटल SIMPLE_DEV_PM_OPS(max517_pm_ops, max517_suspend, max517_resume);
+static SIMPLE_DEV_PM_OPS(max517_pm_ops, max517_suspend, max517_resume);
 
-अटल स्थिर काष्ठा iio_info max517_info = अणु
-	.पढ़ो_raw = max517_पढ़ो_raw,
-	.ग_लिखो_raw = max517_ग_लिखो_raw,
-पूर्ण;
+static const struct iio_info max517_info = {
+	.read_raw = max517_read_raw,
+	.write_raw = max517_write_raw,
+};
 
-#घोषणा MAX517_CHANNEL(chan) अणु				\
+#define MAX517_CHANNEL(chan) {				\
 	.type = IIO_VOLTAGE,				\
 	.indexed = 1,					\
 	.output = 1,					\
 	.channel = (chan),				\
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |	\
 	BIT(IIO_CHAN_INFO_SCALE),			\
-पूर्ण
+}
 
-अटल स्थिर काष्ठा iio_chan_spec max517_channels[] = अणु
+static const struct iio_chan_spec max517_channels[] = {
 	MAX517_CHANNEL(0),
 	MAX517_CHANNEL(1),
 	MAX517_CHANNEL(2),
@@ -140,73 +139,73 @@
 	MAX517_CHANNEL(5),
 	MAX517_CHANNEL(6),
 	MAX517_CHANNEL(7),
-पूर्ण;
+};
 
-अटल पूर्णांक max517_probe(काष्ठा i2c_client *client,
-			स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा max517_data *data;
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा max517_platक्रमm_data *platक्रमm_data = client->dev.platक्रमm_data;
-	पूर्णांक chan;
+static int max517_probe(struct i2c_client *client,
+			const struct i2c_device_id *id)
+{
+	struct max517_data *data;
+	struct iio_dev *indio_dev;
+	struct max517_platform_data *platform_data = client->dev.platform_data;
+	int chan;
 
-	indio_dev = devm_iio_device_alloc(&client->dev, माप(*data));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*data));
+	if (!indio_dev)
+		return -ENOMEM;
 	data = iio_priv(indio_dev);
 	data->client = client;
 
-	चयन (id->driver_data) अणु
-	हाल ID_MAX521:
+	switch (id->driver_data) {
+	case ID_MAX521:
 		indio_dev->num_channels = 8;
-		अवरोध;
-	हाल ID_MAX520:
+		break;
+	case ID_MAX520:
 		indio_dev->num_channels = 4;
-		अवरोध;
-	हाल ID_MAX519:
-	हाल ID_MAX518:
+		break;
+	case ID_MAX519:
+	case ID_MAX518:
 		indio_dev->num_channels = 2;
-		अवरोध;
-	शेष:  /* single channel क्रम MAX517 */
+		break;
+	default:  /* single channel for MAX517 */
 		indio_dev->num_channels = 1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	indio_dev->channels = max517_channels;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 	indio_dev->info = &max517_info;
 
 	/*
-	 * Reference voltage on MAX518 and शेष is 5V, अन्यथा take vref_mv
-	 * from platक्रमm_data
+	 * Reference voltage on MAX518 and default is 5V, else take vref_mv
+	 * from platform_data
 	 */
-	क्रम (chan = 0; chan < indio_dev->num_channels; chan++) अणु
-		अगर (id->driver_data == ID_MAX518 || !platक्रमm_data)
+	for (chan = 0; chan < indio_dev->num_channels; chan++) {
+		if (id->driver_data == ID_MAX518 || !platform_data)
 			data->vref_mv[chan] = 5000; /* mV */
-		अन्यथा
-			data->vref_mv[chan] = platक्रमm_data->vref_mv[chan];
-	पूर्ण
+		else
+			data->vref_mv[chan] = platform_data->vref_mv[chan];
+	}
 
-	वापस devm_iio_device_रेजिस्टर(&client->dev, indio_dev);
-पूर्ण
+	return devm_iio_device_register(&client->dev, indio_dev);
+}
 
-अटल स्थिर काष्ठा i2c_device_id max517_id[] = अणु
-	अणु "max517", ID_MAX517 पूर्ण,
-	अणु "max518", ID_MAX518 पूर्ण,
-	अणु "max519", ID_MAX519 पूर्ण,
-	अणु "max520", ID_MAX520 पूर्ण,
-	अणु "max521", ID_MAX521 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id max517_id[] = {
+	{ "max517", ID_MAX517 },
+	{ "max518", ID_MAX518 },
+	{ "max519", ID_MAX519 },
+	{ "max520", ID_MAX520 },
+	{ "max521", ID_MAX521 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, max517_id);
 
-अटल काष्ठा i2c_driver max517_driver = अणु
-	.driver = अणु
+static struct i2c_driver max517_driver = {
+	.driver = {
 		.name	= MAX517_DRV_NAME,
 		.pm	= &max517_pm_ops,
-	पूर्ण,
+	},
 	.probe		= max517_probe,
 	.id_table	= max517_id,
-पूर्ण;
+};
 module_i2c_driver(max517_driver);
 
 MODULE_AUTHOR("Roland Stigge <stigge@antcom.de>");

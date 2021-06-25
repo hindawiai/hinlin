@@ -1,118 +1,117 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
+/* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /* Copyright 2017-2019 Qiang Yu <yuq825@gmail.com> */
 
-#अगर_अघोषित __LIMA_SCHED_H__
-#घोषणा __LIMA_SCHED_H__
+#ifndef __LIMA_SCHED_H__
+#define __LIMA_SCHED_H__
 
-#समावेश <drm/gpu_scheduler.h>
-#समावेश <linux/list.h>
-#समावेश <linux/xarray.h>
+#include <drm/gpu_scheduler.h>
+#include <linux/list.h>
+#include <linux/xarray.h>
 
-काष्ठा lima_device;
-काष्ठा lima_vm;
+struct lima_device;
+struct lima_vm;
 
-काष्ठा lima_sched_error_task अणु
-	काष्ठा list_head list;
-	व्योम *data;
+struct lima_sched_error_task {
+	struct list_head list;
+	void *data;
 	u32 size;
-पूर्ण;
+};
 
-काष्ठा lima_sched_task अणु
-	काष्ठा drm_sched_job base;
+struct lima_sched_task {
+	struct drm_sched_job base;
 
-	काष्ठा lima_vm *vm;
-	व्योम *frame;
+	struct lima_vm *vm;
+	void *frame;
 
-	काष्ठा xarray deps;
-	अचिन्हित दीर्घ last_dep;
+	struct xarray deps;
+	unsigned long last_dep;
 
-	काष्ठा lima_bo **bos;
-	पूर्णांक num_bos;
+	struct lima_bo **bos;
+	int num_bos;
 
 	bool recoverable;
-	काष्ठा lima_bo *heap;
+	struct lima_bo *heap;
 
 	/* pipe fence */
-	काष्ठा dma_fence *fence;
-पूर्ण;
+	struct dma_fence *fence;
+};
 
-काष्ठा lima_sched_context अणु
-	काष्ठा drm_sched_entity base;
-पूर्ण;
+struct lima_sched_context {
+	struct drm_sched_entity base;
+};
 
-#घोषणा LIMA_SCHED_PIPE_MAX_MMU       8
-#घोषणा LIMA_SCHED_PIPE_MAX_L2_CACHE  2
-#घोषणा LIMA_SCHED_PIPE_MAX_PROCESSOR 8
+#define LIMA_SCHED_PIPE_MAX_MMU       8
+#define LIMA_SCHED_PIPE_MAX_L2_CACHE  2
+#define LIMA_SCHED_PIPE_MAX_PROCESSOR 8
 
-काष्ठा lima_ip;
+struct lima_ip;
 
-काष्ठा lima_sched_pipe अणु
-	काष्ठा drm_gpu_scheduler base;
+struct lima_sched_pipe {
+	struct drm_gpu_scheduler base;
 
 	u64 fence_context;
 	u32 fence_seqno;
 	spinlock_t fence_lock;
 
-	काष्ठा lima_device *ldev;
+	struct lima_device *ldev;
 
-	काष्ठा lima_sched_task *current_task;
-	काष्ठा lima_vm *current_vm;
+	struct lima_sched_task *current_task;
+	struct lima_vm *current_vm;
 
-	काष्ठा lima_ip *mmu[LIMA_SCHED_PIPE_MAX_MMU];
-	पूर्णांक num_mmu;
+	struct lima_ip *mmu[LIMA_SCHED_PIPE_MAX_MMU];
+	int num_mmu;
 
-	काष्ठा lima_ip *l2_cache[LIMA_SCHED_PIPE_MAX_L2_CACHE];
-	पूर्णांक num_l2_cache;
+	struct lima_ip *l2_cache[LIMA_SCHED_PIPE_MAX_L2_CACHE];
+	int num_l2_cache;
 
-	काष्ठा lima_ip *processor[LIMA_SCHED_PIPE_MAX_PROCESSOR];
-	पूर्णांक num_processor;
+	struct lima_ip *processor[LIMA_SCHED_PIPE_MAX_PROCESSOR];
+	int num_processor;
 
-	काष्ठा lima_ip *bcast_processor;
-	काष्ठा lima_ip *bcast_mmu;
+	struct lima_ip *bcast_processor;
+	struct lima_ip *bcast_mmu;
 
-	u32 करोne;
+	u32 done;
 	bool error;
 	atomic_t task;
 
-	पूर्णांक frame_size;
-	काष्ठा kmem_cache *task_slab;
+	int frame_size;
+	struct kmem_cache *task_slab;
 
-	पूर्णांक (*task_validate)(काष्ठा lima_sched_pipe *pipe, काष्ठा lima_sched_task *task);
-	व्योम (*task_run)(काष्ठा lima_sched_pipe *pipe, काष्ठा lima_sched_task *task);
-	व्योम (*task_fini)(काष्ठा lima_sched_pipe *pipe);
-	व्योम (*task_error)(काष्ठा lima_sched_pipe *pipe);
-	व्योम (*task_mmu_error)(काष्ठा lima_sched_pipe *pipe);
-	पूर्णांक (*task_recover)(काष्ठा lima_sched_pipe *pipe);
+	int (*task_validate)(struct lima_sched_pipe *pipe, struct lima_sched_task *task);
+	void (*task_run)(struct lima_sched_pipe *pipe, struct lima_sched_task *task);
+	void (*task_fini)(struct lima_sched_pipe *pipe);
+	void (*task_error)(struct lima_sched_pipe *pipe);
+	void (*task_mmu_error)(struct lima_sched_pipe *pipe);
+	int (*task_recover)(struct lima_sched_pipe *pipe);
 
-	काष्ठा work_काष्ठा recover_work;
-पूर्ण;
+	struct work_struct recover_work;
+};
 
-पूर्णांक lima_sched_task_init(काष्ठा lima_sched_task *task,
-			 काष्ठा lima_sched_context *context,
-			 काष्ठा lima_bo **bos, पूर्णांक num_bos,
-			 काष्ठा lima_vm *vm);
-व्योम lima_sched_task_fini(काष्ठा lima_sched_task *task);
+int lima_sched_task_init(struct lima_sched_task *task,
+			 struct lima_sched_context *context,
+			 struct lima_bo **bos, int num_bos,
+			 struct lima_vm *vm);
+void lima_sched_task_fini(struct lima_sched_task *task);
 
-पूर्णांक lima_sched_context_init(काष्ठा lima_sched_pipe *pipe,
-			    काष्ठा lima_sched_context *context,
+int lima_sched_context_init(struct lima_sched_pipe *pipe,
+			    struct lima_sched_context *context,
 			    atomic_t *guilty);
-व्योम lima_sched_context_fini(काष्ठा lima_sched_pipe *pipe,
-			     काष्ठा lima_sched_context *context);
-काष्ठा dma_fence *lima_sched_context_queue_task(काष्ठा lima_sched_context *context,
-						काष्ठा lima_sched_task *task);
+void lima_sched_context_fini(struct lima_sched_pipe *pipe,
+			     struct lima_sched_context *context);
+struct dma_fence *lima_sched_context_queue_task(struct lima_sched_context *context,
+						struct lima_sched_task *task);
 
-पूर्णांक lima_sched_pipe_init(काष्ठा lima_sched_pipe *pipe, स्थिर अक्षर *name);
-व्योम lima_sched_pipe_fini(काष्ठा lima_sched_pipe *pipe);
-व्योम lima_sched_pipe_task_करोne(काष्ठा lima_sched_pipe *pipe);
+int lima_sched_pipe_init(struct lima_sched_pipe *pipe, const char *name);
+void lima_sched_pipe_fini(struct lima_sched_pipe *pipe);
+void lima_sched_pipe_task_done(struct lima_sched_pipe *pipe);
 
-अटल अंतरभूत व्योम lima_sched_pipe_mmu_error(काष्ठा lima_sched_pipe *pipe)
-अणु
+static inline void lima_sched_pipe_mmu_error(struct lima_sched_pipe *pipe)
+{
 	pipe->error = true;
 	pipe->task_mmu_error(pipe);
-पूर्ण
+}
 
-पूर्णांक lima_sched_slab_init(व्योम);
-व्योम lima_sched_slab_fini(व्योम);
+int lima_sched_slab_init(void);
+void lima_sched_slab_fini(void);
 
-#पूर्ण_अगर
+#endif

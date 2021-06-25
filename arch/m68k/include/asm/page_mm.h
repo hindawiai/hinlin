@@ -1,180 +1,179 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _M68K_PAGE_MM_H
-#घोषणा _M68K_PAGE_MM_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _M68K_PAGE_MM_H
+#define _M68K_PAGE_MM_H
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#समावेश <linux/compiler.h>
-#समावेश <यंत्र/module.h>
+#include <linux/compiler.h>
+#include <asm/module.h>
 
 /*
- * We करोn't need to check क्रम alignment etc.
+ * We don't need to check for alignment etc.
  */
-#अगर_घोषित CPU_M68040_OR_M68060_ONLY
-अटल अंतरभूत व्योम copy_page(व्योम *to, व्योम *from)
-अणु
-  अचिन्हित दीर्घ पंचांगp;
+#ifdef CPU_M68040_OR_M68060_ONLY
+static inline void copy_page(void *to, void *from)
+{
+  unsigned long tmp;
 
-  __यंत्र__ __अस्थिर__("1:\t"
+  __asm__ __volatile__("1:\t"
 		       ".chip 68040\n\t"
 		       "move16 %1@+,%0@+\n\t"
 		       "move16 %1@+,%0@+\n\t"
 		       ".chip 68k\n\t"
 		       "dbra  %2,1b\n\t"
-		       : "=a" (to), "=a" (from), "=d" (पंचांगp)
+		       : "=a" (to), "=a" (from), "=d" (tmp)
 		       : "0" (to), "1" (from) , "2" (PAGE_SIZE / 32 - 1)
 		       );
-पूर्ण
+}
 
-अटल अंतरभूत व्योम clear_page(व्योम *page)
-अणु
-	अचिन्हित दीर्घ पंचांगp;
-	अचिन्हित दीर्घ *sp = page;
+static inline void clear_page(void *page)
+{
+	unsigned long tmp;
+	unsigned long *sp = page;
 
 	*sp++ = 0;
 	*sp++ = 0;
 	*sp++ = 0;
 	*sp++ = 0;
 
-	__यंत्र__ __अस्थिर__("1:\t"
+	__asm__ __volatile__("1:\t"
 			     ".chip 68040\n\t"
 			     "move16 %2@+,%0@+\n\t"
 			     ".chip 68k\n\t"
 			     "subqw  #8,%2\n\t"
 			     "subqw  #8,%2\n\t"
 			     "dbra   %1,1b\n\t"
-			     : "=a" (sp), "=d" (पंचांगp)
+			     : "=a" (sp), "=d" (tmp)
 			     : "a" (page), "0" (sp),
 			       "1" ((PAGE_SIZE - 16) / 16 - 1));
-पूर्ण
+}
 
-#अन्यथा
-#घोषणा clear_page(page)	स_रखो((page), 0, PAGE_SIZE)
-#घोषणा copy_page(to,from)	स_नकल((to), (from), PAGE_SIZE)
-#पूर्ण_अगर
+#else
+#define clear_page(page)	memset((page), 0, PAGE_SIZE)
+#define copy_page(to,from)	memcpy((to), (from), PAGE_SIZE)
+#endif
 
-#घोषणा clear_user_page(addr, vaddr, page)	\
-	करो अणु	clear_page(addr);		\
+#define clear_user_page(addr, vaddr, page)	\
+	do {	clear_page(addr);		\
 		flush_dcache_page(page);	\
-	पूर्ण जबतक (0)
-#घोषणा copy_user_page(to, from, vaddr, page)	\
-	करो अणु	copy_page(to, from);		\
+	} while (0)
+#define copy_user_page(to, from, vaddr, page)	\
+	do {	copy_page(to, from);		\
 		flush_dcache_page(page);	\
-	पूर्ण जबतक (0)
+	} while (0)
 
-बाह्य अचिन्हित दीर्घ m68k_memoffset;
+extern unsigned long m68k_memoffset;
 
-#अगर_अघोषित CONFIG_SUN3
+#ifndef CONFIG_SUN3
 
-#घोषणा WANT_PAGE_VIRTUAL
+#define WANT_PAGE_VIRTUAL
 
-अटल अंतरभूत अचिन्हित दीर्घ ___pa(व्योम *vaddr)
-अणु
-	अचिन्हित दीर्घ paddr;
-	यंत्र (
+static inline unsigned long ___pa(void *vaddr)
+{
+	unsigned long paddr;
+	asm (
 		"1:	addl #0,%0\n"
 		m68k_fixup(%c2, 1b+2)
 		: "=r" (paddr)
 		: "0" (vaddr), "i" (m68k_fixup_memoffset));
-	वापस paddr;
-पूर्ण
-#घोषणा __pa(vaddr)	___pa((व्योम *)(दीर्घ)(vaddr))
-अटल अंतरभूत व्योम *__va(अचिन्हित दीर्घ paddr)
-अणु
-	व्योम *vaddr;
-	यंत्र (
+	return paddr;
+}
+#define __pa(vaddr)	___pa((void *)(long)(vaddr))
+static inline void *__va(unsigned long paddr)
+{
+	void *vaddr;
+	asm (
 		"1:	subl #0,%0\n"
 		m68k_fixup(%c2, 1b+2)
 		: "=r" (vaddr)
 		: "0" (paddr), "i" (m68k_fixup_memoffset));
-	वापस vaddr;
-पूर्ण
+	return vaddr;
+}
 
-#अन्यथा	/* !CONFIG_SUN3 */
-/* This #घोषणा is a horrible hack to suppress lots of warnings. --m */
-#घोषणा __pa(x) ___pa((अचिन्हित दीर्घ)(x))
-अटल अंतरभूत अचिन्हित दीर्घ ___pa(अचिन्हित दीर्घ x)
-अणु
-     अगर(x == 0)
-	  वापस 0;
-     अगर(x >= PAGE_OFFSET)
-        वापस (x-PAGE_OFFSET);
-     अन्यथा
-        वापस (x+0x2000000);
-पूर्ण
+#else	/* !CONFIG_SUN3 */
+/* This #define is a horrible hack to suppress lots of warnings. --m */
+#define __pa(x) ___pa((unsigned long)(x))
+static inline unsigned long ___pa(unsigned long x)
+{
+     if(x == 0)
+	  return 0;
+     if(x >= PAGE_OFFSET)
+        return (x-PAGE_OFFSET);
+     else
+        return (x+0x2000000);
+}
 
-अटल अंतरभूत व्योम *__va(अचिन्हित दीर्घ x)
-अणु
-     अगर(x == 0)
-	  वापस (व्योम *)0;
+static inline void *__va(unsigned long x)
+{
+     if(x == 0)
+	  return (void *)0;
 
-     अगर(x < 0x2000000)
-        वापस (व्योम *)(x+PAGE_OFFSET);
-     अन्यथा
-        वापस (व्योम *)(x-0x2000000);
-पूर्ण
-#पूर्ण_अगर	/* CONFIG_SUN3 */
+     if(x < 0x2000000)
+        return (void *)(x+PAGE_OFFSET);
+     else
+        return (void *)(x-0x2000000);
+}
+#endif	/* CONFIG_SUN3 */
 
 /*
- * NOTE: भव isn't really correct, actually it should be the offset पूर्णांकo the
- * memory node, but we have no highmem, so that works क्रम now.
+ * NOTE: virtual isn't really correct, actually it should be the offset into the
+ * memory node, but we have no highmem, so that works for now.
  * TODO: implement (fast) pfn<->pgdat_idx conversion functions, this makes lots
- * of the shअगरts unnecessary.
+ * of the shifts unnecessary.
  */
-#घोषणा virt_to_pfn(kaddr)	(__pa(kaddr) >> PAGE_SHIFT)
-#घोषणा pfn_to_virt(pfn)	__va((pfn) << PAGE_SHIFT)
+#define virt_to_pfn(kaddr)	(__pa(kaddr) >> PAGE_SHIFT)
+#define pfn_to_virt(pfn)	__va((pfn) << PAGE_SHIFT)
 
-बाह्य पूर्णांक m68k_virt_to_node_shअगरt;
+extern int m68k_virt_to_node_shift;
 
-#अगर_अघोषित CONFIG_DISCONTIGMEM
-#घोषणा __virt_to_node(addr)	(&pg_data_map[0])
-#अन्यथा
-बाह्य काष्ठा pglist_data *pg_data_table[];
+#ifndef CONFIG_DISCONTIGMEM
+#define __virt_to_node(addr)	(&pg_data_map[0])
+#else
+extern struct pglist_data *pg_data_table[];
 
-अटल अंतरभूत __attribute_स्थिर__ पूर्णांक __virt_to_node_shअगरt(व्योम)
-अणु
-	पूर्णांक shअगरt;
+static inline __attribute_const__ int __virt_to_node_shift(void)
+{
+	int shift;
 
-	यंत्र (
+	asm (
 		"1:	moveq	#0,%0\n"
 		m68k_fixup(%c1, 1b)
-		: "=d" (shअगरt)
-		: "i" (m68k_fixup_vnode_shअगरt));
-	वापस shअगरt;
-पूर्ण
+		: "=d" (shift)
+		: "i" (m68k_fixup_vnode_shift));
+	return shift;
+}
 
-#घोषणा __virt_to_node(addr)	(pg_data_table[(अचिन्हित दीर्घ)(addr) >> __virt_to_node_shअगरt()])
-#पूर्ण_अगर
+#define __virt_to_node(addr)	(pg_data_table[(unsigned long)(addr) >> __virt_to_node_shift()])
+#endif
 
-#घोषणा virt_to_page(addr) (अणु						\
+#define virt_to_page(addr) ({						\
 	pfn_to_page(virt_to_pfn(addr));					\
-पूर्ण)
-#घोषणा page_to_virt(page) (अणु						\
+})
+#define page_to_virt(page) ({						\
 	pfn_to_virt(page_to_pfn(page));					\
-पूर्ण)
+})
 
-#अगर_घोषित CONFIG_DISCONTIGMEM
-#घोषणा pfn_to_page(pfn) (अणु						\
-	अचिन्हित दीर्घ __pfn = (pfn);					\
-	काष्ठा pglist_data *pgdat;					\
-	pgdat = __virt_to_node((अचिन्हित दीर्घ)pfn_to_virt(__pfn));	\
+#ifdef CONFIG_DISCONTIGMEM
+#define pfn_to_page(pfn) ({						\
+	unsigned long __pfn = (pfn);					\
+	struct pglist_data *pgdat;					\
+	pgdat = __virt_to_node((unsigned long)pfn_to_virt(__pfn));	\
 	pgdat->node_mem_map + (__pfn - pgdat->node_start_pfn);		\
-पूर्ण)
-#घोषणा page_to_pfn(_page) (अणु						\
-	स्थिर काष्ठा page *__p = (_page);				\
-	काष्ठा pglist_data *pgdat;					\
+})
+#define page_to_pfn(_page) ({						\
+	const struct page *__p = (_page);				\
+	struct pglist_data *pgdat;					\
 	pgdat = &pg_data_map[page_to_nid(__p)];				\
 	((__p) - pgdat->node_mem_map) + pgdat->node_start_pfn;		\
-पूर्ण)
-#अन्यथा
-#घोषणा ARCH_PFN_OFFSET (m68k_memory[0].addr >> PAGE_SHIFT)
-#समावेश <यंत्र-generic/memory_model.h>
-#पूर्ण_अगर
+})
+#else
+#define ARCH_PFN_OFFSET (m68k_memory[0].addr >> PAGE_SHIFT)
+#include <asm-generic/memory_model.h>
+#endif
 
-#घोषणा virt_addr_valid(kaddr)	((अचिन्हित दीर्घ)(kaddr) >= PAGE_OFFSET && (अचिन्हित दीर्घ)(kaddr) < (अचिन्हित दीर्घ)high_memory)
-#घोषणा pfn_valid(pfn)		virt_addr_valid(pfn_to_virt(pfn))
+#define virt_addr_valid(kaddr)	((unsigned long)(kaddr) >= PAGE_OFFSET && (unsigned long)(kaddr) < (unsigned long)high_memory)
+#define pfn_valid(pfn)		virt_addr_valid(pfn_to_virt(pfn))
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
+#endif /* __ASSEMBLY__ */
 
-#पूर्ण_अगर /* _M68K_PAGE_MM_H */
+#endif /* _M68K_PAGE_MM_H */

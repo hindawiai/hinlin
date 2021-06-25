@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2017 Josh Poimboeuf <jpoimboe@redhat.com>
  */
@@ -13,62 +12,62 @@
  * This command is a superset of "objtool check".
  */
 
-#समावेश <माला.स>
-#समावेश <objtool/builtin.h>
-#समावेश <objtool/objtool.h>
+#include <string.h>
+#include <objtool/builtin.h>
+#include <objtool/objtool.h>
 
-अटल स्थिर अक्षर *orc_usage[] = अणु
+static const char *orc_usage[] = {
 	"objtool orc generate [<options>] file.o",
 	"objtool orc dump file.o",
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-पूर्णांक cmd_orc(पूर्णांक argc, स्थिर अक्षर **argv)
-अणु
-	स्थिर अक्षर *objname;
+int cmd_orc(int argc, const char **argv)
+{
+	const char *objname;
 
 	argc--; argv++;
-	अगर (argc <= 0)
+	if (argc <= 0)
 		usage_with_options(orc_usage, check_options);
 
-	अगर (!म_भेदन(argv[0], "gen", 3)) अणु
-		काष्ठा objtool_file *file;
-		पूर्णांक ret;
+	if (!strncmp(argv[0], "gen", 3)) {
+		struct objtool_file *file;
+		int ret;
 
 		argc = cmd_parse_options(argc, argv, orc_usage);
 		objname = argv[0];
 
-		file = objtool_खोलो_पढ़ो(objname);
-		अगर (!file)
-			वापस 1;
+		file = objtool_open_read(objname);
+		if (!file)
+			return 1;
 
 		ret = check(file);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		अगर (list_empty(&file->insn_list))
-			वापस 0;
+		if (list_empty(&file->insn_list))
+			return 0;
 
 		ret = orc_create(file);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		अगर (!file->elf->changed)
-			वापस 0;
+		if (!file->elf->changed)
+			return 0;
 
-		वापस elf_ग_लिखो(file->elf);
-	पूर्ण
+		return elf_write(file->elf);
+	}
 
-	अगर (!म_भेद(argv[0], "dump")) अणु
-		अगर (argc != 2)
+	if (!strcmp(argv[0], "dump")) {
+		if (argc != 2)
 			usage_with_options(orc_usage, check_options);
 
 		objname = argv[1];
 
-		वापस orc_dump(objname);
-	पूर्ण
+		return orc_dump(objname);
+	}
 
 	usage_with_options(orc_usage, check_options);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

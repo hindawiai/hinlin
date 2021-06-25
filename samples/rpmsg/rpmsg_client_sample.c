@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Remote processor messaging - sample client driver
  *
@@ -10,87 +9,87 @@
  * Brian Swetland <swetland@google.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/rpmsg.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/rpmsg.h>
 
-#घोषणा MSG		"hello world!"
+#define MSG		"hello world!"
 
-अटल पूर्णांक count = 100;
-module_param(count, पूर्णांक, 0644);
+static int count = 100;
+module_param(count, int, 0644);
 
-काष्ठा instance_data अणु
-	पूर्णांक rx_count;
-पूर्ण;
+struct instance_data {
+	int rx_count;
+};
 
-अटल पूर्णांक rpmsg_sample_cb(काष्ठा rpmsg_device *rpdev, व्योम *data, पूर्णांक len,
-						व्योम *priv, u32 src)
-अणु
-	पूर्णांक ret;
-	काष्ठा instance_data *idata = dev_get_drvdata(&rpdev->dev);
+static int rpmsg_sample_cb(struct rpmsg_device *rpdev, void *data, int len,
+						void *priv, u32 src)
+{
+	int ret;
+	struct instance_data *idata = dev_get_drvdata(&rpdev->dev);
 
 	dev_info(&rpdev->dev, "incoming msg %d (src: 0x%x)\n",
 		 ++idata->rx_count, src);
 
-	prपूर्णांक_hex_dump_debug(__func__, DUMP_PREFIX_NONE, 16, 1, data, len,
+	print_hex_dump_debug(__func__, DUMP_PREFIX_NONE, 16, 1, data, len,
 			     true);
 
-	/* samples should not live क्रमever */
-	अगर (idata->rx_count >= count) अणु
+	/* samples should not live forever */
+	if (idata->rx_count >= count) {
 		dev_info(&rpdev->dev, "goodbye!\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* send a new message now */
-	ret = rpmsg_send(rpdev->ept, MSG, म_माप(MSG));
-	अगर (ret)
+	ret = rpmsg_send(rpdev->ept, MSG, strlen(MSG));
+	if (ret)
 		dev_err(&rpdev->dev, "rpmsg_send failed: %d\n", ret);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rpmsg_sample_probe(काष्ठा rpmsg_device *rpdev)
-अणु
-	पूर्णांक ret;
-	काष्ठा instance_data *idata;
+static int rpmsg_sample_probe(struct rpmsg_device *rpdev)
+{
+	int ret;
+	struct instance_data *idata;
 
 	dev_info(&rpdev->dev, "new channel: 0x%x -> 0x%x!\n",
 					rpdev->src, rpdev->dst);
 
-	idata = devm_kzalloc(&rpdev->dev, माप(*idata), GFP_KERNEL);
-	अगर (!idata)
-		वापस -ENOMEM;
+	idata = devm_kzalloc(&rpdev->dev, sizeof(*idata), GFP_KERNEL);
+	if (!idata)
+		return -ENOMEM;
 
 	dev_set_drvdata(&rpdev->dev, idata);
 
 	/* send a message to our remote processor */
-	ret = rpmsg_send(rpdev->ept, MSG, म_माप(MSG));
-	अगर (ret) अणु
+	ret = rpmsg_send(rpdev->ept, MSG, strlen(MSG));
+	if (ret) {
 		dev_err(&rpdev->dev, "rpmsg_send failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम rpmsg_sample_हटाओ(काष्ठा rpmsg_device *rpdev)
-अणु
+static void rpmsg_sample_remove(struct rpmsg_device *rpdev)
+{
 	dev_info(&rpdev->dev, "rpmsg sample client driver is removed\n");
-पूर्ण
+}
 
-अटल काष्ठा rpmsg_device_id rpmsg_driver_sample_id_table[] = अणु
-	अणु .name	= "rpmsg-client-sample" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static struct rpmsg_device_id rpmsg_driver_sample_id_table[] = {
+	{ .name	= "rpmsg-client-sample" },
+	{ },
+};
 MODULE_DEVICE_TABLE(rpmsg, rpmsg_driver_sample_id_table);
 
-अटल काष्ठा rpmsg_driver rpmsg_sample_client = अणु
+static struct rpmsg_driver rpmsg_sample_client = {
 	.drv.name	= KBUILD_MODNAME,
 	.id_table	= rpmsg_driver_sample_id_table,
 	.probe		= rpmsg_sample_probe,
 	.callback	= rpmsg_sample_cb,
-	.हटाओ		= rpmsg_sample_हटाओ,
-पूर्ण;
+	.remove		= rpmsg_sample_remove,
+};
 module_rpmsg_driver(rpmsg_sample_client);
 
 MODULE_DESCRIPTION("Remote processor messaging sample client driver");

@@ -1,111 +1,110 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright IBM Corp. 2019
  */
-#समावेश <linux/pgtable.h>
-#समावेश <यंत्र/mem_detect.h>
-#समावेश <यंत्र/cpacf.h>
-#समावेश <यंत्र/समयx.h>
-#समावेश <यंत्र/sclp.h>
-#समावेश <यंत्र/kasan.h>
-#समावेश "compressed/decompressor.h"
-#समावेश "boot.h"
+#include <linux/pgtable.h>
+#include <asm/mem_detect.h>
+#include <asm/cpacf.h>
+#include <asm/timex.h>
+#include <asm/sclp.h>
+#include <asm/kasan.h>
+#include "compressed/decompressor.h"
+#include "boot.h"
 
-#घोषणा PRNG_MODE_TDES	 1
-#घोषणा PRNG_MODE_SHA512 2
-#घोषणा PRNG_MODE_TRNG	 3
+#define PRNG_MODE_TDES	 1
+#define PRNG_MODE_SHA512 2
+#define PRNG_MODE_TRNG	 3
 
-काष्ठा prno_parm अणु
+struct prno_parm {
 	u32 res;
 	u32 reseed_counter;
 	u64 stream_bytes;
 	u8  V[112];
 	u8  C[112];
-पूर्ण;
+};
 
-काष्ठा prng_parm अणु
+struct prng_parm {
 	u8  parm_block[32];
 	u32 reseed_counter;
 	u64 byte_counter;
-पूर्ण;
+};
 
-अटल पूर्णांक check_prng(व्योम)
-अणु
-	अगर (!cpacf_query_func(CPACF_KMC, CPACF_KMC_PRNG)) अणु
-		sclp_early_prपूर्णांकk("KASLR disabled: CPU has no PRNG\n");
-		वापस 0;
-	पूर्ण
-	अगर (cpacf_query_func(CPACF_PRNO, CPACF_PRNO_TRNG))
-		वापस PRNG_MODE_TRNG;
-	अगर (cpacf_query_func(CPACF_PRNO, CPACF_PRNO_SHA512_DRNG_GEN))
-		वापस PRNG_MODE_SHA512;
-	अन्यथा
-		वापस PRNG_MODE_TDES;
-पूर्ण
+static int check_prng(void)
+{
+	if (!cpacf_query_func(CPACF_KMC, CPACF_KMC_PRNG)) {
+		sclp_early_printk("KASLR disabled: CPU has no PRNG\n");
+		return 0;
+	}
+	if (cpacf_query_func(CPACF_PRNO, CPACF_PRNO_TRNG))
+		return PRNG_MODE_TRNG;
+	if (cpacf_query_func(CPACF_PRNO, CPACF_PRNO_SHA512_DRNG_GEN))
+		return PRNG_MODE_SHA512;
+	else
+		return PRNG_MODE_TDES;
+}
 
-अटल पूर्णांक get_अक्रमom(अचिन्हित दीर्घ limit, अचिन्हित दीर्घ *value)
-अणु
-	काष्ठा prng_parm prng = अणु
-		/* initial parameter block क्रम tdes mode, copied from libica */
-		.parm_block = अणु
+static int get_random(unsigned long limit, unsigned long *value)
+{
+	struct prng_parm prng = {
+		/* initial parameter block for tdes mode, copied from libica */
+		.parm_block = {
 			0x0F, 0x2B, 0x8E, 0x63, 0x8C, 0x8E, 0xD2, 0x52,
 			0x64, 0xB7, 0xA0, 0x7B, 0x75, 0x28, 0xB8, 0xF4,
 			0x75, 0x5F, 0xD2, 0xA6, 0x8D, 0x97, 0x11, 0xFF,
 			0x49, 0xD8, 0x23, 0xF3, 0x7E, 0x21, 0xEC, 0xA0
-		पूर्ण,
-	पूर्ण;
-	अचिन्हित दीर्घ seed, अक्रमom;
-	काष्ठा prno_parm prno;
+		},
+	};
+	unsigned long seed, random;
+	struct prno_parm prno;
 	__u64 entropy[4];
-	पूर्णांक mode, i;
+	int mode, i;
 
 	mode = check_prng();
-	seed = get_tod_घड़ी_fast();
-	चयन (mode) अणु
-	हाल PRNG_MODE_TRNG:
-		cpacf_trng(शून्य, 0, (u8 *) &अक्रमom, माप(अक्रमom));
-		अवरोध;
-	हाल PRNG_MODE_SHA512:
-		cpacf_prno(CPACF_PRNO_SHA512_DRNG_SEED, &prno, शून्य, 0,
-			   (u8 *) &seed, माप(seed));
-		cpacf_prno(CPACF_PRNO_SHA512_DRNG_GEN, &prno, (u8 *) &अक्रमom,
-			   माप(अक्रमom), शून्य, 0);
-		अवरोध;
-	हाल PRNG_MODE_TDES:
+	seed = get_tod_clock_fast();
+	switch (mode) {
+	case PRNG_MODE_TRNG:
+		cpacf_trng(NULL, 0, (u8 *) &random, sizeof(random));
+		break;
+	case PRNG_MODE_SHA512:
+		cpacf_prno(CPACF_PRNO_SHA512_DRNG_SEED, &prno, NULL, 0,
+			   (u8 *) &seed, sizeof(seed));
+		cpacf_prno(CPACF_PRNO_SHA512_DRNG_GEN, &prno, (u8 *) &random,
+			   sizeof(random), NULL, 0);
+		break;
+	case PRNG_MODE_TDES:
 		/* add entropy */
-		*(अचिन्हित दीर्घ *) prng.parm_block ^= seed;
-		क्रम (i = 0; i < 16; i++) अणु
+		*(unsigned long *) prng.parm_block ^= seed;
+		for (i = 0; i < 16; i++) {
 			cpacf_kmc(CPACF_KMC_PRNG, prng.parm_block,
 				  (u8 *) entropy, (u8 *) entropy,
-				  माप(entropy));
-			स_नकल(prng.parm_block, entropy, माप(entropy));
-		पूर्ण
-		अक्रमom = seed;
-		cpacf_kmc(CPACF_KMC_PRNG, prng.parm_block, (u8 *) &अक्रमom,
-			  (u8 *) &अक्रमom, माप(अक्रमom));
-		अवरोध;
-	शेष:
-		वापस -1;
-	पूर्ण
-	*value = अक्रमom % limit;
-	वापस 0;
-पूर्ण
+				  sizeof(entropy));
+			memcpy(prng.parm_block, entropy, sizeof(entropy));
+		}
+		random = seed;
+		cpacf_kmc(CPACF_KMC_PRNG, prng.parm_block, (u8 *) &random,
+			  (u8 *) &random, sizeof(random));
+		break;
+	default:
+		return -1;
+	}
+	*value = random % limit;
+	return 0;
+}
 
 /*
- * To अक्रमomize kernel base address we have to consider several facts:
+ * To randomize kernel base address we have to consider several facts:
  * 1. physical online memory might not be continuous and have holes. mem_detect
  *    info contains list of online memory ranges we should consider.
  * 2. we have several memory regions which are occupied and we should not
  *    overlap and destroy them. Currently safe_addr tells us the border below
  *    which all those occupied regions are. We are safe to use anything above
  *    safe_addr.
- * 3. the upper limit might apply as well, even अगर memory above that limit is
+ * 3. the upper limit might apply as well, even if memory above that limit is
  *    online. Currently those limitations are:
  *    3.1. Limit set by "mem=" kernel command line option
- *    3.2. memory reserved at the end क्रम kasan initialization.
+ *    3.2. memory reserved at the end for kasan initialization.
  * 4. kernel base address must be aligned to THREAD_SIZE (kernel stack size).
- *    Which is required क्रम CONFIG_CHECK_STACK. Currently THREAD_SIZE is 4 pages
+ *    Which is required for CONFIG_CHECK_STACK. Currently THREAD_SIZE is 4 pages
  *    (16 pages when the kernel is built with kasan enabled)
  * Assumptions:
  * 1. kernel size (including .bss size) and upper memory limit are page aligned.
@@ -113,12 +112,12 @@
  *    aligned (in practice memory configurations granularity on z/VM and LPAR
  *    is 1mb).
  *
- * To guarantee unअगरorm distribution of kernel base address among all suitable
- * addresses we generate अक्रमom value just once. For that we need to build a
+ * To guarantee uniform distribution of kernel base address among all suitable
+ * addresses we generate random value just once. For that we need to build a
  * continuous range in which every value would be suitable. We can build this
  * range by simply counting all suitable addresses (let's call them positions)
  * which would be valid as kernel base address. To count positions we iterate
- * over online memory ranges. For each range which is big enough क्रम the
+ * over online memory ranges. For each range which is big enough for the
  * kernel image we count all suitable addresses we can put the kernel image at
  * that is
  * (end - start - kernel_size) / THREAD_SIZE + 1
@@ -126,85 +125,85 @@
  * to count positions in memory range given and then convert position back
  * to address.
  */
-अटल अचिन्हित दीर्घ count_valid_kernel_positions(अचिन्हित दीर्घ kernel_size,
-						  अचिन्हित दीर्घ _min,
-						  अचिन्हित दीर्घ _max)
-अणु
-	अचिन्हित दीर्घ start, end, pos = 0;
-	पूर्णांक i;
+static unsigned long count_valid_kernel_positions(unsigned long kernel_size,
+						  unsigned long _min,
+						  unsigned long _max)
+{
+	unsigned long start, end, pos = 0;
+	int i;
 
-	क्रम_each_mem_detect_block(i, &start, &end) अणु
-		अगर (_min >= end)
-			जारी;
-		अगर (start >= _max)
-			अवरोध;
+	for_each_mem_detect_block(i, &start, &end) {
+		if (_min >= end)
+			continue;
+		if (start >= _max)
+			break;
 		start = max(_min, start);
 		end = min(_max, end);
-		अगर (end - start < kernel_size)
-			जारी;
+		if (end - start < kernel_size)
+			continue;
 		pos += (end - start - kernel_size) / THREAD_SIZE + 1;
-	पूर्ण
+	}
 
-	वापस pos;
-पूर्ण
+	return pos;
+}
 
-अटल अचिन्हित दीर्घ position_to_address(अचिन्हित दीर्घ pos, अचिन्हित दीर्घ kernel_size,
-				 अचिन्हित दीर्घ _min, अचिन्हित दीर्घ _max)
-अणु
-	अचिन्हित दीर्घ start, end;
-	पूर्णांक i;
+static unsigned long position_to_address(unsigned long pos, unsigned long kernel_size,
+				 unsigned long _min, unsigned long _max)
+{
+	unsigned long start, end;
+	int i;
 
-	क्रम_each_mem_detect_block(i, &start, &end) अणु
-		अगर (_min >= end)
-			जारी;
-		अगर (start >= _max)
-			अवरोध;
+	for_each_mem_detect_block(i, &start, &end) {
+		if (_min >= end)
+			continue;
+		if (start >= _max)
+			break;
 		start = max(_min, start);
 		end = min(_max, end);
-		अगर (end - start < kernel_size)
-			जारी;
-		अगर ((end - start - kernel_size) / THREAD_SIZE + 1 >= pos)
-			वापस start + (pos - 1) * THREAD_SIZE;
+		if (end - start < kernel_size)
+			continue;
+		if ((end - start - kernel_size) / THREAD_SIZE + 1 >= pos)
+			return start + (pos - 1) * THREAD_SIZE;
 		pos -= (end - start - kernel_size) / THREAD_SIZE + 1;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अचिन्हित दीर्घ get_अक्रमom_base(अचिन्हित दीर्घ safe_addr)
-अणु
-	अचिन्हित दीर्घ memory_limit = get_mem_detect_end();
-	अचिन्हित दीर्घ base_pos, max_pos, kernel_size;
-	अचिन्हित दीर्घ kasan_needs;
-	पूर्णांक i;
+unsigned long get_random_base(unsigned long safe_addr)
+{
+	unsigned long memory_limit = get_mem_detect_end();
+	unsigned long base_pos, max_pos, kernel_size;
+	unsigned long kasan_needs;
+	int i;
 
 	memory_limit = min(memory_limit, ident_map_size);
 
 	/*
-	 * Aव्योम putting kernel in the end of physical memory
-	 * which kasan will use क्रम shaकरोw memory and early pgtable
+	 * Avoid putting kernel in the end of physical memory
+	 * which kasan will use for shadow memory and early pgtable
 	 * mapping allocations.
 	 */
 	memory_limit -= kasan_estimate_memory_needs(memory_limit);
 
-	अगर (IS_ENABLED(CONFIG_BLK_DEV_INITRD) && INITRD_START && INITRD_SIZE) अणु
-		अगर (safe_addr < INITRD_START + INITRD_SIZE)
+	if (IS_ENABLED(CONFIG_BLK_DEV_INITRD) && INITRD_START && INITRD_SIZE) {
+		if (safe_addr < INITRD_START + INITRD_SIZE)
 			safe_addr = INITRD_START + INITRD_SIZE;
-	पूर्ण
+	}
 	safe_addr = ALIGN(safe_addr, THREAD_SIZE);
 
 	kernel_size = vmlinux.image_size + vmlinux.bss_size;
-	अगर (safe_addr + kernel_size > memory_limit)
-		वापस 0;
+	if (safe_addr + kernel_size > memory_limit)
+		return 0;
 
 	max_pos = count_valid_kernel_positions(kernel_size, safe_addr, memory_limit);
-	अगर (!max_pos) अणु
-		sclp_early_prपूर्णांकk("KASLR disabled: not enough memory\n");
-		वापस 0;
-	पूर्ण
+	if (!max_pos) {
+		sclp_early_printk("KASLR disabled: not enough memory\n");
+		return 0;
+	}
 
 	/* we need a value in the range [1, base_pos] inclusive */
-	अगर (get_अक्रमom(max_pos, &base_pos))
-		वापस 0;
-	वापस position_to_address(base_pos + 1, kernel_size, safe_addr, memory_limit);
-पूर्ण
+	if (get_random(max_pos, &base_pos))
+		return 0;
+	return position_to_address(base_pos + 1, kernel_size, safe_addr, memory_limit);
+}

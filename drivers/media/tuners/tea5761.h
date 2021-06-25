@@ -1,36 +1,35 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
 */
 
-#अगर_अघोषित __TEA5761_H__
-#घोषणा __TEA5761_H__
+#ifndef __TEA5761_H__
+#define __TEA5761_H__
 
-#समावेश <linux/i2c.h>
-#समावेश <media/dvb_frontend.h>
+#include <linux/i2c.h>
+#include <media/dvb_frontend.h>
 
-#अगर IS_REACHABLE(CONFIG_MEDIA_TUNER_TEA5761)
-बाह्य पूर्णांक tea5761_स्वतःdetection(काष्ठा i2c_adapter* i2c_adap, u8 i2c_addr);
+#if IS_REACHABLE(CONFIG_MEDIA_TUNER_TEA5761)
+extern int tea5761_autodetection(struct i2c_adapter* i2c_adap, u8 i2c_addr);
 
-बाह्य काष्ठा dvb_frontend *tea5761_attach(काष्ठा dvb_frontend *fe,
-					   काष्ठा i2c_adapter* i2c_adap,
+extern struct dvb_frontend *tea5761_attach(struct dvb_frontend *fe,
+					   struct i2c_adapter* i2c_adap,
 					   u8 i2c_addr);
-#अन्यथा
-अटल अंतरभूत पूर्णांक tea5761_स्वतःdetection(काष्ठा i2c_adapter* i2c_adap,
+#else
+static inline int tea5761_autodetection(struct i2c_adapter* i2c_adap,
 					u8 i2c_addr)
-अणु
-	prपूर्णांकk(KERN_INFO "%s: not probed - driver disabled by Kconfig\n",
+{
+	printk(KERN_INFO "%s: not probed - driver disabled by Kconfig\n",
 	       __func__);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल अंतरभूत काष्ठा dvb_frontend *tea5761_attach(काष्ठा dvb_frontend *fe,
-						   काष्ठा i2c_adapter* i2c_adap,
+static inline struct dvb_frontend *tea5761_attach(struct dvb_frontend *fe,
+						   struct i2c_adapter* i2c_adap,
 						   u8 i2c_addr)
-अणु
-	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर
+{
+	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	return NULL;
+}
+#endif
 
-#पूर्ण_अगर /* __TEA5761_H__ */
+#endif /* __TEA5761_H__ */

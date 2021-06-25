@@ -1,194 +1,193 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2012 Freescale Semiconductor, Inc.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pwm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sपंचांगp_device.h>
+#include <linux/clk.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/pwm.h>
+#include <linux/slab.h>
+#include <linux/stmp_device.h>
 
-#घोषणा SET	0x4
-#घोषणा CLR	0x8
-#घोषणा TOG	0xc
+#define SET	0x4
+#define CLR	0x8
+#define TOG	0xc
 
-#घोषणा PWM_CTRL		0x0
-#घोषणा PWM_ACTIVE0		0x10
-#घोषणा PWM_PERIOD0		0x20
-#घोषणा  PERIOD_PERIOD(p)	((p) & 0xffff)
-#घोषणा  PERIOD_PERIOD_MAX	0x10000
-#घोषणा  PERIOD_ACTIVE_HIGH	(3 << 16)
-#घोषणा  PERIOD_ACTIVE_LOW	(2 << 16)
-#घोषणा  PERIOD_INACTIVE_HIGH	(3 << 18)
-#घोषणा  PERIOD_INACTIVE_LOW	(2 << 18)
-#घोषणा  PERIOD_POLARITY_NORMAL	(PERIOD_ACTIVE_HIGH | PERIOD_INACTIVE_LOW)
-#घोषणा  PERIOD_POLARITY_INVERSE	(PERIOD_ACTIVE_LOW | PERIOD_INACTIVE_HIGH)
-#घोषणा  PERIOD_CDIV(भाग)	(((भाग) & 0x7) << 20)
-#घोषणा  PERIOD_CDIV_MAX	8
+#define PWM_CTRL		0x0
+#define PWM_ACTIVE0		0x10
+#define PWM_PERIOD0		0x20
+#define  PERIOD_PERIOD(p)	((p) & 0xffff)
+#define  PERIOD_PERIOD_MAX	0x10000
+#define  PERIOD_ACTIVE_HIGH	(3 << 16)
+#define  PERIOD_ACTIVE_LOW	(2 << 16)
+#define  PERIOD_INACTIVE_HIGH	(3 << 18)
+#define  PERIOD_INACTIVE_LOW	(2 << 18)
+#define  PERIOD_POLARITY_NORMAL	(PERIOD_ACTIVE_HIGH | PERIOD_INACTIVE_LOW)
+#define  PERIOD_POLARITY_INVERSE	(PERIOD_ACTIVE_LOW | PERIOD_INACTIVE_HIGH)
+#define  PERIOD_CDIV(div)	(((div) & 0x7) << 20)
+#define  PERIOD_CDIV_MAX	8
 
-अटल स्थिर u8 cभाग_shअगरt[PERIOD_CDIV_MAX] = अणु
+static const u8 cdiv_shift[PERIOD_CDIV_MAX] = {
 	0, 1, 2, 3, 4, 6, 8, 10
-पूर्ण;
+};
 
-काष्ठा mxs_pwm_chip अणु
-	काष्ठा pwm_chip chip;
-	काष्ठा clk *clk;
-	व्योम __iomem *base;
-पूर्ण;
+struct mxs_pwm_chip {
+	struct pwm_chip chip;
+	struct clk *clk;
+	void __iomem *base;
+};
 
-#घोषणा to_mxs_pwm_chip(_chip) container_of(_chip, काष्ठा mxs_pwm_chip, chip)
+#define to_mxs_pwm_chip(_chip) container_of(_chip, struct mxs_pwm_chip, chip)
 
-अटल पूर्णांक mxs_pwm_apply(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm,
-			 स्थिर काष्ठा pwm_state *state)
-अणु
-	काष्ठा mxs_pwm_chip *mxs = to_mxs_pwm_chip(chip);
-	पूर्णांक ret, भाग = 0;
-	अचिन्हित पूर्णांक period_cycles, duty_cycles;
-	अचिन्हित दीर्घ rate;
-	अचिन्हित दीर्घ दीर्घ c;
-	अचिन्हित पूर्णांक pol_bits;
+static int mxs_pwm_apply(struct pwm_chip *chip, struct pwm_device *pwm,
+			 const struct pwm_state *state)
+{
+	struct mxs_pwm_chip *mxs = to_mxs_pwm_chip(chip);
+	int ret, div = 0;
+	unsigned int period_cycles, duty_cycles;
+	unsigned long rate;
+	unsigned long long c;
+	unsigned int pol_bits;
 
 	/*
 	 * If the PWM channel is disabled, make sure to turn on the
-	 * घड़ी beक्रमe calling clk_get_rate() and writing to the
-	 * रेजिस्टरs. Otherwise, just keep it enabled.
+	 * clock before calling clk_get_rate() and writing to the
+	 * registers. Otherwise, just keep it enabled.
 	 */
-	अगर (!pwm_is_enabled(pwm)) अणु
+	if (!pwm_is_enabled(pwm)) {
 		ret = clk_prepare_enable(mxs->clk);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (!state->enabled && pwm_is_enabled(pwm))
-		ग_लिखोl(1 << pwm->hwpwm, mxs->base + PWM_CTRL + CLR);
+	if (!state->enabled && pwm_is_enabled(pwm))
+		writel(1 << pwm->hwpwm, mxs->base + PWM_CTRL + CLR);
 
 	rate = clk_get_rate(mxs->clk);
-	जबतक (1) अणु
-		c = rate >> cभाग_shअगरt[भाग];
+	while (1) {
+		c = rate >> cdiv_shift[div];
 		c = c * state->period;
-		करो_भाग(c, 1000000000);
-		अगर (c < PERIOD_PERIOD_MAX)
-			अवरोध;
-		भाग++;
-		अगर (भाग >= PERIOD_CDIV_MAX)
-			वापस -EINVAL;
-	पूर्ण
+		do_div(c, 1000000000);
+		if (c < PERIOD_PERIOD_MAX)
+			break;
+		div++;
+		if (div >= PERIOD_CDIV_MAX)
+			return -EINVAL;
+	}
 
 	period_cycles = c;
 	c *= state->duty_cycle;
-	करो_भाग(c, state->period);
+	do_div(c, state->period);
 	duty_cycles = c;
 
 	/*
-	 * The data sheet the says रेजिस्टरs must be written to in
+	 * The data sheet the says registers must be written to in
 	 * this order (ACTIVEn, then PERIODn). Also, the new settings
-	 * only take effect at the beginning of a new period, aव्योमing
+	 * only take effect at the beginning of a new period, avoiding
 	 * glitches.
 	 */
 
 	pol_bits = state->polarity == PWM_POLARITY_NORMAL ?
 		PERIOD_POLARITY_NORMAL : PERIOD_POLARITY_INVERSE;
-	ग_लिखोl(duty_cycles << 16,
+	writel(duty_cycles << 16,
 	       mxs->base + PWM_ACTIVE0 + pwm->hwpwm * 0x20);
-	ग_लिखोl(PERIOD_PERIOD(period_cycles) | pol_bits | PERIOD_CDIV(भाग),
+	writel(PERIOD_PERIOD(period_cycles) | pol_bits | PERIOD_CDIV(div),
 	       mxs->base + PWM_PERIOD0 + pwm->hwpwm * 0x20);
 
-	अगर (state->enabled) अणु
-		अगर (!pwm_is_enabled(pwm)) अणु
+	if (state->enabled) {
+		if (!pwm_is_enabled(pwm)) {
 			/*
-			 * The घड़ी was enabled above. Just enable
-			 * the channel in the control रेजिस्टर.
+			 * The clock was enabled above. Just enable
+			 * the channel in the control register.
 			 */
-			ग_लिखोl(1 << pwm->hwpwm, mxs->base + PWM_CTRL + SET);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			writel(1 << pwm->hwpwm, mxs->base + PWM_CTRL + SET);
+		}
+	} else {
 		clk_disable_unprepare(mxs->clk);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा pwm_ops mxs_pwm_ops = अणु
+static const struct pwm_ops mxs_pwm_ops = {
 	.apply = mxs_pwm_apply,
 	.owner = THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक mxs_pwm_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा mxs_pwm_chip *mxs;
-	पूर्णांक ret;
+static int mxs_pwm_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct mxs_pwm_chip *mxs;
+	int ret;
 
-	mxs = devm_kzalloc(&pdev->dev, माप(*mxs), GFP_KERNEL);
-	अगर (!mxs)
-		वापस -ENOMEM;
+	mxs = devm_kzalloc(&pdev->dev, sizeof(*mxs), GFP_KERNEL);
+	if (!mxs)
+		return -ENOMEM;
 
-	mxs->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(mxs->base))
-		वापस PTR_ERR(mxs->base);
+	mxs->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(mxs->base))
+		return PTR_ERR(mxs->base);
 
-	mxs->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(mxs->clk))
-		वापस PTR_ERR(mxs->clk);
+	mxs->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(mxs->clk))
+		return PTR_ERR(mxs->clk);
 
 	mxs->chip.dev = &pdev->dev;
 	mxs->chip.ops = &mxs_pwm_ops;
 	mxs->chip.of_xlate = of_pwm_xlate_with_flags;
 	mxs->chip.of_pwm_n_cells = 3;
 
-	ret = of_property_पढ़ो_u32(np, "fsl,pwm-number", &mxs->chip.npwm);
-	अगर (ret < 0) अणु
+	ret = of_property_read_u32(np, "fsl,pwm-number", &mxs->chip.npwm);
+	if (ret < 0) {
 		dev_err(&pdev->dev, "failed to get pwm number: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = pwmchip_add(&mxs->chip);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "failed to add pwm chip %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	platक्रमm_set_drvdata(pdev, mxs);
+	platform_set_drvdata(pdev, mxs);
 
-	ret = sपंचांगp_reset_block(mxs->base);
-	अगर (ret)
-		जाओ pwm_हटाओ;
+	ret = stmp_reset_block(mxs->base);
+	if (ret)
+		goto pwm_remove;
 
-	वापस 0;
+	return 0;
 
-pwm_हटाओ:
-	pwmchip_हटाओ(&mxs->chip);
-	वापस ret;
-पूर्ण
+pwm_remove:
+	pwmchip_remove(&mxs->chip);
+	return ret;
+}
 
-अटल पूर्णांक mxs_pwm_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा mxs_pwm_chip *mxs = platक्रमm_get_drvdata(pdev);
+static int mxs_pwm_remove(struct platform_device *pdev)
+{
+	struct mxs_pwm_chip *mxs = platform_get_drvdata(pdev);
 
-	वापस pwmchip_हटाओ(&mxs->chip);
-पूर्ण
+	return pwmchip_remove(&mxs->chip);
+}
 
-अटल स्थिर काष्ठा of_device_id mxs_pwm_dt_ids[] = अणु
-	अणु .compatible = "fsl,imx23-pwm", पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id mxs_pwm_dt_ids[] = {
+	{ .compatible = "fsl,imx23-pwm", },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, mxs_pwm_dt_ids);
 
-अटल काष्ठा platक्रमm_driver mxs_pwm_driver = अणु
-	.driver = अणु
+static struct platform_driver mxs_pwm_driver = {
+	.driver = {
 		.name = "mxs-pwm",
 		.of_match_table = mxs_pwm_dt_ids,
-	पूर्ण,
+	},
 	.probe = mxs_pwm_probe,
-	.हटाओ = mxs_pwm_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(mxs_pwm_driver);
+	.remove = mxs_pwm_remove,
+};
+module_platform_driver(mxs_pwm_driver);
 
 MODULE_ALIAS("platform:mxs-pwm");
 MODULE_AUTHOR("Shawn Guo <shawn.guo@linaro.org>");

@@ -1,66 +1,65 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Generic OPP debugfs पूर्णांकerface
+ * Generic OPP debugfs interface
  *
  * Copyright (C) 2015-2016 Viresh Kumar <viresh.kumar@linaro.org>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/सीमा.स>
-#समावेश <linux/slab.h>
+#include <linux/debugfs.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/limits.h>
+#include <linux/slab.h>
 
-#समावेश "opp.h"
+#include "opp.h"
 
-अटल काष्ठा dentry *rootdir;
+static struct dentry *rootdir;
 
-अटल व्योम opp_set_dev_name(स्थिर काष्ठा device *dev, अक्षर *name)
-अणु
-	अगर (dev->parent)
-		snम_लिखो(name, NAME_MAX, "%s-%s", dev_name(dev->parent),
+static void opp_set_dev_name(const struct device *dev, char *name)
+{
+	if (dev->parent)
+		snprintf(name, NAME_MAX, "%s-%s", dev_name(dev->parent),
 			 dev_name(dev));
-	अन्यथा
-		snम_लिखो(name, NAME_MAX, "%s", dev_name(dev));
-पूर्ण
+	else
+		snprintf(name, NAME_MAX, "%s", dev_name(dev));
+}
 
-व्योम opp_debug_हटाओ_one(काष्ठा dev_pm_opp *opp)
-अणु
-	debugfs_हटाओ_recursive(opp->dentry);
-पूर्ण
+void opp_debug_remove_one(struct dev_pm_opp *opp)
+{
+	debugfs_remove_recursive(opp->dentry);
+}
 
-अटल sमाप_प्रकार bw_name_पढ़ो(काष्ठा file *fp, अक्षर __user *userbuf,
-			    माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा icc_path *path = fp->निजी_data;
-	अक्षर buf[64];
-	पूर्णांक i;
+static ssize_t bw_name_read(struct file *fp, char __user *userbuf,
+			    size_t count, loff_t *ppos)
+{
+	struct icc_path *path = fp->private_data;
+	char buf[64];
+	int i;
 
-	i = scnम_लिखो(buf, माप(buf), "%.62s\n", icc_get_name(path));
+	i = scnprintf(buf, sizeof(buf), "%.62s\n", icc_get_name(path));
 
-	वापस simple_पढ़ो_from_buffer(userbuf, count, ppos, buf, i);
-पूर्ण
+	return simple_read_from_buffer(userbuf, count, ppos, buf, i);
+}
 
-अटल स्थिर काष्ठा file_operations bw_name_fops = अणु
-	.खोलो = simple_खोलो,
-	.पढ़ो = bw_name_पढ़ो,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations bw_name_fops = {
+	.open = simple_open,
+	.read = bw_name_read,
+	.llseek = default_llseek,
+};
 
-अटल व्योम opp_debug_create_bw(काष्ठा dev_pm_opp *opp,
-				काष्ठा opp_table *opp_table,
-				काष्ठा dentry *pdentry)
-अणु
-	काष्ठा dentry *d;
-	अक्षर name[11];
-	पूर्णांक i;
+static void opp_debug_create_bw(struct dev_pm_opp *opp,
+				struct opp_table *opp_table,
+				struct dentry *pdentry)
+{
+	struct dentry *d;
+	char name[11];
+	int i;
 
-	क्रम (i = 0; i < opp_table->path_count; i++) अणु
-		snम_लिखो(name, माप(name), "icc-path-%.1d", i);
+	for (i = 0; i < opp_table->path_count; i++) {
+		snprintf(name, sizeof(name), "icc-path-%.1d", i);
 
 		/* Create per-path directory */
 		d = debugfs_create_dir(name, pdentry);
@@ -71,57 +70,57 @@
 				   &opp->bandwidth[i].peak);
 		debugfs_create_u32("avg_bw", S_IRUGO, d,
 				   &opp->bandwidth[i].avg);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम opp_debug_create_supplies(काष्ठा dev_pm_opp *opp,
-				      काष्ठा opp_table *opp_table,
-				      काष्ठा dentry *pdentry)
-अणु
-	काष्ठा dentry *d;
-	पूर्णांक i;
+static void opp_debug_create_supplies(struct dev_pm_opp *opp,
+				      struct opp_table *opp_table,
+				      struct dentry *pdentry)
+{
+	struct dentry *d;
+	int i;
 
-	क्रम (i = 0; i < opp_table->regulator_count; i++) अणु
-		अक्षर name[15];
+	for (i = 0; i < opp_table->regulator_count; i++) {
+		char name[15];
 
-		snम_लिखो(name, माप(name), "supply-%d", i);
+		snprintf(name, sizeof(name), "supply-%d", i);
 
 		/* Create per-opp directory */
 		d = debugfs_create_dir(name, pdentry);
 
-		debugfs_create_uदीर्घ("u_volt_target", S_IRUGO, d,
+		debugfs_create_ulong("u_volt_target", S_IRUGO, d,
 				     &opp->supplies[i].u_volt);
 
-		debugfs_create_uदीर्घ("u_volt_min", S_IRUGO, d,
+		debugfs_create_ulong("u_volt_min", S_IRUGO, d,
 				     &opp->supplies[i].u_volt_min);
 
-		debugfs_create_uदीर्घ("u_volt_max", S_IRUGO, d,
+		debugfs_create_ulong("u_volt_max", S_IRUGO, d,
 				     &opp->supplies[i].u_volt_max);
 
-		debugfs_create_uदीर्घ("u_amp", S_IRUGO, d,
+		debugfs_create_ulong("u_amp", S_IRUGO, d,
 				     &opp->supplies[i].u_amp);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम opp_debug_create_one(काष्ठा dev_pm_opp *opp, काष्ठा opp_table *opp_table)
-अणु
-	काष्ठा dentry *pdentry = opp_table->dentry;
-	काष्ठा dentry *d;
-	अचिन्हित दीर्घ id;
-	अक्षर name[25];	/* 20 अक्षरs क्रम 64 bit value + 5 (opp:\0) */
+void opp_debug_create_one(struct dev_pm_opp *opp, struct opp_table *opp_table)
+{
+	struct dentry *pdentry = opp_table->dentry;
+	struct dentry *d;
+	unsigned long id;
+	char name[25];	/* 20 chars for 64 bit value + 5 (opp:\0) */
 
 	/*
-	 * Get directory name क्रम OPP.
+	 * Get directory name for OPP.
 	 *
 	 * - Normally rate is unique to each OPP, use it to get unique opp-name.
 	 * - For some devices rate isn't available, use index instead.
 	 */
-	अगर (likely(opp->rate))
+	if (likely(opp->rate))
 		id = opp->rate;
-	अन्यथा
+	else
 		id = _get_opp_count(opp_table);
 
-	snम_लिखो(name, माप(name), "opp:%lu", id);
+	snprintf(name, sizeof(name), "opp:%lu", id);
 
 	/* Create per-opp directory */
 	d = debugfs_create_dir(name, pdentry);
@@ -131,120 +130,120 @@
 	debugfs_create_bool("turbo", S_IRUGO, d, &opp->turbo);
 	debugfs_create_bool("suspend", S_IRUGO, d, &opp->suspend);
 	debugfs_create_u32("performance_state", S_IRUGO, d, &opp->pstate);
-	debugfs_create_uदीर्घ("rate_hz", S_IRUGO, d, &opp->rate);
-	debugfs_create_uदीर्घ("clock_latency_ns", S_IRUGO, d,
-			     &opp->घड़ी_latency_ns);
+	debugfs_create_ulong("rate_hz", S_IRUGO, d, &opp->rate);
+	debugfs_create_ulong("clock_latency_ns", S_IRUGO, d,
+			     &opp->clock_latency_ns);
 
 	opp_debug_create_supplies(opp, opp_table, d);
 	opp_debug_create_bw(opp, opp_table, d);
 
 	opp->dentry = d;
-पूर्ण
+}
 
-अटल व्योम opp_list_debug_create_dir(काष्ठा opp_device *opp_dev,
-				      काष्ठा opp_table *opp_table)
-अणु
-	स्थिर काष्ठा device *dev = opp_dev->dev;
-	काष्ठा dentry *d;
+static void opp_list_debug_create_dir(struct opp_device *opp_dev,
+				      struct opp_table *opp_table)
+{
+	const struct device *dev = opp_dev->dev;
+	struct dentry *d;
 
 	opp_set_dev_name(dev, opp_table->dentry_name);
 
-	/* Create device specअगरic directory */
+	/* Create device specific directory */
 	d = debugfs_create_dir(opp_table->dentry_name, rootdir);
 
 	opp_dev->dentry = d;
 	opp_table->dentry = d;
-पूर्ण
+}
 
-अटल व्योम opp_list_debug_create_link(काष्ठा opp_device *opp_dev,
-				       काष्ठा opp_table *opp_table)
-अणु
-	अक्षर name[NAME_MAX];
+static void opp_list_debug_create_link(struct opp_device *opp_dev,
+				       struct opp_table *opp_table)
+{
+	char name[NAME_MAX];
 
 	opp_set_dev_name(opp_dev->dev, name);
 
-	/* Create device specअगरic directory link */
+	/* Create device specific directory link */
 	opp_dev->dentry = debugfs_create_symlink(name, rootdir,
 						 opp_table->dentry_name);
-पूर्ण
+}
 
 /**
- * opp_debug_रेजिस्टर - add a device opp node to the debugfs 'opp' directory
- * @opp_dev: opp-dev poपूर्णांकer क्रम device
+ * opp_debug_register - add a device opp node to the debugfs 'opp' directory
+ * @opp_dev: opp-dev pointer for device
  * @opp_table: the device-opp being added
  *
- * Dynamically adds device specअगरic directory in debugfs 'opp' directory. If the
- * device-opp is shared with other devices, then links will be created क्रम all
+ * Dynamically adds device specific directory in debugfs 'opp' directory. If the
+ * device-opp is shared with other devices, then links will be created for all
  * devices except the first.
  */
-व्योम opp_debug_रेजिस्टर(काष्ठा opp_device *opp_dev, काष्ठा opp_table *opp_table)
-अणु
-	अगर (opp_table->dentry)
+void opp_debug_register(struct opp_device *opp_dev, struct opp_table *opp_table)
+{
+	if (opp_table->dentry)
 		opp_list_debug_create_link(opp_dev, opp_table);
-	अन्यथा
+	else
 		opp_list_debug_create_dir(opp_dev, opp_table);
-पूर्ण
+}
 
-अटल व्योम opp_migrate_dentry(काष्ठा opp_device *opp_dev,
-			       काष्ठा opp_table *opp_table)
-अणु
-	काष्ठा opp_device *new_dev;
-	स्थिर काष्ठा device *dev;
-	काष्ठा dentry *dentry;
+static void opp_migrate_dentry(struct opp_device *opp_dev,
+			       struct opp_table *opp_table)
+{
+	struct opp_device *new_dev;
+	const struct device *dev;
+	struct dentry *dentry;
 
-	/* Look क्रम next opp-dev */
-	list_क्रम_each_entry(new_dev, &opp_table->dev_list, node)
-		अगर (new_dev != opp_dev)
-			अवरोध;
+	/* Look for next opp-dev */
+	list_for_each_entry(new_dev, &opp_table->dev_list, node)
+		if (new_dev != opp_dev)
+			break;
 
 	/* new_dev is guaranteed to be valid here */
 	dev = new_dev->dev;
-	debugfs_हटाओ_recursive(new_dev->dentry);
+	debugfs_remove_recursive(new_dev->dentry);
 
 	opp_set_dev_name(dev, opp_table->dentry_name);
 
-	dentry = debugfs_नाम(rootdir, opp_dev->dentry, rootdir,
+	dentry = debugfs_rename(rootdir, opp_dev->dentry, rootdir,
 				opp_table->dentry_name);
-	अगर (!dentry) अणु
+	if (!dentry) {
 		dev_err(dev, "%s: Failed to rename link from: %s to %s\n",
 			__func__, dev_name(opp_dev->dev), dev_name(dev));
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	new_dev->dentry = dentry;
 	opp_table->dentry = dentry;
-पूर्ण
+}
 
 /**
- * opp_debug_unरेजिस्टर - हटाओ a device opp node from debugfs opp directory
- * @opp_dev: opp-dev poपूर्णांकer क्रम device
- * @opp_table: the device-opp being हटाओd
+ * opp_debug_unregister - remove a device opp node from debugfs opp directory
+ * @opp_dev: opp-dev pointer for device
+ * @opp_table: the device-opp being removed
  *
- * Dynamically हटाओs device specअगरic directory from debugfs 'opp' directory.
+ * Dynamically removes device specific directory from debugfs 'opp' directory.
  */
-व्योम opp_debug_unरेजिस्टर(काष्ठा opp_device *opp_dev,
-			  काष्ठा opp_table *opp_table)
-अणु
-	अगर (opp_dev->dentry == opp_table->dentry) अणु
+void opp_debug_unregister(struct opp_device *opp_dev,
+			  struct opp_table *opp_table)
+{
+	if (opp_dev->dentry == opp_table->dentry) {
 		/* Move the real dentry object under another device */
-		अगर (!list_is_singular(&opp_table->dev_list)) अणु
+		if (!list_is_singular(&opp_table->dev_list)) {
 			opp_migrate_dentry(opp_dev, opp_table);
-			जाओ out;
-		पूर्ण
-		opp_table->dentry = शून्य;
-	पूर्ण
+			goto out;
+		}
+		opp_table->dentry = NULL;
+	}
 
-	debugfs_हटाओ_recursive(opp_dev->dentry);
+	debugfs_remove_recursive(opp_dev->dentry);
 
 out:
-	opp_dev->dentry = शून्य;
-पूर्ण
+	opp_dev->dentry = NULL;
+}
 
-अटल पूर्णांक __init opp_debug_init(व्योम)
-अणु
+static int __init opp_debug_init(void)
+{
 	/* Create /sys/kernel/debug/opp directory */
-	rootdir = debugfs_create_dir("opp", शून्य);
+	rootdir = debugfs_create_dir("opp", NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 core_initcall(opp_debug_init);

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: BSD-3-Clause */
+/* SPDX-License-Identifier: BSD-3-Clause */
 /*
  * Copyright (c) 2020, MIPI Alliance, Inc.
  *
@@ -8,27 +7,27 @@
  * Common command/response related stuff
  */
 
-#अगर_अघोषित CMD_H
-#घोषणा CMD_H
+#ifndef CMD_H
+#define CMD_H
 
 /*
- * Those bits are common to all descriptor क्रमmats and
+ * Those bits are common to all descriptor formats and
  * may be manipulated by the core code.
  */
-#घोषणा CMD_0_TOC			W0_BIT_(31)
-#घोषणा CMD_0_ROC			W0_BIT_(30)
-#घोषणा CMD_0_ATTR			W0_MASK(2, 0)
+#define CMD_0_TOC			W0_BIT_(31)
+#define CMD_0_ROC			W0_BIT_(30)
+#define CMD_0_ATTR			W0_MASK(2, 0)
 
 /*
  * Response Descriptor Structure
  */
-#घोषणा RESP_STATUS(resp)		FIELD_GET(GENMASK(31, 28), resp)
-#घोषणा RESP_TID(resp)			FIELD_GET(GENMASK(27, 24), resp)
-#घोषणा RESP_DATA_LENGTH(resp)		FIELD_GET(GENMASK(21,  0), resp)
+#define RESP_STATUS(resp)		FIELD_GET(GENMASK(31, 28), resp)
+#define RESP_TID(resp)			FIELD_GET(GENMASK(27, 24), resp)
+#define RESP_DATA_LENGTH(resp)		FIELD_GET(GENMASK(21,  0), resp)
 
-#घोषणा RESP_ERR_FIELD			GENMASK(31, 28)
+#define RESP_ERR_FIELD			GENMASK(31, 28)
 
-क्रमागत hci_resp_err अणु
+enum hci_resp_err {
 	RESP_SUCCESS			= 0x0,
 	RESP_ERR_CRC			= 0x1,
 	RESP_ERR_PARITY			= 0x2,
@@ -43,26 +42,26 @@
 	RESP_ERR_BUS_XFER_ABORTED	= 0x9,
 	RESP_ERR_NOT_SUPPORTED		= 0xa,
 	RESP_ERR_ABORTED_WITH_CRC	= 0xb,
-	/* 0xc to 0xf are reserved क्रम transfer specअगरic errors */
-पूर्ण;
+	/* 0xc to 0xf are reserved for transfer specific errors */
+};
 
-/* TID generation (4 bits wide in all हालs) */
-#घोषणा hci_get_tid(bits) \
-	(atomic_inc_वापस_relaxed(&hci->next_cmd_tid) % (1U << 4))
+/* TID generation (4 bits wide in all cases) */
+#define hci_get_tid(bits) \
+	(atomic_inc_return_relaxed(&hci->next_cmd_tid) % (1U << 4))
 
-/* This असलtracts operations with our command descriptor क्रमmats */
-काष्ठा hci_cmd_ops अणु
-	पूर्णांक (*prep_ccc)(काष्ठा i3c_hci *hci, काष्ठा hci_xfer *xfer,
+/* This abstracts operations with our command descriptor formats */
+struct hci_cmd_ops {
+	int (*prep_ccc)(struct i3c_hci *hci, struct hci_xfer *xfer,
 			u8 ccc_addr, u8 ccc_cmd, bool raw);
-	व्योम (*prep_i3c_xfer)(काष्ठा i3c_hci *hci, काष्ठा i3c_dev_desc *dev,
-			      काष्ठा hci_xfer *xfer);
-	व्योम (*prep_i2c_xfer)(काष्ठा i3c_hci *hci, काष्ठा i2c_dev_desc *dev,
-			      काष्ठा hci_xfer *xfer);
-	पूर्णांक (*perक्रमm_daa)(काष्ठा i3c_hci *hci);
-पूर्ण;
+	void (*prep_i3c_xfer)(struct i3c_hci *hci, struct i3c_dev_desc *dev,
+			      struct hci_xfer *xfer);
+	void (*prep_i2c_xfer)(struct i3c_hci *hci, struct i2c_dev_desc *dev,
+			      struct hci_xfer *xfer);
+	int (*perform_daa)(struct i3c_hci *hci);
+};
 
 /* Our various instances */
-बाह्य स्थिर काष्ठा hci_cmd_ops mipi_i3c_hci_cmd_v1;
-बाह्य स्थिर काष्ठा hci_cmd_ops mipi_i3c_hci_cmd_v2;
+extern const struct hci_cmd_ops mipi_i3c_hci_cmd_v1;
+extern const struct hci_cmd_ops mipi_i3c_hci_cmd_v2;
 
-#पूर्ण_अगर
+#endif

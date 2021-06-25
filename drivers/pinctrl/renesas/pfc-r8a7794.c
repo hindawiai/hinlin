@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * r8a7794/r8a7745 processor support - PFC hardware block.
  *
@@ -8,14 +7,14 @@
  * Copyright (C) 2015-2017 Cogent Embedded, Inc. <source@cogentembedded.com>
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sys_soc.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/sys_soc.h>
 
-#समावेश "core.h"
-#समावेश "sh_pfc.h"
+#include "core.h"
+#include "sh_pfc.h"
 
-#घोषणा CPU_ALL_GP(fn, sfx)						\
+#define CPU_ALL_GP(fn, sfx)						\
 	PORT_GP_32(0, fn, sfx),						\
 	PORT_GP_26(1, fn, sfx),						\
 	PORT_GP_32(2, fn, sfx),						\
@@ -26,7 +25,7 @@
 	PORT_GP_1(6, 24, fn, sfx),					\
 	PORT_GP_1(6, 25, fn, sfx)
 
-क्रमागत अणु
+enum {
 	PINMUX_RESERVED = 0,
 
 	PINMUX_DATA_BEGIN,
@@ -141,7 +140,7 @@
 
 	/* IPSR3 */
 	FN_A21, FN_MOSI_IO0,
-	FN_A22, FN_MISO_IO1, FN_ATAसूची1_N,
+	FN_A22, FN_MISO_IO1, FN_ATADIR1_N,
 	FN_A23, FN_IO2, FN_ATAWR1_N,
 	FN_A24, FN_IO3, FN_EX_WAIT2,
 	FN_A25, FN_SSL, FN_ATARD1_N,
@@ -334,7 +333,7 @@
 	FN_SSI_WS9, FN_SCIF2_RXD_B, FN_I2C3_SCL_E, FN_VI1_DATA6, FN_ATARD0_N,
 	FN_ETH_TX_EN_B,
 	FN_SSI_SDATA9, FN_SCIF2_TXD_B, FN_I2C3_SDA_E, FN_VI1_DATA7,
-	FN_ATAसूची0_N, FN_ETH_MAGIC_B,
+	FN_ATADIR0_N, FN_ETH_MAGIC_B,
 	FN_AUDIO_CLKA, FN_I2C0_SCL_B, FN_SCIFA4_RXD_D, FN_VI1_CLKENB,
 	FN_TS_SDATA_C, FN_ETH_TXD0_B,
 	FN_AUDIO_CLKB, FN_I2C0_SDA_B, FN_SCIFA4_TXD_D, FN_VI1_FIELD,
@@ -452,7 +451,7 @@
 
 	/* IPSR3 */
 	A21_MARK, MOSI_IO0_MARK,
-	A22_MARK, MISO_IO1_MARK, ATAसूची1_N_MARK,
+	A22_MARK, MISO_IO1_MARK, ATADIR1_N_MARK,
 	A23_MARK, IO2_MARK, ATAWR1_N_MARK,
 	A24_MARK, IO3_MARK, EX_WAIT2_MARK,
 	A25_MARK, SSL_MARK, ATARD1_N_MARK,
@@ -658,7 +657,7 @@
 	SSI_WS9_MARK, SCIF2_RXD_B_MARK, I2C3_SCL_E_MARK, VI1_DATA6_MARK,
 	ATARD0_N_MARK, ETH_TX_EN_B_MARK,
 	SSI_SDATA9_MARK, SCIF2_TXD_B_MARK, I2C3_SDA_E_MARK, VI1_DATA7_MARK,
-	ATAसूची0_N_MARK, ETH_MAGIC_B_MARK,
+	ATADIR0_N_MARK, ETH_MAGIC_B_MARK,
 	AUDIO_CLKA_MARK, I2C0_SCL_B_MARK, SCIFA4_RXD_D_MARK, VI1_CLKENB_MARK,
 	TS_SDATA_C_MARK, ETH_TXD0_B_MARK,
 	AUDIO_CLKB_MARK, I2C0_SDA_B_MARK, SCIFA4_TXD_D_MARK, VI1_FIELD_MARK,
@@ -668,9 +667,9 @@
 	AUDIO_CLKOUT_MARK, I2C4_SDA_B_MARK, SCIFA5_TXD_D_MARK, VI1_VSYNC_N_MARK,
 	TS_SPSYNC_C_MARK, FMIN_E_MARK,
 	PINMUX_MARK_END,
-पूर्ण;
+};
 
-अटल स्थिर u16 pinmux_data[] = अणु
+static const u16 pinmux_data[] = {
 	PINMUX_DATA_GP_ALL(), /* PINMUX_DATA(GP_M_N_DATA, GP_M_N_FN...), */
 
 	PINMUX_SINGLE(A2),
@@ -854,7 +853,7 @@
 	PINMUX_IPSR_GPSR(IP3_1_0, MOSI_IO0),
 	PINMUX_IPSR_GPSR(IP3_3_2, A22),
 	PINMUX_IPSR_GPSR(IP3_3_2, MISO_IO1),
-	PINMUX_IPSR_GPSR(IP3_3_2, ATAसूची1_N),
+	PINMUX_IPSR_GPSR(IP3_3_2, ATADIR1_N),
 	PINMUX_IPSR_GPSR(IP3_5_4, A23),
 	PINMUX_IPSR_GPSR(IP3_5_4, IO2),
 	PINMUX_IPSR_GPSR(IP3_5_4, ATAWR1_N),
@@ -1408,7 +1407,7 @@
 	PINMUX_IPSR_MSEL(IP13_14_12, SCIF2_TXD_B, SEL_SCIF2_1),
 	PINMUX_IPSR_MSEL(IP13_14_12, I2C3_SDA_E, SEL_I2C03_4),
 	PINMUX_IPSR_GPSR(IP13_14_12, VI1_DATA7),
-	PINMUX_IPSR_GPSR(IP13_14_12, ATAसूची0_N),
+	PINMUX_IPSR_GPSR(IP13_14_12, ATADIR0_N),
 	PINMUX_IPSR_MSEL(IP13_14_12, ETH_MAGIC_B, SEL_ETH_1),
 	PINMUX_IPSR_MSEL(IP13_17_15, AUDIO_CLKA, SEL_ADG_0),
 	PINMUX_IPSR_MSEL(IP13_17_15, I2C0_SCL_B, SEL_I2C00_1),
@@ -1435,130 +1434,130 @@
 	PINMUX_IPSR_GPSR(IP13_26_24, VI1_VSYNC_N),
 	PINMUX_IPSR_MSEL(IP13_26_24, TS_SPSYNC_C, SEL_TSIF0_2),
 	PINMUX_IPSR_MSEL(IP13_26_24, FMIN_E, SEL_DARC_4),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sh_pfc_pin pinmux_pins[] = अणु
+static const struct sh_pfc_pin pinmux_pins[] = {
 	PINMUX_GPIO_GP_ALL(),
-पूर्ण;
+};
 
 /* - Audio Clock ------------------------------------------------------------ */
-अटल स्थिर अचिन्हित पूर्णांक audio_clka_pins[] = अणु
+static const unsigned int audio_clka_pins[] = {
 	/* CLKA */
 	RCAR_GP_PIN(5, 20),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक audio_clka_mux[] = अणु
+};
+static const unsigned int audio_clka_mux[] = {
 	AUDIO_CLKA_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक audio_clka_b_pins[] = अणु
+};
+static const unsigned int audio_clka_b_pins[] = {
 	/* CLKA */
 	RCAR_GP_PIN(3, 25),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक audio_clka_b_mux[] = अणु
+};
+static const unsigned int audio_clka_b_mux[] = {
 	AUDIO_CLKA_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक audio_clka_c_pins[] = अणु
+};
+static const unsigned int audio_clka_c_pins[] = {
 	/* CLKA */
 	RCAR_GP_PIN(4, 20),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक audio_clka_c_mux[] = अणु
+};
+static const unsigned int audio_clka_c_mux[] = {
 	AUDIO_CLKA_C_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक audio_clka_d_pins[] = अणु
+};
+static const unsigned int audio_clka_d_pins[] = {
 	/* CLKA */
 	RCAR_GP_PIN(5, 0),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक audio_clka_d_mux[] = अणु
+};
+static const unsigned int audio_clka_d_mux[] = {
 	AUDIO_CLKA_D_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक audio_clkb_pins[] = अणु
+};
+static const unsigned int audio_clkb_pins[] = {
 	/* CLKB */
 	RCAR_GP_PIN(5, 21),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक audio_clkb_mux[] = अणु
+};
+static const unsigned int audio_clkb_mux[] = {
 	AUDIO_CLKB_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक audio_clkb_b_pins[] = अणु
+};
+static const unsigned int audio_clkb_b_pins[] = {
 	/* CLKB */
 	RCAR_GP_PIN(3, 26),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक audio_clkb_b_mux[] = अणु
+};
+static const unsigned int audio_clkb_b_mux[] = {
 	AUDIO_CLKB_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक audio_clkb_c_pins[] = अणु
+};
+static const unsigned int audio_clkb_c_pins[] = {
 	/* CLKB */
 	RCAR_GP_PIN(4, 21),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक audio_clkb_c_mux[] = अणु
+};
+static const unsigned int audio_clkb_c_mux[] = {
 	AUDIO_CLKB_C_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक audio_clkc_pins[] = अणु
+};
+static const unsigned int audio_clkc_pins[] = {
 	/* CLKC */
 	RCAR_GP_PIN(5, 22),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक audio_clkc_mux[] = अणु
+};
+static const unsigned int audio_clkc_mux[] = {
 	AUDIO_CLKC_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक audio_clkc_b_pins[] = अणु
+};
+static const unsigned int audio_clkc_b_pins[] = {
 	/* CLKC */
 	RCAR_GP_PIN(3, 29),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक audio_clkc_b_mux[] = अणु
+};
+static const unsigned int audio_clkc_b_mux[] = {
 	AUDIO_CLKC_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक audio_clkc_c_pins[] = अणु
+};
+static const unsigned int audio_clkc_c_pins[] = {
 	/* CLKC */
 	RCAR_GP_PIN(4, 22),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक audio_clkc_c_mux[] = अणु
+};
+static const unsigned int audio_clkc_c_mux[] = {
 	AUDIO_CLKC_C_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक audio_clkout_pins[] = अणु
+};
+static const unsigned int audio_clkout_pins[] = {
 	/* CLKOUT */
 	RCAR_GP_PIN(5, 23),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक audio_clkout_mux[] = अणु
+};
+static const unsigned int audio_clkout_mux[] = {
 	AUDIO_CLKOUT_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक audio_clkout_b_pins[] = अणु
+};
+static const unsigned int audio_clkout_b_pins[] = {
 	/* CLKOUT */
 	RCAR_GP_PIN(3, 12),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक audio_clkout_b_mux[] = अणु
+};
+static const unsigned int audio_clkout_b_mux[] = {
 	AUDIO_CLKOUT_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक audio_clkout_c_pins[] = अणु
+};
+static const unsigned int audio_clkout_c_pins[] = {
 	/* CLKOUT */
 	RCAR_GP_PIN(4, 23),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक audio_clkout_c_mux[] = अणु
+};
+static const unsigned int audio_clkout_c_mux[] = {
 	AUDIO_CLKOUT_C_MARK,
-पूर्ण;
+};
 /* - AVB -------------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक avb_link_pins[] = अणु
+static const unsigned int avb_link_pins[] = {
 	RCAR_GP_PIN(3, 26),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक avb_link_mux[] = अणु
+};
+static const unsigned int avb_link_mux[] = {
 	AVB_LINK_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक avb_magic_pins[] = अणु
+};
+static const unsigned int avb_magic_pins[] = {
 	RCAR_GP_PIN(3, 27),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक avb_magic_mux[] = अणु
+};
+static const unsigned int avb_magic_mux[] = {
 	AVB_MAGIC_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक avb_phy_पूर्णांक_pins[] = अणु
+};
+static const unsigned int avb_phy_int_pins[] = {
 	RCAR_GP_PIN(3, 28),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक avb_phy_पूर्णांक_mux[] = अणु
+};
+static const unsigned int avb_phy_int_mux[] = {
 	AVB_PHY_INT_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक avb_mdio_pins[] = अणु
+};
+static const unsigned int avb_mdio_pins[] = {
 	RCAR_GP_PIN(3, 24), RCAR_GP_PIN(3, 25),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक avb_mdio_mux[] = अणु
+};
+static const unsigned int avb_mdio_mux[] = {
 	AVB_MDC_MARK, AVB_MDIO_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक avb_mii_pins[] = अणु
+};
+static const unsigned int avb_mii_pins[] = {
 	RCAR_GP_PIN(3, 14), RCAR_GP_PIN(3, 15), RCAR_GP_PIN(3, 16),
 	RCAR_GP_PIN(3, 17),
 
@@ -1568,8 +1567,8 @@
 	RCAR_GP_PIN(3, 10), RCAR_GP_PIN(3, 0), RCAR_GP_PIN(3, 1),
 	RCAR_GP_PIN(3, 29), RCAR_GP_PIN(3, 12), RCAR_GP_PIN(3, 22),
 	RCAR_GP_PIN(3, 13), RCAR_GP_PIN(3, 11),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक avb_mii_mux[] = अणु
+};
+static const unsigned int avb_mii_mux[] = {
 	AVB_TXD0_MARK, AVB_TXD1_MARK, AVB_TXD2_MARK,
 	AVB_TXD3_MARK,
 
@@ -1579,8 +1578,8 @@
 	AVB_RX_ER_MARK, AVB_RX_CLK_MARK, AVB_RX_DV_MARK,
 	AVB_CRS_MARK, AVB_TX_EN_MARK, AVB_TX_ER_MARK,
 	AVB_TX_CLK_MARK, AVB_COL_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक avb_gmii_pins[] = अणु
+};
+static const unsigned int avb_gmii_pins[] = {
 	RCAR_GP_PIN(3, 14), RCAR_GP_PIN(3, 15), RCAR_GP_PIN(3, 16),
 	RCAR_GP_PIN(3, 17), RCAR_GP_PIN(3, 18), RCAR_GP_PIN(3, 19),
 	RCAR_GP_PIN(3, 20), RCAR_GP_PIN(3, 21),
@@ -1593,8 +1592,8 @@
 	RCAR_GP_PIN(3, 29), RCAR_GP_PIN(3, 23), RCAR_GP_PIN(3, 30),
 	RCAR_GP_PIN(3, 12), RCAR_GP_PIN(3, 22), RCAR_GP_PIN(3, 13),
 	RCAR_GP_PIN(3, 11),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक avb_gmii_mux[] = अणु
+};
+static const unsigned int avb_gmii_mux[] = {
 	AVB_TXD0_MARK, AVB_TXD1_MARK, AVB_TXD2_MARK,
 	AVB_TXD3_MARK, AVB_TXD4_MARK, AVB_TXD5_MARK,
 	AVB_TXD6_MARK, AVB_TXD7_MARK,
@@ -1607,119 +1606,119 @@
 	AVB_CRS_MARK, AVB_GTX_CLK_MARK, AVB_GTXREFCLK_MARK,
 	AVB_TX_EN_MARK, AVB_TX_ER_MARK, AVB_TX_CLK_MARK,
 	AVB_COL_MARK,
-पूर्ण;
+};
 
 /* - CAN -------------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक can0_data_pins[] = अणु
+static const unsigned int can0_data_pins[] = {
 	/* TX, RX */
 	RCAR_GP_PIN(6, 15), RCAR_GP_PIN(6, 14),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक can0_data_mux[] = अणु
+static const unsigned int can0_data_mux[] = {
 	CAN0_TX_MARK, CAN0_RX_MARK,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक can0_data_b_pins[] = अणु
+static const unsigned int can0_data_b_pins[] = {
 	/* TX, RX */
 	RCAR_GP_PIN(3, 16), RCAR_GP_PIN(3, 15),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक can0_data_b_mux[] = अणु
+static const unsigned int can0_data_b_mux[] = {
 	CAN0_TX_B_MARK, CAN0_RX_B_MARK,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक can0_data_c_pins[] = अणु
+static const unsigned int can0_data_c_pins[] = {
 	/* TX, RX */
 	RCAR_GP_PIN(2, 17), RCAR_GP_PIN(2, 16),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक can0_data_c_mux[] = अणु
+static const unsigned int can0_data_c_mux[] = {
 	CAN0_TX_C_MARK, CAN0_RX_C_MARK,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक can0_data_d_pins[] = अणु
+static const unsigned int can0_data_d_pins[] = {
 	/* TX, RX */
 	RCAR_GP_PIN(5, 12), RCAR_GP_PIN(5, 11),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक can0_data_d_mux[] = अणु
+static const unsigned int can0_data_d_mux[] = {
 	CAN0_TX_D_MARK, CAN0_RX_D_MARK,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक can1_data_pins[] = अणु
+static const unsigned int can1_data_pins[] = {
 	/* TX, RX */
 	RCAR_GP_PIN(6, 25), RCAR_GP_PIN(6, 24),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक can1_data_mux[] = अणु
+static const unsigned int can1_data_mux[] = {
 	CAN1_TX_MARK, CAN1_RX_MARK,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक can1_data_b_pins[] = अणु
+static const unsigned int can1_data_b_pins[] = {
 	/* TX, RX */
 	RCAR_GP_PIN(1, 2), RCAR_GP_PIN(1, 1),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक can1_data_b_mux[] = अणु
+static const unsigned int can1_data_b_mux[] = {
 	CAN1_TX_B_MARK, CAN1_RX_B_MARK,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक can1_data_c_pins[] = अणु
+static const unsigned int can1_data_c_pins[] = {
 	/* TX, RX */
 	RCAR_GP_PIN(5, 6), RCAR_GP_PIN(5, 5),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक can1_data_c_mux[] = अणु
+static const unsigned int can1_data_c_mux[] = {
 	CAN1_TX_C_MARK, CAN1_RX_C_MARK,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक can1_data_d_pins[] = अणु
+static const unsigned int can1_data_d_pins[] = {
 	/* TX, RX */
 	RCAR_GP_PIN(3, 31), RCAR_GP_PIN(3, 30),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक can1_data_d_mux[] = अणु
+static const unsigned int can1_data_d_mux[] = {
 	CAN1_TX_D_MARK, CAN1_RX_D_MARK,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक can_clk_pins[] = अणु
+static const unsigned int can_clk_pins[] = {
 	/* CLK */
 	RCAR_GP_PIN(3, 31),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक can_clk_mux[] = अणु
+static const unsigned int can_clk_mux[] = {
 	CAN_CLK_MARK,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक can_clk_b_pins[] = अणु
+static const unsigned int can_clk_b_pins[] = {
 	/* CLK */
 	RCAR_GP_PIN(1, 23),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक can_clk_b_mux[] = अणु
+static const unsigned int can_clk_b_mux[] = {
 	CAN_CLK_B_MARK,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक can_clk_c_pins[] = अणु
+static const unsigned int can_clk_c_pins[] = {
 	/* CLK */
 	RCAR_GP_PIN(1, 0),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक can_clk_c_mux[] = अणु
+static const unsigned int can_clk_c_mux[] = {
 	CAN_CLK_C_MARK,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक can_clk_d_pins[] = अणु
+static const unsigned int can_clk_d_pins[] = {
 	/* CLK */
 	RCAR_GP_PIN(5, 0),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक can_clk_d_mux[] = अणु
+static const unsigned int can_clk_d_mux[] = {
 	CAN_CLK_D_MARK,
-पूर्ण;
+};
 
 /* - DU --------------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक du0_rgb666_pins[] = अणु
+static const unsigned int du0_rgb666_pins[] = {
 	/* R[7:2], G[7:2], B[7:2] */
 	RCAR_GP_PIN(2, 7),  RCAR_GP_PIN(2, 6),  RCAR_GP_PIN(2, 5),
 	RCAR_GP_PIN(2, 4),  RCAR_GP_PIN(2, 3),  RCAR_GP_PIN(2, 2),
@@ -1727,16 +1726,16 @@
 	RCAR_GP_PIN(2, 12), RCAR_GP_PIN(2, 11), RCAR_GP_PIN(2, 10),
 	RCAR_GP_PIN(2, 23), RCAR_GP_PIN(2, 22), RCAR_GP_PIN(2, 21),
 	RCAR_GP_PIN(2, 20), RCAR_GP_PIN(2, 19), RCAR_GP_PIN(2, 18),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du0_rgb666_mux[] = अणु
+};
+static const unsigned int du0_rgb666_mux[] = {
 	DU0_DR7_MARK, DU0_DR6_MARK, DU0_DR5_MARK, DU0_DR4_MARK,
 	DU0_DR3_MARK, DU0_DR2_MARK,
 	DU0_DG7_MARK, DU0_DG6_MARK, DU0_DG5_MARK, DU0_DG4_MARK,
 	DU0_DG3_MARK, DU0_DG2_MARK,
 	DU0_DB7_MARK, DU0_DB6_MARK, DU0_DB5_MARK, DU0_DB4_MARK,
 	DU0_DB3_MARK, DU0_DB2_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du0_rgb888_pins[] = अणु
+};
+static const unsigned int du0_rgb888_pins[] = {
 	/* R[7:0], G[7:0], B[7:0] */
 	RCAR_GP_PIN(2, 7),  RCAR_GP_PIN(2, 6),  RCAR_GP_PIN(2, 5),
 	RCAR_GP_PIN(2, 4),  RCAR_GP_PIN(2, 3),  RCAR_GP_PIN(2, 2),
@@ -1747,65 +1746,65 @@
 	RCAR_GP_PIN(2, 23), RCAR_GP_PIN(2, 22), RCAR_GP_PIN(2, 21),
 	RCAR_GP_PIN(2, 20), RCAR_GP_PIN(2, 19), RCAR_GP_PIN(2, 18),
 	RCAR_GP_PIN(2, 17), RCAR_GP_PIN(2, 16),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du0_rgb888_mux[] = अणु
+};
+static const unsigned int du0_rgb888_mux[] = {
 	DU0_DR7_MARK, DU0_DR6_MARK, DU0_DR5_MARK, DU0_DR4_MARK,
 	DU0_DR3_MARK, DU0_DR2_MARK, DU0_DR1_MARK, DU0_DR0_MARK,
 	DU0_DG7_MARK, DU0_DG6_MARK, DU0_DG5_MARK, DU0_DG4_MARK,
 	DU0_DG3_MARK, DU0_DG2_MARK, DU0_DG1_MARK, DU0_DG0_MARK,
 	DU0_DB7_MARK, DU0_DB6_MARK, DU0_DB5_MARK, DU0_DB4_MARK,
 	DU0_DB3_MARK, DU0_DB2_MARK, DU0_DB1_MARK, DU0_DB0_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du0_clk0_out_pins[] = अणु
+};
+static const unsigned int du0_clk0_out_pins[] = {
 	/* DOTCLKOUT0 */
 	RCAR_GP_PIN(2, 25),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du0_clk0_out_mux[] = अणु
+};
+static const unsigned int du0_clk0_out_mux[] = {
 	DU0_DOTCLKOUT0_MARK
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du0_clk1_out_pins[] = अणु
+};
+static const unsigned int du0_clk1_out_pins[] = {
 	/* DOTCLKOUT1 */
 	RCAR_GP_PIN(2, 26),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du0_clk1_out_mux[] = अणु
+};
+static const unsigned int du0_clk1_out_mux[] = {
 	DU0_DOTCLKOUT1_MARK
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du0_clk_in_pins[] = अणु
+};
+static const unsigned int du0_clk_in_pins[] = {
 	/* CLKIN */
 	RCAR_GP_PIN(2, 24),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du0_clk_in_mux[] = अणु
+};
+static const unsigned int du0_clk_in_mux[] = {
 	DU0_DOTCLKIN_MARK
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du0_sync_pins[] = अणु
+};
+static const unsigned int du0_sync_pins[] = {
 	/* EXVSYNC/VSYNC, EXHSYNC/HSYNC */
 	RCAR_GP_PIN(2, 28), RCAR_GP_PIN(2, 27),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du0_sync_mux[] = अणु
+};
+static const unsigned int du0_sync_mux[] = {
 	DU0_EXVSYNC_DU0_VSYNC_MARK, DU0_EXHSYNC_DU0_HSYNC_MARK
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du0_oddf_pins[] = अणु
+};
+static const unsigned int du0_oddf_pins[] = {
 	/* EXODDF/ODDF/DISP/CDE */
 	RCAR_GP_PIN(2, 29),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du0_oddf_mux[] = अणु
+};
+static const unsigned int du0_oddf_mux[] = {
 	DU0_EXODDF_DU0_ODDF_DISP_CDE_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du0_cde_pins[] = अणु
+};
+static const unsigned int du0_cde_pins[] = {
 	/* CDE */
 	RCAR_GP_PIN(2, 31),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du0_cde_mux[] = अणु
+};
+static const unsigned int du0_cde_mux[] = {
 	DU0_CDE_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du0_disp_pins[] = अणु
+};
+static const unsigned int du0_disp_pins[] = {
 	/* DISP */
 	RCAR_GP_PIN(2, 30),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du0_disp_mux[] = अणु
+};
+static const unsigned int du0_disp_mux[] = {
 	DU0_DISP_MARK
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du1_rgb666_pins[] = अणु
+};
+static const unsigned int du1_rgb666_pins[] = {
 	/* R[7:2], G[7:2], B[7:2] */
 	RCAR_GP_PIN(4, 7),  RCAR_GP_PIN(4, 6),  RCAR_GP_PIN(4, 5),
 	RCAR_GP_PIN(4, 4),  RCAR_GP_PIN(4, 3),  RCAR_GP_PIN(4, 2),
@@ -1813,16 +1812,16 @@
 	RCAR_GP_PIN(4, 12), RCAR_GP_PIN(4, 11), RCAR_GP_PIN(4, 10),
 	RCAR_GP_PIN(4, 23), RCAR_GP_PIN(4, 22), RCAR_GP_PIN(4, 21),
 	RCAR_GP_PIN(4, 20), RCAR_GP_PIN(4, 19), RCAR_GP_PIN(4, 18),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du1_rgb666_mux[] = अणु
+};
+static const unsigned int du1_rgb666_mux[] = {
 	DU1_DR7_MARK, DU1_DR6_MARK, DU1_DR5_MARK, DU1_DR4_MARK,
 	DU1_DR3_MARK, DU1_DR2_MARK,
 	DU1_DG7_MARK, DU1_DG6_MARK, DU1_DG5_MARK, DU1_DG4_MARK,
 	DU1_DG3_MARK, DU1_DG2_MARK,
 	DU1_DB7_MARK, DU1_DB6_MARK, DU1_DB5_MARK, DU1_DB4_MARK,
 	DU1_DB3_MARK, DU1_DB2_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du1_rgb888_pins[] = अणु
+};
+static const unsigned int du1_rgb888_pins[] = {
 	/* R[7:0], G[7:0], B[7:0] */
 	RCAR_GP_PIN(4, 7),  RCAR_GP_PIN(4, 6),  RCAR_GP_PIN(4, 5),
 	RCAR_GP_PIN(4, 4),  RCAR_GP_PIN(4, 3),  RCAR_GP_PIN(4, 2),
@@ -1833,1789 +1832,1789 @@
 	RCAR_GP_PIN(4, 23), RCAR_GP_PIN(4, 22), RCAR_GP_PIN(4, 21),
 	RCAR_GP_PIN(4, 20), RCAR_GP_PIN(4, 19), RCAR_GP_PIN(4, 18),
 	RCAR_GP_PIN(4, 17), RCAR_GP_PIN(4, 16),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du1_rgb888_mux[] = अणु
+};
+static const unsigned int du1_rgb888_mux[] = {
 	DU1_DR7_MARK, DU1_DR6_MARK, DU1_DR5_MARK, DU1_DR4_MARK,
 	DU1_DR3_MARK, DU1_DR2_MARK, DU1_DR1_MARK, DU1_DR0_MARK,
 	DU1_DG7_MARK, DU1_DG6_MARK, DU1_DG5_MARK, DU1_DG4_MARK,
 	DU1_DG3_MARK, DU1_DG2_MARK, DU1_DG1_MARK, DU1_DG0_MARK,
 	DU1_DB7_MARK, DU1_DB6_MARK, DU1_DB5_MARK, DU1_DB4_MARK,
 	DU1_DB3_MARK, DU1_DB2_MARK, DU1_DB1_MARK, DU1_DB0_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du1_clk0_out_pins[] = अणु
+};
+static const unsigned int du1_clk0_out_pins[] = {
 	/* DOTCLKOUT0 */
 	RCAR_GP_PIN(4, 25),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du1_clk0_out_mux[] = अणु
+};
+static const unsigned int du1_clk0_out_mux[] = {
 	DU1_DOTCLKOUT0_MARK
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du1_clk1_out_pins[] = अणु
+};
+static const unsigned int du1_clk1_out_pins[] = {
 	/* DOTCLKOUT1 */
 	RCAR_GP_PIN(4, 26),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du1_clk1_out_mux[] = अणु
+};
+static const unsigned int du1_clk1_out_mux[] = {
 	DU1_DOTCLKOUT1_MARK
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du1_clk_in_pins[] = अणु
+};
+static const unsigned int du1_clk_in_pins[] = {
 	/* DOTCLKIN */
 	RCAR_GP_PIN(4, 24),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du1_clk_in_mux[] = अणु
+};
+static const unsigned int du1_clk_in_mux[] = {
 	DU1_DOTCLKIN_MARK
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du1_sync_pins[] = अणु
+};
+static const unsigned int du1_sync_pins[] = {
 	/* EXVSYNC/VSYNC, EXHSYNC/HSYNC */
 	RCAR_GP_PIN(4, 28), RCAR_GP_PIN(4, 27),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du1_sync_mux[] = अणु
+};
+static const unsigned int du1_sync_mux[] = {
 	DU1_EXVSYNC_DU1_VSYNC_MARK, DU1_EXHSYNC_DU1_HSYNC_MARK
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du1_oddf_pins[] = अणु
+};
+static const unsigned int du1_oddf_pins[] = {
 	/* EXODDF/ODDF/DISP/CDE */
 	RCAR_GP_PIN(4, 29),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du1_oddf_mux[] = अणु
+};
+static const unsigned int du1_oddf_mux[] = {
 	DU1_EXODDF_DU1_ODDF_DISP_CDE_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du1_cde_pins[] = अणु
+};
+static const unsigned int du1_cde_pins[] = {
 	/* CDE */
 	RCAR_GP_PIN(4, 31),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du1_cde_mux[] = अणु
+};
+static const unsigned int du1_cde_mux[] = {
 	DU1_CDE_MARK
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du1_disp_pins[] = अणु
+};
+static const unsigned int du1_disp_pins[] = {
 	/* DISP */
 	RCAR_GP_PIN(4, 30),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक du1_disp_mux[] = अणु
+};
+static const unsigned int du1_disp_mux[] = {
 	DU1_DISP_MARK
-पूर्ण;
+};
 /* - ETH -------------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक eth_link_pins[] = अणु
+static const unsigned int eth_link_pins[] = {
 	/* LINK */
 	RCAR_GP_PIN(3, 18),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक eth_link_mux[] = अणु
+};
+static const unsigned int eth_link_mux[] = {
 	ETH_LINK_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक eth_magic_pins[] = अणु
+};
+static const unsigned int eth_magic_pins[] = {
 	/* MAGIC */
 	RCAR_GP_PIN(3, 22),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक eth_magic_mux[] = अणु
+};
+static const unsigned int eth_magic_mux[] = {
 	ETH_MAGIC_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक eth_mdio_pins[] = अणु
+};
+static const unsigned int eth_mdio_pins[] = {
 	/* MDC, MDIO */
 	RCAR_GP_PIN(3, 24), RCAR_GP_PIN(3, 13),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक eth_mdio_mux[] = अणु
+};
+static const unsigned int eth_mdio_mux[] = {
 	ETH_MDC_MARK, ETH_MDIO_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक eth_rmii_pins[] = अणु
+};
+static const unsigned int eth_rmii_pins[] = {
 	/* RXD[0:1], RX_ER, CRS_DV, TXD[0:1], TX_EN, REF_CLK */
 	RCAR_GP_PIN(3, 16), RCAR_GP_PIN(3, 17), RCAR_GP_PIN(3, 15),
 	RCAR_GP_PIN(3, 14), RCAR_GP_PIN(3, 23), RCAR_GP_PIN(3, 20),
 	RCAR_GP_PIN(3, 21), RCAR_GP_PIN(3, 19),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक eth_rmii_mux[] = अणु
+};
+static const unsigned int eth_rmii_mux[] = {
 	ETH_RXD0_MARK, ETH_RXD1_MARK, ETH_RX_ER_MARK, ETH_CRS_DV_MARK,
 	ETH_TXD0_MARK, ETH_TXD1_MARK, ETH_TX_EN_MARK, ETH_REFCLK_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक eth_link_b_pins[] = अणु
+};
+static const unsigned int eth_link_b_pins[] = {
 	/* LINK */
 	RCAR_GP_PIN(5, 15),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक eth_link_b_mux[] = अणु
+};
+static const unsigned int eth_link_b_mux[] = {
 	ETH_LINK_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक eth_magic_b_pins[] = अणु
+};
+static const unsigned int eth_magic_b_pins[] = {
 	/* MAGIC */
 	RCAR_GP_PIN(5, 19),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक eth_magic_b_mux[] = अणु
+};
+static const unsigned int eth_magic_b_mux[] = {
 	ETH_MAGIC_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक eth_mdio_b_pins[] = अणु
+};
+static const unsigned int eth_mdio_b_pins[] = {
 	/* MDC, MDIO */
 	RCAR_GP_PIN(5, 21), RCAR_GP_PIN(5, 10),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक eth_mdio_b_mux[] = अणु
+};
+static const unsigned int eth_mdio_b_mux[] = {
 	ETH_MDC_B_MARK, ETH_MDIO_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक eth_rmii_b_pins[] = अणु
+};
+static const unsigned int eth_rmii_b_pins[] = {
 	/* RXD[0:1], RX_ER, CRS_DV, TXD[0:1], TX_EN, REF_CLK */
 	RCAR_GP_PIN(5, 13), RCAR_GP_PIN(5, 14), RCAR_GP_PIN(5, 12),
 	RCAR_GP_PIN(5, 11), RCAR_GP_PIN(5, 20), RCAR_GP_PIN(5, 17),
 	RCAR_GP_PIN(5, 18), RCAR_GP_PIN(5, 16),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक eth_rmii_b_mux[] = अणु
+};
+static const unsigned int eth_rmii_b_mux[] = {
 	ETH_RXD0_B_MARK, ETH_RXD1_B_MARK, ETH_RX_ER_B_MARK, ETH_CRS_DV_B_MARK,
 	ETH_TXD0_B_MARK, ETH_TXD1_B_MARK, ETH_TX_EN_B_MARK, ETH_REFCLK_B_MARK,
-पूर्ण;
+};
 /* - HSCIF0 ----------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक hscअगर0_data_pins[] = अणु
+static const unsigned int hscif0_data_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(3, 25), RCAR_GP_PIN(3, 26),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक hscअगर0_data_mux[] = अणु
+};
+static const unsigned int hscif0_data_mux[] = {
 	HSCIF0_HRX_MARK, HSCIF0_HTX_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक hscअगर0_clk_pins[] = अणु
+};
+static const unsigned int hscif0_clk_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(3, 29),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक hscअगर0_clk_mux[] = अणु
+};
+static const unsigned int hscif0_clk_mux[] = {
 	HSCIF0_HSCK_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक hscअगर0_ctrl_pins[] = अणु
+};
+static const unsigned int hscif0_ctrl_pins[] = {
 	/* RTS, CTS */
 	RCAR_GP_PIN(3, 28), RCAR_GP_PIN(3, 27),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक hscअगर0_ctrl_mux[] = अणु
+};
+static const unsigned int hscif0_ctrl_mux[] = {
 	HSCIF0_HRTS_N_MARK, HSCIF0_HCTS_N_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक hscअगर0_data_b_pins[] = अणु
+};
+static const unsigned int hscif0_data_b_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(0, 30), RCAR_GP_PIN(0, 31),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक hscअगर0_data_b_mux[] = अणु
+};
+static const unsigned int hscif0_data_b_mux[] = {
 	HSCIF0_HRX_B_MARK, HSCIF0_HTX_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक hscअगर0_clk_b_pins[] = अणु
+};
+static const unsigned int hscif0_clk_b_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(1, 0),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक hscअगर0_clk_b_mux[] = अणु
+};
+static const unsigned int hscif0_clk_b_mux[] = {
 	HSCIF0_HSCK_B_MARK,
-पूर्ण;
+};
 /* - HSCIF1 ----------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक hscअगर1_data_pins[] = अणु
+static const unsigned int hscif1_data_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(4, 8), RCAR_GP_PIN(4, 9),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक hscअगर1_data_mux[] = अणु
+};
+static const unsigned int hscif1_data_mux[] = {
 	HSCIF1_HRX_MARK, HSCIF1_HTX_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक hscअगर1_clk_pins[] = अणु
+};
+static const unsigned int hscif1_clk_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(4, 10),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक hscअगर1_clk_mux[] = अणु
+};
+static const unsigned int hscif1_clk_mux[] = {
 	HSCIF1_HSCK_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक hscअगर1_ctrl_pins[] = अणु
+};
+static const unsigned int hscif1_ctrl_pins[] = {
 	/* RTS, CTS */
 	RCAR_GP_PIN(4, 12), RCAR_GP_PIN(4, 11),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक hscअगर1_ctrl_mux[] = अणु
+};
+static const unsigned int hscif1_ctrl_mux[] = {
 	HSCIF1_HRTS_N_MARK, HSCIF1_HCTS_N_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक hscअगर1_data_b_pins[] = अणु
+};
+static const unsigned int hscif1_data_b_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(5, 13), RCAR_GP_PIN(5, 14),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक hscअगर1_data_b_mux[] = अणु
+};
+static const unsigned int hscif1_data_b_mux[] = {
 	HSCIF1_HRX_B_MARK, HSCIF1_HTX_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक hscअगर1_ctrl_b_pins[] = अणु
+};
+static const unsigned int hscif1_ctrl_b_pins[] = {
 	/* RTS, CTS */
 	RCAR_GP_PIN(5, 16), RCAR_GP_PIN(5, 15),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक hscअगर1_ctrl_b_mux[] = अणु
+};
+static const unsigned int hscif1_ctrl_b_mux[] = {
 	HSCIF1_HRTS_N_B_MARK, HSCIF1_HCTS_N_B_MARK,
-पूर्ण;
+};
 /* - HSCIF2 ----------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक hscअगर2_data_pins[] = अणु
+static const unsigned int hscif2_data_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(0, 8), RCAR_GP_PIN(0, 9),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक hscअगर2_data_mux[] = अणु
+};
+static const unsigned int hscif2_data_mux[] = {
 	HSCIF2_HRX_MARK, HSCIF2_HTX_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक hscअगर2_clk_pins[] = अणु
+};
+static const unsigned int hscif2_clk_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(0, 10),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक hscअगर2_clk_mux[] = अणु
+};
+static const unsigned int hscif2_clk_mux[] = {
 	HSCIF2_HSCK_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक hscअगर2_ctrl_pins[] = अणु
+};
+static const unsigned int hscif2_ctrl_pins[] = {
 	/* RTS, CTS */
 	RCAR_GP_PIN(0, 12), RCAR_GP_PIN(0, 11),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक hscअगर2_ctrl_mux[] = अणु
+};
+static const unsigned int hscif2_ctrl_mux[] = {
 	HSCIF2_HRTS_N_MARK, HSCIF2_HCTS_N_MARK,
-पूर्ण;
+};
 /* - I2C0 ------------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक i2c0_pins[] = अणु
+static const unsigned int i2c0_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(3, 30), RCAR_GP_PIN(3, 31),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c0_mux[] = अणु
+};
+static const unsigned int i2c0_mux[] = {
 	I2C0_SCL_MARK, I2C0_SDA_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c0_b_pins[] = अणु
+};
+static const unsigned int i2c0_b_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(5, 20), RCAR_GP_PIN(5, 21),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c0_b_mux[] = अणु
+};
+static const unsigned int i2c0_b_mux[] = {
 	I2C0_SCL_B_MARK, I2C0_SDA_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c0_c_pins[] = अणु
+};
+static const unsigned int i2c0_c_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(3, 11), RCAR_GP_PIN(3, 12),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c0_c_mux[] = अणु
+};
+static const unsigned int i2c0_c_mux[] = {
 	I2C0_SCL_C_MARK, I2C0_SDA_C_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c0_d_pins[] = अणु
+};
+static const unsigned int i2c0_d_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(0, 5), RCAR_GP_PIN(0, 6),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c0_d_mux[] = अणु
+};
+static const unsigned int i2c0_d_mux[] = {
 	I2C0_SCL_D_MARK, I2C0_SDA_D_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c0_e_pins[] = अणु
+};
+static const unsigned int i2c0_e_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(3, 27), RCAR_GP_PIN(3, 28),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c0_e_mux[] = अणु
+};
+static const unsigned int i2c0_e_mux[] = {
 	I2C0_SCL_E_MARK, I2C0_SDA_E_MARK,
-पूर्ण;
+};
 /* - I2C1 ------------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक i2c1_pins[] = अणु
+static const unsigned int i2c1_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(4, 0), RCAR_GP_PIN(4, 1),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c1_mux[] = अणु
+};
+static const unsigned int i2c1_mux[] = {
 	I2C1_SCL_MARK, I2C1_SDA_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c1_b_pins[] = अणु
+};
+static const unsigned int i2c1_b_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(0, 8), RCAR_GP_PIN(0, 9),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c1_b_mux[] = अणु
+};
+static const unsigned int i2c1_b_mux[] = {
 	I2C1_SCL_B_MARK, I2C1_SDA_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c1_c_pins[] = अणु
+};
+static const unsigned int i2c1_c_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(3, 25), RCAR_GP_PIN(3, 26),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c1_c_mux[] = अणु
+};
+static const unsigned int i2c1_c_mux[] = {
 	I2C1_SCL_C_MARK, I2C1_SDA_C_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c1_d_pins[] = अणु
+};
+static const unsigned int i2c1_d_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(0, 11), RCAR_GP_PIN(0, 12),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c1_d_mux[] = अणु
+};
+static const unsigned int i2c1_d_mux[] = {
 	I2C1_SCL_D_MARK, I2C1_SDA_D_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c1_e_pins[] = अणु
+};
+static const unsigned int i2c1_e_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(4, 20), RCAR_GP_PIN(4, 21),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c1_e_mux[] = अणु
+};
+static const unsigned int i2c1_e_mux[] = {
 	I2C1_SCL_E_MARK, I2C1_SDA_E_MARK,
-पूर्ण;
+};
 /* - I2C2 ------------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक i2c2_pins[] = अणु
+static const unsigned int i2c2_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(4, 22), RCAR_GP_PIN(4, 23),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c2_mux[] = अणु
+};
+static const unsigned int i2c2_mux[] = {
 	I2C2_SCL_MARK, I2C2_SDA_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c2_b_pins[] = अणु
+};
+static const unsigned int i2c2_b_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(6, 24), RCAR_GP_PIN(6, 25),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c2_b_mux[] = अणु
+};
+static const unsigned int i2c2_b_mux[] = {
 	I2C2_SCL_B_MARK, I2C2_SDA_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c2_c_pins[] = अणु
+};
+static const unsigned int i2c2_c_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(4, 2), RCAR_GP_PIN(4, 3),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c2_c_mux[] = अणु
+};
+static const unsigned int i2c2_c_mux[] = {
 	I2C2_SCL_C_MARK, I2C2_SDA_C_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c2_d_pins[] = अणु
+};
+static const unsigned int i2c2_d_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(2, 0), RCAR_GP_PIN(2, 1),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c2_d_mux[] = अणु
+};
+static const unsigned int i2c2_d_mux[] = {
 	I2C2_SCL_D_MARK, I2C2_SDA_D_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c2_e_pins[] = अणु
+};
+static const unsigned int i2c2_e_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(1, 16), RCAR_GP_PIN(1, 17),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c2_e_mux[] = अणु
+};
+static const unsigned int i2c2_e_mux[] = {
 	I2C2_SCL_E_MARK, I2C2_SDA_E_MARK,
-पूर्ण;
+};
 /* - I2C3 ------------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक i2c3_pins[] = अणु
+static const unsigned int i2c3_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(3, 9), RCAR_GP_PIN(3, 10),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c3_mux[] = अणु
+};
+static const unsigned int i2c3_mux[] = {
 	I2C3_SCL_MARK, I2C3_SDA_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c3_b_pins[] = अणु
+};
+static const unsigned int i2c3_b_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(0, 3), RCAR_GP_PIN(0, 4),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c3_b_mux[] = अणु
+};
+static const unsigned int i2c3_b_mux[] = {
 	I2C3_SCL_B_MARK, I2C3_SDA_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c3_c_pins[] = अणु
+};
+static const unsigned int i2c3_c_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(4, 25), RCAR_GP_PIN(4, 26),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c3_c_mux[] = अणु
+};
+static const unsigned int i2c3_c_mux[] = {
 	I2C3_SCL_C_MARK, I2C3_SDA_C_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c3_d_pins[] = अणु
+};
+static const unsigned int i2c3_d_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(2, 8), RCAR_GP_PIN(2, 9),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c3_d_mux[] = अणु
+};
+static const unsigned int i2c3_d_mux[] = {
 	I2C3_SCL_D_MARK, I2C3_SDA_D_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c3_e_pins[] = अणु
+};
+static const unsigned int i2c3_e_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(5, 18), RCAR_GP_PIN(5, 19),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c3_e_mux[] = अणु
+};
+static const unsigned int i2c3_e_mux[] = {
 	I2C3_SCL_E_MARK, I2C3_SDA_E_MARK,
-पूर्ण;
+};
 /* - I2C4 ------------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक i2c4_pins[] = अणु
+static const unsigned int i2c4_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(4, 8), RCAR_GP_PIN(4, 9),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c4_mux[] = अणु
+};
+static const unsigned int i2c4_mux[] = {
 	I2C4_SCL_MARK, I2C4_SDA_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c4_b_pins[] = अणु
+};
+static const unsigned int i2c4_b_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(5, 22), RCAR_GP_PIN(5, 23),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c4_b_mux[] = अणु
+};
+static const unsigned int i2c4_b_mux[] = {
 	I2C4_SCL_B_MARK, I2C4_SDA_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c4_c_pins[] = अणु
+};
+static const unsigned int i2c4_c_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(4, 28), RCAR_GP_PIN(4, 29),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c4_c_mux[] = अणु
+};
+static const unsigned int i2c4_c_mux[] = {
 	I2C4_SCL_C_MARK, I2C4_SDA_C_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c4_d_pins[] = अणु
+};
+static const unsigned int i2c4_d_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(2, 16), RCAR_GP_PIN(2, 17),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c4_d_mux[] = अणु
+};
+static const unsigned int i2c4_d_mux[] = {
 	I2C4_SCL_D_MARK, I2C4_SDA_D_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c4_e_pins[] = अणु
+};
+static const unsigned int i2c4_e_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(3, 23), RCAR_GP_PIN(3, 24),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c4_e_mux[] = अणु
+};
+static const unsigned int i2c4_e_mux[] = {
 	I2C4_SCL_E_MARK, I2C4_SDA_E_MARK,
-पूर्ण;
+};
 /* - I2C5 ------------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक i2c5_pins[] = अणु
+static const unsigned int i2c5_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(4, 14), RCAR_GP_PIN(4, 15),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c5_mux[] = अणु
+};
+static const unsigned int i2c5_mux[] = {
 	I2C5_SCL_MARK, I2C5_SDA_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c5_b_pins[] = अणु
+};
+static const unsigned int i2c5_b_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(0, 14), RCAR_GP_PIN(0, 15),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c5_b_mux[] = अणु
+};
+static const unsigned int i2c5_b_mux[] = {
 	I2C5_SCL_B_MARK, I2C5_SDA_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c5_c_pins[] = अणु
+};
+static const unsigned int i2c5_c_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(4, 31), RCAR_GP_PIN(4, 30),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c5_c_mux[] = अणु
+};
+static const unsigned int i2c5_c_mux[] = {
 	I2C5_SCL_C_MARK, I2C5_SDA_C_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c5_d_pins[] = अणु
+};
+static const unsigned int i2c5_d_pins[] = {
 	/* SCL, SDA */
 	RCAR_GP_PIN(3, 13), RCAR_GP_PIN(3, 14),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक i2c5_d_mux[] = अणु
+};
+static const unsigned int i2c5_d_mux[] = {
 	I2C5_SCL_D_MARK, I2C5_SDA_D_MARK,
-पूर्ण;
+};
 /* - INTC ------------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक पूर्णांकc_irq0_pins[] = अणु
+static const unsigned int intc_irq0_pins[] = {
 	/* IRQ0 */
 	RCAR_GP_PIN(4, 4),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक पूर्णांकc_irq0_mux[] = अणु
+};
+static const unsigned int intc_irq0_mux[] = {
 	IRQ0_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक पूर्णांकc_irq1_pins[] = अणु
+};
+static const unsigned int intc_irq1_pins[] = {
 	/* IRQ1 */
 	RCAR_GP_PIN(4, 18),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक पूर्णांकc_irq1_mux[] = अणु
+};
+static const unsigned int intc_irq1_mux[] = {
 	IRQ1_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक पूर्णांकc_irq2_pins[] = अणु
+};
+static const unsigned int intc_irq2_pins[] = {
 	/* IRQ2 */
 	RCAR_GP_PIN(4, 19),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक पूर्णांकc_irq2_mux[] = अणु
+};
+static const unsigned int intc_irq2_mux[] = {
 	IRQ2_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक पूर्णांकc_irq3_pins[] = अणु
+};
+static const unsigned int intc_irq3_pins[] = {
 	/* IRQ3 */
 	RCAR_GP_PIN(0, 7),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक पूर्णांकc_irq3_mux[] = अणु
+};
+static const unsigned int intc_irq3_mux[] = {
 	IRQ3_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक पूर्णांकc_irq4_pins[] = अणु
+};
+static const unsigned int intc_irq4_pins[] = {
 	/* IRQ4 */
 	RCAR_GP_PIN(0, 0),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक पूर्णांकc_irq4_mux[] = अणु
+};
+static const unsigned int intc_irq4_mux[] = {
 	IRQ4_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक पूर्णांकc_irq5_pins[] = अणु
+};
+static const unsigned int intc_irq5_pins[] = {
 	/* IRQ5 */
 	RCAR_GP_PIN(4, 1),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक पूर्णांकc_irq5_mux[] = अणु
+};
+static const unsigned int intc_irq5_mux[] = {
 	IRQ5_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक पूर्णांकc_irq6_pins[] = अणु
+};
+static const unsigned int intc_irq6_pins[] = {
 	/* IRQ6 */
 	RCAR_GP_PIN(0, 10),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक पूर्णांकc_irq6_mux[] = अणु
+};
+static const unsigned int intc_irq6_mux[] = {
 	IRQ6_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक पूर्णांकc_irq7_pins[] = अणु
+};
+static const unsigned int intc_irq7_pins[] = {
 	/* IRQ7 */
 	RCAR_GP_PIN(6, 15),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक पूर्णांकc_irq7_mux[] = अणु
+};
+static const unsigned int intc_irq7_mux[] = {
 	IRQ7_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक पूर्णांकc_irq8_pins[] = अणु
+};
+static const unsigned int intc_irq8_pins[] = {
 	/* IRQ8 */
 	RCAR_GP_PIN(5, 0),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक पूर्णांकc_irq8_mux[] = अणु
+};
+static const unsigned int intc_irq8_mux[] = {
 	IRQ8_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक पूर्णांकc_irq9_pins[] = अणु
+};
+static const unsigned int intc_irq9_pins[] = {
 	/* IRQ9 */
 	RCAR_GP_PIN(5, 10),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक पूर्णांकc_irq9_mux[] = अणु
+};
+static const unsigned int intc_irq9_mux[] = {
 	IRQ9_MARK,
-पूर्ण;
+};
 /* - MMCIF ------------------------------------------------------------------ */
-अटल स्थिर अचिन्हित पूर्णांक mmc_data1_pins[] = अणु
+static const unsigned int mmc_data1_pins[] = {
 	/* D[0] */
 	RCAR_GP_PIN(6, 18),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक mmc_data1_mux[] = अणु
+};
+static const unsigned int mmc_data1_mux[] = {
 	MMC_D0_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक mmc_data4_pins[] = अणु
+};
+static const unsigned int mmc_data4_pins[] = {
 	/* D[0:3] */
 	RCAR_GP_PIN(6, 18), RCAR_GP_PIN(6, 19),
 	RCAR_GP_PIN(6, 20), RCAR_GP_PIN(6, 21),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक mmc_data4_mux[] = अणु
+};
+static const unsigned int mmc_data4_mux[] = {
 	MMC_D0_MARK, MMC_D1_MARK, MMC_D2_MARK, MMC_D3_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक mmc_data8_pins[] = अणु
+};
+static const unsigned int mmc_data8_pins[] = {
 	/* D[0:7] */
 	RCAR_GP_PIN(6, 18), RCAR_GP_PIN(6, 19),
 	RCAR_GP_PIN(6, 20), RCAR_GP_PIN(6, 21),
 	RCAR_GP_PIN(6, 22), RCAR_GP_PIN(6, 23),
 	RCAR_GP_PIN(6, 24), RCAR_GP_PIN(6, 25),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक mmc_data8_mux[] = अणु
+};
+static const unsigned int mmc_data8_mux[] = {
 	MMC_D0_MARK, MMC_D1_MARK, MMC_D2_MARK, MMC_D3_MARK,
 	MMC_D4_MARK, MMC_D5_MARK, MMC_D6_MARK, MMC_D7_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक mmc_ctrl_pins[] = अणु
+};
+static const unsigned int mmc_ctrl_pins[] = {
 	/* CLK, CMD */
 	RCAR_GP_PIN(6, 16), RCAR_GP_PIN(6, 17),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक mmc_ctrl_mux[] = अणु
+};
+static const unsigned int mmc_ctrl_mux[] = {
 	MMC_CLK_MARK, MMC_CMD_MARK,
-पूर्ण;
+};
 /* - MSIOF0 ----------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक msiof0_clk_pins[] = अणु
+static const unsigned int msiof0_clk_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(4, 4),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof0_clk_mux[] = अणु
+};
+static const unsigned int msiof0_clk_mux[] = {
 	MSIOF0_SCK_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof0_sync_pins[] = अणु
+};
+static const unsigned int msiof0_sync_pins[] = {
 	/* SYNC */
 	RCAR_GP_PIN(4, 5),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof0_sync_mux[] = अणु
+};
+static const unsigned int msiof0_sync_mux[] = {
 	MSIOF0_SYNC_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof0_ss1_pins[] = अणु
+};
+static const unsigned int msiof0_ss1_pins[] = {
 	/* SS1 */
 	RCAR_GP_PIN(4, 6),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof0_ss1_mux[] = अणु
+};
+static const unsigned int msiof0_ss1_mux[] = {
 	MSIOF0_SS1_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof0_ss2_pins[] = अणु
+};
+static const unsigned int msiof0_ss2_pins[] = {
 	/* SS2 */
 	RCAR_GP_PIN(4, 7),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof0_ss2_mux[] = अणु
+};
+static const unsigned int msiof0_ss2_mux[] = {
 	MSIOF0_SS2_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof0_rx_pins[] = अणु
+};
+static const unsigned int msiof0_rx_pins[] = {
 	/* RXD */
 	RCAR_GP_PIN(4, 2),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof0_rx_mux[] = अणु
+};
+static const unsigned int msiof0_rx_mux[] = {
 	MSIOF0_RXD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof0_tx_pins[] = अणु
+};
+static const unsigned int msiof0_tx_pins[] = {
 	/* TXD */
 	RCAR_GP_PIN(4, 3),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof0_tx_mux[] = अणु
+};
+static const unsigned int msiof0_tx_mux[] = {
 	MSIOF0_TXD_MARK,
-पूर्ण;
+};
 /* - MSIOF1 ----------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक msiof1_clk_pins[] = अणु
+static const unsigned int msiof1_clk_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(0, 26),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof1_clk_mux[] = अणु
+};
+static const unsigned int msiof1_clk_mux[] = {
 	MSIOF1_SCK_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof1_sync_pins[] = अणु
+};
+static const unsigned int msiof1_sync_pins[] = {
 	/* SYNC */
 	RCAR_GP_PIN(0, 27),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof1_sync_mux[] = अणु
+};
+static const unsigned int msiof1_sync_mux[] = {
 	MSIOF1_SYNC_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof1_ss1_pins[] = अणु
+};
+static const unsigned int msiof1_ss1_pins[] = {
 	/* SS1 */
 	RCAR_GP_PIN(0, 28),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof1_ss1_mux[] = अणु
+};
+static const unsigned int msiof1_ss1_mux[] = {
 	MSIOF1_SS1_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof1_ss2_pins[] = अणु
+};
+static const unsigned int msiof1_ss2_pins[] = {
 	/* SS2 */
 	RCAR_GP_PIN(0, 29),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof1_ss2_mux[] = अणु
+};
+static const unsigned int msiof1_ss2_mux[] = {
 	MSIOF1_SS2_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof1_rx_pins[] = अणु
+};
+static const unsigned int msiof1_rx_pins[] = {
 	/* RXD */
 	RCAR_GP_PIN(0, 24),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof1_rx_mux[] = अणु
+};
+static const unsigned int msiof1_rx_mux[] = {
 	MSIOF1_RXD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof1_tx_pins[] = अणु
+};
+static const unsigned int msiof1_tx_pins[] = {
 	/* TXD */
 	RCAR_GP_PIN(0, 25),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof1_tx_mux[] = अणु
+};
+static const unsigned int msiof1_tx_mux[] = {
 	MSIOF1_TXD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof1_clk_b_pins[] = अणु
+};
+static const unsigned int msiof1_clk_b_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(5, 3),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof1_clk_b_mux[] = अणु
+};
+static const unsigned int msiof1_clk_b_mux[] = {
 	MSIOF1_SCK_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof1_sync_b_pins[] = अणु
+};
+static const unsigned int msiof1_sync_b_pins[] = {
 	/* SYNC */
 	RCAR_GP_PIN(5, 4),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof1_sync_b_mux[] = अणु
+};
+static const unsigned int msiof1_sync_b_mux[] = {
 	MSIOF1_SYNC_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof1_ss1_b_pins[] = अणु
+};
+static const unsigned int msiof1_ss1_b_pins[] = {
 	/* SS1 */
 	RCAR_GP_PIN(5, 5),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof1_ss1_b_mux[] = अणु
+};
+static const unsigned int msiof1_ss1_b_mux[] = {
 	MSIOF1_SS1_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof1_ss2_b_pins[] = अणु
+};
+static const unsigned int msiof1_ss2_b_pins[] = {
 	/* SS2 */
 	RCAR_GP_PIN(5, 6),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof1_ss2_b_mux[] = अणु
+};
+static const unsigned int msiof1_ss2_b_mux[] = {
 	MSIOF1_SS2_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof1_rx_b_pins[] = अणु
+};
+static const unsigned int msiof1_rx_b_pins[] = {
 	/* RXD */
 	RCAR_GP_PIN(5, 1),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof1_rx_b_mux[] = अणु
+};
+static const unsigned int msiof1_rx_b_mux[] = {
 	MSIOF1_RXD_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof1_tx_b_pins[] = अणु
+};
+static const unsigned int msiof1_tx_b_pins[] = {
 	/* TXD */
 	RCAR_GP_PIN(5, 2),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof1_tx_b_mux[] = अणु
+};
+static const unsigned int msiof1_tx_b_mux[] = {
 	MSIOF1_TXD_B_MARK,
-पूर्ण;
+};
 /* - MSIOF2 ----------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक msiof2_clk_pins[] = अणु
+static const unsigned int msiof2_clk_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(1, 0),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof2_clk_mux[] = अणु
+};
+static const unsigned int msiof2_clk_mux[] = {
 	MSIOF2_SCK_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof2_sync_pins[] = अणु
+};
+static const unsigned int msiof2_sync_pins[] = {
 	/* SYNC */
 	RCAR_GP_PIN(1, 1),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof2_sync_mux[] = अणु
+};
+static const unsigned int msiof2_sync_mux[] = {
 	MSIOF2_SYNC_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof2_ss1_pins[] = अणु
+};
+static const unsigned int msiof2_ss1_pins[] = {
 	/* SS1 */
 	RCAR_GP_PIN(1, 2),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof2_ss1_mux[] = अणु
+};
+static const unsigned int msiof2_ss1_mux[] = {
 	MSIOF2_SS1_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof2_ss2_pins[] = अणु
+};
+static const unsigned int msiof2_ss2_pins[] = {
 	/* SS2 */
 	RCAR_GP_PIN(1, 3),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof2_ss2_mux[] = अणु
+};
+static const unsigned int msiof2_ss2_mux[] = {
 	MSIOF2_SS2_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof2_rx_pins[] = अणु
+};
+static const unsigned int msiof2_rx_pins[] = {
 	/* RXD */
 	RCAR_GP_PIN(0, 30),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof2_rx_mux[] = अणु
+};
+static const unsigned int msiof2_rx_mux[] = {
 	MSIOF2_RXD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof2_tx_pins[] = अणु
+};
+static const unsigned int msiof2_tx_pins[] = {
 	/* TXD */
 	RCAR_GP_PIN(0, 31),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof2_tx_mux[] = अणु
+};
+static const unsigned int msiof2_tx_mux[] = {
 	MSIOF2_TXD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof2_clk_b_pins[] = अणु
+};
+static const unsigned int msiof2_clk_b_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(3, 15),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof2_clk_b_mux[] = अणु
+};
+static const unsigned int msiof2_clk_b_mux[] = {
 	MSIOF2_SCK_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof2_sync_b_pins[] = अणु
+};
+static const unsigned int msiof2_sync_b_pins[] = {
 	/* SYNC */
 	RCAR_GP_PIN(3, 16),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof2_sync_b_mux[] = अणु
+};
+static const unsigned int msiof2_sync_b_mux[] = {
 	MSIOF2_SYNC_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof2_ss1_b_pins[] = अणु
+};
+static const unsigned int msiof2_ss1_b_pins[] = {
 	/* SS1 */
 	RCAR_GP_PIN(3, 17),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof2_ss1_b_mux[] = अणु
+};
+static const unsigned int msiof2_ss1_b_mux[] = {
 	MSIOF2_SS1_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof2_ss2_b_pins[] = अणु
+};
+static const unsigned int msiof2_ss2_b_pins[] = {
 	/* SS2 */
 	RCAR_GP_PIN(3, 18),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof2_ss2_b_mux[] = अणु
+};
+static const unsigned int msiof2_ss2_b_mux[] = {
 	MSIOF2_SS2_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof2_rx_b_pins[] = अणु
+};
+static const unsigned int msiof2_rx_b_pins[] = {
 	/* RXD */
 	RCAR_GP_PIN(3, 13),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof2_rx_b_mux[] = अणु
+};
+static const unsigned int msiof2_rx_b_mux[] = {
 	MSIOF2_RXD_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof2_tx_b_pins[] = अणु
+};
+static const unsigned int msiof2_tx_b_pins[] = {
 	/* TXD */
 	RCAR_GP_PIN(3, 14),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक msiof2_tx_b_mux[] = अणु
+};
+static const unsigned int msiof2_tx_b_mux[] = {
 	MSIOF2_TXD_B_MARK,
-पूर्ण;
+};
 /* - PWM -------------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक pwm0_pins[] = अणु
+static const unsigned int pwm0_pins[] = {
 	RCAR_GP_PIN(1, 14),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm0_mux[] = अणु
+};
+static const unsigned int pwm0_mux[] = {
 	PWM0_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm0_b_pins[] = अणु
+};
+static const unsigned int pwm0_b_pins[] = {
 	RCAR_GP_PIN(5, 3),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm0_b_mux[] = अणु
+};
+static const unsigned int pwm0_b_mux[] = {
 	PWM0_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm1_pins[] = अणु
+};
+static const unsigned int pwm1_pins[] = {
 	RCAR_GP_PIN(4, 5),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm1_mux[] = अणु
+};
+static const unsigned int pwm1_mux[] = {
 	PWM1_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm1_b_pins[] = अणु
+};
+static const unsigned int pwm1_b_pins[] = {
 	RCAR_GP_PIN(5, 10),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm1_b_mux[] = अणु
+};
+static const unsigned int pwm1_b_mux[] = {
 	PWM1_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm1_c_pins[] = अणु
+};
+static const unsigned int pwm1_c_pins[] = {
 	RCAR_GP_PIN(1, 18),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm1_c_mux[] = अणु
+};
+static const unsigned int pwm1_c_mux[] = {
 	PWM1_C_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm2_pins[] = अणु
+};
+static const unsigned int pwm2_pins[] = {
 	RCAR_GP_PIN(4, 10),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm2_mux[] = अणु
+};
+static const unsigned int pwm2_mux[] = {
 	PWM2_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm2_b_pins[] = अणु
+};
+static const unsigned int pwm2_b_pins[] = {
 	RCAR_GP_PIN(5, 17),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm2_b_mux[] = अणु
+};
+static const unsigned int pwm2_b_mux[] = {
 	PWM2_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm2_c_pins[] = अणु
+};
+static const unsigned int pwm2_c_pins[] = {
 	RCAR_GP_PIN(0, 13),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm2_c_mux[] = अणु
+};
+static const unsigned int pwm2_c_mux[] = {
 	PWM2_C_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm3_pins[] = अणु
+};
+static const unsigned int pwm3_pins[] = {
 	RCAR_GP_PIN(4, 13),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm3_mux[] = अणु
+};
+static const unsigned int pwm3_mux[] = {
 	PWM3_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm3_b_pins[] = अणु
+};
+static const unsigned int pwm3_b_pins[] = {
 	RCAR_GP_PIN(0, 16),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm3_b_mux[] = अणु
+};
+static const unsigned int pwm3_b_mux[] = {
 	PWM3_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm4_pins[] = अणु
+};
+static const unsigned int pwm4_pins[] = {
 	RCAR_GP_PIN(1, 3),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm4_mux[] = अणु
+};
+static const unsigned int pwm4_mux[] = {
 	PWM4_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm4_b_pins[] = अणु
+};
+static const unsigned int pwm4_b_pins[] = {
 	RCAR_GP_PIN(0, 21),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm4_b_mux[] = अणु
+};
+static const unsigned int pwm4_b_mux[] = {
 	PWM4_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm5_pins[] = अणु
+};
+static const unsigned int pwm5_pins[] = {
 	RCAR_GP_PIN(3, 30),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm5_mux[] = अणु
+};
+static const unsigned int pwm5_mux[] = {
 	PWM5_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm5_b_pins[] = अणु
+};
+static const unsigned int pwm5_b_pins[] = {
 	RCAR_GP_PIN(4, 0),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm5_b_mux[] = अणु
+};
+static const unsigned int pwm5_b_mux[] = {
 	PWM5_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm5_c_pins[] = अणु
+};
+static const unsigned int pwm5_c_pins[] = {
 	RCAR_GP_PIN(0, 10),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm5_c_mux[] = अणु
+};
+static const unsigned int pwm5_c_mux[] = {
 	PWM5_C_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm6_pins[] = अणु
+};
+static const unsigned int pwm6_pins[] = {
 	RCAR_GP_PIN(4, 8),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm6_mux[] = अणु
+};
+static const unsigned int pwm6_mux[] = {
 	PWM6_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm6_b_pins[] = अणु
+};
+static const unsigned int pwm6_b_pins[] = {
 	RCAR_GP_PIN(0, 7),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक pwm6_b_mux[] = अणु
+};
+static const unsigned int pwm6_b_mux[] = {
 	PWM6_B_MARK,
-पूर्ण;
+};
 /* - QSPI ------------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक qspi_ctrl_pins[] = अणु
+static const unsigned int qspi_ctrl_pins[] = {
 	/* SPCLK, SSL */
 	RCAR_GP_PIN(1, 4), RCAR_GP_PIN(1, 9),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक qspi_ctrl_mux[] = अणु
+};
+static const unsigned int qspi_ctrl_mux[] = {
 	SPCLK_MARK, SSL_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक qspi_data2_pins[] = अणु
+};
+static const unsigned int qspi_data2_pins[] = {
 	/* MOSI_IO0, MISO_IO1 */
 	RCAR_GP_PIN(1, 5), RCAR_GP_PIN(1, 6),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक qspi_data2_mux[] = अणु
+};
+static const unsigned int qspi_data2_mux[] = {
 	MOSI_IO0_MARK, MISO_IO1_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक qspi_data4_pins[] = अणु
+};
+static const unsigned int qspi_data4_pins[] = {
 	/* MOSI_IO0, MISO_IO1, IO2, IO3 */
 	RCAR_GP_PIN(1, 5), RCAR_GP_PIN(1, 6), RCAR_GP_PIN(1, 7),
 	RCAR_GP_PIN(1, 8),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक qspi_data4_mux[] = अणु
+};
+static const unsigned int qspi_data4_mux[] = {
 	MOSI_IO0_MARK, MISO_IO1_MARK, IO2_MARK, IO3_MARK,
-पूर्ण;
+};
 /* - SCIF0 ------------------------------------------------------------------ */
-अटल स्थिर अचिन्हित पूर्णांक scअगर0_data_pins[] = अणु
+static const unsigned int scif0_data_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(6, 24), RCAR_GP_PIN(6, 25),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर0_data_mux[] = अणु
+};
+static const unsigned int scif0_data_mux[] = {
 	SCIF0_RXD_MARK, SCIF0_TXD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर0_data_b_pins[] = अणु
+};
+static const unsigned int scif0_data_b_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(3, 11), RCAR_GP_PIN(3, 12),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर0_data_b_mux[] = अणु
+};
+static const unsigned int scif0_data_b_mux[] = {
 	SCIF0_RXD_B_MARK, SCIF0_TXD_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर0_data_c_pins[] = अणु
+};
+static const unsigned int scif0_data_c_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(3, 30), RCAR_GP_PIN(3, 31),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर0_data_c_mux[] = अणु
+};
+static const unsigned int scif0_data_c_mux[] = {
 	SCIF0_RXD_C_MARK, SCIF0_TXD_C_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर0_data_d_pins[] = अणु
+};
+static const unsigned int scif0_data_d_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(3, 27), RCAR_GP_PIN(3, 28),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर0_data_d_mux[] = अणु
+};
+static const unsigned int scif0_data_d_mux[] = {
 	SCIF0_RXD_D_MARK, SCIF0_TXD_D_MARK,
-पूर्ण;
+};
 /* - SCIF1 ------------------------------------------------------------------ */
-अटल स्थिर अचिन्हित पूर्णांक scअगर1_data_pins[] = अणु
+static const unsigned int scif1_data_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(4, 14), RCAR_GP_PIN(4, 15),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर1_data_mux[] = अणु
+};
+static const unsigned int scif1_data_mux[] = {
 	SCIF1_RXD_MARK, SCIF1_TXD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर1_clk_pins[] = अणु
+};
+static const unsigned int scif1_clk_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(4, 13),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर1_clk_mux[] = अणु
+};
+static const unsigned int scif1_clk_mux[] = {
 	SCIF1_SCK_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर1_data_b_pins[] = अणु
+};
+static const unsigned int scif1_data_b_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(5, 11), RCAR_GP_PIN(5, 12),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर1_data_b_mux[] = अणु
+};
+static const unsigned int scif1_data_b_mux[] = {
 	SCIF1_RXD_B_MARK, SCIF1_TXD_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर1_clk_b_pins[] = अणु
+};
+static const unsigned int scif1_clk_b_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(5, 10),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर1_clk_b_mux[] = अणु
+};
+static const unsigned int scif1_clk_b_mux[] = {
 	SCIF1_SCK_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर1_data_c_pins[] = अणु
+};
+static const unsigned int scif1_data_c_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(0, 11), RCAR_GP_PIN(0, 12),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर1_data_c_mux[] = अणु
+};
+static const unsigned int scif1_data_c_mux[] = {
 	SCIF1_RXD_C_MARK, SCIF1_TXD_C_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर1_clk_c_pins[] = अणु
+};
+static const unsigned int scif1_clk_c_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(0, 10),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर1_clk_c_mux[] = अणु
+};
+static const unsigned int scif1_clk_c_mux[] = {
 	SCIF1_SCK_C_MARK,
-पूर्ण;
+};
 /* - SCIF2 ------------------------------------------------------------------ */
-अटल स्थिर अचिन्हित पूर्णांक scअगर2_data_pins[] = अणु
+static const unsigned int scif2_data_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(4, 16), RCAR_GP_PIN(4, 17),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर2_data_mux[] = अणु
+};
+static const unsigned int scif2_data_mux[] = {
 	SCIF2_RXD_MARK, SCIF2_TXD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर2_clk_pins[] = अणु
+};
+static const unsigned int scif2_clk_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(4, 18),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर2_clk_mux[] = अणु
+};
+static const unsigned int scif2_clk_mux[] = {
 	SCIF2_SCK_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर2_data_b_pins[] = अणु
+};
+static const unsigned int scif2_data_b_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(5, 18), RCAR_GP_PIN(5, 19),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर2_data_b_mux[] = अणु
+};
+static const unsigned int scif2_data_b_mux[] = {
 	SCIF2_RXD_B_MARK, SCIF2_TXD_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर2_clk_b_pins[] = अणु
+};
+static const unsigned int scif2_clk_b_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(5, 17),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर2_clk_b_mux[] = अणु
+};
+static const unsigned int scif2_clk_b_mux[] = {
 	SCIF2_SCK_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर2_data_c_pins[] = अणु
+};
+static const unsigned int scif2_data_c_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(3, 20), RCAR_GP_PIN(3, 21),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर2_data_c_mux[] = अणु
+};
+static const unsigned int scif2_data_c_mux[] = {
 	SCIF2_RXD_C_MARK, SCIF2_TXD_C_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर2_clk_c_pins[] = अणु
+};
+static const unsigned int scif2_clk_c_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(3, 19),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर2_clk_c_mux[] = अणु
+};
+static const unsigned int scif2_clk_c_mux[] = {
 	SCIF2_SCK_C_MARK,
-पूर्ण;
+};
 /* - SCIF3 ------------------------------------------------------------------ */
-अटल स्थिर अचिन्हित पूर्णांक scअगर3_data_pins[] = अणु
+static const unsigned int scif3_data_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(4, 20), RCAR_GP_PIN(4, 21),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर3_data_mux[] = अणु
+};
+static const unsigned int scif3_data_mux[] = {
 	SCIF3_RXD_MARK, SCIF3_TXD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर3_clk_pins[] = अणु
+};
+static const unsigned int scif3_clk_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(4, 19),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर3_clk_mux[] = अणु
+};
+static const unsigned int scif3_clk_mux[] = {
 	SCIF3_SCK_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर3_data_b_pins[] = अणु
+};
+static const unsigned int scif3_data_b_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(3, 23), RCAR_GP_PIN(3, 24),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर3_data_b_mux[] = अणु
+};
+static const unsigned int scif3_data_b_mux[] = {
 	SCIF3_RXD_B_MARK, SCIF3_TXD_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर3_clk_b_pins[] = अणु
+};
+static const unsigned int scif3_clk_b_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(3, 22),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर3_clk_b_mux[] = अणु
+};
+static const unsigned int scif3_clk_b_mux[] = {
 	SCIF3_SCK_B_MARK,
-पूर्ण;
+};
 /* - SCIF4 ------------------------------------------------------------------ */
-अटल स्थिर अचिन्हित पूर्णांक scअगर4_data_pins[] = अणु
+static const unsigned int scif4_data_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(4, 0), RCAR_GP_PIN(4, 1),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर4_data_mux[] = अणु
+};
+static const unsigned int scif4_data_mux[] = {
 	SCIF4_RXD_MARK, SCIF4_TXD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर4_data_b_pins[] = अणु
+};
+static const unsigned int scif4_data_b_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(0, 5), RCAR_GP_PIN(0, 6),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर4_data_b_mux[] = अणु
+};
+static const unsigned int scif4_data_b_mux[] = {
 	SCIF4_RXD_B_MARK, SCIF4_TXD_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर4_data_c_pins[] = अणु
+};
+static const unsigned int scif4_data_c_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(1, 14), RCAR_GP_PIN(1, 15),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर4_data_c_mux[] = अणु
+};
+static const unsigned int scif4_data_c_mux[] = {
 	SCIF4_RXD_C_MARK, SCIF4_TXD_C_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर4_data_d_pins[] = अणु
+};
+static const unsigned int scif4_data_d_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(3, 17), RCAR_GP_PIN(3, 18),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर4_data_d_mux[] = अणु
+};
+static const unsigned int scif4_data_d_mux[] = {
 	SCIF4_RXD_D_MARK, SCIF4_TXD_D_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर4_data_e_pins[] = अणु
+};
+static const unsigned int scif4_data_e_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(1, 1), RCAR_GP_PIN(1, 2),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर4_data_e_mux[] = अणु
+};
+static const unsigned int scif4_data_e_mux[] = {
 	SCIF4_RXD_E_MARK, SCIF4_TXD_E_MARK,
-पूर्ण;
+};
 /* - SCIF5 ------------------------------------------------------------------ */
-अटल स्थिर अचिन्हित पूर्णांक scअगर5_data_pins[] = अणु
+static const unsigned int scif5_data_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(4, 2), RCAR_GP_PIN(4, 3),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर5_data_mux[] = अणु
+};
+static const unsigned int scif5_data_mux[] = {
 	SCIF5_RXD_MARK, SCIF5_TXD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर5_data_b_pins[] = अणु
+};
+static const unsigned int scif5_data_b_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(0, 3), RCAR_GP_PIN(0, 4),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर5_data_b_mux[] = अणु
+};
+static const unsigned int scif5_data_b_mux[] = {
 	SCIF5_RXD_B_MARK, SCIF5_TXD_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर5_data_c_pins[] = अणु
+};
+static const unsigned int scif5_data_c_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(2, 0), RCAR_GP_PIN(2, 11),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर5_data_c_mux[] = अणु
+};
+static const unsigned int scif5_data_c_mux[] = {
 	SCIF5_RXD_C_MARK, SCIF5_TXD_C_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर5_data_d_pins[] = अणु
+};
+static const unsigned int scif5_data_d_pins[] = {
 	/* RX, TX */
 	RCAR_GP_PIN(5, 1), RCAR_GP_PIN(5, 2),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर5_data_d_mux[] = अणु
+};
+static const unsigned int scif5_data_d_mux[] = {
 	SCIF5_RXD_D_MARK, SCIF5_TXD_D_MARK,
-पूर्ण;
+};
 /* - SCIFA0 ----------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक scअगरa0_data_pins[] = अणु
+static const unsigned int scifa0_data_pins[] = {
 	/* RXD, TXD */
 	RCAR_GP_PIN(4, 6), RCAR_GP_PIN(4, 7),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa0_data_mux[] = अणु
+};
+static const unsigned int scifa0_data_mux[] = {
 	SCIFA0_RXD_MARK, SCIFA0_TXD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa0_data_b_pins[] = अणु
+};
+static const unsigned int scifa0_data_b_pins[] = {
 	/* RXD, TXD */
 	RCAR_GP_PIN(0, 24), RCAR_GP_PIN(0, 25),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa0_data_b_mux[] = अणु
+};
+static const unsigned int scifa0_data_b_mux[] = {
 	SCIFA0_RXD_B_MARK, SCIFA0_TXD_B_MARK
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa0_data_c_pins[] = अणु
+};
+static const unsigned int scifa0_data_c_pins[] = {
 	/* RXD, TXD */
 	RCAR_GP_PIN(2, 8), RCAR_GP_PIN(2, 9),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa0_data_c_mux[] = अणु
+};
+static const unsigned int scifa0_data_c_mux[] = {
 	SCIFA0_RXD_C_MARK, SCIFA0_TXD_C_MARK
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa0_data_d_pins[] = अणु
+};
+static const unsigned int scifa0_data_d_pins[] = {
 	/* RXD, TXD */
 	RCAR_GP_PIN(5, 15), RCAR_GP_PIN(5, 16),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa0_data_d_mux[] = अणु
+};
+static const unsigned int scifa0_data_d_mux[] = {
 	SCIFA0_RXD_D_MARK, SCIFA0_TXD_D_MARK
-पूर्ण;
+};
 /* - SCIFA1 ----------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक scअगरa1_data_pins[] = अणु
+static const unsigned int scifa1_data_pins[] = {
 	/* RXD, TXD */
 	RCAR_GP_PIN(0, 14), RCAR_GP_PIN(0, 15),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa1_data_mux[] = अणु
+};
+static const unsigned int scifa1_data_mux[] = {
 	SCIFA1_RXD_MARK, SCIFA1_TXD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa1_clk_pins[] = अणु
+};
+static const unsigned int scifa1_clk_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(0, 13),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa1_clk_mux[] = अणु
+};
+static const unsigned int scifa1_clk_mux[] = {
 	SCIFA1_SCK_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa1_data_b_pins[] = अणु
+};
+static const unsigned int scifa1_data_b_pins[] = {
 	/* RXD, TXD */
 	RCAR_GP_PIN(4, 28), RCAR_GP_PIN(4, 29),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa1_data_b_mux[] = अणु
+};
+static const unsigned int scifa1_data_b_mux[] = {
 	SCIFA1_RXD_B_MARK, SCIFA1_TXD_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa1_clk_b_pins[] = अणु
+};
+static const unsigned int scifa1_clk_b_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(4, 27),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa1_clk_b_mux[] = अणु
+};
+static const unsigned int scifa1_clk_b_mux[] = {
 	SCIFA1_SCK_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa1_data_c_pins[] = अणु
+};
+static const unsigned int scifa1_data_c_pins[] = {
 	/* RXD, TXD */
 	RCAR_GP_PIN(5, 5), RCAR_GP_PIN(5, 6),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa1_data_c_mux[] = अणु
+};
+static const unsigned int scifa1_data_c_mux[] = {
 	SCIFA1_RXD_C_MARK, SCIFA1_TXD_C_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa1_clk_c_pins[] = अणु
+};
+static const unsigned int scifa1_clk_c_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(5, 4),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa1_clk_c_mux[] = अणु
+};
+static const unsigned int scifa1_clk_c_mux[] = {
 	SCIFA1_SCK_C_MARK,
-पूर्ण;
+};
 /* - SCIFA2 ----------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक scअगरa2_data_pins[] = अणु
+static const unsigned int scifa2_data_pins[] = {
 	/* RXD, TXD */
 	RCAR_GP_PIN(1, 16), RCAR_GP_PIN(1, 17),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa2_data_mux[] = अणु
+};
+static const unsigned int scifa2_data_mux[] = {
 	SCIFA2_RXD_MARK, SCIFA2_TXD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa2_clk_pins[] = अणु
+};
+static const unsigned int scifa2_clk_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(1, 15),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa2_clk_mux[] = अणु
+};
+static const unsigned int scifa2_clk_mux[] = {
 	SCIFA2_SCK_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa2_data_b_pins[] = अणु
+};
+static const unsigned int scifa2_data_b_pins[] = {
 	/* RXD, TXD */
 	RCAR_GP_PIN(4, 31), RCAR_GP_PIN(5, 0),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa2_data_b_mux[] = अणु
+};
+static const unsigned int scifa2_data_b_mux[] = {
 	SCIFA2_RXD_B_MARK, SCIFA2_TXD_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa2_clk_b_pins[] = अणु
+};
+static const unsigned int scifa2_clk_b_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(4, 30),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa2_clk_b_mux[] = अणु
+};
+static const unsigned int scifa2_clk_b_mux[] = {
 	SCIFA2_SCK_B_MARK,
-पूर्ण;
+};
 /* - SCIFA3 ----------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक scअगरa3_data_pins[] = अणु
+static const unsigned int scifa3_data_pins[] = {
 	/* RXD, TXD */
 	RCAR_GP_PIN(4, 25), RCAR_GP_PIN(4, 26),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa3_data_mux[] = अणु
+};
+static const unsigned int scifa3_data_mux[] = {
 	SCIFA3_RXD_MARK, SCIFA3_TXD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa3_clk_pins[] = अणु
+};
+static const unsigned int scifa3_clk_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(4, 24),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa3_clk_mux[] = अणु
+};
+static const unsigned int scifa3_clk_mux[] = {
 	SCIFA3_SCK_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa3_data_b_pins[] = अणु
+};
+static const unsigned int scifa3_data_b_pins[] = {
 	/* RXD, TXD */
 	RCAR_GP_PIN(0, 1), RCAR_GP_PIN(0, 2),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa3_data_b_mux[] = अणु
+};
+static const unsigned int scifa3_data_b_mux[] = {
 	SCIFA3_RXD_B_MARK, SCIFA3_TXD_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa3_clk_b_pins[] = अणु
+};
+static const unsigned int scifa3_clk_b_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(0, 0),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa3_clk_b_mux[] = अणु
+};
+static const unsigned int scifa3_clk_b_mux[] = {
 	SCIFA3_SCK_B_MARK,
-पूर्ण;
+};
 /* - SCIFA4 ----------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक scअगरa4_data_pins[] = अणु
+static const unsigned int scifa4_data_pins[] = {
 	/* RXD, TXD */
 	RCAR_GP_PIN(4, 12), RCAR_GP_PIN(4, 12),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa4_data_mux[] = अणु
+};
+static const unsigned int scifa4_data_mux[] = {
 	SCIFA4_RXD_MARK, SCIFA4_TXD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa4_data_b_pins[] = अणु
+};
+static const unsigned int scifa4_data_b_pins[] = {
 	/* RXD, TXD */
 	RCAR_GP_PIN(0, 22), RCAR_GP_PIN(0, 23),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa4_data_b_mux[] = अणु
+};
+static const unsigned int scifa4_data_b_mux[] = {
 	SCIFA4_RXD_B_MARK, SCIFA4_TXD_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa4_data_c_pins[] = अणु
+};
+static const unsigned int scifa4_data_c_pins[] = {
 	/* RXD, TXD */
 	RCAR_GP_PIN(2, 16), RCAR_GP_PIN(2, 17),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa4_data_c_mux[] = अणु
+};
+static const unsigned int scifa4_data_c_mux[] = {
 	SCIFA4_RXD_C_MARK, SCIFA4_TXD_C_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa4_data_d_pins[] = अणु
+};
+static const unsigned int scifa4_data_d_pins[] = {
 	/* RXD, TXD */
 	RCAR_GP_PIN(5, 20), RCAR_GP_PIN(5, 21),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa4_data_d_mux[] = अणु
+};
+static const unsigned int scifa4_data_d_mux[] = {
 	SCIFA4_RXD_D_MARK, SCIFA4_TXD_D_MARK,
-पूर्ण;
+};
 /* - SCIFA5 ----------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक scअगरa5_data_pins[] = अणु
+static const unsigned int scifa5_data_pins[] = {
 	/* RXD, TXD */
 	RCAR_GP_PIN(4, 22), RCAR_GP_PIN(4, 23),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa5_data_mux[] = अणु
+};
+static const unsigned int scifa5_data_mux[] = {
 	SCIFA5_RXD_MARK, SCIFA5_TXD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa5_data_b_pins[] = अणु
+};
+static const unsigned int scifa5_data_b_pins[] = {
 	/* RXD, TXD */
 	RCAR_GP_PIN(0, 28), RCAR_GP_PIN(0, 29),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa5_data_b_mux[] = अणु
+};
+static const unsigned int scifa5_data_b_mux[] = {
 	SCIFA5_RXD_B_MARK, SCIFA5_TXD_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa5_data_c_pins[] = अणु
+};
+static const unsigned int scifa5_data_c_pins[] = {
 	/* RXD, TXD */
 	RCAR_GP_PIN(3, 9), RCAR_GP_PIN(3, 10),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa5_data_c_mux[] = अणु
+};
+static const unsigned int scifa5_data_c_mux[] = {
 	SCIFA5_RXD_C_MARK, SCIFA5_TXD_C_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa5_data_d_pins[] = अणु
+};
+static const unsigned int scifa5_data_d_pins[] = {
 	/* RXD, TXD */
 	RCAR_GP_PIN(5, 22), RCAR_GP_PIN(5, 23),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरa5_data_d_mux[] = अणु
+};
+static const unsigned int scifa5_data_d_mux[] = {
 	SCIFA5_RXD_D_MARK, SCIFA5_TXD_D_MARK,
-पूर्ण;
+};
 /* - SCIFB0 ----------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक scअगरb0_data_pins[] = अणु
+static const unsigned int scifb0_data_pins[] = {
 	/* RXD, TXD */
 	RCAR_GP_PIN(0, 21), RCAR_GP_PIN(0, 20),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरb0_data_mux[] = अणु
+};
+static const unsigned int scifb0_data_mux[] = {
 	SCIFB0_RXD_MARK, SCIFB0_TXD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरb0_clk_pins[] = अणु
+};
+static const unsigned int scifb0_clk_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(0, 19),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरb0_clk_mux[] = अणु
+};
+static const unsigned int scifb0_clk_mux[] = {
 	SCIFB0_SCK_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरb0_ctrl_pins[] = अणु
+};
+static const unsigned int scifb0_ctrl_pins[] = {
 	/* RTS, CTS */
 	RCAR_GP_PIN(0, 23), RCAR_GP_PIN(0, 22),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरb0_ctrl_mux[] = अणु
+};
+static const unsigned int scifb0_ctrl_mux[] = {
 	SCIFB0_RTS_N_MARK, SCIFB0_CTS_N_MARK,
-पूर्ण;
+};
 /* - SCIFB1 ----------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक scअगरb1_data_pins[] = अणु
+static const unsigned int scifb1_data_pins[] = {
 	/* RXD, TXD */
 	RCAR_GP_PIN(1, 24), RCAR_GP_PIN(0, 17),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरb1_data_mux[] = अणु
+};
+static const unsigned int scifb1_data_mux[] = {
 	SCIFB1_RXD_MARK, SCIFB1_TXD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरb1_clk_pins[] = अणु
+};
+static const unsigned int scifb1_clk_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(0, 16),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरb1_clk_mux[] = अणु
+};
+static const unsigned int scifb1_clk_mux[] = {
 	SCIFB1_SCK_MARK,
-पूर्ण;
+};
 /* - SCIFB2 ----------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक scअगरb2_data_pins[] = अणु
+static const unsigned int scifb2_data_pins[] = {
 	/* RXD, TXD */
 	RCAR_GP_PIN(1, 13), RCAR_GP_PIN(1, 14),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरb2_data_mux[] = अणु
+};
+static const unsigned int scifb2_data_mux[] = {
 	SCIFB2_RXD_MARK, SCIFB2_TXD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरb2_clk_pins[] = अणु
+};
+static const unsigned int scifb2_clk_pins[] = {
 	/* SCK */
 	RCAR_GP_PIN(1, 15),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरb2_clk_mux[] = अणु
+};
+static const unsigned int scifb2_clk_mux[] = {
 	SCIFB2_SCK_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरb2_ctrl_pins[] = अणु
+};
+static const unsigned int scifb2_ctrl_pins[] = {
 	/* RTS, CTS */
 	RCAR_GP_PIN(1, 17), RCAR_GP_PIN(1, 16),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगरb2_ctrl_mux[] = अणु
+};
+static const unsigned int scifb2_ctrl_mux[] = {
 	SCIFB2_RTS_N_MARK, SCIFB2_CTS_N_MARK,
-पूर्ण;
+};
 /* - SCIF Clock ------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक scअगर_clk_pins[] = अणु
+static const unsigned int scif_clk_pins[] = {
 	/* SCIF_CLK */
 	RCAR_GP_PIN(1, 23),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर_clk_mux[] = अणु
+};
+static const unsigned int scif_clk_mux[] = {
 	SCIF_CLK_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर_clk_b_pins[] = अणु
+};
+static const unsigned int scif_clk_b_pins[] = {
 	/* SCIF_CLK */
 	RCAR_GP_PIN(3, 29),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक scअगर_clk_b_mux[] = अणु
+};
+static const unsigned int scif_clk_b_mux[] = {
 	SCIF_CLK_B_MARK,
-पूर्ण;
+};
 /* - SDHI0 ------------------------------------------------------------------ */
-अटल स्थिर अचिन्हित पूर्णांक sdhi0_data1_pins[] = अणु
+static const unsigned int sdhi0_data1_pins[] = {
 	/* D0 */
 	RCAR_GP_PIN(6, 2),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi0_data1_mux[] = अणु
+};
+static const unsigned int sdhi0_data1_mux[] = {
 	SD0_DATA0_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi0_data4_pins[] = अणु
+};
+static const unsigned int sdhi0_data4_pins[] = {
 	/* D[0:3] */
 	RCAR_GP_PIN(6, 2), RCAR_GP_PIN(6, 3),
 	RCAR_GP_PIN(6, 4), RCAR_GP_PIN(6, 5),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi0_data4_mux[] = अणु
+};
+static const unsigned int sdhi0_data4_mux[] = {
 	SD0_DATA0_MARK, SD0_DATA1_MARK, SD0_DATA2_MARK, SD0_DATA3_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi0_ctrl_pins[] = अणु
+};
+static const unsigned int sdhi0_ctrl_pins[] = {
 	/* CLK, CMD */
 	RCAR_GP_PIN(6, 0), RCAR_GP_PIN(6, 1),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi0_ctrl_mux[] = अणु
+};
+static const unsigned int sdhi0_ctrl_mux[] = {
 	SD0_CLK_MARK, SD0_CMD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi0_cd_pins[] = अणु
+};
+static const unsigned int sdhi0_cd_pins[] = {
 	/* CD */
 	RCAR_GP_PIN(6, 6),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi0_cd_mux[] = अणु
+};
+static const unsigned int sdhi0_cd_mux[] = {
 	SD0_CD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi0_wp_pins[] = अणु
+};
+static const unsigned int sdhi0_wp_pins[] = {
 	/* WP */
 	RCAR_GP_PIN(6, 7),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi0_wp_mux[] = अणु
+};
+static const unsigned int sdhi0_wp_mux[] = {
 	SD0_WP_MARK,
-पूर्ण;
+};
 /* - SDHI1 ------------------------------------------------------------------ */
-अटल स्थिर अचिन्हित पूर्णांक sdhi1_data1_pins[] = अणु
+static const unsigned int sdhi1_data1_pins[] = {
 	/* D0 */
 	RCAR_GP_PIN(6, 10),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi1_data1_mux[] = अणु
+};
+static const unsigned int sdhi1_data1_mux[] = {
 	SD1_DATA0_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi1_data4_pins[] = अणु
+};
+static const unsigned int sdhi1_data4_pins[] = {
 	/* D[0:3] */
 	RCAR_GP_PIN(6, 10), RCAR_GP_PIN(6, 11),
 	RCAR_GP_PIN(6, 12), RCAR_GP_PIN(6, 13),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi1_data4_mux[] = अणु
+};
+static const unsigned int sdhi1_data4_mux[] = {
 	SD1_DATA0_MARK, SD1_DATA1_MARK, SD1_DATA2_MARK, SD1_DATA3_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi1_ctrl_pins[] = अणु
+};
+static const unsigned int sdhi1_ctrl_pins[] = {
 	/* CLK, CMD */
 	RCAR_GP_PIN(6, 8), RCAR_GP_PIN(6, 9),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi1_ctrl_mux[] = अणु
+};
+static const unsigned int sdhi1_ctrl_mux[] = {
 	SD1_CLK_MARK, SD1_CMD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi1_cd_pins[] = अणु
+};
+static const unsigned int sdhi1_cd_pins[] = {
 	/* CD */
 	RCAR_GP_PIN(6, 14),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi1_cd_mux[] = अणु
+};
+static const unsigned int sdhi1_cd_mux[] = {
 	SD1_CD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi1_wp_pins[] = अणु
+};
+static const unsigned int sdhi1_wp_pins[] = {
 	/* WP */
 	RCAR_GP_PIN(6, 15),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi1_wp_mux[] = अणु
+};
+static const unsigned int sdhi1_wp_mux[] = {
 	SD1_WP_MARK,
-पूर्ण;
+};
 /* - SDHI2 ------------------------------------------------------------------ */
-अटल स्थिर अचिन्हित पूर्णांक sdhi2_data1_pins[] = अणु
+static const unsigned int sdhi2_data1_pins[] = {
 	/* D0 */
 	RCAR_GP_PIN(6, 18),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi2_data1_mux[] = अणु
+};
+static const unsigned int sdhi2_data1_mux[] = {
 	SD2_DATA0_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi2_data4_pins[] = अणु
+};
+static const unsigned int sdhi2_data4_pins[] = {
 	/* D[0:3] */
 	RCAR_GP_PIN(6, 18), RCAR_GP_PIN(6, 19),
 	RCAR_GP_PIN(6, 20), RCAR_GP_PIN(6, 21),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi2_data4_mux[] = अणु
+};
+static const unsigned int sdhi2_data4_mux[] = {
 	SD2_DATA0_MARK, SD2_DATA1_MARK, SD2_DATA2_MARK, SD2_DATA3_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi2_ctrl_pins[] = अणु
+};
+static const unsigned int sdhi2_ctrl_pins[] = {
 	/* CLK, CMD */
 	RCAR_GP_PIN(6, 16), RCAR_GP_PIN(6, 17),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi2_ctrl_mux[] = अणु
+};
+static const unsigned int sdhi2_ctrl_mux[] = {
 	SD2_CLK_MARK, SD2_CMD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi2_cd_pins[] = अणु
+};
+static const unsigned int sdhi2_cd_pins[] = {
 	/* CD */
 	RCAR_GP_PIN(6, 22),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi2_cd_mux[] = अणु
+};
+static const unsigned int sdhi2_cd_mux[] = {
 	SD2_CD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi2_wp_pins[] = अणु
+};
+static const unsigned int sdhi2_wp_pins[] = {
 	/* WP */
 	RCAR_GP_PIN(6, 23),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक sdhi2_wp_mux[] = अणु
+};
+static const unsigned int sdhi2_wp_mux[] = {
 	SD2_WP_MARK,
-पूर्ण;
+};
 /* - SSI -------------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक ssi0_data_pins[] = अणु
+static const unsigned int ssi0_data_pins[] = {
 	/* SDATA0 */
 	RCAR_GP_PIN(5, 3),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi0_data_mux[] = अणु
+};
+static const unsigned int ssi0_data_mux[] = {
 	SSI_SDATA0_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi0129_ctrl_pins[] = अणु
+};
+static const unsigned int ssi0129_ctrl_pins[] = {
 	/* SCK0129, WS0129 */
 	RCAR_GP_PIN(5, 1), RCAR_GP_PIN(5, 2),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi0129_ctrl_mux[] = अणु
+};
+static const unsigned int ssi0129_ctrl_mux[] = {
 	SSI_SCK0129_MARK, SSI_WS0129_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi1_data_pins[] = अणु
+};
+static const unsigned int ssi1_data_pins[] = {
 	/* SDATA1 */
 	RCAR_GP_PIN(5, 13),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi1_data_mux[] = अणु
+};
+static const unsigned int ssi1_data_mux[] = {
 	SSI_SDATA1_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi1_ctrl_pins[] = अणु
+};
+static const unsigned int ssi1_ctrl_pins[] = {
 	/* SCK1, WS1 */
 	RCAR_GP_PIN(5, 11), RCAR_GP_PIN(5, 12),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi1_ctrl_mux[] = अणु
+};
+static const unsigned int ssi1_ctrl_mux[] = {
 	SSI_SCK1_MARK, SSI_WS1_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi1_data_b_pins[] = अणु
+};
+static const unsigned int ssi1_data_b_pins[] = {
 	/* SDATA1 */
 	RCAR_GP_PIN(4, 13),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi1_data_b_mux[] = अणु
+};
+static const unsigned int ssi1_data_b_mux[] = {
 	SSI_SDATA1_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi1_ctrl_b_pins[] = अणु
+};
+static const unsigned int ssi1_ctrl_b_pins[] = {
 	/* SCK1, WS1 */
 	RCAR_GP_PIN(4, 11), RCAR_GP_PIN(4, 12),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi1_ctrl_b_mux[] = अणु
+};
+static const unsigned int ssi1_ctrl_b_mux[] = {
 	SSI_SCK1_B_MARK, SSI_WS1_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi2_data_pins[] = अणु
+};
+static const unsigned int ssi2_data_pins[] = {
 	/* SDATA2 */
 	RCAR_GP_PIN(5, 16),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi2_data_mux[] = अणु
+};
+static const unsigned int ssi2_data_mux[] = {
 	SSI_SDATA2_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi2_ctrl_pins[] = अणु
+};
+static const unsigned int ssi2_ctrl_pins[] = {
 	/* SCK2, WS2 */
 	RCAR_GP_PIN(5, 14), RCAR_GP_PIN(5, 15),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi2_ctrl_mux[] = अणु
+};
+static const unsigned int ssi2_ctrl_mux[] = {
 	SSI_SCK2_MARK, SSI_WS2_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi2_data_b_pins[] = अणु
+};
+static const unsigned int ssi2_data_b_pins[] = {
 	/* SDATA2 */
 	RCAR_GP_PIN(4, 16),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi2_data_b_mux[] = अणु
+};
+static const unsigned int ssi2_data_b_mux[] = {
 	SSI_SDATA2_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi2_ctrl_b_pins[] = अणु
+};
+static const unsigned int ssi2_ctrl_b_pins[] = {
 	/* SCK2, WS2 */
 	RCAR_GP_PIN(4, 14), RCAR_GP_PIN(4, 15),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi2_ctrl_b_mux[] = अणु
+};
+static const unsigned int ssi2_ctrl_b_mux[] = {
 	SSI_SCK2_B_MARK, SSI_WS2_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi3_data_pins[] = अणु
+};
+static const unsigned int ssi3_data_pins[] = {
 	/* SDATA3 */
 	RCAR_GP_PIN(5, 6),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi3_data_mux[] = अणु
+};
+static const unsigned int ssi3_data_mux[] = {
 	SSI_SDATA3_MARK
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi34_ctrl_pins[] = अणु
+};
+static const unsigned int ssi34_ctrl_pins[] = {
 	/* SCK34, WS34 */
 	RCAR_GP_PIN(5, 4), RCAR_GP_PIN(5, 5),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi34_ctrl_mux[] = अणु
+};
+static const unsigned int ssi34_ctrl_mux[] = {
 	SSI_SCK34_MARK, SSI_WS34_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi4_data_pins[] = अणु
+};
+static const unsigned int ssi4_data_pins[] = {
 	/* SDATA4 */
 	RCAR_GP_PIN(5, 9),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi4_data_mux[] = अणु
+};
+static const unsigned int ssi4_data_mux[] = {
 	SSI_SDATA4_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi4_ctrl_pins[] = अणु
+};
+static const unsigned int ssi4_ctrl_pins[] = {
 	/* SCK4, WS4 */
 	RCAR_GP_PIN(5, 7), RCAR_GP_PIN(5, 8),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi4_ctrl_mux[] = अणु
+};
+static const unsigned int ssi4_ctrl_mux[] = {
 	SSI_SCK4_MARK, SSI_WS4_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi4_data_b_pins[] = अणु
+};
+static const unsigned int ssi4_data_b_pins[] = {
 	/* SDATA4 */
 	RCAR_GP_PIN(4, 22),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi4_data_b_mux[] = अणु
+};
+static const unsigned int ssi4_data_b_mux[] = {
 	SSI_SDATA4_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi4_ctrl_b_pins[] = अणु
+};
+static const unsigned int ssi4_ctrl_b_pins[] = {
 	/* SCK4, WS4 */
 	RCAR_GP_PIN(4, 20), RCAR_GP_PIN(4, 21),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi4_ctrl_b_mux[] = अणु
+};
+static const unsigned int ssi4_ctrl_b_mux[] = {
 	SSI_SCK4_B_MARK, SSI_WS4_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi5_data_pins[] = अणु
+};
+static const unsigned int ssi5_data_pins[] = {
 	/* SDATA5 */
 	RCAR_GP_PIN(4, 26),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi5_data_mux[] = अणु
+};
+static const unsigned int ssi5_data_mux[] = {
 	SSI_SDATA5_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi5_ctrl_pins[] = अणु
+};
+static const unsigned int ssi5_ctrl_pins[] = {
 	/* SCK5, WS5 */
 	RCAR_GP_PIN(4, 24), RCAR_GP_PIN(4, 25),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi5_ctrl_mux[] = अणु
+};
+static const unsigned int ssi5_ctrl_mux[] = {
 	SSI_SCK5_MARK, SSI_WS5_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi5_data_b_pins[] = अणु
+};
+static const unsigned int ssi5_data_b_pins[] = {
 	/* SDATA5 */
 	RCAR_GP_PIN(3, 21),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi5_data_b_mux[] = अणु
+};
+static const unsigned int ssi5_data_b_mux[] = {
 	SSI_SDATA5_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi5_ctrl_b_pins[] = अणु
+};
+static const unsigned int ssi5_ctrl_b_pins[] = {
 	/* SCK5, WS5 */
 	RCAR_GP_PIN(3, 19), RCAR_GP_PIN(3, 20),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi5_ctrl_b_mux[] = अणु
+};
+static const unsigned int ssi5_ctrl_b_mux[] = {
 	SSI_SCK5_B_MARK, SSI_WS5_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi6_data_pins[] = अणु
+};
+static const unsigned int ssi6_data_pins[] = {
 	/* SDATA6 */
 	RCAR_GP_PIN(4, 29),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi6_data_mux[] = अणु
+};
+static const unsigned int ssi6_data_mux[] = {
 	SSI_SDATA6_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi6_ctrl_pins[] = अणु
+};
+static const unsigned int ssi6_ctrl_pins[] = {
 	/* SCK6, WS6 */
 	RCAR_GP_PIN(4, 27), RCAR_GP_PIN(4, 28),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi6_ctrl_mux[] = अणु
+};
+static const unsigned int ssi6_ctrl_mux[] = {
 	SSI_SCK6_MARK, SSI_WS6_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi6_data_b_pins[] = अणु
+};
+static const unsigned int ssi6_data_b_pins[] = {
 	/* SDATA6 */
 	RCAR_GP_PIN(3, 24),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi6_data_b_mux[] = अणु
+};
+static const unsigned int ssi6_data_b_mux[] = {
 	SSI_SDATA6_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi6_ctrl_b_pins[] = अणु
+};
+static const unsigned int ssi6_ctrl_b_pins[] = {
 	/* SCK6, WS6 */
 	RCAR_GP_PIN(3, 22), RCAR_GP_PIN(3, 23),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi6_ctrl_b_mux[] = अणु
+};
+static const unsigned int ssi6_ctrl_b_mux[] = {
 	SSI_SCK6_B_MARK, SSI_WS6_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi7_data_pins[] = अणु
+};
+static const unsigned int ssi7_data_pins[] = {
 	/* SDATA7 */
 	RCAR_GP_PIN(5, 0),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi7_data_mux[] = अणु
+};
+static const unsigned int ssi7_data_mux[] = {
 	SSI_SDATA7_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi78_ctrl_pins[] = अणु
+};
+static const unsigned int ssi78_ctrl_pins[] = {
 	/* SCK78, WS78 */
 	RCAR_GP_PIN(4, 30), RCAR_GP_PIN(4, 31),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi78_ctrl_mux[] = अणु
+};
+static const unsigned int ssi78_ctrl_mux[] = {
 	SSI_SCK78_MARK, SSI_WS78_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi7_data_b_pins[] = अणु
+};
+static const unsigned int ssi7_data_b_pins[] = {
 	/* SDATA7 */
 	RCAR_GP_PIN(3, 27),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi7_data_b_mux[] = अणु
+};
+static const unsigned int ssi7_data_b_mux[] = {
 	SSI_SDATA7_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi78_ctrl_b_pins[] = अणु
+};
+static const unsigned int ssi78_ctrl_b_pins[] = {
 	/* SCK78, WS78 */
 	RCAR_GP_PIN(3, 25), RCAR_GP_PIN(3, 26),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi78_ctrl_b_mux[] = अणु
+};
+static const unsigned int ssi78_ctrl_b_mux[] = {
 	SSI_SCK78_B_MARK, SSI_WS78_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi8_data_pins[] = अणु
+};
+static const unsigned int ssi8_data_pins[] = {
 	/* SDATA8 */
 	RCAR_GP_PIN(5, 10),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi8_data_mux[] = अणु
+};
+static const unsigned int ssi8_data_mux[] = {
 	SSI_SDATA8_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi8_data_b_pins[] = अणु
+};
+static const unsigned int ssi8_data_b_pins[] = {
 	/* SDATA8 */
 	RCAR_GP_PIN(3, 28),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi8_data_b_mux[] = अणु
+};
+static const unsigned int ssi8_data_b_mux[] = {
 	SSI_SDATA8_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi9_data_pins[] = अणु
+};
+static const unsigned int ssi9_data_pins[] = {
 	/* SDATA9 */
 	RCAR_GP_PIN(5, 19),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi9_data_mux[] = अणु
+};
+static const unsigned int ssi9_data_mux[] = {
 	SSI_SDATA9_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi9_ctrl_pins[] = अणु
+};
+static const unsigned int ssi9_ctrl_pins[] = {
 	/* SCK9, WS9 */
 	RCAR_GP_PIN(5, 17), RCAR_GP_PIN(5, 18),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi9_ctrl_mux[] = अणु
+};
+static const unsigned int ssi9_ctrl_mux[] = {
 	SSI_SCK9_MARK, SSI_WS9_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi9_data_b_pins[] = अणु
+};
+static const unsigned int ssi9_data_b_pins[] = {
 	/* SDATA9 */
 	RCAR_GP_PIN(4, 19),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi9_data_b_mux[] = अणु
+};
+static const unsigned int ssi9_data_b_mux[] = {
 	SSI_SDATA9_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi9_ctrl_b_pins[] = अणु
+};
+static const unsigned int ssi9_ctrl_b_pins[] = {
 	/* SCK9, WS9 */
 	RCAR_GP_PIN(4, 17), RCAR_GP_PIN(4, 18),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक ssi9_ctrl_b_mux[] = अणु
+};
+static const unsigned int ssi9_ctrl_b_mux[] = {
 	SSI_SCK9_B_MARK, SSI_WS9_B_MARK,
-पूर्ण;
+};
 /* - TPU -------------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक tpu_to0_pins[] = अणु
+static const unsigned int tpu_to0_pins[] = {
 	RCAR_GP_PIN(3, 31),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक tpu_to0_mux[] = अणु
+};
+static const unsigned int tpu_to0_mux[] = {
 	TPUTO0_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक tpu_to0_b_pins[] = अणु
+};
+static const unsigned int tpu_to0_b_pins[] = {
 	RCAR_GP_PIN(3, 30),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक tpu_to0_b_mux[] = अणु
+};
+static const unsigned int tpu_to0_b_mux[] = {
 	TPUTO0_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक tpu_to0_c_pins[] = अणु
+};
+static const unsigned int tpu_to0_c_pins[] = {
 	RCAR_GP_PIN(1, 18),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक tpu_to0_c_mux[] = अणु
+};
+static const unsigned int tpu_to0_c_mux[] = {
 	TPUTO0_C_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक tpu_to1_pins[] = अणु
+};
+static const unsigned int tpu_to1_pins[] = {
 	RCAR_GP_PIN(4, 9),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक tpu_to1_mux[] = अणु
+};
+static const unsigned int tpu_to1_mux[] = {
 	TPUTO1_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक tpu_to1_b_pins[] = अणु
+};
+static const unsigned int tpu_to1_b_pins[] = {
 	RCAR_GP_PIN(4, 0),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक tpu_to1_b_mux[] = अणु
+};
+static const unsigned int tpu_to1_b_mux[] = {
 	TPUTO1_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक tpu_to1_c_pins[] = अणु
+};
+static const unsigned int tpu_to1_c_pins[] = {
 	RCAR_GP_PIN(4, 4),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक tpu_to1_c_mux[] = अणु
+};
+static const unsigned int tpu_to1_c_mux[] = {
 	TPUTO1_C_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक tpu_to2_pins[] = अणु
+};
+static const unsigned int tpu_to2_pins[] = {
 	RCAR_GP_PIN(1, 3),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक tpu_to2_mux[] = अणु
+};
+static const unsigned int tpu_to2_mux[] = {
 	TPUTO2_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक tpu_to2_b_pins[] = अणु
+};
+static const unsigned int tpu_to2_b_pins[] = {
 	RCAR_GP_PIN(1, 0),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक tpu_to2_b_mux[] = अणु
+};
+static const unsigned int tpu_to2_b_mux[] = {
 	TPUTO2_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक tpu_to2_c_pins[] = अणु
+};
+static const unsigned int tpu_to2_c_pins[] = {
 	RCAR_GP_PIN(0, 22),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक tpu_to2_c_mux[] = अणु
+};
+static const unsigned int tpu_to2_c_mux[] = {
 	TPUTO2_C_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक tpu_to3_pins[] = अणु
+};
+static const unsigned int tpu_to3_pins[] = {
 	RCAR_GP_PIN(1, 14),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक tpu_to3_mux[] = अणु
+};
+static const unsigned int tpu_to3_mux[] = {
 	TPUTO3_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक tpu_to3_b_pins[] = अणु
+};
+static const unsigned int tpu_to3_b_pins[] = {
 	RCAR_GP_PIN(1, 13),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक tpu_to3_b_mux[] = अणु
+};
+static const unsigned int tpu_to3_b_mux[] = {
 	TPUTO3_B_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक tpu_to3_c_pins[] = अणु
+};
+static const unsigned int tpu_to3_c_pins[] = {
 	RCAR_GP_PIN(0, 21),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक tpu_to3_c_mux[] = अणु
+};
+static const unsigned int tpu_to3_c_mux[] = {
 	TPUTO3_C_MARK,
-पूर्ण;
+};
 /* - USB0 ------------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक usb0_pins[] = अणु
+static const unsigned int usb0_pins[] = {
 	RCAR_GP_PIN(5, 24), /* PWEN */
 	RCAR_GP_PIN(5, 25), /* OVC */
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक usb0_mux[] = अणु
+};
+static const unsigned int usb0_mux[] = {
 	USB0_PWEN_MARK,
 	USB0_OVC_MARK,
-पूर्ण;
+};
 /* - USB1 ------------------------------------------------------------------- */
-अटल स्थिर अचिन्हित पूर्णांक usb1_pins[] = अणु
+static const unsigned int usb1_pins[] = {
 	RCAR_GP_PIN(5, 26), /* PWEN */
 	RCAR_GP_PIN(5, 27), /* OVC */
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक usb1_mux[] = अणु
+};
+static const unsigned int usb1_mux[] = {
 	USB1_PWEN_MARK,
 	USB1_OVC_MARK,
-पूर्ण;
+};
 /* - VIN0 ------------------------------------------------------------------- */
-अटल स्थिर जोड़ vin_data vin0_data_pins = अणु
-	.data24 = अणु
+static const union vin_data vin0_data_pins = {
+	.data24 = {
 		/* B */
 		RCAR_GP_PIN(3, 1), RCAR_GP_PIN(3, 2),
 		RCAR_GP_PIN(3, 3), RCAR_GP_PIN(3, 4),
@@ -3631,10 +3630,10 @@
 		RCAR_GP_PIN(3, 23), RCAR_GP_PIN(3, 24),
 		RCAR_GP_PIN(3, 25), RCAR_GP_PIN(3, 26),
 		RCAR_GP_PIN(3, 27), RCAR_GP_PIN(3, 28),
-	पूर्ण,
-पूर्ण;
-अटल स्थिर जोड़ vin_data vin0_data_mux = अणु
-	.data24 = अणु
+	},
+};
+static const union vin_data vin0_data_mux = {
+	.data24 = {
 		/* B */
 		VI0_DATA0_VI0_B0_MARK, VI0_DATA1_VI0_B1_MARK,
 		VI0_DATA2_VI0_B2_MARK, VI0_DATA3_VI0_B3_MARK,
@@ -3650,9 +3649,9 @@
 		VI0_R2_MARK, VI0_R3_MARK,
 		VI0_R4_MARK, VI0_R5_MARK,
 		VI0_R6_MARK, VI0_R7_MARK,
-	पूर्ण,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vin0_data18_pins[] = अणु
+	},
+};
+static const unsigned int vin0_data18_pins[] = {
 	/* B */
 	RCAR_GP_PIN(3, 3), RCAR_GP_PIN(3, 4),
 	RCAR_GP_PIN(3, 5), RCAR_GP_PIN(3, 6),
@@ -3665,8 +3664,8 @@
 	RCAR_GP_PIN(3, 23), RCAR_GP_PIN(3, 24),
 	RCAR_GP_PIN(3, 25), RCAR_GP_PIN(3, 26),
 	RCAR_GP_PIN(3, 27), RCAR_GP_PIN(3, 28),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vin0_data18_mux[] = अणु
+};
+static const unsigned int vin0_data18_mux[] = {
 	/* B */
 	VI0_DATA2_VI0_B2_MARK, VI0_DATA3_VI0_B3_MARK,
 	VI0_DATA4_VI0_B4_MARK, VI0_DATA5_VI0_B5_MARK,
@@ -3679,82 +3678,82 @@
 	VI0_R2_MARK, VI0_R3_MARK,
 	VI0_R4_MARK, VI0_R5_MARK,
 	VI0_R6_MARK, VI0_R7_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vin0_sync_pins[] = अणु
+};
+static const unsigned int vin0_sync_pins[] = {
 	RCAR_GP_PIN(3, 11), /* HSYNC */
 	RCAR_GP_PIN(3, 12), /* VSYNC */
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vin0_sync_mux[] = अणु
+};
+static const unsigned int vin0_sync_mux[] = {
 	VI0_HSYNC_N_MARK,
 	VI0_VSYNC_N_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vin0_field_pins[] = अणु
+};
+static const unsigned int vin0_field_pins[] = {
 	RCAR_GP_PIN(3, 10),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vin0_field_mux[] = अणु
+};
+static const unsigned int vin0_field_mux[] = {
 	VI0_FIELD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vin0_clkenb_pins[] = अणु
+};
+static const unsigned int vin0_clkenb_pins[] = {
 	RCAR_GP_PIN(3, 9),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vin0_clkenb_mux[] = अणु
+};
+static const unsigned int vin0_clkenb_mux[] = {
 	VI0_CLKENB_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vin0_clk_pins[] = अणु
+};
+static const unsigned int vin0_clk_pins[] = {
 	RCAR_GP_PIN(3, 0),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vin0_clk_mux[] = अणु
+};
+static const unsigned int vin0_clk_mux[] = {
 	VI0_CLK_MARK,
-पूर्ण;
+};
 /* - VIN1 ------------------------------------------------------------------- */
-अटल स्थिर जोड़ vin_data12 vin1_data_pins = अणु
-	.data12 = अणु
+static const union vin_data12 vin1_data_pins = {
+	.data12 = {
 		RCAR_GP_PIN(5, 12), RCAR_GP_PIN(5, 13),
 		RCAR_GP_PIN(5, 14), RCAR_GP_PIN(5, 15),
 		RCAR_GP_PIN(5, 16), RCAR_GP_PIN(5, 17),
 		RCAR_GP_PIN(5, 18), RCAR_GP_PIN(5, 19),
 		RCAR_GP_PIN(1, 10), RCAR_GP_PIN(1, 11),
 		RCAR_GP_PIN(1, 12), RCAR_GP_PIN(1, 13),
-	पूर्ण,
-पूर्ण;
-अटल स्थिर जोड़ vin_data12 vin1_data_mux = अणु
-	.data12 = अणु
+	},
+};
+static const union vin_data12 vin1_data_mux = {
+	.data12 = {
 		VI1_DATA0_MARK, VI1_DATA1_MARK,
 		VI1_DATA2_MARK, VI1_DATA3_MARK,
 		VI1_DATA4_MARK, VI1_DATA5_MARK,
 		VI1_DATA6_MARK, VI1_DATA7_MARK,
 		VI1_DATA8_MARK, VI1_DATA9_MARK,
 		VI1_DATA10_MARK, VI1_DATA11_MARK,
-	पूर्ण,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vin1_sync_pins[] = अणु
+	},
+};
+static const unsigned int vin1_sync_pins[] = {
 	RCAR_GP_PIN(5, 22), /* HSYNC */
 	RCAR_GP_PIN(5, 23), /* VSYNC */
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vin1_sync_mux[] = अणु
+};
+static const unsigned int vin1_sync_mux[] = {
 	VI1_HSYNC_N_MARK,
 	VI1_VSYNC_N_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vin1_field_pins[] = अणु
+};
+static const unsigned int vin1_field_pins[] = {
 	RCAR_GP_PIN(5, 21),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vin1_field_mux[] = अणु
+};
+static const unsigned int vin1_field_mux[] = {
 	VI1_FIELD_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vin1_clkenb_pins[] = अणु
+};
+static const unsigned int vin1_clkenb_pins[] = {
 	RCAR_GP_PIN(5, 20),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vin1_clkenb_mux[] = अणु
+};
+static const unsigned int vin1_clkenb_mux[] = {
 	VI1_CLKENB_MARK,
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vin1_clk_pins[] = अणु
+};
+static const unsigned int vin1_clk_pins[] = {
 	RCAR_GP_PIN(5, 11),
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक vin1_clk_mux[] = अणु
+};
+static const unsigned int vin1_clk_mux[] = {
 	VI1_CLK_MARK,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sh_pfc_pin_group pinmux_groups[] = अणु
+static const struct sh_pfc_pin_group pinmux_groups[] = {
 	SH_PFC_PIN_GROUP(audio_clka),
 	SH_PFC_PIN_GROUP(audio_clka_b),
 	SH_PFC_PIN_GROUP(audio_clka_c),
@@ -3770,7 +3769,7 @@
 	SH_PFC_PIN_GROUP(audio_clkout_c),
 	SH_PFC_PIN_GROUP(avb_link),
 	SH_PFC_PIN_GROUP(avb_magic),
-	SH_PFC_PIN_GROUP(avb_phy_पूर्णांक),
+	SH_PFC_PIN_GROUP(avb_phy_int),
 	SH_PFC_PIN_GROUP(avb_mdio),
 	SH_PFC_PIN_GROUP(avb_mii),
 	SH_PFC_PIN_GROUP(avb_gmii),
@@ -3812,19 +3811,19 @@
 	SH_PFC_PIN_GROUP(eth_magic_b),
 	SH_PFC_PIN_GROUP(eth_mdio_b),
 	SH_PFC_PIN_GROUP(eth_rmii_b),
-	SH_PFC_PIN_GROUP(hscअगर0_data),
-	SH_PFC_PIN_GROUP(hscअगर0_clk),
-	SH_PFC_PIN_GROUP(hscअगर0_ctrl),
-	SH_PFC_PIN_GROUP(hscअगर0_data_b),
-	SH_PFC_PIN_GROUP(hscअगर0_clk_b),
-	SH_PFC_PIN_GROUP(hscअगर1_data),
-	SH_PFC_PIN_GROUP(hscअगर1_clk),
-	SH_PFC_PIN_GROUP(hscअगर1_ctrl),
-	SH_PFC_PIN_GROUP(hscअगर1_data_b),
-	SH_PFC_PIN_GROUP(hscअगर1_ctrl_b),
-	SH_PFC_PIN_GROUP(hscअगर2_data),
-	SH_PFC_PIN_GROUP(hscअगर2_clk),
-	SH_PFC_PIN_GROUP(hscअगर2_ctrl),
+	SH_PFC_PIN_GROUP(hscif0_data),
+	SH_PFC_PIN_GROUP(hscif0_clk),
+	SH_PFC_PIN_GROUP(hscif0_ctrl),
+	SH_PFC_PIN_GROUP(hscif0_data_b),
+	SH_PFC_PIN_GROUP(hscif0_clk_b),
+	SH_PFC_PIN_GROUP(hscif1_data),
+	SH_PFC_PIN_GROUP(hscif1_clk),
+	SH_PFC_PIN_GROUP(hscif1_ctrl),
+	SH_PFC_PIN_GROUP(hscif1_data_b),
+	SH_PFC_PIN_GROUP(hscif1_ctrl_b),
+	SH_PFC_PIN_GROUP(hscif2_data),
+	SH_PFC_PIN_GROUP(hscif2_clk),
+	SH_PFC_PIN_GROUP(hscif2_ctrl),
 	SH_PFC_PIN_GROUP(i2c0),
 	SH_PFC_PIN_GROUP(i2c0_b),
 	SH_PFC_PIN_GROUP(i2c0_c),
@@ -3854,16 +3853,16 @@
 	SH_PFC_PIN_GROUP(i2c5_b),
 	SH_PFC_PIN_GROUP(i2c5_c),
 	SH_PFC_PIN_GROUP(i2c5_d),
-	SH_PFC_PIN_GROUP(पूर्णांकc_irq0),
-	SH_PFC_PIN_GROUP(पूर्णांकc_irq1),
-	SH_PFC_PIN_GROUP(पूर्णांकc_irq2),
-	SH_PFC_PIN_GROUP(पूर्णांकc_irq3),
-	SH_PFC_PIN_GROUP(पूर्णांकc_irq4),
-	SH_PFC_PIN_GROUP(पूर्णांकc_irq5),
-	SH_PFC_PIN_GROUP(पूर्णांकc_irq6),
-	SH_PFC_PIN_GROUP(पूर्णांकc_irq7),
-	SH_PFC_PIN_GROUP(पूर्णांकc_irq8),
-	SH_PFC_PIN_GROUP(पूर्णांकc_irq9),
+	SH_PFC_PIN_GROUP(intc_irq0),
+	SH_PFC_PIN_GROUP(intc_irq1),
+	SH_PFC_PIN_GROUP(intc_irq2),
+	SH_PFC_PIN_GROUP(intc_irq3),
+	SH_PFC_PIN_GROUP(intc_irq4),
+	SH_PFC_PIN_GROUP(intc_irq5),
+	SH_PFC_PIN_GROUP(intc_irq6),
+	SH_PFC_PIN_GROUP(intc_irq7),
+	SH_PFC_PIN_GROUP(intc_irq8),
+	SH_PFC_PIN_GROUP(intc_irq9),
 	SH_PFC_PIN_GROUP(mmc_data1),
 	SH_PFC_PIN_GROUP(mmc_data4),
 	SH_PFC_PIN_GROUP(mmc_data8),
@@ -3918,71 +3917,71 @@
 	SH_PFC_PIN_GROUP(qspi_ctrl),
 	SH_PFC_PIN_GROUP(qspi_data2),
 	SH_PFC_PIN_GROUP(qspi_data4),
-	SH_PFC_PIN_GROUP(scअगर0_data),
-	SH_PFC_PIN_GROUP(scअगर0_data_b),
-	SH_PFC_PIN_GROUP(scअगर0_data_c),
-	SH_PFC_PIN_GROUP(scअगर0_data_d),
-	SH_PFC_PIN_GROUP(scअगर1_data),
-	SH_PFC_PIN_GROUP(scअगर1_clk),
-	SH_PFC_PIN_GROUP(scअगर1_data_b),
-	SH_PFC_PIN_GROUP(scअगर1_clk_b),
-	SH_PFC_PIN_GROUP(scअगर1_data_c),
-	SH_PFC_PIN_GROUP(scअगर1_clk_c),
-	SH_PFC_PIN_GROUP(scअगर2_data),
-	SH_PFC_PIN_GROUP(scअगर2_clk),
-	SH_PFC_PIN_GROUP(scअगर2_data_b),
-	SH_PFC_PIN_GROUP(scअगर2_clk_b),
-	SH_PFC_PIN_GROUP(scअगर2_data_c),
-	SH_PFC_PIN_GROUP(scअगर2_clk_c),
-	SH_PFC_PIN_GROUP(scअगर3_data),
-	SH_PFC_PIN_GROUP(scअगर3_clk),
-	SH_PFC_PIN_GROUP(scअगर3_data_b),
-	SH_PFC_PIN_GROUP(scअगर3_clk_b),
-	SH_PFC_PIN_GROUP(scअगर4_data),
-	SH_PFC_PIN_GROUP(scअगर4_data_b),
-	SH_PFC_PIN_GROUP(scअगर4_data_c),
-	SH_PFC_PIN_GROUP(scअगर4_data_d),
-	SH_PFC_PIN_GROUP(scअगर4_data_e),
-	SH_PFC_PIN_GROUP(scअगर5_data),
-	SH_PFC_PIN_GROUP(scअगर5_data_b),
-	SH_PFC_PIN_GROUP(scअगर5_data_c),
-	SH_PFC_PIN_GROUP(scअगर5_data_d),
-	SH_PFC_PIN_GROUP(scअगरa0_data),
-	SH_PFC_PIN_GROUP(scअगरa0_data_b),
-	SH_PFC_PIN_GROUP(scअगरa0_data_c),
-	SH_PFC_PIN_GROUP(scअगरa0_data_d),
-	SH_PFC_PIN_GROUP(scअगरa1_data),
-	SH_PFC_PIN_GROUP(scअगरa1_clk),
-	SH_PFC_PIN_GROUP(scअगरa1_data_b),
-	SH_PFC_PIN_GROUP(scअगरa1_clk_b),
-	SH_PFC_PIN_GROUP(scअगरa1_data_c),
-	SH_PFC_PIN_GROUP(scअगरa1_clk_c),
-	SH_PFC_PIN_GROUP(scअगरa2_data),
-	SH_PFC_PIN_GROUP(scअगरa2_clk),
-	SH_PFC_PIN_GROUP(scअगरa2_data_b),
-	SH_PFC_PIN_GROUP(scअगरa2_clk_b),
-	SH_PFC_PIN_GROUP(scअगरa3_data),
-	SH_PFC_PIN_GROUP(scअगरa3_clk),
-	SH_PFC_PIN_GROUP(scअगरa3_data_b),
-	SH_PFC_PIN_GROUP(scअगरa3_clk_b),
-	SH_PFC_PIN_GROUP(scअगरa4_data),
-	SH_PFC_PIN_GROUP(scअगरa4_data_b),
-	SH_PFC_PIN_GROUP(scअगरa4_data_c),
-	SH_PFC_PIN_GROUP(scअगरa4_data_d),
-	SH_PFC_PIN_GROUP(scअगरa5_data),
-	SH_PFC_PIN_GROUP(scअगरa5_data_b),
-	SH_PFC_PIN_GROUP(scअगरa5_data_c),
-	SH_PFC_PIN_GROUP(scअगरa5_data_d),
-	SH_PFC_PIN_GROUP(scअगरb0_data),
-	SH_PFC_PIN_GROUP(scअगरb0_clk),
-	SH_PFC_PIN_GROUP(scअगरb0_ctrl),
-	SH_PFC_PIN_GROUP(scअगरb1_data),
-	SH_PFC_PIN_GROUP(scअगरb1_clk),
-	SH_PFC_PIN_GROUP(scअगरb2_data),
-	SH_PFC_PIN_GROUP(scअगरb2_clk),
-	SH_PFC_PIN_GROUP(scअगरb2_ctrl),
-	SH_PFC_PIN_GROUP(scअगर_clk),
-	SH_PFC_PIN_GROUP(scअगर_clk_b),
+	SH_PFC_PIN_GROUP(scif0_data),
+	SH_PFC_PIN_GROUP(scif0_data_b),
+	SH_PFC_PIN_GROUP(scif0_data_c),
+	SH_PFC_PIN_GROUP(scif0_data_d),
+	SH_PFC_PIN_GROUP(scif1_data),
+	SH_PFC_PIN_GROUP(scif1_clk),
+	SH_PFC_PIN_GROUP(scif1_data_b),
+	SH_PFC_PIN_GROUP(scif1_clk_b),
+	SH_PFC_PIN_GROUP(scif1_data_c),
+	SH_PFC_PIN_GROUP(scif1_clk_c),
+	SH_PFC_PIN_GROUP(scif2_data),
+	SH_PFC_PIN_GROUP(scif2_clk),
+	SH_PFC_PIN_GROUP(scif2_data_b),
+	SH_PFC_PIN_GROUP(scif2_clk_b),
+	SH_PFC_PIN_GROUP(scif2_data_c),
+	SH_PFC_PIN_GROUP(scif2_clk_c),
+	SH_PFC_PIN_GROUP(scif3_data),
+	SH_PFC_PIN_GROUP(scif3_clk),
+	SH_PFC_PIN_GROUP(scif3_data_b),
+	SH_PFC_PIN_GROUP(scif3_clk_b),
+	SH_PFC_PIN_GROUP(scif4_data),
+	SH_PFC_PIN_GROUP(scif4_data_b),
+	SH_PFC_PIN_GROUP(scif4_data_c),
+	SH_PFC_PIN_GROUP(scif4_data_d),
+	SH_PFC_PIN_GROUP(scif4_data_e),
+	SH_PFC_PIN_GROUP(scif5_data),
+	SH_PFC_PIN_GROUP(scif5_data_b),
+	SH_PFC_PIN_GROUP(scif5_data_c),
+	SH_PFC_PIN_GROUP(scif5_data_d),
+	SH_PFC_PIN_GROUP(scifa0_data),
+	SH_PFC_PIN_GROUP(scifa0_data_b),
+	SH_PFC_PIN_GROUP(scifa0_data_c),
+	SH_PFC_PIN_GROUP(scifa0_data_d),
+	SH_PFC_PIN_GROUP(scifa1_data),
+	SH_PFC_PIN_GROUP(scifa1_clk),
+	SH_PFC_PIN_GROUP(scifa1_data_b),
+	SH_PFC_PIN_GROUP(scifa1_clk_b),
+	SH_PFC_PIN_GROUP(scifa1_data_c),
+	SH_PFC_PIN_GROUP(scifa1_clk_c),
+	SH_PFC_PIN_GROUP(scifa2_data),
+	SH_PFC_PIN_GROUP(scifa2_clk),
+	SH_PFC_PIN_GROUP(scifa2_data_b),
+	SH_PFC_PIN_GROUP(scifa2_clk_b),
+	SH_PFC_PIN_GROUP(scifa3_data),
+	SH_PFC_PIN_GROUP(scifa3_clk),
+	SH_PFC_PIN_GROUP(scifa3_data_b),
+	SH_PFC_PIN_GROUP(scifa3_clk_b),
+	SH_PFC_PIN_GROUP(scifa4_data),
+	SH_PFC_PIN_GROUP(scifa4_data_b),
+	SH_PFC_PIN_GROUP(scifa4_data_c),
+	SH_PFC_PIN_GROUP(scifa4_data_d),
+	SH_PFC_PIN_GROUP(scifa5_data),
+	SH_PFC_PIN_GROUP(scifa5_data_b),
+	SH_PFC_PIN_GROUP(scifa5_data_c),
+	SH_PFC_PIN_GROUP(scifa5_data_d),
+	SH_PFC_PIN_GROUP(scifb0_data),
+	SH_PFC_PIN_GROUP(scifb0_clk),
+	SH_PFC_PIN_GROUP(scifb0_ctrl),
+	SH_PFC_PIN_GROUP(scifb1_data),
+	SH_PFC_PIN_GROUP(scifb1_clk),
+	SH_PFC_PIN_GROUP(scifb2_data),
+	SH_PFC_PIN_GROUP(scifb2_clk),
+	SH_PFC_PIN_GROUP(scifb2_ctrl),
+	SH_PFC_PIN_GROUP(scif_clk),
+	SH_PFC_PIN_GROUP(scif_clk_b),
 	SH_PFC_PIN_GROUP(sdhi0_data1),
 	SH_PFC_PIN_GROUP(sdhi0_data4),
 	SH_PFC_PIN_GROUP(sdhi0_ctrl),
@@ -4064,9 +4063,9 @@
 	SH_PFC_PIN_GROUP(vin1_field),
 	SH_PFC_PIN_GROUP(vin1_clkenb),
 	SH_PFC_PIN_GROUP(vin1_clk),
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर audio_clk_groups[] = अणु
+static const char * const audio_clk_groups[] = {
 	"audio_clka",
 	"audio_clka_b",
 	"audio_clka_c",
@@ -4080,59 +4079,59 @@
 	"audio_clkout",
 	"audio_clkout_b",
 	"audio_clkout_c",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर avb_groups[] = अणु
+static const char * const avb_groups[] = {
 	"avb_link",
 	"avb_magic",
 	"avb_phy_int",
 	"avb_mdio",
 	"avb_mii",
 	"avb_gmii",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर can0_groups[] = अणु
+static const char * const can0_groups[] = {
 	"can0_data",
 	"can0_data_b",
 	"can0_data_c",
 	"can0_data_d",
 	/*
-	 * Retained क्रम backwards compatibility, use can_clk_groups in new
+	 * Retained for backwards compatibility, use can_clk_groups in new
 	 * designs.
 	 */
 	"can_clk",
 	"can_clk_b",
 	"can_clk_c",
 	"can_clk_d",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर can1_groups[] = अणु
+static const char * const can1_groups[] = {
 	"can1_data",
 	"can1_data_b",
 	"can1_data_c",
 	"can1_data_d",
 	/*
-	 * Retained क्रम backwards compatibility, use can_clk_groups in new
+	 * Retained for backwards compatibility, use can_clk_groups in new
 	 * designs.
 	 */
 	"can_clk",
 	"can_clk_b",
 	"can_clk_c",
 	"can_clk_d",
-पूर्ण;
+};
 
 /*
- * can_clk_groups allows क्रम independent configuration, use can_clk function
+ * can_clk_groups allows for independent configuration, use can_clk function
  * in new designs.
  */
-अटल स्थिर अक्षर * स्थिर can_clk_groups[] = अणु
+static const char * const can_clk_groups[] = {
 	"can_clk",
 	"can_clk_b",
 	"can_clk_c",
 	"can_clk_d",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर du0_groups[] = अणु
+static const char * const du0_groups[] = {
 	"du0_rgb666",
 	"du0_rgb888",
 	"du0_clk0_out",
@@ -4142,9 +4141,9 @@
 	"du0_oddf",
 	"du0_cde",
 	"du0_disp",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर du1_groups[] = अणु
+static const char * const du1_groups[] = {
 	"du1_rgb666",
 	"du1_rgb888",
 	"du1_clk0_out",
@@ -4154,9 +4153,9 @@
 	"du1_oddf",
 	"du1_cde",
 	"du1_disp",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर eth_groups[] = अणु
+static const char * const eth_groups[] = {
 	"eth_link",
 	"eth_magic",
 	"eth_mdio",
@@ -4165,78 +4164,78 @@
 	"eth_magic_b",
 	"eth_mdio_b",
 	"eth_rmii_b",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर hscअगर0_groups[] = अणु
+static const char * const hscif0_groups[] = {
 	"hscif0_data",
 	"hscif0_clk",
 	"hscif0_ctrl",
 	"hscif0_data_b",
 	"hscif0_clk_b",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर hscअगर1_groups[] = अणु
+static const char * const hscif1_groups[] = {
 	"hscif1_data",
 	"hscif1_clk",
 	"hscif1_ctrl",
 	"hscif1_data_b",
 	"hscif1_ctrl_b",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर hscअगर2_groups[] = अणु
+static const char * const hscif2_groups[] = {
 	"hscif2_data",
 	"hscif2_clk",
 	"hscif2_ctrl",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर i2c0_groups[] = अणु
+static const char * const i2c0_groups[] = {
 	"i2c0",
 	"i2c0_b",
 	"i2c0_c",
 	"i2c0_d",
 	"i2c0_e",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर i2c1_groups[] = अणु
+static const char * const i2c1_groups[] = {
 	"i2c1",
 	"i2c1_b",
 	"i2c1_c",
 	"i2c1_d",
 	"i2c1_e",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर i2c2_groups[] = अणु
+static const char * const i2c2_groups[] = {
 	"i2c2",
 	"i2c2_b",
 	"i2c2_c",
 	"i2c2_d",
 	"i2c2_e",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर i2c3_groups[] = अणु
+static const char * const i2c3_groups[] = {
 	"i2c3",
 	"i2c3_b",
 	"i2c3_c",
 	"i2c3_d",
 	"i2c3_e",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर i2c4_groups[] = अणु
+static const char * const i2c4_groups[] = {
 	"i2c4",
 	"i2c4_b",
 	"i2c4_c",
 	"i2c4_d",
 	"i2c4_e",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर i2c5_groups[] = अणु
+static const char * const i2c5_groups[] = {
 	"i2c5",
 	"i2c5_b",
 	"i2c5_c",
 	"i2c5_d",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर पूर्णांकc_groups[] = अणु
+static const char * const intc_groups[] = {
 	"intc_irq0",
 	"intc_irq1",
 	"intc_irq2",
@@ -4247,25 +4246,25 @@
 	"intc_irq7",
 	"intc_irq8",
 	"intc_irq9",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर mmc_groups[] = अणु
+static const char * const mmc_groups[] = {
 	"mmc_data1",
 	"mmc_data4",
 	"mmc_data8",
 	"mmc_ctrl",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर msiof0_groups[] = अणु
+static const char * const msiof0_groups[] = {
 	"msiof0_clk",
 	"msiof0_sync",
 	"msiof0_ss1",
 	"msiof0_ss2",
 	"msiof0_rx",
 	"msiof0_tx",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर msiof1_groups[] = अणु
+static const char * const msiof1_groups[] = {
 	"msiof1_clk",
 	"msiof1_sync",
 	"msiof1_ss1",
@@ -4278,9 +4277,9 @@
 	"msiof1_ss2_b",
 	"msiof1_rx_b",
 	"msiof1_tx_b",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर msiof2_groups[] = अणु
+static const char * const msiof2_groups[] = {
 	"msiof2_clk",
 	"msiof2_sync",
 	"msiof2_ss1",
@@ -4293,190 +4292,190 @@
 	"msiof2_ss2_b",
 	"msiof2_rx_b",
 	"msiof2_tx_b",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर pwm0_groups[] = अणु
+static const char * const pwm0_groups[] = {
 	"pwm0",
 	"pwm0_b",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर pwm1_groups[] = अणु
+static const char * const pwm1_groups[] = {
 	"pwm1",
 	"pwm1_b",
 	"pwm1_c",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर pwm2_groups[] = अणु
+static const char * const pwm2_groups[] = {
 	"pwm2",
 	"pwm2_b",
 	"pwm2_c",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर pwm3_groups[] = अणु
+static const char * const pwm3_groups[] = {
 	"pwm3",
 	"pwm3_b",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर pwm4_groups[] = अणु
+static const char * const pwm4_groups[] = {
 	"pwm4",
 	"pwm4_b",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर pwm5_groups[] = अणु
+static const char * const pwm5_groups[] = {
 	"pwm5",
 	"pwm5_b",
 	"pwm5_c",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर pwm6_groups[] = अणु
+static const char * const pwm6_groups[] = {
 	"pwm6",
 	"pwm6_b",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर qspi_groups[] = अणु
+static const char * const qspi_groups[] = {
 	"qspi_ctrl",
 	"qspi_data2",
 	"qspi_data4",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर scअगर0_groups[] = अणु
+static const char * const scif0_groups[] = {
 	"scif0_data",
 	"scif0_data_b",
 	"scif0_data_c",
 	"scif0_data_d",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर scअगर1_groups[] = अणु
+static const char * const scif1_groups[] = {
 	"scif1_data",
 	"scif1_clk",
 	"scif1_data_b",
 	"scif1_clk_b",
 	"scif1_data_c",
 	"scif1_clk_c",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर scअगर2_groups[] = अणु
+static const char * const scif2_groups[] = {
 	"scif2_data",
 	"scif2_clk",
 	"scif2_data_b",
 	"scif2_clk_b",
 	"scif2_data_c",
 	"scif2_clk_c",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर scअगर3_groups[] = अणु
+static const char * const scif3_groups[] = {
 	"scif3_data",
 	"scif3_clk",
 	"scif3_data_b",
 	"scif3_clk_b",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर scअगर4_groups[] = अणु
+static const char * const scif4_groups[] = {
 	"scif4_data",
 	"scif4_data_b",
 	"scif4_data_c",
 	"scif4_data_d",
 	"scif4_data_e",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर scअगर5_groups[] = अणु
+static const char * const scif5_groups[] = {
 	"scif5_data",
 	"scif5_data_b",
 	"scif5_data_c",
 	"scif5_data_d",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर scअगरa0_groups[] = अणु
+static const char * const scifa0_groups[] = {
 	"scifa0_data",
 	"scifa0_data_b",
 	"scifa0_data_c",
 	"scifa0_data_d",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर scअगरa1_groups[] = अणु
+static const char * const scifa1_groups[] = {
 	"scifa1_data",
 	"scifa1_clk",
 	"scifa1_data_b",
 	"scifa1_clk_b",
 	"scifa1_data_c",
 	"scifa1_clk_c",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर scअगरa2_groups[] = अणु
+static const char * const scifa2_groups[] = {
 	"scifa2_data",
 	"scifa2_clk",
 	"scifa2_data_b",
 	"scifa2_clk_b",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर scअगरa3_groups[] = अणु
+static const char * const scifa3_groups[] = {
 	"scifa3_data",
 	"scifa3_clk",
 	"scifa3_data_b",
 	"scifa3_clk_b",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर scअगरa4_groups[] = अणु
+static const char * const scifa4_groups[] = {
 	"scifa4_data",
 	"scifa4_data_b",
 	"scifa4_data_c",
 	"scifa4_data_d",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर scअगरa5_groups[] = अणु
+static const char * const scifa5_groups[] = {
 	"scifa5_data",
 	"scifa5_data_b",
 	"scifa5_data_c",
 	"scifa5_data_d",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर scअगरb0_groups[] = अणु
+static const char * const scifb0_groups[] = {
 	"scifb0_data",
 	"scifb0_clk",
 	"scifb0_ctrl",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर scअगरb1_groups[] = अणु
+static const char * const scifb1_groups[] = {
 	"scifb1_data",
 	"scifb1_clk",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर scअगरb2_groups[] = अणु
+static const char * const scifb2_groups[] = {
 	"scifb2_data",
 	"scifb2_clk",
 	"scifb2_ctrl",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर scअगर_clk_groups[] = अणु
+static const char * const scif_clk_groups[] = {
 	"scif_clk",
 	"scif_clk_b",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर sdhi0_groups[] = अणु
+static const char * const sdhi0_groups[] = {
 	"sdhi0_data1",
 	"sdhi0_data4",
 	"sdhi0_ctrl",
 	"sdhi0_cd",
 	"sdhi0_wp",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर sdhi1_groups[] = अणु
+static const char * const sdhi1_groups[] = {
 	"sdhi1_data1",
 	"sdhi1_data4",
 	"sdhi1_ctrl",
 	"sdhi1_cd",
 	"sdhi1_wp",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर sdhi2_groups[] = अणु
+static const char * const sdhi2_groups[] = {
 	"sdhi2_data1",
 	"sdhi2_data4",
 	"sdhi2_ctrl",
 	"sdhi2_cd",
 	"sdhi2_wp",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर ssi_groups[] = अणु
+static const char * const ssi_groups[] = {
 	"ssi0_data",
 	"ssi0129_ctrl",
 	"ssi1_data",
@@ -4511,9 +4510,9 @@
 	"ssi9_ctrl",
 	"ssi9_data_b",
 	"ssi9_ctrl_b",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर tpu_groups[] = अणु
+static const char * const tpu_groups[] = {
 	"tpu_to0",
 	"tpu_to0_b",
 	"tpu_to0_c",
@@ -4526,17 +4525,17 @@
 	"tpu_to3",
 	"tpu_to3_b",
 	"tpu_to3_c",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर usb0_groups[] = अणु
+static const char * const usb0_groups[] = {
 	"usb0",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर usb1_groups[] = अणु
+static const char * const usb1_groups[] = {
 	"usb1",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर vin0_groups[] = अणु
+static const char * const vin0_groups[] = {
 	"vin0_data24",
 	"vin0_data20",
 	"vin0_data18",
@@ -4548,9 +4547,9 @@
 	"vin0_field",
 	"vin0_clkenb",
 	"vin0_clk",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर vin1_groups[] = अणु
+static const char * const vin1_groups[] = {
 	"vin1_data12",
 	"vin1_data10",
 	"vin1_data8",
@@ -4558,9 +4557,9 @@
 	"vin1_field",
 	"vin1_clkenb",
 	"vin1_clk",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sh_pfc_function pinmux_functions[] = अणु
+static const struct sh_pfc_function pinmux_functions[] = {
 	SH_PFC_FUNCTION(audio_clk),
 	SH_PFC_FUNCTION(avb),
 	SH_PFC_FUNCTION(can0),
@@ -4569,16 +4568,16 @@
 	SH_PFC_FUNCTION(du0),
 	SH_PFC_FUNCTION(du1),
 	SH_PFC_FUNCTION(eth),
-	SH_PFC_FUNCTION(hscअगर0),
-	SH_PFC_FUNCTION(hscअगर1),
-	SH_PFC_FUNCTION(hscअगर2),
+	SH_PFC_FUNCTION(hscif0),
+	SH_PFC_FUNCTION(hscif1),
+	SH_PFC_FUNCTION(hscif2),
 	SH_PFC_FUNCTION(i2c0),
 	SH_PFC_FUNCTION(i2c1),
 	SH_PFC_FUNCTION(i2c2),
 	SH_PFC_FUNCTION(i2c3),
 	SH_PFC_FUNCTION(i2c4),
 	SH_PFC_FUNCTION(i2c5),
-	SH_PFC_FUNCTION(पूर्णांकc),
+	SH_PFC_FUNCTION(intc),
 	SH_PFC_FUNCTION(mmc),
 	SH_PFC_FUNCTION(msiof0),
 	SH_PFC_FUNCTION(msiof1),
@@ -4591,22 +4590,22 @@
 	SH_PFC_FUNCTION(pwm5),
 	SH_PFC_FUNCTION(pwm6),
 	SH_PFC_FUNCTION(qspi),
-	SH_PFC_FUNCTION(scअगर0),
-	SH_PFC_FUNCTION(scअगर1),
-	SH_PFC_FUNCTION(scअगर2),
-	SH_PFC_FUNCTION(scअगर3),
-	SH_PFC_FUNCTION(scअगर4),
-	SH_PFC_FUNCTION(scअगर5),
-	SH_PFC_FUNCTION(scअगरa0),
-	SH_PFC_FUNCTION(scअगरa1),
-	SH_PFC_FUNCTION(scअगरa2),
-	SH_PFC_FUNCTION(scअगरa3),
-	SH_PFC_FUNCTION(scअगरa4),
-	SH_PFC_FUNCTION(scअगरa5),
-	SH_PFC_FUNCTION(scअगरb0),
-	SH_PFC_FUNCTION(scअगरb1),
-	SH_PFC_FUNCTION(scअगरb2),
-	SH_PFC_FUNCTION(scअगर_clk),
+	SH_PFC_FUNCTION(scif0),
+	SH_PFC_FUNCTION(scif1),
+	SH_PFC_FUNCTION(scif2),
+	SH_PFC_FUNCTION(scif3),
+	SH_PFC_FUNCTION(scif4),
+	SH_PFC_FUNCTION(scif5),
+	SH_PFC_FUNCTION(scifa0),
+	SH_PFC_FUNCTION(scifa1),
+	SH_PFC_FUNCTION(scifa2),
+	SH_PFC_FUNCTION(scifa3),
+	SH_PFC_FUNCTION(scifa4),
+	SH_PFC_FUNCTION(scifa5),
+	SH_PFC_FUNCTION(scifb0),
+	SH_PFC_FUNCTION(scifb1),
+	SH_PFC_FUNCTION(scifb2),
+	SH_PFC_FUNCTION(scif_clk),
 	SH_PFC_FUNCTION(sdhi0),
 	SH_PFC_FUNCTION(sdhi1),
 	SH_PFC_FUNCTION(sdhi2),
@@ -4616,10 +4615,10 @@
 	SH_PFC_FUNCTION(usb1),
 	SH_PFC_FUNCTION(vin0),
 	SH_PFC_FUNCTION(vin1),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा pinmux_cfg_reg pinmux_config_regs[] = अणु
-	अणु PINMUX_CFG_REG("GPSR0", 0xE6060004, 32, 1, GROUP(
+static const struct pinmux_cfg_reg pinmux_config_regs[] = {
+	{ PINMUX_CFG_REG("GPSR0", 0xE6060004, 32, 1, GROUP(
 		GP_0_31_FN, FN_IP2_17_16,
 		GP_0_30_FN, FN_IP2_15_14,
 		GP_0_29_FN, FN_IP2_13_12,
@@ -4652,8 +4651,8 @@
 		GP_0_2_FN, FN_IP0_25,
 		GP_0_1_FN, FN_IP0_24,
 		GP_0_0_FN, FN_IP0_23_22, ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("GPSR1", 0xE6060008, 32, 1, GROUP(
+	},
+	{ PINMUX_CFG_REG("GPSR1", 0xE6060008, 32, 1, GROUP(
 		0, 0,
 		0, 0,
 		0, 0,
@@ -4686,8 +4685,8 @@
 		GP_1_2_FN, FN_IP2_26_24,
 		GP_1_1_FN, FN_IP2_23_21,
 		GP_1_0_FN, FN_IP2_20_18, ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("GPSR2", 0xE606000C, 32, 1, GROUP(
+	},
+	{ PINMUX_CFG_REG("GPSR2", 0xE606000C, 32, 1, GROUP(
 		GP_2_31_FN, FN_IP6_7_6,
 		GP_2_30_FN, FN_IP6_5_4,
 		GP_2_29_FN, FN_IP6_3_2,
@@ -4720,8 +4719,8 @@
 		GP_2_2_FN, FN_IP4_9_8,
 		GP_2_1_FN, FN_IP4_7_5,
 		GP_2_0_FN, FN_IP4_4_2 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("GPSR3", 0xE6060010, 32, 1, GROUP(
+	},
+	{ PINMUX_CFG_REG("GPSR3", 0xE6060010, 32, 1, GROUP(
 		GP_3_31_FN, FN_IP8_22_20,
 		GP_3_30_FN, FN_IP8_19_17,
 		GP_3_29_FN, FN_IP8_16_15,
@@ -4754,8 +4753,8 @@
 		GP_3_2_FN, FN_IP6_10,
 		GP_3_1_FN, FN_IP6_9,
 		GP_3_0_FN, FN_IP6_8 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("GPSR4", 0xE6060014, 32, 1, GROUP(
+	},
+	{ PINMUX_CFG_REG("GPSR4", 0xE6060014, 32, 1, GROUP(
 		GP_4_31_FN, FN_IP11_17_16,
 		GP_4_30_FN, FN_IP11_15_14,
 		GP_4_29_FN, FN_IP11_13_11,
@@ -4788,8 +4787,8 @@
 		GP_4_2_FN, FN_IP8_31_29,
 		GP_4_1_FN, FN_IP8_28_26,
 		GP_4_0_FN, FN_IP8_25_23 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("GPSR5", 0xE6060018, 32, 1, GROUP(
+	},
+	{ PINMUX_CFG_REG("GPSR5", 0xE6060018, 32, 1, GROUP(
 		0, 0,
 		0, 0,
 		0, 0,
@@ -4822,8 +4821,8 @@
 		GP_5_2_FN, FN_IP11_26_24,
 		GP_5_1_FN, FN_IP11_23_21,
 		GP_5_0_FN, FN_IP11_20_18 ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG("GPSR6", 0xE606001C, 32, 1, GROUP(
+	},
+	{ PINMUX_CFG_REG("GPSR6", 0xE606001C, 32, 1, GROUP(
 		0, 0,
 		0, 0,
 		0, 0,
@@ -4856,8 +4855,8 @@
 		GP_6_2_FN, FN_SD0_DATA0,
 		GP_6_1_FN, FN_SD0_CMD,
 		GP_6_0_FN, FN_SD0_CLK ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG_VAR("IPSR0", 0xE6060020, 32,
+	},
+	{ PINMUX_CFG_REG_VAR("IPSR0", 0xE6060020, 32,
 			     GROUP(2, 2, 2, 1, 1, 2, 2, 2, 1, 1, 1, 1,
 				   1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1),
 			     GROUP(
@@ -4911,8 +4910,8 @@
 		0, 0,
 		/* IP0_0 [1] */
 		FN_SD1_CD, FN_CAN0_RX, ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG_VAR("IPSR1", 0xE6060024, 32,
+	},
+	{ PINMUX_CFG_REG_VAR("IPSR1", 0xE6060024, 32,
 			     GROUP(2, 2, 1, 1, 1, 1, 2, 2, 2, 3, 2, 2,
 				   3, 2, 2, 2, 2),
 			     GROUP(
@@ -4952,8 +4951,8 @@
 		FN_D7, FN_IRQ3, FN_TCLK1, FN_PWM6_B,
 		/* IP1_1_0 [2] */
 		FN_D6, FN_SCIF4_TXD_B, FN_I2C0_SDA_D, 0, ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG_VAR("IPSR2", 0xE6060028, 32,
+	},
+	{ PINMUX_CFG_REG_VAR("IPSR2", 0xE6060028, 32,
 			     GROUP(2, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2),
 			     GROUP(
 		/* IP2_31_30 [2] */
@@ -4988,8 +4987,8 @@
 		FN_A8, FN_MSIOF1_RXD, FN_SCIFA0_RXD_B, 0,
 		/* IP2_1_0 [2] */
 		FN_A7, FN_SCIFB0_RTS_N, FN_SCIFA4_TXD_B, 0, ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG_VAR("IPSR3", 0xE606002C, 32,
+	},
+	{ PINMUX_CFG_REG_VAR("IPSR3", 0xE606002C, 32,
 			     GROUP(1, 1, 3, 3, 3, 3, 3, 2, 1, 1, 1, 2,
 				   2, 2, 2, 2),
 			     GROUP(
@@ -5027,11 +5026,11 @@
 		/* IP3_5_4 [2] */
 		FN_A23, FN_IO2, 0, FN_ATAWR1_N,
 		/* IP3_3_2 [2] */
-		FN_A22, FN_MISO_IO1, 0, FN_ATAसूची1_N,
+		FN_A22, FN_MISO_IO1, 0, FN_ATADIR1_N,
 		/* IP3_1_0 [2] */
 		FN_A21, FN_MOSI_IO0, 0, 0, ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG_VAR("IPSR4", 0xE6060030, 32,
+	},
+	{ PINMUX_CFG_REG_VAR("IPSR4", 0xE6060030, 32,
 			     GROUP(2, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2, 3, 3, 2),
 			     GROUP(
 		/* IP4_31_30 [2] */
@@ -5066,8 +5065,8 @@
 		0, 0, 0, 0,
 		/* IP4_1_0 [2] */
 		FN_EX_WAIT0, FN_CAN_CLK_B, FN_SCIF_CLK, 0, ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG_VAR("IPSR5", 0xE6060034, 32,
+	},
+	{ PINMUX_CFG_REG_VAR("IPSR5", 0xE6060034, 32,
 			     GROUP(2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3,
 				   2, 2, 2),
 			     GROUP(
@@ -5103,8 +5102,8 @@
 		FN_DU0_DG6, FN_LCDOUT14, 0, 0,
 		/* IP5_1_0 [2] */
 		FN_DU0_DG5, FN_LCDOUT13, 0, 0, ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG_VAR("IPSR6", 0xE6060038, 32,
+	},
+	{ PINMUX_CFG_REG_VAR("IPSR6", 0xE6060038, 32,
 			     GROUP(3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1,
 				   1, 1, 2, 2, 2, 2),
 			     GROUP(
@@ -5150,8 +5149,8 @@
 		0,
 		/* IP6_1_0 [2] */
 		FN_DU0_EXVSYNC_DU0_VSYNC, FN_QSTB_QHE, 0, 0, ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG_VAR("IPSR7", 0xE606003C, 32,
+	},
+	{ PINMUX_CFG_REG_VAR("IPSR7", 0xE606003C, 32,
 			     GROUP(1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3),
 			     GROUP(
 		/* IP7_31 [1] */
@@ -5188,8 +5187,8 @@
 		/* IP7_2_0 [3] */
 		FN_ETH_CRS_DV, FN_VI0_G1, FN_MSIOF2_TXD_B, FN_I2C5_SDA_D,
 		FN_AVB_TXD0, FN_ADICS_SAMP, 0, 0, ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG_VAR("IPSR8", 0xE6060040, 32,
+	},
+	{ PINMUX_CFG_REG_VAR("IPSR8", 0xE6060040, 32,
 			     GROUP(3, 3, 3, 3, 3, 2, 3, 3, 3, 3, 3),
 			     GROUP(
 		/* IP8_31_29 [3] */
@@ -5224,8 +5223,8 @@
 		/* IP8_2_0 [3] */
 		FN_ETH_MDC, FN_VI0_R3, FN_SCIF3_TXD_B, FN_I2C4_SDA_E,
 		FN_AVB_MDC, FN_SSI_SDATA6_B, 0, 0, ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG_VAR("IPSR9", 0xE6060044, 32,
+	},
+	{ PINMUX_CFG_REG_VAR("IPSR9", 0xE6060044, 32,
 			     GROUP(1, 3, 3, 3, 3, 2, 2, 3, 3, 3, 3, 3),
 			     GROUP(
 		/* IP9_31 [1] */
@@ -5261,8 +5260,8 @@
 		/* IP9_2_0 [3] */
 		FN_MSIOF0_TXD, FN_SCIF5_TXD, FN_I2C2_SDA_C, FN_DU1_DR3,
 		0, FN_TS_SPSYNC_D, FN_FMIN_C, 0, ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG_VAR("IPSR10", 0xE6060048, 32,
+	},
+	{ PINMUX_CFG_REG_VAR("IPSR10", 0xE6060048, 32,
 			     GROUP(2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3),
 			     GROUP(
 		/* IP10_31_30 [2] */
@@ -5297,8 +5296,8 @@
 		/* IP10_2_0 [3] */
 		FN_SCIF1_RXD, FN_I2C5_SCL, FN_DU1_DG6, FN_SSI_SCK2_B,
 		0, 0, 0, 0, ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG_VAR("IPSR11", 0xE606004C, 32,
+	},
+	{ PINMUX_CFG_REG_VAR("IPSR11", 0xE606004C, 32,
 			     GROUP(2, 3, 3, 3, 3, 2, 2, 3, 3, 2, 3, 3),
 			     GROUP(
 		/* IP11_31_30 [2] */
@@ -5333,8 +5332,8 @@
 		/* IP11_2_0 [3] */
 		FN_SSI_WS5, FN_SCIFA3_RXD, FN_I2C3_SCL_C, FN_DU1_DOTCLKOUT0,
 		0, 0, 0, 0, ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG_VAR("IPSR12", 0xE6060050, 32,
+	},
+	{ PINMUX_CFG_REG_VAR("IPSR12", 0xE6060050, 32,
 			     GROUP(2, 3, 3, 3, 3, 3, 2, 2, 2, 3, 3, 3),
 			     GROUP(
 		/* IP12_31_30 [2] */
@@ -5369,8 +5368,8 @@
 		/* IP12_2_0 [3] */
 		FN_SSI_SCK34, FN_MSIOF1_SYNC_B, FN_SCIFA1_SCK_C, FN_ADICHS0_B,
 		0, FN_DREQ1_N_B, 0, 0, ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG_VAR("IPSR13", 0xE6060054, 32,
+	},
+	{ PINMUX_CFG_REG_VAR("IPSR13", 0xE6060054, 32,
 			     GROUP(1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3),
 			     GROUP(
 		/* IP13_31 [1] */
@@ -5397,7 +5396,7 @@
 		FN_TS_SDATA_C, 0, FN_ETH_TXD0_B, 0,
 		/* IP13_14_12 [3] */
 		FN_SSI_SDATA9, FN_SCIF2_TXD_B, FN_I2C3_SDA_E, FN_VI1_DATA7,
-		FN_ATAसूची0_N, FN_ETH_MAGIC_B, 0, 0,
+		FN_ATADIR0_N, FN_ETH_MAGIC_B, 0, 0,
 		/* IP13_11_9 [3] */
 		FN_SSI_WS9, FN_SCIF2_RXD_B, FN_I2C3_SCL_E, FN_VI1_DATA6,
 		FN_ATARD0_N, FN_ETH_TX_EN_B, 0, 0,
@@ -5410,8 +5409,8 @@
 		/* IP13_2_0 [3] */
 		FN_SSI_WS2, FN_HSCIF1_HCTS_N_B, FN_SCIFA0_RXD_D, FN_VI1_DATA3,
 		0, FN_ATACS00_N, FN_ETH_LINK_B, 0, ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG_VAR("MOD_SEL", 0xE6060090, 32,
+	},
+	{ PINMUX_CFG_REG_VAR("MOD_SEL", 0xE6060090, 32,
 			     GROUP(2, 1, 2, 3, 4, 1, 1, 3, 3, 3, 3, 3, 2, 1),
 			     GROUP(
 		/* SEL_ADG [2] */
@@ -5448,8 +5447,8 @@
 		FN_SEL_I2C05_0, FN_SEL_I2C05_1, FN_SEL_I2C05_2, FN_SEL_I2C05_3,
 		/* RESERVED [1] */
 		0, 0, ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG_VAR("MOD_SEL2", 0xE6060094, 32,
+	},
+	{ PINMUX_CFG_REG_VAR("MOD_SEL2", 0xE6060094, 32,
 			     GROUP(2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1,
 				   2, 2, 1, 1, 2, 2, 2, 1, 1, 2),
 			     GROUP(
@@ -5500,8 +5499,8 @@
 		FN_SEL_HSCIF1_0, FN_SEL_HSCIF1_1,
 		/* RESERVED [2] */
 		0, 0, 0, 0, ))
-	पूर्ण,
-	अणु PINMUX_CFG_REG_VAR("MOD_SEL3", 0xE6060098, 32,
+	},
+	{ PINMUX_CFG_REG_VAR("MOD_SEL3", 0xE6060098, 32,
 			     GROUP(2, 2, 2, 1, 3, 2, 1, 1, 1, 1, 1, 1,
 				   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 			     GROUP(
@@ -5558,55 +5557,55 @@
 		0, 0,
 		/* RESERVED [1] */
 		0, 0, ))
-	पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+	},
+	{ },
+};
 
-अटल पूर्णांक r8a7794_pin_to_pocctrl(काष्ठा sh_pfc *pfc, अचिन्हित पूर्णांक pin, u32 *pocctrl)
-अणु
+static int r8a7794_pin_to_pocctrl(struct sh_pfc *pfc, unsigned int pin, u32 *pocctrl)
+{
 	*pocctrl = 0xe606006c;
 
-	चयन (pin & 0x1f) अणु
-	हाल 6: वापस 23;
-	हाल 7: वापस 16;
-	हाल 14: वापस 15;
-	हाल 15: वापस 8;
-	हाल 0 ... 5:
-	हाल 8 ... 13:
-		वापस 22 - (pin & 0x1f);
-	हाल 16 ... 23:
-		वापस 47 - (pin & 0x1f);
-	पूर्ण
+	switch (pin & 0x1f) {
+	case 6: return 23;
+	case 7: return 16;
+	case 14: return 15;
+	case 15: return 8;
+	case 0 ... 5:
+	case 8 ... 13:
+		return 22 - (pin & 0x1f);
+	case 16 ... 23:
+		return 47 - (pin & 0x1f);
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा soc_device_attribute r8a7794_tdsel[] = अणु
-	अणु .soc_id = "r8a7794", .revision = "ES1.0" पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct soc_device_attribute r8a7794_tdsel[] = {
+	{ .soc_id = "r8a7794", .revision = "ES1.0" },
+	{ /* sentinel */ }
+};
 
-अटल पूर्णांक r8a7794_pinmux_soc_init(काष्ठा sh_pfc *pfc)
-अणु
+static int r8a7794_pinmux_soc_init(struct sh_pfc *pfc)
+{
 	/* Initialize TDSEL on old revisions */
-	अगर (soc_device_match(r8a7794_tdsel))
-		sh_pfc_ग_लिखो(pfc, 0xe6060068, 0x55555500);
+	if (soc_device_match(r8a7794_tdsel))
+		sh_pfc_write(pfc, 0xe6060068, 0x55555500);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा sh_pfc_soc_operations r8a7794_pinmux_ops = अणु
+static const struct sh_pfc_soc_operations r8a7794_pinmux_ops = {
 	.init = r8a7794_pinmux_soc_init,
 	.pin_to_pocctrl = r8a7794_pin_to_pocctrl,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A7745
-स्थिर काष्ठा sh_pfc_soc_info r8a7745_pinmux_info = अणु
+#ifdef CONFIG_PINCTRL_PFC_R8A7745
+const struct sh_pfc_soc_info r8a7745_pinmux_info = {
 	.name = "r8a77450_pfc",
 	.ops = &r8a7794_pinmux_ops,
 	.unlock_reg = 0xe6060000, /* PMMR */
 
-	.function = अणु PINMUX_FUNCTION_BEGIN, PINMUX_FUNCTION_END पूर्ण,
+	.function = { PINMUX_FUNCTION_BEGIN, PINMUX_FUNCTION_END },
 
 	.pins = pinmux_pins,
 	.nr_pins = ARRAY_SIZE(pinmux_pins),
@@ -5619,16 +5618,16 @@
 
 	.pinmux_data = pinmux_data,
 	.pinmux_data_size = ARRAY_SIZE(pinmux_data),
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-#अगर_घोषित CONFIG_PINCTRL_PFC_R8A7794
-स्थिर काष्ठा sh_pfc_soc_info r8a7794_pinmux_info = अणु
+#ifdef CONFIG_PINCTRL_PFC_R8A7794
+const struct sh_pfc_soc_info r8a7794_pinmux_info = {
 	.name = "r8a77940_pfc",
 	.ops = &r8a7794_pinmux_ops,
 	.unlock_reg = 0xe6060000, /* PMMR */
 
-	.function = अणु PINMUX_FUNCTION_BEGIN, PINMUX_FUNCTION_END पूर्ण,
+	.function = { PINMUX_FUNCTION_BEGIN, PINMUX_FUNCTION_END },
 
 	.pins = pinmux_pins,
 	.nr_pins = ARRAY_SIZE(pinmux_pins),
@@ -5641,5 +5640,5 @@
 
 	.pinmux_data = pinmux_data,
 	.pinmux_data_size = ARRAY_SIZE(pinmux_data),
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif

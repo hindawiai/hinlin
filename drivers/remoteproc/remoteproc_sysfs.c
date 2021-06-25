@@ -1,170 +1,169 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Remote Processor Framework
  */
 
-#समावेश <linux/remoteproc.h>
-#समावेश <linux/slab.h>
+#include <linux/remoteproc.h>
+#include <linux/slab.h>
 
-#समावेश "remoteproc_internal.h"
+#include "remoteproc_internal.h"
 
-#घोषणा to_rproc(d) container_of(d, काष्ठा rproc, dev)
+#define to_rproc(d) container_of(d, struct rproc, dev)
 
-अटल sमाप_प्रकार recovery_show(काष्ठा device *dev,
-			     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा rproc *rproc = to_rproc(dev);
+static ssize_t recovery_show(struct device *dev,
+			     struct device_attribute *attr, char *buf)
+{
+	struct rproc *rproc = to_rproc(dev);
 
-	वापस sysfs_emit(buf, "%s", rproc->recovery_disabled ? "disabled\n" : "enabled\n");
-पूर्ण
+	return sysfs_emit(buf, "%s", rproc->recovery_disabled ? "disabled\n" : "enabled\n");
+}
 
 /*
  * By writing to the 'recovery' sysfs entry, we control the behavior of the
- * recovery mechanism dynamically. The शेष value of this entry is "enabled".
+ * recovery mechanism dynamically. The default value of this entry is "enabled".
  *
  * The 'recovery' sysfs entry supports these commands:
  *
- * enabled:	When enabled, the remote processor will be स्वतःmatically
- *		recovered whenever it crashes. Moreover, अगर the remote
- *		processor crashes जबतक recovery is disabled, it will
- *		be स्वतःmatically recovered too as soon as recovery is enabled.
+ * enabled:	When enabled, the remote processor will be automatically
+ *		recovered whenever it crashes. Moreover, if the remote
+ *		processor crashes while recovery is disabled, it will
+ *		be automatically recovered too as soon as recovery is enabled.
  *
- * disabled:	When disabled, a remote processor will reमुख्य in a crashed
- *		state अगर it crashes. This is useful क्रम debugging purposes;
+ * disabled:	When disabled, a remote processor will remain in a crashed
+ *		state if it crashes. This is useful for debugging purposes;
  *		without it, debugging a crash is substantially harder.
  *
- * recover:	This function will trigger an immediate recovery अगर the
+ * recover:	This function will trigger an immediate recovery if the
  *		remote processor is in a crashed state, without changing
  *		or checking the recovery state (enabled/disabled).
  *		This is useful during debugging sessions, when one expects
  *		additional crashes to happen after enabling recovery. In this
- *		हाल, enabling recovery will make it hard to debug subsequent
+ *		case, enabling recovery will make it hard to debug subsequent
  *		crashes, so it's recommended to keep recovery disabled, and
  *		instead use the "recover" command as needed.
  */
-अटल sमाप_प्रकार recovery_store(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr,
-			      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा rproc *rproc = to_rproc(dev);
+static ssize_t recovery_store(struct device *dev,
+			      struct device_attribute *attr,
+			      const char *buf, size_t count)
+{
+	struct rproc *rproc = to_rproc(dev);
 
-	अगर (sysfs_streq(buf, "enabled")) अणु
-		/* change the flag and begin the recovery process अगर needed */
+	if (sysfs_streq(buf, "enabled")) {
+		/* change the flag and begin the recovery process if needed */
 		rproc->recovery_disabled = false;
 		rproc_trigger_recovery(rproc);
-	पूर्ण अन्यथा अगर (sysfs_streq(buf, "disabled")) अणु
+	} else if (sysfs_streq(buf, "disabled")) {
 		rproc->recovery_disabled = true;
-	पूर्ण अन्यथा अगर (sysfs_streq(buf, "recover")) अणु
+	} else if (sysfs_streq(buf, "recover")) {
 		/* begin the recovery process without changing the flag */
 		rproc_trigger_recovery(rproc);
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+	} else {
+		return -EINVAL;
+	}
 
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR_RW(recovery);
+	return count;
+}
+static DEVICE_ATTR_RW(recovery);
 
 /*
- * A coredump-configuration-to-string lookup table, क्रम exposing a
- * human पढ़ोable configuration via sysfs. Always keep in sync with
- * क्रमागत rproc_coredump_mechanism
+ * A coredump-configuration-to-string lookup table, for exposing a
+ * human readable configuration via sysfs. Always keep in sync with
+ * enum rproc_coredump_mechanism
  */
-अटल स्थिर अक्षर * स्थिर rproc_coredump_str[] = अणु
+static const char * const rproc_coredump_str[] = {
 	[RPROC_COREDUMP_DISABLED]	= "disabled",
 	[RPROC_COREDUMP_ENABLED]	= "enabled",
 	[RPROC_COREDUMP_INLINE]		= "inline",
-पूर्ण;
+};
 
 /* Expose the current coredump configuration via debugfs */
-अटल sमाप_प्रकार coredump_show(काष्ठा device *dev,
-			     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा rproc *rproc = to_rproc(dev);
+static ssize_t coredump_show(struct device *dev,
+			     struct device_attribute *attr, char *buf)
+{
+	struct rproc *rproc = to_rproc(dev);
 
-	वापस sysfs_emit(buf, "%s\n", rproc_coredump_str[rproc->dump_conf]);
-पूर्ण
+	return sysfs_emit(buf, "%s\n", rproc_coredump_str[rproc->dump_conf]);
+}
 
 /*
  * By writing to the 'coredump' sysfs entry, we control the behavior of the
- * coredump mechanism dynamically. The शेष value of this entry is "default".
+ * coredump mechanism dynamically. The default value of this entry is "default".
  *
  * The 'coredump' sysfs entry supports these commands:
  *
- * disabled:	This is the शेष coredump mechanism. Recovery will proceed
+ * disabled:	This is the default coredump mechanism. Recovery will proceed
  *		without collecting any dump.
  *
- * शेष:	When the remoteproc crashes the entire coredump will be
+ * default:	When the remoteproc crashes the entire coredump will be
  *		copied to a separate buffer and exposed to userspace.
  *
- * अंतरभूत:	The coredump will not be copied to a separate buffer and the
- *		recovery process will have to रुको until data is पढ़ो by
- *		userspace. But this aव्योम usage of extra memory.
+ * inline:	The coredump will not be copied to a separate buffer and the
+ *		recovery process will have to wait until data is read by
+ *		userspace. But this avoid usage of extra memory.
  */
-अटल sमाप_प्रकार coredump_store(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr,
-			      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा rproc *rproc = to_rproc(dev);
+static ssize_t coredump_store(struct device *dev,
+			      struct device_attribute *attr,
+			      const char *buf, size_t count)
+{
+	struct rproc *rproc = to_rproc(dev);
 
-	अगर (rproc->state == RPROC_CRASHED) अणु
+	if (rproc->state == RPROC_CRASHED) {
 		dev_err(&rproc->dev, "can't change coredump configuration\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	अगर (sysfs_streq(buf, "disabled")) अणु
+	if (sysfs_streq(buf, "disabled")) {
 		rproc->dump_conf = RPROC_COREDUMP_DISABLED;
-	पूर्ण अन्यथा अगर (sysfs_streq(buf, "enabled")) अणु
+	} else if (sysfs_streq(buf, "enabled")) {
 		rproc->dump_conf = RPROC_COREDUMP_ENABLED;
-	पूर्ण अन्यथा अगर (sysfs_streq(buf, "inline")) अणु
+	} else if (sysfs_streq(buf, "inline")) {
 		rproc->dump_conf = RPROC_COREDUMP_INLINE;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(&rproc->dev, "Invalid coredump configuration\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR_RW(coredump);
+	return count;
+}
+static DEVICE_ATTR_RW(coredump);
 
 /* Expose the loaded / running firmware name via sysfs */
-अटल sमाप_प्रकार firmware_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  अक्षर *buf)
-अणु
-	काष्ठा rproc *rproc = to_rproc(dev);
-	स्थिर अक्षर *firmware = rproc->firmware;
+static ssize_t firmware_show(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	struct rproc *rproc = to_rproc(dev);
+	const char *firmware = rproc->firmware;
 
 	/*
-	 * If the remote processor has been started by an बाह्यal
+	 * If the remote processor has been started by an external
 	 * entity we have no idea of what image it is running.  As such
 	 * simply display a generic string rather then rproc->firmware.
 	 */
-	अगर (rproc->state == RPROC_ATTACHED)
+	if (rproc->state == RPROC_ATTACHED)
 		firmware = "unknown";
 
-	वापस प्र_लिखो(buf, "%s\n", firmware);
-पूर्ण
+	return sprintf(buf, "%s\n", firmware);
+}
 
 /* Change firmware name via sysfs */
-अटल sमाप_प्रकार firmware_store(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr,
-			      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा rproc *rproc = to_rproc(dev);
-	पूर्णांक err;
+static ssize_t firmware_store(struct device *dev,
+			      struct device_attribute *attr,
+			      const char *buf, size_t count)
+{
+	struct rproc *rproc = to_rproc(dev);
+	int err;
 
 	err = rproc_set_firmware(rproc, buf);
 
-	वापस err ? err : count;
-पूर्ण
-अटल DEVICE_ATTR_RW(firmware);
+	return err ? err : count;
+}
+static DEVICE_ATTR_RW(firmware);
 
 /*
- * A state-to-string lookup table, क्रम exposing a human पढ़ोable state
- * via sysfs. Always keep in sync with क्रमागत rproc_state
+ * A state-to-string lookup table, for exposing a human readable state
+ * via sysfs. Always keep in sync with enum rproc_state
  */
-अटल स्थिर अक्षर * स्थिर rproc_state_string[] = अणु
+static const char * const rproc_state_string[] = {
 	[RPROC_OFFLINE]		= "offline",
 	[RPROC_SUSPENDED]	= "suspended",
 	[RPROC_RUNNING]		= "running",
@@ -173,98 +172,98 @@
 	[RPROC_ATTACHED]	= "attached",
 	[RPROC_DETACHED]	= "detached",
 	[RPROC_LAST]		= "invalid",
-पूर्ण;
+};
 
 /* Expose the state of the remote processor via sysfs */
-अटल sमाप_प्रकार state_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  अक्षर *buf)
-अणु
-	काष्ठा rproc *rproc = to_rproc(dev);
-	अचिन्हित पूर्णांक state;
+static ssize_t state_show(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	struct rproc *rproc = to_rproc(dev);
+	unsigned int state;
 
 	state = rproc->state > RPROC_LAST ? RPROC_LAST : rproc->state;
-	वापस प्र_लिखो(buf, "%s\n", rproc_state_string[state]);
-पूर्ण
+	return sprintf(buf, "%s\n", rproc_state_string[state]);
+}
 
 /* Change remote processor state via sysfs */
-अटल sमाप_प्रकार state_store(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr,
-			      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा rproc *rproc = to_rproc(dev);
-	पूर्णांक ret = 0;
+static ssize_t state_store(struct device *dev,
+			      struct device_attribute *attr,
+			      const char *buf, size_t count)
+{
+	struct rproc *rproc = to_rproc(dev);
+	int ret = 0;
 
-	अगर (sysfs_streq(buf, "start")) अणु
-		अगर (rproc->state == RPROC_RUNNING ||
+	if (sysfs_streq(buf, "start")) {
+		if (rproc->state == RPROC_RUNNING ||
 		    rproc->state == RPROC_ATTACHED)
-			वापस -EBUSY;
+			return -EBUSY;
 
 		ret = rproc_boot(rproc);
-		अगर (ret)
+		if (ret)
 			dev_err(&rproc->dev, "Boot failed: %d\n", ret);
-	पूर्ण अन्यथा अगर (sysfs_streq(buf, "stop")) अणु
-		अगर (rproc->state != RPROC_RUNNING &&
+	} else if (sysfs_streq(buf, "stop")) {
+		if (rproc->state != RPROC_RUNNING &&
 		    rproc->state != RPROC_ATTACHED)
-			वापस -EINVAL;
+			return -EINVAL;
 
-		rproc_shutकरोwn(rproc);
-	पूर्ण अन्यथा अगर (sysfs_streq(buf, "detach")) अणु
-		अगर (rproc->state != RPROC_ATTACHED)
-			वापस -EINVAL;
+		rproc_shutdown(rproc);
+	} else if (sysfs_streq(buf, "detach")) {
+		if (rproc->state != RPROC_ATTACHED)
+			return -EINVAL;
 
 		ret = rproc_detach(rproc);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(&rproc->dev, "Unrecognised option: %s\n", buf);
 		ret = -EINVAL;
-	पूर्ण
-	वापस ret ? ret : count;
-पूर्ण
-अटल DEVICE_ATTR_RW(state);
+	}
+	return ret ? ret : count;
+}
+static DEVICE_ATTR_RW(state);
 
 /* Expose the name of the remote processor via sysfs */
-अटल sमाप_प्रकार name_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 अक्षर *buf)
-अणु
-	काष्ठा rproc *rproc = to_rproc(dev);
+static ssize_t name_show(struct device *dev, struct device_attribute *attr,
+			 char *buf)
+{
+	struct rproc *rproc = to_rproc(dev);
 
-	वापस प्र_लिखो(buf, "%s\n", rproc->name);
-पूर्ण
-अटल DEVICE_ATTR_RO(name);
+	return sprintf(buf, "%s\n", rproc->name);
+}
+static DEVICE_ATTR_RO(name);
 
-अटल काष्ठा attribute *rproc_attrs[] = अणु
+static struct attribute *rproc_attrs[] = {
 	&dev_attr_coredump.attr,
 	&dev_attr_recovery.attr,
 	&dev_attr_firmware.attr,
 	&dev_attr_state.attr,
 	&dev_attr_name.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group rproc_devgroup = अणु
+static const struct attribute_group rproc_devgroup = {
 	.attrs = rproc_attrs
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *rproc_devgroups[] = अणु
+static const struct attribute_group *rproc_devgroups[] = {
 	&rproc_devgroup,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-काष्ठा class rproc_class = अणु
+struct class rproc_class = {
 	.name		= "remoteproc",
 	.dev_groups	= rproc_devgroups,
-पूर्ण;
+};
 
-पूर्णांक __init rproc_init_sysfs(व्योम)
-अणु
-	/* create remoteproc device class क्रम sysfs */
-	पूर्णांक err = class_रेजिस्टर(&rproc_class);
+int __init rproc_init_sysfs(void)
+{
+	/* create remoteproc device class for sysfs */
+	int err = class_register(&rproc_class);
 
-	अगर (err)
+	if (err)
 		pr_err("remoteproc: unable to register class\n");
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम __निकास rproc_निकास_sysfs(व्योम)
-अणु
-	class_unरेजिस्टर(&rproc_class);
-पूर्ण
+void __exit rproc_exit_sysfs(void)
+{
+	class_unregister(&rproc_class);
+}

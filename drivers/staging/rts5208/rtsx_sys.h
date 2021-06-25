@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Driver क्रम Realtek PCI-Express card पढ़ोer
+ * Driver for Realtek PCI-Express card reader
  *
  * Copyright(c) 2009-2013 Realtek Semiconductor Corp. All rights reserved.
  *
@@ -10,28 +9,28 @@
  *   Micky Ching (micky_ching@realsil.com.cn)
  */
 
-#अगर_अघोषित __RTSX_SYS_H
-#घोषणा __RTSX_SYS_H
+#ifndef __RTSX_SYS_H
+#define __RTSX_SYS_H
 
-#समावेश "rtsx.h"
-#समावेश "rtsx_chip.h"
-#समावेश "rtsx_card.h"
+#include "rtsx.h"
+#include "rtsx_chip.h"
+#include "rtsx_card.h"
 
-अटल अंतरभूत व्योम rtsx_exclusive_enter_ss(काष्ठा rtsx_chip *chip)
-अणु
-	काष्ठा rtsx_dev *dev = chip->rtsx;
+static inline void rtsx_exclusive_enter_ss(struct rtsx_chip *chip)
+{
+	struct rtsx_dev *dev = chip->rtsx;
 
 	spin_lock(&dev->reg_lock);
 	rtsx_enter_ss(chip);
 	spin_unlock(&dev->reg_lock);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम rtsx_reset_detected_cards(काष्ठा rtsx_chip *chip, पूर्णांक flag)
-अणु
+static inline void rtsx_reset_detected_cards(struct rtsx_chip *chip, int flag)
+{
 	rtsx_reset_cards(chip);
-पूर्ण
+}
 
-#घोषणा RTSX_MSG_IN_INT(x)
+#define RTSX_MSG_IN_INT(x)
 
-#पूर्ण_अगर  /* __RTSX_SYS_H */
+#endif  /* __RTSX_SYS_H */
 

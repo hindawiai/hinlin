@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  linux/arch/arm/common/vic.c
  *
@@ -7,277 +6,277 @@
  *  Copyright (C) 2000 Deep Blue Solutions Ltd
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/init.h>
-#समावेश <linux/list.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqchip.h>
-#समावेश <linux/irqchip/chained_irq.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/syscore_ops.h>
-#समावेश <linux/device.h>
-#समावेश <linux/amba/bus.h>
-#समावेश <linux/irqchip/arm-vic.h>
+#include <linux/export.h>
+#include <linux/init.h>
+#include <linux/list.h>
+#include <linux/io.h>
+#include <linux/irq.h>
+#include <linux/irqchip.h>
+#include <linux/irqchip/chained_irq.h>
+#include <linux/irqdomain.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/syscore_ops.h>
+#include <linux/device.h>
+#include <linux/amba/bus.h>
+#include <linux/irqchip/arm-vic.h>
 
-#समावेश <यंत्र/exception.h>
-#समावेश <यंत्र/irq.h>
+#include <asm/exception.h>
+#include <asm/irq.h>
 
-#घोषणा VIC_IRQ_STATUS			0x00
-#घोषणा VIC_FIQ_STATUS			0x04
-#घोषणा VIC_RAW_STATUS			0x08
-#घोषणा VIC_INT_SELECT			0x0c	/* 1 = FIQ, 0 = IRQ */
-#घोषणा VIC_INT_ENABLE			0x10	/* 1 = enable, 0 = disable */
-#घोषणा VIC_INT_ENABLE_CLEAR		0x14
-#घोषणा VIC_INT_SOFT			0x18
-#घोषणा VIC_INT_SOFT_CLEAR		0x1c
-#घोषणा VIC_PROTECT			0x20
-#घोषणा VIC_PL190_VECT_ADDR		0x30	/* PL190 only */
-#घोषणा VIC_PL190_DEF_VECT_ADDR		0x34	/* PL190 only */
+#define VIC_IRQ_STATUS			0x00
+#define VIC_FIQ_STATUS			0x04
+#define VIC_RAW_STATUS			0x08
+#define VIC_INT_SELECT			0x0c	/* 1 = FIQ, 0 = IRQ */
+#define VIC_INT_ENABLE			0x10	/* 1 = enable, 0 = disable */
+#define VIC_INT_ENABLE_CLEAR		0x14
+#define VIC_INT_SOFT			0x18
+#define VIC_INT_SOFT_CLEAR		0x1c
+#define VIC_PROTECT			0x20
+#define VIC_PL190_VECT_ADDR		0x30	/* PL190 only */
+#define VIC_PL190_DEF_VECT_ADDR		0x34	/* PL190 only */
 
-#घोषणा VIC_VECT_ADDR0			0x100	/* 0 to 15 (0..31 PL192) */
-#घोषणा VIC_VECT_CNTL0			0x200	/* 0 to 15 (0..31 PL192) */
-#घोषणा VIC_ITCR			0x300	/* VIC test control रेजिस्टर */
+#define VIC_VECT_ADDR0			0x100	/* 0 to 15 (0..31 PL192) */
+#define VIC_VECT_CNTL0			0x200	/* 0 to 15 (0..31 PL192) */
+#define VIC_ITCR			0x300	/* VIC test control register */
 
-#घोषणा VIC_VECT_CNTL_ENABLE		(1 << 5)
+#define VIC_VECT_CNTL_ENABLE		(1 << 5)
 
-#घोषणा VIC_PL192_VECT_ADDR		0xF00
+#define VIC_PL192_VECT_ADDR		0xF00
 
 /**
- * काष्ठा vic_device - VIC PM device
- * @parent_irq: The parent IRQ number of the VIC अगर cascaded, or 0.
- * @irq: The IRQ number क्रम the base of the VIC.
- * @base: The रेजिस्टर base क्रम the VIC.
- * @valid_sources: A biपंचांगask of valid पूर्णांकerrupts
- * @resume_sources: A biपंचांगask of पूर्णांकerrupts क्रम resume.
- * @resume_irqs: The IRQs enabled क्रम resume.
- * @पूर्णांक_select: Save क्रम VIC_INT_SELECT.
- * @पूर्णांक_enable: Save क्रम VIC_INT_ENABLE.
- * @soft_पूर्णांक: Save क्रम VIC_INT_SOFT.
- * @protect: Save क्रम VIC_PROTECT.
- * @करोमुख्य: The IRQ करोमुख्य क्रम the VIC.
+ * struct vic_device - VIC PM device
+ * @parent_irq: The parent IRQ number of the VIC if cascaded, or 0.
+ * @irq: The IRQ number for the base of the VIC.
+ * @base: The register base for the VIC.
+ * @valid_sources: A bitmask of valid interrupts
+ * @resume_sources: A bitmask of interrupts for resume.
+ * @resume_irqs: The IRQs enabled for resume.
+ * @int_select: Save for VIC_INT_SELECT.
+ * @int_enable: Save for VIC_INT_ENABLE.
+ * @soft_int: Save for VIC_INT_SOFT.
+ * @protect: Save for VIC_PROTECT.
+ * @domain: The IRQ domain for the VIC.
  */
-काष्ठा vic_device अणु
-	व्योम __iomem	*base;
-	पूर्णांक		irq;
+struct vic_device {
+	void __iomem	*base;
+	int		irq;
 	u32		valid_sources;
 	u32		resume_sources;
 	u32		resume_irqs;
-	u32		पूर्णांक_select;
-	u32		पूर्णांक_enable;
-	u32		soft_पूर्णांक;
+	u32		int_select;
+	u32		int_enable;
+	u32		soft_int;
 	u32		protect;
-	काष्ठा irq_करोमुख्य *करोमुख्य;
-पूर्ण;
+	struct irq_domain *domain;
+};
 
-/* we cannot allocate memory when VICs are initially रेजिस्टरed */
-अटल काष्ठा vic_device vic_devices[CONFIG_ARM_VIC_NR];
+/* we cannot allocate memory when VICs are initially registered */
+static struct vic_device vic_devices[CONFIG_ARM_VIC_NR];
 
-अटल पूर्णांक vic_id;
+static int vic_id;
 
-अटल व्योम vic_handle_irq(काष्ठा pt_regs *regs);
+static void vic_handle_irq(struct pt_regs *regs);
 
 /**
  * vic_init2 - common initialisation code
  * @base: Base of the VIC.
  *
- * Common initialisation code क्रम registration
+ * Common initialisation code for registration
  * and resume.
 */
-अटल व्योम vic_init2(व्योम __iomem *base)
-अणु
-	पूर्णांक i;
+static void vic_init2(void __iomem *base)
+{
+	int i;
 
-	क्रम (i = 0; i < 16; i++) अणु
-		व्योम __iomem *reg = base + VIC_VECT_CNTL0 + (i * 4);
-		ग_लिखोl(VIC_VECT_CNTL_ENABLE | i, reg);
-	पूर्ण
+	for (i = 0; i < 16; i++) {
+		void __iomem *reg = base + VIC_VECT_CNTL0 + (i * 4);
+		writel(VIC_VECT_CNTL_ENABLE | i, reg);
+	}
 
-	ग_लिखोl(32, base + VIC_PL190_DEF_VECT_ADDR);
-पूर्ण
+	writel(32, base + VIC_PL190_DEF_VECT_ADDR);
+}
 
-#अगर_घोषित CONFIG_PM
-अटल व्योम resume_one_vic(काष्ठा vic_device *vic)
-अणु
-	व्योम __iomem *base = vic->base;
+#ifdef CONFIG_PM
+static void resume_one_vic(struct vic_device *vic)
+{
+	void __iomem *base = vic->base;
 
-	prपूर्णांकk(KERN_DEBUG "%s: resuming vic at %p\n", __func__, base);
+	printk(KERN_DEBUG "%s: resuming vic at %p\n", __func__, base);
 
-	/* re-initialise अटल settings */
+	/* re-initialise static settings */
 	vic_init2(base);
 
-	ग_लिखोl(vic->पूर्णांक_select, base + VIC_INT_SELECT);
-	ग_लिखोl(vic->protect, base + VIC_PROTECT);
+	writel(vic->int_select, base + VIC_INT_SELECT);
+	writel(vic->protect, base + VIC_PROTECT);
 
-	/* set the enabled पूर्णांकs and then clear the non-enabled */
-	ग_लिखोl(vic->पूर्णांक_enable, base + VIC_INT_ENABLE);
-	ग_लिखोl(~vic->पूर्णांक_enable, base + VIC_INT_ENABLE_CLEAR);
+	/* set the enabled ints and then clear the non-enabled */
+	writel(vic->int_enable, base + VIC_INT_ENABLE);
+	writel(~vic->int_enable, base + VIC_INT_ENABLE_CLEAR);
 
-	/* and the same क्रम the soft-पूर्णांक रेजिस्टर */
+	/* and the same for the soft-int register */
 
-	ग_लिखोl(vic->soft_पूर्णांक, base + VIC_INT_SOFT);
-	ग_लिखोl(~vic->soft_पूर्णांक, base + VIC_INT_SOFT_CLEAR);
-पूर्ण
+	writel(vic->soft_int, base + VIC_INT_SOFT);
+	writel(~vic->soft_int, base + VIC_INT_SOFT_CLEAR);
+}
 
-अटल व्योम vic_resume(व्योम)
-अणु
-	पूर्णांक id;
+static void vic_resume(void)
+{
+	int id;
 
-	क्रम (id = vic_id - 1; id >= 0; id--)
+	for (id = vic_id - 1; id >= 0; id--)
 		resume_one_vic(vic_devices + id);
-पूर्ण
+}
 
-अटल व्योम suspend_one_vic(काष्ठा vic_device *vic)
-अणु
-	व्योम __iomem *base = vic->base;
+static void suspend_one_vic(struct vic_device *vic)
+{
+	void __iomem *base = vic->base;
 
-	prपूर्णांकk(KERN_DEBUG "%s: suspending vic at %p\n", __func__, base);
+	printk(KERN_DEBUG "%s: suspending vic at %p\n", __func__, base);
 
-	vic->पूर्णांक_select = पढ़ोl(base + VIC_INT_SELECT);
-	vic->पूर्णांक_enable = पढ़ोl(base + VIC_INT_ENABLE);
-	vic->soft_पूर्णांक = पढ़ोl(base + VIC_INT_SOFT);
-	vic->protect = पढ़ोl(base + VIC_PROTECT);
+	vic->int_select = readl(base + VIC_INT_SELECT);
+	vic->int_enable = readl(base + VIC_INT_ENABLE);
+	vic->soft_int = readl(base + VIC_INT_SOFT);
+	vic->protect = readl(base + VIC_PROTECT);
 
-	/* set the पूर्णांकerrupts (अगर any) that are used क्रम
-	 * resuming the प्रणाली */
+	/* set the interrupts (if any) that are used for
+	 * resuming the system */
 
-	ग_लिखोl(vic->resume_irqs, base + VIC_INT_ENABLE);
-	ग_लिखोl(~vic->resume_irqs, base + VIC_INT_ENABLE_CLEAR);
-पूर्ण
+	writel(vic->resume_irqs, base + VIC_INT_ENABLE);
+	writel(~vic->resume_irqs, base + VIC_INT_ENABLE_CLEAR);
+}
 
-अटल पूर्णांक vic_suspend(व्योम)
-अणु
-	पूर्णांक id;
+static int vic_suspend(void)
+{
+	int id;
 
-	क्रम (id = 0; id < vic_id; id++)
+	for (id = 0; id < vic_id; id++)
 		suspend_one_vic(vic_devices + id);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा syscore_ops vic_syscore_ops = अणु
+static struct syscore_ops vic_syscore_ops = {
 	.suspend	= vic_suspend,
 	.resume		= vic_resume,
-पूर्ण;
+};
 
 /**
- * vic_pm_init - initcall to रेजिस्टर VIC pm
+ * vic_pm_init - initcall to register VIC pm
  *
- * This is called via late_initcall() to रेजिस्टर
- * the resources क्रम the VICs due to the early
+ * This is called via late_initcall() to register
+ * the resources for the VICs due to the early
  * nature of the VIC's registration.
 */
-अटल पूर्णांक __init vic_pm_init(व्योम)
-अणु
-	अगर (vic_id > 0)
-		रेजिस्टर_syscore_ops(&vic_syscore_ops);
+static int __init vic_pm_init(void)
+{
+	if (vic_id > 0)
+		register_syscore_ops(&vic_syscore_ops);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 late_initcall(vic_pm_init);
-#पूर्ण_अगर /* CONFIG_PM */
+#endif /* CONFIG_PM */
 
-अटल काष्ठा irq_chip vic_chip;
+static struct irq_chip vic_chip;
 
-अटल पूर्णांक vic_irqकरोमुख्य_map(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक irq,
+static int vic_irqdomain_map(struct irq_domain *d, unsigned int irq,
 			     irq_hw_number_t hwirq)
-अणु
-	काष्ठा vic_device *v = d->host_data;
+{
+	struct vic_device *v = d->host_data;
 
-	/* Skip invalid IRQs, only रेजिस्टर handlers क्रम the real ones */
-	अगर (!(v->valid_sources & (1 << hwirq)))
-		वापस -EPERM;
+	/* Skip invalid IRQs, only register handlers for the real ones */
+	if (!(v->valid_sources & (1 << hwirq)))
+		return -EPERM;
 	irq_set_chip_and_handler(irq, &vic_chip, handle_level_irq);
 	irq_set_chip_data(irq, v->base);
 	irq_set_probe(irq);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Handle each पूर्णांकerrupt in a single VIC.  Returns non-zero अगर we've
- * handled at least one पूर्णांकerrupt.  This पढ़ोs the status रेजिस्टर
- * beक्रमe handling each पूर्णांकerrupt, which is necessary given that
- * handle_IRQ may briefly re-enable पूर्णांकerrupts क्रम soft IRQ handling.
+ * Handle each interrupt in a single VIC.  Returns non-zero if we've
+ * handled at least one interrupt.  This reads the status register
+ * before handling each interrupt, which is necessary given that
+ * handle_IRQ may briefly re-enable interrupts for soft IRQ handling.
  */
-अटल पूर्णांक handle_one_vic(काष्ठा vic_device *vic, काष्ठा pt_regs *regs)
-अणु
+static int handle_one_vic(struct vic_device *vic, struct pt_regs *regs)
+{
 	u32 stat, irq;
-	पूर्णांक handled = 0;
+	int handled = 0;
 
-	जबतक ((stat = पढ़ोl_relaxed(vic->base + VIC_IRQ_STATUS))) अणु
+	while ((stat = readl_relaxed(vic->base + VIC_IRQ_STATUS))) {
 		irq = ffs(stat) - 1;
-		handle_करोमुख्य_irq(vic->करोमुख्य, irq, regs);
+		handle_domain_irq(vic->domain, irq, regs);
 		handled = 1;
-	पूर्ण
+	}
 
-	वापस handled;
-पूर्ण
+	return handled;
+}
 
-अटल व्योम vic_handle_irq_cascaded(काष्ठा irq_desc *desc)
-अणु
+static void vic_handle_irq_cascaded(struct irq_desc *desc)
+{
 	u32 stat, hwirq;
-	काष्ठा irq_chip *host_chip = irq_desc_get_chip(desc);
-	काष्ठा vic_device *vic = irq_desc_get_handler_data(desc);
+	struct irq_chip *host_chip = irq_desc_get_chip(desc);
+	struct vic_device *vic = irq_desc_get_handler_data(desc);
 
 	chained_irq_enter(host_chip, desc);
 
-	जबतक ((stat = पढ़ोl_relaxed(vic->base + VIC_IRQ_STATUS))) अणु
+	while ((stat = readl_relaxed(vic->base + VIC_IRQ_STATUS))) {
 		hwirq = ffs(stat) - 1;
-		generic_handle_irq(irq_find_mapping(vic->करोमुख्य, hwirq));
-	पूर्ण
+		generic_handle_irq(irq_find_mapping(vic->domain, hwirq));
+	}
 
-	chained_irq_निकास(host_chip, desc);
-पूर्ण
+	chained_irq_exit(host_chip, desc);
+}
 
 /*
- * Keep iterating over all रेजिस्टरed VIC's until there are no pending
- * पूर्णांकerrupts.
+ * Keep iterating over all registered VIC's until there are no pending
+ * interrupts.
  */
-अटल व्योम __exception_irq_entry vic_handle_irq(काष्ठा pt_regs *regs)
-अणु
-	पूर्णांक i, handled;
+static void __exception_irq_entry vic_handle_irq(struct pt_regs *regs)
+{
+	int i, handled;
 
-	करो अणु
-		क्रम (i = 0, handled = 0; i < vic_id; ++i)
+	do {
+		for (i = 0, handled = 0; i < vic_id; ++i)
 			handled |= handle_one_vic(&vic_devices[i], regs);
-	पूर्ण जबतक (handled);
-पूर्ण
+	} while (handled);
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops vic_irqकरोमुख्य_ops = अणु
-	.map = vic_irqकरोमुख्य_map,
-	.xlate = irq_करोमुख्य_xlate_onetwocell,
-पूर्ण;
+static const struct irq_domain_ops vic_irqdomain_ops = {
+	.map = vic_irqdomain_map,
+	.xlate = irq_domain_xlate_onetwocell,
+};
 
 /**
- * vic_रेजिस्टर() - Register a VIC.
+ * vic_register() - Register a VIC.
  * @base: The base address of the VIC.
- * @parent_irq: The parent IRQ अगर cascaded, अन्यथा 0.
- * @irq: The base IRQ क्रम the VIC.
- * @valid_sources: biपंचांगask of valid पूर्णांकerrupts
- * @resume_sources: biपंचांगask of पूर्णांकerrupts allowed क्रम resume sources.
+ * @parent_irq: The parent IRQ if cascaded, else 0.
+ * @irq: The base IRQ for the VIC.
+ * @valid_sources: bitmask of valid interrupts
+ * @resume_sources: bitmask of interrupts allowed for resume sources.
  * @node: The device tree node associated with the VIC.
  *
- * Register the VIC with the प्रणाली device tree so that it can be notअगरied
+ * Register the VIC with the system device tree so that it can be notified
  * of suspend and resume requests and ensure that the correct actions are
  * taken to re-instate the settings on resume.
  *
- * This also configures the IRQ करोमुख्य क्रम the VIC.
+ * This also configures the IRQ domain for the VIC.
  */
-अटल व्योम __init vic_रेजिस्टर(व्योम __iomem *base, अचिन्हित पूर्णांक parent_irq,
-				अचिन्हित पूर्णांक irq,
+static void __init vic_register(void __iomem *base, unsigned int parent_irq,
+				unsigned int irq,
 				u32 valid_sources, u32 resume_sources,
-				काष्ठा device_node *node)
-अणु
-	काष्ठा vic_device *v;
-	पूर्णांक i;
+				struct device_node *node)
+{
+	struct vic_device *v;
+	int i;
 
-	अगर (vic_id >= ARRAY_SIZE(vic_devices)) अणु
-		prपूर्णांकk(KERN_ERR "%s: too few VICs, increase CONFIG_ARM_VIC_NR\n", __func__);
-		वापस;
-	पूर्ण
+	if (vic_id >= ARRAY_SIZE(vic_devices)) {
+		printk(KERN_ERR "%s: too few VICs, increase CONFIG_ARM_VIC_NR\n", __func__);
+		return;
+	}
 
 	v = &vic_devices[vic_id];
 	v->base = base;
@@ -286,232 +285,232 @@ late_initcall(vic_pm_init);
 	set_handle_irq(vic_handle_irq);
 	vic_id++;
 
-	अगर (parent_irq) अणु
+	if (parent_irq) {
 		irq_set_chained_handler_and_data(parent_irq,
 						 vic_handle_irq_cascaded, v);
-	पूर्ण
+	}
 
-	v->करोमुख्य = irq_करोमुख्य_add_simple(node, fls(valid_sources), irq,
-					  &vic_irqकरोमुख्य_ops, v);
-	/* create an IRQ mapping क्रम each valid IRQ */
-	क्रम (i = 0; i < fls(valid_sources); i++)
-		अगर (valid_sources & (1 << i))
-			irq_create_mapping(v->करोमुख्य, i);
+	v->domain = irq_domain_add_simple(node, fls(valid_sources), irq,
+					  &vic_irqdomain_ops, v);
+	/* create an IRQ mapping for each valid IRQ */
+	for (i = 0; i < fls(valid_sources); i++)
+		if (valid_sources & (1 << i))
+			irq_create_mapping(v->domain, i);
 	/* If no base IRQ was passed, figure out our allocated base */
-	अगर (irq)
+	if (irq)
 		v->irq = irq;
-	अन्यथा
-		v->irq = irq_find_mapping(v->करोमुख्य, 0);
-पूर्ण
+	else
+		v->irq = irq_find_mapping(v->domain, 0);
+}
 
-अटल व्योम vic_ack_irq(काष्ठा irq_data *d)
-अणु
-	व्योम __iomem *base = irq_data_get_irq_chip_data(d);
-	अचिन्हित पूर्णांक irq = d->hwirq;
-	ग_लिखोl(1 << irq, base + VIC_INT_ENABLE_CLEAR);
-	/* moreover, clear the soft-triggered, in हाल it was the reason */
-	ग_लिखोl(1 << irq, base + VIC_INT_SOFT_CLEAR);
-पूर्ण
+static void vic_ack_irq(struct irq_data *d)
+{
+	void __iomem *base = irq_data_get_irq_chip_data(d);
+	unsigned int irq = d->hwirq;
+	writel(1 << irq, base + VIC_INT_ENABLE_CLEAR);
+	/* moreover, clear the soft-triggered, in case it was the reason */
+	writel(1 << irq, base + VIC_INT_SOFT_CLEAR);
+}
 
-अटल व्योम vic_mask_irq(काष्ठा irq_data *d)
-अणु
-	व्योम __iomem *base = irq_data_get_irq_chip_data(d);
-	अचिन्हित पूर्णांक irq = d->hwirq;
-	ग_लिखोl(1 << irq, base + VIC_INT_ENABLE_CLEAR);
-पूर्ण
+static void vic_mask_irq(struct irq_data *d)
+{
+	void __iomem *base = irq_data_get_irq_chip_data(d);
+	unsigned int irq = d->hwirq;
+	writel(1 << irq, base + VIC_INT_ENABLE_CLEAR);
+}
 
-अटल व्योम vic_unmask_irq(काष्ठा irq_data *d)
-अणु
-	व्योम __iomem *base = irq_data_get_irq_chip_data(d);
-	अचिन्हित पूर्णांक irq = d->hwirq;
-	ग_लिखोl(1 << irq, base + VIC_INT_ENABLE);
-पूर्ण
+static void vic_unmask_irq(struct irq_data *d)
+{
+	void __iomem *base = irq_data_get_irq_chip_data(d);
+	unsigned int irq = d->hwirq;
+	writel(1 << irq, base + VIC_INT_ENABLE);
+}
 
-#अगर defined(CONFIG_PM)
-अटल काष्ठा vic_device *vic_from_irq(अचिन्हित पूर्णांक irq)
-अणु
-        काष्ठा vic_device *v = vic_devices;
-	अचिन्हित पूर्णांक base_irq = irq & ~31;
-	पूर्णांक id;
+#if defined(CONFIG_PM)
+static struct vic_device *vic_from_irq(unsigned int irq)
+{
+        struct vic_device *v = vic_devices;
+	unsigned int base_irq = irq & ~31;
+	int id;
 
-	क्रम (id = 0; id < vic_id; id++, v++) अणु
-		अगर (v->irq == base_irq)
-			वापस v;
-	पूर्ण
+	for (id = 0; id < vic_id; id++, v++) {
+		if (v->irq == base_irq)
+			return v;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक vic_set_wake(काष्ठा irq_data *d, अचिन्हित पूर्णांक on)
-अणु
-	काष्ठा vic_device *v = vic_from_irq(d->irq);
-	अचिन्हित पूर्णांक off = d->hwirq;
+static int vic_set_wake(struct irq_data *d, unsigned int on)
+{
+	struct vic_device *v = vic_from_irq(d->irq);
+	unsigned int off = d->hwirq;
 	u32 bit = 1 << off;
 
-	अगर (!v)
-		वापस -EINVAL;
+	if (!v)
+		return -EINVAL;
 
-	अगर (!(bit & v->resume_sources))
-		वापस -EINVAL;
+	if (!(bit & v->resume_sources))
+		return -EINVAL;
 
-	अगर (on)
+	if (on)
 		v->resume_irqs |= bit;
-	अन्यथा
+	else
 		v->resume_irqs &= ~bit;
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा vic_set_wake शून्य
-#पूर्ण_अगर /* CONFIG_PM */
+	return 0;
+}
+#else
+#define vic_set_wake NULL
+#endif /* CONFIG_PM */
 
-अटल काष्ठा irq_chip vic_chip = अणु
+static struct irq_chip vic_chip = {
 	.name		= "VIC",
 	.irq_ack	= vic_ack_irq,
 	.irq_mask	= vic_mask_irq,
 	.irq_unmask	= vic_unmask_irq,
 	.irq_set_wake	= vic_set_wake,
-पूर्ण;
+};
 
-अटल व्योम __init vic_disable(व्योम __iomem *base)
-अणु
-	ग_लिखोl(0, base + VIC_INT_SELECT);
-	ग_लिखोl(0, base + VIC_INT_ENABLE);
-	ग_लिखोl(~0, base + VIC_INT_ENABLE_CLEAR);
-	ग_लिखोl(0, base + VIC_ITCR);
-	ग_लिखोl(~0, base + VIC_INT_SOFT_CLEAR);
-पूर्ण
+static void __init vic_disable(void __iomem *base)
+{
+	writel(0, base + VIC_INT_SELECT);
+	writel(0, base + VIC_INT_ENABLE);
+	writel(~0, base + VIC_INT_ENABLE_CLEAR);
+	writel(0, base + VIC_ITCR);
+	writel(~0, base + VIC_INT_SOFT_CLEAR);
+}
 
-अटल व्योम __init vic_clear_पूर्णांकerrupts(व्योम __iomem *base)
-अणु
-	अचिन्हित पूर्णांक i;
+static void __init vic_clear_interrupts(void __iomem *base)
+{
+	unsigned int i;
 
-	ग_लिखोl(0, base + VIC_PL190_VECT_ADDR);
-	क्रम (i = 0; i < 19; i++) अणु
-		अचिन्हित पूर्णांक value;
+	writel(0, base + VIC_PL190_VECT_ADDR);
+	for (i = 0; i < 19; i++) {
+		unsigned int value;
 
-		value = पढ़ोl(base + VIC_PL190_VECT_ADDR);
-		ग_लिखोl(value, base + VIC_PL190_VECT_ADDR);
-	पूर्ण
-पूर्ण
+		value = readl(base + VIC_PL190_VECT_ADDR);
+		writel(value, base + VIC_PL190_VECT_ADDR);
+	}
+}
 
 /*
- * The PL190 cell from ARM has been modअगरied by ST to handle 64 पूर्णांकerrupts.
- * The original cell has 32 पूर्णांकerrupts, जबतक the modअगरied one has 64,
- * replicating two blocks 0x00..0x1f in 0x20..0x3f. In that हाल
+ * The PL190 cell from ARM has been modified by ST to handle 64 interrupts.
+ * The original cell has 32 interrupts, while the modified one has 64,
+ * replicating two blocks 0x00..0x1f in 0x20..0x3f. In that case
  * the probe function is called twice, with base set to offset 000
  *  and 020 within the page. We call this "second block".
  */
-अटल व्योम __init vic_init_st(व्योम __iomem *base, अचिन्हित पूर्णांक irq_start,
-			       u32 vic_sources, काष्ठा device_node *node)
-अणु
-	अचिन्हित पूर्णांक i;
-	पूर्णांक vic_2nd_block = ((अचिन्हित दीर्घ)base & ~PAGE_MASK) != 0;
+static void __init vic_init_st(void __iomem *base, unsigned int irq_start,
+			       u32 vic_sources, struct device_node *node)
+{
+	unsigned int i;
+	int vic_2nd_block = ((unsigned long)base & ~PAGE_MASK) != 0;
 
-	/* Disable all पूर्णांकerrupts initially. */
+	/* Disable all interrupts initially. */
 	vic_disable(base);
 
 	/*
-	 * Make sure we clear all existing पूर्णांकerrupts. The vector रेजिस्टरs
-	 * in this cell are after the second block of general रेजिस्टरs,
+	 * Make sure we clear all existing interrupts. The vector registers
+	 * in this cell are after the second block of general registers,
 	 * so we can address them using standard offsets, but only from
 	 * the second base address, which is 0x20 in the page
 	 */
-	अगर (vic_2nd_block) अणु
-		vic_clear_पूर्णांकerrupts(base);
+	if (vic_2nd_block) {
+		vic_clear_interrupts(base);
 
-		/* ST has 16 vectors as well, but we करोn't enable them by now */
-		क्रम (i = 0; i < 16; i++) अणु
-			व्योम __iomem *reg = base + VIC_VECT_CNTL0 + (i * 4);
-			ग_लिखोl(0, reg);
-		पूर्ण
+		/* ST has 16 vectors as well, but we don't enable them by now */
+		for (i = 0; i < 16; i++) {
+			void __iomem *reg = base + VIC_VECT_CNTL0 + (i * 4);
+			writel(0, reg);
+		}
 
-		ग_लिखोl(32, base + VIC_PL190_DEF_VECT_ADDR);
-	पूर्ण
+		writel(32, base + VIC_PL190_DEF_VECT_ADDR);
+	}
 
-	vic_रेजिस्टर(base, 0, irq_start, vic_sources, 0, node);
-पूर्ण
+	vic_register(base, 0, irq_start, vic_sources, 0, node);
+}
 
-अटल व्योम __init __vic_init(व्योम __iomem *base, पूर्णांक parent_irq, पूर्णांक irq_start,
+static void __init __vic_init(void __iomem *base, int parent_irq, int irq_start,
 			      u32 vic_sources, u32 resume_sources,
-			      काष्ठा device_node *node)
-अणु
-	अचिन्हित पूर्णांक i;
+			      struct device_node *node)
+{
+	unsigned int i;
 	u32 cellid = 0;
-	क्रमागत amba_venकरोr venकरोr;
+	enum amba_vendor vendor;
 
-	/* Identअगरy which VIC cell this one is, by पढ़ोing the ID */
-	क्रम (i = 0; i < 4; i++) अणु
-		व्योम __iomem *addr;
-		addr = (व्योम __iomem *)((u32)base & PAGE_MASK) + 0xfe0 + (i * 4);
-		cellid |= (पढ़ोl(addr) & 0xff) << (8 * i);
-	पूर्ण
-	venकरोr = (cellid >> 12) & 0xff;
-	prपूर्णांकk(KERN_INFO "VIC @%p: id 0x%08x, vendor 0x%02x\n",
-	       base, cellid, venकरोr);
+	/* Identify which VIC cell this one is, by reading the ID */
+	for (i = 0; i < 4; i++) {
+		void __iomem *addr;
+		addr = (void __iomem *)((u32)base & PAGE_MASK) + 0xfe0 + (i * 4);
+		cellid |= (readl(addr) & 0xff) << (8 * i);
+	}
+	vendor = (cellid >> 12) & 0xff;
+	printk(KERN_INFO "VIC @%p: id 0x%08x, vendor 0x%02x\n",
+	       base, cellid, vendor);
 
-	चयन(venकरोr) अणु
-	हाल AMBA_VENDOR_ST:
+	switch(vendor) {
+	case AMBA_VENDOR_ST:
 		vic_init_st(base, irq_start, vic_sources, node);
-		वापस;
-	शेष:
-		prपूर्णांकk(KERN_WARNING "VIC: unknown vendor, continuing anyways\n");
+		return;
+	default:
+		printk(KERN_WARNING "VIC: unknown vendor, continuing anyways\n");
 		fallthrough;
-	हाल AMBA_VENDOR_ARM:
-		अवरोध;
-	पूर्ण
+	case AMBA_VENDOR_ARM:
+		break;
+	}
 
-	/* Disable all पूर्णांकerrupts initially. */
+	/* Disable all interrupts initially. */
 	vic_disable(base);
 
-	/* Make sure we clear all existing पूर्णांकerrupts */
-	vic_clear_पूर्णांकerrupts(base);
+	/* Make sure we clear all existing interrupts */
+	vic_clear_interrupts(base);
 
 	vic_init2(base);
 
-	vic_रेजिस्टर(base, parent_irq, irq_start, vic_sources, resume_sources, node);
-पूर्ण
+	vic_register(base, parent_irq, irq_start, vic_sources, resume_sources, node);
+}
 
 /**
- * vic_init() - initialise a vectored पूर्णांकerrupt controller
+ * vic_init() - initialise a vectored interrupt controller
  * @base: iomem base address
- * @irq_start: starting पूर्णांकerrupt number, must be muliple of 32
- * @vic_sources: biपंचांगask of पूर्णांकerrupt sources to allow
- * @resume_sources: biपंचांगask of पूर्णांकerrupt sources to allow क्रम resume
+ * @irq_start: starting interrupt number, must be muliple of 32
+ * @vic_sources: bitmask of interrupt sources to allow
+ * @resume_sources: bitmask of interrupt sources to allow for resume
  */
-व्योम __init vic_init(व्योम __iomem *base, अचिन्हित पूर्णांक irq_start,
+void __init vic_init(void __iomem *base, unsigned int irq_start,
 		     u32 vic_sources, u32 resume_sources)
-अणु
-	__vic_init(base, 0, irq_start, vic_sources, resume_sources, शून्य);
-पूर्ण
+{
+	__vic_init(base, 0, irq_start, vic_sources, resume_sources, NULL);
+}
 
-#अगर_घोषित CONFIG_OF
-अटल पूर्णांक __init vic_of_init(काष्ठा device_node *node,
-			      काष्ठा device_node *parent)
-अणु
-	व्योम __iomem *regs;
-	u32 पूर्णांकerrupt_mask = ~0;
+#ifdef CONFIG_OF
+static int __init vic_of_init(struct device_node *node,
+			      struct device_node *parent)
+{
+	void __iomem *regs;
+	u32 interrupt_mask = ~0;
 	u32 wakeup_mask = ~0;
-	पूर्णांक parent_irq;
+	int parent_irq;
 
 	regs = of_iomap(node, 0);
-	अगर (WARN_ON(!regs))
-		वापस -EIO;
+	if (WARN_ON(!regs))
+		return -EIO;
 
-	of_property_पढ़ो_u32(node, "valid-mask", &पूर्णांकerrupt_mask);
-	of_property_पढ़ो_u32(node, "valid-wakeup-mask", &wakeup_mask);
+	of_property_read_u32(node, "valid-mask", &interrupt_mask);
+	of_property_read_u32(node, "valid-wakeup-mask", &wakeup_mask);
 	parent_irq = of_irq_get(node, 0);
-	अगर (parent_irq < 0)
+	if (parent_irq < 0)
 		parent_irq = 0;
 
 	/*
-	 * Passing 0 as first IRQ makes the simple करोमुख्य allocate descriptors
+	 * Passing 0 as first IRQ makes the simple domain allocate descriptors
 	 */
-	__vic_init(regs, parent_irq, 0, पूर्णांकerrupt_mask, wakeup_mask, node);
+	__vic_init(regs, parent_irq, 0, interrupt_mask, wakeup_mask, node);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 IRQCHIP_DECLARE(arm_pl190_vic, "arm,pl190-vic", vic_of_init);
 IRQCHIP_DECLARE(arm_pl192_vic, "arm,pl192-vic", vic_of_init);
 IRQCHIP_DECLARE(arm_versatile_vic, "arm,versatile-vic", vic_of_init);
-#पूर्ण_अगर /* CONFIG OF */
+#endif /* CONFIG OF */

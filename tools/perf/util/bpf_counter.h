@@ -1,80 +1,79 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PERF_BPF_COUNTER_H
-#घोषणा __PERF_BPF_COUNTER_H 1
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PERF_BPF_COUNTER_H
+#define __PERF_BPF_COUNTER_H 1
 
-#समावेश <linux/list.h>
+#include <linux/list.h>
 
-काष्ठा evsel;
-काष्ठा target;
-काष्ठा bpf_counter;
+struct evsel;
+struct target;
+struct bpf_counter;
 
-प्रकार पूर्णांक (*bpf_counter_evsel_op)(काष्ठा evsel *evsel);
-प्रकार पूर्णांक (*bpf_counter_evsel_target_op)(काष्ठा evsel *evsel,
-					   काष्ठा target *target);
-प्रकार पूर्णांक (*bpf_counter_evsel_install_pe_op)(काष्ठा evsel *evsel,
-					       पूर्णांक cpu,
-					       पूर्णांक fd);
+typedef int (*bpf_counter_evsel_op)(struct evsel *evsel);
+typedef int (*bpf_counter_evsel_target_op)(struct evsel *evsel,
+					   struct target *target);
+typedef int (*bpf_counter_evsel_install_pe_op)(struct evsel *evsel,
+					       int cpu,
+					       int fd);
 
-काष्ठा bpf_counter_ops अणु
+struct bpf_counter_ops {
 	bpf_counter_evsel_target_op load;
 	bpf_counter_evsel_op enable;
 	bpf_counter_evsel_op disable;
-	bpf_counter_evsel_op पढ़ो;
+	bpf_counter_evsel_op read;
 	bpf_counter_evsel_op destroy;
 	bpf_counter_evsel_install_pe_op install_pe;
-पूर्ण;
+};
 
-काष्ठा bpf_counter अणु
-	व्योम *skel;
-	काष्ठा list_head list;
-पूर्ण;
+struct bpf_counter {
+	void *skel;
+	struct list_head list;
+};
 
-#अगर_घोषित HAVE_BPF_SKEL
+#ifdef HAVE_BPF_SKEL
 
-पूर्णांक bpf_counter__load(काष्ठा evsel *evsel, काष्ठा target *target);
-पूर्णांक bpf_counter__enable(काष्ठा evsel *evsel);
-पूर्णांक bpf_counter__disable(काष्ठा evsel *evsel);
-पूर्णांक bpf_counter__पढ़ो(काष्ठा evsel *evsel);
-व्योम bpf_counter__destroy(काष्ठा evsel *evsel);
-पूर्णांक bpf_counter__install_pe(काष्ठा evsel *evsel, पूर्णांक cpu, पूर्णांक fd);
+int bpf_counter__load(struct evsel *evsel, struct target *target);
+int bpf_counter__enable(struct evsel *evsel);
+int bpf_counter__disable(struct evsel *evsel);
+int bpf_counter__read(struct evsel *evsel);
+void bpf_counter__destroy(struct evsel *evsel);
+int bpf_counter__install_pe(struct evsel *evsel, int cpu, int fd);
 
-#अन्यथा /* HAVE_BPF_SKEL */
+#else /* HAVE_BPF_SKEL */
 
-#समावेश <linux/err.h>
+#include <linux/err.h>
 
-अटल अंतरभूत पूर्णांक bpf_counter__load(काष्ठा evsel *evsel __maybe_unused,
-				    काष्ठा target *target __maybe_unused)
-अणु
-	वापस 0;
-पूर्ण
+static inline int bpf_counter__load(struct evsel *evsel __maybe_unused,
+				    struct target *target __maybe_unused)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक bpf_counter__enable(काष्ठा evsel *evsel __maybe_unused)
-अणु
-	वापस 0;
-पूर्ण
+static inline int bpf_counter__enable(struct evsel *evsel __maybe_unused)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक bpf_counter__disable(काष्ठा evsel *evsel __maybe_unused)
-अणु
-	वापस 0;
-पूर्ण
+static inline int bpf_counter__disable(struct evsel *evsel __maybe_unused)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक bpf_counter__पढ़ो(काष्ठा evsel *evsel __maybe_unused)
-अणु
-	वापस -EAGAIN;
-पूर्ण
+static inline int bpf_counter__read(struct evsel *evsel __maybe_unused)
+{
+	return -EAGAIN;
+}
 
-अटल अंतरभूत व्योम bpf_counter__destroy(काष्ठा evsel *evsel __maybe_unused)
-अणु
-पूर्ण
+static inline void bpf_counter__destroy(struct evsel *evsel __maybe_unused)
+{
+}
 
-अटल अंतरभूत पूर्णांक bpf_counter__install_pe(काष्ठा evsel *evsel __maybe_unused,
-					  पूर्णांक cpu __maybe_unused,
-					  पूर्णांक fd __maybe_unused)
-अणु
-	वापस 0;
-पूर्ण
+static inline int bpf_counter__install_pe(struct evsel *evsel __maybe_unused,
+					  int cpu __maybe_unused,
+					  int fd __maybe_unused)
+{
+	return 0;
+}
 
-#पूर्ण_अगर /* HAVE_BPF_SKEL */
+#endif /* HAVE_BPF_SKEL */
 
-#पूर्ण_अगर /* __PERF_BPF_COUNTER_H */
+#endif /* __PERF_BPF_COUNTER_H */

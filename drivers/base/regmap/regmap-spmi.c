@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // Register map access API - SPMI support
 //
@@ -7,35 +6,35 @@
 //
 // Based on regmap-i2c.c:
 // Copyright 2011 Wolfson Microelectronics plc
-// Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
+// Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
 
-#समावेश <linux/regmap.h>
-#समावेश <linux/spmi.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
+#include <linux/regmap.h>
+#include <linux/spmi.h>
+#include <linux/module.h>
+#include <linux/init.h>
 
-अटल पूर्णांक regmap_spmi_base_पढ़ो(व्योम *context,
-				 स्थिर व्योम *reg, माप_प्रकार reg_size,
-				 व्योम *val, माप_प्रकार val_size)
-अणु
+static int regmap_spmi_base_read(void *context,
+				 const void *reg, size_t reg_size,
+				 void *val, size_t val_size)
+{
 	u8 addr = *(u8 *)reg;
-	पूर्णांक err = 0;
+	int err = 0;
 
 	BUG_ON(reg_size != 1);
 
-	जबतक (val_size-- && !err)
-		err = spmi_रेजिस्टर_पढ़ो(context, addr++, val++);
+	while (val_size-- && !err)
+		err = spmi_register_read(context, addr++, val++);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक regmap_spmi_base_gather_ग_लिखो(व्योम *context,
-					 स्थिर व्योम *reg, माप_प्रकार reg_size,
-					 स्थिर व्योम *val, माप_प्रकार val_size)
-अणु
-	स्थिर u8 *data = val;
+static int regmap_spmi_base_gather_write(void *context,
+					 const void *reg, size_t reg_size,
+					 const void *val, size_t val_size)
+{
+	const u8 *data = val;
 	u8 addr = *(u8 *)reg;
-	पूर्णांक err = 0;
+	int err = 0;
 
 	BUG_ON(reg_size != 1);
 
@@ -43,72 +42,72 @@
 	 * SPMI defines a more bandwidth-efficient 'Register 0 Write' sequence,
 	 * use it when possible.
 	 */
-	अगर (addr == 0 && val_size) अणु
-		err = spmi_रेजिस्टर_zero_ग_लिखो(context, *data);
-		अगर (err)
-			जाओ err_out;
+	if (addr == 0 && val_size) {
+		err = spmi_register_zero_write(context, *data);
+		if (err)
+			goto err_out;
 
 		data++;
 		addr++;
 		val_size--;
-	पूर्ण
+	}
 
-	जबतक (val_size) अणु
-		err = spmi_रेजिस्टर_ग_लिखो(context, addr, *data);
-		अगर (err)
-			जाओ err_out;
+	while (val_size) {
+		err = spmi_register_write(context, addr, *data);
+		if (err)
+			goto err_out;
 
 		data++;
 		addr++;
 		val_size--;
-	पूर्ण
+	}
 
 err_out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक regmap_spmi_base_ग_लिखो(व्योम *context, स्थिर व्योम *data,
-				  माप_प्रकार count)
-अणु
+static int regmap_spmi_base_write(void *context, const void *data,
+				  size_t count)
+{
 	BUG_ON(count < 1);
-	वापस regmap_spmi_base_gather_ग_लिखो(context, data, 1, data + 1,
+	return regmap_spmi_base_gather_write(context, data, 1, data + 1,
 					     count - 1);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा regmap_bus regmap_spmi_base = अणु
-	.पढ़ो				= regmap_spmi_base_पढ़ो,
-	.ग_लिखो				= regmap_spmi_base_ग_लिखो,
-	.gather_ग_लिखो			= regmap_spmi_base_gather_ग_लिखो,
-	.reg_क्रमmat_endian_शेष	= REGMAP_ENDIAN_NATIVE,
-	.val_क्रमmat_endian_शेष	= REGMAP_ENDIAN_NATIVE,
-पूर्ण;
+static const struct regmap_bus regmap_spmi_base = {
+	.read				= regmap_spmi_base_read,
+	.write				= regmap_spmi_base_write,
+	.gather_write			= regmap_spmi_base_gather_write,
+	.reg_format_endian_default	= REGMAP_ENDIAN_NATIVE,
+	.val_format_endian_default	= REGMAP_ENDIAN_NATIVE,
+};
 
-काष्ठा regmap *__regmap_init_spmi_base(काष्ठा spmi_device *sdev,
-				       स्थिर काष्ठा regmap_config *config,
-				       काष्ठा lock_class_key *lock_key,
-				       स्थिर अक्षर *lock_name)
-अणु
-	वापस __regmap_init(&sdev->dev, &regmap_spmi_base, sdev, config,
+struct regmap *__regmap_init_spmi_base(struct spmi_device *sdev,
+				       const struct regmap_config *config,
+				       struct lock_class_key *lock_key,
+				       const char *lock_name)
+{
+	return __regmap_init(&sdev->dev, &regmap_spmi_base, sdev, config,
 			     lock_key, lock_name);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(__regmap_init_spmi_base);
 
-काष्ठा regmap *__devm_regmap_init_spmi_base(काष्ठा spmi_device *sdev,
-					    स्थिर काष्ठा regmap_config *config,
-					    काष्ठा lock_class_key *lock_key,
-					    स्थिर अक्षर *lock_name)
-अणु
-	वापस __devm_regmap_init(&sdev->dev, &regmap_spmi_base, sdev, config,
+struct regmap *__devm_regmap_init_spmi_base(struct spmi_device *sdev,
+					    const struct regmap_config *config,
+					    struct lock_class_key *lock_key,
+					    const char *lock_name)
+{
+	return __devm_regmap_init(&sdev->dev, &regmap_spmi_base, sdev, config,
 				  lock_key, lock_name);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(__devm_regmap_init_spmi_base);
 
-अटल पूर्णांक regmap_spmi_ext_पढ़ो(व्योम *context,
-				स्थिर व्योम *reg, माप_प्रकार reg_size,
-				व्योम *val, माप_प्रकार val_size)
-अणु
-	पूर्णांक err = 0;
-	माप_प्रकार len;
+static int regmap_spmi_ext_read(void *context,
+				const void *reg, size_t reg_size,
+				void *val, size_t val_size)
+{
+	int err = 0;
+	size_t len;
 	u16 addr;
 
 	BUG_ON(reg_size != 2);
@@ -116,111 +115,111 @@ EXPORT_SYMBOL_GPL(__devm_regmap_init_spmi_base);
 	addr = *(u16 *)reg;
 
 	/*
-	 * Split accesses पूर्णांकo two to take advantage of the more
+	 * Split accesses into two to take advantage of the more
 	 * bandwidth-efficient 'Extended Register Read' command when possible
 	 */
-	जबतक (addr <= 0xFF && val_size) अणु
-		len = min_t(माप_प्रकार, val_size, 16);
+	while (addr <= 0xFF && val_size) {
+		len = min_t(size_t, val_size, 16);
 
-		err = spmi_ext_रेजिस्टर_पढ़ो(context, addr, val, len);
-		अगर (err)
-			जाओ err_out;
-
-		addr += len;
-		val += len;
-		val_size -= len;
-	पूर्ण
-
-	जबतक (val_size) अणु
-		len = min_t(माप_प्रकार, val_size, 8);
-
-		err = spmi_ext_रेजिस्टर_पढ़ोl(context, addr, val, len);
-		अगर (err)
-			जाओ err_out;
+		err = spmi_ext_register_read(context, addr, val, len);
+		if (err)
+			goto err_out;
 
 		addr += len;
 		val += len;
 		val_size -= len;
-	पूर्ण
+	}
+
+	while (val_size) {
+		len = min_t(size_t, val_size, 8);
+
+		err = spmi_ext_register_readl(context, addr, val, len);
+		if (err)
+			goto err_out;
+
+		addr += len;
+		val += len;
+		val_size -= len;
+	}
 
 err_out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक regmap_spmi_ext_gather_ग_लिखो(व्योम *context,
-					स्थिर व्योम *reg, माप_प्रकार reg_size,
-					स्थिर व्योम *val, माप_प्रकार val_size)
-अणु
-	पूर्णांक err = 0;
-	माप_प्रकार len;
+static int regmap_spmi_ext_gather_write(void *context,
+					const void *reg, size_t reg_size,
+					const void *val, size_t val_size)
+{
+	int err = 0;
+	size_t len;
 	u16 addr;
 
 	BUG_ON(reg_size != 2);
 
 	addr = *(u16 *)reg;
 
-	जबतक (addr <= 0xFF && val_size) अणु
-		len = min_t(माप_प्रकार, val_size, 16);
+	while (addr <= 0xFF && val_size) {
+		len = min_t(size_t, val_size, 16);
 
-		err = spmi_ext_रेजिस्टर_ग_लिखो(context, addr, val, len);
-		अगर (err)
-			जाओ err_out;
-
-		addr += len;
-		val += len;
-		val_size -= len;
-	पूर्ण
-
-	जबतक (val_size) अणु
-		len = min_t(माप_प्रकार, val_size, 8);
-
-		err = spmi_ext_रेजिस्टर_ग_लिखोl(context, addr, val, len);
-		अगर (err)
-			जाओ err_out;
+		err = spmi_ext_register_write(context, addr, val, len);
+		if (err)
+			goto err_out;
 
 		addr += len;
 		val += len;
 		val_size -= len;
-	पूर्ण
+	}
+
+	while (val_size) {
+		len = min_t(size_t, val_size, 8);
+
+		err = spmi_ext_register_writel(context, addr, val, len);
+		if (err)
+			goto err_out;
+
+		addr += len;
+		val += len;
+		val_size -= len;
+	}
 
 err_out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक regmap_spmi_ext_ग_लिखो(व्योम *context, स्थिर व्योम *data,
-				 माप_प्रकार count)
-अणु
+static int regmap_spmi_ext_write(void *context, const void *data,
+				 size_t count)
+{
 	BUG_ON(count < 2);
-	वापस regmap_spmi_ext_gather_ग_लिखो(context, data, 2, data + 2,
+	return regmap_spmi_ext_gather_write(context, data, 2, data + 2,
 					    count - 2);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा regmap_bus regmap_spmi_ext = अणु
-	.पढ़ो				= regmap_spmi_ext_पढ़ो,
-	.ग_लिखो				= regmap_spmi_ext_ग_लिखो,
-	.gather_ग_लिखो			= regmap_spmi_ext_gather_ग_लिखो,
-	.reg_क्रमmat_endian_शेष	= REGMAP_ENDIAN_NATIVE,
-	.val_क्रमmat_endian_शेष	= REGMAP_ENDIAN_NATIVE,
-पूर्ण;
+static const struct regmap_bus regmap_spmi_ext = {
+	.read				= regmap_spmi_ext_read,
+	.write				= regmap_spmi_ext_write,
+	.gather_write			= regmap_spmi_ext_gather_write,
+	.reg_format_endian_default	= REGMAP_ENDIAN_NATIVE,
+	.val_format_endian_default	= REGMAP_ENDIAN_NATIVE,
+};
 
-काष्ठा regmap *__regmap_init_spmi_ext(काष्ठा spmi_device *sdev,
-				      स्थिर काष्ठा regmap_config *config,
-				      काष्ठा lock_class_key *lock_key,
-				      स्थिर अक्षर *lock_name)
-अणु
-	वापस __regmap_init(&sdev->dev, &regmap_spmi_ext, sdev, config,
+struct regmap *__regmap_init_spmi_ext(struct spmi_device *sdev,
+				      const struct regmap_config *config,
+				      struct lock_class_key *lock_key,
+				      const char *lock_name)
+{
+	return __regmap_init(&sdev->dev, &regmap_spmi_ext, sdev, config,
 			     lock_key, lock_name);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(__regmap_init_spmi_ext);
 
-काष्ठा regmap *__devm_regmap_init_spmi_ext(काष्ठा spmi_device *sdev,
-					   स्थिर काष्ठा regmap_config *config,
-					   काष्ठा lock_class_key *lock_key,
-					   स्थिर अक्षर *lock_name)
-अणु
-	वापस __devm_regmap_init(&sdev->dev, &regmap_spmi_ext, sdev, config,
+struct regmap *__devm_regmap_init_spmi_ext(struct spmi_device *sdev,
+					   const struct regmap_config *config,
+					   struct lock_class_key *lock_key,
+					   const char *lock_name)
+{
+	return __devm_regmap_init(&sdev->dev, &regmap_spmi_ext, sdev, config,
 				  lock_key, lock_name);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(__devm_regmap_init_spmi_ext);
 
 MODULE_LICENSE("GPL");

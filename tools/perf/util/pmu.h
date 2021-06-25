@@ -1,138 +1,137 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PMU_H
-#घोषणा __PMU_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PMU_H
+#define __PMU_H
 
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/list.h>
-#समावेश <stdbool.h>
-#समावेश "parse-events.h"
-#समावेश "pmu-events/pmu-events.h"
+#include <linux/bitmap.h>
+#include <linux/compiler.h>
+#include <linux/perf_event.h>
+#include <linux/list.h>
+#include <stdbool.h>
+#include "parse-events.h"
+#include "pmu-events/pmu-events.h"
 
-काष्ठा evsel_config_term;
+struct evsel_config_term;
 
-क्रमागत अणु
+enum {
 	PERF_PMU_FORMAT_VALUE_CONFIG,
 	PERF_PMU_FORMAT_VALUE_CONFIG1,
 	PERF_PMU_FORMAT_VALUE_CONFIG2,
-पूर्ण;
+};
 
-#घोषणा PERF_PMU_FORMAT_BITS 64
-#घोषणा EVENT_SOURCE_DEVICE_PATH "/bus/event_source/devices/"
-#घोषणा CPUS_TEMPLATE_CPU	"%s/bus/event_source/devices/%s/cpus"
+#define PERF_PMU_FORMAT_BITS 64
+#define EVENT_SOURCE_DEVICE_PATH "/bus/event_source/devices/"
+#define CPUS_TEMPLATE_CPU	"%s/bus/event_source/devices/%s/cpus"
 
-काष्ठा perf_event_attr;
+struct perf_event_attr;
 
-काष्ठा perf_pmu_caps अणु
-	अक्षर *name;
-	अक्षर *value;
-	काष्ठा list_head list;
-पूर्ण;
+struct perf_pmu_caps {
+	char *name;
+	char *value;
+	struct list_head list;
+};
 
-काष्ठा perf_pmu अणु
-	अक्षर *name;
-	अक्षर *id;
+struct perf_pmu {
+	char *name;
+	char *id;
 	__u32 type;
 	bool selectable;
 	bool is_uncore;
 	bool is_hybrid;
 	bool auxtrace;
-	पूर्णांक max_precise;
-	काष्ठा perf_event_attr *शेष_config;
-	काष्ठा perf_cpu_map *cpus;
-	काष्ठा list_head क्रमmat;  /* HEAD काष्ठा perf_pmu_क्रमmat -> list */
-	काष्ठा list_head aliases; /* HEAD काष्ठा perf_pmu_alias -> list */
-	काष्ठा list_head caps;    /* HEAD काष्ठा perf_pmu_caps -> list */
-	काष्ठा list_head list;    /* ELEM */
-	काष्ठा list_head hybrid_list;
-पूर्ण;
+	int max_precise;
+	struct perf_event_attr *default_config;
+	struct perf_cpu_map *cpus;
+	struct list_head format;  /* HEAD struct perf_pmu_format -> list */
+	struct list_head aliases; /* HEAD struct perf_pmu_alias -> list */
+	struct list_head caps;    /* HEAD struct perf_pmu_caps -> list */
+	struct list_head list;    /* ELEM */
+	struct list_head hybrid_list;
+};
 
-बाह्य काष्ठा perf_pmu perf_pmu__fake;
+extern struct perf_pmu perf_pmu__fake;
 
-काष्ठा perf_pmu_info अणु
-	स्थिर अक्षर *unit;
-	स्थिर अक्षर *metric_expr;
-	स्थिर अक्षर *metric_name;
-	द्विगुन scale;
+struct perf_pmu_info {
+	const char *unit;
+	const char *metric_expr;
+	const char *metric_name;
+	double scale;
 	bool per_pkg;
 	bool snapshot;
-पूर्ण;
+};
 
-#घोषणा UNIT_MAX_LEN	31 /* max length क्रम event unit name */
+#define UNIT_MAX_LEN	31 /* max length for event unit name */
 
-काष्ठा perf_pmu_alias अणु
-	अक्षर *name;
-	अक्षर *desc;
-	अक्षर *दीर्घ_desc;
-	अक्षर *topic;
-	अक्षर *str;
-	काष्ठा list_head terms; /* HEAD काष्ठा parse_events_term -> list */
-	काष्ठा list_head list;  /* ELEM */
-	अक्षर unit[UNIT_MAX_LEN+1];
-	द्विगुन scale;
+struct perf_pmu_alias {
+	char *name;
+	char *desc;
+	char *long_desc;
+	char *topic;
+	char *str;
+	struct list_head terms; /* HEAD struct parse_events_term -> list */
+	struct list_head list;  /* ELEM */
+	char unit[UNIT_MAX_LEN+1];
+	double scale;
 	bool per_pkg;
 	bool snapshot;
 	bool deprecated;
-	अक्षर *metric_expr;
-	अक्षर *metric_name;
-	अक्षर *pmu_name;
-पूर्ण;
+	char *metric_expr;
+	char *metric_name;
+	char *pmu_name;
+};
 
-काष्ठा perf_pmu *perf_pmu__find(स्थिर अक्षर *name);
-काष्ठा perf_pmu *perf_pmu__find_by_type(अचिन्हित पूर्णांक type);
-पूर्णांक perf_pmu__config(काष्ठा perf_pmu *pmu, काष्ठा perf_event_attr *attr,
-		     काष्ठा list_head *head_terms,
-		     काष्ठा parse_events_error *error);
-पूर्णांक perf_pmu__config_terms(स्थिर अक्षर *pmu_name, काष्ठा list_head *क्रमmats,
-			   काष्ठा perf_event_attr *attr,
-			   काष्ठा list_head *head_terms,
-			   bool zero, काष्ठा parse_events_error *error);
-__u64 perf_pmu__क्रमmat_bits(काष्ठा list_head *क्रमmats, स्थिर अक्षर *name);
-पूर्णांक perf_pmu__क्रमmat_type(काष्ठा list_head *क्रमmats, स्थिर अक्षर *name);
-पूर्णांक perf_pmu__check_alias(काष्ठा perf_pmu *pmu, काष्ठा list_head *head_terms,
-			  काष्ठा perf_pmu_info *info);
-काष्ठा list_head *perf_pmu__alias(काष्ठा perf_pmu *pmu,
-				  काष्ठा list_head *head_terms);
-व्योम perf_pmu_error(काष्ठा list_head *list, अक्षर *name, अक्षर स्थिर *msg);
+struct perf_pmu *perf_pmu__find(const char *name);
+struct perf_pmu *perf_pmu__find_by_type(unsigned int type);
+int perf_pmu__config(struct perf_pmu *pmu, struct perf_event_attr *attr,
+		     struct list_head *head_terms,
+		     struct parse_events_error *error);
+int perf_pmu__config_terms(const char *pmu_name, struct list_head *formats,
+			   struct perf_event_attr *attr,
+			   struct list_head *head_terms,
+			   bool zero, struct parse_events_error *error);
+__u64 perf_pmu__format_bits(struct list_head *formats, const char *name);
+int perf_pmu__format_type(struct list_head *formats, const char *name);
+int perf_pmu__check_alias(struct perf_pmu *pmu, struct list_head *head_terms,
+			  struct perf_pmu_info *info);
+struct list_head *perf_pmu__alias(struct perf_pmu *pmu,
+				  struct list_head *head_terms);
+void perf_pmu_error(struct list_head *list, char *name, char const *msg);
 
-पूर्णांक perf_pmu__new_क्रमmat(काष्ठा list_head *list, अक्षर *name,
-			 पूर्णांक config, अचिन्हित दीर्घ *bits);
-व्योम perf_pmu__set_क्रमmat(अचिन्हित दीर्घ *bits, दीर्घ from, दीर्घ to);
-पूर्णांक perf_pmu__क्रमmat_parse(अक्षर *dir, काष्ठा list_head *head);
-व्योम perf_pmu__del_क्रमmats(काष्ठा list_head *क्रमmats);
+int perf_pmu__new_format(struct list_head *list, char *name,
+			 int config, unsigned long *bits);
+void perf_pmu__set_format(unsigned long *bits, long from, long to);
+int perf_pmu__format_parse(char *dir, struct list_head *head);
+void perf_pmu__del_formats(struct list_head *formats);
 
-काष्ठा perf_pmu *perf_pmu__scan(काष्ठा perf_pmu *pmu);
+struct perf_pmu *perf_pmu__scan(struct perf_pmu *pmu);
 
-bool is_pmu_core(स्थिर अक्षर *name);
-व्योम prपूर्णांक_pmu_events(स्थिर अक्षर *event_glob, bool name_only, bool quiet,
-		      bool दीर्घ_desc, bool details_flag,
+bool is_pmu_core(const char *name);
+void print_pmu_events(const char *event_glob, bool name_only, bool quiet,
+		      bool long_desc, bool details_flag,
 		      bool deprecated);
-bool pmu_have_event(स्थिर अक्षर *pname, स्थिर अक्षर *name);
+bool pmu_have_event(const char *pname, const char *name);
 
-पूर्णांक perf_pmu__scan_file(काष्ठा perf_pmu *pmu, स्थिर अक्षर *name, स्थिर अक्षर *fmt, ...) __म_पूछो(3, 4);
+int perf_pmu__scan_file(struct perf_pmu *pmu, const char *name, const char *fmt, ...) __scanf(3, 4);
 
-पूर्णांक perf_pmu__test(व्योम);
+int perf_pmu__test(void);
 
-काष्ठा perf_event_attr *perf_pmu__get_शेष_config(काष्ठा perf_pmu *pmu);
-व्योम pmu_add_cpu_aliases_map(काष्ठा list_head *head, काष्ठा perf_pmu *pmu,
-			     काष्ठा pmu_events_map *map);
+struct perf_event_attr *perf_pmu__get_default_config(struct perf_pmu *pmu);
+void pmu_add_cpu_aliases_map(struct list_head *head, struct perf_pmu *pmu,
+			     struct pmu_events_map *map);
 
-काष्ठा pmu_events_map *perf_pmu__find_map(काष्ठा perf_pmu *pmu);
-काष्ठा pmu_events_map *pmu_events_map__find(व्योम);
-bool pmu_uncore_alias_match(स्थिर अक्षर *pmu_name, स्थिर अक्षर *name);
-व्योम perf_pmu_मुक्त_alias(काष्ठा perf_pmu_alias *alias);
+struct pmu_events_map *perf_pmu__find_map(struct perf_pmu *pmu);
+struct pmu_events_map *pmu_events_map__find(void);
+bool pmu_uncore_alias_match(const char *pmu_name, const char *name);
+void perf_pmu_free_alias(struct perf_pmu_alias *alias);
 
-प्रकार पूर्णांक (*pmu_sys_event_iter_fn)(काष्ठा pmu_event *pe, व्योम *data);
-व्योम pmu_क्रम_each_sys_event(pmu_sys_event_iter_fn fn, व्योम *data);
-पूर्णांक perf_pmu__convert_scale(स्थिर अक्षर *scale, अक्षर **end, द्विगुन *sval);
+typedef int (*pmu_sys_event_iter_fn)(struct pmu_event *pe, void *data);
+void pmu_for_each_sys_event(pmu_sys_event_iter_fn fn, void *data);
+int perf_pmu__convert_scale(const char *scale, char **end, double *sval);
 
-पूर्णांक perf_pmu__caps_parse(काष्ठा perf_pmu *pmu);
+int perf_pmu__caps_parse(struct perf_pmu *pmu);
 
-व्योम perf_pmu__warn_invalid_config(काष्ठा perf_pmu *pmu, __u64 config,
-				   अक्षर *name);
+void perf_pmu__warn_invalid_config(struct perf_pmu *pmu, __u64 config,
+				   char *name);
 
-bool perf_pmu__has_hybrid(व्योम);
+bool perf_pmu__has_hybrid(void);
 
-#पूर्ण_अगर /* __PMU_H */
+#endif /* __PMU_H */

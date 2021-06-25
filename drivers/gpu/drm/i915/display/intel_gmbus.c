@@ -1,15 +1,14 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
- * Copyright तऊ 2006-2008,2010 Intel Corporation
- *   Jesse Barnes <jesse.barnes@पूर्णांकel.com>
+ * Copyright © 2006-2008,2010 Intel Corporation
+ *   Jesse Barnes <jesse.barnes@intel.com>
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -28,683 +27,683 @@
  *	Chris Wilson <chris@chris-wilson.co.uk>
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/i2c-algo-bit.h>
-#समावेश <linux/i2c.h>
+#include <linux/export.h>
+#include <linux/i2c-algo-bit.h>
+#include <linux/i2c.h>
 
-#समावेश <drm/drm_hdcp.h>
+#include <drm/drm_hdcp.h>
 
-#समावेश "i915_drv.h"
-#समावेश "intel_display_types.h"
-#समावेश "intel_gmbus.h"
+#include "i915_drv.h"
+#include "intel_display_types.h"
+#include "intel_gmbus.h"
 
-काष्ठा gmbus_pin अणु
-	स्थिर अक्षर *name;
-	क्रमागत i915_gpio gpio;
-पूर्ण;
+struct gmbus_pin {
+	const char *name;
+	enum i915_gpio gpio;
+};
 
-/* Map gmbus pin pairs to names and रेजिस्टरs. */
-अटल स्थिर काष्ठा gmbus_pin gmbus_pins[] = अणु
-	[GMBUS_PIN_SSC] = अणु "ssc", GPIOB पूर्ण,
-	[GMBUS_PIN_VGADDC] = अणु "vga", GPIOA पूर्ण,
-	[GMBUS_PIN_PANEL] = अणु "panel", GPIOC पूर्ण,
-	[GMBUS_PIN_DPC] = अणु "dpc", GPIOD पूर्ण,
-	[GMBUS_PIN_DPB] = अणु "dpb", GPIOE पूर्ण,
-	[GMBUS_PIN_DPD] = अणु "dpd", GPIOF पूर्ण,
-पूर्ण;
+/* Map gmbus pin pairs to names and registers. */
+static const struct gmbus_pin gmbus_pins[] = {
+	[GMBUS_PIN_SSC] = { "ssc", GPIOB },
+	[GMBUS_PIN_VGADDC] = { "vga", GPIOA },
+	[GMBUS_PIN_PANEL] = { "panel", GPIOC },
+	[GMBUS_PIN_DPC] = { "dpc", GPIOD },
+	[GMBUS_PIN_DPB] = { "dpb", GPIOE },
+	[GMBUS_PIN_DPD] = { "dpd", GPIOF },
+};
 
-अटल स्थिर काष्ठा gmbus_pin gmbus_pins_bdw[] = अणु
-	[GMBUS_PIN_VGADDC] = अणु "vga", GPIOA पूर्ण,
-	[GMBUS_PIN_DPC] = अणु "dpc", GPIOD पूर्ण,
-	[GMBUS_PIN_DPB] = अणु "dpb", GPIOE पूर्ण,
-	[GMBUS_PIN_DPD] = अणु "dpd", GPIOF पूर्ण,
-पूर्ण;
+static const struct gmbus_pin gmbus_pins_bdw[] = {
+	[GMBUS_PIN_VGADDC] = { "vga", GPIOA },
+	[GMBUS_PIN_DPC] = { "dpc", GPIOD },
+	[GMBUS_PIN_DPB] = { "dpb", GPIOE },
+	[GMBUS_PIN_DPD] = { "dpd", GPIOF },
+};
 
-अटल स्थिर काष्ठा gmbus_pin gmbus_pins_skl[] = अणु
-	[GMBUS_PIN_DPC] = अणु "dpc", GPIOD पूर्ण,
-	[GMBUS_PIN_DPB] = अणु "dpb", GPIOE पूर्ण,
-	[GMBUS_PIN_DPD] = अणु "dpd", GPIOF पूर्ण,
-पूर्ण;
+static const struct gmbus_pin gmbus_pins_skl[] = {
+	[GMBUS_PIN_DPC] = { "dpc", GPIOD },
+	[GMBUS_PIN_DPB] = { "dpb", GPIOE },
+	[GMBUS_PIN_DPD] = { "dpd", GPIOF },
+};
 
-अटल स्थिर काष्ठा gmbus_pin gmbus_pins_bxt[] = अणु
-	[GMBUS_PIN_1_BXT] = अणु "dpb", GPIOB पूर्ण,
-	[GMBUS_PIN_2_BXT] = अणु "dpc", GPIOC पूर्ण,
-	[GMBUS_PIN_3_BXT] = अणु "misc", GPIOD पूर्ण,
-पूर्ण;
+static const struct gmbus_pin gmbus_pins_bxt[] = {
+	[GMBUS_PIN_1_BXT] = { "dpb", GPIOB },
+	[GMBUS_PIN_2_BXT] = { "dpc", GPIOC },
+	[GMBUS_PIN_3_BXT] = { "misc", GPIOD },
+};
 
-अटल स्थिर काष्ठा gmbus_pin gmbus_pins_cnp[] = अणु
-	[GMBUS_PIN_1_BXT] = अणु "dpb", GPIOB पूर्ण,
-	[GMBUS_PIN_2_BXT] = अणु "dpc", GPIOC पूर्ण,
-	[GMBUS_PIN_3_BXT] = अणु "misc", GPIOD पूर्ण,
-	[GMBUS_PIN_4_CNP] = अणु "dpd", GPIOE पूर्ण,
-पूर्ण;
+static const struct gmbus_pin gmbus_pins_cnp[] = {
+	[GMBUS_PIN_1_BXT] = { "dpb", GPIOB },
+	[GMBUS_PIN_2_BXT] = { "dpc", GPIOC },
+	[GMBUS_PIN_3_BXT] = { "misc", GPIOD },
+	[GMBUS_PIN_4_CNP] = { "dpd", GPIOE },
+};
 
-अटल स्थिर काष्ठा gmbus_pin gmbus_pins_icp[] = अणु
-	[GMBUS_PIN_1_BXT] = अणु "dpa", GPIOB पूर्ण,
-	[GMBUS_PIN_2_BXT] = अणु "dpb", GPIOC पूर्ण,
-	[GMBUS_PIN_3_BXT] = अणु "dpc", GPIOD पूर्ण,
-	[GMBUS_PIN_9_TC1_ICP] = अणु "tc1", GPIOJ पूर्ण,
-	[GMBUS_PIN_10_TC2_ICP] = अणु "tc2", GPIOK पूर्ण,
-	[GMBUS_PIN_11_TC3_ICP] = अणु "tc3", GPIOL पूर्ण,
-	[GMBUS_PIN_12_TC4_ICP] = अणु "tc4", GPIOM पूर्ण,
-	[GMBUS_PIN_13_TC5_TGP] = अणु "tc5", GPION पूर्ण,
-	[GMBUS_PIN_14_TC6_TGP] = अणु "tc6", GPIOO पूर्ण,
-पूर्ण;
+static const struct gmbus_pin gmbus_pins_icp[] = {
+	[GMBUS_PIN_1_BXT] = { "dpa", GPIOB },
+	[GMBUS_PIN_2_BXT] = { "dpb", GPIOC },
+	[GMBUS_PIN_3_BXT] = { "dpc", GPIOD },
+	[GMBUS_PIN_9_TC1_ICP] = { "tc1", GPIOJ },
+	[GMBUS_PIN_10_TC2_ICP] = { "tc2", GPIOK },
+	[GMBUS_PIN_11_TC3_ICP] = { "tc3", GPIOL },
+	[GMBUS_PIN_12_TC4_ICP] = { "tc4", GPIOM },
+	[GMBUS_PIN_13_TC5_TGP] = { "tc5", GPION },
+	[GMBUS_PIN_14_TC6_TGP] = { "tc6", GPIOO },
+};
 
-अटल स्थिर काष्ठा gmbus_pin gmbus_pins_dg1[] = अणु
-	[GMBUS_PIN_1_BXT] = अणु "dpa", GPIOB पूर्ण,
-	[GMBUS_PIN_2_BXT] = अणु "dpb", GPIOC पूर्ण,
-	[GMBUS_PIN_3_BXT] = अणु "dpc", GPIOD पूर्ण,
-	[GMBUS_PIN_4_CNP] = अणु "dpd", GPIOE पूर्ण,
-पूर्ण;
+static const struct gmbus_pin gmbus_pins_dg1[] = {
+	[GMBUS_PIN_1_BXT] = { "dpa", GPIOB },
+	[GMBUS_PIN_2_BXT] = { "dpb", GPIOC },
+	[GMBUS_PIN_3_BXT] = { "dpc", GPIOD },
+	[GMBUS_PIN_4_CNP] = { "dpd", GPIOE },
+};
 
 /* pin is expected to be valid */
-अटल स्थिर काष्ठा gmbus_pin *get_gmbus_pin(काष्ठा drm_i915_निजी *dev_priv,
-					     अचिन्हित पूर्णांक pin)
-अणु
-	अगर (INTEL_PCH_TYPE(dev_priv) >= PCH_DG1)
-		वापस &gmbus_pins_dg1[pin];
-	अन्यथा अगर (INTEL_PCH_TYPE(dev_priv) >= PCH_ICP)
-		वापस &gmbus_pins_icp[pin];
-	अन्यथा अगर (HAS_PCH_CNP(dev_priv))
-		वापस &gmbus_pins_cnp[pin];
-	अन्यथा अगर (IS_GEN9_LP(dev_priv))
-		वापस &gmbus_pins_bxt[pin];
-	अन्यथा अगर (IS_GEN9_BC(dev_priv))
-		वापस &gmbus_pins_skl[pin];
-	अन्यथा अगर (IS_BROADWELL(dev_priv))
-		वापस &gmbus_pins_bdw[pin];
-	अन्यथा
-		वापस &gmbus_pins[pin];
-पूर्ण
+static const struct gmbus_pin *get_gmbus_pin(struct drm_i915_private *dev_priv,
+					     unsigned int pin)
+{
+	if (INTEL_PCH_TYPE(dev_priv) >= PCH_DG1)
+		return &gmbus_pins_dg1[pin];
+	else if (INTEL_PCH_TYPE(dev_priv) >= PCH_ICP)
+		return &gmbus_pins_icp[pin];
+	else if (HAS_PCH_CNP(dev_priv))
+		return &gmbus_pins_cnp[pin];
+	else if (IS_GEN9_LP(dev_priv))
+		return &gmbus_pins_bxt[pin];
+	else if (IS_GEN9_BC(dev_priv))
+		return &gmbus_pins_skl[pin];
+	else if (IS_BROADWELL(dev_priv))
+		return &gmbus_pins_bdw[pin];
+	else
+		return &gmbus_pins[pin];
+}
 
-bool पूर्णांकel_gmbus_is_valid_pin(काष्ठा drm_i915_निजी *dev_priv,
-			      अचिन्हित पूर्णांक pin)
-अणु
-	अचिन्हित पूर्णांक size;
+bool intel_gmbus_is_valid_pin(struct drm_i915_private *dev_priv,
+			      unsigned int pin)
+{
+	unsigned int size;
 
-	अगर (INTEL_PCH_TYPE(dev_priv) >= PCH_DG1)
+	if (INTEL_PCH_TYPE(dev_priv) >= PCH_DG1)
 		size = ARRAY_SIZE(gmbus_pins_dg1);
-	अन्यथा अगर (INTEL_PCH_TYPE(dev_priv) >= PCH_ICP)
+	else if (INTEL_PCH_TYPE(dev_priv) >= PCH_ICP)
 		size = ARRAY_SIZE(gmbus_pins_icp);
-	अन्यथा अगर (HAS_PCH_CNP(dev_priv))
+	else if (HAS_PCH_CNP(dev_priv))
 		size = ARRAY_SIZE(gmbus_pins_cnp);
-	अन्यथा अगर (IS_GEN9_LP(dev_priv))
+	else if (IS_GEN9_LP(dev_priv))
 		size = ARRAY_SIZE(gmbus_pins_bxt);
-	अन्यथा अगर (IS_GEN9_BC(dev_priv))
+	else if (IS_GEN9_BC(dev_priv))
 		size = ARRAY_SIZE(gmbus_pins_skl);
-	अन्यथा अगर (IS_BROADWELL(dev_priv))
+	else if (IS_BROADWELL(dev_priv))
 		size = ARRAY_SIZE(gmbus_pins_bdw);
-	अन्यथा
+	else
 		size = ARRAY_SIZE(gmbus_pins);
 
-	वापस pin < size && get_gmbus_pin(dev_priv, pin)->name;
-पूर्ण
+	return pin < size && get_gmbus_pin(dev_priv, pin)->name;
+}
 
 /* Intel GPIO access functions */
 
-#घोषणा I2C_RISEFALL_TIME 10
+#define I2C_RISEFALL_TIME 10
 
-अटल अंतरभूत काष्ठा पूर्णांकel_gmbus *
-to_पूर्णांकel_gmbus(काष्ठा i2c_adapter *i2c)
-अणु
-	वापस container_of(i2c, काष्ठा पूर्णांकel_gmbus, adapter);
-पूर्ण
+static inline struct intel_gmbus *
+to_intel_gmbus(struct i2c_adapter *i2c)
+{
+	return container_of(i2c, struct intel_gmbus, adapter);
+}
 
-व्योम
-पूर्णांकel_gmbus_reset(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	पूर्णांकel_de_ग_लिखो(dev_priv, GMBUS0, 0);
-	पूर्णांकel_de_ग_लिखो(dev_priv, GMBUS4, 0);
-पूर्ण
+void
+intel_gmbus_reset(struct drm_i915_private *dev_priv)
+{
+	intel_de_write(dev_priv, GMBUS0, 0);
+	intel_de_write(dev_priv, GMBUS4, 0);
+}
 
-अटल व्योम pnv_gmbus_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv,
+static void pnv_gmbus_clock_gating(struct drm_i915_private *dev_priv,
 				   bool enable)
-अणु
+{
 	u32 val;
 
-	/* When using bit bashing क्रम I2C, this bit needs to be set to 1 */
-	val = पूर्णांकel_de_पढ़ो(dev_priv, DSPCLK_GATE_D);
-	अगर (!enable)
+	/* When using bit bashing for I2C, this bit needs to be set to 1 */
+	val = intel_de_read(dev_priv, DSPCLK_GATE_D);
+	if (!enable)
 		val |= PNV_GMBUSUNIT_CLOCK_GATE_DISABLE;
-	अन्यथा
+	else
 		val &= ~PNV_GMBUSUNIT_CLOCK_GATE_DISABLE;
-	पूर्णांकel_de_ग_लिखो(dev_priv, DSPCLK_GATE_D, val);
-पूर्ण
+	intel_de_write(dev_priv, DSPCLK_GATE_D, val);
+}
 
-अटल व्योम pch_gmbus_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv,
+static void pch_gmbus_clock_gating(struct drm_i915_private *dev_priv,
 				   bool enable)
-अणु
+{
 	u32 val;
 
-	val = पूर्णांकel_de_पढ़ो(dev_priv, SOUTH_DSPCLK_GATE_D);
-	अगर (!enable)
+	val = intel_de_read(dev_priv, SOUTH_DSPCLK_GATE_D);
+	if (!enable)
 		val |= PCH_GMBUSUNIT_CLOCK_GATE_DISABLE;
-	अन्यथा
+	else
 		val &= ~PCH_GMBUSUNIT_CLOCK_GATE_DISABLE;
-	पूर्णांकel_de_ग_लिखो(dev_priv, SOUTH_DSPCLK_GATE_D, val);
-पूर्ण
+	intel_de_write(dev_priv, SOUTH_DSPCLK_GATE_D, val);
+}
 
-अटल व्योम bxt_gmbus_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv,
+static void bxt_gmbus_clock_gating(struct drm_i915_private *dev_priv,
 				   bool enable)
-अणु
+{
 	u32 val;
 
-	val = पूर्णांकel_de_पढ़ो(dev_priv, GEN9_CLKGATE_DIS_4);
-	अगर (!enable)
+	val = intel_de_read(dev_priv, GEN9_CLKGATE_DIS_4);
+	if (!enable)
 		val |= BXT_GMBUS_GATING_DIS;
-	अन्यथा
+	else
 		val &= ~BXT_GMBUS_GATING_DIS;
-	पूर्णांकel_de_ग_लिखो(dev_priv, GEN9_CLKGATE_DIS_4, val);
-पूर्ण
+	intel_de_write(dev_priv, GEN9_CLKGATE_DIS_4, val);
+}
 
-अटल u32 get_reserved(काष्ठा पूर्णांकel_gmbus *bus)
-अणु
-	काष्ठा drm_i915_निजी *i915 = bus->dev_priv;
-	काष्ठा पूर्णांकel_uncore *uncore = &i915->uncore;
+static u32 get_reserved(struct intel_gmbus *bus)
+{
+	struct drm_i915_private *i915 = bus->dev_priv;
+	struct intel_uncore *uncore = &i915->uncore;
 	u32 reserved = 0;
 
 	/* On most chips, these bits must be preserved in software. */
-	अगर (!IS_I830(i915) && !IS_I845G(i915))
-		reserved = पूर्णांकel_uncore_पढ़ो_notrace(uncore, bus->gpio_reg) &
+	if (!IS_I830(i915) && !IS_I845G(i915))
+		reserved = intel_uncore_read_notrace(uncore, bus->gpio_reg) &
 			   (GPIO_DATA_PULLUP_DISABLE |
 			    GPIO_CLOCK_PULLUP_DISABLE);
 
-	वापस reserved;
-पूर्ण
+	return reserved;
+}
 
-अटल पूर्णांक get_घड़ी(व्योम *data)
-अणु
-	काष्ठा पूर्णांकel_gmbus *bus = data;
-	काष्ठा पूर्णांकel_uncore *uncore = &bus->dev_priv->uncore;
+static int get_clock(void *data)
+{
+	struct intel_gmbus *bus = data;
+	struct intel_uncore *uncore = &bus->dev_priv->uncore;
 	u32 reserved = get_reserved(bus);
 
-	पूर्णांकel_uncore_ग_लिखो_notrace(uncore,
+	intel_uncore_write_notrace(uncore,
 				   bus->gpio_reg,
-				   reserved | GPIO_CLOCK_सूची_MASK);
-	पूर्णांकel_uncore_ग_लिखो_notrace(uncore, bus->gpio_reg, reserved);
+				   reserved | GPIO_CLOCK_DIR_MASK);
+	intel_uncore_write_notrace(uncore, bus->gpio_reg, reserved);
 
-	वापस (पूर्णांकel_uncore_पढ़ो_notrace(uncore, bus->gpio_reg) &
+	return (intel_uncore_read_notrace(uncore, bus->gpio_reg) &
 		GPIO_CLOCK_VAL_IN) != 0;
-पूर्ण
+}
 
-अटल पूर्णांक get_data(व्योम *data)
-अणु
-	काष्ठा पूर्णांकel_gmbus *bus = data;
-	काष्ठा पूर्णांकel_uncore *uncore = &bus->dev_priv->uncore;
+static int get_data(void *data)
+{
+	struct intel_gmbus *bus = data;
+	struct intel_uncore *uncore = &bus->dev_priv->uncore;
 	u32 reserved = get_reserved(bus);
 
-	पूर्णांकel_uncore_ग_लिखो_notrace(uncore,
+	intel_uncore_write_notrace(uncore,
 				   bus->gpio_reg,
-				   reserved | GPIO_DATA_सूची_MASK);
-	पूर्णांकel_uncore_ग_लिखो_notrace(uncore, bus->gpio_reg, reserved);
+				   reserved | GPIO_DATA_DIR_MASK);
+	intel_uncore_write_notrace(uncore, bus->gpio_reg, reserved);
 
-	वापस (पूर्णांकel_uncore_पढ़ो_notrace(uncore, bus->gpio_reg) &
+	return (intel_uncore_read_notrace(uncore, bus->gpio_reg) &
 		GPIO_DATA_VAL_IN) != 0;
-पूर्ण
+}
 
-अटल व्योम set_घड़ी(व्योम *data, पूर्णांक state_high)
-अणु
-	काष्ठा पूर्णांकel_gmbus *bus = data;
-	काष्ठा पूर्णांकel_uncore *uncore = &bus->dev_priv->uncore;
+static void set_clock(void *data, int state_high)
+{
+	struct intel_gmbus *bus = data;
+	struct intel_uncore *uncore = &bus->dev_priv->uncore;
 	u32 reserved = get_reserved(bus);
-	u32 घड़ी_bits;
+	u32 clock_bits;
 
-	अगर (state_high)
-		घड़ी_bits = GPIO_CLOCK_सूची_IN | GPIO_CLOCK_सूची_MASK;
-	अन्यथा
-		घड़ी_bits = GPIO_CLOCK_सूची_OUT | GPIO_CLOCK_सूची_MASK |
+	if (state_high)
+		clock_bits = GPIO_CLOCK_DIR_IN | GPIO_CLOCK_DIR_MASK;
+	else
+		clock_bits = GPIO_CLOCK_DIR_OUT | GPIO_CLOCK_DIR_MASK |
 			     GPIO_CLOCK_VAL_MASK;
 
-	पूर्णांकel_uncore_ग_लिखो_notrace(uncore,
+	intel_uncore_write_notrace(uncore,
 				   bus->gpio_reg,
-				   reserved | घड़ी_bits);
-	पूर्णांकel_uncore_posting_पढ़ो(uncore, bus->gpio_reg);
-पूर्ण
+				   reserved | clock_bits);
+	intel_uncore_posting_read(uncore, bus->gpio_reg);
+}
 
-अटल व्योम set_data(व्योम *data, पूर्णांक state_high)
-अणु
-	काष्ठा पूर्णांकel_gmbus *bus = data;
-	काष्ठा पूर्णांकel_uncore *uncore = &bus->dev_priv->uncore;
+static void set_data(void *data, int state_high)
+{
+	struct intel_gmbus *bus = data;
+	struct intel_uncore *uncore = &bus->dev_priv->uncore;
 	u32 reserved = get_reserved(bus);
 	u32 data_bits;
 
-	अगर (state_high)
-		data_bits = GPIO_DATA_सूची_IN | GPIO_DATA_सूची_MASK;
-	अन्यथा
-		data_bits = GPIO_DATA_सूची_OUT | GPIO_DATA_सूची_MASK |
+	if (state_high)
+		data_bits = GPIO_DATA_DIR_IN | GPIO_DATA_DIR_MASK;
+	else
+		data_bits = GPIO_DATA_DIR_OUT | GPIO_DATA_DIR_MASK |
 			GPIO_DATA_VAL_MASK;
 
-	पूर्णांकel_uncore_ग_लिखो_notrace(uncore, bus->gpio_reg, reserved | data_bits);
-	पूर्णांकel_uncore_posting_पढ़ो(uncore, bus->gpio_reg);
-पूर्ण
+	intel_uncore_write_notrace(uncore, bus->gpio_reg, reserved | data_bits);
+	intel_uncore_posting_read(uncore, bus->gpio_reg);
+}
 
-अटल पूर्णांक
-पूर्णांकel_gpio_pre_xfer(काष्ठा i2c_adapter *adapter)
-अणु
-	काष्ठा पूर्णांकel_gmbus *bus = container_of(adapter,
-					       काष्ठा पूर्णांकel_gmbus,
+static int
+intel_gpio_pre_xfer(struct i2c_adapter *adapter)
+{
+	struct intel_gmbus *bus = container_of(adapter,
+					       struct intel_gmbus,
 					       adapter);
-	काष्ठा drm_i915_निजी *dev_priv = bus->dev_priv;
+	struct drm_i915_private *dev_priv = bus->dev_priv;
 
-	पूर्णांकel_gmbus_reset(dev_priv);
+	intel_gmbus_reset(dev_priv);
 
-	अगर (IS_PINEVIEW(dev_priv))
-		pnv_gmbus_घड़ी_gating(dev_priv, false);
+	if (IS_PINEVIEW(dev_priv))
+		pnv_gmbus_clock_gating(dev_priv, false);
 
 	set_data(bus, 1);
-	set_घड़ी(bus, 1);
+	set_clock(bus, 1);
 	udelay(I2C_RISEFALL_TIME);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-पूर्णांकel_gpio_post_xfer(काष्ठा i2c_adapter *adapter)
-अणु
-	काष्ठा पूर्णांकel_gmbus *bus = container_of(adapter,
-					       काष्ठा पूर्णांकel_gmbus,
+static void
+intel_gpio_post_xfer(struct i2c_adapter *adapter)
+{
+	struct intel_gmbus *bus = container_of(adapter,
+					       struct intel_gmbus,
 					       adapter);
-	काष्ठा drm_i915_निजी *dev_priv = bus->dev_priv;
+	struct drm_i915_private *dev_priv = bus->dev_priv;
 
 	set_data(bus, 1);
-	set_घड़ी(bus, 1);
+	set_clock(bus, 1);
 
-	अगर (IS_PINEVIEW(dev_priv))
-		pnv_gmbus_घड़ी_gating(dev_priv, true);
-पूर्ण
+	if (IS_PINEVIEW(dev_priv))
+		pnv_gmbus_clock_gating(dev_priv, true);
+}
 
-अटल व्योम
-पूर्णांकel_gpio_setup(काष्ठा पूर्णांकel_gmbus *bus, अचिन्हित पूर्णांक pin)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = bus->dev_priv;
-	काष्ठा i2c_algo_bit_data *algo;
+static void
+intel_gpio_setup(struct intel_gmbus *bus, unsigned int pin)
+{
+	struct drm_i915_private *dev_priv = bus->dev_priv;
+	struct i2c_algo_bit_data *algo;
 
 	algo = &bus->bit_algo;
 
 	bus->gpio_reg = GPIO(get_gmbus_pin(dev_priv, pin)->gpio);
 	bus->adapter.algo_data = algo;
 	algo->setsda = set_data;
-	algo->setscl = set_घड़ी;
-	algo->माला_लोda = get_data;
-	algo->माला_लोcl = get_घड़ी;
-	algo->pre_xfer = पूर्णांकel_gpio_pre_xfer;
-	algo->post_xfer = पूर्णांकel_gpio_post_xfer;
+	algo->setscl = set_clock;
+	algo->getsda = get_data;
+	algo->getscl = get_clock;
+	algo->pre_xfer = intel_gpio_pre_xfer;
+	algo->post_xfer = intel_gpio_post_xfer;
 	algo->udelay = I2C_RISEFALL_TIME;
-	algo->समयout = usecs_to_jअगरfies(2200);
+	algo->timeout = usecs_to_jiffies(2200);
 	algo->data = bus;
-पूर्ण
+}
 
-अटल पूर्णांक gmbus_रुको(काष्ठा drm_i915_निजी *dev_priv, u32 status, u32 irq_en)
-अणु
-	DEFINE_WAIT(रुको);
+static int gmbus_wait(struct drm_i915_private *dev_priv, u32 status, u32 irq_en)
+{
+	DEFINE_WAIT(wait);
 	u32 gmbus2;
-	पूर्णांक ret;
+	int ret;
 
 	/* Important: The hw handles only the first bit, so set only one! Since
-	 * we also need to check क्रम NAKs besides the hw पढ़ोy/idle संकेत, we
+	 * we also need to check for NAKs besides the hw ready/idle signal, we
 	 * need to wake up periodically and check that ourselves.
 	 */
-	अगर (!HAS_GMBUS_IRQ(dev_priv))
+	if (!HAS_GMBUS_IRQ(dev_priv))
 		irq_en = 0;
 
-	add_रुको_queue(&dev_priv->gmbus_रुको_queue, &रुको);
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, GMBUS4, irq_en);
+	add_wait_queue(&dev_priv->gmbus_wait_queue, &wait);
+	intel_de_write_fw(dev_priv, GMBUS4, irq_en);
 
 	status |= GMBUS_SATOER;
-	ret = रुको_क्रम_us((gmbus2 = पूर्णांकel_de_पढ़ो_fw(dev_priv, GMBUS2)) & status,
+	ret = wait_for_us((gmbus2 = intel_de_read_fw(dev_priv, GMBUS2)) & status,
 			  2);
-	अगर (ret)
-		ret = रुको_क्रम((gmbus2 = पूर्णांकel_de_पढ़ो_fw(dev_priv, GMBUS2)) & status,
+	if (ret)
+		ret = wait_for((gmbus2 = intel_de_read_fw(dev_priv, GMBUS2)) & status,
 			       50);
 
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, GMBUS4, 0);
-	हटाओ_रुको_queue(&dev_priv->gmbus_रुको_queue, &रुको);
+	intel_de_write_fw(dev_priv, GMBUS4, 0);
+	remove_wait_queue(&dev_priv->gmbus_wait_queue, &wait);
 
-	अगर (gmbus2 & GMBUS_SATOER)
-		वापस -ENXIO;
+	if (gmbus2 & GMBUS_SATOER)
+		return -ENXIO;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-gmbus_रुको_idle(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	DEFINE_WAIT(रुको);
+static int
+gmbus_wait_idle(struct drm_i915_private *dev_priv)
+{
+	DEFINE_WAIT(wait);
 	u32 irq_enable;
-	पूर्णांक ret;
+	int ret;
 
 	/* Important: The hw handles only the first bit, so set only one! */
 	irq_enable = 0;
-	अगर (HAS_GMBUS_IRQ(dev_priv))
+	if (HAS_GMBUS_IRQ(dev_priv))
 		irq_enable = GMBUS_IDLE_EN;
 
-	add_रुको_queue(&dev_priv->gmbus_रुको_queue, &रुको);
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, GMBUS4, irq_enable);
+	add_wait_queue(&dev_priv->gmbus_wait_queue, &wait);
+	intel_de_write_fw(dev_priv, GMBUS4, irq_enable);
 
-	ret = पूर्णांकel_रुको_क्रम_रेजिस्टर_fw(&dev_priv->uncore,
+	ret = intel_wait_for_register_fw(&dev_priv->uncore,
 					 GMBUS2, GMBUS_ACTIVE, 0,
 					 10);
 
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, GMBUS4, 0);
-	हटाओ_रुको_queue(&dev_priv->gmbus_रुको_queue, &रुको);
+	intel_de_write_fw(dev_priv, GMBUS4, 0);
+	remove_wait_queue(&dev_priv->gmbus_wait_queue, &wait);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अचिन्हित पूर्णांक gmbus_max_xfer_size(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	वापस DISPLAY_VER(dev_priv) >= 9 ? GEN9_GMBUS_BYTE_COUNT_MAX :
+static unsigned int gmbus_max_xfer_size(struct drm_i915_private *dev_priv)
+{
+	return DISPLAY_VER(dev_priv) >= 9 ? GEN9_GMBUS_BYTE_COUNT_MAX :
 	       GMBUS_BYTE_COUNT_MAX;
-पूर्ण
+}
 
-अटल पूर्णांक
-gmbus_xfer_पढ़ो_chunk(काष्ठा drm_i915_निजी *dev_priv,
-		      अचिन्हित लघु addr, u8 *buf, अचिन्हित पूर्णांक len,
+static int
+gmbus_xfer_read_chunk(struct drm_i915_private *dev_priv,
+		      unsigned short addr, u8 *buf, unsigned int len,
 		      u32 gmbus0_reg, u32 gmbus1_index)
-अणु
-	अचिन्हित पूर्णांक size = len;
-	bool burst_पढ़ो = len > gmbus_max_xfer_size(dev_priv);
+{
+	unsigned int size = len;
+	bool burst_read = len > gmbus_max_xfer_size(dev_priv);
 	bool extra_byte_added = false;
 
-	अगर (burst_पढ़ो) अणु
+	if (burst_read) {
 		/*
-		 * As per HW Spec, क्रम 512Bytes need to पढ़ो extra Byte and
-		 * Ignore the extra byte पढ़ो.
+		 * As per HW Spec, for 512Bytes need to read extra Byte and
+		 * Ignore the extra byte read.
 		 */
-		अगर (len == 512) अणु
+		if (len == 512) {
 			extra_byte_added = true;
 			len++;
-		पूर्ण
+		}
 		size = len % 256 + 256;
-		पूर्णांकel_de_ग_लिखो_fw(dev_priv, GMBUS0,
+		intel_de_write_fw(dev_priv, GMBUS0,
 				  gmbus0_reg | GMBUS_BYTE_CNT_OVERRIDE);
-	पूर्ण
+	}
 
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, GMBUS1,
+	intel_de_write_fw(dev_priv, GMBUS1,
 			  gmbus1_index | GMBUS_CYCLE_WAIT | (size << GMBUS_BYTE_COUNT_SHIFT) | (addr << GMBUS_SLAVE_ADDR_SHIFT) | GMBUS_SLAVE_READ | GMBUS_SW_RDY);
-	जबतक (len) अणु
-		पूर्णांक ret;
+	while (len) {
+		int ret;
 		u32 val, loop = 0;
 
-		ret = gmbus_रुको(dev_priv, GMBUS_HW_RDY, GMBUS_HW_RDY_EN);
-		अगर (ret)
-			वापस ret;
+		ret = gmbus_wait(dev_priv, GMBUS_HW_RDY, GMBUS_HW_RDY_EN);
+		if (ret)
+			return ret;
 
-		val = पूर्णांकel_de_पढ़ो_fw(dev_priv, GMBUS3);
-		करो अणु
-			अगर (extra_byte_added && len == 1)
-				अवरोध;
+		val = intel_de_read_fw(dev_priv, GMBUS3);
+		do {
+			if (extra_byte_added && len == 1)
+				break;
 
 			*buf++ = val & 0xff;
 			val >>= 8;
-		पूर्ण जबतक (--len && ++loop < 4);
+		} while (--len && ++loop < 4);
 
-		अगर (burst_पढ़ो && len == size - 4)
+		if (burst_read && len == size - 4)
 			/* Reset the override bit */
-			पूर्णांकel_de_ग_लिखो_fw(dev_priv, GMBUS0, gmbus0_reg);
-	पूर्ण
+			intel_de_write_fw(dev_priv, GMBUS0, gmbus0_reg);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * HW spec says that 512Bytes in Burst पढ़ो need special treaपंचांगent.
- * But it करोesn't talk about other multiple of 256Bytes. And couldn't locate
- * an I2C slave, which supports such a lengthy burst पढ़ो too क्रम experiments.
+ * HW spec says that 512Bytes in Burst read need special treatment.
+ * But it doesn't talk about other multiple of 256Bytes. And couldn't locate
+ * an I2C slave, which supports such a lengthy burst read too for experiments.
  *
- * So until things get clarअगरied on HW support, to aव्योम the burst पढ़ो length
- * in fold of 256Bytes except 512, max burst पढ़ो length is fixed at 767Bytes.
+ * So until things get clarified on HW support, to avoid the burst read length
+ * in fold of 256Bytes except 512, max burst read length is fixed at 767Bytes.
  */
-#घोषणा INTEL_GMBUS_BURST_READ_MAX_LEN		767U
+#define INTEL_GMBUS_BURST_READ_MAX_LEN		767U
 
-अटल पूर्णांक
-gmbus_xfer_पढ़ो(काष्ठा drm_i915_निजी *dev_priv, काष्ठा i2c_msg *msg,
+static int
+gmbus_xfer_read(struct drm_i915_private *dev_priv, struct i2c_msg *msg,
 		u32 gmbus0_reg, u32 gmbus1_index)
-अणु
+{
 	u8 *buf = msg->buf;
-	अचिन्हित पूर्णांक rx_size = msg->len;
-	अचिन्हित पूर्णांक len;
-	पूर्णांक ret;
+	unsigned int rx_size = msg->len;
+	unsigned int len;
+	int ret;
 
-	करो अणु
-		अगर (HAS_GMBUS_BURST_READ(dev_priv))
+	do {
+		if (HAS_GMBUS_BURST_READ(dev_priv))
 			len = min(rx_size, INTEL_GMBUS_BURST_READ_MAX_LEN);
-		अन्यथा
+		else
 			len = min(rx_size, gmbus_max_xfer_size(dev_priv));
 
-		ret = gmbus_xfer_पढ़ो_chunk(dev_priv, msg->addr, buf, len,
+		ret = gmbus_xfer_read_chunk(dev_priv, msg->addr, buf, len,
 					    gmbus0_reg, gmbus1_index);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		rx_size -= len;
 		buf += len;
-	पूर्ण जबतक (rx_size != 0);
+	} while (rx_size != 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-gmbus_xfer_ग_लिखो_chunk(काष्ठा drm_i915_निजी *dev_priv,
-		       अचिन्हित लघु addr, u8 *buf, अचिन्हित पूर्णांक len,
+static int
+gmbus_xfer_write_chunk(struct drm_i915_private *dev_priv,
+		       unsigned short addr, u8 *buf, unsigned int len,
 		       u32 gmbus1_index)
-अणु
-	अचिन्हित पूर्णांक chunk_size = len;
+{
+	unsigned int chunk_size = len;
 	u32 val, loop;
 
 	val = loop = 0;
-	जबतक (len && loop < 4) अणु
+	while (len && loop < 4) {
 		val |= *buf++ << (8 * loop++);
 		len -= 1;
-	पूर्ण
+	}
 
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, GMBUS3, val);
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, GMBUS1,
+	intel_de_write_fw(dev_priv, GMBUS3, val);
+	intel_de_write_fw(dev_priv, GMBUS1,
 			  gmbus1_index | GMBUS_CYCLE_WAIT | (chunk_size << GMBUS_BYTE_COUNT_SHIFT) | (addr << GMBUS_SLAVE_ADDR_SHIFT) | GMBUS_SLAVE_WRITE | GMBUS_SW_RDY);
-	जबतक (len) अणु
-		पूर्णांक ret;
+	while (len) {
+		int ret;
 
 		val = loop = 0;
-		करो अणु
+		do {
 			val |= *buf++ << (8 * loop);
-		पूर्ण जबतक (--len && ++loop < 4);
+		} while (--len && ++loop < 4);
 
-		पूर्णांकel_de_ग_लिखो_fw(dev_priv, GMBUS3, val);
+		intel_de_write_fw(dev_priv, GMBUS3, val);
 
-		ret = gmbus_रुको(dev_priv, GMBUS_HW_RDY, GMBUS_HW_RDY_EN);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		ret = gmbus_wait(dev_priv, GMBUS_HW_RDY, GMBUS_HW_RDY_EN);
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-gmbus_xfer_ग_लिखो(काष्ठा drm_i915_निजी *dev_priv, काष्ठा i2c_msg *msg,
+static int
+gmbus_xfer_write(struct drm_i915_private *dev_priv, struct i2c_msg *msg,
 		 u32 gmbus1_index)
-अणु
+{
 	u8 *buf = msg->buf;
-	अचिन्हित पूर्णांक tx_size = msg->len;
-	अचिन्हित पूर्णांक len;
-	पूर्णांक ret;
+	unsigned int tx_size = msg->len;
+	unsigned int len;
+	int ret;
 
-	करो अणु
+	do {
 		len = min(tx_size, gmbus_max_xfer_size(dev_priv));
 
-		ret = gmbus_xfer_ग_लिखो_chunk(dev_priv, msg->addr, buf, len,
+		ret = gmbus_xfer_write_chunk(dev_priv, msg->addr, buf, len,
 					     gmbus1_index);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		buf += len;
 		tx_size -= len;
-	पूर्ण जबतक (tx_size != 0);
+	} while (tx_size != 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * The gmbus controller can combine a 1 or 2 byte ग_लिखो with another पढ़ो/ग_लिखो
+ * The gmbus controller can combine a 1 or 2 byte write with another read/write
  * that immediately follows it by using an "INDEX" cycle.
  */
-अटल bool
-gmbus_is_index_xfer(काष्ठा i2c_msg *msgs, पूर्णांक i, पूर्णांक num)
-अणु
-	वापस (i + 1 < num &&
+static bool
+gmbus_is_index_xfer(struct i2c_msg *msgs, int i, int num)
+{
+	return (i + 1 < num &&
 		msgs[i].addr == msgs[i + 1].addr &&
 		!(msgs[i].flags & I2C_M_RD) &&
 		(msgs[i].len == 1 || msgs[i].len == 2) &&
 		msgs[i + 1].len > 0);
-पूर्ण
+}
 
-अटल पूर्णांक
-gmbus_index_xfer(काष्ठा drm_i915_निजी *dev_priv, काष्ठा i2c_msg *msgs,
+static int
+gmbus_index_xfer(struct drm_i915_private *dev_priv, struct i2c_msg *msgs,
 		 u32 gmbus0_reg)
-अणु
+{
 	u32 gmbus1_index = 0;
 	u32 gmbus5 = 0;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (msgs[0].len == 2)
+	if (msgs[0].len == 2)
 		gmbus5 = GMBUS_2BYTE_INDEX_EN |
 			 msgs[0].buf[1] | (msgs[0].buf[0] << 8);
-	अगर (msgs[0].len == 1)
+	if (msgs[0].len == 1)
 		gmbus1_index = GMBUS_CYCLE_INDEX |
 			       (msgs[0].buf[0] << GMBUS_SLAVE_INDEX_SHIFT);
 
 	/* GMBUS5 holds 16-bit index */
-	अगर (gmbus5)
-		पूर्णांकel_de_ग_लिखो_fw(dev_priv, GMBUS5, gmbus5);
+	if (gmbus5)
+		intel_de_write_fw(dev_priv, GMBUS5, gmbus5);
 
-	अगर (msgs[1].flags & I2C_M_RD)
-		ret = gmbus_xfer_पढ़ो(dev_priv, &msgs[1], gmbus0_reg,
+	if (msgs[1].flags & I2C_M_RD)
+		ret = gmbus_xfer_read(dev_priv, &msgs[1], gmbus0_reg,
 				      gmbus1_index);
-	अन्यथा
-		ret = gmbus_xfer_ग_लिखो(dev_priv, &msgs[1], gmbus1_index);
+	else
+		ret = gmbus_xfer_write(dev_priv, &msgs[1], gmbus1_index);
 
 	/* Clear GMBUS5 after each index transfer */
-	अगर (gmbus5)
-		पूर्णांकel_de_ग_लिखो_fw(dev_priv, GMBUS5, 0);
+	if (gmbus5)
+		intel_de_write_fw(dev_priv, GMBUS5, 0);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-करो_gmbus_xfer(काष्ठा i2c_adapter *adapter, काष्ठा i2c_msg *msgs, पूर्णांक num,
+static int
+do_gmbus_xfer(struct i2c_adapter *adapter, struct i2c_msg *msgs, int num,
 	      u32 gmbus0_source)
-अणु
-	काष्ठा पूर्णांकel_gmbus *bus = container_of(adapter,
-					       काष्ठा पूर्णांकel_gmbus,
+{
+	struct intel_gmbus *bus = container_of(adapter,
+					       struct intel_gmbus,
 					       adapter);
-	काष्ठा drm_i915_निजी *dev_priv = bus->dev_priv;
-	पूर्णांक i = 0, inc, try = 0;
-	पूर्णांक ret = 0;
+	struct drm_i915_private *dev_priv = bus->dev_priv;
+	int i = 0, inc, try = 0;
+	int ret = 0;
 
 	/* Display WA #0868: skl,bxt,kbl,cfl,glk,cnl */
-	अगर (IS_GEN9_LP(dev_priv))
-		bxt_gmbus_घड़ी_gating(dev_priv, false);
-	अन्यथा अगर (HAS_PCH_SPT(dev_priv) || HAS_PCH_CNP(dev_priv))
-		pch_gmbus_घड़ी_gating(dev_priv, false);
+	if (IS_GEN9_LP(dev_priv))
+		bxt_gmbus_clock_gating(dev_priv, false);
+	else if (HAS_PCH_SPT(dev_priv) || HAS_PCH_CNP(dev_priv))
+		pch_gmbus_clock_gating(dev_priv, false);
 
 retry:
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, GMBUS0, gmbus0_source | bus->reg0);
+	intel_de_write_fw(dev_priv, GMBUS0, gmbus0_source | bus->reg0);
 
-	क्रम (; i < num; i += inc) अणु
+	for (; i < num; i += inc) {
 		inc = 1;
-		अगर (gmbus_is_index_xfer(msgs, i, num)) अणु
+		if (gmbus_is_index_xfer(msgs, i, num)) {
 			ret = gmbus_index_xfer(dev_priv, &msgs[i],
 					       gmbus0_source | bus->reg0);
 			inc = 2; /* an index transmission is two msgs */
-		पूर्ण अन्यथा अगर (msgs[i].flags & I2C_M_RD) अणु
-			ret = gmbus_xfer_पढ़ो(dev_priv, &msgs[i],
+		} else if (msgs[i].flags & I2C_M_RD) {
+			ret = gmbus_xfer_read(dev_priv, &msgs[i],
 					      gmbus0_source | bus->reg0, 0);
-		पूर्ण अन्यथा अणु
-			ret = gmbus_xfer_ग_लिखो(dev_priv, &msgs[i], 0);
-		पूर्ण
+		} else {
+			ret = gmbus_xfer_write(dev_priv, &msgs[i], 0);
+		}
 
-		अगर (!ret)
-			ret = gmbus_रुको(dev_priv,
+		if (!ret)
+			ret = gmbus_wait(dev_priv,
 					 GMBUS_HW_WAIT_PHASE, GMBUS_HW_WAIT_EN);
-		अगर (ret == -ETIMEDOUT)
-			जाओ समयout;
-		अन्यथा अगर (ret)
-			जाओ clear_err;
-	पूर्ण
+		if (ret == -ETIMEDOUT)
+			goto timeout;
+		else if (ret)
+			goto clear_err;
+	}
 
 	/* Generate a STOP condition on the bus. Note that gmbus can't generata
-	 * a STOP on the very first cycle. To simplअगरy the code we
+	 * a STOP on the very first cycle. To simplify the code we
 	 * unconditionally generate the STOP condition with an additional gmbus
 	 * cycle. */
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, GMBUS1, GMBUS_CYCLE_STOP | GMBUS_SW_RDY);
+	intel_de_write_fw(dev_priv, GMBUS1, GMBUS_CYCLE_STOP | GMBUS_SW_RDY);
 
-	/* Mark the GMBUS पूर्णांकerface as disabled after रुकोing क्रम idle.
+	/* Mark the GMBUS interface as disabled after waiting for idle.
 	 * We will re-enable it at the start of the next xfer,
 	 * till then let it sleep.
 	 */
-	अगर (gmbus_रुको_idle(dev_priv)) अणु
+	if (gmbus_wait_idle(dev_priv)) {
 		drm_dbg_kms(&dev_priv->drm,
 			    "GMBUS [%s] timed out waiting for idle\n",
 			    adapter->name);
 		ret = -ETIMEDOUT;
-	पूर्ण
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, GMBUS0, 0);
+	}
+	intel_de_write_fw(dev_priv, GMBUS0, 0);
 	ret = ret ?: i;
-	जाओ out;
+	goto out;
 
 clear_err:
 	/*
-	 * Wait क्रम bus to IDLE beक्रमe clearing NAK.
-	 * If we clear the NAK जबतक bus is still active, then it will stay
+	 * Wait for bus to IDLE before clearing NAK.
+	 * If we clear the NAK while bus is still active, then it will stay
 	 * active and the next transaction may fail.
 	 *
 	 * If no ACK is received during the address phase of a transaction, the
-	 * adapter must report -ENXIO. It is not clear what to वापस अगर no ACK
-	 * is received at other बार. But we have to be careful to not वापस
+	 * adapter must report -ENXIO. It is not clear what to return if no ACK
+	 * is received at other times. But we have to be careful to not return
 	 * spurious -ENXIO because that will prevent i2c and drm edid functions
-	 * from retrying. So वापस -ENXIO only when gmbus properly quiescents -
+	 * from retrying. So return -ENXIO only when gmbus properly quiescents -
 	 * timing out seems to happen when there _is_ a ddc chip present, but
 	 * it's slow responding and only answers on the 2nd retry.
 	 */
 	ret = -ENXIO;
-	अगर (gmbus_रुको_idle(dev_priv)) अणु
+	if (gmbus_wait_idle(dev_priv)) {
 		drm_dbg_kms(&dev_priv->drm,
 			    "GMBUS [%s] timed out after NAK\n",
 			    adapter->name);
 		ret = -ETIMEDOUT;
-	पूर्ण
+	}
 
 	/* Toggle the Software Clear Interrupt bit. This has the effect
 	 * of resetting the GMBUS controller and so clearing the
-	 * BUS_ERROR उठाओd by the slave's NAK.
+	 * BUS_ERROR raised by the slave's NAK.
 	 */
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, GMBUS1, GMBUS_SW_CLR_INT);
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, GMBUS1, 0);
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, GMBUS0, 0);
+	intel_de_write_fw(dev_priv, GMBUS1, GMBUS_SW_CLR_INT);
+	intel_de_write_fw(dev_priv, GMBUS1, 0);
+	intel_de_write_fw(dev_priv, GMBUS0, 0);
 
 	drm_dbg_kms(&dev_priv->drm, "GMBUS [%s] NAK for addr: %04x %c(%d)\n",
 		    adapter->name, msgs[i].addr,
 		    (msgs[i].flags & I2C_M_RD) ? 'r' : 'w', msgs[i].len);
 
 	/*
-	 * Passive adapters someबार NAK the first probe. Retry the first
-	 * message once on -ENXIO क्रम GMBUS transfers; the bit banging algorithm
-	 * has retries पूर्णांकernally. See also the retry loop in
-	 * drm_करो_probe_ddc_edid, which bails out on the first -ENXIO.
+	 * Passive adapters sometimes NAK the first probe. Retry the first
+	 * message once on -ENXIO for GMBUS transfers; the bit banging algorithm
+	 * has retries internally. See also the retry loop in
+	 * drm_do_probe_ddc_edid, which bails out on the first -ENXIO.
 	 */
-	अगर (ret == -ENXIO && i == 0 && try++ == 0) अणु
+	if (ret == -ENXIO && i == 0 && try++ == 0) {
 		drm_dbg_kms(&dev_priv->drm,
 			    "GMBUS [%s] NAK on first message, retry\n",
 			    adapter->name);
-		जाओ retry;
-	पूर्ण
+		goto retry;
+	}
 
-	जाओ out;
+	goto out;
 
-समयout:
+timeout:
 	drm_dbg_kms(&dev_priv->drm,
 		    "GMBUS [%s] timed out, falling back to bit banging on pin %d\n",
 		    bus->adapter.name, bus->reg0 & 0xff);
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, GMBUS0, 0);
+	intel_de_write_fw(dev_priv, GMBUS0, 0);
 
 	/*
 	 * Hardware may not support GMBUS over these pins? Try GPIO bitbanging
@@ -714,163 +713,163 @@ clear_err:
 
 out:
 	/* Display WA #0868: skl,bxt,kbl,cfl,glk,cnl */
-	अगर (IS_GEN9_LP(dev_priv))
-		bxt_gmbus_घड़ी_gating(dev_priv, true);
-	अन्यथा अगर (HAS_PCH_SPT(dev_priv) || HAS_PCH_CNP(dev_priv))
-		pch_gmbus_घड़ी_gating(dev_priv, true);
+	if (IS_GEN9_LP(dev_priv))
+		bxt_gmbus_clock_gating(dev_priv, true);
+	else if (HAS_PCH_SPT(dev_priv) || HAS_PCH_CNP(dev_priv))
+		pch_gmbus_clock_gating(dev_priv, true);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-gmbus_xfer(काष्ठा i2c_adapter *adapter, काष्ठा i2c_msg *msgs, पूर्णांक num)
-अणु
-	काष्ठा पूर्णांकel_gmbus *bus =
-		container_of(adapter, काष्ठा पूर्णांकel_gmbus, adapter);
-	काष्ठा drm_i915_निजी *dev_priv = bus->dev_priv;
-	पूर्णांकel_wakeref_t wakeref;
-	पूर्णांक ret;
+static int
+gmbus_xfer(struct i2c_adapter *adapter, struct i2c_msg *msgs, int num)
+{
+	struct intel_gmbus *bus =
+		container_of(adapter, struct intel_gmbus, adapter);
+	struct drm_i915_private *dev_priv = bus->dev_priv;
+	intel_wakeref_t wakeref;
+	int ret;
 
-	wakeref = पूर्णांकel_display_घातer_get(dev_priv, POWER_DOMAIN_GMBUS);
+	wakeref = intel_display_power_get(dev_priv, POWER_DOMAIN_GMBUS);
 
-	अगर (bus->क्रमce_bit) अणु
+	if (bus->force_bit) {
 		ret = i2c_bit_algo.master_xfer(adapter, msgs, num);
-		अगर (ret < 0)
-			bus->क्रमce_bit &= ~GMBUS_FORCE_BIT_RETRY;
-	पूर्ण अन्यथा अणु
-		ret = करो_gmbus_xfer(adapter, msgs, num, 0);
-		अगर (ret == -EAGAIN)
-			bus->क्रमce_bit |= GMBUS_FORCE_BIT_RETRY;
-	पूर्ण
+		if (ret < 0)
+			bus->force_bit &= ~GMBUS_FORCE_BIT_RETRY;
+	} else {
+		ret = do_gmbus_xfer(adapter, msgs, num, 0);
+		if (ret == -EAGAIN)
+			bus->force_bit |= GMBUS_FORCE_BIT_RETRY;
+	}
 
-	पूर्णांकel_display_घातer_put(dev_priv, POWER_DOMAIN_GMBUS, wakeref);
+	intel_display_power_put(dev_priv, POWER_DOMAIN_GMBUS, wakeref);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक पूर्णांकel_gmbus_output_aksv(काष्ठा i2c_adapter *adapter)
-अणु
-	काष्ठा पूर्णांकel_gmbus *bus =
-		container_of(adapter, काष्ठा पूर्णांकel_gmbus, adapter);
-	काष्ठा drm_i915_निजी *dev_priv = bus->dev_priv;
+int intel_gmbus_output_aksv(struct i2c_adapter *adapter)
+{
+	struct intel_gmbus *bus =
+		container_of(adapter, struct intel_gmbus, adapter);
+	struct drm_i915_private *dev_priv = bus->dev_priv;
 	u8 cmd = DRM_HDCP_DDC_AKSV;
-	u8 buf[DRM_HDCP_KSV_LEN] = अणु 0 पूर्ण;
-	काष्ठा i2c_msg msgs[] = अणु
-		अणु
+	u8 buf[DRM_HDCP_KSV_LEN] = { 0 };
+	struct i2c_msg msgs[] = {
+		{
 			.addr = DRM_HDCP_DDC_ADDR,
 			.flags = 0,
-			.len = माप(cmd),
+			.len = sizeof(cmd),
 			.buf = &cmd,
-		पूर्ण,
-		अणु
+		},
+		{
 			.addr = DRM_HDCP_DDC_ADDR,
 			.flags = 0,
-			.len = माप(buf),
+			.len = sizeof(buf),
 			.buf = buf,
-		पूर्ण
-	पूर्ण;
-	पूर्णांकel_wakeref_t wakeref;
-	पूर्णांक ret;
+		}
+	};
+	intel_wakeref_t wakeref;
+	int ret;
 
-	wakeref = पूर्णांकel_display_घातer_get(dev_priv, POWER_DOMAIN_GMBUS);
+	wakeref = intel_display_power_get(dev_priv, POWER_DOMAIN_GMBUS);
 	mutex_lock(&dev_priv->gmbus_mutex);
 
 	/*
-	 * In order to output Aksv to the receiver, use an indexed ग_लिखो to
+	 * In order to output Aksv to the receiver, use an indexed write to
 	 * pass the i2c command, and tell GMBUS to use the HW-provided value
-	 * instead of sourcing GMBUS3 क्रम the data.
+	 * instead of sourcing GMBUS3 for the data.
 	 */
-	ret = करो_gmbus_xfer(adapter, msgs, ARRAY_SIZE(msgs), GMBUS_AKSV_SELECT);
+	ret = do_gmbus_xfer(adapter, msgs, ARRAY_SIZE(msgs), GMBUS_AKSV_SELECT);
 
 	mutex_unlock(&dev_priv->gmbus_mutex);
-	पूर्णांकel_display_घातer_put(dev_priv, POWER_DOMAIN_GMBUS, wakeref);
+	intel_display_power_put(dev_priv, POWER_DOMAIN_GMBUS, wakeref);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u32 gmbus_func(काष्ठा i2c_adapter *adapter)
-अणु
-	वापस i2c_bit_algo.functionality(adapter) &
+static u32 gmbus_func(struct i2c_adapter *adapter)
+{
+	return i2c_bit_algo.functionality(adapter) &
 		(I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL |
 		/* I2C_FUNC_10BIT_ADDR | */
 		I2C_FUNC_SMBUS_READ_BLOCK_DATA |
 		I2C_FUNC_SMBUS_BLOCK_PROC_CALL);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा i2c_algorithm gmbus_algorithm = अणु
+static const struct i2c_algorithm gmbus_algorithm = {
 	.master_xfer	= gmbus_xfer,
 	.functionality	= gmbus_func
-पूर्ण;
+};
 
-अटल व्योम gmbus_lock_bus(काष्ठा i2c_adapter *adapter,
-			   अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा पूर्णांकel_gmbus *bus = to_पूर्णांकel_gmbus(adapter);
-	काष्ठा drm_i915_निजी *dev_priv = bus->dev_priv;
+static void gmbus_lock_bus(struct i2c_adapter *adapter,
+			   unsigned int flags)
+{
+	struct intel_gmbus *bus = to_intel_gmbus(adapter);
+	struct drm_i915_private *dev_priv = bus->dev_priv;
 
 	mutex_lock(&dev_priv->gmbus_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक gmbus_trylock_bus(काष्ठा i2c_adapter *adapter,
-			     अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा पूर्णांकel_gmbus *bus = to_पूर्णांकel_gmbus(adapter);
-	काष्ठा drm_i915_निजी *dev_priv = bus->dev_priv;
+static int gmbus_trylock_bus(struct i2c_adapter *adapter,
+			     unsigned int flags)
+{
+	struct intel_gmbus *bus = to_intel_gmbus(adapter);
+	struct drm_i915_private *dev_priv = bus->dev_priv;
 
-	वापस mutex_trylock(&dev_priv->gmbus_mutex);
-पूर्ण
+	return mutex_trylock(&dev_priv->gmbus_mutex);
+}
 
-अटल व्योम gmbus_unlock_bus(काष्ठा i2c_adapter *adapter,
-			     अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा पूर्णांकel_gmbus *bus = to_पूर्णांकel_gmbus(adapter);
-	काष्ठा drm_i915_निजी *dev_priv = bus->dev_priv;
+static void gmbus_unlock_bus(struct i2c_adapter *adapter,
+			     unsigned int flags)
+{
+	struct intel_gmbus *bus = to_intel_gmbus(adapter);
+	struct drm_i915_private *dev_priv = bus->dev_priv;
 
 	mutex_unlock(&dev_priv->gmbus_mutex);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा i2c_lock_operations gmbus_lock_ops = अणु
+static const struct i2c_lock_operations gmbus_lock_ops = {
 	.lock_bus =    gmbus_lock_bus,
 	.trylock_bus = gmbus_trylock_bus,
 	.unlock_bus =  gmbus_unlock_bus,
-पूर्ण;
+};
 
 /**
- * पूर्णांकel_gmbus_setup - instantiate all Intel i2c GMBuses
- * @dev_priv: i915 device निजी
+ * intel_gmbus_setup - instantiate all Intel i2c GMBuses
+ * @dev_priv: i915 device private
  */
-पूर्णांक पूर्णांकel_gmbus_setup(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev_priv->drm.dev);
-	काष्ठा पूर्णांकel_gmbus *bus;
-	अचिन्हित पूर्णांक pin;
-	पूर्णांक ret;
+int intel_gmbus_setup(struct drm_i915_private *dev_priv)
+{
+	struct pci_dev *pdev = to_pci_dev(dev_priv->drm.dev);
+	struct intel_gmbus *bus;
+	unsigned int pin;
+	int ret;
 
-	अगर (!HAS_DISPLAY(dev_priv))
-		वापस 0;
+	if (!HAS_DISPLAY(dev_priv))
+		return 0;
 
-	अगर (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv))
+	if (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv))
 		dev_priv->gpio_mmio_base = VLV_DISPLAY_BASE;
-	अन्यथा अगर (!HAS_GMCH(dev_priv))
+	else if (!HAS_GMCH(dev_priv))
 		/*
-		 * Broxton uses the same PCH offsets क्रम South Display Engine,
-		 * even though it करोesn't have a PCH.
+		 * Broxton uses the same PCH offsets for South Display Engine,
+		 * even though it doesn't have a PCH.
 		 */
 		dev_priv->gpio_mmio_base = PCH_DISPLAY_BASE;
 
 	mutex_init(&dev_priv->gmbus_mutex);
-	init_रुकोqueue_head(&dev_priv->gmbus_रुको_queue);
+	init_waitqueue_head(&dev_priv->gmbus_wait_queue);
 
-	क्रम (pin = 0; pin < ARRAY_SIZE(dev_priv->gmbus); pin++) अणु
-		अगर (!पूर्णांकel_gmbus_is_valid_pin(dev_priv, pin))
-			जारी;
+	for (pin = 0; pin < ARRAY_SIZE(dev_priv->gmbus); pin++) {
+		if (!intel_gmbus_is_valid_pin(dev_priv, pin))
+			continue;
 
 		bus = &dev_priv->gmbus[pin];
 
 		bus->adapter.owner = THIS_MODULE;
 		bus->adapter.class = I2C_CLASS_DDC;
-		snम_लिखो(bus->adapter.name,
-			 माप(bus->adapter.name),
+		snprintf(bus->adapter.name,
+			 sizeof(bus->adapter.name),
 			 "i915 gmbus %s",
 			 get_gmbus_pin(dev_priv, pin)->name);
 
@@ -882,89 +881,89 @@ gmbus_xfer(काष्ठा i2c_adapter *adapter, काष्ठा i2c_msg *
 
 		/*
 		 * We wish to retry with bit banging
-		 * after a समयd out GMBUS attempt.
+		 * after a timed out GMBUS attempt.
 		 */
 		bus->adapter.retries = 1;
 
-		/* By शेष use a conservative घड़ी rate */
+		/* By default use a conservative clock rate */
 		bus->reg0 = pin | GMBUS_RATE_100KHZ;
 
 		/* gmbus seems to be broken on i830 */
-		अगर (IS_I830(dev_priv))
-			bus->क्रमce_bit = 1;
+		if (IS_I830(dev_priv))
+			bus->force_bit = 1;
 
-		पूर्णांकel_gpio_setup(bus, pin);
+		intel_gpio_setup(bus, pin);
 
 		ret = i2c_add_adapter(&bus->adapter);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+		if (ret)
+			goto err;
+	}
 
-	पूर्णांकel_gmbus_reset(dev_priv);
+	intel_gmbus_reset(dev_priv);
 
-	वापस 0;
+	return 0;
 
 err:
-	जबतक (pin--) अणु
-		अगर (!पूर्णांकel_gmbus_is_valid_pin(dev_priv, pin))
-			जारी;
+	while (pin--) {
+		if (!intel_gmbus_is_valid_pin(dev_priv, pin))
+			continue;
 
 		bus = &dev_priv->gmbus[pin];
 		i2c_del_adapter(&bus->adapter);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-काष्ठा i2c_adapter *पूर्णांकel_gmbus_get_adapter(काष्ठा drm_i915_निजी *dev_priv,
-					    अचिन्हित पूर्णांक pin)
-अणु
-	अगर (drm_WARN_ON(&dev_priv->drm,
-			!पूर्णांकel_gmbus_is_valid_pin(dev_priv, pin)))
-		वापस शून्य;
+struct i2c_adapter *intel_gmbus_get_adapter(struct drm_i915_private *dev_priv,
+					    unsigned int pin)
+{
+	if (drm_WARN_ON(&dev_priv->drm,
+			!intel_gmbus_is_valid_pin(dev_priv, pin)))
+		return NULL;
 
-	वापस &dev_priv->gmbus[pin].adapter;
-पूर्ण
+	return &dev_priv->gmbus[pin].adapter;
+}
 
-व्योम पूर्णांकel_gmbus_set_speed(काष्ठा i2c_adapter *adapter, पूर्णांक speed)
-अणु
-	काष्ठा पूर्णांकel_gmbus *bus = to_पूर्णांकel_gmbus(adapter);
+void intel_gmbus_set_speed(struct i2c_adapter *adapter, int speed)
+{
+	struct intel_gmbus *bus = to_intel_gmbus(adapter);
 
 	bus->reg0 = (bus->reg0 & ~(0x3 << 8)) | speed;
-पूर्ण
+}
 
-व्योम पूर्णांकel_gmbus_क्रमce_bit(काष्ठा i2c_adapter *adapter, bool क्रमce_bit)
-अणु
-	काष्ठा पूर्णांकel_gmbus *bus = to_पूर्णांकel_gmbus(adapter);
-	काष्ठा drm_i915_निजी *dev_priv = bus->dev_priv;
+void intel_gmbus_force_bit(struct i2c_adapter *adapter, bool force_bit)
+{
+	struct intel_gmbus *bus = to_intel_gmbus(adapter);
+	struct drm_i915_private *dev_priv = bus->dev_priv;
 
 	mutex_lock(&dev_priv->gmbus_mutex);
 
-	bus->क्रमce_bit += क्रमce_bit ? 1 : -1;
+	bus->force_bit += force_bit ? 1 : -1;
 	drm_dbg_kms(&dev_priv->drm,
 		    "%sabling bit-banging on %s. force bit now %d\n",
-		    क्रमce_bit ? "en" : "dis", adapter->name,
-		    bus->क्रमce_bit);
+		    force_bit ? "en" : "dis", adapter->name,
+		    bus->force_bit);
 
 	mutex_unlock(&dev_priv->gmbus_mutex);
-पूर्ण
+}
 
-bool पूर्णांकel_gmbus_is_क्रमced_bit(काष्ठा i2c_adapter *adapter)
-अणु
-	काष्ठा पूर्णांकel_gmbus *bus = to_पूर्णांकel_gmbus(adapter);
+bool intel_gmbus_is_forced_bit(struct i2c_adapter *adapter)
+{
+	struct intel_gmbus *bus = to_intel_gmbus(adapter);
 
-	वापस bus->क्रमce_bit;
-पूर्ण
+	return bus->force_bit;
+}
 
-व्योम पूर्णांकel_gmbus_tearकरोwn(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा पूर्णांकel_gmbus *bus;
-	अचिन्हित पूर्णांक pin;
+void intel_gmbus_teardown(struct drm_i915_private *dev_priv)
+{
+	struct intel_gmbus *bus;
+	unsigned int pin;
 
-	क्रम (pin = 0; pin < ARRAY_SIZE(dev_priv->gmbus); pin++) अणु
-		अगर (!पूर्णांकel_gmbus_is_valid_pin(dev_priv, pin))
-			जारी;
+	for (pin = 0; pin < ARRAY_SIZE(dev_priv->gmbus); pin++) {
+		if (!intel_gmbus_is_valid_pin(dev_priv, pin))
+			continue;
 
 		bus = &dev_priv->gmbus[pin];
 		i2c_del_adapter(&bus->adapter);
-	पूर्ण
-पूर्ण
+	}
+}

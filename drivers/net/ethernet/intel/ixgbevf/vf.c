@@ -1,77 +1,76 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 1999 - 2018 Intel Corporation. */
 
-#समावेश "vf.h"
-#समावेश "ixgbevf.h"
+#include "vf.h"
+#include "ixgbevf.h"
 
-/* On Hyper-V, to reset, we need to पढ़ो from this offset
+/* On Hyper-V, to reset, we need to read from this offset
  * from the PCI config space. This is the mechanism used on
  * Hyper-V to support PF/VF communication.
  */
-#घोषणा IXGBE_HV_RESET_OFFSET           0x201
+#define IXGBE_HV_RESET_OFFSET           0x201
 
-अटल अंतरभूत s32 ixgbevf_ग_लिखो_msg_पढ़ो_ack(काष्ठा ixgbe_hw *hw, u32 *msg,
-					     u32 *reपंचांगsg, u16 size)
-अणु
-	काष्ठा ixgbe_mbx_info *mbx = &hw->mbx;
-	s32 retval = mbx->ops.ग_लिखो_posted(hw, msg, size);
+static inline s32 ixgbevf_write_msg_read_ack(struct ixgbe_hw *hw, u32 *msg,
+					     u32 *retmsg, u16 size)
+{
+	struct ixgbe_mbx_info *mbx = &hw->mbx;
+	s32 retval = mbx->ops.write_posted(hw, msg, size);
 
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
-	वापस mbx->ops.पढ़ो_posted(hw, reपंचांगsg, size);
-पूर्ण
+	return mbx->ops.read_posted(hw, retmsg, size);
+}
 
 /**
- *  ixgbevf_start_hw_vf - Prepare hardware क्रम Tx/Rx
- *  @hw: poपूर्णांकer to hardware काष्ठाure
+ *  ixgbevf_start_hw_vf - Prepare hardware for Tx/Rx
+ *  @hw: pointer to hardware structure
  *
- *  Starts the hardware by filling the bus info काष्ठाure and media type, clears
- *  all on chip counters, initializes receive address रेजिस्टरs, multicast
+ *  Starts the hardware by filling the bus info structure and media type, clears
+ *  all on chip counters, initializes receive address registers, multicast
  *  table, VLAN filter table, calls routine to set up link and flow control
  *  settings, and leaves transmit and receive units disabled and uninitialized
  **/
-अटल s32 ixgbevf_start_hw_vf(काष्ठा ixgbe_hw *hw)
-अणु
+static s32 ixgbevf_start_hw_vf(struct ixgbe_hw *hw)
+{
 	/* Clear adapter stopped flag */
 	hw->adapter_stopped = false;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *  ixgbevf_init_hw_vf - भव function hardware initialization
- *  @hw: poपूर्णांकer to hardware काष्ठाure
+ *  ixgbevf_init_hw_vf - virtual function hardware initialization
+ *  @hw: pointer to hardware structure
  *
  *  Initialize the hardware by resetting the hardware and then starting
  *  the hardware
  **/
-अटल s32 ixgbevf_init_hw_vf(काष्ठा ixgbe_hw *hw)
-अणु
+static s32 ixgbevf_init_hw_vf(struct ixgbe_hw *hw)
+{
 	s32 status = hw->mac.ops.start_hw(hw);
 
 	hw->mac.ops.get_mac_addr(hw, hw->mac.addr);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
- *  ixgbevf_reset_hw_vf - Perक्रमms hardware reset
- *  @hw: poपूर्णांकer to hardware काष्ठाure
+ *  ixgbevf_reset_hw_vf - Performs hardware reset
+ *  @hw: pointer to hardware structure
  *
  *  Resets the hardware by resetting the transmit and receive units, masks and
- *  clears all पूर्णांकerrupts.
+ *  clears all interrupts.
  **/
-अटल s32 ixgbevf_reset_hw_vf(काष्ठा ixgbe_hw *hw)
-अणु
-	काष्ठा ixgbe_mbx_info *mbx = &hw->mbx;
-	u32 समयout = IXGBE_VF_INIT_TIMEOUT;
+static s32 ixgbevf_reset_hw_vf(struct ixgbe_hw *hw)
+{
+	struct ixgbe_mbx_info *mbx = &hw->mbx;
+	u32 timeout = IXGBE_VF_INIT_TIMEOUT;
 	s32 ret_val = IXGBE_ERR_INVALID_MAC_ADDR;
 	u32 msgbuf[IXGBE_VF_PERMADDR_MSG_LEN];
 	u8 *addr = (u8 *)(&msgbuf[1]);
 
-	/* Call adapter stop to disable tx/rx and clear पूर्णांकerrupts */
+	/* Call adapter stop to disable tx/rx and clear interrupts */
 	hw->mac.ops.stop_adapter(hw);
 
 	/* reset the api version */
@@ -80,20 +79,20 @@
 	IXGBE_WRITE_REG(hw, IXGBE_VFCTRL, IXGBE_CTRL_RST);
 	IXGBE_WRITE_FLUSH(hw);
 
-	/* we cannot reset जबतक the RSTI / RSTD bits are निश्चितed */
-	जबतक (!mbx->ops.check_क्रम_rst(hw) && समयout) अणु
-		समयout--;
+	/* we cannot reset while the RSTI / RSTD bits are asserted */
+	while (!mbx->ops.check_for_rst(hw) && timeout) {
+		timeout--;
 		udelay(5);
-	पूर्ण
+	}
 
-	अगर (!समयout)
-		वापस IXGBE_ERR_RESET_FAILED;
+	if (!timeout)
+		return IXGBE_ERR_RESET_FAILED;
 
-	/* mailbox समयout can now become active */
-	mbx->समयout = IXGBE_VF_MBX_INIT_TIMEOUT;
+	/* mailbox timeout can now become active */
+	mbx->timeout = IXGBE_VF_MBX_INIT_TIMEOUT;
 
 	msgbuf[0] = IXGBE_VF_RESET;
-	mbx->ops.ग_लिखो_posted(hw, msgbuf, 1);
+	mbx->ops.write_posted(hw, msgbuf, 1);
 
 	mdelay(10);
 
@@ -101,61 +100,61 @@
 	 * also set up the mc_filter_type which is piggy backed
 	 * on the mac address in word 3
 	 */
-	ret_val = mbx->ops.पढ़ो_posted(hw, msgbuf, IXGBE_VF_PERMADDR_MSG_LEN);
-	अगर (ret_val)
-		वापस ret_val;
+	ret_val = mbx->ops.read_posted(hw, msgbuf, IXGBE_VF_PERMADDR_MSG_LEN);
+	if (ret_val)
+		return ret_val;
 
-	/* New versions of the PF may NACK the reset वापस message
-	 * to indicate that no MAC address has yet been asचिन्हित क्रम
+	/* New versions of the PF may NACK the reset return message
+	 * to indicate that no MAC address has yet been assigned for
 	 * the VF.
 	 */
-	अगर (msgbuf[0] != (IXGBE_VF_RESET | IXGBE_VT_MSGTYPE_ACK) &&
+	if (msgbuf[0] != (IXGBE_VF_RESET | IXGBE_VT_MSGTYPE_ACK) &&
 	    msgbuf[0] != (IXGBE_VF_RESET | IXGBE_VT_MSGTYPE_NACK))
-		वापस IXGBE_ERR_INVALID_MAC_ADDR;
+		return IXGBE_ERR_INVALID_MAC_ADDR;
 
-	अगर (msgbuf[0] == (IXGBE_VF_RESET | IXGBE_VT_MSGTYPE_ACK))
+	if (msgbuf[0] == (IXGBE_VF_RESET | IXGBE_VT_MSGTYPE_ACK))
 		ether_addr_copy(hw->mac.perm_addr, addr);
 
 	hw->mac.mc_filter_type = msgbuf[IXGBE_VF_MC_TYPE_WORD];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * ixgbevf_hv_reset_hw_vf - reset via Hyper-V
- * @hw: poपूर्णांकer to निजी hardware काष्ठा
+ * @hw: pointer to private hardware struct
  *
  * Hyper-V variant; the VF/PF communication is through the PCI
  * config space.
  */
-अटल s32 ixgbevf_hv_reset_hw_vf(काष्ठा ixgbe_hw *hw)
-अणु
-#अगर IS_ENABLED(CONFIG_PCI_MMCONFIG)
-	काष्ठा ixgbevf_adapter *adapter = hw->back;
-	पूर्णांक i;
+static s32 ixgbevf_hv_reset_hw_vf(struct ixgbe_hw *hw)
+{
+#if IS_ENABLED(CONFIG_PCI_MMCONFIG)
+	struct ixgbevf_adapter *adapter = hw->back;
+	int i;
 
-	क्रम (i = 0; i < 6; i++)
-		pci_पढ़ो_config_byte(adapter->pdev,
+	for (i = 0; i < 6; i++)
+		pci_read_config_byte(adapter->pdev,
 				     (i + IXGBE_HV_RESET_OFFSET),
 				     &hw->mac.perm_addr[i]);
-	वापस 0;
-#अन्यथा
+	return 0;
+#else
 	pr_err("PCI_MMCONFIG needs to be enabled for Hyper-V\n");
-	वापस -EOPNOTSUPP;
-#पूर्ण_अगर
-पूर्ण
+	return -EOPNOTSUPP;
+#endif
+}
 
 /**
  *  ixgbevf_stop_hw_vf - Generic stop Tx/Rx units
- *  @hw: poपूर्णांकer to hardware काष्ठाure
+ *  @hw: pointer to hardware structure
  *
- *  Sets the adapter_stopped flag within ixgbe_hw काष्ठा. Clears पूर्णांकerrupts,
+ *  Sets the adapter_stopped flag within ixgbe_hw struct. Clears interrupts,
  *  disables transmit and receive units. The adapter_stopped flag is used by
- *  the shared code and drivers to determine अगर the adapter is in a stopped
+ *  the shared code and drivers to determine if the adapter is in a stopped
  *  state and should not touch the hardware.
  **/
-अटल s32 ixgbevf_stop_hw_vf(काष्ठा ixgbe_hw *hw)
-अणु
+static s32 ixgbevf_stop_hw_vf(struct ixgbe_hw *hw)
+{
 	u32 number_of_queues;
 	u32 reg_val;
 	u16 i;
@@ -167,38 +166,38 @@
 
 	/* Disable the receive unit by stopped each queue */
 	number_of_queues = hw->mac.max_rx_queues;
-	क्रम (i = 0; i < number_of_queues; i++) अणु
+	for (i = 0; i < number_of_queues; i++) {
 		reg_val = IXGBE_READ_REG(hw, IXGBE_VFRXDCTL(i));
-		अगर (reg_val & IXGBE_RXDCTL_ENABLE) अणु
+		if (reg_val & IXGBE_RXDCTL_ENABLE) {
 			reg_val &= ~IXGBE_RXDCTL_ENABLE;
 			IXGBE_WRITE_REG(hw, IXGBE_VFRXDCTL(i), reg_val);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	IXGBE_WRITE_FLUSH(hw);
 
-	/* Clear पूर्णांकerrupt mask to stop from पूर्णांकerrupts being generated */
+	/* Clear interrupt mask to stop from interrupts being generated */
 	IXGBE_WRITE_REG(hw, IXGBE_VTEIMC, IXGBE_VF_IRQ_CLEAR_MASK);
 
-	/* Clear any pending पूर्णांकerrupts */
+	/* Clear any pending interrupts */
 	IXGBE_READ_REG(hw, IXGBE_VTEICR);
 
 	/* Disable the transmit unit.  Each queue must be disabled. */
 	number_of_queues = hw->mac.max_tx_queues;
-	क्रम (i = 0; i < number_of_queues; i++) अणु
+	for (i = 0; i < number_of_queues; i++) {
 		reg_val = IXGBE_READ_REG(hw, IXGBE_VFTXDCTL(i));
-		अगर (reg_val & IXGBE_TXDCTL_ENABLE) अणु
+		if (reg_val & IXGBE_TXDCTL_ENABLE) {
 			reg_val &= ~IXGBE_TXDCTL_ENABLE;
 			IXGBE_WRITE_REG(hw, IXGBE_VFTXDCTL(i), reg_val);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  *  ixgbevf_mta_vector - Determines bit-vector in multicast table to set
- *  @hw: poपूर्णांकer to hardware काष्ठाure
+ *  @hw: pointer to hardware structure
  *  @mc_addr: the multicast address
  *
  *  Extracts the 12 bits, from a multicast address, to determine which
@@ -208,53 +207,53 @@
  *  by the MO field of the MCSTCTRL. The MO field is set during initialization
  *  to mc_filter_type.
  **/
-अटल s32 ixgbevf_mta_vector(काष्ठा ixgbe_hw *hw, u8 *mc_addr)
-अणु
+static s32 ixgbevf_mta_vector(struct ixgbe_hw *hw, u8 *mc_addr)
+{
 	u32 vector = 0;
 
-	चयन (hw->mac.mc_filter_type) अणु
-	हाल 0:   /* use bits [47:36] of the address */
+	switch (hw->mac.mc_filter_type) {
+	case 0:   /* use bits [47:36] of the address */
 		vector = ((mc_addr[4] >> 4) | (((u16)mc_addr[5]) << 4));
-		अवरोध;
-	हाल 1:   /* use bits [46:35] of the address */
+		break;
+	case 1:   /* use bits [46:35] of the address */
 		vector = ((mc_addr[4] >> 3) | (((u16)mc_addr[5]) << 5));
-		अवरोध;
-	हाल 2:   /* use bits [45:34] of the address */
+		break;
+	case 2:   /* use bits [45:34] of the address */
 		vector = ((mc_addr[4] >> 2) | (((u16)mc_addr[5]) << 6));
-		अवरोध;
-	हाल 3:   /* use bits [43:32] of the address */
+		break;
+	case 3:   /* use bits [43:32] of the address */
 		vector = ((mc_addr[4]) | (((u16)mc_addr[5]) << 8));
-		अवरोध;
-	शेष:  /* Invalid mc_filter_type */
-		अवरोध;
-	पूर्ण
+		break;
+	default:  /* Invalid mc_filter_type */
+		break;
+	}
 
 	/* vector can only be 12-bits or boundary will be exceeded */
 	vector &= 0xFFF;
-	वापस vector;
-पूर्ण
+	return vector;
+}
 
 /**
  *  ixgbevf_get_mac_addr_vf - Read device MAC address
- *  @hw: poपूर्णांकer to the HW काष्ठाure
- *  @mac_addr: poपूर्णांकer to storage क्रम retrieved MAC address
+ *  @hw: pointer to the HW structure
+ *  @mac_addr: pointer to storage for retrieved MAC address
  **/
-अटल s32 ixgbevf_get_mac_addr_vf(काष्ठा ixgbe_hw *hw, u8 *mac_addr)
-अणु
+static s32 ixgbevf_get_mac_addr_vf(struct ixgbe_hw *hw, u8 *mac_addr)
+{
 	ether_addr_copy(mac_addr, hw->mac.perm_addr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल s32 ixgbevf_set_uc_addr_vf(काष्ठा ixgbe_hw *hw, u32 index, u8 *addr)
-अणु
+static s32 ixgbevf_set_uc_addr_vf(struct ixgbe_hw *hw, u32 index, u8 *addr)
+{
 	u32 msgbuf[3], msgbuf_chk;
 	u8 *msg_addr = (u8 *)(&msgbuf[1]);
 	s32 ret_val;
 
-	स_रखो(msgbuf, 0, माप(msgbuf));
+	memset(msgbuf, 0, sizeof(msgbuf));
 	/* If index is one then this is the start of a new list and needs
-	 * indication to the PF so it can करो it's own list management.
+	 * indication to the PF so it can do it's own list management.
 	 * If it is zero then that tells the PF to just clear all of
 	 * this VF's macvlans and there is no new list.
 	 */
@@ -262,258 +261,258 @@
 	msgbuf[0] |= IXGBE_VF_SET_MACVLAN;
 	msgbuf_chk = msgbuf[0];
 
-	अगर (addr)
+	if (addr)
 		ether_addr_copy(msg_addr, addr);
 
-	ret_val = ixgbevf_ग_लिखो_msg_पढ़ो_ack(hw, msgbuf, msgbuf,
+	ret_val = ixgbevf_write_msg_read_ack(hw, msgbuf, msgbuf,
 					     ARRAY_SIZE(msgbuf));
-	अगर (!ret_val) अणु
+	if (!ret_val) {
 		msgbuf[0] &= ~IXGBE_VT_MSGTYPE_CTS;
 
-		अगर (msgbuf[0] == (msgbuf_chk | IXGBE_VT_MSGTYPE_NACK))
-			वापस -ENOMEM;
-	पूर्ण
+		if (msgbuf[0] == (msgbuf_chk | IXGBE_VT_MSGTYPE_NACK))
+			return -ENOMEM;
+	}
 
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
-अटल s32 ixgbevf_hv_set_uc_addr_vf(काष्ठा ixgbe_hw *hw, u32 index, u8 *addr)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static s32 ixgbevf_hv_set_uc_addr_vf(struct ixgbe_hw *hw, u32 index, u8 *addr)
+{
+	return -EOPNOTSUPP;
+}
 
 /**
  * ixgbevf_get_reta_locked - get the RSS redirection table (RETA) contents.
- * @hw: poपूर्णांकer to hardware काष्ठाure
+ * @hw: pointer to hardware structure
  * @reta: buffer to fill with RETA contents.
- * @num_rx_queues: Number of Rx queues configured क्रम this port
+ * @num_rx_queues: Number of Rx queues configured for this port
  *
- * The "reta" buffer should be big enough to contain 32 रेजिस्टरs.
+ * The "reta" buffer should be big enough to contain 32 registers.
  *
  * Returns: 0 on success.
- *          अगर API करोesn't support this operation - (-EOPNOTSUPP).
+ *          if API doesn't support this operation - (-EOPNOTSUPP).
  */
-पूर्णांक ixgbevf_get_reta_locked(काष्ठा ixgbe_hw *hw, u32 *reta, पूर्णांक num_rx_queues)
-अणु
-	पूर्णांक err, i, j;
+int ixgbevf_get_reta_locked(struct ixgbe_hw *hw, u32 *reta, int num_rx_queues)
+{
+	int err, i, j;
 	u32 msgbuf[IXGBE_VFMAILBOX_SIZE];
 	u32 *hw_reta = &msgbuf[1];
 	u32 mask = 0;
 
-	/* We have to use a mailbox क्रम 82599 and x540 devices only.
+	/* We have to use a mailbox for 82599 and x540 devices only.
 	 * For these devices RETA has 128 entries.
-	 * Also these VFs support up to 4 RSS queues. Thereक्रमe PF will compress
+	 * Also these VFs support up to 4 RSS queues. Therefore PF will compress
 	 * 16 RETA entries in each DWORD giving 2 bits to each entry.
 	 */
-	पूर्णांक dwords = IXGBEVF_82599_RETA_SIZE / 16;
+	int dwords = IXGBEVF_82599_RETA_SIZE / 16;
 
-	/* We support the RSS querying क्रम 82599 and x540 devices only.
-	 * Thus वापस an error अगर API करोesn't support RETA querying or querying
-	 * is not supported क्रम this device type.
+	/* We support the RSS querying for 82599 and x540 devices only.
+	 * Thus return an error if API doesn't support RETA querying or querying
+	 * is not supported for this device type.
 	 */
-	चयन (hw->api_version) अणु
-	हाल ixgbe_mbox_api_14:
-	हाल ixgbe_mbox_api_13:
-	हाल ixgbe_mbox_api_12:
-		अगर (hw->mac.type < ixgbe_mac_X550_vf)
-			अवरोध;
+	switch (hw->api_version) {
+	case ixgbe_mbox_api_14:
+	case ixgbe_mbox_api_13:
+	case ixgbe_mbox_api_12:
+		if (hw->mac.type < ixgbe_mac_X550_vf)
+			break;
 		fallthrough;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+	default:
+		return -EOPNOTSUPP;
+	}
 
 	msgbuf[0] = IXGBE_VF_GET_RETA;
 
-	err = hw->mbx.ops.ग_लिखो_posted(hw, msgbuf, 1);
+	err = hw->mbx.ops.write_posted(hw, msgbuf, 1);
 
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	err = hw->mbx.ops.पढ़ो_posted(hw, msgbuf, dwords + 1);
+	err = hw->mbx.ops.read_posted(hw, msgbuf, dwords + 1);
 
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	msgbuf[0] &= ~IXGBE_VT_MSGTYPE_CTS;
 
-	/* If the operation has been refused by a PF वापस -EPERM */
-	अगर (msgbuf[0] == (IXGBE_VF_GET_RETA | IXGBE_VT_MSGTYPE_NACK))
-		वापस -EPERM;
+	/* If the operation has been refused by a PF return -EPERM */
+	if (msgbuf[0] == (IXGBE_VF_GET_RETA | IXGBE_VT_MSGTYPE_NACK))
+		return -EPERM;
 
 	/* If we didn't get an ACK there must have been
 	 * some sort of mailbox error so we should treat it
 	 * as such.
 	 */
-	अगर (msgbuf[0] != (IXGBE_VF_GET_RETA | IXGBE_VT_MSGTYPE_ACK))
-		वापस IXGBE_ERR_MBX;
+	if (msgbuf[0] != (IXGBE_VF_GET_RETA | IXGBE_VT_MSGTYPE_ACK))
+		return IXGBE_ERR_MBX;
 
-	/* ixgbevf करोesn't support more than 2 queues at the moment */
-	अगर (num_rx_queues > 1)
+	/* ixgbevf doesn't support more than 2 queues at the moment */
+	if (num_rx_queues > 1)
 		mask = 0x1;
 
-	क्रम (i = 0; i < dwords; i++)
-		क्रम (j = 0; j < 16; j++)
+	for (i = 0; i < dwords; i++)
+		for (j = 0; j < 16; j++)
 			reta[i * 16 + j] = (hw_reta[i] >> (2 * j)) & mask;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ixgbevf_get_rss_key_locked - get the RSS Ranकरोm Key
- * @hw: poपूर्णांकer to the HW काष्ठाure
+ * ixgbevf_get_rss_key_locked - get the RSS Random Key
+ * @hw: pointer to the HW structure
  * @rss_key: buffer to fill with RSS Hash Key contents.
  *
- * The "rss_key" buffer should be big enough to contain 10 रेजिस्टरs.
+ * The "rss_key" buffer should be big enough to contain 10 registers.
  *
  * Returns: 0 on success.
- *          अगर API करोesn't support this operation - (-EOPNOTSUPP).
+ *          if API doesn't support this operation - (-EOPNOTSUPP).
  */
-पूर्णांक ixgbevf_get_rss_key_locked(काष्ठा ixgbe_hw *hw, u8 *rss_key)
-अणु
-	पूर्णांक err;
+int ixgbevf_get_rss_key_locked(struct ixgbe_hw *hw, u8 *rss_key)
+{
+	int err;
 	u32 msgbuf[IXGBE_VFMAILBOX_SIZE];
 
-	/* We currently support the RSS Ranकरोm Key retrieval क्रम 82599 and x540
+	/* We currently support the RSS Random Key retrieval for 82599 and x540
 	 * devices only.
 	 *
-	 * Thus वापस an error अगर API करोesn't support RSS Ranकरोm Key retrieval
-	 * or अगर the operation is not supported क्रम this device type.
+	 * Thus return an error if API doesn't support RSS Random Key retrieval
+	 * or if the operation is not supported for this device type.
 	 */
-	चयन (hw->api_version) अणु
-	हाल ixgbe_mbox_api_14:
-	हाल ixgbe_mbox_api_13:
-	हाल ixgbe_mbox_api_12:
-		अगर (hw->mac.type < ixgbe_mac_X550_vf)
-			अवरोध;
+	switch (hw->api_version) {
+	case ixgbe_mbox_api_14:
+	case ixgbe_mbox_api_13:
+	case ixgbe_mbox_api_12:
+		if (hw->mac.type < ixgbe_mac_X550_vf)
+			break;
 		fallthrough;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+	default:
+		return -EOPNOTSUPP;
+	}
 
 	msgbuf[0] = IXGBE_VF_GET_RSS_KEY;
-	err = hw->mbx.ops.ग_लिखो_posted(hw, msgbuf, 1);
+	err = hw->mbx.ops.write_posted(hw, msgbuf, 1);
 
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	err = hw->mbx.ops.पढ़ो_posted(hw, msgbuf, 11);
+	err = hw->mbx.ops.read_posted(hw, msgbuf, 11);
 
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	msgbuf[0] &= ~IXGBE_VT_MSGTYPE_CTS;
 
-	/* If the operation has been refused by a PF वापस -EPERM */
-	अगर (msgbuf[0] == (IXGBE_VF_GET_RSS_KEY | IXGBE_VT_MSGTYPE_NACK))
-		वापस -EPERM;
+	/* If the operation has been refused by a PF return -EPERM */
+	if (msgbuf[0] == (IXGBE_VF_GET_RSS_KEY | IXGBE_VT_MSGTYPE_NACK))
+		return -EPERM;
 
 	/* If we didn't get an ACK there must have been
 	 * some sort of mailbox error so we should treat it
 	 * as such.
 	 */
-	अगर (msgbuf[0] != (IXGBE_VF_GET_RSS_KEY | IXGBE_VT_MSGTYPE_ACK))
-		वापस IXGBE_ERR_MBX;
+	if (msgbuf[0] != (IXGBE_VF_GET_RSS_KEY | IXGBE_VT_MSGTYPE_ACK))
+		return IXGBE_ERR_MBX;
 
-	स_नकल(rss_key, msgbuf + 1, IXGBEVF_RSS_HASH_KEY_SIZE);
+	memcpy(rss_key, msgbuf + 1, IXGBEVF_RSS_HASH_KEY_SIZE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  *  ixgbevf_set_rar_vf - set device MAC address
- *  @hw: poपूर्णांकer to hardware काष्ठाure
- *  @index: Receive address रेजिस्टर to ग_लिखो
- *  @addr: Address to put पूर्णांकo receive address रेजिस्टर
+ *  @hw: pointer to hardware structure
+ *  @index: Receive address register to write
+ *  @addr: Address to put into receive address register
  *  @vmdq: Unused in this implementation
  **/
-अटल s32 ixgbevf_set_rar_vf(काष्ठा ixgbe_hw *hw, u32 index, u8 *addr,
+static s32 ixgbevf_set_rar_vf(struct ixgbe_hw *hw, u32 index, u8 *addr,
 			      u32 vmdq)
-अणु
+{
 	u32 msgbuf[3];
 	u8 *msg_addr = (u8 *)(&msgbuf[1]);
 	s32 ret_val;
 
-	स_रखो(msgbuf, 0, माप(msgbuf));
+	memset(msgbuf, 0, sizeof(msgbuf));
 	msgbuf[0] = IXGBE_VF_SET_MAC_ADDR;
 	ether_addr_copy(msg_addr, addr);
 
-	ret_val = ixgbevf_ग_लिखो_msg_पढ़ो_ack(hw, msgbuf, msgbuf,
+	ret_val = ixgbevf_write_msg_read_ack(hw, msgbuf, msgbuf,
 					     ARRAY_SIZE(msgbuf));
 	msgbuf[0] &= ~IXGBE_VT_MSGTYPE_CTS;
 
-	/* अगर nacked the address was rejected, use "perm_addr" */
-	अगर (!ret_val &&
-	    (msgbuf[0] == (IXGBE_VF_SET_MAC_ADDR | IXGBE_VT_MSGTYPE_NACK))) अणु
+	/* if nacked the address was rejected, use "perm_addr" */
+	if (!ret_val &&
+	    (msgbuf[0] == (IXGBE_VF_SET_MAC_ADDR | IXGBE_VT_MSGTYPE_NACK))) {
 		ixgbevf_get_mac_addr_vf(hw, hw->mac.addr);
-		वापस IXGBE_ERR_MBX;
-	पूर्ण
+		return IXGBE_ERR_MBX;
+	}
 
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
 /**
  *  ixgbevf_hv_set_rar_vf - set device MAC address Hyper-V variant
- *  @hw: poपूर्णांकer to hardware काष्ठाure
- *  @index: Receive address रेजिस्टर to ग_लिखो
- *  @addr: Address to put पूर्णांकo receive address रेजिस्टर
+ *  @hw: pointer to hardware structure
+ *  @index: Receive address register to write
+ *  @addr: Address to put into receive address register
  *  @vmdq: Unused in this implementation
  *
- * We करोn't really allow setting the device MAC address. However,
- * अगर the address being set is the permanent MAC address we will
+ * We don't really allow setting the device MAC address. However,
+ * if the address being set is the permanent MAC address we will
  * permit that.
  **/
-अटल s32 ixgbevf_hv_set_rar_vf(काष्ठा ixgbe_hw *hw, u32 index, u8 *addr,
+static s32 ixgbevf_hv_set_rar_vf(struct ixgbe_hw *hw, u32 index, u8 *addr,
 				 u32 vmdq)
-अणु
-	अगर (ether_addr_equal(addr, hw->mac.perm_addr))
-		वापस 0;
+{
+	if (ether_addr_equal(addr, hw->mac.perm_addr))
+		return 0;
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
 /**
  *  ixgbevf_update_mc_addr_list_vf - Update Multicast addresses
- *  @hw: poपूर्णांकer to the HW काष्ठाure
- *  @netdev: poपूर्णांकer to net device काष्ठाure
+ *  @hw: pointer to the HW structure
+ *  @netdev: pointer to net device structure
  *
  *  Updates the Multicast Table Array.
  **/
-अटल s32 ixgbevf_update_mc_addr_list_vf(काष्ठा ixgbe_hw *hw,
-					  काष्ठा net_device *netdev)
-अणु
-	काष्ठा netdev_hw_addr *ha;
+static s32 ixgbevf_update_mc_addr_list_vf(struct ixgbe_hw *hw,
+					  struct net_device *netdev)
+{
+	struct netdev_hw_addr *ha;
 	u32 msgbuf[IXGBE_VFMAILBOX_SIZE];
 	u16 *vector_list = (u16 *)&msgbuf[1];
 	u32 cnt, i;
 
 	/* Each entry in the list uses 1 16 bit word.  We have 30
-	 * 16 bit words available in our HW msg buffer (minus 1 क्रम the
+	 * 16 bit words available in our HW msg buffer (minus 1 for the
 	 * msg type).  That's 30 hash values if we pack 'em right.  If
 	 * there are more than 30 MC addresses to add then punt the
-	 * extras क्रम now and then add code to handle more than 30 later.
-	 * It would be unusual क्रम a server to request that many multi-cast
-	 * addresses except क्रम in large enterprise network environments.
+	 * extras for now and then add code to handle more than 30 later.
+	 * It would be unusual for a server to request that many multi-cast
+	 * addresses except for in large enterprise network environments.
 	 */
 
 	cnt = netdev_mc_count(netdev);
-	अगर (cnt > 30)
+	if (cnt > 30)
 		cnt = 30;
 	msgbuf[0] = IXGBE_VF_SET_MULTICAST;
 	msgbuf[0] |= cnt << IXGBE_VT_MSGINFO_SHIFT;
 
 	i = 0;
-	netdev_क्रम_each_mc_addr(ha, netdev) अणु
-		अगर (i == cnt)
-			अवरोध;
-		अगर (is_link_local_ether_addr(ha->addr))
-			जारी;
+	netdev_for_each_mc_addr(ha, netdev) {
+		if (i == cnt)
+			break;
+		if (is_link_local_ether_addr(ha->addr))
+			continue;
 
 		vector_list[i++] = ixgbevf_mta_vector(hw, ha->addr);
-	पूर्ण
+	}
 
-	वापस ixgbevf_ग_लिखो_msg_पढ़ो_ack(hw, msgbuf, msgbuf,
+	return ixgbevf_write_msg_read_ack(hw, msgbuf, msgbuf,
 			IXGBE_VFMAILBOX_SIZE);
-पूर्ण
+}
 
 /**
  * ixgbevf_hv_update_mc_addr_list_vf - stub
@@ -522,51 +521,51 @@
  *
  * Hyper-V variant - just a stub.
  */
-अटल s32 ixgbevf_hv_update_mc_addr_list_vf(काष्ठा ixgbe_hw *hw,
-					     काष्ठा net_device *netdev)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static s32 ixgbevf_hv_update_mc_addr_list_vf(struct ixgbe_hw *hw,
+					     struct net_device *netdev)
+{
+	return -EOPNOTSUPP;
+}
 
 /**
  *  ixgbevf_update_xcast_mode - Update Multicast mode
- *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  @hw: pointer to the HW structure
  *  @xcast_mode: new multicast mode
  *
  *  Updates the Multicast Mode of VF.
  **/
-अटल s32 ixgbevf_update_xcast_mode(काष्ठा ixgbe_hw *hw, पूर्णांक xcast_mode)
-अणु
+static s32 ixgbevf_update_xcast_mode(struct ixgbe_hw *hw, int xcast_mode)
+{
 	u32 msgbuf[2];
 	s32 err;
 
-	चयन (hw->api_version) अणु
-	हाल ixgbe_mbox_api_12:
-		/* promisc पूर्णांकroduced in 1.3 version */
-		अगर (xcast_mode == IXGBEVF_XCAST_MODE_PROMISC)
-			वापस -EOPNOTSUPP;
+	switch (hw->api_version) {
+	case ixgbe_mbox_api_12:
+		/* promisc introduced in 1.3 version */
+		if (xcast_mode == IXGBEVF_XCAST_MODE_PROMISC)
+			return -EOPNOTSUPP;
 		fallthrough;
-	हाल ixgbe_mbox_api_14:
-	हाल ixgbe_mbox_api_13:
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+	case ixgbe_mbox_api_14:
+	case ixgbe_mbox_api_13:
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
 	msgbuf[0] = IXGBE_VF_UPDATE_XCAST_MODE;
 	msgbuf[1] = xcast_mode;
 
-	err = ixgbevf_ग_लिखो_msg_पढ़ो_ack(hw, msgbuf, msgbuf,
+	err = ixgbevf_write_msg_read_ack(hw, msgbuf, msgbuf,
 					 ARRAY_SIZE(msgbuf));
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	msgbuf[0] &= ~IXGBE_VT_MSGTYPE_CTS;
-	अगर (msgbuf[0] == (IXGBE_VF_UPDATE_XCAST_MODE | IXGBE_VT_MSGTYPE_NACK))
-		वापस -EPERM;
+	if (msgbuf[0] == (IXGBE_VF_UPDATE_XCAST_MODE | IXGBE_VT_MSGTYPE_NACK))
+		return -EPERM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * ixgbevf_hv_update_xcast_mode - stub
@@ -575,21 +574,21 @@
  *
  * Hyper-V variant - just a stub.
  */
-अटल s32 ixgbevf_hv_update_xcast_mode(काष्ठा ixgbe_hw *hw, पूर्णांक xcast_mode)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static s32 ixgbevf_hv_update_xcast_mode(struct ixgbe_hw *hw, int xcast_mode)
+{
+	return -EOPNOTSUPP;
+}
 
 /**
  *  ixgbevf_set_vfta_vf - Set/Unset VLAN filter table address
- *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  @hw: pointer to the HW structure
  *  @vlan: 12 bit VLAN ID
  *  @vind: unused by VF drivers
- *  @vlan_on: अगर true then set bit, अन्यथा clear bit
+ *  @vlan_on: if true then set bit, else clear bit
  **/
-अटल s32 ixgbevf_set_vfta_vf(काष्ठा ixgbe_hw *hw, u32 vlan, u32 vind,
+static s32 ixgbevf_set_vfta_vf(struct ixgbe_hw *hw, u32 vlan, u32 vind,
 			       bool vlan_on)
-अणु
+{
 	u32 msgbuf[2];
 	s32 err;
 
@@ -598,21 +597,21 @@
 	/* Setting the 8 bit field MSG INFO to TRUE indicates "add" */
 	msgbuf[0] |= vlan_on << IXGBE_VT_MSGINFO_SHIFT;
 
-	err = ixgbevf_ग_लिखो_msg_पढ़ो_ack(hw, msgbuf, msgbuf,
+	err = ixgbevf_write_msg_read_ack(hw, msgbuf, msgbuf,
 					 ARRAY_SIZE(msgbuf));
-	अगर (err)
-		जाओ mbx_err;
+	if (err)
+		goto mbx_err;
 
-	/* हटाओ extra bits from the message */
+	/* remove extra bits from the message */
 	msgbuf[0] &= ~IXGBE_VT_MSGTYPE_CTS;
 	msgbuf[0] &= ~(0xFF << IXGBE_VT_MSGINFO_SHIFT);
 
-	अगर (msgbuf[0] != (IXGBE_VF_SET_VLAN | IXGBE_VT_MSGTYPE_ACK))
+	if (msgbuf[0] != (IXGBE_VF_SET_VLAN | IXGBE_VT_MSGTYPE_ACK))
 		err = IXGBE_ERR_INVALID_ARGUMENT;
 
 mbx_err:
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
  * ixgbevf_hv_set_vfta_vf - * Hyper-V variant - just a stub.
@@ -621,237 +620,237 @@ mbx_err:
  * @vind: unused
  * @vlan_on: unused
  */
-अटल s32 ixgbevf_hv_set_vfta_vf(काष्ठा ixgbe_hw *hw, u32 vlan, u32 vind,
+static s32 ixgbevf_hv_set_vfta_vf(struct ixgbe_hw *hw, u32 vlan, u32 vind,
 				  bool vlan_on)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+{
+	return -EOPNOTSUPP;
+}
 
 /**
  *  ixgbevf_setup_mac_link_vf - Setup MAC link settings
- *  @hw: poपूर्णांकer to hardware काष्ठाure
+ *  @hw: pointer to hardware structure
  *  @speed: Unused in this implementation
- *  @स्वतःneg: Unused in this implementation
- *  @स्वतःneg_रुको_to_complete: Unused in this implementation
+ *  @autoneg: Unused in this implementation
+ *  @autoneg_wait_to_complete: Unused in this implementation
  *
- *  Do nothing and वापस success.  VF drivers are not allowed to change
- *  global settings.  Maपूर्णांकained क्रम driver compatibility.
+ *  Do nothing and return success.  VF drivers are not allowed to change
+ *  global settings.  Maintained for driver compatibility.
  **/
-अटल s32 ixgbevf_setup_mac_link_vf(काष्ठा ixgbe_hw *hw,
-				     ixgbe_link_speed speed, bool स्वतःneg,
-				     bool स्वतःneg_रुको_to_complete)
-अणु
-	वापस 0;
-पूर्ण
+static s32 ixgbevf_setup_mac_link_vf(struct ixgbe_hw *hw,
+				     ixgbe_link_speed speed, bool autoneg,
+				     bool autoneg_wait_to_complete)
+{
+	return 0;
+}
 
 /**
  *  ixgbevf_check_mac_link_vf - Get link/speed status
- *  @hw: poपूर्णांकer to hardware काष्ठाure
- *  @speed: poपूर्णांकer to link speed
+ *  @hw: pointer to hardware structure
+ *  @speed: pointer to link speed
  *  @link_up: true is link is up, false otherwise
- *  @स्वतःneg_रुको_to_complete: unused
+ *  @autoneg_wait_to_complete: unused
  *
- *  Reads the links रेजिस्टर to determine अगर link is up and the current speed
+ *  Reads the links register to determine if link is up and the current speed
  **/
-अटल s32 ixgbevf_check_mac_link_vf(काष्ठा ixgbe_hw *hw,
+static s32 ixgbevf_check_mac_link_vf(struct ixgbe_hw *hw,
 				     ixgbe_link_speed *speed,
 				     bool *link_up,
-				     bool स्वतःneg_रुको_to_complete)
-अणु
-	काष्ठा ixgbe_mbx_info *mbx = &hw->mbx;
-	काष्ठा ixgbe_mac_info *mac = &hw->mac;
+				     bool autoneg_wait_to_complete)
+{
+	struct ixgbe_mbx_info *mbx = &hw->mbx;
+	struct ixgbe_mac_info *mac = &hw->mac;
 	s32 ret_val = 0;
 	u32 links_reg;
 	u32 in_msg = 0;
 
 	/* If we were hit with a reset drop the link */
-	अगर (!mbx->ops.check_क्रम_rst(hw) || !mbx->समयout)
+	if (!mbx->ops.check_for_rst(hw) || !mbx->timeout)
 		mac->get_link_status = true;
 
-	अगर (!mac->get_link_status)
-		जाओ out;
+	if (!mac->get_link_status)
+		goto out;
 
-	/* अगर link status is करोwn no poपूर्णांक in checking to see अगर pf is up */
+	/* if link status is down no point in checking to see if pf is up */
 	links_reg = IXGBE_READ_REG(hw, IXGBE_VFLINKS);
-	अगर (!(links_reg & IXGBE_LINKS_UP))
-		जाओ out;
+	if (!(links_reg & IXGBE_LINKS_UP))
+		goto out;
 
-	/* क्रम SFP+ modules and DA cables on 82599 it can take up to 500usecs
-	 * beक्रमe the link status is correct
+	/* for SFP+ modules and DA cables on 82599 it can take up to 500usecs
+	 * before the link status is correct
 	 */
-	अगर (mac->type == ixgbe_mac_82599_vf) अणु
-		पूर्णांक i;
+	if (mac->type == ixgbe_mac_82599_vf) {
+		int i;
 
-		क्रम (i = 0; i < 5; i++) अणु
+		for (i = 0; i < 5; i++) {
 			udelay(100);
 			links_reg = IXGBE_READ_REG(hw, IXGBE_VFLINKS);
 
-			अगर (!(links_reg & IXGBE_LINKS_UP))
-				जाओ out;
-		पूर्ण
-	पूर्ण
+			if (!(links_reg & IXGBE_LINKS_UP))
+				goto out;
+		}
+	}
 
-	चयन (links_reg & IXGBE_LINKS_SPEED_82599) अणु
-	हाल IXGBE_LINKS_SPEED_10G_82599:
+	switch (links_reg & IXGBE_LINKS_SPEED_82599) {
+	case IXGBE_LINKS_SPEED_10G_82599:
 		*speed = IXGBE_LINK_SPEED_10GB_FULL;
-		अवरोध;
-	हाल IXGBE_LINKS_SPEED_1G_82599:
+		break;
+	case IXGBE_LINKS_SPEED_1G_82599:
 		*speed = IXGBE_LINK_SPEED_1GB_FULL;
-		अवरोध;
-	हाल IXGBE_LINKS_SPEED_100_82599:
+		break;
+	case IXGBE_LINKS_SPEED_100_82599:
 		*speed = IXGBE_LINK_SPEED_100_FULL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	/* अगर the पढ़ो failed it could just be a mailbox collision, best रुको
-	 * until we are called again and करोn't report an error
+	/* if the read failed it could just be a mailbox collision, best wait
+	 * until we are called again and don't report an error
 	 */
-	अगर (mbx->ops.पढ़ो(hw, &in_msg, 1))
-		जाओ out;
+	if (mbx->ops.read(hw, &in_msg, 1))
+		goto out;
 
-	अगर (!(in_msg & IXGBE_VT_MSGTYPE_CTS)) अणु
+	if (!(in_msg & IXGBE_VT_MSGTYPE_CTS)) {
 		/* msg is not CTS and is NACK we must have lost CTS status */
-		अगर (in_msg & IXGBE_VT_MSGTYPE_NACK)
+		if (in_msg & IXGBE_VT_MSGTYPE_NACK)
 			ret_val = -1;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* the pf is talking, अगर we समयd out in the past we reinit */
-	अगर (!mbx->समयout) अणु
+	/* the pf is talking, if we timed out in the past we reinit */
+	if (!mbx->timeout) {
 		ret_val = -1;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* अगर we passed all the tests above then the link is up and we no
-	 * दीर्घer need to check क्रम link
+	/* if we passed all the tests above then the link is up and we no
+	 * longer need to check for link
 	 */
 	mac->get_link_status = false;
 
 out:
 	*link_up = !mac->get_link_status;
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
 /**
  * ixgbevf_hv_check_mac_link_vf - check link
- * @hw: poपूर्णांकer to निजी hardware काष्ठा
- * @speed: poपूर्णांकer to link speed
+ * @hw: pointer to private hardware struct
+ * @speed: pointer to link speed
  * @link_up: true is link is up, false otherwise
- * @स्वतःneg_रुको_to_complete: unused
+ * @autoneg_wait_to_complete: unused
  *
  * Hyper-V variant; there is no mailbox communication.
  */
-अटल s32 ixgbevf_hv_check_mac_link_vf(काष्ठा ixgbe_hw *hw,
+static s32 ixgbevf_hv_check_mac_link_vf(struct ixgbe_hw *hw,
 					ixgbe_link_speed *speed,
 					bool *link_up,
-					bool स्वतःneg_रुको_to_complete)
-अणु
-	काष्ठा ixgbe_mbx_info *mbx = &hw->mbx;
-	काष्ठा ixgbe_mac_info *mac = &hw->mac;
+					bool autoneg_wait_to_complete)
+{
+	struct ixgbe_mbx_info *mbx = &hw->mbx;
+	struct ixgbe_mac_info *mac = &hw->mac;
 	u32 links_reg;
 
 	/* If we were hit with a reset drop the link */
-	अगर (!mbx->ops.check_क्रम_rst(hw) || !mbx->समयout)
+	if (!mbx->ops.check_for_rst(hw) || !mbx->timeout)
 		mac->get_link_status = true;
 
-	अगर (!mac->get_link_status)
-		जाओ out;
+	if (!mac->get_link_status)
+		goto out;
 
-	/* अगर link status is करोwn no poपूर्णांक in checking to see अगर pf is up */
+	/* if link status is down no point in checking to see if pf is up */
 	links_reg = IXGBE_READ_REG(hw, IXGBE_VFLINKS);
-	अगर (!(links_reg & IXGBE_LINKS_UP))
-		जाओ out;
+	if (!(links_reg & IXGBE_LINKS_UP))
+		goto out;
 
-	/* क्रम SFP+ modules and DA cables on 82599 it can take up to 500usecs
-	 * beक्रमe the link status is correct
+	/* for SFP+ modules and DA cables on 82599 it can take up to 500usecs
+	 * before the link status is correct
 	 */
-	अगर (mac->type == ixgbe_mac_82599_vf) अणु
-		पूर्णांक i;
+	if (mac->type == ixgbe_mac_82599_vf) {
+		int i;
 
-		क्रम (i = 0; i < 5; i++) अणु
+		for (i = 0; i < 5; i++) {
 			udelay(100);
 			links_reg = IXGBE_READ_REG(hw, IXGBE_VFLINKS);
 
-			अगर (!(links_reg & IXGBE_LINKS_UP))
-				जाओ out;
-		पूर्ण
-	पूर्ण
+			if (!(links_reg & IXGBE_LINKS_UP))
+				goto out;
+		}
+	}
 
-	चयन (links_reg & IXGBE_LINKS_SPEED_82599) अणु
-	हाल IXGBE_LINKS_SPEED_10G_82599:
+	switch (links_reg & IXGBE_LINKS_SPEED_82599) {
+	case IXGBE_LINKS_SPEED_10G_82599:
 		*speed = IXGBE_LINK_SPEED_10GB_FULL;
-		अवरोध;
-	हाल IXGBE_LINKS_SPEED_1G_82599:
+		break;
+	case IXGBE_LINKS_SPEED_1G_82599:
 		*speed = IXGBE_LINK_SPEED_1GB_FULL;
-		अवरोध;
-	हाल IXGBE_LINKS_SPEED_100_82599:
+		break;
+	case IXGBE_LINKS_SPEED_100_82599:
 		*speed = IXGBE_LINK_SPEED_100_FULL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	/* अगर we passed all the tests above then the link is up and we no
-	 * दीर्घer need to check क्रम link
+	/* if we passed all the tests above then the link is up and we no
+	 * longer need to check for link
 	 */
 	mac->get_link_status = false;
 
 out:
 	*link_up = !mac->get_link_status;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  *  ixgbevf_set_rlpml_vf - Set the maximum receive packet length
- *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  @hw: pointer to the HW structure
  *  @max_size: value to assign to max frame size
  **/
-अटल s32 ixgbevf_set_rlpml_vf(काष्ठा ixgbe_hw *hw, u16 max_size)
-अणु
+static s32 ixgbevf_set_rlpml_vf(struct ixgbe_hw *hw, u16 max_size)
+{
 	u32 msgbuf[2];
 	s32 ret_val;
 
 	msgbuf[0] = IXGBE_VF_SET_LPE;
 	msgbuf[1] = max_size;
 
-	ret_val = ixgbevf_ग_लिखो_msg_पढ़ो_ack(hw, msgbuf, msgbuf,
+	ret_val = ixgbevf_write_msg_read_ack(hw, msgbuf, msgbuf,
 					     ARRAY_SIZE(msgbuf));
-	अगर (ret_val)
-		वापस ret_val;
-	अगर ((msgbuf[0] & IXGBE_VF_SET_LPE) &&
+	if (ret_val)
+		return ret_val;
+	if ((msgbuf[0] & IXGBE_VF_SET_LPE) &&
 	    (msgbuf[0] & IXGBE_VT_MSGTYPE_NACK))
-		वापस IXGBE_ERR_MBX;
+		return IXGBE_ERR_MBX;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * ixgbevf_hv_set_rlpml_vf - Set the maximum receive packet length
- * @hw: poपूर्णांकer to the HW काष्ठाure
+ * @hw: pointer to the HW structure
  * @max_size: value to assign to max frame size
  * Hyper-V variant.
  **/
-अटल s32 ixgbevf_hv_set_rlpml_vf(काष्ठा ixgbe_hw *hw, u16 max_size)
-अणु
+static s32 ixgbevf_hv_set_rlpml_vf(struct ixgbe_hw *hw, u16 max_size)
+{
 	u32 reg;
 
 	/* If we are on Hyper-V, we implement this functionality
-	 * dअगरferently.
+	 * differently.
 	 */
 	reg =  IXGBE_READ_REG(hw, IXGBE_VFRXDCTL(0));
 	/* CRC == 4 */
 	reg |= ((max_size + 4) | IXGBE_RXDCTL_RLPML_EN);
 	IXGBE_WRITE_REG(hw, IXGBE_VFRXDCTL(0), reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  *  ixgbevf_negotiate_api_version_vf - Negotiate supported API version
- *  @hw: poपूर्णांकer to the HW काष्ठाure
- *  @api: पूर्णांकeger containing requested API version
+ *  @hw: pointer to the HW structure
+ *  @api: integer containing requested API version
  **/
-अटल पूर्णांक ixgbevf_negotiate_api_version_vf(काष्ठा ixgbe_hw *hw, पूर्णांक api)
-अणु
-	पूर्णांक err;
+static int ixgbevf_negotiate_api_version_vf(struct ixgbe_hw *hw, int api)
+{
+	int err;
 	u32 msg[3];
 
 	/* Negotiate the mailbox API version */
@@ -859,95 +858,95 @@ out:
 	msg[1] = api;
 	msg[2] = 0;
 
-	err = ixgbevf_ग_लिखो_msg_पढ़ो_ack(hw, msg, msg, ARRAY_SIZE(msg));
-	अगर (!err) अणु
+	err = ixgbevf_write_msg_read_ack(hw, msg, msg, ARRAY_SIZE(msg));
+	if (!err) {
 		msg[0] &= ~IXGBE_VT_MSGTYPE_CTS;
 
-		/* Store value and वापस 0 on success */
-		अगर (msg[0] == (IXGBE_VF_API_NEGOTIATE | IXGBE_VT_MSGTYPE_ACK)) अणु
+		/* Store value and return 0 on success */
+		if (msg[0] == (IXGBE_VF_API_NEGOTIATE | IXGBE_VT_MSGTYPE_ACK)) {
 			hw->api_version = api;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		err = IXGBE_ERR_INVALID_ARGUMENT;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
  *  ixgbevf_hv_negotiate_api_version_vf - Negotiate supported API version
- *  @hw: poपूर्णांकer to the HW काष्ठाure
- *  @api: पूर्णांकeger containing requested API version
+ *  @hw: pointer to the HW structure
+ *  @api: integer containing requested API version
  *  Hyper-V version - only ixgbe_mbox_api_10 supported.
  **/
-अटल पूर्णांक ixgbevf_hv_negotiate_api_version_vf(काष्ठा ixgbe_hw *hw, पूर्णांक api)
-अणु
+static int ixgbevf_hv_negotiate_api_version_vf(struct ixgbe_hw *hw, int api)
+{
 	/* Hyper-V only supports api version ixgbe_mbox_api_10 */
-	अगर (api != ixgbe_mbox_api_10)
-		वापस IXGBE_ERR_INVALID_ARGUMENT;
+	if (api != ixgbe_mbox_api_10)
+		return IXGBE_ERR_INVALID_ARGUMENT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ixgbevf_get_queues(काष्ठा ixgbe_hw *hw, अचिन्हित पूर्णांक *num_tcs,
-		       अचिन्हित पूर्णांक *शेष_tc)
-अणु
-	पूर्णांक err;
+int ixgbevf_get_queues(struct ixgbe_hw *hw, unsigned int *num_tcs,
+		       unsigned int *default_tc)
+{
+	int err;
 	u32 msg[5];
 
-	/* करो nothing अगर API करोesn't support ixgbevf_get_queues */
-	चयन (hw->api_version) अणु
-	हाल ixgbe_mbox_api_11:
-	हाल ixgbe_mbox_api_12:
-	हाल ixgbe_mbox_api_13:
-	हाल ixgbe_mbox_api_14:
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+	/* do nothing if API doesn't support ixgbevf_get_queues */
+	switch (hw->api_version) {
+	case ixgbe_mbox_api_11:
+	case ixgbe_mbox_api_12:
+	case ixgbe_mbox_api_13:
+	case ixgbe_mbox_api_14:
+		break;
+	default:
+		return 0;
+	}
 
 	/* Fetch queue configuration from the PF */
 	msg[0] = IXGBE_VF_GET_QUEUE;
 	msg[1] = msg[2] = msg[3] = msg[4] = 0;
 
-	err = ixgbevf_ग_लिखो_msg_पढ़ो_ack(hw, msg, msg, ARRAY_SIZE(msg));
-	अगर (!err) अणु
+	err = ixgbevf_write_msg_read_ack(hw, msg, msg, ARRAY_SIZE(msg));
+	if (!err) {
 		msg[0] &= ~IXGBE_VT_MSGTYPE_CTS;
 
-		/* अगर we we didn't get an ACK there must have been
+		/* if we we didn't get an ACK there must have been
 		 * some sort of mailbox error so we should treat it
 		 * as such
 		 */
-		अगर (msg[0] != (IXGBE_VF_GET_QUEUE | IXGBE_VT_MSGTYPE_ACK))
-			वापस IXGBE_ERR_MBX;
+		if (msg[0] != (IXGBE_VF_GET_QUEUE | IXGBE_VT_MSGTYPE_ACK))
+			return IXGBE_ERR_MBX;
 
 		/* record and validate values from message */
 		hw->mac.max_tx_queues = msg[IXGBE_VF_TX_QUEUES];
-		अगर (hw->mac.max_tx_queues == 0 ||
+		if (hw->mac.max_tx_queues == 0 ||
 		    hw->mac.max_tx_queues > IXGBE_VF_MAX_TX_QUEUES)
 			hw->mac.max_tx_queues = IXGBE_VF_MAX_TX_QUEUES;
 
 		hw->mac.max_rx_queues = msg[IXGBE_VF_RX_QUEUES];
-		अगर (hw->mac.max_rx_queues == 0 ||
+		if (hw->mac.max_rx_queues == 0 ||
 		    hw->mac.max_rx_queues > IXGBE_VF_MAX_RX_QUEUES)
 			hw->mac.max_rx_queues = IXGBE_VF_MAX_RX_QUEUES;
 
 		*num_tcs = msg[IXGBE_VF_TRANS_VLAN];
-		/* in हाल of unknown state assume we cannot tag frames */
-		अगर (*num_tcs > hw->mac.max_rx_queues)
+		/* in case of unknown state assume we cannot tag frames */
+		if (*num_tcs > hw->mac.max_rx_queues)
 			*num_tcs = 1;
 
-		*शेष_tc = msg[IXGBE_VF_DEF_QUEUE];
-		/* शेष to queue 0 on out-of-bounds queue number */
-		अगर (*शेष_tc >= hw->mac.max_tx_queues)
-			*शेष_tc = 0;
-	पूर्ण
+		*default_tc = msg[IXGBE_VF_DEF_QUEUE];
+		/* default to queue 0 on out-of-bounds queue number */
+		if (*default_tc >= hw->mac.max_tx_queues)
+			*default_tc = 0;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा ixgbe_mac_operations ixgbevf_mac_ops = अणु
+static const struct ixgbe_mac_operations ixgbevf_mac_ops = {
 	.init_hw		= ixgbevf_init_hw_vf,
 	.reset_hw		= ixgbevf_reset_hw_vf,
 	.start_hw		= ixgbevf_start_hw_vf,
@@ -962,9 +961,9 @@ out:
 	.set_uc_addr		= ixgbevf_set_uc_addr_vf,
 	.set_vfta		= ixgbevf_set_vfta_vf,
 	.set_rlpml		= ixgbevf_set_rlpml_vf,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ixgbe_mac_operations ixgbevf_hv_mac_ops = अणु
+static const struct ixgbe_mac_operations ixgbevf_hv_mac_ops = {
 	.init_hw		= ixgbevf_init_hw_vf,
 	.reset_hw		= ixgbevf_hv_reset_hw_vf,
 	.start_hw		= ixgbevf_start_hw_vf,
@@ -979,49 +978,49 @@ out:
 	.set_uc_addr		= ixgbevf_hv_set_uc_addr_vf,
 	.set_vfta		= ixgbevf_hv_set_vfta_vf,
 	.set_rlpml		= ixgbevf_hv_set_rlpml_vf,
-पूर्ण;
+};
 
-स्थिर काष्ठा ixgbevf_info ixgbevf_82599_vf_info = अणु
+const struct ixgbevf_info ixgbevf_82599_vf_info = {
 	.mac = ixgbe_mac_82599_vf,
 	.mac_ops = &ixgbevf_mac_ops,
-पूर्ण;
+};
 
-स्थिर काष्ठा ixgbevf_info ixgbevf_82599_vf_hv_info = अणु
+const struct ixgbevf_info ixgbevf_82599_vf_hv_info = {
 	.mac = ixgbe_mac_82599_vf,
 	.mac_ops = &ixgbevf_hv_mac_ops,
-पूर्ण;
+};
 
-स्थिर काष्ठा ixgbevf_info ixgbevf_X540_vf_info = अणु
+const struct ixgbevf_info ixgbevf_X540_vf_info = {
 	.mac = ixgbe_mac_X540_vf,
 	.mac_ops = &ixgbevf_mac_ops,
-पूर्ण;
+};
 
-स्थिर काष्ठा ixgbevf_info ixgbevf_X540_vf_hv_info = अणु
+const struct ixgbevf_info ixgbevf_X540_vf_hv_info = {
 	.mac = ixgbe_mac_X540_vf,
 	.mac_ops = &ixgbevf_hv_mac_ops,
-पूर्ण;
+};
 
-स्थिर काष्ठा ixgbevf_info ixgbevf_X550_vf_info = अणु
+const struct ixgbevf_info ixgbevf_X550_vf_info = {
 	.mac = ixgbe_mac_X550_vf,
 	.mac_ops = &ixgbevf_mac_ops,
-पूर्ण;
+};
 
-स्थिर काष्ठा ixgbevf_info ixgbevf_X550_vf_hv_info = अणु
+const struct ixgbevf_info ixgbevf_X550_vf_hv_info = {
 	.mac = ixgbe_mac_X550_vf,
 	.mac_ops = &ixgbevf_hv_mac_ops,
-पूर्ण;
+};
 
-स्थिर काष्ठा ixgbevf_info ixgbevf_X550EM_x_vf_info = अणु
+const struct ixgbevf_info ixgbevf_X550EM_x_vf_info = {
 	.mac = ixgbe_mac_X550EM_x_vf,
 	.mac_ops = &ixgbevf_mac_ops,
-पूर्ण;
+};
 
-स्थिर काष्ठा ixgbevf_info ixgbevf_X550EM_x_vf_hv_info = अणु
+const struct ixgbevf_info ixgbevf_X550EM_x_vf_hv_info = {
 	.mac = ixgbe_mac_X550EM_x_vf,
 	.mac_ops = &ixgbevf_hv_mac_ops,
-पूर्ण;
+};
 
-स्थिर काष्ठा ixgbevf_info ixgbevf_x550em_a_vf_info = अणु
+const struct ixgbevf_info ixgbevf_x550em_a_vf_info = {
 	.mac = ixgbe_mac_x550em_a_vf,
 	.mac_ops = &ixgbevf_mac_ops,
-पूर्ण;
+};

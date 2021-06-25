@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Samsung Exynos4 SoC series FIMC-IS slave पूर्णांकerface driver
+ * Samsung Exynos4 SoC series FIMC-IS slave interface driver
  *
  * FIMC-IS error code definition
  *
@@ -11,12 +10,12 @@
  *          Sylwester Nawrocki <s.nawrocki@samsung.com>
 */
 
-#अगर_अघोषित FIMC_IS_ERR_H_
-#घोषणा FIMC_IS_ERR_H_
+#ifndef FIMC_IS_ERR_H_
+#define FIMC_IS_ERR_H_
 
-#घोषणा IS_ERROR_VER			011 /* IS ERROR VERSION 0.11 */
+#define IS_ERROR_VER			011 /* IS ERROR VERSION 0.11 */
 
-क्रमागत अणु
+enum {
 	IS_ERROR_NONE,
 
 	/* General 1 ~ 99 */
@@ -26,7 +25,7 @@
 	IS_ERROR_INVALID_SENSORID,
 	IS_ERROR_INVALID_MODE_CHANGE,
 	IS_ERROR_INVALID_MAGIC_NUMBER,
-	IS_ERROR_INVALID_SETखाता_HDR,
+	IS_ERROR_INVALID_SETFILE_HDR,
 	IS_ERROR_BUSY,
 	IS_ERROR_SET_PARAMETER,
 	IS_ERROR_INVALID_PATH,
@@ -105,29 +104,29 @@
 	IS_ERROR_LHFD_FRAME_END_TIME_OUT,
 
 	IS_ERROR_UNKNOWN		= 1000,
-पूर्ण;
+};
 
-#घोषणा IS_ERROR_TIME_OUT_FLAG	0x80000000
+#define IS_ERROR_TIME_OUT_FLAG	0x80000000
 
-/* Set parameter error क्रमागत */
-क्रमागत fimc_is_error अणु
+/* Set parameter error enum */
+enum fimc_is_error {
 	/* Common error (0~99) */
 	ERROR_COMMON_NONE		= 0,
 	ERROR_COMMON_CMD		= 1,	/* Invalid command */
 	ERROR_COMMON_PARAMETER		= 2,	/* Invalid parameter */
-	/* setfile is not loaded beक्रमe adjusting */
-	ERROR_COMMON_SETखाता_LOAD	= 3,
-	/* setfile is not Adjusted beक्रमe runnng. */
-	ERROR_COMMON_SETखाता_ADJUST	= 4,
-	/* Index of setfile is not valid (0~MAX_SETखाता_NUM-1) */
-	ERROR_COMMON_SETखाता_INDEX	= 5,
-	/* Input path can be changed in पढ़ोy state(stop) */
+	/* setfile is not loaded before adjusting */
+	ERROR_COMMON_SETFILE_LOAD	= 3,
+	/* setfile is not Adjusted before runnng. */
+	ERROR_COMMON_SETFILE_ADJUST	= 4,
+	/* Index of setfile is not valid (0~MAX_SETFILE_NUM-1) */
+	ERROR_COMMON_SETFILE_INDEX	= 5,
+	/* Input path can be changed in ready state(stop) */
 	ERROR_COMMON_INPUT_PATH		= 6,
-	/* IP can not start अगर input path is not set */
+	/* IP can not start if input path is not set */
 	ERROR_COMMON_INPUT_INIT		= 7,
-	/* Output path can be changed in पढ़ोy state (stop) */
+	/* Output path can be changed in ready state (stop) */
 	ERROR_COMMON_OUTPUT_PATH	= 8,
-	/* IP can not start अगर output path is not set */
+	/* IP can not start if output path is not set */
 	ERROR_COMMON_OUTPUT_INIT	= 9,
 
 	ERROR_CONTROL_NONE		= ERROR_COMMON_NONE,
@@ -135,7 +134,7 @@
 
 	ERROR_OTF_INPUT_NONE		= ERROR_COMMON_NONE,
 	ERROR_OTF_INPUT_CMD		= 21,
-	/* invalid क्रमmat  (DRC: YUV444, FD: YUV444, 422, 420) */
+	/* invalid format  (DRC: YUV444, FD: YUV444, 422, 420) */
 	ERROR_OTF_INPUT_FORMAT		= 22,
 	/* invalid width (DRC: 128~8192, FD: 32~8190) */
 	ERROR_OTF_INPUT_WIDTH		= 23,
@@ -143,7 +142,7 @@
 	ERROR_OTF_INPUT_HEIGHT		= 24,
 	/* invalid bit-width (DRC: 8~12bits, FD: 8bit) */
 	ERROR_OTF_INPUT_BIT_WIDTH	= 25,
-	/* invalid FrameTime क्रम ISP */
+	/* invalid FrameTime for ISP */
 	ERROR_OTF_INPUT_USER_FRAMETIIME	= 26,
 
 	ERROR_DMA_INPUT_NONE		= ERROR_COMMON_NONE,
@@ -151,7 +150,7 @@
 	ERROR_DMA_INPUT_WIDTH		= 31,
 	/* invalid height (DRC: 64~8192, FD: 16~8190) */
 	ERROR_DMA_INPUT_HEIGHT		= 32,
-	/* invalid क्रमmat (DRC: YUV444 or YUV422, FD: YUV444, 422, 420) */
+	/* invalid format (DRC: YUV444 or YUV422, FD: YUV444, 422, 420) */
 	ERROR_DMA_INPUT_FORMAT		= 33,
 	/* invalid bit-width (DRC: 8~12bit, FD: 8bit) */
 	ERROR_DMA_INPUT_BIT_WIDTH	= 34,
@@ -165,7 +164,7 @@
 	ERROR_OTF_OUTPUT_WIDTH		= 41,
 	/* invalid height (DRC: 64~8192) */
 	ERROR_OTF_OUTPUT_HEIGHT		= 42,
-	/* invalid क्रमmat (DRC: YUV444) */
+	/* invalid format (DRC: YUV444) */
 	ERROR_OTF_OUTPUT_FORMAT		= 43,
 	/* invalid bit-width (DRC: 8~12bits) */
 	ERROR_OTF_OUTPUT_BIT_WIDTH	= 44,
@@ -173,7 +172,7 @@
 	ERROR_DMA_OUTPUT_NONE		= ERROR_COMMON_NONE,
 	ERROR_DMA_OUTPUT_WIDTH		= 51,	/* invalid width */
 	ERROR_DMA_OUTPUT_HEIGHT		= 52,	/* invalid height */
-	ERROR_DMA_OUTPUT_FORMAT		= 53,	/* invalid क्रमmat */
+	ERROR_DMA_OUTPUT_FORMAT		= 53,	/* invalid format */
 	ERROR_DMA_OUTPUT_BIT_WIDTH	= 54,	/* invalid bit-width */
 	ERROR_DMA_OUTPUT_PLANE		= 55,	/* invalid plane */
 	ERROR_DMA_OUTPUT_ORDER		= 56,	/* invalid order */
@@ -224,9 +223,9 @@
 	ERROR_FD_CONFIG_ORIENTATION_STATE		= 411,
 	ERROR_FD_CONFIG_ORIENTATION_INVALID		= 412,
 	ERROR_FD_CONFIG_ORIENTATION_VALUE_INVALID	= 413,
-	/* PARAM_FdResultStr can be only applied in पढ़ोy-state or stream off */
+	/* PARAM_FdResultStr can be only applied in ready-state or stream off */
 	ERROR_FD_RESULT					= 414,
-	/* PARAM_FdModeStr can be only applied in पढ़ोy-state or stream off */
+	/* PARAM_FdModeStr can be only applied in ready-state or stream off */
 	ERROR_FD_MODE					= 415,
 	/* Scaler Error  (500 ~ 599) */
 	ERROR_SCALER_NO_NONE				= ERROR_COMMON_NONE,
@@ -238,9 +237,9 @@
 
 	ERROR_SCALER_ROTATE				= 520,
 	ERROR_SCALER_FLIP				= 521,
-पूर्ण;
+};
 
-स्थिर अक्षर *fimc_is_strerr(अचिन्हित पूर्णांक error);
-स्थिर अक्षर *fimc_is_param_strerr(अचिन्हित पूर्णांक error);
+const char *fimc_is_strerr(unsigned int error);
+const char *fimc_is_param_strerr(unsigned int error);
 
-#पूर्ण_अगर /* FIMC_IS_ERR_H_ */
+#endif /* FIMC_IS_ERR_H_ */

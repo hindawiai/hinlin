@@ -1,139 +1,138 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2000-2002,2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#समावेश "xfs.h"
-#समावेश "xfs_fs.h"
-#समावेश "xfs_shared.h"
-#समावेश "xfs_format.h"
-#समावेश "xfs_log_format.h"
-#समावेश "xfs_trans_resv.h"
-#समावेश "xfs_bit.h"
-#समावेश "xfs_sb.h"
-#समावेश "xfs_mount.h"
-#समावेश "xfs_inode.h"
-#समावेश "xfs_btree.h"
-#समावेश "xfs_ialloc.h"
-#समावेश "xfs_ialloc_btree.h"
-#समावेश "xfs_alloc.h"
-#समावेश "xfs_errortag.h"
-#समावेश "xfs_error.h"
-#समावेश "xfs_bmap.h"
-#समावेश "xfs_trans.h"
-#समावेश "xfs_buf_item.h"
-#समावेश "xfs_icreate_item.h"
-#समावेश "xfs_icache.h"
-#समावेश "xfs_trace.h"
-#समावेश "xfs_log.h"
-#समावेश "xfs_rmap.h"
+#include "xfs.h"
+#include "xfs_fs.h"
+#include "xfs_shared.h"
+#include "xfs_format.h"
+#include "xfs_log_format.h"
+#include "xfs_trans_resv.h"
+#include "xfs_bit.h"
+#include "xfs_sb.h"
+#include "xfs_mount.h"
+#include "xfs_inode.h"
+#include "xfs_btree.h"
+#include "xfs_ialloc.h"
+#include "xfs_ialloc_btree.h"
+#include "xfs_alloc.h"
+#include "xfs_errortag.h"
+#include "xfs_error.h"
+#include "xfs_bmap.h"
+#include "xfs_trans.h"
+#include "xfs_buf_item.h"
+#include "xfs_icreate_item.h"
+#include "xfs_icache.h"
+#include "xfs_trace.h"
+#include "xfs_log.h"
+#include "xfs_rmap.h"
 
 /*
  * Lookup a record by ino in the btree given by cur.
  */
-पूर्णांक					/* error */
+int					/* error */
 xfs_inobt_lookup(
-	काष्ठा xfs_btree_cur	*cur,	/* btree cursor */
+	struct xfs_btree_cur	*cur,	/* btree cursor */
 	xfs_agino_t		ino,	/* starting inode of chunk */
 	xfs_lookup_t		dir,	/* <=, >=, == */
-	पूर्णांक			*stat)	/* success/failure */
-अणु
+	int			*stat)	/* success/failure */
+{
 	cur->bc_rec.i.ir_startino = ino;
 	cur->bc_rec.i.ir_holemask = 0;
 	cur->bc_rec.i.ir_count = 0;
-	cur->bc_rec.i.ir_मुक्तcount = 0;
-	cur->bc_rec.i.ir_मुक्त = 0;
-	वापस xfs_btree_lookup(cur, dir, stat);
-पूर्ण
+	cur->bc_rec.i.ir_freecount = 0;
+	cur->bc_rec.i.ir_free = 0;
+	return xfs_btree_lookup(cur, dir, stat);
+}
 
 /*
  * Update the record referred to by cur to the value given.
- * This either works (वापस 0) or माला_लो an EFSCORRUPTED error.
+ * This either works (return 0) or gets an EFSCORRUPTED error.
  */
-STATIC पूर्णांक				/* error */
+STATIC int				/* error */
 xfs_inobt_update(
-	काष्ठा xfs_btree_cur	*cur,	/* btree cursor */
+	struct xfs_btree_cur	*cur,	/* btree cursor */
 	xfs_inobt_rec_incore_t	*irec)	/* btree record */
-अणु
-	जोड़ xfs_btree_rec	rec;
+{
+	union xfs_btree_rec	rec;
 
 	rec.inobt.ir_startino = cpu_to_be32(irec->ir_startino);
-	अगर (xfs_sb_version_hassparseinodes(&cur->bc_mp->m_sb)) अणु
+	if (xfs_sb_version_hassparseinodes(&cur->bc_mp->m_sb)) {
 		rec.inobt.ir_u.sp.ir_holemask = cpu_to_be16(irec->ir_holemask);
 		rec.inobt.ir_u.sp.ir_count = irec->ir_count;
-		rec.inobt.ir_u.sp.ir_मुक्तcount = irec->ir_मुक्तcount;
-	पूर्ण अन्यथा अणु
+		rec.inobt.ir_u.sp.ir_freecount = irec->ir_freecount;
+	} else {
 		/* ir_holemask/ir_count not supported on-disk */
-		rec.inobt.ir_u.f.ir_मुक्तcount = cpu_to_be32(irec->ir_मुक्तcount);
-	पूर्ण
-	rec.inobt.ir_मुक्त = cpu_to_be64(irec->ir_मुक्त);
-	वापस xfs_btree_update(cur, &rec);
-पूर्ण
+		rec.inobt.ir_u.f.ir_freecount = cpu_to_be32(irec->ir_freecount);
+	}
+	rec.inobt.ir_free = cpu_to_be64(irec->ir_free);
+	return xfs_btree_update(cur, &rec);
+}
 
 /* Convert on-disk btree record to incore inobt record. */
-व्योम
+void
 xfs_inobt_btrec_to_irec(
-	काष्ठा xfs_mount		*mp,
-	जोड़ xfs_btree_rec		*rec,
-	काष्ठा xfs_inobt_rec_incore	*irec)
-अणु
+	struct xfs_mount		*mp,
+	union xfs_btree_rec		*rec,
+	struct xfs_inobt_rec_incore	*irec)
+{
 	irec->ir_startino = be32_to_cpu(rec->inobt.ir_startino);
-	अगर (xfs_sb_version_hassparseinodes(&mp->m_sb)) अणु
+	if (xfs_sb_version_hassparseinodes(&mp->m_sb)) {
 		irec->ir_holemask = be16_to_cpu(rec->inobt.ir_u.sp.ir_holemask);
 		irec->ir_count = rec->inobt.ir_u.sp.ir_count;
-		irec->ir_मुक्तcount = rec->inobt.ir_u.sp.ir_मुक्तcount;
-	पूर्ण अन्यथा अणु
+		irec->ir_freecount = rec->inobt.ir_u.sp.ir_freecount;
+	} else {
 		/*
 		 * ir_holemask/ir_count not supported on-disk. Fill in hardcoded
-		 * values क्रम full inode chunks.
+		 * values for full inode chunks.
 		 */
 		irec->ir_holemask = XFS_INOBT_HOLEMASK_FULL;
 		irec->ir_count = XFS_INODES_PER_CHUNK;
-		irec->ir_मुक्तcount =
-				be32_to_cpu(rec->inobt.ir_u.f.ir_मुक्तcount);
-	पूर्ण
-	irec->ir_मुक्त = be64_to_cpu(rec->inobt.ir_मुक्त);
-पूर्ण
+		irec->ir_freecount =
+				be32_to_cpu(rec->inobt.ir_u.f.ir_freecount);
+	}
+	irec->ir_free = be64_to_cpu(rec->inobt.ir_free);
+}
 
 /*
- * Get the data from the poपूर्णांकed-to record.
+ * Get the data from the pointed-to record.
  */
-पूर्णांक
+int
 xfs_inobt_get_rec(
-	काष्ठा xfs_btree_cur		*cur,
-	काष्ठा xfs_inobt_rec_incore	*irec,
-	पूर्णांक				*stat)
-अणु
-	काष्ठा xfs_mount		*mp = cur->bc_mp;
+	struct xfs_btree_cur		*cur,
+	struct xfs_inobt_rec_incore	*irec,
+	int				*stat)
+{
+	struct xfs_mount		*mp = cur->bc_mp;
 	xfs_agnumber_t			agno = cur->bc_ag.agno;
-	जोड़ xfs_btree_rec		*rec;
-	पूर्णांक				error;
-	uपूर्णांक64_t			realमुक्त;
+	union xfs_btree_rec		*rec;
+	int				error;
+	uint64_t			realfree;
 
 	error = xfs_btree_get_rec(cur, &rec, stat);
-	अगर (error || *stat == 0)
-		वापस error;
+	if (error || *stat == 0)
+		return error;
 
 	xfs_inobt_btrec_to_irec(mp, rec, irec);
 
-	अगर (!xfs_verअगरy_agino(mp, agno, irec->ir_startino))
-		जाओ out_bad_rec;
-	अगर (irec->ir_count < XFS_INODES_PER_HOLEMASK_BIT ||
+	if (!xfs_verify_agino(mp, agno, irec->ir_startino))
+		goto out_bad_rec;
+	if (irec->ir_count < XFS_INODES_PER_HOLEMASK_BIT ||
 	    irec->ir_count > XFS_INODES_PER_CHUNK)
-		जाओ out_bad_rec;
-	अगर (irec->ir_मुक्तcount > XFS_INODES_PER_CHUNK)
-		जाओ out_bad_rec;
+		goto out_bad_rec;
+	if (irec->ir_freecount > XFS_INODES_PER_CHUNK)
+		goto out_bad_rec;
 
-	/* अगर there are no holes, वापस the first available offset */
-	अगर (!xfs_inobt_issparse(irec->ir_holemask))
-		realमुक्त = irec->ir_मुक्त;
-	अन्यथा
-		realमुक्त = irec->ir_मुक्त & xfs_inobt_irec_to_allocmask(irec);
-	अगर (hweight64(realमुक्त) != irec->ir_मुक्तcount)
-		जाओ out_bad_rec;
+	/* if there are no holes, return the first available offset */
+	if (!xfs_inobt_issparse(irec->ir_holemask))
+		realfree = irec->ir_free;
+	else
+		realfree = irec->ir_free & xfs_inobt_irec_to_allocmask(irec);
+	if (hweight64(realfree) != irec->ir_freecount)
+		goto out_bad_rec;
 
-	वापस 0;
+	return 0;
 
 out_bad_rec:
 	xfs_warn(mp,
@@ -141,143 +140,143 @@ out_bad_rec:
 		cur->bc_btnum == XFS_BTNUM_INO ? "Used" : "Free", agno);
 	xfs_warn(mp,
 "start inode 0x%x, count 0x%x, free 0x%x freemask 0x%llx, holemask 0x%x",
-		irec->ir_startino, irec->ir_count, irec->ir_मुक्तcount,
-		irec->ir_मुक्त, irec->ir_holemask);
-	वापस -EFSCORRUPTED;
-पूर्ण
+		irec->ir_startino, irec->ir_count, irec->ir_freecount,
+		irec->ir_free, irec->ir_holemask);
+	return -EFSCORRUPTED;
+}
 
 /*
- * Insert a single inobt record. Cursor must alपढ़ोy poपूर्णांक to desired location.
+ * Insert a single inobt record. Cursor must already point to desired location.
  */
-पूर्णांक
+int
 xfs_inobt_insert_rec(
-	काष्ठा xfs_btree_cur	*cur,
-	uपूर्णांक16_t		holemask,
-	uपूर्णांक8_t			count,
-	पूर्णांक32_t			मुक्तcount,
-	xfs_inoमुक्त_t		मुक्त,
-	पूर्णांक			*stat)
-अणु
+	struct xfs_btree_cur	*cur,
+	uint16_t		holemask,
+	uint8_t			count,
+	int32_t			freecount,
+	xfs_inofree_t		free,
+	int			*stat)
+{
 	cur->bc_rec.i.ir_holemask = holemask;
 	cur->bc_rec.i.ir_count = count;
-	cur->bc_rec.i.ir_मुक्तcount = मुक्तcount;
-	cur->bc_rec.i.ir_मुक्त = मुक्त;
-	वापस xfs_btree_insert(cur, stat);
-पूर्ण
+	cur->bc_rec.i.ir_freecount = freecount;
+	cur->bc_rec.i.ir_free = free;
+	return xfs_btree_insert(cur, stat);
+}
 
 /*
- * Insert records describing a newly allocated inode chunk पूर्णांकo the inobt.
+ * Insert records describing a newly allocated inode chunk into the inobt.
  */
-STATIC पूर्णांक
+STATIC int
 xfs_inobt_insert(
-	काष्ठा xfs_mount	*mp,
-	काष्ठा xfs_trans	*tp,
-	काष्ठा xfs_buf		*agbp,
+	struct xfs_mount	*mp,
+	struct xfs_trans	*tp,
+	struct xfs_buf		*agbp,
 	xfs_agino_t		newino,
 	xfs_agino_t		newlen,
 	xfs_btnum_t		btnum)
-अणु
-	काष्ठा xfs_btree_cur	*cur;
-	काष्ठा xfs_agi		*agi = agbp->b_addr;
+{
+	struct xfs_btree_cur	*cur;
+	struct xfs_agi		*agi = agbp->b_addr;
 	xfs_agnumber_t		agno = be32_to_cpu(agi->agi_seqno);
 	xfs_agino_t		thisino;
-	पूर्णांक			i;
-	पूर्णांक			error;
+	int			i;
+	int			error;
 
 	cur = xfs_inobt_init_cursor(mp, tp, agbp, agno, btnum);
 
-	क्रम (thisino = newino;
+	for (thisino = newino;
 	     thisino < newino + newlen;
-	     thisino += XFS_INODES_PER_CHUNK) अणु
+	     thisino += XFS_INODES_PER_CHUNK) {
 		error = xfs_inobt_lookup(cur, thisino, XFS_LOOKUP_EQ, &i);
-		अगर (error) अणु
+		if (error) {
 			xfs_btree_del_cursor(cur, XFS_BTREE_ERROR);
-			वापस error;
-		पूर्ण
+			return error;
+		}
 		ASSERT(i == 0);
 
 		error = xfs_inobt_insert_rec(cur, XFS_INOBT_HOLEMASK_FULL,
 					     XFS_INODES_PER_CHUNK,
 					     XFS_INODES_PER_CHUNK,
 					     XFS_INOBT_ALL_FREE, &i);
-		अगर (error) अणु
+		if (error) {
 			xfs_btree_del_cursor(cur, XFS_BTREE_ERROR);
-			वापस error;
-		पूर्ण
+			return error;
+		}
 		ASSERT(i == 1);
-	पूर्ण
+	}
 
 	xfs_btree_del_cursor(cur, XFS_BTREE_NOERROR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Verअगरy that the number of मुक्त inodes in the AGI is correct.
+ * Verify that the number of free inodes in the AGI is correct.
  */
-#अगर_घोषित DEBUG
-STATIC पूर्णांक
-xfs_check_agi_मुक्तcount(
-	काष्ठा xfs_btree_cur	*cur,
-	काष्ठा xfs_agi		*agi)
-अणु
-	अगर (cur->bc_nlevels == 1) अणु
+#ifdef DEBUG
+STATIC int
+xfs_check_agi_freecount(
+	struct xfs_btree_cur	*cur,
+	struct xfs_agi		*agi)
+{
+	if (cur->bc_nlevels == 1) {
 		xfs_inobt_rec_incore_t rec;
-		पूर्णांक		मुक्तcount = 0;
-		पूर्णांक		error;
-		पूर्णांक		i;
+		int		freecount = 0;
+		int		error;
+		int		i;
 
 		error = xfs_inobt_lookup(cur, 0, XFS_LOOKUP_GE, &i);
-		अगर (error)
-			वापस error;
+		if (error)
+			return error;
 
-		करो अणु
+		do {
 			error = xfs_inobt_get_rec(cur, &rec, &i);
-			अगर (error)
-				वापस error;
+			if (error)
+				return error;
 
-			अगर (i) अणु
-				मुक्तcount += rec.ir_मुक्तcount;
+			if (i) {
+				freecount += rec.ir_freecount;
 				error = xfs_btree_increment(cur, 0, &i);
-				अगर (error)
-					वापस error;
-			पूर्ण
-		पूर्ण जबतक (i == 1);
+				if (error)
+					return error;
+			}
+		} while (i == 1);
 
-		अगर (!XFS_FORCED_SHUTDOWN(cur->bc_mp))
-			ASSERT(मुक्तcount == be32_to_cpu(agi->agi_मुक्तcount));
-	पूर्ण
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा xfs_check_agi_मुक्तcount(cur, agi)	0
-#पूर्ण_अगर
+		if (!XFS_FORCED_SHUTDOWN(cur->bc_mp))
+			ASSERT(freecount == be32_to_cpu(agi->agi_freecount));
+	}
+	return 0;
+}
+#else
+#define xfs_check_agi_freecount(cur, agi)	0
+#endif
 
 /*
  * Initialise a new set of inodes. When called without a transaction context
- * (e.g. from recovery) we initiate a delayed ग_लिखो of the inode buffers rather
- * than logging them (which in a transaction context माला_दो them पूर्णांकo the AIL
- * क्रम ग_लिखोback rather than the xfsbufd queue).
+ * (e.g. from recovery) we initiate a delayed write of the inode buffers rather
+ * than logging them (which in a transaction context puts them into the AIL
+ * for writeback rather than the xfsbufd queue).
  */
-पूर्णांक
+int
 xfs_ialloc_inode_init(
-	काष्ठा xfs_mount	*mp,
-	काष्ठा xfs_trans	*tp,
-	काष्ठा list_head	*buffer_list,
-	पूर्णांक			icount,
+	struct xfs_mount	*mp,
+	struct xfs_trans	*tp,
+	struct list_head	*buffer_list,
+	int			icount,
 	xfs_agnumber_t		agno,
 	xfs_agblock_t		agbno,
 	xfs_agblock_t		length,
-	अचिन्हित पूर्णांक		gen)
-अणु
-	काष्ठा xfs_buf		*fbuf;
-	काष्ठा xfs_dinode	*मुक्त;
-	पूर्णांक			nbufs;
-	पूर्णांक			version;
-	पूर्णांक			i, j;
+	unsigned int		gen)
+{
+	struct xfs_buf		*fbuf;
+	struct xfs_dinode	*free;
+	int			nbufs;
+	int			version;
+	int			i, j;
 	xfs_daddr_t		d;
 	xfs_ino_t		ino = 0;
-	पूर्णांक			error;
+	int			error;
 
 	/*
 	 * Loop over the new block(s), filling in the inodes.  For small block
@@ -289,41 +288,41 @@ xfs_ialloc_inode_init(
 	/*
 	 * Figure out what version number to use in the inodes we create.  If
 	 * the superblock version has caught up to the one that supports the new
-	 * inode क्रमmat, then use the new inode version.  Otherwise use the old
-	 * version so that old kernels will जारी to be able to use the file
-	 * प्रणाली.
+	 * inode format, then use the new inode version.  Otherwise use the old
+	 * version so that old kernels will continue to be able to use the file
+	 * system.
 	 *
-	 * For v3 inodes, we also need to ग_लिखो the inode number पूर्णांकo the inode,
+	 * For v3 inodes, we also need to write the inode number into the inode,
 	 * so calculate the first inode number of the chunk here as
-	 * XFS_AGB_TO_AGINO() only works within a fileप्रणाली block, not
-	 * across multiple fileप्रणाली blocks (such as a cluster) and so cannot
+	 * XFS_AGB_TO_AGINO() only works within a filesystem block, not
+	 * across multiple filesystem blocks (such as a cluster) and so cannot
 	 * be used in the cluster buffer loop below.
 	 *
-	 * Further, because we are writing the inode directly पूर्णांकo the buffer
+	 * Further, because we are writing the inode directly into the buffer
 	 * and calculating a CRC on the entire inode, we have ot log the entire
 	 * inode so that the entire range the CRC covers is present in the log.
-	 * That means क्रम v3 inode we log the entire buffer rather than just the
+	 * That means for v3 inode we log the entire buffer rather than just the
 	 * inode cores.
 	 */
-	अगर (xfs_sb_version_has_v3inode(&mp->m_sb)) अणु
+	if (xfs_sb_version_has_v3inode(&mp->m_sb)) {
 		version = 3;
 		ino = XFS_AGINO_TO_INO(mp, agno, XFS_AGB_TO_AGINO(mp, agbno));
 
 		/*
 		 * log the initialisation that is about to take place as an
-		 * logical operation. This means the transaction करोes not
+		 * logical operation. This means the transaction does not
 		 * need to log the physical changes to the inode buffers as log
 		 * recovery will know what initialisation is actually needed.
 		 * Hence we only need to log the buffers as "ordered" buffers so
-		 * they track in the AIL as अगर they were physically logged.
+		 * they track in the AIL as if they were physically logged.
 		 */
-		अगर (tp)
+		if (tp)
 			xfs_icreate_log(tp, agno, agbno, icount,
 					mp->m_sb.sb_inodesize, length, gen);
-	पूर्ण अन्यथा
+	} else
 		version = 2;
 
-	क्रम (j = 0; j < nbufs; j++) अणु
+	for (j = 0; j < nbufs; j++) {
 		/*
 		 * Get the block.
 		 */
@@ -332,46 +331,46 @@ xfs_ialloc_inode_init(
 		error = xfs_trans_get_buf(tp, mp->m_ddev_targp, d,
 				mp->m_bsize * M_IGEO(mp)->blocks_per_cluster,
 				XBF_UNMAPPED, &fbuf);
-		अगर (error)
-			वापस error;
+		if (error)
+			return error;
 
 		/* Initialize the inode buffers and log them appropriately. */
 		fbuf->b_ops = &xfs_inode_buf_ops;
 		xfs_buf_zero(fbuf, 0, BBTOB(fbuf->b_length));
-		क्रम (i = 0; i < M_IGEO(mp)->inodes_per_cluster; i++) अणु
-			पूर्णांक	ioffset = i << mp->m_sb.sb_inodelog;
-			uपूर्णांक	isize = XFS_DINODE_SIZE(&mp->m_sb);
+		for (i = 0; i < M_IGEO(mp)->inodes_per_cluster; i++) {
+			int	ioffset = i << mp->m_sb.sb_inodelog;
+			uint	isize = XFS_DINODE_SIZE(&mp->m_sb);
 
-			मुक्त = xfs_make_iptr(mp, fbuf, i);
-			मुक्त->di_magic = cpu_to_be16(XFS_DINODE_MAGIC);
-			मुक्त->di_version = version;
-			मुक्त->di_gen = cpu_to_be32(gen);
-			मुक्त->di_next_unlinked = cpu_to_be32(शून्यAGINO);
+			free = xfs_make_iptr(mp, fbuf, i);
+			free->di_magic = cpu_to_be16(XFS_DINODE_MAGIC);
+			free->di_version = version;
+			free->di_gen = cpu_to_be32(gen);
+			free->di_next_unlinked = cpu_to_be32(NULLAGINO);
 
-			अगर (version == 3) अणु
-				मुक्त->di_ino = cpu_to_be64(ino);
+			if (version == 3) {
+				free->di_ino = cpu_to_be64(ino);
 				ino++;
-				uuid_copy(&मुक्त->di_uuid,
+				uuid_copy(&free->di_uuid,
 					  &mp->m_sb.sb_meta_uuid);
-				xfs_dinode_calc_crc(mp, मुक्त);
-			पूर्ण अन्यथा अगर (tp) अणु
+				xfs_dinode_calc_crc(mp, free);
+			} else if (tp) {
 				/* just log the inode core */
 				xfs_trans_log_buf(tp, fbuf, ioffset,
 						  ioffset + isize - 1);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (tp) अणु
+		if (tp) {
 			/*
 			 * Mark the buffer as an inode allocation buffer so it
-			 * sticks in AIL at the poपूर्णांक of this allocation
-			 * transaction. This ensures the they are on disk beक्रमe
+			 * sticks in AIL at the point of this allocation
+			 * transaction. This ensures the they are on disk before
 			 * the tail of the log can be moved past this
 			 * transaction (i.e. by preventing relogging from moving
-			 * it क्रमward in the log).
+			 * it forward in the log).
 			 */
 			xfs_trans_inode_alloc_buf(tp, fbuf);
-			अगर (version == 3) अणु
+			if (version == 3) {
 				/*
 				 * Mark the buffer as ordered so that they are
 				 * not physically logged in the transaction but
@@ -379,205 +378,205 @@ xfs_ialloc_inode_init(
 				 * transaction and pin the log appropriately.
 				 */
 				xfs_trans_ordered_buf(tp, fbuf);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			fbuf->b_flags |= XBF_DONE;
 			xfs_buf_delwri_queue(fbuf, buffer_list);
-			xfs_buf_rअन्यथा(fbuf);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			xfs_buf_relse(fbuf);
+		}
+	}
+	return 0;
+}
 
 /*
- * Align startino and allocmask क्रम a recently allocated sparse chunk such that
- * they are fit क्रम insertion (or merge) पूर्णांकo the on-disk inode btrees.
+ * Align startino and allocmask for a recently allocated sparse chunk such that
+ * they are fit for insertion (or merge) into the on-disk inode btrees.
  *
  * Background:
  *
  * When enabled, sparse inode support increases the inode alignment from cluster
  * size to inode chunk size. This means that the minimum range between two
- * non-adjacent inode records in the inobt is large enough क्रम a full inode
- * record. This allows क्रम cluster sized, cluster aligned block allocation
+ * non-adjacent inode records in the inobt is large enough for a full inode
+ * record. This allows for cluster sized, cluster aligned block allocation
  * without need to worry about whether the resulting inode record overlaps with
  * another record in the tree. Without this basic rule, we would have to deal
- * with the consequences of overlap by potentially unकरोing recent allocations in
+ * with the consequences of overlap by potentially undoing recent allocations in
  * the inode allocation codepath.
  *
- * Because of this alignment rule (which is enक्रमced on mount), there are two
- * inobt possibilities क्रम newly allocated sparse chunks. One is that the
- * aligned inode record क्रम the chunk covers a range of inodes not alपढ़ोy
+ * Because of this alignment rule (which is enforced on mount), there are two
+ * inobt possibilities for newly allocated sparse chunks. One is that the
+ * aligned inode record for the chunk covers a range of inodes not already
  * covered in the inobt (i.e., it is safe to insert a new sparse record). The
- * other is that a record alपढ़ोy exists at the aligned startino that considers
- * the newly allocated range as sparse. In the latter हाल, record content is
- * merged in hope that sparse inode chunks fill to full chunks over समय.
+ * other is that a record already exists at the aligned startino that considers
+ * the newly allocated range as sparse. In the latter case, record content is
+ * merged in hope that sparse inode chunks fill to full chunks over time.
  */
-STATIC व्योम
+STATIC void
 xfs_align_sparse_ino(
-	काष्ठा xfs_mount		*mp,
+	struct xfs_mount		*mp,
 	xfs_agino_t			*startino,
-	uपूर्णांक16_t			*allocmask)
-अणु
+	uint16_t			*allocmask)
+{
 	xfs_agblock_t			agbno;
 	xfs_agblock_t			mod;
-	पूर्णांक				offset;
+	int				offset;
 
 	agbno = XFS_AGINO_TO_AGBNO(mp, *startino);
 	mod = agbno % mp->m_sb.sb_inoalignmt;
-	अगर (!mod)
-		वापस;
+	if (!mod)
+		return;
 
 	/* calculate the inode offset and align startino */
 	offset = XFS_AGB_TO_AGINO(mp, mod);
 	*startino -= offset;
 
 	/*
-	 * Since startino has been aligned करोwn, left shअगरt allocmask such that
-	 * it जारीs to represent the same physical inodes relative to the
+	 * Since startino has been aligned down, left shift allocmask such that
+	 * it continues to represent the same physical inodes relative to the
 	 * new startino.
 	 */
 	*allocmask <<= offset / XFS_INODES_PER_HOLEMASK_BIT;
-पूर्ण
+}
 
 /*
- * Determine whether the source inode record can merge पूर्णांकo the target. Both
+ * Determine whether the source inode record can merge into the target. Both
  * records must be sparse, the inode ranges must match and there must be no
  * allocation overlap between the records.
  */
 STATIC bool
 __xfs_inobt_can_merge(
-	काष्ठा xfs_inobt_rec_incore	*trec,	/* tgt record */
-	काष्ठा xfs_inobt_rec_incore	*srec)	/* src record */
-अणु
-	uपूर्णांक64_t			talloc;
-	uपूर्णांक64_t			salloc;
+	struct xfs_inobt_rec_incore	*trec,	/* tgt record */
+	struct xfs_inobt_rec_incore	*srec)	/* src record */
+{
+	uint64_t			talloc;
+	uint64_t			salloc;
 
 	/* records must cover the same inode range */
-	अगर (trec->ir_startino != srec->ir_startino)
-		वापस false;
+	if (trec->ir_startino != srec->ir_startino)
+		return false;
 
 	/* both records must be sparse */
-	अगर (!xfs_inobt_issparse(trec->ir_holemask) ||
+	if (!xfs_inobt_issparse(trec->ir_holemask) ||
 	    !xfs_inobt_issparse(srec->ir_holemask))
-		वापस false;
+		return false;
 
 	/* both records must track some inodes */
-	अगर (!trec->ir_count || !srec->ir_count)
-		वापस false;
+	if (!trec->ir_count || !srec->ir_count)
+		return false;
 
 	/* can't exceed capacity of a full record */
-	अगर (trec->ir_count + srec->ir_count > XFS_INODES_PER_CHUNK)
-		वापस false;
+	if (trec->ir_count + srec->ir_count > XFS_INODES_PER_CHUNK)
+		return false;
 
-	/* verअगरy there is no allocation overlap */
+	/* verify there is no allocation overlap */
 	talloc = xfs_inobt_irec_to_allocmask(trec);
 	salloc = xfs_inobt_irec_to_allocmask(srec);
-	अगर (talloc & salloc)
-		वापस false;
+	if (talloc & salloc)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * Merge the source inode record पूर्णांकo the target. The caller must call
+ * Merge the source inode record into the target. The caller must call
  * __xfs_inobt_can_merge() to ensure the merge is valid.
  */
-STATIC व्योम
+STATIC void
 __xfs_inobt_rec_merge(
-	काष्ठा xfs_inobt_rec_incore	*trec,	/* target */
-	काष्ठा xfs_inobt_rec_incore	*srec)	/* src */
-अणु
+	struct xfs_inobt_rec_incore	*trec,	/* target */
+	struct xfs_inobt_rec_incore	*srec)	/* src */
+{
 	ASSERT(trec->ir_startino == srec->ir_startino);
 
 	/* combine the counts */
 	trec->ir_count += srec->ir_count;
-	trec->ir_मुक्तcount += srec->ir_मुक्तcount;
+	trec->ir_freecount += srec->ir_freecount;
 
 	/*
-	 * Merge the holemask and मुक्त mask. For both fields, 0 bits refer to
+	 * Merge the holemask and free mask. For both fields, 0 bits refer to
 	 * allocated inodes. We combine the allocated ranges with bitwise AND.
 	 */
 	trec->ir_holemask &= srec->ir_holemask;
-	trec->ir_मुक्त &= srec->ir_मुक्त;
-पूर्ण
+	trec->ir_free &= srec->ir_free;
+}
 
 /*
- * Insert a new sparse inode chunk पूर्णांकo the associated inode btree. The inode
- * record क्रम the sparse chunk is pre-aligned to a startino that should match
+ * Insert a new sparse inode chunk into the associated inode btree. The inode
+ * record for the sparse chunk is pre-aligned to a startino that should match
  * any pre-existing sparse inode record in the tree. This allows sparse chunks
- * to fill over समय.
+ * to fill over time.
  *
  * This function supports two modes of handling preexisting records depending on
  * the merge flag. If merge is true, the provided record is merged with the
- * existing record and updated in place. The merged record is वापसed in nrec.
+ * existing record and updated in place. The merged record is returned in nrec.
  * If merge is false, an existing record is replaced with the provided record.
  * If no preexisting record exists, the provided record is always inserted.
  *
- * It is considered corruption अगर a merge is requested and not possible. Given
- * the sparse inode alignment स्थिरraपूर्णांकs, this should never happen.
+ * It is considered corruption if a merge is requested and not possible. Given
+ * the sparse inode alignment constraints, this should never happen.
  */
-STATIC पूर्णांक
+STATIC int
 xfs_inobt_insert_sprec(
-	काष्ठा xfs_mount		*mp,
-	काष्ठा xfs_trans		*tp,
-	काष्ठा xfs_buf			*agbp,
-	पूर्णांक				btnum,
-	काष्ठा xfs_inobt_rec_incore	*nrec,	/* in/out: new/merged rec. */
+	struct xfs_mount		*mp,
+	struct xfs_trans		*tp,
+	struct xfs_buf			*agbp,
+	int				btnum,
+	struct xfs_inobt_rec_incore	*nrec,	/* in/out: new/merged rec. */
 	bool				merge)	/* merge or replace */
-अणु
-	काष्ठा xfs_btree_cur		*cur;
-	काष्ठा xfs_agi			*agi = agbp->b_addr;
+{
+	struct xfs_btree_cur		*cur;
+	struct xfs_agi			*agi = agbp->b_addr;
 	xfs_agnumber_t			agno = be32_to_cpu(agi->agi_seqno);
-	पूर्णांक				error;
-	पूर्णांक				i;
-	काष्ठा xfs_inobt_rec_incore	rec;
+	int				error;
+	int				i;
+	struct xfs_inobt_rec_incore	rec;
 
 	cur = xfs_inobt_init_cursor(mp, tp, agbp, agno, btnum);
 
 	/* the new record is pre-aligned so we know where to look */
 	error = xfs_inobt_lookup(cur, nrec->ir_startino, XFS_LOOKUP_EQ, &i);
-	अगर (error)
-		जाओ error;
-	/* अगर nothing there, insert a new record and वापस */
-	अगर (i == 0) अणु
+	if (error)
+		goto error;
+	/* if nothing there, insert a new record and return */
+	if (i == 0) {
 		error = xfs_inobt_insert_rec(cur, nrec->ir_holemask,
-					     nrec->ir_count, nrec->ir_मुक्तcount,
-					     nrec->ir_मुक्त, &i);
-		अगर (error)
-			जाओ error;
-		अगर (XFS_IS_CORRUPT(mp, i != 1)) अणु
+					     nrec->ir_count, nrec->ir_freecount,
+					     nrec->ir_free, &i);
+		if (error)
+			goto error;
+		if (XFS_IS_CORRUPT(mp, i != 1)) {
 			error = -EFSCORRUPTED;
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * A record exists at this startino. Merge or replace the record
-	 * depending on what we've been asked to करो.
+	 * depending on what we've been asked to do.
 	 */
-	अगर (merge) अणु
+	if (merge) {
 		error = xfs_inobt_get_rec(cur, &rec, &i);
-		अगर (error)
-			जाओ error;
-		अगर (XFS_IS_CORRUPT(mp, i != 1)) अणु
+		if (error)
+			goto error;
+		if (XFS_IS_CORRUPT(mp, i != 1)) {
 			error = -EFSCORRUPTED;
-			जाओ error;
-		पूर्ण
-		अगर (XFS_IS_CORRUPT(mp, rec.ir_startino != nrec->ir_startino)) अणु
+			goto error;
+		}
+		if (XFS_IS_CORRUPT(mp, rec.ir_startino != nrec->ir_startino)) {
 			error = -EFSCORRUPTED;
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
 		/*
 		 * This should never fail. If we have coexisting records that
 		 * cannot merge, something is seriously wrong.
 		 */
-		अगर (XFS_IS_CORRUPT(mp, !__xfs_inobt_can_merge(nrec, &rec))) अणु
+		if (XFS_IS_CORRUPT(mp, !__xfs_inobt_can_merge(nrec, &rec))) {
 			error = -EFSCORRUPTED;
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
 		trace_xfs_irec_merge_pre(mp, agno, rec.ir_startino,
 					 rec.ir_holemask, nrec->ir_startino,
@@ -590,73 +589,73 @@ xfs_inobt_insert_sprec(
 					  nrec->ir_holemask);
 
 		error = xfs_inobt_rec_check_count(mp, nrec);
-		अगर (error)
-			जाओ error;
-	पूर्ण
+		if (error)
+			goto error;
+	}
 
 	error = xfs_inobt_update(cur, nrec);
-	अगर (error)
-		जाओ error;
+	if (error)
+		goto error;
 
 out:
 	xfs_btree_del_cursor(cur, XFS_BTREE_NOERROR);
-	वापस 0;
+	return 0;
 error:
 	xfs_btree_del_cursor(cur, XFS_BTREE_ERROR);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * Allocate new inodes in the allocation group specअगरied by agbp.
- * Returns 0 अगर inodes were allocated in this AG; 1 अगर there was no space
+ * Allocate new inodes in the allocation group specified by agbp.
+ * Returns 0 if inodes were allocated in this AG; 1 if there was no space
  * in this AG; or the usual negative error code.
  */
-STATIC पूर्णांक
+STATIC int
 xfs_ialloc_ag_alloc(
-	काष्ठा xfs_trans	*tp,
-	काष्ठा xfs_buf		*agbp)
-अणु
-	काष्ठा xfs_agi		*agi;
-	काष्ठा xfs_alloc_arg	args;
+	struct xfs_trans	*tp,
+	struct xfs_buf		*agbp)
+{
+	struct xfs_agi		*agi;
+	struct xfs_alloc_arg	args;
 	xfs_agnumber_t		agno;
-	पूर्णांक			error;
+	int			error;
 	xfs_agino_t		newino;		/* new first inode's number */
 	xfs_agino_t		newlen;		/* new number of inodes */
-	पूर्णांक			isaligned = 0;	/* inode allocation at stripe */
+	int			isaligned = 0;	/* inode allocation at stripe */
 						/* unit boundary */
 	/* init. to full chunk */
-	uपूर्णांक16_t		allocmask = (uपूर्णांक16_t) -1;
-	काष्ठा xfs_inobt_rec_incore rec;
-	काष्ठा xfs_perag	*pag;
-	काष्ठा xfs_ino_geometry	*igeo = M_IGEO(tp->t_mountp);
-	पूर्णांक			करो_sparse = 0;
+	uint16_t		allocmask = (uint16_t) -1;
+	struct xfs_inobt_rec_incore rec;
+	struct xfs_perag	*pag;
+	struct xfs_ino_geometry	*igeo = M_IGEO(tp->t_mountp);
+	int			do_sparse = 0;
 
-	स_रखो(&args, 0, माप(args));
+	memset(&args, 0, sizeof(args));
 	args.tp = tp;
 	args.mp = tp->t_mountp;
-	args.fsbno = शून्यFSBLOCK;
+	args.fsbno = NULLFSBLOCK;
 	args.oinfo = XFS_RMAP_OINFO_INODES;
 
-#अगर_घोषित DEBUG
-	/* अक्रमomly करो sparse inode allocations */
-	अगर (xfs_sb_version_hassparseinodes(&tp->t_mountp->m_sb) &&
+#ifdef DEBUG
+	/* randomly do sparse inode allocations */
+	if (xfs_sb_version_hassparseinodes(&tp->t_mountp->m_sb) &&
 	    igeo->ialloc_min_blks < igeo->ialloc_blks)
-		करो_sparse = pअक्रमom_u32() & 1;
-#पूर्ण_अगर
+		do_sparse = prandom_u32() & 1;
+#endif
 
 	/*
-	 * Locking will ensure that we करोn't have two callers in here
-	 * at one समय.
+	 * Locking will ensure that we don't have two callers in here
+	 * at one time.
 	 */
 	newlen = igeo->ialloc_inos;
-	अगर (igeo->maxicount &&
-	    percpu_counter_पढ़ो_positive(&args.mp->m_icount) + newlen >
+	if (igeo->maxicount &&
+	    percpu_counter_read_positive(&args.mp->m_icount) + newlen >
 							igeo->maxicount)
-		वापस -ENOSPC;
+		return -ENOSPC;
 	args.minlen = args.maxlen = igeo->ialloc_blks;
 	/*
 	 * First try to allocate inodes contiguous with the last-allocated
-	 * chunk of inodes.  If the fileप्रणाली is striped, this will fill
+	 * chunk of inodes.  If the filesystem is striped, this will fill
 	 * an entire stripe unit with inodes.
 	 */
 	agi = agbp->b_addr;
@@ -664,63 +663,63 @@ xfs_ialloc_ag_alloc(
 	agno = be32_to_cpu(agi->agi_seqno);
 	args.agbno = XFS_AGINO_TO_AGBNO(args.mp, newino) +
 		     igeo->ialloc_blks;
-	अगर (करो_sparse)
-		जाओ sparse_alloc;
-	अगर (likely(newino != शून्यAGINO &&
-		  (args.agbno < be32_to_cpu(agi->agi_length)))) अणु
+	if (do_sparse)
+		goto sparse_alloc;
+	if (likely(newino != NULLAGINO &&
+		  (args.agbno < be32_to_cpu(agi->agi_length)))) {
 		args.fsbno = XFS_AGB_TO_FSB(args.mp, agno, args.agbno);
 		args.type = XFS_ALLOCTYPE_THIS_BNO;
 		args.prod = 1;
 
 		/*
-		 * We need to take पूर्णांकo account alignment here to ensure that
-		 * we करोn't modअगरy the मुक्त list अगर we fail to have an exact
-		 * block. If we करोn't have an exact match, and every oher
+		 * We need to take into account alignment here to ensure that
+		 * we don't modify the free list if we fail to have an exact
+		 * block. If we don't have an exact match, and every oher
 		 * attempt allocation attempt fails, we'll end up cancelling
-		 * a dirty transaction and shutting करोwn.
+		 * a dirty transaction and shutting down.
 		 *
 		 * For an exact allocation, alignment must be 1,
-		 * however we need to take cluster alignment पूर्णांकo account when
-		 * fixing up the मुक्तlist. Use the minalignslop field to
-		 * indicate that extra blocks might be required क्रम alignment,
+		 * however we need to take cluster alignment into account when
+		 * fixing up the freelist. Use the minalignslop field to
+		 * indicate that extra blocks might be required for alignment,
 		 * but not to use them in the actual exact allocation.
 		 */
 		args.alignment = 1;
 		args.minalignslop = igeo->cluster_align - 1;
 
-		/* Allow space क्रम the inode btree to split. */
+		/* Allow space for the inode btree to split. */
 		args.minleft = igeo->inobt_maxlevels;
-		अगर ((error = xfs_alloc_vextent(&args)))
-			वापस error;
+		if ((error = xfs_alloc_vextent(&args)))
+			return error;
 
 		/*
-		 * This request might have dirtied the transaction अगर the AG can
+		 * This request might have dirtied the transaction if the AG can
 		 * satisfy the request, but the exact block was not available.
 		 * If the allocation did fail, subsequent requests will relax
 		 * the exact agbno requirement and increase the alignment
 		 * instead. It is critical that the total size of the request
-		 * (len + alignment + slop) करोes not increase from this poपूर्णांक
+		 * (len + alignment + slop) does not increase from this point
 		 * on, so reset minalignslop to ensure it is not included in
 		 * subsequent requests.
 		 */
 		args.minalignslop = 0;
-	पूर्ण
+	}
 
-	अगर (unlikely(args.fsbno == शून्यFSBLOCK)) अणु
+	if (unlikely(args.fsbno == NULLFSBLOCK)) {
 		/*
-		 * Set the alignment क्रम the allocation.
+		 * Set the alignment for the allocation.
 		 * If stripe alignment is turned on then align at stripe unit
 		 * boundary.
-		 * If the cluster size is smaller than a fileप्रणाली block
-		 * then we're करोing I/O क्रम inodes in fileप्रणाली block size
-		 * pieces, so करोn't need alignment anyway.
+		 * If the cluster size is smaller than a filesystem block
+		 * then we're doing I/O for inodes in filesystem block size
+		 * pieces, so don't need alignment anyway.
 		 */
 		isaligned = 0;
-		अगर (igeo->ialloc_align) अणु
+		if (igeo->ialloc_align) {
 			ASSERT(!(args.mp->m_flags & XFS_MOUNT_NOALIGN));
 			args.alignment = args.mp->m_dalign;
 			isaligned = 1;
-		पूर्ण अन्यथा
+		} else
 			args.alignment = igeo->cluster_align;
 		/*
 		 * Need to figure out where to allocate the inode blocks.
@@ -735,33 +734,33 @@ xfs_ialloc_ag_alloc(
 		args.type = XFS_ALLOCTYPE_NEAR_BNO;
 		args.prod = 1;
 		/*
-		 * Allow space क्रम the inode btree to split.
+		 * Allow space for the inode btree to split.
 		 */
 		args.minleft = igeo->inobt_maxlevels;
-		अगर ((error = xfs_alloc_vextent(&args)))
-			वापस error;
-	पूर्ण
+		if ((error = xfs_alloc_vextent(&args)))
+			return error;
+	}
 
 	/*
 	 * If stripe alignment is turned on, then try again with cluster
 	 * alignment.
 	 */
-	अगर (isaligned && args.fsbno == शून्यFSBLOCK) अणु
+	if (isaligned && args.fsbno == NULLFSBLOCK) {
 		args.type = XFS_ALLOCTYPE_NEAR_BNO;
 		args.agbno = be32_to_cpu(agi->agi_root);
 		args.fsbno = XFS_AGB_TO_FSB(args.mp, agno, args.agbno);
 		args.alignment = igeo->cluster_align;
-		अगर ((error = xfs_alloc_vextent(&args)))
-			वापस error;
-	पूर्ण
+		if ((error = xfs_alloc_vextent(&args)))
+			return error;
+	}
 
 	/*
-	 * Finally, try a sparse allocation अगर the fileप्रणाली supports it and
+	 * Finally, try a sparse allocation if the filesystem supports it and
 	 * the sparse allocation length is smaller than a full chunk.
 	 */
-	अगर (xfs_sb_version_hassparseinodes(&args.mp->m_sb) &&
+	if (xfs_sb_version_hassparseinodes(&args.mp->m_sb) &&
 	    igeo->ialloc_min_blks < igeo->ialloc_blks &&
-	    args.fsbno == शून्यFSBLOCK) अणु
+	    args.fsbno == NULLFSBLOCK) {
 sparse_alloc:
 		args.type = XFS_ALLOCTYPE_NEAR_BNO;
 		args.agbno = be32_to_cpu(agi->agi_root);
@@ -783,44 +782,44 @@ sparse_alloc:
 		 * the end of the AG.
 		 */
 		args.min_agbno = args.mp->m_sb.sb_inoalignmt;
-		args.max_agbno = round_करोwn(args.mp->m_sb.sb_agblocks,
+		args.max_agbno = round_down(args.mp->m_sb.sb_agblocks,
 					    args.mp->m_sb.sb_inoalignmt) -
 				 igeo->ialloc_blks;
 
 		error = xfs_alloc_vextent(&args);
-		अगर (error)
-			वापस error;
+		if (error)
+			return error;
 
 		newlen = XFS_AGB_TO_AGINO(args.mp, args.len);
 		ASSERT(newlen <= XFS_INODES_PER_CHUNK);
 		allocmask = (1 << (newlen / XFS_INODES_PER_HOLEMASK_BIT)) - 1;
-	पूर्ण
+	}
 
-	अगर (args.fsbno == शून्यFSBLOCK)
-		वापस 1;
+	if (args.fsbno == NULLFSBLOCK)
+		return 1;
 
 	ASSERT(args.len == args.minlen);
 
 	/*
-	 * Stamp and ग_लिखो the inode buffers.
+	 * Stamp and write the inode buffers.
 	 *
-	 * Seed the new inode cluster with a अक्रमom generation number. This
-	 * prevents लघु-term reuse of generation numbers अगर a chunk is
-	 * मुक्तd and then immediately पुनः_स्मृतिated. We use अक्रमom numbers
+	 * Seed the new inode cluster with a random generation number. This
+	 * prevents short-term reuse of generation numbers if a chunk is
+	 * freed and then immediately reallocated. We use random numbers
 	 * rather than a linear progression to prevent the next generation
 	 * number from being easily guessable.
 	 */
-	error = xfs_ialloc_inode_init(args.mp, tp, शून्य, newlen, agno,
-			args.agbno, args.len, pअक्रमom_u32());
+	error = xfs_ialloc_inode_init(args.mp, tp, NULL, newlen, agno,
+			args.agbno, args.len, prandom_u32());
 
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 	/*
 	 * Convert the results.
 	 */
 	newino = XFS_AGB_TO_AGINO(args.mp, args.agbno);
 
-	अगर (xfs_inobt_issparse(~allocmask)) अणु
+	if (xfs_inobt_issparse(~allocmask)) {
 		/*
 		 * We've allocated a sparse chunk. Align the startino and mask.
 		 */
@@ -829,29 +828,29 @@ sparse_alloc:
 		rec.ir_startino = newino;
 		rec.ir_holemask = ~allocmask;
 		rec.ir_count = newlen;
-		rec.ir_मुक्तcount = newlen;
-		rec.ir_मुक्त = XFS_INOBT_ALL_FREE;
+		rec.ir_freecount = newlen;
+		rec.ir_free = XFS_INOBT_ALL_FREE;
 
 		/*
-		 * Insert the sparse record पूर्णांकo the inobt and allow क्रम a merge
-		 * अगर necessary. If a merge करोes occur, rec is updated to the
+		 * Insert the sparse record into the inobt and allow for a merge
+		 * if necessary. If a merge does occur, rec is updated to the
 		 * merged record.
 		 */
 		error = xfs_inobt_insert_sprec(args.mp, tp, agbp, XFS_BTNUM_INO,
 					       &rec, true);
-		अगर (error == -EFSCORRUPTED) अणु
+		if (error == -EFSCORRUPTED) {
 			xfs_alert(args.mp,
 	"invalid sparse inode record: ino 0x%llx holemask 0x%x count %u",
 				  XFS_AGINO_TO_INO(args.mp, agno,
 						   rec.ir_startino),
 				  rec.ir_holemask, rec.ir_count);
-			xfs_क्रमce_shutकरोwn(args.mp, SHUTDOWN_CORRUPT_INCORE);
-		पूर्ण
-		अगर (error)
-			वापस error;
+			xfs_force_shutdown(args.mp, SHUTDOWN_CORRUPT_INCORE);
+		}
+		if (error)
+			return error;
 
 		/*
-		 * We can't merge the part we've just allocated as क्रम the inobt
+		 * We can't merge the part we've just allocated as for the inobt
 		 * due to finobt semantics. The original record may or may not
 		 * exist independent of whether physical inodes exist in this
 		 * sparse chunk.
@@ -861,35 +860,35 @@ sparse_alloc:
 		 * from the previous call. Set merge false to replace any
 		 * existing record with this one.
 		 */
-		अगर (xfs_sb_version_hasfinobt(&args.mp->m_sb)) अणु
+		if (xfs_sb_version_hasfinobt(&args.mp->m_sb)) {
 			error = xfs_inobt_insert_sprec(args.mp, tp, agbp,
 						       XFS_BTNUM_FINO, &rec,
 						       false);
-			अगर (error)
-				वापस error;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			if (error)
+				return error;
+		}
+	} else {
 		/* full chunk - insert new records to both btrees */
 		error = xfs_inobt_insert(args.mp, tp, agbp, newino, newlen,
 					 XFS_BTNUM_INO);
-		अगर (error)
-			वापस error;
+		if (error)
+			return error;
 
-		अगर (xfs_sb_version_hasfinobt(&args.mp->m_sb)) अणु
+		if (xfs_sb_version_hasfinobt(&args.mp->m_sb)) {
 			error = xfs_inobt_insert(args.mp, tp, agbp, newino,
 						 newlen, XFS_BTNUM_FINO);
-			अगर (error)
-				वापस error;
-		पूर्ण
-	पूर्ण
+			if (error)
+				return error;
+		}
+	}
 
 	/*
 	 * Update AGI counts and newino.
 	 */
 	be32_add_cpu(&agi->agi_count, newlen);
-	be32_add_cpu(&agi->agi_मुक्तcount, newlen);
+	be32_add_cpu(&agi->agi_freecount, newlen);
 	pag = agbp->b_pag;
-	pag->pagi_मुक्तcount += newlen;
+	pag->pagi_freecount += newlen;
 	pag->pagi_count += newlen;
 	agi->agi_newino = cpu_to_be32(newino);
 
@@ -899,251 +898,251 @@ sparse_alloc:
 	xfs_ialloc_log_agi(tp, agbp,
 		XFS_AGI_COUNT | XFS_AGI_FREECOUNT | XFS_AGI_NEWINO);
 	/*
-	 * Modअगरy/log superblock values क्रम inode count and inode मुक्त count.
+	 * Modify/log superblock values for inode count and inode free count.
 	 */
-	xfs_trans_mod_sb(tp, XFS_TRANS_SB_ICOUNT, (दीर्घ)newlen);
-	xfs_trans_mod_sb(tp, XFS_TRANS_SB_IFREE, (दीर्घ)newlen);
-	वापस 0;
-पूर्ण
+	xfs_trans_mod_sb(tp, XFS_TRANS_SB_ICOUNT, (long)newlen);
+	xfs_trans_mod_sb(tp, XFS_TRANS_SB_IFREE, (long)newlen);
+	return 0;
+}
 
 STATIC xfs_agnumber_t
 xfs_ialloc_next_ag(
 	xfs_mount_t	*mp)
-अणु
+{
 	xfs_agnumber_t	agno;
 
 	spin_lock(&mp->m_agirotor_lock);
 	agno = mp->m_agirotor;
-	अगर (++mp->m_agirotor >= mp->m_maxagi)
+	if (++mp->m_agirotor >= mp->m_maxagi)
 		mp->m_agirotor = 0;
 	spin_unlock(&mp->m_agirotor_lock);
 
-	वापस agno;
-पूर्ण
+	return agno;
+}
 
 /*
- * Select an allocation group to look क्रम a मुक्त inode in, based on the parent
+ * Select an allocation group to look for a free inode in, based on the parent
  * inode and the mode.  Return the allocation group buffer.
  */
 STATIC xfs_agnumber_t
 xfs_ialloc_ag_select(
-	xfs_trans_t	*tp,		/* transaction poपूर्णांकer */
+	xfs_trans_t	*tp,		/* transaction pointer */
 	xfs_ino_t	parent,		/* parent directory inode number */
 	umode_t		mode)		/* bits set to indicate file type */
-अणु
-	xfs_agnumber_t	agcount;	/* number of ag's in the fileप्रणाली */
+{
+	xfs_agnumber_t	agcount;	/* number of ag's in the filesystem */
 	xfs_agnumber_t	agno;		/* current ag number */
-	पूर्णांक		flags;		/* alloc buffer locking flags */
-	xfs_extlen_t	ineed;		/* blocks needed क्रम inode allocation */
-	xfs_extlen_t	दीर्घest = 0;	/* दीर्घest extent available */
-	xfs_mount_t	*mp;		/* mount poपूर्णांक काष्ठाure */
-	पूर्णांक		needspace;	/* file mode implies space allocated */
+	int		flags;		/* alloc buffer locking flags */
+	xfs_extlen_t	ineed;		/* blocks needed for inode allocation */
+	xfs_extlen_t	longest = 0;	/* longest extent available */
+	xfs_mount_t	*mp;		/* mount point structure */
+	int		needspace;	/* file mode implies space allocated */
 	xfs_perag_t	*pag;		/* per allocation group data */
 	xfs_agnumber_t	pagno;		/* parent (starting) ag number */
-	पूर्णांक		error;
+	int		error;
 
 	/*
-	 * Files of these types need at least one block अगर length > 0
+	 * Files of these types need at least one block if length > 0
 	 * (and they won't fit in the inode, but that's hard to figure out).
 	 */
-	needspace = S_ISसूची(mode) || S_ISREG(mode) || S_ISLNK(mode);
+	needspace = S_ISDIR(mode) || S_ISREG(mode) || S_ISLNK(mode);
 	mp = tp->t_mountp;
 	agcount = mp->m_maxagi;
-	अगर (S_ISसूची(mode))
+	if (S_ISDIR(mode))
 		pagno = xfs_ialloc_next_ag(mp);
-	अन्यथा अणु
+	else {
 		pagno = XFS_INO_TO_AGNO(mp, parent);
-		अगर (pagno >= agcount)
+		if (pagno >= agcount)
 			pagno = 0;
-	पूर्ण
+	}
 
 	ASSERT(pagno < agcount);
 
 	/*
-	 * Loop through allocation groups, looking क्रम one with a little
-	 * मुक्त space in it.  Note we करोn't look क्रम मुक्त inodes, exactly.
+	 * Loop through allocation groups, looking for one with a little
+	 * free space in it.  Note we don't look for free inodes, exactly.
 	 * Instead, we include whether there is a need to allocate inodes
-	 * to mean that blocks must be allocated क्रम them,
-	 * अगर none are currently मुक्त.
+	 * to mean that blocks must be allocated for them,
+	 * if none are currently free.
 	 */
 	agno = pagno;
 	flags = XFS_ALLOC_FLAG_TRYLOCK;
-	क्रम (;;) अणु
+	for (;;) {
 		pag = xfs_perag_get(mp, agno);
-		अगर (!pag->pagi_inodeok) अणु
+		if (!pag->pagi_inodeok) {
 			xfs_ialloc_next_ag(mp);
-			जाओ nextag;
-		पूर्ण
+			goto nextag;
+		}
 
-		अगर (!pag->pagi_init) अणु
+		if (!pag->pagi_init) {
 			error = xfs_ialloc_pagi_init(mp, tp, agno);
-			अगर (error)
-				जाओ nextag;
-		पूर्ण
+			if (error)
+				goto nextag;
+		}
 
-		अगर (pag->pagi_मुक्तcount) अणु
+		if (pag->pagi_freecount) {
 			xfs_perag_put(pag);
-			वापस agno;
-		पूर्ण
+			return agno;
+		}
 
-		अगर (!pag->pagf_init) अणु
+		if (!pag->pagf_init) {
 			error = xfs_alloc_pagf_init(mp, tp, agno, flags);
-			अगर (error)
-				जाओ nextag;
-		पूर्ण
+			if (error)
+				goto nextag;
+		}
 
 		/*
-		 * Check that there is enough मुक्त space क्रम the file plus a
-		 * chunk of inodes अगर we need to allocate some. If this is the
-		 * first pass across the AGs, take पूर्णांकo account the potential
-		 * space needed क्रम alignment of inode chunks when checking the
-		 * दीर्घest contiguous मुक्त space in the AG - this prevents us
-		 * from getting ENOSPC because we have मुक्त space larger than
-		 * ialloc_blks but alignment स्थिरraपूर्णांकs prevent us from using
+		 * Check that there is enough free space for the file plus a
+		 * chunk of inodes if we need to allocate some. If this is the
+		 * first pass across the AGs, take into account the potential
+		 * space needed for alignment of inode chunks when checking the
+		 * longest contiguous free space in the AG - this prevents us
+		 * from getting ENOSPC because we have free space larger than
+		 * ialloc_blks but alignment constraints prevent us from using
 		 * it.
 		 *
-		 * If we can't find an AG with space क्रम full alignment slack to
-		 * be taken पूर्णांकo account, we must be near ENOSPC in all AGs.
-		 * Hence we करोn't include alignment क्रम the second pass and so
-		 * अगर we fail allocation due to alignment issues then it is most
+		 * If we can't find an AG with space for full alignment slack to
+		 * be taken into account, we must be near ENOSPC in all AGs.
+		 * Hence we don't include alignment for the second pass and so
+		 * if we fail allocation due to alignment issues then it is most
 		 * likely a real ENOSPC condition.
 		 */
 		ineed = M_IGEO(mp)->ialloc_min_blks;
-		अगर (flags && ineed > 1)
+		if (flags && ineed > 1)
 			ineed += M_IGEO(mp)->cluster_align;
-		दीर्घest = pag->pagf_दीर्घest;
-		अगर (!दीर्घest)
-			दीर्घest = pag->pagf_flcount > 0;
+		longest = pag->pagf_longest;
+		if (!longest)
+			longest = pag->pagf_flcount > 0;
 
-		अगर (pag->pagf_मुक्तblks >= needspace + ineed &&
-		    दीर्घest >= ineed) अणु
+		if (pag->pagf_freeblks >= needspace + ineed &&
+		    longest >= ineed) {
 			xfs_perag_put(pag);
-			वापस agno;
-		पूर्ण
+			return agno;
+		}
 nextag:
 		xfs_perag_put(pag);
 		/*
-		 * No poपूर्णांक in iterating over the rest, अगर we're shutting
-		 * करोwn.
+		 * No point in iterating over the rest, if we're shutting
+		 * down.
 		 */
-		अगर (XFS_FORCED_SHUTDOWN(mp))
-			वापस शून्यAGNUMBER;
+		if (XFS_FORCED_SHUTDOWN(mp))
+			return NULLAGNUMBER;
 		agno++;
-		अगर (agno >= agcount)
+		if (agno >= agcount)
 			agno = 0;
-		अगर (agno == pagno) अणु
-			अगर (flags == 0)
-				वापस शून्यAGNUMBER;
+		if (agno == pagno) {
+			if (flags == 0)
+				return NULLAGNUMBER;
 			flags = 0;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
  * Try to retrieve the next record to the left/right from the current one.
  */
-STATIC पूर्णांक
+STATIC int
 xfs_ialloc_next_rec(
-	काष्ठा xfs_btree_cur	*cur,
+	struct xfs_btree_cur	*cur,
 	xfs_inobt_rec_incore_t	*rec,
-	पूर्णांक			*करोne,
-	पूर्णांक			left)
-अणु
-	पूर्णांक                     error;
-	पूर्णांक			i;
+	int			*done,
+	int			left)
+{
+	int                     error;
+	int			i;
 
-	अगर (left)
+	if (left)
 		error = xfs_btree_decrement(cur, 0, &i);
-	अन्यथा
+	else
 		error = xfs_btree_increment(cur, 0, &i);
 
-	अगर (error)
-		वापस error;
-	*करोne = !i;
-	अगर (i) अणु
+	if (error)
+		return error;
+	*done = !i;
+	if (i) {
 		error = xfs_inobt_get_rec(cur, rec, &i);
-		अगर (error)
-			वापस error;
-		अगर (XFS_IS_CORRUPT(cur->bc_mp, i != 1))
-			वापस -EFSCORRUPTED;
-	पूर्ण
+		if (error)
+			return error;
+		if (XFS_IS_CORRUPT(cur->bc_mp, i != 1))
+			return -EFSCORRUPTED;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-STATIC पूर्णांक
+STATIC int
 xfs_ialloc_get_rec(
-	काष्ठा xfs_btree_cur	*cur,
+	struct xfs_btree_cur	*cur,
 	xfs_agino_t		agino,
 	xfs_inobt_rec_incore_t	*rec,
-	पूर्णांक			*करोne)
-अणु
-	पूर्णांक                     error;
-	पूर्णांक			i;
+	int			*done)
+{
+	int                     error;
+	int			i;
 
 	error = xfs_inobt_lookup(cur, agino, XFS_LOOKUP_EQ, &i);
-	अगर (error)
-		वापस error;
-	*करोne = !i;
-	अगर (i) अणु
+	if (error)
+		return error;
+	*done = !i;
+	if (i) {
 		error = xfs_inobt_get_rec(cur, rec, &i);
-		अगर (error)
-			वापस error;
-		अगर (XFS_IS_CORRUPT(cur->bc_mp, i != 1))
-			वापस -EFSCORRUPTED;
-	पूर्ण
+		if (error)
+			return error;
+		if (XFS_IS_CORRUPT(cur->bc_mp, i != 1))
+			return -EFSCORRUPTED;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Return the offset of the first मुक्त inode in the record. If the inode chunk
+ * Return the offset of the first free inode in the record. If the inode chunk
  * is sparsely allocated, we convert the record holemask to inode granularity
- * and mask off the unallocated regions from the inode मुक्त mask.
+ * and mask off the unallocated regions from the inode free mask.
  */
-STATIC पूर्णांक
-xfs_inobt_first_मुक्त_inode(
-	काष्ठा xfs_inobt_rec_incore	*rec)
-अणु
-	xfs_inoमुक्त_t			realमुक्त;
+STATIC int
+xfs_inobt_first_free_inode(
+	struct xfs_inobt_rec_incore	*rec)
+{
+	xfs_inofree_t			realfree;
 
-	/* अगर there are no holes, वापस the first available offset */
-	अगर (!xfs_inobt_issparse(rec->ir_holemask))
-		वापस xfs_lowbit64(rec->ir_मुक्त);
+	/* if there are no holes, return the first available offset */
+	if (!xfs_inobt_issparse(rec->ir_holemask))
+		return xfs_lowbit64(rec->ir_free);
 
-	realमुक्त = xfs_inobt_irec_to_allocmask(rec);
-	realमुक्त &= rec->ir_मुक्त;
+	realfree = xfs_inobt_irec_to_allocmask(rec);
+	realfree &= rec->ir_free;
 
-	वापस xfs_lowbit64(realमुक्त);
-पूर्ण
+	return xfs_lowbit64(realfree);
+}
 
 /*
  * Allocate an inode using the inobt-only algorithm.
  */
-STATIC पूर्णांक
+STATIC int
 xfs_dialloc_ag_inobt(
-	काष्ठा xfs_trans	*tp,
-	काष्ठा xfs_buf		*agbp,
+	struct xfs_trans	*tp,
+	struct xfs_buf		*agbp,
 	xfs_ino_t		parent,
 	xfs_ino_t		*inop)
-अणु
-	काष्ठा xfs_mount	*mp = tp->t_mountp;
-	काष्ठा xfs_agi		*agi = agbp->b_addr;
+{
+	struct xfs_mount	*mp = tp->t_mountp;
+	struct xfs_agi		*agi = agbp->b_addr;
 	xfs_agnumber_t		agno = be32_to_cpu(agi->agi_seqno);
 	xfs_agnumber_t		pagno = XFS_INO_TO_AGNO(mp, parent);
 	xfs_agino_t		pagino = XFS_INO_TO_AGINO(mp, parent);
-	काष्ठा xfs_perag	*pag = agbp->b_pag;
-	काष्ठा xfs_btree_cur	*cur, *tcur;
-	काष्ठा xfs_inobt_rec_incore rec, trec;
+	struct xfs_perag	*pag = agbp->b_pag;
+	struct xfs_btree_cur	*cur, *tcur;
+	struct xfs_inobt_rec_incore rec, trec;
 	xfs_ino_t		ino;
-	पूर्णांक			error;
-	पूर्णांक			offset;
-	पूर्णांक			i, j;
-	पूर्णांक			searchdistance = 10;
+	int			error;
+	int			offset;
+	int			i, j;
+	int			searchdistance = 10;
 
 	ASSERT(pag->pagi_init);
 	ASSERT(pag->pagi_inodeok);
-	ASSERT(pag->pagi_मुक्तcount > 0);
+	ASSERT(pag->pagi_freecount > 0);
 
  restart_pagno:
 	cur = xfs_inobt_init_cursor(mp, tp, agbp, agno, XFS_BTNUM_INO);
@@ -1151,43 +1150,43 @@ xfs_dialloc_ag_inobt(
 	 * If pagino is 0 (this is the root inode allocation) use newino.
 	 * This must work because we've just allocated some.
 	 */
-	अगर (!pagino)
+	if (!pagino)
 		pagino = be32_to_cpu(agi->agi_newino);
 
-	error = xfs_check_agi_मुक्तcount(cur, agi);
-	अगर (error)
-		जाओ error0;
+	error = xfs_check_agi_freecount(cur, agi);
+	if (error)
+		goto error0;
 
 	/*
 	 * If in the same AG as the parent, try to get near the parent.
 	 */
-	अगर (pagno == agno) अणु
-		पूर्णांक		करोneleft;	/* करोne, to the left */
-		पूर्णांक		करोneright;	/* करोne, to the right */
+	if (pagno == agno) {
+		int		doneleft;	/* done, to the left */
+		int		doneright;	/* done, to the right */
 
 		error = xfs_inobt_lookup(cur, pagino, XFS_LOOKUP_LE, &i);
-		अगर (error)
-			जाओ error0;
-		अगर (XFS_IS_CORRUPT(mp, i != 1)) अणु
+		if (error)
+			goto error0;
+		if (XFS_IS_CORRUPT(mp, i != 1)) {
 			error = -EFSCORRUPTED;
-			जाओ error0;
-		पूर्ण
+			goto error0;
+		}
 
 		error = xfs_inobt_get_rec(cur, &rec, &j);
-		अगर (error)
-			जाओ error0;
-		अगर (XFS_IS_CORRUPT(mp, j != 1)) अणु
+		if (error)
+			goto error0;
+		if (XFS_IS_CORRUPT(mp, j != 1)) {
 			error = -EFSCORRUPTED;
-			जाओ error0;
-		पूर्ण
+			goto error0;
+		}
 
-		अगर (rec.ir_मुक्तcount > 0) अणु
+		if (rec.ir_freecount > 0) {
 			/*
-			 * Found a मुक्त inode in the same chunk
-			 * as the parent, करोne.
+			 * Found a free inode in the same chunk
+			 * as the parent, done.
 			 */
-			जाओ alloc_inode;
-		पूर्ण
+			goto alloc_inode;
+		}
 
 
 		/*
@@ -1196,54 +1195,54 @@ xfs_dialloc_ag_inobt(
 
 		/* duplicate the cursor, search left & right simultaneously */
 		error = xfs_btree_dup_cursor(cur, &tcur);
-		अगर (error)
-			जाओ error0;
+		if (error)
+			goto error0;
 
 		/*
-		 * Skip to last blocks looked up अगर same parent inode.
+		 * Skip to last blocks looked up if same parent inode.
 		 */
-		अगर (pagino != शून्यAGINO &&
+		if (pagino != NULLAGINO &&
 		    pag->pagl_pagino == pagino &&
-		    pag->pagl_leftrec != शून्यAGINO &&
-		    pag->pagl_rightrec != शून्यAGINO) अणु
+		    pag->pagl_leftrec != NULLAGINO &&
+		    pag->pagl_rightrec != NULLAGINO) {
 			error = xfs_ialloc_get_rec(tcur, pag->pagl_leftrec,
-						   &trec, &करोneleft);
-			अगर (error)
-				जाओ error1;
+						   &trec, &doneleft);
+			if (error)
+				goto error1;
 
 			error = xfs_ialloc_get_rec(cur, pag->pagl_rightrec,
-						   &rec, &करोneright);
-			अगर (error)
-				जाओ error1;
-		पूर्ण अन्यथा अणु
+						   &rec, &doneright);
+			if (error)
+				goto error1;
+		} else {
 			/* search left with tcur, back up 1 record */
-			error = xfs_ialloc_next_rec(tcur, &trec, &करोneleft, 1);
-			अगर (error)
-				जाओ error1;
+			error = xfs_ialloc_next_rec(tcur, &trec, &doneleft, 1);
+			if (error)
+				goto error1;
 
-			/* search right with cur, go क्रमward 1 record. */
-			error = xfs_ialloc_next_rec(cur, &rec, &करोneright, 0);
-			अगर (error)
-				जाओ error1;
-		पूर्ण
+			/* search right with cur, go forward 1 record. */
+			error = xfs_ialloc_next_rec(cur, &rec, &doneright, 0);
+			if (error)
+				goto error1;
+		}
 
 		/*
-		 * Loop until we find an inode chunk with a मुक्त inode.
+		 * Loop until we find an inode chunk with a free inode.
 		 */
-		जबतक (--searchdistance > 0 && (!करोneleft || !करोneright)) अणु
-			पूर्णांक	useleft;  /* using left inode chunk this समय */
+		while (--searchdistance > 0 && (!doneleft || !doneright)) {
+			int	useleft;  /* using left inode chunk this time */
 
-			/* figure out the बंदr block अगर both are valid. */
-			अगर (!करोneleft && !करोneright) अणु
+			/* figure out the closer block if both are valid. */
+			if (!doneleft && !doneright) {
 				useleft = pagino -
 				 (trec.ir_startino + XFS_INODES_PER_CHUNK - 1) <
 				  rec.ir_startino - pagino;
-			पूर्ण अन्यथा अणु
-				useleft = !करोneleft;
-			पूर्ण
+			} else {
+				useleft = !doneleft;
+			}
 
-			/* मुक्त inodes to the left? */
-			अगर (useleft && trec.ir_मुक्तcount) अणु
+			/* free inodes to the left? */
+			if (useleft && trec.ir_freecount) {
 				xfs_btree_del_cursor(cur, XFS_BTREE_NOERROR);
 				cur = tcur;
 
@@ -1251,32 +1250,32 @@ xfs_dialloc_ag_inobt(
 				pag->pagl_rightrec = rec.ir_startino;
 				pag->pagl_pagino = pagino;
 				rec = trec;
-				जाओ alloc_inode;
-			पूर्ण
+				goto alloc_inode;
+			}
 
-			/* मुक्त inodes to the right? */
-			अगर (!useleft && rec.ir_मुक्तcount) अणु
+			/* free inodes to the right? */
+			if (!useleft && rec.ir_freecount) {
 				xfs_btree_del_cursor(tcur, XFS_BTREE_NOERROR);
 
 				pag->pagl_leftrec = trec.ir_startino;
 				pag->pagl_rightrec = rec.ir_startino;
 				pag->pagl_pagino = pagino;
-				जाओ alloc_inode;
-			पूर्ण
+				goto alloc_inode;
+			}
 
 			/* get next record to check */
-			अगर (useleft) अणु
+			if (useleft) {
 				error = xfs_ialloc_next_rec(tcur, &trec,
-								 &करोneleft, 1);
-			पूर्ण अन्यथा अणु
+								 &doneleft, 1);
+			} else {
 				error = xfs_ialloc_next_rec(cur, &rec,
-								 &करोneright, 0);
-			पूर्ण
-			अगर (error)
-				जाओ error1;
-		पूर्ण
+								 &doneright, 0);
+			}
+			if (error)
+				goto error1;
+		}
 
-		अगर (searchdistance <= 0) अणु
+		if (searchdistance <= 0) {
 			/*
 			 * Not in range - save last search
 			 * location and allocate a new inode
@@ -1286,338 +1285,338 @@ xfs_dialloc_ag_inobt(
 			pag->pagl_rightrec = rec.ir_startino;
 			pag->pagl_pagino = pagino;
 
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * We've reached the end of the btree. because
 			 * we are only searching a small chunk of the
-			 * btree each search, there is obviously मुक्त
-			 * inodes बंदr to the parent inode than we
+			 * btree each search, there is obviously free
+			 * inodes closer to the parent inode than we
 			 * are now. restart the search again.
 			 */
-			pag->pagl_pagino = शून्यAGINO;
-			pag->pagl_leftrec = शून्यAGINO;
-			pag->pagl_rightrec = शून्यAGINO;
+			pag->pagl_pagino = NULLAGINO;
+			pag->pagl_leftrec = NULLAGINO;
+			pag->pagl_rightrec = NULLAGINO;
 			xfs_btree_del_cursor(tcur, XFS_BTREE_NOERROR);
 			xfs_btree_del_cursor(cur, XFS_BTREE_NOERROR);
-			जाओ restart_pagno;
-		पूर्ण
-	पूर्ण
+			goto restart_pagno;
+		}
+	}
 
 	/*
-	 * In a dअगरferent AG from the parent.
-	 * See अगर the most recently allocated block has any मुक्त.
+	 * In a different AG from the parent.
+	 * See if the most recently allocated block has any free.
 	 */
-	अगर (agi->agi_newino != cpu_to_be32(शून्यAGINO)) अणु
+	if (agi->agi_newino != cpu_to_be32(NULLAGINO)) {
 		error = xfs_inobt_lookup(cur, be32_to_cpu(agi->agi_newino),
 					 XFS_LOOKUP_EQ, &i);
-		अगर (error)
-			जाओ error0;
+		if (error)
+			goto error0;
 
-		अगर (i == 1) अणु
+		if (i == 1) {
 			error = xfs_inobt_get_rec(cur, &rec, &j);
-			अगर (error)
-				जाओ error0;
+			if (error)
+				goto error0;
 
-			अगर (j == 1 && rec.ir_मुक्तcount > 0) अणु
+			if (j == 1 && rec.ir_freecount > 0) {
 				/*
 				 * The last chunk allocated in the group
-				 * still has a मुक्त inode.
+				 * still has a free inode.
 				 */
-				जाओ alloc_inode;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto alloc_inode;
+			}
+		}
+	}
 
 	/*
 	 * None left in the last group, search the whole AG
 	 */
 	error = xfs_inobt_lookup(cur, 0, XFS_LOOKUP_GE, &i);
-	अगर (error)
-		जाओ error0;
-	अगर (XFS_IS_CORRUPT(mp, i != 1)) अणु
+	if (error)
+		goto error0;
+	if (XFS_IS_CORRUPT(mp, i != 1)) {
 		error = -EFSCORRUPTED;
-		जाओ error0;
-	पूर्ण
+		goto error0;
+	}
 
-	क्रम (;;) अणु
+	for (;;) {
 		error = xfs_inobt_get_rec(cur, &rec, &i);
-		अगर (error)
-			जाओ error0;
-		अगर (XFS_IS_CORRUPT(mp, i != 1)) अणु
+		if (error)
+			goto error0;
+		if (XFS_IS_CORRUPT(mp, i != 1)) {
 			error = -EFSCORRUPTED;
-			जाओ error0;
-		पूर्ण
-		अगर (rec.ir_मुक्तcount > 0)
-			अवरोध;
+			goto error0;
+		}
+		if (rec.ir_freecount > 0)
+			break;
 		error = xfs_btree_increment(cur, 0, &i);
-		अगर (error)
-			जाओ error0;
-		अगर (XFS_IS_CORRUPT(mp, i != 1)) अणु
+		if (error)
+			goto error0;
+		if (XFS_IS_CORRUPT(mp, i != 1)) {
 			error = -EFSCORRUPTED;
-			जाओ error0;
-		पूर्ण
-	पूर्ण
+			goto error0;
+		}
+	}
 
 alloc_inode:
-	offset = xfs_inobt_first_मुक्त_inode(&rec);
+	offset = xfs_inobt_first_free_inode(&rec);
 	ASSERT(offset >= 0);
 	ASSERT(offset < XFS_INODES_PER_CHUNK);
 	ASSERT((XFS_AGINO_TO_OFFSET(mp, rec.ir_startino) %
 				   XFS_INODES_PER_CHUNK) == 0);
 	ino = XFS_AGINO_TO_INO(mp, agno, rec.ir_startino + offset);
-	rec.ir_मुक्त &= ~XFS_INOBT_MASK(offset);
-	rec.ir_मुक्तcount--;
+	rec.ir_free &= ~XFS_INOBT_MASK(offset);
+	rec.ir_freecount--;
 	error = xfs_inobt_update(cur, &rec);
-	अगर (error)
-		जाओ error0;
-	be32_add_cpu(&agi->agi_मुक्तcount, -1);
+	if (error)
+		goto error0;
+	be32_add_cpu(&agi->agi_freecount, -1);
 	xfs_ialloc_log_agi(tp, agbp, XFS_AGI_FREECOUNT);
-	pag->pagi_मुक्तcount--;
+	pag->pagi_freecount--;
 
-	error = xfs_check_agi_मुक्तcount(cur, agi);
-	अगर (error)
-		जाओ error0;
+	error = xfs_check_agi_freecount(cur, agi);
+	if (error)
+		goto error0;
 
 	xfs_btree_del_cursor(cur, XFS_BTREE_NOERROR);
 	xfs_trans_mod_sb(tp, XFS_TRANS_SB_IFREE, -1);
 	*inop = ino;
-	वापस 0;
+	return 0;
 error1:
 	xfs_btree_del_cursor(tcur, XFS_BTREE_ERROR);
 error0:
 	xfs_btree_del_cursor(cur, XFS_BTREE_ERROR);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * Use the मुक्त inode btree to allocate an inode based on distance from the
+ * Use the free inode btree to allocate an inode based on distance from the
  * parent. Note that the provided cursor may be deleted and replaced.
  */
-STATIC पूर्णांक
+STATIC int
 xfs_dialloc_ag_finobt_near(
 	xfs_agino_t			pagino,
-	काष्ठा xfs_btree_cur		**ocur,
-	काष्ठा xfs_inobt_rec_incore	*rec)
-अणु
-	काष्ठा xfs_btree_cur		*lcur = *ocur;	/* left search cursor */
-	काष्ठा xfs_btree_cur		*rcur;	/* right search cursor */
-	काष्ठा xfs_inobt_rec_incore	rrec;
-	पूर्णांक				error;
-	पूर्णांक				i, j;
+	struct xfs_btree_cur		**ocur,
+	struct xfs_inobt_rec_incore	*rec)
+{
+	struct xfs_btree_cur		*lcur = *ocur;	/* left search cursor */
+	struct xfs_btree_cur		*rcur;	/* right search cursor */
+	struct xfs_inobt_rec_incore	rrec;
+	int				error;
+	int				i, j;
 
 	error = xfs_inobt_lookup(lcur, pagino, XFS_LOOKUP_LE, &i);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	अगर (i == 1) अणु
+	if (i == 1) {
 		error = xfs_inobt_get_rec(lcur, rec, &i);
-		अगर (error)
-			वापस error;
-		अगर (XFS_IS_CORRUPT(lcur->bc_mp, i != 1))
-			वापस -EFSCORRUPTED;
+		if (error)
+			return error;
+		if (XFS_IS_CORRUPT(lcur->bc_mp, i != 1))
+			return -EFSCORRUPTED;
 
 		/*
-		 * See अगर we've landed in the parent inode record. The finobt
-		 * only tracks chunks with at least one मुक्त inode, so record
+		 * See if we've landed in the parent inode record. The finobt
+		 * only tracks chunks with at least one free inode, so record
 		 * existence is enough.
 		 */
-		अगर (pagino >= rec->ir_startino &&
+		if (pagino >= rec->ir_startino &&
 		    pagino < (rec->ir_startino + XFS_INODES_PER_CHUNK))
-			वापस 0;
-	पूर्ण
+			return 0;
+	}
 
 	error = xfs_btree_dup_cursor(lcur, &rcur);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	error = xfs_inobt_lookup(rcur, pagino, XFS_LOOKUP_GE, &j);
-	अगर (error)
-		जाओ error_rcur;
-	अगर (j == 1) अणु
+	if (error)
+		goto error_rcur;
+	if (j == 1) {
 		error = xfs_inobt_get_rec(rcur, &rrec, &j);
-		अगर (error)
-			जाओ error_rcur;
-		अगर (XFS_IS_CORRUPT(lcur->bc_mp, j != 1)) अणु
+		if (error)
+			goto error_rcur;
+		if (XFS_IS_CORRUPT(lcur->bc_mp, j != 1)) {
 			error = -EFSCORRUPTED;
-			जाओ error_rcur;
-		पूर्ण
-	पूर्ण
+			goto error_rcur;
+		}
+	}
 
-	अगर (XFS_IS_CORRUPT(lcur->bc_mp, i != 1 && j != 1)) अणु
+	if (XFS_IS_CORRUPT(lcur->bc_mp, i != 1 && j != 1)) {
 		error = -EFSCORRUPTED;
-		जाओ error_rcur;
-	पूर्ण
-	अगर (i == 1 && j == 1) अणु
+		goto error_rcur;
+	}
+	if (i == 1 && j == 1) {
 		/*
-		 * Both the left and right records are valid. Choose the बंदr
+		 * Both the left and right records are valid. Choose the closer
 		 * inode chunk to the target.
 		 */
-		अगर ((pagino - rec->ir_startino + XFS_INODES_PER_CHUNK - 1) >
-		    (rrec.ir_startino - pagino)) अणु
+		if ((pagino - rec->ir_startino + XFS_INODES_PER_CHUNK - 1) >
+		    (rrec.ir_startino - pagino)) {
 			*rec = rrec;
 			xfs_btree_del_cursor(lcur, XFS_BTREE_NOERROR);
 			*ocur = rcur;
-		पूर्ण अन्यथा अणु
+		} else {
 			xfs_btree_del_cursor(rcur, XFS_BTREE_NOERROR);
-		पूर्ण
-	पूर्ण अन्यथा अगर (j == 1) अणु
+		}
+	} else if (j == 1) {
 		/* only the right record is valid */
 		*rec = rrec;
 		xfs_btree_del_cursor(lcur, XFS_BTREE_NOERROR);
 		*ocur = rcur;
-	पूर्ण अन्यथा अगर (i == 1) अणु
+	} else if (i == 1) {
 		/* only the left record is valid */
 		xfs_btree_del_cursor(rcur, XFS_BTREE_NOERROR);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 error_rcur:
 	xfs_btree_del_cursor(rcur, XFS_BTREE_ERROR);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * Use the मुक्त inode btree to find a मुक्त inode based on a newino hपूर्णांक. If
- * the hपूर्णांक is शून्य, find the first मुक्त inode in the AG.
+ * Use the free inode btree to find a free inode based on a newino hint. If
+ * the hint is NULL, find the first free inode in the AG.
  */
-STATIC पूर्णांक
+STATIC int
 xfs_dialloc_ag_finobt_newino(
-	काष्ठा xfs_agi			*agi,
-	काष्ठा xfs_btree_cur		*cur,
-	काष्ठा xfs_inobt_rec_incore	*rec)
-अणु
-	पूर्णांक error;
-	पूर्णांक i;
+	struct xfs_agi			*agi,
+	struct xfs_btree_cur		*cur,
+	struct xfs_inobt_rec_incore	*rec)
+{
+	int error;
+	int i;
 
-	अगर (agi->agi_newino != cpu_to_be32(शून्यAGINO)) अणु
+	if (agi->agi_newino != cpu_to_be32(NULLAGINO)) {
 		error = xfs_inobt_lookup(cur, be32_to_cpu(agi->agi_newino),
 					 XFS_LOOKUP_EQ, &i);
-		अगर (error)
-			वापस error;
-		अगर (i == 1) अणु
+		if (error)
+			return error;
+		if (i == 1) {
 			error = xfs_inobt_get_rec(cur, rec, &i);
-			अगर (error)
-				वापस error;
-			अगर (XFS_IS_CORRUPT(cur->bc_mp, i != 1))
-				वापस -EFSCORRUPTED;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			if (error)
+				return error;
+			if (XFS_IS_CORRUPT(cur->bc_mp, i != 1))
+				return -EFSCORRUPTED;
+			return 0;
+		}
+	}
 
 	/*
 	 * Find the first inode available in the AG.
 	 */
 	error = xfs_inobt_lookup(cur, 0, XFS_LOOKUP_GE, &i);
-	अगर (error)
-		वापस error;
-	अगर (XFS_IS_CORRUPT(cur->bc_mp, i != 1))
-		वापस -EFSCORRUPTED;
+	if (error)
+		return error;
+	if (XFS_IS_CORRUPT(cur->bc_mp, i != 1))
+		return -EFSCORRUPTED;
 
 	error = xfs_inobt_get_rec(cur, rec, &i);
-	अगर (error)
-		वापस error;
-	अगर (XFS_IS_CORRUPT(cur->bc_mp, i != 1))
-		वापस -EFSCORRUPTED;
+	if (error)
+		return error;
+	if (XFS_IS_CORRUPT(cur->bc_mp, i != 1))
+		return -EFSCORRUPTED;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Update the inobt based on a modअगरication made to the finobt. Also ensure that
- * the records from both trees are equivalent post-modअगरication.
+ * Update the inobt based on a modification made to the finobt. Also ensure that
+ * the records from both trees are equivalent post-modification.
  */
-STATIC पूर्णांक
+STATIC int
 xfs_dialloc_ag_update_inobt(
-	काष्ठा xfs_btree_cur		*cur,	/* inobt cursor */
-	काष्ठा xfs_inobt_rec_incore	*frec,	/* finobt record */
-	पूर्णांक				offset) /* inode offset */
-अणु
-	काष्ठा xfs_inobt_rec_incore	rec;
-	पूर्णांक				error;
-	पूर्णांक				i;
+	struct xfs_btree_cur		*cur,	/* inobt cursor */
+	struct xfs_inobt_rec_incore	*frec,	/* finobt record */
+	int				offset) /* inode offset */
+{
+	struct xfs_inobt_rec_incore	rec;
+	int				error;
+	int				i;
 
 	error = xfs_inobt_lookup(cur, frec->ir_startino, XFS_LOOKUP_EQ, &i);
-	अगर (error)
-		वापस error;
-	अगर (XFS_IS_CORRUPT(cur->bc_mp, i != 1))
-		वापस -EFSCORRUPTED;
+	if (error)
+		return error;
+	if (XFS_IS_CORRUPT(cur->bc_mp, i != 1))
+		return -EFSCORRUPTED;
 
 	error = xfs_inobt_get_rec(cur, &rec, &i);
-	अगर (error)
-		वापस error;
-	अगर (XFS_IS_CORRUPT(cur->bc_mp, i != 1))
-		वापस -EFSCORRUPTED;
+	if (error)
+		return error;
+	if (XFS_IS_CORRUPT(cur->bc_mp, i != 1))
+		return -EFSCORRUPTED;
 	ASSERT((XFS_AGINO_TO_OFFSET(cur->bc_mp, rec.ir_startino) %
 				   XFS_INODES_PER_CHUNK) == 0);
 
-	rec.ir_मुक्त &= ~XFS_INOBT_MASK(offset);
-	rec.ir_मुक्तcount--;
+	rec.ir_free &= ~XFS_INOBT_MASK(offset);
+	rec.ir_freecount--;
 
-	अगर (XFS_IS_CORRUPT(cur->bc_mp,
-			   rec.ir_मुक्त != frec->ir_मुक्त ||
-			   rec.ir_मुक्तcount != frec->ir_मुक्तcount))
-		वापस -EFSCORRUPTED;
+	if (XFS_IS_CORRUPT(cur->bc_mp,
+			   rec.ir_free != frec->ir_free ||
+			   rec.ir_freecount != frec->ir_freecount))
+		return -EFSCORRUPTED;
 
-	वापस xfs_inobt_update(cur, &rec);
-पूर्ण
+	return xfs_inobt_update(cur, &rec);
+}
 
 /*
- * Allocate an inode using the मुक्त inode btree, अगर available. Otherwise, fall
+ * Allocate an inode using the free inode btree, if available. Otherwise, fall
  * back to the inobt search algorithm.
  *
- * The caller selected an AG क्रम us, and made sure that मुक्त inodes are
+ * The caller selected an AG for us, and made sure that free inodes are
  * available.
  */
-पूर्णांक
+int
 xfs_dialloc_ag(
-	काष्ठा xfs_trans	*tp,
-	काष्ठा xfs_buf		*agbp,
+	struct xfs_trans	*tp,
+	struct xfs_buf		*agbp,
 	xfs_ino_t		parent,
 	xfs_ino_t		*inop)
-अणु
-	काष्ठा xfs_mount		*mp = tp->t_mountp;
-	काष्ठा xfs_agi			*agi = agbp->b_addr;
+{
+	struct xfs_mount		*mp = tp->t_mountp;
+	struct xfs_agi			*agi = agbp->b_addr;
 	xfs_agnumber_t			agno = be32_to_cpu(agi->agi_seqno);
 	xfs_agnumber_t			pagno = XFS_INO_TO_AGNO(mp, parent);
 	xfs_agino_t			pagino = XFS_INO_TO_AGINO(mp, parent);
-	काष्ठा xfs_btree_cur		*cur;	/* finobt cursor */
-	काष्ठा xfs_btree_cur		*icur;	/* inobt cursor */
-	काष्ठा xfs_inobt_rec_incore	rec;
+	struct xfs_btree_cur		*cur;	/* finobt cursor */
+	struct xfs_btree_cur		*icur;	/* inobt cursor */
+	struct xfs_inobt_rec_incore	rec;
 	xfs_ino_t			ino;
-	पूर्णांक				error;
-	पूर्णांक				offset;
-	पूर्णांक				i;
+	int				error;
+	int				offset;
+	int				i;
 
-	अगर (!xfs_sb_version_hasfinobt(&mp->m_sb))
-		वापस xfs_dialloc_ag_inobt(tp, agbp, parent, inop);
+	if (!xfs_sb_version_hasfinobt(&mp->m_sb))
+		return xfs_dialloc_ag_inobt(tp, agbp, parent, inop);
 
 	/*
 	 * If pagino is 0 (this is the root inode allocation) use newino.
 	 * This must work because we've just allocated some.
 	 */
-	अगर (!pagino)
+	if (!pagino)
 		pagino = be32_to_cpu(agi->agi_newino);
 
 	cur = xfs_inobt_init_cursor(mp, tp, agbp, agno, XFS_BTNUM_FINO);
 
-	error = xfs_check_agi_मुक्तcount(cur, agi);
-	अगर (error)
-		जाओ error_cur;
+	error = xfs_check_agi_freecount(cur, agi);
+	if (error)
+		goto error_cur;
 
 	/*
 	 * The search algorithm depends on whether we're in the same AG as the
-	 * parent. If so, find the बंदst available inode to the parent. If
-	 * not, consider the agi hपूर्णांक or find the first मुक्त inode in the AG.
+	 * parent. If so, find the closest available inode to the parent. If
+	 * not, consider the agi hint or find the first free inode in the AG.
 	 */
-	अगर (agno == pagno)
+	if (agno == pagno)
 		error = xfs_dialloc_ag_finobt_near(pagino, &cur, &rec);
-	अन्यथा
+	else
 		error = xfs_dialloc_ag_finobt_newino(agi, cur, &rec);
-	अगर (error)
-		जाओ error_cur;
+	if (error)
+		goto error_cur;
 
-	offset = xfs_inobt_first_मुक्त_inode(&rec);
+	offset = xfs_inobt_first_free_inode(&rec);
 	ASSERT(offset >= 0);
 	ASSERT(offset < XFS_INODES_PER_CHUNK);
 	ASSERT((XFS_AGINO_TO_OFFSET(mp, rec.ir_startino) %
@@ -1625,74 +1624,74 @@ xfs_dialloc_ag(
 	ino = XFS_AGINO_TO_INO(mp, agno, rec.ir_startino + offset);
 
 	/*
-	 * Modअगरy or हटाओ the finobt record.
+	 * Modify or remove the finobt record.
 	 */
-	rec.ir_मुक्त &= ~XFS_INOBT_MASK(offset);
-	rec.ir_मुक्तcount--;
-	अगर (rec.ir_मुक्तcount)
+	rec.ir_free &= ~XFS_INOBT_MASK(offset);
+	rec.ir_freecount--;
+	if (rec.ir_freecount)
 		error = xfs_inobt_update(cur, &rec);
-	अन्यथा
+	else
 		error = xfs_btree_delete(cur, &i);
-	अगर (error)
-		जाओ error_cur;
+	if (error)
+		goto error_cur;
 
 	/*
 	 * The finobt has now been updated appropriately. We haven't updated the
 	 * agi and superblock yet, so we can create an inobt cursor and validate
-	 * the original मुक्तcount. If all is well, make the equivalent update to
-	 * the inobt using the finobt record and offset inक्रमmation.
+	 * the original freecount. If all is well, make the equivalent update to
+	 * the inobt using the finobt record and offset information.
 	 */
 	icur = xfs_inobt_init_cursor(mp, tp, agbp, agno, XFS_BTNUM_INO);
 
-	error = xfs_check_agi_मुक्तcount(icur, agi);
-	अगर (error)
-		जाओ error_icur;
+	error = xfs_check_agi_freecount(icur, agi);
+	if (error)
+		goto error_icur;
 
 	error = xfs_dialloc_ag_update_inobt(icur, &rec, offset);
-	अगर (error)
-		जाओ error_icur;
+	if (error)
+		goto error_icur;
 
 	/*
 	 * Both trees have now been updated. We must update the perag and
-	 * superblock beक्रमe we can check the मुक्तcount क्रम each btree.
+	 * superblock before we can check the freecount for each btree.
 	 */
-	be32_add_cpu(&agi->agi_मुक्तcount, -1);
+	be32_add_cpu(&agi->agi_freecount, -1);
 	xfs_ialloc_log_agi(tp, agbp, XFS_AGI_FREECOUNT);
-	agbp->b_pag->pagi_मुक्तcount--;
+	agbp->b_pag->pagi_freecount--;
 
 	xfs_trans_mod_sb(tp, XFS_TRANS_SB_IFREE, -1);
 
-	error = xfs_check_agi_मुक्तcount(icur, agi);
-	अगर (error)
-		जाओ error_icur;
-	error = xfs_check_agi_मुक्तcount(cur, agi);
-	अगर (error)
-		जाओ error_icur;
+	error = xfs_check_agi_freecount(icur, agi);
+	if (error)
+		goto error_icur;
+	error = xfs_check_agi_freecount(cur, agi);
+	if (error)
+		goto error_icur;
 
 	xfs_btree_del_cursor(icur, XFS_BTREE_NOERROR);
 	xfs_btree_del_cursor(cur, XFS_BTREE_NOERROR);
 	*inop = ino;
-	वापस 0;
+	return 0;
 
 error_icur:
 	xfs_btree_del_cursor(icur, XFS_BTREE_ERROR);
 error_cur:
 	xfs_btree_del_cursor(cur, XFS_BTREE_ERROR);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक
+static int
 xfs_dialloc_roll(
-	काष्ठा xfs_trans	**tpp,
-	काष्ठा xfs_buf		*agibp)
-अणु
-	काष्ठा xfs_trans	*tp = *tpp;
-	काष्ठा xfs_dquot_acct	*dqinfo;
-	पूर्णांक			error;
+	struct xfs_trans	**tpp,
+	struct xfs_buf		*agibp)
+{
+	struct xfs_trans	*tp = *tpp;
+	struct xfs_dquot_acct	*dqinfo;
+	int			error;
 
 	/*
 	 * Hold to on to the agibp across the commit so no other allocation can
-	 * come in and take the मुक्त inodes we just allocated क्रम our caller.
+	 * come in and take the free inodes we just allocated for our caller.
 	 */
 	xfs_trans_bhold(tp, agibp);
 
@@ -1702,7 +1701,7 @@ xfs_dialloc_roll(
 	 * next transaction.
 	 */
 	dqinfo = tp->t_dqinfo;
-	tp->t_dqinfo = शून्य;
+	tp->t_dqinfo = NULL;
 
 	error = xfs_trans_roll(&tp);
 
@@ -1710,206 +1709,206 @@ xfs_dialloc_roll(
 	tp->t_dqinfo = dqinfo;
 
 	*tpp = tp;
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 	xfs_trans_bjoin(tp, agibp);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Select and prepare an AG क्रम inode allocation.
+ * Select and prepare an AG for inode allocation.
  *
  * Mode is used to tell whether the new inode is a directory and hence where to
  * locate it.
  *
- * This function will ensure that the selected AG has मुक्त inodes available to
- * allocate from. The selected AGI will be वापसed locked to the caller, and it
- * will allocate more मुक्त inodes अगर required. If no मुक्त inodes are found or
- * can be allocated, no AGI will be वापसed.
+ * This function will ensure that the selected AG has free inodes available to
+ * allocate from. The selected AGI will be returned locked to the caller, and it
+ * will allocate more free inodes if required. If no free inodes are found or
+ * can be allocated, no AGI will be returned.
  */
-पूर्णांक
+int
 xfs_dialloc_select_ag(
-	काष्ठा xfs_trans	**tpp,
+	struct xfs_trans	**tpp,
 	xfs_ino_t		parent,
 	umode_t			mode,
-	काष्ठा xfs_buf		**IO_agbp)
-अणु
-	काष्ठा xfs_mount	*mp = (*tpp)->t_mountp;
-	काष्ठा xfs_buf		*agbp;
+	struct xfs_buf		**IO_agbp)
+{
+	struct xfs_mount	*mp = (*tpp)->t_mountp;
+	struct xfs_buf		*agbp;
 	xfs_agnumber_t		agno;
-	पूर्णांक			error;
+	int			error;
 	bool			noroom = false;
 	xfs_agnumber_t		start_agno;
-	काष्ठा xfs_perag	*pag;
-	काष्ठा xfs_ino_geometry	*igeo = M_IGEO(mp);
+	struct xfs_perag	*pag;
+	struct xfs_ino_geometry	*igeo = M_IGEO(mp);
 	bool			okalloc = true;
 
-	*IO_agbp = शून्य;
+	*IO_agbp = NULL;
 
 	/*
-	 * We करो not have an agbp, so select an initial allocation
-	 * group क्रम inode allocation.
+	 * We do not have an agbp, so select an initial allocation
+	 * group for inode allocation.
 	 */
 	start_agno = xfs_ialloc_ag_select(*tpp, parent, mode);
-	अगर (start_agno == शून्यAGNUMBER)
-		वापस 0;
+	if (start_agno == NULLAGNUMBER)
+		return 0;
 
 	/*
-	 * If we have alपढ़ोy hit the उच्चमानing of inode blocks then clear
-	 * okalloc so we scan all available agi काष्ठाures क्रम a मुक्त
+	 * If we have already hit the ceiling of inode blocks then clear
+	 * okalloc so we scan all available agi structures for a free
 	 * inode.
 	 *
-	 * Read rough value of mp->m_icount by percpu_counter_पढ़ो_positive,
-	 * which will sacrअगरice the preciseness but improve the perक्रमmance.
+	 * Read rough value of mp->m_icount by percpu_counter_read_positive,
+	 * which will sacrifice the preciseness but improve the performance.
 	 */
-	अगर (igeo->maxicount &&
-	    percpu_counter_पढ़ो_positive(&mp->m_icount) + igeo->ialloc_inos
-							> igeo->maxicount) अणु
+	if (igeo->maxicount &&
+	    percpu_counter_read_positive(&mp->m_icount) + igeo->ialloc_inos
+							> igeo->maxicount) {
 		noroom = true;
 		okalloc = false;
-	पूर्ण
+	}
 
 	/*
-	 * Loop until we find an allocation group that either has मुक्त inodes
+	 * Loop until we find an allocation group that either has free inodes
 	 * or in which we can allocate some inodes.  Iterate through the
 	 * allocation groups upward, wrapping at the end.
 	 */
 	agno = start_agno;
-	क्रम (;;) अणु
+	for (;;) {
 		pag = xfs_perag_get(mp, agno);
-		अगर (!pag->pagi_inodeok) अणु
+		if (!pag->pagi_inodeok) {
 			xfs_ialloc_next_ag(mp);
-			जाओ nextag;
-		पूर्ण
+			goto nextag;
+		}
 
-		अगर (!pag->pagi_init) अणु
+		if (!pag->pagi_init) {
 			error = xfs_ialloc_pagi_init(mp, *tpp, agno);
-			अगर (error)
-				अवरोध;
-		पूर्ण
+			if (error)
+				break;
+		}
 
 		/*
-		 * Do a first racy fast path check अगर this AG is usable.
+		 * Do a first racy fast path check if this AG is usable.
 		 */
-		अगर (!pag->pagi_मुक्तcount && !okalloc)
-			जाओ nextag;
+		if (!pag->pagi_freecount && !okalloc)
+			goto nextag;
 
 		/*
-		 * Then पढ़ो in the AGI buffer and recheck with the AGI buffer
+		 * Then read in the AGI buffer and recheck with the AGI buffer
 		 * lock held.
 		 */
-		error = xfs_ialloc_पढ़ो_agi(mp, *tpp, agno, &agbp);
-		अगर (error)
-			अवरोध;
+		error = xfs_ialloc_read_agi(mp, *tpp, agno, &agbp);
+		if (error)
+			break;
 
-		अगर (pag->pagi_मुक्तcount) अणु
+		if (pag->pagi_freecount) {
 			xfs_perag_put(pag);
-			जाओ found_ag;
-		पूर्ण
+			goto found_ag;
+		}
 
-		अगर (!okalloc)
-			जाओ nextag_rअन्यथा_buffer;
+		if (!okalloc)
+			goto nextag_relse_buffer;
 
 		error = xfs_ialloc_ag_alloc(*tpp, agbp);
-		अगर (error < 0) अणु
-			xfs_trans_brअन्यथा(*tpp, agbp);
+		if (error < 0) {
+			xfs_trans_brelse(*tpp, agbp);
 
-			अगर (error == -ENOSPC)
+			if (error == -ENOSPC)
 				error = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (error == 0) अणु
+		if (error == 0) {
 			/*
-			 * We successfully allocated space क्रम an inode cluster
+			 * We successfully allocated space for an inode cluster
 			 * in this AG.  Roll the transaction so that we can
 			 * allocate one of the new inodes.
 			 */
-			ASSERT(pag->pagi_मुक्तcount > 0);
+			ASSERT(pag->pagi_freecount > 0);
 			xfs_perag_put(pag);
 
 			error = xfs_dialloc_roll(tpp, agbp);
-			अगर (error) अणु
-				xfs_buf_rअन्यथा(agbp);
-				वापस error;
-			पूर्ण
-			जाओ found_ag;
-		पूर्ण
+			if (error) {
+				xfs_buf_relse(agbp);
+				return error;
+			}
+			goto found_ag;
+		}
 
-nextag_rअन्यथा_buffer:
-		xfs_trans_brअन्यथा(*tpp, agbp);
+nextag_relse_buffer:
+		xfs_trans_brelse(*tpp, agbp);
 nextag:
 		xfs_perag_put(pag);
-		अगर (++agno == mp->m_sb.sb_agcount)
+		if (++agno == mp->m_sb.sb_agcount)
 			agno = 0;
-		अगर (agno == start_agno)
-			वापस noroom ? -ENOSPC : 0;
-	पूर्ण
+		if (agno == start_agno)
+			return noroom ? -ENOSPC : 0;
+	}
 
 	xfs_perag_put(pag);
-	वापस error;
+	return error;
 found_ag:
 	*IO_agbp = agbp;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Free the blocks of an inode chunk. We must consider that the inode chunk
- * might be sparse and only मुक्त the regions that are allocated as part of the
+ * might be sparse and only free the regions that are allocated as part of the
  * chunk.
  */
-STATIC व्योम
-xfs_dअगरree_inode_chunk(
-	काष्ठा xfs_trans		*tp,
+STATIC void
+xfs_difree_inode_chunk(
+	struct xfs_trans		*tp,
 	xfs_agnumber_t			agno,
-	काष्ठा xfs_inobt_rec_incore	*rec)
-अणु
-	काष्ठा xfs_mount		*mp = tp->t_mountp;
+	struct xfs_inobt_rec_incore	*rec)
+{
+	struct xfs_mount		*mp = tp->t_mountp;
 	xfs_agblock_t			sagbno = XFS_AGINO_TO_AGBNO(mp,
 							rec->ir_startino);
-	पूर्णांक				startidx, endidx;
-	पूर्णांक				nextbit;
+	int				startidx, endidx;
+	int				nextbit;
 	xfs_agblock_t			agbno;
-	पूर्णांक				contigblk;
+	int				contigblk;
 	DECLARE_BITMAP(holemask, XFS_INOBT_HOLEMASK_BITS);
 
-	अगर (!xfs_inobt_issparse(rec->ir_holemask)) अणु
+	if (!xfs_inobt_issparse(rec->ir_holemask)) {
 		/* not sparse, calculate extent info directly */
-		xfs_bmap_add_मुक्त(tp, XFS_AGB_TO_FSB(mp, agno, sagbno),
+		xfs_bmap_add_free(tp, XFS_AGB_TO_FSB(mp, agno, sagbno),
 				  M_IGEO(mp)->ialloc_blks,
 				  &XFS_RMAP_OINFO_INODES);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* holemask is only 16-bits (fits in an अचिन्हित दीर्घ) */
-	ASSERT(माप(rec->ir_holemask) <= माप(holemask[0]));
+	/* holemask is only 16-bits (fits in an unsigned long) */
+	ASSERT(sizeof(rec->ir_holemask) <= sizeof(holemask[0]));
 	holemask[0] = rec->ir_holemask;
 
 	/*
 	 * Find contiguous ranges of zeroes (i.e., allocated regions) in the
 	 * holemask and convert the start/end index of each range to an extent.
-	 * We start with the start and end index both poपूर्णांकing at the first 0 in
+	 * We start with the start and end index both pointing at the first 0 in
 	 * the mask.
 	 */
 	startidx = endidx = find_first_zero_bit(holemask,
 						XFS_INOBT_HOLEMASK_BITS);
 	nextbit = startidx + 1;
-	जबतक (startidx < XFS_INOBT_HOLEMASK_BITS) अणु
+	while (startidx < XFS_INOBT_HOLEMASK_BITS) {
 		nextbit = find_next_zero_bit(holemask, XFS_INOBT_HOLEMASK_BITS,
 					     nextbit);
 		/*
 		 * If the next zero bit is contiguous, update the end index of
-		 * the current range and जारी.
+		 * the current range and continue.
 		 */
-		अगर (nextbit != XFS_INOBT_HOLEMASK_BITS &&
-		    nextbit == endidx + 1) अणु
+		if (nextbit != XFS_INOBT_HOLEMASK_BITS &&
+		    nextbit == endidx + 1) {
 			endidx = nextbit;
-			जाओ next;
-		पूर्ण
+			goto next;
+		}
 
 		/*
 		 * nextbit is not contiguous with the current end index. Convert
-		 * the current start/end to an extent and add it to the मुक्त
+		 * the current start/end to an extent and add it to the free
 		 * list.
 		 */
 		agbno = sagbno + (startidx * XFS_INODES_PER_HOLEMASK_BIT) /
@@ -1920,7 +1919,7 @@ xfs_dअगरree_inode_chunk(
 
 		ASSERT(agbno % mp->m_sb.sb_spino_align == 0);
 		ASSERT(contigblk % mp->m_sb.sb_spino_align == 0);
-		xfs_bmap_add_मुक्त(tp, XFS_AGB_TO_FSB(mp, agno, agbno),
+		xfs_bmap_add_free(tp, XFS_AGB_TO_FSB(mp, agno, agbno),
 				  contigblk, &XFS_RMAP_OINFO_INODES);
 
 		/* reset range to current bit and carry on... */
@@ -1928,26 +1927,26 @@ xfs_dअगरree_inode_chunk(
 
 next:
 		nextbit++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-STATIC पूर्णांक
-xfs_dअगरree_inobt(
-	काष्ठा xfs_mount		*mp,
-	काष्ठा xfs_trans		*tp,
-	काष्ठा xfs_buf			*agbp,
+STATIC int
+xfs_difree_inobt(
+	struct xfs_mount		*mp,
+	struct xfs_trans		*tp,
+	struct xfs_buf			*agbp,
 	xfs_agino_t			agino,
-	काष्ठा xfs_icluster		*xic,
-	काष्ठा xfs_inobt_rec_incore	*orec)
-अणु
-	काष्ठा xfs_agi			*agi = agbp->b_addr;
+	struct xfs_icluster		*xic,
+	struct xfs_inobt_rec_incore	*orec)
+{
+	struct xfs_agi			*agi = agbp->b_addr;
 	xfs_agnumber_t			agno = be32_to_cpu(agi->agi_seqno);
-	काष्ठा xfs_btree_cur		*cur;
-	काष्ठा xfs_inobt_rec_incore	rec;
-	पूर्णांक				ilen;
-	पूर्णांक				error;
-	पूर्णांक				i;
-	पूर्णांक				off;
+	struct xfs_btree_cur		*cur;
+	struct xfs_inobt_rec_incore	rec;
+	int				ilen;
+	int				error;
+	int				i;
+	int				off;
 
 	ASSERT(agi->agi_magicnum == cpu_to_be32(XFS_AGI_MAGIC));
 	ASSERT(XFS_AGINO_TO_AGBNO(mp, agino) < be32_to_cpu(agi->agi_length));
@@ -1957,53 +1956,53 @@ xfs_dअगरree_inobt(
 	 */
 	cur = xfs_inobt_init_cursor(mp, tp, agbp, agno, XFS_BTNUM_INO);
 
-	error = xfs_check_agi_मुक्तcount(cur, agi);
-	अगर (error)
-		जाओ error0;
+	error = xfs_check_agi_freecount(cur, agi);
+	if (error)
+		goto error0;
 
 	/*
-	 * Look क्रम the entry describing this inode.
+	 * Look for the entry describing this inode.
 	 */
-	अगर ((error = xfs_inobt_lookup(cur, agino, XFS_LOOKUP_LE, &i))) अणु
+	if ((error = xfs_inobt_lookup(cur, agino, XFS_LOOKUP_LE, &i))) {
 		xfs_warn(mp, "%s: xfs_inobt_lookup() returned error %d.",
 			__func__, error);
-		जाओ error0;
-	पूर्ण
-	अगर (XFS_IS_CORRUPT(mp, i != 1)) अणु
+		goto error0;
+	}
+	if (XFS_IS_CORRUPT(mp, i != 1)) {
 		error = -EFSCORRUPTED;
-		जाओ error0;
-	पूर्ण
+		goto error0;
+	}
 	error = xfs_inobt_get_rec(cur, &rec, &i);
-	अगर (error) अणु
+	if (error) {
 		xfs_warn(mp, "%s: xfs_inobt_get_rec() returned error %d.",
 			__func__, error);
-		जाओ error0;
-	पूर्ण
-	अगर (XFS_IS_CORRUPT(mp, i != 1)) अणु
+		goto error0;
+	}
+	if (XFS_IS_CORRUPT(mp, i != 1)) {
 		error = -EFSCORRUPTED;
-		जाओ error0;
-	पूर्ण
+		goto error0;
+	}
 	/*
 	 * Get the offset in the inode chunk.
 	 */
 	off = agino - rec.ir_startino;
 	ASSERT(off >= 0 && off < XFS_INODES_PER_CHUNK);
-	ASSERT(!(rec.ir_मुक्त & XFS_INOBT_MASK(off)));
+	ASSERT(!(rec.ir_free & XFS_INOBT_MASK(off)));
 	/*
-	 * Mark the inode मुक्त & increment the count.
+	 * Mark the inode free & increment the count.
 	 */
-	rec.ir_मुक्त |= XFS_INOBT_MASK(off);
-	rec.ir_मुक्तcount++;
+	rec.ir_free |= XFS_INOBT_MASK(off);
+	rec.ir_freecount++;
 
 	/*
-	 * When an inode chunk is मुक्त, it becomes eligible क्रम removal. Don't
-	 * हटाओ the chunk अगर the block size is large enough क्रम multiple inode
-	 * chunks (that might not be मुक्त).
+	 * When an inode chunk is free, it becomes eligible for removal. Don't
+	 * remove the chunk if the block size is large enough for multiple inode
+	 * chunks (that might not be free).
 	 */
-	अगर (!(mp->m_flags & XFS_MOUNT_IKEEP) &&
-	    rec.ir_मुक्त == XFS_INOBT_ALL_FREE &&
-	    mp->m_sb.sb_inopblock <= XFS_INODES_PER_CHUNK) अणु
-		काष्ठा xfs_perag	*pag = agbp->b_pag;
+	if (!(mp->m_flags & XFS_MOUNT_IKEEP) &&
+	    rec.ir_free == XFS_INOBT_ALL_FREE &&
+	    mp->m_sb.sb_inopblock <= XFS_INODES_PER_CHUNK) {
+		struct xfs_perag	*pag = agbp->b_pag;
 
 		xic->deleted = true;
 		xic->first_ino = XFS_AGINO_TO_INO(mp, agno, rec.ir_startino);
@@ -2012,408 +2011,408 @@ xfs_dअगरree_inobt(
 		/*
 		 * Remove the inode cluster from the AGI B+Tree, adjust the
 		 * AGI and Superblock inode counts, and mark the disk space
-		 * to be मुक्तd when the transaction is committed.
+		 * to be freed when the transaction is committed.
 		 */
-		ilen = rec.ir_मुक्तcount;
+		ilen = rec.ir_freecount;
 		be32_add_cpu(&agi->agi_count, -ilen);
-		be32_add_cpu(&agi->agi_मुक्तcount, -(ilen - 1));
+		be32_add_cpu(&agi->agi_freecount, -(ilen - 1));
 		xfs_ialloc_log_agi(tp, agbp, XFS_AGI_COUNT | XFS_AGI_FREECOUNT);
-		pag->pagi_मुक्तcount -= ilen - 1;
+		pag->pagi_freecount -= ilen - 1;
 		pag->pagi_count -= ilen;
 		xfs_trans_mod_sb(tp, XFS_TRANS_SB_ICOUNT, -ilen);
 		xfs_trans_mod_sb(tp, XFS_TRANS_SB_IFREE, -(ilen - 1));
 
-		अगर ((error = xfs_btree_delete(cur, &i))) अणु
+		if ((error = xfs_btree_delete(cur, &i))) {
 			xfs_warn(mp, "%s: xfs_btree_delete returned error %d.",
 				__func__, error);
-			जाओ error0;
-		पूर्ण
+			goto error0;
+		}
 
-		xfs_dअगरree_inode_chunk(tp, agno, &rec);
-	पूर्ण अन्यथा अणु
+		xfs_difree_inode_chunk(tp, agno, &rec);
+	} else {
 		xic->deleted = false;
 
 		error = xfs_inobt_update(cur, &rec);
-		अगर (error) अणु
+		if (error) {
 			xfs_warn(mp, "%s: xfs_inobt_update returned error %d.",
 				__func__, error);
-			जाओ error0;
-		पूर्ण
+			goto error0;
+		}
 
 		/* 
-		 * Change the inode मुक्त counts and log the ag/sb changes.
+		 * Change the inode free counts and log the ag/sb changes.
 		 */
-		be32_add_cpu(&agi->agi_मुक्तcount, 1);
+		be32_add_cpu(&agi->agi_freecount, 1);
 		xfs_ialloc_log_agi(tp, agbp, XFS_AGI_FREECOUNT);
-		agbp->b_pag->pagi_मुक्तcount++;
+		agbp->b_pag->pagi_freecount++;
 		xfs_trans_mod_sb(tp, XFS_TRANS_SB_IFREE, 1);
-	पूर्ण
+	}
 
-	error = xfs_check_agi_मुक्तcount(cur, agi);
-	अगर (error)
-		जाओ error0;
+	error = xfs_check_agi_freecount(cur, agi);
+	if (error)
+		goto error0;
 
 	*orec = rec;
 	xfs_btree_del_cursor(cur, XFS_BTREE_NOERROR);
-	वापस 0;
+	return 0;
 
 error0:
 	xfs_btree_del_cursor(cur, XFS_BTREE_ERROR);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * Free an inode in the मुक्त inode btree.
+ * Free an inode in the free inode btree.
  */
-STATIC पूर्णांक
-xfs_dअगरree_finobt(
-	काष्ठा xfs_mount		*mp,
-	काष्ठा xfs_trans		*tp,
-	काष्ठा xfs_buf			*agbp,
+STATIC int
+xfs_difree_finobt(
+	struct xfs_mount		*mp,
+	struct xfs_trans		*tp,
+	struct xfs_buf			*agbp,
 	xfs_agino_t			agino,
-	काष्ठा xfs_inobt_rec_incore	*ibtrec) /* inobt record */
-अणु
-	काष्ठा xfs_agi			*agi = agbp->b_addr;
+	struct xfs_inobt_rec_incore	*ibtrec) /* inobt record */
+{
+	struct xfs_agi			*agi = agbp->b_addr;
 	xfs_agnumber_t			agno = be32_to_cpu(agi->agi_seqno);
-	काष्ठा xfs_btree_cur		*cur;
-	काष्ठा xfs_inobt_rec_incore	rec;
-	पूर्णांक				offset = agino - ibtrec->ir_startino;
-	पूर्णांक				error;
-	पूर्णांक				i;
+	struct xfs_btree_cur		*cur;
+	struct xfs_inobt_rec_incore	rec;
+	int				offset = agino - ibtrec->ir_startino;
+	int				error;
+	int				i;
 
 	cur = xfs_inobt_init_cursor(mp, tp, agbp, agno, XFS_BTNUM_FINO);
 
 	error = xfs_inobt_lookup(cur, ibtrec->ir_startino, XFS_LOOKUP_EQ, &i);
-	अगर (error)
-		जाओ error;
-	अगर (i == 0) अणु
+	if (error)
+		goto error;
+	if (i == 0) {
 		/*
-		 * If the record करोes not exist in the finobt, we must have just
-		 * मुक्तd an inode in a previously fully allocated chunk. If not,
+		 * If the record does not exist in the finobt, we must have just
+		 * freed an inode in a previously fully allocated chunk. If not,
 		 * something is out of sync.
 		 */
-		अगर (XFS_IS_CORRUPT(mp, ibtrec->ir_मुक्तcount != 1)) अणु
+		if (XFS_IS_CORRUPT(mp, ibtrec->ir_freecount != 1)) {
 			error = -EFSCORRUPTED;
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
 		error = xfs_inobt_insert_rec(cur, ibtrec->ir_holemask,
 					     ibtrec->ir_count,
-					     ibtrec->ir_मुक्तcount,
-					     ibtrec->ir_मुक्त, &i);
-		अगर (error)
-			जाओ error;
+					     ibtrec->ir_freecount,
+					     ibtrec->ir_free, &i);
+		if (error)
+			goto error;
 		ASSERT(i == 1);
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * Read and update the existing record. We could just copy the ibtrec
 	 * across here, but that would defeat the purpose of having redundant
-	 * metadata. By making the modअगरications independently, we can catch
-	 * corruptions that we wouldn't see अगर we just copied from one record
+	 * metadata. By making the modifications independently, we can catch
+	 * corruptions that we wouldn't see if we just copied from one record
 	 * to another.
 	 */
 	error = xfs_inobt_get_rec(cur, &rec, &i);
-	अगर (error)
-		जाओ error;
-	अगर (XFS_IS_CORRUPT(mp, i != 1)) अणु
+	if (error)
+		goto error;
+	if (XFS_IS_CORRUPT(mp, i != 1)) {
 		error = -EFSCORRUPTED;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	rec.ir_मुक्त |= XFS_INOBT_MASK(offset);
-	rec.ir_मुक्तcount++;
+	rec.ir_free |= XFS_INOBT_MASK(offset);
+	rec.ir_freecount++;
 
-	अगर (XFS_IS_CORRUPT(mp,
-			   rec.ir_मुक्त != ibtrec->ir_मुक्त ||
-			   rec.ir_मुक्तcount != ibtrec->ir_मुक्तcount)) अणु
+	if (XFS_IS_CORRUPT(mp,
+			   rec.ir_free != ibtrec->ir_free ||
+			   rec.ir_freecount != ibtrec->ir_freecount)) {
 		error = -EFSCORRUPTED;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	/*
 	 * The content of inobt records should always match between the inobt
-	 * and finobt. The lअगरecycle of records in the finobt is dअगरferent from
+	 * and finobt. The lifecycle of records in the finobt is different from
 	 * the inobt in that the finobt only tracks records with at least one
-	 * मुक्त inode. Hence, अगर all of the inodes are मुक्त and we aren't
-	 * keeping inode chunks permanently on disk, हटाओ the record.
-	 * Otherwise, update the record with the new inक्रमmation.
+	 * free inode. Hence, if all of the inodes are free and we aren't
+	 * keeping inode chunks permanently on disk, remove the record.
+	 * Otherwise, update the record with the new information.
 	 *
-	 * Note that we currently can't मुक्त chunks when the block size is large
-	 * enough क्रम multiple chunks. Leave the finobt record to reमुख्य in sync
+	 * Note that we currently can't free chunks when the block size is large
+	 * enough for multiple chunks. Leave the finobt record to remain in sync
 	 * with the inobt.
 	 */
-	अगर (rec.ir_मुक्त == XFS_INOBT_ALL_FREE &&
+	if (rec.ir_free == XFS_INOBT_ALL_FREE &&
 	    mp->m_sb.sb_inopblock <= XFS_INODES_PER_CHUNK &&
-	    !(mp->m_flags & XFS_MOUNT_IKEEP)) अणु
+	    !(mp->m_flags & XFS_MOUNT_IKEEP)) {
 		error = xfs_btree_delete(cur, &i);
-		अगर (error)
-			जाओ error;
+		if (error)
+			goto error;
 		ASSERT(i == 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		error = xfs_inobt_update(cur, &rec);
-		अगर (error)
-			जाओ error;
-	पूर्ण
+		if (error)
+			goto error;
+	}
 
 out:
-	error = xfs_check_agi_मुक्तcount(cur, agi);
-	अगर (error)
-		जाओ error;
+	error = xfs_check_agi_freecount(cur, agi);
+	if (error)
+		goto error;
 
 	xfs_btree_del_cursor(cur, XFS_BTREE_NOERROR);
-	वापस 0;
+	return 0;
 
 error:
 	xfs_btree_del_cursor(cur, XFS_BTREE_ERROR);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * Free disk inode.  Carefully aव्योमs touching the incore inode, all
+ * Free disk inode.  Carefully avoids touching the incore inode, all
  * manipulations incore are the caller's responsibility.
  * The on-disk inode is not changed by this operation, only the
- * btree (मुक्त inode mask) is changed.
+ * btree (free inode mask) is changed.
  */
-पूर्णांक
-xfs_dअगरree(
-	काष्ठा xfs_trans	*tp,		/* transaction poपूर्णांकer */
-	xfs_ino_t		inode,		/* inode to be मुक्तd */
-	काष्ठा xfs_icluster	*xic)	/* cluster info अगर deleted */
-अणु
+int
+xfs_difree(
+	struct xfs_trans	*tp,		/* transaction pointer */
+	xfs_ino_t		inode,		/* inode to be freed */
+	struct xfs_icluster	*xic)	/* cluster info if deleted */
+{
 	/* REFERENCED */
 	xfs_agblock_t		agbno;	/* block number containing inode */
-	काष्ठा xfs_buf		*agbp;	/* buffer क्रम allocation group header */
+	struct xfs_buf		*agbp;	/* buffer for allocation group header */
 	xfs_agino_t		agino;	/* allocation group inode number */
 	xfs_agnumber_t		agno;	/* allocation group number */
-	पूर्णांक			error;	/* error वापस value */
-	काष्ठा xfs_mount	*mp;	/* mount काष्ठाure क्रम fileप्रणाली */
-	काष्ठा xfs_inobt_rec_incore rec;/* btree record */
+	int			error;	/* error return value */
+	struct xfs_mount	*mp;	/* mount structure for filesystem */
+	struct xfs_inobt_rec_incore rec;/* btree record */
 
 	mp = tp->t_mountp;
 
 	/*
-	 * Break up inode number पूर्णांकo its components.
+	 * Break up inode number into its components.
 	 */
 	agno = XFS_INO_TO_AGNO(mp, inode);
-	अगर (agno >= mp->m_sb.sb_agcount)  अणु
+	if (agno >= mp->m_sb.sb_agcount)  {
 		xfs_warn(mp, "%s: agno >= mp->m_sb.sb_agcount (%d >= %d).",
 			__func__, agno, mp->m_sb.sb_agcount);
 		ASSERT(0);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	agino = XFS_INO_TO_AGINO(mp, inode);
-	अगर (inode != XFS_AGINO_TO_INO(mp, agno, agino))  अणु
+	if (inode != XFS_AGINO_TO_INO(mp, agno, agino))  {
 		xfs_warn(mp, "%s: inode != XFS_AGINO_TO_INO() (%llu != %llu).",
-			__func__, (अचिन्हित दीर्घ दीर्घ)inode,
-			(अचिन्हित दीर्घ दीर्घ)XFS_AGINO_TO_INO(mp, agno, agino));
+			__func__, (unsigned long long)inode,
+			(unsigned long long)XFS_AGINO_TO_INO(mp, agno, agino));
 		ASSERT(0);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	agbno = XFS_AGINO_TO_AGBNO(mp, agino);
-	अगर (agbno >= mp->m_sb.sb_agblocks)  अणु
+	if (agbno >= mp->m_sb.sb_agblocks)  {
 		xfs_warn(mp, "%s: agbno >= mp->m_sb.sb_agblocks (%d >= %d).",
 			__func__, agbno, mp->m_sb.sb_agblocks);
 		ASSERT(0);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	/*
 	 * Get the allocation group header.
 	 */
-	error = xfs_ialloc_पढ़ो_agi(mp, tp, agno, &agbp);
-	अगर (error) अणु
+	error = xfs_ialloc_read_agi(mp, tp, agno, &agbp);
+	if (error) {
 		xfs_warn(mp, "%s: xfs_ialloc_read_agi() returned error %d.",
 			__func__, error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	/*
 	 * Fix up the inode allocation btree.
 	 */
-	error = xfs_dअगरree_inobt(mp, tp, agbp, agino, xic, &rec);
-	अगर (error)
-		जाओ error0;
+	error = xfs_difree_inobt(mp, tp, agbp, agino, xic, &rec);
+	if (error)
+		goto error0;
 
 	/*
-	 * Fix up the मुक्त inode btree.
+	 * Fix up the free inode btree.
 	 */
-	अगर (xfs_sb_version_hasfinobt(&mp->m_sb)) अणु
-		error = xfs_dअगरree_finobt(mp, tp, agbp, agino, &rec);
-		अगर (error)
-			जाओ error0;
-	पूर्ण
+	if (xfs_sb_version_hasfinobt(&mp->m_sb)) {
+		error = xfs_difree_finobt(mp, tp, agbp, agino, &rec);
+		if (error)
+			goto error0;
+	}
 
-	वापस 0;
+	return 0;
 
 error0:
-	वापस error;
-पूर्ण
+	return error;
+}
 
-STATIC पूर्णांक
+STATIC int
 xfs_imap_lookup(
-	काष्ठा xfs_mount	*mp,
-	काष्ठा xfs_trans	*tp,
+	struct xfs_mount	*mp,
+	struct xfs_trans	*tp,
 	xfs_agnumber_t		agno,
 	xfs_agino_t		agino,
 	xfs_agblock_t		agbno,
 	xfs_agblock_t		*chunk_agbno,
 	xfs_agblock_t		*offset_agbno,
-	पूर्णांक			flags)
-अणु
-	काष्ठा xfs_inobt_rec_incore rec;
-	काष्ठा xfs_btree_cur	*cur;
-	काष्ठा xfs_buf		*agbp;
-	पूर्णांक			error;
-	पूर्णांक			i;
+	int			flags)
+{
+	struct xfs_inobt_rec_incore rec;
+	struct xfs_btree_cur	*cur;
+	struct xfs_buf		*agbp;
+	int			error;
+	int			i;
 
-	error = xfs_ialloc_पढ़ो_agi(mp, tp, agno, &agbp);
-	अगर (error) अणु
+	error = xfs_ialloc_read_agi(mp, tp, agno, &agbp);
+	if (error) {
 		xfs_alert(mp,
 			"%s: xfs_ialloc_read_agi() returned error %d, agno %d",
 			__func__, error, agno);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	/*
-	 * Lookup the inode record क्रम the given agino. If the record cannot be
-	 * found, then it's an invalid inode number and we should पात. Once
+	 * Lookup the inode record for the given agino. If the record cannot be
+	 * found, then it's an invalid inode number and we should abort. Once
 	 * we have a record, we need to ensure it contains the inode number
 	 * we are looking up.
 	 */
 	cur = xfs_inobt_init_cursor(mp, tp, agbp, agno, XFS_BTNUM_INO);
 	error = xfs_inobt_lookup(cur, agino, XFS_LOOKUP_LE, &i);
-	अगर (!error) अणु
-		अगर (i)
+	if (!error) {
+		if (i)
 			error = xfs_inobt_get_rec(cur, &rec, &i);
-		अगर (!error && i == 0)
+		if (!error && i == 0)
 			error = -EINVAL;
-	पूर्ण
+	}
 
-	xfs_trans_brअन्यथा(tp, agbp);
+	xfs_trans_brelse(tp, agbp);
 	xfs_btree_del_cursor(cur, error);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	/* check that the वापसed record contains the required inode */
-	अगर (rec.ir_startino > agino ||
+	/* check that the returned record contains the required inode */
+	if (rec.ir_startino > agino ||
 	    rec.ir_startino + M_IGEO(mp)->ialloc_inos <= agino)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	/* क्रम untrusted inodes check it is allocated first */
-	अगर ((flags & XFS_IGET_UNTRUSTED) &&
-	    (rec.ir_मुक्त & XFS_INOBT_MASK(agino - rec.ir_startino)))
-		वापस -EINVAL;
+	/* for untrusted inodes check it is allocated first */
+	if ((flags & XFS_IGET_UNTRUSTED) &&
+	    (rec.ir_free & XFS_INOBT_MASK(agino - rec.ir_startino)))
+		return -EINVAL;
 
 	*chunk_agbno = XFS_AGINO_TO_AGBNO(mp, rec.ir_startino);
 	*offset_agbno = agbno - *chunk_agbno;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Return the location of the inode in imap, क्रम mapping it पूर्णांकo a buffer.
+ * Return the location of the inode in imap, for mapping it into a buffer.
  */
-पूर्णांक
+int
 xfs_imap(
-	xfs_mount_t	 *mp,	/* file प्रणाली mount काष्ठाure */
-	xfs_trans_t	 *tp,	/* transaction poपूर्णांकer */
+	xfs_mount_t	 *mp,	/* file system mount structure */
+	xfs_trans_t	 *tp,	/* transaction pointer */
 	xfs_ino_t	ino,	/* inode to locate */
-	काष्ठा xfs_imap	*imap,	/* location map काष्ठाure */
-	uपूर्णांक		flags)	/* flags क्रम inode btree lookup */
-अणु
+	struct xfs_imap	*imap,	/* location map structure */
+	uint		flags)	/* flags for inode btree lookup */
+{
 	xfs_agblock_t	agbno;	/* block number of inode in the alloc group */
 	xfs_agino_t	agino;	/* inode number within alloc group */
 	xfs_agnumber_t	agno;	/* allocation group number */
 	xfs_agblock_t	chunk_agbno;	/* first block in inode chunk */
 	xfs_agblock_t	cluster_agbno;	/* first block in inode cluster */
-	पूर्णांक		error;	/* error code */
-	पूर्णांक		offset;	/* index of inode in its buffer */
+	int		error;	/* error code */
+	int		offset;	/* index of inode in its buffer */
 	xfs_agblock_t	offset_agbno;	/* blks from chunk start to inode */
 
-	ASSERT(ino != शून्यFSINO);
+	ASSERT(ino != NULLFSINO);
 
 	/*
-	 * Split up the inode number पूर्णांकo its parts.
+	 * Split up the inode number into its parts.
 	 */
 	agno = XFS_INO_TO_AGNO(mp, ino);
 	agino = XFS_INO_TO_AGINO(mp, ino);
 	agbno = XFS_AGINO_TO_AGBNO(mp, agino);
-	अगर (agno >= mp->m_sb.sb_agcount || agbno >= mp->m_sb.sb_agblocks ||
-	    ino != XFS_AGINO_TO_INO(mp, agno, agino)) अणु
-#अगर_घोषित DEBUG
+	if (agno >= mp->m_sb.sb_agcount || agbno >= mp->m_sb.sb_agblocks ||
+	    ino != XFS_AGINO_TO_INO(mp, agno, agino)) {
+#ifdef DEBUG
 		/*
-		 * Don't output diagnostic inक्रमmation क्रम untrusted inodes
+		 * Don't output diagnostic information for untrusted inodes
 		 * as they can be invalid without implying corruption.
 		 */
-		अगर (flags & XFS_IGET_UNTRUSTED)
-			वापस -EINVAL;
-		अगर (agno >= mp->m_sb.sb_agcount) अणु
+		if (flags & XFS_IGET_UNTRUSTED)
+			return -EINVAL;
+		if (agno >= mp->m_sb.sb_agcount) {
 			xfs_alert(mp,
 				"%s: agno (%d) >= mp->m_sb.sb_agcount (%d)",
 				__func__, agno, mp->m_sb.sb_agcount);
-		पूर्ण
-		अगर (agbno >= mp->m_sb.sb_agblocks) अणु
+		}
+		if (agbno >= mp->m_sb.sb_agblocks) {
 			xfs_alert(mp,
 		"%s: agbno (0x%llx) >= mp->m_sb.sb_agblocks (0x%lx)",
-				__func__, (अचिन्हित दीर्घ दीर्घ)agbno,
-				(अचिन्हित दीर्घ)mp->m_sb.sb_agblocks);
-		पूर्ण
-		अगर (ino != XFS_AGINO_TO_INO(mp, agno, agino)) अणु
+				__func__, (unsigned long long)agbno,
+				(unsigned long)mp->m_sb.sb_agblocks);
+		}
+		if (ino != XFS_AGINO_TO_INO(mp, agno, agino)) {
 			xfs_alert(mp,
 		"%s: ino (0x%llx) != XFS_AGINO_TO_INO() (0x%llx)",
 				__func__, ino,
 				XFS_AGINO_TO_INO(mp, agno, agino));
-		पूर्ण
+		}
 		xfs_stack_trace();
-#पूर्ण_अगर /* DEBUG */
-		वापस -EINVAL;
-	पूर्ण
+#endif /* DEBUG */
+		return -EINVAL;
+	}
 
 	/*
 	 * For bulkstat and handle lookups, we have an untrusted inode number
-	 * that we have to verअगरy is valid. We cannot करो this just by पढ़ोing
-	 * the inode buffer as it may have been unlinked and हटाओd leaving
-	 * inodes in stale state on disk. Hence we have to करो a btree lookup
-	 * in all हालs where an untrusted inode number is passed.
+	 * that we have to verify is valid. We cannot do this just by reading
+	 * the inode buffer as it may have been unlinked and removed leaving
+	 * inodes in stale state on disk. Hence we have to do a btree lookup
+	 * in all cases where an untrusted inode number is passed.
 	 */
-	अगर (flags & XFS_IGET_UNTRUSTED) अणु
+	if (flags & XFS_IGET_UNTRUSTED) {
 		error = xfs_imap_lookup(mp, tp, agno, agino, agbno,
 					&chunk_agbno, &offset_agbno, flags);
-		अगर (error)
-			वापस error;
-		जाओ out_map;
-	पूर्ण
+		if (error)
+			return error;
+		goto out_map;
+	}
 
 	/*
 	 * If the inode cluster size is the same as the blocksize or
 	 * smaller we get to the buffer by simple arithmetics.
 	 */
-	अगर (M_IGEO(mp)->blocks_per_cluster == 1) अणु
+	if (M_IGEO(mp)->blocks_per_cluster == 1) {
 		offset = XFS_INO_TO_OFFSET(mp, ino);
 		ASSERT(offset < mp->m_sb.sb_inopblock);
 
 		imap->im_blkno = XFS_AGB_TO_DADDR(mp, agno, agbno);
 		imap->im_len = XFS_FSB_TO_BB(mp, 1);
-		imap->im_boffset = (अचिन्हित लघु)(offset <<
+		imap->im_boffset = (unsigned short)(offset <<
 							mp->m_sb.sb_inodelog);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
 	 * If the inode chunks are aligned then use simple maths to
-	 * find the location. Otherwise we have to करो a btree
+	 * find the location. Otherwise we have to do a btree
 	 * lookup to find the location.
 	 */
-	अगर (M_IGEO(mp)->inoalign_mask) अणु
+	if (M_IGEO(mp)->inoalign_mask) {
 		offset_agbno = agbno & M_IGEO(mp)->inoalign_mask;
 		chunk_agbno = agbno - offset_agbno;
-	पूर्ण अन्यथा अणु
+	} else {
 		error = xfs_imap_lookup(mp, tp, agno, agino, agbno,
 					&chunk_agbno, &offset_agbno, flags);
-		अगर (error)
-			वापस error;
-	पूर्ण
+		if (error)
+			return error;
+	}
 
 out_map:
 	ASSERT(agbno >= chunk_agbno);
@@ -2425,398 +2424,398 @@ out_map:
 
 	imap->im_blkno = XFS_AGB_TO_DADDR(mp, agno, cluster_agbno);
 	imap->im_len = XFS_FSB_TO_BB(mp, M_IGEO(mp)->blocks_per_cluster);
-	imap->im_boffset = (अचिन्हित लघु)(offset << mp->m_sb.sb_inodelog);
+	imap->im_boffset = (unsigned short)(offset << mp->m_sb.sb_inodelog);
 
 	/*
 	 * If the inode number maps to a block outside the bounds
-	 * of the file प्रणाली then वापस शून्य rather than calling
-	 * पढ़ो_buf and panicing when we get an error from the
+	 * of the file system then return NULL rather than calling
+	 * read_buf and panicing when we get an error from the
 	 * driver.
 	 */
-	अगर ((imap->im_blkno + imap->im_len) >
-	    XFS_FSB_TO_BB(mp, mp->m_sb.sb_dblocks)) अणु
+	if ((imap->im_blkno + imap->im_len) >
+	    XFS_FSB_TO_BB(mp, mp->m_sb.sb_dblocks)) {
 		xfs_alert(mp,
 	"%s: (im_blkno (0x%llx) + im_len (0x%llx)) > sb_dblocks (0x%llx)",
-			__func__, (अचिन्हित दीर्घ दीर्घ) imap->im_blkno,
-			(अचिन्हित दीर्घ दीर्घ) imap->im_len,
+			__func__, (unsigned long long) imap->im_blkno,
+			(unsigned long long) imap->im_len,
 			XFS_FSB_TO_BB(mp, mp->m_sb.sb_dblocks));
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
 /*
- * Log specअगरied fields क्रम the ag hdr (inode section). The growth of the agi
- * काष्ठाure over समय requires that we पूर्णांकerpret the buffer as two logical
+ * Log specified fields for the ag hdr (inode section). The growth of the agi
+ * structure over time requires that we interpret the buffer as two logical
  * regions delineated by the end of the unlinked list. This is due to the size
  * of the hash table and its location in the middle of the agi.
  *
- * For example, a request to log a field beक्रमe agi_unlinked and a field after
+ * For example, a request to log a field before agi_unlinked and a field after
  * agi_unlinked could cause us to log the entire hash table and use an excessive
- * amount of log space. To aव्योम this behavior, log the region up through
+ * amount of log space. To avoid this behavior, log the region up through
  * agi_unlinked in one call and the region after agi_unlinked through the end of
- * the काष्ठाure in another.
+ * the structure in another.
  */
-व्योम
+void
 xfs_ialloc_log_agi(
-	xfs_trans_t	*tp,		/* transaction poपूर्णांकer */
-	काष्ठा xfs_buf	*bp,		/* allocation group header buffer */
-	पूर्णांक		fields)		/* biपंचांगask of fields to log */
-अणु
-	पूर्णांक			first;		/* first byte number */
-	पूर्णांक			last;		/* last byte number */
-	अटल स्थिर लघु	offsets[] = अणु	/* field starting offsets */
+	xfs_trans_t	*tp,		/* transaction pointer */
+	struct xfs_buf	*bp,		/* allocation group header buffer */
+	int		fields)		/* bitmask of fields to log */
+{
+	int			first;		/* first byte number */
+	int			last;		/* last byte number */
+	static const short	offsets[] = {	/* field starting offsets */
 					/* keep in sync with bit definitions */
-		दुरत्व(xfs_agi_t, agi_magicnum),
-		दुरत्व(xfs_agi_t, agi_versionnum),
-		दुरत्व(xfs_agi_t, agi_seqno),
-		दुरत्व(xfs_agi_t, agi_length),
-		दुरत्व(xfs_agi_t, agi_count),
-		दुरत्व(xfs_agi_t, agi_root),
-		दुरत्व(xfs_agi_t, agi_level),
-		दुरत्व(xfs_agi_t, agi_मुक्तcount),
-		दुरत्व(xfs_agi_t, agi_newino),
-		दुरत्व(xfs_agi_t, agi_dirino),
-		दुरत्व(xfs_agi_t, agi_unlinked),
-		दुरत्व(xfs_agi_t, agi_मुक्त_root),
-		दुरत्व(xfs_agi_t, agi_मुक्त_level),
-		दुरत्व(xfs_agi_t, agi_iblocks),
-		माप(xfs_agi_t)
-	पूर्ण;
-#अगर_घोषित DEBUG
-	काष्ठा xfs_agi		*agi = bp->b_addr;
+		offsetof(xfs_agi_t, agi_magicnum),
+		offsetof(xfs_agi_t, agi_versionnum),
+		offsetof(xfs_agi_t, agi_seqno),
+		offsetof(xfs_agi_t, agi_length),
+		offsetof(xfs_agi_t, agi_count),
+		offsetof(xfs_agi_t, agi_root),
+		offsetof(xfs_agi_t, agi_level),
+		offsetof(xfs_agi_t, agi_freecount),
+		offsetof(xfs_agi_t, agi_newino),
+		offsetof(xfs_agi_t, agi_dirino),
+		offsetof(xfs_agi_t, agi_unlinked),
+		offsetof(xfs_agi_t, agi_free_root),
+		offsetof(xfs_agi_t, agi_free_level),
+		offsetof(xfs_agi_t, agi_iblocks),
+		sizeof(xfs_agi_t)
+	};
+#ifdef DEBUG
+	struct xfs_agi		*agi = bp->b_addr;
 
 	ASSERT(agi->agi_magicnum == cpu_to_be32(XFS_AGI_MAGIC));
-#पूर्ण_अगर
+#endif
 
 	/*
-	 * Compute byte offsets क्रम the first and last fields in the first
+	 * Compute byte offsets for the first and last fields in the first
 	 * region and log the agi buffer. This only logs up through
 	 * agi_unlinked.
 	 */
-	अगर (fields & XFS_AGI_ALL_BITS_R1) अणु
+	if (fields & XFS_AGI_ALL_BITS_R1) {
 		xfs_btree_offsets(fields, offsets, XFS_AGI_NUM_BITS_R1,
 				  &first, &last);
 		xfs_trans_log_buf(tp, bp, first, last);
-	पूर्ण
+	}
 
 	/*
 	 * Mask off the bits in the first region and calculate the first and
-	 * last field offsets क्रम any bits in the second region.
+	 * last field offsets for any bits in the second region.
 	 */
 	fields &= ~XFS_AGI_ALL_BITS_R1;
-	अगर (fields) अणु
+	if (fields) {
 		xfs_btree_offsets(fields, offsets, XFS_AGI_NUM_BITS_R2,
 				  &first, &last);
 		xfs_trans_log_buf(tp, bp, first, last);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल xfs_failaddr_t
-xfs_agi_verअगरy(
-	काष्ठा xfs_buf	*bp)
-अणु
-	काष्ठा xfs_mount *mp = bp->b_mount;
-	काष्ठा xfs_agi	*agi = bp->b_addr;
-	पूर्णांक		i;
+static xfs_failaddr_t
+xfs_agi_verify(
+	struct xfs_buf	*bp)
+{
+	struct xfs_mount *mp = bp->b_mount;
+	struct xfs_agi	*agi = bp->b_addr;
+	int		i;
 
-	अगर (xfs_sb_version_hascrc(&mp->m_sb)) अणु
-		अगर (!uuid_equal(&agi->agi_uuid, &mp->m_sb.sb_meta_uuid))
-			वापस __this_address;
-		अगर (!xfs_log_check_lsn(mp, be64_to_cpu(agi->agi_lsn)))
-			वापस __this_address;
-	पूर्ण
+	if (xfs_sb_version_hascrc(&mp->m_sb)) {
+		if (!uuid_equal(&agi->agi_uuid, &mp->m_sb.sb_meta_uuid))
+			return __this_address;
+		if (!xfs_log_check_lsn(mp, be64_to_cpu(agi->agi_lsn)))
+			return __this_address;
+	}
 
 	/*
 	 * Validate the magic number of the agi block.
 	 */
-	अगर (!xfs_verअगरy_magic(bp, agi->agi_magicnum))
-		वापस __this_address;
-	अगर (!XFS_AGI_GOOD_VERSION(be32_to_cpu(agi->agi_versionnum)))
-		वापस __this_address;
+	if (!xfs_verify_magic(bp, agi->agi_magicnum))
+		return __this_address;
+	if (!XFS_AGI_GOOD_VERSION(be32_to_cpu(agi->agi_versionnum)))
+		return __this_address;
 
-	अगर (be32_to_cpu(agi->agi_level) < 1 ||
+	if (be32_to_cpu(agi->agi_level) < 1 ||
 	    be32_to_cpu(agi->agi_level) > M_IGEO(mp)->inobt_maxlevels)
-		वापस __this_address;
+		return __this_address;
 
-	अगर (xfs_sb_version_hasfinobt(&mp->m_sb) &&
-	    (be32_to_cpu(agi->agi_मुक्त_level) < 1 ||
-	     be32_to_cpu(agi->agi_मुक्त_level) > M_IGEO(mp)->inobt_maxlevels))
-		वापस __this_address;
+	if (xfs_sb_version_hasfinobt(&mp->m_sb) &&
+	    (be32_to_cpu(agi->agi_free_level) < 1 ||
+	     be32_to_cpu(agi->agi_free_level) > M_IGEO(mp)->inobt_maxlevels))
+		return __this_address;
 
 	/*
 	 * during growfs operations, the perag is not fully initialised,
 	 * so we can't use it for any useful checking. growfs ensures we can't
-	 * use it by using uncached buffers that करोn't have the perag attached
-	 * so we can detect and aव्योम this problem.
+	 * use it by using uncached buffers that don't have the perag attached
+	 * so we can detect and avoid this problem.
 	 */
-	अगर (bp->b_pag && be32_to_cpu(agi->agi_seqno) != bp->b_pag->pag_agno)
-		वापस __this_address;
+	if (bp->b_pag && be32_to_cpu(agi->agi_seqno) != bp->b_pag->pag_agno)
+		return __this_address;
 
-	क्रम (i = 0; i < XFS_AGI_UNLINKED_BUCKETS; i++) अणु
-		अगर (agi->agi_unlinked[i] == cpu_to_be32(शून्यAGINO))
-			जारी;
-		अगर (!xfs_verअगरy_ino(mp, be32_to_cpu(agi->agi_unlinked[i])))
-			वापस __this_address;
-	पूर्ण
+	for (i = 0; i < XFS_AGI_UNLINKED_BUCKETS; i++) {
+		if (agi->agi_unlinked[i] == cpu_to_be32(NULLAGINO))
+			continue;
+		if (!xfs_verify_ino(mp, be32_to_cpu(agi->agi_unlinked[i])))
+			return __this_address;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम
-xfs_agi_पढ़ो_verअगरy(
-	काष्ठा xfs_buf	*bp)
-अणु
-	काष्ठा xfs_mount *mp = bp->b_mount;
+static void
+xfs_agi_read_verify(
+	struct xfs_buf	*bp)
+{
+	struct xfs_mount *mp = bp->b_mount;
 	xfs_failaddr_t	fa;
 
-	अगर (xfs_sb_version_hascrc(&mp->m_sb) &&
-	    !xfs_buf_verअगरy_cksum(bp, XFS_AGI_CRC_OFF))
-		xfs_verअगरier_error(bp, -EFSBADCRC, __this_address);
-	अन्यथा अणु
-		fa = xfs_agi_verअगरy(bp);
-		अगर (XFS_TEST_ERROR(fa, mp, XFS_ERRTAG_IALLOC_READ_AGI))
-			xfs_verअगरier_error(bp, -EFSCORRUPTED, fa);
-	पूर्ण
-पूर्ण
+	if (xfs_sb_version_hascrc(&mp->m_sb) &&
+	    !xfs_buf_verify_cksum(bp, XFS_AGI_CRC_OFF))
+		xfs_verifier_error(bp, -EFSBADCRC, __this_address);
+	else {
+		fa = xfs_agi_verify(bp);
+		if (XFS_TEST_ERROR(fa, mp, XFS_ERRTAG_IALLOC_READ_AGI))
+			xfs_verifier_error(bp, -EFSCORRUPTED, fa);
+	}
+}
 
-अटल व्योम
-xfs_agi_ग_लिखो_verअगरy(
-	काष्ठा xfs_buf	*bp)
-अणु
-	काष्ठा xfs_mount	*mp = bp->b_mount;
-	काष्ठा xfs_buf_log_item	*bip = bp->b_log_item;
-	काष्ठा xfs_agi		*agi = bp->b_addr;
+static void
+xfs_agi_write_verify(
+	struct xfs_buf	*bp)
+{
+	struct xfs_mount	*mp = bp->b_mount;
+	struct xfs_buf_log_item	*bip = bp->b_log_item;
+	struct xfs_agi		*agi = bp->b_addr;
 	xfs_failaddr_t		fa;
 
-	fa = xfs_agi_verअगरy(bp);
-	अगर (fa) अणु
-		xfs_verअगरier_error(bp, -EFSCORRUPTED, fa);
-		वापस;
-	पूर्ण
+	fa = xfs_agi_verify(bp);
+	if (fa) {
+		xfs_verifier_error(bp, -EFSCORRUPTED, fa);
+		return;
+	}
 
-	अगर (!xfs_sb_version_hascrc(&mp->m_sb))
-		वापस;
+	if (!xfs_sb_version_hascrc(&mp->m_sb))
+		return;
 
-	अगर (bip)
+	if (bip)
 		agi->agi_lsn = cpu_to_be64(bip->bli_item.li_lsn);
 	xfs_buf_update_cksum(bp, XFS_AGI_CRC_OFF);
-पूर्ण
+}
 
-स्थिर काष्ठा xfs_buf_ops xfs_agi_buf_ops = अणु
+const struct xfs_buf_ops xfs_agi_buf_ops = {
 	.name = "xfs_agi",
-	.magic = अणु cpu_to_be32(XFS_AGI_MAGIC), cpu_to_be32(XFS_AGI_MAGIC) पूर्ण,
-	.verअगरy_पढ़ो = xfs_agi_पढ़ो_verअगरy,
-	.verअगरy_ग_लिखो = xfs_agi_ग_लिखो_verअगरy,
-	.verअगरy_काष्ठा = xfs_agi_verअगरy,
-पूर्ण;
+	.magic = { cpu_to_be32(XFS_AGI_MAGIC), cpu_to_be32(XFS_AGI_MAGIC) },
+	.verify_read = xfs_agi_read_verify,
+	.verify_write = xfs_agi_write_verify,
+	.verify_struct = xfs_agi_verify,
+};
 
 /*
  * Read in the allocation group header (inode allocation section)
  */
-पूर्णांक
-xfs_पढ़ो_agi(
-	काष्ठा xfs_mount	*mp,	/* file प्रणाली mount काष्ठाure */
-	काष्ठा xfs_trans	*tp,	/* transaction poपूर्णांकer */
+int
+xfs_read_agi(
+	struct xfs_mount	*mp,	/* file system mount structure */
+	struct xfs_trans	*tp,	/* transaction pointer */
 	xfs_agnumber_t		agno,	/* allocation group number */
-	काष्ठा xfs_buf		**bpp)	/* allocation group hdr buf */
-अणु
-	पूर्णांक			error;
+	struct xfs_buf		**bpp)	/* allocation group hdr buf */
+{
+	int			error;
 
-	trace_xfs_पढ़ो_agi(mp, agno);
+	trace_xfs_read_agi(mp, agno);
 
-	ASSERT(agno != शून्यAGNUMBER);
-	error = xfs_trans_पढ़ो_buf(mp, tp, mp->m_ddev_targp,
+	ASSERT(agno != NULLAGNUMBER);
+	error = xfs_trans_read_buf(mp, tp, mp->m_ddev_targp,
 			XFS_AG_DADDR(mp, agno, XFS_AGI_DADDR(mp)),
 			XFS_FSS_TO_BB(mp, 1), 0, bpp, &xfs_agi_buf_ops);
-	अगर (error)
-		वापस error;
-	अगर (tp)
+	if (error)
+		return error;
+	if (tp)
 		xfs_trans_buf_set_type(tp, *bpp, XFS_BLFT_AGI_BUF);
 
 	xfs_buf_set_ref(*bpp, XFS_AGI_REF);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-xfs_ialloc_पढ़ो_agi(
-	काष्ठा xfs_mount	*mp,	/* file प्रणाली mount काष्ठाure */
-	काष्ठा xfs_trans	*tp,	/* transaction poपूर्णांकer */
+int
+xfs_ialloc_read_agi(
+	struct xfs_mount	*mp,	/* file system mount structure */
+	struct xfs_trans	*tp,	/* transaction pointer */
 	xfs_agnumber_t		agno,	/* allocation group number */
-	काष्ठा xfs_buf		**bpp)	/* allocation group hdr buf */
-अणु
-	काष्ठा xfs_agi		*agi;	/* allocation group header */
-	काष्ठा xfs_perag	*pag;	/* per allocation group data */
-	पूर्णांक			error;
+	struct xfs_buf		**bpp)	/* allocation group hdr buf */
+{
+	struct xfs_agi		*agi;	/* allocation group header */
+	struct xfs_perag	*pag;	/* per allocation group data */
+	int			error;
 
-	trace_xfs_ialloc_पढ़ो_agi(mp, agno);
+	trace_xfs_ialloc_read_agi(mp, agno);
 
-	error = xfs_पढ़ो_agi(mp, tp, agno, bpp);
-	अगर (error)
-		वापस error;
+	error = xfs_read_agi(mp, tp, agno, bpp);
+	if (error)
+		return error;
 
 	agi = (*bpp)->b_addr;
 	pag = (*bpp)->b_pag;
-	अगर (!pag->pagi_init) अणु
-		pag->pagi_मुक्तcount = be32_to_cpu(agi->agi_मुक्तcount);
+	if (!pag->pagi_init) {
+		pag->pagi_freecount = be32_to_cpu(agi->agi_freecount);
 		pag->pagi_count = be32_to_cpu(agi->agi_count);
 		pag->pagi_init = 1;
-	पूर्ण
+	}
 
 	/*
-	 * It's possible क्रम these to be out of sync अगर
-	 * we are in the middle of a क्रमced shutकरोwn.
+	 * It's possible for these to be out of sync if
+	 * we are in the middle of a forced shutdown.
 	 */
-	ASSERT(pag->pagi_मुक्तcount == be32_to_cpu(agi->agi_मुक्तcount) ||
+	ASSERT(pag->pagi_freecount == be32_to_cpu(agi->agi_freecount) ||
 		XFS_FORCED_SHUTDOWN(mp));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Read in the agi to initialise the per-ag data in the mount काष्ठाure
+ * Read in the agi to initialise the per-ag data in the mount structure
  */
-पूर्णांक
+int
 xfs_ialloc_pagi_init(
-	xfs_mount_t	*mp,		/* file प्रणाली mount काष्ठाure */
-	xfs_trans_t	*tp,		/* transaction poपूर्णांकer */
+	xfs_mount_t	*mp,		/* file system mount structure */
+	xfs_trans_t	*tp,		/* transaction pointer */
 	xfs_agnumber_t	agno)		/* allocation group number */
-अणु
-	काष्ठा xfs_buf	*bp = शून्य;
-	पूर्णांक		error;
+{
+	struct xfs_buf	*bp = NULL;
+	int		error;
 
-	error = xfs_ialloc_पढ़ो_agi(mp, tp, agno, &bp);
-	अगर (error)
-		वापस error;
-	अगर (bp)
-		xfs_trans_brअन्यथा(tp, bp);
-	वापस 0;
-पूर्ण
+	error = xfs_ialloc_read_agi(mp, tp, agno, &bp);
+	if (error)
+		return error;
+	if (bp)
+		xfs_trans_brelse(tp, bp);
+	return 0;
+}
 
 /* Is there an inode record covering a given range of inode numbers? */
-पूर्णांक
+int
 xfs_ialloc_has_inode_record(
-	काष्ठा xfs_btree_cur	*cur,
+	struct xfs_btree_cur	*cur,
 	xfs_agino_t		low,
 	xfs_agino_t		high,
 	bool			*exists)
-अणु
-	काष्ठा xfs_inobt_rec_incore	irec;
+{
+	struct xfs_inobt_rec_incore	irec;
 	xfs_agino_t		agino;
-	uपूर्णांक16_t		holemask;
-	पूर्णांक			has_record;
-	पूर्णांक			i;
-	पूर्णांक			error;
+	uint16_t		holemask;
+	int			has_record;
+	int			i;
+	int			error;
 
 	*exists = false;
 	error = xfs_inobt_lookup(cur, low, XFS_LOOKUP_LE, &has_record);
-	जबतक (error == 0 && has_record) अणु
+	while (error == 0 && has_record) {
 		error = xfs_inobt_get_rec(cur, &irec, &has_record);
-		अगर (error || irec.ir_startino > high)
-			अवरोध;
+		if (error || irec.ir_startino > high)
+			break;
 
 		agino = irec.ir_startino;
 		holemask = irec.ir_holemask;
-		क्रम (i = 0; i < XFS_INOBT_HOLEMASK_BITS; holemask >>= 1,
-				i++, agino += XFS_INODES_PER_HOLEMASK_BIT) अणु
-			अगर (holemask & 1)
-				जारी;
-			अगर (agino + XFS_INODES_PER_HOLEMASK_BIT > low &&
-					agino <= high) अणु
+		for (i = 0; i < XFS_INOBT_HOLEMASK_BITS; holemask >>= 1,
+				i++, agino += XFS_INODES_PER_HOLEMASK_BIT) {
+			if (holemask & 1)
+				continue;
+			if (agino + XFS_INODES_PER_HOLEMASK_BIT > low &&
+					agino <= high) {
 				*exists = true;
-				वापस 0;
-			पूर्ण
-		पूर्ण
+				return 0;
+			}
+		}
 
 		error = xfs_btree_increment(cur, 0, &has_record);
-	पूर्ण
-	वापस error;
-पूर्ण
+	}
+	return error;
+}
 
 /* Is there an inode record covering a given extent? */
-पूर्णांक
+int
 xfs_ialloc_has_inodes_at_extent(
-	काष्ठा xfs_btree_cur	*cur,
+	struct xfs_btree_cur	*cur,
 	xfs_agblock_t		bno,
 	xfs_extlen_t		len,
 	bool			*exists)
-अणु
+{
 	xfs_agino_t		low;
 	xfs_agino_t		high;
 
 	low = XFS_AGB_TO_AGINO(cur->bc_mp, bno);
 	high = XFS_AGB_TO_AGINO(cur->bc_mp, bno + len) - 1;
 
-	वापस xfs_ialloc_has_inode_record(cur, low, high, exists);
-पूर्ण
+	return xfs_ialloc_has_inode_record(cur, low, high, exists);
+}
 
-काष्ठा xfs_ialloc_count_inodes अणु
+struct xfs_ialloc_count_inodes {
 	xfs_agino_t			count;
-	xfs_agino_t			मुक्तcount;
-पूर्ण;
+	xfs_agino_t			freecount;
+};
 
 /* Record inode counts across all inobt records. */
-STATIC पूर्णांक
+STATIC int
 xfs_ialloc_count_inodes_rec(
-	काष्ठा xfs_btree_cur		*cur,
-	जोड़ xfs_btree_rec		*rec,
-	व्योम				*priv)
-अणु
-	काष्ठा xfs_inobt_rec_incore	irec;
-	काष्ठा xfs_ialloc_count_inodes	*ci = priv;
+	struct xfs_btree_cur		*cur,
+	union xfs_btree_rec		*rec,
+	void				*priv)
+{
+	struct xfs_inobt_rec_incore	irec;
+	struct xfs_ialloc_count_inodes	*ci = priv;
 
 	xfs_inobt_btrec_to_irec(cur->bc_mp, rec, &irec);
 	ci->count += irec.ir_count;
-	ci->मुक्तcount += irec.ir_मुक्तcount;
+	ci->freecount += irec.ir_freecount;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Count allocated and मुक्त inodes under an inobt. */
-पूर्णांक
+/* Count allocated and free inodes under an inobt. */
+int
 xfs_ialloc_count_inodes(
-	काष्ठा xfs_btree_cur		*cur,
+	struct xfs_btree_cur		*cur,
 	xfs_agino_t			*count,
-	xfs_agino_t			*मुक्तcount)
-अणु
-	काष्ठा xfs_ialloc_count_inodes	ci = अणु0पूर्ण;
-	पूर्णांक				error;
+	xfs_agino_t			*freecount)
+{
+	struct xfs_ialloc_count_inodes	ci = {0};
+	int				error;
 
 	ASSERT(cur->bc_btnum == XFS_BTNUM_INO);
 	error = xfs_btree_query_all(cur, xfs_ialloc_count_inodes_rec, &ci);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	*count = ci.count;
-	*मुक्तcount = ci.मुक्तcount;
-	वापस 0;
-पूर्ण
+	*freecount = ci.freecount;
+	return 0;
+}
 
 /*
- * Initialize inode-related geometry inक्रमmation.
+ * Initialize inode-related geometry information.
  *
  * Compute the inode btree min and max levels and set maxicount.
  *
  * Set the inode cluster size.  This may still be overridden by the file
- * प्रणाली block size अगर it is larger than the chosen cluster size.
+ * system block size if it is larger than the chosen cluster size.
  *
- * For v5 fileप्रणालीs, scale the cluster size with the inode size to keep a
- * स्थिरant ratio of inode per cluster buffer, but only अगर mkfs has set the
- * inode alignment value appropriately क्रम larger cluster sizes.
+ * For v5 filesystems, scale the cluster size with the inode size to keep a
+ * constant ratio of inode per cluster buffer, but only if mkfs has set the
+ * inode alignment value appropriately for larger cluster sizes.
  *
- * Then compute the inode cluster alignment inक्रमmation.
+ * Then compute the inode cluster alignment information.
  */
-व्योम
+void
 xfs_ialloc_setup_geometry(
-	काष्ठा xfs_mount	*mp)
-अणु
-	काष्ठा xfs_sb		*sbp = &mp->m_sb;
-	काष्ठा xfs_ino_geometry	*igeo = M_IGEO(mp);
-	uपूर्णांक64_t		icount;
-	uपूर्णांक			inodes;
+	struct xfs_mount	*mp)
+{
+	struct xfs_sb		*sbp = &mp->m_sb;
+	struct xfs_ino_geometry	*igeo = M_IGEO(mp);
+	uint64_t		icount;
+	uint			inodes;
 
-	igeo->new_dअगरlags2 = 0;
-	अगर (xfs_sb_version_hasbigसमय(&mp->m_sb))
-		igeo->new_dअगरlags2 |= XFS_DIFLAG2_BIGTIME;
+	igeo->new_diflags2 = 0;
+	if (xfs_sb_version_hasbigtime(&mp->m_sb))
+		igeo->new_diflags2 |= XFS_DIFLAG2_BIGTIME;
 
 	/* Compute inode btree geometry. */
 	igeo->agino_log = sbp->sb_inopblog + sbp->sb_agblklog;
@@ -2825,13 +2824,13 @@ xfs_ialloc_setup_geometry(
 	igeo->inobt_mnr[0] = igeo->inobt_mxr[0] / 2;
 	igeo->inobt_mnr[1] = igeo->inobt_mxr[1] / 2;
 
-	igeo->ialloc_inos = max_t(uपूर्णांक16_t, XFS_INODES_PER_CHUNK,
+	igeo->ialloc_inos = max_t(uint16_t, XFS_INODES_PER_CHUNK,
 			sbp->sb_inopblock);
 	igeo->ialloc_blks = igeo->ialloc_inos >> sbp->sb_inopblog;
 
-	अगर (sbp->sb_spino_align)
+	if (sbp->sb_spino_align)
 		igeo->ialloc_min_blks = sbp->sb_spino_align;
-	अन्यथा
+	else
 		igeo->ialloc_min_blks = igeo->ialloc_blks;
 
 	/* Compute and fill in value of m_ino_geo.inobt_maxlevels. */
@@ -2840,28 +2839,28 @@ xfs_ialloc_setup_geometry(
 			inodes);
 
 	/*
-	 * Set the maximum inode count क्रम this fileप्रणाली, being careful not
+	 * Set the maximum inode count for this filesystem, being careful not
 	 * to use obviously garbage sb_inopblog/sb_inopblock values.  Regular
-	 * users should never get here due to failing sb verअगरication, but
+	 * users should never get here due to failing sb verification, but
 	 * certain users (xfs_db) need to be usable even with corrupt metadata.
 	 */
-	अगर (sbp->sb_imax_pct && igeo->ialloc_blks) अणु
+	if (sbp->sb_imax_pct && igeo->ialloc_blks) {
 		/*
 		 * Make sure the maximum inode count is a multiple
 		 * of the units we allocate inodes in.
 		 */
 		icount = sbp->sb_dblocks * sbp->sb_imax_pct;
-		करो_भाग(icount, 100);
-		करो_भाग(icount, igeo->ialloc_blks);
+		do_div(icount, 100);
+		do_div(icount, igeo->ialloc_blks);
 		igeo->maxicount = XFS_FSB_TO_INO(mp,
 				icount * igeo->ialloc_blks);
-	पूर्ण अन्यथा अणु
+	} else {
 		igeo->maxicount = 0;
-	पूर्ण
+	}
 
 	/*
 	 * Compute the desired size of an inode cluster buffer size, which
-	 * starts at 8K and (on v5 fileप्रणालीs) scales up with larger inode
+	 * starts at 8K and (on v5 filesystems) scales up with larger inode
 	 * sizes.
 	 *
 	 * Preserve the desired inode cluster size because the sparse inodes
@@ -2870,28 +2869,28 @@ xfs_ialloc_setup_geometry(
 	 * cannot change the behavior.
 	 */
 	igeo->inode_cluster_size_raw = XFS_INODE_BIG_CLUSTER_SIZE;
-	अगर (xfs_sb_version_has_v3inode(&mp->m_sb)) अणु
-		पूर्णांक	new_size = igeo->inode_cluster_size_raw;
+	if (xfs_sb_version_has_v3inode(&mp->m_sb)) {
+		int	new_size = igeo->inode_cluster_size_raw;
 
 		new_size *= mp->m_sb.sb_inodesize / XFS_DINODE_MIN_SIZE;
-		अगर (mp->m_sb.sb_inoalignmt >= XFS_B_TO_FSBT(mp, new_size))
+		if (mp->m_sb.sb_inoalignmt >= XFS_B_TO_FSBT(mp, new_size))
 			igeo->inode_cluster_size_raw = new_size;
-	पूर्ण
+	}
 
 	/* Calculate inode cluster ratios. */
-	अगर (igeo->inode_cluster_size_raw > mp->m_sb.sb_blocksize)
+	if (igeo->inode_cluster_size_raw > mp->m_sb.sb_blocksize)
 		igeo->blocks_per_cluster = XFS_B_TO_FSBT(mp,
 				igeo->inode_cluster_size_raw);
-	अन्यथा
+	else
 		igeo->blocks_per_cluster = 1;
 	igeo->inode_cluster_size = XFS_FSB_TO_B(mp, igeo->blocks_per_cluster);
 	igeo->inodes_per_cluster = XFS_FSB_TO_INO(mp, igeo->blocks_per_cluster);
 
 	/* Calculate inode cluster alignment. */
-	अगर (xfs_sb_version_hasalign(&mp->m_sb) &&
+	if (xfs_sb_version_hasalign(&mp->m_sb) &&
 	    mp->m_sb.sb_inoalignmt >= igeo->blocks_per_cluster)
 		igeo->cluster_align = mp->m_sb.sb_inoalignmt;
-	अन्यथा
+	else
 		igeo->cluster_align = 1;
 	igeo->inoalign_mask = igeo->cluster_align - 1;
 	igeo->cluster_align_inodes = XFS_FSB_TO_INO(mp, igeo->cluster_align);
@@ -2900,20 +2899,20 @@ xfs_ialloc_setup_geometry(
 	 * If we are using stripe alignment, check whether
 	 * the stripe unit is a multiple of the inode alignment
 	 */
-	अगर (mp->m_dalign && igeo->inoalign_mask &&
+	if (mp->m_dalign && igeo->inoalign_mask &&
 	    !(mp->m_dalign & igeo->inoalign_mask))
 		igeo->ialloc_align = mp->m_dalign;
-	अन्यथा
+	else
 		igeo->ialloc_align = 0;
-पूर्ण
+}
 
 /* Compute the location of the root directory inode that is laid out by mkfs. */
 xfs_ino_t
 xfs_ialloc_calc_rootino(
-	काष्ठा xfs_mount	*mp,
-	पूर्णांक			sunit)
-अणु
-	काष्ठा xfs_ino_geometry	*igeo = M_IGEO(mp);
+	struct xfs_mount	*mp,
+	int			sunit)
+{
+	struct xfs_ino_geometry	*igeo = M_IGEO(mp);
 	xfs_agblock_t		first_bno;
 
 	/*
@@ -2922,51 +2921,51 @@ xfs_ialloc_calc_rootino(
 	 *
 	 * first_bno is the first block in which mkfs could possibly have
 	 * allocated the root directory inode, once we factor in the metadata
-	 * that mkfs क्रमmats beक्रमe it.  Namely, the four AG headers...
+	 * that mkfs formats before it.  Namely, the four AG headers...
 	 */
 	first_bno = howmany(4 * mp->m_sb.sb_sectsize, mp->m_sb.sb_blocksize);
 
-	/* ...the two मुक्त space btree roots... */
+	/* ...the two free space btree roots... */
 	first_bno += 2;
 
 	/* ...the inode btree root... */
 	first_bno += 1;
 
 	/* ...the initial AGFL... */
-	first_bno += xfs_alloc_min_मुक्तlist(mp, शून्य);
+	first_bno += xfs_alloc_min_freelist(mp, NULL);
 
-	/* ...the मुक्त inode btree root... */
-	अगर (xfs_sb_version_hasfinobt(&mp->m_sb))
+	/* ...the free inode btree root... */
+	if (xfs_sb_version_hasfinobt(&mp->m_sb))
 		first_bno++;
 
 	/* ...the reverse mapping btree root... */
-	अगर (xfs_sb_version_hasrmapbt(&mp->m_sb))
+	if (xfs_sb_version_hasrmapbt(&mp->m_sb))
 		first_bno++;
 
 	/* ...the reference count btree... */
-	अगर (xfs_sb_version_hasreflink(&mp->m_sb))
+	if (xfs_sb_version_hasreflink(&mp->m_sb))
 		first_bno++;
 
 	/*
-	 * ...and the log, अगर it is allocated in the first allocation group.
+	 * ...and the log, if it is allocated in the first allocation group.
 	 *
-	 * This can happen with fileप्रणालीs that only have a single
+	 * This can happen with filesystems that only have a single
 	 * allocation group, or very odd geometries created by old mkfs
-	 * versions on very small fileप्रणालीs.
+	 * versions on very small filesystems.
 	 */
-	अगर (mp->m_sb.sb_logstart &&
+	if (mp->m_sb.sb_logstart &&
 	    XFS_FSB_TO_AGNO(mp, mp->m_sb.sb_logstart) == 0)
 		 first_bno += mp->m_sb.sb_logblocks;
 
 	/*
 	 * Now round first_bno up to whatever allocation alignment is given
-	 * by the fileप्रणाली or was passed in.
+	 * by the filesystem or was passed in.
 	 */
-	अगर (xfs_sb_version_hasdalign(&mp->m_sb) && igeo->ialloc_align > 0)
+	if (xfs_sb_version_hasdalign(&mp->m_sb) && igeo->ialloc_align > 0)
 		first_bno = roundup(first_bno, sunit);
-	अन्यथा अगर (xfs_sb_version_hasalign(&mp->m_sb) &&
+	else if (xfs_sb_version_hasalign(&mp->m_sb) &&
 			mp->m_sb.sb_inoalignmt > 1)
 		first_bno = roundup(first_bno, mp->m_sb.sb_inoalignmt);
 
-	वापस XFS_AGINO_TO_INO(mp, 0, XFS_AGB_TO_AGINO(mp, first_bno));
-पूर्ण
+	return XFS_AGINO_TO_INO(mp, 0, XFS_AGB_TO_AGINO(mp, first_bno));
+}

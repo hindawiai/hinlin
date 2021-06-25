@@ -1,345 +1,344 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * trace_boot.c
- * Tracing kernel boot-समय
+ * Tracing kernel boot-time
  */
 
-#घोषणा pr_fmt(fmt)	"trace_boot: " fmt
+#define pr_fmt(fmt)	"trace_boot: " fmt
 
-#समावेश <linux/bootconfig.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/ftrace.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/trace.h>
-#समावेश <linux/trace_events.h>
+#include <linux/bootconfig.h>
+#include <linux/cpumask.h>
+#include <linux/ftrace.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/mutex.h>
+#include <linux/string.h>
+#include <linux/slab.h>
+#include <linux/trace.h>
+#include <linux/trace_events.h>
 
-#समावेश "trace.h"
+#include "trace.h"
 
-#घोषणा MAX_BUF_LEN 256
+#define MAX_BUF_LEN 256
 
-अटल व्योम __init
-trace_boot_set_instance_options(काष्ठा trace_array *tr, काष्ठा xbc_node *node)
-अणु
-	काष्ठा xbc_node *anode;
-	स्थिर अक्षर *p;
-	अक्षर buf[MAX_BUF_LEN];
-	अचिन्हित दीर्घ v = 0;
+static void __init
+trace_boot_set_instance_options(struct trace_array *tr, struct xbc_node *node)
+{
+	struct xbc_node *anode;
+	const char *p;
+	char buf[MAX_BUF_LEN];
+	unsigned long v = 0;
 
 	/* Common ftrace options */
-	xbc_node_क्रम_each_array_value(node, "options", anode, p) अणु
-		अगर (strlcpy(buf, p, ARRAY_SIZE(buf)) >= ARRAY_SIZE(buf)) अणु
+	xbc_node_for_each_array_value(node, "options", anode, p) {
+		if (strlcpy(buf, p, ARRAY_SIZE(buf)) >= ARRAY_SIZE(buf)) {
 			pr_err("String is too long: %s\n", p);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (trace_set_options(tr, buf) < 0)
+		if (trace_set_options(tr, buf) < 0)
 			pr_err("Failed to set option: %s\n", buf);
-	पूर्ण
+	}
 
-	p = xbc_node_find_value(node, "tracing_on", शून्य);
-	अगर (p && *p != '\0') अणु
-		अगर (kम_से_अदीर्घ(p, 10, &v))
+	p = xbc_node_find_value(node, "tracing_on", NULL);
+	if (p && *p != '\0') {
+		if (kstrtoul(p, 10, &v))
 			pr_err("Failed to set tracing on: %s\n", p);
-		अगर (v)
+		if (v)
 			tracer_tracing_on(tr);
-		अन्यथा
+		else
 			tracer_tracing_off(tr);
-	पूर्ण
+	}
 
-	p = xbc_node_find_value(node, "trace_clock", शून्य);
-	अगर (p && *p != '\0') अणु
-		अगर (tracing_set_घड़ी(tr, p) < 0)
+	p = xbc_node_find_value(node, "trace_clock", NULL);
+	if (p && *p != '\0') {
+		if (tracing_set_clock(tr, p) < 0)
 			pr_err("Failed to set trace clock: %s\n", p);
-	पूर्ण
+	}
 
-	p = xbc_node_find_value(node, "buffer_size", शून्य);
-	अगर (p && *p != '\0') अणु
-		v = memparse(p, शून्य);
-		अगर (v < PAGE_SIZE)
+	p = xbc_node_find_value(node, "buffer_size", NULL);
+	if (p && *p != '\0') {
+		v = memparse(p, NULL);
+		if (v < PAGE_SIZE)
 			pr_err("Buffer size is too small: %s\n", p);
-		अगर (tracing_resize_ring_buffer(tr, v, RING_BUFFER_ALL_CPUS) < 0)
+		if (tracing_resize_ring_buffer(tr, v, RING_BUFFER_ALL_CPUS) < 0)
 			pr_err("Failed to resize trace buffer to %s\n", p);
-	पूर्ण
+	}
 
-	p = xbc_node_find_value(node, "cpumask", शून्य);
-	अगर (p && *p != '\0') अणु
+	p = xbc_node_find_value(node, "cpumask", NULL);
+	if (p && *p != '\0') {
 		cpumask_var_t new_mask;
 
-		अगर (alloc_cpumask_var(&new_mask, GFP_KERNEL)) अणु
-			अगर (cpumask_parse(p, new_mask) < 0 ||
+		if (alloc_cpumask_var(&new_mask, GFP_KERNEL)) {
+			if (cpumask_parse(p, new_mask) < 0 ||
 			    tracing_set_cpumask(tr, new_mask) < 0)
 				pr_err("Failed to set new CPU mask %s\n", p);
-			मुक्त_cpumask_var(new_mask);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			free_cpumask_var(new_mask);
+		}
+	}
+}
 
-#अगर_घोषित CONFIG_EVENT_TRACING
-अटल व्योम __init
-trace_boot_enable_events(काष्ठा trace_array *tr, काष्ठा xbc_node *node)
-अणु
-	काष्ठा xbc_node *anode;
-	अक्षर buf[MAX_BUF_LEN];
-	स्थिर अक्षर *p;
+#ifdef CONFIG_EVENT_TRACING
+static void __init
+trace_boot_enable_events(struct trace_array *tr, struct xbc_node *node)
+{
+	struct xbc_node *anode;
+	char buf[MAX_BUF_LEN];
+	const char *p;
 
-	xbc_node_क्रम_each_array_value(node, "events", anode, p) अणु
-		अगर (strlcpy(buf, p, ARRAY_SIZE(buf)) >= ARRAY_SIZE(buf)) अणु
+	xbc_node_for_each_array_value(node, "events", anode, p) {
+		if (strlcpy(buf, p, ARRAY_SIZE(buf)) >= ARRAY_SIZE(buf)) {
 			pr_err("String is too long: %s\n", p);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (ftrace_set_clr_event(tr, buf, 1) < 0)
+		if (ftrace_set_clr_event(tr, buf, 1) < 0)
 			pr_err("Failed to enable event: %s\n", p);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अगर_घोषित CONFIG_KPROBE_EVENTS
-अटल पूर्णांक __init
-trace_boot_add_kprobe_event(काष्ठा xbc_node *node, स्थिर अक्षर *event)
-अणु
-	काष्ठा dynevent_cmd cmd;
-	काष्ठा xbc_node *anode;
-	अक्षर buf[MAX_BUF_LEN];
-	स्थिर अक्षर *val;
-	पूर्णांक ret = 0;
+#ifdef CONFIG_KPROBE_EVENTS
+static int __init
+trace_boot_add_kprobe_event(struct xbc_node *node, const char *event)
+{
+	struct dynevent_cmd cmd;
+	struct xbc_node *anode;
+	char buf[MAX_BUF_LEN];
+	const char *val;
+	int ret = 0;
 
-	xbc_node_क्रम_each_array_value(node, "probes", anode, val) अणु
+	xbc_node_for_each_array_value(node, "probes", anode, val) {
 		kprobe_event_cmd_init(&cmd, buf, MAX_BUF_LEN);
 
 		ret = kprobe_event_gen_cmd_start(&cmd, event, val);
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("Failed to generate probe: %s\n", buf);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		ret = kprobe_event_gen_cmd_end(&cmd);
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("Failed to add probe: %s\n", buf);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस ret;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक __init
-trace_boot_add_kprobe_event(काष्ठा xbc_node *node, स्थिर अक्षर *event)
-अणु
+	return ret;
+}
+#else
+static inline int __init
+trace_boot_add_kprobe_event(struct xbc_node *node, const char *event)
+{
 	pr_err("Kprobe event is not supported.\n");
-	वापस -ENOTSUPP;
-पूर्ण
-#पूर्ण_अगर
+	return -ENOTSUPP;
+}
+#endif
 
-#अगर_घोषित CONFIG_SYNTH_EVENTS
-अटल पूर्णांक __init
-trace_boot_add_synth_event(काष्ठा xbc_node *node, स्थिर अक्षर *event)
-अणु
-	काष्ठा dynevent_cmd cmd;
-	काष्ठा xbc_node *anode;
-	अक्षर buf[MAX_BUF_LEN];
-	स्थिर अक्षर *p;
-	पूर्णांक ret;
+#ifdef CONFIG_SYNTH_EVENTS
+static int __init
+trace_boot_add_synth_event(struct xbc_node *node, const char *event)
+{
+	struct dynevent_cmd cmd;
+	struct xbc_node *anode;
+	char buf[MAX_BUF_LEN];
+	const char *p;
+	int ret;
 
 	synth_event_cmd_init(&cmd, buf, MAX_BUF_LEN);
 
-	ret = synth_event_gen_cmd_start(&cmd, event, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = synth_event_gen_cmd_start(&cmd, event, NULL);
+	if (ret)
+		return ret;
 
-	xbc_node_क्रम_each_array_value(node, "fields", anode, p) अणु
+	xbc_node_for_each_array_value(node, "fields", anode, p) {
 		ret = synth_event_add_field_str(&cmd, p);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	ret = synth_event_gen_cmd_end(&cmd);
-	अगर (ret < 0)
+	if (ret < 0)
 		pr_err("Failed to add synthetic event: %s\n", buf);
 
-	वापस ret;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक __init
-trace_boot_add_synth_event(काष्ठा xbc_node *node, स्थिर अक्षर *event)
-अणु
+	return ret;
+}
+#else
+static inline int __init
+trace_boot_add_synth_event(struct xbc_node *node, const char *event)
+{
 	pr_err("Synthetic event is not supported.\n");
-	वापस -ENOTSUPP;
-पूर्ण
-#पूर्ण_अगर
+	return -ENOTSUPP;
+}
+#endif
 
-अटल व्योम __init
-trace_boot_init_one_event(काष्ठा trace_array *tr, काष्ठा xbc_node *gnode,
-			  काष्ठा xbc_node *enode)
-अणु
-	काष्ठा trace_event_file *file;
-	काष्ठा xbc_node *anode;
-	अक्षर buf[MAX_BUF_LEN];
-	स्थिर अक्षर *p, *group, *event;
+static void __init
+trace_boot_init_one_event(struct trace_array *tr, struct xbc_node *gnode,
+			  struct xbc_node *enode)
+{
+	struct trace_event_file *file;
+	struct xbc_node *anode;
+	char buf[MAX_BUF_LEN];
+	const char *p, *group, *event;
 
 	group = xbc_node_get_data(gnode);
 	event = xbc_node_get_data(enode);
 
-	अगर (!म_भेद(group, "kprobes"))
-		अगर (trace_boot_add_kprobe_event(enode, event) < 0)
-			वापस;
-	अगर (!म_भेद(group, "synthetic"))
-		अगर (trace_boot_add_synth_event(enode, event) < 0)
-			वापस;
+	if (!strcmp(group, "kprobes"))
+		if (trace_boot_add_kprobe_event(enode, event) < 0)
+			return;
+	if (!strcmp(group, "synthetic"))
+		if (trace_boot_add_synth_event(enode, event) < 0)
+			return;
 
 	mutex_lock(&event_mutex);
 	file = find_event_file(tr, group, event);
-	अगर (!file) अणु
+	if (!file) {
 		pr_err("Failed to find event: %s:%s\n", group, event);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	p = xbc_node_find_value(enode, "filter", शून्य);
-	अगर (p && *p != '\0') अणु
-		अगर (strlcpy(buf, p, ARRAY_SIZE(buf)) >= ARRAY_SIZE(buf))
+	p = xbc_node_find_value(enode, "filter", NULL);
+	if (p && *p != '\0') {
+		if (strlcpy(buf, p, ARRAY_SIZE(buf)) >= ARRAY_SIZE(buf))
 			pr_err("filter string is too long: %s\n", p);
-		अन्यथा अगर (apply_event_filter(file, buf) < 0)
+		else if (apply_event_filter(file, buf) < 0)
 			pr_err("Failed to apply filter: %s\n", buf);
-	पूर्ण
+	}
 
-	xbc_node_क्रम_each_array_value(enode, "actions", anode, p) अणु
-		अगर (strlcpy(buf, p, ARRAY_SIZE(buf)) >= ARRAY_SIZE(buf))
+	xbc_node_for_each_array_value(enode, "actions", anode, p) {
+		if (strlcpy(buf, p, ARRAY_SIZE(buf)) >= ARRAY_SIZE(buf))
 			pr_err("action string is too long: %s\n", p);
-		अन्यथा अगर (trigger_process_regex(file, buf) < 0)
+		else if (trigger_process_regex(file, buf) < 0)
 			pr_err("Failed to apply an action: %s\n", buf);
-	पूर्ण
+	}
 
-	अगर (xbc_node_find_value(enode, "enable", शून्य)) अणु
-		अगर (trace_event_enable_disable(file, 1, 0) < 0)
+	if (xbc_node_find_value(enode, "enable", NULL)) {
+		if (trace_event_enable_disable(file, 1, 0) < 0)
 			pr_err("Failed to enable event node: %s:%s\n",
 				group, event);
-	पूर्ण
+	}
 out:
 	mutex_unlock(&event_mutex);
-पूर्ण
+}
 
-अटल व्योम __init
-trace_boot_init_events(काष्ठा trace_array *tr, काष्ठा xbc_node *node)
-अणु
-	काष्ठा xbc_node *gnode, *enode;
+static void __init
+trace_boot_init_events(struct trace_array *tr, struct xbc_node *node)
+{
+	struct xbc_node *gnode, *enode;
 
 	node = xbc_node_find_child(node, "event");
-	अगर (!node)
-		वापस;
+	if (!node)
+		return;
 	/* per-event key starts with "event.GROUP.EVENT" */
-	xbc_node_क्रम_each_child(node, gnode)
-		xbc_node_क्रम_each_child(gnode, enode)
+	xbc_node_for_each_child(node, gnode)
+		xbc_node_for_each_child(gnode, enode)
 			trace_boot_init_one_event(tr, gnode, enode);
-पूर्ण
-#अन्यथा
-#घोषणा trace_boot_enable_events(tr, node) करो अणुपूर्ण जबतक (0)
-#घोषणा trace_boot_init_events(tr, node) करो अणुपूर्ण जबतक (0)
-#पूर्ण_अगर
+}
+#else
+#define trace_boot_enable_events(tr, node) do {} while (0)
+#define trace_boot_init_events(tr, node) do {} while (0)
+#endif
 
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE
-अटल व्योम __init
-trace_boot_set_ftrace_filter(काष्ठा trace_array *tr, काष्ठा xbc_node *node)
-अणु
-	काष्ठा xbc_node *anode;
-	स्थिर अक्षर *p;
-	अक्षर *q;
+#ifdef CONFIG_DYNAMIC_FTRACE
+static void __init
+trace_boot_set_ftrace_filter(struct trace_array *tr, struct xbc_node *node)
+{
+	struct xbc_node *anode;
+	const char *p;
+	char *q;
 
-	xbc_node_क्रम_each_array_value(node, "ftrace.filters", anode, p) अणु
+	xbc_node_for_each_array_value(node, "ftrace.filters", anode, p) {
 		q = kstrdup(p, GFP_KERNEL);
-		अगर (!q)
-			वापस;
-		अगर (ftrace_set_filter(tr->ops, q, म_माप(q), 0) < 0)
+		if (!q)
+			return;
+		if (ftrace_set_filter(tr->ops, q, strlen(q), 0) < 0)
 			pr_err("Failed to add %s to ftrace filter\n", p);
-		अन्यथा
+		else
 			ftrace_filter_param = true;
-		kमुक्त(q);
-	पूर्ण
-	xbc_node_क्रम_each_array_value(node, "ftrace.notraces", anode, p) अणु
+		kfree(q);
+	}
+	xbc_node_for_each_array_value(node, "ftrace.notraces", anode, p) {
 		q = kstrdup(p, GFP_KERNEL);
-		अगर (!q)
-			वापस;
-		अगर (ftrace_set_notrace(tr->ops, q, म_माप(q), 0) < 0)
+		if (!q)
+			return;
+		if (ftrace_set_notrace(tr->ops, q, strlen(q), 0) < 0)
 			pr_err("Failed to add %s to ftrace filter\n", p);
-		अन्यथा
+		else
 			ftrace_filter_param = true;
-		kमुक्त(q);
-	पूर्ण
-पूर्ण
-#अन्यथा
-#घोषणा trace_boot_set_ftrace_filter(tr, node) करो अणुपूर्ण जबतक (0)
-#पूर्ण_अगर
+		kfree(q);
+	}
+}
+#else
+#define trace_boot_set_ftrace_filter(tr, node) do {} while (0)
+#endif
 
-अटल व्योम __init
-trace_boot_enable_tracer(काष्ठा trace_array *tr, काष्ठा xbc_node *node)
-अणु
-	स्थिर अक्षर *p;
+static void __init
+trace_boot_enable_tracer(struct trace_array *tr, struct xbc_node *node)
+{
+	const char *p;
 
 	trace_boot_set_ftrace_filter(tr, node);
 
-	p = xbc_node_find_value(node, "tracer", शून्य);
-	अगर (p && *p != '\0') अणु
-		अगर (tracing_set_tracer(tr, p) < 0)
+	p = xbc_node_find_value(node, "tracer", NULL);
+	if (p && *p != '\0') {
+		if (tracing_set_tracer(tr, p) < 0)
 			pr_err("Failed to set given tracer: %s\n", p);
-	पूर्ण
+	}
 
-	/* Since tracer can मुक्त snapshot buffer, allocate snapshot here.*/
-	अगर (xbc_node_find_value(node, "alloc_snapshot", शून्य)) अणु
-		अगर (tracing_alloc_snapshot_instance(tr) < 0)
+	/* Since tracer can free snapshot buffer, allocate snapshot here.*/
+	if (xbc_node_find_value(node, "alloc_snapshot", NULL)) {
+		if (tracing_alloc_snapshot_instance(tr) < 0)
 			pr_err("Failed to allocate snapshot buffer\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __init
-trace_boot_init_one_instance(काष्ठा trace_array *tr, काष्ठा xbc_node *node)
-अणु
+static void __init
+trace_boot_init_one_instance(struct trace_array *tr, struct xbc_node *node)
+{
 	trace_boot_set_instance_options(tr, node);
 	trace_boot_init_events(tr, node);
 	trace_boot_enable_events(tr, node);
 	trace_boot_enable_tracer(tr, node);
-पूर्ण
+}
 
-अटल व्योम __init
-trace_boot_init_instances(काष्ठा xbc_node *node)
-अणु
-	काष्ठा xbc_node *inode;
-	काष्ठा trace_array *tr;
-	स्थिर अक्षर *p;
+static void __init
+trace_boot_init_instances(struct xbc_node *node)
+{
+	struct xbc_node *inode;
+	struct trace_array *tr;
+	const char *p;
 
 	node = xbc_node_find_child(node, "instance");
-	अगर (!node)
-		वापस;
+	if (!node)
+		return;
 
-	xbc_node_क्रम_each_child(node, inode) अणु
+	xbc_node_for_each_child(node, inode) {
 		p = xbc_node_get_data(inode);
-		अगर (!p || *p == '\0')
-			जारी;
+		if (!p || *p == '\0')
+			continue;
 
 		tr = trace_array_get_by_name(p);
-		अगर (!tr) अणु
+		if (!tr) {
 			pr_err("Failed to get trace instance %s\n", p);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		trace_boot_init_one_instance(tr, inode);
 		trace_array_put(tr);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक __init trace_boot_init(व्योम)
-अणु
-	काष्ठा xbc_node *trace_node;
-	काष्ठा trace_array *tr;
+static int __init trace_boot_init(void)
+{
+	struct xbc_node *trace_node;
+	struct trace_array *tr;
 
 	trace_node = xbc_find_node("ftrace");
-	अगर (!trace_node)
-		वापस 0;
+	if (!trace_node)
+		return 0;
 
 	tr = top_trace_array();
-	अगर (!tr)
-		वापस 0;
+	if (!tr)
+		return 0;
 
 	/* Global trace array is also one instance */
 	trace_boot_init_one_instance(tr, trace_node);
@@ -347,8 +346,8 @@ trace_boot_init_instances(काष्ठा xbc_node *node)
 
 	disable_tracing_selftest("running boot-time tracing");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 /*
  * Start tracing at the end of core-initcall, so that it starts tracing
  * from the beginning of postcore_initcall.

@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2014 Broadcom Corporation
  */
 
-#अगर_अघोषित _venकरोr_h_
-#घोषणा _venकरोr_h_
+#ifndef _vendor_h_
+#define _vendor_h_
 
-#घोषणा BROADCOM_OUI	0x001018
+#define BROADCOM_OUI	0x001018
 
-क्रमागत brcmf_vndr_cmds अणु
+enum brcmf_vndr_cmds {
 	BRCMF_VNDR_CMDS_UNSPEC,
 	BRCMF_VNDR_CMDS_DCMD,
 	BRCMF_VNDR_CMDS_LAST
-पूर्ण;
+};
 
 /**
- * क्रमागत brcmf_nlattrs - nl80211 message attributes
+ * enum brcmf_nlattrs - nl80211 message attributes
  *
  * @BRCMF_NLATTR_LEN: message body length
  * @BRCMF_NLATTR_DATA: message body
  */
-क्रमागत brcmf_nlattrs अणु
+enum brcmf_nlattrs {
 	BRCMF_NLATTR_UNSPEC,
 
 	BRCMF_NLATTR_LEN,
@@ -29,26 +28,26 @@
 
 	__BRCMF_NLATTR_AFTER_LAST,
 	BRCMF_NLATTR_MAX = __BRCMF_NLATTR_AFTER_LAST - 1
-पूर्ण;
+};
 
 /**
- * काष्ठा brcmf_vndr_dcmd_hdr - message header क्रम cfg80211 venकरोr command dcmd
+ * struct brcmf_vndr_dcmd_hdr - message header for cfg80211 vendor command dcmd
  *				support
  *
- * @cmd: common करोngle cmd definition
- * @len: length of expecting वापस buffer
+ * @cmd: common dongle cmd definition
+ * @len: length of expecting return buffer
  * @offset: offset of data buffer
  * @set: get or set request(optional)
- * @magic: magic number क्रम verअगरication
+ * @magic: magic number for verification
  */
-काष्ठा brcmf_vndr_dcmd_hdr अणु
-	uपूर्णांक cmd;
-	पूर्णांक len;
-	uपूर्णांक offset;
-	uपूर्णांक set;
-	uपूर्णांक magic;
-पूर्ण;
+struct brcmf_vndr_dcmd_hdr {
+	uint cmd;
+	int len;
+	uint offset;
+	uint set;
+	uint magic;
+};
 
-बाह्य स्थिर काष्ठा wiphy_venकरोr_command brcmf_venकरोr_cmds[];
+extern const struct wiphy_vendor_command brcmf_vendor_cmds[];
 
-#पूर्ण_अगर /* _venकरोr_h_ */
+#endif /* _vendor_h_ */

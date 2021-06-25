@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  *   Copyright (C) International Business Machines Corp., 2000-2004
  */
-#अगर_अघोषित	_H_JFS_BTREE
-#घोषणा _H_JFS_BTREE
+#ifndef	_H_JFS_BTREE
+#define _H_JFS_BTREE
 
 /*
  *	jfs_btree.h: B+-tree
@@ -15,79 +14,79 @@
 /*
  *	basic btree page - btpage
  *
-काष्ठा btpage अणु
+struct btpage {
 	s64 next;		right sibling bn
 	s64 prev;		left sibling bn
 
 	u8 flag;
-	u8 rsrvd[7];		type specअगरic
+	u8 rsrvd[7];		type specific
 	s64 self;		self address
 
 	u8 entry[4064];
-पूर्ण;						*/
+};						*/
 
 /* btpaget_t flag */
-#घोषणा BT_TYPE		0x07	/* B+-tree index */
-#घोषणा	BT_ROOT		0x01	/* root page */
-#घोषणा	BT_LEAF		0x02	/* leaf page */
-#घोषणा	BT_INTERNAL	0x04	/* पूर्णांकernal page */
-#घोषणा	BT_RIGHTMOST	0x10	/* righपंचांगost page */
-#घोषणा	BT_LEFTMOST	0x20	/* lefपंचांगost page */
-#घोषणा	BT_SWAPPED	0x80	/* used by fsck क्रम endian swapping */
+#define BT_TYPE		0x07	/* B+-tree index */
+#define	BT_ROOT		0x01	/* root page */
+#define	BT_LEAF		0x02	/* leaf page */
+#define	BT_INTERNAL	0x04	/* internal page */
+#define	BT_RIGHTMOST	0x10	/* rightmost page */
+#define	BT_LEFTMOST	0x20	/* leftmost page */
+#define	BT_SWAPPED	0x80	/* used by fsck for endian swapping */
 
 /* btorder (in inode) */
-#घोषणा	BT_RANDOM		0x0000
-#घोषणा	BT_SEQUENTIAL		0x0001
-#घोषणा	BT_LOOKUP		0x0010
-#घोषणा	BT_INSERT		0x0020
-#घोषणा	BT_DELETE		0x0040
+#define	BT_RANDOM		0x0000
+#define	BT_SEQUENTIAL		0x0001
+#define	BT_LOOKUP		0x0010
+#define	BT_INSERT		0x0020
+#define	BT_DELETE		0x0040
 
 /*
  *	btree page buffer cache access
  */
-#घोषणा BT_IS_ROOT(MP) (((MP)->xflag & COMMIT_PAGE) == 0)
+#define BT_IS_ROOT(MP) (((MP)->xflag & COMMIT_PAGE) == 0)
 
 /* get page from buffer page */
-#घोषणा BT_PAGE(IP, MP, TYPE, ROOT)\
+#define BT_PAGE(IP, MP, TYPE, ROOT)\
 	(BT_IS_ROOT(MP) ? (TYPE *)&JFS_IP(IP)->ROOT : (TYPE *)(MP)->data)
 
-/* get the page buffer and the page क्रम specअगरied block address */
-#घोषणा BT_GETPAGE(IP, BN, MP, TYPE, SIZE, P, RC, ROOT)\
-अणु\
-	अगर ((BN) == 0)\
-	अणु\
-		MP = (काष्ठा metapage *)&JFS_IP(IP)->bxflag;\
+/* get the page buffer and the page for specified block address */
+#define BT_GETPAGE(IP, BN, MP, TYPE, SIZE, P, RC, ROOT)\
+{\
+	if ((BN) == 0)\
+	{\
+		MP = (struct metapage *)&JFS_IP(IP)->bxflag;\
 		P = (TYPE *)&JFS_IP(IP)->ROOT;\
 		RC = 0;\
-	पूर्ण\
-	अन्यथा\
-	अणु\
-		MP = पढ़ो_metapage((IP), BN, SIZE, 1);\
-		अगर (MP) अणु\
+	}\
+	else\
+	{\
+		MP = read_metapage((IP), BN, SIZE, 1);\
+		if (MP) {\
 			RC = 0;\
 			P = (MP)->data;\
-		पूर्ण अन्यथा अणु\
-			P = शून्य;\
+		} else {\
+			P = NULL;\
 			jfs_err("bread failed!");\
 			RC = -EIO;\
-		पूर्ण\
-	पूर्ण\
-पूर्ण
+		}\
+	}\
+}
 
-#घोषणा BT_MARK_सूचीTY(MP, IP)\
-अणु\
-	अगर (BT_IS_ROOT(MP))\
+#define BT_MARK_DIRTY(MP, IP)\
+{\
+	if (BT_IS_ROOT(MP))\
 		mark_inode_dirty(IP);\
-	अन्यथा\
+	else\
 		mark_metapage_dirty(MP);\
-पूर्ण
+}
 
 /* put the page buffer */
-#घोषणा BT_PUTPAGE(MP)\
-अणु\
-	अगर (! BT_IS_ROOT(MP)) \
+#define BT_PUTPAGE(MP)\
+{\
+	if (! BT_IS_ROOT(MP)) \
 		release_metapage(MP); \
-पूर्ण
+}
 
 
 /*
@@ -96,65 +95,65 @@
  * record the path traversed during the search;
  * top frame record the leaf page/entry selected.
  */
-काष्ठा btframe अणु	/* stack frame */
+struct btframe {	/* stack frame */
 	s64 bn;			/* 8: */
 	s16 index;		/* 2: */
 	s16 lastindex;		/* 2: unused */
-	काष्ठा metapage *mp;	/* 4/8: */
-पूर्ण;				/* (16/24) */
+	struct metapage *mp;	/* 4/8: */
+};				/* (16/24) */
 
-काष्ठा btstack अणु
-	काष्ठा btframe *top;
-	पूर्णांक nsplit;
-	काष्ठा btframe stack[MAXTREEHEIGHT];
-पूर्ण;
+struct btstack {
+	struct btframe *top;
+	int nsplit;
+	struct btframe stack[MAXTREEHEIGHT];
+};
 
-#घोषणा BT_CLR(btstack)\
+#define BT_CLR(btstack)\
 	(btstack)->top = (btstack)->stack
 
-#घोषणा BT_STACK_FULL(btstack)\
+#define BT_STACK_FULL(btstack)\
 	( (btstack)->top == &((btstack)->stack[MAXTREEHEIGHT-1]))
 
-#घोषणा BT_PUSH(BTSTACK, BN, INDEX)\
-अणु\
-	निश्चित(!BT_STACK_FULL(BTSTACK));\
+#define BT_PUSH(BTSTACK, BN, INDEX)\
+{\
+	assert(!BT_STACK_FULL(BTSTACK));\
 	(BTSTACK)->top->bn = BN;\
 	(BTSTACK)->top->index = INDEX;\
 	++(BTSTACK)->top;\
-पूर्ण
+}
 
-#घोषणा BT_POP(btstack)\
-	( (btstack)->top == (btstack)->stack ? शून्य : --(btstack)->top )
+#define BT_POP(btstack)\
+	( (btstack)->top == (btstack)->stack ? NULL : --(btstack)->top )
 
-#घोषणा BT_STACK(btstack)\
-	( (btstack)->top == (btstack)->stack ? शून्य : (btstack)->top )
+#define BT_STACK(btstack)\
+	( (btstack)->top == (btstack)->stack ? NULL : (btstack)->top )
 
-अटल अंतरभूत व्योम BT_STACK_DUMP(काष्ठा btstack *btstack)
-अणु
-	पूर्णांक i;
-	prपूर्णांकk("btstack dump:\n");
-	क्रम (i = 0; i < MAXTREEHEIGHT; i++)
-		prपूर्णांकk(KERN_ERR "bn = %Lx, index = %d\n",
-		       (दीर्घ दीर्घ)btstack->stack[i].bn,
+static inline void BT_STACK_DUMP(struct btstack *btstack)
+{
+	int i;
+	printk("btstack dump:\n");
+	for (i = 0; i < MAXTREEHEIGHT; i++)
+		printk(KERN_ERR "bn = %Lx, index = %d\n",
+		       (long long)btstack->stack[i].bn,
 		       btstack->stack[i].index);
-पूर्ण
+}
 
 /* retrieve search results */
-#घोषणा BT_GETSEARCH(IP, LEAF, BN, MP, TYPE, P, INDEX, ROOT)\
-अणु\
+#define BT_GETSEARCH(IP, LEAF, BN, MP, TYPE, P, INDEX, ROOT)\
+{\
 	BN = (LEAF)->bn;\
 	MP = (LEAF)->mp;\
-	अगर (BN)\
+	if (BN)\
 		P = (TYPE *)MP->data;\
-	अन्यथा\
+	else\
 		P = (TYPE *)&JFS_IP(IP)->ROOT;\
 	INDEX = (LEAF)->index;\
-पूर्ण
+}
 
 /* put the page buffer of search */
-#घोषणा BT_PUTSEARCH(BTSTACK)\
-अणु\
-	अगर (! BT_IS_ROOT((BTSTACK)->top->mp))\
+#define BT_PUTSEARCH(BTSTACK)\
+{\
+	if (! BT_IS_ROOT((BTSTACK)->top->mp))\
 		release_metapage((BTSTACK)->top->mp);\
-पूर्ण
-#पूर्ण_अगर				/* _H_JFS_BTREE */
+}
+#endif				/* _H_JFS_BTREE */

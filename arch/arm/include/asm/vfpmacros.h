@@ -1,80 +1,79 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * arch/arm/include/यंत्र/vfpmacros.h
+ * arch/arm/include/asm/vfpmacros.h
  *
- * Assembler-only file containing VFP macros and रेजिस्टर definitions.
+ * Assembler-only file containing VFP macros and register definitions.
  */
-#समावेश <यंत्र/hwcap.h>
+#include <asm/hwcap.h>
 
-#समावेश <यंत्र/vfp.h>
+#include <asm/vfp.h>
 
-#अगर_घोषित CONFIG_AS_VFP_VMRS_FPINST
+#ifdef CONFIG_AS_VFP_VMRS_FPINST
 	.macro	VFPFMRX, rd, sysreg, cond
-	vmrs\cond	\लd, \sysreg
+	vmrs\cond	\rd, \sysreg
 	.endm
 
 	.macro	VFPFMXR, sysreg, rd, cond
-	vmsr\cond	\sysreg, \लd
+	vmsr\cond	\sysreg, \rd
 	.endm
-#अन्यथा
+#else
 	@ Macros to allow building with old toolkits (with no VFP support)
 	.macro	VFPFMRX, rd, sysreg, cond
-	MRC\cond	p10, 7, \लd, \sysreg, cr0, 0	@ FMRX	\लd, \sysreg
+	MRC\cond	p10, 7, \rd, \sysreg, cr0, 0	@ FMRX	\rd, \sysreg
 	.endm
 
 	.macro	VFPFMXR, sysreg, rd, cond
-	MCR\cond	p10, 7, \लd, \sysreg, cr0, 0	@ FMXR	\sysreg, \लd
+	MCR\cond	p10, 7, \rd, \sysreg, cr0, 0	@ FMXR	\sysreg, \rd
 	.endm
-#पूर्ण_अगर
+#endif
 
-	@ पढ़ो all the working रेजिस्टरs back पूर्णांकo the VFP
-	.macro	VFPFLDMIA, base, पंचांगp
+	@ read all the working registers back into the VFP
+	.macro	VFPFLDMIA, base, tmp
 	.fpu	vfpv2
-#अगर __LINUX_ARM_ARCH__ < 6
-	fldmiax	\मase!, अणुd0-d15पूर्ण
-#अन्यथा
-	vldmia	\मase!, अणुd0-d15पूर्ण
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_VFPv3
+#if __LINUX_ARM_ARCH__ < 6
+	fldmiax	\base!, {d0-d15}
+#else
+	vldmia	\base!, {d0-d15}
+#endif
+#ifdef CONFIG_VFPv3
 	.fpu	vfpv3
-#अगर __LINUX_ARM_ARCH__ <= 6
-	ldr	\टmp, =elf_hwcap		    @ may not have MVFR regs
-	ldr	\टmp, [\टmp, #0]
-	tst	\टmp, #HWCAP_VFPD32
-	vldmiane \मase!, अणुd16-d31पूर्ण
-	addeq	\मase, \मase, #32*4		    @ step over unused रेजिस्टर space
-#अन्यथा
-	VFPFMRX	\टmp, MVFR0			    @ Media and VFP Feature Register 0
-	and	\टmp, \टmp, #MVFR0_A_SIMD_MASK	    @ A_SIMD field
-	cmp	\टmp, #2			    @ 32 x 64bit रेजिस्टरs?
-	vldmiaeq \मase!, अणुd16-d31पूर्ण
-	addne	\मase, \मase, #32*4		    @ step over unused रेजिस्टर space
-#पूर्ण_अगर
-#पूर्ण_अगर
+#if __LINUX_ARM_ARCH__ <= 6
+	ldr	\tmp, =elf_hwcap		    @ may not have MVFR regs
+	ldr	\tmp, [\tmp, #0]
+	tst	\tmp, #HWCAP_VFPD32
+	vldmiane \base!, {d16-d31}
+	addeq	\base, \base, #32*4		    @ step over unused register space
+#else
+	VFPFMRX	\tmp, MVFR0			    @ Media and VFP Feature Register 0
+	and	\tmp, \tmp, #MVFR0_A_SIMD_MASK	    @ A_SIMD field
+	cmp	\tmp, #2			    @ 32 x 64bit registers?
+	vldmiaeq \base!, {d16-d31}
+	addne	\base, \base, #32*4		    @ step over unused register space
+#endif
+#endif
 	.endm
 
-	@ ग_लिखो all the working रेजिस्टरs out of the VFP
-	.macro	VFPFSTMIA, base, पंचांगp
-#अगर __LINUX_ARM_ARCH__ < 6
-	fsपंचांगiax	\मase!, अणुd0-d15पूर्ण
-#अन्यथा
-	vsपंचांगia	\मase!, अणुd0-d15पूर्ण
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_VFPv3
+	@ write all the working registers out of the VFP
+	.macro	VFPFSTMIA, base, tmp
+#if __LINUX_ARM_ARCH__ < 6
+	fstmiax	\base!, {d0-d15}
+#else
+	vstmia	\base!, {d0-d15}
+#endif
+#ifdef CONFIG_VFPv3
 	.fpu	vfpv3
-#अगर __LINUX_ARM_ARCH__ <= 6
-	ldr	\टmp, =elf_hwcap		    @ may not have MVFR regs
-	ldr	\टmp, [\टmp, #0]
-	tst	\टmp, #HWCAP_VFPD32
-	vsपंचांगiane \मase!, अणुd16-d31पूर्ण
-	addeq	\मase, \मase, #32*4		    @ step over unused रेजिस्टर space
-#अन्यथा
-	VFPFMRX	\टmp, MVFR0			    @ Media and VFP Feature Register 0
-	and	\टmp, \टmp, #MVFR0_A_SIMD_MASK	    @ A_SIMD field
-	cmp	\टmp, #2			    @ 32 x 64bit रेजिस्टरs?
-	vsपंचांगiaeq \मase!, अणुd16-d31पूर्ण
-	addne	\मase, \मase, #32*4		    @ step over unused रेजिस्टर space
-#पूर्ण_अगर
-#पूर्ण_अगर
+#if __LINUX_ARM_ARCH__ <= 6
+	ldr	\tmp, =elf_hwcap		    @ may not have MVFR regs
+	ldr	\tmp, [\tmp, #0]
+	tst	\tmp, #HWCAP_VFPD32
+	vstmiane \base!, {d16-d31}
+	addeq	\base, \base, #32*4		    @ step over unused register space
+#else
+	VFPFMRX	\tmp, MVFR0			    @ Media and VFP Feature Register 0
+	and	\tmp, \tmp, #MVFR0_A_SIMD_MASK	    @ A_SIMD field
+	cmp	\tmp, #2			    @ 32 x 64bit registers?
+	vstmiaeq \base!, {d16-d31}
+	addne	\base, \base, #32*4		    @ step over unused register space
+#endif
+#endif
 	.endm

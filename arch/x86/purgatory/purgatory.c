@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * purgatory: Runs between two kernels
  *
@@ -9,50 +8,50 @@
  *       Vivek Goyal <vgoyal@redhat.com>
  */
 
-#समावेश <linux/bug.h>
-#समावेश <crypto/sha2.h>
-#समावेश <यंत्र/purgatory.h>
+#include <linux/bug.h>
+#include <crypto/sha2.h>
+#include <asm/purgatory.h>
 
-#समावेश "../boot/string.h"
+#include "../boot/string.h"
 
 u8 purgatory_sha256_digest[SHA256_DIGEST_SIZE] __section(".kexec-purgatory");
 
-काष्ठा kexec_sha_region purgatory_sha_regions[KEXEC_SEGMENT_MAX] __section(".kexec-purgatory");
+struct kexec_sha_region purgatory_sha_regions[KEXEC_SEGMENT_MAX] __section(".kexec-purgatory");
 
-अटल पूर्णांक verअगरy_sha256_digest(व्योम)
-अणु
-	काष्ठा kexec_sha_region *ptr, *end;
+static int verify_sha256_digest(void)
+{
+	struct kexec_sha_region *ptr, *end;
 	u8 digest[SHA256_DIGEST_SIZE];
-	काष्ठा sha256_state sctx;
+	struct sha256_state sctx;
 
 	sha256_init(&sctx);
 	end = purgatory_sha_regions + ARRAY_SIZE(purgatory_sha_regions);
 
-	क्रम (ptr = purgatory_sha_regions; ptr < end; ptr++)
-		sha256_update(&sctx, (uपूर्णांक8_t *)(ptr->start), ptr->len);
+	for (ptr = purgatory_sha_regions; ptr < end; ptr++)
+		sha256_update(&sctx, (uint8_t *)(ptr->start), ptr->len);
 
 	sha256_final(&sctx, digest);
 
-	अगर (स_भेद(digest, purgatory_sha256_digest, माप(digest)))
-		वापस 1;
+	if (memcmp(digest, purgatory_sha256_digest, sizeof(digest)))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम purgatory(व्योम)
-अणु
-	पूर्णांक ret;
+void purgatory(void)
+{
+	int ret;
 
-	ret = verअगरy_sha256_digest();
-	अगर (ret) अणु
-		/* loop क्रमever */
-		क्रम (;;)
+	ret = verify_sha256_digest();
+	if (ret) {
+		/* loop forever */
+		for (;;)
 			;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Defined in order to reuse स_नकल() and स_रखो() from
+ * Defined in order to reuse memcpy() and memset() from
  * arch/x86/boot/compressed/string.c
  */
-व्योम warn(स्थिर अक्षर *msg) अणुपूर्ण
+void warn(const char *msg) {}

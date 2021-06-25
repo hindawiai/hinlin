@@ -1,155 +1,154 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Driver क्रम M-5MOLS 8M Pixel camera sensor with ISP
+ * Driver for M-5MOLS 8M Pixel camera sensor with ISP
  *
  * Copyright (C) 2011 Samsung Electronics Co., Ltd.
  * Author: HeungJun Kim <riverful.kim@samsung.com>
  *
  * Copyright (C) 2009 Samsung Electronics Co., Ltd.
- * Author: Dongsoo Nathaniel Kim <करोngsoo45.kim@samsung.com>
+ * Author: Dongsoo Nathaniel Kim <dongsoo45.kim@samsung.com>
  */
 
-#समावेश <linux/i2c.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/videodev2.h>
-#समावेश <linux/module.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-subdev.h>
-#समावेश <media/i2c/m5mols.h>
+#include <linux/i2c.h>
+#include <linux/slab.h>
+#include <linux/irq.h>
+#include <linux/interrupt.h>
+#include <linux/delay.h>
+#include <linux/gpio.h>
+#include <linux/regulator/consumer.h>
+#include <linux/videodev2.h>
+#include <linux/module.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-subdev.h>
+#include <media/i2c/m5mols.h>
 
-#समावेश "m5mols.h"
-#समावेश "m5mols_reg.h"
+#include "m5mols.h"
+#include "m5mols_reg.h"
 
-पूर्णांक m5mols_debug;
-module_param(m5mols_debug, पूर्णांक, 0644);
+int m5mols_debug;
+module_param(m5mols_debug, int, 0644);
 
-#घोषणा MODULE_NAME		"M5MOLS"
-#घोषणा M5MOLS_I2C_CHECK_RETRY	500
+#define MODULE_NAME		"M5MOLS"
+#define M5MOLS_I2C_CHECK_RETRY	500
 
-/* The regulator consumer names क्रम बाह्यal voltage regulators */
-अटल काष्ठा regulator_bulk_data supplies[] = अणु
-	अणु
-		.supply = "core",	/* ARM core घातer, 1.2V */
-	पूर्ण, अणु
-		.supply	= "dig_18",	/* digital घातer 1, 1.8V */
-	पूर्ण, अणु
-		.supply	= "d_sensor",	/* sensor घातer 1, 1.8V */
-	पूर्ण, अणु
-		.supply	= "dig_28",	/* digital घातer 2, 2.8V */
-	पूर्ण, अणु
-		.supply	= "a_sensor",	/* analog घातer */
-	पूर्ण, अणु
-		.supply	= "dig_12",	/* digital घातer 3, 1.2V */
-	पूर्ण,
-पूर्ण;
+/* The regulator consumer names for external voltage regulators */
+static struct regulator_bulk_data supplies[] = {
+	{
+		.supply = "core",	/* ARM core power, 1.2V */
+	}, {
+		.supply	= "dig_18",	/* digital power 1, 1.8V */
+	}, {
+		.supply	= "d_sensor",	/* sensor power 1, 1.8V */
+	}, {
+		.supply	= "dig_28",	/* digital power 2, 2.8V */
+	}, {
+		.supply	= "a_sensor",	/* analog power */
+	}, {
+		.supply	= "dig_12",	/* digital power 3, 1.2V */
+	},
+};
 
-अटल काष्ठा v4l2_mbus_framefmt m5mols_शेष_ffmt[M5MOLS_RESTYPE_MAX] = अणु
-	[M5MOLS_RESTYPE_MONITOR] = अणु
+static struct v4l2_mbus_framefmt m5mols_default_ffmt[M5MOLS_RESTYPE_MAX] = {
+	[M5MOLS_RESTYPE_MONITOR] = {
 		.width		= 1920,
 		.height		= 1080,
 		.code		= MEDIA_BUS_FMT_VYUY8_2X8,
 		.field		= V4L2_FIELD_NONE,
 		.colorspace	= V4L2_COLORSPACE_JPEG,
-	पूर्ण,
-	[M5MOLS_RESTYPE_CAPTURE] = अणु
+	},
+	[M5MOLS_RESTYPE_CAPTURE] = {
 		.width		= 1920,
 		.height		= 1080,
 		.code		= MEDIA_BUS_FMT_JPEG_1X8,
 		.field		= V4L2_FIELD_NONE,
 		.colorspace	= V4L2_COLORSPACE_JPEG,
-	पूर्ण,
-पूर्ण;
-#घोषणा SIZE_DEFAULT_FFMT	ARRAY_SIZE(m5mols_शेष_ffmt)
+	},
+};
+#define SIZE_DEFAULT_FFMT	ARRAY_SIZE(m5mols_default_ffmt)
 
-अटल स्थिर काष्ठा m5mols_resolution m5mols_reg_res[] = अणु
-	अणु 0x01, M5MOLS_RESTYPE_MONITOR, 128, 96 पूर्ण,	/* SUB-QCIF */
-	अणु 0x03, M5MOLS_RESTYPE_MONITOR, 160, 120 पूर्ण,	/* QQVGA */
-	अणु 0x05, M5MOLS_RESTYPE_MONITOR, 176, 144 पूर्ण,	/* QCIF */
-	अणु 0x06, M5MOLS_RESTYPE_MONITOR, 176, 176 पूर्ण,
-	अणु 0x08, M5MOLS_RESTYPE_MONITOR, 240, 320 पूर्ण,	/* QVGA */
-	अणु 0x09, M5MOLS_RESTYPE_MONITOR, 320, 240 पूर्ण,	/* QVGA */
-	अणु 0x0c, M5MOLS_RESTYPE_MONITOR, 240, 400 पूर्ण,	/* WQVGA */
-	अणु 0x0d, M5MOLS_RESTYPE_MONITOR, 400, 240 पूर्ण,	/* WQVGA */
-	अणु 0x0e, M5MOLS_RESTYPE_MONITOR, 352, 288 पूर्ण,	/* CIF */
-	अणु 0x13, M5MOLS_RESTYPE_MONITOR, 480, 360 पूर्ण,
-	अणु 0x15, M5MOLS_RESTYPE_MONITOR, 640, 360 पूर्ण,	/* qHD */
-	अणु 0x17, M5MOLS_RESTYPE_MONITOR, 640, 480 पूर्ण,	/* VGA */
-	अणु 0x18, M5MOLS_RESTYPE_MONITOR, 720, 480 पूर्ण,
-	अणु 0x1a, M5MOLS_RESTYPE_MONITOR, 800, 480 पूर्ण,	/* WVGA */
-	अणु 0x1f, M5MOLS_RESTYPE_MONITOR, 800, 600 पूर्ण,	/* SVGA */
-	अणु 0x21, M5MOLS_RESTYPE_MONITOR, 1280, 720 पूर्ण,	/* HD */
-	अणु 0x25, M5MOLS_RESTYPE_MONITOR, 1920, 1080 पूर्ण,	/* 1080p */
-	अणु 0x29, M5MOLS_RESTYPE_MONITOR, 3264, 2448 पूर्ण,	/* 2.63fps 8M */
-	अणु 0x39, M5MOLS_RESTYPE_MONITOR, 800, 602 पूर्ण,	/* AHS_MON debug */
+static const struct m5mols_resolution m5mols_reg_res[] = {
+	{ 0x01, M5MOLS_RESTYPE_MONITOR, 128, 96 },	/* SUB-QCIF */
+	{ 0x03, M5MOLS_RESTYPE_MONITOR, 160, 120 },	/* QQVGA */
+	{ 0x05, M5MOLS_RESTYPE_MONITOR, 176, 144 },	/* QCIF */
+	{ 0x06, M5MOLS_RESTYPE_MONITOR, 176, 176 },
+	{ 0x08, M5MOLS_RESTYPE_MONITOR, 240, 320 },	/* QVGA */
+	{ 0x09, M5MOLS_RESTYPE_MONITOR, 320, 240 },	/* QVGA */
+	{ 0x0c, M5MOLS_RESTYPE_MONITOR, 240, 400 },	/* WQVGA */
+	{ 0x0d, M5MOLS_RESTYPE_MONITOR, 400, 240 },	/* WQVGA */
+	{ 0x0e, M5MOLS_RESTYPE_MONITOR, 352, 288 },	/* CIF */
+	{ 0x13, M5MOLS_RESTYPE_MONITOR, 480, 360 },
+	{ 0x15, M5MOLS_RESTYPE_MONITOR, 640, 360 },	/* qHD */
+	{ 0x17, M5MOLS_RESTYPE_MONITOR, 640, 480 },	/* VGA */
+	{ 0x18, M5MOLS_RESTYPE_MONITOR, 720, 480 },
+	{ 0x1a, M5MOLS_RESTYPE_MONITOR, 800, 480 },	/* WVGA */
+	{ 0x1f, M5MOLS_RESTYPE_MONITOR, 800, 600 },	/* SVGA */
+	{ 0x21, M5MOLS_RESTYPE_MONITOR, 1280, 720 },	/* HD */
+	{ 0x25, M5MOLS_RESTYPE_MONITOR, 1920, 1080 },	/* 1080p */
+	{ 0x29, M5MOLS_RESTYPE_MONITOR, 3264, 2448 },	/* 2.63fps 8M */
+	{ 0x39, M5MOLS_RESTYPE_MONITOR, 800, 602 },	/* AHS_MON debug */
 
-	अणु 0x02, M5MOLS_RESTYPE_CAPTURE, 320, 240 पूर्ण,	/* QVGA */
-	अणु 0x04, M5MOLS_RESTYPE_CAPTURE, 400, 240 पूर्ण,	/* WQVGA */
-	अणु 0x07, M5MOLS_RESTYPE_CAPTURE, 480, 360 पूर्ण,
-	अणु 0x08, M5MOLS_RESTYPE_CAPTURE, 640, 360 पूर्ण,	/* qHD */
-	अणु 0x09, M5MOLS_RESTYPE_CAPTURE, 640, 480 पूर्ण,	/* VGA */
-	अणु 0x0a, M5MOLS_RESTYPE_CAPTURE, 800, 480 पूर्ण,	/* WVGA */
-	अणु 0x10, M5MOLS_RESTYPE_CAPTURE, 1280, 720 पूर्ण,	/* HD */
-	अणु 0x14, M5MOLS_RESTYPE_CAPTURE, 1280, 960 पूर्ण,	/* 1M */
-	अणु 0x17, M5MOLS_RESTYPE_CAPTURE, 1600, 1200 पूर्ण,	/* 2M */
-	अणु 0x19, M5MOLS_RESTYPE_CAPTURE, 1920, 1080 पूर्ण,	/* Full-HD */
-	अणु 0x1a, M5MOLS_RESTYPE_CAPTURE, 2048, 1152 पूर्ण,	/* 3Mega */
-	अणु 0x1b, M5MOLS_RESTYPE_CAPTURE, 2048, 1536 पूर्ण,
-	अणु 0x1c, M5MOLS_RESTYPE_CAPTURE, 2560, 1440 पूर्ण,	/* 4Mega */
-	अणु 0x1d, M5MOLS_RESTYPE_CAPTURE, 2560, 1536 पूर्ण,
-	अणु 0x1f, M5MOLS_RESTYPE_CAPTURE, 2560, 1920 पूर्ण,	/* 5Mega */
-	अणु 0x21, M5MOLS_RESTYPE_CAPTURE, 3264, 1836 पूर्ण,	/* 6Mega */
-	अणु 0x22, M5MOLS_RESTYPE_CAPTURE, 3264, 1960 पूर्ण,
-	अणु 0x25, M5MOLS_RESTYPE_CAPTURE, 3264, 2448 पूर्ण,	/* 8Mega */
-पूर्ण;
+	{ 0x02, M5MOLS_RESTYPE_CAPTURE, 320, 240 },	/* QVGA */
+	{ 0x04, M5MOLS_RESTYPE_CAPTURE, 400, 240 },	/* WQVGA */
+	{ 0x07, M5MOLS_RESTYPE_CAPTURE, 480, 360 },
+	{ 0x08, M5MOLS_RESTYPE_CAPTURE, 640, 360 },	/* qHD */
+	{ 0x09, M5MOLS_RESTYPE_CAPTURE, 640, 480 },	/* VGA */
+	{ 0x0a, M5MOLS_RESTYPE_CAPTURE, 800, 480 },	/* WVGA */
+	{ 0x10, M5MOLS_RESTYPE_CAPTURE, 1280, 720 },	/* HD */
+	{ 0x14, M5MOLS_RESTYPE_CAPTURE, 1280, 960 },	/* 1M */
+	{ 0x17, M5MOLS_RESTYPE_CAPTURE, 1600, 1200 },	/* 2M */
+	{ 0x19, M5MOLS_RESTYPE_CAPTURE, 1920, 1080 },	/* Full-HD */
+	{ 0x1a, M5MOLS_RESTYPE_CAPTURE, 2048, 1152 },	/* 3Mega */
+	{ 0x1b, M5MOLS_RESTYPE_CAPTURE, 2048, 1536 },
+	{ 0x1c, M5MOLS_RESTYPE_CAPTURE, 2560, 1440 },	/* 4Mega */
+	{ 0x1d, M5MOLS_RESTYPE_CAPTURE, 2560, 1536 },
+	{ 0x1f, M5MOLS_RESTYPE_CAPTURE, 2560, 1920 },	/* 5Mega */
+	{ 0x21, M5MOLS_RESTYPE_CAPTURE, 3264, 1836 },	/* 6Mega */
+	{ 0x22, M5MOLS_RESTYPE_CAPTURE, 3264, 1960 },
+	{ 0x25, M5MOLS_RESTYPE_CAPTURE, 3264, 2448 },	/* 8Mega */
+};
 
 /**
- * m5mols_swap_byte - an byte array to पूर्णांकeger conversion function
+ * m5mols_swap_byte - an byte array to integer conversion function
  * @data: byte array
  * @length: size in bytes of I2C packet defined in the M-5MOLS datasheet
  *
- * Convert I2C data byte array with perक्रमming any required byte
- * reordering to assure proper values क्रम each data type, regardless
+ * Convert I2C data byte array with performing any required byte
+ * reordering to assure proper values for each data type, regardless
  * of the architecture endianness.
  */
-अटल u32 m5mols_swap_byte(u8 *data, u8 length)
-अणु
-	अगर (length == 1)
-		वापस *data;
-	अन्यथा अगर (length == 2)
-		वापस be16_to_cpu(*((__be16 *)data));
-	अन्यथा
-		वापस be32_to_cpu(*((__be32 *)data));
-पूर्ण
+static u32 m5mols_swap_byte(u8 *data, u8 length)
+{
+	if (length == 1)
+		return *data;
+	else if (length == 2)
+		return be16_to_cpu(*((__be16 *)data));
+	else
+		return be32_to_cpu(*((__be32 *)data));
+}
 
 /**
- * m5mols_पढ़ो -  I2C पढ़ो function
- * @sd: sub-device, as poपूर्णांकed by काष्ठा v4l2_subdev
+ * m5mols_read -  I2C read function
+ * @sd: sub-device, as pointed by struct v4l2_subdev
  * @size: desired size of I2C packet
- * @reg: combination of size, category and command क्रम the I2C packet
- * @val: पढ़ो value
+ * @reg: combination of size, category and command for the I2C packet
+ * @val: read value
  *
- * Returns 0 on success, or अन्यथा negative त्रुटि_सं.
+ * Returns 0 on success, or else negative errno.
  */
-अटल पूर्णांक m5mols_पढ़ो(काष्ठा v4l2_subdev *sd, u32 size, u32 reg, u32 *val)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	काष्ठा m5mols_info *info = to_m5mols(sd);
+static int m5mols_read(struct v4l2_subdev *sd, u32 size, u32 reg, u32 *val)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct m5mols_info *info = to_m5mols(sd);
 	u8 rbuf[M5MOLS_I2C_MAX_SIZE + 1];
 	u8 category = I2C_CATEGORY(reg);
 	u8 cmd = I2C_COMMAND(reg);
-	काष्ठा i2c_msg msg[2];
+	struct i2c_msg msg[2];
 	u8 wbuf[5];
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!client->adapter)
-		वापस -ENODEV;
+	if (!client->adapter)
+		return -ENODEV;
 
 	msg[0].addr = client->addr;
 	msg[0].flags = 0;
@@ -166,96 +165,96 @@ module_param(m5mols_debug, पूर्णांक, 0644);
 	msg[1].len = size + 1;
 	msg[1].buf = rbuf;
 
-	/* minimum stabilization समय */
+	/* minimum stabilization time */
 	usleep_range(200, 300);
 
 	ret = i2c_transfer(client->adapter, msg, 2);
 
-	अगर (ret == 2) अणु
+	if (ret == 2) {
 		*val = m5mols_swap_byte(&rbuf[1], size);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (info->isp_पढ़ोy)
+	if (info->isp_ready)
 		v4l2_err(sd, "read failed: size:%d cat:%02x cmd:%02x. %d\n",
 			 size, category, cmd, ret);
 
-	वापस ret < 0 ? ret : -EIO;
-पूर्ण
+	return ret < 0 ? ret : -EIO;
+}
 
-पूर्णांक m5mols_पढ़ो_u8(काष्ठा v4l2_subdev *sd, u32 reg, u8 *val)
-अणु
+int m5mols_read_u8(struct v4l2_subdev *sd, u32 reg, u8 *val)
+{
 	u32 val_32;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (I2C_SIZE(reg) != 1) अणु
+	if (I2C_SIZE(reg) != 1) {
 		v4l2_err(sd, "Wrong data size\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = m5mols_पढ़ो(sd, I2C_SIZE(reg), reg, &val_32);
-	अगर (ret)
-		वापस ret;
+	ret = m5mols_read(sd, I2C_SIZE(reg), reg, &val_32);
+	if (ret)
+		return ret;
 
 	*val = (u8)val_32;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक m5mols_पढ़ो_u16(काष्ठा v4l2_subdev *sd, u32 reg, u16 *val)
-अणु
+int m5mols_read_u16(struct v4l2_subdev *sd, u32 reg, u16 *val)
+{
 	u32 val_32;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (I2C_SIZE(reg) != 2) अणु
+	if (I2C_SIZE(reg) != 2) {
 		v4l2_err(sd, "Wrong data size\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = m5mols_पढ़ो(sd, I2C_SIZE(reg), reg, &val_32);
-	अगर (ret)
-		वापस ret;
+	ret = m5mols_read(sd, I2C_SIZE(reg), reg, &val_32);
+	if (ret)
+		return ret;
 
 	*val = (u16)val_32;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक m5mols_पढ़ो_u32(काष्ठा v4l2_subdev *sd, u32 reg, u32 *val)
-अणु
-	अगर (I2C_SIZE(reg) != 4) अणु
+int m5mols_read_u32(struct v4l2_subdev *sd, u32 reg, u32 *val)
+{
+	if (I2C_SIZE(reg) != 4) {
 		v4l2_err(sd, "Wrong data size\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस m5mols_पढ़ो(sd, I2C_SIZE(reg), reg, val);
-पूर्ण
+	return m5mols_read(sd, I2C_SIZE(reg), reg, val);
+}
 
 /**
- * m5mols_ग_लिखो - I2C command ग_लिखो function
- * @sd: sub-device, as poपूर्णांकed by काष्ठा v4l2_subdev
- * @reg: combination of size, category and command क्रम the I2C packet
- * @val: value to ग_लिखो
+ * m5mols_write - I2C command write function
+ * @sd: sub-device, as pointed by struct v4l2_subdev
+ * @reg: combination of size, category and command for the I2C packet
+ * @val: value to write
  *
- * Returns 0 on success, or अन्यथा negative त्रुटि_सं.
+ * Returns 0 on success, or else negative errno.
  */
-पूर्णांक m5mols_ग_लिखो(काष्ठा v4l2_subdev *sd, u32 reg, u32 val)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	काष्ठा m5mols_info *info = to_m5mols(sd);
+int m5mols_write(struct v4l2_subdev *sd, u32 reg, u32 val)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct m5mols_info *info = to_m5mols(sd);
 	u8 wbuf[M5MOLS_I2C_MAX_SIZE + 4];
 	u8 category = I2C_CATEGORY(reg);
 	u8 cmd = I2C_COMMAND(reg);
 	u8 size	= I2C_SIZE(reg);
 	u32 *buf = (u32 *)&wbuf[4];
-	काष्ठा i2c_msg msg[1];
-	पूर्णांक ret;
+	struct i2c_msg msg[1];
+	int ret;
 
-	अगर (!client->adapter)
-		वापस -ENODEV;
+	if (!client->adapter)
+		return -ENODEV;
 
-	अगर (size != 1 && size != 2 && size != 4) अणु
+	if (size != 1 && size != 2 && size != 4) {
 		v4l2_err(sd, "Wrong data size\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	msg->addr = client->addr;
 	msg->flags = 0;
@@ -268,199 +267,199 @@ module_param(m5mols_debug, पूर्णांक, 0644);
 
 	*buf = m5mols_swap_byte((u8 *)&val, size);
 
-	/* minimum stabilization समय */
+	/* minimum stabilization time */
 	usleep_range(200, 300);
 
 	ret = i2c_transfer(client->adapter, msg, 1);
-	अगर (ret == 1)
-		वापस 0;
+	if (ret == 1)
+		return 0;
 
-	अगर (info->isp_पढ़ोy)
+	if (info->isp_ready)
 		v4l2_err(sd, "write failed: cat:%02x cmd:%02x ret:%d\n",
 			 category, cmd, ret);
 
-	वापस ret < 0 ? ret : -EIO;
-पूर्ण
+	return ret < 0 ? ret : -EIO;
+}
 
 /**
- * m5mols_busy_रुको - Busy रुकोing with I2C रेजिस्टर polling
- * @sd: sub-device, as poपूर्णांकed by काष्ठा v4l2_subdev
- * @reg: the I2C_REG() address of an 8-bit status रेजिस्टर to check
- * @value: expected status रेजिस्टर value
- * @mask: bit mask क्रम the पढ़ो status रेजिस्टर value
- * @समयout: समयout in milliseconds, or -1 क्रम शेष समयout
+ * m5mols_busy_wait - Busy waiting with I2C register polling
+ * @sd: sub-device, as pointed by struct v4l2_subdev
+ * @reg: the I2C_REG() address of an 8-bit status register to check
+ * @value: expected status register value
+ * @mask: bit mask for the read status register value
+ * @timeout: timeout in milliseconds, or -1 for default timeout
  *
- * The @reg रेजिस्टर value is ORed with @mask beक्रमe comparing with @value.
+ * The @reg register value is ORed with @mask before comparing with @value.
  *
- * Return: 0 अगर the requested condition became true within less than
- *         @समयout ms, or अन्यथा negative त्रुटि_सं.
+ * Return: 0 if the requested condition became true within less than
+ *         @timeout ms, or else negative errno.
  */
-पूर्णांक m5mols_busy_रुको(काष्ठा v4l2_subdev *sd, u32 reg, u32 value, u32 mask,
-		     पूर्णांक समयout)
-अणु
-	पूर्णांक ms = समयout < 0 ? M5MOLS_BUSY_WAIT_DEF_TIMEOUT : समयout;
-	अचिन्हित दीर्घ end = jअगरfies + msecs_to_jअगरfies(ms);
+int m5mols_busy_wait(struct v4l2_subdev *sd, u32 reg, u32 value, u32 mask,
+		     int timeout)
+{
+	int ms = timeout < 0 ? M5MOLS_BUSY_WAIT_DEF_TIMEOUT : timeout;
+	unsigned long end = jiffies + msecs_to_jiffies(ms);
 	u8 status;
 
-	करो अणु
-		पूर्णांक ret = m5mols_पढ़ो_u8(sd, reg, &status);
+	do {
+		int ret = m5mols_read_u8(sd, reg, &status);
 
-		अगर (ret < 0 && !(mask & M5MOLS_I2C_RDY_WAIT_FL))
-			वापस ret;
-		अगर (!ret && (status & mask & 0xff) == (value & 0xff))
-			वापस 0;
+		if (ret < 0 && !(mask & M5MOLS_I2C_RDY_WAIT_FL))
+			return ret;
+		if (!ret && (status & mask & 0xff) == (value & 0xff))
+			return 0;
 		usleep_range(100, 250);
-	पूर्ण जबतक (ms > 0 && समय_is_after_jअगरfies(end));
+	} while (ms > 0 && time_is_after_jiffies(end));
 
-	वापस -EBUSY;
-पूर्ण
+	return -EBUSY;
+}
 
 /**
- * m5mols_enable_पूर्णांकerrupt - Clear पूर्णांकerrupt pending bits and unmask पूर्णांकerrupts
- * @sd: sub-device, as poपूर्णांकed by काष्ठा v4l2_subdev
- * @reg: combination of size, category and command क्रम the I2C packet
+ * m5mols_enable_interrupt - Clear interrupt pending bits and unmask interrupts
+ * @sd: sub-device, as pointed by struct v4l2_subdev
+ * @reg: combination of size, category and command for the I2C packet
  *
- * Beक्रमe writing desired पूर्णांकerrupt value the INT_FACTOR रेजिस्टर should
- * be पढ़ो to clear pending पूर्णांकerrupts.
+ * Before writing desired interrupt value the INT_FACTOR register should
+ * be read to clear pending interrupts.
  */
-पूर्णांक m5mols_enable_पूर्णांकerrupt(काष्ठा v4l2_subdev *sd, u8 reg)
-अणु
-	काष्ठा m5mols_info *info = to_m5mols(sd);
+int m5mols_enable_interrupt(struct v4l2_subdev *sd, u8 reg)
+{
+	struct m5mols_info *info = to_m5mols(sd);
 	u8 mask = is_available_af(info) ? REG_INT_AF : 0;
 	u8 dummy;
-	पूर्णांक ret;
+	int ret;
 
-	ret = m5mols_पढ़ो_u8(sd, SYSTEM_INT_FACTOR, &dummy);
-	अगर (!ret)
-		ret = m5mols_ग_लिखो(sd, SYSTEM_INT_ENABLE, reg & ~mask);
-	वापस ret;
-पूर्ण
+	ret = m5mols_read_u8(sd, SYSTEM_INT_FACTOR, &dummy);
+	if (!ret)
+		ret = m5mols_write(sd, SYSTEM_INT_ENABLE, reg & ~mask);
+	return ret;
+}
 
-पूर्णांक m5mols_रुको_पूर्णांकerrupt(काष्ठा v4l2_subdev *sd, u8 irq_mask, u32 समयout)
-अणु
-	काष्ठा m5mols_info *info = to_m5mols(sd);
+int m5mols_wait_interrupt(struct v4l2_subdev *sd, u8 irq_mask, u32 timeout)
+{
+	struct m5mols_info *info = to_m5mols(sd);
 
-	पूर्णांक ret = रुको_event_पूर्णांकerruptible_समयout(info->irq_रुकोq,
-				atomic_add_unless(&info->irq_करोne, -1, 0),
-				msecs_to_jअगरfies(समयout));
-	अगर (ret <= 0)
-		वापस ret ? ret : -ETIMEDOUT;
+	int ret = wait_event_interruptible_timeout(info->irq_waitq,
+				atomic_add_unless(&info->irq_done, -1, 0),
+				msecs_to_jiffies(timeout));
+	if (ret <= 0)
+		return ret ? ret : -ETIMEDOUT;
 
-	वापस m5mols_busy_रुको(sd, SYSTEM_INT_FACTOR, irq_mask,
+	return m5mols_busy_wait(sd, SYSTEM_INT_FACTOR, irq_mask,
 				M5MOLS_I2C_RDY_WAIT_FL | irq_mask, -1);
-पूर्ण
+}
 
 /**
  * m5mols_reg_mode - Write the mode and check busy status
- * @sd: sub-device, as poपूर्णांकed by काष्ठा v4l2_subdev
+ * @sd: sub-device, as pointed by struct v4l2_subdev
  * @mode: the required operation mode
  *
  * It always accompanies a little delay changing the M-5MOLS mode, so it is
  * needed checking current busy status to guarantee right mode.
  */
-अटल पूर्णांक m5mols_reg_mode(काष्ठा v4l2_subdev *sd, u8 mode)
-अणु
-	पूर्णांक ret = m5mols_ग_लिखो(sd, SYSTEM_SYSMODE, mode);
-	अगर (ret < 0)
-		वापस ret;
-	वापस m5mols_busy_रुको(sd, SYSTEM_SYSMODE, mode, 0xff,
+static int m5mols_reg_mode(struct v4l2_subdev *sd, u8 mode)
+{
+	int ret = m5mols_write(sd, SYSTEM_SYSMODE, mode);
+	if (ret < 0)
+		return ret;
+	return m5mols_busy_wait(sd, SYSTEM_SYSMODE, mode, 0xff,
 				M5MOLS_MODE_CHANGE_TIMEOUT);
-पूर्ण
+}
 
 /**
  * m5mols_set_mode - set the M-5MOLS controller mode
- * @info: M-5MOLS driver data काष्ठाure
+ * @info: M-5MOLS driver data structure
  * @mode: the required operation mode
  *
- * The commands of M-5MOLS are grouped पूर्णांकo specअगरic modes. Each functionality
+ * The commands of M-5MOLS are grouped into specific modes. Each functionality
  * can be guaranteed only when the sensor is operating in mode which a command
- * beदीर्घs to.
+ * belongs to.
  */
-पूर्णांक m5mols_set_mode(काष्ठा m5mols_info *info, u8 mode)
-अणु
-	काष्ठा v4l2_subdev *sd = &info->sd;
-	पूर्णांक ret = -EINVAL;
+int m5mols_set_mode(struct m5mols_info *info, u8 mode)
+{
+	struct v4l2_subdev *sd = &info->sd;
+	int ret = -EINVAL;
 	u8 reg;
 
-	अगर (mode < REG_PARAMETER || mode > REG_CAPTURE)
-		वापस ret;
+	if (mode < REG_PARAMETER || mode > REG_CAPTURE)
+		return ret;
 
-	ret = m5mols_पढ़ो_u8(sd, SYSTEM_SYSMODE, &reg);
-	अगर (ret || reg == mode)
-		वापस ret;
+	ret = m5mols_read_u8(sd, SYSTEM_SYSMODE, &reg);
+	if (ret || reg == mode)
+		return ret;
 
-	चयन (reg) अणु
-	हाल REG_PARAMETER:
+	switch (reg) {
+	case REG_PARAMETER:
 		ret = m5mols_reg_mode(sd, REG_MONITOR);
-		अगर (mode == REG_MONITOR)
-			अवरोध;
-		अगर (!ret)
+		if (mode == REG_MONITOR)
+			break;
+		if (!ret)
 			ret = m5mols_reg_mode(sd, REG_CAPTURE);
-		अवरोध;
+		break;
 
-	हाल REG_MONITOR:
-		अगर (mode == REG_PARAMETER) अणु
+	case REG_MONITOR:
+		if (mode == REG_PARAMETER) {
 			ret = m5mols_reg_mode(sd, REG_PARAMETER);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		ret = m5mols_reg_mode(sd, REG_CAPTURE);
-		अवरोध;
+		break;
 
-	हाल REG_CAPTURE:
+	case REG_CAPTURE:
 		ret = m5mols_reg_mode(sd, REG_MONITOR);
-		अगर (mode == REG_MONITOR)
-			अवरोध;
-		अगर (!ret)
+		if (mode == REG_MONITOR)
+			break;
+		if (!ret)
 			ret = m5mols_reg_mode(sd, REG_PARAMETER);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		v4l2_warn(sd, "Wrong mode: %d\n", mode);
-	पूर्ण
+	}
 
-	अगर (!ret)
+	if (!ret)
 		info->mode = mode;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * m5mols_get_version - retrieve full revisions inक्रमmation of M-5MOLS
- * @sd: sub-device, as poपूर्णांकed by काष्ठा v4l2_subdev
+ * m5mols_get_version - retrieve full revisions information of M-5MOLS
+ * @sd: sub-device, as pointed by struct v4l2_subdev
  *
- * The version inक्रमmation includes revisions of hardware and firmware,
+ * The version information includes revisions of hardware and firmware,
  * AutoFocus alghorithm version and the version string.
  */
-अटल पूर्णांक m5mols_get_version(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा m5mols_info *info = to_m5mols(sd);
-	काष्ठा m5mols_version *ver = &info->ver;
+static int m5mols_get_version(struct v4l2_subdev *sd)
+{
+	struct m5mols_info *info = to_m5mols(sd);
+	struct m5mols_version *ver = &info->ver;
 	u8 *str = ver->str;
-	पूर्णांक i;
-	पूर्णांक ret;
+	int i;
+	int ret;
 
-	ret = m5mols_पढ़ो_u8(sd, SYSTEM_VER_CUSTOMER, &ver->customer);
-	अगर (!ret)
-		ret = m5mols_पढ़ो_u8(sd, SYSTEM_VER_PROJECT, &ver->project);
-	अगर (!ret)
-		ret = m5mols_पढ़ो_u16(sd, SYSTEM_VER_FIRMWARE, &ver->fw);
-	अगर (!ret)
-		ret = m5mols_पढ़ो_u16(sd, SYSTEM_VER_HARDWARE, &ver->hw);
-	अगर (!ret)
-		ret = m5mols_पढ़ो_u16(sd, SYSTEM_VER_PARAMETER, &ver->param);
-	अगर (!ret)
-		ret = m5mols_पढ़ो_u16(sd, SYSTEM_VER_AWB, &ver->awb);
-	अगर (!ret)
-		ret = m5mols_पढ़ो_u8(sd, AF_VERSION, &ver->af);
-	अगर (ret)
-		वापस ret;
+	ret = m5mols_read_u8(sd, SYSTEM_VER_CUSTOMER, &ver->customer);
+	if (!ret)
+		ret = m5mols_read_u8(sd, SYSTEM_VER_PROJECT, &ver->project);
+	if (!ret)
+		ret = m5mols_read_u16(sd, SYSTEM_VER_FIRMWARE, &ver->fw);
+	if (!ret)
+		ret = m5mols_read_u16(sd, SYSTEM_VER_HARDWARE, &ver->hw);
+	if (!ret)
+		ret = m5mols_read_u16(sd, SYSTEM_VER_PARAMETER, &ver->param);
+	if (!ret)
+		ret = m5mols_read_u16(sd, SYSTEM_VER_AWB, &ver->awb);
+	if (!ret)
+		ret = m5mols_read_u8(sd, AF_VERSION, &ver->af);
+	if (ret)
+		return ret;
 
-	क्रम (i = 0; i < VERSION_STRING_SIZE; i++) अणु
-		ret = m5mols_पढ़ो_u8(sd, SYSTEM_VER_STRING, &str[i]);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	for (i = 0; i < VERSION_STRING_SIZE; i++) {
+		ret = m5mols_read_u8(sd, SYSTEM_VER_STRING, &str[i]);
+		if (ret)
+			return ret;
+	}
 
 	v4l2_info(sd, "Manufacturer\t[%s]\n",
 			is_manufacturer(info, REG_SAMSUNG_ELECTRO) ?
@@ -472,149 +471,149 @@ module_param(m5mols_debug, पूर्णांक, 0644);
 	v4l2_info(sd, "Customer/Project\t[0x%02x/0x%02x]\n",
 			info->ver.customer, info->ver.project);
 
-	अगर (!is_available_af(info))
+	if (!is_available_af(info))
 		v4l2_info(sd, "No support Auto Focus on this firmware\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * __find_restype - Lookup M-5MOLS resolution type according to pixel code
  * @code: pixel code
  */
-अटल क्रमागत m5mols_restype __find_restype(u32 code)
-अणु
-	क्रमागत m5mols_restype type = M5MOLS_RESTYPE_MONITOR;
+static enum m5mols_restype __find_restype(u32 code)
+{
+	enum m5mols_restype type = M5MOLS_RESTYPE_MONITOR;
 
-	करो अणु
-		अगर (code == m5mols_शेष_ffmt[type].code)
-			वापस type;
-	पूर्ण जबतक (type++ != SIZE_DEFAULT_FFMT);
+	do {
+		if (code == m5mols_default_ffmt[type].code)
+			return type;
+	} while (type++ != SIZE_DEFAULT_FFMT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * __find_resolution - Lookup preset and type of M-5MOLS's resolution
- * @sd: sub-device, as poपूर्णांकed by काष्ठा v4l2_subdev
- * @mf: pixel क्रमmat to find/negotiate the resolution preset क्रम
+ * @sd: sub-device, as pointed by struct v4l2_subdev
+ * @mf: pixel format to find/negotiate the resolution preset for
  * @type: M-5MOLS resolution type
- * @resolution:	M-5MOLS resolution preset रेजिस्टर value
+ * @resolution:	M-5MOLS resolution preset register value
  *
  * Find nearest resolution matching resolution preset and adjust mf
  * to supported values.
  */
-अटल पूर्णांक __find_resolution(काष्ठा v4l2_subdev *sd,
-			     काष्ठा v4l2_mbus_framefmt *mf,
-			     क्रमागत m5mols_restype *type,
+static int __find_resolution(struct v4l2_subdev *sd,
+			     struct v4l2_mbus_framefmt *mf,
+			     enum m5mols_restype *type,
 			     u32 *resolution)
-अणु
-	स्थिर काष्ठा m5mols_resolution *fsize = &m5mols_reg_res[0];
-	स्थिर काष्ठा m5mols_resolution *match = शून्य;
-	क्रमागत m5mols_restype stype = __find_restype(mf->code);
-	पूर्णांक i = ARRAY_SIZE(m5mols_reg_res);
-	अचिन्हित पूर्णांक min_err = ~0;
+{
+	const struct m5mols_resolution *fsize = &m5mols_reg_res[0];
+	const struct m5mols_resolution *match = NULL;
+	enum m5mols_restype stype = __find_restype(mf->code);
+	int i = ARRAY_SIZE(m5mols_reg_res);
+	unsigned int min_err = ~0;
 
-	जबतक (i--) अणु
-		पूर्णांक err;
-		अगर (stype == fsize->type) अणु
-			err = असल(fsize->width - mf->width)
-				+ असल(fsize->height - mf->height);
+	while (i--) {
+		int err;
+		if (stype == fsize->type) {
+			err = abs(fsize->width - mf->width)
+				+ abs(fsize->height - mf->height);
 
-			अगर (err < min_err) अणु
+			if (err < min_err) {
 				min_err = err;
 				match = fsize;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		fsize++;
-	पूर्ण
-	अगर (match) अणु
+	}
+	if (match) {
 		mf->width  = match->width;
 		mf->height = match->height;
 		*resolution = match->reg;
 		*type = stype;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल काष्ठा v4l2_mbus_framefmt *__find_क्रमmat(काष्ठा m5mols_info *info,
-				काष्ठा v4l2_subdev_pad_config *cfg,
-				क्रमागत v4l2_subdev_क्रमmat_whence which,
-				क्रमागत m5mols_restype type)
-अणु
-	अगर (which == V4L2_SUBDEV_FORMAT_TRY)
-		वापस cfg ? v4l2_subdev_get_try_क्रमmat(&info->sd, cfg, 0) : शून्य;
+static struct v4l2_mbus_framefmt *__find_format(struct m5mols_info *info,
+				struct v4l2_subdev_pad_config *cfg,
+				enum v4l2_subdev_format_whence which,
+				enum m5mols_restype type)
+{
+	if (which == V4L2_SUBDEV_FORMAT_TRY)
+		return cfg ? v4l2_subdev_get_try_format(&info->sd, cfg, 0) : NULL;
 
-	वापस &info->ffmt[type];
-पूर्ण
+	return &info->ffmt[type];
+}
 
-अटल पूर्णांक m5mols_get_fmt(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_pad_config *cfg,
-			  काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा m5mols_info *info = to_m5mols(sd);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
-	पूर्णांक ret = 0;
+static int m5mols_get_fmt(struct v4l2_subdev *sd, struct v4l2_subdev_pad_config *cfg,
+			  struct v4l2_subdev_format *fmt)
+{
+	struct m5mols_info *info = to_m5mols(sd);
+	struct v4l2_mbus_framefmt *format;
+	int ret = 0;
 
 	mutex_lock(&info->lock);
 
-	क्रमmat = __find_क्रमmat(info, cfg, fmt->which, info->res_type);
-	अगर (क्रमmat)
-		fmt->क्रमmat = *क्रमmat;
-	अन्यथा
+	format = __find_format(info, cfg, fmt->which, info->res_type);
+	if (format)
+		fmt->format = *format;
+	else
 		ret = -EINVAL;
 
 	mutex_unlock(&info->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक m5mols_set_fmt(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_pad_config *cfg,
-			  काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा m5mols_info *info = to_m5mols(sd);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat = &fmt->क्रमmat;
-	काष्ठा v4l2_mbus_framefmt *sfmt;
-	क्रमागत m5mols_restype type;
+static int m5mols_set_fmt(struct v4l2_subdev *sd, struct v4l2_subdev_pad_config *cfg,
+			  struct v4l2_subdev_format *fmt)
+{
+	struct m5mols_info *info = to_m5mols(sd);
+	struct v4l2_mbus_framefmt *format = &fmt->format;
+	struct v4l2_mbus_framefmt *sfmt;
+	enum m5mols_restype type;
 	u32 resolution = 0;
-	पूर्णांक ret;
+	int ret;
 
-	ret = __find_resolution(sd, क्रमmat, &type, &resolution);
-	अगर (ret < 0)
-		वापस ret;
+	ret = __find_resolution(sd, format, &type, &resolution);
+	if (ret < 0)
+		return ret;
 
-	sfmt = __find_क्रमmat(info, cfg, fmt->which, type);
-	अगर (!sfmt)
-		वापस 0;
+	sfmt = __find_format(info, cfg, fmt->which, type);
+	if (!sfmt)
+		return 0;
 
 	mutex_lock(&info->lock);
 
-	क्रमmat->code = m5mols_शेष_ffmt[type].code;
-	क्रमmat->colorspace = V4L2_COLORSPACE_JPEG;
-	क्रमmat->field = V4L2_FIELD_NONE;
+	format->code = m5mols_default_ffmt[type].code;
+	format->colorspace = V4L2_COLORSPACE_JPEG;
+	format->field = V4L2_FIELD_NONE;
 
-	अगर (fmt->which == V4L2_SUBDEV_FORMAT_ACTIVE) अणु
-		*sfmt = *क्रमmat;
+	if (fmt->which == V4L2_SUBDEV_FORMAT_ACTIVE) {
+		*sfmt = *format;
 		info->resolution = resolution;
 		info->res_type = type;
-	पूर्ण
+	}
 
 	mutex_unlock(&info->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक m5mols_get_frame_desc(काष्ठा v4l2_subdev *sd, अचिन्हित पूर्णांक pad,
-				 काष्ठा v4l2_mbus_frame_desc *fd)
-अणु
-	काष्ठा m5mols_info *info = to_m5mols(sd);
+static int m5mols_get_frame_desc(struct v4l2_subdev *sd, unsigned int pad,
+				 struct v4l2_mbus_frame_desc *fd)
+{
+	struct m5mols_info *info = to_m5mols(sd);
 
-	अगर (pad != 0 || fd == शून्य)
-		वापस -EINVAL;
+	if (pad != 0 || fd == NULL)
+		return -EINVAL;
 
 	mutex_lock(&info->lock);
 	/*
-	 * .get_frame_desc is only used क्रम compressed क्रमmats,
-	 * thus we always वापस the capture frame parameters here.
+	 * .get_frame_desc is only used for compressed formats,
+	 * thus we always return the capture frame parameters here.
 	 */
 	fd->entry[0].length = info->cap.buf_size;
 	fd->entry[0].pixelcode = info->ffmt[M5MOLS_RESTYPE_CAPTURE].code;
@@ -623,17 +622,17 @@ module_param(m5mols_debug, पूर्णांक, 0644);
 	fd->entry[0].flags = V4L2_MBUS_FRAME_DESC_FL_LEN_MAX;
 	fd->num_entries = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक m5mols_set_frame_desc(काष्ठा v4l2_subdev *sd, अचिन्हित पूर्णांक pad,
-				 काष्ठा v4l2_mbus_frame_desc *fd)
-अणु
-	काष्ठा m5mols_info *info = to_m5mols(sd);
-	काष्ठा v4l2_mbus_framefmt *mf = &info->ffmt[M5MOLS_RESTYPE_CAPTURE];
+static int m5mols_set_frame_desc(struct v4l2_subdev *sd, unsigned int pad,
+				 struct v4l2_mbus_frame_desc *fd)
+{
+	struct m5mols_info *info = to_m5mols(sd);
+	struct v4l2_mbus_framefmt *mf = &info->ffmt[M5MOLS_RESTYPE_CAPTURE];
 
-	अगर (pad != 0 || fd == शून्य)
-		वापस -EINVAL;
+	if (pad != 0 || fd == NULL)
+		return -EINVAL;
 
 	fd->entry[0].flags = V4L2_MBUS_FRAME_DESC_FL_LEN_MAX;
 	fd->num_entries = 1;
@@ -644,412 +643,412 @@ module_param(m5mols_debug, पूर्णांक, 0644);
 	info->cap.buf_size = fd->entry[0].length;
 	mutex_unlock(&info->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक m5mols_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
-				 काष्ठा v4l2_subdev_pad_config *cfg,
-				 काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
-अणु
-	अगर (!code || code->index >= SIZE_DEFAULT_FFMT)
-		वापस -EINVAL;
+static int m5mols_enum_mbus_code(struct v4l2_subdev *sd,
+				 struct v4l2_subdev_pad_config *cfg,
+				 struct v4l2_subdev_mbus_code_enum *code)
+{
+	if (!code || code->index >= SIZE_DEFAULT_FFMT)
+		return -EINVAL;
 
-	code->code = m5mols_शेष_ffmt[code->index].code;
+	code->code = m5mols_default_ffmt[code->index].code;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_pad_ops m5mols_pad_ops = अणु
-	.क्रमागत_mbus_code	= m5mols_क्रमागत_mbus_code,
+static const struct v4l2_subdev_pad_ops m5mols_pad_ops = {
+	.enum_mbus_code	= m5mols_enum_mbus_code,
 	.get_fmt	= m5mols_get_fmt,
 	.set_fmt	= m5mols_set_fmt,
 	.get_frame_desc	= m5mols_get_frame_desc,
 	.set_frame_desc	= m5mols_set_frame_desc,
-पूर्ण;
+};
 
 /**
- * m5mols_restore_controls - Apply current control values to the रेजिस्टरs
- * @info: M-5MOLS driver data काष्ठाure
+ * m5mols_restore_controls - Apply current control values to the registers
+ * @info: M-5MOLS driver data structure
  *
- * m5mols_करो_scenemode() handles all parameters क्रम which there is yet no
- * inभागidual control. It should be replaced at some poपूर्णांक by setting each
- * control inभागidually, in required रेजिस्टर set up order.
+ * m5mols_do_scenemode() handles all parameters for which there is yet no
+ * individual control. It should be replaced at some point by setting each
+ * control individually, in required register set up order.
  */
-पूर्णांक m5mols_restore_controls(काष्ठा m5mols_info *info)
-अणु
-	पूर्णांक ret;
+int m5mols_restore_controls(struct m5mols_info *info)
+{
+	int ret;
 
-	अगर (info->ctrl_sync)
-		वापस 0;
+	if (info->ctrl_sync)
+		return 0;
 
-	ret = m5mols_करो_scenemode(info, REG_SCENE_NORMAL);
-	अगर (ret)
-		वापस ret;
+	ret = m5mols_do_scenemode(info, REG_SCENE_NORMAL);
+	if (ret)
+		return ret;
 
 	ret = v4l2_ctrl_handler_setup(&info->handle);
 	info->ctrl_sync = !ret;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * m5mols_start_monitor - Start the monitor mode
- * @info: M-5MOLS driver data काष्ठाure
+ * @info: M-5MOLS driver data structure
  *
- * Beक्रमe applying the controls setup the resolution and frame rate
- * in PARAMETER mode, and then चयन over to MONITOR mode.
+ * Before applying the controls setup the resolution and frame rate
+ * in PARAMETER mode, and then switch over to MONITOR mode.
  */
-अटल पूर्णांक m5mols_start_monitor(काष्ठा m5mols_info *info)
-अणु
-	काष्ठा v4l2_subdev *sd = &info->sd;
-	पूर्णांक ret;
+static int m5mols_start_monitor(struct m5mols_info *info)
+{
+	struct v4l2_subdev *sd = &info->sd;
+	int ret;
 
 	ret = m5mols_set_mode(info, REG_PARAMETER);
-	अगर (!ret)
-		ret = m5mols_ग_लिखो(sd, PARM_MON_SIZE, info->resolution);
-	अगर (!ret)
-		ret = m5mols_ग_लिखो(sd, PARM_MON_FPS, REG_FPS_30);
-	अगर (!ret)
+	if (!ret)
+		ret = m5mols_write(sd, PARM_MON_SIZE, info->resolution);
+	if (!ret)
+		ret = m5mols_write(sd, PARM_MON_FPS, REG_FPS_30);
+	if (!ret)
 		ret = m5mols_set_mode(info, REG_MONITOR);
-	अगर (!ret)
+	if (!ret)
 		ret = m5mols_restore_controls(info);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक m5mols_s_stream(काष्ठा v4l2_subdev *sd, पूर्णांक enable)
-अणु
-	काष्ठा m5mols_info *info = to_m5mols(sd);
+static int m5mols_s_stream(struct v4l2_subdev *sd, int enable)
+{
+	struct m5mols_info *info = to_m5mols(sd);
 	u32 code;
-	पूर्णांक ret;
+	int ret;
 
 	mutex_lock(&info->lock);
 	code = info->ffmt[info->res_type].code;
 
-	अगर (enable) अणु
-		अगर (is_code(code, M5MOLS_RESTYPE_MONITOR))
+	if (enable) {
+		if (is_code(code, M5MOLS_RESTYPE_MONITOR))
 			ret = m5mols_start_monitor(info);
-		अन्यथा अगर (is_code(code, M5MOLS_RESTYPE_CAPTURE))
+		else if (is_code(code, M5MOLS_RESTYPE_CAPTURE))
 			ret = m5mols_start_capture(info);
-		अन्यथा
+		else
 			ret = -EINVAL;
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = m5mols_set_mode(info, REG_PARAMETER);
-	पूर्ण
+	}
 
 	mutex_unlock(&info->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_video_ops m5mols_video_ops = अणु
+static const struct v4l2_subdev_video_ops m5mols_video_ops = {
 	.s_stream	= m5mols_s_stream,
-पूर्ण;
+};
 
-अटल पूर्णांक m5mols_sensor_घातer(काष्ठा m5mols_info *info, bool enable)
-अणु
-	काष्ठा v4l2_subdev *sd = &info->sd;
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	स्थिर काष्ठा m5mols_platक्रमm_data *pdata = info->pdata;
-	पूर्णांक ret;
+static int m5mols_sensor_power(struct m5mols_info *info, bool enable)
+{
+	struct v4l2_subdev *sd = &info->sd;
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	const struct m5mols_platform_data *pdata = info->pdata;
+	int ret;
 
-	अगर (info->घातer == enable)
-		वापस 0;
+	if (info->power == enable)
+		return 0;
 
-	अगर (enable) अणु
-		अगर (info->set_घातer) अणु
-			ret = info->set_घातer(&client->dev, 1);
-			अगर (ret)
-				वापस ret;
-		पूर्ण
+	if (enable) {
+		if (info->set_power) {
+			ret = info->set_power(&client->dev, 1);
+			if (ret)
+				return ret;
+		}
 
 		ret = regulator_bulk_enable(ARRAY_SIZE(supplies), supplies);
-		अगर (ret) अणु
-			अगर (info->set_घातer)
-				info->set_घातer(&client->dev, 0);
-			वापस ret;
-		पूर्ण
+		if (ret) {
+			if (info->set_power)
+				info->set_power(&client->dev, 0);
+			return ret;
+		}
 
 		gpio_set_value(pdata->gpio_reset, !pdata->reset_polarity);
-		info->घातer = 1;
+		info->power = 1;
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = regulator_bulk_disable(ARRAY_SIZE(supplies), supplies);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (info->set_घातer)
-		info->set_घातer(&client->dev, 0);
+	if (info->set_power)
+		info->set_power(&client->dev, 0);
 
 	gpio_set_value(pdata->gpio_reset, pdata->reset_polarity);
 
-	info->isp_पढ़ोy = 0;
-	info->घातer = 0;
+	info->isp_ready = 0;
+	info->power = 0;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* m5mols_update_fw - optional firmware update routine */
-पूर्णांक __attribute__ ((weak)) m5mols_update_fw(काष्ठा v4l2_subdev *sd,
-		पूर्णांक (*set_घातer)(काष्ठा m5mols_info *, bool))
-अणु
-	वापस 0;
-पूर्ण
+int __attribute__ ((weak)) m5mols_update_fw(struct v4l2_subdev *sd,
+		int (*set_power)(struct m5mols_info *, bool))
+{
+	return 0;
+}
 
 /**
- * m5mols_fw_start - M-5MOLS पूर्णांकernal ARM controller initialization
- * @sd: sub-device, as poपूर्णांकed by काष्ठा v4l2_subdev
+ * m5mols_fw_start - M-5MOLS internal ARM controller initialization
+ * @sd: sub-device, as pointed by struct v4l2_subdev
  *
- * Execute the M-5MOLS पूर्णांकernal ARM controller initialization sequence.
+ * Execute the M-5MOLS internal ARM controller initialization sequence.
  * This function should be called after the supply voltage has been
- * applied and beक्रमe any requests to the device are made.
+ * applied and before any requests to the device are made.
  */
-अटल पूर्णांक m5mols_fw_start(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा m5mols_info *info = to_m5mols(sd);
-	पूर्णांक ret;
+static int m5mols_fw_start(struct v4l2_subdev *sd)
+{
+	struct m5mols_info *info = to_m5mols(sd);
+	int ret;
 
-	atomic_set(&info->irq_करोne, 0);
+	atomic_set(&info->irq_done, 0);
 	/* Wait until I2C slave is initialized in Flash Writer mode */
-	ret = m5mols_busy_रुको(sd, FLASH_CAM_START, REG_IN_FLASH_MODE,
+	ret = m5mols_busy_wait(sd, FLASH_CAM_START, REG_IN_FLASH_MODE,
 			       M5MOLS_I2C_RDY_WAIT_FL | 0xff, -1);
-	अगर (!ret)
-		ret = m5mols_ग_लिखो(sd, FLASH_CAM_START, REG_START_ARM_BOOT);
-	अगर (!ret)
-		ret = m5mols_रुको_पूर्णांकerrupt(sd, REG_INT_MODE, 2000);
-	अगर (ret < 0)
-		वापस ret;
+	if (!ret)
+		ret = m5mols_write(sd, FLASH_CAM_START, REG_START_ARM_BOOT);
+	if (!ret)
+		ret = m5mols_wait_interrupt(sd, REG_INT_MODE, 2000);
+	if (ret < 0)
+		return ret;
 
-	info->isp_पढ़ोy = 1;
+	info->isp_ready = 1;
 
 	ret = m5mols_get_version(sd);
-	अगर (!ret)
-		ret = m5mols_update_fw(sd, m5mols_sensor_घातer);
-	अगर (ret)
-		वापस ret;
+	if (!ret)
+		ret = m5mols_update_fw(sd, m5mols_sensor_power);
+	if (ret)
+		return ret;
 
 	v4l2_dbg(1, m5mols_debug, sd, "Success ARM Booting\n");
 
-	ret = m5mols_ग_लिखो(sd, PARM_INTERFACE, REG_INTERFACE_MIPI);
-	अगर (!ret)
-		ret = m5mols_enable_पूर्णांकerrupt(sd,
+	ret = m5mols_write(sd, PARM_INTERFACE, REG_INTERFACE_MIPI);
+	if (!ret)
+		ret = m5mols_enable_interrupt(sd,
 				REG_INT_AF | REG_INT_CAPTURE);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Execute the lens soft-landing algorithm */
-अटल पूर्णांक m5mols_स्वतः_focus_stop(काष्ठा m5mols_info *info)
-अणु
-	पूर्णांक ret;
+static int m5mols_auto_focus_stop(struct m5mols_info *info)
+{
+	int ret;
 
-	ret = m5mols_ग_लिखो(&info->sd, AF_EXECUTE, REG_AF_STOP);
-	अगर (!ret)
-		ret = m5mols_ग_लिखो(&info->sd, AF_MODE, REG_AF_POWEROFF);
-	अगर (!ret)
-		ret = m5mols_busy_रुको(&info->sd, SYSTEM_STATUS, REG_AF_IDLE,
+	ret = m5mols_write(&info->sd, AF_EXECUTE, REG_AF_STOP);
+	if (!ret)
+		ret = m5mols_write(&info->sd, AF_MODE, REG_AF_POWEROFF);
+	if (!ret)
+		ret = m5mols_busy_wait(&info->sd, SYSTEM_STATUS, REG_AF_IDLE,
 				       0xff, -1);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * m5mols_s_घातer - Main sensor घातer control function
- * @sd: sub-device, as poपूर्णांकed by काष्ठा v4l2_subdev
- * @on: अगर true, घातers on the device; घातers off otherwise.
+ * m5mols_s_power - Main sensor power control function
+ * @sd: sub-device, as pointed by struct v4l2_subdev
+ * @on: if true, powers on the device; powers off otherwise.
  *
- * To prevent अवरोधing the lens when the sensor is घातered off the Soft-Landing
+ * To prevent breaking the lens when the sensor is powered off the Soft-Landing
  * algorithm is called where available. The Soft-Landing algorithm availability
  * dependends on the firmware provider.
  */
-अटल पूर्णांक m5mols_s_घातer(काष्ठा v4l2_subdev *sd, पूर्णांक on)
-अणु
-	काष्ठा m5mols_info *info = to_m5mols(sd);
-	पूर्णांक ret;
+static int m5mols_s_power(struct v4l2_subdev *sd, int on)
+{
+	struct m5mols_info *info = to_m5mols(sd);
+	int ret;
 
 	mutex_lock(&info->lock);
 
-	अगर (on) अणु
-		ret = m5mols_sensor_घातer(info, true);
-		अगर (!ret)
+	if (on) {
+		ret = m5mols_sensor_power(info, true);
+		if (!ret)
 			ret = m5mols_fw_start(sd);
-	पूर्ण अन्यथा अणु
-		अगर (is_manufacturer(info, REG_SAMSUNG_TECHWIN)) अणु
+	} else {
+		if (is_manufacturer(info, REG_SAMSUNG_TECHWIN)) {
 			ret = m5mols_set_mode(info, REG_MONITOR);
-			अगर (!ret)
-				ret = m5mols_स्वतः_focus_stop(info);
-			अगर (ret < 0)
+			if (!ret)
+				ret = m5mols_auto_focus_stop(info);
+			if (ret < 0)
 				v4l2_warn(sd, "Soft landing lens failed\n");
-		पूर्ण
-		ret = m5mols_sensor_घातer(info, false);
+		}
+		ret = m5mols_sensor_power(info, false);
 
 		info->ctrl_sync = 0;
-	पूर्ण
+	}
 
 	mutex_unlock(&info->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक m5mols_log_status(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा m5mols_info *info = to_m5mols(sd);
+static int m5mols_log_status(struct v4l2_subdev *sd)
+{
+	struct m5mols_info *info = to_m5mols(sd);
 
 	v4l2_ctrl_handler_log_status(&info->handle, sd->name);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_core_ops m5mols_core_ops = अणु
-	.s_घातer	= m5mols_s_घातer,
+static const struct v4l2_subdev_core_ops m5mols_core_ops = {
+	.s_power	= m5mols_s_power,
 	.log_status	= m5mols_log_status,
-पूर्ण;
+};
 
 /*
- * V4L2 subdev पूर्णांकernal operations
+ * V4L2 subdev internal operations
  */
-अटल पूर्णांक m5mols_खोलो(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_fh *fh)
-अणु
-	काष्ठा v4l2_mbus_framefmt *क्रमmat = v4l2_subdev_get_try_क्रमmat(sd, fh->pad, 0);
+static int m5mols_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
+{
+	struct v4l2_mbus_framefmt *format = v4l2_subdev_get_try_format(sd, fh->pad, 0);
 
-	*क्रमmat = m5mols_शेष_ffmt[0];
-	वापस 0;
-पूर्ण
+	*format = m5mols_default_ffmt[0];
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_पूर्णांकernal_ops m5mols_subdev_पूर्णांकernal_ops = अणु
-	.खोलो		= m5mols_खोलो,
-पूर्ण;
+static const struct v4l2_subdev_internal_ops m5mols_subdev_internal_ops = {
+	.open		= m5mols_open,
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops m5mols_ops = अणु
+static const struct v4l2_subdev_ops m5mols_ops = {
 	.core		= &m5mols_core_ops,
 	.pad		= &m5mols_pad_ops,
 	.video		= &m5mols_video_ops,
-पूर्ण;
+};
 
-अटल irqवापस_t m5mols_irq_handler(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा m5mols_info *info = to_m5mols(data);
+static irqreturn_t m5mols_irq_handler(int irq, void *data)
+{
+	struct m5mols_info *info = to_m5mols(data);
 
-	atomic_set(&info->irq_करोne, 1);
-	wake_up_पूर्णांकerruptible(&info->irq_रुकोq);
+	atomic_set(&info->irq_done, 1);
+	wake_up_interruptible(&info->irq_waitq);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक m5mols_probe(काष्ठा i2c_client *client,
-			स्थिर काष्ठा i2c_device_id *id)
-अणु
-	स्थिर काष्ठा m5mols_platक्रमm_data *pdata = client->dev.platक्रमm_data;
-	अचिन्हित दीर्घ gpio_flags;
-	काष्ठा m5mols_info *info;
-	काष्ठा v4l2_subdev *sd;
-	पूर्णांक ret;
+static int m5mols_probe(struct i2c_client *client,
+			const struct i2c_device_id *id)
+{
+	const struct m5mols_platform_data *pdata = client->dev.platform_data;
+	unsigned long gpio_flags;
+	struct m5mols_info *info;
+	struct v4l2_subdev *sd;
+	int ret;
 
-	अगर (pdata == शून्य) अणु
+	if (pdata == NULL) {
 		dev_err(&client->dev, "No platform data\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!gpio_is_valid(pdata->gpio_reset)) अणु
+	if (!gpio_is_valid(pdata->gpio_reset)) {
 		dev_err(&client->dev, "No valid RESET GPIO specified\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!client->irq) अणु
+	if (!client->irq) {
 		dev_err(&client->dev, "Interrupt not assigned\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	info = devm_kzalloc(&client->dev, माप(*info), GFP_KERNEL);
-	अगर (!info)
-		वापस -ENOMEM;
+	info = devm_kzalloc(&client->dev, sizeof(*info), GFP_KERNEL);
+	if (!info)
+		return -ENOMEM;
 
 	info->pdata = pdata;
-	info->set_घातer	= pdata->set_घातer;
+	info->set_power	= pdata->set_power;
 
 	gpio_flags = pdata->reset_polarity
 		   ? GPIOF_OUT_INIT_HIGH : GPIOF_OUT_INIT_LOW;
 	ret = devm_gpio_request_one(&client->dev, pdata->gpio_reset, gpio_flags,
 				    "M5MOLS_NRST");
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&client->dev, "Failed to request gpio: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = devm_regulator_bulk_get(&client->dev, ARRAY_SIZE(supplies),
 				      supplies);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&client->dev, "Failed to get regulators: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	sd = &info->sd;
 	v4l2_i2c_subdev_init(sd, client, &m5mols_ops);
 	/* Static name; NEVER use in new drivers! */
-	strscpy(sd->name, MODULE_NAME, माप(sd->name));
+	strscpy(sd->name, MODULE_NAME, sizeof(sd->name));
 	sd->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
 
-	sd->पूर्णांकernal_ops = &m5mols_subdev_पूर्णांकernal_ops;
+	sd->internal_ops = &m5mols_subdev_internal_ops;
 	info->pad.flags = MEDIA_PAD_FL_SOURCE;
 	ret = media_entity_pads_init(&sd->entity, 1, &info->pad);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	sd->entity.function = MEDIA_ENT_F_CAM_SENSOR;
 
-	init_रुकोqueue_head(&info->irq_रुकोq);
+	init_waitqueue_head(&info->irq_waitq);
 	mutex_init(&info->lock);
 
 	ret = devm_request_irq(&client->dev, client->irq, m5mols_irq_handler,
 			       IRQF_TRIGGER_RISING, MODULE_NAME, sd);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&client->dev, "Interrupt request failed: %d\n", ret);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 	info->res_type = M5MOLS_RESTYPE_MONITOR;
-	info->ffmt[0] = m5mols_शेष_ffmt[0];
-	info->ffmt[1] =	m5mols_शेष_ffmt[1];
+	info->ffmt[0] = m5mols_default_ffmt[0];
+	info->ffmt[1] =	m5mols_default_ffmt[1];
 
-	ret = m5mols_sensor_घातer(info, true);
-	अगर (ret)
-		जाओ error;
+	ret = m5mols_sensor_power(info, true);
+	if (ret)
+		goto error;
 
 	ret = m5mols_fw_start(sd);
-	अगर (!ret)
+	if (!ret)
 		ret = m5mols_init_controls(sd);
 
-	ret = m5mols_sensor_घातer(info, false);
-	अगर (!ret)
-		वापस 0;
+	ret = m5mols_sensor_power(info, false);
+	if (!ret)
+		return 0;
 error:
 	media_entity_cleanup(&sd->entity);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक m5mols_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
+static int m5mols_remove(struct i2c_client *client)
+{
+	struct v4l2_subdev *sd = i2c_get_clientdata(client);
 
-	v4l2_device_unरेजिस्टर_subdev(sd);
-	v4l2_ctrl_handler_मुक्त(sd->ctrl_handler);
+	v4l2_device_unregister_subdev(sd);
+	v4l2_ctrl_handler_free(sd->ctrl_handler);
 	media_entity_cleanup(&sd->entity);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id m5mols_id[] = अणु
-	अणु MODULE_NAME, 0 पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct i2c_device_id m5mols_id[] = {
+	{ MODULE_NAME, 0 },
+	{ },
+};
 MODULE_DEVICE_TABLE(i2c, m5mols_id);
 
-अटल काष्ठा i2c_driver m5mols_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver m5mols_i2c_driver = {
+	.driver = {
 		.name	= MODULE_NAME,
-	पूर्ण,
+	},
 	.probe		= m5mols_probe,
-	.हटाओ		= m5mols_हटाओ,
+	.remove		= m5mols_remove,
 	.id_table	= m5mols_id,
-पूर्ण;
+};
 
 module_i2c_driver(m5mols_i2c_driver);
 

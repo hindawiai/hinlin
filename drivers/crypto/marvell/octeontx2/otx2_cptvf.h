@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only
+/* SPDX-License-Identifier: GPL-2.0-only
  * Copyright (C) 2020 Marvell.
  */
 
-#अगर_अघोषित __OTX2_CPTVF_H
-#घोषणा __OTX2_CPTVF_H
+#ifndef __OTX2_CPTVF_H
+#define __OTX2_CPTVF_H
 
-#समावेश "mbox.h"
-#समावेश "otx2_cptlf.h"
+#include "mbox.h"
+#include "otx2_cptlf.h"
 
-काष्ठा otx2_cptvf_dev अणु
-	व्योम __iomem *reg_base;		/* Register start address */
-	व्योम __iomem *pfvf_mbox_base;	/* PF-VF mbox start address */
-	काष्ठा pci_dev *pdev;		/* PCI device handle */
-	काष्ठा otx2_cptlfs_info lfs;	/* CPT LFs attached to this VF */
+struct otx2_cptvf_dev {
+	void __iomem *reg_base;		/* Register start address */
+	void __iomem *pfvf_mbox_base;	/* PF-VF mbox start address */
+	struct pci_dev *pdev;		/* PCI device handle */
+	struct otx2_cptlfs_info lfs;	/* CPT LFs attached to this VF */
 	u8 vf_id;			/* Virtual function index */
 
 	/* PF <=> VF mbox */
-	काष्ठा otx2_mbox	pfvf_mbox;
-	काष्ठा work_काष्ठा	pfvf_mbox_work;
-	काष्ठा workqueue_काष्ठा *pfvf_mbox_wq;
-पूर्ण;
+	struct otx2_mbox	pfvf_mbox;
+	struct work_struct	pfvf_mbox_work;
+	struct workqueue_struct *pfvf_mbox_wq;
+};
 
-irqवापस_t otx2_cptvf_pfvf_mbox_पूर्णांकr(पूर्णांक irq, व्योम *arg);
-व्योम otx2_cptvf_pfvf_mbox_handler(काष्ठा work_काष्ठा *work);
-पूर्णांक otx2_cptvf_send_eng_grp_num_msg(काष्ठा otx2_cptvf_dev *cptvf, पूर्णांक eng_type);
-पूर्णांक otx2_cptvf_send_kvf_limits_msg(काष्ठा otx2_cptvf_dev *cptvf);
+irqreturn_t otx2_cptvf_pfvf_mbox_intr(int irq, void *arg);
+void otx2_cptvf_pfvf_mbox_handler(struct work_struct *work);
+int otx2_cptvf_send_eng_grp_num_msg(struct otx2_cptvf_dev *cptvf, int eng_type);
+int otx2_cptvf_send_kvf_limits_msg(struct otx2_cptvf_dev *cptvf);
 
-#पूर्ण_अगर /* __OTX2_CPTVF_H */
+#endif /* __OTX2_CPTVF_H */

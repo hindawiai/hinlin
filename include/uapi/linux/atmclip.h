@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-/* aपंचांगclip.h - Classical IP over ATM */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+/* atmclip.h - Classical IP over ATM */
  
 /* Written 1995-1998 by Werner Almesberger, EPFL LRC/ICA */
  
 
-#अगर_अघोषित LINUX_ATMCLIP_H
-#घोषणा LINUX_ATMCLIP_H
+#ifndef LINUX_ATMCLIP_H
+#define LINUX_ATMCLIP_H
 
-#समावेश <linux/sockios.h>
-#समावेश <linux/aपंचांगioc.h>
+#include <linux/sockios.h>
+#include <linux/atmioc.h>
 
 
-#घोषणा RFC1483LLC_LEN	8		/* LLC+OUI+PID = 8 */
-#घोषणा RFC1626_MTU	9180		/* RFC1626 शेष MTU */
+#define RFC1483LLC_LEN	8		/* LLC+OUI+PID = 8 */
+#define RFC1626_MTU	9180		/* RFC1626 default MTU */
 
-#घोषणा CLIP_DEFAULT_IDLETIMER 1200	/* 20 minutes, see RFC1755 */
-#घोषणा CLIP_CHECK_INTERVAL	 10	/* check every ten seconds */
+#define CLIP_DEFAULT_IDLETIMER 1200	/* 20 minutes, see RFC1755 */
+#define CLIP_CHECK_INTERVAL	 10	/* check every ten seconds */
 
-#घोषणा	SIOCMKCLIP	_IO('a',ATMIOC_CLIP)	/* create IP पूर्णांकerface */
+#define	SIOCMKCLIP	_IO('a',ATMIOC_CLIP)	/* create IP interface */
 
-#पूर्ण_अगर
+#endif

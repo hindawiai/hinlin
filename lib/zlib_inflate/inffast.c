@@ -1,40 +1,39 @@
-<शैली गुरु>
 /* inffast.c -- fast decoding
  * Copyright (C) 1995-2004 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-#समावेश <linux/zutil.h>
-#समावेश "inftrees.h"
-#समावेश "inflate.h"
-#समावेश "inffast.h"
+#include <linux/zutil.h>
+#include "inftrees.h"
+#include "inflate.h"
+#include "inffast.h"
 
-#अगर_अघोषित ASMINF
+#ifndef ASMINF
 
-जोड़ uu अणु
-	अचिन्हित लघु us;
-	अचिन्हित अक्षर b[2];
-पूर्ण;
+union uu {
+	unsigned short us;
+	unsigned char b[2];
+};
 
 /* Endian independed version */
-अटल अंतरभूत अचिन्हित लघु
-get_unaligned16(स्थिर अचिन्हित लघु *p)
-अणु
-	जोड़ uu  mm;
-	अचिन्हित अक्षर *b = (अचिन्हित अक्षर *)p;
+static inline unsigned short
+get_unaligned16(const unsigned short *p)
+{
+	union uu  mm;
+	unsigned char *b = (unsigned char *)p;
 
 	mm.b[0] = b[0];
 	mm.b[1] = b[1];
-	वापस mm.us;
-पूर्ण
+	return mm.us;
+}
 
 /*
-   Decode literal, length, and distance codes and ग_लिखो out the resulting
+   Decode literal, length, and distance codes and write out the resulting
    literal and match bytes until either not enough input or output is
    available, an end-of-block is encountered, or a data error is encountered.
-   When large enough input and output buffers are supplied to inflate(), क्रम
+   When large enough input and output buffers are supplied to inflate(), for
    example, a 16K input buffer and a 64K output buffer, more than 95% of the
-   inflate execution समय is spent in this routine.
+   inflate execution time is spent in this routine.
 
    Entry assumptions:
 
@@ -44,69 +43,69 @@ get_unaligned16(स्थिर अचिन्हित लघु *p)
         start >= strm->avail_out
         state->bits < 8
 
-   On वापस, state->mode is one of:
+   On return, state->mode is one of:
 
         LEN -- ran out of enough output space or enough available input
-        TYPE -- reached end of block code, inflate() to पूर्णांकerpret next block
+        TYPE -- reached end of block code, inflate() to interpret next block
         BAD -- error in block data
 
    Notes:
 
-    - The maximum input bits used by a length/distance pair is 15 bits क्रम the
-      length code, 5 bits क्रम the length extra, 15 bits क्रम the distance code,
-      and 13 bits क्रम the distance extra.  This totals 48 bits, or six bytes.
-      Thereक्रमe अगर strm->avail_in >= 6, then there is enough input to aव्योम
-      checking क्रम available input जबतक decoding.
+    - The maximum input bits used by a length/distance pair is 15 bits for the
+      length code, 5 bits for the length extra, 15 bits for the distance code,
+      and 13 bits for the distance extra.  This totals 48 bits, or six bytes.
+      Therefore if strm->avail_in >= 6, then there is enough input to avoid
+      checking for available input while decoding.
 
     - The maximum bytes that a single length/distance pair can output is 258
       bytes, which is the maximum length that can be coded.  inflate_fast()
-      requires strm->avail_out >= 258 क्रम each loop to aव्योम checking क्रम
+      requires strm->avail_out >= 258 for each loop to avoid checking for
       output space.
 
-    - @start:	inflate()'s starting value क्रम strm->avail_out
+    - @start:	inflate()'s starting value for strm->avail_out
  */
-व्योम inflate_fast(z_streamp strm, अचिन्हित start)
-अणु
-    काष्ठा inflate_state *state;
-    स्थिर अचिन्हित अक्षर *in;    /* local strm->next_in */
-    स्थिर अचिन्हित अक्षर *last;  /* जबतक in < last, enough input available */
-    अचिन्हित अक्षर *out;         /* local strm->next_out */
-    अचिन्हित अक्षर *beg;         /* inflate()'s initial strm->next_out */
-    अचिन्हित अक्षर *end;         /* जबतक out < end, enough space available */
-#अगर_घोषित INFLATE_STRICT
-    अचिन्हित dmax;              /* maximum distance from zlib header */
-#पूर्ण_अगर
-    अचिन्हित wsize;             /* winकरोw size or zero अगर not using winकरोw */
-    अचिन्हित whave;             /* valid bytes in the winकरोw */
-    अचिन्हित ग_लिखो;             /* winकरोw ग_लिखो index */
-    अचिन्हित अक्षर *winकरोw;      /* allocated sliding winकरोw, अगर wsize != 0 */
-    अचिन्हित दीर्घ hold;         /* local strm->hold */
-    अचिन्हित bits;              /* local strm->bits */
-    code स्थिर *lcode;          /* local strm->lencode */
-    code स्थिर *dcode;          /* local strm->distcode */
-    अचिन्हित lmask;             /* mask क्रम first level of length codes */
-    अचिन्हित dmask;             /* mask क्रम first level of distance codes */
+void inflate_fast(z_streamp strm, unsigned start)
+{
+    struct inflate_state *state;
+    const unsigned char *in;    /* local strm->next_in */
+    const unsigned char *last;  /* while in < last, enough input available */
+    unsigned char *out;         /* local strm->next_out */
+    unsigned char *beg;         /* inflate()'s initial strm->next_out */
+    unsigned char *end;         /* while out < end, enough space available */
+#ifdef INFLATE_STRICT
+    unsigned dmax;              /* maximum distance from zlib header */
+#endif
+    unsigned wsize;             /* window size or zero if not using window */
+    unsigned whave;             /* valid bytes in the window */
+    unsigned write;             /* window write index */
+    unsigned char *window;      /* allocated sliding window, if wsize != 0 */
+    unsigned long hold;         /* local strm->hold */
+    unsigned bits;              /* local strm->bits */
+    code const *lcode;          /* local strm->lencode */
+    code const *dcode;          /* local strm->distcode */
+    unsigned lmask;             /* mask for first level of length codes */
+    unsigned dmask;             /* mask for first level of distance codes */
     code this;                  /* retrieved table entry */
-    अचिन्हित op;                /* code bits, operation, extra bits, or */
-                                /*  winकरोw position, winकरोw bytes to copy */
-    अचिन्हित len;               /* match length, unused bytes */
-    अचिन्हित dist;              /* match distance */
-    अचिन्हित अक्षर *from;        /* where to copy match from */
+    unsigned op;                /* code bits, operation, extra bits, or */
+                                /*  window position, window bytes to copy */
+    unsigned len;               /* match length, unused bytes */
+    unsigned dist;              /* match distance */
+    unsigned char *from;        /* where to copy match from */
 
     /* copy state to local variables */
-    state = (काष्ठा inflate_state *)strm->state;
+    state = (struct inflate_state *)strm->state;
     in = strm->next_in;
     last = in + (strm->avail_in - 5);
     out = strm->next_out;
     beg = out - (start - strm->avail_out);
     end = out + (strm->avail_out - 257);
-#अगर_घोषित INFLATE_STRICT
+#ifdef INFLATE_STRICT
     dmax = state->dmax;
-#पूर्ण_अगर
+#endif
     wsize = state->wsize;
     whave = state->whave;
-    ग_लिखो = state->ग_लिखो;
-    winकरोw = state->winकरोw;
+    write = state->write;
+    window = state->window;
     hold = state->hold;
     bits = state->bits;
     lcode = state->lencode;
@@ -116,228 +115,228 @@ get_unaligned16(स्थिर अचिन्हित लघु *p)
 
     /* decode literals and length/distances until end-of-block or not enough
        input data or output space */
-    करो अणु
-        अगर (bits < 15) अणु
-            hold += (अचिन्हित दीर्घ)(*in++) << bits;
+    do {
+        if (bits < 15) {
+            hold += (unsigned long)(*in++) << bits;
             bits += 8;
-            hold += (अचिन्हित दीर्घ)(*in++) << bits;
+            hold += (unsigned long)(*in++) << bits;
             bits += 8;
-        पूर्ण
+        }
         this = lcode[hold & lmask];
-      करोlen:
-        op = (अचिन्हित)(this.bits);
+      dolen:
+        op = (unsigned)(this.bits);
         hold >>= op;
         bits -= op;
-        op = (अचिन्हित)(this.op);
-        अगर (op == 0) अणु                          /* literal */
-            *out++ = (अचिन्हित अक्षर)(this.val);
-        पूर्ण
-        अन्यथा अगर (op & 16) अणु                     /* length base */
-            len = (अचिन्हित)(this.val);
+        op = (unsigned)(this.op);
+        if (op == 0) {                          /* literal */
+            *out++ = (unsigned char)(this.val);
+        }
+        else if (op & 16) {                     /* length base */
+            len = (unsigned)(this.val);
             op &= 15;                           /* number of extra bits */
-            अगर (op) अणु
-                अगर (bits < op) अणु
-                    hold += (अचिन्हित दीर्घ)(*in++) << bits;
+            if (op) {
+                if (bits < op) {
+                    hold += (unsigned long)(*in++) << bits;
                     bits += 8;
-                पूर्ण
-                len += (अचिन्हित)hold & ((1U << op) - 1);
+                }
+                len += (unsigned)hold & ((1U << op) - 1);
                 hold >>= op;
                 bits -= op;
-            पूर्ण
-            अगर (bits < 15) अणु
-                hold += (अचिन्हित दीर्घ)(*in++) << bits;
+            }
+            if (bits < 15) {
+                hold += (unsigned long)(*in++) << bits;
                 bits += 8;
-                hold += (अचिन्हित दीर्घ)(*in++) << bits;
+                hold += (unsigned long)(*in++) << bits;
                 bits += 8;
-            पूर्ण
+            }
             this = dcode[hold & dmask];
-          करोdist:
-            op = (अचिन्हित)(this.bits);
+          dodist:
+            op = (unsigned)(this.bits);
             hold >>= op;
             bits -= op;
-            op = (अचिन्हित)(this.op);
-            अगर (op & 16) अणु                      /* distance base */
-                dist = (अचिन्हित)(this.val);
+            op = (unsigned)(this.op);
+            if (op & 16) {                      /* distance base */
+                dist = (unsigned)(this.val);
                 op &= 15;                       /* number of extra bits */
-                अगर (bits < op) अणु
-                    hold += (अचिन्हित दीर्घ)(*in++) << bits;
+                if (bits < op) {
+                    hold += (unsigned long)(*in++) << bits;
                     bits += 8;
-                    अगर (bits < op) अणु
-                        hold += (अचिन्हित दीर्घ)(*in++) << bits;
+                    if (bits < op) {
+                        hold += (unsigned long)(*in++) << bits;
                         bits += 8;
-                    पूर्ण
-                पूर्ण
-                dist += (अचिन्हित)hold & ((1U << op) - 1);
-#अगर_घोषित INFLATE_STRICT
-                अगर (dist > dmax) अणु
-                    strm->msg = (अक्षर *)"invalid distance too far back";
+                    }
+                }
+                dist += (unsigned)hold & ((1U << op) - 1);
+#ifdef INFLATE_STRICT
+                if (dist > dmax) {
+                    strm->msg = (char *)"invalid distance too far back";
                     state->mode = BAD;
-                    अवरोध;
-                पूर्ण
-#पूर्ण_अगर
+                    break;
+                }
+#endif
                 hold >>= op;
                 bits -= op;
-                op = (अचिन्हित)(out - beg);     /* max distance in output */
-                अगर (dist > op) अणु                /* see अगर copy from winकरोw */
-                    op = dist - op;             /* distance back in winकरोw */
-                    अगर (op > whave) अणु
-                        strm->msg = (अक्षर *)"invalid distance too far back";
+                op = (unsigned)(out - beg);     /* max distance in output */
+                if (dist > op) {                /* see if copy from window */
+                    op = dist - op;             /* distance back in window */
+                    if (op > whave) {
+                        strm->msg = (char *)"invalid distance too far back";
                         state->mode = BAD;
-                        अवरोध;
-                    पूर्ण
-                    from = winकरोw;
-                    अगर (ग_लिखो == 0) अणु           /* very common हाल */
+                        break;
+                    }
+                    from = window;
+                    if (write == 0) {           /* very common case */
                         from += wsize - op;
-                        अगर (op < len) अणु         /* some from winकरोw */
+                        if (op < len) {         /* some from window */
                             len -= op;
-                            करो अणु
+                            do {
                                 *out++ = *from++;
-                            पूर्ण जबतक (--op);
+                            } while (--op);
                             from = out - dist;  /* rest from output */
-                        पूर्ण
-                    पूर्ण
-                    अन्यथा अगर (ग_लिखो < op) अणु      /* wrap around winकरोw */
-                        from += wsize + ग_लिखो - op;
-                        op -= ग_लिखो;
-                        अगर (op < len) अणु         /* some from end of winकरोw */
+                        }
+                    }
+                    else if (write < op) {      /* wrap around window */
+                        from += wsize + write - op;
+                        op -= write;
+                        if (op < len) {         /* some from end of window */
                             len -= op;
-                            करो अणु
+                            do {
                                 *out++ = *from++;
-                            पूर्ण जबतक (--op);
-                            from = winकरोw;
-                            अगर (ग_लिखो < len) अणु  /* some from start of winकरोw */
-                                op = ग_लिखो;
+                            } while (--op);
+                            from = window;
+                            if (write < len) {  /* some from start of window */
+                                op = write;
                                 len -= op;
-                                करो अणु
+                                do {
                                     *out++ = *from++;
-                                पूर्ण जबतक (--op);
+                                } while (--op);
                                 from = out - dist;      /* rest from output */
-                            पूर्ण
-                        पूर्ण
-                    पूर्ण
-                    अन्यथा अणु                      /* contiguous in winकरोw */
-                        from += ग_लिखो - op;
-                        अगर (op < len) अणु         /* some from winकरोw */
+                            }
+                        }
+                    }
+                    else {                      /* contiguous in window */
+                        from += write - op;
+                        if (op < len) {         /* some from window */
                             len -= op;
-                            करो अणु
+                            do {
                                 *out++ = *from++;
-                            पूर्ण जबतक (--op);
+                            } while (--op);
                             from = out - dist;  /* rest from output */
-                        पूर्ण
-                    पूर्ण
-                    जबतक (len > 2) अणु
+                        }
+                    }
+                    while (len > 2) {
                         *out++ = *from++;
                         *out++ = *from++;
                         *out++ = *from++;
                         len -= 3;
-                    पूर्ण
-                    अगर (len) अणु
+                    }
+                    if (len) {
                         *out++ = *from++;
-                        अगर (len > 1)
+                        if (len > 1)
                             *out++ = *from++;
-                    पूर्ण
-                पूर्ण
-                अन्यथा अणु
-		    अचिन्हित लघु *sout;
-		    अचिन्हित दीर्घ loops;
+                    }
+                }
+                else {
+		    unsigned short *sout;
+		    unsigned long loops;
 
                     from = out - dist;          /* copy direct from output */
 		    /* minimum length is three */
 		    /* Align out addr */
-		    अगर (!((दीर्घ)(out - 1) & 1)) अणु
+		    if (!((long)(out - 1) & 1)) {
 			*out++ = *from++;
 			len--;
-		    पूर्ण
-		    sout = (अचिन्हित लघु *)(out);
-		    अगर (dist > 2) अणु
-			अचिन्हित लघु *sfrom;
+		    }
+		    sout = (unsigned short *)(out);
+		    if (dist > 2) {
+			unsigned short *sfrom;
 
-			sfrom = (अचिन्हित लघु *)(from);
+			sfrom = (unsigned short *)(from);
 			loops = len >> 1;
-			करो
-#अगर_घोषित CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
+			do
+#ifdef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
 			    *sout++ = *sfrom++;
-#अन्यथा
+#else
 			    *sout++ = get_unaligned16(sfrom++);
-#पूर्ण_अगर
-			जबतक (--loops);
-			out = (अचिन्हित अक्षर *)sout;
-			from = (अचिन्हित अक्षर *)sfrom;
-		    पूर्ण अन्यथा अणु /* dist == 1 or dist == 2 */
-			अचिन्हित लघु pat16;
+#endif
+			while (--loops);
+			out = (unsigned char *)sout;
+			from = (unsigned char *)sfrom;
+		    } else { /* dist == 1 or dist == 2 */
+			unsigned short pat16;
 
 			pat16 = *(sout-1);
-			अगर (dist == 1) अणु
-				जोड़ uu mm;
-				/* copy one अक्षर pattern to both bytes */
+			if (dist == 1) {
+				union uu mm;
+				/* copy one char pattern to both bytes */
 				mm.us = pat16;
 				mm.b[0] = mm.b[1];
 				pat16 = mm.us;
-			पूर्ण
+			}
 			loops = len >> 1;
-			करो
+			do
 			    *sout++ = pat16;
-			जबतक (--loops);
-			out = (अचिन्हित अक्षर *)sout;
-		    पूर्ण
-		    अगर (len & 1)
+			while (--loops);
+			out = (unsigned char *)sout;
+		    }
+		    if (len & 1)
 			*out++ = *from++;
-                पूर्ण
-            पूर्ण
-            अन्यथा अगर ((op & 64) == 0) अणु          /* 2nd level distance code */
+                }
+            }
+            else if ((op & 64) == 0) {          /* 2nd level distance code */
                 this = dcode[this.val + (hold & ((1U << op) - 1))];
-                जाओ करोdist;
-            पूर्ण
-            अन्यथा अणु
-                strm->msg = (अक्षर *)"invalid distance code";
+                goto dodist;
+            }
+            else {
+                strm->msg = (char *)"invalid distance code";
                 state->mode = BAD;
-                अवरोध;
-            पूर्ण
-        पूर्ण
-        अन्यथा अगर ((op & 64) == 0) अणु              /* 2nd level length code */
+                break;
+            }
+        }
+        else if ((op & 64) == 0) {              /* 2nd level length code */
             this = lcode[this.val + (hold & ((1U << op) - 1))];
-            जाओ करोlen;
-        पूर्ण
-        अन्यथा अगर (op & 32) अणु                     /* end-of-block */
+            goto dolen;
+        }
+        else if (op & 32) {                     /* end-of-block */
             state->mode = TYPE;
-            अवरोध;
-        पूर्ण
-        अन्यथा अणु
-            strm->msg = (अक्षर *)"invalid literal/length code";
+            break;
+        }
+        else {
+            strm->msg = (char *)"invalid literal/length code";
             state->mode = BAD;
-            अवरोध;
-        पूर्ण
-    पूर्ण जबतक (in < last && out < end);
+            break;
+        }
+    } while (in < last && out < end);
 
-    /* वापस unused bytes (on entry, bits < 8, so in won't go too far back) */
+    /* return unused bytes (on entry, bits < 8, so in won't go too far back) */
     len = bits >> 3;
     in -= len;
     bits -= len << 3;
     hold &= (1U << bits) - 1;
 
-    /* update state and वापस */
+    /* update state and return */
     strm->next_in = in;
     strm->next_out = out;
-    strm->avail_in = (अचिन्हित)(in < last ? 5 + (last - in) : 5 - (in - last));
-    strm->avail_out = (अचिन्हित)(out < end ?
+    strm->avail_in = (unsigned)(in < last ? 5 + (last - in) : 5 - (in - last));
+    strm->avail_out = (unsigned)(out < end ?
                                  257 + (end - out) : 257 - (out - end));
     state->hold = hold;
     state->bits = bits;
-    वापस;
-पूर्ण
+    return;
+}
 
 /*
    inflate_fast() speedups that turned out slower (on a PowerPC G3 750CXe):
-   - Using bit fields क्रम code काष्ठाure
-   - Dअगरferent op definition to aव्योम & क्रम extra bits (करो & क्रम table bits)
-   - Three separate decoding करो-loops क्रम direct, winकरोw, and ग_लिखो == 0
-   - Special हाल क्रम distance > 1 copies to करो overlapped load and store copy
+   - Using bit fields for code structure
+   - Different op definition to avoid & for extra bits (do & for table bits)
+   - Three separate decoding do-loops for direct, window, and write == 0
+   - Special case for distance > 1 copies to do overlapped load and store copy
    - Explicit branch predictions (based on measured branch probabilities)
-   - Deferring match copy and पूर्णांकerspersed it with decoding subsequent codes
-   - Swapping literal/length अन्यथा
-   - Swapping winकरोw/direct अन्यथा
+   - Deferring match copy and interspersed it with decoding subsequent codes
+   - Swapping literal/length else
+   - Swapping window/direct else
    - Larger unrolled copy loops (three is about right)
-   - Moving len -= 3 statement पूर्णांकo middle of loop
+   - Moving len -= 3 statement into middle of loop
  */
 
-#पूर्ण_अगर /* !ASMINF */
+#endif /* !ASMINF */

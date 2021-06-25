@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * NXP ISP1301 USB transceiver driver
  *
@@ -8,100 +7,100 @@
  * Author: Roland Stigge <stigge@antcom.de>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/usb/phy.h>
-#समावेश <linux/usb/isp1301.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/i2c.h>
+#include <linux/usb/phy.h>
+#include <linux/usb/isp1301.h>
 
-#घोषणा DRV_NAME		"isp1301"
+#define DRV_NAME		"isp1301"
 
-काष्ठा isp1301 अणु
-	काष्ठा usb_phy		phy;
-	काष्ठा mutex		mutex;
+struct isp1301 {
+	struct usb_phy		phy;
+	struct mutex		mutex;
 
-	काष्ठा i2c_client	*client;
-पूर्ण;
+	struct i2c_client	*client;
+};
 
-#घोषणा phy_to_isp(p)		(container_of((p), काष्ठा isp1301, phy))
+#define phy_to_isp(p)		(container_of((p), struct isp1301, phy))
 
-अटल स्थिर काष्ठा i2c_device_id isp1301_id[] = अणु
-	अणु "isp1301", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id isp1301_id[] = {
+	{ "isp1301", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, isp1301_id);
 
-अटल स्थिर काष्ठा of_device_id isp1301_of_match[] = अणु
-	अणु.compatible = "nxp,isp1301" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id isp1301_of_match[] = {
+	{.compatible = "nxp,isp1301" },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, isp1301_of_match);
 
-अटल काष्ठा i2c_client *isp1301_i2c_client;
+static struct i2c_client *isp1301_i2c_client;
 
-अटल पूर्णांक __isp1301_ग_लिखो(काष्ठा isp1301 *isp, u8 reg, u8 value, u8 clear)
-अणु
-	वापस i2c_smbus_ग_लिखो_byte_data(isp->client, reg | clear, value);
-पूर्ण
+static int __isp1301_write(struct isp1301 *isp, u8 reg, u8 value, u8 clear)
+{
+	return i2c_smbus_write_byte_data(isp->client, reg | clear, value);
+}
 
-अटल पूर्णांक isp1301_ग_लिखो(काष्ठा isp1301 *isp, u8 reg, u8 value)
-अणु
-	वापस __isp1301_ग_लिखो(isp, reg, value, 0);
-पूर्ण
+static int isp1301_write(struct isp1301 *isp, u8 reg, u8 value)
+{
+	return __isp1301_write(isp, reg, value, 0);
+}
 
-अटल पूर्णांक isp1301_clear(काष्ठा isp1301 *isp, u8 reg, u8 value)
-अणु
-	वापस __isp1301_ग_लिखो(isp, reg, value, ISP1301_I2C_REG_CLEAR_ADDR);
-पूर्ण
+static int isp1301_clear(struct isp1301 *isp, u8 reg, u8 value)
+{
+	return __isp1301_write(isp, reg, value, ISP1301_I2C_REG_CLEAR_ADDR);
+}
 
-अटल पूर्णांक isp1301_phy_init(काष्ठा usb_phy *phy)
-अणु
-	काष्ठा isp1301 *isp = phy_to_isp(phy);
+static int isp1301_phy_init(struct usb_phy *phy)
+{
+	struct isp1301 *isp = phy_to_isp(phy);
 
 	/* Disable transparent UART mode first */
 	isp1301_clear(isp, ISP1301_I2C_MODE_CONTROL_1, MC1_UART_EN);
 	isp1301_clear(isp, ISP1301_I2C_MODE_CONTROL_1, ~MC1_SPEED_REG);
-	isp1301_ग_लिखो(isp, ISP1301_I2C_MODE_CONTROL_1, MC1_SPEED_REG);
+	isp1301_write(isp, ISP1301_I2C_MODE_CONTROL_1, MC1_SPEED_REG);
 	isp1301_clear(isp, ISP1301_I2C_MODE_CONTROL_2, ~0);
-	isp1301_ग_लिखो(isp, ISP1301_I2C_MODE_CONTROL_2, (MC2_BI_DI | MC2_PSW_EN
+	isp1301_write(isp, ISP1301_I2C_MODE_CONTROL_2, (MC2_BI_DI | MC2_PSW_EN
 				| MC2_SPD_SUSP_CTRL));
 
 	isp1301_clear(isp, ISP1301_I2C_OTG_CONTROL_1, ~0);
-	isp1301_ग_लिखो(isp, ISP1301_I2C_MODE_CONTROL_1, MC1_DAT_SE0);
-	isp1301_ग_लिखो(isp, ISP1301_I2C_OTG_CONTROL_1, (OTG1_DM_PULLDOWN
+	isp1301_write(isp, ISP1301_I2C_MODE_CONTROL_1, MC1_DAT_SE0);
+	isp1301_write(isp, ISP1301_I2C_OTG_CONTROL_1, (OTG1_DM_PULLDOWN
 				| OTG1_DP_PULLDOWN));
 	isp1301_clear(isp, ISP1301_I2C_OTG_CONTROL_1, (OTG1_DM_PULLUP
 				| OTG1_DP_PULLUP));
 
-	/* mask all पूर्णांकerrupts */
+	/* mask all interrupts */
 	isp1301_clear(isp, ISP1301_I2C_INTERRUPT_LATCH, ~0);
 	isp1301_clear(isp, ISP1301_I2C_INTERRUPT_FALLING, ~0);
 	isp1301_clear(isp, ISP1301_I2C_INTERRUPT_RISING, ~0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक isp1301_phy_set_vbus(काष्ठा usb_phy *phy, पूर्णांक on)
-अणु
-	काष्ठा isp1301 *isp = phy_to_isp(phy);
+static int isp1301_phy_set_vbus(struct usb_phy *phy, int on)
+{
+	struct isp1301 *isp = phy_to_isp(phy);
 
-	अगर (on)
-		isp1301_ग_लिखो(isp, ISP1301_I2C_OTG_CONTROL_1, OTG1_VBUS_DRV);
-	अन्यथा
+	if (on)
+		isp1301_write(isp, ISP1301_I2C_OTG_CONTROL_1, OTG1_VBUS_DRV);
+	else
 		isp1301_clear(isp, ISP1301_I2C_OTG_CONTROL_1, OTG1_VBUS_DRV);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक isp1301_probe(काष्ठा i2c_client *client,
-			 स्थिर काष्ठा i2c_device_id *i2c_id)
-अणु
-	काष्ठा isp1301 *isp;
-	काष्ठा usb_phy *phy;
+static int isp1301_probe(struct i2c_client *client,
+			 const struct i2c_device_id *i2c_id)
+{
+	struct isp1301 *isp;
+	struct usb_phy *phy;
 
-	isp = devm_kzalloc(&client->dev, माप(*isp), GFP_KERNEL);
-	अगर (!isp)
-		वापस -ENOMEM;
+	isp = devm_kzalloc(&client->dev, sizeof(*isp), GFP_KERNEL);
+	if (!isp)
+		return -ENOMEM;
 
 	isp->client = client;
 	mutex_init(&isp->mutex);
@@ -118,50 +117,50 @@ MODULE_DEVICE_TABLE(of, isp1301_of_match);
 
 	isp1301_i2c_client = client;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक isp1301_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा isp1301 *isp = i2c_get_clientdata(client);
+static int isp1301_remove(struct i2c_client *client)
+{
+	struct isp1301 *isp = i2c_get_clientdata(client);
 
-	usb_हटाओ_phy(&isp->phy);
-	isp1301_i2c_client = शून्य;
+	usb_remove_phy(&isp->phy);
+	isp1301_i2c_client = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा i2c_driver isp1301_driver = अणु
-	.driver = अणु
+static struct i2c_driver isp1301_driver = {
+	.driver = {
 		.name = DRV_NAME,
 		.of_match_table = isp1301_of_match,
-	पूर्ण,
+	},
 	.probe = isp1301_probe,
-	.हटाओ = isp1301_हटाओ,
+	.remove = isp1301_remove,
 	.id_table = isp1301_id,
-पूर्ण;
+};
 
 module_i2c_driver(isp1301_driver);
 
-अटल पूर्णांक match(काष्ठा device *dev, स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा device_node *node = (स्थिर काष्ठा device_node *)data;
-	वापस (dev->of_node == node) &&
+static int match(struct device *dev, const void *data)
+{
+	const struct device_node *node = (const struct device_node *)data;
+	return (dev->of_node == node) &&
 		(dev->driver == &isp1301_driver.driver);
-पूर्ण
+}
 
-काष्ठा i2c_client *isp1301_get_client(काष्ठा device_node *node)
-अणु
-	अगर (node) अणु /* reference of ISP1301 I2C node via DT */
-		काष्ठा device *dev = bus_find_device(&i2c_bus_type, शून्य,
+struct i2c_client *isp1301_get_client(struct device_node *node)
+{
+	if (node) { /* reference of ISP1301 I2C node via DT */
+		struct device *dev = bus_find_device(&i2c_bus_type, NULL,
 						     node, match);
-		अगर (!dev)
-			वापस शून्य;
-		वापस to_i2c_client(dev);
-	पूर्ण अन्यथा अणु /* non-DT: only one ISP1301 chip supported */
-		वापस isp1301_i2c_client;
-	पूर्ण
-पूर्ण
+		if (!dev)
+			return NULL;
+		return to_i2c_client(dev);
+	} else { /* non-DT: only one ISP1301 chip supported */
+		return isp1301_i2c_client;
+	}
+}
 EXPORT_SYMBOL_GPL(isp1301_get_client);
 
 MODULE_AUTHOR("Roland Stigge <stigge@antcom.de>");

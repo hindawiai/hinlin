@@ -1,34 +1,33 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2012 Avionic Design GmbH
  * Copyright (C) 2012-2013, NVIDIA Corporation
  */
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/host1x.h>
-#समावेश <linux/of.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/of_device.h>
+#include <linux/debugfs.h>
+#include <linux/host1x.h>
+#include <linux/of.h>
+#include <linux/seq_file.h>
+#include <linux/slab.h>
+#include <linux/of_device.h>
 
-#समावेश "bus.h"
-#समावेश "dev.h"
+#include "bus.h"
+#include "dev.h"
 
-अटल DEFINE_MUTEX(clients_lock);
-अटल LIST_HEAD(clients);
+static DEFINE_MUTEX(clients_lock);
+static LIST_HEAD(clients);
 
-अटल DEFINE_MUTEX(drivers_lock);
-अटल LIST_HEAD(drivers);
+static DEFINE_MUTEX(drivers_lock);
+static LIST_HEAD(drivers);
 
-अटल DEFINE_MUTEX(devices_lock);
-अटल LIST_HEAD(devices);
+static DEFINE_MUTEX(devices_lock);
+static LIST_HEAD(devices);
 
-काष्ठा host1x_subdev अणु
-	काष्ठा host1x_client *client;
-	काष्ठा device_node *np;
-	काष्ठा list_head list;
-पूर्ण;
+struct host1x_subdev {
+	struct host1x_client *client;
+	struct device_node *np;
+	struct list_head list;
+};
 
 /**
  * host1x_subdev_add() - add a new subdevice with an associated device node
@@ -36,17 +35,17 @@
  * @driver: host1x driver containing the subdevices
  * @np: device node
  */
-अटल पूर्णांक host1x_subdev_add(काष्ठा host1x_device *device,
-			     काष्ठा host1x_driver *driver,
-			     काष्ठा device_node *np)
-अणु
-	काष्ठा host1x_subdev *subdev;
-	काष्ठा device_node *child;
-	पूर्णांक err;
+static int host1x_subdev_add(struct host1x_device *device,
+			     struct host1x_driver *driver,
+			     struct device_node *np)
+{
+	struct host1x_subdev *subdev;
+	struct device_node *child;
+	int err;
 
-	subdev = kzalloc(माप(*subdev), GFP_KERNEL);
-	अगर (!subdev)
-		वापस -ENOMEM;
+	subdev = kzalloc(sizeof(*subdev), GFP_KERNEL);
+	if (!subdev)
+		return -ENOMEM;
 
 	INIT_LIST_HEAD(&subdev->list);
 	subdev->np = of_node_get(np);
@@ -56,66 +55,66 @@
 	mutex_unlock(&device->subdevs_lock);
 
 	/* recursively add children */
-	क्रम_each_child_of_node(np, child) अणु
-		अगर (of_match_node(driver->subdevs, child) &&
-		    of_device_is_available(child)) अणु
+	for_each_child_of_node(np, child) {
+		if (of_match_node(driver->subdevs, child) &&
+		    of_device_is_available(child)) {
 			err = host1x_subdev_add(device, driver, child);
-			अगर (err < 0) अणु
+			if (err < 0) {
 				/* XXX cleanup? */
 				of_node_put(child);
-				वापस err;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return err;
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * host1x_subdev_del() - हटाओ subdevice
- * @subdev: subdevice to हटाओ
+ * host1x_subdev_del() - remove subdevice
+ * @subdev: subdevice to remove
  */
-अटल व्योम host1x_subdev_del(काष्ठा host1x_subdev *subdev)
-अणु
+static void host1x_subdev_del(struct host1x_subdev *subdev)
+{
 	list_del(&subdev->list);
 	of_node_put(subdev->np);
-	kमुक्त(subdev);
-पूर्ण
+	kfree(subdev);
+}
 
 /**
  * host1x_device_parse_dt() - scan device tree and add matching subdevices
  * @device: host1x logical device
  * @driver: host1x driver
  */
-अटल पूर्णांक host1x_device_parse_dt(काष्ठा host1x_device *device,
-				  काष्ठा host1x_driver *driver)
-अणु
-	काष्ठा device_node *np;
-	पूर्णांक err;
+static int host1x_device_parse_dt(struct host1x_device *device,
+				  struct host1x_driver *driver)
+{
+	struct device_node *np;
+	int err;
 
-	क्रम_each_child_of_node(device->dev.parent->of_node, np) अणु
-		अगर (of_match_node(driver->subdevs, np) &&
-		    of_device_is_available(np)) अणु
+	for_each_child_of_node(device->dev.parent->of_node, np) {
+		if (of_match_node(driver->subdevs, np) &&
+		    of_device_is_available(np)) {
 			err = host1x_subdev_add(device, driver, np);
-			अगर (err < 0) अणु
+			if (err < 0) {
 				of_node_put(np);
-				वापस err;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return err;
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम host1x_subdev_रेजिस्टर(काष्ठा host1x_device *device,
-				   काष्ठा host1x_subdev *subdev,
-				   काष्ठा host1x_client *client)
-अणु
-	पूर्णांक err;
+static void host1x_subdev_register(struct host1x_device *device,
+				   struct host1x_subdev *subdev,
+				   struct host1x_client *client)
+{
+	int err;
 
 	/*
-	 * Move the subdevice to the list of active (रेजिस्टरed) subdevices
-	 * and associate it with a client. At the same समय, associate the
+	 * Move the subdevice to the list of active (registered) subdevices
+	 * and associate it with a client. At the same time, associate the
 	 * client with its parent device.
 	 */
 	mutex_lock(&device->subdevs_lock);
@@ -127,299 +126,299 @@
 	mutex_unlock(&device->clients_lock);
 	mutex_unlock(&device->subdevs_lock);
 
-	अगर (list_empty(&device->subdevs)) अणु
+	if (list_empty(&device->subdevs)) {
 		err = device_add(&device->dev);
-		अगर (err < 0)
+		if (err < 0)
 			dev_err(&device->dev, "failed to add: %d\n", err);
-		अन्यथा
-			device->रेजिस्टरed = true;
-	पूर्ण
-पूर्ण
+		else
+			device->registered = true;
+	}
+}
 
-अटल व्योम __host1x_subdev_unरेजिस्टर(काष्ठा host1x_device *device,
-				       काष्ठा host1x_subdev *subdev)
-अणु
-	काष्ठा host1x_client *client = subdev->client;
+static void __host1x_subdev_unregister(struct host1x_device *device,
+				       struct host1x_subdev *subdev)
+{
+	struct host1x_client *client = subdev->client;
 
 	/*
-	 * If all subdevices have been activated, we're about to हटाओ the
+	 * If all subdevices have been activated, we're about to remove the
 	 * first active subdevice, so unload the driver first.
 	 */
-	अगर (list_empty(&device->subdevs)) अणु
-		अगर (device->रेजिस्टरed) अणु
-			device->रेजिस्टरed = false;
+	if (list_empty(&device->subdevs)) {
+		if (device->registered) {
+			device->registered = false;
 			device_del(&device->dev);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
-	 * Move the subdevice back to the list of idle subdevices and हटाओ
+	 * Move the subdevice back to the list of idle subdevices and remove
 	 * it from list of clients.
 	 */
 	mutex_lock(&device->clients_lock);
-	subdev->client = शून्य;
-	client->host = शून्य;
+	subdev->client = NULL;
+	client->host = NULL;
 	list_move_tail(&subdev->list, &device->subdevs);
 	/*
-	 * XXX: Perhaps करोn't करो this here, but rather explicitly हटाओ it
+	 * XXX: Perhaps don't do this here, but rather explicitly remove it
 	 * when the device is about to be deleted.
 	 *
 	 * This is somewhat complicated by the fact that this function is
-	 * used to हटाओ the subdevice when a client is unरेजिस्टरed but
-	 * also when the composite device is about to be हटाओd.
+	 * used to remove the subdevice when a client is unregistered but
+	 * also when the composite device is about to be removed.
 	 */
 	list_del_init(&client->list);
 	mutex_unlock(&device->clients_lock);
-पूर्ण
+}
 
-अटल व्योम host1x_subdev_unरेजिस्टर(काष्ठा host1x_device *device,
-				     काष्ठा host1x_subdev *subdev)
-अणु
+static void host1x_subdev_unregister(struct host1x_device *device,
+				     struct host1x_subdev *subdev)
+{
 	mutex_lock(&device->subdevs_lock);
-	__host1x_subdev_unरेजिस्टर(device, subdev);
+	__host1x_subdev_unregister(device, subdev);
 	mutex_unlock(&device->subdevs_lock);
-पूर्ण
+}
 
 /**
  * host1x_device_init() - initialize a host1x logical device
  * @device: host1x logical device
  *
- * The driver क्रम the host1x logical device can call this during execution of
+ * The driver for the host1x logical device can call this during execution of
  * its &host1x_driver.probe implementation to initialize each of its clients.
- * The client drivers access the subप्रणाली specअगरic driver data using the
+ * The client drivers access the subsystem specific driver data using the
  * &host1x_client.parent field and driver data associated with it (usually by
  * calling dev_get_drvdata()).
  */
-पूर्णांक host1x_device_init(काष्ठा host1x_device *device)
-अणु
-	काष्ठा host1x_client *client;
-	पूर्णांक err;
+int host1x_device_init(struct host1x_device *device)
+{
+	struct host1x_client *client;
+	int err;
 
 	mutex_lock(&device->clients_lock);
 
-	list_क्रम_each_entry(client, &device->clients, list) अणु
-		अगर (client->ops && client->ops->early_init) अणु
+	list_for_each_entry(client, &device->clients, list) {
+		if (client->ops && client->ops->early_init) {
 			err = client->ops->early_init(client);
-			अगर (err < 0) अणु
+			if (err < 0) {
 				dev_err(&device->dev, "failed to early initialize %s: %d\n",
 					dev_name(client->dev), err);
-				जाओ tearकरोwn_late;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto teardown_late;
+			}
+		}
+	}
 
-	list_क्रम_each_entry(client, &device->clients, list) अणु
-		अगर (client->ops && client->ops->init) अणु
+	list_for_each_entry(client, &device->clients, list) {
+		if (client->ops && client->ops->init) {
 			err = client->ops->init(client);
-			अगर (err < 0) अणु
+			if (err < 0) {
 				dev_err(&device->dev,
 					"failed to initialize %s: %d\n",
 					dev_name(client->dev), err);
-				जाओ tearकरोwn;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto teardown;
+			}
+		}
+	}
 
 	mutex_unlock(&device->clients_lock);
 
-	वापस 0;
+	return 0;
 
-tearकरोwn:
-	list_क्रम_each_entry_जारी_reverse(client, &device->clients, list)
-		अगर (client->ops->निकास)
-			client->ops->निकास(client);
+teardown:
+	list_for_each_entry_continue_reverse(client, &device->clients, list)
+		if (client->ops->exit)
+			client->ops->exit(client);
 
-	/* reset client to end of list क्रम late tearकरोwn */
-	client = list_entry(&device->clients, काष्ठा host1x_client, list);
+	/* reset client to end of list for late teardown */
+	client = list_entry(&device->clients, struct host1x_client, list);
 
-tearकरोwn_late:
-	list_क्रम_each_entry_जारी_reverse(client, &device->clients, list)
-		अगर (client->ops->late_निकास)
-			client->ops->late_निकास(client);
+teardown_late:
+	list_for_each_entry_continue_reverse(client, &device->clients, list)
+		if (client->ops->late_exit)
+			client->ops->late_exit(client);
 
 	mutex_unlock(&device->clients_lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(host1x_device_init);
 
 /**
- * host1x_device_निकास() - uninitialize host1x logical device
+ * host1x_device_exit() - uninitialize host1x logical device
  * @device: host1x logical device
  *
- * When the driver क्रम a host1x logical device is unloaded, it can call this
- * function to tear करोwn each of its clients. Typically this is करोne after a
- * subप्रणाली-specअगरic data काष्ठाure is हटाओd and the functionality can no
- * दीर्घer be used.
+ * When the driver for a host1x logical device is unloaded, it can call this
+ * function to tear down each of its clients. Typically this is done after a
+ * subsystem-specific data structure is removed and the functionality can no
+ * longer be used.
  */
-पूर्णांक host1x_device_निकास(काष्ठा host1x_device *device)
-अणु
-	काष्ठा host1x_client *client;
-	पूर्णांक err;
+int host1x_device_exit(struct host1x_device *device)
+{
+	struct host1x_client *client;
+	int err;
 
 	mutex_lock(&device->clients_lock);
 
-	list_क्रम_each_entry_reverse(client, &device->clients, list) अणु
-		अगर (client->ops && client->ops->निकास) अणु
-			err = client->ops->निकास(client);
-			अगर (err < 0) अणु
+	list_for_each_entry_reverse(client, &device->clients, list) {
+		if (client->ops && client->ops->exit) {
+			err = client->ops->exit(client);
+			if (err < 0) {
 				dev_err(&device->dev,
 					"failed to cleanup %s: %d\n",
 					dev_name(client->dev), err);
 				mutex_unlock(&device->clients_lock);
-				वापस err;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return err;
+			}
+		}
+	}
 
-	list_क्रम_each_entry_reverse(client, &device->clients, list) अणु
-		अगर (client->ops && client->ops->late_निकास) अणु
-			err = client->ops->late_निकास(client);
-			अगर (err < 0) अणु
+	list_for_each_entry_reverse(client, &device->clients, list) {
+		if (client->ops && client->ops->late_exit) {
+			err = client->ops->late_exit(client);
+			if (err < 0) {
 				dev_err(&device->dev, "failed to late cleanup %s: %d\n",
 					dev_name(client->dev), err);
 				mutex_unlock(&device->clients_lock);
-				वापस err;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return err;
+			}
+		}
+	}
 
 	mutex_unlock(&device->clients_lock);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(host1x_device_निकास);
+	return 0;
+}
+EXPORT_SYMBOL(host1x_device_exit);
 
-अटल पूर्णांक host1x_add_client(काष्ठा host1x *host1x,
-			     काष्ठा host1x_client *client)
-अणु
-	काष्ठा host1x_device *device;
-	काष्ठा host1x_subdev *subdev;
-
-	mutex_lock(&host1x->devices_lock);
-
-	list_क्रम_each_entry(device, &host1x->devices, list) अणु
-		list_क्रम_each_entry(subdev, &device->subdevs, list) अणु
-			अगर (subdev->np == client->dev->of_node) अणु
-				host1x_subdev_रेजिस्टर(device, subdev, client);
-				mutex_unlock(&host1x->devices_lock);
-				वापस 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-
-	mutex_unlock(&host1x->devices_lock);
-	वापस -ENODEV;
-पूर्ण
-
-अटल पूर्णांक host1x_del_client(काष्ठा host1x *host1x,
-			     काष्ठा host1x_client *client)
-अणु
-	काष्ठा host1x_device *device, *dt;
-	काष्ठा host1x_subdev *subdev;
+static int host1x_add_client(struct host1x *host1x,
+			     struct host1x_client *client)
+{
+	struct host1x_device *device;
+	struct host1x_subdev *subdev;
 
 	mutex_lock(&host1x->devices_lock);
 
-	list_क्रम_each_entry_safe(device, dt, &host1x->devices, list) अणु
-		list_क्रम_each_entry(subdev, &device->active, list) अणु
-			अगर (subdev->client == client) अणु
-				host1x_subdev_unरेजिस्टर(device, subdev);
+	list_for_each_entry(device, &host1x->devices, list) {
+		list_for_each_entry(subdev, &device->subdevs, list) {
+			if (subdev->np == client->dev->of_node) {
+				host1x_subdev_register(device, subdev, client);
 				mutex_unlock(&host1x->devices_lock);
-				वापस 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return 0;
+			}
+		}
+	}
 
 	mutex_unlock(&host1x->devices_lock);
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल पूर्णांक host1x_device_match(काष्ठा device *dev, काष्ठा device_driver *drv)
-अणु
-	वापस म_भेद(dev_name(dev), drv->name) == 0;
-पूर्ण
+static int host1x_del_client(struct host1x *host1x,
+			     struct host1x_client *client)
+{
+	struct host1x_device *device, *dt;
+	struct host1x_subdev *subdev;
 
-अटल पूर्णांक host1x_device_uevent(काष्ठा device *dev,
-				काष्ठा kobj_uevent_env *env)
-अणु
-	काष्ठा device_node *np = dev->parent->of_node;
-	अचिन्हित पूर्णांक count = 0;
-	काष्ठा property *p;
-	स्थिर अक्षर *compat;
+	mutex_lock(&host1x->devices_lock);
+
+	list_for_each_entry_safe(device, dt, &host1x->devices, list) {
+		list_for_each_entry(subdev, &device->active, list) {
+			if (subdev->client == client) {
+				host1x_subdev_unregister(device, subdev);
+				mutex_unlock(&host1x->devices_lock);
+				return 0;
+			}
+		}
+	}
+
+	mutex_unlock(&host1x->devices_lock);
+	return -ENODEV;
+}
+
+static int host1x_device_match(struct device *dev, struct device_driver *drv)
+{
+	return strcmp(dev_name(dev), drv->name) == 0;
+}
+
+static int host1x_device_uevent(struct device *dev,
+				struct kobj_uevent_env *env)
+{
+	struct device_node *np = dev->parent->of_node;
+	unsigned int count = 0;
+	struct property *p;
+	const char *compat;
 
 	/*
 	 * This duplicates most of of_device_uevent(), but the latter cannot
 	 * be called from modules and operates on dev->of_node, which is not
-	 * available in this हाल.
+	 * available in this case.
 	 *
-	 * Note that this is really only needed क्रम backwards compatibility
-	 * with libdrm, which parses this inक्रमmation from sysfs and will
-	 * fail अगर it can't find the OF_FULLNAME, specअगरically.
+	 * Note that this is really only needed for backwards compatibility
+	 * with libdrm, which parses this information from sysfs and will
+	 * fail if it can't find the OF_FULLNAME, specifically.
 	 */
 	add_uevent_var(env, "OF_NAME=%pOFn", np);
 	add_uevent_var(env, "OF_FULLNAME=%pOF", np);
 
-	of_property_क्रम_each_string(np, "compatible", p, compat) अणु
+	of_property_for_each_string(np, "compatible", p, compat) {
 		add_uevent_var(env, "OF_COMPATIBLE_%u=%s", count, compat);
 		count++;
-	पूर्ण
+	}
 
 	add_uevent_var(env, "OF_COMPATIBLE_N=%u", count);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक host1x_dma_configure(काष्ठा device *dev)
-अणु
-	वापस of_dma_configure(dev, dev->of_node, true);
-पूर्ण
+static int host1x_dma_configure(struct device *dev)
+{
+	return of_dma_configure(dev, dev->of_node, true);
+}
 
-अटल स्थिर काष्ठा dev_pm_ops host1x_device_pm_ops = अणु
+static const struct dev_pm_ops host1x_device_pm_ops = {
 	.suspend = pm_generic_suspend,
 	.resume = pm_generic_resume,
-	.मुक्तze = pm_generic_मुक्तze,
+	.freeze = pm_generic_freeze,
 	.thaw = pm_generic_thaw,
-	.घातeroff = pm_generic_घातeroff,
+	.poweroff = pm_generic_poweroff,
 	.restore = pm_generic_restore,
-पूर्ण;
+};
 
-काष्ठा bus_type host1x_bus_type = अणु
+struct bus_type host1x_bus_type = {
 	.name = "host1x",
 	.match = host1x_device_match,
 	.uevent = host1x_device_uevent,
 	.dma_configure = host1x_dma_configure,
 	.pm = &host1x_device_pm_ops,
-पूर्ण;
+};
 
-अटल व्योम __host1x_device_del(काष्ठा host1x_device *device)
-अणु
-	काष्ठा host1x_subdev *subdev, *sd;
-	काष्ठा host1x_client *client, *cl;
+static void __host1x_device_del(struct host1x_device *device)
+{
+	struct host1x_subdev *subdev, *sd;
+	struct host1x_client *client, *cl;
 
 	mutex_lock(&device->subdevs_lock);
 
-	/* unरेजिस्टर subdevices */
-	list_क्रम_each_entry_safe(subdev, sd, &device->active, list) अणु
+	/* unregister subdevices */
+	list_for_each_entry_safe(subdev, sd, &device->active, list) {
 		/*
-		 * host1x_subdev_unरेजिस्टर() will हटाओ the client from
+		 * host1x_subdev_unregister() will remove the client from
 		 * any lists, so we'll need to manually add it back to the
 		 * list of idle clients.
 		 *
-		 * XXX: Alternatively, perhaps करोn't हटाओ the client from
-		 * any lists in host1x_subdev_unरेजिस्टर() and instead करो
-		 * that explicitly from host1x_unरेजिस्टर_client()?
+		 * XXX: Alternatively, perhaps don't remove the client from
+		 * any lists in host1x_subdev_unregister() and instead do
+		 * that explicitly from host1x_unregister_client()?
 		 */
 		client = subdev->client;
 
-		__host1x_subdev_unरेजिस्टर(device, subdev);
+		__host1x_subdev_unregister(device, subdev);
 
 		/* add the client to the list of idle clients */
 		mutex_lock(&clients_lock);
 		list_add_tail(&client->list, &clients);
 		mutex_unlock(&clients_lock);
-	पूर्ण
+	}
 
-	/* हटाओ subdevices */
-	list_क्रम_each_entry_safe(subdev, sd, &device->subdevs, list)
+	/* remove subdevices */
+	list_for_each_entry_safe(subdev, sd, &device->subdevs, list)
 		host1x_subdev_del(subdev);
 
 	mutex_unlock(&device->subdevs_lock);
@@ -428,35 +427,35 @@ EXPORT_SYMBOL(host1x_device_निकास);
 	mutex_lock(&clients_lock);
 	mutex_lock(&device->clients_lock);
 
-	list_क्रम_each_entry_safe(client, cl, &device->clients, list)
+	list_for_each_entry_safe(client, cl, &device->clients, list)
 		list_move_tail(&client->list, &clients);
 
 	mutex_unlock(&device->clients_lock);
 	mutex_unlock(&clients_lock);
 
-	/* finally हटाओ the device */
+	/* finally remove the device */
 	list_del_init(&device->list);
-पूर्ण
+}
 
-अटल व्योम host1x_device_release(काष्ठा device *dev)
-अणु
-	काष्ठा host1x_device *device = to_host1x_device(dev);
+static void host1x_device_release(struct device *dev)
+{
+	struct host1x_device *device = to_host1x_device(dev);
 
 	__host1x_device_del(device);
-	kमुक्त(device);
-पूर्ण
+	kfree(device);
+}
 
-अटल पूर्णांक host1x_device_add(काष्ठा host1x *host1x,
-			     काष्ठा host1x_driver *driver)
-अणु
-	काष्ठा host1x_client *client, *पंचांगp;
-	काष्ठा host1x_subdev *subdev;
-	काष्ठा host1x_device *device;
-	पूर्णांक err;
+static int host1x_device_add(struct host1x *host1x,
+			     struct host1x_driver *driver)
+{
+	struct host1x_client *client, *tmp;
+	struct host1x_subdev *subdev;
+	struct host1x_device *device;
+	int err;
 
-	device = kzalloc(माप(*device), GFP_KERNEL);
-	अगर (!device)
-		वापस -ENOMEM;
+	device = kzalloc(sizeof(*device), GFP_KERNEL);
+	if (!device)
+		return -ENOMEM;
 
 	device_initialize(&device->dev);
 
@@ -478,126 +477,126 @@ EXPORT_SYMBOL(host1x_device_निकास);
 	of_dma_configure(&device->dev, host1x->dev->of_node, true);
 
 	device->dev.dma_parms = &device->dma_parms;
-	dma_set_max_seg_size(&device->dev, अच_पूर्णांक_उच्च);
+	dma_set_max_seg_size(&device->dev, UINT_MAX);
 
 	err = host1x_device_parse_dt(device, driver);
-	अगर (err < 0) अणु
-		kमुक्त(device);
-		वापस err;
-	पूर्ण
+	if (err < 0) {
+		kfree(device);
+		return err;
+	}
 
 	list_add_tail(&device->list, &host1x->devices);
 
 	mutex_lock(&clients_lock);
 
-	list_क्रम_each_entry_safe(client, पंचांगp, &clients, list) अणु
-		list_क्रम_each_entry(subdev, &device->subdevs, list) अणु
-			अगर (subdev->np == client->dev->of_node) अणु
-				host1x_subdev_रेजिस्टर(device, subdev, client);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+	list_for_each_entry_safe(client, tmp, &clients, list) {
+		list_for_each_entry(subdev, &device->subdevs, list) {
+			if (subdev->np == client->dev->of_node) {
+				host1x_subdev_register(device, subdev, client);
+				break;
+			}
+		}
+	}
 
 	mutex_unlock(&clients_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Removes a device by first unरेजिस्टरing any subdevices and then removing
+ * Removes a device by first unregistering any subdevices and then removing
  * itself from the list of devices.
  *
  * This function must be called with the host1x->devices_lock held.
  */
-अटल व्योम host1x_device_del(काष्ठा host1x *host1x,
-			      काष्ठा host1x_device *device)
-अणु
-	अगर (device->रेजिस्टरed) अणु
-		device->रेजिस्टरed = false;
+static void host1x_device_del(struct host1x *host1x,
+			      struct host1x_device *device)
+{
+	if (device->registered) {
+		device->registered = false;
 		device_del(&device->dev);
-	पूर्ण
+	}
 
 	put_device(&device->dev);
-पूर्ण
+}
 
-अटल व्योम host1x_attach_driver(काष्ठा host1x *host1x,
-				 काष्ठा host1x_driver *driver)
-अणु
-	काष्ठा host1x_device *device;
-	पूर्णांक err;
+static void host1x_attach_driver(struct host1x *host1x,
+				 struct host1x_driver *driver)
+{
+	struct host1x_device *device;
+	int err;
 
 	mutex_lock(&host1x->devices_lock);
 
-	list_क्रम_each_entry(device, &host1x->devices, list) अणु
-		अगर (device->driver == driver) अणु
+	list_for_each_entry(device, &host1x->devices, list) {
+		if (device->driver == driver) {
 			mutex_unlock(&host1x->devices_lock);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
 	err = host1x_device_add(host1x, driver);
-	अगर (err < 0)
+	if (err < 0)
 		dev_err(host1x->dev, "failed to allocate device: %d\n", err);
 
 	mutex_unlock(&host1x->devices_lock);
-पूर्ण
+}
 
-अटल व्योम host1x_detach_driver(काष्ठा host1x *host1x,
-				 काष्ठा host1x_driver *driver)
-अणु
-	काष्ठा host1x_device *device, *पंचांगp;
+static void host1x_detach_driver(struct host1x *host1x,
+				 struct host1x_driver *driver)
+{
+	struct host1x_device *device, *tmp;
 
 	mutex_lock(&host1x->devices_lock);
 
-	list_क्रम_each_entry_safe(device, पंचांगp, &host1x->devices, list)
-		अगर (device->driver == driver)
+	list_for_each_entry_safe(device, tmp, &host1x->devices, list)
+		if (device->driver == driver)
 			host1x_device_del(host1x, device);
 
 	mutex_unlock(&host1x->devices_lock);
-पूर्ण
+}
 
-अटल पूर्णांक host1x_devices_show(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा host1x *host1x = s->निजी;
-	काष्ठा host1x_device *device;
+static int host1x_devices_show(struct seq_file *s, void *data)
+{
+	struct host1x *host1x = s->private;
+	struct host1x_device *device;
 
 	mutex_lock(&host1x->devices_lock);
 
-	list_क्रम_each_entry(device, &host1x->devices, list) अणु
-		काष्ठा host1x_subdev *subdev;
+	list_for_each_entry(device, &host1x->devices, list) {
+		struct host1x_subdev *subdev;
 
-		seq_म_लिखो(s, "%s\n", dev_name(&device->dev));
+		seq_printf(s, "%s\n", dev_name(&device->dev));
 
 		mutex_lock(&device->subdevs_lock);
 
-		list_क्रम_each_entry(subdev, &device->active, list)
-			seq_म_लिखो(s, "  %pOFf: %s\n", subdev->np,
+		list_for_each_entry(subdev, &device->active, list)
+			seq_printf(s, "  %pOFf: %s\n", subdev->np,
 				   dev_name(subdev->client->dev));
 
-		list_क्रम_each_entry(subdev, &device->subdevs, list)
-			seq_म_लिखो(s, "  %pOFf:\n", subdev->np);
+		list_for_each_entry(subdev, &device->subdevs, list)
+			seq_printf(s, "  %pOFf:\n", subdev->np);
 
 		mutex_unlock(&device->subdevs_lock);
-	पूर्ण
+	}
 
 	mutex_unlock(&host1x->devices_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(host1x_devices);
 
 /**
- * host1x_रेजिस्टर() - रेजिस्टर a host1x controller
+ * host1x_register() - register a host1x controller
  * @host1x: host1x controller
  *
- * The host1x controller driver uses this to रेजिस्टर a host1x controller with
- * the infraकाष्ठाure. Note that all Tegra SoC generations have only ever come
+ * The host1x controller driver uses this to register a host1x controller with
+ * the infrastructure. Note that all Tegra SoC generations have only ever come
  * with a single host1x instance, so this function is somewhat academic.
  */
-पूर्णांक host1x_रेजिस्टर(काष्ठा host1x *host1x)
-अणु
-	काष्ठा host1x_driver *driver;
+int host1x_register(struct host1x *host1x)
+{
+	struct host1x_driver *driver;
 
 	mutex_lock(&devices_lock);
 	list_add_tail(&host1x->list, &devices);
@@ -605,7 +604,7 @@ DEFINE_SHOW_ATTRIBUTE(host1x_devices);
 
 	mutex_lock(&drivers_lock);
 
-	list_क्रम_each_entry(driver, &drivers, list)
+	list_for_each_entry(driver, &drivers, list)
 		host1x_attach_driver(host1x, driver);
 
 	mutex_unlock(&drivers_lock);
@@ -613,23 +612,23 @@ DEFINE_SHOW_ATTRIBUTE(host1x_devices);
 	debugfs_create_file("devices", S_IRUGO, host1x->debugfs, host1x,
 			    &host1x_devices_fops);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * host1x_unरेजिस्टर() - unरेजिस्टर a host1x controller
+ * host1x_unregister() - unregister a host1x controller
  * @host1x: host1x controller
  *
- * The host1x controller driver uses this to हटाओ a host1x controller from
- * the infraकाष्ठाure.
+ * The host1x controller driver uses this to remove a host1x controller from
+ * the infrastructure.
  */
-पूर्णांक host1x_unरेजिस्टर(काष्ठा host1x *host1x)
-अणु
-	काष्ठा host1x_driver *driver;
+int host1x_unregister(struct host1x *host1x)
+{
+	struct host1x_driver *driver;
 
 	mutex_lock(&drivers_lock);
 
-	list_क्रम_each_entry(driver, &drivers, list)
+	list_for_each_entry(driver, &drivers, list)
 		host1x_detach_driver(host1x, driver);
 
 	mutex_unlock(&drivers_lock);
@@ -638,54 +637,54 @@ DEFINE_SHOW_ATTRIBUTE(host1x_devices);
 	list_del_init(&host1x->list);
 	mutex_unlock(&devices_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक host1x_device_probe(काष्ठा device *dev)
-अणु
-	काष्ठा host1x_driver *driver = to_host1x_driver(dev->driver);
-	काष्ठा host1x_device *device = to_host1x_device(dev);
+static int host1x_device_probe(struct device *dev)
+{
+	struct host1x_driver *driver = to_host1x_driver(dev->driver);
+	struct host1x_device *device = to_host1x_device(dev);
 
-	अगर (driver->probe)
-		वापस driver->probe(device);
+	if (driver->probe)
+		return driver->probe(device);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक host1x_device_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा host1x_driver *driver = to_host1x_driver(dev->driver);
-	काष्ठा host1x_device *device = to_host1x_device(dev);
+static int host1x_device_remove(struct device *dev)
+{
+	struct host1x_driver *driver = to_host1x_driver(dev->driver);
+	struct host1x_device *device = to_host1x_device(dev);
 
-	अगर (driver->हटाओ)
-		वापस driver->हटाओ(device);
+	if (driver->remove)
+		return driver->remove(device);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम host1x_device_shutकरोwn(काष्ठा device *dev)
-अणु
-	काष्ठा host1x_driver *driver = to_host1x_driver(dev->driver);
-	काष्ठा host1x_device *device = to_host1x_device(dev);
+static void host1x_device_shutdown(struct device *dev)
+{
+	struct host1x_driver *driver = to_host1x_driver(dev->driver);
+	struct host1x_device *device = to_host1x_device(dev);
 
-	अगर (driver->shutकरोwn)
-		driver->shutकरोwn(device);
-पूर्ण
+	if (driver->shutdown)
+		driver->shutdown(device);
+}
 
 /**
- * host1x_driver_रेजिस्टर_full() - रेजिस्टर a host1x driver
+ * host1x_driver_register_full() - register a host1x driver
  * @driver: host1x driver
  * @owner: owner module
  *
- * Drivers क्रम host1x logical devices call this function to रेजिस्टर a driver
- * with the infraकाष्ठाure. Note that since these drive logical devices, the
+ * Drivers for host1x logical devices call this function to register a driver
+ * with the infrastructure. Note that since these drive logical devices, the
  * registration of the driver actually triggers tho logical device creation.
- * A logical device will be created क्रम each host1x instance.
+ * A logical device will be created for each host1x instance.
  */
-पूर्णांक host1x_driver_रेजिस्टर_full(काष्ठा host1x_driver *driver,
-				काष्ठा module *owner)
-अणु
-	काष्ठा host1x *host1x;
+int host1x_driver_register_full(struct host1x_driver *driver,
+				struct module *owner)
+{
+	struct host1x *host1x;
 
 	INIT_LIST_HEAD(&driver->list);
 
@@ -695,7 +694,7 @@ DEFINE_SHOW_ATTRIBUTE(host1x_devices);
 
 	mutex_lock(&devices_lock);
 
-	list_क्रम_each_entry(host1x, &devices, list)
+	list_for_each_entry(host1x, &devices, list)
 		host1x_attach_driver(host1x, driver);
 
 	mutex_unlock(&devices_lock);
@@ -703,29 +702,29 @@ DEFINE_SHOW_ATTRIBUTE(host1x_devices);
 	driver->driver.bus = &host1x_bus_type;
 	driver->driver.owner = owner;
 	driver->driver.probe = host1x_device_probe;
-	driver->driver.हटाओ = host1x_device_हटाओ;
-	driver->driver.shutकरोwn = host1x_device_shutकरोwn;
+	driver->driver.remove = host1x_device_remove;
+	driver->driver.shutdown = host1x_device_shutdown;
 
-	वापस driver_रेजिस्टर(&driver->driver);
-पूर्ण
-EXPORT_SYMBOL(host1x_driver_रेजिस्टर_full);
+	return driver_register(&driver->driver);
+}
+EXPORT_SYMBOL(host1x_driver_register_full);
 
 /**
- * host1x_driver_unरेजिस्टर() - unरेजिस्टर a host1x driver
+ * host1x_driver_unregister() - unregister a host1x driver
  * @driver: host1x driver
  *
  * Unbinds the driver from each of the host1x logical devices that it is
- * bound to, effectively removing the subप्रणाली devices that they represent.
+ * bound to, effectively removing the subsystem devices that they represent.
  */
-व्योम host1x_driver_unरेजिस्टर(काष्ठा host1x_driver *driver)
-अणु
-	काष्ठा host1x *host1x;
+void host1x_driver_unregister(struct host1x_driver *driver)
+{
+	struct host1x *host1x;
 
-	driver_unरेजिस्टर(&driver->driver);
+	driver_unregister(&driver->driver);
 
 	mutex_lock(&devices_lock);
 
-	list_क्रम_each_entry(host1x, &devices, list)
+	list_for_each_entry(host1x, &devices, list)
 		host1x_detach_driver(host1x, driver);
 
 	mutex_unlock(&devices_lock);
@@ -733,58 +732,58 @@ EXPORT_SYMBOL(host1x_driver_रेजिस्टर_full);
 	mutex_lock(&drivers_lock);
 	list_del_init(&driver->list);
 	mutex_unlock(&drivers_lock);
-पूर्ण
-EXPORT_SYMBOL(host1x_driver_unरेजिस्टर);
+}
+EXPORT_SYMBOL(host1x_driver_unregister);
 
 /**
  * __host1x_client_init() - initialize a host1x client
  * @client: host1x client
- * @key: lock class key क्रम the client-specअगरic mutex
+ * @key: lock class key for the client-specific mutex
  */
-व्योम __host1x_client_init(काष्ठा host1x_client *client, काष्ठा lock_class_key *key)
-अणु
+void __host1x_client_init(struct host1x_client *client, struct lock_class_key *key)
+{
 	INIT_LIST_HEAD(&client->list);
 	__mutex_init(&client->lock, "host1x client lock", key);
 	client->usecount = 0;
-पूर्ण
+}
 EXPORT_SYMBOL(__host1x_client_init);
 
 /**
- * host1x_client_निकास() - uninitialize a host1x client
+ * host1x_client_exit() - uninitialize a host1x client
  * @client: host1x client
  */
-व्योम host1x_client_निकास(काष्ठा host1x_client *client)
-अणु
+void host1x_client_exit(struct host1x_client *client)
+{
 	mutex_destroy(&client->lock);
-पूर्ण
-EXPORT_SYMBOL(host1x_client_निकास);
+}
+EXPORT_SYMBOL(host1x_client_exit);
 
 /**
- * __host1x_client_रेजिस्टर() - रेजिस्टर a host1x client
+ * __host1x_client_register() - register a host1x client
  * @client: host1x client
- * @key: lock class key क्रम the client-specअगरic mutex
+ * @key: lock class key for the client-specific mutex
  *
  * Registers a host1x client with each host1x controller instance. Note that
  * each client will only match their parent host1x controller and will only be
- * associated with that instance. Once all clients have been रेजिस्टरed with
- * their parent host1x controller, the infraकाष्ठाure will set up the logical
+ * associated with that instance. Once all clients have been registered with
+ * their parent host1x controller, the infrastructure will set up the logical
  * device and call host1x_device_init(), which will in turn call each client's
  * &host1x_client_ops.init implementation.
  */
-पूर्णांक __host1x_client_रेजिस्टर(काष्ठा host1x_client *client)
-अणु
-	काष्ठा host1x *host1x;
-	पूर्णांक err;
+int __host1x_client_register(struct host1x_client *client)
+{
+	struct host1x *host1x;
+	int err;
 
 	mutex_lock(&devices_lock);
 
-	list_क्रम_each_entry(host1x, &devices, list) अणु
+	list_for_each_entry(host1x, &devices, list) {
 		err = host1x_add_client(host1x, client);
-		अगर (!err) अणु
+		if (!err) {
 			mutex_unlock(&devices_lock);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	mutex_unlock(&devices_lock);
 
@@ -792,116 +791,116 @@ EXPORT_SYMBOL(host1x_client_निकास);
 	list_add_tail(&client->list, &clients);
 	mutex_unlock(&clients_lock);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(__host1x_client_रेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL(__host1x_client_register);
 
 /**
- * host1x_client_unरेजिस्टर() - unरेजिस्टर a host1x client
+ * host1x_client_unregister() - unregister a host1x client
  * @client: host1x client
  *
  * Removes a host1x client from its host1x controller instance. If a logical
- * device has alपढ़ोy been initialized, it will be torn करोwn.
+ * device has already been initialized, it will be torn down.
  */
-पूर्णांक host1x_client_unरेजिस्टर(काष्ठा host1x_client *client)
-अणु
-	काष्ठा host1x_client *c;
-	काष्ठा host1x *host1x;
-	पूर्णांक err;
+int host1x_client_unregister(struct host1x_client *client)
+{
+	struct host1x_client *c;
+	struct host1x *host1x;
+	int err;
 
 	mutex_lock(&devices_lock);
 
-	list_क्रम_each_entry(host1x, &devices, list) अणु
+	list_for_each_entry(host1x, &devices, list) {
 		err = host1x_del_client(host1x, client);
-		अगर (!err) अणु
+		if (!err) {
 			mutex_unlock(&devices_lock);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	mutex_unlock(&devices_lock);
 	mutex_lock(&clients_lock);
 
-	list_क्रम_each_entry(c, &clients, list) अणु
-		अगर (c == client) अणु
+	list_for_each_entry(c, &clients, list) {
+		if (c == client) {
 			list_del_init(&c->list);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	mutex_unlock(&clients_lock);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(host1x_client_unरेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL(host1x_client_unregister);
 
-पूर्णांक host1x_client_suspend(काष्ठा host1x_client *client)
-अणु
-	पूर्णांक err = 0;
+int host1x_client_suspend(struct host1x_client *client)
+{
+	int err = 0;
 
 	mutex_lock(&client->lock);
 
-	अगर (client->usecount == 1) अणु
-		अगर (client->ops && client->ops->suspend) अणु
+	if (client->usecount == 1) {
+		if (client->ops && client->ops->suspend) {
 			err = client->ops->suspend(client);
-			अगर (err < 0)
-				जाओ unlock;
-		पूर्ण
-	पूर्ण
+			if (err < 0)
+				goto unlock;
+		}
+	}
 
 	client->usecount--;
 	dev_dbg(client->dev, "use count: %u\n", client->usecount);
 
-	अगर (client->parent) अणु
+	if (client->parent) {
 		err = host1x_client_suspend(client->parent);
-		अगर (err < 0)
-			जाओ resume;
-	पूर्ण
+		if (err < 0)
+			goto resume;
+	}
 
-	जाओ unlock;
+	goto unlock;
 
 resume:
-	अगर (client->usecount == 0)
-		अगर (client->ops && client->ops->resume)
+	if (client->usecount == 0)
+		if (client->ops && client->ops->resume)
 			client->ops->resume(client);
 
 	client->usecount++;
 unlock:
 	mutex_unlock(&client->lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(host1x_client_suspend);
 
-पूर्णांक host1x_client_resume(काष्ठा host1x_client *client)
-अणु
-	पूर्णांक err = 0;
+int host1x_client_resume(struct host1x_client *client)
+{
+	int err = 0;
 
 	mutex_lock(&client->lock);
 
-	अगर (client->parent) अणु
+	if (client->parent) {
 		err = host1x_client_resume(client->parent);
-		अगर (err < 0)
-			जाओ unlock;
-	पूर्ण
+		if (err < 0)
+			goto unlock;
+	}
 
-	अगर (client->usecount == 0) अणु
-		अगर (client->ops && client->ops->resume) अणु
+	if (client->usecount == 0) {
+		if (client->ops && client->ops->resume) {
 			err = client->ops->resume(client);
-			अगर (err < 0)
-				जाओ suspend;
-		पूर्ण
-	पूर्ण
+			if (err < 0)
+				goto suspend;
+		}
+	}
 
 	client->usecount++;
 	dev_dbg(client->dev, "use count: %u\n", client->usecount);
 
-	जाओ unlock;
+	goto unlock;
 
 suspend:
-	अगर (client->parent)
+	if (client->parent)
 		host1x_client_suspend(client->parent);
 unlock:
 	mutex_unlock(&client->lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(host1x_client_resume);

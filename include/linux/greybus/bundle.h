@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Greybus bundles
  *
@@ -7,87 +6,87 @@
  * Copyright 2014 Linaro Ltd.
  */
 
-#अगर_अघोषित __BUNDLE_H
-#घोषणा __BUNDLE_H
+#ifndef __BUNDLE_H
+#define __BUNDLE_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/list.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/device.h>
+#include <linux/types.h>
+#include <linux/list.h>
+#include <linux/pm_runtime.h>
+#include <linux/device.h>
 
-#घोषणा	BUNDLE_ID_NONE	U8_MAX
+#define	BUNDLE_ID_NONE	U8_MAX
 
 /* Greybus "public" definitions" */
-काष्ठा gb_bundle अणु
-	काष्ठा device		dev;
-	काष्ठा gb_पूर्णांकerface	*पूर्णांकf;
+struct gb_bundle {
+	struct device		dev;
+	struct gb_interface	*intf;
 
 	u8			id;
 	u8			class;
 	u8			class_major;
 	u8			class_minor;
 
-	माप_प्रकार			num_cports;
-	काष्ठा greybus_descriptor_cport *cport_desc;
+	size_t			num_cports;
+	struct greybus_descriptor_cport *cport_desc;
 
-	काष्ठा list_head	connections;
+	struct list_head	connections;
 	u8			*state;
 
-	काष्ठा list_head	links;	/* पूर्णांकerface->bundles */
-पूर्ण;
-#घोषणा to_gb_bundle(d) container_of(d, काष्ठा gb_bundle, dev)
+	struct list_head	links;	/* interface->bundles */
+};
+#define to_gb_bundle(d) container_of(d, struct gb_bundle, dev)
 
 /* Greybus "private" definitions" */
-काष्ठा gb_bundle *gb_bundle_create(काष्ठा gb_पूर्णांकerface *पूर्णांकf, u8 bundle_id,
+struct gb_bundle *gb_bundle_create(struct gb_interface *intf, u8 bundle_id,
 				   u8 class);
-पूर्णांक gb_bundle_add(काष्ठा gb_bundle *bundle);
-व्योम gb_bundle_destroy(काष्ठा gb_bundle *bundle);
+int gb_bundle_add(struct gb_bundle *bundle);
+void gb_bundle_destroy(struct gb_bundle *bundle);
 
-/* Bundle Runसमय PM wrappers */
-#अगर_घोषित CONFIG_PM
-अटल अंतरभूत पूर्णांक gb_pm_runसमय_get_sync(काष्ठा gb_bundle *bundle)
-अणु
-	पूर्णांक retval;
+/* Bundle Runtime PM wrappers */
+#ifdef CONFIG_PM
+static inline int gb_pm_runtime_get_sync(struct gb_bundle *bundle)
+{
+	int retval;
 
-	retval = pm_runसमय_get_sync(&bundle->dev);
-	अगर (retval < 0) अणु
+	retval = pm_runtime_get_sync(&bundle->dev);
+	if (retval < 0) {
 		dev_err(&bundle->dev,
 			"pm_runtime_get_sync failed: %d\n", retval);
-		pm_runसमय_put_noidle(&bundle->dev);
-		वापस retval;
-	पूर्ण
+		pm_runtime_put_noidle(&bundle->dev);
+		return retval;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक gb_pm_runसमय_put_स्वतःsuspend(काष्ठा gb_bundle *bundle)
-अणु
-	पूर्णांक retval;
+static inline int gb_pm_runtime_put_autosuspend(struct gb_bundle *bundle)
+{
+	int retval;
 
-	pm_runसमय_mark_last_busy(&bundle->dev);
-	retval = pm_runसमय_put_स्वतःsuspend(&bundle->dev);
+	pm_runtime_mark_last_busy(&bundle->dev);
+	retval = pm_runtime_put_autosuspend(&bundle->dev);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल अंतरभूत व्योम gb_pm_runसमय_get_noresume(काष्ठा gb_bundle *bundle)
-अणु
-	pm_runसमय_get_noresume(&bundle->dev);
-पूर्ण
+static inline void gb_pm_runtime_get_noresume(struct gb_bundle *bundle)
+{
+	pm_runtime_get_noresume(&bundle->dev);
+}
 
-अटल अंतरभूत व्योम gb_pm_runसमय_put_noidle(काष्ठा gb_bundle *bundle)
-अणु
-	pm_runसमय_put_noidle(&bundle->dev);
-पूर्ण
+static inline void gb_pm_runtime_put_noidle(struct gb_bundle *bundle)
+{
+	pm_runtime_put_noidle(&bundle->dev);
+}
 
-#अन्यथा
-अटल अंतरभूत पूर्णांक gb_pm_runसमय_get_sync(काष्ठा gb_bundle *bundle)
-अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक gb_pm_runसमय_put_स्वतःsuspend(काष्ठा gb_bundle *bundle)
-अणु वापस 0; पूर्ण
+#else
+static inline int gb_pm_runtime_get_sync(struct gb_bundle *bundle)
+{ return 0; }
+static inline int gb_pm_runtime_put_autosuspend(struct gb_bundle *bundle)
+{ return 0; }
 
-अटल अंतरभूत व्योम gb_pm_runसमय_get_noresume(काष्ठा gb_bundle *bundle) अणुपूर्ण
-अटल अंतरभूत व्योम gb_pm_runसमय_put_noidle(काष्ठा gb_bundle *bundle) अणुपूर्ण
-#पूर्ण_अगर
+static inline void gb_pm_runtime_get_noresume(struct gb_bundle *bundle) {}
+static inline void gb_pm_runtime_put_noidle(struct gb_bundle *bundle) {}
+#endif
 
-#पूर्ण_अगर /* __BUNDLE_H */
+#endif /* __BUNDLE_H */

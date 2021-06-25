@@ -1,90 +1,89 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * devfreq_cooling: Thermal cooling device implementation क्रम devices using
+ * devfreq_cooling: Thermal cooling device implementation for devices using
  *                  devfreq
  *
  * Copyright (C) 2014-2015 ARM Limited
  *
  */
 
-#अगर_अघोषित __DEVFREQ_COOLING_H__
-#घोषणा __DEVFREQ_COOLING_H__
+#ifndef __DEVFREQ_COOLING_H__
+#define __DEVFREQ_COOLING_H__
 
-#समावेश <linux/devfreq.h>
-#समावेश <linux/thermal.h>
+#include <linux/devfreq.h>
+#include <linux/thermal.h>
 
 
 /**
- * काष्ठा devfreq_cooling_घातer - Devfreq cooling घातer ops
- * @get_real_घातer:	When this is set, the framework uses it to ask the
- *			device driver क्रम the actual घातer.
+ * struct devfreq_cooling_power - Devfreq cooling power ops
+ * @get_real_power:	When this is set, the framework uses it to ask the
+ *			device driver for the actual power.
  *			Some devices have more sophisticated methods
- *			(like घातer counters) to approximate the actual घातer
+ *			(like power counters) to approximate the actual power
  *			that they use.
  *			This function provides more accurate data to the
- *			thermal governor. When the driver करोes not provide
+ *			thermal governor. When the driver does not provide
  *			such function, framework just uses pre-calculated
- *			table and scale the घातer by 'utilization'
+ *			table and scale the power by 'utilization'
  *			(based on 'busy_time' and 'total_time' taken from
  *			devfreq 'last_status').
- *			The value वापसed by this function must be lower
- *			or equal than the maximum घातer value
- *			क्रम the current	state
- *			(which can be found in घातer_table[state]).
- *			When this पूर्णांकerface is used, the घातer_table holds
- *			max total (अटल + dynamic) घातer value क्रम each OPP.
+ *			The value returned by this function must be lower
+ *			or equal than the maximum power value
+ *			for the current	state
+ *			(which can be found in power_table[state]).
+ *			When this interface is used, the power_table holds
+ *			max total (static + dynamic) power value for each OPP.
  */
-काष्ठा devfreq_cooling_घातer अणु
-	पूर्णांक (*get_real_घातer)(काष्ठा devfreq *df, u32 *घातer,
-			      अचिन्हित दीर्घ freq, अचिन्हित दीर्घ voltage);
-पूर्ण;
+struct devfreq_cooling_power {
+	int (*get_real_power)(struct devfreq *df, u32 *power,
+			      unsigned long freq, unsigned long voltage);
+};
 
-#अगर_घोषित CONFIG_DEVFREQ_THERMAL
+#ifdef CONFIG_DEVFREQ_THERMAL
 
-काष्ठा thermal_cooling_device *
-of_devfreq_cooling_रेजिस्टर_घातer(काष्ठा device_node *np, काष्ठा devfreq *df,
-				  काष्ठा devfreq_cooling_घातer *dfc_घातer);
-काष्ठा thermal_cooling_device *
-of_devfreq_cooling_रेजिस्टर(काष्ठा device_node *np, काष्ठा devfreq *df);
-काष्ठा thermal_cooling_device *devfreq_cooling_रेजिस्टर(काष्ठा devfreq *df);
-व्योम devfreq_cooling_unरेजिस्टर(काष्ठा thermal_cooling_device *dfc);
-काष्ठा thermal_cooling_device *
-devfreq_cooling_em_रेजिस्टर(काष्ठा devfreq *df,
-			    काष्ठा devfreq_cooling_घातer *dfc_घातer);
+struct thermal_cooling_device *
+of_devfreq_cooling_register_power(struct device_node *np, struct devfreq *df,
+				  struct devfreq_cooling_power *dfc_power);
+struct thermal_cooling_device *
+of_devfreq_cooling_register(struct device_node *np, struct devfreq *df);
+struct thermal_cooling_device *devfreq_cooling_register(struct devfreq *df);
+void devfreq_cooling_unregister(struct thermal_cooling_device *dfc);
+struct thermal_cooling_device *
+devfreq_cooling_em_register(struct devfreq *df,
+			    struct devfreq_cooling_power *dfc_power);
 
-#अन्यथा /* !CONFIG_DEVFREQ_THERMAL */
+#else /* !CONFIG_DEVFREQ_THERMAL */
 
-अटल अंतरभूत काष्ठा thermal_cooling_device *
-of_devfreq_cooling_रेजिस्टर_घातer(काष्ठा device_node *np, काष्ठा devfreq *df,
-				  काष्ठा devfreq_cooling_घातer *dfc_घातer)
-अणु
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
+static inline struct thermal_cooling_device *
+of_devfreq_cooling_register_power(struct device_node *np, struct devfreq *df,
+				  struct devfreq_cooling_power *dfc_power)
+{
+	return ERR_PTR(-EINVAL);
+}
 
-अटल अंतरभूत काष्ठा thermal_cooling_device *
-of_devfreq_cooling_रेजिस्टर(काष्ठा device_node *np, काष्ठा devfreq *df)
-अणु
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
+static inline struct thermal_cooling_device *
+of_devfreq_cooling_register(struct device_node *np, struct devfreq *df)
+{
+	return ERR_PTR(-EINVAL);
+}
 
-अटल अंतरभूत काष्ठा thermal_cooling_device *
-devfreq_cooling_रेजिस्टर(काष्ठा devfreq *df)
-अणु
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
+static inline struct thermal_cooling_device *
+devfreq_cooling_register(struct devfreq *df)
+{
+	return ERR_PTR(-EINVAL);
+}
 
-अटल अंतरभूत काष्ठा thermal_cooling_device *
-devfreq_cooling_em_रेजिस्टर(काष्ठा devfreq *df,
-			    काष्ठा devfreq_cooling_घातer *dfc_घातer)
-अणु
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
+static inline struct thermal_cooling_device *
+devfreq_cooling_em_register(struct devfreq *df,
+			    struct devfreq_cooling_power *dfc_power)
+{
+	return ERR_PTR(-EINVAL);
+}
 
-अटल अंतरभूत व्योम
-devfreq_cooling_unरेजिस्टर(काष्ठा thermal_cooling_device *dfc)
-अणु
-पूर्ण
+static inline void
+devfreq_cooling_unregister(struct thermal_cooling_device *dfc)
+{
+}
 
-#पूर्ण_अगर /* CONFIG_DEVFREQ_THERMAL */
-#पूर्ण_अगर /* __DEVFREQ_COOLING_H__ */
+#endif /* CONFIG_DEVFREQ_THERMAL */
+#endif /* __DEVFREQ_COOLING_H__ */

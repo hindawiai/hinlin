@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (C) 2000-2002 Joakim Axelsson <gozem@linux.nu>
  *                         Patrick Schaaf <bof@bof.de>
  *                         Martin Josefsson <gandalf@wlug.westbo.se>
@@ -7,15 +6,15 @@
  */
 
 /* Kernel module which implements the set match and SET target
- * क्रम netfilter/iptables.
+ * for netfilter/iptables.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/skbuff.h>
+#include <linux/module.h>
+#include <linux/skbuff.h>
 
-#समावेश <linux/netfilter/x_tables.h>
-#समावेश <linux/netfilter/ipset/ip_set.h>
-#समावेश <uapi/linux/netfilter/xt_set.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter/ipset/ip_set.h>
+#include <uapi/linux/netfilter/xt_set.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Jozsef Kadlecsik <kadlec@netfilter.org>");
@@ -26,688 +25,688 @@ MODULE_ALIAS("ip6t_set");
 MODULE_ALIAS("ipt_SET");
 MODULE_ALIAS("ip6t_SET");
 
-अटल अंतरभूत पूर्णांक
-match_set(ip_set_id_t index, स्थिर काष्ठा sk_buff *skb,
-	  स्थिर काष्ठा xt_action_param *par,
-	  काष्ठा ip_set_adt_opt *opt, पूर्णांक inv)
-अणु
-	अगर (ip_set_test(index, skb, par, opt))
+static inline int
+match_set(ip_set_id_t index, const struct sk_buff *skb,
+	  const struct xt_action_param *par,
+	  struct ip_set_adt_opt *opt, int inv)
+{
+	if (ip_set_test(index, skb, par, opt))
 		inv = !inv;
-	वापस inv;
-पूर्ण
+	return inv;
+}
 
-#घोषणा ADT_OPT(n, f, d, fs, cfs, t, p, b, po, bo)	\
-काष्ठा ip_set_adt_opt n = अणु				\
+#define ADT_OPT(n, f, d, fs, cfs, t, p, b, po, bo)	\
+struct ip_set_adt_opt n = {				\
 	.family	= f,					\
 	.dim = d,					\
 	.flags = fs,					\
 	.cmdflags = cfs,				\
-	.ext.समयout = t,				\
+	.ext.timeout = t,				\
 	.ext.packets = p,				\
 	.ext.bytes = b,					\
 	.ext.packets_op = po,				\
 	.ext.bytes_op = bo,				\
-पूर्ण
+}
 
-/* Revision 0 पूर्णांकerface: backward compatible with netfilter/iptables */
+/* Revision 0 interface: backward compatible with netfilter/iptables */
 
-अटल bool
-set_match_v0(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_set_info_match_v0 *info = par->matchinfo;
+static bool
+set_match_v0(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	const struct xt_set_info_match_v0 *info = par->matchinfo;
 
 	ADT_OPT(opt, xt_family(par), info->match_set.u.compat.dim,
-		info->match_set.u.compat.flags, 0, अच_पूर्णांक_उच्च,
+		info->match_set.u.compat.flags, 0, UINT_MAX,
 		0, 0, 0, 0);
 
-	वापस match_set(info->match_set.index, skb, par, &opt,
+	return match_set(info->match_set.index, skb, par, &opt,
 			 info->match_set.u.compat.flags & IPSET_INV_MATCH);
-पूर्ण
+}
 
-अटल व्योम
-compat_flags(काष्ठा xt_set_info_v0 *info)
-अणु
-	u_पूर्णांक8_t i;
+static void
+compat_flags(struct xt_set_info_v0 *info)
+{
+	u_int8_t i;
 
-	/* Fill out compatibility data according to क्रमागत ip_set_kopt */
+	/* Fill out compatibility data according to enum ip_set_kopt */
 	info->u.compat.dim = IPSET_DIM_ZERO;
-	अगर (info->u.flags[0] & IPSET_MATCH_INV)
+	if (info->u.flags[0] & IPSET_MATCH_INV)
 		info->u.compat.flags |= IPSET_INV_MATCH;
-	क्रम (i = 0; i < IPSET_DIM_MAX - 1 && info->u.flags[i]; i++) अणु
+	for (i = 0; i < IPSET_DIM_MAX - 1 && info->u.flags[i]; i++) {
 		info->u.compat.dim++;
-		अगर (info->u.flags[i] & IPSET_SRC)
+		if (info->u.flags[i] & IPSET_SRC)
 			info->u.compat.flags |= (1 << info->u.compat.dim);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक
-set_match_v0_checkentry(स्थिर काष्ठा xt_mtchk_param *par)
-अणु
-	काष्ठा xt_set_info_match_v0 *info = par->matchinfo;
+static int
+set_match_v0_checkentry(const struct xt_mtchk_param *par)
+{
+	struct xt_set_info_match_v0 *info = par->matchinfo;
 	ip_set_id_t index;
 
 	index = ip_set_nfnl_get_byindex(par->net, info->match_set.index);
 
-	अगर (index == IPSET_INVALID_ID) अणु
+	if (index == IPSET_INVALID_ID) {
 		pr_info_ratelimited("Cannot find set identified by id %u to match\n",
 				    info->match_set.index);
-		वापस -ENOENT;
-	पूर्ण
-	अगर (info->match_set.u.flags[IPSET_DIM_MAX - 1] != 0) अणु
+		return -ENOENT;
+	}
+	if (info->match_set.u.flags[IPSET_DIM_MAX - 1] != 0) {
 		pr_info_ratelimited("set match dimension is over the limit!\n");
 		ip_set_nfnl_put(par->net, info->match_set.index);
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
 	/* Fill out compatibility data */
 	compat_flags(&info->match_set);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-set_match_v0_destroy(स्थिर काष्ठा xt_mtdtor_param *par)
-अणु
-	काष्ठा xt_set_info_match_v0 *info = par->matchinfo;
+static void
+set_match_v0_destroy(const struct xt_mtdtor_param *par)
+{
+	struct xt_set_info_match_v0 *info = par->matchinfo;
 
 	ip_set_nfnl_put(par->net, info->match_set.index);
-पूर्ण
+}
 
 /* Revision 1 match */
 
-अटल bool
-set_match_v1(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_set_info_match_v1 *info = par->matchinfo;
+static bool
+set_match_v1(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	const struct xt_set_info_match_v1 *info = par->matchinfo;
 
 	ADT_OPT(opt, xt_family(par), info->match_set.dim,
-		info->match_set.flags, 0, अच_पूर्णांक_उच्च,
+		info->match_set.flags, 0, UINT_MAX,
 		0, 0, 0, 0);
 
-	अगर (opt.flags & IPSET_RETURN_NOMATCH)
+	if (opt.flags & IPSET_RETURN_NOMATCH)
 		opt.cmdflags |= IPSET_FLAG_RETURN_NOMATCH;
 
-	वापस match_set(info->match_set.index, skb, par, &opt,
+	return match_set(info->match_set.index, skb, par, &opt,
 			 info->match_set.flags & IPSET_INV_MATCH);
-पूर्ण
+}
 
-अटल पूर्णांक
-set_match_v1_checkentry(स्थिर काष्ठा xt_mtchk_param *par)
-अणु
-	काष्ठा xt_set_info_match_v1 *info = par->matchinfo;
+static int
+set_match_v1_checkentry(const struct xt_mtchk_param *par)
+{
+	struct xt_set_info_match_v1 *info = par->matchinfo;
 	ip_set_id_t index;
 
 	index = ip_set_nfnl_get_byindex(par->net, info->match_set.index);
 
-	अगर (index == IPSET_INVALID_ID) अणु
+	if (index == IPSET_INVALID_ID) {
 		pr_info_ratelimited("Cannot find set identified by id %u to match\n",
 				    info->match_set.index);
-		वापस -ENOENT;
-	पूर्ण
-	अगर (info->match_set.dim > IPSET_DIM_MAX) अणु
+		return -ENOENT;
+	}
+	if (info->match_set.dim > IPSET_DIM_MAX) {
 		pr_info_ratelimited("set match dimension is over the limit!\n");
 		ip_set_nfnl_put(par->net, info->match_set.index);
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-set_match_v1_destroy(स्थिर काष्ठा xt_mtdtor_param *par)
-अणु
-	काष्ठा xt_set_info_match_v1 *info = par->matchinfo;
+static void
+set_match_v1_destroy(const struct xt_mtdtor_param *par)
+{
+	struct xt_set_info_match_v1 *info = par->matchinfo;
 
 	ip_set_nfnl_put(par->net, info->match_set.index);
-पूर्ण
+}
 
 /* Revision 3 match */
 
-अटल bool
-set_match_v3(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_set_info_match_v3 *info = par->matchinfo;
+static bool
+set_match_v3(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	const struct xt_set_info_match_v3 *info = par->matchinfo;
 
 	ADT_OPT(opt, xt_family(par), info->match_set.dim,
-		info->match_set.flags, info->flags, अच_पूर्णांक_उच्च,
+		info->match_set.flags, info->flags, UINT_MAX,
 		info->packets.value, info->bytes.value,
 		info->packets.op, info->bytes.op);
 
-	अगर (info->packets.op != IPSET_COUNTER_NONE ||
+	if (info->packets.op != IPSET_COUNTER_NONE ||
 	    info->bytes.op != IPSET_COUNTER_NONE)
 		opt.cmdflags |= IPSET_FLAG_MATCH_COUNTERS;
 
-	वापस match_set(info->match_set.index, skb, par, &opt,
+	return match_set(info->match_set.index, skb, par, &opt,
 			 info->match_set.flags & IPSET_INV_MATCH);
-पूर्ण
+}
 
-#घोषणा set_match_v3_checkentry	set_match_v1_checkentry
-#घोषणा set_match_v3_destroy	set_match_v1_destroy
+#define set_match_v3_checkentry	set_match_v1_checkentry
+#define set_match_v3_destroy	set_match_v1_destroy
 
 /* Revision 4 match */
 
-अटल bool
-set_match_v4(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_set_info_match_v4 *info = par->matchinfo;
+static bool
+set_match_v4(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	const struct xt_set_info_match_v4 *info = par->matchinfo;
 
 	ADT_OPT(opt, xt_family(par), info->match_set.dim,
-		info->match_set.flags, info->flags, अच_पूर्णांक_उच्च,
+		info->match_set.flags, info->flags, UINT_MAX,
 		info->packets.value, info->bytes.value,
 		info->packets.op, info->bytes.op);
 
-	अगर (info->packets.op != IPSET_COUNTER_NONE ||
+	if (info->packets.op != IPSET_COUNTER_NONE ||
 	    info->bytes.op != IPSET_COUNTER_NONE)
 		opt.cmdflags |= IPSET_FLAG_MATCH_COUNTERS;
 
-	वापस match_set(info->match_set.index, skb, par, &opt,
+	return match_set(info->match_set.index, skb, par, &opt,
 			 info->match_set.flags & IPSET_INV_MATCH);
-पूर्ण
+}
 
-#घोषणा set_match_v4_checkentry	set_match_v1_checkentry
-#घोषणा set_match_v4_destroy	set_match_v1_destroy
+#define set_match_v4_checkentry	set_match_v1_checkentry
+#define set_match_v4_destroy	set_match_v1_destroy
 
-/* Revision 0 पूर्णांकerface: backward compatible with netfilter/iptables */
+/* Revision 0 interface: backward compatible with netfilter/iptables */
 
-अटल अचिन्हित पूर्णांक
-set_target_v0(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_set_info_target_v0 *info = par->targinfo;
+static unsigned int
+set_target_v0(struct sk_buff *skb, const struct xt_action_param *par)
+{
+	const struct xt_set_info_target_v0 *info = par->targinfo;
 
 	ADT_OPT(add_opt, xt_family(par), info->add_set.u.compat.dim,
-		info->add_set.u.compat.flags, 0, अच_पूर्णांक_उच्च,
+		info->add_set.u.compat.flags, 0, UINT_MAX,
 		0, 0, 0, 0);
 	ADT_OPT(del_opt, xt_family(par), info->del_set.u.compat.dim,
-		info->del_set.u.compat.flags, 0, अच_पूर्णांक_उच्च,
+		info->del_set.u.compat.flags, 0, UINT_MAX,
 		0, 0, 0, 0);
 
-	अगर (info->add_set.index != IPSET_INVALID_ID)
+	if (info->add_set.index != IPSET_INVALID_ID)
 		ip_set_add(info->add_set.index, skb, par, &add_opt);
-	अगर (info->del_set.index != IPSET_INVALID_ID)
+	if (info->del_set.index != IPSET_INVALID_ID)
 		ip_set_del(info->del_set.index, skb, par, &del_opt);
 
-	वापस XT_CONTINUE;
-पूर्ण
+	return XT_CONTINUE;
+}
 
-अटल पूर्णांक
-set_target_v0_checkentry(स्थिर काष्ठा xt_tgchk_param *par)
-अणु
-	काष्ठा xt_set_info_target_v0 *info = par->targinfo;
+static int
+set_target_v0_checkentry(const struct xt_tgchk_param *par)
+{
+	struct xt_set_info_target_v0 *info = par->targinfo;
 	ip_set_id_t index;
 
-	अगर (info->add_set.index != IPSET_INVALID_ID) अणु
+	if (info->add_set.index != IPSET_INVALID_ID) {
 		index = ip_set_nfnl_get_byindex(par->net, info->add_set.index);
-		अगर (index == IPSET_INVALID_ID) अणु
+		if (index == IPSET_INVALID_ID) {
 			pr_info_ratelimited("Cannot find add_set index %u as target\n",
 					    info->add_set.index);
-			वापस -ENOENT;
-		पूर्ण
-	पूर्ण
+			return -ENOENT;
+		}
+	}
 
-	अगर (info->del_set.index != IPSET_INVALID_ID) अणु
+	if (info->del_set.index != IPSET_INVALID_ID) {
 		index = ip_set_nfnl_get_byindex(par->net, info->del_set.index);
-		अगर (index == IPSET_INVALID_ID) अणु
+		if (index == IPSET_INVALID_ID) {
 			pr_info_ratelimited("Cannot find del_set index %u as target\n",
 					    info->del_set.index);
-			अगर (info->add_set.index != IPSET_INVALID_ID)
+			if (info->add_set.index != IPSET_INVALID_ID)
 				ip_set_nfnl_put(par->net, info->add_set.index);
-			वापस -ENOENT;
-		पूर्ण
-	पूर्ण
-	अगर (info->add_set.u.flags[IPSET_DIM_MAX - 1] != 0 ||
-	    info->del_set.u.flags[IPSET_DIM_MAX - 1] != 0) अणु
+			return -ENOENT;
+		}
+	}
+	if (info->add_set.u.flags[IPSET_DIM_MAX - 1] != 0 ||
+	    info->del_set.u.flags[IPSET_DIM_MAX - 1] != 0) {
 		pr_info_ratelimited("SET target dimension over the limit!\n");
-		अगर (info->add_set.index != IPSET_INVALID_ID)
+		if (info->add_set.index != IPSET_INVALID_ID)
 			ip_set_nfnl_put(par->net, info->add_set.index);
-		अगर (info->del_set.index != IPSET_INVALID_ID)
+		if (info->del_set.index != IPSET_INVALID_ID)
 			ip_set_nfnl_put(par->net, info->del_set.index);
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
 	/* Fill out compatibility data */
 	compat_flags(&info->add_set);
 	compat_flags(&info->del_set);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-set_target_v0_destroy(स्थिर काष्ठा xt_tgdtor_param *par)
-अणु
-	स्थिर काष्ठा xt_set_info_target_v0 *info = par->targinfo;
+static void
+set_target_v0_destroy(const struct xt_tgdtor_param *par)
+{
+	const struct xt_set_info_target_v0 *info = par->targinfo;
 
-	अगर (info->add_set.index != IPSET_INVALID_ID)
+	if (info->add_set.index != IPSET_INVALID_ID)
 		ip_set_nfnl_put(par->net, info->add_set.index);
-	अगर (info->del_set.index != IPSET_INVALID_ID)
+	if (info->del_set.index != IPSET_INVALID_ID)
 		ip_set_nfnl_put(par->net, info->del_set.index);
-पूर्ण
+}
 
 /* Revision 1 target */
 
-अटल अचिन्हित पूर्णांक
-set_target_v1(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_set_info_target_v1 *info = par->targinfo;
+static unsigned int
+set_target_v1(struct sk_buff *skb, const struct xt_action_param *par)
+{
+	const struct xt_set_info_target_v1 *info = par->targinfo;
 
 	ADT_OPT(add_opt, xt_family(par), info->add_set.dim,
-		info->add_set.flags, 0, अच_पूर्णांक_उच्च,
+		info->add_set.flags, 0, UINT_MAX,
 		0, 0, 0, 0);
 	ADT_OPT(del_opt, xt_family(par), info->del_set.dim,
-		info->del_set.flags, 0, अच_पूर्णांक_उच्च,
+		info->del_set.flags, 0, UINT_MAX,
 		0, 0, 0, 0);
 
-	अगर (info->add_set.index != IPSET_INVALID_ID)
+	if (info->add_set.index != IPSET_INVALID_ID)
 		ip_set_add(info->add_set.index, skb, par, &add_opt);
-	अगर (info->del_set.index != IPSET_INVALID_ID)
+	if (info->del_set.index != IPSET_INVALID_ID)
 		ip_set_del(info->del_set.index, skb, par, &del_opt);
 
-	वापस XT_CONTINUE;
-पूर्ण
+	return XT_CONTINUE;
+}
 
-अटल पूर्णांक
-set_target_v1_checkentry(स्थिर काष्ठा xt_tgchk_param *par)
-अणु
-	स्थिर काष्ठा xt_set_info_target_v1 *info = par->targinfo;
+static int
+set_target_v1_checkentry(const struct xt_tgchk_param *par)
+{
+	const struct xt_set_info_target_v1 *info = par->targinfo;
 	ip_set_id_t index;
 
-	अगर (info->add_set.index != IPSET_INVALID_ID) अणु
+	if (info->add_set.index != IPSET_INVALID_ID) {
 		index = ip_set_nfnl_get_byindex(par->net, info->add_set.index);
-		अगर (index == IPSET_INVALID_ID) अणु
+		if (index == IPSET_INVALID_ID) {
 			pr_info_ratelimited("Cannot find add_set index %u as target\n",
 					    info->add_set.index);
-			वापस -ENOENT;
-		पूर्ण
-	पूर्ण
+			return -ENOENT;
+		}
+	}
 
-	अगर (info->del_set.index != IPSET_INVALID_ID) अणु
+	if (info->del_set.index != IPSET_INVALID_ID) {
 		index = ip_set_nfnl_get_byindex(par->net, info->del_set.index);
-		अगर (index == IPSET_INVALID_ID) अणु
+		if (index == IPSET_INVALID_ID) {
 			pr_info_ratelimited("Cannot find del_set index %u as target\n",
 					    info->del_set.index);
-			अगर (info->add_set.index != IPSET_INVALID_ID)
+			if (info->add_set.index != IPSET_INVALID_ID)
 				ip_set_nfnl_put(par->net, info->add_set.index);
-			वापस -ENOENT;
-		पूर्ण
-	पूर्ण
-	अगर (info->add_set.dim > IPSET_DIM_MAX ||
-	    info->del_set.dim > IPSET_DIM_MAX) अणु
+			return -ENOENT;
+		}
+	}
+	if (info->add_set.dim > IPSET_DIM_MAX ||
+	    info->del_set.dim > IPSET_DIM_MAX) {
 		pr_info_ratelimited("SET target dimension over the limit!\n");
-		अगर (info->add_set.index != IPSET_INVALID_ID)
+		if (info->add_set.index != IPSET_INVALID_ID)
 			ip_set_nfnl_put(par->net, info->add_set.index);
-		अगर (info->del_set.index != IPSET_INVALID_ID)
+		if (info->del_set.index != IPSET_INVALID_ID)
 			ip_set_nfnl_put(par->net, info->del_set.index);
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-set_target_v1_destroy(स्थिर काष्ठा xt_tgdtor_param *par)
-अणु
-	स्थिर काष्ठा xt_set_info_target_v1 *info = par->targinfo;
+static void
+set_target_v1_destroy(const struct xt_tgdtor_param *par)
+{
+	const struct xt_set_info_target_v1 *info = par->targinfo;
 
-	अगर (info->add_set.index != IPSET_INVALID_ID)
+	if (info->add_set.index != IPSET_INVALID_ID)
 		ip_set_nfnl_put(par->net, info->add_set.index);
-	अगर (info->del_set.index != IPSET_INVALID_ID)
+	if (info->del_set.index != IPSET_INVALID_ID)
 		ip_set_nfnl_put(par->net, info->del_set.index);
-पूर्ण
+}
 
 /* Revision 2 target */
 
-अटल अचिन्हित पूर्णांक
-set_target_v2(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_set_info_target_v2 *info = par->targinfo;
+static unsigned int
+set_target_v2(struct sk_buff *skb, const struct xt_action_param *par)
+{
+	const struct xt_set_info_target_v2 *info = par->targinfo;
 
 	ADT_OPT(add_opt, xt_family(par), info->add_set.dim,
-		info->add_set.flags, info->flags, info->समयout,
+		info->add_set.flags, info->flags, info->timeout,
 		0, 0, 0, 0);
 	ADT_OPT(del_opt, xt_family(par), info->del_set.dim,
-		info->del_set.flags, 0, अच_पूर्णांक_उच्च,
+		info->del_set.flags, 0, UINT_MAX,
 		0, 0, 0, 0);
 
-	/* Normalize to fit पूर्णांकo jअगरfies */
-	अगर (add_opt.ext.समयout != IPSET_NO_TIMEOUT &&
-	    add_opt.ext.समयout > IPSET_MAX_TIMEOUT)
-		add_opt.ext.समयout = IPSET_MAX_TIMEOUT;
-	अगर (info->add_set.index != IPSET_INVALID_ID)
+	/* Normalize to fit into jiffies */
+	if (add_opt.ext.timeout != IPSET_NO_TIMEOUT &&
+	    add_opt.ext.timeout > IPSET_MAX_TIMEOUT)
+		add_opt.ext.timeout = IPSET_MAX_TIMEOUT;
+	if (info->add_set.index != IPSET_INVALID_ID)
 		ip_set_add(info->add_set.index, skb, par, &add_opt);
-	अगर (info->del_set.index != IPSET_INVALID_ID)
+	if (info->del_set.index != IPSET_INVALID_ID)
 		ip_set_del(info->del_set.index, skb, par, &del_opt);
 
-	वापस XT_CONTINUE;
-पूर्ण
+	return XT_CONTINUE;
+}
 
-#घोषणा set_target_v2_checkentry	set_target_v1_checkentry
-#घोषणा set_target_v2_destroy		set_target_v1_destroy
+#define set_target_v2_checkentry	set_target_v1_checkentry
+#define set_target_v2_destroy		set_target_v1_destroy
 
 /* Revision 3 target */
 
-#घोषणा MOPT(opt, member)	((opt).ext.skbinfo.member)
+#define MOPT(opt, member)	((opt).ext.skbinfo.member)
 
-अटल अचिन्हित पूर्णांक
-set_target_v3(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_set_info_target_v3 *info = par->targinfo;
-	पूर्णांक ret;
+static unsigned int
+set_target_v3(struct sk_buff *skb, const struct xt_action_param *par)
+{
+	const struct xt_set_info_target_v3 *info = par->targinfo;
+	int ret;
 
 	ADT_OPT(add_opt, xt_family(par), info->add_set.dim,
-		info->add_set.flags, info->flags, info->समयout,
+		info->add_set.flags, info->flags, info->timeout,
 		0, 0, 0, 0);
 	ADT_OPT(del_opt, xt_family(par), info->del_set.dim,
-		info->del_set.flags, 0, अच_पूर्णांक_उच्च,
+		info->del_set.flags, 0, UINT_MAX,
 		0, 0, 0, 0);
 	ADT_OPT(map_opt, xt_family(par), info->map_set.dim,
-		info->map_set.flags, 0, अच_पूर्णांक_उच्च,
+		info->map_set.flags, 0, UINT_MAX,
 		0, 0, 0, 0);
 
-	/* Normalize to fit पूर्णांकo jअगरfies */
-	अगर (add_opt.ext.समयout != IPSET_NO_TIMEOUT &&
-	    add_opt.ext.समयout > IPSET_MAX_TIMEOUT)
-		add_opt.ext.समयout = IPSET_MAX_TIMEOUT;
-	अगर (info->add_set.index != IPSET_INVALID_ID)
+	/* Normalize to fit into jiffies */
+	if (add_opt.ext.timeout != IPSET_NO_TIMEOUT &&
+	    add_opt.ext.timeout > IPSET_MAX_TIMEOUT)
+		add_opt.ext.timeout = IPSET_MAX_TIMEOUT;
+	if (info->add_set.index != IPSET_INVALID_ID)
 		ip_set_add(info->add_set.index, skb, par, &add_opt);
-	अगर (info->del_set.index != IPSET_INVALID_ID)
+	if (info->del_set.index != IPSET_INVALID_ID)
 		ip_set_del(info->del_set.index, skb, par, &del_opt);
-	अगर (info->map_set.index != IPSET_INVALID_ID) अणु
+	if (info->map_set.index != IPSET_INVALID_ID) {
 		map_opt.cmdflags |= info->flags & (IPSET_FLAG_MAP_SKBMARK |
 						   IPSET_FLAG_MAP_SKBPRIO |
 						   IPSET_FLAG_MAP_SKBQUEUE);
 		ret = match_set(info->map_set.index, skb, par, &map_opt,
 				info->map_set.flags & IPSET_INV_MATCH);
-		अगर (!ret)
-			वापस XT_CONTINUE;
-		अगर (map_opt.cmdflags & IPSET_FLAG_MAP_SKBMARK)
+		if (!ret)
+			return XT_CONTINUE;
+		if (map_opt.cmdflags & IPSET_FLAG_MAP_SKBMARK)
 			skb->mark = (skb->mark & ~MOPT(map_opt,skbmarkmask))
 				    ^ MOPT(map_opt, skbmark);
-		अगर (map_opt.cmdflags & IPSET_FLAG_MAP_SKBPRIO)
+		if (map_opt.cmdflags & IPSET_FLAG_MAP_SKBPRIO)
 			skb->priority = MOPT(map_opt, skbprio);
-		अगर ((map_opt.cmdflags & IPSET_FLAG_MAP_SKBQUEUE) &&
+		if ((map_opt.cmdflags & IPSET_FLAG_MAP_SKBQUEUE) &&
 		    skb->dev &&
 		    skb->dev->real_num_tx_queues > MOPT(map_opt, skbqueue))
 			skb_set_queue_mapping(skb, MOPT(map_opt, skbqueue));
-	पूर्ण
-	वापस XT_CONTINUE;
-पूर्ण
+	}
+	return XT_CONTINUE;
+}
 
-अटल पूर्णांक
-set_target_v3_checkentry(स्थिर काष्ठा xt_tgchk_param *par)
-अणु
-	स्थिर काष्ठा xt_set_info_target_v3 *info = par->targinfo;
+static int
+set_target_v3_checkentry(const struct xt_tgchk_param *par)
+{
+	const struct xt_set_info_target_v3 *info = par->targinfo;
 	ip_set_id_t index;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (info->add_set.index != IPSET_INVALID_ID) अणु
+	if (info->add_set.index != IPSET_INVALID_ID) {
 		index = ip_set_nfnl_get_byindex(par->net,
 						info->add_set.index);
-		अगर (index == IPSET_INVALID_ID) अणु
+		if (index == IPSET_INVALID_ID) {
 			pr_info_ratelimited("Cannot find add_set index %u as target\n",
 					    info->add_set.index);
-			वापस -ENOENT;
-		पूर्ण
-	पूर्ण
+			return -ENOENT;
+		}
+	}
 
-	अगर (info->del_set.index != IPSET_INVALID_ID) अणु
+	if (info->del_set.index != IPSET_INVALID_ID) {
 		index = ip_set_nfnl_get_byindex(par->net,
 						info->del_set.index);
-		अगर (index == IPSET_INVALID_ID) अणु
+		if (index == IPSET_INVALID_ID) {
 			pr_info_ratelimited("Cannot find del_set index %u as target\n",
 					    info->del_set.index);
 			ret = -ENOENT;
-			जाओ cleanup_add;
-		पूर्ण
-	पूर्ण
+			goto cleanup_add;
+		}
+	}
 
-	अगर (info->map_set.index != IPSET_INVALID_ID) अणु
-		अगर (म_भेदन(par->table, "mangle", 7)) अणु
+	if (info->map_set.index != IPSET_INVALID_ID) {
+		if (strncmp(par->table, "mangle", 7)) {
 			pr_info_ratelimited("--map-set only usable from mangle table\n");
 			ret = -EINVAL;
-			जाओ cleanup_del;
-		पूर्ण
-		अगर (((info->flags & IPSET_FLAG_MAP_SKBPRIO) |
+			goto cleanup_del;
+		}
+		if (((info->flags & IPSET_FLAG_MAP_SKBPRIO) |
 		     (info->flags & IPSET_FLAG_MAP_SKBQUEUE)) &&
 		     (par->hook_mask & ~(1 << NF_INET_FORWARD |
 					 1 << NF_INET_LOCAL_OUT |
-					 1 << NF_INET_POST_ROUTING))) अणु
+					 1 << NF_INET_POST_ROUTING))) {
 			pr_info_ratelimited("mapping of prio or/and queue is allowed only from OUTPUT/FORWARD/POSTROUTING chains\n");
 			ret = -EINVAL;
-			जाओ cleanup_del;
-		पूर्ण
+			goto cleanup_del;
+		}
 		index = ip_set_nfnl_get_byindex(par->net,
 						info->map_set.index);
-		अगर (index == IPSET_INVALID_ID) अणु
+		if (index == IPSET_INVALID_ID) {
 			pr_info_ratelimited("Cannot find map_set index %u as target\n",
 					    info->map_set.index);
 			ret = -ENOENT;
-			जाओ cleanup_del;
-		पूर्ण
-	पूर्ण
+			goto cleanup_del;
+		}
+	}
 
-	अगर (info->add_set.dim > IPSET_DIM_MAX ||
+	if (info->add_set.dim > IPSET_DIM_MAX ||
 	    info->del_set.dim > IPSET_DIM_MAX ||
-	    info->map_set.dim > IPSET_DIM_MAX) अणु
+	    info->map_set.dim > IPSET_DIM_MAX) {
 		pr_info_ratelimited("SET target dimension over the limit!\n");
-		ret = -दुस्फल;
-		जाओ cleanup_mark;
-	पूर्ण
+		ret = -ERANGE;
+		goto cleanup_mark;
+	}
 
-	वापस 0;
+	return 0;
 cleanup_mark:
-	अगर (info->map_set.index != IPSET_INVALID_ID)
+	if (info->map_set.index != IPSET_INVALID_ID)
 		ip_set_nfnl_put(par->net, info->map_set.index);
 cleanup_del:
-	अगर (info->del_set.index != IPSET_INVALID_ID)
+	if (info->del_set.index != IPSET_INVALID_ID)
 		ip_set_nfnl_put(par->net, info->del_set.index);
 cleanup_add:
-	अगर (info->add_set.index != IPSET_INVALID_ID)
+	if (info->add_set.index != IPSET_INVALID_ID)
 		ip_set_nfnl_put(par->net, info->add_set.index);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम
-set_target_v3_destroy(स्थिर काष्ठा xt_tgdtor_param *par)
-अणु
-	स्थिर काष्ठा xt_set_info_target_v3 *info = par->targinfo;
+static void
+set_target_v3_destroy(const struct xt_tgdtor_param *par)
+{
+	const struct xt_set_info_target_v3 *info = par->targinfo;
 
-	अगर (info->add_set.index != IPSET_INVALID_ID)
+	if (info->add_set.index != IPSET_INVALID_ID)
 		ip_set_nfnl_put(par->net, info->add_set.index);
-	अगर (info->del_set.index != IPSET_INVALID_ID)
+	if (info->del_set.index != IPSET_INVALID_ID)
 		ip_set_nfnl_put(par->net, info->del_set.index);
-	अगर (info->map_set.index != IPSET_INVALID_ID)
+	if (info->map_set.index != IPSET_INVALID_ID)
 		ip_set_nfnl_put(par->net, info->map_set.index);
-पूर्ण
+}
 
-अटल काष्ठा xt_match set_matches[] __पढ़ो_mostly = अणु
-	अणु
+static struct xt_match set_matches[] __read_mostly = {
+	{
 		.name		= "set",
 		.family		= NFPROTO_IPV4,
 		.revision	= 0,
 		.match		= set_match_v0,
-		.matchsize	= माप(काष्ठा xt_set_info_match_v0),
+		.matchsize	= sizeof(struct xt_set_info_match_v0),
 		.checkentry	= set_match_v0_checkentry,
 		.destroy	= set_match_v0_destroy,
 		.me		= THIS_MODULE
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "set",
 		.family		= NFPROTO_IPV4,
 		.revision	= 1,
 		.match		= set_match_v1,
-		.matchsize	= माप(काष्ठा xt_set_info_match_v1),
+		.matchsize	= sizeof(struct xt_set_info_match_v1),
 		.checkentry	= set_match_v1_checkentry,
 		.destroy	= set_match_v1_destroy,
 		.me		= THIS_MODULE
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "set",
 		.family		= NFPROTO_IPV6,
 		.revision	= 1,
 		.match		= set_match_v1,
-		.matchsize	= माप(काष्ठा xt_set_info_match_v1),
+		.matchsize	= sizeof(struct xt_set_info_match_v1),
 		.checkentry	= set_match_v1_checkentry,
 		.destroy	= set_match_v1_destroy,
 		.me		= THIS_MODULE
-	पूर्ण,
-	/* --वापस-nomatch flag support */
-	अणु
+	},
+	/* --return-nomatch flag support */
+	{
 		.name		= "set",
 		.family		= NFPROTO_IPV4,
 		.revision	= 2,
 		.match		= set_match_v1,
-		.matchsize	= माप(काष्ठा xt_set_info_match_v1),
+		.matchsize	= sizeof(struct xt_set_info_match_v1),
 		.checkentry	= set_match_v1_checkentry,
 		.destroy	= set_match_v1_destroy,
 		.me		= THIS_MODULE
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "set",
 		.family		= NFPROTO_IPV6,
 		.revision	= 2,
 		.match		= set_match_v1,
-		.matchsize	= माप(काष्ठा xt_set_info_match_v1),
+		.matchsize	= sizeof(struct xt_set_info_match_v1),
 		.checkentry	= set_match_v1_checkentry,
 		.destroy	= set_match_v1_destroy,
 		.me		= THIS_MODULE
-	पूर्ण,
+	},
 	/* counters support: update, match */
-	अणु
+	{
 		.name		= "set",
 		.family		= NFPROTO_IPV4,
 		.revision	= 3,
 		.match		= set_match_v3,
-		.matchsize	= माप(काष्ठा xt_set_info_match_v3),
+		.matchsize	= sizeof(struct xt_set_info_match_v3),
 		.checkentry	= set_match_v3_checkentry,
 		.destroy	= set_match_v3_destroy,
 		.me		= THIS_MODULE
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "set",
 		.family		= NFPROTO_IPV6,
 		.revision	= 3,
 		.match		= set_match_v3,
-		.matchsize	= माप(काष्ठा xt_set_info_match_v3),
+		.matchsize	= sizeof(struct xt_set_info_match_v3),
 		.checkentry	= set_match_v3_checkentry,
 		.destroy	= set_match_v3_destroy,
 		.me		= THIS_MODULE
-	पूर्ण,
-	/* new revision क्रम counters support: update, match */
-	अणु
+	},
+	/* new revision for counters support: update, match */
+	{
 		.name		= "set",
 		.family		= NFPROTO_IPV4,
 		.revision	= 4,
 		.match		= set_match_v4,
-		.matchsize	= माप(काष्ठा xt_set_info_match_v4),
+		.matchsize	= sizeof(struct xt_set_info_match_v4),
 		.checkentry	= set_match_v4_checkentry,
 		.destroy	= set_match_v4_destroy,
 		.me		= THIS_MODULE
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "set",
 		.family		= NFPROTO_IPV6,
 		.revision	= 4,
 		.match		= set_match_v4,
-		.matchsize	= माप(काष्ठा xt_set_info_match_v4),
+		.matchsize	= sizeof(struct xt_set_info_match_v4),
 		.checkentry	= set_match_v4_checkentry,
 		.destroy	= set_match_v4_destroy,
 		.me		= THIS_MODULE
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा xt_target set_tarमाला_लो[] __पढ़ो_mostly = अणु
-	अणु
+static struct xt_target set_targets[] __read_mostly = {
+	{
 		.name		= "SET",
 		.revision	= 0,
 		.family		= NFPROTO_IPV4,
 		.target		= set_target_v0,
-		.tarमाला_लोize	= माप(काष्ठा xt_set_info_target_v0),
+		.targetsize	= sizeof(struct xt_set_info_target_v0),
 		.checkentry	= set_target_v0_checkentry,
 		.destroy	= set_target_v0_destroy,
 		.me		= THIS_MODULE
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "SET",
 		.revision	= 1,
 		.family		= NFPROTO_IPV4,
 		.target		= set_target_v1,
-		.tarमाला_लोize	= माप(काष्ठा xt_set_info_target_v1),
+		.targetsize	= sizeof(struct xt_set_info_target_v1),
 		.checkentry	= set_target_v1_checkentry,
 		.destroy	= set_target_v1_destroy,
 		.me		= THIS_MODULE
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "SET",
 		.revision	= 1,
 		.family		= NFPROTO_IPV6,
 		.target		= set_target_v1,
-		.tarमाला_लोize	= माप(काष्ठा xt_set_info_target_v1),
+		.targetsize	= sizeof(struct xt_set_info_target_v1),
 		.checkentry	= set_target_v1_checkentry,
 		.destroy	= set_target_v1_destroy,
 		.me		= THIS_MODULE
-	पूर्ण,
-	/* --समयout and --exist flags support */
-	अणु
+	},
+	/* --timeout and --exist flags support */
+	{
 		.name		= "SET",
 		.revision	= 2,
 		.family		= NFPROTO_IPV4,
 		.target		= set_target_v2,
-		.tarमाला_लोize	= माप(काष्ठा xt_set_info_target_v2),
+		.targetsize	= sizeof(struct xt_set_info_target_v2),
 		.checkentry	= set_target_v2_checkentry,
 		.destroy	= set_target_v2_destroy,
 		.me		= THIS_MODULE
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "SET",
 		.revision	= 2,
 		.family		= NFPROTO_IPV6,
 		.target		= set_target_v2,
-		.tarमाला_लोize	= माप(काष्ठा xt_set_info_target_v2),
+		.targetsize	= sizeof(struct xt_set_info_target_v2),
 		.checkentry	= set_target_v2_checkentry,
 		.destroy	= set_target_v2_destroy,
 		.me		= THIS_MODULE
-	पूर्ण,
+	},
 	/* --map-set support */
-	अणु
+	{
 		.name		= "SET",
 		.revision	= 3,
 		.family		= NFPROTO_IPV4,
 		.target		= set_target_v3,
-		.tarमाला_लोize	= माप(काष्ठा xt_set_info_target_v3),
+		.targetsize	= sizeof(struct xt_set_info_target_v3),
 		.checkentry	= set_target_v3_checkentry,
 		.destroy	= set_target_v3_destroy,
 		.me		= THIS_MODULE
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "SET",
 		.revision	= 3,
 		.family		= NFPROTO_IPV6,
 		.target		= set_target_v3,
-		.tarमाला_लोize	= माप(काष्ठा xt_set_info_target_v3),
+		.targetsize	= sizeof(struct xt_set_info_target_v3),
 		.checkentry	= set_target_v3_checkentry,
 		.destroy	= set_target_v3_destroy,
 		.me		= THIS_MODULE
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init xt_set_init(व्योम)
-अणु
-	पूर्णांक ret = xt_रेजिस्टर_matches(set_matches, ARRAY_SIZE(set_matches));
+static int __init xt_set_init(void)
+{
+	int ret = xt_register_matches(set_matches, ARRAY_SIZE(set_matches));
 
-	अगर (!ret) अणु
-		ret = xt_रेजिस्टर_tarमाला_लो(set_tarमाला_लो,
-					  ARRAY_SIZE(set_tarमाला_लो));
-		अगर (ret)
-			xt_unरेजिस्टर_matches(set_matches,
+	if (!ret) {
+		ret = xt_register_targets(set_targets,
+					  ARRAY_SIZE(set_targets));
+		if (ret)
+			xt_unregister_matches(set_matches,
 					      ARRAY_SIZE(set_matches));
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल व्योम __निकास xt_set_fini(व्योम)
-अणु
-	xt_unरेजिस्टर_matches(set_matches, ARRAY_SIZE(set_matches));
-	xt_unरेजिस्टर_tarमाला_लो(set_tarमाला_लो, ARRAY_SIZE(set_tarमाला_लो));
-पूर्ण
+static void __exit xt_set_fini(void)
+{
+	xt_unregister_matches(set_matches, ARRAY_SIZE(set_matches));
+	xt_unregister_targets(set_targets, ARRAY_SIZE(set_targets));
+}
 
 module_init(xt_set_init);
-module_निकास(xt_set_fini);
+module_exit(xt_set_fini);

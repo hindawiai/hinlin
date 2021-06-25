@@ -1,80 +1,79 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2002 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
+ * Copyright (C) 2002 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/types.h>
-#समावेश <linux/uaccess.h>
+#include <linux/ctype.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/types.h>
+#include <linux/uaccess.h>
 
 /*
- * If पढ़ो and ग_लिखो race, the पढ़ो will still atomically पढ़ो a valid
+ * If read and write race, the read will still atomically read a valid
  * value.
  */
-पूर्णांक uml_निकासcode = 0;
+int uml_exitcode = 0;
 
-अटल पूर्णांक निकासcode_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	पूर्णांक val;
+static int exitcode_proc_show(struct seq_file *m, void *v)
+{
+	int val;
 
 	/*
-	 * Save uml_निकासcode in a local so that we करोn't need to guarantee
-	 * that प्र_लिखो accesses it atomically.
+	 * Save uml_exitcode in a local so that we don't need to guarantee
+	 * that sprintf accesses it atomically.
 	 */
-	val = uml_निकासcode;
-	seq_म_लिखो(m, "%d\n", val);
-	वापस 0;
-पूर्ण
+	val = uml_exitcode;
+	seq_printf(m, "%d\n", val);
+	return 0;
+}
 
-अटल पूर्णांक निकासcode_proc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, निकासcode_proc_show, शून्य);
-पूर्ण
+static int exitcode_proc_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, exitcode_proc_show, NULL);
+}
 
-अटल sमाप_प्रकार निकासcode_proc_ग_लिखो(काष्ठा file *file,
-		स्थिर अक्षर __user *buffer, माप_प्रकार count, loff_t *pos)
-अणु
-	अक्षर *end, buf[माप("nnnnn\0")];
-	माप_प्रकार size;
-	पूर्णांक पंचांगp;
+static ssize_t exitcode_proc_write(struct file *file,
+		const char __user *buffer, size_t count, loff_t *pos)
+{
+	char *end, buf[sizeof("nnnnn\0")];
+	size_t size;
+	int tmp;
 
-	size = min(count, माप(buf));
-	अगर (copy_from_user(buf, buffer, size))
-		वापस -EFAULT;
+	size = min(count, sizeof(buf));
+	if (copy_from_user(buf, buffer, size))
+		return -EFAULT;
 
-	पंचांगp = simple_म_से_दीर्घ(buf, &end, 0);
-	अगर ((*end != '\0') && !है_खाली(*end))
-		वापस -EINVAL;
+	tmp = simple_strtol(buf, &end, 0);
+	if ((*end != '\0') && !isspace(*end))
+		return -EINVAL;
 
-	uml_निकासcode = पंचांगp;
-	वापस count;
-पूर्ण
+	uml_exitcode = tmp;
+	return count;
+}
 
-अटल स्थिर काष्ठा proc_ops निकासcode_proc_ops = अणु
-	.proc_खोलो	= निकासcode_proc_खोलो,
-	.proc_पढ़ो	= seq_पढ़ो,
+static const struct proc_ops exitcode_proc_ops = {
+	.proc_open	= exitcode_proc_open,
+	.proc_read	= seq_read,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= single_release,
-	.proc_ग_लिखो	= निकासcode_proc_ग_लिखो,
-पूर्ण;
+	.proc_write	= exitcode_proc_write,
+};
 
-अटल पूर्णांक make_proc_निकासcode(व्योम)
-अणु
-	काष्ठा proc_dir_entry *ent;
+static int make_proc_exitcode(void)
+{
+	struct proc_dir_entry *ent;
 
-	ent = proc_create("exitcode", 0600, शून्य, &निकासcode_proc_ops);
-	अगर (ent == शून्य) अणु
-		prपूर्णांकk(KERN_WARNING "make_proc_exitcode : Failed to register "
+	ent = proc_create("exitcode", 0600, NULL, &exitcode_proc_ops);
+	if (ent == NULL) {
+		printk(KERN_WARNING "make_proc_exitcode : Failed to register "
 		       "/proc/exitcode\n");
-		वापस 0;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 0;
+	}
+	return 0;
+}
 
-__initcall(make_proc_निकासcode);
+__initcall(make_proc_exitcode);

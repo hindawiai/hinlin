@@ -1,2 +1,1 @@
-<शैली गुरु>
-#समावेश "../../../../include/linux/kconfig.h"
+#include "../../../../include/linux/kconfig.h"

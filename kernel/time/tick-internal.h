@@ -1,167 +1,166 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * tick पूर्णांकernal variable and functions used by low/high res code
+ * tick internal variable and functions used by low/high res code
  */
-#समावेश <linux/hrसमयr.h>
-#समावेश <linux/tick.h>
+#include <linux/hrtimer.h>
+#include <linux/tick.h>
 
-#समावेश "timekeeping.h"
-#समावेश "tick-sched.h"
+#include "timekeeping.h"
+#include "tick-sched.h"
 
-#अगर_घोषित CONFIG_GENERIC_CLOCKEVENTS
+#ifdef CONFIG_GENERIC_CLOCKEVENTS
 
 # define TICK_DO_TIMER_NONE	-1
 # define TICK_DO_TIMER_BOOT	-2
 
-DECLARE_PER_CPU(काष्ठा tick_device, tick_cpu_device);
-बाह्य kसमय_प्रकार tick_next_period;
-बाह्य पूर्णांक tick_करो_समयr_cpu __पढ़ो_mostly;
+DECLARE_PER_CPU(struct tick_device, tick_cpu_device);
+extern ktime_t tick_next_period;
+extern int tick_do_timer_cpu __read_mostly;
 
-बाह्य व्योम tick_setup_periodic(काष्ठा घड़ी_event_device *dev, पूर्णांक broadcast);
-बाह्य व्योम tick_handle_periodic(काष्ठा घड़ी_event_device *dev);
-बाह्य व्योम tick_check_new_device(काष्ठा घड़ी_event_device *dev);
-बाह्य व्योम tick_shutकरोwn(अचिन्हित पूर्णांक cpu);
-बाह्य व्योम tick_suspend(व्योम);
-बाह्य व्योम tick_resume(व्योम);
-बाह्य bool tick_check_replacement(काष्ठा घड़ी_event_device *curdev,
-				   काष्ठा घड़ी_event_device *newdev);
-बाह्य व्योम tick_install_replacement(काष्ठा घड़ी_event_device *dev);
-बाह्य पूर्णांक tick_is_oneshot_available(व्योम);
-बाह्य काष्ठा tick_device *tick_get_device(पूर्णांक cpu);
+extern void tick_setup_periodic(struct clock_event_device *dev, int broadcast);
+extern void tick_handle_periodic(struct clock_event_device *dev);
+extern void tick_check_new_device(struct clock_event_device *dev);
+extern void tick_shutdown(unsigned int cpu);
+extern void tick_suspend(void);
+extern void tick_resume(void);
+extern bool tick_check_replacement(struct clock_event_device *curdev,
+				   struct clock_event_device *newdev);
+extern void tick_install_replacement(struct clock_event_device *dev);
+extern int tick_is_oneshot_available(void);
+extern struct tick_device *tick_get_device(int cpu);
 
-बाह्य पूर्णांक घड़ीevents_tick_resume(काष्ठा घड़ी_event_device *dev);
-/* Check, अगर the device is functional or a dummy क्रम broadcast */
-अटल अंतरभूत पूर्णांक tick_device_is_functional(काष्ठा घड़ी_event_device *dev)
-अणु
-	वापस !(dev->features & CLOCK_EVT_FEAT_DUMMY);
-पूर्ण
+extern int clockevents_tick_resume(struct clock_event_device *dev);
+/* Check, if the device is functional or a dummy for broadcast */
+static inline int tick_device_is_functional(struct clock_event_device *dev)
+{
+	return !(dev->features & CLOCK_EVT_FEAT_DUMMY);
+}
 
-अटल अंतरभूत क्रमागत घड़ी_event_state घड़ीevent_get_state(काष्ठा घड़ी_event_device *dev)
-अणु
-	वापस dev->state_use_accessors;
-पूर्ण
+static inline enum clock_event_state clockevent_get_state(struct clock_event_device *dev)
+{
+	return dev->state_use_accessors;
+}
 
-अटल अंतरभूत व्योम घड़ीevent_set_state(काष्ठा घड़ी_event_device *dev,
-					क्रमागत घड़ी_event_state state)
-अणु
+static inline void clockevent_set_state(struct clock_event_device *dev,
+					enum clock_event_state state)
+{
 	dev->state_use_accessors = state;
-पूर्ण
+}
 
-बाह्य व्योम घड़ीevents_shutकरोwn(काष्ठा घड़ी_event_device *dev);
-बाह्य व्योम घड़ीevents_exchange_device(काष्ठा घड़ी_event_device *old,
-					काष्ठा घड़ी_event_device *new);
-बाह्य व्योम घड़ीevents_चयन_state(काष्ठा घड़ी_event_device *dev,
-				     क्रमागत घड़ी_event_state state);
-बाह्य पूर्णांक घड़ीevents_program_event(काष्ठा घड़ी_event_device *dev,
-				     kसमय_प्रकार expires, bool क्रमce);
-बाह्य व्योम घड़ीevents_handle_noop(काष्ठा घड़ी_event_device *dev);
-बाह्य पूर्णांक __घड़ीevents_update_freq(काष्ठा घड़ी_event_device *dev, u32 freq);
-बाह्य sमाप_प्रकार sysfs_get_uname(स्थिर अक्षर *buf, अक्षर *dst, माप_प्रकार cnt);
+extern void clockevents_shutdown(struct clock_event_device *dev);
+extern void clockevents_exchange_device(struct clock_event_device *old,
+					struct clock_event_device *new);
+extern void clockevents_switch_state(struct clock_event_device *dev,
+				     enum clock_event_state state);
+extern int clockevents_program_event(struct clock_event_device *dev,
+				     ktime_t expires, bool force);
+extern void clockevents_handle_noop(struct clock_event_device *dev);
+extern int __clockevents_update_freq(struct clock_event_device *dev, u32 freq);
+extern ssize_t sysfs_get_uname(const char *buf, char *dst, size_t cnt);
 
 /* Broadcasting support */
-# अगरdef CONFIG_GENERIC_CLOCKEVENTS_BROADCAST
-बाह्य पूर्णांक tick_device_uses_broadcast(काष्ठा घड़ी_event_device *dev, पूर्णांक cpu);
-बाह्य व्योम tick_install_broadcast_device(काष्ठा घड़ी_event_device *dev);
-बाह्य पूर्णांक tick_is_broadcast_device(काष्ठा घड़ी_event_device *dev);
-बाह्य व्योम tick_suspend_broadcast(व्योम);
-बाह्य व्योम tick_resume_broadcast(व्योम);
-बाह्य bool tick_resume_check_broadcast(व्योम);
-बाह्य व्योम tick_broadcast_init(व्योम);
-बाह्य व्योम tick_set_periodic_handler(काष्ठा घड़ी_event_device *dev, पूर्णांक broadcast);
-बाह्य पूर्णांक tick_broadcast_update_freq(काष्ठा घड़ी_event_device *dev, u32 freq);
-बाह्य काष्ठा tick_device *tick_get_broadcast_device(व्योम);
-बाह्य काष्ठा cpumask *tick_get_broadcast_mask(व्योम);
-# अन्यथा /* !CONFIG_GENERIC_CLOCKEVENTS_BROADCAST: */
-अटल अंतरभूत व्योम tick_install_broadcast_device(काष्ठा घड़ी_event_device *dev) अणु पूर्ण
-अटल अंतरभूत पूर्णांक tick_is_broadcast_device(काष्ठा घड़ी_event_device *dev) अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक tick_device_uses_broadcast(काष्ठा घड़ी_event_device *dev, पूर्णांक cpu) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम tick_करो_periodic_broadcast(काष्ठा घड़ी_event_device *d) अणु पूर्ण
-अटल अंतरभूत व्योम tick_suspend_broadcast(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम tick_resume_broadcast(व्योम) अणु पूर्ण
-अटल अंतरभूत bool tick_resume_check_broadcast(व्योम) अणु वापस false; पूर्ण
-अटल अंतरभूत व्योम tick_broadcast_init(व्योम) अणु पूर्ण
-अटल अंतरभूत पूर्णांक tick_broadcast_update_freq(काष्ठा घड़ी_event_device *dev, u32 freq) अणु वापस -ENODEV; पूर्ण
+# ifdef CONFIG_GENERIC_CLOCKEVENTS_BROADCAST
+extern int tick_device_uses_broadcast(struct clock_event_device *dev, int cpu);
+extern void tick_install_broadcast_device(struct clock_event_device *dev);
+extern int tick_is_broadcast_device(struct clock_event_device *dev);
+extern void tick_suspend_broadcast(void);
+extern void tick_resume_broadcast(void);
+extern bool tick_resume_check_broadcast(void);
+extern void tick_broadcast_init(void);
+extern void tick_set_periodic_handler(struct clock_event_device *dev, int broadcast);
+extern int tick_broadcast_update_freq(struct clock_event_device *dev, u32 freq);
+extern struct tick_device *tick_get_broadcast_device(void);
+extern struct cpumask *tick_get_broadcast_mask(void);
+# else /* !CONFIG_GENERIC_CLOCKEVENTS_BROADCAST: */
+static inline void tick_install_broadcast_device(struct clock_event_device *dev) { }
+static inline int tick_is_broadcast_device(struct clock_event_device *dev) { return 0; }
+static inline int tick_device_uses_broadcast(struct clock_event_device *dev, int cpu) { return 0; }
+static inline void tick_do_periodic_broadcast(struct clock_event_device *d) { }
+static inline void tick_suspend_broadcast(void) { }
+static inline void tick_resume_broadcast(void) { }
+static inline bool tick_resume_check_broadcast(void) { return false; }
+static inline void tick_broadcast_init(void) { }
+static inline int tick_broadcast_update_freq(struct clock_event_device *dev, u32 freq) { return -ENODEV; }
 
 /* Set the periodic handler in non broadcast mode */
-अटल अंतरभूत व्योम tick_set_periodic_handler(काष्ठा घड़ी_event_device *dev, पूर्णांक broadcast)
-अणु
+static inline void tick_set_periodic_handler(struct clock_event_device *dev, int broadcast)
+{
 	dev->event_handler = tick_handle_periodic;
-पूर्ण
-# endअगर /* !CONFIG_GENERIC_CLOCKEVENTS_BROADCAST */
+}
+# endif /* !CONFIG_GENERIC_CLOCKEVENTS_BROADCAST */
 
-#अन्यथा /* !GENERIC_CLOCKEVENTS: */
-अटल अंतरभूत व्योम tick_suspend(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम tick_resume(व्योम) अणु पूर्ण
-#पूर्ण_अगर /* !GENERIC_CLOCKEVENTS */
+#else /* !GENERIC_CLOCKEVENTS: */
+static inline void tick_suspend(void) { }
+static inline void tick_resume(void) { }
+#endif /* !GENERIC_CLOCKEVENTS */
 
 /* Oneshot related functions */
-#अगर_घोषित CONFIG_TICK_ONESHOT
-बाह्य व्योम tick_setup_oneshot(काष्ठा घड़ी_event_device *newdev,
-			       व्योम (*handler)(काष्ठा घड़ी_event_device *),
-			       kसमय_प्रकार nextevt);
-बाह्य पूर्णांक tick_program_event(kसमय_प्रकार expires, पूर्णांक क्रमce);
-बाह्य व्योम tick_oneshot_notअगरy(व्योम);
-बाह्य पूर्णांक tick_चयन_to_oneshot(व्योम (*handler)(काष्ठा घड़ी_event_device *));
-बाह्य व्योम tick_resume_oneshot(व्योम);
-अटल अंतरभूत bool tick_oneshot_possible(व्योम) अणु वापस true; पूर्ण
-बाह्य पूर्णांक tick_oneshot_mode_active(व्योम);
-बाह्य व्योम tick_घड़ी_notअगरy(व्योम);
-बाह्य पूर्णांक tick_check_oneshot_change(पूर्णांक allow_nohz);
-बाह्य पूर्णांक tick_init_highres(व्योम);
-#अन्यथा /* !CONFIG_TICK_ONESHOT: */
-अटल अंतरभूत
-व्योम tick_setup_oneshot(काष्ठा घड़ी_event_device *newdev,
-			व्योम (*handler)(काष्ठा घड़ी_event_device *),
-			kसमय_प्रकार nextevt) अणु BUG(); पूर्ण
-अटल अंतरभूत व्योम tick_resume_oneshot(व्योम) अणु BUG(); पूर्ण
-अटल अंतरभूत पूर्णांक tick_program_event(kसमय_प्रकार expires, पूर्णांक क्रमce) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम tick_oneshot_notअगरy(व्योम) अणु पूर्ण
-अटल अंतरभूत bool tick_oneshot_possible(व्योम) अणु वापस false; पूर्ण
-अटल अंतरभूत पूर्णांक tick_oneshot_mode_active(व्योम) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम tick_घड़ी_notअगरy(व्योम) अणु पूर्ण
-अटल अंतरभूत पूर्णांक tick_check_oneshot_change(पूर्णांक allow_nohz) अणु वापस 0; पूर्ण
-#पूर्ण_अगर /* !CONFIG_TICK_ONESHOT */
+#ifdef CONFIG_TICK_ONESHOT
+extern void tick_setup_oneshot(struct clock_event_device *newdev,
+			       void (*handler)(struct clock_event_device *),
+			       ktime_t nextevt);
+extern int tick_program_event(ktime_t expires, int force);
+extern void tick_oneshot_notify(void);
+extern int tick_switch_to_oneshot(void (*handler)(struct clock_event_device *));
+extern void tick_resume_oneshot(void);
+static inline bool tick_oneshot_possible(void) { return true; }
+extern int tick_oneshot_mode_active(void);
+extern void tick_clock_notify(void);
+extern int tick_check_oneshot_change(int allow_nohz);
+extern int tick_init_highres(void);
+#else /* !CONFIG_TICK_ONESHOT: */
+static inline
+void tick_setup_oneshot(struct clock_event_device *newdev,
+			void (*handler)(struct clock_event_device *),
+			ktime_t nextevt) { BUG(); }
+static inline void tick_resume_oneshot(void) { BUG(); }
+static inline int tick_program_event(ktime_t expires, int force) { return 0; }
+static inline void tick_oneshot_notify(void) { }
+static inline bool tick_oneshot_possible(void) { return false; }
+static inline int tick_oneshot_mode_active(void) { return 0; }
+static inline void tick_clock_notify(void) { }
+static inline int tick_check_oneshot_change(int allow_nohz) { return 0; }
+#endif /* !CONFIG_TICK_ONESHOT */
 
 /* Functions related to oneshot broadcasting */
-#अगर defined(CONFIG_GENERIC_CLOCKEVENTS_BROADCAST) && defined(CONFIG_TICK_ONESHOT)
-बाह्य व्योम tick_broadcast_चयन_to_oneshot(व्योम);
-बाह्य पूर्णांक tick_broadcast_oneshot_active(व्योम);
-बाह्य व्योम tick_check_oneshot_broadcast_this_cpu(व्योम);
-bool tick_broadcast_oneshot_available(व्योम);
-बाह्य काष्ठा cpumask *tick_get_broadcast_oneshot_mask(व्योम);
-#अन्यथा /* !(BROADCAST && ONESHOT): */
-अटल अंतरभूत व्योम tick_broadcast_चयन_to_oneshot(व्योम) अणु पूर्ण
-अटल अंतरभूत पूर्णांक tick_broadcast_oneshot_active(व्योम) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम tick_check_oneshot_broadcast_this_cpu(व्योम) अणु पूर्ण
-अटल अंतरभूत bool tick_broadcast_oneshot_available(व्योम) अणु वापस tick_oneshot_possible(); पूर्ण
-#पूर्ण_अगर /* !(BROADCAST && ONESHOT) */
+#if defined(CONFIG_GENERIC_CLOCKEVENTS_BROADCAST) && defined(CONFIG_TICK_ONESHOT)
+extern void tick_broadcast_switch_to_oneshot(void);
+extern int tick_broadcast_oneshot_active(void);
+extern void tick_check_oneshot_broadcast_this_cpu(void);
+bool tick_broadcast_oneshot_available(void);
+extern struct cpumask *tick_get_broadcast_oneshot_mask(void);
+#else /* !(BROADCAST && ONESHOT): */
+static inline void tick_broadcast_switch_to_oneshot(void) { }
+static inline int tick_broadcast_oneshot_active(void) { return 0; }
+static inline void tick_check_oneshot_broadcast_this_cpu(void) { }
+static inline bool tick_broadcast_oneshot_available(void) { return tick_oneshot_possible(); }
+#endif /* !(BROADCAST && ONESHOT) */
 
-#अगर defined(CONFIG_GENERIC_CLOCKEVENTS_BROADCAST) && defined(CONFIG_HOTPLUG_CPU)
-बाह्य व्योम tick_broadcast_offline(अचिन्हित पूर्णांक cpu);
-#अन्यथा
-अटल अंतरभूत व्योम tick_broadcast_offline(अचिन्हित पूर्णांक cpu) अणु पूर्ण
-#पूर्ण_अगर
+#if defined(CONFIG_GENERIC_CLOCKEVENTS_BROADCAST) && defined(CONFIG_HOTPLUG_CPU)
+extern void tick_broadcast_offline(unsigned int cpu);
+#else
+static inline void tick_broadcast_offline(unsigned int cpu) { }
+#endif
 
-/* NO_HZ_FULL पूर्णांकernal */
-#अगर_घोषित CONFIG_NO_HZ_FULL
-बाह्य व्योम tick_nohz_init(व्योम);
-# अन्यथा
-अटल अंतरभूत व्योम tick_nohz_init(व्योम) अणु पूर्ण
-#पूर्ण_अगर
+/* NO_HZ_FULL internal */
+#ifdef CONFIG_NO_HZ_FULL
+extern void tick_nohz_init(void);
+# else
+static inline void tick_nohz_init(void) { }
+#endif
 
-#अगर_घोषित CONFIG_NO_HZ_COMMON
-बाह्य अचिन्हित दीर्घ tick_nohz_active;
-बाह्य व्योम समयrs_update_nohz(व्योम);
-# अगरdef CONFIG_SMP
-बाह्य काष्ठा अटल_key_false समयrs_migration_enabled;
-# endअगर
-#अन्यथा /* CONFIG_NO_HZ_COMMON */
-अटल अंतरभूत व्योम समयrs_update_nohz(व्योम) अणु पूर्ण
-#घोषणा tick_nohz_active (0)
-#पूर्ण_अगर
+#ifdef CONFIG_NO_HZ_COMMON
+extern unsigned long tick_nohz_active;
+extern void timers_update_nohz(void);
+# ifdef CONFIG_SMP
+extern struct static_key_false timers_migration_enabled;
+# endif
+#else /* CONFIG_NO_HZ_COMMON */
+static inline void timers_update_nohz(void) { }
+#define tick_nohz_active (0)
+#endif
 
-DECLARE_PER_CPU(काष्ठा hrसमयr_cpu_base, hrसमयr_bases);
+DECLARE_PER_CPU(struct hrtimer_cpu_base, hrtimer_bases);
 
-बाह्य u64 get_next_समयr_पूर्णांकerrupt(अचिन्हित दीर्घ basej, u64 basem);
-व्योम समयr_clear_idle(व्योम);
+extern u64 get_next_timer_interrupt(unsigned long basej, u64 basem);
+void timer_clear_idle(void);

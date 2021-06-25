@@ -1,368 +1,367 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *  sst_drv_पूर्णांकerface.c - Intel SST Driver क्रम audio engine
+ *  sst_drv_interface.c - Intel SST Driver for audio engine
  *
  *  Copyright (C) 2008-14 Intel Corp
- *  Authors:	Vinod Koul <vinod.koul@पूर्णांकel.com>
- *		Harsha Priya <priya.harsha@पूर्णांकel.com>
- *		Dharageswari R <dharageswari.r@पूर्णांकel.com)
+ *  Authors:	Vinod Koul <vinod.koul@intel.com>
+ *		Harsha Priya <priya.harsha@intel.com>
+ *		Dharageswari R <dharageswari.r@intel.com)
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-#समावेश <linux/delay.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/pm_qos.h>
-#समावेश <linux/math64.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/compress_driver.h>
-#समावेश <यंत्र/platक्रमm_sst_audपन.स>
-#समावेश "../sst-mfld-platform.h"
-#समावेश "sst.h"
+#include <linux/delay.h>
+#include <linux/pci.h>
+#include <linux/fs.h>
+#include <linux/firmware.h>
+#include <linux/pm_runtime.h>
+#include <linux/pm_qos.h>
+#include <linux/math64.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/soc.h>
+#include <sound/compress_driver.h>
+#include <asm/platform_sst_audio.h>
+#include "../sst-mfld-platform.h"
+#include "sst.h"
 
-#घोषणा NUM_CODEC 2
-#घोषणा MIN_FRAGMENT 2
-#घोषणा MAX_FRAGMENT 4
-#घोषणा MIN_FRAGMENT_SIZE (50 * 1024)
-#घोषणा MAX_FRAGMENT_SIZE (1024 * 1024)
-#घोषणा SST_GET_BYTES_PER_SAMPLE(pcm_wd_sz)  (((pcm_wd_sz + 15) >> 4) << 1)
-#अगर_घोषित CONFIG_PM
-#घोषणा GET_USAGE_COUNT(dev) (atomic_पढ़ो(&dev->घातer.usage_count))
-#अन्यथा
-#घोषणा GET_USAGE_COUNT(dev) 1
-#पूर्ण_अगर
+#define NUM_CODEC 2
+#define MIN_FRAGMENT 2
+#define MAX_FRAGMENT 4
+#define MIN_FRAGMENT_SIZE (50 * 1024)
+#define MAX_FRAGMENT_SIZE (1024 * 1024)
+#define SST_GET_BYTES_PER_SAMPLE(pcm_wd_sz)  (((pcm_wd_sz + 15) >> 4) << 1)
+#ifdef CONFIG_PM
+#define GET_USAGE_COUNT(dev) (atomic_read(&dev->power.usage_count))
+#else
+#define GET_USAGE_COUNT(dev) 1
+#endif
 
-पूर्णांक मुक्त_stream_context(काष्ठा पूर्णांकel_sst_drv *ctx, अचिन्हित पूर्णांक str_id)
-अणु
-	काष्ठा stream_info *stream;
-	पूर्णांक ret = 0;
+int free_stream_context(struct intel_sst_drv *ctx, unsigned int str_id)
+{
+	struct stream_info *stream;
+	int ret = 0;
 
 	stream = get_stream_info(ctx, str_id);
-	अगर (stream) अणु
+	if (stream) {
 		/* str_id is valid, so stream is alloacted */
-		ret = sst_मुक्त_stream(ctx, str_id);
-		अगर (ret)
+		ret = sst_free_stream(ctx, str_id);
+		if (ret)
 			sst_clean_stream(&ctx->streams[str_id]);
-		वापस ret;
-	पूर्ण अन्यथा अणु
+		return ret;
+	} else {
 		dev_err(ctx->dev, "we tried to free stream context %d which was freed!!!\n", str_id);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-पूर्णांक sst_get_stream_allocated(काष्ठा पूर्णांकel_sst_drv *ctx,
-	काष्ठा snd_sst_params *str_param,
-	काष्ठा snd_sst_lib_करोwnload **lib_dnld)
-अणु
-	पूर्णांक retval;
+int sst_get_stream_allocated(struct intel_sst_drv *ctx,
+	struct snd_sst_params *str_param,
+	struct snd_sst_lib_download **lib_dnld)
+{
+	int retval;
 
 	retval = ctx->ops->alloc_stream(ctx, str_param);
-	अगर (retval > 0)
+	if (retval > 0)
 		dev_dbg(ctx->dev, "Stream allocated %d\n", retval);
-	वापस retval;
+	return retval;
 
-पूर्ण
+}
 
 /*
- * sst_get_sfreq - this function वापसs the frequency of the stream
+ * sst_get_sfreq - this function returns the frequency of the stream
  *
  * @str_param : stream params
  */
-पूर्णांक sst_get_sfreq(काष्ठा snd_sst_params *str_param)
-अणु
-	चयन (str_param->codec) अणु
-	हाल SST_CODEC_TYPE_PCM:
-		वापस str_param->sparams.uc.pcm_params.sfreq;
-	हाल SST_CODEC_TYPE_AAC:
-		वापस str_param->sparams.uc.aac_params.बाह्यalsr;
-	हाल SST_CODEC_TYPE_MP3:
-		वापस 0;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+int sst_get_sfreq(struct snd_sst_params *str_param)
+{
+	switch (str_param->codec) {
+	case SST_CODEC_TYPE_PCM:
+		return str_param->sparams.uc.pcm_params.sfreq;
+	case SST_CODEC_TYPE_AAC:
+		return str_param->sparams.uc.aac_params.externalsr;
+	case SST_CODEC_TYPE_MP3:
+		return 0;
+	default:
+		return -EINVAL;
+	}
+}
 
 /*
- * sst_get_num_channel - get number of channels क्रम the stream
+ * sst_get_num_channel - get number of channels for the stream
  *
  * @str_param : stream params
  */
-पूर्णांक sst_get_num_channel(काष्ठा snd_sst_params *str_param)
-अणु
-	चयन (str_param->codec) अणु
-	हाल SST_CODEC_TYPE_PCM:
-		वापस str_param->sparams.uc.pcm_params.num_chan;
-	हाल SST_CODEC_TYPE_MP3:
-		वापस str_param->sparams.uc.mp3_params.num_chan;
-	हाल SST_CODEC_TYPE_AAC:
-		वापस str_param->sparams.uc.aac_params.num_chan;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+int sst_get_num_channel(struct snd_sst_params *str_param)
+{
+	switch (str_param->codec) {
+	case SST_CODEC_TYPE_PCM:
+		return str_param->sparams.uc.pcm_params.num_chan;
+	case SST_CODEC_TYPE_MP3:
+		return str_param->sparams.uc.mp3_params.num_chan;
+	case SST_CODEC_TYPE_AAC:
+		return str_param->sparams.uc.aac_params.num_chan;
+	default:
+		return -EINVAL;
+	}
+}
 
 /*
- * sst_get_stream - this function prepares क्रम stream allocation
+ * sst_get_stream - this function prepares for stream allocation
  *
  * @str_param : stream param
  */
-पूर्णांक sst_get_stream(काष्ठा पूर्णांकel_sst_drv *ctx,
-			काष्ठा snd_sst_params *str_param)
-अणु
-	पूर्णांक retval;
-	काष्ठा stream_info *str_info;
+int sst_get_stream(struct intel_sst_drv *ctx,
+			struct snd_sst_params *str_param)
+{
+	int retval;
+	struct stream_info *str_info;
 
 	/* stream is not allocated, we are allocating */
 	retval = ctx->ops->alloc_stream(ctx, str_param);
-	अगर (retval <= 0) अणु
-		वापस -EIO;
-	पूर्ण
+	if (retval <= 0) {
+		return -EIO;
+	}
 	/* store sampling freq */
 	str_info = &ctx->streams[retval];
 	str_info->sfreq = sst_get_sfreq(str_param);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक sst_घातer_control(काष्ठा device *dev, bool state)
-अणु
-	काष्ठा पूर्णांकel_sst_drv *ctx = dev_get_drvdata(dev);
-	पूर्णांक ret = 0;
-	पूर्णांक usage_count = 0;
+static int sst_power_control(struct device *dev, bool state)
+{
+	struct intel_sst_drv *ctx = dev_get_drvdata(dev);
+	int ret = 0;
+	int usage_count = 0;
 
-	अगर (state) अणु
-		ret = pm_runसमय_get_sync(dev);
+	if (state) {
+		ret = pm_runtime_get_sync(dev);
 		usage_count = GET_USAGE_COUNT(dev);
 		dev_dbg(ctx->dev, "Enable: pm usage count: %d\n", usage_count);
-		अगर (ret < 0) अणु
-			pm_runसमय_put_sync(dev);
+		if (ret < 0) {
+			pm_runtime_put_sync(dev);
 			dev_err(ctx->dev, "Runtime get failed with err: %d\n", ret);
-			वापस ret;
-		पूर्ण
-		अगर ((ctx->sst_state == SST_RESET) && (usage_count == 1)) अणु
+			return ret;
+		}
+		if ((ctx->sst_state == SST_RESET) && (usage_count == 1)) {
 			ret = sst_load_fw(ctx);
-			अगर (ret) अणु
+			if (ret) {
 				dev_err(dev, "FW download fail %d\n", ret);
 				sst_set_fw_state_locked(ctx, SST_RESET);
-				ret = sst_pm_runसमय_put(ctx);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+				ret = sst_pm_runtime_put(ctx);
+			}
+		}
+	} else {
 		usage_count = GET_USAGE_COUNT(dev);
 		dev_dbg(ctx->dev, "Disable: pm usage count: %d\n", usage_count);
-		वापस sst_pm_runसमय_put(ctx);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		return sst_pm_runtime_put(ctx);
+	}
+	return ret;
+}
 
 /*
- * sst_खोलो_pcm_stream - Open PCM पूर्णांकerface
+ * sst_open_pcm_stream - Open PCM interface
  *
  * @str_param: parameters of pcm stream
  *
- * This function is called by MID sound card driver to खोलो
- * a new pcm पूर्णांकerface
+ * This function is called by MID sound card driver to open
+ * a new pcm interface
  */
-अटल पूर्णांक sst_खोलो_pcm_stream(काष्ठा device *dev,
-		काष्ठा snd_sst_params *str_param)
-अणु
-	पूर्णांक retval;
-	काष्ठा पूर्णांकel_sst_drv *ctx = dev_get_drvdata(dev);
+static int sst_open_pcm_stream(struct device *dev,
+		struct snd_sst_params *str_param)
+{
+	int retval;
+	struct intel_sst_drv *ctx = dev_get_drvdata(dev);
 
-	अगर (!str_param)
-		वापस -EINVAL;
+	if (!str_param)
+		return -EINVAL;
 
 	retval = sst_get_stream(ctx, str_param);
-	अगर (retval > 0)
+	if (retval > 0)
 		ctx->stream_cnt++;
-	अन्यथा
+	else
 		dev_err(ctx->dev, "sst_get_stream returned err %d\n", retval);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक sst_cdev_खोलो(काष्ठा device *dev,
-		काष्ठा snd_sst_params *str_params, काष्ठा sst_compress_cb *cb)
-अणु
-	पूर्णांक str_id, retval;
-	काष्ठा stream_info *stream;
-	काष्ठा पूर्णांकel_sst_drv *ctx = dev_get_drvdata(dev);
+static int sst_cdev_open(struct device *dev,
+		struct snd_sst_params *str_params, struct sst_compress_cb *cb)
+{
+	int str_id, retval;
+	struct stream_info *stream;
+	struct intel_sst_drv *ctx = dev_get_drvdata(dev);
 
-	retval = pm_runसमय_get_sync(ctx->dev);
-	अगर (retval < 0) अणु
-		pm_runसमय_put_sync(ctx->dev);
-		वापस retval;
-	पूर्ण
+	retval = pm_runtime_get_sync(ctx->dev);
+	if (retval < 0) {
+		pm_runtime_put_sync(ctx->dev);
+		return retval;
+	}
 
 	str_id = sst_get_stream(ctx, str_params);
-	अगर (str_id > 0) अणु
+	if (str_id > 0) {
 		dev_dbg(dev, "stream allocated in sst_cdev_open %d\n", str_id);
 		stream = &ctx->streams[str_id];
 		stream->compr_cb = cb->compr_cb;
 		stream->compr_cb_param = cb->param;
-		stream->drain_notअगरy = cb->drain_notअगरy;
+		stream->drain_notify = cb->drain_notify;
 		stream->drain_cb_param = cb->drain_cb_param;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(dev, "stream encountered error during alloc %d\n", str_id);
 		str_id = -EINVAL;
-		sst_pm_runसमय_put(ctx);
-	पूर्ण
-	वापस str_id;
-पूर्ण
+		sst_pm_runtime_put(ctx);
+	}
+	return str_id;
+}
 
-अटल पूर्णांक sst_cdev_बंद(काष्ठा device *dev, अचिन्हित पूर्णांक str_id)
-अणु
-	पूर्णांक retval;
-	काष्ठा stream_info *stream;
-	काष्ठा पूर्णांकel_sst_drv *ctx = dev_get_drvdata(dev);
+static int sst_cdev_close(struct device *dev, unsigned int str_id)
+{
+	int retval;
+	struct stream_info *stream;
+	struct intel_sst_drv *ctx = dev_get_drvdata(dev);
 
 	stream = get_stream_info(ctx, str_id);
-	अगर (!stream) अणु
+	if (!stream) {
 		dev_err(dev, "stream info is NULL for str %d!!!\n", str_id);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	retval = sst_मुक्त_stream(ctx, str_id);
-	stream->compr_cb_param = शून्य;
-	stream->compr_cb = शून्य;
+	retval = sst_free_stream(ctx, str_id);
+	stream->compr_cb_param = NULL;
+	stream->compr_cb = NULL;
 
-	अगर (retval)
+	if (retval)
 		dev_err(dev, "free stream returned err %d\n", retval);
 
 	dev_dbg(dev, "End\n");
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक sst_cdev_ack(काष्ठा device *dev, अचिन्हित पूर्णांक str_id,
-		अचिन्हित दीर्घ bytes)
-अणु
-	काष्ठा stream_info *stream;
-	काष्ठा snd_sst_tstamp fw_tstamp = अणु0,पूर्ण;
-	पूर्णांक offset;
-	व्योम __iomem *addr;
-	काष्ठा पूर्णांकel_sst_drv *ctx = dev_get_drvdata(dev);
+static int sst_cdev_ack(struct device *dev, unsigned int str_id,
+		unsigned long bytes)
+{
+	struct stream_info *stream;
+	struct snd_sst_tstamp fw_tstamp = {0,};
+	int offset;
+	void __iomem *addr;
+	struct intel_sst_drv *ctx = dev_get_drvdata(dev);
 
 	stream = get_stream_info(ctx, str_id);
-	अगर (!stream)
-		वापस -EINVAL;
+	if (!stream)
+		return -EINVAL;
 
 	/* update bytes sent */
 	stream->cumm_bytes += bytes;
 	dev_dbg(dev, "bytes copied %d inc by %ld\n", stream->cumm_bytes, bytes);
 
-	addr =  ((व्योम __iomem *)(ctx->mailbox + ctx->tstamp)) +
-		(str_id * माप(fw_tstamp));
+	addr =  ((void __iomem *)(ctx->mailbox + ctx->tstamp)) +
+		(str_id * sizeof(fw_tstamp));
 
-	स_नकल_fromio(&fw_tstamp, addr, माप(fw_tstamp));
+	memcpy_fromio(&fw_tstamp, addr, sizeof(fw_tstamp));
 
 	fw_tstamp.bytes_copied = stream->cumm_bytes;
 	dev_dbg(dev, "bytes sent to fw %llu inc by %ld\n",
 			fw_tstamp.bytes_copied, bytes);
 
-	offset =  दुरत्व(काष्ठा snd_sst_tstamp, bytes_copied);
-	sst_shim_ग_लिखो(addr, offset, fw_tstamp.bytes_copied);
-	वापस 0;
-पूर्ण
+	offset =  offsetof(struct snd_sst_tstamp, bytes_copied);
+	sst_shim_write(addr, offset, fw_tstamp.bytes_copied);
+	return 0;
+}
 
-अटल पूर्णांक sst_cdev_set_metadata(काष्ठा device *dev,
-		अचिन्हित पूर्णांक str_id, काष्ठा snd_compr_metadata *metadata)
-अणु
-	पूर्णांक retval = 0;
-	काष्ठा stream_info *str_info;
-	काष्ठा पूर्णांकel_sst_drv *ctx = dev_get_drvdata(dev);
+static int sst_cdev_set_metadata(struct device *dev,
+		unsigned int str_id, struct snd_compr_metadata *metadata)
+{
+	int retval = 0;
+	struct stream_info *str_info;
+	struct intel_sst_drv *ctx = dev_get_drvdata(dev);
 
 	dev_dbg(dev, "set metadata for stream %d\n", str_id);
 
 	str_info = get_stream_info(ctx, str_id);
-	अगर (!str_info)
-		वापस -EINVAL;
+	if (!str_info)
+		return -EINVAL;
 
 	dev_dbg(dev, "pipe id = %d\n", str_info->pipe_id);
 	retval = sst_prepare_and_post_msg(ctx, str_info->task_id, IPC_CMD,
 			IPC_IA_SET_STREAM_PARAMS_MRFLD, str_info->pipe_id,
-			माप(*metadata), metadata, शून्य,
+			sizeof(*metadata), metadata, NULL,
 			true, true, true, false);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक sst_cdev_stream_छोड़ो(काष्ठा device *dev, अचिन्हित पूर्णांक str_id)
-अणु
-	काष्ठा पूर्णांकel_sst_drv *ctx = dev_get_drvdata(dev);
+static int sst_cdev_stream_pause(struct device *dev, unsigned int str_id)
+{
+	struct intel_sst_drv *ctx = dev_get_drvdata(dev);
 
-	वापस sst_छोड़ो_stream(ctx, str_id);
-पूर्ण
+	return sst_pause_stream(ctx, str_id);
+}
 
-अटल पूर्णांक sst_cdev_stream_छोड़ो_release(काष्ठा device *dev,
-		अचिन्हित पूर्णांक str_id)
-अणु
-	काष्ठा पूर्णांकel_sst_drv *ctx = dev_get_drvdata(dev);
+static int sst_cdev_stream_pause_release(struct device *dev,
+		unsigned int str_id)
+{
+	struct intel_sst_drv *ctx = dev_get_drvdata(dev);
 
-	वापस sst_resume_stream(ctx, str_id);
-पूर्ण
+	return sst_resume_stream(ctx, str_id);
+}
 
-अटल पूर्णांक sst_cdev_stream_start(काष्ठा device *dev, अचिन्हित पूर्णांक str_id)
-अणु
-	काष्ठा stream_info *str_info;
-	काष्ठा पूर्णांकel_sst_drv *ctx = dev_get_drvdata(dev);
+static int sst_cdev_stream_start(struct device *dev, unsigned int str_id)
+{
+	struct stream_info *str_info;
+	struct intel_sst_drv *ctx = dev_get_drvdata(dev);
 
 	str_info = get_stream_info(ctx, str_id);
-	अगर (!str_info)
-		वापस -EINVAL;
+	if (!str_info)
+		return -EINVAL;
 	str_info->prev = str_info->status;
 	str_info->status = STREAM_RUNNING;
-	वापस sst_start_stream(ctx, str_id);
-पूर्ण
+	return sst_start_stream(ctx, str_id);
+}
 
-अटल पूर्णांक sst_cdev_stream_drop(काष्ठा device *dev, अचिन्हित पूर्णांक str_id)
-अणु
-	काष्ठा पूर्णांकel_sst_drv *ctx = dev_get_drvdata(dev);
+static int sst_cdev_stream_drop(struct device *dev, unsigned int str_id)
+{
+	struct intel_sst_drv *ctx = dev_get_drvdata(dev);
 
-	वापस sst_drop_stream(ctx, str_id);
-पूर्ण
+	return sst_drop_stream(ctx, str_id);
+}
 
-अटल पूर्णांक sst_cdev_stream_drain(काष्ठा device *dev, अचिन्हित पूर्णांक str_id)
-अणु
-	काष्ठा पूर्णांकel_sst_drv *ctx = dev_get_drvdata(dev);
+static int sst_cdev_stream_drain(struct device *dev, unsigned int str_id)
+{
+	struct intel_sst_drv *ctx = dev_get_drvdata(dev);
 
-	वापस sst_drain_stream(ctx, str_id, false);
-पूर्ण
+	return sst_drain_stream(ctx, str_id, false);
+}
 
-अटल पूर्णांक sst_cdev_stream_partial_drain(काष्ठा device *dev,
-		अचिन्हित पूर्णांक str_id)
-अणु
-	काष्ठा पूर्णांकel_sst_drv *ctx = dev_get_drvdata(dev);
+static int sst_cdev_stream_partial_drain(struct device *dev,
+		unsigned int str_id)
+{
+	struct intel_sst_drv *ctx = dev_get_drvdata(dev);
 
-	वापस sst_drain_stream(ctx, str_id, true);
-पूर्ण
+	return sst_drain_stream(ctx, str_id, true);
+}
 
-अटल पूर्णांक sst_cdev_tstamp(काष्ठा device *dev, अचिन्हित पूर्णांक str_id,
-		काष्ठा snd_compr_tstamp *tstamp)
-अणु
-	काष्ठा snd_sst_tstamp fw_tstamp = अणु0,पूर्ण;
-	काष्ठा stream_info *stream;
-	काष्ठा पूर्णांकel_sst_drv *ctx = dev_get_drvdata(dev);
-	व्योम __iomem *addr;
+static int sst_cdev_tstamp(struct device *dev, unsigned int str_id,
+		struct snd_compr_tstamp *tstamp)
+{
+	struct snd_sst_tstamp fw_tstamp = {0,};
+	struct stream_info *stream;
+	struct intel_sst_drv *ctx = dev_get_drvdata(dev);
+	void __iomem *addr;
 
-	addr = (व्योम __iomem *)(ctx->mailbox + ctx->tstamp) +
-		(str_id * माप(fw_tstamp));
+	addr = (void __iomem *)(ctx->mailbox + ctx->tstamp) +
+		(str_id * sizeof(fw_tstamp));
 
-	स_नकल_fromio(&fw_tstamp, addr, माप(fw_tstamp));
+	memcpy_fromio(&fw_tstamp, addr, sizeof(fw_tstamp));
 
 	stream = get_stream_info(ctx, str_id);
-	अगर (!stream)
-		वापस -EINVAL;
+	if (!stream)
+		return -EINVAL;
 	dev_dbg(dev, "rb_counter %llu in bytes\n", fw_tstamp.ring_buffer_counter);
 
 	tstamp->copied_total = fw_tstamp.ring_buffer_counter;
 	tstamp->pcm_frames = fw_tstamp.frames_decoded;
-	tstamp->pcm_io_frames = भाग_u64(fw_tstamp.hardware_counter,
+	tstamp->pcm_io_frames = div_u64(fw_tstamp.hardware_counter,
 			(u64)stream->num_ch * SST_GET_BYTES_PER_SAMPLE(24));
 	tstamp->sampling_rate = fw_tstamp.sampling_frequency;
 
@@ -371,11 +370,11 @@
 		str_id, tstamp->copied_total, tstamp->pcm_frames);
 	dev_dbg(dev, "rendered %d\n", tstamp->pcm_io_frames);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sst_cdev_caps(काष्ठा snd_compr_caps *caps)
-अणु
+static int sst_cdev_caps(struct snd_compr_caps *caps)
+{
 	caps->num_codecs = NUM_CODEC;
 	caps->min_fragment_size = MIN_FRAGMENT_SIZE;  /* 50KB */
 	caps->max_fragment_size = MAX_FRAGMENT_SIZE;  /* 1024KB */
@@ -383,10 +382,10 @@
 	caps->max_fragments = MAX_FRAGMENT;
 	caps->codecs[0] = SND_AUDIOCODEC_MP3;
 	caps->codecs[1] = SND_AUDIOCODEC_AAC;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_compr_codec_caps caps_mp3 = अणु
+static const struct snd_compr_codec_caps caps_mp3 = {
 	.num_descriptors = 1,
 	.descriptor[0].max_ch = 2,
 	.descriptor[0].sample_rates[0] = 48000,
@@ -400,10 +399,10 @@
 	.descriptor[0].num_bitrates = 2,
 	.descriptor[0].profiles = 0,
 	.descriptor[0].modes = SND_AUDIOCHANMODE_MP3_STEREO,
-	.descriptor[0].क्रमmats = 0,
-पूर्ण;
+	.descriptor[0].formats = 0,
+};
 
-अटल स्थिर काष्ठा snd_compr_codec_caps caps_aac = अणु
+static const struct snd_compr_codec_caps caps_aac = {
 	.num_descriptors = 2,
 	.descriptor[1].max_ch = 2,
 	.descriptor[0].sample_rates[0] = 48000,
@@ -417,203 +416,203 @@
 	.descriptor[1].num_bitrates = 2,
 	.descriptor[1].profiles = 0,
 	.descriptor[1].modes = 0,
-	.descriptor[1].क्रमmats =
+	.descriptor[1].formats =
 			(SND_AUDIOSTREAMFORMAT_MP4ADTS |
 				SND_AUDIOSTREAMFORMAT_RAW),
-पूर्ण;
+};
 
-अटल पूर्णांक sst_cdev_codec_caps(काष्ठा snd_compr_codec_caps *codec)
-अणु
-	अगर (codec->codec == SND_AUDIOCODEC_MP3)
+static int sst_cdev_codec_caps(struct snd_compr_codec_caps *codec)
+{
+	if (codec->codec == SND_AUDIOCODEC_MP3)
 		*codec = caps_mp3;
-	अन्यथा अगर (codec->codec == SND_AUDIOCODEC_AAC)
+	else if (codec->codec == SND_AUDIOCODEC_AAC)
 		*codec = caps_aac;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम sst_cdev_fragment_elapsed(काष्ठा पूर्णांकel_sst_drv *ctx, पूर्णांक str_id)
-अणु
-	काष्ठा stream_info *stream;
+void sst_cdev_fragment_elapsed(struct intel_sst_drv *ctx, int str_id)
+{
+	struct stream_info *stream;
 
 	dev_dbg(ctx->dev, "fragment elapsed from firmware for str_id %d\n",
 			str_id);
 	stream = &ctx->streams[str_id];
-	अगर (stream->compr_cb)
+	if (stream->compr_cb)
 		stream->compr_cb(stream->compr_cb_param);
-पूर्ण
+}
 
 /*
- * sst_बंद_pcm_stream - Close PCM पूर्णांकerface
+ * sst_close_pcm_stream - Close PCM interface
  *
- * @str_id: stream id to be बंदd
+ * @str_id: stream id to be closed
  *
- * This function is called by MID sound card driver to बंद
- * an existing pcm पूर्णांकerface
+ * This function is called by MID sound card driver to close
+ * an existing pcm interface
  */
-अटल पूर्णांक sst_बंद_pcm_stream(काष्ठा device *dev, अचिन्हित पूर्णांक str_id)
-अणु
-	काष्ठा stream_info *stream;
-	पूर्णांक retval = 0;
-	काष्ठा पूर्णांकel_sst_drv *ctx = dev_get_drvdata(dev);
+static int sst_close_pcm_stream(struct device *dev, unsigned int str_id)
+{
+	struct stream_info *stream;
+	int retval = 0;
+	struct intel_sst_drv *ctx = dev_get_drvdata(dev);
 
 	stream = get_stream_info(ctx, str_id);
-	अगर (!stream) अणु
+	if (!stream) {
 		dev_err(ctx->dev, "stream info is NULL for str %d!!!\n", str_id);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	retval = मुक्त_stream_context(ctx, str_id);
-	stream->pcm_substream = शून्य;
+	retval = free_stream_context(ctx, str_id);
+	stream->pcm_substream = NULL;
 	stream->status = STREAM_UN_INIT;
-	stream->period_elapsed = शून्य;
+	stream->period_elapsed = NULL;
 	ctx->stream_cnt--;
 
-	अगर (retval)
+	if (retval)
 		dev_err(ctx->dev, "free stream returned err %d\n", retval);
 
 	dev_dbg(ctx->dev, "Exit\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक sst_calc_tstamp(काष्ठा पूर्णांकel_sst_drv *ctx,
-		काष्ठा pcm_stream_info *info,
-		काष्ठा snd_pcm_substream *substream,
-		काष्ठा snd_sst_tstamp *fw_tstamp)
-अणु
-	माप_प्रकार delay_bytes, delay_frames;
-	माप_प्रकार buffer_sz;
-	u32 poपूर्णांकer_bytes, poपूर्णांकer_samples;
+static inline int sst_calc_tstamp(struct intel_sst_drv *ctx,
+		struct pcm_stream_info *info,
+		struct snd_pcm_substream *substream,
+		struct snd_sst_tstamp *fw_tstamp)
+{
+	size_t delay_bytes, delay_frames;
+	size_t buffer_sz;
+	u32 pointer_bytes, pointer_samples;
 
 	dev_dbg(ctx->dev, "mrfld ring_buffer_counter %llu in bytes\n",
 			fw_tstamp->ring_buffer_counter);
 	dev_dbg(ctx->dev, "mrfld hardware_counter %llu in bytes\n",
 			 fw_tstamp->hardware_counter);
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-		delay_bytes = (माप_प्रकार) (fw_tstamp->ring_buffer_counter -
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		delay_bytes = (size_t) (fw_tstamp->ring_buffer_counter -
 					fw_tstamp->hardware_counter);
-	अन्यथा
-		delay_bytes = (माप_प्रकार) (fw_tstamp->hardware_counter -
+	else
+		delay_bytes = (size_t) (fw_tstamp->hardware_counter -
 					fw_tstamp->ring_buffer_counter);
-	delay_frames = bytes_to_frames(substream->runसमय, delay_bytes);
+	delay_frames = bytes_to_frames(substream->runtime, delay_bytes);
 	buffer_sz = snd_pcm_lib_buffer_bytes(substream);
-	भाग_u64_rem(fw_tstamp->ring_buffer_counter, buffer_sz, &poपूर्णांकer_bytes);
-	poपूर्णांकer_samples = bytes_to_samples(substream->runसमय, poपूर्णांकer_bytes);
+	div_u64_rem(fw_tstamp->ring_buffer_counter, buffer_sz, &pointer_bytes);
+	pointer_samples = bytes_to_samples(substream->runtime, pointer_bytes);
 
 	dev_dbg(ctx->dev, "pcm delay %zu in bytes\n", delay_bytes);
 
-	info->buffer_ptr = poपूर्णांकer_samples / substream->runसमय->channels;
+	info->buffer_ptr = pointer_samples / substream->runtime->channels;
 
 	info->pcm_delay = delay_frames;
 	dev_dbg(ctx->dev, "buffer ptr %llu pcm_delay rep: %llu\n",
 			info->buffer_ptr, info->pcm_delay);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sst_पढ़ो_बारtamp(काष्ठा device *dev, काष्ठा pcm_stream_info *info)
-अणु
-	काष्ठा stream_info *stream;
-	काष्ठा snd_pcm_substream *substream;
-	काष्ठा snd_sst_tstamp fw_tstamp;
-	अचिन्हित पूर्णांक str_id;
-	काष्ठा पूर्णांकel_sst_drv *ctx = dev_get_drvdata(dev);
-	व्योम __iomem *addr;
+static int sst_read_timestamp(struct device *dev, struct pcm_stream_info *info)
+{
+	struct stream_info *stream;
+	struct snd_pcm_substream *substream;
+	struct snd_sst_tstamp fw_tstamp;
+	unsigned int str_id;
+	struct intel_sst_drv *ctx = dev_get_drvdata(dev);
+	void __iomem *addr;
 
 	str_id = info->str_id;
 	stream = get_stream_info(ctx, str_id);
-	अगर (!stream)
-		वापस -EINVAL;
+	if (!stream)
+		return -EINVAL;
 
-	अगर (!stream->pcm_substream)
-		वापस -EINVAL;
+	if (!stream->pcm_substream)
+		return -EINVAL;
 	substream = stream->pcm_substream;
 
-	addr = (व्योम __iomem *)(ctx->mailbox + ctx->tstamp) +
-		(str_id * माप(fw_tstamp));
+	addr = (void __iomem *)(ctx->mailbox + ctx->tstamp) +
+		(str_id * sizeof(fw_tstamp));
 
-	स_नकल_fromio(&fw_tstamp, addr, माप(fw_tstamp));
+	memcpy_fromio(&fw_tstamp, addr, sizeof(fw_tstamp));
 
-	वापस sst_calc_tstamp(ctx, info, substream, &fw_tstamp);
-पूर्ण
+	return sst_calc_tstamp(ctx, info, substream, &fw_tstamp);
+}
 
-अटल पूर्णांक sst_stream_start(काष्ठा device *dev, पूर्णांक str_id)
-अणु
-	काष्ठा stream_info *str_info;
-	काष्ठा पूर्णांकel_sst_drv *ctx = dev_get_drvdata(dev);
+static int sst_stream_start(struct device *dev, int str_id)
+{
+	struct stream_info *str_info;
+	struct intel_sst_drv *ctx = dev_get_drvdata(dev);
 
-	अगर (ctx->sst_state != SST_FW_RUNNING)
-		वापस 0;
+	if (ctx->sst_state != SST_FW_RUNNING)
+		return 0;
 	str_info = get_stream_info(ctx, str_id);
-	अगर (!str_info)
-		वापस -EINVAL;
+	if (!str_info)
+		return -EINVAL;
 	str_info->prev = str_info->status;
 	str_info->status = STREAM_RUNNING;
 	sst_start_stream(ctx, str_id);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sst_stream_drop(काष्ठा device *dev, पूर्णांक str_id)
-अणु
-	काष्ठा stream_info *str_info;
-	काष्ठा पूर्णांकel_sst_drv *ctx = dev_get_drvdata(dev);
+static int sst_stream_drop(struct device *dev, int str_id)
+{
+	struct stream_info *str_info;
+	struct intel_sst_drv *ctx = dev_get_drvdata(dev);
 
-	अगर (ctx->sst_state != SST_FW_RUNNING)
-		वापस 0;
+	if (ctx->sst_state != SST_FW_RUNNING)
+		return 0;
 
 	str_info = get_stream_info(ctx, str_id);
-	अगर (!str_info)
-		वापस -EINVAL;
+	if (!str_info)
+		return -EINVAL;
 	str_info->prev = STREAM_UN_INIT;
 	str_info->status = STREAM_INIT;
-	वापस sst_drop_stream(ctx, str_id);
-पूर्ण
+	return sst_drop_stream(ctx, str_id);
+}
 
-अटल पूर्णांक sst_stream_छोड़ो(काष्ठा device *dev, पूर्णांक str_id)
-अणु
-	काष्ठा stream_info *str_info;
-	काष्ठा पूर्णांकel_sst_drv *ctx = dev_get_drvdata(dev);
+static int sst_stream_pause(struct device *dev, int str_id)
+{
+	struct stream_info *str_info;
+	struct intel_sst_drv *ctx = dev_get_drvdata(dev);
 
-	अगर (ctx->sst_state != SST_FW_RUNNING)
-		वापस 0;
-
-	str_info = get_stream_info(ctx, str_id);
-	अगर (!str_info)
-		वापस -EINVAL;
-
-	वापस sst_छोड़ो_stream(ctx, str_id);
-पूर्ण
-
-अटल पूर्णांक sst_stream_resume(काष्ठा device *dev, पूर्णांक str_id)
-अणु
-	काष्ठा stream_info *str_info;
-	काष्ठा पूर्णांकel_sst_drv *ctx = dev_get_drvdata(dev);
-
-	अगर (ctx->sst_state != SST_FW_RUNNING)
-		वापस 0;
+	if (ctx->sst_state != SST_FW_RUNNING)
+		return 0;
 
 	str_info = get_stream_info(ctx, str_id);
-	अगर (!str_info)
-		वापस -EINVAL;
-	वापस sst_resume_stream(ctx, str_id);
-पूर्ण
+	if (!str_info)
+		return -EINVAL;
 
-अटल पूर्णांक sst_stream_init(काष्ठा device *dev, काष्ठा pcm_stream_info *str_info)
-अणु
-	पूर्णांक str_id = 0;
-	काष्ठा stream_info *stream;
-	काष्ठा पूर्णांकel_sst_drv *ctx = dev_get_drvdata(dev);
+	return sst_pause_stream(ctx, str_id);
+}
+
+static int sst_stream_resume(struct device *dev, int str_id)
+{
+	struct stream_info *str_info;
+	struct intel_sst_drv *ctx = dev_get_drvdata(dev);
+
+	if (ctx->sst_state != SST_FW_RUNNING)
+		return 0;
+
+	str_info = get_stream_info(ctx, str_id);
+	if (!str_info)
+		return -EINVAL;
+	return sst_resume_stream(ctx, str_id);
+}
+
+static int sst_stream_init(struct device *dev, struct pcm_stream_info *str_info)
+{
+	int str_id = 0;
+	struct stream_info *stream;
+	struct intel_sst_drv *ctx = dev_get_drvdata(dev);
 
 	str_id = str_info->str_id;
 
-	अगर (ctx->sst_state != SST_FW_RUNNING)
-		वापस 0;
+	if (ctx->sst_state != SST_FW_RUNNING)
+		return 0;
 
 	stream = get_stream_info(ctx, str_id);
-	अगर (!stream)
-		वापस -EINVAL;
+	if (!stream)
+		return -EINVAL;
 
 	dev_dbg(ctx->dev, "setting the period ptrs\n");
 	stream->pcm_substream = str_info->arg;
@@ -626,8 +625,8 @@
 		stream->pcm_substream, stream->period_elapsed,
 		stream->sfreq, stream->status);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * sst_set_byte_stream - Set generic params
@@ -636,46 +635,46 @@
  * @arg: command argument
  *
  * This function is called by MID sound card driver to configure
- * SST runसमय params.
+ * SST runtime params.
  */
-अटल पूर्णांक sst_send_byte_stream(काष्ठा device *dev,
-		काष्ठा snd_sst_bytes_v2 *bytes)
-अणु
-	पूर्णांक ret_val = 0;
-	काष्ठा पूर्णांकel_sst_drv *ctx = dev_get_drvdata(dev);
+static int sst_send_byte_stream(struct device *dev,
+		struct snd_sst_bytes_v2 *bytes)
+{
+	int ret_val = 0;
+	struct intel_sst_drv *ctx = dev_get_drvdata(dev);
 
-	अगर (शून्य == bytes)
-		वापस -EINVAL;
-	ret_val = pm_runसमय_get_sync(ctx->dev);
-	अगर (ret_val < 0) अणु
-		pm_runसमय_put_sync(ctx->dev);
-		वापस ret_val;
-	पूर्ण
+	if (NULL == bytes)
+		return -EINVAL;
+	ret_val = pm_runtime_get_sync(ctx->dev);
+	if (ret_val < 0) {
+		pm_runtime_put_sync(ctx->dev);
+		return ret_val;
+	}
 
 	ret_val = sst_send_byte_stream_mrfld(ctx, bytes);
-	sst_pm_runसमय_put(ctx);
+	sst_pm_runtime_put(ctx);
 
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
-अटल काष्ठा sst_ops pcm_ops = अणु
-	.खोलो = sst_खोलो_pcm_stream,
+static struct sst_ops pcm_ops = {
+	.open = sst_open_pcm_stream,
 	.stream_init = sst_stream_init,
 	.stream_start = sst_stream_start,
 	.stream_drop = sst_stream_drop,
-	.stream_छोड़ो = sst_stream_छोड़ो,
-	.stream_छोड़ो_release = sst_stream_resume,
-	.stream_पढ़ो_tstamp = sst_पढ़ो_बारtamp,
+	.stream_pause = sst_stream_pause,
+	.stream_pause_release = sst_stream_resume,
+	.stream_read_tstamp = sst_read_timestamp,
 	.send_byte_stream = sst_send_byte_stream,
-	.बंद = sst_बंद_pcm_stream,
-	.घातer = sst_घातer_control,
-पूर्ण;
+	.close = sst_close_pcm_stream,
+	.power = sst_power_control,
+};
 
-अटल काष्ठा compress_sst_ops compr_ops = अणु
-	.खोलो = sst_cdev_खोलो,
-	.बंद = sst_cdev_बंद,
-	.stream_छोड़ो = sst_cdev_stream_छोड़ो,
-	.stream_छोड़ो_release = sst_cdev_stream_छोड़ो_release,
+static struct compress_sst_ops compr_ops = {
+	.open = sst_cdev_open,
+	.close = sst_cdev_close,
+	.stream_pause = sst_cdev_stream_pause,
+	.stream_pause_release = sst_cdev_stream_pause_release,
 	.stream_start = sst_cdev_stream_start,
 	.stream_drop = sst_cdev_stream_drop,
 	.stream_drain = sst_cdev_stream_drain,
@@ -685,34 +684,34 @@
 	.get_caps = sst_cdev_caps,
 	.get_codec_caps = sst_cdev_codec_caps,
 	.set_metadata = sst_cdev_set_metadata,
-	.घातer = sst_घातer_control,
-पूर्ण;
+	.power = sst_power_control,
+};
 
-अटल काष्ठा sst_device sst_dsp_device = अणु
+static struct sst_device sst_dsp_device = {
 	.name = "Intel(R) SST LPE",
-	.dev = शून्य,
+	.dev = NULL,
 	.ops = &pcm_ops,
 	.compr_ops = &compr_ops,
-पूर्ण;
+};
 
 /*
- * sst_रेजिस्टर - function to रेजिस्टर DSP
+ * sst_register - function to register DSP
  *
- * This functions रेजिस्टरs DSP with the platक्रमm driver
+ * This functions registers DSP with the platform driver
  */
-पूर्णांक sst_रेजिस्टर(काष्ठा device *dev)
-अणु
-	पूर्णांक ret_val;
+int sst_register(struct device *dev)
+{
+	int ret_val;
 
 	sst_dsp_device.dev = dev;
-	ret_val = sst_रेजिस्टर_dsp(&sst_dsp_device);
-	अगर (ret_val)
+	ret_val = sst_register_dsp(&sst_dsp_device);
+	if (ret_val)
 		dev_err(dev, "Unable to register DSP with platform driver\n");
 
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
-पूर्णांक sst_unरेजिस्टर(काष्ठा device *dev)
-अणु
-	वापस sst_unरेजिस्टर_dsp(&sst_dsp_device);
-पूर्ण
+int sst_unregister(struct device *dev)
+{
+	return sst_unregister_dsp(&sst_dsp_device);
+}

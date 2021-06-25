@@ -1,31 +1,30 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * VirtualBox Shared Folders: host पूर्णांकerface definition.
+ * VirtualBox Shared Folders: host interface definition.
  *
  * Copyright (C) 2006-2018 Oracle Corporation
  */
 
-#अगर_अघोषित SHFL_HOSTINTF_H
-#घोषणा SHFL_HOSTINTF_H
+#ifndef SHFL_HOSTINTF_H
+#define SHFL_HOSTINTF_H
 
-#समावेश <linux/vbox_vmmdev_types.h>
+#include <linux/vbox_vmmdev_types.h>
 
-/* The max in/out buffer size क्रम a FN_READ or FN_WRITE call */
-#घोषणा SHFL_MAX_RW_COUNT           (16 * SZ_1M)
+/* The max in/out buffer size for a FN_READ or FN_WRITE call */
+#define SHFL_MAX_RW_COUNT           (16 * SZ_1M)
 
 /*
  * Structures shared between guest and the service
- * can be relocated and use offsets to poपूर्णांक to variable
+ * can be relocated and use offsets to point to variable
  * length parts.
  *
  * Shared folders protocol works with handles.
- * Beक्रमe करोing any action on a file प्रणाली object,
+ * Before doing any action on a file system object,
  * one have to obtain the object handle via a SHFL_FN_CREATE
- * request. A handle must be बंदd with SHFL_FN_CLOSE.
+ * request. A handle must be closed with SHFL_FN_CLOSE.
  */
 
-क्रमागत अणु
+enum {
 	SHFL_FN_QUERY_MAPPINGS = 1,	/* Query mappings changes. */
 	SHFL_FN_QUERY_MAP_NAME = 2,	/* Query map name. */
 	SHFL_FN_CREATE = 3,		/* Open/create object. */
@@ -34,7 +33,7 @@
 	SHFL_FN_WRITE = 6,		/* Write new object content. */
 	SHFL_FN_LOCK = 7,		/* Lock/unlock a range in the object. */
 	SHFL_FN_LIST = 8,		/* List object content. */
-	SHFL_FN_INFORMATION = 9,	/* Query/set object inक्रमmation. */
+	SHFL_FN_INFORMATION = 9,	/* Query/set object information. */
 	/* Note function number 10 is not used! */
 	SHFL_FN_REMOVE = 11,		/* Remove object */
 	SHFL_FN_MAP_FOLDER_OLD = 12,	/* Map folder (legacy) */
@@ -46,21 +45,21 @@
 	SHFL_FN_READLINK = 18,		/* Read symlink dest (as of VBox 4.0) */
 	SHFL_FN_SYMLINK = 19,		/* Create symlink (as of VBox 4.0) */
 	SHFL_FN_SET_SYMLINKS = 20,	/* Ask host to show symlinks (4.0+) */
-पूर्ण;
+};
 
-/* Root handles क्रम a mapping are of type u32, Root handles are unique. */
-#घोषणा SHFL_ROOT_NIL		अच_पूर्णांक_उच्च
+/* Root handles for a mapping are of type u32, Root handles are unique. */
+#define SHFL_ROOT_NIL		UINT_MAX
 
-/* Shared folders handle क्रम an खोलोed object are of type u64. */
-#घोषणा SHFL_HANDLE_NIL		ULदीर्घ_उच्च
+/* Shared folders handle for an opened object are of type u64. */
+#define SHFL_HANDLE_NIL		ULLONG_MAX
 
-/* Hardcoded maximum length (in अक्षरs) of a shared folder name. */
-#घोषणा SHFL_MAX_LEN         (256)
+/* Hardcoded maximum length (in chars) of a shared folder name. */
+#define SHFL_MAX_LEN         (256)
 /* Hardcoded maximum number of shared folder mapping available to the guest. */
-#घोषणा SHFL_MAX_MAPPINGS    (64)
+#define SHFL_MAX_MAPPINGS    (64)
 
-/** Shared folder string buffer काष्ठाure. */
-काष्ठा shfl_string अणु
+/** Shared folder string buffer structure. */
+struct shfl_string {
 	/** Allocated size of the string member in bytes. */
 	u16 size;
 
@@ -68,78 +67,78 @@
 	u16 length;
 
 	/** UTF-8 or UTF-16 string. Nul terminated. */
-	जोड़ अणु
+	union {
 		u8 utf8[2];
 		u16 utf16[1];
 		u16 ucs2[1]; /* misnomer, use utf16. */
-	पूर्ण string;
-पूर्ण;
+	} string;
+};
 VMMDEV_ASSERT_SIZE(shfl_string, 6);
 
 /* The size of shfl_string w/o the string part. */
-#घोषणा SHFLSTRING_HEADER_SIZE  4
+#define SHFLSTRING_HEADER_SIZE  4
 
 /* Calculate size of the string. */
-अटल अंतरभूत u32 shfl_string_buf_size(स्थिर काष्ठा shfl_string *string)
-अणु
-	वापस string ? SHFLSTRING_HEADER_SIZE + string->size : 0;
-पूर्ण
+static inline u32 shfl_string_buf_size(const struct shfl_string *string)
+{
+	return string ? SHFLSTRING_HEADER_SIZE + string->size : 0;
+}
 
 /* Set user id on execution (S_ISUID). */
-#घोषणा SHFL_UNIX_ISUID             0004000U
+#define SHFL_UNIX_ISUID             0004000U
 /* Set group id on execution (S_ISGID). */
-#घोषणा SHFL_UNIX_ISGID             0002000U
+#define SHFL_UNIX_ISGID             0002000U
 /* Sticky bit (S_ISVTX / S_ISTXT). */
-#घोषणा SHFL_UNIX_ISTXT             0001000U
+#define SHFL_UNIX_ISTXT             0001000U
 
-/* Owner पढ़ोable (S_IRUSR). */
-#घोषणा SHFL_UNIX_IRUSR             0000400U
+/* Owner readable (S_IRUSR). */
+#define SHFL_UNIX_IRUSR             0000400U
 /* Owner writable (S_IWUSR). */
-#घोषणा SHFL_UNIX_IWUSR             0000200U
+#define SHFL_UNIX_IWUSR             0000200U
 /* Owner executable (S_IXUSR). */
-#घोषणा SHFL_UNIX_IXUSR             0000100U
+#define SHFL_UNIX_IXUSR             0000100U
 
-/* Group पढ़ोable (S_IRGRP). */
-#घोषणा SHFL_UNIX_IRGRP             0000040U
+/* Group readable (S_IRGRP). */
+#define SHFL_UNIX_IRGRP             0000040U
 /* Group writable (S_IWGRP). */
-#घोषणा SHFL_UNIX_IWGRP             0000020U
+#define SHFL_UNIX_IWGRP             0000020U
 /* Group executable (S_IXGRP). */
-#घोषणा SHFL_UNIX_IXGRP             0000010U
+#define SHFL_UNIX_IXGRP             0000010U
 
-/* Other पढ़ोable (S_IROTH). */
-#घोषणा SHFL_UNIX_IROTH             0000004U
+/* Other readable (S_IROTH). */
+#define SHFL_UNIX_IROTH             0000004U
 /* Other writable (S_IWOTH). */
-#घोषणा SHFL_UNIX_IWOTH             0000002U
+#define SHFL_UNIX_IWOTH             0000002U
 /* Other executable (S_IXOTH). */
-#घोषणा SHFL_UNIX_IXOTH             0000001U
+#define SHFL_UNIX_IXOTH             0000001U
 
-/* Named pipe (fअगरo) (S_IFIFO). */
-#घोषणा SHFL_TYPE_FIFO              0010000U
+/* Named pipe (fifo) (S_IFIFO). */
+#define SHFL_TYPE_FIFO              0010000U
 /* Character device (S_IFCHR). */
-#घोषणा SHFL_TYPE_DEV_CHAR          0020000U
-/* Directory (S_IFसूची). */
-#घोषणा SHFL_TYPE_सूचीECTORY         0040000U
+#define SHFL_TYPE_DEV_CHAR          0020000U
+/* Directory (S_IFDIR). */
+#define SHFL_TYPE_DIRECTORY         0040000U
 /* Block device (S_IFBLK). */
-#घोषणा SHFL_TYPE_DEV_BLOCK         0060000U
+#define SHFL_TYPE_DEV_BLOCK         0060000U
 /* Regular file (S_IFREG). */
-#घोषणा SHFL_TYPE_खाता              0100000U
+#define SHFL_TYPE_FILE              0100000U
 /* Symbolic link (S_IFLNK). */
-#घोषणा SHFL_TYPE_SYMLINK           0120000U
+#define SHFL_TYPE_SYMLINK           0120000U
 /* Socket (S_IFSOCK). */
-#घोषणा SHFL_TYPE_SOCKET            0140000U
+#define SHFL_TYPE_SOCKET            0140000U
 /* Whiteout (S_IFWHT). */
-#घोषणा SHFL_TYPE_WHITEOUT          0160000U
+#define SHFL_TYPE_WHITEOUT          0160000U
 /* Type mask (S_IFMT). */
-#घोषणा SHFL_TYPE_MASK              0170000U
+#define SHFL_TYPE_MASK              0170000U
 
-/* Checks the mode flags indicate a directory (S_ISसूची). */
-#घोषणा SHFL_IS_सूचीECTORY(m)   (((m) & SHFL_TYPE_MASK) == SHFL_TYPE_सूचीECTORY)
+/* Checks the mode flags indicate a directory (S_ISDIR). */
+#define SHFL_IS_DIRECTORY(m)   (((m) & SHFL_TYPE_MASK) == SHFL_TYPE_DIRECTORY)
 /* Checks the mode flags indicate a symbolic link (S_ISLNK). */
-#घोषणा SHFL_IS_SYMLINK(m)     (((m) & SHFL_TYPE_MASK) == SHFL_TYPE_SYMLINK)
+#define SHFL_IS_SYMLINK(m)     (((m) & SHFL_TYPE_MASK) == SHFL_TYPE_SYMLINK)
 
-/** The available additional inक्रमmation in a shfl_fsobjattr object. */
-क्रमागत shfl_fsobjattr_add अणु
-	/** No additional inक्रमmation is available / requested. */
+/** The available additional information in a shfl_fsobjattr object. */
+enum shfl_fsobjattr_add {
+	/** No additional information is available / requested. */
 	SHFLFSOBJATTRADD_NOTHING = 1,
 	/**
 	 * The additional unix attributes (shfl_fsobjattr::u::unix_attr) are
@@ -160,543 +159,543 @@ VMMDEV_ASSERT_SIZE(shfl_string, 6);
 
 	/** The usual 32-bit hack. */
 	SHFLFSOBJATTRADD_32BIT_SIZE_HACK = 0x7fffffff
-पूर्ण;
+};
 
 /**
  * Additional unix Attributes, these are available when
  * shfl_fsobjattr.additional == SHFLFSOBJATTRADD_UNIX.
  */
-काष्ठा shfl_fsobjattr_unix अणु
+struct shfl_fsobjattr_unix {
 	/**
-	 * The user owning the fileप्रणाली object (st_uid).
-	 * This field is ~0U अगर not supported.
+	 * The user owning the filesystem object (st_uid).
+	 * This field is ~0U if not supported.
 	 */
 	u32 uid;
 
 	/**
-	 * The group the fileप्रणाली object is asचिन्हित (st_gid).
-	 * This field is ~0U अगर not supported.
+	 * The group the filesystem object is assigned (st_gid).
+	 * This field is ~0U if not supported.
 	 */
 	u32 gid;
 
 	/**
-	 * Number of hard links to this fileप्रणाली object (st_nlink).
-	 * This field is 1 अगर the fileप्रणाली करोesn't support hardlinking or
-	 * the inक्रमmation isn't available.
+	 * Number of hard links to this filesystem object (st_nlink).
+	 * This field is 1 if the filesystem doesn't support hardlinking or
+	 * the information isn't available.
 	 */
 	u32 hardlinks;
 
 	/**
-	 * The device number of the device which this fileप्रणाली object resides
-	 * on (st_dev). This field is 0 अगर this inक्रमmation is not available.
+	 * The device number of the device which this filesystem object resides
+	 * on (st_dev). This field is 0 if this information is not available.
 	 */
 	u32 inode_id_device;
 
 	/**
-	 * The unique identअगरier (within the fileप्रणाली) of this fileप्रणाली
+	 * The unique identifier (within the filesystem) of this filesystem
 	 * object (st_ino). Together with inode_id_device, this field can be
 	 * used as a OS wide unique id, when both their values are not 0.
-	 * This field is 0 अगर the inक्रमmation is not available.
+	 * This field is 0 if the information is not available.
 	 */
 	u64 inode_id;
 
 	/**
 	 * User flags (st_flags).
-	 * This field is 0 अगर this inक्रमmation is not available.
+	 * This field is 0 if this information is not available.
 	 */
 	u32 flags;
 
 	/**
 	 * The current generation number (st_gen).
-	 * This field is 0 अगर this inक्रमmation is not available.
+	 * This field is 0 if this information is not available.
 	 */
 	u32 generation_id;
 
 	/**
-	 * The device number of a अक्षर. or block device type object (st_rdev).
-	 * This field is 0 अगर the file isn't a अक्षर. or block device or when
-	 * the OS करोesn't use the major+minor device idenfication scheme.
+	 * The device number of a char. or block device type object (st_rdev).
+	 * This field is 0 if the file isn't a char. or block device or when
+	 * the OS doesn't use the major+minor device idenfication scheme.
 	 */
 	u32 device;
-पूर्ण __packed;
+} __packed;
 
 /** Extended attribute size. */
-काष्ठा shfl_fsobjattr_easize अणु
+struct shfl_fsobjattr_easize {
 	/** Size of EAs. */
 	s64 cb;
-पूर्ण __packed;
+} __packed;
 
-/** Shared folder fileप्रणाली object attributes. */
-काष्ठा shfl_fsobjattr अणु
+/** Shared folder filesystem object attributes. */
+struct shfl_fsobjattr {
 	/** Mode flags (st_mode). SHFL_UNIX_*, SHFL_TYPE_*, and SHFL_DOS_*. */
 	u32 mode;
 
 	/** The additional attributes available. */
-	क्रमागत shfl_fsobjattr_add additional;
+	enum shfl_fsobjattr_add additional;
 
 	/**
 	 * Additional attributes.
 	 *
-	 * Unless explicitly specअगरied to an API, the API can provide additional
+	 * Unless explicitly specified to an API, the API can provide additional
 	 * data as it is provided by the underlying OS.
 	 */
-	जोड़ अणु
-		काष्ठा shfl_fsobjattr_unix unix_attr;
-		काष्ठा shfl_fsobjattr_easize size;
-	पूर्ण __packed u;
-पूर्ण __packed;
+	union {
+		struct shfl_fsobjattr_unix unix_attr;
+		struct shfl_fsobjattr_easize size;
+	} __packed u;
+} __packed;
 VMMDEV_ASSERT_SIZE(shfl_fsobjattr, 44);
 
-काष्ठा shfl_बारpec अणु
+struct shfl_timespec {
 	s64 ns_relative_to_unix_epoch;
-पूर्ण;
+};
 
-/** Fileप्रणाली object inक्रमmation काष्ठाure. */
-काष्ठा shfl_fsobjinfo अणु
+/** Filesystem object information structure. */
+struct shfl_fsobjinfo {
 	/**
 	 * Logical size (st_size).
 	 * For normal files this is the size of the file.
 	 * For symbolic links, this is the length of the path name contained
 	 * in the symbolic link.
-	 * For other objects this fields needs to be specअगरied.
+	 * For other objects this fields needs to be specified.
 	 */
 	s64 size;
 
 	/** Disk allocation size (st_blocks * DEV_BSIZE). */
 	s64 allocated;
 
-	/** Time of last access (st_aसमय). */
-	काष्ठा shfl_बारpec access_समय;
+	/** Time of last access (st_atime). */
+	struct shfl_timespec access_time;
 
-	/** Time of last data modअगरication (st_mसमय). */
-	काष्ठा shfl_बारpec modअगरication_समय;
-
-	/**
-	 * Time of last status change (st_स_समय).
-	 * If not available this is set to modअगरication_समय.
-	 */
-	काष्ठा shfl_बारpec change_समय;
+	/** Time of last data modification (st_mtime). */
+	struct shfl_timespec modification_time;
 
 	/**
-	 * Time of file birth (st_birthसमय).
-	 * If not available this is set to change_समय.
+	 * Time of last status change (st_ctime).
+	 * If not available this is set to modification_time.
 	 */
-	काष्ठा shfl_बारpec birth_समय;
+	struct shfl_timespec change_time;
+
+	/**
+	 * Time of file birth (st_birthtime).
+	 * If not available this is set to change_time.
+	 */
+	struct shfl_timespec birth_time;
 
 	/** Attributes. */
-	काष्ठा shfl_fsobjattr attr;
+	struct shfl_fsobjattr attr;
 
-पूर्ण __packed;
+} __packed;
 VMMDEV_ASSERT_SIZE(shfl_fsobjinfo, 92);
 
 /**
- * result of an खोलो/create request.
- * Aदीर्घ with handle value the result code
- * identअगरies what has happened जबतक
- * trying to खोलो the object.
+ * result of an open/create request.
+ * Along with handle value the result code
+ * identifies what has happened while
+ * trying to open the object.
  */
-क्रमागत shfl_create_result अणु
+enum shfl_create_result {
 	SHFL_NO_RESULT,
-	/** Specअगरied path करोes not exist. */
+	/** Specified path does not exist. */
 	SHFL_PATH_NOT_FOUND,
-	/** Path to file exists, but the last component करोes not. */
-	SHFL_खाता_NOT_FOUND,
-	/** File alपढ़ोy exists and either has been खोलोed or not. */
-	SHFL_खाता_EXISTS,
+	/** Path to file exists, but the last component does not. */
+	SHFL_FILE_NOT_FOUND,
+	/** File already exists and either has been opened or not. */
+	SHFL_FILE_EXISTS,
 	/** New file was created. */
-	SHFL_खाता_CREATED,
+	SHFL_FILE_CREATED,
 	/** Existing file was replaced or overwritten. */
-	SHFL_खाता_REPLACED
-पूर्ण;
+	SHFL_FILE_REPLACED
+};
 
 /* No flags. Initialization value. */
-#घोषणा SHFL_CF_NONE                  (0x00000000)
+#define SHFL_CF_NONE                  (0x00000000)
 
 /*
- * Only lookup the object, करो not वापस a handle. When this is set all other
+ * Only lookup the object, do not return a handle. When this is set all other
  * flags are ignored.
  */
-#घोषणा SHFL_CF_LOOKUP                (0x00000001)
+#define SHFL_CF_LOOKUP                (0x00000001)
 
 /*
- * Open parent directory of specअगरied object.
- * Useful क्रम the corresponding Winकरोws FSD flag
- * and क्रम खोलोing paths like \\dir\\*.* to search the 'dir'.
+ * Open parent directory of specified object.
+ * Useful for the corresponding Windows FSD flag
+ * and for opening paths like \\dir\\*.* to search the 'dir'.
  */
-#घोषणा SHFL_CF_OPEN_TARGET_सूचीECTORY (0x00000002)
+#define SHFL_CF_OPEN_TARGET_DIRECTORY (0x00000002)
 
-/* Create/खोलो a directory. */
-#घोषणा SHFL_CF_सूचीECTORY             (0x00000004)
+/* Create/open a directory. */
+#define SHFL_CF_DIRECTORY             (0x00000004)
 
 /*
- *  Open/create action to करो अगर object exists
- *  and अगर the object करोes not exists.
+ *  Open/create action to do if object exists
+ *  and if the object does not exists.
  *  REPLACE file means atomically DELETE and CREATE.
  *  OVERWRITE file means truncating the file to 0 and
  *  setting new size.
- *  When खोलोing an existing directory REPLACE and OVERWRITE
- *  actions are considered invalid, and cause वापसing
- *  खाता_EXISTS with NIL handle.
+ *  When opening an existing directory REPLACE and OVERWRITE
+ *  actions are considered invalid, and cause returning
+ *  FILE_EXISTS with NIL handle.
  */
-#घोषणा SHFL_CF_ACT_MASK_IF_EXISTS      (0x000000f0)
-#घोषणा SHFL_CF_ACT_MASK_IF_NEW         (0x00000f00)
+#define SHFL_CF_ACT_MASK_IF_EXISTS      (0x000000f0)
+#define SHFL_CF_ACT_MASK_IF_NEW         (0x00000f00)
 
-/* What to करो अगर object exists. */
-#घोषणा SHFL_CF_ACT_OPEN_IF_EXISTS      (0x00000000)
-#घोषणा SHFL_CF_ACT_FAIL_IF_EXISTS      (0x00000010)
-#घोषणा SHFL_CF_ACT_REPLACE_IF_EXISTS   (0x00000020)
-#घोषणा SHFL_CF_ACT_OVERWRITE_IF_EXISTS (0x00000030)
+/* What to do if object exists. */
+#define SHFL_CF_ACT_OPEN_IF_EXISTS      (0x00000000)
+#define SHFL_CF_ACT_FAIL_IF_EXISTS      (0x00000010)
+#define SHFL_CF_ACT_REPLACE_IF_EXISTS   (0x00000020)
+#define SHFL_CF_ACT_OVERWRITE_IF_EXISTS (0x00000030)
 
-/* What to करो अगर object करोes not exist. */
-#घोषणा SHFL_CF_ACT_CREATE_IF_NEW       (0x00000000)
-#घोषणा SHFL_CF_ACT_FAIL_IF_NEW         (0x00000100)
+/* What to do if object does not exist. */
+#define SHFL_CF_ACT_CREATE_IF_NEW       (0x00000000)
+#define SHFL_CF_ACT_FAIL_IF_NEW         (0x00000100)
 
-/* Read/ग_लिखो requested access क्रम the object. */
-#घोषणा SHFL_CF_ACCESS_MASK_RW          (0x00003000)
+/* Read/write requested access for the object. */
+#define SHFL_CF_ACCESS_MASK_RW          (0x00003000)
 
 /* No access requested. */
-#घोषणा SHFL_CF_ACCESS_NONE             (0x00000000)
+#define SHFL_CF_ACCESS_NONE             (0x00000000)
 /* Read access requested. */
-#घोषणा SHFL_CF_ACCESS_READ             (0x00001000)
+#define SHFL_CF_ACCESS_READ             (0x00001000)
 /* Write access requested. */
-#घोषणा SHFL_CF_ACCESS_WRITE            (0x00002000)
+#define SHFL_CF_ACCESS_WRITE            (0x00002000)
 /* Read/Write access requested. */
-#घोषणा SHFL_CF_ACCESS_READWRITE	(0x00003000)
+#define SHFL_CF_ACCESS_READWRITE	(0x00003000)
 
-/* Requested share access क्रम the object. */
-#घोषणा SHFL_CF_ACCESS_MASK_DENY        (0x0000c000)
+/* Requested share access for the object. */
+#define SHFL_CF_ACCESS_MASK_DENY        (0x0000c000)
 
 /* Allow any access. */
-#घोषणा SHFL_CF_ACCESS_DENYNONE         (0x00000000)
-/* Do not allow पढ़ो. */
-#घोषणा SHFL_CF_ACCESS_DENYREAD         (0x00004000)
-/* Do not allow ग_लिखो. */
-#घोषणा SHFL_CF_ACCESS_DENYWRITE        (0x00008000)
+#define SHFL_CF_ACCESS_DENYNONE         (0x00000000)
+/* Do not allow read. */
+#define SHFL_CF_ACCESS_DENYREAD         (0x00004000)
+/* Do not allow write. */
+#define SHFL_CF_ACCESS_DENYWRITE        (0x00008000)
 /* Do not allow access. */
-#घोषणा SHFL_CF_ACCESS_DENYALL          (0x0000c000)
+#define SHFL_CF_ACCESS_DENYALL          (0x0000c000)
 
 /* Requested access to attributes of the object. */
-#घोषणा SHFL_CF_ACCESS_MASK_ATTR        (0x00030000)
+#define SHFL_CF_ACCESS_MASK_ATTR        (0x00030000)
 
 /* No access requested. */
-#घोषणा SHFL_CF_ACCESS_ATTR_NONE        (0x00000000)
+#define SHFL_CF_ACCESS_ATTR_NONE        (0x00000000)
 /* Read access requested. */
-#घोषणा SHFL_CF_ACCESS_ATTR_READ        (0x00010000)
+#define SHFL_CF_ACCESS_ATTR_READ        (0x00010000)
 /* Write access requested. */
-#घोषणा SHFL_CF_ACCESS_ATTR_WRITE       (0x00020000)
+#define SHFL_CF_ACCESS_ATTR_WRITE       (0x00020000)
 /* Read/Write access requested. */
-#घोषणा SHFL_CF_ACCESS_ATTR_READWRITE   (0x00030000)
+#define SHFL_CF_ACCESS_ATTR_READWRITE   (0x00030000)
 
 /*
- * The file is खोलोed in append mode.
- * Ignored अगर SHFL_CF_ACCESS_WRITE is not set.
+ * The file is opened in append mode.
+ * Ignored if SHFL_CF_ACCESS_WRITE is not set.
  */
-#घोषणा SHFL_CF_ACCESS_APPEND           (0x00040000)
+#define SHFL_CF_ACCESS_APPEND           (0x00040000)
 
-/** Create parameters buffer काष्ठा क्रम SHFL_FN_CREATE call */
-काष्ठा shfl_createparms अणु
-	/** Returned handle of खोलोed object. */
+/** Create parameters buffer struct for SHFL_FN_CREATE call */
+struct shfl_createparms {
+	/** Returned handle of opened object. */
 	u64 handle;
 
 	/** Returned result of the operation */
-	क्रमागत shfl_create_result result;
+	enum shfl_create_result result;
 
 	/** SHFL_CF_* */
 	u32 create_flags;
 
 	/**
 	 * Attributes of object to create and
-	 * वापसed actual attributes of खोलोed/created object.
+	 * returned actual attributes of opened/created object.
 	 */
-	काष्ठा shfl_fsobjinfo info;
-पूर्ण __packed;
+	struct shfl_fsobjinfo info;
+} __packed;
 
-/** Shared Folder directory inक्रमmation */
-काष्ठा shfl_dirinfo अणु
-	/** Full inक्रमmation about the object. */
-	काष्ठा shfl_fsobjinfo info;
+/** Shared Folder directory information */
+struct shfl_dirinfo {
+	/** Full information about the object. */
+	struct shfl_fsobjinfo info;
 	/**
-	 * The length of the लघु field (number of UTF16 अक्षरs).
-	 * It is 16-bit क्रम reasons of alignment.
+	 * The length of the short field (number of UTF16 chars).
+	 * It is 16-bit for reasons of alignment.
 	 */
-	u16 लघु_name_len;
+	u16 short_name_len;
 	/**
-	 * The लघु name क्रम 8.3 compatibility.
-	 * Empty string अगर not available.
+	 * The short name for 8.3 compatibility.
+	 * Empty string if not available.
 	 */
-	u16 लघु_name[14];
-	काष्ठा shfl_string name;
-पूर्ण;
+	u16 short_name[14];
+	struct shfl_string name;
+};
 
-/** Shared folder fileप्रणाली properties. */
-काष्ठा shfl_fsproperties अणु
+/** Shared folder filesystem properties. */
+struct shfl_fsproperties {
 	/**
-	 * The maximum size of a fileप्रणाली object name.
-	 * This करोes not include the '\\0'.
+	 * The maximum size of a filesystem object name.
+	 * This does not include the '\\0'.
 	 */
 	u32 max_component_len;
 
 	/**
-	 * True अगर the fileप्रणाली is remote.
-	 * False अगर the fileप्रणाली is local.
+	 * True if the filesystem is remote.
+	 * False if the filesystem is local.
 	 */
 	bool remote;
 
 	/**
-	 * True अगर the fileप्रणाली is हाल sensitive.
-	 * False अगर the fileप्रणाली is हाल insensitive.
+	 * True if the filesystem is case sensitive.
+	 * False if the filesystem is case insensitive.
 	 */
-	bool हाल_sensitive;
+	bool case_sensitive;
 
 	/**
-	 * True अगर the fileप्रणाली is mounted पढ़ो only.
-	 * False अगर the fileप्रणाली is mounted पढ़ो ग_लिखो.
+	 * True if the filesystem is mounted read only.
+	 * False if the filesystem is mounted read write.
 	 */
-	bool पढ़ो_only;
+	bool read_only;
 
 	/**
-	 * True अगर the fileप्रणाली can encode unicode object names.
-	 * False अगर it can't.
+	 * True if the filesystem can encode unicode object names.
+	 * False if it can't.
 	 */
 	bool supports_unicode;
 
 	/**
-	 * True अगर the fileप्रणाली is compresses.
-	 * False अगर it isn't or we don't know.
+	 * True if the filesystem is compresses.
+	 * False if it isn't or we don't know.
 	 */
 	bool compressed;
 
 	/**
-	 * True अगर the fileप्रणाली compresses of inभागidual files.
-	 * False अगर it करोesn't or we don't know.
+	 * True if the filesystem compresses of individual files.
+	 * False if it doesn't or we don't know.
 	 */
 	bool file_compression;
-पूर्ण;
+};
 VMMDEV_ASSERT_SIZE(shfl_fsproperties, 12);
 
-काष्ठा shfl_volinfo अणु
+struct shfl_volinfo {
 	s64 total_allocation_bytes;
 	s64 available_allocation_bytes;
 	u32 bytes_per_allocation_unit;
 	u32 bytes_per_sector;
 	u32 serial;
-	काष्ठा shfl_fsproperties properties;
-पूर्ण;
+	struct shfl_fsproperties properties;
+};
 
 
-/** SHFL_FN_MAP_FOLDER Parameters काष्ठाure. */
-काष्ठा shfl_map_folder अणु
+/** SHFL_FN_MAP_FOLDER Parameters structure. */
+struct shfl_map_folder {
 	/**
-	 * poपूर्णांकer, in:
-	 * Poपूर्णांकs to काष्ठा shfl_string buffer.
+	 * pointer, in:
+	 * Points to struct shfl_string buffer.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter path;
+	struct vmmdev_hgcm_function_parameter path;
 
 	/**
-	 * poपूर्णांकer, out: SHFLROOT (u32)
+	 * pointer, out: SHFLROOT (u32)
 	 * Root handle of the mapping which name is queried.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter root;
+	struct vmmdev_hgcm_function_parameter root;
 
 	/**
-	 * poपूर्णांकer, in: UTF16
+	 * pointer, in: UTF16
 	 * Path delimiter
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter delimiter;
+	struct vmmdev_hgcm_function_parameter delimiter;
 
 	/**
-	 * poपूर्णांकer, in: SHFLROOT (u32)
+	 * pointer, in: SHFLROOT (u32)
 	 * Case senstive flag
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter हाल_sensitive;
+	struct vmmdev_hgcm_function_parameter case_sensitive;
 
-पूर्ण;
-
-/* Number of parameters */
-#घोषणा SHFL_CPARMS_MAP_FOLDER (4)
-
-
-/** SHFL_FN_UNMAP_FOLDER Parameters काष्ठाure. */
-काष्ठा shfl_unmap_folder अणु
-	/**
-	 * poपूर्णांकer, in: SHFLROOT (u32)
-	 * Root handle of the mapping which name is queried.
-	 */
-	काष्ठा vmmdev_hgcm_function_parameter root;
-
-पूर्ण;
+};
 
 /* Number of parameters */
-#घोषणा SHFL_CPARMS_UNMAP_FOLDER (1)
+#define SHFL_CPARMS_MAP_FOLDER (4)
 
 
-/** SHFL_FN_CREATE Parameters काष्ठाure. */
-काष्ठा shfl_create अणु
+/** SHFL_FN_UNMAP_FOLDER Parameters structure. */
+struct shfl_unmap_folder {
 	/**
-	 * poपूर्णांकer, in: SHFLROOT (u32)
+	 * pointer, in: SHFLROOT (u32)
 	 * Root handle of the mapping which name is queried.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter root;
+	struct vmmdev_hgcm_function_parameter root;
 
-	/**
-	 * poपूर्णांकer, in:
-	 * Poपूर्णांकs to काष्ठा shfl_string buffer.
-	 */
-	काष्ठा vmmdev_hgcm_function_parameter path;
-
-	/**
-	 * poपूर्णांकer, in/out:
-	 * Poपूर्णांकs to काष्ठा shfl_createparms buffer.
-	 */
-	काष्ठा vmmdev_hgcm_function_parameter parms;
-
-पूर्ण;
+};
 
 /* Number of parameters */
-#घोषणा SHFL_CPARMS_CREATE (3)
+#define SHFL_CPARMS_UNMAP_FOLDER (1)
 
 
-/** SHFL_FN_CLOSE Parameters काष्ठाure. */
-काष्ठा shfl_बंद अणु
+/** SHFL_FN_CREATE Parameters structure. */
+struct shfl_create {
 	/**
-	 * poपूर्णांकer, in: SHFLROOT (u32)
+	 * pointer, in: SHFLROOT (u32)
 	 * Root handle of the mapping which name is queried.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter root;
+	struct vmmdev_hgcm_function_parameter root;
+
+	/**
+	 * pointer, in:
+	 * Points to struct shfl_string buffer.
+	 */
+	struct vmmdev_hgcm_function_parameter path;
+
+	/**
+	 * pointer, in/out:
+	 * Points to struct shfl_createparms buffer.
+	 */
+	struct vmmdev_hgcm_function_parameter parms;
+
+};
+
+/* Number of parameters */
+#define SHFL_CPARMS_CREATE (3)
+
+
+/** SHFL_FN_CLOSE Parameters structure. */
+struct shfl_close {
+	/**
+	 * pointer, in: SHFLROOT (u32)
+	 * Root handle of the mapping which name is queried.
+	 */
+	struct vmmdev_hgcm_function_parameter root;
 
 	/**
 	 * value64, in:
-	 * SHFLHANDLE (u64) of object to बंद.
+	 * SHFLHANDLE (u64) of object to close.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter handle;
+	struct vmmdev_hgcm_function_parameter handle;
 
-पूर्ण;
+};
 
 /* Number of parameters */
-#घोषणा SHFL_CPARMS_CLOSE (2)
+#define SHFL_CPARMS_CLOSE (2)
 
 
-/** SHFL_FN_READ Parameters काष्ठाure. */
-काष्ठा shfl_पढ़ो अणु
+/** SHFL_FN_READ Parameters structure. */
+struct shfl_read {
 	/**
-	 * poपूर्णांकer, in: SHFLROOT (u32)
+	 * pointer, in: SHFLROOT (u32)
 	 * Root handle of the mapping which name is queried.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter root;
+	struct vmmdev_hgcm_function_parameter root;
 
 	/**
 	 * value64, in:
-	 * SHFLHANDLE (u64) of object to पढ़ो from.
+	 * SHFLHANDLE (u64) of object to read from.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter handle;
+	struct vmmdev_hgcm_function_parameter handle;
 
 	/**
 	 * value64, in:
-	 * Offset to पढ़ो from.
+	 * Offset to read from.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter offset;
+	struct vmmdev_hgcm_function_parameter offset;
 
 	/**
 	 * value64, in/out:
-	 * Bytes to पढ़ो/How many were पढ़ो.
+	 * Bytes to read/How many were read.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter cb;
+	struct vmmdev_hgcm_function_parameter cb;
 
 	/**
-	 * poपूर्णांकer, out:
+	 * pointer, out:
 	 * Buffer to place data to.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter buffer;
+	struct vmmdev_hgcm_function_parameter buffer;
 
-पूर्ण;
+};
 
 /* Number of parameters */
-#घोषणा SHFL_CPARMS_READ (5)
+#define SHFL_CPARMS_READ (5)
 
 
-/** SHFL_FN_WRITE Parameters काष्ठाure. */
-काष्ठा shfl_ग_लिखो अणु
+/** SHFL_FN_WRITE Parameters structure. */
+struct shfl_write {
 	/**
-	 * poपूर्णांकer, in: SHFLROOT (u32)
+	 * pointer, in: SHFLROOT (u32)
 	 * Root handle of the mapping which name is queried.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter root;
+	struct vmmdev_hgcm_function_parameter root;
 
 	/**
 	 * value64, in:
-	 * SHFLHANDLE (u64) of object to ग_लिखो to.
+	 * SHFLHANDLE (u64) of object to write to.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter handle;
+	struct vmmdev_hgcm_function_parameter handle;
 
 	/**
 	 * value64, in:
-	 * Offset to ग_लिखो to.
+	 * Offset to write to.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter offset;
+	struct vmmdev_hgcm_function_parameter offset;
 
 	/**
 	 * value64, in/out:
-	 * Bytes to ग_लिखो/How many were written.
+	 * Bytes to write/How many were written.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter cb;
+	struct vmmdev_hgcm_function_parameter cb;
 
 	/**
-	 * poपूर्णांकer, in:
-	 * Data to ग_लिखो.
+	 * pointer, in:
+	 * Data to write.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter buffer;
+	struct vmmdev_hgcm_function_parameter buffer;
 
-पूर्ण;
+};
 
 /* Number of parameters */
-#घोषणा SHFL_CPARMS_WRITE (5)
+#define SHFL_CPARMS_WRITE (5)
 
 
 /*
  * SHFL_FN_LIST
- * Listing inक्रमmation includes variable length RTसूचीENTRY[EX] काष्ठाures.
+ * Listing information includes variable length RTDIRENTRY[EX] structures.
  */
 
-#घोषणा SHFL_LIST_NONE			0
-#घोषणा SHFL_LIST_RETURN_ONE		1
+#define SHFL_LIST_NONE			0
+#define SHFL_LIST_RETURN_ONE		1
 
-/** SHFL_FN_LIST Parameters काष्ठाure. */
-काष्ठा shfl_list अणु
+/** SHFL_FN_LIST Parameters structure. */
+struct shfl_list {
 	/**
-	 * poपूर्णांकer, in: SHFLROOT (u32)
+	 * pointer, in: SHFLROOT (u32)
 	 * Root handle of the mapping which name is queried.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter root;
+	struct vmmdev_hgcm_function_parameter root;
 
 	/**
 	 * value64, in:
 	 * SHFLHANDLE (u64) of object to be listed.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter handle;
+	struct vmmdev_hgcm_function_parameter handle;
 
 	/**
 	 * value32, in:
 	 * List flags SHFL_LIST_*.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter flags;
+	struct vmmdev_hgcm_function_parameter flags;
 
 	/**
 	 * value32, in/out:
-	 * Bytes to be used क्रम listing inक्रमmation/How many bytes were used.
+	 * Bytes to be used for listing information/How many bytes were used.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter cb;
+	struct vmmdev_hgcm_function_parameter cb;
 
 	/**
-	 * poपूर्णांकer, in/optional
-	 * Poपूर्णांकs to काष्ठा shfl_string buffer that specअगरies a search path.
+	 * pointer, in/optional
+	 * Points to struct shfl_string buffer that specifies a search path.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter path;
+	struct vmmdev_hgcm_function_parameter path;
 
 	/**
-	 * poपूर्णांकer, out:
-	 * Buffer to place listing inक्रमmation to. (काष्ठा shfl_dirinfo)
+	 * pointer, out:
+	 * Buffer to place listing information to. (struct shfl_dirinfo)
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter buffer;
+	struct vmmdev_hgcm_function_parameter buffer;
 
 	/**
 	 * value32, in/out:
@@ -704,199 +703,199 @@ VMMDEV_ASSERT_SIZE(shfl_fsproperties, 12);
 	 * in: 0 means start from begin of object.
 	 * out: 0 means listing completed.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter resume_poपूर्णांक;
+	struct vmmdev_hgcm_function_parameter resume_point;
 
 	/**
-	 * poपूर्णांकer, out:
-	 * Number of files वापसed
+	 * pointer, out:
+	 * Number of files returned
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter file_count;
-पूर्ण;
+	struct vmmdev_hgcm_function_parameter file_count;
+};
 
 /* Number of parameters */
-#घोषणा SHFL_CPARMS_LIST (8)
+#define SHFL_CPARMS_LIST (8)
 
 
-/** SHFL_FN_READLINK Parameters काष्ठाure. */
-काष्ठा shfl_पढ़ोLink अणु
+/** SHFL_FN_READLINK Parameters structure. */
+struct shfl_readLink {
 	/**
-	 * poपूर्णांकer, in: SHFLROOT (u32)
+	 * pointer, in: SHFLROOT (u32)
 	 * Root handle of the mapping which name is queried.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter root;
+	struct vmmdev_hgcm_function_parameter root;
 
 	/**
-	 * poपूर्णांकer, in:
-	 * Poपूर्णांकs to काष्ठा shfl_string buffer.
+	 * pointer, in:
+	 * Points to struct shfl_string buffer.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter path;
+	struct vmmdev_hgcm_function_parameter path;
 
 	/**
-	 * poपूर्णांकer, out:
+	 * pointer, out:
 	 * Buffer to place data to.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter buffer;
+	struct vmmdev_hgcm_function_parameter buffer;
 
-पूर्ण;
+};
 
 /* Number of parameters */
-#घोषणा SHFL_CPARMS_READLINK (3)
+#define SHFL_CPARMS_READLINK (3)
 
 
 /* SHFL_FN_INFORMATION */
 
 /* Mask of Set/Get bit. */
-#घोषणा SHFL_INFO_MODE_MASK    (0x1)
-/* Get inक्रमmation */
-#घोषणा SHFL_INFO_GET          (0x0)
-/* Set inक्रमmation */
-#घोषणा SHFL_INFO_SET          (0x1)
+#define SHFL_INFO_MODE_MASK    (0x1)
+/* Get information */
+#define SHFL_INFO_GET          (0x0)
+/* Set information */
+#define SHFL_INFO_SET          (0x1)
 
 /* Get name of the object. */
-#घोषणा SHFL_INFO_NAME         (0x2)
+#define SHFL_INFO_NAME         (0x2)
 /* Set size of object (extend/trucate); only applies to file objects */
-#घोषणा SHFL_INFO_SIZE         (0x4)
+#define SHFL_INFO_SIZE         (0x4)
 /* Get/Set file object info. */
-#घोषणा SHFL_INFO_खाता         (0x8)
-/* Get volume inक्रमmation. */
-#घोषणा SHFL_INFO_VOLUME       (0x10)
+#define SHFL_INFO_FILE         (0x8)
+/* Get volume information. */
+#define SHFL_INFO_VOLUME       (0x10)
 
-/** SHFL_FN_INFORMATION Parameters काष्ठाure. */
-काष्ठा shfl_inक्रमmation अणु
+/** SHFL_FN_INFORMATION Parameters structure. */
+struct shfl_information {
 	/**
-	 * poपूर्णांकer, in: SHFLROOT (u32)
+	 * pointer, in: SHFLROOT (u32)
 	 * Root handle of the mapping which name is queried.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter root;
+	struct vmmdev_hgcm_function_parameter root;
 
 	/**
 	 * value64, in:
 	 * SHFLHANDLE (u64) of object to be listed.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter handle;
+	struct vmmdev_hgcm_function_parameter handle;
 
 	/**
 	 * value32, in:
 	 * SHFL_INFO_*
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter flags;
+	struct vmmdev_hgcm_function_parameter flags;
 
 	/**
 	 * value32, in/out:
-	 * Bytes to be used क्रम inक्रमmation/How many bytes were used.
+	 * Bytes to be used for information/How many bytes were used.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter cb;
+	struct vmmdev_hgcm_function_parameter cb;
 
 	/**
-	 * poपूर्णांकer, in/out:
-	 * Inक्रमmation to be set/get (shfl_fsobjinfo or shfl_string). Do not
-	 * क्रमget to set the shfl_fsobjinfo::attr::additional क्रम a get
+	 * pointer, in/out:
+	 * Information to be set/get (shfl_fsobjinfo or shfl_string). Do not
+	 * forget to set the shfl_fsobjinfo::attr::additional for a get
 	 * operation as well.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter info;
+	struct vmmdev_hgcm_function_parameter info;
 
-पूर्ण;
+};
 
 /* Number of parameters */
-#घोषणा SHFL_CPARMS_INFORMATION (5)
+#define SHFL_CPARMS_INFORMATION (5)
 
 
 /* SHFL_FN_REMOVE */
 
-#घोषणा SHFL_REMOVE_खाता        (0x1)
-#घोषणा SHFL_REMOVE_सूची         (0x2)
-#घोषणा SHFL_REMOVE_SYMLINK     (0x4)
+#define SHFL_REMOVE_FILE        (0x1)
+#define SHFL_REMOVE_DIR         (0x2)
+#define SHFL_REMOVE_SYMLINK     (0x4)
 
-/** SHFL_FN_REMOVE Parameters काष्ठाure. */
-काष्ठा shfl_हटाओ अणु
+/** SHFL_FN_REMOVE Parameters structure. */
+struct shfl_remove {
 	/**
-	 * poपूर्णांकer, in: SHFLROOT (u32)
+	 * pointer, in: SHFLROOT (u32)
 	 * Root handle of the mapping which name is queried.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter root;
+	struct vmmdev_hgcm_function_parameter root;
 
 	/**
-	 * poपूर्णांकer, in:
-	 * Poपूर्णांकs to काष्ठा shfl_string buffer.
+	 * pointer, in:
+	 * Points to struct shfl_string buffer.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter path;
+	struct vmmdev_hgcm_function_parameter path;
 
 	/**
 	 * value32, in:
-	 * हटाओ flags (file/directory)
+	 * remove flags (file/directory)
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter flags;
+	struct vmmdev_hgcm_function_parameter flags;
 
-पूर्ण;
+};
 
-#घोषणा SHFL_CPARMS_REMOVE  (3)
+#define SHFL_CPARMS_REMOVE  (3)
 
 
 /* SHFL_FN_RENAME */
 
-#घोषणा SHFL_RENAME_खाता                (0x1)
-#घोषणा SHFL_RENAME_सूची                 (0x2)
-#घोषणा SHFL_RENAME_REPLACE_IF_EXISTS   (0x4)
+#define SHFL_RENAME_FILE                (0x1)
+#define SHFL_RENAME_DIR                 (0x2)
+#define SHFL_RENAME_REPLACE_IF_EXISTS   (0x4)
 
-/** SHFL_FN_RENAME Parameters काष्ठाure. */
-काष्ठा shfl_नाम अणु
+/** SHFL_FN_RENAME Parameters structure. */
+struct shfl_rename {
 	/**
-	 * poपूर्णांकer, in: SHFLROOT (u32)
+	 * pointer, in: SHFLROOT (u32)
 	 * Root handle of the mapping which name is queried.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter root;
+	struct vmmdev_hgcm_function_parameter root;
 
 	/**
-	 * poपूर्णांकer, in:
-	 * Poपूर्णांकs to काष्ठा shfl_string src.
+	 * pointer, in:
+	 * Points to struct shfl_string src.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter src;
+	struct vmmdev_hgcm_function_parameter src;
 
 	/**
-	 * poपूर्णांकer, in:
-	 * Poपूर्णांकs to काष्ठा shfl_string dest.
+	 * pointer, in:
+	 * Points to struct shfl_string dest.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter dest;
+	struct vmmdev_hgcm_function_parameter dest;
 
 	/**
 	 * value32, in:
-	 * नाम flags (file/directory)
+	 * rename flags (file/directory)
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter flags;
+	struct vmmdev_hgcm_function_parameter flags;
 
-पूर्ण;
+};
 
-#घोषणा SHFL_CPARMS_RENAME  (4)
+#define SHFL_CPARMS_RENAME  (4)
 
 
-/** SHFL_FN_SYMLINK Parameters काष्ठाure. */
-काष्ठा shfl_symlink अणु
+/** SHFL_FN_SYMLINK Parameters structure. */
+struct shfl_symlink {
 	/**
-	 * poपूर्णांकer, in: SHFLROOT (u32)
+	 * pointer, in: SHFLROOT (u32)
 	 * Root handle of the mapping which name is queried.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter root;
+	struct vmmdev_hgcm_function_parameter root;
 
 	/**
-	 * poपूर्णांकer, in:
-	 * Poपूर्णांकs to काष्ठा shfl_string of path क्रम the new symlink.
+	 * pointer, in:
+	 * Points to struct shfl_string of path for the new symlink.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter new_path;
+	struct vmmdev_hgcm_function_parameter new_path;
 
 	/**
-	 * poपूर्णांकer, in:
-	 * Poपूर्णांकs to काष्ठा shfl_string of destination क्रम symlink.
+	 * pointer, in:
+	 * Points to struct shfl_string of destination for symlink.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter old_path;
+	struct vmmdev_hgcm_function_parameter old_path;
 
 	/**
-	 * poपूर्णांकer, out:
-	 * Inक्रमmation about created symlink.
+	 * pointer, out:
+	 * Information about created symlink.
 	 */
-	काष्ठा vmmdev_hgcm_function_parameter info;
+	struct vmmdev_hgcm_function_parameter info;
 
-पूर्ण;
+};
 
-#घोषणा SHFL_CPARMS_SYMLINK  (4)
+#define SHFL_CPARMS_SYMLINK  (4)
 
-#पूर्ण_अगर
+#endif

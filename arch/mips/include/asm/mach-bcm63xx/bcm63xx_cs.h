@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित BCM63XX_CS_H
-#घोषणा BCM63XX_CS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef BCM63XX_CS_H
+#define BCM63XX_CS_H
 
-पूर्णांक bcm63xx_set_cs_base(अचिन्हित पूर्णांक cs, u32 base, अचिन्हित पूर्णांक size);
-पूर्णांक bcm63xx_set_cs_timing(अचिन्हित पूर्णांक cs, अचिन्हित पूर्णांक रुको,
-			   अचिन्हित पूर्णांक setup, अचिन्हित पूर्णांक hold);
-पूर्णांक bcm63xx_set_cs_param(अचिन्हित पूर्णांक cs, u32 flags);
-पूर्णांक bcm63xx_set_cs_status(अचिन्हित पूर्णांक cs, पूर्णांक enable);
+int bcm63xx_set_cs_base(unsigned int cs, u32 base, unsigned int size);
+int bcm63xx_set_cs_timing(unsigned int cs, unsigned int wait,
+			   unsigned int setup, unsigned int hold);
+int bcm63xx_set_cs_param(unsigned int cs, u32 flags);
+int bcm63xx_set_cs_status(unsigned int cs, int enable);
 
-#पूर्ण_अगर /* !BCM63XX_CS_H */
+#endif /* !BCM63XX_CS_H */

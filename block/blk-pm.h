@@ -1,36 +1,35 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित _BLOCK_BLK_PM_H_
-#घोषणा _BLOCK_BLK_PM_H_
+#ifndef _BLOCK_BLK_PM_H_
+#define _BLOCK_BLK_PM_H_
 
-#समावेश <linux/pm_runसमय.स>
+#include <linux/pm_runtime.h>
 
-#अगर_घोषित CONFIG_PM
-अटल अंतरभूत पूर्णांक blk_pm_resume_queue(स्थिर bool pm, काष्ठा request_queue *q)
-अणु
-	अगर (!q->dev || !blk_queue_pm_only(q))
-		वापस 1;	/* Nothing to करो */
-	अगर (pm && q->rpm_status != RPM_SUSPENDED)
-		वापस 1;	/* Request allowed */
+#ifdef CONFIG_PM
+static inline int blk_pm_resume_queue(const bool pm, struct request_queue *q)
+{
+	if (!q->dev || !blk_queue_pm_only(q))
+		return 1;	/* Nothing to do */
+	if (pm && q->rpm_status != RPM_SUSPENDED)
+		return 1;	/* Request allowed */
 	pm_request_resume(q->dev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम blk_pm_mark_last_busy(काष्ठा request *rq)
-अणु
-	अगर (rq->q->dev && !(rq->rq_flags & RQF_PM))
-		pm_runसमय_mark_last_busy(rq->q->dev);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक blk_pm_resume_queue(स्थिर bool pm, काष्ठा request_queue *q)
-अणु
-	वापस 1;
-पूर्ण
+static inline void blk_pm_mark_last_busy(struct request *rq)
+{
+	if (rq->q->dev && !(rq->rq_flags & RQF_PM))
+		pm_runtime_mark_last_busy(rq->q->dev);
+}
+#else
+static inline int blk_pm_resume_queue(const bool pm, struct request_queue *q)
+{
+	return 1;
+}
 
-अटल अंतरभूत व्योम blk_pm_mark_last_busy(काष्ठा request *rq)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void blk_pm_mark_last_busy(struct request *rq)
+{
+}
+#endif
 
-#पूर्ण_अगर /* _BLOCK_BLK_PM_H_ */
+#endif /* _BLOCK_BLK_PM_H_ */

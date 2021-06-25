@@ -1,20 +1,19 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * linux/fs/lockd/svघड़ी.c
+ * linux/fs/lockd/svclock.c
  *
  * Handling of server-side locks, mostly of the blocked variety.
- * This is the ugliest part of lockd because we tपढ़ो on very thin ice.
+ * This is the ugliest part of lockd because we tread on very thin ice.
  * GRANT and CANCEL calls may get stuck, meet in mid-flight, etc.
- * IMNSHO पूर्णांकroducing the grant callback पूर्णांकo the NLM protocol was one
- * of the worst ideas Sun ever had. Except maybe क्रम the idea of करोing
+ * IMNSHO introducing the grant callback into the NLM protocol was one
+ * of the worst ideas Sun ever had. Except maybe for the idea of doing
  * NFS file locking at all.
  *
- * I'm trying hard to aव्योम race conditions by protecting most accesses
+ * I'm trying hard to avoid race conditions by protecting most accesses
  * to a file's list of blocked locks through a semaphore. The global
- * list of blocked locks is not रक्षित in this fashion however.
- * Thereक्रमe, some functions (such as the RPC callback क्रम the async grant
- * call) move blocked locks towards the head of the list *जबतक some other
+ * list of blocked locks is not protected in this fashion however.
+ * Therefore, some functions (such as the RPC callback for the async grant
+ * call) move blocked locks towards the head of the list *while some other
  * process might be traversing it*. This should not be a problem in
  * practice, because this will only cause functions traversing the list
  * to visit some blocks twice.
@@ -22,181 +21,181 @@
  * Copyright (C) 1996, Olaf Kirch <okir@monad.swb.de>
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sunrpc/clnt.h>
-#समावेश <linux/sunrpc/svc_xprt.h>
-#समावेश <linux/lockd/nlm.h>
-#समावेश <linux/lockd/lockd.h>
-#समावेश <linux/kthपढ़ो.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/sunrpc/clnt.h>
+#include <linux/sunrpc/svc_xprt.h>
+#include <linux/lockd/nlm.h>
+#include <linux/lockd/lockd.h>
+#include <linux/kthread.h>
 
-#घोषणा NLMDBG_FACILITY		NLMDBG_SVCLOCK
+#define NLMDBG_FACILITY		NLMDBG_SVCLOCK
 
-#अगर_घोषित CONFIG_LOCKD_V4
-#घोषणा nlm_deadlock	nlm4_deadlock
-#अन्यथा
-#घोषणा nlm_deadlock	nlm_lck_denied
-#पूर्ण_अगर
+#ifdef CONFIG_LOCKD_V4
+#define nlm_deadlock	nlm4_deadlock
+#else
+#define nlm_deadlock	nlm_lck_denied
+#endif
 
-अटल व्योम nlmsvc_release_block(काष्ठा nlm_block *block);
-अटल व्योम	nlmsvc_insert_block(काष्ठा nlm_block *block, अचिन्हित दीर्घ);
-अटल व्योम	nlmsvc_हटाओ_block(काष्ठा nlm_block *block);
+static void nlmsvc_release_block(struct nlm_block *block);
+static void	nlmsvc_insert_block(struct nlm_block *block, unsigned long);
+static void	nlmsvc_remove_block(struct nlm_block *block);
 
-अटल पूर्णांक nlmsvc_setgrantargs(काष्ठा nlm_rqst *call, काष्ठा nlm_lock *lock);
-अटल व्योम nlmsvc_मुक्तgrantargs(काष्ठा nlm_rqst *call);
-अटल स्थिर काष्ठा rpc_call_ops nlmsvc_grant_ops;
+static int nlmsvc_setgrantargs(struct nlm_rqst *call, struct nlm_lock *lock);
+static void nlmsvc_freegrantargs(struct nlm_rqst *call);
+static const struct rpc_call_ops nlmsvc_grant_ops;
 
 /*
  * The list of blocked locks to retry
  */
-अटल LIST_HEAD(nlm_blocked);
-अटल DEFINE_SPINLOCK(nlm_blocked_lock);
+static LIST_HEAD(nlm_blocked);
+static DEFINE_SPINLOCK(nlm_blocked_lock);
 
-#अगर IS_ENABLED(CONFIG_SUNRPC_DEBUG)
-अटल स्थिर अक्षर *nlmdbg_cookie2a(स्थिर काष्ठा nlm_cookie *cookie)
-अणु
+#if IS_ENABLED(CONFIG_SUNRPC_DEBUG)
+static const char *nlmdbg_cookie2a(const struct nlm_cookie *cookie)
+{
 	/*
-	 * We can get away with a अटल buffer because this is only called
-	 * from lockd, which is single-thपढ़ोed.
+	 * We can get away with a static buffer because this is only called
+	 * from lockd, which is single-threaded.
 	 */
-	अटल अक्षर buf[2*NLM_MAXCOOKIELEN+1];
-	अचिन्हित पूर्णांक i, len = माप(buf);
-	अक्षर *p = buf;
+	static char buf[2*NLM_MAXCOOKIELEN+1];
+	unsigned int i, len = sizeof(buf);
+	char *p = buf;
 
-	len--;	/* allow क्रम trailing \0 */
-	अगर (len < 3)
-		वापस "???";
-	क्रम (i = 0 ; i < cookie->len ; i++) अणु
-		अगर (len < 2) अणु
-			म_नकल(p-3, "...");
-			अवरोध;
-		पूर्ण
-		प्र_लिखो(p, "%02x", cookie->data[i]);
+	len--;	/* allow for trailing \0 */
+	if (len < 3)
+		return "???";
+	for (i = 0 ; i < cookie->len ; i++) {
+		if (len < 2) {
+			strcpy(p-3, "...");
+			break;
+		}
+		sprintf(p, "%02x", cookie->data[i]);
 		p += 2;
 		len -= 2;
-	पूर्ण
+	}
 	*p = '\0';
 
-	वापस buf;
-पूर्ण
-#पूर्ण_अगर
+	return buf;
+}
+#endif
 
 /*
- * Insert a blocked lock पूर्णांकo the global list
+ * Insert a blocked lock into the global list
  */
-अटल व्योम
-nlmsvc_insert_block_locked(काष्ठा nlm_block *block, अचिन्हित दीर्घ when)
-अणु
-	काष्ठा nlm_block *b;
-	काष्ठा list_head *pos;
+static void
+nlmsvc_insert_block_locked(struct nlm_block *block, unsigned long when)
+{
+	struct nlm_block *b;
+	struct list_head *pos;
 
-	dprपूर्णांकk("lockd: nlmsvc_insert_block(%p, %ld)\n", block, when);
-	अगर (list_empty(&block->b_list)) अणु
+	dprintk("lockd: nlmsvc_insert_block(%p, %ld)\n", block, when);
+	if (list_empty(&block->b_list)) {
 		kref_get(&block->b_count);
-	पूर्ण अन्यथा अणु
+	} else {
 		list_del_init(&block->b_list);
-	पूर्ण
+	}
 
 	pos = &nlm_blocked;
-	अगर (when != NLM_NEVER) अणु
-		अगर ((when += jअगरfies) == NLM_NEVER)
+	if (when != NLM_NEVER) {
+		if ((when += jiffies) == NLM_NEVER)
 			when ++;
-		list_क्रम_each(pos, &nlm_blocked) अणु
-			b = list_entry(pos, काष्ठा nlm_block, b_list);
-			अगर (समय_after(b->b_when,when) || b->b_when == NLM_NEVER)
-				अवरोध;
-		पूर्ण
-		/* On normal निकास from the loop, pos == &nlm_blocked,
+		list_for_each(pos, &nlm_blocked) {
+			b = list_entry(pos, struct nlm_block, b_list);
+			if (time_after(b->b_when,when) || b->b_when == NLM_NEVER)
+				break;
+		}
+		/* On normal exit from the loop, pos == &nlm_blocked,
 		 * so we will be adding to the end of the list - good
 		 */
-	पूर्ण
+	}
 
 	list_add_tail(&block->b_list, pos);
 	block->b_when = when;
-पूर्ण
+}
 
-अटल व्योम nlmsvc_insert_block(काष्ठा nlm_block *block, अचिन्हित दीर्घ when)
-अणु
+static void nlmsvc_insert_block(struct nlm_block *block, unsigned long when)
+{
 	spin_lock(&nlm_blocked_lock);
 	nlmsvc_insert_block_locked(block, when);
 	spin_unlock(&nlm_blocked_lock);
-पूर्ण
+}
 
 /*
  * Remove a block from the global list
  */
-अटल अंतरभूत व्योम
-nlmsvc_हटाओ_block(काष्ठा nlm_block *block)
-अणु
-	अगर (!list_empty(&block->b_list)) अणु
+static inline void
+nlmsvc_remove_block(struct nlm_block *block)
+{
+	if (!list_empty(&block->b_list)) {
 		spin_lock(&nlm_blocked_lock);
 		list_del_init(&block->b_list);
 		spin_unlock(&nlm_blocked_lock);
 		nlmsvc_release_block(block);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Find a block क्रम a given lock
+ * Find a block for a given lock
  */
-अटल काष्ठा nlm_block *
-nlmsvc_lookup_block(काष्ठा nlm_file *file, काष्ठा nlm_lock *lock)
-अणु
-	काष्ठा nlm_block	*block;
-	काष्ठा file_lock	*fl;
+static struct nlm_block *
+nlmsvc_lookup_block(struct nlm_file *file, struct nlm_lock *lock)
+{
+	struct nlm_block	*block;
+	struct file_lock	*fl;
 
-	dprपूर्णांकk("lockd: nlmsvc_lookup_block f=%p pd=%d %Ld-%Ld ty=%d\n",
+	dprintk("lockd: nlmsvc_lookup_block f=%p pd=%d %Ld-%Ld ty=%d\n",
 				file, lock->fl.fl_pid,
-				(दीर्घ दीर्घ)lock->fl.fl_start,
-				(दीर्घ दीर्घ)lock->fl.fl_end, lock->fl.fl_type);
-	list_क्रम_each_entry(block, &nlm_blocked, b_list) अणु
+				(long long)lock->fl.fl_start,
+				(long long)lock->fl.fl_end, lock->fl.fl_type);
+	list_for_each_entry(block, &nlm_blocked, b_list) {
 		fl = &block->b_call->a_args.lock.fl;
-		dprपूर्णांकk("lockd: check f=%p pd=%d %Ld-%Ld ty=%d cookie=%s\n",
+		dprintk("lockd: check f=%p pd=%d %Ld-%Ld ty=%d cookie=%s\n",
 				block->b_file, fl->fl_pid,
-				(दीर्घ दीर्घ)fl->fl_start,
-				(दीर्घ दीर्घ)fl->fl_end, fl->fl_type,
+				(long long)fl->fl_start,
+				(long long)fl->fl_end, fl->fl_type,
 				nlmdbg_cookie2a(&block->b_call->a_args.cookie));
-		अगर (block->b_file == file && nlm_compare_locks(fl, &lock->fl)) अणु
+		if (block->b_file == file && nlm_compare_locks(fl, &lock->fl)) {
 			kref_get(&block->b_count);
-			वापस block;
-		पूर्ण
-	पूर्ण
+			return block;
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल अंतरभूत पूर्णांक nlm_cookie_match(काष्ठा nlm_cookie *a, काष्ठा nlm_cookie *b)
-अणु
-	अगर (a->len != b->len)
-		वापस 0;
-	अगर (स_भेद(a->data, b->data, a->len))
-		वापस 0;
-	वापस 1;
-पूर्ण
+static inline int nlm_cookie_match(struct nlm_cookie *a, struct nlm_cookie *b)
+{
+	if (a->len != b->len)
+		return 0;
+	if (memcmp(a->data, b->data, a->len))
+		return 0;
+	return 1;
+}
 
 /*
  * Find a block with a given NLM cookie.
  */
-अटल अंतरभूत काष्ठा nlm_block *
-nlmsvc_find_block(काष्ठा nlm_cookie *cookie)
-अणु
-	काष्ठा nlm_block *block;
+static inline struct nlm_block *
+nlmsvc_find_block(struct nlm_cookie *cookie)
+{
+	struct nlm_block *block;
 
-	list_क्रम_each_entry(block, &nlm_blocked, b_list) अणु
-		अगर (nlm_cookie_match(&block->b_call->a_args.cookie,cookie))
-			जाओ found;
-	पूर्ण
+	list_for_each_entry(block, &nlm_blocked, b_list) {
+		if (nlm_cookie_match(&block->b_call->a_args.cookie,cookie))
+			goto found;
+	}
 
-	वापस शून्य;
+	return NULL;
 
 found:
-	dprपूर्णांकk("nlmsvc_find_block(%s): block=%p\n", nlmdbg_cookie2a(cookie), block);
+	dprintk("nlmsvc_find_block(%s): block=%p\n", nlmdbg_cookie2a(cookie), block);
 	kref_get(&block->b_count);
-	वापस block;
-पूर्ण
+	return block;
+}
 
 /*
  * Create a block and initialize it.
@@ -205,43 +204,43 @@ found:
  * the blocked lock request. The spec explicitly mentions that the client
  * should _not_ rely on the callback containing the same cookie as the
  * request, but (as I found out later) that's because some implementations
- * करो just this. Never mind the standards comittees, they support our
+ * do just this. Never mind the standards comittees, they support our
  * logging industries.
  *
  * 10 years later: I hope we can safely ignore these old and broken
- * clients by now. Let's fix this so we can uniquely identअगरy an incoming
+ * clients by now. Let's fix this so we can uniquely identify an incoming
  * GRANTED_RES message by cookie, without having to rely on the client's IP
  * address. --okir
  */
-अटल काष्ठा nlm_block *
-nlmsvc_create_block(काष्ठा svc_rqst *rqstp, काष्ठा nlm_host *host,
-		    काष्ठा nlm_file *file, काष्ठा nlm_lock *lock,
-		    काष्ठा nlm_cookie *cookie)
-अणु
-	काष्ठा nlm_block	*block;
-	काष्ठा nlm_rqst		*call = शून्य;
+static struct nlm_block *
+nlmsvc_create_block(struct svc_rqst *rqstp, struct nlm_host *host,
+		    struct nlm_file *file, struct nlm_lock *lock,
+		    struct nlm_cookie *cookie)
+{
+	struct nlm_block	*block;
+	struct nlm_rqst		*call = NULL;
 
 	call = nlm_alloc_call(host);
-	अगर (call == शून्य)
-		वापस शून्य;
+	if (call == NULL)
+		return NULL;
 
-	/* Allocate memory क्रम block, and initialize arguments */
-	block = kzalloc(माप(*block), GFP_KERNEL);
-	अगर (block == शून्य)
-		जाओ failed;
+	/* Allocate memory for block, and initialize arguments */
+	block = kzalloc(sizeof(*block), GFP_KERNEL);
+	if (block == NULL)
+		goto failed;
 	kref_init(&block->b_count);
 	INIT_LIST_HEAD(&block->b_list);
 	INIT_LIST_HEAD(&block->b_flist);
 
-	अगर (!nlmsvc_setgrantargs(call, lock))
-		जाओ failed_मुक्त;
+	if (!nlmsvc_setgrantargs(call, lock))
+		goto failed_free;
 
-	/* Set notअगरier function क्रम VFS, and init args */
+	/* Set notifier function for VFS, and init args */
 	call->a_args.lock.fl.fl_flags |= FL_SLEEP;
 	call->a_args.lock.fl.fl_lmops = &nlmsvc_lock_operations;
 	nlmclnt_next_cookie(&call->a_args.cookie);
 
-	dprपूर्णांकk("lockd: created block %p...\n", block);
+	dprintk("lockd: created block %p...\n", block);
 
 	/* Create and initialize the block */
 	block->b_daemon = rqstp->rq_server;
@@ -252,214 +251,214 @@ nlmsvc_create_block(काष्ठा svc_rqst *rqstp, काष्ठा nlm_h
 	/* Add to file's list of blocks */
 	list_add(&block->b_flist, &file->f_blocks);
 
-	/* Set up RPC arguments क्रम callback */
+	/* Set up RPC arguments for callback */
 	block->b_call = call;
 	call->a_flags   = RPC_TASK_ASYNC;
 	call->a_block = block;
 
-	वापस block;
+	return block;
 
-failed_मुक्त:
-	kमुक्त(block);
+failed_free:
+	kfree(block);
 failed:
 	nlmsvc_release_call(call);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
  * Delete a block.
  * It is the caller's responsibility to check whether the file
- * can be बंदd hereafter.
+ * can be closed hereafter.
  */
-अटल पूर्णांक nlmsvc_unlink_block(काष्ठा nlm_block *block)
-अणु
-	पूर्णांक status;
-	dprपूर्णांकk("lockd: unlinking block %p...\n", block);
+static int nlmsvc_unlink_block(struct nlm_block *block)
+{
+	int status;
+	dprintk("lockd: unlinking block %p...\n", block);
 
 	/* Remove block from list */
 	status = locks_delete_block(&block->b_call->a_args.lock.fl);
-	nlmsvc_हटाओ_block(block);
-	वापस status;
-पूर्ण
+	nlmsvc_remove_block(block);
+	return status;
+}
 
-अटल व्योम nlmsvc_मुक्त_block(काष्ठा kref *kref)
-अणु
-	काष्ठा nlm_block *block = container_of(kref, काष्ठा nlm_block, b_count);
-	काष्ठा nlm_file		*file = block->b_file;
+static void nlmsvc_free_block(struct kref *kref)
+{
+	struct nlm_block *block = container_of(kref, struct nlm_block, b_count);
+	struct nlm_file		*file = block->b_file;
 
-	dprपूर्णांकk("lockd: freeing block %p...\n", block);
+	dprintk("lockd: freeing block %p...\n", block);
 
 	/* Remove block from file's list of blocks */
 	list_del_init(&block->b_flist);
 	mutex_unlock(&file->f_mutex);
 
-	nlmsvc_मुक्तgrantargs(block->b_call);
+	nlmsvc_freegrantargs(block->b_call);
 	nlmsvc_release_call(block->b_call);
 	nlm_release_file(block->b_file);
-	kमुक्त(block);
-पूर्ण
+	kfree(block);
+}
 
-अटल व्योम nlmsvc_release_block(काष्ठा nlm_block *block)
-अणु
-	अगर (block != शून्य)
-		kref_put_mutex(&block->b_count, nlmsvc_मुक्त_block, &block->b_file->f_mutex);
-पूर्ण
+static void nlmsvc_release_block(struct nlm_block *block)
+{
+	if (block != NULL)
+		kref_put_mutex(&block->b_count, nlmsvc_free_block, &block->b_file->f_mutex);
+}
 
 /*
  * Loop over all blocks and delete blocks held by
  * a matching host.
  */
-व्योम nlmsvc_traverse_blocks(काष्ठा nlm_host *host,
-			काष्ठा nlm_file *file,
+void nlmsvc_traverse_blocks(struct nlm_host *host,
+			struct nlm_file *file,
 			nlm_host_match_fn_t match)
-अणु
-	काष्ठा nlm_block *block, *next;
+{
+	struct nlm_block *block, *next;
 
 restart:
 	mutex_lock(&file->f_mutex);
-	list_क्रम_each_entry_safe(block, next, &file->f_blocks, b_flist) अणु
-		अगर (!match(block->b_host, host))
-			जारी;
+	list_for_each_entry_safe(block, next, &file->f_blocks, b_flist) {
+		if (!match(block->b_host, host))
+			continue;
 		/* Do not destroy blocks that are not on
 		 * the global retry list - why? */
-		अगर (list_empty(&block->b_list))
-			जारी;
+		if (list_empty(&block->b_list))
+			continue;
 		kref_get(&block->b_count);
 		mutex_unlock(&file->f_mutex);
 		nlmsvc_unlink_block(block);
 		nlmsvc_release_block(block);
-		जाओ restart;
-	पूर्ण
+		goto restart;
+	}
 	mutex_unlock(&file->f_mutex);
-पूर्ण
+}
 
-अटल काष्ठा nlm_lockowner *
-nlmsvc_get_lockowner(काष्ठा nlm_lockowner *lockowner)
-अणु
+static struct nlm_lockowner *
+nlmsvc_get_lockowner(struct nlm_lockowner *lockowner)
+{
 	refcount_inc(&lockowner->count);
-	वापस lockowner;
-पूर्ण
+	return lockowner;
+}
 
-अटल व्योम nlmsvc_put_lockowner(काष्ठा nlm_lockowner *lockowner)
-अणु
-	अगर (!refcount_dec_and_lock(&lockowner->count, &lockowner->host->h_lock))
-		वापस;
+static void nlmsvc_put_lockowner(struct nlm_lockowner *lockowner)
+{
+	if (!refcount_dec_and_lock(&lockowner->count, &lockowner->host->h_lock))
+		return;
 	list_del(&lockowner->list);
 	spin_unlock(&lockowner->host->h_lock);
 	nlmsvc_release_host(lockowner->host);
-	kमुक्त(lockowner);
-पूर्ण
+	kfree(lockowner);
+}
 
-अटल काष्ठा nlm_lockowner *__nlmsvc_find_lockowner(काष्ठा nlm_host *host, pid_t pid)
-अणु
-	काष्ठा nlm_lockowner *lockowner;
-	list_क्रम_each_entry(lockowner, &host->h_lockowners, list) अणु
-		अगर (lockowner->pid != pid)
-			जारी;
-		वापस nlmsvc_get_lockowner(lockowner);
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+static struct nlm_lockowner *__nlmsvc_find_lockowner(struct nlm_host *host, pid_t pid)
+{
+	struct nlm_lockowner *lockowner;
+	list_for_each_entry(lockowner, &host->h_lockowners, list) {
+		if (lockowner->pid != pid)
+			continue;
+		return nlmsvc_get_lockowner(lockowner);
+	}
+	return NULL;
+}
 
-अटल काष्ठा nlm_lockowner *nlmsvc_find_lockowner(काष्ठा nlm_host *host, pid_t pid)
-अणु
-	काष्ठा nlm_lockowner *res, *new = शून्य;
+static struct nlm_lockowner *nlmsvc_find_lockowner(struct nlm_host *host, pid_t pid)
+{
+	struct nlm_lockowner *res, *new = NULL;
 
 	spin_lock(&host->h_lock);
 	res = __nlmsvc_find_lockowner(host, pid);
 
-	अगर (res == शून्य) अणु
+	if (res == NULL) {
 		spin_unlock(&host->h_lock);
-		new = kदो_स्मृति(माप(*res), GFP_KERNEL);
+		new = kmalloc(sizeof(*res), GFP_KERNEL);
 		spin_lock(&host->h_lock);
 		res = __nlmsvc_find_lockowner(host, pid);
-		अगर (res == शून्य && new != शून्य) अणु
+		if (res == NULL && new != NULL) {
 			res = new;
 			/* fs/locks.c will manage the refcount through lock_ops */
 			refcount_set(&new->count, 1);
 			new->pid = pid;
 			new->host = nlm_get_host(host);
 			list_add(&new->list, &host->h_lockowners);
-			new = शून्य;
-		पूर्ण
-	पूर्ण
+			new = NULL;
+		}
+	}
 
 	spin_unlock(&host->h_lock);
-	kमुक्त(new);
-	वापस res;
-पूर्ण
+	kfree(new);
+	return res;
+}
 
-व्योम
-nlmsvc_release_lockowner(काष्ठा nlm_lock *lock)
-अणु
-	अगर (lock->fl.fl_owner)
+void
+nlmsvc_release_lockowner(struct nlm_lock *lock)
+{
+	if (lock->fl.fl_owner)
 		nlmsvc_put_lockowner(lock->fl.fl_owner);
-पूर्ण
+}
 
-अटल व्योम nlmsvc_locks_copy_lock(काष्ठा file_lock *new, काष्ठा file_lock *fl)
-अणु
-	काष्ठा nlm_lockowner *nlm_lo = (काष्ठा nlm_lockowner *)fl->fl_owner;
+static void nlmsvc_locks_copy_lock(struct file_lock *new, struct file_lock *fl)
+{
+	struct nlm_lockowner *nlm_lo = (struct nlm_lockowner *)fl->fl_owner;
 	new->fl_owner = nlmsvc_get_lockowner(nlm_lo);
-पूर्ण
+}
 
-अटल व्योम nlmsvc_locks_release_निजी(काष्ठा file_lock *fl)
-अणु
-	nlmsvc_put_lockowner((काष्ठा nlm_lockowner *)fl->fl_owner);
-पूर्ण
+static void nlmsvc_locks_release_private(struct file_lock *fl)
+{
+	nlmsvc_put_lockowner((struct nlm_lockowner *)fl->fl_owner);
+}
 
-अटल स्थिर काष्ठा file_lock_operations nlmsvc_lock_ops = अणु
+static const struct file_lock_operations nlmsvc_lock_ops = {
 	.fl_copy_lock = nlmsvc_locks_copy_lock,
-	.fl_release_निजी = nlmsvc_locks_release_निजी,
-पूर्ण;
+	.fl_release_private = nlmsvc_locks_release_private,
+};
 
-व्योम nlmsvc_locks_init_निजी(काष्ठा file_lock *fl, काष्ठा nlm_host *host,
+void nlmsvc_locks_init_private(struct file_lock *fl, struct nlm_host *host,
 						pid_t pid)
-अणु
+{
 	fl->fl_owner = nlmsvc_find_lockowner(host, pid);
-	अगर (fl->fl_owner != शून्य)
+	if (fl->fl_owner != NULL)
 		fl->fl_ops = &nlmsvc_lock_ops;
-पूर्ण
+}
 
 /*
- * Initialize arguments क्रम GRANTED call. The nlm_rqst काष्ठाure
- * has been cleared alपढ़ोy.
+ * Initialize arguments for GRANTED call. The nlm_rqst structure
+ * has been cleared already.
  */
-अटल पूर्णांक nlmsvc_setgrantargs(काष्ठा nlm_rqst *call, काष्ठा nlm_lock *lock)
-अणु
+static int nlmsvc_setgrantargs(struct nlm_rqst *call, struct nlm_lock *lock)
+{
 	locks_copy_lock(&call->a_args.lock.fl, &lock->fl);
-	स_नकल(&call->a_args.lock.fh, &lock->fh, माप(call->a_args.lock.fh));
+	memcpy(&call->a_args.lock.fh, &lock->fh, sizeof(call->a_args.lock.fh));
 	call->a_args.lock.caller = utsname()->nodename;
 	call->a_args.lock.oh.len = lock->oh.len;
 
-	/* set शेष data area */
+	/* set default data area */
 	call->a_args.lock.oh.data = call->a_owner;
-	call->a_args.lock.svid = ((काष्ठा nlm_lockowner *)lock->fl.fl_owner)->pid;
+	call->a_args.lock.svid = ((struct nlm_lockowner *)lock->fl.fl_owner)->pid;
 
-	अगर (lock->oh.len > NLMCLNT_OHSIZE) अणु
-		व्योम *data = kदो_स्मृति(lock->oh.len, GFP_KERNEL);
-		अगर (!data)
-			वापस 0;
+	if (lock->oh.len > NLMCLNT_OHSIZE) {
+		void *data = kmalloc(lock->oh.len, GFP_KERNEL);
+		if (!data)
+			return 0;
 		call->a_args.lock.oh.data = (u8 *) data;
-	पूर्ण
+	}
 
-	स_नकल(call->a_args.lock.oh.data, lock->oh.data, lock->oh.len);
-	वापस 1;
-पूर्ण
+	memcpy(call->a_args.lock.oh.data, lock->oh.data, lock->oh.len);
+	return 1;
+}
 
-अटल व्योम nlmsvc_मुक्तgrantargs(काष्ठा nlm_rqst *call)
-अणु
-	अगर (call->a_args.lock.oh.data != call->a_owner)
-		kमुक्त(call->a_args.lock.oh.data);
+static void nlmsvc_freegrantargs(struct nlm_rqst *call)
+{
+	if (call->a_args.lock.oh.data != call->a_owner)
+		kfree(call->a_args.lock.oh.data);
 
-	locks_release_निजी(&call->a_args.lock.fl);
-पूर्ण
+	locks_release_private(&call->a_args.lock.fl);
+}
 
 /*
- * Deferred lock request handling क्रम non-blocking lock
+ * Deferred lock request handling for non-blocking lock
  */
-अटल __be32
-nlmsvc_defer_lock_rqst(काष्ठा svc_rqst *rqstp, काष्ठा nlm_block *block)
-अणु
+static __be32
+nlmsvc_defer_lock_rqst(struct svc_rqst *rqstp, struct nlm_block *block)
+{
 	__be32 status = nlm_lck_denied_nolocks;
 
 	block->b_flags |= B_QUEUED;
@@ -467,114 +466,114 @@ nlmsvc_defer_lock_rqst(काष्ठा svc_rqst *rqstp, काष्ठा nl
 	nlmsvc_insert_block(block, NLM_TIMEOUT);
 
 	block->b_cache_req = &rqstp->rq_chandle;
-	अगर (rqstp->rq_chandle.defer) अणु
+	if (rqstp->rq_chandle.defer) {
 		block->b_deferred_req =
 			rqstp->rq_chandle.defer(block->b_cache_req);
-		अगर (block->b_deferred_req != शून्य)
+		if (block->b_deferred_req != NULL)
 			status = nlm_drop_reply;
-	पूर्ण
-	dprपूर्णांकk("lockd: nlmsvc_defer_lock_rqst block %p flags %d status %d\n",
+	}
+	dprintk("lockd: nlmsvc_defer_lock_rqst block %p flags %d status %d\n",
 		block, block->b_flags, ntohl(status));
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
- * Attempt to establish a lock, and अगर it can't be granted, block it
- * अगर required.
+ * Attempt to establish a lock, and if it can't be granted, block it
+ * if required.
  */
 __be32
-nlmsvc_lock(काष्ठा svc_rqst *rqstp, काष्ठा nlm_file *file,
-	    काष्ठा nlm_host *host, काष्ठा nlm_lock *lock, पूर्णांक रुको,
-	    काष्ठा nlm_cookie *cookie, पूर्णांक reclaim)
-अणु
-	काष्ठा nlm_block	*block = शून्य;
-	पूर्णांक			error;
+nlmsvc_lock(struct svc_rqst *rqstp, struct nlm_file *file,
+	    struct nlm_host *host, struct nlm_lock *lock, int wait,
+	    struct nlm_cookie *cookie, int reclaim)
+{
+	struct nlm_block	*block = NULL;
+	int			error;
 	__be32			ret;
 
-	dprपूर्णांकk("lockd: nlmsvc_lock(%s/%ld, ty=%d, pi=%d, %Ld-%Ld, bl=%d)\n",
+	dprintk("lockd: nlmsvc_lock(%s/%ld, ty=%d, pi=%d, %Ld-%Ld, bl=%d)\n",
 				locks_inode(file->f_file)->i_sb->s_id,
 				locks_inode(file->f_file)->i_ino,
 				lock->fl.fl_type, lock->fl.fl_pid,
-				(दीर्घ दीर्घ)lock->fl.fl_start,
-				(दीर्घ दीर्घ)lock->fl.fl_end,
-				रुको);
+				(long long)lock->fl.fl_start,
+				(long long)lock->fl.fl_end,
+				wait);
 
 	/* Lock file against concurrent access */
 	mutex_lock(&file->f_mutex);
-	/* Get existing block (in हाल client is busy-रुकोing)
+	/* Get existing block (in case client is busy-waiting)
 	 * or create new block
 	 */
 	block = nlmsvc_lookup_block(file, lock);
-	अगर (block == शून्य) अणु
+	if (block == NULL) {
 		block = nlmsvc_create_block(rqstp, host, file, lock, cookie);
 		ret = nlm_lck_denied_nolocks;
-		अगर (block == शून्य)
-			जाओ out;
+		if (block == NULL)
+			goto out;
 		lock = &block->b_call->a_args.lock;
-	पूर्ण अन्यथा
+	} else
 		lock->fl.fl_flags &= ~FL_SLEEP;
 
-	अगर (block->b_flags & B_QUEUED) अणु
-		dprपूर्णांकk("lockd: nlmsvc_lock deferred block %p flags %d\n",
+	if (block->b_flags & B_QUEUED) {
+		dprintk("lockd: nlmsvc_lock deferred block %p flags %d\n",
 							block, block->b_flags);
-		अगर (block->b_granted) अणु
+		if (block->b_granted) {
 			nlmsvc_unlink_block(block);
 			ret = nlm_granted;
-			जाओ out;
-		पूर्ण
-		अगर (block->b_flags & B_TIMED_OUT) अणु
+			goto out;
+		}
+		if (block->b_flags & B_TIMED_OUT) {
 			nlmsvc_unlink_block(block);
 			ret = nlm_lck_denied;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		ret = nlm_drop_reply;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (locks_in_grace(SVC_NET(rqstp)) && !reclaim) अणु
+	if (locks_in_grace(SVC_NET(rqstp)) && !reclaim) {
 		ret = nlm_lck_denied_grace_period;
-		जाओ out;
-	पूर्ण
-	अगर (reclaim && !locks_in_grace(SVC_NET(rqstp))) अणु
+		goto out;
+	}
+	if (reclaim && !locks_in_grace(SVC_NET(rqstp))) {
 		ret = nlm_lck_denied_grace_period;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!रुको)
+	if (!wait)
 		lock->fl.fl_flags &= ~FL_SLEEP;
-	error = vfs_lock_file(file->f_file, F_SETLK, &lock->fl, शून्य);
+	error = vfs_lock_file(file->f_file, F_SETLK, &lock->fl, NULL);
 	lock->fl.fl_flags &= ~FL_SLEEP;
 
-	dprपूर्णांकk("lockd: vfs_lock_file returned %d\n", error);
-	चयन (error) अणु
-		हाल 0:
+	dprintk("lockd: vfs_lock_file returned %d\n", error);
+	switch (error) {
+		case 0:
 			ret = nlm_granted;
-			जाओ out;
-		हाल -EAGAIN:
+			goto out;
+		case -EAGAIN:
 			/*
-			 * If this is a blocking request क्रम an
-			 * alपढ़ोy pending lock request then we need
+			 * If this is a blocking request for an
+			 * already pending lock request then we need
 			 * to put it back on lockd's block list
 			 */
-			अगर (रुको)
-				अवरोध;
+			if (wait)
+				break;
 			ret = nlm_lck_denied;
-			जाओ out;
-		हाल खाता_LOCK_DEFERRED:
-			अगर (रुको)
-				अवरोध;
-			/* Fileप्रणाली lock operation is in progress
-			   Add it to the queue रुकोing क्रम callback */
+			goto out;
+		case FILE_LOCK_DEFERRED:
+			if (wait)
+				break;
+			/* Filesystem lock operation is in progress
+			   Add it to the queue waiting for callback */
 			ret = nlmsvc_defer_lock_rqst(rqstp, block);
-			जाओ out;
-		हाल -EDEADLK:
+			goto out;
+		case -EDEADLK:
 			ret = nlm_deadlock;
-			जाओ out;
-		शेष:			/* includes ENOLCK */
+			goto out;
+		default:			/* includes ENOLCK */
 			ret = nlm_lck_denied_nolocks;
-			जाओ out;
-	पूर्ण
+			goto out;
+	}
 
 	ret = nlm_lck_blocked;
 
@@ -583,437 +582,437 @@ nlmsvc_lock(काष्ठा svc_rqst *rqstp, काष्ठा nlm_file *fil
 out:
 	mutex_unlock(&file->f_mutex);
 	nlmsvc_release_block(block);
-	dprपूर्णांकk("lockd: nlmsvc_lock returned %u\n", ret);
-	वापस ret;
-पूर्ण
+	dprintk("lockd: nlmsvc_lock returned %u\n", ret);
+	return ret;
+}
 
 /*
- * Test क्रम presence of a conflicting lock.
+ * Test for presence of a conflicting lock.
  */
 __be32
-nlmsvc_testlock(काष्ठा svc_rqst *rqstp, काष्ठा nlm_file *file,
-		काष्ठा nlm_host *host, काष्ठा nlm_lock *lock,
-		काष्ठा nlm_lock *conflock, काष्ठा nlm_cookie *cookie)
-अणु
-	पूर्णांक			error;
+nlmsvc_testlock(struct svc_rqst *rqstp, struct nlm_file *file,
+		struct nlm_host *host, struct nlm_lock *lock,
+		struct nlm_lock *conflock, struct nlm_cookie *cookie)
+{
+	int			error;
 	__be32			ret;
-	काष्ठा nlm_lockowner	*test_owner;
+	struct nlm_lockowner	*test_owner;
 
-	dprपूर्णांकk("lockd: nlmsvc_testlock(%s/%ld, ty=%d, %Ld-%Ld)\n",
+	dprintk("lockd: nlmsvc_testlock(%s/%ld, ty=%d, %Ld-%Ld)\n",
 				locks_inode(file->f_file)->i_sb->s_id,
 				locks_inode(file->f_file)->i_ino,
 				lock->fl.fl_type,
-				(दीर्घ दीर्घ)lock->fl.fl_start,
-				(दीर्घ दीर्घ)lock->fl.fl_end);
+				(long long)lock->fl.fl_start,
+				(long long)lock->fl.fl_end);
 
-	अगर (locks_in_grace(SVC_NET(rqstp))) अणु
+	if (locks_in_grace(SVC_NET(rqstp))) {
 		ret = nlm_lck_denied_grace_period;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* If there's a conflicting lock, remember to clean up the test lock */
-	test_owner = (काष्ठा nlm_lockowner *)lock->fl.fl_owner;
+	test_owner = (struct nlm_lockowner *)lock->fl.fl_owner;
 
 	error = vfs_test_lock(file->f_file, &lock->fl);
-	अगर (error) अणु
+	if (error) {
 		/* We can't currently deal with deferred test requests */
-		अगर (error == खाता_LOCK_DEFERRED)
+		if (error == FILE_LOCK_DEFERRED)
 			WARN_ON_ONCE(1);
 
 		ret = nlm_lck_denied_nolocks;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (lock->fl.fl_type == F_UNLCK) अणु
+	if (lock->fl.fl_type == F_UNLCK) {
 		ret = nlm_granted;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	dprपूर्णांकk("lockd: conflicting lock(ty=%d, %Ld-%Ld)\n",
-		lock->fl.fl_type, (दीर्घ दीर्घ)lock->fl.fl_start,
-		(दीर्घ दीर्घ)lock->fl.fl_end);
+	dprintk("lockd: conflicting lock(ty=%d, %Ld-%Ld)\n",
+		lock->fl.fl_type, (long long)lock->fl.fl_start,
+		(long long)lock->fl.fl_end);
 	conflock->caller = "somehost";	/* FIXME */
-	conflock->len = म_माप(conflock->caller);
-	conflock->oh.len = 0;		/* करोn't वापस OH info */
-	conflock->svid = ((काष्ठा nlm_lockowner *)lock->fl.fl_owner)->pid;
+	conflock->len = strlen(conflock->caller);
+	conflock->oh.len = 0;		/* don't return OH info */
+	conflock->svid = ((struct nlm_lockowner *)lock->fl.fl_owner)->pid;
 	conflock->fl.fl_type = lock->fl.fl_type;
 	conflock->fl.fl_start = lock->fl.fl_start;
 	conflock->fl.fl_end = lock->fl.fl_end;
-	locks_release_निजी(&lock->fl);
+	locks_release_private(&lock->fl);
 
 	/* Clean up the test lock */
-	lock->fl.fl_owner = शून्य;
+	lock->fl.fl_owner = NULL;
 	nlmsvc_put_lockowner(test_owner);
 
 	ret = nlm_lck_denied;
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Remove a lock.
  * This implies a CANCEL call: We send a GRANT_MSG, the client replies
- * with a GRANT_RES call which माला_लो lost, and calls UNLOCK immediately
- * afterwards. In this हाल the block will still be there, and hence
- * must be हटाओd.
+ * with a GRANT_RES call which gets lost, and calls UNLOCK immediately
+ * afterwards. In this case the block will still be there, and hence
+ * must be removed.
  */
 __be32
-nlmsvc_unlock(काष्ठा net *net, काष्ठा nlm_file *file, काष्ठा nlm_lock *lock)
-अणु
-	पूर्णांक	error;
+nlmsvc_unlock(struct net *net, struct nlm_file *file, struct nlm_lock *lock)
+{
+	int	error;
 
-	dprपूर्णांकk("lockd: nlmsvc_unlock(%s/%ld, pi=%d, %Ld-%Ld)\n",
+	dprintk("lockd: nlmsvc_unlock(%s/%ld, pi=%d, %Ld-%Ld)\n",
 				locks_inode(file->f_file)->i_sb->s_id,
 				locks_inode(file->f_file)->i_ino,
 				lock->fl.fl_pid,
-				(दीर्घ दीर्घ)lock->fl.fl_start,
-				(दीर्घ दीर्घ)lock->fl.fl_end);
+				(long long)lock->fl.fl_start,
+				(long long)lock->fl.fl_end);
 
 	/* First, cancel any lock that might be there */
 	nlmsvc_cancel_blocked(net, file, lock);
 
 	lock->fl.fl_type = F_UNLCK;
-	error = vfs_lock_file(file->f_file, F_SETLK, &lock->fl, शून्य);
+	error = vfs_lock_file(file->f_file, F_SETLK, &lock->fl, NULL);
 
-	वापस (error < 0)? nlm_lck_denied_nolocks : nlm_granted;
-पूर्ण
+	return (error < 0)? nlm_lck_denied_nolocks : nlm_granted;
+}
 
 /*
  * Cancel a previously blocked request.
  *
  * A cancel request always overrides any grant that may currently
  * be in progress.
- * The calling procedure must check whether the file can be बंदd.
+ * The calling procedure must check whether the file can be closed.
  */
 __be32
-nlmsvc_cancel_blocked(काष्ठा net *net, काष्ठा nlm_file *file, काष्ठा nlm_lock *lock)
-अणु
-	काष्ठा nlm_block	*block;
-	पूर्णांक status = 0;
+nlmsvc_cancel_blocked(struct net *net, struct nlm_file *file, struct nlm_lock *lock)
+{
+	struct nlm_block	*block;
+	int status = 0;
 
-	dprपूर्णांकk("lockd: nlmsvc_cancel(%s/%ld, pi=%d, %Ld-%Ld)\n",
+	dprintk("lockd: nlmsvc_cancel(%s/%ld, pi=%d, %Ld-%Ld)\n",
 				locks_inode(file->f_file)->i_sb->s_id,
 				locks_inode(file->f_file)->i_ino,
 				lock->fl.fl_pid,
-				(दीर्घ दीर्घ)lock->fl.fl_start,
-				(दीर्घ दीर्घ)lock->fl.fl_end);
+				(long long)lock->fl.fl_start,
+				(long long)lock->fl.fl_end);
 
-	अगर (locks_in_grace(net))
-		वापस nlm_lck_denied_grace_period;
+	if (locks_in_grace(net))
+		return nlm_lck_denied_grace_period;
 
 	mutex_lock(&file->f_mutex);
 	block = nlmsvc_lookup_block(file, lock);
 	mutex_unlock(&file->f_mutex);
-	अगर (block != शून्य) अणु
+	if (block != NULL) {
 		vfs_cancel_lock(block->b_file->f_file,
 				&block->b_call->a_args.lock.fl);
 		status = nlmsvc_unlink_block(block);
 		nlmsvc_release_block(block);
-	पूर्ण
-	वापस status ? nlm_lck_denied : nlm_granted;
-पूर्ण
+	}
+	return status ? nlm_lck_denied : nlm_granted;
+}
 
 /*
- * This is a callback from the fileप्रणाली क्रम VFS file lock requests.
- * It will be used अगर lm_grant is defined and the fileप्रणाली can not
+ * This is a callback from the filesystem for VFS file lock requests.
+ * It will be used if lm_grant is defined and the filesystem can not
  * respond to the request immediately.
  * For SETLK or SETLKW request it will get the local posix lock.
- * In all हालs it will move the block to the head of nlm_blocked q where
- * nlmsvc_retry_blocked() can send back a reply क्रम SETLKW or revisit the
- * deferred rpc क्रम GETLK and SETLK.
+ * In all cases it will move the block to the head of nlm_blocked q where
+ * nlmsvc_retry_blocked() can send back a reply for SETLKW or revisit the
+ * deferred rpc for GETLK and SETLK.
  */
-अटल व्योम
-nlmsvc_update_deferred_block(काष्ठा nlm_block *block, पूर्णांक result)
-अणु
+static void
+nlmsvc_update_deferred_block(struct nlm_block *block, int result)
+{
 	block->b_flags |= B_GOT_CALLBACK;
-	अगर (result == 0)
+	if (result == 0)
 		block->b_granted = 1;
-	अन्यथा
+	else
 		block->b_flags |= B_TIMED_OUT;
-पूर्ण
+}
 
-अटल पूर्णांक nlmsvc_grant_deferred(काष्ठा file_lock *fl, पूर्णांक result)
-अणु
-	काष्ठा nlm_block *block;
-	पूर्णांक rc = -ENOENT;
+static int nlmsvc_grant_deferred(struct file_lock *fl, int result)
+{
+	struct nlm_block *block;
+	int rc = -ENOENT;
 
 	spin_lock(&nlm_blocked_lock);
-	list_क्रम_each_entry(block, &nlm_blocked, b_list) अणु
-		अगर (nlm_compare_locks(&block->b_call->a_args.lock.fl, fl)) अणु
-			dprपूर्णांकk("lockd: nlmsvc_notify_blocked block %p flags %d\n",
+	list_for_each_entry(block, &nlm_blocked, b_list) {
+		if (nlm_compare_locks(&block->b_call->a_args.lock.fl, fl)) {
+			dprintk("lockd: nlmsvc_notify_blocked block %p flags %d\n",
 							block, block->b_flags);
-			अगर (block->b_flags & B_QUEUED) अणु
-				अगर (block->b_flags & B_TIMED_OUT) अणु
+			if (block->b_flags & B_QUEUED) {
+				if (block->b_flags & B_TIMED_OUT) {
 					rc = -ENOLCK;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 				nlmsvc_update_deferred_block(block, result);
-			पूर्ण अन्यथा अगर (result == 0)
+			} else if (result == 0)
 				block->b_granted = 1;
 
 			nlmsvc_insert_block_locked(block, 0);
 			svc_wake_up(block->b_daemon);
 			rc = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock(&nlm_blocked_lock);
-	अगर (rc == -ENOENT)
-		prपूर्णांकk(KERN_WARNING "lockd: grant for unknown block\n");
-	वापस rc;
-पूर्ण
+	if (rc == -ENOENT)
+		printk(KERN_WARNING "lockd: grant for unknown block\n");
+	return rc;
+}
 
 /*
  * Unblock a blocked lock request. This is a callback invoked from the
- * VFS layer when a lock on which we blocked is हटाओd.
+ * VFS layer when a lock on which we blocked is removed.
  *
- * This function करोesn't grant the blocked lock instantly, but rather moves
+ * This function doesn't grant the blocked lock instantly, but rather moves
  * the block to the head of nlm_blocked where it can be picked up by lockd.
  */
-अटल व्योम
-nlmsvc_notअगरy_blocked(काष्ठा file_lock *fl)
-अणु
-	काष्ठा nlm_block	*block;
+static void
+nlmsvc_notify_blocked(struct file_lock *fl)
+{
+	struct nlm_block	*block;
 
-	dprपूर्णांकk("lockd: VFS unblock notification for block %p\n", fl);
+	dprintk("lockd: VFS unblock notification for block %p\n", fl);
 	spin_lock(&nlm_blocked_lock);
-	list_क्रम_each_entry(block, &nlm_blocked, b_list) अणु
-		अगर (nlm_compare_locks(&block->b_call->a_args.lock.fl, fl)) अणु
+	list_for_each_entry(block, &nlm_blocked, b_list) {
+		if (nlm_compare_locks(&block->b_call->a_args.lock.fl, fl)) {
 			nlmsvc_insert_block_locked(block, 0);
 			spin_unlock(&nlm_blocked_lock);
 			svc_wake_up(block->b_daemon);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 	spin_unlock(&nlm_blocked_lock);
-	prपूर्णांकk(KERN_WARNING "lockd: notification for unknown block!\n");
-पूर्ण
+	printk(KERN_WARNING "lockd: notification for unknown block!\n");
+}
 
-स्थिर काष्ठा lock_manager_operations nlmsvc_lock_operations = अणु
-	.lm_notअगरy = nlmsvc_notअगरy_blocked,
+const struct lock_manager_operations nlmsvc_lock_operations = {
+	.lm_notify = nlmsvc_notify_blocked,
 	.lm_grant = nlmsvc_grant_deferred,
-पूर्ण;
+};
 
 /*
  * Try to claim a lock that was previously blocked.
  *
  * Note that we use both the RPC_GRANTED_MSG call _and_ an async
- * RPC thपढ़ो when notअगरying the client. This seems like overसमाप्त...
+ * RPC thread when notifying the client. This seems like overkill...
  * Here's why:
- *  -	we करोn't want to use a synchronous RPC thपढ़ो, otherwise
- *	we might find ourselves hanging on a dead porपंचांगapper.
- *  -	Some lockd implementations (e.g. HP) करोn't react to
+ *  -	we don't want to use a synchronous RPC thread, otherwise
+ *	we might find ourselves hanging on a dead portmapper.
+ *  -	Some lockd implementations (e.g. HP) don't react to
  *	RPC_GRANTED calls; they seem to insist on RPC_GRANTED_MSG calls.
  */
-अटल व्योम
-nlmsvc_grant_blocked(काष्ठा nlm_block *block)
-अणु
-	काष्ठा nlm_file		*file = block->b_file;
-	काष्ठा nlm_lock		*lock = &block->b_call->a_args.lock;
-	पूर्णांक			error;
+static void
+nlmsvc_grant_blocked(struct nlm_block *block)
+{
+	struct nlm_file		*file = block->b_file;
+	struct nlm_lock		*lock = &block->b_call->a_args.lock;
+	int			error;
 	loff_t			fl_start, fl_end;
 
-	dprपूर्णांकk("lockd: grant blocked lock %p\n", block);
+	dprintk("lockd: grant blocked lock %p\n", block);
 
 	kref_get(&block->b_count);
 
 	/* Unlink block request from list */
 	nlmsvc_unlink_block(block);
 
-	/* If b_granted is true this means we've been here beक्रमe.
+	/* If b_granted is true this means we've been here before.
 	 * Just retry the grant callback, possibly refreshing the RPC
 	 * binding */
-	अगर (block->b_granted) अणु
+	if (block->b_granted) {
 		nlm_rebind_host(block->b_host);
-		जाओ callback;
-	पूर्ण
+		goto callback;
+	}
 
 	/* Try the lock operation again */
 	/* vfs_lock_file() can mangle fl_start and fl_end, but we need
-	 * them unchanged क्रम the GRANT_MSG
+	 * them unchanged for the GRANT_MSG
 	 */
 	lock->fl.fl_flags |= FL_SLEEP;
 	fl_start = lock->fl.fl_start;
 	fl_end = lock->fl.fl_end;
-	error = vfs_lock_file(file->f_file, F_SETLK, &lock->fl, शून्य);
+	error = vfs_lock_file(file->f_file, F_SETLK, &lock->fl, NULL);
 	lock->fl.fl_flags &= ~FL_SLEEP;
 	lock->fl.fl_start = fl_start;
 	lock->fl.fl_end = fl_end;
 
-	चयन (error) अणु
-	हाल 0:
-		अवरोध;
-	हाल खाता_LOCK_DEFERRED:
-		dprपूर्णांकk("lockd: lock still blocked error %d\n", error);
+	switch (error) {
+	case 0:
+		break;
+	case FILE_LOCK_DEFERRED:
+		dprintk("lockd: lock still blocked error %d\n", error);
 		nlmsvc_insert_block(block, NLM_NEVER);
 		nlmsvc_release_block(block);
-		वापस;
-	शेष:
-		prपूर्णांकk(KERN_WARNING "lockd: unexpected error %d in %s!\n",
+		return;
+	default:
+		printk(KERN_WARNING "lockd: unexpected error %d in %s!\n",
 				-error, __func__);
 		nlmsvc_insert_block(block, 10 * HZ);
 		nlmsvc_release_block(block);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 callback:
 	/* Lock was granted by VFS. */
-	dprपूर्णांकk("lockd: GRANTing blocked lock.\n");
+	dprintk("lockd: GRANTing blocked lock.\n");
 	block->b_granted = 1;
 
-	/* keep block on the list, but करोn't reattempt until the RPC
+	/* keep block on the list, but don't reattempt until the RPC
 	 * completes or the submission fails
 	 */
 	nlmsvc_insert_block(block, NLM_NEVER);
 
 	/* Call the client -- use a soft RPC task since nlmsvc_retry_blocked
-	 * will queue up a new one अगर this one बार out
+	 * will queue up a new one if this one times out
 	 */
 	error = nlm_async_call(block->b_call, NLMPROC_GRANTED_MSG,
 				&nlmsvc_grant_ops);
 
-	/* RPC submission failed, रुको a bit and retry */
-	अगर (error < 0)
+	/* RPC submission failed, wait a bit and retry */
+	if (error < 0)
 		nlmsvc_insert_block(block, 10 * HZ);
-पूर्ण
+}
 
 /*
  * This is the callback from the RPC layer when the NLM_GRANTED_MSG
- * RPC call has succeeded or समयd out.
+ * RPC call has succeeded or timed out.
  * Like all RPC callbacks, it is invoked by the rpciod process, so it
- * better not sleep. Thereक्रमe, we put the blocked lock on the nlm_blocked
- * chain once more in order to have it हटाओd by lockd itself (which can
+ * better not sleep. Therefore, we put the blocked lock on the nlm_blocked
+ * chain once more in order to have it removed by lockd itself (which can
  * then sleep on the file semaphore without disrupting e.g. the nfs client).
  */
-अटल व्योम nlmsvc_grant_callback(काष्ठा rpc_task *task, व्योम *data)
-अणु
-	काष्ठा nlm_rqst		*call = data;
-	काष्ठा nlm_block	*block = call->a_block;
-	अचिन्हित दीर्घ		समयout;
+static void nlmsvc_grant_callback(struct rpc_task *task, void *data)
+{
+	struct nlm_rqst		*call = data;
+	struct nlm_block	*block = call->a_block;
+	unsigned long		timeout;
 
-	dprपूर्णांकk("lockd: GRANT_MSG RPC callback\n");
+	dprintk("lockd: GRANT_MSG RPC callback\n");
 
 	spin_lock(&nlm_blocked_lock);
-	/* अगर the block is not on a list at this poपूर्णांक then it has
+	/* if the block is not on a list at this point then it has
 	 * been invalidated. Don't try to requeue it.
 	 *
-	 * FIXME: it's possible that the block is हटाओd from the list
-	 * after this check but beक्रमe the nlmsvc_insert_block. In that
-	 * हाल it will be added back. Perhaps we need better locking
-	 * क्रम nlm_blocked?
+	 * FIXME: it's possible that the block is removed from the list
+	 * after this check but before the nlmsvc_insert_block. In that
+	 * case it will be added back. Perhaps we need better locking
+	 * for nlm_blocked?
 	 */
-	अगर (list_empty(&block->b_list))
-		जाओ out;
+	if (list_empty(&block->b_list))
+		goto out;
 
-	/* Technically, we should करोwn the file semaphore here. Since we
+	/* Technically, we should down the file semaphore here. Since we
 	 * move the block towards the head of the queue only, no harm
-	 * can be करोne, though. */
-	अगर (task->tk_status < 0) अणु
-		/* RPC error: Re-insert क्रम retransmission */
-		समयout = 10 * HZ;
-	पूर्ण अन्यथा अणु
-		/* Call was successful, now रुको क्रम client callback */
-		समयout = 60 * HZ;
-	पूर्ण
-	nlmsvc_insert_block_locked(block, समयout);
+	 * can be done, though. */
+	if (task->tk_status < 0) {
+		/* RPC error: Re-insert for retransmission */
+		timeout = 10 * HZ;
+	} else {
+		/* Call was successful, now wait for client callback */
+		timeout = 60 * HZ;
+	}
+	nlmsvc_insert_block_locked(block, timeout);
 	svc_wake_up(block->b_daemon);
 out:
 	spin_unlock(&nlm_blocked_lock);
-पूर्ण
+}
 
 /*
- * FIXME: nlmsvc_release_block() grअसल a mutex.  This is not allowed क्रम an
+ * FIXME: nlmsvc_release_block() grabs a mutex.  This is not allowed for an
  * .rpc_release rpc_call_op
  */
-अटल व्योम nlmsvc_grant_release(व्योम *data)
-अणु
-	काष्ठा nlm_rqst		*call = data;
+static void nlmsvc_grant_release(void *data)
+{
+	struct nlm_rqst		*call = data;
 	nlmsvc_release_block(call->a_block);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा rpc_call_ops nlmsvc_grant_ops = अणु
-	.rpc_call_करोne = nlmsvc_grant_callback,
+static const struct rpc_call_ops nlmsvc_grant_ops = {
+	.rpc_call_done = nlmsvc_grant_callback,
 	.rpc_release = nlmsvc_grant_release,
-पूर्ण;
+};
 
 /*
  * We received a GRANT_RES callback. Try to find the corresponding
  * block.
  */
-व्योम
-nlmsvc_grant_reply(काष्ठा nlm_cookie *cookie, __be32 status)
-अणु
-	काष्ठा nlm_block	*block;
+void
+nlmsvc_grant_reply(struct nlm_cookie *cookie, __be32 status)
+{
+	struct nlm_block	*block;
 
-	dprपूर्णांकk("grant_reply: looking for cookie %x, s=%d \n",
-		*(अचिन्हित पूर्णांक *)(cookie->data), status);
-	अगर (!(block = nlmsvc_find_block(cookie)))
-		वापस;
+	dprintk("grant_reply: looking for cookie %x, s=%d \n",
+		*(unsigned int *)(cookie->data), status);
+	if (!(block = nlmsvc_find_block(cookie)))
+		return;
 
-	अगर (status == nlm_lck_denied_grace_period) अणु
+	if (status == nlm_lck_denied_grace_period) {
 		/* Try again in a couple of seconds */
 		nlmsvc_insert_block(block, 10 * HZ);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * Lock is now held by client, or has been rejected.
-		 * In both हालs, the block should be हटाओd.
+		 * In both cases, the block should be removed.
 		 */
 		nlmsvc_unlink_block(block);
-	पूर्ण
+	}
 	nlmsvc_release_block(block);
-पूर्ण
+}
 
 /* Helper function to handle retry of a deferred block.
  * If it is a blocking lock, call grant_blocked.
  * For a non-blocking lock or test lock, revisit the request.
  */
-अटल व्योम
-retry_deferred_block(काष्ठा nlm_block *block)
-अणु
-	अगर (!(block->b_flags & B_GOT_CALLBACK))
+static void
+retry_deferred_block(struct nlm_block *block)
+{
+	if (!(block->b_flags & B_GOT_CALLBACK))
 		block->b_flags |= B_TIMED_OUT;
 	nlmsvc_insert_block(block, NLM_TIMEOUT);
-	dprपूर्णांकk("revisit block %p flags %d\n",	block, block->b_flags);
-	अगर (block->b_deferred_req) अणु
+	dprintk("revisit block %p flags %d\n",	block, block->b_flags);
+	if (block->b_deferred_req) {
 		block->b_deferred_req->revisit(block->b_deferred_req, 0);
-		block->b_deferred_req = शून्य;
-	पूर्ण
-पूर्ण
+		block->b_deferred_req = NULL;
+	}
+}
 
 /*
- * Retry all blocked locks that have been notअगरied. This is where lockd
- * picks up locks that can be granted, or grant notअगरications that must
+ * Retry all blocked locks that have been notified. This is where lockd
+ * picks up locks that can be granted, or grant notifications that must
  * be retransmitted.
  */
-अचिन्हित दीर्घ
-nlmsvc_retry_blocked(व्योम)
-अणु
-	अचिन्हित दीर्घ	समयout = MAX_SCHEDULE_TIMEOUT;
-	काष्ठा nlm_block *block;
+unsigned long
+nlmsvc_retry_blocked(void)
+{
+	unsigned long	timeout = MAX_SCHEDULE_TIMEOUT;
+	struct nlm_block *block;
 
 	spin_lock(&nlm_blocked_lock);
-	जबतक (!list_empty(&nlm_blocked) && !kthपढ़ो_should_stop()) अणु
-		block = list_entry(nlm_blocked.next, काष्ठा nlm_block, b_list);
+	while (!list_empty(&nlm_blocked) && !kthread_should_stop()) {
+		block = list_entry(nlm_blocked.next, struct nlm_block, b_list);
 
-		अगर (block->b_when == NLM_NEVER)
-			अवरोध;
-		अगर (समय_after(block->b_when, jअगरfies)) अणु
-			समयout = block->b_when - jअगरfies;
-			अवरोध;
-		पूर्ण
+		if (block->b_when == NLM_NEVER)
+			break;
+		if (time_after(block->b_when, jiffies)) {
+			timeout = block->b_when - jiffies;
+			break;
+		}
 		spin_unlock(&nlm_blocked_lock);
 
-		dprपूर्णांकk("nlmsvc_retry_blocked(%p, when=%ld)\n",
+		dprintk("nlmsvc_retry_blocked(%p, when=%ld)\n",
 			block, block->b_when);
-		अगर (block->b_flags & B_QUEUED) अणु
-			dprपूर्णांकk("nlmsvc_retry_blocked delete block (%p, granted=%d, flags=%d)\n",
+		if (block->b_flags & B_QUEUED) {
+			dprintk("nlmsvc_retry_blocked delete block (%p, granted=%d, flags=%d)\n",
 				block, block->b_granted, block->b_flags);
 			retry_deferred_block(block);
-		पूर्ण अन्यथा
+		} else
 			nlmsvc_grant_blocked(block);
 		spin_lock(&nlm_blocked_lock);
-	पूर्ण
+	}
 	spin_unlock(&nlm_blocked_lock);
 
-	वापस समयout;
-पूर्ण
+	return timeout;
+}

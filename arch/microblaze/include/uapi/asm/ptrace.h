@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * Copyright (C) 2006 Aपंचांगark Techno, Inc.
+ * Copyright (C) 2006 Atmark Techno, Inc.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License. See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License. See the file "COPYING" in the main directory of this archive
+ * for more details.
  */
 
-#अगर_अघोषित _UAPI_ASM_MICROBLAZE_PTRACE_H
-#घोषणा _UAPI_ASM_MICROBLAZE_PTRACE_H
+#ifndef _UAPI_ASM_MICROBLAZE_PTRACE_H
+#define _UAPI_ASM_MICROBLAZE_PTRACE_H
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-प्रकार अचिन्हित दीर्घ microblaze_reg_t;
+typedef unsigned long microblaze_reg_t;
 
-काष्ठा pt_regs अणु
+struct pt_regs {
 	microblaze_reg_t r0;
 	microblaze_reg_t r1;
 	microblaze_reg_t r2;
@@ -53,22 +52,22 @@
 	microblaze_reg_t ear;
 	microblaze_reg_t esr;
 	microblaze_reg_t fsr;
-	पूर्णांक pt_mode;
-पूर्ण;
+	int pt_mode;
+};
 
-#अगर_अघोषित __KERNEL__
+#ifndef __KERNEL__
 
 /* pt_regs offsets used by gdbserver etc in ptrace syscalls */
-#घोषणा PT_GPR(n)	((n) * माप(microblaze_reg_t))
-#घोषणा PT_PC		(32 * माप(microblaze_reg_t))
-#घोषणा PT_MSR		(33 * माप(microblaze_reg_t))
-#घोषणा PT_EAR		(34 * माप(microblaze_reg_t))
-#घोषणा PT_ESR		(35 * माप(microblaze_reg_t))
-#घोषणा PT_FSR		(36 * माप(microblaze_reg_t))
-#घोषणा PT_KERNEL_MODE	(37 * माप(microblaze_reg_t))
+#define PT_GPR(n)	((n) * sizeof(microblaze_reg_t))
+#define PT_PC		(32 * sizeof(microblaze_reg_t))
+#define PT_MSR		(33 * sizeof(microblaze_reg_t))
+#define PT_EAR		(34 * sizeof(microblaze_reg_t))
+#define PT_ESR		(35 * sizeof(microblaze_reg_t))
+#define PT_FSR		(36 * sizeof(microblaze_reg_t))
+#define PT_KERNEL_MODE	(37 * sizeof(microblaze_reg_t))
 
-#पूर्ण_अगर /* __KERNEL */
+#endif /* __KERNEL */
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
+#endif /* __ASSEMBLY__ */
 
-#पूर्ण_अगर /* _UAPI_ASM_MICROBLAZE_PTRACE_H */
+#endif /* _UAPI_ASM_MICROBLAZE_PTRACE_H */

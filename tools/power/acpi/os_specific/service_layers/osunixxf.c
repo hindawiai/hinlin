@@ -1,144 +1,143 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Module Name: osunixxf - UNIX OSL पूर्णांकerfaces
+ * Module Name: osunixxf - UNIX OSL interfaces
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
 /*
- * These पूर्णांकerfaces are required in order to compile the ASL compiler and the
- * various ACPICA tools under Linux or other Unix-like प्रणाली.
+ * These interfaces are required in order to compile the ASL compiler and the
+ * various ACPICA tools under Linux or other Unix-like system.
  */
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "amlcode.h"
-#समावेश "acparser.h"
-#समावेश "acdebug.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "amlcode.h"
+#include "acparser.h"
+#include "acdebug.h"
 
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <मानकतर्क.स>
-#समावेश <unistd.h>
-#समावेश <sys/समय.स>
-#समावेश <semaphore.h>
-#समावेश <pthपढ़ो.h>
-#समावेश <त्रुटिसं.स>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include <semaphore.h>
+#include <pthread.h>
+#include <errno.h>
 
-#घोषणा _COMPONENT          ACPI_OS_SERVICES
+#define _COMPONENT          ACPI_OS_SERVICES
 ACPI_MODULE_NAME("osunixxf")
 
 /* Upcalls to acpi_exec */
-व्योम
-ae_table_override(काष्ठा acpi_table_header *existing_table,
-		  काष्ठा acpi_table_header **new_table);
+void
+ae_table_override(struct acpi_table_header *existing_table,
+		  struct acpi_table_header **new_table);
 
-प्रकार व्योम *(*PTHREAD_CALLBACK) (व्योम *);
+typedef void *(*PTHREAD_CALLBACK) (void *);
 
-/* Buffer used by acpi_os_भ_लिखो */
+/* Buffer used by acpi_os_vprintf */
 
-#घोषणा ACPI_VPRINTF_BUFFER_SIZE    512
-#घोषणा _ASCII_NEWLINE              '\n'
+#define ACPI_VPRINTF_BUFFER_SIZE    512
+#define _ASCII_NEWLINE              '\n'
 
-/* Terminal support क्रम acpi_exec only */
+/* Terminal support for acpi_exec only */
 
-#अगर_घोषित ACPI_EXEC_APP
-#समावेश <termios.h>
+#ifdef ACPI_EXEC_APP
+#include <termios.h>
 
-काष्ठा termios original_term_attributes;
-पूर्णांक term_attributes_were_set = 0;
+struct termios original_term_attributes;
+int term_attributes_were_set = 0;
 
-acpi_status acpi_ut_पढ़ो_line(अक्षर *buffer, u32 buffer_length, u32 *bytes_पढ़ो);
+acpi_status acpi_ut_read_line(char *buffer, u32 buffer_length, u32 *bytes_read);
 
-अटल व्योम os_enter_line_edit_mode(व्योम);
+static void os_enter_line_edit_mode(void);
 
-अटल व्योम os_निकास_line_edit_mode(व्योम);
+static void os_exit_line_edit_mode(void);
 
 /******************************************************************************
  *
- * FUNCTION:    os_enter_line_edit_mode, os_निकास_line_edit_mode
+ * FUNCTION:    os_enter_line_edit_mode, os_exit_line_edit_mode
  *
  * PARAMETERS:  None
  *
  * RETURN:      None
  *
- * DESCRIPTION: Enter/Exit the raw अक्षरacter input mode क्रम the terminal.
+ * DESCRIPTION: Enter/Exit the raw character input mode for the terminal.
  *
- * Interactive line-editing support क्रम the AML debugger. Used with the
+ * Interactive line-editing support for the AML debugger. Used with the
  * common/acgetline module.
  *
- * पढ़ोline() is not used because of non-portability. It is not available
- * on all प्रणालीs, and अगर it is, often the package must be manually installed.
+ * readline() is not used because of non-portability. It is not available
+ * on all systems, and if it is, often the package must be manually installed.
  *
- * Thereक्रमe, we use the POSIX tcgetattr/tcsetattr and करो the minimal line
+ * Therefore, we use the POSIX tcgetattr/tcsetattr and do the minimal line
  * editing that we need in acpi_os_get_line.
  *
- * If the POSIX tcgetattr/tcsetattr पूर्णांकerfaces are unavailable, these
+ * If the POSIX tcgetattr/tcsetattr interfaces are unavailable, these
  * calls will also work:
- *     For os_enter_line_edit_mode: प्रणाली ("stty cbreak -echo")
- *     For os_निकास_line_edit_mode: प्रणाली ("stty cooked echo")
+ *     For os_enter_line_edit_mode: system ("stty cbreak -echo")
+ *     For os_exit_line_edit_mode: system ("stty cooked echo")
  *
  *****************************************************************************/
 
-अटल व्योम os_enter_line_edit_mode(व्योम)
-अणु
-	काष्ठा termios local_term_attributes;
+static void os_enter_line_edit_mode(void)
+{
+	struct termios local_term_attributes;
 
 	term_attributes_were_set = 0;
 
 	/* STDIN must be a terminal */
 
-	अगर (!isatty(STDIN_खाताNO)) अणु
-		वापस;
-	पूर्ण
+	if (!isatty(STDIN_FILENO)) {
+		return;
+	}
 
 	/* Get and keep the original attributes */
 
-	अगर (tcgetattr(STDIN_खाताNO, &original_term_attributes)) अणु
-		ख_लिखो(मानक_त्रुटि, "Could not get terminal attributes!\n");
-		वापस;
-	पूर्ण
+	if (tcgetattr(STDIN_FILENO, &original_term_attributes)) {
+		fprintf(stderr, "Could not get terminal attributes!\n");
+		return;
+	}
 
-	/* Set the new attributes to enable raw अक्षरacter input */
+	/* Set the new attributes to enable raw character input */
 
-	स_नकल(&local_term_attributes, &original_term_attributes,
-	       माप(काष्ठा termios));
+	memcpy(&local_term_attributes, &original_term_attributes,
+	       sizeof(struct termios));
 
 	local_term_attributes.c_lflag &= ~(ICANON | ECHO);
 	local_term_attributes.c_cc[VMIN] = 1;
 	local_term_attributes.c_cc[VTIME] = 0;
 
-	अगर (tcsetattr(STDIN_खाताNO, TCSANOW, &local_term_attributes)) अणु
-		ख_लिखो(मानक_त्रुटि, "Could not set terminal attributes!\n");
-		वापस;
-	पूर्ण
+	if (tcsetattr(STDIN_FILENO, TCSANOW, &local_term_attributes)) {
+		fprintf(stderr, "Could not set terminal attributes!\n");
+		return;
+	}
 
 	term_attributes_were_set = 1;
-पूर्ण
+}
 
-अटल व्योम os_निकास_line_edit_mode(व्योम)
-अणु
+static void os_exit_line_edit_mode(void)
+{
 
-	अगर (!term_attributes_were_set) अणु
-		वापस;
-	पूर्ण
+	if (!term_attributes_were_set) {
+		return;
+	}
 
 	/* Set terminal attributes back to the original values */
 
-	अगर (tcsetattr(STDIN_खाताNO, TCSANOW, &original_term_attributes)) अणु
-		ख_लिखो(मानक_त्रुटि, "Could not restore terminal attributes!\n");
-	पूर्ण
-पूर्ण
+	if (tcsetattr(STDIN_FILENO, TCSANOW, &original_term_attributes)) {
+		fprintf(stderr, "Could not restore terminal attributes!\n");
+	}
+}
 
-#अन्यथा
+#else
 
-/* These functions are not needed क्रम other ACPICA utilities */
+/* These functions are not needed for other ACPICA utilities */
 
-#घोषणा os_enter_line_edit_mode()
-#घोषणा os_निकास_line_edit_mode()
-#पूर्ण_अगर
+#define os_enter_line_edit_mode()
+#define os_exit_line_edit_mode()
+#endif
 
 /******************************************************************************
  *
@@ -152,57 +151,57 @@ acpi_status acpi_ut_पढ़ो_line(अक्षर *buffer, u32 buffer_length
  *
  *****************************************************************************/
 
-acpi_status acpi_os_initialize(व्योम)
-अणु
+acpi_status acpi_os_initialize(void)
+{
 	acpi_status status;
 
-	acpi_gbl_output_file = मानक_निकास;
+	acpi_gbl_output_file = stdout;
 
 	os_enter_line_edit_mode();
 
-	status = acpi_os_create_lock(&acpi_gbl_prपूर्णांक_lock);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस (status);
-	पूर्ण
+	status = acpi_os_create_lock(&acpi_gbl_print_lock);
+	if (ACPI_FAILURE(status)) {
+		return (status);
+	}
 
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
-acpi_status acpi_os_terminate(व्योम)
-अणु
+acpi_status acpi_os_terminate(void)
+{
 
-	os_निकास_line_edit_mode();
-	वापस (AE_OK);
-पूर्ण
+	os_exit_line_edit_mode();
+	return (AE_OK);
+}
 
-#अगर_अघोषित ACPI_USE_NATIVE_RSDP_POINTER
+#ifndef ACPI_USE_NATIVE_RSDP_POINTER
 /******************************************************************************
  *
- * FUNCTION:    acpi_os_get_root_poपूर्णांकer
+ * FUNCTION:    acpi_os_get_root_pointer
  *
  * PARAMETERS:  None
  *
  * RETURN:      RSDP physical address
  *
- * DESCRIPTION: Gets the ACPI root poपूर्णांकer (RSDP)
+ * DESCRIPTION: Gets the ACPI root pointer (RSDP)
  *
  *****************************************************************************/
 
-acpi_physical_address acpi_os_get_root_poपूर्णांकer(व्योम)
-अणु
+acpi_physical_address acpi_os_get_root_pointer(void)
+{
 
-	वापस (0);
-पूर्ण
-#पूर्ण_अगर
+	return (0);
+}
+#endif
 
 /******************************************************************************
  *
  * FUNCTION:    acpi_os_predefined_override
  *
  * PARAMETERS:  init_val            - Initial value of the predefined object
- *              new_val             - The new value क्रम the object
+ *              new_val             - The new value for the object
  *
- * RETURN:      Status, poपूर्णांकer to value. Null poपूर्णांकer वापसed अगर not
+ * RETURN:      Status, pointer to value. Null pointer returned if not
  *              overriding.
  *
  * DESCRIPTION: Allow the OS to override predefined names
@@ -210,17 +209,17 @@ acpi_physical_address acpi_os_get_root_poपूर्णांकer(व्यो
  *****************************************************************************/
 
 acpi_status
-acpi_os_predefined_override(स्थिर काष्ठा acpi_predefined_names *init_val,
+acpi_os_predefined_override(const struct acpi_predefined_names *init_val,
 			    acpi_string *new_val)
-अणु
+{
 
-	अगर (!init_val || !new_val) अणु
-		वापस (AE_BAD_PARAMETER);
-	पूर्ण
+	if (!init_val || !new_val) {
+		return (AE_BAD_PARAMETER);
+	}
 
-	*new_val = शून्य;
-	वापस (AE_OK);
-पूर्ण
+	*new_val = NULL;
+	return (AE_OK);
+}
 
 /******************************************************************************
  *
@@ -228,60 +227,60 @@ acpi_os_predefined_override(स्थिर काष्ठा acpi_predefined_n
  *
  * PARAMETERS:  existing_table      - Header of current table (probably
  *                                    firmware)
- *              new_table           - Where an entire new table is वापसed.
+ *              new_table           - Where an entire new table is returned.
  *
- * RETURN:      Status, poपूर्णांकer to new table. Null poपूर्णांकer वापसed अगर no
+ * RETURN:      Status, pointer to new table. Null pointer returned if no
  *              table is available to override
  *
- * DESCRIPTION: Return a dअगरferent version of a table अगर one is available
+ * DESCRIPTION: Return a different version of a table if one is available
  *
  *****************************************************************************/
 
 acpi_status
-acpi_os_table_override(काष्ठा acpi_table_header *existing_table,
-		       काष्ठा acpi_table_header **new_table)
-अणु
+acpi_os_table_override(struct acpi_table_header *existing_table,
+		       struct acpi_table_header **new_table)
+{
 
-	अगर (!existing_table || !new_table) अणु
-		वापस (AE_BAD_PARAMETER);
-	पूर्ण
+	if (!existing_table || !new_table) {
+		return (AE_BAD_PARAMETER);
+	}
 
-	*new_table = शून्य;
+	*new_table = NULL;
 
-#अगर_घोषित ACPI_EXEC_APP
+#ifdef ACPI_EXEC_APP
 
 	ae_table_override(existing_table, new_table);
-	वापस (AE_OK);
-#अन्यथा
+	return (AE_OK);
+#else
 
-	वापस (AE_NO_ACPI_TABLES);
-#पूर्ण_अगर
-पूर्ण
+	return (AE_NO_ACPI_TABLES);
+#endif
+}
 
 /******************************************************************************
  *
  * FUNCTION:    acpi_os_physical_table_override
  *
  * PARAMETERS:  existing_table      - Header of current table (probably firmware)
- *              new_address         - Where new table address is वापसed
+ *              new_address         - Where new table address is returned
  *                                    (Physical address)
- *              new_table_length    - Where new table length is वापसed
+ *              new_table_length    - Where new table length is returned
  *
- * RETURN:      Status, address/length of new table. Null poपूर्णांकer वापसed
- *              अगर no table is available to override.
+ * RETURN:      Status, address/length of new table. Null pointer returned
+ *              if no table is available to override.
  *
  * DESCRIPTION: Returns AE_SUPPORT, function not used in user space.
  *
  *****************************************************************************/
 
 acpi_status
-acpi_os_physical_table_override(काष्ठा acpi_table_header *existing_table,
+acpi_os_physical_table_override(struct acpi_table_header *existing_table,
 				acpi_physical_address *new_address,
 				u32 *new_table_length)
-अणु
+{
 
-	वापस (AE_SUPPORT);
-पूर्ण
+	return (AE_SUPPORT);
+}
 
 /******************************************************************************
  *
@@ -293,144 +292,144 @@ acpi_os_physical_table_override(काष्ठा acpi_table_header *existing_t
  *
  * RETURN:      Status
  *
- * DESCRIPTION: A hook beक्रमe writing sleep रेजिस्टरs to enter the sleep
- *              state. Return AE_CTRL_TERMINATE to skip further sleep रेजिस्टर
- *              ग_लिखोs.
+ * DESCRIPTION: A hook before writing sleep registers to enter the sleep
+ *              state. Return AE_CTRL_TERMINATE to skip further sleep register
+ *              writes.
  *
  *****************************************************************************/
 
 acpi_status acpi_os_enter_sleep(u8 sleep_state, u32 rega_value, u32 regb_value)
-अणु
+{
 
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /******************************************************************************
  *
  * FUNCTION:    acpi_os_redirect_output
  *
- * PARAMETERS:  destination         - An खोलो file handle/poपूर्णांकer
+ * PARAMETERS:  destination         - An open file handle/pointer
  *
  * RETURN:      None
  *
- * DESCRIPTION: Causes redirect of acpi_os_म_लिखो and acpi_os_भ_लिखो
+ * DESCRIPTION: Causes redirect of acpi_os_printf and acpi_os_vprintf
  *
  *****************************************************************************/
 
-व्योम acpi_os_redirect_output(व्योम *destination)
-अणु
+void acpi_os_redirect_output(void *destination)
+{
 
 	acpi_gbl_output_file = destination;
-पूर्ण
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_os_म_लिखो
+ * FUNCTION:    acpi_os_printf
  *
- * PARAMETERS:  fmt, ...            - Standard म_लिखो क्रमmat
+ * PARAMETERS:  fmt, ...            - Standard printf format
  *
  * RETURN:      None
  *
- * DESCRIPTION: Formatted output. Note: very similar to acpi_os_भ_लिखो
- *              (perक्रमmance), changes should be tracked in both functions.
+ * DESCRIPTION: Formatted output. Note: very similar to acpi_os_vprintf
+ *              (performance), changes should be tracked in both functions.
  *
  *****************************************************************************/
 
-व्योम ACPI_INTERNAL_VAR_XFACE acpi_os_म_लिखो(स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
+void ACPI_INTERNAL_VAR_XFACE acpi_os_printf(const char *fmt, ...)
+{
+	va_list args;
 	u8 flags;
 
 	flags = acpi_gbl_db_output_flags;
-	अगर (flags & ACPI_DB_REसूचीECTABLE_OUTPUT) अणु
+	if (flags & ACPI_DB_REDIRECTABLE_OUTPUT) {
 
-		/* Output is directable to either a file (अगर खोलो) or the console */
+		/* Output is directable to either a file (if open) or the console */
 
-		अगर (acpi_gbl_debug_file) अणु
+		if (acpi_gbl_debug_file) {
 
-			/* Output file is खोलो, send the output there */
+			/* Output file is open, send the output there */
 
-			बहु_शुरू(args, fmt);
-			भख_लिखो(acpi_gbl_debug_file, fmt, args);
-			बहु_पूर्ण(args);
-		पूर्ण अन्यथा अणु
+			va_start(args, fmt);
+			vfprintf(acpi_gbl_debug_file, fmt, args);
+			va_end(args);
+		} else {
 			/* No redirection, send output to console (once only!) */
 
 			flags |= ACPI_DB_CONSOLE_OUTPUT;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (flags & ACPI_DB_CONSOLE_OUTPUT) अणु
-		बहु_शुरू(args, fmt);
-		भख_लिखो(acpi_gbl_output_file, fmt, args);
-		बहु_पूर्ण(args);
-	पूर्ण
-पूर्ण
+	if (flags & ACPI_DB_CONSOLE_OUTPUT) {
+		va_start(args, fmt);
+		vfprintf(acpi_gbl_output_file, fmt, args);
+		va_end(args);
+	}
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_os_भ_लिखो
+ * FUNCTION:    acpi_os_vprintf
  *
- * PARAMETERS:  fmt                 - Standard म_लिखो क्रमmat
+ * PARAMETERS:  fmt                 - Standard printf format
  *              args                - Argument list
  *
  * RETURN:      None
  *
- * DESCRIPTION: Formatted output with argument list poपूर्णांकer. Note: very
- *              similar to acpi_os_म_लिखो, changes should be tracked in both
+ * DESCRIPTION: Formatted output with argument list pointer. Note: very
+ *              similar to acpi_os_printf, changes should be tracked in both
  *              functions.
  *
  *****************************************************************************/
 
-व्योम acpi_os_भ_लिखो(स्थिर अक्षर *fmt, बहु_सूची args)
-अणु
+void acpi_os_vprintf(const char *fmt, va_list args)
+{
 	u8 flags;
-	अक्षर buffer[ACPI_VPRINTF_BUFFER_SIZE];
+	char buffer[ACPI_VPRINTF_BUFFER_SIZE];
 
 	/*
 	 * We build the output string in a local buffer because we may be
-	 * outputting the buffer twice. Using भख_लिखो is problematic because
-	 * some implementations modअगरy the args poपूर्णांकer/काष्ठाure during
-	 * execution. Thus, we use the local buffer क्रम portability.
+	 * outputting the buffer twice. Using vfprintf is problematic because
+	 * some implementations modify the args pointer/structure during
+	 * execution. Thus, we use the local buffer for portability.
 	 *
-	 * Note: Since this module is पूर्णांकended क्रम use by the various ACPICA
+	 * Note: Since this module is intended for use by the various ACPICA
 	 * utilities/applications, we can safely declare the buffer on the stack.
-	 * Also, This function is used क्रम relatively small error messages only.
+	 * Also, This function is used for relatively small error messages only.
 	 */
-	vsnम_लिखो(buffer, ACPI_VPRINTF_BUFFER_SIZE, fmt, args);
+	vsnprintf(buffer, ACPI_VPRINTF_BUFFER_SIZE, fmt, args);
 
 	flags = acpi_gbl_db_output_flags;
-	अगर (flags & ACPI_DB_REसूचीECTABLE_OUTPUT) अणु
+	if (flags & ACPI_DB_REDIRECTABLE_OUTPUT) {
 
-		/* Output is directable to either a file (अगर खोलो) or the console */
+		/* Output is directable to either a file (if open) or the console */
 
-		अगर (acpi_gbl_debug_file) अणु
+		if (acpi_gbl_debug_file) {
 
-			/* Output file is खोलो, send the output there */
+			/* Output file is open, send the output there */
 
-			ख_माला_दो(buffer, acpi_gbl_debug_file);
-		पूर्ण अन्यथा अणु
+			fputs(buffer, acpi_gbl_debug_file);
+		} else {
 			/* No redirection, send output to console (once only!) */
 
 			flags |= ACPI_DB_CONSOLE_OUTPUT;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (flags & ACPI_DB_CONSOLE_OUTPUT) अणु
-		ख_माला_दो(buffer, acpi_gbl_output_file);
-	पूर्ण
-पूर्ण
+	if (flags & ACPI_DB_CONSOLE_OUTPUT) {
+		fputs(buffer, acpi_gbl_output_file);
+	}
+}
 
-#अगर_अघोषित ACPI_EXEC_APP
+#ifndef ACPI_EXEC_APP
 /******************************************************************************
  *
  * FUNCTION:    acpi_os_get_line
  *
- * PARAMETERS:  buffer              - Where to वापस the command line
+ * PARAMETERS:  buffer              - Where to return the command line
  *              buffer_length       - Maximum length of Buffer
- *              bytes_पढ़ो          - Where the actual byte count is वापसed
+ *              bytes_read          - Where the actual byte count is returned
  *
- * RETURN:      Status and actual bytes पढ़ो
+ * RETURN:      Status and actual bytes read
  *
  * DESCRIPTION: Get the next input line from the terminal. NOTE: For the
  *              acpi_exec utility, we use the acgetline module instead to
@@ -438,28 +437,28 @@ acpi_status acpi_os_enter_sleep(u8 sleep_state, u32 rega_value, u32 regb_value)
  *
  *****************************************************************************/
 
-acpi_status acpi_os_get_line(अक्षर *buffer, u32 buffer_length, u32 *bytes_पढ़ो)
-अणु
-	पूर्णांक input_अक्षर;
+acpi_status acpi_os_get_line(char *buffer, u32 buffer_length, u32 *bytes_read)
+{
+	int input_char;
 	u32 end_of_line;
 
-	/* Standard acpi_os_get_line क्रम all utilities except acpi_exec */
+	/* Standard acpi_os_get_line for all utilities except acpi_exec */
 
-	क्रम (end_of_line = 0;; end_of_line++) अणु
-		अगर (end_of_line >= buffer_length) अणु
-			वापस (AE_BUFFER_OVERFLOW);
-		पूर्ण
+	for (end_of_line = 0;; end_of_line++) {
+		if (end_of_line >= buffer_length) {
+			return (AE_BUFFER_OVERFLOW);
+		}
 
-		अगर ((input_अक्षर = अक्षर_लो()) == खातापूर्ण) अणु
-			वापस (AE_ERROR);
-		पूर्ण
+		if ((input_char = getchar()) == EOF) {
+			return (AE_ERROR);
+		}
 
-		अगर (!input_अक्षर || input_अक्षर == _ASCII_NEWLINE) अणु
-			अवरोध;
-		पूर्ण
+		if (!input_char || input_char == _ASCII_NEWLINE) {
+			break;
+		}
 
-		buffer[end_of_line] = (अक्षर)input_अक्षर;
-	पूर्ण
+		buffer[end_of_line] = (char)input_char;
+	}
 
 	/* Null terminate the buffer */
 
@@ -467,15 +466,15 @@ acpi_status acpi_os_get_line(अक्षर *buffer, u32 buffer_length, u32 *by
 
 	/* Return the number of bytes in the string */
 
-	अगर (bytes_पढ़ो) अणु
-		*bytes_पढ़ो = end_of_line;
-	पूर्ण
+	if (bytes_read) {
+		*bytes_read = end_of_line;
+	}
 
-	वापस (AE_OK);
-पूर्ण
-#पूर्ण_अगर
+	return (AE_OK);
+}
+#endif
 
-#अगर_अघोषित ACPI_USE_NATIVE_MEMORY_MAPPING
+#ifndef ACPI_USE_NATIVE_MEMORY_MAPPING
 /******************************************************************************
  *
  * FUNCTION:    acpi_os_map_memory
@@ -483,17 +482,17 @@ acpi_status acpi_os_get_line(अक्षर *buffer, u32 buffer_length, u32 *by
  * PARAMETERS:  where               - Physical address of memory to be mapped
  *              length              - How much memory to map
  *
- * RETURN:      Poपूर्णांकer to mapped memory. Null on error.
+ * RETURN:      Pointer to mapped memory. Null on error.
  *
- * DESCRIPTION: Map physical memory पूर्णांकo caller's address space
+ * DESCRIPTION: Map physical memory into caller's address space
  *
  *****************************************************************************/
 
-व्योम *acpi_os_map_memory(acpi_physical_address where, acpi_size length)
-अणु
+void *acpi_os_map_memory(acpi_physical_address where, acpi_size length)
+{
 
-	वापस (ACPI_TO_POINTER((acpi_size)where));
-पूर्ण
+	return (ACPI_TO_POINTER((acpi_size)where));
+}
 
 /******************************************************************************
  *
@@ -509,12 +508,12 @@ acpi_status acpi_os_get_line(अक्षर *buffer, u32 buffer_length, u32 *by
  *
  *****************************************************************************/
 
-व्योम acpi_os_unmap_memory(व्योम *where, acpi_size length)
-अणु
+void acpi_os_unmap_memory(void *where, acpi_size length)
+{
 
-	वापस;
-पूर्ण
-#पूर्ण_अगर
+	return;
+}
+#endif
 
 /******************************************************************************
  *
@@ -522,47 +521,47 @@ acpi_status acpi_os_get_line(अक्षर *buffer, u32 buffer_length, u32 *by
  *
  * PARAMETERS:  size                - Amount to allocate, in bytes
  *
- * RETURN:      Poपूर्णांकer to the new allocation. Null on error.
+ * RETURN:      Pointer to the new allocation. Null on error.
  *
  * DESCRIPTION: Allocate memory. Algorithm is dependent on the OS.
  *
  *****************************************************************************/
 
-व्योम *acpi_os_allocate(acpi_size size)
-अणु
-	व्योम *mem;
+void *acpi_os_allocate(acpi_size size)
+{
+	void *mem;
 
-	mem = (व्योम *)दो_स्मृति((माप_प्रकार) size);
-	वापस (mem);
-पूर्ण
+	mem = (void *)malloc((size_t) size);
+	return (mem);
+}
 
-#अगर_घोषित USE_NATIVE_ALLOCATE_ZEROED
+#ifdef USE_NATIVE_ALLOCATE_ZEROED
 /******************************************************************************
  *
  * FUNCTION:    acpi_os_allocate_zeroed
  *
  * PARAMETERS:  size                - Amount to allocate, in bytes
  *
- * RETURN:      Poपूर्णांकer to the new allocation. Null on error.
+ * RETURN:      Pointer to the new allocation. Null on error.
  *
  * DESCRIPTION: Allocate and zero memory. Algorithm is dependent on the OS.
  *
  *****************************************************************************/
 
-व्योम *acpi_os_allocate_zeroed(acpi_size size)
-अणु
-	व्योम *mem;
+void *acpi_os_allocate_zeroed(acpi_size size)
+{
+	void *mem;
 
-	mem = (व्योम *)सुस्मृति(1, (माप_प्रकार) size);
-	वापस (mem);
-पूर्ण
-#पूर्ण_अगर
+	mem = (void *)calloc(1, (size_t) size);
+	return (mem);
+}
+#endif
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_os_मुक्त
+ * FUNCTION:    acpi_os_free
  *
- * PARAMETERS:  mem                 - Poपूर्णांकer to previously allocated memory
+ * PARAMETERS:  mem                 - Pointer to previously allocated memory
  *
  * RETURN:      None.
  *
@@ -570,18 +569,18 @@ acpi_status acpi_os_get_line(अक्षर *buffer, u32 buffer_length, u32 *by
  *
  *****************************************************************************/
 
-व्योम acpi_os_मुक्त(व्योम *mem)
-अणु
+void acpi_os_free(void *mem)
+{
 
-	मुक्त(mem);
-पूर्ण
+	free(mem);
+}
 
-#अगर_घोषित ACPI_SINGLE_THREADED
+#ifdef ACPI_SINGLE_THREADED
 /******************************************************************************
  *
  * FUNCTION:    Semaphore stub functions
  *
- * DESCRIPTION: Stub functions used क्रम single-thपढ़ो applications that करो
+ * DESCRIPTION: Stub functions used for single-thread applications that do
  *              not require semaphore synchronization. Full implementations
  *              of these functions appear after the stubs.
  *
@@ -590,33 +589,33 @@ acpi_status acpi_os_get_line(अक्षर *buffer, u32 buffer_length, u32 *by
 acpi_status
 acpi_os_create_semaphore(u32 max_units,
 			 u32 initial_units, acpi_handle *out_handle)
-अणु
+{
 	*out_handle = (acpi_handle)1;
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 acpi_status acpi_os_delete_semaphore(acpi_handle handle)
-अणु
-	वापस (AE_OK);
-पूर्ण
+{
+	return (AE_OK);
+}
 
-acpi_status acpi_os_रुको_semaphore(acpi_handle handle, u32 units, u16 समयout)
-अणु
-	वापस (AE_OK);
-पूर्ण
+acpi_status acpi_os_wait_semaphore(acpi_handle handle, u32 units, u16 timeout)
+{
+	return (AE_OK);
+}
 
-acpi_status acpi_os_संकेत_semaphore(acpi_handle handle, u32 units)
-अणु
-	वापस (AE_OK);
-पूर्ण
+acpi_status acpi_os_signal_semaphore(acpi_handle handle, u32 units)
+{
+	return (AE_OK);
+}
 
-#अन्यथा
+#else
 /******************************************************************************
  *
  * FUNCTION:    acpi_os_create_semaphore
  *
- * PARAMETERS:  initial_units       - Units to be asचिन्हित to the new semaphore
- *              out_handle          - Where a handle will be वापसed
+ * PARAMETERS:  initial_units       - Units to be assigned to the new semaphore
+ *              out_handle          - Where a handle will be returned
  *
  * RETURN:      Status
  *
@@ -627,50 +626,50 @@ acpi_status acpi_os_संकेत_semaphore(acpi_handle handle, u32 units)
 acpi_status
 acpi_os_create_semaphore(u32 max_units,
 			 u32 initial_units, acpi_handle *out_handle)
-अणु
+{
 	sem_t *sem;
 
-	अगर (!out_handle) अणु
-		वापस (AE_BAD_PARAMETER);
-	पूर्ण
-#अगर_घोषित __APPLE__
-	अणु
-		अटल पूर्णांक semaphore_count = 0;
-		अक्षर semaphore_name[32];
+	if (!out_handle) {
+		return (AE_BAD_PARAMETER);
+	}
+#ifdef __APPLE__
+	{
+		static int semaphore_count = 0;
+		char semaphore_name[32];
 
-		snम_लिखो(semaphore_name, माप(semaphore_name), "acpi_sem_%d",
+		snprintf(semaphore_name, sizeof(semaphore_name), "acpi_sem_%d",
 			 semaphore_count++);
-		म_लिखो("%s\n", semaphore_name);
+		printf("%s\n", semaphore_name);
 		sem =
-		    sem_खोलो(semaphore_name, O_EXCL | O_CREAT, 0755,
+		    sem_open(semaphore_name, O_EXCL | O_CREAT, 0755,
 			     initial_units);
-		अगर (!sem) अणु
-			वापस (AE_NO_MEMORY);
-		पूर्ण
+		if (!sem) {
+			return (AE_NO_MEMORY);
+		}
 		sem_unlink(semaphore_name);	/* This just deletes the name */
-	पूर्ण
+	}
 
-#अन्यथा
-	sem = acpi_os_allocate(माप(sem_t));
-	अगर (!sem) अणु
-		वापस (AE_NO_MEMORY);
-	पूर्ण
+#else
+	sem = acpi_os_allocate(sizeof(sem_t));
+	if (!sem) {
+		return (AE_NO_MEMORY);
+	}
 
-	अगर (sem_init(sem, 0, initial_units) == -1) अणु
-		acpi_os_मुक्त(sem);
-		वापस (AE_BAD_PARAMETER);
-	पूर्ण
-#पूर्ण_अगर
+	if (sem_init(sem, 0, initial_units) == -1) {
+		acpi_os_free(sem);
+		return (AE_BAD_PARAMETER);
+	}
+#endif
 
 	*out_handle = (acpi_handle)sem;
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /******************************************************************************
  *
  * FUNCTION:    acpi_os_delete_semaphore
  *
- * PARAMETERS:  handle              - Handle वापसed by acpi_os_create_semaphore
+ * PARAMETERS:  handle              - Handle returned by acpi_os_create_semaphore
  *
  * RETURN:      Status
  *
@@ -679,150 +678,150 @@ acpi_os_create_semaphore(u32 max_units,
  *****************************************************************************/
 
 acpi_status acpi_os_delete_semaphore(acpi_handle handle)
-अणु
+{
 	sem_t *sem = (sem_t *) handle;
 
-	अगर (!sem) अणु
-		वापस (AE_BAD_PARAMETER);
-	पूर्ण
-#अगर_घोषित __APPLE__
-	अगर (sem_बंद(sem) == -1) अणु
-		वापस (AE_BAD_PARAMETER);
-	पूर्ण
-#अन्यथा
-	अगर (sem_destroy(sem) == -1) अणु
-		वापस (AE_BAD_PARAMETER);
-	पूर्ण
-#पूर्ण_अगर
+	if (!sem) {
+		return (AE_BAD_PARAMETER);
+	}
+#ifdef __APPLE__
+	if (sem_close(sem) == -1) {
+		return (AE_BAD_PARAMETER);
+	}
+#else
+	if (sem_destroy(sem) == -1) {
+		return (AE_BAD_PARAMETER);
+	}
+#endif
 
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_os_रुको_semaphore
+ * FUNCTION:    acpi_os_wait_semaphore
  *
- * PARAMETERS:  handle              - Handle वापसed by acpi_os_create_semaphore
- *              units               - How many units to रुको क्रम
- *              msec_समयout        - How दीर्घ to रुको (milliseconds)
+ * PARAMETERS:  handle              - Handle returned by acpi_os_create_semaphore
+ *              units               - How many units to wait for
+ *              msec_timeout        - How long to wait (milliseconds)
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Wait क्रम units
+ * DESCRIPTION: Wait for units
  *
  *****************************************************************************/
 
 acpi_status
-acpi_os_रुको_semaphore(acpi_handle handle, u32 units, u16 msec_समयout)
-अणु
+acpi_os_wait_semaphore(acpi_handle handle, u32 units, u16 msec_timeout)
+{
 	acpi_status status = AE_OK;
 	sem_t *sem = (sem_t *) handle;
-	पूर्णांक ret_val;
-#अगर_अघोषित ACPI_USE_ALTERNATE_TIMEOUT
-	काष्ठा बारpec समय;
-#पूर्ण_अगर
+	int ret_val;
+#ifndef ACPI_USE_ALTERNATE_TIMEOUT
+	struct timespec time;
+#endif
 
-	अगर (!sem) अणु
-		वापस (AE_BAD_PARAMETER);
-	पूर्ण
+	if (!sem) {
+		return (AE_BAD_PARAMETER);
+	}
 
-	चयन (msec_समयout) अणु
+	switch (msec_timeout) {
 		/*
 		 * No Wait:
 		 * --------
-		 * A zero समयout value indicates that we shouldn't रुको - just
-		 * acquire the semaphore अगर available otherwise वापस AE_TIME
+		 * A zero timeout value indicates that we shouldn't wait - just
+		 * acquire the semaphore if available otherwise return AE_TIME
 		 * (a.k.a. 'would block').
 		 */
-	हाल 0:
+	case 0:
 
-		अगर (sem_tryरुको(sem) == -1) अणु
+		if (sem_trywait(sem) == -1) {
 			status = (AE_TIME);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
 		/* Wait Indefinitely */
 
-	हाल ACPI_WAIT_FOREVER:
+	case ACPI_WAIT_FOREVER:
 
-		जबतक (((ret_val = sem_रुको(sem)) == -1) && (त्रुटि_सं == EINTR)) अणु
-			जारी;	/* Restart अगर पूर्णांकerrupted */
-		पूर्ण
-		अगर (ret_val != 0) अणु
+		while (((ret_val = sem_wait(sem)) == -1) && (errno == EINTR)) {
+			continue;	/* Restart if interrupted */
+		}
+		if (ret_val != 0) {
 			status = (AE_TIME);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-		/* Wait with msec_समयout */
+		/* Wait with msec_timeout */
 
-	शेष:
+	default:
 
-#अगर_घोषित ACPI_USE_ALTERNATE_TIMEOUT
+#ifdef ACPI_USE_ALTERNATE_TIMEOUT
 		/*
-		 * Alternate समयout mechanism क्रम environments where
-		 * sem_समयdरुको is not available or करोes not work properly.
+		 * Alternate timeout mechanism for environments where
+		 * sem_timedwait is not available or does not work properly.
 		 */
-		जबतक (msec_समयout) अणु
-			अगर (sem_tryरुको(sem) == 0) अणु
+		while (msec_timeout) {
+			if (sem_trywait(sem) == 0) {
 
 				/* Got the semaphore */
-				वापस (AE_OK);
-			पूर्ण
+				return (AE_OK);
+			}
 
-			अगर (msec_समयout >= 10) अणु
-				msec_समयout -= 10;
+			if (msec_timeout >= 10) {
+				msec_timeout -= 10;
 				usleep(10 * ACPI_USEC_PER_MSEC);	/* ten milliseconds */
-			पूर्ण अन्यथा अणु
-				msec_समयout--;
+			} else {
+				msec_timeout--;
 				usleep(ACPI_USEC_PER_MSEC);	/* one millisecond */
-			पूर्ण
-		पूर्ण
+			}
+		}
 		status = (AE_TIME);
-#अन्यथा
+#else
 		/*
-		 * The पूर्णांकerface to sem_समयdरुको is an असलolute समय, so we need to
-		 * get the current समय, then add in the millisecond Timeout value.
+		 * The interface to sem_timedwait is an absolute time, so we need to
+		 * get the current time, then add in the millisecond Timeout value.
 		 */
-		अगर (घड़ी_समय_लो(CLOCK_REALTIME, &समय) == -1) अणु
-			लिखो_त्रुटि("clock_gettime");
-			वापस (AE_TIME);
-		पूर्ण
+		if (clock_gettime(CLOCK_REALTIME, &time) == -1) {
+			perror("clock_gettime");
+			return (AE_TIME);
+		}
 
-		समय.tv_sec += (msec_समयout / ACPI_MSEC_PER_SEC);
-		समय.tv_nsec +=
-		    ((msec_समयout % ACPI_MSEC_PER_SEC) * ACPI_NSEC_PER_MSEC);
+		time.tv_sec += (msec_timeout / ACPI_MSEC_PER_SEC);
+		time.tv_nsec +=
+		    ((msec_timeout % ACPI_MSEC_PER_SEC) * ACPI_NSEC_PER_MSEC);
 
 		/* Handle nanosecond overflow (field must be less than one second) */
 
-		अगर (समय.tv_nsec >= ACPI_NSEC_PER_SEC) अणु
-			समय.tv_sec += (समय.tv_nsec / ACPI_NSEC_PER_SEC);
-			समय.tv_nsec = (समय.tv_nsec % ACPI_NSEC_PER_SEC);
-		पूर्ण
+		if (time.tv_nsec >= ACPI_NSEC_PER_SEC) {
+			time.tv_sec += (time.tv_nsec / ACPI_NSEC_PER_SEC);
+			time.tv_nsec = (time.tv_nsec % ACPI_NSEC_PER_SEC);
+		}
 
-		जबतक (((ret_val = sem_समयdरुको(sem, &समय)) == -1)
-		       && (त्रुटि_सं == EINTR)) अणु
-			जारी;	/* Restart अगर पूर्णांकerrupted */
+		while (((ret_val = sem_timedwait(sem, &time)) == -1)
+		       && (errno == EINTR)) {
+			continue;	/* Restart if interrupted */
 
-		पूर्ण
+		}
 
-		अगर (ret_val != 0) अणु
-			अगर (त्रुटि_सं != ETIMEDOUT) अणु
-				लिखो_त्रुटि("sem_timedwait");
-			पूर्ण
+		if (ret_val != 0) {
+			if (errno != ETIMEDOUT) {
+				perror("sem_timedwait");
+			}
 			status = (AE_TIME);
-		पूर्ण
-#पूर्ण_अगर
-		अवरोध;
-	पूर्ण
+		}
+#endif
+		break;
+	}
 
-	वापस (status);
-पूर्ण
+	return (status);
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_os_संकेत_semaphore
+ * FUNCTION:    acpi_os_signal_semaphore
  *
- * PARAMETERS:  handle              - Handle वापसed by acpi_os_create_semaphore
+ * PARAMETERS:  handle              - Handle returned by acpi_os_create_semaphore
  *              units               - Number of units to send
  *
  * RETURN:      Status
@@ -831,96 +830,96 @@ acpi_os_रुको_semaphore(acpi_handle handle, u32 units, u16 msec_समय
  *
  *****************************************************************************/
 
-acpi_status acpi_os_संकेत_semaphore(acpi_handle handle, u32 units)
-अणु
+acpi_status acpi_os_signal_semaphore(acpi_handle handle, u32 units)
+{
 	sem_t *sem = (sem_t *) handle;
 
-	अगर (!sem) अणु
-		वापस (AE_BAD_PARAMETER);
-	पूर्ण
+	if (!sem) {
+		return (AE_BAD_PARAMETER);
+	}
 
-	अगर (sem_post(sem) == -1) अणु
-		वापस (AE_LIMIT);
-	पूर्ण
+	if (sem_post(sem) == -1) {
+		return (AE_LIMIT);
+	}
 
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
-#पूर्ण_अगर				/* ACPI_SINGLE_THREADED */
+#endif				/* ACPI_SINGLE_THREADED */
 
 /******************************************************************************
  *
- * FUNCTION:    Spinlock पूर्णांकerfaces
+ * FUNCTION:    Spinlock interfaces
  *
- * DESCRIPTION: Map these पूर्णांकerfaces to semaphore पूर्णांकerfaces
+ * DESCRIPTION: Map these interfaces to semaphore interfaces
  *
  *****************************************************************************/
 
 acpi_status acpi_os_create_lock(acpi_spinlock * out_handle)
-अणु
+{
 
-	वापस (acpi_os_create_semaphore(1, 1, out_handle));
-पूर्ण
+	return (acpi_os_create_semaphore(1, 1, out_handle));
+}
 
-व्योम acpi_os_delete_lock(acpi_spinlock handle)
-अणु
+void acpi_os_delete_lock(acpi_spinlock handle)
+{
 	acpi_os_delete_semaphore(handle);
-पूर्ण
+}
 
 acpi_cpu_flags acpi_os_acquire_lock(acpi_handle handle)
-अणु
-	acpi_os_रुको_semaphore(handle, 1, 0xFFFF);
-	वापस (0);
-पूर्ण
+{
+	acpi_os_wait_semaphore(handle, 1, 0xFFFF);
+	return (0);
+}
 
-व्योम acpi_os_release_lock(acpi_spinlock handle, acpi_cpu_flags flags)
-अणु
-	acpi_os_संकेत_semaphore(handle, 1);
-पूर्ण
+void acpi_os_release_lock(acpi_spinlock handle, acpi_cpu_flags flags)
+{
+	acpi_os_signal_semaphore(handle, 1);
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_os_install_पूर्णांकerrupt_handler
+ * FUNCTION:    acpi_os_install_interrupt_handler
  *
- * PARAMETERS:  पूर्णांकerrupt_number    - Level handler should respond to.
- *              isr                 - Address of the ACPI पूर्णांकerrupt handler
- *              except_ptr          - Where status is वापसed
+ * PARAMETERS:  interrupt_number    - Level handler should respond to.
+ *              isr                 - Address of the ACPI interrupt handler
+ *              except_ptr          - Where status is returned
  *
  * RETURN:      Handle to the newly installed handler.
  *
- * DESCRIPTION: Install an पूर्णांकerrupt handler. Used to install the ACPI
+ * DESCRIPTION: Install an interrupt handler. Used to install the ACPI
  *              OS-independent handler.
  *
  *****************************************************************************/
 
 u32
-acpi_os_install_पूर्णांकerrupt_handler(u32 पूर्णांकerrupt_number,
+acpi_os_install_interrupt_handler(u32 interrupt_number,
 				  acpi_osd_handler service_routine,
-				  व्योम *context)
-अणु
+				  void *context)
+{
 
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_os_हटाओ_पूर्णांकerrupt_handler
+ * FUNCTION:    acpi_os_remove_interrupt_handler
  *
  * PARAMETERS:  handle              - Returned when handler was installed
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Uninstalls an पूर्णांकerrupt handler.
+ * DESCRIPTION: Uninstalls an interrupt handler.
  *
  *****************************************************************************/
 
 acpi_status
-acpi_os_हटाओ_पूर्णांकerrupt_handler(u32 पूर्णांकerrupt_number,
+acpi_os_remove_interrupt_handler(u32 interrupt_number,
 				 acpi_osd_handler service_routine)
-अणु
+{
 
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /******************************************************************************
  *
@@ -934,13 +933,13 @@ acpi_os_हटाओ_पूर्णांकerrupt_handler(u32 पूर्ण�
  *
  *****************************************************************************/
 
-व्योम acpi_os_stall(u32 microseconds)
-अणु
+void acpi_os_stall(u32 microseconds)
+{
 
-	अगर (microseconds) अणु
+	if (microseconds) {
 		usleep(microseconds);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /******************************************************************************
  *
@@ -954,52 +953,52 @@ acpi_os_हटाओ_पूर्णांकerrupt_handler(u32 पूर्ण�
  *
  *****************************************************************************/
 
-व्योम acpi_os_sleep(u64 milliseconds)
-अणु
+void acpi_os_sleep(u64 milliseconds)
+{
 
-	/* Sleep क्रम whole seconds */
+	/* Sleep for whole seconds */
 
 	sleep(milliseconds / ACPI_MSEC_PER_SEC);
 
 	/*
-	 * Sleep क्रम reमुख्यing microseconds.
+	 * Sleep for remaining microseconds.
 	 * Arg to usleep() is in usecs and must be less than 1,000,000 (1 second).
 	 */
 	usleep((milliseconds % ACPI_MSEC_PER_SEC) * ACPI_USEC_PER_MSEC);
-पूर्ण
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_os_get_समयr
+ * FUNCTION:    acpi_os_get_timer
  *
  * PARAMETERS:  None
  *
- * RETURN:      Current समय in 100 nanosecond units
+ * RETURN:      Current time in 100 nanosecond units
  *
- * DESCRIPTION: Get the current प्रणाली समय
+ * DESCRIPTION: Get the current system time
  *
  *****************************************************************************/
 
-u64 acpi_os_get_समयr(व्योम)
-अणु
-	काष्ठा समयval समय;
+u64 acpi_os_get_timer(void)
+{
+	struct timeval time;
 
-	/* This समयr has sufficient resolution क्रम user-space application code */
+	/* This timer has sufficient resolution for user-space application code */
 
-	समय_लोofday(&समय, शून्य);
+	gettimeofday(&time, NULL);
 
 	/* (Seconds * 10^7 = 100ns(10^-7)) + (Microseconds(10^-6) * 10^1 = 100ns) */
 
-	वापस (((u64)समय.tv_sec * ACPI_100NSEC_PER_SEC) +
-		((u64)समय.tv_usec * ACPI_100NSEC_PER_USEC));
-पूर्ण
+	return (((u64)time.tv_sec * ACPI_100NSEC_PER_SEC) +
+		((u64)time.tv_usec * ACPI_100NSEC_PER_USEC));
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_os_पढ़ो_pci_configuration
+ * FUNCTION:    acpi_os_read_pci_configuration
  *
  * PARAMETERS:  pci_id              - Seg/Bus/Dev
- *              pci_रेजिस्टर        - Device Register
+ *              pci_register        - Device Register
  *              value               - Buffer where value is placed
  *              width               - Number of bits
  *
@@ -1010,20 +1009,20 @@ u64 acpi_os_get_समयr(व्योम)
  *****************************************************************************/
 
 acpi_status
-acpi_os_पढ़ो_pci_configuration(काष्ठा acpi_pci_id *pci_id,
-			       u32 pci_रेजिस्टर, u64 *value, u32 width)
-अणु
+acpi_os_read_pci_configuration(struct acpi_pci_id *pci_id,
+			       u32 pci_register, u64 *value, u32 width)
+{
 
 	*value = 0;
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_os_ग_लिखो_pci_configuration
+ * FUNCTION:    acpi_os_write_pci_configuration
  *
  * PARAMETERS:  pci_id              - Seg/Bus/Dev
- *              pci_रेजिस्टर        - Device Register
+ *              pci_register        - Device Register
  *              value               - Value to be written
  *              width               - Number of bits
  *
@@ -1034,115 +1033,115 @@ acpi_os_पढ़ो_pci_configuration(काष्ठा acpi_pci_id *pci_id,
  *****************************************************************************/
 
 acpi_status
-acpi_os_ग_लिखो_pci_configuration(काष्ठा acpi_pci_id *pci_id,
-				u32 pci_रेजिस्टर, u64 value, u32 width)
-अणु
+acpi_os_write_pci_configuration(struct acpi_pci_id *pci_id,
+				u32 pci_register, u64 value, u32 width)
+{
 
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_os_पढ़ो_port
+ * FUNCTION:    acpi_os_read_port
  *
- * PARAMETERS:  address             - Address of I/O port/रेजिस्टर to पढ़ो
+ * PARAMETERS:  address             - Address of I/O port/register to read
  *              value               - Where value is placed
  *              width               - Number of bits
  *
- * RETURN:      Value पढ़ो from port
+ * RETURN:      Value read from port
  *
- * DESCRIPTION: Read data from an I/O port or रेजिस्टर
+ * DESCRIPTION: Read data from an I/O port or register
  *
  *****************************************************************************/
 
-acpi_status acpi_os_पढ़ो_port(acpi_io_address address, u32 *value, u32 width)
-अणु
+acpi_status acpi_os_read_port(acpi_io_address address, u32 *value, u32 width)
+{
 
-	चयन (width) अणु
-	हाल 8:
+	switch (width) {
+	case 8:
 
 		*value = 0xFF;
-		अवरोध;
+		break;
 
-	हाल 16:
+	case 16:
 
 		*value = 0xFFFF;
-		अवरोध;
+		break;
 
-	हाल 32:
+	case 32:
 
 		*value = 0xFFFFFFFF;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 
-		वापस (AE_BAD_PARAMETER);
-	पूर्ण
+		return (AE_BAD_PARAMETER);
+	}
 
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_os_ग_लिखो_port
+ * FUNCTION:    acpi_os_write_port
  *
- * PARAMETERS:  address             - Address of I/O port/रेजिस्टर to ग_लिखो
- *              value               - Value to ग_लिखो
+ * PARAMETERS:  address             - Address of I/O port/register to write
+ *              value               - Value to write
  *              width               - Number of bits
  *
  * RETURN:      None
  *
- * DESCRIPTION: Write data to an I/O port or रेजिस्टर
+ * DESCRIPTION: Write data to an I/O port or register
  *
  *****************************************************************************/
 
-acpi_status acpi_os_ग_लिखो_port(acpi_io_address address, u32 value, u32 width)
-अणु
+acpi_status acpi_os_write_port(acpi_io_address address, u32 value, u32 width)
+{
 
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_os_पढ़ो_memory
+ * FUNCTION:    acpi_os_read_memory
  *
- * PARAMETERS:  address             - Physical Memory Address to पढ़ो
+ * PARAMETERS:  address             - Physical Memory Address to read
  *              value               - Where value is placed
  *              width               - Number of bits (8,16,32, or 64)
  *
- * RETURN:      Value पढ़ो from physical memory address. Always वापसed
- *              as a 64-bit पूर्णांकeger, regardless of the पढ़ो width.
+ * RETURN:      Value read from physical memory address. Always returned
+ *              as a 64-bit integer, regardless of the read width.
  *
  * DESCRIPTION: Read data from a physical memory address
  *
  *****************************************************************************/
 
 acpi_status
-acpi_os_पढ़ो_memory(acpi_physical_address address, u64 *value, u32 width)
-अणु
+acpi_os_read_memory(acpi_physical_address address, u64 *value, u32 width)
+{
 
-	चयन (width) अणु
-	हाल 8:
-	हाल 16:
-	हाल 32:
-	हाल 64:
+	switch (width) {
+	case 8:
+	case 16:
+	case 32:
+	case 64:
 
 		*value = 0;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 
-		वापस (AE_BAD_PARAMETER);
-	पूर्ण
-	वापस (AE_OK);
-पूर्ण
+		return (AE_BAD_PARAMETER);
+	}
+	return (AE_OK);
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_os_ग_लिखो_memory
+ * FUNCTION:    acpi_os_write_memory
  *
- * PARAMETERS:  address             - Physical Memory Address to ग_लिखो
- *              value               - Value to ग_लिखो
+ * PARAMETERS:  address             - Physical Memory Address to write
+ *              value               - Value to write
  *              width               - Number of bits (8,16,32, or 64)
  *
  * RETURN:      None
@@ -1152,56 +1151,56 @@ acpi_os_पढ़ो_memory(acpi_physical_address address, u64 *value, u32 width
  *****************************************************************************/
 
 acpi_status
-acpi_os_ग_लिखो_memory(acpi_physical_address address, u64 value, u32 width)
-अणु
+acpi_os_write_memory(acpi_physical_address address, u64 value, u32 width)
+{
 
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_os_पढ़ोable
+ * FUNCTION:    acpi_os_readable
  *
- * PARAMETERS:  poपूर्णांकer             - Area to be verअगरied
+ * PARAMETERS:  pointer             - Area to be verified
  *              length              - Size of area
  *
- * RETURN:      TRUE अगर पढ़ोable क्रम entire length
+ * RETURN:      TRUE if readable for entire length
  *
- * DESCRIPTION: Verअगरy that a poपूर्णांकer is valid क्रम पढ़ोing
+ * DESCRIPTION: Verify that a pointer is valid for reading
  *
  *****************************************************************************/
 
-u8 acpi_os_पढ़ोable(व्योम *poपूर्णांकer, acpi_size length)
-अणु
+u8 acpi_os_readable(void *pointer, acpi_size length)
+{
 
-	वापस (TRUE);
-पूर्ण
+	return (TRUE);
+}
 
 /******************************************************************************
  *
  * FUNCTION:    acpi_os_writable
  *
- * PARAMETERS:  poपूर्णांकer             - Area to be verअगरied
+ * PARAMETERS:  pointer             - Area to be verified
  *              length              - Size of area
  *
- * RETURN:      TRUE अगर writable क्रम entire length
+ * RETURN:      TRUE if writable for entire length
  *
- * DESCRIPTION: Verअगरy that a poपूर्णांकer is valid क्रम writing
+ * DESCRIPTION: Verify that a pointer is valid for writing
  *
  *****************************************************************************/
 
-u8 acpi_os_writable(व्योम *poपूर्णांकer, acpi_size length)
-अणु
+u8 acpi_os_writable(void *pointer, acpi_size length)
+{
 
-	वापस (TRUE);
-पूर्ण
+	return (TRUE);
+}
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_os_संकेत
+ * FUNCTION:    acpi_os_signal
  *
- * PARAMETERS:  function            - ACPI A संकेत function code
- *              info                - Poपूर्णांकer to function-dependent काष्ठाure
+ * PARAMETERS:  function            - ACPI A signal function code
+ *              info                - Pointer to function-dependent structure
  *
  * RETURN:      Status
  *
@@ -1209,48 +1208,48 @@ u8 acpi_os_writable(व्योम *poपूर्णांकer, acpi_size len
  *
  *****************************************************************************/
 
-acpi_status acpi_os_संकेत(u32 function, व्योम *info)
-अणु
+acpi_status acpi_os_signal(u32 function, void *info)
+{
 
-	चयन (function) अणु
-	हाल ACPI_SIGNAL_FATAL:
+	switch (function) {
+	case ACPI_SIGNAL_FATAL:
 
-		अवरोध;
+		break;
 
-	हाल ACPI_SIGNAL_BREAKPOINT:
+	case ACPI_SIGNAL_BREAKPOINT:
 
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
-/* Optional multi-thपढ़ो support */
+/* Optional multi-thread support */
 
-#अगर_अघोषित ACPI_SINGLE_THREADED
+#ifndef ACPI_SINGLE_THREADED
 /******************************************************************************
  *
- * FUNCTION:    acpi_os_get_thपढ़ो_id
+ * FUNCTION:    acpi_os_get_thread_id
  *
  * PARAMETERS:  None
  *
- * RETURN:      Id of the running thपढ़ो
+ * RETURN:      Id of the running thread
  *
- * DESCRIPTION: Get the ID of the current (running) thपढ़ो
+ * DESCRIPTION: Get the ID of the current (running) thread
  *
  *****************************************************************************/
 
-acpi_thपढ़ो_id acpi_os_get_thपढ़ो_id(व्योम)
-अणु
-	pthपढ़ो_t thपढ़ो;
+acpi_thread_id acpi_os_get_thread_id(void)
+{
+	pthread_t thread;
 
-	thपढ़ो = pthपढ़ो_self();
-	वापस (ACPI_CAST_PTHREAD_T(thपढ़ो));
-पूर्ण
+	thread = pthread_self();
+	return (ACPI_CAST_PTHREAD_T(thread));
+}
 
 /******************************************************************************
  *
@@ -1262,57 +1261,57 @@ acpi_thपढ़ो_id acpi_os_get_thपढ़ो_id(व्योम)
  *
  * RETURN:      Status.
  *
- * DESCRIPTION: Execute a new thपढ़ो
+ * DESCRIPTION: Execute a new thread
  *
  *****************************************************************************/
 
 acpi_status
 acpi_os_execute(acpi_execute_type type,
-		acpi_osd_exec_callback function, व्योम *context)
-अणु
-	pthपढ़ो_t thपढ़ो;
-	पूर्णांक ret;
+		acpi_osd_exec_callback function, void *context)
+{
+	pthread_t thread;
+	int ret;
 
 	ret =
-	    pthपढ़ो_create(&thपढ़ो, शून्य, (PTHREAD_CALLBACK) function, context);
-	अगर (ret) अणु
-		acpi_os_म_लिखो("Create thread failed");
-	पूर्ण
-	वापस (0);
-पूर्ण
+	    pthread_create(&thread, NULL, (PTHREAD_CALLBACK) function, context);
+	if (ret) {
+		acpi_os_printf("Create thread failed");
+	}
+	return (0);
+}
 
-#अन्यथा				/* ACPI_SINGLE_THREADED */
-acpi_thपढ़ो_id acpi_os_get_thपढ़ो_id(व्योम)
-अणु
-	वापस (1);
-पूर्ण
+#else				/* ACPI_SINGLE_THREADED */
+acpi_thread_id acpi_os_get_thread_id(void)
+{
+	return (1);
+}
 
 acpi_status
 acpi_os_execute(acpi_execute_type type,
-		acpi_osd_exec_callback function, व्योम *context)
-अणु
+		acpi_osd_exec_callback function, void *context)
+{
 
 	function(context);
 
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
-#पूर्ण_अगर				/* ACPI_SINGLE_THREADED */
+#endif				/* ACPI_SINGLE_THREADED */
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_os_रुको_events_complete
+ * FUNCTION:    acpi_os_wait_events_complete
  *
  * PARAMETERS:  None
  *
  * RETURN:      None
  *
- * DESCRIPTION: Wait क्रम all asynchronous events to complete. This
- *              implementation करोes nothing.
+ * DESCRIPTION: Wait for all asynchronous events to complete. This
+ *              implementation does nothing.
  *
  *****************************************************************************/
 
-व्योम acpi_os_रुको_events_complete(व्योम)
-अणु
-	वापस;
-पूर्ण
+void acpi_os_wait_events_complete(void)
+{
+	return;
+}

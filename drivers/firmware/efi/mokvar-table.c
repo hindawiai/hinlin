@@ -1,129 +1,128 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * mokvar-table.c
  *
  * Copyright (c) 2020 Red Hat
  * Author: Lenny Szubowicz <lszubowi@redhat.com>
  *
- * This module contains the kernel support क्रम the Linux EFI Machine
- * Owner Key (MOK) variable configuration table, which is identअगरied by
+ * This module contains the kernel support for the Linux EFI Machine
+ * Owner Key (MOK) variable configuration table, which is identified by
  * the LINUX_EFI_MOK_VARIABLE_TABLE_GUID.
  *
  * This EFI configuration table provides a more robust alternative to
- * EFI अस्थिर variables by which an EFI boot loader can pass the
- * contents of the Machine Owner Key (MOK) certअगरicate stores to the
+ * EFI volatile variables by which an EFI boot loader can pass the
+ * contents of the Machine Owner Key (MOK) certificate stores to the
  * kernel during boot. If both the EFI MOK config table and corresponding
  * EFI MOK variables are present, the table should be considered as
  * more authoritative.
  *
  * This module includes code that validates and maps the EFI MOK table,
- * अगर it's presence was detected very early in boot.
+ * if it's presence was detected very early in boot.
  *
- * Kernel पूर्णांकerface routines are provided to walk through all the
- * entries in the MOK config table or to search क्रम a specअगरic named
+ * Kernel interface routines are provided to walk through all the
+ * entries in the MOK config table or to search for a specific named
  * entry.
  *
- * The contents of the inभागidual named MOK config table entries are
- * made available to user space via पढ़ो-only sysfs binary files under:
+ * The contents of the individual named MOK config table entries are
+ * made available to user space via read-only sysfs binary files under:
  *
  * /sys/firmware/efi/mok-variables/
  *
  */
-#घोषणा pr_fmt(fmt) "mokvar: " fmt
+#define pr_fmt(fmt) "mokvar: " fmt
 
-#समावेश <linux/capability.h>
-#समावेश <linux/efi.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kobject.h>
-#समावेश <linux/list.h>
-#समावेश <linux/slab.h>
+#include <linux/capability.h>
+#include <linux/efi.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/kobject.h>
+#include <linux/list.h>
+#include <linux/slab.h>
 
-#समावेश <यंत्र/early_ioremap.h>
+#include <asm/early_ioremap.h>
 
 /*
  * The LINUX_EFI_MOK_VARIABLE_TABLE_GUID config table is a packed
- * sequence of काष्ठा efi_mokvar_table_entry, one क्रम each named
+ * sequence of struct efi_mokvar_table_entry, one for each named
  * MOK variable. The sequence is terminated by an entry with a
- * completely शून्य name and 0 data size.
+ * completely NULL name and 0 data size.
  *
  * efi_mokvar_table_size is set to the computed size of the
  * MOK config table by efi_mokvar_table_init(). This will be
- * non-zero अगर and only अगर the table अगर present and has been
+ * non-zero if and only if the table if present and has been
  * validated by efi_mokvar_table_init().
  */
-अटल माप_प्रकार efi_mokvar_table_size;
+static size_t efi_mokvar_table_size;
 
 /*
- * efi_mokvar_table_va is the kernel भव address at which the
+ * efi_mokvar_table_va is the kernel virtual address at which the
  * EFI MOK config table has been mapped by efi_mokvar_sysfs_init().
  */
-अटल काष्ठा efi_mokvar_table_entry *efi_mokvar_table_va;
+static struct efi_mokvar_table_entry *efi_mokvar_table_va;
 
 /*
  * Each /sys/firmware/efi/mok-variables/ sysfs file is represented by
- * an instance of काष्ठा efi_mokvar_sysfs_attr on efi_mokvar_sysfs_list.
- * bin_attr.निजी poपूर्णांकs to the associated EFI MOK config table entry.
+ * an instance of struct efi_mokvar_sysfs_attr on efi_mokvar_sysfs_list.
+ * bin_attr.private points to the associated EFI MOK config table entry.
  *
- * This list is created during boot and then reमुख्यs unchanged.
+ * This list is created during boot and then remains unchanged.
  * So no synchronization is currently required to walk the list.
  */
-काष्ठा efi_mokvar_sysfs_attr अणु
-	काष्ठा bin_attribute bin_attr;
-	काष्ठा list_head node;
-पूर्ण;
+struct efi_mokvar_sysfs_attr {
+	struct bin_attribute bin_attr;
+	struct list_head node;
+};
 
-अटल LIST_HEAD(efi_mokvar_sysfs_list);
-अटल काष्ठा kobject *mokvar_kobj;
+static LIST_HEAD(efi_mokvar_sysfs_list);
+static struct kobject *mokvar_kobj;
 
 /*
  * efi_mokvar_table_init() - Early boot validation of EFI MOK config table
  *
  * If present, validate and compute the size of the EFI MOK variable
  * configuration table. This table may be provided by an EFI boot loader
- * as an alternative to ordinary EFI variables, due to platक्रमm-dependent
+ * as an alternative to ordinary EFI variables, due to platform-dependent
  * limitations. The memory occupied by this table is marked as reserved.
  *
- * This routine must be called beक्रमe efi_मुक्त_boot_services() in order
+ * This routine must be called before efi_free_boot_services() in order
  * to guarantee that it can mark the table as reserved.
  *
- * Implicit inमाला_दो:
+ * Implicit inputs:
  * efi.mokvar_table:	Physical address of EFI MOK variable config table
  *			or special value that indicates no such table.
  *
- * Implicit outमाला_दो:
+ * Implicit outputs:
  * efi_mokvar_table_size: Computed size of EFI MOK variable config table.
- *			The table is considered present and valid अगर this
+ *			The table is considered present and valid if this
  *			is non-zero.
  */
-व्योम __init efi_mokvar_table_init(व्योम)
-अणु
+void __init efi_mokvar_table_init(void)
+{
 	efi_memory_desc_t md;
-	व्योम *va = शून्य;
-	अचिन्हित दीर्घ cur_offset = 0;
-	अचिन्हित दीर्घ offset_limit;
-	अचिन्हित दीर्घ map_size = 0;
-	अचिन्हित दीर्घ map_size_needed = 0;
-	अचिन्हित दीर्घ size;
-	काष्ठा efi_mokvar_table_entry *mokvar_entry;
-	पूर्णांक err;
+	void *va = NULL;
+	unsigned long cur_offset = 0;
+	unsigned long offset_limit;
+	unsigned long map_size = 0;
+	unsigned long map_size_needed = 0;
+	unsigned long size;
+	struct efi_mokvar_table_entry *mokvar_entry;
+	int err;
 
-	अगर (!efi_enabled(EFI_MEMMAP))
-		वापस;
+	if (!efi_enabled(EFI_MEMMAP))
+		return;
 
-	अगर (efi.mokvar_table == EFI_INVALID_TABLE_ADDR)
-		वापस;
+	if (efi.mokvar_table == EFI_INVALID_TABLE_ADDR)
+		return;
 	/*
 	 * The EFI MOK config table must fit within a single EFI memory
 	 * descriptor range.
 	 */
 	err = efi_mem_desc_lookup(efi.mokvar_table, &md);
-	अगर (err) अणु
+	if (err) {
 		pr_warn("EFI MOKvar config table is not within the EFI memory map\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	offset_limit = efi_mem_desc_end(&md) - efi.mokvar_table;
 
@@ -134,227 +133,227 @@
 	 * entry, remapping as necessary.
 	 */
 	err = -EINVAL;
-	जबतक (cur_offset + माप(*mokvar_entry) <= offset_limit) अणु
+	while (cur_offset + sizeof(*mokvar_entry) <= offset_limit) {
 		mokvar_entry = va + cur_offset;
-		map_size_needed = cur_offset + माप(*mokvar_entry);
-		अगर (map_size_needed > map_size) अणु
-			अगर (va)
+		map_size_needed = cur_offset + sizeof(*mokvar_entry);
+		if (map_size_needed > map_size) {
+			if (va)
 				early_memunmap(va, map_size);
 			/*
 			 * Map a little more than the fixed size entry
 			 * header, anticipating some data. It's safe to
-			 * करो so as दीर्घ as we stay within current memory
+			 * do so as long as we stay within current memory
 			 * descriptor.
 			 */
 			map_size = min(map_size_needed + 2*EFI_PAGE_SIZE,
 				       offset_limit);
 			va = early_memremap(efi.mokvar_table, map_size);
-			अगर (!va) अणु
+			if (!va) {
 				pr_err("Failed to map EFI MOKvar config table pa=0x%lx, size=%lu.\n",
 				       efi.mokvar_table, map_size);
-				वापस;
-			पूर्ण
+				return;
+			}
 			mokvar_entry = va + cur_offset;
-		पूर्ण
+		}
 
-		/* Check क्रम last sentinel entry */
-		अगर (mokvar_entry->name[0] == '\0') अणु
-			अगर (mokvar_entry->data_size != 0)
-				अवरोध;
+		/* Check for last sentinel entry */
+		if (mokvar_entry->name[0] == '\0') {
+			if (mokvar_entry->data_size != 0)
+				break;
 			err = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* Sanity check that the name is null terminated */
 		size = strnlen(mokvar_entry->name,
-			       माप(mokvar_entry->name));
-		अगर (size >= माप(mokvar_entry->name))
-			अवरोध;
+			       sizeof(mokvar_entry->name));
+		if (size >= sizeof(mokvar_entry->name))
+			break;
 
 		/* Advance to the next entry */
 		cur_offset = map_size_needed + mokvar_entry->data_size;
-	पूर्ण
+	}
 
-	अगर (va)
+	if (va)
 		early_memunmap(va, map_size);
-	अगर (err) अणु
+	if (err) {
 		pr_err("EFI MOKvar config table is not valid\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 	efi_mem_reserve(efi.mokvar_table, map_size_needed);
 	efi_mokvar_table_size = map_size_needed;
-पूर्ण
+}
 
 /*
  * efi_mokvar_entry_next() - Get next entry in the EFI MOK config table
  *
- * mokvar_entry:	Poपूर्णांकer to current EFI MOK config table entry
+ * mokvar_entry:	Pointer to current EFI MOK config table entry
  *			or null. Null indicates get first entry.
  *			Passed by reference. This is updated to the
- *			same value as the वापस value.
+ *			same value as the return value.
  *
- * Returns:		Poपूर्णांकer to next EFI MOK config table entry
- *			or null, अगर there are no more entries.
- *			Same value is वापसed in the mokvar_entry
+ * Returns:		Pointer to next EFI MOK config table entry
+ *			or null, if there are no more entries.
+ *			Same value is returned in the mokvar_entry
  *			parameter.
  *
  * This routine depends on the EFI MOK config table being entirely
- * mapped with it's starting भव address in efi_mokvar_table_va.
+ * mapped with it's starting virtual address in efi_mokvar_table_va.
  */
-काष्ठा efi_mokvar_table_entry *efi_mokvar_entry_next(
-			काष्ठा efi_mokvar_table_entry **mokvar_entry)
-अणु
-	काष्ठा efi_mokvar_table_entry *mokvar_cur;
-	काष्ठा efi_mokvar_table_entry *mokvar_next;
-	माप_प्रकार size_cur;
+struct efi_mokvar_table_entry *efi_mokvar_entry_next(
+			struct efi_mokvar_table_entry **mokvar_entry)
+{
+	struct efi_mokvar_table_entry *mokvar_cur;
+	struct efi_mokvar_table_entry *mokvar_next;
+	size_t size_cur;
 
 	mokvar_cur = *mokvar_entry;
-	*mokvar_entry = शून्य;
+	*mokvar_entry = NULL;
 
-	अगर (efi_mokvar_table_va == शून्य)
-		वापस शून्य;
+	if (efi_mokvar_table_va == NULL)
+		return NULL;
 
-	अगर (mokvar_cur == शून्य) अणु
+	if (mokvar_cur == NULL) {
 		mokvar_next = efi_mokvar_table_va;
-	पूर्ण अन्यथा अणु
-		अगर (mokvar_cur->name[0] == '\0')
-			वापस शून्य;
-		size_cur = माप(*mokvar_cur) + mokvar_cur->data_size;
-		mokvar_next = (व्योम *)mokvar_cur + size_cur;
-	पूर्ण
+	} else {
+		if (mokvar_cur->name[0] == '\0')
+			return NULL;
+		size_cur = sizeof(*mokvar_cur) + mokvar_cur->data_size;
+		mokvar_next = (void *)mokvar_cur + size_cur;
+	}
 
-	अगर (mokvar_next->name[0] == '\0')
-		वापस शून्य;
+	if (mokvar_next->name[0] == '\0')
+		return NULL;
 
 	*mokvar_entry = mokvar_next;
-	वापस mokvar_next;
-पूर्ण
+	return mokvar_next;
+}
 
 /*
  * efi_mokvar_entry_find() - Find EFI MOK config entry by name
  *
- * name:	Name of the entry to look क्रम.
+ * name:	Name of the entry to look for.
  *
- * Returns:	Poपूर्णांकer to EFI MOK config table entry अगर found;
+ * Returns:	Pointer to EFI MOK config table entry if found;
  *		null otherwise.
  *
  * This routine depends on the EFI MOK config table being entirely
- * mapped with it's starting भव address in efi_mokvar_table_va.
+ * mapped with it's starting virtual address in efi_mokvar_table_va.
  */
-काष्ठा efi_mokvar_table_entry *efi_mokvar_entry_find(स्थिर अक्षर *name)
-अणु
-	काष्ठा efi_mokvar_table_entry *mokvar_entry = शून्य;
+struct efi_mokvar_table_entry *efi_mokvar_entry_find(const char *name)
+{
+	struct efi_mokvar_table_entry *mokvar_entry = NULL;
 
-	जबतक (efi_mokvar_entry_next(&mokvar_entry)) अणु
-		अगर (!म_भेदन(name, mokvar_entry->name,
-			     माप(mokvar_entry->name)))
-			वापस mokvar_entry;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	while (efi_mokvar_entry_next(&mokvar_entry)) {
+		if (!strncmp(name, mokvar_entry->name,
+			     sizeof(mokvar_entry->name)))
+			return mokvar_entry;
+	}
+	return NULL;
+}
 
 /*
- * efi_mokvar_sysfs_पढ़ो() - sysfs binary file पढ़ो routine
+ * efi_mokvar_sysfs_read() - sysfs binary file read routine
  *
- * Returns:	Count of bytes पढ़ो.
+ * Returns:	Count of bytes read.
  *
- * Copy EFI MOK config table entry data क्रम this mokvar sysfs binary file
- * to the supplied buffer, starting at the specअगरied offset पूर्णांकo mokvar table
- * entry data, क्रम the specअगरied count bytes. The copy is limited by the
+ * Copy EFI MOK config table entry data for this mokvar sysfs binary file
+ * to the supplied buffer, starting at the specified offset into mokvar table
+ * entry data, for the specified count bytes. The copy is limited by the
  * amount of data in this mokvar config table entry.
  */
-अटल sमाप_प्रकार efi_mokvar_sysfs_पढ़ो(काष्ठा file *file, काष्ठा kobject *kobj,
-				 काष्ठा bin_attribute *bin_attr, अक्षर *buf,
-				 loff_t off, माप_प्रकार count)
-अणु
-	काष्ठा efi_mokvar_table_entry *mokvar_entry = bin_attr->निजी;
+static ssize_t efi_mokvar_sysfs_read(struct file *file, struct kobject *kobj,
+				 struct bin_attribute *bin_attr, char *buf,
+				 loff_t off, size_t count)
+{
+	struct efi_mokvar_table_entry *mokvar_entry = bin_attr->private;
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस 0;
+	if (!capable(CAP_SYS_ADMIN))
+		return 0;
 
-	अगर (off >= mokvar_entry->data_size)
-		वापस 0;
-	अगर (count >  mokvar_entry->data_size - off)
+	if (off >= mokvar_entry->data_size)
+		return 0;
+	if (count >  mokvar_entry->data_size - off)
 		count = mokvar_entry->data_size - off;
 
-	स_नकल(buf, mokvar_entry->data + off, count);
-	वापस count;
-पूर्ण
+	memcpy(buf, mokvar_entry->data + off, count);
+	return count;
+}
 
 /*
  * efi_mokvar_sysfs_init() - Map EFI MOK config table and create sysfs
  *
- * Map the EFI MOK variable config table क्रम run-समय use by the kernel
+ * Map the EFI MOK variable config table for run-time use by the kernel
  * and create the sysfs entries in /sys/firmware/efi/mok-variables/
  *
- * This routine just वापसs अगर a valid EFI MOK variable config table
+ * This routine just returns if a valid EFI MOK variable config table
  * was not found earlier during boot.
  *
  * This routine must be called during a "middle" initcall phase, i.e.
- * after efi_mokvar_table_init() but beक्रमe UEFI certs are loaded
+ * after efi_mokvar_table_init() but before UEFI certs are loaded
  * during late init.
  *
- * Implicit inमाला_दो:
+ * Implicit inputs:
  * efi.mokvar_table:	Physical address of EFI MOK variable config table
  *			or special value that indicates no such table.
  *
  * efi_mokvar_table_size: Computed size of EFI MOK variable config table.
- *			The table is considered present and valid अगर this
+ *			The table is considered present and valid if this
  *			is non-zero.
  *
- * Implicit outमाला_दो:
- * efi_mokvar_table_va:	Start भव address of the EFI MOK config table.
+ * Implicit outputs:
+ * efi_mokvar_table_va:	Start virtual address of the EFI MOK config table.
  */
-अटल पूर्णांक __init efi_mokvar_sysfs_init(व्योम)
-अणु
-	व्योम *config_va;
-	काष्ठा efi_mokvar_table_entry *mokvar_entry = शून्य;
-	काष्ठा efi_mokvar_sysfs_attr *mokvar_sysfs = शून्य;
-	पूर्णांक err = 0;
+static int __init efi_mokvar_sysfs_init(void)
+{
+	void *config_va;
+	struct efi_mokvar_table_entry *mokvar_entry = NULL;
+	struct efi_mokvar_sysfs_attr *mokvar_sysfs = NULL;
+	int err = 0;
 
-	अगर (efi_mokvar_table_size == 0)
-		वापस -ENOENT;
+	if (efi_mokvar_table_size == 0)
+		return -ENOENT;
 
 	config_va = memremap(efi.mokvar_table, efi_mokvar_table_size,
 			     MEMREMAP_WB);
-	अगर (!config_va) अणु
+	if (!config_va) {
 		pr_err("Failed to map EFI MOKvar config table\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	efi_mokvar_table_va = config_va;
 
 	mokvar_kobj = kobject_create_and_add("mok-variables", efi_kobj);
-	अगर (!mokvar_kobj) अणु
+	if (!mokvar_kobj) {
 		pr_err("Failed to create EFI mok-variables sysfs entry\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	जबतक (efi_mokvar_entry_next(&mokvar_entry)) अणु
-		mokvar_sysfs = kzalloc(माप(*mokvar_sysfs), GFP_KERNEL);
-		अगर (!mokvar_sysfs) अणु
+	while (efi_mokvar_entry_next(&mokvar_entry)) {
+		mokvar_sysfs = kzalloc(sizeof(*mokvar_sysfs), GFP_KERNEL);
+		if (!mokvar_sysfs) {
 			err = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		sysfs_bin_attr_init(&mokvar_sysfs->bin_attr);
-		mokvar_sysfs->bin_attr.निजी = mokvar_entry;
+		mokvar_sysfs->bin_attr.private = mokvar_entry;
 		mokvar_sysfs->bin_attr.attr.name = mokvar_entry->name;
 		mokvar_sysfs->bin_attr.attr.mode = 0400;
 		mokvar_sysfs->bin_attr.size = mokvar_entry->data_size;
-		mokvar_sysfs->bin_attr.पढ़ो = efi_mokvar_sysfs_पढ़ो;
+		mokvar_sysfs->bin_attr.read = efi_mokvar_sysfs_read;
 
 		err = sysfs_create_bin_file(mokvar_kobj,
 					   &mokvar_sysfs->bin_attr);
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 
 		list_add_tail(&mokvar_sysfs->node, &efi_mokvar_sysfs_list);
-	पूर्ण
+	}
 
-	अगर (err) अणु
+	if (err) {
 		pr_err("Failed to create some EFI mok-variables sysfs entries\n");
-		kमुक्त(mokvar_sysfs);
-	पूर्ण
-	वापस err;
-पूर्ण
+		kfree(mokvar_sysfs);
+	}
+	return err;
+}
 device_initcall(efi_mokvar_sysfs_init);

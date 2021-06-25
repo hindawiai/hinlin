@@ -1,210 +1,209 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
  * Copyright 2017~2018 NXP
  *
- * Author: Dong Aisheng <aisheng.करोng@nxp.com>
+ * Author: Dong Aisheng <aisheng.dong@nxp.com>
  *
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/slab.h>
+#include <linux/clk-provider.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/iopoll.h>
+#include <linux/slab.h>
 
-#समावेश "clk.h"
+#include "clk.h"
 
 /**
- * काष्ठा clk_pfdv2 - IMX PFD घड़ी
- * @hw:		घड़ी source
- * @reg:	PFD रेजिस्टर address
+ * struct clk_pfdv2 - IMX PFD clock
+ * @hw:		clock source
+ * @reg:	PFD register address
  * @gate_bit:	Gate bit offset
  * @vld_bit:	Valid bit offset
  * @frac_off:	PLL Fractional Divider offset
  */
 
-काष्ठा clk_pfdv2 अणु
-	काष्ठा clk_hw	hw;
-	व्योम __iomem	*reg;
+struct clk_pfdv2 {
+	struct clk_hw	hw;
+	void __iomem	*reg;
 	u8		gate_bit;
 	u8		vld_bit;
 	u8		frac_off;
-पूर्ण;
+};
 
-#घोषणा to_clk_pfdv2(_hw) container_of(_hw, काष्ठा clk_pfdv2, hw)
+#define to_clk_pfdv2(_hw) container_of(_hw, struct clk_pfdv2, hw)
 
-#घोषणा CLK_PFDV2_FRAC_MASK 0x3f
+#define CLK_PFDV2_FRAC_MASK 0x3f
 
-#घोषणा LOCK_TIMEOUT_US		USEC_PER_MSEC
+#define LOCK_TIMEOUT_US		USEC_PER_MSEC
 
-अटल DEFINE_SPINLOCK(pfd_lock);
+static DEFINE_SPINLOCK(pfd_lock);
 
-अटल पूर्णांक clk_pfdv2_रुको(काष्ठा clk_pfdv2 *pfd)
-अणु
+static int clk_pfdv2_wait(struct clk_pfdv2 *pfd)
+{
 	u32 val;
 
-	वापस पढ़ोl_poll_समयout(pfd->reg, val, val & (1 << pfd->vld_bit),
+	return readl_poll_timeout(pfd->reg, val, val & (1 << pfd->vld_bit),
 				  0, LOCK_TIMEOUT_US);
-पूर्ण
+}
 
-अटल पूर्णांक clk_pfdv2_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_pfdv2 *pfd = to_clk_pfdv2(hw);
-	अचिन्हित दीर्घ flags;
+static int clk_pfdv2_enable(struct clk_hw *hw)
+{
+	struct clk_pfdv2 *pfd = to_clk_pfdv2(hw);
+	unsigned long flags;
 	u32 val;
 
 	spin_lock_irqsave(&pfd_lock, flags);
-	val = पढ़ोl_relaxed(pfd->reg);
+	val = readl_relaxed(pfd->reg);
 	val &= ~(1 << pfd->gate_bit);
-	ग_लिखोl_relaxed(val, pfd->reg);
+	writel_relaxed(val, pfd->reg);
 	spin_unlock_irqrestore(&pfd_lock, flags);
 
-	वापस clk_pfdv2_रुको(pfd);
-पूर्ण
+	return clk_pfdv2_wait(pfd);
+}
 
-अटल व्योम clk_pfdv2_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_pfdv2 *pfd = to_clk_pfdv2(hw);
-	अचिन्हित दीर्घ flags;
+static void clk_pfdv2_disable(struct clk_hw *hw)
+{
+	struct clk_pfdv2 *pfd = to_clk_pfdv2(hw);
+	unsigned long flags;
 	u32 val;
 
 	spin_lock_irqsave(&pfd_lock, flags);
-	val = पढ़ोl_relaxed(pfd->reg);
+	val = readl_relaxed(pfd->reg);
 	val |= (1 << pfd->gate_bit);
-	ग_लिखोl_relaxed(val, pfd->reg);
+	writel_relaxed(val, pfd->reg);
 	spin_unlock_irqrestore(&pfd_lock, flags);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ clk_pfdv2_recalc_rate(काष्ठा clk_hw *hw,
-					   अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_pfdv2 *pfd = to_clk_pfdv2(hw);
-	u64 पंचांगp = parent_rate;
+static unsigned long clk_pfdv2_recalc_rate(struct clk_hw *hw,
+					   unsigned long parent_rate)
+{
+	struct clk_pfdv2 *pfd = to_clk_pfdv2(hw);
+	u64 tmp = parent_rate;
 	u8 frac;
 
-	frac = (पढ़ोl_relaxed(pfd->reg) >> pfd->frac_off)
+	frac = (readl_relaxed(pfd->reg) >> pfd->frac_off)
 		& CLK_PFDV2_FRAC_MASK;
 
-	अगर (!frac) अणु
+	if (!frac) {
 		pr_debug("clk_pfdv2: %s invalid pfd frac value 0\n",
 			 clk_hw_get_name(hw));
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	पंचांगp *= 18;
-	करो_भाग(पंचांगp, frac);
+	tmp *= 18;
+	do_div(tmp, frac);
 
-	वापस पंचांगp;
-पूर्ण
+	return tmp;
+}
 
-अटल पूर्णांक clk_pfdv2_determine_rate(काष्ठा clk_hw *hw,
-				    काष्ठा clk_rate_request *req)
-अणु
-	अचिन्हित दीर्घ parent_rates[] = अणु
+static int clk_pfdv2_determine_rate(struct clk_hw *hw,
+				    struct clk_rate_request *req)
+{
+	unsigned long parent_rates[] = {
 					480000000,
 					528000000,
 					req->best_parent_rate
-				       पूर्ण;
-	अचिन्हित दीर्घ best_rate = -1UL, rate = req->rate;
-	अचिन्हित दीर्घ best_parent_rate = req->best_parent_rate;
-	u64 पंचांगp;
+				       };
+	unsigned long best_rate = -1UL, rate = req->rate;
+	unsigned long best_parent_rate = req->best_parent_rate;
+	u64 tmp;
 	u8 frac;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(parent_rates); i++) अणु
-		पंचांगp = parent_rates[i];
-		पंचांगp = पंचांगp * 18 + rate / 2;
-		करो_भाग(पंचांगp, rate);
-		frac = पंचांगp;
+	for (i = 0; i < ARRAY_SIZE(parent_rates); i++) {
+		tmp = parent_rates[i];
+		tmp = tmp * 18 + rate / 2;
+		do_div(tmp, rate);
+		frac = tmp;
 
-		अगर (frac < 12)
+		if (frac < 12)
 			frac = 12;
-		अन्यथा अगर (frac > 35)
+		else if (frac > 35)
 			frac = 35;
 
-		पंचांगp = parent_rates[i];
-		पंचांगp *= 18;
-		करो_भाग(पंचांगp, frac);
+		tmp = parent_rates[i];
+		tmp *= 18;
+		do_div(tmp, frac);
 
-		अगर (असल(पंचांगp - req->rate) < असल(best_rate - req->rate)) अणु
-			best_rate = पंचांगp;
+		if (abs(tmp - req->rate) < abs(best_rate - req->rate)) {
+			best_rate = tmp;
 			best_parent_rate = parent_rates[i];
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	req->best_parent_rate = best_parent_rate;
 	req->rate = best_rate;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक clk_pfdv2_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_pfdv2 *pfd = to_clk_pfdv2(hw);
+static int clk_pfdv2_is_enabled(struct clk_hw *hw)
+{
+	struct clk_pfdv2 *pfd = to_clk_pfdv2(hw);
 
-	अगर (पढ़ोl_relaxed(pfd->reg) & (1 << pfd->gate_bit))
-		वापस 0;
+	if (readl_relaxed(pfd->reg) & (1 << pfd->gate_bit))
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक clk_pfdv2_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			      अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_pfdv2 *pfd = to_clk_pfdv2(hw);
-	अचिन्हित दीर्घ flags;
-	u64 पंचांगp = parent_rate;
+static int clk_pfdv2_set_rate(struct clk_hw *hw, unsigned long rate,
+			      unsigned long parent_rate)
+{
+	struct clk_pfdv2 *pfd = to_clk_pfdv2(hw);
+	unsigned long flags;
+	u64 tmp = parent_rate;
 	u32 val;
 	u8 frac;
 
-	अगर (!rate)
-		वापस -EINVAL;
+	if (!rate)
+		return -EINVAL;
 
 	/* PFD can NOT change rate without gating */
 	WARN_ON(clk_pfdv2_is_enabled(hw));
 
-	पंचांगp = पंचांगp * 18 + rate / 2;
-	करो_भाग(पंचांगp, rate);
-	frac = पंचांगp;
-	अगर (frac < 12)
+	tmp = tmp * 18 + rate / 2;
+	do_div(tmp, rate);
+	frac = tmp;
+	if (frac < 12)
 		frac = 12;
-	अन्यथा अगर (frac > 35)
+	else if (frac > 35)
 		frac = 35;
 
 	spin_lock_irqsave(&pfd_lock, flags);
-	val = पढ़ोl_relaxed(pfd->reg);
+	val = readl_relaxed(pfd->reg);
 	val &= ~(CLK_PFDV2_FRAC_MASK << pfd->frac_off);
 	val |= frac << pfd->frac_off;
-	ग_लिखोl_relaxed(val, pfd->reg);
+	writel_relaxed(val, pfd->reg);
 	spin_unlock_irqrestore(&pfd_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops clk_pfdv2_ops = अणु
+static const struct clk_ops clk_pfdv2_ops = {
 	.enable		= clk_pfdv2_enable,
 	.disable	= clk_pfdv2_disable,
 	.recalc_rate	= clk_pfdv2_recalc_rate,
 	.determine_rate	= clk_pfdv2_determine_rate,
 	.set_rate	= clk_pfdv2_set_rate,
 	.is_enabled     = clk_pfdv2_is_enabled,
-पूर्ण;
+};
 
-काष्ठा clk_hw *imx_clk_hw_pfdv2(स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
-			     व्योम __iomem *reg, u8 idx)
-अणु
-	काष्ठा clk_init_data init;
-	काष्ठा clk_pfdv2 *pfd;
-	काष्ठा clk_hw *hw;
-	पूर्णांक ret;
+struct clk_hw *imx_clk_hw_pfdv2(const char *name, const char *parent_name,
+			     void __iomem *reg, u8 idx)
+{
+	struct clk_init_data init;
+	struct clk_pfdv2 *pfd;
+	struct clk_hw *hw;
+	int ret;
 
 	WARN_ON(idx > 3);
 
-	pfd = kzalloc(माप(*pfd), GFP_KERNEL);
-	अगर (!pfd)
-		वापस ERR_PTR(-ENOMEM);
+	pfd = kzalloc(sizeof(*pfd), GFP_KERNEL);
+	if (!pfd)
+		return ERR_PTR(-ENOMEM);
 
 	pfd->reg = reg;
 	pfd->gate_bit = (idx + 1) * 8 - 1;
@@ -220,11 +219,11 @@
 	pfd->hw.init = &init;
 
 	hw = &pfd->hw;
-	ret = clk_hw_रेजिस्टर(शून्य, hw);
-	अगर (ret) अणु
-		kमुक्त(pfd);
+	ret = clk_hw_register(NULL, hw);
+	if (ret) {
+		kfree(pfd);
 		hw = ERR_PTR(ret);
-	पूर्ण
+	}
 
-	वापस hw;
-पूर्ण
+	return hw;
+}

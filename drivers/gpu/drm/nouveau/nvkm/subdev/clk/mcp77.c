@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,402 +21,402 @@
  *
  * Authors: Ben Skeggs
  */
-#घोषणा mcp77_clk(p) container_of((p), काष्ठा mcp77_clk, base)
-#समावेश "gt215.h"
-#समावेश "pll.h"
+#define mcp77_clk(p) container_of((p), struct mcp77_clk, base)
+#include "gt215.h"
+#include "pll.h"
 
-#समावेश <subdev/मूलप्रण.स>
-#समावेश <subdev/bios/pll.h>
-#समावेश <subdev/समयr.h>
+#include <subdev/bios.h>
+#include <subdev/bios/pll.h>
+#include <subdev/timer.h>
 
-काष्ठा mcp77_clk अणु
-	काष्ठा nvkm_clk base;
-	क्रमागत nv_clk_src csrc, ssrc, vsrc;
+struct mcp77_clk {
+	struct nvkm_clk base;
+	enum nv_clk_src csrc, ssrc, vsrc;
 	u32 cctrl, sctrl;
 	u32 ccoef, scoef;
 	u32 cpost, spost;
-	u32 vभाग;
-पूर्ण;
+	u32 vdiv;
+};
 
-अटल u32
-पढ़ो_भाग(काष्ठा mcp77_clk *clk)
-अणु
-	काष्ठा nvkm_device *device = clk->base.subdev.device;
-	वापस nvkm_rd32(device, 0x004600);
-पूर्ण
+static u32
+read_div(struct mcp77_clk *clk)
+{
+	struct nvkm_device *device = clk->base.subdev.device;
+	return nvkm_rd32(device, 0x004600);
+}
 
-अटल u32
-पढ़ो_pll(काष्ठा mcp77_clk *clk, u32 base)
-अणु
-	काष्ठा nvkm_device *device = clk->base.subdev.device;
+static u32
+read_pll(struct mcp77_clk *clk, u32 base)
+{
+	struct nvkm_device *device = clk->base.subdev.device;
 	u32 ctrl = nvkm_rd32(device, base + 0);
 	u32 coef = nvkm_rd32(device, base + 4);
-	u32 ref = nvkm_clk_पढ़ो(&clk->base, nv_clk_src_href);
-	u32 post_भाग = 0;
-	u32 घड़ी = 0;
-	पूर्णांक N1, M1;
+	u32 ref = nvkm_clk_read(&clk->base, nv_clk_src_href);
+	u32 post_div = 0;
+	u32 clock = 0;
+	int N1, M1;
 
-	चयन (base)अणु
-	हाल 0x4020:
-		post_भाग = 1 << ((nvkm_rd32(device, 0x4070) & 0x000f0000) >> 16);
-		अवरोध;
-	हाल 0x4028:
-		post_भाग = (nvkm_rd32(device, 0x4040) & 0x000f0000) >> 16;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (base){
+	case 0x4020:
+		post_div = 1 << ((nvkm_rd32(device, 0x4070) & 0x000f0000) >> 16);
+		break;
+	case 0x4028:
+		post_div = (nvkm_rd32(device, 0x4040) & 0x000f0000) >> 16;
+		break;
+	default:
+		break;
+	}
 
 	N1 = (coef & 0x0000ff00) >> 8;
 	M1 = (coef & 0x000000ff);
-	अगर ((ctrl & 0x80000000) && M1) अणु
-		घड़ी = ref * N1 / M1;
-		घड़ी = घड़ी / post_भाग;
-	पूर्ण
+	if ((ctrl & 0x80000000) && M1) {
+		clock = ref * N1 / M1;
+		clock = clock / post_div;
+	}
 
-	वापस घड़ी;
-पूर्ण
+	return clock;
+}
 
-अटल पूर्णांक
-mcp77_clk_पढ़ो(काष्ठा nvkm_clk *base, क्रमागत nv_clk_src src)
-अणु
-	काष्ठा mcp77_clk *clk = mcp77_clk(base);
-	काष्ठा nvkm_subdev *subdev = &clk->base.subdev;
-	काष्ठा nvkm_device *device = subdev->device;
+static int
+mcp77_clk_read(struct nvkm_clk *base, enum nv_clk_src src)
+{
+	struct mcp77_clk *clk = mcp77_clk(base);
+	struct nvkm_subdev *subdev = &clk->base.subdev;
+	struct nvkm_device *device = subdev->device;
 	u32 mast = nvkm_rd32(device, 0x00c054);
 	u32 P = 0;
 
-	चयन (src) अणु
-	हाल nv_clk_src_crystal:
-		वापस device->crystal;
-	हाल nv_clk_src_href:
-		वापस 100000; /* PCIE reference घड़ी */
-	हाल nv_clk_src_hclkm4:
-		वापस nvkm_clk_पढ़ो(&clk->base, nv_clk_src_href) * 4;
-	हाल nv_clk_src_hclkm2d3:
-		वापस nvkm_clk_पढ़ो(&clk->base, nv_clk_src_href) * 2 / 3;
-	हाल nv_clk_src_host:
-		चयन (mast & 0x000c0000) अणु
-		हाल 0x00000000: वापस nvkm_clk_पढ़ो(&clk->base, nv_clk_src_hclkm2d3);
-		हाल 0x00040000: अवरोध;
-		हाल 0x00080000: वापस nvkm_clk_पढ़ो(&clk->base, nv_clk_src_hclkm4);
-		हाल 0x000c0000: वापस nvkm_clk_पढ़ो(&clk->base, nv_clk_src_cclk);
-		पूर्ण
-		अवरोध;
-	हाल nv_clk_src_core:
+	switch (src) {
+	case nv_clk_src_crystal:
+		return device->crystal;
+	case nv_clk_src_href:
+		return 100000; /* PCIE reference clock */
+	case nv_clk_src_hclkm4:
+		return nvkm_clk_read(&clk->base, nv_clk_src_href) * 4;
+	case nv_clk_src_hclkm2d3:
+		return nvkm_clk_read(&clk->base, nv_clk_src_href) * 2 / 3;
+	case nv_clk_src_host:
+		switch (mast & 0x000c0000) {
+		case 0x00000000: return nvkm_clk_read(&clk->base, nv_clk_src_hclkm2d3);
+		case 0x00040000: break;
+		case 0x00080000: return nvkm_clk_read(&clk->base, nv_clk_src_hclkm4);
+		case 0x000c0000: return nvkm_clk_read(&clk->base, nv_clk_src_cclk);
+		}
+		break;
+	case nv_clk_src_core:
 		P = (nvkm_rd32(device, 0x004028) & 0x00070000) >> 16;
 
-		चयन (mast & 0x00000003) अणु
-		हाल 0x00000000: वापस nvkm_clk_पढ़ो(&clk->base, nv_clk_src_crystal) >> P;
-		हाल 0x00000001: वापस 0;
-		हाल 0x00000002: वापस nvkm_clk_पढ़ो(&clk->base, nv_clk_src_hclkm4) >> P;
-		हाल 0x00000003: वापस पढ़ो_pll(clk, 0x004028) >> P;
-		पूर्ण
-		अवरोध;
-	हाल nv_clk_src_cclk:
-		अगर ((mast & 0x03000000) != 0x03000000)
-			वापस nvkm_clk_पढ़ो(&clk->base, nv_clk_src_core);
+		switch (mast & 0x00000003) {
+		case 0x00000000: return nvkm_clk_read(&clk->base, nv_clk_src_crystal) >> P;
+		case 0x00000001: return 0;
+		case 0x00000002: return nvkm_clk_read(&clk->base, nv_clk_src_hclkm4) >> P;
+		case 0x00000003: return read_pll(clk, 0x004028) >> P;
+		}
+		break;
+	case nv_clk_src_cclk:
+		if ((mast & 0x03000000) != 0x03000000)
+			return nvkm_clk_read(&clk->base, nv_clk_src_core);
 
-		अगर ((mast & 0x00000200) == 0x00000000)
-			वापस nvkm_clk_पढ़ो(&clk->base, nv_clk_src_core);
+		if ((mast & 0x00000200) == 0x00000000)
+			return nvkm_clk_read(&clk->base, nv_clk_src_core);
 
-		चयन (mast & 0x00000c00) अणु
-		हाल 0x00000000: वापस nvkm_clk_पढ़ो(&clk->base, nv_clk_src_href);
-		हाल 0x00000400: वापस nvkm_clk_पढ़ो(&clk->base, nv_clk_src_hclkm4);
-		हाल 0x00000800: वापस nvkm_clk_पढ़ो(&clk->base, nv_clk_src_hclkm2d3);
-		शेष: वापस 0;
-		पूर्ण
-	हाल nv_clk_src_shader:
+		switch (mast & 0x00000c00) {
+		case 0x00000000: return nvkm_clk_read(&clk->base, nv_clk_src_href);
+		case 0x00000400: return nvkm_clk_read(&clk->base, nv_clk_src_hclkm4);
+		case 0x00000800: return nvkm_clk_read(&clk->base, nv_clk_src_hclkm2d3);
+		default: return 0;
+		}
+	case nv_clk_src_shader:
 		P = (nvkm_rd32(device, 0x004020) & 0x00070000) >> 16;
-		चयन (mast & 0x00000030) अणु
-		हाल 0x00000000:
-			अगर (mast & 0x00000040)
-				वापस nvkm_clk_पढ़ो(&clk->base, nv_clk_src_href) >> P;
-			वापस nvkm_clk_पढ़ो(&clk->base, nv_clk_src_crystal) >> P;
-		हाल 0x00000010: अवरोध;
-		हाल 0x00000020: वापस पढ़ो_pll(clk, 0x004028) >> P;
-		हाल 0x00000030: वापस पढ़ो_pll(clk, 0x004020) >> P;
-		पूर्ण
-		अवरोध;
-	हाल nv_clk_src_mem:
-		वापस 0;
-	हाल nv_clk_src_vdec:
-		P = (पढ़ो_भाग(clk) & 0x00000700) >> 8;
+		switch (mast & 0x00000030) {
+		case 0x00000000:
+			if (mast & 0x00000040)
+				return nvkm_clk_read(&clk->base, nv_clk_src_href) >> P;
+			return nvkm_clk_read(&clk->base, nv_clk_src_crystal) >> P;
+		case 0x00000010: break;
+		case 0x00000020: return read_pll(clk, 0x004028) >> P;
+		case 0x00000030: return read_pll(clk, 0x004020) >> P;
+		}
+		break;
+	case nv_clk_src_mem:
+		return 0;
+	case nv_clk_src_vdec:
+		P = (read_div(clk) & 0x00000700) >> 8;
 
-		चयन (mast & 0x00400000) अणु
-		हाल 0x00400000:
-			वापस nvkm_clk_पढ़ो(&clk->base, nv_clk_src_core) >> P;
-		शेष:
-			वापस 500000 >> P;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		switch (mast & 0x00400000) {
+		case 0x00400000:
+			return nvkm_clk_read(&clk->base, nv_clk_src_core) >> P;
+		default:
+			return 500000 >> P;
+		}
+		break;
+	default:
+		break;
+	}
 
 	nvkm_debug(subdev, "unknown clock source %d %08x\n", src, mast);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32
-calc_pll(काष्ठा mcp77_clk *clk, u32 reg,
-	 u32 घड़ी, पूर्णांक *N, पूर्णांक *M, पूर्णांक *P)
-अणु
-	काष्ठा nvkm_subdev *subdev = &clk->base.subdev;
-	काष्ठा nvbios_pll pll;
-	पूर्णांक ret;
+static u32
+calc_pll(struct mcp77_clk *clk, u32 reg,
+	 u32 clock, int *N, int *M, int *P)
+{
+	struct nvkm_subdev *subdev = &clk->base.subdev;
+	struct nvbios_pll pll;
+	int ret;
 
 	ret = nvbios_pll_parse(subdev->device->bios, reg, &pll);
-	अगर (ret)
-		वापस 0;
+	if (ret)
+		return 0;
 
 	pll.vco2.max_freq = 0;
-	pll.refclk = nvkm_clk_पढ़ो(&clk->base, nv_clk_src_href);
-	अगर (!pll.refclk)
-		वापस 0;
+	pll.refclk = nvkm_clk_read(&clk->base, nv_clk_src_href);
+	if (!pll.refclk)
+		return 0;
 
-	वापस nv04_pll_calc(subdev, &pll, घड़ी, N, M, शून्य, शून्य, P);
-पूर्ण
+	return nv04_pll_calc(subdev, &pll, clock, N, M, NULL, NULL, P);
+}
 
-अटल अंतरभूत u32
-calc_P(u32 src, u32 target, पूर्णांक *भाग)
-अणु
+static inline u32
+calc_P(u32 src, u32 target, int *div)
+{
 	u32 clk0 = src, clk1 = src;
-	क्रम (*भाग = 0; *भाग <= 7; (*भाग)++) अणु
-		अगर (clk0 <= target) अणु
-			clk1 = clk0 << (*भाग ? 1 : 0);
-			अवरोध;
-		पूर्ण
+	for (*div = 0; *div <= 7; (*div)++) {
+		if (clk0 <= target) {
+			clk1 = clk0 << (*div ? 1 : 0);
+			break;
+		}
 		clk0 >>= 1;
-	पूर्ण
+	}
 
-	अगर (target - clk0 <= clk1 - target)
-		वापस clk0;
-	(*भाग)--;
-	वापस clk1;
-पूर्ण
+	if (target - clk0 <= clk1 - target)
+		return clk0;
+	(*div)--;
+	return clk1;
+}
 
-अटल पूर्णांक
-mcp77_clk_calc(काष्ठा nvkm_clk *base, काष्ठा nvkm_cstate *cstate)
-अणु
-	काष्ठा mcp77_clk *clk = mcp77_clk(base);
-	स्थिर पूर्णांक shader = cstate->करोमुख्य[nv_clk_src_shader];
-	स्थिर पूर्णांक core = cstate->करोमुख्य[nv_clk_src_core];
-	स्थिर पूर्णांक vdec = cstate->करोमुख्य[nv_clk_src_vdec];
-	काष्ठा nvkm_subdev *subdev = &clk->base.subdev;
-	u32 out = 0, घड़ी = 0;
-	पूर्णांक N, M, P1, P2 = 0;
-	पूर्णांक भागs = 0;
+static int
+mcp77_clk_calc(struct nvkm_clk *base, struct nvkm_cstate *cstate)
+{
+	struct mcp77_clk *clk = mcp77_clk(base);
+	const int shader = cstate->domain[nv_clk_src_shader];
+	const int core = cstate->domain[nv_clk_src_core];
+	const int vdec = cstate->domain[nv_clk_src_vdec];
+	struct nvkm_subdev *subdev = &clk->base.subdev;
+	u32 out = 0, clock = 0;
+	int N, M, P1, P2 = 0;
+	int divs = 0;
 
-	/* cclk: find suitable source, disable PLL अगर we can */
-	अगर (core < nvkm_clk_पढ़ो(&clk->base, nv_clk_src_hclkm4))
-		out = calc_P(nvkm_clk_पढ़ो(&clk->base, nv_clk_src_hclkm4), core, &भागs);
+	/* cclk: find suitable source, disable PLL if we can */
+	if (core < nvkm_clk_read(&clk->base, nv_clk_src_hclkm4))
+		out = calc_P(nvkm_clk_read(&clk->base, nv_clk_src_hclkm4), core, &divs);
 
-	/* Calculate घड़ी * 2, so shader घड़ी can use it too */
-	घड़ी = calc_pll(clk, 0x4028, (core << 1), &N, &M, &P1);
+	/* Calculate clock * 2, so shader clock can use it too */
+	clock = calc_pll(clk, 0x4028, (core << 1), &N, &M, &P1);
 
-	अगर (असल(core - out) <= असल(core - (घड़ी >> 1))) अणु
+	if (abs(core - out) <= abs(core - (clock >> 1))) {
 		clk->csrc = nv_clk_src_hclkm4;
-		clk->cctrl = भागs << 16;
-	पूर्ण अन्यथा अणु
+		clk->cctrl = divs << 16;
+	} else {
 		/* NVCTRL is actually used _after_ NVPOST, and after what we
-		 * call NVPLL. To make matters worse, NVPOST is an पूर्णांकeger
-		 * भागider instead of a right-shअगरt number. */
-		अगर(P1 > 2) अणु
+		 * call NVPLL. To make matters worse, NVPOST is an integer
+		 * divider instead of a right-shift number. */
+		if(P1 > 2) {
 			P2 = P1 - 2;
 			P1 = 2;
-		पूर्ण
+		}
 
 		clk->csrc = nv_clk_src_core;
 		clk->ccoef = (N << 8) | M;
 
 		clk->cctrl = (P2 + 1) << 16;
 		clk->cpost = (1 << P1) << 16;
-	पूर्ण
+	}
 
-	/* sclk: nvpll + भागisor, href or spll */
+	/* sclk: nvpll + divisor, href or spll */
 	out = 0;
-	अगर (shader == nvkm_clk_पढ़ो(&clk->base, nv_clk_src_href)) अणु
+	if (shader == nvkm_clk_read(&clk->base, nv_clk_src_href)) {
 		clk->ssrc = nv_clk_src_href;
-	पूर्ण अन्यथा अणु
-		घड़ी = calc_pll(clk, 0x4020, shader, &N, &M, &P1);
-		अगर (clk->csrc == nv_clk_src_core)
-			out = calc_P((core << 1), shader, &भागs);
+	} else {
+		clock = calc_pll(clk, 0x4020, shader, &N, &M, &P1);
+		if (clk->csrc == nv_clk_src_core)
+			out = calc_P((core << 1), shader, &divs);
 
-		अगर (असल(shader - out) <=
-		    असल(shader - घड़ी) &&
-		   (भागs + P2) <= 7) अणु
+		if (abs(shader - out) <=
+		    abs(shader - clock) &&
+		   (divs + P2) <= 7) {
 			clk->ssrc = nv_clk_src_core;
-			clk->sctrl = (भागs + P2) << 16;
-		पूर्ण अन्यथा अणु
+			clk->sctrl = (divs + P2) << 16;
+		} else {
 			clk->ssrc = nv_clk_src_shader;
 			clk->scoef = (N << 8) | M;
 			clk->sctrl = P1 << 16;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* vclk */
-	out = calc_P(core, vdec, &भागs);
-	घड़ी = calc_P(500000, vdec, &P1);
-	अगर(असल(vdec - out) <= असल(vdec - घड़ी)) अणु
+	out = calc_P(core, vdec, &divs);
+	clock = calc_P(500000, vdec, &P1);
+	if(abs(vdec - out) <= abs(vdec - clock)) {
 		clk->vsrc = nv_clk_src_cclk;
-		clk->vभाग = भागs << 16;
-	पूर्ण अन्यथा अणु
+		clk->vdiv = divs << 16;
+	} else {
 		clk->vsrc = nv_clk_src_vdec;
-		clk->vभाग = P1 << 16;
-	पूर्ण
+		clk->vdiv = P1 << 16;
+	}
 
-	/* Prपूर्णांक strategy! */
+	/* Print strategy! */
 	nvkm_debug(subdev, "nvpll: %08x %08x %08x\n",
 		   clk->ccoef, clk->cpost, clk->cctrl);
 	nvkm_debug(subdev, " spll: %08x %08x %08x\n",
 		   clk->scoef, clk->spost, clk->sctrl);
-	nvkm_debug(subdev, " vdiv: %08x\n", clk->vभाग);
-	अगर (clk->csrc == nv_clk_src_hclkm4)
+	nvkm_debug(subdev, " vdiv: %08x\n", clk->vdiv);
+	if (clk->csrc == nv_clk_src_hclkm4)
 		nvkm_debug(subdev, "core: hrefm4\n");
-	अन्यथा
+	else
 		nvkm_debug(subdev, "core: nvpll\n");
 
-	अगर (clk->ssrc == nv_clk_src_hclkm4)
+	if (clk->ssrc == nv_clk_src_hclkm4)
 		nvkm_debug(subdev, "shader: hrefm4\n");
-	अन्यथा अगर (clk->ssrc == nv_clk_src_core)
+	else if (clk->ssrc == nv_clk_src_core)
 		nvkm_debug(subdev, "shader: nvpll\n");
-	अन्यथा
+	else
 		nvkm_debug(subdev, "shader: spll\n");
 
-	अगर (clk->vsrc == nv_clk_src_hclkm4)
+	if (clk->vsrc == nv_clk_src_hclkm4)
 		nvkm_debug(subdev, "vdec: 500MHz\n");
-	अन्यथा
+	else
 		nvkm_debug(subdev, "vdec: core\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-mcp77_clk_prog(काष्ठा nvkm_clk *base)
-अणु
-	काष्ठा mcp77_clk *clk = mcp77_clk(base);
-	काष्ठा nvkm_subdev *subdev = &clk->base.subdev;
-	काष्ठा nvkm_device *device = subdev->device;
+static int
+mcp77_clk_prog(struct nvkm_clk *base)
+{
+	struct mcp77_clk *clk = mcp77_clk(base);
+	struct nvkm_subdev *subdev = &clk->base.subdev;
+	struct nvkm_device *device = subdev->device;
 	u32 pllmask = 0, mast;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ *f = &flags;
-	पूर्णांक ret = 0;
+	unsigned long flags;
+	unsigned long *f = &flags;
+	int ret = 0;
 
 	ret = gt215_clk_pre(&clk->base, f);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	/* First चयन to safe घड़ीs: href */
+	/* First switch to safe clocks: href */
 	mast = nvkm_mask(device, 0xc054, 0x03400e70, 0x03400640);
 	mast &= ~0x00400e73;
 	mast |= 0x03000000;
 
-	चयन (clk->csrc) अणु
-	हाल nv_clk_src_hclkm4:
+	switch (clk->csrc) {
+	case nv_clk_src_hclkm4:
 		nvkm_mask(device, 0x4028, 0x00070000, clk->cctrl);
 		mast |= 0x00000002;
-		अवरोध;
-	हाल nv_clk_src_core:
+		break;
+	case nv_clk_src_core:
 		nvkm_wr32(device, 0x402c, clk->ccoef);
 		nvkm_wr32(device, 0x4028, 0x80000000 | clk->cctrl);
 		nvkm_wr32(device, 0x4040, clk->cpost);
 		pllmask |= (0x3 << 8);
 		mast |= 0x00000003;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		nvkm_warn(subdev, "Reclocking failed: unknown core clock\n");
-		जाओ resume;
-	पूर्ण
+		goto resume;
+	}
 
-	चयन (clk->ssrc) अणु
-	हाल nv_clk_src_href:
+	switch (clk->ssrc) {
+	case nv_clk_src_href:
 		nvkm_mask(device, 0x4020, 0x00070000, 0x00000000);
 		/* mast |= 0x00000000; */
-		अवरोध;
-	हाल nv_clk_src_core:
+		break;
+	case nv_clk_src_core:
 		nvkm_mask(device, 0x4020, 0x00070000, clk->sctrl);
 		mast |= 0x00000020;
-		अवरोध;
-	हाल nv_clk_src_shader:
+		break;
+	case nv_clk_src_shader:
 		nvkm_wr32(device, 0x4024, clk->scoef);
 		nvkm_wr32(device, 0x4020, 0x80000000 | clk->sctrl);
 		nvkm_wr32(device, 0x4070, clk->spost);
 		pllmask |= (0x3 << 12);
 		mast |= 0x00000030;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		nvkm_warn(subdev, "Reclocking failed: unknown sclk clock\n");
-		जाओ resume;
-	पूर्ण
+		goto resume;
+	}
 
-	अगर (nvkm_msec(device, 2000,
-		u32 पंचांगp = nvkm_rd32(device, 0x004080) & pllmask;
-		अगर (पंचांगp == pllmask)
-			अवरोध;
+	if (nvkm_msec(device, 2000,
+		u32 tmp = nvkm_rd32(device, 0x004080) & pllmask;
+		if (tmp == pllmask)
+			break;
 	) < 0)
-		जाओ resume;
+		goto resume;
 
-	चयन (clk->vsrc) अणु
-	हाल nv_clk_src_cclk:
+	switch (clk->vsrc) {
+	case nv_clk_src_cclk:
 		mast |= 0x00400000;
 		fallthrough;
-	शेष:
-		nvkm_wr32(device, 0x4600, clk->vभाग);
-	पूर्ण
+	default:
+		nvkm_wr32(device, 0x4600, clk->vdiv);
+	}
 
 	nvkm_wr32(device, 0xc054, mast);
 
 resume:
-	/* Disable some PLLs and भागiders when unused */
-	अगर (clk->csrc != nv_clk_src_core) अणु
+	/* Disable some PLLs and dividers when unused */
+	if (clk->csrc != nv_clk_src_core) {
 		nvkm_wr32(device, 0x4040, 0x00000000);
 		nvkm_mask(device, 0x4028, 0x80000000, 0x00000000);
-	पूर्ण
+	}
 
-	अगर (clk->ssrc != nv_clk_src_shader) अणु
+	if (clk->ssrc != nv_clk_src_shader) {
 		nvkm_wr32(device, 0x4070, 0x00000000);
 		nvkm_mask(device, 0x4020, 0x80000000, 0x00000000);
-	पूर्ण
+	}
 
 out:
-	अगर (ret == -EBUSY)
-		f = शून्य;
+	if (ret == -EBUSY)
+		f = NULL;
 
 	gt215_clk_post(&clk->base, f);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम
-mcp77_clk_tidy(काष्ठा nvkm_clk *base)
-अणु
-पूर्ण
+static void
+mcp77_clk_tidy(struct nvkm_clk *base)
+{
+}
 
-अटल स्थिर काष्ठा nvkm_clk_func
-mcp77_clk = अणु
-	.पढ़ो = mcp77_clk_पढ़ो,
+static const struct nvkm_clk_func
+mcp77_clk = {
+	.read = mcp77_clk_read,
 	.calc = mcp77_clk_calc,
 	.prog = mcp77_clk_prog,
 	.tidy = mcp77_clk_tidy,
-	.करोमुख्यs = अणु
-		अणु nv_clk_src_crystal, 0xff पूर्ण,
-		अणु nv_clk_src_href   , 0xff पूर्ण,
-		अणु nv_clk_src_core   , 0xff, 0, "core", 1000 पूर्ण,
-		अणु nv_clk_src_shader , 0xff, 0, "shader", 1000 पूर्ण,
-		अणु nv_clk_src_vdec   , 0xff, 0, "vdec", 1000 पूर्ण,
-		अणु nv_clk_src_max पूर्ण
-	पूर्ण
-पूर्ण;
+	.domains = {
+		{ nv_clk_src_crystal, 0xff },
+		{ nv_clk_src_href   , 0xff },
+		{ nv_clk_src_core   , 0xff, 0, "core", 1000 },
+		{ nv_clk_src_shader , 0xff, 0, "shader", 1000 },
+		{ nv_clk_src_vdec   , 0xff, 0, "vdec", 1000 },
+		{ nv_clk_src_max }
+	}
+};
 
-पूर्णांक
-mcp77_clk_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
-	      काष्ठा nvkm_clk **pclk)
-अणु
-	काष्ठा mcp77_clk *clk;
+int
+mcp77_clk_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
+	      struct nvkm_clk **pclk)
+{
+	struct mcp77_clk *clk;
 
-	अगर (!(clk = kzalloc(माप(*clk), GFP_KERNEL)))
-		वापस -ENOMEM;
+	if (!(clk = kzalloc(sizeof(*clk), GFP_KERNEL)))
+		return -ENOMEM;
 	*pclk = &clk->base;
 
-	वापस nvkm_clk_ctor(&mcp77_clk, device, type, inst, true, &clk->base);
-पूर्ण
+	return nvkm_clk_ctor(&mcp77_clk, device, type, inst, true, &clk->base);
+}
